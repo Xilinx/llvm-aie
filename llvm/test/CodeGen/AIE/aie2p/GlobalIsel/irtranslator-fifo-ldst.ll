@@ -36,7 +36,7 @@ define ptr @test_fifo_fill(ptr noalias align 4 %ptr, <32 x i32> %buf, i32 %avail
   ; ISEL-NEXT:   $p0 = COPY [[VLD_FILL_512_pseudo]]
   ; ISEL-NEXT:   PseudoRET implicit $lr, implicit $p0
 entry:
-  %res0 = tail call    { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.fill(ptr %ptr, <32 x i32> %buf, i32 %avail)
+  %res0 = tail call    { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.fill.p0.p0(ptr %ptr, <32 x i32> %buf, i32 %avail)
   %ptr0 = extractvalue { ptr, <32 x i32>, i32 } %res0, 0
   ret ptr %ptr0
 }
@@ -89,22 +89,22 @@ define ptr @test_fifo_pop_unaligned(ptr noalias align 4 %ptr, <32 x i32> %buf, i
   ; ISEL-NEXT:   $p0 = COPY [[VLD_POP_512_3D_pseudo1]]
   ; ISEL-NEXT:   PseudoRET implicit $lr, implicit $p0
 entry:
-  %res0 = tail call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.unaligned(ptr %ptr, <32 x i32> %buf, i32 %avail)
+  %res0 = tail call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.unaligned.p0.p0(ptr %ptr, <32 x i32> %buf, i32 %avail)
   %ptr0 = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } %res0, 1
   %buf0 = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } %res0, 2
   %pos0 = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } %res0, 3
 
-  %res1 = tail call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.1d.unaligned(ptr %ptr0, <32 x i32> %buf0, i32 %pos0, i20 16)
+  %res1 = tail call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.1d.unaligned.p0.p0(ptr %ptr0, <32 x i32> %buf0, i32 %pos0, i20 16)
   %ptr1 = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } %res1, 1
   %buf1 = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } %res1, 2
   %pos1 = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } %res1, 3
 
-  %res2 = tail call { <64 x i8>, ptr, <32 x i32>, i32, i20 } @llvm.aie2p.fifo.ld.pop.2d.unaligned(ptr %ptr1, <32 x i32> %buf1, i32 %pos1, i20 1, i20 2, i20 3, i20 4)
+  %res2 = tail call { <64 x i8>, ptr, <32 x i32>, i32, i20 } @llvm.aie2p.fifo.ld.pop.2d.unaligned.p0.p0(ptr %ptr1, <32 x i32> %buf1, i32 %pos1, i20 1, i20 2, i20 3, i20 4)
   %ptr2 = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } %res2, 1
   %buf2 = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } %res2, 2
   %pos2 = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } %res2, 3
 
-  %res3 = tail call { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2p.fifo.ld.pop.3d.unaligned(ptr %ptr2, <32 x i32> %buf2, i32 %pos2, i20 1, i20 2, i20 3, i20 4, i20 5, i20 6, i20 7)
+  %res3 = tail call { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2p.fifo.ld.pop.3d.unaligned.p0.p0(ptr %ptr2, <32 x i32> %buf2, i32 %pos2, i20 1, i20 2, i20 3, i20 4, i20 5, i20 6, i20 7)
   %ptr3 = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } %res3, 1
   %buf3 = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } %res3, 2
   %pos3 = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } %res3, 3
@@ -168,22 +168,22 @@ define ptr @test_fifo_pop_576(ptr noalias align 4 %ptr, <32 x i32> %buf, i32 %av
   ; ISEL-NEXT:   $p0 = COPY [[VLD_POP_576_3D_pseudo1]]
   ; ISEL-NEXT:   PseudoRET implicit $lr, implicit $p0
 entry:
-  %res0 = tail call    { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.576.bfp16(ptr %ptr, <32 x i32> %buf, i32 %avail)
+  %res0 = tail call    { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.576.bfp16.p0.p0(ptr %ptr, <32 x i32> %buf, i32 %avail)
   %ptr0 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %res0, 0
   %buf0 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %res0, 1
   %pos0 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %res0, 2
 
-  %res1 = tail call    { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.576.1d.bfp16(ptr %ptr0, <32 x i32> %buf0, i32 %pos0, i20 16)
+  %res1 = tail call    { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.576.1d.bfp16.p0.p0(ptr %ptr0, <32 x i32> %buf0, i32 %pos0, i20 16)
   %ptr1 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %res1, 0
   %buf1 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %res1, 1
   %pos1 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %res1, 2
 
-  %res2 = tail call    { ptr, <32 x i32>, i32, i20, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.576.2d.bfp16(ptr %ptr1, <32 x i32> %buf1, i32 %pos1, i20 1, i20 2, i20 3, i20 4)
+  %res2 = tail call    { ptr, <32 x i32>, i32, i20, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.576.2d.bfp16.p0.p0(ptr %ptr1, <32 x i32> %buf1, i32 %pos1, i20 1, i20 2, i20 3, i20 4)
   %ptr2 = extractvalue { ptr, <32 x i32>, i32, i20, <64 x i8>, <8 x i8> } %res2, 0
   %buf2 = extractvalue { ptr, <32 x i32>, i32, i20, <64 x i8>, <8 x i8> } %res2, 1
   %pos2 = extractvalue { ptr, <32 x i32>, i32, i20, <64 x i8>, <8 x i8> } %res2, 2
 
-  %res3 = tail call    { ptr, <32 x i32>, i32, i20, i20, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.576.3d.bfp16(ptr %ptr2, <32 x i32> %buf2, i32 %pos2, i20 1, i20 2, i20 3, i20 4, i20 5, i20 6, i20 7)
+  %res3 = tail call    { ptr, <32 x i32>, i32, i20, i20, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.576.3d.bfp16.p0.p0(ptr %ptr2, <32 x i32> %buf2, i32 %pos2, i20 1, i20 2, i20 3, i20 4, i20 5, i20 6, i20 7)
   %ptr3 = extractvalue { ptr, <32 x i32>, i32, i20, i20, <64 x i8>, <8 x i8> } %res3, 0
   %buf3 = extractvalue { ptr, <32 x i32>, i32, i20, i20, <64 x i8>, <8 x i8> } %res3, 1
   %pos3 = extractvalue { ptr, <32 x i32>, i32, i20, i20, <64 x i8>, <8 x i8> } %res3, 2
@@ -247,22 +247,22 @@ define ptr @test_fifo_pop_544(ptr noalias align 4 %ptr, <32 x i32> %buf, i32 %av
   ; ISEL-NEXT:   $p0 = COPY [[VLD_POP_544_3D_pseudo1]]
   ; ISEL-NEXT:   PseudoRET implicit $lr, implicit $p0
 entry:
-  %res0 = tail call    { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.544.bfp16(ptr %ptr, <32 x i32> %buf, i32 %avail)
+  %res0 = tail call    { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.544.bfp16.p0.p0(ptr %ptr, <32 x i32> %buf, i32 %avail)
   %ptr0 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %res0, 0
   %buf0 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %res0, 1
   %pos0 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %res0, 2
 
-  %res1 = tail call    { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.544.1d.bfp16(ptr %ptr0, <32 x i32> %buf0, i32 %pos0, i20 16)
+  %res1 = tail call    { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.544.1d.bfp16.p0.p0(ptr %ptr0, <32 x i32> %buf0, i32 %pos0, i20 16)
   %ptr1 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %res1, 0
   %buf1 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %res1, 1
   %pos1 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %res1, 2
 
-  %res2 = tail call    { ptr, <32 x i32>, i32, i20, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.544.2d.bfp16(ptr %ptr1, <32 x i32> %buf1, i32 %pos1, i20 1, i20 2, i20 3, i20 4)
+  %res2 = tail call    { ptr, <32 x i32>, i32, i20, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.544.2d.bfp16.p0.p0(ptr %ptr1, <32 x i32> %buf1, i32 %pos1, i20 1, i20 2, i20 3, i20 4)
   %ptr2 = extractvalue { ptr, <32 x i32>, i32, i20, <64 x i8>, <8 x i8> } %res2, 0
   %buf2 = extractvalue { ptr, <32 x i32>, i32, i20, <64 x i8>, <8 x i8> } %res2, 1
   %pos2 = extractvalue { ptr, <32 x i32>, i32, i20, <64 x i8>, <8 x i8> } %res2, 2
 
-  %res3 = tail call    { ptr, <32 x i32>, i32, i20, i20, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.544.3d.bfp16(ptr %ptr2, <32 x i32> %buf2, i32 %pos2, i20 1, i20 2, i20 3, i20 4, i20 5, i20 6, i20 7)
+  %res3 = tail call    { ptr, <32 x i32>, i32, i20, i20, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.544.3d.bfp16.p0.p0(ptr %ptr2, <32 x i32> %buf2, i32 %pos2, i20 1, i20 2, i20 3, i20 4, i20 5, i20 6, i20 7)
   %ptr3 = extractvalue { ptr, <32 x i32>, i32, i20, i20, <64 x i8>, <8 x i8> } %res3, 0
   %buf3 = extractvalue { ptr, <32 x i32>, i32, i20, i20, <64 x i8>, <8 x i8> } %res3, 1
   %pos3 = extractvalue { ptr, <32 x i32>, i32, i20, i20, <64 x i8>, <8 x i8> } %res3, 2
@@ -306,17 +306,17 @@ define ptr @test_fifo_push(ptr noalias align 4 %ptr, <16 x i32> noundef %v, <64 
   ; ISEL-NEXT:   $p0 = COPY [[VST_PUSH_544_1]]
   ; ISEL-NEXT:   PseudoRET implicit $lr, implicit $p0
 entry:
-  %res0 = tail call    { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.512.bfp16(ptr %ptr, <16 x i32> %v, <32 x i32> undef, i32 0)
+  %res0 = tail call    { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.512.bfp16.p0.p0(ptr %ptr, <16 x i32> %v, <32 x i32> undef, i32 0)
   %ptr0 = extractvalue { ptr, <32 x i32>, i32 } %res0, 0
   %buf0 = extractvalue { ptr, <32 x i32>, i32 } %res0, 1
   %pos0 = extractvalue { ptr, <32 x i32>, i32 } %res0, 2
 
-  %res1 = tail call    { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16(ptr %ptr0, <64 x i8> %vbfp, <8 x i8> %ebfp, <32 x i32> %buf0, i32 %pos0)
+  %res1 = tail call    { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16.p0.p0(ptr %ptr0, <64 x i8> %vbfp, <8 x i8> %ebfp, <32 x i32> %buf0, i32 %pos0)
   %ptr1 = extractvalue { ptr, <32 x i32>, i32 } %res1, 0
   %buf1 = extractvalue { ptr, <32 x i32>, i32 } %res1, 1
   %pos1 = extractvalue { ptr, <32 x i32>, i32 } %res1, 2
 
-  %res2 = tail call    { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.544.bfp16(ptr %ptr1, <64 x i8> %vbfp, <8 x i8> %ebfp, <32 x i32> %buf1, i32 %pos1)
+  %res2 = tail call    { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.544.bfp16.p0.p0(ptr %ptr1, <64 x i8> %vbfp, <8 x i8> %ebfp, <32 x i32> %buf1, i32 %pos1)
   %ptr2 = extractvalue { ptr, <32 x i32>, i32 } %res2, 0
   %buf2 = extractvalue { ptr, <32 x i32>, i32 } %res2, 1
   %pos2 = extractvalue { ptr, <32 x i32>, i32 } %res2, 2
@@ -372,22 +372,22 @@ define ptr @test_fifo_flush(ptr noalias align 4 %ptr, <32 x i32> %buf, i32 %pos)
   ; ISEL-NEXT:   $p0 = COPY [[VST_FLUSH_512_3D1]]
   ; ISEL-NEXT:   PseudoRET implicit $lr, implicit $p0
 entry:
-  %res0 = tail call    { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.flush(ptr %ptr, <32 x i32> %buf, i32 %pos)
+  %res0 = tail call    { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.flush.p0.p0(ptr %ptr, <32 x i32> %buf, i32 %pos)
   %ptr0 = extractvalue { ptr, <32 x i32>, i32 } %res0, 0
   %buf0 = extractvalue { ptr, <32 x i32>, i32 } %res0, 1
   %pos0 = extractvalue { ptr, <32 x i32>, i32 } %res0, 2
 
-  %res1 = tail call    { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.flush.1d(ptr %ptr0, <32 x i32> %buf0, i32 %pos0, i20 16)
+  %res1 = tail call    { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.flush.1d.p0.p0(ptr %ptr0, <32 x i32> %buf0, i32 %pos0, i20 16)
   %ptr1 = extractvalue { ptr, <32 x i32>, i32 } %res1, 0
   %buf1 = extractvalue { ptr, <32 x i32>, i32 } %res1, 1
   %pos1 = extractvalue { ptr, <32 x i32>, i32 } %res1, 2
 
-  %res2 = tail call    { ptr, <32 x i32>, i32, i20 } @llvm.aie2p.fifo.st.flush.2d(ptr %ptr1, <32 x i32> %buf1, i32 %pos1, i20 1, i20 2, i20 3, i20 4)
+  %res2 = tail call    { ptr, <32 x i32>, i32, i20 } @llvm.aie2p.fifo.st.flush.2d.p0.p0(ptr %ptr1, <32 x i32> %buf1, i32 %pos1, i20 1, i20 2, i20 3, i20 4)
   %ptr2 = extractvalue { ptr, <32 x i32>, i32, i20 } %res2, 0
   %buf2 = extractvalue { ptr, <32 x i32>, i32, i20 } %res2, 1
   %pos2 = extractvalue { ptr, <32 x i32>, i32, i20 } %res2, 2
 
-  %res3 = tail call    { ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2p.fifo.st.flush.3d(ptr %ptr2, <32 x i32> %buf2, i32 %pos2, i20 1, i20 2, i20 3, i20 4, i20 5, i20 6, i20 7)
+  %res3 = tail call    { ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2p.fifo.st.flush.3d.p0.p0(ptr %ptr2, <32 x i32> %buf2, i32 %pos2, i20 1, i20 2, i20 3, i20 4, i20 5, i20 6, i20 7)
   %ptr3 = extractvalue { ptr, <32 x i32>, i32, i20, i20 } %res3, 0
   %buf3 = extractvalue { ptr, <32 x i32>, i32, i20, i20 } %res3, 1
   %pos3 = extractvalue { ptr, <32 x i32>, i32, i20, i20 } %res3, 2
@@ -443,22 +443,22 @@ define ptr @test_fifo_flush_conv(ptr noalias align 4 %ptr, <32 x i32> %buf, i32 
   ; ISEL-NEXT:   $p0 = COPY [[VST_FLUSH_512_CONV_3D1]]
   ; ISEL-NEXT:   PseudoRET implicit $lr, implicit $p0
 entry:
-  %res0 = tail call    { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.flush.conv(ptr %ptr, <32 x i32> %buf, i32 %pos)
+  %res0 = tail call    { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.flush.conv.p0.p0(ptr %ptr, <32 x i32> %buf, i32 %pos)
   %ptr0 = extractvalue { ptr, <32 x i32>, i32 } %res0, 0
   %buf0 = extractvalue { ptr, <32 x i32>, i32 } %res0, 1
   %pos0 = extractvalue { ptr, <32 x i32>, i32 } %res0, 2
 
-  %res1 = tail call    { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.flush.1d.conv(ptr %ptr0, <32 x i32> %buf0, i32 %pos0, i20 16)
+  %res1 = tail call    { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.flush.1d.conv.p0.p0(ptr %ptr0, <32 x i32> %buf0, i32 %pos0, i20 16)
   %ptr1 = extractvalue { ptr, <32 x i32>, i32 } %res1, 0
   %buf1 = extractvalue { ptr, <32 x i32>, i32 } %res1, 1
   %pos1 = extractvalue { ptr, <32 x i32>, i32 } %res1, 2
 
-  %res2 = tail call    { ptr, <32 x i32>, i32, i20 } @llvm.aie2p.fifo.st.flush.2d.conv(ptr %ptr1, <32 x i32> %buf1, i32 %pos1, i20 1, i20 2, i20 3, i20 4)
+  %res2 = tail call    { ptr, <32 x i32>, i32, i20 } @llvm.aie2p.fifo.st.flush.2d.conv.p0.p0(ptr %ptr1, <32 x i32> %buf1, i32 %pos1, i20 1, i20 2, i20 3, i20 4)
   %ptr2 = extractvalue { ptr, <32 x i32>, i32, i20 } %res2, 0
   %buf2 = extractvalue { ptr, <32 x i32>, i32, i20 } %res2, 1
   %pos2 = extractvalue { ptr, <32 x i32>, i32, i20 } %res2, 2
 
-  %res3 = tail call    { ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2p.fifo.st.flush.3d.conv(ptr %ptr2, <32 x i32> %buf2, i32 %pos2, i20 1, i20 2, i20 3, i20 4, i20 5, i20 6, i20 7)
+  %res3 = tail call    { ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2p.fifo.st.flush.3d.conv.p0.p0(ptr %ptr2, <32 x i32> %buf2, i32 %pos2, i20 1, i20 2, i20 3, i20 4, i20 5, i20 6, i20 7)
   %ptr3 = extractvalue { ptr, <32 x i32>, i32, i20, i20 } %res3, 0
   %buf3 = extractvalue { ptr, <32 x i32>, i32, i20, i20 } %res3, 1
   %pos3 = extractvalue { ptr, <32 x i32>, i32, i20, i20 } %res3, 2

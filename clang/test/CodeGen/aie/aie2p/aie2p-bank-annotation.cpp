@@ -25,7 +25,7 @@
 // CHECK-NEXT:    [[P_ADDR_SROA_0_0_P_ADDR_SROA_0_0_P_ADDR_SROA_0_0_P_ADDR_SROA_0_0_:%.*]] = load ptr, ptr [[P_ADDR_SROA_0]], align 4, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA6:![0-9]+]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA7:![0-9]+]]
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16(ptr [[P_ADDR_SROA_0_0_P_ADDR_SROA_0_0_P_ADDR_SROA_0_0_P_ADDR_SROA_0_0_]], <64 x i8> [[V_COERCE_FCA_0_EXTRACT_I]], <8 x i8> [[V_COERCE_FCA_1_EXTRACT_I]], <32 x i32> [[TMP0]], i32 [[TMP1]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16.p0.p0(ptr [[P_ADDR_SROA_0_0_P_ADDR_SROA_0_0_P_ADDR_SROA_0_0_P_ADDR_SROA_0_0_]], <64 x i8> [[V_COERCE_FCA_0_EXTRACT_I]], <8 x i8> [[V_COERCE_FCA_1_EXTRACT_I]], <32 x i32> [[TMP0]], i32 [[TMP1]])
 // CHECK-NEXT:    [[TMP3:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP2]], 1
 // CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP2]], 2
 // CHECK-NEXT:    store <32 x i32> [[TMP3]], ptr [[S]], align 128
@@ -46,7 +46,7 @@ void test_intrinsic_annotated_pointer(v64bfp16ebs8_unaligned __aie_dm_resource_a
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA6]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA7]]
-// CHECK-NEXT:    [[TMP3:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16(ptr [[TMP0]], <64 x i8> [[V_COERCE_FCA_0_EXTRACT_I]], <8 x i8> [[V_COERCE_FCA_1_EXTRACT_I]], <32 x i32> [[TMP1]], i32 [[TMP2]])
+// CHECK-NEXT:    [[TMP3:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16.p0.p0(ptr [[TMP0]], <64 x i8> [[V_COERCE_FCA_0_EXTRACT_I]], <8 x i8> [[V_COERCE_FCA_1_EXTRACT_I]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 0
 // CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 1
 // CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 2
@@ -77,11 +77,11 @@ void test_intrinsic_annotated_pointer_reference(v64bfp16ebs8_unaligned __aie_dm_
 // CHECK-NEXT:    [[I_09:%.*]] = phi i32 [ 0, [[FOR_BODY_LR_PH]] ], [ [[INC:%.*]], [[FOR_BODY]] ]
 // CHECK-NEXT:    [[S_SROA_0_08:%.*]] = phi <32 x i32> [ undef, [[FOR_BODY_LR_PH]] ], [ [[TMP7:%.*]], [[FOR_BODY]] ]
 // CHECK-NEXT:    [[S_SROA_6_07:%.*]] = phi i32 [ 0, [[FOR_BODY_LR_PH]] ], [ [[TMP8:%.*]], [[FOR_BODY]] ]
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16(ptr [[TMP0]], <64 x i8> [[V_COERCE_FCA_0_EXTRACT_I]], <8 x i8> [[V_COERCE_FCA_1_EXTRACT_I]], <32 x i32> [[S_SROA_0_08]], i32 [[S_SROA_6_07]])
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16.p0.p0(ptr [[TMP0]], <64 x i8> [[V_COERCE_FCA_0_EXTRACT_I]], <8 x i8> [[V_COERCE_FCA_1_EXTRACT_I]], <32 x i32> [[S_SROA_0_08]], i32 [[S_SROA_6_07]])
 // CHECK-NEXT:    [[TMP2:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP1]], 0
 // CHECK-NEXT:    [[TMP3:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP1]], 1
 // CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP1]], 2
-// CHECK-NEXT:    [[TMP5:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.flush(ptr [[TMP2]], <32 x i32> [[TMP3]], i32 [[TMP4]])
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.flush.p0.p0(ptr [[TMP2]], <32 x i32> [[TMP3]], i32 [[TMP4]])
 // CHECK-NEXT:    [[TMP6]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP5]], 0
 // CHECK-NEXT:    [[TMP7]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP5]], 1
 // CHECK-NEXT:    [[TMP8]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP5]], 2
@@ -117,11 +117,11 @@ void test_intrinsic_annotated_pointer_reference_loop(
 // CHECK-NEXT:    [[I_09:%.*]] = phi i32 [ 0, [[FOR_BODY_LR_PH]] ], [ [[INC:%.*]], [[FOR_BODY]] ]
 // CHECK-NEXT:    [[S_SROA_0_08:%.*]] = phi <32 x i32> [ undef, [[FOR_BODY_LR_PH]] ], [ [[TMP7:%.*]], [[FOR_BODY]] ]
 // CHECK-NEXT:    [[S_SROA_6_07:%.*]] = phi i32 [ 0, [[FOR_BODY_LR_PH]] ], [ [[TMP8:%.*]], [[FOR_BODY]] ]
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16(ptr [[TMP0]], <64 x i8> [[V_COERCE_FCA_0_EXTRACT_I]], <8 x i8> [[V_COERCE_FCA_1_EXTRACT_I]], <32 x i32> [[S_SROA_0_08]], i32 [[S_SROA_6_07]])
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16.p0.p0(ptr [[TMP0]], <64 x i8> [[V_COERCE_FCA_0_EXTRACT_I]], <8 x i8> [[V_COERCE_FCA_1_EXTRACT_I]], <32 x i32> [[S_SROA_0_08]], i32 [[S_SROA_6_07]])
 // CHECK-NEXT:    [[TMP2:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP1]], 0
 // CHECK-NEXT:    [[TMP3:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP1]], 1
 // CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP1]], 2
-// CHECK-NEXT:    [[TMP5:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.flush(ptr [[TMP2]], <32 x i32> [[TMP3]], i32 [[TMP4]])
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.flush.p0.p0(ptr [[TMP2]], <32 x i32> [[TMP3]], i32 [[TMP4]])
 // CHECK-NEXT:    [[TMP6]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP5]], 0
 // CHECK-NEXT:    [[TMP7]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP5]], 1
 // CHECK-NEXT:    [[TMP8]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP5]], 2
