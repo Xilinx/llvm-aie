@@ -21,11 +21,31 @@ body:             |
     ; AIE2P: liveins: $x0
     ; AIE2P-NEXT: {{  $}}
     ; AIE2P-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
-    ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-    ; AIE2P-NEXT: [[VEXTRACT_64_vec_extract_r_vaddSign1_:%[0-9]+]]:el = VEXTRACT_64_vec_extract_r_vaddSign1 [[COPY]], [[MOV_RLC_imm11_pseudo]], implicit $vaddsign1
-    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VEXTRACT_64_vec_extract_r_vaddSign1_]]
+    ; AIE2P-NEXT: [[VEXTRACT_64_vec_extract_imm_vaddSign1_:%[0-9]+]]:el = VEXTRACT_64_vec_extract_imm_vaddSign1 [[COPY]], 1, implicit $vaddsign1
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VEXTRACT_64_vec_extract_imm_vaddSign1_]]
     %1:vregbank(<8 x s64>) = COPY $x0
     %2:gprregbank(s32) = G_CONSTANT i32 1
+    %0:gprregbank(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %1(<8 x s64>), %2(s32)
+    PseudoRET implicit $lr, implicit %0
+...
+---
+name:            _512bit_extract_64bit_dyn
+legalized:       true
+regBankSelected: true
+selected:        false
+body:             |
+  bb.1.entry:
+    liveins: $x0, $r0
+
+    ; AIE2P-LABEL: name: _512bit_extract_64bit_dyn
+    ; AIE2P: liveins: $x0, $r0
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r0
+    ; AIE2P-NEXT: [[VEXTRACT_64_vec_extract_r_vaddSign1_:%[0-9]+]]:el = VEXTRACT_64_vec_extract_r_vaddSign1 [[COPY]], [[COPY1]], implicit $vaddsign1
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VEXTRACT_64_vec_extract_r_vaddSign1_]]
+    %1:vregbank(<8 x s64>) = COPY $x0
+    %2:gprregbank(s32) = COPY $r0
     %0:gprregbank(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %1(<8 x s64>), %2(s32)
     PseudoRET implicit $lr, implicit %0
 ...
@@ -42,10 +62,9 @@ body:             |
     ; AIE2P: liveins: $bmll0
     ; AIE2P-NEXT: {{  $}}
     ; AIE2P-NEXT: [[COPY:%[0-9]+]]:acc512 = COPY $bmll0
-    ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
     ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:mxm = COPY [[COPY]]
-    ; AIE2P-NEXT: [[VEXTRACT_64_vec_extract_r_vaddSign1_:%[0-9]+]]:el = VEXTRACT_64_vec_extract_r_vaddSign1 [[COPY1]], [[MOV_RLC_imm11_pseudo]], implicit $vaddsign1
-    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VEXTRACT_64_vec_extract_r_vaddSign1_]]
+    ; AIE2P-NEXT: [[VEXTRACT_64_vec_extract_imm_vaddSign1_:%[0-9]+]]:el = VEXTRACT_64_vec_extract_imm_vaddSign1 [[COPY1]], 1, implicit $vaddsign1
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VEXTRACT_64_vec_extract_imm_vaddSign1_]]
     %1:accregbank(<8 x s64>) = COPY $bmll0
     %2:gprregbank(s32) = G_CONSTANT i32 1
     %0:gprregbank(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %1(<8 x s64>), %2(s32)
@@ -63,352 +82,10 @@ body:             |
     ; AIE2P: liveins: $x0
     ; AIE2P-NEXT: {{  $}}
     ; AIE2P-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
-    ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-    ; AIE2P-NEXT: [[VEXTRACT_64_vec_extract_r_vaddSign0_:%[0-9]+]]:el = VEXTRACT_64_vec_extract_r_vaddSign0 [[COPY]], [[MOV_RLC_imm11_pseudo]], implicit $vaddsign0
-    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VEXTRACT_64_vec_extract_r_vaddSign0_]]
+    ; AIE2P-NEXT: [[VEXTRACT_64_vec_extract_imm_vaddSign0_:%[0-9]+]]:el = VEXTRACT_64_vec_extract_imm_vaddSign0 [[COPY]], 1, implicit $vaddsign0
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VEXTRACT_64_vec_extract_imm_vaddSign0_]]
     %1:vregbank(<8 x s64>) = COPY $x0
     %2:gprregbank(s32) = G_CONSTANT i32 1
     %0:gprregbank(s64) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT %1(<8 x s64>), %2(s32)
-    PseudoRET implicit $lr, implicit %0
-...
-
----
-name:            _1024bit_extract_64bit
-legalized:       true
-regBankSelected: true
-selected:        false
-body:             |
-  bb.1.entry:
-    liveins: $y2
-
-    ; AIE2P-LABEL: name: _1024bit_extract_64bit
-    ; AIE2P: liveins: $y2
-    ; AIE2P-NEXT: {{  $}}
-    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:vec1024 = COPY $y2
-    ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY [[COPY]].sub_512_lo
-    ; AIE2P-NEXT: [[VEXTRACT_64_vec_extract_r_vaddSign1_:%[0-9]+]]:el = VEXTRACT_64_vec_extract_r_vaddSign1 [[COPY1]], [[MOV_RLC_imm11_pseudo]], implicit $vaddsign1
-    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VEXTRACT_64_vec_extract_r_vaddSign1_]]
-    %1:vregbank(<16 x s64>) = COPY $y2
-    %2:gprregbank(s32) = G_CONSTANT i32 1
-    %0:gprregbank(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %1(<16 x s64>), %2(s32)
-    PseudoRET implicit $lr, implicit %0
-...
-
----
-name:            _1024bit_extract_64bit_accregbank
-legalized:       true
-regBankSelected: true
-selected:        false
-body:             |
-  bb.1.entry:
-    liveins: $cml0
-
-    ; AIE2P-LABEL: name: _1024bit_extract_64bit_accregbank
-    ; AIE2P: liveins: $cml0
-    ; AIE2P-NEXT: {{  $}}
-    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:acc1024 = COPY $cml0
-    ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY [[COPY]].sub_512_acc_lo
-    ; AIE2P-NEXT: [[VEXTRACT_64_vec_extract_r_vaddSign1_:%[0-9]+]]:el = VEXTRACT_64_vec_extract_r_vaddSign1 [[COPY1]], [[MOV_RLC_imm11_pseudo]], implicit $vaddsign1
-    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VEXTRACT_64_vec_extract_r_vaddSign1_]]
-    %1:accregbank(<16 x s64>) = COPY $cml0
-    %2:gprregbank(s32) = G_CONSTANT i32 1
-    %0:gprregbank(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %1(<16 x s64>), %2(s32)
-    PseudoRET implicit $lr, implicit %0
-...
-
----
-name:            _1024bit_extractelt_s32_low
-legalized:       true
-regBankSelected: true
-selected:        false
-body:             |
-  bb.1.entry:
-    liveins: $y2
-    ; AIE2P-LABEL: name: _1024bit_extractelt_s32_low
-    ; AIE2P: liveins: $y2
-    ; AIE2P-NEXT: {{  $}}
-    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:vec1024 = COPY $y2
-    ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 7
-    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY [[COPY]].sub_512_hi
-    ; AIE2P-NEXT: [[VEXTRACT_64_vec_extract_r_vaddSign1_:%[0-9]+]]:el = VEXTRACT_64_vec_extract_r_vaddSign1 [[COPY1]], [[MOV_RLC_imm11_pseudo]], implicit $vaddsign1
-    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VEXTRACT_64_vec_extract_r_vaddSign1_]]
-    %1:vregbank(<16 x s64>) = COPY $y2
-    %2:gprregbank(s32) = G_CONSTANT i32 15
-    %0:gprregbank(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %1(<16 x s64>), %2(s32)
-    PseudoRET implicit $lr, implicit %0
-
-...
-
----
-name:            _1024bit_s64_elt_dynamic_idx
-legalized:       true
-regBankSelected: true
-stack:
-  - { id: 0, name: "", type: default, offset: 0, size: 4, alignment: 4}
-body:             |
-  bb.1.entry:
-    liveins:
-    ; AIE2P-LABEL: name: _1024bit_s64_elt_dynamic_idx
-    ; AIE2P: [[COPY:%[0-9]+]]:vec1024 = COPY $y2
-    ; AIE2P-NEXT: [[DEF:%[0-9]+]]:er = IMPLICIT_DEF
-    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY [[COPY]].sub_512_lo
-    ; AIE2P-NEXT: [[COPY2:%[0-9]+]]:vec512 = COPY [[COPY]].sub_512_hi
-    ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
-    ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 8
-    ; AIE2P-NEXT: [[LT:%[0-9]+]]:mr27_select = LT [[DEF]], [[MOV_RLC_imm11_pseudo1]]
-    ; AIE2P-NEXT: [[SEL_NEZ:%[0-9]+]]:er = SEL_NEZ [[MOV_RLC_imm11_pseudo]], [[MOV_RLC_imm11_pseudo1]], [[LT]]
-    ; AIE2P-NEXT: [[SUB:%[0-9]+]]:er = SUB [[DEF]], [[SEL_NEZ]], implicit-def $srcarry
-    ; AIE2P-NEXT: [[ADD_add_r_ri:%[0-9]+]]:ers16 = ADD_add_r_ri [[LT]], -1, implicit-def $srcarry
-    ; AIE2P-NEXT: [[VSEL_32_:%[0-9]+]]:vec512 = VSEL_32 [[COPY1]], [[COPY2]], [[ADD_add_r_ri]]
-    ; AIE2P-NEXT: [[VEXTRACT_64_vec_extract_r_vaddSign1_:%[0-9]+]]:el = VEXTRACT_64_vec_extract_r_vaddSign1 [[VSEL_32_]], [[SUB]], implicit $vaddsign1
-    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VEXTRACT_64_vec_extract_r_vaddSign1_]]
-    %1:vregbank(<16 x s64>) = COPY $y2
-    %3:gprregbank(s32) = G_IMPLICIT_DEF
-    %0:gprregbank(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %1(<16 x s64>), %3(s32)
-    PseudoRET implicit $lr, implicit %0
-
-...
----
-name:            _2048bit_extract_64bit_Lo_Lo
-legalized:       true
-regBankSelected: true
-selected:        false
-body:             |
-  bb.1.entry:
-    liveins:
-    ; AIE2P-LABEL: name: _2048bit_extract_64bit_Lo_Lo
-    ; AIE2P: [[DEF:%[0-9]+]]:acc2048 = IMPLICIT_DEF
-    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:vec1024 = COPY [[DEF]].sub_1024_acc_lo
-    ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY [[COPY]].sub_512_lo
-    ; AIE2P-NEXT: [[VEXTRACT_64_vec_extract_r_vaddSign1_:%[0-9]+]]:el = VEXTRACT_64_vec_extract_r_vaddSign1 [[COPY1]], [[MOV_RLC_imm11_pseudo]], implicit $vaddsign1
-    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VEXTRACT_64_vec_extract_r_vaddSign1_]]
-    %1:accregbank(<32 x s64>) = G_IMPLICIT_DEF
-    %2:gprregbank(s32) = G_CONSTANT i32 1
-    %0:gprregbank(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %1(<32 x s64>), %2(s32)
-    PseudoRET implicit $lr, implicit %0
-...
----
-name:            _2048bit_extract_64bit_Lo_Hi
-legalized:       true
-regBankSelected: true
-selected:        false
-body:             |
-  bb.1.entry:
-    liveins:
-    ; AIE2P-LABEL: name: _2048bit_extract_64bit_Lo_Hi
-    ; AIE2P: [[DEF:%[0-9]+]]:acc2048 = IMPLICIT_DEF
-    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:vec1024 = COPY [[DEF]].sub_1024_acc_lo
-    ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY [[COPY]].sub_512_hi
-    ; AIE2P-NEXT: [[VEXTRACT_64_vec_extract_r_vaddSign1_:%[0-9]+]]:el = VEXTRACT_64_vec_extract_r_vaddSign1 [[COPY1]], [[MOV_RLC_imm11_pseudo]], implicit $vaddsign1
-    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VEXTRACT_64_vec_extract_r_vaddSign1_]]
-    %1:accregbank(<32 x s64>) = G_IMPLICIT_DEF
-    %2:gprregbank(s32) = G_CONSTANT i32 9
-    %0:gprregbank(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %1(<32 x s64>), %2(s32)
-    PseudoRET implicit $lr, implicit %0
-...
----
-name:            _2048bit_extract_64bit_Hi_Lo
-legalized:       true
-regBankSelected: true
-selected:        false
-body:             |
-  bb.1.entry:
-    liveins:
-    ; AIE2P-LABEL: name: _2048bit_extract_64bit_Hi_Lo
-    ; AIE2P: [[DEF:%[0-9]+]]:acc2048 = IMPLICIT_DEF
-    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:vec1024 = COPY [[DEF]].sub_1024_acc_hi
-    ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY [[COPY]].sub_512_lo
-    ; AIE2P-NEXT: [[VEXTRACT_64_vec_extract_r_vaddSign1_:%[0-9]+]]:el = VEXTRACT_64_vec_extract_r_vaddSign1 [[COPY1]], [[MOV_RLC_imm11_pseudo]], implicit $vaddsign1
-    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VEXTRACT_64_vec_extract_r_vaddSign1_]]
-    %1:accregbank(<32 x s64>) = G_IMPLICIT_DEF
-    %2:gprregbank(s32) = G_CONSTANT i32 17
-    %0:gprregbank(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %1(<32 x s64>), %2(s32)
-    PseudoRET implicit $lr, implicit %0
-...
----
-name:            _2048bit_extract_64bit_Hi_Hi
-legalized:       true
-regBankSelected: true
-selected:        false
-body:             |
-  bb.1.entry:
-    liveins:
-    ; AIE2P-LABEL: name: _2048bit_extract_64bit_Hi_Hi
-    ; AIE2P: [[DEF:%[0-9]+]]:acc2048 = IMPLICIT_DEF
-    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:vec1024 = COPY [[DEF]].sub_1024_acc_hi
-    ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY [[COPY]].sub_512_hi
-    ; AIE2P-NEXT: [[VEXTRACT_64_vec_extract_r_vaddSign1_:%[0-9]+]]:el = VEXTRACT_64_vec_extract_r_vaddSign1 [[COPY1]], [[MOV_RLC_imm11_pseudo]], implicit $vaddsign1
-    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VEXTRACT_64_vec_extract_r_vaddSign1_]]
-    %1:accregbank(<32 x s64>) = G_IMPLICIT_DEF
-    %2:gprregbank(s32) = G_CONSTANT i32 25
-    %0:gprregbank(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %1(<32 x s64>), %2(s32)
-    PseudoRET implicit $lr, implicit %0
-...
-
----
-name:            _2048bit_extract_32bit_Lo_Lo
-legalized:       true
-regBankSelected: true
-selected:        false
-body:             |
-  bb.1.entry:
-    liveins:
-    ; AIE2P-LABEL: name: _2048bit_extract_32bit_Lo_Lo
-    ; AIE2P: [[DEF:%[0-9]+]]:acc2048 = IMPLICIT_DEF
-    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:vec1024 = COPY [[DEF]].sub_1024_acc_lo
-    ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY [[COPY]].sub_512_lo
-    ; AIE2P-NEXT: [[VEXTRACT_32_vec_extract_r_vaddSign1_:%[0-9]+]]:er = VEXTRACT_32_vec_extract_r_vaddSign1 [[COPY1]], [[MOV_RLC_imm11_pseudo]], implicit $vaddsign1
-    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VEXTRACT_32_vec_extract_r_vaddSign1_]]
-    %1:accregbank(<64 x s32>) = G_IMPLICIT_DEF
-    %2:gprregbank(s32) = G_CONSTANT i32 1
-    %0:gprregbank(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %1(<64 x s32>), %2(s32)
-    PseudoRET implicit $lr, implicit %0
-...
----
-name:            _2048bit_extract_32bit_Lo_Hi
-legalized:       true
-regBankSelected: true
-selected:        false
-body:             |
-  bb.1.entry:
-    liveins:
-    ; AIE2P-LABEL: name: _2048bit_extract_32bit_Lo_Hi
-    ; AIE2P: [[DEF:%[0-9]+]]:acc2048 = IMPLICIT_DEF
-    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:vec1024 = COPY [[DEF]].sub_1024_acc_lo
-    ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY [[COPY]].sub_512_hi
-    ; AIE2P-NEXT: [[VEXTRACT_32_vec_extract_r_vaddSign1_:%[0-9]+]]:er = VEXTRACT_32_vec_extract_r_vaddSign1 [[COPY1]], [[MOV_RLC_imm11_pseudo]], implicit $vaddsign1
-    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VEXTRACT_32_vec_extract_r_vaddSign1_]]
-    %1:accregbank(<64 x s32>) = G_IMPLICIT_DEF
-    %2:gprregbank(s32) = G_CONSTANT i32 17
-    %0:gprregbank(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %1(<64 x s32>), %2(s32)
-    PseudoRET implicit $lr, implicit %0
-...
----
-name:            _2048bit_extract_32bit_Hi_Lo
-legalized:       true
-regBankSelected: true
-selected:        false
-body:             |
-  bb.1.entry:
-    liveins:
-    ; AIE2P-LABEL: name: _2048bit_extract_32bit_Hi_Lo
-    ; AIE2P: [[DEF:%[0-9]+]]:acc2048 = IMPLICIT_DEF
-    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:vec1024 = COPY [[DEF]].sub_1024_acc_hi
-    ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY [[COPY]].sub_512_lo
-    ; AIE2P-NEXT: [[VEXTRACT_32_vec_extract_r_vaddSign1_:%[0-9]+]]:er = VEXTRACT_32_vec_extract_r_vaddSign1 [[COPY1]], [[MOV_RLC_imm11_pseudo]], implicit $vaddsign1
-    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VEXTRACT_32_vec_extract_r_vaddSign1_]]
-    %1:accregbank(<64 x s32>) = G_IMPLICIT_DEF
-    %2:gprregbank(s32) = G_CONSTANT i32 33
-    %0:gprregbank(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %1(<64 x s32>), %2(s32)
-    PseudoRET implicit $lr, implicit %0
-...
----
-name:            _2048bit_extract_32bit_Hi_Hi
-legalized:       true
-regBankSelected: true
-selected:        false
-body:             |
-  bb.1.entry:
-    liveins:
-    ; AIE2P-LABEL: name: _2048bit_extract_32bit_Hi_Hi
-    ; AIE2P: [[DEF:%[0-9]+]]:acc2048 = IMPLICIT_DEF
-    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:vec1024 = COPY [[DEF]].sub_1024_acc_hi
-    ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY [[COPY]].sub_512_hi
-    ; AIE2P-NEXT: [[VEXTRACT_32_vec_extract_r_vaddSign1_:%[0-9]+]]:er = VEXTRACT_32_vec_extract_r_vaddSign1 [[COPY1]], [[MOV_RLC_imm11_pseudo]], implicit $vaddsign1
-    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VEXTRACT_32_vec_extract_r_vaddSign1_]]
-    %1:accregbank(<64 x s32>) = G_IMPLICIT_DEF
-    %2:gprregbank(s32) = G_CONSTANT i32 49
-    %0:gprregbank(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %1(<64 x s32>), %2(s32)
-    PseudoRET implicit $lr, implicit %0
-...
-
-
----
-name:            _2048bit_s64_elt_dynamic_idx
-legalized:       true
-regBankSelected: true
-stack:
-  - { id: 0, name: "", type: default, offset: 0, size: 4, alignment: 4}
-body:             |
-  bb.1.entry:
-    liveins:
-    ; AIE2P-LABEL: name: _2048bit_s64_elt_dynamic_idx
-    ; AIE2P: [[DEF:%[0-9]+]]:acc2048 = IMPLICIT_DEF
-    ; AIE2P-NEXT: [[DEF1:%[0-9]+]]:er = IMPLICIT_DEF
-    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:vec1024 = COPY [[DEF]].sub_1024_acc_lo
-    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:vec1024 = COPY [[DEF]].sub_1024_acc_hi
-    ; AIE2P-NEXT: [[COPY2:%[0-9]+]]:vec512 = COPY [[COPY]].sub_512_lo
-    ; AIE2P-NEXT: [[COPY3:%[0-9]+]]:vec512 = COPY [[COPY]].sub_512_hi
-    ; AIE2P-NEXT: [[COPY4:%[0-9]+]]:vec512 = COPY [[COPY1]].sub_512_lo
-    ; AIE2P-NEXT: [[COPY5:%[0-9]+]]:vec512 = COPY [[COPY1]].sub_512_hi
-    ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
-    ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 16
-    ; AIE2P-NEXT: [[LT:%[0-9]+]]:mr27_select = LT [[DEF1]], [[MOV_RLC_imm11_pseudo1]]
-    ; AIE2P-NEXT: [[SEL_NEZ:%[0-9]+]]:er = SEL_NEZ [[MOV_RLC_imm11_pseudo]], [[MOV_RLC_imm11_pseudo1]], [[LT]]
-    ; AIE2P-NEXT: [[SUB:%[0-9]+]]:er = SUB [[DEF1]], [[SEL_NEZ]], implicit-def $srcarry
-    ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo2:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 8
-    ; AIE2P-NEXT: [[LT1:%[0-9]+]]:mr27_select = LT [[SUB]], [[MOV_RLC_imm11_pseudo2]]
-    ; AIE2P-NEXT: [[SEL_NEZ1:%[0-9]+]]:er = SEL_NEZ [[MOV_RLC_imm11_pseudo]], [[MOV_RLC_imm11_pseudo2]], [[LT1]]
-    ; AIE2P-NEXT: [[SUB1:%[0-9]+]]:er = SUB [[SUB]], [[SEL_NEZ1]], implicit-def $srcarry
-    ; AIE2P-NEXT: [[ADD_add_r_ri:%[0-9]+]]:ers16 = ADD_add_r_ri [[LT]], -1, implicit-def $srcarry
-    ; AIE2P-NEXT: [[VSEL_32_:%[0-9]+]]:vec512 = VSEL_32 [[COPY2]], [[COPY4]], [[ADD_add_r_ri]]
-    ; AIE2P-NEXT: [[VSEL_32_1:%[0-9]+]]:vec512 = VSEL_32 [[COPY3]], [[COPY5]], [[ADD_add_r_ri]]
-    ; AIE2P-NEXT: [[ADD_add_r_ri1:%[0-9]+]]:ers16 = ADD_add_r_ri [[LT1]], -1, implicit-def $srcarry
-    ; AIE2P-NEXT: [[VSEL_32_2:%[0-9]+]]:vec512 = VSEL_32 [[VSEL_32_]], [[VSEL_32_1]], [[ADD_add_r_ri1]]
-    ; AIE2P-NEXT: [[VEXTRACT_64_vec_extract_r_vaddSign1_:%[0-9]+]]:el = VEXTRACT_64_vec_extract_r_vaddSign1 [[VSEL_32_2]], [[SUB1]], implicit $vaddsign1
-    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VEXTRACT_64_vec_extract_r_vaddSign1_]]
-    %1:accregbank(<32 x s64>) = G_IMPLICIT_DEF
-    %3:gprregbank(s32) = G_IMPLICIT_DEF
-    %0:gprregbank(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %1(<32 x s64>), %3(s32)
-    PseudoRET implicit $lr, implicit %0
-...
-
----
-name:            _2048bit_s32_elt_dynamic_idx
-legalized:       true
-regBankSelected: true
-stack:
-  - { id: 0, name: "", type: default, offset: 0, size: 4, alignment: 4}
-body:             |
-  bb.1.entry:
-    liveins:
-    ; AIE2P-LABEL: name: _2048bit_s32_elt_dynamic_idx
-    ; AIE2P: [[DEF:%[0-9]+]]:acc2048 = IMPLICIT_DEF
-    ; AIE2P-NEXT: [[DEF1:%[0-9]+]]:er = IMPLICIT_DEF
-    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:vec1024 = COPY [[DEF]].sub_1024_acc_lo
-    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:vec1024 = COPY [[DEF]].sub_1024_acc_hi
-    ; AIE2P-NEXT: [[COPY2:%[0-9]+]]:vec512 = COPY [[COPY]].sub_512_lo
-    ; AIE2P-NEXT: [[COPY3:%[0-9]+]]:vec512 = COPY [[COPY]].sub_512_hi
-    ; AIE2P-NEXT: [[COPY4:%[0-9]+]]:vec512 = COPY [[COPY1]].sub_512_lo
-    ; AIE2P-NEXT: [[COPY5:%[0-9]+]]:vec512 = COPY [[COPY1]].sub_512_hi
-    ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
-    ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 32
-    ; AIE2P-NEXT: [[LT:%[0-9]+]]:mr27_select = LT [[DEF1]], [[MOV_RLC_imm11_pseudo1]]
-    ; AIE2P-NEXT: [[SEL_NEZ:%[0-9]+]]:er = SEL_NEZ [[MOV_RLC_imm11_pseudo]], [[MOV_RLC_imm11_pseudo1]], [[LT]]
-    ; AIE2P-NEXT: [[SUB:%[0-9]+]]:er = SUB [[DEF1]], [[SEL_NEZ]], implicit-def $srcarry
-    ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo2:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 16
-    ; AIE2P-NEXT: [[LT1:%[0-9]+]]:mr27_select = LT [[SUB]], [[MOV_RLC_imm11_pseudo2]]
-    ; AIE2P-NEXT: [[SEL_NEZ1:%[0-9]+]]:er = SEL_NEZ [[MOV_RLC_imm11_pseudo]], [[MOV_RLC_imm11_pseudo2]], [[LT1]]
-    ; AIE2P-NEXT: [[SUB1:%[0-9]+]]:er = SUB [[SUB]], [[SEL_NEZ1]], implicit-def $srcarry
-    ; AIE2P-NEXT: [[ADD_add_r_ri:%[0-9]+]]:ers16 = ADD_add_r_ri [[LT]], -1, implicit-def $srcarry
-    ; AIE2P-NEXT: [[VSEL_32_:%[0-9]+]]:vec512 = VSEL_32 [[COPY2]], [[COPY4]], [[ADD_add_r_ri]]
-    ; AIE2P-NEXT: [[VSEL_32_1:%[0-9]+]]:vec512 = VSEL_32 [[COPY3]], [[COPY5]], [[ADD_add_r_ri]]
-    ; AIE2P-NEXT: [[ADD_add_r_ri1:%[0-9]+]]:ers16 = ADD_add_r_ri [[LT1]], -1, implicit-def $srcarry
-    ; AIE2P-NEXT: [[VSEL_32_2:%[0-9]+]]:vec512 = VSEL_32 [[VSEL_32_]], [[VSEL_32_1]], [[ADD_add_r_ri1]]
-    ; AIE2P-NEXT: [[VEXTRACT_32_vec_extract_r_vaddSign1_:%[0-9]+]]:er = VEXTRACT_32_vec_extract_r_vaddSign1 [[VSEL_32_2]], [[SUB1]], implicit $vaddsign1
-    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VEXTRACT_32_vec_extract_r_vaddSign1_]]
-    %1:accregbank(<64 x s32>) = G_IMPLICIT_DEF
-    %3:gprregbank(s32) = G_IMPLICIT_DEF
-    %0:gprregbank(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %1(<64 x s32>), %3(s32)
     PseudoRET implicit $lr, implicit %0
 ...

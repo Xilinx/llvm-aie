@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -31,6 +31,8 @@
 using namespace llvm;
 
 #define DEBUG_TYPE "aie2p-reg-info"
+
+extern cl::opt<bool> SimplifyCRSRRegs;
 
 extern llvm::cl::opt<unsigned> ReservedGPRs;
 
@@ -94,6 +96,12 @@ BitVector AIE2PRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   markSuperRegs(Reserved, AIE2P::le);
   assert(checkAllSuperRegsMarked(Reserved));
   return Reserved;
+}
+
+bool AIE2PRegisterInfo::isSimplifiableReservedReg(MCRegister PhysReg) const {
+  return SimplifyCRSRRegs && (AIE2P::mCRmRegClass.contains(PhysReg) ||
+                              AIE2P::mSRmRegClass.contains(PhysReg) ||
+                              AIE2P::mCRFPRegClass.contains(PhysReg));
 }
 
 const uint32_t *AIE2PRegisterInfo::getNoPreservedMask() const {

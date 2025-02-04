@@ -58,8 +58,6 @@ public:
                             unsigned crUPSModeVal);
   bool selectG_AIE_ADD_VECTOR_ELT_HI(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVCONVbfp16(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectG_AIE_EXTRACT_VECTOR_ELT(MachineInstr &I,
-                                      MachineRegisterInfo &MRI);
   bool selectG_AIE_INSERT_VECTOR_ELT(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_AIE_PAD_VECTOR_UNDEF(MachineInstr &I, MachineOperand &DstReg,
                                     MachineOperand &SrcReg,
@@ -427,9 +425,6 @@ bool AIE2PInstructionSelector::select(MachineInstr &I) {
     return selectG_UNMERGE_VALUES(MIB, I, MRI);
   case AIE2P::G_AIE_ADD_VECTOR_ELT_HI:
     return selectG_AIE_ADD_VECTOR_ELT_HI(I, MRI);
-  case AIE2P::G_AIE_ZEXT_EXTRACT_VECTOR_ELT:
-  case AIE2P::G_AIE_SEXT_EXTRACT_VECTOR_ELT:
-    return selectG_AIE_EXTRACT_VECTOR_ELT(I, MRI);
   case AIE2P::G_AIE_INSERT_VECTOR_ELT:
     return selectG_AIE_INSERT_VECTOR_ELT(I, MRI);
   case AIE2P::G_AIE_BROADCAST_VECTOR:
@@ -619,7 +614,21 @@ bool AIE2PInstructionSelector::selectG_CONCAT_VECTORS(
     return constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *CopyMI2,
                                     AIE2P::VEC256RegClass,
                                     CopyMI2->getOperand(0));
-    return true;
+  }
+
+  // FIXME: Add this as a TableGen pattern. v4i64 is not yet a legal register
+  // type for vector registers.
+  if (DstTy.getSizeInBits() == 512 &&
+      Src0Ty == LLT::fixed_vector(4, LLT::scalar(64))) {
+    auto MI = MIB.buildInstr(TargetOpcode::REG_SEQUENCE, {Dst}, {})
+                  .addReg(Src0)
+                  .addImm(AIE2P::sub_256_lo)
+                  .addReg(Src1)
+                  .addImm(AIE2P::sub_256_hi);
+
+    I.eraseFromParent();
+    return constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *MI,
+                                    AIE2P::VEC512RegClass, MI->getOperand(0));
   }
 
   return selectImpl(I, *CoverageInfo);
@@ -803,32 +812,6 @@ struct SelSrcAndIdx {
 };
 
 } // end anonymous namespace
-static unsigned getExtractVecEltOpcode(unsigned EltSize, unsigned InstOpcode) {
-  unsigned Opcode = 0;
-  bool IsZextExtVecElt = InstOpcode == AIE2P::G_AIE_ZEXT_EXTRACT_VECTOR_ELT;
-  switch (EltSize) {
-  case 8:
-    Opcode = IsZextExtVecElt ? AIE2P::VEXTRACT_8_vec_extract_r_vaddSign0
-                             : AIE2P::VEXTRACT_8_vec_extract_r_vaddSign1;
-    break;
-  case 16:
-    Opcode = IsZextExtVecElt ? AIE2P::VEXTRACT_16_vec_extract_r_vaddSign0
-                             : AIE2P::VEXTRACT_16_vec_extract_r_vaddSign1;
-    break;
-  case 32:
-    Opcode = IsZextExtVecElt ? AIE2P::VEXTRACT_32_vec_extract_r_vaddSign0
-                             : AIE2P::VEXTRACT_32_vec_extract_r_vaddSign1;
-    break;
-  case 64:
-    Opcode = IsZextExtVecElt ? AIE2P::VEXTRACT_64_vec_extract_r_vaddSign0
-                             : AIE2P::VEXTRACT_64_vec_extract_r_vaddSign1;
-    break;
-  default:
-    llvm_unreachable("Unexpected Extracted Vector Element Size");
-  }
-  assert(Opcode != 0 && "Expected a NonZero Opcode");
-  return Opcode;
-}
 
 static unsigned getInsertVecEltOpcode(unsigned EltSize, unsigned InstOpcode) {
   switch (EltSize) {
@@ -1172,24 +1155,6 @@ static SelSrcAndIdx getExtractOrInsertVectorEltInputs(
         "Unexpected input vector size for extract/insert vector elt!");
   }
   return SelSrcIdx;
-}
-
-bool AIE2PInstructionSelector::selectG_AIE_EXTRACT_VECTOR_ELT(
-    MachineInstr &I, MachineRegisterInfo &MRI) {
-  MachineOperand &RegOp0 = I.getOperand(1);
-  Register DstReg = I.getOperand(0).getReg();
-  Register SrcReg0 = RegOp0.getReg();
-  LLT SrcVecTy = MRI.getType(SrcReg0);
-  LLT SrcEltTy = SrcVecTy.getElementType();
-  unsigned EltSize = SrcEltTy.getSizeInBits();
-  SelSrcAndIdx SelSrcIdx =
-      getExtractOrInsertVectorEltInputs(I, TRI, MRI, TII, RBI, MIB);
-  unsigned Opcode = getExtractVecEltOpcode(EltSize, I.getOpcode());
-  MachineInstrBuilder MI = MIB.buildInstr(Opcode, {DstReg}, {})
-                               .addReg(SelSrcIdx.SrcReg)
-                               .addReg(SelSrcIdx.IdxReg);
-  I.eraseFromParent();
-  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
 }
 
 bool AIE2PInstructionSelector::selectG_AIE_INSERT_VECTOR_ELT(
@@ -2550,31 +2515,31 @@ bool AIE2PInstructionSelector::selectG_STORE(MachineInstr &I,
 unsigned getLoadFifoOpcode(MachineInstr &I) {
   switch (cast<GIntrinsic>(I).getIntrinsicID()) {
   case Intrinsic::aie2p_fifo_ld_fill:
-    return AIE2P::VLDB_FILL_512;
+    return AIE2P::VLD_FILL_512_pseudo;
   case Intrinsic::aie2p_fifo_ld_pop_unaligned:
-    return AIE2P::VLDB_POP_512_normal_pop;
+    return AIE2P::VLD_POP_512_normal_pop_pseudo;
   case Intrinsic::aie2p_fifo_ld_pop_1d_unaligned:
-    return AIE2P::VLDB_POP_512_fifo_1d_pop;
+    return AIE2P::VLD_POP_512_fifo_1d_pop_pseudo;
   case Intrinsic::aie2p_fifo_ld_pop_544_1d_bfp16:
-    return AIE2P::VLDB_POP_544_fifo_1d_pop;
+    return AIE2P::VLD_POP_544_fifo_1d_pop_pseudo;
   case Intrinsic::aie2p_fifo_ld_pop_576_1d_bfp16:
-    return AIE2P::VLDB_POP_576_fifo_1d_pop;
+    return AIE2P::VLD_POP_576_fifo_1d_pop_pseudo;
   case Intrinsic::aie2p_fifo_ld_pop_544_bfp16:
-    return AIE2P::VLDB_POP_544_normal_pop;
+    return AIE2P::VLD_POP_544_normal_pop_pseudo;
   case Intrinsic::aie2p_fifo_ld_pop_576_bfp16:
-    return AIE2P::VLDB_POP_576_normal_pop;
+    return AIE2P::VLD_POP_576_normal_pop_pseudo;
   case Intrinsic::aie2p_fifo_ld_pop_2d_unaligned:
-    return AIE2P::VLDB_POP_512_2D;
+    return AIE2P::VLD_POP_512_2D_pseudo;
   case Intrinsic::aie2p_fifo_ld_pop_3d_unaligned:
-    return AIE2P::VLDB_POP_512_3D;
+    return AIE2P::VLD_POP_512_3D_pseudo;
   case Intrinsic::aie2p_fifo_ld_pop_544_2d_bfp16:
-    return AIE2P::VLDB_POP_544_2D;
+    return AIE2P::VLD_POP_544_2D_pseudo;
   case Intrinsic::aie2p_fifo_ld_pop_576_2d_bfp16:
-    return AIE2P::VLDB_POP_576_2D;
+    return AIE2P::VLD_POP_576_2D_pseudo;
   case Intrinsic::aie2p_fifo_ld_pop_544_3d_bfp16:
-    return AIE2P::VLDB_POP_544_3D;
+    return AIE2P::VLD_POP_544_3D_pseudo;
   case Intrinsic::aie2p_fifo_ld_pop_576_3d_bfp16:
-    return AIE2P::VLDB_POP_576_3D;
+    return AIE2P::VLD_POP_576_3D_pseudo;
   }
   llvm_unreachable("unreachable: Failed to get sparse load opcode");
   return AIE2P::INSTRUCTION_LIST_END;

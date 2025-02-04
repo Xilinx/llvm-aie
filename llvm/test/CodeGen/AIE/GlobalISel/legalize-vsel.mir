@@ -21,7 +21,8 @@ body:             |
     ; CHECK-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[COPY]], [[C]]
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<32 x s8>) = COPY [[DEF]](<32 x s8>)
     ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[DEF]](<32 x s8>), [[COPY1]](<32 x s8>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[DEF1]](<32 x s8>), [[COPY1]](<32 x s8>)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(<32 x s8>) = COPY [[DEF]](<32 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[DEF1]](<32 x s8>), [[COPY2]](<32 x s8>)
     ; CHECK-NEXT: [[SELECT:%[0-9]+]]:_(<64 x s8>) = G_SELECT [[AND]](s32), [[CONCAT_VECTORS]], [[CONCAT_VECTORS1]]
     ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<32 x s8>), [[UV1:%[0-9]+]]:_(<32 x s8>) = G_UNMERGE_VALUES [[SELECT]](<64 x s8>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[UV]](<32 x s8>)
@@ -89,7 +90,8 @@ body:             |
     ; CHECK-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[COPY]], [[C]]
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<4 x s64>) = COPY [[DEF]](<4 x s64>)
     ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF]](<4 x s64>), [[COPY1]](<4 x s64>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF1]](<4 x s64>), [[COPY1]](<4 x s64>)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(<4 x s64>) = COPY [[DEF]](<4 x s64>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF1]](<4 x s64>), [[COPY2]](<4 x s64>)
     ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[CONCAT_VECTORS]](<8 x s64>)
     ; CHECK-NEXT: [[BITCAST1:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[CONCAT_VECTORS1]](<8 x s64>)
     ; CHECK-NEXT: [[SELECT:%[0-9]+]]:_(<16 x s32>) = G_SELECT [[AND]](s32), [[BITCAST]], [[BITCAST1]]

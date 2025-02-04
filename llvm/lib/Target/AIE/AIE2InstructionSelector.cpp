@@ -103,8 +103,6 @@ public:
   bool selectG_AIE_STORE_CONV(MachineInstr &StoreI, MachineRegisterInfo &MRI);
   bool selectG_AIE_STORE_PACK(MachineInstr &StoreI, MachineRegisterInfo &MRI);
   bool selectStartLoop(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectG_AIE_EXTRACT_VECTOR_ELT(MachineInstr &I,
-                                      MachineRegisterInfo &MRI);
   bool selectG_AIE_INSERT_VECTOR_ELT(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_AIE_PAD_VECTOR_UNDEF(MachineInstr &I, MachineOperand &DstReg,
                                     MachineOperand &SrcReg,
@@ -452,9 +450,6 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
   case AIE2::G_AIE_POSTINC_3D_SEXTLOAD:
   case AIE2::G_AIE_POSTINC_3D_ZEXTLOAD:
     return selectG_AIE_LOAD_STORE(I, MRI);
-  case AIE2::G_AIE_ZEXT_EXTRACT_VECTOR_ELT:
-  case AIE2::G_AIE_SEXT_EXTRACT_VECTOR_ELT:
-    return selectG_AIE_EXTRACT_VECTOR_ELT(I, MRI);
   case AIE2::G_AIE_INSERT_VECTOR_ELT:
     return selectG_AIE_INSERT_VECTOR_ELT(I, MRI);
   case AIE2::G_AIE_PAD_VECTOR_UNDEF:
@@ -3755,28 +3750,6 @@ createOpcodeCondRegPair(unsigned EltSize, Register LtReg, MachineIRBuilder &MIB,
   return std::make_pair(Opcode, SelReg);
 }
 
-static unsigned getExtractVecEltOpcode(unsigned EltSize, unsigned InstOpcode) {
-  unsigned Opcode = 0;
-  bool IsZextExtVecElt = InstOpcode == AIE2::G_AIE_ZEXT_EXTRACT_VECTOR_ELT;
-  switch (EltSize) {
-  case 8:
-    Opcode = IsZextExtVecElt ? AIE2::VEXTRACT_D8 : AIE2::VEXTRACT_S8;
-    break;
-  case 16:
-    Opcode = IsZextExtVecElt ? AIE2::VEXTRACT_D16 : AIE2::VEXTRACT_S16;
-    break;
-  case 32:
-    Opcode = IsZextExtVecElt ? AIE2::VEXTRACT_D32 : AIE2::VEXTRACT_S32;
-    break;
-  // there is no AIE vector with elt size 64, VEXTRACT_D64/VEXTRACT_S64 is
-  // selected only when the extracted value is another vector of size 64-bit.
-  default:
-    llvm_unreachable("Unexpected Extracted Vector Element Size");
-  }
-  assert(Opcode != 0 && "Expected a NonZero Opcode");
-  return Opcode;
-}
-
 static unsigned getInsertVecEltOpcode(unsigned EltSize, unsigned InstOpcode) {
   switch (EltSize) {
   case 8:
@@ -3929,24 +3902,6 @@ static SelSrcAndIdx getExtractOrInsertVectorEltInputs(
         "Unexpected input vector size for extract/insert vector elt!");
   }
   return SelSrcIdx;
-}
-
-bool AIE2InstructionSelector::selectG_AIE_EXTRACT_VECTOR_ELT(
-    MachineInstr &I, MachineRegisterInfo &MRI) {
-  MachineOperand &RegOp0 = I.getOperand(1);
-  Register DstReg = I.getOperand(0).getReg();
-  Register SrcReg0 = RegOp0.getReg();
-  LLT SrcVecTy = MRI.getType(SrcReg0);
-  LLT SrcEltTy = SrcVecTy.getElementType();
-  unsigned EltSize = SrcEltTy.getSizeInBits();
-  SelSrcAndIdx SelSrcIdx =
-      getExtractOrInsertVectorEltInputs(I, TRI, MRI, TII, RBI, MIB);
-  unsigned Opcode = getExtractVecEltOpcode(EltSize, I.getOpcode());
-  MachineInstrBuilder MI = MIB.buildInstr(Opcode, {DstReg}, {})
-                               .addReg(SelSrcIdx.SrcReg)
-                               .addReg(SelSrcIdx.IdxReg);
-  I.eraseFromParent();
-  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
 }
 
 bool AIE2InstructionSelector::selectG_AIE_INSERT_VECTOR_ELT(

@@ -8,80 +8,862 @@
 #
 # RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
 
+# 256-bit vectors
 ---
-name:           test_v64s32
-registers:
-legalized: false
+name:            test_v32s8_v16s8
+legalized:       false
 body:             |
   bb.0.entry:
-    liveins: $x0, $x1, $x2, $x3
-    ; CHECK-LABEL: name: test_v64s32
-    ; CHECK: liveins: $x0, $x1, $x2, $x3
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY $x0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<16 x s32>) = COPY $x1
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(<16 x s32>) = COPY $x2
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:_(<16 x s32>) = COPY $x3
-    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[COPY]](<16 x s32>), [[COPY1]](<16 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[COPY2]](<16 x s32>), [[COPY3]](<16 x s32>)
+    ; CHECK-LABEL: name: test_v32s8_v16s8
+    ; CHECK: [[DEF:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s8>) = G_CONCAT_VECTORS [[DEF]](<16 x s8>), [[DEF1]](<16 x s8>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<32 x s8>)
+    %0:_(<16 x s8>) = G_IMPLICIT_DEF
+    %1:_(<16 x s8>) = G_IMPLICIT_DEF
+    %2:_(<32 x s8>) = G_CONCAT_VECTORS %0(<16 x s8>), %1(<16 x s8>)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            test_v16s16_v8s16
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v16s16_v8s16
+    ; CHECK: [[DEF:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s16>) = G_CONCAT_VECTORS [[DEF]](<8 x s16>), [[DEF1]](<8 x s16>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<16 x s16>)
+    %0:_(<8 x s16>) = G_IMPLICIT_DEF
+    %1:_(<8 x s16>) = G_IMPLICIT_DEF
+    %2:_(<16 x s16>) = G_CONCAT_VECTORS %0(<8 x s16>), %1(<8 x s16>)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            test_v8s32_v4s32
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v8s32_v4s32
+    ; CHECK: [[DEF:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s32>) = G_CONCAT_VECTORS [[DEF]](<4 x s32>), [[DEF1]](<4 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<8 x s32>)
+    %0:_(<4 x s32>) = G_IMPLICIT_DEF
+    %1:_(<4 x s32>) = G_IMPLICIT_DEF
+    %2:_(<8 x s32>) = G_CONCAT_VECTORS %0(<4 x s32>), %1(<4 x s32>)
+    PseudoRET implicit $lr, implicit %2
+...
+
+# 512-bit vectors
+---
+name:            test_v64s8_v32s8
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v64s8_v32s8
+    ; CHECK: [[DEF:%[0-9]+]]:_(<32 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<32 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[DEF]](<32 x s8>), [[DEF1]](<32 x s8>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<64 x s8>)
+    %0:_(<32 x s8>) = G_IMPLICIT_DEF
+    %1:_(<32 x s8>) = G_IMPLICIT_DEF
+    %2:_(<64 x s8>) = G_CONCAT_VECTORS %0(<32 x s8>), %1(<32 x s8>)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            test_v64s8_v16s8
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v64s8_v16s8
+    ; CHECK: [[DEF:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s8>) = G_CONCAT_VECTORS [[DEF]](<16 x s8>), [[DEF1]](<16 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<32 x s8>) = G_CONCAT_VECTORS [[DEF2]](<16 x s8>), [[DEF3]](<16 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<32 x s8>), [[CONCAT_VECTORS1]](<32 x s8>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS2]](<64 x s8>)
+    %0:_(<16 x s8>) = G_IMPLICIT_DEF
+    %1:_(<16 x s8>) = G_IMPLICIT_DEF
+    %2:_(<16 x s8>) = G_IMPLICIT_DEF
+    %3:_(<16 x s8>) = G_IMPLICIT_DEF
+    %4:_(<64 x s8>) = G_CONCAT_VECTORS %0(<16 x s8>), %1(<16 x s8>), %2(<16 x s8>), %3(<16 x s8>)
+    PseudoRET implicit $lr, implicit %4
+...
+
+---
+name:            test_v32s16_v16s16
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v32s16_v16s16
+    ; CHECK: [[DEF:%[0-9]+]]:_(<16 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[DEF]](<16 x s16>), [[DEF1]](<16 x s16>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<32 x s16>)
+    %0:_(<16 x s16>) = G_IMPLICIT_DEF
+    %1:_(<16 x s16>) = G_IMPLICIT_DEF
+    %2:_(<32 x s16>) = G_CONCAT_VECTORS %0(<16 x s16>), %1(<16 x s16>)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            test_v32s16_v8s16
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v32s16_v8s16
+    ; CHECK: [[DEF:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s16>) = G_CONCAT_VECTORS [[DEF]](<8 x s16>), [[DEF1]](<8 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<16 x s16>) = G_CONCAT_VECTORS [[DEF2]](<8 x s16>), [[DEF3]](<8 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<16 x s16>), [[CONCAT_VECTORS1]](<16 x s16>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS2]](<32 x s16>)
+    %0:_(<8 x s16>) = G_IMPLICIT_DEF
+    %1:_(<8 x s16>) = G_IMPLICIT_DEF
+    %2:_(<8 x s16>) = G_IMPLICIT_DEF
+    %3:_(<8 x s16>) = G_IMPLICIT_DEF
+    %4:_(<32 x s16>) = G_CONCAT_VECTORS %0(<8 x s16>), %1(<8 x s16>), %2(<8 x s16>), %3(<8 x s16>)
+    PseudoRET implicit $lr, implicit %4
+...
+
+---
+name:            test_v16s32_v8s32
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v16s32_v8s32
+    ; CHECK: [[DEF:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[DEF]](<8 x s32>), [[DEF1]](<8 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<16 x s32>)
+    %0:_(<8 x s32>) = G_IMPLICIT_DEF
+    %1:_(<8 x s32>) = G_IMPLICIT_DEF
+    %2:_(<16 x s32>) = G_CONCAT_VECTORS %0(<8 x s32>), %1(<8 x s32>)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            test_v16s32_v4s32
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v16s32_v4s32
+    ; CHECK: [[DEF:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s32>) = G_CONCAT_VECTORS [[DEF]](<4 x s32>), [[DEF1]](<4 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<8 x s32>) = G_CONCAT_VECTORS [[DEF2]](<4 x s32>), [[DEF3]](<4 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<8 x s32>), [[CONCAT_VECTORS1]](<8 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS2]](<16 x s32>)
+    %0:_(<4 x s32>) = G_IMPLICIT_DEF
+    %1:_(<4 x s32>) = G_IMPLICIT_DEF
+    %2:_(<4 x s32>) = G_IMPLICIT_DEF
+    %3:_(<4 x s32>) = G_IMPLICIT_DEF
+    %4:_(<16 x s32>) = G_CONCAT_VECTORS %0(<4 x s32>), %1(<4 x s32>), %2(<4 x s32>), %3(<4 x s32>)
+    PseudoRET implicit $lr, implicit %4
+...
+
+---
+name:            test_v8s64_4s64
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v8s64_4s64
+    ; CHECK: [[DEF:%[0-9]+]]:_(<4 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<4 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF]](<4 x s64>), [[DEF1]](<4 x s64>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<8 x s64>)
+    %0:_(<4 x s64>) = G_IMPLICIT_DEF
+    %1:_(<4 x s64>) = G_IMPLICIT_DEF
+    %2:_(<8 x s64>) = G_CONCAT_VECTORS %0(<4 x s64>), %1(<4 x s64>)
+    PseudoRET implicit $lr, implicit %2
+...
+
+# 1024-bit vectors
+---
+name:            test_v128s8_v64s8
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v128s8_v64s8
+    ; CHECK: [[DEF:%[0-9]+]]:_(<64 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<64 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<128 x s8>) = G_CONCAT_VECTORS [[DEF]](<64 x s8>), [[DEF1]](<64 x s8>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<128 x s8>)
+    %0:_(<64 x s8>) = G_IMPLICIT_DEF
+    %1:_(<64 x s8>) = G_IMPLICIT_DEF
+    %2:_(<128 x s8>) = G_CONCAT_VECTORS %0(<64 x s8>), %1(<64 x s8>)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            test_v128s8_v32s8
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v128s8_v32s8
+    ; CHECK: [[DEF:%[0-9]+]]:_(<32 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<32 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<32 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<32 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[DEF]](<32 x s8>), [[DEF1]](<32 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[DEF2]](<32 x s8>), [[DEF3]](<32 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<128 x s8>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<64 x s8>), [[CONCAT_VECTORS1]](<64 x s8>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS2]](<128 x s8>)
+    %0:_(<32 x s8>) = G_IMPLICIT_DEF
+    %1:_(<32 x s8>) = G_IMPLICIT_DEF
+    %2:_(<32 x s8>) = G_IMPLICIT_DEF
+    %3:_(<32 x s8>) = G_IMPLICIT_DEF
+    %4:_(<128 x s8>) = G_CONCAT_VECTORS %0(<32 x s8>), %1(<32 x s8>), %2(<32 x s8>), %3(<32 x s8>)
+    PseudoRET implicit $lr, implicit %4
+...
+
+---
+name:            test_v128s8_v16s8
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v128s8_v16s8
+    ; CHECK: [[DEF:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF4:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF5:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF6:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF7:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s8>) = G_CONCAT_VECTORS [[DEF]](<16 x s8>), [[DEF1]](<16 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<32 x s8>) = G_CONCAT_VECTORS [[DEF2]](<16 x s8>), [[DEF3]](<16 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<32 x s8>) = G_CONCAT_VECTORS [[DEF4]](<16 x s8>), [[DEF5]](<16 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<32 x s8>) = G_CONCAT_VECTORS [[DEF6]](<16 x s8>), [[DEF7]](<16 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS4:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<32 x s8>), [[CONCAT_VECTORS1]](<32 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS5:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[CONCAT_VECTORS2]](<32 x s8>), [[CONCAT_VECTORS3]](<32 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS6:%[0-9]+]]:_(<128 x s8>) = G_CONCAT_VECTORS [[CONCAT_VECTORS4]](<64 x s8>), [[CONCAT_VECTORS5]](<64 x s8>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS6]](<128 x s8>)
+    %0:_(<16 x s8>) = G_IMPLICIT_DEF
+    %1:_(<16 x s8>) = G_IMPLICIT_DEF
+    %2:_(<16 x s8>) = G_IMPLICIT_DEF
+    %3:_(<16 x s8>) = G_IMPLICIT_DEF
+    %4:_(<16 x s8>) = G_IMPLICIT_DEF
+    %5:_(<16 x s8>) = G_IMPLICIT_DEF
+    %6:_(<16 x s8>) = G_IMPLICIT_DEF
+    %7:_(<16 x s8>) = G_IMPLICIT_DEF
+    %8:_(<128 x s8>) = G_CONCAT_VECTORS %0(<16 x s8>), %1(<16 x s8>), %2(<16 x s8>), %3(<16 x s8>), %4(<16 x s8>), %5(<16 x s8>), %6(<16 x s8>), %7(<16 x s8>)
+    PseudoRET implicit $lr, implicit %8
+...
+
+---
+name:            test_v64s16_v32s16
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v64s16_v32s16
+    ; CHECK: [[DEF:%[0-9]+]]:_(<32 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<32 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s16>) = G_CONCAT_VECTORS [[DEF]](<32 x s16>), [[DEF1]](<32 x s16>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<64 x s16>)
+    %0:_(<32 x s16>) = G_IMPLICIT_DEF
+    %1:_(<32 x s16>) = G_IMPLICIT_DEF
+    %2:_(<64 x s16>) = G_CONCAT_VECTORS %0(<32 x s16>), %1(<32 x s16>)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            test_v64s16_v16s16
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v64s16_v16s16
+    ; CHECK: [[DEF:%[0-9]+]]:_(<16 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<16 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<16 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[DEF]](<16 x s16>), [[DEF1]](<16 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[DEF2]](<16 x s16>), [[DEF3]](<16 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<64 x s16>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<32 x s16>), [[CONCAT_VECTORS1]](<32 x s16>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS2]](<64 x s16>)
+    %0:_(<16 x s16>) = G_IMPLICIT_DEF
+    %1:_(<16 x s16>) = G_IMPLICIT_DEF
+    %2:_(<16 x s16>) = G_IMPLICIT_DEF
+    %3:_(<16 x s16>) = G_IMPLICIT_DEF
+    %4:_(<64 x s16>) = G_CONCAT_VECTORS %0(<16 x s16>), %1(<16 x s16>), %2(<16 x s16>), %3(<16 x s16>)
+    PseudoRET implicit $lr, implicit %4
+...
+
+---
+name:            test_v64s16_v8s16
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v64s16_v8s16
+    ; CHECK: [[DEF:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF4:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF5:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF6:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF7:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s16>) = G_CONCAT_VECTORS [[DEF]](<8 x s16>), [[DEF1]](<8 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<16 x s16>) = G_CONCAT_VECTORS [[DEF2]](<8 x s16>), [[DEF3]](<8 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<16 x s16>) = G_CONCAT_VECTORS [[DEF4]](<8 x s16>), [[DEF5]](<8 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<16 x s16>) = G_CONCAT_VECTORS [[DEF6]](<8 x s16>), [[DEF7]](<8 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS4:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<16 x s16>), [[CONCAT_VECTORS1]](<16 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS5:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[CONCAT_VECTORS2]](<16 x s16>), [[CONCAT_VECTORS3]](<16 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS6:%[0-9]+]]:_(<64 x s16>) = G_CONCAT_VECTORS [[CONCAT_VECTORS4]](<32 x s16>), [[CONCAT_VECTORS5]](<32 x s16>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS6]](<64 x s16>)
+    %0:_(<8 x s16>) = G_IMPLICIT_DEF
+    %1:_(<8 x s16>) = G_IMPLICIT_DEF
+    %2:_(<8 x s16>) = G_IMPLICIT_DEF
+    %3:_(<8 x s16>) = G_IMPLICIT_DEF
+    %4:_(<8 x s16>) = G_IMPLICIT_DEF
+    %5:_(<8 x s16>) = G_IMPLICIT_DEF
+    %6:_(<8 x s16>) = G_IMPLICIT_DEF
+    %7:_(<8 x s16>) = G_IMPLICIT_DEF
+    %8:_(<64 x s16>) = G_CONCAT_VECTORS %0(<8 x s16>), %1(<8 x s16>), %2(<8 x s16>), %3(<8 x s16>), %4(<8 x s16>), %5(<8 x s16>), %6(<8 x s16>), %7(<8 x s16>)
+    PseudoRET implicit $lr, implicit %8
+...
+
+---
+name:            test_v32s32_v16s32
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v32s32_v16s32
+    ; CHECK: [[DEF:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[DEF]](<16 x s32>), [[DEF1]](<16 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<32 x s32>)
+    %0:_(<16 x s32>) = G_IMPLICIT_DEF
+    %1:_(<16 x s32>) = G_IMPLICIT_DEF
+    %2:_(<32 x s32>) = G_CONCAT_VECTORS %0(<16 x s32>), %1(<16 x s32>)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            test_v32s32_v8s32
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v32s32_v8s32
+    ; CHECK: [[DEF:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[DEF]](<8 x s32>), [[DEF1]](<8 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[DEF2]](<8 x s32>), [[DEF3]](<8 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<16 x s32>), [[CONCAT_VECTORS1]](<16 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS2]](<32 x s32>)
+    %0:_(<8 x s32>) = G_IMPLICIT_DEF
+    %1:_(<8 x s32>) = G_IMPLICIT_DEF
+    %2:_(<8 x s32>) = G_IMPLICIT_DEF
+    %3:_(<8 x s32>) = G_IMPLICIT_DEF
+    %4:_(<32 x s32>) = G_CONCAT_VECTORS %0(<8 x s32>), %1(<8 x s32>), %2(<8 x s32>), %3(<8 x s32>)
+    PseudoRET implicit $lr, implicit %4
+...
+
+---
+name:            test_v32s32_v4s32
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v32s32_v4s32
+    ; CHECK: [[DEF:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF4:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF5:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF6:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF7:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s32>) = G_CONCAT_VECTORS [[DEF]](<4 x s32>), [[DEF1]](<4 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<8 x s32>) = G_CONCAT_VECTORS [[DEF2]](<4 x s32>), [[DEF3]](<4 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<8 x s32>) = G_CONCAT_VECTORS [[DEF4]](<4 x s32>), [[DEF5]](<4 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<8 x s32>) = G_CONCAT_VECTORS [[DEF6]](<4 x s32>), [[DEF7]](<4 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS4:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<8 x s32>), [[CONCAT_VECTORS1]](<8 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS5:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS2]](<8 x s32>), [[CONCAT_VECTORS3]](<8 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS6:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS4]](<16 x s32>), [[CONCAT_VECTORS5]](<16 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS6]](<32 x s32>)
+    %0:_(<4 x s32>) = G_IMPLICIT_DEF
+    %1:_(<4 x s32>) = G_IMPLICIT_DEF
+    %2:_(<4 x s32>) = G_IMPLICIT_DEF
+    %3:_(<4 x s32>) = G_IMPLICIT_DEF
+    %4:_(<4 x s32>) = G_IMPLICIT_DEF
+    %5:_(<4 x s32>) = G_IMPLICIT_DEF
+    %6:_(<4 x s32>) = G_IMPLICIT_DEF
+    %7:_(<4 x s32>) = G_IMPLICIT_DEF
+    %8:_(<32 x s32>) = G_CONCAT_VECTORS %0(<4 x s32>), %1(<4 x s32>), %2(<4 x s32>), %3(<4 x s32>), %4(<4 x s32>), %5(<4 x s32>), %6(<4 x s32>), %7(<4 x s32>)
+    PseudoRET implicit $lr, implicit %8
+...
+
+# 2048-bit vectors
+---
+name:            test_v256s8_v128s8
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v256s8_v128s8
+    ; CHECK: [[DEF:%[0-9]+]]:_(<128 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<128 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<256 x s8>) = G_CONCAT_VECTORS [[DEF]](<128 x s8>), [[DEF1]](<128 x s8>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<256 x s8>)
+    %0:_(<128 x s8>) = G_IMPLICIT_DEF
+    %1:_(<128 x s8>) = G_IMPLICIT_DEF
+    %2:_(<256 x s8>) = G_CONCAT_VECTORS %0(<128 x s8>), %1(<128 x s8>)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            test_v256s8_v64s8
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v256s8_v64s8
+    ; CHECK: [[DEF:%[0-9]+]]:_(<64 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<64 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<64 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<64 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<128 x s8>) = G_CONCAT_VECTORS [[DEF]](<64 x s8>), [[DEF1]](<64 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<128 x s8>) = G_CONCAT_VECTORS [[DEF2]](<64 x s8>), [[DEF3]](<64 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<256 x s8>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<128 x s8>), [[CONCAT_VECTORS1]](<128 x s8>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS2]](<256 x s8>)
+    %0:_(<64 x s8>) = G_IMPLICIT_DEF
+    %1:_(<64 x s8>) = G_IMPLICIT_DEF
+    %2:_(<64 x s8>) = G_IMPLICIT_DEF
+    %3:_(<64 x s8>) = G_IMPLICIT_DEF
+    %4:_(<256 x s8>) = G_CONCAT_VECTORS %0(<64 x s8>), %1(<64 x s8>), %2(<64 x s8>), %3(<64 x s8>)
+    PseudoRET implicit $lr, implicit %4
+...
+
+---
+name:            test_v256s8_v32s8
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v256s8_v32s8
+    ; CHECK: [[DEF:%[0-9]+]]:_(<32 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<32 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<32 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<32 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF4:%[0-9]+]]:_(<32 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF5:%[0-9]+]]:_(<32 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF6:%[0-9]+]]:_(<32 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF7:%[0-9]+]]:_(<32 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[DEF]](<32 x s8>), [[DEF1]](<32 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[DEF2]](<32 x s8>), [[DEF3]](<32 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[DEF4]](<32 x s8>), [[DEF5]](<32 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[DEF6]](<32 x s8>), [[DEF7]](<32 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS4:%[0-9]+]]:_(<128 x s8>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<64 x s8>), [[CONCAT_VECTORS1]](<64 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS5:%[0-9]+]]:_(<128 x s8>) = G_CONCAT_VECTORS [[CONCAT_VECTORS2]](<64 x s8>), [[CONCAT_VECTORS3]](<64 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS6:%[0-9]+]]:_(<256 x s8>) = G_CONCAT_VECTORS [[CONCAT_VECTORS4]](<128 x s8>), [[CONCAT_VECTORS5]](<128 x s8>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS6]](<256 x s8>)
+    %0:_(<32 x s8>) = G_IMPLICIT_DEF
+    %1:_(<32 x s8>) = G_IMPLICIT_DEF
+    %2:_(<32 x s8>) = G_IMPLICIT_DEF
+    %3:_(<32 x s8>) = G_IMPLICIT_DEF
+    %4:_(<32 x s8>) = G_IMPLICIT_DEF
+    %5:_(<32 x s8>) = G_IMPLICIT_DEF
+    %6:_(<32 x s8>) = G_IMPLICIT_DEF
+    %7:_(<32 x s8>) = G_IMPLICIT_DEF
+    %8:_(<256 x s8>) = G_CONCAT_VECTORS %0(<32 x s8>), %1(<32 x s8>), %2(<32 x s8>), %3(<32 x s8>), %4(<32 x s8>), %5(<32 x s8>), %6(<32 x s8>), %7(<32 x s8>)
+    PseudoRET implicit $lr, implicit %8
+...
+
+---
+name:            test_v256s8_v16s8
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v256s8_v16s8
+    ; CHECK: [[DEF:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF4:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF5:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF6:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF7:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF8:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF9:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF10:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF11:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF12:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF13:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF14:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF15:%[0-9]+]]:_(<16 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s8>) = G_CONCAT_VECTORS [[DEF]](<16 x s8>), [[DEF1]](<16 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<32 x s8>) = G_CONCAT_VECTORS [[DEF2]](<16 x s8>), [[DEF3]](<16 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<32 x s8>) = G_CONCAT_VECTORS [[DEF4]](<16 x s8>), [[DEF5]](<16 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<32 x s8>) = G_CONCAT_VECTORS [[DEF6]](<16 x s8>), [[DEF7]](<16 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS4:%[0-9]+]]:_(<32 x s8>) = G_CONCAT_VECTORS [[DEF8]](<16 x s8>), [[DEF9]](<16 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS5:%[0-9]+]]:_(<32 x s8>) = G_CONCAT_VECTORS [[DEF10]](<16 x s8>), [[DEF11]](<16 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS6:%[0-9]+]]:_(<32 x s8>) = G_CONCAT_VECTORS [[DEF12]](<16 x s8>), [[DEF13]](<16 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS7:%[0-9]+]]:_(<32 x s8>) = G_CONCAT_VECTORS [[DEF14]](<16 x s8>), [[DEF15]](<16 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS8:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<32 x s8>), [[CONCAT_VECTORS1]](<32 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS9:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[CONCAT_VECTORS2]](<32 x s8>), [[CONCAT_VECTORS3]](<32 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS10:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[CONCAT_VECTORS4]](<32 x s8>), [[CONCAT_VECTORS5]](<32 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS11:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[CONCAT_VECTORS6]](<32 x s8>), [[CONCAT_VECTORS7]](<32 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS12:%[0-9]+]]:_(<128 x s8>) = G_CONCAT_VECTORS [[CONCAT_VECTORS8]](<64 x s8>), [[CONCAT_VECTORS9]](<64 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS13:%[0-9]+]]:_(<128 x s8>) = G_CONCAT_VECTORS [[CONCAT_VECTORS10]](<64 x s8>), [[CONCAT_VECTORS11]](<64 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS14:%[0-9]+]]:_(<256 x s8>) = G_CONCAT_VECTORS [[CONCAT_VECTORS12]](<128 x s8>), [[CONCAT_VECTORS13]](<128 x s8>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS14]](<256 x s8>)
+    %0:_(<16 x s8>) = G_IMPLICIT_DEF
+    %1:_(<16 x s8>) = G_IMPLICIT_DEF
+    %2:_(<16 x s8>) = G_IMPLICIT_DEF
+    %3:_(<16 x s8>) = G_IMPLICIT_DEF
+    %4:_(<16 x s8>) = G_IMPLICIT_DEF
+    %5:_(<16 x s8>) = G_IMPLICIT_DEF
+    %6:_(<16 x s8>) = G_IMPLICIT_DEF
+    %7:_(<16 x s8>) = G_IMPLICIT_DEF
+    %8:_(<16 x s8>) = G_IMPLICIT_DEF
+    %9:_(<16 x s8>) = G_IMPLICIT_DEF
+    %10:_(<16 x s8>) = G_IMPLICIT_DEF
+    %11:_(<16 x s8>) = G_IMPLICIT_DEF
+    %12:_(<16 x s8>) = G_IMPLICIT_DEF
+    %13:_(<16 x s8>) = G_IMPLICIT_DEF
+    %14:_(<16 x s8>) = G_IMPLICIT_DEF
+    %15:_(<16 x s8>) = G_IMPLICIT_DEF
+    %16:_(<256 x s8>) = G_CONCAT_VECTORS %0(<16 x s8>), %1(<16 x s8>), %2(<16 x s8>), %3(<16 x s8>), %4(<16 x s8>), %5(<16 x s8>), %6(<16 x s8>), %7(<16 x s8>), %8(<16 x s8>), %9(<16 x s8>), %10(<16 x s8>), %11(<16 x s8>), %12(<16 x s8>), %13(<16 x s8>), %14(<16 x s8>), %15(<16 x s8>)
+    PseudoRET implicit $lr, implicit %16
+...
+
+---
+name:            test_v128s16_v64s16
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v128s16_v64s16
+    ; CHECK: [[DEF:%[0-9]+]]:_(<64 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<64 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<128 x s16>) = G_CONCAT_VECTORS [[DEF]](<64 x s16>), [[DEF1]](<64 x s16>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<128 x s16>)
+    %0:_(<64 x s16>) = G_IMPLICIT_DEF
+    %1:_(<64 x s16>) = G_IMPLICIT_DEF
+    %2:_(<128 x s16>) = G_CONCAT_VECTORS %0(<64 x s16>), %1(<64 x s16>)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            test_v128s16_v32s16
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v128s16_v32s16
+    ; CHECK: [[DEF:%[0-9]+]]:_(<32 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<32 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<32 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<32 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s16>) = G_CONCAT_VECTORS [[DEF]](<32 x s16>), [[DEF1]](<32 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<64 x s16>) = G_CONCAT_VECTORS [[DEF2]](<32 x s16>), [[DEF3]](<32 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<128 x s16>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<64 x s16>), [[CONCAT_VECTORS1]](<64 x s16>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS2]](<128 x s16>)
+    %0:_(<32 x s16>) = G_IMPLICIT_DEF
+    %1:_(<32 x s16>) = G_IMPLICIT_DEF
+    %2:_(<32 x s16>) = G_IMPLICIT_DEF
+    %3:_(<32 x s16>) = G_IMPLICIT_DEF
+    %4:_(<128 x s16>) = G_CONCAT_VECTORS %0(<32 x s16>), %1(<32 x s16>), %2(<32 x s16>), %3(<32 x s16>)
+    PseudoRET implicit $lr, implicit %4
+...
+
+---
+name:            test_v128s16_v16s16
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v128s16_v16s16
+    ; CHECK: [[DEF:%[0-9]+]]:_(<16 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<16 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<16 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF4:%[0-9]+]]:_(<16 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF5:%[0-9]+]]:_(<16 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF6:%[0-9]+]]:_(<16 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF7:%[0-9]+]]:_(<16 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[DEF]](<16 x s16>), [[DEF1]](<16 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[DEF2]](<16 x s16>), [[DEF3]](<16 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[DEF4]](<16 x s16>), [[DEF5]](<16 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[DEF6]](<16 x s16>), [[DEF7]](<16 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS4:%[0-9]+]]:_(<64 x s16>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<32 x s16>), [[CONCAT_VECTORS1]](<32 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS5:%[0-9]+]]:_(<64 x s16>) = G_CONCAT_VECTORS [[CONCAT_VECTORS2]](<32 x s16>), [[CONCAT_VECTORS3]](<32 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS6:%[0-9]+]]:_(<128 x s16>) = G_CONCAT_VECTORS [[CONCAT_VECTORS4]](<64 x s16>), [[CONCAT_VECTORS5]](<64 x s16>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS6]](<128 x s16>)
+    %0:_(<16 x s16>) = G_IMPLICIT_DEF
+    %1:_(<16 x s16>) = G_IMPLICIT_DEF
+    %2:_(<16 x s16>) = G_IMPLICIT_DEF
+    %3:_(<16 x s16>) = G_IMPLICIT_DEF
+    %4:_(<16 x s16>) = G_IMPLICIT_DEF
+    %5:_(<16 x s16>) = G_IMPLICIT_DEF
+    %6:_(<16 x s16>) = G_IMPLICIT_DEF
+    %7:_(<16 x s16>) = G_IMPLICIT_DEF
+    %8:_(<128 x s16>) = G_CONCAT_VECTORS %0(<16 x s16>), %1(<16 x s16>), %2(<16 x s16>), %3(<16 x s16>), %4(<16 x s16>), %5(<16 x s16>), %6(<16 x s16>), %7(<16 x s16>)
+    PseudoRET implicit $lr, implicit %8
+...
+
+---
+name:            test_v128s16_v8s16
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v128s16_v8s16
+    ; CHECK: [[DEF:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF4:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF5:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF6:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF7:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF8:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF9:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF10:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF11:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF12:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF13:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF14:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF15:%[0-9]+]]:_(<8 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s16>) = G_CONCAT_VECTORS [[DEF]](<8 x s16>), [[DEF1]](<8 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<16 x s16>) = G_CONCAT_VECTORS [[DEF2]](<8 x s16>), [[DEF3]](<8 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<16 x s16>) = G_CONCAT_VECTORS [[DEF4]](<8 x s16>), [[DEF5]](<8 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<16 x s16>) = G_CONCAT_VECTORS [[DEF6]](<8 x s16>), [[DEF7]](<8 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS4:%[0-9]+]]:_(<16 x s16>) = G_CONCAT_VECTORS [[DEF8]](<8 x s16>), [[DEF9]](<8 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS5:%[0-9]+]]:_(<16 x s16>) = G_CONCAT_VECTORS [[DEF10]](<8 x s16>), [[DEF11]](<8 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS6:%[0-9]+]]:_(<16 x s16>) = G_CONCAT_VECTORS [[DEF12]](<8 x s16>), [[DEF13]](<8 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS7:%[0-9]+]]:_(<16 x s16>) = G_CONCAT_VECTORS [[DEF14]](<8 x s16>), [[DEF15]](<8 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS8:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<16 x s16>), [[CONCAT_VECTORS1]](<16 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS9:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[CONCAT_VECTORS2]](<16 x s16>), [[CONCAT_VECTORS3]](<16 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS10:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[CONCAT_VECTORS4]](<16 x s16>), [[CONCAT_VECTORS5]](<16 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS11:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[CONCAT_VECTORS6]](<16 x s16>), [[CONCAT_VECTORS7]](<16 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS12:%[0-9]+]]:_(<64 x s16>) = G_CONCAT_VECTORS [[CONCAT_VECTORS8]](<32 x s16>), [[CONCAT_VECTORS9]](<32 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS13:%[0-9]+]]:_(<64 x s16>) = G_CONCAT_VECTORS [[CONCAT_VECTORS10]](<32 x s16>), [[CONCAT_VECTORS11]](<32 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS14:%[0-9]+]]:_(<128 x s16>) = G_CONCAT_VECTORS [[CONCAT_VECTORS12]](<64 x s16>), [[CONCAT_VECTORS13]](<64 x s16>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS14]](<128 x s16>)
+    %0:_(<8 x s16>) = G_IMPLICIT_DEF
+    %1:_(<8 x s16>) = G_IMPLICIT_DEF
+    %2:_(<8 x s16>) = G_IMPLICIT_DEF
+    %3:_(<8 x s16>) = G_IMPLICIT_DEF
+    %4:_(<8 x s16>) = G_IMPLICIT_DEF
+    %5:_(<8 x s16>) = G_IMPLICIT_DEF
+    %6:_(<8 x s16>) = G_IMPLICIT_DEF
+    %7:_(<8 x s16>) = G_IMPLICIT_DEF
+    %8:_(<8 x s16>) = G_IMPLICIT_DEF
+    %9:_(<8 x s16>) = G_IMPLICIT_DEF
+    %10:_(<8 x s16>) = G_IMPLICIT_DEF
+    %11:_(<8 x s16>) = G_IMPLICIT_DEF
+    %12:_(<8 x s16>) = G_IMPLICIT_DEF
+    %13:_(<8 x s16>) = G_IMPLICIT_DEF
+    %14:_(<8 x s16>) = G_IMPLICIT_DEF
+    %15:_(<8 x s16>) = G_IMPLICIT_DEF
+    %16:_(<128 x s16>) = G_CONCAT_VECTORS %0(<8 x s16>), %1(<8 x s16>), %2(<8 x s16>), %3(<8 x s16>), %4(<8 x s16>), %5(<8 x s16>), %6(<8 x s16>), %7(<8 x s16>), %8(<8 x s16>), %9(<8 x s16>), %10(<8 x s16>), %11(<8 x s16>), %12(<8 x s16>), %13(<8 x s16>), %14(<8 x s16>), %15(<8 x s16>)
+    PseudoRET implicit $lr, implicit %16
+...
+
+---
+name:            test_v64s32_v32s32
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v64s32_v32s32
+    ; CHECK: [[DEF:%[0-9]+]]:_(<32 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<32 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s32>) = G_CONCAT_VECTORS [[DEF]](<32 x s32>), [[DEF1]](<32 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<64 x s32>)
+    %0:_(<32 x s32>) = G_IMPLICIT_DEF
+    %1:_(<32 x s32>) = G_IMPLICIT_DEF
+    %2:_(<64 x s32>) = G_CONCAT_VECTORS %0(<32 x s32>), %1(<32 x s32>)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            test_v64s32_v16s32
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v64s32_v16s32
+    ; CHECK: [[DEF:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[DEF]](<16 x s32>), [[DEF1]](<16 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[DEF2]](<16 x s32>), [[DEF3]](<16 x s32>)
     ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<64 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<32 x s32>), [[CONCAT_VECTORS1]](<32 x s32>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS2]](<64 x s32>)
-    %0:_(<16 x s32>) = COPY $x0
-    %1:_(<16 x s32>) = COPY $x1
-    %2:_(<16 x s32>) = COPY $x2
-    %3:_(<16 x s32>) = COPY $x3
+    %0:_(<16 x s32>) = G_IMPLICIT_DEF
+    %1:_(<16 x s32>) = G_IMPLICIT_DEF
+    %2:_(<16 x s32>) = G_IMPLICIT_DEF
+    %3:_(<16 x s32>) = G_IMPLICIT_DEF
     %4:_(<64 x s32>) = G_CONCAT_VECTORS %0(<16 x s32>), %1(<16 x s32>), %2(<16 x s32>), %3(<16 x s32>)
     PseudoRET implicit $lr, implicit %4
 ...
+
 ---
-name:           test_v32s64
-registers:
-legalized: false
+name:            test_v64s32_v8s32
+legalized:       false
 body:             |
   bb.0.entry:
-    liveins: $x0, $x1, $x2, $x3
-    ; CHECK-LABEL: name: test_v32s64
-    ; CHECK: liveins: $x0, $x1, $x2, $x3
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<8 x s64>) = COPY $x0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<8 x s64>) = COPY $x1
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(<8 x s64>) = COPY $x0
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:_(<8 x s64>) = COPY $x1
-    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s64>) = G_CONCAT_VECTORS [[COPY]](<8 x s64>), [[COPY1]](<8 x s64>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<16 x s64>) = G_CONCAT_VECTORS [[COPY2]](<8 x s64>), [[COPY3]](<8 x s64>)
+    ; CHECK-LABEL: name: test_v64s32_v8s32
+    ; CHECK: [[DEF:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF4:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF5:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF6:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF7:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[DEF]](<8 x s32>), [[DEF1]](<8 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[DEF2]](<8 x s32>), [[DEF3]](<8 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[DEF4]](<8 x s32>), [[DEF5]](<8 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[DEF6]](<8 x s32>), [[DEF7]](<8 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS4:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<16 x s32>), [[CONCAT_VECTORS1]](<16 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS5:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS2]](<16 x s32>), [[CONCAT_VECTORS3]](<16 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS6:%[0-9]+]]:_(<64 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS4]](<32 x s32>), [[CONCAT_VECTORS5]](<32 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS6]](<64 x s32>)
+    %0:_(<8 x s32>) = G_IMPLICIT_DEF
+    %1:_(<8 x s32>) = G_IMPLICIT_DEF
+    %2:_(<8 x s32>) = G_IMPLICIT_DEF
+    %3:_(<8 x s32>) = G_IMPLICIT_DEF
+    %4:_(<8 x s32>) = G_IMPLICIT_DEF
+    %5:_(<8 x s32>) = G_IMPLICIT_DEF
+    %6:_(<8 x s32>) = G_IMPLICIT_DEF
+    %7:_(<8 x s32>) = G_IMPLICIT_DEF
+    %8:_(<64 x s32>) = G_CONCAT_VECTORS %0(<8 x s32>), %1(<8 x s32>), %2(<8 x s32>), %3(<8 x s32>), %4(<8 x s32>), %5(<8 x s32>), %6(<8 x s32>), %7(<8 x s32>)
+    PseudoRET implicit $lr, implicit %8
+...
+
+---
+name:            test_v64s32_v4s32
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v64s32_v4s32
+    ; CHECK: [[DEF:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF4:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF5:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF6:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF7:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF8:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF9:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF10:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF11:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF12:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF13:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF14:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF15:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s32>) = G_CONCAT_VECTORS [[DEF]](<4 x s32>), [[DEF1]](<4 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<8 x s32>) = G_CONCAT_VECTORS [[DEF2]](<4 x s32>), [[DEF3]](<4 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<8 x s32>) = G_CONCAT_VECTORS [[DEF4]](<4 x s32>), [[DEF5]](<4 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<8 x s32>) = G_CONCAT_VECTORS [[DEF6]](<4 x s32>), [[DEF7]](<4 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS4:%[0-9]+]]:_(<8 x s32>) = G_CONCAT_VECTORS [[DEF8]](<4 x s32>), [[DEF9]](<4 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS5:%[0-9]+]]:_(<8 x s32>) = G_CONCAT_VECTORS [[DEF10]](<4 x s32>), [[DEF11]](<4 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS6:%[0-9]+]]:_(<8 x s32>) = G_CONCAT_VECTORS [[DEF12]](<4 x s32>), [[DEF13]](<4 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS7:%[0-9]+]]:_(<8 x s32>) = G_CONCAT_VECTORS [[DEF14]](<4 x s32>), [[DEF15]](<4 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS8:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<8 x s32>), [[CONCAT_VECTORS1]](<8 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS9:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS2]](<8 x s32>), [[CONCAT_VECTORS3]](<8 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS10:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS4]](<8 x s32>), [[CONCAT_VECTORS5]](<8 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS11:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS6]](<8 x s32>), [[CONCAT_VECTORS7]](<8 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS12:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS8]](<16 x s32>), [[CONCAT_VECTORS9]](<16 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS13:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS10]](<16 x s32>), [[CONCAT_VECTORS11]](<16 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS14:%[0-9]+]]:_(<64 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS12]](<32 x s32>), [[CONCAT_VECTORS13]](<32 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS14]](<64 x s32>)
+    %0:_(<4 x s32>) = G_IMPLICIT_DEF
+    %1:_(<4 x s32>) = G_IMPLICIT_DEF
+    %2:_(<4 x s32>) = G_IMPLICIT_DEF
+    %3:_(<4 x s32>) = G_IMPLICIT_DEF
+    %4:_(<4 x s32>) = G_IMPLICIT_DEF
+    %5:_(<4 x s32>) = G_IMPLICIT_DEF
+    %6:_(<4 x s32>) = G_IMPLICIT_DEF
+    %7:_(<4 x s32>) = G_IMPLICIT_DEF
+    %8:_(<4 x s32>) = G_IMPLICIT_DEF
+    %9:_(<4 x s32>) = G_IMPLICIT_DEF
+    %10:_(<4 x s32>) = G_IMPLICIT_DEF
+    %11:_(<4 x s32>) = G_IMPLICIT_DEF
+    %12:_(<4 x s32>) = G_IMPLICIT_DEF
+    %13:_(<4 x s32>) = G_IMPLICIT_DEF
+    %14:_(<4 x s32>) = G_IMPLICIT_DEF
+    %15:_(<4 x s32>) = G_IMPLICIT_DEF
+    %16:_(<64 x s32>) = G_CONCAT_VECTORS %0(<4 x s32>), %1(<4 x s32>), %2(<4 x s32>), %3(<4 x s32>), %4(<4 x s32>), %5(<4 x s32>), %6(<4 x s32>), %7(<4 x s32>), %8(<4 x s32>), %9(<4 x s32>), %10(<4 x s32>), %11(<4 x s32>), %12(<4 x s32>), %13(<4 x s32>), %14(<4 x s32>), %15(<4 x s32>)
+    PseudoRET implicit $lr, implicit %16
+...
+
+---
+name:            test_v32s64_v16s64
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v32s64_v16s64
+    ; CHECK: [[DEF:%[0-9]+]]:_(<16 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s64>) = G_CONCAT_VECTORS [[DEF]](<16 x s64>), [[DEF1]](<16 x s64>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<32 x s64>)
+    %0:_(<16 x s64>) = G_IMPLICIT_DEF
+    %1:_(<16 x s64>) = G_IMPLICIT_DEF
+    %2:_(<32 x s64>) = G_CONCAT_VECTORS %0(<16 x s64>), %1(<16 x s64>)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            test_v32s64_v8s64
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v32s64_v8s64
+    ; CHECK: [[DEF:%[0-9]+]]:_(<8 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<8 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<8 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s64>) = G_CONCAT_VECTORS [[DEF]](<8 x s64>), [[DEF1]](<8 x s64>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<16 x s64>) = G_CONCAT_VECTORS [[DEF2]](<8 x s64>), [[DEF3]](<8 x s64>)
     ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<32 x s64>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<16 x s64>), [[CONCAT_VECTORS1]](<16 x s64>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS2]](<32 x s64>)
-    %0:_(<8 x s64>) = COPY $x0
-    %1:_(<8 x s64>) = COPY $x1
-    %2:_(<8 x s64>) = COPY $x0
-    %3:_(<8 x s64>) = COPY $x1
+    %0:_(<8 x s64>) = G_IMPLICIT_DEF
+    %1:_(<8 x s64>) = G_IMPLICIT_DEF
+    %2:_(<8 x s64>) = G_IMPLICIT_DEF
+    %3:_(<8 x s64>) = G_IMPLICIT_DEF
     %4:_(<32 x s64>) = G_CONCAT_VECTORS %0(<8 x s64>), %1(<8 x s64>), %2(<8 x s64>), %3(<8 x s64>)
     PseudoRET implicit $lr, implicit %4
 ...
 
 ---
-name:           test_v32s32
-registers:
-legalized: false
+name:            test_v32s64_v4s64
+legalized:       false
 body:             |
   bb.0.entry:
-    liveins: $wl0, $wl1, $wl2, $wl3
-    ; CHECK-LABEL: name: test_v32s32
-    ; CHECK: liveins: $wl0, $wl1, $wl2, $wl3
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<8 x s32>) = COPY $wl0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<8 x s32>) = COPY $wl1
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(<8 x s32>) = COPY $wl0
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:_(<8 x s32>) = COPY $wl1
-    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[COPY]](<8 x s32>), [[COPY1]](<8 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[COPY2]](<8 x s32>), [[COPY3]](<8 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<16 x s32>), [[CONCAT_VECTORS1]](<16 x s32>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS2]](<32 x s32>)
-    %0:_(<8 x s32>) = COPY $wl0
-    %1:_(<8 x s32>) = COPY $wl1
-    %2:_(<8 x s32>) = COPY $wl0
-    %3:_(<8 x s32>) = COPY $wl1
-    %4:_(<32 x s32>) = G_CONCAT_VECTORS %0(<8 x s32>), %1(<8 x s32>), %2(<8 x s32>), %3(<8 x s32>)
-    PseudoRET implicit $lr, implicit %4
+    ; CHECK-LABEL: name: test_v32s64_v4s64
+    ; CHECK: [[DEF:%[0-9]+]]:_(<4 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<4 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<4 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:_(<4 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF4:%[0-9]+]]:_(<4 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF5:%[0-9]+]]:_(<4 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF6:%[0-9]+]]:_(<4 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF7:%[0-9]+]]:_(<4 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF]](<4 x s64>), [[DEF1]](<4 x s64>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF2]](<4 x s64>), [[DEF3]](<4 x s64>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF4]](<4 x s64>), [[DEF5]](<4 x s64>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF6]](<4 x s64>), [[DEF7]](<4 x s64>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS4:%[0-9]+]]:_(<16 x s64>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<8 x s64>), [[CONCAT_VECTORS1]](<8 x s64>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS5:%[0-9]+]]:_(<16 x s64>) = G_CONCAT_VECTORS [[CONCAT_VECTORS2]](<8 x s64>), [[CONCAT_VECTORS3]](<8 x s64>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS6:%[0-9]+]]:_(<32 x s64>) = G_CONCAT_VECTORS [[CONCAT_VECTORS4]](<16 x s64>), [[CONCAT_VECTORS5]](<16 x s64>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS6]](<32 x s64>)
+    %0:_(<4 x s64>) = G_IMPLICIT_DEF
+    %1:_(<4 x s64>) = G_IMPLICIT_DEF
+    %2:_(<4 x s64>) = G_IMPLICIT_DEF
+    %3:_(<4 x s64>) = G_IMPLICIT_DEF
+    %4:_(<4 x s64>) = G_IMPLICIT_DEF
+    %5:_(<4 x s64>) = G_IMPLICIT_DEF
+    %6:_(<4 x s64>) = G_IMPLICIT_DEF
+    %7:_(<4 x s64>) = G_IMPLICIT_DEF
+    %8:_(<32 x s64>) = G_CONCAT_VECTORS %0(<4 x s64>), %1(<4 x s64>), %2(<4 x s64>), %3(<4 x s64>), %4(<4 x s64>), %5(<4 x s64>), %6(<4 x s64>), %7(<4 x s64>)
+    PseudoRET implicit $lr, implicit %8
 ...
-

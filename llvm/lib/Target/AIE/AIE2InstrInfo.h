@@ -70,7 +70,7 @@ public:
   unsigned getScalarRegSize() const override;
   unsigned getBasicVecRegSize() const override;
 
-  unsigned getExtractSubvecNativeSrcSize() const override;
+  unsigned getBasicVectorBitSize() const override;
 
   virtual unsigned
   getNumReservedDelaySlots(const MachineInstr &MI) const override;

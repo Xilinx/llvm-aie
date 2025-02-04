@@ -34,7 +34,6 @@ class MachineInstr;
 class MachineOperand;
 class PassRegistry;
 
-FunctionPass *createAIE2ISelDag(TargetMachine &TM);
 FunctionPass *createAIE2PreLegalizerCombiner();
 FunctionPass *createAIE2PostLegalizerCustomCombiner();
 FunctionPass *createAIE2PostLegalizerGenericCombiner();

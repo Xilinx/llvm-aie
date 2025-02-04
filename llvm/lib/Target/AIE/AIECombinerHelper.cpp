@@ -995,6 +995,10 @@ bool llvm::matchExtractVecEltAndExt(
   const LLT S8 = LLT::scalar(8);
   const LLT S16 = LLT::scalar(16);
   LLT SrcVecTy = MRI.getType(MI.getOperand(1).getReg());
+  // Extracts from vectors <= 64-bits are lowered to bit-arithmetic in
+  // legalization
+  if (SrcVecTy.getSizeInBits() <= 64)
+    return false;
   LLT SrcEltTy = SrcVecTy.getElementType();
   if (SrcEltTy != S8 && SrcEltTy != S16)
     return false;
@@ -1029,8 +1033,7 @@ void llvm::applyExtractVecEltAndExt(
   const LLT S32 = LLT::scalar(32);
   const AIEBaseInstrInfo &AIETII = (const AIEBaseInstrInfo &)B.getTII();
   const unsigned Opcode =
-      IsSignedExt ? AIETII.getGenericExtractVectorEltOpcode(/*sign ext*/ true)
-                  : AIETII.getGenericExtractVectorEltOpcode(/*sign ext*/ false);
+      AIETII.getGenericExtractVectorEltOpcode(/*sign ext*/ IsSignedExt);
   const Register ExtractElt32BitDst = MRI.createGenericVirtualRegister(S32);
   B.buildInstr(Opcode, {ExtractElt32BitDst}, {SrcReg0, SrcReg1});
 
@@ -1860,7 +1863,8 @@ static std::optional<int> getUniqueIndex(ArrayRef<int> Mask) {
 ///         %1:_(<4 x s64>) = COPY $wl1
 ///         %2:_(<8 x s64>) = G_SHUFFLE_VECTOR %X(<4 x s64>), %1(<4 x s64>),
 ///         shufflemask(3, 3, 3, 3, 3, 3, 3, 3)
-/// To :    %2:_(<8 x s64>) = G_AIE_BROADCAST_VECTOR %X(<4 x s64>)
+/// To :    %3:_(s64) = G_EXTRACT_VECTOR_ELT %X, 3
+///         %2:_(<8 x s64>) = G_AIE_BROADCAST_VECTOR %3(s64)
 bool llvm::matchShuffleToExtractBroadcast(MachineInstr &MI,
                                           MachineRegisterInfo &MRI,
                                           const AIEBaseInstrInfo &TII,
@@ -1874,13 +1878,12 @@ bool llvm::matchShuffleToExtractBroadcast(MachineInstr &MI,
 
   assert(UniqOpIdx >= 0 && "Couldn't find a unique operand to extract!");
 
-  const unsigned ExtractOpc = TII.getGenericExtractVectorEltOpcode(true);
-
   MatchInfo = [=, &MI, &MRI](MachineIRBuilder &B) {
     const Register DstReg = MI.getOperand(0).getReg();
     const Register SrcVecReg = MI.getOperand(1).getReg();
-    auto Cst = B.buildConstant(LLT::scalar(32), UniqOpIdx.value());
-    auto Extr = B.buildInstr(ExtractOpc, {LLT::scalar(32)}, {SrcVecReg, Cst});
+    const LLT DstElemTy = MRI.getType(SrcVecReg).getElementType();
+    auto Extr =
+        B.buildExtractVectorElementConstant(DstElemTy, SrcVecReg, *UniqOpIdx);
     buildBroadcastVector(B, MRI, Extr.getReg(0), DstReg);
   };
   return true;
@@ -1922,8 +1925,7 @@ bool llvm::matchShuffleToExtractSubvec(MachineInstr &MI,
 
   const unsigned GPRSize = TII.getScalarRegSize();
   const unsigned VecRegSize = TII.getBasicVecRegSize();
-  const unsigned ExtractSubvecNativeSrcSize =
-      TII.getExtractSubvecNativeSrcSize();
+  const unsigned ExtractSubvecNativeSrcSize = TII.getBasicVectorBitSize();
 
   const Register DstReg = MI.getOperand(0).getReg();
   const Register Src1Reg = MI.getOperand(1).getReg();

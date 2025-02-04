@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -87,6 +87,10 @@ cl::opt<bool>
 cl::opt<bool> EnablePreMISchedCoalescer(
     "aie-premisched-coalescer", cl::Hidden, cl::init(true),
     cl::desc("Run the coalescer again after the pre-RA scheduler"));
+
+cl::opt<bool> SimplifyCRSRRegs(
+    "aie-simplify-crsr-edges", cl::Hidden, cl::init(true),
+    cl::desc("Allow simplifying redundant CR and SR reg assignments"));
 
 static StringRef computeDataLayout(const Triple &TT) {
   return "e-m:e-p:20:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-f32:32:32-i64:32-"

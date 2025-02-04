@@ -33,7 +33,9 @@ body: |
     ; AIE2-NEXT: [[BITCAST:%[0-9]+]]:_(<8 x s64>) = G_BITCAST [[AIE_INSERT_VECTOR_ELT]](<16 x s32>)
     ; AIE2-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), [[BITCAST]](<8 x s64>)
     ; AIE2P-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.v16accfloat.to.v16bf16), [[AIE_INSERT_VECTOR_ELT]](<16 x s32>)
-    ; COMMON-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[INT]](<16 x s16>), [[C1]](s32)
+    ; COMMON-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s16>) = G_IMPLICIT_DEF
+    ; COMMON-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[INT]](<16 x s16>), [[DEF1]](<16 x s16>)
+    ; COMMON-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS]](<32 x s16>), [[C1]](s32)
     ; COMMON-NEXT: [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[AIE_SEXT_EXTRACT_VECTOR_ELT]], 16
     ; COMMON-NEXT: $r0 = COPY [[ASSERT_SEXT]](s32)
     ; COMMON-NEXT: PseudoRET implicit $lr, implicit $r0

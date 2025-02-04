@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -52,9 +52,7 @@ static llvm::cl::opt<bool>
     Spill1DModstoGPR("aie2-spill-mods-to-r", cl::Hidden, cl::init(true),
                      cl::desc("Allow spilling 1D modifier registers to GPRs"));
 
-static llvm::cl::opt<bool> SimplifyCRSRRegs(
-    "aie2-simplify-crsr-edges", cl::Hidden, cl::init(true),
-    cl::desc("Allow simplifying redundant CR and SR reg assignments"));
+extern cl::opt<bool> SimplifyCRSRRegs;
 
 AIE2RegisterInfo::AIE2RegisterInfo(unsigned HwMode)
     : AIE2GenRegisterInfo(AIE2::SP, /*DwarfFlavour*/ 0, /*EHFlavor*/ 0,

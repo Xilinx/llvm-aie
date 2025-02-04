@@ -65,17 +65,6 @@ isValidVectorMergeUnmergeOp(const unsigned BigVectorId,
   };
 }
 
-static LegalityPredicate isValidVectorConcatOp(const unsigned BigVectorId,
-                                               const unsigned SmallVectorId) {
-  return [=](const LegalityQuery &Query) {
-    const LLT Big = Query.Types[BigVectorId];
-    const LLT Small = Query.Types[SmallVectorId];
-    return Big.isVector() && Small.isVector() &&
-           Big.getElementType() == Small.getElementType() &&
-           !(Big.getNumElements() % Small.getNumElements());
-  };
-}
-
 static LegalityPredicate isValidVectorAIEP(const unsigned TypeIdx) {
   return [=](const LegalityQuery &Query) {
     const LLT DstTy = Query.Types[TypeIdx];
@@ -454,27 +443,15 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
         const LLT &EltTy = Query.Types[1].getElementType();
         return Query.Types[0] != EltTy;
       })
-      // If it is 32-bit, the LLVM can perform some bitshifts to legalize it
+      // Bitcast 32-bit vectors to 1 x s32, which will be expanded to bit
+      // arithmetic
       .bitcastIf(
           [=](const LegalityQuery &Query) {
             const LLT &VecTy = Query.Types[1];
             return VecTy.getSizeInBits() == 32;
           },
           bitcastToVectorElement32(1))
-      // Extraction is supported for the native types of 32-, 256-, 512- and
-      // 1024-bit
-      .customIf(typeInSet(1, {V2S32}))
-      .customIf(typeInSet(1, AIE2PVectorTypes))
-      // Extraction is supported for accumulator types.
-      .customIf(typeInSet(1, AIE2PAccumulatorTypes))
-      .customIf([=](const LegalityQuery &Query) {
-        const LLT &VectTy = Query.Types[1];
-        return VectTy.getElementType().getSizeInBits() >= 256;
-      })
-      // For 16-bits, we want to increase the number of elements to 4. Since
-      // our architecture doesn't always support all intermediate sizes, we do
-      // it as a special case so that we can use them minimum clamp for the
-      // smallest vector register.
+      // For 2 x 8 vectors, we want to increase the number of elements to 4
       .moreElementsIf(
           [=](const LegalityQuery &Query) {
             return Query.Types[1].getScalarSizeInBits() == 8 &&
@@ -483,11 +460,19 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
           [=](const LegalityQuery &Query) {
             return std::make_pair(1, LLT::fixed_vector(4, S8));
           })
-      // Increase the input vectors if they don't fit in the smallest vector
-      // register
+      // Custom legalize 2 x 32 vectors
+      .customIf(typeInSet(1, {V2S32}))
+      // Extend vectors to have at least 256-bits
       .clampMinNumElements(1, S8, 32)
       .clampMinNumElements(1, S16, 16)
-      .clampMinNumElements(1, S32, 8);
+      .clampMinNumElements(1, S32, 8)
+      // Custom legalize resulting vector types >= 256-bit
+      .customIf(typeInSet(1, AIE2PVectorTypes))
+      .customIf(typeInSet(1, AIE2PAccumulatorTypes))
+      .customIf([=](const LegalityQuery &Query) {
+        const LLT &VectTy = Query.Types[1];
+        return VectTy.getElementType().getSizeInBits() >= 256;
+      });
 
   getActionDefinitionsBuilder(G_INSERT_VECTOR_ELT)
       .clampScalar(2, S32, S32) // Clamp the idx to 32 bit since VINSERT
@@ -587,7 +572,20 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
   getActionDefinitionsBuilder(G_CONCAT_VECTORS)
       .unsupportedIf(IsNotValidDestinationVector)
       .legalIf(isValidVectorMergeUnmergeOp(0, 1))
-      .customIf(isValidVectorConcatOp(0, 1));
+      .customIf([=](const LegalityQuery &Query) {
+        const LLT &DstTy = Query.Types[0];
+        const LLT &SrcTy = Query.Types[1];
+        if (!DstTy.isVector() || !SrcTy.isVector())
+          return false;
+
+        // Concatenating vectors <= 64-bit are not sub-vector operations.
+        // These should be lowered to insert vector elements.
+        if (SrcTy.getSizeInBits() <= 64)
+          return false;
+
+        // Legalize concat vectors to have excatly two inputs
+        return (DstTy.getNumElements() != 2 * SrcTy.getNumElements());
+      });
 
   getActionDefinitionsBuilder(G_BUILD_VECTOR)
       // Legacy legalization for bitcasts

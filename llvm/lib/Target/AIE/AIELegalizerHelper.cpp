@@ -18,7 +18,10 @@
 #include "AIEMachineFunctionInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
+#include "llvm/CodeGen/GlobalISel/LegalizerHelper.h"
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RuntimeLibcalls.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
@@ -31,6 +34,40 @@ AIELegalizerHelper::AIELegalizerHelper(const AIEBaseSubtarget &ST) : ST(ST) {}
 
 const AIEBaseInstrInfo *AIELegalizerHelper::getInstrInfo() {
   return ST.getInstrInfo();
+}
+
+/// Append the result registers of G_UNMERGE_VALUES \p MI to \p Regs.
+static void getUnmergeResults(SmallVectorImpl<Register> &Regs,
+                              const MachineInstr &MI) {
+  assert(MI.getOpcode() == TargetOpcode::G_UNMERGE_VALUES);
+
+  const int StartIdx = Regs.size();
+  const int NumResults = MI.getNumOperands() - 1;
+  Regs.resize(Regs.size() + NumResults);
+  for (int I = 0; I != NumResults; ++I)
+    Regs[StartIdx + I] = MI.getOperand(I).getReg();
+}
+
+static Register emitPadUndefVector(MachineRegisterInfo &MRI,
+                                   MachineIRBuilder &MIRBuilder,
+                                   const LLT WideTy, Register SrcReg) {
+
+  const LLT OrigTy = MRI.getType(SrcReg);
+  assert(WideTy.getSizeInBits() % OrigTy.getSizeInBits() == 0 &&
+         "Expected to pad to a multiple of the src type");
+  const unsigned NumPadElts =
+      WideTy.getSizeInBits() / OrigTy.getSizeInBits() - 1;
+
+  const Register UndefReg = MRI.createGenericVirtualRegister(OrigTy);
+  MIRBuilder.buildUndef(UndefReg);
+
+  SmallVector<Register, 4> Regs;
+  Regs.push_back(SrcReg);
+  for (unsigned I = 0; I < NumPadElts; I++)
+    Regs.push_back(UndefReg);
+  const Register NewSrcReg = MRI.createGenericVirtualRegister(WideTy);
+  MIRBuilder.buildMergeLikeInstr(NewSrcReg, Regs);
+  return NewSrcReg;
 }
 
 bool AIELegalizerHelper::pack32BitVector(LegalizerHelper &Helper,
@@ -629,26 +666,40 @@ bool AIELegalizerHelper::legalizeG_EXTRACT_VECTOR_ELT(LegalizerHelper &Helper,
     assert((SrcVecEltTy == S8 || SrcVecEltTy == S16 || SrcVecEltTy == S64 ||
             SrcVecEltTy == S32) &&
            "Unexpected vector element type for extract vector elt!");
+
+    MachineInstr *ExtractInstr = nullptr;
     if (SrcVecEltTy == S8 || SrcVecEltTy == S16) {
       const Register ExtEltDstReg = MRI.createGenericVirtualRegister(S32);
       const Register ExtDstReg = MRI.createGenericVirtualRegister(S32);
-      MIRBuilder.buildInstr(
+      ExtractInstr = MIRBuilder.buildInstr(
           II->getGenericExtractVectorEltOpcode(/*SignExt*/ true),
           {ExtEltDstReg}, {SrcVecReg, IdxReg});
       MIRBuilder.buildAssertInstr(TargetOpcode::G_ASSERT_SEXT, ExtDstReg,
                                   ExtEltDstReg, SrcVecEltTy.getSizeInBits());
       MIRBuilder.buildTrunc(DstReg, ExtDstReg);
     } else {
-      MIRBuilder.buildInstr(
+      ExtractInstr = MIRBuilder.buildInstr(
           II->getGenericExtractVectorEltOpcode(/*SignExt*/ true), {DstReg},
           {SrcVecReg, IdxReg});
     }
-    break;
+    MI.eraseFromParent();
+
+    const unsigned LegalVectorSize = II->getBasicVectorBitSize();
+    // If this instruction is already legal, we are done
+    if (SrcVecSize == LegalVectorSize)
+      return true;
+
+    // For any illegal vector type, re-use the existing legalization strategy
+
+    // Set a valid insertion point after erasing the original instruction.
+    MIRBuilder.setInstr(*ExtractInstr);
+    return legalizeG_AIE_EXTRACT_VECTOR_ELT(Helper, *ExtractInstr,
+                                            LegalVectorSize);
   }
   default:
     llvm_unreachable("Unexpected vector size for extract vector elt!");
   }
-  MI.removeFromParent();
+  MI.eraseFromParent();
   return true;
 }
 
@@ -1153,11 +1204,14 @@ bool AIELegalizerHelper::legalizeG_FADDSUB(LegalizerHelper &Helper,
           .addUse(FPRes)
           .getReg(0);
 
+  auto Pad512 =
+      emitPadUndefVector(MRI, MIRBuilder, V16BF16.multiplyElements(2), Conv);
+
   const Register ExtEltDstReg = MRI.createGenericVirtualRegister(S32);
   const Register ExtDstReg = MRI.createGenericVirtualRegister(S32);
   const unsigned ExtractEltOpc =
       ST.getInstrInfo()->getGenericExtractVectorEltOpcode(/*SignExt*/ true);
-  MIRBuilder.buildInstr(ExtractEltOpc, {ExtEltDstReg}, {Conv, IdxReg});
+  MIRBuilder.buildInstr(ExtractEltOpc, {ExtEltDstReg}, {Pad512, IdxReg});
   MIRBuilder.buildAssertInstr(TargetOpcode::G_ASSERT_SEXT, ExtDstReg,
                               ExtEltDstReg, 16);
   MIRBuilder.buildTrunc(DstReg, ExtDstReg);
@@ -1211,27 +1265,17 @@ bool AIELegalizerHelper::legalizeG_SELECT(LegalizerHelper &Helper,
       LLT::fixed_vector(MaxBitSize / DstTy.getElementType().getSizeInBits(),
                         DstTy.getElementType());
 
-  const Register UndefReg = MRI.createGenericVirtualRegister(DstTy);
-  MIRBuilder.buildUndef(UndefReg);
-
-  const unsigned NumPadElts = (MaxBitSize / DstVecSize) - 1;
-  auto buildMergeInstr = [&](const Register SrcReg) -> Register {
-    SmallVector<Register, 4> Regs;
-    Regs.push_back(SrcReg);
-    for (unsigned I = 0; I < NumPadElts; I++)
-      Regs.push_back(UndefReg);
-    const Register NewSrcReg = MRI.createGenericVirtualRegister(NewVecTy);
-    MIRBuilder.buildMergeLikeInstr(NewSrcReg, Regs);
-    return NewSrcReg;
-  };
-
-  const Register NewSrcReg1 = buildMergeInstr(SrcReg1);
-  const Register NewSrcReg2 = buildMergeInstr(SrcReg2);
+  const LLT WideTy = DstTy.multiplyElements(MaxBitSize / DstVecSize);
+  const Register NewSrcReg1 =
+      emitPadUndefVector(MRI, MIRBuilder, WideTy, SrcReg1);
+  const Register NewSrcReg2 =
+      emitPadUndefVector(MRI, MIRBuilder, WideTy, SrcReg2);
 
   const Register NewDstReg = MRI.createGenericVirtualRegister(NewVecTy);
   MIRBuilder.buildInstr(MI.getOpcode(), {NewDstReg},
                         {SrcReg0, NewSrcReg1, NewSrcReg2}, MI.getFlags());
 
+  const unsigned NumPadElts = (MaxBitSize / DstVecSize) - 1;
   SmallVector<Register, 4> Regs;
   Regs.push_back(DstReg);
   for (unsigned I = 0; I < NumPadElts; ++I)
@@ -1242,32 +1286,36 @@ bool AIELegalizerHelper::legalizeG_SELECT(LegalizerHelper &Helper,
   return true;
 }
 
-// We legalize concat vector of 2 inputs. So, anything above we need to split
-// it. So far expect only 4 input. 1024bit vector from 4 256bit register and
-// 2048 accumulator register from 4 512bit registers.
+/// Legalize the incoming \p MI G_CONCAT_VECTORS to half the number of inputs,
+/// but at least 2 inputs.
 bool AIELegalizerHelper::legalizeG_CONCAT_VECTORS(LegalizerHelper &Helper,
                                                   MachineInstr &MI) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
-  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
 
-  const Register DstReg = MI.getOperand(0).getReg();
-  const Register SrcReg = MI.getOperand(1).getReg();
-  const LLT DstTy = MRI.getType(DstReg);
-  const LLT SrcTy = MRI.getType(SrcReg);
+  const auto [DstReg, DstTy, SrcReg, SrcTy] = MI.getFirst2RegLLTs();
   assert(DstTy.isVector() && SrcTy.isVector() && "Expected vector types");
-  assert(SrcTy.getSizeInBits() >= 256 && "Input vector size does not match!");
-  assert(MI.getNumOperands() == 5 && "Expected 4 inputs!");
+  assert(SrcTy.getSizeInBits() >= 128 &&
+         "Vectors < 128-bit should be lowered to insert vector elt");
 
-  const LLT DstVecEltTy = DstTy.getElementType();
-  const unsigned ElTySize = DstVecEltTy.getSizeInBits();
-  const LLT SplitTy = LLT::fixed_vector(DstTy.getNumElements() / 2, ElTySize);
-  const Register DstRegLo = MRI.createGenericVirtualRegister(SplitTy);
-  const Register DstRegHi = MRI.createGenericVirtualRegister(SplitTy);
-  MIRBuilder.buildConcatVectors(
-      {DstRegLo}, {MI.getOperand(1).getReg(), MI.getOperand(2).getReg()});
-  MIRBuilder.buildConcatVectors(
-      {DstRegHi}, {MI.getOperand(3).getReg(), MI.getOperand(4).getReg()});
-  MIRBuilder.buildConcatVectors({DstReg}, {DstRegLo, DstRegHi});
+  // Prevent infinite looping in the Legalizer. The base case should be legal
+  // and we should not reach this.
+  assert(DstTy.getSizeInBits() > 2 * SrcTy.getSizeInBits());
+
+  const LLT StepTy = SrcTy.multiplyElements(2);
+
+  // Concatenate pairs of source vector operands.
+  SmallVector<Register, 4> ConcatSteps;
+  for (size_t I = 1; I < MI.getNumOperands(); I += 2) {
+    const Register ConcatStep =
+        MIRBuilder
+            .buildConcatVectors({StepTy}, {MI.getOperand(I).getReg(),
+                                           MI.getOperand(I + 1).getReg()})
+            .getReg(0);
+    ConcatSteps.push_back(ConcatStep);
+  }
+
+  // Concatenate the resulting artifacts.
+  MIRBuilder.buildConcatVectors(DstReg, ConcatSteps);
   MI.eraseFromParent();
   return true;
 }
@@ -1340,37 +1388,134 @@ bool AIELegalizerHelper::legalizeBinOp(LegalizerHelper &Helper,
   const Register Src1Reg = MI.getOperand(1).getReg();
   const Register Src2Reg = MI.getOperand(2).getReg();
   assert(DstTy == MRI.getType(Src1Reg));
-  Register UndefReg = MRI.createGenericVirtualRegister(DstTy);
-  MIRBuilder.buildUndef(UndefReg);
 
   auto NewVecTy = LLT::fixed_vector(
       512 / DstTy.getElementType().getSizeInBits(), DstTy.getElementType());
+
   Register NewDstReg = MRI.createGenericVirtualRegister(NewVecTy);
-  Register NewSrc1Reg = MRI.createGenericVirtualRegister(NewVecTy);
-  Register NewSrc2Reg = MRI.createGenericVirtualRegister(NewVecTy);
+  Register NewSrc1Reg = emitPadUndefVector(MRI, MIRBuilder, NewVecTy, Src1Reg);
+  Register NewSrc2Reg = emitPadUndefVector(MRI, MIRBuilder, NewVecTy, Src2Reg);
 
   unsigned NumberOfPadElts = (512 / VectorSize) - 1;
-  SmallVector<Register, 8> Regs;
-
-  Regs.push_back(Src1Reg);
-  for (unsigned i = 0; i < NumberOfPadElts; ++i)
-    Regs.push_back(UndefReg);
-  MIRBuilder.buildMergeLikeInstr(NewSrc1Reg, Regs);
-
-  Regs.clear();
-  Regs.push_back(Src2Reg);
-  for (unsigned i = 0; i < NumberOfPadElts; ++i)
-    Regs.push_back(UndefReg);
-  MIRBuilder.buildMergeLikeInstr(NewSrc2Reg, Regs);
-
   MIRBuilder.buildInstr(MI.getOpcode(), {NewDstReg}, {NewSrc1Reg, NewSrc2Reg},
                         MI.getFlags());
 
-  Regs.clear();
+  SmallVector<Register, 8> Regs;
   Regs.push_back(DstReg);
   for (unsigned i = 0; i < NumberOfPadElts; ++i)
     Regs.push_back(MRI.createGenericVirtualRegister(DstTy));
   MIRBuilder.buildUnmerge(Regs, NewDstReg);
+
+  MI.eraseFromParent();
+  return true;
+}
+
+/// Clamps the source vector size of the incoming \p MI to the legal base vector
+/// size \p LegalVectorSize.
+static bool narrowAIEVectorExtractEltSrcVecToLegalSize(
+    MachineRegisterInfo &MRI, MachineIRBuilder &MIRBuilder,
+    LegalizerHelper &Helper, MachineInstr &MI, const unsigned LegalVectorSize) {
+  auto [DstReg, SrcVec] = MI.getFirst2Regs();
+  Register Idx = MI.getOperand(MI.getNumOperands() - 1).getReg();
+
+  const LLT VecTy = MRI.getType(SrcVec);
+  assert((VecTy.getSizeInBits() % LegalVectorSize == 0) &&
+         "Expected source vector to be multiple of LegalVectorSize");
+  const LLT NarrowVecTy = VecTy.divide(VecTy.getSizeInBits() / LegalVectorSize);
+
+  // If the index is a constant, we can really break this down as you would
+  // expect, and index into the target size pieces.
+  auto MaybeCst = getIConstantVRegValWithLookThrough(Idx, MRI);
+  if (MaybeCst) {
+    const int64_t IdxVal = MaybeCst->Value.getSExtValue();
+    // Avoid out of bounds indexing the pieces.
+    if (IdxVal >= VecTy.getNumElements() || IdxVal < 0) {
+      MIRBuilder.buildUndef(DstReg);
+      return true;
+    }
+
+    SmallVector<Register, 4> VecParts;
+    const auto Unmerge = MIRBuilder.buildUnmerge(NarrowVecTy, SrcVec);
+    getUnmergeResults(VecParts, *Unmerge);
+
+    const unsigned NewNumElts = NarrowVecTy.getNumElements();
+    const int64_t PartIdx = IdxVal / NewNumElts;
+    const LLT IdxTy = MRI.getType(Idx);
+    const auto NewIdx = MIRBuilder.buildConstant(IdxTy, IdxVal % NewNumElts);
+    MIRBuilder.buildInstr(MI.getOpcode(), {DstReg},
+                          {VecParts[PartIdx], NewIdx});
+    return true;
+  }
+
+  // If the index is not a constant, we need to find the sub-vector to extract
+  // from at runtime.
+  SmallVector<Register, 4> VecParts;
+  const auto Unmerge = MIRBuilder.buildUnmerge(NarrowVecTy, SrcVec);
+  getUnmergeResults(VecParts, *Unmerge);
+
+  assert(VecParts.size() >= 2 &&
+         "Expected split into at least two sub-vectors");
+
+  const unsigned NewNumElts = NarrowVecTy.getNumElements();
+  const LLT IdxTy = MRI.getType(Idx);
+  Register NewSrcVec = VecParts[VecParts.size() - 1];
+  Register AdjImm =
+      MIRBuilder.buildConstant(IdxTy, (VecParts.size() - 1) * NewNumElts)
+          .getReg(0);
+
+  for (size_t I = VecParts.size() - 1; I > 0; I--) {
+    const auto HighIdx = MIRBuilder.buildConstant(IdxTy, I * NewNumElts);
+    // Check if the Idx falls into the low or high part of the split vector.
+    const auto Cmp =
+        MIRBuilder.buildICmp(CmpInst::ICMP_SLT, LLT::scalar(1), Idx, HighIdx);
+    // Select between the low and high part of the split vector.
+    NewSrcVec =
+        MIRBuilder.buildSelect(NarrowVecTy, Cmp, VecParts[I - 1], NewSrcVec)
+            .getReg(0);
+
+    // We need to adjust the Idx to select from either low or high sub-vector
+    const auto AdjLow = MIRBuilder.buildConstant(IdxTy, (I - 1) * NewNumElts);
+    AdjImm = MIRBuilder.buildSelect(IdxTy, Cmp, AdjLow, AdjImm).getReg(0);
+  }
+
+  const auto NewIdx = MIRBuilder.buildSub(IdxTy, Idx, AdjImm);
+  MIRBuilder.buildInstr(MI.getOpcode(), {DstReg}, {NewSrcVec, NewIdx});
+  return true;
+}
+
+bool AIELegalizerHelper::legalizeG_AIE_EXTRACT_VECTOR_ELT(
+    LegalizerHelper &Helper, MachineInstr &MI,
+    const unsigned LegalVectorSize) const {
+  MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register SrcVecReg = MI.getOperand(1).getReg();
+  const LLT SrcVecTy = MRI.getType(SrcVecReg);
+  const Register IdxReg = MI.getOperand(2).getReg();
+  const unsigned SrcVecSize = SrcVecTy.getSizeInBits();
+
+  // Already legal
+  if (SrcVecSize == LegalVectorSize)
+    return true;
+
+  if (SrcVecSize < LegalVectorSize) {
+    assert((LegalVectorSize % SrcVecSize == 0) &&
+           "Expected LegalVectorSize to be a multiple of source vector size");
+    const unsigned MultiplyFactor = LegalVectorSize / SrcVecSize;
+    const LLT LegalVecTy = SrcVecTy.multiplyElements(MultiplyFactor);
+    const Register NewSrc =
+        emitPadUndefVector(MRI, MIRBuilder, LegalVecTy, SrcVecReg);
+
+    MIRBuilder.buildInstr(MI.getOpcode(), {DstReg}, {NewSrc, IdxReg});
+  } else if (SrcVecSize > LegalVectorSize && isPowerOf2_32(SrcVecSize)) {
+    if (!narrowAIEVectorExtractEltSrcVecToLegalSize(MRI, MIRBuilder, Helper, MI,
+                                                    LegalVectorSize))
+      return false;
+  } else {
+    llvm_unreachable(
+        "Illegal vector size for G_AIE_[ZS]EXT_EXTRACT_VECTOR_ELT");
+  }
 
   MI.eraseFromParent();
   return true;
