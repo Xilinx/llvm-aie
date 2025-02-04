@@ -22153,6 +22153,16 @@ Value *CodeGenFunction::EmitAIE1BuiltinExpr(unsigned BuiltinID,
   return nullptr;
 }
 
+void insertImplicitCasts(MutableArrayRef<llvm::Value *> Args,
+                         llvm::FunctionType &FTy, CGBuilderTy &Builder) {
+  for (unsigned ArgNum = 0; ArgNum < Args.size(); ++ArgNum) {
+    llvm::Value *Arg = Args[ArgNum];
+    llvm::Type *RequiredType = FTy.getParamType(ArgNum);
+    if (Arg->getType() != RequiredType)
+      Args[ArgNum] = Builder.CreateBitCast(Arg, RequiredType);
+  }
+}
+
 Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
                                            const CallExpr *E,
                                            llvm::Triple::ArchType Arch) {
@@ -22390,9 +22400,12 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
     for (unsigned I = 0; I < E->getNumArgs(); I++)
       Ops.push_back(EmitScalarExpr(E->getArg(I)));
 
+    llvm::Type *OverloadedTy = Ops[0]->getType();
     llvm::Intrinsic::ID IntrinsicID = getAIEIntrinsicFunction(BuiltinID, Arch);
     assert(IntrinsicID != Intrinsic::not_intrinsic);
-    Function *F = CGM.getIntrinsic(IntrinsicID);
+    Function *F = CGM.getIntrinsic(IntrinsicID, {OverloadedTy, OverloadedTy});
+
+    insertImplicitCasts(Ops, *F->getFunctionType(), Builder);
     Value *Val = Builder.CreateCall(F, Ops);
 
     Value *Ptr = Builder.CreateExtractValue(Val, 0);
@@ -22455,9 +22468,13 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
           Builder.CreateTrunc(EmitScalarExpr(E->getArg(I)),
                               llvm::Type::getInt20Ty(getLLVMContext())));
     }
+
+    llvm::Type *OverloadedTy = Ops[0]->getType();
     llvm::Intrinsic::ID IntrinsicID = getAIEIntrinsicFunction(BuiltinID, Arch);
     assert(IntrinsicID != Intrinsic::not_intrinsic);
-    Function *F = CGM.getIntrinsic(IntrinsicID);
+    Function *F = CGM.getIntrinsic(IntrinsicID, {OverloadedTy, OverloadedTy});
+
+    insertImplicitCasts(Ops, *F->getFunctionType(), Builder);
     Value *Val = Builder.CreateCall(F, Ops);
 
     Value *Ptr = Builder.CreateExtractValue(Val, 0);
@@ -22500,9 +22517,12 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
     for (unsigned I = 0; I < E->getNumArgs(); I++)
       Ops.push_back(EmitScalarExpr(E->getArg(I)));
 
+    llvm::Type *OverloadedTy = Ops[0]->getType();
     llvm::Intrinsic::ID IntrinsicID = getAIEIntrinsicFunction(BuiltinID, Arch);
     assert(IntrinsicID != Intrinsic::not_intrinsic);
-    Function *F = CGM.getIntrinsic(IntrinsicID);
+    Function *F = CGM.getIntrinsic(IntrinsicID, {OverloadedTy, OverloadedTy});
+
+    insertImplicitCasts(Ops, *F->getFunctionType(), Builder);
     Value *Val = Builder.CreateCall(F, Ops);
 
     Value *Ptr = Builder.CreateExtractValue(Val, 0);
@@ -22542,9 +22562,12 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
                               llvm::Type::getInt20Ty(getLLVMContext())));
     }
 
+    llvm::Type *OverloadedTy = Ops[0]->getType();
     llvm::Intrinsic::ID IntrinsicID = getAIEIntrinsicFunction(BuiltinID, Arch);
     assert(IntrinsicID != Intrinsic::not_intrinsic);
-    Function *F = CGM.getIntrinsic(IntrinsicID);
+    Function *F = CGM.getIntrinsic(IntrinsicID, {OverloadedTy, OverloadedTy});
+
+    insertImplicitCasts(Ops, *F->getFunctionType(), Builder);
     Value *Val = Builder.CreateCall(F, Ops);
 
     Value *Vec = Builder.CreateExtractValue(Val, 0);
@@ -22617,9 +22640,12 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
                               llvm::Type::getInt20Ty(getLLVMContext())));
     }
 
+    llvm::Type *OverloadedTy = Ops[0]->getType();
     llvm::Intrinsic::ID IntrinsicID = getAIEIntrinsicFunction(BuiltinID, Arch);
     assert(IntrinsicID != Intrinsic::not_intrinsic);
-    Function *F = CGM.getIntrinsic(IntrinsicID);
+    Function *F = CGM.getIntrinsic(IntrinsicID, {OverloadedTy, OverloadedTy});
+
+    insertImplicitCasts(Ops, *F->getFunctionType(), Builder);
     Value *Val = Builder.CreateCall(F, Ops);
 
     Value *Ptr = Builder.CreateExtractValue(Val, 0);
