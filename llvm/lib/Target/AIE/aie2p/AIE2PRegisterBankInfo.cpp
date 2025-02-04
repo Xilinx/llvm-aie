@@ -458,6 +458,22 @@ static bool isUsedAsFifoRegInIntrinsic(const MachineRegisterInfo &MRI,
     return checkFifoDstSrc(MI, FifoRegCandidate, 1, 7);
     break;
   }
+  case Intrinsic::aie2p_fifo_ld_fillx: {
+    Register FifoExtraDstReg = MI.getOperand(3).getReg();
+    Register FifoExtraSrcReg = MI.getOperand(8).getReg();
+    return (checkFifoDstSrc(MI, FifoRegCandidate, 1, 6) ||
+            (FifoRegCandidate == FifoExtraDstReg) ||
+            (FifoRegCandidate == FifoExtraSrcReg));
+    break;
+  }
+  case Intrinsic::aie2p_fifo_ld_popx: {
+    Register FifoExtraDstReg = MI.getOperand(4).getReg();
+    Register FifoExtraSrcReg = MI.getOperand(9).getReg();
+    return (checkFifoDstSrc(MI, FifoRegCandidate, 2, 7) ||
+            (FifoRegCandidate == FifoExtraDstReg) ||
+            (FifoRegCandidate == FifoExtraSrcReg));
+    break;
+  }
   default:
     return false;
   }
