@@ -33,7 +33,6 @@ tablegen(LLVM AIE2GenPostLegalizerGIGenericCombiner.inc -gen-global-isel-combine
 tablegen(LLVM AIE2GenPostLegalizerGICustomCombiner.inc -gen-global-isel-combiner
               -combiners="AIE2PostLegalizerCustomCombiner")
 tablegen(LLVM AIE2GenCallingConv.inc -gen-callingconv)
-tablegen(LLVM AIE2GenDAGISel.inc -gen-dag-isel)
 tablegen(LLVM AIE2GenDisassemblerTables.inc -gen-disassembler)
 tablegen(LLVM AIE2GenFormats.inc -gen-instr-format)
 tablegen(LLVM AIE2GenInstrInfo.inc -gen-instr-info -base-instrinfo-class AIEBaseInstrInfo)
@@ -129,7 +128,6 @@ add_llvm_target(AIECodeGen
    AIE2FrameLowering.cpp
    AIE2InstrInfo.cpp
    AIE2InstructionSelector.cpp
-   AIE2ISelDAGToDAG.cpp
    AIE2ISelLowering.cpp
    AIE2LegalizerInfo.cpp
    AIE2PostLegalizerCustomCombiner.cpp

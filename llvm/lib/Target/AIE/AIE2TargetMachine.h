@@ -57,7 +57,6 @@ public:
 
   bool addPreISel() override;
   void addPreEmitPass() override;
-  bool addInstSelector() override;
   bool addGlobalInstructionSelect() override;
   void addPreRegAlloc() override;
   bool addRegAssignAndRewriteOptimized() override;

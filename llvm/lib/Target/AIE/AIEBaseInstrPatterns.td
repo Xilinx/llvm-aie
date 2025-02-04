@@ -77,3 +77,21 @@ foreach vec512Ty = [v64i8, v32i16, v16i32] in {
   def : Pat<(vec512Ty (select (i32 eR:$rs1), VEC512:$rs2, VEC512:$rs3)),
             (vec512Ty (VSEL_32 VEC512:$rs2, VEC512:$rs3, (ADD_add_r_ri eR:$rs1, (i32 -1))))>;
 }
+
+// Make our generic extract vector elt instructions available to TableGen patterns.
+def vextract_zext : SDNode<"G_AIE_ZEXT_EXTRACT_VECTOR_ELT",
+                          SDTypeProfile<1, 2, [SDTCisInt<0>,SDTCisVec<1>, SDTCisInt<2>]>>;
+def : GINodeEquiv<G_AIE_ZEXT_EXTRACT_VECTOR_ELT, vextract_zext>;
+
+def vextract_sext : SDNode<"G_AIE_SEXT_EXTRACT_VECTOR_ELT",
+                          SDTypeProfile<1, 2, [SDTCisInt<0>,SDTCisVec<1>, SDTCisInt<2>]>>;
+def : GINodeEquiv<G_AIE_SEXT_EXTRACT_VECTOR_ELT, vextract_sext>;
+
+class Extr512Pat<ValueType DstTy, ValueType SrcTy, dag Idx, SDNode Op, Instruction Inst> :
+    Pat<(DstTy (Op SrcTy:$src1, Idx)),
+        (Inst SrcTy:$src1, Idx)>;
+
+multiclass Extract_512<ValueType DstTy, ValueType SrcTy, dag Idx, Instruction UnsignedOpc, Instruction SignedOpc> {
+  def : Extr512Pat<DstTy, SrcTy, Idx, vextract_zext, UnsignedOpc>;
+  def : Extr512Pat<DstTy, SrcTy, Idx, vextract_sext, SignedOpc>;
+}

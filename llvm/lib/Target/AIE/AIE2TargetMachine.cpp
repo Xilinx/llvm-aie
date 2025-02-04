@@ -220,15 +220,6 @@ AIE2TargetMachine::getTargetTransformInfo(const Function &F) const {
   return TargetTransformInfo(AIE2TTIImpl(this, F));
 }
 
-bool AIE2PassConfig::addInstSelector() {
-  if (AIEDumpArtifacts)
-    addPass(createMachineFunctionDumperPass(/*Suffix=*/"before-isel"));
-  addPass(createAIE2ISelDag(getAIETargetMachine()));
-  if (AIEDumpArtifacts)
-    addPass(createMachineFunctionDumperPass(/*Suffix=*/"after-isel"));
-  return false;
-}
-
 unsigned
 AIE2TargetMachine::getAddressSpaceForPseudoSourceKind(unsigned Kind) const {
   switch (Kind) {
