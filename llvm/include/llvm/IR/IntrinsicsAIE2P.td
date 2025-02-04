@@ -665,6 +665,18 @@ class AIE2PFIFO_ST_FLUSH_3D : Intrinsic<[llvm_anyptr_ty, llvm_v32i32_ty, llvm_i3
 def int_aie2p_fifo_st_flush_3d: AIE2PFIFO_ST_FLUSH_3D;
 def int_aie2p_fifo_st_flush_3d_conv: AIE2PFIFO_ST_FLUSH_3D;
 
+// FILLX
+class AIE2PFIFO_LD_FILLX : Intrinsic<[llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_v16i32_ty],
+     [llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_v16i32_ty, llvm_i32_ty],
+     [IntrReadMem, IntrArgMemOnly]>;
+def int_aie2p_fifo_ld_fillx: AIE2PFIFO_LD_FILLX;
+
+// POPX
+class AIE2PFIFO_LD_POPX : Intrinsic<[llvm_v64i8_ty, llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_v16i32_ty],
+     [llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_v16i32_ty, llvm_i32_ty],
+     [IntrReadMem, IntrArgMemOnly]>;
+def int_aie2p_fifo_ld_popx: AIE2PFIFO_LD_POPX;
+
 // FILL
 class AIE2PFIFO_LD_FILL : Intrinsic<[llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty],
      [llvm_anyptr_ty, llvm_v32i32_ty, llvm_i32_ty],

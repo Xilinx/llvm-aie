@@ -81,6 +81,8 @@ bool AIE2PTargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
                                              unsigned Intrinsic) const {
   switch (Intrinsic) {
   case Intrinsic::aie2p_fifo_ld_fill:
+  case Intrinsic::aie2p_fifo_ld_fillx:
+  case Intrinsic::aie2p_fifo_ld_popx:
   case Intrinsic::aie2p_fifo_ld_pop_unaligned:
   case Intrinsic::aie2p_fifo_ld_pop_1d_unaligned:
   case Intrinsic::aie2p_fifo_ld_pop_2d_unaligned:

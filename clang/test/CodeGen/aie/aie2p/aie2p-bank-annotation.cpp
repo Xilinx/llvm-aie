@@ -34,8 +34,39 @@ void test_intrinsic_annotated_pointer(v64bfp16ebs8_unaligned __aie_dm_resource_a
   return fifo_st_push(p, v, s);
 }
 
+// CHECK-LABEL: define dso_local noundef <64 x i8> @_Z43test_intrinsic_annotated_pointer_fillx_popxPU3AS522v64bfp16ebs8_unalignedPU3AS6Dv64_DB8_R12fifo_state_t(
+// CHECK-SAME: ptr addrspace(5) [[P_UNALIGNED:%.*]], ptr addrspace(6) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]]) local_unnamed_addr #[[ATTR1:[0-9]+]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 128
+// CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 192
+// CHECK-NEXT:    [[TMP0:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA5]]
+// CHECK-NEXT:    [[TMP2:%.*]] = load <16 x i32>, ptr [[EXTRA3_I_I]], align 64, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[TMP3:%.*]] = tail call { ptr addrspace(5), <32 x i32>, i32, <16 x i32> } @llvm.aie2p.fifo.ld.fillx.p5.p5(ptr addrspace(5) [[P_UNALIGNED]], <32 x i32> [[TMP0]], i32 [[TMP1]], <16 x i32> [[TMP2]], i32 2015)
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32, <16 x i32> } [[TMP3]], 1
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32, <16 x i32> } [[TMP3]], 2
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32, <16 x i32> } [[TMP3]], 3
+// CHECK-NEXT:    store <16 x i32> [[TMP6]], ptr [[EXTRA3_I_I]], align 64
+// CHECK-NEXT:    store <32 x i32> [[TMP4]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP5]], ptr [[POS1_I_I]], align 64
+// CHECK-NEXT:    [[TMP7:%.*]] = tail call { <64 x i8>, ptr addrspace(6), <32 x i32>, i32, <16 x i32> } @llvm.aie2p.fifo.ld.popx.p6.p6(ptr addrspace(6) [[P]], <32 x i32> [[TMP4]], i32 [[TMP5]], <16 x i32> [[TMP6]], i32 2015)
+// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr addrspace(6), <32 x i32>, i32, <16 x i32> } [[TMP7]], 0
+// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr addrspace(6), <32 x i32>, i32, <16 x i32> } [[TMP7]], 2
+// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue { <64 x i8>, ptr addrspace(6), <32 x i32>, i32, <16 x i32> } [[TMP7]], 3
+// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue { <64 x i8>, ptr addrspace(6), <32 x i32>, i32, <16 x i32> } [[TMP7]], 4
+// CHECK-NEXT:    store <16 x i32> [[TMP11]], ptr [[EXTRA3_I_I]], align 64
+// CHECK-NEXT:    store <32 x i32> [[TMP9]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP10]], ptr [[POS1_I_I]], align 64
+// CHECK-NEXT:    ret <64 x i8> [[TMP8]]
+//
+v128uint4 test_intrinsic_annotated_pointer_fillx_popx(v64bfp16ebs8_unaligned __aie_dm_resource_a * p_unaligned, v128int4 __aie_dm_resource_b *p, fifo_state_t &s) {
+  fifo_ld_fillx(p_unaligned, s);
+  return  fifo_ld_popx(p, s);
+}
+
+
 // CHECK-LABEL: define dso_local void @_Z42test_intrinsic_annotated_pointer_referenceRPU3AS522v64bfp16ebs8_unaligned12v64bfp16ebs8R12fifo_state_t(
-// CHECK-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], [[STRUCT_V64BFP16EBS8:%.*]] [[V_COERCE:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]]) local_unnamed_addr #[[ATTR1:[0-9]+]] {
+// CHECK-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], [[STRUCT_V64BFP16EBS8:%.*]] [[V_COERCE:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]]) local_unnamed_addr #[[ATTR2:[0-9]+]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[V_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[V_COERCE]], 0
 // CHECK-NEXT:    [[V_COERCE_FCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[V_COERCE]], 1
@@ -55,10 +86,52 @@ void test_intrinsic_annotated_pointer(v64bfp16ebs8_unaligned __aie_dm_resource_a
 void test_intrinsic_annotated_pointer_reference(v64bfp16ebs8_unaligned __aie_dm_resource_a * &p, v64bfp16ebs8 v,
                        fifo_state_t &s) {
   return fifo_st_push(p, v, s);
+
 }
 
+
+// CHECK-LABEL: define dso_local noundef <64 x i8> @_Z53test_intrinsic_annotated_pointer_reference_fillx_popxRPU3AS522v64bfp16ebs8_unalignedRPU3AS6Dv64_DB8_R12fifo_state_t(
+// CHECK-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P_UNALIGNED:%.*]], ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]]) local_unnamed_addr #[[ATTR3:[0-9]+]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 128
+// CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 192
+// CHECK-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P_UNALIGNED]], align 4, !tbaa [[TBAA7]]
+// CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA5]]
+// CHECK-NEXT:    [[TMP3:%.*]] = load <16 x i32>, ptr [[EXTRA3_I_I]], align 64, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[TMP4:%.*]] = tail call { ptr addrspace(5), <32 x i32>, i32, <16 x i32> } @llvm.aie2p.fifo.ld.fillx.p5.p5(ptr addrspace(5) [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], <16 x i32> [[TMP3]], i32 2015)
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32, <16 x i32> } [[TMP4]], 0
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32, <16 x i32> } [[TMP4]], 1
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32, <16 x i32> } [[TMP4]], 2
+// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32, <16 x i32> } [[TMP4]], 3
+// CHECK-NEXT:    store <16 x i32> [[TMP8]], ptr [[EXTRA3_I_I]], align 64
+// CHECK-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP7]], ptr [[POS1_I_I]], align 64
+// CHECK-NEXT:    store ptr addrspace(5) [[TMP5]], ptr [[P_UNALIGNED]], align 4
+// CHECK-NEXT:    [[TMP9:%.*]] = load ptr addrspace(6), ptr [[P]], align 4, !tbaa [[TBAA7]]
+// CHECK-NEXT:    [[TMP10:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[TMP11:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA5]]
+// CHECK-NEXT:    [[TMP12:%.*]] = load <16 x i32>, ptr [[EXTRA3_I_I]], align 64, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[TMP13:%.*]] = tail call { <64 x i8>, ptr addrspace(6), <32 x i32>, i32, <16 x i32> } @llvm.aie2p.fifo.ld.popx.p6.p6(ptr addrspace(6) [[TMP9]], <32 x i32> [[TMP10]], i32 [[TMP11]], <16 x i32> [[TMP12]], i32 2015)
+// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr addrspace(6), <32 x i32>, i32, <16 x i32> } [[TMP13]], 0
+// CHECK-NEXT:    [[TMP15:%.*]] = extractvalue { <64 x i8>, ptr addrspace(6), <32 x i32>, i32, <16 x i32> } [[TMP13]], 1
+// CHECK-NEXT:    [[TMP16:%.*]] = extractvalue { <64 x i8>, ptr addrspace(6), <32 x i32>, i32, <16 x i32> } [[TMP13]], 2
+// CHECK-NEXT:    [[TMP17:%.*]] = extractvalue { <64 x i8>, ptr addrspace(6), <32 x i32>, i32, <16 x i32> } [[TMP13]], 3
+// CHECK-NEXT:    [[TMP18:%.*]] = extractvalue { <64 x i8>, ptr addrspace(6), <32 x i32>, i32, <16 x i32> } [[TMP13]], 4
+// CHECK-NEXT:    store <16 x i32> [[TMP18]], ptr [[EXTRA3_I_I]], align 64
+// CHECK-NEXT:    store <32 x i32> [[TMP16]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP17]], ptr [[POS1_I_I]], align 64
+// CHECK-NEXT:    store ptr addrspace(6) [[TMP15]], ptr [[P]], align 4
+// CHECK-NEXT:    ret <64 x i8> [[TMP14]]
+//
+v128uint4 test_intrinsic_annotated_pointer_reference_fillx_popx(v64bfp16ebs8_unaligned __aie_dm_resource_a * &p_unaligned, v128int4 __aie_dm_resource_b *&p, fifo_state_t &s) {
+  fifo_ld_fillx(p_unaligned, s);
+  return  fifo_ld_popx(p, s);
+}
+
+
 // CHECK-LABEL: define dso_local void @_Z47test_intrinsic_annotated_pointer_reference_loopRPU3AS522v64bfp16ebs8_unaligned12v64bfp16ebs8i(
-// CHECK-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], [[STRUCT_V64BFP16EBS8:%.*]] [[V_COERCE:%.*]], i32 noundef [[NUM:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// CHECK-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], [[STRUCT_V64BFP16EBS8:%.*]] [[V_COERCE:%.*]], i32 noundef [[NUM:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP6:%.*]] = icmp sgt i32 [[NUM]], 0
 // CHECK-NEXT:    br i1 [[CMP6]], label [[FOR_BODY_LR_PH:%.*]], label [[FOR_COND_CLEANUP:%.*]]
@@ -98,7 +171,7 @@ void test_intrinsic_annotated_pointer_reference_loop(
 }
 
 // CHECK-LABEL: define dso_local void @_Z45test_intrinsic_default_pointer_reference_loopRP22v64bfp16ebs8_unaligned12v64bfp16ebs8i(
-// CHECK-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], [[STRUCT_V64BFP16EBS8:%.*]] [[V_COERCE:%.*]], i32 noundef [[NUM:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// CHECK-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], [[STRUCT_V64BFP16EBS8:%.*]] [[V_COERCE:%.*]], i32 noundef [[NUM:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP6:%.*]] = icmp sgt i32 [[NUM]], 0
 // CHECK-NEXT:    br i1 [[CMP6]], label [[FOR_BODY_LR_PH:%.*]], label [[FOR_COND_CLEANUP:%.*]]

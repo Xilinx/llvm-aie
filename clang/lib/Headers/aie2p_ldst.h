@@ -386,6 +386,36 @@ FIFO_ST(__aie_dm_resource_cd, restrict)
     return r;                                                                  \
   }
 
+#define FIFO_FILLX(T, DM_BANK, RESTRICT)                                       \
+  INTRINSIC(void)                                                              \
+  fifo_ld_fillx(T DM_BANK *RESTRICT &p, fifo_state_t &s, int step, int mask) { \
+    int &pos = s.pos;                                                          \
+    sparse_fifo_t &fifo = s.fifo;                                              \
+    v16int32 &extra = s.extra;                                                 \
+    int conf = (step << 6) | mask;                                             \
+    __builtin_aie2p_fifo_ld_fillx((void DM_BANK *RESTRICT &)p, fifo, pos,      \
+                                  extra, conf);                                \
+  }                                                                            \
+                                                                               \
+  INTRINSIC(void) fifo_ld_fillx(T DM_BANK *RESTRICT &p, fifo_state_t &s) {     \
+    return fifo_ld_fillx(p, s, 31, 31);                                        \
+  }
+
+#define FIFO_POPX(T, DM_BANK, RESTRICT)                                        \
+  INTRINSIC(T)                                                                 \
+  fifo_ld_popx(T DM_BANK *RESTRICT &p, fifo_state_t &s, int step, int mask) {  \
+    int &pos = s.pos;                                                          \
+    sparse_fifo_t &fifo = s.fifo;                                              \
+    v16int32 &extra = s.extra;                                                 \
+    int conf = (step << 6) | mask;                                             \
+    T r = (T)__builtin_aie2p_fifo_ld_popx((void DM_BANK *RESTRICT &)p, fifo,   \
+                                          pos, extra, conf);                   \
+    return r;                                                                  \
+  }                                                                            \
+  INTRINSIC(T) fifo_ld_popx(T DM_BANK *RESTRICT &p, fifo_state_t &s) {         \
+    return fifo_ld_popx(p, s, 31, 31);                                         \
+  }
+
 #define FIFO_LD(DM_BANK, RESTRICT)                                             \
   FIFO_LD_NORMAL(v32bfloat16, DM_BANK, RESTRICT)                               \
   FIFO_LD_NORMAL(v16float, DM_BANK, RESTRICT)                                  \
@@ -398,7 +428,19 @@ FIFO_ST(__aie_dm_resource_cd, restrict)
   FIFO_LD_NORMAL(v16int32, DM_BANK, RESTRICT)                                  \
   FIFO_LD_NORMAL(v16uint32, DM_BANK, RESTRICT)                                 \
   FIFO_LD_BFP16(v64bfp16ebs8, 576, DM_BANK, RESTRICT)                          \
-  FIFO_LD_BFP16(v64bfp16ebs16, 544, DM_BANK, RESTRICT)
+  FIFO_LD_BFP16(v64bfp16ebs16, 544, DM_BANK, RESTRICT)                         \
+  FIFO_POPX(v32bfloat16, DM_BANK, RESTRICT)                                    \
+  FIFO_POPX(v16float, DM_BANK, RESTRICT)                                       \
+  FIFO_POPX(v128int4, DM_BANK, RESTRICT)                                       \
+  FIFO_POPX(v128uint4, DM_BANK, RESTRICT)                                      \
+  FIFO_POPX(v64int8, DM_BANK, RESTRICT)                                        \
+  FIFO_POPX(v64uint8, DM_BANK, RESTRICT)                                       \
+  FIFO_POPX(v32int16, DM_BANK, RESTRICT)                                       \
+  FIFO_POPX(v32uint16, DM_BANK, RESTRICT)                                      \
+  FIFO_POPX(v16int32, DM_BANK, RESTRICT)                                       \
+  FIFO_POPX(v16uint32, DM_BANK, RESTRICT)                                      \
+  FIFO_FILLX(v64bfp16ebs8_unaligned, DM_BANK, RESTRICT)                        \
+  FIFO_FILLX(v64bfp16ebs16_unaligned, DM_BANK, RESTRICT)
 
 FIFO_LD(, )
 FIFO_LD(__aie_dm_resource_a, )
@@ -426,6 +468,8 @@ FIFO_LD(__aie_dm_resource_cd, restrict)
 
 #undef FIFO_LD_NORMAL
 #undef FIFO_LD_BFP16
+#undef FIFO_POPX
+#undef FIFO_FILLX
 #undef FIFO_LD
 
 #endif // AIE2P_LDST_H
