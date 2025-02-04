@@ -65,17 +65,6 @@ isValidVectorMergeUnmergeOp(const unsigned BigVectorId,
   };
 }
 
-static LegalityPredicate isValidVectorConcatOp(const unsigned BigVectorId,
-                                               const unsigned SmallVectorId) {
-  return [=](const LegalityQuery &Query) {
-    const LLT Big = Query.Types[BigVectorId];
-    const LLT Small = Query.Types[SmallVectorId];
-    return Big.isVector() && Small.isVector() &&
-           Big.getElementType() == Small.getElementType() &&
-           !(Big.getNumElements() % Small.getNumElements());
-  };
-}
-
 static LegalityPredicate isValidVectorAIEP(const unsigned TypeIdx) {
   return [=](const LegalityQuery &Query) {
     const LLT DstTy = Query.Types[TypeIdx];
@@ -583,7 +572,20 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
   getActionDefinitionsBuilder(G_CONCAT_VECTORS)
       .unsupportedIf(IsNotValidDestinationVector)
       .legalIf(isValidVectorMergeUnmergeOp(0, 1))
-      .customIf(isValidVectorConcatOp(0, 1));
+      .customIf([=](const LegalityQuery &Query) {
+        const LLT &DstTy = Query.Types[0];
+        const LLT &SrcTy = Query.Types[1];
+        if (!DstTy.isVector() || !SrcTy.isVector())
+          return false;
+
+        // Concatenating vectors <= 64-bit are not sub-vector operations.
+        // These should be lowered to insert vector elements.
+        if (SrcTy.getSizeInBits() <= 64)
+          return false;
+
+        // Legalize concat vectors to have excatly two inputs
+        return (DstTy.getNumElements() != 2 * SrcTy.getNumElements());
+      });
 
   getActionDefinitionsBuilder(G_BUILD_VECTOR)
       // Legacy legalization for bitcasts
