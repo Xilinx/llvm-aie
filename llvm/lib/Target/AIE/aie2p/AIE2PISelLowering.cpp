@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -15,6 +15,7 @@
 #include "AIE2PISelLowering.h"
 #include "AIESubtarget.h"
 #include "MCTargetDesc/aie2p/AIE2PMCTargetDesc.h"
+#include "llvm/IR/IntrinsicsAIE2P.h"
 
 using namespace llvm;
 
@@ -69,6 +70,58 @@ bool AIE2PTargetLowering::functionArgumentNeedsConsecutiveRegisters(
   if (!STy || STy->isLiteral())
     return false;
   if (isTyNameBfp16(STy->getName())) {
+    return true;
+  }
+  return false;
+}
+
+bool AIE2PTargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
+                                             const CallInst &I,
+                                             MachineFunction &MF,
+                                             unsigned Intrinsic) const {
+  switch (Intrinsic) {
+  case Intrinsic::aie2p_fifo_ld_fill:
+  case Intrinsic::aie2p_fifo_ld_pop_unaligned:
+  case Intrinsic::aie2p_fifo_ld_pop_1d_unaligned:
+  case Intrinsic::aie2p_fifo_ld_pop_2d_unaligned:
+  case Intrinsic::aie2p_fifo_ld_pop_3d_unaligned:
+  case Intrinsic::aie2p_fifo_ld_pop_544_1d_bfp16:
+  case Intrinsic::aie2p_fifo_ld_pop_544_2d_bfp16:
+  case Intrinsic::aie2p_fifo_ld_pop_544_3d_bfp16:
+  case Intrinsic::aie2p_fifo_ld_pop_544_bfp16:
+  case Intrinsic::aie2p_fifo_ld_pop_576_1d_bfp16:
+  case Intrinsic::aie2p_fifo_ld_pop_576_2d_bfp16:
+  case Intrinsic::aie2p_fifo_ld_pop_576_3d_bfp16:
+  case Intrinsic::aie2p_fifo_ld_pop_576_bfp16:
+    // The HW does a 512-bit load from somewhere between addr-63 and addr+128
+    // depending on the FIFO availability and the input alignment.
+    // A conservative access range would be [addr-64, addr+192)
+    // To be safe, we prefer "unknown-size".
+    Info.memVT = MVT::Other;
+    Info.ptrVal = I.getArgOperand(0);
+    Info.align = Align(1); // Can we somehow recover the original alignment?
+    Info.flags = MachineMemOperand::MOLoad;
+    return true;
+
+  case Intrinsic::aie2p_fifo_st_push_512_bfp16:
+  case Intrinsic::aie2p_fifo_st_push_576_bfp16:
+  case Intrinsic::aie2p_fifo_st_push_544_bfp16:
+  case Intrinsic::aie2p_fifo_st_flush:
+  case Intrinsic::aie2p_fifo_st_flush_1d:
+  case Intrinsic::aie2p_fifo_st_flush_2d:
+  case Intrinsic::aie2p_fifo_st_flush_3d:
+  case Intrinsic::aie2p_fifo_st_flush_conv:
+  case Intrinsic::aie2p_fifo_st_flush_1d_conv:
+  case Intrinsic::aie2p_fifo_st_flush_2d_conv:
+  case Intrinsic::aie2p_fifo_st_flush_3d_conv:
+    // The HW does a 512-bit store at somewhere between addr and addr-128
+    // depending on the FIFO availability.
+    // A conservative access range would be [addr-128, addr+64)
+    // To be safe, we prefer "unknown-size".
+    Info.memVT = MVT::Other;
+    Info.ptrVal = I.getArgOperand(0);
+    Info.align = Align(4); // Can we somehow recover the original alignment?
+    Info.flags = MachineMemOperand::MOStore;
     return true;
   }
   return false;
