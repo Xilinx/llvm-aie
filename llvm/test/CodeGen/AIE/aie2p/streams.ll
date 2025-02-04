@@ -138,41 +138,41 @@ define dso_local void @_Z19test_put_ms_v64bf16Dv64_u6__bf16ii(<64 x bfloat> noun
 ; CHECK-LABEL: _Z19test_put_ms_v64bf16Dv64_u6__bf16ii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r2, #0; nopb ; nopx ; mov r28, r1
-; CHECK-NEXT:    mova r0, #1; vextract.32 r5, x4, r2, vaddsign1
-; CHECK-NEXT:    mova r3, #2; vextract.32 r6, x4, r0, vaddsign1
-; CHECK-NEXT:    mova r4, #3; mov ms, r5; vextract.32 r7, x4, r3, vaddsign1
-; CHECK-NEXT:    mova r5, #4; mov ms, r6; vextract.32 r6, x4, r4, vaddsign1
-; CHECK-NEXT:    mova r16, #5; mov ms, r7; vextract.32 r7, x4, r5, vaddsign1
-; CHECK-NEXT:    mova r17, #6; mov ms, r6; vextract.32 r6, x4, r16, vaddsign1
-; CHECK-NEXT:    mova r18, #7; mov ms, r7; vextract.32 r7, x4, r17, vaddsign1
-; CHECK-NEXT:    mova r19, #8; mov ms, r6; vextract.32 r6, x4, r18, vaddsign1
-; CHECK-NEXT:    mova r20, #9; mov ms, r7; vextract.32 r7, x4, r19, vaddsign1
-; CHECK-NEXT:    mova r21, #10; mov ms, r6; vextract.32 r6, x4, r20, vaddsign1
-; CHECK-NEXT:    mova r22, #11; mov ms, r7; vextract.32 r7, x4, r21, vaddsign1
-; CHECK-NEXT:    mova r23, #12; mov ms, r6; vextract.32 r6, x4, r22, vaddsign1
-; CHECK-NEXT:    mova r24, #13; mov ms, r7; vextract.32 r7, x4, r23, vaddsign1
-; CHECK-NEXT:    mova r25, #14; mov ms, r6; vextract.32 r6, x4, r24, vaddsign1
-; CHECK-NEXT:    mova r26, #15; mov ms, r7; vextract.32 r7, x4, r25, vaddsign1
-; CHECK-NEXT:    mov ms, r6; vextract.32 r6, x4, r26, vaddsign1
-; CHECK-NEXT:    mov ms, r7; vextract.32 r2, x5, r2, vaddsign1
-; CHECK-NEXT:    mov ms, r6; vextract.32 r0, x5, r0, vaddsign1
-; CHECK-NEXT:    mov ms, r2; vextract.32 r2, x5, r3, vaddsign1
-; CHECK-NEXT:    mov ms, r0; vextract.32 r0, x5, r4, vaddsign1
-; CHECK-NEXT:    mov ms, r2; vextract.32 r2, x5, r5, vaddsign1
-; CHECK-NEXT:    mov ms, r0; vextract.32 r0, x5, r16, vaddsign1
-; CHECK-NEXT:    mov ms, r2; vextract.32 r2, x5, r17, vaddsign1
-; CHECK-NEXT:    mov ms, r0; vextract.32 r0, x5, r18, vaddsign1
-; CHECK-NEXT:    mov ms, r2; vextract.32 r2, x5, r19, vaddsign1
-; CHECK-NEXT:    mov ms, r0; vextract.32 r0, x5, r20, vaddsign1
-; CHECK-NEXT:    mov ms, r2; vextract.32 r2, x5, r21, vaddsign1
-; CHECK-NEXT:    mov ms, r0; vextract.32 r0, x5, r22, vaddsign1
-; CHECK-NEXT:    mov ms, r2; vextract.32 r2, x5, r23, vaddsign1
-; CHECK-NEXT:    mov ms, r0; vextract.32 r0, x5, r24, vaddsign1
-; CHECK-NEXT:    mov ms, r2; ret lr; vextract.32 r2, x5, r25, vaddsign1
-; CHECK-NEXT:    mov ms, r0; vextract.32 r0, x5, r26, vaddsign1 // Delay Slot 5
-; CHECK-NEXT:    mov ms, r2 // Delay Slot 4
-; CHECK-NEXT:    mov ms, r0, r28 // Delay Slot 3
+; CHECK-NEXT:    nopa ; nopx ; mov r28, r1
+; CHECK-NEXT:    vextract.32 r0, x4, #0, vaddsign1
+; CHECK-NEXT:    vextract.32 r2, x4, #1, vaddsign1
+; CHECK-NEXT:    mov ms, r0; vextract.32 r0, x4, #2, vaddsign1
+; CHECK-NEXT:    mov ms, r2; vextract.32 r2, x4, #3, vaddsign1
+; CHECK-NEXT:    mov ms, r0; vextract.32 r0, x4, #4, vaddsign1
+; CHECK-NEXT:    mov ms, r2; vextract.32 r2, x4, #5, vaddsign1
+; CHECK-NEXT:    mov ms, r0; vextract.32 r0, x4, #6, vaddsign1
+; CHECK-NEXT:    mov ms, r2; vextract.32 r2, x4, #7, vaddsign1
+; CHECK-NEXT:    mov ms, r0; vextract.32 r0, x4, #8, vaddsign1
+; CHECK-NEXT:    mov ms, r2; vextract.32 r2, x4, #9, vaddsign1
+; CHECK-NEXT:    mov ms, r0; vextract.32 r0, x4, #10, vaddsign1
+; CHECK-NEXT:    mov ms, r2; vextract.32 r2, x4, #11, vaddsign1
+; CHECK-NEXT:    mov ms, r0; vextract.32 r0, x4, #12, vaddsign1
+; CHECK-NEXT:    mov ms, r2; vextract.32 r2, x4, #13, vaddsign1
+; CHECK-NEXT:    mov ms, r0; vextract.32 r0, x4, #14, vaddsign1
+; CHECK-NEXT:    mov ms, r2; vextract.32 r2, x4, #15, vaddsign1
+; CHECK-NEXT:    mov ms, r0; vextract.32 r0, x5, #0, vaddsign1
+; CHECK-NEXT:    mov ms, r2; vextract.32 r2, x5, #1, vaddsign1
+; CHECK-NEXT:    mov ms, r0; vextract.32 r0, x5, #2, vaddsign1
+; CHECK-NEXT:    mov ms, r2; vextract.32 r2, x5, #3, vaddsign1
+; CHECK-NEXT:    mov ms, r0; vextract.32 r0, x5, #4, vaddsign1
+; CHECK-NEXT:    mov ms, r2; vextract.32 r2, x5, #5, vaddsign1
+; CHECK-NEXT:    mov ms, r0; vextract.32 r0, x5, #6, vaddsign1
+; CHECK-NEXT:    mov ms, r2; vextract.32 r2, x5, #7, vaddsign1
+; CHECK-NEXT:    mov ms, r0; vextract.32 r0, x5, #8, vaddsign1
+; CHECK-NEXT:    mov ms, r2; vextract.32 r2, x5, #9, vaddsign1
+; CHECK-NEXT:    mov ms, r0; vextract.32 r0, x5, #10, vaddsign1
+; CHECK-NEXT:    mov ms, r2; vextract.32 r2, x5, #11, vaddsign1
+; CHECK-NEXT:    mov ms, r0; vextract.32 r0, x5, #12, vaddsign1
+; CHECK-NEXT:    mov ms, r2; vextract.32 r2, x5, #13, vaddsign1
+; CHECK-NEXT:    mov ms, r0; ret lr; vextract.32 r0, x5, #14, vaddsign1
+; CHECK-NEXT:    mov ms, r2; vextract.32 r2, x5, #15, vaddsign1 // Delay Slot 5
+; CHECK-NEXT:    mov ms, r0 // Delay Slot 4
+; CHECK-NEXT:    mov ms, r2, r28 // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:

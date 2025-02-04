@@ -1068,3 +1068,8 @@ def : PatInaccessibleMem<(int_aie2_clr16f_conf),
 // DIVS
 def : Pat<(int_aie2_divs eR31:$sd_in, eR:$src0, eR:$src1),
           (DIVS eR31:$sd_in, eR:$src0, eR:$src1)>;
+
+// G_AIE_[SZ]EXT_EXTRACT_VECTOR_ELT
+defm : Extract_512<i32, v64i8, (i32 eR:$idx), VEXTRACT_D8, VEXTRACT_S8>;
+defm : Extract_512<i32, v32i16, (i32 eR:$idx), VEXTRACT_D16, VEXTRACT_S16>;
+defm : Extract_512<i32, v16i32, (i32 eR:$idx), VEXTRACT_D32, VEXTRACT_S32>;

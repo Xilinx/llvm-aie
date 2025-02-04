@@ -1096,3 +1096,14 @@ foreach Ty = [v64i8, v32i16, v16i32, v8i64] in {
 def : Pat<(Ty (vshift_node VEC512:$src1, VEC512:$src2, (i32 eR:$shift))),
           (VSHIFT VEC512:$src1, VEC512:$src2, eR:$shift)>;
 }
+
+// G_AIE_[SZ]EXT_EXTRACT_VECTOR_ELT
+defm : Extract_512<i32, v64i8, (i32 eR:$idx), VEXTRACT_8_vec_extract_r_vaddSign0, VEXTRACT_8_vec_extract_r_vaddSign1>;
+defm : Extract_512<i32, v32i16, (i32 eR:$idx), VEXTRACT_16_vec_extract_r_vaddSign0, VEXTRACT_16_vec_extract_r_vaddSign1>;
+defm : Extract_512<i32, v16i32, (i32 eR:$idx), VEXTRACT_32_vec_extract_r_vaddSign0, VEXTRACT_32_vec_extract_r_vaddSign1>;
+defm : Extract_512<i64, v8i64, (i32 eR:$idx), VEXTRACT_64_vec_extract_r_vaddSign0, VEXTRACT_64_vec_extract_r_vaddSign1>;
+
+defm : Extract_512<i32, v64i8, (i32 c6u:$idx), VEXTRACT_8_vec_extract_imm_vaddSign0, VEXTRACT_8_vec_extract_imm_vaddSign1>;
+defm : Extract_512<i32, v32i16, (i32 c6u:$idx), VEXTRACT_16_vec_extract_imm_vaddSign0, VEXTRACT_16_vec_extract_imm_vaddSign1>;
+defm : Extract_512<i32, v16i32, (i32 c6u:$idx), VEXTRACT_32_vec_extract_imm_vaddSign0, VEXTRACT_32_vec_extract_imm_vaddSign1>;
+defm : Extract_512<i64, v8i64, (i32 c6u:$idx), VEXTRACT_64_vec_extract_imm_vaddSign0, VEXTRACT_64_vec_extract_imm_vaddSign1>;

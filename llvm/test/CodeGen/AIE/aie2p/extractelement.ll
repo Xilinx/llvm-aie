@@ -13,10 +13,10 @@ define i64 @extract_v4i64(<4 x i64> inreg %v) nounwind {
 ; AIE2P:         .p2align 4
 ; AIE2P-NEXT:  // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
-; AIE2P-NEXT:    nop // Delay Slot 5
-; AIE2P-NEXT:    mova r0, #3 // Delay Slot 4
+; AIE2P-NEXT:    nopx // Delay Slot 5
+; AIE2P-NEXT:    nop // Delay Slot 4
 ; AIE2P-NEXT:    vmov x0, bmll0 // Delay Slot 3
-; AIE2P-NEXT:    vextract.64 r1:r0, x0, r0, vaddsign1 // Delay Slot 2
+; AIE2P-NEXT:    vextract.64 r1:r0, x0, #3, vaddsign1 // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
   %1 = extractelement <4 x i64> %v, i32 3
   ret i64 %1
@@ -42,10 +42,10 @@ define i64 @extract_v8i64(<8 x i64> inreg %v) nounwind {
 ; AIE2P:         .p2align 4
 ; AIE2P-NEXT:  // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
-; AIE2P-NEXT:    nop // Delay Slot 5
-; AIE2P-NEXT:    mova r0, #7 // Delay Slot 4
+; AIE2P-NEXT:    nopx // Delay Slot 5
+; AIE2P-NEXT:    nop // Delay Slot 4
 ; AIE2P-NEXT:    vmov x0, bmll0 // Delay Slot 3
-; AIE2P-NEXT:    vextract.64 r1:r0, x0, r0, vaddsign1 // Delay Slot 2
+; AIE2P-NEXT:    vextract.64 r1:r0, x0, #7, vaddsign1 // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
   %1 = extractelement <8 x i64> %v, i32 7
   ret i64 %1
@@ -71,10 +71,10 @@ define i64 @extract_v16i64(<16 x i64> inreg %v) nounwind {
 ; AIE2P:         .p2align 4
 ; AIE2P-NEXT:  // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
-; AIE2P-NEXT:    nop // Delay Slot 5
-; AIE2P-NEXT:    mova r0, #7 // Delay Slot 4
+; AIE2P-NEXT:    nopx // Delay Slot 5
+; AIE2P-NEXT:    nop // Delay Slot 4
 ; AIE2P-NEXT:    vmov x0, bmll0 // Delay Slot 3
-; AIE2P-NEXT:    vextract.64 r1:r0, x0, r0, vaddsign1 // Delay Slot 2
+; AIE2P-NEXT:    vextract.64 r1:r0, x0, #7, vaddsign1 // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
   %1 = extractelement <16 x i64> %v, i32 7
   ret i64 %1
@@ -106,10 +106,10 @@ define i32 @extract_v64i32(<64 x i32> inreg %v) nounwind {
 ; AIE2P:         .p2align 4
 ; AIE2P-NEXT:  // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
-; AIE2P-NEXT:    nop // Delay Slot 5
-; AIE2P-NEXT:    mova r0, #7 // Delay Slot 4
+; AIE2P-NEXT:    nopx // Delay Slot 5
+; AIE2P-NEXT:    nop // Delay Slot 4
 ; AIE2P-NEXT:    vmov x0, bmll0 // Delay Slot 3
-; AIE2P-NEXT:    vextract.32 r0, x0, r0, vaddsign1 // Delay Slot 2
+; AIE2P-NEXT:    vextract.32 r0, x0, #7, vaddsign1 // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
   %1 = extractelement <64 x i32> %v, i32 7
   ret i32 %1
@@ -152,10 +152,10 @@ define i64 @extract_v32i64(<32 x i64> inreg %v) nounwind {
 ; AIE2P:         .p2align 4
 ; AIE2P-NEXT:  // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
-; AIE2P-NEXT:    nop // Delay Slot 5
-; AIE2P-NEXT:    mova r0, #7 // Delay Slot 4
+; AIE2P-NEXT:    nopx // Delay Slot 5
+; AIE2P-NEXT:    nop // Delay Slot 4
 ; AIE2P-NEXT:    vmov x0, bmll0 // Delay Slot 3
-; AIE2P-NEXT:    vextract.64 r1:r0, x0, r0, vaddsign1 // Delay Slot 2
+; AIE2P-NEXT:    vextract.64 r1:r0, x0, #7, vaddsign1 // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
   %1 = extractelement <32 x i64> %v, i32 7
   ret i64 %1
