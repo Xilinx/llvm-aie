@@ -560,12 +560,10 @@ void AIE2PInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
         .addReg(SrcReg, getKillRegState(KillSrc));
   } else if ((AIE2P::VEC512RegClass.contains(SrcReg) ||
               AIE2P::ACC512RegClass.contains(SrcReg) ||
-              AIE2P::eLdFifoHRegRegClass.contains(SrcReg) ||
-              AIE2P::eLdFifoLRegRegClass.contains(SrcReg)) &&
+              AIE2P::FIFO512RegClass.contains(SrcReg)) &&
              (AIE2P::VEC512RegClass.contains(DstReg) ||
               AIE2P::ACC512RegClass.contains(DstReg) ||
-              AIE2P::eLdFifoHRegRegClass.contains(DstReg) ||
-              AIE2P::eLdFifoLRegRegClass.contains(DstReg))) {
+              AIE2P::FIFO512RegClass.contains(DstReg))) {
     BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x), DstReg)
         .addReg(SrcReg, getKillRegState(KillSrc));
   } else if ((AIE2P::VEC1024RegClass.contains(SrcReg)) &&

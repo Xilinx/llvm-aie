@@ -120,11 +120,19 @@ body: |
     ; CHECK-NEXT: $x10 = VMOV_alu_mv_mv_x $lfh1
     ; CHECK-NEXT: $bmhh2 = VMOV_alu_mv_mv_x $lfl0
     ; CHECK-NEXT: $lfl0 = VMOV_alu_mv_mv_x $bmhh2
+    ; CHECK-NEXT: $x10 = VMOV_alu_mv_mv_x $lfe
+    ; CHECK-NEXT: $bmhh2 = VMOV_alu_mv_mv_x $lfe
+    ; CHECK-NEXT: $lfe = VMOV_alu_mv_mv_x $bmhh2
+    ; CHECK-NEXT: $lfe = VMOV_alu_mv_mv_x $lfl1
   $lfl1 = COPY $x4
   $lfh0 = COPY $lfl1
   $x10 = COPY $lfh1
   $bmhh2 = COPY $lfl0
   $lfl0 = COPY $bmhh2
+  $x10 = COPY $lfe
+  $bmhh2 = COPY $lfe
+  $lfe = COPY $bmhh2
+  $lfe = COPY $lfl1
 ...
 
 ---
