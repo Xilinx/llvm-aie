@@ -938,3 +938,87 @@ body:             |
     PseudoRET implicit $lr, implicit %30, implicit %31, implicit %25, implicit %26, implicit %27, implicit %28, implicit %29
 
 ...
+
+---
+name:            test_fifo_ld_fillx
+legalized:       true
+body:             |
+  bb.1.entry:
+    ; GREEDY-LABEL: name: test_fifo_ld_fillx
+    ; GREEDY: [[DEF:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[DEF1:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[DEF2:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[DEF3:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[DEF4:%[0-9]+]]:vregbank(<16 x s32>) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[DEF5:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF2]](<32 x s32>)
+    ; GREEDY-NEXT: [[COPY1:%[0-9]+]]:fiforegbank(<16 x s32>) = COPY [[DEF4]](<16 x s32>)
+    ; GREEDY-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:fiforegbank(<16 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.fillx), [[DEF1]](p0), [[COPY]](<32 x s32>), [[DEF3]](s32), [[COPY1]](<16 x s32>), [[DEF5]](s32)
+    ; GREEDY-NEXT: PseudoRET implicit $lr, implicit [[INT]](p0), implicit [[INT1]](<32 x s32>), implicit [[INT2]](s32), implicit [[INT3]](<16 x s32>)
+    ;
+    ; FAST-LABEL: name: test_fifo_ld_fillx
+    ; FAST: [[DEF:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[DEF1:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[DEF2:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[DEF3:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[DEF4:%[0-9]+]]:vregbank(<16 x s32>) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[DEF5:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF2]](<32 x s32>)
+    ; FAST-NEXT: [[COPY1:%[0-9]+]]:fiforegbank(<16 x s32>) = COPY [[DEF4]](<16 x s32>)
+    ; FAST-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:fiforegbank(<16 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.fillx), [[DEF1]](p0), [[COPY]](<32 x s32>), [[DEF3]](s32), [[COPY1]](<16 x s32>), [[DEF5]](s32)
+    ; FAST-NEXT: PseudoRET implicit $lr, implicit [[INT]](p0), implicit [[INT1]](<32 x s32>), implicit [[INT2]](s32), implicit [[INT3]](<16 x s32>)
+    %2:_(s20) = G_IMPLICIT_DEF
+    %4:_(p0) = G_IMPLICIT_DEF
+    %5:_(<32 x s32>) = G_IMPLICIT_DEF
+    %6:_(s32) = G_IMPLICIT_DEF
+    %10:_(<16 x s32>) = G_IMPLICIT_DEF
+    %11:_(s32) = G_IMPLICIT_DEF
+    %7:_(p0), %8:_(<32 x s32>), %9:_(s32), %12:_(<16 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.fillx), %4:_(p0), %5:_(<32 x s32>), %6:_(s32), %10:_(<16 x s32>), %11:_(s32)
+    PseudoRET implicit $lr, implicit %7, implicit %8, implicit %9, implicit %12
+
+...
+
+---
+name:            test_fifo_ld_popx
+tracksRegLiveness: true
+legalized: true
+regBankSelected: false
+body:             |
+  bb.1.entry:
+    liveins: $p0, $p1
+    ; GREEDY-LABEL: name: test_fifo_ld_popx
+    ; GREEDY: liveins: $p0, $p1
+    ; GREEDY-NEXT: {{  $}}
+    ; GREEDY-NEXT: [[DEF:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[DEF1:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[DEF2:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[DEF3:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[DEF4:%[0-9]+]]:vregbank(<16 x s32>) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[DEF5:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF2]](<32 x s32>)
+    ; GREEDY-NEXT: [[COPY1:%[0-9]+]]:fiforegbank(<16 x s32>) = COPY [[DEF4]](<16 x s32>)
+    ; GREEDY-NEXT: [[INT:%[0-9]+]]:vregbank(<64 x s8>), [[INT1:%[0-9]+]]:ptrregbank(p0), [[INT2:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT3:%[0-9]+]]:gprregbank(s32), [[INT4:%[0-9]+]]:fiforegbank(<16 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.popx), [[DEF1]](p0), [[COPY]](<32 x s32>), [[DEF3]](s32), [[COPY1]](<16 x s32>), [[DEF5]](s32)
+    ; GREEDY-NEXT: PseudoRET implicit $lr, implicit [[INT]](<64 x s8>), implicit [[INT1]](p0), implicit [[INT2]](<32 x s32>), implicit [[INT3]](s32), implicit [[INT4]](<16 x s32>)
+    ;
+    ; FAST-LABEL: name: test_fifo_ld_popx
+    ; FAST: liveins: $p0, $p1
+    ; FAST-NEXT: {{  $}}
+    ; FAST-NEXT: [[DEF:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[DEF1:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[DEF2:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[DEF3:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[DEF4:%[0-9]+]]:vregbank(<16 x s32>) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[DEF5:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF2]](<32 x s32>)
+    ; FAST-NEXT: [[COPY1:%[0-9]+]]:fiforegbank(<16 x s32>) = COPY [[DEF4]](<16 x s32>)
+    ; FAST-NEXT: [[INT:%[0-9]+]]:vregbank(<64 x s8>), [[INT1:%[0-9]+]]:ptrregbank(p0), [[INT2:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT3:%[0-9]+]]:gprregbank(s32), [[INT4:%[0-9]+]]:fiforegbank(<16 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.popx), [[DEF1]](p0), [[COPY]](<32 x s32>), [[DEF3]](s32), [[COPY1]](<16 x s32>), [[DEF5]](s32)
+    ; FAST-NEXT: PseudoRET implicit $lr, implicit [[INT]](<64 x s8>), implicit [[INT1]](p0), implicit [[INT2]](<32 x s32>), implicit [[INT3]](s32), implicit [[INT4]](<16 x s32>)
+    %3:_(s20) = G_IMPLICIT_DEF
+    %5:_(p0) = G_IMPLICIT_DEF
+    %6:_(<32 x s32>) = G_IMPLICIT_DEF
+    %7:_(s32) = G_IMPLICIT_DEF
+    %12:_(<16 x s32>) = G_IMPLICIT_DEF
+    %13:_(s32) = G_IMPLICIT_DEF
+    %8:_(<64 x s8>), %9:_(p0), %10:_(<32 x s32>), %11:_(s32), %14:_(<16 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.popx), %5:_(p0), %6:_(<32 x s32>), %7:_(s32), %12:_(<16 x s32>), %13:_(s32)
+    PseudoRET implicit $lr, implicit %8, implicit %9, implicit %10, implicit %11, implicit %14
+...
