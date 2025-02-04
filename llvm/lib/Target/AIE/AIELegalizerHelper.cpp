@@ -1286,32 +1286,36 @@ bool AIELegalizerHelper::legalizeG_SELECT(LegalizerHelper &Helper,
   return true;
 }
 
-// We legalize concat vector of 2 inputs. So, anything above we need to split
-// it. So far expect only 4 input. 1024bit vector from 4 256bit register and
-// 2048 accumulator register from 4 512bit registers.
+/// Legalize the incoming \p MI G_CONCAT_VECTORS to half the number of inputs,
+/// but at least 2 inputs.
 bool AIELegalizerHelper::legalizeG_CONCAT_VECTORS(LegalizerHelper &Helper,
                                                   MachineInstr &MI) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
-  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
 
-  const Register DstReg = MI.getOperand(0).getReg();
-  const Register SrcReg = MI.getOperand(1).getReg();
-  const LLT DstTy = MRI.getType(DstReg);
-  const LLT SrcTy = MRI.getType(SrcReg);
+  const auto [DstReg, DstTy, SrcReg, SrcTy] = MI.getFirst2RegLLTs();
   assert(DstTy.isVector() && SrcTy.isVector() && "Expected vector types");
-  assert(SrcTy.getSizeInBits() >= 256 && "Input vector size does not match!");
-  assert(MI.getNumOperands() == 5 && "Expected 4 inputs!");
+  assert(SrcTy.getSizeInBits() >= 128 &&
+         "Vectors < 128-bit should be lowered to insert vector elt");
 
-  const LLT DstVecEltTy = DstTy.getElementType();
-  const unsigned ElTySize = DstVecEltTy.getSizeInBits();
-  const LLT SplitTy = LLT::fixed_vector(DstTy.getNumElements() / 2, ElTySize);
-  const Register DstRegLo = MRI.createGenericVirtualRegister(SplitTy);
-  const Register DstRegHi = MRI.createGenericVirtualRegister(SplitTy);
-  MIRBuilder.buildConcatVectors(
-      {DstRegLo}, {MI.getOperand(1).getReg(), MI.getOperand(2).getReg()});
-  MIRBuilder.buildConcatVectors(
-      {DstRegHi}, {MI.getOperand(3).getReg(), MI.getOperand(4).getReg()});
-  MIRBuilder.buildConcatVectors({DstReg}, {DstRegLo, DstRegHi});
+  // Prevent infinite looping in the Legalizer. The base case should be legal
+  // and we should not reach this.
+  assert(DstTy.getSizeInBits() > 2 * SrcTy.getSizeInBits());
+
+  const LLT StepTy = SrcTy.multiplyElements(2);
+
+  // Concatenate pairs of source vector operands.
+  SmallVector<Register, 4> ConcatSteps;
+  for (size_t I = 1; I < MI.getNumOperands(); I += 2) {
+    const Register ConcatStep =
+        MIRBuilder
+            .buildConcatVectors({StepTy}, {MI.getOperand(I).getReg(),
+                                           MI.getOperand(I + 1).getReg()})
+            .getReg(0);
+    ConcatSteps.push_back(ConcatStep);
+  }
+
+  // Concatenate the resulting artifacts.
+  MIRBuilder.buildConcatVectors(DstReg, ConcatSteps);
   MI.eraseFromParent();
   return true;
 }
