@@ -466,8 +466,83 @@ entry:
   ret ptr %ptr3
 }
 
+define ptr @test_fifo_fillx(ptr noalias align 4 %ptr, <32 x i32> %buf, i32 %avail, <16 x i32> %extra_buf, i32 %conf) {
+  ; GMIR-LABEL: name: test_fifo_fillx
+  ; GMIR: bb.1.entry:
+  ; GMIR-NEXT:   liveins: $p1, $r0, $r1, $x0, $y2
+  ; GMIR-NEXT: {{  $}}
+  ; GMIR-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $p1
+  ; GMIR-NEXT:   [[COPY1:%[0-9]+]]:_(<32 x s32>) = COPY $y2
+  ; GMIR-NEXT:   [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
+  ; GMIR-NEXT:   [[COPY3:%[0-9]+]]:_(<16 x s32>) = COPY $x0
+  ; GMIR-NEXT:   [[COPY4:%[0-9]+]]:_(s32) = COPY $r1
+  ; GMIR-NEXT:   [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(<32 x s32>), [[INT2:%[0-9]+]]:_(s32), [[INT3:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.fillx), [[COPY]](p0), [[COPY1]](<32 x s32>), [[COPY2]](s32), [[COPY3]](<16 x s32>), [[COPY4]](s32) :: (load unknown-size from %ir.ptr, align 1)
+  ; GMIR-NEXT:   $p0 = COPY [[INT]](p0)
+  ; GMIR-NEXT:   PseudoRET implicit $lr, implicit $p0
+  ;
+  ; ISEL-LABEL: name: test_fifo_fillx
+  ; ISEL: bb.1.entry:
+  ; ISEL-NEXT:   liveins: $p1, $r0, $r1, $x0, $y2
+  ; ISEL-NEXT: {{  $}}
+  ; ISEL-NEXT:   [[COPY:%[0-9]+]]:eps = COPY $p1
+  ; ISEL-NEXT:   [[COPY1:%[0-9]+]]:vec1024 = COPY $y2
+  ; ISEL-NEXT:   [[COPY2:%[0-9]+]]:erf2 = COPY $r0
+  ; ISEL-NEXT:   [[COPY3:%[0-9]+]]:vec512 = COPY $x0
+  ; ISEL-NEXT:   [[COPY4:%[0-9]+]]:mr30_fifo_step_e1 = COPY $r1
+  ; ISEL-NEXT:   [[COPY5:%[0-9]+]]:eldfiforeg = COPY [[COPY1]]
+  ; ISEL-NEXT:   [[COPY6:%[0-9]+]]:fifo512 = COPY [[COPY3]]
+  ; ISEL-NEXT:   $lfe = COPY [[COPY6]]
+  ; ISEL-NEXT:   [[VLDB_FILLX_512_:%[0-9]+]]:eps, [[VLDB_FILLX_512_1:%[0-9]+]]:eldfiforeg, [[VLDB_FILLX_512_2:%[0-9]+]]:erf2 = VLDB_FILLX_512 [[COPY4]], [[COPY4]], [[COPY]], [[COPY5]], [[COPY2]], implicit-def $lfe, implicit $lfe :: (load unknown-size from %ir.ptr, align 1)
+  ; ISEL-NEXT:   [[COPY7:%[0-9]+]]:mextra = COPY $lfe
+  ; ISEL-NEXT:   $p0 = COPY [[VLDB_FILLX_512_]]
+  ; ISEL-NEXT:   PseudoRET implicit $lr, implicit $p0
+entry:
+  %res0 = tail call    { ptr, <32 x i32>, i32, <16 x i32>} @llvm.aie2p.fifo.ld.fillx.p0.p0(ptr %ptr, <32 x i32> %buf, i32 %avail, <16 x i32> %extra_buf, i32 %conf)
+  %ptr0 = extractvalue { ptr, <32 x i32>, i32, <16 x i32> } %res0, 0
+  ret ptr %ptr0
+}
+
+
+define ptr @test_fifo_popx(ptr noalias align 4 %ptr, <32 x i32> %buf, i32 %avail, <16 x i32> %extra_buf, i32 %conf) {
+  ; GMIR-LABEL: name: test_fifo_popx
+  ; GMIR: bb.1.entry:
+  ; GMIR-NEXT:   liveins: $p1, $r0, $r1, $x0, $y2
+  ; GMIR-NEXT: {{  $}}
+  ; GMIR-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $p1
+  ; GMIR-NEXT:   [[COPY1:%[0-9]+]]:_(<32 x s32>) = COPY $y2
+  ; GMIR-NEXT:   [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
+  ; GMIR-NEXT:   [[COPY3:%[0-9]+]]:_(<16 x s32>) = COPY $x0
+  ; GMIR-NEXT:   [[COPY4:%[0-9]+]]:_(s32) = COPY $r1
+  ; GMIR-NEXT:   [[INT:%[0-9]+]]:_(<64 x s8>), [[INT1:%[0-9]+]]:_(p0), [[INT2:%[0-9]+]]:_(<32 x s32>), [[INT3:%[0-9]+]]:_(s32), [[INT4:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.popx), [[COPY]](p0), [[COPY1]](<32 x s32>), [[COPY2]](s32), [[COPY3]](<16 x s32>), [[COPY4]](s32) :: (load unknown-size from %ir.ptr, align 1)
+  ; GMIR-NEXT:   $p0 = COPY [[INT1]](p0)
+  ; GMIR-NEXT:   PseudoRET implicit $lr, implicit $p0
+  ;
+  ; ISEL-LABEL: name: test_fifo_popx
+  ; ISEL: bb.1.entry:
+  ; ISEL-NEXT:   liveins: $p1, $r0, $r1, $x0, $y2
+  ; ISEL-NEXT: {{  $}}
+  ; ISEL-NEXT:   [[COPY:%[0-9]+]]:eps = COPY $p1
+  ; ISEL-NEXT:   [[COPY1:%[0-9]+]]:vec1024 = COPY $y2
+  ; ISEL-NEXT:   [[COPY2:%[0-9]+]]:erf2 = COPY $r0
+  ; ISEL-NEXT:   [[COPY3:%[0-9]+]]:vec512 = COPY $x0
+  ; ISEL-NEXT:   [[COPY4:%[0-9]+]]:mr30_fifo_step_e1 = COPY $r1
+  ; ISEL-NEXT:   [[COPY5:%[0-9]+]]:eldfiforeg = COPY [[COPY1]]
+  ; ISEL-NEXT:   [[COPY6:%[0-9]+]]:fifo512 = COPY [[COPY3]]
+  ; ISEL-NEXT:   $lfe = COPY [[COPY6]]
+  ; ISEL-NEXT:   [[VLDB_POPX_512_:%[0-9]+]]:vec512, [[VLDB_POPX_512_1:%[0-9]+]]:eps, [[VLDB_POPX_512_2:%[0-9]+]]:eldfiforeg, [[VLDB_POPX_512_3:%[0-9]+]]:erf2 = VLDB_POPX_512 [[COPY4]], [[COPY4]], [[COPY]], [[COPY5]], [[COPY2]], implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe :: (load unknown-size from %ir.ptr, align 1)
+  ; ISEL-NEXT:   [[COPY7:%[0-9]+]]:mextra = COPY $lfe
+  ; ISEL-NEXT:   $p0 = COPY [[VLDB_POPX_512_1]]
+  ; ISEL-NEXT:   PseudoRET implicit $lr, implicit $p0
+entry:
+  %res0 = tail call { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } @llvm.aie2p.fifo.ld.popx.p0.p0(ptr %ptr, <32 x i32> %buf, i32 %avail, <16 x i32> %extra_buf, i32 %conf)
+  %ptr0 = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } %res0, 1
+
+  ret ptr %ptr0
+}
 
 declare { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.fill(ptr, <32 x i32>, i32)
+declare { ptr, <32 x i32>, i32, <16 x i32> } @llvm.aie2p.fifo.ld.fillx(ptr, <32 x i32>, i32)
+declare { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.popx(ptr, <32 x i32>, i32, <16 x i32>, i32)
 declare { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.unaligned(ptr, <32 x i32>, i32)
 declare { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.1d.unaligned(ptr, <32 x i32>, i32, i20)
 declare { <64 x i8>, ptr, <32 x i32>, i32, i20 } @llvm.aie2p.fifo.ld.pop.2d.unaligned(ptr, <32 x i32>, i32, i20, i20, i20, i20)

@@ -302,6 +302,7 @@ class AIE2PDim3DRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> 
   def eLdFifoReg : AIE2PVector1024RegisterClass<(add lf0, lf1)>;
 
   def mFifoHLReg : AIE2PVector512RegisterClass<(add sfh, sfl, lfh0, lfh1, lfl0, lfl1, lfe)>;
+  def mExtra : AIE2PVector512RegisterClass<(add lfe)>;
   def mStFifo :  AIE2PVector1024RegisterClass<(add sf)>;
   def mStFifoh : AIE2PVector512RegisterClass<(add sfh)>;
   def mStFifol : AIE2PVector512RegisterClass<(add sfl)>;
