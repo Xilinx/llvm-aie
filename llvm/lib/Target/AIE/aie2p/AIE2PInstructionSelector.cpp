@@ -119,6 +119,8 @@ public:
   bool selectVLD_FIFO_POP_BFP16_1D(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVLD_FIFO_POP_BFP16_2D(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVLD_FIFO_POP_BFP16_3D(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectVLD_FIFO_FILLX(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectVLD_FIFO_POPX(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectSetI128(MachineInstr &I, MachineOperand &DstReg,
                      MachineOperand &SrcReg, MachineRegisterInfo &MRI);
   bool selectExtractI128(MachineInstr &I, Register DstReg, Register SrcReg,
@@ -400,6 +402,10 @@ bool AIE2PInstructionSelector::select(MachineInstr &I) {
       return selectVST_FIFO(I, MRI);
     case Intrinsic::aie2p_fifo_ld_fill:
       return selectVLD_FIFO_FILL(I, MRI);
+    case Intrinsic::aie2p_fifo_ld_fillx:
+      return selectVLD_FIFO_FILLX(I, MRI);
+    case Intrinsic::aie2p_fifo_ld_popx:
+      return selectVLD_FIFO_POPX(I, MRI);
     case Intrinsic::aie2p_fifo_ld_pop_unaligned:
       return selectVLD_FIFO_POP_512(I, MRI);
     case Intrinsic::aie2p_fifo_ld_pop_1d_unaligned:
@@ -2542,6 +2548,10 @@ unsigned getLoadFifoOpcode(MachineInstr &I) {
     return AIE2P::VLD_POP_544_3D_pseudo;
   case Intrinsic::aie2p_fifo_ld_pop_576_3d_bfp16:
     return AIE2P::VLD_POP_576_3D_pseudo;
+  case Intrinsic::aie2p_fifo_ld_fillx:
+    return AIE2P::VLDB_FILLX_512;
+  case Intrinsic::aie2p_fifo_ld_popx:
+    return AIE2P::VLDB_POPX_512;
   }
   llvm_unreachable("unreachable: Failed to get sparse load opcode");
   return AIE2P::INSTRUCTION_LIST_END;
@@ -2564,6 +2574,35 @@ bool AIE2PInstructionSelector::selectVLD_FIFO_FILL(MachineInstr &I,
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
 }
 
+bool AIE2PInstructionSelector::selectVLD_FIFO_FILLX(MachineInstr &I,
+                                                    MachineRegisterInfo &MRI) {
+  unsigned IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
+  assert(IntrinsicID == Intrinsic::aie2p_fifo_ld_fillx);
+  Register PtrOut = I.getOperand(0).getReg();
+  Register FifoOut = I.getOperand(1).getReg();
+  Register AvailOut = I.getOperand(2).getReg();
+  Register ExtraOut = I.getOperand(3).getReg();
+  Register PtrIn = I.getOperand(5).getReg();
+  Register FifoIn = I.getOperand(6).getReg();
+  Register AvailIn = I.getOperand(7).getReg();
+  Register ExtraIn = I.getOperand(8).getReg();
+  Register ConfIn = I.getOperand(9).getReg();
+
+  MIB.buildInstr(TargetOpcode::COPY, {AIE2P::lfe}, {}).addReg(ExtraIn);
+  MachineInstrBuilder MI =
+      MIB.buildInstr(getLoadFifoOpcode(I), {PtrOut, FifoOut, AvailOut},
+                     {ConfIn, ConfIn, PtrIn, FifoIn, AvailIn});
+  auto CopyBackLfeMI =
+      MIB.buildInstr(TargetOpcode::COPY, {ExtraOut}, {}).addReg(AIE2P::lfe);
+
+  MI.cloneMemRefs(I);
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI) &&
+         constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *CopyBackLfeMI,
+                                  AIE2P::mExtraRegClass,
+                                  CopyBackLfeMI->getOperand(0));
+}
+
 bool AIE2PInstructionSelector::selectVLD_FIFO_POP_512(
     MachineInstr &I, MachineRegisterInfo &MRI) {
   unsigned IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
@@ -2581,6 +2620,36 @@ bool AIE2PInstructionSelector::selectVLD_FIFO_POP_512(
   MI.cloneMemRefs(I);
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+}
+
+bool AIE2PInstructionSelector::selectVLD_FIFO_POPX(MachineInstr &I,
+                                                   MachineRegisterInfo &MRI) {
+  unsigned IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
+  assert(IntrinsicID == Intrinsic::aie2p_fifo_ld_popx);
+  Register VecOut = I.getOperand(0).getReg();
+  Register PtrOut = I.getOperand(1).getReg();
+  Register FifoOut = I.getOperand(2).getReg();
+  Register AvailOut = I.getOperand(3).getReg();
+  Register ExtraOut = I.getOperand(4).getReg();
+  Register PtrIn = I.getOperand(6).getReg();
+  Register FifoIn = I.getOperand(7).getReg();
+  Register AvailIn = I.getOperand(8).getReg();
+  Register ExtraIn = I.getOperand(9).getReg();
+  Register ConfIn = I.getOperand(10).getReg();
+
+  MIB.buildInstr(TargetOpcode::COPY, {AIE2P::lfe}, {}).addReg(ExtraIn);
+  MachineInstrBuilder MI =
+      MIB.buildInstr(getLoadFifoOpcode(I), {VecOut, PtrOut, FifoOut, AvailOut},
+                     {ConfIn, ConfIn, PtrIn, FifoIn, AvailIn});
+  auto CopyBackLfeMI =
+      MIB.buildInstr(TargetOpcode::COPY, {ExtraOut}, {}).addReg(AIE2P::lfe);
+
+  MI.cloneMemRefs(I);
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI) &&
+         constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *CopyBackLfeMI,
+                                  AIE2P::mExtraRegClass,
+                                  CopyBackLfeMI->getOperand(0));
 }
 
 bool AIE2PInstructionSelector::selectVLD_FIFO_POP_512_1D(

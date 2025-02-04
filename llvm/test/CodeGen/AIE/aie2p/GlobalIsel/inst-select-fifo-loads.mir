@@ -30,6 +30,62 @@ body:             |
 ...
 
 ---
+name:            ld_fillx
+tracksRegLiveness: true
+legalized: true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins:
+    ; CHECK-LABEL: name: ld_fillx
+    ; CHECK: [[DEF:%[0-9]+]]:eps = IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:eldfiforeg = IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:erf2 = IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:fifo512 = IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF4:%[0-9]+]]:mr30_fifo_step_e1 = IMPLICIT_DEF
+    ; CHECK-NEXT: $lfe = COPY [[DEF3]]
+    ; CHECK-NEXT: [[VLDB_FILLX_512_:%[0-9]+]]:eps, [[VLDB_FILLX_512_1:%[0-9]+]]:eldfiforeg, [[VLDB_FILLX_512_2:%[0-9]+]]:erf2 = VLDB_FILLX_512 [[DEF4]], [[DEF4]], [[DEF]], [[DEF1]], [[DEF2]], implicit-def $lfe, implicit $lfe
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:mextra = COPY $lfe
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDB_FILLX_512_]], implicit [[VLDB_FILLX_512_1]], implicit [[VLDB_FILLX_512_2]], implicit [[COPY]]
+    %2:modregbank(s20) = G_IMPLICIT_DEF
+    %4:ptrregbank(p0) = G_IMPLICIT_DEF
+    %5:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
+    %6:gprregbank(s32) = G_IMPLICIT_DEF
+    %10:fiforegbank(<16 x s32>) = G_IMPLICIT_DEF
+    %11:gprregbank(s32) = G_IMPLICIT_DEF
+    %7:ptrregbank(p0), %8:fiforegbank(<32 x s32>), %9:gprregbank(s32), %12:fiforegbank(<16 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.fillx), %4:ptrregbank(p0), %5:fiforegbank(<32 x s32>), %6:gprregbank(s32), %10:fiforegbank(<16 x s32>), %11:gprregbank(s32)
+    PseudoRET implicit $lr, implicit %7, implicit %8, implicit %9, implicit %12
+...
+
+---
+name:            ld_popx
+tracksRegLiveness: true
+legalized: true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins:
+    ; CHECK-LABEL: name: ld_popx
+    ; CHECK: [[DEF:%[0-9]+]]:eps = IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:eldfiforeg = IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF2:%[0-9]+]]:erf2 = IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF3:%[0-9]+]]:fifo512 = IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF4:%[0-9]+]]:mr30_fifo_step_e1 = IMPLICIT_DEF
+    ; CHECK-NEXT: $lfe = COPY [[DEF3]]
+    ; CHECK-NEXT: [[VLDB_POPX_512_:%[0-9]+]]:vec512, [[VLDB_POPX_512_1:%[0-9]+]]:eps, [[VLDB_POPX_512_2:%[0-9]+]]:eldfiforeg, [[VLDB_POPX_512_3:%[0-9]+]]:erf2 = VLDB_POPX_512 [[DEF4]], [[DEF4]], [[DEF]], [[DEF1]], [[DEF2]], implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:mextra = COPY $lfe
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDB_POPX_512_]], implicit [[VLDB_POPX_512_1]], implicit [[VLDB_POPX_512_2]], implicit [[VLDB_POPX_512_3]], implicit [[COPY]]
+    %3:modregbank(s20) = G_IMPLICIT_DEF
+    %5:ptrregbank(p0) = G_IMPLICIT_DEF
+    %6:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
+    %7:gprregbank(s32) = G_IMPLICIT_DEF
+    %12:fiforegbank(<16 x s32>) = G_IMPLICIT_DEF
+    %13:gprregbank(s32) = G_IMPLICIT_DEF
+    %8:vregbank(<64 x s8>), %9:ptrregbank(p0), %10:fiforegbank(<32 x s32>), %11:gprregbank(s32), %14:fiforegbank(<16 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.popx), %5:ptrregbank(p0), %6:fiforegbank(<32 x s32>), %7:gprregbank(s32), %12:fiforegbank(<16 x s32>), %13:gprregbank(s32)
+    PseudoRET implicit $lr, implicit %8, implicit %9, implicit %10, implicit %11, implicit %14
+...
+
+---
 name:            pop_unaligned
 tracksRegLiveness: true
 legalized: true
