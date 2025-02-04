@@ -1,0 +1,27 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
+
+---
+name: test_fsub_vec_2048
+body: |
+  bb.0:
+    liveins: $dm0, $dm1
+    ; CHECK-LABEL: name: test_fsub_vec_2048
+    ; CHECK: liveins: $dm0, $dm1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<64 x s32>) = COPY $dm0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<64 x s32>) = COPY $dm1
+    ; CHECK-NEXT: [[FSUB:%[0-9]+]]:_(<64 x s32>) = G_FSUB [[COPY]], [[COPY1]]
+    ; CHECK-NEXT: $dm0 = COPY [[FSUB]](<64 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $dm0
+    %1:_(<64 x s32>) = COPY $dm0
+    %3:_(<64 x s32>) = COPY $dm1
+    %4:_(<64 x s32>) = G_FSUB %1, %3
+    $dm0 = COPY %4(<64 x s32>)
+    PseudoRET implicit $lr, implicit $dm0
+...

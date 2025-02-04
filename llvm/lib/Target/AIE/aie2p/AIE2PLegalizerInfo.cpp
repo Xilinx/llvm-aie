@@ -225,7 +225,7 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
   getActionDefinitionsBuilder(G_FABS).customFor({S16, S32, S64}).scalarize(0);
 
   getActionDefinitionsBuilder({G_FADD, G_FSUB})
-      .legalFor({V16S32})
+      .legalFor({AccV64S32})
       .customFor({S16})
       .libcallFor({S32, S64});
 

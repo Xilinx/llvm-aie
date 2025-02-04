@@ -1,0 +1,27 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -mtriple aie2 -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
+
+---
+name: test_fadd_vec_512
+body: |
+  bb.0:
+    liveins: $x0, $x1
+    ; CHECK-LABEL: name: test_fadd_vec_512
+    ; CHECK: liveins: $x0, $x1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY $x0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<16 x s32>) = COPY $x1
+    ; CHECK-NEXT: [[FADD:%[0-9]+]]:_(<16 x s32>) = G_FADD [[COPY]], [[COPY1]]
+    ; CHECK-NEXT: $x0 = COPY [[FADD]](<16 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
+    %1:_(<16 x s32>) = COPY $x0
+    %3:_(<16 x s32>) = COPY $x1
+    %4:_(<16 x s32>) = G_FADD %1, %3
+    $x0 = COPY %4(<16 x s32>)
+    PseudoRET implicit $lr, implicit $x0
+...

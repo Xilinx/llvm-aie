@@ -1034,11 +1034,20 @@ bool AIELegalizerHelper::legalizeG_FCMP(
   return true;
 }
 
-static unsigned getFpTrunc32ToBF16IntrID(const AIEBaseSubtarget &ST) {
-  if (ST.isAIE2())
-    return Intrinsic::aie2_v16accfloat_to_v16bf16;
-  if (ST.isAIE2P())
-    return Intrinsic::aie2p_v16accfloat_to_v16bf16;
+static unsigned getFpTrunc32ToBF16IntrID(const AIEBaseSubtarget &ST,
+                                         const int InputRegSize) {
+  if (ST.isAIE2()) {
+    if (InputRegSize == 512)
+      return Intrinsic::aie2_v16accfloat_to_v16bf16;
+    llvm_unreachable("Unsupported InputRegSize for AIE2!");
+  }
+  if (ST.isAIE2P()) {
+    if (InputRegSize == 512)
+      return Intrinsic::aie2p_v16accfloat_to_v16bf16;
+    if (InputRegSize == 1024)
+      return Intrinsic::aie2p_v32accfloat_to_v32bf16;
+    llvm_unreachable("Unsupported InputRegSize for AIE2P!");
+  }
 
   llvm_unreachable("Called with unknown target triple!");
 }
@@ -1077,8 +1086,10 @@ bool AIELegalizerHelper::legalizeG_FPTRUNC(LegalizerHelper &Helper,
   }
 
   Register Vec256Reg = MRI.createGenericVirtualRegister(V16S16);
+  const int VecSize = MRI.getType(Acc512Reg).getSizeInBits();
   MIRBuilder
-      .buildIntrinsic(getFpTrunc32ToBF16IntrID(ST), Vec256Reg, true, false)
+      .buildIntrinsic(getFpTrunc32ToBF16IntrID(ST, VecSize), Vec256Reg, true,
+                      false)
       .addUse(Acc512Reg);
 
   MIRBuilder.buildInstr(TargetOpcode::G_EXTRACT_VECTOR_ELT, {DstReg},
@@ -1151,65 +1162,68 @@ bool AIELegalizerHelper::legalizeG_FADD_G_FSUB(LegalizerHelper &Helper,
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
   MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
 
-  Register DstReg = MI.getOperand(0).getReg();
-  Register SrcReg1 = MI.getOperand(1).getReg();
-  Register SrcReg2 = MI.getOperand(2).getReg();
+  const Register DstReg = MI.getOperand(0).getReg();
+  Register SrcLHS = MI.getOperand(1).getReg();
+  Register SrcRHS = MI.getOperand(2).getReg();
 
   assert(MRI.getType(DstReg) == LLT::scalar(16) &&
          "Expected bfloat16 type in custom legalization.");
 
-  const LLT S32 = LLT::scalar(32);
-  const LLT V16BF16 = LLT::fixed_vector(16, 16);
-  const LLT V16FP32 = LLT::fixed_vector(16, 32);
-  const LLT ACC512 = LLT::fixed_vector(8, 64);
-
-  Register NewSrcReg1 = MIRBuilder.buildFPExt(S32, SrcReg1).getReg(0);
-  Register NewSrcReg2 = MIRBuilder.buildFPExt(S32, SrcReg2).getReg(0);
-  Register IdxReg = MIRBuilder.buildConstant(S32, 0).getReg(0);
-  Register Src1Vec = MIRBuilder.buildUndef(V16FP32).getReg(0);
-  Register Src2Vec = MIRBuilder.buildUndef(V16FP32).getReg(0);
+  const LLT InsertVecLLT = ST.isAIE2P() ? V32FP32 : V16FP32;
+  SrcLHS = MIRBuilder.buildFPExt(S32, SrcLHS).getReg(0);
+  SrcRHS = MIRBuilder.buildFPExt(S32, SrcRHS).getReg(0);
+  const Register IdxReg = MIRBuilder.buildConstant(S32, 0).getReg(0);
+  const Register UndefVec = MIRBuilder.buildUndef(InsertVecLLT).getReg(0);
 
   const unsigned InsertEltOpc =
       ST.getInstrInfo()->getGenericInsertVectorEltOpcode();
-  Register NewSrc1 =
+  SrcLHS =
       MIRBuilder
-          .buildInstr(InsertEltOpc, {V16FP32}, {Src1Vec, NewSrcReg1, IdxReg})
+          .buildInstr(InsertEltOpc, {InsertVecLLT}, {UndefVec, SrcLHS, IdxReg})
           .getReg(0);
-  Register NewSrc2 =
+  SrcRHS =
       MIRBuilder
-          .buildInstr(InsertEltOpc, {V16FP32}, {Src2Vec, NewSrcReg2, IdxReg})
+          .buildInstr(InsertEltOpc, {InsertVecLLT}, {UndefVec, SrcRHS, IdxReg})
           .getReg(0);
 
-  Register FPOp;
-  if (MI.getOpcode() == TargetOpcode::G_FADD)
-    FPOp = MIRBuilder.buildFAdd(V16FP32, NewSrc1, NewSrc2).getReg(0);
-  else
-    FPOp = MIRBuilder.buildFSub(V16FP32, NewSrc1, NewSrc2).getReg(0);
-
-  Register FPRes;
-  if (ST.isAIE2()) {
-    FPRes = MIRBuilder.buildBitcast(ACC512, FPOp).getReg(0);
-  } else {
-    FPRes = FPOp;
+  if (ST.isAIE2P()) {
+    const Register ConcatLHS = MRI.createGenericVirtualRegister(V64FP32);
+    const Register ConcatRHS = MRI.createGenericVirtualRegister(V64FP32);
+    MIRBuilder.buildConcatVectors(ConcatLHS, {SrcLHS, UndefVec});
+    MIRBuilder.buildConcatVectors(ConcatRHS, {SrcRHS, UndefVec});
+    SrcLHS = ConcatLHS;
+    SrcRHS = ConcatRHS;
   }
 
-  Register Conv =
+  Register Res =
       MIRBuilder
-          .buildIntrinsic(getFpTrunc32ToBF16IntrID(ST), {V16BF16}, true, false)
-          .addUse(FPRes)
+          .buildInstr(MI.getOpcode(), {MRI.getType(SrcLHS)}, {SrcLHS, SrcRHS})
           .getReg(0);
 
-  auto Pad512 =
-      emitPadUndefVector(MRI, MIRBuilder, V16BF16.multiplyElements(2), Conv);
+  if (ST.isAIE2()) {
+    Res = MIRBuilder.buildBitcast(V8ACC64, Res).getReg(0);
+  } else if (ST.isAIE2P()) {
+    Res = MIRBuilder.buildUnmerge(V32ACC32, Res).getReg(0);
+  }
 
-  const Register ExtEltDstReg = MRI.createGenericVirtualRegister(S32);
-  const Register ExtDstReg = MRI.createGenericVirtualRegister(S32);
+  const int VecSize = MRI.getType(Res).getSizeInBits();
+  const LLT DstLLT = ST.isAIE2P() ? V32BF16 : V16BF16;
+  Res = MIRBuilder
+            .buildIntrinsic(getFpTrunc32ToBF16IntrID(ST, VecSize), {DstLLT},
+                            true, false)
+            .addUse(Res)
+            .getReg(0);
+
+  if (ST.isAIE2()) {
+    Res = emitPadUndefVector(MRI, MIRBuilder, V32BF16, Res);
+  }
+
   const unsigned ExtractEltOpc =
       ST.getInstrInfo()->getGenericExtractVectorEltOpcode(/*SignExt*/ true);
-  MIRBuilder.buildInstr(ExtractEltOpc, {ExtEltDstReg}, {Pad512, IdxReg});
-  MIRBuilder.buildAssertInstr(TargetOpcode::G_ASSERT_SEXT, ExtDstReg,
-                              ExtEltDstReg, 16);
-  MIRBuilder.buildTrunc(DstReg, ExtDstReg);
+  Res = MIRBuilder.buildInstr(ExtractEltOpc, {S32}, {Res, IdxReg}).getReg(0);
+  Res = MIRBuilder.buildAssertInstr(TargetOpcode::G_ASSERT_SEXT, {S32}, Res, 16)
+            .getReg(0);
+  MIRBuilder.buildTrunc(DstReg, Res);
 
   MI.eraseFromParent();
   return true;
