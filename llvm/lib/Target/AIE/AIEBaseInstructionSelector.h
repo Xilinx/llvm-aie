@@ -159,6 +159,8 @@ public:
   bool selectVSUB_MIN_MAX(MachineInstr &I, MachineRegisterInfo &MRI,
                           MachineIRBuilder &MIB);
 
+  void insertPtrAddForOffset(MachineRegisterInfo &MRI, MachineInstr &MemI);
+
 protected:
   void makeDeadMI(MachineInstr &MI, MachineRegisterInfo &MRI);
   virtual std::optional<AddressingModeInfo>

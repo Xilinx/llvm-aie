@@ -229,6 +229,13 @@ unsigned AIE2InstrInfo::getOffsetMemOpcode(unsigned BaseMemOpcode) const {
   llvm_unreachable("not a generic load/store");
 }
 
+bool AIE2InstrInfo::isGenericOffsetMemOpcode(unsigned Opcode) const {
+  return ((Opcode == AIE2::G_AIE_OFFSET_STORE) ||
+          (Opcode == AIE2::G_AIE_OFFSET_LOAD) ||
+          (Opcode == AIE2::G_AIE_OFFSET_SEXTLOAD) ||
+          (Opcode == AIE2::G_AIE_OFFSET_ZEXTLOAD));
+}
+
 std::optional<unsigned> AIE2InstrInfo::getCombinedPostIncOpcode(
     MachineInstr &BaseMemI, MachineInstr &PostIncI, TypeSize Size) const {
   switch (PostIncI.getOpcode()) {
@@ -1624,3 +1631,7 @@ unsigned AIE2InstrInfo::getScalarRegSize() const { return 32; }
 unsigned AIE2InstrInfo::getBasicVecRegSize() const { return 256; }
 
 unsigned AIE2InstrInfo::getBasicVectorBitSize() const { return 512; }
+
+unsigned AIE2InstrInfo::getMaxVectorBitSize() const { return 1024; }
+
+unsigned AIE2InstrInfo::getMaxSupportedLdStIncSize() const { return 512; }

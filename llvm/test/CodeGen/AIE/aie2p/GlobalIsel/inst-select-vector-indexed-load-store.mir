@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
 
 ---
@@ -69,14 +69,14 @@ body:             |
 ...
 
 ---
-name:            VEC256_LOAD_overMinOffset
+name:            VEC256_LOAD_outOfMinRangeOffset
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $p0
-    ; CHECK-LABEL: name: VEC256_LOAD_overMinOffset
+    ; CHECK-LABEL: name: VEC256_LOAD_outOfMinRangeOffset
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -151,14 +151,14 @@ body:             |
 ...
 
 ---
-name:            VEC512_LOAD_overMinOffset
+name:            VEC512_LOAD_outOfMinRangeOffset
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $p0
-    ; CHECK-LABEL: name: VEC512_LOAD_overMinOffset
+    ; CHECK-LABEL: name: VEC512_LOAD_outOfMinRangeOffset
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -233,14 +233,14 @@ body:             |
 ...
 
 ---
-name:            ACC512_LOAD_overMinOffset
+name:            ACC512_LOAD_outOfMinRangeOffset
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $p0
-    ; CHECK-LABEL: name: ACC512_LOAD_overMinOffset
+    ; CHECK-LABEL: name: ACC512_LOAD_outOfMinRangeOffset
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -315,14 +315,14 @@ body:             |
 ...
 
 ---
-name:            VEC256_STORE_overMinOffset
+name:            VEC256_STORE_outOfMinRangeOffset
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $p0, $wl0
-    ; CHECK-LABEL: name: VEC256_STORE_overMinOffset
+    ; CHECK-LABEL: name: VEC256_STORE_outOfMinRangeOffset
     ; CHECK: liveins: $p0, $wl0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec256 = COPY $wl0
@@ -397,14 +397,14 @@ body:             |
 ...
 
 ---
-name:            VEC512_STORE_overMinOffset
+name:            VEC512_STORE_outOfMinRangeOffset
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $p0, $x0
-    ; CHECK-LABEL: name: VEC512_STORE_overMinOffset
+    ; CHECK-LABEL: name: VEC512_STORE_outOfMinRangeOffset
     ; CHECK: liveins: $p0, $x0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
@@ -479,14 +479,14 @@ body:             |
 ...
 
 ---
-name:            ACC512_STORE_overMinOffset
+name:            ACC512_STORE_outOfMinRangeOffset
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $bmll0, $p0
-    ; CHECK-LABEL: name: ACC512_STORE_overMinOffset
+    ; CHECK-LABEL: name: ACC512_STORE_outOfMinRangeOffset
     ; CHECK: liveins: $bmll0, $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:acc512 = COPY $bmll0
@@ -497,4 +497,937 @@ body:             |
     %1:ptrregbank(p0) = COPY $p0
     %2:modregbank(s20) = G_CONSTANT i20 -576
     G_AIE_OFFSET_STORE %0:accregbank(<8 x s64>), %1:ptrregbank(p0), %2:modregbank(s20) :: (store (<8 x s64>))
+...
+
+---
+name:            FIFO512_LOAD_maxOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: FIFO512_LOAD_maxOffset
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 448 :: (load (<16 x s32>))
+    ; CHECK-NEXT: $lfl0 = COPY [[VLDA_dmx_lda_fifohl_idx_imm]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 448
+    %0:fiforegbank(<16 x s32>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<16 x s32>))
+    $lfl0 = COPY %0:fiforegbank(<16 x s32>)
+...
+
+---
+name:            FIFO512_LOAD_minOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: FIFO512_LOAD_minOffset
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], -512 :: (load (<16 x s32>))
+    ; CHECK-NEXT: $lfl0 = COPY [[VLDA_dmx_lda_fifohl_idx_imm]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 -512
+    %0:fiforegbank(<16 x s32>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<16 x s32>))
+    $lfl0 = COPY %0:fiforegbank(<16 x s32>)
+...
+
+---
+name:            FIFO512_LOAD_overMaxOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: FIFO512_LOAD_overMaxOffset
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 512
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx [[COPY]], [[MOV_PD_imm11_pseudo]] :: (load (<16 x s32>))
+    ; CHECK-NEXT: $lfl0 = COPY [[VLDA_dmx_lda_fifohl_idx]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 512
+    %0:fiforegbank(<16 x s32>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<16 x s32>))
+    $lfl0 = COPY %0:fiforegbank(<16 x s32>)
+...
+
+---
+name:            FIFO512_LOAD_outOfMinRangeOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: FIFO512_LOAD_outOfMinRangeOffset
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo -576
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx [[COPY]], [[MOV_PD_imm11_pseudo]] :: (load (<16 x s32>))
+    ; CHECK-NEXT: $lfl0 = COPY [[VLDA_dmx_lda_fifohl_idx]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 -576
+    %0:fiforegbank(<16 x s32>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<16 x s32>))
+    $lfl0 = COPY %0:fiforegbank(<16 x s32>)
+...
+
+---
+name:            FIFO512_STORE_maxOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $lfl0
+    ; CHECK-LABEL: name: FIFO512_STORE_maxOffset
+    ; CHECK: liveins: $p0, $lfl0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:fifo512 = COPY $lfl0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY]], [[COPY1]], 448 :: (store (<16 x s32>))
+    %0:fiforegbank(<16 x s32>) = COPY $lfl0
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 448
+    G_AIE_OFFSET_STORE %0:fiforegbank(<16 x s32>), %1:ptrregbank(p0), %2:modregbank(s20) :: (store (<16 x s32>))
+...
+
+---
+name:            FIFO512_STORE_minOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $lfl0
+    ; CHECK-LABEL: name: FIFO512_STORE_minOffset
+    ; CHECK: liveins: $p0, $lfl0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:fifo512 = COPY $lfl0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY]], [[COPY1]], -512 :: (store (<16 x s32>))
+    %0:fiforegbank(<16 x s32>) = COPY $lfl0
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 -512
+    G_AIE_OFFSET_STORE %0:fiforegbank(<16 x s32>), %1:ptrregbank(p0), %2:modregbank(s20) :: (store (<16 x s32>))
+...
+
+---
+name:            FIFO512_STORE_overMaxOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $lfl0
+    ; CHECK-LABEL: name: FIFO512_STORE_overMaxOffset
+    ; CHECK: liveins: $p0, $lfl0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:fifo512 = COPY $lfl0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 512
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx [[COPY]], [[COPY1]], [[MOV_PD_imm11_pseudo]] :: (store (<16 x s32>))
+    %0:fiforegbank(<16 x s32>) = COPY $lfl0
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 512
+    G_AIE_OFFSET_STORE %0:fiforegbank(<16 x s32>), %1:ptrregbank(p0), %2:modregbank(s20) :: (store (<16 x s32>))
+...
+
+---
+name:            FIFO512_STORE_outOfMinRangeOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $lfl0
+    ; CHECK-LABEL: name: FIFO512_STORE_outOfMinRangeOffset
+    ; CHECK: liveins: $p0, $lfl0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:fifo512 = COPY $lfl0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo -576
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx [[COPY]], [[COPY1]], [[MOV_PD_imm11_pseudo]] :: (store (<16 x s32>))
+    %0:fiforegbank(<16 x s32>) = COPY $lfl0
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 -576
+    G_AIE_OFFSET_STORE %0:fiforegbank(<16 x s32>), %1:ptrregbank(p0), %2:modregbank(s20) :: (store (<16 x s32>))
+...
+
+---
+name:            VEC1024_LOAD_maxOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: VEC1024_LOAD_maxOffset
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[VLDA_dmx_lda_x_idx_imm:%[0-9]+]]:vec512 = VLDA_dmx_lda_x_idx_imm [[COPY]], 384 :: (load (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_x_idx_imm1:%[0-9]+]]:vec512 = VLDA_dmx_lda_x_idx_imm [[COPY]], 448 :: (load (<16 x s32>) from unknown-address + 64)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec1024 = REG_SEQUENCE [[VLDA_dmx_lda_x_idx_imm]], %subreg.sub_512_lo, [[VLDA_dmx_lda_x_idx_imm1]], %subreg.sub_512_hi
+    ; CHECK-NEXT: $y0 = COPY [[REG_SEQUENCE]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 384
+    %0:vregbank(<32 x s32>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<32 x s32>))
+    $y0 = COPY %0:vregbank(<32 x s32>)
+...
+
+---
+name:            VEC1024_LOAD_minOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: VEC1024_LOAD_minOffset
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[VLDA_dmx_lda_x_idx_imm:%[0-9]+]]:vec512 = VLDA_dmx_lda_x_idx_imm [[COPY]], -448 :: (load (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_x_idx_imm1:%[0-9]+]]:vec512 = VLDA_dmx_lda_x_idx_imm [[COPY]], -384 :: (load (<16 x s32>) from unknown-address + 64)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec1024 = REG_SEQUENCE [[VLDA_dmx_lda_x_idx_imm]], %subreg.sub_512_lo, [[VLDA_dmx_lda_x_idx_imm1]], %subreg.sub_512_hi
+    ; CHECK-NEXT: $y0 = COPY [[REG_SEQUENCE]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 -448
+    %0:vregbank(<32 x s32>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<32 x s32>))
+    $y0 = COPY %0:vregbank(<32 x s32>)
+...
+
+---
+name:            VEC1024_LOAD_overMaxOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: VEC1024_LOAD_overMaxOffset
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 448
+    ; CHECK-NEXT: [[VLDA_dmx_lda_x_idx_imm:%[0-9]+]]:vec512 = VLDA_dmx_lda_x_idx_imm [[PADD_imm_pseudo]], 0 :: (load (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_x_idx_imm1:%[0-9]+]]:vec512 = VLDA_dmx_lda_x_idx_imm [[PADD_imm_pseudo]], 64 :: (load (<16 x s32>) from unknown-address + 64)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec1024 = REG_SEQUENCE [[VLDA_dmx_lda_x_idx_imm]], %subreg.sub_512_lo, [[VLDA_dmx_lda_x_idx_imm1]], %subreg.sub_512_hi
+    ; CHECK-NEXT: $y0 = COPY [[REG_SEQUENCE]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 448
+    %0:vregbank(<32 x s32>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<32 x s32>))
+    $y0 = COPY %0:vregbank(<32 x s32>)
+...
+
+---
+name:            VEC1024_LOAD_outOfMinRangeOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: VEC1024_LOAD_outOfMinRangeOffset
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo -576
+    ; CHECK-NEXT: [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[MOV_PD_imm11_pseudo]]
+    ; CHECK-NEXT: [[VLDA_dmx_lda_x_idx_imm:%[0-9]+]]:vec512 = VLDA_dmx_lda_x_idx_imm [[PADD_mod_pseudo]], 0 :: (load (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_x_idx_imm1:%[0-9]+]]:vec512 = VLDA_dmx_lda_x_idx_imm [[PADD_mod_pseudo]], 64 :: (load (<16 x s32>) from unknown-address + 64)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec1024 = REG_SEQUENCE [[VLDA_dmx_lda_x_idx_imm]], %subreg.sub_512_lo, [[VLDA_dmx_lda_x_idx_imm1]], %subreg.sub_512_hi
+    ; CHECK-NEXT: $y0 = COPY [[REG_SEQUENCE]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 -576
+    %0:vregbank(<32 x s32>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<32 x s32>))
+    $y0 = COPY %0:vregbank(<32 x s32>)
+...
+
+---
+name:            VEC1024_STORE_maxOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $lfl0
+    ; CHECK-LABEL: name: VEC1024_STORE_maxOffset
+    ; CHECK: liveins: $p0, $lfl0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec1024 = COPY $y0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec512 = COPY [[COPY]].sub_512_lo
+    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY2]], [[COPY1]], 384 :: (store (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:vec512 = COPY [[COPY]].sub_512_hi
+    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY3]], [[COPY1]], 448 :: (store (<16 x s32>) into unknown-address + 64)
+    %0:vregbank(<32 x s32>) = COPY $y0
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 384
+    G_AIE_OFFSET_STORE %0:vregbank(<32 x s32>), %1:ptrregbank(p0), %2:modregbank(s20) :: (store (<32 x s32>))
+...
+
+---
+name:            VEC1024_STORE_minOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $y0
+    ; CHECK-LABEL: name: VEC1024_STORE_minOffset
+    ; CHECK: liveins: $p0, $y0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec1024 = COPY $y0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec512 = COPY [[COPY]].sub_512_lo
+    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY2]], [[COPY1]], -512 :: (store (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:vec512 = COPY [[COPY]].sub_512_hi
+    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY3]], [[COPY1]], -448 :: (store (<16 x s32>) into unknown-address + 64)
+    %0:vregbank(<32 x s32>) = COPY $y0
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 -512
+    G_AIE_OFFSET_STORE %0:vregbank(<32 x s32>), %1:ptrregbank(p0), %2:modregbank(s20) :: (store (<32 x s32>))
+...
+
+---
+name:            VEC1024_STORE_overMaxOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $y0
+    ; CHECK-LABEL: name: VEC1024_STORE_overMaxOffset
+    ; CHECK: liveins: $p0, $y0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec1024 = COPY $y0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY1]], 448
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec512 = COPY [[COPY]].sub_512_lo
+    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY2]], [[PADD_imm_pseudo]], 0 :: (store (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:vec512 = COPY [[COPY]].sub_512_hi
+    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY3]], [[PADD_imm_pseudo]], 64 :: (store (<16 x s32>) into unknown-address + 64)
+    %0:vregbank(<32 x s32>) = COPY $y0
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 448
+    G_AIE_OFFSET_STORE %0:vregbank(<32 x s32>), %1:ptrregbank(p0), %2:modregbank(s20) :: (store (<32 x s32>))
+...
+
+---
+name:            VEC1024_STORE_outOfMinRangeOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $y0
+    ; CHECK-LABEL: name: VEC1024_STORE_outOfMinRangeOffset
+    ; CHECK: liveins: $p0, $y0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec1024 = COPY $y0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo -576
+    ; CHECK-NEXT: [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY1]], [[MOV_PD_imm11_pseudo]]
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec512 = COPY [[COPY]].sub_512_lo
+    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY2]], [[PADD_mod_pseudo]], 0 :: (store (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:vec512 = COPY [[COPY]].sub_512_hi
+    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY3]], [[PADD_mod_pseudo]], 64 :: (store (<16 x s32>) into unknown-address + 64)
+    %0:vregbank(<32 x s32>) = COPY $y0
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 -576
+    G_AIE_OFFSET_STORE %0:vregbank(<32 x s32>), %1:ptrregbank(p0), %2:modregbank(s20) :: (store (<32 x s32>))
+...
+
+---
+name:            ACC1024_LOAD_maxOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: ACC1024_LOAD_maxOffset
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 384 :: (load (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm1:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 448 :: (load (<16 x s32>) from unknown-address + 64)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_dmx_lda_bm_idx_imm]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm1]], %subreg.sub_512_acc_hi
+    ; CHECK-NEXT: $cml0 = COPY [[REG_SEQUENCE]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 384
+    %0:accregbank(<32 x s32>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<32 x s32>))
+    $cml0 = COPY %0:accregbank(<32 x s32>)
+...
+
+---
+name:            ACC1024_LOAD_minOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: ACC1024_LOAD_minOffset
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], -448 :: (load (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm1:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], -384 :: (load (<16 x s32>) from unknown-address + 64)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_dmx_lda_bm_idx_imm]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm1]], %subreg.sub_512_acc_hi
+    ; CHECK-NEXT: $cml0 = COPY [[REG_SEQUENCE]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 -448
+    %0:accregbank(<32 x s32>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<32 x s32>))
+    $cml0 = COPY %0:accregbank(<32 x s32>)
+...
+
+---
+name:            ACC1024_LOAD_overMaxOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: ACC1024_LOAD_overMaxOffset
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 448
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[PADD_imm_pseudo]], 0 :: (load (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm1:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[PADD_imm_pseudo]], 64 :: (load (<16 x s32>) from unknown-address + 64)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_dmx_lda_bm_idx_imm]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm1]], %subreg.sub_512_acc_hi
+    ; CHECK-NEXT: $cml0 = COPY [[REG_SEQUENCE]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 448
+    %0:accregbank(<32 x s32>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<32 x s32>))
+    $cml0 = COPY %0:accregbank(<32 x s32>)
+...
+
+---
+name:            ACC1024_LOAD_outOfMinRangeOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: ACC1024_LOAD_outOfMinRangeOffset
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo -576
+    ; CHECK-NEXT: [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[MOV_PD_imm11_pseudo]]
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[PADD_mod_pseudo]], 0 :: (load (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm1:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[PADD_mod_pseudo]], 64 :: (load (<16 x s32>) from unknown-address + 64)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_dmx_lda_bm_idx_imm]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm1]], %subreg.sub_512_acc_hi
+    ; CHECK-NEXT: $cml0 = COPY [[REG_SEQUENCE]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 -576
+    %0:accregbank(<32 x s32>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<32 x s32>))
+    $cml0 = COPY %0:accregbank(<32 x s32>)
+...
+
+---
+name:            ACC1024_STORE_maxOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $cml0
+    ; CHECK-LABEL: name: ACC1024_STORE_maxOffset
+    ; CHECK: liveins: $p0, $cml0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:acc1024 = COPY $cml0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc512 = COPY [[COPY]].sub_512_acc_lo
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY2]], [[COPY1]], 384 :: (store (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY [[COPY]].sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY3]], [[COPY1]], 448 :: (store (<16 x s32>) into unknown-address + 64)
+    %0:accregbank(<32 x s32>) = COPY $cml0
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 384
+    G_AIE_OFFSET_STORE %0:accregbank(<32 x s32>), %1:ptrregbank(p0), %2:modregbank(s20) :: (store (<32 x s32>))
+...
+
+---
+name:            ACC1024_STORE_minOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $cml0
+    ; CHECK-LABEL: name: ACC1024_STORE_minOffset
+    ; CHECK: liveins: $p0, $cml0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:acc1024 = COPY $cml0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc512 = COPY [[COPY]].sub_512_acc_lo
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY2]], [[COPY1]], -512 :: (store (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY [[COPY]].sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY3]], [[COPY1]], -448 :: (store (<16 x s32>) into unknown-address + 64)
+    %0:accregbank(<32 x s32>) = COPY $cml0
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 -512
+    G_AIE_OFFSET_STORE %0:accregbank(<32 x s32>), %1:ptrregbank(p0), %2:modregbank(s20) :: (store (<32 x s32>))
+...
+
+---
+name:            ACC1024_STORE_overMaxOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $cml0
+    ; CHECK-LABEL: name: ACC1024_STORE_overMaxOffset
+    ; CHECK: liveins: $p0, $cml0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:acc1024 = COPY $cml0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY1]], 448
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc512 = COPY [[COPY]].sub_512_acc_lo
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY2]], [[PADD_imm_pseudo]], 0 :: (store (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY [[COPY]].sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY3]], [[PADD_imm_pseudo]], 64 :: (store (<16 x s32>) into unknown-address + 64)
+    %0:accregbank(<32 x s32>) = COPY $cml0
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 448
+    G_AIE_OFFSET_STORE %0:accregbank(<32 x s32>), %1:ptrregbank(p0), %2:modregbank(s20) :: (store (<32 x s32>))
+...
+
+---
+name:            ACC1024_STORE_outOfMinRangeOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $cml0
+    ; CHECK-LABEL: name: ACC1024_STORE_outOfMinRangeOffset
+    ; CHECK: liveins: $p0, $cml0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:acc1024 = COPY $cml0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo -576
+    ; CHECK-NEXT: [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY1]], [[MOV_PD_imm11_pseudo]]
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc512 = COPY [[COPY]].sub_512_acc_lo
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY2]], [[PADD_mod_pseudo]], 0 :: (store (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY [[COPY]].sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY3]], [[PADD_mod_pseudo]], 64 :: (store (<16 x s32>) into unknown-address + 64)
+    %0:accregbank(<32 x s32>) = COPY $cml0
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 -576
+    G_AIE_OFFSET_STORE %0:accregbank(<32 x s32>), %1:ptrregbank(p0), %2:modregbank(s20) :: (store (<32 x s32>))
+...
+
+---
+name:            FIFO1024_LOAD_maxOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: FIFO1024_LOAD_maxOffset
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 384 :: (load (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm1:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 448 :: (load (<16 x s32>) from unknown-address + 64)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:fifo1024 = REG_SEQUENCE [[VLDA_dmx_lda_fifohl_idx_imm]], %subreg.sub_lo_fifo, [[VLDA_dmx_lda_fifohl_idx_imm1]], %subreg.sub_hi_fifo
+    ; CHECK-NEXT: $lf0 = COPY [[REG_SEQUENCE]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 384
+    %0:fiforegbank(<32 x s32>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<32 x s32>))
+    $lf0 = COPY %0:fiforegbank(<32 x s32>)
+...
+
+---
+name:            FIFO1024_LOAD_minOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: FIFO1024_LOAD_minOffset
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], -448 :: (load (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm1:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], -384 :: (load (<16 x s32>) from unknown-address + 64)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:fifo1024 = REG_SEQUENCE [[VLDA_dmx_lda_fifohl_idx_imm]], %subreg.sub_lo_fifo, [[VLDA_dmx_lda_fifohl_idx_imm1]], %subreg.sub_hi_fifo
+    ; CHECK-NEXT: $lf0 = COPY [[REG_SEQUENCE]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 -448
+    %0:fiforegbank(<32 x s32>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<32 x s32>))
+    $lf0 = COPY %0:fiforegbank(<32 x s32>)
+...
+
+---
+name:            FIFO1024_LOAD_overMaxOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: FIFO1024_LOAD_overMaxOffset
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 448
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[PADD_imm_pseudo]], 0 :: (load (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm1:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[PADD_imm_pseudo]], 64 :: (load (<16 x s32>) from unknown-address + 64)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:fifo1024 = REG_SEQUENCE [[VLDA_dmx_lda_fifohl_idx_imm]], %subreg.sub_lo_fifo, [[VLDA_dmx_lda_fifohl_idx_imm1]], %subreg.sub_hi_fifo
+    ; CHECK-NEXT: $lf0 = COPY [[REG_SEQUENCE]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 448
+    %0:fiforegbank(<32 x s32>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<32 x s32>))
+    $lf0 = COPY %0:fiforegbank(<32 x s32>)
+...
+
+---
+name:            FIFO1024_LOAD_outOfMinRangeOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: FIFO1024_LOAD_outOfMinRangeOffset
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo -576
+    ; CHECK-NEXT: [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[MOV_PD_imm11_pseudo]]
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[PADD_mod_pseudo]], 0 :: (load (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm1:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[PADD_mod_pseudo]], 64 :: (load (<16 x s32>) from unknown-address + 64)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:fifo1024 = REG_SEQUENCE [[VLDA_dmx_lda_fifohl_idx_imm]], %subreg.sub_lo_fifo, [[VLDA_dmx_lda_fifohl_idx_imm1]], %subreg.sub_hi_fifo
+    ; CHECK-NEXT: $lf0 = COPY [[REG_SEQUENCE]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 -576
+    %0:fiforegbank(<32 x s32>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<32 x s32>))
+    $lf0 = COPY %0:fiforegbank(<32 x s32>)
+...
+
+---
+name:            FIFO1024_STORE_maxOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $lf0
+    ; CHECK-LABEL: name: FIFO1024_STORE_maxOffset
+    ; CHECK: liveins: $p0, $lf0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:fifo1024 = COPY $lf0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:fifo512 = COPY [[COPY]].sub_lo_fifo
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY2]], [[COPY1]], 384 :: (store (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:fifo512 = COPY [[COPY]].sub_hi_fifo
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY3]], [[COPY1]], 448 :: (store (<16 x s32>) into unknown-address + 64)
+    %0:fiforegbank(<32 x s32>) = COPY $lf0
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 384
+    G_AIE_OFFSET_STORE %0:fiforegbank(<32 x s32>), %1:ptrregbank(p0), %2:modregbank(s20) :: (store (<32 x s32>))
+...
+
+---
+name:            FIFO1024_STORE_minOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $lf0
+    ; CHECK-LABEL: name: FIFO1024_STORE_minOffset
+    ; CHECK: liveins: $p0, $lf0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:fifo1024 = COPY $lf0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:fifo512 = COPY [[COPY]].sub_lo_fifo
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY2]], [[COPY1]], -512 :: (store (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:fifo512 = COPY [[COPY]].sub_hi_fifo
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY3]], [[COPY1]], -448 :: (store (<16 x s32>) into unknown-address + 64)
+    %0:fiforegbank(<32 x s32>) = COPY $lf0
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 -512
+    G_AIE_OFFSET_STORE %0:fiforegbank(<32 x s32>), %1:ptrregbank(p0), %2:modregbank(s20) :: (store (<32 x s32>))
+...
+
+---
+name:            FIFO1024_STORE_overMaxOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $lf0
+    ; CHECK-LABEL: name: FIFO1024_STORE_overMaxOffset
+    ; CHECK: liveins: $p0, $lf0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:fifo1024 = COPY $lf0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY1]], 448
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:fifo512 = COPY [[COPY]].sub_lo_fifo
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY2]], [[PADD_imm_pseudo]], 0 :: (store (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:fifo512 = COPY [[COPY]].sub_hi_fifo
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY3]], [[PADD_imm_pseudo]], 64 :: (store (<16 x s32>) into unknown-address + 64)
+    %0:fiforegbank(<32 x s32>) = COPY $lf0
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 448
+    G_AIE_OFFSET_STORE %0:fiforegbank(<32 x s32>), %1:ptrregbank(p0), %2:modregbank(s20) :: (store (<32 x s32>))
+...
+
+---
+name:            FIFO1024_STORE_outOfMinRangeOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $lf0
+    ; CHECK-LABEL: name: FIFO1024_STORE_outOfMinRangeOffset
+    ; CHECK: liveins: $p0, $lf0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:fifo1024 = COPY $lf0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo -576
+    ; CHECK-NEXT: [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY1]], [[MOV_PD_imm11_pseudo]]
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:fifo512 = COPY [[COPY]].sub_lo_fifo
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY2]], [[PADD_mod_pseudo]], 0 :: (store (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:fifo512 = COPY [[COPY]].sub_hi_fifo
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY3]], [[PADD_mod_pseudo]], 64 :: (store (<16 x s32>) into unknown-address + 64)
+    %0:fiforegbank(<32 x s32>) = COPY $lf0
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 -576
+    G_AIE_OFFSET_STORE %0:fiforegbank(<32 x s32>), %1:ptrregbank(p0), %2:modregbank(s20) :: (store (<32 x s32>))
+...
+
+
+---
+name:            ACC2048_LOAD_maxOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: ACC2048_LOAD_maxOffset
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 256 :: (load (<8 x s64>), align 256)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm1:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 320 :: (load (<8 x s64>) from unknown-address + 64)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm2:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 384 :: (load (<8 x s64>) from unknown-address + 128, align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm3:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 448 :: (load (<8 x s64>) from unknown-address + 192)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:acc2048 = REG_SEQUENCE [[VLDA_dmx_lda_bm_idx_imm]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm1]], %subreg.sub_512_acc_hi, [[VLDA_dmx_lda_bm_idx_imm2]], %subreg.sub_1024_acc_hi_then_sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm3]], %subreg.sub_1024_acc_hi_then_sub_512_acc_hi
+    ; CHECK-NEXT: $dm0 = COPY [[REG_SEQUENCE]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 256
+    %0:accregbank(<32 x s64>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<32 x s64>))
+    $dm0 = COPY %0:accregbank(<32 x s64>)
+...
+
+---
+name:            ACC2048_LOAD_minOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: ACC2048_LOAD_minOffset
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], -320 :: (load (<8 x s64>), align 256)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm1:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], -256 :: (load (<8 x s64>) from unknown-address + 64)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm2:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], -192 :: (load (<8 x s64>) from unknown-address + 128, align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm3:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], -128 :: (load (<8 x s64>) from unknown-address + 192)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:acc2048 = REG_SEQUENCE [[VLDA_dmx_lda_bm_idx_imm]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm1]], %subreg.sub_512_acc_hi, [[VLDA_dmx_lda_bm_idx_imm2]], %subreg.sub_1024_acc_hi_then_sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm3]], %subreg.sub_1024_acc_hi_then_sub_512_acc_hi
+    ; CHECK-NEXT: $dm0 = COPY [[REG_SEQUENCE]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 -320
+    %0:accregbank(<32 x s64>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<32 x s64>))
+    $dm0 = COPY %0:accregbank(<32 x s64>)
+...
+
+---
+name:            ACC2048_LOAD_overMaxOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: ACC2048_LOAD_overMaxOffset
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 320
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[PADD_imm_pseudo]], 0 :: (load (<8 x s64>), align 256)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm1:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[PADD_imm_pseudo]], 64 :: (load (<8 x s64>) from unknown-address + 64)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm2:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[PADD_imm_pseudo]], 128 :: (load (<8 x s64>) from unknown-address + 128, align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm3:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[PADD_imm_pseudo]], 192 :: (load (<8 x s64>) from unknown-address + 192)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:acc2048 = REG_SEQUENCE [[VLDA_dmx_lda_bm_idx_imm]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm1]], %subreg.sub_512_acc_hi, [[VLDA_dmx_lda_bm_idx_imm2]], %subreg.sub_1024_acc_hi_then_sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm3]], %subreg.sub_1024_acc_hi_then_sub_512_acc_hi
+    ; CHECK-NEXT: $dm0 = COPY [[REG_SEQUENCE]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 320
+    %0:accregbank(<32 x s64>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<32 x s64>))
+    $dm0 = COPY %0:accregbank(<32 x s64>)
+...
+
+---
+name:            ACC2048_LOAD_outOfMinRangeOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: ACC2048_LOAD_outOfMinRangeOffset
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo -576
+    ; CHECK-NEXT: [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[MOV_PD_imm11_pseudo]]
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[PADD_mod_pseudo]], 0 :: (load (<8 x s64>), align 256)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm1:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[PADD_mod_pseudo]], 64 :: (load (<8 x s64>) from unknown-address + 64)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm2:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[PADD_mod_pseudo]], 128 :: (load (<8 x s64>) from unknown-address + 128, align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm3:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[PADD_mod_pseudo]], 192 :: (load (<8 x s64>) from unknown-address + 192)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:acc2048 = REG_SEQUENCE [[VLDA_dmx_lda_bm_idx_imm]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm1]], %subreg.sub_512_acc_hi, [[VLDA_dmx_lda_bm_idx_imm2]], %subreg.sub_1024_acc_hi_then_sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm3]], %subreg.sub_1024_acc_hi_then_sub_512_acc_hi
+    ; CHECK-NEXT: $dm0 = COPY [[REG_SEQUENCE]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 -576
+    %0:accregbank(<32 x s64>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<32 x s64>))
+    $dm0 = COPY %0:accregbank(<32 x s64>)
+...
+
+---
+name:            ACC2048_STORE_maxOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $dm0
+    ; CHECK-LABEL: name: ACC2048_STORE_maxOffset
+    ; CHECK: liveins: $p0, $dm0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:acc2048 = COPY $dm0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc512 = COPY [[COPY]].sub_512_acc_lo
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY2]], [[COPY1]], 256 :: (store (<8 x s64>), align 256)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY [[COPY]].sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY3]], [[COPY1]], 320 :: (store (<8 x s64>) into unknown-address + 64)
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc512 = COPY [[COPY]].sub_1024_acc_hi_then_sub_512_acc_lo
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY4]], [[COPY1]], 384 :: (store (<8 x s64>) into unknown-address + 128, align 128)
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:acc512 = COPY [[COPY]].sub_1024_acc_hi_then_sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY5]], [[COPY1]], 448 :: (store (<8 x s64>) into unknown-address + 192)
+    %0:accregbank(<32 x s64>) = COPY $dm0
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 256
+    G_AIE_OFFSET_STORE %0:accregbank(<32 x s64>), %1:ptrregbank(p0), %2:modregbank(s20) :: (store (<32 x s64>))
+...
+
+---
+name:            ACC2048_STORE_minOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $dm0
+    ; CHECK-LABEL: name: ACC2048_STORE_minOffset
+    ; CHECK: liveins: $p0, $dm0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:acc2048 = COPY $dm0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc512 = COPY [[COPY]].sub_512_acc_lo
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY2]], [[COPY1]], -512 :: (store (<8 x s64>), align 256)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY [[COPY]].sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY3]], [[COPY1]], -448 :: (store (<8 x s64>) into unknown-address + 64)
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc512 = COPY [[COPY]].sub_1024_acc_hi_then_sub_512_acc_lo
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY4]], [[COPY1]], -384 :: (store (<8 x s64>) into unknown-address + 128, align 128)
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:acc512 = COPY [[COPY]].sub_1024_acc_hi_then_sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY5]], [[COPY1]], -320 :: (store (<8 x s64>) into unknown-address + 192)
+    %0:accregbank(<32 x s64>) = COPY $dm0
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 -512
+    G_AIE_OFFSET_STORE %0:accregbank(<32 x s64>), %1:ptrregbank(p0), %2:modregbank(s20) :: (store (<32 x s64>))
+...
+
+---
+name:            ACC2048_STORE_overMaxOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $dm0
+    ; CHECK-LABEL: name: ACC2048_STORE_overMaxOffset
+    ; CHECK: liveins: $p0, $dm0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:acc2048 = COPY $dm0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY1]], 320
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc512 = COPY [[COPY]].sub_512_acc_lo
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY2]], [[PADD_imm_pseudo]], 0 :: (store (<8 x s64>), align 256)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY [[COPY]].sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY3]], [[PADD_imm_pseudo]], 64 :: (store (<8 x s64>) into unknown-address + 64)
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc512 = COPY [[COPY]].sub_1024_acc_hi_then_sub_512_acc_lo
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY4]], [[PADD_imm_pseudo]], 128 :: (store (<8 x s64>) into unknown-address + 128, align 128)
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:acc512 = COPY [[COPY]].sub_1024_acc_hi_then_sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY5]], [[PADD_imm_pseudo]], 192 :: (store (<8 x s64>) into unknown-address + 192)
+    %0:accregbank(<32 x s64>) = COPY $dm0
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 320
+    G_AIE_OFFSET_STORE %0:accregbank(<32 x s64>), %1:ptrregbank(p0), %2:modregbank(s20) :: (store (<32 x s64>))
+...
+
+---
+name:            ACC2048_STORE_outOfMinRangeOffset
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $dm0
+    ; CHECK-LABEL: name: ACC2048_STORE_outOfMinRangeOffset
+    ; CHECK: liveins: $p0, $dm0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:acc2048 = COPY $dm0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo -576
+    ; CHECK-NEXT: [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY1]], [[MOV_PD_imm11_pseudo]]
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc512 = COPY [[COPY]].sub_512_acc_lo
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY2]], [[PADD_mod_pseudo]], 0 :: (store (<8 x s64>), align 256)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY [[COPY]].sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY3]], [[PADD_mod_pseudo]], 64 :: (store (<8 x s64>) into unknown-address + 64)
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc512 = COPY [[COPY]].sub_1024_acc_hi_then_sub_512_acc_lo
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY4]], [[PADD_mod_pseudo]], 128 :: (store (<8 x s64>) into unknown-address + 128, align 128)
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:acc512 = COPY [[COPY]].sub_1024_acc_hi_then_sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY5]], [[PADD_mod_pseudo]], 192 :: (store (<8 x s64>) into unknown-address + 192)
+    %0:accregbank(<32 x s64>) = COPY $dm0
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 -576
+    G_AIE_OFFSET_STORE %0:accregbank(<32 x s64>), %1:ptrregbank(p0), %2:modregbank(s20) :: (store (<32 x s64>))
 ...

@@ -1747,7 +1747,6 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
     // Scalar loads are handled in tablegen patterns mostly and loads to ptr in
     // selectG_LOAD
     MachineInstr *PtrDef = MRI.getVRegDef(I.getOperand(1).getReg());
-    // TODO: handle remaining load sizes
     if (LoadStoreSize == 128) {
       assert(RBID == AIE2P::VRegBankID &&
              "128-bit vectors should be in the Vector Register Bank");
@@ -1785,7 +1784,7 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
         }
         llvm_unreachable(
             "512-bit vector type must be in AccRegBank or VRegBank "
-            "or FifoRegBankID");
+            "or FifoRegBank");
       }
       if (RBID == AIE2P::AccRegBankID) {
         return {/*ISelOpcode=*/AIE2P::VLDA_dmx_lda_bm_idx_imm,
@@ -1803,7 +1802,7 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
                 /*OffsetOpcode=*/{}};
       }
       llvm_unreachable("512-bit vector type must be in AccRegBank or VRegBank "
-                       "or FifoRegBankID");
+                       "or FifoRegBank");
     }
     if (LoadStoreSize == 1024) {
       unsigned RBID = deriveRegBankID(I.getOperand(0).getReg(), MRI, RBI);
@@ -1823,7 +1822,7 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
                 /*OffsetOpcode=*/AIE2P::VLDA_dmx_lda_x_idx_imm};
       }
       llvm_unreachable("1024-bit vector type must be in AccRegBank or VRegBank "
-                       "or FifoRegBankID");
+                       "or FifoRegBank");
     } else if (LoadStoreSize == 2048) {
       if (RBID == AIE2P::AccRegBankID) {
         return {/*ISelOpcode=*/AIE2P::VLDA_dmx_lda_bm_idx_imm,
@@ -1835,7 +1834,6 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
     break;
   }
   case AIE2P::G_AIE_OFFSET_LOAD: {
-    // TODO: handle remaining load sizes
     if (LoadStoreSize == 128) {
       assert(RBID == AIE2P::VRegBankID &&
              "128-bit vectors should be in the Vector Register Bank");
@@ -1867,7 +1865,36 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
         return {ISelOpcode, FitsImmediateRange,
                 /*OffsetOpcode=*/AIE2P::VLDA_dmx_lda_x_idx_imm};
       }
-      llvm_unreachable("512-bit vector type must be in AccRegBank or VRegBank");
+      if (RBID == AIE2P::FifoRegBankID) {
+        ISelOpcode = FitsImmediateRange ? AIE2P::VLDA_dmx_lda_fifohl_idx_imm
+                                        : AIE2P::VLDA_dmx_lda_fifohl_idx;
+        return {ISelOpcode, FitsImmediateRange,
+                /*OffsetOpcode=*/AIE2P::VLDA_dmx_lda_fifohl_idx_imm};
+      }
+      llvm_unreachable("Vector type must be in AccRegBank or VRegBank "
+                       "or FifoRegBank");
+    } else if (LoadStoreSize == 1024 || LoadStoreSize == 2048) {
+      FitsImmediateRange =
+          (LoadStoreSize == 1024)
+              ? checkImmediateRangeSplitting<4, 64, 64>(Offset)
+              : checkImmediateRangeSplitting<4, 64, 192>(Offset);
+      if (RBID == AIE2P::AccRegBankID) {
+        return {/*ISelOpcode=*/AIE2P::VLDA_dmx_lda_bm_idx_imm,
+                FitsImmediateRange,
+                /*OffsetOpcode=*/AIE2P::VLDA_dmx_lda_bm_idx_imm};
+      }
+      if (RBID == AIE2P::VRegBankID) {
+        return {/*ISelOpcode=*/AIE2P::VLDA_dmx_lda_x_idx_imm,
+                FitsImmediateRange,
+                /*OffsetOpcode=*/AIE2P::VLDA_dmx_lda_x_idx_imm};
+      }
+      if (RBID == AIE2P::FifoRegBankID) {
+        return {/*ISelOpcode=*/AIE2P::VLDA_dmx_lda_fifohl_idx_imm,
+                FitsImmediateRange,
+                /*OffsetOpcode=*/AIE2P::VLDA_dmx_lda_fifohl_idx_imm};
+      }
+      llvm_unreachable("Vector type must be in AccRegBank or VRegBank "
+                       "or FifoRegBank");
     }
     if (LoadStoreSize == 20 || LoadStoreSize == 32) {
       FitsImmediateRange = checkImmediateRange<4, 4>(Offset);
@@ -1908,7 +1935,6 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
     break;
   }
   case AIE2P::G_AIE_POSTINC_LOAD: {
-    // TODO: handle remaining load sizes
     if (LoadStoreSize == 128) {
       assert(RBID == AIE2P::VRegBankID &&
              "128-bit vectors should be in the Vector Register Bank");
@@ -1926,7 +1952,8 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
                                       : AIE2P::VLDA_dmw_lda_w_pstm_nrm;
       return {ISelOpcode, FitsImmediateRange,
               /*OffsetOpcode=*/AIE2P::VLDA_dmw_lda_w_idx_imm};
-    } else if (LoadStoreSize == 512) {
+    } else if (LoadStoreSize == 512 || LoadStoreSize == 1024 ||
+               LoadStoreSize == 2048) {
       FitsImmediateRange = checkImmediateRange<4, 64>(Offset);
       if (RBID == AIE2P::AccRegBankID) {
         ISelOpcode = FitsImmediateRange ? AIE2P::VLDA_dmx_lda_bm_pstm_nrm_imm
@@ -1940,7 +1967,15 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
         return {ISelOpcode, FitsImmediateRange,
                 /*OffsetOpcode=*/AIE2P::VLDA_dmx_lda_x_idx_imm};
       }
-      llvm_unreachable("512-bit vector type must be in AccRegBank or VRegBank");
+      if (RBID == AIE2P::FifoRegBankID) {
+        ISelOpcode = FitsImmediateRange
+                         ? AIE2P::VLDA_dmx_lda_fifohl_pstm_nrm_imm
+                         : AIE2P::VLDA_dmx_lda_fifohl_pstm_nrm;
+        return {ISelOpcode, FitsImmediateRange,
+                /*OffsetOpcode=*/AIE2P::VLDA_dmx_lda_fifohl_idx_imm};
+      }
+      llvm_unreachable("Vector type must be in AccRegBank or VRegBank "
+                       "or FifoRegBank");
     }
     if (LoadStoreSize == 20 || LoadStoreSize == 32) {
       FitsImmediateRange = checkImmediateRange<4, 4>(Offset);
@@ -1992,14 +2027,19 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
              "256-bit vectors should be in the Vector Register Bank");
       return {/*ISelOpcode=*/AIE2P::VLDA_2D_dmw_lda_w, NoImmediate,
               /*OffsetOpcode=*/{}};
-    } else if (LoadStoreSize == 512) {
+    } else if (LoadStoreSize == 512 || LoadStoreSize == 1024 ||
+               LoadStoreSize == 2048) {
       if (RBID == AIE2P::AccRegBankID)
         return {/*ISelOpcode=*/AIE2P::VLDA_2D_dmx_lda_bm, NoImmediate,
-                /*OffsetOpcode=*/{}};
+                /*OffsetOpcode=*/{AIE2P::VLDA_dmx_lda_bm_idx_imm}};
       if (RBID == AIE2P::VRegBankID)
         return {/*ISelOpcode=*/AIE2P::VLDA_2D_dmx_lda_x, NoImmediate,
-                /*OffsetOpcode=*/{}};
-      llvm_unreachable("512-bit vector type must be in AccRegBank or VRegBank");
+                /*OffsetOpcode=*/{AIE2P::VLDA_dmw_lda_w_idx_imm}};
+      if (RBID == AIE2P::FifoRegBankID)
+        return {/*ISelOpcode=*/AIE2P::VLDA_2D_dmx_lda_fifohl, NoImmediate,
+                /*OffsetOpcode=*/{AIE2P::VLDA_dmx_lda_fifohl_idx_imm}};
+      llvm_unreachable("Vector type must be in AccRegBank or VRegBank "
+                       "or FifoRegBank");
     }
     if (LoadStoreSize == 20 || LoadStoreSize == 32) {
       return {/*ISelOpcode=*/AIE2P::LDA_2D_dms_lda, NoImmediate,
@@ -2039,14 +2079,19 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
              "256-bit vectors should be in the Vector Register Bank");
       return {/*ISelOpcode=*/AIE2P::VLDA_3D_dmw_lda_w, NoImmediate,
               /*OffsetOpcode=*/{}};
-    } else if (LoadStoreSize == 512) {
+    } else if (LoadStoreSize == 512 || LoadStoreSize == 1024 ||
+               LoadStoreSize == 2048) {
       if (RBID == AIE2P::AccRegBankID)
         return {/*ISelOpcode=*/AIE2P::VLDA_3D_dmx_lda_bm, NoImmediate,
-                /*OffsetOpcode=*/{}};
+                /*OffsetOpcode=*/{AIE2P::VLDA_dmx_lda_bm_idx_imm}};
       if (RBID == AIE2P::VRegBankID)
         return {/*ISelOpcode=*/AIE2P::VLDA_3D_dmx_lda_x, NoImmediate,
-                /*OffsetOpcode=*/{}};
-      llvm_unreachable("512-bit vector type must be in AccRegBank or VRegBank");
+                /*OffsetOpcode=*/{AIE2P::VLDA_dmw_lda_w_idx_imm}};
+      if (RBID == AIE2P::FifoRegBankID)
+        return {/*ISelOpcode=*/AIE2P::VLDA_3D_dmx_lda_fifohl, NoImmediate,
+                /*OffsetOpcode=*/{AIE2P::VLDA_dmx_lda_fifohl_idx_imm}};
+      llvm_unreachable("Vector type must be in AccRegBank or VRegBank "
+                       "or FifoRegBank");
     }
     if (LoadStoreSize == 20 || LoadStoreSize == 32) {
       return {/*ISelOpcode=*/AIE2P::LDA_3D_dms_lda, NoImmediate,
@@ -2077,7 +2122,6 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
   case AIE2P::G_STORE: {
     // Scalar stores are handled in tablegen patterns
     MachineInstr *PtrDef = MRI.getVRegDef(I.getOperand(1).getReg());
-    // TODO: handle remaining store sizes
     if (LoadStoreSize == 128) {
       assert(RBID == AIE2P::VRegBankID &&
              "128-bit vectors should be in the Vector Register Bank");
@@ -2114,7 +2158,7 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
                   /*OffsetOpcode=*/{}};
         }
         llvm_unreachable("512-bit vector type must be in AccRegBank or "
-                         "VRegBank or FifoRegBankID");
+                         "VRegBank or FifoRegBank");
       } else {
         if (RBID == AIE2P::AccRegBankID) {
           return {/*ISelOpcode=*/AIE2P::VST_dmx_sts_bm_idx_imm,
@@ -2132,7 +2176,7 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
                   /*OffsetOpcode=*/AIE2P::VST_dmx_sts_fifohl_idx_imm};
         }
         llvm_unreachable("512-bit vector type must be in AccRegBank or "
-                         "VRegBank or FifoRegBankID");
+                         "VRegBank or FifoRegBank");
       }
     } else if (LoadStoreSize == 1024) {
       if (RBID == AIE2P::FifoRegBankID) {
@@ -2151,7 +2195,7 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
                 /*OffsetOpcode=*/AIE2P::VST_dmx_sts_x_idx_imm};
       }
       llvm_unreachable("1024-bit vector type must be in AccRegBank or "
-                       "VRegBank or FifoRegBankID");
+                       "VRegBank or FifoRegBank");
     } else if (LoadStoreSize == 2048) {
       assert(RBID == AIE2P::AccRegBankID &&
              "2048-bit vectors should be in the Accumulator Register Bank");
@@ -2164,7 +2208,6 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
     break;
   }
   case AIE2P::G_AIE_OFFSET_STORE: {
-    // TODO: handle remaining store sizes
     if (LoadStoreSize == 128) {
       assert(RBID == AIE2P::VRegBankID &&
              "128-bit vectors should be in the Vector Register Bank");
@@ -2196,7 +2239,35 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
         return {ISelOpcode, FitsImmediateRange,
                 /*OffsetOpcode=*/AIE2P::VST_dmx_sts_x_idx_imm};
       }
-      llvm_unreachable("512-bit vector type must be in AccRegBank or VRegBank");
+      if (RBID == AIE2P::FifoRegBankID) {
+        ISelOpcode = FitsImmediateRange ? AIE2P::VST_dmx_sts_fifohl_idx_imm
+                                        : AIE2P::VST_dmx_sts_fifohl_idx;
+        return {ISelOpcode, FitsImmediateRange,
+                /*OffsetOpcode=*/AIE2P::VST_dmx_sts_fifohl_idx_imm};
+      }
+      llvm_unreachable("512-bit vector type must be in AccRegBank or "
+                       "VRegBank or FifoRegBank");
+    } else if (LoadStoreSize == 1024 || LoadStoreSize == 2048) {
+      FitsImmediateRange =
+          (LoadStoreSize == 1024)
+              ? checkImmediateRangeSplitting<4, 64, 64>(Offset)
+              : checkImmediateRangeSplitting<4, 64, 192>(Offset);
+      if (RBID == AIE2P::AccRegBankID) {
+        return {/*ISelOpcode=*/AIE2P::VST_dmx_sts_bm_idx_imm,
+                FitsImmediateRange,
+                /*OffsetOpcode=*/AIE2P::VST_dmx_sts_bm_idx_imm};
+      }
+      if (RBID == AIE2P::VRegBankID) {
+        return {/*ISelOpcode=*/AIE2P::VST_dmx_sts_x_idx_imm, FitsImmediateRange,
+                /*OffsetOpcode=*/AIE2P::VST_dmx_sts_x_idx_imm};
+      }
+      if (RBID == AIE2P::FifoRegBankID) {
+        return {/*ISelOpcode=*/AIE2P::VST_dmx_sts_fifohl_idx_imm,
+                FitsImmediateRange,
+                /*OffsetOpcode=*/AIE2P::VST_dmx_sts_fifohl_idx_imm};
+      }
+      llvm_unreachable("Vector type must be in AccRegBank or "
+                       "VRegBank or FifoRegBank");
     }
     if (LoadStoreSize == 20 || LoadStoreSize == 32) {
       FitsImmediateRange = checkImmediateRange<4, 4>(Offset);
@@ -2219,7 +2290,6 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
   }
   case AIE2P::G_AIE_POSTINC_STORE: {
     RBID = deriveRegBankID(I.getOperand(1).getReg(), MRI, RBI);
-    // TODO: handle remaining store sizes
     if (LoadStoreSize == 128) {
       assert(RBID == AIE2P::VRegBankID &&
              "128-bit vectors should be in the Vector Register Bank");
@@ -2237,21 +2307,29 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
                                       : AIE2P::VST_dmw_sts_w_pstm_nrm;
       return {ISelOpcode, FitsImmediateRange,
               /*OffsetOpcode=*/AIE2P::VST_dmw_sts_w_pstm_nrm_imm};
-    } else if (LoadStoreSize == 512) {
+    } else if (LoadStoreSize == 512 || LoadStoreSize == 1024 ||
+               LoadStoreSize == 2048) {
       FitsImmediateRange = checkImmediateRange<4, 64>(Offset);
       if (RBID == AIE2P::AccRegBankID) {
         ISelOpcode = FitsImmediateRange ? AIE2P::VST_dmx_sts_bm_pstm_nrm_imm
                                         : AIE2P::VST_dmx_sts_bm_pstm_nrm;
         return {ISelOpcode, FitsImmediateRange,
-                /*OffsetOpcode=*/AIE2P::VST_dmx_sts_bm_pstm_nrm_imm};
+                /*OffsetOpcode=*/AIE2P::VST_dmx_sts_bm_idx_imm};
       }
       if (RBID == AIE2P::VRegBankID) {
         ISelOpcode = FitsImmediateRange ? AIE2P::VST_dmx_sts_x_pstm_nrm_imm
                                         : AIE2P::VST_dmx_sts_x_pstm_nrm;
         return {ISelOpcode, FitsImmediateRange,
-                /*OffsetOpcode=*/AIE2P::VST_dmx_sts_x_pstm_nrm_imm};
+                /*OffsetOpcode=*/AIE2P::VST_dmx_sts_x_idx_imm};
       }
-      llvm_unreachable("512-bit vector type must be in AccRegBank or VRegBank");
+      if (RBID == AIE2P::FifoRegBankID) {
+        ISelOpcode = FitsImmediateRange ? AIE2P::VST_dmx_sts_fifohl_pstm_nrm_imm
+                                        : AIE2P::VST_dmx_sts_fifohl_pstm_nrm;
+        return {ISelOpcode, FitsImmediateRange,
+                /*OffsetOpcode=*/AIE2P::VST_dmx_sts_fifohl_idx_imm};
+      }
+      llvm_unreachable("Vector type must be in AccRegBank or VRegBank "
+                       "or FifoRegBank");
     }
     if (LoadStoreSize == 20 || LoadStoreSize == 32) {
       FitsImmediateRange = checkImmediateRange<4, 4>(Offset);
@@ -2275,7 +2353,6 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
   }
   case AIE2P::G_AIE_POSTINC_2D_STORE: {
     RBID = deriveRegBankID(I.getOperand(2).getReg(), MRI, RBI);
-    // TODO: handle remaining store sizes
     if (LoadStoreSize == 128) {
       assert(RBID == AIE2P::VRegBankID &&
              "128-bit vectors should be in the Vector Register Bank");
@@ -2287,16 +2364,22 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
              "256-bit vectors should be in the Vector Register Bank");
       return {AIE2P::VST_2D_dmw_sts_w, NoImmediate,
               /*OffsetOpcode=*/{}};
-    } else if (LoadStoreSize == 512) {
+    } else if (LoadStoreSize == 512 || LoadStoreSize == 1024 ||
+               LoadStoreSize == 2048) {
       if (RBID == AIE2P::AccRegBankID) {
         return {AIE2P::VST_2D_dmx_sts_bm, NoImmediate,
-                /*OffsetOpcode=*/{}};
+                /*OffsetOpcode=*/{AIE2P::VST_dmx_sts_bm_idx_imm}};
       }
       if (RBID == AIE2P::VRegBankID) {
         return {AIE2P::VST_2D_dmx_sts_x, NoImmediate,
-                /*OffsetOpcode=*/{}};
+                /*OffsetOpcode=*/{AIE2P::VST_dmx_sts_x_idx_imm}};
       }
-      llvm_unreachable("512-bit vector type must be in AccRegBank or VRegBank");
+      if (RBID == AIE2P::FifoRegBankID) {
+        return {AIE2P::VST_2D_dmx_sts_x, NoImmediate,
+                /*OffsetOpcode=*/{AIE2P::VST_dmx_sts_fifohl_idx_imm}};
+      }
+      llvm_unreachable("Vector type must be in AccRegBank or VRegBank "
+                       "or FifoRegBank");
     }
     if (LoadStoreSize == 20 || LoadStoreSize == 32) {
       return {/*ISelOpcode=*/AIE2P::ST_2D_dms_sts, NoImmediate,
@@ -2314,7 +2397,6 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
   }
   case AIE2P::G_AIE_POSTINC_3D_STORE: {
     RBID = deriveRegBankID(I.getOperand(3).getReg(), MRI, RBI);
-    // TODO: handle remaining store sizes
     if (LoadStoreSize == 128) {
       assert(RBID == AIE2P::VRegBankID &&
              "128-bit vectors should be in the Vector Register Bank");
@@ -2326,16 +2408,22 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
              "256-bit vectors should be in the Vector Register Bank");
       return {AIE2P::VST_3D_dmw_sts_w, NoImmediate,
               /*OffsetOpcode=*/{}};
-    } else if (LoadStoreSize == 512) {
+    } else if (LoadStoreSize == 512 || LoadStoreSize == 1024 ||
+               LoadStoreSize == 2048) {
       if (RBID == AIE2P::AccRegBankID) {
         return {AIE2P::VST_3D_dmx_sts_bm, NoImmediate,
-                /*OffsetOpcode=*/{}};
+                /*OffsetOpcode=*/{AIE2P::VST_dmx_sts_bm_idx_imm}};
       }
       if (RBID == AIE2P::VRegBankID) {
         return {AIE2P::VST_3D_dmx_sts_x, NoImmediate,
-                /*OffsetOpcode=*/{}};
+                /*OffsetOpcode=*/{AIE2P::VST_dmx_sts_x_idx_imm}};
       }
-      llvm_unreachable("512-bit vector type must be in AccRegBank or VRegBank");
+      if (RBID == AIE2P::FifoRegBankID) {
+        return {AIE2P::VST_3D_dmx_sts_x, NoImmediate,
+                /*OffsetOpcode=*/{AIE2P::VST_dmx_sts_fifohl_idx_imm}};
+      }
+      llvm_unreachable("Vector type must be in AccRegBank or VRegBank "
+                       "or FifoRegBank");
     }
     if (LoadStoreSize == 20 || LoadStoreSize == 32) {
       return {/*ISelOpcode=*/AIE2P::ST_3D_dms_sts, NoImmediate,
@@ -2364,7 +2452,8 @@ bool AIE2PInstructionSelector::selectWideG_AIE_LOAD_STORE(
   LLT SrcDstTy = MRI.getType(AMI.SrcDstOp.getReg());
   const unsigned SrcDstTySize = SrcDstTy.getSizeInBits();
   const unsigned SplitFactor = (SrcDstTySize == 1024) ? 2 : 4;
-  const unsigned RBID = deriveRegBankID(I.getOperand(0).getReg(), MRI, RBI);
+  const unsigned OpIdx = AMI.MemI.mayStore() ? I.getNumExplicitDefs() : 0;
+  const unsigned RBID = deriveRegBankID(I.getOperand(OpIdx).getReg(), MRI, RBI);
   const TargetRegisterClass *RC512 = nullptr;
   const TargetRegisterClass *RC1024 = nullptr;
   const TargetRegisterClass *RC2048 = &AIE2P::ACC2048RegClass;
@@ -2410,25 +2499,28 @@ bool AIE2PInstructionSelector::selectWideG_AIE_LOAD_STORE(
 
   SmallVector<MachineInstrBuilder, 4> SplitInstrs;
   switch (AMI.MemI.getOpcode()) {
-  case AIE2P::G_STORE: {
+  case AIE2P::G_STORE:
+  case AIE2P::G_AIE_POSTINC_STORE:
+  case AIE2P::G_AIE_POSTINC_2D_STORE:
+  case AIE2P::G_AIE_POSTINC_3D_STORE: {
     for (unsigned SubRegIdx = 0; SubRegIdx < SplitFactor; ++SubRegIdx) {
       const unsigned Offset = SubRegIdx * 64;
       auto Copy = MIB.buildInstr(TargetOpcode::COPY, {SubRegs[SubRegIdx]}, {})
                       .addReg(AMI.SrcDstOp.getReg(), 0,
                               SubRegIdxes[SubRegIdx % SubRegIdxes.size()]);
-
-      auto StoreInstr = (SubRegIdx == 0)
-                            ? MIB.buildInstr(LSO.ISelOpcode, {}, {})
-                            : MIB.buildInstr(*LSO.OffsetOpcode, {}, {})
-                                  .addReg(Copy.getReg(0))
-                                  .addReg(AMI.PtrOp.getReg())
-                                  .addImm(Offset);
-
+      MachineInstrBuilder StoreInstr;
       if (SubRegIdx == 0) {
+        StoreInstr = MIB.buildInstr(LSO.ISelOpcode, {}, {});
         for (auto Def : AMI.MemI.defs())
           StoreInstr.addDef(Def.getReg());
         StoreInstr.addReg(Copy.getReg(0));
         addAddressingMode(StoreInstr, AMI, LSO.FitsImmediateRange, false, MRI);
+      } else {
+
+        StoreInstr = MIB.buildInstr(*LSO.OffsetOpcode, {}, {})
+                         .addReg(Copy.getReg(0))
+                         .addReg(AMI.PtrOp.getReg())
+                         .addImm(Offset);
       }
       SplitInstrs.push_back(StoreInstr);
     }
@@ -2436,22 +2528,114 @@ bool AIE2PInstructionSelector::selectWideG_AIE_LOAD_STORE(
     handleSplitMemOperands(SplitInstrs);
     break;
   }
-  case AIE2P::G_LOAD: {
+  case AIE2P::G_AIE_OFFSET_STORE: {
+    if (!LSO.FitsImmediateRange) {
+      // Emit an PTR_ADD to evaluate the offset
+      insertPtrAddForOffset(MRI, AMI.MemI);
+    }
     for (unsigned SubRegIdx = 0; SubRegIdx < SplitFactor; ++SubRegIdx) {
-      auto Load = (SubRegIdx == 0)
-                      ? MIB.buildInstr(LSO.ISelOpcode, {SubRegs[SubRegIdx]}, {})
-                      : MIB.buildInstr(*LSO.OffsetOpcode, {}, {})
-                            .addDef(SubRegs[SubRegIdx])
-                            .addUse(AMI.PtrOp.getReg())
-                            .addImm(SubRegIdx * 64);
+      const unsigned Offset = SubRegIdx * 64;
+      auto Copy = MIB.buildInstr(TargetOpcode::COPY, {SubRegs[SubRegIdx]}, {})
+                      .addReg(AMI.SrcDstOp.getReg(), 0,
+                              SubRegIdxes[SubRegIdx % SubRegIdxes.size()]);
+      MachineInstrBuilder StoreInstr;
       if (SubRegIdx == 0) {
+        StoreInstr = MIB.buildInstr(LSO.ISelOpcode, {}, {});
+        StoreInstr.addReg(Copy.getReg(0));
+
+        StoreInstr.addUse(AMI.PtrOp.getReg());
+
+        if (LSO.FitsImmediateRange) {
+          StoreInstr.addImm(AMI.ImmediateOffset->getSExtValue()); // Offset
+        } else {
+          // In this case we have already inserted a PTR_ADD to add the offset
+          // to the base pointer
+          StoreInstr.addImm(0); // Offset
+        }
+      } else { // SubRegIdx != 0
+        if (LSO.FitsImmediateRange) {
+          StoreInstr = MIB.buildInstr(*LSO.OffsetOpcode, {}, {})
+                           .addReg(Copy.getReg(0))
+                           .addReg(AMI.PtrOp.getReg())
+                           .addImm(AMI.ImmediateOffset->getSExtValue() +
+                                   Offset); // Offset
+        } else {
+          StoreInstr = MIB.buildInstr(*LSO.OffsetOpcode, {}, {})
+                           .addReg(Copy.getReg(0))
+                           .addReg(AMI.PtrOp.getReg())
+                           .addImm(Offset); // Offset
+        }
+      }
+      SplitInstrs.push_back(StoreInstr);
+    }
+    handleSplitMemOperands(SplitInstrs);
+    break;
+  }
+  case AIE2P::G_LOAD:
+  case AIE2P::G_AIE_POSTINC_LOAD:
+  case AIE2P::G_AIE_POSTINC_2D_LOAD:
+  case AIE2P::G_AIE_POSTINC_3D_LOAD: {
+    for (unsigned SubRegIdx = 0; SubRegIdx < SplitFactor; ++SubRegIdx) {
+      MachineInstrBuilder Load;
+      if (SubRegIdx == 0) {
+        Load = MIB.buildInstr(LSO.ISelOpcode, {SubRegs[0]}, {});
         for (auto *Def = AMI.MemI.defs().begin() + 1;
              Def != AMI.MemI.defs().end(); Def++) {
           Load.addDef(Def->getReg());
         }
         addAddressingMode(Load, AMI, LSO.FitsImmediateRange, false, MRI);
+      } else {
+        Load = MIB.buildInstr(*LSO.OffsetOpcode, {}, {})
+                   .addDef(SubRegs[SubRegIdx])
+                   .addUse(AMI.PtrOp.getReg())
+                   .addImm(SubRegIdx * 64);
       }
+      SplitInstrs.push_back(Load);
+    }
+    auto RegSeq =
+        MIB.buildInstr(AIE2P::REG_SEQUENCE, {AMI.SrcDstOp.getReg()}, {});
+    for (unsigned SubRegIdx = 0; SubRegIdx < SplitFactor; ++SubRegIdx) {
+      RegSeq.addReg(SubRegs[SubRegIdx]).addImm(SubRegIdxes[SubRegIdx]);
+    }
+    Register SrcDstReg = AMI.SrcDstOp.getReg();
+    if (!RBI.constrainGenericRegister(
+            SrcDstReg, *(SrcDstTySize == 2048 ? RC2048 : RC1024), MRI))
+      return false;
 
+    handleSplitMemOperands(SplitInstrs);
+    break;
+  }
+  case AIE2P::G_AIE_OFFSET_LOAD: {
+    if (!LSO.FitsImmediateRange) {
+      // Emit an PTR_ADD to evaluate the offset
+      insertPtrAddForOffset(MRI, AMI.MemI);
+    }
+    for (unsigned SubRegIdx = 0; SubRegIdx < SplitFactor; ++SubRegIdx) {
+      MachineInstrBuilder Load;
+      if (SubRegIdx == 0) {
+        Load = MIB.buildInstr(LSO.ISelOpcode, {SubRegs[0]}, {})
+                   .addUse(AMI.PtrOp.getReg());
+        if (LSO.FitsImmediateRange) {
+          Load.addImm(AMI.ImmediateOffset->getSExtValue()); // Offset
+        } else {
+          // In this case we have already inserted a PTR_ADD to add the offset
+          // to the base pointer
+          Load.addImm(0); // Offset
+        }
+      } else { // SubRegIdx != 0
+        if (LSO.FitsImmediateRange) {
+          Load = MIB.buildInstr(*LSO.OffsetOpcode, {}, {})
+                     .addDef(SubRegs[SubRegIdx])
+                     .addUse(AMI.PtrOp.getReg())
+                     .addImm(AMI.ImmediateOffset->getSExtValue() +
+                             SubRegIdx * 64); // Offset
+        } else {
+          Load = MIB.buildInstr(*LSO.OffsetOpcode, {}, {})
+                     .addDef(SubRegs[SubRegIdx])
+                     .addUse(AMI.PtrOp.getReg())
+                     .addImm(SubRegIdx * 64); // Offset
+        }
+      }
       SplitInstrs.push_back(Load);
     }
     auto RegSeq =

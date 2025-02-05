@@ -58,8 +58,14 @@ MachineInstr *findPreIncMatch(MachineInstr &MemI, MachineRegisterInfo &MRI,
                               const AIEBaseInstrInfo &TII) {
   // This is currently done with patterns in instruction selection.
   // No need to do it here.
-  if (MRI.getType(MemI.getOperand(0).getReg()).getSizeInBits() >= 1024)
+  MachineFunction &MF = *MemI.getMF();
+  const Triple &TT = MF.getTarget().getTargetTriple();
+  const unsigned VecSize =
+      MRI.getType(MemI.getOperand(0).getReg()).getSizeInBits();
+  if (VecSize > TII.getMaxSupportedLdStIncSize()) {
     return nullptr;
+  }
+
   if (!EnableOffsetCombine)
     return nullptr;
   Register Addr = MemI.getOperand(1).getReg();
@@ -320,9 +326,13 @@ MachineInstr *findPostIncMatch(MachineInstr &MemI, MachineRegisterInfo &MRI,
                                const AIEBaseInstrInfo &TII) {
   if (!EnablePostIncCombine)
     return nullptr;
-  if (MRI.getType(MemI.getOperand(0).getReg()).getSizeInBits() >= 1024)
+  MachineFunction &MF = *MemI.getMF();
+  const Triple &TT = MF.getTarget().getTargetTriple();
+  const unsigned VecSize =
+      MRI.getType(MemI.getOperand(0).getReg()).getSizeInBits();
+  if (VecSize > TII.getMaxSupportedLdStIncSize()) {
     return nullptr;
-
+  }
   Register Addr = MemI.getOperand(1).getReg();
   for (auto &PtrInc : MRI.use_nodbg_instructions(Addr)) {
     if (MemI.getParent() != PtrInc.getParent())
