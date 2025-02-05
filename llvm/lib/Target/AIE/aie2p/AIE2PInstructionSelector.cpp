@@ -156,6 +156,13 @@ private:
                        std::optional<APInt> Immediate, bool IsSigned);
   bool canCombineSRS(MachineInstr &MemOp, MachineInstr &CombOp,
                      MachineRegisterInfo &MRI);
+  bool selectG_AIE_LOAD_UNPACK(MachineInstr &UNPACKI, MachineRegisterInfo &MRI);
+  std::optional<LoadStoreOpcodes>
+  getCombinedOpcodeUNPACKLoad(const MachineInstr &MemOp,
+                              const MachineInstr &CombOp,
+                              std::optional<APInt> Immediate, bool IsSigned);
+  bool canCombineUNPACKLoad(MachineInstr &MemOp, MachineInstr &CombOp,
+                            MachineRegisterInfo &MRI);
 
   const AIE2PInstrInfo &TII;
   const AIE2PRegisterInfo &TRI;
@@ -1299,7 +1306,7 @@ bool AIE2PInstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
 
   // First use is the G_INTRINSIC_W_SIDE_EFFECTS ID
   Register LoadResult = (std::next(UPSI.uses().begin()))->getReg();
-  MachineInstr *LoadOp = MRI.getUniqueVRegDef(LoadResult);
+  MachineInstr *LoadOp = getDefIgnoringCopiesAndBitcasts(LoadResult, MRI);
 
   assert(LoadOp && "Expected SSA.");
 
@@ -2930,6 +2937,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodePACK(
             /*ISelOpcode=*/AIE2P::VST_PACK_dmx_sts_pack_idx_imm_packSign1,
             AlwaysFitsImmediateRange, /*OffsetOpcode=*/{}};
       }
+      break;
     case AIE2P::G_AIE_OFFSET_STORE:
       switch (CombOpIntrinsicID) {
       case Intrinsic::aie2p_pack_I512_I8_I16:
@@ -2949,6 +2957,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodePACK(
         return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                 /*OffsetOpcode=*/{}};
       }
+      break;
     case AIE2P::G_AIE_POSTINC_STORE:
       switch (CombOpIntrinsicID) {
       case Intrinsic::aie2p_pack_I512_I8_I16:
@@ -2968,6 +2977,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodePACK(
         return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                 /*OffsetOpcode=*/{}};
       }
+      break;
     case AIE2P::G_AIE_POSTINC_2D_STORE:
       switch (CombOpIntrinsicID) {
       case Intrinsic::aie2p_pack_I512_I8_I16:
@@ -2983,6 +2993,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodePACK(
             NoImmediate,
             /*OffsetOpcode=*/{}};
       }
+      break;
     case AIE2P::G_AIE_POSTINC_3D_STORE:
       switch (CombOpIntrinsicID) {
       case Intrinsic::aie2p_pack_I512_I8_I16:
@@ -2998,6 +3009,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodePACK(
             NoImmediate,
             /*OffsetOpcode=*/{}};
       }
+      break;
     default:
       return {};
     }
@@ -3016,6 +3028,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodePACK(
             /*ISelOpcode=*/AIE2P::VST_PACK_dmx_sts_pack_idx_imm_packSign0,
             AlwaysFitsImmediateRange, /*OffsetOpcode=*/{}};
       }
+      break;
     case AIE2P::G_AIE_OFFSET_STORE:
       switch (CombOpIntrinsicID) {
       case Intrinsic::aie2p_pack_I512_I8_I16:
@@ -3035,6 +3048,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodePACK(
         return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                 /*OffsetOpcode=*/{}};
       }
+      break;
     case AIE2P::G_AIE_POSTINC_STORE:
       switch (CombOpIntrinsicID) {
       case Intrinsic::aie2p_pack_I512_I8_I16:
@@ -3054,6 +3068,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodePACK(
         return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                 /*OffsetOpcode=*/{}};
       }
+      break;
     case AIE2P::G_AIE_POSTINC_2D_STORE:
       switch (CombOpIntrinsicID) {
       case Intrinsic::aie2p_pack_I512_I8_I16:
@@ -3069,6 +3084,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodePACK(
             NoImmediate,
             /*OffsetOpcode=*/{}};
       }
+      break;
     case AIE2P::G_AIE_POSTINC_3D_STORE:
       switch (CombOpIntrinsicID) {
       case Intrinsic::aie2p_pack_I512_I8_I16:
@@ -3084,6 +3100,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodePACK(
             NoImmediate,
             /*OffsetOpcode=*/{}};
       }
+      break;
     default:
       return {};
     }
@@ -3110,7 +3127,7 @@ bool AIE2PInstructionSelector::selectG_AIE_STORE_PACK(
     MachineInstr &StoreI, MachineRegisterInfo &MRI) {
 
   Register PackResult = (StoreI.uses().begin())->getReg();
-  MachineInstr *PackOp = MRI.getVRegDef(PackResult);
+  MachineInstr *PackOp = getDefIgnoringCopiesAndBitcasts(PackResult, MRI);
 
   if (!canCombinePACK(StoreI, *PackOp, MRI))
     return false;
@@ -3190,7 +3207,7 @@ bool AIE2PInstructionSelector::selectG_AIE_STORE_SRS(MachineInstr &StoreI,
                                                      MachineRegisterInfo &MRI) {
 
   Register SrsResult = (StoreI.uses().begin())->getReg();
-  MachineInstr *SrsOp = MRI.getUniqueVRegDef(SrsResult);
+  MachineInstr *SrsOp = getDefIgnoringCopiesAndBitcasts(SrsResult, MRI);
 
   assert(SrsOp && "Expected SSA.");
 
@@ -3332,6 +3349,10 @@ bool AIE2PInstructionSelector::selectWriteTM(MachineInstr &I,
 
 bool AIE2PInstructionSelector::selectVUNPACK(MachineInstr &I,
                                              MachineRegisterInfo &MRI) {
+  // Try to match UNPACK combine
+  if (selectG_AIE_LOAD_UNPACK(I, MRI))
+    return true;
+
   MachineInstrBuilder MI;
   buildUnpack(I, MRI, MIB, MI);
   const auto IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
@@ -3446,7 +3467,7 @@ bool AIE2PInstructionSelector::selectG_AIE_STORE_CONV(
   // differ.
 
   Register ConvResult = (StoreI.uses().begin())->getReg();
-  MachineInstr *ConvOp = MRI.getUniqueVRegDef(ConvResult);
+  MachineInstr *ConvOp = getDefIgnoringCopiesAndBitcasts(ConvResult, MRI);
 
   assert(ConvOp && "Expected SSA.");
 
@@ -3479,6 +3500,294 @@ bool AIE2PInstructionSelector::selectG_AIE_STORE_CONV(
 
   makeDeadMI(*ConvOp, MRI);
   StoreI.eraseFromParent();
+  return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
+}
+
+std::optional<LoadStoreOpcodes>
+AIE2PInstructionSelector::getCombinedOpcodeUNPACKLoad(
+    const MachineInstr &MemOp, const MachineInstr &CombOp,
+    std::optional<APInt> Immediate, bool IsSigned) {
+
+  auto CombOpInstID = cast<GIntrinsic>(CombOp).getIntrinsicID();
+  if (CombOp.getOpcode() != AIE2P::G_INTRINSIC ||
+      (CombOpInstID != Intrinsic::aie2p_unpack_I512_I16_I8 &&
+       CombOpInstID != Intrinsic::aie2p_unpack_I512_I8_I4 &&
+       CombOpInstID != Intrinsic::aie2p_unpack_I1024_I16_I8 &&
+       CombOpInstID != Intrinsic::aie2p_unpack_I1024_I8_I4))
+    return {};
+
+  if (!MemOp.mayLoad())
+    return {};
+
+  assert(((getLoadStoreSize(MemOp) == 256 &&
+           (CombOpInstID == Intrinsic::aie2p_unpack_I512_I16_I8 ||
+            CombOpInstID == Intrinsic::aie2p_unpack_I512_I8_I4)) ||
+          (getLoadStoreSize(MemOp) == 512 &&
+           (CombOpInstID == Intrinsic::aie2p_unpack_I1024_I16_I8 ||
+            CombOpInstID == Intrinsic::aie2p_unpack_I1024_I8_I4))) &&
+         "Unexpected VLDB.UNPACK size");
+
+  unsigned ISelOpcode = UINT_MAX;
+  const bool AlwaysFitsImmediateRange = true;
+  const bool NoImmediate = false;
+  bool FitsImmediateRange = false;
+  if (IsSigned) {
+    switch (MemOp.getOpcode()) {
+    case AIE2P::G_LOAD:
+      switch (CombOpInstID) {
+      case Intrinsic::aie2p_unpack_I1024_I8_I4:
+      case Intrinsic::aie2p_unpack_I1024_I16_I8:
+        return LoadStoreOpcodes{
+            AIE2P::VLDB_UNPACK_dmx_ldb_unpack_idx_imm_unpackSign1,
+            AlwaysFitsImmediateRange,
+            {}};
+      case Intrinsic::aie2p_unpack_I512_I8_I4:
+      case Intrinsic::aie2p_unpack_I512_I16_I8:
+        return LoadStoreOpcodes{
+            AIE2P::VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign1,
+            AlwaysFitsImmediateRange,
+            {}};
+      }
+      break;
+    case AIE2P::G_AIE_OFFSET_LOAD:
+      switch (CombOpInstID) {
+      case Intrinsic::aie2p_unpack_I1024_I8_I4:
+      case Intrinsic::aie2p_unpack_I1024_I16_I8:
+        FitsImmediateRange = checkImmediateRange<4, 64>(Immediate);
+        ISelOpcode = FitsImmediateRange
+                         ? AIE2P::VLDB_UNPACK_dmx_ldb_unpack_idx_imm_unpackSign1
+                         : AIE2P::VLDB_UNPACK_dmx_ldb_unpack_idx_unpackSign1;
+        return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange, {}};
+      case Intrinsic::aie2p_unpack_I512_I8_I4:
+      case Intrinsic::aie2p_unpack_I512_I16_I8:
+        FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
+        ISelOpcode = FitsImmediateRange
+                         ? AIE2P::VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign1
+                         : AIE2P::VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign1;
+        return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange, {}};
+      }
+      break;
+    case AIE2P::G_AIE_POSTINC_LOAD:
+      switch (CombOpInstID) {
+      case Intrinsic::aie2p_unpack_I1024_I8_I4:
+      case Intrinsic::aie2p_unpack_I1024_I16_I8:
+        FitsImmediateRange = checkImmediateRange<4, 64>(Immediate);
+        ISelOpcode =
+            FitsImmediateRange
+                ? AIE2P::VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_imm_unpackSign1
+                : AIE2P::VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign1;
+        return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange, {}};
+      case Intrinsic::aie2p_unpack_I512_I8_I4:
+      case Intrinsic::aie2p_unpack_I512_I16_I8:
+        FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
+        ISelOpcode =
+            FitsImmediateRange
+                ? AIE2P::VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1
+                : AIE2P::VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1;
+        return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange, {}};
+      }
+      break;
+    case AIE2P::G_AIE_POSTINC_2D_LOAD:
+      switch (CombOpInstID) {
+      case Intrinsic::aie2p_unpack_I1024_I8_I4:
+      case Intrinsic::aie2p_unpack_I1024_I16_I8:
+        return LoadStoreOpcodes{
+            AIE2P::VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign1, NoImmediate, {}};
+      case Intrinsic::aie2p_unpack_I512_I8_I4:
+      case Intrinsic::aie2p_unpack_I512_I16_I8:
+        return LoadStoreOpcodes{
+            AIE2P::VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1, NoImmediate, {}};
+      }
+      break;
+    case AIE2P::G_AIE_POSTINC_3D_LOAD:
+      switch (CombOpInstID) {
+      case Intrinsic::aie2p_unpack_I1024_I8_I4:
+      case Intrinsic::aie2p_unpack_I1024_I16_I8:
+        return LoadStoreOpcodes{
+            AIE2P::VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1, NoImmediate, {}};
+      case Intrinsic::aie2p_unpack_I512_I8_I4:
+      case Intrinsic::aie2p_unpack_I512_I16_I8:
+        return LoadStoreOpcodes{
+            AIE2P::VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1, NoImmediate, {}};
+      }
+      break;
+    }
+  } else {
+    switch (MemOp.getOpcode()) {
+    case AIE2P::G_LOAD:
+      switch (CombOpInstID) {
+      case Intrinsic::aie2p_unpack_I1024_I8_I4:
+      case Intrinsic::aie2p_unpack_I1024_I16_I8:
+        return LoadStoreOpcodes{
+            AIE2P::VLDB_UNPACK_dmx_ldb_unpack_idx_imm_unpackSign0,
+            AlwaysFitsImmediateRange,
+            {}};
+      case Intrinsic::aie2p_unpack_I512_I8_I4:
+      case Intrinsic::aie2p_unpack_I512_I16_I8:
+        return LoadStoreOpcodes{
+            AIE2P::VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0,
+            AlwaysFitsImmediateRange,
+            {}};
+      }
+      break;
+    case AIE2P::G_AIE_OFFSET_LOAD:
+      switch (CombOpInstID) {
+      case Intrinsic::aie2p_unpack_I1024_I8_I4:
+      case Intrinsic::aie2p_unpack_I1024_I16_I8:
+        FitsImmediateRange = checkImmediateRange<4, 64>(Immediate);
+        ISelOpcode = FitsImmediateRange
+                         ? AIE2P::VLDB_UNPACK_dmx_ldb_unpack_idx_imm_unpackSign0
+                         : AIE2P::VLDB_UNPACK_dmx_ldb_unpack_idx_unpackSign0;
+        return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange, {}};
+      case Intrinsic::aie2p_unpack_I512_I8_I4:
+      case Intrinsic::aie2p_unpack_I512_I16_I8:
+        FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
+        ISelOpcode = FitsImmediateRange
+                         ? AIE2P::VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0
+                         : AIE2P::VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0;
+        return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange, {}};
+      }
+      break;
+    case AIE2P::G_AIE_POSTINC_LOAD:
+      switch (CombOpInstID) {
+      case Intrinsic::aie2p_unpack_I1024_I8_I4:
+      case Intrinsic::aie2p_unpack_I1024_I16_I8:
+        FitsImmediateRange = checkImmediateRange<4, 64>(Immediate);
+        ISelOpcode =
+            FitsImmediateRange
+                ? AIE2P::VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_imm_unpackSign0
+                : AIE2P::VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign0;
+        return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange, {}};
+      case Intrinsic::aie2p_unpack_I512_I8_I4:
+      case Intrinsic::aie2p_unpack_I512_I16_I8:
+        FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
+        ISelOpcode =
+            FitsImmediateRange
+                ? AIE2P::VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign0
+                : AIE2P::VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign0;
+        return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange, {}};
+      }
+      break;
+    case AIE2P::G_AIE_POSTINC_2D_LOAD:
+      switch (CombOpInstID) {
+      case Intrinsic::aie2p_unpack_I1024_I8_I4:
+      case Intrinsic::aie2p_unpack_I1024_I16_I8:
+        return LoadStoreOpcodes{
+            AIE2P::VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign0, NoImmediate, {}};
+      case Intrinsic::aie2p_unpack_I512_I8_I4:
+      case Intrinsic::aie2p_unpack_I512_I16_I8:
+        return LoadStoreOpcodes{
+            AIE2P::VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0, NoImmediate, {}};
+      }
+    case AIE2P::G_AIE_POSTINC_3D_LOAD:
+      switch (CombOpInstID) {
+      case Intrinsic::aie2p_unpack_I1024_I8_I4:
+      case Intrinsic::aie2p_unpack_I1024_I16_I8:
+        return LoadStoreOpcodes{
+            AIE2P::VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign0, NoImmediate, {}};
+      case Intrinsic::aie2p_unpack_I512_I8_I4:
+      case Intrinsic::aie2p_unpack_I512_I16_I8:
+        return LoadStoreOpcodes{
+            AIE2P::VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0, NoImmediate, {}};
+      }
+      break;
+    }
+  }
+  return {};
+}
+
+bool AIE2PInstructionSelector::canCombineUNPACKLoad(MachineInstr &MemOp,
+                                                    MachineInstr &CombOp,
+                                                    MachineRegisterInfo &MRI) {
+  Register LoadResult = MemOp.defs().begin()->getReg();
+  if (MemOp.getParent() != CombOp.getParent() || !MRI.hasOneUse(LoadResult))
+    return false;
+
+  const std::optional<APInt> NoImmediate = {};
+  const bool IsSigned = false;
+  return getCombinedOpcodeUNPACKLoad(MemOp, CombOp, NoImmediate, IsSigned)
+      .has_value();
+}
+
+bool AIE2PInstructionSelector::selectG_AIE_LOAD_UNPACK(
+    MachineInstr &UNPACKI, MachineRegisterInfo &MRI) {
+  Register LoadResult = (std::next(UNPACKI.uses().begin()))->getReg();
+  MachineInstr *LoadOp = getDefIgnoringCopiesAndBitcasts(LoadResult, MRI);
+  // Should we build the instruction at load's position?
+  bool ShouldAdvanceOp = false;
+
+  assert(LoadOp && "Expected SSA.");
+
+  // Do not try to combine if one of the load's defs is used by another
+  // instruction between the load and the VUNPACK or if there is a store
+  // between the load and the VUNPACK.
+  if (!canDelayMemOp(*LoadOp, UNPACKI, MRI)) {
+    // If we cannot delay the load, we can try to advance the combined
+    // instruction to the load's position.
+    if (canAdvanceOp(*LoadOp, UNPACKI, MRI))
+      ShouldAdvanceOp = true;
+    else
+      return false;
+  }
+
+  if (!canCombineUNPACKLoad(*LoadOp, UNPACKI, MRI))
+    return false;
+
+  std::optional<AddressingModeInfo> AMI =
+      getOrDefineAddressingRegister(*LoadOp, MRI);
+  if (!AMI)
+    return false;
+
+  Register DstReg = UNPACKI.getOperand(0).getReg();
+  // In this case of G_INTRINSIC operand 1 is target intrinsic
+  // In this case the operand 2 is the source register which is the loaded value
+  Register SignReg = UNPACKI.getOperand(3).getReg();
+
+  auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI);
+  bool ConstantSign = SignVal ? true : false;
+  std::optional<LoadStoreOpcodes> LSO = getCombinedOpcodeUNPACKLoad(
+      *LoadOp, UNPACKI, AMI->ImmediateOffset,
+      ConstantSign ? SignVal.value().Value == 0x1 : false);
+
+  assert(LSO && "Unexpected VLDB.UNPACK combine failure");
+
+  if (ShouldAdvanceOp)
+    MIB.setInstr(*LoadOp);
+  else
+    MIB.setInstr(UNPACKI);
+
+  // Selects the size of the UNPACK instructions
+  // 0 – Source is 4 bits
+  // 1 – Source is 8 bits
+  switch (cast<GIntrinsic>(UNPACKI).getIntrinsicID()) {
+  case Intrinsic::aie2p_unpack_I512_I8_I4:
+  case Intrinsic::aie2p_unpack_I1024_I8_I4:
+    setCtrlRegister(MIB, AIE2P::crUnpackSize, 0);
+    break;
+  case Intrinsic::aie2p_unpack_I512_I16_I8:
+  case Intrinsic::aie2p_unpack_I1024_I16_I8:
+    setCtrlRegister(MIB, AIE2P::crUnpackSize, 1);
+  }
+
+  auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
+
+  NewInstr.addDef(DstReg);
+
+  for (auto *Def = std::next(LoadOp->defs().begin());
+       Def != LoadOp->defs().end(); ++Def) {
+    NewInstr.addDef(Def->getReg());
+  }
+
+  addAddressingMode(NewInstr, *AMI, LSO->FitsImmediateRange, false, MRI);
+
+  NewInstr.cloneMemRefs(*LoadOp);
+
+  if (!ConstantSign)
+    setUnsetCtrlRegister(MIB, *NewInstr, MRI, AIE2P::unpackSign0, SignReg);
+
+  UNPACKI.eraseFromParent();
+  makeDeadMI(*LoadOp, MRI);
+
   return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
 }
 

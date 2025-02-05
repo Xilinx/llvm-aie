@@ -1526,3 +1526,30 @@ body: |
     G_AIE_OFFSET_STORE %107, %0, %11 :: (store (<32 x s16>) into stack - 64)
     G_AIE_OFFSET_STORE %108, %0, %12 :: (store (<32 x s16>) into stack - 64)
 ...
+
+---
+name:            VST_SRS_2x_v16_acc32_signed_BITCAST
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $m0, $p0, $r1
+    ; CHECK-LABEL: name: VST_SRS_2x_v16_acc32_signed_BITCAST
+    ; CHECK: liveins: $m0, $p0, $r1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edj = COPY $m0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
+    ; CHECK-NEXT: $crsrsmode = MOV_scalar_imm11_pseudo 0
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:es = COPY [[COPY2]]
+    ; CHECK-NEXT: VST_SRS_4x_dm_sts_srs_cm_idx_srsSign0 %5:acc1024, [[COPY3]], [[COPY]], [[COPY1]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0 :: (store (<8 x s32>))
+    %0:ptrregbank(p0) = COPY $p0
+    %7:modregbank(s20) = COPY $m0
+    %101:gprregbank(s32) = COPY $r1
+    %102:gprregbank(s32) = G_CONSTANT i32 0
+    %103:vregbank(<32 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.I256.v32.acc32.srs), %100:accregbank(<16 x s64>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %144:vregbank(<8 x s32>) = G_BITCAST %103(<32 x s8>)
+    %201:vregbank(<8 x s32>) = COPY %144(<8 x s32>)
+    G_AIE_OFFSET_STORE %201(<8 x s32>), %0, %7 :: (store (<8 x s32>))
+...

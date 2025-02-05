@@ -714,14 +714,6 @@ bool AIEBaseInstructionSelector::selectG_AIE_LOAD_CONV(
   NewInstr.cloneMemRefs(AMI->MemI);
 
   CONVI.eraseFromParent();
-
-  // Erasing the load instruction breaks later on in the selection code. That is
-  // because an iterator is kept on erased instructions. This breaks while
-  // trying to eliminate a trivially dead instruction which requires access to
-  // its memory operands which have been erased, thus leading to a seg fault. To
-  // remedy this, we keep the load to be removed by the trivial dead code
-  // elimination and we make sure to assign new virtual register definitions to
-  // its live operands to respect SSA.
   makeDeadMI(*LoadOp, MRI);
 
   return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
@@ -750,7 +742,14 @@ AIEBaseInstructionSelector::getCombinedOpcodeCONVLoad(
 }
 
 // Make an instruction trivially dead by creating and distributing new virtual
-// registers to its defs
+// registers to its defs.
+// Erasing the load instruction breaks later on in the selection code. That is
+// because we keep an iterator on erased instructions. This breaks while
+// trying to eliminate a trivially dead instruction which requires access to
+// its memory operands which have been erased, thus leading to a seg fault. To
+// remedy this, we keep the load to be removed by the trivial dead code
+// elimination and we make sure to assign a new virtual register definition to
+// its live operands to respect SSA.
 void AIEBaseInstructionSelector::makeDeadMI(MachineInstr &MI,
                                             MachineRegisterInfo &MRI) {
   if (MI.getOpcode() == TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS) {

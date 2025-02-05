@@ -148,6 +148,11 @@ private:
                         std::optional<APInt> Immediate, bool IsSigned,
                         bool Is32Lanes);
   bool canCombinePACK(MachineInstr &MemOp, MachineInstr &CombOp);
+  bool canCombineUNPACKLoad(MachineInstr &MemOp, MachineInstr &CombOp,
+                            MachineRegisterInfo &MRI);
+  std::optional<LoadStoreOpcodes> getCombinedOpcodeUNPACKLoad(
+      const MachineInstr &MemOp, const MachineInstr &CombOp,
+      std::optional<APInt> Immediate, MachineRegisterInfo &MRI);
 
   // const AIE2TargetMachine &TM;
   const AIE2InstrInfo &TII;
@@ -819,7 +824,8 @@ bool AIE2InstructionSelector::selectVPACK(MachineInstr &I,
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
 }
 
-std::optional<LoadStoreOpcodes> getCombinedOpcodeUNPACKLoad(
+std::optional<LoadStoreOpcodes>
+AIE2InstructionSelector::getCombinedOpcodeUNPACKLoad(
     const MachineInstr &MemOp, const MachineInstr &CombOp,
     std::optional<APInt> Immediate, MachineRegisterInfo &MRI) {
 
@@ -910,8 +916,9 @@ std::optional<LoadStoreOpcodes> getCombinedOpcodeUNPACKLoad(
   return {};
 }
 
-bool canCombineUNPACKLoad(MachineInstr &MemOp, MachineInstr &CombOp,
-                          MachineRegisterInfo &MRI) {
+bool AIE2InstructionSelector::canCombineUNPACKLoad(MachineInstr &MemOp,
+                                                   MachineInstr &CombOp,
+                                                   MachineRegisterInfo &MRI) {
   const std::optional<APInt> NoImmediate = {};
   return getCombinedOpcodeUNPACKLoad(MemOp, CombOp, NoImmediate, MRI)
       .has_value();
@@ -949,6 +956,8 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_UNPACK(
 
   std::optional<LoadStoreOpcodes> LSO = getCombinedOpcodeUNPACKLoad(
       AMI->MemI, UNPACKI, AMI->ImmediateOffset, MRI);
+
+  assert(LSO && "Unexpected VLDB.UNPACK combine failure");
 
   Register DstReg = UNPACKI.getOperand(0).getReg();
   Register SignReg = UNPACKI.getOperand(3).getReg();
