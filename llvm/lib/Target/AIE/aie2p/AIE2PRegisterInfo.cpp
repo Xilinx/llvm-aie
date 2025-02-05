@@ -30,7 +30,7 @@
 
 using namespace llvm;
 
-#define DEBUG_TYPE "aie2p-reg-info"
+#define DEBUG_TYPE "aie-reg-info"
 
 extern cl::opt<bool> SimplifyCRSRRegs;
 
