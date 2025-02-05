@@ -1151,8 +1151,8 @@ bool AIELegalizerHelper::legalizeG_FABS(LegalizerHelper &Helper,
   return true;
 }
 
-bool AIELegalizerHelper::legalizeG_FADDSUB(LegalizerHelper &Helper,
-                                           MachineInstr &MI) const {
+bool AIELegalizerHelper::legalizeG_FADD_G_FSUB(LegalizerHelper &Helper,
+                                               MachineInstr &MI) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
   MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
 
