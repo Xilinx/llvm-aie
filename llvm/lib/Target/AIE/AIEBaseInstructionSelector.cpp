@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 /// \file
@@ -240,6 +240,13 @@ void AIEBaseInstructionSelector::setUnsetCtrlRegister(
     MachineIRBuilder &MIB, MachineInstr &I, MachineRegisterInfo &MRI,
     Register CRReg, Register ValueReg, unsigned DefaultCRVal) {
   setUnsetCtrlRegister(MIB, I, I, MRI, CRReg, ValueReg, DefaultCRVal);
+}
+
+MachineInstrBuilder
+AIEBaseInstructionSelector::setCtrlRegister(MachineIRBuilder &MIB,
+                                            Register CRReg, unsigned Val) {
+  auto Opcode = TII.getMvSclMultiSlotPseudoOpcode();
+  return MIB.buildInstr(Opcode, {CRReg}, {}).addImm(Val);
 }
 
 void AIEBaseInstructionSelector::addSplitMemOperands(

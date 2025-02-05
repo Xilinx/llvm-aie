@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 /// \file
@@ -96,6 +96,8 @@ public:
                             MachineInstr &EndI, MachineRegisterInfo &MRI,
                             Register CRReg, Register ValueReg,
                             unsigned DefaultCRVal = 0);
+  MachineInstrBuilder setCtrlRegister(MachineIRBuilder &MIB, Register CRReg,
+                                      unsigned Val);
   AddressingModeInfo createAddressModeInfo(MachineInstr &MemI,
                                            MachineOperand &SrcDstOp,
                                            MachineOperand &PtrOp,

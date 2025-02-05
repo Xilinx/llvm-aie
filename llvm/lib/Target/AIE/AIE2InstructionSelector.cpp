@@ -53,8 +53,6 @@ public:
   Register createSparseRegSequence(Register Vec, Register Mask,
                                    MachineRegisterInfo &MRI);
   void insertPtrAddForOffset(MachineRegisterInfo &MRI, MachineInstr &MemI);
-  void setCtrlRegister(MachineInstr &I, MachineRegisterInfo &MRI,
-                       Register CRReg, Register ValueReg);
 
   bool select(MachineInstr &I) override;
   bool selectCascadeStreamInsn(MachineInstr &I, MachineRegisterInfo &MRI,
@@ -2380,9 +2378,7 @@ bool AIE2InstructionSelector::selectSetControlRegister(
       break;
     }
 
-    MachineInstrBuilder MI =
-        MIB.buildInstr(AIE2::MOV_scalar_imm10_pseudo, {CtrlReg}, {})
-            .addImm(SrcConstVal);
+    MachineInstrBuilder MI = setCtrlRegister(MIB, CtrlReg, SrcConstVal);
     I.eraseFromParent();
     return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
   }
