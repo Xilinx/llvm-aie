@@ -778,9 +778,7 @@ bool AIE2PInstructionSelector::selectSetControlRegister(
       break;
     }
 
-    MachineInstrBuilder MI =
-        MIB.buildInstr(AIE2P::MOV_scalar_imm11_pseudo, {CtrlReg}, {})
-            .addImm(SrcConstVal);
+    MachineInstrBuilder MI = setCtrlRegister(MIB, CtrlReg, SrcConstVal);
     I.eraseFromParent();
     return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
   }
@@ -1280,8 +1278,7 @@ bool AIE2PInstructionSelector::selectVSRS(MachineInstr &I,
   // 0 – 32-bit accumulator lane
   // 1 – 64-bit accumulator lane
   MIB.setInstr(I);
-  MIB.buildInstr(AIE2P::MOV_scalar_imm11_pseudo, {AIE2P::crSRSMode}, {})
-      .addImm(crSRSModeVal);
+  setCtrlRegister(MIB, AIE2P::crSRSMode, crSRSModeVal);
 
   if (auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI)) {
     // Handle constant sign through instruction patterns
@@ -1349,8 +1346,7 @@ bool AIE2PInstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
   // 0 – 32-bit accumulator lane
   // 1 – 64-bit accumulator lane
   MIB.setInstr(UPSI);
-  MIB.buildInstr(AIE2P::MOV_scalar_imm11_pseudo, {AIE2P::crUPSMode}, {})
-      .addImm(crUPSModeVal);
+  setCtrlRegister(MIB, AIE2P::crUPSMode, crUPSModeVal);
 
   auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
 
@@ -1391,8 +1387,7 @@ bool AIE2PInstructionSelector::selectVUPS(MachineInstr &I,
   // 0 – 32-bit accumulator lane
   // 1 – 64-bit accumulator lane
   MIB.setInstr(I);
-  MIB.buildInstr(AIE2P::MOV_scalar_imm11_pseudo, {AIE2P::crUPSMode}, {})
-      .addImm(crUPSModeVal);
+  setCtrlRegister(MIB, AIE2P::crUPSMode, crUPSModeVal);
 
   if (auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI)) {
     // Handle constant sign through instruction patterns
@@ -3342,13 +3337,12 @@ bool AIE2PInstructionSelector::selectVUNPACK(MachineInstr &I,
   const auto IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
   bool Is8Bit = IntrinsicID == Intrinsic::aie2p_unpack_I1024_I16_I8 ||
                 IntrinsicID == Intrinsic::aie2p_unpack_I512_I16_I8;
-  auto Opcode = TII.getMvSclMultiSlotPseudoOpcode();
   // Set the crReg based on ValueReg parameter before I
   MIB.setInstr(*MI);
   // Selects the size of the UNPACK instructions
   // 0 – Source is 4 bits
   // 1 – Source is 8 bits
-  MIB.buildInstr(Opcode, {AIE2P::crUnpackSize}, {}).addImm((unsigned)Is8Bit);
+  setCtrlRegister(MIB, AIE2P::crUnpackSize, (unsigned)Is8Bit);
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
 }
@@ -3360,13 +3354,12 @@ bool AIE2PInstructionSelector::selectVPACK(MachineInstr &I,
   const auto IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
   bool Is8Bit = IntrinsicID == Intrinsic::aie2p_pack_I512_I8_I16 ||
                 IntrinsicID == Intrinsic::aie2p_pack_I1024_I8_I16;
-  auto Opcode = TII.getMvSclMultiSlotPseudoOpcode();
   // Set the crReg based on ValueReg parameter before I
   MIB.setInstr(*MI);
   // Selects the size of the Pack instructions
   // 0 – Destination is 4 bits
   // 1 – Destination is 8 bits
-  MIB.buildInstr(Opcode, {AIE2P::crPackSize}, {}).addImm((unsigned)Is8Bit);
+  setCtrlRegister(MIB, AIE2P::crPackSize, (unsigned)Is8Bit);
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
 }
