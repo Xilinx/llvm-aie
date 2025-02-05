@@ -44,6 +44,8 @@ static cl::opt<bool> AggressiveReAlloc(
     "aie-aggressive-realloc", cl::Hidden, cl::init(false),
     cl::desc("Aggressively de-allocate live-through registers to favor "
              "loop-local registers"));
+static cl::opt<bool> GPRRealloc("aie-gpr-realloc", cl::Hidden, cl::init(false),
+                                cl::desc("Re-allocate GPRs as well"));
 
 namespace {
 
@@ -328,6 +330,10 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   // If we fail, we fall back to the original allocation
   BitVector ExcludedPhysRegs{TRI->getNumRegs()};
 
+  // Exclude CSRs
+  for (const MCPhysReg *CSR = MRI->getCalleeSavedRegs(); CSR && *CSR; ++CSR)
+    ExcludedPhysRegs[*CSR] = true;
+
   for (const auto *RC : RegClasses) {
 
     LLVM_DEBUG(dbgs() << "Allowed registers in RC=" << TRI->getRegClassName(RC)
@@ -357,7 +363,12 @@ bool AIEWawRegRewriter::isWorthRenaming(const Register &Reg,
   if (!VRM->hasPhys(Reg))
     return false;
 
-  if (!TRI->isVecOrAccRegClass(*(MRI->getRegClass(Reg))))
+  // Only consider vec/acc registers as candidates, and optionally GPRs.
+  bool IsCandidateClass =
+      TRI->isVecOrAccRegClass(*(MRI->getRegClass(Reg))) ||
+      (GPRRealloc &&
+       TRI->getGPRRegClass(*MF)->hasSubClassEq(MRI->getRegClass(Reg)));
+  if (!IsCandidateClass)
     return false;
 
   return !VRegWithCopies[Reg.virtRegIndex()];
