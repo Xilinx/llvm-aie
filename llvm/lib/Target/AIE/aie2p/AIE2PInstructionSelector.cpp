@@ -1343,11 +1343,11 @@ bool AIE2PInstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
 
   unsigned MemOpLoadStoreSize = getLoadStoreSize(*LoadOp);
   TypeSize DstRegSize = MRI.getType(DstReg).getSizeInBits();
-  assert((MemOpLoadStoreSize == 256 &&
-          (DstRegSize != 512 || DstRegSize != 1024)) ||
-         (MemOpLoadStoreSize == 512 &&
-          (DstRegSize != 1024 || DstRegSize != 2048)) &&
-             "Unexpected VLDA.UPS size");
+  assert(((MemOpLoadStoreSize == 256 &&
+           (DstRegSize != 512 || DstRegSize != 1024)) ||
+          (MemOpLoadStoreSize == 512 &&
+           (DstRegSize != 1024 || DstRegSize != 2048))) &&
+         "Unexpected VLDA.UPS size");
 
   // Selects the mode of the accumulator for UPS instructions
   // 0 – 32-bit accumulator lane
@@ -3143,9 +3143,9 @@ bool AIE2PInstructionSelector::selectG_AIE_STORE_PACK(
 
   unsigned MemOpLoadStoreSize = getLoadStoreSize(StoreI);
   TypeSize SrcRegSize = MRI.getType(SrcReg).getSizeInBits();
-  assert((MemOpLoadStoreSize == 256 && SrcRegSize == 512) ||
-         (MemOpLoadStoreSize == 512 && SrcRegSize == 1024) &&
-             "Unexpected VST.PACK size");
+  assert(((MemOpLoadStoreSize == 256 && SrcRegSize == 512) ||
+          (MemOpLoadStoreSize == 512 && SrcRegSize == 1024)) &&
+         "Unexpected VST.PACK size");
 
   auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI);
   bool ConstantSign = SignVal ? true : false;
@@ -3226,11 +3226,11 @@ bool AIE2PInstructionSelector::selectG_AIE_STORE_SRS(MachineInstr &StoreI,
 
   unsigned MemOpLoadStoreSize = getLoadStoreSize(StoreI);
   TypeSize SrcRegSize = MRI.getType(SrcReg).getSizeInBits();
-  assert((MemOpLoadStoreSize == 256 &&
-          (SrcRegSize == 512 || SrcRegSize == 1024)) ||
-         (MemOpLoadStoreSize == 512 &&
-          (SrcRegSize == 1024 || SrcRegSize == 2048)) &&
-             "Unexpected VST.SRS size");
+  assert(((MemOpLoadStoreSize == 256 &&
+           (SrcRegSize == 512 || SrcRegSize == 1024)) ||
+          (MemOpLoadStoreSize == 512 &&
+           (SrcRegSize == 1024 || SrcRegSize == 2048))) &&
+         "Unexpected VST.SRS size");
 
   auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI);
   bool ConstantSign = SignVal ? true : false;
@@ -3679,6 +3679,7 @@ AIE2PInstructionSelector::getCombinedOpcodeUNPACKLoad(
         return LoadStoreOpcodes{
             AIE2P::VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0, NoImmediate, {}};
       }
+      break;
     case AIE2P::G_AIE_POSTINC_3D_LOAD:
       switch (CombOpInstID) {
       case Intrinsic::aie2p_unpack_I1024_I8_I4:
@@ -3858,6 +3859,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeUPS(
               AlwaysFitsImmediateRange, /*OffsetOpcode=*/{}};
         }
       }
+      break;
     case AIE2P::G_AIE_OFFSET_LOAD:
       if (getLoadStoreSize(MemOp) == 512) {
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
@@ -3898,6 +3900,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeUPS(
                                   /*OffsetOpcode=*/{}};
         }
       }
+      break;
     case AIE2P::G_AIE_POSTINC_LOAD:
       if (getLoadStoreSize(MemOp) == 512) {
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
@@ -3942,6 +3945,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeUPS(
                                   /*OffsetOpcode=*/{}};
         }
       }
+      break;
     case AIE2P::G_AIE_POSTINC_2D_LOAD:
       if (getLoadStoreSize(MemOp) == 512) {
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
@@ -3970,6 +3974,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeUPS(
               NoImmediate, /*OffsetOpcode=*/{}};
         }
       }
+      break;
     case AIE2P::G_AIE_POSTINC_3D_LOAD:
       if (getLoadStoreSize(MemOp) == 512) {
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
@@ -3998,6 +4003,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeUPS(
               NoImmediate, /*OffsetOpcode=*/{}};
         }
       }
+      break;
     }
     // isSigned
   } else {
@@ -4034,6 +4040,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeUPS(
               AlwaysFitsImmediateRange, /*OffsetOpcode=*/{}};
         }
       }
+      break;
     case AIE2P::G_AIE_OFFSET_LOAD:
       if (getLoadStoreSize(MemOp) == 512) {
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
@@ -4074,6 +4081,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeUPS(
                                   /*OffsetOpcode=*/{}};
         }
       }
+      break;
     case AIE2P::G_AIE_POSTINC_LOAD:
       if (getLoadStoreSize(MemOp) == 512) {
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
@@ -4118,6 +4126,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeUPS(
                                   /*OffsetOpcode=*/{}};
         }
       }
+      break;
     case AIE2P::G_AIE_POSTINC_2D_LOAD:
       if (getLoadStoreSize(MemOp) == 512) {
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
@@ -4146,6 +4155,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeUPS(
               NoImmediate, /*OffsetOpcode=*/{}};
         }
       }
+      break;
     case AIE2P::G_AIE_POSTINC_3D_LOAD:
       if (getLoadStoreSize(MemOp) == 512) {
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
@@ -4175,6 +4185,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeUPS(
               NoImmediate, /*OffsetOpcode=*/{}};
         }
       }
+      break;
     }
   }
   return {};
@@ -4247,6 +4258,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeSRS(
               AlwaysFitsImmediateRange, /*OffsetOpcode=*/{}};
         }
       }
+      break;
     case AIE2P::G_AIE_OFFSET_STORE:
       if (Is512BitMemOp) {
         switch (CombOpIntrinsicID) {
@@ -4287,6 +4299,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeSRS(
                                   /*OffsetOpcode=*/{}};
         }
       }
+      break;
     case AIE2P::G_AIE_POSTINC_STORE:
       if (Is512BitMemOp) {
         switch (CombOpIntrinsicID) {
@@ -4331,6 +4344,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeSRS(
                                   /*OffsetOpcode=*/{}};
         }
       }
+      break;
     case AIE2P::G_AIE_POSTINC_2D_STORE:
       if (Is512BitMemOp) {
         switch (CombOpIntrinsicID) {
@@ -4359,6 +4373,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeSRS(
               NoImmediate, /*OffsetOpcode=*/{}};
         }
       }
+      break;
     case AIE2P::G_AIE_POSTINC_3D_STORE:
       if (Is512BitMemOp) {
         switch (CombOpIntrinsicID) {
@@ -4387,6 +4402,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeSRS(
               NoImmediate, /*OffsetOpcode=*/{}};
         }
       }
+      break;
     }
     // isSigned
   } else {
@@ -4419,6 +4435,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeSRS(
               AlwaysFitsImmediateRange, /*OffsetOpcode=*/{}};
         }
       }
+      break;
     case AIE2P::G_AIE_OFFSET_STORE:
       if (Is512BitMemOp) {
         switch (CombOpIntrinsicID) {
@@ -4459,6 +4476,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeSRS(
                                   /*OffsetOpcode=*/{}};
         }
       }
+      break;
     case AIE2P::G_AIE_POSTINC_STORE:
       if (Is512BitMemOp) {
         switch (CombOpIntrinsicID) {
@@ -4503,6 +4521,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeSRS(
                                   /*OffsetOpcode=*/{}};
         }
       }
+      break;
     case AIE2P::G_AIE_POSTINC_2D_STORE:
       if (Is512BitMemOp) {
         switch (CombOpIntrinsicID) {
@@ -4531,6 +4550,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeSRS(
               NoImmediate, /*OffsetOpcode=*/{}};
         }
       }
+      break;
     case AIE2P::G_AIE_POSTINC_3D_STORE:
       if (Is512BitMemOp) {
         switch (CombOpIntrinsicID) {
@@ -4559,6 +4579,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeSRS(
               NoImmediate, /*OffsetOpcode=*/{}};
         }
       }
+      break;
     }
   }
   return {};
