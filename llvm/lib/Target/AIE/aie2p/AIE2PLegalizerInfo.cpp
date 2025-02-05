@@ -659,7 +659,7 @@ bool AIE2PLegalizerInfo::legalizeCustom(
     return AIEHelper.legalizeG_FABS(Helper, MI);
   case TargetOpcode::G_FADD:
   case TargetOpcode::G_FSUB:
-    return AIEHelper.legalizeG_FADDSUB(Helper, MI);
+    return AIEHelper.legalizeG_FADD_G_FSUB(Helper, MI);
   case TargetOpcode::G_BUILD_VECTOR:
     return AIEHelper.legalizeG_BUILD_VECTOR(Helper, MI);
   case TargetOpcode::G_UNMERGE_VALUES:
