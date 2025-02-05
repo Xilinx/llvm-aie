@@ -26,6 +26,20 @@ class MachineInstr;
 class AIELegalizerHelper {
   const AIEBaseSubtarget &ST;
 
+  const LLT S32 = LLT::scalar(32);
+  const LLT V2S16 = LLT::fixed_vector(2, 16);
+  const LLT V2S32 = LLT::fixed_vector(2, 32);
+  const LLT V8ACC64 = LLT::fixed_vector(8, 64);
+  const LLT V16S16 = LLT::fixed_vector(16, 16);
+  const LLT V16BF16 = LLT::fixed_vector(16, 16);
+  const LLT V16S32 = LLT::fixed_vector(16, 32);
+  const LLT V16FP32 = LLT::fixed_vector(16, 32);
+  const LLT V32S16 = LLT::fixed_vector(32, 16);
+  const LLT V32BF16 = LLT::fixed_vector(32, 16);
+  const LLT V32FP32 = LLT::fixed_vector(32, 32);
+  const LLT V32ACC32 = LLT::fixed_vector(32, 32);
+  const LLT V64FP32 = LLT::fixed_vector(64, 32);
+
 public:
   AIELegalizerHelper(const AIEBaseSubtarget &ST);
   const AIEBaseInstrInfo *getInstrInfo();

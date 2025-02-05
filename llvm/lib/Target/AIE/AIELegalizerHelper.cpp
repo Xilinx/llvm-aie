@@ -240,7 +240,6 @@ bool AIELegalizerHelper::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
     // the upper half of the 512-bit vector.
     MIRBuilder.buildUnmerge({UnusedSubReg, DstReg}, Src);
   } else if (DstVecSize == 128) {
-    const LLT V16S32 = LLT::fixed_vector(16, 32);
     Register Vec512Reg = MRI.createGenericVirtualRegister(V16S32);
 
     Register Zero = MIRBuilder.buildConstant(LLT::scalar(32), 0).getReg(0);
@@ -634,7 +633,7 @@ bool AIELegalizerHelper::legalizeG_EXTRACT_VECTOR_ELT(LegalizerHelper &Helper,
   const LLT S32 = LLT::scalar(32);
   switch (SrcVecSize) {
   case 64: {
-    assert(SrcVecTy == LLT::fixed_vector(2, 32) && "Unexpected 64bit vector!");
+    assert(SrcVecTy == V2S32 && "Unexpected 64bit vector!");
     const Register Reg0 = MRI.createGenericVirtualRegister(S32);
     const Register Reg1 = MRI.createGenericVirtualRegister(S32);
     MIRBuilder.buildUnmerge({Reg0, Reg1}, SrcVecReg);
@@ -717,7 +716,7 @@ bool AIELegalizerHelper::legalizeG_INSERT_VECTOR_ELT(LegalizerHelper &Helper,
 
   switch (DstVecSize) {
   case 64: {
-    if (DstVecTy != LLT::fixed_vector(2, 32)) {
+    if (DstVecTy != V2S32) {
       llvm_unreachable("Unexpected 64-bit vector type!");
     }
     std::array<Register, 2> Regs = {MRI.createGenericVirtualRegister(S32),
@@ -986,7 +985,6 @@ bool AIELegalizerHelper::legalizeG_FCMP(
     return true;
   }
 
-  const LLT V32S16 = LLT::fixed_vector(32, 16);
   const Register VecUndef = MRI.createGenericVirtualRegister(V32S16);
   MIRBuilder.buildUndef(VecUndef);
   const Register IdxReg = MRI.createGenericVirtualRegister(S32);
@@ -1059,9 +1057,6 @@ bool AIELegalizerHelper::legalizeG_FPTRUNC(LegalizerHelper &Helper,
   if (DstTy != LLT::scalar(16) || SrcTy != LLT::scalar(32))
     return false;
 
-  LLT ACC512 = LLT::fixed_vector(8, 64);
-  LLT V16S32 = LLT::fixed_vector(16, 32);
-  LLT V16S16 = LLT::fixed_vector(16, 16);
   Register Vec512Reg = MRI.createGenericVirtualRegister(V16S32);
   Register Vec512Undef = MRI.createGenericVirtualRegister(V16S32);
   Register IdxReg = MRI.createGenericVirtualRegister(LLT::scalar(32));
@@ -1073,7 +1068,7 @@ bool AIELegalizerHelper::legalizeG_FPTRUNC(LegalizerHelper &Helper,
   Register Acc512Reg;
   if (ST.isAIE2()) {
     // Accumulator registers in AIE2 must have an element type of s64
-    Acc512Reg = MRI.createGenericVirtualRegister(ACC512);
+    Acc512Reg = MRI.createGenericVirtualRegister(V8ACC64);
     MIRBuilder.buildBitcast(Acc512Reg, Vec512Reg);
   } else {
     // For all other architectures the virtual vector register can directly be
@@ -1332,7 +1327,6 @@ bool AIELegalizerHelper::legalizeG_BITCAST(LegalizerHelper &Helper,
   const LLT SrcTy = MRI.getType(SrcReg);
   assert(DstTy.getSizeInBits() == 16 && SrcTy.getSizeInBits() == 16 &&
          "Expected to legalize 16-bit G_BITCAST");
-  const LLT VEC32 = LLT::fixed_vector(2, 16);
   if (DstTy.isVector()) {
     const Register TmpReg32A =
         MRI.createGenericVirtualRegister(LLT::scalar(32));
@@ -1353,12 +1347,12 @@ bool AIELegalizerHelper::legalizeG_BITCAST(LegalizerHelper &Helper,
         MRI.createGenericVirtualRegister(LLT::scalar(32));
     MIRBuilder.buildOr(TmpReg32E, TmpReg32D, TmpReg32C);
 
-    const Register TmpReg2x16 = MRI.createGenericVirtualRegister(VEC32);
+    const Register TmpReg2x16 = MRI.createGenericVirtualRegister(V2S16);
     MIRBuilder.buildBitcast({TmpReg2x16}, {TmpReg32E});
     MIRBuilder.buildTrunc(DstReg, TmpReg2x16);
 
   } else {
-    const Register TmpReg2x16 = MRI.createGenericVirtualRegister(VEC32);
+    const Register TmpReg2x16 = MRI.createGenericVirtualRegister(V2S16);
     MIRBuilder.buildAnyExt({TmpReg2x16}, {SrcReg});
     const Register TmpReg32 = MRI.createGenericVirtualRegister(LLT::scalar(32));
     MIRBuilder.buildBitcast({TmpReg32}, {TmpReg2x16});
