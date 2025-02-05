@@ -6303,6 +6303,36 @@ static const Value *getUnderlyingObjectAIEIntrinsic(const Value *V) {
       case Intrinsic::aie2_add_3d:
       case Intrinsic::aie2p_add_2d:
       case Intrinsic::aie2p_add_3d:
+      case Intrinsic::aie2p_fifo_ld_fill:
+      // fifo ld unaligned
+      case Intrinsic::aie2p_fifo_ld_pop_unaligned:
+      case Intrinsic::aie2p_fifo_ld_pop_1d_unaligned:
+      case Intrinsic::aie2p_fifo_ld_pop_2d_unaligned:
+      case Intrinsic::aie2p_fifo_ld_pop_3d_unaligned:
+      // fifo ld pop 544
+      case Intrinsic::aie2p_fifo_ld_pop_544_bfp16:
+      case Intrinsic::aie2p_fifo_ld_pop_544_1d_bfp16:
+      case Intrinsic::aie2p_fifo_ld_pop_544_2d_bfp16:
+      case Intrinsic::aie2p_fifo_ld_pop_544_3d_bfp16:
+      // fifo ld pop 576
+      case Intrinsic::aie2p_fifo_ld_pop_576_bfp16:
+      case Intrinsic::aie2p_fifo_ld_pop_576_1d_bfp16:
+      case Intrinsic::aie2p_fifo_ld_pop_576_2d_bfp16:
+      case Intrinsic::aie2p_fifo_ld_pop_576_3d_bfp16:
+      // fifo st flush
+      case Intrinsic::aie2p_fifo_st_flush:
+      case Intrinsic::aie2p_fifo_st_flush_1d:
+      case Intrinsic::aie2p_fifo_st_flush_2d:
+      case Intrinsic::aie2p_fifo_st_flush_3d:
+      // fifo st flush conv
+      case Intrinsic::aie2p_fifo_st_flush_conv:
+      case Intrinsic::aie2p_fifo_st_flush_1d_conv:
+      case Intrinsic::aie2p_fifo_st_flush_2d_conv:
+      case Intrinsic::aie2p_fifo_st_flush_3d_conv:
+      // fifo st push
+      case Intrinsic::aie2p_fifo_st_push_512_bfp16:
+      case Intrinsic::aie2p_fifo_st_push_544_bfp16:
+      case Intrinsic::aie2p_fifo_st_push_576_bfp16:
         return II->getArgOperand(0);
       }
     }

@@ -34,7 +34,7 @@
 
 using namespace llvm;
 
-#define DEBUG_TYPE "aie2-reg-info"
+#define DEBUG_TYPE "aie-reg-info"
 
 // TODO: More flexible syntax, e.g. --aie-reserved-regs=er:10
 llvm::cl::opt<unsigned>
