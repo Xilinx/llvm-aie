@@ -197,5 +197,7 @@ def AIE2PostLegalizerCustomCombiner
 
 def AIE2PPostLegalizerCustomCombiner
     : GICombiner<"AIE2PPostLegalizerCustomCombinerImpl", [ combine_load_store_increment,
-                                                          combine_add_vector_elt_undef ]> {
+                                                           combine_offset_load_store_ptradd,
+                                                           combine_offset_load_store_share_ptradd,
+                                                           combine_add_vector_elt_undef ]> {
 }

@@ -52,7 +52,6 @@ public:
                                MachineRegisterInfo &MRI) override;
   Register createSparseRegSequence(Register Vec, Register Mask,
                                    MachineRegisterInfo &MRI);
-  void insertPtrAddForOffset(MachineRegisterInfo &MRI, MachineInstr &MemI);
 
   bool select(MachineInstr &I) override;
   bool selectCascadeStreamInsn(MachineInstr &I, MachineRegisterInfo &MRI,
@@ -994,37 +993,6 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_UNPACK(
   makeDeadMI(*LoadOp, MRI);
 
   return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
-}
-
-void AIE2InstructionSelector::insertPtrAddForOffset(MachineRegisterInfo &MRI,
-                                                    MachineInstr &MemI) {
-  // The offset is not an immediate or the immediate does not fit the immediate
-  // range. Instruction select PTR_ADD for the splitting of instruction. E.g.:
-  // $x0 = G_AIE_OFFSET_LOAD %ptr, %offset has to be selected to
-  // %new_ptr = PTR_ADD %ptr, %offset
-  // $wh0 = VLDA_dmw_lda_w_ag_idx_imm %new_ptr, #32
-  // $wl0 = VLDA_dmw_lda_w_ag_idx_imm %new_ptr, #0
-
-  // This function only gets called for G_AIE_OFFSET_LOAD AND G_AIE_OFFSET_STORE
-  // Both instruction have the pointer and the offset in the same operands
-  assert((MemI.getOpcode() == AIE2::G_AIE_OFFSET_LOAD ||
-          MemI.getOpcode() == AIE2::G_AIE_OFFSET_STORE) &&
-         "Unexpected instruction in instrPtrAddForOffset");
-  const unsigned PointerRegIndex = 1;
-  const unsigned OffsetRegIndex = 2;
-
-  Register NewPtrReg =
-      MRI.cloneVirtualRegister(MemI.getOperand(PointerRegIndex).getReg());
-  MachineInstrBuilder NewPtr =
-      MIB.buildInstr(TargetOpcode::G_PTR_ADD)
-          .addDef(NewPtrReg)
-          .addReg(MemI.getOperand(PointerRegIndex).getReg())
-          .addReg(MemI.getOperand(OffsetRegIndex).getReg());
-
-  if (!selectImpl(*NewPtr.getInstr(), *CoverageInfo))
-    llvm_unreachable("Unexpected failure selecting G_PTR_ADD");
-
-  MemI.getOperand(PointerRegIndex).setReg(NewPtrReg);
 }
 
 std::optional<LoadStoreOpcodes>

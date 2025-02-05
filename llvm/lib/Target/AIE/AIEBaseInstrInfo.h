@@ -232,6 +232,8 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
     return false;
   }
 
+  virtual bool isGenericOffsetMemOpcode(unsigned Opcode) const { return false; }
+
   // Used for Load/Store combiners
   virtual unsigned getOffsetMemOpcode(unsigned BaseMemOpcode) const {
     llvm_unreachable("Target didn't implement getOffsetMemOpcode");
@@ -565,6 +567,17 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   /// Get size of basic vector registers
   virtual unsigned getBasicVecRegSize() const {
     llvm_unreachable("Target didn't implement getVecRegSize!");
+  }
+
+  /// Return the maximum supported vector size for this target.
+  virtual unsigned getMaxVectorBitSize() const {
+    llvm_unreachable("Target didn't implement getMaxVectorBitSize!");
+  }
+
+  /// Return the maximum vector size the target supports for a combined
+  /// load-store increment.
+  virtual unsigned getMaxSupportedLdStIncSize() const {
+    llvm_unreachable("Target didn't implement getMaxSupportedLdStIncSize!");
   }
 
   /// Abstract operations to help the decoding of complex operations.

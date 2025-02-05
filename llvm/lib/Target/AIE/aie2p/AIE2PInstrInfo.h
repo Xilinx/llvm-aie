@@ -71,6 +71,8 @@ public:
   unsigned getBasicVecRegSize() const override;
 
   unsigned getBasicVectorBitSize() const override;
+  unsigned getMaxVectorBitSize() const override;
+  unsigned getMaxSupportedLdStIncSize() const override;
 
   virtual unsigned
   getNumReservedDelaySlots(const MachineInstr &MI) const override;
@@ -83,6 +85,7 @@ public:
   bool isBooleanNoOp(unsigned Opc) const override;
   bool isBooleanNot(unsigned Opc) const override;
   bool isConstStep(const MachineInstr &MI, int64_t &Step) const override;
+  bool isGenericOffsetMemOpcode(unsigned Opcode) const override;
 
   bool verifyGenericInstruction(const MachineInstr &MI,
                                 StringRef &ErrInfo) const override;
