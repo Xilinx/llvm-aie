@@ -620,3 +620,47 @@ body: |
     %3:accregbank(<32 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2p.v32bf16.to.v32accfloat), %2:vregbank(<32 x s16>)
     PseudoRET implicit $lr, implicit %3
 ...
+
+---
+name:            VLDA_CONV_COPY
+legalized:       true
+regBankSelected: true
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $p0, $r0
+    ; CHECK-LABEL: name: VLDA_CONV_COPY
+    ; CHECK: liveins: $p0, $r0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[VLDA_CONV_fp32_bf16_dmw_lda_ups_bf_idx_imm:%[0-9]+]]:acc512 = VLDA_CONV_fp32_bf16_dmw_lda_ups_bf_idx_imm [[COPY]], 0 :: (load (<16 x s16>))
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_CONV_fp32_bf16_dmw_lda_ups_bf_idx_imm]]
+    %0:ptrregbank(p0) = COPY $p0
+    %1:vregbank(<16 x s16>) = G_LOAD %0:ptrregbank(p0) :: (load (<16 x s16>))
+    %2:vregbank(<16 x s16>) = COPY %1
+    %3:accregbank(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2p.v16bf16.to.v16accfloat), %2:vregbank(<16 x s16>)
+    PseudoRET implicit $lr, implicit %3
+...
+
+---
+name:            VLDA_CONV_COPY_no_single_use
+legalized:       true
+regBankSelected: true
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $p0, $r0
+    ; CHECK-LABEL: name: VLDA_CONV_COPY_no_single_use
+    ; CHECK: liveins: $p0, $r0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[VLDA_dmw_lda_w_idx_imm:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_idx_imm [[COPY]], 0 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VCONV_fp32_bf16_mv_ups_wbf:%[0-9]+]]:acc512 = VCONV_fp32_bf16_mv_ups_wbf [[VLDA_dmw_lda_w_idx_imm]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VCONV_fp32_bf16_mv_ups_wbf]], implicit [[VLDA_dmw_lda_w_idx_imm]]
+    %0:ptrregbank(p0) = COPY $p0
+    %1:vregbank(<16 x s16>) = G_LOAD %0:ptrregbank(p0) :: (load (<16 x s16>))
+    %2:vregbank(<16 x s16>) = COPY %1
+    %3:accregbank(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2p.v16bf16.to.v16accfloat), %2:vregbank(<16 x s16>)
+    PseudoRET implicit $lr, implicit %3, implicit %2
+...
+
