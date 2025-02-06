@@ -1062,7 +1062,7 @@ def vsel_node : SDNode<"AIE2P::G_AIE_VSEL",
                        SDTypeProfile<1, 3, []>>;
 def : GINodeEquiv<G_AIE_VSEL, vsel_node>;
 
-def : Pat<(v64i8(vsel_node (v64i8 VEC512:$src1), (v64i8 VEC512:$src2), (v2i32 eL:$lsel))), 
+def : Pat<(v64i8(vsel_node (v64i8 VEC512:$src1), (v64i8 VEC512:$src2), (i64 eL:$lsel))), 
   (VSEL_8 VEC512:$src1, VEC512:$src2, eL:$lsel)>;
 def : Pat<(v32i16(vsel_node (v32i16 VEC512:$src1), (v32i16 VEC512:$src2), (i32 eRS16:$rsel))), 
   (VSEL_16 VEC512:$src1, VEC512:$src2, eRS16:$rsel)>;
