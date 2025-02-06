@@ -194,7 +194,7 @@ body:             |
     ; GREEDY-NEXT: [[FRAME_INDEX:%[0-9]+]]:ptrregbank(p0) = G_FRAME_INDEX %stack.0
     ; GREEDY-NEXT: [[FRAME_INDEX1:%[0-9]+]]:ptrregbank(p0) = G_FRAME_INDEX %stack.1
     ; GREEDY-NEXT: G_STORE [[COPY]](<16 x s32>), [[FRAME_INDEX]](p0) :: (store (<16 x s32>))
-    ; GREEDY-NEXT: [[LOAD:%[0-9]+]]:accregbank(<16 x s32>) = G_LOAD [[FRAME_INDEX]](p0) :: (dereferenceable load (<16 x s32>))
+    ; GREEDY-NEXT: [[LOAD:%[0-9]+]]:vregbank(<16 x s32>) = G_LOAD [[FRAME_INDEX]](p0) :: (dereferenceable load (<16 x s32>))
     ; GREEDY-NEXT: G_STORE [[LOAD]](<16 x s32>), [[FRAME_INDEX1]](p0) :: (volatile store (<16 x s32>))
     ; GREEDY-NEXT: [[LOAD1:%[0-9]+]]:accregbank(<16 x s32>) = G_LOAD [[FRAME_INDEX1]](p0) :: (volatile dereferenceable load (<16 x s32>))
     ; GREEDY-NEXT: $bmll0 = COPY [[LOAD1]](<16 x s32>)
@@ -205,7 +205,7 @@ body:             |
     ; FAST-NEXT: [[FRAME_INDEX:%[0-9]+]]:ptrregbank(p0) = G_FRAME_INDEX %stack.0
     ; FAST-NEXT: [[FRAME_INDEX1:%[0-9]+]]:ptrregbank(p0) = G_FRAME_INDEX %stack.1
     ; FAST-NEXT: G_STORE [[COPY]](<16 x s32>), [[FRAME_INDEX]](p0) :: (store (<16 x s32>))
-    ; FAST-NEXT: [[LOAD:%[0-9]+]]:accregbank(<16 x s32>) = G_LOAD [[FRAME_INDEX]](p0) :: (dereferenceable load (<16 x s32>))
+    ; FAST-NEXT: [[LOAD:%[0-9]+]]:vregbank(<16 x s32>) = G_LOAD [[FRAME_INDEX]](p0) :: (dereferenceable load (<16 x s32>))
     ; FAST-NEXT: G_STORE [[LOAD]](<16 x s32>), [[FRAME_INDEX1]](p0) :: (volatile store (<16 x s32>))
     ; FAST-NEXT: [[LOAD1:%[0-9]+]]:accregbank(<16 x s32>) = G_LOAD [[FRAME_INDEX1]](p0) :: (volatile dereferenceable load (<16 x s32>))
     ; FAST-NEXT: $bmll0 = COPY [[LOAD1]](<16 x s32>)
@@ -1395,4 +1395,461 @@ body:             |
     $wl0 = COPY %0(<16 x s16>)
     PseudoRET implicit $lr, implicit $wl0
 
+...
+---
+name:            offset_load_acc512
+legalized:       true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; GREEDY-LABEL: name: offset_load_acc512
+    ; GREEDY: liveins: $p0
+    ; GREEDY-NEXT: {{  $}}
+    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:ptrregbank(p0) = COPY $p0
+    ; GREEDY-NEXT: [[C:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 448
+    ; GREEDY-NEXT: [[AIE_OFFSET_LOAD:%[0-9]+]]:accregbank(<8 x s64>) = G_AIE_OFFSET_LOAD [[COPY]](p0), [[C]](s20) :: (load (<8 x s64>))
+    ; GREEDY-NEXT: $bmll0 = COPY [[AIE_OFFSET_LOAD]](<8 x s64>)
+    ;
+    ; FAST-LABEL: name: offset_load_acc512
+    ; FAST: liveins: $p0
+    ; FAST-NEXT: {{  $}}
+    ; FAST-NEXT: [[COPY:%[0-9]+]]:ptrregbank(p0) = COPY $p0
+    ; FAST-NEXT: [[C:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 448
+    ; FAST-NEXT: [[AIE_OFFSET_LOAD:%[0-9]+]]:accregbank(<8 x s64>) = G_AIE_OFFSET_LOAD [[COPY]](p0), [[C]](s20) :: (load (<8 x s64>))
+    ; FAST-NEXT: $bmll0 = COPY [[AIE_OFFSET_LOAD]](<8 x s64>)
+    %1:_(p0) = COPY $p0
+    %2:_(s20) = G_CONSTANT i20 448
+    %0:_(<8 x s64>) = G_AIE_OFFSET_LOAD %1:_(p0), %2:_(s20) :: (load (<8 x s64>))
+    $bmll0 = COPY %0:_(<8 x s64>)
+...
+
+---
+name:            offset_store_acc512
+legalized:       true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; GREEDY-LABEL: name: offset_store_acc512
+    ; GREEDY: liveins: $p0
+    ; GREEDY-NEXT: {{  $}}
+    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:accregbank(<16 x s32>) = COPY $bmll0
+    ; GREEDY-NEXT: [[COPY1:%[0-9]+]]:ptrregbank(p0) = COPY $p0
+    ; GREEDY-NEXT: [[C:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 448
+    ; GREEDY-NEXT: G_AIE_OFFSET_STORE [[COPY]](<16 x s32>), [[COPY1]](p0), [[C]](s20) :: (store (<16 x s32>))
+    ;
+    ; FAST-LABEL: name: offset_store_acc512
+    ; FAST: liveins: $p0
+    ; FAST-NEXT: {{  $}}
+    ; FAST-NEXT: [[COPY:%[0-9]+]]:accregbank(<16 x s32>) = COPY $bmll0
+    ; FAST-NEXT: [[COPY1:%[0-9]+]]:ptrregbank(p0) = COPY $p0
+    ; FAST-NEXT: [[C:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 448
+    ; FAST-NEXT: G_AIE_OFFSET_STORE [[COPY]](<16 x s32>), [[COPY1]](p0), [[C]](s20) :: (store (<16 x s32>))
+    %0:_(<16 x s32>) = COPY $bmll0
+    %1:_(p0) = COPY $p0
+    %2:_(s20) = G_CONSTANT i20 448
+    G_AIE_OFFSET_STORE %0:_(<16 x s32>), %1:_(p0), %2:_(s20) :: (store (<16 x s32>))
+...
+---
+
+name: post-inc-acc512-load
+legalized:       true
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $p0, $r0, $r1
+    ; GREEDY-LABEL: name: post-inc-acc512-load
+    ; GREEDY: liveins: $p0, $r0, $r1
+    ; GREEDY-NEXT: {{  $}}
+    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:ptrregbank(p0) = COPY $p0
+    ; GREEDY-NEXT: [[COPY1:%[0-9]+]]:gprregbank(s32) = COPY $r0
+    ; GREEDY-NEXT: [[TRUNC:%[0-9]+]]:modregbank(s20) = G_TRUNC [[COPY1]](s32)
+    ; GREEDY-NEXT: [[C:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 448
+    ; GREEDY-NEXT: [[C1:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 -512
+    ; GREEDY-NEXT: [[C2:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 0
+    ; GREEDY-NEXT: [[C3:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 32
+    ; GREEDY-NEXT: [[C4:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 512
+    ; GREEDY-NEXT: [[AIE_POSTINC_LOAD:%[0-9]+]]:accregbank(<16 x s32>), [[AIE_POSTINC_LOAD1:%[0-9]+]]:ptrregbank(p0) = G_AIE_POSTINC_LOAD [[COPY]], [[TRUNC]](s20) :: (load (<16 x s32>) from stack - 64)
+    ; GREEDY-NEXT: [[AIE_POSTINC_LOAD2:%[0-9]+]]:accregbank(<16 x s32>), [[AIE_POSTINC_LOAD3:%[0-9]+]]:ptrregbank(p0) = G_AIE_POSTINC_LOAD [[AIE_POSTINC_LOAD1]], [[C]](s20) :: (load (<16 x s32>) from stack - 64)
+    ; GREEDY-NEXT: $bmll0 = COPY [[AIE_POSTINC_LOAD]](<16 x s32>)
+    ; GREEDY-NEXT: $bmll1 = COPY [[AIE_POSTINC_LOAD2]](<16 x s32>)
+    ;
+    ; FAST-LABEL: name: post-inc-acc512-load
+    ; FAST: liveins: $p0, $r0, $r1
+    ; FAST-NEXT: {{  $}}
+    ; FAST-NEXT: [[COPY:%[0-9]+]]:ptrregbank(p0) = COPY $p0
+    ; FAST-NEXT: [[COPY1:%[0-9]+]]:gprregbank(s32) = COPY $r0
+    ; FAST-NEXT: [[TRUNC:%[0-9]+]]:modregbank(s20) = G_TRUNC [[COPY1]](s32)
+    ; FAST-NEXT: [[C:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 448
+    ; FAST-NEXT: [[C1:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 -512
+    ; FAST-NEXT: [[C2:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 0
+    ; FAST-NEXT: [[C3:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 32
+    ; FAST-NEXT: [[C4:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 512
+    ; FAST-NEXT: [[AIE_POSTINC_LOAD:%[0-9]+]]:accregbank(<16 x s32>), [[AIE_POSTINC_LOAD1:%[0-9]+]]:ptrregbank(p0) = G_AIE_POSTINC_LOAD [[COPY]], [[TRUNC]](s20) :: (load (<16 x s32>) from stack - 64)
+    ; FAST-NEXT: [[AIE_POSTINC_LOAD2:%[0-9]+]]:accregbank(<16 x s32>), [[AIE_POSTINC_LOAD3:%[0-9]+]]:ptrregbank(p0) = G_AIE_POSTINC_LOAD [[AIE_POSTINC_LOAD1]], [[C]](s20) :: (load (<16 x s32>) from stack - 64)
+    ; FAST-NEXT: $bmll0 = COPY [[AIE_POSTINC_LOAD]](<16 x s32>)
+    ; FAST-NEXT: $bmll1 = COPY [[AIE_POSTINC_LOAD2]](<16 x s32>)
+    %0:_(p0) = COPY $p0
+    %1:_(s32) = COPY $r0
+    %7:_(s20) = G_TRUNC %1
+    %8:_(s20) = G_CONSTANT i20 448
+    %9:_(s20) = G_CONSTANT i20 -512
+    %10:_(s20) = G_CONSTANT i20 0
+    %11:_(s20) = G_CONSTANT i20 32
+    %12:_(s20) = G_CONSTANT i20 512
+    %13:_(<16 x s32>), %15:_(p0) = G_AIE_POSTINC_LOAD %0, %7 :: (load (<16 x s32>) from stack - 64)
+    %14:_(<16 x s32>), %16:_(p0) = G_AIE_POSTINC_LOAD %15, %8 :: (load (<16 x s32>) from stack - 64)
+    $bmll0 = COPY %13:_(<16 x s32>)
+    $bmll1 = COPY %14:_(<16 x s32>)
+...
+
+---
+name: post-inc-acc2048-load
+legalized:       true
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $p0, $r0, $r1
+    ; GREEDY-LABEL: name: post-inc-acc2048-load
+    ; GREEDY: liveins: $p0, $r0, $r1
+    ; GREEDY-NEXT: {{  $}}
+    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:ptrregbank(p0) = COPY $p0
+    ; GREEDY-NEXT: [[COPY1:%[0-9]+]]:gprregbank(s32) = COPY $r0
+    ; GREEDY-NEXT: [[TRUNC:%[0-9]+]]:modregbank(s20) = G_TRUNC [[COPY1]](s32)
+    ; GREEDY-NEXT: [[C:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 448
+    ; GREEDY-NEXT: [[C1:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 -512
+    ; GREEDY-NEXT: [[C2:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 0
+    ; GREEDY-NEXT: [[C3:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 32
+    ; GREEDY-NEXT: [[C4:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 512
+    ; GREEDY-NEXT: [[AIE_POSTINC_LOAD:%[0-9]+]]:accregbank(<64 x s32>), [[AIE_POSTINC_LOAD1:%[0-9]+]]:ptrregbank(p0) = G_AIE_POSTINC_LOAD [[COPY]], [[TRUNC]](s20) :: (load (<64 x s32>) from stack - 64, align 64, basealign 256)
+    ; GREEDY-NEXT: [[AIE_POSTINC_LOAD2:%[0-9]+]]:accregbank(<64 x s32>), [[AIE_POSTINC_LOAD3:%[0-9]+]]:ptrregbank(p0) = G_AIE_POSTINC_LOAD [[AIE_POSTINC_LOAD1]], [[C]](s20) :: (load (<64 x s32>) from stack - 64, align 64, basealign 256)
+    ; GREEDY-NEXT: $dm0 = COPY [[AIE_POSTINC_LOAD]](<64 x s32>)
+    ; GREEDY-NEXT: $dm1 = COPY [[AIE_POSTINC_LOAD2]](<64 x s32>)
+    ;
+    ; FAST-LABEL: name: post-inc-acc2048-load
+    ; FAST: liveins: $p0, $r0, $r1
+    ; FAST-NEXT: {{  $}}
+    ; FAST-NEXT: [[COPY:%[0-9]+]]:ptrregbank(p0) = COPY $p0
+    ; FAST-NEXT: [[COPY1:%[0-9]+]]:gprregbank(s32) = COPY $r0
+    ; FAST-NEXT: [[TRUNC:%[0-9]+]]:modregbank(s20) = G_TRUNC [[COPY1]](s32)
+    ; FAST-NEXT: [[C:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 448
+    ; FAST-NEXT: [[C1:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 -512
+    ; FAST-NEXT: [[C2:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 0
+    ; FAST-NEXT: [[C3:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 32
+    ; FAST-NEXT: [[C4:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 512
+    ; FAST-NEXT: [[AIE_POSTINC_LOAD:%[0-9]+]]:accregbank(<64 x s32>), [[AIE_POSTINC_LOAD1:%[0-9]+]]:ptrregbank(p0) = G_AIE_POSTINC_LOAD [[COPY]], [[TRUNC]](s20) :: (load (<64 x s32>) from stack - 64, align 64, basealign 256)
+    ; FAST-NEXT: [[AIE_POSTINC_LOAD2:%[0-9]+]]:accregbank(<64 x s32>), [[AIE_POSTINC_LOAD3:%[0-9]+]]:ptrregbank(p0) = G_AIE_POSTINC_LOAD [[AIE_POSTINC_LOAD1]], [[C]](s20) :: (load (<64 x s32>) from stack - 64, align 64, basealign 256)
+    ; FAST-NEXT: $dm0 = COPY [[AIE_POSTINC_LOAD]](<64 x s32>)
+    ; FAST-NEXT: $dm1 = COPY [[AIE_POSTINC_LOAD2]](<64 x s32>)
+    %0:_(p0) = COPY $p0
+    %1:_(s32) = COPY $r0
+    %7:_(s20) = G_TRUNC %1
+    %8:_(s20) = G_CONSTANT i20 448
+    %9:_(s20) = G_CONSTANT i20 -512
+    %10:_(s20) = G_CONSTANT i20 0
+    %11:_(s20) = G_CONSTANT i20 32
+    %12:_(s20) = G_CONSTANT i20 512
+    %13:_(<64 x s32>), %15:_(p0) = G_AIE_POSTINC_LOAD %0, %7 :: (load (<64 x s32>) from stack - 64)
+    %14:_(<64 x s32>), %16:_(p0) = G_AIE_POSTINC_LOAD %15, %8 :: (load (<64 x s32>) from stack - 64)
+    $dm0 = COPY %13:_(<64 x s32>)
+    $dm1 = COPY %14:_(<64 x s32>)
+...
+
+---
+name: post-inc-2d-acc-load-bm
+legalized:       true
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $p0
+    ; GREEDY-LABEL: name: post-inc-2d-acc-load-bm
+    ; GREEDY: liveins: $p0
+    ; GREEDY-NEXT: {{  $}}
+    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:ptrregbank(p0) = COPY $p0
+    ; GREEDY-NEXT: [[C:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 1
+    ; GREEDY-NEXT: [[C1:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 2
+    ; GREEDY-NEXT: [[C2:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 3
+    ; GREEDY-NEXT: [[C3:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 4
+    ; GREEDY-NEXT: [[AIE_POSTINC_2D_LOAD:%[0-9]+]]:accregbank(<16 x s32>), [[AIE_POSTINC_2D_LOAD1:%[0-9]+]]:ptrregbank(p0), [[AIE_POSTINC_2D_LOAD2:%[0-9]+]]:modregbank(s20) = G_AIE_POSTINC_2D_LOAD [[COPY]], [[C]], [[C1]], [[C2]], [[C3]] :: (load (<16 x s32>))
+    ; GREEDY-NEXT: $bmll0 = COPY [[AIE_POSTINC_2D_LOAD]](<16 x s32>)
+    ;
+    ; FAST-LABEL: name: post-inc-2d-acc-load-bm
+    ; FAST: liveins: $p0
+    ; FAST-NEXT: {{  $}}
+    ; FAST-NEXT: [[COPY:%[0-9]+]]:ptrregbank(p0) = COPY $p0
+    ; FAST-NEXT: [[C:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 1
+    ; FAST-NEXT: [[C1:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 2
+    ; FAST-NEXT: [[C2:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 3
+    ; FAST-NEXT: [[C3:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 4
+    ; FAST-NEXT: [[AIE_POSTINC_2D_LOAD:%[0-9]+]]:accregbank(<16 x s32>), [[AIE_POSTINC_2D_LOAD1:%[0-9]+]]:ptrregbank(p0), [[AIE_POSTINC_2D_LOAD2:%[0-9]+]]:modregbank(s20) = G_AIE_POSTINC_2D_LOAD [[COPY]], [[C]], [[C1]], [[C2]], [[C3]] :: (load (<16 x s32>))
+    ; FAST-NEXT: $bmll0 = COPY [[AIE_POSTINC_2D_LOAD]](<16 x s32>)
+    %0:_(p0) = COPY $p0
+    %1:_(s20) = G_CONSTANT i20 1
+    %2:_(s20) = G_CONSTANT i20 2
+    %3:_(s20) = G_CONSTANT i20 3
+    %4:_(s20) = G_CONSTANT i20 4
+    %5:_(<16 x s32>), %6:_(p0), %7:_(s20) = G_AIE_POSTINC_2D_LOAD %0, %1, %2, %3, %4 :: (load (<16 x s32>))
+    $bmll0 = COPY %5:_(<16 x s32>)
+...
+
+---
+name: post-inc-3d-acc-load-512
+legalized:       true
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $p0
+    ; GREEDY-LABEL: name: post-inc-3d-acc-load-512
+    ; GREEDY: liveins: $p0
+    ; GREEDY-NEXT: {{  $}}
+    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:ptrregbank(p0) = COPY $p0
+    ; GREEDY-NEXT: [[C:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 1
+    ; GREEDY-NEXT: [[C1:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 2
+    ; GREEDY-NEXT: [[C2:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 3
+    ; GREEDY-NEXT: [[C3:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 4
+    ; GREEDY-NEXT: [[C4:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 5
+    ; GREEDY-NEXT: [[C5:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 6
+    ; GREEDY-NEXT: [[C6:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 7
+    ; GREEDY-NEXT: [[AIE_POSTINC_3D_LOAD:%[0-9]+]]:accregbank(<16 x s32>), [[AIE_POSTINC_3D_LOAD1:%[0-9]+]]:ptrregbank(p0), [[AIE_POSTINC_3D_LOAD2:%[0-9]+]]:modregbank(s20), [[AIE_POSTINC_3D_LOAD3:%[0-9]+]]:modregbank = G_AIE_POSTINC_3D_LOAD [[COPY]], [[C]], [[C1]], [[C2]], [[C3]], [[C5]], [[C4]], [[C6]] :: (load (<16 x s32>))
+    ; GREEDY-NEXT: $bmll0 = COPY [[AIE_POSTINC_3D_LOAD]](<16 x s32>)
+    ;
+    ; FAST-LABEL: name: post-inc-3d-acc-load-512
+    ; FAST: liveins: $p0
+    ; FAST-NEXT: {{  $}}
+    ; FAST-NEXT: [[COPY:%[0-9]+]]:ptrregbank(p0) = COPY $p0
+    ; FAST-NEXT: [[C:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 1
+    ; FAST-NEXT: [[C1:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 2
+    ; FAST-NEXT: [[C2:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 3
+    ; FAST-NEXT: [[C3:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 4
+    ; FAST-NEXT: [[C4:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 5
+    ; FAST-NEXT: [[C5:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 6
+    ; FAST-NEXT: [[C6:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 7
+    ; FAST-NEXT: [[AIE_POSTINC_3D_LOAD:%[0-9]+]]:accregbank(<16 x s32>), [[AIE_POSTINC_3D_LOAD1:%[0-9]+]]:ptrregbank(p0), [[AIE_POSTINC_3D_LOAD2:%[0-9]+]]:modregbank(s20), [[AIE_POSTINC_3D_LOAD3:%[0-9]+]]:modregbank = G_AIE_POSTINC_3D_LOAD [[COPY]], [[C]], [[C1]], [[C2]], [[C3]], [[C5]], [[C4]], [[C6]] :: (load (<16 x s32>))
+    ; FAST-NEXT: $bmll0 = COPY [[AIE_POSTINC_3D_LOAD]](<16 x s32>)
+    %0:_(p0) = COPY $p0
+    %1:_(s20) = G_CONSTANT i20 1
+    %2:_(s20) = G_CONSTANT i20 2
+    %3:_(s20) = G_CONSTANT i20 3
+    %4:_(s20) = G_CONSTANT i20 4
+    %5:_(s20) = G_CONSTANT i20 5
+    %6:_(s20) = G_CONSTANT i20 6
+    %7:_(s20) = G_CONSTANT i20 7
+    %8:_(<16 x s32>), %9:_(p0), %10:_(s20), %11:_(s20) = G_AIE_POSTINC_3D_LOAD %0, %1, %2, %3, %4, %6, %5, %7 :: (load (<16 x s32>))
+    $bmll0 = COPY %8:_(<16 x s32>)
+
+...
+---
+name:            test_v32acc32_postinc_store
+legalized:       true
+stack:
+  - { id: 0, name: "", type: default, offset: 0, size: 64, alignment: 64}
+body:             |
+  bb.1.entry:
+
+    ; GREEDY-LABEL: name: test_v32acc32_postinc_store
+    ; GREEDY: [[COPY:%[0-9]+]]:accregbank(<16 x s32>) = COPY $bmll1
+    ; GREEDY-NEXT: [[COPY1:%[0-9]+]]:ptrregbank(p0) = COPY $p1
+    ; GREEDY-NEXT: [[C:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 128
+    ; GREEDY-NEXT: [[AIE_POSTINC_STORE:%[0-9]+]]:ptrregbank(p0) = G_AIE_POSTINC_STORE [[COPY]](<16 x s32>), [[COPY1]], [[C]](s20) :: (store (<16 x s32>))
+    ; GREEDY-NEXT: [[LOAD:%[0-9]+]]:accregbank(<16 x s32>) = G_LOAD [[AIE_POSTINC_STORE]](p0) :: (volatile dereferenceable load (<16 x s32>))
+    ; GREEDY-NEXT: $bmll0 = COPY [[LOAD]](<16 x s32>)
+    ; GREEDY-NEXT: PseudoRET implicit $lr, implicit $bmll0
+    ;
+    ; FAST-LABEL: name: test_v32acc32_postinc_store
+    ; FAST: [[COPY:%[0-9]+]]:accregbank(<16 x s32>) = COPY $bmll1
+    ; FAST-NEXT: [[COPY1:%[0-9]+]]:ptrregbank(p0) = COPY $p1
+    ; FAST-NEXT: [[C:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 128
+    ; FAST-NEXT: [[AIE_POSTINC_STORE:%[0-9]+]]:ptrregbank(p0) = G_AIE_POSTINC_STORE [[COPY]](<16 x s32>), [[COPY1]], [[C]](s20) :: (store (<16 x s32>))
+    ; FAST-NEXT: [[LOAD:%[0-9]+]]:accregbank(<16 x s32>) = G_LOAD [[AIE_POSTINC_STORE]](p0) :: (volatile dereferenceable load (<16 x s32>))
+    ; FAST-NEXT: $bmll0 = COPY [[LOAD]](<16 x s32>)
+    ; FAST-NEXT: PseudoRET implicit $lr, implicit $bmll0
+    %1:_(<16 x s32>) = COPY $bmll1
+    %2:_(p0) = COPY $p1
+    %3:_(s20) = G_CONSTANT i20 128
+    %5:_(p0) = G_AIE_POSTINC_STORE %1(<16 x s32>), %2, %3(s20) :: (store (<16 x s32>))
+    %0:_(<16 x s32>) = G_LOAD %5(p0) :: (volatile dereferenceable load (<16 x s32>))
+    $bmll0 = COPY %0(<16 x s32>)
+    PseudoRET implicit $lr, implicit $bmll0
+
+...
+---
+name:            test_v16acc32_spill_reload_postinc
+legalized:       true
+stack:
+  - { id: 0, name: "", type: default, offset: 0, size: 64, alignment: 64}
+  - { id: 1, name: "", type: default, offset: 0, size: 64, alignment: 64}
+body:             |
+  bb.1.entry:
+
+    ; GREEDY-LABEL: name: test_v16acc32_spill_reload_postinc
+    ; GREEDY: [[COPY:%[0-9]+]]:accregbank(<16 x s32>) = COPY $bmll1
+    ; GREEDY-NEXT: [[FRAME_INDEX:%[0-9]+]]:ptrregbank(p0) = G_FRAME_INDEX %stack.0
+    ; GREEDY-NEXT: [[FRAME_INDEX1:%[0-9]+]]:ptrregbank(p0) = G_FRAME_INDEX %stack.1
+    ; GREEDY-NEXT: [[COPY1:%[0-9]+]]:ptrregbank(p0) = COPY $p1
+    ; GREEDY-NEXT: [[C:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 128
+    ; GREEDY-NEXT: [[AIE_POSTINC_STORE:%[0-9]+]]:ptrregbank(p0) = G_AIE_POSTINC_STORE [[COPY]](<16 x s32>), [[COPY1]], [[C]](s20) :: (store (<16 x s32>))
+    ; GREEDY-NEXT: [[LOAD:%[0-9]+]]:vregbank(<16 x s32>) = G_LOAD [[AIE_POSTINC_STORE]](p0) :: (dereferenceable load (<16 x s32>))
+    ; GREEDY-NEXT: G_STORE [[LOAD]](<16 x s32>), [[FRAME_INDEX1]](p0) :: (volatile store (<16 x s32>))
+    ; GREEDY-NEXT: [[LOAD1:%[0-9]+]]:accregbank(<16 x s32>) = G_LOAD [[FRAME_INDEX1]](p0) :: (volatile dereferenceable load (<16 x s32>))
+    ; GREEDY-NEXT: $bmll0 = COPY [[LOAD1]](<16 x s32>)
+    ; GREEDY-NEXT: PseudoRET implicit $lr, implicit $bmll0
+    ;
+    ; FAST-LABEL: name: test_v16acc32_spill_reload_postinc
+    ; FAST: [[COPY:%[0-9]+]]:accregbank(<16 x s32>) = COPY $bmll1
+    ; FAST-NEXT: [[FRAME_INDEX:%[0-9]+]]:ptrregbank(p0) = G_FRAME_INDEX %stack.0
+    ; FAST-NEXT: [[FRAME_INDEX1:%[0-9]+]]:ptrregbank(p0) = G_FRAME_INDEX %stack.1
+    ; FAST-NEXT: [[COPY1:%[0-9]+]]:ptrregbank(p0) = COPY $p1
+    ; FAST-NEXT: [[C:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 128
+    ; FAST-NEXT: [[AIE_POSTINC_STORE:%[0-9]+]]:ptrregbank(p0) = G_AIE_POSTINC_STORE [[COPY]](<16 x s32>), [[COPY1]], [[C]](s20) :: (store (<16 x s32>))
+    ; FAST-NEXT: [[LOAD:%[0-9]+]]:vregbank(<16 x s32>) = G_LOAD [[AIE_POSTINC_STORE]](p0) :: (dereferenceable load (<16 x s32>))
+    ; FAST-NEXT: G_STORE [[LOAD]](<16 x s32>), [[FRAME_INDEX1]](p0) :: (volatile store (<16 x s32>))
+    ; FAST-NEXT: [[LOAD1:%[0-9]+]]:accregbank(<16 x s32>) = G_LOAD [[FRAME_INDEX1]](p0) :: (volatile dereferenceable load (<16 x s32>))
+    ; FAST-NEXT: $bmll0 = COPY [[LOAD1]](<16 x s32>)
+    ; FAST-NEXT: PseudoRET implicit $lr, implicit $bmll0
+    %1:_(<16 x s32>) = COPY $bmll1
+    %2:_(p0) = G_FRAME_INDEX %stack.0
+    %3:_(p0) = G_FRAME_INDEX %stack.1
+    %5:_(p0) = COPY $p1
+    %6:_(s20) = G_CONSTANT i20 128
+    %7:_(p0) = G_AIE_POSTINC_STORE %1(<16 x s32>), %5, %6(s20) :: (store (<16 x s32>))
+    %4:_(<16 x s32>) = G_LOAD %7(p0) :: (dereferenceable load (<16 x s32>))
+    G_STORE %4(<16 x s32>), %3(p0) :: (volatile store (<16 x s32>))
+    %0:_(<16 x s32>) = G_LOAD %3(p0) :: (volatile dereferenceable load (<16 x s32>))
+    $bmll0 = COPY %0(<16 x s32>)
+    PseudoRET implicit $lr, implicit $bmll0
+
+...
+
+---
+name: post-inc-acc-store-512
+legalized:       true
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $p0, $r0, $r1, $bmll0
+    ; GREEDY-LABEL: name: post-inc-acc-store-512
+    ; GREEDY: liveins: $p0, $r0, $r1, $bmll0
+    ; GREEDY-NEXT: {{  $}}
+    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:ptrregbank(p0) = COPY $p0
+    ; GREEDY-NEXT: [[COPY1:%[0-9]+]]:gprregbank(s32) = COPY $r0
+    ; GREEDY-NEXT: [[TRUNC:%[0-9]+]]:modregbank(s20) = G_TRUNC [[COPY1]](s32)
+    ; GREEDY-NEXT: [[C:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 448
+    ; GREEDY-NEXT: [[C1:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 -512
+    ; GREEDY-NEXT: [[C2:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 0
+    ; GREEDY-NEXT: [[C3:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 32
+    ; GREEDY-NEXT: [[C4:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 512
+    ; GREEDY-NEXT: [[COPY2:%[0-9]+]]:accregbank(<16 x s32>) = COPY $bmll0
+    ; GREEDY-NEXT: [[AIE_POSTINC_STORE:%[0-9]+]]:ptrregbank(p0) = G_AIE_POSTINC_STORE [[COPY2]](<16 x s32>), [[COPY]], [[TRUNC]](s20) :: (store (<16 x s32>) into stack - 64)
+    ;
+    ; FAST-LABEL: name: post-inc-acc-store-512
+    ; FAST: liveins: $p0, $r0, $r1, $bmll0
+    ; FAST-NEXT: {{  $}}
+    ; FAST-NEXT: [[COPY:%[0-9]+]]:ptrregbank(p0) = COPY $p0
+    ; FAST-NEXT: [[COPY1:%[0-9]+]]:gprregbank(s32) = COPY $r0
+    ; FAST-NEXT: [[TRUNC:%[0-9]+]]:modregbank(s20) = G_TRUNC [[COPY1]](s32)
+    ; FAST-NEXT: [[C:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 448
+    ; FAST-NEXT: [[C1:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 -512
+    ; FAST-NEXT: [[C2:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 0
+    ; FAST-NEXT: [[C3:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 32
+    ; FAST-NEXT: [[C4:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 512
+    ; FAST-NEXT: [[COPY2:%[0-9]+]]:accregbank(<16 x s32>) = COPY $bmll0
+    ; FAST-NEXT: [[AIE_POSTINC_STORE:%[0-9]+]]:ptrregbank(p0) = G_AIE_POSTINC_STORE [[COPY2]](<16 x s32>), [[COPY]], [[TRUNC]](s20) :: (store (<16 x s32>) into stack - 64)
+    %0:_(p0) = COPY $p0
+    %1:_(s32) = COPY $r0
+    %7:_(s20) = G_TRUNC %1
+    %8:_(s20) = G_CONSTANT i20 448
+    %9:_(s20) = G_CONSTANT i20 -512
+    %10:_(s20) = G_CONSTANT i20 0
+    %11:_(s20) = G_CONSTANT i20 32
+    %12:_(s20) = G_CONSTANT i20 512
+    %13:_(<16 x s32>) = COPY $bmll0
+    %19:_(p0) = G_AIE_POSTINC_STORE %13, %0, %7 :: (store (<16 x s32>) into stack - 64)
+...
+
+---
+name: post-inc-2d-acc-store-512
+legalized:       true
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $p0, $bmll0
+    ; GREEDY-LABEL: name: post-inc-2d-acc-store-512
+    ; GREEDY: liveins: $p0, $bmll0
+    ; GREEDY-NEXT: {{  $}}
+    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:ptrregbank(p0) = COPY $p0
+    ; GREEDY-NEXT: [[C:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 1
+    ; GREEDY-NEXT: [[C1:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 2
+    ; GREEDY-NEXT: [[C2:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 3
+    ; GREEDY-NEXT: [[C3:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 4
+    ; GREEDY-NEXT: [[COPY1:%[0-9]+]]:accregbank(<16 x s32>) = COPY $bmll0
+    ; GREEDY-NEXT: [[AIE_POSTINC_2D_STORE:%[0-9]+]]:ptrregbank(p0), [[AIE_POSTINC_2D_STORE1:%[0-9]+]]:modregbank(s20) = G_AIE_POSTINC_2D_STORE [[COPY1]](<16 x s32>), [[COPY]], [[C]], [[C1]], [[C2]], [[C3]] :: (store (<16 x s32>))
+    ; GREEDY-NEXT: PseudoRET implicit $lr
+    ;
+    ; FAST-LABEL: name: post-inc-2d-acc-store-512
+    ; FAST: liveins: $p0, $bmll0
+    ; FAST-NEXT: {{  $}}
+    ; FAST-NEXT: [[COPY:%[0-9]+]]:ptrregbank(p0) = COPY $p0
+    ; FAST-NEXT: [[C:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 1
+    ; FAST-NEXT: [[C1:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 2
+    ; FAST-NEXT: [[C2:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 3
+    ; FAST-NEXT: [[C3:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 4
+    ; FAST-NEXT: [[COPY1:%[0-9]+]]:accregbank(<16 x s32>) = COPY $bmll0
+    ; FAST-NEXT: [[AIE_POSTINC_2D_STORE:%[0-9]+]]:ptrregbank(p0), [[AIE_POSTINC_2D_STORE1:%[0-9]+]]:modregbank(s20) = G_AIE_POSTINC_2D_STORE [[COPY1]](<16 x s32>), [[COPY]], [[C]], [[C1]], [[C2]], [[C3]] :: (store (<16 x s32>))
+    ; FAST-NEXT: PseudoRET implicit $lr
+    %0:_(p0) = COPY $p0
+    %1:_(s20) = G_CONSTANT i20 1
+    %2:_(s20) = G_CONSTANT i20 2
+    %3:_(s20) = G_CONSTANT i20 3
+    %4:_(s20) = G_CONSTANT i20 4
+    %5:_(<16 x s32>) = COPY $bmll0
+    %6:_(p0), %7:_(s20) = G_AIE_POSTINC_2D_STORE %5, %0, %1, %2, %3, %4 :: (store (<16 x s32>))
+    PseudoRET implicit $lr
+...
+
+---
+name: post-inc-3d-vector-store-512
+legalized:       true
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $p0, $bmll0
+    ; GREEDY-LABEL: name: post-inc-3d-vector-store-512
+    ; GREEDY: liveins: $p0, $bmll0
+    ; GREEDY-NEXT: {{  $}}
+    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:ptrregbank(p0) = COPY $p0
+    ; GREEDY-NEXT: [[C:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 1
+    ; GREEDY-NEXT: [[C1:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 2
+    ; GREEDY-NEXT: [[C2:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 3
+    ; GREEDY-NEXT: [[C3:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 4
+    ; GREEDY-NEXT: [[C4:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 5
+    ; GREEDY-NEXT: [[C5:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 6
+    ; GREEDY-NEXT: [[C6:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 7
+    ; GREEDY-NEXT: [[COPY1:%[0-9]+]]:accregbank(<16 x s32>) = COPY $bmll0
+    ; GREEDY-NEXT: [[AIE_POSTINC_3D_STORE:%[0-9]+]]:ptrregbank(p0), [[AIE_POSTINC_3D_STORE1:%[0-9]+]]:modregbank(s20), [[AIE_POSTINC_3D_STORE2:%[0-9]+]]:modregbank = G_AIE_POSTINC_3D_STORE [[COPY1]](<16 x s32>), [[COPY]], [[C]], [[C1]], [[C2]], [[C3]], [[C5]], [[C4]], [[C6]] :: (store (<16 x s32>))
+    ; GREEDY-NEXT: PseudoRET implicit $lr
+    ;
+    ; FAST-LABEL: name: post-inc-3d-vector-store-512
+    ; FAST: liveins: $p0, $bmll0
+    ; FAST-NEXT: {{  $}}
+    ; FAST-NEXT: [[COPY:%[0-9]+]]:ptrregbank(p0) = COPY $p0
+    ; FAST-NEXT: [[C:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 1
+    ; FAST-NEXT: [[C1:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 2
+    ; FAST-NEXT: [[C2:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 3
+    ; FAST-NEXT: [[C3:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 4
+    ; FAST-NEXT: [[C4:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 5
+    ; FAST-NEXT: [[C5:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 6
+    ; FAST-NEXT: [[C6:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 7
+    ; FAST-NEXT: [[COPY1:%[0-9]+]]:accregbank(<16 x s32>) = COPY $bmll0
+    ; FAST-NEXT: [[AIE_POSTINC_3D_STORE:%[0-9]+]]:ptrregbank(p0), [[AIE_POSTINC_3D_STORE1:%[0-9]+]]:modregbank(s20), [[AIE_POSTINC_3D_STORE2:%[0-9]+]]:modregbank = G_AIE_POSTINC_3D_STORE [[COPY1]](<16 x s32>), [[COPY]], [[C]], [[C1]], [[C2]], [[C3]], [[C5]], [[C4]], [[C6]] :: (store (<16 x s32>))
+    ; FAST-NEXT: PseudoRET implicit $lr
+    %0:_(p0) = COPY $p0
+    %1:_(s20) = G_CONSTANT i20 1
+    %2:_(s20) = G_CONSTANT i20 2
+    %3:_(s20) = G_CONSTANT i20 3
+    %4:_(s20) = G_CONSTANT i20 4
+    %5:_(s20) = G_CONSTANT i20 5
+    %6:_(s20) = G_CONSTANT i20 6
+    %7:_(s20) = G_CONSTANT i20 7
+    %8:_(<16 x s32>) = COPY $bmll0
+    %9:_(p0), %10:_(s20), %11:_(s20) = G_AIE_POSTINC_3D_STORE %8, %0, %1, %2, %3, %4, %6, %5, %7 :: (store (<16 x s32>))
+    PseudoRET implicit $lr
 ...

@@ -255,32 +255,123 @@ AIE2PRegisterBankInfo::getInstrAlternativeMappings(
   const MachineRegisterInfo &MRI = MF.getRegInfo();
   switch (MI.getOpcode()) {
   case TargetOpcode::G_LOAD:
-  case TargetOpcode::G_STORE: {
+  case AIE2P::G_AIE_OFFSET_LOAD:
+  case AIE2P::G_AIE_POSTINC_LOAD:
+  case AIE2P::G_AIE_POSTINC_2D_LOAD:
+  case AIE2P::G_AIE_POSTINC_3D_LOAD: {
+    const unsigned NumOperands = MI.getNumOperands();
+    const unsigned FirstSrcIdx = MI.getNumExplicitDefs();
+    unsigned MappingID = 1;
+    unsigned const Cost = 1;
+
     Register DstReg = MI.getOperand(0).getReg();
-    const LLT Ty = MRI.getType(DstReg);
-    unsigned Size = getSizeInBits(DstReg, MRI, TRI);
-    // Base Alternative Mapping for size <= 256.
-    if (Size <= 256)
+    const LLT DstRegTy = MRI.getType(DstReg);
+    const unsigned DstSize = getSizeInBits(DstReg, MRI, TRI);
+
+    // Base alternative mapping for sizes up to 256.
+    // For 2048-bit sizes, mapping is restricted to the accumulator bank.
+    if (DstSize <= 256 || DstSize == 2048)
       break;
 
-    // If the instruction has any implicit-defs or uses,
-    // do not mess with it.
-    if (MI.getNumOperands() != 2)
-      break;
+    // Prepare the three mapping indices.
+    std::vector<AIEBaseRegisterBankInfo::PartialMappingIdx> MappingIndices = {
+        getVecPartialMappingIdx(DstRegTy), getAccPartialMappingIdx(DstRegTy),
+        getFifoPartialMappingIdx(DstRegTy)};
+
+    // Initialize the operand vectors.
+    // Set all operand mapping indices to PMI_MOD by default.
+    // Set all operand sizes to 20 by default.
+    SmallVector<PartialMappingIdx, 4> OpRegBankIdx(NumOperands, PMI_MOD);
+    SmallVector<const ValueMapping *, 8> OpdsMapping(NumOperands);
+    SmallVector<unsigned, 4> OpSize(NumOperands, 20);
+
+    // Operand[0]- vector operand.
+    OpSize[0] = DstSize;
+    for (unsigned I = 1; I < FirstSrcIdx; ++I)
+      OpRegBankIdx[I] = (I == 1) ? PMI_PTR : PMI_MOD;
+
+    // Assign PMI_PTR at FirstSrcIdx
+    OpRegBankIdx[FirstSrcIdx] = PMI_PTR;
+
     InstructionMappings AltMappings;
-    const InstructionMapping &VRegMapping = getInstructionMapping(
-        /*ID*/ 1, /*Cost*/ 1,
-        getOperandsMapping({getValueMapping(getPartialMappingIdx(Ty), Size),
-                            getValueMapping(PMI_PTR, 20)}),
-        /*NumOperands*/ 2);
-    const InstructionMapping &AccRegMapping = getInstructionMapping(
-        /*ID*/ 2, /*Cost*/ 1,
-        getOperandsMapping({getValueMapping(getAccPartialMappingIdx(Ty), Size),
-                            getValueMapping(PMI_PTR, 20)}),
-        /*NumOperands*/ 2);
+    // For each mapping index in MappingIndices, override operand 0
+    // and build an alternative instruction mapping.
+    for (const auto &VecIdx : MappingIndices) {
+      OpRegBankIdx[0] =
+          static_cast<AIEBaseRegisterBankInfo::PartialMappingIdx>(VecIdx);
+      for (unsigned Idx = 0; Idx < NumOperands; ++Idx) {
+        if (MI.getOperand(Idx).isReg() && MI.getOperand(Idx).getReg()) {
+          LLT Ty = MRI.getType(MI.getOperand(Idx).getReg());
+          if (!Ty.isValid())
+            continue;
+          OpdsMapping[Idx] = getValueMapping(OpRegBankIdx[Idx], OpSize[Idx]);
+        }
+      }
+      const InstructionMapping &InsnMapping = getInstructionMapping(
+          MappingID++, Cost, getOperandsMapping(OpdsMapping), NumOperands);
+      AltMappings.push_back(&InsnMapping);
+    }
+    return AltMappings;
+  }
+  case TargetOpcode::G_STORE:
+  case AIE2P::G_AIE_OFFSET_STORE:
+  case AIE2P::G_AIE_POSTINC_STORE:
+  case AIE2P::G_AIE_POSTINC_2D_STORE:
+  case AIE2P::G_AIE_POSTINC_3D_STORE: {
+    const unsigned NumOperands = MI.getNumOperands();
+    // Select the operand index for VecReg.
+    const unsigned VecRegOpIdx = MI.getNumExplicitDefs();
+    unsigned MappingID = 1;
+    unsigned const Cost = 1;
 
-    AltMappings.push_back(&VRegMapping);
-    AltMappings.push_back(&AccRegMapping);
+    Register VecReg = MI.getOperand(VecRegOpIdx).getReg();
+    const LLT VecRegTy = MRI.getType(VecReg);
+    const unsigned VecRegSize = getSizeInBits(VecReg, MRI, TRI);
+
+    // Base alternative mapping for sizes up to 256.
+    // For 2048-bit sizes, mapping is restricted to the accumulator bank.
+    // Also, if the instruction has any implicit defs/uses, leave it alone.
+    if (VecRegSize <= 256 || VecRegSize == 2048 ||
+        MI.getNumOperands() != MI.getNumExplicitOperands())
+      break;
+
+    // Prepare the three mapping indices.
+    std::vector<AIEBaseRegisterBankInfo::PartialMappingIdx> MappingIndices = {
+        getVecPartialMappingIdx(VecRegTy), getAccPartialMappingIdx(VecRegTy),
+        getFifoPartialMappingIdx(VecRegTy)};
+
+    // Initialize the operand vectors.
+    // Set all operand mapping indices to PMI_MOD by default.
+    // Set all operand sizes to 20 by default.
+    SmallVector<PartialMappingIdx, 4> OpRegBankIdx(NumOperands, PMI_MOD);
+    SmallVector<const ValueMapping *, 8> OpdsMapping(NumOperands);
+    SmallVector<unsigned, 4> OpSize(NumOperands, 20);
+
+    // Initialize first few indices based on VRegOpIdx
+    for (unsigned I = 0; I < VecRegOpIdx; ++I) {
+      OpRegBankIdx[I] = (I == 0) ? PMI_PTR : PMI_MOD;
+    }
+
+    // Assign PMI_PTR to the next operand if within bounds
+    assert(((VecRegOpIdx + 1) < NumOperands) && "RegOpIdx + 1 out of bound");
+    OpRegBankIdx[VecRegOpIdx + 1] = PMI_PTR;
+
+    InstructionMappings AltMappings;
+    for (const auto &VecIdx : MappingIndices) {
+      OpRegBankIdx[VecRegOpIdx] =
+          static_cast<AIEBaseRegisterBankInfo::PartialMappingIdx>(VecIdx);
+      for (unsigned Idx = 0; Idx < NumOperands; ++Idx) {
+        if (MI.getOperand(Idx).isReg() && MI.getOperand(Idx).getReg()) {
+          LLT Ty = MRI.getType(MI.getOperand(Idx).getReg());
+          if (!Ty.isValid())
+            continue;
+          OpdsMapping[Idx] = getValueMapping(OpRegBankIdx[Idx], OpSize[Idx]);
+        }
+      }
+      const InstructionMapping &InsnMapping = getInstructionMapping(
+          MappingID++, Cost, getOperandsMapping(OpdsMapping), NumOperands);
+      AltMappings.push_back(&InsnMapping);
+    }
     return AltMappings;
   }
   case TargetOpcode::G_CONCAT_VECTORS: {
@@ -702,10 +793,7 @@ static bool isUsedAsAccRegInIntrinsic(const MachineRegisterInfo &MRI,
 static bool isUsedAsAccRegInInstr(const MachineInstr &MI,
                                   const MachineRegisterInfo &MRI,
                                   const TargetRegisterInfo &TRI, Register Reg) {
-  const MachineFunction &MF = *MI.getParent()->getParent();
-  const RegisterBankInfo *RBI = MF.getSubtarget().getRegBankInfo();
-  unsigned Op = MI.getOpcode();
-  switch (Op) {
+  switch (MI.getOpcode()) {
   default:
     break;
   case TargetOpcode::G_INTRINSIC:
@@ -714,12 +802,6 @@ static bool isUsedAsAccRegInInstr(const MachineInstr &MI,
   case TargetOpcode::COPY: {
     Register DstReg = MI.getOperand(0).getReg();
     if (isAccReg(DstReg))
-      return true;
-    break;
-  }
-  case TargetOpcode::G_STORE: {
-    auto *RB = RBI->getRegBank(MI.getOperand(0).getReg(), MRI, TRI);
-    if (RB == &AIE2P::AccRegBank)
       return true;
     break;
   }
@@ -736,8 +818,6 @@ static bool isUsedAsFifoRegInInstr(const MachineInstr &MI,
   const MachineFunction &MF = *MI.getParent()->getParent();
   auto *RI = static_cast<const AIEBaseRegisterInfo *>(
       MF.getSubtarget().getRegisterInfo());
-  const RegisterBankInfo *RBI = MF.getSubtarget().getRegBankInfo();
-
   switch (MI.getOpcode()) {
   default:
     break;
@@ -747,12 +827,6 @@ static bool isUsedAsFifoRegInInstr(const MachineInstr &MI,
   case TargetOpcode::COPY: {
     Register DstReg = MI.getOperand(0).getReg();
     if (RI->isFifoPhysReg(DstReg))
-      return true;
-    break;
-  }
-  case TargetOpcode::G_STORE: {
-    auto *RB = RBI->getRegBank(MI.getOperand(0).getReg(), MRI, TRI);
-    if (RB == &AIE2P::FifoRegBank)
       return true;
     break;
   }
@@ -971,74 +1045,108 @@ AIE2PRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     }
     return AIEBaseRegisterBankInfo::getInstrMapping(MI);
   }
-  case TargetOpcode::G_LOAD: {
+  case TargetOpcode::G_LOAD:
+  case AIE2P::G_AIE_OFFSET_LOAD:
+  case AIE2P::G_AIE_POSTINC_LOAD:
+  case AIE2P::G_AIE_POSTINC_2D_LOAD:
+  case AIE2P::G_AIE_POSTINC_3D_LOAD: {
     bool isAccRegMapping = false;
     bool isFifoPhysRegMapping = false;
+
     // Check if that load feeds acc or fifo instructions.
     Register UseCandidate = MI.getOperand(0).getReg();
     LLT Type = MRI.getType(UseCandidate);
+
+    MachineMemOperand *MMO = *MI.memoperands_begin();
+    const unsigned MemSize = 8 * MMO->getSize().getValue();
+    // Size of accumulator and fifo vectors on aie2p >= 512.
+    // for MemSize < 512, fallback to base instruction mapping.
+    if (MemSize < 512)
+      return AIEBaseRegisterBankInfo::getInstrMapping(MI);
+
     // Check if we already know the register bank.
     auto *RB = getRegBank(UseCandidate, MRI, TRI);
-    if (RB == &AIE2P::AccRegBank || RB == &AIE2P::FifoRegBank)
+    if (RB == &AIE2P::AccRegBank || RB == &AIE2P::FifoRegBank ||
+        RB == &AIE2P::VRegBank)
       return AIEBaseRegisterBankInfo::getInstrMapping(MI);
     auto PreferredRegBank =
         getPreferredRegBankForVectorTy(MRI, TRI, UseCandidate);
-    if (PreferredRegBank && &AIE2P::AccRegBank == *PreferredRegBank)
-      isAccRegMapping = true;
-    else if (PreferredRegBank && &AIE2P::FifoRegBank == *PreferredRegBank)
-      isFifoPhysRegMapping = true;
-    // size of accu and fifo vector on aie2p >= 512.
-    MachineMemOperand *MMO = *MI.memoperands_begin();
-    const unsigned MemSize = 8 * MMO->getSize().getValue();
-    // Handle the example case as below
-    /* %2:_(p0) = G_FRAME_INDEX %stack.0
-       G_STORE %1(<32 x s32>), %2(p0)
-       %4:_(<32 x s32>) = G_LOAD %2(p0) */
-    if (MemSize >= 512) {
-      Register PtrReg = MI.getOperand(1).getReg();
-      MachineInstr *DefMI = MRI.getVRegDef(PtrReg);
-      // e.g. UseCandidate:_(p0) = G_FRAME_INDEX %stack.0
-      UseCandidate = DefMI->getOperand(0).getReg();
-      Type = MRI.getType(MI.getOperand(0).getReg());
-    }
+
     PreferredRegBank = getPreferredRegBankForVectorTy(MRI, TRI, UseCandidate);
     if (PreferredRegBank && &AIE2P::AccRegBank == *PreferredRegBank)
       isAccRegMapping = true;
     else if (PreferredRegBank && &AIE2P::FifoRegBank == *PreferredRegBank)
       isFifoPhysRegMapping = true;
-    if (isAccRegMapping) {
-      OpRegBankIdx[0] = getAccPartialMappingIdx(Type);
-      OpRegBankIdx[1] = PMI_PTR;
-      return AIEBaseRegisterBankInfo::getInstrMappingFinal(MI, Cost, OpSize,
-                                                           OpRegBankIdx);
-    }
-    if (isFifoPhysRegMapping) {
-      OpRegBankIdx[0] = getFifoPartialMappingIdx(Type);
-      OpRegBankIdx[1] = PMI_PTR;
+
+    // First source Idx (pointer reg)
+    const unsigned FirstSrcIdx = MI.getNumExplicitDefs();
+
+    if (isAccRegMapping || isFifoPhysRegMapping) {
+      // Determine the appropriate mapping index
+      const unsigned MappingIdx = isAccRegMapping
+                                      ? getAccPartialMappingIdx(Type)
+                                      : getFifoPartialMappingIdx(Type);
+
+      // Set all operand mapping indices to PMI_MOD by default.
+      // Set all operand sizes to 20 by default.
+      OpSize.assign(NumOperands, 20);
+      OpRegBankIdx.assign(NumOperands, PMI_MOD);
+      // Set up vector operand indices
+      OpRegBankIdx[0] =
+          static_cast<AIEBaseRegisterBankInfo::PartialMappingIdx>(MappingIdx);
+      // Assign PMI_PTR and PMI_MOD based on FirstSrcIdx
+      for (unsigned I = 1; I < FirstSrcIdx; ++I) {
+        OpRegBankIdx[I] = (I == 1) ? PMI_PTR : PMI_MOD;
+      }
+      // Assign PMI_PTR at FirstSrcIdx
+      OpRegBankIdx[FirstSrcIdx] = PMI_PTR;
       return AIEBaseRegisterBankInfo::getInstrMappingFinal(MI, Cost, OpSize,
                                                            OpRegBankIdx);
     }
     return AIEBaseRegisterBankInfo::getInstrMapping(MI);
   }
-  case TargetOpcode::G_STORE: {
-    // Check if the store is fed by acc or fifo instructions.
-    Register VReg = MI.getOperand(0).getReg();
-    if (!VReg)
-      break;
-    auto DefRegBank = getRegBank(VReg, MRI, TRI);
-    if (DefRegBank == &AIE2P::AccRegBank) {
-      OpRegBankIdx[0] = getAccPartialMappingIdx(MRI.getType(VReg));
-      OpRegBankIdx[1] = PMI_PTR;
-      return AIEBaseRegisterBankInfo::getInstrMappingFinal(MI, Cost, OpSize,
-                                                           OpRegBankIdx);
+  case TargetOpcode::G_STORE:
+  case AIE2P::G_AIE_OFFSET_STORE:
+  case AIE2P::G_AIE_POSTINC_STORE:
+  case AIE2P::G_AIE_POSTINC_2D_STORE:
+  case AIE2P::G_AIE_POSTINC_3D_STORE: {
+    // Select the operand index for VecReg.
+    const unsigned VecRegOpIdx = MI.getNumExplicitDefs();
+    Register VecReg = MI.getOperand(VecRegOpIdx).getReg();
+    // Size of accumulator and fifo vectors on aie2p >= 512.
+    // for VecSize < 512, fallback to base instruction mapping.
+    if (MRI.getType(VecReg).getSizeInBits() < 512)
+      return AIEBaseRegisterBankInfo::getInstrMapping(MI);
+
+    auto *DefRegBank = getRegBank(VecReg, MRI, TRI);
+    // Only process if VecReg is defined in Accumulator or Fifo register banks.
+    if (DefRegBank != &AIE2P::AccRegBank && DefRegBank != &AIE2P::FifoRegBank)
+      return AIEBaseRegisterBankInfo::getInstrMapping(MI);
+
+    // Compute the partial mapping index based on the register bank.
+    const unsigned MappingIdx =
+        (DefRegBank == &AIE2P::AccRegBank)
+            ? getAccPartialMappingIdx(MRI.getType(VecReg))
+            : getFifoPartialMappingIdx(MRI.getType(VecReg));
+
+    // Set all operand mapping indices to PMI_MOD by default.
+    // Set all operand sizes to 20 by default.
+    OpSize.assign(NumOperands, 20);
+    OpRegBankIdx.assign(NumOperands, PMI_MOD);
+
+    // Initialize first few indices based on VRegOpIdx
+    for (unsigned I = 0; I < VecRegOpIdx; ++I) {
+      OpRegBankIdx[I] = (I == 0) ? PMI_PTR : PMI_MOD;
     }
-    if (DefRegBank == &AIE2P::FifoRegBank) {
-      OpRegBankIdx[0] = getFifoPartialMappingIdx(MRI.getType(VReg));
-      OpRegBankIdx[1] = PMI_PTR;
-      return AIEBaseRegisterBankInfo::getInstrMappingFinal(MI, Cost, OpSize,
-                                                           OpRegBankIdx);
-    }
-    return AIEBaseRegisterBankInfo::getInstrMapping(MI);
+    OpRegBankIdx[VecRegOpIdx] =
+        static_cast<AIEBaseRegisterBankInfo::PartialMappingIdx>(MappingIdx);
+
+    // Assign PMI_PTR to the next operand if within bounds
+    assert(((VecRegOpIdx + 1) < NumOperands) && "RegOpIdx + 1 out of bounds");
+    OpRegBankIdx[VecRegOpIdx + 1] = PMI_PTR;
+
+    return AIEBaseRegisterBankInfo::getInstrMappingFinal(MI, Cost, OpSize,
+                                                         OpRegBankIdx);
   }
   default:
     // Base class implementation for others
