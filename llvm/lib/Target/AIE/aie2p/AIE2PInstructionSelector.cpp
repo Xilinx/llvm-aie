@@ -69,6 +69,7 @@ public:
   bool selectCascadeStreamInsn(MachineInstr &I, MachineRegisterInfo &MRI,
                                bool isWrite);
   bool selectVST_FIFO(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectG_TRUNC(MachineInstr &I, MachineRegisterInfo &MRI);
 
   static const char *getName() { return DEBUG_TYPE; }
 
@@ -222,20 +223,7 @@ bool AIE2PInstructionSelector::select(MachineInstr &I) {
     I.setDesc(TII.get(COPY));
     return selectCopy(I, MRI);
   case G_TRUNC: {
-    Register SrcReg = I.getOperand(1).getReg();
-    LLT SrcTy = MRI.getType(SrcReg);
-    unsigned Size = SrcTy.getSizeInBits();
-    // G_TRUNC S32 <- S64
-    if (Size == 64) {
-      Register DstReg = I.getOperand(0).getReg();
-      MachineInstrBuilder MI = MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {})
-                                   .addReg(SrcReg, 0, AIE2P::sub_l_even);
-      I.eraseFromParent();
-      return selectCopy(*MI.getInstr(), MRI);
-    } else {
-      I.setDesc(TII.get(COPY));
-      return selectCopy(I, MRI);
-    }
+    return selectG_TRUNC(I, MRI);
   }
   case G_SEXT_INREG:
     return selectG_SEXT_INREG(I, MRI);
@@ -5037,7 +5025,26 @@ bool AIE2PInstructionSelector::selectVST_FIFO(MachineInstr &I,
   }
   return false;
 }
-
+bool AIE2PInstructionSelector::selectG_TRUNC(MachineInstr &I,
+                                             MachineRegisterInfo &MRI) {
+  Register SrcReg = I.getOperand(1).getReg();
+  LLT SrcTy = MRI.getType(SrcReg);
+  unsigned SrcSize = SrcTy.getSizeInBits();
+  // G_TRUNC S32 <- S64
+  if (SrcSize == 64) {
+    Register DstReg = I.getOperand(0).getReg();
+    MachineInstrBuilder MI = MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {})
+                                 .addReg(SrcReg, 0, AIE2P::sub_l_even);
+    I.eraseFromParent();
+    return selectCopy(*MI.getInstr(), MRI);
+  } else if (SrcTy.isVector()) {
+    assert(SrcSize >= 512 && "Invalid vector size for G_TRUNC source vector!");
+    return selectImpl(I, *CoverageInfo);
+  } else {
+    I.setDesc(TII.get(TargetOpcode::COPY));
+    return selectCopy(I, MRI);
+  }
+}
 namespace llvm {
 InstructionSelector *
 createAIE2PInstructionSelector(const AIE2PTargetMachine &TM,
