@@ -1828,7 +1828,9 @@ bool llvm::matchShuffleToVSel(MachineInstr &MI, MachineRegisterInfo &MRI,
   }
 
   MatchInfo = [=, &TII](MachineIRBuilder &B) {
-    MachineInstrBuilder MaskReg = B.buildConstant(LLT::scalar(32), DstMask);
+    const unsigned ScalarSize = NumMaskElems == 64 ? 64 : 32;
+    MachineInstrBuilder MaskReg =
+        B.buildConstant(LLT::scalar(ScalarSize), DstMask);
     const unsigned VSelOpc = TII.getGenericVSelOpcode();
     B.buildInstr(VSelOpc, {DstReg}, {Src1Reg, Src2Reg, MaskReg});
   };

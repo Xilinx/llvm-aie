@@ -111,8 +111,7 @@ body:             |
     %4:gprregbank(s32) = COPY $r0
     %5:gprregbank(s32) = COPY $r1
     %3:gprregbank(s64) = G_MERGE_VALUES %4:gprregbank(s32), %5:gprregbank(s32)
-    %6:gprregbank(<2 x s32>) = G_BITCAST %3:gprregbank(s64)
-    %0:vregbank(<64 x s8>) = G_AIE_VSEL %1:vregbank(<64 x s8>), %2:vregbank(<64 x s8>), %6:gprregbank(<2 x s32>)
+    %0:vregbank(<64 x s8>) = G_AIE_VSEL %1:vregbank(<64 x s8>), %2:vregbank(<64 x s8>), %3:gprregbank(s64)
     $x0 = COPY %0:vregbank(<64 x s8>)
     PseudoRET implicit $lr, implicit $x0
 ...
