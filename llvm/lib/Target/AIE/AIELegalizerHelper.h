@@ -88,6 +88,7 @@ public:
   bool legalizeG_AIE_EXTRACT_VECTOR_ELT(LegalizerHelper &Helper,
                                         MachineInstr &MI,
                                         const unsigned LegalVectorSize) const;
+  bool legalizeG_TRUNC(LegalizerHelper &Helper, MachineInstr &MI) const;
 };
 
 } // namespace llvm
