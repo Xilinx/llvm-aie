@@ -259,8 +259,8 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
     unassignReg(VReg);
     auto *RC = MRI->getRegClass(VReg);
     RegClasses.insert(RC);
-    LLVM_DEBUG(dbgs() << "VR" << Register::virtReg2Index(VReg) << " RC="
-                      << RC->getID() << " (" << TRI->getName(Org) << ")\n");
+    LLVM_DEBUG(dbgs() << "Candidate " << printReg(VReg, TRI, 0, MRI) << " ("
+                      << TRI->getName(Org) << ")\n");
   }
   LLVM_DEBUG(dbgs() << "Renaming " << Candidates.size() << " candidates in "
                     << RegClasses.size() << " classes\n");
@@ -271,7 +271,7 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
     for (auto &[MO, Org] : Candidates) {
       auto VReg = MO->getReg();
       if (!replaceReg(VReg, Registers)) {
-        LLVM_DEBUG(dbgs() << "Renaming VR" << Register::virtReg2Index(VReg)
+        LLVM_DEBUG(dbgs() << "Renaming " << printReg(VReg, TRI, 0, MRI)
                           << " failed\n");
         return false;
       }
@@ -304,12 +304,17 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   BitVector ExcludedPhysRegs{TRI->getNumRegs()};
 
   for (const auto *RC : RegClasses) {
+
+    LLVM_DEBUG(dbgs() << "Allowed registers in RC=" << TRI->getRegClassName(RC)
+                      << ":");
     for (auto PhysReg : RC->getRegisters()) {
       if (!ExcludedPhysRegs[PhysReg]) {
+        LLVM_DEBUG(dbgs() << " " << printReg(PhysReg, TRI));
         LRURegisters.push_back(PhysReg);
       }
       ExcludedPhysRegs[PhysReg] = true;
     }
+    LLVM_DEBUG(dbgs() << "\n");
   }
   if (!ReAllocate(Candidates, LRURegisters)) {
     RevertAllocation(Candidates);
@@ -350,8 +355,8 @@ bool AIEWawRegRewriter::replaceReg(const Register VReg,
   if (ReplacementPhysReg == MCRegister::NoRegister)
     return false;
 
-  LLVM_DEBUG(dbgs() << "     replace: VR" << Register::virtReg2Index(VReg)
-                    << " with " << TRI->getName(ReplacementPhysReg) << '\n');
+  LLVM_DEBUG(dbgs() << "     replace: " << printReg(VReg, TRI) << " with "
+                    << TRI->getName(ReplacementPhysReg) << '\n');
 
   assignReg(VReg, ReplacementPhysReg);
   return true;
@@ -361,6 +366,8 @@ MCPhysReg
 AIEWawRegRewriter::getReplacementPhysReg(const Register VReg,
                                          RoundRobin &LRURegisters) const {
   assert(VReg.isVirtual() && "Reg has to be a virtual register");
+
+  LLVM_DEBUG(dbgs() << "     Try to re-assign" << printReg(VReg, TRI) << "\n");
   const TargetRegisterClass *RC = MRI->getRegClass(VReg);
   const LiveInterval &LI = LIS->getInterval(VReg);
 
@@ -379,6 +386,9 @@ AIEWawRegRewriter::getReplacementPhysReg(const Register VReg,
       LRURegisters.emplace_back(PhysReg);
       return PhysReg;
     }
+    LLVM_DEBUG(dbgs() << "       Cannot assign " << printReg(VReg, TRI)
+                      << " to " << TRI->getName(PhysReg)
+                      << " due to interference\n");
   }
   return MCRegister::NoRegister;
 }
