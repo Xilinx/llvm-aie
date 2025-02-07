@@ -1529,4 +1529,34 @@ bool AIELegalizerHelper::legalizeG_AIE_EXTRACT_VECTOR_ELT(
   return true;
 }
 
+bool AIELegalizerHelper::legalizeG_TRUNC(LegalizerHelper &Helper,
+                                         MachineInstr &MI) const {
+  MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+
+  const auto [DstReg, DstVecTy, SrcReg, SrcVecTy] = MI.getFirst2RegLLTs();
+  const unsigned SrcVecSize = SrcVecTy.getSizeInBits();
+
+  assert(SrcVecSize == 256 && "Expected G_TRUNC input vector size is 256!");
+
+  const AIEBaseInstrInfo *TII = ST.getInstrInfo();
+  const unsigned PadOpc = TII->getGenericPadVectorOpcode();
+  const unsigned UnpadOpc = TII->getGenericUnpadVectorOpcode();
+
+  const LLT NewPadRegTy = LLT::fixed_vector(
+      TII->getBasicVectorBitSize() / SrcVecTy.getScalarType().getSizeInBits(),
+      SrcVecTy.getScalarType());
+  const Register NewPadReg = MRI.createGenericVirtualRegister(NewPadRegTy);
+  const LLT NewUnPadRegTy = LLT::fixed_vector(DstVecTy.getNumElements() * 2,
+                                              DstVecTy.getScalarType());
+  const Register NewUnPadReg = MRI.createGenericVirtualRegister(NewUnPadRegTy);
+
+  MIRBuilder.buildInstr(PadOpc, {NewPadReg}, {SrcReg});
+  MIRBuilder.buildTrunc(NewUnPadReg, NewPadReg);
+  MIRBuilder.buildInstr(UnpadOpc, {DstReg}, {NewUnPadReg});
+
+  MI.eraseFromParent();
+  return true;
+}
+
 } // namespace llvm

@@ -16,21 +16,29 @@ define dso_local void @test_load_store_aligned(<8 x i16> noundef %a, <4 x i32> n
 ; CHECK-LABEL: test_load_store_aligned:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; vmov q0, wl2
+; CHECK-NEXT:    mova r0, #2; nopx
 ; CHECK-NEXT:    paddxm [sp], #768
-; CHECK-NEXT:    vmov x2, bmll0
-; CHECK-NEXT:    vst.128 wl0, [sp, #-768]
-; CHECK-NEXT:    vst.128 wl4, [sp, #-736]
+; CHECK-NEXT:    vmov x1, bmll0
+; CHECK-NEXT:    vshuffle x0, x0, x0, r0
+; CHECK-NEXT:    mova r0, #0
 ; CHECK-NEXT:    vst wl6, [sp, #-704]
-; CHECK-NEXT:    vst bmll1, [sp, #-512]
-; CHECK-NEXT:    vlda bmll0, [sp, #-512]
 ; CHECK-NEXT:    vst wl8, [sp, #-640]
+; CHECK-NEXT:    vst bmll1, [sp, #-512]
 ; CHECK-NEXT:    vst x10, [sp, #-448]
+; CHECK-NEXT:    vmov q0, wl0
+; CHECK-NEXT:    vshuffle x4, x4, x4, r0
+; CHECK-NEXT:    vst wl1, [sp, #-576]
+; CHECK-NEXT:    vlda bmll0, [sp, #-512]
+; CHECK-NEXT:    vmov q0, wl2
 ; CHECK-NEXT:    vmov wh0, q0
+; CHECK-NEXT:    vmov wh2, q0
+; CHECK-NEXT:    vmov q0, wl4
+; CHECK-NEXT:    vst.128 wh0, [sp, #-768]
 ; CHECK-NEXT:    vlda.128 wh0, [sp, #-768]
-; CHECK-NEXT:    vst wl2, [sp, #-576]
-; CHECK-NEXT:    vst.128 wh0, [sp, #-752]
+; CHECK-NEXT:    vmov wh4, q0
+; CHECK-NEXT:    vst.128 wh2, [sp, #-752]
 ; CHECK-NEXT:    vst bmll0, [sp, #-128]
+; CHECK-NEXT:    vst.128 wh4, [sp, #-736]
 ; CHECK-NEXT:    vlda.128 wh0, [sp, #-752]
 ; CHECK-NEXT:    vlda.128 wh0, [sp, #-736]
 ; CHECK-NEXT:    vlda wh0, [sp, #-704]

@@ -256,7 +256,39 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
       .clampScalar(0, S32, S32)
       .clampScalar(1, S32, S32);
 
-  getActionDefinitionsBuilder(G_TRUNC).alwaysLegal();
+  getActionDefinitionsBuilder(G_TRUNC)
+      .legalIf([=](const LegalityQuery &Query) {
+        const LLT &SrcTy = Query.Types[1];
+        const LLT &DstTy = Query.Types[0];
+        return SrcTy.isVector() && DstTy.isVector() &&
+               (SrcTy.getSizeInBits() == 512 ||
+                SrcTy.getSizeInBits() == 1024) &&
+               DstTy.getElementType().getSizeInBits() * 2 ==
+                   SrcTy.getElementType().getSizeInBits();
+      })
+      .legalIf([=](const LegalityQuery &Query) {
+        const LLT &SrcTy = Query.Types[1];
+        const LLT &DstTy = Query.Types[0];
+        return SrcTy.isScalar() && DstTy.isScalar();
+      })
+      .customIf([=](const LegalityQuery &Query) {
+        const LLT &SrcTy = Query.Types[1];
+        const LLT &DstTy = Query.Types[0];
+        return SrcTy.isVector() && SrcTy.getSizeInBits() == 256 &&
+               DstTy.getElementType().getSizeInBits() * 2 ==
+                   SrcTy.getElementType().getSizeInBits();
+      })
+      .fewerElementsIf(
+          [=](const LegalityQuery &Query) {
+            const LLT &SrcTy = Query.Types[1];
+            return SrcTy.isVector() && SrcTy.getSizeInBits() == 2048;
+          },
+          [=](const LegalityQuery &Query) {
+            const LLT &SrcTy = Query.Types[1];
+            return std::make_pair(1,
+                                  LLT::fixed_vector(SrcTy.getNumElements() / 2,
+                                                    SrcTy.getElementType()));
+          });
 
   getActionDefinitionsBuilder(G_SELECT)
       .legalFor({{S32, S32}, {P0, S32}})
@@ -676,6 +708,8 @@ bool AIE2PLegalizerInfo::legalizeCustom(
   case TargetOpcode::G_SUB:
   case TargetOpcode::G_XOR:
     return AIEHelper.legalizeBinOp(Helper, MI);
+  case TargetOpcode::G_TRUNC:
+    return AIEHelper.legalizeG_TRUNC(Helper, MI);
   }
   llvm_unreachable("Un-expected custom legalization");
 }
