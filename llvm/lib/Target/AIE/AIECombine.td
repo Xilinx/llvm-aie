@@ -71,21 +71,15 @@ def combine_vector_broadcast : GICombineRule<
   (apply [{ applySplatVector(*${root}, MRI, B, ${matchinfo}); }])>;
 
 def combine_vector_shuffle_broadcast : GICombineRule<
-  (defs root:$root, combine_splat_vector_matchdata:$matchinfo),
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
   (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
-         [{ return matchShuffleToBroadcast(*${root}, MRI, ${matchinfo}); }]),
-  (apply [{ applySplatVector(*${root}, MRI, B, ${matchinfo}); }])>;
+         [{ return matchShuffleToBroadcast(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
 
 def combine_vector_shuffle_vsel : GICombineRule<
   (defs root:$root, build_fn_matchinfo:$matchinfo),
   (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
          [{ return matchShuffleToVSel(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
-  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
-
-def combine_shuffle_to_vextbcst : GICombineRule<
-  (defs root:$root, build_fn_matchinfo:$matchinfo),
-  (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
-  [{ return matchShuffleToExtractBroadcast(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
 
 def combine_vector_shuffle_extract_subvec : GICombineRule<
@@ -111,9 +105,9 @@ def AIE2PPreLegalizerCombiner
                                                                  combine_extract_vector_elt_and_zsa_ext,
                                                                  combine_splat_vector, combine_vector_broadcast,
                                                                  combine_concat_to_pad_vector, 
-                                                                 combine_vector_shuffle_broadcast, 
                                                                  combine_vector_shuffle_vsel,
-                                                                 combine_shuffle_to_vextbcst]> {
+                                                                 combine_vector_shuffle_broadcast
+                                                                 ]> {
   let CombineAllMethodName = "tryCombineAllImpl";
 }
 

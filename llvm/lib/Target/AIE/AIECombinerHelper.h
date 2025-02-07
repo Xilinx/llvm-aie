@@ -63,7 +63,7 @@ bool matchGlobalValOffset(MachineInstr &MI, MachineRegisterInfo &MRI,
 bool matchBroadcastElement(MachineInstr &MI, MachineRegisterInfo &MRI,
                            std::pair<Register, Register> &MatchInfo);
 bool matchShuffleToBroadcast(MachineInstr &MI, MachineRegisterInfo &MRI,
-                             std::pair<Register, Register> &MatchInfo);
+                             const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
 /// Combine G_SHUFFLE_VECTOR(G_BUILD_VECTOR (VAL, UNDEF, ...), mask<0,0,...>)
 /// idiom into G_AIE_VSEL
 bool matchShuffleToVSel(MachineInstr &MI, MachineRegisterInfo &MRI,
