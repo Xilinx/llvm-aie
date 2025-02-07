@@ -826,9 +826,11 @@ foreach intr = [VSHUFFLE_vec_shuffle_x, VSHUFFLE_vec_shuffle_bm] in {
 // VSHIFT Intrinsic (shift/shiftx/shift_bytes)
 def : Pat<(int_aie2p_vshift_I512_I512 VEC512:$s1, VEC512:$s2, 0x0, eR:$shift),
            (VSHIFT VEC512:$s1, VEC512:$s2, eR:$shift)>;
-def : Pat<(int_aie2p_vshift_I512_I512 VEC512:$s1, VEC512:$s2, mSs:$pre ,eR:$shift),
+def : Pat<(int_aie2p_vshift_bf512_bf512 VEC512:$s1, VEC512:$s2, 0x0, eR:$shift),
+           (VSHIFT VEC512:$s1, VEC512:$s2, eR:$shift)>;
+def : Pat<(int_aie2p_vshift_I512_I512 VEC512:$s1, VEC512:$s2, mSs:$pre, eR:$shift),
            (VSHIFT_ALIGN VEC512:$s1, mSs:$pre, VEC512:$s2, eR:$shift)>;
-def : Pat<(int_aie2p_vshift_bf512_bf512 VEC512:$s1, VEC512:$s2, mSs:$pre ,eR:$shift),
+def : Pat<(int_aie2p_vshift_bf512_bf512 VEC512:$s1, VEC512:$s2, mSs:$pre, eR:$shift),
            (VSHIFT_ALIGN VEC512:$s1, mSs:$pre, VEC512:$s2, eR:$shift)>;
 
 // VINSERT
