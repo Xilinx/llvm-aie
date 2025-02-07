@@ -509,6 +509,110 @@ body:             |
     PseudoRET implicit $lr
 ...
 
+# This is a simplified example taken from the GEMM_bf16 kernel.
+# When we get to the last 4 VSHUFFLE, all 12 X registers have already been
+# distributed. Those VSHUFFLE represent a kill point for other X registers.
+# We should then prefer "re-using" the killed registers instead of us starting
+# anew from x0, x2, x4 and x6.
+---
+name:            def_kill_instrs
+alignment:       16
+legalized:       true
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: def_kill_instrs
+  ; CHECK: bb.0.entry:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $m0, $p0, $r0, $d1_3d, $d2_3d
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   renamable $p1 = COPY $p0
+  ; CHECK-NEXT:   renamable $m3 = COPY $m0
+  ; CHECK-NEXT:   renamable $m4 = COPY $m0
+  ; CHECK-NEXT:   renamable $r1 = COPY $r0
+  ; CHECK-NEXT:   renamable $r2 = COPY $r0
+  ; CHECK-NEXT:   LoopStart $r0, 0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; CHECK-NEXT:   liveins: $m0, $m3, $m4, $p0, $p1, $r0, $r1, $r2, $d1_3d:0x000000000003C870, $d2_3d:0x000000000003C870
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   renamable $wl0, renamable $p1 = VLD_pstm_imm_4x32_pseudo killed renamable $p1, 32
+  ; CHECK-NEXT:   renamable $wh0, renamable $p1 = VLD_pstm_imm_4x32_pseudo killed renamable $p1, 32
+  ; CHECK-NEXT:   renamable $wl2, renamable $p1 = VLD_pstm_imm_4x32_pseudo killed renamable $p1, 32
+  ; CHECK-NEXT:   renamable $wh2, renamable $p1 = VLD_pstm_imm_4x32_pseudo killed renamable $p1, 32
+  ; CHECK-NEXT:   renamable $p1 = PADD_mod_pseudo killed renamable $p1, renamable $m0
+  ; CHECK-NEXT:   renamable $wl4, renamable $p1 = VLD_pstm_imm_4x32_pseudo killed renamable $p1, 32
+  ; CHECK-NEXT:   renamable $wh4, renamable $p1 = VLD_pstm_imm_4x32_pseudo killed renamable $p1, 32
+  ; CHECK-NEXT:   renamable $wl6, renamable $p1 = VLD_pstm_imm_4x32_pseudo killed renamable $p1, 32
+  ; CHECK-NEXT:   $wh6, $p1, $dc2, $dc6 = VLD_3D_pseudo killed $p1, $d2_3d
+  ; CHECK-NEXT:   renamable $x8 = VSHUFFLE renamable $x0, renamable $x4, renamable $r0
+  ; CHECK-NEXT:   renamable $x10 = VSHUFFLE killed renamable $x0, killed renamable $x4, renamable $r1
+  ; CHECK-NEXT:   renamable $x1 = VSHUFFLE renamable $x2, renamable $x6, renamable $r0
+  ; CHECK-NEXT:   renamable $x3 = VSHUFFLE killed renamable $x2, killed renamable $x6, renamable $r1
+  ; CHECK-NEXT:   renamable $wl5, renamable $p0 = VLD_pstm_pseudo killed renamable $p0, renamable $m3
+  ; CHECK-NEXT:   renamable $wh5, renamable $p0 = VLD_pstm_pseudo killed renamable $p0, renamable $m4
+  ; CHECK-NEXT:   renamable $wl7, renamable $p0 = VLD_pstm_pseudo killed renamable $p0, renamable $m3
+  ; CHECK-NEXT:   renamable $wh7, renamable $p0 = VLD_pstm_pseudo killed renamable $p0, renamable $m4
+  ; CHECK-NEXT:   renamable $wl9, renamable $p0 = VLD_pstm_pseudo killed renamable $p0, renamable $m3
+  ; CHECK-NEXT:   renamable $wh9, renamable $p0 = VLD_pstm_pseudo killed renamable $p0, renamable $m4
+  ; CHECK-NEXT:   renamable $wl11, renamable $p0 = VLD_pstm_pseudo killed renamable $p0, renamable $m3
+  ; CHECK-NEXT:   $wh11, $p0, $dc1, $dc5 = VLD_3D_pseudo killed $p0, $d1_3d
+  ; CHECK-NEXT:   renamable $x5 = VSHUFFLE killed renamable $x5, renamable $x5, renamable $r2
+  ; CHECK-NEXT:   renamable $x7 = VSHUFFLE killed renamable $x7, renamable $x7, renamable $r2
+  ; CHECK-NEXT:   renamable $x9 = VSHUFFLE killed renamable $x9, renamable $x9, renamable $r2
+  ; CHECK-NEXT:   renamable $x11 = VSHUFFLE killed renamable $x11, renamable $x11, renamable $r2
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit killed renamable $x8, implicit killed renamable $x10, implicit killed renamable $x1, implicit killed renamable $x3, implicit killed renamable $x5, implicit killed renamable $x7, implicit killed renamable $x9, implicit killed renamable $x11
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   PseudoRET implicit $lr
+  bb.0.entry:
+  successors: %bb.1
+  liveins: $r0, $p0, $m0, $d1_3d, $d2_3d
+  %598:ep_as_32bit = COPY $p0
+  %599:ep_as_32bit = COPY $p0
+  %7:em = COPY $m0
+  %13:em = COPY $m0
+  %14:em = COPY $m0
+  %582:eds = COPY $d1_3d
+  %583:eds = COPY $d2_3d
+  %108:er = COPY $r0
+  %110:er = COPY $r0
+  %20:er = COPY $r0
+  LoopStart $r0, 0
+
+  bb.1:
+    successors: %bb.1, %bb.2
+    undef %338.sub_256_lo:vec512, %599:ep_as_32bit = VLD_pstm_imm_4x32_pseudo %599, 32
+    %338.sub_256_hi:vec512, %599:ep_as_32bit = VLD_pstm_imm_4x32_pseudo %599, 32
+    undef %346.sub_256_lo:vec512, %599:ep_as_32bit = VLD_pstm_imm_4x32_pseudo %599, 32
+    %346.sub_256_hi:vec512, %599:ep_as_32bit = VLD_pstm_imm_4x32_pseudo %599, 32
+    %599:ep_as_32bit = PADD_mod_pseudo %599, %7
+    undef %355.sub_256_lo:vec512, %599:ep_as_32bit = VLD_pstm_imm_4x32_pseudo %599, 32
+    %355.sub_256_hi:vec512, %599:ep_as_32bit = VLD_pstm_imm_4x32_pseudo %599, 32
+    undef %361.sub_256_lo:vec512, %599:ep_as_32bit = VLD_pstm_imm_4x32_pseudo %599, 32
+    %361.sub_256_hi:vec512, %599:ep_as_32bit, %583.sub_dim_count:eds, %583.sub_hi_dim_then_sub_dim_count:eds = VLD_3D_pseudo %599, %583
+    %369:vec512 = VSHUFFLE %338, %355, %108
+    %370:vec512 = VSHUFFLE %338, %355, %110
+    %371:vec512 = VSHUFFLE %346, %361, %108
+    %372:vec512 = VSHUFFLE %346, %361, %110
+    undef %378.sub_256_lo:vec512, %598:ep_as_32bit = VLD_pstm_pseudo %598, %13
+    %378.sub_256_hi:vec512, %598:ep_as_32bit = VLD_pstm_pseudo %598, %14
+    undef %386.sub_256_lo:vec512, %598:ep_as_32bit = VLD_pstm_pseudo %598, %13
+    %386.sub_256_hi:vec512, %598:ep_as_32bit = VLD_pstm_pseudo %598, %14
+    undef %394.sub_256_lo:vec512, %598:ep_as_32bit = VLD_pstm_pseudo %598, %13
+    %394.sub_256_hi:vec512, %598:ep_as_32bit = VLD_pstm_pseudo %598, %14
+    undef %402.sub_256_lo:vec512, %598:ep_as_32bit = VLD_pstm_pseudo %598, %13
+    %402.sub_256_hi:vec512, %598:ep_as_32bit, %582.sub_dim_count:eds, %582.sub_hi_dim_then_sub_dim_count:eds = VLD_3D_pseudo %598, %582
+    %410:vec512 = VSHUFFLE %378, %378, %20
+    %411:vec512 = VSHUFFLE %386, %386, %20
+    %412:vec512 = VSHUFFLE %394, %394, %20
+    %413:vec512 = VSHUFFLE %402, %402, %20
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit %369, implicit %370, implicit %371, implicit %372, implicit %410, implicit %411, implicit %412, implicit %413
+
+  bb.2:
+    PseudoRET implicit $lr
+...
+
 # Ignore renaming of general purpose registers.
 ---
 name:            gpr_replacement

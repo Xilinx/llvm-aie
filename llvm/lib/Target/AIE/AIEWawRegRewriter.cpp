@@ -96,14 +96,15 @@ private:
   BitVector getDefinedPhysRegs(const MachineBasicBlock *MBB) const;
 
   /// Returns true if the physical register \p Reg was replaced
-  bool replaceReg(const Register Reg, RoundRobin &Registers);
+  bool replaceReg(const Register Reg, RoundRobin &Registers,
+                  BitVector &UsedUnits);
 
   void unassignReg(Register Reg);
   void assignReg(Register Reg, MCPhysReg PhysReg);
 
   /// Find a free register of the same register class type
-  MCPhysReg getReplacementPhysReg(const Register Reg,
-                                  RoundRobin &Registers) const;
+  MCPhysReg getReplacementPhysReg(const Register Reg, RoundRobin &Registers,
+                                  BitVector &UsedUnits) const;
 
   /// Whether \p Reg should be considered a candidate for re-assignment.
   bool isWorthRenaming(const Register &Reg,
@@ -268,9 +269,11 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   // Reallocate all virtual registers in Candidates.
   // Return true if successful.
   auto ReAllocate = [&](OriginalAllocation &Candidates, RoundRobin &Registers) {
+    BitVector UsedUnits;
+    UsedUnits.resize(TRI->getNumRegUnits());
     for (auto &[MO, Org] : Candidates) {
       auto VReg = MO->getReg();
-      if (!replaceReg(VReg, Registers)) {
+      if (!replaceReg(VReg, Registers, UsedUnits)) {
         LLVM_DEBUG(dbgs() << "Renaming " << printReg(VReg, TRI, 0, MRI)
                           << " failed\n");
         return false;
@@ -348,9 +351,11 @@ void AIEWawRegRewriter::assignReg(Register VReg, MCPhysReg PhysReg) {
 }
 
 bool AIEWawRegRewriter::replaceReg(const Register VReg,
-                                   RoundRobin &LRURegisters) {
+                                   RoundRobin &LRURegisters,
+                                   BitVector &UsedUnits) {
   assert(VReg.isVirtual());
-  MCPhysReg ReplacementPhysReg = getReplacementPhysReg(VReg, LRURegisters);
+  MCPhysReg ReplacementPhysReg =
+      getReplacementPhysReg(VReg, LRURegisters, UsedUnits);
 
   if (ReplacementPhysReg == MCRegister::NoRegister)
     return false;
@@ -360,6 +365,30 @@ bool AIEWawRegRewriter::replaceReg(const Register VReg,
 
   assignReg(VReg, ReplacementPhysReg);
   return true;
+}
+
+/// Returns a vreg of the same class that is exclusively used (and killed)
+/// at the point \p VReg gets defined.
+std::optional<Register>
+getKilledRegAtSingledDefPoint(Register VReg, const MachineRegisterInfo &MRI) {
+  MachineOperand *MO = MRI.getOneDef(VReg);
+  if (!MO)
+    return std::nullopt;
+
+  MachineInstr &DefMI = *MO->getParent();
+  auto OnlyUsedByInstr = [&MRI](Register Reg, const MachineInstr &MI) {
+    return all_of(MRI.use_instructions(Reg),
+                  [&MI](const MachineInstr &UseMI) { return &UseMI == &MI; });
+  };
+
+  for (MachineOperand &UseMO : DefMI.explicit_uses()) {
+    if (UseMO.isReg() && UseMO.getReg().isVirtual() &&
+        MRI.getRegClass(VReg) == MRI.getRegClass(UseMO.getReg()) &&
+        OnlyUsedByInstr(UseMO.getReg(), DefMI)) {
+      return UseMO.getReg();
+    }
+  }
+  return std::nullopt;
 }
 
 void moveRegAndAliasesBack(MCPhysReg PhysReg, RoundRobin &LRURegisters,
@@ -375,10 +404,17 @@ void moveRegAndAliasesBack(MCPhysReg PhysReg, RoundRobin &LRURegisters,
   }
 }
 
-MCPhysReg
-AIEWawRegRewriter::getReplacementPhysReg(const Register VReg,
-                                         RoundRobin &LRURegisters) const {
+MCPhysReg AIEWawRegRewriter::getReplacementPhysReg(const Register VReg,
+                                                   RoundRobin &LRURegisters,
+                                                   BitVector &UsedUnits) const {
   assert(VReg.isVirtual() && "Reg has to be a virtual register");
+
+  /// Whether \p PhysReg was ever used for re-assigning a vreg
+  auto WasUsedForReassignment = [TRI = this->TRI,
+                                 &UsedUnits](MCPhysReg PhysReg) {
+    return any_of(TRI->regunits(PhysReg),
+                  [&UsedUnits](MCRegUnit RU) { return UsedUnits.test(RU); });
+  };
 
   LLVM_DEBUG(dbgs() << "     Try to re-assign" << printReg(VReg, TRI) << "\n");
   const TargetRegisterClass *RC = MRI->getRegClass(VReg);
@@ -393,9 +429,30 @@ AIEWawRegRewriter::getReplacementPhysReg(const Register VReg,
     }
     LiveRegMatrix::InterferenceKind IK = LRM->checkInterference(LI, PhysReg);
     if (IK == LiveRegMatrix::IK_Free) {
+      // If the chosen physical register has already been used and the vreg to
+      // allocate is defined at a point where another vreg gets killed, prefer
+      // reusing the assignment of the killed reg.
+      if (std::optional<Register> KilledReg =
+              getKilledRegAtSingledDefPoint(VReg, *MRI);
+          KilledReg && WasUsedForReassignment(PhysReg)) {
+        MCRegister KilledPhysReg = getAssignedPhysReg(*KilledReg);
+        if (KilledPhysReg && LRM->checkInterference(LI, KilledPhysReg) ==
+                                 LiveRegMatrix::IK_Free) {
+
+          LLVM_DEBUG(dbgs() << "     re-use killed physreg for assigning: "
+                            << printReg(VReg, TRI) << " to "
+                            << TRI->getName(KilledPhysReg) << '\n');
+          PhysReg = KilledPhysReg;
+          It = llvm::find(LRURegisters, KilledPhysReg);
+          assert(It != LRURegisters.end());
+        }
+      }
+
       // Move it to the end of the list. We return, so don't have to
       // care about invalidation
       moveRegAndAliasesBack(PhysReg, LRURegisters, TRI);
+      for (MCRegUnit RU : TRI->regunits(PhysReg))
+        UsedUnits.set(RU);
       return PhysReg;
     }
     LLVM_DEBUG(dbgs() << "       Cannot assign " << printReg(VReg, TRI)
