@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 // This file contains a simple post-RA pipeliner. It tries to wrap the linear
@@ -323,7 +323,7 @@ bool PostPipeliner::computeLoopCarriedParameters() {
   }
 
   // Save the static values for ease of reset
-  for (auto &N : Info) {
+  for (auto &N : Info.Nodes) {
     N.StaticEarliest = N.Earliest;
     N.StaticLatest = N.Latest;
   }
@@ -343,24 +343,23 @@ int PostPipeliner::computeMinScheduleLength() const {
   return MinLength;
 }
 
-void dumpGraph(int NInstr, const std::vector<NodeInfo> &Info,
-               ScheduleDAGInstrs *DAG) {
+void dumpGraph(const ScheduleInfo &Info, ScheduleDAGInstrs *DAG) {
   dbgs() << "digraph {\n";
 
-  for (int K = 0; K < NInstr; K++) {
+  for (int K = 0; K < Info.NInstr; K++) {
     auto &SU = DAG->SUnits[K];
     for (auto &Dep : SU.Succs) {
       auto *Succ = Dep.getSUnit();
       int S = Succ->NodeNum;
-      if (S % NInstr == K) {
+      if (S % Info.NInstr == K) {
         continue;
       }
 
       dbgs() << "\tSU" << K << " -> "
              << "SU" << S;
 
-      if (S >= NInstr) {
-        dbgs() << "_" << S % NInstr;
+      if (S >= Info.NInstr) {
+        dbgs() << "_" << S % Info.NInstr;
       }
       if (Dep.getKind() == SDep::Data) {
         dbgs() << " [color=red] ";
@@ -476,7 +475,7 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
 }
 
 namespace {
-void dumpEarliestChain(const std::vector<NodeInfo> &Info, int N) {
+void dumpEarliestChain(const ScheduleInfo &Info, int N) {
   auto Prev = Info[N].LastEarliestPusher;
   if (Prev) {
     dumpEarliestChain(Info, *Prev);
@@ -515,8 +514,7 @@ bool PostPipeliner::scheduleOtherIterations() {
 
 class DefaultStrategy : public PostPipelinerStrategy {
 public:
-  DefaultStrategy(ScheduleDAGMI &DAG, std::vector<NodeInfo> &Info,
-                  int LatestBias)
+  DefaultStrategy(ScheduleDAGMI &DAG, ScheduleInfo &Info, int LatestBias)
       : PostPipelinerStrategy(DAG, Info, LatestBias) {}
   bool better(const SUnit &A, const SUnit &B) override {
     return Info[A.NodeNum].Latest < Info[B.NodeNum].Latest;
@@ -525,6 +523,7 @@ public:
 
 class ConfigStrategy : public PostPipelinerStrategy {
   bool TopDown = true;
+  bool Alternate = false;
 
 public:
   enum PriorityComponent {
@@ -552,6 +551,13 @@ public:
     }
     return "Size - Illegal";
   }
+  struct Configuration {
+    int ExtraStages = 0;
+    bool TopDown = true;
+    bool Alternate = false;
+    int Runs = 0;
+    SmallVector<PriorityComponent, 4> Components;
+  };
 
 private:
   std::string Name;
@@ -628,15 +634,20 @@ private:
         PredSiblingScheduled.insert(PDep.getSUnit()->NodeNum);
       }
     }
+    if (Alternate) {
+      TopDown = !TopDown;
+    }
   }
 
 public:
   std::string name() override { return Name; }
-  ConfigStrategy(ScheduleDAGInstrs &DAG, std::vector<NodeInfo> &Info,
-                 int Length, bool TopDown,
+  ConfigStrategy(ScheduleDAGInstrs &DAG, ScheduleInfo &Info, int Length,
+                 bool TopDown, bool Alternate,
                  ArrayRef<PriorityComponent> Components)
-      : PostPipelinerStrategy(DAG, Info, Length), TopDown(TopDown) {
-    Name = "Config_" + std::to_string(Length) + "_" + std::to_string(TopDown);
+      : PostPipelinerStrategy(DAG, Info, Length), TopDown(TopDown),
+        Alternate(Alternate) {
+    Name = "Config_" + std::to_string(Length) + "_" + std::to_string(TopDown) +
+           "_" + std::to_string(Alternate);
     for (auto Comp : Components) {
       Name += "_" + getPriorityName(Comp);
       Priority.emplace_back(Comp);
@@ -644,59 +655,45 @@ public:
   }
 };
 
-static const struct {
-  int ExtraStages;
-  bool TopDown;
-  bool Rerun;
-  ConfigStrategy::PriorityComponent Components[3];
-} Strategies[] = {
+using Prio = ConfigStrategy::PriorityComponent;
+static const ConfigStrategy::Configuration Strategies[] = {
     // Loosely speaking, a lower value of the first parameter targets
     // a lower stage count, which benefits code size.
-    // Rerurn is only useful for heuristics that use it, e.g. Critical
-    {1, true, false, {ConfigStrategy::NodeNum}},
-    {1, true, false, {ConfigStrategy::Latest}},
-    {1, true, true, {ConfigStrategy::Critical}},
-    {1, true, true, {ConfigStrategy::Critical, ConfigStrategy::LCDLatest}},
-    {0, false, true, {ConfigStrategy::Critical, ConfigStrategy::LCDLatest}},
-    {1, false, true, {ConfigStrategy::Critical, ConfigStrategy::LCDLatest}},
+    // Runs>1 is only useful for heuristics that use it, e.g. Critical
+    // {ExtraStages, TopDown, Alternate, Runs, PriorityComponents}
+    {1, true, false, 1, {Prio::NodeNum}},
+    {1, true, false, 1, {Prio::Latest}},
+    {1, true, false, 2, {Prio::Critical}},
+    {1, true, false, 2, {Prio::Critical, Prio::LCDLatest}},
+    {0, false, false, 2, {Prio::Critical, Prio::LCDLatest}},
+    {1, false, false, 2, {Prio::Critical, Prio::LCDLatest}},
     // This is pure bottom up
-    {1, false, false, {ConfigStrategy::NodeNum}},
+    {1, false, false, 1, {Prio::NodeNum}},
 };
 
 bool PostPipeliner::tryHeuristics() {
   int MinLength = computeMinScheduleLength();
-
   DEBUG_SUMMARY(dbgs() << "-- MinLength=" << MinLength << "\n");
 
   int HeuristicIndex = 0;
-  for (auto &[ExtraStages, TopDown, Rerun, Components] : Strategies) {
+  for (const auto &Config : Strategies) {
     if (Heuristic >= 0 && Heuristic != HeuristicIndex++) {
       continue;
     }
-    ConfigStrategy S(*DAG, Info, MinLength + ExtraStages * II, TopDown,
-                     Components);
+    ConfigStrategy S(*DAG, Info, MinLength + Config.ExtraStages * II,
+                     Config.TopDown, Config.Alternate, Config.Components);
     resetSchedule(/*FullReset=*/true);
-    DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name() << "\n");
-    if (scheduleFirstIteration(S) && scheduleOtherIterations()) {
-      DEBUG_SUMMARY(dbgs() << "    Strategy " << S.name() << " found II=" << II
+    for (int Run = 0; Run < Config.Runs; Run++) {
+      DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name() << " run=" << Run
                            << "\n");
-      return true;
+      if (scheduleFirstIteration(S) && scheduleOtherIterations()) {
+        DEBUG_SUMMARY(dbgs() << "    Strategy " << S.name() << " run=" << Run
+                             << " found II=" << II << "\n");
+        return true;
+      }
+      resetSchedule(/*FullReset=*/false);
     }
-
-    DEBUG_SUMMARY(dbgs() << " failed\n");
-    if (!Rerun) {
-      continue;
-    }
-
-    // Rerun with dynamic information retained
-    resetSchedule(/*FullReset=*/false);
-    DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name()
-                         << " with critical path");
-    if (scheduleFirstIteration(S) && scheduleOtherIterations()) {
-      DEBUG_SUMMARY(dbgs() << " found II=" << II << "\n");
-      return true;
-    }
-    DEBUG_SUMMARY(dbgs() << " failed\n");
+    DEBUG_SUMMARY(dbgs() << "    Strategy " << S.name() << " failed\n");
   }
   DEBUG_SUMMARY(dbgs() << "=== II=" << II << " Failed ===\n");
   return false;
@@ -718,12 +715,11 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
   Depth = NCopies * II + HR.getPipelineDepth();
   Scoreboard.reset(Depth);
 
-  Info.clear();
-  Info.resize(NTotalInstrs);
+  Info.init(NInstr, NCopies);
 
   LLVM_DEBUG(for (int I = 0; I < NInstr;
                   I++) { dbgs() << I << " " << *DAG->SUnits[I].getInstr(); });
-  LLVM_DEBUG(dumpGraph(NInstr, Info, DAG));
+  LLVM_DEBUG(dumpGraph(Info, DAG));
 
   computeLoopCarriedParameters();
 
