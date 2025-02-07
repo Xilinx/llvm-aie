@@ -362,6 +362,19 @@ bool AIEWawRegRewriter::replaceReg(const Register VReg,
   return true;
 }
 
+void moveRegAndAliasesBack(MCPhysReg PhysReg, RoundRobin &LRURegisters,
+                           const TargetRegisterInfo *TRI) {
+  for (MCRegAliasIterator AI(MCRegister(PhysReg), TRI, true); AI.isValid();
+       ++AI) {
+    // TODO: Use hints to speed up the search of aliases?
+    auto AliasIt = llvm::find(LRURegisters, *AI);
+    if (AliasIt != LRURegisters.end()) {
+      LRURegisters.erase(AliasIt);
+      LRURegisters.emplace_back(*AI);
+    }
+  }
+}
+
 MCPhysReg
 AIEWawRegRewriter::getReplacementPhysReg(const Register VReg,
                                          RoundRobin &LRURegisters) const {
@@ -382,8 +395,7 @@ AIEWawRegRewriter::getReplacementPhysReg(const Register VReg,
     if (IK == LiveRegMatrix::IK_Free) {
       // Move it to the end of the list. We return, so don't have to
       // care about invalidation
-      LRURegisters.erase(It);
-      LRURegisters.emplace_back(PhysReg);
+      moveRegAndAliasesBack(PhysReg, LRURegisters, TRI);
       return PhysReg;
     }
     LLVM_DEBUG(dbgs() << "       Cannot assign " << printReg(VReg, TRI)
