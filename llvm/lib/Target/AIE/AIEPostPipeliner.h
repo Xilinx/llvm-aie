@@ -233,10 +233,10 @@ public:
 
   /// Check whether this is a suitable loop for the PostPipeliner. It also
   /// leaves some useful information.
-  bool canAccept(MachineBasicBlock &LoopBlock);
+  bool isPostPipelineCandidate(MachineBasicBlock &LoopBlock);
 
   /// Get a lowerbound for the II required to accommodate the slots.
-  /// \pre canAccept has returned true
+  /// \pre isPostPipelineCandidate has returned true
   int getResMII(MachineBasicBlock &LoopBlock);
 
   // Schedule using the given InitiationInterval. Return true when successful.

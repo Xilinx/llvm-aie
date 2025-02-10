@@ -77,6 +77,13 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   /// slot will be the default one (unknown).
   MCSlotKind getSlotKind(unsigned Opcode) const;
   virtual const MCSlotInfo *getSlotInfo(const MCSlotKind Kind) const;
+  /// \return Opcode of multi-slot pseudo \p MI that runs in \p Slot
+  std::optional<unsigned> getSlotOpcode(const MCSlotKind Slot,
+                                        const MachineInstr &MI) const;
+
+  /// \return wether \p MI is a multi-slot pseudo instruction
+  bool isMultiSlotPseudo(const MachineInstr &MI) const;
+
   /// Return the Packet formats for this target
   virtual const PacketFormats &getPacketFormats() const;
   /// Return a nop of the given byte size, or the smallest if zero.
