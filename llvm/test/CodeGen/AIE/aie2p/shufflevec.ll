@@ -423,3 +423,101 @@ entry:
   %shuffle = shufflevector <16 x i16> %a, <16 x i16> %b, <16 x i32> <i32 4, i32 5, i32 6, i32 7, i32 4, i32 5, i32 6, i32 7, i32 4, i32 5, i32 6, i32 7, i32 4, i32 5, i32 6, i32 7>
   ret <16 x i16> %shuffle
 }
+
+; Test G_SHUFFLE_VECTOR to UNMERGE
+
+define <8 x i32> @test_shuffle_vector_vector_unmerge_lo(<16 x i32> noundef %a, <16 x i32> noundef %b) {
+; CHECK-LABEL: test_shuffle_vector_vector_unmerge_lo:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    vmov x0, x2 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %shuffle = shufflevector <16 x i32> %a, <16 x i32> %b, <8 x i32> <i32 0, i32  1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+  ret <8 x i32> %shuffle
+}
+
+define <8 x i32> @test_shuffle_vector_vector_unmerge_lo_4_unmerge_outputs(<32 x i32> noundef %a, <32 x i32> noundef %b) {
+; CHECK-LABEL: test_shuffle_vector_vector_unmerge_lo_4_unmerge_outputs:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    vmov x0, x4 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %shuffle = shufflevector <32 x i32> %a, <32 x i32> %b, <8 x i32> <i32 0, i32  1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+  ret <8 x i32> %shuffle
+}
+
+define <4 x i32> @test_shuffle_vector_vector_unmerge_hi_128(<8 x i32> noundef %a, <8 x i32> noundef %b) {
+; CHECK-LABEL: test_shuffle_vector_vector_unmerge_hi_128:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
+; CHECK-NEXT:    nopx // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    mova r0, #16 // Delay Slot 3
+; CHECK-NEXT:    vshift x0, x2, x0, r0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %shuffle = shufflevector <8 x i32> %a, <8 x i32> %b, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  ret <4 x i32> %shuffle
+}
+
+define <8 x i32> @test_shuffle_vector_vector_unmerge_hi_256(<16 x i32> noundef %a, <16 x i32> noundef %b) {
+; CHECK-LABEL: test_shuffle_vector_vector_unmerge_hi_256:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    vmov wl0, wh2 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %shuffle = shufflevector <16 x i32> %a, <16 x i32> %b, <8 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+  ret <8 x i32> %shuffle
+}
+
+define <16 x i32> @test_shuffle_vector_vector_unmerge_hi_512(<32 x i32> noundef %a, <32 x i32> noundef %b) {
+; CHECK-LABEL: test_shuffle_vector_vector_unmerge_hi_512:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    vmov x0, x5 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %shuffle = shufflevector <32 x i32> %a, <32 x i32> %b, <16 x i32> <i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+  ret <16 x i32> %shuffle
+}
+
+define <32 x i32> @test_shuffle_vector_vector_unmerge_lo_1024(<64 x i32> noundef %a, <64 x i32> noundef %b) {
+; CHECK-LABEL: test_shuffle_vector_vector_unmerge_lo_1024:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    nopa ; nopb ; nopx ; mov p0, sp; nops
+; CHECK-NEXT:    padda [p0], #-256
+; CHECK-NEXT:    vlda bmll0, [p0, #0]
+; CHECK-NEXT:    vlda bmlh0, [p0, #64]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    vmov x4, bmll0 // Delay Slot 3
+; CHECK-NEXT:    vmov x5, bmlh0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %shuffle = shufflevector <64 x i32> %a, <64 x i32> %b, <32 x i32> <i32 0, i32  1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+  ret <32 x i32> %shuffle
+}
