@@ -39,4 +39,8 @@ const PacketFormats &AIE2PMCFormats::getPacketFormats() const {
   return Formats;
 }
 
+SmallVector<MCSlotKind, 2> AIE2PMCFormats::getLoadSlotKinds() const {
+  return {AIE2PSlotKind::AIE2P_SLOT_LDB, AIE2PSlotKind::AIE2P_SLOT_LDA};
+}
+
 } // end namespace llvm

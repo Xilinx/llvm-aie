@@ -5,7 +5,8 @@
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
 ; (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
-; RUN: llc -mtriple=aie2p --aie-force-postpipeliner %s -o - | FileCheck %s
+; RUN: llc -mtriple=aie2p --aie-force-postpipeliner \ 
+; RUN:   -aie-multi-slot-pseudo-instr=true %s -o - | FileCheck %s
 
 ; This is a bf16->bfp16 conversion function used by Conv2D kernels.
 ; Ultimately, we should target II=4

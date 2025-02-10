@@ -18,6 +18,7 @@
 #include "AIELiveRegs.h"
 #include "AIEMachineScheduler.h"
 #include "AIEMaxLatencyFinder.h"
+#include "AIEMultiSlotInstrMaterializer.h"
 #include "Utils/AIELoopUtils.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
@@ -59,6 +60,11 @@ static cl::opt<bool>
 static cl::opt<int> PostPipelinerMaxII(
     "aie-postpipeliner-maxii", cl::init(40),
     cl::desc("[AIE] Maximum II to be tried in the post-ra pipeliner"));
+
+static cl::opt<bool> EnableMultiSlotInstrMaterialization(
+    "aie-multi-slot-pseudo-instr", cl::Hidden, cl::init(false),
+    cl::desc("Statically materialize Multi-Slot Pseudo Instructions in "
+             "loops."));
 
 namespace llvm::AIE {
 
@@ -586,7 +592,7 @@ SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
   // But first try SWP
   if (BS.getRegions().size() == 1) {
     auto &PostSWP = BS.getPostSWP();
-    if (PostSWP.canAccept(*BS.TheBlock)) {
+    if (PostSWP.isPostPipelineCandidate(*BS.TheBlock)) {
       BS.FixPoint.II = PostSWP.getResMII(*BS.TheBlock);
       return BS.FixPoint.Stage = SchedulingStage::Pipelining;
     }
@@ -1161,6 +1167,11 @@ void BlockState::initInterBlock(const MachineSchedContext &Context,
     // Don't worry, this just constructs a mostly empty container class
     auto NumInstrs = getTop().getFreeInstructions().size();
     PostSWP = std::make_unique<PostPipeliner>(HR, NumInstrs);
+
+    // perform static assignment of multi-slot pseudos
+    if (EnableMultiSlotInstrMaterialization &&
+        PostSWP->isPostPipelineCandidate(*TheBlock))
+      staticallyMaterializeMultiSlotInstructions(*TheBlock, HR);
   }
 
   // We are called just after the first round of scheduling a block.
