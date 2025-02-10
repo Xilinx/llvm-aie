@@ -1874,8 +1874,8 @@ static bool checkExtractSubvectorPrerequisites(const AIEBaseInstrInfo &TII,
       (DstTySize != ScalarRegSize && DstTySize != 2 * ScalarRegSize))
     return false;
 
-  // Currently, we cannot extract vectors of the size less than vector register
-  // size.
+  // Currently, we cannot extract vectors for the case when the size of the
+  // source vector is less than the basic vector register size (of the target).
   if (SrcTySize < VecRegSize)
     return false;
 
@@ -1945,6 +1945,38 @@ buildExtractSubvector(MachineIRBuilder &B, MachineRegisterInfo &MRI,
 }
 
 /// Match something like this:
+///  %1:_(<16 x s32>) = COPY $x0
+///  %2:_(<16 x s32>) = COPY $x1
+///  %0:_(<8 x s32>) = G_SHUFFLE_VECTOR %1(<16 x s32>), %2(<16 x s32>),
+///  shufflemask(8, 9, 10, 11, 12, 13, 14, 15)
+///  PseudoRET implicit $lr, implicit %0
+
+/// To convert to:
+/// %1:_(<16 x s32>) = COPY $x0
+/// %2:_(<8 x s32>), %3:_(<8 x s32>) = G_UNMERGE_VALUES %1(<16 x s32>)
+/// PseudoRET implicit $lr, implicit %3(<8 x s32>)
+static bool matchShuffleToUnmerge(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                  BuildFnTy &MatchInfo, unsigned SubIdx,
+                                  unsigned NumSubVectors) {
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register Src1Reg = MI.getOperand(1).getReg();
+  const LLT DstTy = MRI.getType(DstReg);
+
+  // TODO: Select into G_EXTRACT_SUBVECTOR once it is more widely supported
+  MatchInfo = [=, &MRI](MachineIRBuilder &B) {
+    SmallVector<Register, 4> SubVecs;
+    for (unsigned I = 0; I < NumSubVectors; I++) {
+      if (I == (unsigned)SubIdx)
+        SubVecs.push_back(DstReg);
+      else
+        SubVecs.push_back(MRI.createGenericVirtualRegister(DstTy));
+    }
+    B.buildUnmerge(SubVecs, Src1Reg);
+  };
+  return true;
+}
+
+/// Match something like this:
 ///  %1:_(<16 x s16>) = COPY $wl0
 ///  %2:_(<16 x s16>) = COPY $wl1
 ///  %0:_(<4 x s16>) = G_SHUFFLE_VECTOR %1(<16 x s16>), %2(<16 x s16>),
@@ -1954,6 +1986,81 @@ buildExtractSubvector(MachineIRBuilder &B, MachineRegisterInfo &MRI,
 /// %1:_(<16 x s16>) = COPY $wl0
 /// %2:_(s32) = G_CONSTANT i32 1
 /// %3:_(<4 x s16>) = G_AIE_EXTRACT_SUBVECTOR %1(<16 x s16>), %2(s32)
+/// NOTE: This combine works ONLY for 32- and 64-bit outputs!
+static bool matchShuffleToAIEExtractSubvec(
+    MachineInstr &MI, MachineRegisterInfo &MRI, const AIEBaseInstrInfo &TII,
+    BuildFnTy &MatchInfo, unsigned SubIdx, unsigned NumSubVectors) {
+  const unsigned GPRSize = TII.getScalarRegSize();
+  const unsigned ExtractSubvecNativeSrcSize = TII.getBasicVectorBitSize();
+
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register Src1Reg = MI.getOperand(1).getReg();
+
+  const LLT DstTy = MRI.getType(DstReg);
+  const LLT Src1Ty = MRI.getType(Src1Reg);
+  const unsigned Src1TySize = Src1Ty.getSizeInBits();
+
+  if (!checkExtractSubvectorPrerequisites(TII, DstTy, Src1Ty))
+    return false;
+
+  const unsigned Opc = TII.getGenericExtractSubvectorOpcode();
+
+  // Natively supported source vector type
+  if (Src1TySize == ExtractSubvecNativeSrcSize) {
+    MatchInfo = [=](MachineIRBuilder &B) {
+      auto Cst = B.buildConstant(LLT::scalar(GPRSize), SubIdx);
+      B.buildInstr(Opc, {DstReg}, {Src1Reg, Cst});
+    };
+
+    return true;
+  }
+
+  // Source vectors of a non-native size are converted to vectors of the native
+  // size
+  const unsigned Src1ElmtSize = Src1Ty.getElementType().getSizeInBits();
+  const unsigned Src1Vec512BitLen = ExtractSubvecNativeSrcSize / Src1ElmtSize;
+  const LLT NewSrc1Ty = LLT::fixed_vector(Src1Vec512BitLen, Src1ElmtSize);
+  const Register NewSrcReg = MRI.createGenericVirtualRegister(NewSrc1Ty);
+
+  if (Src1TySize < ExtractSubvecNativeSrcSize) {
+    MatchInfo = [=](MachineIRBuilder &B) {
+      const Register ImplicitDef = B.buildUndef(Src1Ty).getReg(0);
+      SmallVector<Register, 15> ConcatOps = {Src1Reg};
+      unsigned NumImplicitDef = ExtractSubvecNativeSrcSize / Src1TySize - 1;
+      while (NumImplicitDef-- > 0) {
+        ConcatOps.push_back(ImplicitDef);
+      }
+      B.buildConcatVectors({NewSrcReg}, ConcatOps);
+      auto Cst = B.buildConstant(LLT::scalar(GPRSize), SubIdx);
+      B.buildInstr(Opc, {DstReg}, {NewSrcReg, Cst});
+    };
+    return true;
+  }
+
+  // Source vectors with the size greater than the native source vector size
+  MatchInfo = [=, &MRI](MachineIRBuilder &B) {
+    const unsigned SizeCoefficient = Src1TySize / ExtractSubvecNativeSrcSize;
+    const unsigned NumSubVectorsNativeSize = NumSubVectors / SizeCoefficient;
+    unsigned NewSubIdx = SubIdx % NumSubVectorsNativeSize;
+
+    SmallVector<Register, 4> SubRegs;
+    unsigned NewSrcRegPosition = SubIdx / NumSubVectorsNativeSize;
+    for (unsigned I = 0; I < SizeCoefficient; ++I) {
+      if (I == NewSrcRegPosition)
+        SubRegs.push_back(NewSrcReg);
+      else
+        SubRegs.push_back(MRI.createGenericVirtualRegister(NewSrc1Ty));
+    }
+
+    B.buildUnmerge(SubRegs, Src1Reg);
+    auto Cst = B.buildConstant(LLT::scalar(GPRSize), NewSubIdx);
+    B.buildInstr(Opc, {DstReg}, {NewSrcReg, Cst});
+  };
+  return true;
+}
+
+/// The method does some checks and calls matchShuffleToAIEExtractSubvec and
+/// matchShuffleToUnmerge which extract subvectors is possible.
 bool llvm::matchShuffleToExtractSubvec(MachineInstr &MI,
                                        MachineRegisterInfo &MRI,
                                        const AIEBaseInstrInfo &TII,
@@ -1962,45 +2069,56 @@ bool llvm::matchShuffleToExtractSubvec(MachineInstr &MI,
 
   const Register DstReg = MI.getOperand(0).getReg();
   const Register Src1Reg = MI.getOperand(1).getReg();
-  const ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
+  ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
 
   const LLT DstTy = MRI.getType(DstReg);
   const LLT Src1Ty = MRI.getType(Src1Reg);
+  const unsigned Src1TySize = Src1Ty.getSizeInBits();
 
-  if (!checkExtractSubvectorPrerequisites(TII, DstTy, Src1Ty))
+  if (!DstTy.isVector() || !Src1Ty.isVector())
+    return false;
+
+  //  This should be handled by a separate combine that copies Src1Reg to
+  //  DstReg.
+  if (Src1TySize == DstTy.getSizeInBits())
     return false;
 
   const unsigned NumDstElems = DstTy.getNumElements();
   const unsigned NumSrc1Elems = Src1Ty.getNumElements();
-  const unsigned NumSubVectors = NumSrc1Elems / NumDstElems;
 
   // Not an extract pattern
-  if (NumSrc1Elems < NumDstElems)
+  if (NumSrc1Elems <= NumDstElems)
     return false;
 
   // Unlikely to select into a subregister copy
   if (NumSrc1Elems % NumDstElems != 0)
     return false;
 
-  auto GetSubIdx = [=, &Mask]() -> std::optional<unsigned> {
+  const unsigned NumSubVectors = NumSrc1Elems / NumDstElems;
+  auto GetSubvecExtractIdx = [=, &Mask]() -> std::optional<unsigned> {
     for (unsigned SubVecIdx = 0; SubVecIdx < NumSubVectors; ++SubVecIdx) {
       if (checkSequentialMask(Mask, SubVecIdx * NumDstElems, NumDstElems)) {
         return SubVecIdx;
       }
     }
+
     return std::nullopt;
   };
 
-  std::optional<unsigned> SubIdx = GetSubIdx();
+  std::optional<unsigned> SubvecExtractIdx = GetSubvecExtractIdx();
 
   // Not an extract pattern
-  if (!SubIdx)
+  if (!SubvecExtractIdx)
     return false;
 
-  MatchInfo = [=, &MRI, &TII](MachineIRBuilder &B) {
-    buildExtractSubvector(B, MRI, TII, DstReg, Src1Reg, SubIdx.value());
-  };
-  return true;
+  if (matchShuffleToAIEExtractSubvec(MI, MRI, TII, MatchInfo,
+                                     SubvecExtractIdx.value(), NumSubVectors))
+    return true;
+  if (matchShuffleToUnmerge(MI, MRI, MatchInfo, SubvecExtractIdx.value(),
+                            NumSubVectors))
+    return true;
+
+  return false;
 }
 
 /// Match something like this:
