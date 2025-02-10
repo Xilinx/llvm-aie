@@ -1021,6 +1021,23 @@ const MCSlotInfo *AIEBaseInstrInfo::getSlotInfo(const MCSlotKind Kind) const {
   return FormatInterface->getSlotInfo(Kind);
 }
 
+bool AIEBaseInstrInfo::isMultiSlotPseudo(const MachineInstr &MI) const {
+  return MI.isPseudo() &&
+         getFormatInterface()->getAlternateInstsOpcode(MI.getOpcode());
+}
+
+std::optional<unsigned>
+AIEBaseInstrInfo::getSlotOpcode(const MCSlotKind Slot,
+                                const MachineInstr &MI) const {
+  assert(isMultiSlotPseudo(MI));
+  for (const auto &OpCode :
+       *getFormatInterface()->getAlternateInstsOpcode(MI.getOpcode())) {
+    if (getSlotKind(OpCode) == Slot)
+      return OpCode;
+  }
+  return {};
+}
+
 const PacketFormats &AIEBaseInstrInfo::getPacketFormats() const {
   return FormatInterface->getPacketFormats();
 }

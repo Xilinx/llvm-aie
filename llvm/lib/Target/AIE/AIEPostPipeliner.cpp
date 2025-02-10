@@ -65,7 +65,7 @@ public:
 PostPipeliner::PostPipeliner(const AIEHazardRecognizer &HR, int NInstr)
     : HR(HR), NInstr(NInstr) {}
 
-bool PostPipeliner::canAccept(MachineBasicBlock &LoopBlock) {
+bool PostPipeliner::isPostPipelineCandidate(MachineBasicBlock &LoopBlock) {
   // We leave the single-block loop criterion to our caller. It is fulfilled
   // by being a loopaware scheduling candidate.
   // First get us some instruments
