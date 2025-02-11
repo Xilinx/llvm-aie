@@ -70,6 +70,7 @@ public:
                                bool isWrite);
   bool selectVST_FIFO(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_TRUNC(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectVST_FIFO_CONV(MachineInstr &StoreI, MachineRegisterInfo &MRI);
 
   static const char *getName() { return DEBUG_TYPE; }
 
@@ -3630,19 +3631,28 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeCONV(
     std::optional<APInt> Immediate) {
   const bool AlwaysFitsImmediateRange = true;
   const bool NoImmediate = false;
-  if (CombOp.getOpcode() != AIE2P::G_INTRINSIC_W_SIDE_EFFECTS ||
-      (cast<GIntrinsic>(CombOp).getIntrinsicID() !=
-           Intrinsic::aie2p_v16accfloat_to_v16bf16 &&
-       cast<GIntrinsic>(CombOp).getIntrinsicID() !=
-           Intrinsic::aie2p_v32accfloat_to_v32bf16))
-    return {};
+  if (CombOp.getOpcode() != AIE2P::G_INTRINSIC_W_SIDE_EFFECTS)
+    return std::nullopt;
 
-  assert(((cast<GIntrinsic>(CombOp).getIntrinsicID() ==
-               Intrinsic::aie2p_v16accfloat_to_v16bf16 &&
+  const unsigned CombOpID = cast<GIntrinsic>(CombOp).getIntrinsicID();
+  switch (CombOpID) {
+  case Intrinsic::aie2p_v16accfloat_to_v16bf16:
+  case Intrinsic::aie2p_v32accfloat_to_v32bf16:
+  case Intrinsic::aie2p_v64accfloat_to_v64bfp16ebs8:
+  case Intrinsic::aie2p_v64accfloat_to_v64bfp16ebs16:
+  case Intrinsic::aie2p_v64bfp16ebs8_to_v64bfp16ebs16:
+    break;
+  default:
+    return std::nullopt;
+  }
+
+  assert(((CombOpID == Intrinsic::aie2p_v16accfloat_to_v16bf16 &&
            getLoadStoreSize(MemOp) == 256) ||
-          (cast<GIntrinsic>(CombOp).getIntrinsicID() ==
-               Intrinsic::aie2p_v32accfloat_to_v32bf16 &&
-           getLoadStoreSize(MemOp) == 512)) &&
+          (CombOpID == Intrinsic::aie2p_v32accfloat_to_v32bf16 &&
+           getLoadStoreSize(MemOp) == 512) ||
+          (CombOpID == Intrinsic::aie2p_v64accfloat_to_v64bfp16ebs8) ||
+          (CombOpID == Intrinsic::aie2p_v64accfloat_to_v64bfp16ebs16) ||
+          (CombOpID == Intrinsic::aie2p_v64bfp16ebs8_to_v64bfp16ebs16)) &&
          "Unexpected VST.CONV size");
 
   unsigned ISelOpcode;
@@ -3697,6 +3707,21 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeCONV(
       ISelOpcode = AIE2P::VST_3D_CONV_bf16_fp32_dmx_sts_srs_bf;
     return LoadStoreOpcodes{ISelOpcode, NoImmediate,
                             /*OffsetOpcode=*/{}};
+  case AIE2P::G_INTRINSIC_W_SIDE_EFFECTS:
+    switch (cast<GIntrinsic>(MemOp).getIntrinsicID()) {
+    case Intrinsic::aie2p_fifo_st_push_544_bfp16:
+      if (CombOpID == Intrinsic::aie2p_v64bfp16ebs8_to_v64bfp16ebs16)
+        ISelOpcode = AIE2P::VST_PUSH_544_CONV_bfp16ebs16_ebs8;
+      else /* CombOpID ==
+              Intrinsic::aie2p_v64accfloat_to_v64bfp16ebs16 */
+        ISelOpcode = AIE2P::VST_PUSH_544_CONV_bfp16ebs16_fp32;
+      return LoadStoreOpcodes{ISelOpcode, NoImmediate,
+                              /*OffsetOpcode=*/{}};
+    case Intrinsic::aie2p_fifo_st_push_576_bfp16:
+      return LoadStoreOpcodes{AIE2P::VST_PUSH_576_CONV_bfp16ebs8_fp32,
+                              NoImmediate,
+                              /*OffsetOpcode=*/{}};
+    }
   }
   return {};
 }
@@ -4905,6 +4930,57 @@ unsigned int getStoreFifoOpcode(MachineInstr &I) {
   return AIE2P::INSTRUCTION_LIST_END;
 }
 
+bool AIE2PInstructionSelector::selectVST_FIFO_CONV(MachineInstr &StoreI,
+                                                   MachineRegisterInfo &MRI) {
+  Register ConvResult = StoreI.getOperand(5).getReg();
+  MachineInstr *ConvOp = getDefIgnoringCopiesAndBitcasts(ConvResult, MRI);
+  assert(ConvOp && "Expected SSA.");
+
+  if (!canCombineCONV(StoreI, *ConvOp) ||
+      StoreI.getParent() != ConvOp->getParent() || !MRI.hasOneUse(ConvResult))
+    return false;
+
+  const std::optional<APInt> NoImmediate = {};
+  std::optional<LoadStoreOpcodes> LSO =
+      getCombinedOpcodeCONV(StoreI, *ConvOp, NoImmediate);
+  assert(LSO && "Unexpected VST.FIFO.CONV combine failure");
+
+  Register PtrOut = StoreI.getOperand(0).getReg();
+  Register FifoOut = StoreI.getOperand(1).getReg();
+  Register AvailOut = StoreI.getOperand(2).getReg();
+
+  Register PtrIn = StoreI.getOperand(4).getReg();
+  Register FifoIn = StoreI.getOperand(7).getReg();
+  Register AvailIn = StoreI.getOperand(8).getReg();
+  Register SrcReg;
+
+  unsigned CombOpID = cast<GIntrinsic>(*ConvOp).getIntrinsicID();
+  if (CombOpID == Intrinsic::aie2p_v64bfp16ebs8_to_v64bfp16ebs16) {
+    Register MantIn = ConvOp->getOperand(3).getReg();
+    Register ExpIn = ConvOp->getOperand(4).getReg();
+    SrcReg = MRI.createVirtualRegister(&AIE2P::mEXaRegClass);
+    MIB.buildInstr(TargetOpcode::REG_SEQUENCE, {SrcReg}, {})
+        .addReg(MantIn)
+        .addImm(AIE2P::sub_bfp16_x)
+        .addReg(ExpIn)
+        .addImm(AIE2P::sub_bfp16_e);
+  } else {
+    assert((CombOpID == Intrinsic::aie2p_v64accfloat_to_v64bfp16ebs8 ||
+            CombOpID == Intrinsic::aie2p_v64accfloat_to_v64bfp16ebs16) &&
+           "Unexpected IntrinsicID in VST.FIFO.CONV combine");
+    SrcReg = ConvOp->getOperand(3).getReg();
+  }
+
+  auto NewInstr = MIB.buildInstr(LSO->ISelOpcode, {FifoOut, PtrOut, AvailOut},
+                                 {FifoIn, SrcReg, PtrIn, AvailIn});
+  NewInstr.cloneMemRefs(StoreI);
+
+  makeDeadMI(*ConvOp, MRI);
+  StoreI.eraseFromParent();
+
+  return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
+}
+
 bool AIE2PInstructionSelector::selectVST_FIFO(MachineInstr &I,
                                               MachineRegisterInfo &MRI) {
   auto IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
@@ -4928,6 +5004,10 @@ bool AIE2PInstructionSelector::selectVST_FIFO(MachineInstr &I,
   }
   case Intrinsic::aie2p_fifo_st_push_544_bfp16:
   case Intrinsic::aie2p_fifo_st_push_576_bfp16: {
+    // First try to match CONV combine
+    if (selectVST_FIFO_CONV(I, MRI))
+      return true;
+
     Register PtrIn = I.getOperand(4).getReg();
     Register FifoIn = I.getOperand(7).getReg();
     Register AvailIn = I.getOperand(8).getReg();
