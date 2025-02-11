@@ -1460,16 +1460,8 @@ AIE2PInstrInfo::getTiedRegInfo(unsigned Opcode) const {
          {/*OpIdx=*/7, /*SubRegIdx=*/AIE2P::sub_avail}},
         /*NewSuperClass=*/&AIE2P::ePSRFLdFRegClass}};
   case AIE2P::VLDA_FILL_512:
-    return {TiedRegOperands{
-        /*DstOps=*/{{/*OpIdx=*/0, /*SubRegIdx=*/AIE2P::sub_ptr},
-                    {/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_fifo},
-                    {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_avail}},
-        /*SrcOps=*/
-        {{/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_ptr},
-         {/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::sub_fifo},
-         {/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::sub_avail}},
-        /*NewSuperClass=*/&AIE2P::ePSRFLdFRegClass}};
   case AIE2P::VLDB_FILL_512:
+  case AIE2P::VLD_FILL_512_pseudo:
     return {TiedRegOperands{
         /*DstOps=*/{{/*OpIdx=*/0, /*SubRegIdx=*/AIE2P::sub_ptr},
                     {/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_fifo},
@@ -1500,6 +1492,11 @@ AIE2PInstrInfo::getTiedRegInfo(unsigned Opcode) const {
   case AIE2P::VLDB_POP_576_normal_pop:
   case AIE2P::VLDB_POP_640_normal_pop:
   case AIE2P::VLDB_POP_704_normal_pop:
+  case AIE2P::VLD_POP_512_normal_pop_pseudo:
+  case AIE2P::VLD_POP_544_normal_pop_pseudo:
+  case AIE2P::VLD_POP_576_normal_pop_pseudo:
+  case AIE2P::VLD_POP_640_normal_pop_pseudo:
+  case AIE2P::VLD_POP_704_normal_pop_pseudo:
   case AIE2P::VLDA_POP_512_fifo_1d_pop:
   case AIE2P::VLDA_POP_544_fifo_1d_pop:
   case AIE2P::VLDA_POP_576_fifo_1d_pop:
@@ -1510,6 +1507,11 @@ AIE2PInstrInfo::getTiedRegInfo(unsigned Opcode) const {
   case AIE2P::VLDB_POP_576_fifo_1d_pop:
   case AIE2P::VLDB_POP_640_fifo_1d_pop:
   case AIE2P::VLDB_POP_704_fifo_1d_pop:
+  case AIE2P::VLD_POP_512_fifo_1d_pop_pseudo:
+  case AIE2P::VLD_POP_544_fifo_1d_pop_pseudo:
+  case AIE2P::VLD_POP_576_fifo_1d_pop_pseudo:
+  case AIE2P::VLD_POP_640_fifo_1d_pop_pseudo:
+  case AIE2P::VLD_POP_704_fifo_1d_pop_pseudo:
     return {TiedRegOperands{
         /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_ptr},
                     {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_fifo},
@@ -1529,6 +1531,11 @@ AIE2PInstrInfo::getTiedRegInfo(unsigned Opcode) const {
   case AIE2P::VLDB_POP_576_2D:
   case AIE2P::VLDB_POP_640_2D:
   case AIE2P::VLDB_POP_704_2D:
+  case AIE2P::VLD_POP_512_2D_pseudo:
+  case AIE2P::VLD_POP_544_2D_pseudo:
+  case AIE2P::VLD_POP_576_2D_pseudo:
+  case AIE2P::VLD_POP_640_2D_pseudo:
+  case AIE2P::VLD_POP_704_2D_pseudo:
     return {TiedRegOperands{
                 /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_ptr},
                             {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_fifo},
@@ -1553,6 +1560,11 @@ AIE2PInstrInfo::getTiedRegInfo(unsigned Opcode) const {
   case AIE2P::VLDB_POP_576_3D:
   case AIE2P::VLDB_POP_640_3D:
   case AIE2P::VLDB_POP_704_3D:
+  case AIE2P::VLD_POP_512_3D_pseudo:
+  case AIE2P::VLD_POP_544_3D_pseudo:
+  case AIE2P::VLD_POP_576_3D_pseudo:
+  case AIE2P::VLD_POP_640_3D_pseudo:
+  case AIE2P::VLD_POP_704_3D_pseudo:
     return {
         TiedRegOperands{
             /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_ptr},
