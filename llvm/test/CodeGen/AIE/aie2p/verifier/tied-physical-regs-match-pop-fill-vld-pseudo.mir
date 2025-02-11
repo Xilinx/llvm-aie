@@ -1,0 +1,118 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -mtriple=aie2p -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+# This test ensures that the Machine Verifier detects tied physical registers
+# that don't match.
+
+---
+name:      tied_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+
+    $p0, $lf0, $r24 = VLD_FILL_512_pseudo $p0, $lf0, $r24
+    $x1, $p0, $lf0, $r24 = VLD_POP_512_fifo_1d_pop_pseudo $p0, $lf0, $r24, $m7, implicit-def $srfifo_uf
+    $x5, $p0, $lf0, $r24 = VLD_POP_512_normal_pop_pseudo $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $ex7, $p1, $lf1, $r25 = VLD_POP_544_fifo_1d_pop_pseudo  $p1, $lf1, $r25, $m1, implicit-def $srfifo_uf
+    $ex1, $p0, $lf0, $r24 = VLD_POP_544_normal_pop_pseudo $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $ex1, $p1, $lf1, $r25 = VLD_POP_576_fifo_1d_pop_pseudo  $p1, $lf1, $r25, $m7, implicit-def $srfifo_uf
+    $ex4, $p1, $lf1, $r25 = VLD_POP_576_normal_pop_pseudo  $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $qx2, $p0, $lf0, $r24 = VLD_POP_640_fifo_1d_pop_pseudo $p0, $lf0, $r24, $m5, implicit-def $srfifo_uf
+    $qx3, $p1, $lf1, $r25 = VLD_POP_640_normal_pop_pseudo  $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $qex3, $p1, $lf1, $r25 = VLD_POP_704_fifo_1d_pop_pseudo  $p1, $lf1, $r25, $m6, implicit-def $srfifo_uf
+    $qex0, $p1, $lf1, $r25 = VLD_POP_704_normal_pop_pseudo  $p1, $lf1, $r25, implicit-def $srfifo_uf
+
+    ; Below instructions have hasExtraSrcRegAllocReq and hasExtraDefRegAllocReq attributes
+    ; which essentially bypass the register flags. The renamable attributes
+    ; below should trigger no verification error.
+    ; CHECK-NOT: Bad machine code
+    renamable $p0, renamable $lf0, renamable $r24 = VLD_FILL_512_pseudo renamable $p0, renamable $lf0, renamable $r24
+    renamable $x1, renamable $p0, renamable $lf0, renamable $r24 = VLD_POP_512_fifo_1d_pop_pseudo renamable $p0, renamable $lf0, renamable $r24, renamable $m7, implicit-def renamable $srfifo_uf
+    renamable $x5, renamable $p0, renamable $lf0, renamable $r24 = VLD_POP_512_normal_pop_pseudo renamable $p0, renamable $lf0, renamable $r24, implicit-def renamable $srfifo_uf
+    renamable $ex7, renamable $p1, renamable $lf1, renamable $r25 = VLD_POP_544_fifo_1d_pop_pseudo renamable $p1, renamable $lf1, renamable $r25, renamable $m1, implicit-def renamable $srfifo_uf
+    renamable $ex1, renamable $p0, renamable $lf0, renamable $r24 = VLD_POP_544_normal_pop_pseudo renamable $p0, renamable $lf0, renamable $r24, implicit-def renamable $srfifo_uf
+    renamable $ex1, renamable $p1, renamable $lf1, renamable $r25 = VLD_POP_576_fifo_1d_pop_pseudo renamable $p1, renamable $lf1, renamable $r25, renamable $m7, implicit-def renamable $srfifo_uf
+    renamable $ex4, renamable $p1, renamable $lf1, renamable $r25 = VLD_POP_576_normal_pop_pseudo renamable $p1, renamable $lf1, renamable $r25, implicit-def renamable $srfifo_uf
+    renamable $qx2, renamable $p0, renamable $lf0, renamable $r24 = VLD_POP_640_fifo_1d_pop_pseudo renamable $p0, renamable $lf0, renamable $r24, renamable $m5, implicit-def renamable $srfifo_uf
+    renamable $qx3, renamable $p1, renamable $lf1, renamable $r25 = VLD_POP_640_normal_pop_pseudo renamable $p1, renamable $lf1, renamable $r25, implicit-def renamable $srfifo_uf
+    renamable $qex3, renamable $p1, renamable $lf1, renamable $r25 = VLD_POP_704_fifo_1d_pop_pseudo renamable $p1, renamable $lf1, renamable $r25, renamable $m6, implicit-def renamable $srfifo_uf
+    renamable $qex0, renamable $p1, renamable $lf1, renamable $r25 = VLD_POP_704_normal_pop_pseudo renamable $p1, renamable $lf1, renamable $r25, implicit-def renamable $srfifo_uf
+
+...
+
+---
+name:      virtual_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    %0:ep = COPY $p0
+    %10:eds = COPY $d0_3d
+    %280:eps, %281:eldfiforeg, %282:erf2 = VLD_FILL_512_pseudo $p0, $lf0, $r24
+    %320:mxb, %321:eps, %322:eldfiforeg, %323:erf2 = VLD_POP_512_fifo_1d_pop_pseudo $p0, $lf0, $r24, $m7, implicit-def $srfifo_uf
+    %330:mxb, %331:eps, %332:eldfiforeg, %333:erf2 = VLD_POP_512_normal_pop_pseudo $p0, $lf0, $r24, implicit-def $srfifo_uf
+    %360:mexb, %361:eps, %362:eldfiforeg, %363:erf2 = VLD_POP_544_fifo_1d_pop_pseudo $p1, $lf1, $r25, $m1, implicit-def $srfifo_uf
+    %370:mexb, %371:eps, %372:eldfiforeg, %373:erf2 = VLD_POP_544_normal_pop_pseudo $p0, $lf0, $r24, implicit-def $srfifo_uf
+    %400:mexb, %401:eps, %402:eldfiforeg, %403:erf2 = VLD_POP_576_fifo_1d_pop_pseudo $p1, $lf1, $r25, $m7, implicit-def $srfifo_uf
+    %410:mexb, %411:eps, %412:eldfiforeg, %413:erf2 = VLD_POP_576_normal_pop_pseudo $p1, $lf1, $r25, implicit-def $srfifo_uf
+    %440:mqxsb, %441:eps, %442:eldfiforeg, %443:erf2 = VLD_POP_640_fifo_1d_pop_pseudo $p0, $lf0, $r24, $m5, implicit-def $srfifo_uf
+    %450:mqxsb, %451:eps, %452:eldfiforeg, %453:erf2 = VLD_POP_640_normal_pop_pseudo $p1, $lf1, $r25, implicit-def $srfifo_uf
+    %480:mqexsb, %481:eps, %482:eldfiforeg, %483:erf2 = VLD_POP_704_fifo_1d_pop_pseudo $p1, $lf1, $r25, $m6, implicit-def $srfifo_uf
+    %490:mqexsb, %491:eps, %492:eldfiforeg, %493:erf2 = VLD_POP_704_normal_pop_pseudo $p1, $lf1, $r25, implicit-def $srfifo_uf
+
+...
+
+---
+name:      tied_nok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    ; CHECK-COUNT-34: Bad machine code:
+
+    $p1, $lf1, $r25 = VLD_FILL_512_pseudo $p0, $lf0, $r24
+    $p0, $lf1, $r25 = VLD_FILL_512_pseudo $p1, $lf1, $r25
+    $p0, $lf0, $r24 = VLD_FILL_512_pseudo $p1, $lf1, $r25
+    $x6, $p1, $lf0, $r25 = VLD_POP_512_fifo_1d_pop_pseudo $p0, $lf0, $r24, $m7, implicit-def $srfifo_uf
+    $x6, $p1, $lf1, $r24 = VLD_POP_512_fifo_1d_pop_pseudo $p0, $lf0, $r24, $m7, implicit-def $srfifo_uf
+    $x6, $p0, $lf1, $r25 = VLD_POP_512_fifo_1d_pop_pseudo $p0, $lf0, $r24, $m7, implicit-def $srfifo_uf
+    $x8, $p0, $lf0, $r25 = VLD_POP_512_normal_pop_pseudo $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $x8, $p0, $lf0, $r24 = VLD_POP_512_normal_pop_pseudo $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $x8, $p1, $lf0, $r24 = VLD_POP_512_normal_pop_pseudo $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $ex7, $p1, $lf0, $r25 = VLD_POP_544_fifo_1d_pop_pseudo $p1, $lf1, $r25, $m1, implicit-def $srfifo_uf
+    $ex7, $p1, $lf0, $r24 = VLD_POP_544_fifo_1d_pop_pseudo $p1, $lf1, $r25, $m1, implicit-def $srfifo_uf
+    $ex7, $p0, $lf0, $r25 = VLD_POP_544_fifo_1d_pop_pseudo $p1, $lf1, $r25, $m1, implicit-def $srfifo_uf
+    $ex1, $p1, $lf0, $r25 = VLD_POP_544_normal_pop_pseudo $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $ex1, $p1, $lf0, $r24 = VLD_POP_544_normal_pop_pseudo $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $ex1, $p0, $lf1, $r25 = VLD_POP_544_normal_pop_pseudo $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $ex1, $p0, $lf1, $r25 = VLD_POP_576_fifo_1d_pop_pseudo $p1, $lf1, $r25, $m7, implicit-def $srfifo_uf
+    $ex1, $p1, $lf1, $r25 = VLD_POP_576_fifo_1d_pop_pseudo $p0, $lf0, $r24, $m7, implicit-def $srfifo_uf
+    $ex1, $p0, $lf1, $r25 = VLD_POP_576_fifo_1d_pop_pseudo $p1, $lf1, $r25, $m7, implicit-def $srfifo_uf
+    $ex4, $p1, $lf1, $r25 = VLD_POP_576_normal_pop_pseudo $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $ex4, $p0, $lf1, $r25 = VLD_POP_576_normal_pop_pseudo $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $ex4, $p0, $lf0, $r25 = VLD_POP_576_normal_pop_pseudo $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $qx2, $p1, $lf0, $r25 = VLD_POP_640_fifo_1d_pop_pseudo $p0, $lf0, $r24, $m5, implicit-def $srfifo_uf
+    $qx2, $p0, $lf0, $r25 = VLD_POP_640_fifo_1d_pop_pseudo $p0, $lf0, $r24, $m5, implicit-def $srfifo_uf
+    $qx2, $p0, $lf1, $r25 = VLD_POP_640_fifo_1d_pop_pseudo $p0, $lf0, $r24, $m5, implicit-def $srfifo_uf
+    $qx3, $p0, $lf0, $r24 = VLD_POP_640_normal_pop_pseudo $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $qx3, $p1, $lf0, $r24 = VLD_POP_640_normal_pop_pseudo $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $qx3, $p1, $lf1, $r24 = VLD_POP_640_normal_pop_pseudo $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $qex3, $p1, $lf1, $r24 = VLD_POP_704_fifo_1d_pop_pseudo $p1, $lf1, $r25, $m6, implicit-def $srfifo_uf
+    $qex3, $p0, $lf1, $r24 = VLD_POP_704_fifo_1d_pop_pseudo $p1, $lf1, $r25, $m6, implicit-def $srfifo_uf
+    $qex3, $p0, $lf0, $r24 = VLD_POP_704_fifo_1d_pop_pseudo $p1, $lf1, $r25, $m6, implicit-def $srfifo_uf
+    $qex0, $p0, $lf1, $r24 = VLD_POP_704_normal_pop_pseudo $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $qex0, $p0, $lf0, $r25 = VLD_POP_704_normal_pop_pseudo $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $qex0, $p1, $lf0, $r24 = VLD_POP_704_normal_pop_pseudo $p1, $lf1, $r25, implicit-def $srfifo_uf
+    ; Inexistent superreg.
+    $p0, $lf1, $r25 = VLD_FILL_512_pseudo $p0, $lf1, $r25
+    $p0, $lf0, $r25 = VLD_FILL_512_pseudo $p0, $lf0, $r25
+    $p1, $lf0, $r25 = VLD_FILL_512_pseudo $p1, $lf0, $r25
+...
+
