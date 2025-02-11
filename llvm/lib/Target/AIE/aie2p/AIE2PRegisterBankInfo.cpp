@@ -385,6 +385,14 @@ AIE2PRegisterBankInfo::getInstrAlternativeMappings(
     AltMappings.push_back(&AccRegMapping);
     return AltMappings;
   }
+  case TargetOpcode::G_TRUNC: {
+    Register SrcReg = MI.getOperand(1).getReg();
+    LLT SrcTy = MRI.getType(SrcReg);
+    if (SrcTy.isVector())
+      // TODO : find registerbank using use-def analysis as we do other places.
+      return RegisterBankInfo::getInstrAlternativeMappings(MI);
+    break;
+  }
   default:
     break;
   }
