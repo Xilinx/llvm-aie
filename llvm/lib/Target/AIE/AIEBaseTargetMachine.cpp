@@ -78,6 +78,11 @@ cl::opt<bool>
                    cl::desc("Enable multi-stage register allocation"));
 
 cl::opt<bool>
+    EnableWAWRegRewrite("aie-wawreg-rewrite",
+                        cl::desc("Enable the WAW Register Renaming in loops"),
+                        cl::init(true), cl::Hidden);
+
+cl::opt<bool>
     EnableSuperRegSplitting("aie-split-superregs", cl::Hidden, cl::init(true),
                             cl::desc("Enable splitting super-regs into their "
                                      "smaller components to facilitate RA"));
