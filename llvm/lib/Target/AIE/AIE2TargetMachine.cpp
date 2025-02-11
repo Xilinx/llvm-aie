@@ -28,10 +28,6 @@ cl::opt<bool>
                          cl::desc("Enable RenameIndependentSubregs pass"));
 
 static cl::opt<bool>
-    EnableWAWRegRewrite("aie-wawreg-rewrite",
-                        cl::desc("Enable the WAW Register Renaming in loops"),
-                        cl::init(true), cl::Hidden);
-static cl::opt<bool>
     EnableReservedRegsLICM("aie-reserved-regs-licm", cl::Hidden, cl::init(true),
                            cl::desc("Enable LICM for some reserved registers"));
 
@@ -45,6 +41,7 @@ extern cl::opt<bool> EnableStagedRA;
 extern cl::opt<bool> EnableSuperRegSplitting;
 extern cl::opt<bool> AllocateMRegsFirst;
 extern cl::opt<bool> EnablePreMISchedCoalescer;
+extern cl::opt<bool> EnableWAWRegRewrite;
 
 extern bool AIEDumpArtifacts;
 

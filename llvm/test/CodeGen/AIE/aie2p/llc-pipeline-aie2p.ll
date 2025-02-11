@@ -235,6 +235,8 @@
 ; AIE-O1-NEXT:      Greedy Register Allocator
 ; AIE-O1-NEXT:      AIE super-reg rewrite
 ; AIE-O1-NEXT:      Greedy Register Allocator
+; AIE-O1-NEXT:      AIE waw-reg rewrite
+; AIE-O1-NEXT:      Greedy Register Allocator
 ; AIE-O1-NEXT:      Virtual Register Rewriter
 ; AIE-O1-NEXT:      Stack Slot Coloring
 ; AIE-O1-NEXT:      AIE 1D operands to 2D/3D rewriter
@@ -440,6 +442,8 @@
 ; AIE-O23-NEXT:      AIE super-reg rewrite
 ; AIE-O23-NEXT:      Greedy Register Allocator
 ; AIE-O23-NEXT:      AIE super-reg rewrite
+; AIE-O23-NEXT:      Greedy Register Allocator
+; AIE-O23-NEXT:      AIE waw-reg rewrite
 ; AIE-O23-NEXT:      Greedy Register Allocator
 ; AIE-O23-NEXT:      Virtual Register Rewriter
 ; AIE-O23-NEXT:      Stack Slot Coloring

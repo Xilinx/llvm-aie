@@ -22,6 +22,7 @@ extern cl::opt<bool> EnableSuperRegSplitting;
 extern cl::opt<bool> AllocateMRegsFirst;
 extern cl::opt<bool> EnablePreMISchedCoalescer;
 extern cl::opt<bool> EnableAddressChaining;
+extern cl::opt<bool> EnableWAWRegRewrite;
 
 void AIE2PTargetMachine::anchor() {}
 
@@ -102,6 +103,10 @@ bool AIE2PPassConfig::addRegAssignAndRewriteOptimized() {
     addPass(createAIESuperRegRewriter());
   }
   addPass(createGreedyRegisterAllocator());
+  if (EnableWAWRegRewrite) {
+    addPass(createAIEWawRegRewriter());
+    addPass(createGreedyRegisterAllocator());
+  }
   addPass(createVirtRegRewriter());
 
   return true;
