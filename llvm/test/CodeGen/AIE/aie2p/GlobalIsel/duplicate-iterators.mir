@@ -4,12 +4,12 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 
-# RUN: llc -mtriple aie2p -run-pass=aie-post-select-optimize %s -o - | FileCheck %s
-# RUN: llc -mtriple aie2p -start-before=aie-post-select-optimize -stop-after=register-coalescer \
+# RUN: llc -mtriple aie2p -run-pass=aie-post-select-optimize -verify-machineinstrs %s -o - | FileCheck %s
+# RUN: llc -mtriple aie2p -start-before=aie-post-select-optimize -stop-after=register-coalescer -verify-machineinstrs \
 # RUN:      %s -o - | FileCheck %s -check-prefix=POST-COALESCER
-# RUN: llc -mtriple aie2p -start-after=aie-post-select-optimize -stop-after=register-coalescer \
+# RUN: llc -mtriple aie2p -start-after=aie-post-select-optimize -stop-after=register-coalescer -verify-machineinstrs \
 # RUN:      %s -o - | FileCheck %s -check-prefix=COALESCER
 
 # POST-COALESCER represents the case where we apply the post-select optimization and we
@@ -33,15 +33,15 @@ body:             |
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p1
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo 10
-  ; CHECK-NEXT:   [[PseudoMove:%[0-9]+]]:em = PseudoMove [[MOV_PD_imm11_pseudo]]
-  ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edn = MOV_PD_imm11_pseudo 12
-  ; CHECK-NEXT:   [[PseudoMove1:%[0-9]+]]:edn = PseudoMove [[MOV_PD_imm11_pseudo1]]
-  ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo2:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 14
-  ; CHECK-NEXT:   [[PseudoMove2:%[0-9]+]]:edj = PseudoMove [[MOV_PD_imm11_pseudo2]]
+  ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]]:em_as_32bit = MOV_PD_imm11_pseudo 10
+  ; CHECK-NEXT:   [[PseudoMove:%[0-9]+]]:em_as_32bit = PseudoMove [[MOV_PD_imm11_pseudo]]
+  ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edn_as_32bit = MOV_PD_imm11_pseudo 12
+  ; CHECK-NEXT:   [[PseudoMove1:%[0-9]+]]:edn_as_32bit = PseudoMove [[MOV_PD_imm11_pseudo1]]
+  ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo2:%[0-9]+]]:edj_as_32bit = MOV_PD_imm11_pseudo 14
+  ; CHECK-NEXT:   [[PseudoMove2:%[0-9]+]]:edj_as_32bit = PseudoMove [[MOV_PD_imm11_pseudo2]]
   ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo3:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 0
   ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo4:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 0
-  ; CHECK-NEXT:   LoopStart [[COPY2]]
+  ; CHECK-NEXT:   LoopStart [[COPY2]], 0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
@@ -77,7 +77,7 @@ body:             |
   ; POST-COALESCER-NEXT:   [[PseudoMove:%[0-9]+]].sub_dim_stride:ed = PseudoMove [[MOV_PD_imm11_pseudo]].sub_dim_stride
   ; POST-COALESCER-NEXT:   [[PseudoMove:%[0-9]+]].sub_dim_count:ed = MOV_PD_imm11_pseudo 0
   ; POST-COALESCER-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]].sub_dim_count:ed = MOV_PD_imm11_pseudo 0
-  ; POST-COALESCER-NEXT:   LoopStart [[COPY2]]
+  ; POST-COALESCER-NEXT:   LoopStart [[COPY2]], 0
   ; POST-COALESCER-NEXT:   PseudoJ_jump_imm %bb.1
   ; POST-COALESCER-NEXT: {{  $}}
   ; POST-COALESCER-NEXT: bb.1:
@@ -104,7 +104,7 @@ body:             |
   ; COALESCER-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]].sub_dim_stride:ed = MOV_PD_imm11_pseudo 14
   ; COALESCER-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]].sub_dim_count:ed = MOV_PD_imm11_pseudo 0
   ; COALESCER-NEXT:   undef [[MOV_PD_imm11_pseudo1:%[0-9]+]].sub_dim_count:ed = MOV_PD_imm11_pseudo 0
-  ; COALESCER-NEXT:   LoopStart [[COPY2]]
+  ; COALESCER-NEXT:   LoopStart [[COPY2]], 0
   ; COALESCER-NEXT:   PseudoJ_jump_imm %bb.1
   ; COALESCER-NEXT: {{  $}}
   ; COALESCER-NEXT: bb.1:
@@ -167,21 +167,21 @@ body:             |
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p1
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo 10
-  ; CHECK-NEXT:   [[PseudoMove:%[0-9]+]]:em = PseudoMove [[MOV_PD_imm11_pseudo]]
-  ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edn = MOV_PD_imm11_pseudo 12
-  ; CHECK-NEXT:   [[PseudoMove1:%[0-9]+]]:edn = PseudoMove [[MOV_PD_imm11_pseudo1]]
-  ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo2:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 14
-  ; CHECK-NEXT:   [[PseudoMove2:%[0-9]+]]:edj = PseudoMove [[MOV_PD_imm11_pseudo2]]
+  ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]]:em_as_32bit = MOV_PD_imm11_pseudo 10
+  ; CHECK-NEXT:   [[PseudoMove:%[0-9]+]]:em_as_32bit = PseudoMove [[MOV_PD_imm11_pseudo]]
+  ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edn_as_32bit = MOV_PD_imm11_pseudo 12
+  ; CHECK-NEXT:   [[PseudoMove1:%[0-9]+]]:edn_as_32bit = PseudoMove [[MOV_PD_imm11_pseudo1]]
+  ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo2:%[0-9]+]]:edj_as_32bit = MOV_PD_imm11_pseudo 14
+  ; CHECK-NEXT:   [[PseudoMove2:%[0-9]+]]:edj_as_32bit = PseudoMove [[MOV_PD_imm11_pseudo2]]
   ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo3:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 0
   ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo4:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 0
   ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo5:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 0
   ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo6:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 0
-  ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo7:%[0-9]+]]:edn = MOV_PD_imm11_pseudo 16
-  ; CHECK-NEXT:   [[PseudoMove3:%[0-9]+]]:edn = PseudoMove [[MOV_PD_imm11_pseudo7]]
-  ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo8:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 18
-  ; CHECK-NEXT:   [[PseudoMove4:%[0-9]+]]:edj = PseudoMove [[MOV_PD_imm11_pseudo8]]
-  ; CHECK-NEXT:   LoopStart [[COPY2]]
+  ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo7:%[0-9]+]]:edn_as_32bit = MOV_PD_imm11_pseudo 16
+  ; CHECK-NEXT:   [[PseudoMove3:%[0-9]+]]:edn_as_32bit = PseudoMove [[MOV_PD_imm11_pseudo7]]
+  ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo8:%[0-9]+]]:edj_as_32bit = MOV_PD_imm11_pseudo 18
+  ; CHECK-NEXT:   [[PseudoMove4:%[0-9]+]]:edj_as_32bit = PseudoMove [[MOV_PD_imm11_pseudo8]]
+  ; CHECK-NEXT:   LoopStart [[COPY2]], 0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
@@ -225,7 +225,7 @@ body:             |
   ; POST-COALESCER-NEXT:   [[PseudoMove:%[0-9]+]].sub_hi_dim_then_sub_dim_size:eds = PseudoMove [[MOV_PD_imm11_pseudo]].sub_hi_dim_then_sub_dim_size
   ; POST-COALESCER-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]].sub_hi_dim_then_sub_dim_stride:eds = MOV_PD_imm11_pseudo 18
   ; POST-COALESCER-NEXT:   [[PseudoMove:%[0-9]+]].sub_hi_dim_then_sub_dim_stride:eds = PseudoMove [[MOV_PD_imm11_pseudo]].sub_hi_dim_then_sub_dim_stride
-  ; POST-COALESCER-NEXT:   LoopStart [[COPY2]]
+  ; POST-COALESCER-NEXT:   LoopStart [[COPY2]], 0
   ; POST-COALESCER-NEXT:   PseudoJ_jump_imm %bb.1
   ; POST-COALESCER-NEXT: {{  $}}
   ; POST-COALESCER-NEXT: bb.1:
@@ -260,7 +260,7 @@ body:             |
   ; COALESCER-NEXT:   undef [[MOV_PD_imm11_pseudo2:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = MOV_PD_imm11_pseudo 0
   ; COALESCER-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]].sub_hi_dim_then_sub_dim_size:eds = MOV_PD_imm11_pseudo 16
   ; COALESCER-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]].sub_hi_dim_then_sub_dim_stride:eds = MOV_PD_imm11_pseudo 18
-  ; COALESCER-NEXT:   LoopStart [[COPY2]]
+  ; COALESCER-NEXT:   LoopStart [[COPY2]], 0
   ; COALESCER-NEXT:   PseudoJ_jump_imm %bb.1
   ; COALESCER-NEXT: {{  $}}
   ; COALESCER-NEXT: bb.1:
