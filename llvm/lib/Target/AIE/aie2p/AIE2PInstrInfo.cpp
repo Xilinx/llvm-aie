@@ -1167,7 +1167,7 @@ bool AIE2PInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
     Register Dst = MI.getOperand(0).getReg();
     Register Src = MI.getOperand(1).getReg();
     BuildMI(MBB, MI, DL, get(AIE2P::MOV_alu_mv_mv_mv_scl), Dst)
-        .addReg(Src, getKillRegState(true));
+        .addReg(Src, getKillRegState(MI.getOperand(1).isKill()));
     MI.eraseFromParent();
     return true;
   }
