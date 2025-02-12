@@ -33,6 +33,7 @@
 #include "AIE2.h"
 #include "AIE2InstrInfo.h"
 #include "AIE2RegisterInfo.h"
+#include "AIEBaseRegisterBankInfo.h"
 #include "AIEBaseRegisterInfo.h"
 #include "AIECombinerHelper.h"
 #include "Utils/AIELoopUtils.h"
@@ -364,7 +365,8 @@ static void collectIteratorComponentsUsage(
 static bool tryToDuplicateLoadUse(
     DenseMap<Register, SmallPtrSet<MachineInstr *, 8>> &LoadUses,
     SmallSet<Register, 8> &NonLoadUses, MachineRegisterInfo &MRI,
-    const AIEBaseInstrInfo *TII) {
+    const AIEBaseInstrInfo *TII, const AIEBaseRegisterInfo *TRI,
+    const AIEBaseRegisterBankInfo *RBI) {
 
   bool Changed = false;
   for (auto &RegMILoad : LoadUses) {
@@ -381,9 +383,15 @@ static bool tryToDuplicateLoadUse(
     // Here we cannot use COPY, because Machine CSE will run
     // PerformTrivialCopyPropagation and our work will disappear.
     // smoothly.
-    BuildMI(*DefReg->getParent(), ++InsertPoint, DefReg->getDebugLoc(),
-            TII->get(TII->getPseudoMoveOpcode()), DstReg)
-        .addReg(Reg);
+    MachineInstr *MI =
+        BuildMI(*DefReg->getParent(), ++InsertPoint, DefReg->getDebugLoc(),
+                TII->get(TII->getPseudoMoveOpcode()), DstReg)
+            .addReg(Reg);
+
+    // AIE's PseudoMove instruction takes compound register classes which
+    // contains registers of different sizes. We need to use the right classes
+    // to avoid the MachineVerifier complaining about mismatching sizes.
+    constrainSelectedInstRegOperands(*MI, *TII, *TRI, *RBI);
 
     for (MachineInstr *UseMI : RegMILoad.second) {
       for (auto &Operand : UseMI->operands()) {
@@ -407,6 +415,8 @@ bool duplicateAdressingRegs(MachineBasicBlock &MBB, MachineRegisterInfo &MRI) {
       static_cast<const AIEBaseInstrInfo *>(ST.getInstrInfo());
   const AIEBaseRegisterInfo *TRI =
       static_cast<const AIEBaseRegisterInfo *>(ST.getRegisterInfo());
+  const AIEBaseRegisterBankInfo *RBI =
+      static_cast<const AIEBaseRegisterBankInfo *>(ST.getRegBankInfo());
 
   assert(TII->getPseudoMoveOpcode() &&
          "Target must have a PseudoMove instruction");
@@ -437,7 +447,7 @@ bool duplicateAdressingRegs(MachineBasicBlock &MBB, MachineRegisterInfo &MRI) {
   // The second part, filter the real useful cases,
   // registers used in both load and stores (or non load uses).
   // Then duplicate those registers.
-  return tryToDuplicateLoadUse(LoadUses, NonLoadUses, MRI, TII);
+  return tryToDuplicateLoadUse(LoadUses, NonLoadUses, MRI, TII, TRI, RBI);
 }
 
 using Operation = AIEBaseInstrInfo::AbstractOp::OperationType;
