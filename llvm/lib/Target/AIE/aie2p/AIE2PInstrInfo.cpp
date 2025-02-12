@@ -1264,12 +1264,15 @@ AIE2PInstrInfo::getTiedRegInfo(unsigned Opcode) const {
   case AIE2P::VLDA_2D_dmx_lda_fifohl:
   case AIE2P::VLDA_2D_dmx_lda_x:
   case AIE2P::VLDB_2D_128:
+  case AIE2P::VLD_2D_128_pseudo:
   case AIE2P::VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0:
   case AIE2P::VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1:
   case AIE2P::VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign0:
   case AIE2P::VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign1:
   case AIE2P::VLDB_2D_dmw_ldb:
   case AIE2P::VLDB_2D_dmx_ldb_x:
+  case AIE2P::VLD_2D_w_pseudo:
+  case AIE2P::VLD_2D_x_pseudo:
   case AIE2P::LDA_TM_2D:
     // Constraints = "$count_out=$mod.sub_dim_count"
     return {TiedRegOperands{
@@ -1290,6 +1293,7 @@ AIE2PInstrInfo::getTiedRegInfo(unsigned Opcode) const {
   case AIE2P::LDA_3D_u8:
   case AIE2P::VLDA_3D_dmw_lda_w:
   case AIE2P::VLDA_3D_128:
+  case AIE2P::VLD_3D_128_pseudo:
   case AIE2P::VLDA_3D_CONV_fp32_bf16_dmw_lda_ups_bf:
   case AIE2P::VLDA_3D_CONV_fp32_bf16_dmx_lda_ups_bf:
   case AIE2P::VLDB_3D_128:
@@ -1302,6 +1306,8 @@ AIE2PInstrInfo::getTiedRegInfo(unsigned Opcode) const {
   case AIE2P::VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1:
   case AIE2P::VLDB_3D_dmw_ldb:
   case AIE2P::VLDB_3D_dmx_ldb_x:
+  case AIE2P::VLD_3D_w_pseudo:
+  case AIE2P::VLD_3D_x_pseudo:
   case AIE2P::LDA_TM_3D:
     // Constraints = "$count_lo_out=$mod.sub_dim_count,
     //                $count_hi_out=$mod.sub_hi_dim_then_sub_dim_count"
@@ -1438,6 +1444,7 @@ AIE2PInstrInfo::getTiedRegInfo(unsigned Opcode) const {
   case AIE2P::PADDA_2D:
   case AIE2P::PADDB_2D:
   case AIE2P::PADDS_2D:
+  case AIE2P::PADD_2D_pseudo:
     // Constraints = "$count_out=$mod.sub_dim_count"
     return {TiedRegOperands{
         /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_dim_count}},
@@ -1447,6 +1454,7 @@ AIE2PInstrInfo::getTiedRegInfo(unsigned Opcode) const {
   case AIE2P::PADDA_3D:
   case AIE2P::PADDB_3D:
   case AIE2P::PADDS_3D:
+  case AIE2P::PADD_3D_pseudo:
     // Constraints = "$count_lo_out=$mod.sub_dim_count,
     //                $count_hi_out=$mod.sub_hi_dim_then_sub_dim_count"
     return {TiedRegOperands{
