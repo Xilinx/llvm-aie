@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
 ---
 name:            accfloat_to_bfp16ebs16
@@ -17,18 +17,15 @@ body:             |
     ; CHECK-LABEL: name: accfloat_to_bfp16ebs16
     ; CHECK: liveins: $dm0, $x1, $e1
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x1
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edm = COPY [[COPY]]
-    ; CHECK-NEXT: [[VCONV_bfp16ebs16_fp32_:%[0-9]+]]:mexa = VCONV_bfp16ebs16_fp32 [[COPY1]], implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec512 = COPY [[VCONV_bfp16ebs16_fp32_]].sub_bfp16_x
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:expvec64 = COPY [[VCONV_bfp16ebs16_fp32_]].sub_bfp16_e
-    ; CHECK-NEXT: $x0 = COPY [[COPY2]]
-    ; CHECK-NEXT: $e0 = COPY [[COPY3]]
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:acc2048 = COPY $dm0
+    ; CHECK-NEXT: [[VCONV_bfp16ebs16_fp32_:%[0-9]+]]:mexa = VCONV_bfp16ebs16_fp32 [[COPY]], implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY [[VCONV_bfp16ebs16_fp32_]].sub_bfp16_x
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:expvec64 = COPY [[VCONV_bfp16ebs16_fp32_]].sub_bfp16_e
+    ; CHECK-NEXT: $x0 = COPY [[COPY1]]
+    ; CHECK-NEXT: $e0 = COPY [[COPY2]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0, implicit $e0
     %1:accregbank(<64 x s32>) = COPY $dm0
-    %2:vregbank(<64 x s8>) = COPY $x1
-    %3:gprregbank(<8 x s8>) = COPY $e1
-    %0:vregbank(<64 x s8>), %4:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.v64accfloat.to.v64bfp16ebs16), %2(<64 x s8>), %3(<8 x s8>), %1(<64 x s32>)
+    %0:vregbank(<64 x s8>), %4:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.v64accfloat.to.v64bfp16ebs16), %1(<64 x s32>)
     $x0 = COPY %0(<64 x s8>)
     $e0 = COPY %4(<8 x s8>)
     PseudoRET implicit $lr, implicit $x0, implicit $e0
@@ -46,18 +43,15 @@ body:             |
     ; CHECK-LABEL: name: accfloat_to_bfp16ebs8
     ; CHECK: liveins: $dm0, $x1, $e1
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x1
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edm = COPY [[COPY]]
-    ; CHECK-NEXT: [[VCONV_bfp16ebs8_fp32_:%[0-9]+]]:mexa = VCONV_bfp16ebs8_fp32 [[COPY1]], implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec512 = COPY [[VCONV_bfp16ebs8_fp32_]].sub_bfp16_x
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:expvec64 = COPY [[VCONV_bfp16ebs8_fp32_]].sub_bfp16_e
-    ; CHECK-NEXT: $x0 = COPY [[COPY2]]
-    ; CHECK-NEXT: $e0 = COPY [[COPY3]]
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:acc2048 = COPY $dm0
+    ; CHECK-NEXT: [[VCONV_bfp16ebs8_fp32_:%[0-9]+]]:mexa = VCONV_bfp16ebs8_fp32 [[COPY]], implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY [[VCONV_bfp16ebs8_fp32_]].sub_bfp16_x
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:expvec64 = COPY [[VCONV_bfp16ebs8_fp32_]].sub_bfp16_e
+    ; CHECK-NEXT: $x0 = COPY [[COPY1]]
+    ; CHECK-NEXT: $e0 = COPY [[COPY2]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0, implicit $e0
     %1:accregbank(<64 x s32>) = COPY $dm0
-    %2:vregbank(<64 x s8>) = COPY $x1
-    %3:gprregbank(<8 x s8>) = COPY $e1
-    %0:vregbank(<64 x s8>), %4:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.v64accfloat.to.v64bfp16ebs8), %2(<64 x s8>), %3(<8 x s8>), %1(<64 x s32>)
+    %0:vregbank(<64 x s8>), %4:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.v64accfloat.to.v64bfp16ebs8), %1(<64 x s32>)
     $x0 = COPY %0(<64 x s8>)
     $e0 = COPY %4(<8 x s8>)
     PseudoRET implicit $lr, implicit $x0, implicit $e0
