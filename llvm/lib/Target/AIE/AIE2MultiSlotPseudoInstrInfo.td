@@ -73,7 +73,7 @@ let isMoveImm = 1, isReMaterializable = 1, isAsCheapAsAMove = 1, Itinerary = II_
 
 // Pseudo VLD
 let hasSideEffects = false, mayLoad = true, mayStore = false in {
-  let Itinerary = II_VLDA_W in {
+  let Itinerary = II_VLDB in {
   def VLD_idx_pseudo : MultiSlot_Pseudo< (outs mWa:$dst), 
                                          (ins eP:$ptr, eDJ:$dj),
       "vld_idx_pseudo", "$dst, [$ptr, $dj]", 
@@ -83,7 +83,7 @@ let hasSideEffects = false, mayLoad = true, mayStore = false in {
       "vld_idx_imm_imm3x32_pseudo", "$dst, [$ptr, $imm]", 
       [VLDB_dmw_ldb_ag_idx_imm, VLDA_dmw_lda_w_ag_idx_imm]>;
   }
-  let Itinerary = II_VLDA_POSTINC_W in
+  let Itinerary = II_VLDB_POSTINC in
   let Constraints = "$ptr_out = $ptr" in {
   def VLD_pstm_pseudo : MultiSlot_Pseudo< (outs mWa:$dst, eP:$ptr_out), 
                                           (ins eP:$ptr, eM:$mod),
@@ -94,14 +94,14 @@ let hasSideEffects = false, mayLoad = true, mayStore = false in {
       "vld_pstm_imm_4x32_pseudo", "$dst, [$ptr], $imm", 
       [VLDB_dmw_ldb_ag_pstm_nrm_imm, VLDA_dmw_lda_w_ag_pstm_nrm_imm]>;
   }
-  let Itinerary = II_VLDA_2D_W in
+  let Itinerary = II_VLDB_2D in
   let Constraints = "$ptr_out = $ptr" in {
   def VLD_2D_pseudo : MultiSlot_Pseudo< (outs mWa:$dst, eP:$ptr_out, eDC:$count_out), 
                                         (ins eP:$ptr, eD:$mod),
       "vld.2d_pseudo", "$dst, [$ptr], $mod", 
       [VLDB_2D, VLDA_2D_dmw_lda_w]>, AIE_HasTiedSubregister;
   }
-  let Itinerary = II_VLDA_3D_W in
+  let Itinerary = II_VLDB_3D in
   let Constraints = "$ptr_out = $ptr" in {
   def VLD_3D_pseudo : MultiSlot_Pseudo< (outs mWa:$dst, eP:$ptr_out, eDC:$count_lo_out, eDC:$count_hi_out), 
                                         (ins eP:$ptr, eDS:$mod),
