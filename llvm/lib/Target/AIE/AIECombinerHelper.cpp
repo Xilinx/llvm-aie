@@ -58,8 +58,6 @@ MachineInstr *findPreIncMatch(MachineInstr &MemI, MachineRegisterInfo &MRI,
                               const AIEBaseInstrInfo &TII) {
   // This is currently done with patterns in instruction selection.
   // No need to do it here.
-  MachineFunction &MF = *MemI.getMF();
-  const Triple &TT = MF.getTarget().getTargetTriple();
   const unsigned VecSize =
       MRI.getType(MemI.getOperand(0).getReg()).getSizeInBits();
   if (VecSize > TII.getMaxSupportedLdStIncSize()) {
@@ -326,8 +324,7 @@ MachineInstr *findPostIncMatch(MachineInstr &MemI, MachineRegisterInfo &MRI,
                                const AIEBaseInstrInfo &TII) {
   if (!EnablePostIncCombine)
     return nullptr;
-  MachineFunction &MF = *MemI.getMF();
-  const Triple &TT = MF.getTarget().getTargetTriple();
+
   const unsigned VecSize =
       MRI.getType(MemI.getOperand(0).getReg()).getSizeInBits();
   if (VecSize > TII.getMaxSupportedLdStIncSize()) {
