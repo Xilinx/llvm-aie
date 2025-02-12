@@ -1039,7 +1039,7 @@ bool AIE2InstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
     Register Src = MI.getOperand(1).getReg();
     const unsigned MOVSclOpcode = getScalarMovOpcode(Dst, Src);
     BuildMI(MBB, MI, DL, get(MOVSclOpcode), Dst)
-        .addReg(Src, getKillRegState(true));
+        .addReg(Src, getKillRegState(MI.getOperand(1).isKill()));
     MI.eraseFromParent();
     return true;
   }
