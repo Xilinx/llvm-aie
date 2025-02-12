@@ -27,16 +27,15 @@ define dso_local ptr @test_add_2d_ptr(ptr %a, i32 noundef %off, i32 noundef %siz
 ; CHECK-LABEL: test_add_2d_ptr:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r3, #6; nopx
-; CHECK-NEXT:    mov dn0, r1
+; CHECK-NEXT:    mova r3, #6; nopxm
 ; CHECK-NEXT:    lda dc0, [p2, #0]
-; CHECK-NEXT:    mov p0, p1
+; CHECK-NEXT:    mov dn0, r1
 ; CHECK-NEXT:    lshl r0, r0, r3
 ; CHECK-NEXT:    mov m0, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    lshl r0, r2, r3 // Delay Slot 5
 ; CHECK-NEXT:    mov dj0, r0 // Delay Slot 4
-; CHECK-NEXT:    padda.2d [p0], d0 // Delay Slot 3
+; CHECK-NEXT:    paddb.2d [p1], d0 // Delay Slot 3
 ; CHECK-NEXT:    st dc0, [p2, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -60,13 +59,13 @@ define dso_local ptr @test_add_2d_byte(ptr %a, i32 noundef %off, i32 noundef %si
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    lda dc0, [p2, #0]; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopx
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov m0, r0
-; CHECK-NEXT:    mov dj0, r2
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    mov dn0, r1 // Delay Slot 5
-; CHECK-NEXT:    mov p0, p1 // Delay Slot 4
-; CHECK-NEXT:    padda.2d [p0], d0 // Delay Slot 3
+; CHECK-NEXT:    mov dj0, r2 // Delay Slot 5
+; CHECK-NEXT:    mov dn0, r1 // Delay Slot 4
+; CHECK-NEXT:    paddb.2d [p1], d0 // Delay Slot 3
 ; CHECK-NEXT:    st dc0, [p2, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -87,10 +86,9 @@ define dso_local ptr @test_add_3d_ptr(ptr %a, i32 noundef %off, i32 noundef %siz
 ; CHECK-LABEL: test_add_3d_ptr:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r5, #6; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopx ; mov dn0, r1
+; CHECK-NEXT:    mova r5, #6; nopx
+; CHECK-NEXT:    mov dn0, r1
 ; CHECK-NEXT:    mov dn4, r3
-; CHECK-NEXT:    mov p0, p1
 ; CHECK-NEXT:    lda dc0, [p2, #0]
 ; CHECK-NEXT:    lda dc4, [p3, #0]
 ; CHECK-NEXT:    lshl r0, r0, r5
@@ -100,7 +98,7 @@ define dso_local ptr @test_add_3d_ptr(ptr %a, i32 noundef %off, i32 noundef %siz
 ; CHECK-NEXT:    lshl r0, r4, r5
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    mov dj4, r0 // Delay Slot 5
-; CHECK-NEXT:    padda.3d [p0], d0 // Delay Slot 4
+; CHECK-NEXT:    paddb.3d [p1], d0 // Delay Slot 4
 ; CHECK-NEXT:    st dc0, [p2, #0] // Delay Slot 3
 ; CHECK-NEXT:    st dc4, [p3, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
@@ -132,16 +130,15 @@ define dso_local ptr @test_add_3d_byte(ptr %a, i32 noundef %off, i32 noundef %si
 ; CHECK-LABEL: test_add_3d_byte:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; mov m0, r0; nopv
 ; CHECK-NEXT:    lda dc0, [p2, #0]; nopx
 ; CHECK-NEXT:    lda dc4, [p3, #0]
+; CHECK-NEXT:    mov m0, r0
 ; CHECK-NEXT:    mov dj0, r2
 ; CHECK-NEXT:    mov dj4, r4
 ; CHECK-NEXT:    mov dn0, r1
-; CHECK-NEXT:    mov dn4, r3
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    mov p0, p1 // Delay Slot 5
-; CHECK-NEXT:    padda.3d [p0], d0 // Delay Slot 4
+; CHECK-NEXT:    mov dn4, r3 // Delay Slot 5
+; CHECK-NEXT:    paddb.3d [p1], d0 // Delay Slot 4
 ; CHECK-NEXT:    st dc0, [p2, #0] // Delay Slot 3
 ; CHECK-NEXT:    st dc4, [p3, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
@@ -170,18 +167,16 @@ define dso_local ptr @test_add_2d_ptr_backTOback_call(ptr %a, i32 noundef %off, 
 ; CHECK-LABEL: test_add_2d_ptr_backTOback_call:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; mov p0, p1
-; CHECK-NEXT:    mova r3, #6
+; CHECK-NEXT:    mova r3, #6; nopb ; nopxm
 ; CHECK-NEXT:    mova dc0, #0
 ; CHECK-NEXT:    mov dn0, r1
 ; CHECK-NEXT:    lshl r0, r0, r3
-; CHECK-NEXT:    mov m0, r0
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    lshl r0, r2, r3 // Delay Slot 5
-; CHECK-NEXT:    mov dj0, r0 // Delay Slot 4
-; CHECK-NEXT:    padda.2d [p0], d0 // Delay Slot 3
-; CHECK-NEXT:    padda.2d [p0], d0 // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
+; CHECK-NEXT:    mov m0, r0 // Delay Slot 5
+; CHECK-NEXT:    lshl r0, r2, r3 // Delay Slot 4
+; CHECK-NEXT:    mov dj0, r0 // Delay Slot 3
+; CHECK-NEXT:    paddb.2d [p1], d0 // Delay Slot 2
+; CHECK-NEXT:    paddb.2d [p0], d0 // Delay Slot 1
 entry:
   %mul.i = shl i32 %off, 6
   %0 = trunc i32 %mul.i to i20
@@ -201,8 +196,7 @@ define dso_local ptr @test_add_3d_ptr_backTOback_call(ptr %a, i32 noundef %off, 
 ; CHECK-LABEL: test_add_3d_ptr_backTOback_call:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; mov p0, p1
-; CHECK-NEXT:    mova r5, #6
+; CHECK-NEXT:    mova r5, #6; nopb ; nopxm
 ; CHECK-NEXT:    mova dc0, #0
 ; CHECK-NEXT:    mov dn0, r1
 ; CHECK-NEXT:    mov dn4, r3
@@ -210,13 +204,12 @@ define dso_local ptr @test_add_3d_ptr_backTOback_call(ptr %a, i32 noundef %off, 
 ; CHECK-NEXT:    mov dc4, dc0
 ; CHECK-NEXT:    mov m0, r0
 ; CHECK-NEXT:    lshl r0, r2, r5
-; CHECK-NEXT:    mov dj0, r0
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    lshl r0, r4, r5 // Delay Slot 5
-; CHECK-NEXT:    mov dj4, r0 // Delay Slot 4
-; CHECK-NEXT:    padda.3d [p0], d0 // Delay Slot 3
-; CHECK-NEXT:    padda.3d [p0], d0 // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
+; CHECK-NEXT:    mov dj0, r0 // Delay Slot 5
+; CHECK-NEXT:    lshl r0, r4, r5 // Delay Slot 4
+; CHECK-NEXT:    mov dj4, r0 // Delay Slot 3
+; CHECK-NEXT:    paddb.3d [p1], d0 // Delay Slot 2
+; CHECK-NEXT:    paddb.3d [p0], d0 // Delay Slot 1
 entry:
   %mul.i = shl i32 %off, 6
   %0 = trunc i32 %mul.i to i20

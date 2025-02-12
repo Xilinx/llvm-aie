@@ -20,19 +20,19 @@ define <32 x i16> @zol(i32 %n, ptr %p) {
 ; CHECK-NEXT:    add.nc lc, r0, #-7
 ; CHECK-NEXT:    movxm ls, #.LBB0_1
 ; CHECK-NEXT:    movxm le, #.L_LEnd0
-; CHECK-NEXT:    vlda x2, [p0], #64; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    vlda x2, [p0], #64; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    vlda x2, [p0], #64; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    vlda x2, [p0], #64; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    vlda x2, [p0], #64; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    vlda x2, [p0], #64; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    vlda x2, [p0], #64; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopxm ; nopv
 ; CHECK-NEXT:    // implicit-def: $x0
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:  .L_LEnd0:
-; CHECK-NEXT:    vlda x2, [p0], #64; nopb ; nops ; nopx ; vadd.16 x0, x2, x0; nopv
+; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopx ; vadd.16 x0, x2, x0; nopv
 ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
 ; CHECK-NEXT:    nopa ; nopx ; vadd.16 x0, x2, x0
 ; CHECK-NEXT:    vadd.16 x0, x2, x0

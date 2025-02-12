@@ -1754,7 +1754,7 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
         return {/*ISelOpcode=*/AIE2P::VLDA_128_dmv_lda_w_spill, NoImmediate,
                 /*OffsetOpcode=*/{}};
       }
-      return {/*ISelOpcode=*/AIE2P::VLDA_128_dmv_lda_w_idx_imm,
+      return {/*ISelOpcode=*/AIE2P::VLD_128_idx_imm_pseudo,
               /*FitsImmediateRange=*/true,
               /*OffsetOpcode=*/{}};
     }
@@ -1765,7 +1765,7 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
         return {/*ISelOpcode=*/AIE2P::VLDA_dmw_lda_w_spill, NoImmediate,
                 /*OffsetOpcode=*/{}};
       }
-      return {/*ISelOpcode=*/AIE2P::VLDA_dmw_lda_w_idx_imm,
+      return {/*ISelOpcode=*/AIE2P::VLD_w_idx_imm_pseudo,
               /*FitsImmediateRange=*/true,
               /*OffsetOpcode=*/{}};
     } else if (LoadStoreSize == 512) {
@@ -1792,7 +1792,7 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
                 /*OffsetOpcode=*/{}};
       }
       if (RBID == AIE2P::VRegBankID) {
-        return {/*ISelOpcode=*/AIE2P::VLDA_dmx_lda_x_idx_imm,
+        return {/*ISelOpcode=*/AIE2P::VLD_x_idx_imm_pseudo,
                 /*FitsImmediateRange=*/true,
                 /*OffsetOpcode=*/{}};
       }
@@ -1817,9 +1817,9 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
                 /*OffsetOpcode=*/AIE2P::VLDA_dmx_lda_bm_idx_imm};
       }
       if (RBID == AIE2P::VRegBankID) {
-        return {/*ISelOpcode=*/AIE2P::VLDA_dmx_lda_x_idx_imm,
+        return {/*ISelOpcode=*/AIE2P::VLD_x_idx_imm_pseudo,
                 AlwaysFitsImmediateRange,
-                /*OffsetOpcode=*/AIE2P::VLDA_dmx_lda_x_idx_imm};
+                /*OffsetOpcode=*/AIE2P::VLD_x_idx_imm_pseudo};
       }
       llvm_unreachable("1024-bit vector type must be in AccRegBank or VRegBank "
                        "or FifoRegBank");
@@ -1838,19 +1838,19 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
       assert(RBID == AIE2P::VRegBankID &&
              "128-bit vectors should be in the Vector Register Bank");
       FitsImmediateRange = checkImmediateRange<4, 16>(Offset);
-      ISelOpcode = FitsImmediateRange ? AIE2P::VLDA_128_dmv_lda_w_idx_imm
-                                      : AIE2P::VLDA_128_dmv_lda_w_idx;
+      ISelOpcode = FitsImmediateRange ? AIE2P::VLD_128_idx_imm_pseudo
+                                      : AIE2P::VLD_128_idx_pseudo;
       return {ISelOpcode, FitsImmediateRange,
-              /*OffsetOpcode=*/AIE2P::VLDA_128_dmv_lda_w_idx_imm};
+              /*OffsetOpcode=*/AIE2P::VLD_128_idx_imm_pseudo};
     }
     if (LoadStoreSize == 256) {
       assert(RBID == AIE2P::VRegBankID &&
              "256-bit vectors should be in the Vector Register Bank");
       FitsImmediateRange = checkImmediateRange<4, 32>(Offset);
-      ISelOpcode = FitsImmediateRange ? AIE2P::VLDA_dmw_lda_w_idx_imm
-                                      : AIE2P::VLDA_dmw_lda_w_idx;
+      ISelOpcode = FitsImmediateRange ? AIE2P::VLD_w_idx_imm_pseudo
+                                      : AIE2P::VLD_w_idx_pseudo;
       return {ISelOpcode, FitsImmediateRange,
-              /*OffsetOpcode=*/AIE2P::VLDA_dmw_lda_w_idx_imm};
+              /*OffsetOpcode=*/AIE2P::VLD_w_idx_imm_pseudo};
     } else if (LoadStoreSize == 512) {
       FitsImmediateRange = checkImmediateRange<4, 64>(Offset);
       if (RBID == AIE2P::AccRegBankID) {
@@ -1860,10 +1860,10 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
                 /*OffsetOpcode=*/AIE2P::VLDA_dmx_lda_bm_idx_imm};
       }
       if (RBID == AIE2P::VRegBankID) {
-        ISelOpcode = FitsImmediateRange ? AIE2P::VLDA_dmx_lda_x_idx_imm
-                                        : AIE2P::VLDA_dmx_lda_x_idx;
+        ISelOpcode = FitsImmediateRange ? AIE2P::VLD_x_idx_imm_pseudo
+                                        : AIE2P::VLD_x_idx_pseudo;
         return {ISelOpcode, FitsImmediateRange,
-                /*OffsetOpcode=*/AIE2P::VLDA_dmx_lda_x_idx_imm};
+                /*OffsetOpcode=*/AIE2P::VLD_x_idx_imm_pseudo};
       }
       if (RBID == AIE2P::FifoRegBankID) {
         ISelOpcode = FitsImmediateRange ? AIE2P::VLDA_dmx_lda_fifohl_idx_imm
@@ -1884,9 +1884,8 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
                 /*OffsetOpcode=*/AIE2P::VLDA_dmx_lda_bm_idx_imm};
       }
       if (RBID == AIE2P::VRegBankID) {
-        return {/*ISelOpcode=*/AIE2P::VLDA_dmx_lda_x_idx_imm,
-                FitsImmediateRange,
-                /*OffsetOpcode=*/AIE2P::VLDA_dmx_lda_x_idx_imm};
+        return {/*ISelOpcode=*/AIE2P::VLD_x_idx_imm_pseudo, FitsImmediateRange,
+                /*OffsetOpcode=*/AIE2P::VLD_x_idx_imm_pseudo};
       }
       if (RBID == AIE2P::FifoRegBankID) {
         return {/*ISelOpcode=*/AIE2P::VLDA_dmx_lda_fifohl_idx_imm,
@@ -1939,19 +1938,19 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
       assert(RBID == AIE2P::VRegBankID &&
              "128-bit vectors should be in the Vector Register Bank");
       FitsImmediateRange = checkImmediateRange<4, 16>(Offset);
-      ISelOpcode = FitsImmediateRange ? AIE2P::VLDA_128_dmv_lda_w_pstm_nrm_imm
-                                      : AIE2P::VLDA_128_dmv_lda_w_pstm_nrm;
+      ISelOpcode = FitsImmediateRange ? AIE2P::VLD_128_pstm_nrm_imm_pseudo
+                                      : AIE2P::VLD_128_pstm_nrm_pseudo;
       return {ISelOpcode, FitsImmediateRange,
-              /*OffsetOpcode=*/AIE2P::VLDA_128_dmv_lda_w_pstm_nrm_imm};
+              /*OffsetOpcode=*/AIE2P::VLD_128_pstm_nrm_imm_pseudo};
     }
     if (LoadStoreSize == 256) {
       assert(RBID == AIE2P::VRegBankID &&
              "256-bit vectors should be in the Vector Register Bank");
       FitsImmediateRange = checkImmediateRange<4, 32>(Offset);
-      ISelOpcode = FitsImmediateRange ? AIE2P::VLDA_dmw_lda_w_pstm_nrm_imm
-                                      : AIE2P::VLDA_dmw_lda_w_pstm_nrm;
+      ISelOpcode = FitsImmediateRange ? AIE2P::VLD_w_pstm_nrm_imm_pseudo
+                                      : AIE2P::VLD_w_pstm_nrm_pseudo;
       return {ISelOpcode, FitsImmediateRange,
-              /*OffsetOpcode=*/AIE2P::VLDA_dmw_lda_w_idx_imm};
+              /*OffsetOpcode=*/AIE2P::VLD_w_idx_imm_pseudo};
     } else if (LoadStoreSize == 512 || LoadStoreSize == 1024 ||
                LoadStoreSize == 2048) {
       FitsImmediateRange = checkImmediateRange<4, 64>(Offset);
@@ -1962,10 +1961,10 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
                 /*OffsetOpcode=*/AIE2P::VLDA_dmx_lda_bm_idx_imm};
       }
       if (RBID == AIE2P::VRegBankID) {
-        ISelOpcode = FitsImmediateRange ? AIE2P::VLDA_dmx_lda_x_pstm_nrm_imm
-                                        : AIE2P::VLDA_dmx_lda_x_pstm_nrm;
+        ISelOpcode = FitsImmediateRange ? AIE2P::VLD_x_pstm_nrm_imm_pseudo
+                                        : AIE2P::VLD_x_pstm_nrm_pseudo;
         return {ISelOpcode, FitsImmediateRange,
-                /*OffsetOpcode=*/AIE2P::VLDA_dmx_lda_x_idx_imm};
+                /*OffsetOpcode=*/AIE2P::VLD_x_idx_imm_pseudo};
       }
       if (RBID == AIE2P::FifoRegBankID) {
         ISelOpcode = FitsImmediateRange
@@ -2019,13 +2018,13 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
     if (LoadStoreSize == 128) {
       assert(RBID == AIE2P::VRegBankID &&
              "128-bit vectors should be in the Vector Register Bank");
-      return {/*ISelOpcode=*/AIE2P::VLDA_2D_128, NoImmediate,
+      return {/*ISelOpcode=*/AIE2P::VLD_2D_128_pseudo, NoImmediate,
               /*OffsetOpcode=*/{}};
     }
     if (LoadStoreSize == 256) {
       assert(RBID == AIE2P::VRegBankID &&
              "256-bit vectors should be in the Vector Register Bank");
-      return {/*ISelOpcode=*/AIE2P::VLDA_2D_dmw_lda_w, NoImmediate,
+      return {/*ISelOpcode=*/AIE2P::VLD_2D_w_pseudo, NoImmediate,
               /*OffsetOpcode=*/{}};
     } else if (LoadStoreSize == 512 || LoadStoreSize == 1024 ||
                LoadStoreSize == 2048) {
@@ -2033,8 +2032,8 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
         return {/*ISelOpcode=*/AIE2P::VLDA_2D_dmx_lda_bm, NoImmediate,
                 /*OffsetOpcode=*/{AIE2P::VLDA_dmx_lda_bm_idx_imm}};
       if (RBID == AIE2P::VRegBankID)
-        return {/*ISelOpcode=*/AIE2P::VLDA_2D_dmx_lda_x, NoImmediate,
-                /*OffsetOpcode=*/{AIE2P::VLDA_dmw_lda_w_idx_imm}};
+        return {/*ISelOpcode=*/AIE2P::VLD_2D_x_pseudo, NoImmediate,
+                /*OffsetOpcode=*/{AIE2P::VLD_x_idx_imm_pseudo}};
       if (RBID == AIE2P::FifoRegBankID)
         return {/*ISelOpcode=*/AIE2P::VLDA_2D_dmx_lda_fifohl, NoImmediate,
                 /*OffsetOpcode=*/{AIE2P::VLDA_dmx_lda_fifohl_idx_imm}};
@@ -2071,13 +2070,13 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
     if (LoadStoreSize == 128) {
       assert(RBID == AIE2P::VRegBankID &&
              "128-bit vectors should be in the Vector Register Bank");
-      return {/*ISelOpcode=*/AIE2P::VLDA_3D_128, NoImmediate,
+      return {/*ISelOpcode=*/AIE2P::VLD_3D_128_pseudo, NoImmediate,
               /*OffsetOpcode=*/{}};
     }
     if (LoadStoreSize == 256) {
       assert(RBID == AIE2P::VRegBankID &&
              "256-bit vectors should be in the Vector Register Bank");
-      return {/*ISelOpcode=*/AIE2P::VLDA_3D_dmw_lda_w, NoImmediate,
+      return {/*ISelOpcode=*/AIE2P::VLD_3D_w_pseudo, NoImmediate,
               /*OffsetOpcode=*/{}};
     } else if (LoadStoreSize == 512 || LoadStoreSize == 1024 ||
                LoadStoreSize == 2048) {
@@ -2085,8 +2084,8 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
         return {/*ISelOpcode=*/AIE2P::VLDA_3D_dmx_lda_bm, NoImmediate,
                 /*OffsetOpcode=*/{AIE2P::VLDA_dmx_lda_bm_idx_imm}};
       if (RBID == AIE2P::VRegBankID)
-        return {/*ISelOpcode=*/AIE2P::VLDA_3D_dmx_lda_x, NoImmediate,
-                /*OffsetOpcode=*/{AIE2P::VLDA_dmw_lda_w_idx_imm}};
+        return {/*ISelOpcode=*/AIE2P::VLD_3D_x_pseudo, NoImmediate,
+                /*OffsetOpcode=*/{AIE2P::VLD_x_idx_imm_pseudo}};
       if (RBID == AIE2P::FifoRegBankID)
         return {/*ISelOpcode=*/AIE2P::VLDA_3D_dmx_lda_fifohl, NoImmediate,
                 /*OffsetOpcode=*/{AIE2P::VLDA_dmx_lda_fifohl_idx_imm}};

@@ -31,11 +31,11 @@ body:             |
     ; CHECK-NEXT: [[LDA_dms_lda_idx_imm:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY3]], 0 :: (load (s32))
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:edc = COPY [[LDA_dms_lda_idx_imm]]
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:ed = REG_SEQUENCE [[COPY5]], %subreg.sub_mod, [[COPY7]], %subreg.sub_dim_size, [[COPY6]], %subreg.sub_dim_stride, [[COPY8]], %subreg.sub_dim_count
-    ; CHECK-NEXT: [[PADDA_2D:%[0-9]+]]:ep, [[PADDA_2D1:%[0-9]+]]:edc = PADDA_2D [[COPY]], [[REG_SEQUENCE]]
-    ; CHECK-NEXT: [[COPY9:%[0-9]+]]:ep = COPY [[PADDA_2D1]]
+    ; CHECK-NEXT: [[PADD_2D_pseudo:%[0-9]+]]:ep, [[PADD_2D_pseudo1:%[0-9]+]]:edc = PADD_2D_pseudo [[COPY]], [[REG_SEQUENCE]]
+    ; CHECK-NEXT: [[COPY9:%[0-9]+]]:ep = COPY [[PADD_2D_pseudo1]]
     ; CHECK-NEXT: [[COPY10:%[0-9]+]]:er = COPY [[COPY9]]
     ; CHECK-NEXT: ST_dms_sts_idx_imm [[COPY10]], [[COPY3]], 0 :: (store (s32))
-    ; CHECK-NEXT: $p0 = COPY [[PADDA_2D]]
+    ; CHECK-NEXT: $p0 = COPY [[PADD_2D_pseudo]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $p0
     %1:ptrregbank(p0) = COPY $p1
     %2:gprregbank(s32) = COPY $r0
@@ -78,11 +78,11 @@ body:             |
     ; CHECK-NEXT: [[LDA_dms_lda_idx_imm:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY3]], 0 :: (load (s32))
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:edc = COPY [[LDA_dms_lda_idx_imm]]
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:ed = REG_SEQUENCE [[COPY5]], %subreg.sub_mod, [[COPY7]], %subreg.sub_dim_size, [[COPY6]], %subreg.sub_dim_stride, [[COPY8]], %subreg.sub_dim_count
-    ; CHECK-NEXT: [[PADDA_2D:%[0-9]+]]:ep, [[PADDA_2D1:%[0-9]+]]:edc = PADDA_2D [[COPY]], [[REG_SEQUENCE]]
-    ; CHECK-NEXT: [[COPY9:%[0-9]+]]:ep = COPY [[PADDA_2D1]]
+    ; CHECK-NEXT: [[PADD_2D_pseudo:%[0-9]+]]:ep, [[PADD_2D_pseudo1:%[0-9]+]]:edc = PADD_2D_pseudo [[COPY]], [[REG_SEQUENCE]]
+    ; CHECK-NEXT: [[COPY9:%[0-9]+]]:ep = COPY [[PADD_2D_pseudo1]]
     ; CHECK-NEXT: [[COPY10:%[0-9]+]]:er = COPY [[COPY9]]
     ; CHECK-NEXT: ST_dms_sts_idx_imm [[COPY10]], [[COPY3]], 0 :: (store (s32))
-    ; CHECK-NEXT: $p0 = COPY [[PADDA_2D]]
+    ; CHECK-NEXT: $p0 = COPY [[PADD_2D_pseudo]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $p0
     %1:ptrregbank(p0) = COPY $p1
     %2:gprregbank(s32) = COPY $r0
@@ -119,8 +119,8 @@ body:             |
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:edn = COPY [[MOV_PD_imm11_pseudo]]
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:edc = COPY [[MOV_PD_imm11_pseudo]]
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm11_pseudo]], %subreg.sub_mod, [[COPY2]], %subreg.sub_dim_size, [[COPY1]], %subreg.sub_dim_stride, [[COPY3]], %subreg.sub_dim_count
-    ; CHECK-NEXT: [[PADDA_2D:%[0-9]+]]:ep, [[PADDA_2D1:%[0-9]+]]:edc = PADDA_2D [[COPY]], [[REG_SEQUENCE]]
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[PADDA_2D]]
+    ; CHECK-NEXT: [[PADD_2D_pseudo:%[0-9]+]]:ep, [[PADD_2D_pseudo1:%[0-9]+]]:edc = PADD_2D_pseudo [[COPY]], [[REG_SEQUENCE]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[PADD_2D_pseudo]]
     %1:ptrregbank(p0) = COPY $p1
     %2:modregbank(s20) = G_CONSTANT i20 32
     %3:ptrregbank(p0), %4:modregbank(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.2d), %1:ptrregbank(p0), %2:modregbank(s20), %2:modregbank(s20), %2:modregbank(s20), %2:modregbank(s20)
@@ -156,14 +156,14 @@ body:             |
     ; CHECK-NEXT: [[LDA_dms_lda_idx_imm1:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY6]], 0 :: (load (s32))
     ; CHECK-NEXT: [[COPY14:%[0-9]+]]:edc = COPY [[LDA_dms_lda_idx_imm1]]
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:eds = REG_SEQUENCE [[COPY8]], %subreg.sub_mod, [[COPY11]], %subreg.sub_dim_size, [[COPY9]], %subreg.sub_dim_stride, [[COPY12]], %subreg.sub_dim_count, [[COPY13]], %subreg.sub_hi_dim_then_sub_dim_size, [[COPY10]], %subreg.sub_hi_dim_then_sub_dim_stride, [[COPY14]], %subreg.sub_hi_dim_then_sub_dim_count
-    ; CHECK-NEXT: [[PADDA_3D:%[0-9]+]]:ep, [[PADDA_3D1:%[0-9]+]]:edcl, [[PADDA_3D2:%[0-9]+]]:edch = PADDA_3D [[COPY]], [[REG_SEQUENCE]]
-    ; CHECK-NEXT: [[COPY15:%[0-9]+]]:ep = COPY [[PADDA_3D1]]
+    ; CHECK-NEXT: [[PADD_3D_pseudo:%[0-9]+]]:ep, [[PADD_3D_pseudo1:%[0-9]+]]:edcl, [[PADD_3D_pseudo2:%[0-9]+]]:edch = PADD_3D_pseudo [[COPY]], [[REG_SEQUENCE]]
+    ; CHECK-NEXT: [[COPY15:%[0-9]+]]:ep = COPY [[PADD_3D_pseudo1]]
     ; CHECK-NEXT: [[COPY16:%[0-9]+]]:er = COPY [[COPY15]]
-    ; CHECK-NEXT: [[COPY17:%[0-9]+]]:ep = COPY [[PADDA_3D2]]
+    ; CHECK-NEXT: [[COPY17:%[0-9]+]]:ep = COPY [[PADD_3D_pseudo2]]
     ; CHECK-NEXT: [[COPY18:%[0-9]+]]:er = COPY [[COPY17]]
     ; CHECK-NEXT: ST_dms_sts_idx_imm [[COPY16]], [[COPY3]], 0 :: (store (s32))
     ; CHECK-NEXT: ST_dms_sts_idx_imm [[COPY18]], [[COPY6]], 0 :: (store (s32))
-    ; CHECK-NEXT: $p0 = COPY [[PADDA_3D]]
+    ; CHECK-NEXT: $p0 = COPY [[PADD_3D_pseudo]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $p0
     %1:ptrregbank(p0) = COPY $p1
     %2:gprregbank(s32) = COPY $r0
@@ -222,14 +222,14 @@ body:             |
     ; CHECK-NEXT: [[LDA_dms_lda_idx_imm1:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY6]], 0 :: (load (s32))
     ; CHECK-NEXT: [[COPY14:%[0-9]+]]:edc = COPY [[LDA_dms_lda_idx_imm1]]
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:eds = REG_SEQUENCE [[COPY8]], %subreg.sub_mod, [[COPY11]], %subreg.sub_dim_size, [[COPY9]], %subreg.sub_dim_stride, [[COPY12]], %subreg.sub_dim_count, [[COPY13]], %subreg.sub_hi_dim_then_sub_dim_size, [[COPY10]], %subreg.sub_hi_dim_then_sub_dim_stride, [[COPY14]], %subreg.sub_hi_dim_then_sub_dim_count
-    ; CHECK-NEXT: [[PADDA_3D:%[0-9]+]]:ep, [[PADDA_3D1:%[0-9]+]]:edcl, [[PADDA_3D2:%[0-9]+]]:edch = PADDA_3D [[COPY]], [[REG_SEQUENCE]]
-    ; CHECK-NEXT: [[COPY15:%[0-9]+]]:ep = COPY [[PADDA_3D1]]
+    ; CHECK-NEXT: [[PADD_3D_pseudo:%[0-9]+]]:ep, [[PADD_3D_pseudo1:%[0-9]+]]:edcl, [[PADD_3D_pseudo2:%[0-9]+]]:edch = PADD_3D_pseudo [[COPY]], [[REG_SEQUENCE]]
+    ; CHECK-NEXT: [[COPY15:%[0-9]+]]:ep = COPY [[PADD_3D_pseudo1]]
     ; CHECK-NEXT: [[COPY16:%[0-9]+]]:er = COPY [[COPY15]]
-    ; CHECK-NEXT: [[COPY17:%[0-9]+]]:ep = COPY [[PADDA_3D2]]
+    ; CHECK-NEXT: [[COPY17:%[0-9]+]]:ep = COPY [[PADD_3D_pseudo2]]
     ; CHECK-NEXT: [[COPY18:%[0-9]+]]:er = COPY [[COPY17]]
     ; CHECK-NEXT: ST_dms_sts_idx_imm [[COPY16]], [[COPY3]], 0 :: (store (s32))
     ; CHECK-NEXT: ST_dms_sts_idx_imm [[COPY18]], [[COPY6]], 0 :: (store (s32))
-    ; CHECK-NEXT: $p0 = COPY [[PADDA_3D]]
+    ; CHECK-NEXT: $p0 = COPY [[PADD_3D_pseudo]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $p0
     %1:ptrregbank(p0) = COPY $p1
     %2:gprregbank(s32) = COPY $r0
@@ -279,8 +279,8 @@ body:             |
     ; CHECK-NEXT: [[COPY5:%[0-9]+]]:edn = COPY [[MOV_PD_imm11_pseudo]]
     ; CHECK-NEXT: [[COPY6:%[0-9]+]]:edc = COPY [[MOV_PD_imm11_pseudo]]
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:eds = REG_SEQUENCE [[MOV_PD_imm11_pseudo]], %subreg.sub_mod, [[COPY3]], %subreg.sub_dim_size, [[COPY1]], %subreg.sub_dim_stride, [[COPY4]], %subreg.sub_dim_count, [[COPY5]], %subreg.sub_hi_dim_then_sub_dim_size, [[COPY2]], %subreg.sub_hi_dim_then_sub_dim_stride, [[COPY6]], %subreg.sub_hi_dim_then_sub_dim_count
-    ; CHECK-NEXT: [[PADDA_3D:%[0-9]+]]:ep, [[PADDA_3D1:%[0-9]+]]:edcl, [[PADDA_3D2:%[0-9]+]]:edch = PADDA_3D [[COPY]], [[REG_SEQUENCE]]
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[PADDA_3D]]
+    ; CHECK-NEXT: [[PADD_3D_pseudo:%[0-9]+]]:ep, [[PADD_3D_pseudo1:%[0-9]+]]:edcl, [[PADD_3D_pseudo2:%[0-9]+]]:edch = PADD_3D_pseudo [[COPY]], [[REG_SEQUENCE]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[PADD_3D_pseudo]]
     %1:ptrregbank(p0) = COPY $p1
     %2:modregbank(s20) = G_CONSTANT i20 32
     %3:ptrregbank(p0), %4:modregbank(s20), %5:modregbank(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.3d), %1:ptrregbank(p0), %2:modregbank(s20), %2:modregbank(s20), %2:modregbank(s20), %2:modregbank(s20), %2:modregbank(s20), %2:modregbank(s20), %2:modregbank(s20)
