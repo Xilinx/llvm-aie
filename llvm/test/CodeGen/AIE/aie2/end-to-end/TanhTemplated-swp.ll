@@ -132,7 +132,7 @@ define dso_local void @TanhTemplated(ptr noalias %ifm, ptr noalias %ofm, ptr non
 ; CHECK-NEXT:  .L_LEnd0:
 ; CHECK-NEXT:    nopb ; nopa ; vconv.bf16.fp32 wl7, bml3; nopx ; vmin_ge.bf16 x5, r16, x5, x1; nopv
 ; CHECK-NEXT:  // %bb.2:
-; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vmov wh7, wl2; nopv
+; CHECK-NEXT:    nopa ; nopb ; nopx ; vmov wh7, wl2; nops
 ; CHECK-NEXT:    vconv.bf16.fp32 wl1, bml4; vmov wh1, wl2
 ; CHECK-NEXT:    vmov wh6, wl2; vmul.f bmh3, x7, x0, r1
 ; CHECK-NEXT:    vmax_lt.bf16 x10, r16, x5, x10; vmul.f bmh2, x1, x0, r1
@@ -164,10 +164,11 @@ define dso_local void @TanhTemplated(ptr noalias %ifm, ptr noalias %ofm, ptr non
 ; CHECK-NEXT:    vsub.f bmh0, bmh0, bmh1, r0
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    vst.conv.bf16.fp32 bmh2, [p1], #32 // Delay Slot 4
-; CHECK-NEXT:    vst.conv.bf16.fp32 bmh0, [p1], #32 // Delay Slot 3
+; CHECK-NEXT:    vst.conv.bf16.fp32 bmh2, [p1], #32 // Delay Slot 5
+; CHECK-NEXT:    vst.conv.bf16.fp32 bmh0, [p1], #32 // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r8 // Delay Slot 1
 for.body.lr.ph:

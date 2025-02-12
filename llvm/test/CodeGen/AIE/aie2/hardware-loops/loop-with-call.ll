@@ -71,10 +71,10 @@ define dso_local void @_Z5test4i(i32 noundef %n) {
 ; CHECK-NEXT:    ge r0, r1, r0; mov r16, r0
 ; CHECK-NEXT:    jnz r0, #.LBB1_3
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    st lr, [sp, #-20] // 4-byte Folded Spill Delay Slot 3
-; CHECK-NEXT:    st p6, [sp, #-28] // 4-byte Folded Spill Delay Slot 2
-; CHECK-NEXT:    st p7, [sp, #-32] // 4-byte Folded Spill Delay Slot 1
+; CHECK-NEXT:    st lr, [sp, #-20] // 4-byte Folded Spill Delay Slot 4
+; CHECK-NEXT:    st p6, [sp, #-28] // 4-byte Folded Spill Delay Slot 3
+; CHECK-NEXT:    st p7, [sp, #-32] // 4-byte Folded Spill Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1:
 ; CHECK-NEXT:    nopa ; movxm p6, #.L.str
 ; CHECK-NEXT:    movxm p7, #.L.str.1

@@ -154,10 +154,10 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VST_CONV_2D_BF16_FP32_STORE_UNIT
-    ; CHECK: $p5, $dc2 = VST_2D_SRS_D16_S32 killed $p5, killed $d2, killed $bml0, killed $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into stack - 32)
-    ; CHECK-NEXT: $p2, $dc0 = VST_CONV_2D_BF16_FP32 killed $p2, killed $d0, killed $bml1, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask :: (store (<8 x s32>) into stack - 64)
-    ; CHECK-NEXT: NOP
+    ; CHECK: $p2, $dc0 = VST_CONV_2D_BF16_FP32 killed $p2, killed $d0, killed $bml1, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask :: (store (<8 x s32>) into stack - 64)
+    ; CHECK-NEXT: $p5, $dc2 = VST_2D_SRS_D16_S32 killed $p5, killed $d2, killed $bml0, killed $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into stack - 32)
     ; CHECK-NEXT: $p2, $dc1 = VST_CONV_2D_BF16_FP32 killed $p2, killed $d1, killed $bml2, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask :: (store (<8 x s32>) into stack - 96)
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     $p5, $dc2 = VST_2D_SRS_D16_S32 $p5, $d2, $bml0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into stack - 32)
