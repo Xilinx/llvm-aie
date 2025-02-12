@@ -24,6 +24,16 @@ let mayLoad = false, mayStore = false, hasSideEffects = false, Itinerary = II_PA
                           "padd_imm_pseudo", "[$ptr], $imm", 
                           [PADDA_pstm_nrm_imm, PADDB_pstm_nrm_imm, PADDS_pstm_nrm_imm] >;
   }
+
+  let Itinerary = II_PADDB_2D in {
+    def PADD_2D_pseudo : MultiSlot_Pseudo< (outs eP:$ptr_out, eDC:$dc), (ins eP:$ptr, eD:$mod),
+                          "padd_2d_pseudo", "[$ptr], $mod", [PADDB_2D, PADDS_2D, PADDA_2D]>, AIE_HasTiedSubregister;
+  }
+
+  let Itinerary = II_PADDB_3D in {
+    def PADD_3D_pseudo : MultiSlot_Pseudo< (outs eP:$ptr_out, eDCL:$dcl, eDCH:$dch), (ins eP:$ptr, eDS:$mod),
+                          "padd_3d_pseudo", "[$ptr], $mod", [PADDB_3D, PADDS_3D, PADDA_3D]>, AIE_HasTiedSubregister;
+  }
 }
 
 // Pseudo MOV
@@ -216,5 +226,140 @@ let hasSideEffects = false, mayLoad = true, mayStore = false in {
                                           (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDS:$mod),
       "vld_pop_704_3d_pseudo", "$dst, [$ptr, $fifo_reg, $pos, $mod]",
       [VLDB_POP_704_3D, VLDA_POP_704_3D]>, AIE_HasTiedSubregister;
+  }
+
+  let Itinerary = II_VLDB_dmw_ldb_idx in {
+  def VLD_w_idx_pseudo : MultiSlot_Pseudo< (outs OP_mWa:$dst),
+                                         (ins eP:$ptr, eDJ:$dj),
+      "vld_w_idx_pseudo", "$dst, [$ptr, $dj]",
+      [VLDB_dmw_ldb_idx, VLDA_dmw_lda_w_idx]>;
+  }
+
+  let Itinerary = II_VLDB_dmw_ldb_idx_imm in {
+  def VLD_w_idx_imm_pseudo : MultiSlot_Pseudo< (outs mWa:$dst),
+                                                  (ins eP:$ptr, c9s_step32:$imm),
+      "vld_w_idx_imm_pseudo", "$dst, [$ptr, #$imm]",
+      [VLDB_dmw_ldb_idx_imm, VLDA_dmw_lda_w_idx_imm]>;
+  }
+
+  let Itinerary = II_VLDB_dmw_ldb_pstm_nrm in
+  let Constraints = "$ptr_out = $ptr" in {
+  def VLD_w_pstm_nrm_pseudo : MultiSlot_Pseudo< (outs mWa:$dst, eP:$ptr_out),
+                                          (ins eP:$ptr, eM:$mod),
+      "vld_w_pstm_nrm_pseudo", "$dst, [$ptr], $mod",
+      [VLDB_dmw_ldb_pstm_nrm, VLDA_dmw_lda_w_pstm_nrm]>;
+  }
+
+  let Itinerary = II_VLDB_dmw_ldb_pstm_nrm_imm in
+  let Constraints = "$ptr_out = $ptr" in {
+  def VLD_w_pstm_nrm_imm_pseudo : MultiSlot_Pseudo< (outs mWa:$dst, eP:$ptr_out),
+                                                   (ins eP:$ptr, c9s_step32:$imm),
+      "vld_w_pstm_nrm_imm_pseudo", "$dst, [$ptr], #$imm",
+      [VLDB_dmw_ldb_pstm_nrm_imm, VLDA_dmw_lda_w_pstm_nrm_imm]>;
+  }
+
+  let Itinerary = II_VLDB_dmx_ldb_x_idx in {
+  def VLD_x_idx_pseudo : MultiSlot_Pseudo< (outs OP_mXa:$dst),
+                                         (ins eP:$ptr, eDJ:$dj),
+      "vld_x_idx_pseudo", "$dst, [$ptr, $dj]",
+      [VLDB_dmx_ldb_x_idx, VLDA_dmx_lda_x_idx]>;
+  }
+
+  let Itinerary = II_VLDB_dmx_ldb_x_idx_imm in {
+  def VLD_x_idx_imm_pseudo : MultiSlot_Pseudo< (outs mXa:$dst),
+                                                  (ins eP:$ptr, c10s_step64:$imm),
+      "vld_x_idx_imm_pseudo", "$dst, [$ptr, #$imm]",
+      [VLDB_dmx_ldb_x_idx_imm, VLDA_dmx_lda_x_idx_imm]>;
+  }
+
+  let Itinerary = II_VLDB_dmx_ldb_x_pstm_nrm in
+  let Constraints = "$ptr_out = $ptr" in {
+  def VLD_x_pstm_nrm_pseudo : MultiSlot_Pseudo< (outs mXa:$dst, eP:$ptr_out),
+                                          (ins eP:$ptr, eM:$mod),
+      "vld_x_pstm_nrm_pseudo", "$dst, [$ptr], $mod",
+      [VLDB_dmx_ldb_x_pstm_nrm, VLDA_dmx_lda_x_pstm_nrm]>;
+  }
+
+  let Itinerary = II_VLDB_dmx_ldb_x_pstm_nrm_imm in
+  let Constraints = "$ptr_out = $ptr" in {
+  def VLD_x_pstm_nrm_imm_pseudo : MultiSlot_Pseudo< (outs mXa:$dst, eP:$ptr_out),
+                                                   (ins eP:$ptr, c10s_step64:$imm),
+      "vld_x_pstm_nrm_imm_pseudo", "$dst, [$ptr], #$imm",
+      [VLDB_dmx_ldb_x_pstm_nrm_imm, VLDA_dmx_lda_x_pstm_nrm_imm]>;
+  }
+
+  // 2D vector.
+  let Itinerary = II_VLDB_2D_dmw_ldb in {
+  def VLD_2D_w_pseudo : MultiSlot_Pseudo< (outs mWa:$dst, eP:$ptr_out, eDC:$dc),
+                                          (ins eP:$ptr, eD:$mod),
+      "vld_2d_w_pseudo", "$dst, [$ptr], $mod",
+      [VLDB_2D_dmw_ldb, VLDA_2D_dmw_lda_w]>, AIE_HasTiedSubregister;
+  }
+
+  let Itinerary = II_VLDB_2D_dmx_ldb_x in {
+  def VLD_2D_x_pseudo : MultiSlot_Pseudo< (outs mXa:$dst, eP:$ptr_out, eDC:$dc),
+                                                   (ins eP:$ptr, eD:$mod),
+      "vld_2d_x_pseudo", "$dst, [$ptr], $mod",
+      [VLDB_2D_dmx_ldb_x, VLDA_2D_dmx_lda_x]>, AIE_HasTiedSubregister;
+  }
+
+  // 3D vector.
+  let Itinerary = II_VLDB_3D_dmw_ldb in {
+  def VLD_3D_w_pseudo : MultiSlot_Pseudo< (outs mWa:$dst, eP:$ptr_out, eDCL:$dcl, eDCH:$dch),
+                                          (ins eP:$ptr, eDS:$mod),
+      "vld_3d_w_pseudo", "$dst, [$ptr], $mod",
+      [VLDB_3D_dmw_ldb, VLDA_3D_dmw_lda_w]>, AIE_HasTiedSubregister;
+  }
+
+  let Itinerary = II_VLDB_3D_dmx_ldb_x in {
+  def VLD_3D_x_pseudo : MultiSlot_Pseudo< (outs mXa:$dst, eP:$ptr_out, eDCL:$dcl, eDCH:$dch),
+                                                   (ins eP:$ptr, eDS:$mod),
+      "vld_3d_x_pseudo", "$dst, [$ptr], $mod",
+      [VLDB_3D_dmx_ldb_x, VLDA_3D_dmx_lda_x]>, AIE_HasTiedSubregister;
+  }
+
+  // 128-bit variants.
+  let Itinerary = II_VLDB_128_idx in {
+  def VLD_128_idx_pseudo : MultiSlot_Pseudo< (outs mWa:$dst),
+                                          (ins eP:$ptr, eDJ:$dj),
+      "vld_128_idx_pseudo", "$dst, [$ptr, $dj]",
+      [VLDB_128_idx, VLDA_128_dmv_lda_w_idx]>;
+  }
+
+  let Itinerary = II_VLDB_128_idx_imm in {
+  def VLD_128_idx_imm_pseudo : MultiSlot_Pseudo< (outs mWa:$dst),
+                                          (ins eP:$ptr, c8s_step16:$imm),
+      "vld_128_idx_imm_pseudo", "$dst, [$ptr, #$imm]",
+      [VLDB_128_idx_imm, VLDA_128_dmv_lda_w_idx_imm]>;
+  }
+
+  let Itinerary = II_VLDB_128_pstm_nrm in
+  let Constraints = "$ptr_out = $ptr" in {
+  def VLD_128_pstm_nrm_pseudo : MultiSlot_Pseudo< (outs mWa:$dst, eP:$ptr_out),
+                                          (ins eP:$ptr, eM:$mod),
+      "vld_128_pstm_nrm_pseudo", "$dst, [$ptr], $mod",
+      [VLDB_128_pstm_nrm, VLDA_128_dmv_lda_w_pstm_nrm]>;
+  }
+
+  let Itinerary = II_VLDB_128_pstm_nrm_imm in
+  let Constraints = "$ptr_out = $ptr" in {
+  def VLD_128_pstm_nrm_imm_pseudo : MultiSlot_Pseudo< (outs mWa:$dst, eP:$ptr_out),
+                                          (ins eP:$ptr, c8s_step16:$imm),
+      "vld_128_pstm_nrm_pseudo", "$dst, [$ptr], #$imm",
+      [VLDB_128_pstm_nrm_imm, VLDA_128_dmv_lda_w_pstm_nrm_imm]>;
+  }
+
+  let Itinerary = II_VLDB_2D_128 in {
+  def VLD_2D_128_pseudo : MultiSlot_Pseudo< (outs mWa:$dst, eP:$ptr_out, eDC:$dc),
+                                          (ins eP:$ptr, eD:$mod),
+      "vld_2d_128_pseudo", "$dst, [$ptr], $mod",
+      [VLDB_2D_128, VLDA_2D_128]>, AIE_HasTiedSubregister;
+  }
+
+  let Itinerary = II_VLDB_3D_128 in {
+  def VLD_3D_128_pseudo : MultiSlot_Pseudo< (outs mWa:$dst, eP:$ptr_out, eDCL:$dcl, eDCH:$dch),
+                                          (ins eP:$ptr, eDS:$mod),
+      "vld_3d_128_pseudo", "$dst, [$ptr], $mod",
+      [VLDB_3D_128, VLDA_3D_128]>, AIE_HasTiedSubregister;
   }
 }

@@ -1,0 +1,65 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -mtriple=aie2p -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+
+# This test ensures that the Machine Verifier detects tied physical registers
+# that don't match.
+
+---
+name:      tied_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+
+    $wl6, $p6, $dc6 = VLD_2D_128_pseudo $p6, $d6
+    $wh6, $p3, $dc4 = VLD_2D_w_pseudo $p3, $d4
+    $x9, $p0, $dc3 = VLD_2D_x_pseudo $p0, $d3
+
+    ; Below instructions have hasExtraSrcRegAllocReq and hasExtraDefRegAllocReq attributes
+    ; which essentially bypass the register flags. The renamable attributes
+    ; below should trigger no verification error.
+    ; CHECK-NOT: Bad machine code
+    renamable $wl6, renamable $p6, renamable $dc6 = VLD_2D_128_pseudo renamable $p6, renamable $d6
+    renamable $wh6, renamable $p3, renamable $dc4 = VLD_2D_w_pseudo renamable $p3, renamable $d4
+    renamable $bmlh2, renamable $p5, renamable $dc3 = VLDA_2D_dmx_lda_bm renamable $p5, renamable $d3
+    renamable $lfl0, renamable $p5, renamable $dc6 = VLDA_2D_dmx_lda_fifohl renamable $p5, renamable $d6
+    renamable $x9, renamable $p0, renamable $dc3 = VLD_2D_x_pseudo renamable $p0, renamable $d3
+
+...
+
+---
+name:      virtual_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    %0:ep = COPY $p0
+    %10:ed = COPY $d0
+    %80:mwa, %81:ep, %82:edc = VLD_2D_128_pseudo %0, %10
+    %190:mwa, %191:ep, %192:edc = VLD_2D_w_pseudo %0, %10
+    %220:mxa, %221:ep, %222:edc = VLD_2D_x_pseudo %0, %10
+
+...
+
+---
+name:      tied_nok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    ; CHECK-COUNT-9: Bad machine code:
+
+    $wl6, $p6, $dc3 = VLD_2D_128_pseudo $p6, $d6
+    $wl6, $p6, $dc5 = VLD_2D_128_pseudo $p6, $d6
+    $wl6, $p6, $dc1 = VLD_2D_128_pseudo $p6, $d6
+    $wh6, $p3, $dc5 = VLD_2D_w_pseudo $p3, $d4
+    $wh6, $p3, $dc6 = VLD_2D_w_pseudo $p3, $d4
+    $wh6, $p3, $dc0 = VLD_2D_w_pseudo $p3, $d4
+    $x9, $p0, $dc4 = VLD_2D_x_pseudo $p0, $d3
+    $x9, $p0, $dc1 = VLD_2D_x_pseudo $p0, $d3
+    $x9, $p0, $dc7 = VLD_2D_x_pseudo $p0, $d3
+...
+
