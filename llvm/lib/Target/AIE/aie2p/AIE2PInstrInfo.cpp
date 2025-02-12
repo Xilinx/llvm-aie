@@ -80,9 +80,13 @@ unsigned AIE2PInstrInfo::getAddrIntrinsic3D() const {
   return Intrinsic::aie2p_add_3d;
 }
 
-unsigned AIE2PInstrInfo::getPtrAdd2DOpcode() const { return AIE2P::PADDA_2D; }
+unsigned AIE2PInstrInfo::getPtrAdd2DOpcode() const {
+  return AIE2P::PADD_2D_pseudo;
+}
 
-unsigned AIE2PInstrInfo::getPtrAdd3DOpcode() const { return AIE2P::PADDA_3D; }
+unsigned AIE2PInstrInfo::getPtrAdd3DOpcode() const {
+  return AIE2P::PADD_3D_pseudo;
+}
 
 unsigned AIE2PInstrInfo::getMvSclMultiSlotPseudoOpcode() const {
   return AIE2P::MOV_scalar_imm11_pseudo;

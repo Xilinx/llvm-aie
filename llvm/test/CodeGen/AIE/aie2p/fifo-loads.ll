@@ -672,7 +672,7 @@ define dso_local noundef <64 x i8> @_Z17test_fifo_ld_popxRPDv64_hR12fifo_state_t
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vlda lfl0, [p1, #0]
-; CHECK-NEXT:    vlda x0, [p1, #192]; mov p2, p0
+; CHECK-NEXT:    vldb x0, [p1, #192]; mov p2, p0
 ; CHECK-NEXT:    vlda lfh0, [p1, #64]
 ; CHECK-NEXT:    movxm r30, #2015
 ; CHECK-NEXT:    vldb.popx.512 x0, [p0, lf0, r24]
@@ -719,7 +719,7 @@ define dso_local void @_Z18test_fifo_ld_fillxRP22v64bfp16ebs8_unalignedR12fifo_s
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vlda lfl0, [p1, #0]
-; CHECK-NEXT:    vlda x0, [p1, #192]; movx r2, #6; mov p2, p0
+; CHECK-NEXT:    mova r2, #6; vldb x0, [p1, #192]; mov p2, p0
 ; CHECK-NEXT:    vlda lfh0, [p1, #64]; lshl r0, r0, r2
 ; CHECK-NEXT:    or r30, r0, r1
 ; CHECK-NEXT:    vldb.fillx.512 [p0, lf0, r24]

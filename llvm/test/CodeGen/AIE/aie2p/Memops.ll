@@ -138,7 +138,7 @@ define dso_local void @lowerMemcpyUsingVector16() local_unnamed_addr #0 {
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; movxm p0, ##buffer2; nopv
-; CHECK-NEXT:    vlda.128 wh0, [p0, #0]; nopb ; nopx
+; CHECK-NEXT:    nopa ; vldb.128 wh0, [p0, #0]; nopx
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
@@ -158,8 +158,8 @@ define dso_local void @lowerMemcpyUsingWordVector16() local_unnamed_addr #0 {
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    movxm p0, ##buffer2
-; CHECK-NEXT:    vlda.128 wh0, [p0], #16; nopx
-; CHECK-NEXT:    vlda.128 wh2, [p0], #16
+; CHECK-NEXT:    vldb.128 wh0, [p0], #16; nopx
+; CHECK-NEXT:    vldb.128 wh2, [p0], #16
 ; CHECK-NEXT:    lda r0, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -180,7 +180,7 @@ define dso_local void @lowerMemcpyUsingWordVector32() local_unnamed_addr #0 {
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; movxm p0, ##buffer2
-; CHECK-NEXT:    vlda wh0, [p0], #32
+; CHECK-NEXT:    vldb wh0, [p0], #32
 ; CHECK-NEXT:    lda r0, [p0], #4
 ; CHECK-NEXT:    lda r1, [p0], #4
 ; CHECK-NEXT:    lda r2, [p0], #4
@@ -204,7 +204,7 @@ define dso_local void @lowerMemcpyUsingWordVector64() local_unnamed_addr #0 {
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; movxm p0, ##buffer2
-; CHECK-NEXT:    vlda x0, [p0], #64
+; CHECK-NEXT:    vldb x0, [p0], #64
 ; CHECK-NEXT:    lda r0, [p0], #4
 ; CHECK-NEXT:    lda r1, [p0], #4
 ; CHECK-NEXT:    lda r2, [p0], #4

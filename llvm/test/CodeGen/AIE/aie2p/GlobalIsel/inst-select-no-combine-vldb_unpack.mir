@@ -25,10 +25,10 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:em = COPY [[COPY1]]
-    ; CHECK-NEXT: [[VLDA_dmw_lda_w_pstm_nrm:%[0-9]+]]:vec256, [[VLDA_dmw_lda_w_pstm_nrm1:%[0-9]+]]:ep = VLDA_dmw_lda_w_pstm_nrm [[COPY]], [[COPY2]] :: (load (<32 x s8>))
+    ; CHECK-NEXT: [[VLD_w_pstm_nrm_pseudo:%[0-9]+]]:vec256, [[VLD_w_pstm_nrm_pseudo1:%[0-9]+]]:ep = VLD_w_pstm_nrm_pseudo [[COPY]], [[COPY2]] :: (load (<32 x s8>))
     ; CHECK-NEXT: $crunpacksize = MOV_scalar_imm11_pseudo 0
-    ; CHECK-NEXT: [[VUNPACK_mv_unpack_w_unpackSign1_:%[0-9]+]]:vec512 = VUNPACK_mv_unpack_w_unpackSign1 [[VLDA_dmw_lda_w_pstm_nrm]], implicit $crunpacksize, implicit $unpacksign1
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VUNPACK_mv_unpack_w_unpackSign1_]], implicit [[VLDA_dmw_lda_w_pstm_nrm]]
+    ; CHECK-NEXT: [[VUNPACK_mv_unpack_w_unpackSign1_:%[0-9]+]]:vec512 = VUNPACK_mv_unpack_w_unpackSign1 [[VLD_w_pstm_nrm_pseudo]], implicit $crunpacksize, implicit $unpacksign1
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VUNPACK_mv_unpack_w_unpackSign1_]], implicit [[VLD_w_pstm_nrm_pseudo]]
     %0:ptrregbank(p0) = COPY $p0
     %1:gprregbank(s32) = COPY $r0
     %7:modregbank(s20) = G_TRUNC %1
@@ -55,10 +55,10 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:em = COPY [[COPY1]]
-    ; CHECK-NEXT: [[VLDA_dmw_lda_w_pstm_nrm:%[0-9]+]]:vec256, [[VLDA_dmw_lda_w_pstm_nrm1:%[0-9]+]]:ep = VLDA_dmw_lda_w_pstm_nrm [[COPY]], [[COPY2]] :: (load (<32 x s8>))
+    ; CHECK-NEXT: [[VLD_w_pstm_nrm_pseudo:%[0-9]+]]:vec256, [[VLD_w_pstm_nrm_pseudo1:%[0-9]+]]:ep = VLD_w_pstm_nrm_pseudo [[COPY]], [[COPY2]] :: (load (<32 x s8>))
     ; CHECK-NEXT: $crunpacksize = MOV_scalar_imm11_pseudo 0
-    ; CHECK-NEXT: [[VUNPACK_mv_unpack_w_unpackSign1_:%[0-9]+]]:vec512 = VUNPACK_mv_unpack_w_unpackSign1 [[VLDA_dmw_lda_w_pstm_nrm]], implicit $crunpacksize, implicit $unpacksign1
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VUNPACK_mv_unpack_w_unpackSign1_]], implicit [[VLDA_dmw_lda_w_pstm_nrm]]
+    ; CHECK-NEXT: [[VUNPACK_mv_unpack_w_unpackSign1_:%[0-9]+]]:vec512 = VUNPACK_mv_unpack_w_unpackSign1 [[VLD_w_pstm_nrm_pseudo]], implicit $crunpacksize, implicit $unpacksign1
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VUNPACK_mv_unpack_w_unpackSign1_]], implicit [[VLD_w_pstm_nrm_pseudo]]
     %0:ptrregbank(p0) = COPY $p0
     %1:gprregbank(s32) = COPY $r0
     %7:modregbank(s20) = G_TRUNC %1
@@ -83,10 +83,10 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:em = COPY [[COPY1]]
-    ; CHECK-NEXT: [[VLDA_dmw_lda_w_pstm_nrm:%[0-9]+]]:vec256, [[VLDA_dmw_lda_w_pstm_nrm1:%[0-9]+]]:ep = VLDA_dmw_lda_w_pstm_nrm [[COPY]], [[COPY2]] :: (load (<32 x s8>))
+    ; CHECK-NEXT: [[VLD_w_pstm_nrm_pseudo:%[0-9]+]]:vec256, [[VLD_w_pstm_nrm_pseudo1:%[0-9]+]]:ep = VLD_w_pstm_nrm_pseudo [[COPY]], [[COPY2]] :: (load (<32 x s8>))
     ; CHECK-NEXT: $srssign1 = COPY [[COPY1]]
     ; CHECK-NEXT: $crunpacksize = MOV_scalar_imm11_pseudo 0
-    ; CHECK-NEXT: [[VUNPACK_mv_unpack_w_unpackSign1_:%[0-9]+]]:vec512 = VUNPACK_mv_unpack_w_unpackSign1 [[VLDA_dmw_lda_w_pstm_nrm]], implicit $crunpacksize, implicit $unpacksign1
+    ; CHECK-NEXT: [[VUNPACK_mv_unpack_w_unpackSign1_:%[0-9]+]]:vec512 = VUNPACK_mv_unpack_w_unpackSign1 [[VLD_w_pstm_nrm_pseudo]], implicit $crunpacksize, implicit $unpacksign1
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VUNPACK_mv_unpack_w_unpackSign1_]]
     %0:ptrregbank(p0) = COPY $p0
     %1:gprregbank(s32) = COPY $r0
