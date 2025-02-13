@@ -584,6 +584,39 @@ bool fixLoadMemOpInfo(MachineFunction &MF, MachineBasicBlock &MBB,
   return Changed;
 }
 
+// Replace the VST.FLUSH opcode with VST.FLUSH.CONV if it is chained with
+// VST.PUSH.CONV. The CONV variant behaves identically to the normal variant but
+// all actions are delayed by one pipeline stage.
+bool modifyStoreFlush(MachineBasicBlock &MBB, MachineRegisterInfo &MRI) {
+  const TargetInstrInfo *TII = MBB.getParent()->getSubtarget().getInstrInfo();
+  const AIEBaseInstrInfo *AIEII = static_cast<const AIEBaseInstrInfo *>(TII);
+  bool Changed = false;
+
+  // Helper function to recursively update VST.FLUSH to VST.FLUSH.CONV
+  std::function<void(const Register)> Impl = [&](const Register UseReg) {
+    for (MachineInstr &UseMI : MRI.use_instructions(UseReg)) {
+      std::optional<unsigned> StoreFlushConvOpcode =
+          AIEII->getStoreFlushConvOpcode(UseMI.getOpcode());
+      if (StoreFlushConvOpcode) {
+        UseMI.setDesc(TII->get(*StoreFlushConvOpcode));
+        Changed = true;
+        // Update the opcode for the next dependent instruction in the chain
+        const Register UseDstReg = UseMI.getOperand(0).getReg();
+        Impl(UseDstReg);
+      }
+    }
+  };
+
+  for (MachineInstr &MI : MBB) {
+    if (AIEII->isFifoStoreConvOpcode(MI.getOpcode())) {
+      const Register DstReg = MI.getOperand(0).getReg();
+      Impl(DstReg);
+    }
+  }
+
+  return Changed;
+}
+
 bool AIEPostSelectOptimize::runOnMachineFunction(MachineFunction &MF) {
   LLVM_DEBUG(dbgs() << "\n******* POST I-SEL OPTIMIZATION PASS *******\n"
                     << "********** Function: " << MF.getName() << '\n');
@@ -622,6 +655,14 @@ bool AIEPostSelectOptimize::runOnMachineFunction(MachineFunction &MF) {
   // registers (use vector instead, for example).
   for (MachineBasicBlock &MBB : MF) {
     Changed |= fixLoadMemOpInfo(MF, MBB, MF.getRegInfo());
+  }
+
+  // 5. Convert store flush instructions only on AIE2P targets: when VST.FLUSH
+  // and VST.PUSH.CONV are chained, replace VST.FLUSH with VST.FLUSH.CONV
+  if (MF.getTarget().getTargetTriple().isAIE2P()) {
+    for (MachineBasicBlock &MBB : MF) {
+      Changed |= modifyStoreFlush(MBB, MF.getRegInfo());
+    }
   }
 
   return Changed;
