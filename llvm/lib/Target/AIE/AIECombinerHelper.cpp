@@ -1828,6 +1828,20 @@ bool llvm::matchBroadcastElement(MachineInstr &MI, MachineRegisterInfo &MRI,
   return true;
 }
 
+static void buildUnmergeVector(MachineIRBuilder &B, MachineRegisterInfo &MRI,
+                               Register DstReg, Register SrcReg,
+                               unsigned NumSubVectors, unsigned SubIdx) {
+  const LLT DstTy = MRI.getType(DstReg);
+  SmallVector<Register, 4> SubVecs;
+  for (unsigned I = 0; I < NumSubVectors; I++) {
+    if (I == SubIdx)
+      SubVecs.push_back(DstReg);
+    else
+      SubVecs.push_back(MRI.createGenericVirtualRegister(DstTy));
+  }
+  B.buildUnmerge(SubVecs, SrcReg);
+}
+
 /// \returns true if it is possible to combine the shuffle vector to VSEL.
 /// E.g.:
 /// From :  %0:_(<16 x s32>) = COPY $x0
@@ -1841,6 +1855,11 @@ bool llvm::matchShuffleToVSel(MachineInstr &MI, MachineRegisterInfo &MRI,
                               const AIEBaseInstrInfo &TII,
                               BuildFnTy &MatchInfo) {
   assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR);
+
+  const unsigned BasicVectorBitSize = TII.getBasicVectorBitSize();
+  const unsigned ScalarRegSize = TII.getScalarRegSize();
+  const unsigned DoubleScalarRegSize = ScalarRegSize * 2;
+
   const Register DstReg = MI.getOperand(0).getReg();
   const Register Src1Reg = MI.getOperand(1).getReg();
   const Register Src2Reg = MI.getOperand(2).getReg();
@@ -1848,17 +1867,23 @@ bool llvm::matchShuffleToVSel(MachineInstr &MI, MachineRegisterInfo &MRI,
 
   const LLT DstTy = MRI.getType(DstReg);
   const LLT Src1Ty = MRI.getType(Src1Reg);
-  if (Src1Ty.getSizeInBits() != 512 ||
-      Src1Ty.getElementType() == LLT::scalar(64))
+  if (Src1Ty.getSizeInBits() != BasicVectorBitSize ||
+      Src1Ty.getElementType() == LLT::scalar(DoubleScalarRegSize))
     return false;
 
   const unsigned NumDstElems = DstTy.getNumElements();
   const unsigned NumSrcElems = Src1Ty.getNumElements();
-  if (NumDstElems != NumSrcElems)
+  if (NumDstElems > NumSrcElems)
     return false;
 
   if (MaskMatch::isMaskWithAllUndefs(Mask))
     return false;
+
+  std::optional<unsigned> MaskHeight = MaskMatch::getHeight(Mask, /*Period*/ 0);
+  if (!MaskHeight)
+    return false;
+
+  MaskHeight.value() %= NumSrcElems;
 
   // Check that the shuffle mask can be converted into VSel mask:
   // 1. The shuffle mask doesn't contain indices that correspond to the same
@@ -1868,8 +1893,8 @@ bool llvm::matchShuffleToVSel(MachineInstr &MI, MachineRegisterInfo &MRI,
   // order.
   uint64_t DstMask = 0;
   const size_t NumMaskElems = Mask.size();
-  for (unsigned I = 0; I < NumMaskElems; I++) {
-    int Idx = Mask[I];
+  for (unsigned I = *MaskHeight; I < *MaskHeight + NumMaskElems; I++) {
+    const int Idx = Mask[I];
     if (Idx == -1 || Idx == (int)I)
       continue;
 
@@ -1879,12 +1904,24 @@ bool llvm::matchShuffleToVSel(MachineInstr &MI, MachineRegisterInfo &MRI,
       return false;
   }
 
-  MatchInfo = [=, &TII](MachineIRBuilder &B) {
-    const unsigned ScalarSize = NumMaskElems == 64 ? 64 : 32;
+  MatchInfo = [=, &MRI, &TII](MachineIRBuilder &B) {
+    const unsigned ScalarSize =
+        NumMaskElems == DoubleScalarRegSize ? DoubleScalarRegSize : 32;
     MachineInstrBuilder MaskReg =
         B.buildConstant(LLT::scalar(ScalarSize), DstMask);
     const unsigned VSelOpc = TII.getGenericVSelOpcode();
-    B.buildInstr(VSelOpc, {DstReg}, {Src1Reg, Src2Reg, MaskReg});
+    if (NumDstElems == NumSrcElems)
+      B.buildInstr(VSelOpc, {DstReg}, {Src1Reg, Src2Reg, MaskReg});
+    else { // NumDstElems < NumSrcElems
+      const unsigned NumSubVectors = NumSrcElems / NumMaskElems;
+      const unsigned SubIdx = MaskHeight.value() / NumMaskElems;
+      const unsigned Src1ElemtSize = Src1Ty.getElementType().getSizeInBits();
+      const unsigned Src1Vec512BitLen = BasicVectorBitSize / Src1ElemtSize;
+      const LLT VSelDstTy = LLT::fixed_vector(Src1Vec512BitLen, Src1ElemtSize);
+      const Register VSelDstReg = MRI.createGenericVirtualRegister(VSelDstTy);
+      B.buildInstr(VSelOpc, {VSelDstReg}, {Src1Reg, Src2Reg, MaskReg});
+      buildUnmergeVector(B, MRI, DstReg, VSelDstReg, NumSubVectors, SubIdx);
+    }
   };
   return true;
 }
@@ -2020,18 +2057,10 @@ static bool matchShuffleToUnmerge(MachineInstr &MI, MachineRegisterInfo &MRI,
                                   unsigned NumSubVectors) {
   const Register DstReg = MI.getOperand(0).getReg();
   const Register Src1Reg = MI.getOperand(1).getReg();
-  const LLT DstTy = MRI.getType(DstReg);
 
   // TODO: Select into G_EXTRACT_SUBVECTOR once it is more widely supported
   MatchInfo = [=, &MRI](MachineIRBuilder &B) {
-    SmallVector<Register, 4> SubVecs;
-    for (unsigned I = 0; I < NumSubVectors; I++) {
-      if (I == (unsigned)SubIdx)
-        SubVecs.push_back(DstReg);
-      else
-        SubVecs.push_back(MRI.createGenericVirtualRegister(DstTy));
-    }
-    B.buildUnmerge(SubVecs, Src1Reg);
+    buildUnmergeVector(B, MRI, DstReg, Src1Reg, NumSubVectors, SubIdx);
   };
   return true;
 }
