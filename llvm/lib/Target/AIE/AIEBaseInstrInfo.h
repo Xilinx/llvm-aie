@@ -259,6 +259,15 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
                            TypeSize Size) const {
     llvm_unreachable("Target didn't implement getCombinedPostIncOpcode");
   }
+
+  /// Check whether Opcode is a VST.PUSH.CONV
+  virtual bool isFifoStoreConvOpcode(unsigned Opcode) const { return false; }
+  /// \return Corresponding VST.FLUSH.CONV Opcode based on \a VST.FLUSH Opcode
+  virtual std::optional<unsigned>
+  getStoreFlushConvOpcode(unsigned StoreFlushOpcode) const {
+    llvm_unreachable("Target didn't implement getStoreFlushConvOpcode!");
+  }
+
   /// \return AIE2p OpCode based on \a IntrinsicID
   virtual unsigned getOpCode(MachineInstr &MI) const {
     llvm_unreachable("Target didn't implement getOpCode");

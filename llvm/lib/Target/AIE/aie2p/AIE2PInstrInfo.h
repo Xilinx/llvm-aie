@@ -87,6 +87,7 @@ public:
   bool isBooleanNot(unsigned Opc) const override;
   bool isConstStep(const MachineInstr &MI, int64_t &Step) const override;
   bool isGenericOffsetMemOpcode(unsigned Opcode) const override;
+  bool isFifoStoreConvOpcode(unsigned Opcode) const override;
 
   bool verifyGenericInstruction(const MachineInstr &MI,
                                 StringRef &ErrInfo) const override;
@@ -97,6 +98,8 @@ public:
   std::optional<unsigned>
   getCombinedPostIncOpcode(MachineInstr &BaseMemI, MachineInstr &PtrAddI,
                            TypeSize Size) const override;
+  std::optional<unsigned>
+  getStoreFlushConvOpcode(unsigned StoreFlushOpcode) const override;
   unsigned getOpCode(MachineInstr &MI) const override;
   Register getVaddSignControlRegister() const override;
 
