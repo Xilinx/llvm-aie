@@ -280,8 +280,8 @@ body:             |
     ; CHECK-NEXT: $p0 = LDA_dms_lda_spill -60, implicit $sp
     ; CHECK-NEXT: VST_dmx_sts_fifohl_spill $lfl0, -192, implicit $sp
     ; CHECK-NEXT: VST_dmx_sts_fifohl_spill $lfh0, -128, implicit $sp
-    ; CHECK-NEXT: ST_dms_sts_spill $p0, -64, implicit $sp
-    ; CHECK-NEXT: ST_dms_sts_spill $r24, -60, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_spill $r24, -64, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_spill $p0, -60, implicit $sp
     $plfr0 = VLDA_PLFR_SPILL %stack.0, implicit $sp
     VST_PLFR_SPILL $plfr0, %stack.0, implicit $sp
 ...
@@ -480,9 +480,9 @@ body:             |
     ; CHECK-NEXT: $dj0 = MOVXM -2176
     ; CHECK-NEXT: VST_dmx_sts_fifohl_idx $lfh0, $p1, killed $dj0
     ; CHECK-NEXT: $dj0 = MOVXM -2112
-    ; CHECK-NEXT: ST_dms_sts_idx $p0, $p1, killed $dj0
+    ; CHECK-NEXT: ST_dms_sts_idx $r24, $p1, killed $dj0
     ; CHECK-NEXT: $dj0 = MOVXM -2108
-    ; CHECK-NEXT: ST_dms_sts_idx $r24, killed $p1, killed $dj0
+    ; CHECK-NEXT: ST_dms_sts_idx $p0, killed $p1, killed $dj0
     renamable $p0 = PseudoFI %stack.0, implicit $sp
     ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     $plfr0 = VLDA_PLFR_SPILL %stack.0, implicit $sp

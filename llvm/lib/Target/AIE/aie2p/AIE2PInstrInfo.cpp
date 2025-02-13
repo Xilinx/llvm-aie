@@ -1020,8 +1020,8 @@ AIE2PInstrInfo::getSpillPseudoExpandInfo(const MachineInstr &MI) const {
             {AIE2P::VST_dmx_sts_fifohl_spill, AIE2P::sub_hi_fifo}};
   case AIE2P::VST_PLFR_SPILL:
     return {{AIE2P::VST_FIFO_SPILL, AIE2P::sub_fifo},
-            {AIE2P::ST_dms_sts_spill, AIE2P::sub_ptr},
-            {AIE2P::ST_dms_sts_spill, AIE2P::sub_avail}};
+            {AIE2P::ST_dms_sts_spill, AIE2P::sub_avail},
+            {AIE2P::ST_dms_sts_spill, AIE2P::sub_ptr}};
 
   case AIE2P::VST_DM_SPILL:
     return {{AIE2P::VST_CM_SPILL, AIE2P::sub_1024_acc_lo},
