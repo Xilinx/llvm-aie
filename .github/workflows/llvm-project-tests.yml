@@ -73,8 +73,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     container:
       image: ${{(startsWith(matrix.os, 'ubuntu') && 'ghcr.io/llvm/ci-ubuntu-22.04:latest') || null}}
-      volumes:
-        - /mnt/:/mnt/
     strategy:
       fail-fast: false
       matrix:
