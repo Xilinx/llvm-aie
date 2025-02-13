@@ -320,7 +320,7 @@ body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_2D_w_pseudo_same_bank
     ; CHECK: $wh3, $p7, $dc5 = VLDB_2D_dmw_ldb killed $p7, killed $d5 :: (load (<8 x s32>), addrspace 9)
-    ; CHECK-NEXT: $wh4, $p7, $dc7 = VLDB_2D_dmw_ldb killed $p6, killed $d7 :: (load (<8 x s32>), addrspace 9)
+    ; CHECK-NEXT: $wh4, $p6, $dc7 = VLDB_2D_dmw_ldb killed $p6, killed $d7 :: (load (<8 x s32>), addrspace 9)
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -328,7 +328,7 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     $wh3, $p7, $dc5 = VLD_2D_w_pseudo $p7, $d5 :: (load (<8 x s32>), addrspace 9)
-    $wh4, $p7, $dc7 = VLD_2D_w_pseudo $p6, $d7 :: (load (<8 x s32>), addrspace 9)
+    $wh4, $p6, $dc7 = VLD_2D_w_pseudo $p6, $d7 :: (load (<8 x s32>), addrspace 9)
 ...
 
 ---
@@ -358,7 +358,7 @@ body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLD_2D_x_pseudo_same_bank
     ; CHECK: $x0, $p7, $dc5 = VLDB_2D_dmx_ldb_x killed $p7, killed $d5 :: (load (<16 x s32>), addrspace 9)
-    ; CHECK-NEXT: $x1, $p7, $dc7 = VLDB_2D_dmx_ldb_x killed $p6, killed $d7 :: (load (<16 x s32>), addrspace 9)
+    ; CHECK-NEXT: $x1, $p6, $dc7 = VLDB_2D_dmx_ldb_x killed $p6, killed $d7 :: (load (<16 x s32>), addrspace 9)
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -366,7 +366,7 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     $x0, $p7, $dc5 = VLD_2D_x_pseudo $p7, $d5 :: (load (<16 x s32>), addrspace 9)
-    $x1, $p7, $dc7 = VLD_2D_x_pseudo $p6, $d7 :: (load (<16 x s32>), addrspace 9)
+    $x1, $p6, $dc7 = VLD_2D_x_pseudo $p6, $d7 :: (load (<16 x s32>), addrspace 9)
 ...
 
 ---
