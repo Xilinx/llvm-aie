@@ -25,12 +25,14 @@ let mayLoad = false, mayStore = false, hasSideEffects = false, Itinerary = II_PA
                           [PADDA_pstm_nrm_imm, PADDB_pstm_nrm_imm, PADDS_pstm_nrm_imm] >;
   }
 
-  let Itinerary = II_PADDB_2D in {
+  let Itinerary = II_PADDB_2D in
+  let Constraints = "$ptr_out = $ptr" in {
     def PADD_2D_pseudo : MultiSlot_Pseudo< (outs eP:$ptr_out, eDC:$dc), (ins eP:$ptr, eD:$mod),
                           "padd_2d_pseudo", "[$ptr], $mod", [PADDB_2D, PADDS_2D, PADDA_2D]>, AIE_HasTiedSubregister;
   }
 
-  let Itinerary = II_PADDB_3D in {
+  let Itinerary = II_PADDB_3D in
+  let Constraints = "$ptr_out = $ptr" in {
     def PADD_3D_pseudo : MultiSlot_Pseudo< (outs eP:$ptr_out, eDCL:$dcl, eDCH:$dch), (ins eP:$ptr, eDS:$mod),
                           "padd_3d_pseudo", "[$ptr], $mod", [PADDB_3D, PADDS_3D, PADDA_3D]>, AIE_HasTiedSubregister;
   }
@@ -289,14 +291,16 @@ let hasSideEffects = false, mayLoad = true, mayStore = false in {
   }
 
   // 2D vector.
-  let Itinerary = II_VLDB_2D_dmw_ldb in {
+  let Itinerary = II_VLDB_2D_dmw_ldb in
+  let Constraints = "$ptr_out = $ptr" in {
   def VLD_2D_w_pseudo : MultiSlot_Pseudo< (outs mWa:$dst, eP:$ptr_out, eDC:$dc),
                                           (ins eP:$ptr, eD:$mod),
       "vld_2d_w_pseudo", "$dst, [$ptr], $mod",
       [VLDB_2D_dmw_ldb, VLDA_2D_dmw_lda_w]>, AIE_HasTiedSubregister;
   }
 
-  let Itinerary = II_VLDB_2D_dmx_ldb_x in {
+  let Itinerary = II_VLDB_2D_dmx_ldb_x in
+  let Constraints = "$ptr_out = $ptr" in {
   def VLD_2D_x_pseudo : MultiSlot_Pseudo< (outs mXa:$dst, eP:$ptr_out, eDC:$dc),
                                                    (ins eP:$ptr, eD:$mod),
       "vld_2d_x_pseudo", "$dst, [$ptr], $mod",
@@ -304,14 +308,16 @@ let hasSideEffects = false, mayLoad = true, mayStore = false in {
   }
 
   // 3D vector.
-  let Itinerary = II_VLDB_3D_dmw_ldb in {
+  let Itinerary = II_VLDB_3D_dmw_ldb in
+  let Constraints = "$ptr_out = $ptr" in {
   def VLD_3D_w_pseudo : MultiSlot_Pseudo< (outs mWa:$dst, eP:$ptr_out, eDCL:$dcl, eDCH:$dch),
                                           (ins eP:$ptr, eDS:$mod),
       "vld_3d_w_pseudo", "$dst, [$ptr], $mod",
       [VLDB_3D_dmw_ldb, VLDA_3D_dmw_lda_w]>, AIE_HasTiedSubregister;
   }
 
-  let Itinerary = II_VLDB_3D_dmx_ldb_x in {
+  let Itinerary = II_VLDB_3D_dmx_ldb_x in
+  let Constraints = "$ptr_out = $ptr" in {
   def VLD_3D_x_pseudo : MultiSlot_Pseudo< (outs mXa:$dst, eP:$ptr_out, eDCL:$dcl, eDCH:$dch),
                                                    (ins eP:$ptr, eDS:$mod),
       "vld_3d_x_pseudo", "$dst, [$ptr], $mod",
@@ -349,14 +355,16 @@ let hasSideEffects = false, mayLoad = true, mayStore = false in {
       [VLDB_128_pstm_nrm_imm, VLDA_128_dmv_lda_w_pstm_nrm_imm]>;
   }
 
-  let Itinerary = II_VLDB_2D_128 in {
+  let Itinerary = II_VLDB_2D_128 in 
+  let Constraints = "$ptr_out = $ptr" in {
   def VLD_2D_128_pseudo : MultiSlot_Pseudo< (outs mWa:$dst, eP:$ptr_out, eDC:$dc),
                                           (ins eP:$ptr, eD:$mod),
       "vld_2d_128_pseudo", "$dst, [$ptr], $mod",
       [VLDB_2D_128, VLDA_2D_128]>, AIE_HasTiedSubregister;
   }
 
-  let Itinerary = II_VLDB_3D_128 in {
+  let Itinerary = II_VLDB_3D_128 in
+  let Constraints = "$ptr_out = $ptr" in {
   def VLD_3D_128_pseudo : MultiSlot_Pseudo< (outs mWa:$dst, eP:$ptr_out, eDCL:$dcl, eDCH:$dch),
                                           (ins eP:$ptr, eDS:$mod),
       "vld_3d_128_pseudo", "$dst, [$ptr], $mod",
