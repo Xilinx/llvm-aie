@@ -2236,6 +2236,9 @@ bool llvm::matchShuffleToExtractSubvec(MachineInstr &MI,
 /// %3:_(<4 x s32>) = G_AIE_EXTRACT_SUBVECTOR %1(<8 x s32>), %2(s32)
 /// %4:_(<16 x s32>) = G_AIE_BROADCAST_VECTOR %3(<4 x s32>)
 /// %5:_(<8 x s32>) = G_AIE_UNPAD_VECTOR %4(<16 x s32>)
+
+// If the subvector cannot be extracted and broadcasted given the target
+// constraints, an Unmerge and Concat are used instead.
 static bool matchShuffleToSubvecBroadcast(MachineInstr &MI,
                                           MachineRegisterInfo &MRI,
                                           const AIEBaseInstrInfo &TII,
@@ -2287,20 +2290,40 @@ static bool matchShuffleToSubvecBroadcast(MachineInstr &MI,
   const LLT ElemTy = Src1Ty.getElementType();
   const LLT DstSubvecType =
       LLT::fixed_vector(SplatMaskLen, ElemTy.getSizeInBits());
+  const unsigned SubIdx = SplatMaskStart / SplatMaskLen;
+  Register ExtractSubvecDstReg =
+      MRI.createGenericVirtualRegister(DstSubvecType);
 
   // Check whether we can extract the subvector
-  if (!checkExtractSubvectorPrerequisites(TII, DstSubvecType, Src1Ty))
-    return false;
+  const bool CanExtractSubvector =
+      checkExtractSubvectorPrerequisites(TII, DstSubvecType, Src1Ty);
+  if (CanExtractSubvector) {
+    MatchInfo = [=, &MRI, &TII](MachineIRBuilder &B) {
+      auto Extract = buildExtractSubvector(B, MRI, TII, ExtractSubvecDstReg,
+                                           Src1Reg, SubIdx);
+      buildBroadcastVector(B, MRI, Extract.getReg(0), DstReg);
+    };
+    return true;
+  }
 
-  MatchInfo = [=, &MRI, &TII](MachineIRBuilder &B) {
-    Register ExtractSubvecDstReg =
-        MRI.createGenericVirtualRegister(DstSubvecType);
-    auto Extract =
-        buildExtractSubvector(B, MRI, TII, ExtractSubvecDstReg, Src1Reg,
-                              SplatMaskStart / SplatMaskLen);
-    buildBroadcastVector(B, MRI, Extract.getReg(0), DstReg);
-  };
-  return true;
+  // If we cannot extract the subvector, we try to apply UNMERGE + CONCAT
+  const unsigned NumSubVectors = NumSrcElems / SplatMaskLen;
+  // Don't try to unmerge when we have just one subvector.
+  // We can overcome with a copy, but other combiners can do a
+  // better job for this case.
+  if (NumSubVectors > 1 && NumDstElems == SplatMaskLen * 2) {
+    MatchInfo = [=, &MRI](MachineIRBuilder &B) {
+      buildUnmergeVector(B, MRI, ExtractSubvecDstReg, Src1Reg, NumSubVectors,
+                         SubIdx);
+
+      const SmallVector<Register, 2> ConcatOps = {ExtractSubvecDstReg,
+                                                  ExtractSubvecDstReg};
+      B.buildConcatVectors({DstReg}, ConcatOps);
+    };
+    return true;
+  }
+
+  return false;
 }
 
 /// Match something like this:
@@ -2345,6 +2368,9 @@ static bool matchShuffleToVecBroadcast(MachineInstr &MI,
   return true;
 }
 
+// If the subvector cannot be extracted and broadcasted given the target
+// constraints, an Unmerge and Concat are used instead, such as in
+// matchShuffleToSubvecBroadcast.
 bool llvm::matchShuffleToBroadcast(MachineInstr &MI, MachineRegisterInfo &MRI,
                                    const AIEBaseInstrInfo &TII,
                                    BuildFnTy &MatchInfo) {
