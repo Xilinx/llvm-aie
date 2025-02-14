@@ -2296,3 +2296,51 @@ bool llvm::matchShuffleToBroadcast(MachineInstr &MI, MachineRegisterInfo &MRI,
     return true;
   return false;
 }
+
+/// Match something like this:
+///  %1:_(<2 x s32>) = COPY $x0
+///  %2:_(<2 x s32>) = G_IMPLICIT_DEF
+///  %0:_(<16 x s32>) = G_SHUFFLE_VECTOR %1(<16 x s32>), %2(<16 x s32>),
+///  shufflemask(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+
+/// To convert to:
+///  %0:_(<16 x s32>) = COPY $x0
+bool llvm::matchShuffleToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
+                              BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR);
+
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register Src1Reg = MI.getOperand(1).getReg();
+  ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
+
+  const LLT DstTy = MRI.getType(DstReg);
+  const LLT Src1Ty = MRI.getType(Src1Reg);
+  if (DstTy != Src1Ty)
+    return false;
+
+  const unsigned NumSrcElems = Src1Ty.isVector() ? Src1Ty.getNumElements() : 1;
+  if (Mask.size() != NumSrcElems)
+    return false;
+
+  // If the mask has only -1 (undef), do nothing
+  auto AllUndefs = [NumSrcElems](const ArrayRef<int> &Mask) -> bool {
+    for (unsigned I = 0; I < NumSrcElems; ++I) {
+      if (Mask[I] != -1)
+        return false;
+    }
+    return true;
+  };
+
+  if (AllUndefs(Mask))
+    return false;
+
+  // Check that the mask is sequential
+  for (unsigned I = 0; I < NumSrcElems; ++I) {
+    if (Mask[I] != -1 && Mask[I] != (int)I)
+      return false;
+  }
+
+  MatchInfo = [=](MachineIRBuilder &B) { B.buildCopy(DstReg, Src1Reg); };
+
+  return true;
+}

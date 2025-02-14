@@ -211,6 +211,9 @@ bool matchShuffleToExtractSubvec(MachineInstr &MI, MachineRegisterInfo &MRI,
                                  const AIEBaseInstrInfo &TII,
                                  BuildFnTy &MatchInfo);
 
+bool matchShuffleToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
+                        BuildFnTy &MatchInfo);
+
 } // namespace llvm
 
 #endif

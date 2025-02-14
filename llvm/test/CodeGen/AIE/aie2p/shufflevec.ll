@@ -521,3 +521,47 @@ entry:
   %shuffle = shufflevector <64 x i32> %a, <64 x i32> %b, <32 x i32> <i32 0, i32  1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
   ret <32 x i32> %shuffle
 }
+
+; Combine G_SHUFFLE_VECTOR into COPY. Note: shufflevector doesn't accept scalar arguments.
+define <16 x i32> @shuffle_vector_to_copy_vec(<16 x i32> noundef %a, <16 x i32> noundef %b) {
+; CHECK-LABEL: shuffle_vector_to_copy_vec:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    vmov x0, x2 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %shuffle = shufflevector <16 x i32> %a, <16 x i32> %b, <16 x i32> <i32 0, i32  1, i32 2, i32 undef, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+  ret <16 x i32> %shuffle
+}
+
+define <8 x i32> @shuffle_vector_to_copy_no_combine(<8 x i32> noundef %a, <8 x i32> noundef %b) {
+; CHECK-LABEL: shuffle_vector_to_copy_no_combine:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    nopa ; nopx ; vextract.32 r1, x2, #5, vaddsign1
+; CHECK-NEXT:    vextract.32 r2, x2, #6, vaddsign1
+; CHECK-NEXT:    vextract.32 r3, x2, #7, vaddsign1
+; CHECK-NEXT:    vextract.32 r4, x4, #0, vaddsign1
+; CHECK-NEXT:    vextract.32 r5, x4, #1, vaddsign1
+; CHECK-NEXT:    vextract.32 r6, x4, #2, vaddsign1
+; CHECK-NEXT:    vextract.32 r0, x2, #4, vaddsign1
+; CHECK-NEXT:    vextract.32 r7, x4, #3, vaddsign1
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r0
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r1
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r2
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r3
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r4
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r5 // Delay Slot 5
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r6 // Delay Slot 4
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r7 // Delay Slot 3
+; CHECK-NEXT:    vmov wl0, wh0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %shuffle = shufflevector <8 x i32> %a, <8 x i32> %b, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11>
+  ret <8 x i32> %shuffle
+}
