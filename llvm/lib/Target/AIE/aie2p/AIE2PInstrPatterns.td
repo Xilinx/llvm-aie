@@ -845,31 +845,38 @@ def : Pat<(int_aie2p_vinsert32_accfloat ACC512:$s1, eR29:$idx, eR:$s0),
 def extract_subvec_node : SDNode<"AIE2P::G_AIE_EXTRACT_SUBVECTOR", SDTypeProfile<1, 2, []>>;
 def : GINodeEquiv<G_AIE_EXTRACT_SUBVECTOR , extract_subvec_node>;
 // G_AIE_EXTRACT_SUBVECTOR extracts only 32-bit or 64-bit subvector.
-def : Pat<(v4i8(extract_subvec_node(v64i8 VEC512:$s0), (i32 c6u:$idx))), 
-          (VEXTRACT_32_vec_extract_imm_vaddSign1 VEC512:$s0, c6u:$idx)>;
-def : Pat<(v8i8(extract_subvec_node(v64i8 VEC512:$s0), (i32 c6u:$idx))), 
-          (VEXTRACT_64_vec_extract_imm_vaddSign1 VEC512:$s0, c6u:$idx)>;
-def : Pat<(v2i16(extract_subvec_node(v32i16 VEC512:$s0), (i32 c6u:$idx))), 
-          (VEXTRACT_32_vec_extract_imm_vaddSign1 VEC512:$s0, c6u:$idx)>;
-def : Pat<(v4i16(extract_subvec_node(v32i16 VEC512:$s0), (i32 c6u:$idx))), 
-          (VEXTRACT_64_vec_extract_imm_vaddSign1 VEC512:$s0, c6u:$idx)>;
-def : Pat<(v2i32(extract_subvec_node(v16i32 VEC512:$s0), (i32 c6u:$idx))), 
-          (VEXTRACT_64_vec_extract_imm_vaddSign1 VEC512:$s0, c6u:$idx)>;
-def : Pat<(v2i32(extract_subvec_node(v8i64 VEC512:$s0), (i32 c6u:$idx))), 
-          (VEXTRACT_64_vec_extract_imm_vaddSign1 VEC512:$s0, c6u:$idx)>;
+class ExtractSubvecPat<AIE2PInst Inst, ValueType DstTy, ValueType SrcTy, 
+                       DAGOperand IdxTy> :
+  Pat<(DstTy (extract_subvec_node(SrcTy VEC512:$s0), (i32 IdxTy:$idx))), 
+      (Inst VEC512:$s0, IdxTy:$idx)>;
 
-def : Pat<(v4i8(extract_subvec_node(v64i8 VEC512:$s0), (i32 eRS4:$idx))), 
-          (VEXTRACT_32_vec_extract_r_vaddSign1 VEC512:$s0, eRS4:$idx)>;
-def : Pat<(v8i8(extract_subvec_node(v64i8 VEC512:$s0), (i32 eRS4:$idx))), 
-          (VEXTRACT_64_vec_extract_r_vaddSign1 VEC512:$s0, eRS4:$idx)>;
-def : Pat<(v2i16(extract_subvec_node(v32i16 VEC512:$s0), (i32 eRS4:$idx))), 
-          (VEXTRACT_32_vec_extract_r_vaddSign1 VEC512:$s0, eRS4:$idx)>;
-def : Pat<(v4i16(extract_subvec_node(v32i16 VEC512:$s0), (i32 eRS4:$idx))), 
-          (VEXTRACT_64_vec_extract_r_vaddSign1 VEC512:$s0, eRS4:$idx)>;
-def : Pat<(v2i32(extract_subvec_node(v16i32 VEC512:$s0), (i32 eRS4:$idx))), 
-          (VEXTRACT_64_vec_extract_r_vaddSign1 VEC512:$s0, eRS4:$idx)>;
-def : Pat<(v2i32(extract_subvec_node(v8i64 VEC512:$s0), (i32 eRS4:$idx))), 
-          (VEXTRACT_64_vec_extract_r_vaddSign1 VEC512:$s0, eRS4:$idx)>;
+class ExtractSubvecPair<AIE2PInst inst, DAGOperand idxTy>{
+  AIE2PInst Inst = inst;
+  DAGOperand IdxTy = idxTy;
+}
+
+defset list<ExtractSubvecPair> ExtrSubvec32Pairs={ 
+  def : ExtractSubvecPair<VEXTRACT_32_vec_extract_imm_vaddSign1, c6u>;
+  def : ExtractSubvecPair<VEXTRACT_32_vec_extract_r_vaddSign1, eRS4>;
+
+}
+
+defset list<ExtractSubvecPair> ExtrSubvec64Pairs={ 
+  def : ExtractSubvecPair<VEXTRACT_64_vec_extract_imm_vaddSign1, c6u>;
+  def : ExtractSubvecPair<VEXTRACT_64_vec_extract_r_vaddSign1, eRS4>;
+}
+
+foreach Pair = ExtrSubvec32Pairs in {
+  def : ExtractSubvecPat<Pair.Inst, v4i8, v64i8, Pair.IdxTy>; 
+  def : ExtractSubvecPat<Pair.Inst, v2i16, v32i16, Pair.IdxTy>; 
+}
+
+foreach Pair = ExtrSubvec64Pairs in {
+  def : ExtractSubvecPat<Pair.Inst, v8i8, v64i8, Pair.IdxTy>; 
+  def : ExtractSubvecPat<Pair.Inst, v4i16, v32i16, Pair.IdxTy>; 
+  def : ExtractSubvecPat<Pair.Inst, v2i32, v16i32, Pair.IdxTy>; 
+  def : ExtractSubvecPat<Pair.Inst, v2i32, v8i64, Pair.IdxTy>; 
+}
 
 // VBCST
 def : Pat<(int_aie2p_vbroadcast32_bf512 eR:$s0), (VBCST_32 eR:$s0)>;
