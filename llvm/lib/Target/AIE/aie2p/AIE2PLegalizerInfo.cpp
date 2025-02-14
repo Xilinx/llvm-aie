@@ -182,6 +182,7 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
                  V2S32, V4S16, V8S8})
       .legalFor(AIE2PVectorTypes)
       .legalFor(AIE2PAccumulatorTypes)
+      .legalFor({AccV2S1024})
       .widenScalarToNextPow2(0)
       .clampScalar(0, S32, S32);
 
@@ -445,6 +446,12 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
           {AccV32S64, P0, AccV32S64, 512},
           {S128, P0, S128, 16},
       })
+      // Legalize <2 x s1024>
+      .bitcastIf(
+          [=](const LegalityQuery &Query) {
+            return Query.Types[0] == AccV2S1024;
+          },
+          [=](const LegalityQuery &Query) { return std::pair(0, AccV32S64); })
       // Split 256-bit aligned load/store of 512-bit or larger vectors into
       // legal 256-bit loads with 32-byte alignment.
       .fewerElementsIf(

@@ -47,6 +47,26 @@ body:             |
 ...
 
 ---
+name:            test_v2s1024
+body:             |
+  bb.1.entry:
+    liveins: $p0
+
+    ; CHECK-LABEL: name: test_v2s1024
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<2 x s1024>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<32 x s64>) = G_BITCAST [[DEF]](<2 x s1024>)
+    ; CHECK-NEXT: G_STORE [[BITCAST]](<32 x s64>), [[COPY]](p0) :: (store (<32 x s64>))
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    %0:_(p0) = COPY $p0
+    %1:_(<2 x s1024>) = G_IMPLICIT_DEF
+    G_STORE %1(<2 x s1024>), %0(p0) :: (store (<2 x s1024>))
+    PseudoRET implicit $lr
+...
+
+---
 name:            test_v16int8_unaligned
 body:             |
   bb.1.entry:
