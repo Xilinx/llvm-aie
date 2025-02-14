@@ -52,6 +52,69 @@ cl::opt<bool> CombineVecShiftByZero(
     "aie-combine-vec-shift-by-zero", cl::init(true), cl::Hidden,
     cl::desc("Combine vectors shift by zero into copies."));
 
+bool MaskMatch::isValidMask(ArrayRef<int> Mask) const {
+  bool FirstNotUndef = true;
+  for (unsigned Idx = 0; Idx < Mask.size(); ++Idx) {
+    if (Mask[Idx] == -1)
+      continue;
+
+    // Find the start value of the mask
+    if (FirstNotUndef) {
+      // Get the start value
+      const unsigned MaskStart = Mask[Idx] - (Period == 0 ? Idx : Idx % Period);
+
+      if (MaskStart != Height)
+        return false;
+
+      FirstNotUndef = false;
+    }
+
+    // Check not undef values (not -1) of the mask
+    if ((unsigned)Mask[Idx] != getMaskValue(Idx))
+      return false;
+  }
+
+  return true;
+}
+
+bool MaskMatch::isMaskWithAllUndefs(ArrayRef<int> Mask) {
+  for (unsigned I = 0; I < Mask.size(); ++I) {
+    if (Mask[I] != -1)
+      return false;
+  }
+  return true;
+}
+
+std::optional<unsigned> MaskMatch::getHeight(ArrayRef<int> Mask,
+                                             unsigned Period) {
+  for (unsigned I = 0; I < Mask.size(); ++I) {
+    if (Mask[I] != -1)
+      return Mask[I] - (Period == 0 ? I : I % Period);
+  }
+  return std::nullopt;
+}
+
+/// This function returns the unique index in the shuffle mask \p Mask if the
+/// unique index exists.
+std::optional<int> MaskMatch::getUniqueIndex(ArrayRef<int> Mask) {
+  std::optional<int> UniqOpIdx;
+  for (unsigned I = 0; I < Mask.size(); I++) {
+    int Idx = Mask[I];
+    if (Idx == -1)
+      continue;
+
+    if (!UniqOpIdx) {
+      UniqOpIdx = Idx;
+      continue;
+    }
+
+    if (UniqOpIdx != Idx) {
+      return std::nullopt;
+    }
+  }
+  return UniqOpIdx;
+}
+
 MachineInstr *findPreIncMatch(MachineInstr &MemI, MachineRegisterInfo &MRI,
                               CombinerHelper &Helper,
                               AIELoadStoreCombineMatchData &MatchData,
@@ -1765,6 +1828,15 @@ bool llvm::matchBroadcastElement(MachineInstr &MI, MachineRegisterInfo &MRI,
   return true;
 }
 
+/// \returns true if it is possible to combine the shuffle vector to VSEL.
+/// E.g.:
+/// From :  %0:_(<16 x s32>) = COPY $x0
+///         %1:_(<16 x s32>) = COPY $x1
+///         %2:_(<16 x s32>) = G_SHUFFLE_VECTOR %X(<16 x s32>), %1(<16 x s32>),
+///         shufflemask(0, 1, 2, 3, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+///         31)
+/// To :    %3:_(s32) = G_CONSTANT i32 65520
+///         %4:_(<16 x s32>) = G_AIE_VSEL %0, %1, %3(s32)
 bool llvm::matchShuffleToVSel(MachineInstr &MI, MachineRegisterInfo &MRI,
                               const AIEBaseInstrInfo &TII,
                               BuildFnTy &MatchInfo) {
@@ -1785,13 +1857,10 @@ bool llvm::matchShuffleToVSel(MachineInstr &MI, MachineRegisterInfo &MRI,
   if (NumDstElems != NumSrcElems)
     return false;
 
-  // Check that the shuffle mask can be converted into VSel mask:
-  // The mask contains only -1
-  if (std::all_of(Mask.begin(), Mask.end(),
-                  [&](int Value) { return Value == -1; })) {
+  if (MaskMatch::isMaskWithAllUndefs(Mask))
     return false;
-  }
 
+  // Check that the shuffle mask can be converted into VSel mask:
   // 1. The shuffle mask doesn't contain indices that correspond to the same
   // index in Src1 and Src2, i.e., for each i only the i-th element from Src1 or
   // the i-th element from Src2 is used.
@@ -1820,27 +1889,6 @@ bool llvm::matchShuffleToVSel(MachineInstr &MI, MachineRegisterInfo &MRI,
   return true;
 }
 
-/// This function returns the unique index in the shuffle mask \p Mask if the
-/// unique index exists.
-static std::optional<int> getUniqueIndex(ArrayRef<int> Mask) {
-  std::optional<int> UniqOpIdx;
-  for (unsigned I = 0; I < Mask.size(); I++) {
-    int Idx = Mask[I];
-    if (Idx < 0)
-      continue;
-
-    if (!UniqOpIdx) {
-      UniqOpIdx = Idx;
-      continue;
-    }
-
-    if (UniqOpIdx != Idx) {
-      return std::nullopt;
-    }
-  }
-  return UniqOpIdx;
-}
-
 /// \returns true if it is possible to combine the shuffle vector with a mask
 /// that extracts an element from the first source vector and broadcasts
 /// it. E.g.:
@@ -1856,7 +1904,7 @@ static bool matchShuffleToVecEltBroadcast(MachineInstr &MI,
                                           BuildFnTy &MatchInfo) {
   ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
 
-  std::optional<int> UniqOpIdx = getUniqueIndex(Mask);
+  std::optional<int> UniqOpIdx = MaskMatch::getUniqueIndex(Mask);
   if (!UniqOpIdx)
     return false;
 
@@ -1870,24 +1918,6 @@ static bool matchShuffleToVecEltBroadcast(MachineInstr &MI,
         B.buildExtractVectorElementConstant(DstElemTy, SrcVecReg, *UniqOpIdx);
     buildBroadcastVector(B, MRI, Extr.getReg(0), DstReg);
   };
-  return true;
-}
-
-/// A sequential mask with \p StartValue and \p NumElems is generated. If \p
-/// Mask is equivalent to the generated sequential mask, the method returns
-/// true. Otherwise, false.
-static bool checkSequentialMask(const ArrayRef<int> Mask, unsigned StartValue,
-                                unsigned NumElems) {
-  if (Mask.size() != NumElems)
-    return false;
-
-  auto SeqMask = createSequentialMask(StartValue, NumElems, 0);
-
-  for (unsigned I = 0; I < NumElems; ++I) {
-    if (Mask[I] != -1 && Mask[I] != SeqMask[I])
-      return false;
-  }
-
   return true;
 }
 
@@ -2124,12 +2154,15 @@ bool llvm::matchShuffleToExtractSubvec(MachineInstr &MI,
   if (NumSrc1Elems % NumDstElems != 0)
     return false;
 
+  if (MaskMatch::isMaskWithAllUndefs(Mask))
+    return false;
+
   const unsigned NumSubVectors = NumSrc1Elems / NumDstElems;
   auto GetSubvecExtractIdx = [=, &Mask]() -> std::optional<unsigned> {
     for (unsigned SubVecIdx = 0; SubVecIdx < NumSubVectors; ++SubVecIdx) {
-      if (checkSequentialMask(Mask, SubVecIdx * NumDstElems, NumDstElems)) {
+      MaskMatch SequentialMask{/*Height*/ SubVecIdx * NumDstElems};
+      if (SequentialMask.isValidMask(Mask))
         return SubVecIdx;
-      }
     }
 
     return std::nullopt;
@@ -2189,30 +2222,17 @@ static bool matchShuffleToSubvecBroadcast(MachineInstr &MI,
       if (Mask[0] != -1 && Mask[0] % SplatMaskLen != 0)
         return std::nullopt;
 
-      // Find the start value of the splat mask and check that the mask is valid
-      bool ValidMask = true;
-      int SplatMaskStart = -1;
-      for (unsigned I = 0; I < MaskSize; ++I) {
-        if (Mask[I] == -1)
-          continue;
+      // Get Height (start value)
+      std::optional<unsigned> Height =
+          MaskMatch::getHeight(Mask, /*Period*/ SplatMaskLen);
+      if (!Height)
+        return std::nullopt;
 
-        if (SplatMaskStart == -1) {
-          // First Mask[I]!=-1
-          // Get the start value
-          SplatMaskStart = Mask[I] - I % SplatMaskLen;
-
-          if (SplatMaskStart % SplatMaskLen != 0)
-            return std::nullopt;
-
-        } else if ((unsigned)Mask[I] != SplatMaskStart + I % SplatMaskLen) {
-          // Check the rest not undef values (not -1) of the mask
-          ValidMask = false;
-          break;
-        }
-      }
-
-      if (ValidMask)
-        return std::make_pair(SplatMaskStart, SplatMaskLen);
+      // Check the mask
+      MaskMatch SequentialPeriodicMask{/*Height*/ Height.value(),
+                                       /*Period*/ SplatMaskLen};
+      if (SequentialPeriodicMask.isValidMask(Mask))
+        return std::make_pair(Height.value(), SplatMaskLen);
     }
     return std::nullopt;
   };
@@ -2272,10 +2292,11 @@ static bool matchShuffleToVecBroadcast(MachineInstr &MI,
     return false;
   }
 
-  for (unsigned I = 0; I < Mask.size(); ++I) {
-    if (Mask[I] != -1 && (unsigned)Mask[I] != I % NumSrcElems)
-      return false;
-  }
+  // Check the mask
+  MaskMatch SequentialPeriodicMask{/*Height*/ 0,
+                                   /*Period*/ NumSrcElems};
+  if (!SequentialPeriodicMask.isValidMask(Mask))
+    return false;
 
   MatchInfo = [=, &MRI](MachineIRBuilder &B) {
     buildBroadcastVector(B, MRI, Src1Reg, DstReg);
@@ -2288,6 +2309,12 @@ bool llvm::matchShuffleToBroadcast(MachineInstr &MI, MachineRegisterInfo &MRI,
                                    const AIEBaseInstrInfo &TII,
                                    BuildFnTy &MatchInfo) {
   assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR);
+
+  ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
+
+  if (MaskMatch::isMaskWithAllUndefs(Mask))
+    return false;
+
   if (matchShuffleToVecBroadcast(MI, MRI, TII, MatchInfo))
     return true;
   if (matchShuffleToVecEltBroadcast(MI, MRI, TII, MatchInfo))
@@ -2322,23 +2349,13 @@ bool llvm::matchShuffleToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
   if (Mask.size() != NumSrcElems)
     return false;
 
-  // If the mask has only -1 (undef), do nothing
-  auto AllUndefs = [NumSrcElems](const ArrayRef<int> &Mask) -> bool {
-    for (unsigned I = 0; I < NumSrcElems; ++I) {
-      if (Mask[I] != -1)
-        return false;
-    }
-    return true;
-  };
-
-  if (AllUndefs(Mask))
+  if (MaskMatch::isMaskWithAllUndefs(Mask))
     return false;
 
   // Check that the mask is sequential
-  for (unsigned I = 0; I < NumSrcElems; ++I) {
-    if (Mask[I] != -1 && Mask[I] != (int)I)
-      return false;
-  }
+  MaskMatch SequentialMask{/*Height*/ 0};
+  if (!SequentialMask.isValidMask(Mask))
+    return false;
 
   MatchInfo = [=](MachineIRBuilder &B) { B.buildCopy(DstReg, Src1Reg); };
 

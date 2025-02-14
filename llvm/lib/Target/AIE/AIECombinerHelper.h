@@ -34,6 +34,34 @@ struct AIELoadStoreCombineMatchData {
   bool RemoveInstr;
 };
 
+/// The mask is represented by a sawtooth function F with Period, Height and
+/// Amplitude, i.e., F(idx + Period) = F(idx) = Height + idx * Amplitude, where
+/// idx >= 0.
+/// Example: mask = (4, 6, 8, 4, 6, 8) <=> Height=4, Amplitude=2, Period=3
+class MaskMatch {
+public:
+  MaskMatch(unsigned MaskHeight, unsigned MaskPeriod = 0, int MaskAmplitude = 1)
+      : Period{MaskPeriod}, Height{MaskHeight}, Amplitude{MaskAmplitude} {}
+
+  bool isValidMask(ArrayRef<int> Mask) const;
+  unsigned getHeight() const { return Height; }
+
+  static bool isMaskWithAllUndefs(ArrayRef<int> Mask);
+  static std::optional<unsigned> getHeight(ArrayRef<int> Mask, unsigned Period);
+  static std::optional<int> getUniqueIndex(ArrayRef<int> Mask);
+
+protected:
+  unsigned getMaskValue(unsigned Idx) const {
+    unsigned BaseIdx = Period == 0 ? Idx : Idx % Period;
+    return Height + BaseIdx * Amplitude;
+  }
+
+  unsigned Period = 0;
+  unsigned Height = 0;
+  /// Negative amplitude can be used for reverse mask patterns.
+  int Amplitude = 1;
+};
+
 /// Look for any PtrAdd instruction that use the same base as \a MI that can be
 /// combined with it and stores it in \a MatchData
 /// \return true if an instruction is found
