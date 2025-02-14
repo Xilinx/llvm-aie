@@ -94,3 +94,261 @@ body:             |
     $x0 = COPY %0:vregbank(<16 x s32>)
     PseudoRET implicit $lr, implicit $x0
 ...
+---
+name:            VEXTBCST_32_extract_subvec_broadcast_64xs8_imm
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $r0, $x2
+    ; CHECK-LABEL: name: VEXTBCST_32_extract_subvec_broadcast_64xs8_imm
+    ; CHECK: liveins: $r0, $x2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
+    ; CHECK-NEXT: [[VEXTRACT_32_vec_extract_imm_vaddSign1_:%[0-9]+]]:er = VEXTRACT_32_vec_extract_imm_vaddSign1 [[COPY]], 1, implicit $vaddsign1
+    ; CHECK-NEXT: [[VBCST_32_:%[0-9]+]]:vec512 = VBCST_32 [[VEXTRACT_32_vec_extract_imm_vaddSign1_]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VBCST_32_]]
+    %1:vregbank(<64 x s8>) = COPY $x2
+    %3:gprregbank(s32) = G_CONSTANT i32 1
+    %4:gprregbank(<4 x s8>) = G_AIE_EXTRACT_SUBVECTOR %1(<64 x s8>), %3(s32)
+    %5:vregbank(<64 x s8>) = G_AIE_BROADCAST_VECTOR %4(<4 x s8>)
+    PseudoRET implicit $lr, implicit %5
+...
+---
+name:            VEXTBCST_32_extract_subvec_broadcast_32xs16_imm
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $r0, $x2
+    ; CHECK-LABEL: name: VEXTBCST_32_extract_subvec_broadcast_32xs16_imm
+    ; CHECK: liveins: $r0, $x2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
+    ; CHECK-NEXT: [[VEXTRACT_32_vec_extract_imm_vaddSign1_:%[0-9]+]]:er = VEXTRACT_32_vec_extract_imm_vaddSign1 [[COPY]], 1, implicit $vaddsign1
+    ; CHECK-NEXT: [[VBCST_32_:%[0-9]+]]:vec512 = VBCST_32 [[VEXTRACT_32_vec_extract_imm_vaddSign1_]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VBCST_32_]]
+    %1:vregbank(<32 x s16>) = COPY $x2
+    %3:gprregbank(s32) = G_CONSTANT i32 1
+    %4:gprregbank(<2 x s16>) = G_AIE_EXTRACT_SUBVECTOR %1(<32 x s16>), %3(s32)
+    %5:vregbank(<32 x s16>) = G_AIE_BROADCAST_VECTOR %4(<2 x s16>)
+    PseudoRET implicit $lr, implicit %5
+...
+---
+name:            VEXTBCST_64_extract_subvec_broadcast_64xs8_imm
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $r0, $x2
+    ; CHECK-LABEL: name: VEXTBCST_64_extract_subvec_broadcast_64xs8_imm
+    ; CHECK: liveins: $r0, $x2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
+    ; CHECK-NEXT: [[VEXTRACT_64_vec_extract_imm_vaddSign1_:%[0-9]+]]:el = VEXTRACT_64_vec_extract_imm_vaddSign1 [[COPY]], 1, implicit $vaddsign1
+    ; CHECK-NEXT: [[VBCST_64_:%[0-9]+]]:vec512 = VBCST_64 [[VEXTRACT_64_vec_extract_imm_vaddSign1_]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VBCST_64_]]
+    %1:vregbank(<64 x s8>) = COPY $x2
+    %3:gprregbank(s32) = G_CONSTANT i32 1
+    %4:gprregbank(<8 x s8>) = G_AIE_EXTRACT_SUBVECTOR %1(<64 x s8>), %3(s32)
+    %5:vregbank(<64 x s8>) = G_AIE_BROADCAST_VECTOR %4(<8 x s8>)
+    PseudoRET implicit $lr, implicit %5
+...
+---
+name:            VEXTBCST_64_extract_subvec_broadcast_32xs16_imm
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $r0, $x2
+    ; CHECK-LABEL: name: VEXTBCST_64_extract_subvec_broadcast_32xs16_imm
+    ; CHECK: liveins: $r0, $x2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
+    ; CHECK-NEXT: [[VEXTRACT_64_vec_extract_imm_vaddSign1_:%[0-9]+]]:el = VEXTRACT_64_vec_extract_imm_vaddSign1 [[COPY]], 1, implicit $vaddsign1
+    ; CHECK-NEXT: [[VBCST_64_:%[0-9]+]]:vec512 = VBCST_64 [[VEXTRACT_64_vec_extract_imm_vaddSign1_]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VBCST_64_]]
+    %1:vregbank(<32 x s16>) = COPY $x2
+    %3:gprregbank(s32) = G_CONSTANT i32 1
+    %4:gprregbank(<4 x s16>) = G_AIE_EXTRACT_SUBVECTOR %1(<32 x s16>), %3(s32)
+    %5:vregbank(<32 x s16>) = G_AIE_BROADCAST_VECTOR %4(<4 x s16>)
+    PseudoRET implicit $lr, implicit %5
+...
+---
+name:            VEXTBCST_64_extract_subvec_broadcast_16xs32_imm
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $r0, $x2
+    ; CHECK-LABEL: name: VEXTBCST_64_extract_subvec_broadcast_16xs32_imm
+    ; CHECK: liveins: $r0, $x2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
+    ; CHECK-NEXT: [[VEXTRACT_64_vec_extract_imm_vaddSign1_:%[0-9]+]]:el = VEXTRACT_64_vec_extract_imm_vaddSign1 [[COPY]], 1, implicit $vaddsign1
+    ; CHECK-NEXT: [[VBCST_64_:%[0-9]+]]:vec512 = VBCST_64 [[VEXTRACT_64_vec_extract_imm_vaddSign1_]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VBCST_64_]]
+    %1:vregbank(<16 x s32>) = COPY $x2
+    %3:gprregbank(s32) = G_CONSTANT i32 1
+    %4:gprregbank(<2 x s32>) = G_AIE_EXTRACT_SUBVECTOR %1(<16 x s32>), %3(s32)
+    %5:vregbank(<16 x s32>) = G_AIE_BROADCAST_VECTOR %4(<2 x s32>)
+    PseudoRET implicit $lr, implicit %5
+...
+---
+name:            VEXTBCST_64_extract_subvec_broadcast_8xs64_imm
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $r0, $x2
+    ; CHECK-LABEL: name: VEXTBCST_64_extract_subvec_broadcast_8xs64_imm
+    ; CHECK: liveins: $r0, $x2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
+    ; CHECK-NEXT: [[VEXTRACT_64_vec_extract_imm_vaddSign1_:%[0-9]+]]:el = VEXTRACT_64_vec_extract_imm_vaddSign1 [[COPY]], 1, implicit $vaddsign1
+    ; CHECK-NEXT: [[VBCST_64_:%[0-9]+]]:vec512 = VBCST_64 [[VEXTRACT_64_vec_extract_imm_vaddSign1_]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VBCST_64_]]
+    %1:vregbank(<8 x s64>) = COPY $x2
+    %3:gprregbank(s32) = G_CONSTANT i32 1
+    %4:gprregbank(<2 x s32>) = G_AIE_EXTRACT_SUBVECTOR %1(<8 x s64>), %3(s32)
+    %5:vregbank(<8 x s64>) = G_AIE_BROADCAST_VECTOR %4(<2 x s32>)
+    PseudoRET implicit $lr, implicit %5
+...
+---
+name:            VEXTBCST_32_extract_subvec_broadcast_64xs8_r
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $r0, $x2
+    ; CHECK-LABEL: name: VEXTBCST_32_extract_subvec_broadcast_64xs8_r
+    ; CHECK: liveins: $r0, $x2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r0
+    ; CHECK-NEXT: [[VEXTRACT_32_vec_extract_r_vaddSign1_:%[0-9]+]]:er = VEXTRACT_32_vec_extract_r_vaddSign1 [[COPY]], [[COPY1]], implicit $vaddsign1
+    ; CHECK-NEXT: [[VBCST_32_:%[0-9]+]]:vec512 = VBCST_32 [[VEXTRACT_32_vec_extract_r_vaddSign1_]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VBCST_32_]]
+    %1:vregbank(<64 x s8>) = COPY $x2
+    %3:gprregbank(s32) = COPY $r0
+    %4:gprregbank(<4 x s8>) = G_AIE_EXTRACT_SUBVECTOR %1(<64 x s8>), %3(s32)
+    %5:vregbank(<64 x s8>) = G_AIE_BROADCAST_VECTOR %4(<4 x s8>)
+    PseudoRET implicit $lr, implicit %5
+...
+---
+name:            VEXTBCST_32_extract_subvec_broadcast_32xs16_r
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $r0, $x2
+    ; CHECK-LABEL: name: VEXTBCST_32_extract_subvec_broadcast_32xs16_r
+    ; CHECK: liveins: $r0, $x2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r0
+    ; CHECK-NEXT: [[VEXTRACT_32_vec_extract_r_vaddSign1_:%[0-9]+]]:er = VEXTRACT_32_vec_extract_r_vaddSign1 [[COPY]], [[COPY1]], implicit $vaddsign1
+    ; CHECK-NEXT: [[VBCST_32_:%[0-9]+]]:vec512 = VBCST_32 [[VEXTRACT_32_vec_extract_r_vaddSign1_]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VBCST_32_]]
+    %1:vregbank(<32 x s16>) = COPY $x2
+    %3:gprregbank(s32) = COPY $r0
+    %4:gprregbank(<2 x s16>) = G_AIE_EXTRACT_SUBVECTOR %1(<32 x s16>), %3(s32)
+    %5:vregbank(<32 x s16>) = G_AIE_BROADCAST_VECTOR %4(<2 x s16>)
+    PseudoRET implicit $lr, implicit %5
+...
+---
+name:            VEXTBCST_64_extract_subvec_broadcast_64xs8_r
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $r0, $x2
+    ; CHECK-LABEL: name: VEXTBCST_64_extract_subvec_broadcast_64xs8_r
+    ; CHECK: liveins: $r0, $x2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r0
+    ; CHECK-NEXT: [[VEXTRACT_64_vec_extract_r_vaddSign1_:%[0-9]+]]:el = VEXTRACT_64_vec_extract_r_vaddSign1 [[COPY]], [[COPY1]], implicit $vaddsign1
+    ; CHECK-NEXT: [[VBCST_64_:%[0-9]+]]:vec512 = VBCST_64 [[VEXTRACT_64_vec_extract_r_vaddSign1_]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VBCST_64_]]
+    %1:vregbank(<64 x s8>) = COPY $x2
+    %3:gprregbank(s32) = COPY $r0
+    %4:gprregbank(<8 x s8>) = G_AIE_EXTRACT_SUBVECTOR %1(<64 x s8>), %3(s32)
+    %5:vregbank(<64 x s8>) = G_AIE_BROADCAST_VECTOR %4(<8 x s8>)
+    PseudoRET implicit $lr, implicit %5
+...
+---
+name:            VEXTBCST_64_extract_subvec_broadcast_32xs16_r
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $r0, $x2
+    ; CHECK-LABEL: name: VEXTBCST_64_extract_subvec_broadcast_32xs16_r
+    ; CHECK: liveins: $r0, $x2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r0
+    ; CHECK-NEXT: [[VEXTRACT_64_vec_extract_r_vaddSign1_:%[0-9]+]]:el = VEXTRACT_64_vec_extract_r_vaddSign1 [[COPY]], [[COPY1]], implicit $vaddsign1
+    ; CHECK-NEXT: [[VBCST_64_:%[0-9]+]]:vec512 = VBCST_64 [[VEXTRACT_64_vec_extract_r_vaddSign1_]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VBCST_64_]]
+    %1:vregbank(<32 x s16>) = COPY $x2
+    %3:gprregbank(s32) = COPY $r0
+    %4:gprregbank(<4 x s16>) = G_AIE_EXTRACT_SUBVECTOR %1(<32 x s16>), %3(s32)
+    %5:vregbank(<32 x s16>) = G_AIE_BROADCAST_VECTOR %4(<4 x s16>)
+    PseudoRET implicit $lr, implicit %5
+...
+---
+name:            VEXTBCST_64_extract_subvec_broadcast_16xs32_r
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $r0, $x2
+    ; CHECK-LABEL: name: VEXTBCST_64_extract_subvec_broadcast_16xs32_r
+    ; CHECK: liveins: $r0, $x2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r0
+    ; CHECK-NEXT: [[VEXTRACT_64_vec_extract_r_vaddSign1_:%[0-9]+]]:el = VEXTRACT_64_vec_extract_r_vaddSign1 [[COPY]], [[COPY1]], implicit $vaddsign1
+    ; CHECK-NEXT: [[VBCST_64_:%[0-9]+]]:vec512 = VBCST_64 [[VEXTRACT_64_vec_extract_r_vaddSign1_]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VBCST_64_]]
+    %1:vregbank(<16 x s32>) = COPY $x2
+    %3:gprregbank(s32) = COPY $r0
+    %4:gprregbank(<2 x s32>) = G_AIE_EXTRACT_SUBVECTOR %1(<16 x s32>), %3(s32)
+    %5:vregbank(<16 x s32>) = G_AIE_BROADCAST_VECTOR %4(<2 x s32>)
+    PseudoRET implicit $lr, implicit %5
+...
+---
+name:            VEXTBCST_64_extract_subvec_broadcast_8xs64_r
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $r0, $x2
+    ; CHECK-LABEL: name: VEXTBCST_64_extract_subvec_broadcast_8xs64_r
+    ; CHECK: liveins: $r0, $x2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r0
+    ; CHECK-NEXT: [[VEXTRACT_64_vec_extract_r_vaddSign1_:%[0-9]+]]:el = VEXTRACT_64_vec_extract_r_vaddSign1 [[COPY]], [[COPY1]], implicit $vaddsign1
+    ; CHECK-NEXT: [[VBCST_64_:%[0-9]+]]:vec512 = VBCST_64 [[VEXTRACT_64_vec_extract_r_vaddSign1_]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VBCST_64_]]
+    %1:vregbank(<8 x s64>) = COPY $x2
+    %3:gprregbank(s32) = COPY $r0
+    %4:gprregbank(<2 x s32>) = G_AIE_EXTRACT_SUBVECTOR %1(<8 x s64>), %3(s32)
+    %5:vregbank(<8 x s64>) = G_AIE_BROADCAST_VECTOR %4(<2 x s32>)
+    PseudoRET implicit $lr, implicit %5
+...
