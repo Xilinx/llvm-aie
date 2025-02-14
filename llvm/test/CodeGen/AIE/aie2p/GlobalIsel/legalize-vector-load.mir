@@ -43,6 +43,24 @@ body:             |
 ...
 
 ---
+name:            test_v2s1024
+body:             |
+  bb.1.entry:
+    liveins: $p0
+
+    ; CHECK-LABEL: name: test_v2s1024
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; CHECK-NEXT: [[LOAD:%[0-9]+]]:_(<32 x s64>) = G_LOAD [[COPY]](p0) :: (load (<32 x s64>))
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<2 x s1024>) = G_BITCAST [[LOAD]](<32 x s64>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[BITCAST]](<2 x s1024>)
+    %1:_(p0) = COPY $p0
+    %0:_(<2 x s1024>) = G_LOAD %1(p0) :: (load (<2 x s1024>))
+    PseudoRET implicit $lr, implicit %0
+...
+
+---
 name:            test_v4int32_unaligned
 body:             |
   bb.1.entry:
