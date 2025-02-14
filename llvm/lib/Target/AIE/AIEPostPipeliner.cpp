@@ -136,9 +136,11 @@ int PostPipeliner::getResMII(MachineBasicBlock &LoopBlock) {
 // This assigns Cycle of SU, Earliest of its successors and Latest of its
 // predecessors
 void PostPipeliner::scheduleNode(SUnit &SU, int Cycle) {
-  LLVM_DEBUG(dbgs() << "PostPipeline " << SU.NodeNum << " in cycle " << Cycle
-                    << ". ");
+  LLVM_DEBUG(dbgs() << "PostPipelined SU" << SU.NodeNum << " in cycle " << Cycle
+                    << ": " << *SU.getInstr());
   Info[SU.NodeNum].Cycle = Cycle;
+
+  LLVM_DEBUG(dbgs() << "  Pushed succs Earliest: ");
   for (auto &Dep : SU.Succs) {
     int Latency = Dep.getSignedLatency();
     auto *Succ = Dep.getSUnit();
@@ -148,12 +150,14 @@ void PostPipeliner::scheduleNode(SUnit &SU, int Cycle) {
     const int SNum = Succ->NodeNum;
     const int NewEarliest = Cycle + Latency;
     if (NewEarliest > Info[SNum].Earliest) {
+      LLVM_DEBUG(dbgs() << "SU" << SNum << " from " << Info[SNum].Earliest
+                        << " to " << NewEarliest << " ; ");
       Info[SNum].LastEarliestPusher = SU.NodeNum;
       Info[SNum].Earliest = NewEarliest;
       Info[SU.NodeNum].NumPushedEarliest++;
-      LLVM_DEBUG(dbgs() << SNum << " to " << Info[SNum].Earliest << " -; ");
     }
   }
+  LLVM_DEBUG(dbgs() << "\n  Pushed preds Latest: ");
   for (auto &Dep : SU.Preds) {
     int Latency = Dep.getSignedLatency();
     auto *Pred = Dep.getSUnit();
@@ -163,10 +167,11 @@ void PostPipeliner::scheduleNode(SUnit &SU, int Cycle) {
     const int PNum = Pred->NodeNum;
     const int NewLatest = Cycle - Latency;
     if (NewLatest < Info[PNum].Latest) {
+      LLVM_DEBUG(dbgs() << "SU" << PNum << " from " << Info[PNum].Latest
+                        << " to " << NewLatest << " ; ");
       Info[PNum].LastLatestPusher = SU.NodeNum;
       Info[PNum].Latest = NewLatest;
       Info[SU.NodeNum].NumPushedLatest++;
-      LLVM_DEBUG(dbgs() << PNum << " to - " << Info[PNum].Latest << "; ");
     }
   }
   LLVM_DEBUG(dbgs() << "\n");
@@ -539,6 +544,7 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
     LLVM_DEBUG(dbgs() << "  Emit in " << Cycle << "\n");
     for (int N = 0; N < NCopies; N++) {
       if (N > 0 && HR.checkConflict(Scoreboard, *MI, Cycle)) {
+        LLVM_DEBUG(dbgs() << "Conflict in iteration N=" << N << "\n");
         return false;
       }
 
@@ -562,7 +568,7 @@ void dumpEarliestChain(const ScheduleInfo &Info, int N) {
   if (Prev) {
     dumpEarliestChain(Info, *Prev);
   }
-  dbgs() << "  --> " << N << " @" << Info[N].Cycle << "\n";
+  dbgs() << "  --> SU" << N << " @" << Info[N].Cycle << "\n";
 }
 } // namespace
 
