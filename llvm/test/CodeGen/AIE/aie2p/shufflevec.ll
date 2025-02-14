@@ -409,15 +409,30 @@ entry:
 
 ; Test extract and broadcast a subvector
 
-define <16 x i16> @test_shuffle_vector_to_extract_broadcast_subvec(<16 x i16> noundef %a, <16 x i16> noundef %b) {
-; CHECK-LABEL: test_shuffle_vector_to_extract_broadcast_subvec:
+define <64 x i8> @test_shuffle_vector_to_extract_broadcast_subvec_32(<64 x i8> noundef %a, <64 x i8> noundef %b) {
+; CHECK-LABEL: test_shuffle_vector_to_extract_broadcast_subvec_32:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
-; CHECK-NEXT:    nopx // Delay Slot 5
-; CHECK-NEXT:    vextract.64 r1:r0, x2, #1, vaddsign1 // Delay Slot 4
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    vbcst.64 x0, r1:r0 // Delay Slot 2
+; CHECK-NEXT:    vextbcst.32 x0, x2, #1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %shuffle = shufflevector <64 x i8> %a, <64 x i8> %b, <64 x i32> <i32 4, i32 5, i32 6, i32 7, i32 4, i32 5, i32 6, i32 7, i32 4, i32 5, i32 6, i32 7, i32 4, i32 5, i32 6, i32 7, i32 4, i32 5, i32 6, i32 7, i32 4, i32 5, i32 6, i32 7, i32 4, i32 5, i32 6, i32 7, i32 4, i32 5, i32 6, i32 7, i32 4, i32 5, i32 6, i32 7, i32 4, i32 5, i32 6, i32 7, i32 4, i32 5, i32 6, i32 7, i32 4, i32 5, i32 6, i32 7, i32 4, i32 5, i32 6, i32 7, i32 4, i32 5, i32 6, i32 7, i32 4, i32 5, i32 6, i32 7, i32 4, i32 5, i32 6, i32 7>
+  ret <64 x i8> %shuffle
+}
+
+define <16 x i16> @test_shuffle_vector_to_extract_broadcast_subvec_64(<16 x i16> noundef %a, <16 x i16> noundef %b) {
+; CHECK-LABEL: test_shuffle_vector_to_extract_broadcast_subvec_64:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    vextbcst.64 x0, x2, #1 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %shuffle = shufflevector <16 x i16> %a, <16 x i16> %b, <16 x i32> <i32 4, i32 5, i32 6, i32 7, i32 4, i32 5, i32 6, i32 7, i32 4, i32 5, i32 6, i32 7, i32 4, i32 5, i32 6, i32 7>
