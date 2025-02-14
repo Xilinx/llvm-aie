@@ -886,6 +886,43 @@ def : Pat<(int_aie2p_vextract_broadcast128_I512 VEC512:$src, eR:$idx),
 def : Pat<(int_aie2p_vextract_broadcast128_I512 VEC512:$src, c6u:$idx),
            (VEXTBCST_128_vec_extract_broadcast_imm  VEC512:$src, c6u:$idx)>;
 
+// Combine G_AIE_BROADCAST(G_AIE_EXTRACT_SUBVECTOR) into VEXTBCST
+// Note:  Broadcast destination type is the same as subvector source type
+class BcstSubvecPat<AIE2PInst Inst, ValueType BcstDstTy, 
+                      ValueType SubvecDstTy, DAGOperand IdxTy> :
+  Pat<(BcstDstTy (bcst_vector_node
+                      (SubvecDstTy(extract_subvec_node(BcstDstTy VEC512:$s0), 
+                                                      (i32 IdxTy:$idx))))), 
+(Inst VEC512:$s0, IdxTy:$idx)>;
+
+class BcstSubvecPair<AIE2PInst inst, DAGOperand idxTy>{
+  AIE2PInst Inst = inst;
+  DAGOperand IdxTy = idxTy;
+}
+
+defset list<BcstSubvecPair> BcstSubvec32Pairs={ 
+  def : BcstSubvecPair<VEXTBCST_32_vec_extract_broadcast_imm, c6u>;
+  def : BcstSubvecPair<VEXTBCST_32_vec_extract_broadcast_r, eRS4>;
+
+}
+
+defset list<BcstSubvecPair> BcstSubvec64Pairs={ 
+  def : BcstSubvecPair<VEXTBCST_64_vec_extract_broadcast_imm, c6u>;
+  def : BcstSubvecPair<VEXTBCST_64_vec_extract_broadcast_r, eRS4>;
+}
+
+foreach Pair = BcstSubvec32Pairs in {
+  def : BcstSubvecPat<Pair.Inst, v64i8, v4i8, Pair.IdxTy>;
+  def : BcstSubvecPat<Pair.Inst, v32i16, v2i16, Pair.IdxTy>;
+}
+
+foreach  Pair = BcstSubvec64Pairs in {
+  def : BcstSubvecPat<Pair.Inst, v64i8, v8i8, Pair.IdxTy>;
+  def : BcstSubvecPat<Pair.Inst, v32i16, v4i16, Pair.IdxTy>;
+  def : BcstSubvecPat<Pair.Inst, v16i32, v2i32, Pair.IdxTy>;
+  def : BcstSubvecPat<Pair.Inst, v8i64, v2i32, Pair.IdxTy>;
+}
+
 // VBCSTSHFL
 // Note: There are VBCSTSHFL instructions, which return accumulator types, but it seems no Intrinsics of that type.
 def : Pat<(int_aie2p_vbcst_shuffle8 eR:$s0, eR29:$idx),
