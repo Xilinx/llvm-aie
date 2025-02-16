@@ -22,6 +22,9 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: ST_dms_sts_idx_imm $r0, killed $p1, 0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: DONE
     ; CHECK-NEXT: RET implicit $lr
     ; CHECK-NEXT: NOP
