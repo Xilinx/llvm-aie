@@ -184,9 +184,9 @@ bool updateSuccLatency(SDep &SuccEdge, SUnit &PredSU, int Latency) {
   return updatePredLatency(PredEdge, *SuccEdge.getSUnit(), Latency);
 }
 
-// Set the latency of ordering edges between memory operations and locks.
+// Set the latency of ordering edges between memory operations and locks/DONE.
 // The initial graph will have ordering edges induced by hasSideEffects of the
-// locks
+// locks/DONE.
 class LockDelays : public ScheduleDAGMutation {
   void apply(ScheduleDAGInstrs *DAG) override {
     // FIXME: Delays for locks to reach the core aren't completely described in
@@ -199,9 +199,12 @@ class LockDelays : public ScheduleDAGMutation {
     // to increase the edge latency.
     // Note that scalar streams are kept away from locks using
     // a reserved FuncUnit instead.  See AIE2Schedule.td
+    // Be conservative for DONE instruction as we don't expect it to appear
+    // without a sched barrier.
     for (auto &SU : DAG->SUnits) {
-      MachineInstr *Lock = SU.getInstr();
-      if (!Lock || !TII->isLock(Lock->getOpcode())) {
+      MachineInstr *MI = SU.getInstr();
+      if (!MI || !(TII->isLock(MI->getOpcode()) ||
+                   TII->getDoneLatency(MI->getOpcode()))) {
         continue;
       }
       for (auto &PredEdge : SU.Preds) {
