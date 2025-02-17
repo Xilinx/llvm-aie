@@ -196,37 +196,66 @@ int PostPipeliner::fit(MachineInstr *MI, int First, int Last, int II) {
   return -1;
 }
 
+// Account for predecessor that require the same resources by pushing Earliest
+// further.
+void PostPipeliner::biasForLocalResourceContention(NodeInfo &NI,
+                                                   const SUnit &SU) {
+  SlotCounts Slots(NI.Slots);
+  int PredEarliest = std::numeric_limits<int>::max();
+  SmallSet<int, 8> UniqueAncestors;
+  int Count = 0;
+
+  for (const SDep &Dep : SU.Preds) {
+    if (Dep.getKind() != SDep::Data) {
+      continue;
+    }
+    int P = Dep.getSUnit()->NodeNum;
+    const NodeInfo &Pred = Info[P];
+    auto [It, Inserted] = UniqueAncestors.insert(P);
+    if (Inserted) {
+      Slots += Pred.Slots;
+      Count++;
+    }
+    PredEarliest = std::min(PredEarliest, Pred.Earliest);
+  }
+
+  // When we need more slots than we have data predecessors, we have local
+  // resource contention that we can safely account for in Earliest.
+  if (Count > 0 && Slots.max() > Count) {
+    int NewEarliest = std::max(NI.Earliest, PredEarliest + Slots.max() - 1);
+    LLVM_DEBUG(dbgs() << "  SU" << SU.NodeNum << " MaxSlots=" << Slots.max()
+                      << ": Earliest " << NI.Earliest << " -> " << NewEarliest
+                      << "\n");
+    NI.Earliest = NewEarliest;
+  }
+}
+
 void PostPipeliner::computeForward() {
   // The forward order defines a topological sort, so we can compute
   // Earliest and Ancestors in a single forward sweep
   for (int K = 0; K < NInstr; K++) {
+    LLVM_DEBUG(dbgs() << "computeForward SU" << K << "\n");
     auto &Me = Info[K];
     SUnit &SU = DAG->SUnits[K];
-    Me.Slots = getSlotCounts(*SU.getInstr(), TII);
-    // Accumulate the slots of Me and all data predecessors.
-    SlotCounts Slots(Me.Slots);
-    int PredEarliest = std::numeric_limits<int>::max();
-    int Count = 0;
+
+    // Give a more realistic Earliest if preds require similar resources.
+    biasForLocalResourceContention(Me, SU);
+
+    // Accumulate all data predecessors.
     for (auto &Dep : SU.Preds) {
       if (Dep.getKind() != SDep::Data) {
         continue;
       }
       int P = Dep.getSUnit()->NodeNum;
       assert(P < K);
+      const NodeInfo &Pred = Info[P];
       Me.Ancestors.insert(P);
-      auto &Pred = Info[P];
-      Slots += Pred.Slots;
-      Count++;
-      PredEarliest = std::min(PredEarliest, Pred.Earliest);
       for (int Anc : Pred.Ancestors) {
         Me.Ancestors.insert(Anc);
       }
     }
-    // When we need more slots than we have data predecessors, we have local
-    // resource contention that we can safely account for in Earliest.
-    if (Count > 0 && Slots.max() > Count) {
-      Me.Earliest = std::max(Me.Earliest, PredEarliest + Slots.max() - 1);
-    }
+
+    // Propagate Earliest to successors
     for (auto &Dep : SU.Succs) {
       auto *Succ = Dep.getSUnit();
       if (Succ->isBoundaryNode()) {
@@ -234,6 +263,11 @@ void PostPipeliner::computeForward() {
       }
       auto &SInfo = Info[Succ->NodeNum];
       const int NewEarliest = Me.Earliest + Dep.getSignedLatency();
+      if (NewEarliest != SInfo.Earliest) {
+        LLVM_DEBUG(dbgs() << "  SU" << Succ->NodeNum << " : Earliest "
+                          << SInfo.Earliest << " -> "
+                          << std::max(SInfo.Earliest, NewEarliest) << "\n");
+      }
       SInfo.Earliest = std::max(SInfo.Earliest, NewEarliest);
     }
   }
@@ -275,6 +309,11 @@ bool PostPipeliner::computeBackward() {
 
 bool PostPipeliner::computeLoopCarriedParameters() {
 
+  // Initialize slot counts.
+  for (int K = 0; K < NTotalInstrs; K++) {
+    Info[K].Slots = getSlotCounts(*DAG->SUnits[K].getInstr(), TII);
+  }
+
   // Forward properties like Earliest and Ancestors.
   computeForward();
 
@@ -314,6 +353,9 @@ bool PostPipeliner::computeLoopCarriedParameters() {
     const int KNextIter = K + NInstr;
     const int Earliest = Info[KNextIter].Earliest - II;
     Info[K].Earliest = std::max(Info[K].Earliest, Earliest);
+    LLVM_DEBUG(dbgs() << "SU" << K << " LCD: Earliest=" << Info[K].Earliest
+                      << "(Modulo SU" << KNextIter
+                      << " Earliest=" << Info[KNextIter].Earliest << ")\n");
   }
 
   // Make Earliest of the second iteration push up Latest of the first
@@ -340,6 +382,13 @@ bool PostPipeliner::computeLoopCarriedParameters() {
   for (auto &N : Info.Nodes) {
     N.StaticEarliest = N.Earliest;
     N.StaticLatest = N.Latest;
+  }
+
+  LLVM_DEBUG(dbgs() << "Final Earliest - Latest:\n");
+  for (int K = 0; K < NTotalInstrs; K++) {
+    auto &Me = Info[K];
+    LLVM_DEBUG(dbgs() << "  SU" << K << " : " << Me.Earliest << " - "
+                      << Me.Latest << "\n");
   }
   return true;
 }
