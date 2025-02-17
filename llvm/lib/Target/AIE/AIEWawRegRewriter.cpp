@@ -253,7 +253,12 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
       // WAW dependency resolution
       if (LastVRegDef[Reg] != &MI)
         continue;
-
+      // See llvm bug #48911.
+      // Skip reassign if a register has originated from InlineSpiller.
+      // FIXME: Remove the workaround when bug #48911 is fixed.
+      if (VRM->getPreSplitReg(Reg)) {
+        continue;
+      }
       if (isWorthRenaming(Reg, VRegWithCopies)) {
         assert(VRM->hasPhys(Reg));
         MCRegister AssignedPhysReg = VRM->getPhys(Reg);
