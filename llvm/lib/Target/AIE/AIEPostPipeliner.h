@@ -65,6 +65,11 @@ public:
   int StaticEarliest = 0;
   int StaticLatest = -1;
 
+  /// "Tweaked" numbers for \p Earliest and \p Latest to use for the next
+  /// iteration of this strategy.
+  std::optional<int> TweakedEarliest;
+  std::optional<int> TweakedLatest;
+
   // Slots necessary for this instruction.
   SlotCounts Slots;
 
@@ -124,6 +129,7 @@ public:
   virtual int latest(const SUnit &N) {
     return Info[N.NodeNum].Latest + LatestBias;
   }
+  virtual int mobility(const SUnit &N) { return latest(N) - earliest(N); }
   // Select from top or from bottom.
   virtual bool fromTop() { return true; }
   // Report a final selection. This marks the start of selecting a new node.
@@ -215,7 +221,7 @@ class PostPipeliner {
   bool scheduleFirstIteration(PostPipelinerStrategy &Strategy);
 
   /// Check that all copied instructions can run in the same modulo cycle
-  bool scheduleOtherIterations();
+  bool scheduleOtherIterations(PostPipelinerStrategy &Strategy);
 
   /// Reset dynamic scheduling data.
   /// If FullReset is set, also reset information collected from earlier

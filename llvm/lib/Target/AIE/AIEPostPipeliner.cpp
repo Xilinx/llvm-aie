@@ -30,6 +30,10 @@ static cl::opt<int>
     Heuristic("aie-postpipeliner-heuristic",
               cl::desc("Select one specific post-pipeliner heuristic"),
               cl::init(-1), cl::Hidden);
+static cl::opt<int>
+    HeuristicRuns("aie-postpipeliner-heuristic-runs",
+                  cl::desc("Number of runs for heuristics that converge"),
+                  cl::init(20), cl::Hidden);
 
 PipelineScheduleVisitor::~PipelineScheduleVisitor() {}
 
@@ -511,8 +515,8 @@ void PostPipeliner::resetSchedule(bool FullReset) {
     auto &N = Info[K];
     N.reset(FullReset);
     if (K < NInstr) {
-      N.Earliest = N.StaticEarliest;
-      N.Latest = N.StaticLatest;
+      N.Earliest = N.TweakedEarliest ? *N.TweakedEarliest : N.StaticEarliest;
+      N.Latest = N.TweakedLatest ? *N.TweakedLatest : N.StaticLatest;
     }
   }
 
@@ -533,8 +537,12 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
     const int Actual = Strategy.fromTop() ? fit(MI, Earliest, Latest + 1, II)
                                           : fit(MI, Latest, Earliest - 1, II);
     if (Actual < 0) {
-      // out of resources for this II;
       LLVM_DEBUG(dbgs() << "Out of resources\n");
+
+      // The node might have been given too tight Earliest/Latest attributes.
+      // Relax those to give another chance for scheduling this II.
+      Info[N].TweakedEarliest = {};
+      Info[N].TweakedLatest = {};
       return false;
     }
     Strategy.selected(SU);
@@ -572,7 +580,7 @@ void dumpEarliestChain(const ScheduleInfo &Info, int N) {
 }
 } // namespace
 
-bool PostPipeliner::scheduleOtherIterations() {
+bool PostPipeliner::scheduleOtherIterations(PostPipelinerStrategy &Strategy) {
   // Make sure that all the copies can be placed at II from the previous one.
   // This looks like overkill, but it accommodates dependences that span
   // multiple loop edges. Without these, the pattern should repeat after the
@@ -581,16 +589,43 @@ bool PostPipeliner::scheduleOtherIterations() {
     for (int K = 0; K < NInstr; K++) {
       const int N = L + K;
       SUnit &SU = DAG->SUnits[N];
+      NodeInfo &Node = Info[N];
+      const SUnit &ModuloSU = DAG->SUnits[N - NInstr];
+      NodeInfo &ModuloNode = Info[N - NInstr];
+
       // Earliest tracks the latencies of the loop carried deps
-      const int Earliest = Info[N].Earliest;
+      const int Earliest = Node.Earliest;
       // Insert supplies the modulo condition.
-      const int Insert = Info[N - NInstr].Cycle + II;
+      const int Insert = ModuloNode.Cycle + II;
 
       // All iterations following the first one should fit exactly
       if (Earliest > Insert) {
-        LLVM_DEBUG(dbgs() << "  Latency not met for " << N
-                          << "(Earliest=" << Earliest << ")\n";
-                   dumpEarliestChain(Info, N););
+        LLVM_DEBUG(dbgs() << "Latency not met for SU" << N << " in cycle "
+                          << Insert << " (Earliest=" << Earliest
+                          << " ModuloNode=SU" << N - NInstr << ")\n";
+                   dumpEarliestChain(Info, N));
+        if (Strategy.mobility(ModuloSU) > 0) {
+          // The modulo Node can be delayed
+          ModuloNode.TweakedEarliest = ModuloNode.Earliest + 1;
+          LLVM_DEBUG(dbgs() << "  Try to delay SU" << N - NInstr
+                            << " with TweakedEarliest= "
+                            << ModuloNode.TweakedEarliest << "\n");
+          return false;
+        }
+        if (Node.LastEarliestPusher && *Node.LastEarliestPusher < NInstr) {
+          // The modulo Node cannot be delayed.
+          // Instead, prioritise whatever pushed us.
+          NodeInfo &Pusher = Info[*Node.LastEarliestPusher];
+          if (Strategy.mobility(DAG->SUnits[*Node.LastEarliestPusher]) > 0) {
+            ModuloNode.TweakedEarliest = {};
+            Pusher.TweakedLatest = Pusher.Latest - 1;
+            LLVM_DEBUG(dbgs()
+                       << "  Try to prioritise SU" << *Node.LastEarliestPusher
+                       << " with TweakedLatest= " << Pusher.TweakedLatest
+                       << "\n");
+            return false;
+          }
+        }
         return false;
       }
 
@@ -750,13 +785,13 @@ static const ConfigStrategy::Configuration Strategies[] = {
     // Runs>1 is only useful for heuristics that use it, e.g. Critical
     // {ExtraStages, TopDown, Alternate, Runs, PriorityComponents}
     {1, true, false, 1, {Prio::NodeNum}},
-    {1, true, false, 1, {Prio::Latest}},
-    {1, true, false, 2, {Prio::Critical}},
-    {1, true, false, 2, {Prio::Critical, Prio::LCDLatest}},
+    {1, true, false, HeuristicRuns, {Prio::Latest}},
+    {1, true, false, HeuristicRuns, {Prio::Critical}},
+    {1, true, false, HeuristicRuns, {Prio::Critical, Prio::LCDLatest}},
+    // Bottom-up strategies
     {0, false, false, 2, {Prio::Critical, Prio::LCDLatest}},
     {1, false, false, 2, {Prio::Critical, Prio::LCDLatest}},
-    // This is pure bottom up
-    {1, false, false, 1, {Prio::NodeNum}},
+    {1, false, false, 1, {Prio::NodeNum}}, // pure bottom up
 };
 
 bool PostPipeliner::tryHeuristics() {
@@ -774,7 +809,7 @@ bool PostPipeliner::tryHeuristics() {
     for (int Run = 0; Run < Config.Runs; Run++) {
       DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name() << " run=" << Run
                            << "\n");
-      if (scheduleFirstIteration(S) && scheduleOtherIterations()) {
+      if (scheduleFirstIteration(S) && scheduleOtherIterations(S)) {
         DEBUG_SUMMARY(dbgs() << "    Strategy " << S.name() << " run=" << Run
                              << " found II=" << II << "\n");
         return true;
@@ -920,6 +955,8 @@ void NodeInfo::reset(bool FullReset) {
   Earliest = 0;
   Latest = -1;
   if (FullReset) {
+    TweakedEarliest = {};
+    TweakedLatest = {};
     NumPushedEarliest = 0;
     NumPushedLatest = 0;
     LastEarliestPusher = {};

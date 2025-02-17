@@ -26,57 +26,56 @@
   ; CHECK-NEXT:    nop // Delay Slot 2
   ; CHECK-NEXT:    nop // Delay Slot 1
   ; CHECK-NEXT:  // %bb.1: // %for.body.preheader
-  ; CHECK-NEXT:    vldb wh10, [p4, #32]; nopx
+  ; CHECK-NEXT:    nopa ; vldb wh10, [p4, #32]; nopx
   ; CHECK-NEXT:    vldb wl10, [p4], m4
+  ; CHECK-NEXT:    vldb wh10, [p5, #32]
   ; CHECK-NEXT:    vldb wh7, [p4, #32]
   ; CHECK-NEXT:    vldb wl7, [p4], m4
-  ; CHECK-NEXT:    vldb wh8, [p4, #32]
-  ; CHECK-NEXT:    vldb wl8, [p4], m4; add.nc lc, r0, #-1
+  ; CHECK-NEXT:    vldb wl10, [p5], #64
+  ; CHECK-NEXT:    vldb wh7, [p5, #32]
+  ; CHECK-NEXT:    vldb wh8, [p4, #32]; add.nc lc, r0, #-1
+  ; CHECK-NEXT:    vldb wl8, [p4], m4; vshift.align x3, x3, s0, x10, r21
   ; CHECK-NEXT:    vldb wh11, [p4, #32]; movxm ls, #.LBB0_2
   ; CHECK-NEXT:    vldb.3d wl11, [p4], d0; movxm le, #.L_LEnd0
-  ; CHECK-NEXT:    vldb wh10, [p5, #32]; nopa ; nops ; nopx ; vshift.align x3, x3, s0, x10, r21; nopv
-  ; CHECK-NEXT:    vldb wl10, [p5], #64; nopa ; nops ; nopx ; mov r3, p4; nopv
-  ; CHECK-NEXT:    vldb wh7, [p5, #32]; nopa ; nops ; and r3, r3, r6; vshift.align x2, x2, s0, x7, r21; nopv
-  ; CHECK-NEXT:    vldb wl7, [p5], #64; nopa ; nops ; nopx ; vshuffle x6, x3, x2, r10; nopv
-  ; CHECK-NEXT:    vldb wh9, [p5, #32]; nopa ; nops ; nopx ; vshift.align x1, x1, s0, x8, r21; nopv
-  ; CHECK-NEXT:    vldb wl9, [p5], #64; nopa ; nops ; nopx ; vshuffle x8, x3, x2, r25; nopv
-  ; CHECK-NEXT:    vldb wh4, [p5, #32]; nopa ; nops ; add r21, r3, #34; vshift.align x0, x0, s0, x11, r21; nopv
-  ; CHECK-NEXT:    vldb wl4, [p5], #64; vshuffle x4, x1, x0, r10
-  ; CHECK-NEXT:    nopx ; vshuffle x11, x1, x0, r25; vmac.f bmh4, bmh4, x8, x10, r14
-  ; CHECK-NEXT:    vshuffle x5, x4, x6, r15
-  ; CHECK-NEXT:    vshuffle x6, x4, x6, r24; vmac.f bml1, bml1, x11, x10, r14
-  ; CHECK-NEXT:    vmac.f bmh3, bmh3, x5, x10, r14
+  ; CHECK-NEXT:    vldb wl7, [p5], #64; nopa ; nops ; nopx ; vshift.align x2, x2, s0, x7, r21; nopv
+  ; CHECK-NEXT:    vldb wh9, [p5, #32]; nopa ; nops ; nopx ; mov r3, p4; nopv
+  ; CHECK-NEXT:    vldb wl9, [p5], #64; nopa ; nops ; and r3, r3, r6; nopm ; nopv
+  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vshuffle x6, x3, x2, r10; nopv
+  ; CHECK-NEXT:    vldb wh4, [p5, #32]; nopa ; nops ; nopx ; vshift.align x1, x1, s0, x8, r21; nopv
+  ; CHECK-NEXT:    vldb wl4, [p5], #64; nopa ; nops ; nopx ; vshuffle x8, x3, x2, r25; nopv
+  ; CHECK-NEXT:    nopb ; nopa ; nops ; add r21, r3, #34; vshift.align x0, x0, s0, x11, r21; nopv
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_2: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-  ; CHECK-NEXT:    vldb wh10, [p4, #32]; nopx ; vmac.f bml0, bml0, x6, x10, r14
-  ; CHECK-NEXT:    vldb wl10, [p4], m4; vmac.f bmh2, bmh2, x8, x7, r14
-  ; CHECK-NEXT:    vldb wh7, [p4, #32]; vmac.f bmh1, bmh1, x5, x7, r14
-  ; CHECK-NEXT:    vldb wl7, [p4], m4; vmac.f bmh6, bmh6, x11, x7, r14
-  ; CHECK-NEXT:    vldb wh8, [p4, #32]; vmac.f bmh5, bmh5, x6, x7, r14
-  ; CHECK-NEXT:    vldb wl8, [p4], m4; vmac.f bml2, bml2, x8, x9, r14
+  ; CHECK-NEXT:    vldb wh10, [p4, #32]; nopa ; nops ; nopx ; vshuffle x4, x1, x0, r10; vmac.f bmh4, bmh4, x8, x10, r14
+  ; CHECK-NEXT:    vldb wl10, [p4], m4; nopx ; vshuffle x11, x1, x0, r25; vmac.f bmh2, bmh2, x8, x7, r14
+  ; CHECK-NEXT:    vldb wh10, [p5, #32]; vshuffle x5, x4, x6, r15; vmac.f bml2, bml2, x8, x9, r14
+  ; CHECK-NEXT:    vldb wh7, [p4, #32]; vshuffle x6, x4, x6, r24; vmac.f bml1, bml1, x11, x10, r14
+  ; CHECK-NEXT:    vldb wl7, [p4], m4; vmac.f bmh3, bmh3, x5, x10, r14
+  ; CHECK-NEXT:    vldb wl10, [p5], #64; vmac.f bml0, bml0, x6, x10, r14
+  ; CHECK-NEXT:    vldb wh7, [p5, #32]; vmac.f bmh1, bmh1, x5, x7, r14
+  ; CHECK-NEXT:    vldb wh8, [p4, #32]; vmac.f bmh6, bmh6, x11, x7, r14
+  ; CHECK-NEXT:    vldb wl8, [p4], m4; vshift.align x3, x3, s0, x10, r21; vmac.f bmh5, bmh5, x6, x7, r14
   ; CHECK-NEXT:    vldb wh11, [p4, #32]; vmac.f bmh8, bmh8, x5, x9, r14
   ; CHECK-NEXT:    vldb.3d wl11, [p4], d0; vmac.f bml6, bml6, x11, x9, r14
-  ; CHECK-NEXT:    vldb wh10, [p5, #32]; vshift.align x3, x3, s0, x10, r21; vmac.f bml5, bml5, x6, x9, r14
-  ; CHECK-NEXT:    vldb wl10, [p5], #64; mov r3, p4; vmac.f bmh7, bmh7, x8, x4, r14
-  ; CHECK-NEXT:    vldb wh7, [p5, #32]; and r3, r3, r6; vshift.align x2, x2, s0, x7, r21; vmac.f bmh0, bmh0, x5, x4, r14
-  ; CHECK-NEXT:    vldb wl7, [p5], #64; vshuffle x6, x3, x2, r10; vmac.f bml4, bml4, x11, x4, r14
-  ; CHECK-NEXT:    vldb wh9, [p5, #32]; vshift.align x1, x1, s0, x8, r21; vmac.f bml3, bml3, x6, x4, r14
-  ; CHECK-NEXT:    vldb wl9, [p5], #64; vshuffle x8, x3, x2, r25
-  ; CHECK-NEXT:    vldb wh4, [p5, #32]; add r21, r3, #34; vshift.align x0, x0, s0, x11, r21
-  ; CHECK-NEXT:    vldb wl4, [p5], #64; vshuffle x4, x1, x0, r10
-  ; CHECK-NEXT:    vshuffle x11, x1, x0, r25; vmac.f bmh4, bmh4, x8, x10, r14
-  ; CHECK-NEXT:    vshuffle x5, x4, x6, r15
-  ; CHECK-NEXT:    vshuffle x6, x4, x6, r24; vmac.f bml1, bml1, x11, x10, r14
+  ; CHECK-NEXT:    vldb wl7, [p5], #64; vshift.align x2, x2, s0, x7, r21; vmac.f bml5, bml5, x6, x9, r14
+  ; CHECK-NEXT:    vldb wh9, [p5, #32]; mov r3, p4; vmac.f bmh7, bmh7, x8, x4, r14
+  ; CHECK-NEXT:    vldb wl9, [p5], #64; and r3, r3, r6; vmac.f bmh0, bmh0, x5, x4, r14
+  ; CHECK-NEXT:    vshuffle x6, x3, x2, r10; vmac.f bml4, bml4, x11, x4, r14
+  ; CHECK-NEXT:    vldb wh4, [p5, #32]; vshift.align x1, x1, s0, x8, r21; vmac.f bml3, bml3, x6, x4, r14
+  ; CHECK-NEXT:    vldb wl4, [p5], #64; vshuffle x8, x3, x2, r25
   ; CHECK-NEXT:  .L_LEnd0:
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; vmac.f bmh3, bmh3, x5, x10, r14
+  ; CHECK-NEXT:    nopb ; nopa ; nops ; add r21, r3, #34; vshift.align x0, x0, s0, x11, r21; nopv
   ; CHECK-NEXT:  // %bb.3: // %for.cond.cleanup
+  ; CHECK-NEXT:    nopa ; nopx ; vshuffle x4, x1, x0, r10; vmac.f bmh4, bmh4, x8, x10, r14
+  ; CHECK-NEXT:    vshuffle x11, x1, x0, r25; vmac.f bmh2, bmh2, x8, x7, r14
+  ; CHECK-NEXT:    vshuffle x5, x4, x6, r15; vmac.f bml2, bml2, x8, x9, r14
+  ; CHECK-NEXT:    vshuffle x6, x4, x6, r24; vmac.f bml1, bml1, x11, x10, r14
+  ; CHECK-NEXT:    vmac.f bmh3, bmh3, x5, x10, r14
   ; CHECK-NEXT:    vmac.f bml0, bml0, x6, x10, r14
-  ; CHECK-NEXT:    vmac.f bmh2, bmh2, x8, x7, r14
   ; CHECK-NEXT:    vmac.f bmh1, bmh1, x5, x7, r14
   ; CHECK-NEXT:    vmac.f bmh6, bmh6, x11, x7, r14
   ; CHECK-NEXT:    vmac.f bmh5, bmh5, x6, x7, r14
-  ; CHECK-NEXT:    vmac.f bml2, bml2, x8, x9, r14
   ; CHECK-NEXT:    vmac.f bmh8, bmh8, x5, x9, r14
   ; CHECK-NEXT:    vmac.f bml6, bml6, x11, x9, r14
   ; CHECK-NEXT:    vmac.f bml5, bml5, x6, x9, r14
