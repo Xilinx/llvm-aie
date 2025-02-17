@@ -48,6 +48,11 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   SCHED_BARRIER
   ; CHECK-NEXT:   DONE
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   SCHED_BARRIER
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
