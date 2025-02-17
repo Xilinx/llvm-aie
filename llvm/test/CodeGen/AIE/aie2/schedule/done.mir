@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -march=aie2 -run-pass=postmisched %topdown-multi %s -o - | FileCheck %s
 
 # Make sure DONE stays in place
@@ -35,4 +35,34 @@ body:             |
     DONE
     RET implicit $lr
     DelayedSchedBarrier implicit $r0
+...
+
+# Check 6 cycle latency for DONE at region end.
+---
+name:            done_latency
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: done_latency
+  ; CHECK: bb.0.entry:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   SCHED_BARRIER
+  ; CHECK-NEXT:   DONE
+  ; CHECK-NEXT:   SCHED_BARRIER
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   JL 0, implicit-def $lr
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   DelayedSchedBarrier csr_aie2
+  bb.0.entry:
+    SCHED_BARRIER
+    DONE
+    SCHED_BARRIER
+  bb.1:
+    JL 0, implicit-def $lr
+    DelayedSchedBarrier csr_aie2
 ...
