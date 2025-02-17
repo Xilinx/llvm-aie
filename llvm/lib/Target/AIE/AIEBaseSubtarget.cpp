@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -281,6 +281,10 @@ class RegionEndEdges : public ScheduleDAGMutation {
         assert(EdgeLatency < DelaySlots);
         EdgeLatency = DelaySlots + 1;
       }
+
+      // "Implicit" latency for special instructions.
+      const unsigned ImplicitLatency = TII->getImplicitLatency(MI);
+      EdgeLatency = std::max(EdgeLatency, ImplicitLatency);
 
       // Between writing ZOL Registers (lc, le, ls) and the end of the loop,
       // there must be a minimum distance. This is ultimately padded out by the

@@ -1172,6 +1172,14 @@ bool AIE2InstrInfo::isLock(unsigned Opc) const {
   return false;
 }
 
+// Return an optional latency if Opc is DONE.
+std::optional<unsigned>
+AIE2InstrInfo::getDoneLatency(const unsigned Opc) const {
+  // AIE2P ISA isn't very clear on the DONE instruction and only mentions a
+  // structural conflict at E4..E6. So, conservatively, provide a latency of 6.
+  return (Opc == AIE2::DONE) ? std::optional<unsigned>(6) : std::nullopt;
+}
+
 bool AIE2InstrInfo::isDelayedSchedBarrier(const MachineInstr &MI) const {
   return MI.getOpcode() == AIE2::DelayedSchedBarrier;
 }

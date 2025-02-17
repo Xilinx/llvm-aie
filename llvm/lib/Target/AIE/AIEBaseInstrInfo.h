@@ -176,6 +176,22 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   }
   /// Check whether Opc represents a lock instruction
   virtual bool isLock(unsigned Opc) const { return false; }
+
+  /// Return an optional latency if Opc is DONE.
+  virtual std::optional<unsigned> getDoneLatency(const unsigned Opc) const {
+    return std::nullopt;
+  }
+
+  /// Get "implicit" latency for special instructions.
+  /// This is basically an extra latency, implicit to a special instruction like
+  /// "DONE", that we would like to give to the exit edge.
+  virtual unsigned getImplicitLatency(const MachineInstr &MI) const {
+    if (auto OptLatency = getDoneLatency(MI.getOpcode()))
+      return *OptLatency;
+
+    return 0;
+  }
+
   /// Check whether this is a delayed scheduling barrier induced from
   /// a preceding instruction with delay slots.
   virtual bool isDelayedSchedBarrier(const MachineInstr &) const {
