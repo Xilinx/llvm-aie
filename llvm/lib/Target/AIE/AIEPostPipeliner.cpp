@@ -635,6 +635,16 @@ bool PostPipeliner::scheduleOtherIterations(PostPipelinerStrategy &Strategy) {
   return true;
 }
 
+int getMinOutputLat(ArrayRef<SDep> Edges) {
+  int Min = std::numeric_limits<int>::max();
+  for (const SDep &Dep : Edges) {
+    if (Dep.getKind() != SDep::Output)
+      continue;
+    Min = std::min(Min, Dep.getSignedLatency());
+  }
+  return Min;
+}
+
 class DefaultStrategy : public PostPipelinerStrategy {
 public:
   DefaultStrategy(ScheduleDAGMI &DAG, ScheduleInfo &Info, int LatestBias)
@@ -655,6 +665,8 @@ public:
     Critical,
     Sibling,
     LCDLatest,
+    DepLength, // Schedule "as deep as possible" first
+    Liveness,  // Minimise liveness by looking at output deps
     Size
   };
   static std::string getPriorityName(PriorityComponent Component) {
@@ -669,6 +681,10 @@ public:
       return "Sibling";
     case PriorityComponent::LCDLatest:
       return "LcdLatest";
+    case PriorityComponent::DepLength:
+      return "DepLength";
+    case PriorityComponent::Liveness:
+      return "Liveness";
     default:
       break;
     }
@@ -711,6 +727,14 @@ private:
             auto &IA = Info[A.NodeNum];
             auto &IB = Info[B.NodeNum];
             return IA.LCDLatest < IB.LCDLatest;
+          },
+          [&](const SUnit &A, const SUnit &B) {
+            return A.getDepth() > B.getDepth();
+          },
+          [&](const SUnit &A, const SUnit &B) {
+            // This tries to minimise live ranges of registers by favouring
+            // nodes that have successors with negative latencies.
+            return getMinOutputLat(A.Succs) < getMinOutputLat(B.Succs);
           },
       };
   std::vector<PriorityComponent> Priority;
@@ -787,7 +811,11 @@ static const ConfigStrategy::Configuration Strategies[] = {
     {1, true, false, 1, {Prio::NodeNum}},
     {1, true, false, HeuristicRuns, {Prio::Latest}},
     {1, true, false, HeuristicRuns, {Prio::Critical}},
+    {1, true, false, HeuristicRuns, {Prio::Latest, Prio::Sibling}},
+    {1, true, false, HeuristicRuns, {Prio::DepLength, Prio::Latest}},
     {1, true, false, HeuristicRuns, {Prio::Critical, Prio::LCDLatest}},
+    {1, true, false, HeuristicRuns, {Prio::Liveness, Prio::Latest}},
+    {1, true, false, HeuristicRuns, {Prio::Latest, Prio::Liveness}},
     // Bottom-up strategies
     {0, false, false, 2, {Prio::Critical, Prio::LCDLatest}},
     {1, false, false, 2, {Prio::Critical, Prio::LCDLatest}},
