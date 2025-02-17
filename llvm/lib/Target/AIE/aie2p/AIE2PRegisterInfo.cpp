@@ -591,6 +591,11 @@ bool AIE2PRegisterInfo::isVecOrAccRegClass(
   if (AIE2P::ACC2048RegClass.hasSubClassEq(&RC))
     return true;
 
+  // BFP16 registers
+  if (AIE2P::VEC576RegClass.hasSubClassEq(&RC) ||
+      AIE2P::eEYRegClass.hasSubClassEq(&RC))
+    return true;
+
   return false;
 }
 
