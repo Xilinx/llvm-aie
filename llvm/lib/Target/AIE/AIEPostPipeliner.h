@@ -193,6 +193,7 @@ class PostPipeliner {
   bool computeLoopCarriedParameters();
 
   /// Helpers of computeLoopCarriedParameters()
+  void biasForLocalResourceContention(NodeInfo &NI, const SUnit &SU);
   void computeForward();
   bool computeBackward();
 
