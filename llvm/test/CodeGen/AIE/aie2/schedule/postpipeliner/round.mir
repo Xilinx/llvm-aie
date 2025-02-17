@@ -5,7 +5,7 @@
 #
 # (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
 
-# RUN: llc --mtriple=aie2 -O2 --start-before=postmisched %s -o - | FileCheck %s
+# RUN: llc --mtriple=aie2 -O2 --start-before=postmisched %s -o - --debug-only=postpipeliner-summary | FileCheck %s
 
 # Inspired by Round
 # Currently we don't get this post-pipelined, because the RecMII is
