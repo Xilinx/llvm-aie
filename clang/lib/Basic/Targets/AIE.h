@@ -61,8 +61,13 @@ public:
     IntPtrType = SignedInt;
     UseZeroLengthBitfieldAlignment = true;
 
-    // Vector types on AIE have maximum 32-byte alignment
-    MaxVectorAlign = 256;
+    // On AIE2p, vector types have a maximum alignment of 64 bytes,
+    // whereas on AIE1 and AIE2, the maximum alignment is 32 bytes.
+    if (isAIE2P(getTriple()))
+      MaxVectorAlign = 512;
+    else
+      MaxVectorAlign = 256;
+
     std::string DataLayout;
 
     if (isAIE1(getTriple()))
