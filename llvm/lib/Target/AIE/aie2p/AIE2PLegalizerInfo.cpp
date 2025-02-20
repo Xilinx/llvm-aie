@@ -225,12 +225,22 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
 
   getActionDefinitionsBuilder(G_FABS).customFor({S16, S32, S64}).scalarize(0);
 
+  getActionDefinitionsBuilder(G_FMUL)
+      .legalFor({V64S16, V32S16})
+      // We don't have an instruction to multiply bf16 scalars, so instead of
+      // using an inefficient and potentially unsafe libcall (e.g. in the case
+      // of hardware loops) we need custom legalization by inserting the bf16
+      // scalar into a vector, perform the element wise multiplication with
+      // VMUL.f and extract the bf16 scalar again.
+      .customFor({S16})
+      .libcallFor({S32, S64});
+
   getActionDefinitionsBuilder({G_FADD, G_FSUB})
       .legalFor({AccV64S32})
       .customFor({S16})
       .libcallFor({S32, S64});
 
-  getActionDefinitionsBuilder({G_FMUL, G_FDIV, G_FREM})
+  getActionDefinitionsBuilder({G_FDIV, G_FREM})
       .clampScalar(0, S32, S64)
       .libcallFor({S32, S64});
 
@@ -723,6 +733,8 @@ bool AIE2PLegalizerInfo::legalizeCustom(
   case TargetOpcode::G_FADD:
   case TargetOpcode::G_FSUB:
     return AIEHelper.legalizeG_FADD_G_FSUB(Helper, MI);
+  case TargetOpcode::G_FMUL:
+    return AIEHelper.legalizeG_FMUL(Helper, MI);
   case TargetOpcode::G_BUILD_VECTOR:
     return AIEHelper.legalizeG_BUILD_VECTOR(Helper, MI);
   case TargetOpcode::G_UNMERGE_VALUES:

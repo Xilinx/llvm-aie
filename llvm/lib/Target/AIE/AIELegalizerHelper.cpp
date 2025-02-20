@@ -27,6 +27,7 @@
 #include "llvm/IR/IntrinsicsAIE2.h"
 #include "llvm/IR/IntrinsicsAIE2P.h"
 #include "llvm/Support/ErrorHandling.h"
+#include <cassert>
 
 namespace llvm {
 
@@ -1152,6 +1153,54 @@ bool AIELegalizerHelper::legalizeG_FABS(LegalizerHelper &Helper,
     auto And = MIRBuilder.buildAnd(S32, AnyExt, Ones);
     MIRBuilder.buildTrunc(DstReg, And);
   }
+
+  MI.eraseFromParent();
+  return true;
+}
+
+bool AIELegalizerHelper::legalizeG_FMUL(LegalizerHelper &Helper,
+                                        MachineInstr &MI) const {
+  assert(ST.isAIE2P() && "Custom legalization supported for AIE2P only");
+
+  MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+
+  const Register DstReg = MI.getOperand(0).getReg();
+  assert(MRI.getType(DstReg) == LLT::scalar(16) &&
+         "Expected bfloat16 type in custom legalization.");
+
+  Register SrcLHS = MI.getOperand(1).getReg();
+  Register SrcRHS = MI.getOperand(2).getReg();
+
+  SrcLHS = MIRBuilder.buildAnyExt(S32, SrcLHS).getReg(0);
+  SrcRHS = MIRBuilder.buildAnyExt(S32, SrcRHS).getReg(0);
+  SrcLHS = MIRBuilder
+               .buildAssertInstr(TargetOpcode::G_ASSERT_ZEXT, {S32}, SrcLHS, 16)
+               .getReg(0);
+  SrcRHS = MIRBuilder
+               .buildAssertInstr(TargetOpcode::G_ASSERT_ZEXT, {S32}, SrcRHS, 16)
+               .getReg(0);
+
+  const LLT BroadcastVecLLT = V32BF16;
+  const unsigned BroadcastOpc =
+      ST.getInstrInfo()->getGenericBroadcastVectorOpcode();
+
+  SrcLHS = MIRBuilder.buildInstr(BroadcastOpc, {BroadcastVecLLT}, {SrcLHS})
+               .getReg(0);
+  SrcRHS = MIRBuilder.buildInstr(BroadcastOpc, {BroadcastVecLLT}, {SrcRHS})
+               .getReg(0);
+
+  Register Res =
+      MIRBuilder.buildInstr(MI.getOpcode(), {V32BF16}, {SrcLHS, SrcRHS})
+          .getReg(0);
+
+  const Register IdxReg = MIRBuilder.buildConstant(S32, 0).getReg(0);
+  const unsigned ExtractEltOpc =
+      ST.getInstrInfo()->getGenericExtractVectorEltOpcode(/*ZeroExt*/ false);
+  Res = MIRBuilder.buildInstr(ExtractEltOpc, {S32}, {Res, IdxReg}).getReg(0);
+  Res = MIRBuilder.buildAssertInstr(TargetOpcode::G_ASSERT_ZEXT, {S32}, Res, 16)
+            .getReg(0);
+  MIRBuilder.buildTrunc(DstReg, Res);
 
   MI.eraseFromParent();
   return true;
