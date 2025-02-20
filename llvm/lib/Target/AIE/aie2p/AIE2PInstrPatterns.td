@@ -40,6 +40,11 @@ class VecConf {
   int BMODE_16x16_b = 1;
   int BMODE_32x16   = 0;
 
+  int CMODE_8x8_1_elem_2 = 1;
+  int CMODE_16x16_1_elem = 1;
+  int CMODE_16x16_2_elem_2 = 2;
+  int CMODE_BF16xBF16_1_elem_1 = 1;
+
   bits<1> dynZeroAccum = 0;  // 0 – Use default first accumulator input to the post-adder. 1 – Replace default first accumulator with zeros.
   bits<2> amode        = 0;  // Accumulator width (see above)
   bits<2> bmode        = 0;  // Multiplication precision (see above)
@@ -59,6 +64,7 @@ class VecConf {
 }
 
 def accfp32_vecconf : VecConf { let amode = AMODE_FP32; let bmode = BMODE_16x16; }
+def mulbf16_vecconf : VecConf { let amode = AMODE_FP32; let bmode = BMODE_16x16; let cmode = CMODE_BF16xBF16_1_elem_1; }
 
 /// Generic pattern classes
 class PatGpr<SDPatternOperator OpNode, AIE2PInst Inst, ValueType type>
@@ -221,6 +227,26 @@ def : Pat<(fadd ACC2048:$acc1, ACC2048:$acc2),
           (VADD_f_vmac_cm2_add_reg ACC2048:$acc1, ACC2048:$acc2, (i32 accfp32_vecconf.ConfBits))>;
 def : Pat<(fsub ACC2048:$acc1, ACC2048:$acc2),
           (VSUB_f_vmac_cm2_add_reg ACC2048:$acc1, ACC2048:$acc2, (i32 accfp32_vecconf.ConfBits))>;
+
+// MUL
+def : Pat<(v64bf16 (fmul v64bf16:$vec1, v64bf16:$vec2)),
+          (v64bf16 (REG_SEQUENCE VEC1024,
+            (VCONV_bf16_fp32_mv_x_srs_bf 
+              (EXTRACT_SUBREG 
+                (VMUL_f_vmul_bf_vmul_bf_core_Y_Y VEC1024:$vec1, VEC1024:$vec2, (i32 mulbf16_vecconf.ConfBits)),
+                sub_1024_acc_lo)), 
+            sub_512_lo,
+            (VCONV_bf16_fp32_mv_x_srs_bf 
+              (EXTRACT_SUBREG
+                (VMUL_f_vmul_bf_vmul_bf_core_Y_Y VEC1024:$vec1, VEC1024:$vec2, (i32 mulbf16_vecconf.ConfBits)),
+                sub_1024_acc_hi)), 
+            sub_512_hi))>;
+
+def : Pat<(v32bf16 (fmul v32bf16:$vec1, v32bf16:$vec2)),
+    (VCONV_bf16_fp32_mv_x_srs_bf 
+              (EXTRACT_SUBREG 
+                (VMUL_f_vmul_bf_vmul_bf_core_X_X VEC512:$vec1, VEC512:$vec2, (i32 mulbf16_vecconf.ConfBits)),
+                sub_1024_acc_lo))>;
 
 // VMUL/VMAC Intrinsics
 
