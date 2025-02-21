@@ -242,6 +242,9 @@ bool AIE2PInstructionSelector::select(MachineInstr &I) {
     return selectG_CONCAT_VECTORS(I, MRI);
   case G_BRCOND:
     return selectG_BRCOND(I, MRI);
+  case G_BRINDIRECT:
+    I.setDesc(TII.get(AIE2P::PseudoJ_jump_ind));
+    return constrainSelectedInstRegOperands(I, TII, TRI, RBI);
   case G_INTRINSIC:
     switch (cast<GIntrinsic>(I).getIntrinsicID()) {
     case Intrinsic::aie2p_get_coreid:
