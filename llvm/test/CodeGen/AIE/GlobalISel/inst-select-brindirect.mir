@@ -4,9 +4,10 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE1 %s
 # RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2 %s
+# RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2P %s
 
 ---
 name:            test_brjt
@@ -21,11 +22,18 @@ body:             |
     ; AIE1-NEXT: [[COPY:%[0-9]+]]:ptr = COPY $p0
     ; AIE1-NEXT: [[COPY1:%[0-9]+]]:mcb = COPY [[COPY]]
     ; AIE1-NEXT: JA [[COPY1]]
+    ;
     ; AIE2-LABEL: name: test_brjt
     ; AIE2: liveins: $p0
     ; AIE2-NEXT: {{  $}}
     ; AIE2-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; AIE2-NEXT: J_jump_ind [[COPY]]
+    ; AIE2-NEXT: PseudoJ_jump_ind [[COPY]]
+    ;
+    ; AIE2P-LABEL: name: test_brjt
+    ; AIE2P: liveins: $p0
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2P-NEXT: PseudoJ_jump_ind [[COPY]]
     %0:ptrregbank(p0) = COPY $p0
     G_BRINDIRECT %0(p0)
 
