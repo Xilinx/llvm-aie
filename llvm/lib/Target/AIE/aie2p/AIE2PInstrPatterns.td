@@ -1218,3 +1218,11 @@ class Trunc512Pat<ValueType DstTy, ValueType SrcTy, int Mode> :
 def : Trunc512Pat<v8i32, v8i64, 4>;
 def : Trunc512Pat<v16i16, v16i32, 2>;
 def : Trunc512Pat<v32i8, v32i16, 0>;
+
+class EventPat<AIE2PInst Inst, dag Imm> :
+  Pat<(int_aie2p_event Imm), (Inst)>;
+
+def : EventPat<EVENT_event0,  (i32 0)>;
+def : EventPat<EVENT_event1,  (i32 1)>;
+def : EventPat<EVENT_WARNING, (i32 2)>;
+def : EventPat<EVENT_ERROR,   (i32 3)>;
