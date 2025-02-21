@@ -225,28 +225,28 @@ bits<5> s1;
 let alu = {s0, d0, s1, 0b0111, 0b1};
 }
 
-let Itinerary = II_EVENT_ERROR in
+let Itinerary = II_EVENT_ERROR, hasSideEffects = 1 in
 def EVENT_ERROR : AIE2P_inst_alu_instr32 <(outs), (ins), "event.error", "">{
 // id: me__instr128_or__alu_mv__alumv_or__alu__event__event3
 
 let alu = {0b11, dontcare{3-1}, 0b010, dontcare{5-1}, 0b000, 0b0000};
 }
 
-let Itinerary = II_EVENT_WARNING in
+let Itinerary = II_EVENT_WARNING, hasSideEffects = 1 in
 def EVENT_WARNING : AIE2P_inst_alu_instr32 <(outs), (ins), "event.warning", "">{
 // id: me__instr128_or__alu_mv__alumv_or__alu__event__event2
 
 let alu = {0b10, dontcare{3-1}, 0b010, dontcare{5-1}, 0b000, 0b0000};
 }
 
-let Itinerary = II_EVENT_event0 in
+let Itinerary = II_EVENT_event0, hasSideEffects = 1 in
 def EVENT_event0 : AIE2P_inst_alu_instr32 <(outs), (ins), "event", "#0">{
 // id: me__instr128_or__alu_mv__alumv_or__alu__event__event0
 
 let alu = {0b00, dontcare{3-1}, 0b010, dontcare{5-1}, 0b000, 0b0000};
 }
 
-let Itinerary = II_EVENT_event1 in
+let Itinerary = II_EVENT_event1, hasSideEffects = 1 in
 def EVENT_event1 : AIE2P_inst_alu_instr32 <(outs), (ins), "event", "#1">{
 // id: me__instr128_or__alu_mv__alumv_or__alu__event__event1
 
