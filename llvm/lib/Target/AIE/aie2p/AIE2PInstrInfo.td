@@ -130,18 +130,138 @@ let hasDelaySlot = true, isBranch = true, isTerminator = true,
   }
 }
 
+include "aie2p/AIE2PMultiSlotPseudoInstrInfo.td"
 // Define _split variants for instructions using 2D registers
 class Split2DInstr<Instruction RealInst, int opidx> : SplitPseudo<RealInst,
     opidx, (ins eM:$mod, eDN:$dim_size, eDJ:$dim_stride, eDC:$dim_count)> {}
-foreach instr = [PADDA_2D, PADDB_2D, PADDS_2D] in
+
+foreach instr = [PADDA_2D, PADDB_2D, PADDS_2D, PADD_2D_pseudo] in
     def instr # _split : Split2DInstr<instr, /*opidx=*/3>;
+
+foreach instr = [
+  LDA_2D_dms_lda,
+  LDA_2D_s8,
+  LDA_2D_u16,
+  LDA_2D_u8,
+  LDA_TM_2D,
+  ST_2D_dms_sts,
+  ST_2D_dmv_sts_q,
+  ST_2D_s16,
+  ST_2D_s8,
+  ST_TM_2D,
+  VLDA_2D_128,
+  VLDA_2D_CONV_fp32_bf16_dmw_lda_ups_bf,
+  VLDA_2D_CONV_fp32_bf16_dmx_lda_ups_bf,
+  VLDA_2D_dmw_lda_w,
+  VLDA_2D_dmx_lda_bm,
+  VLDA_2D_dmx_lda_fifohl,
+  VLDA_2D_dmx_lda_x,
+  VLDB_2D_128,
+  VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0,
+  VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1,
+  VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign0,
+  VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign1,
+  VLDB_2D_dmw_ldb,
+  VLDB_2D_dmx_ldb_x,
+  VST_2D_128,
+  VST_2D_CONV_bf16_fp32_dmw_sts_srs_bf,
+  VST_2D_CONV_bf16_fp32_dmx_sts_srs_bf,
+  VST_2D_PACK_dmw_sts_pack_packSign0,
+  VST_2D_PACK_dmw_sts_pack_packSign1,
+  VST_2D_PACK_dmx_sts_pack_packSign0,
+  VST_2D_PACK_dmx_sts_pack_packSign1,
+  VST_2D_dmw_sts_w,
+  VST_2D_dmx_sts_bm,
+  VST_2D_dmx_sts_fifohl,
+  VST_2D_dmx_sts_x, VLD_2D_128_pseudo, VLD_2D_w_pseudo, VLD_2D_x_pseudo] in
+    def instr # _split : Split2DInstr<instr, /*opidx=*/4>;
+
+foreach instr = [
+  VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0,
+  VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign1,
+  VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign0,
+  VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign1,
+  VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign0,
+  VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign1, 
+  VST_2D_SRS_2x_dm_sts_srs_cm_srsSign0,
+  VST_2D_SRS_2x_dm_sts_srs_cm_srsSign1, 
+  VST_2D_SRS_2x_dmw_sts_srs_bm_srsSign0,
+  VST_2D_SRS_2x_dmw_sts_srs_bm_srsSign1, 
+  VST_2D_SRS_4x_dm_sts_srs_cm_srsSign0,
+  VST_2D_SRS_4x_dm_sts_srs_cm_srsSign1, 
+  VST_2D_SRS_4x_dmx_sts_srs_dm_srsSign0,
+  VST_2D_SRS_4x_dmx_sts_srs_dm_srsSign1] in
+    def instr # _split : Split2DInstr<instr, /*opidx=*/5>;
 
 // Define _split variants for instructions using 3D registers
 class Split3DInstr<Instruction RealInst, int opidx> : SplitPseudo<RealInst,
     opidx, (ins eM:$mod1, eDN:$dim_size1, eDJ:$dim_stride1, eDC:$dim_count1,
                 eM:$mod2, eDN:$dim_size2, eDJ:$dim_stride2, eDC:$dim_count2)> {}
-foreach instr = [PADDA_3D, PADDB_3D, PADDS_3D] in
+
+foreach instr = [PADDA_3D, PADDB_3D, PADDS_3D, PADD_3D_pseudo] in
     def instr # _split : Split3DInstr<instr, /*opidx=*/4>;
+
+foreach instr = [
+  LDA_3D_dms_lda,
+  LDA_3D_dmv_lda_q,
+  LDA_3D_s16,
+  LDA_3D_s8,
+  LDA_3D_u16,
+  LDA_3D_u8,
+  LDA_TM_3D,
+  ST_3D_dms_sts,
+  ST_3D_dmv_sts_q,
+  ST_3D_s16,
+  ST_3D_s8,
+  ST_TM_3D,
+  VLDA_3D_128,
+  VLDA_3D_CONV_fp32_bf16_dmw_lda_ups_bf,
+  VLDA_3D_CONV_fp32_bf16_dmx_lda_ups_bf,
+  VLDA_3D_dmw_lda_w,
+  VLDA_3D_dmx_lda_bm,
+  VLDA_3D_dmx_lda_fifohl,
+  VLDA_3D_dmx_lda_x,
+  VLDB_3D_128,
+  VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0,
+  VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1,
+  VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign0,
+  VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1,
+  VLDB_3D_dmw_ldb,
+  VLDB_3D_dmx_ldb_x,
+  VST_3D_128,
+  VST_3D_CONV_bf16_fp32_dmw_sts_srs_bf,
+  VST_3D_CONV_bf16_fp32_dmx_sts_srs_bf,
+  VST_3D_PACK_dmw_sts_pack_packSign0,
+  VST_3D_PACK_dmw_sts_pack_packSign1,
+  VST_3D_PACK_dmx_sts_pack_packSign0,
+  VST_3D_PACK_dmx_sts_pack_packSign1,
+  VST_3D_dmw_sts_w,
+  VST_3D_dmx_sts_bm,
+  VST_3D_dmx_sts_fifohl,
+  VST_3D_dmx_sts_x,
+  VLD_3D_w_pseudo,
+  VLD_3D_x_pseudo,
+  VLD_3D_128_pseudo] in       
+    def instr # _split : Split3DInstr<instr, /*opidx=*/5>;
+
+foreach instr = [ VLDA_3D_UPS_2x_dmw_lda_ups_w2b_upsSign0,
+  VLDA_3D_UPS_2x_dmw_lda_ups_w2b_upsSign1, 
+  VLDA_3D_UPS_2x_dmx_lda_ups_x2c_upsSign0, 
+  VLDA_3D_UPS_2x_dmx_lda_ups_x2c_upsSign1, 
+  VLDA_3D_UPS_4x_dmw_lda_ups_w2c_upsSign0, 
+  VLDA_3D_UPS_4x_dmw_lda_ups_w2c_upsSign1, 
+  VLDA_3D_UPS_4x_dmx_lda_ups_x2d_upsSign0, 
+  VLDA_3D_UPS_4x_dmx_lda_ups_x2d_upsSign1, 
+  VST_3D_SRS_2x_dm_sts_srs_cm_srsSign0, 
+  VST_3D_SRS_2x_dm_sts_srs_cm_srsSign1, 
+  VST_3D_SRS_2x_dmw_sts_srs_bm_srsSign0, 
+  VST_3D_SRS_2x_dmw_sts_srs_bm_srsSign1, 
+  VST_3D_SRS_4x_dm_sts_srs_cm_srsSign0, 
+  VST_3D_SRS_4x_dm_sts_srs_cm_srsSign1, 
+  VST_3D_SRS_4x_dmx_sts_srs_dm_srsSign0, 
+  VST_3D_SRS_4x_dmx_sts_srs_dm_srsSign1] in   
+    def instr # _split : Split3DInstr<instr, /*opidx=*/6>;
+
 
 let hasSideEffects = 0, Uses = [sp] in {
 let mayLoad = false, mayStore = true in {
@@ -178,5 +298,5 @@ def VLDA_E_SPILL : Pseudo<(outs EXPVEC64:$dst), (ins c12n_step4:$imm), "vlda_e_s
 }
 }
 
-include "aie2p/AIE2PMultiSlotPseudoInstrInfo.td"
+
 include "aie2p/AIE2PInstrPatterns.td"
