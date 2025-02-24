@@ -28,21 +28,13 @@ class AIE2TTIImpl : public AIEBaseTTIImpl<AIE2TTIImpl> {
   typedef AIEBaseTTIImpl<AIE2TTIImpl> BaseT;
   typedef TargetTransformInfo TTI;
   friend BaseT;
+  AIETTICommon Common;
 
 public:
   explicit AIE2TTIImpl(const AIE2TargetMachine *TM, const Function &F)
       : BaseT(TM, F.getParent()->getDataLayout(),
               (const AIESubtarget *)TM->getSubtargetImpl(F)) {}
 
-  void getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
-                               TTI::UnrollingPreferences &UP,
-                               OptimizationRemarkEmitter *ORE);
-
-  bool isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
-                                AssumptionCache &AC, TargetLibraryInfo *LibInfo,
-                                HardwareLoopInfo &HWLoopInfo);
-
-  bool isProfitableOuterLSR(const Loop &L) const;
   std::optional<Instruction *> instCombineIntrinsic(InstCombiner &IC,
                                                     IntrinsicInst &II) const;
 
@@ -54,6 +46,13 @@ public:
   // This type of code can lead to additional pointer arithmetics and
   // and pointer moves (especially due to the pre-pipeliner).
   bool isProfitableFoldGEPIntoPHI() const { return false; }
+  void getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
+                               TTI::UnrollingPreferences &UP,
+                               OptimizationRemarkEmitter *ORE);
+  bool isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
+                                AssumptionCache &AC, TargetLibraryInfo *LibInfo,
+                                HardwareLoopInfo &HWLoopInfo);
+  bool isProfitableOuterLSR(const Loop &L) const;
 };
 
 } // end namespace llvm

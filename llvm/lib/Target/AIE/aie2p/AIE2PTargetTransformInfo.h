@@ -20,26 +20,27 @@
 #include "AIE2PTargetMachine.h"
 #include "AIEBaseTargetTransformInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
-#include "llvm/CodeGen/BasicTTIImpl.h"
-#include "llvm/Transforms/Utils/ScalarEvolutionExpander.h"
 
 namespace llvm {
+class Loop;
+class ScalarEvolution;
 class AIE2PTTIImpl : public AIEBaseTTIImpl<AIE2PTTIImpl> {
   typedef AIEBaseTTIImpl<AIE2PTTIImpl> BaseT;
   typedef TargetTransformInfo TTI;
   friend BaseT;
+  AIETTICommon Common;
 
 public:
   explicit AIE2PTTIImpl(const AIE2PTargetMachine *TM, const Function &F)
       : BaseT(TM, F.getParent()->getDataLayout(),
               (const AIESubtarget *)TM->getSubtargetImpl(F)) {}
-
   void getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
                                TTI::UnrollingPreferences &UP,
                                OptimizationRemarkEmitter *ORE);
   bool isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
                                 AssumptionCache &AC, TargetLibraryInfo *LibInfo,
                                 HardwareLoopInfo &HWLoopInfo);
+  bool isProfitableOuterLSR(const Loop &L) const;
 };
 
 } // end namespace llvm

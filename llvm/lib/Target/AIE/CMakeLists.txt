@@ -85,6 +85,7 @@ add_llvm_target(AIECodeGen
    AIEBaseInstrInfo.cpp
    AIEBasePipelinerLoopInfo.cpp
    AIEBaseInstructionSelector.cpp
+   AIEBaseTargetTransformInfo.cpp
    AIEClusterBaseAddress.cpp
    AIECombinerHelper.cpp
    AIEBaseRegisterBankInfo.cpp
