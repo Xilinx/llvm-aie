@@ -4,14 +4,14 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -O2 -mtriple=aie2p -verify-machineinstrs -run-pass=aie-split-instrs-create %s -o - | FileCheck %s
 
 # Verify that instructions are successfully rewritten into _split instructions
 # that expose sub-registers.
 
 ---
-name:            test_split_2D
+name:            test_split_2D_opIdx3
 alignment:       16
 legalized:       true
 regBankSelected: true
@@ -20,24 +20,71 @@ tracksRegLiveness: true
 body:             |
   bb.1.entry:
     liveins: $p0, $d1
-    ; CHECK-LABEL: name: test_split_2D
+    ; CHECK-LABEL: name: test_split_2D_opIdx3
     ; CHECK: liveins: $p0, $d1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ed = COPY $d1
-    ; CHECK-NEXT: [[COPY]]:ep, [[COPY1]].sub_dim_count:ed = PADDA_2D_split killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count
-    ; CHECK-NEXT: [[COPY]]:ep, [[COPY1]].sub_dim_count:ed = PADDB_2D_split killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count
-    ; CHECK-NEXT: dead [[COPY]]:ep, dead [[COPY1]].sub_dim_count:ed = PADDS_2D_split killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep, [[COPY1:%[0-9]+]].sub_dim_count:ed = PADDA_2D_split killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep, [[COPY1:%[0-9]+]].sub_dim_count:ed = PADDB_2D_split killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep, [[COPY1:%[0-9]+]].sub_dim_count:ed = PADDS_2D_split killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count
+    ; CHECK-NEXT: dead [[COPY:%[0-9]+]]:ep, dead [[COPY1:%[0-9]+]].sub_dim_count:ed = PADD_2D_pseudo_split killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count
     %20:ep = COPY $p0
     %100:ed = COPY $d1
     %20:ep, %100.sub_dim_count:ed = PADDA_2D killed %20, killed %100
     %20:ep, %100.sub_dim_count:ed = PADDB_2D killed %20, killed %100
-    dead %20:ep, dead %100.sub_dim_count:ed = PADDS_2D killed %20, killed %100
+    %20:ep, %100.sub_dim_count:ed = PADDS_2D killed %20, killed %100
+    dead %20:ep, dead %100.sub_dim_count:ed = PADD_2D_pseudo killed %20, killed %100
 ...
+
+---
+name:            test_split_2D_opIdx4
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $d1, $sfh
+    ; CHECK-LABEL: name: test_split_2D_opIdx4
+    ; CHECK: liveins: $p0, $d1, $sfh
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ed = COPY $d1
+    ; CHECK-NEXT: $r4, [[COPY]]:ep, [[COPY1]].sub_dim_count:ed = LDA_2D_dms_lda_split killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep, [[COPY1:%[0-9]+]].sub_dim_count:ed = VST_2D_dmx_sts_fifohl_split $sfh, killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count
+    %20:ep = COPY $p0
+    %100:ed = COPY $d1
+    $r4, %20:ep, %100.sub_dim_count:ed = LDA_2D_dms_lda killed %20, killed %100
+    %20:ep, %100.sub_dim_count:ed = VST_2D_dmx_sts_fifohl $sfh, killed %20, killed %100
+...
+
+---
+name:            test_split_2D_opIdx5
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $d1, $s0
+    ; CHECK-LABEL: name: test_split_2D_opIdx5
+    ; CHECK: liveins: $p0, $d1, $s0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ed = COPY $d1
+    ; CHECK-NEXT: $bmhh0, [[COPY]]:ep, [[COPY1]].sub_dim_count:ed = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_split $s0, killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    %20:ep = COPY $p0
+    %100:ed = COPY $d1
+    $bmhh0, %20:ep, %100.sub_dim_count:ed = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s0, killed %20, killed %100, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+...
+
 
 # In particular, pay attention to undef for sub_hi_dim_then_sub_mod.
 ---
-name:            test_split_3D
+name:            test_split_3D_opIdx4
 alignment:       16
 legalized:       true
 regBankSelected: true
@@ -46,17 +93,57 @@ tracksRegLiveness: true
 body:             |
   bb.1.entry:
     liveins: $p0, $d1_3d
-    ; CHECK-LABEL: name: test_split_3D
+    ; CHECK-LABEL: name: test_split_3D_opIdx4
     ; CHECK: liveins: $p0, $d1_3d
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:eds = COPY $d1_3d
-    ; CHECK-NEXT: [[COPY]]:ep, [[COPY1]].sub_dim_count:eds, [[COPY1]].sub_hi_dim_then_sub_dim_count:eds = PADDA_3D_split killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count, killed undef [[COPY1]].sub_hi_dim_then_sub_mod, killed [[COPY1]].sub_hi_dim_then_sub_dim_size, killed [[COPY1]].sub_hi_dim_then_sub_dim_stride, killed [[COPY1]].sub_hi_dim_then_sub_dim_count
-    ; CHECK-NEXT: [[COPY]]:ep, [[COPY1]].sub_dim_count:eds, [[COPY1]].sub_hi_dim_then_sub_dim_count:eds = PADDB_3D_split killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count, killed undef [[COPY1]].sub_hi_dim_then_sub_mod, killed [[COPY1]].sub_hi_dim_then_sub_dim_size, killed [[COPY1]].sub_hi_dim_then_sub_dim_stride, killed [[COPY1]].sub_hi_dim_then_sub_dim_count
-    ; CHECK-NEXT: dead [[COPY]]:ep, dead [[COPY1]].sub_dim_count:eds, dead [[COPY1]].sub_hi_dim_then_sub_dim_count:eds = PADDS_3D_split killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count, killed undef [[COPY1]].sub_hi_dim_then_sub_mod, killed [[COPY1]].sub_hi_dim_then_sub_dim_size, killed [[COPY1]].sub_hi_dim_then_sub_dim_stride, killed [[COPY1]].sub_hi_dim_then_sub_dim_count
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep, [[COPY1:%[0-9]+]].sub_dim_count:eds, [[COPY1:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = PADDA_3D_split killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count, killed undef [[COPY1]].sub_hi_dim_then_sub_mod, killed [[COPY1]].sub_hi_dim_then_sub_dim_size, killed [[COPY1]].sub_hi_dim_then_sub_dim_stride, killed [[COPY1]].sub_hi_dim_then_sub_dim_count
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep, [[COPY1:%[0-9]+]].sub_dim_count:eds, [[COPY1:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = PADDB_3D_split killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count, killed undef [[COPY1]].sub_hi_dim_then_sub_mod, killed [[COPY1]].sub_hi_dim_then_sub_dim_size, killed [[COPY1]].sub_hi_dim_then_sub_dim_stride, killed [[COPY1]].sub_hi_dim_then_sub_dim_count
+    ; CHECK-NEXT: dead [[COPY:%[0-9]+]]:ep, dead [[COPY1:%[0-9]+]].sub_dim_count:eds, dead [[COPY1:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = PADDS_3D_split killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count, killed undef [[COPY1]].sub_hi_dim_then_sub_mod, killed [[COPY1]].sub_hi_dim_then_sub_dim_size, killed [[COPY1]].sub_hi_dim_then_sub_dim_stride, killed [[COPY1]].sub_hi_dim_then_sub_dim_count
     %20:ep = COPY $p0
     %100:eds = COPY $d1_3d
     %20:ep, %100.sub_dim_count:eds, %100.sub_hi_dim_then_sub_dim_count:eds = PADDA_3D killed %20, killed %100
     %20:ep, %100.sub_dim_count:eds, %100.sub_hi_dim_then_sub_dim_count:eds = PADDB_3D killed %20, killed %100
     dead %20:ep, dead %100.sub_dim_count:eds, dead %100.sub_hi_dim_then_sub_dim_count:eds = PADDS_3D killed %20, killed %100
+...
+---
+name:            test_split_3D_opIdx5
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $d1_3d
+    ; CHECK-LABEL: name: test_split_3D_opIdx5
+    ; CHECK: liveins: $p0, $d1_3d
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:eds = COPY $d1_3d
+    ; CHECK-NEXT: $r4, [[COPY]]:ep, [[COPY1]].sub_dim_count:eds, [[COPY1]].sub_hi_dim_then_sub_dim_count:eds = LDA_3D_dms_lda_split killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count, killed undef [[COPY1]].sub_hi_dim_then_sub_mod, killed [[COPY1]].sub_hi_dim_then_sub_dim_size, killed [[COPY1]].sub_hi_dim_then_sub_dim_stride, killed [[COPY1]].sub_hi_dim_then_sub_dim_count
+    %20:ep = COPY $p0
+    %100:eds = COPY $d1_3d
+    $r4, %20:ep, %100.sub_dim_count:eds, %100.sub_hi_dim_then_sub_dim_count:eds = LDA_3D_dms_lda killed %20, killed %100
+...
+---
+name:            test_split_3D_opIdx6
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $d1_3d, $s0
+    ; CHECK-LABEL: name: test_split_3D_opIdx6
+    ; CHECK: liveins: $p0, $d1_3d, $s0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:eds = COPY $d1_3d
+    ; CHECK-NEXT: [[VLDA_3D_UPS_4x_dmx_lda_ups_x2d_upsSign0_split:%[0-9]+]]:edm, [[COPY:%[0-9]+]]:ep, [[COPY1:%[0-9]+]].sub_dim_count:eds, [[COPY1:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = VLDA_3D_UPS_4x_dmx_lda_ups_x2d_upsSign0_split $s0, [[COPY]], [[COPY1]].sub_mod, [[COPY1]].sub_dim_size, [[COPY1]].sub_dim_stride, [[COPY1]].sub_dim_count, undef [[COPY1]].sub_hi_dim_then_sub_mod, [[COPY1]].sub_hi_dim_then_sub_dim_size, [[COPY1]].sub_hi_dim_then_sub_dim_stride, [[COPY1]].sub_hi_dim_then_sub_dim_count, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    %20:ep = COPY $p0
+    %100:eds = COPY $d1_3d
+    %0:edm, %20:ep, %100.sub_dim_count:eds, %100.sub_hi_dim_then_sub_dim_count:eds = VLDA_3D_UPS_4x_dmx_lda_ups_x2d_upsSign0 $s0, %20, %100, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
 ...
