@@ -159,8 +159,9 @@ bool AIE2InstrInfo::verifyGenericInstruction(const MachineInstr &MI,
         return false;
       }
     }
-    ErrInfo = "Expected 32bit scalar destination";
-    return MRI.getType(MI.getOperand(0).getReg()) == LLT::scalar(32);
+    ErrInfo = "Expected 20/32bit scalar destination";
+    return (MRI.getType(MI.getOperand(0).getReg()) == LLT::scalar(20) ||
+            MRI.getType(MI.getOperand(0).getReg()) == LLT::scalar(32));
   case AIE2::G_AIE_PAD_VECTOR_UNDEF:
     return verifySameLaneTypes(MI, ErrInfo) &&
            isLegalTypeToUnpad(MRI.getType(MI.getOperand(0).getReg()),
