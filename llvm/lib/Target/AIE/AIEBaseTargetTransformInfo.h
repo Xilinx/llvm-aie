@@ -23,6 +23,23 @@
 #include "llvm/CodeGen/BasicTTIImpl.h"
 
 namespace llvm {
+/// This is just a bunch of shared methods that can be easily reused.
+/// It is foreseen that some of them may be overridden in derived classes used
+/// by the actual TTIImpl classes
+class AIETTICommon {
+public:
+  virtual ~AIETTICommon() = default;
+  virtual bool isLoweredToCall(const Function *F);
+  virtual bool isAllowedInZOL(llvm::Instruction &Instr);
+  void adjustUnrollingPreferences(Loop *L, ScalarEvolution &SE,
+                                  TTI::UnrollingPreferences &UP,
+                                  OptimizationRemarkEmitter *ORE);
+  bool isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
+                                AssumptionCache &AC, TargetLibraryInfo *LibInfo,
+                                HardwareLoopInfo &HWLoopInfo);
+  bool isProfitableOuterLSR(const Loop &L) const;
+};
+
 template <typename T> class AIEBaseTTIImpl : public BasicTTIImplBase<T> {
 private:
   using BaseT = BasicTTIImplBase<T>;
@@ -55,6 +72,12 @@ public:
     // cost?
     return TTI::TCC_Basic;
   }
+  void adjustUnrollingPreferences(Loop *L, ScalarEvolution &SE,
+                                  TTI::UnrollingPreferences &UP,
+                                  OptimizationRemarkEmitter *ORE);
+  bool isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
+                                AssumptionCache &AC, TargetLibraryInfo *LibInfo,
+                                HardwareLoopInfo &HWLoopInfo);
 };
 
 } // end namespace llvm

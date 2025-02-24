@@ -11,8 +11,8 @@
 ; We have float operations in the loop body, and we check whether ZOL loops
 ; were created by looking for the hallmark intrinsics
 
-; CHECK: llvm.set.loop.iterations
-; CHECK: llvm.loop.decrement
+; CHECK-NOT: llvm.set.loop.iterations
+; CHECK-NOT: llvm.loop.decrement
 
 define dso_local float @factorial(i32 noundef %n) local_unnamed_addr {
 entry:
