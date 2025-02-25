@@ -62,7 +62,7 @@ static cl::opt<int> PostPipelinerMaxII(
     cl::desc("[AIE] Maximum II to be tried in the post-ra pipeliner"));
 
 static cl::opt<bool> EnableMultiSlotInstrMaterialization(
-    "aie-preassign-multi-slot-instr", cl::Hidden, cl::init(false),
+    "aie-preassign-multi-slot-instr", cl::Hidden, cl::init(true),
     cl::desc("Statically materialize Multi-Slot Pseudo Instructions in "
              "loops."));
 
