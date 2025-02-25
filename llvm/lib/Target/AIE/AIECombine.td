@@ -42,6 +42,14 @@ def combine_splat_vector : GICombineRule<
   (apply [{ applySplatVector(*${root}, MRI, B, ${matchinfo}); }])
 >;
 
+def combine_single_diff_build_vector_matchdata: GIDefMatchData<"AIESingleDiffLaneBuildVectorMatchData">;
+def combine_single_diff_build_vector : GICombineRule<
+  (defs root:$root, combine_single_diff_build_vector_matchdata:$matchinfo),
+  (match (wip_match_opcode G_BUILD_VECTOR): $root,
+  [{ return matchSingleDiffLaneBuildVector(*${root}, MRI, ${matchinfo}); }]),
+  (apply [{ applySingleDiffLaneBuildVector(*${root}, MRI, B, ${matchinfo}); }])
+>;
+
 def combine_pad_vector_matchdata: GIDefMatchData<"Register">;
 def combine_pad_vector : GICombineRule<
   (defs root:$root, combine_pad_vector_matchdata:$matchinfo),
@@ -99,7 +107,8 @@ def AIE2PreLegalizerCombiner
                                                                  all_combines, combine_S20NarrowingOpt,
                                                                  combine_globalval_offset,
                                                                  combine_extract_vector_elt_and_zsa_ext,
-                                                                 combine_splat_vector, combine_concat_to_pad_vector]> {
+                                                                 combine_splat_vector, combine_concat_to_pad_vector, 
+                                                                 combine_single_diff_build_vector]> {
   let CombineAllMethodName = "tryCombineAllImpl";
 }
 
@@ -113,8 +122,8 @@ def AIE2PPreLegalizerCombiner
                                                                  combine_splat_vector, combine_vector_broadcast,
                                                                  combine_concat_to_pad_vector, 
                                                                  combine_vector_shuffle_vsel,
-                                                                 combine_vector_shuffle_broadcast
-                                                                 ]> {
+                                                                 combine_vector_shuffle_broadcast,
+                                                                 combine_single_diff_build_vector]> {
   let CombineAllMethodName = "tryCombineAllImpl";
 }
 

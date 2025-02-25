@@ -1241,6 +1241,93 @@ bool llvm::applySplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
 }
 
 // Match something like:
+// %0:_(<32 x s16>) = G_BUILD_VECTOR %2:(s16), %2:(s16), %1:(s16) ... x32
+//
+// To turn it into
+// %3:_(<32 x s16>) = G_AIE_BROADCAST_VECTOR %2:_(s16)
+// %0:(<32 x s16>) = G_AIE_INSERT_VECTOR_ELT %3:(<32 x s16>), %1:_(s16), 2
+bool llvm::matchSingleDiffLaneBuildVector(
+    MachineInstr &MI, MachineRegisterInfo &MRI,
+    AIESingleDiffLaneBuildVectorMatchData &MatchInfo) {
+  assert(MI.getOpcode() == TargetOpcode::G_BUILD_VECTOR &&
+         "Expected a G_BUILD_VECTOR");
+
+  const Register DstVecReg = MI.getOperand(0).getReg();
+  const LLT DstVecTy = MRI.getType(DstVecReg);
+  const unsigned DstVecSize = DstVecTy.getSizeInBits();
+
+  switch (DstVecSize) {
+  case 256:
+  case 512:
+  case 1024:
+  case 2048:
+    break;
+  default:
+    // unimplemented
+    return false;
+  }
+  // DenseMap to hold unique registers and their (count, last index)
+  DenseMap<Register, std::pair<unsigned, unsigned>> UniqueRegs;
+  const unsigned NumOps = MI.getNumOperands();
+  for (unsigned i = 1; i < NumOps; i++) {
+    const Register OpReg = MI.getOperand(i).getReg();
+    auto &RegInfo = UniqueRegs[OpReg];
+    RegInfo.first += 1;
+    RegInfo.second = i - 1;
+
+    if (UniqueRegs.size() > 2)
+      return false;
+  }
+  // Ensure exactly 2 unique registers to match the single differing lane build
+  // vector pattern. More than 2 registers won't match; 1 unique register would
+  // be a splat vector combine
+  if (UniqueRegs.size() != 2)
+    return false;
+
+  Register SplatReg, DifferingReg;
+  unsigned DifferingIndex;
+
+  // Identify splat (multiple uses) and differing (single use) registers
+  for (const auto &[Reg, RegInfo] : UniqueRegs) {
+    if (RegInfo.first == 1) {
+      DifferingReg = Reg;
+      DifferingIndex = RegInfo.second;
+    } else {
+      SplatReg = Reg;
+    }
+  }
+  // Validate that one register was used exactly once
+  if (!DifferingReg.isValid() || !SplatReg.isValid())
+    return false;
+
+  // Ignore G_IMPLICIT_DEF to avoid conflicts with \fn matchBroadcastElement
+  const MachineInstr *SplatRegDef = getDefIgnoringCopies(SplatReg, MRI);
+  if (!SplatRegDef || SplatRegDef->getOpcode() == TargetOpcode::G_IMPLICIT_DEF)
+    return false;
+
+  MatchInfo = {DstVecReg, SplatReg, DifferingReg, DifferingIndex};
+  return true;
+}
+
+bool llvm::applySingleDiffLaneBuildVector(
+    MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B,
+    AIESingleDiffLaneBuildVectorMatchData &MatchInfo) {
+  B.setInstrAndDebugLoc(MI);
+  const Register DstVecReg = MatchInfo.DstVecReg;
+  const LLT DstVecRegTy = MRI.getType(DstVecReg);
+  const Register BcstDstReg = MRI.createGenericVirtualRegister(DstVecRegTy);
+  const LLT S32 = LLT::scalar(32);
+
+  buildBroadcastVector(B, MRI, MatchInfo.SplatReg, BcstDstReg);
+  const Register IdxReg =
+      B.buildConstant(S32, MatchInfo.DifferingIndex).getReg(0);
+  B.buildInsertVectorElement(DstVecReg, BcstDstReg, MatchInfo.DifferingReg,
+                             IdxReg);
+  MI.eraseFromParent();
+  return true;
+}
+
+// Match something like:
 // %0(<4 x s32>), dead %1(<4 x s32>), dead %2(<4 x s32>), dead %3(<4 x s32>)
 //   = G_UNMERGE_VALUES %10(<16 x s32>)
 //
