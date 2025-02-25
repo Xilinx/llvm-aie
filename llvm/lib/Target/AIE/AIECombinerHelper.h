@@ -62,6 +62,17 @@ protected:
   int Amplitude = 1;
 };
 
+struct AIESingleDiffLaneBuildVectorMatchData {
+  /// Destination register of G_BUILD_VECTOR
+  Register DstVecReg;
+  /// The repeated register
+  Register SplatReg;
+  /// Register for the differing element
+  Register DifferingReg;
+  /// Lane index of the single differing element
+  unsigned DifferingIndex;
+};
+
 /// Look for any PtrAdd instruction that use the same base as \a MI that can be
 /// combined with it and stores it in \a MatchData
 /// \return true if an instruction is found
@@ -180,6 +191,13 @@ bool matchSplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
 bool applySplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                       MachineIRBuilder &B,
                       std::pair<Register, Register> &MatchInfo);
+
+bool matchSingleDiffLaneBuildVector(
+    MachineInstr &MI, MachineRegisterInfo &MRI,
+    AIESingleDiffLaneBuildVectorMatchData &MatchInfo);
+bool applySingleDiffLaneBuildVector(
+    MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B,
+    AIESingleDiffLaneBuildVectorMatchData &MatchInfo);
 
 bool matchUnpadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                       const AIEBaseInstrInfo &TII);
