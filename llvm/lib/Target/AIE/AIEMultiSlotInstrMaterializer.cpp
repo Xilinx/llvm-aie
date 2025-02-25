@@ -100,7 +100,8 @@ private:
   /// If Slots have to be reassigned (because every Slot has already been
   /// assigned to a Memory Bank), use an Index to cycle through already
   /// used Slots.
-  unsigned ReassignIndex = 0;
+  /// The initial value is tuned for specific benchmarks for aie2p architecture.
+  unsigned ReassignIndex = 1;
   const AIEBaseInstrInfo *TII;
 
   /// \return an unused Slot from the mapping.

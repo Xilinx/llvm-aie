@@ -44,7 +44,7 @@
   ; CHECK-NEXT:  .LBB0_2: // =>This Inner Loop Header: Depth=1
   ; CHECK-NEXT:    vlda.fill.512 [p1, lf1, r25]; vldb.fill.512 [p0, lf0, r24]; nops ; nopxm ; nopv
   ; CHECK-NEXT:  .L_LEnd0:
-  ; CHECK-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vlda.fill.512 [p0, lf0, r24]; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:  // %bb.3:
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_4:
