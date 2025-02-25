@@ -118,11 +118,7 @@ private:
       LLVM_DEBUG(dbgs() << "    Found Unused Slot " << Slot << "\n");
       return Slot;
     }
-
-    // no slots were assigned yet, assign first Slot.
-    // FIXME: use a heuristic that takes Slots utilization and
-    // utilization of MemoryBanks into consideration.
-    return LoadSlots[0];
+    return {};
   }
 
   /// Cycle through load Slots and \return an already used Slot
