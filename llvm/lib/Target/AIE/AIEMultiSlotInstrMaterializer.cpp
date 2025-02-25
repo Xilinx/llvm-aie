@@ -20,6 +20,10 @@ using namespace llvm;
 
 #define DEBUG_TYPE "aie-multi-slot-pseudo"
 
+static cl::opt<bool> SkipSingleSlotAssignment(
+    "aie-skip-single-slot-assignment", cl::Hidden, cl::init(true),
+    cl::desc("Skip preassigning if all multi-slot instr are assigned to the "
+             "same Slot."));
 namespace llvm::AIE {
 
 class SlotMapping {
@@ -87,6 +91,8 @@ public:
 
     return true;
   }
+
+  bool hasSingleMapping() const { return SlotToBanks.size() == 1; }
 
 private:
   /// Mapping between a Slot and the MemoryBanks that occupy the Slot.
@@ -160,6 +166,7 @@ SlotMapping getAssignedSlots(const MachineBasicBlock &MBB,
 /// in \p SlotToBanks are used and updated.
 bool assignSlots(SlotMapping &SlotToBanks, const MachineBasicBlock &MBB,
                  const AIEBaseInstrInfo *TII, const AIEHazardRecognizer &HR) {
+  LLVM_DEBUG(dbgs() << "Assigning Slots\n");
   for (const auto &MI : MBB) {
     if (!MI.mayLoad() || !TII->isMultiSlotPseudo(MI))
       continue;
@@ -169,7 +176,20 @@ bool assignSlots(SlotMapping &SlotToBanks, const MachineBasicBlock &MBB,
     }
   }
 
-  return SlotToBanks.hasUniqueSlotForBank();
+  const bool SingleSlotAssignment = SlotToBanks.hasSingleMapping();
+  if (SingleSlotAssignment)
+    LLVM_DEBUG(
+        dbgs()
+        << "WARNING: Only a single Slot was assigned to all multi-slot Load "
+           " Instructions.\n");
+
+  if (!SlotToBanks.hasUniqueSlotForBank())
+    return false;
+
+  if (SkipSingleSlotAssignment)
+    return !SingleSlotAssignment;
+
+  return true;
 }
 
 /// Materialise \p MI into its slot assigned by \p SlotToBanks .
