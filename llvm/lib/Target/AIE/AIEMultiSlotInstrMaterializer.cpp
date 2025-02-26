@@ -70,7 +70,7 @@ public:
 
   /// \return whether a Slot can be assigned to \b MI and assign it in the
   /// mapping.
-  bool assignSlot(const MachineInstr &MI, const AIEHazardRecognizer &HR) {
+  bool isSlotAssignable(const MachineInstr &MI, const AIEHazardRecognizer &HR) {
     auto MemBankBits = HR.getMemoryBanks(&MI);
     LLVM_DEBUG(dbgs() << "Memory Bank: " << MemBankBits << " " << MI);
     if (!MemBankBits) {
@@ -168,7 +168,7 @@ bool assignSlots(SlotMapping &SlotToBanks, const MachineBasicBlock &MBB,
     if (!MI.mayLoad() || !TII->isMultiSlotPseudo(MI))
       continue;
 
-    if (!SlotToBanks.assignSlot(MI, HR)) {
+    if (!SlotToBanks.isSlotAssignable(MI, HR)) {
       return false;
     }
   }
