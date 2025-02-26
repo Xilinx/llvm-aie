@@ -134,6 +134,8 @@ public:
   std::optional<unsigned>
   getOpcodeWithAtomicOperands(unsigned Opcode) const override;
 
+  TiedRegOperands getTiedRegInfoForSplitting(unsigned Opcode) const override;
+
   std::optional<unsigned>
   getOpcodeWithTupleOperands(unsigned Opcode) const override;
 

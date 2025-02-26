@@ -1403,6 +1403,12 @@ AIE2InstrInfo::getTiedRegInfo(unsigned Opcode) const {
   }
 }
 
+TiedRegOperands
+AIE2InstrInfo::getTiedRegInfoForSplitting(unsigned Opcode) const {
+  assert(getTiedRegInfo(Opcode).size() == 1);
+  return getTiedRegInfo(Opcode).front();
+}
+
 bool AIE2InstrInfo::isHardwareLoopDec(unsigned Opcode) const {
   return Opcode == AIE2::LoopDec;
 }

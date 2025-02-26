@@ -1635,6 +1635,21 @@ AIE2PInstrInfo::getTiedRegInfo(unsigned Opcode) const {
   }
 }
 
+TiedRegOperands
+AIE2PInstrInfo::getTiedRegInfoForSplitting(unsigned Opcode) const {
+  const auto &TiedRegInfoVector = getTiedRegInfo(Opcode);
+  unsigned Size = TiedRegInfoVector.size();
+  assert(Size >= 1 && "Expected to have tied register info");
+
+  for (auto &TiedRegInfo : TiedRegInfoVector) {
+    if (TiedRegInfo.SrcOps.size() > 1)
+      continue;
+    if (TiedRegInfo.canSplitSrcOps())
+      return TiedRegInfo;
+  }
+  return {};
+}
+
 unsigned AIE2PInstrInfo::getNumBypassedCycles(
     const InstrItineraryData *ItinData, const MachineInstr &DefMI,
     unsigned DefIdx, const MachineInstr &UseMI, unsigned UseIdx) const {

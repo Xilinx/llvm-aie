@@ -68,8 +68,8 @@ bool AIESplitInstrBuilder::runOnMachineFunction(MachineFunction &MF) {
     for (MachineInstr &MI : make_early_inc_range(MBB)) {
       if (std::optional<unsigned> SplitOpcode =
               TII.getOpcodeWithAtomicOperands(MI.getOpcode())) {
-        assert(TII.getTiedRegInfo(MI).size() == 1);
-        rewriteInstruction(TII.getTiedRegInfo(MI).front(), MI, *SplitOpcode);
+        rewriteInstruction(TII.getTiedRegInfoForSplitting(MI.getOpcode()), MI,
+                           *SplitOpcode);
       }
     }
   }
@@ -178,8 +178,7 @@ bool AIESplitInstrReplacer::runOnMachineFunction(MachineFunction &MF) {
     for (MachineInstr &MI : make_early_inc_range(MBB)) {
       if (std::optional<unsigned> OpcodeWithTuple =
               TII.getOpcodeWithTupleOperands(MI.getOpcode())) {
-        assert(TII.getTiedRegInfo(*OpcodeWithTuple).size() == 1);
-        rewriteInstruction(TII.getTiedRegInfo(*OpcodeWithTuple).front(), MI,
+        rewriteInstruction(TII.getTiedRegInfoForSplitting(*OpcodeWithTuple), MI,
                            *OpcodeWithTuple);
       }
     }

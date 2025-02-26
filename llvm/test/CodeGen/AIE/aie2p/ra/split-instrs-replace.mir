@@ -148,13 +148,13 @@ body:             |
 ...
 
 ---
-name:            PADD_2D
+name:            test_split_2D_opIdx3
 tracksRegLiveness: true
 body:             |
   bb.0.entry:
     liveins: $dc4, $dj4, $dn4, $m4, $p0, $r0
 
-    ; CHECK-LABEL: name: PADD_2D
+    ; CHECK-LABEL: name: test_split_2D_opIdx3
     ; CHECK: liveins: $d4:0x0000000000200E00, $dc4, $dj4, $dn4, $m4, $p0, $r0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $p0, $dc4 = PADDA_2D killed $p0, $d4
@@ -199,12 +199,64 @@ body:             |
 ...
 
 ---
-name:            PADD_3D
+name:            test_split_2D_opIdx7
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    liveins: $sf, $p0, $p1, $r26
+
+    ; CHECK-LABEL: name: test_split_2D_opIdx7
+    ; CHECK: liveins: $sf, $p0, $p1, $r26
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: renamable $m0 = MOV_PD_imm11_pseudo 0
+    ; CHECK-NEXT: renamable $dn0 = LDA_dms_lda_idx_imm killed renamable $p1, 0 :: (load (s20), align 4)
+    ; CHECK-NEXT: renamable $dj0 = COPY renamable $m0
+    ; CHECK-NEXT: renamable $dc0 = COPY renamable $dn0
+    ; CHECK-NEXT: renamable $p2 = COPY $p0
+    ; CHECK-NEXT: $sf, dead $p2, $r26, dead $dc0 = VST_FLUSH_512_2D $sf, killed $p2, $r26, $d0, implicit-def $srfifo_of
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    renamable $m0 = MOV_PD_imm11_pseudo 0
+    renamable $dn0 = LDA_dms_lda_idx_imm killed renamable $p1, 0 :: (load (s20), align 4)
+    renamable $dj0 = COPY renamable $m0
+    renamable $dc0 = COPY renamable $dn0
+    renamable $p2 = COPY $p0
+    $sf, dead $p2, $r26, dead $dc0 = VST_FLUSH_512_2D_split $sf, killed $p2, $r26, killed $m0, killed $dn0, killed $dj0, killed $dc0, implicit-def $srfifo_of
+    PseudoRET implicit $lr
+...
+
+---
+name:            test_split_2D_opIdx8
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    liveins: $p0, $p1
+
+    ; CHECK-LABEL: name: test_split_2D_opIdx8
+    ; CHECK: liveins: $p0, $p1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: renamable $m0 = MOV_PD_imm11_pseudo 0
+    ; CHECK-NEXT: renamable $dn0 = LDA_dms_lda_idx_imm killed renamable $p1, 0 :: (load (s20), align 4)
+    ; CHECK-NEXT: renamable $r24 = MOV_RLC_imm11_pseudo 0
+    ; CHECK-NEXT: renamable $dj0 = COPY renamable $m0
+    ; CHECK-NEXT: renamable $dc0 = COPY renamable $dn0
+    ; CHECK-NEXT: $x0, dead $p0, dead $lf0, dead $r24, dead $dc0 = VLD_POP_512_2D_pseudo killed $p0, undef $lf0, $r24, $d0, implicit-def $srfifo_uf
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $x0
+    renamable $m0 = MOV_PD_imm11_pseudo 0
+    renamable $dn0 = LDA_dms_lda_idx_imm killed renamable $p1, 0 :: (load (s20), align 4)
+    renamable $r24 = MOV_RLC_imm11_pseudo 0
+    renamable $dj0 = COPY renamable $m0
+    renamable $dc0 = COPY renamable $dn0
+    $x0, dead $p0, dead $lf0, dead $r24, dead $dc0 = VLD_POP_512_2D_pseudo_split killed $p0, undef $lf0, $r24, killed $m0, killed $dn0, killed $dj0, killed $dc0, implicit-def $srfifo_uf
+    PseudoRET implicit $lr, implicit killed renamable $x0
+...
+
+---
+name:            test_split_3D_opIdx4
 tracksRegLiveness: true
 body:             |
   bb.0.entry:
     liveins: $dc4, $dj4, $dn4, $p0, $m0, $dn0, $dj0, $dc0
-    ; CHECK-LABEL: name: PADD_3D
+    ; CHECK-LABEL: name: test_split_3D_opIdx4
     ; CHECK: liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x0001C00000200E00
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $p0, $dc0, $dc4 = PADDA_3D killed $p0, $d0_3d
@@ -244,4 +296,68 @@ body:             |
     ; CHECK-NEXT: dead $dm0, dead $p0, dead $dc1, dead $dc5 = VLDA_3D_UPS_4x_dmx_lda_ups_x2d_upsSign0 $s0, killed $p0, $d1_3d, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
     dead $dm0, dead $p0, dead $dc1, dead $dc5 = VLDA_3D_UPS_4x_dmx_lda_ups_x2d_upsSign0_split $s0, killed $p0, $m1, $dn1, $dj1, $dc1, undef $m5, $dn5, $dj5, $dc5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
 
+...
+
+---
+name:            test_split_3D_opIdx8
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    liveins: $sf, $p0, $r26
+
+    ; CHECK-LABEL: name: test_split_3D_opIdx8
+    ; CHECK: liveins: $sf, $p0, $r26
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: renamable $m0 = MOV_PD_imm11_pseudo 0
+    ; CHECK-NEXT: renamable $dj4 = MOV_PD_imm11_pseudo 128
+    ; CHECK-NEXT: renamable $dj0 = COPY renamable $m0
+    ; CHECK-NEXT: renamable $dn0 = COPY renamable $dj4
+    ; CHECK-NEXT: renamable $dc0 = COPY renamable $m0
+    ; CHECK-NEXT: renamable $dc4 = COPY renamable $m0
+    ; CHECK-NEXT: renamable $dn4 = COPY renamable $dn0
+    ; CHECK-NEXT: renamable $p2 = COPY $p0
+    ; CHECK-NEXT: $sf, dead $p2, $r26, dead $dc0, dead $dc4 = VST_FLUSH_512_3D $sf, killed $p2, $r26, $d0_3d, implicit-def $srfifo_of
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    renamable $m0 = MOV_PD_imm11_pseudo 0
+    renamable $dj4 = MOV_PD_imm11_pseudo 128
+    renamable $dj0 = COPY renamable $m0
+    renamable $dn0 = COPY renamable $dj4
+    renamable $dc0 = COPY renamable $m0
+    renamable $dc4 = COPY renamable $m0
+    renamable $dn4 = COPY renamable $dn0
+    renamable $p2 = COPY $p0
+    $sf, dead $p2, $r26, dead $dc0, dead $dc4 = VST_FLUSH_512_3D_split $sf, killed $p2, $r26, killed $m0, killed $dn0, killed $dj0, killed $dc0, undef $m4, killed $dn4, killed $dj4, killed $dc4, implicit-def $srfifo_of
+    PseudoRET implicit $lr
+...
+
+---
+name:            test_split_3D_opIdx9
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    liveins: $p0
+
+    ; CHECK-LABEL: name: test_split_3D_opIdx9
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: renamable $m0 = MOV_PD_imm11_pseudo 0
+    ; CHECK-NEXT: renamable $dj4 = MOV_PD_imm11_pseudo 128
+    ; CHECK-NEXT: renamable $r24 = MOV_RLC_imm11_pseudo 0
+    ; CHECK-NEXT: renamable $dj0 = COPY renamable $m0
+    ; CHECK-NEXT: renamable $dn0 = COPY renamable $dj4
+    ; CHECK-NEXT: renamable $dc0 = COPY renamable $m0
+    ; CHECK-NEXT: renamable $dc4 = COPY renamable $m0
+    ; CHECK-NEXT: renamable $dn4 = COPY renamable $dn0
+    ; CHECK-NEXT: $x0, dead $p0, dead $lf0, dead $r24, dead $dc0, dead $dc4 = VLD_POP_512_3D_pseudo killed $p0, undef $lf0, $r24, $d0_3d, implicit-def $srfifo_uf
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $x0
+    renamable $m0 = MOV_PD_imm11_pseudo 0
+    renamable $dj4 = MOV_PD_imm11_pseudo 128
+    renamable $r24 = MOV_RLC_imm11_pseudo 0
+    renamable $dj0 = COPY renamable $m0
+    renamable $dn0 = COPY renamable $dj4
+    renamable $dc0 = COPY renamable $m0
+    renamable $dc4 = COPY renamable $m0
+    renamable $dn4 = COPY renamable $dn0
+    $x0, dead $p0, dead $lf0, dead $r24, dead $dc0, dead $dc4 = VLD_POP_512_3D_pseudo_split killed $p0, undef $lf0, $r24, killed $m0, killed $dn0, killed $dj0, killed $dc0, undef $m4, killed $dn4, killed $dj4, killed $dc4, implicit-def $srfifo_uf
+    PseudoRET implicit $lr, implicit killed renamable $x0
 ...

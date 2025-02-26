@@ -25,3 +25,10 @@ TiedRegOperands::findOperandInfo(unsigned OpIdx) const {
   }
   return nullptr;
 }
+
+bool TiedRegOperands::canSplitSrcOps() const {
+  assert(SrcOps.size() == 1 && "Expected only one SrcOp (NoSubRegister) ");
+
+  const auto &SrcSubRegsSplit = SrcOps.front().SubRegsSplit;
+  return SrcSubRegsSplit.size() > 0;
+}
