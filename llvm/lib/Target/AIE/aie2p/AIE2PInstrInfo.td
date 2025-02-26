@@ -133,7 +133,7 @@ let hasDelaySlot = true, isBranch = true, isTerminator = true,
 include "aie2p/AIE2PMultiSlotPseudoInstrInfo.td"
 // Define _split variants for instructions using 2D registers
 class Split2DInstr<Instruction RealInst, int opidx> : SplitPseudo<RealInst,
-    opidx, (ins eM:$mod, eDN:$dim_size, eDJ:$dim_stride, eDC:$dim_count)> {}
+    opidx, (ins eM:$mod_2d, eDN:$dim_size, eDJ:$dim_stride, eDC:$dim_count)> {}
 
 foreach instr = [PADDA_2D, PADDB_2D, PADDS_2D, PADD_2D_pseudo] in
     def instr # _split : Split2DInstr<instr, /*opidx=*/3>;
@@ -192,6 +192,18 @@ foreach instr = [
   VST_2D_SRS_4x_dmx_sts_srs_dm_srsSign0,
   VST_2D_SRS_4x_dmx_sts_srs_dm_srsSign1] in
     def instr # _split : Split2DInstr<instr, /*opidx=*/5>;
+
+foreach instr = [
+     VST_FLUSH_512_2D, VST_FLUSH_512_CONV_2D] in
+    def instr # _split : Split2DInstr<instr, /*opidx=*/7>;
+
+foreach instr = [
+    VLDA_POP_512_2D, VLDA_POP_544_2D, VLDA_POP_576_2D, VLDA_POP_640_2D,
+    VLDA_POP_704_2D, VLDB_POP_512_2D, VLDB_POP_544_2D, VLDB_POP_576_2D,
+    VLDB_POP_640_2D, VLDB_POP_704_2D,
+    VLD_POP_512_2D_pseudo, VLD_POP_544_2D_pseudo, VLD_POP_576_2D_pseudo, 
+    VLD_POP_640_2D_pseudo, VLD_POP_704_2D_pseudo] in
+    def instr # _split : Split2DInstr<instr, /*opidx=*/8>;
 
 // Define _split variants for instructions using 3D registers
 class Split3DInstr<Instruction RealInst, int opidx> : SplitPseudo<RealInst,
@@ -262,6 +274,17 @@ foreach instr = [ VLDA_3D_UPS_2x_dmw_lda_ups_w2b_upsSign0,
   VST_3D_SRS_4x_dmx_sts_srs_dm_srsSign1] in   
     def instr # _split : Split3DInstr<instr, /*opidx=*/6>;
 
+foreach instr = [
+    VST_FLUSH_512_3D, VST_FLUSH_512_CONV_3D] in
+    def instr # _split : Split3DInstr<instr, /*opidx=*/8>;
+
+foreach instr = [
+    VLDA_POP_512_3D, VLDA_POP_544_3D, VLDA_POP_576_3D, VLDA_POP_640_3D,
+    VLDA_POP_704_3D, VLDB_POP_512_3D, VLDB_POP_544_3D, VLDB_POP_576_3D,
+    VLDB_POP_640_3D, VLDB_POP_704_3D,
+    VLD_POP_512_3D_pseudo, VLD_POP_544_3D_pseudo, VLD_POP_576_3D_pseudo,
+    VLD_POP_640_3D_pseudo, VLD_POP_704_3D_pseudo] in
+    def instr # _split : Split3DInstr<instr, /*opidx=*/9>;
 
 let hasSideEffects = 0, Uses = [sp] in {
 let mayLoad = false, mayStore = true in {

@@ -366,6 +366,11 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
     return getTiedRegInfo(MI.getOpcode());
   }
 
+  /// Information about tied operands which can be splitted.
+  virtual TiedRegOperands getTiedRegInfoForSplitting(unsigned Opcode) const {
+    return {};
+  }
+
   /// Finds the opcode that is equivalent to \p Opcode except some operands
   /// are expanded into multiple sub-registers operands to facilitate register
   /// allocation.

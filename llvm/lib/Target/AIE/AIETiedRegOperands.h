@@ -59,6 +59,9 @@ struct TiedRegOperands {
 
   /// Find the OperandSubRegMapping for the operand at index \p OpIdx, if any.
   const OperandSubRegMapping *findOperandInfo(unsigned OpIdx) const;
+
+  ///
+  bool canSplitSrcOps() const;
 };
 
 } // end namespace llvm
