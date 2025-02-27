@@ -3,11 +3,14 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 ;
-; RUN: llc --mtriple=aie2 -O2 --stop-after=pipeliner %s -o - | FileCheck %s
+; RUN: llc --mtriple=aie2 -O2 \
+; RUN:   --aie-hardware-loops-minitercount=3 --stop-after=pipeliner %s \
+; RUN:   -o - | FileCheck %s
 
-; We check that we have a three stage pipeline with unconditional controlflow in the prologue
+; We check that we have a three stage pipeline with unconditional
+; controlflow in the prologue
 
 ; CHECK:  bb.4
 ; CHECK:   LDA
