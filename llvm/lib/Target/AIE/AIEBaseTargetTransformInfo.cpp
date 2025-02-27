@@ -29,7 +29,7 @@ static cl::opt<bool>
                 cl::init(true), cl::Hidden);
 
 static cl::opt<int> MinIterCountHLReject(
-    "aie-hardware-loops-minitercount", cl::Hidden, cl::init(3),
+    "aie-hardware-loops-minitercount", cl::Hidden, cl::init(2),
     cl::desc("Minimum trip count threshold for HL rejection"));
 
 static cl::opt<bool>
