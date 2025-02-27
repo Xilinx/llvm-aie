@@ -35,6 +35,7 @@ set(LLVM_INSTALL_TOOLCHAIN_ONLY ON CACHE BOOL "")
 set(LLVM_TOOLCHAIN_TOOLS
   llc
   llvm-ar
+  llvm-as
   llvm-cxxfilt
   llvm-dwarfdump
   llvm-nm
