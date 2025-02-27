@@ -2306,7 +2306,7 @@ bool AIE2InstructionSelector::selectGetControlRegister(
   else
     llvm_unreachable("Expected const value for control register map index.");
 
-  if (!RBI.constrainGenericRegister(DstReg, AIE2::eRCRRegClass, MRI))
+  if (!RBI.constrainGenericRegister(DstReg, AIE2::eRRegClass, MRI))
     return false;
 
   auto CopyInstr =
