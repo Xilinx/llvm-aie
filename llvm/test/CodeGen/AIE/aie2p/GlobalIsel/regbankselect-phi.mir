@@ -373,12 +373,12 @@ body:             |
   ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:ptrregbank(p0) = G_PHI [[COPY]](p0), %bb.0, %8(p0), %bb.1
   ; CHECK-NEXT:   [[PHI2:%[0-9]+]]:gprregbank(s32) = G_PHI [[C]](s32), %bb.0, %10(s32), %bb.1
   ; CHECK-NEXT:   [[PHI3:%[0-9]+]]:fiforegbank(<16 x s64>) = G_PHI [[DEF]](<16 x s64>), %bb.0, %12(<16 x s64>), %bb.1
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:accregbank(<16 x s64>) = COPY [[PHI3]](<16 x s64>)
+  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:vregbank(<16 x s64>) = COPY [[PHI3]](<16 x s64>)
   ; CHECK-NEXT:   [[BITCAST:%[0-9]+]]:vregbank(<32 x s32>) = G_BITCAST [[COPY1]](<16 x s64>)
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[BITCAST]](<32 x s32>)
   ; CHECK-NEXT:   [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.fill), [[PHI1]](p0), [[COPY2]](<32 x s32>), [[PHI2]](s32)
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:vregbank(<32 x s32>) = COPY [[INT1]](<32 x s32>)
-  ; CHECK-NEXT:   [[BITCAST1:%[0-9]+]]:accregbank(<16 x s64>) = G_BITCAST [[COPY3]](<32 x s32>)
+  ; CHECK-NEXT:   [[BITCAST1:%[0-9]+]]:vregbank(<16 x s64>) = G_BITCAST [[COPY3]](<32 x s32>)
   ; CHECK-NEXT:   [[ADD:%[0-9]+]]:gprregbank(s32) = G_ADD [[PHI]], [[C1]]
   ; CHECK-NEXT:   [[ICMP:%[0-9]+]]:gprregbank(s32) = G_ICMP intpred(eq), [[ADD]](s32), [[C]]
   ; CHECK-NEXT:   G_BRCOND [[ICMP]](s32), %bb.1
