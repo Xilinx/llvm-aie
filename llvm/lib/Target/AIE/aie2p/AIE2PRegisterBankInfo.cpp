@@ -283,10 +283,7 @@ AIE2PRegisterBankInfo::getInstrAlternativeMappings(
     // Set all operand sizes to 20 by default.
     SmallVector<PartialMappingIdx, 4> OpRegBankIdx(NumOperands, PMI_MOD);
     SmallVector<const ValueMapping *, 8> OpdsMapping(NumOperands);
-    SmallVector<unsigned, 4> OpSize(NumOperands, 20);
 
-    // Operand[0]- vector operand.
-    OpSize[0] = DstSize;
     for (unsigned I = 1; I < FirstSrcIdx; ++I)
       OpRegBankIdx[I] = (I == 1) ? PMI_PTR : PMI_MOD;
 
@@ -304,7 +301,8 @@ AIE2PRegisterBankInfo::getInstrAlternativeMappings(
           LLT Ty = MRI.getType(MI.getOperand(Idx).getReg());
           if (!Ty.isValid())
             continue;
-          OpdsMapping[Idx] = getValueMapping(OpRegBankIdx[Idx], OpSize[Idx]);
+          OpdsMapping[Idx] =
+              getValueMapping(OpRegBankIdx[Idx], (Idx == 0) ? DstSize : 20);
         }
       }
       const InstructionMapping &InsnMapping = getInstructionMapping(
@@ -345,7 +343,6 @@ AIE2PRegisterBankInfo::getInstrAlternativeMappings(
     // Set all operand sizes to 20 by default.
     SmallVector<PartialMappingIdx, 4> OpRegBankIdx(NumOperands, PMI_MOD);
     SmallVector<const ValueMapping *, 8> OpdsMapping(NumOperands);
-    SmallVector<unsigned, 4> OpSize(NumOperands, 20);
 
     // Initialize first few indices based on VRegOpIdx
     for (unsigned I = 0; I < VecRegOpIdx; ++I) {
@@ -365,7 +362,8 @@ AIE2PRegisterBankInfo::getInstrAlternativeMappings(
           LLT Ty = MRI.getType(MI.getOperand(Idx).getReg());
           if (!Ty.isValid())
             continue;
-          OpdsMapping[Idx] = getValueMapping(OpRegBankIdx[Idx], OpSize[Idx]);
+          OpdsMapping[Idx] = getValueMapping(
+              OpRegBankIdx[Idx], (Idx == VecRegOpIdx) ? VecRegSize : 20);
         }
       }
       const InstructionMapping &InsnMapping = getInstructionMapping(
@@ -375,20 +373,19 @@ AIE2PRegisterBankInfo::getInstrAlternativeMappings(
     return AltMappings;
   }
   case TargetOpcode::G_UNMERGE_VALUES: {
-    const Register SrcReg = MI.getOperand(2).getReg();
+    const unsigned NumOperands = MI.getNumOperands();
+    assert(NumOperands == 3 &&
+           "Unsupported number of operands for G_UNMERGE_VALUES\n");
+    const Register SrcReg = MI.getOperand(NumOperands - 1).getReg();
     const LLT SrcTy = MRI.getType(SrcReg);
     unsigned SrcSize = getSizeInBits(SrcReg, MRI, TRI);
-    const LLT HalfSrcTy = SrcTy.divide(2);
-    const unsigned HalfSrcTySize = HalfSrcTy.getSizeInBits();
     // Only the accumulator is of 2048-bit size, with the possible mapping
     // restricted to accumulator register banks. For a 512-bit vector,
     // the only possible mapping is to a vector register bank.
     if (SrcSize <= 512 || SrcSize == 2048)
       break;
-    // If the instruction has any implicit-defs or uses,
-    // do not mess with it.
-    if (MI.getNumOperands() != 3)
-      break;
+    const LLT HalfSrcTy = SrcTy.divide(2);
+    const unsigned HalfSrcTySize = HalfSrcTy.getSizeInBits();
     InstructionMappings AltMappings;
     const InstructionMapping &VRegMapping = getInstructionMapping(
         /*ID*/ 1, /*Cost*/ 1,
@@ -421,8 +418,15 @@ AIE2PRegisterBankInfo::getInstrAlternativeMappings(
   }
   case TargetOpcode::G_CONCAT_VECTORS: {
     Register DstReg = MI.getOperand(0).getReg();
-    const LLT Ty = MRI.getType(DstReg);
-    unsigned Size = getSizeInBits(DstReg, MRI, TRI);
+    const LLT DstTy = MRI.getType(DstReg);
+    const LLT HalfDstTy = DstTy.divide(2);
+    unsigned DstSize = getSizeInBits(DstReg, MRI, TRI);
+    const unsigned HalfDstTySize = HalfDstTy.getSizeInBits();
+    // Only the accumulator is of 2048-bit size, with the possible mapping
+    // restricted to accumulator register banks. For a 512-bit vector,
+    // the only possible mapping is to a vector register bank.
+    if (DstSize <= 512 || DstSize == 2048)
+      break;
 
     // If the instruction has any implicit-defs or uses,
     // do not mess with it.
@@ -431,20 +435,33 @@ AIE2PRegisterBankInfo::getInstrAlternativeMappings(
     InstructionMappings AltMappings;
     const InstructionMapping &VRegMapping = getInstructionMapping(
         /*ID*/ 1, /*Cost*/ 1,
-        getOperandsMapping({getValueMapping(getPartialMappingIdx(Ty), Size),
-                            getValueMapping(getPartialMappingIdx(Ty), Size),
-                            getValueMapping(getPartialMappingIdx(Ty), Size)}),
+        getOperandsMapping(
+            {getValueMapping(getVecPartialMappingIdx(DstTy), DstSize),
+             getValueMapping(getVecPartialMappingIdx(HalfDstTy), HalfDstTySize),
+             getValueMapping(getVecPartialMappingIdx(HalfDstTy),
+                             HalfDstTySize)}),
         /*NumOperands*/ 3);
     const InstructionMapping &AccRegMapping = getInstructionMapping(
         /*ID*/ 2, /*Cost*/ 1,
         getOperandsMapping(
-            {getValueMapping(getAccPartialMappingIdx(Ty), Size),
-             getValueMapping(getAccPartialMappingIdx(Ty), Size),
-             getValueMapping(getAccPartialMappingIdx(Ty), Size)}),
+            {getValueMapping(getAccPartialMappingIdx(DstTy), DstSize),
+             getValueMapping(getAccPartialMappingIdx(HalfDstTy), HalfDstTySize),
+             getValueMapping(getAccPartialMappingIdx(HalfDstTy),
+                             HalfDstTySize)}),
+        /*NumOperands*/ 3);
+    const InstructionMapping &FifoRegMapping = getInstructionMapping(
+        /*ID*/ 3, /*Cost*/ 1,
+        getOperandsMapping(
+            {getValueMapping(getFifoPartialMappingIdx(DstTy), DstSize),
+             getValueMapping(getFifoPartialMappingIdx(HalfDstTy),
+                             HalfDstTySize),
+             getValueMapping(getFifoPartialMappingIdx(HalfDstTy),
+                             HalfDstTySize)}),
         /*NumOperands*/ 3);
 
     AltMappings.push_back(&VRegMapping);
     AltMappings.push_back(&AccRegMapping);
+    AltMappings.push_back(&FifoRegMapping);
     return AltMappings;
   }
   case TargetOpcode::G_BITCAST: {
@@ -453,7 +470,7 @@ AIE2PRegisterBankInfo::getInstrAlternativeMappings(
     // Only the accumulator is of 2048-bit size, with the possible mapping
     // restricted to accumulator register banks. For a 256-bit vector,
     // the only possible mapping is to a vector register bank.
-    if (Size == 256 || Size == 2048)
+    if (Size <= 256 || Size == 2048)
       break;
 
     // If the instruction has any implicit-defs or uses,
@@ -465,8 +482,10 @@ AIE2PRegisterBankInfo::getInstrAlternativeMappings(
     const InstructionMapping &VRegMapping = getInstructionMapping(
         /*ID*/ 1, /*Cost*/ 1,
         getOperandsMapping(
-            {getValueMapping(getPartialMappingIdx(MRI.getType(DstReg)), Size),
-             getValueMapping(getPartialMappingIdx(MRI.getType(DstReg)), Size)}),
+            {getValueMapping(getVecPartialMappingIdx(MRI.getType(DstReg)),
+                             Size),
+             getValueMapping(getVecPartialMappingIdx(MRI.getType(DstReg)),
+                             Size)}),
         /*NumOperands*/ 2);
     const InstructionMapping &AccRegMapping = getInstructionMapping(
         /*ID*/ 2, /*Cost*/ 1,
@@ -479,7 +498,8 @@ AIE2PRegisterBankInfo::getInstrAlternativeMappings(
     const InstructionMapping &AccToVRegMapping = getInstructionMapping(
         /*ID*/ 2, /*Cost*/ 2,
         getOperandsMapping(
-            {getValueMapping(getPartialMappingIdx(MRI.getType(DstReg)), Size),
+            {getValueMapping(getVecPartialMappingIdx(MRI.getType(DstReg)),
+                             Size),
              getValueMapping(getAccPartialMappingIdx(MRI.getType(DstReg)),
                              Size)}),
         /*NumOperands*/ 2);
@@ -488,7 +508,8 @@ AIE2PRegisterBankInfo::getInstrAlternativeMappings(
         getOperandsMapping(
             {getValueMapping(getAccPartialMappingIdx(MRI.getType(DstReg)),
                              Size),
-             getValueMapping(getPartialMappingIdx(MRI.getType(DstReg)), Size)}),
+             getValueMapping(getVecPartialMappingIdx(MRI.getType(DstReg)),
+                             Size)}),
         /*NumOperands*/ 2);
 
     AltMappings.push_back(&VRegMapping);
@@ -508,8 +529,8 @@ AIE2PRegisterBankInfo::getInstrAlternativeMappings(
     InstructionMappings AltMappings;
     const InstructionMapping &VRegMapping = getInstructionMapping(
         /*ID*/ 1, /*Cost*/ 1,
-        getOperandsMapping(
-            {getValueMapping(getPartialMappingIdx(MRI.getType(DstReg)), Size)}),
+        getOperandsMapping({getValueMapping(
+            getVecPartialMappingIdx(MRI.getType(DstReg)), Size)}),
         /*NumOperands*/ 1);
     const InstructionMapping &AccRegMapping = getInstructionMapping(
         /*ID*/ 2, /*Cost*/ 1,
@@ -1016,17 +1037,19 @@ AIE2PRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     Register SrcReg = MI.getOperand(1).getReg();
     LLT DstType = MRI.getType(DstReg);
     LLT SrcType = MRI.getType(SrcReg);
+    if (SrcType.getSizeInBits() <= 64)
+      return AIEBaseRegisterBankInfo::getInstrMapping(MI);
     // Check if we already know the register bank.
     auto *RB = getRegBank(SrcReg, MRI, TRI);
     auto PreferredRegBank = getPreferredRegBankForVectorTy(MRI, TRI, DstReg);
     if (PreferredRegBank && &AIE2P::AccRegBank == *PreferredRegBank)
       OpRegBankIdx[0] = getAccPartialMappingIdx(DstType);
     else
-      OpRegBankIdx[0] = getPartialMappingIdx(DstType);
+      OpRegBankIdx[0] = getVecPartialMappingIdx(DstType);
     if (RB == &AIE2P::AccRegBank)
       OpRegBankIdx[1] = getAccPartialMappingIdx(SrcType);
     else
-      OpRegBankIdx[1] = getPartialMappingIdx(SrcType);
+      OpRegBankIdx[1] = getVecPartialMappingIdx(SrcType);
 
     return AIEBaseRegisterBankInfo::getInstrMappingFinal(MI, Cost, OpSize,
                                                          OpRegBankIdx);

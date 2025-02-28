@@ -298,6 +298,8 @@ AIEBaseRegisterBankInfo::getAccPartialMappingIdx(const LLT &Ty) const {
 AIEBaseRegisterBankInfo::PartialMappingIdx
 AIEBaseRegisterBankInfo::getVecPartialMappingIdx(const LLT &Ty) const {
   switch (Ty.getSizeInBits()) {
+  case 128:
+    return PMI_VREG128;
   case 256:
     return PMI_VREG256;
   case 512:
