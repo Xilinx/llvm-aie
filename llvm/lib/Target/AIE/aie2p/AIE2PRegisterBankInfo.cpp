@@ -374,6 +374,51 @@ AIE2PRegisterBankInfo::getInstrAlternativeMappings(
     }
     return AltMappings;
   }
+  case TargetOpcode::G_UNMERGE_VALUES: {
+    const Register SrcReg = MI.getOperand(2).getReg();
+    const LLT SrcTy = MRI.getType(SrcReg);
+    unsigned SrcSize = getSizeInBits(SrcReg, MRI, TRI);
+    const LLT HalfSrcTy = SrcTy.divide(2);
+    const unsigned HalfSrcTySize = HalfSrcTy.getSizeInBits();
+    // Only the accumulator is of 2048-bit size, with the possible mapping
+    // restricted to accumulator register banks. For a 512-bit vector,
+    // the only possible mapping is to a vector register bank.
+    if (SrcSize <= 512 || SrcSize == 2048)
+      break;
+    // If the instruction has any implicit-defs or uses,
+    // do not mess with it.
+    if (MI.getNumOperands() != 3)
+      break;
+    InstructionMappings AltMappings;
+    const InstructionMapping &VRegMapping = getInstructionMapping(
+        /*ID*/ 1, /*Cost*/ 1,
+        getOperandsMapping(
+            {getValueMapping(getVecPartialMappingIdx(HalfSrcTy), HalfSrcTySize),
+             getValueMapping(getVecPartialMappingIdx(HalfSrcTy), HalfSrcTySize),
+             getValueMapping(getVecPartialMappingIdx(SrcTy), SrcSize)}),
+        /*NumOperands*/ 3);
+    const InstructionMapping &AccRegMapping = getInstructionMapping(
+        /*ID*/ 2, /*Cost*/ 1,
+        getOperandsMapping(
+            {getValueMapping(getAccPartialMappingIdx(HalfSrcTy), HalfSrcTySize),
+             getValueMapping(getAccPartialMappingIdx(HalfSrcTy), HalfSrcTySize),
+             getValueMapping(getAccPartialMappingIdx(SrcTy), SrcSize)}),
+        /*NumOperands*/ 3);
+    const InstructionMapping &FifoRegMapping = getInstructionMapping(
+        /*ID*/ 3, /*Cost*/ 1,
+        getOperandsMapping(
+            {getValueMapping(getFifoPartialMappingIdx(HalfSrcTy),
+                             HalfSrcTySize),
+             getValueMapping(getFifoPartialMappingIdx(HalfSrcTy),
+                             HalfSrcTySize),
+             getValueMapping(getFifoPartialMappingIdx(SrcTy), SrcSize)}),
+        /*NumOperands*/ 3);
+
+    AltMappings.push_back(&VRegMapping);
+    AltMappings.push_back(&AccRegMapping);
+    AltMappings.push_back(&FifoRegMapping);
+    return AltMappings;
+  }
   case TargetOpcode::G_CONCAT_VECTORS: {
     Register DstReg = MI.getOperand(0).getReg();
     const LLT Ty = MRI.getType(DstReg);
