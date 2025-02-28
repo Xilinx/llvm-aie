@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2p -run-pass=regbankselect -regbankselect-fast %s -verify-machineinstrs -o - | FileCheck %s
 # RUN: llc -mtriple aie2p -run-pass=regbankselect -regbankselect-greedy %s -verify-machineinstrs -o - | FileCheck %s
 ---
@@ -143,5 +143,19 @@ body:             |
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[UV1]](<4 x s64>)
     %0:_(<8 x s64>) = COPY $bmll0
     %1:_(<4 x s64>), %2:_(<4 x s64>) = G_UNMERGE_VALUES %0(<8 x s64>)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            test_unmerge_v8s32
+legalized: true
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: test_unmerge_v8s32
+    ; CHECK: [[COPY:%[0-9]+]]:vregbank(<8 x s32>) = COPY $wl0
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:vregbank(<4 x s32>), [[UV1:%[0-9]+]]:vregbank(<4 x s32>) = G_UNMERGE_VALUES [[COPY]](<8 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[UV1]](<4 x s32>)
+    %0:_(<8 x s32>) = COPY $wl0
+    %1:_(<4 x s32>), %2:_(<4 x s32>) = G_UNMERGE_VALUES %0(<8 x s32>)
     PseudoRET implicit $lr, implicit %2
 ...
