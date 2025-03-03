@@ -22,7 +22,7 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:acc2048 = COPY $dm0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:acc2048 = COPY $dm1
-    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 28
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 60
     ; CHECK-NEXT: [[VADD_f_vmac_cm2_add_reg:%[0-9]+]]:acc2048 = VADD_f_vmac_cm2_add_reg [[COPY]], [[COPY1]], [[MOV_RLC_imm11_pseudo]], implicit-def dead $srfpflags, implicit $crfpmask
     ; CHECK-NEXT: $dm0 = COPY [[VADD_f_vmac_cm2_add_reg]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $dm0
