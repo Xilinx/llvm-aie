@@ -617,6 +617,73 @@ bool modifyStoreFlush(MachineBasicBlock &MBB, MachineRegisterInfo &MRI) {
   return Changed;
 }
 
+static bool combineSubRegCopyToSuperregCopy(MachineBasicBlock &MBB,
+                                            MachineRegisterInfo &MRI) {
+  const TargetInstrInfo *TII = MBB.getParent()->getSubtarget().getInstrInfo();
+  bool Changed = false;
+
+  for (MachineInstr &MI : make_early_inc_range(reverse(MBB))) {
+    if (!MI.isRegSequence())
+      continue;
+
+    LLVM_DEBUG(llvm::dbgs() << "SubregCopyToSuperRegCopy visiting ");
+    LLVM_DEBUG(MI.dump());
+    Register CommonSrcReg;
+    // TODO: We may want to check that the list covers the whole superregister
+    // lest we run the risk of replacing an undefined register with the defined
+    // source subreg.
+    for (unsigned I = 1; I < MI.getNumExplicitOperands(); I += 2) {
+
+      const Register SrcReg = MI.getOperand(I).getReg();
+      const unsigned SubRegIdx = MI.getOperand(I + 1).getImm();
+
+      auto *SubRegDef = MRI.getVRegDef(SrcReg);
+      if (!SubRegDef->isCopy()) {
+        LLVM_DEBUG(llvm::dbgs() << "Src is not a COPY. Skip\n");
+        CommonSrcReg = {};
+        break;
+      }
+
+      if (!SubRegDef->getOperand(1).getSubReg()) {
+        LLVM_DEBUG(llvm::dbgs() << "Src COPY is not a subreg COPY. Skip\n");
+        CommonSrcReg = {};
+        break;
+      }
+
+      const unsigned SrcSubRegIdx = SubRegDef->getOperand(1).getSubReg();
+
+      if (SubRegIdx != SrcSubRegIdx) {
+        LLVM_DEBUG(llvm::dbgs() << "SubReg indexes are not the same. Skip\n");
+        CommonSrcReg = {};
+        break;
+      }
+
+      Register SubRegCopySrc = SubRegDef->getOperand(1).getReg();
+      if (CommonSrcReg && SubRegCopySrc != CommonSrcReg) {
+        LLVM_DEBUG(llvm::dbgs()
+                   << "REG_SEQUENCE from different sources. Skip\n");
+        CommonSrcReg = {};
+        break;
+      }
+      CommonSrcReg = SubRegCopySrc;
+    }
+
+    if (CommonSrcReg) {
+      LLVM_DEBUG(llvm::dbgs() << "Folding ");
+      LLVM_DEBUG(MI.dump());
+      LLVM_DEBUG(llvm::dbgs() << "into superreg COPY\n");
+      auto MIB =
+          BuildMI(MBB, MI, MI.getDebugLoc(), TII->get(TargetOpcode::COPY),
+                  MI.getOperand(0).getReg())
+              .addReg(CommonSrcReg);
+      LLVM_DEBUG(MIB->dump());
+      MI.eraseFromParent();
+      Changed = true;
+    }
+  }
+  return Changed;
+}
+
 bool AIEPostSelectOptimize::runOnMachineFunction(MachineFunction &MF) {
   LLVM_DEBUG(dbgs() << "\n******* POST I-SEL OPTIMIZATION PASS *******\n"
                     << "********** Function: " << MF.getName() << '\n');
@@ -631,6 +698,12 @@ bool AIEPostSelectOptimize::runOnMachineFunction(MachineFunction &MF) {
     return false;
 
   bool Changed = false;
+
+  // 0. Fold REG_SEQUENCE (COPY %0.sub_bfp16_x), %subreg.sub_bfp16_x,
+  // (%0.sub_bfp16_e), %subreg.sub_bfp16_e) into COPY %0
+  for (MachineBasicBlock &MBB : MF) {
+    Changed |= combineSubRegCopyToSuperregCopy(MBB, MF.getRegInfo());
+  }
 
   // 1. Turn INSERT_SUBREG into REG_SEQUENCE when possible
   for (MachineBasicBlock &MBB : MF) {
