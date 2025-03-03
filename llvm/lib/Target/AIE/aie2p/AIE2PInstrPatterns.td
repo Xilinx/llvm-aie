@@ -63,7 +63,10 @@ class VecConf {
   dag ConfBits = (MOV_RLC_imm11_pseudo (i32 all));
 }
 
-def accfp32_vecconf : VecConf { let amode = AMODE_FP32; let bmode = BMODE_16x16; }
+// The multiplication mode (cmode) should be irrelevant for an addition/substraction but it is part of 
+// the amode, bmode, cmode combination to perform an element wise multiplication according to ISA, we set it 
+// to the value of that combination (1) to silence our tools (e.g. simulator)
+def accfp32_vecconf : VecConf { let amode = AMODE_FP32; let bmode = BMODE_16x16; let cmode = 1;}
 def mulbf16_vecconf : VecConf { let amode = AMODE_FP32; let bmode = BMODE_16x16; let cmode = CMODE_BF16xBF16_1_elem_1; }
 
 /// Generic pattern classes
