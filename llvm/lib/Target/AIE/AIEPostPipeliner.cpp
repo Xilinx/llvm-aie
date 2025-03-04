@@ -141,7 +141,8 @@ int PostPipeliner::getResMII(MachineBasicBlock &LoopBlock) {
 
 // This assigns Cycle of SU, Earliest of its successors and Latest of its
 // predecessors
-void PostPipeliner::scheduleNode(SUnit &SU, int Cycle) {
+void PostPipeliner::scheduleNode(SUnit &SU, int Cycle,
+                                 PostPipelinerStrategy &Strategy) {
   LLVM_DEBUG(dbgs() << "PostPipelined SU" << SU.NodeNum << " in cycle " << Cycle
                     << ": " << *SU.getInstr());
   Info[SU.NodeNum].Cycle = Cycle;
@@ -161,6 +162,7 @@ void PostPipeliner::scheduleNode(SUnit &SU, int Cycle) {
       Info[SNum].LastEarliestPusher = SU.NodeNum;
       Info[SNum].Earliest = NewEarliest;
       Info[SU.NodeNum].NumPushedEarliest++;
+      Strategy.setChanged();
     }
   }
   LLVM_DEBUG(dbgs() << "\n  Pushed preds Latest: ");
@@ -178,6 +180,7 @@ void PostPipeliner::scheduleNode(SUnit &SU, int Cycle) {
       Info[PNum].LastLatestPusher = SU.NodeNum;
       Info[PNum].Latest = NewLatest;
       Info[SU.NodeNum].NumPushedLatest++;
+      Strategy.setChanged();
     }
   }
   LLVM_DEBUG(dbgs() << "\n");
@@ -578,7 +581,7 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
       Cycle += II;
     }
 
-    scheduleNode(SU, Actual);
+    scheduleNode(SU, Actual, Strategy);
     Info[N].Scheduled = true;
     DEBUG_FULL(dbgs() << "Scoreboard\n"; Scoreboard.dumpFull(););
   }
@@ -627,6 +630,7 @@ bool PostPipeliner::scheduleOtherIterations(PostPipelinerStrategy &Strategy) {
         if (Strategy.mobility(ModuloSU) > 0) {
           // The modulo Node can be delayed
           ModuloNode.TweakedEarliest = ModuloNode.Earliest + 1;
+          Strategy.setChanged();
           LLVM_DEBUG(dbgs() << "  Try to delay SU" << N - NInstr
                             << " with TweakedEarliest= "
                             << ModuloNode.TweakedEarliest << "\n");
@@ -639,6 +643,7 @@ bool PostPipeliner::scheduleOtherIterations(PostPipelinerStrategy &Strategy) {
           if (Strategy.mobility(DAG->SUnits[*Node.LastEarliestPusher]) > 0) {
             ModuloNode.TweakedEarliest = {};
             Pusher.TweakedLatest = Pusher.Latest - 1;
+            Strategy.setChanged();
             LLVM_DEBUG(dbgs()
                        << "  Try to prioritise SU" << *Node.LastEarliestPusher
                        << " with TweakedLatest= " << Pusher.TweakedLatest
@@ -649,7 +654,7 @@ bool PostPipeliner::scheduleOtherIterations(PostPipelinerStrategy &Strategy) {
         return false;
       }
 
-      scheduleNode(SU, Insert);
+      scheduleNode(SU, Insert, Strategy);
     }
   }
   return true;
@@ -776,6 +781,7 @@ private:
     while (Pushed->LastEarliestPusher) {
       Pushed = &Info[*Pushed->LastEarliestPusher];
       Pushed->NumPushedEarliest++;
+      setChanged();
     }
 
     // Promote my siblings
@@ -866,6 +872,10 @@ bool PostPipeliner::tryHeuristics() {
         if (Success) {
           return true;
         }
+      }
+      if (!S.checkAndResetChanged()) {
+        // If nothing changed, there's no use in rerunning.
+        break;
       }
       resetSchedule(/*FullReset=*/false);
     }
