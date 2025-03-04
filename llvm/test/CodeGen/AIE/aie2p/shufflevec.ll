@@ -655,3 +655,53 @@ entry:
   %shuffle = shufflevector <16 x i32> %a, <16 x i32> %b, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
   ret <16 x i32> %shuffle
 }
+
+define fastcc void @shuffle_match_extracted_load_idx0() {
+; CHECK-LABEL: shuffle_match_extracted_load_idx0:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    mova r0, #0; nopb ; nopxm
+; CHECK-NEXT:    mov p0, r0
+; CHECK-NEXT:    lda.s16 r0, [p0, #0]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    vbcst.16 x0, r0 // Delay Slot 4
+; CHECK-NEXT:    mova p0, #0 // Delay Slot 3
+; CHECK-NEXT:    vst x0, [p0, #0] // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %0 = load <8 x bfloat>, ptr null, align 4
+  %1 = shufflevector <8 x bfloat> %0, <8 x bfloat> zeroinitializer, <32 x i32> zeroinitializer
+  store <32 x bfloat> %1, ptr addrspace(6) null, align 64
+  ret void
+}
+
+
+define fastcc void @shuffle_match_extracted_load_idx_non_zero() {
+; CHECK-LABEL: shuffle_match_extracted_load_idx_non_zero:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    mova r0, #6; nopb ; nopxm
+; CHECK-NEXT:    mov p0, r0
+; CHECK-NEXT:    lda.s16 r0, [p0, #0]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    vbcst.16 x0, r0 // Delay Slot 4
+; CHECK-NEXT:    mova p0, #0 // Delay Slot 3
+; CHECK-NEXT:    vst x0, [p0, #0] // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %0 = load <8 x bfloat>, ptr null, align 4
+  %1 = shufflevector <8 x bfloat> %0, <8 x bfloat> zeroinitializer, <32 x i32> <i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3>
+  store <32 x bfloat> %1, ptr addrspace(6) null, align 64
+  ret void
+}
+
