@@ -1326,8 +1326,15 @@ bool CombinerHelper::matchCombineExtractedVectorLoad(MachineInstr &MI,
 
   LegalityQuery::MemDesc MMDesc(*NewMMO);
 
+  // llvm::dbgs() << "Using VecEltTy : " << VecEltTy
+  //              << " in this debug print fixes the bug below\n";
   LegalityQuery Q = {TargetOpcode::G_LOAD, {VecEltTy, PtrTy}, {MMDesc}};
-
+  // Passing initializer lists to the constructor below is not safe as there
+  // will be a temporary object created for {VecEltTy, PtrTy} which leads to the
+  // value referenced by temporary VecEltTy copy being destroyed before its use
+  // in the legality checks. See test file for a reproducer:
+  // llvm/test/CodeGen/AIE/aie2p/GlobalIsel/prelegalizercombiner-extracted-vector-load-bug.mir
+  // The test fails but uncommenting the debug line above mysteriously fixes it.
   if (!isLegalOrBeforeLegalizer(Q))
     return false;
 
