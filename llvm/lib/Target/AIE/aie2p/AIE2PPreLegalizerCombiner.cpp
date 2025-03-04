@@ -85,7 +85,7 @@ AIE2PPreLegalizerCombinerImpl::AIE2PPreLegalizerCombinerImpl(
     const AIE2PSubtarget &STI, MachineDominatorTree *MDT,
     const LegalizerInfo *LI)
     : Combiner(MF, CInfo, TPC, &KB, CSEInfo),
-      Helper(Observer, B, /*IsPreLegalize*/ false, &KB, MDT, LI),
+      Helper(Observer, B, /*IsPreLegalize*/ true, &KB, MDT, LI),
       RuleConfig(RuleConfig), STI(STI),
 #define GET_GICOMBINER_CONSTRUCTOR_INITS
 #include "AIE2PGenPreLegalizerGICombiner.inc"
