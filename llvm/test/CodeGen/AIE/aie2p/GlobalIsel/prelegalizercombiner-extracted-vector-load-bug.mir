@@ -5,15 +5,14 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie2p -start-before=aie2p-prelegalizer-combiner -stop-after=aie2p-prelegalizer-combiner -print-after=aie2p-prelegalizer-combiner %s -verify-machineinstrs -o - | FileCheck %s
-
+# RUN: llc -mtriple aie2p -run-pass=aie2p-prelegalizer-combiner -print-after=aie2p-prelegalizer-combiner %s -verify-machineinstrs -o - | FileCheck %s
 
 
 # The combiner will try to combine the vector load and the extract to a single scalar load if it is Legal
-# However, this will fail in LowLevelType.h because the LegalityQuery doesn't correctly carry the vector load element 
-# type to the to the legality check methods. The carried type is some garbage type <48800 x s14532256> instead of scalar 
-# s16. As a result, the type is not picked up by the earlier legality checks and fails in one of the later checks where 
-# we try to get the element type. 
+# or if we are before the legalizer. 
+# The bug showcased in the previous commit is now fixed and the test would pass after successful compilation 
+# but the combine doesn't happen. This is due to another issue which will be fixed by the following commit thus 
+# enabling the combine.
 ---
 name:            not_combine_extracted_vector_load_s16_align2
 alignment:       16
@@ -36,6 +35,4 @@ body:             |
     %7:_(s16) = G_EXTRACT_VECTOR_ELT %2:_(<32 x s16>), %4:_(s32)
     PseudoRET implicit $lr, implicit %7
 ...
-
-
 
