@@ -115,6 +115,20 @@ protected:
   ScheduleInfo &Info;
   int LatestBias = 0;
 
+  // Report change to the scheduling data. This can be used for iterative
+  // refinement
+  bool Changed = false;
+
+public:
+  // Register a change
+  void setChanged() { Changed = true; }
+  // Return changed and reset it
+  bool checkAndResetChanged() {
+    bool Old = Changed;
+    Changed = false;
+    return Old;
+  }
+
 public:
   PostPipelinerStrategy(ScheduleDAGInstrs &DAG, ScheduleInfo &Info,
                         int LatestBias)
@@ -186,7 +200,7 @@ class PostPipeliner {
 
   /// Place SU in cycle Cycle; update Earliest of successors and Latest
   /// of predecessors
-  void scheduleNode(SUnit &SU, int Cycle);
+  void scheduleNode(SUnit &SU, int Cycle, PostPipelinerStrategy &Strategy);
 
   /// Computes the stage in which each instruction runs and check the resulting
   /// stage count against MinIterCount and the number of copies in the DAG
