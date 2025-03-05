@@ -47,6 +47,10 @@ static cl::opt<bool> AggressiveReAlloc(
 static cl::opt<bool> GPRRealloc("aie-gpr-realloc", cl::Hidden, cl::init(false),
                                 cl::desc("Re-allocate GPRs as well"));
 
+static cl::opt<bool> PreAlloc(
+    "aie-realloc-loopaware", cl::Hidden, cl::init(false),
+    cl::desc("Prime the LRU queue to make the allocations more loop-aware"));
+
 namespace {
 
 using RoundRobin = std::list<MCPhysReg>;
@@ -299,12 +303,28 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
     }
   }
 
+  // Pre-allocate all virtual registers in Candidates. The sole purpose of
+  // this is to prime the LRURegisters, so that the end of the loop is
+  // considered to be near to the start. No actual allocations are made.
+  // The ultimate allocation is expected to be different from this initial
+  // run -- that's the whole purpose.
+  auto PreAllocate = [&](OriginalAllocation &Candidates,
+                         RoundRobin &LRURegisters) {
+    // This is tracking any used register unit across the entire loop.
+    BitVector UsedUnits(TRI->getNumRegUnits());
+    for (auto &[MO, Org] : Candidates) {
+      auto VReg = MO->getReg();
+      assert(VReg.isVirtual());
+      (void)getReplacementPhysReg(VReg, LRURegisters, UsedUnits);
+    }
+  };
+
   // Reallocate all virtual registers in Candidates.
   // Return true if successful.
   auto ReAllocate = [&](OriginalAllocation &Candidates, RoundRobin &Registers) {
     bool AnyFails = false;
-    BitVector UsedUnits;
-    UsedUnits.resize(TRI->getNumRegUnits());
+    // This is tracking any used register unit across the entire loop.
+    BitVector UsedUnits(TRI->getNumRegUnits());
     for (auto &[MO, Org] : Candidates) {
       auto VReg = MO->getReg();
       if (!replaceReg(VReg, Registers, UsedUnits)) {
@@ -386,6 +406,10 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
     LLVM_DEBUG(dbgs() << "\n");
   }
 
+  // Prime the LRURegisters, so that the allocation is loop-aware.
+  if (PreAlloc) {
+    PreAllocate(Candidates, LRURegisters);
+  }
   if (!ReAllocate(Candidates, LRURegisters)) {
     RevertAllocation(Candidates);
     return false;
