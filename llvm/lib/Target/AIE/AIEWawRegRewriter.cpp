@@ -271,13 +271,17 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   }
 
   // Free physregs of all candidates and register their regclasses
-  std::set<const TargetRegisterClass *> RegClasses;
+  // RegClasses is a map that tracks successful reallocation for all
+  // registers in that class. If there's a failure in a register class, all
+  // allocations for register classes that overlap with the failed ones are
+  // reverted
+  std::map<const TargetRegisterClass *, bool> RegClasses;
   for (auto &[MO, Org] : Candidates) {
     auto VReg = MO->getReg();
     if (VRM->hasPhys(VReg))
       unassignReg(VReg);
     auto *RC = MRI->getRegClass(VReg);
-    RegClasses.insert(RC);
+    RegClasses.emplace(RC, true);
   }
   LLVM_DEBUG(dbgs() << "Renaming " << Candidates.size() << " candidates in "
                     << RegClasses.size() << " classes\n");
@@ -298,6 +302,7 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   // Reallocate all virtual registers in Candidates.
   // Return true if successful.
   auto ReAllocate = [&](OriginalAllocation &Candidates, RoundRobin &Registers) {
+    bool AnyFails = false;
     BitVector UsedUnits;
     UsedUnits.resize(TRI->getNumRegUnits());
     for (auto &[MO, Org] : Candidates) {
@@ -305,25 +310,53 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
       if (!replaceReg(VReg, Registers, UsedUnits)) {
         LLVM_DEBUG(dbgs() << "Renaming " << printReg(VReg, TRI, 0, MRI)
                           << " failed\n");
-        return false;
+        auto *RC = MRI->getRegClass(VReg);
+        AnyFails = true;
+        RegClasses[RC] = false;
       }
     }
-    return true;
+    return !AnyFails;
   };
 
-  // Reapply the original allocation to all Candidates
-  auto RevertAllocation = [&](OriginalAllocation &Candidates) {
-    // The partial allocation may conflict with the original one in ugly ways.
-    // To be safe, reset all allocations first.
-    for (auto &[MO, Org] : Candidates) {
-      auto VReg = MO->getReg();
-      if (VRM->hasPhys(VReg)) {
-        unassignReg(VReg);
+  auto Overlaps = [this](MCRegister Reg, const TargetRegisterClass *RC) {
+    for (auto RCReg : RC->getRegisters()) {
+      if (TRI->regsOverlap(Reg, RCReg)) {
+        return true;
       }
     }
-    for (auto &[MO, Org] : Candidates) {
-      auto VReg = MO->getReg();
-      assignReg(VReg, Org);
+    return false;
+  };
+
+  // Reapply the original allocation to all Candidates involved in failed
+  // register classes.
+  auto RevertAllocation = [&](OriginalAllocation &Candidates) {
+    // We revert all allocations whose original have an overlap
+    // with a failed register class.
+    // The partial allocation may conflict with the original one in ugly ways,
+    // which means we may not be able to reassign in arbitrary order
+    // To be safe, reset all allocations first.
+    for (auto [RC, Success] : RegClasses) {
+      LLVM_DEBUG(dbgs() << "RC=" << TRI->getRegClassName(RC)
+                        << (Success ? " Succeeded\n" : " Failed\n"));
+      if (Success) {
+        continue;
+      }
+      for (auto &[MO, Org] : Candidates) {
+        if (Overlaps(Org, RC)) {
+          auto VReg = MO->getReg();
+          if (VRM->hasPhys(VReg)) {
+            unassignReg(VReg);
+          }
+        }
+      }
+      for (auto &[MO, Org] : Candidates) {
+        if (Overlaps(Org, RC)) {
+          auto VReg = MO->getReg();
+          LLVM_DEBUG(dbgs() << "Reverting " << printReg(VReg, TRI) << " to "
+                            << printReg(Org, TRI) << "\n");
+          assignReg(VReg, Org);
+        }
+      }
     }
   };
 
@@ -339,7 +372,7 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   for (const MCPhysReg *CSR = MRI->getCalleeSavedRegs(); CSR && *CSR; ++CSR)
     ExcludedPhysRegs[*CSR] = true;
 
-  for (const auto *RC : RegClasses) {
+  for (const auto [RC, Success] : RegClasses) {
 
     LLVM_DEBUG(dbgs() << "Allowed registers in RC=" << TRI->getRegClassName(RC)
                       << ":");
@@ -352,6 +385,7 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
     }
     LLVM_DEBUG(dbgs() << "\n");
   }
+
   if (!ReAllocate(Candidates, LRURegisters)) {
     RevertAllocation(Candidates);
     return false;
