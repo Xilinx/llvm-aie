@@ -297,16 +297,16 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; DCL-NEXT:    vldb.3d wh7, [p0], d0
 ; DCL-NEXT:    vlda.ups.s32.s16 bmh3, s0, [p2, #32]; mov m2, r15
 ; DCL-NEXT:    vlda.ups.s32.s16 bml3, s0, [p2], m2
-; DCL-NEXT:    vlda.ups.s32.s16 bmh4, s0, [p2, #32]
-; DCL-NEXT:    vlda.ups.s32.s16 bml4, s0, [p2], m5
 ; DCL-NEXT:    vlda.ups.s32.s16 bmh5, s0, [p2, #32]
-; DCL-NEXT:    vlda.ups.s32.s16 bml5, s0, [p2], m1
-; DCL-NEXT:    vlda.ups.s32.s16 bmh6, s0, [p2, #32]
-; DCL-NEXT:    vlda.ups.s32.s16 bml6, s0, [p2], m5
+; DCL-NEXT:    vlda.ups.s32.s16 bml5, s0, [p2], m5
+; DCL-NEXT:    vlda.ups.s32.s16 bmh4, s0, [p2, #32]
+; DCL-NEXT:    vlda.ups.s32.s16 bml4, s0, [p2], m1
 ; DCL-NEXT:    vlda.ups.s32.s16 bmh7, s0, [p2, #32]
+; DCL-NEXT:    vlda.ups.s32.s16 bml7, s0, [p2], m5
+; DCL-NEXT:    vlda.ups.s32.s16 bmh6, s0, [p2, #32]
 ; DCL-NEXT:    vldb wh8, [p1], #32
 ; DCL-NEXT:    vldb wl5, [p0], m6; mov r1, p0
-; DCL-NEXT:    vlda.ups.s32.s16 bml7, s0, [p2, #0]; and r0, r0, r9
+; DCL-NEXT:    vlda.ups.s32.s16 bml6, s0, [p2, #0]; and r0, r0, r9
 ; DCL-NEXT:    vldb wh5, [p0], m6; add r0, r0, #33
 ; DCL-NEXT:    vldb wl3, [p0], m6; vshift.align x4, x4, s1, x3, r0
 ; DCL-NEXT:    vldb.3d wh3, [p0], d0; and r10, r1, r9; vshift.align x2, x2, s1, x7, r0
@@ -319,15 +319,15 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; DCL-NEXT:    // Parent Loop BB0_1 Depth=1
 ; DCL-NEXT:    // => This Inner Loop Header: Depth=2
 ; DCL-NEXT:    nopb ; nopa ; nops ; nopx ; vshuffle x9, x4, x2, r3; vmac cm1, cm1, x9, x6, r4
-; DCL-NEXT:    nopa ; nopb ; nopx ; vshift.align x4, x4, s1, x5, r0; vmac cm5, cm5, x9, x8, r4
+; DCL-NEXT:    nopa ; nopb ; nopx ; vshift.align x4, x4, s1, x5, r0; vmac cm4, cm4, x9, x8, r4
 ; DCL-NEXT:    vldb wl5, [p0], m6; vshift.align x2, x2, s1, x3, r0
 ; DCL-NEXT:    vldb wh5, [p0], m6; add r1, r1, #-1; vshuffle x11, x9, x0, r8
 ; DCL-NEXT:    vldb wl3, [p0], m6; jnz r1, #.LBB0_2; vmac cm0, cm0, x7, x6, r4
-; DCL-NEXT:    vldb.3d wh3, [p0], d0; vshuffle x7, x4, x2, r2; vmac cm4, cm4, x7, x8, r4 // Delay Slot 5
+; DCL-NEXT:    vldb.3d wh3, [p0], d0; vshuffle x7, x4, x2, r2; vmac cm5, cm5, x7, x8, r4 // Delay Slot 5
 ; DCL-NEXT:    vldb wl1, [p1], #32; vshuffle x9, x7, x0, r8; vmac cm2, cm2, x9, x6, r4 // Delay Slot 4
-; DCL-NEXT:    vldb wh1, [p1], #32; vmov x6, x1; vmac cm6, cm6, x9, x8, r4 // Delay Slot 3
+; DCL-NEXT:    vldb wh1, [p1], #32; vmov x6, x1; vmac cm7, cm7, x9, x8, r4 // Delay Slot 3
 ; DCL-NEXT:    vldb wl10, [p1], #32; add r0, r10, #33; mov r10, p0; vmac cm3, cm3, x11, x6, r4 // Delay Slot 2
-; DCL-NEXT:    vldb wh10, [p1], #32; and r10, r10, r9; vmov x8, x10; vmac cm7, cm7, x11, x8, r4 // Delay Slot 1
+; DCL-NEXT:    vldb wh10, [p1], #32; and r10, r10, r9; vmov x8, x10; vmac cm6, cm6, x11, x8, r4 // Delay Slot 1
 ; DCL-NEXT:  // %bb.3: // in Loop: Header=BB0_1 Depth=1
 ; DCL-NEXT:    nopx ; vmov x11, x0
 ; DCL-NEXT:    vshuffle x0, x4, x2, r3
@@ -338,14 +338,14 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; DCL-NEXT:    vlda wl11, [sp, #-160] // 32-byte Folded Reload
 ; DCL-NEXT:    vlda wh11, [sp, #-128] // 32-byte Folded Reload
 ; DCL-NEXT:    vlda wl6, [sp, #-160]; vmac cm2, cm2, x0, x6, r4 // 32-byte Folded Reload
-; DCL-NEXT:    vlda wh6, [sp, #-128]; vmac cm5, cm6, x0, x8, r4 // 32-byte Folded Reload
-; DCL-NEXT:    vlda wh0, [sp, #-32]; vmac cm4, cm5, x9, x8, r4 // 32-byte Folded Reload
-; DCL-NEXT:    lda dn7, [sp, #-92]; vmac cm8, cm4, x7, x8, r4 // 4-byte Folded Reload
+; DCL-NEXT:    vlda wh6, [sp, #-128]; vmac cm5, cm7, x0, x8, r4 // 32-byte Folded Reload
+; DCL-NEXT:    vlda wh0, [sp, #-32]; vmac cm8, cm5, x7, x8, r4 // 32-byte Folded Reload
+; DCL-NEXT:    lda dn7, [sp, #-92] // 4-byte Folded Reload
 ; DCL-NEXT:    vmac cm0, cm0, x7, x6, r4
 ; DCL-NEXT:    lda dj7, [sp, #-88]; vshift.align x4, x4, s1, x5, r0; vmac cm1, cm1, x9, x6, r4 // 4-byte Folded Reload
 ; DCL-NEXT:    vshift.align x2, x2, s1, x3, r0; vmac cm3, cm3, x11, x6, r4
-; DCL-NEXT:    vshuffle x6, x4, x2, r2
-; DCL-NEXT:    vmac cm6, cm7, x6, x8, r4
+; DCL-NEXT:    vshuffle x6, x4, x2, r2; vmac cm4, cm4, x9, x8, r4
+; DCL-NEXT:    vmac cm6, cm6, x6, x8, r4
 ; DCL-NEXT:    vshuffle x8, x6, x0, r8; vmac cm7, cm0, x6, x1, r4
 ; DCL-NEXT:    st dn7, [sp, #-92] // 4-byte Folded Spill
 ; DCL-NEXT:    vshuffle x3, x4, x2, r3; vmac cm0, cm1, x8, x1, r4
@@ -461,18 +461,18 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-NEXT:    vlda.ups.s32.s16 bmh3, s0, [p2, #32]; mov m2, r14
 ; ZOL-NEXT:    vlda.ups.s32.s16 bml3, s0, [p2], m2
 ; ZOL-NEXT:    vldb wl1, [p1], #32
-; ZOL-NEXT:    vlda.ups.s32.s16 bmh4, s0, [p2, #32]
-; ZOL-NEXT:    vlda.ups.s32.s16 bml4, s0, [p2], m5
 ; ZOL-NEXT:    vlda.ups.s32.s16 bmh5, s0, [p2, #32]
-; ZOL-NEXT:    vlda.ups.s32.s16 bml5, s0, [p2], m1
-; ZOL-NEXT:    vlda.ups.s32.s16 bmh6, s0, [p2, #32]
-; ZOL-NEXT:    vlda.ups.s32.s16 bml6, s0, [p2], m5; movxm ls, #.LBB0_2
+; ZOL-NEXT:    vlda.ups.s32.s16 bml5, s0, [p2], m5
+; ZOL-NEXT:    vlda.ups.s32.s16 bmh4, s0, [p2, #32]
+; ZOL-NEXT:    vlda.ups.s32.s16 bml4, s0, [p2], m1
+; ZOL-NEXT:    vlda.ups.s32.s16 bmh7, s0, [p2, #32]
+; ZOL-NEXT:    vlda.ups.s32.s16 bml7, s0, [p2], m5; movxm ls, #.LBB0_2
 ; ZOL-NEXT:    vldb wl5, [p0], m6; mov r1, p0
 ; ZOL-NEXT:    vldb wh5, [p0], m6; movxm le, #.L_LEnd0
-; ZOL-NEXT:    vlda.ups.s32.s16 bmh7, s0, [p2, #32]; and r0, r0, r9; add.nc lc, r5, #-2
+; ZOL-NEXT:    vlda.ups.s32.s16 bmh6, s0, [p2, #32]; and r0, r0, r9; add.nc lc, r5, #-2
 ; ZOL-NEXT:    vldb wl3, [p0], m6; nopa ; nops ; add r0, r0, #33; nopm ; nopv
 ; ZOL-NEXT:    vldb.3d wh3, [p0], d0; nopa ; nops ; nopx ; vshift.align x4, x4, s1, x3, r0; nopv
-; ZOL-NEXT:    nopb ; vlda.ups.s32.s16 bml7, s0, [p2, #0]; nops ; and r1, r1, r9; vshift.align x2, x2, s1, x7, r0; nopv
+; ZOL-NEXT:    nopb ; vlda.ups.s32.s16 bml6, s0, [p2, #0]; nops ; and r1, r1, r9; vshift.align x2, x2, s1, x7, r0; nopv
 ; ZOL-NEXT:    vldb wh1, [p1], #32; nopa ; nops ; add r0, r1, #33; mov r1, p0; nopv
 ; ZOL-NEXT:    vldb wl10, [p1], #32; nopa ; nops ; nopx ; vshuffle x7, x4, x2, r2; nopv
 ; ZOL-NEXT:    vldb wh10, [p1], #32; nopa ; nops ; nopx ; vshuffle x9, x7, x0, r8; nopv
@@ -482,15 +482,15 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-NEXT:    // Parent Loop BB0_1 Depth=1
 ; ZOL-NEXT:    // => This Inner Loop Header: Depth=2
 ; ZOL-NEXT:    nopa ; nopx ; vshuffle x9, x4, x2, r3; vmac cm1, cm1, x9, x6, r4
-; ZOL-NEXT:    vldb wl5, [p0], m6; vshift.align x4, x4, s1, x5, r0; vmac cm5, cm5, x9, x8, r4
+; ZOL-NEXT:    vldb wl5, [p0], m6; vshift.align x4, x4, s1, x5, r0; vmac cm4, cm4, x9, x8, r4
 ; ZOL-NEXT:    vldb wh5, [p0], m6; vshift.align x2, x2, s1, x3, r0
 ; ZOL-NEXT:    vldb wl3, [p0], m6; vshuffle x11, x9, x0, r8; vmac cm0, cm0, x7, x6, r4
-; ZOL-NEXT:    vldb.3d wh3, [p0], d0; vshuffle x7, x4, x2, r2; vmac cm4, cm4, x7, x8, r4
+; ZOL-NEXT:    vldb.3d wh3, [p0], d0; vshuffle x7, x4, x2, r2; vmac cm5, cm5, x7, x8, r4
 ; ZOL-NEXT:    vldb wl1, [p1], #32; vshuffle x9, x7, x0, r8; vmac cm2, cm2, x9, x6, r4
-; ZOL-NEXT:    vldb wh1, [p1], #32; vmov x6, x1; vmac cm6, cm6, x9, x8, r4
+; ZOL-NEXT:    vldb wh1, [p1], #32; vmov x6, x1; vmac cm7, cm7, x9, x8, r4
 ; ZOL-NEXT:    vldb wl10, [p1], #32; add r0, r1, #33; mov r1, p0; vmac cm3, cm3, x11, x6, r4
 ; ZOL-NEXT:  .L_LEnd0:
-; ZOL-NEXT:    vldb wh10, [p1], #32; nopa ; nops ; and r1, r1, r9; vmov x8, x10; vmac cm7, cm7, x11, x8, r4
+; ZOL-NEXT:    vldb wh10, [p1], #32; nopa ; nops ; and r1, r1, r9; vmov x8, x10; vmac cm6, cm6, x11, x8, r4
 ; ZOL-NEXT:  // %bb.3: // in Loop: Header=BB0_1 Depth=1
 ; ZOL-NEXT:    nopx ; vmov x11, x0
 ; ZOL-NEXT:    vshuffle x0, x4, x2, r3
@@ -501,14 +501,14 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-NEXT:    vlda wl11, [sp, #-160] // 32-byte Folded Reload
 ; ZOL-NEXT:    vlda wh11, [sp, #-128] // 32-byte Folded Reload
 ; ZOL-NEXT:    vlda wl6, [sp, #-160]; vmac cm2, cm2, x0, x6, r4 // 32-byte Folded Reload
-; ZOL-NEXT:    vlda wh6, [sp, #-128]; vmac cm5, cm6, x0, x8, r4 // 32-byte Folded Reload
-; ZOL-NEXT:    vlda wh0, [sp, #-32]; vmac cm4, cm5, x9, x8, r4 // 32-byte Folded Reload
-; ZOL-NEXT:    lda dn7, [sp, #-92]; vmac cm8, cm4, x7, x8, r4 // 4-byte Folded Reload
+; ZOL-NEXT:    vlda wh6, [sp, #-128]; vmac cm5, cm7, x0, x8, r4 // 32-byte Folded Reload
+; ZOL-NEXT:    vlda wh0, [sp, #-32]; vmac cm8, cm5, x7, x8, r4 // 32-byte Folded Reload
+; ZOL-NEXT:    lda dn7, [sp, #-92] // 4-byte Folded Reload
 ; ZOL-NEXT:    vmac cm0, cm0, x7, x6, r4
 ; ZOL-NEXT:    lda dj7, [sp, #-88]; vshift.align x4, x4, s1, x5, r0; vmac cm1, cm1, x9, x6, r4 // 4-byte Folded Reload
 ; ZOL-NEXT:    vshift.align x2, x2, s1, x3, r0; vmac cm3, cm3, x11, x6, r4
-; ZOL-NEXT:    vshuffle x6, x4, x2, r2
-; ZOL-NEXT:    vmac cm6, cm7, x6, x8, r4
+; ZOL-NEXT:    vshuffle x6, x4, x2, r2; vmac cm4, cm4, x9, x8, r4
+; ZOL-NEXT:    vmac cm6, cm6, x6, x8, r4
 ; ZOL-NEXT:    vshuffle x8, x6, x0, r8; vmac cm7, cm0, x6, x1, r4
 ; ZOL-NEXT:    st dn7, [sp, #-92] // 4-byte Folded Spill
 ; ZOL-NEXT:    vshuffle x3, x4, x2, r3; vmac cm0, cm1, x8, x1, r4
