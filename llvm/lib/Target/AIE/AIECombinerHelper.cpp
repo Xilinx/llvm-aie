@@ -53,21 +53,9 @@ cl::opt<bool> CombineVecShiftByZero(
     cl::desc("Combine vectors shift by zero into copies."));
 
 bool MaskMatch::isValidMask(ArrayRef<int> Mask) const {
-  bool FirstNotUndef = true;
   for (unsigned Idx = 0; Idx < Mask.size(); ++Idx) {
     if (Mask[Idx] == -1)
       continue;
-
-    // Find the start value of the mask
-    if (FirstNotUndef) {
-      // Get the start value
-      const unsigned MaskStart = Mask[Idx] - (Period == 0 ? Idx : Idx % Period);
-
-      if (MaskStart != Height)
-        return false;
-
-      FirstNotUndef = false;
-    }
 
     // Check not undef values (not -1) of the mask
     if ((unsigned)Mask[Idx] != getMaskValue(Idx))
