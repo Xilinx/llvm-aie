@@ -1849,7 +1849,7 @@ static void buildUnmergeVector(MachineIRBuilder &B, MachineRegisterInfo &MRI,
 ///         %2:_(<16 x s32>) = G_SHUFFLE_VECTOR %X(<16 x s32>), %1(<16 x s32>),
 ///         shufflemask(0, 1, 2, 3, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
 ///         31)
-/// To :    %3:_(s32) = G_CONSTANT i32 65520
+/// To :    %3:_(s32) = G_CONSTANT i32 0xFFF0
 ///         %4:_(<16 x s32>) = G_AIE_VSEL %0, %1, %3(s32)
 bool llvm::matchShuffleToVSel(MachineInstr &MI, MachineRegisterInfo &MRI,
                               const AIEBaseInstrInfo &TII,
@@ -1868,53 +1868,76 @@ bool llvm::matchShuffleToVSel(MachineInstr &MI, MachineRegisterInfo &MRI,
   const LLT DstTy = MRI.getType(DstReg);
   const LLT Src1Ty = MRI.getType(Src1Reg);
   if (Src1Ty.getSizeInBits() != BasicVectorBitSize ||
-      Src1Ty.getElementType() == LLT::scalar(DoubleScalarRegSize))
+      Src1Ty.getElementType().getSizeInBits() >= DoubleScalarRegSize)
     return false;
 
   const unsigned NumDstElems = DstTy.getNumElements();
+  assert(NumDstElems == Mask.size());
   const unsigned NumSrcElems = Src1Ty.getNumElements();
   if (NumDstElems > NumSrcElems)
     return false;
+  const unsigned NumSubVectors = NumSrcElems / NumDstElems;
+  if ((NumSubVectors != 1 && NumSubVectors != 2) ||
+      NumSrcElems % NumDstElems != 0) {
+    return false;
+  }
 
+  // Someone should make undef out of this.
   if (MaskMatch::isMaskWithAllUndefs(Mask))
     return false;
 
-  std::optional<unsigned> MaskHeight = MaskMatch::getHeight(Mask, /*Period*/ 0);
-  if (!MaskHeight)
-    return false;
-
-  MaskHeight.value() %= NumSrcElems;
-
-  // Check that the shuffle mask can be converted into VSel mask:
-  // 1. The shuffle mask doesn't contain indices that correspond to the same
-  // index in Src1 and Src2, i.e., for each i only the i-th element from Src1 or
-  // the i-th element from Src2 is used.
-  // 2. The mask indices modulo the number of elements are in strictly ascending
-  // order.
+  // Check that the shuffle mask can be converted into VSel condition vector:
+  // Each element can select from the corresponding element from the first or
+  // the second vector.
+  // Hence, the mask value should either be don't care, equal to the index,
+  // or equal to the index + NumSrcElems
+  // This immediately defines the mask vector of the VSEL.
   uint64_t DstMask = 0;
-  const size_t NumMaskElems = Mask.size();
-  for (unsigned I = *MaskHeight; I < *MaskHeight + NumMaskElems; I++) {
-    const int Idx = Mask[I];
-    if (Idx == -1 || Idx == (int)I)
-      continue;
+  auto MatchVSEL = [&](unsigned Shift) {
+    DstMask = 0;
+    for (unsigned I = 0; I < NumDstElems; I++) {
+      const int Idx = Mask[I];
+      if (Idx == -1) {
+        continue;
+      }
+      const int EffPos = I + Shift;
+      if (Idx == EffPos)
+        continue;
 
-    if ((unsigned)Idx == I + NumSrcElems)
+      if (Idx != EffPos + (int)NumSrcElems) {
+        return false;
+      }
       DstMask |= uint64_t(1) << I;
-    else
-      return false;
+    }
+    return true;
+  };
+
+  int SubIdx = 0;
+  // A subvector can be matched with a shift corresponding to the subvector to
+  // extract.
+  auto MatchSubVector = [&]() {
+    for (unsigned Shift = 0; Shift < NumSrcElems; Shift += NumDstElems) {
+      if (MatchVSEL(Shift)) {
+        return true;
+      }
+      SubIdx++;
+    }
+    return false;
+  };
+
+  if (!MatchSubVector()) {
+    return false;
   }
 
   MatchInfo = [=, &MRI, &TII](MachineIRBuilder &B) {
     const unsigned ScalarSize =
-        NumMaskElems == DoubleScalarRegSize ? DoubleScalarRegSize : 32;
+        NumDstElems == DoubleScalarRegSize ? DoubleScalarRegSize : 32;
     MachineInstrBuilder MaskReg =
         B.buildConstant(LLT::scalar(ScalarSize), DstMask);
     const unsigned VSelOpc = TII.getGenericVSelOpcode();
     if (NumDstElems == NumSrcElems)
       B.buildInstr(VSelOpc, {DstReg}, {Src1Reg, Src2Reg, MaskReg});
     else { // NumDstElems < NumSrcElems
-      const unsigned NumSubVectors = NumSrcElems / NumMaskElems;
-      const unsigned SubIdx = MaskHeight.value() / NumMaskElems;
       const unsigned Src1ElemtSize = Src1Ty.getElementType().getSizeInBits();
       const unsigned Src1Vec512BitLen = BasicVectorBitSize / Src1ElemtSize;
       const LLT VSelDstTy = LLT::fixed_vector(Src1Vec512BitLen, Src1ElemtSize);
