@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple=aie2p -run-pass postrapseudos -verify-machineinstrs -o - %s | FileCheck %s
 
 # Verify AIE2PInstrInfo.cpp: copyPhysReg()
@@ -14,10 +14,10 @@ name:     test_copy_d
 body: |
   bb.0:
     ; CHECK-LABEL: name: test_copy_d
-    ; CHECK: $m1 = MOV_alu_mv_mv_mv_scl $m2
-    ; CHECK-NEXT: $dn1 = MOV_alu_mv_mv_mv_scl $dn2
-    ; CHECK-NEXT: $dj1 = MOV_alu_mv_mv_mv_scl $dj2
-    ; CHECK-NEXT: $dc1 = MOV_alu_mv_mv_mv_scl $dc2
+    ; CHECK: $m1 = MOV_scalar_pseudo $m2
+    ; CHECK-NEXT: $dn1 = MOV_scalar_pseudo $dn2
+    ; CHECK-NEXT: $dj1 = MOV_scalar_pseudo $dj2
+    ; CHECK-NEXT: $dc1 = MOV_scalar_pseudo $dc2
   $d1 = COPY $d2
 ...
 
@@ -26,14 +26,14 @@ name:     test_copy_ds
 body: |
   bb.0:
     ; CHECK-LABEL: name: test_copy_ds
-    ; CHECK: $m1 = MOV_alu_mv_mv_mv_scl $m2
-    ; CHECK-NEXT: $dn1 = MOV_alu_mv_mv_mv_scl $dn2
-    ; CHECK-NEXT: $dj1 = MOV_alu_mv_mv_mv_scl $dj2
-    ; CHECK-NEXT: $dc1 = MOV_alu_mv_mv_mv_scl $dc2
-    ; CHECK-NEXT: $m5 = MOV_alu_mv_mv_mv_scl $m6
-    ; CHECK-NEXT: $dn5 = MOV_alu_mv_mv_mv_scl $dn6
-    ; CHECK-NEXT: $dj5 = MOV_alu_mv_mv_mv_scl $dj6
-    ; CHECK-NEXT: $dc5 = MOV_alu_mv_mv_mv_scl $dc6
+    ; CHECK: $m1 = MOV_scalar_pseudo $m2
+    ; CHECK-NEXT: $dn1 = MOV_scalar_pseudo $dn2
+    ; CHECK-NEXT: $dj1 = MOV_scalar_pseudo $dj2
+    ; CHECK-NEXT: $dc1 = MOV_scalar_pseudo $dc2
+    ; CHECK-NEXT: $m5 = MOV_scalar_pseudo $m6
+    ; CHECK-NEXT: $dn5 = MOV_scalar_pseudo $dn6
+    ; CHECK-NEXT: $dj5 = MOV_scalar_pseudo $dj6
+    ; CHECK-NEXT: $dc5 = MOV_scalar_pseudo $dc6
   $d1_3d = COPY $d2_3d
 ...
 
@@ -162,11 +162,11 @@ name:            test_copy_plfr
 body: |
   bb.0:
     ; CHECK-LABEL: name: test_copy_plfr
-    ; CHECK: $p1 = MOV_alu_mv_mv_mv_scl $p0
+    ; CHECK: $p1 = MOV_scalar_pseudo $p0
     ; CHECK-NEXT: $lfl1 = VMOV_alu_mv_mv_x $lfl0
     ; CHECK-NEXT: $lfh1 = VMOV_alu_mv_mv_x $lfh0
     ; CHECK-NEXT: $r25 = MOV_alu_mv_mv_mv_scl $r24
-    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $p1
+    ; CHECK-NEXT: $p0 = MOV_scalar_pseudo $p1
     ; CHECK-NEXT: $lfl0 = VMOV_alu_mv_mv_x $lfl1
     ; CHECK-NEXT: $lfh0 = VMOV_alu_mv_mv_x $lfh1
     ; CHECK-NEXT: $r24 = MOV_alu_mv_mv_mv_scl $r25

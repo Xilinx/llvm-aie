@@ -156,15 +156,15 @@ define dso_local void @_Z26test_fifo_st_flush_2d_byteRPDv64_DB8_R12fifo_state_ti
 ; CHECK-LABEL: _Z26test_fifo_st_flush_2d_byteRPDv64_DB8_R12fifo_state_tiiRii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    lda p4, [p0, #0]; nopxm
+; CHECK-NEXT:    lda p4, [p0, #0]; nopx
 ; CHECK-NEXT:    lda dc0, [p2, #0]; mov dj0, #128
 ; CHECK-NEXT:    lda r26, [p1, dj0]
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda sfl, [p1, #0]; mov m0, r0
-; CHECK-NEXT:    vlda sfh, [p1, #64]; mov p3, p2
-; CHECK-NEXT:    mov dn0, r1
-; CHECK-NEXT:    mov dj0, r2
-; CHECK-NEXT:    mov p2, p4
+; CHECK-NEXT:    vlda sfl, [p1, #0]
+; CHECK-NEXT:    vlda sfh, [p1, #64]
+; CHECK-NEXT:    movs p3, p2
+; CHECK-NEXT:    movs m0, r0; mov dn0, r1
+; CHECK-NEXT:    movs dj0, r2; mov p2, p4
 ; CHECK-NEXT:    vst.flush.512.conv.2d [p2, sf, r26, d0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -203,17 +203,17 @@ define dso_local void @_Z26test_fifo_st_flush_3d_byteRPDv64_DB8_R12fifo_state_ti
 ; CHECK-LABEL: _Z26test_fifo_st_flush_3d_byteRPDv64_DB8_R12fifo_state_tiiRiiiS5_i:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    vlda sfl, [p1, #0]; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda sfl, [p1, #0]; nopxm
 ; CHECK-NEXT:    lda p5, [p0, #0]
 ; CHECK-NEXT:    lda dc0, [p2, #0]
 ; CHECK-NEXT:    lda dc4, [p3, #0]; mov dj0, #128
-; CHECK-NEXT:    lda r26, [p1, dj0]; mov m0, r0
-; CHECK-NEXT:    vlda sfh, [p1, #64]; mov dn0, r1
-; CHECK-NEXT:    mov p4, p2
-; CHECK-NEXT:    mov dn4, r3
-; CHECK-NEXT:    mov dj4, r4
-; CHECK-NEXT:    mov dj0, r2
-; CHECK-NEXT:    mov p2, p5
+; CHECK-NEXT:    lda r26, [p1, dj0]
+; CHECK-NEXT:    vlda sfh, [p1, #64]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    movs p4, p2
+; CHECK-NEXT:    movs m0, r0; mov dn0, r1
+; CHECK-NEXT:    movs dn4, r3; mov dj4, r4
+; CHECK-NEXT:    movs dj0, r2; mov p2, p5
 ; CHECK-NEXT:    vst.flush.512.3d [p2, sf, r26, d0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st dc0, [p4, #0]
@@ -333,16 +333,16 @@ define dso_local void @_Z31test_fifo_st_flush_conv_2d_byteRPDv64_DB8_R12fifo_sta
 ; CHECK-LABEL: _Z31test_fifo_st_flush_conv_2d_byteRPDv64_DB8_R12fifo_state_tiiRii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    vlda sfl, [p1, #0]; nopb ; nopxm
+; CHECK-NEXT:    vlda sfl, [p1, #0]; nopb ; nopx
 ; CHECK-NEXT:    lda p4, [p0, #0]
 ; CHECK-NEXT:    lda dc0, [p2, #0]; mov dj0, #128
 ; CHECK-NEXT:    lda r26, [p1, dj0]
 ; CHECK-NEXT:    vlda sfh, [p1, #64]
-; CHECK-NEXT:    mov m0, r0
-; CHECK-NEXT:    mov p3, p2
-; CHECK-NEXT:    mov dn0, r1
-; CHECK-NEXT:    mov dj0, r2
-; CHECK-NEXT:    mov p2, p4
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    movs p3, p2
+; CHECK-NEXT:    movs m0, r0; mov dn0, r1
+; CHECK-NEXT:    movs dj0, r2; mov p2, p4
 ; CHECK-NEXT:    vst.flush.512.2d [p2, sf, r26, d0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st dc0, [p3, #0]; ret lr
@@ -379,16 +379,16 @@ define dso_local void @_Z31test_fifo_st_flush_conv_3d_byteRPDv64_DB8_R12fifo_sta
 ; CHECK-LABEL: _Z31test_fifo_st_flush_conv_3d_byteRPDv64_DB8_R12fifo_state_tiiRiiiS5_i:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    lda p5, [p0, #0]; nopb ; nopxm ; nops
+; CHECK-NEXT:    lda p5, [p0, #0]; nopb ; nopx
 ; CHECK-NEXT:    lda dc0, [p2, #0]
 ; CHECK-NEXT:    lda dc4, [p3, #0]; mov dj0, #128
-; CHECK-NEXT:    lda r26, [p1, dj0]; mov m0, r0
-; CHECK-NEXT:    mov dn0, r1
-; CHECK-NEXT:    vlda sfl, [p1, #0]; mov p4, p2
-; CHECK-NEXT:    vlda sfh, [p1, #64]; mov dn4, r3
-; CHECK-NEXT:    mov dj4, r4
-; CHECK-NEXT:    mov dj0, r2
-; CHECK-NEXT:    mov p2, p5
+; CHECK-NEXT:    lda r26, [p1, dj0]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    vlda sfl, [p1, #0]
+; CHECK-NEXT:    vlda sfh, [p1, #64]; movs p4, p2
+; CHECK-NEXT:    movs m0, r0; mov dn0, r1
+; CHECK-NEXT:    movs dn4, r3; mov dj4, r4
+; CHECK-NEXT:    movs dj0, r2; mov p2, p5
 ; CHECK-NEXT:    vst.flush.512.conv.3d [p2, sf, r26, d0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
