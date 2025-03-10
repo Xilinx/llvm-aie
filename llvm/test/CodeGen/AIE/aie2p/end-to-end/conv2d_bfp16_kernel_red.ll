@@ -20,7 +20,7 @@ define dso_local void @conv2d_bfp16.for.body90.i(<32 x i32> %fW.sroa.0.1489.i, i
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %newFuncRoot
 ; CHECK-NEXT:    paddxm [sp], #64
-; CHECK-NEXT:    st p6, [sp, #-60] // 4-byte Folded Spill
+; CHECK-NEXT:    st p6, [sp, #-60]; nopx // 4-byte Folded Spill
 ; CHECK-NEXT:    mov p6, sp
 ; CHECK-NEXT:    padda [p6], #-320
 ; CHECK-NEXT:    vlda bmll3, [p6, #0]
@@ -58,11 +58,11 @@ define dso_local void @conv2d_bfp16.for.body90.i(<32 x i32> %fW.sroa.0.1489.i, i
 ; CHECK-NEXT:    padda [p6], m0
 ; CHECK-NEXT:    vlda bmll0, [p6, #0]
 ; CHECK-NEXT:    vlda bmlh0, [p6, #64]
-; CHECK-NEXT:    vlda bmhl0, [p6, #128]; mov dn0, p3
-; CHECK-NEXT:    vlda bmhh0, [p6, #192]; movx r25, #0; mov dj0, p4
-; CHECK-NEXT:    mova dc4, #0; vldb.fill.512 [p1, lf1, r25]; mov dn4, p5
-; CHECK-NEXT:    mova r24, #0; vldb.fill.512 [p1, lf1, r25]; mov dc0, dc4
-; CHECK-NEXT:    vlda.fill.512 [p0, lf0, r24]; vldb.pop.576 ex0, [p1, lf1, r25]; mov m0, p2
+; CHECK-NEXT:    vlda bmhl0, [p6, #128]
+; CHECK-NEXT:    vlda bmhh0, [p6, #192]; movx r25, #0
+; CHECK-NEXT:    mova dc4, #0; vldb.fill.512 [p1, lf1, r25]; mov dn0, p3
+; CHECK-NEXT:    mova r24, #0; vldb.fill.512 [p1, lf1, r25]; movs dj0, p4; mov dn4, p5
+; CHECK-NEXT:    vlda.fill.512 [p0, lf0, r24]; vldb.pop.576 ex0, [p1, lf1, r25]; movs dc0, dc4; mov m0, p2
 ; CHECK-NEXT:    vlda.pop.576 ex4, [p0, lf0, r24]; vldb.pop.576.3d ex2, [p1, lf1, r25, d0]
 ; CHECK-NEXT:    vldb.fill.512 [p1, lf1, r25]
 ; CHECK-NEXT:    vlda.pop.576 ex6, [p0, lf0, r24, m1]; vldb.fill.512 [p1, lf1, r25]; add r1, r6, #-1
@@ -85,7 +85,7 @@ define dso_local void @conv2d_bfp16.for.body90.i(<32 x i32> %fW.sroa.0.1489.i, i
 ; CHECK-NEXT:  .L_LEnd0:
 ; CHECK-NEXT:    vlda.pop.576 ex4, [p0, lf0, r24]; vldb.pop.576.3d ex2, [p1, lf1, r25, d0]; nops ; nopx ; vshuffle ex8, ex0, ex2, r4; vmac.f dm2, dm2, ex8, ex6, r0
 ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup89.i.exitStub
-; CHECK-NEXT:    lda p6, [sp, #-60]; nopx ; vshuffle ex10, ex0, ex2, r5; vmac.f dm3, dm3, ex10, ex6, r0 // 4-byte Folded Reload
+; CHECK-NEXT:    lda p6, [sp, #-60]; nopb ; nopx ; vshuffle ex10, ex0, ex2, r5; vmac.f dm3, dm3, ex10, ex6, r0 // 4-byte Folded Reload
 ; CHECK-NEXT:    vlda.pop.576 ex6, [p0, lf0, r24, m1]; vmac.f dm0, dm0, ex8, ex4, r0
 ; CHECK-NEXT:    mov p0, r7; vmac.f dm1, dm1, ex10, ex4, r0
 ; CHECK-NEXT:    vshuffle ex8, ex0, ex2, r4; vmac.f dm2, dm2, ex8, ex6, r0
@@ -112,8 +112,8 @@ define dso_local void @conv2d_bfp16.for.body90.i(<32 x i32> %fW.sroa.0.1489.i, i
 ; CHECK-NEXT:    vst bmll2, [p0, #0]
 ; CHECK-NEXT:    vst bmlh2, [p0, #64]
 ; CHECK-NEXT:    vst bmhl2, [p0, #128]
-; CHECK-NEXT:    vst bmhh2, [p0, #192]; mov p0, r2
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    vst bmhh2, [p0, #192]
+; CHECK-NEXT:    movs p0, r2; ret lr
 ; CHECK-NEXT:    vst bmll3, [p0, #0] // Delay Slot 5
 ; CHECK-NEXT:    vst bmlh3, [p0, #64] // Delay Slot 4
 ; CHECK-NEXT:    vst bmhl3, [p0, #128] // Delay Slot 3

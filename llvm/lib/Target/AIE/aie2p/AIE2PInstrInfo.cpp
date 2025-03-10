@@ -556,7 +556,12 @@ void AIE2PInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 
   if (AIE2P::mMvSclSrcRegClass.contains(SrcReg) &&
       AIE2P::mMvSclDstRegClass.contains(DstReg)) {
-    BuildMI(MBB, MBBI, DL, get(AIE2P::MOV_alu_mv_mv_mv_scl), DstReg)
+    // Build MultiSlotPseudo in preference
+    unsigned Opcode = (AIE2P::mAguSrcRegClass.contains(SrcReg) &&
+                       AIE2P::mAguDstRegClass.contains(DstReg))
+                          ? AIE2P::MOV_scalar_pseudo
+                          : AIE2P::MOV_alu_mv_mv_mv_scl;
+    BuildMI(MBB, MBBI, DL, get(Opcode), DstReg)
         .addReg(SrcReg, getKillRegState(KillSrc));
   } else if ((AIE2P::eLRegClass.contains(SrcReg)) &&
              (AIE2P::eLRegClass.contains(DstReg))) {
