@@ -28,6 +28,7 @@
 #define chess_loop_range(...)
 #define chess_manifest(x) (__builtin_constant_p(x) && (x != 0))
 #define chess_modulo_scheduling_budget_ratio(x)
+#define chess_no_hw_loop
 #define chess_no_warn_pipelining
 #define chess_no_warn_unroll
 #define chess_output
@@ -39,6 +40,7 @@
 #define chess_no_prepare_for_pipelining
 #define chess_property(x)
 #define chess_protect_access
+#define chess_report(x)
 #define chess_require_pipelining(x)
 #define chess_separator_scheduler()
 #define chess_separator_scheduler_local()
