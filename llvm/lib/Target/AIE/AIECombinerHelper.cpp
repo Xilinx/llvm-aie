@@ -2311,13 +2311,13 @@ static bool matchShuffleToSubvecBroadcast(MachineInstr &MI,
   // Don't try to unmerge when we have just one subvector.
   // We can overcome with a copy, but other combiners can do a
   // better job for this case.
-  if (NumSubVectors > 1 && NumDstElems == SplatMaskLen * 2) {
+  if (NumSubVectors > 1 && NumDstElems > SplatMaskLen) {
     MatchInfo = [=, &MRI](MachineIRBuilder &B) {
       buildUnmergeVector(B, MRI, ExtractSubvecDstReg, Src1Reg, NumSubVectors,
                          SubIdx);
 
-      const SmallVector<Register, 2> ConcatOps = {ExtractSubvecDstReg,
-                                                  ExtractSubvecDstReg};
+      const SmallVector<Register, 2> ConcatOps(NumDstElems / SplatMaskLen,
+                                               ExtractSubvecDstReg);
       B.buildConcatVectors({DstReg}, ConcatOps);
     };
     return true;
