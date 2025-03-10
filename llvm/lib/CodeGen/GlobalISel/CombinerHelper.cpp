@@ -687,8 +687,10 @@ bool CombinerHelper::matchCombineExtendingLoads(MachineInstr &MI,
         unsigned CandidateLoadOpc = getExtLoadOpcForExtend(UseMI.getOpcode());
         LLT UseTy = MRI.getType(UseMI.getOperand(0).getReg());
         LLT SrcTy = MRI.getType(LoadMI->getPointerReg());
-        if (LI->getAction({CandidateLoadOpc, {UseTy, SrcTy}, {MMDesc}})
-                .Action != LegalizeActions::Legal)
+        SmallVector<LegalityQuery::MemDesc, 2> MemDescrs({MMDesc});
+        SmallVector<LLT> OpTys({UseTy, SrcTy});
+        LegalityQuery Q(CandidateLoadOpc, OpTys, MemDescrs);
+        if (LI->getAction(Q).Action != LegalizeActions::Legal)
           continue;
       }
       Preferred = ChoosePreferredUse(MI, Preferred,
