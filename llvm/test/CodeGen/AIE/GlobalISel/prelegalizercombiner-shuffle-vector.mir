@@ -1090,3 +1090,24 @@ body:             |
     %0:_(<16 x s32>) = G_SHUFFLE_VECTOR %1(<16 x s32>), %2(<16 x s32>), shufflemask(8, 9, 10, 11, 12, 13, 14, 15, 8, 9, 10, 11, 12, 13, 14, 15)
     PseudoRET implicit $lr, implicit %0
 ...
+
+
+# TODO: We should be able to handle this swap pattern with an unmerge and concat
+---
+name: shuffle_vector_to_unmerge_concat_lo_hi
+tracksRegLiveness: true
+body:             |
+  bb.1:
+    liveins: $x0, $x1
+    ; CHECK-LABEL: name: shuffle_vector_to_unmerge_concat_lo_hi
+    ; CHECK: liveins: $x0, $x1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY $x0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<16 x s32>) = COPY $x1
+    ; CHECK-NEXT: [[SHUF:%[0-9]+]]:_(<16 x s32>) = G_SHUFFLE_VECTOR [[COPY]](<16 x s32>), [[COPY1]], shufflemask(8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[SHUF]](<16 x s32>)
+    %1:_(<16 x s32>) = COPY $x0
+    %2:_(<16 x s32>) = COPY $x1
+    %0:_(<16 x s32>) = G_SHUFFLE_VECTOR %1(<16 x s32>), %2(<16 x s32>), shufflemask(8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7)
+    PseudoRET implicit $lr, implicit %0
+...
