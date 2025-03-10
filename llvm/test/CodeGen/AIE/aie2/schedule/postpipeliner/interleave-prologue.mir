@@ -437,3 +437,88 @@ body:             |
     RET implicit $lr
     DelayedSchedBarrier
 ...
+# A Ld/St instruction should wait for core resume cycles after lock instruction.
+---
+name:            load_lock
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: load_lock
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1, $r0, $r18
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $lc = ADD_NC $r0, -7
+  ; CHECK-NEXT:   $ls = MOVXM_lng_cg %bb.2
+  ; CHECK-NEXT:   $le = MOVXM_lng_cg <mcsymbol .L_LEnd0>
+  ; CHECK-NEXT:   $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm killed $p0, $m0
+  ; CHECK-NEXT:   $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm killed $p0, $m0
+  ; CHECK-NEXT:   $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm killed $p0, $m0
+  ; CHECK-NEXT:   BUNDLE implicit-def $x6, implicit-def $wl6, implicit-def $wh6, implicit-def $p0, implicit killed $p0, implicit $m0, implicit killed $r18 {
+  ; CHECK-NEXT:     $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm killed $p0, $m0
+  ; CHECK-NEXT:     ACQ_mLockId_imm 49, killed renamable $r18
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE implicit-def $r1, implicit-def $x6, implicit-def $wl6, implicit-def $wh6, implicit-def $p0, implicit killed $p0, implicit $m0 {
+  ; CHECK-NEXT:     $r1 = MOVA_lda_cg 0
+  ; CHECK-NEXT:     $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm killed $p0, $m0
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE implicit-def $x6, implicit-def $wl6, implicit-def $wh6, implicit-def $p0, implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit killed $p0, implicit $m0, implicit killed $r1 {
+  ; CHECK-NEXT:     $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm killed $p0, $m0
+  ; CHECK-NEXT:     $x0 = VBCST_16 killed $r1
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm killed $p0, $m0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.2(0x04000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1, $r0, $m0, $x0, $x2, $x4
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   BUNDLE implicit-def $x6, implicit-def $wl6, implicit-def $wh6, implicit-def $p0, implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit killed $p0, implicit $m0, implicit killed $x0 {
+  ; CHECK-NEXT:     $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm killed $p0, $m0
+  ; CHECK-NEXT:     $x0 = VADD_16 killed $x0, internal $x6
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   liveins: $p0, $p1, $x0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
+  ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
+  ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
+  ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
+  ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
+  ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, $x6
+  ; CHECK-NEXT:   $x0 = VADD_16 killed $x0, killed $x6
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   VST_PACK_S8_S16_ag_idx_imm killed $p1, 0, killed $x0, implicit $crsat
+  ; CHECK-NEXT:   RET implicit $lr
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   DelayedSchedBarrier
+  bb.0:
+    successors: %bb.1(0x80000000)
+    liveins: $p0, $p1, $r0, $r18
+
+    $lc = ADD_NC $r0, 0
+    $ls = MOVXM_lng_cg %bb.2
+    $le = MOVXM_lng_cg <mcsymbol .L_LEnd0>
+    $r1 = MOV_RLC_imm10_pseudo 0
+    $x0 = VBCST_16 $r1
+    ACQ_mLockId_imm 49, renamable $r18
+
+  bb.1:
+    successors: %bb.1(0x7c000000), %bb.2(0x04000000)
+    liveins: $p0, $p1, $r0, $m0, $x0, $x2, $x4
+
+    $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm $p0, $m0
+    $x0 = VADD_16 $x0, $x6
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
+
+  bb.2:
+    liveins: $p0, $p1, $x0
+    VST_PACK_S8_S16_ag_idx_imm $p1, 0, $x0, implicit $crsat
+    RET implicit $lr
+    DelayedSchedBarrier
+...
