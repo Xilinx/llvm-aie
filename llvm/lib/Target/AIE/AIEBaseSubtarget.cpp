@@ -396,8 +396,21 @@ public:
           DAG->getSUnit(&*getBundleStart(FixedDepMI->getIterator()));
       assert(FixedDepSU && "Fixed Bundle has no corresponding SU.");
       SDep Dep(&FreeSU, SDep::Artificial);
-      Dep.setLatency(
-          AIE::maxLatency(&MI, *TII, *ItinData, /*IncludeStages=*/true));
+      auto Latency =
+          AIE::maxLatency(&MI, *TII, *ItinData, /*IncludeStages=*/true);
+      if (TII->isLock(MI.getOpcode())) {
+        Dep.setLatency(std::max(
+            TII->getCoreResumeCycleAfterLock() -
+                *TII->getFirstMemoryCycle(FixedDepMI->getDesc().SchedClass) + 1,
+            Latency));
+      } else if (TII->isLock(FixedDepMI->getOpcode())) {
+        Dep.setLatency(
+            std::max(*TII->getLastMemoryCycle(MI.getDesc().SchedClass) -
+                         TII->getCoreStallCycleAfterLock() + 1,
+                     Latency));
+      } else {
+        Dep.setLatency(Latency);
+      }
       FixedDepSU->addPred(Dep, /*Required=*/true);
     }
 
