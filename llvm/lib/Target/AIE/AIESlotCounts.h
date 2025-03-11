@@ -42,11 +42,22 @@ public:
   // By-value addition.
   SlotCounts operator+(const SlotCounts &Other) const;
 
+  // Multiply all elements with Scalar
+  SlotCounts &operator*=(int Scalar);
+
+  // By-value scalar multiplication
+  SlotCounts operator*(int Scalar) const;
+
   // Indexing
   const int &operator[](int I) const { return Counts[I]; };
 
   int size() const { return Size; }
 };
+
+// Symmetric version of scalar multiplication
+
+SlotCounts operator*(int Scalar, const SlotCounts &Slots);
+
 } // namespace AIE
 
 raw_ostream &operator<<(raw_ostream &OS, const AIE::SlotCounts &Val);
