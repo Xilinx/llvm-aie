@@ -71,6 +71,9 @@ write_tm(uint32 regVal, uint32 regAddr, uint32 TMAddrSpaceStart = 0x80000) {
 }
 // FIXME: this belongs to libc's stdio.h
 void printf(const char *__restrict, ...);
+#if defined(__AIECC__EMPTY_PRINTF_IMPL)
+void printf(const char *__restrict, ...) {}
+#endif
 
 #endif /* __cplusplus && !(__AIECC__DISABLE_READ_WRITE_TM) */
 #endif /* __AIE2PINTRIN_H */
