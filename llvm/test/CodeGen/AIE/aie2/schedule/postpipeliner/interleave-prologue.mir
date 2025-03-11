@@ -448,16 +448,15 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT:   liveins: $p0, $p1, $r0, $r18
   ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   ACQ_mLockId_imm 49, killed renamable $r18
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   $lc = ADD_NC $r0, -7
   ; CHECK-NEXT:   $ls = MOVXM_lng_cg %bb.2
   ; CHECK-NEXT:   $le = MOVXM_lng_cg <mcsymbol .L_LEnd0>
   ; CHECK-NEXT:   $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm killed $p0, $m0
   ; CHECK-NEXT:   $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm killed $p0, $m0
   ; CHECK-NEXT:   $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm killed $p0, $m0
-  ; CHECK-NEXT:   BUNDLE implicit-def $x6, implicit-def $wl6, implicit-def $wh6, implicit-def $p0, implicit killed $p0, implicit $m0, implicit killed $r18 {
-  ; CHECK-NEXT:     $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm killed $p0, $m0
-  ; CHECK-NEXT:     ACQ_mLockId_imm 49, killed renamable $r18
-  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm killed $p0, $m0
   ; CHECK-NEXT:   BUNDLE implicit-def $r1, implicit-def $x6, implicit-def $wl6, implicit-def $wh6, implicit-def $p0, implicit killed $p0, implicit $m0 {
   ; CHECK-NEXT:     $r1 = MOVA_lda_cg 0
   ; CHECK-NEXT:     $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm killed $p0, $m0
