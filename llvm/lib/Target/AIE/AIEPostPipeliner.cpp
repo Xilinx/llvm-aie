@@ -624,7 +624,9 @@ int PostPipeliner::mostUrgent(PostPipelinerStrategy &Strategy) {
 
   int Best = -1;
   LLVM_DEBUG(dbgs() << "Available:");
-  for (int K = FirstUnscheduled; K <= LastUnscheduled; K++) {
+  for (int TD = FirstUnscheduled, BU = LastUnscheduled; TD <= LastUnscheduled;
+       TD++, BU--) {
+    int K = Strategy.fromTop() ? TD : BU;
     const auto &SU = DAG->SUnits[K];
     auto &Edges = Strategy.fromTop() ? SU.Preds : SU.Succs;
     // Check whether it is available
@@ -991,6 +993,8 @@ static const ConfigStrategy::Configuration Strategies[] = {
     // Runs>1 is only useful for heuristics that use it, e.g. Critical
     // {ExtraStages, TopDown, Alternate, Runs, PriorityComponents}
     {1, true, false, 1, {Prio::NodeNum}},
+    {0, true, false, HeuristicRuns, {Prio::Latest}},
+    {0, true, false, HeuristicRuns, {Prio::Critical}},
     {1, true, false, HeuristicRuns, {Prio::Latest}},
     {1, true, false, HeuristicRuns, {Prio::Critical}},
     {1, true, false, HeuristicRuns, {Prio::Latest, Prio::Sibling}},
@@ -1001,8 +1005,10 @@ static const ConfigStrategy::Configuration Strategies[] = {
     // Bottom-up strategies
     {0, false, false, 2, {Prio::Critical, Prio::LCDLatest}},
     {1, false, false, 2, {Prio::Critical, Prio::LCDLatest}},
-    {1, false, false, 1, {Prio::NodeNum}}, // pure bottom up
-};
+    {0, false, false, 1, {Prio::NodeNum}}, // pure bottom up
+    {1, false, false, 1, {Prio::NodeNum}},
+    // Alternate strategies
+    {0, true, true, 1, {Prio::Latest}}};
 
 bool PostPipeliner::tryHeuristics() {
   DEBUG_SUMMARY(dbgs() << "-- MinLength=" << MinLength << "\n");
@@ -1017,7 +1023,7 @@ bool PostPipeliner::tryHeuristics() {
     resetSchedule(/*FullReset=*/true);
     for (int Run = 0; Run < Config.Runs; Run++) {
       DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name() << " run=" << Run
-                           << "\n");
+                           << " trying II=" << II << "\n");
       if (scheduleFirstIteration(S) && scheduleOtherIterations(S)) {
         DEBUG_SUMMARY(dbgs()
                       << "    Strategy " << S.name() << " run=" << Run
