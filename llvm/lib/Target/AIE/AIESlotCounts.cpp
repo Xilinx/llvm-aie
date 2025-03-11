@@ -56,6 +56,22 @@ SlotCounts SlotCounts::operator+(const SlotCounts &Other) const {
   return Result += Other;
 }
 
+SlotCounts &SlotCounts::operator*=(int Scalar) {
+  for (int I = 0; I < Size; I++) {
+    Counts[I] *= Scalar;
+  }
+  return *this;
+}
+
+SlotCounts SlotCounts::operator*(int Scalar) const {
+  SlotCounts Result(*this);
+  return Result *= Scalar;
+}
+
+SlotCounts operator*(int Scalar, const SlotCounts &Slots) {
+  return Slots * Scalar;
+}
+
 } // namespace AIE
 
 raw_ostream &operator<<(raw_ostream &OS, const AIE::SlotCounts &Val) {
