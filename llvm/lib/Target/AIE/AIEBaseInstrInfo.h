@@ -491,6 +491,10 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual int getMaxLastMemoryCycle() const;
   /// Return cycles for memory operations of an instruction.
   virtual SmallVector<int, 2> getMemoryCycles(unsigned SchedClass) const;
+  /// Return cycles for core to stall after lock instruction.
+  virtual int getCoreStallCycleAfterLock() const;
+  /// Return cycles for core to resume after lock instruction.
+  virtual int getCoreResumeCycleAfterLock() const;
 
   /// Return the schedclass for the given instruction descriptor based on
   /// operand regclass.
