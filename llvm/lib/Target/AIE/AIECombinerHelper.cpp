@@ -115,6 +115,112 @@ std::optional<int> MaskMatch::getUniqueIndex(ArrayRef<int> Mask) {
   return UniqOpIdx;
 }
 
+bool MaskFunction::fit(ArrayRef<int> Mask) {
+  for (int E : Mask) {
+    if (E != DontCare) {
+      return false;
+    }
+  }
+  return true;
+}
+int MaskFunction::at(unsigned Idx) const { return DontCare; }
+
+int SawToothMask::getHeight() const { return Height.value_or(0); }
+int SawToothMask::getAmplitude() const { return Amplitude.value_or(0); }
+unsigned SawToothMask::getPeriod() const { return Period.value_or(0); }
+bool SawToothMask::isDontCare() const { return !Height.has_value(); }
+bool SawToothMask::isConstant() const {
+  return Height.has_value() && !Amplitude.has_value();
+}
+int SawToothMask::at(unsigned Idx) const {
+  unsigned P = getPeriod();
+  return getHeight() + getAmplitude() * (P ? Idx % P : Idx);
+}
+bool SawToothMask::fit(ArrayRef<int> Mask) {
+  unsigned HeightIdx = 0;
+  for (unsigned Idx = 0; Idx < Mask.size(); Idx++) {
+    int Val = Mask[Idx];
+    if (Val == DontCare) {
+      continue;
+    }
+    if (!Height) {
+      assert(!Amplitude);
+      assert(!Period);
+      Height = Val;
+      HeightIdx = Idx;
+      continue;
+    }
+
+    // Find a period that yields an integer amplitude.
+    // For sanity, we one try a few small powers of two.
+    auto FindPeriod = [](int DF, int DI) {
+      for (int P = 16; P > 1; P /= 2) {
+        const int R = DI % P;
+        if (DF % R == 0) {
+          return P;
+        }
+      }
+      return 0;
+    };
+
+    if (!Amplitude) {
+      assert(Height);
+      int DF = Val - *Height;
+      int DI = Idx - HeightIdx;
+      if (DF % DI) {
+        // We can't have fractional amplitudes, but may be able to find a
+        // period that reduces it to an integer.
+        // Example: {0, -1, -1, 1}
+        int P = FindPeriod(DF, DI);
+        if (P) {
+          Period = P;
+          const int R = DI % P;
+          Amplitude = DF / R;
+          continue;
+        }
+        return false;
+      }
+      Amplitude = DF / DI;
+      // Height was set assuming Amplitude = 0, and needs correction
+      Height = *Height - *Amplitude * HeightIdx;
+      continue;
+    }
+    int Predict = at(Idx);
+    if (Val == Predict) {
+      continue;
+    }
+    if (Period) {
+      return false;
+    }
+    if (Val == *Height) {
+      Period = Idx;
+      continue;
+    }
+    // We may have fixed the height with the wrong amplitude. We have a second
+    // chance to fix the triple.
+    // Typical example is {-1, 1, 0, 1, 0, 1, ...}, which gives H=2, A=-1
+    // Note that this only works for Period=2. The condition makes sure that
+    // we only have three significant values.
+    if (Idx == HeightIdx + 2 && Val == at(HeightIdx)) {
+      int Prev = at(Idx - 1);
+      // Height takes the even one
+      if (Idx & 1) {
+        Height = Prev;
+        Amplitude = Val - Prev;
+      } else {
+        Height = Val;
+        Amplitude = Prev - Val;
+      }
+      Period = 2;
+      continue;
+    }
+    return false;
+  }
+
+  assert(*this == Mask);
+  return true;
+}
+
 MachineInstr *findPreIncMatch(MachineInstr &MemI, MachineRegisterInfo &MRI,
                               CombinerHelper &Helper,
                               AIELoadStoreCombineMatchData &MatchData,
@@ -2312,8 +2418,13 @@ bool llvm::matchShuffleToBroadcast(MachineInstr &MI, MachineRegisterInfo &MRI,
 
   ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
 
-  if (MaskMatch::isMaskWithAllUndefs(Mask))
+  SawToothMask SawTooth;
+  if (!SawTooth.fit(Mask)) {
     return false;
+  }
+  if (SawTooth.isDontCare()) {
+    return false;
+  }
 
   if (matchShuffleToVecBroadcast(MI, MRI, TII, MatchInfo))
     return true;

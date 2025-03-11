@@ -62,6 +62,57 @@ protected:
   int Amplitude = 1;
 };
 
+/// A MaskFunction is a function representing a shuffle mask.
+class MaskFunction {
+protected:
+  // Elements with this value will be ignored. They always fit.
+  static const int DontCare = -1;
+
+public:
+  virtual ~MaskFunction() = default;
+  // Check whether the function fits the given Mask, possibly
+  // adjusting free parameters
+  virtual bool fit(ArrayRef<int> Mask);
+  // The basic evaluator
+  virtual int at(unsigned Idx) const;
+  // Direct comparison with an explicit mask
+  bool operator==(ArrayRef<int> Other) {
+    for (unsigned Idx = 0; Idx < Other.size(); Idx++) {
+      int Val = Other[Idx];
+      if (Val != DontCare && Val != at(Idx)) {
+        return false;
+      }
+    }
+    return true;
+  }
+};
+
+// SawTooth(Idx) = Height + Amplitude * (Period ? Idx % Period ? Idx)
+// This can represent constant functions and a lot of subregister
+// patterns.
+// We fit the free parameters without backtracking by first fixing the height,
+// then the amplitude, then the period. This covers the vast majority, if not
+// all, cases
+class SawToothMask : public MaskFunction {
+  std::optional<int> Height;
+  std::optional<int> Amplitude;
+  std::optional<unsigned> Period;
+
+public:
+  bool fit(ArrayRef<int> Mask) override;
+  int at(unsigned Idx) const override;
+  // Retrieve parameters. If fit() has returned true, they will reproduce
+  // the mask except that regular values are returned for the DontCare positions
+  // in the original
+  int getHeight() const;
+  int getAmplitude() const;
+  unsigned getPeriod() const;
+  // Check whether the function is fully DontCare
+  bool isDontCare() const;
+  // Check whether the function is constant, defined by the height paramater
+  bool isConstant() const;
+};
+
 /// Look for any PtrAdd instruction that use the same base as \a MI that can be
 /// combined with it and stores it in \a MatchData
 /// \return true if an instruction is found
