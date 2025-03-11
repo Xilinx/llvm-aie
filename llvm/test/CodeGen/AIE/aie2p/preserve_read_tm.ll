@@ -14,6 +14,9 @@ define void @preserve_read_tm(i32 %channel) {
 ; CHECK-NEXT:    movxm r1, #524288
 ; CHECK-NEXT:    nopa ; xor r0, r0, r1
 ; CHECK-NEXT:    mov p0, r0
+; CHECK-NEXT:    .p2align 4
+; CHECK-NEXT:  .LBB0_1: // %while.cond
+; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    lda.tm r0, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -21,9 +24,6 @@ define void @preserve_read_tm(i32 %channel) {
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    .p2align 4
-; CHECK-NEXT:  .LBB0_1: // %while.cond
-; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    jnz r0, #.LBB0_1
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4

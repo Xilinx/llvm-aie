@@ -18,7 +18,7 @@ body:             |
     ; CHECK-LABEL: name: Read_TM
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[LDA_TM_idx_imm:%[0-9]+]]:er = LDA_TM_idx_imm %2:ep, 0 :: (load (s32) from custom "TileMemory")
+    ; CHECK-NEXT: [[LDA_TM_idx_imm:%[0-9]+]]:er = LDA_TM_idx_imm %2:ep, 0 :: (volatile load (s32) from custom "TileMemory")
     ; CHECK-NEXT: $r0 = COPY [[LDA_TM_idx_imm]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:ptrregbank(p0) = COPY $p0
