@@ -771,6 +771,10 @@ SmallVector<int, 2>
 AIEBaseInstrInfo::getMemoryCycles(unsigned SchedClass) const {
   return {};
 }
+/// FIXME: Delays for locks to reach the core aren't completely described in
+/// the ISA. The numbers are therefore conservative.
+int AIEBaseInstrInfo::getCoreStallCycleAfterLock() const { return 2; }
+int AIEBaseInstrInfo::getCoreResumeCycleAfterLock() const { return 8; }
 
 unsigned
 AIEBaseInstrInfo::getSchedClass(const MCInstrDesc &Desc,

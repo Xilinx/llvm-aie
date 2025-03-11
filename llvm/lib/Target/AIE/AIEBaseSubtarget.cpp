@@ -194,11 +194,9 @@ bool updateSuccLatency(SDep &SuccEdge, SUnit &PredSU, int Latency) {
 // locks/DONE.
 class LockDelays : public ScheduleDAGMutation {
   void apply(ScheduleDAGInstrs *DAG) override {
-    // FIXME: Delays for locks to reach the core aren't completely described in
-    // the ISA. The numbers are therefore conservative.
-    const int CoreStallCycle = 2;
-    const int CoreResumeCycle = 8;
     const auto *TII = static_cast<const AIEBaseInstrInfo *>(DAG->TII);
+    const int CoreStallCycle = TII->getCoreStallCycleAfterLock();
+    const int CoreResumeCycle = TII->getCoreResumeCycleAfterLock();
 
     // Iterate over all the predecessors and successors of Lock instructions
     // to increase the edge latency.
