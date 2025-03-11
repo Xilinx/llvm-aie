@@ -16,11 +16,18 @@
 // CHECK-NEXT:    [[TMP0:%.*]] = xor i32 [[CHANNEL]], 524288
 // CHECK-NEXT:    [[CONV_I:%.*]] = trunc i32 [[TMP0]] to i20
 // CHECK-NEXT:    [[TMP1:%.*]] = inttoptr i20 [[CONV_I]] to ptr
+// CHECK-NEXT:    br label [[WHILE_COND:%.*]]
+// CHECK:       while.cond:
 // CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef i32 @llvm.aie2p.read.tm(ptr [[TMP1]])
 // CHECK-NEXT:    [[CMP_NOT:%.*]] = icmp eq i32 [[TMP2]], 0
-// CHECK-NEXT:    tail call void @llvm.assume(i1 [[CMP_NOT]])
+// CHECK-NEXT:    br i1 [[CMP_NOT]], label [[WHILE_END:%.*]], label [[WHILE_COND]], !llvm.loop [[LOOP2:![0-9]+]]
+// CHECK:       while.end:
 // CHECK-NEXT:    ret void
 //
 void preserve_read_tm(uint32 channel) {
     while ((read_tm(channel)) != 0) {}
 }
+//.
+// CHECK: [[LOOP2]] = distinct !{[[LOOP2]], [[META3:![0-9]+]]}
+// CHECK: [[META3]] = !{!"llvm.loop.mustprogress"}
+//.

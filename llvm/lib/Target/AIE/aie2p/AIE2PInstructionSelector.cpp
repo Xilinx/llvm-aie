@@ -3567,7 +3567,8 @@ bool AIE2PInstructionSelector::selectReadTM(MachineInstr &I,
   Register Dest = I.getOperand(0).getReg();
   Register Ptr = I.getOperand(2).getReg();
 
-  MachineMemOperand *MMO = getTileMemOperand(I, MachineMemOperand::MOLoad);
+  MachineMemOperand *MMO = getTileMemOperand(
+      I, MachineMemOperand::MOLoad | MachineMemOperand::MOVolatile);
   MachineInstrBuilder MI = MIB.buildInstr(AIE2P::LDA_TM_idx_imm, {Dest}, {Ptr})
                                .addMemOperand(MMO)
                                .addImm(0x0);
