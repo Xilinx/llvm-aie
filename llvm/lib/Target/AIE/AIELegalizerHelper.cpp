@@ -744,9 +744,6 @@ bool AIELegalizerHelper::legalizeG_INSERT_VECTOR_ELT(LegalizerHelper &Helper,
   case 1024: {
     const LLT ValTy = MRI.getType(ValReg);
     const AIEBaseInstrInfo *II = ST.getInstrInfo();
-    if (ValTy == LLT::scalar(64)) {
-      llvm_unreachable("Unexpected scalar value type for insert vec elt!");
-    }
     Register NewValReg;
     if (ValTy == LLT::scalar(8) || ValTy == LLT::scalar(16)) {
       NewValReg = MRI.createGenericVirtualRegister(S32);
