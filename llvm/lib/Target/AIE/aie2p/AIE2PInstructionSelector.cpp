@@ -824,8 +824,9 @@ static unsigned getInsertVecEltOpcode(unsigned EltSize, unsigned InstOpcode) {
     return AIE2P::VINSERT_16_mR29_insert;
   case 32:
     return AIE2P::VINSERT_32_mR29_insert;
+  case 64:
+    return AIE2P::VINSERT_64_mR29_insert;
   default:
-    // Vector insert for 64bit element is currently not supported.
     llvm_unreachable("Unexpected vector elt size for insert vec elt!");
   }
 }
