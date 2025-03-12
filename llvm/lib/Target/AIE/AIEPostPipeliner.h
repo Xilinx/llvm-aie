@@ -186,8 +186,10 @@ class PostPipeliner {
   /// of predecessors
   void scheduleNode(SUnit &SU, int Cycle);
 
-  /// Compute the stage in which each instruction runs
-  void computeStages();
+  /// Computes the stage in which each instruction runs and check the resulting
+  /// stage count against MinIterCount and the number of copies in the DAG
+  /// Returns true if these checks indicate that the schedule can be implmented.
+  bool checkStages();
 
   // return the first Cycle: Earliest <= Cycle < Earliest+NTries where MI fits
   // in the scoreboard, -1 if it doesn't fit. The insertion point is taken
