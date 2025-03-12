@@ -878,13 +878,27 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
     LLVM_DEBUG(dbgs() << "PostPipeliner: No schedule found\n");
     return false;
   }
+  if (!checkStages()) {
+    return false;
+  }
 
-  computeStages();
-  LLVM_DEBUG(dbgs() << "PostPipeliner: Schedule found, NS=" << NStages
-                    << " II=" << II << "\n");
+  LLVM_DEBUG(dbgs() << "PostPipeliner: Success\n");
+  return true;
+}
 
-  // Check that we don't exceed the number of copies in the DAG. In that case
-  // we didn't reach steady state, and we may have missed conflicts.
+bool PostPipeliner::checkStages() {
+  // we compute the stage in which each representative instruction runs,
+  // and take the maximum to decide on the stage count
+  NStages = 0;
+  for (int K = 0; K < NInstr; K++) {
+    auto &Node = Info[K];
+    Node.Stage = Node.Cycle / II;
+    Node.ModuloCycle = Node.Cycle % II;
+    NStages = std::max(NStages, Node.Stage + 1);
+  }
+
+  // Now check that we don't exceed the number of copies in the DAG. In that
+  // case we didn't reach steady state, and we may have missed conflicts.
   // We expect this to be rare.
   if (NStages > NCopies) {
     LLVM_DEBUG(dbgs() << "PostPipeliner: Unsafe stage count, NCopies="
@@ -897,20 +911,7 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
     LLVM_DEBUG(dbgs() << "PostPipeliner: MinTripCount insufficient\n");
     return false;
   }
-
-  LLVM_DEBUG(dbgs() << "PostPipeliner: Success\n");
   return true;
-}
-
-// We only mark up the representative instructions
-void PostPipeliner::computeStages() {
-  NStages = 0;
-  for (int K = 0; K < NInstr; K++) {
-    auto &Node = Info[K];
-    Node.Stage = Node.Cycle / II;
-    Node.ModuloCycle = Node.Cycle % II;
-    NStages = std::max(NStages, Node.Stage + 1);
-  }
 }
 
 void PostPipeliner::visitPipelineSchedule(
