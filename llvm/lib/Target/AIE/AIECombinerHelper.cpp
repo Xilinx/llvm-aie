@@ -1172,6 +1172,7 @@ bool llvm::matchSplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
   const unsigned DstVecSize = DstVecTy.getSizeInBits();
 
   switch (DstVecSize) {
+  case 128:
   case 256:
   case 512:
   case 1024:
@@ -1211,6 +1212,20 @@ bool llvm::matchSplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
 
   MatchInfo = {DstVecReg, SrcReg};
   return true;
+}
+
+static void buildUnmergeVector(MachineIRBuilder &B, MachineRegisterInfo &MRI,
+                               Register DstReg, Register SrcReg,
+                               unsigned NumSubVectors, unsigned SubIdx) {
+  const LLT DstTy = MRI.getType(DstReg);
+  SmallVector<Register, 4> SubVecs;
+  for (unsigned I = 0; I < NumSubVectors; I++) {
+    if (I == SubIdx)
+      SubVecs.push_back(DstReg);
+    else
+      SubVecs.push_back(MRI.createGenericVirtualRegister(DstTy));
+  }
+  B.buildUnmerge(SubVecs, SrcReg);
 }
 
 static void buildBroadcastVector(MachineIRBuilder &B, MachineRegisterInfo &MRI,
@@ -1257,10 +1272,10 @@ static void buildBroadcastVector(MachineIRBuilder &B, MachineRegisterInfo &MRI,
     // Build the G_AIE_BROADCAST_VECTOR instruction for the 512-bit vector.
     B.buildInstr(AIETII.getGenericBroadcastVectorOpcode(), {DstVec512BitReg},
                  {SrcReg});
-    if (DstVecSize == 256) {
-      const Register UnusedSubReg = MRI.createGenericVirtualRegister(DstVecTy);
-      // Unmerge the 512-bit vector into the 256-bit destination vector.
-      B.buildUnmerge({DstVecReg, UnusedSubReg}, DstVec512BitReg);
+    if (DstVecSize == 128 || DstVecSize == 256) {
+      const unsigned NumSubVectors = 512 / DstVecSize;
+      // Unmerge the 512-bit vector into the 128/256-bit destination vector.
+      buildUnmergeVector(B, MRI, DstVecReg, DstVec512BitReg, NumSubVectors, 0);
     } else if (DstVecSize == 1024) {
       // Concatenate two 512-bit vectors to form a 1024-bit destination vector.
       B.buildConcatVectors({DstVecReg}, {DstVec512BitReg, DstVec512BitReg});
@@ -1299,6 +1314,7 @@ bool llvm::matchSingleDiffLaneBuildVector(
   const unsigned DstVecSize = DstVecTy.getSizeInBits();
 
   switch (DstVecSize) {
+  case 128:
   case 256:
   case 512:
   case 1024:
@@ -1959,20 +1975,6 @@ bool llvm::matchBroadcastElement(MachineInstr &MI, MachineRegisterInfo &MRI,
       SrcVec->getOperand(SrcElemIdx - AdjustSrcElemIdx).getReg();
   MatchInfo = std::make_pair(DstReg, ElemReg);
   return true;
-}
-
-static void buildUnmergeVector(MachineIRBuilder &B, MachineRegisterInfo &MRI,
-                               Register DstReg, Register SrcReg,
-                               unsigned NumSubVectors, unsigned SubIdx) {
-  const LLT DstTy = MRI.getType(DstReg);
-  SmallVector<Register, 4> SubVecs;
-  for (unsigned I = 0; I < NumSubVectors; I++) {
-    if (I == SubIdx)
-      SubVecs.push_back(DstReg);
-    else
-      SubVecs.push_back(MRI.createGenericVirtualRegister(DstTy));
-  }
-  B.buildUnmerge(SubVecs, SrcReg);
 }
 
 /// \returns true if it is possible to combine the shuffle vector to VSEL.
