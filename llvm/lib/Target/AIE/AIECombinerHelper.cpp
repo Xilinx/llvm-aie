@@ -1177,10 +1177,10 @@ static void buildBroadcastVector(MachineIRBuilder &B, MachineRegisterInfo &MRI,
     // Build the G_AIE_BROADCAST_VECTOR instruction for the 512-bit vector.
     B.buildInstr(AIETII.getGenericBroadcastVectorOpcode(), {DstVec512BitReg},
                  {SrcReg});
-    if (DstVecSize == 256) {
-      const Register UnusedSubReg = MRI.createGenericVirtualRegister(DstVecTy);
-      // Unmerge the 512-bit vector into the 256-bit destination vector.
-      B.buildUnmerge({DstVecReg, UnusedSubReg}, DstVec512BitReg);
+    if (DstVecSize == 128 || DstVecSize == 256) {
+      // Unpad the 512-bit vector to form a 128/256-bit destination vector.
+      B.buildInstr(AIETII.getGenericUnpadVectorOpcode(), {DstVecReg},
+                   {DstVec512BitReg});
     } else if (DstVecSize == 1024) {
       // Concatenate two 512-bit vectors to form a 1024-bit destination vector.
       B.buildConcatVectors({DstVecReg}, {DstVec512BitReg, DstVec512BitReg});
@@ -1294,6 +1294,7 @@ bool llvm::matchBuildVectorPatterns(MachineInstr &MI, MachineRegisterInfo &MRI,
   const unsigned DstVecSize = DstVecTy.getSizeInBits();
 
   switch (DstVecSize) {
+  case 128:
   case 256:
   case 512:
   case 1024:
