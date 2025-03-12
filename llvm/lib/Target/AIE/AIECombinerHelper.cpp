@@ -1133,44 +1133,6 @@ void llvm::applyExtractVecEltAndExt(
   MI.eraseFromParent();
   MatchMI->eraseFromParent();
 }
-
-// Match something like:
-// %0:_(<32 x s16>) = G_BUILD_VECTOR %1:_(s16), ... x32
-//
-// To turn it into
-// %0:_(<32 x s16>) = G_AIE_BROADCAST_VECTOR %1:_(s16)
-bool llvm::matchSplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
-                            std::pair<Register, Register> &MatchInfo) {
-
-  assert(MI.getOpcode() == TargetOpcode::G_BUILD_VECTOR &&
-         "Expected a G_BUILD_VECTOR");
-
-  const Register DstVecReg = MI.getOperand(0).getReg();
-  const LLT DstVecTy = MRI.getType(DstVecReg);
-  const unsigned DstVecSize = DstVecTy.getSizeInBits();
-
-  switch (DstVecSize) {
-  case 256:
-  case 512:
-  case 1024:
-  case 2048:
-    break;
-  default:
-    // unimplemented
-    return false;
-  }
-
-  const unsigned NumOps = MI.getNumOperands();
-  const MachineOperand FirstOp = MI.getOperand(1);
-  for (unsigned i = 2; i < NumOps; i++) {
-    if (!MI.getOperand(i).isIdenticalTo(FirstOp)) {
-      return false;
-    }
-  }
-  MatchInfo = std::make_pair(DstVecReg, FirstOp.getReg());
-  return true;
-}
-
 static void buildBroadcastVector(MachineIRBuilder &B, MachineRegisterInfo &MRI,
                                  Register SrcReg, Register DstVecReg) {
   const AIEBaseInstrInfo &AIETII = (const AIEBaseInstrInfo &)B.getTII();
@@ -1230,60 +1192,12 @@ static void buildBroadcastVector(MachineIRBuilder &B, MachineRegisterInfo &MRI,
   }
 }
 
-bool llvm::applySplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
-                            MachineIRBuilder &B,
-                            std::pair<Register, Register> &MatchInfo) {
-  B.setInstrAndDebugLoc(MI);
-  auto [DstVecReg, SrcReg] = MatchInfo;
-  buildBroadcastVector(B, MRI, SrcReg, DstVecReg);
-  MI.eraseFromParent();
-  return true;
-}
-
-// Match something like:
-// %0:_(<32 x s16>) = G_BUILD_VECTOR %2:(s16), %2:(s16), %1:(s16) ... x32
-//
-// To turn it into
-// %3:_(<32 x s16>) = G_AIE_BROADCAST_VECTOR %2:_(s16)
-// %0:(<32 x s16>) = G_AIE_INSERT_VECTOR_ELT %3:(<32 x s16>), %1:_(s16), 2
-bool llvm::matchSingleDiffLaneBuildVector(
-    MachineInstr &MI, MachineRegisterInfo &MRI,
-    AIESingleDiffLaneBuildVectorMatchData &MatchInfo) {
-  assert(MI.getOpcode() == TargetOpcode::G_BUILD_VECTOR &&
-         "Expected a G_BUILD_VECTOR");
-
-  const Register DstVecReg = MI.getOperand(0).getReg();
-  const LLT DstVecTy = MRI.getType(DstVecReg);
-  const unsigned DstVecSize = DstVecTy.getSizeInBits();
-
-  switch (DstVecSize) {
-  case 256:
-  case 512:
-  case 1024:
-  case 2048:
-    break;
-  default:
-    // unimplemented
-    return false;
-  }
-  // DenseMap to hold unique registers and their (count, last index)
-  DenseMap<Register, std::pair<unsigned, unsigned>> UniqueRegs;
-  const unsigned NumOps = MI.getNumOperands();
-  for (unsigned i = 1; i < NumOps; i++) {
-    const Register OpReg = MI.getOperand(i).getReg();
-    auto &RegInfo = UniqueRegs[OpReg];
-    RegInfo.first += 1;
-    RegInfo.second = i - 1;
-
-    if (UniqueRegs.size() > 2)
-      return false;
-  }
-  // Ensure exactly 2 unique registers to match the single differing lane build
-  // vector pattern. More than 2 registers won't match; 1 unique register would
-  // be a splat vector combine
-  if (UniqueRegs.size() != 2)
-    return false;
-
+// This helper attempts to match a single-different-lane splat vector pattern.
+// That pattern is a nearly-splat vector (one repeated register) but with one
+// lane "differing" from the rest.
+static bool matchSingleDiffSplatVector(
+    DenseMap<Register, std::pair<unsigned, unsigned>> UniqueRegs,
+    Register DstVecReg, MachineRegisterInfo &MRI, BuildFnTy &MatchInfo) {
   Register SplatReg, DifferingReg;
   unsigned DifferingIndex;
 
@@ -1305,26 +1219,94 @@ bool llvm::matchSingleDiffLaneBuildVector(
   if (!SplatRegDef || SplatRegDef->getOpcode() == TargetOpcode::G_IMPLICIT_DEF)
     return false;
 
-  MatchInfo = {DstVecReg, SplatReg, DifferingReg, DifferingIndex};
+  // If we match, build a function-lambda that does the transformation:
+  // 1) Create a broadcast of the SplatReg into the destination vector.
+  // 2) Insert the differing lane at DifferingIndex.
+  MatchInfo = [=, &MRI](MachineIRBuilder &B) {
+    const LLT DstVecRegTy = MRI.getType(DstVecReg);
+    const Register BcstDstReg = MRI.createGenericVirtualRegister(DstVecRegTy);
+    const LLT S32 = LLT::scalar(32);
+
+    buildBroadcastVector(B, MRI, SplatReg, BcstDstReg);
+    const Register IdxReg = B.buildConstant(S32, DifferingIndex).getReg(0);
+    B.buildInsertVectorElement(DstVecReg, BcstDstReg, DifferingReg, IdxReg);
+  };
   return true;
 }
 
-bool llvm::applySingleDiffLaneBuildVector(
-    MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B,
-    AIESingleDiffLaneBuildVectorMatchData &MatchInfo) {
-  B.setInstrAndDebugLoc(MI);
-  const Register DstVecReg = MatchInfo.DstVecReg;
-  const LLT DstVecRegTy = MRI.getType(DstVecReg);
-  const Register BcstDstReg = MRI.createGenericVirtualRegister(DstVecRegTy);
-  const LLT S32 = LLT::scalar(32);
+// Match something like:
+// %0:_(<32 x s16>) = G_BUILD_VECTOR %1:_(s16), ... x32
+//
+// To turn it into
+// %0:_(<32 x s16>) = G_AIE_BROADCAST_VECTOR %1:_(s16)
+//
+// And this:
+// %0:_(<32 x s16>) = G_BUILD_VECTOR %2:(s16), %2:(s16), %1:(s16) ... x32
+//
+// To turn it into
+// %3:_(<32 x s16>) = G_AIE_BROADCAST_VECTOR %2:_(s16)
+// %0:(<32 x s16>) = G_AIE_INSERT_VECTOR_ELT %3:(<32 x s16>), %1:_(s16), 2
+static bool matchSplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
+                             BuildFnTy &MatchInfo) {
 
-  buildBroadcastVector(B, MRI, MatchInfo.SplatReg, BcstDstReg);
-  const Register IdxReg =
-      B.buildConstant(S32, MatchInfo.DifferingIndex).getReg(0);
-  B.buildInsertVectorElement(DstVecReg, BcstDstReg, MatchInfo.DifferingReg,
-                             IdxReg);
-  MI.eraseFromParent();
-  return true;
+  // DenseMap to hold unique registers and their (count, last index)
+  DenseMap<Register, std::pair<unsigned, unsigned>> UniqueRegs;
+  const Register DstVecReg = MI.getOperand(0).getReg();
+  const unsigned NumOps = MI.getNumOperands();
+
+  for (unsigned i = 1; i < NumOps; i++) {
+    const Register OpReg = MI.getOperand(i).getReg();
+    auto &RegInfo = UniqueRegs[OpReg];
+    RegInfo.first += 1;
+    RegInfo.second = i - 1;
+    if (UniqueRegs.size() > 2)
+      return false;
+  }
+
+  switch (UniqueRegs.size()) {
+  case 1: {
+    // Pure splat as there is only one unique register.
+
+    auto It = UniqueRegs.begin();
+    Register SplatReg = It->first;
+    // Build a lambda that creates a broadcast of SplatReg into DstVecReg.
+    MatchInfo = [=, &MRI](MachineIRBuilder &B) {
+      buildBroadcastVector(B, MRI, SplatReg, DstVecReg);
+    };
+    return true;
+  }
+  case 2:
+    // Check for single differing lane splat, as there are 2 unique registers.
+    return matchSingleDiffSplatVector(UniqueRegs, DstVecReg, MRI, MatchInfo);
+  default:
+    return false;
+  }
+}
+
+bool llvm::matchBuildVectorPatterns(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                    BuildFnTy &MatchInfo) {
+
+  assert(MI.getOpcode() == TargetOpcode::G_BUILD_VECTOR &&
+         "Expected a G_BUILD_VECTOR");
+
+  const Register DstVecReg = MI.getOperand(0).getReg();
+  const LLT DstVecTy = MRI.getType(DstVecReg);
+  const unsigned DstVecSize = DstVecTy.getSizeInBits();
+
+  switch (DstVecSize) {
+  case 256:
+  case 512:
+  case 1024:
+  case 2048:
+    break;
+  default:
+    // unimplemented
+    return false;
+  }
+  if (matchSplatVector(MI, MRI, MatchInfo)) {
+    return true;
+  }
+  return false;
 }
 
 // Match something like:
@@ -1900,6 +1882,16 @@ bool llvm::matchBroadcastElement(MachineInstr &MI, MachineRegisterInfo &MRI,
   const Register ElemReg =
       SrcVec->getOperand(SrcElemIdx - AdjustSrcElemIdx).getReg();
   MatchInfo = std::make_pair(DstReg, ElemReg);
+  return true;
+}
+
+bool llvm::applyBroadcastElement(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                 MachineIRBuilder &B,
+                                 std::pair<Register, Register> &MatchInfo) {
+  B.setInstrAndDebugLoc(MI);
+  auto [DstVecReg, SrcReg] = MatchInfo;
+  buildBroadcastVector(B, MRI, SrcReg, DstVecReg);
+  MI.eraseFromParent();
   return true;
 }
 
