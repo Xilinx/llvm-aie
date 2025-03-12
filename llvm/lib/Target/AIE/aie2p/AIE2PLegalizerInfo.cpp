@@ -133,6 +133,7 @@ static const LLT V16S32 = LLT::fixed_vector(16, 32);
 static const LLT V32S16 = LLT::fixed_vector(32, 16);
 static const LLT V64S8 = LLT::fixed_vector(64, 8);
 static const LLT V2S256 = LLT::fixed_vector(2, 256);
+static const LLT V8S64 = LLT::fixed_vector(8, 64);
 
 // 512-bit accumulators
 static const LLT AccV1632 = LLT::fixed_vector(16, 32);
@@ -143,6 +144,7 @@ static const LLT V32S32 = LLT::fixed_vector(32, 32);
 static const LLT V64S16 = LLT::fixed_vector(64, 16);
 static const LLT V128S8 = LLT::fixed_vector(128, 8);
 static const LLT V2S512 = LLT::fixed_vector(2, 512);
+static const LLT V16S64 = LLT::fixed_vector(16, 64);
 
 // 1024-bit accumulators
 static const LLT AccV32S32 = LLT::fixed_vector(32, 32);
@@ -551,7 +553,7 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
       .clampScalar(2, S32, S32) // Clamp the idx to 32 bit since VINSERT
                                 // relies on eR29 only for idx.
       .customIf(typeInSet(0, {V2S32, V8S32, V16S16, V32S8, V16S32, V32S16,
-                              V64S8, V32S32, V64S16, V128S8}));
+                              V64S8, V32S32, V64S16, V128S8, V8S64, V16S64}));
 
   // Control-flow
   getActionDefinitionsBuilder(G_BRCOND).legalFor({S32}).clampScalar(0, S32,
