@@ -1270,12 +1270,22 @@ void AIE2PRegisterBankInfo::setAIEGenericInstrMapping(
     Register DstReg = MI.getOperand(0).getReg();
     LLT DstType = MRI.getType(DstReg);
     unsigned Size = DstType.getSizeInBits();
+    // 512-bit size is supported using VBCST and 2048-bit using VCLR
     assert((Size == 512 || Size == 2048) &&
            "Unsupported vector size for G_AIE_BROADCAST_VECTOR!");
     if (Size == 2048)
       OpRegBankIdx[0] = getAccPartialMappingIdx(DstType);
     else
       OpRegBankIdx[0] = getVecPartialMappingIdx(DstType);
+    break;
+  }
+
+  case AIE2P::G_AIE_INSERT_VECTOR_ELT: {
+    LLT DstType = MRI.getType(MI.getOperand(0).getReg());
+    LLT SrcType = MRI.getType(MI.getOperand(1).getReg());
+    assert(DstType == SrcType);
+    OpRegBankIdx[0] = getVecPartialMappingIdx(DstType);
+    OpRegBankIdx[1] = getVecPartialMappingIdx(SrcType);
     break;
   }
   }
