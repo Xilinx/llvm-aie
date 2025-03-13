@@ -176,6 +176,9 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual unsigned getGenericVShiftOpcode() const {
     llvm_unreachable("Target didn't implement getGenericVShiftOpcode!");
   }
+  virtual unsigned getGenericShuffleVectorOpcode() const {
+    llvm_unreachable("Target didn't implement getGenericShuffleVectorOpcode!");
+  }
   /// Return the opcode to be used for subvector extraction.
   virtual unsigned getGenericExtractSubvectorOpcode() const {
     llvm_unreachable(

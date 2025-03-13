@@ -1778,6 +1778,10 @@ unsigned AIE2PInstrInfo::getGenericVShiftOpcode() const {
   return AIE2P::G_AIE_VSHIFT_RIGHT;
 }
 
+unsigned AIE2PInstrInfo::getGenericShuffleVectorOpcode() const {
+  return AIE2P::G_AIE_SHUFFLE_VECTOR;
+}
+
 unsigned AIE2PInstrInfo::getGenericExtractSubvectorOpcode() const {
   return AIE2P::G_AIE_EXTRACT_SUBVECTOR;
 }
