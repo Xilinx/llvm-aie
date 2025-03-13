@@ -119,6 +119,8 @@ AIE2PostLegalizerCustomCombiner::AIE2PostLegalizerCustomCombiner()
     : MachineFunctionPass(ID) {
   initializeAIE2PostLegalizerCustomCombinerPass(
       *PassRegistry::getPassRegistry());
+  if (!RuleConfig.parseCommandLineOption())
+    report_fatal_error("Invalid rule identifier");
 }
 
 bool AIE2PostLegalizerCustomCombiner::runOnMachineFunction(

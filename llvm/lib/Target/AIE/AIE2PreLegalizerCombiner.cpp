@@ -476,9 +476,10 @@ private:
 };
 } // end anonymous namespace
 
-AIE2PreLegalizerCombiner::AIE2PreLegalizerCombiner()
-    : MachineFunctionPass(ID) {
+AIE2PreLegalizerCombiner::AIE2PreLegalizerCombiner() : MachineFunctionPass(ID) {
   initializeAIE2PreLegalizerCombinerPass(*PassRegistry::getPassRegistry());
+  if (!RuleConfig.parseCommandLineOption())
+    report_fatal_error("Invalid rule identifier");
 }
 
 bool AIE2PreLegalizerCombiner::runOnMachineFunction(MachineFunction &MF) {

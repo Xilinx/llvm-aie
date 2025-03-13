@@ -36,15 +36,20 @@ body:             |
     ; AIE2: [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE target-flags(aie2-global) @Y + 4
     ; AIE2-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 -4
     ; AIE2-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C]](s20)
-    ; AIE2-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; AIE2-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C1]](s20)
-    ; AIE2-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 -2
-    ; AIE2-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C2]](s20)
-    ; AIE2-NEXT: [[SEXTLOAD:%[0-9]+]]:_(s32) = G_SEXTLOAD [[PTR_ADD]](p0) :: (dereferenceable load (s16) from @Y, align 4)
-    ; AIE2-NEXT: [[SEXTLOAD1:%[0-9]+]]:_(s32) = G_SEXTLOAD [[PTR_ADD2]](p0) :: (dereferenceable load (s16) from `ptr getelementptr inbounds (%struct.anon, ptr @Y, i32 0, i32 1)`)
-    ; AIE2-NEXT: [[ADD:%[0-9]+]]:_(s32) = nsw G_ADD [[SEXTLOAD]], [[SEXTLOAD1]]
-    ; AIE2-NEXT: [[SEXTLOAD2:%[0-9]+]]:_(s32) = G_SEXTLOAD [[GV]](p0) :: (dereferenceable load (s8) from `ptr getelementptr inbounds (%struct.anon, ptr @Y, i32 0, i32 2)`, align 4)
-    ; AIE2-NEXT: [[ADD1:%[0-9]+]]:_(s32) = nsw G_ADD [[ADD]], [[SEXTLOAD2]]
+    ; AIE2-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+    ; AIE2-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD]], [[C1]](s20)
+    ; AIE2-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 2
+    ; AIE2-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD]], [[C2]](s20)
+    ; AIE2-NEXT: [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
+    ; AIE2-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD]], [[C3]](s20)
+    ; AIE2-NEXT: [[LOAD:%[0-9]+]]:_(s16) = G_LOAD [[PTR_ADD]](p0) :: (dereferenceable load (s16) from @Y, align 4)
+    ; AIE2-NEXT: [[SEXT:%[0-9]+]]:_(s32) = G_SEXT [[LOAD]](s16)
+    ; AIE2-NEXT: [[LOAD1:%[0-9]+]]:_(s16) = G_LOAD [[PTR_ADD2]](p0) :: (dereferenceable load (s16) from `ptr getelementptr inbounds (%struct.anon, ptr @Y, i32 0, i32 1)`)
+    ; AIE2-NEXT: [[SEXT1:%[0-9]+]]:_(s32) = G_SEXT [[LOAD1]](s16)
+    ; AIE2-NEXT: [[ADD:%[0-9]+]]:_(s32) = nsw G_ADD [[SEXT]], [[SEXT1]]
+    ; AIE2-NEXT: [[LOAD2:%[0-9]+]]:_(s8) = G_LOAD [[PTR_ADD3]](p0) :: (dereferenceable load (s8) from `ptr getelementptr inbounds (%struct.anon, ptr @Y, i32 0, i32 2)`, align 4)
+    ; AIE2-NEXT: [[SEXT2:%[0-9]+]]:_(s32) = G_SEXT [[LOAD2]](s8)
+    ; AIE2-NEXT: [[ADD1:%[0-9]+]]:_(s32) = nsw G_ADD [[ADD]], [[SEXT2]]
     ; AIE2-NEXT: G_STORE [[ADD1]](s32), [[PTR_ADD1]](p0) :: (store (s32) into `ptr getelementptr inbounds (%struct.anon, ptr @Y, i32 0, i32 3)`)
     ; AIE2-NEXT: $p0 = COPY [[PTR_ADD1]](p0)
     ; AIE2-NEXT: PseudoRET implicit $lr, implicit $p0
@@ -53,15 +58,20 @@ body:             |
     ; AIE2P: [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE target-flags(aie2p-global) @Y + 4
     ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 -4
     ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C]](s20)
-    ; AIE2P-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; AIE2P-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C1]](s20)
-    ; AIE2P-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 -2
-    ; AIE2P-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C2]](s20)
-    ; AIE2P-NEXT: [[SEXTLOAD:%[0-9]+]]:_(s32) = G_SEXTLOAD [[PTR_ADD]](p0) :: (dereferenceable load (s16) from @Y, align 4)
-    ; AIE2P-NEXT: [[SEXTLOAD1:%[0-9]+]]:_(s32) = G_SEXTLOAD [[PTR_ADD2]](p0) :: (dereferenceable load (s16) from `ptr getelementptr inbounds (%struct.anon, ptr @Y, i32 0, i32 1)`)
-    ; AIE2P-NEXT: [[ADD:%[0-9]+]]:_(s32) = nsw G_ADD [[SEXTLOAD]], [[SEXTLOAD1]]
-    ; AIE2P-NEXT: [[SEXTLOAD2:%[0-9]+]]:_(s32) = G_SEXTLOAD [[GV]](p0) :: (dereferenceable load (s8) from `ptr getelementptr inbounds (%struct.anon, ptr @Y, i32 0, i32 2)`, align 4)
-    ; AIE2P-NEXT: [[ADD1:%[0-9]+]]:_(s32) = nsw G_ADD [[ADD]], [[SEXTLOAD2]]
+    ; AIE2P-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+    ; AIE2P-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD]], [[C1]](s20)
+    ; AIE2P-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 2
+    ; AIE2P-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD]], [[C2]](s20)
+    ; AIE2P-NEXT: [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
+    ; AIE2P-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD]], [[C3]](s20)
+    ; AIE2P-NEXT: [[LOAD:%[0-9]+]]:_(s16) = G_LOAD [[PTR_ADD]](p0) :: (dereferenceable load (s16) from @Y, align 4)
+    ; AIE2P-NEXT: [[SEXT:%[0-9]+]]:_(s32) = G_SEXT [[LOAD]](s16)
+    ; AIE2P-NEXT: [[LOAD1:%[0-9]+]]:_(s16) = G_LOAD [[PTR_ADD2]](p0) :: (dereferenceable load (s16) from `ptr getelementptr inbounds (%struct.anon, ptr @Y, i32 0, i32 1)`)
+    ; AIE2P-NEXT: [[SEXT1:%[0-9]+]]:_(s32) = G_SEXT [[LOAD1]](s16)
+    ; AIE2P-NEXT: [[ADD:%[0-9]+]]:_(s32) = nsw G_ADD [[SEXT]], [[SEXT1]]
+    ; AIE2P-NEXT: [[LOAD2:%[0-9]+]]:_(s8) = G_LOAD [[PTR_ADD3]](p0) :: (dereferenceable load (s8) from `ptr getelementptr inbounds (%struct.anon, ptr @Y, i32 0, i32 2)`, align 4)
+    ; AIE2P-NEXT: [[SEXT2:%[0-9]+]]:_(s32) = G_SEXT [[LOAD2]](s8)
+    ; AIE2P-NEXT: [[ADD1:%[0-9]+]]:_(s32) = nsw G_ADD [[ADD]], [[SEXT2]]
     ; AIE2P-NEXT: G_STORE [[ADD1]](s32), [[PTR_ADD1]](p0) :: (store (s32) into `ptr getelementptr inbounds (%struct.anon, ptr @Y, i32 0, i32 3)`)
     ; AIE2P-NEXT: $p0 = COPY [[PTR_ADD1]](p0)
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit $p0
