@@ -102,6 +102,12 @@ def combine_vector_shuffle_to_copy : GICombineRule<
          [{ return matchShuffleToCopy(*${root}, MRI, ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
 
+def combine_vector_shuffle_to_extract_insert_elt : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
+         [{ return matchShuffleToExtractInsertElt(*${root}, MRI, ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
+
 def AIE2PreLegalizerCombiner
     : GICombiner<"AIE2PreLegalizerCombinerImpl", [ combine_unpad_vector, combine_pad_vector,
                                                                  all_combines, combine_S20NarrowingOpt,
@@ -123,7 +129,8 @@ def AIE2PPreLegalizerCombiner
                                                                  combine_concat_to_pad_vector, 
                                                                  combine_vector_shuffle_vsel,
                                                                  combine_vector_shuffle_broadcast,
-                                                                 combine_single_diff_build_vector]> {
+                                                                 combine_single_diff_build_vector,
+                                                                 combine_vector_shuffle_to_extract_insert_elt]> {
   let CombineAllMethodName = "tryCombineAllImpl";
 }
 
