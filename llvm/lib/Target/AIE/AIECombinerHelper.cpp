@@ -31,6 +31,10 @@
 
 using namespace llvm;
 
+static cl::opt<unsigned> ShuffleMaxNumInsertions(
+    "aie-shuffle-combine-max-inserts", cl::Hidden, cl::init(0),
+    cl::desc(
+        "Maximum number of insertions allowed to scalarize a shuffle pattern"));
 static cl::opt<bool> EnableOffsetCombine(
     "aie-offset-combine", cl::Hidden, cl::init(true),
     cl::desc("Enable combines of load and stores with an offset"));
@@ -2511,10 +2515,101 @@ bool llvm::matchShuffleToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
 
   // Check that the mask is sequential
   MaskMatch SequentialMask{/*Height*/ 0};
-  if (!SequentialMask.isValidMask(Mask))
+  if (!SequentialMask.isValidMask(Mask).IsValid)
     return false;
 
   MatchInfo = [=](MachineIRBuilder &B) { B.buildCopy(DstReg, Src1Reg); };
 
+  return true;
+}
+
+/// Match something like this:
+/// %0:_(<32 x s16>) = COPY $x0
+/// %1:_(<32 x s16>) = COPY $x1
+/// %2:_(<32 x s16>) = G_SHUFFLE_VECTOR %0:_(<32 x s16>), %1:_, shufflemask(0,
+/// 1, 2, 3, 4, 5, 6, 7, 32, 9, 10, 11, 12, 13, 14, 15, undef, 17, 18, 19, 20,
+/// 21, 22, 23, undef, 25, 26, 27, 28, 29, 30, 31)
+
+/// To convert to:
+/// %3:_(s32) = G_CONSTANT i32 0
+/// %4:_(<32 x s16>) = G_EXTRACT_VECTOR_ELT %1:_(<32 x s16>), %3:_(s32)
+/// %0:_(<32 x s32>) = G_AIE_INSERT_VECTOR_ELT %0:(<32 x s16>), %4:_(s16), 8
+bool llvm::matchShuffleToExtractInsertElt(MachineInstr &MI,
+                                          MachineRegisterInfo &MRI,
+                                          BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR);
+
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register Src1Reg = MI.getOperand(1).getReg();
+  const Register Src2Reg = MI.getOperand(2).getReg();
+  ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
+
+  const LLT DstTy = MRI.getType(DstReg);
+  const LLT Src1Ty = MRI.getType(Src1Reg);
+  if (DstTy != Src1Ty)
+    return false;
+
+  const unsigned NumSrcElems = Src1Ty.isVector() ? Src1Ty.getNumElements() : 1;
+  const LLT ElemTy = MRI.getType(Src1Reg).getElementType();
+
+  if (Mask.size() != NumSrcElems)
+    return false;
+
+  if (MaskMatch::isMaskWithAllUndefs(Mask))
+    return false;
+
+  // Check that the mask is sequential
+  MaskMatch SequentialMask{/*Height*/ 0};
+  ShuffleMaskValidity SequentialMaskValidity = SequentialMask.isValidMask(Mask);
+  bool IsValid = SequentialMaskValidity.IsValid;
+
+  // This is a Copy pattern and will be handled by matchShuffleToCopy
+  if (IsValid)
+    return false;
+
+  SmallVector<unsigned, 4> Exceptions = SequentialMaskValidity.MaskExceptions;
+  assert(!Exceptions.empty());
+
+  unsigned MaxNumInsertions;
+  if (MI.getMF()->getTarget().getTargetTriple().isAIE2P())
+    // The scalarization of G_SHUFFLE_VECTOR in the legalizer is more beneficial
+    // if there are more exceptions than NumSrcElems / 2 as AIE2P's VINSERT
+    // instrutions require a move to a register used for the index unlike VPUSH.
+    MaxNumInsertions = (ShuffleMaxNumInsertions != 0) ? ShuffleMaxNumInsertions
+                                                      : NumSrcElems / 2;
+  else
+    llvm_unreachable(
+        "MaxNumInsertions unimplemented for target. Does the target's Insert "
+        "instruction take immediate indices or does it require a register for "
+        "the index?");
+
+  if (Exceptions.size() >= MaxNumInsertions)
+    return false;
+
+  MatchInfo = [=, &MRI](MachineIRBuilder &B) {
+    Register InsertSrc;
+    Register InsertDst;
+
+    for (const unsigned ExceptionIdx : Exceptions) {
+      Register VecToExtract =
+          Mask[ExceptionIdx] < (int)NumSrcElems ? Src1Reg : Src2Reg;
+
+      int ExtractIdx = Mask[ExceptionIdx] % NumSrcElems;
+      auto ExtrElt =
+          B.buildExtractVectorElementConstant(ElemTy, VecToExtract, ExtractIdx);
+
+      auto ExceptionIdxReg = B.buildConstant(LLT::scalar(32), ExceptionIdx);
+
+      InsertSrc = (Exceptions.size() == 1 || ExceptionIdx == Exceptions.front())
+                      ? Src1Reg
+                      : InsertDst;
+      InsertDst = (Exceptions.size() == 1 || ExceptionIdx == Exceptions.back())
+                      ? DstReg
+                      : MRI.createGenericVirtualRegister(Src1Ty);
+
+      B.buildInsertVectorElement(InsertDst, InsertSrc, ExtrElt,
+                                 ExceptionIdxReg);
+    }
+  };
   return true;
 }
