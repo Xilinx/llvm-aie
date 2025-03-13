@@ -1227,6 +1227,19 @@ def : Pat<(Ty (vshift_node VEC512:$src1, VEC512:$src2, (i32 eR:$shift))),
           (VSHIFT VEC512:$src1, VEC512:$src2, eR:$shift)>;
 }
 
+// VSHUFFLE
+def shuffle_vector_node : SDNode<"AIE2P::G_AIE_SHUFFLE_VECTOR",
+                          SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisInt<3>,
+                                              SDTCisSameAs<0,1>,
+                                              SDTCisSameAs<0,2>]>>;
+def : GINodeEquiv<G_AIE_SHUFFLE_VECTOR, shuffle_vector_node>;
+
+
+foreach Ty = [v64i8, v32i16, v16i32, v8i64] in {
+def : Pat<(Ty (shuffle_vector_node VEC512:$src1, VEC512:$src2, (i32 eR:$mod))),
+          (VSHUFFLE_vec_shuffle_x VEC512:$src1, VEC512:$src2, eR:$mod)>;
+}
+
 // G_AIE_[SZ]EXT_EXTRACT_VECTOR_ELT
 defm : Extract_512<i32, v64i8, (i32 eR:$idx), VEXTRACT_8_vec_extract_r_vaddSign0, VEXTRACT_8_vec_extract_r_vaddSign1>;
 defm : Extract_512<i32, v32i16, (i32 eR:$idx), VEXTRACT_16_vec_extract_r_vaddSign0, VEXTRACT_16_vec_extract_r_vaddSign1>;

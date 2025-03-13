@@ -133,3 +133,10 @@ def G_AIE_EXTRACT_SUBVECTOR : AIEGenericInstruction {
   let InOperandList = (ins type1:$src, type2:$idx);
   let hasSideEffects = false;
 }
+
+// Corresponds to AIE shuffle vector. 
+def G_AIE_SHUFFLE_VECTOR : AIEGenericInstruction {
+  let OutOperandList = (outs type0:$dst);
+  let InOperandList = (ins type0:$src0, type0:$src1, type1:$mode);
+  let hasSideEffects = false;
+}

@@ -63,6 +63,7 @@ public:
   unsigned getGenericBroadcastVectorOpcode() const override;
   unsigned getGenericVSelOpcode() const override;
   unsigned getGenericVShiftOpcode() const override;
+  unsigned getGenericShuffleVectorOpcode() const override;
   unsigned getGenericExtractSubvectorOpcode() const override;
   bool isLock(unsigned Opc) const override;
   std::optional<unsigned> getDoneLatency(unsigned) const override;
