@@ -34,6 +34,12 @@ struct AIELoadStoreCombineMatchData {
   bool RemoveInstr;
 };
 
+struct ShuffleMaskValidity {
+  bool IsValid;
+  // Holds mask indices that don't satisfy the mask constraints
+  SmallVector<unsigned, 4> MaskExceptions;
+};
+
 /// The mask is represented by a sawtooth function F with Period, Height and
 /// Amplitude, i.e., F(idx + Period) = F(idx) = Height + idx * Amplitude, where
 /// idx >= 0.
@@ -43,7 +49,7 @@ public:
   MaskMatch(unsigned MaskHeight, unsigned MaskPeriod = 0, int MaskAmplitude = 1)
       : Period{MaskPeriod}, Height{MaskHeight}, Amplitude{MaskAmplitude} {}
 
-  bool isValidMask(ArrayRef<int> Mask) const;
+  ShuffleMaskValidity isValidMask(ArrayRef<int> Mask) const;
   unsigned getHeight() const { return Height; }
 
   static bool isMaskWithAllUndefs(ArrayRef<int> Mask);
