@@ -1178,18 +1178,38 @@ bool llvm::matchSplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
   case 2048:
     break;
   default:
-    // unimplemented
+    // unimplemented.
     return false;
   }
 
+  auto IsUndef = [&](const MachineOperand &Op) {
+    const MachineInstr *Undef = MRI.getVRegDef(Op.getReg());
+    return Undef && Undef->getOpcode() == TargetOpcode::G_IMPLICIT_DEF;
+  };
   const unsigned NumOps = MI.getNumOperands();
-  const MachineOperand FirstOp = MI.getOperand(1);
-  for (unsigned i = 2; i < NumOps; i++) {
-    if (!MI.getOperand(i).isIdenticalTo(FirstOp)) {
-      return false;
+  // First non-undef operand.
+  unsigned SrcReg = 0;
+  bool FoundSrc = false;
+  bool AllUndef = true;
+
+  // Find the first non-undef operand as the reference.
+  for (unsigned I = 1; I < NumOps; I++) {
+    const MachineOperand &Op = MI.getOperand(I);
+    if (!IsUndef(Op)) {
+      if (!FoundSrc) {
+        SrcReg = Op.getReg();
+        FoundSrc = true;
+      } else if (Op.getReg() != SrcReg) {
+        return false;
+      }
+      AllUndef = false;
     }
   }
-  MatchInfo = std::make_pair(DstVecReg, FirstOp.getReg());
+
+  if (AllUndef)
+    SrcReg = MI.getOperand(1).getReg();
+
+  MatchInfo = {DstVecReg, SrcReg};
   return true;
 }
 
@@ -1205,7 +1225,7 @@ static void buildBroadcastVector(MachineIRBuilder &B, MachineRegisterInfo &MRI,
     return Cst && Cst->Value.isZero();
   };
   // Check if the source is constant zero and build a 2048-bit
-  // vector destination
+  // vector destination.
   auto isConstantZero = IsConstantZeroReg(SrcReg) && DstVecSize == 2048;
   if (SrcTy == LLT::scalar(8) || SrcTy == LLT::scalar(16)) {
     const LLT S32 = LLT::scalar(32);
@@ -2828,6 +2848,41 @@ bool llvm::matchShuffleToConcatExtractedSubvectors(MachineInstr &MI,
     }
     B.buildConcatVectors({DstReg}, ExtractedSubvectors);
   };
+
+  return true;
+}
+
+///  %1:_(s32) = COPY $r0
+///  %2:_(<16 x s32>) = G_IMPLICIT_DEF
+///  %3:_(<16 x s32>) = G_AIE_BROADCAST_VECTOR %1:_(s32)
+///  %0:_(<16 x s32>) = G_SHUFFLE_VECTOR %3(<16 x s32>), %2(<16 x s32>),
+///  shufflemask(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+/// To convert to:
+///  %0:_(<16 x s32>) = G_AIE_BROADCAST_VECTOR %1(s32)
+bool llvm::matchShuffleBcstToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                  const TargetInstrInfo &TII,
+                                  BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR);
+
+  const auto [DstReg, DstTy, Src1Reg, Src1Ty] = MI.getFirst2RegLLTs();
+  if (DstTy != Src1Ty)
+    return false;
+
+  ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
+  const AIEBaseInstrInfo &AIETII = (const AIEBaseInstrInfo &)TII;
+  MachineInstr *SrcVec = MRI.getVRegDef(Src1Reg);
+  // Check if the first source is defined by a Broadcast.
+  if (SrcVec->getOpcode() != AIETII.getGenericBroadcastVectorOpcode())
+    return false;
+
+  const unsigned NumSrcElems = Src1Ty.isVector() ? Src1Ty.getNumElements() : 1;
+  if (Mask.size() != NumSrcElems)
+    return false;
+
+  if (MaskMatch::isMaskWithAllUndefs(Mask))
+    return false;
+
+  MatchInfo = [=](MachineIRBuilder &B) { B.buildCopy(DstReg, Src1Reg); };
 
   return true;
 }

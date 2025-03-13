@@ -271,6 +271,8 @@ bool matchShuffleToConcatExtractedSubvectors(MachineInstr &MI,
 
 bool matchShuffleToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
                         BuildFnTy &MatchInfo);
+bool matchShuffleBcstToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
+                            const TargetInstrInfo &TII, BuildFnTy &MatchInfo);
 
 bool matchShuffleToExtractInsertElt(MachineInstr &MI, MachineRegisterInfo &MRI,
                                     BuildFnTy &MatchInfo);
