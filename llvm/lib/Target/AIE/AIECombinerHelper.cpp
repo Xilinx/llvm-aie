@@ -52,17 +52,21 @@ cl::opt<bool> CombineVecShiftByZero(
     "aie-combine-vec-shift-by-zero", cl::init(true), cl::Hidden,
     cl::desc("Combine vectors shift by zero into copies."));
 
-bool MaskMatch::isValidMask(ArrayRef<int> Mask) const {
+ShuffleMaskValidity MaskMatch::isValidMask(const ArrayRef<int> Mask) const {
+  SmallVector<unsigned, 4> MaskExceptions;
   for (unsigned Idx = 0; Idx < Mask.size(); ++Idx) {
     if (Mask[Idx] == -1)
       continue;
 
     // Check not undef values (not -1) of the mask
-    if ((unsigned)Mask[Idx] != getMaskValue(Idx))
-      return false;
+    if ((unsigned)Mask[Idx] != getMaskValue(Idx)) {
+      MaskExceptions.push_back(Idx);
+    }
   }
 
-  return true;
+  if (MaskExceptions.empty())
+    return {true, MaskExceptions};
+  return {false, MaskExceptions};
 }
 
 bool MaskMatch::isMaskWithAllUndefs(ArrayRef<int> Mask) {
@@ -2288,7 +2292,7 @@ bool llvm::matchShuffleToExtractSubvec(MachineInstr &MI,
   auto GetSubvecExtractIdx = [=, &Mask]() -> std::optional<unsigned> {
     for (unsigned SubVecIdx = 0; SubVecIdx < NumSubVectors; ++SubVecIdx) {
       MaskMatch SequentialMask{/*Height*/ SubVecIdx * NumDstElems};
-      if (SequentialMask.isValidMask(Mask))
+      if (SequentialMask.isValidMask(Mask).IsValid)
         return SubVecIdx;
     }
 
@@ -2361,7 +2365,7 @@ static bool matchShuffleToSubvecBroadcast(MachineInstr &MI,
       // Check the mask
       MaskMatch SequentialPeriodicMask{/*Height*/ Height.value(),
                                        /*Period*/ SplatMaskLen};
-      if (SequentialPeriodicMask.isValidMask(Mask))
+      if (SequentialPeriodicMask.isValidMask(Mask).IsValid)
         return std::make_pair(Height.value(), SplatMaskLen);
     }
     return std::nullopt;
@@ -2445,7 +2449,7 @@ static bool matchShuffleToVecBroadcast(MachineInstr &MI,
   // Check the mask
   MaskMatch SequentialPeriodicMask{/*Height*/ 0,
                                    /*Period*/ NumSrcElems};
-  if (!SequentialPeriodicMask.isValidMask(Mask))
+  if (!SequentialPeriodicMask.isValidMask(Mask).IsValid)
     return false;
 
   MatchInfo = [=, &MRI](MachineIRBuilder &B) {
