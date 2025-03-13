@@ -901,6 +901,7 @@ public:
 };
 
 bool PostPipeliner::solve(int NS) {
+#if LLVM_WITH_Z3
   if (!UseSolver) {
     return false;
   }
@@ -957,6 +958,7 @@ bool PostPipeliner::solve(int NS) {
                          << "\n");
     return true;
   }
+#endif // LLVM_WITH_Z3
 
   return false;
 }

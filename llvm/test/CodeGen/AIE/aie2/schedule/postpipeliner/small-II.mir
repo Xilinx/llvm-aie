@@ -37,17 +37,16 @@
   ; CHECK-NEXT:    nopb ; lda r0, [p0], #4; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; lda r1, [p0], #4; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; lda r2, [p0], #4; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; lda r3, [p0], #4; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    nopb ; lda r3, [p0], #4; st r0, [p1], #4; nopxm ; nopv
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_2: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-  ; CHECK-NEXT:    nopb ; lda r0, [p0], #4; st r0, [p1], #4; nopxm ; nopv
-  ; CHECK-NEXT:    lda r1, [p0], #4; st r1, [p1], #4; nopx
-  ; CHECK-NEXT:    lda r2, [p0], #4; st r2, [p1], #4
+  ; CHECK-NEXT:    nopb ; lda r0, [p0], #4; st r1, [p1], #4; nopxm ; nopv
+  ; CHECK-NEXT:    lda r1, [p0], #4; st r2, [p1], #4; nopx
+  ; CHECK-NEXT:    lda r2, [p0], #4; st r3, [p1], #4
   ; CHECK-NEXT:  .L_LEnd0:
-  ; CHECK-NEXT:    nopb ; lda r3, [p0], #4; st r3, [p1], #4; nopxm ; nopv
+  ; CHECK-NEXT:    nopb ; lda r3, [p0], #4; st r0, [p1], #4; nopxm ; nopv
   ; CHECK-NEXT:  // %bb.3: // %for.cond.cleanup
-  ; CHECK-NEXT:    nopb ; nopa ; st r0, [p1], #4; nopxm ; nopv
   ; CHECK-NEXT:    st r1, [p1], #4; nopx
   ; CHECK-NEXT:    st r2, [p1], #4
   ; CHECK-NEXT:    st r3, [p1], #4

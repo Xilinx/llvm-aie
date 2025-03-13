@@ -29,13 +29,13 @@
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_1: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-  ; CHECK-NEXT:    nopb ; lda r0, [p2, #0]; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopx
+  ; CHECK-NEXT:    nopb ; lda r0, [p2, #0]; nops ; nopx ; mov p2, p1; nopv
+  ; CHECK-NEXT:    nopa ; nopx
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    mov p2, p1
+  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    nopb ; nopa ; st r0, [p0, #0]; nopxm ; nopv
   ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup

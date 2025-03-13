@@ -11,7 +11,13 @@
 #ifndef LLVM_LIB_TARGET_AIE_AIESWPSOLVER_H
 #define LLVM_LIB_TARGET_AIE_AIESWPSOLVER_H
 
+#include "llvm/Config/config.h"
+#if LLVM_WITH_Z3
 #include "z3++.h"
+#endif
+
+#include <cassert>
+#include <cstdint>
 #include <cstdio>
 #include <map>
 #include <optional>
@@ -126,7 +132,7 @@ public:
   virtual bool solveModel() = 0;
 };
 
-
+#if LLVM_WITH_Z3
 class Z3Solver : public SWPSolver {
 protected:
   z3::context Context;
@@ -214,9 +220,11 @@ class Z3IntegerSolver : public Z3Solver {
   z3::expr genCycle(int N) override;
   void genConflict(int M, int N) override;
   bool genSlotConstraint(int SlotNo, const Slot &Slot) override;
+
 public:
   Z3IntegerSolver() = default;
 };
+#endif // LLVM_WITH_Z3
 
 class LPFile : public SWPSolver {
   // Prefix, SlotNumber, InstrNr, Stage, Cycle

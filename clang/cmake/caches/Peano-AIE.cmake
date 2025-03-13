@@ -61,7 +61,9 @@ if(LLVM_BUILD_LLVM_DYLIB)
   list(APPEND _llvm_distribution_components LLVM clang-cpp)
 endif()
 
-option(LLVM_ENABLE_Z3_SOLVER "" ON)
+# Switch it on if you have Z3 installed and want to use the solver mode 
+# of the postpipeliner
+# option(LLVM_ENABLE_Z3_SOLVER "" ON)
 
 # there's some bug here where if you list(APPEND ...) to a CACHE variable
 # it doesn't work (neither libLLVM nor clang-cpp were being successfully installed)

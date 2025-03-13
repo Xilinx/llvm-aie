@@ -166,6 +166,7 @@ void SWPSolver::latencies() {
   }
 }
 
+#if LLVM_WITH_Z3
 Z3Solver::Z3Solver() : Solver(Context), Zero(Context.int_val(0)) {
   // timeout behaves undeterministically
   if (!DeterministicSolver) {
@@ -419,6 +420,7 @@ bool Z3IntegerSolver::genSlotConstraint(int SlotNo, const Slot &Slot) {
 
   return true;
 }
+#endif // LLVM_WITH_Z3
 
 void LPFile::genModel() {
   printf("max: ;\n");
