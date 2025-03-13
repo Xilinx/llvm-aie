@@ -858,8 +858,14 @@ bool PostPipeliner::tryHeuristics() {
                            << "\n");
       if (scheduleFirstIteration(S) && scheduleOtherIterations(S)) {
         DEBUG_SUMMARY(dbgs() << "    Strategy " << S.name() << " run=" << Run
-                             << " found II=" << II << "\n");
-        return true;
+                             << " found schedule:\n");
+        const bool Success = checkStages();
+        DEBUG_SUMMARY(dbgs()
+                      << "    Strategy " << S.name() << " run=" << Run
+                      << " found NS=" << NStages << " II=" << II << "\n");
+        if (Success) {
+          return true;
+        }
       }
       resetSchedule(/*FullReset=*/false);
     }
@@ -905,9 +911,6 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval,
   LLVM_DEBUG(dumpIntervals(Info, MinLength, II));
   if (!tryHeuristics()) {
     LLVM_DEBUG(dbgs() << "PostPipeliner: No schedule found\n");
-    return false;
-  }
-  if (!checkStages()) {
     return false;
   }
 
