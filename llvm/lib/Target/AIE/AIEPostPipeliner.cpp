@@ -580,10 +580,12 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
     Info[N].Scheduled = true;
     DEBUG_FULL(dbgs() << "Scoreboard\n"; Scoreboard.dumpFull(););
   }
+
+  const bool Success = checkStages();
   DEBUG_SUMMARY(dbgs() << "==== First iteration scheduled by "
                        << Strategy.name() << "====\n");
-  DEBUG_SUMMARY(dumpCycles(Info, MinLength, II));
-  return true;
+  DEBUG_SUMMARY(dumpCycles(Info, NStages * II, II));
+  return Success;
 }
 
 namespace {
@@ -916,14 +918,14 @@ bool PostPipeliner::checkStages() {
   // case we didn't reach steady state, and we may have missed conflicts.
   // We expect this to be rare.
   if (NStages > NCopies) {
-    LLVM_DEBUG(dbgs() << "PostPipeliner: Unsafe stage count, NCopies="
-                      << NCopies << "\n");
+    DEBUG_SUMMARY(dbgs() << "PostPipeliner: Unsafe stage count, NCopies="
+                         << NCopies << "\n");
     return false;
   }
 
   // Check that we have a positive trip count after adjusting
   if (MinTripCount - (NStages - 1) <= 0) {
-    LLVM_DEBUG(dbgs() << "PostPipeliner: MinTripCount insufficient\n");
+    DEBUG_SUMMARY(dbgs() << "PostPipeliner: MinTripCount insufficient\n");
     return false;
   }
   return true;
