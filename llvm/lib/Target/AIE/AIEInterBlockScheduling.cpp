@@ -22,6 +22,7 @@
 #include "Utils/AIELoopUtils.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <memory>
@@ -617,6 +618,15 @@ SchedulingStage InterBlockScheduling::updatePipelining(BlockState &BS) {
       ++BS.FixPoint.IITries <= PostPipelinerMaxTryII) {
     return BS.FixPoint.Stage = SchedulingStage::Pipelining;
   }
+
+  auto *BB = BS.TheBlock;
+  auto DbgLoc = BB->begin()->getDebugLoc();
+  MachineOptimizationRemarkEmitter More(*BB->getParent(), nullptr);
+  More.emit([&]() {
+    return MachineOptimizationRemarkMissed("postpipeliner", "schedule", DbgLoc,
+                                           BB)
+           << "No schedule found.";
+  });
 
   // Fall back to the loop schedule. Note that we can only have II != 0
   // after the loop schedule has stabilized.

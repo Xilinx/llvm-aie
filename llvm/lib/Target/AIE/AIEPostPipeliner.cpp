@@ -14,6 +14,8 @@
 #include "AIEPostPipeliner.h"
 #include "AIESlotCounts.h"
 #include "Utils/AIELoopUtils.h"
+#include "llvm/Analysis/OptimizationRemarkEmitter.h"
+#include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include "llvm/Support/MathExtras.h"
@@ -867,11 +869,21 @@ bool PostPipeliner::tryHeuristics() {
   return false;
 }
 
-bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
+bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval,
+                             MachineOptimizationRemarkEmitter &More) {
   NTotalInstrs = TheDAG.SUnits.size();
   assert(NTotalInstrs % NInstr == 0);
   NCopies = NTotalInstrs / NInstr;
+
+  auto *BB = TheDAG.getBB();
+  auto DbgLoc = BB->begin()->getDebugLoc();
+
   if (NCopies == 1) {
+    More.emit([&]() {
+      return MachineOptimizationRemarkMissed("postpipeliner", "schedule",
+                                             DbgLoc, BB)
+             << "Not feasible.";
+    });
     LLVM_DEBUG(dbgs() << "PostPipeliner: Not feasible\n");
     return false;
   }
@@ -899,6 +911,11 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
     return false;
   }
 
+  More.emit([&]() {
+    return MachineOptimizationRemark("postpipeliner", "schedule", DbgLoc, BB)
+           << "Schedule found: NS=" << ore::NV("NS", NStages)
+           << " II=" << ore::NV("II", II);
+  });
   LLVM_DEBUG(dbgs() << "PostPipeliner: Success\n");
   return true;
 }
