@@ -22,7 +22,7 @@ using namespace llvm;
 
 AIEBaseInstructionSelector::AIEBaseInstructionSelector(
     const AIEBaseSubtarget &STI, const AIEBaseRegisterBankInfo &RBI)
-    : InstructionSelector(), TII(*STI.getInstrInfo()),
+    : InstructionSelector(), STI(STI), TII(*STI.getInstrInfo()),
       TRI(*static_cast<const AIEBaseRegisterInfo *>(STI.getRegisterInfo())),
       RBI(RBI) {}
 
@@ -679,22 +679,35 @@ bool AIEBaseInstructionSelector::selectG_AIE_LOAD_CONV(
   Register LoadResult = (std::next(CONVI.uses().begin()))->getReg();
   MachineInstr *LoadOp = getDefIgnoringCopiesAndBitcasts(LoadResult, MRI);
   assert(LoadOp && "Expected SSA.");
+  bool ShouldAdvanceOp = false;
 
-  // Do not try to combine if one of the load's defs is used by another
-  // instruction between the load and the VCONV or if there is a store
-  // between the load and the VCONV.
-  if (!canDelayMemOp(*LoadOp, CONVI, MRI))
+  // We can try to advance the combined
+  // instruction to the load's position.
+  // Note: only for AIE2P due to performance reasons.
+  if (STI.isAIE2P() && canAdvanceOp(*LoadOp, CONVI, MRI)) {
+    ShouldAdvanceOp = true;
+  } else if (!canDelayMemOp(*LoadOp, CONVI, MRI)) {
+    // Do not try to combine if one of the load's defs is used by another
+    // instruction between the load and the VCONV or if there is a store
+    // between the load and the VCONV.
     return false;
+  }
 
   if (!canCombineCONVLoad(*LoadOp, CONVI) ||
       LoadOp->getParent() != CONVI.getParent() || !MRI.hasOneUse(LoadResult))
     return false;
 
+  if (ShouldAdvanceOp)
+    MIB.setInstr(*LoadOp);
+
   std::optional<AddressingModeInfo> AMI =
       getOrDefineAddressingRegister(*LoadOp, MRI);
 
-  if (!AMI)
+  if (!AMI) {
+    // Restore to the correct position.
+    MIB.setInstr(CONVI);
     return false;
+  }
 
   std::optional<LoadStoreOpcodes> LSO =
       getCombinedOpcodeCONVLoad(AMI->MemI, CONVI, AMI->ImmediateOffset);
