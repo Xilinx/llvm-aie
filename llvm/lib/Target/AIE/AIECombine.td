@@ -96,6 +96,12 @@ def combine_vector_shuffle_extract_subvec : GICombineRule<
          [{ return matchShuffleToExtractSubvec(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
 
+def combine_vector_shuffle_concat_extracted_subvectors : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
+         [{ return matchShuffleToConcatExtractedSubvectors(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
+
 def combine_vector_shuffle_to_copy : GICombineRule<
   (defs root:$root, build_fn_matchinfo:$matchinfo),
   (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
@@ -130,7 +136,8 @@ def AIE2PPreLegalizerCombiner
                                                                  combine_vector_shuffle_vsel,
                                                                  combine_vector_shuffle_broadcast,
                                                                  combine_single_diff_build_vector,
-                                                                 combine_vector_shuffle_to_extract_insert_elt]> {
+                                                                 combine_vector_shuffle_to_extract_insert_elt,
+                                                                 combine_vector_shuffle_concat_extracted_subvectors]> {
   let CombineAllMethodName = "tryCombineAllImpl";
 }
 

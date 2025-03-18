@@ -15,7 +15,6 @@
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineInstr.h"
-
 namespace llvm {
 
 struct AIEBaseInstrInfo;
@@ -58,12 +57,12 @@ public:
   static std::optional<unsigned> getHeight(ArrayRef<int> Mask, unsigned Period);
   static std::optional<int> getUniqueIndex(ArrayRef<int> Mask);
 
-protected:
   unsigned getMaskValue(unsigned Idx) const {
     unsigned BaseIdx = Period == 0 ? Idx : Idx % Period;
     return Height + BaseIdx * Amplitude;
   }
 
+protected:
   unsigned Period = 0;
   unsigned Height = 0;
   /// Negative amplitude can be used for reverse mask patterns.
@@ -264,6 +263,11 @@ void applyOffsetLoadStoreSharePtrAdd(MachineInstr &MI, MachineRegisterInfo &MRI,
 bool matchShuffleToExtractSubvec(MachineInstr &MI, MachineRegisterInfo &MRI,
                                  const AIEBaseInstrInfo &TII,
                                  BuildFnTy &MatchInfo);
+
+bool matchShuffleToConcatExtractedSubvectors(MachineInstr &MI,
+                                             MachineRegisterInfo &MRI,
+                                             const AIEBaseInstrInfo &TII,
+                                             BuildFnTy &MatchInfo);
 
 bool matchShuffleToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
                         BuildFnTy &MatchInfo);
