@@ -1288,3 +1288,27 @@ body:             |
     %0:_(<16 x s32>) = G_SHUFFLE_VECTOR %1(<16 x s32>), %2(<16 x s32>), shufflemask(0, 1, 2, 3, 4, 5, 6, 7, 8, 6, 5, 4, 3, 2, 1, 0)
     PseudoRET implicit $lr, implicit %0
 ...
+
+# TODO: We should be able to combine using extract+broadcast instead of unmerge+concat for this case
+---
+name: shuffle_vector_to_subvec_illegal_concat_no_combine
+tracksRegLiveness: true
+body:             |
+  bb.1.entry:
+    liveins: $y0, $q0
+    ; CHECK-LABEL: name: shuffle_vector_to_subvec_illegal_concat_no_combine
+    ; CHECK: liveins: $y0, $q0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<4 x s32>) = COPY $q0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(p0) = G_CONSTANT i20 0
+    ; CHECK-NEXT: [[SHUF:%[0-9]+]]:_(<16 x s32>) = G_SHUFFLE_VECTOR [[COPY]](<4 x s32>), [[COPY]], shufflemask(2, 3, 2, 3, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef)
+    ; CHECK-NEXT: G_STORE [[SHUF]](<16 x s32>), [[C]](p0) :: (store (<16 x s32>), align 32, addrspace 5)
+    %2:_(s32) = G_CONSTANT i32 0
+    %1:_(<4 x s32>) = COPY $q0
+    %4:_(<16 x s32>) = COPY $x1
+    %5:_(p0) = G_CONSTANT i20 0
+    %0:_(<16 x s32>) = G_SHUFFLE_VECTOR %1(<4 x s32>), %1, shufflemask(2, 3, 2, 3, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef, undef)
+    G_STORE %0(<16 x s32>), %5(p0) :: (store (<16 x s32>) into unknown-address, addrspace 5, align 32)
+...
+
+

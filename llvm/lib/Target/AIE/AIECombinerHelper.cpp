@@ -2403,6 +2403,12 @@ static bool matchShuffleToSubvecBroadcast(MachineInstr &MI,
 
   // If we cannot extract the subvector, we try to apply UNMERGE + CONCAT
   const unsigned NumSubVectors = NumSrcElems / SplatMaskLen;
+
+  const unsigned SubVecSize = Src1Ty.getSizeInBits() / NumSubVectors;
+  // FIXME: We don't have unmerge/concat support of 64-bit and smaller.
+  if (SubVecSize < 128)
+    return false;
+
   // Don't try to unmerge when we have just one subvector.
   // We can overcome with a copy, but other combiners can do a
   // better job for this case.
