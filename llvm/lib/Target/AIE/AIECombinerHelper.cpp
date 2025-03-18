@@ -1851,6 +1851,22 @@ void llvm::applyOffsetLoadStoreSharePtrAdd(MachineInstr &MI,
   MI.getOperand(1).setReg(PtrAddReg);
   MI.getOperand(2).setReg(NewOffsetReg);
 }
+
+static bool isPowerOfTwoOrZero(unsigned Height) {
+  return Height == 0 || (Height > 1 && has_single_bit(Height));
+}
+
+static unsigned getNumMaskUndefs(const ArrayRef<int> &Mask,
+                                 unsigned StartIndex) {
+  unsigned Count = 0;
+  for (unsigned I = StartIndex; I < Mask.size(); ++I) {
+    if (Mask[I] == -1) {
+      ++Count;
+    }
+  }
+  return Count;
+}
+
 /// \returns true if it is possible to combine the below sequence of MIRs
 /// into a COPY.
 /// From : %1:_(<64 x s8>) = G_IMPLICIT_DEF
@@ -2632,5 +2648,188 @@ bool llvm::matchShuffleToExtractInsertElt(MachineInstr &MI,
                                  ExceptionIdxReg);
     }
   };
+
+  return true;
+}
+
+bool llvm::matchShuffleToConcatExtractedSubvectors(MachineInstr &MI,
+                                                   MachineRegisterInfo &MRI,
+                                                   const AIEBaseInstrInfo &TII,
+                                                   BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR);
+
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register Src1Reg = MI.getOperand(1).getReg();
+  const Register Src2Reg = MI.getOperand(2).getReg();
+  ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
+
+  const LLT DstTy = MRI.getType(DstReg);
+  const LLT Src1Ty = MRI.getType(Src1Reg);
+  if (!DstTy.isVector() || !Src1Ty.isVector())
+    return false;
+
+  const LLT ElemTy = Src1Ty.getElementType();
+  unsigned ElemSize = ElemTy.getSizeInBits();
+  const unsigned NumSrc1Elems = Src1Ty.getNumElements();
+  const unsigned NumDstElems = DstTy.getNumElements();
+  if (NumDstElems != NumSrc1Elems)
+    return false;
+
+  // Get Height (start value)
+  std::optional<unsigned> Height = MaskMatch::getHeight(Mask, /*Period*/ 0);
+  if (!Height)
+    return false;
+
+  // Not extractable
+  if (!isPowerOfTwoOrZero((*Height) % NumSrc1Elems))
+    return false;
+
+  MaskMatch SequentialMask{/*Height*/ *Height};
+  ShuffleMaskValidity SequentialMaskValidity =
+      SequentialMask.getShuffleMaskValidity(Mask);
+  bool IsValid = SequentialMaskValidity.IsValid;
+
+  // Should be handled by a separate combine shuffleToCopy combine
+  if (IsValid)
+    return false;
+
+  auto GetSubvecExtractIndices =
+      [=, &Mask,
+       &SequentialMaskValidity]() -> std::optional<SmallVector<unsigned>> {
+    SmallVector<unsigned> SubvecExtractIndices = {0};
+    unsigned CurrentMaskPos = 0;
+    unsigned CurrentHeight = *Height;
+    SmallVector<unsigned, 4> CurrentExceptions =
+        SequentialMaskValidity.MaskExceptions;
+    ArrayRef<int> CurrentMask = Mask;
+
+    // Check that the exceptions are contiguous or form one block. Since undef
+    // values are not counted as exceptions, we have to take them into account
+    // in the condition below
+    auto ContiguousExceptions = [&CurrentExceptions, &CurrentMask]() {
+      return (CurrentExceptions.size() +
+              getNumMaskUndefs(CurrentMask, CurrentExceptions[0])) ==
+             (CurrentMask.size() - CurrentExceptions[0]);
+    };
+
+    while (ContiguousExceptions()) {
+      // The Mask has nothing but exceptions
+      if (CurrentExceptions.size() == CurrentMask.size()) {
+        return std::nullopt;
+      }
+      SubvecExtractIndices.push_back(CurrentMaskPos + CurrentExceptions[0]);
+      CurrentMaskPos += CurrentExceptions[0];
+
+      // Extract the submask at the current exception indices and update the
+      // current mask with it
+      ArrayRef<int> SubMask =
+          CurrentMask.slice(CurrentExceptions[0], CurrentExceptions.size());
+      CurrentMask = SubMask;
+      CurrentHeight = *MaskMatch::getHeight(CurrentMask, /*Period*/ 0);
+
+      MaskMatch SequentialMask{/*Height*/ CurrentHeight};
+      // Check the sequential validity of the new Submask
+      ShuffleMaskValidity SequentialMaskValidity =
+          SequentialMask.getShuffleMaskValidity(CurrentMask);
+
+      if (SequentialMaskValidity.IsValid)
+        return SubvecExtractIndices;
+
+      // Update CurrentExceptions
+      CurrentExceptions = SequentialMaskValidity.MaskExceptions;
+    }
+
+    // Non contiguous exceptions
+    return std::nullopt;
+  };
+
+  auto SubvecExtractIndices = GetSubvecExtractIndices();
+
+  // Not a valid pattern
+  if (!SubvecExtractIndices)
+    return false;
+
+  // Since we can only unmerge and concat vectors of the same size, equalize the
+  // extract indices, by inserting additional extract indices if needed. E.g.
+  // for the shufflemask:
+  // (16, 17, 18, 19, 20, 21, 22, 23, 0, 1, 2, 3, undef, undef, undef, undef)
+  // We get SubvecExtractIndices = [0,8,12] which equalized becomes [0,4,8,12]
+  auto EqualizeExtractIndices = [=, &SubvecExtractIndices]() {
+    if (SubvecExtractIndices->size() < 2)
+      return *SubvecExtractIndices;
+    // Calculate the smallest difference between consecutive indices
+    unsigned MinDiff = Mask.size() - SubvecExtractIndices->back();
+    for (unsigned I = 1; I < SubvecExtractIndices->size(); ++I) {
+      unsigned Diff =
+          (*SubvecExtractIndices)[I] - (*SubvecExtractIndices)[I - 1];
+      MinDiff = std::min(MinDiff, Diff);
+    }
+    // Generate the new indices
+    SmallVector<unsigned> UsableSubvecExtractIndices;
+    unsigned StartIndex = (*SubvecExtractIndices)[0];
+    for (unsigned I = StartIndex; I < Mask.size(); I += MinDiff) {
+      UsableSubvecExtractIndices.push_back(I);
+    }
+    return UsableSubvecExtractIndices;
+  };
+
+  SmallVector<unsigned> EqualizedExtractIndices = EqualizeExtractIndices();
+
+  // Return the values in the mask for the given indices. For undef, return the
+  // expected value of the provided mask pattern.
+  auto getSubMaskValuesAtIndices = [&EqualizedExtractIndices, &Mask,
+                                    &SequentialMask]() {
+    unsigned NumSubVectors = EqualizedExtractIndices.size();
+    SmallVector<unsigned, 4> SubMask;
+    for (unsigned Idx : EqualizedExtractIndices) {
+      unsigned ExpectedMaskValue =
+          SequentialMask.getMaskValue(Idx % NumSubVectors);
+      SubMask.push_back(Mask[Idx] == -1 ? ExpectedMaskValue : Mask[Idx]);
+    }
+    return SubMask;
+  };
+
+  SmallVector<unsigned, 4> IndicesToExtract = getSubMaskValuesAtIndices();
+  unsigned NumSubVectors = IndicesToExtract.size();
+
+  // The combine is not any better than scalarization
+  if (NumSubVectors == NumDstElems)
+    return false;
+
+  // Subvectors cannot be extracted
+  if (!isPowerOfTwoOrZero(NumSubVectors)) {
+    return false;
+  }
+
+  unsigned SubVecNumElts = NumDstElems / NumSubVectors;
+  unsigned SubVecSize = SubVecNumElts * ElemSize;
+  // Check whether we can extract the subvector
+  LLT SubvecType = LLT::fixed_vector(SubVecNumElts, ElemSize);
+  const bool CanExtractSubvectors =
+      checkExtractSubvectorPrerequisites(TII, SubvecType, Src1Ty);
+
+  // FIXME: Enable once we have concat support of 64-bits or smaller.
+  if (SubVecSize <= 64)
+    return false;
+
+  MatchInfo = [=, &MRI, &TII](MachineIRBuilder &B) {
+    SmallVector<Register> ExtractedSubvectors;
+    for (unsigned Idx : IndicesToExtract) {
+      Register ExtractVec = Idx < NumSrc1Elems ? Src1Reg : Src2Reg;
+      unsigned ExtractIdx = Idx % NumSrc1Elems;
+      Register ExtractedSubVec = MRI.createGenericVirtualRegister(SubvecType);
+      if (CanExtractSubvectors) {
+        buildExtractSubvector(B, MRI, TII, ExtractedSubVec, ExtractVec,
+                              ExtractIdx);
+      } else {
+        unsigned UnmergeIdx = ExtractIdx / SubVecNumElts;
+        buildUnmergeVector(B, MRI, ExtractedSubVec, ExtractVec, NumSubVectors,
+                           UnmergeIdx);
+      }
+      ExtractedSubvectors.push_back(ExtractedSubVec);
+    }
+    B.buildConcatVectors({DstReg}, ExtractedSubvectors);
+  };
+
   return true;
 }
