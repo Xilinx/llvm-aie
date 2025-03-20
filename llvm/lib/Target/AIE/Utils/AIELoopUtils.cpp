@@ -4,13 +4,15 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 #include "AIELoopUtils.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/Transforms/Utils/LoopUtils.h"
+#include "llvm/Transforms/Utils/UnrollLoop.h"
+#include <optional>
 
 #define DEBUG_TYPE "aielooputils"
 
@@ -49,21 +51,10 @@ std::optional<bool> getPipelinerDisabled(const MachineBasicBlock &LoopBlock) {
   if (!LoopID) {
     return {};
   }
-  for (const MDOperand &MDO : llvm::drop_begin(LoopID->operands())) {
-    MDNode *MD = dyn_cast<MDNode>(MDO);
-    if (MD == nullptr) {
-      continue;
-    }
 
-    MDString *S = dyn_cast<MDString>(MD->getOperand(0));
-    if (S == nullptr) {
-      continue;
-    }
+  if (auto LoopMD = getLoopMetadata(LoopID, "llvm.loop.pipeline.disable"))
+    return true;
 
-    if (S->getString() == "llvm.loop.pipeline.disable") {
-      return true;
-    }
-  }
   return {};
 }
 
@@ -134,6 +125,53 @@ MachineBasicBlock *getLoopPredecessor(const MachineBasicBlock &EpilogueMBB) {
   assert((!LoopPred || (isSingleMBBLoop(LoopPred))) &&
          "Layout predecessor is not a loop");
   return LoopPred;
+}
+
+std::optional<const MDNode *> getLoopMetadata(const MDNode *LoopID,
+                                              const StringRef Name) {
+  // First operand should refer to the loop id itself.
+  assert(LoopID->getNumOperands() > 0 && "requires at least one operand");
+  assert(LoopID->getOperand(0) == LoopID && "invalid loop id");
+
+  for (const MDOperand &MDO : llvm::drop_begin(LoopID->operands())) {
+    const MDNode *MD = dyn_cast<MDNode>(MDO);
+    if (!MD)
+      continue;
+
+    MDString *S = dyn_cast<MDString>(MD->getOperand(0));
+    if (!S)
+      continue;
+
+    if (Name.equals(S->getString()))
+      return MD;
+  }
+  return std::nullopt;
+}
+
+// Returns true if the loop has an unroll(full) pragma.
+bool hasUnrollFullPragma(const MDNode *LoopID) {
+  return getLoopMetadata(LoopID, "llvm.loop.unroll.full").has_value();
+}
+
+// Returns true if the loop has an unroll(enable) pragma. This metadata is used
+// for both "#pragma unroll" and "#pragma clang loop unroll(enable)" directives.
+bool hasUnrollEnablePragma(const MDNode *LoopID) {
+  return getLoopMetadata(LoopID, "llvm.loop.unroll.enable").has_value();
+}
+
+// Returns true if the loop has an unroll x pragma.
+bool hasUnrollCountPragma(const MDNode *LoopID) {
+  return getLoopMetadata(LoopID, "llvm.loop.unroll.count").has_value();
+}
+
+bool hasUnrollPragma(const Loop *L) {
+
+  if (const MDNode *LoopID = L->getLoopID()) {
+    return hasUnrollFullPragma(LoopID) || hasUnrollEnablePragma(LoopID) ||
+           hasUnrollCountPragma(LoopID);
+  }
+
+  return false;
 }
 
 } // namespace llvm::AIELoopUtils
