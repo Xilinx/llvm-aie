@@ -83,6 +83,7 @@ add_llvm_target(AIECodeGen
    AIEBaseHardwareLoops.cpp
    AIEBaseISelLowering.cpp
    AIEBaseInstrInfo.cpp
+   AIEBaseRegisterInfo.cpp
    AIEBasePipelinerLoopInfo.cpp
    AIEBaseInstructionSelector.cpp
    AIEBaseTargetTransformInfo.cpp

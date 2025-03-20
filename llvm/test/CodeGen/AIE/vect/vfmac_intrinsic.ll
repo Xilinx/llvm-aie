@@ -4,8 +4,8 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-; RUN: llc -O2 -mtriple=aie --issue-limit=1 < %s | FileCheck %s
+; (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+; RUN: llc -O2 -mtriple=aie --issue-limit=1< %s | FileCheck %s
 
 @buf2 = external global [64 x float]
 @buf1 = external global [64 x float]
@@ -19,20 +19,21 @@ define void @_main() local_unnamed_addr {
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0:
 ; CHECK-NEXT:    mov.u20 p0, #buf1
-; CHECK-NEXT:    vlda wc0, [p0]
 ; CHECK-NEXT:    mov.u20 r12, #0
+; CHECK-NEXT:    vlda wc0, [p0]
 ; CHECK-NEXT:    mov r13, r12
-; CHECK-NEXT:    mov.u20 p0, #buf0
 ; CHECK-NEXT:    movt.s12 r13, #1024
-; CHECK-NEXT:    vlda wd0, [p0]
+; CHECK-NEXT:    mov.u20 p0, #buf0
 ; CHECK-NEXT:    vshl0.32 wr0, r13
 ; CHECK-NEXT:    mov r13, r12
-; CHECK-NEXT:    mov.u20 cl0, #274960
-; CHECK-NEXT:    mov cl1, r12
+; CHECK-NEXT:    vlda wd0, [p0]
 ; CHECK-NEXT:    movt.s12 r13, #1016
 ; CHECK-NEXT:    vshl0.32 wr0, r13
-; CHECK-NEXT:    movt.s12 cl0, #1893
+; CHECK-NEXT:    mov.u20 cl0, #274960
 ; CHECK-NEXT:    // kill: def $wr1 killed $ya killed $ya def $ya
+; CHECK-NEXT:    mov cl1, r12
+; CHECK-NEXT:    // kill: def $xb killed $xa killed $ya def $ya
+; CHECK-NEXT:    movt.s12 cl0, #1893
 ; CHECK-NEXT:    movt.s12 cl1, #9
 ; CHECK-NEXT:    mov cl2, r12
 ; CHECK-NEXT:    mov.u20 p0, #buf2
