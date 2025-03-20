@@ -2637,15 +2637,13 @@ bool llvm::matchShuffleToExtractInsertElt(MachineInstr &MI,
 
       auto ExceptionIdxReg = B.buildConstant(LLT::scalar(32), ExceptionIdx);
 
-      InsertSrc = (Exceptions.size() == 1 || ExceptionIdx == Exceptions.front())
-                      ? Src1Reg
-                      : InsertDst;
-      InsertDst = (Exceptions.size() == 1 || ExceptionIdx == Exceptions.back())
+      InsertDst = (ExceptionIdx == Exceptions.back())
                       ? DstReg
                       : MRI.createGenericVirtualRegister(Src1Ty);
 
       B.buildInsertVectorElement(InsertDst, InsertSrc, ExtrElt,
                                  ExceptionIdxReg);
+      InsertSrc = InsertDst;
     }
   };
 
