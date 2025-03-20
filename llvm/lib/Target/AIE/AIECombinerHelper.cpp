@@ -2588,6 +2588,19 @@ bool llvm::matchShuffleToExtractInsertElt(MachineInstr &MI,
   const unsigned NumSrcElems = Src1Ty.isVector() ? Src1Ty.getNumElements() : 1;
   const LLT ElemTy = MRI.getType(Src1Reg).getElementType();
 
+  unsigned MaxNumInsertions;
+  if (MI.getMF()->getTarget().getTargetTriple().isAIE2P())
+    // The scalarization of G_SHUFFLE_VECTOR in the legalizer is more beneficial
+    // if there are more exceptions than NumSrcElems / 2 as AIE2P's VINSERT
+    // instrutions require a move to a register used for the index unlike VPUSH.
+    MaxNumInsertions = (ShuffleMaxNumInsertions != 0) ? ShuffleMaxNumInsertions
+                                                      : NumSrcElems / 2;
+  else
+    llvm_unreachable(
+        "MaxNumInsertions unimplemented for target. Does the target's Insert "
+        "instruction take immediate indices or does it require a register for "
+        "the index?");
+
   if (Mask.size() != NumSrcElems)
     return false;
 
@@ -2607,24 +2620,11 @@ bool llvm::matchShuffleToExtractInsertElt(MachineInstr &MI,
   SmallVector<unsigned, 4> Exceptions = SequentialMaskValidity.MaskExceptions;
   assert(!Exceptions.empty());
 
-  unsigned MaxNumInsertions;
-  if (MI.getMF()->getTarget().getTargetTriple().isAIE2P())
-    // The scalarization of G_SHUFFLE_VECTOR in the legalizer is more beneficial
-    // if there are more exceptions than NumSrcElems / 2 as AIE2P's VINSERT
-    // instrutions require a move to a register used for the index unlike VPUSH.
-    MaxNumInsertions = (ShuffleMaxNumInsertions != 0) ? ShuffleMaxNumInsertions
-                                                      : NumSrcElems / 2;
-  else
-    llvm_unreachable(
-        "MaxNumInsertions unimplemented for target. Does the target's Insert "
-        "instruction take immediate indices or does it require a register for "
-        "the index?");
-
   if (Exceptions.size() >= MaxNumInsertions)
     return false;
 
   MatchInfo = [=, &MRI](MachineIRBuilder &B) {
-    Register InsertSrc;
+    Register InsertSrc = Src1Reg;
     Register InsertDst;
 
     for (const unsigned ExceptionIdx : Exceptions) {
