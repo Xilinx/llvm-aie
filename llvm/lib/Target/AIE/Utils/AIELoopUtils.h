@@ -53,6 +53,21 @@ bool isSingleMBBLoop(const MachineBasicBlock *MBB);
 /// Note: this function should be used only with single MBB loops.
 MachineBasicBlock *getLoopPredecessor(const MachineBasicBlock &EpilogueMBB);
 
+std::optional<const MDNode *> getLoopMetadata(const MDNode *LoopID,
+                                              const StringRef Name);
+
+// Returns true if the loop has an unroll(full) pragma.
+bool hasUnrollFullPragma(const MDNode *LoopID);
+
+// Returns true if the loop has an unroll(enable) pragma. This metadata is used
+// for both "#pragma unroll" and "#pragma clang loop unroll(enable)" directives.
+bool hasUnrollEnablePragma(const MDNode *LoopID);
+
+// Returns true if the loop has an unroll x pragma.
+bool hasUnrollCountPragma(const MDNode *LoopID);
+
+bool hasUnrollPragma(const Loop *L);
+
 } // namespace llvm::AIELoopUtils
 
 #endif

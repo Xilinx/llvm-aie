@@ -9,17 +9,31 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIE2PTargetTransformInfo.h"
+#include "Utils/AIELoopUtils.h"
 
 using namespace llvm;
+
+static cl::opt<bool>
+    UnrollOnlyLoopsWithPragma("aie2p-unroll-only-pragma-loops",
+                              cl::desc("Only unroll loops guarded by pragmas"),
+                              cl::init(true), cl::Hidden);
 
 #define DEBUG_TYPE "aie2ptti"
 
 void AIE2PTTIImpl::getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
                                            TTI::UnrollingPreferences &UP,
                                            OptimizationRemarkEmitter *ORE) {
-  UP.Partial = UP.Runtime = true;
+
   BaseT::getUnrollingPreferences(L, SE, UP, ORE);
   Common.adjustUnrollingPreferences(L, SE, UP, ORE);
+
+  // If we don't have unroll pragma, block unroll by zeroing the
+  // Threshold.
+  // We also disable partial because it can bypass the Threshold logic.
+  if (UnrollOnlyLoopsWithPragma && !AIELoopUtils::hasUnrollPragma(L)) {
+    UP.Threshold = 0;
+    UP.Partial = false;
+  }
 }
 
 bool AIE2PTTIImpl::isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
