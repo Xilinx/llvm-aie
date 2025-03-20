@@ -62,17 +62,6 @@ protected:
   int Amplitude = 1;
 };
 
-struct AIESingleDiffLaneBuildVectorMatchData {
-  /// Destination register of G_BUILD_VECTOR
-  Register DstVecReg;
-  /// The repeated register
-  Register SplatReg;
-  /// Register for the differing element
-  Register DifferingReg;
-  /// Lane index of the single differing element
-  unsigned DifferingIndex;
-};
-
 /// Look for any PtrAdd instruction that use the same base as \a MI that can be
 /// combined with it and stores it in \a MatchData
 /// \return true if an instruction is found
@@ -100,6 +89,9 @@ bool matchGlobalValOffset(MachineInstr &MI, MachineRegisterInfo &MRI,
 /// Combine G_SHUFFLE_VECTOR(G_BUILD_VECTOR (VAL, UNDEF, ...), mask<0,0,...>)
 /// idiom into G_AIE_BROADCAST
 bool matchBroadcastElement(MachineInstr &MI, MachineRegisterInfo &MRI,
+                           std::pair<Register, Register> &MatchInfo);
+bool applyBroadcastElement(MachineInstr &MI, MachineRegisterInfo &MRI,
+                           MachineIRBuilder &B,
                            std::pair<Register, Register> &MatchInfo);
 bool matchShuffleToBroadcast(MachineInstr &MI, MachineRegisterInfo &MRI,
                              const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
@@ -186,18 +178,8 @@ void applyExtractVecEltAndExt(MachineInstr &MI, MachineRegisterInfo &MRI,
                               MachineIRBuilder &B,
                               std::pair<MachineInstr *, bool> &MatchInfo);
 
-bool matchSplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
-                      std::pair<Register, Register> &MatchInfo);
-bool applySplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
-                      MachineIRBuilder &B,
-                      std::pair<Register, Register> &MatchInfo);
-
-bool matchSingleDiffLaneBuildVector(
-    MachineInstr &MI, MachineRegisterInfo &MRI,
-    AIESingleDiffLaneBuildVectorMatchData &MatchInfo);
-bool applySingleDiffLaneBuildVector(
-    MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B,
-    AIESingleDiffLaneBuildVectorMatchData &MatchInfo);
+bool matchBuildVectorPatterns(MachineInstr &MI, MachineRegisterInfo &MRI,
+                              BuildFnTy &MatchInfo);
 
 bool matchUnpadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                       const AIEBaseInstrInfo &TII);

@@ -34,20 +34,11 @@ def combine_extract_vector_elt_and_zsa_ext : GICombineRule<
   (apply [{ applyExtractVecEltAndExt(*${root}, MRI, B, ${matchinfo}); }])
 >;
 
-def combine_splat_vector_matchdata: GIDefMatchData<"std::pair<Register, Register>">;
-def combine_splat_vector : GICombineRule<
-  (defs root:$root, combine_splat_vector_matchdata:$matchinfo),
+def combine_build_vector : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
   (match (wip_match_opcode G_BUILD_VECTOR): $root,
-  [{ return matchSplatVector(*${root}, MRI, ${matchinfo}); }]),
-  (apply [{ applySplatVector(*${root}, MRI, B, ${matchinfo}); }])
->;
-
-def combine_single_diff_build_vector_matchdata: GIDefMatchData<"AIESingleDiffLaneBuildVectorMatchData">;
-def combine_single_diff_build_vector : GICombineRule<
-  (defs root:$root, combine_single_diff_build_vector_matchdata:$matchinfo),
-  (match (wip_match_opcode G_BUILD_VECTOR): $root,
-  [{ return matchSingleDiffLaneBuildVector(*${root}, MRI, ${matchinfo}); }]),
-  (apply [{ applySingleDiffLaneBuildVector(*${root}, MRI, B, ${matchinfo}); }])
+  [{ return matchBuildVectorPatterns(*${root}, MRI, ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])
 >;
 
 def combine_pad_vector_matchdata: GIDefMatchData<"Register">;
@@ -72,11 +63,12 @@ def combine_unpad_vector : GICombineRule<
   (apply [{ applyUnpadVector(*${root}, MRI, B); }])
 >;
 
+def combine_vector_broadcast_matchdata: GIDefMatchData<"std::pair<Register, Register>">;
 def combine_vector_broadcast : GICombineRule<
-  (defs root:$root, combine_splat_vector_matchdata:$matchinfo),
+  (defs root:$root, combine_vector_broadcast_matchdata:$matchinfo),
   (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
          [{ return matchBroadcastElement(*${root}, MRI, ${matchinfo}); }]),
-  (apply [{ applySplatVector(*${root}, MRI, B, ${matchinfo}); }])>;
+  (apply [{ applyBroadcastElement(*${root}, MRI, B, ${matchinfo}); }])>;
 
 def combine_vector_shuffle_broadcast : GICombineRule<
   (defs root:$root, build_fn_matchinfo:$matchinfo),
@@ -107,8 +99,7 @@ def AIE2PreLegalizerCombiner
                                                                  all_combines, combine_S20NarrowingOpt,
                                                                  combine_globalval_offset,
                                                                  combine_extract_vector_elt_and_zsa_ext,
-                                                                 combine_splat_vector, combine_concat_to_pad_vector, 
-                                                                 combine_single_diff_build_vector]> {
+                                                                 combine_build_vector, combine_concat_to_pad_vector]> {
   let CombineAllMethodName = "tryCombineAllImpl";
 }
 
@@ -119,11 +110,10 @@ def AIE2PPreLegalizerCombiner
                                                                  all_combines, combine_S20NarrowingOpt,
                                                                  combine_globalval_offset,
                                                                  combine_extract_vector_elt_and_zsa_ext,
-                                                                 combine_splat_vector, combine_vector_broadcast,
+                                                                 combine_build_vector, combine_vector_broadcast,
                                                                  combine_concat_to_pad_vector, 
                                                                  combine_vector_shuffle_vsel,
-                                                                 combine_vector_shuffle_broadcast,
-                                                                 combine_single_diff_build_vector]> {
+                                                                 combine_vector_shuffle_broadcast]> {
   let CombineAllMethodName = "tryCombineAllImpl";
 }
 
