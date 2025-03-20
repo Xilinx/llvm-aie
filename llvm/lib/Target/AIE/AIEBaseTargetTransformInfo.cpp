@@ -41,8 +41,11 @@ static cl::opt<bool>
                           cl::desc("Whether to consider outer loops for LSR"));
 
 static cl::opt<bool>
-    EnableAutoUnroll("aie-unroll-auto", cl::Hidden, cl::init(true),
-                     cl::desc("Whether to unroll loops without pragmas"));
+    EnablePartialUnroll("aie-unroll-partial", cl::Hidden, cl::init(true),
+                        cl::desc("Whether to partially unroll loops"));
+static cl::opt<bool> EnableRuntimeUnroll(
+    "aie-unroll-runtime", cl::Hidden, cl::init(false),
+    cl::desc("Whether to unroll loops with runtime checks"));
 static cl::opt<unsigned>
     MaxUnrollCount("aie-unroll-max-count", cl::Hidden, cl::init(4),
                    cl::desc("Maximum partial unroll count for loops"));
@@ -111,7 +114,8 @@ bool AIETTICommon::isAllowedInZOL(Instruction &I) {
 void AIETTICommon::adjustUnrollingPreferences(Loop *L, ScalarEvolution &SE,
                                               TTI::UnrollingPreferences &UP,
                                               OptimizationRemarkEmitter *ORE) {
-  UP.Partial &= UP.Runtime &= EnableAutoUnroll;
+  UP.Partial = EnablePartialUnroll;
+  UP.Runtime = EnableRuntimeUnroll;
   UP.MaxCount = MaxUnrollCount;
   UP.FullUnrollMaxCount = 32;
   UP.Threshold = MaxUnrollCost;
