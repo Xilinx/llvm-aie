@@ -49,7 +49,9 @@ public:
   MaskMatch(unsigned MaskHeight, unsigned MaskPeriod = 0, int MaskAmplitude = 1)
       : Period{MaskPeriod}, Height{MaskHeight}, Amplitude{MaskAmplitude} {}
 
-  ShuffleMaskValidity isValidMask(ArrayRef<int> Mask) const;
+  bool isValidMask(ArrayRef<int> Mask) const;
+  ShuffleMaskValidity getShuffleMaskValidity(ArrayRef<int> Mask) const;
+
   unsigned getHeight() const { return Height; }
 
   static bool isMaskWithAllUndefs(ArrayRef<int> Mask);
