@@ -41,7 +41,7 @@ bool AIEBaseRegisterInfo::shouldCoalesce(
   const unsigned BasicVectorSize = TII->getBasicVecRegSize();
   // Should not coalesce if copying from bigger source.
   if (SrcSize < DstSize &&
-      (SrcSize > BasicVectorSize || DstSize > BasicVectorSize)) {
+      (SrcSize >= BasicVectorSize || DstSize >= BasicVectorSize)) {
     LiveInterval &LI = LIS.getInterval(MI->getOperand(1).getReg());
     const MachineInstr *FirstMI =
         LI.empty() ? nullptr : LIS.getInstructionFromIndex(LI.beginIndex());

@@ -88,6 +88,7 @@ public:
   unsigned getMvSclOpcode() const override;
 
   bool canHoistCheapInst(const MachineInstr &MI) const override;
+  unsigned getBasicVecRegSize() const override { return 256; };
 
 protected:
   SmallVector<AIEPseudoExpandInfo, 4>
