@@ -321,6 +321,91 @@ bool PostPipeliner::computeBackward() {
   return Changed;
 }
 
+// This is a direct access cache. The outer optional says it's not present.
+// the inner says it's not a circuit.
+// Note that the height we compute is specific for a particular end node, so
+// it would be a bit bulky to save everything in NodeInfo.
+using HCache = std::vector<std::optional<std::optional<int>>>;
+
+namespace {
+std::optional<int> computeHeight(HCache &Heights, SUnit *Start, SUnit *End) {
+  if (Start == End) {
+    // We've reached our target, and we add nothing to the height.
+    // We can't conclude this is the longest path from start to end,
+    // but we will visit all paths.
+    return 0;
+  }
+  if (Start->NodeNum > End->NodeNum) {
+    // We are topologically ordered, so any forward edge to End will start
+    // from an earlier one. We can prune, knowing we will not find a circuit.
+    return {};
+  }
+  // We memoize the result, which prevents searching path suffixes
+  // multiple times.
+  auto Cached = Heights[Start->NodeNum];
+  if (Cached) {
+    return *Cached;
+  }
+  std::optional<int> Height;
+  for (auto &Dep : Start->Succs) {
+    SUnit *Dst = Dep.getSUnit();
+    auto SuccHeight = computeHeight(Heights, Dst, End);
+    if (SuccHeight) {
+      int NewHeight = *SuccHeight + Dep.getSignedLatency();
+      if (Height) {
+        Height = std::max(NewHeight, *Height);
+      } else {
+        Height = NewHeight;
+      }
+    }
+    // else not a cycle, so don't count
+  }
+  // We have definitely evaluated Height, even if it is none_opt
+  Heights[Start->NodeNum] = Height;
+  DEBUG_FULL(dbgs() << " Circuit height(" << Start->NodeNum << "->"
+                    << End->NodeNum << ")=" << Height << "\n");
+  return Height;
+}
+} // namespace
+
+// We compute the Minimum Initiation Interval given by recurrences (or
+// circuits) in the dependence graph.
+// A recurrence is identified by a backedge for which there is a path
+// between Dst and Src. Backedges are defined by edges between the
+// first and the second iteration.
+// The length of each circuit is computed by a depth-first traversal
+// starting from Dst, trying to find Src. Revisiting paths is prevented by
+// caching the height to Src.
+
+void PostPipeliner::computeRecMII() {
+  for (int K = 0; K < NInstr; K++) {
+    SUnit &Src = DAG->SUnits[K];
+    for (auto &Dep : Src.Succs) {
+      SUnit *Dst = Dep.getSUnit();
+      if (Dst->NodeNum >= unsigned(NInstr)) {
+        NodeInfo Me = Info[K];
+        int SNum = Dst->NodeNum - NInstr;
+        if (Me.Ancestors.count(SNum)) {
+          // The successor is represented by one of
+          // my ancestors. That means we have a circuit,
+          // which may be the longest one. We find the longest path between
+          // that ancestor and this node, adding the latency of the
+          // backedge.
+          HCache Heights(NInstr);
+          auto Height = computeHeight(Heights, &DAG->SUnits[SNum], &Src);
+          assert(Height);
+
+          int Circuit = *Height + Dep.getSignedLatency();
+          RecMII = std::max(Circuit, RecMII);
+          LLVM_DEBUG(dbgs() << "Backedge " << K << " -> " << SNum
+                            << " circuit=" << Circuit << "\n");
+        }
+      }
+    }
+  }
+  LLVM_DEBUG(dbgs() << "RecMII=" << RecMII << "\n");
+}
+
 bool PostPipeliner::computeLoopCarriedParameters() {
 
   // Initialize slot counts.
@@ -337,6 +422,11 @@ bool PostPipeliner::computeLoopCarriedParameters() {
   while (computeBackward()) {
     /* EMPTY */;
   }
+
+  // Compute the Recurrence Minimum Initiation Interval. The current code
+  // structure makes it difficult to use RecMII as the starting II for the
+  // main pipeliner loop, but it still can be used to reject very early on.
+  computeRecMII();
 
   // Adjust Earliest and Latest with resource requirements.
   // FIXME: We do not account for negative latencies here. This can lead to
@@ -918,8 +1008,21 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval,
   LLVM_DEBUG(dumpGraph(Info, DAG));
 
   computeLoopCarriedParameters();
+  if (II < RecMII) {
+    More.emit([&]() {
+      return MachineOptimizationRemarkMissed("postpipeliner", "schedule",
+                                             DbgLoc, BB)
+             << "Longest circuit doesn't fit II.";
+    });
+    return false;
+  }
   LLVM_DEBUG(dumpIntervals(Info, MinLength, II));
   if (!tryHeuristics()) {
+    More.emit([&]() {
+      return MachineOptimizationRemarkMissed("postpipeliner", "schedule",
+                                             DbgLoc, BB)
+             << "No schedule found.";
+    });
     LLVM_DEBUG(dbgs() << "PostPipeliner: No schedule found\n");
     return false;
   }
