@@ -114,6 +114,12 @@ def combine_vector_shuffle_to_extract_insert_elt : GICombineRule<
          [{ return matchShuffleToExtractInsertElt(*${root}, MRI, ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
 
+def combine_vector_shuffle_bcst_to_copy : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
+         [{ return matchShuffleBcstToCopy(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
+
 def AIE2PreLegalizerCombiner
     : GICombiner<"AIE2PreLegalizerCombinerImpl", [ combine_unpad_vector, combine_pad_vector,
                                                                  all_combines, combine_S20NarrowingOpt,
@@ -131,7 +137,9 @@ def AIE2PPreLegalizerCombiner
                                                                  all_combines, combine_S20NarrowingOpt,
                                                                  combine_globalval_offset,
                                                                  combine_extract_vector_elt_and_zsa_ext,
-                                                                 combine_splat_vector, combine_vector_broadcast,
+                                                                 combine_splat_vector, 
+                                                                 combine_vector_shuffle_bcst_to_copy,
+                                                                 combine_vector_broadcast,
                                                                  combine_concat_to_pad_vector, 
                                                                  combine_vector_shuffle_vsel,
                                                                  combine_vector_shuffle_broadcast,
