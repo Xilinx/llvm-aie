@@ -2864,7 +2864,11 @@ bool llvm::matchShuffleBcstToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
                                   BuildFnTy &MatchInfo) {
   assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR);
 
-  const auto [DstReg, DstTy, Src1Reg, Src1Ty] = MI.getFirst2RegLLTs();
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register Src1Reg = MI.getOperand(1).getReg();
+  const LLT DstTy = MRI.getType(DstReg);
+  const LLT Src1Ty = MRI.getType(Src1Reg);
+
   if (DstTy != Src1Ty)
     return false;
 
