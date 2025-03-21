@@ -58,6 +58,8 @@ foreach(target ${LLVM_BUILTIN_TARGETS})
   set(RUNTIMES_${target}_LIBCXX_INCLUDE_BENCHMARKS OFF CACHE STRING "")
   set(RUNTIMES_${target}_LIBCXX_INCLUDE_TESTS OFF CACHE STRING "")
   set(RUNTIMES_${target}_LIBCXX_EXTRA_SITE_DEFINES "_LIBCPP_REMOVE_TRANSITIVE_INCLUDES" CACHE STRING "")
+  # disable inclusion of vitis headers for compiler checks
+  set(RUNTIMES_${target}_CMAKE_REQUIRED_FLAGS "-mno-vitis-headers" CACHE STRING "")
 
   set(RUNTIMES_${target}_LIBC_ENABLE_USE_BY_CLANG ON CACHE STRING "")
   # LIBC includes C++ sources which by default trigger inclusion of standard libc++ headers
