@@ -179,6 +179,9 @@ class PostPipeliner {
   ScheduleInfo Info;
   int MinLength;
 
+  /// The length of the longest circuit in the graph
+  int RecMII = 0;
+
   // The scoreboard and its depth
   ResourceScoreboard<FuncUnitWrapper> Scoreboard;
   int Depth;
@@ -220,6 +223,7 @@ class PostPipeliner {
   void biasForLocalResourceContention(NodeInfo &NI, const SUnit &SU);
   void computeForward();
   bool computeBackward();
+  void computeRecMII();
 
   // Given Earliest and Latest of each node in the first iteration,
   // compute the smallest length of the linear schedule that is feasible.
