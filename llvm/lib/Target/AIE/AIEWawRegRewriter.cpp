@@ -13,7 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AIEBaseInstrInfo.h"
+#include "AIE.h"
 #include "AIEBaseRegisterInfo.h"
 #include "Utils/AIELoopUtils.h"
 
@@ -35,6 +35,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include <llvm/CodeGen/MachineBasicBlock.h>
+#include <map>
 
 using namespace llvm;
 
@@ -53,7 +54,15 @@ static cl::opt<bool> PreAlloc(
 
 namespace {
 
+// Defines the next register to use in reallocation.
 using RoundRobin = std::list<MCPhysReg>;
+
+// Record the candidates and their original allocation.
+using OriginalAllocation =
+    std::vector<std::pair<const MachineOperand *, Register>>;
+
+// Record success for a whole register class.
+using RegClassSuccess = std::map<const TargetRegisterClass *, bool>;
 
 ///
 /// This pass rewrites physical register assignments in critical parts of the
@@ -99,6 +108,25 @@ private:
   const TargetInstrInfo *TII = nullptr;
 
   bool renameMBBPhysRegs(const MachineBasicBlock *MBB);
+
+  /// Pre-allocate all virtual registers in Candidates. The sole purpose of
+  /// this is to prime the LRURegisters, so that the end of the loop is
+  /// considered to be near to the start. No actual allocations are made.
+  /// The ultimate allocation is expected to be different from this initial
+  /// run -- that's the whole purpose.
+  void preAllocate(OriginalAllocation &Candidates, RoundRobin &LRURegisters);
+
+  /// Reallocate all virtual registers in Candidates.
+  /// Return true if successful for all classes.
+  bool reAllocate(OriginalAllocation &Candidates, RoundRobin &LRURegisters,
+                  RegClassSuccess &RegClasses);
+
+  /// If reallocation fails for a particular register class, we can't trust the
+  /// partial allocation for that class to be correct. Therefore, we have to
+  /// revert all reallocations that are in a register class that overlaps with
+  /// the failed one.
+  void revertAllocation(OriginalAllocation &Candidates,
+                        RegClassSuccess &RegClasses);
 
   /// Get all the defined physical registers that the MachineBasicBlock already
   /// uses. These physical registers should not be used for replacement
@@ -218,6 +246,75 @@ AIEWawRegRewriter::getVRegWithCopies(const MachineBasicBlock &MBB) const {
   return VRegWithCopies;
 }
 
+void AIEWawRegRewriter::preAllocate(OriginalAllocation &Candidates,
+                                    RoundRobin &LRURegisters) {
+  // This is tracking any used register unit across the entire loop.
+  BitVector UsedUnits(TRI->getNumRegUnits());
+  for (auto &[MO, Org] : Candidates) {
+    auto VReg = MO->getReg();
+    assert(VReg.isVirtual());
+    (void)getReplacementPhysReg(VReg, LRURegisters, UsedUnits);
+  }
+}
+
+bool AIEWawRegRewriter::reAllocate(OriginalAllocation &Candidates,
+                                   RoundRobin &Registers,
+                                   RegClassSuccess &RegClasses) {
+  bool Success = true;
+  // This is tracking any used register unit across the entire loop.
+  BitVector UsedUnits(TRI->getNumRegUnits());
+  for (auto &[MO, Org] : Candidates) {
+    auto VReg = MO->getReg();
+    if (!replaceReg(VReg, Registers, UsedUnits)) {
+      LLVM_DEBUG(dbgs() << "Renaming " << printReg(VReg, TRI, 0, MRI)
+                        << " failed\n");
+      auto *RC = MRI->getRegClass(VReg);
+      Success = false;
+      RegClasses[RC] = false;
+    }
+  }
+  return Success;
+}
+
+void AIEWawRegRewriter::revertAllocation(OriginalAllocation &Candidates,
+                                         RegClassSuccess &RegClasses) {
+
+  auto Overlaps = [this](MCRegister Reg, const TargetRegisterClass *RC) {
+    return any_of(RC->getRegisters(), [this, Reg](MCRegister RCReg) {
+      return TRI->regsOverlap(Reg, RCReg);
+    });
+  };
+
+  // We revert all allocations whose original have an overlap
+  // with a failed register class.
+  // The partial allocation may conflict with the original one in ugly ways,
+  // which means we may not be able to reassign in arbitrary order.
+  // To be safe, reset all allocations first.
+  for (auto [RC, Success] : RegClasses) {
+    LLVM_DEBUG(dbgs() << "RC=" << TRI->getRegClassName(RC)
+                      << (Success ? " Succeeded\n" : " Failed\n"));
+    if (Success) {
+      continue;
+    }
+    for (auto &[MO, Org] : Candidates) {
+      if (Overlaps(Org, RC)) {
+        auto VReg = MO->getReg();
+        if (VRM->hasPhys(VReg)) {
+          unassignReg(VReg);
+        }
+      }
+    }
+    for (auto &[MO, Org] : Candidates) {
+      if (Overlaps(Org, RC)) {
+        auto VReg = MO->getReg();
+        LLVM_DEBUG(dbgs() << "Reverting " << printReg(VReg, TRI) << " to "
+                          << printReg(Org, TRI) << "\n");
+        assignReg(VReg, Org);
+      }
+    }
+  }
+}
+
 bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   LLVM_DEBUG(dbgs() << "WAW Reg Renaming BasicBlock "; MBB->dump();
              dbgs() << "\n");
@@ -232,9 +329,6 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   IndexedMap<const MachineInstr *, VirtReg2IndexFunctor> LastVRegDef =
       getLastVRegDef(*MBB);
 
-  // Record the candidates and their original allocation
-  using OriginalAllocation =
-      std::vector<std::pair<const MachineOperand *, Register>>;
   OriginalAllocation Candidates;
 
   for (const MachineInstr &MI : *MBB) {
@@ -303,86 +397,9 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
     }
   }
 
-  // Pre-allocate all virtual registers in Candidates. The sole purpose of
-  // this is to prime the LRURegisters, so that the end of the loop is
-  // considered to be near to the start. No actual allocations are made.
-  // The ultimate allocation is expected to be different from this initial
-  // run -- that's the whole purpose.
-  auto PreAllocate = [&](OriginalAllocation &Candidates,
-                         RoundRobin &LRURegisters) {
-    // This is tracking any used register unit across the entire loop.
-    BitVector UsedUnits(TRI->getNumRegUnits());
-    for (auto &[MO, Org] : Candidates) {
-      auto VReg = MO->getReg();
-      assert(VReg.isVirtual());
-      (void)getReplacementPhysReg(VReg, LRURegisters, UsedUnits);
-    }
-  };
-
-  // Reallocate all virtual registers in Candidates.
-  // Return true if successful.
-  auto ReAllocate = [&](OriginalAllocation &Candidates, RoundRobin &Registers) {
-    bool AnyFails = false;
-    // This is tracking any used register unit across the entire loop.
-    BitVector UsedUnits(TRI->getNumRegUnits());
-    for (auto &[MO, Org] : Candidates) {
-      auto VReg = MO->getReg();
-      if (!replaceReg(VReg, Registers, UsedUnits)) {
-        LLVM_DEBUG(dbgs() << "Renaming " << printReg(VReg, TRI, 0, MRI)
-                          << " failed\n");
-        auto *RC = MRI->getRegClass(VReg);
-        AnyFails = true;
-        RegClasses[RC] = false;
-      }
-    }
-    return !AnyFails;
-  };
-
-  auto Overlaps = [this](MCRegister Reg, const TargetRegisterClass *RC) {
-    for (auto RCReg : RC->getRegisters()) {
-      if (TRI->regsOverlap(Reg, RCReg)) {
-        return true;
-      }
-    }
-    return false;
-  };
-
-  // Reapply the original allocation to all Candidates involved in failed
-  // register classes.
-  auto RevertAllocation = [&](OriginalAllocation &Candidates) {
-    // We revert all allocations whose original have an overlap
-    // with a failed register class.
-    // The partial allocation may conflict with the original one in ugly ways,
-    // which means we may not be able to reassign in arbitrary order
-    // To be safe, reset all allocations first.
-    for (auto [RC, Success] : RegClasses) {
-      LLVM_DEBUG(dbgs() << "RC=" << TRI->getRegClassName(RC)
-                        << (Success ? " Succeeded\n" : " Failed\n"));
-      if (Success) {
-        continue;
-      }
-      for (auto &[MO, Org] : Candidates) {
-        if (Overlaps(Org, RC)) {
-          auto VReg = MO->getReg();
-          if (VRM->hasPhys(VReg)) {
-            unassignReg(VReg);
-          }
-        }
-      }
-      for (auto &[MO, Org] : Candidates) {
-        if (Overlaps(Org, RC)) {
-          auto VReg = MO->getReg();
-          LLVM_DEBUG(dbgs() << "Reverting " << printReg(VReg, TRI) << " to "
-                            << printReg(Org, TRI) << "\n");
-          assignReg(VReg, Org);
-        }
-      }
-    }
-  };
-
   // Least-Recently-Used list of physical registers for assignments to VRegs.
   // Physical registers that have recently been used are moved to the back.
-  std::list<MCPhysReg> LRURegisters;
+  RoundRobin LRURegisters;
 
   // For each reg class, allocate the candidates in round-robin fashion.
   // If we fail, we fall back to the original allocation
@@ -393,7 +410,6 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
     ExcludedPhysRegs[*CSR] = true;
 
   for (const auto [RC, Success] : RegClasses) {
-
     LLVM_DEBUG(dbgs() << "Allowed registers in RC=" << TRI->getRegClassName(RC)
                       << ":");
     for (MCPhysReg PhysReg : RC->getRegisters()) {
@@ -408,10 +424,10 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
 
   // Prime the LRURegisters, so that the allocation is loop-aware.
   if (PreAlloc) {
-    PreAllocate(Candidates, LRURegisters);
+    preAllocate(Candidates, LRURegisters);
   }
-  if (!ReAllocate(Candidates, LRURegisters)) {
-    RevertAllocation(Candidates);
+  if (!reAllocate(Candidates, LRURegisters, RegClasses)) {
+    revertAllocation(Candidates, RegClasses);
     return false;
   }
 
