@@ -40,6 +40,25 @@ entry:
   ret void
 }
 
+define void @test_symmetric_buildvector() {
+; CHECK-LABEL: test_symmetric_buildvector:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    mova r0, #111; nopb ; nopxm ; nops
+; CHECK-NEXT:    mova r1, #222
+; CHECK-NEXT:    mova p0, #0
+; CHECK-NEXT:    vbcst.32 x0, r0
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    vbcst.32 x2, r1 // Delay Slot 5
+; CHECK-NEXT:    vst wl0, [p0, #0] // Delay Slot 4
+; CHECK-NEXT:    mova p0, #32 // Delay Slot 3
+; CHECK-NEXT:    vst wl2, [p0, #0] // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  store <16 x i32> <i32 111, i32 111, i32 111, i32 111, i32 111, i32 111, i32 111, i32 111, i32 222, i32 222, i32 222, i32 222, i32 222, i32 222, i32 222, i32 222>, ptr addrspace(6) null, align 32
+  ret void
+}
+
 define void @test_multi_diff_lane_buildvector() {
 ; CHECK-LABEL: test_multi_diff_lane_buildvector:
 ; CHECK:         .p2align 4
