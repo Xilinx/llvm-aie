@@ -215,6 +215,10 @@ bool applySingleDiffLaneBuildVector(
     MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B,
     AIESingleDiffLaneBuildVectorMatchData &MatchInfo);
 
+bool matchSymmetricBuildVector(MachineInstr &MI, MachineRegisterInfo &MRI,
+                               GISelChangeObserver &Observer,
+                               BuildFnTy &MatchInfo);
+
 bool matchUnpadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                       const AIEBaseInstrInfo &TII);
 void applyUnpadVector(MachineInstr &MI, MachineRegisterInfo &MRI,

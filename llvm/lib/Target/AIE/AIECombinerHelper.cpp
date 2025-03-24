@@ -17,6 +17,7 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Analysis/VectorUtils.h"
 #include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
+#include "llvm/CodeGen/GlobalISel/LegalizerHelper.h"
 #include "llvm/CodeGen/GlobalISel/Utils.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -1453,6 +1454,72 @@ bool llvm::applySingleDiffLaneBuildVector(
   B.buildInsertVectorElement(DstVecReg, BcstDstReg, MatchInfo.DifferingReg,
                              IdxReg);
   MI.eraseFromParent();
+  return true;
+}
+
+// Match something like:
+// %0:_(<32 x s16>) = G_BUILD_VECTOR %1:_(s16), ... x16, %2:_(s16), ... x16
+//
+// To turn it into
+// %3:_(<16 x s16>) = G_BUILD_VECTOR %1:_(s16), ... x16
+// %4:_(<16 x s16>) = G_BUILD_VECTOR %2:_(s16), ... x16
+// %0:_(<32 x s16>) = G_CONCAT_VECTORS %3:_(<16 x s16>), %4:_(<16 x s16>)
+// These sub-G_BUILD_VECTOR instructions may later be combined into broadcast
+// instructions by combine_splat_vector.
+bool llvm::matchSymmetricBuildVector(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                     GISelChangeObserver &Observer,
+                                     BuildFnTy &MatchInfo) {
+
+  assert(MI.getOpcode() == TargetOpcode::G_BUILD_VECTOR &&
+         "Expected a G_BUILD_VECTOR");
+  const Register DstVecReg = MI.getOperand(0).getReg();
+  const LLT DstVecTy = MRI.getType(DstVecReg);
+  const unsigned DstVecSize = DstVecTy.getSizeInBits();
+
+  switch (DstVecSize) {
+  case 256:
+  case 512:
+  case 1024:
+  case 2048:
+    break;
+  default:
+    // unimplemented
+    return false;
+  }
+
+  auto getSrcOperand = [&](unsigned I) { return MI.getOperand(I + 1); };
+
+  const unsigned NumElts = MI.getNumOperands() - 1;
+  const unsigned HalfNumElts = NumElts / 2;
+  const MachineOperand FirstOp = getSrcOperand(0);
+  const MachineOperand SecondOp = getSrcOperand(HalfNumElts);
+
+  // Ensures that each operand in the first half matches FirstOp, and each
+  // operand in the second half matches SecondOp.
+  for (unsigned i = 0; i < HalfNumElts; i++) {
+    if (!getSrcOperand(i).isIdenticalTo(FirstOp)) {
+      return false;
+    }
+    if (!getSrcOperand(HalfNumElts + i).isIdenticalTo(SecondOp)) {
+      return false;
+    }
+  }
+
+  // If both halves are the same register, it's effectively a splat, and the
+  // splat vector combine already handles that case.
+  if (FirstOp.isIdenticalTo(SecondOp))
+    return false;
+
+  MatchInfo = [&MI, &Observer, &MRI, DstVecTy](MachineIRBuilder &B) {
+    B.setInstrAndDebugLoc(MI);
+    LegalizerHelper Helper(B.getMF(), Observer, B);
+    // Splits the G_BUILD_VECTOR into two half-sized G_BUILD_VECTOR operations
+    // and then emits a G_CONCAT_VECTORS to combine them into final vector.
+    Helper.fewerElementsVector(
+        MI, 0,
+        DstVecTy.changeElementCount(
+            DstVecTy.getElementCount().divideCoefficientBy(2)));
+  };
   return true;
 }
 
