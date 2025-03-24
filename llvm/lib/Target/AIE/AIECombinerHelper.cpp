@@ -2747,6 +2747,9 @@ bool llvm::matchShuffleToConcatExtractedSubvectors(MachineInstr &MI,
       CurrentMask = SubMask;
       CurrentHeight = *MaskMatch::getHeight(CurrentMask, /*Period*/ 0);
 
+      if (!isPowerOfTwoOrZero((CurrentHeight) % NumSrc1Elems))
+        return std::nullopt;
+
       MaskMatch SequentialMask{/*Height*/ CurrentHeight};
       // Check the sequential validity of the new Submask
       ShuffleMaskValidity SequentialMaskValidity =
@@ -2832,6 +2835,16 @@ bool llvm::matchShuffleToConcatExtractedSubvectors(MachineInstr &MI,
   if (SubVecSize <= 64)
     return false;
 
+  // Do not combine if any of the subvectors is not extractable with the
+  // determined NumSubVectors.
+  // FIXME: Dynamically adjust the NumSubVecs and thus the
+  // SubVecNumElts to have all subvectors extractable.
+  if (!all_of(IndicesToExtract, [=](const unsigned ExtractIdx) {
+        return !(ExtractIdx % SubVecNumElts);
+      })) {
+    return false;
+  }
+
   MatchInfo = [=, &MRI, &TII](MachineIRBuilder &B) {
     SmallVector<Register> ExtractedSubvectors;
     for (unsigned Idx : IndicesToExtract) {
@@ -2843,6 +2856,7 @@ bool llvm::matchShuffleToConcatExtractedSubvectors(MachineInstr &MI,
                               ExtractIdx);
       } else {
         unsigned UnmergeIdx = ExtractIdx / SubVecNumElts;
+        assert(!(ExtractIdx % SubVecNumElts));
         buildUnmergeVector(B, MRI, ExtractedSubVec, ExtractVec, NumSubVectors,
                            UnmergeIdx);
       }
