@@ -45,6 +45,7 @@ public:
   unsigned getPseudoMoveOpcode() const override;
   unsigned getConstantMovOpcode(MachineRegisterInfo &MRI, unsigned int Reg,
                                 APInt &Val) const override;
+  unsigned getScalarMovOpcode(Register DstReg, Register SrcReg) const override;
   unsigned getMvScl2MS(unsigned ConstTLastVal) const override;
   unsigned getMvNBScl2MS(unsigned ConstTLastVal) const override;
   unsigned getMvScl2MSTlastRegOpcode() const override;

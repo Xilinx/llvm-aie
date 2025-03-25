@@ -629,9 +629,9 @@ define dso_local noundef <32 x bfloat> @_Z13test_upd_elemDv32_u6__bf16iy(<32 x b
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
-; CHECK-NEXT:    mov r4, r1 // Delay Slot 5
-; CHECK-NEXT:    mov r29, r0 // Delay Slot 4
-; CHECK-NEXT:    mov r5, r2 // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    mov r4, r1 // Delay Slot 4
+; CHECK-NEXT:    or r29, r0, r0; mov r5, r2 // Delay Slot 3
 ; CHECK-NEXT:    vinsert.64 x0, x2, r29, r5:r4 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -729,8 +729,8 @@ define dso_local noundef <2 x float> @_Z16test_ext_v2floatDv16_fii(<16 x float> 
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r10, r0 // Delay Slot 2
-; CHECK-NEXT:    mov r1, r8 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    or r10, r0, r0; mov r1, r8 // Delay Slot 1
 ; CHECK-NEXT:    lda lr, [sp, #-52]; nopx // 4-byte Folded Reload
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -740,8 +740,8 @@ define dso_local noundef <2 x float> @_Z16test_ext_v2floatDv16_fii(<16 x float> 
 ; CHECK-NEXT:    lda r11, [sp, #-64] // 4-byte Folded Reload
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mov r11, r0 // Delay Slot 4
-; CHECK-NEXT:    mov r0, r10 // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    or r11, r0, r0; mov r0, r10 // Delay Slot 3
 ; CHECK-NEXT:    paddxm [sp], #-64 // Delay Slot 2
 ; CHECK-NEXT:    mov r1, r11 // Delay Slot 1
 entry:
@@ -803,8 +803,8 @@ define dso_local noundef <2 x float> @_Z20test_extract_v2floatDv16_fii(<16 x flo
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r10, r0 // Delay Slot 2
-; CHECK-NEXT:    mov r1, r8 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    or r10, r0, r0; mov r1, r8 // Delay Slot 1
 ; CHECK-NEXT:    lda lr, [sp, #-52]; nopx // 4-byte Folded Reload
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -814,8 +814,8 @@ define dso_local noundef <2 x float> @_Z20test_extract_v2floatDv16_fii(<16 x flo
 ; CHECK-NEXT:    lda r11, [sp, #-64] // 4-byte Folded Reload
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mov r11, r0 // Delay Slot 4
-; CHECK-NEXT:    mov r0, r10 // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    or r11, r0, r0; mov r0, r10 // Delay Slot 3
 ; CHECK-NEXT:    paddxm [sp], #-64 // Delay Slot 2
 ; CHECK-NEXT:    mov r1, r11 // Delay Slot 1
 entry:
@@ -846,8 +846,8 @@ define dso_local noundef <2 x float> @_Z20test_extract_v2floatDv16_fi(<16 x floa
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r10, r0 // Delay Slot 2
-; CHECK-NEXT:    mov r1, r8 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    or r10, r0, r0; mov r1, r8 // Delay Slot 1
 ; CHECK-NEXT:    lda lr, [sp, #-52]; nopx // 4-byte Folded Reload
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -857,8 +857,8 @@ define dso_local noundef <2 x float> @_Z20test_extract_v2floatDv16_fi(<16 x floa
 ; CHECK-NEXT:    lda r11, [sp, #-64] // 4-byte Folded Reload
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mov r11, r0 // Delay Slot 4
-; CHECK-NEXT:    mov r0, r10 // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    or r11, r0, r0; mov r0, r10 // Delay Slot 3
 ; CHECK-NEXT:    paddxm [sp], #-64 // Delay Slot 2
 ; CHECK-NEXT:    mov r1, r11 // Delay Slot 1
 entry:

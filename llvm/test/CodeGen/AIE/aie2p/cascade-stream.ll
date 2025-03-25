@@ -150,8 +150,8 @@ define dso_local inreg noundef <32 x i32> @_Z28test_get_scd_expand_v32acc32ii(i3
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    vmov dm0, scd, r31; nopb ; nopxm
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    mov r31, r1 // Delay Slot 5
-; CHECK-NEXT:    mov crscden, r0 // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    or r31, r1, r1; mov crscden, r0 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    mov crscden, #1 // Delay Slot 1
@@ -167,8 +167,8 @@ define dso_local inreg noundef <64 x i32> @_Z28test_get_scd_expand_v64acc32ii(i3
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    vmov dm0, scd, r31; nopb ; nopxm
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    mov r31, r1 // Delay Slot 5
-; CHECK-NEXT:    mov crscden, r0 // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    or r31, r1, r1; mov crscden, r0 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    mov crscden, #1 // Delay Slot 1
