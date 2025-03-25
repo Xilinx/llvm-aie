@@ -14,11 +14,11 @@ define dso_local noundef <64 x i8> @insert_element_64(<8 x i64> noundef %v, i32 
 ; CHECK-NEXT:    vlda bmll0, [sp, #-64]; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopx
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mov r4, r1
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    mov r29, r0 // Delay Slot 5
-; CHECK-NEXT:    mov r5, r2 // Delay Slot 4
-; CHECK-NEXT:    vmov x0, bmll0 // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    or r4, r1, r1; mov r29, r0 // Delay Slot 4
+; CHECK-NEXT:    or r5, r2, r2; vmov x0, bmll0 // Delay Slot 3
 ; CHECK-NEXT:    vinsert.64 x0, x0, r29, r5:r4 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:

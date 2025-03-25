@@ -165,11 +165,11 @@ body: |
     ; CHECK: $p1 = MOV_scalar_pseudo $p0
     ; CHECK-NEXT: $lfl1 = VMOV_alu_mv_mv_x $lfl0
     ; CHECK-NEXT: $lfh1 = VMOV_alu_mv_mv_x $lfh0
-    ; CHECK-NEXT: $r25 = MOV_alu_mv_mv_mv_scl $r24
+    ; CHECK-NEXT: $r25 = MOV_OR_pseudo $r24
     ; CHECK-NEXT: $p0 = MOV_scalar_pseudo $p1
     ; CHECK-NEXT: $lfl0 = VMOV_alu_mv_mv_x $lfl1
     ; CHECK-NEXT: $lfh0 = VMOV_alu_mv_mv_x $lfh1
-    ; CHECK-NEXT: $r24 = MOV_alu_mv_mv_mv_scl $r25
+    ; CHECK-NEXT: $r24 = MOV_OR_pseudo $r25
   $plfr1 = COPY $plfr0
   $plfr0 = COPY $plfr1
 ...

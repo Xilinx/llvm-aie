@@ -62,6 +62,13 @@ let Itinerary = II_MOVS, hasSideEffects = false, mayLoad = false, mayStore = fal
       "MOV_scalar_pseudo", "$dst, $src", [MOV_alu_mv_mv_mv_scl, MOVS] >;
 }
 
+// We use OR to mimic MOV behavior, and not ADD with 0 because ADD uses $srCarry register
+let Itinerary = II_MOV_alu_mv_mv_mv_scl, isMoveReg = 1, hasSideEffects = false, mayLoad = false, mayStore = false in {
+    def MOV_OR_pseudo : MultiSlot_Pseudo<(outs eR:$mRx), (ins eR:$mRx0), 
+                                          "mov_scl_pseudo", "$mRx, $mRx0",
+                                          [MOV_alu_mv_mv_mv_scl, MOV_OR]>;
+}
+
 // Pseudo VLD
 let hasSideEffects = false, mayLoad = true, mayStore = false in {
   // Fifo fill.

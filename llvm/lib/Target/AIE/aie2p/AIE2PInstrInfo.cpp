@@ -557,11 +557,8 @@ void AIE2PInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   if (AIE2P::mMvSclSrcRegClass.contains(SrcReg) &&
       AIE2P::mMvSclDstRegClass.contains(DstReg)) {
     // Build MultiSlotPseudo in preference
-    unsigned Opcode = (AIE2P::mAguSrcRegClass.contains(SrcReg) &&
-                       AIE2P::mAguDstRegClass.contains(DstReg))
-                          ? AIE2P::MOV_scalar_pseudo
-                          : AIE2P::MOV_alu_mv_mv_mv_scl;
-    BuildMI(MBB, MBBI, DL, get(Opcode), DstReg)
+    const unsigned MOVSclOpcode = getScalarMovOpcode(DstReg, SrcReg);
+    BuildMI(MBB, MBBI, DL, get(MOVSclOpcode), DstReg)
         .addReg(SrcReg, getKillRegState(KillSrc));
   } else if ((AIE2P::eLRegClass.contains(SrcReg)) &&
              (AIE2P::eLRegClass.contains(DstReg))) {
@@ -1179,6 +1176,17 @@ unsigned AIE2PInstrInfo::getConstantMovOpcode(MachineRegisterInfo &MRI,
   llvm_unreachable("Expected imm. size <= 32 bits");
 }
 
+unsigned AIE2PInstrInfo::getScalarMovOpcode(Register DstReg,
+                                            Register SrcReg) const {
+  return (AIE2P::eRRegClass.contains(SrcReg) &&
+          AIE2P::eRRegClass.contains(DstReg))
+             ? AIE2P::MOV_OR_pseudo
+         : (AIE2P::mAguSrcRegClass.contains(SrcReg) &&
+            AIE2P::mAguDstRegClass.contains(DstReg))
+             ? AIE2P::MOV_scalar_pseudo
+             : AIE2P::MOV_alu_mv_mv_mv_scl;
+}
+
 unsigned AIE2PInstrInfo::getCycleSeparatorOpcode() const {
   return AIE2P::CYCLE_SEPARATOR;
 }
@@ -1192,7 +1200,8 @@ bool AIE2PInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
   case AIE2P::PseudoMove: {
     Register Dst = MI.getOperand(0).getReg();
     Register Src = MI.getOperand(1).getReg();
-    BuildMI(MBB, MI, DL, get(AIE2P::MOV_alu_mv_mv_mv_scl), Dst)
+    const unsigned MOVSclOpcode = getScalarMovOpcode(Dst, Src);
+    BuildMI(MBB, MI, DL, get(MOVSclOpcode), Dst)
         .addReg(Src, getKillRegState(MI.getOperand(1).isKill()));
     MI.eraseFromParent();
     return true;

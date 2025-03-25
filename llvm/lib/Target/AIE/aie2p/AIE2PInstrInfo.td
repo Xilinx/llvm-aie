@@ -130,6 +130,17 @@ let hasDelaySlot = true, isBranch = true, isTerminator = true,
   }
 }
 
+// Modified OR instruction to mimic MOV operation
+// OR $dst, $src, $src is equivalent to MOV $dst, $src 
+let Itinerary = II_OR, isCodeGenOnly = 1, hasSideEffects = false,
+    mayLoad = 0, mayStore = 0 in {
+  def MOV_OR : AIE2P_inst_alu_instr32 <(outs eR:$d0), (ins eR:$s0), "or", " $d0, $s0, $s0">{
+    bits<5> s0;
+    bits<5> d0;
+    let alu = {s0, d0, s0, 0b0101, 0b1};
+  }    
+}
+
 include "aie2p/AIE2PMultiSlotPseudoInstrInfo.td"
 // Define _split variants for instructions using 2D registers
 class Split2DInstr<Instruction RealInst, int opidx> : SplitPseudo<RealInst,

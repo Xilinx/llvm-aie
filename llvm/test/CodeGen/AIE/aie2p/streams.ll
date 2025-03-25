@@ -138,8 +138,7 @@ define dso_local void @_Z19test_put_ms_v64bf16Dv64_u6__bf16ii(<64 x bfloat> noun
 ; CHECK-LABEL: _Z19test_put_ms_v64bf16Dv64_u6__bf16ii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopx ; mov r28, r1
-; CHECK-NEXT:    vextract.32 r0, x4, #0, vaddsign1
+; CHECK-NEXT:    nopa ; nopb ; nopx ; vextract.32 r0, x4, #0, vaddsign1
 ; CHECK-NEXT:    vextract.32 r2, x4, #1, vaddsign1
 ; CHECK-NEXT:    mov ms, r0; vextract.32 r0, x4, #2, vaddsign1
 ; CHECK-NEXT:    mov ms, r2; vextract.32 r2, x4, #3, vaddsign1
@@ -171,7 +170,7 @@ define dso_local void @_Z19test_put_ms_v64bf16Dv64_u6__bf16ii(<64 x bfloat> noun
 ; CHECK-NEXT:    mov ms, r2; vextract.32 r2, x5, #13, vaddsign1
 ; CHECK-NEXT:    mov ms, r0; ret lr; vextract.32 r0, x5, #14, vaddsign1
 ; CHECK-NEXT:    mov ms, r2; vextract.32 r2, x5, #15, vaddsign1 // Delay Slot 5
-; CHECK-NEXT:    mov ms, r0 // Delay Slot 4
+; CHECK-NEXT:    mov ms, r0; or r28, r1, r1 // Delay Slot 4
 ; CHECK-NEXT:    mov ms, r2, r28 // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
