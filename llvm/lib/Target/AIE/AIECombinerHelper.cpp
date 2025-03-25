@@ -2866,17 +2866,21 @@ bool llvm::matchShuffleBcstToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
 
   const Register DstReg = MI.getOperand(0).getReg();
   const Register Src1Reg = MI.getOperand(1).getReg();
+  const Register Src2Reg = MI.getOperand(2).getReg();
   const LLT DstTy = MRI.getType(DstReg);
   const LLT Src1Ty = MRI.getType(Src1Reg);
-
   if (DstTy != Src1Ty)
     return false;
 
   ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
   const AIEBaseInstrInfo &AIETII = (const AIEBaseInstrInfo &)TII;
-  MachineInstr *SrcVec = MRI.getVRegDef(Src1Reg);
+  MachineInstr *SrcVec1 = MRI.getVRegDef(Src1Reg);
+  MachineInstr *SrcVec2 = MRI.getVRegDef(Src2Reg);
   // Check if the first source is defined by a Broadcast.
-  if (SrcVec->getOpcode() != AIETII.getGenericBroadcastVectorOpcode())
+  if (SrcVec1->getOpcode() != AIETII.getGenericBroadcastVectorOpcode())
+    return false;
+  // Check if the second source is an undef.
+  if (SrcVec2->getOpcode() != TargetOpcode::G_IMPLICIT_DEF)
     return false;
 
   const unsigned NumSrcElems = Src1Ty.isVector() ? Src1Ty.getNumElements() : 1;
