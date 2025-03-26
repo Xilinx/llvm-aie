@@ -18,11 +18,8 @@
 #include "Utils/AIELoopUtils.h"
 #include "llvm/CodeGen/LiveIntervals.h"
 
-namespace llvm {
-static cl::opt<bool> EnableCoalescingForWideCopy(
-    "aie-enable-widen-copy-coalescing",
-    cl::desc("Enable register coalescing for widening Copy"), cl::init(false),
-    cl::Hidden);
+using namespace llvm;
+extern cl::opt<bool> EnableCoalescingForWideCopy;
 
 bool AIEBaseRegisterInfo::shouldCoalesce(
     MachineInstr *MI, const TargetRegisterClass *SrcRC, unsigned SubReg,
@@ -57,5 +54,3 @@ bool AIEBaseRegisterInfo::shouldCoalesce(
   return TargetRegisterInfo::shouldCoalesce(MI, SrcRC, SubReg, DstRC, DstSubReg,
                                             NewRC, LIS);
 }
-
-} // namespace llvm

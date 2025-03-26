@@ -81,13 +81,14 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 7
   ; CHECK-NEXT:   [[VBCST_16_:%[0-9]+]]:vec512 = VBCST_16 [[MOV_RLC_imm11_pseudo]]
-  ; CHECK-NEXT:   undef [[VCONV_fp32_bf16_mv_ups_xbf:%[0-9]+]].sub_1024_acc_lo:acc2048 = VCONV_fp32_bf16_mv_ups_xbf [[VBCST_16_]]
+  ; CHECK-NEXT:   [[VCONV_fp32_bf16_mv_ups_xbf:%[0-9]+]]:ecml = VCONV_fp32_bf16_mv_ups_xbf [[VBCST_16_]]
   ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   dead [[VADD_vmac_cm2_add_reg:%[0-9]+]]:acc2048 = VADD_vmac_cm2_add_reg [[VCONV_fp32_bf16_mv_ups_xbf]], [[VCONV_fp32_bf16_mv_ups_xbf]], [[MOV_RLC_imm11_pseudo1]]
+  ; CHECK-NEXT:   undef [[COPY:%[0-9]+]].sub_1024_acc_lo:acc2048 = COPY [[VCONV_fp32_bf16_mv_ups_xbf]]
+  ; CHECK-NEXT:   dead [[VADD_vmac_cm2_add_reg:%[0-9]+]]:acc2048 = VADD_vmac_cm2_add_reg [[COPY]], [[COPY]], [[MOV_RLC_imm11_pseudo1]]
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}

@@ -103,6 +103,11 @@ struct AIE2PRegisterInfo : public AIE2PGenRegisterInfo {
   bool isFifoPhysReg(const Register Reg) const override;
 
   bool isSimplifiableReservedReg(MCRegister PhysReg) const override;
+
+  bool shouldCoalesce(MachineInstr *MI, const TargetRegisterClass *SrcRC,
+                      unsigned SubReg, const TargetRegisterClass *DstRC,
+                      unsigned DstSubReg, const TargetRegisterClass *NewRC,
+                      LiveIntervals &LIS) const override;
 };
 } // namespace llvm
 
