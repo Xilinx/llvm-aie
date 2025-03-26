@@ -39,6 +39,11 @@ struct ShuffleMaskValidity {
   SmallVector<unsigned, 4> MaskExceptions;
 };
 
+struct FrequentIndexResult {
+  unsigned FrequentIdx;
+  unsigned NonMatchingCount;
+};
+
 /// The mask is represented by a sawtooth function F with Period, Height and
 /// Amplitude, i.e., F(idx + Period) = F(idx) = Height + idx * Amplitude, where
 /// idx >= 0.
@@ -58,6 +63,8 @@ public:
   static std::optional<int> getUniqueIndex(ArrayRef<int> Mask);
   static bool isMaskWithinRangeOrUndef(ArrayRef<int> Mask, int MinValue,
                                        int MaxValue);
+  static std::optional<FrequentIndexResult>
+  getFrequentIndexResult(ArrayRef<int> Mask, unsigned MinFrequency);
 
   unsigned getMaskValue(unsigned Idx) const {
     unsigned BaseIdx = Period == 0 ? Idx : Idx % Period;
@@ -283,6 +290,9 @@ bool matchPairedExtracts(MachineInstr &MI, MachineRegisterInfo &MRI,
                          CombinerHelper &Helper, const TargetInstrInfo &TII,
                          BuildFnTy &MatchInfo);
 
+bool matchShuffleToExtractInsertEltToBroadcast(MachineInstr &MI,
+                                               MachineRegisterInfo &MRI,
+                                               BuildFnTy &MatchInfo);
 } // namespace llvm
 
 #endif

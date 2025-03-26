@@ -57,6 +57,17 @@ cl::opt<bool> CombineVecShiftByZero(
     "aie-combine-vec-shift-by-zero", cl::init(true), cl::Hidden,
     cl::desc("Combine vectors shift by zero into copies."));
 
+static unsigned getNumMaskUndefs(const ArrayRef<int> &Mask,
+                                 unsigned StartIndex) {
+  unsigned Count = 0;
+  for (unsigned I = StartIndex; I < Mask.size(); ++I) {
+    if (Mask[I] == -1) {
+      ++Count;
+    }
+  }
+  return Count;
+}
+
 bool MaskMatch::isValidMask(const ArrayRef<int> Mask) const {
   for (unsigned Idx = 0; Idx < Mask.size(); ++Idx) {
     if (Mask[Idx] == -1)
@@ -134,6 +145,55 @@ std::optional<int> MaskMatch::getUniqueIndex(ArrayRef<int> Mask) {
     }
   }
   return UniqOpIdx;
+}
+
+static std::unordered_map<int, unsigned>
+getMaskFrequencyMap(const ArrayRef<int> Mask) {
+  assert(!MaskMatch::isMaskWithAllUndefs(Mask));
+  std::unordered_map<int, unsigned> FrequencyMap;
+  for (int Idx : Mask) {
+    if (Idx == -1)
+      continue;
+    FrequencyMap[Idx]++;
+  }
+  return FrequencyMap;
+}
+
+std::optional<FrequentIndexResult>
+MaskMatch::getFrequentIndexResult(const ArrayRef<int> Mask,
+                                  unsigned MinFrequency = 0) {
+
+  // Set the default value for MinFrequency
+  if (MinFrequency == 0) {
+    MinFrequency = Mask.size() / 2;
+  }
+
+  std::unordered_map<int, unsigned> FrequencyMap = getMaskFrequencyMap(Mask);
+  unsigned DontCareCount = getNumMaskUndefs(Mask, 0);
+
+  auto [FrequentValue, HighestFrequency] = *std::max_element(
+      FrequencyMap.begin(), FrequencyMap.end(),
+      [](const std::pair<int, unsigned> p1, const std::pair<int, unsigned> p2) {
+        return p1.second < p2.second;
+      });
+
+  unsigned HighestAdjustedFrequency = HighestFrequency + DontCareCount;
+  if (HighestAdjustedFrequency < MinFrequency) {
+    return std::nullopt;
+  }
+
+  unsigned NonMatchingCount = Mask.size() - HighestAdjustedFrequency;
+
+  unsigned FrequentIdx = 0;
+  for (unsigned I = 0; I < Mask.size(); I++) {
+    int MaskValue = Mask[I];
+    if (MaskValue == FrequentValue) {
+      FrequentIdx = I;
+      break;
+    }
+  }
+
+  return FrequentIndexResult{FrequentIdx, NonMatchingCount};
 }
 
 MachineInstr *findPreIncMatch(MachineInstr &MemI, MachineRegisterInfo &MRI,
@@ -1903,17 +1963,6 @@ static bool isPowerOfTwoOrZero(unsigned Height) {
   return Height == 0 || (Height > 1 && has_single_bit(Height));
 }
 
-static unsigned getNumMaskUndefs(const ArrayRef<int> &Mask,
-                                 unsigned StartIndex) {
-  unsigned Count = 0;
-  for (unsigned I = StartIndex; I < Mask.size(); ++I) {
-    if (Mask[I] == -1) {
-      ++Count;
-    }
-  }
-  return Count;
-}
-
 /// \returns true if it is possible to combine the below sequence of MIRs
 /// into a COPY.
 /// From : %1:_(<64 x s8>) = G_IMPLICIT_DEF
@@ -2593,6 +2642,114 @@ bool llvm::matchShuffleToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
 }
 
 /// Match something like this:
+///  %2:_(<16 x s32>) = G_SHUFFLE_VECTOR %0(<16 x s32>), %1(<16 x s32>),
+///  shufflemask(16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+/// To convert to:
+//  %4:_(s32) = G_CONSTANT i32 0
+//  %5:_(s32) = G_EXTRACT_VECTOR_ELT %0(<16 x s32>), %4(s32)
+//  %3:_(<16 x s32>) = G_AIE_BROADCAST_VECTOR %5(s32)ab
+//  %6:_(s32) = G_EXTRACT_VECTOR_ELT %1(<16 x s32>), %4(s32)
+//  %2:_(<16 x s32>) = G_INSERT_VECTOR_ELT %3, %6(s32), %4(s32)
+bool llvm::matchShuffleToExtractInsertEltToBroadcast(MachineInstr &MI,
+                                                     MachineRegisterInfo &MRI,
+                                                     BuildFnTy &MatchInfo) {
+
+  assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR);
+
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register Src1Reg = MI.getOperand(1).getReg();
+  const Register Src2Reg = MI.getOperand(2).getReg();
+  ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
+
+  const LLT DstTy = MRI.getType(DstReg);
+  const LLT Src1Ty = MRI.getType(Src1Reg);
+  if (DstTy != Src1Ty)
+    return false;
+
+  if (!DstTy.isVector() || !Src1Ty.isVector())
+    return false;
+
+  if (DstTy.getSizeInBits() < 128)
+    return false;
+
+  const unsigned NumSrcElems = Src1Ty.getNumElements();
+  const LLT DstElemTy = MRI.getType(Src1Reg).getElementType();
+
+  if (Mask.size() != NumSrcElems)
+    return false;
+
+  if (MaskMatch::isMaskWithAllUndefs(Mask))
+    return false;
+
+  unsigned MinFrequency;
+  if (MI.getMF()->getTarget().getTargetTriple().isAIE2P())
+    // The scalarization of G_SHUFFLE_VECTOR in the legalizer is more beneficial
+    // if there are more exceptions than NumSrcElems / 2 as AIE2P's VINSERT
+    // instrutions require a move to a register used for the index unlike VPUSH.
+    MinFrequency = (ShuffleMaxNumInsertions != 0) ? ShuffleMaxNumInsertions
+                                                  : NumSrcElems / 2;
+  else
+    llvm_unreachable("MinFrequency unimplemented for target.");
+
+  std::optional<FrequentIndexResult> FrequentIdxResult =
+      MaskMatch::getFrequentIndexResult(Mask, MinFrequency);
+
+  if (!FrequentIdxResult)
+    return false;
+
+  unsigned FrequentIdx = FrequentIdxResult->FrequentIdx;
+  unsigned NonMatchingCount = FrequentIdxResult->NonMatchingCount;
+
+  // This is a pure broadcast pattern. Should be handled by
+  // matchShuffleToVecEltBroadcast combine
+  if (NonMatchingCount == 0)
+    return false;
+
+  int BcstValue = Mask[FrequentIdx];
+
+  MatchInfo = [=, &MRI](MachineIRBuilder &B) {
+    Register BroadcastVecReg = MRI.createGenericVirtualRegister(Src1Ty);
+    Register VecToExtract = BcstValue < (int)NumSrcElems ? Src1Reg : Src2Reg;
+    auto Extr = B.buildExtractVectorElementConstant(DstElemTy, VecToExtract,
+                                                    BcstValue % NumSrcElems);
+    buildBroadcastVector(B, MRI, Extr.getReg(0), BroadcastVecReg);
+
+    Register InsertSrc = BroadcastVecReg;
+    Register InsertDst;
+
+    unsigned InsertionCount = 0;
+    for (unsigned Idx = 0; Idx < Mask.size(); ++Idx) {
+
+      if (Mask[Idx] == BcstValue)
+        continue;
+
+      if (Mask[Idx] == -1)
+        continue;
+
+      Register VecToExtract = Mask[Idx] < (int)NumSrcElems ? Src1Reg : Src2Reg;
+
+      int ExtractIdx = Mask[Idx] % NumSrcElems;
+      auto ExtrElt = B.buildExtractVectorElementConstant(
+          DstElemTy, VecToExtract, ExtractIdx);
+
+      auto NonMatchingIdxReg = B.buildConstant(LLT::scalar(32), Idx);
+
+      InsertDst = (InsertionCount == NonMatchingCount - 1)
+                      ? DstReg
+                      : MRI.createGenericVirtualRegister(Src1Ty);
+
+      B.buildInsertVectorElement(InsertDst, InsertSrc, ExtrElt,
+                                 NonMatchingIdxReg);
+      InsertSrc = InsertDst;
+      InsertionCount++;
+    }
+  };
+
+  return true;
+}
+
+/// Match something like this:
 /// %0:_(<32 x s16>) = COPY $x0
 /// %1:_(<32 x s16>) = COPY $x1
 /// %2:_(<32 x s16>) = G_SHUFFLE_VECTOR %0:_(<32 x s16>), %1:_, shufflemask(0,
@@ -2625,7 +2782,8 @@ bool llvm::matchShuffleToExtractInsertElt(MachineInstr &MI,
   if (MI.getMF()->getTarget().getTargetTriple().isAIE2P())
     // The scalarization of G_SHUFFLE_VECTOR in the legalizer is more beneficial
     // if there are more exceptions than NumSrcElems / 2 as AIE2P's VINSERT
-    // instrutions require a move to a register used for the index unlike VPUSH.
+    // instructions require a move to a register used for the index unlike
+    // VPUSH.
     MaxNumInsertions = (ShuffleMaxNumInsertions != 0) ? ShuffleMaxNumInsertions
                                                       : NumSrcElems / 2;
   else
