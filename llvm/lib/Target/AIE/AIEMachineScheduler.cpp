@@ -1500,9 +1500,9 @@ SUnit &AIEPostRASchedStrategy::addFixedSUnit(MachineInstr &MI, bool IsTop) {
 bool AIEScheduleDAGMI::mayAlias(SUnit *SUa, SUnit *SUb, bool UseTBAA) {
   BlockState &BS = getSchedImpl()->getInterBlock().getBlockState(getBB());
   if (BS.FixPoint.Stage == SchedulingStage::Pipelining) {
-    int II = BS.FixPoint.II;
-    int IterA = SUa->NodeNum / II;
-    int IterB = SUb->NodeNum / II;
+    int NInstr = BS.getCurrentRegion().getFreeInstructions().size();
+    int IterA = SUa->NodeNum / NInstr;
+    int IterB = SUb->NodeNum / NInstr;
     if (aliasAcrossVirtualUnrolls(SUa->getInstr(), SUb->getInstr(), IterA,
                                   IterB) == AliasResult::NoAlias) {
       return false;
