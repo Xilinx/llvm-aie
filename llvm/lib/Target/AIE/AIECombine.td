@@ -126,6 +126,12 @@ def combine_paired_extracts : GICombineRule<
          [{ return matchPairedExtracts(*${root}, MRI, Helper, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
 
+def combine_vector_shuffle_to_extract_insert_elt_to_broadcast : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
+         [{ return matchShuffleToExtractInsertEltToBroadcast(*${root}, MRI, ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
+
 def AIE2PreLegalizerCombiner
     : GICombiner<"AIE2PreLegalizerCombinerImpl", [ combine_unpad_vector, combine_pad_vector,
                                                                  all_combines, combine_S20NarrowingOpt,
@@ -152,7 +158,8 @@ def AIE2PPreLegalizerCombiner
                                                                  combine_single_diff_build_vector,
                                                                  combine_vector_shuffle_to_extract_insert_elt,
                                                                  combine_vector_shuffle_concat_extracted_subvectors,
-                                                                 combine_paired_extracts]> {
+                                                                 combine_paired_extracts,
+                                                                 combine_vector_shuffle_to_extract_insert_elt_to_broadcast]> {
   let CombineAllMethodName = "tryCombineAllImpl";
 }
 

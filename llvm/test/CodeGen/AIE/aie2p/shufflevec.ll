@@ -221,25 +221,11 @@ define <16 x i32> @test_shuffle_vector_vsel_invalid_mask(<16 x i32> noundef %a, 
 ; CHECK-LABEL: test_shuffle_vector_vsel_invalid_mask:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; vextract.32 r0, x2, #0, vaddsign1
-; CHECK-NEXT:    vextract.32 r1, x2, #1, vaddsign1
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r0
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r1
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r1
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r1
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r1
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r1
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r1
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r1
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r1
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r1
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r1
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r1
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r1 // Delay Slot 5
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r1 // Delay Slot 4
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r1 // Delay Slot 3
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r1 // Delay Slot 2
+; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
+; CHECK-NEXT:    vextract.64 r1:r0, x2, #0, vaddsign1 // Delay Slot 5
+; CHECK-NEXT:    mova r29, #0 // Delay Slot 4
+; CHECK-NEXT:    vbcst.32 x0, r1 // Delay Slot 3
+; CHECK-NEXT:    vinsert.32 x0, x0, r29, r0 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %shuffle = shufflevector <16 x i32> %a, <16 x i32> %b, <16 x i32> <i32 0, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1>
@@ -922,34 +908,25 @@ define <16 x i32> @shuffle_concat_extracted_subvectors_undef_at_extractidx(<16 x
 }
 
 ; Exeptions submask is all exceptions
-; TODO: Combine using broadcast + element inserts for the allowed number of exceptions to the broadcast pattern
 define <16 x i32> @shuffle_concat_extracted_subvectors_nothing_but_exceptions(<16 x i32> %a, <16 x i32> %b) {
 ; CHECK-LABEL: shuffle_concat_extracted_subvectors_nothing_but_exceptions:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0:
-; CHECK-NEXT:    nopx ; vextract.32 r1, x2, #1, vaddsign1
-; CHECK-NEXT:    vextract.32 r2, x2, #2, vaddsign1
-; CHECK-NEXT:    vextract.32 r3, x2, #3, vaddsign1
-; CHECK-NEXT:    vextract.32 r4, x2, #4, vaddsign1
-; CHECK-NEXT:    vextract.32 r0, x2, #0, vaddsign1
-; CHECK-NEXT:    vextract.32 r5, x2, #5, vaddsign1
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r0
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r1
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r2
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r3
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r4
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r5
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r5
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r5
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r5
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r5
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r5
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r5
+; CHECK-NEXT:    mova r29, #0; nopx
+; CHECK-NEXT:    vextract.64 r1:r0, x2, #2, vaddsign1
+; CHECK-NEXT:    vextract.64 r3:r2, x2, #0, vaddsign1
+; CHECK-NEXT:    vbcst.32 x0, r1
+; CHECK-NEXT:    vinsert.32 x0, x0, r29, r2
+; CHECK-NEXT:    mova r29, #1
+; CHECK-NEXT:    vinsert.32 x0, x0, r29, r3
+; CHECK-NEXT:    vextract.64 r3:r2, x2, #1, vaddsign1
+; CHECK-NEXT:    mova r29, #2
+; CHECK-NEXT:    vinsert.32 x0, x0, r29, r2
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r5 // Delay Slot 5
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r5 // Delay Slot 4
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r5 // Delay Slot 3
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r5 // Delay Slot 2
+; CHECK-NEXT:    mova r29, #3 // Delay Slot 5
+; CHECK-NEXT:    vinsert.32 x0, x0, r29, r3 // Delay Slot 4
+; CHECK-NEXT:    mova r29, #4 // Delay Slot 3
+; CHECK-NEXT:    vinsert.32 x0, x0, r29, r0 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
   %shuffle = shufflevector <16 x i32> %a, <16 x i32> %b, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5>
   ret <16 x i32> %shuffle
