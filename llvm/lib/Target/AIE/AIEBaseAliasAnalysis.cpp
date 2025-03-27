@@ -27,6 +27,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include <optional>
+#include <unordered_set>
 
 using namespace llvm;
 
@@ -183,32 +184,39 @@ struct IntrinsicArgsInfo {
   SmallVector<const Value *, 5> CounterArgs;
 };
 
-struct IntrinsicChainInfo {
+struct PtrUpdateChainInfo {
   // Calls up to a specific point.
-  unsigned IntrinsicCalls = 0;
+  unsigned PointerUpdates = 0;
   // Total calls across the loop.
-  unsigned TotalIntrinsicCalls = 0;
+  unsigned TotalPointerUpdates = 0;
   // All parameters.
   IntrinsicArgsInfo IntrinsicParameters;
+  // Constant chain (always the same index).
+  SmallVector<const Value *, 2> GEPIndexes;
 
-  // Same number of call until the point of interest.
-  bool hasSameNumberOfCalls(const IntrinsicChainInfo &Other) const {
-    return IntrinsicCalls == Other.IntrinsicCalls;
+  // Same GEP Indexes.
+  bool hasSameGEPIndexes(const PtrUpdateChainInfo &Other) const {
+    return GEPIndexes == Other.GEPIndexes;
   }
 
-  // Same number of calls accross the loop.
-  bool hasSameTotalNumberOfCalls(const IntrinsicChainInfo &Other) const {
-    return TotalIntrinsicCalls == Other.TotalIntrinsicCalls;
+  // Same number of call until the point of interest.
+  bool hasSameNumberOfUpdates(const PtrUpdateChainInfo &Other) const {
+    return PointerUpdates == Other.PointerUpdates;
+  }
+
+  // Same number of calls across the loop.
+  bool hasSameTotalNumberOfUpdates(const PtrUpdateChainInfo &Other) const {
+    return TotalPointerUpdates == Other.TotalPointerUpdates;
   }
 
   // Check for the same constant parameters.
-  bool hasSameParameters(const IntrinsicChainInfo &Other) const {
+  bool hasSameParameters(const PtrUpdateChainInfo &Other) const {
     return IntrinsicParameters.ConstantArgs ==
            Other.IntrinsicParameters.ConstantArgs;
   }
 
   // Check for the same initial values for the counters.
-  bool hasSameStartingCounters(const IntrinsicChainInfo &Other) const {
+  bool hasSameStartingCounters(const PtrUpdateChainInfo &Other) const {
 
     auto GetExternalIndex = [](const PHINode *Phi) {
       return Phi->getIncomingBlock(0) == Phi->getParent() ? 1 : 0;
@@ -238,10 +246,10 @@ struct IntrinsicChainInfo {
     return true;
   }
 
-  bool mayOverlap(const IntrinsicChainInfo &Other) const {
+  bool mayOverlap(const PtrUpdateChainInfo &Other) const {
     // Different number of updates in the chain.
     // * but maybe with consistent updates (same steps)
-    if (!hasSameTotalNumberOfCalls(Other))
+    if (!hasSameTotalNumberOfUpdates(Other))
       return true;
 
     // Different parameters.
@@ -253,14 +261,18 @@ struct IntrinsicChainInfo {
       return true;
 
     // Check for different steps of calculation.
-    if (hasSameNumberOfCalls(Other))
+    if (hasSameNumberOfUpdates(Other))
+      return true;
+
+    // Check for different GEP index.
+    if (!hasSameGEPIndexes(Other))
       return true;
 
     return false;
   }
 
   void bumpIteration(const unsigned VirtIteration) {
-    IntrinsicCalls += VirtIteration * TotalIntrinsicCalls;
+    PointerUpdates += VirtIteration * TotalPointerUpdates;
   }
 };
 
@@ -316,9 +328,14 @@ static bool allInSameBB(SmallVector<const Value *> Values) {
 /// that starts from a Value *TargetPointer to the Phi node that firstly defines
 /// a pointer value to the same ambiguous memory. We start the search from the
 /// last update of the pointer.
-std::optional<IntrinsicChainInfo>
-trackIntrinsicChain(const Value *LastUpdate, const Value *TargetPointer) {
-  IntrinsicChainInfo ChainInfo;
+std::optional<PtrUpdateChainInfo>
+trackPtrUpdateChain(const Value *LastUpdate, const Value *TargetPointer) {
+  PtrUpdateChainInfo ChainInfo;
+  bool FoundIntrinsicChain = false;
+  bool FoundGEPChain = false;
+  IntrinsicArgsInfo IntrinsicParameters;
+  SmallVector<const Value *, 2> GEPIndexes;
+
   // We count backwards.
   std::optional<unsigned> LastCalls = std::nullopt;
   // Let's expose the real pointer.
@@ -332,21 +349,49 @@ trackIntrinsicChain(const Value *LastUpdate, const Value *TargetPointer) {
     // This information is crucial to calculate the number
     // of pointer updates before TargetPointer.
     if (LastUpdate == TargetPointer)
-      LastCalls = ChainInfo.TotalIntrinsicCalls;
+      LastCalls = ChainInfo.TotalPointerUpdates;
 
     if (!LastUpdate->getType()->isPointerTy())
       return std::nullopt; // not a pointer.
 
     if (auto *GEP = dyn_cast<GEPOperator>(LastUpdate)) {
-      if (!GEP->hasAllZeroIndices())
-        return std::nullopt; // No pointer arithmetic is allowed.
+      // We handle GEP with a single index bacause of the PostSWP.
+      if (!GEP->hasAllZeroIndices()) {
+
+        if (FoundIntrinsicChain) {
+          // Found a mixed chain.
+          return std::nullopt;
+        }
+
+        if (!FoundGEPChain) {
+          for (unsigned I = 1; I <= GEP->getNumIndices(); I++)
+            GEPIndexes.push_back(GEP->getOperand(I));
+
+        } else if (GEPIndexes.size() == GEP->getNumIndices()) {
+          for (unsigned I = 1; I <= GEP->getNumIndices(); I++) {
+            if (GEP->getOperand(I) != GEPIndexes[I - 1]) {
+              // Found a mismatch between indexes.
+              return std::nullopt;
+            }
+          }
+        } else {
+          // Found a mismatch between number of indexes.
+          return std::nullopt;
+        }
+
+        ChainInfo.TotalPointerUpdates++;
+        FoundGEPChain = true;
+      }
+
       // The result pointer and the first operand have
       // the same value
       LastUpdate = GEP->getPointerOperand();
     } else if (auto *PHI = dyn_cast<PHINode>(LastUpdate)) {
       // Reached final destination.
       if (LastCalls) {
-        ChainInfo.IntrinsicCalls = ChainInfo.TotalIntrinsicCalls - *LastCalls;
+        ChainInfo.PointerUpdates = ChainInfo.TotalPointerUpdates - *LastCalls;
+        ChainInfo.IntrinsicParameters = IntrinsicParameters;
+        ChainInfo.GEPIndexes = GEPIndexes;
         return ChainInfo;
       }
       return std::nullopt; // The object was not found.
@@ -359,34 +404,85 @@ trackIntrinsicChain(const Value *LastUpdate, const Value *TargetPointer) {
         return std::nullopt;
       }
 
+      if (FoundGEPChain) {
+        // Found a mixed chain.
+        return std::nullopt;
+      }
+
       IntrinsicArgsInfo NewArgs = collectIntrinsicOperands(LastUpdate);
 
       // Initialize counters.
-      if (!ChainInfo.IntrinsicParameters.CounterArgs.empty() &&
+      if (!IntrinsicParameters.CounterArgs.empty() &&
           !isAddressingIntrinsicOutput(
-              ArrayRef(ChainInfo.IntrinsicParameters.CounterArgs), AIEObject)) {
+              ArrayRef(IntrinsicParameters.CounterArgs), AIEObject)) {
         // if we already have counters, we need to reach the same
         // AIEObject from the counters. Otherwise we can have some undesired
         // counter update in between.
         return std::nullopt; // not reachable.
       }
 
-      if (!ChainInfo.IntrinsicParameters.ConstantArgs.empty() &&
-          ChainInfo.IntrinsicParameters.ConstantArgs != NewArgs.ConstantArgs) {
+      if (!IntrinsicParameters.ConstantArgs.empty() &&
+          IntrinsicParameters.ConstantArgs != NewArgs.ConstantArgs) {
         // Constant iterator information mismatch between sequence of
         // intrinsic calls. We stop here.
         return std::nullopt;
       }
 
       // Update params for the next round.
-      ChainInfo.IntrinsicParameters.CounterArgs = NewArgs.CounterArgs;
-      ChainInfo.IntrinsicParameters.ConstantArgs = NewArgs.ConstantArgs;
+      IntrinsicParameters.CounterArgs = NewArgs.CounterArgs;
+      IntrinsicParameters.ConstantArgs = NewArgs.ConstantArgs;
 
       LastUpdate = AIEObject;
-      ChainInfo.TotalIntrinsicCalls++;
+      ChainInfo.TotalPointerUpdates++;
+      FoundIntrinsicChain = true;
     }
   }
   return std::nullopt;
+}
+
+static bool isLockStepGEPChain(std::unordered_set<const Value *> &Visited,
+                               const Value *ValueA, const Value *ValueB) {
+
+  ValueA = skipCast(ValueA);
+  ValueB = skipCast(ValueB);
+
+  // Pointers are the same.
+  if (ValueA == ValueB)
+    return true;
+
+  if (Visited.count(ValueA) && Visited.count(ValueB))
+    return true;
+
+  Visited.insert(ValueA);
+  Visited.insert(ValueB);
+
+  const PHINode *PhiA = dyn_cast<PHINode>(ValueA);
+  const PHINode *PhiB = dyn_cast<PHINode>(ValueB);
+
+  if (PhiA && PhiB) {
+    if (PhiA->getParent() != PhiB->getParent())
+      return false;
+    for (unsigned I = 0; I < PhiA->getNumIncomingValues(); I++) {
+      if (!isLockStepGEPChain(Visited, PhiA->getIncomingValue(I),
+                              PhiB->getIncomingValue(I)))
+        return false;
+    }
+    return true;
+  }
+
+  const GEPOperator *GEPA = dyn_cast<GEPOperator>(ValueA);
+  const GEPOperator *GEPB = dyn_cast<GEPOperator>(ValueB);
+
+  if (!GEPA || !GEPB || GEPA->getNumOperands() != GEPB->getNumOperands())
+    return false;
+
+  for (unsigned I = 1; I <= GEPA->getNumIndices(); I++) {
+    if (GEPA->getOperand(I) != GEPB->getOperand(I))
+      return false;
+  }
+
+  return isLockStepGEPChain(Visited, GEPA->getPointerOperand(),
+                            GEPB->getPointerOperand());
 }
 
 static AliasResult aliasAIEIntrinsic(const Value *ValueA, const Value *ValueB,
@@ -449,8 +545,15 @@ static AliasResult aliasAIEIntrinsic(const Value *ValueA, const Value *ValueB,
   // an = add_2d(a1, /*fixed parameters + chained counters*/)
   // Where we can prove that those two loads are not aliasing, even though
   // they are sharing the same phi node as an underlying object.
-  if (ExtPhiValA != ExtPhiValB)
-    return AliasResult::MayAlias;
+  if (ExtPhiValA != ExtPhiValB) {
+    std::unordered_set<const Value *> Visited;
+    // Pointers may differ in Value, but if they walk in lockstep
+    // they are the same.
+    if (!isLockStepGEPChain(Visited, ExtPhiValA, ExtPhiValB)) {
+      // We cannot prove anything if they are not in lockstep.
+      return AliasResult::MayAlias;
+    }
+  }
 
   // Most of the remaining code aims to prove that the two pointers
   // are updated with same steps.
@@ -464,11 +567,11 @@ static AliasResult aliasAIEIntrinsic(const Value *ValueA, const Value *ValueB,
 
   // Now we know that the pointers are updated consistently across
   // loop iterations, let's look to the values.
-  auto ATracking = trackIntrinsicChain(IntPhiValA, ValueA);
+  auto ATracking = trackPtrUpdateChain(IntPhiValA, ValueA);
   if (!ATracking) // Non uniform address update accross the loop.
     return AliasResult::MayAlias;
 
-  auto BTracking = trackIntrinsicChain(IntPhiValB, ValueB);
+  auto BTracking = trackPtrUpdateChain(IntPhiValB, ValueB);
   if (!BTracking) // Non uniform address update accross the loop.
     return AliasResult::MayAlias;
 
