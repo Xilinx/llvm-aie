@@ -30,9 +30,6 @@ def sub_256_hi  : SubRegIndex<256, 256>;  // sub_512_lo_256_hi
 def sub_512_lo  : SubRegIndex<512,   0>;
 def sub_512_hi  : SubRegIndex<512, 512>;
 
-def sub_512_acc_lo  : SubRegIndex<512,   0>;
-def sub_512_acc_hi  : SubRegIndex<512, 512>;
-
 def sub_1024_lo  : SubRegIndex<1024,   0>;
 def sub_1024_hi  : SubRegIndex<1024, 1024>;
 
@@ -992,5 +989,10 @@ def spill_eM_to_eR : AIE2PScalarRegisterClass<(add eM, eR, eDN)>;
 def spill_eDN_to_eR : AIE2PScalarRegisterClass<(add eDN, eR)>;
 def spill_eDJ_to_eR : AIE2PScalarRegisterClass<(add eDJ, eR, eDN)>;
 def spill_eDC_to_eR : AIE2PScalarRegisterClass<(add eDC, eR)>;
+
+def spill_vec512_to_composite : AIE2PVector512RegisterClass<(add mXm, mBMm)>;
+def spill_vec1024_to_composite : AIE2PVector1024RegisterClass<(add eY, mCMm)>;
+def spill_acc512_to_composite : AIE2PVector512RegisterClass<(add mBMm, mXm)>;
+def spill_acc1024_to_composite : AIE2PVector1024RegisterClass<(add mCMm, eY)>;
 
 } // End AIE2P Namespace

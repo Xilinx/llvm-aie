@@ -43,6 +43,12 @@ cl::opt<bool> EnableCoalescingForWideCopy(
 
 extern llvm::cl::opt<unsigned> ReservedGPRs;
 
+static llvm::cl::opt<bool>
+    SpillAccToVecOrAcc("aie2p-spill-accumulator-to-vec-or-acc", cl::Hidden,
+                       cl::init(true),
+                       cl::desc("Allow spilling accumulator registers to "
+                                "vector or accumulator registers"));
+
 AIE2PRegisterInfo::AIE2PRegisterInfo(unsigned HwMode)
     : AIE2PGenRegisterInfo(AIE2P::sp, /*DwarfFlavour*/ 0, /*EHFlavor*/ 0,
                            /*PC*/ 0, HwMode) {}
@@ -482,7 +488,32 @@ AIE2PRegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC,
 
   if (AIE2P::eSRegClass.hasSubClassEq(RC))
     return &AIE2P::spill_eS_to_eRRegClass;
+  if (SpillAccToVecOrAcc && RC == &AIE2P::ACC1024RegClass)
+    return &AIE2P::spill_acc1024_to_compositeRegClass;
+  if (SpillAccToVecOrAcc && RC == &AIE2P::ACC512RegClass)
+    return &AIE2P::spill_acc512_to_compositeRegClass;
+  if (SpillAccToVecOrAcc && RC == &AIE2P::VEC1024RegClass)
+    return &AIE2P::spill_vec1024_to_compositeRegClass;
+  if (SpillAccToVecOrAcc && RC == &AIE2P::VEC512RegClass)
+    return &AIE2P::spill_vec512_to_compositeRegClass;
   return RC;
+}
+
+const TargetRegisterClass *
+AIE2PRegisterInfo::getSubClassWithSubReg(const TargetRegisterClass *RC,
+                                         unsigned Idx) const {
+  if ((RC == &AIE2P::spill_vec512_to_compositeRegClass ||
+       RC == &AIE2P::spill_acc512_to_compositeRegClass) &&
+      (Idx == AIE2P::sub_256_lo || Idx == AIE2P::sub_256_hi)) {
+    return &AIE2P::VEC512RegClass;
+  }
+  if ((RC == &AIE2P::spill_vec1024_to_compositeRegClass ||
+       RC == &AIE2P::spill_acc1024_to_compositeRegClass) &&
+      (Idx == AIE2P::sub_512_hi_256_lo || Idx == AIE2P::sub_512_hi_256_hi)) {
+    return &AIE2P::VEC1024RegClass;
+  }
+  // Forward to TableGen's default version.
+  return AIE2PGenRegisterInfo::getSubClassWithSubReg(RC, Idx);
 }
 
 const std::set<int> &AIE2PRegisterInfo::getSubRegSplit(int RegClassId) const {
@@ -618,6 +649,42 @@ bool AIE2PRegisterInfo::shouldCoalesce(
 
   const unsigned SrcSize = getRegSizeInBits(*SrcRC);
   const unsigned DstSize = getRegSizeInBits(*DstRC);
+
+  // if (SrcSize == 256 && (AIE2P::ACC2048RegClass.hasSubClassEq(DstRC) ||
+  //                        AIE2P::ACC1024RegClass.hasSubClassEq(DstRC) ||
+  //                        AIE2P::ACC512RegClass.hasSubClassEq(DstRC) ||
+  //                        &AIE2P::spill_vec512_to_compositeRegClass == DstRC))
+  //                        {
+  //   return false;
+  // }
+  // if (DstSize == 256 && (AIE2P::ACC2048RegClass.hasSubClassEq(SrcRC) ||
+  //                        AIE2P::ACC1024RegClass.hasSubClassEq(SrcRC) ||
+  //                        AIE2P::ACC512RegClass.hasSubClassEq(SrcRC) ||
+  //                        &AIE2P::spill_vec512_to_compositeRegClass == SrcRC))
+  //                        {
+  //   return false;
+  // }
+  // if ((&AIE2P::spill_vec512_to_compositeRegClass == DstRC &&
+  //      (AIE2P::ACC2048RegClass.hasSubClassEq(SrcRC) ||
+  //       AIE2P::ACC1024RegClass.hasSubClassEq(SrcRC) ||
+  //       AIE2P::ACC512RegClass.hasSubClassEq(SrcRC)))) {
+  //   return false;
+  // }
+  // if ((&AIE2P::spill_vec512_to_compositeRegClass == SrcRC &&
+  //      (AIE2P::ACC2048RegClass.hasSubClassEq(DstRC) ||
+  //       AIE2P::ACC1024RegClass.hasSubClassEq(DstRC) ||
+  //       AIE2P::ACC512RegClass.hasSubClassEq(DstRC)))) {
+  //   return false;
+  // }
+  // if (((&AIE2P::spill_vec512_to_compositeRegClass == SrcRC ||
+  //       &AIE2P::spill_vec1024_to_compositeRegClass == SrcRC ||
+  //       &AIE2P::spill_vec512_to_compositeRegClass == DstRC ||
+  //       &AIE2P::spill_vec1024_to_compositeRegClass == DstRC) &&
+  //      (AIE2P::ACC2048RegClass.hasSubClassEq(NewRC) ||
+  //       AIE2P::ACC1024RegClass.hasSubClassEq(NewRC) ||
+  //       AIE2P::ACC512RegClass.hasSubClassEq(NewRC)))) {
+  //   return false;
+  // }
   MachineFunction *MF = MI->getMF();
   const AIEBaseInstrInfo *TII =
       static_cast<const AIEBaseInstrInfo *>(MF->getSubtarget().getInstrInfo());

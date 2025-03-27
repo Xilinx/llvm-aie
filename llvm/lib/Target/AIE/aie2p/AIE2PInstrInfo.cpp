@@ -554,7 +554,6 @@ void AIE2PInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                  MCRegister SrcReg, bool KillSrc) const {
   MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
   const TargetRegisterInfo &TRI = *MRI.getTargetRegisterInfo();
-
   if (AIE2P::mMvSclSrcRegClass.contains(SrcReg) &&
       AIE2P::mMvSclDstRegClass.contains(DstReg)) {
     // Build MultiSlotPseudo in preference
@@ -753,8 +752,16 @@ void AIE2PInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                 getKillRegState(KillSrc));
   } else if ((AIE2P::ePSRFLdFRegClass.contains(SrcReg)) &&
              (AIE2P::ePSRFLdFRegClass.contains(DstReg))) {
-    copyThroughSubRegs(MBB, MBBI, DL, DstReg, SrcReg, KillSrc);
+    // copyThroughSubRegs(MBB, MBBI, DL, DstReg, SrcReg, KillSrc);
+    copyPhysReg(MBB, MBBI, DL, TRI.getSubReg(DstReg, AIE2P::sub_ptr),
+                TRI.getSubReg(SrcReg, AIE2P::sub_ptr), KillSrc);
+    copyPhysReg(MBB, MBBI, DL, TRI.getSubReg(DstReg, AIE2P::sub_fifo),
+                TRI.getSubReg(SrcReg, AIE2P::sub_fifo), KillSrc);
+    copyPhysReg(MBB, MBBI, DL, TRI.getSubReg(DstReg, AIE2P::sub_avail),
+                TRI.getSubReg(SrcReg, AIE2P::sub_avail), KillSrc);
   } else {
+    MBBI->dump();
+    LLVM_DEBUG(MBBI->dump());
     llvm_unreachable("unhandled case in copyPhysReg");
   }
 }
@@ -906,6 +913,14 @@ void AIE2PInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     Opcode = AIE2P::VST_E_SPILL;
   } else if (regClassMatches(AIE2P::VEC576RegClass, RC, SrcReg)) {
     Opcode = AIE2P::VST_EX_SPILL;
+  } else if (&AIE2P::spill_acc1024_to_compositeRegClass == RC) {
+    Opcode = AIE2P::VST_CM_SPILL;
+  } else if (&AIE2P::spill_acc512_to_compositeRegClass == RC) {
+    Opcode = AIE2P::VST_dmx_sts_bm_spill;
+  } else if (&AIE2P::spill_vec1024_to_compositeRegClass == RC) {
+    Opcode = AIE2P::VST_Y_SPILL;
+  } else if (&AIE2P::spill_vec512_to_compositeRegClass == RC) {
+    Opcode = AIE2P::VST_dmx_sts_x_spill;
   } else if (regClassMatches(AIE2P::eSRegClass, RC, SrcReg) ||
              regClassMatches(AIE2P::spill_eS_to_eRRegClass, RC, SrcReg)) {
     // Can't spill these directly.  Need to bounce through a GPR.
@@ -962,6 +977,7 @@ void AIE2PInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   } else if (regClassMatches(AIE2P::VEC256RegClass, RC, DstReg)) {
     Opcode = AIE2P::VLDA_dmw_lda_w_spill;
   } else if (regClassMatches(AIE2P::mBMsRegClass, RC, DstReg)) {
+    I->dump();
     Opcode = AIE2P::VLDA_dmx_lda_bm_spill;
   } else if (regClassMatches(AIE2P::mFifoHLRegRegClass, RC, DstReg)) {
     Opcode = AIE2P::VLDA_dmx_lda_fifohl_spill;
@@ -970,6 +986,7 @@ void AIE2PInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   } else if (regClassMatches(AIE2P::ACC2048RegClass, RC, DstReg)) {
     Opcode = AIE2P::VLDA_DM_SPILL;
   } else if (regClassMatches(AIE2P::ACC1024RegClass, RC, DstReg)) {
+    I->dump();
     Opcode = AIE2P::VLDA_CM_SPILL;
   } else if (regClassMatches(AIE2P::FIFO1024RegClass, RC, DstReg)) {
     Opcode = AIE2P::VLDA_FIFO_SPILL;
@@ -987,6 +1004,15 @@ void AIE2PInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     Opcode = AIE2P::VLDA_E_SPILL;
   } else if (regClassMatches(AIE2P::VEC576RegClass, RC, DstReg)) {
     Opcode = AIE2P::VLDA_EX_SPILL;
+  } else if (&AIE2P::spill_acc1024_to_compositeRegClass == RC) {
+    Opcode = AIE2P::VLDA_CM_SPILL;
+  } else if (&AIE2P::spill_acc512_to_compositeRegClass == RC) {
+    // I->dump();
+    Opcode = AIE2P::VLDA_dmx_lda_bm_spill;
+  } else if (&AIE2P::spill_vec1024_to_compositeRegClass == RC) {
+    Opcode = AIE2P::VLDA_Y_SPILL;
+  } else if (&AIE2P::spill_vec512_to_compositeRegClass == RC) {
+    Opcode = AIE2P::VLDA_dmx_lda_x_spill;
   } else if (regClassMatches(AIE2P::eSRegClass, RC, DstReg) ||
              regClassMatches(AIE2P::spill_eS_to_eRRegClass, RC, DstReg)) {
     // Can't spill these directly.  Need to bounce through a GPR.
@@ -999,6 +1025,7 @@ void AIE2PInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
         .addReg(Reg, getKillRegState(true));
     return;
   } else {
+    I->dump();
     llvm_unreachable(
         "Can't load this register from stack slot: is it virtual?");
   }

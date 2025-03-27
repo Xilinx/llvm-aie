@@ -77,6 +77,9 @@ struct AIE2PRegisterInfo : public AIE2PGenRegisterInfo {
   getLargestLegalSuperClass(const TargetRegisterClass *RC,
                             const MachineFunction &MF) const override;
   const TargetRegisterClass *
+  getSubClassWithSubReg(const TargetRegisterClass *RC,
+                        unsigned Idx) const override;
+  const TargetRegisterClass *
   getGPRRegClass(const MachineFunction &MF) const override;
 
   unsigned getVectorRegBankID() const override;
