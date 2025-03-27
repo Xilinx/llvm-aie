@@ -56,6 +56,8 @@ public:
   static bool isMaskWithAllUndefs(ArrayRef<int> Mask);
   static std::optional<unsigned> getHeight(ArrayRef<int> Mask, unsigned Period);
   static std::optional<int> getUniqueIndex(ArrayRef<int> Mask);
+  static bool isMaskWithinRangeOrUndef(ArrayRef<int> Mask, int MinValue,
+                                       int MaxValue);
 
   unsigned getMaskValue(unsigned Idx) const {
     unsigned BaseIdx = Period == 0 ? Idx : Idx % Period;
