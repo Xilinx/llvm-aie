@@ -96,6 +96,16 @@ bool MaskMatch::isMaskWithAllUndefs(ArrayRef<int> Mask) {
   return true;
 }
 
+// Checks if the mask is in range, allowing some values to be
+// undef (-1), but not all.
+bool MaskMatch::isMaskWithinRangeOrUndef(ArrayRef<int> Mask, int MinValue,
+                                         int MaxValue) {
+  return llvm::any_of(Mask, [](int v) { return v != -1; }) &&
+         llvm::all_of(Mask, [=](int v) {
+           return v == -1 || (v >= MinValue && v <= MaxValue);
+         });
+}
+
 std::optional<unsigned> MaskMatch::getHeight(ArrayRef<int> Mask,
                                              unsigned Period) {
   for (unsigned I = 0; I < Mask.size(); ++I) {
@@ -2869,8 +2879,9 @@ bool llvm::matchShuffleToConcatExtractedSubvectors(MachineInstr &MI,
   return true;
 }
 
+/// Match something like this:
 ///  %1:_(s32) = COPY $r0
-///  %2:_(<16 x s32>) = G_IMPLICIT_DEF
+///  %2:_(<16 x s32>) = COPY $x0
 ///  %3:_(<16 x s32>) = G_AIE_BROADCAST_VECTOR %1:_(s32)
 ///  %0:_(<16 x s32>) = G_SHUFFLE_VECTOR %3(<16 x s32>), %2(<16 x s32>),
 ///  shufflemask(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
@@ -2891,23 +2902,43 @@ bool llvm::matchShuffleBcstToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
 
   ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
   const AIEBaseInstrInfo &AIETII = (const AIEBaseInstrInfo &)TII;
-  MachineInstr *SrcVec1 = MRI.getVRegDef(Src1Reg);
-  MachineInstr *SrcVec2 = MRI.getVRegDef(Src2Reg);
-  // Check if the first source is defined by a Broadcast.
-  if (SrcVec1->getOpcode() != AIETII.getGenericBroadcastVectorOpcode())
-    return false;
-  // Check if the second source is an undef.
-  if (SrcVec2->getOpcode() != TargetOpcode::G_IMPLICIT_DEF)
+  MachineInstr *Src1Vec = MRI.getVRegDef(Src1Reg);
+  MachineInstr *Src2Vec = MRI.getVRegDef(Src2Reg);
+  unsigned BcstOpcode = AIETII.getGenericBroadcastVectorOpcode();
+  bool IsSrc1Bcst = (Src1Vec->getOpcode() == BcstOpcode);
+  bool IsSrc2Bcst = (Src2Vec->getOpcode() == BcstOpcode);
+
+  // Check if the first or second source is defined by a Broadcast.
+  if (!IsSrc1Bcst && !IsSrc2Bcst)
     return false;
 
-  const unsigned NumSrcElems = Src1Ty.isVector() ? Src1Ty.getNumElements() : 1;
+  if (!DstTy.isVector() || !Src1Ty.isVector())
+    return false;
+
+  const unsigned NumSrcElems = Src1Ty.getNumElements();
   if (Mask.size() != NumSrcElems)
     return false;
 
-  if (MaskMatch::isMaskWithAllUndefs(Mask))
+  // Determine the valid mask range
+  const int MinSrc1Value = 0, MaxSrc1Value = NumSrcElems - 1;
+  const int MinSrc2Value = NumSrcElems, MaxSrc2Value = 2 * NumSrcElems - 1;
+  const bool IsValidSrc1Mask =
+      IsSrc1Bcst ? MaskMatch(0).isMaskWithinRangeOrUndef(Mask, MinSrc1Value,
+                                                         MaxSrc1Value)
+                 : false;
+  const bool IsValidSrc2Mask =
+      IsSrc2Bcst ? MaskMatch(0).isMaskWithinRangeOrUndef(Mask, MinSrc2Value,
+                                                         MaxSrc2Value)
+                 : false;
+  Register SrcReg;
+  if (IsSrc1Bcst && IsValidSrc1Mask)
+    SrcReg = Src1Reg;
+  else if (IsSrc2Bcst && IsValidSrc2Mask)
+    SrcReg = Src2Reg;
+  else
     return false;
 
-  MatchInfo = [=](MachineIRBuilder &B) { B.buildCopy(DstReg, Src1Reg); };
+  MatchInfo = [=](MachineIRBuilder &B) { B.buildCopy(DstReg, SrcReg); };
 
   return true;
 }
