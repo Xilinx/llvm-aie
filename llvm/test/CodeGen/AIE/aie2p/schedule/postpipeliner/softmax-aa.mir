@@ -32,38 +32,39 @@
   ; CHECK-NEXT:  .LBB0_2: // %for.cond2.preheader
   ; CHECK-NEXT:    // =>This Loop Header: Depth=1
   ; CHECK-NEXT:    // Child Loop BB0_3 Depth 2
-  ; CHECK-NEXT:    add.nc lc, r1, #0
+  ; CHECK-NEXT:    vldb wl2, [p1], #32; nopxm
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    add.nc lc, r1, #-3
   ; CHECK-NEXT:    movxm ls, #.LBB0_3
-  ; CHECK-NEXT:    movxm le, #.L_LEnd0
+  ; CHECK-NEXT:    vldb wl2, [p1], #32; movxm le, #.L_LEnd0
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; vmul.f dm0, x2, x0, r2
+  ; CHECK-NEXT:    nopa ; vldb wl2, [p1], #32; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; vmul.f dm0, x2, x0, r2
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_3: // %for.body5
   ; CHECK-NEXT:    // Parent Loop BB0_2 Depth=1
   ; CHECK-NEXT:    // => This Inner Loop Header: Depth=2
-  ; CHECK-NEXT:    vldb wl2, [p1], #32; nopx
+  ; CHECK-NEXT:    vldb wl2, [p1], #32; nopxm
+  ; CHECK-NEXT:    vst.conv.bf16.fp32 bmll0, [p0], #32
   ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:  .L_LEnd0:
+  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; vmul.f dm0, x2, x0, r2
+  ; CHECK-NEXT:  // %bb.4: // %for.cond.cleanup4
+  ; CHECK-NEXT:    // in Loop: Header=BB0_2 Depth=1
+  ; CHECK-NEXT:    nopx
+  ; CHECK-NEXT:    vst.conv.bf16.fp32 bmll0, [p0], #32
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vmul.f dm0, x2, x0, r2
   ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    vst.conv.bf16.fp32 bmll0, [p0], #32; add r0, r0, #-1
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:  .L_LEnd0:
-  ; CHECK-NEXT:    nopa ; nopb ; vst.conv.bf16.fp32 bmll0, [p0], #32; nopxm ; nopv
-  ; CHECK-NEXT:  // %bb.4: // %for.cond.cleanup4
-  ; CHECK-NEXT:    // in Loop: Header=BB0_2 Depth=1
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; add r0, r0, #-1; nopm ; nopv
+  ; CHECK-NEXT:    vst.conv.bf16.fp32 bmll0, [p0], #32
   ; CHECK-NEXT:    jnz r0, #.LBB0_2
   ; CHECK-NEXT:    nop // Delay Slot 5
   ; CHECK-NEXT:    nop // Delay Slot 4
@@ -139,38 +140,41 @@
   ; CHECK-NEXT:  .LBB1_2: // %for.cond2.preheader
   ; CHECK-NEXT:    // =>This Loop Header: Depth=1
   ; CHECK-NEXT:    // Child Loop BB1_3 Depth 2
-  ; CHECK-NEXT:    add.nc lc, r1, #0
+  ; CHECK-NEXT:    padda [p1], m0
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    vldb wl2, [p1], #32
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    add.nc lc, r1, #-3
   ; CHECK-NEXT:    movxm ls, #.LBB1_3
-  ; CHECK-NEXT:    movxm le, #.L_LEnd1
+  ; CHECK-NEXT:    vldb wl2, [p1], #32; movxm le, #.L_LEnd1
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; vmul.f dm0, x2, x0, r2
+  ; CHECK-NEXT:    nopa ; vldb wl2, [p1], #32; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    padda [p0], m0; paddb [p1], m0; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    padda [p0], m0; nopb ; nops ; nopxm ; vmul.f dm0, x2, x0, r2
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB1_3: // %for.body5
   ; CHECK-NEXT:    // Parent Loop BB1_2 Depth=1
   ; CHECK-NEXT:    // => This Inner Loop Header: Depth=2
-  ; CHECK-NEXT:    vldb wl2, [p1], #32; nopx
+  ; CHECK-NEXT:    vldb wl2, [p1], #32; nopxm
+  ; CHECK-NEXT:    vst.conv.bf16.fp32 bmll0, [p0], #32
   ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:  .L_LEnd1:
+  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; vmul.f dm0, x2, x0, r2
+  ; CHECK-NEXT:  // %bb.4: // %for.cond.cleanup4
+  ; CHECK-NEXT:    // in Loop: Header=BB1_2 Depth=1
+  ; CHECK-NEXT:    nopx
+  ; CHECK-NEXT:    vst.conv.bf16.fp32 bmll0, [p0], #32
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vmul.f dm0, x2, x0, r2
   ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    vst.conv.bf16.fp32 bmll0, [p0], #32; add r0, r0, #-1
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:  .L_LEnd1:
-  ; CHECK-NEXT:    nopa ; nopb ; vst.conv.bf16.fp32 bmll0, [p0], #32; nopxm ; nopv
-  ; CHECK-NEXT:  // %bb.4: // %for.cond.cleanup4
-  ; CHECK-NEXT:    // in Loop: Header=BB1_2 Depth=1
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; add r0, r0, #-1; nopm ; nopv
+  ; CHECK-NEXT:    vst.conv.bf16.fp32 bmll0, [p0], #32
   ; CHECK-NEXT:    jnz r0, #.LBB1_2
   ; CHECK-NEXT:    nop // Delay Slot 5
   ; CHECK-NEXT:    nop // Delay Slot 4
