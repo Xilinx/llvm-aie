@@ -419,7 +419,7 @@ static AliasResult aliasAIEIntrinsic(const Value *ValueA, const Value *ValueB,
   };
 
   // Both PHI nodes are recurrent.
-  if (!IsPHIRecurrent(PhiA) || !IsPHIRecurrent(PhiA)) {
+  if (!IsPHIRecurrent(PhiA) || !IsPHIRecurrent(PhiB)) {
     return AliasResult::MayAlias;
   }
 
