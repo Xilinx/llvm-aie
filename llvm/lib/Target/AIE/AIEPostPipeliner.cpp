@@ -399,6 +399,8 @@ bool PostPipeliner::computeLoopCarriedParameters() {
     LLVM_DEBUG(dbgs() << "  SU" << K << " : " << Me.Earliest << " - "
                       << Me.Latest << "\n");
   }
+
+  MinLength = computeMinScheduleLength();
   return true;
 }
 
@@ -451,23 +453,36 @@ void dumpGraph(const ScheduleInfo &Info, ScheduleDAGInstrs *DAG) {
   dbgs() << "}\n";
 }
 
-void dumpIntervals(const ScheduleInfo &Info, int MinLength) {
-  dbgs() << "Intervals:\n";
+void dumpSchedule(const ScheduleInfo &Info, int MinLength, int II,
+                  std::function<bool(int I, int K)> Select) {
   for (int K = 0; K < Info.NInstr; K++) {
     std::string Head = "SU" + std::to_string(K);
     dbgs() << Head;
     for (int I = Head.length() - 6; I < MinLength; I++) {
-      if (I == 0) {
+      if (I % II == 0) {
         dbgs() << "|";
       }
-      if (I >= Info[K].Earliest && I <= MinLength + Info[K].Latest) {
+      if (Select(I, K)) {
         dbgs() << "*";
       } else {
         dbgs() << " ";
       }
     }
-    dbgs() << "\n";
+    dbgs() << "]\n";
   }
+}
+
+void dumpIntervals(const ScheduleInfo &Info, int MinLength, int II) {
+  dbgs() << "Intervals:\n";
+  dumpSchedule(Info, MinLength, II, [&](int I, int K) {
+    return I >= Info[K].Earliest && I <= MinLength + Info[K].Latest;
+  });
+}
+
+void dumpCycles(const ScheduleInfo &Info, int MinLength, int II) {
+  dbgs() << "Cycles:\n";
+  dumpSchedule(Info, MinLength, II,
+               [&](int I, int K) { return I == Info[K].Cycle; });
 }
 
 int PostPipeliner::mostUrgent(PostPipelinerStrategy &Strategy) {
@@ -565,8 +580,9 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
     Info[N].Scheduled = true;
     DEBUG_FULL(dbgs() << "Scoreboard\n"; Scoreboard.dumpFull(););
   }
-  LLVM_DEBUG(dbgs() << "==== First iteration scheduled by " << Strategy.name()
-                    << "====\n");
+  DEBUG_SUMMARY(dbgs() << "==== First iteration scheduled by "
+                       << Strategy.name() << "====\n");
+  DEBUG_SUMMARY(dumpCycles(Info, MinLength, II));
   return true;
 }
 
@@ -823,7 +839,6 @@ static const ConfigStrategy::Configuration Strategies[] = {
 };
 
 bool PostPipeliner::tryHeuristics() {
-  int MinLength = computeMinScheduleLength();
   DEBUG_SUMMARY(dbgs() << "-- MinLength=" << MinLength << "\n");
 
   int HeuristicIndex = 0;
@@ -873,7 +888,7 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
   LLVM_DEBUG(dumpGraph(Info, DAG));
 
   computeLoopCarriedParameters();
-  LLVM_DEBUG(dumpIntervals(Info, computeMinScheduleLength()));
+  LLVM_DEBUG(dumpIntervals(Info, MinLength, II));
   if (!tryHeuristics()) {
     LLVM_DEBUG(dbgs() << "PostPipeliner: No schedule found\n");
     return false;
@@ -887,7 +902,7 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
 }
 
 bool PostPipeliner::checkStages() {
-  // we compute the stage in which each representative instruction runs,
+  // We compute the stage in which each representative instruction runs,
   // and take the maximum to decide on the stage count
   NStages = 0;
   for (int K = 0; K < NInstr; K++) {
