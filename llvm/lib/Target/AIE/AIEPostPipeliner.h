@@ -162,6 +162,7 @@ class PostPipeliner {
   /// should hold:
   /// Cycle(N) mod II == Cycle(N % NInstr) mod II
   ScheduleInfo Info;
+  int MinLength;
 
   // The scoreboard and its depth
   ResourceScoreboard<FuncUnitWrapper> Scoreboard;
