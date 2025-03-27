@@ -53,6 +53,7 @@ MCDisassembler *createAIE2PDisassembler(const Target &T,
 // Include generated operand decoder tables and methods.
 #include "AIE2PDisassembler.inc"
 
+namespace {
 SLOTDECODERDecl(Lda);
 SLOTDECODERDecl(Ldb);
 SLOTDECODERDecl(Alu);
@@ -61,6 +62,7 @@ SLOTDECODERDecl(Mv);
 SLOTDECODERDecl(Vec);
 SLOTDECODERDecl(Lng);
 SLOTDECODERDecl(Nop);
+} // namespace
 
 #include "AIE2PGenDecoderMethods.h"
 
@@ -68,6 +70,7 @@ SLOTDECODERDecl(Nop);
 
 #include "AIE2PGenDecoderMethods.inc"
 
+namespace {
 /// Slot decoders
 template <typename InsnType>
 DecodeStatus decodeAIE2PSlot(const uint8_t *DecoderTable, MCInst &Inst,
@@ -138,8 +141,6 @@ DecodeStatus decodeLngSlot(MCInst &Inst, InsnType &Imm, int64_t Address,
   LLVM_DEBUG(dbgs() << "Decode Lng Instruction\n");
   return decodeAIE2PSlot(DecoderTableLng48, Inst, Imm, Address, Decoder);
 }
-
-namespace {
 
 /// Interpret the code bits to determine the format size.
 int formatSize(ArrayRef<uint8_t> Bytes) {
