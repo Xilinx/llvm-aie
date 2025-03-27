@@ -84,6 +84,22 @@ static bool isScalarizedVectorOpIdiomLoop(const Loop *L) {
   return IsVectorLoopIdiom;
 }
 
+static bool isScalarLoop(const Loop *L) {
+  if (L->getNumBlocks() != 1)
+    return false;
+
+  const BasicBlock *LoopBlock = L->getHeader();
+  for (auto &I : *LoopBlock) {
+    if (I.getType()->isVectorTy())
+      return false;
+    if (auto SI = dyn_cast<StoreInst>(&I)) {
+      if (SI->getValueOperand()->getType()->isVectorTy())
+        return false;
+    }
+  }
+  return true;
+}
+
 void AIE2PTTIImpl::getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
                                            TTI::UnrollingPreferences &UP,
                                            OptimizationRemarkEmitter *ORE) {
@@ -91,7 +107,7 @@ void AIE2PTTIImpl::getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
   BaseT::getUnrollingPreferences(L, SE, UP, ORE);
   Common.adjustUnrollingPreferences(L, SE, UP, ORE);
 
-  if (isScalarizedVectorOpIdiomLoop(L)) {
+  if (isScalarizedVectorOpIdiomLoop(L) || isScalarLoop(L)) {
     UP.Threshold = LoopIdiomUnrollingThreshold;
   } else if (UnrollOnlyLoopsWithPragma && !AIELoopUtils::hasUnrollPragma(L)) {
     // If we don't have unroll pragma, block unroll by zeroing the
