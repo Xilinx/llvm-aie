@@ -10,6 +10,8 @@
 #include "AIELoopUtils.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/Metadata.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Transforms/Utils/LoopUtils.h"
 #include "llvm/Transforms/Utils/UnrollLoop.h"
 #include <optional>
@@ -131,7 +133,8 @@ std::optional<const MDNode *> getLoopMetadata(const MDNode *LoopID,
                                               const StringRef Name) {
   // First operand should refer to the loop id itself.
   assert(LoopID->getNumOperands() > 0 && "requires at least one operand");
-  assert(LoopID->getOperand(0) == LoopID && "invalid loop id");
+  assert(dyn_cast_or_null<MDNode>(LoopID->getOperand(0)) == LoopID &&
+         "invalid loop id");
 
   for (const MDOperand &MDO : llvm::drop_begin(LoopID->operands())) {
     const MDNode *MD = dyn_cast<MDNode>(MDO);
