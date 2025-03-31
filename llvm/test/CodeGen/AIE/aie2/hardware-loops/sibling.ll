@@ -12,11 +12,9 @@ define void @sibling(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef
 ; CHECK-LABEL: sibling:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %for.body.lr.ph
-; CHECK-NEXT:    mova r2, #0; nopxm
-; CHECK-NEXT:    add.nc r0, r0, #-1
-; CHECK-NEXT:    mova r4, #2
+; CHECK-NEXT:    nopa ; nopb ; nopx ; add.nc r0, r0, #-1
 ; CHECK-NEXT:    movxm p2, #.LBB0_1
-; CHECK-NEXT:    mova r5, #0
+; CHECK-NEXT:    mova r2, #0; movx r5, #0; mov r4, #2
 ; CHECK-NEXT:    lda r3, [p0, #0]
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_1: // %for.body

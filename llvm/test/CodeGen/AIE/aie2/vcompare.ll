@@ -11,12 +11,12 @@ define i64 @test_ge_v64uint8(<64 x i8> %a, <64 x i8> %b) {
 ; CHECK-LABEL: test_ge_v64uint8:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    vge.d8 r25:r24, x0, x2 // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r0, r24 // Delay Slot 2
-; CHECK-NEXT:    mov r1, r25 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    vge.d8 r25:r24, x0, x2 // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    or r1, r25, r25; mov r0, r24 // Delay Slot 1
 entry:
   %0 = tail call <2 x i32> @llvm.aie2.vge8(<64 x i8> %a, <64 x i8> %b, i32 0)
   %1 = bitcast <2 x i32> %0 to i64
@@ -27,12 +27,12 @@ define i64 @test_ge_v64int8(<64 x i8> %a, <64 x i8> %b) {
 ; CHECK-LABEL: test_ge_v64int8:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    vge.s8 r25:r24, x0, x2 // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r0, r24 // Delay Slot 2
-; CHECK-NEXT:    mov r1, r25 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    vge.s8 r25:r24, x0, x2 // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    or r1, r25, r25; mov r0, r24 // Delay Slot 1
 entry:
   %0 = tail call <2 x i32> @llvm.aie2.vge8(<64 x i8> %a, <64 x i8> %b, i32 1)
   %1 = bitcast <2 x i32> %0 to i64
@@ -43,12 +43,12 @@ define i32 @test_ge_v32uint16(<32 x i16> %a, <32 x i16> %b) {
 ; CHECK-LABEL: test_ge_v32uint16:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    vge.d16 r16, x0, x2 // Delay Slot 4
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    vge.d16 r16, x0, x2 // Delay Slot 3
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1; mov r0, r16 // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.vge16(<32 x i16> %a, <32 x i16> %b, i32 0)
   ret i32 %0
@@ -58,12 +58,12 @@ define i32 @test_ge_v32int16(<32 x i16> %a, <32 x i16> %b) {
 ; CHECK-LABEL: test_ge_v32int16:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    vge.s16 r16, x0, x2 // Delay Slot 4
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    vge.s16 r16, x0, x2 // Delay Slot 3
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1; mov r0, r16 // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.vge16(<32 x i16> %a, <32 x i16> %b, i32 1)
   ret i32 %0
@@ -73,12 +73,12 @@ define i32 @test_ge_v16uint32(<16 x i32> %a, <16 x i32> %b) {
 ; CHECK-LABEL: test_ge_v16uint32:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    vge.d32 r16, x0, x2 // Delay Slot 4
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    vge.d32 r16, x0, x2 // Delay Slot 3
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1; mov r0, r16 // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.vge32(<16 x i32> %a, <16 x i32> %b, i32 0)
   ret i32 %0
@@ -88,12 +88,12 @@ define i32 @test_ge_v16int32(<16 x i32> %a, <16 x i32> %b) {
 ; CHECK-LABEL: test_ge_v16int32:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    vge.s32 r16, x0, x2 // Delay Slot 4
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    vge.s32 r16, x0, x2 // Delay Slot 3
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1; mov r0, r16 // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.vge32(<16 x i32> %a, <16 x i32> %b, i32 1)
   ret i32 %0
@@ -103,13 +103,12 @@ define i64 @test_ge_v64int8_sgn(<64 x i8> %a, <64 x i8> %b, i1 zeroext %sgn) {
 ; CHECK-LABEL: test_ge_v64int8_sgn:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopx ; mov crVaddSign, r2
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vge.d8 r25:r24, x0, x2 // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
-; CHECK-NEXT:    mov r0, r24 // Delay Slot 2
-; CHECK-NEXT:    mov r1, r25 // Delay Slot 1
+; CHECK-NEXT:    nopa ; ret lr ; nopm
+; CHECK-NEXT:    mov crVaddSign, r2 // Delay Slot 5
+; CHECK-NEXT:    vge.d8 r25:r24, x0, x2 // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
+; CHECK-NEXT:    or r1, r25, r25; mov r0, r24 // Delay Slot 1
 entry:
   %conv.i = zext i1 %sgn to i32
   %0 = tail call <2 x i32> @llvm.aie2.vge8(<64 x i8> %a, <64 x i8> %b, i32 %conv.i)
@@ -121,13 +120,12 @@ define i32 @test_ge_v32uint16_sgn(<32 x i16> %a, <32 x i16> %b, i1 zeroext %sgn)
 ; CHECK-LABEL: test_ge_v32uint16_sgn:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; mov crVaddSign, r1
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vge.d16 r16, x0, x2 // Delay Slot 5
-; CHECK-NEXT:    or r2, r16, r16 // Delay Slot 4
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r2 // Delay Slot 1
+; CHECK-NEXT:    nopa ; nopb ; ret lr
+; CHECK-NEXT:    mov crVaddSign, r1 // Delay Slot 5
+; CHECK-NEXT:    vge.d16 r16, x0, x2 // Delay Slot 4
+; CHECK-NEXT:    or r2, r16, r16 // Delay Slot 3
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
+; CHECK-NEXT:    or r16, r2, r2; mov r0, r16 // Delay Slot 1
 entry:
   %conv.i = zext i1 %sgn to i32
   %0 = tail call i32 @llvm.aie2.vge16(<32 x i16> %a, <32 x i16> %b, i32 %conv.i)
@@ -138,13 +136,12 @@ define i32 @test_ge_v16int32_sgn(<16 x i32> %a, <16 x i32> %b, i1 zeroext %sgn) 
 ; CHECK-LABEL: test_ge_v16int32_sgn:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; mov crVaddSign, r1
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vge.d32 r16, x0, x2 // Delay Slot 5
-; CHECK-NEXT:    or r2, r16, r16 // Delay Slot 4
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r2 // Delay Slot 1
+; CHECK-NEXT:    nopa ; nopb ; ret lr
+; CHECK-NEXT:    mov crVaddSign, r1 // Delay Slot 5
+; CHECK-NEXT:    vge.d32 r16, x0, x2 // Delay Slot 4
+; CHECK-NEXT:    or r2, r16, r16 // Delay Slot 3
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
+; CHECK-NEXT:    or r16, r2, r2; mov r0, r16 // Delay Slot 1
 entry:
   %conv.i = zext i1 %sgn to i32
   %0 = tail call i32 @llvm.aie2.vge32(<16 x i32> %a, <16 x i32> %b, i32 %conv.i)
@@ -155,12 +152,12 @@ define i64 @test_lt_v64uint8(<64 x i8> %a, <64 x i8> %b) {
 ; CHECK-LABEL: test_lt_v64uint8:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    vlt.d8 r25:r24, x0, x2 // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r0, r24 // Delay Slot 2
-; CHECK-NEXT:    mov r1, r25 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    vlt.d8 r25:r24, x0, x2 // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    or r1, r25, r25; mov r0, r24 // Delay Slot 1
 entry:
   %0 = tail call <2 x i32> @llvm.aie2.vlt8(<64 x i8> %a, <64 x i8> %b, i32 0)
   %1 = bitcast <2 x i32> %0 to i64
@@ -171,12 +168,12 @@ define i64 @test_lt_v64int8(<64 x i8> %a, <64 x i8> %b) {
 ; CHECK-LABEL: test_lt_v64int8:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    vlt.s8 r25:r24, x0, x2 // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r0, r24 // Delay Slot 2
-; CHECK-NEXT:    mov r1, r25 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    vlt.s8 r25:r24, x0, x2 // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    or r1, r25, r25; mov r0, r24 // Delay Slot 1
 entry:
   %0 = tail call <2 x i32> @llvm.aie2.vlt8(<64 x i8> %a, <64 x i8> %b, i32 1)
   %1 = bitcast <2 x i32> %0 to i64
@@ -187,12 +184,12 @@ define i32 @test_lt_v32uint16(<32 x i16> %a, <32 x i16> %b) {
 ; CHECK-LABEL: test_lt_v32uint16:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    vlt.d16 r16, x0, x2 // Delay Slot 4
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    vlt.d16 r16, x0, x2 // Delay Slot 3
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1; mov r0, r16 // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.vlt16(<32 x i16> %a, <32 x i16> %b, i32 0)
   ret i32 %0
@@ -202,12 +199,12 @@ define i32 @test_lt_v32int16(<32 x i16> %a, <32 x i16> %b) {
 ; CHECK-LABEL: test_lt_v32int16:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    vlt.s16 r16, x0, x2 // Delay Slot 4
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    vlt.s16 r16, x0, x2 // Delay Slot 3
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1; mov r0, r16 // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.vlt16(<32 x i16> %a, <32 x i16> %b, i32 1)
   ret i32 %0
@@ -217,12 +214,12 @@ define i32 @test_lt_v16uint32(<16 x i32> %a, <16 x i32> %b) {
 ; CHECK-LABEL: test_lt_v16uint32:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    vlt.d32 r16, x0, x2 // Delay Slot 4
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    vlt.d32 r16, x0, x2 // Delay Slot 3
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1; mov r0, r16 // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.vlt32(<16 x i32> %a, <16 x i32> %b, i32 0)
   ret i32 %0
@@ -232,12 +229,12 @@ define i32 @test_lt_v16int32(<16 x i32> %a, <16 x i32> %b) {
 ; CHECK-LABEL: test_lt_v16int32:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    vlt.s32 r16, x0, x2 // Delay Slot 4
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    vlt.s32 r16, x0, x2 // Delay Slot 3
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1; mov r0, r16 // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.vlt32(<16 x i32> %a, <16 x i32> %b, i32 1)
   ret i32 %0
@@ -247,13 +244,12 @@ define i64 @test_lt_v64uint8_sgn(<64 x i8> %a, <64 x i8> %b, i1 zeroext %sgn) {
 ; CHECK-LABEL: test_lt_v64uint8_sgn:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopx ; mov crVaddSign, r2
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vlt.d8 r25:r24, x0, x2 // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
-; CHECK-NEXT:    mov r0, r24 // Delay Slot 2
-; CHECK-NEXT:    mov r1, r25 // Delay Slot 1
+; CHECK-NEXT:    nopa ; ret lr ; nopm
+; CHECK-NEXT:    mov crVaddSign, r2 // Delay Slot 5
+; CHECK-NEXT:    vlt.d8 r25:r24, x0, x2 // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
+; CHECK-NEXT:    or r1, r25, r25; mov r0, r24 // Delay Slot 1
 entry:
   %conv.i = zext i1 %sgn to i32
   %0 = tail call <2 x i32> @llvm.aie2.vlt8(<64 x i8> %a, <64 x i8> %b, i32 %conv.i)
@@ -265,13 +261,12 @@ define i32 @test_lt_v32int16_sgn(<32 x i16> %a, <32 x i16> %b, i1 zeroext %sgn) 
 ; CHECK-LABEL: test_lt_v32int16_sgn:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; mov crVaddSign, r1
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vlt.d16 r16, x0, x2 // Delay Slot 5
-; CHECK-NEXT:    or r2, r16, r16 // Delay Slot 4
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r2 // Delay Slot 1
+; CHECK-NEXT:    nopa ; nopb ; ret lr
+; CHECK-NEXT:    mov crVaddSign, r1 // Delay Slot 5
+; CHECK-NEXT:    vlt.d16 r16, x0, x2 // Delay Slot 4
+; CHECK-NEXT:    or r2, r16, r16 // Delay Slot 3
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
+; CHECK-NEXT:    or r16, r2, r2; mov r0, r16 // Delay Slot 1
 entry:
   %conv.i = zext i1 %sgn to i32
   %0 = tail call i32 @llvm.aie2.vlt16(<32 x i16> %a, <32 x i16> %b, i32 %conv.i)
@@ -282,13 +277,12 @@ define i32 @test_lt_v16uint32_sgn(<16 x i32> %a, <16 x i32> %b, i1 zeroext %sgn)
 ; CHECK-LABEL: test_lt_v16uint32_sgn:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; mov crVaddSign, r1
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vlt.d32 r16, x0, x2 // Delay Slot 5
-; CHECK-NEXT:    or r2, r16, r16 // Delay Slot 4
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r2 // Delay Slot 1
+; CHECK-NEXT:    nopa ; nopb ; ret lr
+; CHECK-NEXT:    mov crVaddSign, r1 // Delay Slot 5
+; CHECK-NEXT:    vlt.d32 r16, x0, x2 // Delay Slot 4
+; CHECK-NEXT:    or r2, r16, r16 // Delay Slot 3
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
+; CHECK-NEXT:    or r16, r2, r2; mov r0, r16 // Delay Slot 1
 entry:
   %conv.i = zext i1 %sgn to i32
   %0 = tail call i32 @llvm.aie2.vlt32(<16 x i32> %a, <16 x i32> %b, i32 %conv.i)
@@ -306,12 +300,12 @@ define i32 @test_lt_v32bfloat16(<32 x bfloat> %a, <32 x bfloat> %b) {
 ; CHECK-LABEL: test_lt_v32bfloat16:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    vlt.bf16 r16, x0, x2 // Delay Slot 4
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    vlt.bf16 r16, x0, x2 // Delay Slot 3
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1; mov r0, r16 // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.vltbf16(<32 x bfloat> %a, <32 x bfloat> %b)
   ret i32 %0
@@ -321,12 +315,12 @@ define i32 @test_ge_v32bfloat16(<32 x bfloat> %a, <32 x bfloat> %b) {
 ; CHECK-LABEL: test_ge_v32bfloat16:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    vge.bf16 r16, x0, x2 // Delay Slot 4
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    vge.bf16 r16, x0, x2 // Delay Slot 3
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1; mov r0, r16 // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.vgebf16(<32 x bfloat> %a, <32 x bfloat> %b)
   ret i32 %0
@@ -336,12 +330,12 @@ define i32 @test_le_v32bfloat16(<32 x bfloat> %a, <32 x bfloat> %b) {
 ; CHECK-LABEL: test_le_v32bfloat16:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    vge.bf16 r16, x2, x0 // Delay Slot 4
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    vge.bf16 r16, x2, x0 // Delay Slot 3
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1; mov r0, r16 // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.vgebf16(<32 x bfloat> %b, <32 x bfloat> %a)
   ret i32 %0
@@ -351,12 +345,12 @@ define i32 @test_gt_v32bfloat16(<32 x bfloat> %a, <32 x bfloat> %b) {
 ; CHECK-LABEL: test_gt_v32bfloat16:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    vlt.bf16 r16, x2, x0 // Delay Slot 4
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    vlt.bf16 r16, x2, x0 // Delay Slot 3
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1; mov r0, r16 // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.vltbf16(<32 x bfloat> %b, <32 x bfloat> %a)
   ret i32 %0
@@ -366,13 +360,12 @@ define i32 @test_ltz_v32bfloat16(<32 x bfloat> %a) {
 ; CHECK-LABEL: test_ltz_v32bfloat16:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nop ; movxm r0, #32768
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vbcst.16 x2, r0 // Delay Slot 5
-; CHECK-NEXT:    vlt.bf16 r16, x0, x2 // Delay Slot 4
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nopa ; ret lr
+; CHECK-NEXT:    movxm r0, #32768 // Delay Slot 5
+; CHECK-NEXT:    vbcst.16 x2, r0 // Delay Slot 4
+; CHECK-NEXT:    vlt.bf16 r16, x0, x2 // Delay Slot 3
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1; mov r0, r16 // Delay Slot 1
 entry:
   %0 = tail call <32 x i16> @llvm.aie2.vbroadcast16.I512(i32 32768)
   %1 = bitcast <32 x i16> %0 to <32 x bfloat>
@@ -384,13 +377,12 @@ define i32 @test_gtz_v32bfloat16(<32 x bfloat> %a) {
 ; CHECK-LABEL: test_gtz_v32bfloat16:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r0, #0; nopb ; nopx
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vbcst.16 x2, r0 // Delay Slot 5
-; CHECK-NEXT:    vlt.bf16 r16, x2, x0 // Delay Slot 4
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nopa ; nopb ; ret lr
+; CHECK-NEXT:    mova r0, #0 // Delay Slot 5
+; CHECK-NEXT:    vbcst.16 x2, r0 // Delay Slot 4
+; CHECK-NEXT:    vlt.bf16 r16, x2, x0 // Delay Slot 3
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1; mov r0, r16 // Delay Slot 1
 entry:
   %0 = tail call <32 x i16> @llvm.aie2.vbroadcast16.I512(i32 0)
   %1 = bitcast <32 x i16> %0 to <32 x bfloat>
@@ -403,13 +395,12 @@ define i32 @test_eq_v32bfloat16(<32 x bfloat> %a, <32 x bfloat> %b) {
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    mov r1, r16
-; CHECK-NEXT:    vge.bf16 r16, x2, x0
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vge.bf16 r17, x0, x2 // Delay Slot 5
-; CHECK-NEXT:    or r2, r17, r17 // Delay Slot 4
-; CHECK-NEXT:    and r0, r17, r16 // Delay Slot 3
-; CHECK-NEXT:    mov r17, r2 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    vge.bf16 r16, x2, x0 // Delay Slot 5
+; CHECK-NEXT:    vge.bf16 r17, x0, x2 // Delay Slot 4
+; CHECK-NEXT:    or r2, r17, r17 // Delay Slot 3
+; CHECK-NEXT:    and r0, r17, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1; mov r17, r2 // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.vgebf16(<32 x bfloat> %b, <32 x bfloat> %a)
   %1 = tail call i32 @llvm.aie2.vgebf16(<32 x bfloat> %a, <32 x bfloat> %b)
@@ -422,13 +413,12 @@ define i32 @test_ne_v32bfloat16(<32 x bfloat> %a, <32 x bfloat> %b) {
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    mov r1, r16
-; CHECK-NEXT:    vlt.bf16 r16, x0, x2
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vlt.bf16 r17, x2, x0 // Delay Slot 5
-; CHECK-NEXT:    or r2, r17, r17 // Delay Slot 4
-; CHECK-NEXT:    or r0, r17, r16 // Delay Slot 3
-; CHECK-NEXT:    mov r17, r2 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    vlt.bf16 r16, x0, x2 // Delay Slot 5
+; CHECK-NEXT:    vlt.bf16 r17, x2, x0 // Delay Slot 4
+; CHECK-NEXT:    or r2, r17, r17 // Delay Slot 3
+; CHECK-NEXT:    or r0, r17, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1; mov r17, r2 // Delay Slot 1
 entry:
   %0 = tail call i32 @llvm.aie2.vltbf16(<32 x bfloat> %a, <32 x bfloat> %b)
   %1 = tail call i32 @llvm.aie2.vltbf16(<32 x bfloat> %b, <32 x bfloat> %a)

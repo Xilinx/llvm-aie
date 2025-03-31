@@ -68,10 +68,10 @@ define void @callmemset(ptr %p) {
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; jl #memset
-; CHECK-NEXT:    mova r0, #42 // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4
 ; CHECK-NEXT:    st lr, [sp, #-32] // 4-byte Folded Spill Delay Slot 3
-; CHECK-NEXT:    mova r1, #40 // Delay Slot 2
+; CHECK-NEXT:    mova r0, #42; movx r1, #40 // Delay Slot 2
 ; CHECK-NEXT:    mov p1, p0 // Delay Slot 1
 ; CHECK-NEXT:    lda lr, [sp, #-32] // 4-byte Folded Reload
 ; CHECK-NEXT:    nop

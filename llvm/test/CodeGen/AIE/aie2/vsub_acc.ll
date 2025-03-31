@@ -27,10 +27,8 @@ define dso_local noundef <16 x i64> @test_sub_conf(<16 x i64> noundef %acc1, <16
 ; CHECK-LABEL: test_sub_conf:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r4, #10; nopb ; nopx
-; CHECK-NEXT:    mova r5, #12
-; CHECK-NEXT:    mova r6, #13
-; CHECK-NEXT:    mova r7, #2
+; CHECK-NEXT:    mova r4, #10; nopxm
+; CHECK-NEXT:    mova r5, #12; movx r7, #2; mov r6, #13
 ; CHECK-NEXT:    lshl r1, r1, r4
 ; CHECK-NEXT:    lshl r2, r2, r5
 ; CHECK-NEXT:    lshl r3, r3, r6

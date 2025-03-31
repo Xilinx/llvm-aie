@@ -106,11 +106,11 @@ define <2 x i32> @test_64bit(<2 x i32> %vec, i32 %c) {
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopx // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r16, r18 // Delay Slot 2
-; CHECK-NEXT:    mov r17, r0 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    or r17, r0, r0; mov r16, r18 // Delay Slot 1
 entry:
   %vecins = insertelement <2 x i32> %vec, i32 %c, i32 1
   ret <2 x i32> %vecins
