@@ -862,6 +862,10 @@ def : Pat<(int_aie2p_vshift_I512_I512 VEC512:$s1, VEC512:$s2, mSs:$pre, eR:$shif
 def : Pat<(int_aie2p_vshift_bf512_bf512 VEC512:$s1, VEC512:$s2, mSs:$pre, eR:$shift),
            (VSHIFT_ALIGN VEC512:$s1, mSs:$pre, VEC512:$s2, eR:$shift)>;
 
+// Combine broadcast + shift into VPUSH_hi_64
+def : Pat<(int_aie2p_vshift_I512_I512 (v16i32 VEC512:$s0), (v16i32 (bcst_vector_node(v2i32 eL : $s1))), 0x0, 0x8),
+           (VPUSH_hi_64 VEC512:$s0, eL:$s1)>;
+
 // VINSERT
 def : Pat<(int_aie2p_vinsert32_bf512 VEC512:$s1, eR29:$idx, eR:$s0),
            (VINSERT_32_mR29_insert VEC512:$s1, eR29:$idx, eR:$s0)>;
