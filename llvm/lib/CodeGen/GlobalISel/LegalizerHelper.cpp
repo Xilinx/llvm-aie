@@ -8556,18 +8556,11 @@ LegalizerHelper::lowerMemset(MachineInstr &MI, Register Dst, Register Val,
                              bool IsVolatile) {
   auto &MF = *MI.getParent()->getParent();
   const auto &TLI = *MF.getSubtarget().getTargetLowering();
-  auto &DL = MF.getDataLayout();
-  LLVMContext &C = MF.getFunction().getContext();
 
   assert(KnownLen != 0 && "Have a zero length memset length!");
 
-  bool DstAlignCanChange = false;
-  MachineFrameInfo &MFI = MF.getFrameInfo();
+  const bool DstAlignCanChange = false;
   bool OptSize = shouldLowerMemFuncForSize(MF);
-
-  MachineInstr *FIDef = getOpcodeDef(TargetOpcode::G_FRAME_INDEX, Dst, MRI);
-  if (FIDef && !MFI.isFixedObjectIndex(FIDef->getOperand(1).getIndex()))
-    DstAlignCanChange = true;
 
   unsigned Limit = TLI.getMaxStoresPerMemset(OptSize);
   std::vector<LLT> MemOps;
@@ -8586,19 +8579,6 @@ LegalizerHelper::lowerMemset(MachineInstr &MI, Register Dst, Register Val,
                                      DstPtrInfo.getAddrSpace(), ~0u,
                                      MF.getFunction().getAttributes(), TLI))
     return UnableToLegalize;
-
-  if (DstAlignCanChange) {
-    // Get an estimate of the type from the LLT.
-    Type *IRTy = getTypeForLLT(MemOps[0], C);
-    Align NewAlign = DL.getABITypeAlign(IRTy);
-    if (NewAlign > Alignment) {
-      Alignment = NewAlign;
-      unsigned FI = FIDef->getOperand(1).getIndex();
-      // Give the stack frame object a larger alignment if needed.
-      if (MFI.getObjectAlign(FI) < Alignment)
-        MFI.setObjectAlignment(FI, Alignment);
-    }
-  }
 
   MachineIRBuilder MIB(MI);
   // Find the largest store and generate the bit pattern for it.
