@@ -785,26 +785,23 @@ define <16 x i32> @shuffle_vector_to_extract_insert_elt_max_exceptions_combine(<
 ; CHECK-LABEL: shuffle_vector_to_extract_insert_elt_max_exceptions_combine:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopx ; vextract.32 r0, x2, #6, vaddsign1
+; CHECK-NEXT:    nopx ; vextract.32 r0, x2, #6, vaddsign1
 ; CHECK-NEXT:    mova r29, #9
 ; CHECK-NEXT:    vinsert.32 x0, x2, r29, r0
-; CHECK-NEXT:    vextract.32 r0, x2, #5, vaddsign1
+; CHECK-NEXT:    vextract.64 r1:r0, x2, #2, vaddsign1
 ; CHECK-NEXT:    mova r29, #10
-; CHECK-NEXT:    vinsert.32 x0, x0, r29, r0
-; CHECK-NEXT:    vextract.32 r0, x2, #4, vaddsign1
+; CHECK-NEXT:    vinsert.32 x0, x0, r29, r1
 ; CHECK-NEXT:    mova r29, #11
 ; CHECK-NEXT:    vinsert.32 x0, x0, r29, r0
-; CHECK-NEXT:    vextract.32 r0, x2, #3, vaddsign1
+; CHECK-NEXT:    vextract.64 r1:r0, x2, #1, vaddsign1
 ; CHECK-NEXT:    mova r29, #12
-; CHECK-NEXT:    vinsert.32 x0, x0, r29, r0
-; CHECK-NEXT:    vextract.32 r0, x2, #2, vaddsign1
+; CHECK-NEXT:    vinsert.32 x0, x0, r29, r1
 ; CHECK-NEXT:    mova r29, #13
 ; CHECK-NEXT:    vinsert.32 x0, x0, r29, r0
-; CHECK-NEXT:    mova r29, #14
-; CHECK-NEXT:    vextract.32 r0, x2, #1, vaddsign1
+; CHECK-NEXT:    vextract.64 r1:r0, x2, #0, vaddsign1
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vinsert.32 x0, x0, r29, r0 // Delay Slot 5
-; CHECK-NEXT:    vextract.32 r0, x2, #0, vaddsign1 // Delay Slot 4
+; CHECK-NEXT:    mova r29, #14 // Delay Slot 5
+; CHECK-NEXT:    vinsert.32 x0, x0, r29, r1 // Delay Slot 4
 ; CHECK-NEXT:    mova r29, #15 // Delay Slot 3
 ; CHECK-NEXT:    vinsert.32 x0, x0, r29, r0 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
