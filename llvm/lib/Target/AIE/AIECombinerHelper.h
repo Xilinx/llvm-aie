@@ -277,6 +277,10 @@ bool matchShuffleBcstToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
 bool matchShuffleToExtractInsertElt(MachineInstr &MI, MachineRegisterInfo &MRI,
                                     BuildFnTy &MatchInfo);
 
+bool matchPairedExtracts(MachineInstr &MI, MachineRegisterInfo &MRI,
+                         CombinerHelper &Helper, const TargetInstrInfo &TII,
+                         BuildFnTy &MatchInfo);
+
 } // namespace llvm
 
 #endif

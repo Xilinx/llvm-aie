@@ -9,6 +9,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIECombinerHelper.h"
+#include "AIE.h"
 #include "AIE2TargetMachine.h"
 #include "AIEBaseInstrInfo.h"
 #include "AIETargetMachine.h"
@@ -2907,6 +2908,104 @@ bool llvm::matchShuffleBcstToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
     return false;
 
   MatchInfo = [=](MachineIRBuilder &B) { B.buildCopy(DstReg, Src1Reg); };
+
+  return true;
+}
+
+/// Match:
+/// %35:_(s32) = G_CONSTANT i32 0
+/// %38:_(s32) = G_CONSTANT i32 1
+/// %34:_(s32) = G_EXTRACT_VECTOR_ELT %33(<32 x s32>), %35(s32)
+/// %37:_(s32) = G_EXTRACT_VECTOR_ELT %33(<32 x s32>), %38(s32)
+/// To convert to:
+/// %35:_(s32) = G_CONSTANT i32 0
+/// %50:_(<16 x s64>) = G_BITCAST %33(<32 x s32>)
+/// %60:_(s64) = G_EXTRACT_VECTOR_ELT %50(<16 x s64>), %35(s32)
+/// %34:_(s32), %37:_(s32) = G_UNMERGE_VALUES %60(s64)
+bool llvm::matchPairedExtracts(MachineInstr &MI, MachineRegisterInfo &MRI,
+                               CombinerHelper &Helper,
+                               const TargetInstrInfo &TII,
+                               BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TargetOpcode::G_EXTRACT_VECTOR_ELT);
+  const AIEBaseInstrInfo &AIETII = (const AIEBaseInstrInfo &)TII;
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register Src1Reg = MI.getOperand(1).getReg();
+  const LLT DstTy = MRI.getType(DstReg);
+  const LLT Src1Ty = MRI.getType(Src1Reg);
+  const LLT S64 = LLT::scalar(64);
+  const LLT S32 = LLT::scalar(32);
+
+  if (Src1Ty.getSizeInBits() < AIETII.getBasicVectorBitSize())
+    return false;
+
+  if (DstTy != S32)
+    return false;
+
+  auto GetConstantIndex =
+      [&](const MachineInstr &ExtractMI) -> std::optional<unsigned> {
+    const Register IndexReg = ExtractMI.getOperand(2).getReg();
+    if (auto Index = getIConstantVRegValWithLookThrough(IndexReg, MRI))
+      return Index->Value.getZExtValue();
+    return std::nullopt;
+  };
+
+  auto IndexCst = GetConstantIndex(MI);
+
+  if (!IndexCst)
+    return false;
+
+  bool isEven = *IndexCst % 2 == 0;
+
+  auto FindPairedExtract = [&](unsigned PairedIndex) -> MachineInstr * {
+    for (auto &UseMI : MRI.use_nodbg_instructions(Src1Reg)) {
+      if (UseMI.getOpcode() != TargetOpcode::G_EXTRACT_VECTOR_ELT)
+        continue;
+      if (UseMI.getParent() != MI.getParent())
+        continue;
+      // This helps to simplify the code in relation to
+      // instruction build point. If we miss some opportunity now,
+      // we will catch in the next combiner run.
+      if (!Helper.dominates(MI, UseMI))
+        continue;
+      const Register UseDstReg = UseMI.getOperand(0).getReg();
+      const LLT UseDstTy = MRI.getType(UseDstReg);
+      if (UseDstTy != S32)
+        continue;
+      auto NextIndexCst = GetConstantIndex(UseMI);
+      if (!NextIndexCst)
+        continue;
+      if (*NextIndexCst == PairedIndex)
+        return &UseMI;
+    }
+    return nullptr;
+  };
+
+  const unsigned NextIndex = isEven ? *IndexCst + 1 : *IndexCst - 1;
+  MachineInstr *NextExtractMI = FindPairedExtract(NextIndex);
+  if (!NextExtractMI)
+    return false;
+
+  MatchInfo = [=, &MRI](MachineIRBuilder &B) {
+    const Register NewExtendedDstReg = MRI.createGenericVirtualRegister(S64);
+    const Register NewIdxReg = B.buildConstant(S32, *IndexCst / 2).getReg(0);
+
+    // Bitcast from <2n x s32> to <n x s64>
+    const LLT NewType = LLT::fixed_vector(Src1Ty.getNumElements() / 2, S64);
+    const Register CastedVecReg = B.buildBitcast(NewType, Src1Reg).getReg(0);
+
+    const Register NextDstReg = NextExtractMI->getOperand(0).getReg();
+    // As we need to replace 2 instructions, make the second one dead,
+    // so DCE will remove it. Another practical effect is, if we don't do
+    // this, we will have a SSA violation because of the last buildCopy.
+    const Register NewDeadReg = MRI.cloneVirtualRegister(NextDstReg);
+    NextExtractMI->getOperand(0).setReg(NewDeadReg);
+
+    B.buildExtractVectorElement(NewExtendedDstReg, CastedVecReg, NewIdxReg);
+    auto Split = B.buildUnmerge(S32, NewExtendedDstReg);
+    const unsigned FirstOpIndex = isEven ? 0 : 1;
+    B.buildCopy(DstReg, Split->getOperand(FirstOpIndex).getReg());
+    B.buildCopy(NextDstReg, Split->getOperand(FirstOpIndex ^ 1).getReg());
+  };
 
   return true;
 }
