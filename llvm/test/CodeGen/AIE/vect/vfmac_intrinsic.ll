@@ -19,21 +19,20 @@ define void @_main() local_unnamed_addr {
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0:
 ; CHECK-NEXT:    mov.u20 p0, #buf1
-; CHECK-NEXT:    mov.u20 r12, #0
 ; CHECK-NEXT:    vlda wc0, [p0]
+; CHECK-NEXT:    mov.u20 r12, #0
 ; CHECK-NEXT:    mov r13, r12
-; CHECK-NEXT:    movt.s12 r13, #1024
 ; CHECK-NEXT:    mov.u20 p0, #buf0
+; CHECK-NEXT:    movt.s12 r13, #1024
+; CHECK-NEXT:    vlda wd0, [p0]
 ; CHECK-NEXT:    vshl0.32 wr0, r13
 ; CHECK-NEXT:    mov r13, r12
-; CHECK-NEXT:    vlda wd0, [p0]
+; CHECK-NEXT:    mov.u20 cl0, #274960
+; CHECK-NEXT:    mov cl1, r12
 ; CHECK-NEXT:    movt.s12 r13, #1016
 ; CHECK-NEXT:    vshl0.32 wr0, r13
-; CHECK-NEXT:    mov.u20 cl0, #274960
-; CHECK-NEXT:    // kill: def $wr1 killed $ya killed $ya def $ya
-; CHECK-NEXT:    mov cl1, r12
-; CHECK-NEXT:    // kill: def $xb killed $xa killed $ya def $ya
 ; CHECK-NEXT:    movt.s12 cl0, #1893
+; CHECK-NEXT:    // kill: def $wr1 killed $ya killed $ya def $ya
 ; CHECK-NEXT:    movt.s12 cl1, #9
 ; CHECK-NEXT:    mov cl2, r12
 ; CHECK-NEXT:    mov.u20 p0, #buf2
