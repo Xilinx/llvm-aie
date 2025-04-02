@@ -88,6 +88,8 @@ public:
   getPreferredRegBankForVectorTy(const MachineRegisterInfo &MRI,
                                  const TargetRegisterInfo &TRI,
                                  Register Reg) const;
+  void applyMappingImpl(MachineIRBuilder &Builder,
+                        const OperandsMapper &OpdMapper) const override;
 };
 } // end namespace llvm
 #endif
