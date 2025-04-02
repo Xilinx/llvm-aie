@@ -5,8 +5,8 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie2p -run-pass=regbankselect -regbankselect-fast %s -verify-machineinstrs -o - | FileCheck %s --check-prefixes=COMMON,FAST
-# RUN: llc -mtriple aie2p -run-pass=regbankselect -regbankselect-greedy %s -verify-machineinstrs -o - | FileCheck %s --check-prefixes=COMMON,GREEDY
+# RUN: llc -mtriple aie2p -run-pass=regbankselect -regbankselect-fast %s -verify-machineinstrs -o - | FileCheck %s --check-prefixes=COMMON
+# RUN: llc -mtriple aie2p -run-pass=regbankselect -regbankselect-greedy %s -verify-machineinstrs -o - | FileCheck %s --check-prefixes=COMMON
 
 ---
 name:            test_32

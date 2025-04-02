@@ -496,7 +496,7 @@ AIE2PRegisterBankInfo::getInstrAlternativeMappings(
                              Size)}),
         /*NumOperands*/ 2);
     const InstructionMapping &AccToVRegMapping = getInstructionMapping(
-        /*ID*/ 2, /*Cost*/ 2,
+        /*ID*/ 3, /*Cost*/ 2,
         getOperandsMapping(
             {getValueMapping(getVecPartialMappingIdx(MRI.getType(DstReg)),
                              Size),
@@ -504,7 +504,7 @@ AIE2PRegisterBankInfo::getInstrAlternativeMappings(
                              Size)}),
         /*NumOperands*/ 2);
     const InstructionMapping &VRegToAccRegMapping = getInstructionMapping(
-        /*ID*/ 3, /*Cost*/ 2,
+        /*ID*/ 4, /*Cost*/ 2,
         getOperandsMapping(
             {getValueMapping(getAccPartialMappingIdx(MRI.getType(DstReg)),
                              Size),
@@ -1399,4 +1399,19 @@ AIE2PRegisterBankInfo::getRegBankFromRegClass(const TargetRegisterClass &RC,
     dbgs() << "ID: " << RC.getID() << "\n";
     llvm_unreachable("Register class not supported");
   }
+}
+
+void AIE2PRegisterBankInfo::applyMappingImpl(
+    MachineIRBuilder &Builder, const OperandsMapper &OpdMapper) const {
+  switch (OpdMapper.getMI().getOpcode()) {
+  case TargetOpcode::G_BITCAST:
+    // Those ID must match getInstrAlternativeMappings.
+    assert((OpdMapper.getInstrMapping().getID() >= 1 &&
+            OpdMapper.getInstrMapping().getID() <= 4) &&
+           "Don't know how to handle that ID");
+    return applyDefaultMapping(OpdMapper);
+  default:
+    break;
+  }
+  AIEBaseRegisterBankInfo::applyMappingImpl(Builder, OpdMapper);
 }
