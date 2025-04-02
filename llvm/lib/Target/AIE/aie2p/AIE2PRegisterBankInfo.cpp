@@ -1059,12 +1059,11 @@ AIE2PRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
            "Unsupported number of operands for G_UNMERGE_VALUES\n");
     const Register SrcReg = MI.getOperand(2).getReg();
     const LLT SrcTy = MRI.getType(SrcReg);
-
+    const LLT HalfSrcTy = SrcTy.divide(2);
+    const unsigned HalfSrcTySize = HalfSrcTy.getSizeInBits();
     auto *RB = getRegBank(SrcReg, MRI, TRI);
-    if ((RB == &AIE2P::AccRegBank) &&
-        (SrcTy.getSizeInBits() == 1024 || SrcTy.getSizeInBits() == 2048)) {
-      const LLT HalfSrcTy = SrcTy.divide(2);
-      const unsigned HalfSrcTySize = HalfSrcTy.getSizeInBits();
+
+    if (SrcTy.getSizeInBits() == 2048) {
       return getInstructionMapping(
           /*ID*/ 1, /*Cost*/ 1,
           getOperandsMapping(
@@ -1075,6 +1074,39 @@ AIE2PRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
                getValueMapping(getAccPartialMappingIdx(SrcTy),
                                SrcTy.getSizeInBits())}),
           /*NumOperands*/ 3);
+    }
+
+    auto IsUnmergeUsedByAcc = [&](const MachineInstr *UnmergeMI) -> bool {
+      return any_of(MI.defs(), [&](const MachineOperand &MO) {
+        auto RegBank = getPreferredRegBankForVectorTy(MRI, TRI, MO.getReg());
+        return RegBank && *RegBank == &AIE2P::AccRegBank;
+      });
+    };
+
+    if (SrcTy.getSizeInBits() == 1024) {
+      if (RB == &AIE2P::AccRegBank || IsUnmergeUsedByAcc(&MI)) {
+        return getInstructionMapping(
+            /*ID*/ 1, /*Cost*/ 1,
+            getOperandsMapping(
+                {getValueMapping(getAccPartialMappingIdx(HalfSrcTy),
+                                 HalfSrcTySize),
+                 getValueMapping(getAccPartialMappingIdx(HalfSrcTy),
+                                 HalfSrcTySize),
+                 getValueMapping(getAccPartialMappingIdx(SrcTy),
+                                 SrcTy.getSizeInBits())}),
+            /*NumOperands*/ 3);
+      } else {
+        return getInstructionMapping(
+            /*ID*/ 1, /*Cost*/ 1,
+            getOperandsMapping(
+                {getValueMapping(getVecPartialMappingIdx(HalfSrcTy),
+                                 HalfSrcTySize),
+                 getValueMapping(getVecPartialMappingIdx(HalfSrcTy),
+                                 HalfSrcTySize),
+                 getValueMapping(getVecPartialMappingIdx(SrcTy),
+                                 SrcTy.getSizeInBits())}),
+            /*NumOperands*/ 3);
+      }
     }
 
     if (SrcTy.getSizeInBits() == 512) {

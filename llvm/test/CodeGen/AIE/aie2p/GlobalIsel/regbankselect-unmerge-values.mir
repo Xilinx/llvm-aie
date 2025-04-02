@@ -5,20 +5,20 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie2p -run-pass=regbankselect -regbankselect-fast %s -verify-machineinstrs -o - | FileCheck %s
-# RUN: llc -mtriple aie2p -run-pass=regbankselect -regbankselect-greedy %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2p -run-pass=regbankselect -regbankselect-greedy %s -verify-machineinstrs -o - | FileCheck %s -check-prefixes=COMMON,GREEDY
+# RUN: llc -mtriple aie2p -run-pass=regbankselect -regbankselect-fast %s -verify-machineinstrs -o - | FileCheck %s -check-prefixes=COMMON,FAST
 ---
 name:           test_unmerge_2x256_to_s256
 legalized:       true
 body:             |
   bb.0.entry:
     liveins: $x0
-    ; CHECK-LABEL: name: test_unmerge_2x256_to_s256
-    ; CHECK: liveins: $x0
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vregbank(<2 x s256>) = COPY $x0
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:vregbank(s256), [[UV1:%[0-9]+]]:vregbank(s256) = G_UNMERGE_VALUES [[COPY]](<2 x s256>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[UV]](s256), implicit [[UV1]](s256)
+    ; COMMON-LABEL: name: test_unmerge_2x256_to_s256
+    ; COMMON: liveins: $x0
+    ; COMMON-NEXT: {{  $}}
+    ; COMMON-NEXT: [[COPY:%[0-9]+]]:vregbank(<2 x s256>) = COPY $x0
+    ; COMMON-NEXT: [[UV:%[0-9]+]]:vregbank(s256), [[UV1:%[0-9]+]]:vregbank(s256) = G_UNMERGE_VALUES [[COPY]](<2 x s256>)
+    ; COMMON-NEXT: PseudoRET implicit $lr, implicit [[UV]](s256), implicit [[UV1]](s256)
     %0:_(<2 x s256>) = COPY $x0
     %1:_(s256), %2:_(s256) = G_UNMERGE_VALUES %0(<2 x s256>)
     PseudoRET implicit $lr, implicit %1, implicit %2
@@ -30,14 +30,14 @@ legalized:       true
 body:             |
   bb.0.entry:
     liveins: $bmll0
-    ; CHECK-LABEL: name: test_unmerge_2x256_to_s256_acc
-    ; CHECK: liveins: $bmll0
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:accregbank(<2 x s256>) = COPY $bmll0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vregbank(<2 x s256>) = COPY [[COPY]](<2 x s256>)
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:vregbank(s256), [[UV1:%[0-9]+]]:vregbank(s256) = G_UNMERGE_VALUES [[COPY1]](<2 x s256>)
-    ; CHECK-NEXT: $wl0 = COPY [[UV]](s256)
-    ; CHECK-NEXT: $wl2 = COPY [[UV1]](s256)
+    ; COMMON-LABEL: name: test_unmerge_2x256_to_s256_acc
+    ; COMMON: liveins: $bmll0
+    ; COMMON-NEXT: {{  $}}
+    ; COMMON-NEXT: [[COPY:%[0-9]+]]:accregbank(<2 x s256>) = COPY $bmll0
+    ; COMMON-NEXT: [[COPY1:%[0-9]+]]:vregbank(<2 x s256>) = COPY [[COPY]](<2 x s256>)
+    ; COMMON-NEXT: [[UV:%[0-9]+]]:vregbank(s256), [[UV1:%[0-9]+]]:vregbank(s256) = G_UNMERGE_VALUES [[COPY1]](<2 x s256>)
+    ; COMMON-NEXT: $wl0 = COPY [[UV]](s256)
+    ; COMMON-NEXT: $wl2 = COPY [[UV1]](s256)
     %0:_(<2 x s256>) = COPY $bmll0
     %1:_(s256), %2:_(s256) = G_UNMERGE_VALUES %0(<2 x s256>)
     $wl0 = COPY %1:_(s256)
@@ -50,12 +50,12 @@ legalized:       true
 body:             |
   bb.0.entry:
     liveins: $y2
-    ; CHECK-LABEL: name: test_unmerge_2x512_to_s512
-    ; CHECK: liveins: $y2
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vregbank(<2 x s512>) = COPY $y2
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:vregbank(s512), [[UV1:%[0-9]+]]:vregbank(s512) = G_UNMERGE_VALUES [[COPY]](<2 x s512>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[UV]](s512), implicit [[UV1]](s512)
+    ; COMMON-LABEL: name: test_unmerge_2x512_to_s512
+    ; COMMON: liveins: $y2
+    ; COMMON-NEXT: {{  $}}
+    ; COMMON-NEXT: [[COPY:%[0-9]+]]:vregbank(<2 x s512>) = COPY $y2
+    ; COMMON-NEXT: [[UV:%[0-9]+]]:vregbank(s512), [[UV1:%[0-9]+]]:vregbank(s512) = G_UNMERGE_VALUES [[COPY]](<2 x s512>)
+    ; COMMON-NEXT: PseudoRET implicit $lr, implicit [[UV]](s512), implicit [[UV1]](s512)
     %0:_(<2 x s512>) = COPY $y2
     %1:_(s512), %2:_(s512) = G_UNMERGE_VALUES %0(<2 x s512>)
     PseudoRET implicit $lr, implicit %1, implicit %2
@@ -67,13 +67,13 @@ legalized:       true
 body:             |
   bb.0.entry:
     liveins: $cml0
-    ; CHECK-LABEL: name: test_unmerge_2x512_to_s512_acc
-    ; CHECK: liveins: $cml0
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:accregbank(<2 x s512>) = COPY $cml0
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:accregbank(s512), [[UV1:%[0-9]+]]:accregbank(s512) = G_UNMERGE_VALUES [[COPY]](<2 x s512>)
-    ; CHECK-NEXT: $bmll0 = COPY [[UV]](s512)
-    ; CHECK-NEXT: $bmll2 = COPY [[UV1]](s512)
+    ; COMMON-LABEL: name: test_unmerge_2x512_to_s512_acc
+    ; COMMON: liveins: $cml0
+    ; COMMON-NEXT: {{  $}}
+    ; COMMON-NEXT: [[COPY:%[0-9]+]]:accregbank(<2 x s512>) = COPY $cml0
+    ; COMMON-NEXT: [[UV:%[0-9]+]]:accregbank(s512), [[UV1:%[0-9]+]]:accregbank(s512) = G_UNMERGE_VALUES [[COPY]](<2 x s512>)
+    ; COMMON-NEXT: $bmll0 = COPY [[UV]](s512)
+    ; COMMON-NEXT: $bmll2 = COPY [[UV1]](s512)
     %0:_(<2 x s512>) = COPY $cml0
     %1:_(s512), %2:_(s512) = G_UNMERGE_VALUES %0(<2 x s512>)
     $bmll0 = COPY %1:_(s512)
@@ -87,12 +87,12 @@ legalized:       true
 body:             |
   bb.0.entry:
     liveins: $dm0
-    ; CHECK-LABEL: name: test_unmerge_2x2048_to_s1024
-    ; CHECK: liveins: $dm0
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:accregbank(<2 x s1024>) = COPY $dm0
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:accregbank(s1024), [[UV1:%[0-9]+]]:accregbank(s1024) = G_UNMERGE_VALUES [[COPY]](<2 x s1024>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[UV]](s1024), implicit [[UV1]](s1024)
+    ; COMMON-LABEL: name: test_unmerge_2x2048_to_s1024
+    ; COMMON: liveins: $dm0
+    ; COMMON-NEXT: {{  $}}
+    ; COMMON-NEXT: [[COPY:%[0-9]+]]:accregbank(<2 x s1024>) = COPY $dm0
+    ; COMMON-NEXT: [[UV:%[0-9]+]]:accregbank(s1024), [[UV1:%[0-9]+]]:accregbank(s1024) = G_UNMERGE_VALUES [[COPY]](<2 x s1024>)
+    ; COMMON-NEXT: PseudoRET implicit $lr, implicit [[UV]](s1024), implicit [[UV1]](s1024)
     %0:_(<2 x s1024>) = COPY $dm0
     %1:_(s1024), %2:_(s1024) = G_UNMERGE_VALUES %0(<2 x s1024>)
     PseudoRET implicit $lr, implicit %1, implicit %2
@@ -104,13 +104,13 @@ legalized:       true
 body:             |
   bb.0.entry:
     liveins: $dm0
-    ; CHECK-LABEL: name: test_unmerge_2x2048_to_s1024_vec
-    ; CHECK: liveins: $dm0
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:accregbank(<2 x s1024>) = COPY $dm0
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:accregbank(s1024), [[UV1:%[0-9]+]]:accregbank(s1024) = G_UNMERGE_VALUES [[COPY]](<2 x s1024>)
-    ; CHECK-NEXT: $y2 = COPY [[UV]](s1024)
-    ; CHECK-NEXT: $y3 = COPY [[UV1]](s1024)
+    ; COMMON-LABEL: name: test_unmerge_2x2048_to_s1024_vec
+    ; COMMON: liveins: $dm0
+    ; COMMON-NEXT: {{  $}}
+    ; COMMON-NEXT: [[COPY:%[0-9]+]]:accregbank(<2 x s1024>) = COPY $dm0
+    ; COMMON-NEXT: [[UV:%[0-9]+]]:accregbank(s1024), [[UV1:%[0-9]+]]:accregbank(s1024) = G_UNMERGE_VALUES [[COPY]](<2 x s1024>)
+    ; COMMON-NEXT: $y2 = COPY [[UV]](s1024)
+    ; COMMON-NEXT: $y3 = COPY [[UV1]](s1024)
     %0:_(<2 x s1024>) = COPY $dm0
     %1:_(s1024), %2:_(s1024) = G_UNMERGE_VALUES %0(<2 x s1024>)
     $y2 = COPY %1:_(s1024)
@@ -122,10 +122,10 @@ name:            test_unmerge_v8s64
 legalized: true
 body:             |
   bb.1.entry:
-    ; CHECK-LABEL: name: test_unmerge_v8s64
-    ; CHECK: [[COPY:%[0-9]+]]:vregbank(<8 x s64>) = COPY $x0
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:vregbank(<4 x s64>), [[UV1:%[0-9]+]]:vregbank(<4 x s64>) = G_UNMERGE_VALUES [[COPY]](<8 x s64>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[UV1]](<4 x s64>)
+    ; COMMON-LABEL: name: test_unmerge_v8s64
+    ; COMMON: [[COPY:%[0-9]+]]:vregbank(<8 x s64>) = COPY $x0
+    ; COMMON-NEXT: [[UV:%[0-9]+]]:vregbank(<4 x s64>), [[UV1:%[0-9]+]]:vregbank(<4 x s64>) = G_UNMERGE_VALUES [[COPY]](<8 x s64>)
+    ; COMMON-NEXT: PseudoRET implicit $lr, implicit [[UV1]](<4 x s64>)
     %0:_(<8 x s64>) = COPY $x0
     %1:_(<4 x s64>), %2:_(<4 x s64>) = G_UNMERGE_VALUES %0(<8 x s64>)
     PseudoRET implicit $lr, implicit %2
@@ -136,11 +136,11 @@ name:            test_unmerge_v8s64_acc
 legalized: true
 body:             |
   bb.1.entry:
-    ; CHECK-LABEL: name: test_unmerge_v8s64_acc
-    ; CHECK: [[COPY:%[0-9]+]]:accregbank(<8 x s64>) = COPY $bmll0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vregbank(<8 x s64>) = COPY [[COPY]](<8 x s64>)
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:vregbank(<4 x s64>), [[UV1:%[0-9]+]]:vregbank(<4 x s64>) = G_UNMERGE_VALUES [[COPY1]](<8 x s64>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[UV1]](<4 x s64>)
+    ; COMMON-LABEL: name: test_unmerge_v8s64_acc
+    ; COMMON: [[COPY:%[0-9]+]]:accregbank(<8 x s64>) = COPY $bmll0
+    ; COMMON-NEXT: [[COPY1:%[0-9]+]]:vregbank(<8 x s64>) = COPY [[COPY]](<8 x s64>)
+    ; COMMON-NEXT: [[UV:%[0-9]+]]:vregbank(<4 x s64>), [[UV1:%[0-9]+]]:vregbank(<4 x s64>) = G_UNMERGE_VALUES [[COPY1]](<8 x s64>)
+    ; COMMON-NEXT: PseudoRET implicit $lr, implicit [[UV1]](<4 x s64>)
     %0:_(<8 x s64>) = COPY $bmll0
     %1:_(<4 x s64>), %2:_(<4 x s64>) = G_UNMERGE_VALUES %0(<8 x s64>)
     PseudoRET implicit $lr, implicit %2
@@ -151,11 +151,96 @@ name:            test_unmerge_v8s32
 legalized: true
 body:             |
   bb.1.entry:
-    ; CHECK-LABEL: name: test_unmerge_v8s32
-    ; CHECK: [[COPY:%[0-9]+]]:vregbank(<8 x s32>) = COPY $wl0
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:vregbank(<4 x s32>), [[UV1:%[0-9]+]]:vregbank(<4 x s32>) = G_UNMERGE_VALUES [[COPY]](<8 x s32>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[UV1]](<4 x s32>)
+    ; COMMON-LABEL: name: test_unmerge_v8s32
+    ; COMMON: [[COPY:%[0-9]+]]:vregbank(<8 x s32>) = COPY $wl0
+    ; COMMON-NEXT: [[UV:%[0-9]+]]:vregbank(<4 x s32>), [[UV1:%[0-9]+]]:vregbank(<4 x s32>) = G_UNMERGE_VALUES [[COPY]](<8 x s32>)
+    ; COMMON-NEXT: PseudoRET implicit $lr, implicit [[UV1]](<4 x s32>)
     %0:_(<8 x s32>) = COPY $wl0
     %1:_(<4 x s32>), %2:_(<4 x s32>) = G_UNMERGE_VALUES %0(<8 x s32>)
     PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            test_unmerge_v16s32_acc
+legalized: true
+body:             |
+  bb.1.entry:
+    ; COMMON-LABEL: name: test_unmerge_v16s32_acc
+    ; COMMON: [[COPY:%[0-9]+]]:accregbank(<16 x s64>) = COPY $cml0
+    ; COMMON-NEXT: [[UV:%[0-9]+]]:accregbank(<8 x s64>), [[UV1:%[0-9]+]]:accregbank(<8 x s64>) = G_UNMERGE_VALUES [[COPY]](<16 x s64>)
+    ; COMMON-NEXT: PseudoRET implicit $lr, implicit [[UV1]](<8 x s64>)
+    %0:_(<16 x s64>) = COPY $cml0
+    %1:_(<8 x s64>), %2:_(<8 x s64>) = G_UNMERGE_VALUES %0(<16 x s64>)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            test_unmerge_v16s32_vec
+legalized: true
+body:             |
+  bb.1.entry:
+    ; COMMON-LABEL: name: test_unmerge_v16s32_vec
+    ; COMMON: [[COPY:%[0-9]+]]:vregbank(<16 x s64>) = COPY $y0
+    ; COMMON-NEXT: [[UV:%[0-9]+]]:vregbank(<8 x s64>), [[UV1:%[0-9]+]]:vregbank(<8 x s64>) = G_UNMERGE_VALUES [[COPY]](<16 x s64>)
+    ; COMMON-NEXT: PseudoRET implicit $lr, implicit [[UV1]](<8 x s64>)
+    %0:_(<16 x s64>) = COPY $y0
+    %1:_(<8 x s64>), %2:_(<8 x s64>) = G_UNMERGE_VALUES %0(<16 x s64>)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            test_unmerge_v16s32_implicit
+legalized: true
+body:             |
+  bb.1.entry:
+    ; COMMON-LABEL: name: test_unmerge_v16s32_implicit
+    ; COMMON: [[DEF:%[0-9]+]]:accregbank(<16 x s64>) = G_IMPLICIT_DEF
+    ; COMMON-NEXT: [[UV:%[0-9]+]]:accregbank(<8 x s64>), [[UV1:%[0-9]+]]:accregbank(<8 x s64>) = G_UNMERGE_VALUES [[DEF]](<16 x s64>)
+    ; COMMON-NEXT: PseudoRET implicit $lr, implicit [[UV1]](<8 x s64>)
+    %0:_(<16 x s64>) = G_IMPLICIT_DEF
+    %1:_(<8 x s64>), %2:_(<8 x s64>) = G_UNMERGE_VALUES %0(<16 x s64>)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            test_unmerge_v16s32_bitcast
+legalized: true
+body:             |
+  bb.1.entry:
+    ; COMMON-LABEL: name: test_unmerge_v16s32_bitcast
+    ; COMMON: [[COPY:%[0-9]+]]:vregbank(<32 x s32>) = COPY $y0
+    ; COMMON-NEXT: [[BITCAST:%[0-9]+]]:vregbank(<16 x s64>) = G_BITCAST [[COPY]](<32 x s32>)
+    ; COMMON-NEXT: [[UV:%[0-9]+]]:vregbank(<8 x s64>), [[UV1:%[0-9]+]]:vregbank(<8 x s64>) = G_UNMERGE_VALUES [[BITCAST]](<16 x s64>)
+    ; COMMON-NEXT: PseudoRET implicit $lr, implicit [[UV1]](<8 x s64>)
+    %0:_(<32 x s32>) = COPY $y0
+    %1:_(<16 x s64>) = G_BITCAST %0(<32 x s32>)
+    %2:_(<8 x s64>), %3:_(<8 x s64>) = G_UNMERGE_VALUES %1(<16 x s64>)
+    PseudoRET implicit $lr, implicit %3
+...
+
+---
+name:            test_unmerge_v16s32_used_by_acc
+legalized: true
+body:             |
+  bb.1.entry:
+
+    ; GREEDY-LABEL: name: test_unmerge_v16s32_used_by_acc
+    ; GREEDY: [[COPY:%[0-9]+]]:vregbank(<32 x s32>) = COPY $y0
+    ; GREEDY-NEXT: [[BITCAST:%[0-9]+]]:vregbank(<16 x s64>) = G_BITCAST [[COPY]](<32 x s32>)
+    ; GREEDY-NEXT: [[UV:%[0-9]+]]:vregbank(<8 x s64>), [[UV1:%[0-9]+]]:vregbank(<8 x s64>) = G_UNMERGE_VALUES [[BITCAST]](<16 x s64>)
+    ; GREEDY-NEXT: $bmll1 = COPY [[UV]](<8 x s64>)
+    ; GREEDY-NEXT: PseudoRET implicit $lr, implicit $bmll1
+    ;
+    ; FAST-LABEL: name: test_unmerge_v16s32_used_by_acc
+    ; FAST: [[COPY:%[0-9]+]]:vregbank(<32 x s32>) = COPY $y0
+    ; FAST-NEXT: [[BITCAST:%[0-9]+]]:vregbank(<16 x s64>) = G_BITCAST [[COPY]](<32 x s32>)
+    ; FAST-NEXT: [[COPY1:%[0-9]+]]:accregbank(<16 x s64>) = COPY [[BITCAST]](<16 x s64>)
+    ; FAST-NEXT: [[UV:%[0-9]+]]:accregbank(<8 x s64>), [[UV1:%[0-9]+]]:accregbank(<8 x s64>) = G_UNMERGE_VALUES [[COPY1]](<16 x s64>)
+    ; FAST-NEXT: $bmll1 = COPY [[UV]](<8 x s64>)
+    ; FAST-NEXT: PseudoRET implicit $lr, implicit $bmll1
+    %0:_(<32 x s32>) = COPY $y0
+    %1:_(<16 x s64>) = G_BITCAST %0(<32 x s32>)
+    %2:_(<8 x s64>), %3:_(<8 x s64>) = G_UNMERGE_VALUES %1(<16 x s64>)
+    $bmll1 = COPY %2(<8 x s64>)
+    PseudoRET implicit $lr, implicit $bmll1
 ...
