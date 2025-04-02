@@ -208,10 +208,11 @@ body:             |
     ; FAST: [[DEF:%[0-9]+]]:vregbank(<16 x s32>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF1:%[0-9]+]]:vregbank(<16 x s32>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:vregbank(<32 x s32>) = G_CONCAT_VECTORS [[DEF]](<16 x s32>), [[DEF1]](<16 x s32>)
-    ; FAST-NEXT: [[BITCAST:%[0-9]+]]:accregbank(<16 x s64>) = G_BITCAST [[CONCAT_VECTORS]](<32 x s32>)
+    ; FAST-NEXT: [[BITCAST:%[0-9]+]]:vregbank(<16 x s64>) = G_BITCAST [[CONCAT_VECTORS]](<32 x s32>)
     ; FAST-NEXT: [[DEF2:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF3:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[INT:%[0-9]+]]:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.I256.v16.acc64.srs), [[BITCAST]](<16 x s64>), [[DEF2]](s32), [[DEF3]](s32)
+    ; FAST-NEXT: [[COPY:%[0-9]+]]:accregbank(<16 x s64>) = COPY [[BITCAST]](<16 x s64>)
+    ; FAST-NEXT: [[INT:%[0-9]+]]:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.I256.v16.acc64.srs), [[COPY]](<16 x s64>), [[DEF2]](s32), [[DEF3]](s32)
     ; FAST-NEXT: $wl0 = COPY [[INT]](<16 x s16>)
     ; FAST-NEXT: PseudoRET implicit $lr, implicit $wl0
     %1:_(<16 x s32>) = G_IMPLICIT_DEF
@@ -249,11 +250,12 @@ body:             |
     ; FAST: [[DEF:%[0-9]+]]:vregbank(<16 x s32>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF1:%[0-9]+]]:vregbank(<16 x s32>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:vregbank(<32 x s32>) = G_CONCAT_VECTORS [[DEF]](<16 x s32>), [[DEF1]](<16 x s32>)
-    ; FAST-NEXT: [[BITCAST:%[0-9]+]]:accregbank(<16 x s64>) = G_BITCAST [[CONCAT_VECTORS]](<32 x s32>)
-    ; FAST-NEXT: [[BITCAST1:%[0-9]+]]:accregbank(<32 x s32>) = G_BITCAST [[BITCAST]](<16 x s64>)
+    ; FAST-NEXT: [[BITCAST:%[0-9]+]]:vregbank(<16 x s64>) = G_BITCAST [[CONCAT_VECTORS]](<32 x s32>)
+    ; FAST-NEXT: [[BITCAST1:%[0-9]+]]:vregbank(<32 x s32>) = G_BITCAST [[BITCAST]](<16 x s64>)
     ; FAST-NEXT: [[DEF2:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF3:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[INT:%[0-9]+]]:vregbank(<32 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.I512.v32.acc32.srs), [[BITCAST1]](<32 x s32>), [[DEF2]](s32), [[DEF3]](s32)
+    ; FAST-NEXT: [[COPY:%[0-9]+]]:accregbank(<32 x s32>) = COPY [[BITCAST1]](<32 x s32>)
+    ; FAST-NEXT: [[INT:%[0-9]+]]:vregbank(<32 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.I512.v32.acc32.srs), [[COPY]](<32 x s32>), [[DEF2]](s32), [[DEF3]](s32)
     ; FAST-NEXT: $x0 = COPY [[INT]](<32 x s16>)
     ; FAST-NEXT: PseudoRET implicit $lr, implicit $x0
     %1:_(<16 x s32>) = G_IMPLICIT_DEF
