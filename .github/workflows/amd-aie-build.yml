@@ -26,7 +26,7 @@ jobs:
     name: Build AIE
     uses: ./.github/workflows/llvm-project-tests.yml
     with:
-      build_target: default
+      build_target: ""  # empty to indicate default target build
       projects: clang;lld
       cache-key: amd-aie
       extra_cmake_args: '-DLLVM_USE_LINKER=gold -C clang/cmake/caches/Peano-AIE.cmake'
