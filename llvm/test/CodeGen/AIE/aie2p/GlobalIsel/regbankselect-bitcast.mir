@@ -115,7 +115,7 @@ body:             |
   bb.1.entry:
     ; COMMON-LABEL: name: test_v16s64_bitcast
     ; COMMON: [[COPY:%[0-9]+]]:accregbank(<16 x s64>) = COPY $cml0
-    ; COMMON-NEXT: [[BITCAST:%[0-9]+]]:vregbank(<32 x s32>) = G_BITCAST [[COPY]](<16 x s64>)
+    ; COMMON-NEXT: [[BITCAST:%[0-9]+]]:accregbank(<32 x s32>) = G_BITCAST [[COPY]](<16 x s64>)
     ; COMMON-NEXT: PseudoRET implicit $lr, implicit [[BITCAST]](<32 x s32>)
     %0:_(<16 x s64>) = COPY $cml0
     %1:_(<32 x s32>) = G_BITCAST %0(<16 x s64>)

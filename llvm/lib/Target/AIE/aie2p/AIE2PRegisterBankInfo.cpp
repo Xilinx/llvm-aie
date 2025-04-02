@@ -1042,14 +1042,14 @@ AIE2PRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     // Check if we already know the register bank.
     auto *RB = getRegBank(SrcReg, MRI, TRI);
     auto PreferredRegBank = getPreferredRegBankForVectorTy(MRI, TRI, DstReg);
-    if (PreferredRegBank && &AIE2P::AccRegBank == *PreferredRegBank)
+    if ((PreferredRegBank && &AIE2P::AccRegBank == *PreferredRegBank) ||
+        (RB == &AIE2P::AccRegBank)) {
       OpRegBankIdx[0] = getAccPartialMappingIdx(DstType);
-    else
-      OpRegBankIdx[0] = getVecPartialMappingIdx(DstType);
-    if (RB == &AIE2P::AccRegBank)
       OpRegBankIdx[1] = getAccPartialMappingIdx(SrcType);
-    else
+    } else {
+      OpRegBankIdx[0] = getVecPartialMappingIdx(DstType);
       OpRegBankIdx[1] = getVecPartialMappingIdx(SrcType);
+    }
 
     return AIEBaseRegisterBankInfo::getInstrMappingFinal(MI, Cost, OpSize,
                                                          OpRegBankIdx);
