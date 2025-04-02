@@ -1,4 +1,4 @@
-name: AIEngine LLVM Tests
+name: AIEngine LLVM Build
 
 permissions:
   contents: read
