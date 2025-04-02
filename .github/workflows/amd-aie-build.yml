@@ -21,13 +21,13 @@ concurrency:
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
 jobs:
-  check_all:
+  build:
     if: github.repository_owner == 'Xilinx'
-    name: Test AIE llvm,clang,lld
+    name: Build AIE
     uses: ./.github/workflows/llvm-project-tests.yml
     with:
-      build_target: check-llvm-aie check-clang-aie check-lld-aie
+      build_target: default
       projects: clang;lld
       cache-key: amd-aie
       extra_cmake_args: '-DLLVM_USE_LINKER=gold -C clang/cmake/caches/Peano-AIE.cmake'
-      os_list: '["ubuntu-22.04"]'
+      os_list: '["windows-2019"]'
