@@ -1228,6 +1228,40 @@ void llvm::applyExtractVecEltAndExt(
   MatchMI->eraseFromParent();
 }
 
+static std::optional<Register>
+getSplatVectorSrcReg(const MachineInstr &MI, const MachineRegisterInfo &MRI,
+                     std::pair<unsigned, unsigned> Range) {
+  auto IsUndef = [&](const MachineOperand &Op) {
+    const MachineInstr *Undef = MRI.getVRegDef(Op.getReg());
+    return Undef && Undef->getOpcode() == TargetOpcode::G_IMPLICIT_DEF;
+  };
+  const unsigned Start = Range.first;
+  const unsigned End = Range.second;
+  // First non-undef operand.
+  Register SrcReg = 0;
+  bool FoundSrc = false;
+  bool AllUndef = true;
+
+  // Find the first non-undef operand as the reference.
+  for (unsigned I = Start; I < End; I++) {
+    const MachineOperand &Op = MI.getOperand(I);
+    if (!IsUndef(Op)) {
+      if (!FoundSrc) {
+        SrcReg = Op.getReg();
+        FoundSrc = true;
+      } else if (Op.getReg() != SrcReg) {
+        return std::nullopt;
+      }
+      AllUndef = false;
+    }
+  }
+
+  if (AllUndef)
+    SrcReg = MI.getOperand(1).getReg();
+
+  return SrcReg;
+}
+
 // Match something like:
 // %0:_(<32 x s16>) = G_BUILD_VECTOR %1:_(s16), ... x32
 //
@@ -1255,34 +1289,12 @@ bool llvm::matchSplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
     return false;
   }
 
-  auto IsUndef = [&](const MachineOperand &Op) {
-    const MachineInstr *Undef = MRI.getVRegDef(Op.getReg());
-    return Undef && Undef->getOpcode() == TargetOpcode::G_IMPLICIT_DEF;
-  };
   const unsigned NumOps = MI.getNumOperands();
-  // First non-undef operand.
-  unsigned SrcReg = 0;
-  bool FoundSrc = false;
-  bool AllUndef = true;
+  auto SrcReg = getSplatVectorSrcReg(MI, MRI, std::make_pair(1, NumOps));
+  if (!SrcReg)
+    return false;
 
-  // Find the first non-undef operand as the reference.
-  for (unsigned I = 1; I < NumOps; I++) {
-    const MachineOperand &Op = MI.getOperand(I);
-    if (!IsUndef(Op)) {
-      if (!FoundSrc) {
-        SrcReg = Op.getReg();
-        FoundSrc = true;
-      } else if (Op.getReg() != SrcReg) {
-        return false;
-      }
-      AllUndef = false;
-    }
-  }
-
-  if (AllUndef)
-    SrcReg = MI.getOperand(1).getReg();
-
-  MatchInfo = {DstVecReg, SrcReg};
+  MatchInfo = {DstVecReg, *SrcReg};
   return true;
 }
 
@@ -1466,6 +1478,7 @@ bool llvm::applySingleDiffLaneBuildVector(
 // %0:_(<32 x s16>) = G_CONCAT_VECTORS %3:_(<16 x s16>), %4:_(<16 x s16>)
 // These sub-G_BUILD_VECTOR instructions may later be combined into broadcast
 // instructions by combine_splat_vector.
+// TODO: Remove the original splat vector match and implement the same here.
 bool llvm::matchSymmetricBuildVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                                      GISelChangeObserver &Observer,
                                      BuildFnTy &MatchInfo) {
@@ -1487,30 +1500,16 @@ bool llvm::matchSymmetricBuildVector(MachineInstr &MI, MachineRegisterInfo &MRI,
     return false;
   }
 
-  auto getSrcOperand = [&](unsigned I) { return MI.getOperand(I + 1); };
+  // TODO: Split the G_BUILD_VECTOR either into 3/4 and 1/4 parts,
+  // or 1/4 and 3/4 parts, and then check if any part qualifies as a splat.
+  const unsigned NumOps = MI.getNumOperands();
+  const unsigned HalfNumElts = NumOps / 2 + 1;
+  auto FirstHalfSrcReg =
+      getSplatVectorSrcReg(MI, MRI, std::make_pair(1, HalfNumElts));
+  auto SecondHalfSrcReg =
+      getSplatVectorSrcReg(MI, MRI, std::make_pair(HalfNumElts, NumOps));
 
-  const unsigned NumElts = MI.getNumOperands() - 1;
-  const unsigned HalfNumElts = NumElts / 2;
-  const MachineOperand FirstOp = getSrcOperand(0);
-  const MachineOperand SecondOp = getSrcOperand(HalfNumElts);
-
-  // Ensures that each operand in the first half matches FirstOp, and each
-  // operand in the second half matches SecondOp.
-  for (unsigned i = 0; i < HalfNumElts; i++) {
-    if (!getSrcOperand(i).isIdenticalTo(FirstOp)) {
-      return false;
-    }
-    if (!getSrcOperand(HalfNumElts + i).isIdenticalTo(SecondOp)) {
-      return false;
-    }
-  }
-
-  // If both halves are the same register, it's effectively a splat, and the
-  // splat vector combine already handles that case.
-  if (FirstOp.isIdenticalTo(SecondOp))
-    return false;
-
-  MatchInfo = [&MI, &Observer, &MRI, DstVecTy](MachineIRBuilder &B) {
+  MatchInfo = [&MI, &Observer, DstVecTy](MachineIRBuilder &B) {
     B.setInstrAndDebugLoc(MI);
     LegalizerHelper Helper(B.getMF(), Observer, B);
     // Splits the G_BUILD_VECTOR into two half-sized G_BUILD_VECTOR operations
@@ -1520,7 +1519,8 @@ bool llvm::matchSymmetricBuildVector(MachineInstr &MI, MachineRegisterInfo &MRI,
         DstVecTy.changeElementCount(
             DstVecTy.getElementCount().divideCoefficientBy(2)));
   };
-  return true;
+
+  return (FirstHalfSrcReg.has_value() || SecondHalfSrcReg.has_value());
 }
 
 // Match something like:

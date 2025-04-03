@@ -74,12 +74,12 @@ define void @test_multi_diff_lane_buildvector() {
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r2
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r2 // Delay Slot 5
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r2 // Delay Slot 4
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r0 // Delay Slot 4
 ; CHECK-NEXT:    mova p0, #0 // Delay Slot 3
 ; CHECK-NEXT:    vst wh0, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  store <8 x i32> <i32 111, i32 222, i32 777, i32 777, i32 777, i32 777, i32 777, i32 777>, ptr addrspace(6) null, align 32
+  store <8 x i32> <i32 111, i32 222, i32 777, i32 777, i32 777, i32 777, i32 777, i32 111>, ptr addrspace(6) null, align 32
   ret void
 }
 
