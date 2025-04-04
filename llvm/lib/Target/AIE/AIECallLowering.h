@@ -46,6 +46,13 @@ public:
   bool lowerCall(MachineIRBuilder &MIRBuilder,
                  CallLoweringInfo &Info) const override;
 
+  /// Returns true if the call can be lowered as a tail call.
+  bool
+  isEligibleForTailCallOptimization(MachineIRBuilder &MIRBuilder,
+                                    CallLoweringInfo &Info,
+                                    SmallVectorImpl<ArgInfo> &InArgs,
+                                    SmallVectorImpl<ArgInfo> &OutArgs) const;
+
   /// A container class that helps access and maintain context between
   /// determining assignments and applying them, giving more flexibility than
   /// the standard CallLowering::determineAndHandleAssignments()
@@ -88,6 +95,14 @@ private:
                       ArrayRef<Register> VRegs,
                       FunctionLoweringInfo::SavedRetCCState &RetAssignments,
                       MachineInstrBuilder &Ret) const;
+
+  bool lowerTailCall(MachineIRBuilder &MIRBuilder, CallLoweringInfo &Info,
+                     SmallVectorImpl<ArgInfo> &InArgs,
+                     SmallVectorImpl<ArgInfo> &OutArgs) const;
+
+  bool areCalleeArgsTailCallable(CallLoweringInfo &Info, MachineFunction &MF,
+                                 SmallVectorImpl<ArgInfo> &OrigInArgs,
+                                 SmallVectorImpl<ArgInfo> &OutOutArgs) const;
 };
 
 } // end namespace llvm

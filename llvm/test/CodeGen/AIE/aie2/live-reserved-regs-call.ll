@@ -14,28 +14,15 @@ define void @caller1() {
 ; CHECK-LABEL: caller1:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; jl #callee1; nops
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4
-; CHECK-NEXT:    st lr, [sp, #-32] // 4-byte Folded Spill Delay Slot 3
-; CHECK-NEXT:    mov crSat, #1 // Delay Slot 2
-; CHECK-NEXT:    mov crRnd, #12 // Delay Slot 1
-; CHECK-NEXT:    lda lr, [sp, #-32] // 4-byte Folded Reload
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nopb ; nopa ; nops ; j #callee1; nopv
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    mov crSat, #1 // Delay Slot 2
+; CHECK-NEXT:    mov crRnd, #12 // Delay Slot 1
 entry:
-	tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 1)
-  	tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 12)
+	call void @llvm.aie2.set.ctrl.reg(i32 9, i32 1)
+  	call void @llvm.aie2.set.ctrl.reg(i32 6, i32 12)
   	tail call void @callee1()
   	ret void
 }

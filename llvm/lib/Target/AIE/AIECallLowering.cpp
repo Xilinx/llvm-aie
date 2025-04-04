@@ -41,6 +41,10 @@
 
 using namespace llvm;
 
+static cl::opt<bool> TailCallOpt("aie-tail-call-optimization", cl::Hidden,
+                                 cl::init(true),
+                                 cl::desc("Enable tail call optimization"));
+
 AIECallLowering::AIECallLowering(const TargetLowering &TLI)
     : CallLowering(&TLI) {}
 
@@ -75,8 +79,10 @@ private:
 /// function return values and call parameters).
 struct AIEOutgoingValueHandler : public CallLowering::OutgoingValueHandler {
   AIEOutgoingValueHandler(MachineIRBuilder &MIRBuilder,
-                          MachineRegisterInfo &MRI, MachineInstrBuilder &MIB)
-      : OutgoingValueHandler(MIRBuilder, MRI), MIB(MIB) {}
+                          MachineRegisterInfo &MRI, MachineInstrBuilder &MIB,
+                          bool IsTailCall = false, int FPDiff = 0)
+      : OutgoingValueHandler(MIRBuilder, MRI), MIB(MIB), IsTailCall(IsTailCall),
+        FPDiff(FPDiff) {}
 
   Register getStackAddress(uint64_t Size, int64_t Offset,
                            MachinePointerInfo &MPO,
@@ -88,16 +94,26 @@ struct AIEOutgoingValueHandler : public CallLowering::OutgoingValueHandler {
     assert(isAligned(StackSlotAlign, Offset) && "Stack offset is not aligned");
     MachineFunction &MF = MIRBuilder.getMF();
     LLT PtrTy = LLT::pointer(0, 20);
+
+    // AIE stack grows up, fix the offset which was built by llvm
+    // with standard down-growing stacks in mind.
+    Offset = -Offset - int64_t(SizeInSlots);
+
+    if (IsTailCall) {
+      // We need to adjust the offset for the callee's stack frame.
+      Offset += FPDiff;
+      int FI = MF.getFrameInfo().CreateFixedObject(Size, Offset, true);
+      auto FIReg = MIRBuilder.buildFrameIndex(PtrTy, FI);
+      MPO = MachinePointerInfo::getFixedStack(MF, FI);
+      return FIReg.getReg(0);
+    }
+
     if (!SPReg) {
       auto *TRI =
           static_cast<const AIEBaseRegisterInfo *>(MRI.getTargetRegisterInfo());
       SPReg =
           MIRBuilder.buildCopy(PtrTy, TRI->getStackPointerRegister()).getReg(0);
     }
-
-    // AIE stack grows up, fix the offset which was built by llvm
-    // with standard down-growing stacks in mind.
-    Offset = -Offset - int64_t(SizeInSlots);
 
     LLT S20 = LLT::scalar(20);
     auto OffsetReg = MIRBuilder.buildConstant(S20, Offset);
@@ -127,9 +143,16 @@ struct AIEOutgoingValueHandler : public CallLowering::OutgoingValueHandler {
         MF.getMachineMemOperand(MPO, MachineMemOperand::MOStore, MemTy,
                                 commonAlignment(Align(32), LocMemOffset));
     MIRBuilder.buildStore(ValVReg, Addr, *MMO);
-    }
+  }
 
   MachineInstrBuilder &MIB;
+
+  bool IsTailCall;
+
+  /// For tail calls, the byte offset of the call's argument area from the
+  /// callee's. Unused elsewhere.
+  int FPDiff;
+
   // Cache the SP register vreg if we need it more than once in this call site.
   Register SPReg;
 };
@@ -407,20 +430,26 @@ bool AIECallLowering::lowerFormalArguments(MachineIRBuilder &MIRBuilder,
   for (Register Reg : AA.getAssignedRegisters())
     MF.getRegInfo().disableCalleeSavedRegister(Reg);
 
+  uint64_t StackSize = Assigner.StackSize;
   if (F.isVarArg()) {
-    uint64_t StackSize = Assigner.StackSize;
-
     // Offset of the end address of the first vararg from stack pointer
     // The stack grows up, and we allocate close to SP first, so we cannot know
     // the begin address. This would be (VaArgEndOffset - AlignedVarArgSize),
     // but AlignedVarArgSize is only known when meeting a va_arg instruction.
-    int FirstVAEndOffset = -alignTo(StackSize, Align(32));
+    StackSize = alignTo(StackSize, Align(32));
+    int FirstVAEndOffset = -StackSize;
 
     // Record the frame index for FirstVAEndOffset, it will be used by VASTART.
     auto &MFI = MIRBuilder.getMF().getFrameInfo();
     int FI = MFI.CreateFixedObject(4, FirstVAEndOffset, true);
     FunctionInfo.setVarArgsFrameIndex(FI);
   }
+
+  // When we tail call, we need to check if the callee's arguments
+  // will fit on the caller's stack. So, whenever we lower formal arguments,
+  // we should keep track of this information, since we might lower a tail call
+  // in this function later.
+  FunctionInfo.setBytesInStackArgArea(StackSize);
 
   MIRBuilder.setMBB(MBB);
   return true;
@@ -458,14 +487,178 @@ determineCallPreservedMask(MachineFunction &MF,
   return CustomMask;
 }
 
-bool AIECallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
-                                CallLoweringInfo &Info) const {
+bool AIECallLowering::areCalleeArgsTailCallable(
+    CallLoweringInfo &Info, MachineFunction &MF,
+    SmallVectorImpl<ArgInfo> &OrigInArgs,
+    SmallVectorImpl<ArgInfo> &OrigOutArgs) const {
+  // If there are no outgoing arguments, then we are done.
+  if (OrigOutArgs.empty())
+    return true;
 
-  // We must emit a tail call if we have musttail.
-  if (Info.IsMustTailCall) {
-    LLVM_DEBUG(dbgs() << "Must-tail calls not supported yet.\n");
+  const AIEBaseTargetLowering &TLI = *getTLI<AIEBaseTargetLowering>();
+  const Function &CallerF = MF.getFunction();
+  LLVMContext &Ctx = CallerF.getContext();
+  CallingConv::ID CalleeCC = Info.CallConv;
+
+  CCAssignFn *AssignFnFixed = TLI.CCAssignFnForCall(/*IsVarArg=*/false);
+  CCAssignFn *AssignFnVa = TLI.CCAssignFnForCall(/*IsVarArg=*/true);
+
+  // determineAndLegalizeAssignments() may modify argument flags, so make a
+  // copy.
+  SmallVector<ArgInfo, 8> InArgs;
+  append_range(InArgs, OrigInArgs);
+
+  // Pre-determine the assignments for the return type, they will affect
+  // the parameter assignments.
+  ArgAssignments InAA(MF, InArgs);
+  if (!Info.OrigRet.Ty->isVoidTy()) {
+    CCAssignFn *RetAssignFn = TLI.CCAssignFnForReturn();
+    AIEValueAssigner Assigner(/*IsIncoming=*/true, RetAssignFn);
+    if (!determineAndLegalizeAssignments(InAA, Assigner))
+      return false;
+  }
+
+  // We have outgoing arguments. Make sure that we can tail call with them.
+  SmallVector<CCValAssign, 16> OutLocs;
+  CCState OutInfo(CalleeCC, false, MF, OutLocs, Ctx);
+
+  AIEValueAssigner CalleeAssigner(/*IsIncoming=*/false, AssignFnFixed,
+                                  AssignFnVa);
+
+  // determineAndLegalizeAssignments() may modify argument flags, so make a
+  // copy.
+  SmallVector<ArgInfo, 8> OutArgs;
+  append_range(OutArgs, OrigOutArgs);
+  ArgAssignments OutAA(MF, OutArgs);
+  // The registers/slots used by the result type cannot be re-used for args.
+  OutAA.reserveRegisters(InAA.getAssignedRegisters());
+  OutAA.reserveStackSize(InAA.getAssignedStackSize());
+
+  if (!determineAssignments(CalleeAssigner, OutAA.getArgInfos(),
+                            OutAA.getCCInfo()))
+    return false;
+
+  auto &FuncInfo = *MF.getInfo<AIEMachineFunctionInfo>();
+  if (OutAA.getCCInfo().getStackSize() > FuncInfo.getBytesInStackArgArea()) {
+    LLVM_DEBUG(dbgs() << "Cannot fit call operands on caller's stack.\n");
+    LLVM_DEBUG(
+        dbgs() << "Caller stack size: " << FuncInfo.getBytesInStackArgArea()
+               << " Callee stack size: " << OutAA.getCCInfo().getStackSize()
+               << "\n");
     return false;
   }
+
+  SmallVector<Register, 8> CCRegs(OutAA.getAssignedRegisters());
+  const uint32_t *CallerPreservedMask =
+      determineCallPreservedMask(MF, Info, CCRegs);
+  MachineRegisterInfo &MRI = MF.getRegInfo();
+  return parametersInCSRMatch(MRI, CallerPreservedMask, OutLocs,
+                              OutAA.getArgInfos());
+}
+
+bool AIECallLowering::isEligibleForTailCallOptimization(
+    MachineIRBuilder &MIRBuilder, CallLoweringInfo &Info,
+    SmallVectorImpl<ArgInfo> &InArgs, SmallVectorImpl<ArgInfo> &OutArgs) const {
+
+  MachineFunction &MF = MIRBuilder.getMF();
+  const Function &CallerF = MF.getFunction();
+
+  // Must pass all target-independent checks in order to tail call optimize.
+  if (!Info.IsTailCall) {
+    LLVM_DEBUG(
+        dbgs()
+        << "Call is not eligible for TCO, failed target-independent checks.\n");
+    return false;
+  }
+
+  if (any_of(CallerF.args(),
+             [](const Argument &A) { return A.hasByValAttr(); })) {
+    LLVM_DEBUG(dbgs() << "Cannot tail call from callers with byval\n");
+    return false;
+  }
+
+  if (!areCalleeArgsTailCallable(Info, MF, InArgs, OutArgs)) {
+    LLVM_DEBUG(dbgs() << "Callee's arguments are not tail callable.\n");
+    return false;
+  }
+
+  LLVM_DEBUG(dbgs() << "Call is eligible for TCO.\n");
+  return true;
+}
+
+bool AIECallLowering::lowerTailCall(MachineIRBuilder &MIRBuilder,
+                                    CallLoweringInfo &Info,
+                                    SmallVectorImpl<ArgInfo> &InArgs,
+                                    SmallVectorImpl<ArgInfo> &OutArgs) const {
+
+  MachineFunction &MF = MIRBuilder.getMF();
+  MachineRegisterInfo &MRI = MF.getRegInfo();
+  const AIEBaseTargetLowering &TLI = *getTLI<AIEBaseTargetLowering>();
+
+  CCAssignFn *AssignFnFixed = TLI.CCAssignFnForCall(/*IsVarArg=*/false);
+  CCAssignFn *AssignFnVa = TLI.CCAssignFnForCall(/*IsVarArg=*/true);
+
+  // Pre-determine the assignments for the return type, they will affect
+  // the parameter assignments.
+  ArgAssignments InAA(MF, InArgs);
+  if (!Info.OrigRet.Ty->isVoidTy()) {
+    CCAssignFn *RetAssignFn = TLI.CCAssignFnForReturn();
+    AIEValueAssigner Assigner(/*IsIncoming=*/true, RetAssignFn);
+    if (!determineAndLegalizeAssignments(InAA, Assigner))
+      return false;
+  }
+
+  // The registers/slots used by the result type cannot be re-used for args.
+  ArgAssignments OutAA(MF, OutArgs);
+  OutAA.reserveRegisters(InAA.getAssignedRegisters());
+  OutAA.reserveStackSize(InAA.getAssignedStackSize());
+
+  const TargetSubtargetInfo &Subtarget = MF.getSubtarget();
+  auto &TII = *static_cast<const AIEBaseInstrInfo *>(Subtarget.getInstrInfo());
+  MachineInstrBuilder CallSeqStart;
+  CallSeqStart = MIRBuilder.buildInstr(TII.getCallFrameSetupOpcode());
+
+  unsigned Opc =
+      TII.getCallOpcode(MF, Info.Callee.isReg(), true /*isTailCall*/);
+  auto MIB = MIRBuilder.buildInstrNoInsert(Opc);
+  MIB.add(Info.Callee);
+
+  AIEValueAssigner Assigner(/*IsIncoming=*/false, AssignFnFixed, AssignFnVa);
+  AIEOutgoingValueHandler Handler(MIRBuilder, MRI, MIB,
+                                  /*IsTailCall*/ true /*, FPDiff*/);
+  if (!determineAndLegalizeAssignments(OutAA, Assigner) ||
+      !handleAssignments(OutAA, Handler, MIRBuilder))
+    return false;
+
+  // Tell the call which registers are clobbered.
+  SmallVector<Register, 8> CCRegs(InAA.getAssignedRegisters());
+  CCRegs.append(OutAA.getAssignedRegisters());
+  const uint32_t *Mask = determineCallPreservedMask(MF, Info, CCRegs);
+  MIB.addRegMask(Mask);
+
+  // we need to adjust the stack. We'll do the call sequence start and end here.
+  CallSeqStart.addImm(0).addImm(0);
+  // End the call sequence *before* emitting the call. Normally, we would
+  // tidy the frame up after the call. However, here, we've laid out the
+  // parameters so that when SP is reset, they will be in the correct
+  // location.
+  MIRBuilder.buildInstr(TII.getCallFrameDestroyOpcode()).addImm(0).addImm(0);
+
+  MIRBuilder.insertInstr(MIB);
+
+  const auto *TRI = Subtarget.getRegisterInfo();
+  if (Info.Callee.isReg())
+    constrainOperandRegClass(MF, *TRI, MRI, *Subtarget.getInstrInfo(),
+                             *Subtarget.getRegBankInfo(), *MIB, MIB->getDesc(),
+                             Info.Callee, 0);
+
+  MF.getFrameInfo().setHasTailCall();
+  Info.LoweredTailCall = true;
+  return true;
+}
+
+bool AIECallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
+                                CallLoweringInfo &Info) const {
 
   MachineFunction &MF = MIRBuilder.getMF();
   const Function &F = MF.getFunction();
@@ -480,6 +673,28 @@ bool AIECallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
   SmallVector<ArgInfo, 8> InArgs;
   if (!Info.OrigRet.Ty->isVoidTy())
     splitToValueTypes(Info.OrigRet, InArgs, DL, Info.CallConv);
+
+  // If we can lower as a tail call, do that instead.
+  bool CanTailCallOpt =
+      isEligibleForTailCallOptimization(MIRBuilder, Info, InArgs, OutArgs) &&
+      TailCallOpt;
+
+  // We must emit a tail call if we have musttail.
+  if (Info.IsMustTailCall) {
+    LLVM_DEBUG(dbgs() << "Must-tail calls not supported yet.\n");
+    Info.IsTailCall = false;
+    Info.LoweredTailCall = false;
+    return false;
+  }
+
+  Info.IsTailCall = CanTailCallOpt;
+  if (CanTailCallOpt) {
+    if (lowerTailCall(MIRBuilder, Info, InArgs, OutArgs))
+      return true;
+    LLVM_DEBUG(
+        dbgs() << "Tail call optimization failed, falling back to normal "
+                  "call.\n");
+  }
 
   // Pre-determine the assignments for the return type, they will affect
   // the parameter assignments.

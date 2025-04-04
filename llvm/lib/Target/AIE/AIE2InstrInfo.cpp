@@ -70,7 +70,7 @@ unsigned AIE2InstrInfo::getReturnOpcode() const { return AIE2::PseudoRET; }
 unsigned AIE2InstrInfo::getCallOpcode(const MachineFunction &CallerF,
                                       bool IsIndirect, bool IsTailCall) const {
   if (IsTailCall)
-    llvm_unreachable("Tail calls not supported yet.\n");
+    return IsIndirect ? AIE2::PseudoJ_TCO_jump_ind : AIE2::PseudoJ_TCO_jump_imm;
   return IsIndirect ? AIE2::PseudoJL_IND : AIE2::PseudoJL;
 }
 
