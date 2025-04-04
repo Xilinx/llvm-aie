@@ -456,6 +456,12 @@ let hasDelaySlot = true, isBranch = true, isTerminator = true,
         PreSchedInstExpansion<J_jump_imm, DelayedSchedBarrier>;
     def PseudoJ_jump_ind : Pseudo<(outs), (ins eP:$mPm)>,
         PreSchedInstExpansion<J_jump_ind, DelayedSchedBarrier>;
+    let isCall = true, isReturn = true in {
+      def PseudoJ_TCO_jump_imm : Pseudo<(outs), (ins addr20:$cpmaddr)>,
+          PreSchedInstExpansion<J_jump_imm, DelayedSchedBarrier>;
+      def PseudoJ_TCO_jump_ind : Pseudo<(outs), (ins eP:$mPm)>,
+          PreSchedInstExpansion<J_jump_ind, DelayedSchedBarrier>;      
+    }
   }
 }
 

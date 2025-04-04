@@ -69,6 +69,9 @@ private:
   /// FrameIndex for start of varargs area
   int VarArgsFrameIndex = 0;
 
+  /// Number of bytes of arguments this function has on the stack.
+  unsigned BytesInStackArgArea = 0;
+
   const TileMemoryPSV TileMemory;
 
 public:
@@ -82,6 +85,9 @@ public:
   int getVarArgsFrameIndex() const { return VarArgsFrameIndex; }
   void setVarArgsFrameIndex(int Index) { VarArgsFrameIndex = Index; }
   const PseudoSourceValue *getTileMemory() const { return &TileMemory; }
+
+  unsigned getBytesInStackArgArea() const { return BytesInStackArgArea; }
+  void setBytesInStackArgArea(unsigned bytes) { BytesInStackArgArea = bytes; }
 };
 
 namespace yaml {

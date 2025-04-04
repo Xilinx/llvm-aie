@@ -38,25 +38,12 @@ define void @callmemmov(ptr %p, ptr %q) {
 ; CHECK-LABEL: callmemmov:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; jl #memmov
-; CHECK-NEXT:    mov p2, p1 // Delay Slot 5
-; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4
-; CHECK-NEXT:    st lr, [sp, #-32] // 4-byte Folded Spill Delay Slot 3
-; CHECK-NEXT:    mov p1, p0 // Delay Slot 2
-; CHECK-NEXT:    mova r0, #40 // Delay Slot 1
-; CHECK-NEXT:    lda lr, [sp, #-32] // 4-byte Folded Reload
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopb ; nopa ; nops ; j #memmov; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    mov p2, p1 // Delay Slot 3
+; CHECK-NEXT:    mov p1, p0 // Delay Slot 2
+; CHECK-NEXT:    mova r0, #40 // Delay Slot 1
 entry:
   %call = tail call ptr @memmov(ptr %p, ptr %q, i32 40)
   ret void

@@ -128,6 +128,12 @@ let hasDelaySlot = true, isBranch = true, isTerminator = true,
     def PseudoJ_jump_ind : Pseudo<(outs), (ins eP:$mPm)>,
         PreSchedInstExpansion<J_alumv_or, DelayedSchedBarrier>;
   }
+    let isCall = true, isReturn = true in {
+    def PseudoJ_TCO_jump_imm : Pseudo<(outs), (ins cpmaddr:$cpmaddr)>,
+        PreSchedInstExpansion<J_lng, DelayedSchedBarrier>;
+    def PseudoJ_TCO_jump_ind : Pseudo<(outs), (ins eP:$mPm)>,
+        PreSchedInstExpansion<J_alumv_or, DelayedSchedBarrier>;    
+    }
 }
 
 // Modified OR instruction to mimic MOV operation

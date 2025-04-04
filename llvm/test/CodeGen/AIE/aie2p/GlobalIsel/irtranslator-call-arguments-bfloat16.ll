@@ -16,11 +16,8 @@ define dso_local void @_Z17test_get_bfloat16v() local_unnamed_addr #0 {
   ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   [[ANYEXT:%[0-9]+]]:_(s32) = G_ANYEXT [[DEF]](s16)
   ; CHECK-NEXT:   $r1 = COPY [[ANYEXT]](s32)
-  ; CHECK-NEXT:   PseudoJL @_Z12ret_bfloat168bfloat16, csr_aie2p, implicit-def $lr, implicit $r1, implicit-def $r0
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
-  ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s16) = G_TRUNC [[COPY]](s32)
   ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
-  ; CHECK-NEXT:   PseudoRET implicit $lr
+  ; CHECK-NEXT:   PseudoJ_TCO_jump_imm @_Z12ret_bfloat168bfloat16, csr_aie2p, implicit $r1
 entry:
   %call = tail call %class.bfloat16 @_Z12ret_bfloat168bfloat16(%class.bfloat16 undef)
   ret void
