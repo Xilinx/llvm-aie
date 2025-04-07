@@ -67,6 +67,10 @@ AIEBasePipelinerLoopInfo::AIEBasePipelinerLoopInfo(MachineInstr *EndLoop,
     LLVM_DEBUG(dbgs() << "PLI: MinTripCount from pragma/CL =  " << MinTripCount
                       << "\n");
   }
+  HasIIPragma = AIELoopUtils::hasIIPragma(*LoopBlock);
+  if (HasIIPragma) {
+    LLVM_DEBUG(dbgs() << "PLI: II specified by pragma\n");
+  }
 }
 
 SmallVector<ArrayRef<SUnit *>, 4> AIEBasePipelinerLoopInfo::getNodeOrders(
@@ -758,7 +762,7 @@ bool ZeroOverheadLoop::preferPostPipeliner(SMSchedule &SMS) {
 
   unsigned NS = SMS.getMaxStageCount() + 1;
   int II = SMS.getInitiationInterval();
-  if (NS > LoopMaxStageCount && II < PostPipelinerCutoff) {
+  if (!HasIIPragma && NS > LoopMaxStageCount && II < PostPipelinerCutoff) {
     LLVM_DEBUG(dbgs() << "PLI: Leaving high stage count for PostPipeliner\n");
     return true;
   }
@@ -819,7 +823,7 @@ bool ZeroOverheadLoop::shouldUseSchedule(SwingSchedulerDAG &SSD,
 bool AIEBasePipelinerLoopInfo::canAcceptII(SMSchedule &SMS) {
   const unsigned PrologueCount = SMS.getMaxStageCount();
   const unsigned NumStages = PrologueCount + 1;
-  if (NumStages > LoopMaxStageCount) {
+  if (!HasIIPragma && NumStages > LoopMaxStageCount) {
     LLVM_DEBUG(dbgs() << "PLI: Rejected schedule (Too many stages, TotStages="
                       << NumStages << " II=" << SMS.getInitiationInterval()
                       << ")\n");

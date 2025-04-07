@@ -29,6 +29,7 @@ protected:
   MachineInstr *EndLoop;
   MachineBasicBlock *LoopBlock;
   bool Negated = false;
+  bool HasIIPragma = false;
 
   // MinTripCount is computed by the initial sanity check, either from
   // a constant loop counter initialization or from a user pragma
