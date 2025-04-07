@@ -1818,3 +1818,34 @@ unsigned AIE2PInstrInfo::getBasicVectorBitSize() const { return 512; }
 unsigned AIE2PInstrInfo::getMaxVectorBitSize() const { return 2048; }
 
 unsigned AIE2PInstrInfo::getMaxSupportedLdStIncSize() const { return 2048; }
+
+using AbstractOp = AIEBaseInstrInfo::AbstractOp;
+
+std::optional<const AbstractOp>
+AIE2PInstrInfo::parseAbstractOp(const MachineInstr &MI) const {
+
+  switch (MI.getOpcode()) {
+  case AIE2P::VADD_32:
+    return AbstractOp{AbstractOp::OperationType::VECTOR_ADD,
+                      {MI.getOperand(1).getReg(), MI.getOperand(2).getReg()},
+                      {}};
+  case AIE2P::VBCST_32:
+    return AbstractOp{AbstractOp::OperationType::VECTOR_BROADCAST,
+                      {},
+                      {MI.getOperand(1).getReg()}};
+  case AIE2P::VSEL_32:
+    return AbstractOp{AbstractOp::OperationType::VECTOR_SELECT,
+                      {MI.getOperand(1).getReg(), MI.getOperand(2).getReg()},
+                      {MI.getOperand(3).getReg()}};
+  case AIE2P::VLDB_4x16_lo:
+  case AIE2P::VLDB_4x16_hi:
+  case AIE2P::VLDB_4x32_lo:
+  case AIE2P::VLDB_4x32_hi:
+  case AIE2P::VLDB_4x64_lo:
+  case AIE2P::VLDB_4x64_hi:
+    return AbstractOp{AbstractOp::OperationType::VECTOR_XWAY_LOAD,
+                      {MI.getOperand(1).getReg()},
+                      {}};
+  }
+  return std::nullopt;
+}
