@@ -48,6 +48,19 @@ std::optional<int64_t> getMinTripCount(const MachineBasicBlock &LoopBlock) {
   return MinTripCount;
 }
 
+bool hasIIPragma(const MachineBasicBlock &LoopBlock) {
+  auto *LoopID = getLoopID(LoopBlock);
+  if (!LoopID) {
+    return {};
+  }
+
+  if (auto LoopMD =
+          getLoopMetadata(LoopID, "llvm.loop.pipeline.initiationinterval"))
+    return true;
+
+  return false;
+}
+
 std::optional<bool> getPipelinerDisabled(const MachineBasicBlock &LoopBlock) {
   auto *LoopID = getLoopID(LoopBlock);
   if (!LoopID) {

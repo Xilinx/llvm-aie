@@ -30,6 +30,8 @@ const MDNode *getLoopID(const MachineBasicBlock &LoopBlock);
 /// single block loops, that's automatically true.
 std::optional<int64_t> getMinTripCount(const MachineBasicBlock &LoopBlock);
 
+bool hasIIPragma(const MachineBasicBlock &LoopBlock);
+
 /// Returns true if this is a loop latch that has a pipeliner disable pragma,
 /// none otherwise.
 std::optional<bool> getPipelinerDisabled(const MachineBasicBlock &LoopBlock);
