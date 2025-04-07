@@ -186,6 +186,9 @@ public:
 
   bool canHoistCheapInst(const MachineInstr &MI) const override;
 
+  std::optional<const AbstractOp>
+  parseAbstractOp(const MachineInstr &MI) const override;
+
 protected:
   SmallVector<AIEPseudoExpandInfo, 4>
   getSpillPseudoExpandInfo(const MachineInstr &MI) const override;
