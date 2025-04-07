@@ -67,7 +67,7 @@ static cl::opt<bool> EnableMultiSlotInstrMaterialization(
              "loops."));
 
 static cl::opt<int> PostPipelinerMaxTryII(
-    "aie-postpipeliner-maxtry-ii", cl::init(10),
+    "aie-postpipeliner-maxtry-ii", cl::init(20),
     cl::desc("[AIE] Maximum II steps to be tried in the post-ra pipeliner"));
 
 namespace llvm::AIE {
