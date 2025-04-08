@@ -42,19 +42,19 @@ define void @add2d(ptr noalias %params, ptr noalias %ifm1_data, ptr noalias %ifm
 ; ASM-NEXT:    lda m3, [p0], #8
 ; ASM-NEXT:    lda m5, [p0], #8
 ; ASM-NEXT:    lda m4, [p0], #-24
-; ASM-NEXT:    lda r3, [p0], #36
-; ASM-NEXT:    lda r1, [p0], #-32
+; ASM-NEXT:    lda r4, [p0], #36
+; ASM-NEXT:    lda r2, [p0], #-32
 ; ASM-NEXT:    lda r0, [p0], #-12; mov p6, sp
-; ASM-NEXT:    lda r2, [p0], #40; paddb [p6], #-36
+; ASM-NEXT:    lda r1, [p0], #40; paddb [p6], #-36
 ; ASM-NEXT:    lda p6, [p6, #0]; mov p7, sp
 ; ASM-NEXT:    paddb [p7], #-40
 ; ASM-NEXT:    lda r5, [p7, #0]
 ; ASM-NEXT:    lda m1, [p0], #36
 ; ASM-NEXT:    lda m0, [p0], #-8
 ; ASM-NEXT:    lda dn0, [p0], #-8
-; ASM-NEXT:    st r2, [p4, #0]
-; ASM-NEXT:    lda dj0, [p0], #12; nez r4, r0; mov p4, sp
-; ASM-NEXT:    st r4, [p5, #0]
+; ASM-NEXT:    st r1, [p4, #0]
+; ASM-NEXT:    lda dj0, [p0], #12; nez r3, r0; mov p4, sp
+; ASM-NEXT:    st r3, [p5, #0]
 ; ASM-NEXT:    lda dn4, [p0], #-8; paddb [p4], #-44; mov p5, sp
 ; ASM-NEXT:    lda p4, [p4, #0]; paddb [p5], #-48
 ; ASM-NEXT:    lda p7, [p5, #0]; mov p5, sp
@@ -80,17 +80,17 @@ define void @add2d(ptr noalias %params, ptr noalias %ifm1_data, ptr noalias %ifm
 ; ASM-NEXT:    lda r12, [p5, #0]; paddb [p4], #-68; mov p5, sp
 ; ASM-NEXT:    lda p4, [p4, #0]; paddb [p5], #-92
 ; ASM-NEXT:    lda r13, [p5, #0]
-; ASM-NEXT:    mova r6, #1; add r7, r1, #-1; mov p5, r6
-; ASM-NEXT:    mova r6, #3; ne r3, r3, r6
+; ASM-NEXT:    mova r6, #1; add r7, r2, #-1; mov p5, r6
+; ASM-NEXT:    mova r6, #3; ne r4, r4, r6
 ; ASM-NEXT:    ltu r7, r7, r6
 ; ASM-NEXT:    jz r7, #.LBB0_2
 ; ASM-NEXT:    st dn4, [p5, #0]; nez r0, r0 // Delay Slot 5
 ; ASM-NEXT:    st r0, [p6, #0] // Delay Slot 4
 ; ASM-NEXT:    paddb [p2], m3; st r5, [p7, #0] // Delay Slot 3
-; ASM-NEXT:    padda [p1], m2; paddb [p2], m5; and r8, r1, r6; st r3, [p4, #0] // Delay Slot 2
+; ASM-NEXT:    padda [p1], m2; paddb [p2], m5; and r8, r2, r6; st r4, [p4, #0] // Delay Slot 2
 ; ASM-NEXT:    mova r6, #0; paddb [p2], m4; st r8, [p0, #0] // Delay Slot 1
 ; ASM-NEXT:  // %bb.1:
-; ASM-NEXT:    nopb ; nopa ; nops ; j #.LBB0_6; nopv
+; ASM-NEXT:    nopb ; nopa ; nops ; j #.LBB0_5; nopv
 ; ASM-NEXT:    nopa ; nopx // Delay Slot 5
 ; ASM-NEXT:    nop // Delay Slot 4
 ; ASM-NEXT:    nop // Delay Slot 3
@@ -98,64 +98,53 @@ define void @add2d(ptr noalias %params, ptr noalias %ifm1_data, ptr noalias %ifm
 ; ASM-NEXT:    mova r0, #0 // Delay Slot 1
 ; ASM-NEXT:    .p2align 4
 ; ASM-NEXT:  .LBB0_2: // %entry.new
-; ASM-NEXT:    vlda.ups.s32.d8 cm1, s1, [p1], m1; mov dc0, #0
-; ASM-NEXT:    vlda.ups.s32.d8 cm2, s1, [p1], m1; mov dc4, dc0
-; ASM-NEXT:    vlda.3d.ups.s32.d8 cm4, s1, [p2], d0
-; ASM-NEXT:    vlda.ups.s32.d8 cm5, s1, [p1], m1
-; ASM-NEXT:    vlda.3d.ups.s32.d8 cm6, s1, [p2], d0; mov crUPSSign, r4
-; ASM-NEXT:    vlda.ups.s32.d8 cm0, s1, [p1], m1; mov s1, r2
-; ASM-NEXT:    vlda.3d.ups.s32.d8 cm7, s1, [p2], d0
-; ASM-NEXT:    vlda.3d.ups.s32.d8 cm3, s1, [p2], d0
-; ASM-NEXT:    vlda.ups.s32.d8 cm2, s1, [p1], m1
-; ASM-NEXT:    vlda.3d.ups.s32.d8 cm5, s1, [p2], d0
-; ASM-NEXT:    vlda.3d.ups.s32.d8 cm7, s1, [p2], d0
-; ASM-NEXT:    vlda.ups.s32.d8 cm4, s1, [p1], m1
-; ASM-NEXT:    vlda.ups.s32.d8 cm3, s1, [p1], m1
-; ASM-NEXT:    vlda.3d.ups.s32.d8 cm6, s1, [p2], d0; vadd cm4, cm4, cm1, r0
-; ASM-NEXT:    vlda.ups.s32.d8 cm0, s1, [p1], m1; movx r6, #-4; vadd cm6, cm6, cm2, r0
-; ASM-NEXT:    vlda.3d.ups.s32.d8 cm1, s1, [p2], d0; and r1, r1, r6; vadd cm1, cm7, cm5, r0
-; ASM-NEXT:    add r1, r1, #-4; mov crSRSSign, r3; vadd cm8, cm3, cm0, r0
-; ASM-NEXT:    add r1, r1, #-4; mov s0, r5
-; ASM-NEXT:    jz r1, #.LBB0_5
-; ASM-NEXT:    vst.srs.d8.s32 cm4, s0, [p3], #32 // Delay Slot 5
-; ASM-NEXT:    vst.srs.d8.s32 cm6, s0, [p3], #32 // Delay Slot 4
-; ASM-NEXT:    vst.srs.d8.s32 cm1, s0, [p3], #32 // Delay Slot 3
-; ASM-NEXT:    nop // Delay Slot 2
-; ASM-NEXT:    nop // Delay Slot 1
+; ASM-NEXT:    nopa ; nopb ; movxm ls, #.LBB0_3
+; ASM-NEXT:    vlda.ups.s32.d8 cm0, s1, [p1], m1; mov dc0, #0
+; ASM-NEXT:    vlda.ups.s32.d8 cm1, s1, [p1], m1; movx r6, #-4; mov dc4, dc0
+; ASM-NEXT:    vlda.3d.ups.s32.d8 cm2, s1, [p2], d0; movxm le, #.L_LEnd0
+; ASM-NEXT:    vlda.ups.s32.d8 cm3, s1, [p1], m1; and r2, r2, r6; mov crUPSSign, r3
+; ASM-NEXT:    vlda.3d.ups.s32.d8 cm6, s1, [p2], d0; add r2, r2, #-4; mov r6, #-2
+; ASM-NEXT:    vlda.ups.s32.d8 cm4, s1, [p1], m1; lshl r2, r2, r6; mov s1, r1
+; ASM-NEXT:    vlda.3d.ups.s32.d8 cm7, s1, [p2], d0; add r2, r2, #1
+; ASM-NEXT:    vlda.3d.ups.s32.d8 cm5, s1, [p2], d0; add.nc lc, r2, #-1
+; ASM-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+; ASM-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+; ASM-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+; ASM-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+; ASM-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+; ASM-NEXT:    nopb ; nopa ; nops ; nopx ; mov crSRSSign, r4; nopv
+; ASM-NEXT:    nopb ; nopa ; nops ; nopx ; mov s0, r5; nopv
 ; ASM-NEXT:    .p2align 4
 ; ASM-NEXT:  .LBB0_3: // %for.body
 ; ASM-NEXT:    // =>This Inner Loop Header: Depth=1
-; ASM-NEXT:    nopb ; vlda.3d.ups.s32.d8 cm5, s1, [p2], d0; nops ; nopxm ; vadd cm5, cm5, cm2, r0
-; ASM-NEXT:    vlda.3d.ups.s32.d8 cm7, s1, [p2], d0; nopb ; nopx ; vadd cm2, cm7, cm4, r0
-; ASM-NEXT:    vlda.ups.s32.d8 cm2, s1, [p1], m1; vadd cm3, cm6, cm3, r0
-; ASM-NEXT:    vlda.3d.ups.s32.d8 cm6, s1, [p2], d0; add r1, r1, #-4
-; ASM-NEXT:    vlda.ups.s32.d8 cm4, s1, [p1], m1; jnz r1, #.LBB0_3
-; ASM-NEXT:    vlda.ups.s32.d8 cm3, s1, [p1], m1; vst.srs.d8.s32 cm8, s0, [p3], #32 // Delay Slot 5
-; ASM-NEXT:    vst.srs.d8.s32 cm5, s0, [p3], #32 // Delay Slot 4
-; ASM-NEXT:    nop // Delay Slot 3
-; ASM-NEXT:    vlda.3d.ups.s32.d8 cm1, s1, [p2], d0; vst.srs.d8.s32 cm2, s0, [p3], #32 // Delay Slot 2
-; ASM-NEXT:    vlda.ups.s32.d8 cm0, s1, [p1], m1; vst.srs.d8.s32 cm3, s0, [p3], #32; vadd cm8, cm1, cm0, r0 // Delay Slot 1
-; ASM-NEXT:  // %bb.4:
-; ASM-NEXT:    nopa ; nopb ; nopxm
-; ASM-NEXT:    nop
-; ASM-NEXT:    nop
-; ASM-NEXT:    .p2align 4
-; ASM-NEXT:  .LBB0_5:
-; ASM-NEXT:    nopa ; nopb ; nopx ; vadd cm4, cm7, cm4, r0
-; ASM-NEXT:    vadd cm3, cm6, cm3, r0
-; ASM-NEXT:    vadd cm2, cm5, cm2, r0
-; ASM-NEXT:    vadd cm0, cm1, cm0, r0
-; ASM-NEXT:    nop
-; ASM-NEXT:    nop
-; ASM-NEXT:    vst.srs.d8.s32 cm8, s0, [p3], #32
-; ASM-NEXT:    vst.srs.d8.s32 cm2, s0, [p3], #32
+; ASM-NEXT:    nopx ; vadd cm8, cm2, cm0, r0
+; ASM-NEXT:    vlda.ups.s32.d8 cm0, s1, [p1], m1; vadd cm2, cm6, cm1, r0
+; ASM-NEXT:    vlda.ups.s32.d8 cm1, s1, [p1], m1; vadd cm6, cm7, cm3, r0
+; ASM-NEXT:    vlda.ups.s32.d8 cm3, s1, [p1], m1; vadd cm4, cm5, cm4, r0
+; ASM-NEXT:    vlda.3d.ups.s32.d8 cm2, s1, [p2], d0
+; ASM-NEXT:    vlda.3d.ups.s32.d8 cm6, s1, [p2], d0
+; ASM-NEXT:    vlda.3d.ups.s32.d8 cm7, s1, [p2], d0; vst.srs.d8.s32 cm8, s0, [p3], #32
+; ASM-NEXT:    vlda.ups.s32.d8 cm4, s1, [p1], m1; vst.srs.d8.s32 cm2, s0, [p3], #32
+; ASM-NEXT:    vlda.3d.ups.s32.d8 cm5, s1, [p2], d0; vst.srs.d8.s32 cm6, s0, [p3], #32
 ; ASM-NEXT:    vst.srs.d8.s32 cm4, s0, [p3], #32
-; ASM-NEXT:    vst.srs.d8.s32 cm3, s0, [p3], #32; mov crUPSSign, #0
-; ASM-NEXT:    vst.srs.d8.s32 cm0, s0, [p3], #32; mov r6, dc0
+; ASM-NEXT:    nop
+; ASM-NEXT:  .L_LEnd0:
+; ASM-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+; ASM-NEXT:  // %bb.4:
+; ASM-NEXT:    nopb ; nopa ; nops ; nopxm ; vadd cm0, cm2, cm0, r0
+; ASM-NEXT:    vadd cm2, cm7, cm3, r0
+; ASM-NEXT:    vadd cm1, cm6, cm1, r0
+; ASM-NEXT:    vadd cm3, cm5, cm4, r0
+; ASM-NEXT:    nop
+; ASM-NEXT:    nop
+; ASM-NEXT:    vst.srs.d8.s32 cm0, s0, [p3], #32
+; ASM-NEXT:    vst.srs.d8.s32 cm1, s0, [p3], #32
+; ASM-NEXT:    vst.srs.d8.s32 cm2, s0, [p3], #32; mov crUPSSign, #0
+; ASM-NEXT:    vst.srs.d8.s32 cm3, s0, [p3], #32; mov r6, dc0
 ; ASM-NEXT:    mov r0, dc4
 ; ASM-NEXT:    mov crSRSSign, #0
 ; ASM-NEXT:    .p2align 4
-; ASM-NEXT:  .LBB0_6: // %for.cond.cleanup.unr-lcssa.split
+; ASM-NEXT:  .LBB0_5: // %for.cond.cleanup.unr-lcssa.split
 ; ASM-NEXT:    nopb ; lda p7, [sp, #-32]; nops ; nopxm ; nopv // 4-byte Folded Reload
 ; ASM-NEXT:    mov p0, r13
 ; ASM-NEXT:    st r0, [p0, #0]
