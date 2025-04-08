@@ -1,4 +1,4 @@
-name: AIEngine LLVM Build
+name: AIEngine LLVM Build - Windows
 
 permissions:
   contents: read
