@@ -5,7 +5,7 @@
 # (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc --mtriple=aie2p -O2 --start-before=postmisched %s \
-# RUN:   --aie-addrspace-none-is-safe=1	\
+# RUN:   --aie-addrspace-none-is-safe=1	--aie-postpipeliner-maxtry-ii=10 \
 # RUN:   -pass-remarks-output=- -pass-remarks-filter=postpipeliner -o /dev/null | FileCheck %s
 
 
