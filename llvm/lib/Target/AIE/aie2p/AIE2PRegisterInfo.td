@@ -398,23 +398,43 @@ class AIE2PDim3DRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> 
        srFifo_of, srFifo_uf,
        srSparse_of, srFPFlags, srF2IFlags, srF2FFlags,
        srF2BFlags, srFPNlf, srFPCnvFx2Fl, srFPCnvFl2Fx)>;
-
-
+       
+  let isArtificial = 1 in {
   foreach i = 0 - 4 in {
-    def bmll #i : AIE2P3BitReg<i, "bmll" #i>;
+    def dummy_acc256ll_l #i : AIE2P3BitReg<i, "dummy_acc256ll_l" #i>;
+    def dummy_acc256ll_h #i : AIE2P3BitReg<i, "dummy_acc256ll_h" #i>;
+  }
+  foreach i = 0 - 4 in {
+    def dummy_acc256lh_l #i : AIE2P3BitReg<i, "dummy_acc256lh_l" #i>;
+    def dummy_acc256lh_h #i : AIE2P3BitReg<i, "dummy_acc256lh_h" #i>;
+  }
+  foreach i = 0 - 4 in {
+    def dummy_acc256hl_l #i : AIE2P3BitReg<i, "dummy_acc256hl_l" #i>;
+    def dummy_acc256hl_h #i : AIE2P3BitReg<i, "dummy_acc256hl_h" #i>;
+  }
+  foreach i = 0 - 4 in {
+    def dummy_acc256hh_l #i : AIE2P3BitReg<i, "dummy_acc256hh_l" #i>;
+    def dummy_acc256hh_h #i : AIE2P3BitReg<i, "dummy_acc256hh_h" #i>;
+  }
+  }
+
+  let SubRegIndices = [sub_256_lo, sub_256_hi], CoveredBySubRegs = 1 in {
+  foreach i = 0 - 4 in {
+    def bmll #i : AIE2P3BitReg<i, "bmll" #i, [!cast<Register>("dummy_acc256ll_l" #i), !cast<Register>("dummy_acc256ll_h" #i)]>;
   }
 
   foreach i = 0 - 4 in {
-    def bmlh #i : AIE2P3BitReg<i, "bmlh" #i>;
+    def bmlh #i : AIE2P3BitReg<i, "bmlh" #i, [!cast<Register>("dummy_acc256lh_l" #i), !cast<Register>("dummy_acc256lh_h" #i)]>;
   }
 
   foreach i = 0 - 4 in {
-    def bmhl #i : AIE2P3BitReg<i, "bmhl" #i>;
+    def bmhl #i : AIE2P3BitReg<i, "bmhl" #i, [!cast<Register>("dummy_acc256hl_l" #i), !cast<Register>("dummy_acc256hl_h" #i)]>;
   }
 
   foreach i = 0 - 4 in {
-    def bmhh #i : AIE2P3BitReg<i, "bmhh" #i>;
+    def bmhh #i : AIE2P3BitReg<i, "bmhh" #i, [!cast<Register>("dummy_acc256hh_l" #i), !cast<Register>("dummy_acc256hh_h" #i)]>;
   }
+ } // let SubRegIndices = [sub_256_lo, sub_256_hi], CoveredBySubRegs = 1
 
   def eBMLL : AIE2PVector512RegisterClass<(add bmll0, bmll1, bmll2, bmll3, bmll4)>;
   def eBMLH : AIE2PVector512RegisterClass<(add bmlh0, bmlh1, bmlh2, bmlh3, bmlh4)>;
