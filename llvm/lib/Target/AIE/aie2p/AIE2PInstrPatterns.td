@@ -243,19 +243,19 @@ def : Pat<(v64bf16 (fmul v64bf16:$vec1, v64bf16:$vec2)),
             (VCONV_bf16_fp32_mv_x_srs_bf 
               (EXTRACT_SUBREG 
                 (VMUL_f_vmul_bf_vmul_bf_core_Y_Y VEC1024:$vec1, VEC1024:$vec2, (i32 mulbf16_vecconf.ConfBits)),
-                sub_1024_acc_lo)), 
+                sub_1024_lo)), 
             sub_512_lo,
             (VCONV_bf16_fp32_mv_x_srs_bf 
               (EXTRACT_SUBREG
                 (VMUL_f_vmul_bf_vmul_bf_core_Y_Y VEC1024:$vec1, VEC1024:$vec2, (i32 mulbf16_vecconf.ConfBits)),
-                sub_1024_acc_hi)), 
+                sub_1024_hi)), 
             sub_512_hi))>;
 
 def : Pat<(v32bf16 (fmul v32bf16:$vec1, v32bf16:$vec2)),
     (VCONV_bf16_fp32_mv_x_srs_bf 
               (EXTRACT_SUBREG 
                 (VMUL_f_vmul_bf_vmul_bf_core_X_X VEC512:$vec1, VEC512:$vec2, (i32 mulbf16_vecconf.ConfBits)),
-                sub_1024_acc_lo))>;
+                sub_1024_lo))>;
 
 // VMUL/VMAC Intrinsics
 
@@ -303,40 +303,40 @@ def : Pat<(int_aie2p_I512_I1024_ACC2048_mul_conf VEC512:$s1, VEC1024:$s2, eR:$ac
 def : Pat<(int_aie2p_I512_I512_ACC1024_addmac_conf VEC512:$s1, VEC512:$s2, ACC1024:$acc1, ACC1024:$acc2, eR:$acc),
            (EXTRACT_SUBREG 
             (VADDMAC_vmac_cm2_add_reg_vmul_cm_core_X_X 
-             (REG_SEQUENCE ACC2048, ACC1024:$acc1, sub_1024_acc_lo),
-             (REG_SEQUENCE ACC2048, ACC1024:$acc2, sub_1024_acc_lo),
+             (REG_SEQUENCE ACC2048, ACC1024:$acc1, sub_1024_lo),
+             (REG_SEQUENCE ACC2048, ACC1024:$acc2, sub_1024_lo),
              VEC512:$s1, VEC512:$s2, eR:$acc),
-           sub_1024_acc_lo)>;
+           sub_1024_lo)>;
 
 def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC1024_bf_addmac_conf VEC512:$s1, VEC512:$s2, ACC1024:$acc1, ACC1024:$acc2, eR:$acc),
            (EXTRACT_SUBREG
             (VADDMAC_f_vaddmac_bf_vmac_cm2_add_reg_vmul_bf_core_X_X 
-             (REG_SEQUENCE ACC2048, ACC1024:$acc1, sub_1024_acc_lo),
-             (REG_SEQUENCE ACC2048, ACC1024:$acc2, sub_1024_acc_lo),
+             (REG_SEQUENCE ACC2048, ACC1024:$acc1, sub_1024_lo),
+             (REG_SEQUENCE ACC2048, ACC1024:$acc2, sub_1024_lo),
              VEC512:$s1, VEC512:$s2, eR:$acc), 
-           sub_1024_acc_lo)>;
+           sub_1024_lo)>;
 
 def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC1024_bf_mac_conf VEC512:$s1, VEC512:$s2, ACC1024:$acc1, eR:$acc),
            (EXTRACT_SUBREG 
             (VMAC_f_vmac_bf_vmul_bf_core_X_X 
-             (REG_SEQUENCE ACC2048, ACC1024:$acc1, sub_1024_acc_lo),
+             (REG_SEQUENCE ACC2048, ACC1024:$acc1, sub_1024_lo),
              VEC512:$s1, VEC512:$s2, eR:$acc),
-           sub_1024_acc_lo)>;
+           sub_1024_lo)>;
 
 def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC1024_bf_mul_conf VEC512:$s1, VEC512:$s2, eR:$acc),
            (EXTRACT_SUBREG 
             (VMUL_f_vmul_bf_vmul_bf_core_X_X VEC512:$s1, VEC512:$s2, eR:$acc),
-           sub_1024_acc_lo)>;
+           sub_1024_lo)>;
 
 def : Pat<(int_aie2p_I512_I512_ACC1024_mac_conf VEC512:$s1, VEC512:$s2, ACC1024:$acc1, eR:$acc),
            (EXTRACT_SUBREG
             (VMAC_vmul_cm_core_X_X 
-             (REG_SEQUENCE ACC2048, ACC1024:$acc1, sub_1024_acc_lo),
+             (REG_SEQUENCE ACC2048, ACC1024:$acc1, sub_1024_lo),
              VEC512:$s1, VEC512:$s2, eR:$acc),
-           sub_1024_acc_lo)>;
+           sub_1024_lo)>;
 
 def : Pat<(int_aie2p_I512_I512_ACC1024_mul_conf VEC512:$s1, VEC512:$s2, eR:$acc),
-           (EXTRACT_SUBREG (VMUL_vmul_cm_core_X_X VEC512:$s1, VEC512:$s2, eR:$acc), sub_1024_acc_lo)>;
+           (EXTRACT_SUBREG (VMUL_vmul_cm_core_X_X VEC512:$s1, VEC512:$s2, eR:$acc), sub_1024_lo)>;
 
 
 def : Pat<(int_aie2p_I512_I512_ACC2048_addmac_conf VEC512:$s1, VEC512:$s2, ACC2048:$acc1, ACC2048:$acc2, eR:$acc),
@@ -361,18 +361,18 @@ def : Pat<(int_aie2p_I512_I512_ACC2048_mul_conf VEC512:$s1, VEC512:$s2, eR:$acc)
 
 def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC512_bf_addmac_conf VEC512:$s1, VEC512:$s2, ACC512:$acc1, ACC512:$acc2, eR:$acc),
            (EXTRACT_SUBREG (VADDMAC_f_vaddmac_bf_vmac_cm2_add_reg_vmul_bf_core_X_X 
-            (REG_SEQUENCE ACC2048, ACC512:$acc1, sub_512_acc_lo),
-            (REG_SEQUENCE ACC2048, ACC512:$acc2, sub_512_acc_lo),
-             VEC512:$s1, VEC512:$s2, eR:$acc), sub_512_acc_lo)>;
+            (REG_SEQUENCE ACC2048, ACC512:$acc1, sub_512_lo),
+            (REG_SEQUENCE ACC2048, ACC512:$acc2, sub_512_lo),
+             VEC512:$s1, VEC512:$s2, eR:$acc), sub_512_lo)>;
 
 def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC512_bf_mac_conf VEC512:$s1, VEC512:$s2, ACC512:$acc1, eR:$acc),
            (EXTRACT_SUBREG
             (VMAC_f_vmac_bf_vmul_bf_core_X_X 
-              (REG_SEQUENCE ACC2048, ACC512:$acc1, sub_512_acc_lo),
-              VEC512:$s1, VEC512:$s2, eR:$acc), sub_512_acc_lo)>;
+              (REG_SEQUENCE ACC2048, ACC512:$acc1, sub_512_lo),
+              VEC512:$s1, VEC512:$s2, eR:$acc), sub_512_lo)>;
 
 def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC512_bf_mul_conf VEC512:$s1, VEC512:$s2, eR:$acc),
-           (EXTRACT_SUBREG (VMUL_f_vmul_bf_vmul_bf_core_X_X VEC512:$s1, VEC512:$s2, eR:$acc), sub_512_acc_lo)>;
+           (EXTRACT_SUBREG (VMUL_f_vmul_bf_vmul_bf_core_X_X VEC512:$s1, VEC512:$s2, eR:$acc), sub_512_lo)>;
 
 // BFP16 VMUL/VMAC Intrinsics
 
@@ -591,11 +591,11 @@ def : Pat<(int_aie2p_I512_I512_ACC1024_addmsc_conf
            ACC1024:$acc2,
            eR:$acc),
           (EXTRACT_SUBREG (VADDMSC_vmac_cm2_add_reg_vmul_cm_core_X_X 
-           (REG_SEQUENCE ACC2048, ACC1024:$acc1, sub_1024_acc_lo),
-           (REG_SEQUENCE ACC2048, ACC1024:$acc2, sub_1024_acc_lo),
+           (REG_SEQUENCE ACC2048, ACC1024:$acc1, sub_1024_lo),
+           (REG_SEQUENCE ACC2048, ACC1024:$acc2, sub_1024_lo),
            VEC512:$s1, 
            VEC512:$s2, 
-           eR:$acc), sub_1024_acc_lo)>;
+           eR:$acc), sub_1024_lo)>;
 def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC1024_bf_addmsc_conf
            VEC512:$s1, 
            VEC512:$s2,
@@ -603,21 +603,21 @@ def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC1024_bf_addmsc_conf
            ACC1024:$acc2,
            eR:$acc),
           (EXTRACT_SUBREG (VADDMSC_f_vaddmac_bf_vmac_cm2_add_reg_vmul_bf_core_X_X
-           (REG_SEQUENCE ACC2048, ACC1024:$acc1, sub_1024_acc_lo),
-           (REG_SEQUENCE ACC2048, ACC1024:$acc2, sub_1024_acc_lo),
+           (REG_SEQUENCE ACC2048, ACC1024:$acc1, sub_1024_lo),
+           (REG_SEQUENCE ACC2048, ACC1024:$acc2, sub_1024_lo),
            VEC512:$s1, 
            VEC512:$s2, 
-           eR:$acc), sub_1024_acc_lo)>;
+           eR:$acc), sub_1024_lo)>;
 def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC1024_bf_msc_conf
            VEC512:$s1, 
            VEC512:$s2,
            ACC1024:$acc1,
            eR:$acc),
           (EXTRACT_SUBREG (VMSC_f_vmac_bf_vmul_bf_core_X_X
-           (REG_SEQUENCE ACC2048, ACC1024:$acc1, sub_1024_acc_lo),
+           (REG_SEQUENCE ACC2048, ACC1024:$acc1, sub_1024_lo),
            VEC512:$s1, 
            VEC512:$s2, 
-           eR:$acc), sub_1024_acc_lo)>;
+           eR:$acc), sub_1024_lo)>;
 def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC1024_bf_negmul_conf
            VEC512:$s1, 
            VEC512:$s2,
@@ -625,17 +625,17 @@ def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC1024_bf_negmul_conf
           (EXTRACT_SUBREG (VNEGMUL_f_vmul_bf_vmul_bf_core_X_X
            VEC512:$s1, 
            VEC512:$s2, 
-           eR:$acc), sub_1024_acc_lo)>;
+           eR:$acc), sub_1024_lo)>;
 def : Pat<(int_aie2p_I512_I512_ACC1024_msc_conf
            VEC512:$s1, 
            VEC512:$s2,
            ACC1024:$acc1,
            eR:$acc),
           (EXTRACT_SUBREG (VMSC_vmul_cm_core_X_X
-           (REG_SEQUENCE ACC2048, ACC1024:$acc1, sub_1024_acc_lo),
+           (REG_SEQUENCE ACC2048, ACC1024:$acc1, sub_1024_lo),
            VEC512:$s1, 
            VEC512:$s2, 
-           eR:$acc), sub_1024_acc_lo)>;
+           eR:$acc), sub_1024_lo)>;
 def : Pat<(int_aie2p_I512_I512_ACC1024_negmul_conf
            VEC512:$s1, 
            VEC512:$s2,
@@ -643,7 +643,7 @@ def : Pat<(int_aie2p_I512_I512_ACC1024_negmul_conf
           (EXTRACT_SUBREG (VNEGMUL_vmul_cm_core_X_X
            VEC512:$s1, 
            VEC512:$s2, 
-           eR:$acc), sub_1024_acc_lo)>;
+           eR:$acc), sub_1024_lo)>;
 def : Pat<(int_aie2p_I512_I512_ACC2048_addmsc_conf 
            VEC512:$s1,
            VEC512:$s2,
@@ -711,21 +711,21 @@ def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC512_bf_addmsc_conf
            ACC512:$acc2,
            eR:$acc),
           (EXTRACT_SUBREG (VADDMSC_f_vaddmac_bf_vmac_cm2_add_reg_vmul_bf_core_X_X
-           (REG_SEQUENCE ACC2048, ACC512:$acc1, sub_512_acc_lo),
-           (REG_SEQUENCE ACC2048, ACC512:$acc2, sub_512_acc_lo),
+           (REG_SEQUENCE ACC2048, ACC512:$acc1, sub_512_lo),
+           (REG_SEQUENCE ACC2048, ACC512:$acc2, sub_512_lo),
            VEC512:$s1, 
            VEC512:$s2, 
-           eR:$acc), sub_512_acc_lo)>;
+           eR:$acc), sub_512_lo)>;
 def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC512_bf_msc_conf
            VEC512:$s1, 
            VEC512:$s2,
            ACC512:$acc1,
            eR:$acc),
           (EXTRACT_SUBREG (VMSC_f_vmac_bf_vmul_bf_core_X_X
-           (REG_SEQUENCE ACC2048, ACC512:$acc1, sub_512_acc_lo),
+           (REG_SEQUENCE ACC2048, ACC512:$acc1, sub_512_lo),
            VEC512:$s1, 
            VEC512:$s2, 
-           eR:$acc), sub_512_acc_lo)>;
+           eR:$acc), sub_512_lo)>;
 def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC512_bf_negmul_conf
            VEC512:$s1, 
            VEC512:$s2,
@@ -733,7 +733,7 @@ def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC512_bf_negmul_conf
           (EXTRACT_SUBREG (VNEGMUL_f_vmul_bf_vmul_bf_core_X_X
            VEC512:$s1, 
            VEC512:$s2, 
-           eR:$acc), sub_512_acc_lo)>;
+           eR:$acc), sub_512_lo)>;
 
 // SRS Intrinsic
 // Note : Non-constant sign is handled in .cpp
@@ -867,7 +867,6 @@ def : Pat<(int_aie2p_vshift_I512_I512 VEC512:$s1, VEC512:$s2, mSs:$pre, eR:$shif
            (VSHIFT_ALIGN VEC512:$s1, mSs:$pre, VEC512:$s2, eR:$shift)>;
 def : Pat<(int_aie2p_vshift_bf512_bf512 VEC512:$s1, VEC512:$s2, mSs:$pre, eR:$shift),
            (VSHIFT_ALIGN VEC512:$s1, mSs:$pre, VEC512:$s2, eR:$shift)>;
-
 // Combine broadcast + shift into VPUSH_hi_64
 def : Pat<(int_aie2p_vshift_I512_I512 (v16i32 VEC512:$s0), (v16i32 (bcst_vector_node(v2i32 eL : $s1))), 0x0, 0x8),
            (VPUSH_hi_64 VEC512:$s0, eL:$s1)>;
@@ -998,16 +997,16 @@ def : Pat<(v128i8 (concat_vectors (v64i8 VEC512:$src0), (v64i8 VEC512:$src1))),
 
 // concat_vector - accumulator bank
 def : Pat<(v16i64 (concat_vectors (v8i64 ACC512:$src0), (v8i64 ACC512:$src1))),
-  (v16i64 (REG_SEQUENCE ACC1024, ACC512:$src0, sub_512_acc_lo, ACC512:$src1, sub_512_acc_hi))>;
+  (v16i64 (REG_SEQUENCE ACC1024, ACC512:$src0, sub_512_lo, ACC512:$src1, sub_512_hi))>;
 
 def : Pat<(v32i32 (concat_vectors (v16i32 ACC512:$src0), (v16i32 ACC512:$src1))),
-  (v32i32 (REG_SEQUENCE ACC1024, ACC512:$src0, sub_512_acc_lo, ACC512:$src1, sub_512_acc_hi))>;
+  (v32i32 (REG_SEQUENCE ACC1024, ACC512:$src0, sub_512_lo, ACC512:$src1, sub_512_hi))>;
 
 def : Pat<(v32i64 (concat_vectors (v16i64 ACC1024:$src0), (v16i64 ACC1024:$src1))),
-  (v32i64 (REG_SEQUENCE ACC2048, ACC1024:$src0, sub_1024_acc_lo, ACC1024:$src1, sub_1024_acc_hi))>;
+  (v32i64 (REG_SEQUENCE ACC2048, ACC1024:$src0, sub_1024_lo, ACC1024:$src1, sub_1024_hi))>;
 
 def : Pat<(v64i32 (concat_vectors (v32i32 ACC1024:$src0), (v32i32 ACC1024:$src1))),
-  (v64i32 (REG_SEQUENCE ACC2048, ACC1024:$src0, sub_1024_acc_lo, ACC1024:$src1, sub_1024_acc_hi))>;
+  (v64i32 (REG_SEQUENCE ACC2048, ACC1024:$src0, sub_1024_lo, ACC1024:$src1, sub_1024_hi))>;
 
 // concat_vector - gpr bank
 foreach Ty = [v4i16, v8i8] in {

@@ -540,14 +540,14 @@ void AIE2PRegisterInfo::getTargetSubRegs(std::vector<unsigned> &Subregs,
       Subregs.push_back(AIE2P::sub_256_hi);
       break;
     case 512:
-      Subregs.push_back(IsVecRB ? AIE2P::sub_512_lo : AIE2P::sub_512_acc_lo);
-      Subregs.push_back(IsVecRB ? AIE2P::sub_512_hi : AIE2P::sub_512_acc_hi);
+      Subregs.push_back(AIE2P::sub_512_lo);
+      Subregs.push_back(AIE2P::sub_512_hi);
       break;
     case 1024:
       assert(!IsVecRB &&
              "expected accumulator register bank for 256 dest type!");
-      Subregs.push_back(AIE2P::sub_1024_acc_lo);
-      Subregs.push_back(AIE2P::sub_1024_acc_hi);
+      Subregs.push_back(AIE2P::sub_1024_lo);
+      Subregs.push_back(AIE2P::sub_1024_hi);
       break;
     default:
       llvm_unreachable("Unsupported subreg type!");
