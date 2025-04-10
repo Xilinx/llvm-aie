@@ -2459,7 +2459,7 @@ bool AIE2PInstructionSelector::selectWideG_AIE_LOAD_STORE(
     RC1024 = &AIE2P::VEC1024RegClass;
   } else if (RBID == AIE2P::FifoRegBankID) {
     RC512 = &AIE2P::FIFO512RegClass;
-    SubRegIdxes = {AIE2P::sub_lo_fifo, AIE2P::sub_hi_fifo};
+    SubRegIdxes = {AIE2P::sub_512_lo, AIE2P::sub_512_hi};
     RC1024 = &AIE2P::FIFO1024RegClass;
   } else {
     llvm_unreachable("Unknown Register Bank ID!");

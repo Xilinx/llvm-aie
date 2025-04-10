@@ -683,52 +683,52 @@ void AIE2PInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   } else if ((AIE2P::FIFO1024RegClass.contains(SrcReg)) &&
              (AIE2P::FIFO1024RegClass.contains(DstReg))) {
     BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
-            TRI.getSubReg(DstReg, AIE2P::sub_lo_fifo))
-        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_lo_fifo),
+            TRI.getSubReg(DstReg, AIE2P::sub_512_lo))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_512_lo),
                 getKillRegState(KillSrc));
     BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
-            TRI.getSubReg(DstReg, AIE2P::sub_hi_fifo))
-        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_hi_fifo),
+            TRI.getSubReg(DstReg, AIE2P::sub_512_hi))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_512_hi),
                 getKillRegState(KillSrc));
   } else if ((AIE2P::VEC1024RegClass.contains(SrcReg)) &&
              (AIE2P::FIFO1024RegClass.contains(DstReg))) {
     BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
-            TRI.getSubReg(DstReg, AIE2P::sub_lo_fifo))
+            TRI.getSubReg(DstReg, AIE2P::sub_512_lo))
         .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_512_lo),
                 getKillRegState(KillSrc));
     BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
-            TRI.getSubReg(DstReg, AIE2P::sub_hi_fifo))
+            TRI.getSubReg(DstReg, AIE2P::sub_512_hi))
         .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_512_hi),
                 getKillRegState(KillSrc));
   } else if ((AIE2P::FIFO1024RegClass.contains(SrcReg)) &&
              (AIE2P::VEC1024RegClass.contains(DstReg))) {
     BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
             TRI.getSubReg(DstReg, AIE2P::sub_512_lo))
-        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_lo_fifo),
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_512_lo),
                 getKillRegState(KillSrc));
     BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
             TRI.getSubReg(DstReg, AIE2P::sub_512_hi))
-        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_hi_fifo),
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_512_hi),
                 getKillRegState(KillSrc));
   } else if ((AIE2P::ACC1024RegClass.contains(SrcReg)) &&
              (AIE2P::FIFO1024RegClass.contains(DstReg))) {
     BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
-            TRI.getSubReg(DstReg, AIE2P::sub_lo_fifo))
+            TRI.getSubReg(DstReg, AIE2P::sub_512_lo))
         .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_512_lo),
                 getKillRegState(KillSrc));
     BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
-            TRI.getSubReg(DstReg, AIE2P::sub_hi_fifo))
+            TRI.getSubReg(DstReg, AIE2P::sub_512_hi))
         .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_512_hi),
                 getKillRegState(KillSrc));
   } else if ((AIE2P::FIFO1024RegClass.contains(SrcReg)) &&
              (AIE2P::ACC1024RegClass.contains(DstReg))) {
     BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
             TRI.getSubReg(DstReg, AIE2P::sub_512_lo))
-        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_lo_fifo),
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_512_lo),
                 getKillRegState(KillSrc));
     BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
             TRI.getSubReg(DstReg, AIE2P::sub_512_hi))
-        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_hi_fifo),
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_512_hi),
                 getKillRegState(KillSrc));
   } else if ((AIE2P::eLRegClass.contains(SrcReg)) &&
              (AIE2P::EXPVEC64RegClass.contains(DstReg))) {
@@ -1055,8 +1055,8 @@ AIE2PInstrInfo::getSpillPseudoExpandInfo(const MachineInstr &MI) const {
     return {{AIE2P::VST_dmx_sts_bm_spill, AIE2P::sub_512_lo},
             {AIE2P::VST_dmx_sts_bm_spill, AIE2P::sub_512_hi}};
   case AIE2P::VST_FIFO_SPILL:
-    return {{AIE2P::VST_dmx_sts_fifohl_spill, AIE2P::sub_lo_fifo},
-            {AIE2P::VST_dmx_sts_fifohl_spill, AIE2P::sub_hi_fifo}};
+    return {{AIE2P::VST_dmx_sts_fifohl_spill, AIE2P::sub_512_lo},
+            {AIE2P::VST_dmx_sts_fifohl_spill, AIE2P::sub_512_hi}};
   case AIE2P::VST_PLFR_SPILL:
     return {{AIE2P::VST_FIFO_SPILL, AIE2P::sub_fifo},
             {AIE2P::ST_dms_sts_spill, AIE2P::sub_avail},
@@ -1092,8 +1092,8 @@ AIE2PInstrInfo::getSpillPseudoExpandInfo(const MachineInstr &MI) const {
     return {{AIE2P::VLDA_dmx_lda_bm_spill, AIE2P::sub_512_lo},
             {AIE2P::VLDA_dmx_lda_bm_spill, AIE2P::sub_512_hi}};
   case AIE2P::VLDA_FIFO_SPILL:
-    return {{AIE2P::VLDA_dmx_lda_fifohl_spill, AIE2P::sub_lo_fifo},
-            {AIE2P::VLDA_dmx_lda_fifohl_spill, AIE2P::sub_hi_fifo}};
+    return {{AIE2P::VLDA_dmx_lda_fifohl_spill, AIE2P::sub_512_lo},
+            {AIE2P::VLDA_dmx_lda_fifohl_spill, AIE2P::sub_512_hi}};
   case AIE2P::VLDA_PLFR_SPILL:
     return {
         {AIE2P::VLDA_FIFO_SPILL, AIE2P::sub_fifo},

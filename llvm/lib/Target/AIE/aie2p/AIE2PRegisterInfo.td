@@ -262,21 +262,42 @@ class AIE2PDim3DRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> 
   // Core ID
   def CORE_ID : AIE2PSPLReg<10, "core_id">;
   def mCoreID : AIE2P20BitRegisterClass<(add CORE_ID)>;
+
+  let isArtificial = 1 in {
+  def dummy_sfh_l : AIE2P3BitReg<0, "dummy_sfh_l">;
+  def dummy_sfh_h : AIE2P3BitReg<0, "dummy_sfh_h">;
+  def dummy_sfl_l : AIE2P3BitReg<0, "dummy_sfl_l">;
+  def dummy_sfl_h : AIE2P3BitReg<0, "dummy_sfl_h">;
+
+  def dummy_lfh0_l : AIE2P3BitReg<0, "dummy_lfh0_l">;
+  def dummy_lfh0_h : AIE2P3BitReg<0, "dummy_lfh0_h">;
+  def dummy_lfl0_l : AIE2P3BitReg<0, "dummy_lfl0_l">;
+  def dummy_lfl0_h : AIE2P3BitReg<0, "dummy_lfl0_h">;
+
+  def dummy_lfh1_l : AIE2P3BitReg<0, "dummy_lfh1_l">;
+  def dummy_lfh1_h : AIE2P3BitReg<0, "dummy_lfh1_h">;
+  def dummy_lfl1_l : AIE2P3BitReg<0, "dummy_lfl1_l">;
+  def dummy_lfl1_h : AIE2P3BitReg<0, "dummy_lfl1_h">;
+  }
+
+  let SubRegIndices = [sub_256_lo, sub_256_hi], CoveredBySubRegs = 1 in {
   // Store FIFO register
-  def sfh : AIE2P3BitReg<0b110,"sfh">;
-  def sfl : AIE2P3BitReg<0b011,"sfl">;
+  def sfh : AIE2P3BitReg<0b110,"sfh", [dummy_sfh_l, dummy_sfh_h]>;
+  def sfl : AIE2P3BitReg<0b011,"sfl", [dummy_sfl_l, dummy_sfl_h]>;
   // Load FIFO register 0
-  def lfh0 : AIE2P1BitReg<0b0,"lfh0">;
-  def lfl0 : AIE2P1BitReg<0b0,"lfl0">;
+  def lfh0 : AIE2P1BitReg<0b0,"lfh0", [dummy_lfh0_l, dummy_lfh0_h]>;
+  def lfl0 : AIE2P1BitReg<0b0,"lfl0", [dummy_lfl0_l, dummy_lfl0_h]>;
   // Load FIFO register 1
-  def lfh1 : AIE2P1BitReg<0b1,"lfh1">;
-  def lfl1 : AIE2P1BitReg<0b1,"lfl1">;
+  def lfh1 : AIE2P1BitReg<0b1,"lfh1", [dummy_lfh1_l, dummy_lfh1_h]>;
+  def lfl1 : AIE2P1BitReg<0b1,"lfl1", [dummy_lfl1_l, dummy_lfl1_h]>;
+  }
+
   // Load FIFO extra register
   def lfe : AIE2P3BitReg<0b010,"lfe">;
 
   def sub_lo_fifo: SubRegIndex<512,  0>;
   def sub_hi_fifo : SubRegIndex<512, 512>;
-  let SubRegIndices = [sub_lo_fifo, sub_hi_fifo], CoveredBySubRegs = 1 in {
+  let SubRegIndices = [sub_512_lo, sub_512_hi], CoveredBySubRegs = 1 in {
     def lf0 : AIE2P1BitReg<0b0, "lf0", [lfl0, lfh0]>;
     def lf1 : AIE2P1BitReg<0b1, "lf1", [lfl1, lfh1]>;
     def sf : AIE2P1BitReg<0b1, "sf", [sfl, sfh]>;
@@ -990,9 +1011,9 @@ def spill_eDN_to_eR : AIE2PScalarRegisterClass<(add eDN, eR)>;
 def spill_eDJ_to_eR : AIE2PScalarRegisterClass<(add eDJ, eR, eDN)>;
 def spill_eDC_to_eR : AIE2PScalarRegisterClass<(add eDC, eR)>;
 
-def spill_vec512_to_composite : AIE2PVector512RegisterClass<(add mXm, mBMm)>;
-def spill_vec1024_to_composite : AIE2PVector1024RegisterClass<(add eY, mCMm)>;
-def spill_acc512_to_composite : AIE2PVector512RegisterClass<(add mBMm, mXm)>;
-def spill_acc1024_to_composite : AIE2PVector1024RegisterClass<(add mCMm, eY)>;
+def spill_vec512_to_composite : AIE2PVector512RegisterClass<(add mXm, mBMm, sfh, sfl, lfh0, lfh1, lfl0, lfl1)>;
+def spill_vec1024_to_composite : AIE2PVector1024RegisterClass<(add eY, mCMm, lf0, lf1, sf)>;
+def spill_acc512_to_composite : AIE2PVector512RegisterClass<(add mBMm, mXm, sfh, sfl, lfh0, lfh1, lfl0, lfl1)>;
+def spill_acc1024_to_composite : AIE2PVector1024RegisterClass<(add mCMm, eY, lf0, lf1, sf)>;
 
 } // End AIE2P Namespace
