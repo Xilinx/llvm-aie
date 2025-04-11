@@ -423,7 +423,6 @@ list(REMOVE_ITEM aie2_GENERIC_SOURCES
   fixdfdi.c     # unsupported instruction : G_FCMP
   fixunsdfdi.c  # unsupported instruction : G_FPTOUI
   fixunssfdi.c  # unsupported instruction : G_FPTOUI
-  floatdidf.c   # unsupported instruction : G_SITOFP
   muldc3.c      # unsupported instruction : G_FCOPYSIGN
   mulsc3.c      # unsupported instruction : G_FCOPYSIGN
   udivmoddi4.c  # unsupported instruction : G_CTTZ_ZERO_UNDEF
