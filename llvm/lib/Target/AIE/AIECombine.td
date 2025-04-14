@@ -9,6 +9,32 @@
 //===----------------------------------------------------------------------===//
 include "llvm/Target/GlobalISel/Combine.td"
 
+// Explicitly listing each generic combine here ensures direct visibility and 
+// control over all functionalities.
+def aie_all_combines : GICombineGroup<[trivial_combines, vector_ops_combines,
+  insert_vec_elt_combines, extract_vec_elt_combines, combines_for_extload,
+  combine_extracted_vector_load,
+  undef_combines, identity_combines, phi_combines,
+  simplify_add_to_sub, hoist_logic_op_with_same_opcode_hands, shifts_too_big,
+  reassocs, ptr_add_immed_chain,
+  shl_ashr_to_sext_inreg, sext_inreg_of_load,
+  width_reduction_combines, select_combines,
+  known_bits_simplifications, ext_ext_fold,
+  not_cmp_fold, opt_brcond_by_inverting_cond,
+  unmerge_merge, unmerge_cst, unmerge_dead_to_trunc,
+  unmerge_zext_to_zext, merge_unmerge, trunc_ext_fold, trunc_shift,
+  const_combines, xor_of_and_with_same_reg, ptr_add_with_zero,
+  shift_immed_chain, shift_of_shifted_logic_chain, load_or_combine,
+  div_rem_to_divrem, funnel_shift_combines, commute_shift,
+  form_bitfield_extract, constant_fold_binops, constant_fold_fma,
+  constant_fold_cast_op, fabs_fneg_fold,
+  intdiv_combines, mulh_combines, redundant_neg_operands,
+  and_or_disjoint_mask, fma_combines, fold_binop_into_select,
+  sub_add_reg, select_to_minmax, redundant_binop_in_equality,
+  fsub_to_fneg, commute_constant_to_rhs, match_ands, match_ors,
+  combine_concat_vector, double_icmp_zero_and_or_combine, match_addos,
+  combine_shuffle_concat]>;
+
 // AIE-specific offset folding for G_GLOBAL_VALUE.
 def combine_globalval_offset_matchdata : GIDefMatchData<"uint64_t">;
 def combine_globalval_offset : GICombineRule<
@@ -134,7 +160,7 @@ def combine_vector_shuffle_to_extract_insert_elt_to_broadcast : GICombineRule<
 
 def AIE2PreLegalizerCombiner
     : GICombiner<"AIE2PreLegalizerCombinerImpl", [ combine_unpad_vector, combine_pad_vector,
-                                                                 all_combines, combine_S20NarrowingOpt,
+                                                                 aie_all_combines, combine_S20NarrowingOpt,
                                                                  combine_globalval_offset,
                                                                  combine_extract_vector_elt_and_zsa_ext,
                                                                  combine_splat_vector, combine_concat_to_pad_vector, 
@@ -146,7 +172,7 @@ def AIE2PPreLegalizerCombiner
     : GICombiner<"AIE2PPreLegalizerCombinerImpl", [ combine_unpad_vector, combine_pad_vector,
                                                                  combine_vector_shuffle_to_copy,
                                                                  combine_vector_shuffle_extract_subvec,
-                                                                 all_combines, combine_S20NarrowingOpt,
+                                                                 aie_all_combines, combine_S20NarrowingOpt,
                                                                  combine_globalval_offset,
                                                                  combine_extract_vector_elt_and_zsa_ext,
                                                                  combine_splat_vector, 
@@ -164,11 +190,11 @@ def AIE2PPreLegalizerCombiner
 }
 
 def AIE2PostLegalizerGenericCombiner
-    : GICombiner<"AIE2PostLegalizerGenericCombinerImpl", [ all_combines ]> {
+    : GICombiner<"AIE2PostLegalizerGenericCombinerImpl", [ aie_all_combines ]> {
 }
 
 def AIE2PPostLegalizerGenericCombiner
-    : GICombiner<"AIE2PPostLegalizerGenericCombinerImpl", [ all_combines ]> {
+    : GICombiner<"AIE2PPostLegalizerGenericCombinerImpl", [ aie_all_combines ]> {
 }
 
 def combine_extract_concat_matchdata: GIDefMatchData<"Register">;
