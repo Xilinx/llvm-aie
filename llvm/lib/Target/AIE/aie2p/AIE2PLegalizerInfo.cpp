@@ -259,7 +259,8 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
       .legalFor({S32})
       .legalFor(AIE2PVectorTypes)
       .widenScalarToNextPow2(0)
-      .clampScalar(0, S32, S32);
+      .clampScalar(0, S32, S32)
+      .scalarizeIf(typeIs(0, V2S32), 0);
 
   getActionDefinitionsBuilder(G_SEXT_INREG).custom();
 
