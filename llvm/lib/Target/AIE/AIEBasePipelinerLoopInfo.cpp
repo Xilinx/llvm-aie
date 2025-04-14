@@ -756,13 +756,13 @@ bool ZeroOverheadLoop::preferPostPipeliner(SMSchedule &SMS) {
   // job on multi-stage live-ranges without spilling or moving.
 
   // PostPipeliner can do nothing without tripcount > 1
-  if (MinTripCount <= 1) {
+  if (MinTripCount <= 1 || HasIIPragma) {
     return false;
   }
 
   unsigned NS = SMS.getMaxStageCount() + 1;
   int II = SMS.getInitiationInterval();
-  if (!HasIIPragma && NS > LoopMaxStageCount && II < PostPipelinerCutoff) {
+  if (NS > LoopMaxStageCount && II < PostPipelinerCutoff) {
     LLVM_DEBUG(dbgs() << "PLI: Leaving high stage count for PostPipeliner\n");
     return true;
   }
