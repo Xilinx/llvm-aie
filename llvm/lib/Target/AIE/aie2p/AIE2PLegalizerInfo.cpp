@@ -128,6 +128,8 @@ static const LLT V8S32 = LLT::fixed_vector(8, 32);
 static const LLT AccV8S32 = LLT::fixed_vector(8, 32);
 static const LLT AccV4S64 = LLT::fixed_vector(4, 64);
 
+static const LLT V2S128 = LLT::fixed_vector(2, S128);
+
 // 512-bit vectors
 static const LLT V16S32 = LLT::fixed_vector(16, 32);
 static const LLT V32S16 = LLT::fixed_vector(32, 16);
@@ -550,6 +552,7 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
       .clampMinNumElements(1, S16, 16)
       .clampMinNumElements(1, S32, 8)
       // Custom legalize resulting vector types >= 256-bit
+      .customIf(typeIs(1, V2S128))
       .customIf(typeInSet(1, AIE2PVectorTypes))
       .customIf(typeInSet(1, AIE2PAccumulatorTypes))
       .customIf([=](const LegalityQuery &Query) {

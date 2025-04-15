@@ -652,6 +652,49 @@ bool AIELegalizerHelper::legalizeG_EXTRACT_VECTOR_ELT(LegalizerHelper &Helper,
     break;
   }
   case 256:
+    if (SrcVecEltTy.getSizeInBits() == 128) {
+      assert(ST.isAIE2P() &&
+             "G_EXTRACT_VECTOR_ELT of s128 not supported for the target");
+      /// We can use vshuffle + pad/unpad instruction to select extract s128
+      /// from <2 x s128>
+      const AIEBaseInstrInfo *II = ST.getInstrInfo();
+      const LLT V64S8 = LLT::fixed_vector(64, 8);
+      const LLT V32S8 = LLT::fixed_vector(32, 8);
+      const LLT V16S8 = LLT::fixed_vector(16, 8);
+      // Step 1: Prepare the src1(SrcVecReg) for vshuffle
+      const Register RegSrcBitcast = MRI.createGenericVirtualRegister(V32S8);
+      MIRBuilder.buildBitcast(RegSrcBitcast, SrcVecReg);
+      const unsigned PadOpc = II->getGenericPadVectorOpcode();
+      const Register RegSrcPadded =
+          MIRBuilder.buildInstr(PadOpc, {V64S8}, {RegSrcBitcast}).getReg(0);
+      // Step 2: Create an undef src2 for vshuffle
+      const Register RegUndef = MIRBuilder.buildUndef(V64S8).getReg(0);
+      // Step 3: Select the correct mode for vshuffle. In AIE2P, Mode 8 maps
+      // first 128-bits of src1 vector to lsb positions of output. Mode 9 maps
+      // the second 128-bits to lsb positions of output.
+      const Register ModeReg = MRI.createGenericVirtualRegister(S32);
+      auto IdxVal = getIConstantVRegValWithLookThrough(IdxReg, MRI);
+      if (!IdxVal) {
+        const Register Mode8Reg = MIRBuilder.buildConstant(S32, 8).getReg(0);
+        const Register Mode9Reg = MIRBuilder.buildConstant(S32, 9).getReg(0);
+        MIRBuilder.buildSelect(ModeReg, IdxReg, Mode9Reg, Mode8Reg);
+      } else {
+        const unsigned LaneIdx = IdxVal->Value.getZExtValue();
+        MIRBuilder.buildConstant(ModeReg, LaneIdx ? 9 : 8);
+      }
+      // step 4: Create vshuffle
+      auto ShuffleInstr =
+          MIRBuilder.buildInstr(II->getGenericShuffleVectorOpcode(), {V64S8},
+                                {RegSrcPadded, RegUndef, ModeReg});
+
+      const unsigned UnpadOpc = II->getGenericUnpadVectorOpcode();
+      // Finally, unpad the 512-bit result to 128-bit
+      auto UnpadInstr =
+          MIRBuilder.buildInstr(UnpadOpc, {V16S8}, {ShuffleInstr});
+      MIRBuilder.buildBitcast(DstReg, {UnpadInstr});
+      break;
+    }
+    LLVM_FALLTHROUGH;
   case 512:
   case 1024:
   case 2048: {
