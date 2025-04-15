@@ -1279,11 +1279,15 @@ void AIE2PRegisterBankInfo::setAIEGenericInstrMapping(
     OpRegBankIdx[3] = PMI_MOD;
     break;
   }
-  case AIE2P::G_AIE_UNPAD_VECTOR: {
-    // Unpad typically discards 128-/256-bit, which is only supported on the
-    // vector register bank
+  case AIE2P::G_AIE_UNPAD_VECTOR:
+  case AIE2P::G_AIE_PAD_VECTOR_UNDEF: {
+    // Pad/Unpad typically pads/discards 128-/256-bit, which is only supported
+    // on the vector register bank
     Register SrcReg0 = MI.getOperand(1).getReg();
+    Register DstReg = MI.getOperand(0).getReg();
     LLT SrcType0 = MRI.getType(SrcReg0);
+    LLT DstType = MRI.getType(DstReg);
+    OpRegBankIdx[0] = getVecPartialMappingIdx(DstType);
     OpRegBankIdx[1] = getVecPartialMappingIdx(SrcType0);
     break;
   }
