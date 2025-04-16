@@ -114,6 +114,12 @@ def : PatGprGpr<xor, XOR, type>;
 def : PatGprGpr<mul, MUL, type>;
 }
 defm : ALUPatterns<i32>;
+// We can safely select bitwise operators for v2i16 and v4i8 types.
+foreach Ty = [v2i16, v4i8] in {
+def : PatGprGpr<and, AND, Ty>;
+def : PatGprGpr<or, OR, Ty>;
+def : PatGprGpr<xor, XOR, Ty>;
+}
 
 // 4.1.8 SELECT
 class SelectPat<ValueType type> :
@@ -1002,6 +1008,13 @@ def : Pat<(v32i64 (concat_vectors (v16i64 ACC1024:$src0), (v16i64 ACC1024:$src1)
 
 def : Pat<(v64i32 (concat_vectors (v32i32 ACC1024:$src0), (v32i32 ACC1024:$src1))),
   (v64i32 (REG_SEQUENCE ACC2048, ACC1024:$src0, sub_1024_acc_lo, ACC1024:$src1, sub_1024_acc_hi))>;
+
+// concat_vector - gpr bank
+foreach Ty = [v4i16, v8i8] in {
+def : Pat<(Ty (concat_vectors eR:$src0, eR:$src1)),
+  (Ty (REG_SEQUENCE eL, eR:$src0, sub_l_even, eR:$src1, sub_l_odd))>;
+}
+
 // VCONV_BF16_FP32
 def : PatInaccessibleMem<(int_aie2p_v16accfloat_to_v16bf16 ACC512:$src),
           (VCONV_bf16_fp32_mv_w_srs_bf ACC512:$src)>;
