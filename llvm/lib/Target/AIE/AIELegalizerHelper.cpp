@@ -805,8 +805,8 @@ bool AIELegalizerHelper::legalizeG_INSERT_VECTOR_ELT(LegalizerHelper &Helper,
   return true;
 }
 
-static RTLIB::Libcall getFCmpLibCall(CmpInst::Predicate Predicate,
-                                     CmpInst::Predicate &IPredicate) {
+static RTLIB::Libcall getFCmp32LibCall(CmpInst::Predicate Predicate,
+                                       CmpInst::Predicate &IPredicate) {
   switch (Predicate) {
   default:
     llvm_unreachable("Unsupported FCmp predicate");
@@ -851,18 +851,65 @@ static RTLIB::Libcall getFCmpLibCall(CmpInst::Predicate Predicate,
   }
 }
 
-bool AIELegalizerHelper::legalizeG_FCMP_FP32(
+static RTLIB::Libcall getFCmp64LibCall(CmpInst::Predicate Predicate,
+                                       CmpInst::Predicate &IPredicate) {
+  switch (Predicate) {
+  default:
+    llvm_unreachable("Unsupported FCmp predicate");
+  case CmpInst::FCMP_OEQ:
+    IPredicate = CmpInst::ICMP_EQ;
+    return RTLIB::OEQ_F64;
+  case CmpInst::FCMP_OGE:
+    IPredicate = CmpInst::ICMP_SGE;
+    return RTLIB::OGE_F64;
+  case CmpInst::FCMP_OGT:
+    IPredicate = CmpInst::ICMP_SGT;
+    return RTLIB::OGT_F64;
+  case CmpInst::FCMP_OLE:
+    IPredicate = CmpInst::ICMP_SLE;
+    return RTLIB::OLE_F64;
+  case CmpInst::FCMP_OLT:
+    IPredicate = CmpInst::ICMP_SLT;
+    return RTLIB::OLT_F64;
+  case CmpInst::FCMP_ORD:
+    IPredicate = CmpInst::ICMP_EQ;
+    return RTLIB::UO_F64;
+  /* Unordered comparisons are built from
+   * the complement of the ordered ones */
+  case CmpInst::FCMP_UGE:
+    IPredicate = CmpInst::ICMP_SGE;
+    return RTLIB::OLT_F64;
+  case CmpInst::FCMP_UGT:
+    IPredicate = CmpInst::ICMP_SGT;
+    return RTLIB::OLE_F64;
+  case CmpInst::FCMP_ULE:
+    IPredicate = CmpInst::ICMP_SLE;
+    return RTLIB::OGT_F64;
+  case CmpInst::FCMP_ULT:
+    IPredicate = CmpInst::ICMP_SLT;
+    return RTLIB::OGE_F64;
+  case CmpInst::FCMP_UNE:
+    IPredicate = CmpInst::ICMP_NE;
+    return RTLIB::UNE_F64;
+  case CmpInst::FCMP_UNO:
+    IPredicate = CmpInst::ICMP_NE;
+    return RTLIB::UO_F64;
+  }
+}
+
+bool AIELegalizerHelper::legalizeG_FCMP_FP32_FP64(
     LegalizerHelper &Helper, MachineInstr &MI,
-    const CmpInst::Predicate FPredicate,
-    LostDebugLocObserver &LocObserver) const {
+    const CmpInst::Predicate FPredicate, LostDebugLocObserver &LocObserver,
+    int ArgSize) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
   MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
-  assert(MRI.getType(MI.getOperand(2).getReg()) == LLT::scalar(32) &&
-         MRI.getType(MI.getOperand(3).getReg()) == LLT::scalar(32) &&
-         "Expected single precision floating point operands!");
+  assert(MRI.getType(MI.getOperand(2).getReg()) == LLT::scalar(ArgSize) &&
+         MRI.getType(MI.getOperand(3).getReg()) == LLT::scalar(ArgSize) &&
+         "Expected single or double precision floating point operands!");
 
   LLVMContext &Ctx = MIRBuilder.getMF().getFunction().getContext();
   auto DstReg = MI.getOperand(0).getReg();
+  bool Is32 = ArgSize == 32;
 
   RTLIB::Libcall Libcall = RTLIB::UNKNOWN_LIBCALL;
   CmpInst::Predicate IPredicate = CmpInst::BAD_ICMP_PREDICATE;
@@ -871,21 +918,26 @@ bool AIELegalizerHelper::legalizeG_FCMP_FP32(
   /* Compose ordered and unequal operands as follows:
    * a != b ==> a > b || a < b */
   case CmpInst::FCMP_ONE:
-    Libcalls.push_back(std::make_pair(RTLIB::OGT_F32, CmpInst::ICMP_SGT));
-    Libcalls.push_back(std::make_pair(RTLIB::OLT_F32, CmpInst::ICMP_SLT));
+    Libcalls.push_back(std::make_pair(Is32 ? RTLIB::OGT_F32 : RTLIB::OGT_F64,
+                                      CmpInst::ICMP_SGT));
+    Libcalls.push_back(std::make_pair(Is32 ? RTLIB::OLT_F32 : RTLIB::OLT_F64,
+                                      CmpInst::ICMP_SLT));
     break;
   /* Compose unordered or equal operands as follows:
    * (unord(a, b) or a == b) ==> a == b || a != b */
   case CmpInst::FCMP_UEQ:
-    Libcalls.push_back(std::make_pair(RTLIB::OEQ_F32, CmpInst::ICMP_EQ));
-    Libcalls.push_back(std::make_pair(RTLIB::UO_F32, CmpInst::ICMP_NE));
+    Libcalls.push_back(std::make_pair(Is32 ? RTLIB::OEQ_F32 : RTLIB::OEQ_F64,
+                                      CmpInst::ICMP_EQ));
+    Libcalls.push_back(
+        std::make_pair(Is32 ? RTLIB::UO_F32 : RTLIB::UO_F64, CmpInst::ICMP_NE));
     break;
   default:
-    Libcall = getFCmpLibCall(FPredicate, IPredicate);
+    Libcall = Is32 ? getFCmp32LibCall(FPredicate, IPredicate)
+                   : getFCmp64LibCall(FPredicate, IPredicate);
     Libcalls.push_back(std::make_pair(Libcall, IPredicate));
     break;
   }
-  auto *ArgTy = Type::getFloatTy(Ctx);
+  auto *ArgTy = Is32 ? Type::getFloatTy(Ctx) : Type::getDoubleTy(Ctx);
   auto *RetTy = Type::getInt32Ty(Ctx);
 
   SmallVector<Register, 2> Results;
@@ -911,6 +963,7 @@ bool AIELegalizerHelper::legalizeG_FCMP_FP32(
     MIRBuilder.buildICmp(IDestPred, NewDstReg, LibcallResult, Zero);
     Results.push_back(NewDstReg);
   }
+
   // OR the results when we have two libcalls
   if (Results.size() != 1) {
     assert(Results.size() == 2 && "Unexpected Number of Results");
@@ -1006,8 +1059,8 @@ bool AIELegalizerHelper::legalizeG_FCMP(
   }
 
   const unsigned LHSSize = MRI.getType(LHS).getSizeInBits();
-  if (LHSSize == 32)
-    return legalizeG_FCMP_FP32(Helper, MI, FPred, LocObserver);
+  if (LHSSize == 32 || LHSSize == 64)
+    return legalizeG_FCMP_FP32_FP64(Helper, MI, FPred, LocObserver, LHSSize);
 
   assert(LHSSize == 16 && "Expected bf16 operands for FCmp");
 

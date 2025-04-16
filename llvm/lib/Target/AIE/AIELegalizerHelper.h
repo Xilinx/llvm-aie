@@ -63,9 +63,10 @@ public:
                                    MachineInstr &MI) const;
   bool legalizeG_FCMP(LegalizerHelper &Helper, MachineInstr &MI,
                       LostDebugLocObserver &LocObserver) const;
-  bool legalizeG_FCMP_FP32(LegalizerHelper &Helper, MachineInstr &MI,
-                           const CmpInst::Predicate FPredicate,
-                           LostDebugLocObserver &LocObserver) const;
+  bool legalizeG_FCMP_FP32_FP64(LegalizerHelper &Helper, MachineInstr &MI,
+                                const CmpInst::Predicate FPredicate,
+                                LostDebugLocObserver &LocObserver,
+                                int ArgSize) const;
   bool legalizeG_FPTRUNC(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeG_FPEXT(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeG_FABS(LegalizerHelper &Helper, MachineInstr &MI) const;

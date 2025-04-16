@@ -204,7 +204,7 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
 
   getActionDefinitionsBuilder(G_FCMP)
       .clampScalar(0, S32, S32)
-      .customFor({{S32, S16}, {S32, S32}});
+      .customFor({{S32, S16}, {S32, S32}, {S32, S64}});
 
   getActionDefinitionsBuilder(G_FPTRUNC)
       .libcallFor({{S32, S64}})
