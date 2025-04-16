@@ -256,11 +256,18 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
   // FIXME: (s|z|any)ext s20 to s64 is broken.
 
   getActionDefinitionsBuilder({G_AND, G_OR})
-      .legalFor({S32})
+      .legalFor({S32, V2S16, V4S8})
       .legalFor(AIE2PVectorTypes)
       .widenScalarToNextPow2(0)
       .clampScalar(0, S32, S32)
-      .scalarizeIf(typeIs(0, V2S32), 0);
+      .scalarizeIf(typeIs(0, V2S32), 0)
+      .fewerElementsIf(typeInSet(0, {V4S16, V8S8}),
+                       [=](const LegalityQuery &Query) {
+                         const LLT &SrcTy = Query.Types[0];
+                         return std::make_pair(
+                             0, LLT::fixed_vector(SrcTy.getNumElements() / 2,
+                                                  SrcTy.getElementType()));
+                       });
 
   getActionDefinitionsBuilder(G_SEXT_INREG).custom();
 
@@ -646,7 +653,6 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
       .legalIf(isValidVectorMergeUnmergeOp(1, 0));
 
   getActionDefinitionsBuilder(G_CONCAT_VECTORS)
-      .unsupportedIf(IsNotValidDestinationVector)
       .legalIf(isValidVectorMergeUnmergeOp(0, 1))
       .customIf([=](const LegalityQuery &Query) {
         const LLT &DstTy = Query.Types[0];

@@ -29,6 +29,50 @@ body:             |
     %10:_(<2 x s32>) = G_AND %0(<2 x s32>), %1(<2 x s32>)
     PseudoRET implicit $lr, implicit %10
 ...
+
+---
+name:            and_vec_V4S16
+body:             |
+  bb.1.entry:
+    liveins: $l1, $l2
+    ; CHECK-LABEL: name: and_vec_V4S16
+    ; CHECK: liveins: $l1, $l2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<4 x s16>) = COPY $l1
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<4 x s16>) = COPY $l2
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<2 x s16>), [[UV1:%[0-9]+]]:_(<2 x s16>) = G_UNMERGE_VALUES [[COPY]](<4 x s16>)
+    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(<2 x s16>), [[UV3:%[0-9]+]]:_(<2 x s16>) = G_UNMERGE_VALUES [[COPY1]](<4 x s16>)
+    ; CHECK-NEXT: [[AND:%[0-9]+]]:_(<2 x s16>) = G_AND [[UV]], [[UV2]]
+    ; CHECK-NEXT: [[AND1:%[0-9]+]]:_(<2 x s16>) = G_AND [[UV1]], [[UV3]]
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<4 x s16>) = G_CONCAT_VECTORS [[AND]](<2 x s16>), [[AND1]](<2 x s16>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<4 x s16>)
+    %0:_(<4 x s16>) = COPY $l1
+    %1:_(<4 x s16>) = COPY $l2
+    %10:_(<4 x s16>) = G_AND %0(<4 x s16>), %1(<4 x s16>)
+    PseudoRET implicit $lr, implicit %10
+...
+
+---
+name:            and_vec_V8S8
+body:             |
+  bb.1.entry:
+    liveins: $l1, $l2
+    ; CHECK-LABEL: name: and_vec_V8S8
+    ; CHECK: liveins: $l1, $l2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<8 x s8>) = COPY $l1
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<8 x s8>) = COPY $l2
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<4 x s8>), [[UV1:%[0-9]+]]:_(<4 x s8>) = G_UNMERGE_VALUES [[COPY]](<8 x s8>)
+    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(<4 x s8>), [[UV3:%[0-9]+]]:_(<4 x s8>) = G_UNMERGE_VALUES [[COPY1]](<8 x s8>)
+    ; CHECK-NEXT: [[AND:%[0-9]+]]:_(<4 x s8>) = G_AND [[UV]], [[UV2]]
+    ; CHECK-NEXT: [[AND1:%[0-9]+]]:_(<4 x s8>) = G_AND [[UV1]], [[UV3]]
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s8>) = G_CONCAT_VECTORS [[AND]](<4 x s8>), [[AND1]](<4 x s8>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<8 x s8>)
+    %0:_(<8 x s8>) = COPY $l1
+    %1:_(<8 x s8>) = COPY $l2
+    %10:_(<8 x s8>) = G_AND %0(<8 x s8>), %1(<8 x s8>)
+    PseudoRET implicit $lr, implicit %10
+...
 ---
 name:            or_vec_64
 body:             |
@@ -48,5 +92,49 @@ body:             |
     %0:_(<2 x s32>) = COPY $l1
     %1:_(<2 x s32>) = COPY $l2
     %10:_(<2 x s32>) = G_OR %0(<2 x s32>), %1(<2 x s32>)
+    PseudoRET implicit $lr, implicit %10
+...
+
+---
+name:            or_vec_V4S16
+body:             |
+  bb.1.entry:
+    liveins: $l1, $l2
+    ; CHECK-LABEL: name: or_vec_V4S16
+    ; CHECK: liveins: $l1, $l2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<4 x s16>) = COPY $l1
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<4 x s16>) = COPY $l2
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<2 x s16>), [[UV1:%[0-9]+]]:_(<2 x s16>) = G_UNMERGE_VALUES [[COPY]](<4 x s16>)
+    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(<2 x s16>), [[UV3:%[0-9]+]]:_(<2 x s16>) = G_UNMERGE_VALUES [[COPY1]](<4 x s16>)
+    ; CHECK-NEXT: [[OR:%[0-9]+]]:_(<2 x s16>) = G_OR [[UV]], [[UV2]]
+    ; CHECK-NEXT: [[OR1:%[0-9]+]]:_(<2 x s16>) = G_OR [[UV1]], [[UV3]]
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<4 x s16>) = G_CONCAT_VECTORS [[OR]](<2 x s16>), [[OR1]](<2 x s16>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<4 x s16>)
+    %0:_(<4 x s16>) = COPY $l1
+    %1:_(<4 x s16>) = COPY $l2
+    %10:_(<4 x s16>) = G_OR %0(<4 x s16>), %1(<4 x s16>)
+    PseudoRET implicit $lr, implicit %10
+...
+
+---
+name:            or_vec_V8S8
+body:             |
+  bb.1.entry:
+    liveins: $l1, $l2
+    ; CHECK-LABEL: name: or_vec_V8S8
+    ; CHECK: liveins: $l1, $l2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<8 x s8>) = COPY $l1
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<8 x s8>) = COPY $l2
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<4 x s8>), [[UV1:%[0-9]+]]:_(<4 x s8>) = G_UNMERGE_VALUES [[COPY]](<8 x s8>)
+    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(<4 x s8>), [[UV3:%[0-9]+]]:_(<4 x s8>) = G_UNMERGE_VALUES [[COPY1]](<8 x s8>)
+    ; CHECK-NEXT: [[OR:%[0-9]+]]:_(<4 x s8>) = G_OR [[UV]], [[UV2]]
+    ; CHECK-NEXT: [[OR1:%[0-9]+]]:_(<4 x s8>) = G_OR [[UV1]], [[UV3]]
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s8>) = G_CONCAT_VECTORS [[OR]](<4 x s8>), [[OR1]](<4 x s8>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<8 x s8>)
+    %0:_(<8 x s8>) = COPY $l1
+    %1:_(<8 x s8>) = COPY $l2
+    %10:_(<8 x s8>) = G_OR %0(<8 x s8>), %1(<8 x s8>)
     PseudoRET implicit $lr, implicit %10
 ...
