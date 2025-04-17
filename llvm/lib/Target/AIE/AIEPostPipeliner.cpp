@@ -979,15 +979,10 @@ bool PostPipeliner::tryHeuristics() {
       DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name() << " run=" << Run
                            << "\n");
       if (scheduleFirstIteration(S) && scheduleOtherIterations(S)) {
-        DEBUG_SUMMARY(dbgs() << "    Strategy " << S.name() << " run=" << Run
-                             << " found schedule:\n");
-        const bool Success = checkStages();
         DEBUG_SUMMARY(dbgs()
                       << "    Strategy " << S.name() << " run=" << Run
                       << " found NS=" << NStages << " II=" << II << "\n");
-        if (Success) {
-          return true;
-        }
+        return true;
       }
       if (!S.checkAndResetChanged()) {
         // If nothing changed, there's no use in rerunning.
