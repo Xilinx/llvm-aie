@@ -1021,6 +1021,23 @@ static const ConfigStrategy::Configuration Strategies[] = {
 bool PostPipeliner::tryHeuristics() {
   DEBUG_SUMMARY(dbgs() << "-- MinLength=" << MinLength << "\n");
 
+  if (NInstr == 26 && II == 7) {
+
+    LLVM_DEBUG(dbgs() << "--- Strategy 26/7\n");
+
+    std::vector<int> Schedule = {0,  1,  1,  2,  3,  4,  7,  8,  8,
+
+                                 9,  9,
+
+                                 10, 11, 16, 11, 11, 12, 12, 14, 17,
+                                 19, 20, 22, 24, 23, 25};
+    FixedStrategy Gemm(*DAG, Info, MinLength, Schedule);
+    resetSchedule(/*FullReset=*/true);
+    if (scheduleFirstIteration(Gemm) && scheduleOtherIterations(Gemm)) {
+      return true;
+    }
+  }
+
   if (solve(MinLength / II)) {
     return true;
   }
