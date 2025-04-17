@@ -664,7 +664,12 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
     MachineInstr *MI = SU.getInstr();
     const int Earliest = Strategy.earliest(SU);
     const int Latest = Strategy.latest(SU);
-    // Find the first cycle that fits. We try every position modulo II
+    if (Earliest > Latest) {
+      LLVM_DEBUG(dbgs() << "Latency violation at node " << N << " interval=["
+                        << Earliest << ", " << Latest << "]\n");
+      return false;
+    }
+
     const int Actual = Strategy.fromTop() ? fit(MI, Earliest, Latest + 1, II)
                                           : fit(MI, Latest, Earliest - 1, II);
     if (Actual < 0) {
