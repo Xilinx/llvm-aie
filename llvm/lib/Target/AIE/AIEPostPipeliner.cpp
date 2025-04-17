@@ -714,9 +714,9 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
     DEBUG_FULL(dbgs() << "Scoreboard\n"; Scoreboard.dumpFull(););
   }
 
-  const bool Success = checkStages();
   DEBUG_SUMMARY(dbgs() << "==== First iteration scheduled by "
                        << Strategy.name() << "====\n");
+  const bool Success = checkStages();
   DEBUG_SUMMARY(dumpCycles(Info, NStages * II, II));
   return Success;
 }
