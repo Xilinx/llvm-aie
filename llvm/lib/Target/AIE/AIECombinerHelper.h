@@ -28,7 +28,9 @@ struct AIELoadStoreCombineMatchData {
   /// before this Instruction
   MachineInstr *CombinedInsertPoint;
   /// Additional instructions to be moved just before Instr
-  std::vector<MachineInstr *> ExtraInstrsToMove;
+  std::vector<MachineInstr *> ExtraInstrsToMoveBefore;
+  /// Additional instructions to be moved just after Instr
+  std::vector<MachineInstr *> ExtraInstrsToMoveAfter;
   /// Should Instr (the PtrAdd) be removed after the combine was applied
   bool RemoveInstr;
 };
@@ -38,6 +40,16 @@ struct ShuffleMaskValidity {
   // Holds mask indices that don't satisfy the mask constraints
   SmallVector<unsigned, 4> MaskExceptions;
 };
+
+// Custom comparator for std::set based on dominance relation
+struct DominanceComparator {
+  CombinerHelper &Helper;
+  DominanceComparator(CombinerHelper &Helper) : Helper(Helper) {}
+  bool operator()(MachineInstr *A, MachineInstr *B) const {
+    return Helper.dominates(*B, *A);
+  }
+};
+using DependentInstrSet = std::set<MachineInstr *, DominanceComparator>;
 
 struct FrequentIndexResult {
   unsigned FrequentIdx;
@@ -132,6 +144,12 @@ bool matchShuffleToExtractBroadcast(MachineInstr &MI, MachineRegisterInfo &MRI,
 /// post-increment combining
 bool canDelayMemOp(MachineInstr &MemI, MachineInstr &Dest,
                    MachineRegisterInfo &MRI);
+/// \return true if \a MemI can be moved just before \a Dest in order to allow
+/// post-increment combining, and return additional instuction in \a
+/// DependentInstrs to be moved just after \a Dest
+bool canDelayMemOpWithExtraInstr(MachineInstr &MemI, MachineInstr &Dest,
+                                 MachineRegisterInfo &MRI,
+                                 DependentInstrSet &DependentInstrs);
 /// \return true if \a Dest can be moved just after \a MemI in order to allow
 /// combining
 bool canAdvanceOp(MachineInstr &MemI, MachineInstr &Dest,
