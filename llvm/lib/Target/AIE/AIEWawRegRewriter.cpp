@@ -26,6 +26,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineOperand.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
@@ -276,6 +277,14 @@ bool AIEWawRegRewriter::reAllocate(OriginalAllocation &Candidates,
   return Success;
 }
 
+void dumpRoudRobin(RoundRobin &LRU, const TargetRegisterInfo *TRI) {
+  dbgs() << "LRU: ";
+  for (auto Reg : LRU) {
+    dbgs() << printReg(Reg, TRI) << ", ";
+  }
+  dbgs() << "\n";
+}
+
 void AIEWawRegRewriter::revertAllocation(OriginalAllocation &Candidates,
                                          RegClassSuccess &RegClasses) {
 
@@ -421,11 +430,15 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
     }
     LLVM_DEBUG(dbgs() << "\n");
   }
-
+  LLVM_DEBUG(dbgs() << "Initial LRU:\n");
+  LLVM_DEBUG(dumpRoudRobin(LRURegisters, TRI));
   // Prime the LRURegisters, so that the allocation is loop-aware.
   if (PreAlloc) {
     preAllocate(Candidates, LRURegisters);
+    LLVM_DEBUG(dbgs() << "Preallocated LRU:\n");
+    LLVM_DEBUG(dumpRoudRobin(LRURegisters, TRI));
   }
+
   if (!reAllocate(Candidates, LRURegisters, RegClasses)) {
     revertAllocation(Candidates, RegClasses);
     return false;
