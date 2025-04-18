@@ -26,7 +26,7 @@
   ; CHECK-NEXT:    nop // Delay Slot 2
   ; CHECK-NEXT:    nop // Delay Slot 1
   ; CHECK-NEXT:  // %bb.1: // %for.body.preheader
-  ; CHECK-NEXT:    vldb wl9, [p1], m5; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vldb wl9, [p1], m5; nopx
   ; CHECK-NEXT:    vldb wh9, [p1], m6
   ; CHECK-NEXT:    vldb wl5, [p1], m5
   ; CHECK-NEXT:    vldb wh5, [p1], m6
@@ -37,17 +37,17 @@
   ; CHECK-NEXT:    vldb wl6, [p0, #64]; vshuffle x11, x9, x9, r2
   ; CHECK-NEXT:    vldb wh6, [p0, #96]; padds [p0], m4
   ; CHECK-NEXT:    padds [p0], #128; vshuffle x5, x5, x5, r2
-  ; CHECK-NEXT:    vldb wl10, [p0], #32; add.nc lc, r0, #-1
+  ; CHECK-NEXT:    vldb wl10, [p0], #32
   ; CHECK-NEXT:    vldb wh10, [p0], #32; vshuffle x7, x7, x7, r2
-  ; CHECK-NEXT:    vldb wl3, [p0], #32; movxm ls, #.LBB0_2
-  ; CHECK-NEXT:    vldb.3d wh3, [p0], d0; movxm le, #.L_LEnd0
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    vldb wl3, [p1], m5; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    vldb.3d wh3, [p1], d1; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vshuffle x1, x8, x10, r4; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vshuffle x8, x8, x10, r16; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vshuffle x10, x6, x3, r4; vmac.f bmh0, bmh0, x1, x11, r3
+  ; CHECK-NEXT:    vldb wl3, [p0], #32
+  ; CHECK-NEXT:    vldb.3d wh3, [p0], d0
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    vldb wl3, [p1], m5; add.nc lc, r0, #-1
+  ; CHECK-NEXT:    vldb.3d wh3, [p1], d1; movxm ls, #.LBB0_2
+  ; CHECK-NEXT:    movxm le, #.L_LEnd0
+  ; CHECK-NEXT:    vshuffle x1, x8, x10, r4
+  ; CHECK-NEXT:    vshuffle x8, x8, x10, r16
+  ; CHECK-NEXT:    vshuffle x10, x6, x3, r4; vmac.f bmh0, bmh0, x1, x11, r3
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_2: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1

@@ -18,7 +18,6 @@
 namespace llvm {
 
 class AIEMachineAlignment : public llvm::MachineFunctionPass {
-
 public:
   static char ID;
   AIEMachineAlignment() : MachineFunctionPass(ID) {}
@@ -26,6 +25,10 @@ public:
     return "AIE Machine Alignment";
   }
   bool runOnMachineFunction(llvm::MachineFunction &MF) override;
+
+  std::vector<llvm::iterator_range<MachineBasicBlock::iterator>>
+  findRegions(MachineBasicBlock &MBB);
+
   void applyBundlesAlignment(
       const std::vector<llvm::iterator_range<MachineBasicBlock::iterator>>
           &Regions,

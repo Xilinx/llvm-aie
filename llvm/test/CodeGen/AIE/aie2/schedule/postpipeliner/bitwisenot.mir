@@ -13,10 +13,10 @@
   define dso_local void @bitNot(ptr addrspace(5) noalias nocapture writeonly %d, ptr addrspace(6) noalias nocapture readonly %s, i32 noundef %n) local_unnamed_addr #0 {
   ; CHECK-LABEL: bitNot:
   ; CHECK:       // %bb.0:
-  ; CHECK-NEXT:    nopa ; vldb wh0, [p0, #32]; nopx ; add.nc lc, r0, #-5
-  ; CHECK-NEXT:    vldb wl0, [p0], #64; movxm ls, #.LBB0_2
-  ; CHECK-NEXT:    vldb wh0, [p0, #32]; movxm le, #.L_LEnd0
-  ; CHECK-NEXT:    vldb wl0, [p0], #64; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vldb wh0, [p0, #32]; nopx
+  ; CHECK-NEXT:    vldb wl0, [p0], #64; add.nc lc, r0, #-5
+  ; CHECK-NEXT:    vldb wh0, [p0, #32]; movxm ls, #.LBB0_2
+  ; CHECK-NEXT:    vldb wl0, [p0], #64; movxm le, #.L_LEnd0
   ; CHECK-NEXT:    vldb wh0, [p0, #32]; nopa ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    vldb wl0, [p0], #64; nopa ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    vldb wh0, [p0, #32]; nopa ; nops ; nopxm ; nopv

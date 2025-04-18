@@ -18,6 +18,7 @@
 #include "AIEBaseAddrSpaceInfo.h"
 #include "AIEBaseInstrInfo.h"
 #include "Utils/AIEBaseInfo.h"
+#include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/ScheduleDAGMutation.h"
 #include "llvm/CodeGenTypes/MachineValueType.h"
 #include "llvm/MC/MCInstrItineraries.h"

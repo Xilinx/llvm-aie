@@ -28,8 +28,8 @@
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vmin_ge.s16 x8, r16, x6, x0; nopv
   ; CHECK-NEXT:    vldb.unpack.s16.s8 x6, [p0], m0; nopa ; nops ; nopx ; vmax_lt.s16 x10, r16, x8, x2; vmac cm1, cm0, x10, x4, r0
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vmin_ge.s16 x8, r16, x6, x0; nopv
-  ; CHECK-NEXT:    vldb.unpack.s16.s8 x6, [p0], m0; nopa ; nops ; nopx ; vmax_lt.s16 x10, r16, x8, x2; vmac cm1, cm0, x10, x4, r0
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vmin_ge.s16 x8, r16, x6, x0; nopv
+  ; CHECK-NEXT:    vldb.unpack.s16.s8 x6, [p0], m0; nopx ; vmax_lt.s16 x10, r16, x8, x2; vmac cm1, cm0, x10, x4, r0
+  ; CHECK-NEXT:    vmin_ge.s16 x8, r16, x6, x0
   ; CHECK-NEXT:  .LBB0_1: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
   ; CHECK-NEXT:    vldb.unpack.s16.s8 x6, [p0], m0; nopa ; nops ; nopx ; vmax_lt.s16 x10, r16, x8, x2; vmac cm1, cm0, x10, x4, r0
@@ -52,8 +52,8 @@
   ; CHECK-NEXT:    nopb ; nopa ; vst.srs.s8.s32 cm1, s0, [p1], #32; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    vldb.unpack.s16.s8 x6, [p0], m0; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopa ; nopx
+  ; CHECK-NEXT:    vldb.unpack.s16.s8 x6, [p0], m0
+  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vldb.unpack.s16.s8 x6, [p0], m0
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vldb.unpack.s16.s8 x6, [p0], m0

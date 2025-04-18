@@ -252,6 +252,7 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   BUNDLE implicit-def $r6 {
   ; CHECK-NEXT:     renamable $r6 = MOVA_lda_cg -8
+  ; CHECK-NEXT:     NOPB
   ; CHECK-NEXT:     NOPXM
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def dead $r6, implicit-def $r0, implicit killed $r0 {
@@ -268,53 +269,25 @@ body:             |
   ; CHECK-NEXT:     $le = MOVXM_lng_cg <mcsymbol .L_1121>
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPXM
-  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPXM
-  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPXM
-  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPXM
-  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPXM
-  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPXM
-  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPXM
-  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4.for.body (align 16):
@@ -617,6 +590,7 @@ body:             |
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
+  ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     $lc = MOV_mv_scl $r5
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
@@ -626,53 +600,25 @@ body:             |
   ; CHECK-NEXT:     $le = MOVXM_lng_cg <mcsymbol .L_1120>
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPXM
-  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPXM
-  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPXM
-  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPXM
-  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPXM
-  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPXM
-  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPXM
-  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.7.for.body.epil (align 16):
@@ -688,23 +634,44 @@ body:             |
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $r6, implicit $r7, implicit $r0 {
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPS
   ; CHECK-NEXT:     renamable $r6 = LSHL renamable $r7, renamable $r0
+  ; CHECK-NEXT:     NOPM
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def dead $r6, implicit-def $dj0, implicit $r4, implicit $r1, implicit $r27 {
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPS
   ; CHECK-NEXT:     renamable $r6 = SELNEZ renamable $r4, renamable $r1, renamable $r27
   ; CHECK-NEXT:     $dj0 = MOV_mv_scl internal killed $r6
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOP
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOP
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOP
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOP
+  ; CHECK-NEXT:     NOPX
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $r5, implicit-def $srcarry, implicit killed $r5, implicit killed $r6 {
   ; CHECK-NEXT:     renamable $r5 = nsw ADD killed renamable $r5, killed renamable $r6, implicit-def $srcarry

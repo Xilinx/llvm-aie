@@ -32,7 +32,6 @@
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; nopa ; nops ; movx r1, #0; nopm ; nopv
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_2: // %for.body

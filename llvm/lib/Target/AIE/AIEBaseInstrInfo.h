@@ -16,6 +16,7 @@
 #define LLVM_LIB_TARGET_AIE_AIEBASEINSTRRINFO_H
 
 #include "AIE.h"
+#include "AIEBundle.h"
 #include "AIEMIRFormatter.h"
 #include "AIETiedRegOperands.h"
 #include "MCTargetDesc/AIEFormat.h"
@@ -35,7 +36,6 @@ template <class I> class Bundle;
 
 struct AIEBaseInstrInfo : public TargetInstrInfo {
   using TargetInstrInfo::TargetInstrInfo;
-
   // This codifies the model of ZeroOverheadLoops
   class ZOLSupport {
   public:
@@ -317,6 +317,12 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   // registers(lc, le, ls, etc.) and the end of the loop,
   virtual unsigned getLoopSetupDistance() const;
 
+  virtual unsigned getZOLBundlesCount(const MachineBasicBlock &MBB) const;
+
+  virtual unsigned getPostZOLRegionSize(MachineBasicBlock &MBB) const;
+
+  virtual bool isZOLBody(const MachineBasicBlock &MBB) const;
+
   // Return the vector of Alignment Region Boundaries.
   virtual std::vector<MachineBasicBlock::iterator>
   getAlignmentBoundaries(MachineBasicBlock &MBB) const;
@@ -441,8 +447,8 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   bool isLastZOLSetupBundleInMBB(MachineBasicBlock::iterator MII) const;
   virtual const AIE::Bundle<MachineInstr>
   getAIEMachineBundle(MachineBasicBlock::iterator MII) const;
-  virtual unsigned
-  getRegionSize(llvm::iterator_range<MachineBasicBlock::iterator> Region) const;
+  virtual unsigned getRegionSizeInBytes(
+      llvm::iterator_range<MachineBasicBlock::iterator> Region) const;
 
   /// Central place to compute RAW/WAR/WAW operand latencies.
   /// This uses itineraries when they exist. It returns std::nullopt for

@@ -260,6 +260,8 @@ class RegionEndEdges : public ScheduleDAGMutation {
   }
   void apply(ScheduleDAGInstrs *DAG) override {
     AIE::MaxLatencyFinder MaxLatency(DAG);
+    MachineBasicBlock *PrologueMBB = DAG->getBB();
+    unsigned int ZOLBundlesCount = 0;
 
     // Default edges to ExitSU are conservative, and can't be shrunk.
     // We really should know what we're doing here, so just remove and
@@ -296,9 +298,18 @@ class RegionEndEdges : public ScheduleDAGMutation {
       if (TII->isZeroOverheadLoopSetupInstr(MI)) {
         auto ZOLSupport = TII->getZOLSupport();
         assert(ZOLSupport);
-        EdgeLatency = std::max(EdgeLatency, ZOLSupport->LoopSetupDistance + 1);
+        if (PrologueMBB && PrologueMBB->succ_size() == 1) {
+          // if we have only one MBB, it must be the loop.
+          MachineBasicBlock *LoopSucc = *PrologueMBB->successors().begin();
+          // Exclude the LoopEnd bundle since it must reside in its own
+          // standalone region to ensure it points to a 128-bit aligned
+          // instruction.
+          ZOLBundlesCount = TII->getZOLBundlesCount(*LoopSucc) - 1;
+        }
+        if (ZOLBundlesCount < ZOLSupport->LoopSetupDistance)
+          EdgeLatency = std::max(EdgeLatency, ZOLSupport->LoopSetupDistance +
+                                                  1 - ZOLBundlesCount);
       }
-
       ExitDep.setLatency(EdgeLatency);
       DAG->ExitSU.addPred(ExitDep, /*Required=*/true);
     }

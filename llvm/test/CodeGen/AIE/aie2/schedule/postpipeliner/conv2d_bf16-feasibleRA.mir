@@ -26,24 +26,24 @@
   ; CHECK-NEXT:    nop // Delay Slot 2
   ; CHECK-NEXT:    nop // Delay Slot 1
   ; CHECK-NEXT:  // %bb.1: // %for.body.preheader
-  ; CHECK-NEXT:    nopa ; vldb wh10, [p4, #32]; nopx
+  ; CHECK-NEXT:    nopa ; vldb wh10, [p4, #32]; nopxm
   ; CHECK-NEXT:    vldb wl10, [p4], m4
   ; CHECK-NEXT:    vldb wh10, [p5, #32]
   ; CHECK-NEXT:    vldb wh7, [p4, #32]
   ; CHECK-NEXT:    vldb wl7, [p4], m4
   ; CHECK-NEXT:    vldb wl10, [p5], #64
   ; CHECK-NEXT:    vldb wh7, [p5, #32]
-  ; CHECK-NEXT:    vldb wh8, [p4, #32]; add.nc lc, r0, #-1
+  ; CHECK-NEXT:    vldb wh8, [p4, #32]
   ; CHECK-NEXT:    vldb wl8, [p4], m4; vshift.align x3, x3, s0, x10, r21
   ; CHECK-NEXT:    vldb wh11, [p4, #32]; movxm ls, #.LBB0_2
   ; CHECK-NEXT:    vldb.3d wl11, [p4], d0; movxm le, #.L_LEnd0
-  ; CHECK-NEXT:    vldb wl7, [p5], #64; nopa ; nops ; nopx ; vshift.align x2, x2, s0, x7, r21; nopv
-  ; CHECK-NEXT:    vldb wh9, [p5, #32]; nopa ; nops ; nopx ; mov r3, p4; nopv
-  ; CHECK-NEXT:    vldb wl9, [p5], #64; nopa ; nops ; and r3, r3, r6; nopm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vshuffle x6, x3, x2, r10; nopv
-  ; CHECK-NEXT:    vldb wh4, [p5, #32]; nopa ; nops ; nopx ; vshift.align x1, x1, s0, x8, r21; nopv
-  ; CHECK-NEXT:    vldb wl4, [p5], #64; nopa ; nops ; nopx ; vshuffle x8, x3, x2, r25; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; add r21, r3, #34; vshift.align x0, x0, s0, x11, r21; nopv
+  ; CHECK-NEXT:    vldb wl7, [p5], #64; vshift.align x2, x2, s0, x7, r21
+  ; CHECK-NEXT:    vldb wh9, [p5, #32]; mov r3, p4
+  ; CHECK-NEXT:    vldb wl9, [p5], #64; and r3, r3, r6; add.nc lc, r0, #-1
+  ; CHECK-NEXT:    vshuffle x6, x3, x2, r10
+  ; CHECK-NEXT:    vldb wh4, [p5, #32]; vshift.align x1, x1, s0, x8, r21
+  ; CHECK-NEXT:    vldb wl4, [p5], #64; vshuffle x8, x3, x2, r25
+  ; CHECK-NEXT:    add r21, r3, #34; vshift.align x0, x0, s0, x11, r21
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_2: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
