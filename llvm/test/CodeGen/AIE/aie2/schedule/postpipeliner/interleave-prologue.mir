@@ -320,19 +320,19 @@ body:             |
   ; CHECK-NEXT:   $r8 = LDA_dms_lda_idx_imm killed $p3, 0
   ; CHECK-NEXT:   $bmh2 = VLDA_UPS_S32_S16_ag_idx_imm $s0, $p2, 32, implicit-def $srups_of, implicit $crsat
   ; CHECK-NEXT:   $bml2 = VLDA_UPS_S32_S16_ag_idx_imm $s0, killed $p2, 0, implicit-def $srups_of, implicit $crsat
-  ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $lc, implicit $p0, implicit killed $r0 {
-  ; CHECK-NEXT:     $wh6 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32
+  ; CHECK-NEXT:   $wh6 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32
+  ; CHECK-NEXT:   BUNDLE implicit-def $wl6, implicit-def $p0, implicit-def $lc, implicit killed $p0, implicit $m0, implicit killed $r0 {
+  ; CHECK-NEXT:     $wl6, $p0 = VLDA_dmw_lda_w_ag_pstm_nrm_imm killed $p0, $m0
   ; CHECK-NEXT:     $lc = ADD_NC killed $r0, -5
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $wl6, implicit-def $p0, implicit-def $ls, implicit killed $p0, implicit $m0 {
-  ; CHECK-NEXT:     $wl6, $p0 = VLDA_dmw_lda_w_ag_pstm_nrm_imm killed $p0, $m0
+  ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $ls, implicit $p0 {
+  ; CHECK-NEXT:     $wh6 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32
   ; CHECK-NEXT:     $ls = MOVXM_lng_cg %bb.2
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $le, implicit $p0 {
-  ; CHECK-NEXT:     $wh6 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32
+  ; CHECK-NEXT:   BUNDLE implicit-def $wl6, implicit-def $p0, implicit-def $le, implicit killed $p0, implicit $m0 {
+  ; CHECK-NEXT:     $wl6, $p0 = VLDA_dmw_lda_w_ag_pstm_nrm_imm killed $p0, $m0
   ; CHECK-NEXT:     $le = MOVXM_lng_cg <mcsymbol .L_LEnd0>
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   $wl6, $p0 = VLDA_dmw_lda_w_ag_pstm_nrm_imm killed $p0, $m0
   ; CHECK-NEXT:   $wh6 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32
   ; CHECK-NEXT:   $wl6, $p0 = VLDA_dmw_lda_w_ag_pstm_nrm_imm killed $p0, $m0
   ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit $p0, implicit killed $r1 {

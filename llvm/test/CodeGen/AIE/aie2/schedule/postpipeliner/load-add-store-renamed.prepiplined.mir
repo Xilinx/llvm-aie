@@ -28,23 +28,16 @@
   ; CHECK-NEXT:    add.nc lc, r0, #-1
   ; CHECK-NEXT:    movxm ls, #.LBB0_2
   ; CHECK-NEXT:    movxm le, #.L_LEnd0
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_2: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
   ; CHECK-NEXT:    nopb ; lda r0, [p1], #4; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    nopa ; nopb ; nopxm
   ; CHECK-NEXT:    add r1, r0, #1
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    nopb ; nopa ; st r1, [p0], #4; nopxm ; nopv

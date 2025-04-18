@@ -376,6 +376,7 @@ void AIEBaseInstrInfo::adjustTripCount(MachineInstr &MI, int Adjustment) const {
   auto &Imm = MI.getOperand(2);
   Imm.setImm(Imm.getImm() + Adjustment);
 }
+
 bool AIEBaseInstrInfo::isHardwareLoopStart(unsigned Opcode) const {
   const auto ZOLSupport = getZOLSupport();
   return ZOLSupport && Opcode == ZOLSupport->LoopStartOpcode;
@@ -397,13 +398,57 @@ bool AIEBaseInstrInfo::isLastZOLSetupBundleInMBB(
   return true;
 }
 
-unsigned AIEBaseInstrInfo::getRegionSize(
+// Compute the total size (in bytes) of all instruction bundles in the
+// pre-header that follow the last ZOL setup instruction.
+unsigned AIEBaseInstrInfo::getPostZOLRegionSize(MachineBasicBlock &MBB) const {
+  unsigned Size = 0;
+  for (auto &MI : llvm::reverse(MBB)) {
+    if (MI.isDebugInstr())
+      continue;
+
+    if (isZOLSetupBundle(&MI) && isLastZOLSetupBundleInMBB(&MI))
+      break;
+    if (MI.isBundle()) {
+      AIE::MachineBundle Bundle = getAIEMachineBundle(MI);
+      const VLIWFormat *Format = Bundle.getFormatOrNull();
+      assert(Format);
+      Size += Format->getSize();
+    }
+  }
+  return Size;
+}
+
+// Return true if this is ZeroOverhead loop body.
+bool AIEBaseInstrInfo::isZOLBody(const MachineBasicBlock &MBB) const {
+  auto Last = MBB.getLastNonDebugInstr();
+
+  // If MBB is empty or has no non-debug instructions, return false.
+  if (Last == MBB.end())
+    return false;
+
+  return isHardwareLoopEnd(Last->getOpcode());
+}
+
+// Count the number of Machine Bundles in a MachineBasicBlock.
+unsigned
+AIEBaseInstrInfo::getZOLBundlesCount(const MachineBasicBlock &MBB) const {
+  if (!isZOLBody(MBB))
+    return 0;
+
+  auto First = MBB.getFirstNonDebugInstr();
+  auto Last = MBB.getLastNonDebugInstr();
+
+  return std::count_if(
+      First, Last, [](const MachineInstr &MI) { return !MI.isDebugInstr(); });
+}
+
+unsigned AIEBaseInstrInfo::getRegionSizeInBytes(
     llvm::iterator_range<MachineBasicBlock::iterator> Region) const {
   unsigned Size = 0;
   LLVM_DEBUG(dbgs() << "---Region Begin---\n");
-  for (auto it = Region.begin(), end = Region.end(); it != end; ++it) {
-    if (it->isBundle()) {
-      AIE::MachineBundle Bundle = getAIEMachineBundle(it);
+  for (auto It = Region.begin(), End = Region.end(); It != End; ++It) {
+    if (It->isBundle()) {
+      AIE::MachineBundle Bundle = getAIEMachineBundle(It);
       const VLIWFormat *Format = Bundle.getFormatOrNull();
       assert(Format);
       Size += Format->getSize();
@@ -1082,17 +1127,75 @@ const PacketFormats &AIEBaseInstrInfo::getPacketFormats() const {
 std::vector<MachineBasicBlock::iterator>
 AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
   std::vector<MachineBasicBlock::iterator> AlgnCandidates;
-  unsigned DelaySlot = 0;
 
+  unsigned DelaySlot = 0;
   // LoopSetupDistance will be set to number of instructions (7). In
   // PostRAScheduler, this is enforced by setting the exit latency in the
-  // schduler dag mutator
+  // schduler dag mutator.
   unsigned LoopSetupDistance = 0;
+  unsigned ZOLBundlesCount = 0;
   bool IsCall = false;
   auto ZOLSupport = getZOLSupport();
+
+  const bool IsZOLBody = isZOLBody(MBB);
+  if (IsZOLBody) {
+    assert(ZOLSupport);
+    auto LoopSizeExcludingLastBundle = [&](MachineBasicBlock &MBB) -> unsigned {
+      if (MBB.empty())
+        return 0;
+
+      auto It = MBB.getLastNonDebugInstr();
+      if (It == MBB.begin())
+        return 0;
+      // Step before the PseudoLoopEnd.
+      --It;
+      while (It != MBB.begin()) {
+        if (It->isBundle())
+          return getRegionSizeInBytes(llvm::make_range(MBB.begin(), It));
+        --It;
+      }
+      return 0;
+    };
+
+    auto getPostZOLSetupRegionSize =
+        [&](MachineBasicBlock &LoopMBB) -> unsigned {
+      for (auto *Pred : LoopMBB.predecessors()) {
+        if (Pred == &LoopMBB)
+          continue;
+
+        const unsigned Size = getPostZOLRegionSize(*Pred);
+        if (Size > 0)
+          return Size;
+      }
+      return 0;
+    };
+    const unsigned ZOLSetupToLoopEndDist = ZOLSupport->LoopSetupDistance;
+    // Exclude the LoopEnd bundle as it must be placed in its own standalone
+    // region to guarantee 128-bit instruction alignment. Additionally, there
+    // must be a 112-byte gap (in PM address space) between writing to the ls,
+    // le, and lc registers and the LoopEnd instruction.
+    ZOLBundlesCount = getZOLBundlesCount(MBB) - 1;
+    if (ZOLBundlesCount < ZOLSetupToLoopEndDist)
+      LoopSetupDistance = ZOLBundlesCount;
+    else {
+      // Elongate the ZOL loop body only if the distance from the end of the
+      // ZOL setup instruction to the last bundle in the loop (excluding the
+      // final bundle) is less than 112 bytes.
+      const unsigned LoopSetupSizeInBytes = 16 * ZOLSetupToLoopEndDist;
+      const unsigned LoopSize = LoopSizeExcludingLastBundle(MBB);
+      if (LoopSize >= LoopSetupSizeInBytes)
+        LoopSetupDistance = 0;
+      else {
+        const unsigned PostZOLRegionSize = getPostZOLSetupRegionSize(MBB);
+        const bool DistanceConstraintMet =
+            (LoopSize + PostZOLRegionSize) >= LoopSetupSizeInBytes;
+        LoopSetupDistance = DistanceConstraintMet ? 0 : ZOLSetupToLoopEndDist;
+      }
+    }
+  }
   for (auto MI = MBB.begin(), End = MBB.end(); MI != End; ++MI) {
     if (MI->isBundle()) {
-      // Return Address Candidate
+      // Return Address Candidate.
       IsCall = isCallBundle(MI);
       if (IsCall && DelaySlot > 0)
         llvm_unreachable("Cannot have branch in branch delay slot!\n");
@@ -1118,8 +1221,15 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
       // Distance in terms of fully-expanded 128-bit bundles that
       // loop setup should maintain. We force each of these bundles to an
       // alignment boundary, so that they will occupy 16 bytes.
-      if (ZOLSupport && isZOLSetupBundle(MI) && isLastZOLSetupBundleInMBB(MI))
-        LoopSetupDistance = ZOLSupport->LoopSetupDistance;
+      if (ZOLSupport && isZOLSetupBundle(MI) && isLastZOLSetupBundleInMBB(MI)) {
+        // if we have only one MBB, it must be the loop.
+        if (MBB.succ_size() == 1) {
+          const MachineBasicBlock *LoopSucc = *MBB.successors().begin();
+          ZOLBundlesCount = getZOLBundlesCount(*LoopSucc) - 1;
+        }
+        if (ZOLBundlesCount < ZOLSupport->LoopSetupDistance)
+          LoopSetupDistance = ZOLSupport->LoopSetupDistance - ZOLBundlesCount;
+      }
     } else if (isHardwareLoopEnd(MI->getOpcode())) {
       if (DelaySlot > 0)
         llvm_unreachable("Cannot have HWLoopEnd in branch delay slot!\n");
@@ -1128,7 +1238,7 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
       AlgnCandidates.emplace_back(std::prev(MI));
     } else if (!MI->isMetaInstruction()) {
       // single instruction, there should not be any
-      // after Bundle Finalization Pass
+      // after Bundle Finalization Pass.
       llvm_unreachable("Found an un-expected standalone instruction !");
     }
   }

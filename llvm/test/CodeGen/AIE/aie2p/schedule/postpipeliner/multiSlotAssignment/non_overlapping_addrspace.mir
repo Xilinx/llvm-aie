@@ -42,14 +42,11 @@
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_2: // =>This Inner Loop Header: Depth=1
-  ; CHECK-NEXT:    vlda.fill.512 [p1, lf1, r25]; vldb.fill.512 [p0, lf0, r24]; nopx
-  ; CHECK-NEXT:    vldb.fill.512 [p0, lf0, r24]
-  ; CHECK-NEXT:    vldb.pop.576 ex6, [p0, lf0, r24]
+  ; CHECK-NEXT:    vlda.fill.512 [p1, lf1, r25]; vldb.fill.512 [p0, lf0, r24]; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    nopa ; vldb.pop.576 ex6, [p0, lf0, r24]; nops ; nopxm ; nopv
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    nopa ; vldb.pop.576.3d ex1, [p0, lf0, r24, d3]; nops ; nopxm ; nopv
   ; CHECK-NEXT:  // %bb.3:

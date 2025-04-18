@@ -28,26 +28,25 @@
   ; CHECK-NEXT:    nop // Delay Slot 2
   ; CHECK-NEXT:    nop // Delay Slot 1
   ; CHECK-NEXT:  // %bb.1: // %for.body.preheader
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; movxm ls, #.LBB0_2; nopv
-  ; CHECK-NEXT:    nopa ; add.nc lc, r0, #-1
-  ; CHECK-NEXT:    lda r0, [p0], #4; movxm le, #.L_LEnd0
-  ; CHECK-NEXT:    nopb ; lda r1, [p0], #4; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; lda r2, [p0], #4; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; lda r3, [p0], #4; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; lda r4, [p0], #4; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; lda r5, [p0], #4; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; lda r6, [p0], #4; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; lda r7, [p0], #4; st r0, [p1], #4; nopxm ; nopv
+  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; add.nc lc, r0, #-1; nopv
+  ; CHECK-NEXT:    lda r0, [p0], #4; nopx
+  ; CHECK-NEXT:    lda r1, [p0], #4
+  ; CHECK-NEXT:    lda r2, [p0], #4
+  ; CHECK-NEXT:    lda r3, [p0], #4
+  ; CHECK-NEXT:    lda r4, [p0], #4
+  ; CHECK-NEXT:    lda r5, [p0], #4
+  ; CHECK-NEXT:    lda r6, [p0], #4; movxm ls, #.LBB0_2
+  ; CHECK-NEXT:    lda r7, [p0], #4; st r0, [p1], #4; movxm le, #.L_LEnd0
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_2: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-  ; CHECK-NEXT:    lda r0, [p0], #4; nopb ; nopx ; st r1, [p1], #4
-  ; CHECK-NEXT:    lda r1, [p0], #4; st r2, [p1], #4
-  ; CHECK-NEXT:    lda r2, [p0], #4; st r3, [p1], #4
-  ; CHECK-NEXT:    lda r3, [p0], #4; st r4, [p1], #4
-  ; CHECK-NEXT:    lda r4, [p0], #4; st r5, [p1], #4
-  ; CHECK-NEXT:    lda r5, [p0], #4; st r6, [p1], #4
-  ; CHECK-NEXT:    lda r6, [p0], #4; st r7, [p1], #4
+  ; CHECK-NEXT:    nopb ; lda r0, [p0], #4; st r1, [p1], #4; nopxm ; nopv
+  ; CHECK-NEXT:    nopb ; lda r1, [p0], #4; st r2, [p1], #4; nopxm ; nopv
+  ; CHECK-NEXT:    nopb ; lda r2, [p0], #4; st r3, [p1], #4; nopxm ; nopv
+  ; CHECK-NEXT:    nopb ; lda r3, [p0], #4; st r4, [p1], #4; nopxm ; nopv
+  ; CHECK-NEXT:    nopb ; lda r4, [p0], #4; st r5, [p1], #4; nopxm ; nopv
+  ; CHECK-NEXT:    nopb ; lda r5, [p0], #4; st r6, [p1], #4; nopxm ; nopv
+  ; CHECK-NEXT:    nopb ; lda r6, [p0], #4; st r7, [p1], #4; nopxm ; nopv
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    nopb ; lda r7, [p0], #4; st r0, [p1], #4; nopxm ; nopv
   ; CHECK-NEXT:  // %bb.3: // %for.cond.cleanup

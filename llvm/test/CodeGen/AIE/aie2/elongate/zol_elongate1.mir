@@ -69,22 +69,47 @@ body:             |
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $dj0, implicit killed $r4 {
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPX
   ; CHECK-NEXT:     $dj0 = MOV_mv_scl killed $r4
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $r4, implicit $p1, implicit killed $dj0 {
+  ; CHECK-NEXT:     NOPB
   ; CHECK-NEXT:     renamable $r4 = LDA_dms_lda_idx renamable $p1, killed renamable $dj0 :: (load (s32) from %ir.arrayidx)
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOP
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOP
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOP
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOP
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
   ; CHECK-NEXT:     NOP

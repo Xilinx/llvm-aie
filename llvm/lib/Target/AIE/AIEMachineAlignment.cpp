@@ -150,7 +150,7 @@ void AIEMachineAlignment::applyBundlesAlignment(
   for (auto Region : Regions) {
     unsigned Size = 0;
     unsigned PadBytes = 0;
-    Size = TII->getRegionSize(Region);
+    Size = TII->getRegionSizeInBytes(Region);
     if ((Size % 16) == 0)
       continue;
     PadBytes = 16 - (Size % 16);
@@ -167,8 +167,8 @@ void AIEMachineAlignment::applyBundlesAlignment(
 
 // Find Regions for Alignment Candidate e.g. Region ending with Return Address,
 // End of BB, etc.
-static std::vector<llvm::iterator_range<MachineBasicBlock::iterator>>
-findRegions(MachineBasicBlock &MBB) {
+std::vector<llvm::iterator_range<MachineBasicBlock::iterator>>
+AIEMachineAlignment::findRegions(MachineBasicBlock &MBB) {
   auto *TII = static_cast<const AIEBaseInstrInfo *>(
       MBB.getParent()->getSubtarget().getInstrInfo());
   MachineBasicBlock::iterator RegionBegin = MBB.begin();
@@ -192,11 +192,12 @@ bool AIEMachineAlignment::runOnMachineFunction(MachineFunction &MF) {
   // ordering of the blocks within the function.
   MF.RenumberBlocks();
 
+  auto *TII =
+      static_cast<const AIEBaseInstrInfo *>(MF.getSubtarget().getInstrInfo());
+
   for (auto &MBB : MF) {
     std::vector<llvm::iterator_range<MachineBasicBlock::iterator>> Regions =
         findRegions(MBB);
-    auto *TII = static_cast<const AIEBaseInstrInfo *>(
-        MBB.getParent()->getSubtarget().getInstrInfo());
     applyBundlesAlignment(Regions, TII);
     // Clean up BB local Regions
     Regions.clear();

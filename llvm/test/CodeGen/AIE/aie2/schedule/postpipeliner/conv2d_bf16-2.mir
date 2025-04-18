@@ -26,7 +26,7 @@
   ; CHECK-NEXT:    nop // Delay Slot 2
   ; CHECK-NEXT:    nop // Delay Slot 1
   ; CHECK-NEXT:  // %bb.1: // %for.body.preheader
-  ; CHECK-NEXT:    vldb wh7, [p5, #32]; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    nopa ; vldb wh7, [p5, #32]; nopxm
   ; CHECK-NEXT:    vldb wl7, [p5], #64
   ; CHECK-NEXT:    vldb wh8, [p4, #32]
   ; CHECK-NEXT:    vldb wl8, [p4], m4
@@ -39,13 +39,13 @@
   ; CHECK-NEXT:    vldb.3d wl3, [p4], d0; vshift.align x0, x0, s0, x8, r21
   ; CHECK-NEXT:    mov r3, p4
   ; CHECK-NEXT:    and r3, r3, r6; add.nc lc, r0, #-1
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vshift.align x2, x2, s0, x10, r21; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vshuffle x5, x0, x2, r25; nopv
-  ; CHECK-NEXT:    vldb wh5, [p5, #32]; nopa ; nops ; nopx ; vshift.align x4, x4, s0, x1, r21; nopv
-  ; CHECK-NEXT:    vldb wl5, [p5], #64; nopa ; nops ; nopx ; vshuffle x8, x0, x2, r10; nopv
-  ; CHECK-NEXT:    vldb wh9, [p5, #32]; nopa ; nops ; add r21, r3, #34; vshift.align x6, x6, s0, x3, r21; nopv
-  ; CHECK-NEXT:    vldb wl9, [p5], #64; nopa ; nops ; nopx ; vshuffle x3, x4, x6, r10; vmac.f bmh4, bmh4, x8, x7, r14
-  ; CHECK-NEXT:    vldb wh11, [p5, #32]; nopx ; vshuffle x10, x4, x6, r25
+  ; CHECK-NEXT:    vshift.align x2, x2, s0, x10, r21
+  ; CHECK-NEXT:    vshuffle x5, x0, x2, r25
+  ; CHECK-NEXT:    vldb wh5, [p5, #32]; vshift.align x4, x4, s0, x1, r21
+  ; CHECK-NEXT:    vldb wl5, [p5], #64; vshuffle x8, x0, x2, r10
+  ; CHECK-NEXT:    vldb wh9, [p5, #32]; add r21, r3, #34; vshift.align x6, x6, s0, x3, r21
+  ; CHECK-NEXT:    vldb wl9, [p5], #64; vshuffle x3, x4, x6, r10; vmac.f bmh4, bmh4, x8, x7, r14
+  ; CHECK-NEXT:    vldb wh11, [p5, #32]; vshuffle x10, x4, x6, r25
   ; CHECK-NEXT:    vldb wl11, [p5], #64; vshuffle x1, x3, x5, r15
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_2: // %for.body
