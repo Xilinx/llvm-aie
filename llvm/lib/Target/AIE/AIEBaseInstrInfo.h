@@ -29,6 +29,10 @@
 
 namespace llvm {
 
+namespace AIE {
+template <class I> class Bundle;
+}
+
 struct AIEBaseInstrInfo : public TargetInstrInfo {
   using TargetInstrInfo::TargetInstrInfo;
 
@@ -435,6 +439,10 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   // setting LE Reg
   bool isZOLSetupBundle(MachineBasicBlock::iterator MII) const;
   bool isLastZOLSetupBundleInMBB(MachineBasicBlock::iterator MII) const;
+  virtual const AIE::Bundle<MachineInstr>
+  getAIEMachineBundle(MachineBasicBlock::iterator MII) const;
+  virtual unsigned
+  getRegionSize(llvm::iterator_range<MachineBasicBlock::iterator> Region) const;
 
   /// Central place to compute RAW/WAR/WAW operand latencies.
   /// This uses itineraries when they exist. It returns std::nullopt for

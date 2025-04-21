@@ -39,20 +39,6 @@ const AIEBaseInstrInfo *getTII(MachineBasicBlock::iterator MII) {
   return static_cast<const AIEBaseInstrInfo *>(Subtarget.getInstrInfo());
 }
 
-const AIE::MachineBundle getAIEMachineBundle(MachineBasicBlock::iterator MII) {
-  const AIEBaseInstrInfo *TII = getTII(MII);
-  AIE::MachineBundle Bundle(TII->getFormatInterface());
-  // Iterate over the instructions in the bundle.
-  MachineBasicBlock::const_instr_iterator I = ++MII->getIterator();
-  MachineBasicBlock::instr_iterator E = MII->getParent()->instr_end();
-  while (I != E && I->isInsideBundle()) {
-    MachineInstr *MI = const_cast<MachineInstr *>(&(*I));
-    Bundle.add(MI);
-    I++;
-  }
-  return Bundle;
-}
-
 const VLIWFormat *getElongatedFormat(AIE::MachineBundle &Bundle,
                                      unsigned Size) {
   if (Bundle.isNOPBundle()) {
@@ -108,7 +94,8 @@ unsigned applyRegionAlignment(MachineBasicBlock::iterator MI,
   unsigned f = 0;
   while (MI != EndMI) {
     if (MI->isBundle()) {
-      AIE::MachineBundle Bundle = getAIEMachineBundle(MI);
+      const AIEBaseInstrInfo *TII = getTII(MI);
+      AIE::MachineBundle Bundle = TII->getAIEMachineBundle(MI);
       const VLIWFormat *Format = Bundle.getFormatOrNull();
       assert(Format);
       Size = Format->getSize();
@@ -154,34 +141,16 @@ unsigned applyRegionAlignment(MachineBasicBlock::iterator MI,
   return PadBytes;
 }
 
-unsigned
-getRegionSize(llvm::iterator_range<MachineBasicBlock::iterator> Region) {
-  unsigned Size = 0;
-  LLVM_DEBUG(dbgs() << "---Region Begin---\n");
-  for (auto it = Region.begin(), end = Region.end(); it != end; ++it) {
-    if (it->isBundle()) {
-      AIE::MachineBundle Bundle = getAIEMachineBundle(it);
-      const VLIWFormat *Format = Bundle.getFormatOrNull();
-      assert(Format);
-      Size += Format->getSize();
-      LLVM_DEBUG(dbgs() << Format->Name << "\n");
-    }
-  }
-  LLVM_DEBUG(dbgs() << "---Region End---\n");
-  LLVM_DEBUG(dbgs() << "Region Size"
-                    << " " << Size << "\n");
-  return Size;
-}
-
 } // namespace
 
 void AIEMachineAlignment::applyBundlesAlignment(
     const std::vector<llvm::iterator_range<MachineBasicBlock::iterator>>
-        &Regions) {
+        &Regions,
+    const AIEBaseInstrInfo *TII) {
   for (auto Region : Regions) {
     unsigned Size = 0;
     unsigned PadBytes = 0;
-    Size = getRegionSize(Region);
+    Size = TII->getRegionSize(Region);
     if ((Size % 16) == 0)
       continue;
     PadBytes = 16 - (Size % 16);
@@ -226,7 +195,9 @@ bool AIEMachineAlignment::runOnMachineFunction(MachineFunction &MF) {
   for (auto &MBB : MF) {
     std::vector<llvm::iterator_range<MachineBasicBlock::iterator>> Regions =
         findRegions(MBB);
-    applyBundlesAlignment(Regions);
+    auto *TII = static_cast<const AIEBaseInstrInfo *>(
+        MBB.getParent()->getSubtarget().getInstrInfo());
+    applyBundlesAlignment(Regions, TII);
     // Clean up BB local Regions
     Regions.clear();
   }
