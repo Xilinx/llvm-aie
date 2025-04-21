@@ -28,7 +28,8 @@ public:
   bool runOnMachineFunction(llvm::MachineFunction &MF) override;
   void applyBundlesAlignment(
       const std::vector<llvm::iterator_range<MachineBasicBlock::iterator>>
-          &Regions);
+          &Regions,
+      const AIEBaseInstrInfo *TII);
 };
 
 } // end namespace llvm

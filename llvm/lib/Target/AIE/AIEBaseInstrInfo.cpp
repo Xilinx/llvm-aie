@@ -397,6 +397,39 @@ bool AIEBaseInstrInfo::isLastZOLSetupBundleInMBB(
   return true;
 }
 
+unsigned AIEBaseInstrInfo::getRegionSize(
+    llvm::iterator_range<MachineBasicBlock::iterator> Region) const {
+  unsigned Size = 0;
+  LLVM_DEBUG(dbgs() << "---Region Begin---\n");
+  for (auto it = Region.begin(), end = Region.end(); it != end; ++it) {
+    if (it->isBundle()) {
+      AIE::MachineBundle Bundle = getAIEMachineBundle(it);
+      const VLIWFormat *Format = Bundle.getFormatOrNull();
+      assert(Format);
+      Size += Format->getSize();
+      LLVM_DEBUG(dbgs() << Format->Name << "\n");
+    }
+  }
+  LLVM_DEBUG(dbgs() << "---Region End---\n");
+  LLVM_DEBUG(dbgs() << "Region Size"
+                    << " " << Size << "\n");
+  return Size;
+}
+
+const AIE::MachineBundle
+AIEBaseInstrInfo::getAIEMachineBundle(MachineBasicBlock::iterator MII) const {
+  AIE::MachineBundle Bundle(getFormatInterface());
+  // Iterate over the instructions in the bundle.
+  MachineBasicBlock::const_instr_iterator I = ++MII->getIterator();
+  MachineBasicBlock::instr_iterator E = MII->getParent()->instr_end();
+  while (I != E && I->isInsideBundle()) {
+    MachineInstr *MI = const_cast<MachineInstr *>(&(*I));
+    Bundle.add(MI);
+    I++;
+  }
+  return Bundle;
+}
+
 unsigned computeRegStateFlags(const MachineOperand &RegOp) {
   assert(RegOp.isReg() && "Not a register operand");
   assert(!RegOp.getSubReg() && "RegOp has SubReg flags set");
