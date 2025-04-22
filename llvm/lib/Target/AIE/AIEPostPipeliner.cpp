@@ -14,13 +14,22 @@
 #include "AIEPostPipeliner.h"
 #include "AIESlotCounts.h"
 #include "Utils/AIELoopUtils.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/OptimizationRemarkEmitter.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
+#include "llvm/CodeGen/TargetInstrInfo.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include <limits>
+#include <optional>
+#include <queue>
 #include <string>
+#include <unordered_set>
 
 #define DEBUG_TYPE "postpipeliner"
 #define DEBUG_SUMMARY(X) DEBUG_WITH_TYPE("postpipeliner-summary", X)
@@ -94,13 +103,16 @@ bool PostPipeliner::isPostPipelineCandidate(MachineBasicBlock &LoopBlock) {
   // the tripcount is pristine, otherwise the loop may have been software
   // pipelined before and we can't trust min itercount metadata.
   // Return on investment is probably low anyway.
+
   const bool Pristine = true;
+
   for (auto &MI : reverse(*Preheader)) {
     if (TII->isZOLTripCountDef(MI, Pristine)) {
       TripCountDef = &MI;
       break;
     }
   }
+
   if (!TripCountDef) {
     LLVM_DEBUG(dbgs() << " PostPipeliner: No tripcount def\n");
     return false;
@@ -108,13 +120,24 @@ bool PostPipeliner::isPostPipelineCandidate(MachineBasicBlock &LoopBlock) {
 
   // 4. We need to peel stages and be left with a positive tripcount.
   // This is just a minimum check to save useless work; the real stage
-  // count is checked before accepting the schedule.
+  // count is checked before accepting the schedule. If min itercount
+  // metadata is not available, try to detect it in machine instructions
   auto ParsedMinTripCount = AIELoopUtils::getMinTripCount(LoopBlock);
+  LLVM_DEBUG(dbgs() << ParsedMinTripCount << "\n");
   if (!ParsedMinTripCount) {
-    LLVM_DEBUG(dbgs() << " PostPipeliner: No min tripcount\n");
-    return false;
+    std ::optional<int> MyTripCount = extractMinTripCount(Preheader);
+    if (MyTripCount.has_value()) {
+      MinTripCount = MyTripCount.value();
+      LLVM_DEBUG(dbgs() << " Min Trip Count: " << MyTripCount.value() << "\n");
+
+    } else {
+      LLVM_DEBUG(dbgs() << " PostPipeliner: No min tripcount\n");
+      return false;
+    }
+  } else {
+    MinTripCount = *ParsedMinTripCount;
   }
-  MinTripCount = *ParsedMinTripCount;
+
   if (MinTripCount < 2) {
     LLVM_DEBUG(dbgs() << " PostPipeliner: min tripcount < 2\n");
     return false;
@@ -123,6 +146,57 @@ bool PostPipeliner::isPostPipelineCandidate(MachineBasicBlock &LoopBlock) {
   return true;
 }
 
+std::optional<int>
+PostPipeliner ::extractMinTripCount(MachineBasicBlock *LoopPreheader) {
+  const bool Pristine = true;
+  bool IsNotMoveModifies = false;
+  std::optional<int> MyTripCount;
+  Register Vreg;
+  bool TripCountState = false;
+  std::unordered_set<MachineBasicBlock *> Visited;
+  std::queue<MachineBasicBlock *> WorkList;
+  WorkList.push(LoopPreheader);
+
+  while (!WorkList.empty()) {
+    MachineBasicBlock *MBB = WorkList.front();
+    WorkList.pop();
+    if (!MBB || Visited.count(MBB)) {
+      continue;
+    }
+    Visited.insert(MBB);
+    for (auto &MI : reverse(*MBB)) {
+      if (!TripCountState) {
+        if (TII->isZOLTripCountDef(MI, Pristine)) {
+          TripCountState = true;
+          Vreg = MI.getOperand(1).getReg();
+        }
+
+      } else {
+
+        if (MI.modifiesRegister(Vreg)) {
+          if (MI.isMoveImmediate()) {
+            MyTripCount = MI.getOperand(1).getImm();
+          }
+          IsNotMoveModifies = true; // if the instruction modifies the register
+                                    // but not MoveImmediate, stop the search.
+          break;
+        }
+      }
+    }
+
+    if (MyTripCount.has_value() || IsNotMoveModifies) {
+      break;
+    }
+
+    for (MachineBasicBlock *Pred : MBB->predecessors()) {
+      if (Pred && !Visited.count(Pred)) {
+        WorkList.push(Pred);
+      }
+    }
+  }
+
+  return MyTripCount;
+}
 static SlotCounts getSlotCounts(MachineInstr &MI, const AIEBaseInstrInfo *TII) {
   auto *SlotInfo = TII->getSlotInfo(TII->getSlotKind(MI.getOpcode()));
   return SlotInfo ? SlotInfo->getSlotSet() : 0;

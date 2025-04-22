@@ -16,6 +16,7 @@
 
 #include "AIEHazardRecognizer.h"
 #include "AIESlotCounts.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/ResourceScoreboard.h"
 #include <unordered_set>
@@ -260,6 +261,9 @@ public:
   /// Get a lowerbound for the II required to accommodate the slots.
   /// \pre isPostPipelineCandidate has returned true
   int getResMII(MachineBasicBlock &LoopBlock);
+
+  /// Determine the minimum trip count from the loop preheader
+  std::optional<int> extractMinTripCount(MachineBasicBlock *LoopBlock);
 
   // Schedule using the given InitiationInterval. Return true when successful.
   // In that case calls to the query methods below are legitimate.
