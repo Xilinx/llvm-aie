@@ -205,10 +205,14 @@ FunctionPass *llvm::createGreedyRegisterAllocator(RegClassFilterFunc Ftor) {
   return new RAGreedy(Ftor);
 }
 
-RAGreedy::RAGreedy(RegClassFilterFunc F):
-  MachineFunctionPass(ID),
-  RegAllocBase(F) {
+FunctionPass *
+llvm::createGreedyRegisterAllocator(RegClassFilterFunc Ftor,
+                                    LiveIntervalFilterFunc LIFtor) {
+  return new RAGreedy(Ftor, LIFtor);
 }
+
+RAGreedy::RAGreedy(RegClassFilterFunc F, LiveIntervalFilterFunc LIF)
+    : MachineFunctionPass(ID), RegAllocBase(F, LIF) {}
 
 void RAGreedy::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesCFG();

@@ -188,8 +188,13 @@ void RegAllocBase::enqueue(const LiveInterval *LI) {
 
   const TargetRegisterClass &RC = *MRI->getRegClass(Reg);
   if (ShouldAllocateClass(*TRI, RC)) {
-    LLVM_DEBUG(dbgs() << "Enqueuing " << printReg(Reg, TRI) << '\n');
-    enqueueImpl(LI);
+    if (ShouldAllocateLiveInterval(*MRI, LIS->getTargetInstrInfo(), LI)) {
+      LLVM_DEBUG(dbgs() << "Enqueuing " << printReg(Reg, TRI) << '\n');
+      enqueueImpl(LI);
+    } else {
+      LLVM_DEBUG(dbgs() << "Not enqueueing " << printReg(Reg, TRI)
+                        << " in skipped live interval\n");
+    }
   } else {
     LLVM_DEBUG(dbgs() << "Not enqueueing " << printReg(Reg, TRI)
                       << " in skipped register class\n");
