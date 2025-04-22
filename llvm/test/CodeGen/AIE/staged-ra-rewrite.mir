@@ -31,13 +31,13 @@ body:             |
   ; AIE2-VREGS-NEXT:   [[LDA_dms_lda_idx_imm1:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 4
   ; AIE2-VREGS-NEXT:   [[LDA_dms_lda_idx_imm2:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 8
   ; AIE2-VREGS-NEXT:   [[LDA_dms_lda_idx_imm3:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 12
-  ; AIE2-VREGS-NEXT:   [[COPY2:%[0-9]+]]:edn = COPY [[LDA_dms_lda_idx_imm1]]
-  ; AIE2-VREGS-NEXT:   [[COPY3:%[0-9]+]]:em = COPY [[LDA_dms_lda_idx_imm]]
-  ; AIE2-VREGS-NEXT:   [[COPY4:%[0-9]+]]:edj = COPY [[LDA_dms_lda_idx_imm2]]
-  ; AIE2-VREGS-NEXT:   [[COPY5:%[0-9]+]]:edc = COPY [[LDA_dms_lda_idx_imm3]]
+  ; AIE2-VREGS-NEXT:   [[COPY2:%[0-9]+]]:edn_as_32bit = COPY [[LDA_dms_lda_idx_imm1]]
+  ; AIE2-VREGS-NEXT:   [[COPY3:%[0-9]+]]:em_as_32bit = COPY [[LDA_dms_lda_idx_imm]]
+  ; AIE2-VREGS-NEXT:   [[COPY4:%[0-9]+]]:edj_as_32bit = COPY [[LDA_dms_lda_idx_imm2]]
+  ; AIE2-VREGS-NEXT:   [[COPY5:%[0-9]+]]:edc_as_32bit = COPY [[LDA_dms_lda_idx_imm3]]
   ; AIE2-VREGS-NEXT: {{  $}}
   ; AIE2-VREGS-NEXT: bb.1:
-  ; AIE2-VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY5:%[0-9]+]]:edc = PADDA_2D_split [[COPY]], [[COPY3]], [[COPY2]], [[COPY4]], [[COPY5]]
+  ; AIE2-VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY5:%[0-9]+]]:edc_as_32bit = PADDA_2D_split [[COPY]], [[COPY3]], [[COPY2]], [[COPY4]], [[COPY5]]
   ; AIE2-VREGS-NEXT:   PseudoRET implicit $lr, implicit [[COPY]], implicit [[COPY5]]
   ;
   ; AIE2-RA-LABEL: name: test_split_2d_from_1d
@@ -71,13 +71,13 @@ body:             |
   ; AIE2P-VREGS-NEXT:   [[LDA_dms_lda_idx_imm1:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 4
   ; AIE2P-VREGS-NEXT:   [[LDA_dms_lda_idx_imm2:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 8
   ; AIE2P-VREGS-NEXT:   [[LDA_dms_lda_idx_imm3:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 12
-  ; AIE2P-VREGS-NEXT:   [[COPY2:%[0-9]+]]:edn = COPY [[LDA_dms_lda_idx_imm1]]
-  ; AIE2P-VREGS-NEXT:   [[COPY3:%[0-9]+]]:em = COPY [[LDA_dms_lda_idx_imm]]
-  ; AIE2P-VREGS-NEXT:   [[COPY4:%[0-9]+]]:edj = COPY [[LDA_dms_lda_idx_imm2]]
-  ; AIE2P-VREGS-NEXT:   [[COPY5:%[0-9]+]]:edc = COPY [[LDA_dms_lda_idx_imm3]]
+  ; AIE2P-VREGS-NEXT:   [[COPY2:%[0-9]+]]:edn_as_32bit = COPY [[LDA_dms_lda_idx_imm1]]
+  ; AIE2P-VREGS-NEXT:   [[COPY3:%[0-9]+]]:em_as_32bit = COPY [[LDA_dms_lda_idx_imm]]
+  ; AIE2P-VREGS-NEXT:   [[COPY4:%[0-9]+]]:edj_as_32bit = COPY [[LDA_dms_lda_idx_imm2]]
+  ; AIE2P-VREGS-NEXT:   [[COPY5:%[0-9]+]]:edc_as_32bit = COPY [[LDA_dms_lda_idx_imm3]]
   ; AIE2P-VREGS-NEXT: {{  $}}
   ; AIE2P-VREGS-NEXT: bb.1:
-  ; AIE2P-VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY5:%[0-9]+]]:edc = PADDA_2D_split [[COPY]], [[COPY3]], [[COPY2]], [[COPY4]], [[COPY5]]
+  ; AIE2P-VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY5:%[0-9]+]]:edc_as_32bit = PADDA_2D_split [[COPY]], [[COPY3]], [[COPY2]], [[COPY4]], [[COPY5]]
   ; AIE2P-VREGS-NEXT:   PseudoRET implicit $lr, implicit [[COPY]], implicit [[COPY5]]
   ;
   ; AIE2P-RA-LABEL: name: test_split_2d_from_1d
@@ -134,9 +134,9 @@ body:             |
   ; AIE2-VREGS-NEXT:   [[LDA_dms_lda_idx_imm1:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 4
   ; AIE2-VREGS-NEXT:   [[LDA_dms_lda_idx_imm2:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 8
   ; AIE2-VREGS-NEXT:   [[LDA_dms_lda_idx_imm3:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 12
-  ; AIE2-VREGS-NEXT:   [[COPY2:%[0-9]+]]:edn = COPY [[LDA_dms_lda_idx_imm1]]
-  ; AIE2-VREGS-NEXT:   [[COPY3:%[0-9]+]]:em = COPY [[LDA_dms_lda_idx_imm]]
-  ; AIE2-VREGS-NEXT:   [[COPY4:%[0-9]+]]:edj = COPY [[LDA_dms_lda_idx_imm2]]
+  ; AIE2-VREGS-NEXT:   [[COPY2:%[0-9]+]]:edn_as_32bit = COPY [[LDA_dms_lda_idx_imm1]]
+  ; AIE2-VREGS-NEXT:   [[COPY3:%[0-9]+]]:em_as_32bit = COPY [[LDA_dms_lda_idx_imm]]
+  ; AIE2-VREGS-NEXT:   [[COPY4:%[0-9]+]]:edj_as_32bit = COPY [[LDA_dms_lda_idx_imm2]]
   ; AIE2-VREGS-NEXT:   [[COPY5:%[0-9]+]]:edc_as_32bit = COPY [[LDA_dms_lda_idx_imm3]]
   ; AIE2-VREGS-NEXT: {{  $}}
   ; AIE2-VREGS-NEXT: bb.1:
@@ -174,9 +174,9 @@ body:             |
   ; AIE2P-VREGS-NEXT:   [[LDA_dms_lda_idx_imm1:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 4
   ; AIE2P-VREGS-NEXT:   [[LDA_dms_lda_idx_imm2:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 8
   ; AIE2P-VREGS-NEXT:   [[LDA_dms_lda_idx_imm3:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 12
-  ; AIE2P-VREGS-NEXT:   [[COPY2:%[0-9]+]]:edn = COPY [[LDA_dms_lda_idx_imm1]]
-  ; AIE2P-VREGS-NEXT:   [[COPY3:%[0-9]+]]:em = COPY [[LDA_dms_lda_idx_imm]]
-  ; AIE2P-VREGS-NEXT:   [[COPY4:%[0-9]+]]:edj = COPY [[LDA_dms_lda_idx_imm2]]
+  ; AIE2P-VREGS-NEXT:   [[COPY2:%[0-9]+]]:edn_as_32bit = COPY [[LDA_dms_lda_idx_imm1]]
+  ; AIE2P-VREGS-NEXT:   [[COPY3:%[0-9]+]]:em_as_32bit = COPY [[LDA_dms_lda_idx_imm]]
+  ; AIE2P-VREGS-NEXT:   [[COPY4:%[0-9]+]]:edj_as_32bit = COPY [[LDA_dms_lda_idx_imm2]]
   ; AIE2P-VREGS-NEXT:   [[COPY5:%[0-9]+]]:edc_as_32bit = COPY [[LDA_dms_lda_idx_imm3]]
   ; AIE2P-VREGS-NEXT: {{  $}}
   ; AIE2P-VREGS-NEXT: bb.1:
@@ -236,13 +236,13 @@ body:             |
   ; AIE2-VREGS-NEXT:   [[LDA_dms_lda_idx_imm:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 4
   ; AIE2-VREGS-NEXT:   [[LDA_dms_lda_idx_imm1:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 8
   ; AIE2-VREGS-NEXT:   [[LDA_dms_lda_idx_imm2:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 12
-  ; AIE2-VREGS-NEXT:   [[COPY3:%[0-9]+]]:edn = COPY [[LDA_dms_lda_idx_imm]]
-  ; AIE2-VREGS-NEXT:   [[COPY4:%[0-9]+]]:em = COPY [[COPY2]].sub_mod
-  ; AIE2-VREGS-NEXT:   [[COPY5:%[0-9]+]]:edj = COPY [[LDA_dms_lda_idx_imm1]]
-  ; AIE2-VREGS-NEXT:   [[COPY6:%[0-9]+]]:edc = COPY [[LDA_dms_lda_idx_imm2]]
+  ; AIE2-VREGS-NEXT:   [[COPY3:%[0-9]+]]:edn_as_32bit = COPY [[LDA_dms_lda_idx_imm]]
+  ; AIE2-VREGS-NEXT:   [[COPY4:%[0-9]+]]:em_as_32bit = COPY [[COPY2]].sub_mod
+  ; AIE2-VREGS-NEXT:   [[COPY5:%[0-9]+]]:edj_as_32bit = COPY [[LDA_dms_lda_idx_imm1]]
+  ; AIE2-VREGS-NEXT:   [[COPY6:%[0-9]+]]:edc_as_32bit = COPY [[LDA_dms_lda_idx_imm2]]
   ; AIE2-VREGS-NEXT: {{  $}}
   ; AIE2-VREGS-NEXT: bb.1:
-  ; AIE2-VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY6:%[0-9]+]]:edc = PADDA_2D_split [[COPY]], [[COPY4]], [[COPY3]], [[COPY5]], [[COPY6]]
+  ; AIE2-VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY6:%[0-9]+]]:edc_as_32bit = PADDA_2D_split [[COPY]], [[COPY4]], [[COPY3]], [[COPY5]], [[COPY6]]
   ; AIE2-VREGS-NEXT:   PseudoRET implicit $lr, implicit [[COPY]], implicit [[COPY6]]
   ;
   ; AIE2-RA-LABEL: name: test_split_2d_from_other_2d
@@ -274,13 +274,13 @@ body:             |
   ; AIE2P-VREGS-NEXT:   [[LDA_dms_lda_idx_imm:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 4
   ; AIE2P-VREGS-NEXT:   [[LDA_dms_lda_idx_imm1:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 8
   ; AIE2P-VREGS-NEXT:   [[LDA_dms_lda_idx_imm2:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 12
-  ; AIE2P-VREGS-NEXT:   [[COPY3:%[0-9]+]]:edn = COPY [[LDA_dms_lda_idx_imm]]
-  ; AIE2P-VREGS-NEXT:   [[COPY4:%[0-9]+]]:em = COPY [[COPY2]].sub_mod
-  ; AIE2P-VREGS-NEXT:   [[COPY5:%[0-9]+]]:edj = COPY [[LDA_dms_lda_idx_imm1]]
-  ; AIE2P-VREGS-NEXT:   [[COPY6:%[0-9]+]]:edc = COPY [[LDA_dms_lda_idx_imm2]]
+  ; AIE2P-VREGS-NEXT:   [[COPY3:%[0-9]+]]:edn_as_32bit = COPY [[LDA_dms_lda_idx_imm]]
+  ; AIE2P-VREGS-NEXT:   [[COPY4:%[0-9]+]]:em_as_32bit = COPY [[COPY2]].sub_mod
+  ; AIE2P-VREGS-NEXT:   [[COPY5:%[0-9]+]]:edj_as_32bit = COPY [[LDA_dms_lda_idx_imm1]]
+  ; AIE2P-VREGS-NEXT:   [[COPY6:%[0-9]+]]:edc_as_32bit = COPY [[LDA_dms_lda_idx_imm2]]
   ; AIE2P-VREGS-NEXT: {{  $}}
   ; AIE2P-VREGS-NEXT: bb.1:
-  ; AIE2P-VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY6:%[0-9]+]]:edc = PADDA_2D_split [[COPY]], [[COPY4]], [[COPY3]], [[COPY5]], [[COPY6]]
+  ; AIE2P-VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY6:%[0-9]+]]:edc_as_32bit = PADDA_2D_split [[COPY]], [[COPY4]], [[COPY3]], [[COPY5]], [[COPY6]]
   ; AIE2P-VREGS-NEXT:   PseudoRET implicit $lr, implicit [[COPY]], implicit [[COPY6]]
   ;
   ; AIE2P-RA-LABEL: name: test_split_2d_from_other_2d
@@ -391,17 +391,17 @@ body:             |
   ; AIE2-VREGS-NEXT:   liveins: $p0, $m1, $dn1, $dj1
   ; AIE2-VREGS-NEXT: {{  $}}
   ; AIE2-VREGS-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
-  ; AIE2-VREGS-NEXT:   [[COPY1:%[0-9]+]]:em = COPY $m1
-  ; AIE2-VREGS-NEXT:   [[COPY2:%[0-9]+]]:edn = COPY $dn1
-  ; AIE2-VREGS-NEXT:   [[COPY3:%[0-9]+]]:edj = COPY $dj1
-  ; AIE2-VREGS-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 0
+  ; AIE2-VREGS-NEXT:   [[COPY1:%[0-9]+]]:spill_em_to_er = COPY $m1
+  ; AIE2-VREGS-NEXT:   [[COPY2:%[0-9]+]]:spill_edn_to_er = COPY $dn1
+  ; AIE2-VREGS-NEXT:   [[COPY3:%[0-9]+]]:spill_edj_to_er = COPY $dj1
+  ; AIE2-VREGS-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]]:edc_as_32bit = MOV_PD_imm11_pseudo 0
   ; AIE2-VREGS-NEXT: {{  $}}
   ; AIE2-VREGS-NEXT: bb.1:
-  ; AIE2-VREGS-NEXT:   [[COPY4:%[0-9]+]]:edc = COPY [[MOV_PD_imm11_pseudo]]
-  ; AIE2-VREGS-NEXT:   [[COPY5:%[0-9]+]]:edn = COPY [[COPY2]]
-  ; AIE2-VREGS-NEXT:   [[COPY6:%[0-9]+]]:edj = COPY [[COPY3]]
-  ; AIE2-VREGS-NEXT:   [[COPY7:%[0-9]+]]:em = COPY [[COPY1]]
-  ; AIE2-VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY4:%[0-9]+]]:edc = PADDA_2D_split [[COPY]], [[COPY7]], [[COPY5]], [[COPY6]], [[COPY4]]
+  ; AIE2-VREGS-NEXT:   [[COPY4:%[0-9]+]]:edc_as_32bit = COPY [[MOV_PD_imm11_pseudo]]
+  ; AIE2-VREGS-NEXT:   [[COPY5:%[0-9]+]]:edn_as_32bit = COPY [[COPY2]]
+  ; AIE2-VREGS-NEXT:   [[COPY6:%[0-9]+]]:edj_as_32bit = COPY [[COPY3]]
+  ; AIE2-VREGS-NEXT:   [[COPY7:%[0-9]+]]:em_as_32bit = COPY [[COPY1]]
+  ; AIE2-VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY4:%[0-9]+]]:edc_as_32bit = PADDA_2D_split [[COPY]], [[COPY7]], [[COPY5]], [[COPY6]], [[COPY4]]
   ; AIE2-VREGS-NEXT:   PseudoRET implicit $lr, implicit [[COPY]], implicit [[COPY4]]
   ;
   ; AIE2-RA-LABEL: name: test_split_2d_from_full_copy_def_by_1d
@@ -423,17 +423,17 @@ body:             |
   ; AIE2P-VREGS-NEXT:   liveins: $p0, $m1, $dn1, $dj1
   ; AIE2P-VREGS-NEXT: {{  $}}
   ; AIE2P-VREGS-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
-  ; AIE2P-VREGS-NEXT:   [[COPY1:%[0-9]+]]:em = COPY $m1
-  ; AIE2P-VREGS-NEXT:   [[COPY2:%[0-9]+]]:edn = COPY $dn1
-  ; AIE2P-VREGS-NEXT:   [[COPY3:%[0-9]+]]:edj = COPY $dj1
-  ; AIE2P-VREGS-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 0
+  ; AIE2P-VREGS-NEXT:   [[COPY1:%[0-9]+]]:spill_em_to_er = COPY $m1
+  ; AIE2P-VREGS-NEXT:   [[COPY2:%[0-9]+]]:spill_edn_to_er = COPY $dn1
+  ; AIE2P-VREGS-NEXT:   [[COPY3:%[0-9]+]]:spill_edj_to_er = COPY $dj1
+  ; AIE2P-VREGS-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]]:edc_as_32bit = MOV_PD_imm11_pseudo 0
   ; AIE2P-VREGS-NEXT: {{  $}}
   ; AIE2P-VREGS-NEXT: bb.1:
-  ; AIE2P-VREGS-NEXT:   [[COPY4:%[0-9]+]]:edc = COPY [[MOV_PD_imm11_pseudo]]
-  ; AIE2P-VREGS-NEXT:   [[COPY5:%[0-9]+]]:edn = COPY [[COPY2]]
-  ; AIE2P-VREGS-NEXT:   [[COPY6:%[0-9]+]]:edj = COPY [[COPY3]]
-  ; AIE2P-VREGS-NEXT:   [[COPY7:%[0-9]+]]:em = COPY [[COPY1]]
-  ; AIE2P-VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY4:%[0-9]+]]:edc = PADDA_2D_split [[COPY]], [[COPY7]], [[COPY5]], [[COPY6]], [[COPY4]]
+  ; AIE2P-VREGS-NEXT:   [[COPY4:%[0-9]+]]:edc_as_32bit = COPY [[MOV_PD_imm11_pseudo]]
+  ; AIE2P-VREGS-NEXT:   [[COPY5:%[0-9]+]]:edn_as_32bit = COPY [[COPY2]]
+  ; AIE2P-VREGS-NEXT:   [[COPY6:%[0-9]+]]:edj_as_32bit = COPY [[COPY3]]
+  ; AIE2P-VREGS-NEXT:   [[COPY7:%[0-9]+]]:em_as_32bit = COPY [[COPY1]]
+  ; AIE2P-VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY4:%[0-9]+]]:edc_as_32bit = PADDA_2D_split [[COPY]], [[COPY7]], [[COPY5]], [[COPY6]], [[COPY4]]
   ; AIE2P-VREGS-NEXT:   PseudoRET implicit $lr, implicit [[COPY]], implicit [[COPY4]]
   ;
   ; AIE2P-RA-LABEL: name: test_split_2d_from_full_copy_def_by_1d
@@ -476,12 +476,12 @@ body:             |
   ; AIE2-VREGS-NEXT:   [[LDA_dms_lda_idx_imm:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 4
   ; AIE2-VREGS-NEXT:   [[LDA_dms_lda_idx_imm1:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 8
   ; AIE2-VREGS-NEXT:   [[LDA_dms_lda_idx_imm2:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 12
-  ; AIE2-VREGS-NEXT:   [[COPY2:%[0-9]+]]:edn = COPY [[LDA_dms_lda_idx_imm]]
-  ; AIE2-VREGS-NEXT:   [[COPY3:%[0-9]+]]:edj = COPY [[LDA_dms_lda_idx_imm1]]
-  ; AIE2-VREGS-NEXT:   [[COPY4:%[0-9]+]]:edc = COPY [[LDA_dms_lda_idx_imm2]]
+  ; AIE2-VREGS-NEXT:   [[COPY2:%[0-9]+]]:edn_as_32bit = COPY [[LDA_dms_lda_idx_imm]]
+  ; AIE2-VREGS-NEXT:   [[COPY3:%[0-9]+]]:edj_as_32bit = COPY [[LDA_dms_lda_idx_imm1]]
+  ; AIE2-VREGS-NEXT:   [[COPY4:%[0-9]+]]:edc_as_32bit = COPY [[LDA_dms_lda_idx_imm2]]
   ; AIE2-VREGS-NEXT: {{  $}}
   ; AIE2-VREGS-NEXT: bb.1:
-  ; AIE2-VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY4:%[0-9]+]]:edc = PADDA_2D_split [[COPY]], undef %9:em, [[COPY2]], [[COPY3]], [[COPY4]]
+  ; AIE2-VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY4:%[0-9]+]]:edc_as_32bit = PADDA_2D_split [[COPY]], undef %9:em_as_32bit, [[COPY2]], [[COPY3]], [[COPY4]]
   ; AIE2-VREGS-NEXT:   PseudoRET implicit $lr, implicit [[COPY]], implicit [[COPY4]]
   ;
   ; AIE2-RA-LABEL: name: test_split_2d_undef
@@ -512,12 +512,12 @@ body:             |
   ; AIE2P-VREGS-NEXT:   [[LDA_dms_lda_idx_imm:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 4
   ; AIE2P-VREGS-NEXT:   [[LDA_dms_lda_idx_imm1:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 8
   ; AIE2P-VREGS-NEXT:   [[LDA_dms_lda_idx_imm2:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 12
-  ; AIE2P-VREGS-NEXT:   [[COPY2:%[0-9]+]]:edn = COPY [[LDA_dms_lda_idx_imm]]
-  ; AIE2P-VREGS-NEXT:   [[COPY3:%[0-9]+]]:edj = COPY [[LDA_dms_lda_idx_imm1]]
-  ; AIE2P-VREGS-NEXT:   [[COPY4:%[0-9]+]]:edc = COPY [[LDA_dms_lda_idx_imm2]]
+  ; AIE2P-VREGS-NEXT:   [[COPY2:%[0-9]+]]:edn_as_32bit = COPY [[LDA_dms_lda_idx_imm]]
+  ; AIE2P-VREGS-NEXT:   [[COPY3:%[0-9]+]]:edj_as_32bit = COPY [[LDA_dms_lda_idx_imm1]]
+  ; AIE2P-VREGS-NEXT:   [[COPY4:%[0-9]+]]:edc_as_32bit = COPY [[LDA_dms_lda_idx_imm2]]
   ; AIE2P-VREGS-NEXT: {{  $}}
   ; AIE2P-VREGS-NEXT: bb.1:
-  ; AIE2P-VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY4:%[0-9]+]]:edc = PADDA_2D_split [[COPY]], undef %9:em, [[COPY2]], [[COPY3]], [[COPY4]]
+  ; AIE2P-VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY4:%[0-9]+]]:edc_as_32bit = PADDA_2D_split [[COPY]], undef %9:em_as_32bit, [[COPY2]], [[COPY3]], [[COPY4]]
   ; AIE2P-VREGS-NEXT:   PseudoRET implicit $lr, implicit [[COPY]], implicit [[COPY4]]
   ;
   ; AIE2P-RA-LABEL: name: test_split_2d_undef
@@ -569,15 +569,15 @@ body:             |
   ; AIE2-VREGS-NEXT: {{  $}}
   ; AIE2-VREGS-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
   ; AIE2-VREGS-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p1
-  ; AIE2-VREGS-NEXT:   [[LDA_dms_lda_idx_imm:%[0-9]+]]:edn_as_32bit = LDA_dms_lda_idx_imm [[COPY1]], 4
-  ; AIE2-VREGS-NEXT:   [[LDA_dms_lda_idx_imm1:%[0-9]+]]:edj_as_32bit = LDA_dms_lda_idx_imm [[COPY1]], 8
-  ; AIE2-VREGS-NEXT:   [[LDA_dms_lda_idx_imm2:%[0-9]+]]:edc_as_32bit = LDA_dms_lda_idx_imm [[COPY1]], 12
+  ; AIE2-VREGS-NEXT:   [[LDA_dms_lda_idx_imm:%[0-9]+]]:spill_edn_to_er = LDA_dms_lda_idx_imm [[COPY1]], 4
+  ; AIE2-VREGS-NEXT:   [[LDA_dms_lda_idx_imm1:%[0-9]+]]:spill_edj_to_er = LDA_dms_lda_idx_imm [[COPY1]], 8
+  ; AIE2-VREGS-NEXT:   [[LDA_dms_lda_idx_imm2:%[0-9]+]]:spill_edc_to_er = LDA_dms_lda_idx_imm [[COPY1]], 12
   ; AIE2-VREGS-NEXT: {{  $}}
   ; AIE2-VREGS-NEXT: bb.1:
-  ; AIE2-VREGS-NEXT:   [[COPY2:%[0-9]+]]:edc = COPY [[LDA_dms_lda_idx_imm2]]
-  ; AIE2-VREGS-NEXT:   [[COPY3:%[0-9]+]]:edn = COPY [[LDA_dms_lda_idx_imm]]
-  ; AIE2-VREGS-NEXT:   [[COPY4:%[0-9]+]]:edj = COPY [[LDA_dms_lda_idx_imm1]]
-  ; AIE2-VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY2:%[0-9]+]]:edc = PADDA_2D_split [[COPY]], undef %11:em, [[COPY3]], [[COPY4]], [[COPY2]]
+  ; AIE2-VREGS-NEXT:   [[COPY2:%[0-9]+]]:edc_as_32bit = COPY [[LDA_dms_lda_idx_imm2]]
+  ; AIE2-VREGS-NEXT:   [[COPY3:%[0-9]+]]:edn_as_32bit = COPY [[LDA_dms_lda_idx_imm]]
+  ; AIE2-VREGS-NEXT:   [[COPY4:%[0-9]+]]:edj_as_32bit = COPY [[LDA_dms_lda_idx_imm1]]
+  ; AIE2-VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY2:%[0-9]+]]:edc_as_32bit = PADDA_2D_split [[COPY]], undef %11:em_as_32bit, [[COPY3]], [[COPY4]], [[COPY2]]
   ; AIE2-VREGS-NEXT:   PseudoRET implicit $lr, implicit [[COPY]], implicit [[COPY2]]
   ;
   ; AIE2-RA-LABEL: name: test_split_2d_undef_through_copy
@@ -602,15 +602,15 @@ body:             |
   ; AIE2P-VREGS-NEXT: {{  $}}
   ; AIE2P-VREGS-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
   ; AIE2P-VREGS-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p1
-  ; AIE2P-VREGS-NEXT:   [[LDA_dms_lda_idx_imm:%[0-9]+]]:edn_as_32bit = LDA_dms_lda_idx_imm [[COPY1]], 4
-  ; AIE2P-VREGS-NEXT:   [[LDA_dms_lda_idx_imm1:%[0-9]+]]:edj_as_32bit = LDA_dms_lda_idx_imm [[COPY1]], 8
-  ; AIE2P-VREGS-NEXT:   [[LDA_dms_lda_idx_imm2:%[0-9]+]]:edc_as_32bit = LDA_dms_lda_idx_imm [[COPY1]], 12
+  ; AIE2P-VREGS-NEXT:   [[LDA_dms_lda_idx_imm:%[0-9]+]]:spill_edn_to_er = LDA_dms_lda_idx_imm [[COPY1]], 4
+  ; AIE2P-VREGS-NEXT:   [[LDA_dms_lda_idx_imm1:%[0-9]+]]:spill_edj_to_er = LDA_dms_lda_idx_imm [[COPY1]], 8
+  ; AIE2P-VREGS-NEXT:   [[LDA_dms_lda_idx_imm2:%[0-9]+]]:spill_edc_to_er = LDA_dms_lda_idx_imm [[COPY1]], 12
   ; AIE2P-VREGS-NEXT: {{  $}}
   ; AIE2P-VREGS-NEXT: bb.1:
-  ; AIE2P-VREGS-NEXT:   [[COPY2:%[0-9]+]]:edc = COPY [[LDA_dms_lda_idx_imm2]]
-  ; AIE2P-VREGS-NEXT:   [[COPY3:%[0-9]+]]:edn = COPY [[LDA_dms_lda_idx_imm]]
-  ; AIE2P-VREGS-NEXT:   [[COPY4:%[0-9]+]]:edj = COPY [[LDA_dms_lda_idx_imm1]]
-  ; AIE2P-VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY2:%[0-9]+]]:edc = PADDA_2D_split [[COPY]], undef %11:em, [[COPY3]], [[COPY4]], [[COPY2]]
+  ; AIE2P-VREGS-NEXT:   [[COPY2:%[0-9]+]]:edc_as_32bit = COPY [[LDA_dms_lda_idx_imm2]]
+  ; AIE2P-VREGS-NEXT:   [[COPY3:%[0-9]+]]:edn_as_32bit = COPY [[LDA_dms_lda_idx_imm]]
+  ; AIE2P-VREGS-NEXT:   [[COPY4:%[0-9]+]]:edj_as_32bit = COPY [[LDA_dms_lda_idx_imm1]]
+  ; AIE2P-VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY2:%[0-9]+]]:edc_as_32bit = PADDA_2D_split [[COPY]], undef %11:em_as_32bit, [[COPY3]], [[COPY4]], [[COPY2]]
   ; AIE2P-VREGS-NEXT:   PseudoRET implicit $lr, implicit [[COPY]], implicit [[COPY2]]
   ;
   ; AIE2P-RA-LABEL: name: test_split_2d_undef_through_copy
@@ -864,9 +864,9 @@ body:             |
   ; AIE2-VREGS-NEXT:   [[LDA_dms_lda_idx_imm1:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 4
   ; AIE2-VREGS-NEXT:   [[LDA_dms_lda_idx_imm2:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 8
   ; AIE2-VREGS-NEXT:   [[LDA_dms_lda_idx_imm3:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 12
-  ; AIE2-VREGS-NEXT:   [[COPY2:%[0-9]+]]:edn = COPY [[LDA_dms_lda_idx_imm1]]
-  ; AIE2-VREGS-NEXT:   [[COPY3:%[0-9]+]]:em = COPY [[LDA_dms_lda_idx_imm]]
-  ; AIE2-VREGS-NEXT:   [[COPY4:%[0-9]+]]:edj = COPY [[LDA_dms_lda_idx_imm2]]
+  ; AIE2-VREGS-NEXT:   [[COPY2:%[0-9]+]]:edn_as_32bit = COPY [[LDA_dms_lda_idx_imm1]]
+  ; AIE2-VREGS-NEXT:   [[COPY3:%[0-9]+]]:em_as_32bit = COPY [[LDA_dms_lda_idx_imm]]
+  ; AIE2-VREGS-NEXT:   [[COPY4:%[0-9]+]]:edj_as_32bit = COPY [[LDA_dms_lda_idx_imm2]]
   ; AIE2-VREGS-NEXT:   [[COPY5:%[0-9]+]]:edc_as_32bit = COPY [[LDA_dms_lda_idx_imm3]]
   ; AIE2-VREGS-NEXT: {{  $}}
   ; AIE2-VREGS-NEXT: bb.1:
@@ -912,9 +912,9 @@ body:             |
   ; AIE2P-VREGS-NEXT:   [[LDA_dms_lda_idx_imm1:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 4
   ; AIE2P-VREGS-NEXT:   [[LDA_dms_lda_idx_imm2:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 8
   ; AIE2P-VREGS-NEXT:   [[LDA_dms_lda_idx_imm3:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 12
-  ; AIE2P-VREGS-NEXT:   [[COPY2:%[0-9]+]]:edn = COPY [[LDA_dms_lda_idx_imm1]]
-  ; AIE2P-VREGS-NEXT:   [[COPY3:%[0-9]+]]:em = COPY [[LDA_dms_lda_idx_imm]]
-  ; AIE2P-VREGS-NEXT:   [[COPY4:%[0-9]+]]:edj = COPY [[LDA_dms_lda_idx_imm2]]
+  ; AIE2P-VREGS-NEXT:   [[COPY2:%[0-9]+]]:edn_as_32bit = COPY [[LDA_dms_lda_idx_imm1]]
+  ; AIE2P-VREGS-NEXT:   [[COPY3:%[0-9]+]]:em_as_32bit = COPY [[LDA_dms_lda_idx_imm]]
+  ; AIE2P-VREGS-NEXT:   [[COPY4:%[0-9]+]]:edj_as_32bit = COPY [[LDA_dms_lda_idx_imm2]]
   ; AIE2P-VREGS-NEXT:   [[COPY5:%[0-9]+]]:edc_as_32bit = COPY [[LDA_dms_lda_idx_imm3]]
   ; AIE2P-VREGS-NEXT: {{  $}}
   ; AIE2P-VREGS-NEXT: bb.1:

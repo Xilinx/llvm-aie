@@ -11,6 +11,10 @@
 #include "AIEBaseInstrInfo.h"
 #include "AIEBaseRegisterInfo.h"
 
+#include "aie2p/AIE2PRegisterBankInfo.h"
+#include "aie2p/AIE2PRegisterInfo.h"
+#include "aie2p/AIE2PSubtarget.h"
+
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/CodeGen/LiveDebugVariables.h"
@@ -65,8 +69,9 @@ public:
 
 private:
   void rewriteSuperReg(Register Reg, Register AssignedPhysReg,
-                       MachineRegisterInfo &MRI, const AIEBaseRegisterInfo &TRI,
-                       VirtRegMap &VRM, LiveRegMatrix &LRM, LiveIntervals &LIS,
+                       MachineFunction &MF, MachineRegisterInfo &MRI,
+                       const AIEBaseRegisterInfo &TRI, VirtRegMap &VRM,
+                       LiveRegMatrix &LRM, LiveIntervals &LIS,
                        SlotIndexes &Indexes, LiveDebugVariables &DebugVars);
 };
 
@@ -149,6 +154,7 @@ bool AIESuperRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   SlotIndexes &Indexes = getAnalysis<SlotIndexes>();
   LiveDebugVariables &DebugVars = getAnalysis<LiveDebugVariables>();
   std::map<Register, MCRegister> AssignedPhysRegs;
+  std::list<Register> UnAssignedPhysRegs;
 
   // Collect already-assigned VRegs that can be split into smaller ones.
   LLVM_DEBUG(VRM.dump());
@@ -156,9 +162,11 @@ bool AIESuperRegRewriter::runOnMachineFunction(MachineFunction &MF) {
        ++VRegIdx) {
     Register Reg = Register::index2VirtReg(VRegIdx);
 
-    // Ignore un-used registers and un-allocated registers
-    if (MRI.reg_nodbg_empty(Reg) || !VRM.hasPhys(Reg))
+    // Ignore un-used registers registers
+    if (MRI.reg_nodbg_empty(Reg))
       continue;
+
+    const bool VirtualRegIsAllocated = VRM.hasPhys(Reg);
 
     // Skip vregs that are spilled, they would anyway be disregarded by
     // getRewritableSubRegs due to the spill instructions using the whole reg
@@ -172,17 +180,32 @@ bool AIESuperRegRewriter::runOnMachineFunction(MachineFunction &MF) {
     LLVM_DEBUG(dbgs() << "Analysing " << printReg(Reg, &TRI, 0, &MRI) << ":"
                       << printRegClassOrBank(Reg, MRI, &TRI) << '\n');
     if (!getRewritableSubRegs(Reg, MRI, TRI).empty()) {
-      AssignedPhysRegs[Reg] = VRM.getPhys(Reg);
-      LRM.unassign(LIS.getInterval(Reg));
+      if (VirtualRegIsAllocated) {
+        AssignedPhysRegs[Reg] = VRM.getPhys(Reg);
+        LRM.unassign(LIS.getInterval(Reg));
+      } else {
+        UnAssignedPhysRegs.push_back(Reg);
+      }
     } else {
       LLVM_DEBUG(dbgs() << "Could not rewrite " << printReg(Reg, &TRI, 0, &MRI)
                         << '\n');
     }
   }
 
-  // Re-write all the collected VRegs
+  // Re-write all the collected assigned VRegs
   for (auto &[VReg, PhysReg] : AssignedPhysRegs) {
-    rewriteSuperReg(VReg, PhysReg, MRI, TRI, VRM, LRM, LIS, Indexes, DebugVars);
+    rewriteSuperReg(VReg, PhysReg, MF, MRI, TRI, VRM, LRM, LIS, Indexes,
+                    DebugVars);
+  }
+
+  // Re-write all the collected unassigned VRegs
+  for (auto &VReg : UnAssignedPhysRegs) {
+    MCRegister DummyPhysReg;
+    const TargetRegisterClass *SuperRC = MRI.getRegClass(VReg);
+    // TODO : Remove ARCH specific check
+    if (SuperRC == &AIE2P::eDSRegClass)
+      rewriteSuperReg(VReg, DummyPhysReg, MF, MRI, TRI, VRM, LRM, LIS, Indexes,
+                      DebugVars);
   }
 
   LLVM_DEBUG(VRM.dump());
@@ -238,10 +261,13 @@ static void rewriteFullCopy(MachineInstr &MI, const std::set<int> &CopySubRegs,
 }
 
 void AIESuperRegRewriter::rewriteSuperReg(
-    Register Reg, Register AssignedPhysReg, MachineRegisterInfo &MRI,
-    const AIEBaseRegisterInfo &TRI, VirtRegMap &VRM, LiveRegMatrix &LRM,
-    LiveIntervals &LIS, SlotIndexes &Indexes, LiveDebugVariables &DebugVars) {
-  LLVM_DEBUG(dbgs() << "Rewriting " << printReg(Reg, &TRI, 0, &MRI) << '\n');
+    Register Reg, Register AssignedPhysReg, MachineFunction &MF,
+    MachineRegisterInfo &MRI, const AIEBaseRegisterInfo &TRI, VirtRegMap &VRM,
+    LiveRegMatrix &LRM, LiveIntervals &LIS, SlotIndexes &Indexes,
+    LiveDebugVariables &DebugVars) {
+  bool AssignPhysRegIsValid = AssignedPhysReg.isValid();
+  LLVM_DEBUG(dbgs() << "Rewriting " << printReg(Reg, &TRI, 0, &MRI)
+                    << " Assigned " << AssignPhysRegIsValid << '\n');
   auto *TII = static_cast<const AIEBaseInstrInfo *>(
       VRM.getMachineFunction().getSubtarget().getInstrInfo());
 
@@ -251,7 +277,9 @@ void AIESuperRegRewriter::rewriteSuperReg(
   SmallSet<int, 8> SubRegs = getRewritableSubRegs(Reg, MRI, TRI);
   assert(!SubRegs.empty());
   for (int SubReg : SubRegs) {
-    const TargetRegisterClass *SubRC = TRI.getSubRegisterClass(SuperRC, SubReg);
+    const TargetRegisterClass *SubRC = TRI.getLargestLegalSuperClass(
+        TRI.getSubRegisterClass(SuperRC, SubReg), MF);
+
     SubRegToVReg[SubReg] = MRI.createVirtualRegister(SubRC);
   }
 
@@ -289,7 +317,9 @@ void AIESuperRegRewriter::rewriteSuperReg(
   LIS.removeInterval(Reg);
 
   for (auto &[SubRegIdx, VReg] : SubRegToVReg) {
-    MCRegister SubPhysReg = TRI.getSubReg(AssignedPhysReg, SubRegIdx);
+    MCRegister SubPhysReg;
+    if (AssignPhysRegIsValid)
+      SubPhysReg = TRI.getSubReg(AssignedPhysReg, SubRegIdx);
     LiveInterval &SubRegLI = LIS.getInterval(VReg);
     LLVM_DEBUG(dbgs() << "  Assigning Range: " << SubRegLI << '\n');
 
@@ -300,11 +330,12 @@ void AIESuperRegRewriter::rewriteSuperReg(
     LIComponents.push_back(&SubRegLI);
     VRM.grow();
 
-    for (LiveInterval *LI : LIComponents) {
-      LRM.assign(*LI, SubPhysReg);
-      VRM.setRequiredPhys(LI->reg(), SubPhysReg);
-      LLVM_DEBUG(dbgs() << "  Assigned " << printReg(LI->reg()) << "\n");
-    }
+    if (AssignPhysRegIsValid)
+      for (LiveInterval *LI : LIComponents) {
+        LRM.assign(*LI, SubPhysReg);
+        VRM.setRequiredPhys(LI->reg(), SubPhysReg);
+        LLVM_DEBUG(dbgs() << "  Assigned " << printReg(LI->reg()) << "\n");
+      }
   }
 
   // Announce new VRegs so DBG locations can be updated.
