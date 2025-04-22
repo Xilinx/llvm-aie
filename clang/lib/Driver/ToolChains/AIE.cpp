@@ -187,6 +187,19 @@ void AIEToolChain::addClangTargetOptions(
 
   // Enable Loop Iteration Count Assumptions
   CC1Args.append({"-mllvm", "-enable-loop-iter-count-assumptions=true"});
+
+  bool UseBuiltins = DriverArgs.hasFlag(options::OPT_fbuiltin,
+                                        options::OPT_fno_builtin, false);
+
+  // Only disable memory builtins if -fbuiltin was not used or
+  // -fno-builtin is used. Also, disable it by default.
+  // TODO: remove this as soon as we can deal with it vector mem ops
+  // (making use of the alignment information).
+  if (!UseBuiltins) {
+    CC1Args.push_back("-fno-builtin-memset");
+    CC1Args.push_back("-fno-builtin-memcpy");
+    CC1Args.push_back("-fno-builtin-memmove");
+  }
 }
 
 // Avoid using newer dwarf versions, as the simulator doesn't understand newer
