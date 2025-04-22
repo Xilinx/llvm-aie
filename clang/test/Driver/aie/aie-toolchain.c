@@ -16,6 +16,15 @@
 // CC1: "-mllvm" "-vectorize-loops=false"
 // CC1: "-mllvm" "-vectorize-slp=false"
 // CC1: "-mllvm" "--two-entry-phi-node-folding-threshold=10"
+// CC1: "-fno-builtin-memset"
+// CC1: "-fno-builtin-memcpy"
+// CC1: "-fno-builtin-memmove"
+
+// RUN: %clang %s -### -no-canonical-prefixes --target=aie 2>&1 -fbuiltin \
+// RUN:   | FileCheck -check-prefix=BUILTIN %s
+// BUILTIN-NOT: "-fno-builtin-memset"
+// BUILTIN-NOT: "-fno-builtin-memcpy"
+// BUILTIN-NOT: "-fno-builtin-memmove"
 
 // RUN: %clang %s -### -no-canonical-prefixes --target=aie 2>&1 -fvectorize -fslp-vectorize \
 // RUN:   | FileCheck -check-prefix=CC1-VECTORIZE-ALL %s
