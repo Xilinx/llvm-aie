@@ -179,40 +179,40 @@ class PostPipeliner {
   ScheduleInfo Info;
   int MinLength;
 
-  /// The length of the longest circuit in the graph
+  /// The length of the longest circuit in the graph.
   int RecMII = 0;
 
-  // The scoreboard and its depth
+  // The scoreboard and its depth.
   ResourceScoreboard<FuncUnitWrapper> Scoreboard;
   int Depth;
 
-  /// The minimum tripcount, read from the pragma, or from an LC initialization
+  /// The minimum tripcount, read from the pragma, or from an LC initialization.
   int MinTripCount = 0;
 
-  /// The Preheader of the loop
+  /// The Preheader of the loop.
   MachineBasicBlock *Preheader = nullptr;
 
-  // The instruction defining the tripcount
+  /// The instruction defining the tripcount.
   MachineInstr *TripCountDef = nullptr;
 
-  // Basic modulo scheduling parameters
+  /// Basic modulo scheduling parameters.
   int NInstr;
   int NCopies;
   int II = 1;
   int NStages = 0;
 
   /// Place SU in cycle Cycle; update Earliest of successors and Latest
-  /// of predecessors
+  /// of predecessors.
   void scheduleNode(SUnit &SU, int Cycle, PostPipelinerStrategy &Strategy);
 
   /// Computes the stage in which each instruction runs and check the resulting
-  /// stage count against MinIterCount and the number of copies in the DAG
+  /// stage count against MinIterCount and the number of copies in the DAG.
   /// Returns true if these checks indicate that the schedule can be implmented.
   bool checkStages();
 
   // return the first Cycle: Earliest <= Cycle < Earliest+NTries where MI fits
   // in the scoreboard, -1 if it doesn't fit. The insertion point is taken
-  // module II.
+  // modulo II.
   int fit(MachineInstr *MI, int Earliest, int NTries, int II);
 
   /// Provide some look ahead by seeing the effect of the first iteration
@@ -225,9 +225,9 @@ class PostPipeliner {
   bool computeBackward();
   void computeRecMII();
 
-  // Given Earliest and Latest of each node in the first iteration,
-  // compute the smallest length of the linear schedule that is feasible.
-  // this length will be a multiple of the InitiationInterval
+  /// Given Earliest and Latest of each node in the first iteration,
+  /// compute the smallest length of the linear schedule that is feasible.
+  /// this length will be a multiple of the InitiationInterval.
   int computeMinScheduleLength() const;
 
   /// Try all heuristics, stop at the first that fits the II
@@ -235,11 +235,11 @@ class PostPipeliner {
   bool tryHeuristics();
 
   /// Find the first available unscheduled instruction with the highest
-  /// priority
+  /// priority.
   int mostUrgent(PostPipelinerStrategy &Strategy);
 
   /// Schedule the original instructions, taking the modulo scoreboard
-  /// into account
+  /// into account.
   bool scheduleFirstIteration(PostPipelinerStrategy &Strategy);
 
   /// Check that all copied instructions can run in the same modulo cycle
@@ -247,7 +247,7 @@ class PostPipeliner {
 
   /// Reset dynamic scheduling data.
   /// If FullReset is set, also reset information collected from earlier
-  /// data mining scheduling rounds
+  /// data mining scheduling rounds.
   void resetSchedule(bool FullReset);
 
 public:
@@ -262,11 +262,11 @@ public:
   int getResMII(MachineBasicBlock &LoopBlock);
 
   // Schedule using the given InitiationInterval. Return true when successful.
-  // In that case calls to the query methods below are legitimate
+  // In that case calls to the query methods below are legitimate.
   bool schedule(ScheduleDAGMI &DAG, int InitiationInterval,
                 MachineOptimizationRemarkEmitter &More);
 
-  // quick query for the stage count
+  // Quick query for the stage count.
   int getStageCount() { return NStages; }
 
   // After scheduling, interpret the results and call the appropriate methods
