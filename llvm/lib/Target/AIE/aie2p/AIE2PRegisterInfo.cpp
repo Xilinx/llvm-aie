@@ -52,6 +52,16 @@ AIE2PRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   return CSR_AIE2P_SaveList;
 }
 
+const TargetRegisterClass *
+AIE2PRegisterInfo::getSubClassWithSubReg(const TargetRegisterClass *RC,
+                                         unsigned Idx) const {
+  if (Idx == AIE2P::sub_lo_dim) {
+    return nullptr;
+  }
+  // Forward to TableGen's default version.
+  return AIE2PGenRegisterInfo::getSubClassWithSubReg(RC, Idx);
+}
+
 BitVector AIE2PRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   const TargetFrameLowering *TFI = getFrameLowering(MF);
   BitVector Reserved(getNumRegs());
