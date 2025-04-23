@@ -15,3 +15,5 @@ __start:
         NOP
         NOP
         NOP
+.p2align 4
+.size __start, . - __start
