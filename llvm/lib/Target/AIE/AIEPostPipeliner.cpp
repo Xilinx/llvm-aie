@@ -515,6 +515,18 @@ int PostPipeliner::computeMinScheduleLength() const {
 void dumpGraph(const ScheduleInfo &Info, ScheduleDAGInstrs *DAG) {
   dbgs() << "digraph {\n";
 
+  // Prescan backedge destinations and declare them to have a different shape.
+  for (int K = 0; K < Info.NInstr; K++) {
+    int K2 = K + Info.NInstr;
+    auto &SU = DAG->SUnits[K2];
+    if (any_of(SU.Preds, [Limit = Info.NInstr, K](const SDep &Dep) {
+          int P = Dep.getSUnit()->NodeNum;
+          return P < Limit && P != K;
+        })) {
+      dbgs() << "\tSU" << K2 << "_" << K << "[shape=rectangle]\n";
+    }
+  }
+
   for (int K = 0; K < Info.NInstr; K++) {
     auto &SU = DAG->SUnits[K];
     for (auto &Dep : SU.Succs) {
@@ -530,13 +542,22 @@ void dumpGraph(const ScheduleInfo &Info, ScheduleDAGInstrs *DAG) {
       if (S >= Info.NInstr) {
         dbgs() << "_" << S % Info.NInstr;
       }
-      if (Dep.getKind() == SDep::Data) {
-        dbgs() << " [color=red] ";
-      } else if (Dep.getKind() == SDep::Output) {
-        dbgs() << " [color=black] ";
-      } else if (Dep.getKind() == SDep::Anti) {
-        dbgs() << " [color=blue] ";
+      dbgs() << " [ label=\"" << Dep.getSignedLatency() << "\"";
+      switch (Dep.getKind()) {
+      case SDep::Data:
+        dbgs() << " color=red ";
+        break;
+      case SDep::Output:
+        dbgs() << " color=black ";
+        break;
+      case SDep::Anti:
+        dbgs() << " color=blue ";
+        break;
+      case SDep::Order:
+        dbgs() << " color=green ";
+        break;
       }
+      dbgs() << "] ";
 
       dbgs() << " # L=" << Dep.getSignedLatency();
       if (Dep.getKind() == SDep::Output) {
