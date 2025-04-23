@@ -8,9 +8,9 @@
 // (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
 // --------------------------------------------------------------------------///
 
-// RUN: %clang --target=aie2p -O2 -S -emit-llvm %s -o - | FileCheck %s -check-prefix=DEFAULT
-// RUN: %clang --target=aie2p -O2 -S -fbuiltin -emit-llvm %s -o - | FileCheck %s -check-prefix=FBUILTIN
-// RUN: %clang --target=aie2p -O2 -S -fno-builtin -emit-llvm %s -o - | FileCheck %s -check-prefix=FNO-BUILTIN
+// RUN: %clang --target=aie2p-none-unknown-elf -O2 -S -emit-llvm %s -o - | FileCheck %s -check-prefix=DEFAULT
+// RUN: %clang --target=aie2p-none-unknown-elf -O2 -S -fbuiltin -emit-llvm %s -o - | FileCheck %s -check-prefix=FBUILTIN
+// RUN: %clang --target=aie2p-none-unknown-elf -O2 -S -fno-builtin -emit-llvm %s -o - | FileCheck %s -check-prefix=FNO-BUILTIN
 
 
 // DEFAULT-LABEL: define dso_local ptr @_Z10aie_memsetPvii(
