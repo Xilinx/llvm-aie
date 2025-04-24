@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -O2 -mtriple=aie2p --enable-pipeliner=0 %s -o - | FileCheck %s
 
 @buffer1 = dso_local local_unnamed_addr global [1000 x i32] zeroinitializer, align 4
@@ -100,7 +100,7 @@ define dso_local void @lowerMemcpyUsingWordHalfByte() local_unnamed_addr #0 {
 ; CHECK-LABEL: lowerMemcpyUsingWordHalfByte:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; movxm p0, ##(buffer2+8)
+; CHECK-NEXT:    nopa ; nopb ; movxm p0, ##(buffer2+8); nops
 ; CHECK-NEXT:    lda.s16 r0, [p0, #0]; movxm p1, ##(buffer1+8)
 ; CHECK-NEXT:    st.s16 r0, [p1, #0]
 ; CHECK-NEXT:    nop
@@ -109,16 +109,15 @@ define dso_local void @lowerMemcpyUsingWordHalfByte() local_unnamed_addr #0 {
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova m0, #-8
 ; CHECK-NEXT:    padda [p0], m0
-; CHECK-NEXT:    lda r0, [p0], #4
-; CHECK-NEXT:    mova m1, #6
+; CHECK-NEXT:    lda r0, [p0], #4; mov m1, #6
 ; CHECK-NEXT:    lda r1, [p0], m1
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    padda [p1], m0
 ; CHECK-NEXT:    st r0, [p1], #4
-; CHECK-NEXT:    lda.s8 r0, [p0, #0]
-; CHECK-NEXT:    st r1, [p1], m1
+; CHECK-NEXT:    lda.s8 r0, [p0, #0]; st r1, [p1], m1
 ; CHECK-NEXT:    st.s8 r0, [p1, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr

@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -march=aie2 -run-pass=postmisched %s -o - | FileCheck %s
 
 # This test checks that we are scheduling loads from differnt banks in on VLIW bundle.
@@ -15,8 +15,10 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLDA_VLDB_noBank_BankA
-    ; CHECK: $wl1 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
-    ; CHECK-NEXT: $wl2 = VLDA_dmw_lda_w_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>))
+    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 {
+    ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>))
+    ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 5)
+    ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -33,8 +35,10 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VLDA_VLDB_BankA_noBank
-    ; CHECK: $wl1 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>))
-    ; CHECK-NEXT: $wl2 = VLDA_dmw_lda_w_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 5)
+    ; CHECK: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 {
+    ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
+    ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>))
+    ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP

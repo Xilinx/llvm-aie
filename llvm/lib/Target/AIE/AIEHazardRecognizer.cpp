@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -44,7 +44,7 @@ static cl::opt<unsigned>
                         cl::desc("Override maximum scoreboard depth to use."));
 
 static cl::opt<bool> AddressSpaceNoneIsSafe(
-    "aie-addrspace-none-is-safe", cl::Hidden, cl::init(false),
+    "aie-addrspace-none-is-safe", cl::Hidden, cl::init(true),
     cl::desc("Assume that addrspace(0) doesn't cause conflicts."));
 
 const AIEBaseMCFormats *FuncUnitWrapper::FormatInterface = nullptr;
