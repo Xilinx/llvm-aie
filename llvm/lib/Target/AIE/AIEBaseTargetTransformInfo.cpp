@@ -23,6 +23,11 @@ static cl::opt<bool>
                            cl::desc("Enable hardware loops on AIE"),
                            cl::init(true), cl::Hidden);
 
+static cl::opt<bool> EnableZOLForLoopsWithoutMinIterCount(
+    "enable-aie-zol-without-minitercount",
+    cl::desc("Enable zol for loops without minitercount"), cl::init(true),
+    cl::Hidden);
+
 static cl::opt<bool>
     AllowAIEZOL("enable-aie-zero-overhead-loops",
                 cl::desc("Enable true zero overhead hardware loops on AIE"),
@@ -177,8 +182,7 @@ bool AIETTICommon::isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
       if (*MinTripCount <= MinIterCountHLReject) {
         return false;
       }
-    } else {
-      // We have metadata, but not iteration information.
+    } else if (!EnableZOLForLoopsWithoutMinIterCount) {
       return false;
     }
   }

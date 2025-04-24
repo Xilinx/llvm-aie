@@ -4,8 +4,8 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-; RUN: llc --mtriple=aie2 -O2 --aie-pipeliner-max-guards=2 %s -o - | FileCheck %s
+; (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+; RUN: llc --mtriple=aie2 -O2 --aie-pipeliner-max-guards=2 -enable-aie-zol-without-minitercount=false %s -o - | FileCheck %s
 
 define dso_local i32 @dot(ptr nocapture readonly %a, ptr nocapture readonly %b, i32 noundef %n) {
 ; This pipelines in three stages. We have a dynamic tripcount, and we

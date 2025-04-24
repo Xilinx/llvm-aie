@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -O2 -mtriple=aie2 --enable-pipeliner=0 %s -o - | FileCheck %s --check-prefix=ASM
 ; RUN: llc -O2 -mtriple=aie2 --enable-pipeliner=0 %s -o - --debug-only=machine-scheduler  \
 ; RUN:    2>&1 | %imisched -d - \
@@ -94,7 +94,7 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ASM-NEXT:  .LBB0_1: // %outer.loop.header
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
 ; ASM-NEXT:    // Child Loop BB0_2 Depth 2
-; ASM-NEXT:    vlda.ups.s32.s16 bmh0, s0, [p2, #32]; mov m1, p4
+; ASM-NEXT:    vlda.ups.s32.s16 bmh0, s0, [p2, #32]; nopx ; mov m1, p4
 ; ASM-NEXT:    vlda.ups.s32.s16 bml0, s0, [p2], m1
 ; ASM-NEXT:    vlda.ups.s32.s16 bmh1, s0, [p2, #32]; mov m2, p5
 ; ASM-NEXT:    vlda.ups.s32.s16 bml1, s0, [p2], m2
@@ -105,17 +105,17 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ASM-NEXT:    vlda.ups.s32.s16 bmh4, s0, [p2, #32]
 ; ASM-NEXT:    vlda.ups.s32.s16 bml4, s0, [p2], m1
 ; ASM-NEXT:    vlda.ups.s32.s16 bmh5, s0, [p2, #32]
-; ASM-NEXT:    vlda.ups.s32.s16 bml5, s0, [p2], m2
-; ASM-NEXT:    vlda.ups.s32.s16 bmh6, s0, [p2, #32]
-; ASM-NEXT:    vlda.ups.s32.s16 bml6, s0, [p2], m1; mov r0, p0
+; ASM-NEXT:    vlda.ups.s32.s16 bml5, s0, [p2], m2; mov r0, p0
+; ASM-NEXT:    vlda.ups.s32.s16 bmh6, s0, [p2, #32]; movxm ls, #.LBB0_2
+; ASM-NEXT:    vlda.ups.s32.s16 bml6, s0, [p2], m1; movxm le, #.L_LEnd0
 ; ASM-NEXT:    vlda.ups.s32.s16 bmh7, s0, [p2, #32]; and r0, r0, r9
-; ASM-NEXT:    vlda.ups.s32.s16 bml7, s0, [p2, #0]; add r1, r0, #33; mov r0, r5
+; ASM-NEXT:    vlda.ups.s32.s16 bml7, s0, [p2, #0]; add r0, r0, #33; add.nc lc, r5, #0
 ; ASM-NEXT:    .p2align 4
 ; ASM-NEXT:  .LBB0_2: // %inner.loop
 ; ASM-NEXT:    // Parent Loop BB0_1 Depth=1
 ; ASM-NEXT:    // => This Inner Loop Header: Depth=2
-; ASM-NEXT:    vldb wl2, [p0], m6; nopx
-; ASM-NEXT:    vldb wh2, [p0], m6
+; ASM-NEXT:    vldb wl2, [p0], m6; nopa ; nops ; nopxm ; nopv
+; ASM-NEXT:    vldb wh2, [p0], m6; nopxm
 ; ASM-NEXT:    vldb wl4, [p0], m6
 ; ASM-NEXT:    vldb.3d wh4, [p0], d0
 ; ASM-NEXT:    nop
@@ -123,18 +123,19 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ASM-NEXT:    vldb wh6, [p1], #32
 ; ASM-NEXT:    vldb wl10, [p1], #32
 ; ASM-NEXT:    vldb wh10, [p1], #32
-; ASM-NEXT:    vshift.align x8, x8, s1, x2, r1
-; ASM-NEXT:    vshift.align x1, x1, s1, x4, r1
+; ASM-NEXT:    vshift.align x8, x8, s1, x2, r0
+; ASM-NEXT:    vshift.align x1, x1, s1, x4, r0
 ; ASM-NEXT:    vshuffle x3, x8, x1, r2
 ; ASM-NEXT:    vshuffle x7, x8, x1, r3
 ; ASM-NEXT:    vmac cm0, cm0, x3, x6, r4
-; ASM-NEXT:    add r0, r0, #-1; vshuffle x5, x3, x0, r8; vmac cm2, cm2, x7, x6, r4
-; ASM-NEXT:    jnz r0, #.LBB0_2; vmac cm4, cm4, x3, x10, r4
-; ASM-NEXT:    vshuffle x9, x7, x0, r8; vmac cm6, cm6, x7, x10, r4 // Delay Slot 5
-; ASM-NEXT:    vmac cm1, cm1, x5, x6, r4 // Delay Slot 4
-; ASM-NEXT:    mov r1, p0; vmac cm3, cm3, x9, x6, r4 // Delay Slot 3
-; ASM-NEXT:    and r1, r1, r9; vmac cm5, cm5, x5, x10, r4 // Delay Slot 2
-; ASM-NEXT:    add r1, r1, #33; vmac cm7, cm7, x9, x10, r4 // Delay Slot 1
+; ASM-NEXT:    vmac cm2, cm2, x7, x6, r4
+; ASM-NEXT:    vshuffle x5, x3, x0, r8; vmac cm4, cm4, x3, x10, r4
+; ASM-NEXT:    vshuffle x9, x7, x0, r8; vmac cm6, cm6, x7, x10, r4
+; ASM-NEXT:    vmac cm1, cm1, x5, x6, r4
+; ASM-NEXT:    mov r0, p0; vmac cm3, cm3, x9, x6, r4
+; ASM-NEXT:    and r0, r0, r9; vmac cm5, cm5, x5, x10, r4
+; ASM-NEXT:  .L_LEnd0:
+; ASM-NEXT:    nopb ; nopa ; nops ; add r0, r0, #33; nopm ; vmac cm7, cm7, x9, x10, r4
 ; ASM-NEXT:  // %bb.3: // %outer.loop.latch
 ; ASM-NEXT:    // in Loop: Header=BB0_1 Depth=1
 ; ASM-NEXT:    nopb ; nopa ; vst.srs.s16.s32 bmh0, s2, [p3, #32]; nopxm ; nopv
