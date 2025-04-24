@@ -4,9 +4,9 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 
-; RUN: llc -O2 -mtriple=aie2 %s -o - | FileCheck %s
+; RUN: llc -O2 -mtriple=aie2 -enable-aie-zol-without-minitercount=false %s -o - | FileCheck %s
 ; RUN: opt -mtriple=aie2 -passes=aa-eval -print-all-alias-modref-info -disable-output < %s 2>&1 | FileCheck %s --check-prefix=AA
 
 ; A reduced example from MLLib's mul2d benchmark.
