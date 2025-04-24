@@ -827,6 +827,41 @@ public:
   }
 };
 
+// This is a strategy that follows a pre-computed schedule. it picks
+// instructions in the order of the final schedule and nudges earliest and
+// latest so as to have no slack.
+// It still checks latencies and resources
+class CheckFixedSchedule : public PostPipelinerStrategy {
+  std::vector<int> Schedule;
+  // We schedule in strict top-down order, and we leave only one cycle
+  // to schedule it in.
+  bool better(const SUnit &A, const SUnit &B) override {
+    return Schedule[A.NodeNum] < Schedule[B.NodeNum];
+  }
+  int earliest(const SUnit &N) override {
+    int Result = PostPipelinerStrategy::earliest(N);
+    unsigned NodeNum = N.NodeNum;
+    if (NodeNum < Schedule.size()) {
+      Result = std::max(Result, Schedule[NodeNum]);
+    }
+    return Result;
+  }
+  int latest(const SUnit &N) override {
+    int Result = PostPipelinerStrategy::latest(N);
+    unsigned NodeNum = N.NodeNum;
+    if (NodeNum < Schedule.size()) {
+      Result = std::min(Result, Schedule[NodeNum]);
+    }
+    return Result;
+  }
+
+public:
+  CheckFixedSchedule(ScheduleDAGInstrs &DAG, ScheduleInfo &Info, int Length,
+                     std::vector<int> Schedule)
+      : PostPipelinerStrategy(DAG, Info, Length), Schedule(Schedule) {}
+  std::string name() override { return "CheckFixedSchedule"; }
+};
+
 class ConfigStrategy : public PostPipelinerStrategy {
   bool TopDown = true;
   bool Alternate = false;
