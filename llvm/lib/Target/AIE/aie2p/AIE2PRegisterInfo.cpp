@@ -194,6 +194,8 @@ bool AIE2PRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   case AIE2P::VST_dmx_sts_bm_spill:
   case AIE2P::VST_dmx_sts_fifohl_spill:
   case AIE2P::VST_dmx_sts_x_spill:
+  case AIE2P::VLDA_512_COMPOSED_REG_SPILL:
+  case AIE2P::VST_512_COMPOSED_REG_SPILL:
     MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
     return false;
   case AIE2P::LDA_R_SPILL:
@@ -231,10 +233,12 @@ bool AIE2PRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   case AIE2P::VST_CM_SPILL:
   case AIE2P::VST_FIFO_SPILL:
   case AIE2P::VST_Y_SPILL:
+  case AIE2P::VST_1024_COMPOSED_REG_SPILL:
   case AIE2P::VLDA_DM_SPILL:
   case AIE2P::VLDA_CM_SPILL:
   case AIE2P::VLDA_FIFO_SPILL:
   case AIE2P::VLDA_Y_SPILL:
+  case AIE2P::VLDA_1024_COMPOSED_REG_SPILL:
     MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
     TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4));
     return true;
@@ -488,13 +492,11 @@ AIE2PRegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC,
 
   if (AIE2P::eSRegClass.hasSubClassEq(RC))
     return &AIE2P::spill_eS_to_eRRegClass;
-  if (SpillAccToVecOrAcc && RC == &AIE2P::ACC1024RegClass)
-    return &AIE2P::spill_acc1024_to_compositeRegClass;
-  if (SpillAccToVecOrAcc && RC == &AIE2P::ACC512RegClass)
-    return &AIE2P::spill_acc512_to_compositeRegClass;
-  if (SpillAccToVecOrAcc && RC == &AIE2P::VEC1024RegClass)
+  if (SpillAccToVecOrAcc &&
+      (RC == &AIE2P::ACC1024RegClass || RC == &AIE2P::VEC1024RegClass))
     return &AIE2P::spill_vec1024_to_compositeRegClass;
-  if (SpillAccToVecOrAcc && RC == &AIE2P::VEC512RegClass)
+  if (SpillAccToVecOrAcc &&
+      (RC == &AIE2P::ACC512RegClass || RC == &AIE2P::VEC512RegClass))
     return &AIE2P::spill_vec512_to_compositeRegClass;
   return RC;
 }

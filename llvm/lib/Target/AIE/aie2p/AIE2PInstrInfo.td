@@ -321,6 +321,8 @@ def VST_FIFO_SPILL : Pseudo<(outs ), (ins FIFO1024:$src, c16n_step64:$imm), "vst
 def VST_PLFR_SPILL : Pseudo<(outs ), (ins ePSRFLdF:$src, c16n_step64:$imm), "vst_plfr_spill", "${src}, [sp, $imm]">;
 def VST_EX_SPILL : Pseudo<(outs ), (ins VEC576:$src, c16n_step64:$imm), "vst_ex_spill", "${src}, [sp, $imm]">;
 def VST_E_SPILL : Pseudo<(outs ), (ins EXPVEC64:$src, c12n_step4:$imm), "vst_e_spill", "$src, [sp, $imm]">;
+def VST_512_COMPOSED_REG_SPILL : Pseudo<(outs ), (ins spill_vec512_to_composite:$src, c16n_step64:$imm), "vst_512_composed_reg_spill", "${src}, [sp, $imm]">;
+def VST_1024_COMPOSED_REG_SPILL : Pseudo<(outs ), (ins spill_vec1024_to_composite:$src, c16n_step64:$imm), "vst_512_composed_reg_spill", "${src}, [sp, $imm]">;
 }
 
 let mayLoad = true, mayStore = false in {
@@ -335,6 +337,8 @@ def LDA_D_SPILL : Pseudo<(outs eD:$dst), (ins c12n_step4:$imm), "lda_d_spill", "
 def LDA_DS_SPILL : Pseudo<(outs eDS:$dst), (ins c12n_step4:$imm), "lda_ds_spill", "${dst}, [sp, $imm]">;
 def VLDA_EX_SPILL : Pseudo<(outs VEC576:$dst), (ins c16n_step64:$imm), "vlda_ex_spill", "${dst}, [sp, $imm]">;
 def VLDA_E_SPILL : Pseudo<(outs EXPVEC64:$dst), (ins c12n_step4:$imm), "vlda_e_spill", "${dst}, [sp, $imm]">;
+def VLDA_512_COMPOSED_REG_SPILL : Pseudo<(outs spill_vec512_to_composite:$dst), (ins c16n_step64:$imm), "vlda_512_composed_reg_spill", "${dst}, [sp, $imm]">;
+def VLDA_1024_COMPOSED_REG_SPILL : Pseudo<(outs spill_vec1024_to_composite:$dst), (ins c16n_step64:$imm), "vlda_512_composed_reg_spill", "${dst}, [sp, $imm]">;
 }
 }
 
