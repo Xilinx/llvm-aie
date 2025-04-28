@@ -894,3 +894,118 @@ body:             |
     $srups_of = COPY %1:ercr
     %18:mbmm, %19:ep, %20:edc =  VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, %0:ep, $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
 ...
+
+# Test 14 - Remove immediate copies that are duplicated.
+# Transform -
+# $crupsmode = MOV_scalar_imm11_pseudo 1  |   |    |   $crupsmode = MOV_scalar_imm11_pseudo 1
+# %1 = opcode implicit $crupsmode         |   |    |   %1 = opcode implicit $crupsmode
+# $crupsmode = MOV_scalar_imm11_pseudo 1  |   |    |   ---------------------------
+# %2 = opcode implicit $crupsmode         |   |    |   %2 = opcode implicit $crupsmode
+# $crupsmode = MOV_scalar_imm11_pseudo 1  |   |    |   ---------------------------
+# %3 = opcode implicit $crupsmode         |   |    |   %3 = opcode implicit $crupsmode
+# $crupsmode = MOV_scalar_imm11_pseudo 0  |   |    |   $crupsmode = MOV_scalar_imm11_pseudo 0
+# %4 = opcode implicit $crupsmode         |   |    |   %4 = opcode implicit $crupsmode
+# $crupsmode = MOV_scalar_imm11_pseudo 1  |   |    |   $crupsmode = MOV_scalar_imm11_pseudo 1
+# %5 = opcode implicit $crupsmode         |   |    |   %5 = opcode implicit $crupsmode
+# $crupsmode = MOV_scalar_imm11_pseudo 1  |   |    |   ---------------------------
+# %6 = opcode implicit $crupsmode         |   |    |   %6 = opcode implicit $crupsmode
+
+---
+name:            crupsmode_of_multiple_imm
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    liveins: $s3, $r5, $r0, $p0, $d0
+    ; CHECK-LABEL: name: crupsmode_of_multiple_imm
+    ; CHECK: liveins: $s3, $r5, $r0, $p0, $d0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
+    ; CHECK-NEXT: [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_:%[0-9]+]]:mbmm, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_1:%[0-9]+]]:ep, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_2:%[0-9]+]]:edc = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, [[COPY]], $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
+    ; CHECK-NEXT: [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_3:%[0-9]+]]:mbmm, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_4:%[0-9]+]]:ep, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_5:%[0-9]+]]:edc = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, [[COPY]], $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
+    ; CHECK-NEXT: [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_6:%[0-9]+]]:mbmm, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_7:%[0-9]+]]:ep, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_8:%[0-9]+]]:edc = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, [[COPY]], $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
+    ; CHECK-NEXT: [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_9:%[0-9]+]]:mbmm, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_10:%[0-9]+]]:ep, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_11:%[0-9]+]]:edc = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, [[COPY]], $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
+    ; CHECK-NEXT: [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_12:%[0-9]+]]:mbmm, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_13:%[0-9]+]]:ep, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_14:%[0-9]+]]:edc = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, [[COPY]], $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
+    ; CHECK-NEXT: [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_15:%[0-9]+]]:mbmm, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_16:%[0-9]+]]:ep, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_17:%[0-9]+]]:edc = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, [[COPY]], $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    %0:ep = COPY $p0
+    $crupsmode = MOV_scalar_imm11_pseudo 1
+    %2:mbmm, %3:ep, %4:edc =  VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, %0:ep, $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $crupsmode = MOV_scalar_imm11_pseudo 1
+    %5:mbmm, %6:ep, %7:edc =  VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, %0:ep, $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $crupsmode = MOV_scalar_imm11_pseudo 1
+    %9:mbmm, %10:ep, %11:edc =  VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, %0:ep, $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $crupsmode = MOV_scalar_imm11_pseudo 0
+    %12:mbmm, %13:ep, %14:edc =  VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, %0:ep, $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $crupsmode = MOV_scalar_imm11_pseudo 1
+    %15:mbmm, %16:ep, %17:edc =  VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, %0:ep, $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $crupsmode = MOV_scalar_imm11_pseudo 1
+    %18:mbmm, %19:ep, %20:edc =  VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, %0:ep, $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+...
+
+# Test 15 - Remove immediate copies and normal copies that are duplicated.
+# Transform -
+# $crupsmode = MOV_scalar_imm11_pseudo 1  |   |    |   $crupsmode = MOV_scalar_imm11_pseudo 1
+# %1 = opcode implicit $crupsmode         |   |    |   %1 = opcode implicit $crupsmode
+# $crupsmode = MOV_scalar_imm11_pseudo 1  |   |    |   ---------------------------
+# %2 = opcode implicit $crupsmode         |   |    |   %2 = opcode implicit $crupsmode
+# $crupsmode = COPY %1                    |   |    |   $crupsmode = COPY %1 
+# %3 = opcode implicit $crupsmode         |   |    |   %3 = opcode implicit $crupsmode
+# $crupsmode = COPY %1                    |   |    |   ---------------------------
+# %4 = opcode implicit $crupsmode         |   |    |   %4 = opcode implicit $crupsmode
+# $crupsmode = MOV_scalar_imm11_pseudo 1  |   |    |   $crupsmode = MOV_scalar_imm11_pseudo 1
+# %5 = opcode implicit $crupsmode         |   |    |   %5 = opcode implicit $crupsmode
+# $crupsmode = MOV_scalar_imm11_pseudo 1  |   |    |   ---------------------------
+# %6 = opcode implicit $crupsmode         |   |    |   %6 = opcode implicit $crupsmode
+
+---
+name:            crupsmode_of_multiple_imm_multiple_copies
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    liveins: $r2, $s3, $r5, $r0, $p0, $d0
+    ; CHECK-LABEL: name: crupsmode_of_multiple_imm_multiple_copies
+    ; CHECK: liveins: $r2, $s3, $r5, $r0, $p0, $d0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r2
+    ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
+    ; CHECK-NEXT: [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_:%[0-9]+]]:mbmm, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_1:%[0-9]+]]:ep, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_2:%[0-9]+]]:edc = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, [[COPY]], $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
+    ; CHECK-NEXT: [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_3:%[0-9]+]]:mbmm, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_4:%[0-9]+]]:ep, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_5:%[0-9]+]]:edc = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, [[COPY]], $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    ; CHECK-NEXT: $crupsmode = COPY [[COPY1]]
+    ; CHECK-NEXT: [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_6:%[0-9]+]]:mbmm, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_7:%[0-9]+]]:ep, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_8:%[0-9]+]]:edc = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, [[COPY]], $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    ; CHECK-NEXT: [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_9:%[0-9]+]]:mbmm, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_10:%[0-9]+]]:ep, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_11:%[0-9]+]]:edc = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, [[COPY]], $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
+    ; CHECK-NEXT: [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_12:%[0-9]+]]:mbmm, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_13:%[0-9]+]]:ep, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_14:%[0-9]+]]:edc = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, [[COPY]], $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
+    ; CHECK-NEXT: [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_15:%[0-9]+]]:mbmm, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_16:%[0-9]+]]:ep, [[VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0_17:%[0-9]+]]:edc = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, [[COPY]], $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    %0:ep = COPY $p0
+    %1:er = COPY $r2
+    $crupsmode = MOV_scalar_imm11_pseudo 1
+    %2:mbmm, %3:ep, %4:edc =  VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, %0:ep, $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $crupsmode = MOV_scalar_imm11_pseudo 1
+    %5:mbmm, %6:ep, %7:edc =  VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, %0:ep, $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $crupsmode = COPY %1
+    %9:mbmm, %10:ep, %11:edc =  VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, %0:ep, $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $crupsmode = COPY %1
+    %12:mbmm, %13:ep, %14:edc =  VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, %0:ep, $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $crupsmode = MOV_scalar_imm11_pseudo 1
+    %15:mbmm, %16:ep, %17:edc =  VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, %0:ep, $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $crupsmode = MOV_scalar_imm11_pseudo 1
+    %18:mbmm, %19:ep, %20:edc =  VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, %0:ep, $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+...
+
+
