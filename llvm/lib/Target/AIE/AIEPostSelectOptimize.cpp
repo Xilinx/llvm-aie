@@ -51,6 +51,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <optional>
+#include <variant>
 
 using namespace llvm;
 
@@ -62,17 +63,18 @@ static cl::opt<bool>
 
 namespace {
 
-/// Information about a COPY that can be tracked by PhysRegCopyTracker.
-struct TrackableCopyOperands {
-  Register VirtReg;
+/// Information about definitions of physical registers that can be tracked by
+/// PhysRegCopyTracker.
+struct TrackablePhysRegRedefinitions {
+  std::variant<Register, int64_t> VirtRegOrConstant;
   MCRegister PhysReg;
   bool IsPhysRegDef; // Whether PhysReg is being redefined.
 };
 
-/// Track SSA copies of simple physical registers.
+/// Track SSA copies and constant initializations of simple physical registers.
 /// Simple means they don't have sub or super registers.
 class PhysRegCopyTracker {
-  DenseMap<MCRegister, SmallSet<Register, 4>> Copies;
+  DenseMap<MCRegister, std::variant<Register, int64_t>> LastAssigns;
   const TargetRegisterInfo &TRI;
 
 public:
@@ -82,7 +84,7 @@ public:
   }
 
   /// Invalidate the copies of \p Reg.
-  void invalidateCopies(MCRegister Reg) { Copies.erase(Reg); }
+  void invalidateCopies(MCRegister Reg) { LastAssigns.erase(Reg); }
 
   /// Invalidate copies for any reg defined by \p MI
   void invalidateDefCopies(const MachineInstr &MI) {
@@ -93,25 +95,29 @@ public:
     }
   }
 
-  /// Track that \p VRegCopy is a copy of \p PhysReg
-  void trackCopy(MCRegister PhysReg, Register VRegCopy) {
-    assert(VRegCopy.isVirtual());
+  /// Track that \p VirtRegOrConstant represents the current value of
+  /// \p PhysReg.
+  void
+  trackPhysRegCurrentValue(MCRegister PhysReg,
+                           std::variant<Register, int64_t> VirtRegOrConstant) {
     assert(range_size(TRI.regunits(PhysReg)) == 1 && "Phys reg has aliases.");
-    Copies[PhysReg].insert(VRegCopy);
+    LastAssigns[PhysReg] = VirtRegOrConstant;
   }
 
-  /// Return true if \p VReg is a copy of \p PhysReg
-  bool isCopy(MCRegister PhysReg, Register VReg) const {
-    if (auto It = Copies.find(PhysReg); It != Copies.end())
-      return It->second.contains(VReg);
+  /// Return true if \p PhysReg currently contains \p VirtRegOrConstant
+  bool isDefinedBy(MCRegister PhysReg,
+                   std::variant<Register, int64_t> VirtRegOrConstant) const {
+    if (auto It = LastAssigns.find(PhysReg); It != LastAssigns.end())
+      return It->second == VirtRegOrConstant;
+
     return false;
   }
 
   /// If it exists, return a virtual register that holds a copy of \p PhysReg.
   std::optional<Register> getVirtualCopy(MCRegister PhysReg) const {
-    if (auto It = Copies.find(PhysReg);
-        It != Copies.end() && !It->second.empty())
-      return *It->second.begin();
+    if (auto It = LastAssigns.find(PhysReg); It != LastAssigns.end())
+      return std::get<Register>(It->second);
+
     return {};
   }
 };
@@ -127,9 +133,20 @@ public:
 } // end anonymous namespace
 
 /// Returns whether the operands of \p MI can be tracked by PhysRegCopyTracker
-std::optional<TrackableCopyOperands>
-getTrackableCopyOperands(const MachineInstr &MI,
-                         const TargetRegisterInfo &TRI) {
+std::optional<TrackablePhysRegRedefinitions>
+getTrackablePhysRegDefsAndCopies(const MachineInstr &MI,
+                                 const TargetRegisterInfo &TRI) {
+
+  if (MI.isMoveImmediate()) {
+    Register DstReg = MI.getOperand(0).getReg();
+    if (TRI.isSimplifiableReservedReg(DstReg)) {
+      const int64_t ImmValue = MI.getOperand(1).getImm();
+      return TrackablePhysRegRedefinitions{ImmValue, DstReg,
+                                           /*InvalidatePhysReg=*/true};
+    }
+    return {};
+  }
+
   if (!MI.isCopy())
     return {};
 
@@ -142,33 +159,54 @@ getTrackableCopyOperands(const MachineInstr &MI,
 
   auto [DstReg, SrcReg] = MI.getFirst2Regs();
   if (CanTrackCopyOps(DstReg, SrcReg)) {
-    return TrackableCopyOperands{DstReg, SrcReg, /*InvalidatePhysReg=*/false};
+    return TrackablePhysRegRedefinitions{DstReg, SrcReg,
+                                         /*InvalidatePhysReg=*/false};
   }
   if (CanTrackCopyOps(SrcReg, DstReg)) {
     // Here the phys reg is redefined. Notify PhysRegCopyTracker to invalidate
     // its tracked copies.
-    return TrackableCopyOperands{SrcReg, DstReg, /*InvalidatePhysReg=*/true};
+    return TrackablePhysRegRedefinitions{SrcReg, DstReg,
+                                         /*InvalidatePhysReg=*/true};
   }
   return {};
 }
 
 /// Returns true if \p MI is a COPY that was eliminated.
 bool trySimplifyCopy(MachineInstr &MI, const PhysRegCopyTracker &CT) {
-  if (!MI.isCopy())
+
+  if (MI.isCopy()) {
+    auto [DstReg, SrcReg] = MI.getFirst2Regs();
+    if (DstReg.isPhysical() && CT.isDefinedBy(DstReg, SrcReg)) {
+      // Assigning to DstReg a copy of itself. Just remove MI.
+      MI.eraseFromParent();
+      return true;
+    }
+    if (std::optional<Register> EquivVirtSrc;
+        SrcReg.isPhysical() && (EquivVirtSrc = CT.getVirtualCopy(SrcReg))) {
+      // Avoid defining a new VReg if another available one has the same value.
+      MI.getMF()->getRegInfo().replaceRegWith(DstReg, *EquivVirtSrc);
+      MI.eraseFromParent();
+      return true;
+    }
     return false;
-  auto [DstReg, SrcReg] = MI.getFirst2Regs();
-  if (DstReg.isPhysical() && CT.isCopy(DstReg, SrcReg)) {
-    // Assigning to DstReg a copy of itself. Just remove MI.
-    MI.eraseFromParent();
-    return true;
   }
-  if (std::optional<Register> EquivVirtSrc;
-      SrcReg.isPhysical() && (EquivVirtSrc = CT.getVirtualCopy(SrcReg))) {
-    // Avoid defining a new VReg if another available one has the same value.
-    MI.getMF()->getRegInfo().replaceRegWith(DstReg, *EquivVirtSrc);
-    MI.eraseFromParent();
-    return true;
+
+  if (MI.isMoveImmediate()) {
+    Register DstReg = MI.getOperand(0).getReg();
+    MachineOperand &SrcMO = MI.getOperand(1);
+    // Skip relocations.
+    if (!SrcMO.isImm())
+      return false;
+
+    const int64_t ImmValue = SrcMO.getImm();
+    if (DstReg.isPhysical() && CT.isDefinedBy(DstReg, ImmValue)) {
+      // Assigning to DstReg a previously assigned value. Just remove MI.
+      MI.eraseFromParent();
+      return true;
+    }
+    return false;
   }
+
   return false;
 }
 
@@ -183,12 +221,12 @@ bool removeRedundantCopies(MachineBasicBlock &MBB,
   for (MachineInstr &MI : make_early_inc_range(MBB)) {
     if (trySimplifyCopy(MI, CT)) {
       Changed = true;
-    } else if (auto Ops = getTrackableCopyOperands(MI, TRI)) {
+    } else if (auto Ops = getTrackablePhysRegDefsAndCopies(MI, TRI)) {
       if (Ops->IsPhysRegDef) {
         // PhysReg is redefined: Track the copy but invalidate previous ones.
         CT.invalidateCopies(Ops->PhysReg);
       }
-      CT.trackCopy(Ops->PhysReg, Ops->VirtReg);
+      CT.trackPhysRegCurrentValue(Ops->PhysReg, Ops->VirtRegOrConstant);
     } else {
       // For any other instruction, be conservative and invalidate copies for
       // the phys regs that MI defines.
