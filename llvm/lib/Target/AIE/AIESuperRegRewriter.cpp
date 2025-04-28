@@ -316,6 +316,27 @@ void AIESuperRegRewriter::rewriteSuperReg(
   VRM.grow();
   LIS.removeInterval(Reg);
 
+  // The liverange splitting logic sometimes produces bundles of copies when
+  // subregisters are involved. Sometimes some of the copies are not used,
+  // since super-reg-rewriter is going to modify them into individual virtual
+  // register with separate live ranges we need to make sure we remove the
+  // dead-MI from the bundel of copies
+  SmallVector<int, 8> SubRegsToRemove;
+  for (auto &[SubRegIdx, VReg] : make_early_inc_range(SubRegToVReg)) {
+    if (MRI.use_nodbg_empty(VReg))
+      for (auto &MI : MRI.reg_nodbg_instructions(VReg)) {
+        if (MI.isBundled() && MI.isCopy()) {
+          Indexes.removeSingleMachineInstrFromMaps(MI);
+          MI.eraseFromBundle();
+          SubRegsToRemove.push_back(SubRegIdx);
+        }
+        break;
+      }
+  }
+
+  for (auto SubRegIdx : SubRegsToRemove)
+    SubRegToVReg.erase(SubRegIdx);
+
   for (auto &[SubRegIdx, VReg] : SubRegToVReg) {
     MCRegister SubPhysReg;
     if (AssignPhysRegIsValid)
