@@ -50,15 +50,14 @@ body:      |
     $p0 = PADDB_pstm_nrm $p0, $m4
 
     ; PADDB_pstm_nrm_imm
-    ; TODO: Uncomment after investigating and solving the bug
-    ; $p2 = PADDB_pstm_nrm_imm $p2, -512
-    ; $p7 = PADDB_pstm_nrm_imm $p7, 0
-    ; $p1 = PADDB_pstm_nrm_imm $p1, 64
-    ; $p0 = PADDB_pstm_nrm_imm $p0, 448
-    ; $p6 = PADDB_pstm_nrm_imm $p6, -512
-    ; $p3 = PADDB_pstm_nrm_imm $p3, 0
-    ; $p5 = PADDB_pstm_nrm_imm $p5, 64
-    ; $p4 = PADDB_pstm_nrm_imm $p4, 448
+    $p2 = PADDB_pstm_nrm_imm $p2, -512
+    $p7 = PADDB_pstm_nrm_imm $p7, 0
+    $p1 = PADDB_pstm_nrm_imm $p1, 64
+    $p0 = PADDB_pstm_nrm_imm $p0, 448
+    $p6 = PADDB_pstm_nrm_imm $p6, -512
+    $p3 = PADDB_pstm_nrm_imm $p3, 0
+    $p5 = PADDB_pstm_nrm_imm $p5, 64
+    $p4 = PADDB_pstm_nrm_imm $p4, 448
 ...
 
 # CHECK: 0: 18 90 73 3f paddb.2d [p7], d3
@@ -85,3 +84,12 @@ body:      |
 # CHECK: 54: 18 90 ab 3e paddb [p6], m5
 # CHECK: 58: 18 90 0b 3b paddb [p3], m0
 # CHECK: 5c: 18 90 8b 38 paddb [p0], m4
+# CHECK: 60: 18 90 8f 3a paddb [p2], #-512
+# CHECK: 64: 18 90 0f 3f paddb [p7], #0
+# CHECK: 68: 18 90 1f 39 paddb [p1], #64
+# CHECK: 6c: 18 90 7f 38 paddb [p0], #448
+# CHECK: 70: 18 90 8f 3e paddb [p6], #-512
+# CHECK: 74: 18 90 0f 3b paddb [p3], #0
+# CHECK: 78: 18 90 1f 3d paddb [p5], #64
+# CHECK: 7c: 18 90 7f 3c paddb [p4], #448
+
