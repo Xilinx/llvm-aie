@@ -11,6 +11,7 @@
 
 class AIE2PRegisterOperand<RegisterClass c> : RegisterOperand<c> {
   let EncoderMethod = "get" # c # OpValue;
+  let hasCompleteDecoder = false;
 }
 
 def OP_mWa : AIE2PRegisterOperand<mWa>;
