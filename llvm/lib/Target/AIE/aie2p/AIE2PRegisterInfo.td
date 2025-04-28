@@ -1011,9 +1011,9 @@ def spill_eDN_to_eR : AIE2PScalarRegisterClass<(add eDN, eR)>;
 def spill_eDJ_to_eR : AIE2PScalarRegisterClass<(add eDJ, eR, eDN)>;
 def spill_eDC_to_eR : AIE2PScalarRegisterClass<(add eDC, eR)>;
 
-def spill_vec512_to_composite : AIE2PVector512RegisterClass<(add mXm, mBMm, sfh, sfl, lfh0, lfh1, lfl0, lfl1)>;
-def spill_vec1024_to_composite : AIE2PVector1024RegisterClass<(add eY, mCMm, lf0, lf1, sf)>;
-def spill_acc512_to_composite : AIE2PVector512RegisterClass<(add mBMm, mXm, sfh, sfl, lfh0, lfh1, lfl0, lfl1)>;
-def spill_acc1024_to_composite : AIE2PVector1024RegisterClass<(add mCMm, eY, lf0, lf1, sf)>;
+def spill_vec512_to_composite : AIE2PVector512RegisterClass<(add mXm, mBMm, lfh0, lfh1, lfl0, lfl1)>;
+def spill_vec1024_to_composite : AIE2PVector1024RegisterClass<(add eY, mCMm, lf0, lf1)>;
+def spill_acc512_to_composite : AIE2PVector512RegisterClass<(add mBMm, mXm, lfh0, lfh1, lfl0, lfl1)>;
+def spill_acc1024_to_composite : AIE2PVector1024RegisterClass<(add mCMm, eY, lf0, lf1)>;
 
 } // End AIE2P Namespace
