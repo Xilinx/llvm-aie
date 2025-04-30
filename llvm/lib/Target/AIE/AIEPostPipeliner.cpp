@@ -15,10 +15,10 @@
 #include "AIESlotCounts.h"
 #include "Utils/AIELoopUtils.h"
 #include "llvm/Analysis/OptimizationRemarkEmitter.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
-#include "llvm/Support/MathExtras.h"
 #include <limits>
 #include <string>
 
@@ -123,10 +123,32 @@ bool PostPipeliner::isPostPipelineCandidate(MachineBasicBlock &LoopBlock) {
   return true;
 }
 
-static SlotCounts getSlotCounts(MachineInstr &MI, const AIEBaseInstrInfo *TII) {
+namespace {
+
+uint64_t getSlotSet(MachineInstr &MI, const AIEBaseInstrInfo *TII) {
   auto *SlotInfo = TII->getSlotInfo(TII->getSlotKind(MI.getOpcode()));
   return SlotInfo ? SlotInfo->getSlotSet() : 0;
 }
+
+SlotCounts getSlotCounts(MachineInstr &MI, const AIEBaseInstrInfo *TII) {
+  return SlotCounts{getSlotSet(MI, TII)};
+}
+
+// Our definition of side-effect free. There are no implicit defs, no stores
+// and it doesn't touch anything that is live in to the loop.
+// We explicitly use the fact that out-of-bounds loads do not cause an
+// exception.
+bool isSideEffectFree(MachineInstr *MI) {
+  if (MI->getNumImplicitOperands() != 0 || MI->mayStore() ||
+      MI->hasUnmodeledSideEffects()) {
+    return false;
+  }
+  return !any_of(MI->defs(), [MBB = MI->getParent()](MachineOperand &Def) {
+    return MBB->isLiveIn(Def.getReg());
+  });
+}
+
+} // namespace
 
 int PostPipeliner::getResMII(MachineBasicBlock &LoopBlock) {
   // Add up all slot requirements and return the maximum slot count
@@ -597,9 +619,14 @@ void dumpIntervals(const ScheduleInfo &Info, int MinLength, int II) {
   });
 }
 
-void dumpCycles(const ScheduleInfo &Info, int MinLength, int II) {
+void dumpCycles(const ScheduleInfo &Info, int II) {
+  int FullStageLength = 0;
+  while (FullStageLength < Info.Length) {
+    FullStageLength += II;
+  }
+
   dbgs() << "Cycles:\n";
-  dumpSchedule(Info, MinLength, II,
+  dumpSchedule(Info, FullStageLength, II,
                [&](int I, int K) { return I == Info[K].Cycle; });
 }
 
@@ -613,7 +640,7 @@ int PostPipeliner::mostUrgent(PostPipelinerStrategy &Strategy) {
   }
   assert(FirstUnscheduled <= LastUnscheduled);
 
-  auto NotScheduled = [&](const auto &Dep) {
+  auto NotScheduled = [this](const auto &Dep) {
     auto *SU = Dep.getSUnit();
     if (SU->isBoundaryNode()) {
       return false;
@@ -700,14 +727,15 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
     }
 
     scheduleNode(SU, Actual, Strategy);
-    Info[N].Scheduled = true;
+    Info.commitCycle(N);
+
     DEBUG_FULL(dbgs() << "Scoreboard\n"; Scoreboard.dumpFull(););
   }
 
   const bool Success = checkStages();
   DEBUG_SUMMARY(dbgs() << "==== First iteration scheduled by "
                        << Strategy.name() << "====\n");
-  DEBUG_SUMMARY(dumpCycles(Info, NStages * II, II));
+  DEBUG_SUMMARY(dumpCycles(Info, II));
   return Success;
 }
 
@@ -1059,16 +1087,82 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval,
   return true;
 }
 
+// Pipelining reduces the iteration count by NS - 1
+// The result should be > 0, because ZOL doesn't support zero iterations.
+bool PostPipeliner::hasSufficientMinTripCount(int NS) const {
+  return MinTripCount - (NS - 1) > 0;
+}
+
+// This visitor counts the initial bundles without any side-effect,
+// typically only on the first stage.
+class CountSideEffectFreeBundles : public PipelineScheduleVisitor {
+  bool SEF = true;
+  int NumSEFBundles = 0;
+  void addToBundle(MachineInstr *MI) override { SEF &= isSideEffectFree(MI); }
+  void endBundle() override { NumSEFBundles += SEF; }
+
+public:
+  int operator()() { return NumSEFBundles; }
+};
+
+bool PostPipeliner::peelSideEffectFree() {
+  // The plan: If an instruction has no side-effect, it doesn't matter whether
+  // we execute it too often. That means we can construct a side-effect-free
+  // first stage as a preamble to the true modulo loop/prologue.
+  // That stage has one more copy than the others, and will produce unused
+  // values in the last iteration.
+  // The extracted pipeline for a 2.5 stage pipeline looks like this:
+  //
+  // Prolog:
+  //   S-1
+  //   S0 S-1
+  // Loop:
+  //   S1 S0 S-1
+  // Epilog:
+  //      S1
+
+  // Try whether peeling one SEF stage would help.
+  const int OneStageFewer = NStages - 1;
+  if (!hasSufficientMinTripCount(OneStageFewer)) {
+    // still no luck
+    return false;
+  }
+
+  CountSideEffectFreeBundles SEFCounter;
+  visitPipelineSection(SEFCounter, 1, [](const NodeInfo &Node, int S, int M) {
+    return Node.Stage == 0 && Node.ModuloCycle == M;
+  });
+
+  const int NSEF = SEFCounter();
+  LLVM_DEBUG(dbgs() << "SEFPeeler: Length=" << Info.Length << " NSEF=" << NSEF
+                    << " NStages=" << NStages << "\n");
+  // If we exclude the side-effect-free part of the schedule, it may fit in one
+  // stage fewer, which we have shown not to exceed the tripcount constraint
+  if (Info.Length - NSEF <= OneStageFewer * II) {
+    DEBUG_SUMMARY(dbgs() << "Can peel SEF stage. " << Info.Length << " - "
+                         << NSEF << " <= " << NStages << " * " << II << "\n");
+    // Rotate the schedule to the SEF form. We prefix the schedule with
+    // empty cycles, so that the first stage only contains SEF instructions.
+    // This shifts modulo cycles and stages of all nodes.
+    const int Rotation = II - NSEF;
+    Info.rotate(Rotation, II);
+    NStages--;
+    return true;
+  }
+
+  return false;
+}
+
 bool PostPipeliner::checkStages() {
   // We compute the stage in which each representative instruction runs,
   // and take the maximum to decide on the stage count
-  NStages = 0;
+  int MaxStage = 0;
   for (int K = 0; K < NInstr; K++) {
     auto &Node = Info[K];
-    Node.Stage = Node.Cycle / II;
-    Node.ModuloCycle = Node.Cycle % II;
-    NStages = std::max(NStages, Node.Stage + 1);
+    Node.update(II);
+    MaxStage = std::max(MaxStage, Node.Stage);
   }
+  NStages = MaxStage + 1;
 
   // Now check that we don't exceed the number of copies in the DAG. In that
   // case we didn't reach steady state, and we may have missed conflicts.
@@ -1081,51 +1175,61 @@ bool PostPipeliner::checkStages() {
 
   NPrologueStages = NStages - 1;
   // Check that we have a positive trip count after adjusting
-  if (MinTripCount - (NStages - 1) <= 0) {
+  if (!hasSufficientMinTripCount(NStages) && !peelSideEffectFree()) {
     DEBUG_SUMMARY(dbgs() << "PostPipeliner: MinTripCount insufficient\n");
     return false;
   }
   return true;
 }
 
-void PostPipeliner::visitPipelineSchedule(
-    PipelineScheduleVisitor &Visitor) const {
+void PostPipeliner::visitPipelineSection(
+    PipelineScheduleVisitor &Visitor, int StageCount,
+    std::function<bool(const NodeInfo &Node, int Stage, int M)> Filter) const {
 
   // This runs StageCount times across the original body instructions and
   // calls the bundle emission callbacks according to Filter.
   // It provide the stage and the modulo cycle in that stage
   // (both starting at zero) to the filter
-  auto ExtractSection =
-      [&](int StageCount,
-          std::function<bool(const NodeInfo &Node, int Stage, int M)> Filter) {
-        for (int Stage = 0; Stage < StageCount; Stage++) {
-          for (int M = 0; M < II; M++) {
-            Visitor.startBundle();
-            for (int K = 0; K < NInstr; K++) {
-              auto &Node = Info[K];
-              if (Filter(Node, Stage, M)) {
-                Visitor.addToBundle(DAG->SUnits[K].getInstr());
-              }
-            }
-            Visitor.endBundle();
-          }
+  for (int Stage = 0; Stage < StageCount; Stage++) {
+    for (int M = 0; M < II; M++) {
+      Visitor.startBundle();
+      for (int K = 0; K < NInstr; K++) {
+        auto &Node = Info[K];
+        if (Filter(Node, Stage, M)) {
+          Visitor.addToBundle(DAG->SUnits[K].getInstr());
         }
-      };
+      }
+      Visitor.endBundle();
+    }
+  }
+}
 
+void PostPipeliner::visitPipelineSchedule(
+    PipelineScheduleVisitor &Visitor) const {
+
+  DEBUG_SUMMARY(dbgs() << "Extracting NP=" << NPrologueStages
+                       << " NS=" << NStages << "\n");
   Visitor.startPrologue();
-  ExtractSection(NPrologueStages, [&](const NodeInfo &Node, int Stage, int M) {
-    return Node.ModuloCycle == M && Node.Cycle < (Stage + 1) * II;
-  });
+  visitPipelineSection(
+      Visitor, NPrologueStages, [&](const NodeInfo &Node, int Stage, int M) {
+        return Node.ModuloCycle == M && Node.Cycle < (Stage + 1) * II;
+      });
 
   Visitor.startLoop();
-  ExtractSection(1, [&](const NodeInfo &Node, int Stage, int M) {
+  visitPipelineSection(Visitor, 1, [&](const NodeInfo &Node, int Stage, int M) {
     return Node.ModuloCycle == M;
   });
 
   Visitor.startEpilogue();
-  ExtractSection(NStages - 1, [&](const NodeInfo &Node, int Stage, int M) {
-    return Node.ModuloCycle == M && Node.Cycle >= (Stage + 1) * II;
-  });
+  // The epilogue normally starts at stage 1. However, if we have a SEF stage,
+  // it occupies stage 0, the actual pipeline has shifted to start at
+  // stage 1, and the epilogue starts at stage 2. We recognize the case by
+  // comparing the main NStages with the secondary NPrologueStages.
+  const int EpiBase = NPrologueStages == NStages ? 2 : 1;
+  visitPipelineSection(
+      Visitor, NStages - 1, [&](const NodeInfo &Node, int Stage, int M) {
+        return Node.ModuloCycle == M && Node.Cycle >= (EpiBase + Stage) * II;
+      });
 
   Visitor.finish();
 }
@@ -1164,6 +1268,20 @@ void NodeInfo::reset(bool FullReset) {
     NumPushedLatest = 0;
     LastEarliestPusher = {};
     LastLatestPusher = {};
+  }
+}
+
+void NodeInfo::update(int II) {
+  ModuloCycle = Cycle % II;
+  Stage = Cycle / II;
+}
+
+void ScheduleInfo::rotate(int Rotation, int II) {
+  for (int N = 0; N < NInstr; N++) {
+    Nodes[N].Cycle = Nodes[N].Cycle + Rotation;
+    Nodes[N].update(II);
+
+    commitCycle(N);
   }
 }
 

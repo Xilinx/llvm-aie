@@ -331,20 +331,14 @@ class PipelineExtractor : public PipelineScheduleVisitor {
     auto &CopyTo = Epilogue->TopInsert;
     assert(CopyTo.empty() && "Epilogue already has a timed region at Top.");
 
-    // Establish the number of bundles to copy.
-    int NonEmpty = TimedRegion.size();
-    for (auto &B : reverse(TimedRegion)) {
-      if (!B.empty()) {
-        break;
-      }
-      NonEmpty--;
-    }
+    // Establish the number of bundles to copy. Note that std::distance on a
+    // vector is O(1)
+    int NonEmpty = std::distance(
+        find_if(reverse(TimedRegion), [](const auto &B) { return !B.empty(); }),
+        TimedRegion.rend());
     // And copy them.
-    for (auto &B : TimedRegion) {
-      if (NonEmpty > 0) {
-        CopyTo.push_back(B);
-      }
-      NonEmpty--;
+    for (int I = 0; I < NonEmpty; I++) {
+      CopyTo.push_back(TimedRegion[I]);
     }
     TimedRegion.clear();
   }
