@@ -475,7 +475,6 @@ const std::set<int> &AIE2RegisterInfo::getSubRegSplit(int RegClassId) const {
                                            AIE2::sub_dim_size,
                                            AIE2::sub_dim_stride,
                                            AIE2::sub_dim_count,
-                                           AIE2::sub_hi_dim_then_sub_mod,
                                            AIE2::sub_hi_dim_then_sub_dim_size,
                                            AIE2::sub_hi_dim_then_sub_dim_stride,
                                            AIE2::sub_hi_dim_then_sub_dim_count};

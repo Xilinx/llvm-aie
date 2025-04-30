@@ -835,7 +835,6 @@ AIE2InstrInfo::getSpillPseudoExpandInfo(const MachineInstr &MI) const {
             {AIE2::LDA_dms_spill, AIE2::sub_dim_size},
             {AIE2::LDA_dms_spill, AIE2::sub_dim_stride},
             {AIE2::LDA_dms_spill, AIE2::sub_dim_count},
-            {AIE2::LDA_dms_spill, AIE2::sub_hi_dim_then_sub_mod},
             {AIE2::LDA_dms_spill, AIE2::sub_hi_dim_then_sub_dim_size},
             {AIE2::LDA_dms_spill, AIE2::sub_hi_dim_then_sub_dim_stride},
             {AIE2::LDA_dms_spill, AIE2::sub_hi_dim_then_sub_dim_count}};
@@ -844,7 +843,6 @@ AIE2InstrInfo::getSpillPseudoExpandInfo(const MachineInstr &MI) const {
             {AIE2::ST_dms_spill, AIE2::sub_dim_size},
             {AIE2::ST_dms_spill, AIE2::sub_dim_stride},
             {AIE2::ST_dms_spill, AIE2::sub_dim_count},
-            {AIE2::ST_dms_spill, AIE2::sub_hi_dim_then_sub_mod},
             {AIE2::ST_dms_spill, AIE2::sub_hi_dim_then_sub_dim_size},
             {AIE2::ST_dms_spill, AIE2::sub_hi_dim_then_sub_dim_stride},
             {AIE2::ST_dms_spill, AIE2::sub_hi_dim_then_sub_dim_count}};
@@ -1205,7 +1203,6 @@ AIE2InstrInfo::getTiedRegInfo(unsigned Opcode) const {
       SubRegSplit(AIE2::sub_dim_size),
       SubRegSplit(AIE2::sub_dim_stride),
       SubRegSplit(AIE2::sub_dim_count),
-      SubRegSplit(AIE2::sub_hi_dim_then_sub_mod, /*IsUndef=*/true),
       SubRegSplit(AIE2::sub_hi_dim_then_sub_dim_size),
       SubRegSplit(AIE2::sub_hi_dim_then_sub_dim_stride),
       SubRegSplit(AIE2::sub_hi_dim_then_sub_dim_count)};

@@ -605,7 +605,7 @@ foreach instr = [VST_2D_SRS_D8_S32, VST_2D_SRS_D16_S64, VST_2D_SRS_D16_S32,
 // Define _split variants for instructions using 3D registers
 class Split3DInstr<Instruction RealInst, int opidx> : SplitPseudo<RealInst,
     opidx, (ins eM:$mod1, eDN:$dim_size1, eDJ:$dim_stride1, eDC:$dim_count1,
-                eM:$mod2, eDN:$dim_size2, eDJ:$dim_stride2, eDC:$dim_count2)> {}
+                          eDN:$dim_size2, eDJ:$dim_stride2, eDC:$dim_count2)> {}
 foreach instr = [VLDA_3D_dmw_lda_w, VLDA_3D_dmw_lda_am, VLDA_3D_CONV_FP32_BF16,
                  VLDB_3D, VLDB_3D_128, LDA_3D_dmv_lda_q, VLDB_3D_UNPACK_S8_S4,
                  VLDB_3D_UNPACK_S16_S8, VLDB_3D_UNPACK_D8_D4, VLDB_3D_UNPACK_D16_D8,

@@ -143,7 +143,7 @@ body:             |
 
   bb.3:
     liveins: $dc4, $dj4, $dn4, $p0, $m0, $dn0, $dj0, $dc0
-    $p0, $dc0, $dc4 = PADDA_3D_split killed $p0, killed $m0, killed $dn0, killed $dj0, killed $dc0, killed undef $m4, killed $dn4, killed $dj4, killed $dc4
+    $p0, $dc0, $dc4 = PADDA_3D_split killed $p0, killed $m0, killed $dn0, killed $dj0, killed $dc0, killed $dn4, killed $dj4, killed $dc4
     PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
 ...
 
@@ -263,9 +263,9 @@ body:             |
     ; CHECK-NEXT: $p0, $dc0, $dc4 = PADDB_3D killed $p0, $d0_3d
     ; CHECK-NEXT: $p0, $dc0, $dc4 = PADDS_3D killed $p0, $d0_3d
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
-    $p0, $dc0, $dc4 = PADDA_3D_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4
-    $p0, $dc0, $dc4 = PADDB_3D_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4
-    $p0, $dc0, $dc4 = PADDS_3D_split killed $p0, killed $m0, killed $dn0, killed $dj0, killed $dc0, killed undef $m4, killed $dn4, killed $dj4, killed $dc4
+    $p0, $dc0, $dc4 = PADDA_3D_split killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4
+    $p0, $dc0, $dc4 = PADDB_3D_split killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4
+    $p0, $dc0, $dc4 = PADDS_3D_split killed $p0, killed $m0, killed $dn0, killed $dj0, killed $dc0, killed $dn4, killed $dj4, killed $dc4
     PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
 ...
 
@@ -280,7 +280,7 @@ body:             |
     ; CHECK: liveins: $p0, $d1_3d
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $r4, dead $p0, dead $dc1, dead $dc5 = LDA_3D_dms_lda killed $p0, $d1_3d
-    $r4, dead $p0, dead $dc1, dead $dc5 = LDA_3D_dms_lda_split killed $p0, $m1, $dn1, $dj1, $dc1, undef $m5, $dn5, $dj5, $dc5
+    $r4, dead $p0, dead $dc1, dead $dc5 = LDA_3D_dms_lda_split killed $p0, $m1, $dn1, $dj1, $dc1, $dn5, $dj5, $dc5
 ...
 
 ---
@@ -294,7 +294,7 @@ body:             |
     ; CHECK: liveins: $p0, $s0, $d1_3d
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: dead $dm0, dead $p0, dead $dc1, dead $dc5 = VLDA_3D_UPS_4x_dmx_lda_ups_x2d_upsSign0 $s0, killed $p0, $d1_3d, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    dead $dm0, dead $p0, dead $dc1, dead $dc5 = VLDA_3D_UPS_4x_dmx_lda_ups_x2d_upsSign0_split $s0, killed $p0, $m1, $dn1, $dj1, $dc1, undef $m5, $dn5, $dj5, $dc5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    dead $dm0, dead $p0, dead $dc1, dead $dc5 = VLDA_3D_UPS_4x_dmx_lda_ups_x2d_upsSign0_split $s0, killed $p0, $m1, $dn1, $dj1, $dc1, $dn5, $dj5, $dc5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
 
 ...
 
@@ -326,7 +326,7 @@ body:             |
     renamable $dc4 = COPY renamable $m0
     renamable $dn4 = COPY renamable $dn0
     renamable $p2 = COPY $p0
-    $sf, dead $p2, $r26, dead $dc0, dead $dc4 = VST_FLUSH_512_3D_split $sf, killed $p2, $r26, killed $m0, killed $dn0, killed $dj0, killed $dc0, undef $m4, killed $dn4, killed $dj4, killed $dc4, implicit-def $srfifo_of
+    $sf, dead $p2, $r26, dead $dc0, dead $dc4 = VST_FLUSH_512_3D_split $sf, killed $p2, $r26, killed $m0, killed $dn0, killed $dj0, killed $dc0, killed $dn4, killed $dj4, killed $dc4, implicit-def $srfifo_of
     PseudoRET implicit $lr
 ...
 
@@ -358,6 +358,6 @@ body:             |
     renamable $dc0 = COPY renamable $m0
     renamable $dc4 = COPY renamable $m0
     renamable $dn4 = COPY renamable $dn0
-    $x0, dead $p0, dead $lf0, dead $r24, dead $dc0, dead $dc4 = VLD_POP_512_3D_pseudo_split killed $p0, undef $lf0, $r24, killed $m0, killed $dn0, killed $dj0, killed $dc0, undef $m4, killed $dn4, killed $dj4, killed $dc4, implicit-def $srfifo_uf
+    $x0, dead $p0, dead $lf0, dead $r24, dead $dc0, dead $dc4 = VLD_POP_512_3D_pseudo_split killed $p0, undef $lf0, $r24, killed $m0, killed $dn0, killed $dj0, killed $dc0, killed $dn4, killed $dj4, killed $dc4, implicit-def $srfifo_uf
     PseudoRET implicit $lr, implicit killed renamable $x0
 ...

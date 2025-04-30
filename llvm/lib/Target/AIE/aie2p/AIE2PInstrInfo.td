@@ -225,7 +225,7 @@ foreach instr = [
 // Define _split variants for instructions using 3D registers
 class Split3DInstr<Instruction RealInst, int opidx> : SplitPseudo<RealInst,
     opidx, (ins eM:$mod1, eDN:$dim_size1, eDJ:$dim_stride1, eDC:$dim_count1,
-                eM:$mod2, eDN:$dim_size2, eDJ:$dim_stride2, eDC:$dim_count2)> {}
+                          eDN:$dim_size2, eDJ:$dim_stride2, eDC:$dim_count2)> {}
 
 foreach instr = [PADDA_3D, PADDB_3D, PADDS_3D, PADD_3D_pseudo] in
     def instr # _split : Split3DInstr<instr, /*opidx=*/4>;
