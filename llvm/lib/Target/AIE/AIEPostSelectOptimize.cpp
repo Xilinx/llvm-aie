@@ -29,10 +29,7 @@
 // %4 = opcode implicit $crsat    |   |    |   %4 = opcode implicit $crsat
 //
 
-#include "AIE.h"
-#include "AIE2.h"
-#include "AIE2InstrInfo.h"
-#include "AIE2RegisterInfo.h"
+#include "AIEBaseInstrInfo.h"
 #include "AIEBaseRegisterBankInfo.h"
 #include "AIEBaseRegisterInfo.h"
 #include "AIECombinerHelper.h"
