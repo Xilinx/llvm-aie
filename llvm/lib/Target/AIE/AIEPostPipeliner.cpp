@@ -1194,15 +1194,43 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval,
   LLVM_DEBUG(dbgs() << "PostPipeliner: Success\n");
   return true;
 }
+bool PostPipeliner::hasSufficientMinTripCount() const {
+  return MinTripCount - (NStages - 1) > 0;
+}
+
+class SideEffectFreePeeler : public PipelineScheduleVisitor {
+  void addToBundle(MachineInstr *MI) override {}
+
+public:
+  SideEffectFreePeeler() = default;
+};
+
+bool PostPipeliner::peelSideEffectFree(int MaxCycle) {
+  // The plan: If an instruction has no side-effect, it doesn't matter whether
+  // we execute it too often. That means we can construct a side-effect-free
+  // first stage as a preamble to the true modulo loop/prologue.
+  // That stage has one more copy than the others, and will produce unused
+  // values in the last iteration.
+  // We can define a side effect as any instruction that modifies a register
+  // that is livein of the loop body.
+  auto LiveIns = DAG->getBB()->getLiveIns();
+  SideEffectFreePeeler Peeler;
+
+  // TODO: check, fix, return true;
+
+  return false;
+}
 
 bool PostPipeliner::checkStages() {
   // We compute the stage in which each representative instruction runs,
   // and take the maximum to decide on the stage count
   NStages = 0;
+  int MaxCycle = 0;
   for (int K = 0; K < NInstr; K++) {
     auto &Node = Info[K];
     Node.Stage = Node.Cycle / II;
     Node.ModuloCycle = Node.Cycle % II;
+    MaxCycle = std::max(MaxCycle, Node.Cycle);
     NStages = std::max(NStages, Node.Stage + 1);
   }
 
@@ -1216,51 +1244,54 @@ bool PostPipeliner::checkStages() {
   }
 
   // Check that we have a positive trip count after adjusting
-  if (MinTripCount - (NStages - 1) <= 0) {
+  if (!hasSufficientMinTripCount() && !peelSideEffectFree(MaxCycle)) {
     DEBUG_SUMMARY(dbgs() << "PostPipeliner: MinTripCount insufficient\n");
     return false;
   }
   return true;
 }
 
-void PostPipeliner::visitPipelineSchedule(
-    PipelineScheduleVisitor &Visitor) const {
+void PostPipeliner::visitPipelineSection(
+    PipelineScheduleVisitor &Visitor, int StageCount,
+    std::function<bool(const NodeInfo &Node, int Stage, int M)> Filter) const {
 
   // This runs StageCount times across the original body instructions and
   // calls the bundle emission callbacks according to Filter.
   // It provide the stage and the modulo cycle in that stage
   // (both starting at zero) to the filter
-  auto ExtractSection =
-      [&](int StageCount,
-          std::function<bool(const NodeInfo &Node, int Stage, int M)> Filter) {
-        for (int Stage = 0; Stage < StageCount; Stage++) {
-          for (int M = 0; M < II; M++) {
-            Visitor.startBundle();
-            for (int K = 0; K < NInstr; K++) {
-              auto &Node = Info[K];
-              if (Filter(Node, Stage, M)) {
-                Visitor.addToBundle(DAG->SUnits[K].getInstr());
-              }
-            }
-            Visitor.endBundle();
-          }
+  for (int Stage = 0; Stage < StageCount; Stage++) {
+    for (int M = 0; M < II; M++) {
+      Visitor.startBundle();
+      for (int K = 0; K < NInstr; K++) {
+        auto &Node = Info[K];
+        if (Filter(Node, Stage, M)) {
+          Visitor.addToBundle(DAG->SUnits[K].getInstr());
         }
-      };
+      }
+      Visitor.endBundle();
+    }
+  }
+}
+
+void PostPipeliner::visitPipelineSchedule(
+    PipelineScheduleVisitor &Visitor) const {
 
   Visitor.startPrologue();
-  ExtractSection(NStages - 1, [&](const NodeInfo &Node, int Stage, int M) {
-    return Node.ModuloCycle == M && Node.Cycle < (Stage + 1) * II;
-  });
+  visitPipelineSection(
+      Visitor, NStages - 1, [&](const NodeInfo &Node, int Stage, int M) {
+        return Node.ModuloCycle == M && Node.Cycle < (Stage + 1) * II;
+      });
 
   Visitor.startLoop();
-  ExtractSection(1, [&](const NodeInfo &Node, int Stage, int M) {
+  visitPipelineSection(Visitor, 1, [&](const NodeInfo &Node, int Stage, int M) {
     return Node.ModuloCycle == M;
   });
 
   Visitor.startEpilogue();
-  ExtractSection(NStages - 1, [&](const NodeInfo &Node, int Stage, int M) {
-    return Node.ModuloCycle == M && Node.Cycle >= (Stage + 1) * II;
-  });
+  visitPipelineSection(
+      Visitor, NStages - 1, [&](const NodeInfo &Node, int Stage, int M) {
+        return Node.ModuloCycle == M && Node.Cycle >= (Stage + 1) * II;
+      });
 
   Visitor.finish();
 }

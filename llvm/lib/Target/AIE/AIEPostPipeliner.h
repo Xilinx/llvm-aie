@@ -212,6 +212,17 @@ class PostPipeliner {
   /// of predecessors.
   void scheduleNode(SUnit &SU, int Cycle, PostPipelinerStrategy &Strategy);
 
+  /// Check the stage count against the tripcount to see whether this schedule
+  /// can be trivially extracted into a pipelined loop.
+  bool hasSufficientMinTripCount() const;
+
+  /// If the iteration count is too low, we may be able to peel off some
+  /// side-effect-free initial stage and rotate the schedule accordingly.
+  /// When the method returns true, this was successful, and all relevant
+  /// data has been updated to perform the modulo extraction.
+  /// \pre !hasSufficientTripCount()
+  bool peelSideEffectFree(int MaxCycle);
+
   /// Computes the stage in which each instruction runs and check the resulting
   /// stage count against MinIterCount and the number of copies in the DAG.
   /// Returns true if these checks indicate that the schedule can be implmented.
@@ -287,10 +298,17 @@ public:
   // in the Visitor interface object.
   // There are section delimitor methods for prologue, loop, and epilogue
   // end end-of-epilogue.
-  // Between those delimitors, it will call emit() with instructions that need
-  // to be cloned and placed in the appropriate sections. These calls are
-  // bracketed with start and end methods to indicate cycles.
+  // Between those delimitors, it will call addToBundle() with instructions
+  // that need to be cloned and placed in the appropriate sections. These calls
+  // are bracketed with startBundle and endBundle methods to indicate cycles.
   void visitPipelineSchedule(PipelineScheduleVisitor &Visitor) const;
+
+  // Core helper of visitPipelineSchedule to process a single section.
+  // It will not call the section delimitor methods.
+  // \param Filter will decide on calling Visitor.addToBundle().
+  void visitPipelineSection(
+      PipelineScheduleVisitor &Visitor, int StageCount,
+      std::function<bool(const NodeInfo &Node, int Stage, int M)> Filter) const;
 
   // Modify the tripcount to run StageCount-1 less iterations.
   void updateTripCount() const;
