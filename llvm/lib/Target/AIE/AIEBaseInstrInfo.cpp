@@ -1175,14 +1175,19 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
     // must be a 112-byte gap (in PM address space) between writing to the ls,
     // le, and lc registers and the LoopEnd instruction.
     ZOLBundlesCount = getZOLBundlesCount(MBB) - 1;
-    if (ZOLBundlesCount < ZOLSetupToLoopEndDist)
-      LoopSetupDistance = ZOLBundlesCount;
-    else {
+    const unsigned LoopSetupSizeInBytes = 16 * ZOLSetupToLoopEndDist;
+    const unsigned LoopSize = LoopSizeExcludingLastBundle(MBB);
+    if (ZOLBundlesCount < ZOLSetupToLoopEndDist) {
+      // We have already elongated the bundles in the preheader.
+      // getPostZOLSetupRegionSize should return the elongated size in bytes.
+      const unsigned PostZOLRegionSize = getPostZOLSetupRegionSize(MBB);
+      const bool DistanceConstraintMet =
+          (LoopSize + PostZOLRegionSize) >= LoopSetupSizeInBytes;
+      LoopSetupDistance = DistanceConstraintMet ? 0 : ZOLBundlesCount;
+    } else {
       // Elongate the ZOL loop body only if the distance from the end of the
       // ZOL setup instruction to the last bundle in the loop (excluding the
       // final bundle) is less than 112 bytes.
-      const unsigned LoopSetupSizeInBytes = 16 * ZOLSetupToLoopEndDist;
-      const unsigned LoopSize = LoopSizeExcludingLastBundle(MBB);
       if (LoopSize >= LoopSetupSizeInBytes)
         LoopSetupDistance = 0;
       else {
