@@ -73,6 +73,10 @@ private:
                        const AIEBaseRegisterInfo &TRI, VirtRegMap &VRM,
                        LiveRegMatrix &LRM, LiveIntervals &LIS,
                        SlotIndexes &Indexes, LiveDebugVariables &DebugVars);
+
+  void expandCopyBundle(MachineInstr &MI, MachineFunction &MF,
+                        const AIEBaseRegisterInfo &TRI, SlotIndexes &Indexes,
+                        SmallSet<Register, 8> &RecomputeLIandLRM);
 };
 
 /// Returns the subreg indices that can be used to rewrite \p Reg into smaller
@@ -208,6 +212,36 @@ bool AIESuperRegRewriter::runOnMachineFunction(MachineFunction &MF) {
                       DebugVars);
   }
 
+  // Expand CopyBundle
+  SmallSet<Register, 8> RecomputeLIandLRM;
+  for (MachineFunction::iterator MBBI = MF.begin(), MBBE = MF.end();
+       MBBI != MBBE; ++MBBI) {
+    LLVM_DEBUG(MBBI->print(dbgs(), &Indexes));
+    for (MachineInstr &MI : llvm::make_early_inc_range(MBBI->instrs())) {
+      expandCopyBundle(MI, MF, TRI, Indexes, RecomputeLIandLRM);
+    }
+  }
+
+  for (Register Reg : RecomputeLIandLRM) {
+    if (LIS.hasInterval(Reg)) {
+      LLVM_DEBUG(dbgs() << "Recomputing live range for " << printReg(Reg, &TRI)
+                        << '\n');
+      // Recompute the LiveIntervals for the register and update the
+      // LiveRegMatrix
+      if (Reg.isPhysical()) {
+        const MCRegister PhysReg = VRM.getPhys(Reg);
+        const LiveInterval &OldLI = LIS.getInterval(Reg);
+        LIS.removeInterval(Reg);
+        LRM.unassign(OldLI);
+        const LiveInterval &LI = LIS.getInterval(Reg);
+        LRM.assign(LI, PhysReg);
+      } else {
+        LIS.removeInterval(Reg);
+        LIS.getInterval(Reg);
+      }
+    }
+  }
+
   LLVM_DEBUG(VRM.dump());
   return !AssignedPhysRegs.empty();
 }
@@ -265,7 +299,7 @@ void AIESuperRegRewriter::rewriteSuperReg(
     MachineRegisterInfo &MRI, const AIEBaseRegisterInfo &TRI, VirtRegMap &VRM,
     LiveRegMatrix &LRM, LiveIntervals &LIS, SlotIndexes &Indexes,
     LiveDebugVariables &DebugVars) {
-  bool AssignPhysRegIsValid = AssignedPhysReg.isValid();
+  bool AssignPhysRegIsValid = AssignedPhysReg.isPhysical();
   LLVM_DEBUG(dbgs() << "Rewriting " << printReg(Reg, &TRI, 0, &MRI)
                     << " Assigned " << AssignPhysRegIsValid << '\n');
   auto *TII = static_cast<const AIEBaseInstrInfo *>(
@@ -363,6 +397,84 @@ void AIESuperRegRewriter::rewriteSuperReg(
   auto NewVRegs = SmallVector<Register, 8>(llvm::map_range(
       SubRegToVReg, [&](auto &Mapping) { return Mapping.second; }));
   DebugVars.splitRegister(Reg, NewVRegs, LIS);
+}
+
+// The liverange splitting logic sometimes produces bundles of copies when
+// subregisters are involved. Expand these into a sequence of copy instructions
+// after processing the last in the bundle. This is needed to ensure that the
+// un-assigned virtual reg operands of COPY that were part of these bundles have
+// a unique SlotIndex and thus a LiveInterval which is better for RA.
+void AIESuperRegRewriter::expandCopyBundle(
+    MachineInstr &MI, MachineFunction &MF, const AIEBaseRegisterInfo &TRI,
+    SlotIndexes &Indexes, SmallSet<Register, 8> &RecomputeLIandLRM) {
+  if (!MI.isCopy() && !MI.isKill())
+    return;
+
+  if (MI.isBundledWithPred() && !MI.isBundledWithSucc()) {
+    SmallVector<MachineInstr *, 2> MIs({&MI});
+
+    // Only do this when the complete bundle is made out of COPYs and KILLs.
+    MachineBasicBlock &MBB = *MI.getParent();
+    for (MachineBasicBlock::reverse_instr_iterator
+             I = std::next(MI.getReverseIterator()),
+             E = MBB.instr_rend();
+         I != E && I->isBundledWithSucc(); ++I) {
+      if (!I->isCopy() && !I->isKill())
+        return;
+      MIs.push_back(&*I);
+    }
+    MachineInstr *FirstMI = MIs.back();
+
+    auto anyRegsAlias = [](const MachineInstr *Dst,
+                           ArrayRef<MachineInstr *> Srcs,
+                           const TargetRegisterInfo &TRI) {
+      for (const MachineInstr *Src : Srcs)
+        if (Src != Dst)
+          if (TRI.regsOverlap(Dst->getOperand(0).getReg(),
+                              Src->getOperand(1).getReg()))
+            return true;
+      return false;
+    };
+
+    // If any of the destination registers in the bundle of copies alias any of
+    // the source registers, try to schedule the instructions to avoid any
+    // clobbering.
+    for (int E = MIs.size(), PrevE = E; E > 1; PrevE = E) {
+      for (int I = E; I--;)
+        if (!anyRegsAlias(MIs[I], ArrayRef(MIs).take_front(E), TRI)) {
+          if (I + 1 != E)
+            std::swap(MIs[I], MIs[E - 1]);
+          --E;
+        }
+      if (PrevE == E) {
+        MF.getFunction().getContext().emitError(
+            "super-reg-rewriter register rewriting failed: cycle in copy "
+            "bundle");
+        break;
+      }
+    }
+
+    MachineInstr *BundleStart = FirstMI;
+    for (MachineInstr *BundledMI : llvm::reverse(MIs)) {
+      // If instruction is in the middle of the bundle, move it before the
+      // bundle starts, otherwise, just unbundle it. When we get to the last
+      // instruction, the bundle will have been completely undone.
+      if (BundledMI != BundleStart) {
+        BundledMI->removeFromBundle();
+        MBB.insert(BundleStart, BundledMI);
+      } else if (BundledMI->isBundledWithSucc()) {
+        BundledMI->unbundleFromSucc();
+        BundleStart = &*std::next(BundledMI->getIterator());
+      }
+
+      if (BundledMI != FirstMI) {
+        Indexes.insertMachineInstrInMaps(*BundledMI);
+        RecomputeLIandLRM.insert(BundledMI->getOperand(0).getReg());
+        RecomputeLIandLRM.insert(BundledMI->getOperand(1).getReg());
+        BundledMI->getOperand(0).setIsInternalRead(false);
+      }
+    }
+  }
 }
 
 } // end anonymous namespace

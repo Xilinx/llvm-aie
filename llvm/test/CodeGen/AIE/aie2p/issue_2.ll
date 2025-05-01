@@ -20,34 +20,36 @@ define void @issue_2(i32 %0, i1 %exitcond.not.i) {
 ; CHECK-NEXT:    movs dj4, m0; mov dn0, m0
 ; CHECK-NEXT:    movs dj2, m0; mov dn4, m0
 ; CHECK-NEXT:    movs dj6, m0; mov dn2, m0
-; CHECK-NEXT:    movs dj3, m0; mov dn6, m0
-; CHECK-NEXT:    movs dj7, m0; mov dn3, m0
-; CHECK-NEXT:    mova r2, #1; movs dn7, m0; mov dc0, m0
-; CHECK-NEXT:    movs dc4, m0; and r5, r1, r2; mov r2, m0
-; CHECK-NEXT:    movs dc3, m0; mov r1, m0
-; CHECK-NEXT:    movs dc2, m0; mov m2, m0
-; CHECK-NEXT:    mova dn5, #1; movs dj5, m0; mov m3, m0
-; CHECK-NEXT:    mova r3, #0; movs dn1, m0; mov m1, m0
+; CHECK-NEXT:    movs dn6, m0; mov dc0, m0
+; CHECK-NEXT:    movs dc4, m0; mov r4, m0
+; CHECK-NEXT:    movs dc3, m0; mov r6, m0
+; CHECK-NEXT:    mova dn5, #1; movs dc2, m0; mov r3, m0
+; CHECK-NEXT:    movs dn3, m0; mov r5, m0
+; CHECK-NEXT:    mova r16, #1; movs dj3, m0; mov r2, m0
+; CHECK-NEXT:    movs dn7, m0; and r16, r1, r16; mov r1, m0
+; CHECK-NEXT:    mova r7, #0; movs dj7, m0; mov m3, m0
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_1: // %for.body58.i
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    jz r5, #.LBB0_1
-; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nopa ; nopb ; nops ; jz r16, #.LBB0_1; nopv
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    mova p0, #0 // Delay Slot 4
 ; CHECK-NEXT:    paddb.3d [p0], d0 // Delay Slot 3
-; CHECK-NEXT:    mova p0, #0; mov dc6, r3 // Delay Slot 2
-; CHECK-NEXT:    paddb.3d [p0], d2; or r3, r0, r0; mov dc0, dn5 // Delay Slot 1
+; CHECK-NEXT:    mova p0, #0; movs dc6, r7; mov m2, m0 // Delay Slot 2
+; CHECK-NEXT:    paddb.3d [p0], d2; or r7, r0, r0; mov dc0, dn5 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup57.i
 ; CHECK-NEXT:    // in Loop: Header=BB0_1 Depth=1
-; CHECK-NEXT:    nopa ; nopb ; movs dc7, dn5; nopx ; mov dc0, dc5; nopv
-; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r3, dn5; movs dc1, r2
-; CHECK-NEXT:    movs dj1, r1; mov dn5, m0
-; CHECK-NEXT:    mova p0, #0; movs dc5, m0; j #.LBB0_1
+; CHECK-NEXT:    nopx ; mov dc7, dn5
+; CHECK-NEXT:    movs dc0, dc5; mov dc1, r1
+; CHECK-NEXT:    movs dj1, r2; mov r7, dn5
+; CHECK-NEXT:    movs dj5, m0; mov dn1, m0
+; CHECK-NEXT:    movs dn5, m0; mov dc5, m0
+; CHECK-NEXT:    mova p0, #0; movs m1, m0; j #.LBB0_1
 ; CHECK-NEXT:    paddb.3d [p0], d1 // Delay Slot 5
-; CHECK-NEXT:    mova p0, #0; movs dc2, m0; mov dn5, r3 // Delay Slot 4
-; CHECK-NEXT:    movs dj1, m0; paddb.3d [p0], d3; mov r2, dc1 // Delay Slot 3
+; CHECK-NEXT:    mova p0, #0; movs dc2, m0; mov dn5, r7 // Delay Slot 4
+; CHECK-NEXT:    movs dj1, m0; paddb.3d [p0], d3; mov r1, dc1 // Delay Slot 3
 ; CHECK-NEXT:    mova p0, #0; movs dc5, dc0; mov dc1, m0 // Delay Slot 2
-; CHECK-NEXT:    mova r3, #0; paddb.3d [p0], d1; movs dc4, m0; mov dc0, m0 // Delay Slot 1
+; CHECK-NEXT:    mova r7, #0; paddb.3d [p0], d1; movs dc4, m0; mov dc0, m0 // Delay Slot 1
 entry:
   br label %for.body.i
 
