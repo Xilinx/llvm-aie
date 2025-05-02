@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -335,3 +335,41 @@ v32acc64 test_undef_v32acc64() { return undef_v32acc64(); }
 //
 v64accfloat test_undef_v64accfloat() { return undef_v64accfloat(); }
 
+
+
+// CHECK-LABEL: define dso_local %struct.v64bfp16ebs16 @_Z24test_undef_v64bfp16ebs16v(
+// CHECK-SAME: ) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    ret [[STRUCT_V64BFP16EBS16:%.*]] undef
+//
+v64bfp16ebs16 test_undef_v64bfp16ebs16() {
+    return undef_v64bfp16ebs16();
+}
+
+// CHECK-LABEL: define dso_local %struct.v64bfp16ebs8 @_Z23test_undef_v64bfp16ebs8v(
+// CHECK-SAME: ) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    ret [[STRUCT_V64BFP16EBS8:%.*]] undef
+//
+v64bfp16ebs8 test_undef_v64bfp16ebs8() {
+    return undef_v64bfp16ebs8();
+}
+
+// CHECK-LABEL: define dso_local %struct.v128bfp16ebs16 @_Z25test_undef_v128bfp16ebs16v(
+// CHECK-SAME: ) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    ret [[STRUCT_V128BFP16EBS16:%.*]] undef
+//
+v128bfp16ebs16 test_undef_v128bfp16ebs16() {
+    return undef_v128bfp16ebs16();
+
+}
+
+// CHECK-LABEL: define dso_local %struct.v128bfp16ebs8 @_Z24test_undef_v128bfp16ebs8v(
+// CHECK-SAME: ) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    ret [[STRUCT_V128BFP16EBS8:%.*]] undef
+//
+v128bfp16ebs8 test_undef_v128bfp16ebs8() {
+    return undef_v128bfp16ebs8();
+}

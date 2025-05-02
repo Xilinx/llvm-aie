@@ -3,7 +3,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -229,4 +229,25 @@ INTRINSIC(v64accfloat) undef_v64accfloat() {
   v64accfloat val;
   return val;
 }
+
+INTRINSIC(v64bfp16ebs16) undef_v64bfp16ebs16() {
+  v64bfp16ebs16 val;
+  return val;
+}
+
+INTRINSIC(v64bfp16ebs8) undef_v64bfp16ebs8() {
+  v64bfp16ebs8 val;
+  return val;
+}
+
+INTRINSIC(v128bfp16ebs16) undef_v128bfp16ebs16() {
+  v128bfp16ebs16 val;
+  return val;
+}
+
+INTRINSIC(v128bfp16ebs8) undef_v128bfp16ebs8() {
+  v128bfp16ebs8 val;
+  return val;
+}
+
 #endif // __AIE2P_UNDEF_H__
