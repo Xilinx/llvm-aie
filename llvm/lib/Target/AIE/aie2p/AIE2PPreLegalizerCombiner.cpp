@@ -128,8 +128,10 @@ bool AIE2PPreLegalizerCombinerImpl::tryCombineAll(MachineInstr &MI) const {
   case TargetOpcode::G_SHUFFLE_VECTOR: {
     Register Src = MI.getOperand(1).getReg();
     LLT SrcType = MRI.getType(Src);
-    // We support concat for vector sizes greater than 128 bits.
-    if (SrcType.getSizeInBits() >= 128) {
+    // We support concat for vector sizes greater than 128 bits as well as those
+    // of 32 bits.
+    const unsigned SrcSize = SrcType.getSizeInBits();
+    if (SrcSize >= 128 || SrcSize == 32) {
       return Helper.tryCombineShuffleVector(MI);
     }
     break;
