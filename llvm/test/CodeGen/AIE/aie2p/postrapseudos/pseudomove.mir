@@ -48,6 +48,18 @@ body:             |
 ...
 
 ---
+name:            COPY_GPR_const
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; CHECK-LABEL: name: COPY_GPR_const
+    ; CHECK: $r0 = MOV_RLC_imm11_pseudo 10
+    ; CHECK-NEXT: $r1 = MOV_RLC_imm11_pseudo 10
+    $r0 = MOV_RLC_imm11_pseudo 10
+    $r1 = COPY $r0
+...
+
+---
 name:            COPY_non_GPR
 alignment:       16
 body:             |
