@@ -120,6 +120,11 @@ protected:
   bool Changed = false;
 
 public:
+  void setEarliest(int Index, int Value) { Info[Index].Earliest = Value; }
+  void setLatest(int Index, int Value) {
+    Info[Index].Latest = Value - LatestBias;
+  }
+
   // Register a change
   void setChanged() { Changed = true; }
   // Return changed and reset it

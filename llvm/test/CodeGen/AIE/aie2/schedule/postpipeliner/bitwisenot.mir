@@ -20,16 +20,15 @@
   ; CHECK-NEXT:    vldb wh0, [p0, #32]; nopa ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    vldb wl0, [p0], #64; nopa ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    vldb wh0, [p0, #32]; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    vldb wl0, [p0], #64; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    vldb wh0, [p0, #32]; nopa ; nops ; nopx ; vbneg_ltz.s16 x1, r21, x0; nopv
-  ; CHECK-NEXT:    vldb wl0, [p0], #64; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vldb wl0, [p0], #64; nopa ; nops ; nopx ; vbneg_ltz.s16 x1, r21, x0; nopv
+  ; CHECK-NEXT:    vldb wh0, [p0, #32]; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vldb wl0, [p0], #64; nopa ; vst wh1, [p1, #32]; nopx ; vbneg_ltz.s16 x1, r21, x0; nopv
   ; CHECK-NEXT:  .LBB0_1: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-  ; CHECK-NEXT:    vldb wh0, [p0, #32]; nopa ; vst wh1, [p1, #32]; nopx ; vbneg_ltz.s16 x1, r21, x0; nopv
+  ; CHECK-NEXT:    vldb wh0, [p0, #32]; nopa ; vst wl1, [p1], #64; nopxm ; nopv
   ; CHECK-NEXT:  .L_LEnd0:
-  ; CHECK-NEXT:    vldb wl0, [p0], #64; nopa ; vst wl1, [p1], #64; nopxm ; nopv
+  ; CHECK-NEXT:    vldb wl0, [p0], #64; nopa ; vst wh1, [p1, #32]; nopx ; vbneg_ltz.s16 x1, r21, x0; nopv
   ; CHECK-NEXT:  .LBB0_2: // %for.cond.cleanup
-  ; CHECK-NEXT:    nopb ; nopa ; vst wh1, [p1, #32]; nopx ; vbneg_ltz.s16 x1, r21, x0; nopv
   ; CHECK-NEXT:    vst wl1, [p1], #64; nopx
   ; CHECK-NEXT:    vst wh1, [p1, #32]; vbneg_ltz.s16 x1, r21, x0
   ; CHECK-NEXT:    vst wl1, [p1], #64
