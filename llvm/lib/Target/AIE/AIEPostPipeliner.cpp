@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
+#include <algorithm>
 #include <limits>
 #include <optional>
 #include <queue>
@@ -124,18 +125,20 @@ bool PostPipeliner::isPostPipelineCandidate(MachineBasicBlock &LoopBlock) {
   // metadata is not available, try to detect it in machine instructions
   auto ParsedMinTripCount = AIELoopUtils::getMinTripCount(LoopBlock);
   LLVM_DEBUG(dbgs() << ParsedMinTripCount << "\n");
-  if (!ParsedMinTripCount) {
+  if (ParsedMinTripCount) {
+    MinTripCount = *ParsedMinTripCount;
+  } else {
     std ::optional<int> MyTripCount = extractMinTripCount(Preheader);
     if (MyTripCount.has_value()) {
       MinTripCount = MyTripCount.value();
       LLVM_DEBUG(dbgs() << " Min Trip Count: " << MyTripCount.value() << "\n");
 
-    } else {
+    }
+
+    else {
       LLVM_DEBUG(dbgs() << " PostPipeliner: No min tripcount\n");
       return false;
     }
-  } else {
-    MinTripCount = *ParsedMinTripCount;
   }
 
   if (MinTripCount < 2) {
@@ -149,10 +152,11 @@ bool PostPipeliner::isPostPipelineCandidate(MachineBasicBlock &LoopBlock) {
 std::optional<int>
 PostPipeliner ::extractMinTripCount(MachineBasicBlock *LoopPreheader) {
   const bool Pristine = true;
-  bool IsNotMoveModifies = false;
-  std::optional<int> MyTripCount;
-  Register Vreg;
-  bool TripCountState = false;
+  bool TripCountFound = false;
+  bool NonMoveImmModifiesReg = false;
+  bool IsZOLCandidate = false;
+  std::optional<int64_t> MyTripCount;
+  Register PhyReg;
   std::unordered_set<MachineBasicBlock *> Visited;
   std::queue<MachineBasicBlock *> WorkList;
   WorkList.push(LoopPreheader);
@@ -164,30 +168,50 @@ PostPipeliner ::extractMinTripCount(MachineBasicBlock *LoopPreheader) {
       continue;
     }
     Visited.insert(MBB);
+
     for (auto &MI : reverse(*MBB)) {
-      if (!TripCountState) {
+      if (!IsZOLCandidate) {
         if (TII->isZOLTripCountDef(MI, Pristine)) {
-          TripCountState = true;
-          Vreg = MI.getOperand(1).getReg();
+          IsZOLCandidate = true;
+          PhyReg = MI.getOperand(1).getReg();
         }
-
       } else {
-
-        if (MI.modifiesRegister(Vreg)) {
+        if (MI.modifiesRegister(PhyReg)) {
           if (MI.isMoveImmediate()) {
-            MyTripCount = MI.getOperand(1).getImm();
+            if (MyTripCount.has_value()) {
+              MyTripCount =
+                  std::min(MyTripCount.value(), (MI.getOperand(1).getImm()));
+            } else {
+              MyTripCount = MI.getOperand(1).getImm();
+            }
+            TripCountFound = true;
+          } else {
+            NonMoveImmModifiesReg =
+                true; // if the instruction modifies the register
+                      // but is not moveimmediate, stop the search
           }
-          IsNotMoveModifies = true; // if the instruction modifies the register
-                                    // but not MoveImmediate, stop the search.
           break;
         }
       }
     }
 
-    if (MyTripCount.has_value() || IsNotMoveModifies) {
+    if (!IsZOLCandidate) {
       break;
     }
 
+    if (NonMoveImmModifiesReg) { // If one of the modifications is done by
+                                 // non-moveImmediate instruction, stop the
+                                 // search, and reset the mytripcount.
+      MyTripCount.reset();
+      break;
+    }
+
+    if (TripCountFound) { // if trip count is found in specific block,
+                          // do NOT add its parents to Worklist
+      TripCountFound =
+          false; // set this again to false to search for other blocks
+      continue;
+    }
     for (MachineBasicBlock *Pred : MBB->predecessors()) {
       if (Pred && !Visited.count(Pred)) {
         WorkList.push(Pred);
