@@ -3,7 +3,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc --mtriple=aie2 -O2 --start-before=postmisched %s -o - | FileCheck %s
 
@@ -44,10 +44,10 @@
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_2: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-  ; CHECK-NEXT:    vldb wh0, [p1, #32]; vlda wh1, [p0, #32]; vst wl6, [p2], #64; nopx ; vband x4, x0, x3; nopv
-  ; CHECK-NEXT:    vldb wl0, [p1], #64; vlda wl1, [p0], #64; nops ; nopx ; vband x5, x1, x2; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vbor x6, x4, x5; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vbneg_ltz.s8 x2, r25:r24, x0; nopv
+  ; CHECK-NEXT:    vlda wh1, [p0, #32]; vldb wh0, [p1, #32]; nopx ; vband x4, x0, x3; vst wl6, [p2], #64
+  ; CHECK-NEXT:    vlda wl1, [p0], #64; vldb wl0, [p1], #64; vband x5, x1, x2
+  ; CHECK-NEXT:    vbor x6, x4, x5
+  ; CHECK-NEXT:    vbneg_ltz.s8 x2, r25:r24, x0
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    nopb ; nopa ; vst wh6, [p2, #32]; nopx ; vbneg_ltz.s8 x3, r25:r24, x1; nopv
   ; CHECK-NEXT:  // %bb.3: // %for.cond.cleanup

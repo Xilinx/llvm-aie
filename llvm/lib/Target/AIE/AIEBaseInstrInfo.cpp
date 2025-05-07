@@ -20,6 +20,7 @@
 #include "AIETargetMachine.h"
 #include "MCTargetDesc/AIEFormat.h"
 #include "MCTargetDesc/AIEMCFormats.h"
+#include "Utils/AIELoopUtils.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/LivePhysRegs.h"
@@ -399,23 +400,25 @@ bool AIEBaseInstrInfo::isLastZOLSetupBundleInMBB(
 }
 
 // Compute the total size (in bytes) of all instruction bundles in the
-// pre-header that follow the last ZOL setup instruction.
-unsigned AIEBaseInstrInfo::getPostZOLRegionSize(MachineBasicBlock &MBB) const {
+// pre-header that follow the last ZOL setup instruction + the number of
+// bundles.
+std::pair<unsigned, unsigned>
+AIEBaseInstrInfo::getPostZOLRegionSizeInfo(MachineBasicBlock &MBB) const {
   unsigned Size = 0;
+  unsigned BundleCount = 0;
   for (auto &MI : llvm::reverse(MBB)) {
     if (MI.isDebugInstr())
       continue;
 
     if (isZOLSetupBundle(&MI) && isLastZOLSetupBundleInMBB(&MI))
       break;
-    if (MI.isBundle()) {
-      AIE::MachineBundle Bundle = getAIEMachineBundle(MI);
-      const VLIWFormat *Format = Bundle.getFormatOrNull();
-      assert(Format);
-      Size += Format->getSize();
-    }
+
+    if (MI.isBundle())
+      BundleCount++;
+
+    Size += getAIEMachineBundleSize(MI);
   }
-  return Size;
+  return std::make_pair(BundleCount, Size);
 }
 
 // Return true if this is ZeroOverhead loop body.
@@ -447,13 +450,7 @@ unsigned AIEBaseInstrInfo::getRegionSizeInBytes(
   unsigned Size = 0;
   LLVM_DEBUG(dbgs() << "---Region Begin---\n");
   for (auto It = Region.begin(), End = Region.end(); It != End; ++It) {
-    if (It->isBundle()) {
-      AIE::MachineBundle Bundle = getAIEMachineBundle(It);
-      const VLIWFormat *Format = Bundle.getFormatOrNull();
-      assert(Format);
-      Size += Format->getSize();
-      LLVM_DEBUG(dbgs() << Format->Name << "\n");
-    }
+    Size += getAIEMachineBundleSize(It);
   }
   LLVM_DEBUG(dbgs() << "---Region End---\n");
   LLVM_DEBUG(dbgs() << "Region Size"
@@ -473,6 +470,18 @@ AIEBaseInstrInfo::getAIEMachineBundle(MachineBasicBlock::iterator MII) const {
     I++;
   }
   return Bundle;
+}
+
+unsigned AIEBaseInstrInfo::getAIEMachineBundleSize(
+    MachineBasicBlock::iterator MII) const {
+  if (MII->isBundle()) {
+    AIE::MachineBundle Bundle = getAIEMachineBundle(MII);
+    const VLIWFormat *Format = Bundle.getFormatOrNull();
+    assert(Format);
+    LLVM_DEBUG(dbgs() << Format->Name << "\n");
+    return Format->getSize();
+  }
+  return 0;
 }
 
 unsigned computeRegStateFlags(const MachineOperand &RegOp) {
@@ -1132,72 +1141,56 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
   // LoopSetupDistance will be set to number of instructions (7). In
   // PostRAScheduler, this is enforced by setting the exit latency in the
   // schduler dag mutator.
-  unsigned LoopSetupDistance = 0;
-  unsigned ZOLBundlesCount = 0;
+  int LoopPaddingInBytes = 0;
   bool IsCall = false;
   auto ZOLSupport = getZOLSupport();
+  const unsigned ZOLSetupToLoopEndDist =
+      ZOLSupport.has_value() ? ZOLSupport->LoopSetupDistance : 0;
+  const unsigned LoopSetupSizeInBytes = 16 * ZOLSetupToLoopEndDist;
+
+  auto GetPostZOLSetupRegionSize =
+      [this](MachineBasicBlock &LoopMBB) -> std::pair<unsigned, unsigned> {
+    MachineBasicBlock *Pred =
+        AIELoopUtils::getDedicatedFallThroughPreheader(LoopMBB);
+    assert(Pred && "Null preheader block!");
+    return getPostZOLRegionSizeInfo(*Pred);
+  };
+
+  auto LoopSizeExcludingLastBundle = [&](MachineBasicBlock &MBB) -> unsigned {
+    if (MBB.empty())
+      return 0;
+
+    auto It = MBB.getLastNonDebugInstr();
+    if (It == MBB.begin())
+      return 0;
+    // Step before the PseudoLoopEnd.
+    --It;
+    while (It != MBB.begin()) {
+      if (It->isBundle())
+        return getRegionSizeInBytes(llvm::make_range(MBB.begin(), It));
+      --It;
+    }
+    return 0;
+  };
 
   const bool IsZOLBody = isZOLBody(MBB);
   if (IsZOLBody) {
     assert(ZOLSupport);
-    auto LoopSizeExcludingLastBundle = [&](MachineBasicBlock &MBB) -> unsigned {
-      if (MBB.empty())
-        return 0;
 
-      auto It = MBB.getLastNonDebugInstr();
-      if (It == MBB.begin())
-        return 0;
-      // Step before the PseudoLoopEnd.
-      --It;
-      while (It != MBB.begin()) {
-        if (It->isBundle())
-          return getRegionSizeInBytes(llvm::make_range(MBB.begin(), It));
-        --It;
-      }
-      return 0;
-    };
-
-    auto getPostZOLSetupRegionSize =
-        [&](MachineBasicBlock &LoopMBB) -> unsigned {
-      for (auto *Pred : LoopMBB.predecessors()) {
-        if (Pred == &LoopMBB)
-          continue;
-
-        const unsigned Size = getPostZOLRegionSize(*Pred);
-        if (Size > 0)
-          return Size;
-      }
-      return 0;
-    };
-    const unsigned ZOLSetupToLoopEndDist = ZOLSupport->LoopSetupDistance;
     // Exclude the LoopEnd bundle as it must be placed in its own standalone
     // region to guarantee 128-bit instruction alignment. Additionally, there
     // must be a 112-byte gap (in PM address space) between writing to the ls,
     // le, and lc registers and the LoopEnd instruction.
-    ZOLBundlesCount = getZOLBundlesCount(MBB) - 1;
-    const unsigned LoopSetupSizeInBytes = 16 * ZOLSetupToLoopEndDist;
     const unsigned LoopSize = LoopSizeExcludingLastBundle(MBB);
-    if (ZOLBundlesCount < ZOLSetupToLoopEndDist) {
-      // We have already elongated the bundles in the preheader.
-      // getPostZOLSetupRegionSize should return the elongated size in bytes.
-      const unsigned PostZOLRegionSize = getPostZOLSetupRegionSize(MBB);
-      const bool DistanceConstraintMet =
-          (LoopSize + PostZOLRegionSize) >= LoopSetupSizeInBytes;
-      LoopSetupDistance = DistanceConstraintMet ? 0 : ZOLBundlesCount;
-    } else {
-      // Elongate the ZOL loop body only if the distance from the end of the
-      // ZOL setup instruction to the last bundle in the loop (excluding the
-      // final bundle) is less than 112 bytes.
-      if (LoopSize >= LoopSetupSizeInBytes)
-        LoopSetupDistance = 0;
-      else {
-        const unsigned PostZOLRegionSize = getPostZOLSetupRegionSize(MBB);
-        const bool DistanceConstraintMet =
-            (LoopSize + PostZOLRegionSize) >= LoopSetupSizeInBytes;
-        LoopSetupDistance = DistanceConstraintMet ? 0 : ZOLSetupToLoopEndDist;
-      }
+
+    if (LoopSize < LoopSetupSizeInBytes) {
+      const unsigned PostZOLRegionSize = GetPostZOLSetupRegionSize(MBB).second;
+      const int LoopEndDistance =
+          LoopSetupSizeInBytes - (PostZOLRegionSize + LoopSize);
+      LoopPaddingInBytes = std::max(0, LoopEndDistance);
     }
   }
+
   for (auto MI = MBB.begin(), End = MBB.end(); MI != End; ++MI) {
     if (MI->isBundle()) {
       // Return Address Candidate.
@@ -1215,9 +1208,10 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
       // create regions of singleton bundle for schedule margin bundles,
       // alignment algorithm will force fill each bundle to 128-bit due
       // to the alignment requirement of 16-byte for the alignment region.
-      if (LoopSetupDistance > 0) {
+      if (LoopPaddingInBytes > 0) {
         AlgnCandidates.emplace_back(MI);
-        LoopSetupDistance--;
+        const int BundleSize = getAIEMachineBundleSize(MI);
+        LoopPaddingInBytes -= (16 - BundleSize);
       }
 
       if (IsCall)
@@ -1227,13 +1221,26 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
       // loop setup should maintain. We force each of these bundles to an
       // alignment boundary, so that they will occupy 16 bytes.
       if (ZOLSupport && isZOLSetupBundle(MI) && isLastZOLSetupBundleInMBB(MI)) {
+        unsigned LoopSize = 0;
         // if we have only one MBB, it must be the loop.
         if (MBB.succ_size() == 1) {
-          const MachineBasicBlock *LoopSucc = *MBB.successors().begin();
-          ZOLBundlesCount = getZOLBundlesCount(*LoopSucc) - 1;
+          MachineBasicBlock *LoopSucc = *MBB.successors().begin();
+          LoopSize = LoopSizeExcludingLastBundle(*LoopSucc);
+          // If we have a loop size, we can consider that it will
+          // have, at least, 16 bytes (alignment).
+          if (LoopSize > 0 && LoopSize < 16)
+            LoopSize = 16;
         }
-        if (ZOLBundlesCount < ZOLSupport->LoopSetupDistance)
-          LoopSetupDistance = ZOLSupport->LoopSetupDistance - ZOLBundlesCount;
+
+        if (LoopSize < LoopSetupSizeInBytes) {
+          const auto [PostZOLBundleCount, PostZOLSize] =
+              getPostZOLRegionSizeInfo(MBB);
+          const int AvailablePaddingSpace =
+              PostZOLBundleCount * 16 - PostZOLSize;
+          const int NeededPadding =
+              LoopSetupSizeInBytes - LoopSize - PostZOLSize;
+          LoopPaddingInBytes = std::min(AvailablePaddingSpace, NeededPadding);
+        }
       }
     } else if (isHardwareLoopEnd(MI->getOpcode())) {
       if (DelaySlot > 0)
@@ -1247,9 +1254,9 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
       llvm_unreachable("Found an un-expected standalone instruction !");
     }
   }
-  if (LoopSetupDistance > 0)
-    llvm_unreachable(
-        "LoopStart Region must have a length of at-least 7 bundles!\n");
+
+  if (LoopPaddingInBytes > 0)
+    llvm_unreachable("LoopStart/LoopBody: insufficient padding!\n");
 
   return AlgnCandidates;
 }

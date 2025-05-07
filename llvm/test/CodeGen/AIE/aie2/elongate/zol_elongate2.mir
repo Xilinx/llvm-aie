@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc -mtriple aie2 -run-pass=aie-machine-alignment %s -verify-machineinstrs -o - | FileCheck %s
 --- |
@@ -590,7 +590,6 @@ body:             |
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     $lc = MOV_mv_scl $r5
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
@@ -600,19 +599,37 @@ body:             |
   ; CHECK-NEXT:     $le = MOVXM_lng_cg <mcsymbol .L_1120>
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOP
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOP
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOP
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOP
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOP
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPXM
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
   ; CHECK-NEXT:     NOP
@@ -634,44 +651,23 @@ body:             |
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $r6, implicit $r7, implicit $r0 {
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPS
   ; CHECK-NEXT:     renamable $r6 = LSHL renamable $r7, renamable $r0
-  ; CHECK-NEXT:     NOPM
-  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def dead $r6, implicit-def $dj0, implicit $r4, implicit $r1, implicit $r27 {
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPS
   ; CHECK-NEXT:     renamable $r6 = SELNEZ renamable $r4, renamable $r1, renamable $r27
   ; CHECK-NEXT:     $dj0 = MOV_mv_scl internal killed $r6
-  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPXM
-  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPXM
-  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPXM
-  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPX
+  ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $r5, implicit-def $srcarry, implicit killed $r5, implicit killed $r6 {
   ; CHECK-NEXT:     renamable $r5 = nsw ADD killed renamable $r5, killed renamable $r6, implicit-def $srcarry

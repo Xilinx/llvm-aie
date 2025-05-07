@@ -111,8 +111,8 @@ define void @add2d(ptr noalias %params, ptr noalias %ifm1_data, ptr noalias %ifm
 ; ASM-NEXT:    nopb ; vlda.ups.s32.d8 cm1, s1, [p1], m1; nops ; nopxm ; vadd cm6, cm7, cm3, r0
 ; ASM-NEXT:    nopb ; vlda.ups.s32.d8 cm3, s1, [p1], m1; nops ; nopxm ; vadd cm4, cm5, cm4, r0
 ; ASM-NEXT:    nopb ; vlda.3d.ups.s32.d8 cm2, s1, [p2], d0; nops ; nopxm ; nopv
-; ASM-NEXT:    nopb ; vlda.3d.ups.s32.d8 cm6, s1, [p2], d0; nops ; nopxm ; nopv
-; ASM-NEXT:    vlda.3d.ups.s32.d8 cm7, s1, [p2], d0; nopb ; nopxm ; vst.srs.d8.s32 cm8, s0, [p3], #32
+; ASM-NEXT:    vlda.3d.ups.s32.d8 cm6, s1, [p2], d0; nopb ; nopx
+; ASM-NEXT:    vlda.3d.ups.s32.d8 cm7, s1, [p2], d0; vst.srs.d8.s32 cm8, s0, [p3], #32
 ; ASM-NEXT:    vlda.ups.s32.d8 cm4, s1, [p1], m1; vst.srs.d8.s32 cm2, s0, [p3], #32
 ; ASM-NEXT:    vlda.3d.ups.s32.d8 cm5, s1, [p2], d0; vst.srs.d8.s32 cm6, s0, [p3], #32
 ; ASM-NEXT:    vst.srs.d8.s32 cm4, s0, [p3], #32
