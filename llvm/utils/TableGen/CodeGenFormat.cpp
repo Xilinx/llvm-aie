@@ -168,12 +168,20 @@ void CodeGenFormat::run(raw_ostream &o) {
   o << "const std::vector<unsigned int> *" << Target.getName().str()
     << "MCFormats::getAlternateInstsOpcode";
   o << "(unsigned int Opcode) const {\n";
-  o << "  switch (Opcode) {\n";
-  o << "  default:\n";
-  o << "    return nullptr;\n";
-  for (unsigned int i = 0; i < PseudoInstFormats.size(); i++)
-    PseudoInstFormats[i].emitAlternateInstsOpcode(o, i);
-  o << "  }\n}\n";
+
+  if (!PseudoInstFormats.empty()) {
+
+    o << "  switch (Opcode) {\n";
+    o << "  default:\n";
+    o << "    return nullptr;\n";
+    for (unsigned int i = 0; i < PseudoInstFormats.size(); i++)
+      PseudoInstFormats[i].emitAlternateInstsOpcode(o, i);
+    o << "  }\n}\n";
+
+  } else {
+    o << "  return nullptr;\n";
+    o << "  }\n";
+  }
   o << "#endif // GET_ALTERNATE_INST_OPCODE_FUNC\n\n";
 
   if (InstFormats.size() > 0 && Slots.size() > 0) {

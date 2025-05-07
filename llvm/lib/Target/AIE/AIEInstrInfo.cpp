@@ -271,7 +271,8 @@ unsigned getVCMPforPseudoVCMP(unsigned opcode) {
     case AIE::VCMP512_S8:
       return AIE::VCMP_S8;
   }
-  assert(false && "Illegal opcode");
+
+  llvm_unreachable("Illegal opcode");
 }
 
 SmallVector<AIEBaseInstrInfo::AIEPseudoExpandInfo, 4>
@@ -656,25 +657,23 @@ std::optional<unsigned> AIEInstrInfo::getCombinedPostIncOpcode(
 unsigned AIEInstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
     unsigned Opcode = MI.getOpcode();
 
-    switch (Opcode) {
-    default: { return get(Opcode).getSize(); }
-  // case TargetOpcode::EH_LABEL:
-  // case TargetOpcode::IMPLICIT_DEF:
-  // case TargetOpcode::KILL:
-  // case TargetOpcode::DBG_VALUE:
-  //   return 0;
-  // case AIE::PseudoCALL:
-  // case AIE::PseudoTAIL:
-  // case AIE::PseudoLLA:
-  //   return 8;
-  // case TargetOpcode::INLINEASM:
-  // case TargetOpcode::INLINEASM_BR: {
-  //   const MachineFunction &MF = *MI.getParent()->getParent();
-  //   const auto &TM = static_cast<const AIETargetMachine &>(MF.getTarget());
-  //   return getInlineAsmLength(MI.getOperand(0).getSymbolName(),
-  //                             *TM.getMCAsmInfo());
-  // }
-  }
+    return get(Opcode).getSize();
+    // case TargetOpcode::EH_LABEL:
+    // case TargetOpcode::IMPLICIT_DEF:
+    // case TargetOpcode::KILL:
+    // case TargetOpcode::DBG_VALUE:
+    //   return 0;
+    // case AIE::PseudoCALL:
+    // case AIE::PseudoTAIL:
+    // case AIE::PseudoLLA:
+    //   return 8;
+    // case TargetOpcode::INLINEASM:
+    // case TargetOpcode::INLINEASM_BR: {
+    //   const MachineFunction &MF = *MI.getParent()->getParent();
+    //   const auto &TM = static_cast<const AIETargetMachine &>(MF.getTarget());
+    //   return getInlineAsmLength(MI.getOperand(0).getSymbolName(),
+    //                             *TM.getMCAsmInfo());
+    // }
 }
 
 std::pair<unsigned, unsigned>

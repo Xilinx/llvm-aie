@@ -71,10 +71,7 @@ uint32_t AIE::calcEFlags() const {
 
 RelExpr AIE::getRelExpr(const RelType Type, const Symbol &S,
                           const uint8_t *Loc) const {
-  switch (Type) {
-  default:
-    return R_ABS;
-  }
+  return R_ABS;
 }
 
 // Read an N byte value from Loc in little-endian fashion.

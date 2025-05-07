@@ -109,8 +109,5 @@ bool AIEMCExpr::evaluateAsConstant(int64_t &Res) const {
 }
 
 int64_t AIEMCExpr::evaluateAsInt64(int64_t Value) const {
-  switch (Kind) {
-  default:
-    llvm_unreachable("Invalid kind");
-  }
+  llvm_unreachable("Invalid kind");
 }
