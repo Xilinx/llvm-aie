@@ -105,6 +105,10 @@ public:
 
   virtual std::optional<ZOLSupport> getZOLSupport() const override;
 
+  virtual bool
+  isOffsetInImmediateRange(unsigned Opcode, unsigned LoadStoreSize,
+                           std::optional<APInt> Immediate) const override;
+
   virtual unsigned getPseudoJNZDOpcode() const override;
 
   unsigned getNumBypassedCycles(const InstrItineraryData *ItinData,

@@ -1743,6 +1743,77 @@ AIE2PInstrInfo::getZOLSupport() const {
   return Result;
 }
 
+bool AIE2PInstrInfo::isOffsetInImmediateRange(
+    unsigned Opcode, unsigned LoadStoreSize,
+    std::optional<APInt> Offset) const {
+  if (!Offset)
+    return false;
+
+  switch (Opcode) {
+  case AIE2P::G_AIE_OFFSET_STORE:
+  case AIE2P::G_AIE_OFFSET_LOAD: {
+    switch (LoadStoreSize) {
+    case 8:
+      return checkSignedImmediateRange<4, 1>(Offset);
+    case 16:
+      return checkSignedImmediateRange<4, 2>(Offset);
+    case 20:
+    case 32:
+      return checkSignedImmediateRange<4, 4>(Offset);
+    case 128:
+      return checkSignedImmediateRange<4, 16>(Offset);
+    case 256:
+      return checkSignedImmediateRange<4, 32>(Offset);
+    case 512:
+      return checkSignedImmediateRange<4, 64>(Offset);
+    case 1024:
+      return checkSignedImmediateRangeSplitting<4, 64, 64>(Offset);
+    case 2048:
+      return checkSignedImmediateRangeSplitting<4, 64, 192>(Offset);
+    default:
+      return false;
+    }
+  }
+  case AIE2P::G_AIE_OFFSET_SEXTLOAD:
+  case AIE2P::G_AIE_OFFSET_ZEXTLOAD:
+  case AIE2P::G_AIE_POSTINC_ZEXTLOAD:
+  case AIE2P::G_AIE_POSTINC_SEXTLOAD: {
+    switch (LoadStoreSize) {
+    case 8:
+      return checkSignedImmediateRange<4, 1>(Offset);
+    case 16:
+      return checkSignedImmediateRange<4, 2>(Offset);
+    default:
+      return false;
+    }
+  }
+  case AIE2P::G_AIE_POSTINC_STORE:
+  case AIE2P::G_AIE_POSTINC_LOAD: {
+    switch (LoadStoreSize) {
+    case 8:
+      return checkSignedImmediateRange<4, 1>(Offset);
+    case 16:
+      return checkSignedImmediateRange<4, 2>(Offset);
+    case 20:
+    case 32:
+      return checkSignedImmediateRange<4, 4>(Offset);
+    case 128:
+      return checkSignedImmediateRange<4, 16>(Offset);
+    case 256:
+      return checkSignedImmediateRange<4, 32>(Offset);
+    case 512:
+    case 1024:
+    case 2048:
+      return checkSignedImmediateRange<4, 64>(Offset);
+    default:
+      return false;
+    }
+  }
+  default:
+    return false;
+  }
+}
+
 unsigned AIE2PInstrInfo::getGenericAddVectorEltOpcode() const {
   return AIE2P::G_AIE_ADD_VECTOR_ELT_HI;
 }

@@ -59,6 +59,10 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
     // of bundles.
     unsigned LoopSetupDistance;
   };
+  virtual bool isOffsetInImmediateRange(unsigned Opcode, unsigned LoadStoreSize,
+                                        std::optional<APInt> Offset) const {
+    llvm_unreachable("Target didn't implement OffsetFitImmRange");
+  }
 
   /// Return the opcode for a return instruction
   virtual unsigned getReturnOpcode() const {
@@ -755,6 +759,24 @@ protected:
   const MIRFormatter *getMIRFormatter() const override;
   mutable std::unique_ptr<AIEMIRFormatter> Formatter;
 };
+
+template <unsigned NumEncodingBits, unsigned Step>
+bool checkSignedImmediateRange(std::optional<APInt> Immediate) {
+  const unsigned MaxPow2 = NumEncodingBits + llvm::Log2_64(Step);
+  if (Immediate && isIntN(MaxPow2, Immediate->getSExtValue()) &&
+      Immediate->getSExtValue() % Step == 0) {
+    return true;
+  }
+  return false;
+}
+
+template <unsigned NumEncodingBits, unsigned Step, unsigned SplitOffset>
+bool checkSignedImmediateRangeSplitting(std::optional<APInt> Immediate) {
+  return Immediate &&
+         checkSignedImmediateRange<NumEncodingBits, Step>(Immediate) &&
+         checkSignedImmediateRange<NumEncodingBits, Step>(*Immediate +
+                                                          SplitOffset);
+}
 } // namespace llvm
 
 #endif // LLVM_LIB_TARGET_AIE_AIEBASEINSTRRINFO_H

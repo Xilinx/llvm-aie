@@ -198,24 +198,6 @@ inline unsigned getLoadStoreSize(const MachineInstr &MI) {
   return (*MI.memoperands_begin())->getSizeInBits().getValue();
 }
 
-template <unsigned NumEncodingBits, unsigned Step>
-bool checkImmediateRange(std::optional<APInt> Immediate) {
-  unsigned MaxPow2 = NumEncodingBits + llvm::Log2_64(Step);
-  if (Immediate && isIntN(MaxPow2, Immediate->getSExtValue()) &&
-      Immediate->getSExtValue() % Step == 0) {
-    LLVM_DEBUG(dbgs() << "Immediate " << Immediate << " is valid for MaxPow2 "
-                      << MaxPow2 << " and Step " << Step << ".\n");
-    return true;
-  }
-  return false;
-}
-
-template <unsigned NumEncodingBits, unsigned Step, unsigned SplitOffset>
-bool checkImmediateRangeSplitting(std::optional<APInt> Immediate) {
-  return Immediate && checkImmediateRange<NumEncodingBits, Step>(Immediate) &&
-         checkImmediateRange<NumEncodingBits, Step>(*Immediate + SplitOffset);
-}
-
 inline unsigned deriveRegBankID(Register Reg, const MachineRegisterInfo &MRI,
                                 const RegisterBankInfo &RBI) {
   const RegisterBank *RB = MRI.getRegBankOrNull(Reg);
