@@ -83,8 +83,8 @@ public:
   // Helper functions for legalization
   bool pack32BitVector(LegalizerHelper &Helper, MachineInstr &MI,
                        Register SourceReg) const;
-  bool unpack32BitVector(LegalizerHelper &Helper, MachineInstr &MI,
-                         Register SourceReg) const;
+  bool unpackVector(LegalizerHelper &Helper, MachineInstr &MI,
+                    Register SourceReg) const;
   bool legalizeG_UNMERGE_VALUES_128bit(LegalizerHelper &Helper,
                                        MachineInstr &MI) const;
   bool legalizeG_AIE_EXTRACT_VECTOR_ELT(LegalizerHelper &Helper,

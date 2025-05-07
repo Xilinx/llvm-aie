@@ -125,19 +125,20 @@ bool AIELegalizerHelper::pack32BitVector(LegalizerHelper &Helper,
   return true;
 }
 
-bool AIELegalizerHelper::unpack32BitVector(LegalizerHelper &Helper,
-                                           MachineInstr &MI,
-                                           Register SourceReg) const {
+// Unpack 32 bit or 64 bit vectors
+bool AIELegalizerHelper::unpackVector(LegalizerHelper &Helper, MachineInstr &MI,
+                                      Register SourceReg) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
   MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
 
   const LLT SourceRegTy = MRI.getType(SourceReg);
-  assert(SourceRegTy.getSizeInBits() == 32 &&
-         "cannot unpack vectors larger or smaller than 32-bit");
+  unsigned SourceRegSize = SourceRegTy.getSizeInBits();
+  assert((SourceRegSize == 32 || SourceRegSize == 64) &&
+         "cannot unpack vectors other than 32-bit or 64-bit");
 
-  const LLT S32 = LLT::scalar(32);
+  const LLT Type = LLT::scalar(SourceRegSize);
   unsigned Offset = 0;
-  Register DstCastReg = MRI.createGenericVirtualRegister(S32);
+  Register DstCastReg = MRI.createGenericVirtualRegister(Type);
 
   MachineOperand *Operand = MI.operands_begin(),
                  *OperandEnd = MI.operands_end() - 1;
@@ -149,9 +150,9 @@ bool AIELegalizerHelper::unpack32BitVector(LegalizerHelper &Helper,
     // optimized out in O0.
     if (Offset != 0) {
       const MachineInstrBuilder ShiftConstant =
-          MIRBuilder.buildConstant(S32, Offset);
+          MIRBuilder.buildConstant(Type, Offset);
       const MachineInstrBuilder Masked =
-          MIRBuilder.buildLShr(S32, DstCastReg, ShiftConstant);
+          MIRBuilder.buildLShr(Type, DstCastReg, ShiftConstant);
       MIRBuilder.buildTrunc(DestinationOperand, Masked);
 
     } else {
@@ -345,8 +346,9 @@ bool AIELegalizerHelper::legalizeG_UNMERGE_VALUES(LegalizerHelper &Helper,
              LastTy.getSizeInBits() &&
          "This operation is only supported for vectors");
 
-  if (LastTy.getSizeInBits() == 32)
-    return unpack32BitVector(Helper, MI, LastReg);
+  unsigned LastTySize = LastTy.getSizeInBits();
+  if (LastTySize == 32 || LastTySize == 64)
+    return unpackVector(Helper, MI, LastReg);
 
   // Pad vectors of 128-bit vectors to 256-bit
   Register TargetReg = LastReg;
