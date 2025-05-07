@@ -40,7 +40,8 @@ public:
   uint32_t calcEFlags() const override;
   RelExpr getRelExpr(RelType Type, const Symbol &S,
                      const uint8_t *Loc) const override;
-  void relocate(uint8_t *Loc, const Relocation &rel, uint64_t Val) const override;
+  void relocate(uint8_t *Loc, const Relocation &rel,
+                uint64_t Val) const override;
 
 private:
   void relocateAIE1(uint8_t *Loc, const Relocation &rel, uint64_t Val) const;
@@ -70,7 +71,7 @@ uint32_t AIE::calcEFlags() const {
 }
 
 RelExpr AIE::getRelExpr(const RelType Type, const Symbol &S,
-                          const uint8_t *Loc) const {
+                        const uint8_t *Loc) const {
   return R_ABS;
 }
 
@@ -281,14 +282,14 @@ static void patch16bytes(uint8_t *Loc, const uint64_t V, uint32_t Begin,
 void AIE::relocateAIE1(uint8_t *Loc, const Relocation &rel,
                        uint64_t Val) const {
   if (errorHandler().verbose)
-        lld::outs() << "Relocation expr=" << rel.expr << " " << rel.type << "@"
-                    << getErrorLocation(Loc) << "\n";
+    lld::outs() << "Relocation expr=" << rel.expr << " " << rel.type << "@"
+                << getErrorLocation(Loc) << "\n";
 
   // Relocation applied to debug_info
   if (rel.expr == R_NONE) {
-        checkUInt(Loc, Val, 20, rel);
-        patch4bytes(Loc, Val, 19, 0, 12);
-        return;
+    checkUInt(Loc, Val, 20, rel);
+    patch4bytes(Loc, Val, 19, 0, 12);
+    return;
   }
 
   switch (rel.type) {
@@ -296,8 +297,9 @@ void AIE::relocateAIE1(uint8_t *Loc, const Relocation &rel,
     // automatically generated from the processor description.
 #include "AIE_rela.inc"
 
-      //72 : (symbol_addr_AR  + addend )  :  addr [19..0]@0 in w08[4]      // with default addend 0
-      //73 : (symbol_addr_AR  + addend )  :  addr [19..0]@0 in w32[1]      // with default addend 0
+    // 72 : (symbol_addr_AR  + addend )  :  addr [19..0]@0 in w08[4]      //
+    // with default addend 0 73 : (symbol_addr_AR  + addend )  :  addr [19..0]@0
+    // in w32[1]      // with default addend 0
   case 72:
   case 73:
     checkUInt(Loc, Val, 20, rel);

@@ -28,7 +28,7 @@ using namespace llvm;
 #define DEBUG_TYPE "aiemcexpr"
 
 const AIEMCExpr *AIEMCExpr::create(const MCExpr *Expr, VariantKind Kind,
-                                       MCContext &Ctx) {
+                                   MCContext &Ctx) {
   return new (Ctx) AIEMCExpr(Expr, Kind);
 }
 
@@ -43,10 +43,9 @@ void AIEMCExpr::printImpl(raw_ostream &OS, const MCAsmInfo *MAI) const {
     OS << ')';
 }
 
-
 bool AIEMCExpr::evaluateAsRelocatableImpl(MCValue &Res,
-                                            const MCAsmLayout *Layout,
-                                            const MCFixup *Fixup) const {
+                                          const MCAsmLayout *Layout,
+                                          const MCFixup *Fixup) const {
   // if (Kind == VK_AIE_PCREL_LO && evaluatePCRelLo(Res, Layout, Fixup))
   //   return true;
 

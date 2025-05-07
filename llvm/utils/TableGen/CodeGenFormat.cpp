@@ -689,7 +689,8 @@ void TGInstrLayout::emitFormat(ConstTable &FieldsHierarchy, ConstTable &o,
     << "      " << (IsComposite ? "true" : "false") << " /* isComposite */,\n"
     << "      " << (IsMultipleSlotOptions ? "true" : "false")
     << " /* hasMultipleSlotOptions */,\n"
-    << "      " << "/* Slots - Fields mapper */\n"
+    << "      "
+    << "/* Slots - Fields mapper */\n"
     << "      {";
 
   const std::string TargetClassName = Target + SlotsRegistry.GenSlotKindName;
@@ -1105,7 +1106,8 @@ void TGTargetSlots::emitTargetSlotKindClass(raw_ostream &o) const {
   if (Slots.size() > 1) {
     // 2nd Ctor - Initilization by SlotKind if valid
     // We check in this constructor
-    o << "  constexpr " << TargetEnumName << '(' << "int" << " Kind)\n"
+    o << "  constexpr " << TargetEnumName << '(' << "int"
+      << " Kind)\n"
       << "    : MC" << GenSlotKindName
       << "((Kind >= "
       // Default slot is always at index 0
@@ -1183,8 +1185,11 @@ void TGTargetSlots::emitTargetSlotClass(raw_ostream &o) const {
     << "  const " << TargetEnumName << " Kind;\n"
     << "public:\n"
     << "  constexpr " << TargetClassName << "(const " << TargetEnumName
-    << " Kind, " << "const char* SlotName, " << "unsigned Size, "
-    << "SlotBits SlotSet, " << "unsigned NopOpc)\n"
+    << " Kind, "
+    << "const char* SlotName, "
+    << "unsigned Size, "
+    << "SlotBits SlotSet, "
+    << "unsigned NopOpc)\n"
     << "    : MC" << GenSlotInfoName
     << "(SlotName, Size, SlotSet, NopOpc), Kind(Kind)\n"
     << "  {\n  }\n\n"
