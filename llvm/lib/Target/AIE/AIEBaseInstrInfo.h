@@ -319,7 +319,11 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
 
   virtual unsigned getZOLBundlesCount(const MachineBasicBlock &MBB) const;
 
-  virtual unsigned getPostZOLRegionSize(MachineBasicBlock &MBB) const;
+  // Return a pair where the first element represents the number of bundles
+  // and the second one represents the size of the region that starts after
+  // the last loop setup instruction in a given MBB.
+  virtual std::pair<unsigned, unsigned>
+  getPostZOLRegionSizeInfo(MachineBasicBlock &MBB) const;
 
   virtual bool isZOLBody(const MachineBasicBlock &MBB) const;
 
@@ -447,6 +451,7 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   bool isLastZOLSetupBundleInMBB(MachineBasicBlock::iterator MII) const;
   virtual const AIE::Bundle<MachineInstr>
   getAIEMachineBundle(MachineBasicBlock::iterator MII) const;
+  unsigned getAIEMachineBundleSize(MachineBasicBlock::iterator MII) const;
   virtual unsigned getRegionSizeInBytes(
       llvm::iterator_range<MachineBasicBlock::iterator> Region) const;
 
