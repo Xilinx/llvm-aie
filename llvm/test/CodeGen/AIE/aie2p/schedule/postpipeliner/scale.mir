@@ -5,7 +5,8 @@
 #
 # (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
 
-# RUN: llc --mtriple=aie2p %s --start-before=postmisched \
+# RUN: llc -verify-machineinstrs --mtriple=aie2p %s \
+# RUN:     --start-before=postmisched \
 # RUN:     --debug-only=postpipeliner-summary -o - | FileCheck %s
 
 # This should pipeline into NS=14 * II=1

@@ -5,7 +5,8 @@
 #
 # (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
 
-# RUN: llc --mtriple=aie2p  %s --start-before=postmisched -o - | FileCheck %s
+# RUN: llc -verify-machineinstrs --mtriple=aie2p  %s \
+# RUN:     --start-before=postmisched -o - | FileCheck %s
 
 # This is a reduced version of the SoftMaxRowMajor kernel function used to test
 # AA capabilities related to Post SWP.
