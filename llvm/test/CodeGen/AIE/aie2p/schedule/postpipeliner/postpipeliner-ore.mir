@@ -4,9 +4,11 @@
 #
 # (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
 
-# RUN: llc --mtriple=aie2p -O2 --start-before=postmisched %s \
+# RUN: llc -verify-machineinstrs --mtriple=aie2p -O2 \
+# RUN:   --start-before=postmisched %s \
 # RUN:   --aie-addrspace-none-is-safe=1	--aie-postpipeliner-maxtry-ii=10 \
-# RUN:   -pass-remarks-output=- -pass-remarks-filter=postpipeliner -o /dev/null | FileCheck %s
+# RUN:   -pass-remarks-output=- -pass-remarks-filter=postpipeliner \
+# RUN:   -o /dev/null | FileCheck %s
 
 
 --- |
