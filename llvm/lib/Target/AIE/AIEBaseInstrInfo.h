@@ -546,6 +546,8 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   bool verifyImplicitOpsOrder(const MachineInstr &MI, StringRef &ErrInfo) const;
   bool verifyInstruction(const MachineInstr &MI,
                          StringRef &ErrInfo) const override;
+  bool verifyControlFlowConstraints(const MachineInstr &MI,
+                                    StringRef &ErrInfo) const;
 
   /// Returns whether the function that contains \p MI has been
   /// legalized

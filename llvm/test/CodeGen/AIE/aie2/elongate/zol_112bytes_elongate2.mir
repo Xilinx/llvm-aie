@@ -8,13 +8,24 @@
 
 # RUN: llc -mtriple aie2 -run-pass=aie-machine-alignment %s -verify-machineinstrs -o - | FileCheck %s
 
-# Verify bundle elongation after lc and ls in bb.0, and le in bb.1
+# Verify bundle elongation after lc and ls in bb.1, and le in bb.0
 ---
 name:            zol_setup_in_different_mbb
 body:             |
   ; CHECK-LABEL: name: zol_setup_in_different_mbb
   ; CHECK: bb.0 (align 16):
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   BUNDLE implicit-def $le {
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     $le = MOVXM_lng_cg <mcsymbol .L_1120>
+  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1 (align 16):
+  ; CHECK-NEXT:   successors: %bb.2(0x80000000)
   ; CHECK-NEXT:   liveins: $p0, $p1, $r0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   BUNDLE implicit-def $r1, implicit-def $r2, implicit-def $lc, implicit $p0, implicit $r0 {
@@ -80,32 +91,35 @@ body:             |
   ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.1 (align 16):
-  ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.2(0x04000000)
+  ; CHECK-NEXT: bb.2 (align 16):
+  ; CHECK-NEXT:   successors: %bb.2(0x7c000000), %bb.3(0x04000000)
   ; CHECK-NEXT:   liveins: $p0, $p1, $r0, $r1, $r2, $r3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   BUNDLE implicit-def $r4, implicit $r2, implicit $r3 {
+  ; CHECK-NEXT:     NOPB
   ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPS
   ; CHECK-NEXT:     renamable $r4 = LSHL renamable $r2, renamable $r3
   ; CHECK-NEXT:     NOPM
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $le {
-  ; CHECK-NEXT:     $le = MOVXM_lng_cg <mcsymbol .L_1120>
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $dj0, implicit killed $r4 {
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPX
   ; CHECK-NEXT:     $dj0 = MOV_mv_scl killed $r4
-  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $r4, implicit $p1, implicit killed $dj0 {
-  ; CHECK-NEXT:     NOPB
   ; CHECK-NEXT:     renamable $r4 = LDA_dms_lda_idx renamable $p1, killed renamable $dj0
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPXM
-  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE {
+  ; CHECK-NEXT:     NOP
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE {
+  ; CHECK-NEXT:     NOP
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE {
+  ; CHECK-NEXT:     NOP
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE {
+  ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
   ; CHECK-NEXT:     NOPB
@@ -114,37 +128,9 @@ body:             |
   ; CHECK-NEXT:     NOPXM
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPXM
-  ; CHECK-NEXT:     NOPV
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPXM
-  ; CHECK-NEXT:     NOPV
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPXM
-  ; CHECK-NEXT:     NOPV
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPXM
-  ; CHECK-NEXT:     NOPV
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.2
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.2 (align 16):
+  ; CHECK-NEXT: bb.3 (align 16):
   ; CHECK-NEXT:   BUNDLE {
   ; CHECK-NEXT:     NOPB
   ; CHECK-NEXT:     NOPA
@@ -155,6 +141,11 @@ body:             |
   ; CHECK-NEXT:   DelayedSchedBarrier
   bb.0 (align 16):
     successors: %bb.1(0x80000000)
+    BUNDLE implicit-def $le {
+      $le = MOVXM_lng_cg <mcsymbol .L_1120>
+    }
+  bb.1 (align 16):
+    successors: %bb.2(0x80000000)
     liveins: $p0, $p1, $r0
 
     BUNDLE implicit-def $r1, implicit-def $r2, implicit-def $lc, implicit $p0, implicit $r0 {
@@ -193,15 +184,12 @@ body:             |
       NOP
     }
 
-  bb.1 (align 16):
-    successors: %bb.1(0x7c000000), %bb.2(0x04000000)
+  bb.2 (align 16):
+    successors: %bb.2(0x7c000000), %bb.3(0x04000000)
     liveins: $p0, $p1, $r0, $r1, $r2, $r3
 
     BUNDLE implicit-def $r4, implicit $r2, implicit $r3 {
       renamable $r4 = LSHL renamable $r2, renamable $r3
-    }
-    BUNDLE implicit-def $le {
-      $le = MOVXM_lng_cg <mcsymbol .L_1120>
     }
     BUNDLE implicit-def $dj0, implicit killed $r4 {
       $dj0 = MOV_mv_scl killed $r4
@@ -224,9 +212,9 @@ body:             |
     BUNDLE {
       NOP
     }
-    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.2
 
-  bb.2 (align 16):
+  bb.3 (align 16):
     BUNDLE {
       NOP
     }

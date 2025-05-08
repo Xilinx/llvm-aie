@@ -1034,6 +1034,31 @@ bool AIEBaseInstrInfo::verifyImplicitOpsOrder(const MachineInstr &MI,
   return true;
 }
 
+bool AIEBaseInstrInfo::verifyControlFlowConstraints(const MachineInstr &MI,
+                                                    StringRef &ErrInfo) const {
+
+  auto NotAllowedInZOL = [&](const MachineInstr &MI) {
+    return !MI.isMetaInstruction() &&
+           (MI.isCall() || MI.isBranch() || MI.isIndirectBranch() ||
+            isZeroOverheadLoopSetupInstr(MI));
+  };
+
+  if (isZOLBody(*MI.getParent())) {
+    if (MI.isBundle()) {
+      for (const MachineInstr &BundledMI : const_bundled_instrs(MI)) {
+        if (NotAllowedInZOL(BundledMI)) {
+          ErrInfo = "Invalid bundled instruction in a ZOL loop!";
+          return false;
+        }
+      }
+    } else if (NotAllowedInZOL(MI)) {
+      ErrInfo = "Invalid instruction in a ZOL loop!";
+      return false;
+    }
+  }
+  return true;
+}
+
 bool AIEBaseInstrInfo::verifyInstruction(const MachineInstr &MI,
                                          StringRef &ErrInfo) const {
   const Triple &TT = MI.getMF()->getSubtarget().getTargetTriple();
@@ -1044,6 +1069,9 @@ bool AIEBaseInstrInfo::verifyInstruction(const MachineInstr &MI,
     return false;
   }
   if (!verifyMemOperand(MI, ErrInfo)) {
+    return false;
+  }
+  if (!verifyControlFlowConstraints(MI, ErrInfo)) {
     return false;
   }
   if (!TT.isAIE1() && !verifyImplicitOpsOrder(MI, ErrInfo)) {
