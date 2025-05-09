@@ -1,6 +1,7 @@
 name: AMD AIE Distro
 
 on:
+  pull_request:
   workflow_dispatch:
     inputs:
       DEBUG_ENABLED:
@@ -164,7 +165,7 @@ jobs:
     steps:
 
     - name: Checkout actions
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         sparse-checkout: .github/workflows/amd_aie_releases
         # Turning off cone mode ensures that files in the project root are not included during checkout
