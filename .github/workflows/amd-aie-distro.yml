@@ -83,12 +83,13 @@ jobs:
         id: get_llvm_aie_project_commit
         run: |
           
-          if [ x"${{ inputs.LLVM_AIE_COMMIT }}" == x"" ]; then
-            LLVM_AIE_PROJECT_COMMIT=$(git rev-parse ${{ github.head_ref || github.ref_name }})
-            LLVM_AIE_PROJECT_COMMIT=${LLVM_AIE_PROJECT_COMMIT:0:8}
-          else
-            LLVM_AIE_PROJECT_COMMIT="${{ inputs.LLVM_AIE_COMMIT }}"
-          fi
+          # if [ x"${{ inputs.LLVM_AIE_COMMIT }}" == x"" ]; then
+          #   LLVM_AIE_PROJECT_COMMIT=$(git rev-parse ${{ github.head_ref || github.ref_name }})
+          #   LLVM_AIE_PROJECT_COMMIT=${LLVM_AIE_PROJECT_COMMIT:0:8}
+          # else
+          #   LLVM_AIE_PROJECT_COMMIT="${{ inputs.LLVM_AIE_COMMIT }}"
+          # fi
+          LLVM_AIE_PROJECT_COMMIT=${{ github.event.pull_request.head.sha }}
           echo "LLVM_AIE_PROJECT_COMMIT=${LLVM_AIE_PROJECT_COMMIT}" | tee -a $GITHUB_OUTPUT
           DATETIME=$(date +"%Y%m%d%H")
           echo "DATETIME=${DATETIME}" | tee -a $GITHUB_OUTPUT
