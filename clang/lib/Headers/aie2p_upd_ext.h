@@ -1920,4 +1920,167 @@ INTRINSIC(v16acc64) set_v16acc64(int idx, v4acc64 b) {
 INTRINSIC(v16acc64) concat(v4acc64 a, v4acc64 b, v4acc64 c, v4acc64 d) {
   return (v16acc64)concat((v8int32)a, (v8int32)b, (v8int32)c, (v8int32)d);
 }
+
+INTRINSIC(v64bfp16ebs16) insert(v64bfp16ebs16 v, v64int8 m) {
+  return {m, v.exponent};
+}
+
+INTRINSIC(v64int8) extract_v64int8(v64bfp16ebs16 v) { return v.mantissa; }
+
+INTRINSIC(v64int8) extract_data(v64bfp16ebs16 v) { return extract_v64int8(v); }
+
+INTRINSIC(int)
+extract_exponent(v64bfp16ebs16 v, int idx) {
+  v2int32 exp = v.exponent;
+  return idx == 0 ? exp[0] : exp[1];
+}
+
+INTRINSIC(v64bfp16ebs16) insert(v64bfp16ebs16 v, int idx, int exp32) {
+  v2int32 exp64 = v.exponent;
+  exp64[idx] = exp32;
+  return {v.mantissa, exp64};
+}
+
+INTRINSIC(v64bfp16ebs8) insert(v64bfp16ebs8 v, v64int8 m) {
+  return {m, v.exponent};
+}
+
+INTRINSIC(v64int8) extract_v64int8(v64bfp16ebs8 v) { return v.mantissa; }
+
+INTRINSIC(v64int8) extract_data(v64bfp16ebs8 v) { return extract_v64int8(v); }
+
+INTRINSIC(int) extract_exponent(v64bfp16ebs8 v, int idx) {
+  v2int32 exp = v.exponent;
+  return idx == 0 ? exp[0] : exp[1];
+}
+
+INTRINSIC(v64bfp16ebs8) insert(v64bfp16ebs8 v, int idx, int exp32) {
+  v2int32 exp64 = v.exponent;
+  exp64[idx] = exp32;
+  return {v.mantissa, exp64};
+}
+
+INTRINSIC(v32int8) extract_v32int8(v64bfp16ebs16 v, int idx) {
+  return extract_256_512(v.mantissa, idx);
+}
+
+INTRINSIC(v32int8) extract_v32int8(v64bfp16ebs8 v, int idx) {
+  return extract_256_512(v.mantissa, idx);
+}
+
+INTRINSIC(v64int8) extract_v64int8(v128bfp16ebs8 v, int idx) {
+  if (idx == 0)
+    return v.mantissaX0;
+  return v.mantissaX1;
+}
+
+INTRINSIC(v128bfp16ebs8) insert(v128bfp16ebs8 v, int idx, v64int8 m) {
+  if (idx == 0)
+    return {m, v.mantissaX1, v.exponentE0, v.exponentE1};
+  return {v.mantissaX0, m, v.exponentE0, v.exponentE1};
+}
+
+INTRINSIC(v128bfp16ebs8) concat(v64bfp16ebs8 v1, v64bfp16ebs8 v2) {
+  return {v1.mantissa, v2.mantissa, v1.exponent, v2.exponent};
+}
+
+INTRINSIC(v128bfp16ebs8) insert(v128bfp16ebs8 v, int idx, v64bfp16ebs8 vsub) {
+  if (idx == 0)
+    return {vsub.mantissa, v.mantissaX1, vsub.exponent, v.exponentE1};
+  return {v.mantissaX0, vsub.mantissa, v.exponentE0, vsub.exponent};
+}
+
+INTRINSIC(v128bfp16ebs8) set_v128bfp16ebs8(int idx, v64bfp16ebs8 vsub) {
+  v64bfp16ebs8 undefValue;
+  if (idx == 0)
+    return {vsub.mantissa, undefValue.mantissa, vsub.exponent,
+            undefValue.exponent};
+  return {undefValue.mantissa, vsub.mantissa, undefValue.exponent,
+          vsub.exponent};
+}
+
+INTRINSIC(v128bfp16ebs8) insert(v128bfp16ebs8 v, int idx, int exp) {
+  v64bfp16ebs8 vsub0 = {v.mantissaX0, v.exponentE0};
+  v64bfp16ebs8 vsub1 = {v.mantissaX1, v.exponentE1};
+  if (idx < 2)
+    return insert(v, 0, insert(vsub0, (unsigned)idx % 2, exp));
+  return insert(v, 1, insert(vsub1, (unsigned)idx % 2, exp));
+}
+
+INTRINSIC(int) extract_exponent(v128bfp16ebs8 v, int idx) {
+  v8int8 exp0 = v.exponentE0;
+  v8int8 exp1 = v.exponentE1;
+  if (idx == 0)
+    return (int)__builtin_shufflevector(exp0, exp0, 0, 1, 2, 3);
+  else if (idx == 1)
+    return (int)__builtin_shufflevector(exp0, exp0, 4, 5, 6, 7);
+  else if (idx == 2)
+    return (int)__builtin_shufflevector(exp1, exp1, 0, 1, 2, 3);
+  return (int)__builtin_shufflevector(exp1, exp1, 4, 5, 6, 7);
+}
+
+INTRINSIC(v64int8) extract_v64int8(v128bfp16ebs16 v, int idx) {
+  if (idx == 0)
+    return v.mantissaX0;
+  return v.mantissaX1;
+}
+
+INTRINSIC(v128bfp16ebs16) insert(v128bfp16ebs16 v, int idx, v64int8 m) {
+  if (idx == 0)
+    return {m, v.mantissaX1, v.exponentE0, v.exponentE1};
+  return {v.mantissaX0, m, v.exponentE0, v.exponentE1};
+}
+
+INTRINSIC(v128bfp16ebs16) concat(v64bfp16ebs16 v1, v64bfp16ebs16 v2) {
+  return {v1.mantissa, v2.mantissa, v1.exponent, v2.exponent};
+}
+
+INTRINSIC(v128bfp16ebs16)
+insert(v128bfp16ebs16 v, int idx, v64bfp16ebs16 vsub) {
+  if (idx == 0)
+    return {vsub.mantissa, v.mantissaX1, vsub.exponent, v.exponentE1};
+  return {v.mantissaX0, vsub.mantissa, v.exponentE0, vsub.exponent};
+}
+
+INTRINSIC(v128bfp16ebs16) set_v128bfp16ebs16(int idx, v64bfp16ebs16 vsub) {
+  v64bfp16ebs16 undefValue;
+  if (idx == 0)
+    return {vsub.mantissa, undefValue.mantissa, vsub.exponent,
+            undefValue.exponent};
+  return {undefValue.mantissa, vsub.mantissa, undefValue.exponent,
+          vsub.exponent};
+}
+
+INTRINSIC(v128bfp16ebs16) insert(v128bfp16ebs16 v, int idx, int exp) {
+  v64bfp16ebs16 vsub0 = {v.mantissaX0, v.exponentE0};
+  v64bfp16ebs16 vsub1 = {v.mantissaX1, v.exponentE1};
+  if (idx < 2)
+    return insert(v, 0, insert(vsub0, (unsigned)idx % 2, exp));
+  return insert(v, 1, insert(vsub1, (unsigned)idx % 2, exp));
+}
+
+INTRINSIC(int) extract_exponent(v128bfp16ebs16 v, int idx) {
+  v8int8 exp0 = v.exponentE0;
+  v8int8 exp1 = v.exponentE1;
+  if (idx == 0)
+    return (int)__builtin_shufflevector(exp0, exp0, 0, 1, 2, 3);
+  else if (idx == 1)
+    return (int)__builtin_shufflevector(exp0, exp0, 4, 5, 6, 7);
+  else if (idx == 2)
+    return (int)__builtin_shufflevector(exp1, exp1, 0, 1, 2, 3);
+  return (int)__builtin_shufflevector(exp1, exp1, 4, 5, 6, 7);
+}
+
+INTRINSIC(v64bfp16ebs16) extract_v64bfp16ebs16(v128bfp16ebs16 m, int idx) {
+  if (idx == 0)
+    return {m.mantissaX0, m.exponentE0};
+  return {m.mantissaX1, m.exponentE1};
+}
+
+INTRINSIC(v64bfp16ebs8) extract_v64bfp16ebs8(v128bfp16ebs8 m, int idx) {
+  if (idx == 0)
+    return {m.mantissaX0, m.exponentE0};
+  return {m.mantissaX1, m.exponentE1};
+}
+
 #endif // __AIE2P_UPD_EXT_H__
