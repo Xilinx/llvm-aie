@@ -751,6 +751,16 @@ void AIE2PInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
             TRI.getSubReg(DstReg, AIE2P::sub_l_odd))
         .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_hi_exp),
                 getKillRegState(KillSrc));
+  } else if ((AIE2P::EXPVEC64RegClass.contains(SrcReg)) &&
+             (AIE2P::EXPVEC64RegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::MOV_alu_mv_mv_mv_e_mv_el_to_el),
+            TRI.getSubReg(DstReg, AIE2P::sub_lo_exp))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_lo_exp),
+                getKillRegState(KillSrc));
+    BuildMI(MBB, MBBI, DL, get(AIE2P::MOV_alu_mv_mv_mv_e_mv_eh_to_eh),
+            TRI.getSubReg(DstReg, AIE2P::sub_hi_exp))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_hi_exp),
+                getKillRegState(KillSrc));
   } else if ((AIE2P::ePSRFLdFRegClass.contains(SrcReg)) &&
              (AIE2P::ePSRFLdFRegClass.contains(DstReg))) {
     copyThroughSubRegs(MBB, MBBI, DL, DstReg, SrcReg, KillSrc);
