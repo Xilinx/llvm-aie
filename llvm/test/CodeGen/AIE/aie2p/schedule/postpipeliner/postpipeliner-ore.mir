@@ -11,16 +11,16 @@
 
 --- |
   define dso_local void @gemm(ptr addrspace(5) noalias nocapture writeonly %d, ptr addrspace(6) noalias nocapture readonly %s, i32 noundef %n) local_unnamed_addr {
-  ; CHECK:--- !Passed
-  ; CHECK-NEXT:Pass:            postpipeliner
-  ; CHECK-NEXT:Name:            schedule
-  ; CHECK-NEXT:Function:        gemm
-  ; CHECK-NEXT:Args:
-  ; CHECK-NEXT:  - String:          'Schedule found: NS='
-  ; CHECK-NEXT:  - NS:              '5'
-  ; CHECK-NEXT:  - String:          ' II='
-  ; CHECK-NEXT:  - II:              '6'
-  ; CHECK-NEXT:...
+  ; CHECK: --- !Passed
+  ; CHECK-NEXT: Pass:            postpipeliner
+  ; CHECK-NEXT: Name:            schedule
+  ; CHECK-NEXT: Function:        gemm
+  ; CHECK-NEXT: Args:
+  ; CHECK-NEXT:   - String:          'Schedule found: NS='
+  ; CHECK-NEXT:   - NS:              '4'
+  ; CHECK-NEXT:   - String:          ' II='
+  ; CHECK-NEXT:   - II:              '8'
+  ; CHECK-NEXT: ...
   entry:
     %cmp5 = icmp sgt i32 %n, 0
     br i1 %cmp5, label %for.body.preheader, label %for.cond.cleanup
@@ -47,23 +47,13 @@
 
 
   define dso_local void @gemm_lowitercount(ptr addrspace(5) noalias nocapture writeonly %d, ptr addrspace(6) noalias nocapture readonly %s, i32 noundef %n) local_unnamed_addr {
-  ; CHECK:--- !Missed
-  ; CHECK-NEXT:Pass:            postpipeliner
-  ; CHECK-NEXT:Name:            schedule
-  ; CHECK-NEXT:Function:        gemm_lowitercount
-  ; CHECK-NEXT:Args:
-  ; CHECK-NEXT:  - String:          No schedule found.
-  ; CHECK-NEXT:...
-  ; CHECK:--- !Passed
-  ; CHECK-NEXT:Pass:            postpipeliner
-  ; CHECK-NEXT:Name:            schedule
-  ; CHECK-NEXT:Function:        gemm
-  ; CHECK-NEXT:Args:
-  ; CHECK-NEXT:  - String:          'Schedule found: NS='
-  ; CHECK-NEXT:  - NS:              '2'
-  ; CHECK-NEXT:  - String:          ' II='
-  ; CHECK-NEXT:  - II:              '13'
-  ; CHECK-NEXT:...
+  ; CHECK: --- !Missed
+  ; CHECK-NEXT: Pass:            postpipeliner
+  ; CHECK-NEXT: Name:            schedule
+  ; CHECK-NEXT: Function:        gemm_lowitercount
+  ; CHECK-NEXT: Args:
+  ; CHECK-NEXT:   - String:          No schedule found.
+  ; CHECK-NEXT: ...
   entry:
     %cmp5 = icmp sgt i32 %n, 0
     br i1 %cmp5, label %for.body.preheader, label %for.cond.cleanup

@@ -155,13 +155,14 @@ void PostPipeliner::scheduleNode(SUnit &SU, int Cycle,
       continue;
     }
     const int SNum = Succ->NodeNum;
+    const int OldEarliest = Strategy.earliest(*Succ);
     const int NewEarliest = Cycle + Latency;
     if (NewEarliest > Strategy.earliest(*Succ)) {
-      LLVM_DEBUG(dbgs() << "SU" << SNum << " from " << Info[SNum].Earliest
-                        << " to " << NewEarliest << " ; ");
+      LLVM_DEBUG(dbgs() << "SU" << SNum << " from " << OldEarliest << " to "
+                        << NewEarliest << " ; ");
       Info[SNum].LastEarliestPusher = SU.NodeNum;
       Info[SU.NodeNum].NumPushedEarliest++;
-      Strategy.setEarliest(SU.NodeNum, NewEarliest);
+      Strategy.setEarliest(SNum, NewEarliest);
       Strategy.setChanged();
     }
   }
@@ -173,10 +174,11 @@ void PostPipeliner::scheduleNode(SUnit &SU, int Cycle,
       continue;
     }
     const int PNum = Pred->NodeNum;
+    const int OldLatest = Strategy.latest(*Pred);
     const int NewLatest = Cycle - Latency;
-    if (NewLatest < Strategy.latest(*Pred)) {
-      LLVM_DEBUG(dbgs() << "SU" << PNum << " from " << Info[PNum].Latest
-                        << " to " << NewLatest << " ; ");
+    if (NewLatest < OldLatest) {
+      LLVM_DEBUG(dbgs() << "SU" << PNum << " from " << OldLatest << " to "
+                        << NewLatest << " ; ");
       Info[PNum].LastLatestPusher = SU.NodeNum;
       Info[SU.NodeNum].NumPushedLatest++;
       Strategy.setLatest(PNum, NewLatest);
