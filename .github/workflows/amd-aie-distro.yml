@@ -74,7 +74,7 @@ jobs:
       - name: Checkout actions
         uses: actions/checkout@v3
         with:
-          ref: ${{ github.head_ref || github.ref_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
           # check out anything
           sparse-checkout: .github/workflows/amd_aie_releases
           sparse-checkout-cone-mode: false
