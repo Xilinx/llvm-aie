@@ -284,6 +284,9 @@ class PostPipeliner {
   /// Check that all copied instructions can run in the same modulo cycle
   bool scheduleOtherIterations(PostPipelinerStrategy &Strategy);
 
+  /// Top level strategy scheduler
+  bool scheduleWithStrategy(PostPipelinerStrategy &Strategy);
+
   /// Reset dynamic scheduling data.
   /// If FullReset is set, also reset information collected from earlier
   /// data mining scheduling rounds.

@@ -808,6 +808,19 @@ bool PostPipeliner::scheduleOtherIterations(PostPipelinerStrategy &Strategy) {
   return true;
 }
 
+bool PostPipeliner::scheduleWithStrategy(PostPipelinerStrategy &S) {
+  DEBUG_SUMMARY(dbgs() << "Starting " << S.name() << "\n");
+  if (!scheduleFirstIteration(S)) {
+    return false;
+  }
+  DEBUG_SUMMARY(dbgs() << "   First iteration successful\n");
+  if (!scheduleOtherIterations(S)) {
+    return false;
+  }
+  DEBUG_SUMMARY(dbgs() << "   Other iterations successful\n");
+  return true;
+}
+
 int getMinOutputLat(ArrayRef<SDep> Edges) {
   int Min = std::numeric_limits<int>::max();
   for (const SDep &Dep : Edges) {
@@ -860,6 +873,52 @@ public:
                      std::vector<int> Schedule)
       : PostPipelinerStrategy(DAG, Info, Length), Schedule(Schedule) {}
   std::string name() override { return "CheckFixedSchedule"; }
+};
+
+// This strategy is specifically to have a high chance of success in peeling
+// off a side-effect-free first stage, so that we can have some relaxation
+// on minitercount
+// The plan is to target one full stage more than the minimum,
+// select side-effect free instructions on an initial top-down phase, and do the
+// rest bottom-up. This improves the chances to have a gap between those
+// two regions, which is exactly what we need in order to separate that first
+// stage from the others.
+// For now, we assume the extra slack stage means we don't have to be too
+// clever, we just use earliest
+class IterCountSlackStrategy : public PostPipelinerStrategy {
+  bool TopDown = true;
+
+private:
+  bool fromTop() override { return TopDown; }
+
+  bool better(const SUnit &A, const SUnit &B) override {
+    if (!TopDown) {
+      // Something simple suitable for bottom-up.
+      return Info[A.NodeNum].Earliest > Info[B.NodeNum].Earliest;
+    }
+    const bool SEFA = isSideEffectFree(A.getInstr());
+    const bool SEFB = isSideEffectFree(B.getInstr());
+    if (SEFA > SEFB) {
+      return true;
+    }
+    if (SEFA < SEFB) {
+      return false;
+    }
+    // Both are equal, use a simple Top-Down heuristic
+    return Info[A.NodeNum].Latest > Info[B.NodeNum].Latest;
+  }
+
+  void selected(const SUnit &N) override {
+    // The once-only transition to bottom-up.
+    if (TopDown && !isSideEffectFree(N.getInstr())) {
+      TopDown = false;
+    }
+  }
+
+public:
+  std::string name() override { return "IterCountSlackStrategy"; }
+  IterCountSlackStrategy(ScheduleDAGInstrs &DAG, ScheduleInfo &Info, int Length)
+      : PostPipelinerStrategy(DAG, Info, Length) {}
 };
 
 class ConfigStrategy : public PostPipelinerStrategy {
@@ -1044,8 +1103,8 @@ bool PostPipeliner::tryHeuristics() {
     resetSchedule(/*FullReset=*/true);
     for (int Run = 0; Run < Config.Runs; Run++) {
       DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name() << " run=" << Run
-                           << "\n");
-      if (scheduleFirstIteration(S) && scheduleOtherIterations(S)) {
+                           << " trying II=" << II << "\n");
+      if (scheduleWithStrategy(S)) {
         DEBUG_SUMMARY(dbgs()
                       << "    Strategy " << S.name() << " run=" << Run
                       << " found NS=" << NStages << " II=" << II << "\n");
@@ -1058,6 +1117,11 @@ bool PostPipeliner::tryHeuristics() {
       resetSchedule(/*FullReset=*/false);
     }
     DEBUG_SUMMARY(dbgs() << "    Strategy " << S.name() << " failed\n");
+  }
+  IterCountSlackStrategy Relaxed(*DAG, Info, MinLength + II);
+  resetSchedule(/*FullReset=*/true);
+  if (scheduleWithStrategy(Relaxed)) {
+    return true;
   }
   DEBUG_SUMMARY(dbgs() << "=== II=" << II << " Failed ===\n");
   return false;
