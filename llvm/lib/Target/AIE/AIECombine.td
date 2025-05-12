@@ -51,6 +51,13 @@ def combine_S20NarrowingOpt : GICombineRule<
   (apply [{  applyS20NarrowingOpt(*${root}, MRI, B, Observer, Helper, ${matchinfo});}])
 >;
 
+def combine_mixed_input_type_phi : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_PHI): $root,
+  [{ return matchMixedInputTypePhi(*${root}, MRI, ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])
+>;
+
 def combine_extract_vector_elt_and_zsa_ext_matchdata: GIDefMatchData<"std::pair<MachineInstr *, bool>">;
 def combine_extract_vector_elt_and_zsa_ext : GICombineRule<
   (defs root:$root, combine_extract_vector_elt_and_zsa_ext_matchdata:$matchinfo),
@@ -167,6 +174,7 @@ def combine_vector_shuffle_to_extract_insert_elt_to_broadcast : GICombineRule<
 def AIE2PreLegalizerCombiner
     : GICombiner<"AIE2PreLegalizerCombinerImpl", [ combine_unpad_vector, combine_pad_vector,
                                                                  aie_all_combines, combine_S20NarrowingOpt,
+                                                                 combine_mixed_input_type_phi,
                                                                  combine_globalval_offset,
                                                                  combine_extract_vector_elt_and_zsa_ext,
                                                                  combine_splat_vector, combine_concat_to_pad_vector, 
@@ -180,6 +188,7 @@ def AIE2PPreLegalizerCombiner
                                                                  combine_vector_shuffle_to_copy,
                                                                  combine_vector_shuffle_extract_subvec,
                                                                  aie_all_combines, combine_S20NarrowingOpt,
+                                                                 combine_mixed_input_type_phi,
                                                                  combine_globalval_offset,
                                                                  combine_extract_vector_elt_and_zsa_ext,
                                                                  combine_splat_vector, 

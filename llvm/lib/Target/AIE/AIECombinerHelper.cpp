@@ -1160,6 +1160,55 @@ void llvm::applyS20NarrowingOpt(MachineInstr &MI, MachineRegisterInfo &MRI,
   }
 }
 
+// Match something like:
+// %2:_(s20) = G_PHI %1(s20), %bb.1, %0(s32), %bb.0
+//
+// To turn it into
+// %10:_(s20) = G_TRUNC %0(s32)
+// %2:_(s20) = G_PHI %1(s20), %bb.1, %10(s32), %bb.0
+//
+// Or this
+// %2:_(s32) = G_PHI %1(s20), %bb.1, %0(s32), %bb.0
+//
+// To turn it into
+// %10:_(s32) = G_ZEXT %1(s20)
+// %2:_(s32) = G_PHI %10(s32), %bb.1, %0(s32), %bb.0
+bool llvm::matchMixedInputTypePhi(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                  BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TargetOpcode::G_PHI && "Expected a G_PHI");
+
+  SmallSet<unsigned, 4> MismatchOpIdx;
+  const LLT DstType = MRI.getType(MI.getOperand(0).getReg());
+  if (DstType.isVector())
+    return false;
+
+  // Collects indices of operands that have a type mismatching the destination
+  for (unsigned i = 1, e = MI.getNumOperands(); i < e; i += 2) {
+    const MachineOperand &Operand = MI.getOperand(i);
+    if (!Operand.isReg())
+      continue;
+    const LLT InType = MRI.getType(Operand.getReg());
+
+    if (InType != DstType)
+      MismatchOpIdx.insert(i);
+  }
+
+  MatchInfo = [&MI, &MRI, MismatchOpIdx, DstType](MachineIRBuilder &B) {
+    for (const unsigned Idx : MismatchOpIdx) {
+      MachineOperand &MismatchOp = MI.getOperand(Idx);
+      const Register InReg = MismatchOp.getReg();
+      MachineInstr *DefInstr = MRI.getUniqueVRegDef(InReg);
+      // Set the builder's insertion point just after the definition
+      B.setInsertPt(*DefInstr->getParent(), std::next(DefInstr->getIterator()));
+
+      const Register NewReg = B.buildZExtOrTrunc(DstType, InReg).getReg(0);
+      MismatchOp.setReg(NewReg);
+    }
+  };
+
+  return !MismatchOpIdx.empty();
+}
+
 bool llvm::matchExtractVecEltAndExt(
     MachineInstr &MI, MachineRegisterInfo &MRI,
     std::pair<MachineInstr *, bool> &MatchInfo) {

@@ -196,6 +196,9 @@ void applyS20NarrowingOpt(MachineInstr &MI, MachineRegisterInfo &MRI,
                           CombinerHelper &Helper,
                           std::set<InstrNode> &ValidStartNodes);
 
+bool matchMixedInputTypePhi(MachineInstr &MI, MachineRegisterInfo &MRI,
+                            BuildFnTy &MatchInfo);
+
 bool matchExtractVecEltAndExt(MachineInstr &MI, MachineRegisterInfo &MRI,
                               std::pair<MachineInstr *, bool> &MatchInfo);
 void applyExtractVecEltAndExt(MachineInstr &MI, MachineRegisterInfo &MRI,
