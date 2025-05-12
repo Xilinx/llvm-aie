@@ -58,6 +58,12 @@ def combine_mixed_input_type_phi : GICombineRule<
   (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])
 >;
 
+def constant_fold_trunc : GICombineRule<
+  (defs root:$root, apint_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_TRUNC):$root,
+   [{ return matchConstantFoldTrunc(*${root}, MRI, ${matchinfo}); }]),
+  (apply [{ Helper.replaceInstWithConstant(*${root}, ${matchinfo}); }])>;
+
 def combine_extract_vector_elt_and_zsa_ext_matchdata: GIDefMatchData<"std::pair<MachineInstr *, bool>">;
 def combine_extract_vector_elt_and_zsa_ext : GICombineRule<
   (defs root:$root, combine_extract_vector_elt_and_zsa_ext_matchdata:$matchinfo),
@@ -174,7 +180,7 @@ def combine_vector_shuffle_to_extract_insert_elt_to_broadcast : GICombineRule<
 def AIE2PreLegalizerCombiner
     : GICombiner<"AIE2PreLegalizerCombinerImpl", [ combine_unpad_vector, combine_pad_vector,
                                                                  aie_all_combines, combine_S20NarrowingOpt,
-                                                                 combine_mixed_input_type_phi,
+                                                                 combine_mixed_input_type_phi, constant_fold_trunc,
                                                                  combine_globalval_offset,
                                                                  combine_extract_vector_elt_and_zsa_ext,
                                                                  combine_splat_vector, combine_concat_to_pad_vector, 
@@ -188,7 +194,7 @@ def AIE2PPreLegalizerCombiner
                                                                  combine_vector_shuffle_to_copy,
                                                                  combine_vector_shuffle_extract_subvec,
                                                                  aie_all_combines, combine_S20NarrowingOpt,
-                                                                 combine_mixed_input_type_phi,
+                                                                 combine_mixed_input_type_phi, constant_fold_trunc,
                                                                  combine_globalval_offset,
                                                                  combine_extract_vector_elt_and_zsa_ext,
                                                                  combine_splat_vector, 

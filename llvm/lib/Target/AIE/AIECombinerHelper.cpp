@@ -1257,6 +1257,30 @@ bool llvm::matchMixedInputTypePhi(MachineInstr &MI, MachineRegisterInfo &MRI,
   return !MismatchOpIdx.empty();
 }
 
+// Match something like:
+// %0:_(s32) = G_CONSTANT i32 41
+// %1:_(s20) = G_TRUNC %0(s32)
+//
+// To turn it into
+// %0:_(s32) = G_CONSTANT i32 41
+// %1:_(s20) = G_CONSTANT i20 41
+bool llvm::matchConstantFoldTrunc(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                  APInt &MatchInfo) {
+  assert(MI.getOpcode() == TargetOpcode::G_TRUNC && "Expected a G_TRUNC");
+
+  const LLT DstTy = MRI.getType(MI.getOperand(0).getReg());
+  const unsigned DstSize = DstTy.getScalarSizeInBits();
+  const Register SrcOp = MI.getOperand(1).getReg();
+
+  std::optional<APInt> Val = getIConstantVRegVal(SrcOp, MRI);
+  if (!Val)
+    return false;
+
+  MatchInfo = Val->trunc(DstSize);
+
+  return true;
+}
+
 bool llvm::matchExtractVecEltAndExt(
     MachineInstr &MI, MachineRegisterInfo &MRI,
     std::pair<MachineInstr *, bool> &MatchInfo) {

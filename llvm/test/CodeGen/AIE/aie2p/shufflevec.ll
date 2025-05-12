@@ -618,9 +618,8 @@ define fastcc void @shuffle_match_extracted_load_idx0() {
 ; CHECK-LABEL: shuffle_match_extracted_load_idx0:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r0, #0; nopb ; nopxm
-; CHECK-NEXT:    mov p0, r0
-; CHECK-NEXT:    lda.s16 r0, [p0, #0]
+; CHECK-NEXT:    mova p0, #0; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    lda.s16 r0, [p0, #0]; nopx
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -628,7 +627,7 @@ define fastcc void @shuffle_match_extracted_load_idx0() {
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vbcst.16 x0, r0 // Delay Slot 4
-; CHECK-NEXT:    mova p0, #0 // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    vst x0, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -643,8 +642,7 @@ define fastcc void @shuffle_match_extracted_load_idx_non_zero() {
 ; CHECK-LABEL: shuffle_match_extracted_load_idx_non_zero:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r0, #6; nopb ; nopxm
-; CHECK-NEXT:    mov p0, r0
+; CHECK-NEXT:    mova p0, #6; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    lda.s16 r0, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
