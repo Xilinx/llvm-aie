@@ -314,6 +314,14 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
           });
 
   getActionDefinitionsBuilder(G_SELECT)
+      .bitcastIf(
+          [=](const LegalityQuery &Query) {
+            const LLT &ResTy = Query.Types[0];
+            return ResTy.isVector() && ResTy.getSizeInBits() == 32;
+          },
+          [=](const LegalityQuery &Query) {
+            return std::pair(0, LLT::scalar(32));
+          })
       .legalFor({{S32, S32}, {P0, S32}})
       .clampScalar(1, S32, S32)
       // AIE2P ISA supports only 512-bit vector select
@@ -332,6 +340,19 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
           })
       .widenScalarToNextPow2(0)
       .clampScalar(0, S32, S32)
+      .fewerElementsIf(
+          [=](const LegalityQuery &Query) {
+            const LLT &DstTy = Query.Types[0];
+            if (DstTy.getSizeInBits() == 64)
+              return true;
+            return false;
+          },
+          [=](const LegalityQuery &Query) {
+            const LLT &DstTy = Query.Types[0];
+            return std::make_pair(0,
+                                  LLT::fixed_vector(DstTy.getNumElements() / 2,
+                                                    DstTy.getElementType()));
+          })
       .customIf(vectorSmallerThan(0, 512))
       // We support G_SELECT only on the vector register bank
       // Mapping the G_SELECT operands to the vector register bank
