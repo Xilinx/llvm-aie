@@ -827,6 +827,33 @@ isNativeS20Consumer(const MachineInstr &MI,
   }
 }
 
+/// Checks whether the 32-bit value held in \p UseReg can safely be represented
+/// in a 20-bit field.
+static bool is20BitRepresentable(const Register UseReg,
+                                 const MachineRegisterInfo &MRI) {
+  MachineInstr *DefMI = MRI.getUniqueVRegDef(UseReg);
+  switch (DefMI->getOpcode()) {
+  case TargetOpcode::G_IMPLICIT_DEF:
+    return true;
+  case TargetOpcode::G_CONSTANT:
+    // Check if the constant value fits within 20 bits
+    return isIntN(20, DefMI->getOperand(1).getCImm()->getSExtValue());
+  case TargetOpcode::G_ZEXT:
+    return MRI.getType(DefMI->getOperand(1).getReg()) == LLT::scalar(20);
+  case TargetOpcode::G_PHI: {
+    for (unsigned OpIdx = 1; OpIdx < DefMI->getNumOperands(); OpIdx += 2) {
+      // Recursively check if each source register can be Zero-Extended
+      if (!is20BitRepresentable(DefMI->getOperand(OpIdx).getReg(), MRI))
+        return false;
+    }
+    return true;
+  }
+  // For any other opcode, safe 20-bit representation cannot be guaranteed.
+  default:
+    return false;
+  }
+}
+
 /// The function checks if the node can be adapted to produce an S20 value, and
 /// recursively looks forward to see if all users can be changed to consume S20
 /// inputs.
@@ -881,7 +908,8 @@ bool canNarrowUserTreeToS20(MachineRegisterInfo &MRI, InstrNode Start,
         return false;
       continue;
     default:
-      if (isNativeS20Consumer(Use, Use.findRegisterUseOperandIdx(DefReg)))
+      if (isNativeS20Consumer(Use, Use.findRegisterUseOperandIdx(DefReg)) ||
+          is20BitRepresentable(DefReg, MRI))
         continue;
       LLVM_DEBUG(dbgs() << "    User cannot consume S20: " << Use);
       return false;
@@ -1056,6 +1084,21 @@ bool modifyToS20(InstrNode Start, MachineRegisterInfo &MRI, MachineIRBuilder &B,
   const LLT S20 = LLT::scalar(20);
   MachineInstr *StartNodeMI = Start.getBaseNode();
 
+  // Ensuring that any S20 register value used as an operand is zero-extended
+  // to a S32 since StartNodeMI here cannot natively consume 20-bit values.
+  auto extendS20Operands = [&](auto *StartNodeMI) {
+    for (auto &Operand : drop_begin(StartNodeMI->operands(), 1)) {
+      if (Operand.isReg() && MRI.getType(Operand.getReg()) == S20) {
+        const LLT S32 = LLT::scalar(32);
+        B.setInstrAndDebugLoc(*StartNodeMI);
+        auto ZExt = B.buildZExt(S32, Operand.getReg());
+        Observer.changingInstr(*StartNodeMI);
+        Operand.setReg(ZExt->getOperand(0).getReg());
+        Observer.changedInstr(*StartNodeMI);
+      }
+    }
+  };
+
   // If Start can be rematerialized, only modify one user to use the
   // rematerialized instruction and leave the others unchanged.
   if (MachineInstr *RematForUser = Start.getRematerializeForUser()) {
@@ -1097,8 +1140,13 @@ bool modifyToS20(InstrNode Start, MachineRegisterInfo &MRI, MachineIRBuilder &B,
   case TargetOpcode::G_ZEXT: {
     assert(MRI.getType(StartNodeMI->getOperand(1).getReg()) == S20 &&
            "Source instruction is not of type S20");
-    MRI.setType(StartNodeMI->getOperand(0).getReg(), S20);
-    Helper.replaceOpcodeWith(*StartNodeMI, TargetOpcode::COPY);
+    const Register DefReg = StartNodeMI->getOperand(0).getReg();
+    if (DefReg.isVirtual()) {
+      MRI.setType(DefReg, S20);
+      Helper.replaceOpcodeWith(*StartNodeMI, TargetOpcode::COPY);
+    } else {
+      extendS20Operands(StartNodeMI);
+    }
     // FIXME : tryCombineCopy if successful will remove the COPY aka
     // *StartNodeMI and ahead when we try to get uses of *StartNodeMI we will
     // error out Helper.tryCombineCopy(*StartNodeMI);
@@ -1115,8 +1163,8 @@ bool modifyToS20(InstrNode Start, MachineRegisterInfo &MRI, MachineIRBuilder &B,
     return true;
   }
   default: {
-    LLVM_DEBUG(dbgs() << "Node :" << *StartNodeMI);
-    llvm_unreachable("Unexpected OpCode, while modifying IR");
+    extendS20Operands(StartNodeMI);
+    return true;
   }
   }
 
