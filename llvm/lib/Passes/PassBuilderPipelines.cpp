@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -118,6 +118,7 @@
 #include "llvm/Transforms/Scalar/MemCpyOptimizer.h"
 #include "llvm/Transforms/Scalar/MergedLoadStoreMotion.h"
 #include "llvm/Transforms/Scalar/NewGVN.h"
+#include "llvm/Transforms/Scalar/OutlineGEP.h"
 #include "llvm/Transforms/Scalar/Reassociate.h"
 #include "llvm/Transforms/Scalar/SCCP.h"
 #include "llvm/Transforms/Scalar/SROA.h"
@@ -311,6 +312,10 @@ static cl::opt<bool> EnableLoopIterCountToAssumptions(
     "enable-loop-iter-count-assumptions", cl::Hidden, cl::init(false),
     cl::desc(
         "Enable Conversion of Loop Iteration Count Metadata to Assumptions."));
+
+static cl::opt<bool>
+    EnableReverseGEPInline("enable-outline-gep", cl::Hidden, cl::init(false),
+                           cl::desc("Enable Outlining of GEPs."));
 
 namespace llvm {
 extern cl::opt<bool> EnableMemProfContextDisambiguation;
@@ -1580,6 +1585,9 @@ PassBuilder::buildPerModuleDefaultPipeline(OptimizationLevel Level,
       PGOOpt->Action == PGOOptions::SampleUse)
     MPM.addPass(PseudoProbeUpdatePass());
 
+  if (EnableReverseGEPInline)
+    MPM.addPass(createModuleToFunctionPassAdaptor(OutlineGEPPass()));
+
   // Emit annotation remarks.
   addAnnotationRemarksPass(MPM);
 
@@ -1608,6 +1616,10 @@ PassBuilder::buildFatLTODefaultPipeline(OptimizationLevel Level, bool ThinLTO,
     // Emit annotation remarks.
     addAnnotationRemarksPass(MPM);
   }
+
+  if (EnableReverseGEPInline)
+    MPM.addPass(createModuleToFunctionPassAdaptor(OutlineGEPPass()));
+
   return MPM;
 }
 
@@ -1655,6 +1667,9 @@ PassBuilder::buildThinLTOPreLinkDefaultPipeline(OptimizationLevel Level) {
   // callbacks there in case of in-process ThinLTO called by linker.
   invokeOptimizerEarlyEPCallbacks(MPM, Level);
   invokeOptimizerLastEPCallbacks(MPM, Level);
+
+  if (EnableReverseGEPInline)
+    MPM.addPass(createModuleToFunctionPassAdaptor(OutlineGEPPass()));
 
   // Emit annotation remarks.
   addAnnotationRemarksPass(MPM);
@@ -1713,6 +1728,9 @@ ModulePassManager PassBuilder::buildThinLTODefaultPipeline(
   MPM.addPass(buildModuleOptimizationPipeline(
       Level, ThinOrFullLTOPhase::ThinLTOPostLink));
 
+  if (EnableReverseGEPInline)
+    MPM.addPass(createModuleToFunctionPassAdaptor(OutlineGEPPass()));
+
   // Emit annotation remarks.
   addAnnotationRemarksPass(MPM);
 
@@ -1747,6 +1765,9 @@ PassBuilder::buildLTODefaultPipeline(OptimizationLevel Level,
     MPM.addPass(LowerTypeTestsPass(nullptr, nullptr, true));
 
     invokeFullLinkTimeOptimizationLastEPCallbacks(MPM, Level);
+
+    if (EnableReverseGEPInline)
+      MPM.addPass(createModuleToFunctionPassAdaptor(OutlineGEPPass()));
 
     // Emit annotation remarks.
     addAnnotationRemarksPass(MPM);
@@ -1825,6 +1846,9 @@ PassBuilder::buildLTODefaultPipeline(OptimizationLevel Level,
     MPM.addPass(LowerTypeTestsPass(nullptr, nullptr, true));
 
     invokeFullLinkTimeOptimizationLastEPCallbacks(MPM, Level);
+
+    if (EnableReverseGEPInline)
+      MPM.addPass(createModuleToFunctionPassAdaptor(OutlineGEPPass()));
 
     // Emit annotation remarks.
     addAnnotationRemarksPass(MPM);
@@ -2037,6 +2061,9 @@ PassBuilder::buildLTODefaultPipeline(OptimizationLevel Level,
     MPM.addPass(CGProfilePass(/*InLTOPostLink=*/true));
 
   invokeFullLinkTimeOptimizationLastEPCallbacks(MPM, Level);
+
+  if (EnableReverseGEPInline)
+    MPM.addPass(createModuleToFunctionPassAdaptor(OutlineGEPPass()));
 
   // Emit annotation remarks.
   addAnnotationRemarksPass(MPM);

@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -200,6 +200,9 @@ void AIEToolChain::addClangTargetOptions(
     CC1Args.push_back("-fno-builtin-memcpy");
     CC1Args.push_back("-fno-builtin-memmove");
   }
+
+  // Enable Reverse GEP Inlining
+  CC1Args.append({"-mllvm", "-enable-outline-gep=true"});
 }
 
 // Avoid using newer dwarf versions, as the simulator doesn't understand newer
