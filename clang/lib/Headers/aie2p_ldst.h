@@ -225,6 +225,64 @@ INTRINSIC(v128uint8) unpack(v128uint4 v) { return unpack(v, __SIGN_UNSIGNED); }
   FIFO_ST_FLUSH_BARE(T##_unaligned, _bare, DM_BANK, RESTRICT)                  \
   FIFO_ST_FLUSH_CONV(T##_unaligned, DM_BANK, RESTRICT)
 
+#define FIFO_ST_PUSH_BFP16_WIDE(T1, T2, DM_BANK, RESTRICT)                     \
+  INTRINSIC(void)                                                              \
+  fifo_st_reset(T1##_unaligned DM_BANK *RESTRICT &p, T1 v, fifo_state_t &s) {  \
+    T2##_unaligned DM_BANK *RESTRICT &q =                                      \
+        (T2##_unaligned DM_BANK * RESTRICT &)p;                                \
+    s.pos = 0;                                                                 \
+    T2 tmp = extract_##T2(v, 0);                                               \
+    fifo_st_push(q, tmp, s);                                                   \
+    tmp = extract_##T2(v, 1);                                                  \
+    fifo_st_push(q, tmp, s);                                                   \
+  }                                                                            \
+  INTRINSIC(void)                                                              \
+  fifo_st_push(T1##_unaligned DM_BANK *RESTRICT &p, T1 v, fifo_state_t &s) {   \
+    T2##_unaligned DM_BANK *RESTRICT &q =                                      \
+        (T2##_unaligned DM_BANK * RESTRICT &)p;                                \
+    T2 tmp = extract_##T2(v, 0);                                               \
+    fifo_st_push(q, tmp, s);                                                   \
+    tmp = extract_##T2(v, 1);                                                  \
+    fifo_st_push(q, tmp, s);                                                   \
+  }
+
+#define FIFO_ST_FLUSH_BFP16_WIDE(T1, T2, VAR, DM_BANK, RESTRICT)               \
+  INTRINSIC(void)                                                              \
+  fifo_st_flush##VAR(T1##_unaligned DM_BANK *RESTRICT &p, fifo_state_t &s) {   \
+    T2##_unaligned DM_BANK *RESTRICT &q =                                      \
+        (T2##_unaligned DM_BANK * RESTRICT &)p;                                \
+    fifo_st_flush(q, s);                                                       \
+    fifo_st_flush(q, s);                                                       \
+  }                                                                            \
+  INTRINSIC(void)                                                              \
+  fifo_st_flush##VAR##_1d_byte(T1##_unaligned DM_BANK *RESTRICT &p,            \
+                               fifo_state_t &s, int off) {                     \
+    T2##_unaligned DM_BANK *RESTRICT &q =                                      \
+        (T2##_unaligned DM_BANK * RESTRICT &)p;                                \
+    fifo_st_flush(q, s);                                                       \
+    fifo_st_flush_1d_byte(q, s, off);                                          \
+  }                                                                            \
+  INTRINSIC(void)                                                              \
+  fifo_st_flush##VAR##_2d_byte(T1##_unaligned DM_BANK *RESTRICT &p,            \
+                               fifo_state_t &s, int off, int size1,            \
+                               addr_t &count1, int inc1) {                     \
+    T2##_unaligned DM_BANK *RESTRICT &q =                                      \
+        (T2##_unaligned DM_BANK * RESTRICT &)p;                                \
+    fifo_st_flush(q, s);                                                       \
+    fifo_st_flush_2d_byte(q, s, off, size1, count1, inc1);                     \
+  }                                                                            \
+  INTRINSIC(void)                                                              \
+  fifo_st_flush##VAR##_3d_byte(T1##_unaligned DM_BANK *RESTRICT &p,            \
+                               fifo_state_t &s, int off, int size1,            \
+                               addr_t &count1, int inc1, int size2,            \
+                               addr_t &count2, int inc2) {                     \
+    T2##_unaligned DM_BANK *RESTRICT &q =                                      \
+        (T2##_unaligned DM_BANK * RESTRICT &)p;                                \
+    fifo_st_flush(q, s);                                                       \
+    fifo_st_flush_3d_byte(q, s, off, size1, count1, inc1, size2, count2,       \
+                          inc2);                                               \
+  }
+
 #define FIFO_ST(DM_BANK, RESTRICT)                                             \
   FIFO_ST_BFP16(v64bfp16ebs8, 576, DM_BANK, RESTRICT)                          \
   FIFO_ST_BFP16(v64bfp16ebs16, 544, DM_BANK, RESTRICT)                         \
@@ -237,7 +295,19 @@ INTRINSIC(v128uint8) unpack(v128uint4 v) { return unpack(v, __SIGN_UNSIGNED); }
   FIFO_ST_NORMAL(v32int16, DM_BANK, RESTRICT)                                  \
   FIFO_ST_NORMAL(v32uint16, DM_BANK, RESTRICT)                                 \
   FIFO_ST_NORMAL(v16int32, DM_BANK, RESTRICT)                                  \
-  FIFO_ST_NORMAL(v16uint32, DM_BANK, RESTRICT)
+  FIFO_ST_NORMAL(v16uint32, DM_BANK, RESTRICT)                                 \
+  FIFO_ST_PUSH_BFP16_WIDE(v128bfp16ebs8, v64bfp16ebs8, DM_BANK, RESTRICT)      \
+  FIFO_ST_PUSH_BFP16_WIDE(v128bfp16ebs16, v64bfp16ebs16, DM_BANK, RESTRICT)    \
+  FIFO_ST_FLUSH_BFP16_WIDE(v128bfp16ebs8, v64bfp16ebs8, , DM_BANK, RESTRICT)   \
+  FIFO_ST_FLUSH_BFP16_WIDE(v128bfp16ebs8, v64bfp16ebs8, _bare, DM_BANK,        \
+                           RESTRICT)                                           \
+  FIFO_ST_FLUSH_BFP16_WIDE(v128bfp16ebs8, v64bfp16ebs8, _conv, DM_BANK,        \
+                           RESTRICT)                                           \
+  FIFO_ST_FLUSH_BFP16_WIDE(v128bfp16ebs16, v64bfp16ebs16, , DM_BANK, RESTRICT) \
+  FIFO_ST_FLUSH_BFP16_WIDE(v128bfp16ebs16, v64bfp16ebs16, _bare, DM_BANK,      \
+                           RESTRICT)                                           \
+  FIFO_ST_FLUSH_BFP16_WIDE(v128bfp16ebs16, v64bfp16ebs16, _conv, DM_BANK,      \
+                           RESTRICT)
 
 FIFO_ST(, )
 FIFO_ST(__aie_dm_resource_a, )
@@ -269,6 +339,8 @@ FIFO_ST(__aie_dm_resource_cd, restrict)
 #undef FIFO_ST_PUSH_BFP16
 #undef FIFO_ST_NORMAL
 #undef FIFO_ST_BFP16
+#undef FIFO_ST_PUSH_BFP16_WIDE
+#undef FIFO_ST_FLUSH_BFP16_WIDE
 #undef FIFO_ST
 
 #define FIFO_LD_NORMAL(T, DM_BANK, RESTRICT)                                   \
@@ -416,6 +488,63 @@ FIFO_ST(__aie_dm_resource_cd, restrict)
     return fifo_ld_popx(p, s, 31, 31);                                         \
   }
 
+#define FIFO_LD_BFP16_WIDE(T1, T2, DM_BANK, RESTRICT)                          \
+  INTRINSIC(void)                                                              \
+  fifo_ld_reset(T1##_unaligned DM_BANK *RESTRICT &p, fifo_state_t &s) {        \
+    T2##_unaligned DM_BANK *RESTRICT &q =                                      \
+        (T2##_unaligned DM_BANK * RESTRICT &)p;                                \
+    fifo_ld_reset(q, s);                                                       \
+  }                                                                            \
+                                                                               \
+  INTRINSIC(void)                                                              \
+  fifo_ld_fill(T1##_unaligned DM_BANK *RESTRICT &p, fifo_state_t &s) {         \
+    T2##_unaligned DM_BANK *RESTRICT &q =                                      \
+        (T2##_unaligned DM_BANK * RESTRICT &)p;                                \
+    fifo_ld_fill(q, s);                                                        \
+  }                                                                            \
+  INTRINSIC(T1)                                                                \
+  fifo_ld_pop(T1##_unaligned DM_BANK *RESTRICT &p, fifo_state_t &s) {          \
+    T2##_unaligned DM_BANK *RESTRICT &q =                                      \
+        (T2##_unaligned DM_BANK * RESTRICT &)p;                                \
+    T1 v;                                                                      \
+    v = set_##T1(0, fifo_ld_pop(q, s));                                        \
+    v = insert(v, 1, fifo_ld_pop(q, s));                                       \
+    return v;                                                                  \
+  }                                                                            \
+  INTRINSIC(T1)                                                                \
+  fifo_ld_pop_1d_byte(T1##_unaligned DM_BANK *RESTRICT &p, fifo_state_t &s,    \
+                      int off) {                                               \
+    T2##_unaligned DM_BANK *RESTRICT &q =                                      \
+        (T2##_unaligned DM_BANK * RESTRICT &)p;                                \
+    T1 v;                                                                      \
+    v = set_##T1(0, fifo_ld_pop(q, s));                                        \
+    v = insert(v, 1, fifo_ld_pop_1d_byte(q, s, off));                          \
+    return v;                                                                  \
+  }                                                                            \
+  INTRINSIC(T1)                                                                \
+  fifo_ld_pop_2d_byte(T1##_unaligned DM_BANK *RESTRICT &p, fifo_state_t &s,    \
+                      int off, int size1, addr_t &count1, int inc1) {          \
+    T2##_unaligned DM_BANK *RESTRICT &q =                                      \
+        (T2##_unaligned DM_BANK * RESTRICT &)p;                                \
+    T1 v;                                                                      \
+    v = set_##T1(0, fifo_ld_pop(q, s));                                        \
+    v = insert(v, 1, fifo_ld_pop_2d_byte(q, s, off, size1, count1, inc1));     \
+    return v;                                                                  \
+  }                                                                            \
+  INTRINSIC(T1)                                                                \
+  fifo_ld_pop_3d_byte(T1##_unaligned DM_BANK *RESTRICT &p, fifo_state_t &s,    \
+                      int off, int size1, addr_t &count1, int inc1, int size2, \
+                      addr_t &count2, int inc2) {                              \
+    T2##_unaligned DM_BANK *RESTRICT &q =                                      \
+        (T2##_unaligned DM_BANK * RESTRICT &)p;                                \
+    T1 v;                                                                      \
+    v = set_##T1(0, fifo_ld_pop(q, s));                                        \
+    v = insert(v, 1,                                                           \
+               fifo_ld_pop_3d_byte(q, s, off, size1, count1, inc1, size2,      \
+                                   count2, inc2));                             \
+    return v;                                                                  \
+  }
+
 #define FIFO_LD(DM_BANK, RESTRICT)                                             \
   FIFO_LD_NORMAL(v32bfloat16, DM_BANK, RESTRICT)                               \
   FIFO_LD_NORMAL(v16float, DM_BANK, RESTRICT)                                  \
@@ -440,7 +569,9 @@ FIFO_ST(__aie_dm_resource_cd, restrict)
   FIFO_POPX(v16int32, DM_BANK, RESTRICT)                                       \
   FIFO_POPX(v16uint32, DM_BANK, RESTRICT)                                      \
   FIFO_FILLX(v64bfp16ebs8_unaligned, DM_BANK, RESTRICT)                        \
-  FIFO_FILLX(v64bfp16ebs16_unaligned, DM_BANK, RESTRICT)
+  FIFO_FILLX(v64bfp16ebs16_unaligned, DM_BANK, RESTRICT)                       \
+  FIFO_LD_BFP16_WIDE(v128bfp16ebs8, v64bfp16ebs8, DM_BANK, RESTRICT)           \
+  FIFO_LD_BFP16_WIDE(v128bfp16ebs16, v64bfp16ebs16, DM_BANK, RESTRICT)
 
 FIFO_LD(, )
 FIFO_LD(__aie_dm_resource_a, )
@@ -470,6 +601,7 @@ FIFO_LD(__aie_dm_resource_cd, restrict)
 #undef FIFO_LD_BFP16
 #undef FIFO_POPX
 #undef FIFO_FILLX
+#undef FIFO_LD_BFP16_WIDE
 #undef FIFO_LD
 
 #endif // AIE2P_LDST_H
