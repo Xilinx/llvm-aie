@@ -4,16 +4,16 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
-; RUN: llc -O2 -mtriple=aie2p -verify-machineinstrs --issue-limit=1 %s -o - | FileCheck %s
+; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+; RUN: llc -O2 -mtriple=aie2ps -verify-machineinstrs --issue-limit=1 %s -o - | FileCheck %s
 
 define void @test_single_diff_lane_buildvector() {
 ; CHECK-LABEL: test_single_diff_lane_buildvector:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #111; nopx
-; CHECK-NEXT:    mova r1, #777
+; CHECK-NEXT:    mova r2, #777
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vbcst.32 x0, r1 // Delay Slot 5
+; CHECK-NEXT:    vbcst.32 x0, r2 // Delay Slot 5
 ; CHECK-NEXT:    vinsert.32 x0, x0, #0, r0 // Delay Slot 4
 ; CHECK-NEXT:    mova p0, #0 // Delay Slot 3
 ; CHECK-NEXT:    vst wl0, [p0, #0] // Delay Slot 2
@@ -41,11 +41,11 @@ define void @test_symmetric_buildvector() {
 ; CHECK-LABEL: test_symmetric_buildvector:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #111; nopb ; nopxm ; nops
-; CHECK-NEXT:    mova r1, #222
+; CHECK-NEXT:    mova r2, #222
 ; CHECK-NEXT:    mova p0, #0
 ; CHECK-NEXT:    vbcst.32 x0, r0
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vbcst.32 x2, r1 // Delay Slot 5
+; CHECK-NEXT:    vbcst.32 x2, r2 // Delay Slot 5
 ; CHECK-NEXT:    vst wl0, [p0, #0] // Delay Slot 4
 ; CHECK-NEXT:    mova p0, #32 // Delay Slot 3
 ; CHECK-NEXT:    vst wl2, [p0, #0] // Delay Slot 2
@@ -59,16 +59,16 @@ define void @test_multi_diff_lane_buildvector() {
 ; CHECK-LABEL: test_multi_diff_lane_buildvector:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #111; nopxm
-; CHECK-NEXT:    mova r1, #222
-; CHECK-NEXT:    mova r2, #777
+; CHECK-NEXT:    mova r2, #222
+; CHECK-NEXT:    mova r4, #777
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r0
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r1
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r2
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r2
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r2
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r2
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r4
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r4
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r4
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r4
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r2 // Delay Slot 5
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r4 // Delay Slot 5
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r0 // Delay Slot 4
 ; CHECK-NEXT:    mova p0, #0 // Delay Slot 3
 ; CHECK-NEXT:    vst wh0, [p0, #0] // Delay Slot 2
@@ -81,17 +81,16 @@ entry:
 define void @test_buildvector_64bits() {
 ; CHECK-LABEL: test_buildvector_64bits:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r0, #777; nopx
+; CHECK-NEXT:    mova r0, #777; nopb ; nopxm
 ; CHECK-NEXT:    vpush.hi.16 x0, x0, r0
 ; CHECK-NEXT:    vpush.hi.16 x0, x0, r0
 ; CHECK-NEXT:    vpush.hi.16 x0, x0, r0
 ; CHECK-NEXT:    vpush.hi.16 x0, x0, r0
-; CHECK-NEXT:    vextract.64 r1:r0, x0, #0, vaddsign1
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    mova p0, #0 // Delay Slot 5
-; CHECK-NEXT:    st r0, [p0, #0] // Delay Slot 4
-; CHECK-NEXT:    mova p0, #4 // Delay Slot 3
-; CHECK-NEXT:    st r1, [p0, #0] // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    vextract.64 r1:r0, x0, #0, vaddsign1 // Delay Slot 4
+; CHECK-NEXT:    mova p0, #0 // Delay Slot 3
+; CHECK-NEXT:    st r1:r0, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   store <4 x i16> <i16 777, i16 777, i16 777, i16 777>, ptr addrspace(6) null, align 32

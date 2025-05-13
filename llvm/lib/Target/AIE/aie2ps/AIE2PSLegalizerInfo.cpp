@@ -68,11 +68,18 @@ isValidVectorMergeUnmergeOp(const unsigned BigVectorId,
   };
 }
 
-static LegalityPredicate isValidVectorAIEPS(const unsigned TypeIdx) {
+static LegalityPredicate isValidUnmergeVector(const unsigned TypeIdx) {
   return [=](const LegalityQuery &Query) {
     const LLT DstTy = Query.Types[TypeIdx];
     const unsigned DstSize = DstTy.getSizeInBits();
     return DstTy.isVector() && (DstSize == 32 || DstSize > 64);
+  };
+}
+
+static LegalityPredicate isValidBuildVector(const unsigned TypeIdx) {
+  return [=](const LegalityQuery &Query) {
+    const LLT DstTy = Query.Types[TypeIdx];
+    return DstTy.isVector() && DstTy.getSizeInBits() >= 32;
   };
 }
 
@@ -665,8 +672,10 @@ AIE2PSLegalizerInfo::AIE2PSLegalizerInfo(const AIE2PSSubtarget &ST)
           LegalityPredicates::all(isLegalBitCastType(0), isLegalBitCastType(1)))
       .customIf(typeInSet(0, {V2S8, S16}));
 
-  const LegalityPredicate IsNotValidDestinationVector =
-      negatePredicate(isValidVectorAIEPS(0));
+  const LegalityPredicate IsNotValidUnmergeVector =
+      negatePredicate(isValidUnmergeVector(0));
+  const LegalityPredicate IsNotValidBuildVector =
+      negatePredicate(isValidBuildVector(0));
 
   getActionDefinitionsBuilder(G_MERGE_VALUES)
       .legalFor({{S64, S32}})
@@ -751,7 +760,7 @@ AIE2PSLegalizerInfo::AIE2PSLegalizerInfo(const AIE2PSSubtarget &ST)
                (SrcTy.isVector() && DstTy.isScalar() &&
                 DstTy == SrcTy.getElementType());
       })
-      .unsupportedIf(IsNotValidDestinationVector)
+      .unsupportedIf(IsNotValidUnmergeVector)
       .legalIf(isValidVectorMergeUnmergeOp(1, 0));
 
   getActionDefinitionsBuilder(G_CONCAT_VECTORS)
@@ -782,7 +791,7 @@ AIE2PSLegalizerInfo::AIE2PSLegalizerInfo(const AIE2PSSubtarget &ST)
   getActionDefinitionsBuilder(G_BUILD_VECTOR)
       // Legacy legalization for bitcasts
       .legalFor({{V2S32, S32}})
-      .unsupportedIf(IsNotValidDestinationVector)
+      .unsupportedIf(IsNotValidBuildVector)
       // We clamp the high values and not the low ones, sice the former
       // splits the values but the latter keeps the same G_BUILD_VECTOR in
       // the output instructions which causes an infinite loop since it

@@ -50,6 +50,7 @@ class AIELegalizerHelper {
   const LLT V32ACC32 = LLT::fixed_vector(32, 32);
   const LLT V64S8 = LLT::fixed_vector(64, 8);
   const LLT V64FP32 = LLT::fixed_vector(64, 32);
+  const LLT V8S64 = LLT::fixed_vector(8, 64);
 
 public:
   AIELegalizerHelper(const AIEBaseSubtarget &ST);

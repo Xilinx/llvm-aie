@@ -196,9 +196,8 @@ bool AIELegalizerHelper::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
 
   assert((EltSize == 8 || EltSize == 16 || EltSize == 32 || EltSize == 64) &&
          "non-existent integer size");
-  assert(DstVecSize == 32 || (DstVecSize > 64 && DstVecSize <= 1024 &&
-                              "non-native vectors are not supported"));
-  assert(DstVecSize < 1024 && "vadd takes a 512-bit argument");
+  assert(DstVecSize >= 32 && DstVecSize < 1024 &&
+         "G_BUILD_VECTOR lowering supports 32-bit through 512-bit vectors");
 
   // If our vector is 32-bit we can store it as packed integer vector
   if (DstVecSize == 32)
@@ -264,6 +263,17 @@ bool AIELegalizerHelper::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
                       : MIRBuilder.buildBitcast(VecTy, Vec512Reg).getReg(0);
     MIRBuilder.buildInstr(II->getGenericUnpadVectorOpcode(), {DstReg},
                           {NewSrc2});
+  } else if (DstVecSize == 64) {
+    // E.G. AIE2 doesn't have an 64-bit extract vector element instruction
+    assert((ST.isAIE2P() || ST.isAIE2PS()) &&
+           "Only AIE2P and AIE2PS are supported for now");
+    Register Zero = MIRBuilder.buildConstant(S32, 0).getReg(0);
+    Register DstTemp = MRI.createGenericVirtualRegister(S64);
+    Register NewSrc = MIRBuilder.buildBitcast(V8S64, Src).getReg(0);
+
+    MIRBuilder.buildInstr(II->getGenericExtractVectorEltOpcode(true), {DstTemp},
+                          {NewSrc, Zero});
+    MIRBuilder.buildBitcast(DstReg, DstTemp);
   }
 
   MI.eraseFromParent();
