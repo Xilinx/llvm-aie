@@ -9,6 +9,8 @@
 
 %struct.v64bfp16ebs8 = type <{ <64 x i8>, <8 x i8> }>
 %struct.v64bfp16ebs16 = type <{ <64 x i8>, <8 x i8> }>
+%struct.v128bfp16ebs8 = type <{ <64 x i8>, <64 x i8>, <8 x i8>, <8 x i8> }>
+%struct.v128bfp16ebs16 = type <{ <64 x i8>, <64 x i8>, <8 x i8>, <8 x i8> }>
 
 
 define dso_local void @_Z17test_fifo_ld_fillRPDv64_DB8_R12fifo_state_t(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s) local_unnamed_addr #2 {
@@ -727,6 +729,404 @@ entry:
   store ptr %5, ptr %p, align 4
   ret void
 }
+
+
+define dso_local void @_Z18test_fifo_ld_resetRrP23v128bfp16ebs8_unalignedR12fifo_state_t(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s) local_unnamed_addr #0 {
+; CHECK-LABEL: _Z18test_fifo_ld_resetRrP23v128bfp16ebs8_unalignedR12fifo_state_t:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    lda p0, [p0, #0]; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopx
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    vlda lfl0, [p1, #0]
+; CHECK-NEXT:    mova dj0, #128; movx r24, #0; mov p2, p0
+; CHECK-NEXT:    vlda lfh0, [p1, #64]; st r24, [p1, dj0]
+; CHECK-NEXT:    vldb.fill.512 [p0, lf0, r24]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 5
+; CHECK-NEXT:    vst lfl0, [p1], #128 // Delay Slot 4
+; CHECK-NEXT:    st r24, [p1, #0] // Delay Slot 3
+; CHECK-NEXT:    st p0, [p2, #0] // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %pos.i.i = getelementptr inbounds i8, ptr %s, i20 128
+  store i32 0, ptr %pos.i.i, align 64, !tbaa !2
+  %0 = load ptr, ptr %p, align 4, !tbaa !7
+  %1 = load <32 x i32>, ptr %s, align 64
+  %2 = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.fill.p0.p0(ptr %0, <32 x i32> %1, i32 0)
+  %3 = extractvalue { ptr, <32 x i32>, i32 } %2, 0
+  %4 = extractvalue { ptr, <32 x i32>, i32 } %2, 1
+  %5 = extractvalue { ptr, <32 x i32>, i32 } %2, 2
+  store <32 x i32> %4, ptr %s, align 128
+  store i32 %5, ptr %pos.i.i, align 64
+  store ptr %3, ptr %p, align 4
+  ret void
+}
+
+define dso_local void @_Z17test_fifo_ld_fillRrP23v128bfp16ebs8_unalignedR12fifo_state_t(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s) local_unnamed_addr #0 {
+; CHECK-LABEL: _Z17test_fifo_ld_fillRrP23v128bfp16ebs8_unalignedR12fifo_state_t:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    lda p0, [p0, #0]; mov dj0, #128
+; CHECK-NEXT:    lda r24, [p1, dj0]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs p2, p0
+; CHECK-NEXT:    vlda lfh0, [p1, #64]
+; CHECK-NEXT:    vldb.fill.512 [p0, lf0, r24]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 5
+; CHECK-NEXT:    vst lfl0, [p1], #128 // Delay Slot 4
+; CHECK-NEXT:    st r24, [p1, #0] // Delay Slot 3
+; CHECK-NEXT:    st p0, [p2, #0] // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %pos1.i.i = getelementptr inbounds i8, ptr %s, i20 128
+  %0 = load ptr, ptr %p, align 4, !tbaa !7
+  %1 = load <32 x i32>, ptr %s, align 64
+  %2 = load i32, ptr %pos1.i.i, align 64
+  %3 = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.fill.p0.p0(ptr %0, <32 x i32> %1, i32 %2)
+  %4 = extractvalue { ptr, <32 x i32>, i32 } %3, 0
+  %5 = extractvalue { ptr, <32 x i32>, i32 } %3, 1
+  %6 = extractvalue { ptr, <32 x i32>, i32 } %3, 2
+  store <32 x i32> %5, ptr %s, align 128
+  store i32 %6, ptr %pos1.i.i, align 64
+  store ptr %4, ptr %p, align 4
+  ret void
+}
+
+define dso_local %struct.v128bfp16ebs8 @_Z16test_fifo_ld_popRrP23v128bfp16ebs8_unalignedR12fifo_state_t(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s) local_unnamed_addr #0 {
+; CHECK-LABEL: _Z16test_fifo_ld_popRrP23v128bfp16ebs8_unalignedR12fifo_state_t:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    lda p0, [p0, #0]; nopb ; nops ; nopx ; mov dj0, #128; nopv
+; CHECK-NEXT:    lda r24, [p1, dj0]; nopb ; nopx
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs p2, p0
+; CHECK-NEXT:    vlda lfh0, [p1, #64]
+; CHECK-NEXT:    vldb.pop.576 ex0, [p0, lf0, r24]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    st r24, [p1, dj0]
+; CHECK-NEXT:    vst lfl0, [p1, #0]
+; CHECK-NEXT:    vst lfh0, [p1, #64]
+; CHECK-NEXT:    st p0, [p2, #0]
+; CHECK-NEXT:    lda r24, [p1, dj0]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    vlda lfl0, [p1, #0]
+; CHECK-NEXT:    vlda lfh0, [p1, #64]
+; CHECK-NEXT:    vldb.pop.576 ex1, [p0, lf0, r24]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 5
+; CHECK-NEXT:    vst lfl0, [p1], #128 // Delay Slot 4
+; CHECK-NEXT:    st r24, [p1, #0] // Delay Slot 3
+; CHECK-NEXT:    st p0, [p2, #0] // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %pos1.i.i = getelementptr inbounds i8, ptr %s, i20 128
+  %0 = load ptr, ptr %p, align 4, !tbaa !7
+  %1 = load <32 x i32>, ptr %s, align 64
+  %2 = load i32, ptr %pos1.i.i, align 64
+  %3 = tail call { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.576.bfp16.p0.p0(ptr %0, <32 x i32> %1, i32 %2)
+  %4 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %3, 0
+  %5 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %3, 1
+  %6 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %3, 2
+  %7 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %3, 3
+  %8 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %3, 4
+  store <32 x i32> %5, ptr %s, align 128
+  store i32 %6, ptr %pos1.i.i, align 64
+  store ptr %4, ptr %p, align 4
+  %.fca.0.insert.i23.i = insertvalue %struct.v128bfp16ebs8 poison, <64 x i8> %7, 0
+  %9 = load <32 x i32>, ptr %s, align 64
+  %10 = load i32, ptr %pos1.i.i, align 64
+  %11 = tail call { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.576.bfp16.p0.p0(ptr %4, <32 x i32> %9, i32 %10)
+  %12 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %11, 0
+  %13 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %11, 1
+  %14 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %11, 2
+  %15 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %11, 3
+  %16 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %11, 4
+  store <32 x i32> %13, ptr %s, align 128
+  store i32 %14, ptr %pos1.i.i, align 64
+  store ptr %12, ptr %p, align 4
+  %.fca.1.insert.i28.i = insertvalue %struct.v128bfp16ebs8 %.fca.0.insert.i23.i, <64 x i8> %15, 1
+  %.fca.2.insert.i29.i = insertvalue %struct.v128bfp16ebs8 %.fca.1.insert.i28.i, <8 x i8> %8, 2
+  %.fca.3.insert.i30.i = insertvalue %struct.v128bfp16ebs8 %.fca.2.insert.i29.i, <8 x i8> %16, 3
+  ret %struct.v128bfp16ebs8 %.fca.3.insert.i30.i
+}
+
+define dso_local %struct.v128bfp16ebs8 @_Z24test_fifo_ld_pop_1d_byteRrP23v128bfp16ebs8_unalignedR12fifo_state_ti(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s, i32 noundef %off) local_unnamed_addr #0 {
+; CHECK-LABEL: _Z24test_fifo_ld_pop_1d_byteRrP23v128bfp16ebs8_unalignedR12fifo_state_ti:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    lda p0, [p0, #0]; nopb ; nops ; nopx ; mov dj0, #128; nopv
+; CHECK-NEXT:    lda r24, [p1, dj0]; nopx
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs p2, p0
+; CHECK-NEXT:    vlda lfh0, [p1, #64]
+; CHECK-NEXT:    vldb.pop.576 ex0, [p0, lf0, r24]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    st r24, [p1, dj0]
+; CHECK-NEXT:    vst lfl0, [p1, #0]
+; CHECK-NEXT:    vst lfh0, [p1, #64]
+; CHECK-NEXT:    st p0, [p2, #0]
+; CHECK-NEXT:    lda r24, [p1, dj0]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    vlda lfl0, [p1, #0]
+; CHECK-NEXT:    vlda lfh0, [p1, #64]; mov m0, r0
+; CHECK-NEXT:    vldb.pop.576 ex1, [p0, lf0, r24, m0]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 5
+; CHECK-NEXT:    vst lfl0, [p1], #128 // Delay Slot 4
+; CHECK-NEXT:    st r24, [p1, #0] // Delay Slot 3
+; CHECK-NEXT:    st p0, [p2, #0] // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %pos1.i.i = getelementptr inbounds i8, ptr %s, i20 128
+  %0 = load ptr, ptr %p, align 4, !tbaa !7
+  %1 = load <32 x i32>, ptr %s, align 64
+  %2 = load i32, ptr %pos1.i.i, align 64
+  %3 = tail call { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.576.bfp16.p0.p0(ptr %0, <32 x i32> %1, i32 %2)
+  %4 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %3, 0
+  %5 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %3, 1
+  %6 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %3, 2
+  %7 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %3, 3
+  %8 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %3, 4
+  store <32 x i32> %5, ptr %s, align 128
+  store i32 %6, ptr %pos1.i.i, align 64
+  store ptr %4, ptr %p, align 4
+  %.fca.0.insert.i23.i = insertvalue %struct.v128bfp16ebs8 poison, <64 x i8> %7, 0
+  %9 = load <32 x i32>, ptr %s, align 64
+  %10 = load i32, ptr %pos1.i.i, align 64
+  %11 = trunc i32 %off to i20
+  %12 = tail call { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.576.1d.bfp16.p0.p0(ptr %4, <32 x i32> %9, i32 %10, i20 %11)
+  %13 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %12, 0
+  %14 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %12, 1
+  %15 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %12, 2
+  %16 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %12, 3
+  %17 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %12, 4
+  store <32 x i32> %14, ptr %s, align 128
+  store i32 %15, ptr %pos1.i.i, align 64
+  store ptr %13, ptr %p, align 4
+  %.fca.1.insert.i28.i = insertvalue %struct.v128bfp16ebs8 %.fca.0.insert.i23.i, <64 x i8> %16, 1
+  %.fca.2.insert.i29.i = insertvalue %struct.v128bfp16ebs8 %.fca.1.insert.i28.i, <8 x i8> %8, 2
+  %.fca.3.insert.i30.i = insertvalue %struct.v128bfp16ebs8 %.fca.2.insert.i29.i, <8 x i8> %17, 3
+  ret %struct.v128bfp16ebs8 %.fca.3.insert.i30.i
+}
+
+define dso_local %struct.v128bfp16ebs8 @_Z24test_fifo_ld_pop_2d_byteRrP23v128bfp16ebs8_unalignedR12fifo_state_tiiRii(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s, i32 noundef %off, i32 noundef %size1, ptr nocapture nonnull align 4 dereferenceable(4) %count1, i32 noundef %inc1) local_unnamed_addr #0 {
+; CHECK-LABEL: _Z24test_fifo_ld_pop_2d_byteRrP23v128bfp16ebs8_unalignedR12fifo_state_tiiRii:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    lda p0, [p0, #0]; mov dj0, #128
+; CHECK-NEXT:    lda r24, [p1, dj0]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs p3, p0
+; CHECK-NEXT:    vlda lfh0, [p1, #64]
+; CHECK-NEXT:    vldb.pop.576 ex0, [p0, lf0, r24]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    st r24, [p1, dj0]
+; CHECK-NEXT:    vst lfl0, [p1, #0]
+; CHECK-NEXT:    vst lfh0, [p1, #64]
+; CHECK-NEXT:    st p0, [p3, #0]
+; CHECK-NEXT:    lda r24, [p1, dj0]
+; CHECK-NEXT:    lda dc0, [p2, #0]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; mov m0, r0
+; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs dn0, r1; mov dj0, r2
+; CHECK-NEXT:    vldb.pop.576.2d ex1, [p0, lf0, r24, d0]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    st dc0, [p2, #0]; ret lr
+; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 5
+; CHECK-NEXT:    vst lfl0, [p1], #128 // Delay Slot 4
+; CHECK-NEXT:    st r24, [p1, #0] // Delay Slot 3
+; CHECK-NEXT:    st p0, [p3, #0] // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %pos1.i.i = getelementptr inbounds i8, ptr %s, i20 128
+  %0 = load ptr, ptr %p, align 4, !tbaa !7
+  %1 = load <32 x i32>, ptr %s, align 64
+  %2 = load i32, ptr %pos1.i.i, align 64
+  %3 = tail call { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.576.bfp16.p0.p0(ptr %0, <32 x i32> %1, i32 %2)
+  %4 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %3, 0
+  %5 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %3, 1
+  %6 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %3, 2
+  %7 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %3, 3
+  %8 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %3, 4
+  store <32 x i32> %5, ptr %s, align 128
+  store i32 %6, ptr %pos1.i.i, align 64
+  store ptr %4, ptr %p, align 4
+  %.fca.0.insert.i23.i = insertvalue %struct.v128bfp16ebs8 poison, <64 x i8> %7, 0
+  %9 = load <32 x i32>, ptr %s, align 64
+  %10 = load i32, ptr %pos1.i.i, align 64
+  %11 = trunc i32 %off to i20
+  %12 = trunc i32 %size1 to i20
+  %13 = load i32, ptr %count1, align 4
+  %14 = trunc i32 %13 to i20
+  %15 = trunc i32 %inc1 to i20
+  %16 = tail call { ptr, <32 x i32>, i32, i20, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.576.2d.bfp16.p0.p0(ptr %4, <32 x i32> %9, i32 %10, i20 %11, i20 %12, i20 %14, i20 %15)
+  %17 = extractvalue { ptr, <32 x i32>, i32, i20, <64 x i8>, <8 x i8> } %16, 0
+  %18 = extractvalue { ptr, <32 x i32>, i32, i20, <64 x i8>, <8 x i8> } %16, 1
+  %19 = extractvalue { ptr, <32 x i32>, i32, i20, <64 x i8>, <8 x i8> } %16, 2
+  %20 = extractvalue { ptr, <32 x i32>, i32, i20, <64 x i8>, <8 x i8> } %16, 4
+  %21 = extractvalue { ptr, <32 x i32>, i32, i20, <64 x i8>, <8 x i8> } %16, 5
+  %22 = extractvalue { ptr, <32 x i32>, i32, i20, <64 x i8>, <8 x i8> } %16, 3
+  %23 = zext i20 %22 to i32
+  store i32 %23, ptr %count1, align 4
+  store <32 x i32> %18, ptr %s, align 128
+  store i32 %19, ptr %pos1.i.i, align 64
+  store ptr %17, ptr %p, align 4
+  %.fca.1.insert.i28.i = insertvalue %struct.v128bfp16ebs8 %.fca.0.insert.i23.i, <64 x i8> %20, 1
+  %.fca.2.insert.i29.i = insertvalue %struct.v128bfp16ebs8 %.fca.1.insert.i28.i, <8 x i8> %8, 2
+  %.fca.3.insert.i30.i = insertvalue %struct.v128bfp16ebs8 %.fca.2.insert.i29.i, <8 x i8> %21, 3
+  ret %struct.v128bfp16ebs8 %.fca.3.insert.i30.i
+}
+
+define dso_local %struct.v128bfp16ebs8 @_Z24test_fifo_ld_pop_3d_byteRrP23v128bfp16ebs8_unalignedR12fifo_state_tiiRiiiS5_i(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s, i32 noundef %off, i32 noundef %size1, ptr nocapture nonnull align 4 dereferenceable(4) %count1, i32 noundef %inc1, i32 noundef %size2, ptr nocapture nonnull align 4 dereferenceable(4) %count2, i32 noundef %inc2) local_unnamed_addr #0 {
+; CHECK-LABEL: _Z24test_fifo_ld_pop_3d_byteRrP23v128bfp16ebs8_unalignedR12fifo_state_tiiRiiiS5_i:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    lda p0, [p0, #0]; nopx ; mov dj0, #128
+; CHECK-NEXT:    lda r24, [p1, dj0]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs p4, p0
+; CHECK-NEXT:    vlda lfh0, [p1, #64]
+; CHECK-NEXT:    vldb.pop.576 ex0, [p0, lf0, r24]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    st r24, [p1, dj0]
+; CHECK-NEXT:    vst lfl0, [p1, #0]
+; CHECK-NEXT:    vst lfh0, [p1, #64]
+; CHECK-NEXT:    st p0, [p4, #0]
+; CHECK-NEXT:    lda r24, [p1, dj0]
+; CHECK-NEXT:    lda dc0, [p2, #0]
+; CHECK-NEXT:    lda dc4, [p3, #0]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    mov m0, r0
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs dn0, r1; mov dj4, r4
+; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs dn4, r3; mov dj0, r2
+; CHECK-NEXT:    vldb.pop.576.3d ex1, [p0, lf0, r24, d0]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    st dc0, [p2, #0]
+; CHECK-NEXT:    st dc4, [p3, #0]; ret lr
+; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 5
+; CHECK-NEXT:    vst lfl0, [p1], #128 // Delay Slot 4
+; CHECK-NEXT:    st r24, [p1, #0] // Delay Slot 3
+; CHECK-NEXT:    st p0, [p4, #0] // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %pos1.i.i = getelementptr inbounds i8, ptr %s, i20 128
+  %0 = load ptr, ptr %p, align 4, !tbaa !7
+  %1 = load <32 x i32>, ptr %s, align 64
+  %2 = load i32, ptr %pos1.i.i, align 64
+  %3 = tail call { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.576.bfp16.p0.p0(ptr %0, <32 x i32> %1, i32 %2)
+  %4 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %3, 0
+  %5 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %3, 1
+  %6 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %3, 2
+  %7 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %3, 3
+  %8 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %3, 4
+  store <32 x i32> %5, ptr %s, align 128
+  store i32 %6, ptr %pos1.i.i, align 64
+  store ptr %4, ptr %p, align 4
+  %.fca.0.insert.i23.i = insertvalue %struct.v128bfp16ebs8 poison, <64 x i8> %7, 0
+  %9 = load <32 x i32>, ptr %s, align 64
+  %10 = load i32, ptr %pos1.i.i, align 64
+  %11 = trunc i32 %off to i20
+  %12 = trunc i32 %size1 to i20
+  %13 = load i32, ptr %count1, align 4
+  %14 = trunc i32 %13 to i20
+  %15 = trunc i32 %inc1 to i20
+  %16 = trunc i32 %size2 to i20
+  %17 = load i32, ptr %count2, align 4
+  %18 = trunc i32 %17 to i20
+  %19 = trunc i32 %inc2 to i20
+  %20 = tail call { ptr, <32 x i32>, i32, i20, i20, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.576.3d.bfp16.p0.p0(ptr %4, <32 x i32> %9, i32 %10, i20 %11, i20 %12, i20 %14, i20 %15, i20 %16, i20 %18, i20 %19)
+  %21 = extractvalue { ptr, <32 x i32>, i32, i20, i20, <64 x i8>, <8 x i8> } %20, 0
+  %22 = extractvalue { ptr, <32 x i32>, i32, i20, i20, <64 x i8>, <8 x i8> } %20, 1
+  %23 = extractvalue { ptr, <32 x i32>, i32, i20, i20, <64 x i8>, <8 x i8> } %20, 2
+  %24 = extractvalue { ptr, <32 x i32>, i32, i20, i20, <64 x i8>, <8 x i8> } %20, 5
+  %25 = extractvalue { ptr, <32 x i32>, i32, i20, i20, <64 x i8>, <8 x i8> } %20, 6
+  %26 = extractvalue { ptr, <32 x i32>, i32, i20, i20, <64 x i8>, <8 x i8> } %20, 3
+  %27 = zext i20 %26 to i32
+  %28 = extractvalue { ptr, <32 x i32>, i32, i20, i20, <64 x i8>, <8 x i8> } %20, 4
+  %29 = zext i20 %28 to i32
+  store i32 %27, ptr %count1, align 4
+  store i32 %29, ptr %count2, align 4
+  store <32 x i32> %22, ptr %s, align 128
+  store i32 %23, ptr %pos1.i.i, align 64
+  store ptr %21, ptr %p, align 4
+  %.fca.1.insert.i28.i = insertvalue %struct.v128bfp16ebs8 %.fca.0.insert.i23.i, <64 x i8> %24, 1
+  %.fca.2.insert.i29.i = insertvalue %struct.v128bfp16ebs8 %.fca.1.insert.i28.i, <8 x i8> %8, 2
+  %.fca.3.insert.i30.i = insertvalue %struct.v128bfp16ebs8 %.fca.2.insert.i29.i, <8 x i8> %25, 3
+  ret %struct.v128bfp16ebs8 %.fca.3.insert.i30.i
+}
+
 
 
 
