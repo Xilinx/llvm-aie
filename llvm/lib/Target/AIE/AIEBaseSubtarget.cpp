@@ -392,8 +392,46 @@ public:
     };
     ArrayRef<AIE::MachineBundle> BotFixedBundles =
         CurRegion.getBotFixedBundles();
+    ArrayRef<AIE::MachineBundle> TopFixedBundles =
+        CurRegion.getTopFixedBundles();
+
     for (SUnit &FreeSU : make_filter_range(DAG->SUnits, IsFreeSU)) {
       const MachineInstr &MI = *FreeSU.getInstr();
+
+      auto UseOrDefReg = [](const MachineInstr &MI) {
+        return llvm::any_of(
+            MI.operands(), [](const MachineOperand &MO) { return MO.isReg(); });
+      };
+
+      if (MI.hasUnmodeledSideEffects() && !MI.mayLoadOrStore() &&
+          !TII->isLock(MI.getOpcode()) && !UseOrDefReg(MI)) {
+        // We are in front of an instruction with side effects, but with no
+        // memory deps and also no data dependency. Such instruction can be
+        // responsible for event signaling, for example. In this case, we should
+        // not interleave this instruction with fixed and already scheduled
+        // instructions. If the instruction does not meet the requirements, it
+        // will be handled by the subsequent code.
+        // This instruction shoud be scheduled before the first bot-fixed
+        // instruction.
+        if (!BotFixedBundles.empty()) {
+          SUnit *FixedDepSU = DAG->getSUnit(&*getBundleStart(
+              BotFixedBundles.front().getInstrs().front()->getIterator()));
+          SDep Dep(&FreeSU, SDep::Artificial);
+          Dep.setLatency(1);
+          FixedDepSU->addPred(Dep, /*Required=*/true);
+        }
+        // This instruction shoud be also scheduled after the first top-fixed
+        // instruction.
+        if (!TopFixedBundles.empty()) {
+          SUnit *FixedDepSU = DAG->getSUnit(&*getBundleStart(
+              TopFixedBundles.back().getInstrs().front()->getIterator()));
+          SDep Dep(FixedDepSU, SDep::Artificial);
+          Dep.setLatency(1);
+          FreeSU.addPred(Dep, /*Required=*/true);
+        }
+        continue;
+      }
+
       MachineInstr *FixedDepMI =
           AIE::findEarliestRef(MI, BotFixedBundles, BotFixedBundles.size()).MI;
       if (!FixedDepMI)
@@ -437,8 +475,6 @@ public:
     }
 
     ArrayRef<AIE::MachineBundle> LoopTimedBundles = LBS.getTop().Bundles;
-    ArrayRef<AIE::MachineBundle> TopFixedBundles =
-        CurRegion.getTopFixedBundles();
 
     RET.computeUseDefForward(TopFixedBundles, /*InSeparateRegion=*/false);
     // It is more cost-effective to reuse the RET to establish individual safety
