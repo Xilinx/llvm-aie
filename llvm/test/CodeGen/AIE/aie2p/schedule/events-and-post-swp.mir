@@ -14,7 +14,12 @@
   ; CHECK-LABEL: keep_event_order:
   ; CHECK:         .p2align 4
   ; CHECK-NEXT:  // %bb.0: // %entry
-  ; CHECK-NEXT:    vldb x2, [p0], #64; nopx
+  ; CHECK-NEXT:    nopa ; nopb ; nops ; event #0; nopm ; nopv
+  ; CHECK-NEXT:    nopa ; event #1
+  ; CHECK-NEXT:    event #0
+  ; CHECK-NEXT:    event #1
+  ; CHECK-NEXT:    event #0
+  ; CHECK-NEXT:    vldb x2, [p0], #64
   ; CHECK-NEXT:    vldb x2, [p0], #64
   ; CHECK-NEXT:    vldb x2, [p0], #64; movxm ls, #.LBB0_1
   ; CHECK-NEXT:    mova r2, #-5; vldb x2, [p0], #64; movxm le, #.L_LEnd0
@@ -22,36 +27,37 @@
   ; CHECK-NEXT:    vldb x2, [p0], #64; add.nc lc, r1, #-13
   ; CHECK-NEXT:    mova r0, #824; vldb x2, [p0], #64; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopxm ; vmul dm0, y1, y0,r0
-  ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; event #0; nopm ; vmul dm0, y1, y0,r0
-  ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; event #1; nopm ; vmul dm0, y1, y0,r0
-  ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; event #0; nopm ; vmul dm0, y1, y0,r0
-  ; CHECK-NEXT:    mova r3, #0; vldb x2, [p0], #64; nops ; event #1; mov crsrsmode, #0; vmul dm0, y1, y0,r0
-  ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; event #0; mov s0, r3; vmul dm0, y1, y0,r0
+  ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopxm ; vmul dm0, y1, y0,r0
+  ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopxm ; vmul dm0, y1, y0,r0
+  ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopxm ; vmul dm0, y1, y0,r0
+  ; CHECK-NEXT:    mova r3, #0; vldb x2, [p0], #64; nops ; nopx ; mov crsrsmode, #0; vmul dm0, y1, y0,r0
+  ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopx ; mov s0, r3; vmul dm0, y1, y0,r0
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_1: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; vst.srs.2x cml0, s0, srssign1, [p1], #64; nopxm ; vmul dm0, y1, y0,r0
   ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
-  ; CHECK-NEXT:    nopa ; nopb ; vst.srs.2x cml0, s0, srssign1, [p1], #64; nopxm ; vmul dm0, y1, y0,r0
+  ; CHECK-NEXT:    nopa ; nopb ; nopx ; vst.srs.2x cml0, s0, srssign1, [p1], #64; vmul dm0, y1, y0,r0
   ; CHECK-NEXT:    vst.srs.2x cml0, s0, srssign1, [p1], #64; vmul dm0, y1, y0,r0
   ; CHECK-NEXT:    vst.srs.2x cml0, s0, srssign1, [p1], #64; vmul dm0, y1, y0,r0
   ; CHECK-NEXT:    vst.srs.2x cml0, s0, srssign1, [p1], #64; vmul dm0, y1, y0,r0
   ; CHECK-NEXT:    vst.srs.2x cml0, s0, srssign1, [p1], #64; vmul dm0, y1, y0,r0
   ; CHECK-NEXT:    vst.srs.2x cml0, s0, srssign1, [p1], #64; vmul dm0, y1, y0,r0
-  ; CHECK-NEXT:    vst.srs.2x cml0, s0, srssign1, [p1], #64; event #1; vmul dm0, y1, y0,r0
-  ; CHECK-NEXT:    vst.srs.2x cml0, s0, srssign1, [p1], #64; event #0
-  ; CHECK-NEXT:    vst.srs.2x cml0, s0, srssign1, [p1], #64; event #1
-  ; CHECK-NEXT:    vst.srs.2x cml0, s0, srssign1, [p1], #64; event #0
-  ; CHECK-NEXT:    vst.srs.2x cml0, s0, srssign1, [p1], #64; event #1
+  ; CHECK-NEXT:    vst.srs.2x cml0, s0, srssign1, [p1], #64; vmul dm0, y1, y0,r0
   ; CHECK-NEXT:    vst.srs.2x cml0, s0, srssign1, [p1], #64
   ; CHECK-NEXT:    vst.srs.2x cml0, s0, srssign1, [p1], #64
+  ; CHECK-NEXT:    vst.srs.2x cml0, s0, srssign1, [p1], #64
+  ; CHECK-NEXT:    vst.srs.2x cml0, s0, srssign1, [p1], #64
+  ; CHECK-NEXT:    vst.srs.2x cml0, s0, srssign1, [p1], #64
+  ; CHECK-NEXT:    vst.srs.2x cml0, s0, srssign1, [p1], #64
+  ; CHECK-NEXT:    event #1
   ; CHECK-NEXT:    ret lr
   ; CHECK-NEXT:    nop // Delay Slot 5
-  ; CHECK-NEXT:    nop // Delay Slot 4
-  ; CHECK-NEXT:    nop // Delay Slot 3
-  ; CHECK-NEXT:    nop // Delay Slot 2
-  ; CHECK-NEXT:    nop // Delay Slot 1
+  ; CHECK-NEXT:    event #0 // Delay Slot 4
+  ; CHECK-NEXT:    event #1 // Delay Slot 3
+  ; CHECK-NEXT:    event #0 // Delay Slot 2
+  ; CHECK-NEXT:    event #1 // Delay Slot 1
   entry:
     tail call void @llvm.aie2p.event(i32 0)
     tail call void @llvm.aie2p.event(i32 1)
