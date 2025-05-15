@@ -298,6 +298,8 @@ jobs:
       if: contains(matrix.OS, 'ubuntu') || contains(matrix.OS, 'macos')
       working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
       run: |
+
+        sudo apt install -y rename
         
         rename 's/cp310-cp310/py3-none/' wheelhouse/llvm_aie-*whl
         rename 's/cp311-cp311/py3-none/' wheelhouse/llvm_aie-*whl
