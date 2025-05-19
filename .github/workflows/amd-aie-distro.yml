@@ -1,6 +1,7 @@
 name: AMD AIE Distro
 
 on:
+  pull_request:
   workflow_dispatch:
     inputs:
       DEBUG_ENABLED:
@@ -73,7 +74,7 @@ jobs:
       - name: Checkout actions
         uses: actions/checkout@v3
         with:
-          ref: ${{ github.head_ref || github.ref_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
           # check out anything
           sparse-checkout: .github/workflows/amd_aie_releases
           sparse-checkout-cone-mode: false
@@ -82,12 +83,13 @@ jobs:
         id: get_llvm_aie_project_commit
         run: |
           
-          if [ x"${{ inputs.LLVM_AIE_COMMIT }}" == x"" ]; then
-            LLVM_AIE_PROJECT_COMMIT=$(git rev-parse ${{ github.head_ref || github.ref_name }})
-            LLVM_AIE_PROJECT_COMMIT=${LLVM_AIE_PROJECT_COMMIT:0:8}
-          else
-            LLVM_AIE_PROJECT_COMMIT="${{ inputs.LLVM_AIE_COMMIT }}"
-          fi
+          # if [ x"${{ inputs.LLVM_AIE_COMMIT }}" == x"" ]; then
+          #   LLVM_AIE_PROJECT_COMMIT=$(git rev-parse ${{ github.head_ref || github.ref_name }})
+          #   LLVM_AIE_PROJECT_COMMIT=${LLVM_AIE_PROJECT_COMMIT:0:8}
+          # else
+          #   LLVM_AIE_PROJECT_COMMIT="${{ inputs.LLVM_AIE_COMMIT }}"
+          # fi
+          LLVM_AIE_PROJECT_COMMIT=${{ github.event.pull_request.head.sha }}
           echo "LLVM_AIE_PROJECT_COMMIT=${LLVM_AIE_PROJECT_COMMIT}" | tee -a $GITHUB_OUTPUT
           DATETIME=$(date +"%Y%m%d%H")
           echo "DATETIME=${DATETIME}" | tee -a $GITHUB_OUTPUT
@@ -164,7 +166,7 @@ jobs:
     steps:
 
     - name: Checkout actions
-      uses: actions/checkout@v4
+      uses: actions/checkout@v3
       with:
         sparse-checkout: .github/workflows/amd_aie_releases
         # Turning off cone mode ensures that files in the project root are not included during checkout
