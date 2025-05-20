@@ -20,10 +20,7 @@
   ; CHECK-LABEL: gemm:
   ; CHECK:         .p2align 4
   ; CHECK-NEXT:  // %bb.0: // %entry
-  ; CHECK-NEXT:    nopx
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    vldb x4, [p7, #64]
+  ; CHECK-NEXT:    nopa ; vldb x4, [p7, #64]; nopxm
   ; CHECK-NEXT:    vldb.3d x7, [p7], d0; movs p4, p7
   ; CHECK-NEXT:    paddb [p4], m4
   ; CHECK-NEXT:    vldb x9, [p4, #0]

@@ -29,10 +29,7 @@
   ; CHECK-NEXT:    nop // Delay Slot 2
   ; CHECK-NEXT:    nop // Delay Slot 1
   ; CHECK-NEXT:  // %bb.1: // %for.body.preheader
-  ; CHECK-NEXT:    nopx
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    vlda.ups.s32.s8 cm0, s0, [p0], #32
+  ; CHECK-NEXT:    vlda.ups.s32.s8 cm0, s0, [p0], #32; nopb ; nopxm
   ; CHECK-NEXT:    vlda.ups.s32.s8 cm1, s0, [p0], #32
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop

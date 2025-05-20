@@ -310,9 +310,15 @@ class PipelineExtractor : public PipelineScheduleVisitor {
     // Nothing at this time, but let's keep the override around
   }
   void startLoop() override {
-    assert(Prologue->BottomInsert.empty() &&
-           "PreHeader already has a timed region at Bottom.");
-    Prologue->BottomInsert = TimedRegion;
+    auto &CopyTo = Prologue->BottomInsert;
+    assert(CopyTo.empty() && "PreHeader already has a timed region at Bottom.");
+    bool CopyEmpty = false;
+    for (auto &B : TimedRegion) {
+      if (!B.empty() || CopyEmpty) {
+        CopyTo.emplace_back(B);
+        CopyEmpty = true;
+      }
+    }
     TimedRegion.clear();
     InLoop = true;
   }
@@ -322,9 +328,24 @@ class PipelineExtractor : public PipelineScheduleVisitor {
     InLoop = false;
   }
   void finish() override {
-    assert(Epilogue->TopInsert.empty() &&
-           "Epilogue already has a timed region at Top.");
-    Epilogue->TopInsert = TimedRegion;
+    auto &CopyTo = Epilogue->TopInsert;
+    assert(CopyTo.empty() && "Epilogue already has a timed region at Top.");
+
+    // Establish the number of bundles to copy.
+    int NonEmpty = TimedRegion.size();
+    for (auto &B : reverse(TimedRegion)) {
+      if (!B.empty()) {
+        break;
+      }
+      NonEmpty--;
+    }
+    // And copy them.
+    for (auto &B : TimedRegion) {
+      if (NonEmpty > 0) {
+        CopyTo.push_back(B);
+      }
+      NonEmpty--;
+    }
     TimedRegion.clear();
   }
   void startBundle() override { CurrentBundle.clear(); }
