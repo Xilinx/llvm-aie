@@ -152,7 +152,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - OS: ubuntu-22.04
+          - OS: ubuntu-latest
             ARCH: x86_64
           - OS: windows-2019
             ARCH: AMD64
@@ -188,6 +188,11 @@ jobs:
         MATRIX_OS: ${{ matrix.OS }}
         MATRIX_ARCH: ${{ matrix.ARCH }}
         WORKSPACE_ROOT: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
+
+    - name: Install APT requirements
+      if: contains(matrix.OS, 'ubuntu')
+      run: |
+        sudo apt update && sudo apt install -y rename
 
       # This step is needed because action/checkout does not support paths.
     - name: Copy stuff to workspace_root
