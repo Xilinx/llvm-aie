@@ -190,7 +190,7 @@ jobs:
         WORKSPACE_ROOT: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
 
     - name: Install APT requirements
-      if: ${{ matrix.os == "ubuntu-latest" }}
+      if: contains(matrix.OS, 'ubuntu')
       run: |
         sudo apt update && sudo apt install -y rename
 
