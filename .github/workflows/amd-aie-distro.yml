@@ -189,6 +189,11 @@ jobs:
         MATRIX_ARCH: ${{ matrix.ARCH }}
         WORKSPACE_ROOT: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
 
+    - name: Install APT requirements
+      if: ${{ matrix.os == "ubuntu-latest" }}
+      run: |
+        sudo apt update && sudo apt install -y rename
+
       # This step is needed because action/checkout does not support paths.
     - name: Copy stuff to workspace_root
       run: |
