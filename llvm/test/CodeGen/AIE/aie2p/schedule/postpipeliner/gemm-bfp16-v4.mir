@@ -18,13 +18,8 @@
   ; CHECK-LABEL: gemm:
   ; CHECK:         .p2align 4
   ; CHECK-NEXT:  // %bb.0: // %entry
-  ; CHECK-NEXT:    nopx
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    vlda x1, [p6, #64]; vldb.3d x0, [p6], d0; movs p5, p6
-  ; CHECK-NEXT:    padda [p5], m4
+  ; CHECK-NEXT:    vlda x1, [p6, #64]; vldb.3d x0, [p6], d0; movs p5, p6; nopxm ; nopv
+  ; CHECK-NEXT:    padda [p5], m4; nopb ; nopx
   ; CHECK-NEXT:    vlda x6, [p5, #0]; vldb x4, [p5, #64]
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop

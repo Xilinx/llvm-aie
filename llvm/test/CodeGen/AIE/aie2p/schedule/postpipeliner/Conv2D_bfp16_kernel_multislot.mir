@@ -14,8 +14,6 @@
   ; CHECK-LABEL: conv2d_bfp16:
   ; CHECK:         .p2align 4
   ; CHECK-NEXT:  // %bb.0: // %entry
-  ; CHECK-NEXT:    nopa ; nopb ; nopxm ; nops
-  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    mova r25, #0
   ; CHECK-NEXT:    vldb.fill.512 [p1, lf1, r25]
   ; CHECK-NEXT:    vldb.fill.512 [p1, lf1, r25]
