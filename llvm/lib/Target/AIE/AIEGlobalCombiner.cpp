@@ -211,6 +211,94 @@ std::vector<const GenericCombiner *> CombineCandidates::searchCombinerSet(
   // seed greedy solution
   auto BestSolution = getGreedySolution();
 
+  std::priority_queue<CombinerSolution> PQ;
+  // Add Start Position
+  PQ.emplace(NumCombiner);
+  LLVM_DEBUG(dbgs() << MBB->getName() << " - Initial Search Start "
+                    << BestSolution << "\n");
+
+  // The search algorithm finds the optimal combination of combiners to
+  // maximize gain.  It starts with a greedy solution and iteratively
+  // explores the solution space using a priority queue.
+  //
+  // The Index within the CombinerSolution represents the index of the next
+  // combiner in the Combiners vector to consider. The Index is updated when a
+  // new CombinerSolution is created and pushed onto the priority queue, either
+  // by including the current combiner (Index increments by 1) or skipping it
+  // (Index increments by 1). Including a combiner always guarantees that the
+  // applied combiners are conflict free.
+  //
+  // The search prunes branches that cannot surpass the current best solution,
+  // and prioritizes candidates based on their potential future gain. The
+  // algorithm considers both applying and skipping each combiner to find the
+  // best overall combination. The priority queue ensures that we explore
+  // promising solutions first. When popping an element of the priority queue,
+  // we also remove it from the queue, thereby guaranteeing we don't search the
+  // same solution root twice. The algorithm is exhaustive, limited only by the
+  // maximum number of iterations.
+  int Iteration = 0;
+  while (!PQ.empty() && Iteration < MaxSearchIterationCount) {
+    Iteration++;
+
+    // Get best Candidate to continue searching
+    const CombinerSolution Current = PQ.top();
+    PQ.pop();
+    LLVM_DEBUG(dbgs() << "Search " << Current
+                      << " MaxGain = " << Current.getMaxFutureGain() << "\n");
+
+    // Check if Current has finished the search
+    if (Current.getIndex() == Combiners.size()) {
+      if (Current.getGain() > BestSolution.getGain()) {
+        LLVM_DEBUG(dbgs() << "  [Search] Updated Optimal Combiner " << Current
+                          << "\n");
+        BestSolution = Current;
+      }
+      continue;
+    }
+
+    const GenericCombiner *Candidate = Combiners[Current.getIndex()];
+
+    // Check if search can be stopped for Current
+    const auto PotentialGain = getMaxPotentialGain(Current, Current.getIndex());
+    if (BestSolution.getGain() > PotentialGain) {
+      LLVM_DEBUG(
+          dbgs() << "  [Search] Cannot Surpass BestScore, skipping exploration "
+                 << *Candidate << " Candidate: " << Candidate->getGain()
+                 << " Overlap= "
+                 << Candidate->getOverlapGain(Current.getCombinersBitVector(),
+                                              Combiners)
+                 << " MaxGain = " << PotentialGain << "\n");
+      continue;
+    }
+
+    if (Current.hasConflict(Candidate)) {
+      LLVM_DEBUG(dbgs() << "  Conflict, adding Non-Conflict Variant "
+                        << *Candidate << "Candidate: " << Candidate->getGain()
+                        << "\n");
+    } else {
+      PQ.emplace(Current, Candidate, PotentialGain, Current.getIndex(),
+                 Combiners);
+      LLVM_DEBUG(dbgs() << "  Adding to Stack: " << *Candidate
+                        << "Candidate: " << Candidate->getGain()
+                        << " MaxGain = " << PotentialGain << "\n");
+    }
+
+    // Add a solution where no combiner is applied, if it could Surpass
+    // CurrentBest
+    const auto NoneMaxFutureGain =
+        getMaxPotentialGain(Current, Current.getIndex() + 1);
+    if (BestSolution.getGain() < NoneMaxFutureGain) {
+      LLVM_DEBUG(dbgs() << "  Adding to Stack: None MaxGain = "
+                        << NoneMaxFutureGain << "\n");
+      // Idx is not needed, since we do not apply any Combiner
+      PQ.emplace(Current, nullptr, NoneMaxFutureGain, /*Idx=*/-1, Combiners);
+    }
+  } // end while
+
+  LLVM_DEBUG(dbgs() << "Search Iterations: " << Iteration << "\n");
+  LLVM_DEBUG(dbgs() << "Search Result " << BestSolution.getGain() << "\n");
+
+  // Save best Candidate to FixedCombiners
   std::vector<const GenericCombiner *> Result;
   BitVector CombinerBitVec = BestSolution.getCombinersBitVector();
   for (int Idx = CombinerBitVec.find_first(); Idx != -1;

@@ -20,15 +20,15 @@ define dso_local void @lowerMemcpyUsingWord() local_unnamed_addr #0 {
 ; CHECK-NEXT:    lda r1, [p0], #4
 ; CHECK-NEXT:    lda r2, [p0], #4
 ; CHECK-NEXT:    lda r3, [p0], #4
-; CHECK-NEXT:    lda r4, [p0], #4
-; CHECK-NEXT:    lda r5, [p0, #0]
+; CHECK-NEXT:    lda r4, [p0, #0]
+; CHECK-NEXT:    lda r5, [p0, #4]
 ; CHECK-NEXT:    movxm p0, ##buffer1
 ; CHECK-NEXT:    st r0, [p0], #4
 ; CHECK-NEXT:    st r1, [p0], #4; ret lr
 ; CHECK-NEXT:    st r2, [p0], #4 // Delay Slot 5
 ; CHECK-NEXT:    st r3, [p0], #4 // Delay Slot 4
-; CHECK-NEXT:    st r4, [p0], #4 // Delay Slot 3
-; CHECK-NEXT:    st r5, [p0, #0] // Delay Slot 2
+; CHECK-NEXT:    st r4, [p0, #0] // Delay Slot 3
+; CHECK-NEXT:    st r5, [p0, #4] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   tail call void @llvm.memcpy.p0.p0.i32(ptr noundef nonnull align 4 dereferenceable(24) @buffer1, ptr noundef nonnull align 4 dereferenceable(24) @buffer2, i32 24, i1 false)
@@ -73,16 +73,16 @@ define dso_local void @lowerMemcpyUsingHalfByte() local_unnamed_addr #0 {
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; movxm p0, ##buffer2; nops
-; CHECK-NEXT:    lda.s16 r0, [p0], #2; movxm p1, ##buffer1
-; CHECK-NEXT:    st.s16 r0, [p1], #2
+; CHECK-NEXT:    lda.s16 r0, [p0, #0]; movxm p1, ##buffer1
+; CHECK-NEXT:    st.s16 r0, [p1, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    lda.s8 r0, [p0, #0]
-; CHECK-NEXT:    st.s8 r0, [p1, #0]
+; CHECK-NEXT:    lda.s8 r0, [p0, #2]
+; CHECK-NEXT:    st.s8 r0, [p1, #2]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -101,31 +101,37 @@ define dso_local void @lowerMemcpyUsingWordHalfByte() local_unnamed_addr #0 {
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; movxm p0, ##(buffer2+8); nopv
-; CHECK-NEXT:    lda.s16 r0, [p0, #0]; nopb ; nopx
-; CHECK-NEXT:    lda r1, [p0, #-4]; movxm p1, ##(buffer1+8)
+; CHECK-NEXT:    lda.s16 r0, [p0, #0]; nopb ; movxm p1, ##(buffer1+8)
 ; CHECK-NEXT:    st.s16 r0, [p1, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    lda.s8 r0, [p0, #2]
-; CHECK-NEXT:    st.s8 r0, [p1, #2]
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    mova m0, #-8
+; CHECK-NEXT:    padda [p0], m0
+; CHECK-NEXT:    lda r0, [p0], #4
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    lda r0, [p0, #-8]
+; CHECK-NEXT:    padda [p1], m0
+; CHECK-NEXT:    lda.s8 r0, [p0, #6]; st r0, [p1], #4
+; CHECK-NEXT:    st.s8 r0, [p1, #6]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    lda r0, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    st r1, [p1, #-4] // Delay Slot 3
-; CHECK-NEXT:    st r0, [p1, #-8] // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    st r0, [p1, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   tail call void @llvm.memcpy.p0.p0.i32(ptr noundef nonnull align 4 dereferenceable(11) @buffer1, ptr noundef nonnull align 4 dereferenceable(11) @buffer2, i32 11, i1 false)
@@ -159,15 +165,15 @@ define dso_local void @lowerMemcpyUsingWordVector16() local_unnamed_addr #0 {
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    movxm p0, ##buffer2
 ; CHECK-NEXT:    vldb.128 wh0, [p0], #16; nopx
-; CHECK-NEXT:    vldb.128 wh2, [p0], #16
-; CHECK-NEXT:    lda r0, [p0, #0]
+; CHECK-NEXT:    vldb.128 wh2, [p0, #0]
+; CHECK-NEXT:    lda r0, [p0, #16]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    movxm p0, ##buffer1 // Delay Slot 5
 ; CHECK-NEXT:    vst.128 wh0, [p0], #16 // Delay Slot 4
-; CHECK-NEXT:    vst.128 wh2, [p0], #16 // Delay Slot 3
-; CHECK-NEXT:    st r0, [p0, #0] // Delay Slot 2
+; CHECK-NEXT:    vst.128 wh2, [p0, #0] // Delay Slot 3
+; CHECK-NEXT:    st r0, [p0, #16] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   tail call void @llvm.memcpy.p0.p0.i32(ptr noundef nonnull align 16 dereferenceable(36) @buffer1, ptr noundef nonnull align 16 dereferenceable(36) @buffer2, i32 36, i1 false)
@@ -183,15 +189,15 @@ define dso_local void @lowerMemcpyUsingWordVector32() local_unnamed_addr #0 {
 ; CHECK-NEXT:    vldb wh0, [p0], #32
 ; CHECK-NEXT:    lda r0, [p0], #4
 ; CHECK-NEXT:    lda r1, [p0], #4
-; CHECK-NEXT:    lda r2, [p0], #4
-; CHECK-NEXT:    lda r3, [p0, #0]
+; CHECK-NEXT:    lda r2, [p0, #0]
+; CHECK-NEXT:    lda r3, [p0, #4]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    movxm p0, ##buffer1
 ; CHECK-NEXT:    vst wh0, [p0], #32; ret lr
 ; CHECK-NEXT:    st r0, [p0], #4 // Delay Slot 5
 ; CHECK-NEXT:    st r1, [p0], #4 // Delay Slot 4
-; CHECK-NEXT:    st r2, [p0], #4 // Delay Slot 3
-; CHECK-NEXT:    st r3, [p0, #0] // Delay Slot 2
+; CHECK-NEXT:    st r2, [p0, #0] // Delay Slot 3
+; CHECK-NEXT:    st r3, [p0, #4] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   tail call void @llvm.memcpy.p0.p0.i32(ptr noundef nonnull align 32 dereferenceable(48) @buffer1, ptr noundef nonnull align 32 dereferenceable(48) @buffer2, i32 48, i1 false)
@@ -207,15 +213,15 @@ define dso_local void @lowerMemcpyUsingWordVector64() local_unnamed_addr #0 {
 ; CHECK-NEXT:    vldb x0, [p0], #64
 ; CHECK-NEXT:    lda r0, [p0], #4
 ; CHECK-NEXT:    lda r1, [p0], #4
-; CHECK-NEXT:    lda r2, [p0], #4
-; CHECK-NEXT:    lda r3, [p0, #0]
+; CHECK-NEXT:    lda r2, [p0, #0]
+; CHECK-NEXT:    lda r3, [p0, #4]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    movxm p0, ##buffer1
 ; CHECK-NEXT:    vst x0, [p0], #64; ret lr
 ; CHECK-NEXT:    st r0, [p0], #4 // Delay Slot 5
 ; CHECK-NEXT:    st r1, [p0], #4 // Delay Slot 4
-; CHECK-NEXT:    st r2, [p0], #4 // Delay Slot 3
-; CHECK-NEXT:    st r3, [p0, #0] // Delay Slot 2
+; CHECK-NEXT:    st r2, [p0, #0] // Delay Slot 3
+; CHECK-NEXT:    st r3, [p0, #4] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   tail call void @llvm.memcpy.p0.p0.i32(ptr noundef nonnull align 64 dereferenceable(80) @buffer1, ptr noundef nonnull align 64 dereferenceable(80) @buffer2, i32 80, i1 false)
@@ -263,8 +269,8 @@ define dso_local void @lowerMemsetUsingWordVector32() local_unnamed_addr #2 {
 ; CHECK-NEXT:    vst wl0, [p0], #32; ret lr
 ; CHECK-NEXT:    st r0, [p0], #4 // Delay Slot 5
 ; CHECK-NEXT:    st r0, [p0], #4 // Delay Slot 4
-; CHECK-NEXT:    st r0, [p0], #4 // Delay Slot 3
-; CHECK-NEXT:    st r0, [p0, #0] // Delay Slot 2
+; CHECK-NEXT:    st r0, [p0, #0] // Delay Slot 3
+; CHECK-NEXT:    st r0, [p0, #4] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   tail call void @llvm.memset.p0.i32(ptr noundef nonnull align 32 dereferenceable(48) @buffer1, i8 0, i32 48, i1 false)
@@ -282,8 +288,8 @@ define dso_local void @lowerMemsetUsingWordVector64() local_unnamed_addr #2 {
 ; CHECK-NEXT:    vst x0, [p0], #64; ret lr
 ; CHECK-NEXT:    st r0, [p0], #4 // Delay Slot 5
 ; CHECK-NEXT:    st r0, [p0], #4 // Delay Slot 4
-; CHECK-NEXT:    st r0, [p0], #4 // Delay Slot 3
-; CHECK-NEXT:    st r0, [p0, #0] // Delay Slot 2
+; CHECK-NEXT:    st r0, [p0, #0] // Delay Slot 3
+; CHECK-NEXT:    st r0, [p0, #4] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   tail call void @llvm.memset.p0.i32(ptr noundef nonnull align 64 dereferenceable(80) @buffer1, i8 0, i32 80, i1 false)
