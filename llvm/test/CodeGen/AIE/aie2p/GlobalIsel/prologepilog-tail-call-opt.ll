@@ -40,8 +40,8 @@ define dso_local void @_Z5test2PPv(ptr nocapture readonly %args) local_unnamed_a
   ; CHECK: bb.0.entry:
   ; CHECK-NEXT:   liveins: $p0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   renamable $p1, renamable $p0 = LDA_dms_lda_pstm_nrm_imm killed renamable $p0, 4 :: (load (p0) from %ir.args, align 4)
-  ; CHECK-NEXT:   renamable $p0 = LDA_dms_lda_idx_imm killed renamable $p0, 0 :: (load (p0) from %ir.arrayidx1, align 4)
+  ; CHECK-NEXT:   renamable $p1 = LDA_dms_lda_idx_imm renamable $p0, 0 :: (load (p0) from %ir.args, align 4)
+  ; CHECK-NEXT:   renamable $p0 = LDA_dms_lda_idx_imm killed renamable $p0, 4 :: (load (p0) from %ir.arrayidx1, align 4)
   ; CHECK-NEXT:   renamable $r1 = LDA_dms_lda_idx_imm killed renamable $p1, 0 :: (load (s32) from %ir.0)
   ; CHECK-NEXT:   renamable $r2 = LDA_dms_lda_idx_imm killed renamable $p0, 0 :: (load (s32) from %ir.2)
   ; CHECK-NEXT:   PseudoJ_TCO_jump_imm @_Z4funcii, csr_aie2p, implicit $r1, implicit $r2

@@ -381,10 +381,10 @@ define dso_local noundef <16 x i16> @test_postincrement(ptr %array, <8 x i64> no
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; mova r0, #2; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; mov s0, r0
-; CHECK-NEXT:    vst.srs.d16.s32 bml0, s0, [p0], #32
+; CHECK-NEXT:    vst.srs.d16.s32 bml0, s0, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vldb wl0, [p0, #0]
+; CHECK-NEXT:    vldb wl0, [p0, #32]
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4

@@ -246,36 +246,37 @@ define  void @test_huge_stack(i32 noundef %n) #0 {
 ; AIE2-NEXT:    padda [p7], m0
 ; AIE2-NEXT:    movxm m0, #-40048
 ; AIE2-NEXT:    mov p0, p7
+; AIE2-NEXT:    mov p3, p7
 ; AIE2-NEXT:    mov p2, p7
 ; AIE2-NEXT:    mov p6, p7
+; AIE2-NEXT:    paddb [p3], #-32
 ; AIE2-NEXT:    paddb [p0], m0
-; AIE2-NEXT:    paddb [p6], #-32
-; AIE2-NEXT:    movxm m0, #-40032
 ; AIE2-NEXT:    st r0, [p0, #0]
 ; AIE2-NEXT:    lda r0, [p0, #0]
-; AIE2-NEXT:    paddb [p2], m0
+; AIE2-NEXT:    paddb [p2], #-24
+; AIE2-NEXT:    mov r16, p3
+; AIE2-NEXT:    st r1, [p2, #4]
 ; AIE2-NEXT:    mov p0, sp
-; AIE2-NEXT:    mov r16, p2
-; AIE2-NEXT:    st p0, [p6, #0]
-; AIE2-NEXT:    mov p0, p7
-; AIE2-NEXT:    paddb [p0], #-24
+; AIE2-NEXT:    st p0, [p3, #0]
+; AIE2-NEXT:    mov p0, p1
 ; AIE2-NEXT:    lshl r2, r0, r2
-; AIE2-NEXT:    st r0, [p0], #4
+; AIE2-NEXT:    st r0, [p2, #0]
 ; AIE2-NEXT:    add r2, r2, #31
-; AIE2-NEXT:    st r1, [p0, #0]
+; AIE2-NEXT:    and r2, r2, r3
 ; AIE2-NEXT:    jl #extern_call
-; AIE2-NEXT:    mov p0, p1 // Delay Slot 5
-; AIE2-NEXT:    and r2, r2, r3 // Delay Slot 4
-; AIE2-NEXT:    mov m0, r2 // Delay Slot 3
-; AIE2-NEXT:    paddb [p1], m0 // Delay Slot 2
+; AIE2-NEXT:    mov m0, r2 // Delay Slot 5
+; AIE2-NEXT:    paddb [p1], m0 // Delay Slot 4
+; AIE2-NEXT:    movxm m0, #-40032 // Delay Slot 3
+; AIE2-NEXT:    paddb [p6], m0 // Delay Slot 2
 ; AIE2-NEXT:    mov sp, p1 // Delay Slot 1
 ; AIE2-NEXT:    nopb ; nopa ; nops ; jl #extern_call; nopv
 ; AIE2-NEXT:    nopa ; nopx // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
 ; AIE2-NEXT:    nop // Delay Slot 3
 ; AIE2-NEXT:    nop // Delay Slot 2
-; AIE2-NEXT:    mov p0, r16 // Delay Slot 1
-; AIE2-NEXT:    lda p0, [p6, #0]; nopx
+; AIE2-NEXT:    mov p0, p6 // Delay Slot 1
+; AIE2-NEXT:    nopb ; nopa ; nops ; nopx ; mov p0, r16; nopv
+; AIE2-NEXT:    lda p0, [p0, #0]; nopx
 ; AIE2-NEXT:    nop
 ; AIE2-NEXT:    nop
 ; AIE2-NEXT:    nop
@@ -329,18 +330,18 @@ define  void @test_huge_stack(i32 noundef %n) #0 {
 ; AIE2P-NEXT:    padda [p0], m0
 ; AIE2P-NEXT:    mova m0, #-32
 ; AIE2P-NEXT:    padda [p3], m0
+; AIE2P-NEXT:    mova m0, #-24
 ; AIE2P-NEXT:    st r0, [p0, #0]
 ; AIE2P-NEXT:    lda r0, [p0, #0]
-; AIE2P-NEXT:    mova m0, #-24
 ; AIE2P-NEXT:    mov p0, sp
 ; AIE2P-NEXT:    mov r8, p3
 ; AIE2P-NEXT:    padda [p2], m0
 ; AIE2P-NEXT:    st p0, [p3, #0]
 ; AIE2P-NEXT:    mov p0, p1
+; AIE2P-NEXT:    st r1, [p2, #4]
 ; AIE2P-NEXT:    lshl r2, r0, r2
-; AIE2P-NEXT:    st r0, [p2], #4
+; AIE2P-NEXT:    st r0, [p2, #0]
 ; AIE2P-NEXT:    add r2, r2, #63
-; AIE2P-NEXT:    st r1, [p2, #0]
 ; AIE2P-NEXT:    and r2, r2, r3
 ; AIE2P-NEXT:    jl #extern_call
 ; AIE2P-NEXT:    mov m0, r2 // Delay Slot 5

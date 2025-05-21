@@ -14,8 +14,8 @@ define dso_local noundef <64 x i8> @_Z22test_bneg_ltz_v64uint8Dv64_hRy(<64 x i8>
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mova r0, #-1 // Delay Slot 5
 ; CHECK-NEXT:    vbneg_ltz.s8 x0, r25:r24, x2 // Delay Slot 4
-; CHECK-NEXT:    st r0, [p0], #4 // Delay Slot 3
-; CHECK-NEXT:    st r0, [p0, #0] // Delay Slot 2
+; CHECK-NEXT:    st r0, [p0, #0] // Delay Slot 3
+; CHECK-NEXT:    st r0, [p0, #4] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call { <64 x i8>, <2 x i32> } @llvm.aie2.vbneg.ltz8(<64 x i8> %a)

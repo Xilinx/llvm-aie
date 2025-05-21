@@ -16,8 +16,8 @@ define dso_local noundef i32 @_Z4getAv() {
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    movxm p0, #(d+4)
-; CHECK-NEXT:    lda r0, [p0], #4
-; CHECK-NEXT:    lda r1, [p0, #0]
+; CHECK-NEXT:    lda r0, [p0, #0]
+; CHECK-NEXT:    lda r1, [p0, #4]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5

@@ -15,8 +15,8 @@ define dso_local noundef <64 x i8> @_Z20test_max_lt_v64uint8Dv64_hS_Ry(<64 x i8>
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    vmax_lt.d8 x0, r25:r24, x2, x4 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    st r24, [p0], #4 // Delay Slot 3
-; CHECK-NEXT:    st r25, [p0, #0] // Delay Slot 2
+; CHECK-NEXT:    st r24, [p0, #0] // Delay Slot 3
+; CHECK-NEXT:    st r25, [p0, #4] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call { <64 x i8>, <2 x i32> } @llvm.aie2.vmax.lt8(<64 x i8> %a, <64 x i8> %b, i32 0)
@@ -35,8 +35,8 @@ define dso_local noundef <64 x i8> @_Z20test_max_lt_v64uint8Dv64_hS_bRy(<64 x i8
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vmax_lt.d8 x0, r25:r24, x2, x4 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    st r24, [p0], #4 // Delay Slot 3
-; CHECK-NEXT:    st r25, [p0, #0] // Delay Slot 2
+; CHECK-NEXT:    st r24, [p0, #0] // Delay Slot 3
+; CHECK-NEXT:    st r25, [p0, #4] // Delay Slot 2
 ; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 1
 entry:
   %conv.i = zext i1 %sgn to i32
@@ -88,8 +88,8 @@ define dso_local noundef <64 x i8> @_Z19test_max_lt_v64int8Dv64_aS_Ry(<64 x i8> 
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    vmax_lt.s8 x0, r25:r24, x2, x4 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    st r24, [p0], #4 // Delay Slot 3
-; CHECK-NEXT:    st r25, [p0, #0] // Delay Slot 2
+; CHECK-NEXT:    st r24, [p0, #0] // Delay Slot 3
+; CHECK-NEXT:    st r25, [p0, #4] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = tail call { <64 x i8>, <2 x i32> } @llvm.aie2.vmax.lt8(<64 x i8> %a, <64 x i8> %b, i32 1)
@@ -108,8 +108,8 @@ define dso_local noundef <64 x i8> @_Z19test_max_lt_v64int8Dv64_aS_bRy(<64 x i8>
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vmax_lt.d8 x0, r25:r24, x2, x4 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    st r24, [p0], #4 // Delay Slot 3
-; CHECK-NEXT:    st r25, [p0, #0] // Delay Slot 2
+; CHECK-NEXT:    st r24, [p0, #0] // Delay Slot 3
+; CHECK-NEXT:    st r25, [p0, #4] // Delay Slot 2
 ; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 1
 entry:
   %conv.i = zext i1 %sgn to i32

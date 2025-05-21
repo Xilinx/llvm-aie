@@ -28,11 +28,10 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
-    ; CHECK-NEXT: %sZero:_(s32), %4:_(p0) = G_AIE_POSTINC_LOAD [[COPY]], [[C]](s20) :: (load (s32))
-    ; CHECK-NEXT: %sOne:_(s32) = G_LOAD %4(p0) :: (load (s32))
-    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20), [[INT2:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.3d), [[COPY]](p0), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20)
+    ; CHECK-NEXT: %sZero:_(s32), %6:_(p0), %7:_(s20), %8:_ = G_AIE_POSTINC_3D_LOAD [[COPY]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]] :: (load (s32))
+    ; CHECK-NEXT: %sOne:_(s32) = G_AIE_OFFSET_LOAD [[COPY]](p0), [[C]](s20) :: (load (s32))
     ; CHECK-NEXT: [[ADD:%[0-9]+]]:_(s32) = nsw G_ADD %sZero, %sOne
-    ; CHECK-NEXT: G_STORE [[ADD]](s32), [[INT]](p0) :: (store (s32))
+    ; CHECK-NEXT: G_STORE [[ADD]](s32), %6(p0) :: (store (s32))
     ; CHECK-NEXT: PseudoRET implicit $lr
     %0:_(p0) = COPY $p0
     %1:_(s20) = G_CONSTANT i20 64
