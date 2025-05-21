@@ -205,6 +205,7 @@ class PostPipeliner {
   int NCopies;
   int II = 1;
   int NStages = 0;
+  int NPrologueStages = 0;
 
   /// Place SU in cycle Cycle; update Earliest of successors and Latest
   /// of predecessors.

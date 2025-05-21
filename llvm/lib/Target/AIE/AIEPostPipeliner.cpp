@@ -1079,6 +1079,7 @@ bool PostPipeliner::checkStages() {
     return false;
   }
 
+  NPrologueStages = NStages - 1;
   // Check that we have a positive trip count after adjusting
   if (MinTripCount - (NStages - 1) <= 0) {
     DEBUG_SUMMARY(dbgs() << "PostPipeliner: MinTripCount insufficient\n");
@@ -1112,7 +1113,7 @@ void PostPipeliner::visitPipelineSchedule(
       };
 
   Visitor.startPrologue();
-  ExtractSection(NStages - 1, [&](const NodeInfo &Node, int Stage, int M) {
+  ExtractSection(NPrologueStages, [&](const NodeInfo &Node, int Stage, int M) {
     return Node.ModuloCycle == M && Node.Cycle < (Stage + 1) * II;
   });
 
