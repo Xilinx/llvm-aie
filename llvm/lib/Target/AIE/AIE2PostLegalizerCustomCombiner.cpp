@@ -33,6 +33,8 @@
 
 using namespace llvm;
 
+extern cl::opt<bool> EnableGlobalPtrModOptimizer;
+
 static const char AIE2_POSTLEGALIZER_CUSTOM_COMBINER[] =
     "AIE2 Post Legalizer Custom Combiner";
 
@@ -113,7 +115,9 @@ public:
     AU.addPreserved<MachineDominatorTree>();
     AU.addRequired<GISelCSEAnalysisWrapperPass>();
     AU.addPreserved<GISelCSEAnalysisWrapperPass>();
-    AU.addPreserved<AIEPtrModOptimizer>();
+    if (EnableGlobalPtrModOptimizer) {
+      AU.addRequired<AIEPtrModOptimizer>();
+    }
     MachineFunctionPass::getAnalysisUsage(AU);
   }
 

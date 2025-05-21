@@ -99,6 +99,7 @@ add_llvm_target(AIECodeGen
    AIEFinalizeBundle.cpp
    AIEFrameLowering.cpp
    AIEGlobalCombiner.cpp
+   AIEGlobalCombinerPtrMods.cpp
    AIEHazardRecognizer.cpp
    AIEHazardRecognizerPRAS.cpp
    AIEInstrInfo.cpp

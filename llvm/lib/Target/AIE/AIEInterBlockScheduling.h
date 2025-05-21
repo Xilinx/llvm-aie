@@ -44,8 +44,12 @@ class DataDependenceHelper : public ScheduleDAGInstrs {
   void schedule() override{};
 
 public:
-  DataDependenceHelper(const MachineSchedContext &Context)
+  DataDependenceHelper(const MachineSchedContext &Context,
+                       bool AddMutators = true)
       : ScheduleDAGInstrs(*Context.MF, Context.MLI), Context(Context) {
+    if (!AddMutators)
+      return;
+
     auto &Subtarget = Context.MF->getSubtarget();
     auto TT = Subtarget.getTargetTriple();
     for (auto &M : AIEBaseSubtarget::getInterBlockMutationsImpl(TT)) {

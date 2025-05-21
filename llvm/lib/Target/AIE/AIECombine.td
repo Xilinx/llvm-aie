@@ -275,8 +275,18 @@ def combine_offset_load_store_share_ptradd : GICombineRule<
   (apply [{ applyOffsetLoadStoreSharePtrAdd(*${root}, MRI, B, ${matchinfo}); }])
 >;
 
+
+def combine_global_load_store_increment : GICombineRule <
+  (defs root:$root),
+  (match (wip_match_opcode G_LOAD, G_ZEXTLOAD, G_SEXTLOAD, G_STORE):$root,
+          [{ return matchGlobalPtrModOptimizer(*${root}, MRI, Helper, B.getTII(), GlobalCombiners); }]),
+  (apply [{ applyLdStInc(*${root}, MRI, Helper, B, Observer, GlobalCombiners); }] )>;
+
+
+
 def AIE2PostLegalizerCustomCombiner
-    : GICombiner<"AIE2PostLegalizerCustomCombinerImpl", [ combine_load_store_split,
+    : GICombiner<"AIE2PostLegalizerCustomCombinerImpl", [ combine_global_load_store_increment,
+                                                          combine_load_store_split,
                                                           ptr_add_immed_chain,
                                                           combine_load_store_increment,
                                                           combine_offset_load_store_ptradd,
@@ -289,9 +299,10 @@ def AIE2PostLegalizerCustomCombiner
 }
 
 def AIE2PPostLegalizerCustomCombiner
-    : GICombiner<"AIE2PPostLegalizerCustomCombinerImpl", [ combine_load_store_increment,
-                                                           ptr_add_immed_chain, 
-                                                           combine_offset_load_store_ptradd,
-                                                           combine_offset_load_store_share_ptradd,
-                                                           combine_add_vector_elt_undef ]> {
+    : GICombiner<"AIE2PPostLegalizerCustomCombinerImpl", [  combine_global_load_store_increment,
+                                                            combine_load_store_increment,
+                                                            ptr_add_immed_chain, 
+                                                            combine_offset_load_store_ptradd,
+                                                            combine_offset_load_store_share_ptradd,
+                                                            combine_add_vector_elt_undef ]> {
 }

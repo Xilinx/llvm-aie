@@ -9,6 +9,7 @@
 # RUN: llc --mtriple=aie2p -verify-machineinstrs \
 # RUN:  --start-before=aie2p-postlegalizer-generic-combiner \
 # RUN:  --stop-after=aie2p-postlegalizer-custom-combiner \
+# RUN: --aie-global-ptr-mod-opt=true \
 # RUN:  --aie-address-chaining=true -o - %s  | FileCheck %s
 
 # overlay gain: Do not penalize Immediates that can be reused, if the Immediates

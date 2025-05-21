@@ -9,6 +9,7 @@
 # RUN: llc --mtriple=aie2p -verify-machineinstrs \
 # RUN:  --start-before=aie2p-postlegalizer-generic-combiner \
 # RUN:  --stop-after=aie2p-postlegalizer-custom-combiner \
+# RUN: --aie-global-ptr-mod-opt=true \
 # RUN:  -o - %s  | FileCheck %s
 
 # Verify that Gemm has the correct assignment
@@ -39,16 +40,17 @@ body:             |
   ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:_(p0) = G_PHI [[COPY]](p0), %bb.0, %9(p0), %bb.1
   ; CHECK-NEXT:   [[ADD:%[0-9]+]]:_(s32) = G_ADD [[PHI]], [[C2]]
   ; CHECK-NEXT:   [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(sgt), [[ADD]](s32), [[C]]
-  ; CHECK-NEXT:   [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20), [[INT2:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.3d), [[PHI1]](p0), [[C1]](s20), [[C1]](s20), [[C1]](s20), [[C1]](s20), [[C1]](s20), [[C1]](s20), [[C1]](s20)
+  ; CHECK-NEXT:   [[AIE_POSTINC_3D_LOAD:%[0-9]+]]:_(<32 x s16>), [[AIE_POSTINC_3D_LOAD1:%[0-9]+]]:_(p0), [[AIE_POSTINC_3D_LOAD2:%[0-9]+]]:_(s20), [[AIE_POSTINC_3D_LOAD3:%[0-9]+]]:_ = G_AIE_POSTINC_3D_LOAD [[PHI1]], [[C1]], [[C1]], [[C1]], [[C1]], [[C1]], [[C1]], [[C1]] :: (load (<32 x s16>))
   ; CHECK-NEXT:   [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
-  ; CHECK-NEXT:   [[AIE_POSTINC_LOAD:%[0-9]+]]:_(<32 x s16>), [[AIE_POSTINC_LOAD1:%[0-9]+]]:_(p0) = G_AIE_POSTINC_LOAD [[PHI1]], %configZero(s20) :: (load (<32 x s16>))
   ; CHECK-NEXT:   [[AIE_OFFSET_LOAD:%[0-9]+]]:_(<32 x s16>) = G_AIE_OFFSET_LOAD [[PHI1]](p0), [[C4]](s20) :: (load (<32 x s16>))
-  ; CHECK-NEXT:   [[AIE_POSTINC_LOAD2:%[0-9]+]]:_(<32 x s16>), [[AIE_POSTINC_LOAD3:%[0-9]+]]:_(p0) = G_AIE_POSTINC_LOAD [[AIE_POSTINC_LOAD1]], [[C4]](s20) :: (load (<32 x s16>))
-  ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(<32 x s16>) = G_LOAD [[AIE_POSTINC_LOAD3]](p0) :: (load (<32 x s16>))
+  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[PHI1]], %configZero(s20)
+  ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
+  ; CHECK-NEXT:   [[AIE_OFFSET_LOAD1:%[0-9]+]]:_(<32 x s16>) = G_AIE_OFFSET_LOAD [[PTR_ADD]](p0), [[C5]](s20) :: (load (<32 x s16>))
+  ; CHECK-NEXT:   [[AIE_OFFSET_LOAD2:%[0-9]+]]:_(<32 x s16>) = G_AIE_OFFSET_LOAD [[PTR_ADD]](p0), [[C4]](s20) :: (load (<32 x s16>))
   ; CHECK-NEXT:   G_BRCOND [[ICMP]](s32), %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
-  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit [[AIE_POSTINC_LOAD]](<32 x s16>), implicit [[AIE_OFFSET_LOAD]](<32 x s16>), implicit [[AIE_POSTINC_LOAD2]](<32 x s16>), implicit [[LOAD]](<32 x s16>)
+  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit [[AIE_POSTINC_3D_LOAD]](<32 x s16>), implicit [[AIE_OFFSET_LOAD]](<32 x s16>), implicit [[AIE_OFFSET_LOAD1]](<32 x s16>), implicit [[AIE_OFFSET_LOAD2]](<32 x s16>)
   bb.0:
     liveins: $p0, $p1
     %0:_(p0) = COPY $p0

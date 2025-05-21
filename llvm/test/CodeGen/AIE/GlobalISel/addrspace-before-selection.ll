@@ -4,23 +4,23 @@
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
 ; (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
-; RUN: llc -mtriple=aie2 -stop-before=instruction-select %s -o - 2>&1 | FileCheck %s
+; RUN: llc -mtriple=aie2 -stop-after=instruction-select %s -o - 2>&1 | FileCheck %s
 
 ; Test if addrspace is correctly propagated after transformations, like memory op.
 ; split.
+; Note: Global Combiner does not legalize non-legal load/stores, therefore,
+; unit-test has to stop after instruction-legalization, to show the legalized load instructions.
 
 define dso_local noundef<16 x i32> @addrspace_propagation(ptr addrspace(6) nocapture readonly %ptr) local_unnamed_addr #0 {
   ; CHECK-LABEL: name: addrspace_propagation
   ; CHECK: bb.1.entry:
   ; CHECK-NEXT:   liveins: $p0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:ptrregbank(p0) = COPY $p0
-  ; CHECK-NEXT:   [[C:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 128
-  ; CHECK-NEXT:   [[C1:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 160
-  ; CHECK-NEXT:   [[AIE_OFFSET_LOAD:%[0-9]+]]:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD [[COPY]](p0), [[C1]](s20) :: (load (<8 x s32>) from %ir.arrayidx.1 + 32, addrspace 6)
-  ; CHECK-NEXT:   [[AIE_OFFSET_LOAD1:%[0-9]+]]:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD [[COPY]](p0), [[C]](s20) :: (load (<8 x s32>) from %ir.arrayidx.1, addrspace 6)
-  ; CHECK-NEXT:   [[CONCAT_VECTORS:%[0-9]+]]:vregbank(<16 x s32>) = G_CONCAT_VECTORS [[AIE_OFFSET_LOAD1]](<8 x s32>), [[AIE_OFFSET_LOAD]](<8 x s32>)
-  ; CHECK-NEXT:   $x0 = COPY [[CONCAT_VECTORS]](<16 x s32>)
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
+  ; CHECK-NEXT:   [[VLDA_dmw_lda_w_ag_idx_imm:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_ag_idx_imm [[COPY]], 160 :: (load (<8 x s32>) from %ir.arrayidx.1 + 32, addrspace 6)
+  ; CHECK-NEXT:   [[VLDA_dmw_lda_w_ag_idx_imm1:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_ag_idx_imm [[COPY]], 128 :: (load (<8 x s32>) from %ir.arrayidx.1, addrspace 6)
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[VLDA_dmw_lda_w_ag_idx_imm1]], %subreg.sub_256_lo, [[VLDA_dmw_lda_w_ag_idx_imm]], %subreg.sub_256_hi
+  ; CHECK-NEXT:   $x0 = COPY [[REG_SEQUENCE]]
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $x0
 entry:
   %arrayidx.1 = getelementptr inbounds [16 x <16 x i32>], ptr addrspace(6) %ptr, i32 0, i32 2

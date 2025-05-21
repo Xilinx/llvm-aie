@@ -13,15 +13,15 @@
 
 # Check Movability
 
-# Check that PTR_ADD which has a lower DAG depth than the CombineRoot (load), 
+# Check that PTR_ADD which has a lower DAG depth than the CombineRoot (load),
 # can be combined
 ---
-name:            gemm-kernel
+name:            move-up-check
 legalized:       true
 alignment:       16
 tracksRegLiveness: true
 body:             |
-  ; CHECK-LABEL: name: gemm-kernel
+  ; CHECK-LABEL: name: move-up-check
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT:   liveins: $p0, $p1
@@ -44,6 +44,71 @@ body:             |
     %7:_(p0) = G_PTR_ADD %0(p0), %6(s20)
     PseudoRET implicit $lr, implicit %5, implicit %7
 ...
+
+---
+name:            move-multiple-preds
+legalized:       true
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: move-multiple-preds
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 8
+  ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C]](s32)
+  ; CHECK-NEXT:   %Res:_(s32), %7:_(p0) = G_AIE_POSTINC_LOAD [[COPY]], [[TRUNC]](s20) :: (load (s32))
+  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit %Res(s32), implicit %7(p0)
+  bb.0:
+    liveins: $p0, $p1
+    %0:_(p0) = COPY $p0
+    %1:_(s32) = G_CONSTANT i32 0
+    %2:_(s20) = G_CONSTANT i20 64
+    %3:_(s32) = G_CONSTANT i32 -1
+  bb.1:
+    %Res:_(s32) = G_LOAD %0(p0) :: (load (s32))
+    %4:_(s32) = G_CONSTANT i32 8
+    %5:_(s20) = G_TRUNC %4
+    %7:_(p0) = G_PTR_ADD %0(p0), %5(s20)
+    PseudoRET implicit $lr, implicit %Res, implicit %7
+...
+
+
+---
+name:            detect-no-movability
+legalized:       true
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: detect-no-movability
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 128
+  ; CHECK-NEXT:   G_STORE [[C]](s20), [[COPY]](p0) :: (store (s20), align 4)
+  ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(s20) = G_LOAD [[COPY]](p0) :: (load (s20), align 4)
+  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[LOAD]](s20)
+  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit [[PTR_ADD]](p0)
+  bb.0:
+    liveins: $p0, $p1
+    %0:_(p0) = COPY $p0
+    %1:_(s32) = G_CONSTANT i32 0
+    %2:_(s20) = G_CONSTANT i20 64
+    %3:_(s32) = G_CONSTANT i32 -1
+  bb.1:
+    %4:_(s20) = G_ADD %2, %2
+    G_STORE %4(s20), %0(p0) :: (store (s20))
+    %5:_(s20) = G_LOAD %0(p0) :: (load (s20))
+    %7:_(p0) = G_PTR_ADD %0(p0), %5(s20)
+    PseudoRET implicit $lr, implicit %7
 ...
 
 
