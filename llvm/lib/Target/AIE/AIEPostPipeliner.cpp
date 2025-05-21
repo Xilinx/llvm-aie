@@ -320,12 +320,11 @@ void PostPipeliner::computeForward() {
       }
       auto &SInfo = Info[Succ->NodeNum];
       const int NewEarliest = Me.Earliest + Dep.getSignedLatency();
-      if (NewEarliest != SInfo.Earliest) {
+      if (NewEarliest > SInfo.Earliest) {
         LLVM_DEBUG(dbgs() << "  SU" << Succ->NodeNum << " : Earliest "
-                          << SInfo.Earliest << " -> "
-                          << std::max(SInfo.Earliest, NewEarliest) << "\n");
+                          << SInfo.Earliest << " -> " << NewEarliest << "\n");
+        SInfo.Earliest = NewEarliest;
       }
-      SInfo.Earliest = std::max(SInfo.Earliest, NewEarliest);
     }
   }
 }
@@ -532,7 +531,7 @@ bool PostPipeliner::computeLoopCarriedParameters() {
   }
 
   LLVM_DEBUG(dbgs() << "Final Earliest - Latest:\n");
-  for (int K = 0; K < NTotalInstrs; K++) {
+  for (int K = 0; K < NTotalInstrs && K < 2 * NInstr; K++) {
     auto &Me = Info[K];
     LLVM_DEBUG(dbgs() << "  SU" << K << " : " << Me.Earliest << " - "
                       << Me.Latest << "\n");
