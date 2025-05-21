@@ -788,6 +788,7 @@ TargetLoweringBase::TargetLoweringBase(const TargetMachine &tm) : TM(tm) {
   HasMultipleConditionRegisters = false;
   HasExtractBitsInsn = false;
   JumpIsExpensive = JumpIsExpensiveOverride;
+  BuildInlinedGEPsNextToUse = false;
   PredictableSelectIsExpensive = false;
   EnableExtLdPromotion = false;
   StackPointerRegisterToSaveRestore = 0;
@@ -1055,6 +1056,10 @@ void TargetLoweringBase::setJumpIsExpensive(bool isExpensive) {
   // If the command-line option was specified, ignore this request.
   if (!JumpIsExpensiveOverride.getNumOccurrences())
     JumpIsExpensive = isExpensive;
+}
+
+void TargetLoweringBase::setBuildInlinedGEPsNextToUse(bool GEPsNextToUse) {
+  BuildInlinedGEPsNextToUse = GEPsNextToUse;
 }
 
 TargetLoweringBase::LegalizeKind

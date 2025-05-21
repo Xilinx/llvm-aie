@@ -607,6 +607,11 @@ public:
   /// avoided.
   bool isJumpExpensive() const { return JumpIsExpensive; }
 
+  /// Return true if inlined GEPs should be build at the user
+  bool shouldBuildInlinedGEPsNextToUse() const {
+    return BuildInlinedGEPsNextToUse;
+  }
+
   // Costs parameters used by
   // SelectionDAGBuilder::shouldKeepJumpConditionsTogether.
   // shouldKeepJumpConditionsTogether will use these parameter value to
@@ -2514,6 +2519,9 @@ protected:
   /// control.
   void setJumpIsExpensive(bool isExpensive = true);
 
+  /// Tell the code generator to build inline GEPs at the user
+  void setBuildInlinedGEPsNextToUse(bool GEPsNextToUse = true);
+
   /// Tells the code generator which bitwidths to bypass.
   void addBypassSlowDiv(unsigned int SlowBitWidth, unsigned int FastBitWidth) {
     BypassSlowDivWidths[SlowBitWidth] = FastBitWidth;
@@ -3496,6 +3504,9 @@ private:
   /// instructions and should attempt to combine flow control instructions via
   /// predication.
   bool JumpIsExpensive;
+
+  /// Tell the code generator to build inline GEPs at the user
+  bool BuildInlinedGEPsNextToUse;
 
   /// Information about the contents of the high-bits in boolean values held in
   /// a type wider than i1. See getBooleanContents.
