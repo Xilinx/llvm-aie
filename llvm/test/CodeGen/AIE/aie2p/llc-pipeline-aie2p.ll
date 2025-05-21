@@ -175,6 +175,7 @@
 ; AIE-O1-NEXT:      MachineDominator Tree Construction
 ; AIE-O1-NEXT:      AIE2P Post Legalizer Generic Combiner
 ; AIE-O1-NEXT:      AIE Base Address Clustering Optimization
+; AIE-O1-NEXT:      AIE Pointer Modifier Optimization
 ; AIE-O1-NEXT:      AIE2P Post Legalizer Custom Combiner
 ; AIE-O1-NEXT:      RegBankSelect
 ; AIE-O1-NEXT:      Analysis for ComputingKnownBits
@@ -376,6 +377,7 @@
 ; AIE-O23-NEXT:      MachineDominator Tree Construction
 ; AIE-O23-NEXT:      AIE2P Post Legalizer Generic Combiner
 ; AIE-O23-NEXT:      AIE Base Address Clustering Optimization
+; AIE-O23-NEXT:      AIE Pointer Modifier Optimization
 ; AIE-O23-NEXT:      AIE2P Post Legalizer Custom Combiner
 ; AIE-O23-NEXT:      RegBankSelect
 ; AIE-O23-NEXT:      Analysis for ComputingKnownBits

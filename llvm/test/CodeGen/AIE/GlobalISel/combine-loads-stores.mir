@@ -43,8 +43,9 @@ body:             |
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 24
     ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C]](s32)
     ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[TRUNC]](s20)
-    ; CHECK-NEXT: [[AIE_OFFSET_LOAD:%[0-9]+]]:_(s32) = G_AIE_OFFSET_LOAD [[COPY]](p0), [[TRUNC]](s20) :: (load (s32))
-    ; CHECK-NEXT: $r0 = COPY [[AIE_OFFSET_LOAD]](s32)
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(p0) = COPY [[PTR_ADD]](p0)
+    ; CHECK-NEXT: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY1]](p0) :: (load (s32))
+    ; CHECK-NEXT: $r0 = COPY [[LOAD]](s32)
     ; CHECK-NEXT: $p0 = COPY [[PTR_ADD]](p0)
     %0:_(p0) = COPY $p0
     %1:_(s32) = G_CONSTANT i32 24
@@ -161,9 +162,7 @@ body:             |
 ...
 
 
-# Our current combine code is not able to move the memory operation up. In this
-# case we cannot just move the pointer add to the load and we therefore don't
-# combine. This could be improved.
+# Move PTR_ADD Instruction down to the Memory Instruction.
 ---
 name:            load_not_to_postinc_ptradd_before_load
 body:             |
@@ -175,10 +174,9 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 24
     ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C]](s32)
-    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[TRUNC]](s20)
-    ; CHECK-NEXT: $p0 = COPY [[PTR_ADD]](p0)
-    ; CHECK-NEXT: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY]](p0) :: (load (s32))
-    ; CHECK-NEXT: $r0 = COPY [[LOAD]](s32)
+    ; CHECK-NEXT: [[AIE_POSTINC_LOAD:%[0-9]+]]:_(s32), [[AIE_POSTINC_LOAD1:%[0-9]+]]:_(p0) = G_AIE_POSTINC_LOAD [[COPY]], [[TRUNC]](s20) :: (load (s32))
+    ; CHECK-NEXT: $p0 = COPY [[AIE_POSTINC_LOAD1]](p0)
+    ; CHECK-NEXT: $r0 = COPY [[AIE_POSTINC_LOAD]](s32)
     %0:_(p0) = COPY $p0
     %1:_(s32) = G_CONSTANT i32 24
     %2:_(s20) = G_TRUNC %1
@@ -220,12 +218,11 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
-    ; CHECK-NEXT: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY]](p0) :: (load (s32))
-    ; CHECK-NEXT: $r0 = COPY [[LOAD]](s32)
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 12
     ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C]](s32)
-    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[TRUNC]](s20)
-    ; CHECK-NEXT: $p0 = COPY [[PTR_ADD]](p0)
+    ; CHECK-NEXT: [[AIE_POSTINC_LOAD:%[0-9]+]]:_(s32), [[AIE_POSTINC_LOAD1:%[0-9]+]]:_(p0) = G_AIE_POSTINC_LOAD [[COPY]], [[TRUNC]](s20) :: (load (s32))
+    ; CHECK-NEXT: $r0 = COPY [[AIE_POSTINC_LOAD]](s32)
+    ; CHECK-NEXT: $p0 = COPY [[AIE_POSTINC_LOAD1]](p0)
     %0:_(p0) = COPY $p0
     %3:_(s32) = G_LOAD %0 :: (load (s32))
     $r0 = COPY %3
@@ -352,9 +349,7 @@ body:             |
     $p0 = COPY %3
 ...
 
-# Our current combine code is not able to move the memory operation up. In this
-# case we cannot just move the pointer add to the store and we therefore don't
-# combine. This could be improved.
+# Move PTR_ADD Instruction down to the Memory Instruction.
 ---
 name:            store_not_to_postinc_ptr_add_before
 body:             |
@@ -366,9 +361,8 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r0
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
-    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s20)
-    ; CHECK-NEXT: $p0 = COPY [[PTR_ADD]](p0)
-    ; CHECK-NEXT: G_STORE [[COPY1]](s32), [[COPY]](p0) :: (store (s32))
+    ; CHECK-NEXT: [[AIE_POSTINC_STORE:%[0-9]+]]:_(p0) = G_AIE_POSTINC_STORE [[COPY1]](s32), [[COPY]], [[C]](s20) :: (store (s32))
+    ; CHECK-NEXT: $p0 = COPY [[AIE_POSTINC_STORE]](p0)
     %0:_(p0) = COPY $p0
     %1:_(s32) = COPY $r0
     %2:_(s20) = G_CONSTANT i20 24
@@ -430,13 +424,12 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r0
-    ; CHECK-NEXT: G_STORE [[COPY1]](s32), [[COPY]](p0) :: (store (s32))
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(p0) = COPY $p1
-    ; CHECK-NEXT: G_STORE [[COPY1]](s32), [[COPY2]](p0) :: (store (s32))
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 24
     ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C]](s32)
-    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[TRUNC]](s20)
-    ; CHECK-NEXT: $p0 = COPY [[PTR_ADD]](p0)
+    ; CHECK-NEXT: [[AIE_POSTINC_STORE:%[0-9]+]]:_(p0) = G_AIE_POSTINC_STORE [[COPY1]](s32), [[COPY]], [[TRUNC]](s20) :: (store (s32))
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(p0) = COPY $p1
+    ; CHECK-NEXT: G_STORE [[COPY1]](s32), [[COPY2]](p0) :: (store (s32))
+    ; CHECK-NEXT: $p0 = COPY [[AIE_POSTINC_STORE]](p0)
     %0:_(p0) = COPY $p0
     %1:_(s32) = COPY $r0
     G_STORE %1, %0 :: (store (s32))
@@ -618,10 +611,9 @@ body:             |
     ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 24
     ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C]](s32)
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
-    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[TRUNC]](s20)
-    ; CHECK-NEXT: $p0 = COPY [[PTR_ADD]](p0)
-    ; CHECK-NEXT: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY]](p0) :: (load (s32))
-    ; CHECK-NEXT: $r0 = COPY [[LOAD]](s32)
+    ; CHECK-NEXT: [[AIE_POSTINC_LOAD:%[0-9]+]]:_(s32), [[AIE_POSTINC_LOAD1:%[0-9]+]]:_(p0) = G_AIE_POSTINC_LOAD [[COPY]], [[TRUNC]](s20) :: (load (s32))
+    ; CHECK-NEXT: $p0 = COPY [[AIE_POSTINC_LOAD1]](p0)
+    ; CHECK-NEXT: $r0 = COPY [[AIE_POSTINC_LOAD]](s32)
     %1:_(s32) = G_CONSTANT i32 24
     %4:_(s20) = G_TRUNC %1
     %0:_(p0) = COPY $p0
@@ -639,12 +631,12 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 24
     ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C]](s32)
-    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[TRUNC]](s20)
+    ; CHECK-NEXT: [[AIE_POSTINC_LOAD:%[0-9]+]]:_(s32), [[AIE_POSTINC_LOAD1:%[0-9]+]]:_(p0) = G_AIE_POSTINC_LOAD [[COPY]], [[TRUNC]](s20) :: (load (s32))
     ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 24
     ; CHECK-NEXT: [[TRUNC1:%[0-9]+]]:_(s20) = G_TRUNC [[C1]](s32)
-    ; CHECK-NEXT: [[AIE_POSTINC_LOAD:%[0-9]+]]:_(s32), [[AIE_POSTINC_LOAD1:%[0-9]+]]:_(p0) = G_AIE_POSTINC_LOAD [[COPY]], [[TRUNC1]](s20) :: (load (s32))
-    ; CHECK-NEXT: $p0 = COPY [[AIE_POSTINC_LOAD1]](p0)
-    ; CHECK-NEXT: $p1 = COPY [[PTR_ADD]](p0)
+    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[TRUNC1]](s20)
+    ; CHECK-NEXT: $p0 = COPY [[PTR_ADD]](p0)
+    ; CHECK-NEXT: $p1 = COPY [[AIE_POSTINC_LOAD1]](p0)
     ; CHECK-NEXT: $r0 = COPY [[AIE_POSTINC_LOAD]](s32)
     %2:_(p0) = COPY $p0
     %7:_(s32) = G_LOAD %2 :: (load (s32))
@@ -931,15 +923,10 @@ body: |
     ; CHECK-LABEL: name: preinc_combine_vectors_512_bits
     ; CHECK: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 96
-    ; CHECK-NEXT: [[AIE_OFFSET_LOAD:%[0-9]+]]:_(<16 x s16>) = G_AIE_OFFSET_LOAD [[COPY]](p0), [[C1]](s20) :: (load (<16 x s16>) from unknown-address + 32)
-    ; CHECK-NEXT: [[AIE_OFFSET_LOAD1:%[0-9]+]]:_(<16 x s16>) = G_AIE_OFFSET_LOAD [[COPY]](p0), [[C]](s20) :: (load (<16 x s16>), align 64)
+    ; CHECK-NEXT: [[AIE_OFFSET_LOAD:%[0-9]+]]:_(<32 x s16>) = G_AIE_OFFSET_LOAD [[COPY]](p0), [[C]](s20) :: (load (<32 x s16>))
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(p0) = COPY $p0
-    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(<16 x s16>) = COPY [[AIE_OFFSET_LOAD1]](<16 x s16>)
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:_(<16 x s16>) = COPY [[AIE_OFFSET_LOAD]](<16 x s16>)
-    ; CHECK-NEXT: G_AIE_OFFSET_STORE [[COPY3]](<16 x s16>), [[COPY1]](p0), [[C1]](s20) :: (store (<16 x s16>) into unknown-address + 32)
-    ; CHECK-NEXT: G_AIE_OFFSET_STORE [[COPY2]](<16 x s16>), [[COPY1]](p0), [[C2]](s20) :: (store (<16 x s16>), align 64)
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
+    ; CHECK-NEXT: G_AIE_OFFSET_STORE [[AIE_OFFSET_LOAD]](<32 x s16>), [[COPY1]](p0), [[C1]](s20) :: (store (<32 x s16>))
       %0:_(p0) = COPY $p0
       %1:_(s20) = G_CONSTANT i20 64
       %3:_(p0) = G_PTR_ADD %0, %1
@@ -984,13 +971,12 @@ body: |
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $p0
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
-  ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY]](p0) :: (load (s32))
-  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s20)
-  ; CHECK-NEXT:   [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s20)
-  ; CHECK-NEXT:   $r0 = COPY [[LOAD]](s32)
+  ; CHECK-NEXT:   [[AIE_POSTINC_LOAD:%[0-9]+]]:_(s32), [[AIE_POSTINC_LOAD1:%[0-9]+]]:_(p0) = G_AIE_POSTINC_LOAD [[COPY]], [[C]](s20) :: (load (s32))
+  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s20)
+  ; CHECK-NEXT:   $r0 = COPY [[AIE_POSTINC_LOAD]](s32)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
-  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit [[PTR_ADD]](p0), implicit [[PTR_ADD1]](p0), implicit [[COPY]](p0)
+  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit [[AIE_POSTINC_LOAD1]](p0), implicit [[PTR_ADD]](p0), implicit [[COPY]](p0)
   bb.0:
       %0:_(p0) = COPY $p0
       %1:_(s20) = G_CONSTANT i20 64
@@ -1015,9 +1001,8 @@ body: |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $p0
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
-  ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY]](p0) :: (load (s32))
-  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s20)
-  ; CHECK-NEXT:   $r0 = COPY [[LOAD]](s32)
+  ; CHECK-NEXT:   [[AIE_POSTINC_LOAD:%[0-9]+]]:_(s32), [[AIE_POSTINC_LOAD1:%[0-9]+]]:_(p0) = G_AIE_POSTINC_LOAD [[COPY]], [[C]](s20) :: (load (s32))
+  ; CHECK-NEXT:   $r0 = COPY [[AIE_POSTINC_LOAD]](s32)
   ; CHECK-NEXT:   PseudoJNZ $r1, %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
@@ -1032,7 +1017,7 @@ body: |
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
-  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit [[PTR_ADD]](p0)
+  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit [[AIE_POSTINC_LOAD1]](p0)
   bb.0:
     %0:_(p0) = COPY $p0
     %1:_(s20) = G_CONSTANT i20 64
@@ -1061,9 +1046,8 @@ body: |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $p0
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
-  ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY]](p0) :: (load (s32))
-  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s20)
-  ; CHECK-NEXT:   $r0 = COPY [[LOAD]](s32)
+  ; CHECK-NEXT:   [[AIE_POSTINC_LOAD:%[0-9]+]]:_(s32), [[AIE_POSTINC_LOAD1:%[0-9]+]]:_(p0) = G_AIE_POSTINC_LOAD [[COPY]], [[C]](s20) :: (load (s32))
+  ; CHECK-NEXT:   $r0 = COPY [[AIE_POSTINC_LOAD]](s32)
   ; CHECK-NEXT:   PseudoJNZ $r1, %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
@@ -1078,7 +1062,7 @@ body: |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   $p0 = COPY [[COPY]](p0)
-  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit [[PTR_ADD]](p0)
+  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit [[AIE_POSTINC_LOAD1]](p0)
   bb.0:
     %0:_(p0) = COPY $p0
     %1:_(s20) = G_CONSTANT i20 64
@@ -1160,9 +1144,8 @@ body: |
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
-  ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY]](p0) :: (load (s32))
-  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s20)
-  ; CHECK-NEXT:   $r0 = COPY [[LOAD]](s32)
+  ; CHECK-NEXT:   [[AIE_POSTINC_LOAD:%[0-9]+]]:_(s32), [[AIE_POSTINC_LOAD1:%[0-9]+]]:_(p0) = G_AIE_POSTINC_LOAD [[COPY]], [[C]](s20) :: (load (s32))
+  ; CHECK-NEXT:   $r0 = COPY [[AIE_POSTINC_LOAD]](s32)
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
@@ -1172,7 +1155,7 @@ body: |
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
-  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit [[PTR_ADD]](p0)
+  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit [[AIE_POSTINC_LOAD1]](p0)
   bb.0:
     %0:_(p0) = COPY $p0
     PseudoJNZ $r1, %bb.2
@@ -1206,9 +1189,8 @@ body: |
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
-  ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY]](p0) :: (load (s32))
-  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s20)
-  ; CHECK-NEXT:   $r0 = COPY [[LOAD]](s32)
+  ; CHECK-NEXT:   [[AIE_POSTINC_LOAD:%[0-9]+]]:_(s32), [[AIE_POSTINC_LOAD1:%[0-9]+]]:_(p0) = G_AIE_POSTINC_LOAD [[COPY]], [[C]](s20) :: (load (s32))
+  ; CHECK-NEXT:   $r0 = COPY [[AIE_POSTINC_LOAD]](s32)
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
@@ -1218,7 +1200,7 @@ body: |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   $p0 = COPY [[COPY]](p0)
-  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit [[PTR_ADD]](p0)
+  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit [[AIE_POSTINC_LOAD1]](p0)
   bb.0:
     %0:_(p0) = COPY $p0
     PseudoJNZ $r1, %bb.2
@@ -1309,10 +1291,9 @@ body: |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
-  ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY]](p0) :: (load (s32))
-  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s20)
-  ; CHECK-NEXT:   $r0 = COPY [[LOAD]](s32)
-  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit [[PTR_ADD]](p0)
+  ; CHECK-NEXT:   [[AIE_POSTINC_LOAD:%[0-9]+]]:_(s32), [[AIE_POSTINC_LOAD1:%[0-9]+]]:_(p0) = G_AIE_POSTINC_LOAD [[COPY]], [[C]](s20) :: (load (s32))
+  ; CHECK-NEXT:   $r0 = COPY [[AIE_POSTINC_LOAD]](s32)
+  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit [[AIE_POSTINC_LOAD1]](p0)
   bb.0:
     %0:_(p0) = COPY $p0
     PseudoJNZ $r1, %bb.2
@@ -1342,11 +1323,11 @@ body: |
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
     ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
     ; CHECK-NEXT: [[AIE_POSTINC_LOAD:%[0-9]+]]:_(<32 x s8>), [[AIE_POSTINC_LOAD1:%[0-9]+]]:_(p0) = G_AIE_POSTINC_LOAD [[COPY]], [[C]](s20) :: (load (<32 x s8>))
+    ; CHECK-NEXT: [[AIE_POSTINC_STORE:%[0-9]+]]:_(p0) = G_AIE_POSTINC_STORE [[AIE_POSTINC_LOAD]](<32 x s8>), [[COPY1]], [[C]](s20) :: (store (<32 x s8>))
     ; CHECK-NEXT: $p0 = COPY [[AIE_POSTINC_LOAD1]](p0)
-    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY1]], [[C]](s20)
-    ; CHECK-NEXT: [[AIE_POSTINC_STORE:%[0-9]+]]:_(p0) = G_AIE_POSTINC_STORE [[AIE_POSTINC_LOAD]](<32 x s8>), [[COPY1]], [[C1]](s20) :: (store (<32 x s8>))
-    ; CHECK-NEXT: $p1 = COPY [[PTR_ADD]](p0)
-    ; CHECK-NEXT: $p2 = COPY [[AIE_POSTINC_STORE]](p0)
+    ; CHECK-NEXT: $p1 = COPY [[AIE_POSTINC_STORE]](p0)
+    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY1]], [[C1]](s20)
+    ; CHECK-NEXT: $p2 = COPY [[PTR_ADD]](p0)
     ; CHECK-NEXT: $wl0 = COPY [[AIE_POSTINC_LOAD]](<32 x s8>)
       %0:_(p0) = COPY $p0
       %6:_(p0) = COPY $p1
@@ -1372,11 +1353,11 @@ body: |
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(p0) = COPY $p1
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
     ; CHECK-NEXT: [[AIE_POSTINC_2D_LOAD:%[0-9]+]]:_(<32 x s8>), [[AIE_POSTINC_2D_LOAD1:%[0-9]+]]:_(p0), [[AIE_POSTINC_2D_LOAD2:%[0-9]+]]:_(s20) = G_AIE_POSTINC_2D_LOAD [[COPY]], [[C]], [[C]], [[C]], [[C]] :: (load (<32 x s8>))
-    ; CHECK-NEXT: $p0 = COPY [[AIE_POSTINC_2D_LOAD1]](p0)
-    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2.add.2d), [[COPY1]](p0), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20)
     ; CHECK-NEXT: [[AIE_POSTINC_2D_STORE:%[0-9]+]]:_(p0), [[AIE_POSTINC_2D_STORE1:%[0-9]+]]:_(s20) = G_AIE_POSTINC_2D_STORE [[AIE_POSTINC_2D_LOAD]](<32 x s8>), [[COPY1]], [[C]], [[C]], [[C]], [[C]] :: (store (<32 x s8>))
-    ; CHECK-NEXT: $p1 = COPY [[INT]](p0)
-    ; CHECK-NEXT: $p2 = COPY [[AIE_POSTINC_2D_STORE]](p0)
+    ; CHECK-NEXT: $p0 = COPY [[AIE_POSTINC_2D_LOAD1]](p0)
+    ; CHECK-NEXT: $p1 = COPY [[AIE_POSTINC_2D_STORE]](p0)
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2.add.2d), [[COPY1]](p0), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20)
+    ; CHECK-NEXT: $p2 = COPY [[INT]](p0)
     ; CHECK-NEXT: $wl0 = COPY [[AIE_POSTINC_2D_LOAD]](<32 x s8>)
       %0:_(p0) = COPY $p0
       %6:_(p0) = COPY $p1
@@ -1401,11 +1382,11 @@ body: |
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(p0) = COPY $p1
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
     ; CHECK-NEXT: [[AIE_POSTINC_3D_LOAD:%[0-9]+]]:_(<32 x s8>), [[AIE_POSTINC_3D_LOAD1:%[0-9]+]]:_(p0), [[AIE_POSTINC_3D_LOAD2:%[0-9]+]]:_(s20), [[AIE_POSTINC_3D_LOAD3:%[0-9]+]]:_ = G_AIE_POSTINC_3D_LOAD [[COPY]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]] :: (load (<32 x s8>))
-    ; CHECK-NEXT: $p0 = COPY [[AIE_POSTINC_3D_LOAD1]](p0)
-    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20), [[INT2:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2.add.3d), [[COPY1]](p0), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20)
     ; CHECK-NEXT: [[AIE_POSTINC_3D_STORE:%[0-9]+]]:_(p0), [[AIE_POSTINC_3D_STORE1:%[0-9]+]]:_(s20), [[AIE_POSTINC_3D_STORE2:%[0-9]+]]:_ = G_AIE_POSTINC_3D_STORE [[AIE_POSTINC_3D_LOAD]](<32 x s8>), [[COPY1]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]] :: (store (<32 x s8>))
-    ; CHECK-NEXT: $p1 = COPY [[INT]](p0)
-    ; CHECK-NEXT: $p2 = COPY [[AIE_POSTINC_3D_STORE]](p0)
+    ; CHECK-NEXT: $p0 = COPY [[AIE_POSTINC_3D_LOAD1]](p0)
+    ; CHECK-NEXT: $p1 = COPY [[AIE_POSTINC_3D_STORE]](p0)
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20), [[INT2:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2.add.3d), [[COPY1]](p0), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20)
+    ; CHECK-NEXT: $p2 = COPY [[INT]](p0)
     ; CHECK-NEXT: $wl0 = COPY [[AIE_POSTINC_3D_LOAD]](<32 x s8>)
       %0:_(p0) = COPY $p0
       %6:_(p0) = COPY $p1
@@ -1457,17 +1438,12 @@ body: |
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(p0) = COPY $p1
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
     ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
-    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; CHECK-NEXT: [[AIE_OFFSET_LOAD:%[0-9]+]]:_(<16 x s16>) = G_AIE_OFFSET_LOAD [[COPY]](p0), [[C2]](s20) :: (load (<16 x s16>) from unknown-address + 32)
-    ; CHECK-NEXT: [[AIE_POSTINC_LOAD:%[0-9]+]]:_(<16 x s16>), [[AIE_POSTINC_LOAD1:%[0-9]+]]:_(p0) = G_AIE_POSTINC_LOAD [[COPY]], [[C]](s20) :: (load (<16 x s16>), align 64)
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(<16 x s16>) = COPY [[AIE_POSTINC_LOAD]](<16 x s16>)
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:_(<16 x s16>) = COPY [[AIE_OFFSET_LOAD]](<16 x s16>)
-    ; CHECK-NEXT: G_AIE_OFFSET_STORE [[COPY3]](<16 x s16>), [[COPY1]](p0), [[C2]](s20) :: (store (<16 x s16>) into unknown-address + 32)
+    ; CHECK-NEXT: [[AIE_POSTINC_LOAD:%[0-9]+]]:_(<32 x s16>), [[AIE_POSTINC_LOAD1:%[0-9]+]]:_(p0) = G_AIE_POSTINC_LOAD [[COPY]], [[C]](s20) :: (load (<32 x s16>))
+    ; CHECK-NEXT: [[AIE_POSTINC_STORE:%[0-9]+]]:_(p0) = G_AIE_POSTINC_STORE [[AIE_POSTINC_LOAD]](<32 x s16>), [[COPY1]], [[C]](s20) :: (store (<32 x s16>))
     ; CHECK-NEXT: $p0 = COPY [[AIE_POSTINC_LOAD1]](p0)
-    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY1]], [[C]](s20)
-    ; CHECK-NEXT: [[AIE_POSTINC_STORE:%[0-9]+]]:_(p0) = G_AIE_POSTINC_STORE [[COPY2]](<16 x s16>), [[COPY1]], [[C1]](s20) :: (store (<16 x s16>), align 64)
-    ; CHECK-NEXT: $p1 = COPY [[PTR_ADD]](p0)
-    ; CHECK-NEXT: $p2 = COPY [[AIE_POSTINC_STORE]](p0)
+    ; CHECK-NEXT: $p1 = COPY [[AIE_POSTINC_STORE]](p0)
+    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY1]], [[C1]](s20)
+    ; CHECK-NEXT: $p2 = COPY [[PTR_ADD]](p0)
       %0:_(p0) = COPY $p0
       %6:_(p0) = COPY $p1
       %1:_(s20) = G_CONSTANT i20 64
@@ -1490,13 +1466,8 @@ body: |
     ; CHECK: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(p0) = COPY $p1
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; CHECK-NEXT: [[AIE_OFFSET_LOAD:%[0-9]+]]:_(<16 x s16>) = G_AIE_OFFSET_LOAD [[COPY]](p0), [[C1]](s20) :: (load (<16 x s16>) from unknown-address + 32)
-    ; CHECK-NEXT: [[AIE_POSTINC_2D_LOAD:%[0-9]+]]:_(<16 x s16>), [[AIE_POSTINC_2D_LOAD1:%[0-9]+]]:_(p0), [[AIE_POSTINC_2D_LOAD2:%[0-9]+]]:_(s20) = G_AIE_POSTINC_2D_LOAD [[COPY]], [[C]], [[C]], [[C]], [[C]] :: (load (<16 x s16>), align 64)
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(<16 x s16>) = COPY [[AIE_POSTINC_2D_LOAD]](<16 x s16>)
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:_(<16 x s16>) = COPY [[AIE_OFFSET_LOAD]](<16 x s16>)
-    ; CHECK-NEXT: G_AIE_OFFSET_STORE [[COPY3]](<16 x s16>), [[COPY1]](p0), [[C1]](s20) :: (store (<16 x s16>) into unknown-address + 32)
-    ; CHECK-NEXT: [[AIE_POSTINC_2D_STORE:%[0-9]+]]:_(p0), [[AIE_POSTINC_2D_STORE1:%[0-9]+]]:_(s20) = G_AIE_POSTINC_2D_STORE [[COPY2]](<16 x s16>), [[COPY1]], [[C]], [[C]], [[C]], [[C]] :: (store (<16 x s16>), align 64)
+    ; CHECK-NEXT: [[AIE_POSTINC_2D_LOAD:%[0-9]+]]:_(<32 x s16>), [[AIE_POSTINC_2D_LOAD1:%[0-9]+]]:_(p0), [[AIE_POSTINC_2D_LOAD2:%[0-9]+]]:_(s20) = G_AIE_POSTINC_2D_LOAD [[COPY]], [[C]], [[C]], [[C]], [[C]] :: (load (<32 x s16>))
+    ; CHECK-NEXT: [[AIE_POSTINC_2D_STORE:%[0-9]+]]:_(p0), [[AIE_POSTINC_2D_STORE1:%[0-9]+]]:_(s20) = G_AIE_POSTINC_2D_STORE [[AIE_POSTINC_2D_LOAD]](<32 x s16>), [[COPY1]], [[C]], [[C]], [[C]], [[C]] :: (store (<32 x s16>))
     ; CHECK-NEXT: $p0 = COPY [[AIE_POSTINC_2D_LOAD1]](p0)
     ; CHECK-NEXT: $p1 = COPY [[AIE_POSTINC_2D_STORE]](p0)
       %0:_(p0) = COPY $p0
@@ -1518,13 +1489,8 @@ body: |
     ; CHECK: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(p0) = COPY $p1
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; CHECK-NEXT: [[AIE_OFFSET_LOAD:%[0-9]+]]:_(<16 x s16>) = G_AIE_OFFSET_LOAD [[COPY]](p0), [[C1]](s20) :: (load (<16 x s16>) from unknown-address + 32)
-    ; CHECK-NEXT: [[AIE_POSTINC_3D_LOAD:%[0-9]+]]:_(<16 x s16>), [[AIE_POSTINC_3D_LOAD1:%[0-9]+]]:_(p0), [[AIE_POSTINC_3D_LOAD2:%[0-9]+]]:_(s20), [[AIE_POSTINC_3D_LOAD3:%[0-9]+]]:_ = G_AIE_POSTINC_3D_LOAD [[COPY]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]] :: (load (<16 x s16>), align 64)
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(<16 x s16>) = COPY [[AIE_POSTINC_3D_LOAD]](<16 x s16>)
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:_(<16 x s16>) = COPY [[AIE_OFFSET_LOAD]](<16 x s16>)
-    ; CHECK-NEXT: G_AIE_OFFSET_STORE [[COPY3]](<16 x s16>), [[COPY1]](p0), [[C1]](s20) :: (store (<16 x s16>) into unknown-address + 32)
-    ; CHECK-NEXT: [[AIE_POSTINC_3D_STORE:%[0-9]+]]:_(p0), [[AIE_POSTINC_3D_STORE1:%[0-9]+]]:_(s20), [[AIE_POSTINC_3D_STORE2:%[0-9]+]]:_ = G_AIE_POSTINC_3D_STORE [[COPY2]](<16 x s16>), [[COPY1]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]] :: (store (<16 x s16>), align 64)
+    ; CHECK-NEXT: [[AIE_POSTINC_3D_LOAD:%[0-9]+]]:_(<32 x s16>), [[AIE_POSTINC_3D_LOAD1:%[0-9]+]]:_(p0), [[AIE_POSTINC_3D_LOAD2:%[0-9]+]]:_(s20), [[AIE_POSTINC_3D_LOAD3:%[0-9]+]]:_ = G_AIE_POSTINC_3D_LOAD [[COPY]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]] :: (load (<32 x s16>))
+    ; CHECK-NEXT: [[AIE_POSTINC_3D_STORE:%[0-9]+]]:_(p0), [[AIE_POSTINC_3D_STORE1:%[0-9]+]]:_(s20), [[AIE_POSTINC_3D_STORE2:%[0-9]+]]:_ = G_AIE_POSTINC_3D_STORE [[AIE_POSTINC_3D_LOAD]](<32 x s16>), [[COPY1]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]] :: (store (<32 x s16>))
     ; CHECK-NEXT: $p0 = COPY [[AIE_POSTINC_3D_LOAD1]](p0)
     ; CHECK-NEXT: $p1 = COPY [[AIE_POSTINC_3D_STORE]](p0)
       %0:_(p0) = COPY $p0

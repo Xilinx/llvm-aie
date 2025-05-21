@@ -43,24 +43,24 @@ define dso_local void @lowerMemcpyUsingWordByte() local_unnamed_addr #0 {
 ; CHECK-LABEL: lowerMemcpyUsingWordByte:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; nopa ; nops ; movxm p1, #(buffer2+8); nopv
-; CHECK-NEXT:    lda.s8 r0, [p1, #0]; nopb ; movxm p0, #(buffer1+8); nops
-; CHECK-NEXT:    st.s8 r0, [p0, #0]
+; CHECK-NEXT:    nop ; movxm p0, #(buffer2+8)
+; CHECK-NEXT:    lda.s8 r0, [p0, #0]
+; CHECK-NEXT:    lda r1, [p0, #-4]; movxm p1, #(buffer1+8)
+; CHECK-NEXT:    st.s8 r0, [p1, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    paddb [p1], #-8
-; CHECK-NEXT:    lda r0, [p1], #4
-; CHECK-NEXT:    lda r1, [p1, #0]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    lda r0, [p0, #-8]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    paddb [p0], #-8 // Delay Slot 4
-; CHECK-NEXT:    st r0, [p0], #4 // Delay Slot 3
-; CHECK-NEXT:    st r1, [p0, #0] // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    st r1, [p1, #-4] // Delay Slot 3
+; CHECK-NEXT:    st r0, [p1, #-8] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   tail call void @llvm.memcpy.p0.p0.i32(ptr noundef nonnull align 4 dereferenceable(9) @buffer1, ptr noundef nonnull align 4 dereferenceable(9) @buffer2, i32 9, i1 false)
@@ -101,30 +101,31 @@ define dso_local void @lowerMemcpyUsingWordHalfByte() local_unnamed_addr #0 {
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; movxm p0, #(buffer2+8); nopv
-; CHECK-NEXT:    lda.s16 r0, [p0, #0]; movxm p1, #(buffer1+8)
+; CHECK-NEXT:    lda.s16 r0, [p0, #0]; nopb ; nopx
+; CHECK-NEXT:    lda r1, [p0, #-4]; movxm p1, #(buffer1+8)
 ; CHECK-NEXT:    st.s16 r0, [p1, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    paddb [p0], #-8
-; CHECK-NEXT:    lda r0, [p0], #4; mov m0, #6
-; CHECK-NEXT:    lda r1, [p0], m0
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    lda.s8 r0, [p0, #2]
+; CHECK-NEXT:    st.s8 r0, [p1, #2]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    paddb [p1], #-8
-; CHECK-NEXT:    st r0, [p1], #4
-; CHECK-NEXT:    lda.s8 r0, [p0, #0]; st r1, [p1], m0
-; CHECK-NEXT:    st.s8 r0, [p1, #0]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    lda r0, [p0, #-8]
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    st r1, [p1, #-4] // Delay Slot 3
+; CHECK-NEXT:    st r0, [p1, #-8] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   tail call void @llvm.memcpy.p0.p0.i32(ptr noundef nonnull align 4 dereferenceable(11) @buffer1, ptr noundef nonnull align 4 dereferenceable(11) @buffer2, i32 11, i1 false)

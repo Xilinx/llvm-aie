@@ -17,6 +17,7 @@
 #include "AIE.h"
 #include "AIEBaseInstrInfo.h"
 #include "AIEGlobalCombiner.h"
+#include "AIEGlobalCombinerPtrMods.h"
 #include "AIEInterBlockScheduling.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/GlobalISel/CSEInfo.h"
@@ -45,7 +46,45 @@ namespace llvm {
 
 bool AIEPtrModOptimizer::runOnMachineFunction(MachineFunction &MF) {
   PtrModRes = std::make_unique<AIE::FoundCombiners>(
-      /*Analysis=*/false);
+      /*Analysis=*/true);
+
+  MachineRegisterInfo &MRI = MF.getRegInfo();
+  const auto *TII =
+      static_cast<const AIEBaseInstrInfo *>(MF.getSubtarget().getInstrInfo());
+
+  const MachineDominatorTree *MDT = &getAnalysis<MachineDominatorTree>();
+
+  MachineSchedContext Context;
+  Context.MF = &MF;
+  Context.AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
+
+  // To build the edges in the DAG, the reserved Registers have to be freezed
+  MRI.freezeReservedRegs();
+  AIE::DataDependenceHelper DAG(Context, /*AddMutators=*/false);
+
+  // Fixme: these combiners should be provided by tablegen
+  std::vector<const AIE::GenericCombiner *> Combiners;
+  auto OffsetCombiner = std::make_unique<AIE::OffsetCombiner>(&MRI, TII);
+  Combiners.push_back(OffsetCombiner.get());
+  auto PostInc = std::make_unique<AIE::PostIncCombiner>(&MRI, TII);
+  Combiners.push_back(PostInc.get());
+  AIE::AIEGlobalCombiner GlobalCombinerHelper(Combiners, *MDT, DAG, &MRI, TII);
+
+  for (auto &MBB : MF) {
+    LLVM_DEBUG(dbgs() << "\n\n\n New MBB:" << MBB.getName() << " ("
+                      << MBB.getParent()->getName() << ")\n\n");
+
+    std::vector<const AIE::GenericCombiner *> FoundCombiners =
+        GlobalCombinerHelper.getCombiners(MBB);
+
+    if (FoundCombiners.empty()) {
+      LLVM_DEBUG(dbgs() << "[Global Ptr Inc] Skipping. No Combiners found!\n");
+      continue;
+    }
+
+    LLVM_DEBUG(dbgs() << "\n[Solution] MBB : " << MBB.getName() << "\n");
+    appendResult(FoundCombiners);
+  }
 
   return false;
 }

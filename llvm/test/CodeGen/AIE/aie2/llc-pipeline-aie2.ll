@@ -123,6 +123,7 @@
 ; AIE-O123-NEXT:      MachineDominator Tree Construction
 ; AIE-O123-NEXT:      AIE2 Post Legalizer Generic Combiner
 ; AIE-O123-NEXT:      AIE Base Address Clustering Optimization
+; AIE-O123-NEXT:      AIE Pointer Modifier Optimization
 ; AIE-O123-NEXT:      AIE2 Post Legalizer Custom Combiner
 
 ; AIE-O0123-NEXT:      RegBankSelect

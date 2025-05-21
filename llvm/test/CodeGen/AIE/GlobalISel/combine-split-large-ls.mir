@@ -8,11 +8,13 @@
 # RUN: llc -mtriple aie2 -run-pass=aie2-postlegalizer-custom-combiner %s -verify-machineinstrs -o - | FileCheck %s
 
 # Test for combine_load_store_split
+# FIXME: Global Combiner does not evaluate if the Load has to be split into smaller loads with offsets.
 
 # Case 1: Can split.
 
 ---
 name:            load_16xs32
+tracksRegLiveness: true
 body:             |
   bb.0:
     liveins: $p0
@@ -21,9 +23,10 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; CHECK-NEXT: [[AIE_OFFSET_LOAD:%[0-9]+]]:_(<8 x s32>) = G_AIE_OFFSET_LOAD [[COPY]](p0), [[C]](s20) :: (load (<8 x s32>) from unknown-address + 32)
-    ; CHECK-NEXT: [[LOAD:%[0-9]+]]:_(<8 x s32>) = G_LOAD [[COPY]](p0) :: (load (<8 x s32>), align 64)
-    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[LOAD]](<8 x s32>), [[AIE_OFFSET_LOAD]](<8 x s32>)
+    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s20)
+    ; CHECK-NEXT: [[LOAD:%[0-9]+]]:_(<8 x s32>) = G_LOAD [[PTR_ADD]](p0) :: (load (<8 x s32>) from unknown-address + 32)
+    ; CHECK-NEXT: [[LOAD1:%[0-9]+]]:_(<8 x s32>) = G_LOAD [[COPY]](p0) :: (load (<8 x s32>), align 64)
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[LOAD1]](<8 x s32>), [[LOAD]](<8 x s32>)
     ; CHECK-NEXT: $x0 = COPY [[CONCAT_VECTORS]](<16 x s32>)
     %1:_(p0) = COPY $p0
     %295:_(<16 x s32>) = G_LOAD %1(p0) :: (load (<16 x s32>))
@@ -42,9 +45,10 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; CHECK-NEXT: [[AIE_OFFSET_LOAD:%[0-9]+]]:_(<16 x s16>) = G_AIE_OFFSET_LOAD [[COPY]](p0), [[C]](s20) :: (load (<16 x s16>) from unknown-address + 32)
-    ; CHECK-NEXT: [[LOAD:%[0-9]+]]:_(<16 x s16>) = G_LOAD [[COPY]](p0) :: (load (<16 x s16>), align 64)
-    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[LOAD]](<16 x s16>), [[AIE_OFFSET_LOAD]](<16 x s16>)
+    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s20)
+    ; CHECK-NEXT: [[LOAD:%[0-9]+]]:_(<16 x s16>) = G_LOAD [[PTR_ADD]](p0) :: (load (<16 x s16>) from unknown-address + 32)
+    ; CHECK-NEXT: [[LOAD1:%[0-9]+]]:_(<16 x s16>) = G_LOAD [[COPY]](p0) :: (load (<16 x s16>), align 64)
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[LOAD1]](<16 x s16>), [[LOAD]](<16 x s16>)
     ; CHECK-NEXT: $x0 = COPY [[CONCAT_VECTORS]](<32 x s16>)
     %1:_(p0) = COPY $p0
     %295:_(<32 x s16>) = G_LOAD %1(p0) :: (load (<32 x s16>))
@@ -63,9 +67,10 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; CHECK-NEXT: [[AIE_OFFSET_LOAD:%[0-9]+]]:_(<32 x s8>) = G_AIE_OFFSET_LOAD [[COPY]](p0), [[C]](s20) :: (load (<32 x s8>) from unknown-address + 32)
-    ; CHECK-NEXT: [[LOAD:%[0-9]+]]:_(<32 x s8>) = G_LOAD [[COPY]](p0) :: (load (<32 x s8>), align 64)
-    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[LOAD]](<32 x s8>), [[AIE_OFFSET_LOAD]](<32 x s8>)
+    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s20)
+    ; CHECK-NEXT: [[LOAD:%[0-9]+]]:_(<32 x s8>) = G_LOAD [[PTR_ADD]](p0) :: (load (<32 x s8>) from unknown-address + 32)
+    ; CHECK-NEXT: [[LOAD1:%[0-9]+]]:_(<32 x s8>) = G_LOAD [[COPY]](p0) :: (load (<32 x s8>), align 64)
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[LOAD1]](<32 x s8>), [[LOAD]](<32 x s8>)
     ; CHECK-NEXT: $x0 = COPY [[CONCAT_VECTORS]](<64 x s8>)
     %1:_(p0) = COPY $p0
     %295:_(<64 x s8>) = G_LOAD %1(p0) :: (load (<64 x s8>))
@@ -86,7 +91,8 @@ body:             |
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(p0) = COPY $p0
     ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<8 x s32>), [[UV1:%[0-9]+]]:_(<8 x s32>) = G_UNMERGE_VALUES [[COPY]](<16 x s32>)
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; CHECK-NEXT: G_AIE_OFFSET_STORE [[UV1]](<8 x s32>), [[COPY1]](p0), [[C]](s20) :: (store (<8 x s32>) into unknown-address + 32)
+    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY1]], [[C]](s20)
+    ; CHECK-NEXT: G_STORE [[UV1]](<8 x s32>), [[PTR_ADD]](p0) :: (store (<8 x s32>) into unknown-address + 32)
     ; CHECK-NEXT: G_STORE [[UV]](<8 x s32>), [[COPY1]](p0) :: (store (<8 x s32>), align 64)
     %0:_(<16 x s32>) = COPY $x0
     %1:_(p0) = COPY $p0

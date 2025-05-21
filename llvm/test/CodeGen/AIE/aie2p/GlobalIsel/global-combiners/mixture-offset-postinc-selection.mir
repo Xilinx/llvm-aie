@@ -10,6 +10,7 @@
 # RUN:  --start-before=aie2p-postlegalizer-generic-combiner \
 # RUN:  --stop-after=aie2p-postlegalizer-custom-combiner \
 # RUN: --aie-address-chaining=true \
+# RUN:  --aie-global-ptr-mod-opt=true \
 # RUN:  -o - %s  | FileCheck %s
 
 # store hinders addr-chaining and thus leads to suboptimal assignments.
