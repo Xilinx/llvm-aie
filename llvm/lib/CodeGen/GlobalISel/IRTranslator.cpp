@@ -3511,10 +3511,15 @@ bool IRTranslator::translate(const Constant &C, Register Reg) {
     }
     EntryBuilder->buildBuildVector(Reg, Ops);
   } else if (auto CE = dyn_cast<ConstantExpr>(&C)) {
+    auto Builder = *EntryBuilder.get();
+    if (TLI->shouldBuildInlinedGEPsNextToUse() &&
+        CE->getOpcode() == Instruction::GetElementPtr) {
+      Builder = *CurBuilder.get();
+    }
     switch(CE->getOpcode()) {
 #define HANDLE_INST(NUM, OPCODE, CLASS)                                        \
   case Instruction::OPCODE:                                                    \
-    return translate##OPCODE(*CE, *EntryBuilder.get());
+    return translate##OPCODE(*CE, Builder);
 #include "llvm/IR/Instruction.def"
     default:
       return false;
