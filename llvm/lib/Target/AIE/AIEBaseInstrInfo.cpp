@@ -23,6 +23,7 @@
 #include "Utils/AIELoopUtils.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
 #include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -1287,4 +1288,90 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
     llvm_unreachable("LoopStart/LoopBody: insufficient padding!\n");
 
   return AlgnCandidates;
+}
+
+bool llvm::AIEBaseInstrInfo::PTRModSupport::isNativeS20Consumer(
+    const MachineInstr &MI) const {
+  switch (MI.getOpcode()) {
+  case TargetOpcode::G_PTR_ADD:
+    return true;
+  case TargetOpcode::G_INTRINSIC:
+  case TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS: {
+    const unsigned IntrinsicID = cast<GIntrinsic>(MI).getIntrinsicID();
+    return S20Consumers->count(IntrinsicID);
+  }
+
+  default:
+    return false;
+  }
+}
+
+bool llvm::AIEBaseInstrInfo::PTRModSupport::isNativeS20Operand(
+    const MachineInstr &MI, unsigned OperandIdx) const {
+  switch (MI.getOpcode()) {
+  case TargetOpcode::G_PTR_ADD:
+    return true;
+  case TargetOpcode::G_INTRINSIC:
+  case TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS: {
+    const unsigned IntrinsicID = cast<GIntrinsic>(MI).getIntrinsicID();
+    return isNativeS20ConsumerIntrinsicOperand(IntrinsicID, OperandIdx);
+  }
+  default:
+    return false;
+  }
+}
+
+bool llvm::AIEBaseInstrInfo::PTRModSupport::isNativeS20ConsumerIntrinsicOperand(
+    const unsigned IntrinsicID, unsigned OperandIdx) const {
+  auto It = S20Consumers->find(IntrinsicID);
+  if (It == S20Consumers->end())
+    return false;
+
+  const std::set<unsigned> &Indices = It->second;
+  return Indices.find(OperandIdx) != Indices.end();
+}
+
+std::optional<unsigned> llvm::AIEBaseInstrInfo::PTRModSupport::getInputPtrIdx(
+    const MachineInstr &MI) const {
+  switch (MI.getOpcode()) {
+  case TargetOpcode::G_PTR_ADD:
+    return 1;
+  case TargetOpcode::G_INTRINSIC:
+  case TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS: {
+    const unsigned IntrinsicID = cast<GIntrinsic>(MI).getIntrinsicID();
+    return getInputPtrIdx(IntrinsicID);
+  }
+  default:
+    return {};
+  }
+}
+
+unsigned llvm::AIEBaseInstrInfo::PTRModSupport::getInputPtrIdx(
+    const unsigned OpCode) const {
+  auto It = PtrInputAndOutputIdx->find(OpCode);
+  assert(It != PtrInputAndOutputIdx->end());
+  return It->second.first;
+}
+
+std::optional<unsigned> llvm::AIEBaseInstrInfo::PTRModSupport::getOutputPtrIdx(
+    const MachineInstr &MI) const {
+  switch (MI.getOpcode()) {
+  case TargetOpcode::G_PTR_ADD:
+    return 0;
+  case TargetOpcode::G_INTRINSIC:
+  case TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS: {
+    const unsigned IntrinsicID = cast<GIntrinsic>(MI).getIntrinsicID();
+    return getOutputPtrIdx(IntrinsicID);
+  }
+
+  default:
+    return {};
+  }
+}
+
+unsigned llvm::AIEBaseInstrInfo::PTRModSupport::getOutputPtrIdx(
+    const unsigned OpCode) const {
+  auto It = PtrInputAndOutputIdx->find(OpCode);
+  assert(It != PtrInputAndOutputIdx->end());
+  return It->second.second;
 }

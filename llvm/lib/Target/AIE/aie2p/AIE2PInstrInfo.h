@@ -113,6 +113,7 @@ public:
   bool isOffsetInImmediateRange(unsigned Opcode, unsigned LoadStoreSize,
                                 std::optional<APInt> Immediate) const override;
 
+  virtual const PTRModSupport &getPTRModSupport() const override;
   unsigned getNumBypassedCycles(const InstrItineraryData *ItinData,
                                 const MachineInstr &DefMI, unsigned DefIdx,
                                 const MachineInstr &UseMI,

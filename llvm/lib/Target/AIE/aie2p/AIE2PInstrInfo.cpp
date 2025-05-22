@@ -1814,6 +1814,58 @@ bool AIE2PInstrInfo::isOffsetInImmediateRange(
   }
 }
 
+namespace {
+static const std::map<unsigned, std::set<unsigned>> S20Consumers = {
+    {Intrinsic::aie2p_add_2d, {4, 5, 6, 7}},
+    {Intrinsic::aie2p_add_2d, {4, 5, 6, 7}},
+    {Intrinsic::aie2p_add_3d, {5, 6, 7, 8, 9, 10, 11}},
+    {Intrinsic::aie2p_fifo_st_flush_1d, {7}},
+    {Intrinsic::aie2p_fifo_st_flush_1d_conv, {7}},
+    {Intrinsic::aie2p_fifo_ld_pop_1d_unaligned, {8}},
+    {Intrinsic::aie2p_fifo_st_flush_2d, {8, 9, 10, 11}},
+    {Intrinsic::aie2p_fifo_st_flush_2d_conv, {8, 9, 10, 11}},
+    {Intrinsic::aie2p_fifo_ld_pop_544_1d_bfp16, {9}},
+    {Intrinsic::aie2p_fifo_ld_pop_576_1d_bfp16, {9}},
+    {Intrinsic::aie2p_fifo_ld_pop_2d_unaligned, {9, 10, 11, 12}},
+    {Intrinsic::aie2p_fifo_st_flush_3d, {9, 10, 11, 12, 13, 14, 15}},
+    {Intrinsic::aie2p_fifo_st_flush_3d_conv, {9, 10, 11, 12, 13, 14, 15}},
+    {Intrinsic::aie2p_fifo_ld_pop_544_2d_bfp16, {10, 11, 12, 13}},
+    {Intrinsic::aie2p_fifo_ld_pop_576_2d_bfp16, {10, 11, 12, 13}},
+    {Intrinsic::aie2p_fifo_ld_pop_3d_unaligned, {10, 11, 12, 13, 14, 15, 16}},
+    {Intrinsic::aie2p_fifo_ld_pop_544_3d_bfp16, {11, 12, 13, 14, 15, 16, 17}},
+    {Intrinsic::aie2p_fifo_ld_pop_576_3d_bfp16, {11, 12, 13, 14, 15, 16, 17}}};
+
+static const std::map<unsigned, std::pair<unsigned, unsigned>>
+    PtrInputAndOutputIdx = {
+        {Intrinsic::aie2p_add_2d, {3, 0}},
+        {Intrinsic::aie2p_add_3d, {4, 0}},
+        {Intrinsic::aie2p_fifo_st_flush_1d, {3, 0}},
+        {Intrinsic::aie2p_fifo_st_flush_1d_conv, {3, 0}},
+        {Intrinsic::aie2p_fifo_ld_pop_1d_unaligned, {3, 0}},
+        {Intrinsic::aie2p_fifo_st_flush_2d, {4, 0}},
+        {Intrinsic::aie2p_fifo_st_flush_2d_conv, {4, 0}},
+        {Intrinsic::aie2p_fifo_ld_pop_544_1d_bfp16, {3, 0}},
+        {Intrinsic::aie2p_fifo_ld_pop_576_1d_bfp16, {3, 0}},
+        {Intrinsic::aie2p_fifo_ld_pop_2d_unaligned, {4, 0}},
+        {Intrinsic::aie2p_fifo_st_flush_3d, {5, 0}},
+        {Intrinsic::aie2p_fifo_st_flush_3d_conv, {5, 0}},
+        {Intrinsic::aie2p_fifo_ld_pop_544_2d_bfp16, {4, 0}},
+        {Intrinsic::aie2p_fifo_ld_pop_576_2d_bfp16, {4, 0}},
+        {Intrinsic::aie2p_fifo_ld_pop_3d_unaligned, {5, 0}},
+        {Intrinsic::aie2p_fifo_ld_pop_544_3d_bfp16, {5, 0}},
+        {Intrinsic::aie2p_fifo_ld_pop_576_3d_bfp16, {5, 0}},
+};
+
+static const AIEBaseInstrInfo::PTRModSupport AIE2PPTRModSupport{
+    &S20Consumers, &PtrInputAndOutputIdx};
+
+} // namespace
+
+const AIEBaseInstrInfo::PTRModSupport &
+AIE2PInstrInfo::getPTRModSupport() const {
+  return AIE2PPTRModSupport;
+}
+
 unsigned AIE2PInstrInfo::getGenericAddVectorEltOpcode() const {
   return AIE2P::G_AIE_ADD_VECTOR_ELT_HI;
 }

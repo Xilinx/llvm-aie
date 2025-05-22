@@ -69,6 +69,11 @@ static unsigned getNumMaskUndefs(const ArrayRef<int> &Mask,
   return Count;
 }
 
+static const AIEBaseInstrInfo *getInstrInfo(const MachineInstr &MI) {
+  return static_cast<const AIEBaseInstrInfo *>(
+      MI.getMF()->getSubtarget().getInstrInfo());
+}
+
 bool MaskMatch::isValidMask(const ArrayRef<int> Mask) const {
   for (unsigned Idx = 0; Idx < Mask.size(); ++Idx) {
     if (Mask[Idx] == -1)
@@ -773,57 +778,27 @@ static bool canProduceS20(const MachineRegisterInfo &MRI,
   }
 }
 
-/// Checks if the intrinsic natively consumes S20 for scalar inputs.
-static bool isNativeS20ConsumerIntrinsic(const unsigned IntrinsicID,
-                                         std::optional<unsigned> OperandIdx) {
-  static const std::map<unsigned, const std::set<unsigned>> S20OpIndices = {
-      {Intrinsic::aie2_add_2d, {4, 5, 6, 7}},
-      {Intrinsic::aie2_add_3d, {5, 6, 7, 8, 9, 10, 11}},
-      {Intrinsic::aie2p_add_2d, {4, 5, 6, 7}},
-      {Intrinsic::aie2p_add_3d, {5, 6, 7, 8, 9, 10, 11}},
-      {Intrinsic::aie2p_fifo_st_flush_1d, {7}},
-      {Intrinsic::aie2p_fifo_st_flush_1d_conv, {7}},
-      {Intrinsic::aie2p_fifo_ld_pop_1d_unaligned, {8}},
-      {Intrinsic::aie2p_fifo_st_flush_2d, {8, 9, 10, 11}},
-      {Intrinsic::aie2p_fifo_st_flush_2d_conv, {8, 9, 10, 11}},
-      {Intrinsic::aie2p_fifo_ld_pop_544_1d_bfp16, {9}},
-      {Intrinsic::aie2p_fifo_ld_pop_576_1d_bfp16, {9}},
-      {Intrinsic::aie2p_fifo_ld_pop_2d_unaligned, {9, 10, 11, 12}},
-      {Intrinsic::aie2p_fifo_st_flush_3d, {9, 10, 11, 12, 13, 14, 15}},
-      {Intrinsic::aie2p_fifo_st_flush_3d_conv, {9, 10, 11, 12, 13, 14, 15}},
-      {Intrinsic::aie2p_fifo_ld_pop_544_2d_bfp16, {10, 11, 12, 13}},
-      {Intrinsic::aie2p_fifo_ld_pop_576_2d_bfp16, {10, 11, 12, 13}},
-      {Intrinsic::aie2p_fifo_ld_pop_3d_unaligned, {10, 11, 12, 13, 14, 15, 16}},
-      {Intrinsic::aie2p_fifo_ld_pop_544_3d_bfp16, {11, 12, 13, 14, 15, 16, 17}},
-      {Intrinsic::aie2p_fifo_ld_pop_576_3d_bfp16,
-       {11, 12, 13, 14, 15, 16, 17}}};
-
-  auto It = S20OpIndices.find(IntrinsicID);
-  if (It == S20OpIndices.end())
-    return false;
-
-  if (!OperandIdx) {
-    return true;
-  }
-  const std::set<unsigned> &Indices = It->second;
-  return Indices.find(*OperandIdx) != Indices.end();
-}
-
-/// Checks if the instruction natively consumes S20 for scalar inputs.
-static bool
-isNativeS20Consumer(const MachineInstr &MI,
-                    std::optional<unsigned> OperandIdx = std::nullopt) {
-  switch (MI.getOpcode()) {
-  case TargetOpcode::G_PTR_ADD:
-    return true;
-  case TargetOpcode::G_INTRINSIC:
-  case TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS: {
-    const unsigned IntrinsicID = cast<GIntrinsic>(MI).getIntrinsicID();
-    return isNativeS20ConsumerIntrinsic(IntrinsicID, OperandIdx);
-  }
-
-  default:
-    return false;
+/// Returns all MachineOperand Indices that are a use of
+/// the specific register. It further tightens the search criteria to a use
+/// that kills the register if IsKill is true.
+static std::vector<unsigned>
+findAllRegisterUseOperandIdx(MachineInstr &MI, Register Reg,
+                             bool IsKill = false,
+                             const TargetRegisterInfo *TRI = nullptr) {
+  {
+    std::vector<unsigned> UseIndices;
+    for (unsigned I = 0, E = MI.getNumOperands(); I != E; ++I) {
+      const MachineOperand &MO = MI.getOperand(I);
+      if (!MO.isReg() || !MO.isUse())
+        continue;
+      Register MOReg = MO.getReg();
+      if (!MOReg)
+        continue;
+      if (MOReg == Reg || (TRI && Reg && MOReg && TRI->regsOverlap(MOReg, Reg)))
+        if (!IsKill || MO.isKill())
+          UseIndices.push_back(I);
+    }
+    return UseIndices;
   }
 }
 
@@ -856,6 +831,9 @@ bool canNarrowUserTreeToS20(MachineRegisterInfo &MRI, InstrNode Start,
     return false;
   }
 
+  const auto *TII = getInstrInfo(MI);
+  auto &PtrModSupport = TII->getPTRModSupport();
+
   // Now check if users can be adapted to consume an S20 input
   assert(MI.getNumExplicitDefs() == 1);
   Register DefReg = MI.getOperand(0).getReg();
@@ -881,10 +859,15 @@ bool canNarrowUserTreeToS20(MachineRegisterInfo &MRI, InstrNode Start,
         return false;
       continue;
     default:
-      if (isNativeS20Consumer(Use, Use.findRegisterUseOperandIdx(DefReg)))
-        continue;
-      LLVM_DEBUG(dbgs() << "    User cannot consume S20: " << Use);
-      return false;
+      // FIXME: check every Use of DefReg in Use
+      auto UseIndices = findAllRegisterUseOperandIdx(Use, DefReg);
+      assert(!UseIndices.empty());
+      for (auto &Idx : UseIndices) {
+        if (!PtrModSupport.isNativeS20Operand(Use, Idx)) {
+          LLVM_DEBUG(dbgs() << "    User cannot consume S20: " << Use);
+          return false;
+        }
+      }
     }
   }
   LLVM_DEBUG(dbgs() << "  Can be narrowed: " << MI);
@@ -1005,7 +988,9 @@ bool getOperandsToNarrow(MachineInstr &MI, MachineRegisterInfo &MRI,
 
 bool llvm::matchS20NarrowingOpt(MachineInstr &MI, MachineRegisterInfo &MRI,
                                 std::set<InstrNode> &ValidStartNodes) {
-  if (!EnableS20Narrowing || !isNativeS20Consumer(MI))
+  auto *TII = getInstrInfo(MI);
+  auto &PtrModSupport = TII->getPTRModSupport();
+  if (!EnableS20Narrowing || !PtrModSupport.isNativeS20Consumer(MI))
     return false;
   return getOperandsToNarrow(MI, MRI, ValidStartNodes);
 }
@@ -1064,7 +1049,9 @@ bool modifyToS20(InstrNode Start, MachineRegisterInfo &MRI, MachineIRBuilder &B,
   }
 
   // Easy case
-  if (isNativeS20Consumer(*StartNodeMI))
+  const auto *TII = getInstrInfo(*StartNodeMI);
+  auto &PtrModSupport = TII->getPTRModSupport();
+  if (PtrModSupport.isNativeS20Consumer(*StartNodeMI))
     return true;
 
   LLVM_DEBUG(dbgs() << "Narrow operand of :" << *StartNodeMI);

@@ -1503,6 +1503,24 @@ bool AIE2InstrInfo::isOffsetInImmediateRange(
   }
 }
 
+namespace {
+static const std::map<unsigned, std::set<unsigned>> S20Consumers = {
+    {Intrinsic::aie2_add_2d, {4, 5, 6, 7}},
+    {Intrinsic::aie2_add_3d, {5, 6, 7, 8, 9, 10, 11}}};
+
+static const std::map<unsigned, std::pair<unsigned, unsigned>>
+    PtrInputAndOutputIdx = {{Intrinsic::aie2_add_2d, {3, 0}},
+                            {Intrinsic::aie2_add_3d, {4, 0}}};
+
+static const AIEBaseInstrInfo::PTRModSupport AIE2PTRModSupport{
+    &S20Consumers, &PtrInputAndOutputIdx};
+
+} // namespace
+
+const AIEBaseInstrInfo::PTRModSupport &AIE2InstrInfo::getPTRModSupport() const {
+  return AIE2PTRModSupport;
+}
+
 unsigned AIE2InstrInfo::getPseudoJNZDOpcode() const { return AIE2::PseudoJNZD; }
 
 unsigned AIE2InstrInfo::getNumBypassedCycles(const InstrItineraryData *ItinData,
