@@ -27,6 +27,7 @@
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <optional>
+#include <set>
 
 namespace llvm {
 
@@ -62,6 +63,43 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual bool isOffsetInImmediateRange(unsigned Opcode, unsigned LoadStoreSize,
                                         std::optional<APInt> Offset) const {
     llvm_unreachable("Target didn't implement OffsetFitImmRange");
+  }
+
+  class PTRModSupport {
+    /// Map between GIntrinsic and the OperandIndices that consume S20 Operands
+    const std::map<unsigned, std::set<unsigned>> *S20Consumers = nullptr;
+    /// Map between GIntrinsic/Opcode and the <Input, Output> OperandIndices
+    const std::map<unsigned, std::pair<unsigned, unsigned>>
+        *PtrInputAndOutputIdx = nullptr;
+
+    /// \return whether \p OperandIdx of \p IntrinsicId is a native S20 Operand
+    bool isNativeS20ConsumerIntrinsicOperand(const unsigned IntrinsicID,
+                                             const unsigned OperandIdx) const;
+
+    unsigned getInputPtrIdx(const unsigned OpCode) const;
+    unsigned getOutputPtrIdx(const unsigned OpCode) const;
+
+  public:
+    PTRModSupport(const std::map<unsigned, std::set<unsigned>> *S20Consumers,
+                  const std::map<unsigned, std::pair<unsigned, unsigned>>
+                      *PtrInputAndOutputIdx)
+        : S20Consumers(S20Consumers),
+          PtrInputAndOutputIdx(PtrInputAndOutputIdx) {}
+
+    /// \return whether \p MI consumes S20
+    bool isNativeS20Consumer(const MachineInstr &MI) const;
+
+    /// \return whether \p OperandIdx of \p MI is a native S20 operand
+    bool isNativeS20Operand(const MachineInstr &MI, unsigned OperandIdx) const;
+
+    std::optional<unsigned> getInputPtrIdx(const MachineInstr &MI) const;
+
+    std::optional<unsigned> getOutputPtrIdx(const MachineInstr &MI) const;
+  };
+
+  /// Return PointerModifierSupport Class for querying
+  virtual const PTRModSupport &getPTRModSupport() const {
+    llvm_unreachable("Target didn't implement getPTRModSupport");
   }
 
   /// Return the opcode for a return instruction
