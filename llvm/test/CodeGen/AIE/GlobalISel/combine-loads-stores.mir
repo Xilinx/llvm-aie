@@ -212,20 +212,19 @@ body:             |
 ...
 
 ---
-name:            load_not_to_postinc_cannot_move_offset
+name:            load_to_postinc_move_inst_below_PTR_ADD
 body:             |
   bb.0:
     liveins: $p0
-    ; CHECK-LABEL: name: load_not_to_postinc_cannot_move_offset
+    ; CHECK-LABEL: name: load_to_postinc_move_inst_below_PTR_ADD
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
-    ; CHECK-NEXT: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY]](p0) :: (load (s32))
-    ; CHECK-NEXT: $r0 = COPY [[LOAD]](s32)
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 12
     ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C]](s32)
-    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[TRUNC]](s20)
-    ; CHECK-NEXT: $p0 = COPY [[PTR_ADD]](p0)
+    ; CHECK-NEXT: [[AIE_POSTINC_LOAD:%[0-9]+]]:_(s32), [[AIE_POSTINC_LOAD1:%[0-9]+]]:_(p0) = G_AIE_POSTINC_LOAD [[COPY]], [[TRUNC]](s20) :: (load (s32))
+    ; CHECK-NEXT: $r0 = COPY [[AIE_POSTINC_LOAD]](s32)
+    ; CHECK-NEXT: $p0 = COPY [[AIE_POSTINC_LOAD1]](p0)
     %0:_(p0) = COPY $p0
     %3:_(s32) = G_LOAD %0 :: (load (s32))
     $r0 = COPY %3
@@ -421,22 +420,21 @@ body:             |
 ...
 
 ---
-name:            store_not_to_postinc_cannot_move_offset
+name:            store_to_postinc_move_store_near_to_ptr_add
 body:             |
   bb.0:
     liveins: $p0, $r0
-    ; CHECK-LABEL: name: store_not_to_postinc_cannot_move_offset
+    ; CHECK-LABEL: name: store_to_postinc_move_store_near_to_ptr_add
     ; CHECK: liveins: $p0, $r0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r0
-    ; CHECK-NEXT: G_STORE [[COPY1]](s32), [[COPY]](p0) :: (store (s32))
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(p0) = COPY $p1
     ; CHECK-NEXT: G_STORE [[COPY1]](s32), [[COPY2]](p0) :: (store (s32))
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 24
     ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C]](s32)
-    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[TRUNC]](s20)
-    ; CHECK-NEXT: $p0 = COPY [[PTR_ADD]](p0)
+    ; CHECK-NEXT: [[AIE_POSTINC_STORE:%[0-9]+]]:_(p0) = G_AIE_POSTINC_STORE [[COPY1]](s32), [[COPY]], [[TRUNC]](s20) :: (store (s32))
+    ; CHECK-NEXT: $p0 = COPY [[AIE_POSTINC_STORE]](p0)
     %0:_(p0) = COPY $p0
     %1:_(s32) = COPY $r0
     G_STORE %1, %0 :: (store (s32))

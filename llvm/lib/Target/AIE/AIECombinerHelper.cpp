@@ -43,6 +43,11 @@ static cl::opt<bool> EnableOffsetCombine(
 static cl::opt<bool> EnablePostIncCombine(
     "aie-postinc-combine", cl::Hidden, cl::init(true),
     cl::desc("Enable combines of load and stores with post increments"));
+static cl::opt<bool> EnablePostIncCombineMultipleInst(
+    "aie-postinc-combine-move-multiple-instr", cl::Hidden, cl::init(true),
+    cl::desc(
+        "Enable combines of load and stores with post increments requiring "
+        "multiple instructions to be moved"));
 static cl::opt<bool> EnableGreedyAddressCombine(
     "aie-greedy-address-combines", cl::Hidden, cl::init(false),
     cl::desc("Enable greedy combines without checking for later uses of the "
@@ -214,8 +219,11 @@ MachineInstr *findPreIncMatch(MachineInstr &MemI, MachineRegisterInfo &MRI,
   Register Addr = MemI.getOperand(1).getReg();
   MachineInstr *AddrDef = getDefIgnoringCopies(Addr, MRI);
   if (AddrDef->getOpcode() == TargetOpcode::G_PTR_ADD) {
-    MatchData = {AddrDef, TII.getOffsetMemOpcode(MemI.getOpcode()), &MemI,
-                 /*ExtraInstrsToMove=*/{},
+    MatchData = {AddrDef,
+                 TII.getOffsetMemOpcode(MemI.getOpcode()),
+                 &MemI,
+                 /*ExtraInstrsToMoveBefore=*/{},
+                 /*ExtraInstrsToMoveAfter=*/{},
                  /*RemoveInstr=*/false};
     return AddrDef;
   }
@@ -276,6 +284,67 @@ bool llvm::canDelayMemOp(MachineInstr &MemI, MachineInstr &Dest,
            !MI.isSafeToMove(nullptr, SawStore);
   };
   return none_of(InstrRange, UnsafeToMovePast);
+}
+
+/// Collects all dependent instructions between SrcMI and DestMI.
+/// This function iterates over all definitions in SrcMI and collects all
+/// instructions that use these definitions and are within the range from
+/// SrcMI to DestMI. The collected instructions are stored in the
+/// DependentInstrs vector. It is expected that the SrcMI & DestMI are in the BB
+///
+/// \param SrcMI The source machine instruction to start the range.
+/// \param DestMI The destination machine instruction to end the range.
+/// \param MRI The machine register info used to query register uses.
+/// \param DependentInstrs A set to store the collected dependent
+/// instructions in dominating order.
+void DependentInstrInRange(MachineInstr &SrcMI, MachineInstr &DestMI,
+                           MachineRegisterInfo &MRI,
+                           DependentInstrSet &DependentInstrs) {
+  if (SrcMI.getParent() != DestMI.getParent())
+    return;
+  const auto SrcMIIter = SrcMI.getIterator();
+  const auto DestMIIter = DestMI.getIterator();
+  const auto SrcToDestDistance = std::distance(SrcMIIter, DestMIIter);
+  for (auto &Defs : SrcMI.all_defs()) {
+    const Register Reg = Defs.getReg();
+    for (auto &Use : MRI.use_nodbg_instructions(Reg)) {
+      if (Use.getParent() != DestMI.getParent())
+        continue;
+      auto UseIter = Use.getIterator();
+      if (std::distance(SrcMIIter, UseIter) > SrcToDestDistance)
+        break;
+      DependentInstrs.insert(&Use);
+      DependentInstrInRange(Use, DestMI, MRI, DependentInstrs);
+    }
+  }
+}
+
+/// \return true and \a DependentInstrs set to move below Dest, if \a MemI
+/// can be moved just before \a Dest in order to allow post-increment combining
+bool llvm::canDelayMemOpWithExtraInstr(MachineInstr &MemI, MachineInstr &Dest,
+                                       MachineRegisterInfo &MRI,
+                                       DependentInstrSet &DependentInstrs) {
+  if (MemI.getParent() != Dest.getParent())
+    return false;
+  DependentInstrInRange(MemI, Dest, MRI, DependentInstrs);
+
+  if (DependentInstrs.empty())
+    return true;
+
+  // Check if we can move the dependent instructions after Dest in order to
+  // enable post-increment combining.
+  if (!canDelayMemOp(**DependentInstrs.begin(), Dest, MRI))
+    return false;
+
+  // Check if we can move the rest of the dependent instructions after the
+  // previous one, this inherently checks if we can move the dependent
+  // instruction below the Dest instruction
+  for (auto Iter = DependentInstrs.begin(), NextIter = std::next(Iter);
+       NextIter != DependentInstrs.end(); ++Iter, ++NextIter)
+    if (!canDelayMemOp(**NextIter, **Iter, MRI))
+      return false;
+
+  return true;
 }
 
 /// \return true if \a Dest can be moved just after \a MemI in order to allow
@@ -498,25 +567,43 @@ MachineInstr *findPostIncMatch(MachineInstr &MemI, MachineRegisterInfo &MRI,
                  })) {
         continue;
       }
-      MatchData = {&PtrInc, *CombinedOpcode, &MemI,
-                   /*ExtraInstrsToMove=*/{},
+      MatchData = {&PtrInc,
+                   *CombinedOpcode,
+                   &MemI,
+                   /*dxeBefore=*/{},
+                   /*ExtraInstrsToMoveAfter=*/{},
                    /*RemoveInstr=*/true};
       // The offset of the PtrInc might be defined after MemI, in this case we
       // want to verify if it would be possible to insert the combined
       // instruction at the PtrInc instead of the location of MemI. Instruction
       // with side effects are also blocking: Loads, stores, calls, instructions
       // with side effects cannot be moved.
-      // TODO: try move other instructions that block us from combining
     } else if (canDelayMemOp(MemI, PtrAddInsertLoc, MRI)) {
       // If Definition of the offset is a G_CONSTANT we have to move that
       // instruction up
       MatchData = {
           &PtrInc, *CombinedOpcode, &PtrAddInsertLoc,
-          /*ExtraInstrsToMove=*/
+          /*ExtraInstrsToMoveBefore=*/
           findConstantOffsetsToMove(PtrInc, PtrAddInsertLoc, MRI, Helper),
+          /*ExtraInstrsToMoveAfter=*/{},
           /*RemoveInstr=*/true};
+      // When the offset of the PtrInc might be defined after MemI, we may want
+      // to move some instruction below the PtrInc to allow the combine.
+    } else if (DependentInstrSet DependentInstrToMoveBelow(Helper);
+               EnablePostIncCombineMultipleInst &&
+               canDelayMemOpWithExtraInstr(MemI, PtrInc, MRI,
+                                           DependentInstrToMoveBelow)) {
+      std::vector<MachineInstr *> ExtraInstrsToMoveAfter(
+          DependentInstrToMoveBelow.begin(), DependentInstrToMoveBelow.end());
+      MatchData = {&PtrInc,
+                   *CombinedOpcode,
+                   &PtrInc,
+                   /*ExtraInstrsToMoveBefore=*/{},
+                   /*ExtraInstrsToMoveAfter=*/ExtraInstrsToMoveAfter,
+                   /*RemoveInstr=*/true};
+
     } else {
-      LLVM_DEBUG(dbgs() << "    Ignoring candidate " << PtrInc);
+      LLVM_DEBUG(dbgs() << "    Ignoring candidate for PostInc " << PtrInc);
       continue;
     }
     // Only combine postIncs if we know that the original pointer is not used
@@ -553,9 +640,24 @@ void llvm::applyLdStInc(MachineInstr &MI, MachineRegisterInfo &MRI,
   // Debug Loc: Debug Loc of LOAD STORE: MI
   B.setDebugLoc(MI.getDebugLoc());
   auto NewInstr = B.buildInstr(MatchData.CombinedInstrOpcode);
-  for (auto *Instr : MatchData.ExtraInstrsToMove) {
-    Instr->moveBefore(NewInstr);
-  }
+
+  // Move the instructions before the NewInstr
+  auto MoveInstrsBefore = [&NewInstr](const auto &InstrsToMoveBefore) {
+    std::for_each(InstrsToMoveBefore.begin(), InstrsToMoveBefore.end(),
+                  [&NewInstr](auto *MI) { MI->moveBefore(NewInstr); });
+  };
+  MoveInstrsBefore(MatchData.ExtraInstrsToMoveBefore);
+
+  // Move the instructions after the NewInstr
+  auto MoveInstrsAfter = [&NewInstr](const auto &InstrsToMoveAfter) {
+    const auto &NewInstrIter = NewInstr.getInstr()->getIterator();
+    std::for_each(InstrsToMoveAfter.begin(), InstrsToMoveAfter.end(),
+                  [&NewInstrIter](auto *MI) {
+                    MI->moveBefore(&*std::next(NewInstrIter));
+                  });
+  };
+  MoveInstrsAfter(MatchData.ExtraInstrsToMoveAfter);
+
   if (MI.mayLoad())
     NewInstr.addDef(MI.getOperand(0).getReg() /* Loaded value */);
   if (MatchData.RemoveInstr)
