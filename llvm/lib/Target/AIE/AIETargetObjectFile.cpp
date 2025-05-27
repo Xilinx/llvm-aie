@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -22,9 +22,11 @@ static cl::opt<bool>
                                   "sections to match object alignment"));
 
 void AIEELFTargetObjectFile::Initialize(MCContext &Ctx,
-                                          const TargetMachine &TM) {
+                                        const TargetMachine &TM) {
   TargetLoweringObjectFileELF::Initialize(Ctx, TM);
   InitializeELF(TM.Options.UseInitArray);
+
+  RemarksSection = Ctx.getELFSection(".remarks", ELF::SHT_NOTE, ELF::SHF_ALLOC);
 
   // Legacy linker requires unique names for every symbol
   Ctx.setUseNamesOnTempLabels(true);
