@@ -599,7 +599,7 @@ void dumpSchedule(const ScheduleInfo &Info, int MinLength, int II,
     std::string Head = "SU" + std::to_string(K);
     dbgs() << Head;
     for (int I = Head.length() - 6; I < MinLength; I++) {
-      if (I % II == 0) {
+      if (I >= 0 && I % II == 0) {
         dbgs() << "|";
       }
       if (Select(I, K)) {
