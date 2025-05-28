@@ -43,14 +43,6 @@ def combine_globalval_offset : GICombineRule<
   (apply [{  applyGlobalValOffset(*${root}, MRI, B, Observer, ${matchinfo});}])
 >;
 
-def combine_S20NarrowingOpt_instruction_queue : GIDefMatchData<"std::set<InstrNode>">;
-def combine_S20NarrowingOpt : GICombineRule<
-  (defs root:$root, combine_S20NarrowingOpt_instruction_queue:$matchinfo),
-  (match (wip_match_opcode G_PTR_ADD, G_INTRINSIC, G_INTRINSIC_W_SIDE_EFFECTS):$root,
-          [{ return matchS20NarrowingOpt(*${root}, MRI, ${matchinfo}); }]),
-  (apply [{  applyS20NarrowingOpt(*${root}, MRI, B, Observer, Helper, ${matchinfo});}])
->;
-
 def combine_extract_vector_elt_and_zsa_ext_matchdata: GIDefMatchData<"std::pair<MachineInstr *, bool>">;
 def combine_extract_vector_elt_and_zsa_ext : GICombineRule<
   (defs root:$root, combine_extract_vector_elt_and_zsa_ext_matchdata:$matchinfo),
@@ -170,11 +162,17 @@ def combine_broadcast_shl_to_add : GICombineRule<
          [{ return matchBroadcastToShl(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
 
+def combine_narrow_phi_node_s20 : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_PHI): $root,
+         [{ return matchNarrowPhi(*${root}, MRI, Observer, ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
+
 // AIE-specifc combines (currently shared by AIE2 and AIE2P).
 def aie_additional_combines : GICombineGroup<[
   combine_unpad_vector,
   combine_pad_vector,
-  combine_S20NarrowingOpt,
+  combine_narrow_phi_node_s20,
   combine_globalval_offset,
   combine_extract_vector_elt_and_zsa_ext,
   combine_splat_vector,

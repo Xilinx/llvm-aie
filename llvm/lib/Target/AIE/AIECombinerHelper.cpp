@@ -68,11 +68,6 @@ static unsigned getNumMaskUndefs(const ArrayRef<int> &Mask,
   return Count;
 }
 
-static const AIEBaseInstrInfo *getInstrInfo(const MachineInstr &MI) {
-  return static_cast<const AIEBaseInstrInfo *>(
-      MI.getMF()->getSubtarget().getInstrInfo());
-}
-
 bool MaskMatch::isValidMask(const ArrayRef<int> Mask) const {
   for (unsigned Idx = 0; Idx < Mask.size(); ++Idx) {
     if (Mask[Idx] == -1)
@@ -864,394 +859,6 @@ void llvm::applyGlobalValOffset(MachineInstr &MI, MachineRegisterInfo &MRI,
   B.buildPtrAdd(
       Dst, NewGVDst,
       B.buildConstant(LLT::scalar(20), -static_cast<int64_t>(Offset)));
-}
-
-/// Checks whether the instruction produces or can be adapted to produce
-/// a single S20 output.
-static bool canProduceS20(const MachineRegisterInfo &MRI,
-                          const MachineInstr &MI) {
-  switch (MI.getOpcode()) {
-  case TargetOpcode::G_ZEXT:
-    // If the ZEXT input is S20, we can just turn MI into a COPY
-    return MRI.getType(MI.getOperand(1).getReg()) == LLT::scalar(20);
-  case TargetOpcode::G_TRUNC:
-  case TargetOpcode::G_LOAD:
-  case TargetOpcode::G_PHI:
-  case TargetOpcode::G_CONSTANT:
-  case TargetOpcode::G_IMPLICIT_DEF:
-    return true;
-  default:
-    return false;
-  }
-}
-
-/// Returns all MachineOperand Indices that are a use of
-/// the specific register. It further tightens the search criteria to a use
-/// that kills the register if IsKill is true.
-static std::vector<unsigned>
-findAllRegisterUseOperandIdx(MachineInstr &MI, Register Reg,
-                             bool IsKill = false,
-                             const TargetRegisterInfo *TRI = nullptr) {
-  {
-    std::vector<unsigned> UseIndices;
-    for (unsigned I = 0, E = MI.getNumOperands(); I != E; ++I) {
-      const MachineOperand &MO = MI.getOperand(I);
-      if (!MO.isReg() || !MO.isUse())
-        continue;
-      Register MOReg = MO.getReg();
-      if (!MOReg)
-        continue;
-      if (MOReg == Reg || (TRI && Reg && MOReg && TRI->regsOverlap(MOReg, Reg)))
-        if (!IsKill || MO.isKill())
-          UseIndices.push_back(I);
-    }
-    return UseIndices;
-  }
-}
-
-/// The function checks if the node can be adapted to produce an S20 value, and
-/// recursively looks forward to see if all users can be changed to consume S20
-/// inputs.
-///
-/// \param Start: Source Node identified by traversing backwards from a S20
-/// user. The node can have a DirectionNode, in which case only one particular
-/// user should be analyzed.
-/// \param VisitedNodes: To keep track of visited instructions
-bool canNarrowUserTreeToS20(MachineRegisterInfo &MRI, InstrNode Start,
-                            std::set<MachineInstr *> &VisitedNodes) {
-  Start.dbgPrintNode();
-
-  MachineInstr &MI = *Start.getBaseNode();
-
-  // Ignore nodes that have already been completely visited. This is needed
-  // because G_PHI can introduce cycles.
-  if (!Start.getRematerializeForUser()) {
-    if (VisitedNodes.count(&MI)) {
-      return true;
-    }
-    VisitedNodes.insert(&MI);
-  }
-
-  // First check that the instruction itself can be adapted to produce S20
-  if (!canProduceS20(MRI, MI)) {
-    LLVM_DEBUG(dbgs() << "  Cannot produce S20:" << MI);
-    return false;
-  }
-
-  const auto *TII = getInstrInfo(MI);
-  auto &PtrModSupport = TII->getPTRModSupport();
-
-  // Now check if users can be adapted to consume an S20 input
-  assert(MI.getNumExplicitDefs() == 1);
-  Register DefReg = MI.getOperand(0).getReg();
-  for (MachineInstr &Use : MRI.use_nodbg_instructions(DefReg)) {
-    LLVM_DEBUG(dbgs() << "  Verify use for narrowing: " << Use);
-    if (MachineInstr *LookAtSingleUse = Start.getRematerializeForUser();
-        LookAtSingleUse && &Use != LookAtSingleUse) {
-      LLVM_DEBUG(dbgs() << "    Skip irrelevant user: " << Use);
-      continue;
-    }
-    switch (Use.getOpcode()) {
-    case TargetOpcode::G_TRUNC:
-      // Check if the scalar size of the operand's type is at least 20 bits,
-      // this ensures that the G_TRUNC can be safely converted to a COPY.
-      if (MRI.getType(Use.getOperand(0).getReg()).getScalarSizeInBits() < 20)
-        return false;
-      [[fallthrough]];
-    case TargetOpcode::G_STORE: // Data operand is later modified to S20 type
-      continue;
-    case TargetOpcode::G_ZEXT:
-    case TargetOpcode::G_PHI:
-      if (!canNarrowUserTreeToS20(MRI, InstrNode(&Use), VisitedNodes))
-        return false;
-      continue;
-    default:
-      // FIXME: check every Use of DefReg in Use
-      auto UseIndices = findAllRegisterUseOperandIdx(Use, DefReg);
-      assert(!UseIndices.empty());
-      for (auto &Idx : UseIndices) {
-        if (!PtrModSupport.isNativeS20Operand(Use, Idx)) {
-          LLVM_DEBUG(dbgs() << "    User cannot consume S20: " << Use);
-          return false;
-        }
-      }
-    }
-  }
-  LLVM_DEBUG(dbgs() << "  Can be narrowed: " << MI);
-  return true;
-}
-
-/// The function recursively looks backwards to identify the src nodes that end
-/// up defining \p VReg. In particular, this looks through G_TRUNC, COPY and
-/// G_PHI to find sources.
-///
-/// \param Vreg Register for which to find "source" instructions
-/// \param UserInstr Instruction that uses \p VReg
-/// \param VisitedNodes Keeps track of visited instructions to avoid cycles
-/// \param SourceNodes Will contain all identified sources for \p VReg.
-void getSrcNodes(Register VReg, MachineInstr *UserInstr,
-                 MachineRegisterInfo &MRI,
-                 std::set<MachineInstr *> &VisitedNodes,
-                 std::set<InstrNode> &SourceNodes) {
-  assert(VReg.isVirtual());
-  MachineInstr *MI = nullptr;
-  const LLT S20 = LLT::scalar(20);
-
-  // Loop over the instructions defining the used vregs until finding a
-  // source instruction or a physical register.
-  while (VReg.isVirtual()) {
-    MI = MRI.getVRegDef(VReg);
-    LLVM_DEBUG(dbgs() << "  Visiting producer: " << *MI);
-
-    if (VisitedNodes.count(MI)) {
-      LLVM_DEBUG(dbgs() << "  ** Skipping already visited: " << *MI);
-      return;
-    }
-    VisitedNodes.insert(MI);
-
-    // Look through COPY, TRUNC and PHI to find "sources"
-    switch (MI->getOpcode()) {
-    case TargetOpcode::G_TRUNC:
-    case TargetOpcode::COPY:
-      VReg = MI->getOperand(1).getReg();
-      break;
-    case TargetOpcode::G_PHI:
-      for (unsigned SrcIdx = 1; SrcIdx < MI->getNumOperands(); SrcIdx += 2) {
-        getSrcNodes(MI->getOperand(SrcIdx).getReg(), MI, MRI, VisitedNodes,
-                    SourceNodes);
-      }
-      return;
-    case TargetOpcode::G_IMPLICIT_DEF:
-    case TargetOpcode::G_CONSTANT:
-      // This is an easily re-materializable node, consider it as source.
-      LLVM_DEBUG(dbgs() << "  Found source node (remat): " << *MI);
-      if (MRI.getType(VReg) != S20)
-        SourceNodes.emplace(InstrNode(MI, UserInstr));
-      return;
-    default:
-      // Don't know how to traverse VReg producer, consider as a source
-      LLVM_DEBUG(dbgs() << "  Found source node (other): " << *MI);
-      if (MRI.getType(VReg) != S20)
-        SourceNodes.emplace(InstrNode(MI));
-      return;
-    }
-    UserInstr = MI;
-  }
-
-  // We got to a physical register, consider the node using it as a source
-  LLVM_DEBUG(dbgs() << "  Found source node (phys reg consumer): "
-                    << *UserInstr);
-  assert(UserInstr->isCopy() && "Expected phys reg user to be a COPY");
-  SourceNodes.emplace(UserInstr);
-}
-
-void InstrNode::dbgPrintNode() const {
-  LLVM_DEBUG(dbgs() << "  Node : " << *BaseNode);
-  if (RematerializeForUser)
-    LLVM_DEBUG(dbgs() << "    Rematerialize for: " << *RematerializeForUser);
-}
-
-/// Return the S20 input operands of \p MI
-std::vector<MachineOperand *> getS20Operands(MachineInstr &MI,
-                                             MachineRegisterInfo &MRI) {
-  std::vector<MachineOperand *> Operands;
-  for (MachineOperand &MO : MI.explicit_uses()) {
-    if (MO.isReg() && MRI.getType(MO.getReg()) == LLT::scalar(20))
-      Operands.push_back(&MO);
-  }
-  return Operands;
-}
-
-/// The function recursively looks backwards to identify the src nodes that end
-/// up defining the S20 inputs of \p MI. Sources whose entire "user tree" can
-/// get converted to S20 will get added to \p ValidStartNodes.
-bool getOperandsToNarrow(MachineInstr &MI, MachineRegisterInfo &MRI,
-                         std::set<InstrNode> &ValidStartNodes) {
-  LLVM_DEBUG(dbgs() << "\n*** Trying to narrow operands for " << MI);
-
-  // Find all the source instructions for each S20 operand
-  for (const MachineOperand *MO : getS20Operands(MI, MRI)) {
-    std::set<InstrNode> SourceNodes;
-    std::set<MachineInstr *> VisitedNodes;
-
-    // Collect all the src nodes in PossibleStartNodes for given MO
-    LLVM_DEBUG(dbgs() << "Find source nodes for " << *MO << "\n");
-    getSrcNodes(MO->getReg(), &MI, MRI, VisitedNodes, SourceNodes);
-
-    // Traverse all users of our source nodes to verify if they can
-    // all be narrowed to S20 types.
-    LLVM_DEBUG(dbgs() << "Verify source nodes for " << *MO << "\n");
-    if (all_of(SourceNodes, [&MRI](const InstrNode &InstrNode) {
-          std::set<MachineInstr *> VisitedNodes;
-          return canNarrowUserTreeToS20(MRI, InstrNode, VisitedNodes);
-        })) {
-      ValidStartNodes.insert(SourceNodes.begin(), SourceNodes.end());
-    }
-  }
-
-  // We have a "match" if we found at least one valid source to narrow.
-  return !(ValidStartNodes.empty());
-}
-
-bool llvm::matchS20NarrowingOpt(MachineInstr &MI, MachineRegisterInfo &MRI,
-                                std::set<InstrNode> &ValidStartNodes) {
-  auto *TII = getInstrInfo(MI);
-  auto &PtrModSupport = TII->getPTRModSupport();
-  if (!EnableS20Narrowing || !PtrModSupport.isNativeS20Consumer(MI))
-    return false;
-  return getOperandsToNarrow(MI, MRI, ValidStartNodes);
-}
-
-/// When the \a InstrNode is G_CONSTANT/G_IMPLICIT_DEF create a new variant of
-/// S20 type and use that with the Instruction pointed by \a DirectionNode
-void InstrNode::rematerializeStartNode(MachineRegisterInfo &MRI,
-                                       MachineIRBuilder &B,
-                                       GISelChangeObserver &Observer) {
-  assert(isRematerializable() && getRematerializeForUser());
-  const LLT S20 = LLT::scalar(20);
-  Register NewConstOrImpDef, OldConstOrImplDef;
-
-  OldConstOrImplDef = BaseNode->getOperand(0).getReg();
-  switch (BaseNode->getOpcode()) {
-  case TargetOpcode::G_CONSTANT:
-    NewConstOrImpDef = MRI.createGenericVirtualRegister(S20);
-    B.setInstrAndDebugLoc(*BaseNode);
-    // TODO: Zero Extend or Sign ?
-    BaseNode = B.buildConstant(
-        NewConstOrImpDef, BaseNode->getOperand(1).getCImm()->getZExtValue());
-    Observer.createdInstr(*BaseNode);
-    break;
-  case TargetOpcode::G_IMPLICIT_DEF:
-    NewConstOrImpDef = MRI.createGenericVirtualRegister(S20);
-    B.setInstrAndDebugLoc(*BaseNode);
-    BaseNode = B.buildUndef(NewConstOrImpDef);
-    Observer.createdInstr(*BaseNode);
-    break;
-  }
-
-  MachineOperand *Op =
-      RematerializeForUser->findRegisterUseOperand(OldConstOrImplDef);
-  if (Op) {
-    Observer.changingInstr(*RematerializeForUser);
-    Op->setReg(NewConstOrImpDef);
-    Observer.changedInstr(*RematerializeForUser);
-  } else {
-    llvm_unreachable("RematerializeForUser must have use of StartNode");
-  }
-}
-
-/// The function recursively goes through \p Start and its users to adapt them
-/// to use S20 types. It stops when it meets a native S20 consumer, like G_TRUNC
-/// or G_PTR_ADD instructions.
-bool modifyToS20(InstrNode Start, MachineRegisterInfo &MRI, MachineIRBuilder &B,
-                 GISelChangeObserver &Observer, CombinerHelper &Helper) {
-  const LLT S20 = LLT::scalar(20);
-  MachineInstr *StartNodeMI = Start.getBaseNode();
-
-  // If Start can be rematerialized, only modify one user to use the
-  // rematerialized instruction and leave the others unchanged.
-  if (MachineInstr *RematForUser = Start.getRematerializeForUser()) {
-    Start.rematerializeStartNode(MRI, B, Observer);
-    StartNodeMI = RematForUser;
-  }
-
-  // Easy case
-  const auto *TII = getInstrInfo(*StartNodeMI);
-  auto &PtrModSupport = TII->getPTRModSupport();
-  if (PtrModSupport.isNativeS20Consumer(*StartNodeMI))
-    return true;
-
-  LLVM_DEBUG(dbgs() << "Narrow operand of :" << *StartNodeMI);
-  switch (StartNodeMI->getOpcode()) {
-  case TargetOpcode::G_LOAD: {
-    GLoadStore &LoadInst = cast<GLoadStore>(*StartNodeMI);
-    Observer.changingInstr(*StartNodeMI);
-    LoadInst.getMMO().setType(S20);
-    MRI.setType(StartNodeMI->getOperand(0).getReg(), S20);
-    Observer.changedInstr(*StartNodeMI);
-    break;
-  }
-  case TargetOpcode::G_STORE: {
-    GLoadStore &StoreInst = cast<GLoadStore>(*StartNodeMI);
-    Observer.changingInstr(*StartNodeMI);
-    StoreInst.getMMO().setType(S20);
-    Observer.changedInstr(*StartNodeMI);
-    return true;
-  }
-  case TargetOpcode::G_PHI: {
-    if (MRI.getType(StartNodeMI->getOperand(0).getReg()) == S20) {
-      return true;
-    }
-    Observer.changingInstr(*StartNodeMI);
-    MRI.setType(StartNodeMI->getOperand(0).getReg(), S20);
-    Observer.changedInstr(*StartNodeMI);
-    break;
-  }
-  case TargetOpcode::COPY:
-  case TargetOpcode::G_ZEXT: {
-    assert(MRI.getType(StartNodeMI->getOperand(1).getReg()) == S20 &&
-           "Source instruction is not of type S20");
-    MRI.setType(StartNodeMI->getOperand(0).getReg(), S20);
-    Helper.replaceOpcodeWith(*StartNodeMI, TargetOpcode::COPY);
-    // FIXME : tryCombineCopy if successful will remove the COPY aka
-    // *StartNodeMI and ahead when we try to get uses of *StartNodeMI we will
-    // error out Helper.tryCombineCopy(*StartNodeMI);
-    break;
-  }
-  case TargetOpcode::G_TRUNC: {
-    // From canNarrowUserTreeToS20, we have a guarantee that the output of
-    // G_TRUNC is at least 20-bit. We can then replace each G_TRUNC by a COPY.
-    assert(MRI.getType(StartNodeMI->getOperand(1).getReg()).getSizeInBits() >=
-               20 &&
-           "Source instruction is not of type S20");
-    Helper.replaceOpcodeWith(*StartNodeMI, TargetOpcode::COPY);
-    Helper.tryCombineCopy(*StartNodeMI);
-    return true;
-  }
-  default: {
-    LLVM_DEBUG(dbgs() << "Node :" << *StartNodeMI);
-    llvm_unreachable("Unexpected OpCode, while modifying IR");
-  }
-  }
-
-  switch (StartNodeMI->getOpcode()) {
-  case TargetOpcode::COPY:
-  case TargetOpcode::G_LOAD:
-  case TargetOpcode::G_PHI: {
-    const auto UseInstIter =
-        MRI.use_nodbg_instructions(StartNodeMI->getOperand(0).getReg());
-    std::vector<MachineInstr *> UseInstr;
-    // We cannot directly iterate on \var UseInstIter and modify the
-    // instruction. Creating a std::vector allows us to iterate without
-    // corrupting the iterator allowing us to modify the instructions.
-    for (auto &Use : UseInstIter)
-      UseInstr.push_back(&Use);
-    // Iterate on all the uses and modify the type to s20
-    for (auto &Use : UseInstr) {
-      InstrNode NextNodeToModify(Use);
-      if (!modifyToS20(NextNodeToModify, MRI, B, Observer, Helper))
-        llvm_unreachable("All input nodes should have updated");
-    }
-    break;
-  }
-  default: {
-    LLVM_DEBUG(dbgs() << "Node :" << *StartNodeMI);
-    llvm_unreachable("Unexpected OpCode, while modifying IR");
-  }
-  }
-  return true;
-}
-
-void llvm::applyS20NarrowingOpt(MachineInstr &MI, MachineRegisterInfo &MRI,
-                                MachineIRBuilder &B,
-                                GISelChangeObserver &Observer,
-                                CombinerHelper &Helper,
-                                std::set<InstrNode> &ValidStartNodes) {
-
-  for (const auto &StartNode : ValidStartNodes) {
-    if (!modifyToS20(StartNode, MRI, B, Observer, Helper))
-      assert(false && "All input nodes should have updated");
-  }
 }
 
 bool llvm::matchExtractVecEltAndExt(
@@ -3401,6 +3008,155 @@ bool llvm::matchBroadcastToShl(MachineInstr &MI, MachineRegisterInfo &MRI,
     }
 
     B.buildCopy(DstReg, CurAddReg);
+  };
+
+  return true;
+}
+
+// Can we narrow all operands of a PHI node without losing precision?
+// We can narrow losing precision, provided that all further users of this
+// PHI node are s20 users (in this case we are not interested in the higher
+// bits).
+static bool
+canBeNarrowedWithoutLoss(MachineInstr &Phi,
+                         SmallPtrSet<MachineInstr *, 4> &VisitedInstrs,
+                         MachineRegisterInfo &MRI) {
+  if (VisitedInstrs.contains(&Phi))
+    return true;
+  VisitedInstrs.insert(&Phi);
+  for (unsigned OpNum = 1; OpNum < Phi.getNumOperands(); OpNum += 2) {
+    const Register PhiRegIn = Phi.getOperand(OpNum).getReg();
+    assert(MRI.getType(PhiRegIn).getSizeInBits() == 32 && "Mixed Phi node");
+
+    MachineInstr *DefMI = MRI.getVRegDef(PhiRegIn);
+    const unsigned Opcode = DefMI->getOpcode();
+    if (Opcode == TargetOpcode::G_PHI) {
+      if (!canBeNarrowedWithoutLoss(*DefMI, VisitedInstrs, MRI))
+        return false;
+    } else if (Opcode == TargetOpcode::G_CONSTANT) {
+      if (!isIntN(20, DefMI->getOperand(1).getCImm()->getSExtValue()))
+        return false;
+    } else if (Opcode == TargetOpcode::G_ZEXT) {
+      if (MRI.getType(DefMI->getOperand(1).getReg()) != LLT::scalar(20))
+        return false;
+    } else if (Opcode != TargetOpcode::G_IMPLICIT_DEF) {
+      return false;
+    }
+  }
+  return true;
+}
+
+struct PhiUsageAnalysisResult {
+  bool MayNeedFullPrecision = false;
+  bool IsUsedByS20 = false;
+
+  void operator|=(const PhiUsageAnalysisResult &Other) {
+    IsUsedByS20 |= Other.IsUsedByS20;
+    MayNeedFullPrecision |= Other.MayNeedFullPrecision;
+  }
+};
+
+// Do we have any s20 user of this PHI node? Also, do we have users that
+// may require all 32 bits of the representation (extra users)?
+// We don't need to explicitly know the end users of the s20 value, we
+// can just look to the truncations.
+static PhiUsageAnalysisResult
+isUsedByAnyS20Instruction(MachineInstr &Phi,
+                          SmallPtrSet<MachineInstr *, 4> &VisitedInstrs,
+                          MachineRegisterInfo &MRI) {
+
+  PhiUsageAnalysisResult Result;
+
+  if (VisitedInstrs.contains(&Phi))
+    return Result;
+  VisitedInstrs.insert(&Phi);
+
+  Register DefReg = Phi.getOperand(0).getReg();
+  // We can not break/return from this loop as soon as we have an S20 use
+  // because we need to collect MayNeedFullPrecision.
+  for (auto &User : MRI.use_instructions(DefReg)) {
+    const unsigned Opcode = User.getOpcode();
+    if (Opcode == TargetOpcode::G_TRUNC) {
+      const unsigned TruncatedSize =
+          MRI.getType(User.getOperand(0).getReg()).getScalarSizeInBits();
+      if (TruncatedSize == 20)
+        Result.IsUsedByS20 = true;
+      else if (TruncatedSize > 20)
+        Result.MayNeedFullPrecision = true;
+    } else if (Opcode == TargetOpcode::G_PHI) {
+      Result |= isUsedByAnyS20Instruction(User, VisitedInstrs, MRI);
+    } else {
+      Result.MayNeedFullPrecision = true;
+    }
+  }
+
+  return Result;
+}
+
+/// Narrow Phi nodes to s20, when it is safe.
+bool llvm::matchNarrowPhi(MachineInstr &Phi, MachineRegisterInfo &MRI,
+                          GISelChangeObserver &Observer, BuildFnTy &MatchInfo) {
+
+  assert(Phi.getOpcode() == TargetOpcode::G_PHI);
+
+  // We can only narrow s32 -> s20.
+  if (MRI.getType(Phi.getOperand(0).getReg()) != LLT::scalar(32))
+    return false;
+
+  SmallPtrSet<MachineInstr *, 4> VisitedInstrs;
+  PhiUsageAnalysisResult Result =
+      isUsedByAnyS20Instruction(Phi, VisitedInstrs, MRI);
+  if (!Result.IsUsedByS20)
+    return false;
+
+  VisitedInstrs.clear();
+  const bool CanKeepPrecision =
+      canBeNarrowedWithoutLoss(Phi, VisitedInstrs, MRI);
+
+  // We can only narrow in the following 2 situations:
+  // * We may lose precision by narrowing this PHI node, but all
+  // users are s20 bit users, so higher bits are not important.
+  // * We have users that may require full precision, however, we know
+  // that the narrowed inputs can be represented as s20 without loss
+  // of precision.
+  if (!CanKeepPrecision && Result.MayNeedFullPrecision)
+    return false;
+
+  // We will do the following transformation:
+  // PHI(A, B) -> ZEXT(PHI(TRUNC(A), TRUNC(B)))
+  MatchInfo = [=, &MRI, &Phi, &Observer](MachineIRBuilder &B) {
+    // We change the PHI node instead of building a new one.
+    const LLT S20 = LLT::scalar(20);
+    const Register NewDefReg = MRI.createGenericVirtualRegister(S20);
+    const Register DefReg = Phi.getOperand(0).getReg();
+
+    MachineBasicBlock *MBB = Phi.getParent();
+    MachineBasicBlock::iterator InsertPt = MBB->getFirstNonPHI();
+    B.setInsertPt(*Phi.getParent(), InsertPt);
+    // Extend the output.
+    // We use ZExt because it is the only safe, considering the
+    // previous analysis (isUsedByAnyS20Instruction - trunc case).
+    Observer.createdInstr(*B.buildZExt(DefReg, NewDefReg));
+    Phi.getOperand(0).setReg(NewDefReg);
+
+    // Truncate the inputs.
+    for (unsigned OpNum = 1; OpNum < Phi.getNumOperands(); OpNum += 2) {
+      const Register SrcReg = Phi.getOperand(OpNum).getReg();
+      const Register NewSrcReg = MRI.createGenericVirtualRegister(S20);
+      MachineInstr *DefMI = MRI.getVRegDef(SrcReg);
+
+      MachineBasicBlock *DefMIMBB = DefMI->getParent();
+      MachineBasicBlock::iterator InsertPt = ++DefMI->getIterator();
+      if (InsertPt != DefMIMBB->end() && InsertPt->isPHI())
+        InsertPt = DefMIMBB->getFirstNonPHI();
+
+      B.setInsertPt(*DefMI->getParent(), InsertPt);
+      B.setDebugLoc(DefMI->getDebugLoc());
+      Observer.createdInstr(*B.buildTrunc(NewSrcReg, SrcReg));
+      Observer.changingInstr(Phi);
+      Phi.getOperand(OpNum).setReg(NewSrcReg);
+      Observer.changedInstr(Phi);
+    }
   };
 
   return true;

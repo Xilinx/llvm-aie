@@ -16,10 +16,11 @@ tracksRegLiveness: true
 body:             |
   bb.1:
     ; CHECK-LABEL: name: valid_trunc
-    ; CHECK: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 1
+    ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C]](s32)
     ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
     ; CHECK-NEXT: [[C2:%[0-9]+]]:_(p0) = G_CONSTANT i20 0
-    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.2d), [[C2]](p0), [[C1]](s20), [[C1]](s20), [[C1]](s20), [[C]](s20)
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.2d), [[C2]](p0), [[C1]](s20), [[C1]](s20), [[C1]](s20), [[TRUNC]](s20)
     ; CHECK-NEXT: $p0 = COPY [[INT]](p0)
     %0:_(s32) = G_CONSTANT i32 1
     %1:_(s20) = G_TRUNC %0
@@ -64,12 +65,13 @@ body:             |
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(p0) = G_CONSTANT i20 0
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
   ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+  ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C2]](s32)
   ; CHECK-NEXT:   G_STORE [[C2]](s32), [[C]](p0) :: (store (s32))
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s20) = G_PHI [[C1]](s20), %bb.0, %7(s20), %bb.1
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s20) = G_PHI [[TRUNC]](s20), %bb.0, %7(s20), %bb.1
   ; CHECK-NEXT:   [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20), [[INT2:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.3d), [[C]](p0), [[C1]](s20), [[C1]](s20), [[C1]](s20), [[C1]](s20), [[PHI]](s20), [[C1]](s20), [[C1]](s20)
   ; CHECK-NEXT:   G_BR %bb.1
   bb.1.entry:
@@ -106,12 +108,14 @@ body:             |
   ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s1) = G_TRUNC [[COPY]](s32)
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(p0) = G_CONSTANT i20 0
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
+  ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+  ; CHECK-NEXT:   [[TRUNC1:%[0-9]+]]:_(s20) = G_TRUNC [[C2]](s32)
   ; CHECK-NEXT:   [[DEF:%[0-9]+]]:_(s20) = G_IMPLICIT_DEF
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s20) = G_PHI [[C1]](s20), %bb.0, [[DEF]](s20), %bb.1, %10(s20), %bb.2
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s20) = G_PHI [[TRUNC1]](s20), %bb.0, [[DEF]](s20), %bb.1, %10(s20), %bb.2
   ; CHECK-NEXT:   G_BRCOND [[TRUNC]](s1), %bb.1
   ; CHECK-NEXT:   G_BR %bb.2
   ; CHECK-NEXT: {{  $}}
@@ -160,22 +164,24 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
   ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s1) = G_TRUNC [[COPY]](s32)
-  ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
+  ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+  ; CHECK-NEXT:   [[TRUNC1:%[0-9]+]]:_(s20) = G_TRUNC [[C]](s32)
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(p0) = G_CONSTANT i20 0
+  ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
   ; CHECK-NEXT:   [[DEF:%[0-9]+]]:_(s20) = G_IMPLICIT_DEF
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.3(0x30000000), %bb.2(0x50000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s20) = G_PHI [[C]](s20), %bb.0, %7(s20), %bb.3, %16(s20), %bb.4
-  ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s1) = G_CONSTANT i1 true
-  ; CHECK-NEXT:   G_BRCOND [[C2]](s1), %bb.3
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s20) = G_PHI [[TRUNC1]](s20), %bb.0, %22(s20), %bb.3, %16(s20), %bb.4
+  ; CHECK-NEXT:   [[C3:%[0-9]+]]:_(s1) = G_CONSTANT i1 true
+  ; CHECK-NEXT:   G_BRCOND [[C3]](s1), %bb.3
   ; CHECK-NEXT:   G_BR %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20), [[INT2:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.3d), [[C1]](p0), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20)
+  ; CHECK-NEXT:   [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20), [[INT2:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.3d), [[C1]](p0), [[C2]](s20), [[C2]](s20), [[C2]](s20), [[C2]](s20), [[C2]](s20), [[C2]](s20), [[C2]](s20)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.4(0x40000000)
@@ -187,7 +193,7 @@ body:             |
   ; CHECK-NEXT: bb.4:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[INT3:%[0-9]+]]:_(p0), [[INT4:%[0-9]+]]:_(s20), [[INT5:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.3d), [[C1]](p0), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20), [[PHI]](s20), [[C]](s20), [[C]](s20)
+  ; CHECK-NEXT:   [[INT3:%[0-9]+]]:_(p0), [[INT4:%[0-9]+]]:_(s20), [[INT5:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.3d), [[C1]](p0), [[C2]](s20), [[C2]](s20), [[C2]](s20), [[C2]](s20), [[PHI]](s20), [[C2]](s20), [[C2]](s20)
   ; CHECK-NEXT:   G_BR %bb.1
   bb.1.entry:
     successors: %bb.2(0x80000000); %bb.2(100.00%)
@@ -256,9 +262,10 @@ body:             |
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.4(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(s20) = G_LOAD [[COPY2]](p0) :: (dereferenceable load (s20), align 4)
-  ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[COPY3]](s32)
-  ; CHECK-NEXT:   [[TRUNC1:%[0-9]+]]:_(s20) = G_TRUNC [[COPY1]](s32)
+  ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY2]](p0) :: (dereferenceable load (s32))
+  ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[LOAD]](s32)
+  ; CHECK-NEXT:   [[TRUNC1:%[0-9]+]]:_(s20) = G_TRUNC [[COPY3]](s32)
+  ; CHECK-NEXT:   [[TRUNC2:%[0-9]+]]:_(s20) = G_TRUNC [[COPY1]](s32)
   ; CHECK-NEXT:   G_BR %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
@@ -274,9 +281,10 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:_(s32) = G_PHI [[COPY4]](s32), %bb.1, %16(s32), %bb.4
   ; CHECK-NEXT:   [[PHI2:%[0-9]+]]:_(p0) = G_PHI [[COPY]](p0), %bb.1, %14(p0), %bb.4
-  ; CHECK-NEXT:   [[PHI3:%[0-9]+]]:_(s20) = G_PHI [[LOAD]](s20), %bb.1, %21(s20), %bb.4
-  ; CHECK-NEXT:   [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.2d), [[PHI2]](p0), [[C1]](s20), [[TRUNC]](s20), [[TRUNC1]](s20), [[PHI3]](s20)
-  ; CHECK-NEXT:   G_STORE [[INT1]](s20), [[COPY2]](p0) :: (store (s20), align 4)
+  ; CHECK-NEXT:   [[PHI3:%[0-9]+]]:_(s20) = G_PHI [[TRUNC]](s20), %bb.1, %21(s20), %bb.4
+  ; CHECK-NEXT:   [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.2d), [[PHI2]](p0), [[C1]](s20), [[TRUNC1]](s20), [[TRUNC2]](s20), [[PHI3]](s20)
+  ; CHECK-NEXT:   [[ZEXT:%[0-9]+]]:_(s32) = G_ZEXT [[INT1]](s20)
+  ; CHECK-NEXT:   G_STORE [[ZEXT]](s32), [[COPY2]](p0) :: (store (s32))
   ; CHECK-NEXT:   [[ADD:%[0-9]+]]:_(s32) = G_ADD [[PHI1]], [[C2]]
   ; CHECK-NEXT:   [[ICMP1:%[0-9]+]]:_(s1) = G_ICMP intpred(eq), [[ADD]](s32), [[C]]
   ; CHECK-NEXT:   G_BRCOND [[ICMP1]](s1), %bb.2
@@ -346,11 +354,13 @@ body:             |
   ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s1) = G_TRUNC [[COPY]](s32)
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(p0) = G_CONSTANT i20 0
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
+  ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+  ; CHECK-NEXT:   [[TRUNC1:%[0-9]+]]:_(s20) = G_TRUNC [[C2]](s32)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.3(0x40000000), %bb.2(0x40000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s20) = G_PHI [[C1]](s20), %bb.0, %6(s20), %bb.3
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s20) = G_PHI [[TRUNC1]](s20), %bb.0, %16(s20), %bb.3
   ; CHECK-NEXT:   G_BRCOND [[TRUNC]](s1), %bb.3
   ; CHECK-NEXT:   G_BR %bb.2
   ; CHECK-NEXT: {{  $}}
@@ -362,7 +372,7 @@ body:             |
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:_(s20) = G_PHI [[C1]](s20), %bb.1, [[INT1]](s20), %bb.2
+  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:_(s20) = G_PHI [[TRUNC1]](s20), %bb.1, [[INT1]](s20), %bb.2
   ; CHECK-NEXT:   G_BR %bb.1
   bb.1.entry:
     successors: %bb.2(0x80000000); %bb.2(100.00%)
@@ -412,15 +422,13 @@ body:             |
   ; CHECK-NEXT:   [[ADD:%[0-9]+]]:_(s8) = G_ADD [[TRUNC]], [[TRUNC]]
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(p0) = G_CONSTANT i20 0
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
-  ; CHECK-NEXT:   [[ZEXT:%[0-9]+]]:_(s32) = G_ZEXT [[ADD]](s8)
+  ; CHECK-NEXT:   [[ZEXT:%[0-9]+]]:_(s20) = G_ZEXT [[ADD]](s8)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s32) = G_PHI [[ZEXT]](s32), %bb.0, %7(s32), %bb.1
-  ; CHECK-NEXT:   [[TRUNC1:%[0-9]+]]:_(s20) = G_TRUNC [[PHI]](s32)
-  ; CHECK-NEXT:   [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.2d), [[C]](p0), [[C1]](s20), [[C1]](s20), [[C1]](s20), [[TRUNC1]](s20)
-  ; CHECK-NEXT:   [[ZEXT1:%[0-9]+]]:_(s32) = G_ZEXT [[INT1]](s20)
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s20) = G_PHI [[ZEXT]](s20), %bb.0, %10(s20), %bb.1
+  ; CHECK-NEXT:   [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.2d), [[C]](p0), [[C1]](s20), [[C1]](s20), [[C1]](s20), [[PHI]](s20)
   ; CHECK-NEXT:   G_BR %bb.1
   bb.0.entry:
     successors: %bb.1(0x80000000); %bb.1(100.00%)
@@ -493,16 +501,15 @@ body:             |
   ; CHECK-NEXT:   liveins: $r0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
+  ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[COPY]](s32)
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(p0) = G_CONSTANT i20 0
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s32) = G_PHI [[COPY]](s32), %bb.0, %4(s32), %bb.1
-  ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[PHI]](s32)
-  ; CHECK-NEXT:   [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.2d), [[C]](p0), [[C1]](s20), [[C1]](s20), [[C1]](s20), [[TRUNC]](s20)
-  ; CHECK-NEXT:   [[ZEXT:%[0-9]+]]:_(s32) = G_ZEXT [[INT1]](s20)
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s20) = G_PHI [[TRUNC]](s20), %bb.0, %7(s20), %bb.1
+  ; CHECK-NEXT:   [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.2d), [[C]](p0), [[C1]](s20), [[C1]](s20), [[C1]](s20), [[PHI]](s20)
   ; CHECK-NEXT:   G_BR %bb.1
   bb.0.entry:
     successors: %bb.1(0x80000000); %bb.1(100.00%)
@@ -537,12 +544,14 @@ body:             |
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(s20) = COPY $p0
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(p0) = G_CONSTANT i20 0
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
+  ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+  ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C2]](s32)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s20) = G_PHI %11(s20), %bb.1, [[C1]](s20), %bb.0
-  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:_(s20) = G_PHI [[C1]](s20), %bb.1, [[COPY]](s20), %bb.0
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s20) = G_PHI %11(s20), %bb.1, [[TRUNC]](s20), %bb.0
+  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:_(s20) = G_PHI [[TRUNC]](s20), %bb.1, [[COPY]](s20), %bb.0
   ; CHECK-NEXT:   [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20), [[INT2:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.3d), [[C]](p0), [[C1]](s20), [[C1]](s20), [[C1]](s20), [[C1]](s20), [[PHI]](s20), [[C1]](s20), [[PHI1]](s20)
   ; CHECK-NEXT:   G_BR %bb.1
   bb.1:
@@ -580,6 +589,7 @@ body:             |
   ; CHECK-NEXT:   liveins: $p0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+  ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C]](s32)
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
   ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
   ; CHECK-NEXT:   [[C3:%[0-9]+]]:_(p0) = G_CONSTANT i20 0
@@ -587,10 +597,9 @@ body:             |
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s32) = G_PHI %5(s32), %bb.1, [[C]](s32), %bb.0
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s20) = G_PHI %9(s20), %bb.1, [[TRUNC]](s20), %bb.0
   ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:_(s32) = G_PHI %5(s32), %bb.1, [[C1]](s32), %bb.0
-  ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[PHI]](s32)
-  ; CHECK-NEXT:   [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.2d), [[C3]](p0), [[C2]](s20), [[C2]](s20), [[C2]](s20), [[TRUNC]](s20)
+  ; CHECK-NEXT:   [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.2d), [[C3]](p0), [[C2]](s20), [[C2]](s20), [[C2]](s20), [[PHI]](s20)
   ; CHECK-NEXT:   [[ZEXT:%[0-9]+]]:_(s32) = G_ZEXT [[INT1]](s20)
   ; CHECK-NEXT:   $r0 = COPY [[PHI1]](s32)
   ; CHECK-NEXT:   G_BR %bb.1
@@ -625,10 +634,10 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
     ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<32 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(<64 x s8>), [[INT1:%[0-9]+]]:_(p0), [[INT2:%[0-9]+]]:_(<32 x s32>), [[INT3:%[0-9]+]]:_(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.1d.unaligned), [[COPY]](p0), [[DEF]](<32 x s32>), [[C1]](s32), [[C]](s20)
+    ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C]](s32)
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(<64 x s8>), [[INT1:%[0-9]+]]:_(p0), [[INT2:%[0-9]+]]:_(<32 x s32>), [[INT3:%[0-9]+]]:_(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.1d.unaligned), [[COPY]](p0), [[DEF]](<32 x s32>), [[C]](s32), [[TRUNC]](s20)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[INT]](<64 x s8>)
     %0:_(p0) = COPY $p0
     %1:_(s32) = G_CONSTANT i32 0
@@ -650,12 +659,13 @@ body:             |
     ; CHECK: liveins: $p0, $p1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(p0) = COPY $p1
     ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<32 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[LOAD:%[0-9]+]]:_(s20) = G_LOAD [[COPY1]](p0) :: (load (s20), align 4)
-    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(<64 x s8>), [[INT1:%[0-9]+]]:_(p0), [[INT2:%[0-9]+]]:_(<32 x s32>), [[INT3:%[0-9]+]]:_(s32), [[INT4:%[0-9]+]]:_(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.2d.unaligned), [[COPY]](p0), [[DEF]](<32 x s32>), [[C1]](s32), [[C]](s20), [[LOAD]](s20), [[LOAD]](s20), [[C]](s20)
+    ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C]](s32)
+    ; CHECK-NEXT: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY1]](p0) :: (load (s32))
+    ; CHECK-NEXT: [[TRUNC1:%[0-9]+]]:_(s20) = G_TRUNC [[LOAD]](s32)
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(<64 x s8>), [[INT1:%[0-9]+]]:_(p0), [[INT2:%[0-9]+]]:_(<32 x s32>), [[INT3:%[0-9]+]]:_(s32), [[INT4:%[0-9]+]]:_(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.2d.unaligned), [[COPY]](p0), [[DEF]](<32 x s32>), [[C]](s32), [[TRUNC]](s20), [[TRUNC1]](s20), [[TRUNC1]](s20), [[TRUNC]](s20)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[INT]](<64 x s8>)
     %0:_(p0) = COPY $p0
     %1:_(s32) = G_CONSTANT i32 0
@@ -680,11 +690,11 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
-    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 128
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 128
     ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<32 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(<64 x s8>), [[INT1:%[0-9]+]]:_(p0), [[INT2:%[0-9]+]]:_(<32 x s32>), [[INT3:%[0-9]+]]:_(s32), [[INT4:%[0-9]+]]:_(s20), [[INT5:%[0-9]+]]:_(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.3d.unaligned), [[COPY]](p0), [[DEF]](<32 x s32>), [[C1]](s32), [[C]](s20), [[C2]](s20), [[C]](s20), [[C]](s20), [[C2]](s20), [[C]](s20), [[C2]](s20)
+    ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C]](s32)
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(<64 x s8>), [[INT1:%[0-9]+]]:_(p0), [[INT2:%[0-9]+]]:_(<32 x s32>), [[INT3:%[0-9]+]]:_(s32), [[INT4:%[0-9]+]]:_(s20), [[INT5:%[0-9]+]]:_(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.3d.unaligned), [[COPY]](p0), [[DEF]](<32 x s32>), [[C]](s32), [[TRUNC]](s20), [[C1]](s20), [[TRUNC]](s20), [[TRUNC]](s20), [[C1]](s20), [[TRUNC]](s20), [[C1]](s20)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[INT]](<64 x s8>)
     %0:_(p0) = COPY $p0
     %1:_(s32) = G_CONSTANT i32 0
@@ -707,12 +717,12 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
     ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<64 x s8>) = G_IMPLICIT_DEF
     ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s8>) = G_IMPLICIT_DEF
     ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<32 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(<32 x s32>), [[INT2:%[0-9]+]]:_(s32), [[INT3:%[0-9]+]]:_(<64 x s8>), [[INT4:%[0-9]+]]:_(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.544.1d.bfp16), [[COPY]](p0), [[DEF2]](<32 x s32>), [[C1]](s32), [[C]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
+    ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C]](s32)
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(<32 x s32>), [[INT2:%[0-9]+]]:_(s32), [[INT3:%[0-9]+]]:_(<64 x s8>), [[INT4:%[0-9]+]]:_(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.544.1d.bfp16), [[COPY]](p0), [[DEF2]](<32 x s32>), [[C]](s32), [[TRUNC]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[INT1]](<32 x s32>)
     %0:_(p0) = COPY $p0
     %1:_(s32) = G_CONSTANT i32 0
@@ -736,13 +746,13 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
     ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<64 x s8>) = G_IMPLICIT_DEF
     ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 128
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 128
     ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<32 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(<32 x s32>), [[INT2:%[0-9]+]]:_(s32), [[INT3:%[0-9]+]]:_(s20), [[INT4:%[0-9]+]]:_(<64 x s8>), [[INT5:%[0-9]+]]:_(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.544.2d.bfp16), [[COPY]](p0), [[DEF2]](<32 x s32>), [[C1]](s32), [[C2]](s20), [[C]](s20), [[C2]](s20), [[C]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
+    ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C]](s32)
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(<32 x s32>), [[INT2:%[0-9]+]]:_(s32), [[INT3:%[0-9]+]]:_(s20), [[INT4:%[0-9]+]]:_(<64 x s8>), [[INT5:%[0-9]+]]:_(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.544.2d.bfp16), [[COPY]](p0), [[DEF2]](<32 x s32>), [[C]](s32), [[C1]](s20), [[TRUNC]](s20), [[C1]](s20), [[TRUNC]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[INT]](p0)
     %0:_(p0) = COPY $p0
     %1:_(s32) = G_CONSTANT i32 0
@@ -767,6 +777,7 @@ body:             |
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(p0) = G_CONSTANT i20 0
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
   ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+  ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C2]](s32)
   ; CHECK-NEXT:   [[DEF:%[0-9]+]]:_(<64 x s8>) = G_IMPLICIT_DEF
   ; CHECK-NEXT:   [[DEF1:%[0-9]+]]:_(<8 x s8>) = G_IMPLICIT_DEF
   ; CHECK-NEXT:   [[DEF2:%[0-9]+]]:_(<32 x s32>) = G_IMPLICIT_DEF
@@ -775,8 +786,8 @@ body:             |
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s20) = G_PHI [[C1]](s20), %bb.0, %15(s20), %bb.1
-  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:_(s20) = G_PHI [[C1]](s20), %bb.0, %16(s20), %bb.1
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s20) = G_PHI [[TRUNC]](s20), %bb.0, %15(s20), %bb.1
+  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:_(s20) = G_PHI [[TRUNC]](s20), %bb.0, %16(s20), %bb.1
   ; CHECK-NEXT:   [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(<32 x s32>), [[INT2:%[0-9]+]]:_(s32), [[INT3:%[0-9]+]]:_(s20), [[INT4:%[0-9]+]]:_(s20), [[INT5:%[0-9]+]]:_(<64 x s8>), [[INT6:%[0-9]+]]:_(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.544.3d.bfp16), [[C]](p0), [[DEF2]](<32 x s32>), [[C2]](s32), [[C1]](s20), [[C1]](s20), [[PHI1]](s20), [[C1]](s20), [[C1]](s20), [[PHI]](s20), [[C1]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
   ; CHECK-NEXT:   G_BR %bb.1
   bb.0.entry:
@@ -815,12 +826,12 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
     ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<64 x s8>) = G_IMPLICIT_DEF
     ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s8>) = G_IMPLICIT_DEF
     ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<32 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(<32 x s32>), [[INT2:%[0-9]+]]:_(s32), [[INT3:%[0-9]+]]:_(<64 x s8>), [[INT4:%[0-9]+]]:_(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.576.1d.bfp16), [[COPY]](p0), [[DEF2]](<32 x s32>), [[C1]](s32), [[C]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
+    ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C]](s32)
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(<32 x s32>), [[INT2:%[0-9]+]]:_(s32), [[INT3:%[0-9]+]]:_(<64 x s8>), [[INT4:%[0-9]+]]:_(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.576.1d.bfp16), [[COPY]](p0), [[DEF2]](<32 x s32>), [[C]](s32), [[TRUNC]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[INT1]](<32 x s32>)
     %0:_(p0) = COPY $p0
     %1:_(s32) = G_CONSTANT i32 0
@@ -844,13 +855,13 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
     ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<64 x s8>) = G_IMPLICIT_DEF
     ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s8>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 128
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 128
     ; CHECK-NEXT: [[DEF2:%[0-9]+]]:_(<32 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(<32 x s32>), [[INT2:%[0-9]+]]:_(s32), [[INT3:%[0-9]+]]:_(s20), [[INT4:%[0-9]+]]:_(<64 x s8>), [[INT5:%[0-9]+]]:_(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.576.2d.bfp16), [[COPY]](p0), [[DEF2]](<32 x s32>), [[C1]](s32), [[C2]](s20), [[C]](s20), [[C2]](s20), [[C]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
+    ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C]](s32)
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(<32 x s32>), [[INT2:%[0-9]+]]:_(s32), [[INT3:%[0-9]+]]:_(s20), [[INT4:%[0-9]+]]:_(<64 x s8>), [[INT5:%[0-9]+]]:_(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.576.2d.bfp16), [[COPY]](p0), [[DEF2]](<32 x s32>), [[C]](s32), [[C1]](s20), [[TRUNC]](s20), [[C1]](s20), [[TRUNC]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[INT]](p0)
     %0:_(p0) = COPY $p0
     %1:_(s32) = G_CONSTANT i32 0
@@ -875,6 +886,7 @@ body:             |
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(p0) = G_CONSTANT i20 0
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
   ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+  ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C2]](s32)
   ; CHECK-NEXT:   [[DEF:%[0-9]+]]:_(<64 x s8>) = G_IMPLICIT_DEF
   ; CHECK-NEXT:   [[DEF1:%[0-9]+]]:_(<8 x s8>) = G_IMPLICIT_DEF
   ; CHECK-NEXT:   [[DEF2:%[0-9]+]]:_(<32 x s32>) = G_IMPLICIT_DEF
@@ -883,8 +895,8 @@ body:             |
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s20) = G_PHI [[C1]](s20), %bb.0, %15(s20), %bb.1
-  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:_(s20) = G_PHI [[C1]](s20), %bb.0, %16(s20), %bb.1
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s20) = G_PHI [[TRUNC]](s20), %bb.0, %15(s20), %bb.1
+  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:_(s20) = G_PHI [[TRUNC]](s20), %bb.0, %16(s20), %bb.1
   ; CHECK-NEXT:   [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(<32 x s32>), [[INT2:%[0-9]+]]:_(s32), [[INT3:%[0-9]+]]:_(s20), [[INT4:%[0-9]+]]:_(s20), [[INT5:%[0-9]+]]:_(<64 x s8>), [[INT6:%[0-9]+]]:_(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.576.3d.bfp16), [[C]](p0), [[DEF2]](<32 x s32>), [[C2]](s32), [[C1]](s20), [[C1]](s20), [[PHI1]](s20), [[C1]](s20), [[C1]](s20), [[PHI]](s20), [[C1]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
   ; CHECK-NEXT:   G_BR %bb.1
   bb.0.entry:
@@ -923,10 +935,10 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
     ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<32 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(<32 x s32>), [[INT2:%[0-9]+]]:_(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.1d), [[COPY]](p0), [[DEF]](<32 x s32>), [[C1]](s32), [[C]](s20)
+    ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C]](s32)
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(<32 x s32>), [[INT2:%[0-9]+]]:_(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.1d), [[COPY]](p0), [[DEF]](<32 x s32>), [[C]](s32), [[TRUNC]](s20)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[INT1]](<32 x s32>)
     %0:_(p0) = COPY $p0
     %1:_(s32) = G_CONSTANT i32 0
@@ -948,10 +960,10 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
     ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<32 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(<32 x s32>), [[INT2:%[0-9]+]]:_(s32), [[INT3:%[0-9]+]]:_(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.2d), [[COPY]](p0), [[DEF]](<32 x s32>), [[C1]](s32), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20)
+    ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C]](s32)
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(<32 x s32>), [[INT2:%[0-9]+]]:_(s32), [[INT3:%[0-9]+]]:_(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.2d), [[COPY]](p0), [[DEF]](<32 x s32>), [[C]](s32), [[TRUNC]](s20), [[TRUNC]](s20), [[TRUNC]](s20), [[TRUNC]](s20)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[INT1]](<32 x s32>)
     %0:_(p0) = COPY $p0
     %1:_(s32) = G_CONSTANT i32 0
@@ -973,14 +985,15 @@ body:             |
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(p0) = G_CONSTANT i20 0
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
   ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+  ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C2]](s32)
   ; CHECK-NEXT:   [[DEF:%[0-9]+]]:_(<32 x s32>) = G_IMPLICIT_DEF
   ; CHECK-NEXT:   G_STORE [[C2]](s32), [[C]](p0) :: (store (s32))
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s20) = G_PHI [[C1]](s20), %bb.0, %15(s20), %bb.1
-  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:_(s20) = G_PHI [[C1]](s20), %bb.0, %16(s20), %bb.1
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s20) = G_PHI [[TRUNC]](s20), %bb.0, %15(s20), %bb.1
+  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:_(s20) = G_PHI [[TRUNC]](s20), %bb.0, %16(s20), %bb.1
   ; CHECK-NEXT:   [[PHI2:%[0-9]+]]:_(s32) = G_PHI [[C2]](s32), %bb.0, %9(s32), %bb.1
   ; CHECK-NEXT:   [[PHI3:%[0-9]+]]:_(<32 x s32>) = G_PHI [[DEF]](<32 x s32>), %bb.0, %11(<32 x s32>), %bb.1
   ; CHECK-NEXT:   [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(<32 x s32>), [[INT2:%[0-9]+]]:_(s32), [[INT3:%[0-9]+]]:_(s20), [[INT4:%[0-9]+]]:_(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.3d), [[C]](p0), [[PHI3]](<32 x s32>), [[PHI2]](s32), [[C1]](s20), [[C1]](s20), [[PHI1]](s20), [[C1]](s20), [[PHI]](s20), [[C1]](s20), [[PHI]](s20)
@@ -1060,20 +1073,20 @@ body:             |
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(p0) = G_CONSTANT i20 0
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
   ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+  ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C2]](s32)
   ; CHECK-NEXT:   [[DEF:%[0-9]+]]:_(<32 x s32>) = G_IMPLICIT_DEF
   ; CHECK-NEXT:   G_STORE [[C2]](s32), [[C]](p0) :: (store (s32))
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s20) = G_PHI [[C1]](s20), %bb.0, %16(s20), %bb.1
-  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:_(s20) = G_PHI [[C1]](s20), %bb.0, %17(s20), %bb.1
-  ; CHECK-NEXT:   [[PHI2:%[0-9]+]]:_(s32) = G_PHI [[C2]](s32), %bb.0, %9(s32), %bb.1
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s20) = G_PHI [[TRUNC]](s20), %bb.0, %16(s20), %bb.1
+  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:_(s20) = G_PHI [[TRUNC]](s20), %bb.0, %17(s20), %bb.1
+  ; CHECK-NEXT:   [[PHI2:%[0-9]+]]:_(s20) = G_PHI [[TRUNC]](s20), %bb.0, %20(s20), %bb.1
   ; CHECK-NEXT:   [[PHI3:%[0-9]+]]:_(<32 x s32>) = G_PHI [[DEF]](<32 x s32>), %bb.0, %11(<32 x s32>), %bb.1
-  ; CHECK-NEXT:   [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(<32 x s32>), [[INT2:%[0-9]+]]:_(s32), [[INT3:%[0-9]+]]:_(s20), [[INT4:%[0-9]+]]:_(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.3d), [[C]](p0), [[PHI3]](<32 x s32>), [[PHI2]](s32), [[C1]](s20), [[C1]](s20), [[PHI1]](s20), [[C1]](s20), [[PHI]](s20), [[C1]](s20), [[PHI]](s20)
-  ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[PHI2]](s32)
-  ; CHECK-NEXT:   [[INT5:%[0-9]+]]:_(p0), [[INT6:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.2d), [[INT]](p0), [[C1]](s20), [[C1]](s20), [[C1]](s20), [[TRUNC]](s20)
-  ; CHECK-NEXT:   [[ZEXT:%[0-9]+]]:_(s32) = G_ZEXT [[INT6]](s20)
+  ; CHECK-NEXT:   [[ZEXT:%[0-9]+]]:_(s32) = G_ZEXT [[PHI2]](s20)
+  ; CHECK-NEXT:   [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(<32 x s32>), [[INT2:%[0-9]+]]:_(s32), [[INT3:%[0-9]+]]:_(s20), [[INT4:%[0-9]+]]:_(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.3d), [[C]](p0), [[PHI3]](<32 x s32>), [[ZEXT]](s32), [[C1]](s20), [[C1]](s20), [[PHI1]](s20), [[C1]](s20), [[PHI]](s20), [[C1]](s20), [[PHI]](s20)
+  ; CHECK-NEXT:   [[INT5:%[0-9]+]]:_(p0), [[INT6:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.2d), [[INT]](p0), [[C1]](s20), [[C1]](s20), [[C1]](s20), [[PHI2]](s20)
   ; CHECK-NEXT:   G_BR %bb.1
   bb.0.entry:
     successors: %bb.1(0x80000000)
