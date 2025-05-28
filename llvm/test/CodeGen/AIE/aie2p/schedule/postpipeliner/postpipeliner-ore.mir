@@ -18,10 +18,10 @@
   ; CHECK-NEXT: Name:            schedule
   ; CHECK-NEXT: Function:        gemm
   ; CHECK-NEXT: Args:
-  ; CHECK-NEXT:   - String:          'Schedule found: NS='
+  ; CHECK-NEXT:   - String:          Schedule found
   ; CHECK-NEXT:   - NS:              '4'
-  ; CHECK-NEXT:   - String:          ' II='
   ; CHECK-NEXT:   - II:              '8'
+  ; CHECK-NEXT:   - BasicBlock:              for.body
   ; CHECK-NEXT: ...
   entry:
     %cmp5 = icmp sgt i32 %n, 0
