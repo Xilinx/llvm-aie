@@ -1035,7 +1035,8 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval,
     More.emit([&]() {
       return MachineOptimizationRemarkMissed("postpipeliner", "schedule",
                                              DbgLoc, BB)
-             << "Longest circuit doesn't fit II.";
+             << "Longest circuit does not fit II." << ore::NV("II", II)
+             << ore::NV("BasicBlock", BB->getName());
     });
     return false;
   }
@@ -1052,8 +1053,8 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval,
 
   More.emit([&]() {
     return MachineOptimizationRemark("postpipeliner", "schedule", DbgLoc, BB)
-           << "Schedule found: NS=" << ore::NV("NS", NStages)
-           << " II=" << ore::NV("II", II);
+           << "Schedule found" << ore::NV("NS", NStages) << ore::NV("II", II)
+           << ore::NV("BasicBlock", BB->getName());
   });
   LLVM_DEBUG(dbgs() << "PostPipeliner: Success\n");
   return true;
