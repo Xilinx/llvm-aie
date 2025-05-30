@@ -134,14 +134,14 @@ define dso_local noundef <64 x i8> @_Z24test_fifo_ld_pop_2d_byteRPDv64_DB8_R12fi
 ; CHECK-LABEL: _Z24test_fifo_ld_pop_2d_byteRPDv64_DB8_R12fifo_state_tiiRii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    lda dc0, [p2, #0]; nopx
-; CHECK-NEXT:    lda p0, [p0, #0]; mov dj1, #128
+; CHECK-NEXT:    lda p0, [p0, #0]; nopb ; nopx
+; CHECK-NEXT:    lda dc0, [p2, #0]; mov dj1, #128
 ; CHECK-NEXT:    lda r24, [p1, dj1]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs p3, p0; mov m0, r0
+; CHECK-NEXT:    movs p3, p0
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; mov m0, r0
 ; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs dn0, r1; mov dj0, r2
 ; CHECK-NEXT:    vldb.pop.512.2d x0, [p0, lf0, r24, d0]
 ; CHECK-NEXT:    nop
@@ -182,15 +182,15 @@ define dso_local noundef <64 x i8> @_Z24test_fifo_ld_pop_3d_byteRPDv64_DB8_R12fi
 ; CHECK-LABEL: _Z24test_fifo_ld_pop_3d_byteRPDv64_DB8_R12fifo_state_tiiRiiiS5_i:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    lda dc0, [p2, #0]; nopxm
-; CHECK-NEXT:    lda dc4, [p3, #0]
-; CHECK-NEXT:    lda p0, [p0, #0]; mov dj1, #128
+; CHECK-NEXT:    lda p0, [p0, #0]; nopb ; nopxm
+; CHECK-NEXT:    lda dc0, [p2, #0]
+; CHECK-NEXT:    lda dc4, [p3, #0]; mov dj1, #128
 ; CHECK-NEXT:    lda r24, [p1, dj1]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    movs m0, r0; mov dn0, r1
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs p4, p0; mov dj0, r2
+; CHECK-NEXT:    movs p4, p0
+; CHECK-NEXT:    mov m0, r0
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs dn0, r1; mov dj0, r2
 ; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs dn4, r3; mov dj4, r4
 ; CHECK-NEXT:    vldb.pop.512.3d x0, [p0, lf0, r24, d0]
 ; CHECK-NEXT:    nop
@@ -324,14 +324,14 @@ define dso_local %struct.v64bfp16ebs8 @_Z24test_fifo_ld_pop_2d_byteRP22v64bfp16e
 ; CHECK-LABEL: _Z24test_fifo_ld_pop_2d_byteRP22v64bfp16ebs8_unalignedR12fifo_state_tiiRii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    lda dc0, [p2, #0]; nopx
-; CHECK-NEXT:    lda p0, [p0, #0]; mov dj1, #128
+; CHECK-NEXT:    lda p0, [p0, #0]; nopb ; nopx
+; CHECK-NEXT:    lda dc0, [p2, #0]; mov dj1, #128
 ; CHECK-NEXT:    lda r24, [p1, dj1]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs p3, p0; mov m0, r0
+; CHECK-NEXT:    movs p3, p0
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; mov m0, r0
 ; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs dn0, r1; mov dj0, r2
 ; CHECK-NEXT:    vldb.pop.576.2d ex0, [p0, lf0, r24, d0]
 ; CHECK-NEXT:    nop
@@ -375,15 +375,15 @@ define dso_local %struct.v64bfp16ebs8 @_Z24test_fifo_ld_pop_3d_byteRP22v64bfp16e
 ; CHECK-LABEL: _Z24test_fifo_ld_pop_3d_byteRP22v64bfp16ebs8_unalignedR12fifo_state_tiiRiiiS4_i:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    lda dc0, [p2, #0]; nopxm
-; CHECK-NEXT:    lda dc4, [p3, #0]
-; CHECK-NEXT:    lda p0, [p0, #0]; mov dj1, #128
+; CHECK-NEXT:    lda p0, [p0, #0]; nopb ; nopxm
+; CHECK-NEXT:    lda dc0, [p2, #0]
+; CHECK-NEXT:    lda dc4, [p3, #0]; mov dj1, #128
 ; CHECK-NEXT:    lda r24, [p1, dj1]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    movs m0, r0; mov dn0, r1
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs p4, p0; mov dj0, r2
+; CHECK-NEXT:    movs p4, p0
+; CHECK-NEXT:    mov m0, r0
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs dn0, r1; mov dj0, r2
 ; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs dn4, r3; mov dj4, r4
 ; CHECK-NEXT:    vldb.pop.576.3d ex0, [p0, lf0, r24, d0]
 ; CHECK-NEXT:    nop
@@ -520,14 +520,14 @@ define dso_local %struct.v64bfp16ebs16 @_Z24test_fifo_ld_pop_2d_byteRP23v64bfp16
 ; CHECK-LABEL: _Z24test_fifo_ld_pop_2d_byteRP23v64bfp16ebs16_unalignedR12fifo_state_tiiRii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    lda dc0, [p2, #0]; nopx
-; CHECK-NEXT:    lda p0, [p0, #0]; mov dj1, #128
+; CHECK-NEXT:    lda p0, [p0, #0]; nopb ; nopx
+; CHECK-NEXT:    lda dc0, [p2, #0]; mov dj1, #128
 ; CHECK-NEXT:    lda r24, [p1, dj1]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs p3, p0; mov m0, r0
+; CHECK-NEXT:    movs p3, p0
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; mov m0, r0
 ; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs dn0, r1; mov dj0, r2
 ; CHECK-NEXT:    vldb.pop.544.2d ex0, [p0, lf0, r24, d0]
 ; CHECK-NEXT:    nop
@@ -571,15 +571,15 @@ define dso_local %struct.v64bfp16ebs16 @_Z24test_fifo_ld_pop_3d_byteRP23v64bfp16
 ; CHECK-LABEL: _Z24test_fifo_ld_pop_3d_byteRP23v64bfp16ebs16_unalignedR12fifo_state_tiiRiiiS4_i:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    lda dc0, [p2, #0]; nopxm
-; CHECK-NEXT:    lda dc4, [p3, #0]
-; CHECK-NEXT:    lda p0, [p0, #0]; mov dj1, #128
+; CHECK-NEXT:    lda p0, [p0, #0]; nopb ; nopxm
+; CHECK-NEXT:    lda dc0, [p2, #0]
+; CHECK-NEXT:    lda dc4, [p3, #0]; mov dj1, #128
 ; CHECK-NEXT:    lda r24, [p1, dj1]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    movs m0, r0; mov dn0, r1
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs p4, p0; mov dj0, r2
+; CHECK-NEXT:    movs p4, p0
+; CHECK-NEXT:    mov m0, r0
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs dn0, r1; mov dj0, r2
 ; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs dn4, r3; mov dj4, r4
 ; CHECK-NEXT:    vldb.pop.544.3d ex0, [p0, lf0, r24, d0]
 ; CHECK-NEXT:    nop
@@ -958,8 +958,8 @@ define dso_local %struct.v128bfp16ebs8 @_Z24test_fifo_ld_pop_2d_byteRrP23v128bfp
 ; CHECK-NEXT:    vst lfl0, [p1, #0]
 ; CHECK-NEXT:    vst lfh0, [p1, #64]
 ; CHECK-NEXT:    st p0, [p3, #0]
-; CHECK-NEXT:    lda dc0, [p2, #0]
 ; CHECK-NEXT:    lda r24, [p1, dj1]
+; CHECK-NEXT:    lda dc0, [p2, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -1039,9 +1039,9 @@ define dso_local %struct.v128bfp16ebs8 @_Z24test_fifo_ld_pop_3d_byteRrP23v128bfp
 ; CHECK-NEXT:    vst lfl0, [p1, #0]
 ; CHECK-NEXT:    vst lfh0, [p1, #64]
 ; CHECK-NEXT:    st p0, [p4, #0]
+; CHECK-NEXT:    lda r24, [p1, dj1]
 ; CHECK-NEXT:    lda dc0, [p2, #0]
 ; CHECK-NEXT:    lda dc4, [p3, #0]
-; CHECK-NEXT:    lda r24, [p1, dj1]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop

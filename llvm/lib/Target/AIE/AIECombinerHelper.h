@@ -243,6 +243,12 @@ bool matchBroadcastToShl(MachineInstr &MI, MachineRegisterInfo &MRI,
 bool matchNarrowPhi(MachineInstr &Phi, MachineRegisterInfo &MRI,
                     GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
 
+bool matchNarrowTrunc(MachineInstr &MI, MachineRegisterInfo &MRI,
+                      GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
+
+bool matchNarrowZext(MachineInstr &MI, MachineRegisterInfo &MRI,
+                     GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
+
 } // namespace llvm
 
 #endif
