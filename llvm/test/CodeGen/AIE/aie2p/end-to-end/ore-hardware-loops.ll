@@ -58,7 +58,7 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ; CHECK-NEXT: convert_bf16_to_bfp16:                  // @convert_bf16_to_bfp16
 ; CHECK-NEXT: 	.p2align	4
 ; CHECK-NEXT: // %bb.0:                               // %entry
-; CHECK-NEXT: 	lda	 r3, [p2, #0];		nopb	;		nops	;		nopx	;		mov	m0, #4;		nopv	
+; CHECK-NEXT: 	lda	 r0, [p2, #0];		nopb	;		nops	;		nopx	;		mov	m0, #4;		nopv	
 ; CHECK-NEXT: 	padda	 [p2], m0;		nopx	
 ; CHECK-NEXT: 	lda	 dn0, [p2], #4
 ; CHECK-NEXT: 	lda	 m1, [p2, #0]
@@ -73,7 +73,7 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ; CHECK-NEXT: 	vldb.fill.512	 [p0, lf0, r24]
 ; CHECK-NEXT: 	lda	 m0, [p2, #4];		vldb.pop.512	 x0, [p0, lf0, r24];		movxm	ls, #.LBB0_1
 ; CHECK-NEXT: 	vldb.pop.512.2d	 x2, [p0, lf0, r24, d1];		movxm	le, #.L_LEnd0
-; CHECK-NEXT: 	add.nc	lc, r3, #-3
+; CHECK-NEXT: 	add.nc	lc, r0, #-3
 ; CHECK-NEXT: 	nopa	;		vldb.fill.512	 [p0, lf0, r24];		nops	;		nopxm	;		nopv	
 ; CHECK-NEXT: 	nopa	;		vldb.pop.512	 x0, [p0, lf0, r24];		nops	;		nopx	;		vconv.fp32.bf16	cml0, x0;		nopv	
 ; CHECK-NEXT: 	nopa	;		vldb.pop.512.2d	 x2, [p0, lf0, r24, d1];		nops	;		nopx	;		vconv.fp32.bf16	cmh0, x2;		nopv	

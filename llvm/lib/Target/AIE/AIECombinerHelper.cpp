@@ -3161,3 +3161,105 @@ bool llvm::matchNarrowPhi(MachineInstr &Phi, MachineRegisterInfo &MRI,
 
   return true;
 }
+
+/// Check if the user is a potentially legal user of s20 type.
+/// If it is not legal, it will be legalized as 32 bit operation.
+static bool isUsedByLikelyLegalS20User(MachineRegisterInfo &MRI,
+                                       const MachineInstr &MI) {
+  return any_of(MRI.use_nodbg_instructions(MI.getOperand(0).getReg()),
+                [&](const MachineInstr &UseMI) {
+                  return UseMI.getOpcode() == TargetOpcode::G_PHI ||
+                         UseMI.getOpcode() == TargetOpcode::G_PTR_ADD ||
+                         UseMI.getOpcode() == TargetOpcode::G_STORE ||
+                         UseMI.getOpcode() == TargetOpcode::G_INTRINSIC ||
+                         UseMI.getOpcode() ==
+                             TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS;
+                });
+}
+
+static void changeLoadStoreDataRegister(MachineInstr &MI, Register DataReg,
+                                        MachineRegisterInfo &MRI) {
+  GLoadStore &LdStInst = cast<GLoadStore>(MI);
+  LdStInst.getMMO().setType(MRI.getType(DataReg));
+  LdStInst.getOperand(0).setReg(DataReg);
+}
+
+/// Narrow operations that are feeding truncations to s20.
+/// Covers G_LOAD and G_CONSTANT.
+bool llvm::matchNarrowTrunc(MachineInstr &MI, MachineRegisterInfo &MRI,
+                            GISelChangeObserver &Observer,
+                            BuildFnTy &MatchInfo) {
+
+  assert(MI.getOpcode() == TargetOpcode::G_TRUNC);
+
+  auto [DstReg, SrcReg] = MI.getFirst2Regs();
+
+  if (MRI.getType(DstReg).getScalarSizeInBits() != 20)
+    return false;
+
+  MachineInstr &SrcMI = *MRI.getVRegDef(SrcReg);
+
+  if (SrcMI.getOpcode() == TargetOpcode::G_CONSTANT) {
+    MatchInfo = [=, &MI, &SrcMI, &MRI](MachineIRBuilder &B) {
+      auto NewConstant = B.buildConstant(
+          LLT::scalar(20),
+          *getIConstantVRegSExtVal(SrcMI.getOperand(0).getReg(), MRI));
+      MRI.replaceRegWith(MI.getOperand(0).getReg(),
+                         NewConstant->getOperand(0).getReg());
+      MI.eraseFromParent();
+    };
+    return true;
+  }
+
+  // Ideally, we could allow more users, provided that they are all TRUNCs.
+  // However, if we have more users, the live range of this register could
+  // spread through more blocks, and this could lead to more register pressure
+  // on s20 registers.
+  if (!MRI.hasOneNonDBGUse(SrcReg) || !isUsedByLikelyLegalS20User(MRI, MI))
+    return false;
+
+  if (SrcMI.getOpcode() == TargetOpcode::G_LOAD) {
+    MatchInfo = [=, &MI, &SrcMI, &MRI, &Observer](MachineIRBuilder &B) {
+      Observer.changingInstr(SrcMI);
+      changeLoadStoreDataRegister(SrcMI, MI.getOperand(0).getReg(), MRI);
+      Observer.changedInstr(SrcMI);
+      MI.eraseFromParent();
+    };
+    return true;
+  }
+
+  return false;
+}
+
+/// Narrow operations that are fed by zext from s20.
+/// Covers G_STORE.
+bool llvm::matchNarrowZext(MachineInstr &MI, MachineRegisterInfo &MRI,
+                           GISelChangeObserver &Observer,
+                           BuildFnTy &MatchInfo) {
+
+  assert(MI.getOpcode() == TargetOpcode::G_ZEXT);
+
+  const LLT S20 = LLT::scalar(20);
+  const LLT S32 = LLT::scalar(32);
+  auto [DstReg, SrcReg] = MI.getFirst2Regs();
+
+  if (MRI.getType(SrcReg) != S20 || MRI.getType(DstReg) != S32)
+    return false;
+
+  if (!MRI.hasOneNonDBGUse(DstReg))
+    return false;
+
+  MachineInstr &DstMI = *MRI.use_instr_nodbg_begin(DstReg);
+
+  if (DstMI.getOpcode() == TargetOpcode::G_STORE) {
+    MatchInfo = [=, &MI, &DstMI, &MRI, &Observer](MachineIRBuilder &B) {
+      Observer.changingInstr(DstMI);
+      changeLoadStoreDataRegister(DstMI, MI.getOperand(1).getReg(), MRI);
+      Observer.changedInstr(DstMI);
+      MI.eraseFromParent();
+    };
+    return true;
+  }
+
+  return false;
+}
