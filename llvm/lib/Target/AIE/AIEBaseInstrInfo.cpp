@@ -1387,3 +1387,17 @@ unsigned llvm::AIEBaseInstrInfo::PTRModSupport::getOutputPtrIdx(
   assert(It != PtrInputAndOutputIdx->end());
   return It->second.second;
 }
+
+bool AIEBaseInstrInfo::isExtendLikelyToBeFolded(
+    MachineInstr &ExtMI, MachineRegisterInfo &MRI) const {
+  assert(ExtMI.getOpcode() == TargetOpcode::G_SEXT ||
+         ExtMI.getOpcode() == TargetOpcode::G_ZEXT ||
+         ExtMI.getOpcode() == TargetOpcode::G_ANYEXT);
+
+  if (ExtMI.getOpcode() != TargetOpcode::G_ZEXT)
+    return false;
+
+  const LLT S20 = LLT::scalar(20);
+  const LLT ActualType = MRI.getType(ExtMI.getOperand(1).getReg());
+  return ActualType == S20;
+}
