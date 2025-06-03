@@ -799,6 +799,9 @@ protected:
   // MIR formatter overrides for PseudoSourceValues
   const MIRFormatter *getMIRFormatter() const override;
   mutable std::unique_ptr<AIEMIRFormatter> Formatter;
+
+  bool isExtendLikelyToBeFolded(MachineInstr &ExtMI,
+                                MachineRegisterInfo &MRI) const override;
 };
 
 template <unsigned NumEncodingBits, unsigned Step>
