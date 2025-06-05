@@ -102,16 +102,17 @@ public:
     MockScoreboard.reset(computeScoreboardDepth());
   }
   void emit(unsigned SchedClass, int Delta, SlotBits SlotSet = 0,
-            MemoryBankBits MemoryBanks = 0,
+            MemoryBankBits MemoryBanks = 0, MemoryObjectsBits ObjectsBits = 0,
             SmallVector<int, 2> MemoryAccessCycles = {}) {
     enterResources(MockScoreboard, &Itins, SchedClass, SlotSet, MemoryBanks,
-                   MemoryAccessCycles, Delta, std::nullopt);
+                   ObjectsBits, MemoryAccessCycles, Delta, std::nullopt);
   }
   bool hazard(unsigned SchedClass, int Delta, SlotBits SlotSet = 0,
-              MemoryBankBits MemoryBanks = 0,
+              MemoryBankBits MemoryBanks = 0, MemoryObjectsBits ObjectsBits = 0,
               SmallVector<int, 2> MemoryAccessCycles = {}) {
     return checkConflict(MockScoreboard, &Itins, SchedClass, SlotSet,
-                         MemoryBanks, MemoryAccessCycles, Delta, std::nullopt);
+                         MemoryBanks, ObjectsBits, MemoryAccessCycles, Delta,
+                         std::nullopt);
   }
   void AdvanceCycle() override { MockScoreboard.advance(); }
   void RecedeCycle() override { MockScoreboard.recede(); }
@@ -392,36 +393,47 @@ TEST(HazardRecognizer, bankConflictHazard) {
   AIE2InstrInfo InstrInfo;
   MockHR HR(InstrInfo);
 
-  HR.emit(1, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b1010,
+  HR.emit(1, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b1010, /*ObjectsBits=*/0,
           /*MemoryAccessCycle=*/{5});
 
   // Classes 1 and 3 have no resource conflicts in MockStages, they can only
   // conflict because of Memory Banks.
   EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b01,
+                         /*ObjectsBits=*/0,
                          /*MemoryAccessCycle=*/{5}));
   EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b100,
+                         /*ObjectsBits=*/0,
                          /*MemoryAccessCycle=*/{5}));
   EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b0101,
+                         /*ObjectsBits=*/0,
                          /*MemoryAccessCycle=*/{5}));
 
   // Expected to conflict since same bank & same memory access cycle
   EXPECT_TRUE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b010,
+                        /*ObjectsBits=*/0,
                         /*MemoryAccessCycle=*/{5}));
   EXPECT_TRUE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b1000,
+                        /*ObjectsBits=*/0,
                         /*MemoryAccessCycle=*/{5}));
   EXPECT_TRUE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b1010,
+                        /*ObjectsBits=*/0,
                         /*MemoryAccessCycle=*/{5}));
   EXPECT_TRUE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b1111,
+                        /*ObjectsBits=*/0,
                         /*MemoryAccessCycle=*/{5}));
 
   // Not Expected to conflict since same bank but differenec memory access cycle
   EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b010,
+                         /*ObjectsBits=*/0,
                          /*MemoryAccessCycle=*/{6}));
   EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b1000,
+                         /*ObjectsBits=*/0,
                          /*MemoryAccessCycle=*/{6}));
   EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b1010,
+                         /*ObjectsBits=*/0,
                          /*MemoryAccessCycle=*/{6}));
   EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b1111,
+                         /*ObjectsBits=*/0,
                          /*MemoryAccessCycle=*/{6}));
 }
 
@@ -430,64 +442,86 @@ TEST(HazardRecognizer, bankConflictHazardMultiCycle) {
   AIE2InstrInfo InstrInfo;
   MockHR HR(InstrInfo);
 
-  HR.emit(1, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b1010,
+  HR.emit(1, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b1010, /*ObjectsBits=*/0,
           /*MemoryAccessCycle=*/{5, 7});
 
   // Classes 1 and 3 have no resource conflicts in MockStages, they can only
   // conflict because of Memory Banks.
   EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b01,
+                         /*ObjectsBits=*/0,
                          /*MemoryAccessCycle=*/{5}));
   EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b100,
+                         /*ObjectsBits=*/0,
                          /*MemoryAccessCycle=*/{5}));
   EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b0101,
+                         /*ObjectsBits=*/0,
                          /*MemoryAccessCycle=*/{5}));
 
   // Expected to conflict since same bank & same memory access cycle
   EXPECT_TRUE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b010,
+                        /*ObjectsBits=*/0,
                         /*MemoryAccessCycle=*/{5}));
   EXPECT_TRUE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b1000,
+                        /*ObjectsBits=*/0,
                         /*MemoryAccessCycle=*/{5}));
   EXPECT_TRUE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b1010,
+                        /*ObjectsBits=*/0,
                         /*MemoryAccessCycle=*/{5}));
   EXPECT_TRUE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b1111,
+                        /*ObjectsBits=*/0,
                         /*MemoryAccessCycle=*/{5}));
 
   // Not Expected to conflict since same bank but differenec memory access cycle
   EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b010,
+                         /*ObjectsBits=*/0,
                          /*MemoryAccessCycle=*/{6}));
   EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b1000,
+                         /*ObjectsBits=*/0,
                          /*MemoryAccessCycle=*/{6}));
   EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b1010,
+                         /*ObjectsBits=*/0,
                          /*MemoryAccessCycle=*/{6}));
   EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b1111,
+                         /*ObjectsBits=*/0,
                          /*MemoryAccessCycle=*/{6}));
 
   // Not Expected to conflict since different bank but same memory access cycles
   EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b01,
+                         /*ObjectsBits=*/0,
                          /*MemoryAccessCycle=*/{5, 7}));
   EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b100,
+                         /*ObjectsBits=*/0,
                          /*MemoryAccessCycle=*/{5, 7}));
   EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b0101,
+                         /*ObjectsBits=*/0,
                          /*MemoryAccessCycle=*/{5, 7}));
 
   // Expected to conflict since same bank & same memory access cycles
   EXPECT_TRUE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b010,
+                        /*ObjectsBits=*/0,
                         /*MemoryAccessCycle=*/{5, 7}));
   EXPECT_TRUE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b1000,
+                        /*ObjectsBits=*/0,
                         /*MemoryAccessCycle=*/{5, 11}));
   EXPECT_TRUE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b1010,
+                        /*ObjectsBits=*/0,
                         /*MemoryAccessCycle=*/{7, 11}));
   EXPECT_TRUE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b1111,
+                        /*ObjectsBits=*/0,
                         /*MemoryAccessCycle=*/{5, 7}));
 
   // Not Expected to conflict since same bank but differenec memory access cycle
   EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b010,
+                         /*ObjectsBits=*/0,
                          /*MemoryAccessCycle=*/{1, 6}));
   EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b1000,
+                         /*ObjectsBits=*/0,
                          /*MemoryAccessCycle=*/{2, 8, 11}));
   EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b1010,
+                         /*ObjectsBits=*/0,
                          /*MemoryAccessCycle=*/{1, 6, 11}));
   EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b1111,
+                         /*ObjectsBits=*/0,
                          /*MemoryAccessCycle=*/{6, 11}));
 }
 
@@ -500,7 +534,59 @@ TEST(HazardRecognizer, blockResourcesMemoryBanks) {
 
   // Not Expected to conflict since blockResources does not touch MemoryBanks
   EXPECT_FALSE(HR.hazard(0, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b010,
+                         /*ObjectsBits=*/0,
                          /*MemoryAccessCycle=*/{1, 6}));
   EXPECT_FALSE(HR.hazard(0, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0b010,
+                         /*ObjectsBits=*/0,
                          /*MemoryAccessCycle=*/{5}));
+}
+
+/// Check scoreboard conflicts from object sharing
+TEST(HazardRecognizer, objectConflictHazard) {
+  AIE2InstrInfo InstrInfo;
+  MockHR HR(InstrInfo);
+
+  HR.emit(1, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0, /*ObjectsBits=*/0b101,
+          /*MemoryAccessCycle=*/{5});
+
+  // Classes 1 and 3 have no resource conflicts in MockStages, they can only
+  // conflict because of Memory Banks and Objects.
+  EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                         /*ObjectsBits=*/0,
+                         /*MemoryAccessCycle=*/{5}));
+  EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                         /*ObjectsBits=*/0b01000,
+                         /*MemoryAccessCycle=*/{5}));
+  EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                         /*ObjectsBits=*/0b010000,
+                         /*MemoryAccessCycle=*/{5}));
+
+  // Expected to conflict since same object & same memory access cycle
+  EXPECT_TRUE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                        /*ObjectsBits=*/0b01,
+                        /*MemoryAccessCycle=*/{5}));
+  EXPECT_TRUE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                        /*ObjectsBits=*/0b11,
+                        /*MemoryAccessCycle=*/{5}));
+  EXPECT_TRUE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                        /*ObjectsBits=*/0b100,
+                        /*MemoryAccessCycle=*/{5}));
+  EXPECT_TRUE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                        /*ObjectsBits=*/0b101,
+                        /*MemoryAccessCycle=*/{5}));
+
+  // Not Expected to conflict since same object but differenec memory access
+  // cycle
+  EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                         /*ObjectsBits=*/0b01,
+                         /*MemoryAccessCycle=*/{6}));
+  EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                         /*ObjectsBits=*/0b11,
+                         /*MemoryAccessCycle=*/{6}));
+  EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                         /*ObjectsBits=*/0b100,
+                         /*MemoryAccessCycle=*/{6}));
+  EXPECT_FALSE(HR.hazard(3, 0, /*SlotSet=*/0b0, /*MemoryBanks=*/0,
+                         /*ObjectsBits=*/0b101,
+                         /*MemoryAccessCycle=*/{6}));
 }

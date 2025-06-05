@@ -15,6 +15,7 @@
 #include "AIEHazardRecognizer.h"
 #include "AIEBaseSubtarget.h"
 #include "MCTargetDesc/AIEMCFormats.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineOperand.h"
@@ -27,6 +28,7 @@
 #include "llvm/Support/WithColor.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
+#include <climits>
 #include <limits>
 #include <optional>
 
@@ -47,6 +49,11 @@ static cl::opt<bool> AddressSpaceNoneIsSafe(
     "aie-addrspace-none-is-safe", cl::Hidden, cl::init(true),
     cl::desc("Assume that addrspace(0) doesn't cause conflicts."));
 
+static cl::opt<bool>
+    PointerHazardRecognition("aie-recognize-pointer-hazards", cl::Hidden,
+                             cl::init(true),
+                             cl::desc("Recognize pointer hazards"));
+
 const AIEBaseMCFormats *FuncUnitWrapper::FormatInterface = nullptr;
 void FuncUnitWrapper::setFormatInterface(const AIEBaseMCFormats *Formats) {
   FormatInterface = Formats;
@@ -54,7 +61,8 @@ void FuncUnitWrapper::setFormatInterface(const AIEBaseMCFormats *Formats) {
 
 bool FuncUnitWrapper::operator==(const FuncUnitWrapper &Other) const {
   return Required == Other.Required && Reserved == Other.Reserved &&
-         Slots == Other.Slots && MemoryBanks == Other.MemoryBanks;
+         Slots == Other.Slots && MemoryBanks == Other.MemoryBanks &&
+         MemObjectsBits == Other.MemObjectsBits;
 }
 
 void FuncUnitWrapper::dump() const {
@@ -76,6 +84,7 @@ void FuncUnitWrapper::dump() const {
   PrintFU("Req     : ", Required);
   PrintResource(" Slots : ", Slots);
   PrintResource(" Memorybanks : ", MemoryBanks);
+  PrintResource(" MemObjectsBits : ", MemObjectsBits);
   if (!Reserved)
     return;
   PrintFU("\n\t   Rsrv : ", Reserved);
@@ -87,6 +96,7 @@ void FuncUnitWrapper::clearResources() {
   Reserved = 0;
   Slots = 0;
   MemoryBanks = 0;
+  MemObjectsBits = 0;
 }
 bool FuncUnitWrapper::isEmpty() const {
   return Required == 0 && Reserved == 0 && Slots == 0 && MemoryBanks == 0;
@@ -98,6 +108,7 @@ void FuncUnitWrapper::blockResources() {
   Slots = ~0;
   // Since the HW stalls in the event of memory bank conflicts, we don't need to
   // block the resource. It is overly conservative if we block all memory banks.
+  // The same applies for MemoryObjectBits.
 }
 
 FuncUnitWrapper &FuncUnitWrapper::operator|=(const FuncUnitWrapper &Other) {
@@ -105,13 +116,15 @@ FuncUnitWrapper &FuncUnitWrapper::operator|=(const FuncUnitWrapper &Other) {
   Reserved |= Other.Reserved;
   Slots |= Other.Slots;
   MemoryBanks |= Other.MemoryBanks;
+  MemObjectsBits |= Other.MemObjectsBits;
   return *this;
 }
 
 bool FuncUnitWrapper::conflict(const FuncUnitWrapper &Other) const {
   if ((Required & Other.Required) != 0 || (Slots & Other.Slots) != 0 ||
       (MemoryBanks & Other.MemoryBanks) != 0 ||
-      (Reserved & Other.Required) != 0 || (Required & Other.Reserved) != 0) {
+      (Reserved & Other.Required) != 0 || (Required & Other.Reserved) != 0 ||
+      (MemObjectsBits & Other.MemObjectsBits) != 0) {
     return true;
   }
 
@@ -334,9 +347,9 @@ AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
   const MachineRegisterInfo &MRI = MI->getMF()->getRegInfo();
   if (AlternateInsts) {
     for (const auto AltInstOpcode : *AlternateInsts) {
-      ScheduleHazardRecognizer::HazardType Haz =
-          getHazardType(Scoreboard, TII->get(AltInstOpcode), getMemoryBanks(MI),
-                        MI->operands(), MRI, DeltaCycles);
+      ScheduleHazardRecognizer::HazardType Haz = getHazardType(
+          Scoreboard, TII->get(AltInstOpcode), getMemoryBanks(MI),
+          getMemoryObjectsBits(MI), MI->operands(), MRI, DeltaCycles);
       // Check if there is NoHazard, If there is a Hazard or NoopHazard check
       // for the next possible Opcode.
       if (Haz == NoHazard) {
@@ -351,7 +364,8 @@ AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
   }
 
   return getHazardType(Scoreboard, MI->getDesc(), getMemoryBanks(MI),
-                       MI->operands(), MRI, DeltaCycles);
+                       getMemoryObjectsBits(MI), MI->operands(), MRI,
+                       DeltaCycles);
 }
 
 bool AIEHazardRecognizer::conflict(const AIEHazardRecognizer &Other,
@@ -409,7 +423,8 @@ void AIEHazardRecognizer::EmitInstruction(SUnit *SU, int DeltaCycles) {
       continue;
 
     emitInScoreboard(TII->get(SelectedOpcode), getMemoryBanks(&BundledMI),
-                     BundledMI.operands(), MRI, DeltaCycles);
+                     getMemoryObjectsBits(&BundledMI), BundledMI.operands(),
+                     MRI, DeltaCycles);
   }
 
   // When requested, we switch off VLIW scheduling after the specified number
@@ -454,6 +469,7 @@ auto toHazardType(bool Conflict) {
 ScheduleHazardRecognizer::HazardType AIEHazardRecognizer::getHazardType(
     const ResourceScoreboard<FuncUnitWrapper> &TheScoreboard,
     const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
+    MemoryObjectsBits MemObjectsBits,
     iterator_range<const MachineOperand *> MIOperands,
     const MachineRegisterInfo &MRI, int DeltaCycles) const {
   const unsigned SchedClass = TII->getSchedClass(Desc, MIOperands, MRI);
@@ -466,8 +482,8 @@ ScheduleHazardRecognizer::HazardType AIEHazardRecognizer::getHazardType(
   return toHazardType(checkConflict(
       TheScoreboard, ItinData, SchedClass,
       getSlotSet(Desc, *TII->getFormatInterface(), IgnoreUnknownSlotSets),
-      MemoryBanks, TII->getMemoryCycles(SchedClass), DeltaCycles,
-      FUDepthLimit));
+      MemoryBanks, MemObjectsBits, TII->getMemoryCycles(SchedClass),
+      DeltaCycles, FUDepthLimit));
 }
 
 bool AIEHazardRecognizer::checkConflict(
@@ -477,17 +493,20 @@ bool AIEHazardRecognizer::checkConflict(
   const unsigned SchedClass =
       TII->getSchedClass(Desc, MI.operands(), MI.getMF()->getRegInfo());
   const MemoryBankBits MemoryBanks = getMemoryBanks(&MI);
+  const MemoryObjectsBits MemObjectsBits = getMemoryObjectsBits(&MI);
   return checkConflict(
       Scoreboard, ItinData, SchedClass,
       getSlotSet(Desc, *TII->getFormatInterface(), IgnoreUnknownSlotSets),
-      MemoryBanks, TII->getMemoryCycles(SchedClass), DeltaCycles, std::nullopt);
+      MemoryBanks, MemObjectsBits, TII->getMemoryCycles(SchedClass),
+      DeltaCycles, std::nullopt);
 }
 
 bool AIEHazardRecognizer::checkConflict(
     const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
     const InstrItineraryData *ItinData, unsigned SchedClass, SlotBits SlotSet,
-    MemoryBankBits MemoryBanks, SmallVector<int, 2> MemoryAccessCycles,
-    int DeltaCycles, std::optional<int> FUDepthLimit) {
+    MemoryBankBits MemoryBanks, MemoryObjectsBits MemObjectsBits,
+    SmallVector<int, 2> MemoryAccessCycles, int DeltaCycles,
+    std::optional<int> FUDepthLimit) {
   assert(Scoreboard.isValidDelta(DeltaCycles));
 
   // Verify format hazards
@@ -495,17 +514,18 @@ bool AIEHazardRecognizer::checkConflict(
   if (EmissionCycle.conflict(Scoreboard[DeltaCycles]))
     return true;
 
-  // Verify memory bank hazards
+  // Verify memory bank and shared object hazards
   if (!MemoryAccessCycles.empty()) {
-    FuncUnitWrapper MemoryBankAccessCycle(/*Req=*/0, /*Res=*/0, /*SlotSet=*/0,
-                                          MemoryBanks);
+    FuncUnitWrapper MemoryAccessCycle(/*Req=*/0, /*Res=*/0, /*SlotSet=*/0,
+                                      MemoryBanks, MemObjectsBits);
+
     for (auto Cycles : MemoryAccessCycles) {
       // MemoryAccessCycles starts counting from 1, so we need to subtract 1
       int AccessCycle = DeltaCycles + Cycles - 1;
-      if (MemoryBankAccessCycle.conflict(Scoreboard[AccessCycle])) {
-        LLVM_DEBUG(dbgs() << "*** Memory bank conflict in cycle=" << AccessCycle
-                          << ":\n";
-                   MemoryBankAccessCycle.dump(); dbgs() << "\n");
+      if (MemoryAccessCycle.conflict(Scoreboard[AccessCycle])) {
+        LLVM_DEBUG(dbgs() << "*** Memory bank/Object conflict in cycle="
+                          << AccessCycle << ":\n";
+                   MemoryAccessCycle.dump(); dbgs() << "\n");
         return true;
       }
     }
@@ -543,14 +563,16 @@ bool AIEHazardRecognizer::checkConflict(
 
 void AIEHazardRecognizer::emitInScoreboard(
     const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
+    MemoryObjectsBits MemObjectsBits,
     iterator_range<const MachineOperand *> MIOperands,
     const MachineRegisterInfo &MRI, int DeltaCycles) {
-  emitInScoreboard(Scoreboard, Desc, MemoryBanks, MIOperands, MRI, DeltaCycles);
+  emitInScoreboard(Scoreboard, Desc, MemoryBanks, MemObjectsBits, MIOperands,
+                   MRI, DeltaCycles);
 }
 
 void AIEHazardRecognizer::emitInScoreboard(
     ResourceScoreboard<FuncUnitWrapper> &TheScoreboard, const MCInstrDesc &Desc,
-    MemoryBankBits MemoryBanks,
+    MemoryBankBits MemoryBanks, MemoryObjectsBits MemObjectsBits,
     iterator_range<const MachineOperand *> MIOperands,
     const MachineRegisterInfo &MRI, int DeltaCycles) const {
   const unsigned SchedClass = TII->getSchedClass(Desc, MIOperands, MRI);
@@ -563,14 +585,16 @@ void AIEHazardRecognizer::emitInScoreboard(
   const SlotBits SlotSet =
       getSlotSet(Desc, *TII->getFormatInterface(), IgnoreUnknownSlotSets);
   enterResources(TheScoreboard, ItinData, SchedClass, SlotSet, MemoryBanks,
-                 TII->getMemoryCycles(SchedClass), DeltaCycles, FUDepthLimit);
+                 MemObjectsBits, TII->getMemoryCycles(SchedClass), DeltaCycles,
+                 FUDepthLimit);
 }
 
 void AIEHazardRecognizer::enterResources(
     ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
     const InstrItineraryData *ItinData, unsigned SchedClass, SlotBits SlotSet,
-    MemoryBankBits MemoryBanks, SmallVector<int, 2> MemoryAccessCycles,
-    int DeltaCycles, std::optional<int> FUDepthLimit) {
+    MemoryBankBits MemoryBanks, MemoryObjectsBits MemObjectsBits,
+    SmallVector<int, 2> MemoryAccessCycles, int DeltaCycles,
+    std::optional<int> FUDepthLimit) {
   assert(Scoreboard.isValidDelta(DeltaCycles));
 
   // Append slot usage
@@ -579,10 +603,10 @@ void AIEHazardRecognizer::enterResources(
 
   // Append memory bank usage
   if (!MemoryAccessCycles.empty()) {
-    FuncUnitWrapper MemoryBankAccessCycle(/*Req=*/0, /*Res=*/0, /*SlotSet=*/0,
-                                          MemoryBanks);
+    FuncUnitWrapper MemoryBankAndObjectsAccessCycle(
+        /*Req=*/0, /*Res=*/0, /*SlotSet=*/0, MemoryBanks, MemObjectsBits);
     for (auto Cycles : MemoryAccessCycles) {
-      Scoreboard[DeltaCycles + Cycles - 1] |= MemoryBankAccessCycle;
+      Scoreboard[DeltaCycles + Cycles - 1] |= MemoryBankAndObjectsAccessCycle;
     }
   }
 
@@ -676,4 +700,74 @@ AIEHazardRecognizer::getMemoryBanks(const MachineInstr *MI) const {
     MemoryBankUsed |= MemoryBank;
   }
   return MemoryBankUsed;
+}
+
+bool MemoryObjectEnumerator::isFull() const {
+  return ObjectCounter == sizeof(MemoryObjectsBits) * CHAR_BIT;
+}
+
+std::optional<unsigned>
+MemoryObjectEnumerator::getObjectNumber(const Value *Object) {
+  unsigned ObjectNumber = 0;
+
+  // We locate directly the object number.
+  auto ItNumber = ObjectNumberingMap.find(Object);
+  if (ItNumber != ObjectNumberingMap.end()) {
+    ObjectNumber = ItNumber->second;
+    return ObjectNumber;
+  }
+
+  const Value *ParentObject = getUnderlyingObject(Object);
+
+  // We locate the parent's object number.
+  auto ItParentNumber = ObjectNumberingMap.find(ParentObject);
+  if (ItParentNumber != ObjectNumberingMap.end()) {
+    ObjectNumber = ItParentNumber->second;
+    // Reuse the number for this object.
+    ObjectNumberingMap[Object] = ObjectNumber;
+    return ObjectNumber;
+  }
+
+  if (isFull()) {
+    LLVM_DEBUG(dbgs() << "MemoryObjectEnumerator with full capacity\n");
+    return std::nullopt;
+  }
+
+  // Use the same number for both objects.
+  ObjectNumber = ObjectCounter++;
+  ObjectNumberingMap[ParentObject] = ObjectNumber;
+  ObjectNumberingMap[Object] = ObjectNumber;
+
+  return ObjectNumber;
+}
+
+/// For instructions using memory operands, return
+/// a bit map representing the used base objects. This is not
+/// for correctness, but for wait cycles avoidance.
+MemoryObjectsBits
+AIEHazardRecognizer::getMemoryObjectsBits(const MachineInstr *MI) const {
+
+  // If in PreRA, don't constrain the scheduler even more.
+  if (IsPreRA || !PointerHazardRecognition)
+    return 0;
+
+  if (!(MI->mayLoad() || MI->mayStore()))
+    return 0;
+
+  if (MI->memoperands_empty())
+    return 0; // optimistic: we will assume no conflict.
+
+  MemoryObjectsBits ObjectsToBitMap = 0;
+  for (auto &MMO : MI->memoperands()) {
+    const Value *BaseObject = MMO->getValue();
+    if (!BaseObject) {
+      LLVM_DEBUG(dbgs() << "No Base Object!\n");
+      continue;
+    }
+
+    const uint64_t One = 1;
+    if (auto ObjectNumber = ObjectEnumerator.getObjectNumber(BaseObject))
+      ObjectsToBitMap |= One << *ObjectNumber;
+  }
+  return ObjectsToBitMap;
 }

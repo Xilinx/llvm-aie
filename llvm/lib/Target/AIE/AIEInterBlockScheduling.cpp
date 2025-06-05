@@ -93,8 +93,8 @@ createTopDownScoreboard(ArrayRef<MachineBundle> Bundles,
   for (int I = TotalBundles - AmountToEmit; I < TotalBundles; I++) {
     for (MachineInstr *MI : Bundles[I].getInstrs())
       HR.emitInScoreboard(Scoreboard, *SelectedDescriptors.getDesc(MI),
-                          HR.getMemoryBanks(MI), MI->operands(),
-                          MI->getMF()->getRegInfo(), 0);
+                          HR.getMemoryBanks(MI), HR.getMemoryObjectsBits(MI),
+                          MI->operands(), MI->getMF()->getRegInfo(), 0);
     Scoreboard.advance();
   }
 
@@ -144,8 +144,8 @@ createBottomUpScoreboard(ArrayRef<MachineBundle> Bundles,
   for (const MachineBundle &B : reverse(MinBundles)) {
     for (MachineInstr *MI : B.getInstrs())
       HR.emitInScoreboard(Scoreboard, *SelectedDescriptors.getDesc(MI),
-                          HR.getMemoryBanks(MI), MI->operands(),
-                          MI->getMF()->getRegInfo(), 0);
+                          HR.getMemoryBanks(MI), HR.getMemoryObjectsBits(MI),
+                          MI->operands(), MI->getMF()->getRegInfo(), 0);
     Scoreboard.recede();
   }
   return Scoreboard;
@@ -168,8 +168,9 @@ MachineInstr *checkResourceConflictsBottomUp(
       break;
     for (MachineInstr *MI : B.getInstrs()) {
       if (HR.getHazardType(Scoreboard, *SelectedDescriptors.getDesc(MI),
-                           HR.getMemoryBanks(MI), MI->operands(),
-                           MI->getMF()->getRegInfo(), -BottomUpCycle)) {
+                           HR.getMemoryBanks(MI), HR.getMemoryObjectsBits(MI),
+                           MI->operands(), MI->getMF()->getRegInfo(),
+                           -BottomUpCycle)) {
         DEBUG_LOOPAWARE(dbgs() << "Conflicting MI at Bottom-up cycle="
                                << BottomUpCycle << ": " << *MI);
         return MI;
@@ -200,8 +201,8 @@ MachineInstr *checkResourceConflictsTopDown(
   for (const MachineBundle &B : SuccBundles) {
     for (MachineInstr *MI : B.getInstrs()) {
       if (HR.getHazardType(Scoreboard, *SelectedDescriptors.getDesc(MI),
-                           HR.getMemoryBanks(MI), MI->operands(),
-                           MI->getMF()->getRegInfo(), 0)) {
+                           HR.getMemoryBanks(MI), HR.getMemoryObjectsBits(MI),
+                           MI->operands(), MI->getMF()->getRegInfo(), 0)) {
         DEBUG_LOOPAWARE(dbgs() << "Conflicting MI at Top cycle=" << TopCycle
                                << ": " << *MI);
         ConflictMI = MI;

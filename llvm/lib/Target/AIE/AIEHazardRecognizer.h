@@ -30,6 +30,8 @@ namespace llvm {
 
 class MachineInstr;
 
+using MemoryObjectsBits = uint64_t;
+
 void applyFormatOrdering(AIE::MachineBundle &Bundle, const VLIWFormat &Format,
                          MachineInstr *BundleRoot,
                          MachineBasicBlock::iterator InsertPoint);
@@ -71,17 +73,21 @@ class FuncUnitWrapper {
   /// The occupied bank
   MemoryBankBits MemoryBanks = 0;
 
+  /// The occupied pointer objects
+  MemoryObjectsBits MemObjectsBits = 0;
+
 public:
   /// IssueCount - Count instructions issued in this cycle.
   unsigned IssueCount = 0;
 
   FuncUnitWrapper(const InstrStage &IS, SlotBits Slots = 0,
-                  MemoryBankBits MemoryBanks = 0)
+                  MemoryBankBits MemoryBanks = 0, uint64_t MemObjectsBits = 0)
       : Required(IS.getReservationKind() == InstrStage::Required ? IS.getUnits()
                                                                  : 0),
         Reserved(IS.getReservationKind() == InstrStage::Reserved ? IS.getUnits()
                                                                  : 0),
-        Slots(Slots), MemoryBanks(MemoryBanks) {}
+        Slots(Slots), MemoryBanks(MemoryBanks), MemObjectsBits(MemObjectsBits) {
+  }
 
   static void setFormatInterface(const AIEBaseMCFormats *Formats);
 
@@ -95,8 +101,10 @@ public:
   FuncUnitWrapper() = default;
   FuncUnitWrapper(InstrStage::FuncUnits Req) : Required(Req), Reserved(0) {}
   FuncUnitWrapper(InstrStage::FuncUnits Req, InstrStage::FuncUnits Res,
-                  SlotBits Slots = 0, MemoryBankBits MemoryBanks = 0)
-      : Required(Req), Reserved(Res), Slots(Slots), MemoryBanks(MemoryBanks) {}
+                  SlotBits Slots = 0, MemoryBankBits MemoryBanks = 0,
+                  uint64_t MemObjectsBits = 0)
+      : Required(Req), Reserved(Res), Slots(Slots), MemoryBanks(MemoryBanks),
+        MemObjectsBits(MemObjectsBits) {}
 
   /// Compare two FuncUnitWrappers for equality. This is only used for
   /// dumping purposes, quite literally saying "this looks the same"
@@ -109,12 +117,25 @@ public:
   bool conflict(const FuncUnitWrapper &Other) const;
 };
 
+struct MemoryObjectEnumerator {
+private:
+  std::unordered_map<const Value *, unsigned> ObjectNumberingMap;
+  unsigned ObjectCounter = 0;
+
+  bool isFull() const;
+
+public:
+  std::optional<unsigned> getObjectNumber(const Value *Object);
+};
+
 /// This Hazard Recognizer is primarily intended to work together
 /// with PostRASchedulerList to implement an in-order VLIW scheduling
 /// model without interlocks.
 class AIEHazardRecognizer : public ScheduleHazardRecognizer {
   int PipelineDepth = -1;
   int MaxLatency = -1;
+
+  mutable MemoryObjectEnumerator ObjectEnumerator;
 
   /// Compute the limits from the itinerary data
   void computeMaxLatency();
@@ -163,10 +184,12 @@ public:
   ///        doesn't pay off.
   void emitInScoreboard(ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
                         const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
+                        MemoryObjectsBits MemObjectsBits,
                         iterator_range<const MachineOperand *> MIOperands,
                         const MachineRegisterInfo &MRI, int DeltaCycles) const;
   // Apply the above function to the local scoreboard.
   void emitInScoreboard(const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
+                        MemoryObjectsBits MemObjectsBits,
                         iterator_range<const MachineOperand *> MIOperands,
                         const MachineRegisterInfo &MRI, int DeltaCycles);
 
@@ -182,6 +205,11 @@ public:
   /// The instructions with memory bank attribute return the address space
   /// number
   MemoryBankBits getMemoryBanks(const MachineInstr *MI) const;
+
+  /// For instructions using memory operands, return
+  /// a bit map representing the used base objects. This is not
+  /// for correctness, but for wait cycles avoidance.
+  MemoryObjectsBits getMemoryObjectsBits(const MachineInstr *MI) const;
 
   /// The pipeline depth is the depth of the deepest instruction.
   /// We compute that once from the itineraries.
@@ -208,6 +236,7 @@ public:
   ScheduleHazardRecognizer::HazardType
   getHazardType(const ResourceScoreboard<FuncUnitWrapper> &TheScoreboard,
                 const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
+                uint64_t MemObjectsBits,
                 iterator_range<const MachineOperand *> MIOperands,
                 const MachineRegisterInfo &MRI, int DeltaCycles) const;
   bool checkConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
@@ -220,13 +249,14 @@ protected:
   checkConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
                 const InstrItineraryData *ItinData, unsigned SchedClass,
                 SlotBits SlotSet, MemoryBankBits MemoryBanks,
-                SmallVector<int, 2> MemoryAccessCycles, int DeltaCycles,
-                std::optional<int> FUDepthLimit);
+                uint64_t MemObjectsBits, SmallVector<int, 2> MemoryAccessCycles,
+                int DeltaCycles, std::optional<int> FUDepthLimit);
 
   static void enterResources(ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
                              const InstrItineraryData *ItinData,
                              unsigned SchedClass, SlotBits SlotSet,
                              MemoryBankBits MemoryBanks,
+                             uint64_t MemObjectsBits,
                              SmallVector<int, 2> MemoryAccessCycles,
                              int DeltaCycles, std::optional<int> FUDepthLimit);
 
