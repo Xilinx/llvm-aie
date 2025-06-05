@@ -6,34 +6,40 @@
 #
 # (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
 
-# RUN: llc --mtriple=aie2 --issue-limit=6 --start-before=postmisched \
+# RUN: llc --mtriple=aie2 --start-before=postmisched \
 # RUN:     %s -o - | FileCheck %s
+
+# Pointer hazard recognition test: vldb wh2, [p0, #32] should not be packed with vldb wl2, [p0], #64
+# because this will lead to wait cycles.
 
 --- |
   define void @_Z16scale_vectorizedPsS_ii(ptr noalias nocapture readonly %a, ptr noalias nocapture writeonly %c, i32 noundef %factor, i32 noundef %N) {
   ; CHECK-LABEL: _Z16scale_vectorizedPsS_ii:
   ; CHECK:         .p2align 4
   ; CHECK-NEXT:  // %bb.0: // %entry
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; event #0; nopm ; nopv
-  ; CHECK-NEXT:    vlda wh2, [p0, #32]; vldb wl2, [p0], #64; nopx
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    vlda wh2, [p0, #32]; vldb wl2, [p0], #64; movxm ls, #.LBB0_1
-  ; CHECK-NEXT:    mova r2, #-5; movxm le, #.L_LEnd0
-  ; CHECK-NEXT:    vlda wh2, [p0, #32]; vldb wl2, [p0], #64; lshl r1, r1, r2; vbcst.16 x0, r0
-  ; CHECK-NEXT:    add.nc lc, r1, #-6
-  ; CHECK-NEXT:    vldb wl2, [p0], #64; vlda wh2, [p0, #32]; nops ; movx r0, #824; nopm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; vmul cm0, x2, x0, r0
-  ; CHECK-NEXT:    vldb wl2, [p0], #64; vlda wh2, [p0, #32]; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; vmul cm0, x2, x0, r0
-  ; CHECK-NEXT:    vldb wl2, [p0], #64; vlda wh2, [p0, #32]; nops ; movx r3, #0; nopm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov s0, r3; vmul cm0, x2, x0, r0
+  ; CHECK-NEXT:    nopa ; event #0
+  ; CHECK-NEXT:    vldb wh2, [p0, #32]
+  ; CHECK-NEXT:    vldb wl2, [p0], #64
+  ; CHECK-NEXT:    vldb wh2, [p0, #32]
+  ; CHECK-NEXT:    vldb wl2, [p0], #64
+  ; CHECK-NEXT:    vldb wh2, [p0, #32]; movxm ls, #.LBB0_1
+  ; CHECK-NEXT:    mova r2, #-5; vldb wl2, [p0], #64; movxm le, #.L_LEnd0
+  ; CHECK-NEXT:    vldb wh2, [p0, #32]; lshl r1, r1, r2; vbcst.16 x0, r0
+  ; CHECK-NEXT:    mova r0, #824; vldb wl2, [p0], #64; add.nc lc, r1, #-7
+  ; CHECK-NEXT:    vldb wh2, [p0, #32]; nopa ; nops ; nopxm ; vmul cm0, x2, x0, r0
+  ; CHECK-NEXT:    vldb wl2, [p0], #64; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vldb wh2, [p0, #32]; nopa ; nops ; nopxm ; vmul cm0, x2, x0, r0
+  ; CHECK-NEXT:    vldb wl2, [p0], #64; mova r3, #0; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vldb wh2, [p0, #32]; nopa ; nops ; nopx ; mov s0, r3; vmul cm0, x2, x0, r0
+  ; CHECK-NEXT:    vldb wl2, [p0], #64; nopa ; vst.srs.s16.s32 bmh0, s0, [p1, #32]; nopxm ; nopv
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_1: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-  ; CHECK-NEXT:    vldb wl2, [p0], #64; vlda wh2, [p0, #32]; vst.srs.s16.s32 bmh0, s0, [p1, #32]; nopxm ; nopv
+  ; CHECK-NEXT:    vldb wh2, [p0, #32]; nopa ; vst.srs.s16.s32 bml0, s0, [p1], #64; nopxm ; vmul cm0, x2, x0, r0
   ; CHECK-NEXT:  .L_LEnd0:
-  ; CHECK-NEXT:    nopb ; nopa ; vst.srs.s16.s32 bml0, s0, [p1], #64; nopxm ; vmul cm0, x2, x0, r0
+  ; CHECK-NEXT:    vldb wl2, [p0], #64; nopa ; vst.srs.s16.s32 bmh0, s0, [p1, #32]; nopxm ; nopv
   ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
+  ; CHECK-NEXT:    nopb ; nopa ; vst.srs.s16.s32 bml0, s0, [p1], #64; nopxm ; vmul cm0, x2, x0, r0
   ; CHECK-NEXT:    vst.srs.s16.s32 bmh0, s0, [p1, #32]; nopx
   ; CHECK-NEXT:    vst.srs.s16.s32 bml0, s0, [p1], #64; vmul cm0, x2, x0, r0
   ; CHECK-NEXT:    vst.srs.s16.s32 bmh0, s0, [p1, #32]

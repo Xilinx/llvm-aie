@@ -713,6 +713,7 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
     Strategy.selected(SU);
     const int LocalCycle = Actual % II;
     const MemoryBankBits MemoryBanks = HR.getMemoryBanks(MI);
+    const MemoryObjectsBits ObjectBits = HR.getMemoryObjectsBits(MI);
     int Cycle = -Depth + LocalCycle;
     LLVM_DEBUG(dbgs() << "  Emit in " << Cycle << "\n");
     for (int N = 0; N < NCopies; N++) {
@@ -721,7 +722,7 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
         return false;
       }
 
-      HR.emitInScoreboard(Scoreboard, MI->getDesc(), MemoryBanks,
+      HR.emitInScoreboard(Scoreboard, MI->getDesc(), MemoryBanks, ObjectBits,
                           MI->operands(), MI->getMF()->getRegInfo(), Cycle);
       Cycle += II;
     }
