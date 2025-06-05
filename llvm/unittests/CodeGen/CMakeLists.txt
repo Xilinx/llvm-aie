@@ -1,3 +1,11 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+# affiliates
+
 set(LLVM_LINK_COMPONENTS
   ${LLVM_TARGETS_TO_BUILD}
   Analysis
@@ -37,6 +45,7 @@ add_llvm_unittest(CodeGenTests
   MachineOperandTest.cpp
   RegAllocScoreTest.cpp
   PassManagerTest.cpp
+  ResourceScoreboardTest.cpp
   ScalableVectorMVTsTest.cpp
   SchedBoundary.cpp
   ScheduleDAGMITest.cpp

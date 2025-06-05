@@ -558,7 +558,7 @@ bool AIEHazardRecognizer::checkConflict(
     const FuncUnitWrapper ThisCycle(IS);
     for (unsigned int C = 0; C < IS.getCycles(); ++C) {
       int StageCycle = Cycle + (int)C;
-      assert(StageCycle < Scoreboard.getDepth());
+      assert(Scoreboard.isInRange(StageCycle));
 
       if (ThisCycle.conflict(Scoreboard[StageCycle])) {
         LLVM_DEBUG(dbgs() << "*** Hazard in cycle=" << StageCycle
