@@ -35,25 +35,20 @@ template <typename RC> class ResourceScoreboard {
   /// scheduler's cycles.
   std::vector<RC> Cycles;
 
-  /// The maximum number of cycles monitored by the Scoreboard. This
-  /// value is determined based on the target itineraries to ensure
-  /// that all hazards can be tracked.
+  /// The maximum number of cycles monitored by the Scoreboard.
   /// For efficiency, it is rounded up to a power of two.
   int Size = 0;
 
-  /// The scoreboard extends from Head - Depth to Head + Depth - 1
-  /// Depth is half of Size. Emitting an instruction is allowed in the
-  /// range [-Depth, 0], which guarantees that all of its resources are
-  /// recorded.
+  /// The scoreboard extends from Head - Lowest to Head + Highest
   /// When querying for conflicts, we have more liberty, with out-of-range
   /// cycles interpreted as being empty.
-  int Depth = 0;
+  int LowestCycle = 0;
+  int HighestCycle = 0;
 
   /// Index into the Scoreboard that represents the current cycle.
   int Head = 0;
 
 public:
-  int getDepth() const { return Depth; }
   int getSize() const { return Size; }
 
   /// Index operators. Size is checked to be a power of two. Masking it
@@ -70,27 +65,37 @@ public:
     Head = 0;
   }
 
-  void reset(int D) {
-    // Implementation relies on masking to wrap-around, so round up
+  // Sets up the scoreboard to be able to maintain a range of cycles
+  // between LowestCycle and HighestCycle relative to Head
+  // When Head changes position, empty cycles appear at the cycles that come
+  // into range. The cycles that go out of range are lost.
+  // Direct indexing out of [Lwb, Upb] is invalid. In operations an index
+  // outside of this range represents an empty cycle.
+  void config(int Lwb, int Upb) {
+    LowestCycle = Lwb;
+    HighestCycle = Upb;
+    const int Req = Upb - Lwb + 1;
+    // Implementation relies on masking for wrap-around, so round up
     // to a power of two.
     int Pow2 = 1;
-    while (Pow2 < D) {
+    while (Pow2 < Req) {
       Pow2 += Pow2;
     }
-    Depth = Pow2;
-    Size = 2 * Depth;
+    Size = Pow2;
     clear();
   }
-  bool isValidDelta(int DeltaCycles) const {
-    return DeltaCycles >= -Depth && DeltaCycles <= 0;
+
+  bool isInRange(int Index) const {
+    return Index >= LowestCycle && Index <= HighestCycle;
   }
 
   void advance() {
-    (*this)[-Depth].clearResources();
+    (*this)[LowestCycle].clearResources();
     Head = (Head + 1) & (Size - 1);
   }
+
   void recede() {
-    (*this)[Depth - 1].clearResources();
+    (*this)[HighestCycle].clearResources();
     Head = (Head - 1) & (Size - 1);
   }
 
@@ -100,13 +105,13 @@ public:
     // All cycles outside of either scoreboard are considered empty,
     // so cannot cause conflicts
     // We check every cycle in the overlapping region.
-    int Cycle = -Depth + DeltaCycles;
-    int OtherCycle = -Other.Depth;
-    while (Cycle < -Depth) {
+    int Cycle = LowestCycle + DeltaCycles;
+    int OtherCycle = Other.LowestCycle;
+    while (Cycle < LowestCycle) {
       Cycle++;
       OtherCycle++;
     }
-    while (Cycle < Depth && OtherCycle < Other.Depth) {
+    while (Cycle <= HighestCycle && OtherCycle <= Other.HighestCycle) {
       if ((*this)[Cycle].conflict(Other[OtherCycle])) {
         return true;
       }
@@ -117,14 +122,14 @@ public:
   }
 
   int firstOccupied() const {
-    int First = -Depth;
+    int First = LowestCycle;
     while (First < 0 && (*this)[First].isEmpty())
       First++;
     return First;
   }
 
   int lastOccupied() const {
-    int Last = Depth - 1;
+    int Last = HighestCycle;
     while ((Last > 0) && (*this)[Last].isEmpty())
       Last--;
 
@@ -172,6 +177,17 @@ public:
       Cycle.dump();
       dbgs() << "\n";
     }
+  }
+
+  // FIXME: These are relics from the original user of the scoreboard. mainly
+  // hazardrecognizer variants. They should be moved there. In that original
+  // use, D was determined by the pipeline depth of the itineraries. We would
+  // double the size and putting the origin in the middle, so that we could
+  // insert in cycles < 0. isValidDelta represents this sanity check
+  void reset(int D) { config(-D, D - 1); }
+
+  bool isValidDelta(int DeltaCycles) const {
+    return DeltaCycles >= LowestCycle && DeltaCycles <= 0;
   }
 };
 
