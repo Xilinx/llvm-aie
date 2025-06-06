@@ -2527,7 +2527,9 @@ bool SwingSchedulerDAG::schedulePipeline(SMSchedule &Schedule) {
              << "Schedule found with Initiation Interval: "
              << ore::NV("II", Schedule.getInitiationInterval())
              << ", MaxStageCount: "
-             << ore::NV("MaxStageCount", Schedule.getMaxStageCount());
+             << ore::NV("MaxStageCount", Schedule.getMaxStageCount())
+             << ore::NV("NS", Schedule.getMaxStageCount() + 1)
+             << ore::NV("BasicBlock", BB->getName());
     });
   } else
     Schedule.reset();
