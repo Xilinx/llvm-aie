@@ -168,12 +168,20 @@ void CodeGenFormat::run(raw_ostream &o) {
   o << "const std::vector<unsigned int> *" << Target.getName().str()
     << "MCFormats::getAlternateInstsOpcode";
   o << "(unsigned int Opcode) const {\n";
-  o << "  switch (Opcode) {\n";
-  o << "  default:\n";
-  o << "    return nullptr;\n";
-  for (unsigned int i = 0; i < PseudoInstFormats.size(); i++)
-    PseudoInstFormats[i].emitAlternateInstsOpcode(o, i);
-  o << "  }\n}\n";
+
+  if (!PseudoInstFormats.empty()) {
+
+    o << "  switch (Opcode) {\n";
+    o << "  default:\n";
+    o << "    return nullptr;\n";
+    for (unsigned int i = 0; i < PseudoInstFormats.size(); i++)
+      PseudoInstFormats[i].emitAlternateInstsOpcode(o, i);
+    o << "  }\n}\n";
+
+  } else {
+    o << "  return nullptr;\n";
+    o << "  }\n";
+  }
   o << "#endif // GET_ALTERNATE_INST_OPCODE_FUNC\n\n";
 
   if (InstFormats.size() > 0 && Slots.size() > 0) {
@@ -681,7 +689,8 @@ void TGInstrLayout::emitFormat(ConstTable &FieldsHierarchy, ConstTable &o,
     << "      " << (IsComposite ? "true" : "false") << " /* isComposite */,\n"
     << "      " << (IsMultipleSlotOptions ? "true" : "false")
     << " /* hasMultipleSlotOptions */,\n"
-    << "      " << "/* Slots - Fields mapper */\n"
+    << "      "
+    << "/* Slots - Fields mapper */\n"
     << "      {";
 
   const std::string TargetClassName = Target + SlotsRegistry.GenSlotKindName;
@@ -1097,7 +1106,8 @@ void TGTargetSlots::emitTargetSlotKindClass(raw_ostream &o) const {
   if (Slots.size() > 1) {
     // 2nd Ctor - Initilization by SlotKind if valid
     // We check in this constructor
-    o << "  constexpr " << TargetEnumName << '(' << "int" << " Kind)\n"
+    o << "  constexpr " << TargetEnumName << '(' << "int"
+      << " Kind)\n"
       << "    : MC" << GenSlotKindName
       << "((Kind >= "
       // Default slot is always at index 0
@@ -1175,8 +1185,11 @@ void TGTargetSlots::emitTargetSlotClass(raw_ostream &o) const {
     << "  const " << TargetEnumName << " Kind;\n"
     << "public:\n"
     << "  constexpr " << TargetClassName << "(const " << TargetEnumName
-    << " Kind, " << "const char* SlotName, " << "unsigned Size, "
-    << "SlotBits SlotSet, " << "unsigned NopOpc)\n"
+    << " Kind, "
+    << "const char* SlotName, "
+    << "unsigned Size, "
+    << "SlotBits SlotSet, "
+    << "unsigned NopOpc)\n"
     << "    : MC" << GenSlotInfoName
     << "(SlotName, Size, SlotSet, NopOpc), Kind(Kind)\n"
     << "  {\n  }\n\n"

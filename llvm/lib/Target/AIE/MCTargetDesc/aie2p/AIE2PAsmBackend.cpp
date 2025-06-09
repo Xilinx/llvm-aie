@@ -14,14 +14,7 @@
 
 using namespace llvm;
 
-bool AIE2PAsmBackend::isCall(unsigned Opcode) const {
-  switch (Opcode) {
-  // TODO Add Call Opcode e.g. JL
-  default:
-    break;
-  }
-  return false;
-}
+bool AIE2PAsmBackend::isCall(unsigned Opcode) const { return false; }
 
 bool AIE2PAsmBackend::isDelaySlotInstr(unsigned Opcode) const {
   switch (Opcode) {
