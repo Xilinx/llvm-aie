@@ -297,6 +297,9 @@ bool matchPairedExtracts(MachineInstr &MI, MachineRegisterInfo &MRI,
 bool matchShuffleToExtractInsertEltToBroadcast(MachineInstr &MI,
                                                MachineRegisterInfo &MRI,
                                                BuildFnTy &MatchInfo);
+
+bool matchBroadcastToShl(MachineInstr &MI, MachineRegisterInfo &MRI,
+                         const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
 } // namespace llvm
 
 #endif

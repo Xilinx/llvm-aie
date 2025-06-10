@@ -164,6 +164,12 @@ def combine_vector_shuffle_to_extract_insert_elt_to_broadcast : GICombineRule<
          [{ return matchShuffleToExtractInsertEltToBroadcast(*${root}, MRI, ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
 
+def combine_broadcast_shl_to_add : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_SHL): $root,
+         [{ return matchBroadcastToShl(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
+
 def AIE2PreLegalizerCombiner
     : GICombiner<"AIE2PreLegalizerCombinerImpl", [ combine_unpad_vector, combine_pad_vector,
                                                                  aie_all_combines, combine_S20NarrowingOpt,
@@ -171,7 +177,8 @@ def AIE2PreLegalizerCombiner
                                                                  combine_extract_vector_elt_and_zsa_ext,
                                                                  combine_splat_vector, combine_concat_to_pad_vector, 
                                                                  combine_single_diff_build_vector,
-                                                                 combine_symmetric_build_vector]> {
+                                                                 combine_symmetric_build_vector,
+                                                                 combine_broadcast_shl_to_add]> {
   let CombineAllMethodName = "tryCombineAllImpl";
 }
 
@@ -193,7 +200,8 @@ def AIE2PPreLegalizerCombiner
                                                                  combine_vector_shuffle_concat_extracted_subvectors,
                                                                  combine_paired_extracts,
                                                                  combine_vector_shuffle_to_extract_insert_elt_to_broadcast,
-                                                                 combine_symmetric_build_vector]> {
+                                                                 combine_symmetric_build_vector,
+                                                                 combine_broadcast_shl_to_add]> {
   let CombineAllMethodName = "tryCombineAllImpl";
 }
 
