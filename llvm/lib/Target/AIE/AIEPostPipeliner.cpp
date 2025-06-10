@@ -1240,7 +1240,7 @@ void PostPipeliner::dump() const {
     const NodeInfo &Node = Info[I];
     dbgs() << I << " @" << Node.Cycle << " %" << Node.ModuloCycle << " S"
            << Node.Stage << " : ";
-    DAG->SUnits[I].getInstr()->dump();
+    LLVM_DEBUG(DAG->SUnits[I].getInstr()->dump());
   }
   PostPipelineDumper Dump;
   visitPipelineSchedule(Dump);
