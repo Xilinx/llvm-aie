@@ -69,15 +69,39 @@ AIEGlobalCombiner::findBeneficialCombiners() {
     CombineCandidates.filterOut(FixedCombiners);
     CombineCandidates.filterOut(FoundCombiners);
 
-    for (auto *Combiner :
-         CombineCandidates.searchCombinerSet(OwnedCombineCandidates))
-      FoundCombiners.push_back(Combiner);
+    auto Combiners =
+        CombineCandidates.searchCombinerSet(OwnedCombineCandidates);
+    reorderCombinerInsertions(Combiners);
+
+    FoundCombiners.insert(FoundCombiners.end(), Combiners.begin(),
+                          Combiners.end());
   }
 
   LLVM_DEBUG(dbgs() << "[Global Combiner] Found " << FoundCombiners.size()
                     << " Fixed Combiners\n\n");
 
   return FoundCombiners;
+}
+
+void AIEGlobalCombiner::reorderCombinerInsertions(
+    std::vector<GenericCombiner *> &Combiners) const {
+  for (auto *Combiner : Combiners) {
+    if (!Combiner->canReorder())
+      continue;
+
+    auto It = std::find_if(Combiners.rbegin(), Combiners.rend(),
+                           [Combiner](GenericCombiner *Candidate) {
+                             return Combiner->isReorderCandidate(Candidate);
+                           });
+
+    if (It == Combiners.rend())
+      continue;
+
+    auto *BestCandidate = *It;
+    Combiner->copyInsertionPoint(BestCandidate);
+    LLVM_DEBUG(dbgs() << "Reordering \n"; Combiner->dumpFull();
+               BestCandidate->dumpFull(););
+  }
 }
 
 void AIEGlobalCombiner::calculateCombineCandidates(
@@ -198,7 +222,7 @@ std::vector<CombineCandidates> AIEGlobalCombiner::getCombineCandidates(
 
 // -------------------------- CombineCandidates ------------------------------//
 
-std::vector<const GenericCombiner *> CombineCandidates::searchCombinerSet(
+std::vector<GenericCombiner *> CombineCandidates::searchCombinerSet(
     const std::vector<std::unique_ptr<GenericCombiner>>
         &OwnedCombineCandidates) {
   if (Combiners.empty())
@@ -299,7 +323,7 @@ std::vector<const GenericCombiner *> CombineCandidates::searchCombinerSet(
   LLVM_DEBUG(dbgs() << "Search Result " << BestSolution.getGain() << "\n");
 
   // Save best Candidate to FixedCombiners
-  std::vector<const GenericCombiner *> Result;
+  std::vector<GenericCombiner *> Result;
   BitVector CombinerBitVec = BestSolution.getCombinersBitVector();
   for (int Idx = CombinerBitVec.find_first(); Idx != -1;
        Idx = CombinerBitVec.find_next(Idx)) {
@@ -515,6 +539,16 @@ unsigned GenericCombiner::getGlobalID() const { return GlobalID; }
 
 void GenericCombiner::setGlobalID(unsigned GlobalID) {
   this->GlobalID = GlobalID;
+}
+
+bool GenericCombiner::isReorderCandidate(
+    const GenericCombiner *Candidate) const {
+  return false;
+}
+
+void GenericCombiner::copyInsertionPoint(const GenericCombiner *Candidate) {
+  CombinerData.InsertionPoint = Candidate->CombinerData.InsertionPoint;
+  InsertionPointNodeNum = Candidate->InsertionPointNodeNum;
 }
 
 /// \return whether a Combiner is used after a Remove-Combiner, that

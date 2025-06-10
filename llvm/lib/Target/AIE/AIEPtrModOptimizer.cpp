@@ -167,6 +167,9 @@ void FoundCombiners::remapCombiner(AIE::Combiner &Combiner) const {
       getRemappedInstrs(Combiner.DelayInstrToInsertionPoint);
   Combiner.DelayInstrPastInsertionPoint =
       getRemappedInstrs(Combiner.DelayInstrPastInsertionPoint);
+
+  std::vector<MachineInstr *> InsertionPointVec = {Combiner.InsertionPoint};
+  Combiner.InsertionPoint = getRemappedInstrs(InsertionPointVec)[0];
 }
 
 const std::map<MachineInstr *, AIE::Combiner> &

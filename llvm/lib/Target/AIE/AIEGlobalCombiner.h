@@ -256,6 +256,16 @@ public:
 
   /// Set unique Identifier for this Combiner to \p GlobalID
   void setGlobalID(unsigned GlobalID);
+
+  /// \return whether this Combiner could be moved before another Combiner
+  virtual bool canReorder() const = 0;
+
+  /// \return whether \p Candidate is a ReorderCandidate, i.e. if this combiner
+  /// can be inserted right before \p Candidate
+  virtual bool isReorderCandidate(const GenericCombiner *Candidate) const;
+
+  /// Set InsertionPoint of this combiner to the same as \p Candidate
+  void copyInsertionPoint(const GenericCombiner *Candidate);
 };
 
 raw_ostream &operator<<(raw_ostream &OS, const GenericCombiner &Val);
@@ -338,7 +348,7 @@ public:
 
   /// \return Combiners from \p OwnedCombineCandidates that maximize the gain
   /// when applied
-  std::vector<const GenericCombiner *>
+  std::vector<GenericCombiner *>
   searchCombinerSet(const std::vector<std::unique_ptr<GenericCombiner>>
                         &OwnedCombineCandidates);
 
@@ -395,6 +405,9 @@ class AIEGlobalCombiner {
                                   const GenericCombiner *Combiner);
 
   void calculateCombinerConflicts();
+
+  void
+  reorderCombinerInsertions(std::vector<GenericCombiner *> &Combiners) const;
 
   /// \return CombineCandidates sorted by highest potential gain
   std::vector<CombineCandidates> getCombineCandidates(

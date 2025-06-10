@@ -29,10 +29,10 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(p0) = COPY $p1
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
-    ; CHECK-NEXT: [[AIE_POSTINC_3D_LOAD:%[0-9]+]]:_(s32), [[AIE_POSTINC_3D_LOAD1:%[0-9]+]]:_(p0), [[AIE_POSTINC_3D_LOAD2:%[0-9]+]]:_(s20), [[AIE_POSTINC_3D_LOAD3:%[0-9]+]]:_ = G_AIE_POSTINC_3D_LOAD [[COPY]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]] :: (load (s32))
     ; CHECK-NEXT: [[AIE_OFFSET_LOAD:%[0-9]+]]:_(s32) = G_AIE_OFFSET_LOAD [[COPY]](p0), [[C]](s20) :: (load (s32))
-    ; CHECK-NEXT: [[AIE_POSTINC_3D_LOAD4:%[0-9]+]]:_(s32), [[AIE_POSTINC_3D_LOAD5:%[0-9]+]]:_(p0), [[AIE_POSTINC_3D_LOAD6:%[0-9]+]]:_(s20), [[AIE_POSTINC_3D_LOAD7:%[0-9]+]]:_ = G_AIE_POSTINC_3D_LOAD [[COPY1]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]] :: (load (s32))
+    ; CHECK-NEXT: [[AIE_POSTINC_3D_LOAD:%[0-9]+]]:_(s32), [[AIE_POSTINC_3D_LOAD1:%[0-9]+]]:_(p0), [[AIE_POSTINC_3D_LOAD2:%[0-9]+]]:_(s20), [[AIE_POSTINC_3D_LOAD3:%[0-9]+]]:_ = G_AIE_POSTINC_3D_LOAD [[COPY]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]] :: (load (s32))
     ; CHECK-NEXT: [[AIE_OFFSET_LOAD1:%[0-9]+]]:_(s32) = G_AIE_OFFSET_LOAD [[COPY1]](p0), [[C]](s20) :: (load (s32))
+    ; CHECK-NEXT: [[AIE_POSTINC_3D_LOAD4:%[0-9]+]]:_(s32), [[AIE_POSTINC_3D_LOAD5:%[0-9]+]]:_(p0), [[AIE_POSTINC_3D_LOAD6:%[0-9]+]]:_(s20), [[AIE_POSTINC_3D_LOAD7:%[0-9]+]]:_ = G_AIE_POSTINC_3D_LOAD [[COPY1]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]] :: (load (s32))
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_POSTINC_3D_LOAD]](s32), implicit [[AIE_OFFSET_LOAD]](s32), implicit [[AIE_POSTINC_3D_LOAD4]](s32), implicit [[AIE_OFFSET_LOAD1]](s32), implicit [[AIE_POSTINC_3D_LOAD1]](p0), implicit [[AIE_POSTINC_3D_LOAD5]](p0)
     %0:_(p0) = COPY $p0
     %1:_(p0) = COPY $p1
