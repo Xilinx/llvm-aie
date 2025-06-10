@@ -344,12 +344,10 @@ AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
 
   const std::vector<unsigned int> *AlternateInsts =
       TII->getFormatInterface()->getAlternateInstsOpcode(MI->getOpcode());
-  const MachineRegisterInfo &MRI = MI->getMF()->getRegInfo();
   if (AlternateInsts) {
     for (const auto AltInstOpcode : *AlternateInsts) {
-      ScheduleHazardRecognizer::HazardType Haz = getHazardType(
-          Scoreboard, TII->get(AltInstOpcode), getMemoryBanks(MI),
-          getMemoryObjectsBits(MI), MI->operands(), MRI, DeltaCycles);
+      ScheduleHazardRecognizer::HazardType Haz =
+          getHazardType(Scoreboard, MI, TII->get(AltInstOpcode), DeltaCycles);
       // Check if there is NoHazard, If there is a Hazard or NoopHazard check
       // for the next possible Opcode.
       if (Haz == NoHazard) {
@@ -363,9 +361,7 @@ AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
     return NoopHazard;
   }
 
-  return getHazardType(Scoreboard, MI->getDesc(), getMemoryBanks(MI),
-                       getMemoryObjectsBits(MI), MI->operands(), MRI,
-                       DeltaCycles);
+  return getHazardType(Scoreboard, MI, MI->getDesc(), DeltaCycles);
 }
 
 bool AIEHazardRecognizer::conflict(const AIEHazardRecognizer &Other,
@@ -461,6 +457,14 @@ auto toHazardType(bool Conflict) {
                   : ScheduleHazardRecognizer::NoHazard;
 }
 } // namespace
+
+ScheduleHazardRecognizer::HazardType AIEHazardRecognizer::getHazardType(
+    const ResourceScoreboard<FuncUnitWrapper> &TheScoreboard,
+    const MachineInstr *MI, const MCInstrDesc &Desc, int DeltaCycles) const {
+  return getHazardType(TheScoreboard, Desc, getMemoryBanks(MI),
+                       getMemoryObjectsBits(MI), MI->operands(),
+                       MI->getMF()->getRegInfo(), DeltaCycles);
+}
 
 // These functions interpret the itinerary, translating InstrStages
 // to ResourceCycles to apply.
