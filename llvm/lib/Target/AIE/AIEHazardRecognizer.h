@@ -235,16 +235,22 @@ public:
 
   ScheduleHazardRecognizer::HazardType
   getHazardType(const ResourceScoreboard<FuncUnitWrapper> &TheScoreboard,
+                const MachineInstr *MI, const MCInstrDesc &Desc,
+                int DeltaCycles) const;
+
+  ScheduleHazardRecognizer::HazardType
+  getHazardType(const ResourceScoreboard<FuncUnitWrapper> &TheScoreboard,
                 const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
                 uint64_t MemObjectsBits,
                 iterator_range<const MachineOperand *> MIOperands,
                 const MachineRegisterInfo &MRI, int DeltaCycles) const;
+
   bool checkConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
                      MachineInstr &MI, int DeltaCycles) const;
 
 protected:
   ScheduleHazardRecognizer::HazardType getHazardType(const MCInstrDesc &Desc,
-                                                     int DeltaCycles);
+                                                     int DeltaCycles) const;
   static bool
   checkConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
                 const InstrItineraryData *ItinData, unsigned SchedClass,
