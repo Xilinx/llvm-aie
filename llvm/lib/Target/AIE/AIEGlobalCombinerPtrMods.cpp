@@ -315,7 +315,25 @@ std::unique_ptr<GenericCombiner> OffsetCombiner::clone() const {
 
 std::optional<std::pair<std::vector<SUnit *>, std::vector<SUnit *>>>
 OffsetCombiner::getInstructionsToMove(const AIE::DataDependenceHelper &DAG) {
-  return {{/*MoveUp*/ {}, /*MoveDown*/ {}}};
+  auto *PtrAdd = getPtrInc();
+  if (!getImm(*PtrAdd, *MRI)) {
+    /// Offset is not an immediate and the OffsetCombiner is not eligible for
+    /// reordering.
+    // Since the Offset already dominates the MemoryInstruction (where the
+    // insertion happens), no checks have to be performed.
+    return {{/*MoveUp=*/{}, /*MoveDown=*/{}}};
+  }
+
+  auto *SUnitPtrAdd = DAG.getSUnit(PtrAdd);
+  if (!SUnitPtrAdd) {
+    /// PtrAdd is an Immediate but it is outside of the MBB, so it already
+    /// dominates the MemoryInstruction. No checks have to be performed.
+    return {{/*MoveUp=*/{}, /*MoveDown=*/{}}};
+  }
+
+  /// Immediate Offset can be a reordering Candidate. Therefore, track Immediate
+  /// Offset, so it can be moved in case of a reordering.
+  return {{/*MoveUp=*/{SUnitPtrAdd}, /*MoveDown=*/{}}};
 }
 
 void OffsetCombiner::adjustGain(const MachineDominatorTree &MDT) {
@@ -335,7 +353,7 @@ void OffsetCombiner::adjustGain(const MachineDominatorTree &MDT) {
     Gain.setPtrMod(0);
   }
 
-  std::optional<APInt> ImmOffset = getImm(*PtrAdd, *MRI);
+  ImmOffset = getImm(*PtrAdd, *MRI);
   if (!ImmOffset)
     return;
 
@@ -361,6 +379,58 @@ std::optional<unsigned> OffsetCombiner::getOpCode(MachineInstr *PtrInc,
     return {};
 
   return TII->getOffsetMemOpcode(MemI->getOpcode());
+}
+
+bool OffsetCombiner::canReorder() const { return ImmOffset.has_value(); }
+
+bool OffsetCombiner::isReorderCandidate(
+    const GenericCombiner *PostIncCombiner) const {
+  auto GetInputPtr = [&](const MachineInstr *PtrMod) {
+    auto InputPtrIdx = PtrModSupport.getInputPtrIdx(*PtrMod);
+    assert(InputPtrIdx);
+    return PtrMod->getOperand(*InputPtrIdx);
+  };
+
+  const PointerModifierCombiner *PtrModCombiner =
+      static_cast<const PointerModifierCombiner *>(PostIncCombiner);
+  if (!PtrModCombiner->isPostInc())
+    return false;
+
+  // only allow loads to be reordered
+  if (getMemI()->mayStore() || PtrModCombiner->getMemI()->mayStore())
+    return false;
+
+  // Same MBB check
+  auto *PtrAdd = getPtrInc();
+  auto *PostIncPtrMod = PtrModCombiner->getPtrInc();
+  if (PtrAdd->getParent() != PostIncPtrMod->getParent())
+    return false;
+
+  // Same Input Ptr Check
+  auto InputPtr = GetInputPtr(PtrAdd);
+  auto PostIncInputPtr = GetInputPtr(PostIncPtrMod);
+  if (!InputPtr.isIdenticalTo(PostIncInputPtr))
+    return false;
+
+  // Check if Store Instruction of Offset dominates PostInc
+  auto *MemI = getMemI();
+  if (MemI->mayStore()) {
+    auto Source = MemI->getOperand(0);
+    assert(Source.isReg());
+    auto *DefSource = MRI->getUniqueVRegDef(Source.getReg());
+    if (!DefSource)
+      return false;
+    auto *DefSUnit = DAG->getSUnit(DefSource);
+    if (DefSUnit &&
+        DefSUnit->NodeNum > PostIncCombiner->InsertionPointNodeNum) {
+      // Source of Offset-Store would be after the new InsertionPoint and thus
+      // generate invalid mir
+      return false;
+    }
+  }
+
+  // OffsetCombiner occurs after PostIncCombiner
+  return InsertionPointNodeNum > PostIncCombiner->InsertionPointNodeNum;
 }
 
 // -------------------------- PostIncCombiner --------------------------------//

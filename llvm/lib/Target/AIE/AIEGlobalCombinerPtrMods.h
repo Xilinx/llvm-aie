@@ -118,9 +118,13 @@ public:
 
   /// \return whether Opcode can be set
   bool tryToSetCombinedOpCode() override;
+
+  virtual bool isPostInc() const = 0;
 };
 
 class OffsetCombiner : public PointerModifierCombiner {
+  std::optional<APInt> ImmOffset;
+
 protected:
   std::optional<unsigned> getOpCode(MachineInstr *PtrInc,
                                     MachineInstr *MemI) const override;
@@ -141,6 +145,12 @@ public:
 
   std::optional<std::pair<std::vector<SUnit *>, std::vector<SUnit *>>>
   getInstructionsToMove(const AIE::DataDependenceHelper &DAG) override;
+
+  bool isReorderCandidate(const GenericCombiner *Candidate) const override;
+
+  bool canReorder() const override;
+
+  bool isPostInc() const override { return false; }
 };
 
 class PostIncCombiner : public PointerModifierCombiner {
@@ -176,6 +186,14 @@ public:
   void adjustGain(const MachineDominatorTree &MDT) override;
 
   std::vector<MachineInstr *> getPtrInstrs(MachineInstr *MI) const override;
+
+  bool isReorderCandidate(const GenericCombiner *Candidate) const override {
+    return false;
+  }
+
+  bool canReorder() const override { return false; }
+
+  bool isPostInc() const override { return true; }
 };
 
 } // namespace llvm::AIE
