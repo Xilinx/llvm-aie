@@ -3265,3 +3265,49 @@ bool llvm::matchPairedExtracts(MachineInstr &MI, MachineRegisterInfo &MRI,
 
   return true;
 }
+
+bool llvm::matchBroadcastToShl(MachineInstr &MI, MachineRegisterInfo &MRI,
+                               const AIEBaseInstrInfo &TII,
+                               BuildFnTy &MatchInfo) {
+
+  assert(MI.getOpcode() == TargetOpcode::G_SHL);
+
+  const Register DstReg = MI.getOperand(0).getReg();
+  const LLT DstType = MRI.getType(DstReg);
+
+  if (!DstType.isFixedVector())
+    return false;
+
+  const Register SrcReg1 = MI.getOperand(1).getReg();
+  const Register SrcReg2 = MI.getOperand(2).getReg();
+
+  const MachineInstr *DefAmtMI = MRI.getVRegDef(SrcReg2);
+
+  if (DefAmtMI->getOpcode() != TII.getGenericBroadcastVectorOpcode())
+    return false;
+
+  auto CstSrc =
+      getIConstantVRegValWithLookThrough(DefAmtMI->getOperand(1).getReg(), MRI);
+
+  if (!CstSrc)
+    return false;
+
+  const int ShiftAmount = CstSrc->Value.getZExtValue();
+  assert(ShiftAmount >= 0 && "Invalid shift amount");
+
+  MatchInfo = [=, &MRI](MachineIRBuilder &B) {
+    Register CurAddReg = SrcReg1;
+    for (int NumAdds = 0; NumAdds < ShiftAmount; NumAdds++) {
+      Register AddReg = MRI.cloneVirtualRegister(SrcReg1);
+      B.buildInstr(TargetOpcode::G_ADD)
+          .addDef(AddReg)
+          .addReg(CurAddReg)
+          .addReg(CurAddReg);
+      CurAddReg = AddReg;
+    }
+
+    B.buildCopy(DstReg, CurAddReg);
+  };
+
+  return true;
+}
