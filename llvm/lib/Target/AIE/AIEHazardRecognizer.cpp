@@ -575,6 +575,20 @@ void AIEHazardRecognizer::emitInScoreboard(
 }
 
 void AIEHazardRecognizer::emitInScoreboard(
+    ResourceScoreboard<FuncUnitWrapper> &TheScoreboard, const MachineInstr &MI,
+    const MCInstrDesc &Desc, int DeltaCycles) const {
+  emitInScoreboard(TheScoreboard, Desc, getMemoryBanks(&MI),
+                   getMemoryObjectsBits(&MI), MI.operands(),
+                   MI.getMF()->getRegInfo(), DeltaCycles);
+}
+
+void AIEHazardRecognizer::emitInScoreboard(const MachineInstr &MI,
+                                           const MCInstrDesc &Desc,
+                                           int DeltaCycles) {
+  emitInScoreboard(Scoreboard, MI, Desc, DeltaCycles);
+}
+
+void AIEHazardRecognizer::emitInScoreboard(
     ResourceScoreboard<FuncUnitWrapper> &TheScoreboard, const MCInstrDesc &Desc,
     MemoryBankBits MemoryBanks, MemoryObjectsBits MemObjectsBits,
     iterator_range<const MachineOperand *> MIOperands,

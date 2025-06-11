@@ -279,10 +279,7 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard(ScoreboardTrust Trust) {
   /// make sure we always have enough lookahead available. We arrange for that
   /// by starting in the earliest possible cycle, -Depth
   auto InsertInCycle = [=](MachineInstr &MI, int Cycle) {
-    BotHazardRec->emitInScoreboard(
-        MI.getDesc(), BotHazardRec->getMemoryBanks(&MI),
-        BotHazardRec->getMemoryObjectsBits(&MI), MI.operands(),
-        MI.getMF()->getRegInfo(), Cycle - Depth);
+    BotHazardRec->emitInScoreboard(MI, MI.getDesc(), Cycle - Depth);
   };
   auto BlockCycle = [=](int Cycle) {
     BotHazardRec->blockCycleInScoreboard(Cycle - Depth);
@@ -365,10 +362,7 @@ void AIEPostRASchedStrategy::initializeTopScoreBoard() {
 
   AIEHazardRecognizer *TopHazardRec = getAIEHazardRecognizer(Top);
   auto EmitInstr = [=](MachineInstr &MI) {
-    TopHazardRec->emitInScoreboard(MI.getDesc(),
-                                   TopHazardRec->getMemoryBanks(&MI),
-                                   TopHazardRec->getMemoryObjectsBits(&MI),
-                                   MI.operands(), MI.getMF()->getRegInfo(), 0);
+    TopHazardRec->emitInScoreboard(MI, MI.getDesc(), 0);
   };
 
   const unsigned ConflictHorizon = TopHazardRec->getConflictHorizon();
