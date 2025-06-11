@@ -92,9 +92,7 @@ createTopDownScoreboard(ArrayRef<MachineBundle> Bundles,
   // then this will not cause conflicts.
   for (int I = TotalBundles - AmountToEmit; I < TotalBundles; I++) {
     for (MachineInstr *MI : Bundles[I].getInstrs())
-      HR.emitInScoreboard(Scoreboard, *SelectedDescriptors.getDesc(MI),
-                          HR.getMemoryBanks(MI), HR.getMemoryObjectsBits(MI),
-                          MI->operands(), MI->getMF()->getRegInfo(), 0);
+      HR.emitInScoreboard(Scoreboard, *MI, *SelectedDescriptors.getDesc(MI), 0);
     Scoreboard.advance();
   }
 
@@ -143,9 +141,7 @@ createBottomUpScoreboard(ArrayRef<MachineBundle> Bundles,
       Bundles.begin(), Bundles.begin() + std::min(NumBundles, RequiredCycles));
   for (const MachineBundle &B : reverse(MinBundles)) {
     for (MachineInstr *MI : B.getInstrs())
-      HR.emitInScoreboard(Scoreboard, *SelectedDescriptors.getDesc(MI),
-                          HR.getMemoryBanks(MI), HR.getMemoryObjectsBits(MI),
-                          MI->operands(), MI->getMF()->getRegInfo(), 0);
+      HR.emitInScoreboard(Scoreboard, *MI, *SelectedDescriptors.getDesc(MI), 0);
     Scoreboard.recede();
   }
   return Scoreboard;

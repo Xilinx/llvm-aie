@@ -192,7 +192,13 @@ public:
                         MemoryObjectsBits MemObjectsBits,
                         iterator_range<const MachineOperand *> MIOperands,
                         const MachineRegisterInfo &MRI, int DeltaCycles);
-
+  // Apply supplying the remaining info.
+  void emitInScoreboard(ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                        const MachineInstr &MI, const MCInstrDesc &Desc,
+                        int DeltaCycles) const;
+  // Apply supplying the remaining info (local scoreboard).
+  void emitInScoreboard(const MachineInstr &MI, const MCInstrDesc &Desc,
+                        int DeltaCycles);
   /// Block all scoreboard resources at DeltaCycles
   void blockCycleInScoreboard(int DeltaCycle);
 
