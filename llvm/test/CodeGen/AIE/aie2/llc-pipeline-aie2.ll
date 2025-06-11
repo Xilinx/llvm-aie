@@ -3,7 +3,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 
 ; When EXPENSIVE_CHECKS are enabled, the machine verifier appears between each
 ; pass. Ignore it with 'grep -v'.
@@ -251,6 +251,8 @@
 ; AIE-O123-NEXT:      MachineDominator Tree Construction
 ; AIE-O123-NEXT:      Machine Natural Loop Construction
 ; AIE-O123-NEXT:      ReachingDefAnalysis
+; AIE-O123-NEXT:      Lazy Machine Block Frequency Analysis
+; AIE-O123-NEXT:      Machine Optimization Remark Emitter
 ; AIE-O123-NEXT:      AIE Hardware Loops pass
 
 ; AIE-O0123-NEXT:      AIE pseudo branch expansion
