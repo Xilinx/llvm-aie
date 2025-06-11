@@ -225,7 +225,7 @@ int PostPipeliner::fit(MachineInstr *MI, int First, int Last, int II) {
   for (int C = First; C != Last; C += Step) {
     int Mod = C % II;
     LLVM_DEBUG(dbgs() << "   at " << C << " (" << Mod << ")\n");
-    if (!HR.checkConflict(Scoreboard, *MI, -Depth + Mod)) {
+    if (!HR.checkConflict(Scoreboard, *MI, Mod)) {
       LLVM_DEBUG(dbgs() << "    Success\n");
       return C;
     }
@@ -712,10 +712,10 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
       return false;
     }
     Strategy.selected(SU);
-    const int LocalCycle = Actual % II;
+    const int ModCycle = Actual % II;
     const MemoryBankBits MemoryBanks = HR.getMemoryBanks(MI);
     const MemoryObjectsBits ObjectBits = HR.getMemoryObjectsBits(MI);
-    int Cycle = -Depth + LocalCycle;
+    int Cycle = ModCycle;
     LLVM_DEBUG(dbgs() << "  Emit in " << Cycle << "\n");
     for (int N = 0; N < NCopies; N++) {
       if (N > 0 && HR.checkConflict(Scoreboard, *MI, Cycle)) {
@@ -1051,8 +1051,8 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval,
 
   // Let's not skimp on size here. This allows us to insert any instruction
   // in the unrolled dag.
-  Depth = NCopies * II + HR.getPipelineDepth();
-  Scoreboard.reset(Depth);
+  const int Size = NCopies * II + HR.getPipelineDepth();
+  Scoreboard.config(0, Size - 1);
 
   Info.init(NInstr, NCopies);
 

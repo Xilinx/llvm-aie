@@ -210,9 +210,8 @@ class PostPipeliner {
   /// The length of the longest circuit in the graph.
   int RecMII = 0;
 
-  // The scoreboard and its depth.
+  // The scoreboard.
   ResourceScoreboard<FuncUnitWrapper> Scoreboard;
-  int Depth;
 
   /// The minimum tripcount, read from the pragma, or from an LC initialization.
   int MinTripCount = 0;

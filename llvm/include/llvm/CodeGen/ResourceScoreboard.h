@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -179,16 +179,11 @@ public:
     }
   }
 
-  // FIXME: These are relics from the original user of the scoreboard. mainly
-  // hazardrecognizer variants. They should be moved there. In that original
-  // use, D was determined by the pipeline depth of the itineraries. We would
-  // double the size and putting the origin in the middle, so that we could
-  // insert in cycles < 0. isValidDelta represents this sanity check
+  // This is a relic from the original users of the scoreboard, mainly
+  // hazardrecognizer variants. In that original use, D was determined by
+  // the pipeline depth of the itineraries. We have doubled the size and
+  // put the origin in the middle, so that we could insert in cycles < 0.
   void reset(int D) { config(-D, D - 1); }
-
-  bool isValidDelta(int DeltaCycles) const {
-    return DeltaCycles >= LowestCycle && DeltaCycles <= 0;
-  }
 };
 
 } // end namespace llvm

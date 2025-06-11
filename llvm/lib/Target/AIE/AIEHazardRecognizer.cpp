@@ -72,6 +72,7 @@ void FuncUnitWrapper::dump() const {
 
   auto PrintFU = [&](const std::string &FUName, InstrStage::FuncUnits FU) {
     dbgs() << FUName;
+
     for (int J = Upper; J >= 0; J--)
       dbgs() << ((FU & (1ULL << J)) ? Digits[J % 10] : Spacer[J % 10 == 0]);
   };
@@ -136,6 +137,31 @@ bool FuncUnitWrapper::conflict(const FuncUnitWrapper &Other) const {
   return Slots && Other.Slots &&
          !FormatInterface->getPacketFormats().getFormat(Slots | Other.Slots);
 }
+
+namespace {
+// Central itinerary data interpreter
+// It will call Action with the cycle number and the FuncUnits,
+// returning true as soon as Action returns true.
+// A full traversal can be made by returning false.
+bool anyStage(ArrayRef<const InstrStage> Stages,
+              std::function<bool(int C, const FuncUnitWrapper &)> Action,
+              std::optional<int> FUDepthLimit = std::nullopt) {
+  int Cycle = 0;
+  for (const InstrStage &IS : Stages) {
+    if (FUDepthLimit && Cycle >= *FUDepthLimit) {
+      break;
+    }
+    const FuncUnitWrapper ThisCycle(IS);
+    for (unsigned C = 0; C < IS.getCycles(); C++) {
+      if (Action(Cycle + C, ThisCycle)) {
+        return true;
+      }
+    }
+    Cycle += IS.getNextCycles();
+  }
+  return false;
+}
+} // namespace
 
 bool AIEResourceCycle::canReserveResources(MachineInstr &MI) {
   // This is optimistic, just trying to use available parallelism.
@@ -391,7 +417,7 @@ void AIEHazardRecognizer::RecedeCycle() {
 }
 
 void AIEHazardRecognizer::blockCycleInScoreboard(int DeltaCycles) {
-  assert(Scoreboard.isValidDelta(DeltaCycles));
+  assert(Scoreboard.isInRange(DeltaCycles));
   Scoreboard[DeltaCycles].blockResources();
 }
 
@@ -521,7 +547,6 @@ bool AIEHazardRecognizer::checkConflict(
     MemoryBankBits MemoryBanks, MemoryObjectsBits MemObjectsBits,
     SmallVector<int, 2> MemoryAccessCycles, int DeltaCycles,
     std::optional<int> FUDepthLimit) {
-  assert(Scoreboard.isValidDelta(DeltaCycles));
 
   // Verify format hazards
   FuncUnitWrapper EmissionCycle(/*Req=*/0, /*Res=*/0, SlotSet);
@@ -536,6 +561,7 @@ bool AIEHazardRecognizer::checkConflict(
     for (auto Cycles : MemoryAccessCycles) {
       // MemoryAccessCycles starts counting from 1, so we need to subtract 1
       int AccessCycle = DeltaCycles + Cycles - 1;
+      assert(Scoreboard.isInRange(AccessCycle));
       if (MemoryAccessCycle.conflict(Scoreboard[AccessCycle])) {
         LLVM_DEBUG(dbgs() << "*** Memory bank/Object conflict in cycle="
                           << AccessCycle << ":\n";
@@ -545,34 +571,25 @@ bool AIEHazardRecognizer::checkConflict(
     }
   }
 
-  // Note that Delta will be negative for bottom-up scheduling.
-  // Cycle is 'our' cycle at which each stage of the itinerary starts.
-  // It gets updated by the increment from the InstrStage.
-  int Cycle = DeltaCycles;
-  for (const InstrStage &IS : ItinData->getStages(SchedClass)) {
-    if (FUDepthLimit && (Cycle - DeltaCycles) >= *FUDepthLimit) {
-      break;
-    }
-    // Check availability of this stage's resources for the specified number
-    // of cycles
-    const FuncUnitWrapper ThisCycle(IS);
-    for (unsigned int C = 0; C < IS.getCycles(); ++C) {
-      int StageCycle = Cycle + (int)C;
-      assert(Scoreboard.isInRange(StageCycle));
+  // Note that DeltaCycles will be negative for bottom-up scheduling.
 
-      if (ThisCycle.conflict(Scoreboard[StageCycle])) {
-        LLVM_DEBUG(dbgs() << "*** Hazard in cycle=" << StageCycle
-                          << " EC=" << StageCycle - DeltaCycles << ":\n";
-                   ThisCycle.dump(); dbgs() << "\n");
-        return true;
-      }
-    }
+  /// Check ThisCycle for a conflict at Cycle relative to the start of the
+  /// itinerary.
+  auto CycleConflict =
 
-    // Advance the cycle to the next stage.
-    Cycle += IS.getNextCycles();
-  }
+      [&Scoreboard, DeltaCycles](int Cycle, const FuncUnitWrapper &ThisCycle) {
+        const int StageCycle = DeltaCycles + Cycle;
+        assert(Scoreboard.isInRange(StageCycle));
+        if (ThisCycle.conflict(Scoreboard[StageCycle])) {
+          LLVM_DEBUG(dbgs() << "*** Hazard in cycle=" << StageCycle
+                            << " EC=" << StageCycle - DeltaCycles << ":\n";
+                     ThisCycle.dump(); dbgs() << "\n");
+          return true;
+        }
+        return false;
+      };
 
-  return false;
+  return anyStage(ItinData->getStages(SchedClass), CycleConflict, FUDepthLimit);
 }
 
 void AIEHazardRecognizer::emitInScoreboard(
@@ -623,7 +640,6 @@ void AIEHazardRecognizer::enterResources(
     MemoryBankBits MemoryBanks, MemoryObjectsBits MemObjectsBits,
     SmallVector<int, 2> MemoryAccessCycles, int DeltaCycles,
     std::optional<int> FUDepthLimit) {
-  assert(Scoreboard.isValidDelta(DeltaCycles));
 
   // Append slot usage
   FuncUnitWrapper EmissionCycle(/*Req=*/0, /*Res=*/0, SlotSet);
@@ -634,24 +650,23 @@ void AIEHazardRecognizer::enterResources(
     FuncUnitWrapper MemoryBankAndObjectsAccessCycle(
         /*Req=*/0, /*Res=*/0, /*SlotSet=*/0, MemoryBanks, MemObjectsBits);
     for (auto Cycles : MemoryAccessCycles) {
+      assert(Scoreboard.isInRange(DeltaCycles + Cycles - 1));
       Scoreboard[DeltaCycles + Cycles - 1] |= MemoryBankAndObjectsAccessCycle;
     }
   }
 
-  int Cycle = DeltaCycles;
-  Scoreboard[Cycle].IssueCount++;
-  for (const InstrStage &IS : ItinData->getStages(SchedClass)) {
-    if (FUDepthLimit && (Cycle - DeltaCycles) >= *FUDepthLimit) {
-      break;
-    }
-    const FuncUnitWrapper ThisCycle(IS);
-    for (unsigned int C = 0; C < IS.getCycles(); ++C) {
-      Scoreboard[Cycle + C] |= ThisCycle;
-    }
+  Scoreboard[DeltaCycles].IssueCount++;
 
-    // Advance the cycle to the next stage.
-    Cycle += IS.getNextCycles();
-  }
+  // Insert ThisCycle at position Cycle relative to the start of the itinerary.
+  auto Insert = [&Scoreboard, DeltaCycles](int Cycle,
+                                           const FuncUnitWrapper &ThisCycle) {
+    const int ScoreboardCycle = Cycle + DeltaCycles;
+    assert(Scoreboard.isInRange(ScoreboardCycle));
+    Scoreboard[ScoreboardCycle] |= ThisCycle;
+    return false;
+  };
+
+  (void)anyStage(ItinData->getStages(SchedClass), Insert, FUDepthLimit);
 
   LLVM_DEBUG({
     dbgs() << "Scoreboard:\n";
@@ -671,14 +686,13 @@ void AIEHazardRecognizer::computeMaxLatency() {
   assert(ItinData && !ItinData->isEmpty());
   unsigned FirstRW = std::numeric_limits<unsigned>().max();
   unsigned LastRW = 0;
-  unsigned ItinDepth = 0;
+  auto MaxDepth = [this](int C, const FuncUnitWrapper &) {
+    PipelineDepth = std::max(PipelineDepth, C);
+    return false;
+  };
   for (unsigned SchedClass = 0; !ItinData->isEndMarker(SchedClass);
        ++SchedClass) {
-    unsigned CurCycle = 0;
-    for (const InstrStage &IS : ItinData->getStages(SchedClass)) {
-      ItinDepth = std::max(ItinDepth, CurCycle + IS.getCycles());
-      CurCycle += IS.getNextCycles();
-    }
+    anyStage(ItinData->getStages(SchedClass), MaxDepth);
     for (unsigned OpIdx = 0;; OpIdx++) {
       std::optional<unsigned> OpLat =
           ItinData->getOperandCycle(SchedClass, OpIdx);
@@ -689,8 +703,6 @@ void AIEHazardRecognizer::computeMaxLatency() {
       LastRW = std::max(LastRW, *OpLat);
     }
   }
-
-  PipelineDepth = ItinDepth;
 
   // This is worst case, ignoring bypasses and same-cycle WAR
   MaxLatency = LastRW - FirstRW + 1;
