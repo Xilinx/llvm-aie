@@ -1,0 +1,151 @@
+;
+; This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+; See https://llvm.org/LICENSE.txt for license information.
+; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+;
+; (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+; RUN: llc -mtriple=aie2p --aie-force-postpipeliner \
+; RUN:   -pass-remarks-output=- \
+; RUN:   -pass-remarks-filter='aie-hardware-loops' %s -o /dev/null | FileCheck %s
+
+
+; Check that Optimization Remarks find that a Hardware loop is used.
+; MIR is from a bf16->bfp16 conversion function used by Conv2D kernels.
+
+; Function Attrs: mustprogress noinline
+define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noalias %out, ptr nonnull align 64 dereferenceable(64) %params) local_unnamed_addr #0 {
+; CHECK: Pass:            aie-hardware-loops
+; CHECK-NEXT: Name:            analysis
+; CHECK-NEXT: Function:        convert_bf16_to_bfp16
+; CHECK-NEXT: Args:
+; CHECK-NEXT:   - LoopID:          '0'
+; CHECK-NEXT:   - BasicBlock:      for.body
+; CHECK-NEXT:   - Zero-Overhead-Loop:   'true'
+entry:
+  %num = getelementptr inbounds i8, ptr %params, i20 4
+  %0 = load i32, ptr %num, align 4, !tbaa !4
+  %inc_I = getelementptr inbounds i8, ptr %params, i20 8
+  %1 = load i32, ptr %inc_I, align 8, !tbaa !9
+  %inc_O = getelementptr inbounds i8, ptr %params, i20 12
+  %2 = load i32, ptr %inc_O, align 4, !tbaa !10
+  %3 = load i32, ptr %params, align 64, !tbaa !11
+  %4 = icmp ugt i32 %3, 3
+  tail call void @llvm.assume(i1 %4)
+  %5 = trunc i32 %1 to i20
+  %6 = trunc i32 %0 to i20
+  %7 = trunc i32 %2 to i20
+  br label %for.body
+
+for.cond.cleanup:                                 ; preds = %for.body
+  ret void
+
+for.body:                                         ; preds = %for.body, %entry
+  %i.048 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
+  %pI16.047 = phi ptr [ %in, %entry ], [ %23, %for.body ]
+  %pO.046 = phi ptr [ %out, %entry ], [ %45, %for.body ]
+  %fI.sroa.8.045 = phi i32 [ 0, %entry ], [ %25, %for.body ]
+  %dimsO.sroa.8.044 = phi i32 [ 0, %entry ], [ %49, %for.body ]
+  %fI.sroa.0.043 = phi <32 x i32> [ undef, %entry ], [ %24, %for.body ]
+  %fO.sroa.8.042 = phi i32 [ 0, %entry ], [ %47, %for.body ]
+  %fO.sroa.0.041 = phi <32 x i32> [ undef, %entry ], [ %46, %for.body ]
+  %dimsI.sroa.8.040 = phi i32 [ 0, %entry ], [ %27, %for.body ]
+  %8 = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.fill.p0.p0(ptr %pI16.047, <32 x i32> %fI.sroa.0.043, i32 %fI.sroa.8.045)
+  %9 = extractvalue { ptr, <32 x i32>, i32 } %8, 0
+  %10 = extractvalue { ptr, <32 x i32>, i32 } %8, 1
+  %11 = extractvalue { ptr, <32 x i32>, i32 } %8, 2
+  %12 = tail call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.unaligned.p0.p0(ptr %9, <32 x i32> %10, i32 %11)
+  %13 = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } %12, 0
+  %14 = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } %12, 1
+  %15 = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } %12, 2
+  %16 = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } %12, 3
+  %17 = bitcast <64 x i8> %13 to <32 x bfloat>
+  %18 = tail call noundef <32 x float> @llvm.aie2p.v32bf16.to.v32accfloat(<32 x bfloat> %17)
+  %19 = bitcast <32 x float> %18 to <16 x i64>
+  %20 = trunc nuw i32 %dimsI.sroa.8.040 to i20
+  %21 = tail call { <64 x i8>, ptr, <32 x i32>, i32, i20 } @llvm.aie2p.fifo.ld.pop.2d.unaligned.p0.p0(ptr %14, <32 x i32> %15, i32 %16, i20 %5, i20 %6, i20 %20, i20 0)
+  %22 = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } %21, 0
+  %23 = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } %21, 1
+  %24 = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } %21, 2
+  %25 = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } %21, 3
+  %26 = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } %21, 4
+  %27 = zext i20 %26 to i32
+  %28 = bitcast <64 x i8> %22 to <32 x bfloat>
+  %29 = tail call noundef <32 x float> @llvm.aie2p.v32bf16.to.v32accfloat(<32 x bfloat> %28)
+  %30 = bitcast <32 x float> %29 to <16 x i64>
+  %shuffle2.i.i = shufflevector <16 x i64> %19, <16 x i64> %30, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+  %31 = bitcast <32 x i64> %shuffle2.i.i to <64 x float>
+  %32 = tail call { <64 x i8>, <8 x i8> } @llvm.aie2p.v64accfloat.to.v64bfp16ebs8(<64 x float> %31)
+  %33 = extractvalue { <64 x i8>, <8 x i8> } %32, 0
+  %34 = extractvalue { <64 x i8>, <8 x i8> } %32, 1
+  %35 = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16.p0.p0(ptr %pO.046, <64 x i8> %33, <8 x i8> %34, <32 x i32> %fO.sroa.0.041, i32 %fO.sroa.8.042)
+  %36 = extractvalue { ptr, <32 x i32>, i32 } %35, 0
+  %37 = extractvalue { ptr, <32 x i32>, i32 } %35, 1
+  %38 = extractvalue { ptr, <32 x i32>, i32 } %35, 2
+  %39 = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.flush.p0.p0(ptr %36, <32 x i32> %37, i32 %38)
+  %40 = extractvalue { ptr, <32 x i32>, i32 } %39, 0
+  %41 = extractvalue { ptr, <32 x i32>, i32 } %39, 1
+  %42 = extractvalue { ptr, <32 x i32>, i32 } %39, 2
+  %43 = trunc nuw i32 %dimsO.sroa.8.044 to i20
+  %44 = tail call { ptr, <32 x i32>, i32, i20 } @llvm.aie2p.fifo.st.flush.2d.conv.p0.p0(ptr %40, <32 x i32> %41, i32 %42, i20 %7, i20 %6, i20 %43, i20 0)
+  %45 = extractvalue { ptr, <32 x i32>, i32, i20 } %44, 0
+  %46 = extractvalue { ptr, <32 x i32>, i32, i20 } %44, 1
+  %47 = extractvalue { ptr, <32 x i32>, i32, i20 } %44, 2
+  %48 = extractvalue { ptr, <32 x i32>, i32, i20 } %44, 3
+  %49 = zext i20 %48 to i32
+  %inc = add nuw i32 %i.048, 1
+  %exitcond.not = icmp eq i32 %inc, %3
+  br i1 %exitcond.not, label %for.cond.cleanup, label %for.body, !llvm.loop !12
+}
+
+; Function Attrs: nounwind memory(argmem: read)
+declare { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.fill.p0.p0(ptr, <32 x i32>, i32) #1
+
+; Function Attrs: nounwind memory(none)
+declare <32 x float> @llvm.aie2p.v32bf16.to.v32accfloat(<32 x bfloat>) #2
+
+; Function Attrs: nounwind memory(argmem: read)
+declare { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.unaligned.p0.p0(ptr, <32 x i32>, i32) #1
+
+; Function Attrs: nounwind memory(argmem: read)
+declare { <64 x i8>, ptr, <32 x i32>, i32, i20 } @llvm.aie2p.fifo.ld.pop.2d.unaligned.p0.p0(ptr, <32 x i32>, i32, i20, i20, i20, i20) #1
+
+; Function Attrs: nounwind memory(argmem: write)
+declare { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16.p0.p0(ptr, <64 x i8>, <8 x i8>, <32 x i32>, i32) #3
+
+; Function Attrs: nounwind memory(inaccessiblemem: read)
+declare { <64 x i8>, <8 x i8> } @llvm.aie2p.v64accfloat.to.v64bfp16ebs8(<64 x float>) #4
+
+; Function Attrs: nounwind memory(argmem: write)
+declare { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.flush.p0.p0(ptr, <32 x i32>, i32) #3
+
+; Function Attrs: nounwind memory(argmem: write)
+declare { ptr, <32 x i32>, i32, i20 } @llvm.aie2p.fifo.st.flush.2d.conv.p0.p0(ptr, <32 x i32>, i32, i20, i20, i20, i20) #3
+
+; Function Attrs: nocallback nofree nosync nounwind willreturn memory(inaccessiblemem: write)
+declare void @llvm.assume(i1 noundef) #5
+
+attributes #0 = { mustprogress noinline "no-jump-tables"="true" "no-trapping-math"="true" "stack-protector-buffer-size"="8" }
+attributes #1 = { nounwind memory(argmem: read) }
+attributes #2 = { nounwind memory(none) }
+attributes #3 = { nounwind memory(argmem: write) }
+attributes #4 = { nounwind memory(inaccessiblemem: read) }
+attributes #5 = { nocallback nofree nosync nounwind willreturn memory(inaccessiblemem: write) }
+
+!llvm.linker.options = !{}
+!llvm.module.flags = !{!0, !1, !2}
+
+!0 = !{i32 7, !"Dwarf Version", i32 4}
+!1 = !{i32 2, !"Debug Info Version", i32 3}
+!2 = !{i32 1, !"wchar_size", i32 4}
+!4 = !{!5, !6, i64 4}
+!5 = !{!"_ZTS13BfToBfpParams", !6, i64 0, !6, i64 4, !6, i64 8, !6, i64 12}
+!6 = !{!"int", !7, i64 0}
+!7 = !{!"omnipotent char", !8, i64 0}
+!8 = !{!"Simple C++ TBAA"}
+!9 = !{!5, !6, i64 8}
+!10 = !{!5, !6, i64 12}
+!11 = !{!5, !6, i64 0}
+!12 = distinct !{!12, !13, !14, !15}
+!13 = !{!"llvm.loop.mustprogress"}
+!14 = !{!"llvm.loop.itercount.range", i64 4}
+!15 = !{!"llvm.loop.unroll.disable"}

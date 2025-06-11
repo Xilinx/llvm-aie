@@ -1,0 +1,123 @@
+;
+; This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+; See https://llvm.org/LICENSE.txt for license information.
+; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+;
+; (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+; RUN: llc -mtriple=aie2p --aie-force-postpipeliner \
+; RUN:   -pass-remarks-output=- \
+; RUN:   -pass-remarks-filter='aie-hardware-loops' %s -o - | FileCheck %s
+
+; Verify that Zero-Overhead-Loop is attributed to the correct loop.
+; Loop Structure: 
+; Loop 0
+;   HW Loop 0_0
+;   Loop 0_1
+
+; Function Attrs: mustprogress noinline
+define weak_odr dso_local void @nestedInnerLoop(ptr noalias %in, ptr noalias %out, ptr nonnull align 64 dereferenceable(64) %params) local_unnamed_addr #0 {
+; CHECK: --- !Analysis
+; CHECK-NEXT: Pass:            aie-hardware-loops
+; CHECK-NEXT: Name:            analysis
+; CHECK-NEXT: Function:        nestedInnerLoop
+; CHECK-NEXT: Args:
+; CHECK-NEXT:   - LoopID:          0_0
+; CHECK-NEXT:   - BasicBlock:      inner.loop.body
+; CHECK-NEXT:   - Zero-Overhead-Loop: 'true'
+; CHECK-NEXT: ...
+; CHECK-NEXT: --- !Analysis
+; CHECK-NEXT: Pass:            aie-hardware-loops
+; CHECK-NEXT: Name:            analysis
+; CHECK-NEXT: Function:        nestedInnerLoop
+; CHECK-NEXT: Args:
+; CHECK-NEXT:   - LoopID:          0_1
+; CHECK-NEXT:   - BasicBlock:      for.nested.regular.loop.cond
+; CHECK-NEXT:   - Zero-Overhead-Loop: 'false'
+; CHECK-NEXT: ...
+; CHECK-NEXT: --- !Analysis
+; CHECK-NEXT: Pass:            aie-hardware-loops
+; CHECK-NEXT: Name:            analysis
+; CHECK-NEXT: Function:        nestedInnerLoop
+; CHECK-NEXT: Args:
+; CHECK-NEXT:   - LoopID:          '0'
+; CHECK-NEXT:   - BasicBlock:      inner.loop
+; CHECK-NEXT:   - BasicBlock:      inner.loop.body
+; CHECK-NEXT:   - BasicBlock:      for.nested.regular.loop.cond.preheader
+; CHECK-NEXT:   - BasicBlock:      for.nested.regular.loop.cond
+; CHECK-NEXT:   - BasicBlock:      for.body
+; CHECK-NEXT:   - Zero-Overhead-Loop: 'false'
+; CHECK-NEXT: ...
+entry:
+  br label %for.cond
+
+for.cond:
+  %counter = phi i32 [0, %entry], [%incOuter, %for.body]
+  %incOuter = add nuw i32 %counter, 1
+  %outer.cond = icmp slt i32 %incOuter, 5
+  br i1 %outer.cond, label %inner.loop, label %for.cond.cleanup
+
+inner.loop:
+  %num = getelementptr inbounds i8, ptr %params, i20 4
+  %0 = load i32, ptr %num, align 4, !tbaa !4
+  %inc_I = getelementptr inbounds i8, ptr %params, i20 8
+  %1 = load i32, ptr %inc_I, align 8, !tbaa !9
+  %inc_O = getelementptr inbounds i8, ptr %params, i20 12
+  %2 = load i32, ptr %inc_O, align 4, !tbaa !10
+  %3 = load i32, ptr %params, align 64, !tbaa !11
+  %4 = icmp ugt i32 %3, 3
+  tail call void @llvm.assume(i1 %4)
+  %5 = trunc i32 %1 to i20
+  %6 = trunc i32 %0 to i20
+  %7 = trunc i32 %2 to i20
+  br label %inner.loop.body
+
+for.cond.cleanup:                                 ; preds = %inner.loop.body
+  ret void
+
+inner.loop.body:                                         ; preds = %inner.loop.body, %entry
+  %i.048 = phi i32 [ 0, %inner.loop ], [ %inc, %inner.loop.body ]
+  %inc = add nuw i32 %i.048, 1
+  %exitcond.not = icmp eq i32 %inc, %3
+  br i1 %exitcond.not, label %for.nested.regular.loop.cond, label %inner.loop.body, !llvm.loop !12
+
+for.nested.regular.loop.cond:
+  %NestedCounter = phi i32 [0, %inner.loop.body], [%incOuter, %for.nested.body]
+  %NestedIncOuter = add nuw i32 %NestedCounter, 1
+  %NestedCond = icmp slt i32 %NestedIncOuter, 5
+  br i1 %NestedCond, label %for.nested.body, label %for.body
+
+for.nested.body:
+  br label %for.nested.regular.loop.cond
+
+for.body: 
+  br label %for.cond
+}
+
+; Function Attrs: nocallback nofree nosync nounwind willreturn memory(inaccessiblemem: write)
+declare void @llvm.assume(i1 noundef) #5
+
+attributes #0 = { mustprogress noinline "no-jump-tables"="true" "no-trapping-math"="true" "stack-protector-buffer-size"="8" }
+attributes #1 = { nounwind memory(argmem: read) }
+attributes #2 = { nounwind memory(none) }
+attributes #3 = { nounwind memory(argmem: write) }
+attributes #4 = { nounwind memory(inaccessiblemem: read) }
+attributes #5 = { nocallback nofree nosync nounwind willreturn memory(inaccessiblemem: write) }
+
+!llvm.linker.options = !{}
+!llvm.module.flags = !{!0, !1, !2}
+
+!0 = !{i32 7, !"Dwarf Version", i32 4}
+!1 = !{i32 2, !"Debug Info Version", i32 3}
+!2 = !{i32 1, !"wchar_size", i32 4}
+!4 = !{!5, !6, i64 4}
+!5 = !{!"_ZTS13BfToBfpParams", !6, i64 0, !6, i64 4, !6, i64 8, !6, i64 12}
+!6 = !{!"int", !7, i64 0}
+!7 = !{!"omnipotent char", !8, i64 0}
+!8 = !{!"Simple C++ TBAA"}
+!9 = !{!5, !6, i64 8}
+!10 = !{!5, !6, i64 12}
+!11 = !{!5, !6, i64 0}
+!12 = distinct !{!12, !13, !14, !15}
+!13 = !{!"llvm.loop.mustprogress"}
+!14 = !{!"llvm.loop.itercount.range", i64 4}
+!15 = !{!"llvm.loop.unroll.disable"}
