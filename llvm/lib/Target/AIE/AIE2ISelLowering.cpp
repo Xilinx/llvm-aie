@@ -48,7 +48,6 @@ AIE2TargetLowering::AIE2TargetLowering(const TargetMachine &TM,
       addRegisterClass(Ty, *RCIt);
     }
   }
-  setBuildInlinedGEPsNextToUse(true);
   computeRegisterProperties(STI.getRegisterInfo());
 
   setStackPointerRegisterToSaveRestore(AIE2::SP);
