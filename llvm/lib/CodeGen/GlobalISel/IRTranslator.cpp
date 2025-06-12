@@ -3513,11 +3513,7 @@ bool IRTranslator::translate(const Constant &C, Register Reg) {
   } else if (auto CE = dyn_cast<ConstantExpr>(&C)) {
     auto Builder = *EntryBuilder.get();
     if (TLI->shouldBuildInlinedGEPsNextToUse() &&
-        CE->getOpcode() == Instruction::GetElementPtr &&
-        // If we have Constants as users, build using EntryBuilder to avoid
-        // use-before-def cases.
-        llvm::none_of(C.users(),
-                      [&](const User *U) { return isa<Constant>(*U); })) {
+        CE->getOpcode() == Instruction::GetElementPtr) {
       Builder = *CurBuilder.get();
     }
     switch(CE->getOpcode()) {

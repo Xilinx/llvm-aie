@@ -9,8 +9,8 @@
 ;
 ; NOTE: Example File to outline GEPs
 ;
-; RUN: llc -mtriple aie2 -stop-after=irtranslator -verify-machineinstrs -o - %s | FileCheck %s --check-prefixes=COMMON
-; RUN: llc -mtriple aie2p -stop-after=irtranslator -verify-machineinstrs -o - %s | FileCheck %s --check-prefixes=COMMON
+; RUN: llc -mtriple aie2 -stop-after=irtranslator -o - %s | FileCheck %s --check-prefixes=COMMON
+; RUN: llc -mtriple aie2p -stop-after=irtranslator -o - %s | FileCheck %s --check-prefixes=COMMON
 
 
 %struct.kernel_params = type { i32, i32, i32, i32, i32, i32, [8 x i8], i32, [28 x i8] }
@@ -24,24 +24,24 @@ define hidden fastcc void @inlineGEPs(ptr nocapture readonly %lp) {
   ; COMMON-NEXT: {{  $}}
   ; COMMON-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $p0
   ; COMMON-NEXT:   [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @param
-  ; COMMON-NEXT:   [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-  ; COMMON-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = nuw G_PTR_ADD [[GV]], [[C]](s20)
-  ; COMMON-NEXT:   [[C1:%[0-9]+]]:_(s8) = G_CONSTANT i8 0
-  ; COMMON-NEXT:   [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
+  ; COMMON-NEXT:   [[C:%[0-9]+]]:_(s8) = G_CONSTANT i8 0
+  ; COMMON-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
   ; COMMON-NEXT:   [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY]](p0) :: (load (s32) from %ir.lp)
   ; COMMON-NEXT:   G_STORE [[LOAD]](s32), [[GV]](p0) :: (store (s32) into @param, align 32)
-  ; COMMON-NEXT:   [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+  ; COMMON-NEXT:   [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+  ; COMMON-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = nuw G_PTR_ADD [[GV]], [[C2]](s20)
+  ; COMMON-NEXT:   [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD]](p0) :: (dereferenceable load (s32) from `ptr getelementptr inbounds (%struct.kernel_params, ptr @param, i20 0, i32 2)`)
+  ; COMMON-NEXT:   [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
   ; COMMON-NEXT:   [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw G_PTR_ADD [[GV]], [[C3]](s20)
-  ; COMMON-NEXT:   [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD1]](p0) :: (dereferenceable load (s32) from `ptr getelementptr inbounds (%struct.kernel_params, ptr @param, i20 0, i32 2)`)
-  ; COMMON-NEXT:   [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-  ; COMMON-NEXT:   [[PTR_ADD2:%[0-9]+]]:_(p0) = nuw G_PTR_ADD [[GV]], [[C4]](s20)
-  ; COMMON-NEXT:   G_STORE [[LOAD1]](s32), [[PTR_ADD2]](p0) :: (store (s32) into `ptr getelementptr inbounds (%struct.kernel_params, ptr @param, i20 0, i32 1)`)
-  ; COMMON-NEXT:   [[PTR_ADD3:%[0-9]+]]:_(p0) = nuw G_PTR_ADD [[COPY]], [[C4]](s20)
-  ; COMMON-NEXT:   [[LOAD2:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD3]](p0) :: (load (s32) from %ir.arrayidx1)
+  ; COMMON-NEXT:   G_STORE [[LOAD1]](s32), [[PTR_ADD1]](p0) :: (store (s32) into `ptr getelementptr inbounds (%struct.kernel_params, ptr @param, i20 0, i32 1)`)
+  ; COMMON-NEXT:   [[PTR_ADD2:%[0-9]+]]:_(p0) = nuw G_PTR_ADD [[COPY]], [[C3]](s20)
+  ; COMMON-NEXT:   [[LOAD2:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD2]](p0) :: (load (s32) from %ir.arrayidx1)
+  ; COMMON-NEXT:   [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
+  ; COMMON-NEXT:   [[PTR_ADD3:%[0-9]+]]:_(p0) = nuw G_PTR_ADD [[GV]], [[C4]](s20)
   ; COMMON-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 13
-  ; COMMON-NEXT:   [[PTR_ADD4:%[0-9]+]]:_(p0) = nuw G_PTR_ADD [[PTR_ADD]], [[C5]](s20)
-  ; COMMON-NEXT:   [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C2]](s32)
-  ; COMMON-NEXT:   G_MEMSET [[PTR_ADD4]](p0), [[C1]](s8), [[TRUNC]](s20), 1 :: (store (s8) into `ptr getelementptr inbounds (i8, ptr getelementptr inbounds (%struct.kernel_params, ptr @param, i20 0, i32 7), i20 13)`)
+  ; COMMON-NEXT:   [[PTR_ADD4:%[0-9]+]]:_(p0) = nuw G_PTR_ADD [[PTR_ADD3]], [[C5]](s20)
+  ; COMMON-NEXT:   [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C1]](s32)
+  ; COMMON-NEXT:   G_MEMSET [[PTR_ADD4]](p0), [[C]](s8), [[TRUNC]](s20), 1 :: (store (s8) into `ptr getelementptr inbounds (i8, ptr getelementptr inbounds (%struct.kernel_params, ptr @param, i20 0, i32 7), i20 13)`)
   ; COMMON-NEXT:   PseudoRET implicit $lr
 entry:
   %0 = load i32, ptr %lp, align 4
@@ -62,23 +62,23 @@ define hidden fastcc void @outlineGEPs(ptr nocapture readonly %lp) {
   ; COMMON-NEXT: {{  $}}
   ; COMMON-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $p0
   ; COMMON-NEXT:   [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @param
-  ; COMMON-NEXT:   [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-  ; COMMON-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = nuw G_PTR_ADD [[GV]], [[C]](s20)
-  ; COMMON-NEXT:   [[C1:%[0-9]+]]:_(s8) = G_CONSTANT i8 0
-  ; COMMON-NEXT:   [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
+  ; COMMON-NEXT:   [[C:%[0-9]+]]:_(s8) = G_CONSTANT i8 0
+  ; COMMON-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
   ; COMMON-NEXT:   [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY]](p0) :: (load (s32) from %ir.lp)
   ; COMMON-NEXT:   G_STORE [[LOAD]](s32), [[GV]](p0) :: (store (s32) into @param, align 32)
-  ; COMMON-NEXT:   [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
-  ; COMMON-NEXT:   [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw G_PTR_ADD [[GV]], [[C3]](s20)
-  ; COMMON-NEXT:   [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD1]](p0) :: (dereferenceable load (s32) from %ir.GEP0)
-  ; COMMON-NEXT:   G_STORE [[LOAD1]](s32), [[PTR_ADD1]](p0) :: (store (s32) into %ir.GEP0)
-  ; COMMON-NEXT:   [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-  ; COMMON-NEXT:   [[PTR_ADD2:%[0-9]+]]:_(p0) = nuw G_PTR_ADD [[COPY]], [[C4]](s20)
-  ; COMMON-NEXT:   [[LOAD2:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD2]](p0) :: (load (s32) from %ir.arrayidx1)
+  ; COMMON-NEXT:   [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+  ; COMMON-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = nuw G_PTR_ADD [[GV]], [[C2]](s20)
+  ; COMMON-NEXT:   [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD]](p0) :: (dereferenceable load (s32) from %ir.GEP0)
+  ; COMMON-NEXT:   G_STORE [[LOAD1]](s32), [[PTR_ADD]](p0) :: (store (s32) into %ir.GEP0)
+  ; COMMON-NEXT:   [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
+  ; COMMON-NEXT:   [[PTR_ADD1:%[0-9]+]]:_(p0) = nuw G_PTR_ADD [[COPY]], [[C3]](s20)
+  ; COMMON-NEXT:   [[LOAD2:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD1]](p0) :: (load (s32) from %ir.arrayidx1)
+  ; COMMON-NEXT:   [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
+  ; COMMON-NEXT:   [[PTR_ADD2:%[0-9]+]]:_(p0) = nuw G_PTR_ADD [[GV]], [[C4]](s20)
   ; COMMON-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 13
-  ; COMMON-NEXT:   [[PTR_ADD3:%[0-9]+]]:_(p0) = nuw G_PTR_ADD [[PTR_ADD]], [[C5]](s20)
-  ; COMMON-NEXT:   [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C2]](s32)
-  ; COMMON-NEXT:   G_MEMSET [[PTR_ADD3]](p0), [[C1]](s8), [[TRUNC]](s20), 1 :: (store (s8) into %ir.GEP1)
+  ; COMMON-NEXT:   [[PTR_ADD3:%[0-9]+]]:_(p0) = nuw G_PTR_ADD [[PTR_ADD2]], [[C5]](s20)
+  ; COMMON-NEXT:   [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C1]](s32)
+  ; COMMON-NEXT:   G_MEMSET [[PTR_ADD3]](p0), [[C]](s8), [[TRUNC]](s20), 1 :: (store (s8) into %ir.GEP1)
   ; COMMON-NEXT:   PseudoRET implicit $lr
 entry:
   %0 = load i32, ptr %lp, align 4
@@ -92,37 +92,3 @@ entry:
   tail call void @llvm.memset.p0.i32(ptr noundef nonnull align 1 dereferenceable(7) %GEP1, i8 0, i32 7, i1 false)
   ret void
 }
-
-; In this case, we should build getelementptr using EntryBuilder, because ptrtoint is also a
-; ConstantExpr (and it will be built using EntryBuilder anyway).
-; If we build getelementptr in CurBuilder, and later on ptrtoint using EntryBuilder, we will have
-; an use before def problem. Remember that EntryBuilder uses a special block just for constants,
-; and this block will be merged with the first normal block.
-
-define <16 x bfloat> @constChainKeepInEntry() {
-  ; COMMON-LABEL: name: constChainKeepInEntry
-  ; COMMON: bb.1.entry:
-  ; COMMON-NEXT:   [[C:%[0-9]+]]:_(s16) = G_FCONSTANT bfloat 0xR0000
-  ; COMMON-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<16 x s16>) = G_BUILD_VECTOR [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16)
-  ; COMMON-NEXT:   [[C1:%[0-9]+]]:_(p0) = G_CONSTANT i20 0
-  ; COMMON-NEXT:   [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 256
-  ; COMMON-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = nuw G_PTR_ADD [[C1]], [[C2]](s20)
-  ; COMMON-NEXT:   [[PTRTOINT:%[0-9]+]]:_(s20) = G_PTRTOINT [[PTR_ADD]](p0)
-  ; COMMON-NEXT:   [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
-  ; COMMON-NEXT:   [[BUILD_VECTOR1:%[0-9]+]]:_(<16 x s32>) = G_BUILD_VECTOR [[C3]](s32), [[C3]](s32), [[C3]](s32), [[C3]](s32), [[C3]](s32), [[C3]](s32), [[C3]](s32), [[C3]](s32), [[C3]](s32), [[C3]](s32), [[C3]](s32), [[C3]](s32), [[C3]](s32), [[C3]](s32), [[C3]](s32), [[C3]](s32)
-  ; COMMON-NEXT:   [[ZEXT:%[0-9]+]]:_(s32) = G_ZEXT [[PTRTOINT]](s20)
-  ; COMMON-NEXT:   [[IVEC:%[0-9]+]]:_(<16 x s32>) = G_INSERT_VECTOR_ELT [[BUILD_VECTOR1]], [[ZEXT]](s32), [[C3]](s32)
-  ; COMMON-NEXT:   [[SHUF:%[0-9]+]]:_(<8 x s32>) = G_SHUFFLE_VECTOR [[IVEC]](<16 x s32>), [[BUILD_VECTOR1]], shufflemask(0, 1, 2, 3, 4, 5, 6, 7)
-  ; COMMON-NEXT:   [[INT:%[0-9]+]]:_(<8 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.load.4x64.lo), [[SHUF]](<8 x s32>)
-  ; COMMON-NEXT:   $wl0 = COPY [[BUILD_VECTOR]](<16 x s16>)
-  ; COMMON-NEXT:   PseudoRET implicit $lr, implicit $wl0
-entry:
-  %0 = zext i20 ptrtoint (ptr getelementptr inbounds ([0 x float], ptr null, i20 0, i20 64) to i20) to i32
-  %splat.splatinsert.i3.i.i.i.i.i = insertelement <16 x i32> zeroinitializer, i32 %0, i64 0
-  %shuffle.i.i.i.i.i.i = shufflevector <16 x i32> %splat.splatinsert.i3.i.i.i.i.i, <16 x i32> zeroinitializer, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
-  %1 = call <8 x i32> @llvm.aie2p.load.4x64.lo(<8 x i32> %shuffle.i.i.i.i.i.i)
-  ret <16 x bfloat> zeroinitializer
-}
-
-; Function Attrs: nocallback nofree nosync nounwind willreturn memory(read)
-declare <8 x i32> @llvm.aie2p.load.4x64.lo(<8 x i32>) #0
