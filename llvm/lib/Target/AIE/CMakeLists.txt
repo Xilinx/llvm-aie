@@ -3,7 +3,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 add_llvm_component_group(AIE)
 
 set(LLVM_TARGET_DEFINITIONS AIE.td)
@@ -144,6 +144,7 @@ add_llvm_target(AIECodeGen
    AIE2TargetTransformInfo.cpp
    AIETiedRegOperands.cpp
    ReservedRegsLICM.cpp
+   AIEOutlineMemoryGEP.cpp
    AIEWawRegRewriter.cpp
    aie2p/AIE2PSubtarget.cpp
    aie2p/AIE2PTargetMachine.cpp
