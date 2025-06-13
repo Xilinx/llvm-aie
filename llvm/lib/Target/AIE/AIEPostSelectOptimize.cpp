@@ -48,6 +48,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
+#include "llvm/IR/GlobalValue.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <optional>
@@ -60,6 +61,10 @@ using namespace llvm;
 static cl::opt<bool>
     EnablePostSelectOptimize("aie-post-select-opt", cl::Hidden, cl::init(true),
                              cl::desc("Enable post select optimize."));
+
+static cl::opt<bool> Assume4xLoadReadOnlyData(
+    "assume-4xload-ro-data", cl::Hidden, cl::init(true),
+    cl::desc("Assumes that the 4x load instructions access read-only data"));
 
 namespace {
 
@@ -490,25 +495,54 @@ using Operation = AIEBaseInstrInfo::AbstractOp::OperationType;
 using AbstractOp = AIEBaseInstrInfo::AbstractOp;
 using OptionalOp = std::optional<AbstractOp>;
 
-bool getGlobalValue(const MachineInstr *MI,
-                    SmallPtrSet<const Value *, 4> &GVSet,
+// Verify if an instruction has a GlobalValue (GV) as operand. In case of
+// true result, add such GV to the GVSet. Under some circumstances, such
+// GV operand can also be virtually retrieved.
+bool hasGlobalValue(MachineInstr *MI, SmallPtrSet<const Value *, 4> &GVSet,
                     MachineRegisterInfo &MRI) {
 
   MI = getDefIgnoringCopiesAndBitcasts(MI->getOperand(1).getReg(), MRI);
 
   // We need an instruction that explicitly moves a global
   // to a register (move immediate).
-  if (MI->getNumOperands() != 2)
-    return false;
+  if (MI->isMoveImmediate()) {
+    const MachineOperand *MO = MI->uses().begin();
 
-  const MachineOperand *MO = MI->uses().begin();
-
-  if (MO->isGlobal()) {
-    GVSet.insert(MO->getGlobal());
-    return true;
+    if (MO->isGlobal()) {
+      GVSet.insert(MO->getGlobal());
+      return true;
+    }
   }
 
-  return false;
+  if (!Assume4xLoadReadOnlyData)
+    return false;
+
+  // In the context of memory access, we cannot definitively determine the
+  // original value beyond this point (it may reside in another CU, for
+  // example). However, since the affected instructions are intended for
+  // accessing read-only tables, we can optimistically assign a common
+  // artificial value that symbolizes a fictional global variable. Be mindful
+  // that if these instructions are used to access read/write data or exceed the
+  // bounds of the allocated table, the behavior will be undefined.
+  //
+  // Furthermore, we can address two additional scenarios:
+  // 1. Loading the pointer from an external source.
+  // 2. Copying the pointer from a physical register.
+  // By limiting our focus in this manner, we streamline the search space to a
+  // well-known structure.
+  if (!MI->mayLoad() && !MI->isCopy())
+    return false;
+
+  if (MI->isCopy() && !MI->getOperand(1).getReg().isPhysical())
+    return false;
+
+  // This is a transient variable that will be discarded in the end.
+  Module &M = *MI->getMF()->getFunction().getParent();
+  auto *GV = M.getOrInsertGlobal("__aie_common_lookup_table",
+                                 PointerType::getUnqual(M.getContext()));
+
+  GVSet.insert(GV);
+  return true;
 }
 
 // Recognize BROADCAST (GLOBAL)
@@ -517,7 +551,7 @@ bool visitVBroadcast(const AbstractOp &VBroadcast, const AIEBaseInstrInfo *TII,
                      SmallPtrSet<const Value *, 4> &GVSet) {
   assert(VBroadcast.Type == Operation::VECTOR_BROADCAST &&
          "Wrong abstract operation.");
-  return getGlobalValue(MRI.getVRegDef(VBroadcast.ScalarSrcRegs[0]), GVSet,
+  return hasGlobalValue(MRI.getVRegDef(VBroadcast.ScalarSrcRegs[0]), GVSet,
                         MRI);
 }
 

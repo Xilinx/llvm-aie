@@ -20,6 +20,8 @@
   define void @test_4x16_load_sel_invalid1() { ret void }
   define void @test_4x16_load_sel_invalid2() { ret void }
   define void @test_4x16_load_parameter() { ret void }
+  define void @test_4x16_load_add_loaded_pointer() { ret void }
+  define void @test_4x16_load_add_copied_pointer() { ret void }
 ...
 
 # Case 1: here we have the common case (ADD (SEL (BROADCAST(G), BROADCAST(G))))
@@ -342,7 +344,7 @@ body:             |
     PseudoRET implicit $lr
 ...
 
-# Case 5: here we have the invalid case (SEL (BROADCAST(parameter), BROADCAST(G)))
+# Case 5: here we have the case (SEL (BROADCAST(parameter), BROADCAST(G)))
 
 ---
 name:            test_4x16_load_sel_invalid2
@@ -373,10 +375,10 @@ body:             |
     ; CHECK-NEXT: [[VSEL_32_:%[0-9]+]]:vec512 = VSEL_32 [[VBCST_32_]], [[VBCST_32_1]], [[MOVXM1]]
     ; CHECK-NEXT: [[COPY9:%[0-9]+]]:ewl = COPY [[VSEL_32_]].sub_256_lo
     ; CHECK-NEXT: [[COPY10:%[0-9]+]]:ewh = COPY [[VSEL_32_]].sub_256_hi
-    ; CHECK-NEXT: [[VLDB_4x16_lo:%[0-9]+]]:vec256 = VLDB_4x16_lo [[COPY9]]
-    ; CHECK-NEXT: [[VLDB_4x16_hi:%[0-9]+]]:vec256 = VLDB_4x16_hi [[COPY9]]
-    ; CHECK-NEXT: [[VLDB_4x16_lo1:%[0-9]+]]:vec256 = VLDB_4x16_lo [[COPY10]]
-    ; CHECK-NEXT: [[VLDB_4x16_hi1:%[0-9]+]]:vec256 = VLDB_4x16_hi [[COPY10]]
+    ; CHECK-NEXT: [[VLDB_4x16_lo:%[0-9]+]]:vec256 = VLDB_4x16_lo [[COPY9]] :: (load unknown-size from @__aie_common_lookup_table, align 1), (load unknown-size from @softmax_ilut_cd, align 1)
+    ; CHECK-NEXT: [[VLDB_4x16_hi:%[0-9]+]]:vec256 = VLDB_4x16_hi [[COPY9]] :: (load unknown-size from @__aie_common_lookup_table, align 1), (load unknown-size from @softmax_ilut_cd, align 1)
+    ; CHECK-NEXT: [[VLDB_4x16_lo1:%[0-9]+]]:vec256 = VLDB_4x16_lo [[COPY10]] :: (load unknown-size from @__aie_common_lookup_table, align 1), (load unknown-size from @softmax_ilut_cd, align 1)
+    ; CHECK-NEXT: [[VLDB_4x16_hi1:%[0-9]+]]:vec256 = VLDB_4x16_hi [[COPY10]] :: (load unknown-size from @__aie_common_lookup_table, align 1), (load unknown-size from @softmax_ilut_cd, align 1)
     ; CHECK-NEXT: $wl0 = COPY [[VLDB_4x16_lo]]
     ; CHECK-NEXT: $wl1 = COPY [[VLDB_4x16_hi]]
     ; CHECK-NEXT: $wl2 = COPY [[VLDB_4x16_lo1]]
@@ -433,4 +435,201 @@ body:             |
   %0:vec256 = VLDB_4x64_hi %1:vec256
   $wl0 = COPY %0:vec256
   PseudoRET implicit $lr, implicit $wl0
+...
+
+# Case 7: here we have the common case (ADD (SEL (BROADCAST(G), BROADCAST(G)))) but with
+# pointers being loaded from an unknown place. We assign a common and unique global
+# value.
+
+---
+name:            test_4x16_load_add_loaded_pointer
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.0:
+  liveins: $p0, $p1, $wl0
+
+    ; CHECK-LABEL: name: test_4x16_load_add_loaded_pointer
+    ; CHECK: liveins: $p0, $p1, $wl0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p1
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec256 = COPY $wl0
+    ; CHECK-NEXT: [[LDA_dms_lda_idx_imm:%[0-9]+]]:ep_as_32bit = LDA_dms_lda_idx_imm [[COPY1]], 0
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:er = COPY [[LDA_dms_lda_idx_imm]]
+    ; CHECK-NEXT: [[LDA_dms_lda_idx_imm1:%[0-9]+]]:ep_as_32bit = LDA_dms_lda_idx_imm [[COPY1]], 32
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:er = COPY [[LDA_dms_lda_idx_imm1]]
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:mdm = COPY [[COPY3]]
+    ; CHECK-NEXT: [[COPY6:%[0-9]+]]:er = COPY [[COPY5]]
+    ; CHECK-NEXT: [[COPY7:%[0-9]+]]:mdm = COPY [[COPY4]]
+    ; CHECK-NEXT: [[COPY8:%[0-9]+]]:er = COPY [[COPY7]]
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:ers4 = MOV_RLC_imm11_pseudo 0
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 2
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo2:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 6
+    ; CHECK-NEXT: [[COPY9:%[0-9]+]]:mss = COPY [[COPY]]
+    ; CHECK-NEXT: [[VFLOOR_s32_bf16_mv_float_to_int_w:%[0-9]+]]:vec512 = VFLOOR_s32_bf16_mv_float_to_int_w [[COPY2]], [[COPY9]], implicit-def $srf2iflags, implicit $crf2imask
+    ; CHECK-NEXT: [[VSHUFFLE_vec_shuffle_x:%[0-9]+]]:vec512 = VSHUFFLE_vec_shuffle_x [[VFLOOR_s32_bf16_mv_float_to_int_w]], [[VFLOOR_s32_bf16_mv_float_to_int_w]], [[MOV_RLC_imm11_pseudo1]]
+    ; CHECK-NEXT: [[COPY10:%[0-9]+]]:ewl = COPY [[VSHUFFLE_vec_shuffle_x]].sub_256_lo
+    ; CHECK-NEXT: [[COPY11:%[0-9]+]]:vec256 = COPY [[COPY10]]
+    ; CHECK-NEXT: [[COPY12:%[0-9]+]]:mss = COPY [[MOV_RLC_imm11_pseudo]]
+    ; CHECK-NEXT: [[VUPS_4x_mv_ups_w2c_upsSign0_:%[0-9]+]]:acc1024 = VUPS_4x_mv_ups_w2c_upsSign0 [[COPY11]], [[COPY12]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    ; CHECK-NEXT: [[COPY13:%[0-9]+]]:mss = COPY [[MOV_RLC_imm11_pseudo2]]
+    ; CHECK-NEXT: [[VSRS_2x_mv_x_srs_cm_srsSign0_:%[0-9]+]]:vec512 = VSRS_2x_mv_x_srs_cm_srsSign0 [[VUPS_4x_mv_ups_w2c_upsSign0_]], [[COPY13]], implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    ; CHECK-NEXT: [[VBCST_32_:%[0-9]+]]:vec512 = VBCST_32 [[COPY6]]
+    ; CHECK-NEXT: [[VBCST_32_1:%[0-9]+]]:vec512 = VBCST_32 [[COPY8]]
+    ; CHECK-NEXT: [[MOVXM:%[0-9]+]]:ers16 = MOVXM 52428
+    ; CHECK-NEXT: [[VSEL_32_:%[0-9]+]]:vec512 = VSEL_32 [[VBCST_32_]], [[VBCST_32_1]], [[MOVXM]]
+    ; CHECK-NEXT: [[VADD_32_:%[0-9]+]]:vec512 = VADD_32 [[VSEL_32_]], [[VSRS_2x_mv_x_srs_cm_srsSign0_]]
+    ; CHECK-NEXT: [[COPY14:%[0-9]+]]:ewl = COPY [[VADD_32_]].sub_256_lo
+    ; CHECK-NEXT: [[COPY15:%[0-9]+]]:ewh = COPY [[VADD_32_]].sub_256_hi
+    ; CHECK-NEXT: [[VLDB_4x16_lo:%[0-9]+]]:vec256 = VLDB_4x16_lo [[COPY14]] :: (load unknown-size from @__aie_common_lookup_table, align 1)
+    ; CHECK-NEXT: [[VLDB_4x16_hi:%[0-9]+]]:vec256 = VLDB_4x16_hi [[COPY14]] :: (load unknown-size from @__aie_common_lookup_table, align 1)
+    ; CHECK-NEXT: [[VLDB_4x16_lo1:%[0-9]+]]:vec256 = VLDB_4x16_lo [[COPY15]] :: (load unknown-size from @__aie_common_lookup_table, align 1)
+    ; CHECK-NEXT: [[VLDB_4x16_hi1:%[0-9]+]]:vec256 = VLDB_4x16_hi [[COPY15]] :: (load unknown-size from @__aie_common_lookup_table, align 1)
+    ; CHECK-NEXT: $wl0 = COPY [[VLDB_4x16_lo]]
+    ; CHECK-NEXT: $wl1 = COPY [[VLDB_4x16_hi]]
+    ; CHECK-NEXT: $wl2 = COPY [[VLDB_4x16_lo1]]
+    ; CHECK-NEXT: $wl3 = COPY [[VLDB_4x16_hi1]]
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    %0:ep = COPY $p0
+    %1:ep = COPY $p1
+    %121:vec256 = COPY $wl0
+    %97:ep_as_32bit = LDA_dms_lda_idx_imm %1, 0
+    %96:er = COPY %97
+    %100:ep_as_32bit = LDA_dms_lda_idx_imm %1, 32
+    %99:er = COPY %100
+    %284:mdm = COPY %96
+    %98:er = COPY %284
+    %285:mdm = COPY %99
+    %101:er = COPY %285
+    %95:ers4 = MOV_RLC_imm11_pseudo 0
+    %127:er = MOV_RLC_imm11_pseudo 2
+    %134:er = MOV_RLC_imm11_pseudo 6
+    %297:mss = COPY %0
+    %122:vec512 = VFLOOR_s32_bf16_mv_float_to_int_w %121, %297, implicit-def $srf2iflags, implicit $crf2imask
+    %126:vec512 = VSHUFFLE_vec_shuffle_x %122, %122, %127
+    %128:ewl = COPY %126.sub_256_lo
+    %129:vec256 = COPY %128
+    %296:mss = COPY %95
+    %132:acc1024 = VUPS_4x_mv_ups_w2c_upsSign0 %129, %296, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    %295:mss = COPY %134
+    %133:vec512 = VSRS_2x_mv_x_srs_cm_srsSign0 %132, %295, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    %136:vec512 = VBCST_32 %98
+    %137:vec512 = VBCST_32 %101
+    %139:ers16 = MOVXM 52428
+    %138:vec512 = VSEL_32 %136, %137, %139
+    %140:vec512 = VADD_32 %138, %133
+    %141:ewl = COPY %140.sub_256_lo
+    %147:ewh = COPY %140.sub_256_hi
+    %142:vec256 = VLDB_4x16_lo %141
+    %145:vec256 = VLDB_4x16_hi %141
+    %148:vec256 = VLDB_4x16_lo %147
+    %150:vec256 = VLDB_4x16_hi %147
+    $wl0 = COPY %142
+    $wl1 = COPY %145
+    $wl2 = COPY %148
+    $wl3 = COPY %150
+    PseudoRET implicit $lr
+...
+
+# Case 8: here we have the common case (ADD (SEL (BROADCAST(G), BROADCAST(G)))) but with
+# pointers being moved from other pointers. We assign a common and unique global
+# value.
+
+---
+name:            test_4x16_load_add_copied_pointer
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.0:
+  liveins: $p0, $p1, $p2, $wl0
+    ; CHECK-LABEL: name: test_4x16_load_add_copied_pointer
+    ; CHECK: liveins: $p0, $p1, $p2, $wl0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p1
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:ep = COPY $p2
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:vec256 = COPY $wl0
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:ep_as_32bit = COPY [[COPY1]]
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:er = COPY [[COPY4]]
+    ; CHECK-NEXT: [[COPY6:%[0-9]+]]:ep_as_32bit = COPY [[COPY2]]
+    ; CHECK-NEXT: [[COPY7:%[0-9]+]]:er = COPY [[COPY6]]
+    ; CHECK-NEXT: [[COPY8:%[0-9]+]]:mdm = COPY [[COPY5]]
+    ; CHECK-NEXT: [[COPY9:%[0-9]+]]:er = COPY [[COPY8]]
+    ; CHECK-NEXT: [[COPY10:%[0-9]+]]:mdm = COPY [[COPY7]]
+    ; CHECK-NEXT: [[COPY11:%[0-9]+]]:er = COPY [[COPY10]]
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:ers4 = MOV_RLC_imm11_pseudo 0
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 2
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo2:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 6
+    ; CHECK-NEXT: [[COPY12:%[0-9]+]]:mss = COPY [[COPY]]
+    ; CHECK-NEXT: [[VFLOOR_s32_bf16_mv_float_to_int_w:%[0-9]+]]:vec512 = VFLOOR_s32_bf16_mv_float_to_int_w [[COPY3]], [[COPY12]], implicit-def $srf2iflags, implicit $crf2imask
+    ; CHECK-NEXT: [[VSHUFFLE_vec_shuffle_x:%[0-9]+]]:vec512 = VSHUFFLE_vec_shuffle_x [[VFLOOR_s32_bf16_mv_float_to_int_w]], [[VFLOOR_s32_bf16_mv_float_to_int_w]], [[MOV_RLC_imm11_pseudo1]]
+    ; CHECK-NEXT: [[COPY13:%[0-9]+]]:ewl = COPY [[VSHUFFLE_vec_shuffle_x]].sub_256_lo
+    ; CHECK-NEXT: [[COPY14:%[0-9]+]]:vec256 = COPY [[COPY13]]
+    ; CHECK-NEXT: [[COPY15:%[0-9]+]]:mss = COPY [[MOV_RLC_imm11_pseudo]]
+    ; CHECK-NEXT: [[VUPS_4x_mv_ups_w2c_upsSign0_:%[0-9]+]]:acc1024 = VUPS_4x_mv_ups_w2c_upsSign0 [[COPY14]], [[COPY15]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    ; CHECK-NEXT: [[COPY16:%[0-9]+]]:mss = COPY [[MOV_RLC_imm11_pseudo2]]
+    ; CHECK-NEXT: [[VSRS_2x_mv_x_srs_cm_srsSign0_:%[0-9]+]]:vec512 = VSRS_2x_mv_x_srs_cm_srsSign0 [[VUPS_4x_mv_ups_w2c_upsSign0_]], [[COPY16]], implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    ; CHECK-NEXT: [[VBCST_32_:%[0-9]+]]:vec512 = VBCST_32 [[COPY9]]
+    ; CHECK-NEXT: [[VBCST_32_1:%[0-9]+]]:vec512 = VBCST_32 [[COPY11]]
+    ; CHECK-NEXT: [[MOVXM:%[0-9]+]]:ers16 = MOVXM 52428
+    ; CHECK-NEXT: [[VSEL_32_:%[0-9]+]]:vec512 = VSEL_32 [[VBCST_32_]], [[VBCST_32_1]], [[MOVXM]]
+    ; CHECK-NEXT: [[VADD_32_:%[0-9]+]]:vec512 = VADD_32 [[VSEL_32_]], [[VSRS_2x_mv_x_srs_cm_srsSign0_]]
+    ; CHECK-NEXT: [[COPY17:%[0-9]+]]:ewl = COPY [[VADD_32_]].sub_256_lo
+    ; CHECK-NEXT: [[COPY18:%[0-9]+]]:ewh = COPY [[VADD_32_]].sub_256_hi
+    ; CHECK-NEXT: [[VLDB_4x16_lo:%[0-9]+]]:vec256 = VLDB_4x16_lo [[COPY17]] :: (load unknown-size from @__aie_common_lookup_table, align 1)
+    ; CHECK-NEXT: [[VLDB_4x16_hi:%[0-9]+]]:vec256 = VLDB_4x16_hi [[COPY17]] :: (load unknown-size from @__aie_common_lookup_table, align 1)
+    ; CHECK-NEXT: [[VLDB_4x16_lo1:%[0-9]+]]:vec256 = VLDB_4x16_lo [[COPY18]] :: (load unknown-size from @__aie_common_lookup_table, align 1)
+    ; CHECK-NEXT: [[VLDB_4x16_hi1:%[0-9]+]]:vec256 = VLDB_4x16_hi [[COPY18]] :: (load unknown-size from @__aie_common_lookup_table, align 1)
+    ; CHECK-NEXT: $wl0 = COPY [[VLDB_4x16_lo]]
+    ; CHECK-NEXT: $wl1 = COPY [[VLDB_4x16_hi]]
+    ; CHECK-NEXT: $wl2 = COPY [[VLDB_4x16_lo1]]
+    ; CHECK-NEXT: $wl3 = COPY [[VLDB_4x16_hi1]]
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    %0:ep = COPY $p0
+    %1:ep = COPY $p1
+    %2:ep = COPY $p2
+    %121:vec256 = COPY $wl0
+    %97:ep_as_32bit = COPY %1
+    %96:er = COPY %97
+    %100:ep_as_32bit = COPY %2
+    %99:er = COPY %100
+    %284:mdm = COPY %96
+    %98:er = COPY %284
+    %285:mdm = COPY %99
+    %101:er = COPY %285
+    %95:ers4 = MOV_RLC_imm11_pseudo 0
+    %127:er = MOV_RLC_imm11_pseudo 2
+    %134:er = MOV_RLC_imm11_pseudo 6
+    %297:mss = COPY %0
+    %122:vec512 = VFLOOR_s32_bf16_mv_float_to_int_w %121, %297, implicit-def $srf2iflags, implicit $crf2imask
+    %126:vec512 = VSHUFFLE_vec_shuffle_x %122, %122, %127
+    %128:ewl = COPY %126.sub_256_lo
+    %129:vec256 = COPY %128
+    %296:mss = COPY %95
+    %132:acc1024 = VUPS_4x_mv_ups_w2c_upsSign0 %129, %296, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    %295:mss = COPY %134
+    %133:vec512 = VSRS_2x_mv_x_srs_cm_srsSign0 %132, %295, implicit-def dead $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    %136:vec512 = VBCST_32 %98
+    %137:vec512 = VBCST_32 %101
+    %139:ers16 = MOVXM 52428
+    %138:vec512 = VSEL_32 %136, %137, %139
+    %140:vec512 = VADD_32 %138, %133
+    %141:ewl = COPY %140.sub_256_lo
+    %147:ewh = COPY %140.sub_256_hi
+    %142:vec256 = VLDB_4x16_lo %141
+    %145:vec256 = VLDB_4x16_hi %141
+    %148:vec256 = VLDB_4x16_lo %147
+    %150:vec256 = VLDB_4x16_hi %147
+    $wl0 = COPY %142
+    $wl1 = COPY %145
+    $wl2 = COPY %148
+    $wl3 = COPY %150
+    PseudoRET implicit $lr
 ...
