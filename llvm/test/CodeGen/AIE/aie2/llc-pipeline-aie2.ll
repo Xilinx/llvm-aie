@@ -3,7 +3,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 
 ; When EXPENSIVE_CHECKS are enabled, the machine verifier appears between each
 ; pass. Ignore it with 'grep -v'.
@@ -87,6 +87,7 @@
 
 ; AIE-O0123-NEXT:      Lower invoke and unwind, for unwindless code generators
 ; AIE-O0123-NEXT:      Remove unreachable blocks from the CFG
+; AIE-O0123-NEXT:      AIE outline Memory GEP
 ; AIE-O123-NEXT:      Dominator Tree Construction
 ; AIE-O123-NEXT:      Natural Loop Information
 ; AIE-O123-NEXT:      Scalar Evolution Analysis

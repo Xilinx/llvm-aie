@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -O2 -mtriple=aie2  --issue-limit=1 %s -o - | FileCheck %s
 ; ModuleID = 'conv2d_offset_test.cc'
 source_filename = "conv2d_offset_test.cc"
@@ -20,30 +20,31 @@ define dso_local noundef i32 @_Z3foov() #0 {
 ; CHECK-LABEL: _Z3foov:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; movxm p0, #(X+92)
-; CHECK-NEXT:    mova dj0, #96
-; CHECK-NEXT:    mova dj1, #-68
-; CHECK-NEXT:    mova dj2, #-56
-; CHECK-NEXT:    mov p1, p0
-; CHECK-NEXT:    lda r0, [p0, #8]
-; CHECK-NEXT:    lda.u8 r1, [p0, dj0]
+; CHECK-NEXT:    nop ; movxm p1, #(X+92)
+; CHECK-NEXT:    mova m0, #-164
+; CHECK-NEXT:    mov p0, p1
+; CHECK-NEXT:    lda r0, [p1, #8]
+; CHECK-NEXT:    paddb [p0], #96
+; CHECK-NEXT:    lda.u8 r1, [p0], m0
+; CHECK-NEXT:    mova m0, #12
 ; CHECK-NEXT:    lda r1, [p1], #8
-; CHECK-NEXT:    lda.u16 r1, [p0, dj1]
-; CHECK-NEXT:    lda.u8 r1, [p0, dj2]
+; CHECK-NEXT:    lda.u16 r1, [p0], m0
+; CHECK-NEXT:    mova m0, #60
+; CHECK-NEXT:    lda.u8 r1, [p0], m0
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    lda r1, [p0, #4]
+; CHECK-NEXT:    lda r1, [p0], #76
+; CHECK-NEXT:    add r0, r0, r1
+; CHECK-NEXT:    add r0, r0, r1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    add r0, r0, r1
 ; CHECK-NEXT:    add r0, r0, r1
+; CHECK-NEXT:    lda r1, [p0], #12
 ; CHECK-NEXT:    add r0, r0, r1
-; CHECK-NEXT:    add r0, r0, r1
-; CHECK-NEXT:    lda r1, [p0, #80]
-; CHECK-NEXT:    add r0, r0, r1
-; CHECK-NEXT:    lda r1, [p0, #92]
-; CHECK-NEXT:    lda r1, [p0, #44]
+; CHECK-NEXT:    lda r1, [p0], #-48
+; CHECK-NEXT:    lda r1, [p0], #32
 ; CHECK-NEXT:    lda r1, [p1, #0]
-; CHECK-NEXT:    lda r1, [p0, #76]
-; CHECK-NEXT:    lda r1, [p0, #-60]
+; CHECK-NEXT:    lda r1, [p0], #-136
+; CHECK-NEXT:    lda r1, [p0, #0]
 ; CHECK-NEXT:    add r0, r0, r1
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    add r0, r0, r1 // Delay Slot 5

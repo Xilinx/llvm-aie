@@ -3,7 +3,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 
 ; When EXPENSIVE_CHECKS are enabled, the machine verifier appears between each
 ; pass. Ignore it with 'grep -v'.
@@ -39,6 +39,7 @@
 ; AIE-O0-NEXT:      Expand reduction intrinsics
 ; AIE-O0-NEXT:      Lower invoke and unwind, for unwindless code generators
 ; AIE-O0-NEXT:      Remove unreachable blocks from the CFG
+; AIE-O0-NEXT:      AIE outline Memory GEP
 ; AIE-O0-NEXT:      Prepare callbr
 ; AIE-O0-NEXT:      Safe Stack instrumentation pass
 ; AIE-O0-NEXT:      Insert stack protectors
@@ -146,6 +147,7 @@
 ; AIE-O1-NEXT:      CodeGen Prepare
 ; AIE-O1-NEXT:      Lower invoke and unwind, for unwindless code generators
 ; AIE-O1-NEXT:      Remove unreachable blocks from the CFG
+; AIE-O1-NEXT:      AIE outline Memory GEP
 ; AIE-O1-NEXT:      Dominator Tree Construction
 ; AIE-O1-NEXT:      Natural Loop Information
 ; AIE-O1-NEXT:      Scalar Evolution Analysis
@@ -346,6 +348,7 @@
 ; AIE-O23-NEXT:      CodeGen Prepare
 ; AIE-O23-NEXT:      Lower invoke and unwind, for unwindless code generators
 ; AIE-O23-NEXT:      Remove unreachable blocks from the CFG
+; AIE-O23-NEXT:      AIE outline Memory GEP
 ; AIE-O23-NEXT:      Dominator Tree Construction
 ; AIE-O23-NEXT:      Natural Loop Information
 ; AIE-O23-NEXT:      Scalar Evolution Analysis
