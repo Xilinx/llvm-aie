@@ -26,7 +26,7 @@
 #define chess_keep_sw_loop2
 #define chess_loop_count(x)
 #define chess_loop_range(...)
-#define chess_manifest(x) (__builtin_constant_p(x) && (x != 0))
+#define chess_manifest(x) (__builtin_constant_p(x) && (!!(x)))
 #define chess_modulo_scheduling_budget_ratio(x)
 #define chess_no_hw_loop
 #define chess_no_warn_pipelining
