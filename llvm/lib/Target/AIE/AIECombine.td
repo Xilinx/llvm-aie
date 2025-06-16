@@ -9,7 +9,7 @@
 //===----------------------------------------------------------------------===//
 include "llvm/Target/GlobalISel/Combine.td"
 
-// Explicitly listing each generic combine here ensures direct visibility and 
+// Explicitly listing each generic combine here ensures direct visibility and
 // control over all functionalities.
 def aie_all_combines : GICombineGroup<[trivial_combines, vector_ops_combines,
   insert_vec_elt_combines, extract_vec_elt_combines, combines_for_extload,
@@ -175,7 +175,7 @@ def AIE2PreLegalizerCombiner
                                                                  aie_all_combines, combine_S20NarrowingOpt,
                                                                  combine_globalval_offset,
                                                                  combine_extract_vector_elt_and_zsa_ext,
-                                                                 combine_splat_vector, combine_concat_to_pad_vector, 
+                                                                 combine_splat_vector, combine_concat_to_pad_vector,
                                                                  combine_single_diff_build_vector,
                                                                  combine_symmetric_build_vector,
                                                                  combine_broadcast_shl_to_add]> {
@@ -189,10 +189,10 @@ def AIE2PPreLegalizerCombiner
                                                                  aie_all_combines, combine_S20NarrowingOpt,
                                                                  combine_globalval_offset,
                                                                  combine_extract_vector_elt_and_zsa_ext,
-                                                                 combine_splat_vector, 
+                                                                 combine_splat_vector,
                                                                  combine_vector_shuffle_bcst_to_copy,
                                                                  combine_vector_broadcast,
-                                                                 combine_concat_to_pad_vector, 
+                                                                 combine_concat_to_pad_vector,
                                                                  combine_vector_shuffle_vsel,
                                                                  combine_vector_shuffle_broadcast,
                                                                  combine_single_diff_build_vector,
@@ -294,14 +294,14 @@ def AIE2PostLegalizerCustomCombiner
                                                           combine_add_vector_elt_undef,
                                                           combine_extract_concat,
                                                           combine_unmerge_concat,
-                                                          combine_upd_to_concat 
+                                                          combine_upd_to_concat
                                                           ]> {
 }
 
 def AIE2PPostLegalizerCustomCombiner
     : GICombiner<"AIE2PPostLegalizerCustomCombinerImpl", [  combine_global_load_store_increment,
                                                             combine_load_store_increment,
-                                                            ptr_add_immed_chain, 
+                                                            ptr_add_immed_chain,
                                                             combine_offset_load_store_ptradd,
                                                             combine_offset_load_store_share_ptradd,
                                                             combine_add_vector_elt_undef ]> {
