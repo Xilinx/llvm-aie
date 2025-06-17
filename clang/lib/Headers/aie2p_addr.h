@@ -136,9 +136,20 @@ dims_3d_from_steps(unsigned int size1, int step1, unsigned int size2, int step2,
                    count1, count2);
 };
 
+template <typename T> INTRINSIC(T *) add_2d_ptr(T *a, dims_2d_t &params) {
+  return add_2d_ptr(a, params.inc2, params.num1, (addr_t &)params.count1,
+                    params.inc1);
+}
+
 template <typename T> INTRINSIC(T *) add_2d_byte(T *a, dims_2d_t &params) {
   return add_2d_byte(a, params.inc2, params.num1, (addr_t &)params.count1,
                      params.inc1);
+}
+
+template <typename T> INTRINSIC(T *) add_3d_ptr(T *a, dims_3d_t &params) {
+  return add_3d_ptr(a, params.inc3, params.num1, (addr_t &)params.count1,
+                    params.inc1, params.num2, (addr_t &)params.count2,
+                    params.inc2);
 }
 
 template <typename T> INTRINSIC(T *) add_3d_byte(T *a, dims_3d_t &params) {
