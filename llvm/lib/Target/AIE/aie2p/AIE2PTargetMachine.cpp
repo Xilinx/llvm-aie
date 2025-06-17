@@ -22,6 +22,7 @@ extern cl::opt<bool> EnableSuperRegSplitting;
 extern cl::opt<bool> AllocateMRegsFirst;
 extern cl::opt<bool> EnablePreMISchedCoalescer;
 extern cl::opt<bool> EnableAddressChaining;
+extern cl::opt<bool> EnableGlobalPtrModOptimizer;
 extern cl::opt<bool> EnableWAWRegRewrite;
 
 void AIE2PTargetMachine::anchor() {}
@@ -62,6 +63,8 @@ void AIE2PPassConfig::addPreRegBankSelect() {
     addPass(createAIE2PPostLegalizerGenericCombiner());
     if (EnableAddressChaining)
       addPass(createAIEClusterBaseAddress());
+    if (EnableGlobalPtrModOptimizer)
+      addPass(createAIEPtrModOptimizer());
     addPass(createAIE2PPostLegalizerCustomCombiner());
   }
 }

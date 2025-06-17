@@ -237,12 +237,11 @@ def combine_upd_to_concat : GICombineRule<
   (apply [{ applyUpdToConcat(*${root}, MRI, B, ${matchinfo}); }])
 >;
 
-def load_store_increment_matchdata : GIDefMatchData<"AIELoadStoreCombineMatchData">;
 def combine_load_store_increment : GICombineRule <
-  (defs root:$root, load_store_increment_matchdata:$matchinfo),
+  (defs root:$root),
   (match (wip_match_opcode G_LOAD, G_ZEXTLOAD, G_SEXTLOAD, G_STORE):$root,
-          [{ return matchLdStInc(*${root}, MRI, ${matchinfo}, Helper, B.getTII()); }]),
-  (apply [{ applyLdStInc(*${root}, MRI, B, ${matchinfo}, Observer); }] )
+          [{ return matchLdStInc(*${root}, MRI, Helper, B.getTII(), GlobalCombiners); }]),
+  (apply [{ applyLdStInc(*${root}, MRI, Helper, B, Observer, GlobalCombiners); }] )
 >;
 
 def combine_add_vector_elt_undef : GICombineRule <
