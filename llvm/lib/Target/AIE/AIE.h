@@ -54,6 +54,7 @@ FunctionPass *createAIEBaseHardwareLoopsPass();
 FunctionPass *createAIEPseudoBranchExpansion();
 FunctionPass *createAIESubRegConstrainer();
 MachineFunctionPass *createAIEClusterBaseAddress();
+MachineFunctionPass *createAIEPtrModOptimizer();
 MachineFunctionPass *createAIEAddressSpaceFlattening();
 MachineFunctionPass *createAIEEliminateDuplicatePHI();
 FunctionPass *createAIEOutlineMemoryGEP();
@@ -65,6 +66,7 @@ createDeadMachineInstructionElim(bool KeepLifetimeInstructions);
 
 void initializeAIEBaseHardwareLoopsPass(PassRegistry &);
 void initializeAIEClusterBaseAddressPass(PassRegistry &);
+void initializeAIEPtrModOptimizerPass(PassRegistry &);
 void initializeAIEAddressSpaceFlatteningPass(PassRegistry &);
 void initializeAIEEliminateDuplicatePHIPass(PassRegistry &);
 extern char &AIEFormatSelectorID;

@@ -202,10 +202,11 @@ MaskMatch::getFrequentIndexResult(const ArrayRef<int> Mask,
   return FrequentIndexResult{FrequentIdx, NonMatchingCount};
 }
 
-MachineInstr *findPreIncMatch(MachineInstr &MemI, MachineRegisterInfo &MRI,
-                              CombinerHelper &Helper,
-                              AIELoadStoreCombineMatchData &MatchData,
-                              const AIEBaseInstrInfo &TII) {
+static MachineInstr *findPreIncMatch(MachineInstr &MemI,
+                                     MachineRegisterInfo &MRI,
+                                     CombinerHelper &Helper,
+                                     const AIEBaseInstrInfo &TII,
+                                     AIE::FoundCombiners *GlobalCombinerPtr) {
   // This is currently done with patterns in instruction selection.
   // No need to do it here.
   const unsigned VecSize =
@@ -219,9 +220,14 @@ MachineInstr *findPreIncMatch(MachineInstr &MemI, MachineRegisterInfo &MRI,
   Register Addr = MemI.getOperand(1).getReg();
   MachineInstr *AddrDef = getDefIgnoringCopies(Addr, MRI);
   if (AddrDef->getOpcode() == TargetOpcode::G_PTR_ADD) {
-    MatchData = {AddrDef, TII.getOffsetMemOpcode(MemI.getOpcode()), &MemI,
-                 /*ExtraInstrsToMove=*/{},
-                 /*RemoveInstr=*/false};
+    // 2 Instructions are in the Combiner
+    BitVector RemoveInstrs(2);
+    GlobalCombinerPtr->append(AIE::Combiner(
+        /*CombineInstrs=*/std::vector<MachineInstr *>{AddrDef, &MemI},
+        /*CombinedInstrOpcode=*/TII.getOffsetMemOpcode(MemI.getOpcode()),
+        /*InsertionPoint=*/&MemI, /*CombineRoot=*/&MemI,
+        /*MoveUpInstrsToInsertionPoint=*/std::vector<MachineInstr *>{},
+        /*RemoveInstrs=*/RemoveInstrs, /*Name=*/"Offset-legacy"));
     return AddrDef;
   }
   return nullptr;
@@ -269,7 +275,7 @@ bool isNonCoalesceableUseOf(const MachineInstr &MemI,
 /// \return true if \a MemI can be moved just before \a Dest in order to allow
 /// post-increment combining
 bool llvm::canDelayMemOp(MachineInstr &MemI, MachineInstr &Dest,
-                         MachineRegisterInfo &MRI) {
+                         const MachineRegisterInfo &MRI) {
   if (MemI.getParent() != Dest.getParent())
     return false;
   auto MII = std::next(MemI.getIterator());
@@ -433,9 +439,10 @@ findEarliestInsertPoint(MachineInstr &Instr, MachineInstr &NoMoveBeforeInstr,
   return EarliestInstrPos;
 }
 
-std::vector<MachineInstr *>
+static std::vector<MachineInstr *>
 findConstantOffsetsToMove(MachineInstr &PtrAdd, MachineInstr &PtrAddInsertLoc,
-                          MachineRegisterInfo &MRI, CombinerHelper &Helper) {
+                          const MachineRegisterInfo &MRI,
+                          CombinerHelper &Helper) {
   // By moving the PtrAdd up without considering if we are moving past a
   // G_CONSTANT defining one of the uses of the PtrAdd we are generating
   // incorrect code (use before def). We have to search those G_CONSTANTs and
@@ -455,8 +462,8 @@ findConstantOffsetsToMove(MachineInstr &PtrAdd, MachineInstr &PtrAddInsertLoc,
 }
 
 // Check that MI is after First and not after Last
-bool isBetween(MachineInstr &MI, MachineInstr &First, MachineInstr &Last,
-               CombinerHelper &Helper) {
+static bool isBetween(MachineInstr &MI, MachineInstr &First, MachineInstr &Last,
+                      CombinerHelper &Helper) {
   assert(First.getParent() == Last.getParent());
   // If it's in another block, it can't be between
   if (MI.getParent() != First.getParent()) {
@@ -468,10 +475,11 @@ bool isBetween(MachineInstr &MI, MachineInstr &First, MachineInstr &Last,
   return !Helper.dominates(MI, First) && Helper.dominates(MI, Last);
 }
 
-MachineInstr *findPostIncMatch(MachineInstr &MemI, MachineRegisterInfo &MRI,
-                               CombinerHelper &Helper,
-                               AIELoadStoreCombineMatchData &MatchData,
-                               const AIEBaseInstrInfo &TII) {
+static MachineInstr *findPostIncMatch(MachineInstr &MemI,
+                                      MachineRegisterInfo &MRI,
+                                      CombinerHelper &Helper,
+                                      const AIEBaseInstrInfo &TII,
+                                      AIE::FoundCombiners *GlobalCombinerPtr) {
   if (!EnablePostIncCombine)
     return nullptr;
 
@@ -480,7 +488,14 @@ MachineInstr *findPostIncMatch(MachineInstr &MemI, MachineRegisterInfo &MRI,
   if (VecSize > TII.getMaxSupportedLdStIncSize()) {
     return nullptr;
   }
+  // 2 Instructions are in the Combiner
+  BitVector RemovePtrInc(2);
+  // remove PtrInc
+  RemovePtrInc.set(0);
+
+  MachineInstr *InsertionPoint = nullptr;
   Register Addr = MemI.getOperand(1).getReg();
+  AIE::Combiner TempCombiner;
   for (auto &PtrInc : MRI.use_nodbg_instructions(Addr)) {
     if (MemI.getParent() != PtrInc.getParent())
       continue;
@@ -503,9 +518,14 @@ MachineInstr *findPostIncMatch(MachineInstr &MemI, MachineRegisterInfo &MRI,
                  })) {
         continue;
       }
-      MatchData = {&PtrInc, *CombinedOpcode, &MemI,
-                   /*ExtraInstrsToMove=*/{},
-                   /*RemoveInstr=*/true};
+      InsertionPoint = &MemI;
+      TempCombiner = AIE::Combiner(
+          /*CombineInstrs=*/std::vector<MachineInstr *>{&PtrInc, &MemI},
+          /*CombinedInstrOpcode=*/*CombinedOpcode,
+          /*InsertionPoint=*/InsertionPoint, /*CombineRoot=*/&MemI,
+          /*MoveUpInstrsToInsertionPoint=*/std::vector<MachineInstr *>{},
+          /*RemoveInstrs=*/RemovePtrInc, /*Name=*/"PostInc1");
+
       // The offset of the PtrInc might be defined after MemI, in this case we
       // want to verify if it would be possible to insert the combined
       // instruction at the PtrInc instead of the location of MemI. Instruction
@@ -515,11 +535,14 @@ MachineInstr *findPostIncMatch(MachineInstr &MemI, MachineRegisterInfo &MRI,
     } else if (canDelayMemOp(MemI, PtrAddInsertLoc, MRI)) {
       // If Definition of the offset is a G_CONSTANT we have to move that
       // instruction up
-      MatchData = {
-          &PtrInc, *CombinedOpcode, &PtrAddInsertLoc,
-          /*ExtraInstrsToMove=*/
+      InsertionPoint = &PtrAddInsertLoc;
+      TempCombiner = AIE::Combiner(
+          /*CombineInstrs=*/std::vector<MachineInstr *>{&PtrInc, &MemI},
+          /*CombinedInstrOpcode=*/*CombinedOpcode,
+          /*InsertionPoint=*/InsertionPoint, /*CombineRoot=*/&MemI,
+          /*MoveUpInstrsToInsertionPoint=*/
           findConstantOffsetsToMove(PtrInc, PtrAddInsertLoc, MRI, Helper),
-          /*RemoveInstr=*/true};
+          /*RemoveInstrs=*/RemovePtrInc, /*Name=*/"PostInc2");
     } else {
       LLVM_DEBUG(dbgs() << "    Ignoring candidate " << PtrInc);
       continue;
@@ -530,56 +553,141 @@ MachineInstr *findPostIncMatch(MachineInstr &MemI, MachineRegisterInfo &MRI,
     // TODO: This heuristic is very conservative and we should allow combines if
     // a combine does not dominate the insertion point but can never follow the
     // insertion point, e.g. being in a sibling BB.
-    bool AddrUsesDominatesInsertPoint = checkRegUsesDominate(
-        Addr, *MatchData.CombinedInsertPoint, PtrInc, MRI, Helper, TII);
-    if (EnableGreedyAddressCombine || AddrUsesDominatesInsertPoint)
+    bool AddrUsesDominatesInsertPoint =
+        checkRegUsesDominate(Addr, *InsertionPoint, PtrInc, MRI, Helper, TII);
+    if (EnableGreedyAddressCombine || AddrUsesDominatesInsertPoint) {
+      GlobalCombinerPtr->append(TempCombiner);
       return &PtrInc;
+    }
   }
   return nullptr;
 }
 
-bool llvm::matchLdStInc(MachineInstr &MemI, MachineRegisterInfo &MRI,
-                        AIELoadStoreCombineMatchData &MatchData,
-                        CombinerHelper &Helper, const TargetInstrInfo &TII) {
-  const AIEBaseInstrInfo &AIETII = (const AIEBaseInstrInfo &)TII;
-  return findPostIncMatch(MemI, MRI, Helper, MatchData, AIETII) ||
-         findPreIncMatch(MemI, MRI, Helper, MatchData, AIETII);
+bool llvm::matchGlobalPtrModOptimizer(MachineInstr &MemI,
+                                      MachineRegisterInfo &MRI,
+                                      CombinerHelper &Helper,
+                                      const TargetInstrInfo &TII,
+                                      AIE::FoundCombiners *GlobalCombinerPtr) {
+
+  AIE::Combiner *CombineRule = GlobalCombinerPtr->getCombine(&MemI);
+  if (!CombineRule) {
+    LLVM_DEBUG(dbgs() << "[Global Ptr Inc] Could not find Combine for "
+                      << MemI);
+    return false;
+  }
+  assert(CombineRule->CombineInstrs.size() >= 2);
+  LLVM_DEBUG(dbgs() << "[Global Ptr Inc] Found\n" << *CombineRule);
+
+  return true;
 }
 
-void llvm::applyLdStInc(MachineInstr &MI, MachineRegisterInfo &MRI,
-                        MachineIRBuilder &B,
-                        AIELoadStoreCombineMatchData &MatchData,
-                        GISelChangeObserver &Observer) {
-  if (MatchData.CombinedInsertPoint) {
-    B.setInstr(*MatchData.CombinedInsertPoint);
+bool llvm::matchLdStInc(MachineInstr &MemI, MachineRegisterInfo &MRI,
+                        CombinerHelper &Helper, const TargetInstrInfo &TII,
+                        AIE::FoundCombiners *GlobalCombinerPtr) {
+  const AIEBaseInstrInfo &AIETII = (const AIEBaseInstrInfo &)TII;
+
+  if (GlobalCombinerPtr->hasAnalysis())
+    return false;
+
+  return findPostIncMatch(MemI, MRI, Helper, AIETII, GlobalCombinerPtr) ||
+         findPreIncMatch(MemI, MRI, Helper, AIETII, GlobalCombinerPtr);
+}
+
+void llvm::applyLdStInc(MachineInstr &MemI, MachineRegisterInfo &MRI,
+                        CombinerHelper &Helper, MachineIRBuilder &B,
+                        GISelChangeObserver &Observer,
+                        AIE::FoundCombiners *GlobalCombinerPtr) {
+
+  AIE::Combiner *CombineResult = GlobalCombinerPtr->getCombine(&MemI);
+  assert(CombineResult);
+
+  LLVM_DEBUG(dbgs() << "Applying Combiner "; CombineResult->dumpFull());
+
+  MachineInstr *CombinedInsertionPoint = CombineResult->InsertionPoint;
+  unsigned CombinedInstrOpcode = CombineResult->CombinedInstrOpcode;
+  assert(CombinedInstrOpcode != (unsigned)-1 && "Invalid OpCode");
+
+  if (CombinedInsertionPoint) {
+    B.setInstr(*CombinedInsertionPoint);
   } else {
-    B.setMBB(*MI.getParent());
+    B.setMBB(*MemI.getParent());
   }
+
+  // Init combiner and get variables
+  MachineInstr *PtrMod = CombineResult->CombineInstrs[0];
+  bool RemovePtrMod = CombineResult->RemoveInstrs.any();
+
   // Debug Loc: Debug Loc of LOAD STORE: MI
-  B.setDebugLoc(MI.getDebugLoc());
-  auto NewInstr = B.buildInstr(MatchData.CombinedInstrOpcode);
-  for (auto *Instr : MatchData.ExtraInstrsToMove) {
+  B.setDebugLoc(MemI.getDebugLoc());
+  auto NewInstr = B.buildInstr(CombinedInstrOpcode);
+
+  // move Instr right before the InsertionPoint
+  for (auto *Instr : CombineResult->MoveUpInstrsToInsertionPoint) {
+    if (!Instr->getParent())
+      // Instr does not exist anymore, no need to move it
+      continue;
+
+    if (Helper.dominates(*Instr, *NewInstr))
+      continue;
+
     Instr->moveBefore(NewInstr);
+    LLVM_DEBUG(dbgs() << "Move Instr before " << *Instr);
   }
-  if (MI.mayLoad())
-    NewInstr.addDef(MI.getOperand(0).getReg() /* Loaded value */);
-  if (MatchData.RemoveInstr)
+
+  // Move Instr past the InsertionPoint
+  if (CombinedInsertionPoint) {
+    for (auto *Instr : CombineResult->DelayInstrPastInsertionPoint) {
+      if (!Instr->getParent())
+        // Instruction may not exist anymore, i.e. a ptr_add that was combined
+        // to a post increment Instruction
+        continue;
+
+      if (Helper.dominates(*CombinedInsertionPoint, *Instr))
+        continue;
+
+      LLVM_DEBUG(dbgs() << "Delaying Instr " << *Instr);
+      Instr->moveBefore(CombinedInsertionPoint);
+    }
+  }
+
+  if (MemI.mayLoad())
+    NewInstr.addDef(MemI.getOperand(0).getReg() /* Loaded value */);
+  if (RemovePtrMod)
     // If we remove the instr it is because we have defs that would otherwise
     // be redefined. We have to add these defs into the new instruction.
-    for (auto Def : MatchData.Instr->defs())
+    for (auto Def : PtrMod->defs())
       if (Def.isReg())
         NewInstr.addDef(Def.getReg());
-  if (MI.getOpcode() == TargetOpcode::G_STORE)
-    NewInstr.addUse(MI.getOperand(0).getReg() /* Stored value */);
-  for (auto Use : MatchData.Instr->uses())
+  if (MemI.getOpcode() == TargetOpcode::G_STORE)
+    NewInstr.addUse(MemI.getOperand(0).getReg() /* Stored value */);
+  for (auto Use : PtrMod->uses())
     if (Use.isReg())
       NewInstr.addUse(Use.getReg());
-  for (auto *Mem : MI.memoperands())
+  for (auto *Mem : MemI.memoperands())
     NewInstr.addMemOperand(Mem);
 
-  if (MatchData.RemoveInstr)
-    MatchData.Instr->removeFromParent();
-  MI.removeFromParent();
+  // keep track of Converted Instructions, so that delayInstructions are
+  // properly keep track of
+  GlobalCombinerPtr->createMapping(&MemI, NewInstr);
+
+  LLVM_DEBUG(dbgs() << *NewInstr.getInstr());
+
+  for (int Idx = CombineResult->RemoveInstrs.find_first(); Idx != -1;
+       Idx = CombineResult->RemoveInstrs.find_next(Idx)) {
+    auto *RemoveMI = CombineResult->CombineInstrs[Idx];
+
+    // Removed Instructions have to be remapped to the newly Inserted
+    // Instructions, so that they are considered when the Removed Instruction
+    // should be moved up/down
+    GlobalCombinerPtr->createMapping(RemoveMI, NewInstr);
+
+    LLVM_DEBUG(dbgs() << "  Removing " << *RemoveMI);
+    assert(RemoveMI->getParent() &&
+           "RemoveMI was already deleted. This Combiner may have a conflict "
+           "with the Combiner that already removed the MachineInstr.");
+    RemoveMI->removeFromParent();
+  }
+  MemI.removeFromParent();
 }
 
 // Match all equivalents of these:
@@ -3297,4 +3405,8 @@ bool llvm::matchBroadcastToShl(MachineInstr &MI, MachineRegisterInfo &MRI,
   };
 
   return true;
+}
+
+void llvm::foundPattern(MachineInstr &MemI) {
+  dbgs() << "Found Custom Pattern " << MemI;
 }

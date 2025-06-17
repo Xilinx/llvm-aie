@@ -98,6 +98,7 @@ add_llvm_target(AIECodeGen
    AIEEliminateDuplicatePHI.cpp
    AIEFinalizeBundle.cpp
    AIEFrameLowering.cpp
+   AIEGlobalCombiner.cpp
    AIEHazardRecognizer.cpp
    AIEHazardRecognizerPRAS.cpp
    AIEInstrInfo.cpp
@@ -118,6 +119,7 @@ add_llvm_target(AIECodeGen
    AIEPostPipeliner.cpp
    AIEPostSelectOptimize.cpp
    AIEPseudoBranchExpansion.cpp
+   AIEPtrModOptimizer.cpp
    AIERegClassConstrainer.cpp
    AIERegMemEventTracker.cpp
    AIERegisterInfo.cpp

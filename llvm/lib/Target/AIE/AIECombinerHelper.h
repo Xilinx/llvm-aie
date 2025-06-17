@@ -11,27 +11,13 @@
 #ifndef LLVM_LIB_TARGET_AIE_AIECOMBINERHELPER_H
 #define LLVM_LIB_TARGET_AIE_AIECOMBINERHELPER_H
 
+#include "AIEPtrModOptimizer.h"
 #include "llvm/CodeGen/GlobalISel/CombinerHelper.h"
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
-#include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineInstr.h"
 namespace llvm {
 
 struct AIEBaseInstrInfo;
-
-struct AIELoadStoreCombineMatchData {
-  /// Matched PtrAdd instruction
-  MachineInstr *Instr;
-  /// Opcode of the combined instruction
-  unsigned CombinedInstrOpcode;
-  /// If null insert instruction at the end of the BB, otherwise insert just
-  /// before this Instruction
-  MachineInstr *CombinedInsertPoint;
-  /// Additional instructions to be moved just before Instr
-  std::vector<MachineInstr *> ExtraInstrsToMove;
-  /// Should Instr (the PtrAdd) be removed after the combine was applied
-  bool RemoveInstr;
-};
 
 struct ShuffleMaskValidity {
   bool IsValid;
@@ -89,16 +75,24 @@ struct AIESingleDiffLaneBuildVectorMatchData {
   unsigned DifferingIndex;
 };
 
+void foundPattern(MachineInstr &MemI);
+
+bool matchGlobalPtrModOptimizer(MachineInstr &MemI, MachineRegisterInfo &MRI,
+                                CombinerHelper &Helper,
+                                const TargetInstrInfo &TII,
+                                AIE::FoundCombiners *GlobalCombinerPtr);
+
 /// Look for any PtrAdd instruction that use the same base as \a MI that can be
-/// combined with it and stores it in \a MatchData
+/// combined with it and stores it in \a GlobalCombinerPtr
 /// \return true if an instruction is found
 bool matchLdStInc(MachineInstr &MI, MachineRegisterInfo &MRI,
-                  AIELoadStoreCombineMatchData &MatchData,
-                  CombinerHelper &Helper, const TargetInstrInfo &TII);
-/// Combines \a MI and the instruction stored in \a MatchData
+                  CombinerHelper &Helper, const TargetInstrInfo &TII,
+                  AIE::FoundCombiners *GlobalCombinerPtr);
+/// Combines \a MI and the instruction stored in \a GlobalCombinerPtr
 void applyLdStInc(MachineInstr &MI, MachineRegisterInfo &MRI,
-                  MachineIRBuilder &B, AIELoadStoreCombineMatchData &MatchData,
-                  GISelChangeObserver &Observer);
+                  CombinerHelper &Helper, MachineIRBuilder &B,
+                  GISelChangeObserver &Observer,
+                  AIE::FoundCombiners *GlobalCombinerPtr);
 /// Look for  with G_IMPLICIT_DEF source operands
 /// \return true if such an instruction is found
 bool matchAddVecEltUndef(MachineInstr &MI, MachineRegisterInfo &MRI,
@@ -131,7 +125,7 @@ bool matchShuffleToExtractBroadcast(MachineInstr &MI, MachineRegisterInfo &MRI,
 /// \return true if \a MemI can be moved just before \a Dest in order to allow
 /// post-increment combining
 bool canDelayMemOp(MachineInstr &MemI, MachineInstr &Dest,
-                   MachineRegisterInfo &MRI);
+                   const MachineRegisterInfo &MRI);
 /// \return true if \a Dest can be moved just after \a MemI in order to allow
 /// combining
 bool canAdvanceOp(MachineInstr &MemI, MachineInstr &Dest,

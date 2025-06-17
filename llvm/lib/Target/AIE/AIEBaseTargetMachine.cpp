@@ -73,6 +73,10 @@ cl::opt<bool> EnableAddressChaining("aie-address-chaining", cl::Hidden,
                                     cl::init(true),
                                     cl::desc("Enable ptradd chaining."));
 
+cl::opt<bool> EnableGlobalPtrModOptimizer(
+    "aie-global-ptr-mod-opt", cl::Hidden, cl::init(false),
+    cl::desc("Enable global pointer modifier optimization."));
+
 cl::opt<bool>
     EnableStagedRA("aie-staged-ra", cl::Hidden, cl::init(true),
                    cl::desc("Enable multi-stage register allocation"));

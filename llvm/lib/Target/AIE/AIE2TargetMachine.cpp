@@ -41,6 +41,7 @@ static cl::opt<bool> EnableOutlineMemoryGEP(
     cl::desc("Enable Outlining GEPs in Memory Instructions."));
 
 extern cl::opt<bool> EnableAddressChaining;
+extern cl::opt<bool> EnableGlobalPtrModOptimizer;
 extern cl::opt<bool> EnableStagedRA;
 extern cl::opt<bool> EnableSuperRegSplitting;
 extern cl::opt<bool> AllocateMRegsFirst;
@@ -89,6 +90,8 @@ void AIE2PassConfig::addPreRegBankSelect() {
     addPass(createAIE2PostLegalizerGenericCombiner());
     if (EnableAddressChaining)
       addPass(createAIEClusterBaseAddress());
+    if (EnableGlobalPtrModOptimizer)
+      addPass(createAIEPtrModOptimizer());
     addPass(createAIE2PostLegalizerCustomCombiner());
   }
 }
