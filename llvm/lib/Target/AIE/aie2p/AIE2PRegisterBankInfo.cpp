@@ -911,22 +911,27 @@ bool AIE2PRegisterBankInfo::registerBankLookAheadSearch(
     return (MI.isCopy() && MI.getOperand(0).getReg().isVirtual());
   };
 
+  // Check all Uses of Reg for Register Bank Preference
   for (auto &UseMI : MRI.use_nodbg_instructions(Reg)) {
     const unsigned UseOpcode = UseMI.getOpcode();
 
-    // skip copies, bitcasts and phis
-    if (UseOpcode == TargetOpcode::G_BITCAST || IsCopyToVReg(UseMI) ||
+    // look through copies, bitcasts, phis and concat_vectors
+    if (UseOpcode == TargetOpcode::G_BITCAST ||
+        UseOpcode == TargetOpcode::G_CONCAT_VECTORS || IsCopyToVReg(UseMI) ||
         UseMI.isPHI()) {
       Register DefReg = UseMI.getOperand(0).getReg();
       if (DefReg.isPhysical())
         continue;
+      // Check if DefReg prefers a specific Register Bank
       if (registerBankLookAheadSearch(RegisterUsedAsSpecificBank, MRI, TRI,
                                       DefReg, Depth + 1))
         return true;
     } else if (RegisterUsedAsSpecificBank(UseMI, MRI, TRI, Reg)) {
+      // UseMI prefers a RegisterBank
       return true;
     }
   }
+  // no Register Bank preference
   return false;
 }
 

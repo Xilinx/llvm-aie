@@ -22,14 +22,14 @@ define noundef inreg <64 x i32> @test_select_64xi32(i1 noundef zeroext %sel, <64
 ; AIE2P-NEXT:    vmov x1, bmhh1
 ; AIE2P-NEXT:    vmov x3, bmll1
 ; AIE2P-NEXT:    vsel.32 x6, x6, x3, r16
-; AIE2P-NEXT:    vsel.32 x7, x0, x8, r16
-; AIE2P-NEXT:    vsel.32 x0, x2, x10, r16
-; AIE2P-NEXT:    vsel.32 x1, x4, x1, r16
+; AIE2P-NEXT:    vsel.32 x0, x0, x8, r16
+; AIE2P-NEXT:    vsel.32 x2, x2, x10, r16
+; AIE2P-NEXT:    vsel.32 x4, x4, x1, r16
 ; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    vmov bmll0, x6 // Delay Slot 5
-; AIE2P-NEXT:    vmov bmlh0, x7 // Delay Slot 4
-; AIE2P-NEXT:    vmov bmhl0, x0 // Delay Slot 3
-; AIE2P-NEXT:    vmov bmhh0, x1 // Delay Slot 2
+; AIE2P-NEXT:    vmov bmlh0, x0 // Delay Slot 4
+; AIE2P-NEXT:    vmov bmhl0, x2 // Delay Slot 3
+; AIE2P-NEXT:    vmov bmhh0, x4 // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
 entry:
   %cond = select i1 %sel, <64 x i32> %b, <64 x i32> %a
