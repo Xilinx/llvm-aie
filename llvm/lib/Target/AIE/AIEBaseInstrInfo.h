@@ -492,8 +492,11 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   bool isZOLSetupBundle(MachineBasicBlock::iterator MII) const;
   bool isLastZOLSetupBundleInMBB(MachineBasicBlock::iterator MII) const;
   virtual const AIE::Bundle<MachineInstr>
-  getAIEMachineBundle(MachineBasicBlock::iterator MII) const;
-  unsigned getAIEMachineBundleSize(MachineBasicBlock::iterator MII) const;
+  getAIEMachineBundle(const MachineBasicBlock::iterator MII) const;
+  virtual const AIE::Bundle<const MachineInstr>
+  getAIEMachineBundle(const MachineBasicBlock::const_iterator MII) const;
+  unsigned
+  getAIEMachineBundleSize(const MachineBasicBlock::const_iterator MII) const;
   virtual unsigned getRegionSizeInBytes(
       llvm::iterator_range<MachineBasicBlock::iterator> Region) const;
 

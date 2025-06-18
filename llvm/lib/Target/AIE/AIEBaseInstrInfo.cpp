@@ -459,8 +459,8 @@ unsigned AIEBaseInstrInfo::getRegionSizeInBytes(
   return Size;
 }
 
-const AIE::MachineBundle
-AIEBaseInstrInfo::getAIEMachineBundle(MachineBasicBlock::iterator MII) const {
+const AIE::MachineBundle AIEBaseInstrInfo::getAIEMachineBundle(
+    const MachineBasicBlock::iterator MII) const {
   AIE::MachineBundle Bundle(getFormatInterface());
   // Iterate over the instructions in the bundle.
   MachineBasicBlock::const_instr_iterator I = ++MII->getIterator();
@@ -473,10 +473,25 @@ AIEBaseInstrInfo::getAIEMachineBundle(MachineBasicBlock::iterator MII) const {
   return Bundle;
 }
 
+const AIE::ConstMachineBundle AIEBaseInstrInfo::getAIEMachineBundle(
+    const MachineBasicBlock::const_iterator MII) const {
+
+  AIE::ConstMachineBundle Bundle = (getFormatInterface());
+  // Iterate over the instructions in the bundle.
+  MachineBasicBlock::const_instr_iterator I = ++MII->getIterator();
+  MachineBasicBlock::const_instr_iterator E = MII->getParent()->instr_end();
+  while (I != E && I->isInsideBundle()) {
+    MachineInstr *MI = const_cast<MachineInstr *>(&(*I));
+    Bundle.add(MI);
+    I++;
+  }
+  return Bundle;
+}
+
 unsigned AIEBaseInstrInfo::getAIEMachineBundleSize(
-    MachineBasicBlock::iterator MII) const {
+    const MachineBasicBlock::const_iterator MII) const {
   if (MII->isBundle()) {
-    AIE::MachineBundle Bundle = getAIEMachineBundle(MII);
+    AIE::ConstMachineBundle Bundle = getAIEMachineBundle(MII);
     const VLIWFormat *Format = Bundle.getFormatOrNull();
     assert(Format);
     LLVM_DEBUG(dbgs() << Format->Name << "\n");

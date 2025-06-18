@@ -263,6 +263,7 @@ template <class I> bool operator==(const Bundle<I> &B1, const Bundle<I> &B2) {
 
 using MCBundle = Bundle<MCInst>;
 using MachineBundle = Bundle<MachineInstr>;
+using ConstMachineBundle = Bundle<const MachineInstr>;
 
 } // namespace AIE
 } // namespace llvm

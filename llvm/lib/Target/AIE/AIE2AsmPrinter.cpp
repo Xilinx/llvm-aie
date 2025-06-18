@@ -76,11 +76,15 @@ bool AIE2AsmPrinter::lowerOperand(const MachineOperand &MO,
 
 void AIE2AsmPrinter::emitBundleCount(const MachineBasicBlock &MBB) {
   unsigned BundleCount = 0;
+  unsigned ByteCount = 0;
+  auto *TII = static_cast<const AIEBaseInstrInfo *>(
+      MBB.getParent()->getSubtarget().getInstrInfo());
   for (auto &MI : MBB) {
     if (!MI.isBundle())
       continue;
 
     BundleCount++;
+    ByteCount += TII->getAIEMachineBundleSize(MI);
   }
 
   if (BundleCount == 0) {
@@ -93,7 +97,8 @@ void AIE2AsmPrinter::emitBundleCount(const MachineBasicBlock &MBB) {
     return MachineOptimizationRemarkAnalysis(DEBUG_TYPE, "analysis",
                                              MBB.begin()->getDebugLoc(), &MBB)
            << ore::NV("BasicBlock", MBB.getName())
-           << ore::NV("BundleCount", BundleCount);
+           << ore::NV("BundleCount", BundleCount)
+           << ore::NV("ByteCount", ByteCount);
   });
 }
 
