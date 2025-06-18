@@ -214,7 +214,18 @@ static bool CC_AIE2_SPARSE(unsigned ValNo, MVT ValVT, MVT LocVT,
     } else {
       VecLoc.convertToMem(State.AllocateStack(64, Align(32)));
       State.addLoc(VecLoc);
-      unsigned OffsetMask = State.AllocateStack(16, Align(32));
+      // Offset which was built by llvm is with standard down-growing stacks in
+      // mind. So, for allocated vector above we get offset 0. And later we
+      // adjust this offset to -64 based on the size to match up-growing AIE
+      // stack.
+      //
+      // But the problem is, as per ABI, mask register must be 32 byte
+      // aligned in the stack, and State.AllocateStack(16, Align(16)) will
+      // produce an offset of 64 and later when we adjust the offset it becomes
+      // -80(-64 - 16), and it is not 32 byte aligned. So we add a fixup of 16
+      // to the offset and it matches the ABI. Also, allocated stack size is
+      // 16 byte short and we allocate a dummy 16 byte stack .
+      unsigned OffsetMask = State.AllocateStack(32, Align(16)) + 16;
       State.addLoc(
           CCValAssign::getMem(ValNo, ValVT, OffsetMask, LocVT, LocInfo));
       return true;
