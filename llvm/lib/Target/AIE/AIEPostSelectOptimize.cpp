@@ -116,7 +116,8 @@ public:
   /// If it exists, return a virtual register that holds a copy of \p PhysReg.
   std::optional<Register> getVirtualCopy(MCRegister PhysReg) const {
     if (auto It = LastAssigns.find(PhysReg); It != LastAssigns.end())
-      return std::get<Register>(It->second);
+      if (std::holds_alternative<Register>(It->second))
+        return std::get<Register>(It->second);
 
     return {};
   }
