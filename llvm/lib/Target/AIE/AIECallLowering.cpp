@@ -88,9 +88,8 @@ struct AIEOutgoingValueHandler : public CallLowering::OutgoingValueHandler {
   Register getStackAddress(uint64_t Size, int64_t Offset,
                            MachinePointerInfo &MPO,
                            ISD::ArgFlagsTy Flags) override {
-    Align StackSlotAlign =
-        std::max(Flags.getNonZeroMemAlign(),
-                 AIEBaseTargetLowering::getStackArgumentAlignment());
+    const Align StackSlotAlign =
+        AIEBaseTargetLowering::getStackArgumentAlignment();
     auto SizeInSlots = alignTo(Size, StackSlotAlign);
     assert(isAligned(StackSlotAlign, Offset) && "Stack offset is not aligned");
     MachineFunction &MF = MIRBuilder.getMF();
@@ -316,9 +315,8 @@ struct AIEIncomingValueHandler : public CallLowering::IncomingValueHandler {
   Register getStackAddress(uint64_t Size, int64_t Offset,
                            MachinePointerInfo &MPO,
                            ISD::ArgFlagsTy Flags) override {
-    Align StackSlotAlign =
-        std::max(Flags.getNonZeroMemAlign(),
-                 AIEBaseTargetLowering::getStackArgumentAlignment());
+    const Align StackSlotAlign =
+        AIEBaseTargetLowering::getStackArgumentAlignment();
     auto SizeInSlots = alignTo(Size, StackSlotAlign);
 
     assert(isAligned(StackSlotAlign, Offset) && "Stack offset is not aligned");
