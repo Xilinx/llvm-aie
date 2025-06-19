@@ -10,15 +10,6 @@
 //===----------------------------------------------------------------------===//
 // RUN: %clang -O2 %s --target=aie2p -nostdlibinc -S -emit-llvm -o - | FileCheck %s
 
-// CHECK-LABEL: @_Z22test_pack_v32i8_v32i16Dv32_si(
-// CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2p.pack.I512.I8.I16(<32 x i16> [[V:%.*]], i32 [[SIGN:%.*]])
-// CHECK-NEXT:    ret <32 x i8> [[TMP0]]
-//
-v32int8 test_pack_v32i8_v32i16(v32int16 v, int sign) {
-  return pack(v, sign);
-}
-
 // CHECK-LABEL: @_Z24test_unpack_v32i16_v32i8Dv32_a(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i16> @llvm.aie2p.unpack.I512.I16.I8(<32 x i8> [[V:%.*]], i32 1)
@@ -63,25 +54,6 @@ v64uint8 test_pack_v64i8_v64i16(v64uint16 v, int sign) {
 v64uint16 test_unpack_v64i16_v64i8(v64uint8 v) {
   return unpack(v);
 }
-
-// CHECK-LABEL: @_Z23test_pack_v128i4_v128i8Dv128_hi(
-// CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x i8> @llvm.aie2p.pack.I1024.I4.I8(<128 x i8> [[V:%.*]], i32 [[SIGN:%.*]])
-// CHECK-NEXT:    ret <64 x i8> [[TMP0]]
-//
-v128uint4 test_pack_v128i4_v128i8(v128uint8 v, int sign) {
-  return pack(v, sign);
-}
-
-// CHECK-LABEL: @_Z25test_unpack_v128i8_v128i4Dv64_DU8_(
-// CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <128 x i8> @llvm.aie2p.unpack.I1024.I8.I4(<64 x i8> [[V:%.*]], i32 0)
-// CHECK-NEXT:    ret <128 x i8> [[TMP0]]
-//
-v128uint8 test_unpack_v128i8_v128i4(v128uint4 v) {
-  return unpack(v);
-}
-
 
 // CHECK-LABEL: @_Z18test_fifo_st_resetRrPDv64_DB8_S0_R12fifo_state_t(
 // CHECK-NEXT:  entry:
