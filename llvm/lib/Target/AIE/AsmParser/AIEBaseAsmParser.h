@@ -9,6 +9,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/MC/MCAsmMacro.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
@@ -64,6 +65,11 @@ protected:
   /// F = "["
   /// Parse an "addressing mode", emits an error if it fails
   bool parseIndirectOrIndexedMode(OperandVector &Operands);
+
+  /// parseSingleIndirectOrIndexedModeOperand
+  /// Helper function for parseIndirectOrIndexedMode to parse a single
+  /// operand
+  bool parseSingleIndirectOrIndexedModeOperand(OperandVector &Operands);
 
   /// parseOperand:
   ///   ::= IndirectOrIndexedMode
@@ -279,6 +285,25 @@ bool AIEBaseAsmParser<Parser, BundleType, OperandType>::parseImmediate(
   return MatchOperand_Success;
 }
 
+template <typename Parser, typename BundleType, typename OperandType>
+bool AIEBaseAsmParser<Parser, BundleType, OperandType>::
+    parseSingleIndirectOrIndexedModeOperand(OperandVector &Operands) {
+  AsmToken const &IdxToken = getTok();
+  switch (IdxToken.getKind()) {
+  case AsmToken::Hash:
+    if (parseImmediate(Operands))
+      return MatchOperand_ParseFail;
+    break;
+  case AsmToken::Identifier:
+    if (parseIdentifier(Operands))
+      return MatchOperand_ParseFail;
+    break;
+  default:
+    return Error(IdxToken.getLoc(), "unexpected operand");
+  }
+  return MatchOperand_Success;
+}
+
 /// parseIndirectOrIndexedMode
 ///   ::= "[" <ptr> "]"
 ///   ::= "[" <ptr> "," Register "]"
@@ -292,27 +317,12 @@ bool AIEBaseAsmParser<Parser, BundleType, OperandType>::
   Operands.push_back(OperandType::CreateToken(
       getContext(), LBracToken.getString(), LBracToken.getLoc()));
   Lex();
-  if (parseIdentifier(Operands))
-    return true;
-  if (getLexer().is(AsmToken::Comma)) {
-    // Consume ","
-    Lex();
-    AsmToken const &IdxToken = getTok();
-    switch (IdxToken.getKind()) {
-    case AsmToken::Hash:
-      if (parseImmediate(Operands))
-        return true /*MatchOperand_ParseFail*/;
-      break;
-    case AsmToken::Identifier:
-      if (parseIdentifier(Operands))
-        return true /*MatchOperand_ParseFail*/;
-      break;
-    case AsmToken::RBrac:
-      return Error(IdxToken.getLoc(), "missing index operand");
-    default:
-      return Error(IdxToken.getLoc(), "unexpected operand");
-    }
-  }
+
+  do {
+    if (parseSingleIndirectOrIndexedModeOperand(Operands))
+      return true;
+  } while (parseOptionalToken(llvm::AsmToken::Comma));
+
   if (getLexer().is(AsmToken::RBrac)) {
     AsmToken const &RBracToken = getLexer().getTok();
     Operands.push_back(OperandType::CreateToken(
