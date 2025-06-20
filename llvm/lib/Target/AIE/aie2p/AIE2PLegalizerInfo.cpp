@@ -281,13 +281,24 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
 
   getActionDefinitionsBuilder(G_TRUNC)
       .legalIf([=](const LegalityQuery &Query) {
+        // Return true if there is a tablegen pattern to lower truncs on vectors
+        // of specific element types and lengths to shuffles.
         const LLT &SrcTy = Query.Types[1];
         const LLT &DstTy = Query.Types[0];
-        return SrcTy.isVector() && DstTy.isVector() &&
-               (SrcTy.getSizeInBits() == 512 ||
-                SrcTy.getSizeInBits() == 1024) &&
-               DstTy.getElementType().getSizeInBits() * 2 ==
-                   SrcTy.getElementType().getSizeInBits();
+
+        if (!SrcTy.isVector() || !DstTy.isVector())
+          return false;
+
+        const auto SrcElmBits = SrcTy.getElementType().getSizeInBits();
+        if (SrcElmBits != 64 && SrcElmBits != 32 && SrcElmBits != 16)
+          return false;
+
+        const TypeSize SrcBits = SrcTy.getSizeInBits();
+        const TypeSize DstBits = DstTy.getSizeInBits();
+
+        return ((SrcBits == 1024 && DstBits == 256) ||
+                (SrcBits == 1024 && DstBits == 512) ||
+                (SrcBits == 512 && DstBits == 256));
       })
       .legalIf([=](const LegalityQuery &Query) {
         const LLT &SrcTy = Query.Types[1];

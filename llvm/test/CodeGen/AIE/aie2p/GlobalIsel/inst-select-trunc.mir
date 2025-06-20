@@ -184,4 +184,52 @@ body:             |
     %0:vregbank(<32 x s8>) = G_TRUNC %1(<32 x s16>)
     PseudoRET implicit $lr, implicit %0
 ...
+---
+name:            v32s8_trunc_v32s32_vec1024
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: v32s8_trunc_v32s32_vec1024
+    ; CHECK: [[DEF:%[0-9]+]]:vec1024 = IMPLICIT_DEF
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 2
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:exo = COPY [[DEF]].sub_512_hi
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:exe = COPY [[DEF]].sub_512_lo
+    ; CHECK-NEXT: [[VSHUFFLE_vec_shuffle_x:%[0-9]+]]:vec512 = VSHUFFLE_vec_shuffle_x [[COPY1]], [[COPY]], [[MOV_RLC_imm11_pseudo1]]
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo2:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 2
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:exo = COPY [[DEF]].sub_512_hi
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:exe = COPY [[DEF]].sub_512_lo
+    ; CHECK-NEXT: [[VSHUFFLE_vec_shuffle_x1:%[0-9]+]]:vec512 = VSHUFFLE_vec_shuffle_x [[COPY3]], [[COPY2]], [[MOV_RLC_imm11_pseudo2]]
+    ; CHECK-NEXT: [[VSHUFFLE_vec_shuffle_x2:%[0-9]+]]:mshflxdst = VSHUFFLE_vec_shuffle_x [[VSHUFFLE_vec_shuffle_x1]], [[VSHUFFLE_vec_shuffle_x]], [[MOV_RLC_imm11_pseudo]]
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:ewl = COPY [[VSHUFFLE_vec_shuffle_x2]].sub_256_lo
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[COPY4]]
+    %1:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    %0:vregbank(<32 x s8>) = G_TRUNC %1(<32 x s32>)
+    PseudoRET implicit $lr, implicit %0
+...
 
+---
+name:            v16s16_trunc_v16s64_vec1024
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: v16s16_trunc_v16s64_vec1024
+    ; CHECK: [[DEF:%[0-9]+]]:vec1024 = IMPLICIT_DEF
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 2
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 4
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:exo = COPY [[DEF]].sub_512_hi
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:exe = COPY [[DEF]].sub_512_lo
+    ; CHECK-NEXT: [[VSHUFFLE_vec_shuffle_x:%[0-9]+]]:vec512 = VSHUFFLE_vec_shuffle_x [[COPY1]], [[COPY]], [[MOV_RLC_imm11_pseudo1]]
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo2:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 4
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:exo = COPY [[DEF]].sub_512_hi
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:exe = COPY [[DEF]].sub_512_lo
+    ; CHECK-NEXT: [[VSHUFFLE_vec_shuffle_x1:%[0-9]+]]:vec512 = VSHUFFLE_vec_shuffle_x [[COPY3]], [[COPY2]], [[MOV_RLC_imm11_pseudo2]]
+    ; CHECK-NEXT: [[VSHUFFLE_vec_shuffle_x2:%[0-9]+]]:mshflxdst = VSHUFFLE_vec_shuffle_x [[VSHUFFLE_vec_shuffle_x1]], [[VSHUFFLE_vec_shuffle_x]], [[MOV_RLC_imm11_pseudo]]
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:ewl = COPY [[VSHUFFLE_vec_shuffle_x2]].sub_256_lo
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[COPY4]]
+    %1:vregbank(<16 x s64>) = G_IMPLICIT_DEF
+    %0:vregbank(<16 x s16>) = G_TRUNC %1(<16 x s64>)
+    PseudoRET implicit $lr, implicit %0
+...
