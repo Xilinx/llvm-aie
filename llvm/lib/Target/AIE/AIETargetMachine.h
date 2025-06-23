@@ -16,8 +16,8 @@
 #define LLVM_LIB_TARGET_AIE_AIETARGETMACHINE_H
 
 #include "AIEBaseTargetMachine.h"
-#include "AIESubtarget.h"
 #include "MCTargetDesc/AIEMCTargetDesc.h"
+#include "aie1/AIE1Subtarget.h"
 
 namespace llvm {
 

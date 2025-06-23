@@ -14,21 +14,19 @@
 
 #include "AIEBaseSubtarget.h"
 #include "AIE.h"
-#include "AIE2Subtarget.h"
 #include "AIEBaseRegisterInfo.h"
 #include "AIEInterBlockScheduling.h"
 #include "AIEMachineScheduler.h"
 #include "AIEMaxLatencyFinder.h"
 #include "AIERegMemEventTracker.h"
-#include "AIESubtarget.h"
 #include "Utils/AIELoopUtils.h"
+#include "aie1/AIE1Subtarget.h"
 #include "aie2p/AIE2PSubtarget.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include "llvm/CodeGen/ScheduleDAGMutation.h"
-#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/Support/Debug.h"
 
 using namespace llvm;
@@ -149,18 +147,21 @@ void AIEBaseSubtarget::adjustSchedDependency(
   }
 }
 
+// Note: AIEBaseSubtarget is not derived from TargetSubtargetInfo.
+// It is glued in through multiple inheritance of the AIE classes, so we go down
+// from TargetSubtargetInfo, and then up to AIEBaseSubTarget.
+// Someone should build the base class injection in tablegen.
 const AIEBaseSubtarget &AIEBaseSubtarget::get(const MachineFunction &MF) {
   if (MF.getTarget().getTargetTriple().isAIE1())
     return static_cast<const AIEBaseSubtarget &>(
         MF.getSubtarget<AIESubtarget>());
-  else if (MF.getTarget().getTargetTriple().isAIE2())
+  if (MF.getTarget().getTargetTriple().isAIE2())
     return static_cast<const AIEBaseSubtarget &>(
         MF.getSubtarget<AIE2Subtarget>());
-  else if (MF.getTarget().getTargetTriple().isAIE2P())
+  if (MF.getTarget().getTargetTriple().isAIE2P())
     return static_cast<const AIEBaseSubtarget &>(
         MF.getSubtarget<AIE2PSubtarget>());
-  else
-    llvm_unreachable("Unknown subtarget");
+  llvm_unreachable("Unknown subtarget");
 }
 
 namespace {

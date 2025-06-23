@@ -47,14 +47,13 @@ class AIESubtarget final : public AIEGenSubtargetInfo, public AIEBaseSubtarget {
 
   /// Initializes using the passed in CPU and feature strings so that we can
   /// use initializer lists for subtarget initialization.
-  AIESubtarget &initializeSubtargetDependencies(const Triple &TT,
-                                                  StringRef CPU, StringRef FS,
-                                                  StringRef ABIName);
+  AIESubtarget &initializeSubtargetDependencies(const Triple &TT, StringRef CPU,
+                                                StringRef FS,
+                                                StringRef ABIName);
 
 public:
   // Initializes the data members to match that of the specified triple.
-  AIESubtarget(const Triple &TT, StringRef CPU,
-               StringRef TuneCPU, StringRef FS,
+  AIESubtarget(const Triple &TT, StringRef CPU, StringRef TuneCPU, StringRef FS,
                StringRef ABIName, const TargetMachine &TM);
 
   bool enablePostRAScheduler() const override { return true; }
@@ -79,9 +78,7 @@ public:
     return &InstrItins;
   }
   const AIEInstrInfo *getInstrInfo() const override { return &InstrInfo; }
-  const AIERegisterInfo *getRegisterInfo() const override {
-    return &RegInfo;
-  }
+  const AIERegisterInfo *getRegisterInfo() const override { return &RegInfo; }
   const AIE1TargetLowering *getTargetLowering() const override {
     return &TLInfo;
   }

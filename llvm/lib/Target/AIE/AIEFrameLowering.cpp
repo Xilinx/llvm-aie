@@ -15,7 +15,7 @@
 #include "AIEFrameLowering.h"
 #include "AIEBaseRegisterInfo.h"
 #include "AIEMachineFunctionInfo.h"
-#include "AIESubtarget.h"
+#include "aie1/AIE1Subtarget.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"

@@ -14,14 +14,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEBaseFrameLowering.h"
-#include "AIEMachineFunctionInfo.h"
-#include "AIESubtarget.h"
+#include "AIEBaseRegisterInfo.h"
+#include "AIEBaseSubtarget.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
-#include "llvm/Support/Debug.h"
 
 #define DEBUG_TYPE "aie-frame-lowering"
 
@@ -291,7 +290,7 @@ void AIEBaseFrameLowering::emitPrologue(MachineFunction &MF,
 
   MachineFrameInfo &MFI = MF.getFrameInfo();
   MachineBasicBlock::iterator MBBI = MBB.begin();
-  auto *TII = static_cast<const AIEInstrInfo *>(STI.getInstrInfo());
+  auto *TII = static_cast<const AIEBaseInstrInfo *>(STI.getInstrInfo());
   auto *RI = static_cast<const AIEBaseRegisterInfo *>(STI.getRegisterInfo());
   Register SPReg = RI->getStackPointerRegister();
 
@@ -341,7 +340,7 @@ void AIEBaseFrameLowering::emitEpilogue(MachineFunction &MF,
                                         MachineBasicBlock &MBB) const {
   MachineFrameInfo &MFI = MF.getFrameInfo();
   MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
-  auto *TII = static_cast<const AIEInstrInfo *>(STI.getInstrInfo());
+  auto *TII = static_cast<const AIEBaseInstrInfo *>(STI.getInstrInfo());
   auto *RI = static_cast<const AIEBaseRegisterInfo *>(STI.getRegisterInfo());
 
   DebugLoc DL = MBBI->getDebugLoc();

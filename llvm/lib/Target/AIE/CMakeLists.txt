@@ -121,7 +121,6 @@ add_llvm_target(AIECodeGen
    AIESlotCounts.cpp
    AIESplitInstructionRewriter.cpp
    AIESubRegConstrainer.cpp
-   AIESubtarget.cpp
    AIESuperRegRewriter.cpp
    AIETargetMachine.cpp
    AIETargetObjectFile.cpp
@@ -150,6 +149,7 @@ add_llvm_target(AIECodeGen
    aie1/AIE1LegalizerInfo.cpp
    aie1/AIE1RegisterBankInfo.cpp
    aie1/AIE1RegisterInfo.cpp
+   aie1/AIE1Subtarget.cpp
    aie2p/AIE2PSubtarget.cpp
    aie2p/AIE2PTargetMachine.cpp
    aie2p/AIE2PTargetTransformInfo.cpp

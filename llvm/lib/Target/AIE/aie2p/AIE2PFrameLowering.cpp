@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIE2PFrameLowering.h"
-#include "AIE2PSubtarget.h"
+#include "AIE2PInstrInfo.h"
 #include "MCTargetDesc/aie2p/AIE2PMCTargetDesc.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
@@ -28,7 +28,7 @@ void AIE2PFrameLowering::adjustReg(MachineBasicBlock &MBB,
                                    int64_t StackPtrIncr,
                                    MachineInstr::MIFlag Flag) const {
   MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
-  auto *TII = static_cast<const AIEInstrInfo *>(STI.getInstrInfo());
+  auto *TII = static_cast<const AIE2PInstrInfo *>(STI.getInstrInfo());
 
   if (StackPtrIncr == 0)
     return;
@@ -62,7 +62,7 @@ void AIE2PFrameLowering::adjustSPReg(MachineBasicBlock &MBB,
                                      const DebugLoc &DL, int64_t StackPtrIncr,
                                      MachineInstr::MIFlag Flag) const {
 
-  auto *TII = static_cast<const AIEInstrInfo *>(STI.getInstrInfo());
+  auto *TII = static_cast<const AIE2PInstrInfo *>(STI.getInstrInfo());
 
   if (StackPtrIncr == 0)
     return;

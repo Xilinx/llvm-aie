@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIE2ISelLowering.h"
-#include "AIESubtarget.h"
+#include "AIEBaseSubtarget.h"
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
 #include "llvm/CodeGen/ISDOpcodes.h"
 #include "llvm/CodeGen/TargetLowering.h"
