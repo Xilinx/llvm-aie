@@ -557,10 +557,19 @@ void AIE2PInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 
   if (AIE2P::mMvSclSrcRegClass.contains(SrcReg) &&
       AIE2P::mMvSclDstRegClass.contains(DstReg)) {
-    // Build MultiSlotPseudo in preference
-    const unsigned MOVSclOpcode = getScalarMovOpcode(DstReg, SrcReg);
-    BuildMI(MBB, MBBI, DL, get(MOVSclOpcode), DstReg)
-        .addReg(SrcReg, getKillRegState(KillSrc));
+    if (MachineInstr *MI = MRI.getUniqueVRegDef(SrcReg);
+        MI && MI->isMoveImmediate()) {
+      // Try modifying scalar move to pseudo immediate move.
+      const int64_t Imm = MI->getOperand(1).getImm();
+      APInt ImmVal = APInt(64, Imm);
+      auto OpCode = getConstantMovOpcode(MRI, DstReg, ImmVal);
+      BuildMI(MBB, MBBI, DL, get(OpCode), DstReg).addImm(Imm);
+    } else {
+      // Build MultiSlotPseudo in preference
+      const unsigned MOVSclOpcode = getScalarMovOpcode(DstReg, SrcReg);
+      BuildMI(MBB, MBBI, DL, get(MOVSclOpcode), DstReg)
+          .addReg(SrcReg, getKillRegState(KillSrc));
+    }
   } else if ((AIE2P::eLRegClass.contains(SrcReg)) &&
              (AIE2P::eLRegClass.contains(DstReg))) {
     BuildMI(MBB, MBBI, DL, get(AIE2P::MOV_alu_mv_mv_mv_scl),
@@ -1148,11 +1157,15 @@ unsigned AIE2PInstrInfo::getConstantMovOpcode(MachineRegisterInfo &MRI,
   unsigned int ImmSize = Val.getSignificantBits();
 
   const TargetRegisterClass *DstRegClass = nullptr;
-  const RegClassOrRegBank &RCB = MRI.getRegClassOrRegBank(Reg);
-  if (const RegisterBank *RB = RCB.dyn_cast<const RegisterBank *>())
-    DstRegClass = &TRI->getMinClassForRegBank(*RB, MRI.getType(Reg));
-  if (auto *TRC = RCB.dyn_cast<const TargetRegisterClass *>())
-    DstRegClass = TRC;
+  if (Register::isVirtualRegister(Reg)) {
+    const RegClassOrRegBank &RCB = MRI.getRegClassOrRegBank(Reg);
+    if (const RegisterBank *RB = RCB.dyn_cast<const RegisterBank *>())
+      DstRegClass = &TRI->getMinClassForRegBank(*RB, MRI.getType(Reg));
+    if (auto *TRC = RCB.dyn_cast<const TargetRegisterClass *>())
+      DstRegClass = TRC;
+  } else {
+    DstRegClass = TRI->getMinimalPhysRegClass(Reg);
+  }
   assert(DstRegClass != nullptr && "RC cannot be null");
   if (ImmSize <= 11) {
     if (regClassMatches(AIE2P::mAluCgRegClass, DstRegClass, Reg))

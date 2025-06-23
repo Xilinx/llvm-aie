@@ -52,10 +52,10 @@ define void @gelu_fn(ptr noalias %ifm, ptr noalias %ofm, ptr nonnull align 64 de
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vconv.bf16.fp32 x5, cml1
 ; CHECK-NEXT:    vconv.bf16.fp32 x8, cml4; movxm ls, #.LBB0_1; vmul.f dm4, x10, x4, r2
-; CHECK-NEXT:    mova r3, #0; nopb ; vconv.bf16.fp32 x7, cml2; movxm le, #.L_LEnd0; vmul.f dm4, x5, x4, r2
-; CHECK-NEXT:    vconv.bf16.fp32 x5, cml3; mov s0, r3; vadd.f dm2, dm1, dm2, r0
+; CHECK-NEXT:    vconv.bf16.fp32 x7, cml2; movxm le, #.L_LEnd0; vmul.f dm4, x5, x4, r2
+; CHECK-NEXT:    vconv.bf16.fp32 x5, cml3; mov s0, #0; vadd.f dm2, dm1, dm2, r0
 ; CHECK-NEXT:    vmov cml2, cml0; vmul.f dm3, x7, x2, r2
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], #64; vfloor.s32.bf16 x1, wl8, s0; movx r4, #-5; vmul.f dm4, x5, x4, r2
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], #64; nopb ; vfloor.s32.bf16 x1, wl8, s0; movx r4, #-5; mov r3, #0; vmul.f dm4, x5, x4, r2
 ; CHECK-NEXT:    vfloor.s32.bf16 x3, wh8, s0; lshl r4, r1, r4; vbcst.16 x6, r3
 ; CHECK-NEXT:    mova r1, #2; vconv.bf16.fp32 x10, cml4; add.nc lc, r4, #-7
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vshuffle x1, x1, x3, r1; nopv
