@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AIEInstrInfo.h"
+#include "AIE1InstrInfo.h"
 #include "AIE.h"
 #include "AIEHazardRecognizerPRAS.h"
 #include "AIESubtarget.h"
@@ -48,9 +48,9 @@ AIEInstrInfo::AIEInstrInfo()
   FuncUnitWrapper::setFormatInterface(FormatInterface);
 }
 
-ScheduleHazardRecognizer*
-AIEInstrInfo::CreateTargetPostRAHazardRecognizer(
-      const InstrItineraryData *II, const ScheduleDAG *DAG) const {
+ScheduleHazardRecognizer *
+AIEInstrInfo::CreateTargetPostRAHazardRecognizer(const InstrItineraryData *II,
+                                                 const ScheduleDAG *DAG) const {
 
   // AIE has a fully exposed pipeline, so we have to insert
   // Noops in the case of instruction dependence hazards.
@@ -116,29 +116,29 @@ void AIEInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
       (AIE::PTRRegClass.contains(SrcReg) &&
        AIE::PTRRegClass.contains(DstReg))) {
     BuildMI(MBB, MBBI, DL, get(AIE::MOV), DstReg)
-      .addReg(SrcReg, getKillRegState(KillSrc));
+        .addReg(SrcReg, getKillRegState(KillSrc));
   } else if (AIE::SPRRegClass.contains(SrcReg) &&
              AIE::GPRRegClass.contains(DstReg)) {
     BuildMI(MBB, MBBI, DL, get(AIE::MV_SPECIAL2R), DstReg)
-      .addReg(SrcReg, getKillRegState(KillSrc));
+        .addReg(SrcReg, getKillRegState(KillSrc));
   } else if (AIE::GPRRegClass.contains(SrcReg) &&
              AIE::SPRRegClass.contains(DstReg)) {
     BuildMI(MBB, MBBI, DL, get(AIE::MV_R2SPECIAL), DstReg)
-      .addReg(SrcReg, getKillRegState(KillSrc));
+        .addReg(SrcReg, getKillRegState(KillSrc));
   } else if (AIE::SPRRegClass.contains(SrcReg) &&
              AIE::PTRRegClass.contains(DstReg)) {
     Register GPRReg = AIE::r15;
     BuildMI(MBB, MBBI, DL, get(AIE::MV_SPECIAL2R), GPRReg)
-      .addReg(SrcReg, getKillRegState(KillSrc));
+        .addReg(SrcReg, getKillRegState(KillSrc));
     BuildMI(MBB, MBBI, DL, get(AIE::MOV), DstReg)
-      .addReg(GPRReg, getKillRegState(KillSrc));
+        .addReg(GPRReg, getKillRegState(KillSrc));
   } else if (AIE::PTRRegClass.contains(SrcReg) &&
              AIE::SPRRegClass.contains(DstReg)) {
     Register GPRReg = AIE::r15;
     BuildMI(MBB, MBBI, DL, get(AIE::MOV), GPRReg)
-      .addReg(SrcReg, getKillRegState(KillSrc));
+        .addReg(SrcReg, getKillRegState(KillSrc));
     BuildMI(MBB, MBBI, DL, get(AIE::MV_R2SPECIAL), DstReg)
-      .addReg(GPRReg, getKillRegState(KillSrc));
+        .addReg(GPRReg, getKillRegState(KillSrc));
   } else if (AIE::SPRRegClass.contains(SrcReg) &&
              AIE::SPRRegClass.contains(DstReg)) {
     Register GPRReg = AIE::r15;
@@ -149,31 +149,31 @@ void AIEInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   } else if (AIE::VEC128RegClass.contains(SrcReg) &&
              AIE::VEC128RegClass.contains(DstReg)) {
     BuildMI(MBB, MBBI, DL, get(AIE::MV_V), DstReg)
-      .addReg(SrcReg, getKillRegState(KillSrc));
+        .addReg(SrcReg, getKillRegState(KillSrc));
   } else if (AIE::VEC256RegClass.contains(SrcReg) &&
              AIE::VEC256RegClass.contains(DstReg)) {
     BuildMI(MBB, MBBI, DL, get(AIE::MV_W), DstReg)
-      .addReg(SrcReg, getKillRegState(KillSrc));
+        .addReg(SrcReg, getKillRegState(KillSrc));
   } else if (AIE::VEC512RegClass.contains(SrcReg) &&
              AIE::VEC512RegClass.contains(DstReg)) {
     BuildMI(MBB, MBBI, DL, get(AIE::MV_X), DstReg)
-      .addReg(SrcReg, getKillRegState(KillSrc));
+        .addReg(SrcReg, getKillRegState(KillSrc));
   } else if (AIE::VEC1024RegClass.contains(SrcReg) &&
              AIE::VEC1024RegClass.contains(DstReg)) {
     // The 1024-bit registers share their high-order bits.
-    if(SrcReg == AIE::ya && DstReg == AIE::yd) {
+    if (SrcReg == AIE::ya && DstReg == AIE::yd) {
       BuildMI(MBB, MBBI, DL, get(AIE::MV_X), AIE::xd)
-      .addReg(AIE::xa, getKillRegState(KillSrc));
-    } else if(SrcReg == AIE::yd && DstReg == AIE::ya) {
+          .addReg(AIE::xa, getKillRegState(KillSrc));
+    } else if (SrcReg == AIE::yd && DstReg == AIE::ya) {
       BuildMI(MBB, MBBI, DL, get(AIE::MV_X), AIE::xa)
-      .addReg(AIE::xd, getKillRegState(KillSrc));
+          .addReg(AIE::xd, getKillRegState(KillSrc));
     }
   } else if (AIE::GPRRegClass.contains(SrcReg) &&
              AIE::VEC256RegClass.contains(DstReg)) {
     // only for f32 type.
     BuildMI(MBB, MBBI, DL, get(AIE::S2V_SHIFTW0_R32), DstReg)
-      .addReg(DstReg, RegState::Undef)
-      .addReg(SrcReg, getKillRegState(KillSrc));
+        .addReg(DstReg, RegState::Undef)
+        .addReg(SrcReg, getKillRegState(KillSrc));
   } else if (AIE::mMv0Cg20RegClass.contains(SrcReg) &&
              AIE::VEC256RegClass.contains(DstReg)) {
     // only for f32 type.  Bounce through GPR
@@ -187,14 +187,16 @@ void AIEInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
              AIE::GPRRegClass.contains(DstReg)) {
     // only for f32 type.
     BuildMI(MBB, MBBI, DL, get(AIE::S2V_EXT_R32), DstReg)
-      .addReg(TRI.getSubReg(SrcReg, AIE::sub_128bit_lo), getKillRegState(true))
-      .addImm(0);
+        .addReg(TRI.getSubReg(SrcReg, AIE::sub_128bit_lo),
+                getKillRegState(true))
+        .addImm(0);
   } else if (AIE::VEC256RegClass.contains(SrcReg) &&
              AIE::PTRRegClass.contains(DstReg)) {
     // only for f32 type.
     BuildMI(MBB, MBBI, DL, get(AIE::S2V_EXT_P32), DstReg)
-      .addReg(TRI.getSubReg(SrcReg, AIE::sub_128bit_lo), getKillRegState(true))
-      .addImm(0);
+        .addReg(TRI.getSubReg(SrcReg, AIE::sub_128bit_lo),
+                getKillRegState(true))
+        .addImm(0);
   } else if (AIE::VEC256RegClass.contains(SrcReg) &&
              AIE::mMv0Cg20RegClass.contains(DstReg)) {
     // only for f32 type.  Bounce through GPR
@@ -208,13 +210,15 @@ void AIEInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   } else if (AIE::mCRegClass.contains(SrcReg) &&
              AIE::mCRegClass.contains(DstReg)) {
     BuildMI(MBB, MBBI, DL, get(AIE::MOV), TRI.getSubReg(DstReg, AIE::sub_32_lo))
-      .addReg(TRI.getSubReg(SrcReg, AIE::sub_32_lo), getKillRegState(KillSrc));
+        .addReg(TRI.getSubReg(SrcReg, AIE::sub_32_lo),
+                getKillRegState(KillSrc));
     BuildMI(MBB, MBBI, DL, get(AIE::MOV), TRI.getSubReg(DstReg, AIE::sub_32_hi))
-      .addReg(TRI.getSubReg(SrcReg, AIE::sub_32_hi), getKillRegState(KillSrc));
+        .addReg(TRI.getSubReg(SrcReg, AIE::sub_32_hi),
+                getKillRegState(KillSrc));
   } else if (AIE::ACC384RegClass.contains(SrcReg) &&
              AIE::ACC384RegClass.contains(DstReg)) {
     BuildMI(MBB, MBBI, DL, get(AIE::ACCUMULATOR_MOVE), DstReg)
-      .addReg(SrcReg, getKillRegState(KillSrc));
+        .addReg(SrcReg, getKillRegState(KillSrc));
   } else {
     assert(false && "unhandled case in copyPhysReg");
   }
@@ -223,53 +227,53 @@ void AIEInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 // Sometimes the instruction set encodes smaller registers (256-bit or 512-bit)
 // using a 1024-bit yreg and an offset.
 void getYRegForNarrowReg(Register &yreg, int &offset, Register wreg) {
-  switch(wreg.id()) {
-    case AIE::wr0:
-    case AIE::xa:
-      yreg = AIE::ya;
-      offset = 0;
-      return;
-    case AIE::wr1:
-      yreg = AIE::ya;
-      offset = 8;
-      return;
-    case AIE::wr2:
-    case AIE::xb:
-      yreg = AIE::ya;
-      offset = 16;
-      return;
-    case AIE::wr3:
-      yreg = AIE::ya;
-      offset = 24;
-      return;
-    case AIE::wd0:
-    case AIE::xd:
-      yreg = AIE::yd;
-      offset = 0;
-      return;
-    case AIE::wd1:
-      yreg = AIE::yd;
-      offset = 8;
-      return;
+  switch (wreg.id()) {
+  case AIE::wr0:
+  case AIE::xa:
+    yreg = AIE::ya;
+    offset = 0;
+    return;
+  case AIE::wr1:
+    yreg = AIE::ya;
+    offset = 8;
+    return;
+  case AIE::wr2:
+  case AIE::xb:
+    yreg = AIE::ya;
+    offset = 16;
+    return;
+  case AIE::wr3:
+    yreg = AIE::ya;
+    offset = 24;
+    return;
+  case AIE::wd0:
+  case AIE::xd:
+    yreg = AIE::yd;
+    offset = 0;
+    return;
+  case AIE::wd1:
+    yreg = AIE::yd;
+    offset = 8;
+    return;
   }
   assert(false && "Illegal register");
 }
 
 // Given a VCMP512 pseudo-op, return the VCMP op with the corresponding type.
 unsigned getVCMPforPseudoVCMP(unsigned opcode) {
-  switch(opcode) {
-    case AIE::VCMP512GPR_S16:
-    case AIE::VCMP512_S16:
-      return AIE::VCMP_S16;
-    case AIE::VCMP512GPR_S32:
-    case AIE::VCMP512_S32:
-      return AIE::VCMP_S32;
-    case AIE::VCMP512GPR_U8:
-    case AIE::VCMP512_U8:
-      return AIE::VCMP_U8;
-    case AIE::VCMP512GPR_S8:
-    case AIE::VCMP512_S8:
-      return AIE::VCMP_S8;
+  switch (opcode) {
+  case AIE::VCMP512GPR_S16:
+  case AIE::VCMP512_S16:
+    return AIE::VCMP_S16;
+  case AIE::VCMP512GPR_S32:
+  case AIE::VCMP512_S32:
+    return AIE::VCMP_S32;
+  case AIE::VCMP512GPR_U8:
+  case AIE::VCMP512_U8:
+    return AIE::VCMP_U8;
+  case AIE::VCMP512GPR_S8:
+  case AIE::VCMP512_S8:
+    return AIE::VCMP_S8;
   }
   assert(false && "Illegal opcode");
 }
@@ -320,16 +324,13 @@ bool AIEInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
     Register yreg;
     int offset;
     getYRegForNarrowReg(yreg, offset, wreg);
-    BuildMI(MBB, MI, DL, get(AIE::MOV_U20), AIE::r15)
-        .addImm(offset);
+    BuildMI(MBB, MI, DL, get(AIE::MOV_U20), AIE::r15).addImm(offset);
     auto b = BuildMI(MBB, MI, DL, get(AIE::VFPMAC));
     // Swap the first two operands if necessary
-    if(MI.getOpcode() == AIE::VFPMAC256GPR)
-        b.add(MI.getOperand(1))
-        .add(MI.getOperand(0));
+    if (MI.getOpcode() == AIE::VFPMAC256GPR)
+      b.add(MI.getOperand(1)).add(MI.getOperand(0));
     else // VFPMAC256...
-        b.add(MI.getOperand(0))
-        .add(MI.getOperand(1));
+      b.add(MI.getOperand(0)).add(MI.getOperand(1));
 
     b.add(MI.getOperand(2))
         .addReg(yreg)
@@ -350,16 +351,13 @@ bool AIEInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
     Register yreg;
     int offset;
     getYRegForNarrowReg(yreg, offset, wreg);
-    BuildMI(MBB, MI, DL, get(AIE::MOV_U20), AIE::r15)
-        .addImm(offset);
+    BuildMI(MBB, MI, DL, get(AIE::MOV_U20), AIE::r15).addImm(offset);
     auto b = BuildMI(MBB, MI, DL, get(AIE::VFPMUL));
     // Swap the first two operands if necessary
-    if(MI.getOpcode() == AIE::VFPMUL256GPR)
-        b.add(MI.getOperand(1))
-        .add(MI.getOperand(0));
+    if (MI.getOpcode() == AIE::VFPMUL256GPR)
+      b.add(MI.getOperand(1)).add(MI.getOperand(0));
     else // VFPMUL256...
-        b.add(MI.getOperand(0))
-        .add(MI.getOperand(1));
+      b.add(MI.getOperand(0)).add(MI.getOperand(1));
 
     b.addReg(yreg)
         .addReg(AIE::r15, RegState::Kill)
@@ -388,33 +386,29 @@ bool AIEInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
     getYRegForNarrowReg(y1reg, offset1, x1reg);
     getYRegForNarrowReg(y2reg, offset2, x2reg);
     assert(y1reg == y2reg);
-    BuildMI(MBB, MI, DL, get(AIE::MOV_U20), AIE::r15)
-        .addImm(offset1);
-    BuildMI(MBB, MI, DL, get(AIE::MOV_U20), AIE::r5)
-        .addImm(offset2);
+    BuildMI(MBB, MI, DL, get(AIE::MOV_U20), AIE::r15).addImm(offset1);
+    BuildMI(MBB, MI, DL, get(AIE::MOV_U20), AIE::r5).addImm(offset2);
     auto b = BuildMI(MBB, MI, DL, get(getVCMPforPseudoVCMP(MI.getOpcode())));
     // Swap the first two operands if necessary
-    switch(MI.getOpcode()) {
-      case AIE::VCMP512GPR_S16:
-      case AIE::VCMP512GPR_S32:
-      case AIE::VCMP512GPR_U8:
-      case AIE::VCMP512GPR_S8:
-        b.add(MI.getOperand(1))
-        .add(MI.getOperand(0));
-        break;
-      case AIE::VCMP512_S16:
-      case AIE::VCMP512_S32:
-      case AIE::VCMP512_U8:
-      case AIE::VCMP512_S8:
-        b.add(MI.getOperand(0))
-        .add(MI.getOperand(1));
+    switch (MI.getOpcode()) {
+    case AIE::VCMP512GPR_S16:
+    case AIE::VCMP512GPR_S32:
+    case AIE::VCMP512GPR_U8:
+    case AIE::VCMP512GPR_S8:
+      b.add(MI.getOperand(1)).add(MI.getOperand(0));
+      break;
+    case AIE::VCMP512_S16:
+    case AIE::VCMP512_S32:
+    case AIE::VCMP512_U8:
+    case AIE::VCMP512_S8:
+      b.add(MI.getOperand(0)).add(MI.getOperand(1));
     }
     b.addReg(y1reg)
         .addReg(AIE::r15, RegState::Kill) // xstart
-        .add(MI.getOperand(4)) // xoffs
-        .addReg(AIE::r5, RegState::Kill) // ystart
-        .add(MI.getOperand(5)) // yoffs
-        .add(MI.getOperand(6)); // conf
+        .add(MI.getOperand(4))            // xoffs
+        .addReg(AIE::r5, RegState::Kill)  // ystart
+        .add(MI.getOperand(5))            // yoffs
+        .add(MI.getOperand(6));           // conf
 
     MI.eraseFromParent();
     return true;
@@ -597,7 +591,8 @@ void AIEInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     BuildMI(MBB, I, DL, get(inst), DstReg).addReg(Reg, getKillRegState(true));
     return;
   } else
-    llvm_unreachable("Can't load this register from stack slot: is it virtual?");
+    llvm_unreachable(
+        "Can't load this register from stack slot: is it virtual?");
 
   // To load from a stack slot we generate a load indirect via the
   // stack pointer.  The actual offset will be an immediate, but for
@@ -654,26 +649,28 @@ std::optional<unsigned> AIEInstrInfo::getCombinedPostIncOpcode(
 }
 
 unsigned AIEInstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
-    unsigned Opcode = MI.getOpcode();
+  unsigned Opcode = MI.getOpcode();
 
-    switch (Opcode) {
-    default: { return get(Opcode).getSize(); }
-  // case TargetOpcode::EH_LABEL:
-  // case TargetOpcode::IMPLICIT_DEF:
-  // case TargetOpcode::KILL:
-  // case TargetOpcode::DBG_VALUE:
-  //   return 0;
-  // case AIE::PseudoCALL:
-  // case AIE::PseudoTAIL:
-  // case AIE::PseudoLLA:
-  //   return 8;
-  // case TargetOpcode::INLINEASM:
-  // case TargetOpcode::INLINEASM_BR: {
-  //   const MachineFunction &MF = *MI.getParent()->getParent();
-  //   const auto &TM = static_cast<const AIETargetMachine &>(MF.getTarget());
-  //   return getInlineAsmLength(MI.getOperand(0).getSymbolName(),
-  //                             *TM.getMCAsmInfo());
-  // }
+  switch (Opcode) {
+  default: {
+    return get(Opcode).getSize();
+  }
+    // case TargetOpcode::EH_LABEL:
+    // case TargetOpcode::IMPLICIT_DEF:
+    // case TargetOpcode::KILL:
+    // case TargetOpcode::DBG_VALUE:
+    //   return 0;
+    // case AIE::PseudoCALL:
+    // case AIE::PseudoTAIL:
+    // case AIE::PseudoLLA:
+    //   return 8;
+    // case TargetOpcode::INLINEASM:
+    // case TargetOpcode::INLINEASM_BR: {
+    //   const MachineFunction &MF = *MI.getParent()->getParent();
+    //   const auto &TM = static_cast<const AIETargetMachine &>(MF.getTarget());
+    //   return getInlineAsmLength(MI.getOperand(0).getSymbolName(),
+    //                             *TM.getMCAsmInfo());
+    // }
   }
 }
 
@@ -687,8 +684,7 @@ ArrayRef<std::pair<unsigned, const char *>>
 AIEInstrInfo::getSerializableDirectMachineOperandTargetFlags() const {
   using namespace AIEII;
   static const std::pair<unsigned, const char *> TargetFlags[] = {
-      {MO_CALL, "aie-call"},
-      {MO_GLOBAL, "aie-global"}};
+      {MO_CALL, "aie-call"}, {MO_GLOBAL, "aie-global"}};
   return ArrayRef(TargetFlags);
 }
 

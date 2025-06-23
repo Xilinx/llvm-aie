@@ -73,9 +73,12 @@ tablegen(LLVM AIE2PGenVarInstructionItin.inc -gen-aie-alternate-itinerary-emitte
 add_public_tablegen_target(AIECommonTableGen)
 
 add_llvm_target(AIECodeGen
-   AIE1ISelLowering.cpp
-   AIE1RegisterBankInfo.cpp
    AIE1AsmPrinter.cpp
+   AIE1InstrInfo.cpp
+   AIE1ISelLowering.cpp
+   AIE1LegalizerInfo.cpp
+   AIE1RegisterBankInfo.cpp
+   AIE1RegisterInfo.cpp
    AIEAddressSpaceFlattening.cpp
    AIEBaseAliasAnalysis.cpp
    AIEBaseAsmPrinter.cpp
@@ -102,12 +105,10 @@ add_llvm_target(AIECodeGen
    AIEGlobalCombinerPtrMods.cpp
    AIEHazardRecognizer.cpp
    AIEHazardRecognizerPRAS.cpp
-   AIEInstrInfo.cpp
    AIEInstructionSelector.cpp
    AIEInterBlockScheduling.cpp
    AIEISelDAGToDAG.cpp
    AIELegalizerHelper.cpp
-   AIE1LegalizerInfo.cpp
    AIELiveRegs.cpp
    AIEMachineAlignment.cpp
    AIEMachineBlockPlacement.cpp
@@ -123,7 +124,6 @@ add_llvm_target(AIECodeGen
    AIEPtrModOptimizer.cpp
    AIERegClassConstrainer.cpp
    AIERegMemEventTracker.cpp
-   AIERegisterInfo.cpp
    AIESlotCounts.cpp
    AIESplitInstructionRewriter.cpp
    AIESubRegConstrainer.cpp

@@ -17,8 +17,8 @@
 
 #include "AIE1ISelLowering.h"
 #include "AIE.h"
+#include "AIE1RegisterInfo.h"
 #include "AIEMachineFunctionInfo.h"
-#include "AIERegisterInfo.h"
 #include "AIESubtarget.h"
 #include "AIETargetMachine.h"
 #include "llvm/ADT/Statistic.h"

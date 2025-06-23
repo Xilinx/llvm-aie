@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEInstPrinter.h"
-#include "AIEInstrInfo.h"
+#include "AIE1InstrInfo.h"
 // #include "MCTargetDesc/AIEMCExpr.h"
 #include "Utils/AIEBaseInfo.h"
 #include "llvm/MC/MCAsmInfo.h"

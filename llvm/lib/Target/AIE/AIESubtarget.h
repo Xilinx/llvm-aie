@@ -16,9 +16,9 @@
 #define LLVM_LIB_TARGET_AIE_AIESUBTARGET_H
 
 #include "AIE1ISelLowering.h"
+#include "AIE1InstrInfo.h"
 #include "AIEBaseSubtarget.h"
 #include "AIEFrameLowering.h"
-#include "AIEInstrInfo.h"
 #include "llvm/CodeGen/GlobalISel/CallLowering.h"
 #include "llvm/CodeGen/GlobalISel/InstructionSelector.h"
 #include "llvm/CodeGen/GlobalISel/LegalizerInfo.h"

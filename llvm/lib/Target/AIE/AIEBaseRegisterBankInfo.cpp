@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEBaseRegisterBankInfo.h"
-#include "AIEInstrInfo.h"
-#include "AIERegisterInfo.h"
+#include "AIEBaseInstrInfo.h"
+#include "AIEBaseRegisterInfo.h"
 #include "MCTargetDesc/AIEMCTargetDesc.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/Support/Debug.h"

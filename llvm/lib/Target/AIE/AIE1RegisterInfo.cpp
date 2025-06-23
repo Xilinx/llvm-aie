@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AIERegisterInfo.h"
+#include "AIE1RegisterInfo.h"
 #include "AIE.h"
 #include "AIESubtarget.h"
 #include "MCTargetDesc/AIEMCTargetDesc.h"
@@ -34,18 +34,18 @@ using namespace llvm;
 #define DEBUG_TYPE "aie-reg-info"
 
 AIERegisterInfo::AIERegisterInfo(unsigned HwMode)
-    : AIEGenRegisterInfo(AIE::SP, /*DwarfFlavour*/0, /*EHFlavor*/0,
-                           /*PC*/0, HwMode) {}
+    : AIEGenRegisterInfo(AIE::SP, /*DwarfFlavour*/ 0, /*EHFlavor*/ 0,
+                         /*PC*/ 0, HwMode) {}
 
 const MCPhysReg *
 AIERegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
-  //auto &Subtarget = MF->getSubtarget<AIESubtarget>();
+  // auto &Subtarget = MF->getSubtarget<AIESubtarget>();
 
   return CSR_AIE1_SaveList;
 }
 
 BitVector AIERegisterInfo::getReservedRegs(const MachineFunction &MF) const {
-  //const TargetFrameLowering *TFI = getFrameLowering(MF);
+  // const TargetFrameLowering *TFI = getFrameLowering(MF);
   BitVector Reserved(getNumRegs());
 
   // Use markSuperRegs to ensure any register aliases are also reserved
@@ -70,8 +70,8 @@ const uint32_t *AIERegisterInfo::getNoPreservedMask() const {
 }
 
 bool AIERegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
-                                            int SPAdj, unsigned FIOperandNum,
-                                            RegScavenger *RS) const {
+                                          int SPAdj, unsigned FIOperandNum,
+                                          RegScavenger *RS) const {
   assert(SPAdj == 0 && "Unexpected non-zero SPAdj value");
 
   MachineInstr &MI = *II;
@@ -96,7 +96,8 @@ bool AIERegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   int OffsetAdjustment = MF.getFrameInfo().getOffsetAdjustment();
   int LocalFrameSize = MF.getFrameInfo().getLocalFrameSize();
 
-  LLVM_DEBUG(dbgs() << "eliminateFrameIndex in Function : " << MF.getName() << "\n");
+  LLVM_DEBUG(dbgs() << "eliminateFrameIndex in Function : " << MF.getName()
+                    << "\n");
   LLVM_DEBUG(dbgs() << "FrameInfo:\n");
   LLVM_DEBUG(MF.getFrameInfo().print(MF, dbgs()));
 
@@ -170,14 +171,14 @@ bool AIERegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     // something on the stack.  We need to generate and appropriate instruction
     // sequence depending on the amount of offset, fortunately, this is handled
     // by adjustReg already.
-    int FrameIndexOffset = MI.getOperand(FIOperandNum+1).getImm();
+    int FrameIndexOffset = MI.getOperand(FIOperandNum + 1).getImm();
     int RealOffset = Offset + FrameIndexOffset;
 
     if (FrameReg == AIE::SP) {
       // Can't move directly from SP to PTR.
       Register ScratchReg = MRI.createVirtualRegister(&AIE::GPRRegClass);
       BuildMI(MBB, II, DL, TII->get(AIE::MV_SPECIAL2R), ScratchReg)
-        .addReg(FrameReg);
+          .addReg(FrameReg);
       BuildMI(MBB, II, DL, TII->get(AIE::MOV), TargetPtrReg).addReg(ScratchReg);
     } else
       BuildMI(MBB, II, DL, TII->get(AIE::MOV), TargetPtrReg).addReg(FrameReg);
@@ -195,13 +196,13 @@ bool AIERegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   Register ScratchReg = MRI.createVirtualRegister(&AIE::GPRRegClass);
   Register PtrReg = MRI.createVirtualRegister(&AIE::PTRRegClass);
 
-  if(Offset == 0 && FrameReg != AIE::SP) {
+  if (Offset == 0 && FrameReg != AIE::SP) {
     // Use the frame pointer directly.
     PtrReg = FrameReg;
   } else {
     if (FrameReg == AIE::SP) {
       BuildMI(MBB, II, DL, TII->get(AIE::MV_SPECIAL2R), ScratchReg)
-        .addReg(FrameReg);
+          .addReg(FrameReg);
       BuildMI(MBB, II, DL, TII->get(AIE::MOV), PtrReg).addReg(ScratchReg);
     } else
       BuildMI(MBB, II, DL, TII->get(AIE::MOV), PtrReg).addReg(FrameReg);
@@ -209,10 +210,8 @@ bool AIERegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     AIEFrameLowering::adjustReg(TII, MBB, II, DL, PtrReg, Offset);
   }
 
-  MI.getOperand(FIOperandNum).ChangeToRegister(PtrReg,
-                                               false,
-                                               false,
-                                               true/*IsKill*/);
+  MI.getOperand(FIOperandNum)
+      .ChangeToRegister(PtrReg, false, false, true /*IsKill*/);
   return false;
 }
 
@@ -231,11 +230,10 @@ AIERegisterInfo::getPointerRegClass(const MachineFunction &MF,
   return &AIE::PTRRegClass;
 }
 
-
 const uint32_t *
-AIERegisterInfo::getCallPreservedMask(const MachineFunction & MF,
-                                        CallingConv::ID /*CC*/) const {
-  //auto &Subtarget = MF.getSubtarget<AIESubtarget>();
+AIERegisterInfo::getCallPreservedMask(const MachineFunction &MF,
+                                      CallingConv::ID /*CC*/) const {
+  // auto &Subtarget = MF.getSubtarget<AIESubtarget>();
   return CSR_AIE1_RegMask;
 }
 
@@ -256,7 +254,7 @@ bool AIERegisterInfo::isTypeLegalForClass(const TargetRegisterClass &RC,
 
   // The stack pointer is copied to a virtual register when accessing the stack,
   // thus we need to add handling for it here, too
-  if (T == LLT::pointer(0,20) && RC.getID() == AIE::SP_onlyRegClassID)
+  if (T == LLT::pointer(0, 20) && RC.getID() == AIE::SP_onlyRegClassID)
     return true;
 
   // Copying a s20 type to/from a physical register may only copy 20-bits,
