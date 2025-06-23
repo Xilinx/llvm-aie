@@ -386,7 +386,7 @@ trackPtrUpdateChain(const Value *LastUpdate, const Value *TargetPointer) {
       // The result pointer and the first operand have
       // the same value
       LastUpdate = GEP->getPointerOperand();
-    } else if (auto *PHI = dyn_cast<PHINode>(LastUpdate)) {
+    } else if (isa<PHINode>(LastUpdate)) {
       // Reached final destination.
       if (LastCalls) {
         ChainInfo.PointerUpdates = ChainInfo.TotalPointerUpdates - *LastCalls;
