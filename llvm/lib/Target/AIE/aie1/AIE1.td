@@ -22,22 +22,16 @@ def ptr0 : PtrValueType<i20, 0>;
 // Registers, calling conventions, instruction descriptions.
 //===----------------------------------------------------------------------===//
 
-include "AIERegisterInfo.td"
-include "AIESchedule.td"
-include "AIECallingConv.td"
-include "AIEInstrInfo.td"
-include "AIERegisterBanks.td"
+include "aie1/AIE1RegisterInfo.td"
+include "aie1/AIE1Schedule.td"
+include "aie1/AIE1CallingConv.td"
+include "aie1/AIE1InstrInfo.td"
+include "aie1/AIE1RegisterBanks.td"
 
 class AIEGenericInstruction : GenericInstruction {
   let Namespace = "AIE";
 }
 include "AIEInstrGISel.td"
-
-//===----------------------------------------------------------------------===//
-// Named operands for CSR instructions.
-//===----------------------------------------------------------------------===//
-
-//include "AIESystemOperands.td"
 
 //===----------------------------------------------------------------------===//
 // AIEngine processors supported.

@@ -6,7 +6,7 @@
 # (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 add_llvm_component_group(AIE)
 
-set(LLVM_TARGET_DEFINITIONS AIE.td)
+set(LLVM_TARGET_DEFINITIONS aie1/AIE1.td)
 
 tablegen(LLVM AIEGenAsmMatcher.inc -gen-asm-matcher)
 tablegen(LLVM AIEGenAsmWriter.inc -gen-asm-writer)

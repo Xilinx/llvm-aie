@@ -171,8 +171,8 @@ def call_symbol : Operand<i32> {
   let ParserMatchClass = CallSymbol;
 }
 
-include "AIEInstrFormats.td"
-include "AIECompositeFormats.td"
+include "aie1/AIE1InstrFormats.td"
+include "aie1/AIE1CompositeFormats.td"
 
 // Patterns for Vector registers with different types.
 def V16I8:   PatLeaf<(v16i8 VEC128:$R)>;
