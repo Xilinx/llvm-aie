@@ -13,8 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIE.h"
-#include "AIE2TargetMachine.h"
-#include "AIETargetMachine.h"
+#include "aie1/AIE1TargetMachine.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"

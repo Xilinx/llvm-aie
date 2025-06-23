@@ -9,7 +9,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIETargetObjectFile.h"
-#include "AIETargetMachine.h"
+#include "aie1/AIE1TargetMachine.h"
 #include "llvm/BinaryFormat/ELF.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSectionELF.h"

@@ -1,10 +1,10 @@
-//===-- AIESubtarget.h - Define Subtarget for the AIE -------*- C++ -*-===//
+//===-- AIE1Subtarget.h - Define Subtarget for the AIE -------*- C++ -*-===//
 //
 // This file is licensed under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -12,11 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_LIB_TARGET_AIE_AIESUBTARGET_H
-#define LLVM_LIB_TARGET_AIE_AIESUBTARGET_H
+#ifndef LLVM_LIB_TARGET_AIE_AIE1SUBTARGET_H
+#define LLVM_LIB_TARGET_AIE_AIE1SUBTARGET_H
 
 #include "AIEBaseSubtarget.h"
-#include "AIEFrameLowering.h"
+#include "aie1/AIE1FrameLowering.h"
 #include "aie1/AIE1ISelLowering.h"
 #include "aie1/AIE1InstrInfo.h"
 #include "llvm/CodeGen/GlobalISel/CallLowering.h"
@@ -119,4 +119,4 @@ public:
 };
 } // namespace llvm
 
-#endif // LLVM_LIB_TARGET_AIE_AIESUBTARGET_H
+#endif // LLVM_LIB_TARGET_AIE_AIE1SUBTARGET_H

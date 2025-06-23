@@ -12,9 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AIETargetMachine.h"
+#include "AIE1TargetMachine.h"
 #include "AIE.h"
-#include "AIE2TargetMachine.h"
 #include "AIEDumpArtifacts.h"
 #include "AIEFinalizeBundle.h"
 #include "AIEMachineBlockPlacement.h"

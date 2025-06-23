@@ -14,11 +14,11 @@
 
 #include "AIE1Subtarget.h"
 #include "AIE.h"
+#include "AIE1FrameLowering.h"
+#include "AIE1LegalizerInfo.h"
+#include "AIE1RegisterBankInfo.h"
+#include "AIE1TargetMachine.h"
 #include "AIECallLowering.h"
-#include "AIEFrameLowering.h"
-#include "AIETargetMachine.h"
-#include "aie1/AIE1LegalizerInfo.h"
-#include "aie1/AIE1RegisterBankInfo.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/MC/TargetRegistry.h"
 

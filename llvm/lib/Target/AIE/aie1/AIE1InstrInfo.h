@@ -1,10 +1,10 @@
-//===-- AIEInstrInfo.h - AIE Instruction Information --------*- C++ -*-===//
+//===-- AIE1InstrInfo.h - AIE Instruction Information --------*- C++ -*-===//
 //
 // This file is licensed under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_LIB_TARGET_AIE_AIEINSTRINFO_H
-#define LLVM_LIB_TARGET_AIE_AIEINSTRINFO_H
+#ifndef LLVM_LIB_TARGET_AIE_AIE1INSTRINFO_H
+#define LLVM_LIB_TARGET_AIE_AIE1INSTRINFO_H
 
 #include "AIE.h"
 #include "AIE1RegisterInfo.h"
@@ -95,4 +95,4 @@ protected:
   getSpillPseudoExpandInfo(const MachineInstr &MI) const override;
 };
 } // namespace llvm
-#endif
+#endif // LLVM_LIB_TARGET_AIE_AIE1INSTRINFO_H

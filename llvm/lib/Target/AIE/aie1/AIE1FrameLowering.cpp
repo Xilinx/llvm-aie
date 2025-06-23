@@ -12,9 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AIEFrameLowering.h"
+#include "AIE1FrameLowering.h"
 #include "AIEBaseRegisterInfo.h"
-#include "AIEMachineFunctionInfo.h"
 #include "aie1/AIE1Subtarget.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -38,14 +37,14 @@ void AIEFrameLowering::adjustReg(const TargetInstrInfo *TII,
   if (Val == 0)
     return;
 
-  if (isInt<4+2>(Val) && (Val % 4 == 0)) {
+  if (isInt<4 + 2>(Val) && (Val % 4 == 0)) {
     // Use an nrm_imm instruction if we can.  However, it encodes a 6
     // bit number with 2 LSBs being zero.
     BuildMI(MBB, MBBI, DL, TII->get(AIE::PADDA_nrm_imm), Reg)
         .addReg(Reg)
         .addImm(Val)
         .setMIFlag(Flag);
-  } else if(isInt<12>(Val)) {
+  } else if (isInt<12>(Val)) {
     Register ScratchReg = MRI.createVirtualRegister(&AIE::MODRegClass);
     BuildMI(MBB, MBBI, DL, TII->get(AIE::MOV_S12), ScratchReg)
         .addImm(Val)
@@ -58,11 +57,11 @@ void AIEFrameLowering::adjustReg(const TargetInstrInfo *TII,
     Register ImmReg = MRI.createVirtualRegister(&AIE::GPRRegClass);
     Register ModReg = MRI.createVirtualRegister(&AIE::MODRegClass);
     BuildMI(MBB, MBBI, DL, TII->get(AIE::MOV_S20), ImmReg)
-      .addImm(Val)
-      .setMIFlag(Flag);
+        .addImm(Val)
+        .setMIFlag(Flag);
     BuildMI(MBB, MBBI, DL, TII->get(AIE::MOV), ModReg)
-      .addReg(ImmReg, RegState::Kill)
-      .setMIFlag(Flag);
+        .addReg(ImmReg, RegState::Kill)
+        .setMIFlag(Flag);
     BuildMI(MBB, MBBI, DL, TII->get(AIE::PADDA_nrm), Reg)
         .addReg(Reg)
         .addReg(ModReg)
@@ -85,41 +84,41 @@ void AIEFrameLowering::adjustSPReg(MachineBasicBlock &MBB,
 
   // Note that we assume stack is 32-byte aligned.
   assert(Val % 32 == 0); // We only move the stack 32 bytes at a time.
-  if (isInt<5+5>(Val)) {
+  if (isInt<5 + 5>(Val)) {
     // Use an sp_imm instruction if we can.  However, it encodes a 10
     // bit number with 5 LSBs being zero.
     BuildMI(MBB, MBBI, DL, TII->get(AIE::PADDA_sp_imm))
         .addImm(Val)
         .setMIFlag(Flag);
-  } else if(isInt<12>(Val)) {
+  } else if (isInt<12>(Val)) {
     Register ScratchReg = MRI.createVirtualRegister(&AIE::MODRegClass);
     BuildMI(MBB, MBBI, DL, TII->get(AIE::MOV_S12), ScratchReg)
         .addImm(Val)
         .setMIFlag(Flag);
     BuildMI(MBB, MBBI, DL, TII->get(AIE::PADDA_sp))
-      .addReg(ScratchReg, RegState::Kill)
-      .setMIFlag(Flag);
+        .addReg(ScratchReg, RegState::Kill)
+        .setMIFlag(Flag);
   } else if (isInt<20>(Val)) {
     Register ImmReg = MRI.createVirtualRegister(&AIE::GPRRegClass);
     Register ModReg = MRI.createVirtualRegister(&AIE::MODRegClass);
     BuildMI(MBB, MBBI, DL, TII->get(AIE::MOV_S20), ImmReg)
-      .addImm(Val)
-      .setMIFlag(Flag);
+        .addImm(Val)
+        .setMIFlag(Flag);
     BuildMI(MBB, MBBI, DL, TII->get(AIE::MOV), ModReg)
-      .addReg(ImmReg, RegState::Kill)
-      .setMIFlag(Flag);
+        .addReg(ImmReg, RegState::Kill)
+        .setMIFlag(Flag);
     BuildMI(MBB, MBBI, DL, TII->get(AIE::PADDA_sp))
-      .addReg(ModReg, RegState::Kill)
-      .setMIFlag(Flag);
+        .addReg(ModReg, RegState::Kill)
+        .setMIFlag(Flag);
   } else {
-      LLVM_DEBUG(dbgs() << "Adjust Stack by " << Val << " bytes\n.");
-      report_fatal_error("adjustSPReg cannot yet handle adjustments > +-2^19 bytes");
+    LLVM_DEBUG(dbgs() << "Adjust Stack by " << Val << " bytes\n.");
+    report_fatal_error(
+        "adjustSPReg cannot yet handle adjustments > +-2^19 bytes");
   }
 }
 
-
 void AIEFrameLowering::emitPrologue(MachineFunction &MF,
-                                      MachineBasicBlock &MBB) const {
+                                    MachineBasicBlock &MBB) const {
   assert(&MF.front() == &MBB && "Shrink-wrapping not yet supported");
 
   MachineFrameInfo &MFI = MF.getFrameInfo();
@@ -172,7 +171,7 @@ void AIEFrameLowering::emitPrologue(MachineFunction &MF,
 }
 
 void AIEFrameLowering::emitEpilogue(MachineFunction &MF,
-                                      MachineBasicBlock &MBB) const {
+                                    MachineBasicBlock &MBB) const {
   MachineFrameInfo &MFI = MF.getFrameInfo();
   MachineRegisterInfo &MRI = MF.getRegInfo();
 
@@ -200,8 +199,8 @@ void AIEFrameLowering::emitEpilogue(MachineFunction &MF,
         .addReg(FPReg)
         .setMIFlag(MachineInstr::FrameSetup);
     BuildMI(MBB, MBBI, DL, TII->get(AIE::MV_R2SPECIAL), SPReg)
-    .addReg(ScratchReg)
-    .setMIFlag(MachineInstr::FrameSetup);
+        .addReg(ScratchReg)
+        .setMIFlag(MachineInstr::FrameSetup);
 
     adjustSPReg(MBB, LastFrameDestroy, DL, -StackSize,
                 MachineInstr::FrameDestroy);

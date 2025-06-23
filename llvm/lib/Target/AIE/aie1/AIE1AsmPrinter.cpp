@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -14,9 +14,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIE.h"
+#include "AIE1TargetMachine.h"
 #include "AIE2AsmPrinter.h"
 #include "AIEBaseAsmPrinter.h"
-#include "AIETargetMachine.h"
 #include "InstPrinter/AIEInstPrinter.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
