@@ -34,7 +34,7 @@ void AIE2FrameLowering::adjustSPReg(MachineBasicBlock &MBB,
                                     MachineBasicBlock::iterator MBBI,
                                     const DebugLoc &DL, int64_t StackPtrIncr,
                                     MachineInstr::MIFlag Flag) const {
-  auto *TII = static_cast<const AIEInstrInfo *>(STI.getInstrInfo());
+  auto *TII = static_cast<const AIE2InstrInfo *>(STI.getInstrInfo());
 
   if (StackPtrIncr == 0)
     return;
@@ -66,7 +66,7 @@ void AIE2FrameLowering::adjustReg(MachineBasicBlock &MBB,
                                   int64_t StackPtrIncr,
                                   MachineInstr::MIFlag Flag) const {
   MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
-  auto *TII = static_cast<const AIEInstrInfo *>(STI.getInstrInfo());
+  auto *TII = static_cast<const AIE2InstrInfo *>(STI.getInstrInfo());
 
   if (StackPtrIncr == 0)
     return;

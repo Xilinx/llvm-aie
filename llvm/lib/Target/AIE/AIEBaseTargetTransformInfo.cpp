@@ -9,7 +9,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEBaseTargetTransformInfo.h"
-#include "Utils/AIELoopUtils.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/BasicTTIImpl.h"
 #include "llvm/IR/Instruction.h"

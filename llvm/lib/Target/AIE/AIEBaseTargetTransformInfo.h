@@ -18,7 +18,7 @@
 #ifndef LLVM_LIB_TARGET_AIE_AIEBASETARGETTRANSFORMINFO_H
 #define LLVM_LIB_TARGET_AIE_AIEBASETARGETTRANSFORMINFO_H
 
-#include "AIESubtarget.h" // For AIEBaseSubTarget
+#include "aie1/AIE1Subtarget.h" // For AIEBaseSubTarget
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/BasicTTIImpl.h"
 

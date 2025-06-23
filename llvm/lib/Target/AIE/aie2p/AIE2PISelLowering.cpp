@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIE2PISelLowering.h"
-#include "AIESubtarget.h"
+#include "AIEBaseSubtarget.h"
 #include "MCTargetDesc/aie2p/AIE2PMCTargetDesc.h"
 #include "llvm/IR/IntrinsicsAIE2P.h"
 
@@ -53,14 +53,14 @@ namespace {
 bool isTyNameBfp16(StringRef TyName) {
   if (TyName.ends_with("struct.v64bfp16ebs16"))
     return true;
-  else if (TyName.ends_with("struct.v64bfp16ebs8"))
+  if (TyName.ends_with("struct.v64bfp16ebs8"))
     return true;
-  else if (TyName.ends_with("struct.v128bfp16ebs16"))
+  if (TyName.ends_with("struct.v128bfp16ebs16"))
     return true;
-  else if (TyName.ends_with("struct.v128bfp16ebs8"))
+  if (TyName.ends_with("struct.v128bfp16ebs8"))
     return true;
-  else
-    return false;
+
+  return false;
 }
 } // namespace
 bool AIE2PTargetLowering::functionArgumentNeedsConsecutiveRegisters(

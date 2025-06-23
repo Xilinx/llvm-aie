@@ -8,16 +8,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AIE.h"
-#include "AIE2.h"
-#include "AIE2InstrInfo.h"
-#include "AIE2Subtarget.h"
-#include "AIE2TargetMachine.h"
-#include "AIEBundle.h"
-#include "AIESubtarget.h"
-
-#include "AIEBundle.h"
 #include "AIEMachineAlignment.h"
+#include "AIE.h"
+#include "AIEBundle.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineInstrBundle.h"
 

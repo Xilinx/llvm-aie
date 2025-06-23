@@ -19,7 +19,7 @@
 #include "AIE2FrameLowering.h"
 #include "AIE2ISelLowering.h"
 #include "AIE2InstrInfo.h"
-#include "AIESubtarget.h"
+#include "AIEBaseSubtarget.h"
 #include "Utils/AIEBaseInfo.h"
 #include "llvm/CodeGen/GlobalISel/CallLowering.h"
 #include "llvm/CodeGen/GlobalISel/InstructionSelector.h"

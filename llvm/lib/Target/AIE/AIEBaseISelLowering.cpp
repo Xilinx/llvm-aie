@@ -14,7 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEBaseISelLowering.h"
-#include "AIESubtarget.h" // For AIEBaseSubTarget
+#include "AIEBaseSubtarget.h"
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
 #include "MCTargetDesc/AIEMCTargetDesc.h"
 #include "MCTargetDesc/aie2p/AIE2PMCTargetDesc.h"

@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AIESubtarget.h"
+#include "AIE1Subtarget.h"
 #include "AIE.h"
 #include "AIECallLowering.h"
 #include "AIEFrameLowering.h"
@@ -32,10 +32,12 @@ using namespace llvm;
 
 void AIESubtarget::anchor() {}
 
-AIESubtarget &AIESubtarget::initializeSubtargetDependencies(
-    const Triple &TT, StringRef CPU, StringRef FS, StringRef ABIName) {
+AIESubtarget &AIESubtarget::initializeSubtargetDependencies(const Triple &TT,
+                                                            StringRef CPU,
+                                                            StringRef FS,
+                                                            StringRef ABIName) {
   if (CPUName.empty())
-      CPUName = "aie";
+    CPUName = "aie";
   ParseSubtargetFeatures(CPUName, CPUName, FS);
 
   return *this;

@@ -14,7 +14,7 @@
 
 #include "AIE1RegisterInfo.h"
 #include "AIE.h"
-#include "AIESubtarget.h"
+#include "AIE1Subtarget.h"
 #include "MCTargetDesc/AIEMCTargetDesc.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
