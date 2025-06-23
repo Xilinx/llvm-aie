@@ -3406,7 +3406,3 @@ bool llvm::matchBroadcastToShl(MachineInstr &MI, MachineRegisterInfo &MRI,
 
   return true;
 }
-
-void llvm::foundPattern(MachineInstr &MemI) {
-  dbgs() << "Found Custom Pattern " << MemI;
-}

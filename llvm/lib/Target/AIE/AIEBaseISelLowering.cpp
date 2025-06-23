@@ -139,12 +139,22 @@ const std::array<std::array<MCPhysReg, 2>, 4> SparseRegPairs = {
      {AIE2::x1, AIE2::q1},
      {AIE2::x3, AIE2::q3}}};
 }
-ArrayRef<MCPhysReg> AllocateSparseRegPair(CCState &State) {
-  for (const std::array<MCPhysReg, 2> &RegPair : SparseRegPairs) {
-    if (unsigned Block = State.AllocateRegBlock(RegPair, 2))
+
+template <typename RegSetType>
+static ArrayRef<MCPhysReg> allocateRegs(CCState &State,
+                                        const RegSetType &RegSet) {
+  constexpr unsigned NumRegs =
+      std::tuple_size<typename RegSetType::value_type>::value;
+
+  for (const auto &RegPair : RegSet) {
+    if (State.AllocateRegBlock(RegPair, NumRegs))
       return RegPair;
   }
   return ArrayRef<MCPhysReg>();
+}
+
+static ArrayRef<MCPhysReg> allocateSparseRegPair(CCState &State) {
+  return allocateRegs(State, SparseRegPairs);
 }
 
 namespace {
@@ -171,19 +181,11 @@ const std::array<std::array<MCPhysReg, 4>, 6> Bfp16RegSet1052Bit = {
      {AIE2P::x10, AIE2P::x11, AIE2P::e10, AIE2P::e11}}};
 } // namespace
 
-ArrayRef<MCPhysReg> AllocateBfp16RegPair(CCState &State) {
-  for (const std::array<MCPhysReg, 2> &RegPair : Bfp16RegPairs576Bit) {
-    if (unsigned Block = State.AllocateRegBlock(RegPair, 2))
-      return RegPair;
-  }
-  return ArrayRef<MCPhysReg>();
+static ArrayRef<MCPhysReg> allocateBfp16RegPair(CCState &State) {
+  return allocateRegs(State, Bfp16RegPairs576Bit);
 }
-ArrayRef<MCPhysReg> AllocateBfp16RegSet(CCState &State) {
-  for (const std::array<MCPhysReg, 4> &RegSet : Bfp16RegSet1052Bit) {
-    if (unsigned Block = State.AllocateRegBlock(RegSet, 4))
-      return RegSet;
-  }
-  return ArrayRef<MCPhysReg>();
+static ArrayRef<MCPhysReg> allocateBfp16RegSet(CCState &State) {
+  return allocateRegs(State, Bfp16RegSet1052Bit);
 }
 static bool CC_AIE2_SPARSE(unsigned ValNo, MVT ValVT, MVT LocVT,
                            CCValAssign::LocInfo LocInfo,
@@ -201,7 +203,7 @@ static bool CC_AIE2_SPARSE(unsigned ValNo, MVT ValVT, MVT LocVT,
     // Allocate both the pending X register, and the current mask register.
     CCValAssign VecLoc = State.getPendingLocs().front();
     State.getPendingLocs().clear();
-    auto SparseRegPair = AllocateSparseRegPair(State);
+    auto SparseRegPair = allocateSparseRegPair(State);
     if (!SparseRegPair.empty()) {
       auto VecReg = SparseRegPair.front();
       auto MaskReg = SparseRegPair.back();
@@ -241,7 +243,7 @@ static bool CC_AIE2P_BFP16(unsigned ValNo, MVT ValVT, MVT LocVT,
       // Allocate both the pending X register, and the current exponent
       // register.
       State.getPendingLocs().clear();
-      auto BFP16RegPair = AllocateBfp16RegPair(State);
+      auto BFP16RegPair = allocateBfp16RegPair(State);
       if (!BFP16RegPair.empty()) {
         auto VecReg = BFP16RegPair.front();
         auto ExponentReg = BFP16RegPair.back();
@@ -266,7 +268,7 @@ static bool CC_AIE2P_BFP16(unsigned ValNo, MVT ValVT, MVT LocVT,
       CCValAssign MantissaVecLoc1 = State.getPendingLocs()[1];
       CCValAssign ExponentVecLoc1 = State.getPendingLocs()[2];
       State.getPendingLocs().clear();
-      auto BFP16RegSet = AllocateBfp16RegSet(State);
+      auto BFP16RegSet = allocateBfp16RegSet(State);
       if (!BFP16RegSet.empty()) {
         auto VecReg1 = BFP16RegSet.front();
         auto VecReg2 = BFP16RegSet[1];
