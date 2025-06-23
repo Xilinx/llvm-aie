@@ -55,6 +55,11 @@ public:
     return getSelectedDescriptor(MI).value_or(&MI->getDesc());
   }
 
+  const MCInstrDesc *getDesc(const MachineInstr *MI) const {
+    return getSelectedDescriptor(const_cast<MachineInstr *>(MI))
+        .value_or(&MI->getDesc());
+  }
+
   // Return the alternate opcode for the given multi-opcode instruction.
   std::optional<unsigned> getSelectedOpcode(MachineInstr *MI) const {
     if (auto It = AlternateDescs.find(MI); It != AlternateDescs.end())

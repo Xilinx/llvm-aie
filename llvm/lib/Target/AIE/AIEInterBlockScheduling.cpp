@@ -163,8 +163,7 @@ MachineInstr *checkResourceConflictsBottomUp(
     if (BottomUpCycle >= HR.getConflictHorizon())
       break;
     for (MachineInstr *MI : B.getInstrs()) {
-      if (HR.getHazardType(Scoreboard, MI, *SelectedDescriptors.getDesc(MI),
-                           -BottomUpCycle)) {
+      if (HR.getHazardType(Scoreboard, MI, -BottomUpCycle)) {
         DEBUG_LOOPAWARE(dbgs() << "Conflicting MI at Bottom-up cycle="
                                << BottomUpCycle << ": " << *MI);
         return MI;
@@ -194,8 +193,7 @@ MachineInstr *checkResourceConflictsTopDown(
   MachineInstr *ConflictMI = nullptr;
   for (const MachineBundle &B : SuccBundles) {
     for (MachineInstr *MI : B.getInstrs()) {
-      if (HR.getHazardType(Scoreboard, MI, *SelectedDescriptors.getDesc(MI),
-                           0)) {
+      if (HR.getHazardType(Scoreboard, MI, 0)) {
         DEBUG_LOOPAWARE(dbgs() << "Conflicting MI at Top cycle=" << TopCycle
                                << ": " << *MI);
         ConflictMI = MI;

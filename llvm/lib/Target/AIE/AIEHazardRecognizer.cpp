@@ -361,7 +361,7 @@ AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
     return NoopHazard;
   }
 
-  return getHazardType(Scoreboard, MI, MI->getDesc(), DeltaCycles);
+  return getHazardType(Scoreboard, MI, DeltaCycles);
 }
 
 bool AIEHazardRecognizer::conflict(const AIEHazardRecognizer &Other,
@@ -464,6 +464,14 @@ ScheduleHazardRecognizer::HazardType AIEHazardRecognizer::getHazardType(
   return getHazardType(TheScoreboard, Desc, getMemoryBanks(MI),
                        getMemoryObjectsBits(MI), MI->operands(),
                        MI->getMF()->getRegInfo(), DeltaCycles);
+}
+
+ScheduleHazardRecognizer::HazardType AIEHazardRecognizer::getHazardType(
+    const ResourceScoreboard<FuncUnitWrapper> &TheScoreboard,
+    const MachineInstr *MI, int DeltaCycles) const {
+  return getHazardType(TheScoreboard, *SelectedAltDescs.getDesc(MI),
+                       getMemoryBanks(MI), getMemoryObjectsBits(MI),
+                       MI->operands(), MI->getMF()->getRegInfo(), DeltaCycles);
 }
 
 // These functions interpret the itinerary, translating InstrStages
