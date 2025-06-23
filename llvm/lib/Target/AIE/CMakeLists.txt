@@ -73,12 +73,6 @@ tablegen(LLVM AIE2PGenVarInstructionItin.inc -gen-aie-alternate-itinerary-emitte
 add_public_tablegen_target(AIECommonTableGen)
 
 add_llvm_target(AIECodeGen
-   AIE1AsmPrinter.cpp
-   AIE1InstrInfo.cpp
-   AIE1ISelLowering.cpp
-   AIE1LegalizerInfo.cpp
-   AIE1RegisterBankInfo.cpp
-   AIE1RegisterInfo.cpp
    AIEAddressSpaceFlattening.cpp
    AIEBaseAliasAnalysis.cpp
    AIEBaseAsmPrinter.cpp
@@ -149,6 +143,13 @@ add_llvm_target(AIECodeGen
    ReservedRegsLICM.cpp
    AIEOutlineMemoryGEP.cpp
    AIEWawRegRewriter.cpp
+   aie1/AIE1AsmPrinter.cpp
+   aie1/AIE1AsmPrinter.cpp
+   aie1/AIE1InstrInfo.cpp
+   aie1/AIE1ISelLowering.cpp
+   aie1/AIE1LegalizerInfo.cpp
+   aie1/AIE1RegisterBankInfo.cpp
+   aie1/AIE1RegisterInfo.cpp
    aie2p/AIE2PSubtarget.cpp
    aie2p/AIE2PTargetMachine.cpp
    aie2p/AIE2PTargetTransformInfo.cpp
