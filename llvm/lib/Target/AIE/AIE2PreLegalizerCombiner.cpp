@@ -152,6 +152,7 @@ unsigned getVInsertScalarSize(unsigned IntrinsicID) {
   case Intrinsic::aie2_vinsert8_I512:
     return 8;
   case Intrinsic::aie2_vinsert16_I512:
+  case Intrinsic::aie2_vinsert16_bf512:
     return 16;
   case Intrinsic::aie2_vinsert32_I512:
     return 32;
@@ -188,11 +189,11 @@ AIE2PreLegalizerCombinerImpl::getVectorInsertIndices(
     if (!Cst ||
         !RegMap.try_emplace(Cst->Value.getZExtValue(), SclSrcReg).second)
       return {};
-    CurMI = getDefIgnoringCopies(SrcReg, MRI);
+    CurMI = getDefIgnoringCopiesAndBitcasts(SrcReg, false, MRI);
 
     // Combining Set and Extract to fetch next VInsert
     if (IsSet(CurMI) && tryToCombineSetExtract(*CurMI))
-      CurMI = getDefIgnoringCopies(SrcReg, MRI);
+      CurMI = getDefIgnoringCopiesAndBitcasts(SrcReg, false, MRI);
   }
 
   // For 128/256-bit vectors, not all lanes are explicitly defined. If the
@@ -392,6 +393,7 @@ bool AIE2PreLegalizerCombinerImpl::tryToCombineIntrinsic(
   }
   case Intrinsic::aie2_vinsert8_I512:
   case Intrinsic::aie2_vinsert16_I512:
+  case Intrinsic::aie2_vinsert16_bf512:
   case Intrinsic::aie2_vinsert32_I512: {
     return tryToCombineVectorInserts(MI, getVInsertScalarSize(IntrinsicID));
   }

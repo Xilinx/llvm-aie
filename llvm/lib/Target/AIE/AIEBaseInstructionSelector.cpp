@@ -677,7 +677,8 @@ bool AIEBaseInstructionSelector::canCombineCONVLoad(MachineInstr &MemOp,
 bool AIEBaseInstructionSelector::selectG_AIE_LOAD_CONV(
     MachineInstr &CONVI, MachineRegisterInfo &MRI) {
   Register LoadResult = (std::next(CONVI.uses().begin()))->getReg();
-  MachineInstr *LoadOp = getDefIgnoringCopiesAndBitcasts(LoadResult, MRI);
+  MachineInstr *LoadOp =
+      getDefIgnoringCopiesAndBitcasts(LoadResult, false, MRI);
   assert(LoadOp && "Expected SSA.");
   bool ShouldAdvanceOp = false;
 

@@ -1638,7 +1638,6 @@ AIE2InstrInfo::getVExtractOpInfo(const MachineInstr &MI) const {
   case Intrinsic::aie2_ext_I512_I1024:
   case Intrinsic::aie2_ext_I256_I1024:
 
-  case Intrinsic::aie2_ext_bf256_bf512:
   case Intrinsic::aie2_ext_bf512_bf1024:
   case Intrinsic::aie2_ext_bf256_bf1024:
 

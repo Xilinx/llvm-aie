@@ -511,9 +511,9 @@ INTRINSIC(v8cint32) concat(v4cint32 a0, v4cint32 a1) {
 // Extract 256-bit portion from 512-bit register
 INTRINSIC(v16bfloat16) extract_v16bfloat16(v32bfloat16 a, int idx) {
   if (idx == 0)
-    return __builtin_aiev2_ext_bf256_bf512(a, 0);
+    return __builtin_aiev2_ext_I256_I512(a, 0);
   else
-    return __builtin_aiev2_ext_bf256_bf512(a, 1);
+    return __builtin_aiev2_ext_I256_I512(a, 1);
 }
 
 // Insert 256-bit in 512-bit register
@@ -527,9 +527,9 @@ INTRINSIC(v32bfloat16) insert(v32bfloat16 a, int idx, v16bfloat16 b) {
 // Set 256-bit portion of 512-bit register
 INTRINSIC(v32bfloat16) set_v32bfloat16(int idx, v16bfloat16 b) {
   if (idx == 0)
-    return __builtin_aiev2_set_bf512_bf256(b, 0);
+    return __builtin_aiev2_set_I512_I256(b, 0);
   else
-    return __builtin_aiev2_set_bf512_bf256(b, 1);
+    return __builtin_aiev2_set_I512_I256(b, 1);
 }
 
 INTRINSIC(v32bfloat16) concat(v16bfloat16 a0, v16bfloat16 a1) {

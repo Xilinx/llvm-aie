@@ -258,25 +258,3 @@ body:             |
     $wl0 = COPY %0:vregbank(<16 x s16>)
     PseudoRET implicit $lr, implicit $wl0
 ...
-
----
-name:            set_512_256_bf
-alignment:       16
-legalized:       true
-regBankSelected: true
-body:             |
-  bb.1.entry:
-    liveins: $r0, $wl2
-    ; CHECK-LABEL: name: set_512_256_bf
-    ; CHECK: liveins: $r0, $wl2
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ewh = COPY $wl2
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[COPY]], %subreg.sub_256_hi
-    ; CHECK-NEXT: $x0 = COPY [[REG_SEQUENCE]]
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
-    %2:vregbank(<16 x s16>) = COPY $wl2
-    %3:gprregbank(s32) = G_CONSTANT i32 1
-    %0:vregbank(<32 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.set.bf512.bf256), %2:vregbank(<16 x s16>), %3:gprregbank(s32)
-    $x0 = COPY %0:vregbank(<32 x s16>)
-    PseudoRET implicit $lr, implicit $x0
-...

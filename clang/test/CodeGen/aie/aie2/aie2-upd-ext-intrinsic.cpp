@@ -1651,8 +1651,10 @@ v16float test_extract_v16float(v32float a, int idx) {
 
 // CHECK-LABEL: @_Z24test_extract_v16bfloat16Dv32_8bfloat16i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x bfloat> @llvm.aie2.ext.bf256.bf512(<32 x bfloat> [[A:%.*]], i32 0)
-// CHECK-NEXT:    ret <16 x bfloat> [[TMP0]]
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x bfloat> [[A:%.*]] to <16 x i32>
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> [[TMP0]], i32 0)
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <8 x i32> [[TMP1]] to <16 x bfloat>
+// CHECK-NEXT:    ret <16 x bfloat> [[TMP2]]
 //
 v16bfloat16 test_extract_v16bfloat16(v32bfloat16 a, int idx) {
     return extract_v16bfloat16(a, 0);
@@ -1669,8 +1671,10 @@ v32bfloat16 test_insert(v32bfloat16 a, int idx, v16bfloat16 b) {
 
 // CHECK-LABEL: @_Z20test_set_v32bfloat16iDv16_8bfloat16(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call <32 x bfloat> @llvm.aie2.set.bf512.bf256(<16 x bfloat> [[B:%.*]], i32 1)
-// CHECK-NEXT:    ret <32 x bfloat> [[TMP0]]
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x bfloat> [[B:%.*]] to <8 x i32>
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> [[TMP0]], i32 1)
+// CHECK-NEXT:    [[RETVAL_0_I:%.*]] = bitcast <16 x i32> [[TMP1]] to <32 x bfloat>
+// CHECK-NEXT:    ret <32 x bfloat> [[RETVAL_0_I]]
 //
 v32bfloat16 test_set_v32bfloat16(int idx, v16bfloat16 b) {
     return set_v32bfloat16(1, b);
@@ -1822,8 +1826,8 @@ v8bfloat16 test_extract_v8bfloat16_512(v32bfloat16 a, int idx) {
 
 // CHECK-LABEL: @_Z27test_extract_v8bfloat16_256Dv16_8bfloat16i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call <32 x bfloat> @llvm.aie2.set.bf512.bf256(<16 x bfloat> [[A:%.*]], i32 0)
-// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <32 x bfloat> [[TMP0]] to <16 x i32>
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x bfloat> [[A:%.*]] to <8 x i32>
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> [[TMP0]], i32 0)
 // CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x bfloat> @llvm.aie2.v32bfloat16()
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast <32 x bfloat> [[TMP2]] to <16 x i32>
 // CHECK-NEXT:    [[MUL_I_I:%.*]] = shl nsw i32 [[IDX:%.*]], 4

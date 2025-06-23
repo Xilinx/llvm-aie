@@ -562,12 +562,15 @@ v16accfloat test_ups_to_v16accfloat_v16bfloat16(v16bfloat16 a) {
 }
 // CHECK-AIE2-LABEL: @_Z35test_ups_to_v32accfloat_v32bfloat16Dv32_8bfloat16(
 // CHECK-AIE2-NEXT:  entry:
-// CHECK-AIE2-NEXT:    [[TMP0:%.*]] = tail call <16 x bfloat> @llvm.aie2.ext.bf256.bf512(<32 x bfloat> [[A:%.*]], i32 0)
-// CHECK-AIE2-NEXT:    [[TMP1:%.*]] = tail call noundef <8 x i64> @llvm.aie2.v16bf16.to.v16accfloat(<16 x bfloat> [[TMP0]])
-// CHECK-AIE2-NEXT:    [[TMP2:%.*]] = tail call <16 x bfloat> @llvm.aie2.ext.bf256.bf512(<32 x bfloat> [[A]], i32 1)
-// CHECK-AIE2-NEXT:    [[TMP3:%.*]] = tail call noundef <8 x i64> @llvm.aie2.v16bf16.to.v16accfloat(<16 x bfloat> [[TMP2]])
-// CHECK-AIE2-NEXT:    [[TMP4:%.*]] = tail call noundef <16 x i64> @llvm.aie2.concat.1024.512.acc(<8 x i64> [[TMP1]], <8 x i64> [[TMP3]])
-// CHECK-AIE2-NEXT:    ret <16 x i64> [[TMP4]]
+// CHECK-AIE2-NEXT:    [[TMP0:%.*]] = bitcast <32 x bfloat> [[A:%.*]] to <16 x i32>
+// CHECK-AIE2-NEXT:    [[TMP1:%.*]] = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> [[TMP0]], i32 0)
+// CHECK-AIE2-NEXT:    [[RETVAL_0_I_I:%.*]] = bitcast <8 x i32> [[TMP1]] to <16 x bfloat>
+// CHECK-AIE2-NEXT:    [[TMP2:%.*]] = tail call noundef <8 x i64> @llvm.aie2.v16bf16.to.v16accfloat(<16 x bfloat> [[RETVAL_0_I_I]])
+// CHECK-AIE2-NEXT:    [[TMP3:%.*]] = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> [[TMP0]], i32 1)
+// CHECK-AIE2-NEXT:    [[RETVAL_0_I6_I:%.*]] = bitcast <8 x i32> [[TMP3]] to <16 x bfloat>
+// CHECK-AIE2-NEXT:    [[TMP4:%.*]] = tail call noundef <8 x i64> @llvm.aie2.v16bf16.to.v16accfloat(<16 x bfloat> [[RETVAL_0_I6_I]])
+// CHECK-AIE2-NEXT:    [[TMP5:%.*]] = tail call noundef <16 x i64> @llvm.aie2.concat.1024.512.acc(<8 x i64> [[TMP2]], <8 x i64> [[TMP4]])
+// CHECK-AIE2-NEXT:    ret <16 x i64> [[TMP5]]
 //
 // CHECK-AIE2P-LABEL: @_Z35test_ups_to_v32accfloat_v32bfloat16Dv32_8bfloat16(
 // CHECK-AIE2P-NEXT:  entry:

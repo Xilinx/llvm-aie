@@ -494,7 +494,7 @@ bool getGlobalValue(const MachineInstr *MI,
                     SmallPtrSet<const Value *, 4> &GVSet,
                     MachineRegisterInfo &MRI) {
 
-  MI = getDefIgnoringCopiesAndBitcasts(MI->getOperand(1).getReg(), MRI);
+  MI = getDefIgnoringCopiesAndBitcasts(MI->getOperand(1).getReg(), false, MRI);
 
   // We need an instruction that explicitly moves a global
   // to a register (move immediate).
