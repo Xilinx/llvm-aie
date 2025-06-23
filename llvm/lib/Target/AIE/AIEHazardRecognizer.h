@@ -246,6 +246,10 @@ public:
 
   ScheduleHazardRecognizer::HazardType
   getHazardType(const ResourceScoreboard<FuncUnitWrapper> &TheScoreboard,
+                const MachineInstr *MI, int DeltaCycles) const;
+
+  ScheduleHazardRecognizer::HazardType
+  getHazardType(const ResourceScoreboard<FuncUnitWrapper> &TheScoreboard,
                 const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
                 uint64_t MemObjectsBits,
                 iterator_range<const MachineOperand *> MIOperands,
