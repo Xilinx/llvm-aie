@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -17,10 +17,11 @@
 #include "AIECallLowering.h"
 #include "AIEBaseISelLowering.h"
 #include "AIEBaseInstrInfo.h"
+#include "AIEBaseRegisterInfo.h"
+#include "AIEBaseSubtarget.h"
 #include "AIEMachineFunctionInfo.h"
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
 #include "MCTargetDesc/AIEMCTargetDesc.h"
-#include "aie1/AIE1Subtarget.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/CallingConvLower.h"

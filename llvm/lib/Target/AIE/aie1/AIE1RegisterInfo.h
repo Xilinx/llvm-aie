@@ -1,10 +1,10 @@
-//===-- AIERegisterInfo.h - AIE Register Information Impl ---*- C++ -*-===//
+//===-- AIE1RegisterInfo.h - AIE Register Information Impl ---*- C++ -*-===//
 //
 // This file is licensed under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_LIB_TARGET_AIE_AIEREGISTERINFO_H
-#define LLVM_LIB_TARGET_AIE_AIEREGISTERINFO_H
+#ifndef LLVM_LIB_TARGET_AIE_AIE1REGISTERINFO_H
+#define LLVM_LIB_TARGET_AIE_AIE1REGISTERINFO_H
 
 #include "AIEBaseRegisterInfo.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
@@ -66,4 +66,4 @@ struct AIERegisterInfo : public AIEGenRegisterInfo {
 };
 } // namespace llvm
 
-#endif
+#endif // LLVM_LIB_TARGET_AIE_AIE1REGISTERINFO_H

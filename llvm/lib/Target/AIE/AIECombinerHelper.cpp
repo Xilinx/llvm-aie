@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -12,7 +12,6 @@
 #include "AIE.h"
 #include "AIE2TargetMachine.h"
 #include "AIEBaseInstrInfo.h"
-#include "AIETargetMachine.h"
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Analysis/VectorUtils.h"

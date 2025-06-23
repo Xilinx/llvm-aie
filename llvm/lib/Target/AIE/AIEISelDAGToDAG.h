@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -14,8 +14,8 @@
 #ifndef LLVM_LIB_TARGET_AIE_AIEISELDAGTODAG_H
 #define LLVM_LIB_TARGET_AIE_AIEISELDAGTODAG_H
 #include "AIE.h"
-#include "AIETargetMachine.h"
 #include "MCTargetDesc/AIEMCTargetDesc.h"
+#include "aie1/AIE1TargetMachine.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Support/Debug.h"
