@@ -16,8 +16,8 @@
 #define LLVM_LIB_TARGET_AIE_AIEINSTRINFO_H
 
 #include "AIE.h"
+#include "AIE1RegisterInfo.h"
 #include "AIEBaseInstrInfo.h"
-#include "AIERegisterInfo.h"
 #include "MCTargetDesc/AIEFormat.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 
@@ -32,7 +32,7 @@ public:
 
   /// Allocate and return a hazard recognizer to use for this target when
   /// scheduling the machine instructions after register allocation.
-  ScheduleHazardRecognizer*
+  ScheduleHazardRecognizer *
   CreateTargetPostRAHazardRecognizer(const InstrItineraryData *II,
                                      const ScheduleDAG *DAG) const override;
 
@@ -94,5 +94,5 @@ protected:
   SmallVector<AIEPseudoExpandInfo, 4>
   getSpillPseudoExpandInfo(const MachineInstr &MI) const override;
 };
-}
+} // namespace llvm
 #endif

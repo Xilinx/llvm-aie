@@ -16,7 +16,7 @@
 
 #include "AIECallLowering.h"
 #include "AIEBaseISelLowering.h"
-#include "AIEInstrInfo.h"
+#include "AIEBaseInstrInfo.h"
 #include "AIEMachineFunctionInfo.h"
 #include "AIESubtarget.h"
 #include "MCTargetDesc/AIE2MCTargetDesc.h"

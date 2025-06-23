@@ -14,10 +14,10 @@
 #include "llvm/MC/MCParser/MCAsmParser.h"
 
 #include "AIE.h"
+#include "AIE1InstrInfo.h"
+#include "AIE1RegisterInfo.h"
 #include "AIEBaseOperand.h"
 #include "AIEBundle.h"
-#include "AIEInstrInfo.h"
-#include "AIERegisterInfo.h"
 #include "MCTargetDesc/AIEMCExpr.h"
 #include "MCTargetDesc/AIEMCTargetDesc.h"
 #include "TargetInfo/AIETargetInfo.h"

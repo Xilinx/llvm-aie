@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "AIE1InstrInfo.h"
 #include "AIEBaseMCCodeEmitter.h"
-#include "AIEInstrInfo.h"
 #include "MCTargetDesc/AIE1MCFixupKinds.h"
 #include "MCTargetDesc/AIEMCExpr.h"
 #include "MCTargetDesc/AIEMCInstrInfo.h"

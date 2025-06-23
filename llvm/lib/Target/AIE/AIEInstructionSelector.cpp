@@ -14,7 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIE1RegisterBankInfo.h"
-#include "AIERegisterInfo.h"
+#include "AIE1RegisterInfo.h"
 #include "AIETargetMachine.h"
 #include "InstPrinter/AIEInstPrinter.h"
 #include "MCTargetDesc/AIEMCTargetDesc.h"
