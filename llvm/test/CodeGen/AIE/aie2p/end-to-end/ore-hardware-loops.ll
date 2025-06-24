@@ -61,7 +61,7 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ; CHECK-NEXT: 	lda	 r0, [p2, #0];		nopb	;		nops	;		nopx	;		mov	m0, #4;		nopv	
 ; CHECK-NEXT: 	padda	 [p2], m0;		nopx	
 ; CHECK-NEXT: 	lda	 dn0, [p2], #4
-; CHECK-NEXT: 	lda	 m1, [p2], #4
+; CHECK-NEXT: 	lda	 m1, [p2, #0]
 ; CHECK-NEXT: 	nop	
 ; CHECK-NEXT: 	nop	
 ; CHECK-NEXT: 	movx	r24, #0
@@ -71,7 +71,7 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ; CHECK-NEXT: 	vldb.pop.512.2d	 x2, [p0, lf0, r24, d1]
 ; CHECK-NEXT: 	nop	
 ; CHECK-NEXT: 	vldb.fill.512	 [p0, lf0, r24]
-; CHECK-NEXT: 	lda	 m0, [p2, #0];		vldb.pop.512	 x0, [p0, lf0, r24];		movxm	ls, #.LBB0_1
+; CHECK-NEXT: 	lda	 m0, [p2, #4];		vldb.pop.512	 x0, [p0, lf0, r24];		movxm	ls, #.LBB0_1
 ; CHECK-NEXT: 	vldb.pop.512.2d	 x2, [p0, lf0, r24, d1];		movxm	le, #.L_LEnd0
 ; CHECK-NEXT: 	add.nc	lc, r0, #-3
 ; CHECK-NEXT: 	nopa	;		vldb.fill.512	 [p0, lf0, r24];		nops	;		nopxm	;		nopv	
