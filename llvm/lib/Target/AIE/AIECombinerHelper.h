@@ -75,8 +75,6 @@ struct AIESingleDiffLaneBuildVectorMatchData {
   unsigned DifferingIndex;
 };
 
-void foundPattern(MachineInstr &MemI);
-
 bool matchGlobalPtrModOptimizer(MachineInstr &MemI, MachineRegisterInfo &MRI,
                                 CombinerHelper &Helper,
                                 const TargetInstrInfo &TII,
