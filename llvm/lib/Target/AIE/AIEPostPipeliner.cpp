@@ -14,6 +14,7 @@
 #include "AIEPostPipeliner.h"
 #include "AIESlotCounts.h"
 #include "Utils/AIELoopUtils.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/Analysis/OptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"

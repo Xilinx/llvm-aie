@@ -44,13 +44,12 @@ using namespace llvm;
 #define NoSchedModel NoSchedModelAIE2
 #define GET_SUBTARGETINFO_MC_DESC
 #include "AIE2GenSubtargetInfo.inc"
-#undef NoSchedModelAIE2
 #undef NoSchedModel
 
 #define NoSchedModel NoSchedModelAIE2P
 #define GET_SUBTARGETINFO_MC_DESC
 #include "AIE2PGenSubtargetInfo.inc"
-#undef NoSchedModelAIE2P
+#undef NoSchedModel
 
 #define GET_REGINFO_MC_DESC
 #include "AIEGenRegisterInfo.inc"
