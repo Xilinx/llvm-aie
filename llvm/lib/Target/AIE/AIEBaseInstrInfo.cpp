@@ -21,6 +21,7 @@
 #include "MCTargetDesc/AIEMCFormats.h"
 #include "Utils/AIELoopUtils.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
 #include "llvm/CodeGen/LivePhysRegs.h"
