@@ -98,8 +98,10 @@ void FuncUnitWrapper::clearResources() {
   MemoryBanks = 0;
   MemObjectsBits = 0;
 }
+
 bool FuncUnitWrapper::isEmpty() const {
-  return Required == 0 && Reserved == 0 && Slots == 0 && MemoryBanks == 0;
+  return Required == 0 && Reserved == 0 && Slots == 0 && MemoryBanks == 0 &&
+         MemObjectsBits == 0;
 }
 
 void FuncUnitWrapper::blockResources() {
