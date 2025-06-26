@@ -133,6 +133,8 @@ class SubtargetEmitter {
   void emitGenMCSubtargetInfo(raw_ostream &OS);
   void EmitMCInstrAnalysisPredicateFunctions(raw_ostream &OS);
 
+  void EmitNumResources(raw_ostream &OS);
+
   void EmitSchedModel(raw_ostream &OS);
   void emitGetMacroFusions(const std::string &ClassName, raw_ostream &OS);
   void EmitHwModeCheck(const std::string &ClassName, raw_ostream &OS);
@@ -446,12 +448,17 @@ void SubtargetEmitter::EmitStageAndOperandCycleData(
       continue;
 
     StringRef Name = ProcModel.ItinsDef->getName();
+    OS << "\n"
+          "#ifndef FUNCUNIT_REPRESENTATION\n"
+          "#define FUNCUNIT_REPRESENTATION(x) (1ULL << (x))\n"
+          "#endif";
+
     OS << "\n// Functional units for \"" << Name << "\"\n"
        << "namespace " << Name << "FU {\n";
 
     for (unsigned j = 0, FUN = FUs.size(); j < FUN; ++j)
       OS << "  const InstrStage::FuncUnits " << FUs[j]->getName()
-         << " = 1ULL << " << j << ";\n";
+         << " = FUNCUNIT_REPRESENTATION(" << j << ");\n";
 
     OS << "} // end namespace " << Name << "FU\n";
 
@@ -1503,6 +1510,32 @@ void SubtargetEmitter::EmitProcessorModels(raw_ostream &OS) {
 }
 
 //
+// EmitNumResources
+// Emit a const expr representing the number of resources
+//
+void SubtargetEmitter::EmitNumResources(raw_ostream &OS) {
+  if (SchedModels.hasItineraries()) {
+    for (const CodeGenProcModel &ProcModel : SchedModels.procModels()) {
+      StringRef Name = ProcModel.ItinsDef->getName();
+      RecVec FUs = ProcModel.ItinsDef->getValueAsListOfDefs("FU");
+      if (FUs.empty())
+        continue;
+      OS << "#ifdef GET_NUM_RESOURCES\n"
+            "#undef GET_NUM_RESOURCES\n"
+            "namespace "
+         << Name
+         << " {\n"
+            "const int NumResources = "
+         << FUs.size()
+         << ";\n"
+            "}\n // namespace "
+         << Name
+         << "\n"
+            "#endif // GET_NUM_RESOURCES\n";
+    }
+  }
+}
+//
 // EmitSchedModel - Emits all scheduling model tables, folding common patterns.
 //
 void SubtargetEmitter::EmitSchedModel(raw_ostream &OS) {
@@ -1928,6 +1961,8 @@ void SubtargetEmitter::run(raw_ostream &OS) {
   Enumeration(OS, FeatureMap);
   OS << "} // end namespace llvm\n\n";
   OS << "#endif // GET_SUBTARGETINFO_ENUM\n\n";
+
+  EmitNumResources(OS);
 
   EmitSubtargetInfoMacroCalls(OS);
 
