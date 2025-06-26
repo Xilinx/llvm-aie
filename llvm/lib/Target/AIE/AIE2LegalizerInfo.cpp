@@ -158,6 +158,7 @@ AIE2LegalizerInfo::AIE2LegalizerInfo(const AIE2Subtarget &ST) : AIEHelper(ST) {
       .legalFor({S20, S32, P0, S128})
       .legalFor(AIE2VectorTypes)
       .legalFor(AIE2AccumulatorTypes)
+      .legalFor({V16S8, V8S16, V4S32, V2S32})
       .widenScalarToNextPow2(0)
       .clampScalar(0, S32, S32);
 
@@ -446,6 +447,7 @@ AIE2LegalizerInfo::AIE2LegalizerInfo(const AIE2Subtarget &ST) : AIEHelper(ST) {
       .legalFor({S20, S32, P0})
       .legalFor(AIE2VectorTypes)
       .legalFor(AIE2AccumulatorTypes)
+      .legalFor({V16S8, V8S16, V4S32, V2S32})
       .widenScalarToNextPow2(0)
       .clampScalar(0, S32, S32);
 
