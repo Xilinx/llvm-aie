@@ -15,7 +15,6 @@
 
 include "AIEBaseInstrPatterns.td"
 
-
 // Placeholder for a bare frameindex. This pseudo represents the
 // pointer register to be allocated, initialized with the address
 // represented by the frameindex in its only operand.
@@ -1257,14 +1256,19 @@ defm : Extract_512<i64, v8i64, (i32 c6u:$idx), VEXTRACT_64_vec_extract_imm_vaddS
 // The G_TRUNC operation can be efficiently implemented using a VSHUFFLE
 // instruction. Modes 0, 2, and 4 correspond to the deinterleaved operation of
 // 1, 2, and 4 bytes respectively on the concatenated src0 and src1 input
-// vectors of the VSHUFFLE instruction.
+// vectors of the VSHUFFLE instruction. Specifically, the VSHUFFLE instruction
+// with mode 0 performs a transpose on a tensor of type 64x2xi8. Other modes
+// used here perform transposes on different types:
 
-// | 1024-bits -> 512-bits | 512-bits -> 256-bits  | 1024-bits -> 256-bits |
-// +=======================+=======================+=======================|
-// |   v16i64 -> v16i32    |   v8i32  -> v8i16     |   v16i64 -> v16i16    |
-// |   v32i32 -> v32i16    |   v16i16 -> v16i8     |   v32i32 -> v32i8     |
-// |   v64i16 -> v64i8     |   v32i8  -> v32i4     |                       |
-// +=======================+=======================+=======================|
+// Mode   Input type
+// =====+============+
+// 0    |  64x2xi8   |
+// 2    |  32x2xi16  |
+// 4    |  16x2xi32  |
+// 28   |  8x4xi16   |
+// 36   |  16x4xi8   |
+// =====+============+
+
 class Trunc1024To512Pat<ValueType DstTy, ValueType SrcTy, Instruction ShuffleInstOpc, int Mode> :
   Pat<(DstTy (trunc SrcTy:$s1)),
     (ShuffleInstOpc
@@ -1286,24 +1290,16 @@ def : Trunc512To256Pat<v8i32, v8i64, 4>;
 def : Trunc512To256Pat<v16i16, v16i32, 2>;
 def : Trunc512To256Pat<v32i8, v32i16, 0>;
 
-// This is effectively Trunc1024To512 followed by Trunc512To256.
-class Trunc1024To256Pat<ValueType DstTy, ValueType SrcTy, int LargeMode, int SmallMode> :
+class Trunc512To128Pat<ValueType DstTy, ValueType SrcTy, int Mode> :
   Pat<(DstTy (trunc SrcTy:$s1)),
-  (EXTRACT_SUBREG
-    (VSHUFFLE_vec_shuffle_x
-        (VSHUFFLE_vec_shuffle_x
-          (EXTRACT_SUBREG VEC1024:$s1, sub_512_lo),
-          (EXTRACT_SUBREG VEC1024:$s1, sub_512_hi),
-          (MOV_RLC_imm11_pseudo (i32 LargeMode))),
-        (VSHUFFLE_vec_shuffle_x
-          (EXTRACT_SUBREG VEC1024:$s1, sub_512_lo),
-          (EXTRACT_SUBREG VEC1024:$s1, sub_512_hi),
-          (MOV_RLC_imm11_pseudo (i32 LargeMode))),
-      (MOV_RLC_imm11_pseudo (i32 SmallMode))),
-    sub_256_lo)>;
-
-def : Trunc1024To256Pat<v32i8, v32i32, 2, 0>;
-def : Trunc1024To256Pat<v16i16, v16i64, 4, 2>;
+    (VMOV_alu_mv_mv_w_to_q
+      (EXTRACT_SUBREG
+        (VSHUFFLE_vec_shuffle_x VEC512:$s1, VEC512:$s1,
+          (MOV_RLC_imm11_pseudo (i32 Mode))),
+        sub_256_lo)
+    )>;
+def : Trunc512To128Pat<v16i8, v16i32, 36>;
+def : Trunc512To128Pat<v8i16, v8i64, 28>;
 
 class EventPat<AIE2PInst Inst, dag Imm> :
   Pat<(int_aie2p_event Imm), (Inst)>;

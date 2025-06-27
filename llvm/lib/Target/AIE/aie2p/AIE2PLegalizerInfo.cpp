@@ -280,31 +280,60 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
       .clampScalar(1, S32, S32);
 
   getActionDefinitionsBuilder(G_TRUNC)
+      // Mark as legal all G_TRUNC with tablegen selection pattern:
       .legalIf([=](const LegalityQuery &Query) {
-        // Return true if there is a tablegen pattern to lower truncs on vectors
-        // of specific element types and lengths to shuffles.
         const LLT &SrcTy = Query.Types[1];
         const LLT &DstTy = Query.Types[0];
 
-        if (!SrcTy.isVector() || !DstTy.isVector())
+        if (!SrcTy.isVector())
           return false;
+        assert(DstTy.isVector() && "Src is vector so Dst must be vector");
 
-        const auto SrcElmBits = SrcTy.getElementType().getSizeInBits();
-        if (SrcElmBits != 64 && SrcElmBits != 32 && SrcElmBits != 16)
-          return false;
+        const uint16_t SrcElemBits = SrcTy.getElementType().getSizeInBits();
+        const uint16_t DstElemBits = DstTy.getElementType().getSizeInBits();
+        const uint16_t VectorSize = SrcTy.getNumElements();
+        assert(VectorSize == DstTy.getNumElements() &&
+               "Src and Dst vectors must have same number of elements");
 
-        const TypeSize SrcBits = SrcTy.getSizeInBits();
-        const TypeSize DstBits = DstTy.getSizeInBits();
+        // The case where the source vector's element type is i64:
+        //   v16i64 -> v16i32,
+        //   v8i64  -> v8i32,
+        //   v8i64  -> v8i16,
+        if (SrcElemBits == 64) {
+          return (VectorSize == 16 && DstElemBits == 32) ||
+                 (VectorSize == 8 && DstElemBits == 32) ||
+                 (VectorSize == 8 && DstElemBits == 16);
+        }
 
-        return ((SrcBits == 1024 && DstBits == 256) ||
-                (SrcBits == 1024 && DstBits == 512) ||
-                (SrcBits == 512 && DstBits == 256));
+        // The case where the source vector's element type is i32:
+        //   v32i32 -> v32i16,
+        //   v16i32 -> v16i16,
+        //   v16i32 -> v16i8.
+        if (SrcElemBits == 32) {
+          return (VectorSize == 32 && DstElemBits == 16) ||
+                 (VectorSize == 16 && DstElemBits == 16) ||
+                 (VectorSize == 16 && DstElemBits == 8);
+        }
+
+        // The case where the source vector's element type is i16:
+        //   v64i16 -> v64i8,
+        //   v32i16 -> v32i8.
+        if (SrcElemBits == 16) {
+          return (VectorSize == 64 && DstElemBits == 8) ||
+                 (VectorSize == 32 && DstElemBits == 8);
+        }
+
+        return false;
       })
+
+      // Mark as legal all scalar G_TRUNC:
       .legalIf([=](const LegalityQuery &Query) {
         const LLT &SrcTy = Query.Types[1];
         const LLT &DstTy = Query.Types[0];
         return SrcTy.isScalar() && DstTy.isScalar();
       })
+
+      // G_TRUNC 256-bit -> 128-bit is legalized by padding to 2x bitwidth:
       .customIf([=](const LegalityQuery &Query) {
         const LLT &SrcTy = Query.Types[1];
         const LLT &DstTy = Query.Types[0];
@@ -312,10 +341,18 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
                DstTy.getElementType().getSizeInBits() * 2 ==
                    SrcTy.getElementType().getSizeInBits();
       })
+
+      // G_TRUNC on 2048-bit vector is legalized to 2 smaller G_TRUNCs.
+      // Similarly for G_TRUNC 1024-bit -> 256-bit:
       .fewerElementsIf(
           [=](const LegalityQuery &Query) {
             const LLT &SrcTy = Query.Types[1];
-            return SrcTy.isVector() && SrcTy.getSizeInBits() == 2048;
+            const LLT &DstTy = Query.Types[0];
+            if (!SrcTy.isVector() || !DstTy.isVector())
+              return false;
+            const TypeSize SrcBits = SrcTy.getSizeInBits();
+            const TypeSize DstBits = DstTy.getSizeInBits();
+            return (SrcBits == 2048 || (SrcBits == 1024 && DstBits == 256));
           },
           [=](const LegalityQuery &Query) {
             const LLT &SrcTy = Query.Types[1];
