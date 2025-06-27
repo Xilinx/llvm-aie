@@ -24,24 +24,48 @@ using namespace llvm;
 const auto Req = InstrStage::ReservationKinds::Required;
 const auto Res = InstrStage::ReservationKinds::Reserved;
 
-static const llvm::InstrStage MockStages[] = {
-    // { Number of cycles, bitvec of resources,  NextCycle, reservation kind }
-    // We force 6 stages, so we should be able to check cycles in [-6, 5]
-    {6, 0b11111111, 6, Req},
-    {1, 0b00000001, 1, Req},
-    {1, 0b00000001, 1, Res},
-    {1, 0b00000010, 1, Req},
+// Note: This test has a history, and bears the scratches and tears of
+// a number of hazardrecognizer and scoreboard reorganizations
+// The hazard recognizer is the one shared by all AIE versions, but we supply
+// it with our own mock itineraries.
+// We test conflict detection on the SchedClass level.
+// We only use a few resources.
+// A recent overhaul changed bitsets to resource indices. This
+// was backed by the way that we define itineraries, always one
+// resource per stage, however, the test employed multi-resource bitsets
+// as a shorthand. We made an effort to give new equivalent representations,
+// which makes the result a bit clunky. Change comments are indicted by ===
 
-    {0, 0b00000000, 4, Req},
-    {1, 0b00000100, 1, Req},
-    {1, 0b00001000, 2, Req},
-    {1, 0b00000001, 1, Req},
+static const llvm::InstrStage MockStages[] = {
+    // { Number of cycles, resource index,  NextCycle, reservation kind }
+
+    // We force 6 stages, so we should be able to check cycles in [-6, 5]
+    // === This isn't used anymore. It defined 6 cycles of 8 occupied
+    // resource, it has been moved down to have the space to expand it.
+    {6, 10, 6, Req},
+
+    {1, 0, 1, Req},
+    {1, 0, 1, Res},
+    {1, 1, 1, Req},
+
+    // === This was empty. we use an isolated resource
+    {0, 16, 4, Req},
+    {1, 2, 1, Req},
+    {1, 3, 2, Req},
+    {1, 1, 1, Req},
 
     // multistage cycle, 0b111, 0b000, 0b001
-    {1, 0b00000001, 0, Req},
-    {1, 0b00000010, 0, Req},
-    {1, 0b00000100, 2, Req},
-    {1, 0b00000001, 1, Req},
+    {1, 0, 0, Req},
+    {1, 1, 0, Req},
+    {1, 2, 2, Req},
+    {1, 0, 1, Req},
+
+    // === The expanded 6x8 resource of original entry 0
+    // we economized a bit, reducing it to resource 0-3
+    {6, 0, 0, Req},
+    {6, 1, 0, Req},
+    {6, 2, 0, Req},
+    {6, 3, 0, Req},
 
 };
 
@@ -50,6 +74,7 @@ public:
   ArrayRef<const InstrStage> getStages(unsigned SchedClass) const override {
     switch (SchedClass) {
     case 0:
+      return {MockStages + 12, 4};
     case 1:
     case 2:
     case 3:

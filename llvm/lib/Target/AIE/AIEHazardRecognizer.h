@@ -61,6 +61,7 @@ const_bundled_instrs(const MachineInstr &MI, bool IncludeRoot = false) {
 class FuncUnitWrapper {
   /// The format interface to interpret bundle constraints
   static const AIEBaseMCFormats *FormatInterface;
+  static const uint64_t One = 1;
 
   /// Bitset of the required resources
   InstrStage::FuncUnits Required = 0;
@@ -82,10 +83,12 @@ public:
 
   FuncUnitWrapper(const InstrStage &IS, SlotBits Slots = 0,
                   MemoryBankBits MemoryBanks = 0, uint64_t MemObjectsBits = 0)
-      : Required(IS.getReservationKind() == InstrStage::Required ? IS.getUnits()
-                                                                 : 0),
-        Reserved(IS.getReservationKind() == InstrStage::Reserved ? IS.getUnits()
-                                                                 : 0),
+      : Required(IS.getReservationKind() == InstrStage::Required
+                     ? (One << IS.getUnits())
+                     : 0),
+        Reserved(IS.getReservationKind() == InstrStage::Reserved
+                     ? (One << IS.getUnits())
+                     : 0),
         Slots(Slots), MemoryBanks(MemoryBanks), MemObjectsBits(MemObjectsBits) {
   }
 
