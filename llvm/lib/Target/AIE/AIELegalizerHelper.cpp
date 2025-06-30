@@ -1389,7 +1389,7 @@ bool AIELegalizerHelper::legalizeLoopDecrement(LegalizerHelper &Helper,
   MI.getOperand(0).setReg(NewDst);
   Register ZExtValueReg =
       MIRBuilder.buildAssertZExt(LLT::scalar(32), NewDst, 1).getReg(0);
-  MIRBuilder.buildTrunc(OrigDst, ZExtValueReg);
+  MIRBuilder.buildAnyExtOrTrunc(OrigDst, ZExtValueReg);
   return true;
 }
 
