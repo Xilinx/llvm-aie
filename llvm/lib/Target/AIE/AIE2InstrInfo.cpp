@@ -151,6 +151,15 @@ bool AIE2InstrInfo::verifyGenericInstruction(const MachineInstr &MI,
                                              StringRef &ErrInfo) const {
   const MachineRegisterInfo &MRI = MI.getMF()->getRegInfo();
   switch (MI.getOpcode()) {
+  case AIE2 ::G_AIE_INSERT_VECTOR_ELT:
+    if (MRI.getType(MI.getOperand(0).getReg()).getSizeInBits() !=
+        AIE2InstrInfo::getBasicVectorBitSize()) {
+      if (isLegalized(MI)) {
+        ErrInfo = "Operation is only legal for 512-bit vector destinations";
+        return false;
+      }
+    }
+    return true;
   case AIE2::G_AIE_ZEXT_EXTRACT_VECTOR_ELT:
   case AIE2::G_AIE_SEXT_EXTRACT_VECTOR_ELT:
     if (MRI.getType(MI.getOperand(1).getReg()).getSizeInBits() != 512) {
