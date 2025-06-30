@@ -1333,7 +1333,7 @@ bool AIELegalizerHelper::legalizeG_FADD_G_FSUB(LegalizerHelper &Helper,
   assert(MRI.getType(DstReg) == LLT::scalar(16) &&
          "Expected bfloat16 type in custom legalization.");
 
-  const LLT InsertVecLLT = ST.isAIE2P() ? V32FP32 : V16FP32;
+  const LLT InsertVecLLT = V16FP32;
   SrcLHS = MIRBuilder.buildFPExt(S32, SrcLHS).getReg(0);
   SrcRHS = MIRBuilder.buildFPExt(S32, SrcRHS).getReg(0);
   const Register IdxReg = MIRBuilder.buildConstant(S32, 0).getReg(0);
@@ -1351,12 +1351,8 @@ bool AIELegalizerHelper::legalizeG_FADD_G_FSUB(LegalizerHelper &Helper,
           .getReg(0);
 
   if (ST.isAIE2P()) {
-    const Register ConcatLHS = MRI.createGenericVirtualRegister(V64FP32);
-    const Register ConcatRHS = MRI.createGenericVirtualRegister(V64FP32);
-    MIRBuilder.buildConcatVectors(ConcatLHS, {SrcLHS, UndefVec});
-    MIRBuilder.buildConcatVectors(ConcatRHS, {SrcRHS, UndefVec});
-    SrcLHS = ConcatLHS;
-    SrcRHS = ConcatRHS;
+    SrcLHS = emitPadUndefVector(MRI, MIRBuilder, V64FP32, SrcLHS);
+    SrcRHS = emitPadUndefVector(MRI, MIRBuilder, V64FP32, SrcRHS);
   }
 
   Register Res =
