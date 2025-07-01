@@ -12,6 +12,7 @@
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/BasicTTIImpl.h"
 #include "llvm/IR/Instruction.h"
+#include "llvm/IR/Intrinsics.h"
 
 using namespace llvm;
 
@@ -64,6 +65,27 @@ static cl::opt<unsigned> PreferSwpOverUnroll(
     cl::desc("Aim for pipelining if MinIterCount is at least this value."));
 
 bool AIETTICommon::isLoweredToCall(const Function *F) {
+
+  // Memory operations.
+  if (F->getIntrinsicID() == Intrinsic::memcpy ||
+      F->getIntrinsicID() == Intrinsic::memset ||
+      F->getIntrinsicID() == Intrinsic::memmove) {
+    return true;
+  }
+
+  // Disclaimer: We are currently distanced from the legalization of
+  // instructions, as we have an additional layer (IRTranslator) in between.
+  // While retrieving SDAG legalization rules is typically straightforward, the
+  // same cannot be said for GISel. Certain intrinsics may be translated as G_F*
+  // opcodes (of which there may be multiple) or as G_INTRINSIC. Although we can
+  // attempt to predict the outcome of legalization - such as by examining
+  // types - this method is often error-prone due to our customized legalization
+  // rules. To clarify, let's compile a comprehensive list of intrinsics that
+  // can be overridden by the target.
+  if (F->getIntrinsicID() == Intrinsic::fmuladd) {
+    return true;
+  }
+
   return !F->isIntrinsic();
 }
 
