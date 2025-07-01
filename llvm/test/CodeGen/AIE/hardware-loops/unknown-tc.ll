@@ -4,8 +4,10 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-; RUN: llc -O2 -mtriple=aie2 --issue-limit=1 --enable-aie-hardware-loops %s -o - | FileCheck %s
+; (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+
+; RUN: llc -O2 -mtriple=aie2 --issue-limit=1 %s -o - | FileCheck %s
+; RUN: llc -O2 -mtriple=aie2p --issue-limit=1 %s -o - | FileCheck %s
 
 define void @cbz_exit(ptr %in, ptr %res) {
 ; CHECK-LABEL: cbz_exit:
