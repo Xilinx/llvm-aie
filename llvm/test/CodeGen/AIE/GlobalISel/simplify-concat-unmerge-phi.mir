@@ -28,16 +28,16 @@ body:             |
   ; COMMON-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
   ; COMMON-NEXT:   [[DEF:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
   ; COMMON-NEXT:   [[DEF1:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+  ; COMMON-NEXT:   [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[DEF]](<16 x s32>), [[DEF1]](<16 x s32>)
   ; COMMON-NEXT:   G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.set.loop.iterations), [[COPY]](s32)
   ; COMMON-NEXT: {{  $}}
   ; COMMON-NEXT: bb.1:
   ; COMMON-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
   ; COMMON-NEXT: {{  $}}
-  ; COMMON-NEXT:   [[PHI:%[0-9]+]]:_(<16 x s32>) = G_PHI [[DEF]](<16 x s32>), %bb.0, %6(<16 x s32>), %bb.1
-  ; COMMON-NEXT:   [[PHI1:%[0-9]+]]:_(<16 x s32>) = G_PHI [[DEF1]](<16 x s32>), %bb.0, %6(<16 x s32>), %bb.1
-  ; COMMON-NEXT:   [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[PHI]](<16 x s32>), [[PHI1]](<16 x s32>)
-  ; COMMON-NEXT:   G_STORE [[CONCAT_VECTORS]](<32 x s32>), %ptr(p0) :: (store (<32 x s32>))
-  ; COMMON-NEXT:   [[DEF2:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+  ; COMMON-NEXT:   [[PHI:%[0-9]+]]:_(<32 x s32>) = G_PHI [[CONCAT_VECTORS]](<32 x s32>), %bb.0, %10(<32 x s32>), %bb.1
+  ; COMMON-NEXT:   G_STORE [[PHI]](<32 x s32>), %ptr(p0) :: (store (<32 x s32>))
+  ; COMMON-NEXT:   [[DEF2:%[0-9]+]]:_(<32 x s32>) = G_IMPLICIT_DEF
+  ; COMMON-NEXT:   [[DEF3:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
   ; COMMON-NEXT:   [[INT:%[0-9]+]]:_(s1) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.loop.decrement), [[C]](s32)
   ; COMMON-NEXT:   G_BRCOND [[INT]](s1), %bb.1
   ; COMMON-NEXT:   G_BR %bb.2
@@ -89,20 +89,20 @@ body:             |
   ; COMMON-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
   ; COMMON-NEXT:   [[DEF:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
   ; COMMON-NEXT:   [[DEF1:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+  ; COMMON-NEXT:   [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[DEF]](<16 x s32>), [[DEF1]](<16 x s32>)
   ; COMMON-NEXT:   G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.set.loop.iterations), [[COPY]](s32)
   ; COMMON-NEXT: {{  $}}
   ; COMMON-NEXT: bb.1:
   ; COMMON-NEXT:   successors: %bb.2(0x80000000)
   ; COMMON-NEXT: {{  $}}
-  ; COMMON-NEXT:   [[PHI:%[0-9]+]]:_(<16 x s32>) = G_PHI [[DEF]](<16 x s32>), %bb.0, %6(<16 x s32>), %bb.2
-  ; COMMON-NEXT:   [[PHI1:%[0-9]+]]:_(<16 x s32>) = G_PHI [[DEF1]](<16 x s32>), %bb.0, %6(<16 x s32>), %bb.2
-  ; COMMON-NEXT:   [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[PHI]](<16 x s32>), [[PHI1]](<16 x s32>)
-  ; COMMON-NEXT:   G_STORE [[CONCAT_VECTORS]](<32 x s32>), %ptr(p0) :: (store (<32 x s32>))
+  ; COMMON-NEXT:   [[PHI:%[0-9]+]]:_(<32 x s32>) = G_PHI [[CONCAT_VECTORS]](<32 x s32>), %bb.0, %10(<32 x s32>), %bb.2
+  ; COMMON-NEXT:   G_STORE [[PHI]](<32 x s32>), %ptr(p0) :: (store (<32 x s32>))
   ; COMMON-NEXT: {{  $}}
   ; COMMON-NEXT: bb.2:
   ; COMMON-NEXT:   successors: %bb.1(0x40000000), %bb.3(0x40000000)
   ; COMMON-NEXT: {{  $}}
-  ; COMMON-NEXT:   [[DEF2:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+  ; COMMON-NEXT:   [[DEF2:%[0-9]+]]:_(<32 x s32>) = G_IMPLICIT_DEF
+  ; COMMON-NEXT:   [[DEF3:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
   ; COMMON-NEXT:   [[INT:%[0-9]+]]:_(s1) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.loop.decrement), [[C]](s32)
   ; COMMON-NEXT:   G_BRCOND [[INT]](s1), %bb.1
   ; COMMON-NEXT:   G_BR %bb.3
@@ -154,16 +154,16 @@ body:             |
   ; COMMON-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
   ; COMMON-NEXT:   [[DEF:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
   ; COMMON-NEXT:   [[DEF1:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+  ; COMMON-NEXT:   [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[DEF]](<16 x s32>), [[DEF1]](<16 x s32>)
   ; COMMON-NEXT:   G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.set.loop.iterations), [[COPY]](s32)
   ; COMMON-NEXT: {{  $}}
   ; COMMON-NEXT: bb.1:
   ; COMMON-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
   ; COMMON-NEXT: {{  $}}
-  ; COMMON-NEXT:   [[PHI:%[0-9]+]]:_(<16 x s32>) = G_PHI [[DEF]](<16 x s32>), %bb.0, %6(<16 x s32>), %bb.1
-  ; COMMON-NEXT:   [[PHI1:%[0-9]+]]:_(<16 x s32>) = G_PHI [[DEF1]](<16 x s32>), %bb.0, %6(<16 x s32>), %bb.1
-  ; COMMON-NEXT:   [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[PHI]](<16 x s32>), [[PHI1]](<16 x s32>)
-  ; COMMON-NEXT:   G_STORE [[CONCAT_VECTORS]](<32 x s32>), %ptr(p0) :: (store (<32 x s32>))
-  ; COMMON-NEXT:   [[DEF2:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+  ; COMMON-NEXT:   [[PHI:%[0-9]+]]:_(<32 x s32>) = G_PHI [[CONCAT_VECTORS]](<32 x s32>), %bb.0, %10(<32 x s32>), %bb.1
+  ; COMMON-NEXT:   G_STORE [[PHI]](<32 x s32>), %ptr(p0) :: (store (<32 x s32>))
+  ; COMMON-NEXT:   [[DEF2:%[0-9]+]]:_(<32 x s32>) = G_IMPLICIT_DEF
+  ; COMMON-NEXT:   [[DEF3:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
   ; COMMON-NEXT:   [[INT:%[0-9]+]]:_(s1) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.loop.decrement), [[C]](s32)
   ; COMMON-NEXT:   G_BRCOND [[INT]](s1), %bb.1
   ; COMMON-NEXT:   G_BR %bb.2
@@ -220,14 +220,15 @@ body:             |
   ; COMMON-NEXT: bb.1:
   ; COMMON-NEXT:   successors: %bb.2(0x80000000)
   ; COMMON-NEXT: {{  $}}
+  ; COMMON-NEXT:   [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[DEF]](<16 x s32>), [[DEF1]](<16 x s32>)
+  ; COMMON-NEXT: {{  $}}
   ; COMMON-NEXT: bb.2:
   ; COMMON-NEXT:   successors: %bb.2(0x40000000), %bb.3(0x40000000)
   ; COMMON-NEXT: {{  $}}
-  ; COMMON-NEXT:   [[PHI:%[0-9]+]]:_(<16 x s32>) = G_PHI [[DEF]](<16 x s32>), %bb.1, %6(<16 x s32>), %bb.2
-  ; COMMON-NEXT:   [[PHI1:%[0-9]+]]:_(<16 x s32>) = G_PHI [[DEF1]](<16 x s32>), %bb.1, %6(<16 x s32>), %bb.2
-  ; COMMON-NEXT:   [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[PHI]](<16 x s32>), [[PHI1]](<16 x s32>)
-  ; COMMON-NEXT:   G_STORE [[CONCAT_VECTORS]](<32 x s32>), %ptr(p0) :: (store (<32 x s32>))
-  ; COMMON-NEXT:   [[DEF2:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+  ; COMMON-NEXT:   [[PHI:%[0-9]+]]:_(<32 x s32>) = G_PHI [[CONCAT_VECTORS]](<32 x s32>), %bb.1, %10(<32 x s32>), %bb.2
+  ; COMMON-NEXT:   G_STORE [[PHI]](<32 x s32>), %ptr(p0) :: (store (<32 x s32>))
+  ; COMMON-NEXT:   [[DEF2:%[0-9]+]]:_(<32 x s32>) = G_IMPLICIT_DEF
+  ; COMMON-NEXT:   [[DEF3:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
   ; COMMON-NEXT:   [[INT:%[0-9]+]]:_(s1) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.loop.decrement), [[C]](s32)
   ; COMMON-NEXT:   G_BRCOND [[INT]](s1), %bb.2
   ; COMMON-NEXT:   G_BR %bb.3
@@ -282,17 +283,14 @@ body:             |
   ; COMMON-NEXT:   [[DEF1:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
   ; COMMON-NEXT:   [[DEF2:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
   ; COMMON-NEXT:   [[DEF3:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
+  ; COMMON-NEXT:   [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[DEF]](<8 x s32>), [[DEF1]](<8 x s32>), [[DEF2]](<8 x s32>), [[DEF3]](<8 x s32>)
   ; COMMON-NEXT:   G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.set.loop.iterations), [[COPY]](s32)
   ; COMMON-NEXT: {{  $}}
   ; COMMON-NEXT: bb.1:
   ; COMMON-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
   ; COMMON-NEXT: {{  $}}
-  ; COMMON-NEXT:   [[PHI:%[0-9]+]]:_(<8 x s32>) = G_PHI [[DEF]](<8 x s32>), %bb.0, %8(<8 x s32>), %bb.1
-  ; COMMON-NEXT:   [[PHI1:%[0-9]+]]:_(<8 x s32>) = G_PHI [[DEF1]](<8 x s32>), %bb.0, %10(<8 x s32>), %bb.1
-  ; COMMON-NEXT:   [[PHI2:%[0-9]+]]:_(<8 x s32>) = G_PHI [[DEF2]](<8 x s32>), %bb.0, %12(<8 x s32>), %bb.1
-  ; COMMON-NEXT:   [[PHI3:%[0-9]+]]:_(<8 x s32>) = G_PHI [[DEF3]](<8 x s32>), %bb.0, %14(<8 x s32>), %bb.1
-  ; COMMON-NEXT:   [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[PHI]](<8 x s32>), [[PHI1]](<8 x s32>), [[PHI2]](<8 x s32>), [[PHI3]](<8 x s32>)
-  ; COMMON-NEXT:   [[BITCAST:%[0-9]+]]:_(<16 x s64>) = G_BITCAST [[CONCAT_VECTORS]](<32 x s32>)
+  ; COMMON-NEXT:   [[PHI:%[0-9]+]]:_(<32 x s32>) = G_PHI [[CONCAT_VECTORS]](<32 x s32>), %bb.0, %18(<32 x s32>), %bb.1
+  ; COMMON-NEXT:   [[BITCAST:%[0-9]+]]:_(<16 x s64>) = G_BITCAST [[PHI]](<32 x s32>)
   ; COMMON-NEXT:   G_STORE [[BITCAST]](<16 x s64>), %ptr(p0) :: (store (<16 x s64>))
   ; COMMON-NEXT:   [[DEF4:%[0-9]+]]:_(<16 x s64>) = G_IMPLICIT_DEF
   ; COMMON-NEXT:   [[BITCAST1:%[0-9]+]]:_(<32 x s32>) = G_BITCAST [[DEF4]](<16 x s64>)

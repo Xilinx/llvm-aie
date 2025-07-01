@@ -557,6 +557,184 @@ static MachineInstr *findPostIncMatch(MachineInstr &MemI,
   return nullptr;
 }
 
+/// Checking the following Concat-Unmerge-PHI pattern:
+/// bb.0
+/// concatIn0 = ...
+/// concatIn1 = ...
+/// bb.1
+/// 1 = phi 7, bb.1, concatIn0, bb.0
+/// 2 = phi 10, bb.1 concatIn1, bb.0
+/// 3 = G_CONCAT 1, 2
+/// ....
+/// 6 = ...
+/// 7, 8 = G_UNMERGE 6
+/// 9,10 = G_UNMERGE 6
+/// \return unmerge source (6) if the pattern is valid and the sub-vector index
+/// used [ 0 (7, 9) or 1 (8, 10)]. Start the pattern checking from \p ConcatI .
+/// Follow \p UseOpIdx (0 to n-1) of G_CONCAT to identify the pattern. Collect
+/// all relevant Results in \p MatchData .
+static bool findUnmergeOrigin(MachineInstr &ConcatI, const unsigned UseOpIdx,
+                              const MachineRegisterInfo &MRI,
+                              CombinerHelper &Helper,
+                              AIEConcatUnmergeCombineMatchData &MatchData) {
+
+  auto FindPhiUnmergeComponents =
+      [UseOpIdx, &Helper, &MRI, &MatchData](
+          MachineInstr *PhiInst) -> std::pair<MachineInstr *, Register> {
+    // Find Unmerge and Concat Components of the PHI node.
+    MachineInstr *UnmergeI = nullptr;
+    Register UnmergeDefReg;
+    for (unsigned I = 1; I < PhiInst->getNumOperands(); I += 2) {
+      Register IncomingReg = PhiInst->getOperand(I).getReg();
+      MachineBasicBlock *MBB = PhiInst->getOperand(I + 1).getMBB();
+      MachineInstr *IncomingMI = MRI.getVRegDef(IncomingReg);
+
+      // Checking if IncomingMI dominates phi node.
+      if (Helper.dominates(*IncomingMI, *PhiInst)) {
+
+        if (MatchData.NewConcatMBB && MatchData.NewConcatMBB != MBB) {
+          LLVM_DEBUG(dbgs() << "Parts of the Future Concat do not "
+                               "originate in the same MBB.\n");
+          return {};
+        }
+
+        // Concat Components.
+        MatchData.NewConcatMBB = MBB;
+        MatchData.ConcatSubVecs[UseOpIdx] = IncomingReg;
+        continue;
+      }
+
+      if (IncomingMI->getOpcode() != TargetOpcode::G_UNMERGE_VALUES) {
+        LLVM_DEBUG(dbgs() << "Could not find Unmerge Instruction\n");
+        return {};
+      }
+      // Unmerge Components.
+      if (UnmergeI) {
+        LLVM_DEBUG(dbgs() << "Encountered too many Unmerge Instructions\n");
+        return {};
+      }
+      UnmergeDefReg = IncomingReg;
+      UnmergeI = IncomingMI;
+    }
+    return {UnmergeI, UnmergeDefReg};
+  };
+
+  // Find PHI node.
+  const unsigned OperandIdx = UseOpIdx + 1;
+  assert(ConcatI.getOperand(OperandIdx).isReg());
+  const Register Reg = ConcatI.getOperand(OperandIdx).getReg();
+  MachineInstr *PhiInst = MRI.getVRegDef(Reg);
+  if (!PhiInst->isPHI() || !MRI.hasOneNonDBGUse(Reg))
+    return false;
+
+  auto [UnmergeInst, UnmergeDefReg] = FindPhiUnmergeComponents(PhiInst);
+
+  if (!UnmergeInst || !MatchData.NewConcatMBB) {
+    // Could not find Unmerge or Concat Components.
+    return false;
+  }
+
+  const auto UnmergeSourceReg = UnmergeInst->uses().begin()->getReg();
+  // Check consistency of MatchData.UnmergeSourceReg across different
+  // UseOpIdx.
+  if (MatchData.UnmergeSourceReg &&
+      MatchData.UnmergeSourceReg != UnmergeSourceReg) {
+    // Diverging Unmerge Source Registers.
+    return false;
+  }
+  MatchData.UnmergeSourceReg = UnmergeSourceReg;
+
+  const int UnmergeDefIdx =
+      UnmergeInst->findRegisterDefOperandIdx(UnmergeDefReg);
+  assert(UnmergeDefIdx >= 0);
+  // Make sure Unmerge and Concat do not reorder the subvectors.
+  return UseOpIdx == (unsigned)UnmergeDefIdx;
+}
+
+/// This is the matching function for Concat-Unmerge-PHI pattern.
+/// Convert the following:
+/// bb.0
+/// concatIn0 = ...
+/// concatIn1 = ...
+/// bb.1
+/// 1 = phi 7, bb.1, concatIn0, bb.0
+/// 2 = phi 8, bb.1 concatIn1, bb.0
+/// 3 = G_CONCAT 1, 2
+/// ....
+/// 6 = ...
+/// 7, 8 = G_UNMERGE 6
+///
+/// Into:
+/// bb.0
+/// concatIn0 = ...
+/// concatIn1 = ...
+/// 11 = G_CONCAT concatIn0, concatIn1
+/// bb.1
+/// 3 = phi 6, bb.1, 11, bb.0
+/// ...
+/// 6 =
+///
+/// \p ConcatI is the starting Point for this pattern.
+/// \return true if the pattern is found.
+bool llvm::matchConcatUnmergePhis(MachineInstr &ConcatI,
+                                  MachineRegisterInfo &MRI,
+                                  CombinerHelper &Helper,
+                                  AIEConcatUnmergeCombineMatchData &MatchInfo) {
+  assert(ConcatI.getOpcode() == TargetOpcode::G_CONCAT_VECTORS);
+  LLVM_DEBUG(dbgs() << "MF: " << ConcatI.getMF()->getName() << "\n");
+
+  const unsigned NumUses = ConcatI.getNumOperands() - ConcatI.getNumDefs();
+
+  MatchInfo.ConcatSubVecs.resize(NumUses);
+
+  for (unsigned UseOpIdx = 0; UseOpIdx < NumUses; UseOpIdx++) {
+    if (!findUnmergeOrigin(ConcatI, /*UseOpIdx=*/UseOpIdx, MRI, Helper,
+                           MatchInfo))
+      return false;
+  }
+
+  assert(MatchInfo.NewConcatMBB);
+  assert(MatchInfo.UnmergeSourceReg);
+  return true;
+}
+
+void llvm::applyConcatUnmergePhis(MachineInstr &ConcatI,
+                                  MachineRegisterInfo &MRI, MachineIRBuilder &B,
+                                  AIEConcatUnmergeCombineMatchData &MatchInfo,
+                                  GISelChangeObserver &Observer) {
+  /// Set Insertion Point.
+  if (MatchInfo.NewConcatMBB->empty())
+    B.setMBB(*MatchInfo.NewConcatMBB);
+  else
+    B.setInstr(MatchInfo.NewConcatMBB->instr_back());
+
+  // Create new Concat Instruction.
+  const auto TargetVecType = MRI.getType(*MatchInfo.UnmergeSourceReg);
+  Register ConcatReg = MRI.createGenericVirtualRegister(TargetVecType);
+  auto NewConcat = B.buildMergeLikeInstr(ConcatReg, MatchInfo.ConcatSubVecs);
+  LLVM_DEBUG(dbgs() << "In bb." << MatchInfo.NewConcatMBB->getNumber()
+                    << " created " << *NewConcat.getInstr());
+
+  // Set Insertion Point to top of phi-MBB.
+  B.setInsertPt(*ConcatI.getParent(), ConcatI.getParent()->begin());
+
+  // Create new PHI node.
+  auto NewPHI = B.buildInstr(TargetOpcode::G_PHI);
+  NewPHI.addDef(ConcatI.getOperand(0).getReg());
+
+  // Add first PHI operand (newly create G_CONCAT).
+  NewPHI.addUse(NewConcat.getInstr()->getOperand(0).getReg());
+  NewPHI->addOperand(MachineOperand::CreateMBB(MatchInfo.NewConcatMBB));
+
+  // Add second PHI operand (unmerge Components).
+  NewPHI.addUse(*MatchInfo.UnmergeSourceReg);
+  MachineBasicBlock *UnmergeMBB =
+      MRI.getVRegDef(*MatchInfo.UnmergeSourceReg)->getParent();
+  NewPHI->addOperand(MachineOperand::CreateMBB(UnmergeMBB));
+  LLVM_DEBUG(dbgs() << "Created New Instruction " << *NewPHI.getInstr());
+  ConcatI.removeFromParent();
+}
+
 bool llvm::matchGlobalPtrModOptimizer(MachineInstr &MemI,
                                       MachineRegisterInfo &MRI,
                                       CombinerHelper &Helper,

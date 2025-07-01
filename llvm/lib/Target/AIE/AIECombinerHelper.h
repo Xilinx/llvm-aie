@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -28,6 +28,18 @@ struct ShuffleMaskValidity {
 struct FrequentIndexResult {
   unsigned FrequentIdx;
   unsigned NonMatchingCount;
+};
+
+struct AIEConcatUnmergeCombineMatchData {
+  // Concat Instruction's MBB where the G_CONCAT of ConcatSub[0] through
+  // ConcatSub[n-1] should be created.
+  MachineBasicBlock *NewConcatMBB = nullptr;
+  // Concat Source Registers.
+  SmallVector<Register, 4> ConcatSubVecs;
+
+  // PHI component of the backedge
+  // Register for the PHI Source operand 2 sitting in the backedge path.
+  std::optional<Register> UnmergeSourceReg;
 };
 
 /// The mask is represented by a sawtooth function F with Period, Height and
@@ -74,6 +86,17 @@ struct AIESingleDiffLaneBuildVectorMatchData {
   /// Lane index of the single differing element
   unsigned DifferingIndex;
 };
+
+/// \return whether Concat-Unmerge-PHI combine pattern based on  \p ConcatI is
+/// found.
+bool matchConcatUnmergePhis(MachineInstr &ConcatI, MachineRegisterInfo &MRI,
+                            CombinerHelper &Helper,
+                            AIEConcatUnmergeCombineMatchData &MatchInfo);
+/// apply Concat-Unmerge-PHI Combiner
+void applyConcatUnmergePhis(MachineInstr &ConcatI, MachineRegisterInfo &MRI,
+                            MachineIRBuilder &B,
+                            AIEConcatUnmergeCombineMatchData &MatchInfo,
+                            GISelChangeObserver &Observer);
 
 bool matchGlobalPtrModOptimizer(MachineInstr &MemI, MachineRegisterInfo &MRI,
                                 CombinerHelper &Helper,
