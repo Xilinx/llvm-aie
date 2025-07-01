@@ -1409,13 +1409,6 @@ AIE2InstrInfo::getTiedRegInfoForSplitting(unsigned Opcode) const {
   return getTiedRegInfo(Opcode).front();
 }
 
-bool AIE2InstrInfo::isHardwareLoopDec(unsigned Opcode) const {
-  return Opcode == AIE2::LoopDec;
-}
-bool AIE2InstrInfo::isHardwareLoopJNZ(unsigned Opcode) const {
-  return Opcode == AIE2::LoopJNZ;
-}
-
 std::optional<AIEBaseInstrInfo::ZOLSupport>
 AIE2InstrInfo::getZOLSupport() const {
   AIEBaseInstrInfo::ZOLSupport Result;
@@ -1431,6 +1424,19 @@ AIE2InstrInfo::getZOLSupport() const {
   Result.LSRegister = AIE2::LS;
   Result.LERegister = AIE2::LE;
 
+  return Result;
+}
+
+std::optional<AIEBaseInstrInfo::JNZDSupport>
+AIE2InstrInfo::getJNZDSupport() const {
+  AIEBaseInstrInfo::JNZDSupport Result;
+
+  Result.MovBlockAddrOpcode = AIE2::MOVXM_lng_cg;
+  Result.PointerRegisterClass = &AIE2::eP_as_32BitRegClass;
+  Result.LoopDecOpcode = AIE2::LoopDec;
+  Result.LoopJNZOpcode = AIE2::LoopJNZ;
+  Result.DecTripCountOpcode = AIE2::ADD_NC;
+  Result.LoopJNZDOpcode = AIE2::PseudoJNZD;
   return Result;
 }
 
