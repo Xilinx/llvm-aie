@@ -11,7 +11,7 @@ on:
       DEBUG_OS:
         description: 'which runner os to run the tmate action in (if the tmate action is run)'
         type: string
-        default: 'windows-2019'
+        default: 'windows-2022'
         required: false
       DEBUG_ARCH:
         description: 'which runner arch to run the tmate action in (if the tmate action is run)'
@@ -154,7 +154,7 @@ jobs:
         include:
           - OS: ubuntu-latest
             ARCH: x86_64
-          - OS: windows-2019
+          - OS: windows-2022
             ARCH: AMD64
 
     defaults:

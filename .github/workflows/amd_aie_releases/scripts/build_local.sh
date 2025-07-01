@@ -30,7 +30,7 @@ elif [ "$machine" == "macos" ]; then
   export ARCH=arm64
   export PARALLEL_LEVEL=32
 else
-  export MATRIX_OS=windows-2019
+  export MATRIX_OS=windows-2022
   export CIBW_ARCHS=AMD64
   export CIBW_BUILD=cp311-win_amd64
   export ARCH=AMD64
@@ -50,7 +50,7 @@ if [ -d "$HERE/../wheelhouse/.ccache" ]; then
 fi
 
 for TOOL in "llvm-tblgen" "mlir-tblgen" "mlir-linalg-ods-yaml-gen" "mlir-pdll" "llvm-config" "FileCheck"; do
-  if [ x"$MATRIX_OS" == x"windows-2019" ]; then
+  if [ x"$MATRIX_OS" == x"windows-2022" ]; then
     TOOL="$TOOL.exe"
   fi
   unzip -j "$HERE/../wheelhouse/"llvm-aie-*whl "mlir/bin/$TOOL" -d "$HERE/../native_tools/"
@@ -60,7 +60,7 @@ if [ x"$MATRIX_OS" == x"ubuntu-20.04" ]; then
   PLAT="manylinux_2_17"
 elif [ x"$MATRIX_OS" == x"macos-12" ]; then
   PLAT="macosx_12_0"
-elif [ x"$MATRIX_OS" == x"windows-2019" ]; then
+elif [ x"$MATRIX_OS" == x"windows-2022" ]; then
   PLAT="win"
 fi
 
