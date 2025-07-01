@@ -15,6 +15,7 @@
 #define LLVM_LIB_TARGET_AIE_AIELEGALIZERHELPER_H
 
 #include "llvm/CodeGen/GlobalISel/LegalizerHelper.h"
+#include "llvm/CodeGen/GlobalISel/LegalizerInfo.h"
 #include "llvm/IR/InstrTypes.h"
 
 namespace llvm {
@@ -91,6 +92,8 @@ public:
                                         MachineInstr &MI,
                                         const unsigned LegalVectorSize) const;
   bool legalizeG_TRUNC(LegalizerHelper &Helper, MachineInstr &MI) const;
+  bool isUnaligned20BitStore(const LegalityQuery &Query) const;
+  bool legalize_G_STORE(LegalizerHelper &Helper, GStore &StoreI) const;
 };
 
 } // namespace llvm

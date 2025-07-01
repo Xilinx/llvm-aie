@@ -376,6 +376,10 @@ AIE2LegalizerInfo::AIE2LegalizerInfo(const AIE2Subtarget &ST) : AIEHelper(ST) {
           {ACC512, P0, ACC512, 32}, {ACC1024, P0, ACC1024, 32},
           {S128, P0, S128, 16},
       })
+      // Storing a pointer to an un-aligned address.
+      .customIf([=](const LegalityQuery &Query) {
+        return AIEHelper.isUnaligned20BitStore(Query);
+      })
       .widenScalarToNextPow2(0)
       .lowerIfMemSizeNotPow2()
       .bitcastIf(
@@ -393,7 +397,6 @@ AIE2LegalizerInfo::AIE2LegalizerInfo(const AIE2Subtarget &ST) : AIEHelper(ST) {
       .clampScalar(0, S32, S32)
       .lower();
 
-  // FIXME: Storing a pointer to an un-aligned address isn't supported.
   getActionDefinitionsBuilder({G_ZEXTLOAD, G_SEXTLOAD})
       .legalForTypesWithMemDesc({{S32, P0, S8, 8}, {S32, P0, S16, 16}})
       .widenScalarToNextPow2(0)
@@ -530,6 +533,8 @@ bool AIE2LegalizerInfo::legalizeCustom(
   switch (MI.getOpcode()) {
   default:
     break;
+  case TargetOpcode::G_STORE:
+    return AIEHelper.legalize_G_STORE(Helper, cast<GStore>(MI));
   case TargetOpcode::G_VASTART:
     return AIEHelper.legalizeG_VASTART(Helper, MI);
   case TargetOpcode::G_VAARG:

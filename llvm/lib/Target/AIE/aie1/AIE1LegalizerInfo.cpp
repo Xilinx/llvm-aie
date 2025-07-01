@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 /// \file
@@ -17,6 +17,7 @@
 #include "AIEBaseSubtarget.h"
 #include "AIELegalizerHelper.h"
 #include "llvm/Analysis/VectorUtils.h"
+#include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
 #include "llvm/CodeGen/GlobalISel/LegalizerInfo.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
@@ -221,6 +222,10 @@ AIE1LegalizerInfo::AIE1LegalizerInfo(const AIEBaseSubtarget &ST)
           {ACC512, P0, ACC512, 32}, {ACC1024, P0, ACC1024, 32},
           {S128, P0, S128, 16},
       })
+      // Storing a pointer to an un-aligned address.
+      .customIf([=](const LegalityQuery &Query) {
+        return AIEHelper.isUnaligned20BitStore(Query);
+      })
       .widenScalarToNextPow2(0)
       .lowerIfMemSizeNotPow2()
       .bitcastIf(
@@ -238,7 +243,6 @@ AIE1LegalizerInfo::AIE1LegalizerInfo(const AIEBaseSubtarget &ST)
       .clampScalar(0, S32, S32)
       .lower();
 
-  // FIXME: Storing a pointer to an un-aligned address isn't supported.
   getActionDefinitionsBuilder({G_ZEXTLOAD, G_SEXTLOAD})
       .legalForTypesWithMemDesc({{S32, P0, S8, 8}, {S32, P0, S16, 16}})
       .widenScalarToNextPow2(0)
@@ -275,6 +279,8 @@ bool AIE1LegalizerInfo::legalizeCustom(
   switch (MI.getOpcode()) {
   default:
     break;
+  case TargetOpcode::G_STORE:
+    return AIEHelper.legalize_G_STORE(Helper, cast<GStore>(MI));
   case TargetOpcode::G_VASTART:
     return AIEHelper.legalizeG_VASTART(Helper, MI);
   case TargetOpcode::G_VAARG:
