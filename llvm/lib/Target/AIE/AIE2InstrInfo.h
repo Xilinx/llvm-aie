@@ -100,10 +100,8 @@ public:
   unsigned getOpCode(MachineInstr &MI) const override;
   Register getVaddSignControlRegister() const override;
 
-  virtual bool isHardwareLoopDec(unsigned Opcode) const override;
-  virtual bool isHardwareLoopJNZ(unsigned Opcode) const override;
-
   virtual std::optional<ZOLSupport> getZOLSupport() const override;
+  virtual std::optional<JNZDSupport> getJNZDSupport() const override;
 
   virtual bool
   isOffsetInImmediateRange(unsigned Opcode, unsigned LoadStoreSize,

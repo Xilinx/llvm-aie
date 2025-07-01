@@ -4,10 +4,12 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 
 ; RUN: llc -O2 -mtriple=aie2 --issue-limit=1 --enable-aie-zero-overhead-loops=false \
-; RUN:    --aie-force-hl-gen=true %s -o - | FileCheck %s
+; RUN:    --aie-force-hl-gen=true %s -o - | FileCheck %s --check-prefix=AIE2
+; RUN: llc -O2 -mtriple=aie2p --issue-limit=1 --enable-aie-zero-overhead-loops=false \
+; RUN:    --aie-force-hl-gen=true %s -o - | FileCheck %s --check-prefix=AIE2P
 
 ; Check that we recognize the two level nested loops as hardware loop candidates.
 ; In the LLVM IR input, the loop guards have been removed to allow for a simpler
@@ -16,62 +18,119 @@
 ; count
 
 define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef %size, i32 noundef %size2) {
-; CHECK-LABEL: nested:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %for.cond3.preheader.lr.ph
-; CHECK-NEXT:    nopa ; nopb ; j #.LBB0_3
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mova r3, #0 // Delay Slot 4
-; CHECK-NEXT:    mova r4, #2 // Delay Slot 3
-; CHECK-NEXT:    movxm p2, #.LBB0_1 // Delay Slot 2
-; CHECK-NEXT:    lda r2, [p0, #0] // Delay Slot 1
-; CHECK-NEXT:    .p2align 4
-; CHECK-NEXT:  .LBB0_1: // %for.body6
-; CHECK-NEXT:    // Parent Loop BB0_3 Depth=1
-; CHECK-NEXT:    // => This Inner Loop Header: Depth=2
-; CHECK-NEXT:    nopb ; nopa ; nops ; lshl r7, r6, r4; nopm ; nopv
-; CHECK-NEXT:    mov dj0, r7
-; CHECK-NEXT:    lda r7, [p3, dj0]
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    jnzd r5, r5, p2
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    add r6, r6, #1 // Delay Slot 3
-; CHECK-NEXT:    add r2, r2, r7 // Delay Slot 2
-; CHECK-NEXT:    st r2, [p0, #0] // Delay Slot 1
-; CHECK-NEXT:    .p2align 4
-; CHECK-NEXT:  // %bb.2: // %for.cond3.for.cond.cleanup5_crit_edge
-; CHECK-NEXT:    // in Loop: Header=BB0_3 Depth=1
-; CHECK-NEXT:    nopa ; nopb ; add r3, r3, #1; nopm
-; CHECK-NEXT:    eq r5, r0, r3
-; CHECK-NEXT:    jnz r5, #.LBB0_4
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:    .p2align 4
-; CHECK-NEXT:  .LBB0_3: // %for.cond3.preheader
-; CHECK-NEXT:    // =>This Loop Header: Depth=1
-; CHECK-NEXT:    // Child Loop BB0_1 Depth 2
-; CHECK-NEXT:    lshl r5, r3, r4
-; CHECK-NEXT:    mov dj0, r5
-; CHECK-NEXT:    lda p3, [p1, dj0]
-; CHECK-NEXT:    j #.LBB0_1
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mova r6, #0 // Delay Slot 2
-; CHECK-NEXT:    add.nc r5, r1, #-1 // Delay Slot 1
-; CHECK-NEXT:    .p2align 4
-; CHECK-NEXT:  .LBB0_4: // %for.cond.cleanup
-; CHECK-NEXT:    nopa ; ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
+; AIE2-LABEL: nested:
+; AIE2:         .p2align 4
+; AIE2-NEXT:  // %bb.0: // %for.cond3.preheader.lr.ph
+; AIE2-NEXT:    nopa ; nopb ; j #.LBB0_3
+; AIE2-NEXT:    nop // Delay Slot 5
+; AIE2-NEXT:    mova r3, #0 // Delay Slot 4
+; AIE2-NEXT:    mova r4, #2 // Delay Slot 3
+; AIE2-NEXT:    movxm p2, #.LBB0_1 // Delay Slot 2
+; AIE2-NEXT:    lda r2, [p0, #0] // Delay Slot 1
+; AIE2-NEXT:    .p2align 4
+; AIE2-NEXT:  .LBB0_1: // %for.body6
+; AIE2-NEXT:    // Parent Loop BB0_3 Depth=1
+; AIE2-NEXT:    // => This Inner Loop Header: Depth=2
+; AIE2-NEXT:    nopb ; nopa ; nops ; lshl r7, r6, r4; nopm ; nopv
+; AIE2-NEXT:    mov dj0, r7
+; AIE2-NEXT:    lda r7, [p3, dj0]
+; AIE2-NEXT:    nop
+; AIE2-NEXT:    nop
+; AIE2-NEXT:    jnzd r5, r5, p2
+; AIE2-NEXT:    nop // Delay Slot 5
+; AIE2-NEXT:    nop // Delay Slot 4
+; AIE2-NEXT:    add r6, r6, #1 // Delay Slot 3
+; AIE2-NEXT:    add r2, r2, r7 // Delay Slot 2
+; AIE2-NEXT:    st r2, [p0, #0] // Delay Slot 1
+; AIE2-NEXT:    .p2align 4
+; AIE2-NEXT:  // %bb.2: // %for.cond3.for.cond.cleanup5_crit_edge
+; AIE2-NEXT:    // in Loop: Header=BB0_3 Depth=1
+; AIE2-NEXT:    nopa ; nopb ; add r3, r3, #1; nopm
+; AIE2-NEXT:    eq r5, r0, r3
+; AIE2-NEXT:    jnz r5, #.LBB0_4
+; AIE2-NEXT:    nop // Delay Slot 5
+; AIE2-NEXT:    nop // Delay Slot 4
+; AIE2-NEXT:    nop // Delay Slot 3
+; AIE2-NEXT:    nop // Delay Slot 2
+; AIE2-NEXT:    nop // Delay Slot 1
+; AIE2-NEXT:    .p2align 4
+; AIE2-NEXT:  .LBB0_3: // %for.cond3.preheader
+; AIE2-NEXT:    // =>This Loop Header: Depth=1
+; AIE2-NEXT:    // Child Loop BB0_1 Depth 2
+; AIE2-NEXT:    lshl r5, r3, r4
+; AIE2-NEXT:    mov dj0, r5
+; AIE2-NEXT:    lda p3, [p1, dj0]
+; AIE2-NEXT:    j #.LBB0_1
+; AIE2-NEXT:    nop // Delay Slot 5
+; AIE2-NEXT:    nop // Delay Slot 4
+; AIE2-NEXT:    nop // Delay Slot 3
+; AIE2-NEXT:    mova r6, #0 // Delay Slot 2
+; AIE2-NEXT:    add.nc r5, r1, #-1 // Delay Slot 1
+; AIE2-NEXT:    .p2align 4
+; AIE2-NEXT:  .LBB0_4: // %for.cond.cleanup
+; AIE2-NEXT:    nopa ; ret lr
+; AIE2-NEXT:    nop // Delay Slot 5
+; AIE2-NEXT:    nop // Delay Slot 4
+; AIE2-NEXT:    nop // Delay Slot 3
+; AIE2-NEXT:    nop // Delay Slot 2
+; AIE2-NEXT:    nop // Delay Slot 1
+;
+; AIE2P-LABEL: nested:
+; AIE2P:         .p2align 4
+; AIE2P-NEXT:  // %bb.0: // %for.cond3.preheader.lr.ph
+; AIE2P-NEXT:    nopa ; nopb ; j #.LBB0_3
+; AIE2P-NEXT:    nop // Delay Slot 5
+; AIE2P-NEXT:    mova r3, #0 // Delay Slot 4
+; AIE2P-NEXT:    mova r4, #2 // Delay Slot 3
+; AIE2P-NEXT:    movxm p2, #.LBB0_1 // Delay Slot 2
+; AIE2P-NEXT:    lda r2, [p0, #0] // Delay Slot 1
+; AIE2P-NEXT:    .p2align 4
+; AIE2P-NEXT:  .LBB0_1: // %for.body6
+; AIE2P-NEXT:    // Parent Loop BB0_3 Depth=1
+; AIE2P-NEXT:    // => This Inner Loop Header: Depth=2
+; AIE2P-NEXT:    nopa ; nopb ; nops ; lshl r7, r6, r4; nopm ; nopv
+; AIE2P-NEXT:    mov dj0, r7
+; AIE2P-NEXT:    lda r7, [p3, dj0]
+; AIE2P-NEXT:    nop
+; AIE2P-NEXT:    nop
+; AIE2P-NEXT:    jnzd r5, r5, p2
+; AIE2P-NEXT:    nop // Delay Slot 5
+; AIE2P-NEXT:    nop // Delay Slot 4
+; AIE2P-NEXT:    add r6, r6, #1 // Delay Slot 3
+; AIE2P-NEXT:    add r2, r2, r7 // Delay Slot 2
+; AIE2P-NEXT:    st r2, [p0, #0] // Delay Slot 1
+; AIE2P-NEXT:    .p2align 4
+; AIE2P-NEXT:  // %bb.2: // %for.cond3.for.cond.cleanup5_crit_edge
+; AIE2P-NEXT:    // in Loop: Header=BB0_3 Depth=1
+; AIE2P-NEXT:    nopa ; nopb ; add r3, r3, #1; nopm
+; AIE2P-NEXT:    eq r5, r0, r3
+; AIE2P-NEXT:    jnz r5, #.LBB0_4
+; AIE2P-NEXT:    nop // Delay Slot 5
+; AIE2P-NEXT:    nop // Delay Slot 4
+; AIE2P-NEXT:    nop // Delay Slot 3
+; AIE2P-NEXT:    nop // Delay Slot 2
+; AIE2P-NEXT:    nop // Delay Slot 1
+; AIE2P-NEXT:    .p2align 4
+; AIE2P-NEXT:  .LBB0_3: // %for.cond3.preheader
+; AIE2P-NEXT:    // =>This Loop Header: Depth=1
+; AIE2P-NEXT:    // Child Loop BB0_1 Depth 2
+; AIE2P-NEXT:    lshl r5, r3, r4
+; AIE2P-NEXT:    mov dj0, r5
+; AIE2P-NEXT:    lda p3, [p1, dj0]
+; AIE2P-NEXT:    j #.LBB0_1
+; AIE2P-NEXT:    nop // Delay Slot 5
+; AIE2P-NEXT:    nop // Delay Slot 4
+; AIE2P-NEXT:    nop // Delay Slot 3
+; AIE2P-NEXT:    mova r6, #0 // Delay Slot 2
+; AIE2P-NEXT:    add.nc r5, r1, #-1 // Delay Slot 1
+; AIE2P-NEXT:    .p2align 4
+; AIE2P-NEXT:  .LBB0_4: // %for.cond.cleanup
+; AIE2P-NEXT:    nopa ; ret lr
+; AIE2P-NEXT:    nop // Delay Slot 5
+; AIE2P-NEXT:    nop // Delay Slot 4
+; AIE2P-NEXT:    nop // Delay Slot 3
+; AIE2P-NEXT:    nop // Delay Slot 2
+; AIE2P-NEXT:    nop // Delay Slot 1
 for.cond3.preheader.lr.ph:
   %out.promoted22 = load i32, ptr %out, align 4
   br label %for.cond3.preheader

@@ -386,6 +386,16 @@ bool AIEBaseInstrInfo::isHardwareLoopEnd(unsigned Opcode) const {
   return ZOLSupport && Opcode == ZOLSupport->LoopEndOpcode;
 }
 
+bool AIEBaseInstrInfo::isHardwareLoopDec(unsigned Opcode) const {
+  const auto JNZDSupport = getJNZDSupport();
+  return JNZDSupport && Opcode == JNZDSupport->LoopDecOpcode;
+}
+
+bool AIEBaseInstrInfo::isHardwareLoopJNZ(unsigned Opcode) const {
+  const auto JNZDSupport = getJNZDSupport();
+  return JNZDSupport && Opcode == JNZDSupport->LoopJNZOpcode;
+}
+
 // Look for the last LoopSetup Bundle.
 bool AIEBaseInstrInfo::isLastZOLSetupBundleInMBB(
     MachineBasicBlock::iterator MII) const {

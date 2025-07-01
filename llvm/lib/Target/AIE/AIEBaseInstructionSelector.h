@@ -144,6 +144,8 @@ public:
                                MachineIRBuilder &MIB);
   bool selectBrCondLoopDecrement(MachineInstr &BrCond,
                                  MachineRegisterInfo &MRI);
+  bool selectBrCondLoopDecrementReg(MachineInstr &BrCond,
+                                    MachineRegisterInfo &MRI);
   bool selectG_BRCOND(MachineInstr &I, MachineRegisterInfo &MRI);
 
   bool selectVMAXDIFF_LT(MachineInstr &I, MachineRegisterInfo &MRI,
@@ -176,6 +178,7 @@ protected:
   bool canCombineCONVLoad(MachineInstr &MemOp, MachineInstr &CombOp);
   bool selectG_AIE_LOAD_CONV(MachineInstr &CONVI, MachineRegisterInfo &MRI);
   bool selectVCONV(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectStartLoop(MachineInstr &I, MachineRegisterInfo &MRI);
 
 protected:
   MachineIRBuilder MIB;

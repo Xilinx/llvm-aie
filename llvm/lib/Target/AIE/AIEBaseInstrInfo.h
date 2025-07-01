@@ -60,6 +60,23 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
     // of bundles.
     unsigned LoopSetupDistance;
   };
+
+  class JNZDSupport {
+  public:
+    // Target Opcode to move a Block Address to a pointer register.
+    unsigned MovBlockAddrOpcode;
+    // Register class that can hold a pointer.
+    const TargetRegisterClass *PointerRegisterClass;
+    // Target Opcode for LoopDec.
+    unsigned LoopDecOpcode;
+    // Target Opcode for JNZ.
+    unsigned LoopJNZOpcode;
+    // Target Opcode for Decrement Trip Count
+    unsigned DecTripCountOpcode;
+    // Target Opcode for JNZD.
+    unsigned LoopJNZDOpcode;
+  };
+
   virtual bool isOffsetInImmediateRange(unsigned Opcode, unsigned LoadStoreSize,
                                         std::optional<APInt> Offset) const {
     llvm_unreachable("Target didn't implement OffsetFitImmRange");
@@ -332,8 +349,8 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
     llvm_unreachable("Target didn't implement vaddSign control register");
   }
   // Opcodes related to hardware loop handling
-  virtual bool isHardwareLoopDec(unsigned Opcode) const { return false; }
-  virtual bool isHardwareLoopJNZ(unsigned Opcode) const { return false; }
+  virtual bool isHardwareLoopDec(unsigned Opcode) const;
+  virtual bool isHardwareLoopJNZ(unsigned Opcode) const;
   virtual bool isHardwareLoopStart(unsigned Opcode) const;
   virtual bool isHardwareLoopEnd(unsigned Opcode) const;
 
@@ -358,6 +375,10 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   // which needs to be maintained between writing zero-overhead
   // registers(lc, le, ls, etc.) and the end of the loop,
   virtual unsigned getLoopSetupDistance() const;
+
+  // All opcodes etc used for JNZD lowering. If this returns none, we have no
+  // JNZD support.
+  virtual std::optional<JNZDSupport> getJNZDSupport() const { return {}; }
 
   virtual unsigned getZOLBundlesCount(const MachineBasicBlock &MBB) const;
 

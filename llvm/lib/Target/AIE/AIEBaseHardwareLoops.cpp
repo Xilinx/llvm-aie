@@ -435,12 +435,14 @@ void AIEBaseHardwareLoops::expandLoopEnd(LowOverheadLoop &LoLoop) {
   if (!LoLoop.isJNZDLoop()) {
     return;
   }
+  auto LoweringData = TII->getJNZDSupport();
+  assert(LoweringData);
   MachineInstr *Dec = LoLoop.Dec;
   MachineInstr *End = LoLoop.End;
   assert(Dec->getOperand(0).getReg() == End->getOperand(0).getReg() &&
          "LoopDec not feeding into LoopEnd!?");
   MachineBasicBlock *MBB = End->getParent();
-  BuildMI(*MBB, End, End->getDebugLoc(), TII->get(TII->getPseudoJNZDOpcode()))
+  BuildMI(*MBB, End, End->getDebugLoc(), TII->get(LoweringData->LoopJNZDOpcode))
       .addDef(Dec->getOperand(0).getReg())
       .addReg(Dec->getOperand(1).getReg())
       .addReg(End->getOperand(1).getReg());

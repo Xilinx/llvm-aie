@@ -57,7 +57,6 @@ public:
   bool selectCascadeStreamInsn(MachineInstr &I, MachineRegisterInfo &MRI,
                                bool isWrite);
   bool selectG_AIE_ADD_VECTOR_ELT_HI(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectG_BRCOND(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_BRINDIRECT(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_JUMP_TABLE(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_CONSTANT(MachineInstr &I, MachineRegisterInfo &MRI);
@@ -526,80 +525,6 @@ bool AIE2InstructionSelector::selectG_AIE_ADD_VECTOR_ELT_HI(
   I.eraseFromParent();
 
   return constrainSelectedInstRegOperands(MI, TII, TRI, RBI);
-}
-
-bool AIE2InstructionSelector::selectG_BRCOND(MachineInstr &I,
-                                             MachineRegisterInfo &MRI) {
-  Register CondReg = I.getOperand(0).getReg();
-  MachineBasicBlock *DestMBB = I.getOperand(1).getMBB();
-
-  const unsigned CondRB = RBI.getRegBank(CondReg, MRI, TRI)->getID();
-
-  // The condition needs to reside in GPRs
-  if (CondRB != AIE2::GPRRegBankID)
-    return false;
-
-  auto *Cond = getDefIgnoringCopies(CondReg, MRI);
-
-  assert(Cond && "Conditional branch without a condition!?");
-
-  struct JNZDArgs {
-    Register NewLC;
-    Register PrevLC;
-    MachineInstr *IntrinInst;
-  };
-  // This checks for the following pattern:
-  // bb.loop.body:
-  //  %newLC:gprregbank(s32) = llvm.loop.decrement.reg, %prevLC(s32), 1
-  //  %cond:gprregbank(s32) = G_ICMP intpred(ne), %newLC(s32), 0
-  //  G_BRCOND %4(s32), %bb.loop.body
-  auto IsJNZDPattern =
-      [](const MachineInstr &MI,
-         const MachineRegisterInfo &MRI) -> std::optional<JNZDArgs> {
-    if (MI.getOpcode() != TargetOpcode::G_ICMP)
-      return {};
-
-    const auto &PredOp = MI.getOperand(1);
-    const auto Pred = static_cast<CmpInst::Predicate>(PredOp.getPredicate());
-
-    if (Pred != CmpInst::ICMP_NE)
-      return {};
-
-    auto CmpRHS =
-        getIConstantVRegValWithLookThrough(MI.getOperand(3).getReg(), MRI);
-    if (!CmpRHS || CmpRHS->Value != 0)
-      return {};
-
-    auto *CmpLHS = MRI.getVRegDef(MI.getOperand(2).getReg());
-    if (CmpLHS->getOpcode() != TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS)
-      return {};
-
-    unsigned IntrinID = cast<GIntrinsic>(*CmpLHS).getIntrinsicID();
-    if (IntrinID != Intrinsic::loop_decrement_reg)
-      return {};
-
-    JNZDArgs Args;
-    Args.NewLC = CmpLHS->getOperand(0).getReg();
-    Args.PrevLC = CmpLHS->getOperand(2).getReg();
-    Args.IntrinInst = CmpLHS;
-    return Args;
-  };
-
-  if (auto Args = IsJNZDPattern(*Cond, MRI)) {
-    Register BlockAddrReg =
-        MRI.createVirtualRegister(&AIE2::eP_as_32BitRegClass);
-    MIB.buildInstr(AIE2::MOVXM_lng_cg, {BlockAddrReg}, {}).addMBB(DestMBB);
-    auto LoopDec = MIB.buildInstr(AIE2::LoopDec, {Args->NewLC}, {Args->PrevLC});
-    MIB.buildInstr(AIE2::LoopJNZ, {},
-                   {LoopDec->getOperand(0).getReg(), BlockAddrReg});
-    // Explicitly remove intrinsic as it isn't caught in the isTriviallyDead
-    // check
-    I.eraseFromParent();
-    Args->IntrinInst->eraseFromParent();
-    return constrainSelectedInstRegOperands(*LoopDec, TII, TRI, RBI);
-  }
-
-  return AIEBaseInstructionSelector::selectG_BRCOND(I, MRI);
 }
 
 bool AIE2InstructionSelector::selectG_BRINDIRECT(MachineInstr &I,
