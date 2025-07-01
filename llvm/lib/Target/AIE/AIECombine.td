@@ -180,6 +180,14 @@ def combine_narrow_zext_s20 : GICombineRule<
          [{ return matchNarrowZext(*${root}, MRI, Observer, ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
 
+def concat_unmerge_matchdata : GIDefMatchData<"AIEConcatUnmergeCombineMatchData">;
+def combine_concat_unmerge_phis : GICombineRule <
+  (defs root:$root, concat_unmerge_matchdata:$matchinfo),
+  (match (wip_match_opcode G_CONCAT_VECTORS):$root,
+  [{return matchConcatUnmergePhis(*${root}, MRI, Helper, ${matchinfo});}]),
+  (apply [{ applyConcatUnmergePhis(*${root}, MRI, B,${matchinfo}, Observer);}])
+>;
+
 // AIE-specifc combines (currently shared by AIE2 and AIE2P).
 def aie_additional_combines : GICombineGroup<[
   combine_unpad_vector,
@@ -194,7 +202,8 @@ def aie_additional_combines : GICombineGroup<[
   combine_broadcast_shl_to_add,
   combine_vector_shuffle_extract_subvec,
   combine_narrow_trunc_s20,
-  combine_narrow_zext_s20
+  combine_narrow_zext_s20,
+  combine_concat_unmerge_phis
 ]>;
 
 // AIE2P-specific combines.
@@ -311,7 +320,7 @@ def AIE2PostLegalizerCustomCombiner
                                                           combine_add_vector_elt_undef,
                                                           combine_extract_concat,
                                                           combine_unmerge_concat,
-                                                          combine_upd_to_concat
+                                                          combine_upd_to_concat, 
                                                           ]> {
 }
 
@@ -321,6 +330,7 @@ def AIE2PPostLegalizerCustomCombiner
                                                             ptr_add_immed_chain,
                                                             combine_offset_load_store_ptradd,
                                                             combine_offset_load_store_share_ptradd,
-                                                            combine_add_vector_elt_undef ]> {
+                                                            combine_add_vector_elt_undef,
+                                                             ]> {
 }
 
