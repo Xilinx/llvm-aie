@@ -32,6 +32,7 @@ add_llvm_target_unittest(AIETests
   AIETestTarget.cpp
   BundleTest.cpp
   HazardRecognizerTest.cpp
+  StaticBitSetTest.cpp
   VirtUnrollAliasAnalysisTest.cpp
   )
 
