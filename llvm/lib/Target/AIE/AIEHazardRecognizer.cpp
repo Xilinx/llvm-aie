@@ -68,13 +68,12 @@ bool FuncUnitWrapper::operator==(const FuncUnitWrapper &Other) const {
 void FuncUnitWrapper::dump() const {
   const char *const Digits = "0123456789";
   const char *const Spacer = "-|";
-  const int Upper = std::numeric_limits<InstrStage::FuncUnits>::digits - 1;
 
-  auto PrintFU = [&](const std::string &FUName, InstrStage::FuncUnits FU) {
+  auto PrintFU = [&](const std::string &FUName, ResourceSet FU) {
     dbgs() << FUName;
 
-    for (int J = Upper; J >= 0; J--)
-      dbgs() << ((FU & (1ULL << J)) ? Digits[J % 10] : Spacer[J % 10 == 0]);
+    for (int J = FU.getNumBits() - 1; J >= 0; J--)
+      dbgs() << (FU.contains(J) ? Digits[J % 10] : Spacer[J % 10 == 0]);
   };
   auto PrintResource = [&](const std::string &ResourceName, uint64_t Resource) {
     dbgs() << ResourceName;
@@ -86,28 +85,28 @@ void FuncUnitWrapper::dump() const {
   PrintResource(" Slots : ", Slots);
   PrintResource(" Memorybanks : ", MemoryBanks);
   PrintResource(" MemObjectsBits : ", MemObjectsBits);
-  if (!Reserved)
+  if (Reserved.empty())
     return;
   PrintFU("\n\t   Rsrv : ", Reserved);
 }
 
 void FuncUnitWrapper::clearResources() {
   IssueCount = 0;
-  Required = 0;
-  Reserved = 0;
+  Required.clear();
+  Reserved.clear();
   Slots = 0;
   MemoryBanks = 0;
   MemObjectsBits = 0;
 }
 
 bool FuncUnitWrapper::isEmpty() const {
-  return Required == 0 && Reserved == 0 && Slots == 0 && MemoryBanks == 0 &&
-         MemObjectsBits == 0;
+  return Required.empty() && Reserved.empty() && Slots == 0 &&
+         MemoryBanks == 0 && MemObjectsBits == 0;
 }
 
 void FuncUnitWrapper::blockResources() {
-  Required = ~0;
-  Reserved = ~0;
+  Required = ~ResourceSet();
+  Reserved = ~ResourceSet();
   Slots = ~0;
   // Since the HW stalls in the event of memory bank conflicts, we don't need to
   // block the resource. It is overly conservative if we block all memory banks.
@@ -124,10 +123,11 @@ FuncUnitWrapper &FuncUnitWrapper::operator|=(const FuncUnitWrapper &Other) {
 }
 
 bool FuncUnitWrapper::conflict(const FuncUnitWrapper &Other) const {
-  if ((Required & Other.Required) != 0 || (Slots & Other.Slots) != 0 ||
-      (MemoryBanks & Other.MemoryBanks) != 0 ||
-      (Reserved & Other.Required) != 0 || (Required & Other.Reserved) != 0 ||
-      (MemObjectsBits & Other.MemObjectsBits) != 0) {
+  if ((Slots & Other.Slots) != 0 || (MemoryBanks & Other.MemoryBanks) != 0 ||
+      (MemObjectsBits & Other.MemObjectsBits) != 0 ||
+      Required.overlap(Other.Required) || Reserved.overlap(Other.Required) ||
+      Required.overlap(Other.Reserved)) {
+
     return true;
   }
 
@@ -139,12 +139,15 @@ bool FuncUnitWrapper::conflict(const FuncUnitWrapper &Other) const {
 }
 
 namespace {
+
+using FuncUnitWrapperAction =
+    std::function<bool(int C, const FuncUnitWrapper &)>;
+
 // Central itinerary data interpreter
 // It will call Action with the cycle number and the FuncUnits,
 // returning true as soon as Action returns true.
 // A full traversal can be made by returning false.
-bool anyStage(ArrayRef<const InstrStage> Stages,
-              std::function<bool(int C, const FuncUnitWrapper &)> Action,
+bool anyStage(ArrayRef<const InstrStage> Stages, FuncUnitWrapperAction Action,
               std::optional<int> FUDepthLimit = std::nullopt) {
   int Cycle = 0;
   for (const InstrStage &IS : Stages) {
@@ -549,14 +552,14 @@ bool AIEHazardRecognizer::checkConflict(
     std::optional<int> FUDepthLimit) {
 
   // Verify format hazards
-  FuncUnitWrapper EmissionCycle(/*Req=*/0, /*Res=*/0, SlotSet);
+  FuncUnitWrapper EmissionCycle(SlotSet);
   if (EmissionCycle.conflict(Scoreboard[DeltaCycles]))
     return true;
 
   // Verify memory bank and shared object hazards
   if (!MemoryAccessCycles.empty()) {
-    FuncUnitWrapper MemoryAccessCycle(/*Req=*/0, /*Res=*/0, /*SlotSet=*/0,
-                                      MemoryBanks, MemObjectsBits);
+    FuncUnitWrapper MemoryAccessCycle(/*SlotSet=*/0, MemoryBanks,
+                                      MemObjectsBits);
 
     for (auto Cycles : MemoryAccessCycles) {
       // MemoryAccessCycles starts counting from 1, so we need to subtract 1
@@ -575,8 +578,7 @@ bool AIEHazardRecognizer::checkConflict(
 
   /// Check ThisCycle for a conflict at Cycle relative to the start of the
   /// itinerary.
-  auto CycleConflict =
-
+  FuncUnitWrapperAction CycleConflict =
       [&Scoreboard, DeltaCycles](int Cycle, const FuncUnitWrapper &ThisCycle) {
         const int StageCycle = DeltaCycles + Cycle;
         assert(Scoreboard.isInRange(StageCycle));
@@ -642,13 +644,13 @@ void AIEHazardRecognizer::enterResources(
     std::optional<int> FUDepthLimit) {
 
   // Append slot usage
-  FuncUnitWrapper EmissionCycle(/*Req=*/0, /*Res=*/0, SlotSet);
+  FuncUnitWrapper EmissionCycle(SlotSet);
   Scoreboard[DeltaCycles] |= EmissionCycle;
 
   // Append memory bank usage
   if (!MemoryAccessCycles.empty()) {
     FuncUnitWrapper MemoryBankAndObjectsAccessCycle(
-        /*Req=*/0, /*Res=*/0, /*SlotSet=*/0, MemoryBanks, MemObjectsBits);
+        /*SlotSet=*/0, MemoryBanks, MemObjectsBits);
     for (auto Cycles : MemoryAccessCycles) {
       assert(Scoreboard.isInRange(DeltaCycles + Cycles - 1));
       Scoreboard[DeltaCycles + Cycles - 1] |= MemoryBankAndObjectsAccessCycle;
@@ -686,7 +688,7 @@ void AIEHazardRecognizer::computeMaxLatency() {
   assert(ItinData && !ItinData->isEmpty());
   unsigned FirstRW = std::numeric_limits<unsigned>().max();
   unsigned LastRW = 0;
-  auto MaxDepth = [this](int C, const FuncUnitWrapper &) {
+  FuncUnitWrapperAction MaxDepth = [this](int C, const FuncUnitWrapper &) {
     PipelineDepth = std::max(PipelineDepth, C);
     return false;
   };
@@ -709,6 +711,7 @@ void AIEHazardRecognizer::computeMaxLatency() {
   FirstRW = TII->getMinFirstMemoryCycle();
   LastRW = TII->getMaxLastMemoryCycle();
   MaxLatency = std::max(MaxLatency, int(LastRW - FirstRW + 1));
+  PipelineDepth = std::max(PipelineDepth, int(LastRW));
 }
 
 unsigned AIEHazardRecognizer::computeScoreboardDepth() const {

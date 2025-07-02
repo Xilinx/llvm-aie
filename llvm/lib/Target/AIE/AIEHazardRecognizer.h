@@ -16,8 +16,9 @@
 #include "AIEAlternateDescriptors.h"
 #include "AIEBaseSubtarget.h"
 #include "AIEBundle.h"
+#include "AIEMaxNumResources.h"
 #include "MCTargetDesc/AIEMCFormats.h"
-#include "llvm/ADT/SmallSet.h"
+#include "StaticBitSet.h"
 #include "llvm/CodeGen/LiveInterval.h"
 #include "llvm/CodeGen/ResourceCycle.h"
 #include "llvm/CodeGen/ResourceScoreboard.h"
@@ -57,16 +58,17 @@ const_bundled_instrs(const MachineInstr &MI, bool IncludeRoot = false) {
   return make_range(Begin, getBundleEnd(MI.getIterator()));
 }
 
+using ResourceSet = StaticBitSet<TotalNumResources>;
+
 // To be merged with AIEResourceCycle
 class FuncUnitWrapper {
   /// The format interface to interpret bundle constraints
   static const AIEBaseMCFormats *FormatInterface;
-  static const uint64_t One = 1;
 
   /// Bitset of the required resources
-  InstrStage::FuncUnits Required = 0;
+  ResourceSet Required;
   /// Bitset of the reserved resources
-  InstrStage::FuncUnits Reserved = 0;
+  ResourceSet Reserved;
 
   /// The occupied slots. This is currently redundant with Bundle
   SlotBits Slots = 0;
@@ -82,13 +84,14 @@ public:
   unsigned IssueCount = 0;
 
   FuncUnitWrapper(const InstrStage &IS, SlotBits Slots = 0,
-                  MemoryBankBits MemoryBanks = 0, uint64_t MemObjectsBits = 0)
+                  MemoryBankBits MemoryBanks = 0,
+                  MemoryObjectsBits MemObjectsBits = 0)
       : Required(IS.getReservationKind() == InstrStage::Required
-                     ? (One << IS.getUnits())
-                     : 0),
+                     ? ResourceSet(IS.getUnits())
+                     : ResourceSet()),
         Reserved(IS.getReservationKind() == InstrStage::Reserved
-                     ? (One << IS.getUnits())
-                     : 0),
+                     ? ResourceSet(IS.getUnits())
+                     : ResourceSet()),
         Slots(Slots), MemoryBanks(MemoryBanks), MemObjectsBits(MemObjectsBits) {
   }
 
@@ -102,12 +105,10 @@ public:
   /// Make this conflict with any non-empty cycle
   void blockResources();
   FuncUnitWrapper() = default;
-  FuncUnitWrapper(InstrStage::FuncUnits Req) : Required(Req), Reserved(0) {}
-  FuncUnitWrapper(InstrStage::FuncUnits Req, InstrStage::FuncUnits Res,
-                  SlotBits Slots = 0, MemoryBankBits MemoryBanks = 0,
-                  uint64_t MemObjectsBits = 0)
-      : Required(Req), Reserved(Res), Slots(Slots), MemoryBanks(MemoryBanks),
-        MemObjectsBits(MemObjectsBits) {}
+  FuncUnitWrapper(SlotBits Slots, MemoryBankBits MemoryBanks = 0,
+                  MemoryObjectsBits MemObjectsBits = 0)
+      : Slots(Slots), MemoryBanks(MemoryBanks), MemObjectsBits(MemObjectsBits) {
+  }
 
   /// Compare two FuncUnitWrappers for equality. This is only used for
   /// dumping purposes, quite literally saying "this looks the same"
