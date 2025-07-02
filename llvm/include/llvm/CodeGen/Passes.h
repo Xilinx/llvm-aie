@@ -219,6 +219,8 @@ namespace llvm {
   ///
   FunctionPass *createGreedyRegisterAllocator();
   FunctionPass *createGreedyRegisterAllocator(RegClassFilterFunc F);
+  FunctionPass *createGreedyRegisterAllocator(RegClassFilterFunc F,
+                                              LiveIntervalFilterFunc LIF);
 
   /// PBQPRegisterAllocation Pass - This pass implements the Partitioned Boolean
   /// Quadratic Prograaming (PBQP) based register allocator.

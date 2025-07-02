@@ -48,6 +48,10 @@ struct AIE2PRegisterInfo : public AIE2PGenRegisterInfo {
   const TargetRegisterClass *getPointerRegClass(const MachineFunction &MF,
                                                 unsigned Kind) const override;
 
+  const TargetRegisterClass *
+  getSubClassWithSubReg(const TargetRegisterClass *RC,
+                        unsigned Idx) const override;
+
   bool requiresRegisterScavenging(const MachineFunction &MF) const override {
     return true;
   }

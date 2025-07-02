@@ -99,6 +99,8 @@ class VirtRegMap;
     LiveIntervals();
     ~LiveIntervals() override;
 
+    const TargetInstrInfo &getTargetInstrInfo() const { return *TII; }
+
     /// Calculate the spill weight to assign to a single instruction.
     static float getSpillWeight(bool isDef, bool isUse,
                                 const MachineBlockFrequencyInfo *MBFI,

@@ -72,6 +72,7 @@ protected:
   LiveRegMatrix *Matrix = nullptr;
   RegisterClassInfo RegClassInfo;
   const RegClassFilterFunc ShouldAllocateClass;
+  const LiveIntervalFilterFunc ShouldAllocateLiveInterval;
 
   /// Inst which is a def of an original reg and whose defs are already all
   /// dead after remat is saved in DeadRemats. The deletion of such inst is
@@ -79,8 +80,9 @@ protected:
   /// always available for the remat of all the siblings of the original reg.
   SmallPtrSet<MachineInstr *, 32> DeadRemats;
 
-  RegAllocBase(const RegClassFilterFunc F = allocateAllRegClasses) :
-    ShouldAllocateClass(F) {}
+  RegAllocBase(const RegClassFilterFunc F = allocateAllRegClasses,
+               const LiveIntervalFilterFunc LIF = allocateAllLiveIntervals)
+      : ShouldAllocateClass(F), ShouldAllocateLiveInterval(LIF) {}
 
   virtual ~RegAllocBase() = default;
 

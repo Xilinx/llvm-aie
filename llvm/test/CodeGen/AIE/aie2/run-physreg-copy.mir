@@ -26,14 +26,13 @@ name:     test_copy_ds
 body: |
   bb.0:
     ; CHECK-LABEL: name: test_copy_ds
-    ; CHECK: $m1 = MOV_mv_scl $m2
+    ; CHECK: $dc1 = MOV_mv_scl $dc2
     ; CHECK-NEXT: $dn1 = MOV_mv_scl $dn2
     ; CHECK-NEXT: $dj1 = MOV_mv_scl $dj2
-    ; CHECK-NEXT: $dc1 = MOV_mv_scl $dc2
-    ; CHECK-NEXT: $m5 = MOV_mv_scl $m6
+    ; CHECK-NEXT: $m1 = MOV_mv_scl $m2
+    ; CHECK-NEXT: $dc5 = MOV_mv_scl $dc6
     ; CHECK-NEXT: $dn5 = MOV_mv_scl $dn6
     ; CHECK-NEXT: $dj5 = MOV_mv_scl $dj6
-    ; CHECK-NEXT: $dc5 = MOV_mv_scl $dc6
   $d1_3d = COPY $d2_3d
 ...
 

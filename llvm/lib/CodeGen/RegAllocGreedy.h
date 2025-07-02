@@ -284,7 +284,8 @@ private:
   bool ReverseLocalAssignment = false;
 
 public:
-  RAGreedy(const RegClassFilterFunc F = allocateAllRegClasses);
+  RAGreedy(const RegClassFilterFunc F = allocateAllRegClasses,
+           const LiveIntervalFilterFunc LIF = allocateAllLiveIntervals);
 
   /// Return the pass name.
   StringRef getPassName() const override { return "Greedy Register Allocator"; }

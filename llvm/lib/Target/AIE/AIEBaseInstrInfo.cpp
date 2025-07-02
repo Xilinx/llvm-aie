@@ -671,15 +671,29 @@ void AIEBaseInstrInfo::copyThroughSubRegs(MachineBasicBlock &MBB,
                                           MCRegister SrcReg,
                                           bool KillSrc) const {
   MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
-  const TargetRegisterInfo &TRI = *MRI.getTargetRegisterInfo();
+  auto &TRI =
+      *static_cast<const AIEBaseRegisterInfo *>(MRI.getTargetRegisterInfo());
 
-  SmallSet<MCRegister, 8> SrcSubRegs;
-  collectSubRegs(SrcReg, SrcSubRegs, TRI);
+  const auto *RC = Register::isPhysicalRegister(SrcReg.id())
+                       ? TRI.getMinimalPhysRegClass(SrcReg)
+                       : MRI.getRegClass(SrcReg);
+  auto &SubRegSplit = TRI.getSubRegSplit(RC->getID());
 
-  for (MCRegister SrcSubReg : SrcSubRegs) {
-    unsigned SubRegIdx = TRI.getSubRegIndex(SrcReg, SrcSubReg);
-    MCRegister DstSubReg = TRI.getSubReg(DstReg, SubRegIdx);
-    copyPhysReg(MBB, MBBI, DL, DstSubReg, SrcSubReg, KillSrc);
+  if (SubRegSplit.size() > 1) {
+    for (const auto &SubRegIdx : SubRegSplit) {
+      MCRegister SrcSubReg = TRI.getSubReg(SrcReg, SubRegIdx);
+      MCRegister DstSubReg = TRI.getSubReg(DstReg, SubRegIdx);
+      copyPhysReg(MBB, MBBI, DL, DstSubReg, SrcSubReg, KillSrc);
+    }
+  } else {
+    SmallSet<MCRegister, 8> SrcSubRegs;
+    collectSubRegs(SrcReg, SrcSubRegs, TRI);
+
+    for (MCRegister SrcSubReg : SrcSubRegs) {
+      unsigned SubRegIdx = TRI.getSubRegIndex(SrcReg, SrcSubReg);
+      MCRegister DstSubReg = TRI.getSubReg(DstReg, SubRegIdx);
+      copyPhysReg(MBB, MBBI, DL, DstSubReg, SrcSubReg, KillSrc);
+    }
   }
 }
 

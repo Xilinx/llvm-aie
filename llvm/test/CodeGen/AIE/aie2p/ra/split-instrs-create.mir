@@ -166,9 +166,9 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:eds = COPY $d1_3d
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep, [[COPY1:%[0-9]+]].sub_dim_count:eds, [[COPY1:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = PADDA_3D_split killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count, killed undef [[COPY1]].sub_hi_dim_then_sub_mod, killed [[COPY1]].sub_hi_dim_then_sub_dim_size, killed [[COPY1]].sub_hi_dim_then_sub_dim_stride, killed [[COPY1]].sub_hi_dim_then_sub_dim_count
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep, [[COPY1:%[0-9]+]].sub_dim_count:eds, [[COPY1:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = PADDB_3D_split killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count, killed undef [[COPY1]].sub_hi_dim_then_sub_mod, killed [[COPY1]].sub_hi_dim_then_sub_dim_size, killed [[COPY1]].sub_hi_dim_then_sub_dim_stride, killed [[COPY1]].sub_hi_dim_then_sub_dim_count
-    ; CHECK-NEXT: dead [[COPY:%[0-9]+]]:ep, dead [[COPY1:%[0-9]+]].sub_dim_count:eds, dead [[COPY1:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = PADDS_3D_split killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count, killed undef [[COPY1]].sub_hi_dim_then_sub_mod, killed [[COPY1]].sub_hi_dim_then_sub_dim_size, killed [[COPY1]].sub_hi_dim_then_sub_dim_stride, killed [[COPY1]].sub_hi_dim_then_sub_dim_count
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep, [[COPY1:%[0-9]+]].sub_dim_count:eds, [[COPY1:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = PADDA_3D_split killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count, killed [[COPY1]].sub_hi_dim_then_sub_dim_size, killed [[COPY1]].sub_hi_dim_then_sub_dim_stride, killed [[COPY1]].sub_hi_dim_then_sub_dim_count
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep, [[COPY1:%[0-9]+]].sub_dim_count:eds, [[COPY1:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = PADDB_3D_split killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count, killed [[COPY1]].sub_hi_dim_then_sub_dim_size, killed [[COPY1]].sub_hi_dim_then_sub_dim_stride, killed [[COPY1]].sub_hi_dim_then_sub_dim_count
+    ; CHECK-NEXT: dead [[COPY:%[0-9]+]]:ep, dead [[COPY1:%[0-9]+]].sub_dim_count:eds, dead [[COPY1:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = PADDS_3D_split killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count, killed [[COPY1]].sub_hi_dim_then_sub_dim_size, killed [[COPY1]].sub_hi_dim_then_sub_dim_stride, killed [[COPY1]].sub_hi_dim_then_sub_dim_count
     %20:ep = COPY $p0
     %100:eds = COPY $d1_3d
     %20:ep, %100.sub_dim_count:eds, %100.sub_hi_dim_then_sub_dim_count:eds = PADDA_3D killed %20, killed %100
@@ -190,7 +190,7 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:eds = COPY $d1_3d
-    ; CHECK-NEXT: $r4, [[COPY]]:ep, [[COPY1]].sub_dim_count:eds, [[COPY1]].sub_hi_dim_then_sub_dim_count:eds = LDA_3D_dms_lda_split killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count, killed undef [[COPY1]].sub_hi_dim_then_sub_mod, killed [[COPY1]].sub_hi_dim_then_sub_dim_size, killed [[COPY1]].sub_hi_dim_then_sub_dim_stride, killed [[COPY1]].sub_hi_dim_then_sub_dim_count
+    ; CHECK-NEXT: $r4, [[COPY]]:ep, [[COPY1]].sub_dim_count:eds, [[COPY1]].sub_hi_dim_then_sub_dim_count:eds = LDA_3D_dms_lda_split killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count, killed [[COPY1]].sub_hi_dim_then_sub_dim_size, killed [[COPY1]].sub_hi_dim_then_sub_dim_stride, killed [[COPY1]].sub_hi_dim_then_sub_dim_count
     %20:ep = COPY $p0
     %100:eds = COPY $d1_3d
     $r4, %20:ep, %100.sub_dim_count:eds, %100.sub_hi_dim_then_sub_dim_count:eds = LDA_3D_dms_lda killed %20, killed %100
@@ -210,7 +210,7 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:eds = COPY $d1_3d
-    ; CHECK-NEXT: [[VLDA_3D_UPS_4x_dmx_lda_ups_x2d_upsSign0_split:%[0-9]+]]:edm, [[COPY:%[0-9]+]]:ep, [[COPY1:%[0-9]+]].sub_dim_count:eds, [[COPY1:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = VLDA_3D_UPS_4x_dmx_lda_ups_x2d_upsSign0_split $s0, [[COPY]], [[COPY1]].sub_mod, [[COPY1]].sub_dim_size, [[COPY1]].sub_dim_stride, [[COPY1]].sub_dim_count, undef [[COPY1]].sub_hi_dim_then_sub_mod, [[COPY1]].sub_hi_dim_then_sub_dim_size, [[COPY1]].sub_hi_dim_then_sub_dim_stride, [[COPY1]].sub_hi_dim_then_sub_dim_count, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    ; CHECK-NEXT: [[VLDA_3D_UPS_4x_dmx_lda_ups_x2d_upsSign0_split:%[0-9]+]]:edm, [[COPY:%[0-9]+]]:ep, [[COPY1:%[0-9]+]].sub_dim_count:eds, [[COPY1:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = VLDA_3D_UPS_4x_dmx_lda_ups_x2d_upsSign0_split $s0, [[COPY]], [[COPY1]].sub_mod, [[COPY1]].sub_dim_size, [[COPY1]].sub_dim_stride, [[COPY1]].sub_dim_count, [[COPY1]].sub_hi_dim_then_sub_dim_size, [[COPY1]].sub_hi_dim_then_sub_dim_stride, [[COPY1]].sub_hi_dim_then_sub_dim_count, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
     %20:ep = COPY $p0
     %100:eds = COPY $d1_3d
     %0:edm, %20:ep, %100.sub_dim_count:eds, %100.sub_hi_dim_then_sub_dim_count:eds = VLDA_3D_UPS_4x_dmx_lda_ups_x2d_upsSign0 $s0, %20, %100, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
@@ -238,7 +238,7 @@ body:             |
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = COPY [[MOV_PD_imm11_pseudo]].sub_mod
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]].sub_hi_dim_then_sub_dim_size:eds = COPY [[MOV_PD_imm11_pseudo]].sub_dim_size
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:mpfs = COPY $p0
-    ; CHECK-NEXT: $sf, %2:mpfs, $r26, dead [[MOV_PD_imm11_pseudo]].sub_dim_count:eds, dead [[MOV_PD_imm11_pseudo]].sub_hi_dim_then_sub_dim_count:eds = VST_FLUSH_512_3D_split $sf, %2, $r26, [[MOV_PD_imm11_pseudo]].sub_mod, [[MOV_PD_imm11_pseudo]].sub_dim_size, [[MOV_PD_imm11_pseudo]].sub_dim_stride, [[MOV_PD_imm11_pseudo]].sub_dim_count, undef [[MOV_PD_imm11_pseudo]].sub_hi_dim_then_sub_mod, [[MOV_PD_imm11_pseudo]].sub_hi_dim_then_sub_dim_size, [[MOV_PD_imm11_pseudo]].sub_hi_dim_then_sub_dim_stride, [[MOV_PD_imm11_pseudo]].sub_hi_dim_then_sub_dim_count, implicit-def $srfifo_of
+    ; CHECK-NEXT: $sf, %2:mpfs, $r26, dead [[MOV_PD_imm11_pseudo]].sub_dim_count:eds, dead [[MOV_PD_imm11_pseudo]].sub_hi_dim_then_sub_dim_count:eds = VST_FLUSH_512_3D_split $sf, %2, $r26, [[MOV_PD_imm11_pseudo]].sub_mod, [[MOV_PD_imm11_pseudo]].sub_dim_size, [[MOV_PD_imm11_pseudo]].sub_dim_stride, [[MOV_PD_imm11_pseudo]].sub_dim_count, [[MOV_PD_imm11_pseudo]].sub_hi_dim_then_sub_dim_size, [[MOV_PD_imm11_pseudo]].sub_hi_dim_then_sub_dim_stride, [[MOV_PD_imm11_pseudo]].sub_hi_dim_then_sub_dim_count, implicit-def $srfifo_of
     ; CHECK-NEXT: PseudoRET implicit $lr
     undef %12.sub_mod:eds = MOV_PD_imm11_pseudo 0
     %12.sub_hi_dim_then_sub_dim_stride:eds = MOV_PD_imm11_pseudo 128
@@ -275,7 +275,7 @@ body:             |
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]].sub_dim_count:eds = COPY [[MOV_PD_imm11_pseudo]].sub_mod
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = COPY [[MOV_PD_imm11_pseudo]].sub_mod
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]].sub_hi_dim_then_sub_dim_size:eds = COPY [[MOV_PD_imm11_pseudo]].sub_dim_size
-    ; CHECK-NEXT: [[VLD_POP_512_3D_pseudo_split:%[0-9]+]]:vec512, dead [[COPY:%[0-9]+]].sub_ptr:epsrfldf, dead [[COPY:%[0-9]+]].sub_fifo:epsrfldf, dead [[COPY:%[0-9]+]].sub_avail:epsrfldf, dead [[MOV_PD_imm11_pseudo:%[0-9]+]].sub_dim_count:eds, dead [[MOV_PD_imm11_pseudo:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = VLD_POP_512_3D_pseudo_split [[COPY]].sub_ptr, undef [[COPY]].sub_fifo, [[COPY]].sub_avail, [[MOV_PD_imm11_pseudo]].sub_mod, [[MOV_PD_imm11_pseudo]].sub_dim_size, [[MOV_PD_imm11_pseudo]].sub_dim_stride, [[MOV_PD_imm11_pseudo]].sub_dim_count, undef [[MOV_PD_imm11_pseudo]].sub_hi_dim_then_sub_mod, [[MOV_PD_imm11_pseudo]].sub_hi_dim_then_sub_dim_size, [[MOV_PD_imm11_pseudo]].sub_hi_dim_then_sub_dim_stride, [[MOV_PD_imm11_pseudo]].sub_hi_dim_then_sub_dim_count, implicit-def $srfifo_uf
+    ; CHECK-NEXT: [[VLD_POP_512_3D_pseudo_split:%[0-9]+]]:vec512, dead [[COPY:%[0-9]+]].sub_ptr:epsrfldf, dead [[COPY:%[0-9]+]].sub_fifo:epsrfldf, dead [[COPY:%[0-9]+]].sub_avail:epsrfldf, dead [[MOV_PD_imm11_pseudo:%[0-9]+]].sub_dim_count:eds, dead [[MOV_PD_imm11_pseudo:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = VLD_POP_512_3D_pseudo_split [[COPY]].sub_ptr, undef [[COPY]].sub_fifo, [[COPY]].sub_avail, [[MOV_PD_imm11_pseudo]].sub_mod, [[MOV_PD_imm11_pseudo]].sub_dim_size, [[MOV_PD_imm11_pseudo]].sub_dim_stride, [[MOV_PD_imm11_pseudo]].sub_dim_count, [[MOV_PD_imm11_pseudo]].sub_hi_dim_then_sub_dim_size, [[MOV_PD_imm11_pseudo]].sub_hi_dim_then_sub_dim_stride, [[MOV_PD_imm11_pseudo]].sub_hi_dim_then_sub_dim_count, implicit-def $srfifo_uf
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLD_POP_512_3D_pseudo_split]]
     undef %12.sub_mod:eds = MOV_PD_imm11_pseudo 0
     %12.sub_hi_dim_then_sub_dim_stride:eds = MOV_PD_imm11_pseudo 128

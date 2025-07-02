@@ -156,7 +156,7 @@ body:             |
 
   bb.3:
     liveins: $dc4, $dj4, $dn4, $p0, $m0, $dn0, $dj0, $dc0
-    $p0, $dc0, $dc4 = PADDA_3D_split killed $p0, killed $m0, killed $dn0, killed $dj0, killed $dc0, killed undef $m4, killed $dn4, killed $dj4, killed $dc4
+    $p0, $dc0, $dc4 = PADDA_3D_split killed $p0, killed $m0, killed $dn0, killed $dj0, killed $dc0, killed $dn4, killed $dj4, killed $dc4
     PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
 ...
 
@@ -193,9 +193,9 @@ body:             |
     ; CHECK-NEXT: $p0, $dc0, $dc4 = PADDB_3D killed $p0, $d0_3d
     ; CHECK-NEXT: $p0, $dc0, $dc4 = PADDS_3D killed $p0, $d0_3d
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
-    $p0, $dc0, $dc4 = PADDA_3D_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4
-    $p0, $dc0, $dc4 = PADDB_3D_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4
-    $p0, $dc0, $dc4 = PADDS_3D_split killed $p0, killed $m0, killed $dn0, killed $dj0, killed $dc0, killed undef $m4, killed $dn4, killed $dj4, killed $dc4
+    $p0, $dc0, $dc4 = PADDA_3D_split killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4
+    $p0, $dc0, $dc4 = PADDB_3D_split killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4
+    $p0, $dc0, $dc4 = PADDS_3D_split killed $p0, killed $m0, killed $dn0, killed $dj0, killed $dc0, killed $dn4, killed $dj4, killed $dc4
     PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
 ...
 
@@ -232,9 +232,9 @@ body:             |
     ; CHECK-NEXT: dead $amll0, $p0, $dc0, $dc4 = VLDA_3D_dmw_lda_am killed $p0, $d0_3d :: (load (<8 x s32>))
     ; CHECK-NEXT: dead $wl0, $p0, $dc0, $dc4 = VLDB_3D killed $p0, $d0_3d :: (load (<8 x s32>))
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
-    dead $wl0, $p0, $dc0, $dc4 = VLDA_3D_dmw_lda_w_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4 :: (load (<8 x s32>) from unknown-address)
-    dead $amll0, $p0, $dc0, $dc4 = VLDA_3D_dmw_lda_am_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4 :: (load (<8 x s32>) from unknown-address)
-    dead $wl0, $p0, $dc0, $dc4 = VLDB_3D_split killed $p0, killed $m0, killed $dn0, killed $dj0, killed $dc0, killed undef $m4, killed $dn4, killed $dj4, killed $dc4 :: (load (<8 x s32>) from unknown-address)
+    dead $wl0, $p0, $dc0, $dc4 = VLDA_3D_dmw_lda_w_split killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4 :: (load (<8 x s32>) from unknown-address)
+    dead $amll0, $p0, $dc0, $dc4 = VLDA_3D_dmw_lda_am_split killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4 :: (load (<8 x s32>) from unknown-address)
+    dead $wl0, $p0, $dc0, $dc4 = VLDB_3D_split killed $p0, killed $m0, killed $dn0, killed $dj0, killed $dc0, killed $dn4, killed $dj4, killed $dc4 :: (load (<8 x s32>) from unknown-address)
     PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
 ...
 
@@ -289,10 +289,10 @@ body:             |
     ; CHECK-NEXT: dead $x0, $p0, $dc0, $dc4 = VLDB_3D_UNPACK_D8_D4 killed $p0, $d0_3d, implicit $crunpacksign :: (load (<8 x s32>))
     ; CHECK-NEXT: dead $x0, $p0, $dc0, $dc4 = VLDB_3D_UNPACK_D16_D8 killed $p0, $d0_3d, implicit $crunpacksign :: (load (<8 x s32>))
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
-    dead $x0, $p0, $dc0, $dc4 = VLDB_3D_UNPACK_S8_S4_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4 :: (load (<8 x s32>) from unknown-address)
-    dead $x0, $p0, $dc0, $dc4 = VLDB_3D_UNPACK_S16_S8_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4 :: (load (<8 x s32>) from unknown-address)
-    dead $x0, $p0, $dc0, $dc4 = VLDB_3D_UNPACK_D8_D4_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4, implicit $crunpacksign :: (load (<8 x s32>) from unknown-address)
-    dead $x0, $p0, $dc0, $dc4 = VLDB_3D_UNPACK_D16_D8_split killed $p0, killed $m0, killed $dn0, killed $dj0, killed $dc0, killed undef $m4, killed $dn4, killed $dj4, killed $dc4, implicit $crunpacksign :: (load (<8 x s32>) from unknown-address)
+    dead $x0, $p0, $dc0, $dc4 = VLDB_3D_UNPACK_S8_S4_split killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4 :: (load (<8 x s32>) from unknown-address)
+    dead $x0, $p0, $dc0, $dc4 = VLDB_3D_UNPACK_S16_S8_split killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4 :: (load (<8 x s32>) from unknown-address)
+    dead $x0, $p0, $dc0, $dc4 = VLDB_3D_UNPACK_D8_D4_split killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4, implicit $crunpacksign :: (load (<8 x s32>) from unknown-address)
+    dead $x0, $p0, $dc0, $dc4 = VLDB_3D_UNPACK_D16_D8_split killed $p0, killed $m0, killed $dn0, killed $dj0, killed $dc0, killed $dn4, killed $dj4, killed $dc4, implicit $crunpacksign :: (load (<8 x s32>) from unknown-address)
     PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
 ...
 
@@ -308,7 +308,7 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: dead $bml0, $p0, $dc0, $dc4 = VLDA_3D_CONV_FP32_BF16 killed $p0, $d0_3d :: (load (<8 x s32>))
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
-    dead $bml0, $p0, $dc0, $dc4 = VLDA_3D_CONV_FP32_BF16_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4 :: (load (<8 x s32>) from unknown-address)
+    dead $bml0, $p0, $dc0, $dc4 = VLDA_3D_CONV_FP32_BF16_split killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4 :: (load (<8 x s32>) from unknown-address)
     PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
 ...
 
@@ -369,10 +369,10 @@ body:             |
     ; CHECK-NEXT: $p0, $dc0, $dc4 = VST_3D_PACK_S4_S8 killed $p0, $d0_3d, $x0, implicit $crsat :: (store (<8 x s32>))
     ; CHECK-NEXT: $p0, $dc0, $dc4 = VST_3D_PACK_S8_S16 killed $p0, $d0_3d, $x0, implicit $crsat :: (store (<8 x s32>))
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc4
-    $p0, $dc0, $dc4  = VST_3D_PACK_D4_D8_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4, $x0, implicit $crsat, implicit $crpacksign :: (store (<8 x s32>) into unknown-address)
-    $p0, $dc0, $dc4 = VST_3D_PACK_D8_D16_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4, $x0, implicit $crsat, implicit $crpacksign :: (store (<8 x s32>) into unknown-address)
-    $p0, $dc0, $dc4 = VST_3D_PACK_S4_S8_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4, $x0, implicit $crsat :: (store (<8 x s32>) into unknown-address)
-    $p0, $dc0, $dc4 = VST_3D_PACK_S8_S16_split killed $p0, killed $m0, killed $dn0, killed $dj0, killed $dc0, killed undef $m4, killed $dn4, killed $dj4, killed $dc4, $x0, implicit $crsat :: (store (<8 x s32>) into unknown-address)
+    $p0, $dc0, $dc4  = VST_3D_PACK_D4_D8_split killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4, $x0, implicit $crsat, implicit $crpacksign :: (store (<8 x s32>) into unknown-address)
+    $p0, $dc0, $dc4 = VST_3D_PACK_D8_D16_split killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4, $x0, implicit $crsat, implicit $crpacksign :: (store (<8 x s32>) into unknown-address)
+    $p0, $dc0, $dc4 = VST_3D_PACK_S4_S8_split killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4, $x0, implicit $crsat :: (store (<8 x s32>) into unknown-address)
+    $p0, $dc0, $dc4 = VST_3D_PACK_S8_S16_split killed $p0, killed $m0, killed $dn0, killed $dj0, killed $dc0, killed $dn4, killed $dj4, killed $dc4, $x0, implicit $crsat :: (store (<8 x s32>) into unknown-address)
     PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc4
 ...
 
@@ -406,9 +406,9 @@ body:             |
     ; CHECK-NEXT: $p0, $dc0, $dc4 = VST_3D_128 killed $wl0, killed $p0, $d0_3d :: (store (<8 x s32>))
     ; CHECK-NEXT: $p0, $dc0, $dc4 = VST_3D_dmw_sts_am killed $amll0, killed $p0, $d0_3d :: (store (<8 x s32>))
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
-    $p0, $dc0, $dc4 = VST_3D_dmw_sts_w_split $wl0, killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4 :: (store (<8 x s32>) into unknown-address)
-    $p0, $dc0, $dc4 = VST_3D_128_split killed $wl0, killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4 :: (store (<8 x s32>) into unknown-address)
-    $p0, $dc0, $dc4 = VST_3D_dmw_sts_am_split killed $amll0, killed $p0, killed $m0, killed $dn0, killed $dj0, killed $dc0, killed undef $m4, killed $dn4, killed $dj4, killed $dc4 :: (store (<8 x s32>) into unknown-address)
+    $p0, $dc0, $dc4 = VST_3D_dmw_sts_w_split $wl0, killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4 :: (store (<8 x s32>) into unknown-address)
+    $p0, $dc0, $dc4 = VST_3D_128_split killed $wl0, killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4 :: (store (<8 x s32>) into unknown-address)
+    $p0, $dc0, $dc4 = VST_3D_dmw_sts_am_split killed $amll0, killed $p0, killed $m0, killed $dn0, killed $dj0, killed $dc0, killed $dn4, killed $dj4, killed $dc4 :: (store (<8 x s32>) into unknown-address)
     PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
 ...
 
@@ -423,7 +423,7 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $p0, $dc0, $dc4 = ST_3D_dmv_sts_q killed $q0, killed $p0, $d0_3d :: (store (<4 x s32>))
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
-    $p0, $dc0, $dc4 = ST_3D_dmv_sts_q_split killed $q0, killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4 :: (store (<4 x s32>) into unknown-address)
+    $p0, $dc0, $dc4 = ST_3D_dmv_sts_q_split killed $q0, killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4 :: (store (<4 x s32>) into unknown-address)
     PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
 ...
 
@@ -475,14 +475,14 @@ body:             |
     ; CHECK-NEXT: $cm1, $p0, $dc0, $dc4 = VLDA_3D_UPS_S32_S8 $s0, killed $p0, $d0_3d, implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>))
     ; CHECK-NEXT: $cm1, $p0, $dc0, $dc4 = VLDA_3D_UPS_S64_S16 $s0, killed $p0, $d0_3d, implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>))
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
-    $bml0, $p0, $dc0, $dc4 = VLDA_3D_UPS_S32_D16_split $s0, killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from unknown-address)
-    $bml0, $p0, $dc0, $dc4 = VLDA_3D_UPS_S64_D32_split $s0, killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from unknown-address)
-    $cm1,  $p0, $dc0, $dc4 = VLDA_3D_UPS_S32_D8_split  $s0, killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from unknown-address)
-    $cm1,  $p0, $dc0, $dc4 = VLDA_3D_UPS_S64_D16_split $s0, killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from unknown-address)
-    $bml0, $p0, $dc0, $dc4 = VLDA_3D_UPS_S32_S16_split $s0, killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4, implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>) from unknown-address)
-    $bml0, $p0, $dc0, $dc4 = VLDA_3D_UPS_S64_S32_split $s0, killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4, implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>) from unknown-address)
-    $cm1,  $p0, $dc0, $dc4 = VLDA_3D_UPS_S32_S8_split  $s0, killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4, implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>) from unknown-address)
-    $cm1,  $p0, $dc0, $dc4 = VLDA_3D_UPS_S64_S16_split $s0, killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4, implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>) from unknown-address)
+    $bml0, $p0, $dc0, $dc4 = VLDA_3D_UPS_S32_D16_split $s0, killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from unknown-address)
+    $bml0, $p0, $dc0, $dc4 = VLDA_3D_UPS_S64_D32_split $s0, killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from unknown-address)
+    $cm1,  $p0, $dc0, $dc4 = VLDA_3D_UPS_S32_D8_split  $s0, killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from unknown-address)
+    $cm1,  $p0, $dc0, $dc4 = VLDA_3D_UPS_S64_D16_split $s0, killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from unknown-address)
+    $bml0, $p0, $dc0, $dc4 = VLDA_3D_UPS_S32_S16_split $s0, killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4, implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>) from unknown-address)
+    $bml0, $p0, $dc0, $dc4 = VLDA_3D_UPS_S64_S32_split $s0, killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4, implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>) from unknown-address)
+    $cm1,  $p0, $dc0, $dc4 = VLDA_3D_UPS_S32_S8_split  $s0, killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4, implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>) from unknown-address)
+    $cm1,  $p0, $dc0, $dc4 = VLDA_3D_UPS_S64_S16_split $s0, killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4, implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>) from unknown-address)
     PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
 ...
 
@@ -534,14 +534,14 @@ body:             |
     ; CHECK-NEXT: $p0, $dc0, $dc4 = VST_3D_SRS_S16_S32 killed $p0, $d0_3d, $bml0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<8 x s32>))
     ; CHECK-NEXT: $p0, $dc0, $dc4 = VST_3D_SRS_S32_S64 killed $p0, $d0_3d, $bml0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<8 x s32>))
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
-    $p0, $dc0, $dc4 = VST_3D_SRS_D8_S32_split  killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4, $cm1, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into unknown-address)
-    $p0, $dc0, $dc4 = VST_3D_SRS_D16_S64_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4, $cm1, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into unknown-address)
-    $p0, $dc0, $dc4 = VST_3D_SRS_D16_S32_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4, $bml0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into unknown-address)
-    $p0, $dc0, $dc4 = VST_3D_SRS_D32_S64_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4, $bml0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into unknown-address)
-    $p0, $dc0, $dc4 = VST_3D_SRS_S8_S32_split  killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4, $cm1, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<8 x s32>) into unknown-address)
-    $p0, $dc0, $dc4 = VST_3D_SRS_S16_S64_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4, $cm1, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<8 x s32>) into unknown-address)
-    $p0, $dc0, $dc4 = VST_3D_SRS_S16_S32_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4, $bml0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<8 x s32>) into unknown-address)
-    $p0, $dc0, $dc4 = VST_3D_SRS_S32_S64_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4, $bml0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<8 x s32>) into unknown-address)
+    $p0, $dc0, $dc4 = VST_3D_SRS_D8_S32_split  killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4, $cm1, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into unknown-address)
+    $p0, $dc0, $dc4 = VST_3D_SRS_D16_S64_split killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4, $cm1, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into unknown-address)
+    $p0, $dc0, $dc4 = VST_3D_SRS_D16_S32_split killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4, $bml0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into unknown-address)
+    $p0, $dc0, $dc4 = VST_3D_SRS_D32_S64_split killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4, $bml0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into unknown-address)
+    $p0, $dc0, $dc4 = VST_3D_SRS_S8_S32_split  killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4, $cm1, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<8 x s32>) into unknown-address)
+    $p0, $dc0, $dc4 = VST_3D_SRS_S16_S64_split killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4, $cm1, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<8 x s32>) into unknown-address)
+    $p0, $dc0, $dc4 = VST_3D_SRS_S16_S32_split killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4, $bml0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<8 x s32>) into unknown-address)
+    $p0, $dc0, $dc4 = VST_3D_SRS_S32_S64_split killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4, $bml0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<8 x s32>) into unknown-address)
     PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
 ...
 
@@ -573,7 +573,7 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $p0, $dc0, $dc4 = VST_CONV_3D_BF16_FP32 killed $p0, $d0_3d, $bml0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask :: (store (<8 x s32>))
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
-    $p0, $dc0, $dc4 = VST_CONV_3D_BF16_FP32_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4, $bml0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask :: (store (<8 x s32>) into unknown-address)
+    $p0, $dc0, $dc4 = VST_CONV_3D_BF16_FP32_split killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4, $bml0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask :: (store (<8 x s32>) into unknown-address)
     PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
 ...
 
@@ -604,7 +604,7 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: dead $wl0, $p0, $dc0, $dc4 = VLDB_3D_128 killed $p0, $d0_3d :: (load (<8 x s16>))
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
-    dead $wl0, $p0, $dc0, $dc4 = VLDB_3D_128_split killed $p0, killed $m0, killed $dn0, killed $dj0, killed $dc0, killed undef $m4, killed $dn4, killed $dj4, killed $dc4 :: (load (<8 x s16>) from unknown-address)
+    dead $wl0, $p0, $dc0, $dc4 = VLDB_3D_128_split killed $p0, killed $m0, killed $dn0, killed $dj0, killed $dc0, killed $dn4, killed $dj4, killed $dc4 :: (load (<8 x s16>) from unknown-address)
     PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
 
 ...
@@ -649,11 +649,11 @@ body:             |
     ; CHECK-NEXT: $r0, $p0, $dc0, $dc4 = LDA_3D_S16_dmhb_lda killed $p0, $d0_3d :: (load (s32))
     ; CHECK-NEXT: $r0, $p0, $dc0, $dc4 = LDA_3D_U16_dmhb_lda killed $p0, $d0_3d :: (load (s32))
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
-    $r0, $p0, $dc0, $dc4 = LDA_3D_dms_lda_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4 :: (load (s32) from unknown-address)
-    $r0, $p0, $dc0, $dc4 = LDA_3D_S8_dmhb_lda_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4 :: (load (s32) from unknown-address)
-    $r0, $p0, $dc0, $dc4 = LDA_3D_U8_dmhb_lda_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4 :: (load (s32) from unknown-address)
-    $r0, $p0, $dc0, $dc4 = LDA_3D_S16_dmhb_lda_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4 :: (load (s32) from unknown-address)
-    $r0, $p0, $dc0, $dc4 = LDA_3D_U16_dmhb_lda_split killed $p0, killed $m0, killed $dn0, killed $dj0, killed $dc0, killed undef $m4, killed $dn4, killed $dj4, killed $dc4 :: (load (s32) from unknown-address)
+    $r0, $p0, $dc0, $dc4 = LDA_3D_dms_lda_split killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4 :: (load (s32) from unknown-address)
+    $r0, $p0, $dc0, $dc4 = LDA_3D_S8_dmhb_lda_split killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4 :: (load (s32) from unknown-address)
+    $r0, $p0, $dc0, $dc4 = LDA_3D_U8_dmhb_lda_split killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4 :: (load (s32) from unknown-address)
+    $r0, $p0, $dc0, $dc4 = LDA_3D_S16_dmhb_lda_split killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4 :: (load (s32) from unknown-address)
+    $r0, $p0, $dc0, $dc4 = LDA_3D_U16_dmhb_lda_split killed $p0, killed $m0, killed $dn0, killed $dj0, killed $dc0, killed $dn4, killed $dj4, killed $dc4 :: (load (s32) from unknown-address)
     PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
 ...
 
@@ -684,7 +684,7 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $q0, $p0, $dc0, $dc4 = LDA_3D_dmv_lda_q killed $p0, $d0_3d :: (load (s32))
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
-    $q0, $p0, $dc0, $dc4 = LDA_3D_dmv_lda_q_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4 :: (load (s32) from unknown-address)
+    $q0, $p0, $dc0, $dc4 = LDA_3D_dmv_lda_q_split killed $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4 :: (load (s32) from unknown-address)
     PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
 ...
 
@@ -714,7 +714,7 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $p0, $dc0, $dc4 = ST_3D_dms_sts $r0, killed $p0, $d0_3d :: (store (s32))
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
-    $p0, $dc0, $dc4 = ST_3D_dms_sts_split $r0, killed $p0, killed $m0, killed $dn0, killed $dj0, killed $dc0, killed undef $m4, killed $dn4, killed $dj4, killed $dc4 :: (store (s32) into unknown-address)
+    $p0, $dc0, $dc4 = ST_3D_dms_sts_split $r0, killed $p0, killed $m0, killed $dn0, killed $dj0, killed $dc0, killed $dn4, killed $dj4, killed $dc4 :: (store (s32) into unknown-address)
     PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
 ...
 
@@ -747,7 +747,7 @@ body:             |
     ; CHECK-NEXT: $p0, $dc0, $dc4 = ST_3D_S8 $r0, $p0, $d0_3d :: (store (s8))
     ; CHECK-NEXT: $p0, $dc0, $dc4 = ST_3D_S16 $r0, killed $p0, $d0_3d :: (store (s16))
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
-    $p0, $dc0, $dc4 = ST_3D_S8_split $r0, $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4 :: (store (s8) into unknown-address)
-    $p0, $dc0, $dc4 = ST_3D_S16_split $r0, killed $p0, $m0, $dn0, $dj0, $dc0, killed undef $m4, killed $dn4, killed $dj4, killed $dc4 :: (store (s16) into unknown-address)
+    $p0, $dc0, $dc4 = ST_3D_S8_split $r0, $p0, $m0, $dn0, $dj0, $dc0, $dn4, $dj4, $dc4 :: (store (s8) into unknown-address)
+    $p0, $dc0, $dc4 = ST_3D_S16_split $r0, killed $p0, $m0, $dn0, $dj0, $dc0, killed $dn4, killed $dj4, killed $dc4 :: (store (s16) into unknown-address)
     PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
 ...

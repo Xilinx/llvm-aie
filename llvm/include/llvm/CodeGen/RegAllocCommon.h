@@ -16,6 +16,10 @@ namespace llvm {
 class TargetRegisterClass;
 class TargetRegisterInfo;
 
+class MachineRegisterInfo;
+class TargetInstrInfo;
+class LiveInterval;
+
 typedef std::function<bool(const TargetRegisterInfo &TRI,
                            const TargetRegisterClass &RC)> RegClassFilterFunc;
 
@@ -26,6 +30,17 @@ static inline bool allocateAllRegClasses(const TargetRegisterInfo &,
   return true;
 }
 
+typedef std::function<bool(MachineRegisterInfo &MRI, const TargetInstrInfo &TII,
+                           const LiveInterval *LI)>
+    LiveIntervalFilterFunc;
+/// Default live interval filter function for register allocation. All live
+/// intervals should be allocated.
+static inline bool allocateAllLiveIntervals(MachineRegisterInfo &,
+                                            const TargetInstrInfo &,
+                                            const LiveInterval *) {
+  return true;
 }
+
+} // namespace llvm
 
 #endif // LLVM_CODEGEN_REGALLOCCOMMON_H
