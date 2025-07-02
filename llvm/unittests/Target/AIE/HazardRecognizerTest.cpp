@@ -25,7 +25,7 @@ const auto Req = InstrStage::ReservationKinds::Required;
 const auto Res = InstrStage::ReservationKinds::Reserved;
 
 // Note: This test has a history, and bears the scratches and tears of
-// a number of hazardrecognizer and scoreboard reorganizations
+// a number of hazardrecognizer and scoreboard reorganizations.
 // The hazard recognizer is the one shared by all AIE versions, but we supply
 // it with our own mock itineraries.
 // We test conflict detection on the SchedClass level.
@@ -34,7 +34,7 @@ const auto Res = InstrStage::ReservationKinds::Reserved;
 // was backed by the way that we define itineraries, always one
 // resource per stage, however, the test employed multi-resource bitsets
 // as a shorthand. We made an effort to give new equivalent representations,
-// which makes the result a bit clunky. Change comments are indicted by ===
+// which makes the result a bit clunky. Change comments are indicated by ===
 
 static const llvm::InstrStage MockStages[] = {
     // { Number of cycles, resource index,  NextCycle, reservation kind }

@@ -17,9 +17,11 @@
 
 #include <cassert>
 #include <climits>
+#include <cstdint>
 
-template <const int NumBits, typename Container> class StaticBitSet {
+template <const int NumBits> class StaticBitSet {
 protected:
+  using Container = uint64_t;
   static constexpr int twoLog(int N) { return N == 1 ? 0 : twoLog(N / 2) + 1; }
   static constexpr const int BitsPerContainer = sizeof(Container) * CHAR_BIT;
   static constexpr const int Shift = twoLog(BitsPerContainer);

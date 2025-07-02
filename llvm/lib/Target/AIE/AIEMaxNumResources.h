@@ -22,8 +22,8 @@
 #define GET_NUM_RESOURCES
 #include "AIE2PGenSubtargetInfo.inc"
 
-constexpr const int TotalNumResources = std::max(
-    AIE2PItineraries::NumResources,
-    std::max(AIE2Itineraries::NumResources, AIEItineraries::NumResources));
+constexpr const int TotalNumResources =
+    std::max({AIE2PItineraries::NumResources, AIE2Itineraries::NumResources,
+              AIEItineraries::NumResources});
 
 #endif // LLVM_LIB_TARGET_AIE_AIEMAXNUMRESOURCES_H

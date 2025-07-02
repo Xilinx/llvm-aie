@@ -14,7 +14,7 @@
 
 // I like primes.
 static const int Size = 137;
-using S = StaticBitSet<Size, uint32_t>;
+using S = StaticBitSet<Size>;
 
 namespace {
 bool checkEmpty(S X) {
