@@ -15,38 +15,16 @@
 #ifndef LLVM_LIB_TARGET_AIE_STATICBITSET_H
 #define LLVM_LIB_TARGET_AIE_STATICBITSET_H
 
-#include <cassert>
-#include <climits>
-#include <cstdint>
+#include <bitset>
 
-template <const int NumBits> class StaticBitSet {
-protected:
-  using Container = uint64_t;
-  static constexpr int twoLog(int N) { return N == 1 ? 0 : twoLog(N / 2) + 1; }
-  static constexpr const int BitsPerContainer = sizeof(Container) * CHAR_BIT;
-  static constexpr const int Shift = twoLog(BitsPerContainer);
-  static constexpr const int Mask = ~(~0u << Shift);
-  static constexpr const Container One = 1;
-  static constexpr const int NumContainers =
-      (NumBits + BitsPerContainer - 1) / BitsPerContainer;
-  Container Bits[NumContainers];
-
+template <const int NumBits> class StaticBitSet : public std::bitset<NumBits> {
 public:
-  int getNumBits() const { return NumBits; }
-  StaticBitSet() { clear(); }
+  constexpr int getNumBits() const { return NumBits; }
+  StaticBitSet() : std::bitset<NumBits>() {}
   // This takes the index of a resource and constructs a set containing that
   // element.
-  explicit StaticBitSet(int BitNo) : StaticBitSet() {
-    int BlockIdx = BitNo >> Shift;
-    assert(BlockIdx < NumContainers && "BitNo out of range defined by NumBits");
-    Bits[BlockIdx] |= (One << (BitNo & Mask));
-  }
-
-  StaticBitSet &operator|=(const StaticBitSet &Other) {
-    for (int I = 0; I < NumContainers; I++) {
-      Bits[I] |= Other.Bits[I];
-    }
-    return *this;
+  explicit StaticBitSet(int BitNo) : std::bitset<NumBits>() {
+    this->set(BitNo, true);
   }
 
   StaticBitSet operator|(const StaticBitSet &Other) {
@@ -55,12 +33,6 @@ public:
     return Result;
   }
 
-  StaticBitSet &operator&=(const StaticBitSet &Other) {
-    for (int I = 0; I < NumContainers; I++) {
-      Bits[I] &= Other.Bits[I];
-    }
-    return *this;
-  }
   StaticBitSet operator&(const StaticBitSet &Other) const {
     StaticBitSet Result(*this);
     Result &= Other;
@@ -68,53 +40,17 @@ public:
   }
 
   StaticBitSet operator~() const {
-    StaticBitSet Result;
-    for (int I = 0; I < NumContainers; I++) {
-      Result.Bits[I] = ~Bits[I];
-    }
+    StaticBitSet Result(*this);
+    Result.flip();
     return Result;
   }
 
-  bool operator==(const StaticBitSet &Other) const {
-    for (int I = 0; I < NumContainers; I++) {
-      if (Bits[I] != Other.Bits[I]) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  void clear() {
-    for (auto &Block : Bits) {
-      Block = 0;
-    }
-  }
-
-  bool contains(int BitNo) const {
-    if (BitNo >= NumBits) {
-      return false;
-    }
-    const Container &Block = Bits[BitNo >> Shift];
-    return (Block & (One << (BitNo & Mask))) != 0;
-  }
-
+  void clear() { this->reset(); }
+  bool contains(int BitNo) const { return this->test(BitNo); }
   bool overlap(const StaticBitSet &Other) const {
-    for (int I = 0; I < NumContainers; I++) {
-      if (Bits[I] & Other.Bits[I]) {
-        return true;
-      }
-    }
-    return false;
+    return (*this & Other).any();
   }
-
-  bool empty() const {
-    for (int I = 0; I < NumContainers; I++) {
-      if (Bits[I]) {
-        return false;
-      }
-    }
-    return true;
-  }
+  bool empty() const { return this->none(); }
 };
 
 #endif // LLVM_LIB_TARGET_AIE_STATICBITSET_H
