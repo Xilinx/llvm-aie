@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -19,7 +19,7 @@
 #include "AIE2FrameLowering.h"
 #include "AIE2ISelLowering.h"
 #include "AIE2InstrInfo.h"
-#include "AIESubtarget.h"
+#include "AIEBaseSubtarget.h"
 #include "Utils/AIEBaseInfo.h"
 #include "llvm/CodeGen/GlobalISel/CallLowering.h"
 #include "llvm/CodeGen/GlobalISel/InstructionSelector.h"

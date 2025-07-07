@@ -105,14 +105,15 @@ body:             |
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $p0
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(p0) = G_CONSTANT i20 0
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 100
-  ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(s20) = G_LOAD [[C]](p0) :: (load (s20), align 4)
+  ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[C]](p0) :: (load (s32))
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[LOAD]](s20)
+  ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[LOAD]](s32)
+  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[TRUNC]](s20)
   ; CHECK-NEXT:   G_STORE [[C1]](s32), [[PTR_ADD]](p0) :: (store (s32))
-  ; CHECK-NEXT:   G_STORE [[LOAD]](s20), [[PTR_ADD]](p0) :: (store (s20), align 4)
+  ; CHECK-NEXT:   G_STORE [[LOAD]](s32), [[PTR_ADD]](p0) :: (store (s32))
   ; CHECK-NEXT:   G_BR %bb.1
   bb.1:
     successors: %bb.2(0x80000000); %bb.2(100.00%)
@@ -177,4 +178,92 @@ body:             |
     %4:_(p0) = G_PTR_ADD %0:_, %3:_(s20)
     G_STORE %7:_(s32), %4:_(p0) :: (store (s32))
     G_BR %bb.2
+...
+
+# Here G_SUB is non native consumer s20, however its consumes an operand that fits in s20.
+---
+name:              G_PHI_G_CONSTANT_s20
+legalized:         false
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: G_PHI_G_CONSTANT_s20
+  ; CHECK: bb.0.entry:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[C:%[0-9]+]]:_(p0) = G_CONSTANT i20 0
+  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
+  ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 20
+  ; CHECK-NEXT:   [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 20
+  ; CHECK-NEXT:   [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+  ; CHECK-NEXT:   G_STORE [[C2]](s32), [[C]](p0) :: (store (s32))
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s20) = G_PHI [[C3]](s20), %bb.0, %9(s20), %bb.1
+  ; CHECK-NEXT:   [[ZEXT:%[0-9]+]]:_(s32) = G_ZEXT [[PHI]](s20)
+  ; CHECK-NEXT:   [[SUB:%[0-9]+]]:_(s32) = nsw G_SUB [[C4]], [[ZEXT]]
+  ; CHECK-NEXT:   [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20), [[INT2:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2.add.3d), [[C]](p0), [[C1]](s20), [[C1]](s20), [[C1]](s20), [[C1]](s20), [[PHI]](s20), [[C1]](s20), [[C1]](s20)
+  ; CHECK-NEXT:   G_STORE [[SUB]](s32), [[INT]](p0) :: (store (s32))
+  ; CHECK-NEXT:   G_BR %bb.1
+  bb.0.entry:
+    successors: %bb.1(0x80000000); %bb.1(100.00%)
+    %0:_(p0) = G_CONSTANT i20 0
+    %1:_(s20) = G_CONSTANT i20 0
+    %2:_(s32) = G_CONSTANT i32 20
+    %3:_(s32) = G_CONSTANT i32 0
+    G_STORE %2(s32), %0(p0) :: (store (s32))
+  bb.1:
+    successors: %bb.1(0x80000000); %bb.1(100.00%)
+    %4:_(s32) = G_PHI %2(s32), %bb.0, %5(s32), %bb.1
+    %7:_(s20) = G_TRUNC %4(s32)
+    %6:_(s32) = nsw G_SUB %3, %4
+    %8:_(p0), %9:_(s20), %10:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2.add.3d), %0(p0), %1(s20), %1(s20), %1(s20), %1(s20), %7(s20), %1(s20), %1(s20)
+    G_STORE %6(s32), %8(p0) :: (store (s32))
+    %5:_(s32) = G_ZEXT %9(s20)
+    G_BR %bb.1
+...
+
+# Negative test case: G_CONSTANT value cannot fit in s20 register
+---
+name:              neg_G_PHI_G_CONSTANT_s20
+legalized:         false
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: neg_G_PHI_G_CONSTANT_s20
+  ; CHECK: bb.0.entry:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[C:%[0-9]+]]:_(p0) = G_CONSTANT i20 0
+  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
+  ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 1048577
+  ; CHECK-NEXT:   [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+  ; CHECK-NEXT:   G_STORE [[C2]](s32), [[C]](p0) :: (store (s32))
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s32) = G_PHI [[C2]](s32), %bb.0, %5(s32), %bb.1
+  ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[PHI]](s32)
+  ; CHECK-NEXT:   [[SUB:%[0-9]+]]:_(s32) = nsw G_SUB [[C3]], [[PHI]]
+  ; CHECK-NEXT:   [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20), [[INT2:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2.add.3d), [[C]](p0), [[C1]](s20), [[C1]](s20), [[C1]](s20), [[C1]](s20), [[TRUNC]](s20), [[C1]](s20), [[C1]](s20)
+  ; CHECK-NEXT:   G_STORE [[SUB]](s32), [[INT]](p0) :: (store (s32))
+  ; CHECK-NEXT:   [[ZEXT:%[0-9]+]]:_(s32) = G_ZEXT [[INT1]](s20)
+  ; CHECK-NEXT:   G_BR %bb.1
+  bb.0.entry:
+    successors: %bb.1(0x80000000); %bb.1(100.00%)
+    %0:_(p0) = G_CONSTANT i20 0
+    %1:_(s20) = G_CONSTANT i20 0
+    %2:_(s32) = G_CONSTANT i32 1048577
+    %3:_(s32) = G_CONSTANT i32 0
+    G_STORE %2(s32), %0(p0) :: (store (s32))
+  bb.1:
+    successors: %bb.1(0x80000000); %bb.1(100.00%)
+    %4:_(s32) = G_PHI %2(s32), %bb.0, %5(s32), %bb.1
+    %7:_(s20) = G_TRUNC %4(s32)
+    %6:_(s32) = nsw G_SUB %3, %4
+    %8:_(p0), %9:_(s20), %10:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2.add.3d), %0(p0), %1(s20), %1(s20), %1(s20), %1(s20), %7(s20), %1(s20), %1(s20)
+    G_STORE %6(s32), %8(p0) :: (store (s32))
+    %5:_(s32) = G_ZEXT %9(s20)
+    G_BR %bb.1
 ...

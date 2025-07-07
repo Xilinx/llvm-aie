@@ -15,9 +15,8 @@
 #include "AIEBaseInstrInfo.h"
 #include "AIE.h"
 #include "AIEBasePipelinerLoopInfo.h"
+#include "AIEBaseSubtarget.h"
 #include "AIEHazardRecognizer.h"
-#include "AIESubtarget.h"
-#include "AIETargetMachine.h"
 #include "MCTargetDesc/AIEFormat.h"
 #include "MCTargetDesc/AIEMCFormats.h"
 #include "Utils/AIELoopUtils.h"
@@ -26,13 +25,11 @@
 #include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
 #include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
-#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/MC/TargetRegistry.h"
-#include "llvm/Support/Automaton.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <limits>
@@ -389,6 +386,16 @@ bool AIEBaseInstrInfo::isHardwareLoopEnd(unsigned Opcode) const {
   return ZOLSupport && Opcode == ZOLSupport->LoopEndOpcode;
 }
 
+bool AIEBaseInstrInfo::isHardwareLoopDec(unsigned Opcode) const {
+  const auto JNZDSupport = getJNZDSupport();
+  return JNZDSupport && Opcode == JNZDSupport->LoopDecOpcode;
+}
+
+bool AIEBaseInstrInfo::isHardwareLoopJNZ(unsigned Opcode) const {
+  const auto JNZDSupport = getJNZDSupport();
+  return JNZDSupport && Opcode == JNZDSupport->LoopJNZOpcode;
+}
+
 // Look for the last LoopSetup Bundle.
 bool AIEBaseInstrInfo::isLastZOLSetupBundleInMBB(
     MachineBasicBlock::iterator MII) const {
@@ -459,8 +466,8 @@ unsigned AIEBaseInstrInfo::getRegionSizeInBytes(
   return Size;
 }
 
-const AIE::MachineBundle
-AIEBaseInstrInfo::getAIEMachineBundle(MachineBasicBlock::iterator MII) const {
+const AIE::MachineBundle AIEBaseInstrInfo::getAIEMachineBundle(
+    const MachineBasicBlock::iterator MII) const {
   AIE::MachineBundle Bundle(getFormatInterface());
   // Iterate over the instructions in the bundle.
   MachineBasicBlock::const_instr_iterator I = ++MII->getIterator();
@@ -473,10 +480,25 @@ AIEBaseInstrInfo::getAIEMachineBundle(MachineBasicBlock::iterator MII) const {
   return Bundle;
 }
 
+const AIE::ConstMachineBundle AIEBaseInstrInfo::getAIEMachineBundle(
+    const MachineBasicBlock::const_iterator MII) const {
+
+  AIE::ConstMachineBundle Bundle = (getFormatInterface());
+  // Iterate over the instructions in the bundle.
+  MachineBasicBlock::const_instr_iterator I = ++MII->getIterator();
+  MachineBasicBlock::const_instr_iterator E = MII->getParent()->instr_end();
+  while (I != E && I->isInsideBundle()) {
+    MachineInstr *MI = const_cast<MachineInstr *>(&(*I));
+    Bundle.add(MI);
+    I++;
+  }
+  return Bundle;
+}
+
 unsigned AIEBaseInstrInfo::getAIEMachineBundleSize(
-    MachineBasicBlock::iterator MII) const {
+    const MachineBasicBlock::const_iterator MII) const {
   if (MII->isBundle()) {
-    AIE::MachineBundle Bundle = getAIEMachineBundle(MII);
+    AIE::ConstMachineBundle Bundle = getAIEMachineBundle(MII);
     const VLIWFormat *Format = Bundle.getFormatOrNull();
     assert(Format);
     LLVM_DEBUG(dbgs() << Format->Name << "\n");
@@ -1374,4 +1396,18 @@ unsigned llvm::AIEBaseInstrInfo::PTRModSupport::getOutputPtrIdx(
   auto It = PtrInputAndOutputIdx->find(OpCode);
   assert(It != PtrInputAndOutputIdx->end());
   return It->second.second;
+}
+
+bool AIEBaseInstrInfo::isExtendLikelyToBeFolded(
+    MachineInstr &ExtMI, MachineRegisterInfo &MRI) const {
+  assert(ExtMI.getOpcode() == TargetOpcode::G_SEXT ||
+         ExtMI.getOpcode() == TargetOpcode::G_ZEXT ||
+         ExtMI.getOpcode() == TargetOpcode::G_ANYEXT);
+
+  if (ExtMI.getOpcode() != TargetOpcode::G_ZEXT)
+    return false;
+
+  const LLT S20 = LLT::scalar(20);
+  const LLT ActualType = MRI.getType(ExtMI.getOperand(1).getReg());
+  return ActualType == S20;
 }

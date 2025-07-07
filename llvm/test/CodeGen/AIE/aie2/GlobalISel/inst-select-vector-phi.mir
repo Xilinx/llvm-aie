@@ -44,3 +44,156 @@ body:             |
     %phi:accregbank(<4 x s64>) = G_PHI %val_2(<4 x s64>), %bb.1, %val_1(<4 x s64>), %bb.0
     $wl0 = COPY %phi
 ...
+
+---
+name:            vec128_V16S8
+legalized:       true
+regBankSelected: true
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: vec128_V16S8
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 0
+  ; CHECK-NEXT:   [[VBCST_8_:%[0-9]+]]:vec512 = VBCST_8 [[MOV_RLC_imm10_pseudo]]
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:vec128 = COPY [[VBCST_8_]].sub_256_lo
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:vec128 = PHI [[COPY]], %bb.0, %4, %bb.1
+  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:vec256 = COPY [[PHI]]
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[COPY1]], %subreg.sub_256_lo
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:vec128 = COPY [[REG_SEQUENCE]].sub_256_lo
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
+  bb.0:
+    successors: %bb.1(0x80000000)
+
+    %0:gprregbank(s32) = G_CONSTANT i32 0
+    %1:vregbank(<64 x s8>) = G_AIE_BROADCAST_VECTOR %0(s32)
+    %2:vregbank(<16 x s8>) = G_AIE_UNPAD_VECTOR %1(<64 x s8>)
+
+  bb.1:
+    successors: %bb.1(0x80000000)
+
+    %3:vregbank(<16 x s8>) = G_PHI %2(<16 x s8>), %bb.0, %4(<16 x s8>), %bb.1
+    %5:vregbank(<64 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.set.I512.I128), %3(<16 x s8>)
+    %4:vregbank(<16 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.extract.I128.I512), %5(<64 x s8>)
+    G_BR %bb.1
+
+...
+---
+name:            vec128_8S16
+legalized:       true
+regBankSelected: true
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: vec128_8S16
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 0
+  ; CHECK-NEXT:   [[VBCST_16_:%[0-9]+]]:vec512 = VBCST_16 [[MOV_RLC_imm10_pseudo]]
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:vec128 = COPY [[VBCST_16_]].sub_256_lo
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:vec128 = PHI [[COPY]], %bb.0, %4, %bb.1
+  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:vec256 = COPY [[PHI]]
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[COPY1]], %subreg.sub_256_lo
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:vec128 = COPY [[REG_SEQUENCE]].sub_256_lo
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
+  bb.0:
+    successors: %bb.1(0x80000000)
+
+    %0:gprregbank(s32) = G_CONSTANT i32 0
+    %1:vregbank(<32 x s16>) = G_AIE_BROADCAST_VECTOR %0(s32)
+    %2:vregbank(<8 x s16>) = G_AIE_UNPAD_VECTOR %1(<32 x s16>)
+
+  bb.1:
+    successors: %bb.1(0x80000000)
+
+    %3:vregbank(<8 x s16>) = G_PHI %2(<8 x s16>), %bb.0, %4(<8 x s16>), %bb.1
+    %5:vregbank(<32 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.set.I512.I128), %3(<8 x s16>)
+    %4:vregbank(<8 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.extract.I128.I512), %5(<32 x s16>)
+    G_BR %bb.1
+
+...
+---
+name:            vec128_V4S32
+legalized:       true
+regBankSelected: true
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: vec128_V4S32
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 0
+  ; CHECK-NEXT:   [[VBCST_32_:%[0-9]+]]:vec512 = VBCST_32 [[MOV_RLC_imm10_pseudo]]
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:vec128 = COPY [[VBCST_32_]].sub_256_lo
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:vec128 = PHI [[COPY]], %bb.0, %4, %bb.1
+  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:vec256 = COPY [[PHI]]
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[COPY1]], %subreg.sub_256_lo
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:vec128 = COPY [[REG_SEQUENCE]].sub_256_lo
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
+  bb.0:
+    successors: %bb.1(0x80000000)
+
+    %0:gprregbank(s32) = G_CONSTANT i32 0
+    %1:vregbank(<16 x s32>) = G_AIE_BROADCAST_VECTOR %0(s32)
+    %2:vregbank(<4 x s32>) = G_AIE_UNPAD_VECTOR %1(<16 x s32>)
+
+  bb.1:
+    successors: %bb.1(0x80000000)
+
+    %3:vregbank(<4 x s32>) = G_PHI %2(<4 x s32>), %bb.0, %4(<4 x s32>), %bb.1
+    %5:vregbank(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.set.I512.I128), %3(<4 x s32>)
+    %4:vregbank(<4 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.extract.I128.I512), %5(<16 x s32>)
+    G_BR %bb.1
+
+...
+---
+name:            vec64_V2S32
+legalized:       true
+regBankSelected: true
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: vec64_V2S32
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $l0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:el = COPY $l0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:el = PHI [[COPY]], %bb.0, %2, %bb.1
+  ; CHECK-NEXT:   [[VBCST_64_:%[0-9]+]]:vec512 = VBCST_64 [[PHI]]
+  ; CHECK-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:ers4 = MOV_RLC_imm10_pseudo 14
+  ; CHECK-NEXT:   [[VEXTRACT_S64_:%[0-9]+]]:el = VEXTRACT_S64 [[VBCST_64_]], [[MOV_RLC_imm10_pseudo]]
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
+  bb.0:
+    successors: %bb.1(0x80000000)
+    liveins: $l0
+
+    %0:gprregbank(<2 x s32>) = COPY $l0
+
+  bb.1:
+    successors: %bb.1(0x80000000)
+
+    %1:gprregbank(<2 x s32>) = G_PHI %0(<2 x s32>), %bb.0, %2(<2 x s32>), %bb.1
+    %3:vregbank(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vbroadcast64.I512), %1(<2 x s32>)
+    %4:gprregbank(s32) = G_CONSTANT i32 14
+    %5:gprregbank(s32) = G_CONSTANT i32 1
+    %2:gprregbank(<2 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vextract.elem64.I512), %3(<16 x s32>), %4(s32), %5(s32)
+    G_BR %bb.1
+
+...

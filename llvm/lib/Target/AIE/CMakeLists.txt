@@ -6,7 +6,7 @@
 # (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 add_llvm_component_group(AIE)
 
-set(LLVM_TARGET_DEFINITIONS AIE.td)
+set(LLVM_TARGET_DEFINITIONS aie1/AIE1.td)
 
 tablegen(LLVM AIEGenAsmMatcher.inc -gen-asm-matcher)
 tablegen(LLVM AIEGenAsmWriter.inc -gen-asm-writer)
@@ -73,9 +73,6 @@ tablegen(LLVM AIE2PGenVarInstructionItin.inc -gen-aie-alternate-itinerary-emitte
 add_public_tablegen_target(AIECommonTableGen)
 
 add_llvm_target(AIECodeGen
-   AIE1ISelLowering.cpp
-   AIE1RegisterBankInfo.cpp
-   AIE1AsmPrinter.cpp
    AIEAddressSpaceFlattening.cpp
    AIEBaseAliasAnalysis.cpp
    AIEBaseAsmPrinter.cpp
@@ -93,21 +90,15 @@ add_llvm_target(AIECodeGen
    AIEBaseSubtarget.cpp
    AIEBaseTargetMachine.cpp
    AIECallLowering.cpp
-   AIEDelaySlotFiller.cpp
    AIEDumpArtifacts.cpp
    AIEEliminateDuplicatePHI.cpp
    AIEFinalizeBundle.cpp
-   AIEFrameLowering.cpp
    AIEGlobalCombiner.cpp
    AIEGlobalCombinerPtrMods.cpp
    AIEHazardRecognizer.cpp
-   AIEHazardRecognizerPRAS.cpp
-   AIEInstrInfo.cpp
-   AIEInstructionSelector.cpp
    AIEInterBlockScheduling.cpp
    AIEISelDAGToDAG.cpp
    AIELegalizerHelper.cpp
-   AIE1LegalizerInfo.cpp
    AIELiveRegs.cpp
    AIEMachineAlignment.cpp
    AIEMachineBlockPlacement.cpp
@@ -123,13 +114,10 @@ add_llvm_target(AIECodeGen
    AIEPtrModOptimizer.cpp
    AIERegClassConstrainer.cpp
    AIERegMemEventTracker.cpp
-   AIERegisterInfo.cpp
    AIESlotCounts.cpp
    AIESplitInstructionRewriter.cpp
    AIESubRegConstrainer.cpp
-   AIESubtarget.cpp
    AIESuperRegRewriter.cpp
-   AIETargetMachine.cpp
    AIETargetObjectFile.cpp
    AIE2AsmPrinter.cpp
    AIE2FrameLowering.cpp
@@ -149,6 +137,19 @@ add_llvm_target(AIECodeGen
    ReservedRegsLICM.cpp
    AIEOutlineMemoryGEP.cpp
    AIEWawRegRewriter.cpp
+   aie1/AIE1AsmPrinter.cpp
+   aie1/AIE1AsmPrinter.cpp
+   aie1/AIE1DelaySlotFiller.cpp
+   aie1/AIE1FrameLowering.cpp
+   aie1/AIEHazardRecognizerPRAS.cpp
+   aie1/AIE1InstrInfo.cpp
+   aie1/AIE1InstructionSelector.cpp
+   aie1/AIE1ISelLowering.cpp
+   aie1/AIE1LegalizerInfo.cpp
+   aie1/AIE1RegisterBankInfo.cpp
+   aie1/AIE1RegisterInfo.cpp
+   aie1/AIE1Subtarget.cpp
+   aie1/AIE1TargetMachine.cpp
    aie2p/AIE2PSubtarget.cpp
    aie2p/AIE2PTargetMachine.cpp
    aie2p/AIE2PTargetTransformInfo.cpp

@@ -1,0 +1,315 @@
+;
+; This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+; See https://llvm.org/LICENSE.txt for license information.
+; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+;
+; (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+; RUN: llc -mtriple=aie2  \
+; RUN:   -pass-remarks-output=- -pass-remarks-filter=aie-hardware-loops %s -o /dev/null | FileCheck %s
+
+; RUN: llc -mtriple=aie2p  \
+; RUN:   -pass-remarks-output=- -pass-remarks-filter=aie-hardware-loops %s -o /dev/null | FileCheck %s
+
+; Nested Loop structure:
+; Loop 0
+; Loop 1
+;     Loop 1_0
+;         Loop 1_0_0
+;         Loop 1_0_1
+;     Loop 1_1
+
+; Function Attrs: mustprogress noinline nounwind optnone uwtable
+define dso_local noundef i32 @nestedLoops(i32 noundef %a, i32 noundef %b, i32 noundef %c, i32 noundef %d, i32 noundef %e, i32 noundef %f, ptr noundef %ptr) #0 {
+; CHECK: --- !Analysis
+; CHECK-NEXT: Pass:            aie-hardware-loops
+; CHECK-NEXT: Name:            analysis
+; CHECK-NEXT: Function:        nestedLoops
+; CHECK-NEXT: Args:
+; CHECK-NEXT:   - LoopID:          1_0_0
+; CHECK-NEXT:   - BasicBlock:              for.cond7
+; CHECK-NEXT:   - BasicBlock:              for.body9
+; CHECK-NEXT:   - BasicBlock:              for.inc14
+; CHECK-NEXT:   - Zero-Overhead-Loop:   'false'
+; CHECK-NEXT: ...
+; CHECK-NEXT: --- !Analysis
+; CHECK-NEXT: Pass:            aie-hardware-loops
+; CHECK-NEXT: Name:            analysis
+; CHECK-NEXT: Function:        nestedLoops
+; CHECK-NEXT: Args:
+; CHECK-NEXT:   - LoopID:          1_0_1
+; CHECK-NEXT:   - BasicBlock:              for.cond17
+; CHECK-NEXT:   - BasicBlock:              for.body19
+; CHECK-NEXT:   - BasicBlock:              for.inc25
+; CHECK-NEXT:   - Zero-Overhead-Loop:   'false'
+; CHECK-NEXT: ...
+; CHECK-NEXT: --- !Analysis
+; CHECK-NEXT: Pass:            aie-hardware-loops
+; CHECK-NEXT: Name:            analysis
+; CHECK-NEXT: Function:        nestedLoops
+; CHECK-NEXT: Args:
+; CHECK-NEXT:   - LoopID:          1_0
+; CHECK-NEXT:   - BasicBlock:              for.cond4
+; CHECK-NEXT:   - BasicBlock:              for.body6
+; CHECK-NEXT:   - BasicBlock:              for.cond7
+; CHECK-NEXT:   - BasicBlock:              for.end16
+; CHECK-NEXT:   - BasicBlock:              for.cond17
+; CHECK-NEXT:   - BasicBlock:              for.end27
+; CHECK-NEXT:   - BasicBlock:              for.inc28
+; CHECK-NEXT:   - BasicBlock:              for.body19
+; CHECK-NEXT:   - BasicBlock:              for.inc25
+; CHECK-NEXT:   - BasicBlock:              for.body9
+; CHECK-NEXT:   - BasicBlock:              for.inc14
+; CHECK-NEXT:   - Zero-Overhead-Loop:   'false'
+; CHECK-NEXT: ...
+; CHECK-NEXT: --- !Analysis
+; CHECK-NEXT: Pass:            aie-hardware-loops
+; CHECK-NEXT: Name:            analysis
+; CHECK-NEXT: Function:        nestedLoops
+; CHECK-NEXT: Args:
+; CHECK-NEXT:   - LoopID:          1_1
+; CHECK-NEXT:   - BasicBlock:              for.cond31
+; CHECK-NEXT:   - BasicBlock:              for.body33
+; CHECK-NEXT:   - BasicBlock:              for.inc39
+; CHECK-NEXT:   - Zero-Overhead-Loop:   'false'
+; CHECK-NEXT: ...
+; CHECK-NEXT: --- !Analysis
+; CHECK-NEXT: Pass:            aie-hardware-loops
+; CHECK-NEXT: Name:            analysis
+; CHECK-NEXT: Function:        nestedLoops
+; CHECK-NEXT: Args:
+; CHECK-NEXT:   - LoopID:          '1'
+; CHECK-NEXT:   - BasicBlock:              for.cond1
+; CHECK-NEXT:   - BasicBlock:              for.body3
+; CHECK-NEXT:   - BasicBlock:              for.cond4
+; CHECK-NEXT:   - BasicBlock:              for.end30
+; CHECK-NEXT:   - BasicBlock:              for.cond31
+; CHECK-NEXT:   - BasicBlock:              for.end41
+; CHECK-NEXT:   - BasicBlock:              for.inc42
+; CHECK-NEXT:   - BasicBlock:              for.body33
+; CHECK-NEXT:   - BasicBlock:              for.inc39
+; CHECK-NEXT:   - BasicBlock:              for.body6
+; CHECK-NEXT:   - BasicBlock:              for.cond7
+; CHECK-NEXT:   - BasicBlock:              for.end16
+; CHECK-NEXT:   - BasicBlock:              for.cond17
+; CHECK-NEXT:   - BasicBlock:              for.end27
+; CHECK-NEXT:   - BasicBlock:              for.inc28
+; CHECK-NEXT:   - BasicBlock:              for.body19
+; CHECK-NEXT:   - BasicBlock:              for.inc25
+; CHECK-NEXT:   - BasicBlock:              for.body9
+; CHECK-NEXT:   - BasicBlock:              for.inc14
+; CHECK-NEXT:   - Zero-Overhead-Loop:   'false'
+; CHECK-NEXT: ...
+; CHECK-NEXT: --- !Analysis
+; CHECK-NEXT: Pass:            aie-hardware-loops
+; CHECK-NEXT: Name:            analysis
+; CHECK-NEXT: Function:        nestedLoops
+; CHECK-NEXT: Args:
+; CHECK-NEXT:   - LoopID:          '0'
+; CHECK-NEXT:   - BasicBlock:              for.cond
+; CHECK-NEXT:   - BasicBlock:              for.body
+; CHECK-NEXT:   - BasicBlock:              for.inc
+; CHECK-NEXT:   - Zero-Overhead-Loop:   'false'
+; CHECK-NEXT: ...
+entry:
+  %a.addr = alloca i32, align 4
+  %b.addr = alloca i32, align 4
+  %c.addr = alloca i32, align 4
+  %d.addr = alloca i32, align 4
+  %e.addr = alloca i32, align 4
+  %f.addr = alloca i32, align 4
+  %ptr.addr = alloca ptr, align 8
+  %result = alloca i32, align 4
+  %i = alloca i32, align 4
+  %x = alloca i32, align 4
+  %x_y = alloca i32, align 4
+  %x_y_a = alloca i32, align 4
+  %x_y_b = alloca i32, align 4
+  %x_z = alloca i32, align 4
+  store i32 %a, ptr %a.addr, align 4
+  store i32 %b, ptr %b.addr, align 4
+  store i32 %c, ptr %c.addr, align 4
+  store i32 %d, ptr %d.addr, align 4
+  store i32 %e, ptr %e.addr, align 4
+  store i32 %f, ptr %f.addr, align 4
+  store ptr %ptr, ptr %ptr.addr, align 8
+  store i32 0, ptr %result, align 4
+  store i32 0, ptr %i, align 4
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.inc, %entry
+  %0 = load i32, ptr %i, align 4
+  %1 = load i32, ptr %f.addr, align 4
+  %cmp = icmp slt i32 %0, %1
+  br i1 %cmp, label %for.body, label %for.end
+
+for.body:                                         ; preds = %for.cond
+  %2 = load ptr, ptr %ptr.addr, align 8
+  %3 = load i32, ptr %i, align 4
+  %idxprom = sext i32 %3 to i64
+  %arrayidx = getelementptr inbounds i32, ptr %2, i64 %idxprom
+  %4 = load i32, ptr %arrayidx, align 4
+  %5 = load i32, ptr %result, align 4
+  %add = add nsw i32 %5, %4
+  store i32 %add, ptr %result, align 4
+  br label %for.inc
+
+for.inc:                                          ; preds = %for.body
+  %6 = load i32, ptr %i, align 4
+  %inc = add nsw i32 %6, 1
+  store i32 %inc, ptr %i, align 4
+  br label %for.cond, !llvm.loop !6
+
+for.end:                                          ; preds = %for.cond
+  store i32 0, ptr %x, align 4
+  br label %for.cond1
+
+for.cond1:                                        ; preds = %for.inc42, %for.end
+  %7 = load i32, ptr %x, align 4
+  %8 = load i32, ptr %a.addr, align 4
+  %cmp2 = icmp slt i32 %7, %8
+  br i1 %cmp2, label %for.body3, label %for.end44
+
+for.body3:                                        ; preds = %for.cond1
+  store i32 0, ptr %x_y, align 4
+  br label %for.cond4
+
+for.cond4:                                        ; preds = %for.inc28, %for.body3
+  %9 = load i32, ptr %x_y, align 4
+  %10 = load i32, ptr %b.addr, align 4
+  %cmp5 = icmp slt i32 %9, %10
+  br i1 %cmp5, label %for.body6, label %for.end30
+
+for.body6:                                        ; preds = %for.cond4
+  store i32 0, ptr %x_y_a, align 4
+  br label %for.cond7
+
+for.cond7:                                        ; preds = %for.inc14, %for.body6
+  %11 = load i32, ptr %x_y_a, align 4
+  %12 = load i32, ptr %c.addr, align 4
+  %cmp8 = icmp slt i32 %11, %12
+  br i1 %cmp8, label %for.body9, label %for.end16
+
+for.body9:                                        ; preds = %for.cond7
+  %13 = load ptr, ptr %ptr.addr, align 8
+  %14 = load i32, ptr %x, align 4
+  %15 = load i32, ptr %b.addr, align 4
+  %mul = mul nsw i32 %14, %15
+  %16 = load i32, ptr %x_y_a, align 4
+  %add10 = add nsw i32 %mul, %16
+  %idxprom11 = sext i32 %add10 to i64
+  %arrayidx12 = getelementptr inbounds i32, ptr %13, i64 %idxprom11
+  %17 = load i32, ptr %arrayidx12, align 4
+  %18 = load i32, ptr %result, align 4
+  %add13 = add nsw i32 %18, %17
+  store i32 %add13, ptr %result, align 4
+  br label %for.inc14
+
+for.inc14:                                        ; preds = %for.body9
+  %19 = load i32, ptr %x_y_a, align 4
+  %inc15 = add nsw i32 %19, 1
+  store i32 %inc15, ptr %x_y_a, align 4
+  br label %for.cond7, !llvm.loop !8
+
+for.end16:                                        ; preds = %for.cond7
+  store i32 0, ptr %x_y_b, align 4
+  br label %for.cond17
+
+for.cond17:                                       ; preds = %for.inc25, %for.end16
+  %20 = load i32, ptr %x_y_b, align 4
+  %21 = load i32, ptr %d.addr, align 4
+  %cmp18 = icmp slt i32 %20, %21
+  br i1 %cmp18, label %for.body19, label %for.end27
+
+for.body19:                                       ; preds = %for.cond17
+  %22 = load ptr, ptr %ptr.addr, align 8
+  %23 = load i32, ptr %x, align 4
+  %24 = load i32, ptr %c.addr, align 4
+  %mul20 = mul nsw i32 %23, %24
+  %25 = load i32, ptr %x_y_b, align 4
+  %add21 = add nsw i32 %mul20, %25
+  %idxprom22 = sext i32 %add21 to i64
+  %arrayidx23 = getelementptr inbounds i32, ptr %22, i64 %idxprom22
+  %26 = load i32, ptr %arrayidx23, align 4
+  %27 = load i32, ptr %result, align 4
+  %add24 = add nsw i32 %27, %26
+  store i32 %add24, ptr %result, align 4
+  br label %for.inc25
+
+for.inc25:                                        ; preds = %for.body19
+  %28 = load i32, ptr %x_y_b, align 4
+  %inc26 = add nsw i32 %28, 1
+  store i32 %inc26, ptr %x_y_b, align 4
+  br label %for.cond17, !llvm.loop !9
+
+for.end27:                                        ; preds = %for.cond17
+  br label %for.inc28
+
+for.inc28:                                        ; preds = %for.end27
+  %29 = load i32, ptr %x_y, align 4
+  %inc29 = add nsw i32 %29, 1
+  store i32 %inc29, ptr %x_y, align 4
+  br label %for.cond4, !llvm.loop !10
+
+for.end30:                                        ; preds = %for.cond4
+  store i32 0, ptr %x_z, align 4
+  br label %for.cond31
+
+for.cond31:                                       ; preds = %for.inc39, %for.end30
+  %30 = load i32, ptr %x_z, align 4
+  %31 = load i32, ptr %e.addr, align 4
+  %cmp32 = icmp slt i32 %30, %31
+  br i1 %cmp32, label %for.body33, label %for.end41
+
+for.body33:                                       ; preds = %for.cond31
+  %32 = load ptr, ptr %ptr.addr, align 8
+  %33 = load i32, ptr %x, align 4
+  %34 = load i32, ptr %e.addr, align 4
+  %mul34 = mul nsw i32 %33, %34
+  %35 = load i32, ptr %x_z, align 4
+  %add35 = add nsw i32 %mul34, %35
+  %idxprom36 = sext i32 %add35 to i64
+  %arrayidx37 = getelementptr inbounds i32, ptr %32, i64 %idxprom36
+  %36 = load i32, ptr %arrayidx37, align 4
+  %37 = load i32, ptr %result, align 4
+  %add38 = add nsw i32 %37, %36
+  store i32 %add38, ptr %result, align 4
+  br label %for.inc39
+
+for.inc39:                                        ; preds = %for.body33
+  %38 = load i32, ptr %x_z, align 4
+  %inc40 = add nsw i32 %38, 1
+  store i32 %inc40, ptr %x_z, align 4
+  br label %for.cond31, !llvm.loop !11
+
+for.end41:                                        ; preds = %for.cond31
+  br label %for.inc42
+
+for.inc42:                                        ; preds = %for.end41
+  %39 = load i32, ptr %x, align 4
+  %inc43 = add nsw i32 %39, 1
+  store i32 %inc43, ptr %x, align 4
+  br label %for.cond1, !llvm.loop !12
+
+for.end44:                                        ; preds = %for.cond1
+  %40 = load i32, ptr %result, align 4
+  ret i32 %40
+}
+
+attributes #0 = { mustprogress noinline nounwind optnone uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+
+!llvm.module.flags = !{!0, !1, !2, !3, !4}
+!llvm.ident = !{!5}
+
+!0 = !{i32 1, !"wchar_size", i32 4}
+!1 = !{i32 8, !"PIC Level", i32 2}
+!2 = !{i32 7, !"PIE Level", i32 2}
+!3 = !{i32 7, !"uwtable", i32 2}
+!4 = !{i32 7, !"frame-pointer", i32 2}
+!5 = !{!"clang version 19.0.0"}
+!6 = distinct !{!6, !7}
+!7 = !{!"llvm.loop.mustprogress"}
+!8 = distinct !{!8, !7}
+!9 = distinct !{!9, !7}
+!10 = distinct !{!10, !7}
+!11 = distinct !{!11, !7}
+!12 = distinct !{!12, !7}

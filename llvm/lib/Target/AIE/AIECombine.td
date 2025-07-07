@@ -4,14 +4,14 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 include "llvm/Target/GlobalISel/Combine.td"
 
-// Explicitly listing each generic combine here ensures direct visibility and 
+// Explicitly listing each generic combine here ensures direct visibility and
 // control over all functionalities.
-def aie_all_combines : GICombineGroup<[trivial_combines, vector_ops_combines,
+def aie_generic_combines : GICombineGroup<[trivial_combines, vector_ops_combines,
   insert_vec_elt_combines, extract_vec_elt_combines, combines_for_extload,
   combine_extracted_vector_load,
   undef_combines, identity_combines, phi_combines,
@@ -41,14 +41,6 @@ def combine_globalval_offset : GICombineRule<
   (match (wip_match_opcode G_GLOBAL_VALUE):$root,
           [{ return matchGlobalValOffset(*${root}, MRI, ${matchinfo}); }]),
   (apply [{  applyGlobalValOffset(*${root}, MRI, B, Observer, ${matchinfo});}])
->;
-
-def combine_S20NarrowingOpt_instruction_queue : GIDefMatchData<"std::set<InstrNode>">;
-def combine_S20NarrowingOpt : GICombineRule<
-  (defs root:$root, combine_S20NarrowingOpt_instruction_queue:$matchinfo),
-  (match (wip_match_opcode G_PTR_ADD, G_INTRINSIC, G_INTRINSIC_W_SIDE_EFFECTS):$root,
-          [{ return matchS20NarrowingOpt(*${root}, MRI, ${matchinfo}); }]),
-  (apply [{  applyS20NarrowingOpt(*${root}, MRI, B, Observer, Helper, ${matchinfo});}])
 >;
 
 def combine_extract_vector_elt_and_zsa_ext_matchdata: GIDefMatchData<"std::pair<MachineInstr *, bool>">;
@@ -170,47 +162,72 @@ def combine_broadcast_shl_to_add : GICombineRule<
          [{ return matchBroadcastToShl(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
 
+def combine_narrow_phi_node_s20 : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_PHI): $root,
+         [{ return matchNarrowPhi(*${root}, MRI, Observer, ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
+
+def combine_narrow_trunc_s20 : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_TRUNC): $root,
+         [{ return matchNarrowTrunc(*${root}, MRI, Observer, ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
+
+def combine_narrow_zext_s20 : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_ZEXT): $root,
+         [{ return matchNarrowZext(*${root}, MRI, Observer, ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
+
+// AIE-specifc combines (currently shared by AIE2 and AIE2P).
+def aie_additional_combines : GICombineGroup<[
+  combine_unpad_vector,
+  combine_pad_vector,
+  combine_narrow_phi_node_s20,
+  combine_globalval_offset,
+  combine_extract_vector_elt_and_zsa_ext,
+  combine_splat_vector,
+  combine_concat_to_pad_vector,
+  combine_single_diff_build_vector,
+  combine_symmetric_build_vector,
+  combine_broadcast_shl_to_add,
+  combine_vector_shuffle_extract_subvec,
+  combine_narrow_trunc_s20,
+  combine_narrow_zext_s20
+]>;
+
+// AIE2P-specific combines.
+// TODO: Move HW-agnostic combines to `aie_additional_combines`.
+def aie2p_additional_combines : GICombineGroup<[
+  combine_vector_shuffle_to_copy,
+  combine_vector_shuffle_bcst_to_copy,
+  combine_vector_broadcast,
+  combine_vector_shuffle_vsel,
+  combine_vector_shuffle_broadcast,
+  combine_vector_shuffle_to_extract_insert_elt,
+  combine_vector_shuffle_concat_extracted_subvectors,
+  combine_paired_extracts,
+  combine_vector_shuffle_to_extract_insert_elt_to_broadcast,
+]>;
+
 def AIE2PreLegalizerCombiner
-    : GICombiner<"AIE2PreLegalizerCombinerImpl", [ combine_unpad_vector, combine_pad_vector,
-                                                                 aie_all_combines, combine_S20NarrowingOpt,
-                                                                 combine_globalval_offset,
-                                                                 combine_extract_vector_elt_and_zsa_ext,
-                                                                 combine_splat_vector, combine_concat_to_pad_vector, 
-                                                                 combine_single_diff_build_vector,
-                                                                 combine_symmetric_build_vector,
-                                                                 combine_broadcast_shl_to_add]> {
+    : GICombiner<"AIE2PreLegalizerCombinerImpl", [aie_generic_combines, aie_additional_combines]> {
   let CombineAllMethodName = "tryCombineAllImpl";
 }
 
 def AIE2PPreLegalizerCombiner
-    : GICombiner<"AIE2PPreLegalizerCombinerImpl", [ combine_unpad_vector, combine_pad_vector,
-                                                                 combine_vector_shuffle_to_copy,
-                                                                 combine_vector_shuffle_extract_subvec,
-                                                                 aie_all_combines, combine_S20NarrowingOpt,
-                                                                 combine_globalval_offset,
-                                                                 combine_extract_vector_elt_and_zsa_ext,
-                                                                 combine_splat_vector, 
-                                                                 combine_vector_shuffle_bcst_to_copy,
-                                                                 combine_vector_broadcast,
-                                                                 combine_concat_to_pad_vector, 
-                                                                 combine_vector_shuffle_vsel,
-                                                                 combine_vector_shuffle_broadcast,
-                                                                 combine_single_diff_build_vector,
-                                                                 combine_vector_shuffle_to_extract_insert_elt,
-                                                                 combine_vector_shuffle_concat_extracted_subvectors,
-                                                                 combine_paired_extracts,
-                                                                 combine_vector_shuffle_to_extract_insert_elt_to_broadcast,
-                                                                 combine_symmetric_build_vector,
-                                                                 combine_broadcast_shl_to_add]> {
+    : GICombiner<"AIE2PPreLegalizerCombinerImpl",
+                      [aie_generic_combines, aie_additional_combines, aie2p_additional_combines]> {
   let CombineAllMethodName = "tryCombineAllImpl";
 }
 
 def AIE2PostLegalizerGenericCombiner
-    : GICombiner<"AIE2PostLegalizerGenericCombinerImpl", [ aie_all_combines ]> {
+    : GICombiner<"AIE2PostLegalizerGenericCombinerImpl", [aie_generic_combines]> {
 }
 
 def AIE2PPostLegalizerGenericCombiner
-    : GICombiner<"AIE2PPostLegalizerGenericCombinerImpl", [ aie_all_combines ]> {
+    : GICombiner<"AIE2PPostLegalizerGenericCombinerImpl", [aie_generic_combines]> {
 }
 
 def combine_extract_concat_matchdata: GIDefMatchData<"Register">;
@@ -294,15 +311,16 @@ def AIE2PostLegalizerCustomCombiner
                                                           combine_add_vector_elt_undef,
                                                           combine_extract_concat,
                                                           combine_unmerge_concat,
-                                                          combine_upd_to_concat 
+                                                          combine_upd_to_concat
                                                           ]> {
 }
 
 def AIE2PPostLegalizerCustomCombiner
     : GICombiner<"AIE2PPostLegalizerCustomCombinerImpl", [  combine_global_load_store_increment,
                                                             combine_load_store_increment,
-                                                            ptr_add_immed_chain, 
+                                                            ptr_add_immed_chain,
                                                             combine_offset_load_store_ptradd,
                                                             combine_offset_load_store_share_ptradd,
                                                             combine_add_vector_elt_undef ]> {
 }
+

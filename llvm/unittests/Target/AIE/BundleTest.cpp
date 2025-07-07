@@ -8,9 +8,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AIEInstrInfo.h"
 #include "MCTargetDesc/AIEFormat.h"
 #include "MCTargetDesc/AIEMCFormats.h"
+#include "aie1/AIE1InstrInfo.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

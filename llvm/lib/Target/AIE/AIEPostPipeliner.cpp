@@ -713,6 +713,7 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
     Strategy.selected(SU);
     const int LocalCycle = Actual % II;
     const MemoryBankBits MemoryBanks = HR.getMemoryBanks(MI);
+    const MemoryObjectsBits ObjectBits = HR.getMemoryObjectsBits(MI);
     int Cycle = -Depth + LocalCycle;
     LLVM_DEBUG(dbgs() << "  Emit in " << Cycle << "\n");
     for (int N = 0; N < NCopies; N++) {
@@ -721,7 +722,7 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
         return false;
       }
 
-      HR.emitInScoreboard(Scoreboard, MI->getDesc(), MemoryBanks,
+      HR.emitInScoreboard(Scoreboard, MI->getDesc(), MemoryBanks, ObjectBits,
                           MI->operands(), MI->getMF()->getRegInfo(), Cycle);
       Cycle += II;
     }
@@ -1063,7 +1064,8 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval,
     More.emit([&]() {
       return MachineOptimizationRemarkMissed("postpipeliner", "schedule",
                                              DbgLoc, BB)
-             << "Longest circuit doesn't fit II.";
+             << "Longest circuit does not fit II." << ore::NV("II", II)
+             << ore::NV("BasicBlock", BB->getName());
     });
     return false;
   }
@@ -1080,8 +1082,8 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval,
 
   More.emit([&]() {
     return MachineOptimizationRemark("postpipeliner", "schedule", DbgLoc, BB)
-           << "Schedule found: NS=" << ore::NV("NS", NStages)
-           << " II=" << ore::NV("II", II);
+           << "Schedule found" << ore::NV("NS", NStages) << ore::NV("II", II)
+           << ore::NV("BasicBlock", BB->getName());
   });
   LLVM_DEBUG(dbgs() << "PostPipeliner: Success\n");
   return true;

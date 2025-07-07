@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEBaseRegisterBankInfo.h"
-#include "AIEInstrInfo.h"
-#include "AIERegisterInfo.h"
+#include "AIEBaseInstrInfo.h"
+#include "AIEBaseRegisterInfo.h"
 #include "MCTargetDesc/AIEMCTargetDesc.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/Support/Debug.h"
@@ -489,4 +489,52 @@ AIEBaseRegisterBankInfo::getInstrMappingFinal(
 
   return getInstructionMapping(DefaultMappingID, Cost,
                                getOperandsMapping(OpdsMapping), NumOperands);
+}
+
+bool AIEBaseRegisterBankInfo::registerBankLookAheadSearch(
+    RegisterUsedAsSpecificBankFcn RegisterUsedAsSpecificBank,
+    const MachineRegisterInfo &MRI, const TargetRegisterInfo &TRI,
+    Register Reg) const {
+  std::unordered_set<MachineInstr *> VisitedMIs;
+  return registerBankLookAheadSearch(RegisterUsedAsSpecificBank, MRI, TRI, Reg,
+                                     VisitedMIs);
+}
+
+bool AIEBaseRegisterBankInfo::registerBankLookAheadSearch(
+    RegisterUsedAsSpecificBankFcn RegisterUsedAsSpecificBank,
+    const MachineRegisterInfo &MRI, const TargetRegisterInfo &TRI, Register Reg,
+    std::unordered_set<MachineInstr *> &VisitedMIs) const {
+
+  auto IsCopyToVReg = [](const MachineInstr &MI) {
+    return (MI.isCopy() && MI.getOperand(0).getReg().isVirtual());
+  };
+
+  // Check all Uses of Reg for Register Bank Preference
+  for (auto &UseMI : MRI.use_nodbg_instructions(Reg)) {
+    if (is_contained(VisitedMIs, &UseMI)) {
+      // already encountered UseMI, no need to follow it again
+      continue;
+    }
+
+    VisitedMIs.insert(&UseMI);
+    const unsigned UseOpcode = UseMI.getOpcode();
+
+    // look through copies, bitcasts, phis and concat_vectors
+    if (UseOpcode == TargetOpcode::G_BITCAST ||
+        UseOpcode == TargetOpcode::G_CONCAT_VECTORS || IsCopyToVReg(UseMI) ||
+        UseMI.isPHI()) {
+      Register DefReg = UseMI.getOperand(0).getReg();
+      if (DefReg.isPhysical())
+        continue;
+      // Check if DefReg prefers a specific Register Bank
+      if (registerBankLookAheadSearch(RegisterUsedAsSpecificBank, MRI, TRI,
+                                      DefReg, VisitedMIs))
+        return true;
+    } else if (RegisterUsedAsSpecificBank(UseMI, MRI, TRI, Reg)) {
+      // UseMI prefers a RegisterBank
+      return true;
+    }
+  }
+  // no Register Bank preference
+  return false;
 }

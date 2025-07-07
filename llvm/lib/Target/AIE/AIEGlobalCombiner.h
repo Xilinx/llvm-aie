@@ -284,8 +284,6 @@ class CombinerSolution {
   BitVector ConflictCombiners;
 
 public:
-  CombinerSolution() = default;
-  CombinerSolution(const CombinerSolution &Other) = default;
   /// Only Initialize the ConflictCombiners
   CombinerSolution(const unsigned NumCombiners);
 

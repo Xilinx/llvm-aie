@@ -1717,14 +1717,6 @@ bool AIE2PInstrInfo::canHoistCheapInst(const MachineInstr &MI) const {
   return false;
 }
 
-bool AIE2PInstrInfo::isHardwareLoopDec(unsigned Opcode) const {
-  return Opcode == AIE2P::LoopDec;
-}
-
-bool AIE2PInstrInfo::isHardwareLoopJNZ(unsigned Opcode) const {
-  return Opcode == AIE2P::LoopJNZ;
-}
-
 std::optional<AIEBaseInstrInfo::ZOLSupport>
 AIE2PInstrInfo::getZOLSupport() const {
   AIEBaseInstrInfo::ZOLSupport Result;
@@ -1740,6 +1732,19 @@ AIE2PInstrInfo::getZOLSupport() const {
   Result.LSRegister = AIE2P::ls;
   Result.LERegister = AIE2P::le;
 
+  return Result;
+}
+
+std::optional<AIEBaseInstrInfo::JNZDSupport>
+AIE2PInstrInfo::getJNZDSupport() const {
+  AIEBaseInstrInfo::JNZDSupport Result;
+
+  Result.MovBlockAddrOpcode = AIE2P::MOVXM;
+  Result.PointerRegisterClass = &AIE2P::eP_as_32BitRegClass;
+  Result.LoopDecOpcode = AIE2P::LoopDec;
+  Result.LoopJNZOpcode = AIE2P::LoopJNZ;
+  Result.DecTripCountOpcode = AIE2P::ADD_NC_mv_add_ri;
+  Result.LoopJNZDOpcode = AIE2P::PseudoJNZD;
   return Result;
 }
 

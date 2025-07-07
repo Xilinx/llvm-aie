@@ -16,6 +16,7 @@
 
 #include "llvm/CodeGen/RegisterBankInfo.h"
 #include "llvm/TargetParser/Triple.h"
+#include <unordered_set>
 
 namespace llvm {
 
@@ -96,6 +97,18 @@ public:
 
   bool requiresPTRRegBank(const MachineInstr &MI,
                           const MachineRegisterInfo &MRI, unsigned Depth) const;
+
+  using RegisterUsedAsSpecificBankFcn =
+      std::function<bool(const MachineInstr &MI, const MachineRegisterInfo &MRI,
+                         const TargetRegisterInfo &TRI, Register Reg)>;
+  bool registerBankLookAheadSearch(
+      RegisterUsedAsSpecificBankFcn RegisterUsedAsSpecificBank,
+      const MachineRegisterInfo &MRI, const TargetRegisterInfo &TRI,
+      Register Reg) const;
+  bool registerBankLookAheadSearch(
+      RegisterUsedAsSpecificBankFcn RegisterUsedAsSpecificBank,
+      const MachineRegisterInfo &MRI, const TargetRegisterInfo &TRI,
+      Register Reg, std::unordered_set<MachineInstr *> &VisitedMIs) const;
 
 protected:
   // AIE specific generic instructions have target-specific OpCodes

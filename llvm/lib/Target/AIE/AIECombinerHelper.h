@@ -75,8 +75,6 @@ struct AIESingleDiffLaneBuildVectorMatchData {
   unsigned DifferingIndex;
 };
 
-void foundPattern(MachineInstr &MemI);
-
 bool matchGlobalPtrModOptimizer(MachineInstr &MemI, MachineRegisterInfo &MRI,
                                 CombinerHelper &Helper,
                                 const TargetInstrInfo &TII,
@@ -134,61 +132,6 @@ bool canAdvanceOp(MachineInstr &MemI, MachineInstr &Dest,
 /// bitcasts. May return nullptr if \p Reg is not a generic virtual register.
 MachineInstr *getDefIgnoringCopiesAndBitcasts(Register Reg,
                                               const MachineRegisterInfo &MRI);
-
-class InstrNode {
-  MachineInstr *BaseNode;
-  /// A user of \p BaseNode for which the latter can be re-materialized.
-  mutable MachineInstr *RematerializeForUser;
-
-public:
-  InstrNode() {
-    BaseNode = nullptr;
-    RematerializeForUser = nullptr;
-  }
-  InstrNode(MachineInstr *InstrNode, MachineInstr *DirNode = nullptr) {
-    BaseNode = InstrNode;
-    RematerializeForUser = DirNode;
-    assert(!RematerializeForUser || isRematerializable());
-  }
-
-  // Define comparison operators
-  bool operator<(const InstrNode &Node) const {
-    if (RematerializeForUser && Node.RematerializeForUser)
-      return (BaseNode < Node.BaseNode) ||
-             ((BaseNode == Node.BaseNode) &&
-              (RematerializeForUser < Node.RematerializeForUser));
-    else
-      return (BaseNode < Node.BaseNode);
-  }
-  bool operator==(const InstrNode &Node) const {
-    if (RematerializeForUser && Node.RematerializeForUser)
-      return (BaseNode == Node.BaseNode) &&
-             (RematerializeForUser == Node.RematerializeForUser);
-    else
-      return (BaseNode == Node.BaseNode);
-  }
-
-  MachineInstr *getBaseNode() const { return BaseNode; }
-  MachineInstr *getRematerializeForUser() const { return RematerializeForUser; }
-  bool isRematerializable() {
-    auto opCode = BaseNode->getOpcode();
-    if (opCode == TargetOpcode::G_CONSTANT ||
-        opCode == TargetOpcode::G_IMPLICIT_DEF)
-      return true;
-    return false;
-  }
-
-  void dbgPrintNode() const;
-  void rematerializeStartNode(MachineRegisterInfo &MRI, MachineIRBuilder &B,
-                              GISelChangeObserver &Observer);
-};
-
-bool matchS20NarrowingOpt(MachineInstr &MI, MachineRegisterInfo &MRI,
-                          std::set<InstrNode> &ValidStartNodes);
-void applyS20NarrowingOpt(MachineInstr &MI, MachineRegisterInfo &MRI,
-                          MachineIRBuilder &B, GISelChangeObserver &Observer,
-                          CombinerHelper &Helper,
-                          std::set<InstrNode> &ValidStartNodes);
 
 bool matchExtractVecEltAndExt(MachineInstr &MI, MachineRegisterInfo &MRI,
                               std::pair<MachineInstr *, bool> &MatchInfo);
@@ -294,6 +237,16 @@ bool matchShuffleToExtractInsertEltToBroadcast(MachineInstr &MI,
 
 bool matchBroadcastToShl(MachineInstr &MI, MachineRegisterInfo &MRI,
                          const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
+
+bool matchNarrowPhi(MachineInstr &Phi, MachineRegisterInfo &MRI,
+                    GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
+
+bool matchNarrowTrunc(MachineInstr &MI, MachineRegisterInfo &MRI,
+                      GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
+
+bool matchNarrowZext(MachineInstr &MI, MachineRegisterInfo &MRI,
+                     GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
+
 } // namespace llvm
 
 #endif

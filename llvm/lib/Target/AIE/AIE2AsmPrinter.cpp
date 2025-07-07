@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -16,12 +16,16 @@
 #include "AIE2AsmPrinter.h"
 #include "AIE2TargetMachine.h"
 #include "InstPrinter/AIE2InstPrinter.h"
+#include "llvm/Analysis/OptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "aie-asm-printer"
 
 // Simple pseudo-instructions have their lowering (with expansion to real
 // instructions) auto-generated.
@@ -68,6 +72,40 @@ bool AIE2AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 bool AIE2AsmPrinter::lowerOperand(const MachineOperand &MO,
                                   MCOperand &MCOp) const {
   return LowerAIEMachineOperandToMCOperand(MO, MCOp, *this);
+}
+
+void AIE2AsmPrinter::emitBundleCount(const MachineBasicBlock &MBB) {
+  unsigned BundleCount = 0;
+  unsigned ByteCount = 0;
+  auto *TII = static_cast<const AIEBaseInstrInfo *>(
+      MBB.getParent()->getSubtarget().getInstrInfo());
+  for (auto &MI : MBB) {
+    if (!MI.isBundle())
+      continue;
+
+    BundleCount++;
+    ByteCount += TII->getAIEMachineBundleSize(MI);
+  }
+
+  if (BundleCount == 0) {
+    // encountered empty MBB, no need to dump Bundle info, this could be an
+    // empty back-edge
+    return;
+  }
+
+  ORE->emit([&]() {
+    return MachineOptimizationRemarkAnalysis(DEBUG_TYPE, "analysis",
+                                             MBB.begin()->getDebugLoc(), &MBB)
+           << ore::NV("BasicBlock", MBB.getName())
+           << ore::NV("BundleCount", BundleCount)
+           << ore::NV("ByteCount", ByteCount);
+  });
+}
+
+void AIE2AsmPrinter::emitBasicBlockStart(const MachineBasicBlock &MBB) {
+  emitBundleCount(MBB);
+
+  AsmPrinter::emitBasicBlockStart(MBB);
 }
 
 AsmPrinter *

@@ -31,10 +31,6 @@
 #include "AIE2PGenRegisterBank.inc"
 using namespace llvm;
 
-static llvm::cl::opt<unsigned>
-    MaxDepthBankSearch("aie-max-depth-bank-search", cl::Hidden, cl::init(4),
-                       cl::desc("Max depth search during RegBankSelect"));
-
 RegisterBankInfo::PartialMapping AIE2PGenRegisterBankInfo::PartMappings[]{
     // StartIdx, Length, RegBank
     // 0: GPR 32-bit value
@@ -896,36 +892,6 @@ static bool isUsedAsFifoRegInInstr(const MachineInstr &MI,
       return true;
     break;
   }
-  }
-  return false;
-}
-
-bool AIE2PRegisterBankInfo::registerBankLookAheadSearch(
-    RegisterUsedAsSpecificBankFcn RegisterUsedAsSpecificBank,
-    const MachineRegisterInfo &MRI, const TargetRegisterInfo &TRI, Register Reg,
-    unsigned Depth) const {
-  if (Depth > MaxDepthBankSearch)
-    return false;
-
-  auto IsCopyToVReg = [](const MachineInstr &MI) {
-    return (MI.isCopy() && MI.getOperand(0).getReg().isVirtual());
-  };
-
-  for (auto &UseMI : MRI.use_nodbg_instructions(Reg)) {
-    const unsigned UseOpcode = UseMI.getOpcode();
-
-    // skip copies, bitcasts and phis
-    if (UseOpcode == TargetOpcode::G_BITCAST || IsCopyToVReg(UseMI) ||
-        UseMI.isPHI()) {
-      Register DefReg = UseMI.getOperand(0).getReg();
-      if (DefReg.isPhysical())
-        continue;
-      if (registerBankLookAheadSearch(RegisterUsedAsSpecificBank, MRI, TRI,
-                                      DefReg, Depth + 1))
-        return true;
-    } else if (RegisterUsedAsSpecificBank(UseMI, MRI, TRI, Reg)) {
-      return true;
-    }
   }
   return false;
 }

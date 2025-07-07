@@ -92,9 +92,7 @@ createTopDownScoreboard(ArrayRef<MachineBundle> Bundles,
   // then this will not cause conflicts.
   for (int I = TotalBundles - AmountToEmit; I < TotalBundles; I++) {
     for (MachineInstr *MI : Bundles[I].getInstrs())
-      HR.emitInScoreboard(Scoreboard, *SelectedDescriptors.getDesc(MI),
-                          HR.getMemoryBanks(MI), MI->operands(),
-                          MI->getMF()->getRegInfo(), 0);
+      HR.emitInScoreboard(Scoreboard, *MI, *SelectedDescriptors.getDesc(MI), 0);
     Scoreboard.advance();
   }
 
@@ -143,9 +141,7 @@ createBottomUpScoreboard(ArrayRef<MachineBundle> Bundles,
       Bundles.begin(), Bundles.begin() + std::min(NumBundles, RequiredCycles));
   for (const MachineBundle &B : reverse(MinBundles)) {
     for (MachineInstr *MI : B.getInstrs())
-      HR.emitInScoreboard(Scoreboard, *SelectedDescriptors.getDesc(MI),
-                          HR.getMemoryBanks(MI), MI->operands(),
-                          MI->getMF()->getRegInfo(), 0);
+      HR.emitInScoreboard(Scoreboard, *MI, *SelectedDescriptors.getDesc(MI), 0);
     Scoreboard.recede();
   }
   return Scoreboard;
@@ -167,9 +163,7 @@ MachineInstr *checkResourceConflictsBottomUp(
     if (BottomUpCycle >= HR.getConflictHorizon())
       break;
     for (MachineInstr *MI : B.getInstrs()) {
-      if (HR.getHazardType(Scoreboard, *SelectedDescriptors.getDesc(MI),
-                           HR.getMemoryBanks(MI), MI->operands(),
-                           MI->getMF()->getRegInfo(), -BottomUpCycle)) {
+      if (HR.getHazardType(Scoreboard, MI, -BottomUpCycle)) {
         DEBUG_LOOPAWARE(dbgs() << "Conflicting MI at Bottom-up cycle="
                                << BottomUpCycle << ": " << *MI);
         return MI;
@@ -199,9 +193,7 @@ MachineInstr *checkResourceConflictsTopDown(
   MachineInstr *ConflictMI = nullptr;
   for (const MachineBundle &B : SuccBundles) {
     for (MachineInstr *MI : B.getInstrs()) {
-      if (HR.getHazardType(Scoreboard, *SelectedDescriptors.getDesc(MI),
-                           HR.getMemoryBanks(MI), MI->operands(),
-                           MI->getMF()->getRegInfo(), 0)) {
+      if (HR.getHazardType(Scoreboard, MI, 0)) {
         DEBUG_LOOPAWARE(dbgs() << "Conflicting MI at Top cycle=" << TopCycle
                                << ": " << *MI);
         ConflictMI = MI;

@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -27,10 +27,12 @@
 #include "AIEBaseInstrInfo.h"
 #include "AIEBaseSubtarget.h"
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
+#include "llvm/Analysis/OptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineLoopUtils.h"
+#include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/ReachingDefAnalysis.h"
@@ -56,6 +58,50 @@ private:
   // Delayed erasure to avoid invalidating iterators
   SmallPtrSet<MachineInstr *, 4> Trash;
 
+  void dumpLoopID() {
+    std::string LoopID = getLoopID(&ML, "");
+
+    MachineOptimizationRemarkEmitter ORE(*ML.getHeader()->getParent(), nullptr);
+    ORE.emit([&]() {
+      auto RE = MachineOptimizationRemarkAnalysis(
+                    DEBUG_TYPE, "analysis",
+                    ML.getHeader()->begin()->getDebugLoc(), ML.getHeader())
+                << ore::NV("LoopID", LoopID);
+
+      for (auto *MBB : ML.blocks()) {
+        RE << ore::NV("BasicBlock", MBB->getName());
+      }
+
+      RE << ore::NV("Zero-Overhead-Loop", foundAllComponents());
+      return RE;
+    });
+  }
+
+  std::string getLoopID(MachineLoop *ML, std::string LoopID) {
+    if (!ML)
+      return LoopID;
+
+    unsigned LoopCount = 0;
+    std::string Suffix = "";
+    if (LoopID != "") {
+      Suffix = "_" + LoopID;
+    }
+
+    std::vector<MachineLoop *> MachineLoops;
+    if (ML->getParentLoop()) {
+      MachineLoops = ML->getParentLoop()->getSubLoops();
+    } else {
+      MachineLoops = {MLI.begin(), MLI.end()};
+    }
+
+    auto MLHeaderNumber = ML->getHeader()->getNumber();
+    for (auto *L : MachineLoops) {
+      if (L->getHeader()->getNumber() < MLHeaderNumber)
+        LoopCount++;
+    }
+    return getLoopID(ML->getParentLoop(), std::to_string(LoopCount) + Suffix);
+  }
+
 public:
   MachineBasicBlock *Preheader = nullptr;
   MachineInstr *Start = nullptr;
@@ -73,6 +119,9 @@ public:
       Preheader = MBB;
   }
   ~LowOverheadLoop() {
+    // dump the loop ID here, otherwise hardware loop detection is wrong
+    dumpLoopID();
+
     // Responsably empty the trash can
     for (auto *I : Trash) {
       LLVM_DEBUG(dbgs() << "AIE Loops: Erasing " << *I);
@@ -146,6 +195,7 @@ public:
     AU.addRequired<MachineLoopInfo>();
     AU.addRequired<ReachingDefAnalysis>();
     MachineFunctionPass::getAnalysisUsage(AU);
+    AU.addRequired<MachineOptimizationRemarkEmitterPass>();
   }
 
   bool runOnMachineFunction(MachineFunction &MF) override;
@@ -385,12 +435,14 @@ void AIEBaseHardwareLoops::expandLoopEnd(LowOverheadLoop &LoLoop) {
   if (!LoLoop.isJNZDLoop()) {
     return;
   }
+  auto LoweringData = TII->getJNZDSupport();
+  assert(LoweringData);
   MachineInstr *Dec = LoLoop.Dec;
   MachineInstr *End = LoLoop.End;
   assert(Dec->getOperand(0).getReg() == End->getOperand(0).getReg() &&
          "LoopDec not feeding into LoopEnd!?");
   MachineBasicBlock *MBB = End->getParent();
-  BuildMI(*MBB, End, End->getDebugLoc(), TII->get(TII->getPseudoJNZDOpcode()))
+  BuildMI(*MBB, End, End->getDebugLoc(), TII->get(LoweringData->LoopJNZDOpcode))
       .addDef(Dec->getOperand(0).getReg())
       .addReg(Dec->getOperand(1).getReg())
       .addReg(End->getOperand(1).getReg());

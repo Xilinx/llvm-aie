@@ -14,7 +14,9 @@
 
 #include "AIEBaseInstructionSelector.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/MC/MCContext.h"
+#include <optional>
 
 using namespace llvm;
 
@@ -170,8 +172,96 @@ bool AIEBaseInstructionSelector::selectBrCondLoopDecrement(
   return false;
 }
 
+// Try to match BRCOND(Intrinsic::loop_decrement)
+bool AIEBaseInstructionSelector::selectBrCondLoopDecrementReg(
+    MachineInstr &BrCond, MachineRegisterInfo &MRI) {
+
+  assert(BrCond.getOpcode() == TargetOpcode::G_BRCOND && "Not a G_BRCOND");
+
+  auto JNZDSupport = TII.getJNZDSupport();
+  if (!JNZDSupport) {
+    LLVM_DEBUG(dbgs() << "JNZD loop selection not supported\n");
+    return false;
+  }
+
+  Register CondReg = BrCond.getOperand(0).getReg();
+  const unsigned CondRB = RBI.getRegBank(CondReg, MRI, TRI)->getID();
+
+  // The condition needs to reside in GPRs
+  if (CondRB != TRI.getGPRRegBankID())
+    return false;
+
+  auto *Cond = getDefIgnoringCopies(CondReg, MRI);
+
+  assert(Cond && "Conditional branch without a condition!?");
+
+  struct JNZDArgs {
+    Register NewLC;
+    Register PrevLC;
+    MachineInstr *IntrinInst;
+  };
+  // This checks for the following pattern:
+  // bb.loop.body:
+  //  %newLC:gprregbank(s32) = llvm.loop.decrement.reg, %prevLC(s32), 1
+  //  %cond:gprregbank(s32) = G_ICMP intpred(ne), %newLC(s32), 0
+  //  G_BRCOND %4(s32), %bb.loop.body
+  auto IsJNZDPattern =
+      [](const MachineInstr &MI,
+         const MachineRegisterInfo &MRI) -> std::optional<JNZDArgs> {
+    if (MI.getOpcode() != TargetOpcode::G_ICMP)
+      return std::nullopt;
+
+    const auto &PredOp = MI.getOperand(1);
+    const auto Pred = static_cast<CmpInst::Predicate>(PredOp.getPredicate());
+
+    if (Pred != CmpInst::ICMP_NE)
+      return std::nullopt;
+
+    auto CmpRHS =
+        getIConstantVRegValWithLookThrough(MI.getOperand(3).getReg(), MRI);
+    if (!CmpRHS || CmpRHS->Value != 0)
+      return std::nullopt;
+
+    auto *CmpLHS = MRI.getVRegDef(MI.getOperand(2).getReg());
+    if (CmpLHS->getOpcode() != TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS)
+      return std::nullopt;
+
+    const unsigned IntrinID = cast<GIntrinsic>(*CmpLHS).getIntrinsicID();
+    if (IntrinID != Intrinsic::loop_decrement_reg)
+      return std::nullopt;
+
+    JNZDArgs Args;
+    Args.NewLC = CmpLHS->getOperand(0).getReg();
+    Args.PrevLC = CmpLHS->getOperand(2).getReg();
+    Args.IntrinInst = CmpLHS;
+    return Args;
+  };
+
+  if (auto Args = IsJNZDPattern(*Cond, MRI)) {
+    Register BlockAddrReg =
+        MRI.createVirtualRegister(JNZDSupport->PointerRegisterClass);
+    MachineBasicBlock *DestMBB = BrCond.getOperand(1).getMBB();
+    MIB.buildInstr(JNZDSupport->MovBlockAddrOpcode, {BlockAddrReg}, {})
+        .addMBB(DestMBB);
+    auto LoopDec = MIB.buildInstr(JNZDSupport->LoopDecOpcode, {Args->NewLC},
+                                  {Args->PrevLC});
+    MIB.buildInstr(JNZDSupport->LoopJNZOpcode, {},
+                   {LoopDec->getOperand(0).getReg(), BlockAddrReg});
+
+    BrCond.eraseFromParent();
+    makeDeadMI(*Args->IntrinInst, MRI);
+    return constrainSelectedInstRegOperands(*LoopDec, TII, TRI, RBI);
+  }
+
+  return false;
+}
+
 bool AIEBaseInstructionSelector::selectG_BRCOND(MachineInstr &I,
                                                 MachineRegisterInfo &MRI) {
+  // Try matching JNZD loop end
+  if (selectBrCondLoopDecrementReg(I, MRI)) {
+    return true;
+  }
   // Try matching ZOL loop end
   if (selectBrCondLoopDecrement(I, MRI)) {
     return true;
@@ -803,4 +893,35 @@ void AIEBaseInstructionSelector::insertPtrAddForOffset(MachineRegisterInfo &MRI,
     llvm_unreachable("Unexpected failure selecting G_PTR_ADD");
 
   MemI.getOperand(PointerRegIndex).setReg(NewPtrReg);
+}
+
+bool AIEBaseInstructionSelector::selectStartLoop(MachineInstr &I,
+                                                 MachineRegisterInfo &MRI) {
+
+  assert(I.getOpcode() == TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS);
+
+  auto JNZDSupport = TII.getJNZDSupport();
+  if (!JNZDSupport) {
+    return false;
+  }
+
+  const Register DstReg = I.getOperand(0).getReg();
+  // The first argument to start_loop_iterations is the loop trip count.
+  // We need to pre-adjust that number to receive the proper backedge-taken
+  // count
+  if (auto Const =
+          getIConstantVRegValWithLookThrough(I.getOperand(2).getReg(), MRI)) {
+    auto OpCode = TII.getConstantMovOpcode(MRI, DstReg, Const->Value);
+    auto Mov = MIB.buildInstr(OpCode, {DstReg}, {})
+                   .addImm(Const->Value.getSExtValue() - 1);
+    I.eraseFromParent();
+    return constrainSelectedInstRegOperands(*Mov, TII, TRI, RBI);
+  }
+
+  // Not a constant trip count, decrement at runtime
+  auto ADDI = MIB.buildInstr(JNZDSupport->DecTripCountOpcode, {I.getOperand(0)},
+                             {I.getOperand(2)})
+                  .addImm(-1);
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*ADDI, TII, TRI, RBI);
 }

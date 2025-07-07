@@ -416,6 +416,69 @@ bool AIELegalizerHelper::legalizeG_VASTART(LegalizerHelper &Helper,
   return true;
 }
 
+bool AIELegalizerHelper::isUnaligned20BitStore(
+    const LegalityQuery &Query) const {
+  const LLT &DstTy = Query.Types[0];
+  if (DstTy.getSizeInBits() != 20)
+    return false;
+
+  if (Query.MMODescrs.empty())
+    return false;
+
+  if (Query.Opcode != TargetOpcode::G_STORE)
+    return false;
+
+  if (!DstTy.isPointer() && !DstTy.isScalar())
+    return false;
+
+  const bool Is32BitAligned = Query.MMODescrs.begin()->AlignInBits % 32 == 0;
+  if (Is32BitAligned)
+    return false;
+
+  return true;
+}
+
+bool AIELegalizerHelper::legalize_G_STORE(LegalizerHelper &Helper,
+                                          GStore &StoreI) const {
+  MachineRegisterInfo &MRI = StoreI.getMF()->getRegInfo();
+  Register DstReg = StoreI.getOperand(0).getReg();
+  LLT DestLLT = MRI.getType(DstReg);
+
+  const LLT S20 = LLT::scalar(20);
+
+  GISelObserverWrapper DummyObserver;
+  MachineIRBuilder HelperBuilder(StoreI, DummyObserver);
+  DummyObserver.changedInstr(StoreI);
+
+  // PtrtoInt cast.
+  Register InputReg = DstReg;
+  if (DestLLT.isPointer()) {
+    InputReg = MRI.createGenericVirtualRegister(S20);
+    HelperBuilder.buildPtrToInt(InputReg, DstReg);
+  }
+
+  // EXT new PtrtoInt-Cast.
+  Register ExtReg = MRI.createGenericVirtualRegister(S32);
+  if (DestLLT.isPointer())
+    HelperBuilder.buildZExt(ExtReg, InputReg);
+  else {
+    // FIXME: implement with G_SEXT once instruction legalization works
+    Register TempExtReg = MRI.createGenericVirtualRegister(S32);
+    HelperBuilder.buildZExt(TempExtReg, InputReg);
+    HelperBuilder.buildSExtInReg(ExtReg, TempExtReg, 20);
+  }
+
+  // Replace ptr with EXT Result.
+  StoreI.getOperand(0).setReg(ExtReg);
+
+  // Update MMO Type.
+  MachineMemOperand &MMO = **StoreI.memoperands_begin();
+  MMO.setType(S32);
+
+  Helper.lowerStore(StoreI);
+  return true;
+}
+
 bool AIELegalizerHelper::legalizeG_VAARG(LegalizerHelper &Helper,
                                          MachineInstr &MI) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
@@ -1389,7 +1452,7 @@ bool AIELegalizerHelper::legalizeLoopDecrement(LegalizerHelper &Helper,
   MI.getOperand(0).setReg(NewDst);
   Register ZExtValueReg =
       MIRBuilder.buildAssertZExt(LLT::scalar(32), NewDst, 1).getReg(0);
-  MIRBuilder.buildTrunc(OrigDst, ZExtValueReg);
+  MIRBuilder.buildAnyExtOrTrunc(OrigDst, ZExtValueReg);
   return true;
 }
 

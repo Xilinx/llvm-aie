@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEBaseDisassembler.h"
-#include "AIERegisterInfo.h"
 #include "MCTargetDesc/AIEMCTargetDesc.h"
+#include "aie1/AIE1RegisterInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDecoderOps.h"
 #include "llvm/MC/MCDisassembler/MCDisassembler.h"

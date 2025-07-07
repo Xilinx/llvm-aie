@@ -77,13 +77,6 @@ public:
   getInstrMapping(const MachineInstr &MI) const override;
   const RegisterBank &getRegBankFromRegClass(const TargetRegisterClass &RC,
                                              LLT) const override;
-  using RegisterUsedAsSpecificBankFcn =
-      std::function<bool(const MachineInstr &MI, const MachineRegisterInfo &MRI,
-                         const TargetRegisterInfo &TRI, Register Reg)>;
-  bool registerBankLookAheadSearch(
-      RegisterUsedAsSpecificBankFcn RegisterUsedAsSpecificBank,
-      const MachineRegisterInfo &MRI, const TargetRegisterInfo &TRI,
-      Register Reg, unsigned Depth = 0) const;
   std::optional<const RegisterBank *>
   getPreferredRegBankForVectorTy(const MachineRegisterInfo &MRI,
                                  const TargetRegisterInfo &TRI,

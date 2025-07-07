@@ -13,12 +13,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEBaseMCCodeEmitter.h"
-#include "AIEInstrInfo.h"
 #include "MCTargetDesc/AIE1MCFixupKinds.h"
 #include "MCTargetDesc/AIEMCExpr.h"
 #include "MCTargetDesc/AIEMCInstrInfo.h"
 #include "MCTargetDesc/AIEMCTargetDesc.h"
 #include "Utils/AIEBaseInfo.h"
+#include "aie1/AIE1InstrInfo.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/MC/MCAsmInfo.h"
