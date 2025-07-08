@@ -12,8 +12,7 @@
 
 define void @caller1() {
 ; CHECK-LABEL: caller1:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; j #callee1; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -29,8 +28,7 @@ entry:
 
 define void @callee1() {
 ; CHECK-LABEL: callee1:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #1; nopb ; nopxm ; nops
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    mov s0, r0 // Delay Slot 5

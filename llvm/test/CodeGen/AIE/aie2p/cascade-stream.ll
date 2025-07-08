@@ -9,8 +9,7 @@
 
 define dso_local noundef <64 x i8> @_Z21test_get_scd_v128int4i(i32 noundef %en)  {
 ; CHECK-LABEL: _Z21test_get_scd_v128int4i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    vmov x0, scd; nopb ; nopxm ; nops
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -27,8 +26,7 @@ entry:
 
 define dso_local inreg noundef <16 x i32> @_Z21test_get_scd_v16acc32i(i32 noundef %en)  {
 ; CHECK-LABEL: _Z21test_get_scd_v16acc32i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    vmov bmll0, scd; nopb ; nopxm ; nops
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -44,8 +42,7 @@ entry:
 
 define dso_local inreg noundef <32 x i32> @_Z24test_get_scd_v32acc32_loi(i32 noundef %en)  {
 ; CHECK-LABEL: _Z24test_get_scd_v32acc32_loi:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    vmov.0 cml0, scd; nopb ; nopxm ; nops
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -61,8 +58,7 @@ entry:
 
 define dso_local inreg noundef <32 x i32> @_Z24test_get_scd_v32acc32_hii(i32 noundef %en)  {
 ; CHECK-LABEL: _Z24test_get_scd_v32acc32_hii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    vmov.1 cml0, scd; nopb ; nopxm ; nops
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -78,8 +74,7 @@ entry:
 
 define dso_local inreg noundef <64 x i32> @_Z23test_get_scd_v64acc32_0i(i32 noundef %en)  {
 ; CHECK-LABEL: _Z23test_get_scd_v64acc32_0i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    vmov.0 dm0, scd; nopb ; nopxm ; nops
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -95,8 +90,7 @@ entry:
 
 define dso_local inreg noundef <64 x i32> @_Z23test_get_scd_v64acc32_1i(i32 noundef %en)  {
 ; CHECK-LABEL: _Z23test_get_scd_v64acc32_1i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    vmov.1 dm0, scd; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -112,8 +106,7 @@ entry:
 
 define dso_local inreg noundef <64 x i32> @_Z23test_get_scd_v64acc32_2i(i32 noundef %en)  {
 ; CHECK-LABEL: _Z23test_get_scd_v64acc32_2i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    vmov.2 dm0, scd; nopb ; nopxm ; nops
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -129,8 +122,7 @@ entry:
 
 define dso_local inreg noundef <64 x i32> @_Z23test_get_scd_v64acc32_3i(i32 noundef %en)  {
 ; CHECK-LABEL: _Z23test_get_scd_v64acc32_3i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    vmov.3 dm0, scd; nopb ; nopxm ; nops
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -146,8 +138,7 @@ entry:
 
 define dso_local inreg noundef <32 x i32> @_Z28test_get_scd_expand_v32acc32ii(i32 noundef %en, i32 noundef %pos)  {
 ; CHECK-LABEL: _Z28test_get_scd_expand_v32acc32ii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    vmov dm0, scd, r31; nopb ; nopxm
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -163,8 +154,7 @@ entry:
 
 define dso_local inreg noundef <64 x i32> @_Z28test_get_scd_expand_v64acc32ii(i32 noundef %en, i32 noundef %pos)  {
 ; CHECK-LABEL: _Z28test_get_scd_expand_v64acc32ii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    vmov dm0, scd, r31; nopb ; nopxm
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -179,8 +169,7 @@ entry:
 
 define dso_local inreg noundef <32 x i32> @_Z33test_get_scd_expand_v32acc32_incriRi(i32 noundef %en, ptr nocapture nonnull align 4 dereferenceable(4) %pos) {
 ; CHECK-LABEL: _Z33test_get_scd_expand_v32acc32_incriRi:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda r31, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -204,8 +193,7 @@ entry:
 
 define dso_local inreg noundef <64 x i32> @_Z33test_get_scd_expand_v64acc32_incriRi(i32 noundef %en, ptr nocapture nonnull align 4 dereferenceable(4) %pos) {
 ; CHECK-LABEL: _Z33test_get_scd_expand_v64acc32_incriRi:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda r31, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop

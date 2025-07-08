@@ -10,8 +10,7 @@
 
 define dso_local void @_Z18test_acquire_equaljj(i32 noundef %id, i32 noundef %val) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z18test_acquire_equaljj:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    acq r0, r1 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -26,8 +25,7 @@ entry:
 
 define dso_local void @_Z25test_acquire_equal_id_immj(i32 noundef %val) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z25test_acquire_equal_id_immj:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    acq #1, r0 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -42,8 +40,7 @@ entry:
 
 define dso_local void @_Z23test_acquire_equal_condjji(i32 noundef %id, i32 noundef %val, i32 noundef %cond) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z23test_acquire_equal_condjji:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov r26, r2; nopv
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    acq.cond r0, r1, r26 // Delay Slot 5
@@ -59,8 +56,7 @@ entry:
 
 define dso_local void @_Z30test_acquire_equal_cond_id_immji(i32 noundef %val, i32 noundef %cond) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z30test_acquire_equal_cond_id_immji:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov r26, r1; nopv
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    acq.cond #2, r0, r26 // Delay Slot 5
@@ -76,8 +72,7 @@ entry:
 
 define dso_local void @_Z26test_acquire_greater_equaljj(i32 noundef %id, i32 noundef %val) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z26test_acquire_greater_equaljj:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r2, #0; nopb ; nopxm
 ; CHECK-NEXT:    sub r1, r2, r1
 ; CHECK-NEXT:    ret lr
@@ -95,8 +90,7 @@ entry:
 
 define dso_local void @_Z33test_acquire_greater_equal_id_immj(i32 noundef %val) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z33test_acquire_greater_equal_id_immj:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r1, #0; nopb ; nopxm
 ; CHECK-NEXT:    sub r0, r1, r0
 ; CHECK-NEXT:    ret lr
@@ -114,8 +108,7 @@ entry:
 
 define dso_local void @_Z31test_acquire_greater_equal_condjji(i32 noundef %id, i32 noundef %val, i32 noundef %cond) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z31test_acquire_greater_equal_condjji:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopx ; mov r26, r2
 ; CHECK-NEXT:    mova r2, #0
 ; CHECK-NEXT:    sub r1, r2, r1
@@ -134,8 +127,7 @@ entry:
 
 define dso_local void @_Z38test_acquire_greater_equal_cond_id_immji(i32 noundef %val, i32 noundef %cond) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z38test_acquire_greater_equal_cond_id_immji:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopx ; mov r26, r1
 ; CHECK-NEXT:    mova r1, #0
 ; CHECK-NEXT:    sub r0, r1, r0
@@ -154,8 +146,7 @@ entry:
 
 define dso_local void @_Z12test_releaseji(i32 noundef %id, i32 noundef %val) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z12test_releaseji:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    rel r0, r1 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -170,8 +161,7 @@ entry:
 
 define dso_local void @_Z19test_release_id_immi(i32 noundef %val) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z19test_release_id_immi:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    rel #28, r0 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -186,8 +176,7 @@ entry:
 
 define dso_local void @_Z17test_release_condjii(i32 noundef %id, i32 noundef %val, i32 noundef %cond) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z17test_release_condjii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov r26, r2; nopv
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    rel.cond r0, r1, r26 // Delay Slot 5
@@ -203,8 +192,7 @@ entry:
 
 define dso_local void @_Z24test_release_cond_id_immii(i32 noundef %val, i32 noundef %cond) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z24test_release_cond_id_immii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov r26, r1; nopv
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    rel.cond #61, r0, r26 // Delay Slot 5

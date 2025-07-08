@@ -11,8 +11,7 @@
 
 define void @put_ms(i32 inreg %a, i32 inreg %tlast) local_unnamed_addr {
 ; CHECK-LABEL: put_ms:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    mov r28, r1 // Delay Slot 4
@@ -26,8 +25,7 @@ entry:
 
 define i32 @put_ms_nb(i32 inreg %a) local_unnamed_addr {
 ; CHECK-LABEL: put_ms_nb:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    mov.nb.tlast ms, r1 // Delay Slot 4
@@ -41,8 +39,7 @@ entry:
 
 define { i32, i32 } @get_ss(i32 inreg %a) local_unnamed_addr {
 ; CHECK-LABEL: get_ss:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mov r0, SS; nopb ; nopxm
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -59,8 +56,7 @@ entry:
 
 define { i32, i32 } @get_ss_nb(i32 inreg %a) local_unnamed_addr {
 ; CHECK-LABEL: get_ss_nb:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mov.nb r0, SS; nopb ; nopxm
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -77,8 +73,7 @@ entry:
 
 define void @put_ms_ph_doTlastReg(i32 inreg %tlast, i32 inreg %dstID) local_unnamed_addr {
 ; CHECK-LABEL: put_ms_ph_doTlastReg:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov r28, r0; nopv
 ; CHECK-NEXT:    mov.ph ms, r1, #6, r28; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -93,8 +88,7 @@ entry:
 
 define void @put_ms_ph(i32 inreg %dstID) local_unnamed_addr {
 ; CHECK-LABEL: put_ms_ph:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mov.ph.tlast ms, r0, #5; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -108,8 +102,7 @@ entry:
 
 define i32 @put_ms_ph_nb_doTlastReg(i32 inreg %tlast, i32 inreg %dstID) local_unnamed_addr {
 ; CHECK-LABEL: put_ms_ph_nb_doTlastReg:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r28, r1; nops
 ; CHECK-NEXT:    mov.ph.nb ms, r2, #5, r28; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -124,8 +117,7 @@ entry:
 
 define i32 @put_ms_ph_nb(i32 inreg %dstID) local_unnamed_addr {
 ; CHECK-LABEL: put_ms_ph_nb:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; mov.ph.nb ms, r1, #5; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopa ; nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -139,8 +131,7 @@ entry:
 
 define void @put_ms_cph_doTlastReg(i32 inreg %tlast, i32 inreg %addr, i32 inreg %rspID) local_unnamed_addr {
 ; CHECK-LABEL: put_ms_cph_doTlastReg:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; or r28, r0, r0; mov m0, r1; nopv
 ; CHECK-NEXT:    mov.cph ms, m0, #0, #3, r2, r28; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -155,8 +146,7 @@ entry:
 
 define void @put_ms_cph(i32 inreg %addr, i32 inreg %rspID) local_unnamed_addr {
 ; CHECK-LABEL: put_ms_cph:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov m0, r0; nopv
 ; CHECK-NEXT:    mov.cph.tlast ms, m0, #3, #3, r1; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -171,8 +161,7 @@ entry:
 
 define i32 @put_ms_cph_nb_doTlastReg(i32 inreg %tlast, i32 inreg %addr, i32 inreg %rspID) local_unnamed_addr {
 ; CHECK-LABEL: put_ms_cph_nb_doTlastReg:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; or r28, r1, r1; mov m0, r2; nops
 ; CHECK-NEXT:    mov.cph.nb ms, m0, #3, #3, r3, r28; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -187,8 +176,7 @@ entry:
 
 define i32 @put_ms_cph_nb(i32 inreg %addr, i32 inreg %rspID) local_unnamed_addr {
 ; CHECK-LABEL: put_ms_cph_nb:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nopx ; mov m0, r1; nops
 ; CHECK-NEXT:    mov.cph.nb ms, m0, #0, #1, r2; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5

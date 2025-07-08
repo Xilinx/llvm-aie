@@ -17,8 +17,7 @@
 ; Function Attrs: mustprogress
 define dso_local void @conv2d_bfp16.for.body90.i(<32 x i32> %fW.sroa.0.1489.i, i32 %fW.sroa.14.1488.i, <32 x i32> %fA.sroa.0.1487.i, i32 %fA.sroa.18.1486.i, ptr addrspace(6) %pW.1485.i, ptr addrspace(5) %pA.1484.i, <64 x i32> %0, <64 x i32> %1, <64 x i32> %2, <64 x i32> %3, i32 %4, i32 %5, i20 %6, i20 %7, i20 %8, i20 %9, i20 %10, i20 %11, i32 %12, i32 %13, i32 %14, ptr %.out, ptr %.out1, ptr %.out2, ptr %.out3, ptr %.out4, ptr %.out5, ptr %pA.1.i.out, ptr %pW.1.i.out, ptr %fA.sroa.18.1.i.out, ptr %fA.sroa.0.1.i.out, ptr %fW.sroa.14.1.i.out, ptr %fW.sroa.0.1.i.out) #3 {
 ; CHECK-LABEL: conv2d_bfp16.for.body90.i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %newFuncRoot
+; CHECK:       // %bb.0: // %newFuncRoot
 ; CHECK-NEXT:    nopa ; nopb ; nops ; paddxm [sp], #64; nopv
 ; CHECK-NEXT:    st p6, [sp, #-60]; nopx // 4-byte Folded Spill
 ; CHECK-NEXT:    mov p6, sp
@@ -68,7 +67,6 @@ define dso_local void @conv2d_bfp16.for.body90.i(<32 x i32> %fW.sroa.0.1489.i, i
 ; CHECK-NEXT:    lda p7, [p7, #0]; vldb.pop.576 ex0, [p1, lf1, r25]; nops ; nopxm ; nopv
 ; CHECK-NEXT:    vlda.pop.576 ex6, [p0, lf0, r24, m1]; vldb.pop.576.3d ex2, [p1, lf1, r25, d0]; nops ; nopx ; vshuffle ex8, ex0, ex2, r4; nopv
 ; CHECK-NEXT:    vlda.fill.512 [p0, lf0, r24]; vldb.fill.512 [p1, lf1, r25]; nops ; movx r0, #780; vshuffle ex10, ex0, ex2, r5; nopv
-; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_1: // %for.body90.i
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    vlda.pop.576 ex4, [p0, lf0, r24]; vldb.fill.512 [p1, lf1, r25]; nops ; nopxm ; vmac.f dm0, dm0, ex8, ex4, r0

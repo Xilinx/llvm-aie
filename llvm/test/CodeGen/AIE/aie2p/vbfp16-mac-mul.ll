@@ -14,8 +14,7 @@
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z17test_mul_8x8_8x8T12v64bfp16ebs8S_(%struct.v64bfp16ebs8 %a.coerce, %struct.v64bfp16ebs8 %b.coerce) local_unnamed_addr  {
 ; CHECK-LABEL: _Z17test_mul_8x8_8x8T12v64bfp16ebs8S_:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #780; nopb ; nopxm ; nops
 ; CHECK-NEXT:    vmul.f dm0, ex0, ex2, r0
 ; CHECK-NEXT:    ret lr
@@ -37,8 +36,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z20test_negmul_8x8_8x8T12v64bfp16ebs8S_(%struct.v64bfp16ebs8 %a.coerce, %struct.v64bfp16ebs8 %b.coerce) local_unnamed_addr  {
 ; CHECK-LABEL: _Z20test_negmul_8x8_8x8T12v64bfp16ebs8S_:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #780; nopb ; nopxm ; nops
 ; CHECK-NEXT:    vnegmul.f dm0, ex0, ex2, r0
 ; CHECK-NEXT:    ret lr
@@ -60,8 +58,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z17test_mac_8x8_8x8T12v64bfp16ebs8S_Dv64_u10__accfloat(%struct.v64bfp16ebs8 %a.coerce, %struct.v64bfp16ebs8 %b.coerce, <64 x float> inreg noundef %acc) local_unnamed_addr  {
 ; CHECK-LABEL: _Z17test_mac_8x8_8x8T12v64bfp16ebs8S_Dv64_u10__accfloat:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #780; nopb ; nopxm ; nops
 ; CHECK-NEXT:    vmac.f dm0, dm1, ex0, ex2, r0
 ; CHECK-NEXT:    ret lr
@@ -84,8 +81,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z17test_msc_8x8_8x8T12v64bfp16ebs8S_Dv64_u10__accfloat(%struct.v64bfp16ebs8 %a.coerce, %struct.v64bfp16ebs8 %b.coerce, <64 x float> inreg noundef %acc) local_unnamed_addr  {
 ; CHECK-LABEL: _Z17test_msc_8x8_8x8T12v64bfp16ebs8S_Dv64_u10__accfloat:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #780; nopb ; nopxm ; nops
 ; CHECK-NEXT:    vmsc.f dm0, dm1, ex0, ex2, r0
 ; CHECK-NEXT:    ret lr
@@ -108,8 +104,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z20test_addmac_8x8_8x8T12v64bfp16ebs8S_Dv64_u10__accfloatS0_(%struct.v64bfp16ebs8 %a.coerce, %struct.v64bfp16ebs8 %b.coerce, <64 x float> inreg noundef %acc1, <64 x float> inreg noundef %acc2) local_unnamed_addr  {
 ; CHECK-LABEL: _Z20test_addmac_8x8_8x8T12v64bfp16ebs8S_Dv64_u10__accfloatS0_:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopx ; vmov.d dm0, dm1
 ; CHECK-NEXT:    mova r0, #780
 ; CHECK-NEXT:    vaddmac.f dm0, dm0, dm2, ex0, ex2, r0
@@ -134,8 +129,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z20test_addmsc_8x8_8x8T12v64bfp16ebs8S_Dv64_u10__accfloatS0_(%struct.v64bfp16ebs8 %a.coerce, %struct.v64bfp16ebs8 %b.coerce, <64 x float> inreg noundef %acc1, <64 x float> inreg noundef %acc2) local_unnamed_addr  {
 ; CHECK-LABEL: _Z20test_addmsc_8x8_8x8T12v64bfp16ebs8S_Dv64_u10__accfloatS0_:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopx ; vmov.d dm0, dm1
 ; CHECK-NEXT:    mova r0, #780
 ; CHECK-NEXT:    vaddmsc.f dm0, dm0, dm2, ex0, ex2, r0
@@ -160,8 +154,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z17test_mul_8x8_8x8T12v64bfp16ebs8iS_i(%struct.v64bfp16ebs8 %a.coerce, i32 noundef %sgn_x, %struct.v64bfp16ebs8 %b.coerce, i32 noundef %sgn_y) local_unnamed_addr  {
 ; CHECK-LABEL: _Z17test_mul_8x8_8x8T12v64bfp16ebs8iS_i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r2, #9; nopxm
 ; CHECK-NEXT:    mova r3, #8; lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
@@ -191,8 +184,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z20test_negmul_8x8_8x8T12v64bfp16ebs8iS_i(%struct.v64bfp16ebs8 %a.coerce, i32 noundef %sgn_x, %struct.v64bfp16ebs8 %b.coerce, i32 noundef %sgn_y) local_unnamed_addr  {
 ; CHECK-LABEL: _Z20test_negmul_8x8_8x8T12v64bfp16ebs8iS_i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r2, #9; nopxm
 ; CHECK-NEXT:    mova r3, #8; lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
@@ -222,8 +214,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z17test_mac_8x8_8x8T12v64bfp16ebs8iS_iDv64_u10__accfloat(%struct.v64bfp16ebs8 %a.coerce, i32 noundef %sgn_x, %struct.v64bfp16ebs8 %b.coerce, i32 noundef %sgn_y, <64 x float> inreg noundef %acc) local_unnamed_addr  {
 ; CHECK-LABEL: _Z17test_mac_8x8_8x8T12v64bfp16ebs8iS_iDv64_u10__accfloat:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r2, #9; nopxm
 ; CHECK-NEXT:    mova r3, #8; lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
@@ -254,8 +245,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z17test_msc_8x8_8x8T12v64bfp16ebs8iS_iDv64_u10__accfloat(%struct.v64bfp16ebs8 %a.coerce, i32 noundef %sgn_x, %struct.v64bfp16ebs8 %b.coerce, i32 noundef %sgn_y, <64 x float> inreg noundef %acc) local_unnamed_addr  {
 ; CHECK-LABEL: _Z17test_msc_8x8_8x8T12v64bfp16ebs8iS_iDv64_u10__accfloat:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r2, #9; nopxm
 ; CHECK-NEXT:    mova r3, #8; lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
@@ -286,8 +276,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z20test_addmac_8x8_8x8T12v64bfp16ebs8iS_iDv64_u10__accfloatS0_(%struct.v64bfp16ebs8 %a.coerce, i32 noundef %sgn_x, %struct.v64bfp16ebs8 %b.coerce, i32 noundef %sgn_y, <64 x float> inreg noundef %acc1, <64 x float> inreg noundef %acc2) local_unnamed_addr  {
 ; CHECK-LABEL: _Z20test_addmac_8x8_8x8T12v64bfp16ebs8iS_iDv64_u10__accfloatS0_:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r2, #9; nopx
 ; CHECK-NEXT:    mova r3, #8; lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
@@ -319,8 +308,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z20test_addmsc_8x8_8x8T12v64bfp16ebs8iS_iDv64_u10__accfloatS0_(%struct.v64bfp16ebs8 %a.coerce, i32 noundef %sgn_x, %struct.v64bfp16ebs8 %b.coerce, i32 noundef %sgn_y, <64 x float> inreg noundef %acc1, <64 x float> inreg noundef %acc2) local_unnamed_addr  {
 ; CHECK-LABEL: _Z20test_addmsc_8x8_8x8T12v64bfp16ebs8iS_iDv64_u10__accfloatS0_:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r2, #9; nopx
 ; CHECK-NEXT:    mova r3, #8; lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
@@ -352,8 +340,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z22test_mul_8x8_8x8T_conf12v64bfp16ebs8S_i(%struct.v64bfp16ebs8 %a.coerce, %struct.v64bfp16ebs8 %b.coerce, i32 noundef %sub_mul) local_unnamed_addr  {
 ; CHECK-LABEL: _Z22test_mul_8x8_8x8T_conf12v64bfp16ebs8S_i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r1, #11
 ; CHECK-NEXT:    mova r2, #780; lshl r0, r0, r1
 ; CHECK-NEXT:    or r0, r0, r2
@@ -379,8 +366,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z25test_negmul_8x8_8x8T_conf12v64bfp16ebs8S_i(%struct.v64bfp16ebs8 %a.coerce, %struct.v64bfp16ebs8 %b.coerce, i32 noundef %sub_mul) local_unnamed_addr  {
 ; CHECK-LABEL: _Z25test_negmul_8x8_8x8T_conf12v64bfp16ebs8S_i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r1, #11
 ; CHECK-NEXT:    mova r2, #780; lshl r0, r0, r1
 ; CHECK-NEXT:    or r0, r0, r2
@@ -406,8 +392,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z22test_mac_8x8_8x8T_conf12v64bfp16ebs8S_Dv64_u10__accfloatiii(%struct.v64bfp16ebs8 %a.coerce, %struct.v64bfp16ebs8 %b.coerce, <64 x float> inreg noundef %acc, i32 noundef %zero_acc, i32 noundef %sub_mul, i32 noundef %sub_acc1) local_unnamed_addr  {
 ; CHECK-LABEL: _Z22test_mac_8x8_8x8T_conf12v64bfp16ebs8S_Dv64_u10__accfloatiii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r3, #11; nopx
 ; CHECK-NEXT:    mova r4, #12; lshl r1, r1, r3
 ; CHECK-NEXT:    lshl r2, r2, r4
@@ -440,8 +425,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z22test_msc_8x8_8x8T_conf12v64bfp16ebs8S_Dv64_u10__accfloatiii(%struct.v64bfp16ebs8 %a.coerce, %struct.v64bfp16ebs8 %b.coerce, <64 x float> inreg noundef %acc, i32 noundef %zero_acc, i32 noundef %sub_mul, i32 noundef %sub_acc1) local_unnamed_addr  {
 ; CHECK-LABEL: _Z22test_msc_8x8_8x8T_conf12v64bfp16ebs8S_Dv64_u10__accfloatiii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r3, #11; nopx
 ; CHECK-NEXT:    mova r4, #12; lshl r1, r1, r3
 ; CHECK-NEXT:    lshl r2, r2, r4
@@ -474,8 +458,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z25test_addmac_8x8_8x8T_conf12v64bfp16ebs8S_Dv64_u10__accfloatS0_iiii(%struct.v64bfp16ebs8 %a.coerce, %struct.v64bfp16ebs8 %b.coerce, <64 x float> inreg noundef %acc1, <64 x float> inreg noundef %acc2, i32 noundef %zero_acc1, i32 noundef %sub_mul, i32 noundef %sub_acc1, i32 noundef %sub_acc2) local_unnamed_addr  {
 ; CHECK-LABEL: _Z25test_addmac_8x8_8x8T_conf12v64bfp16ebs8S_Dv64_u10__accfloatS0_iiii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r4, #11; nopb ; nopx
 ; CHECK-NEXT:    mova r5, #12; lshl r1, r1, r4
 ; CHECK-NEXT:    lshl r2, r2, r5
@@ -513,8 +496,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z25test_addmsc_8x8_8x8T_conf12v64bfp16ebs8S_Dv64_u10__accfloatS0_iiii(%struct.v64bfp16ebs8 %a.coerce, %struct.v64bfp16ebs8 %b.coerce, <64 x float> inreg noundef %acc1, <64 x float> inreg noundef %acc2, i32 noundef %zero_acc1, i32 noundef %sub_mul, i32 noundef %sub_acc1, i32 noundef %sub_acc2) local_unnamed_addr  {
 ; CHECK-LABEL: _Z25test_addmsc_8x8_8x8T_conf12v64bfp16ebs8S_Dv64_u10__accfloatS0_iiii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r4, #11; nopb ; nopx
 ; CHECK-NEXT:    mova r5, #12; lshl r1, r1, r4
 ; CHECK-NEXT:    lshl r2, r2, r5
@@ -552,8 +534,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z22test_mul_8x8_8x8T_conf12v64bfp16ebs8iS_ii(%struct.v64bfp16ebs8 %a.coerce, i32 noundef %sgn_x, %struct.v64bfp16ebs8 %b.coerce, i32 noundef %sgn_y, i32 noundef %sub_mul) local_unnamed_addr  {
 ; CHECK-LABEL: _Z22test_mul_8x8_8x8T_conf12v64bfp16ebs8iS_ii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r3, #11; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mova r4, #9; lshl r2, r2, r3
 ; CHECK-NEXT:    mova r3, #8; lshl r0, r0, r4
@@ -587,8 +568,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z25test_negmul_8x8_8x8T_conf12v64bfp16ebs8iS_ii(%struct.v64bfp16ebs8 %a.coerce, i32 noundef %sgn_x, %struct.v64bfp16ebs8 %b.coerce, i32 noundef %sgn_y, i32 noundef %sub_mul) local_unnamed_addr  {
 ; CHECK-LABEL: _Z25test_negmul_8x8_8x8T_conf12v64bfp16ebs8iS_ii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r3, #11; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mova r4, #9; lshl r2, r2, r3
 ; CHECK-NEXT:    mova r3, #8; lshl r0, r0, r4
@@ -622,8 +602,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z22test_mac_8x8_8x8T_conf12v64bfp16ebs8iS_iDv64_u10__accfloatiii(%struct.v64bfp16ebs8 %a.coerce, i32 noundef %sgn_x, %struct.v64bfp16ebs8 %b.coerce, i32 noundef %sgn_y, <64 x float> inreg noundef %acc, i32 noundef %zero_acc, i32 noundef %sub_mul, i32 noundef %sub_acc1) local_unnamed_addr  {
 ; CHECK-LABEL: _Z22test_mac_8x8_8x8T_conf12v64bfp16ebs8iS_iDv64_u10__accfloatiii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r5, #11
 ; CHECK-NEXT:    mova r6, #12; lshl r3, r3, r5
 ; CHECK-NEXT:    mova r7, #8; lshl r4, r4, r6
@@ -664,8 +643,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z22test_msc_8x8_8x8T_conf12v64bfp16ebs8iS_iDv64_u10__accfloatiii(%struct.v64bfp16ebs8 %a.coerce, i32 noundef %sgn_x, %struct.v64bfp16ebs8 %b.coerce, i32 noundef %sgn_y, <64 x float> inreg noundef %acc, i32 noundef %zero_acc, i32 noundef %sub_mul, i32 noundef %sub_acc1) local_unnamed_addr  {
 ; CHECK-LABEL: _Z22test_msc_8x8_8x8T_conf12v64bfp16ebs8iS_iDv64_u10__accfloatiii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r5, #11
 ; CHECK-NEXT:    mova r6, #12; lshl r3, r3, r5
 ; CHECK-NEXT:    mova r7, #8; lshl r4, r4, r6
@@ -706,8 +684,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z25test_addmac_8x8_8x8T_conf12v64bfp16ebs8iS_iDv64_u10__accfloatS0_iiii(%struct.v64bfp16ebs8 %a.coerce, i32 noundef %sgn_x, %struct.v64bfp16ebs8 %b.coerce, i32 noundef %sgn_y, <64 x float> inreg noundef %acc1, <64 x float> inreg noundef %acc2, i32 noundef %zero_acc1, i32 noundef %sub_mul, i32 noundef %sub_acc1, i32 noundef %sub_acc2) local_unnamed_addr  {
 ; CHECK-LABEL: _Z25test_addmac_8x8_8x8T_conf12v64bfp16ebs8iS_iDv64_u10__accfloatS0_iiii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r6, #11; nopx
 ; CHECK-NEXT:    mova r7, #12; lshl r3, r3, r6
 ; CHECK-NEXT:    mova r16, #9; lshl r4, r4, r7
@@ -753,8 +730,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z25test_addmsc_8x8_8x8T_conf12v64bfp16ebs8iS_iDv64_u10__accfloatS0_iiii(%struct.v64bfp16ebs8 %a.coerce, i32 noundef %sgn_x, %struct.v64bfp16ebs8 %b.coerce, i32 noundef %sgn_y, <64 x float> inreg noundef %acc1, <64 x float> inreg noundef %acc2, i32 noundef %zero_acc1, i32 noundef %sub_mul, i32 noundef %sub_acc1, i32 noundef %sub_acc2) local_unnamed_addr  {
 ; CHECK-LABEL: _Z25test_addmsc_8x8_8x8T_conf12v64bfp16ebs8iS_iDv64_u10__accfloatS0_iiii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r6, #11; nopx
 ; CHECK-NEXT:    mova r7, #12; lshl r3, r3, r6
 ; CHECK-NEXT:    mova r16, #9; lshl r4, r4, r7
@@ -800,8 +776,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z18test_mul_4x8_8x16T12v64bfp16ebs813v128bfp16ebs8(%struct.v64bfp16ebs8 %a.coerce, %struct.v128bfp16ebs8 %b.coerce) local_unnamed_addr  {
 ; CHECK-LABEL: _Z18test_mul_4x8_8x16T12v64bfp16ebs813v128bfp16ebs8:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #972; nopb ; nopxm ; nops
 ; CHECK-NEXT:    vmul.f dm0, ex0, ey2, r0
 ; CHECK-NEXT:    ret lr
@@ -825,8 +800,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z21test_negmul_4x8_8x16T12v64bfp16ebs813v128bfp16ebs8(%struct.v64bfp16ebs8 %a.coerce, %struct.v128bfp16ebs8 %b.coerce) local_unnamed_addr  {
 ; CHECK-LABEL: _Z21test_negmul_4x8_8x16T12v64bfp16ebs813v128bfp16ebs8:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #972; nopb ; nopxm ; nops
 ; CHECK-NEXT:    vnegmul.f dm0, ex0, ey2, r0
 ; CHECK-NEXT:    ret lr
@@ -850,8 +824,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z18test_mac_4x8_8x16T12v64bfp16ebs813v128bfp16ebs8Dv64_u10__accfloat(%struct.v64bfp16ebs8 %a.coerce, %struct.v128bfp16ebs8 %b.coerce, <64 x float> inreg noundef %acc) local_unnamed_addr  {
 ; CHECK-LABEL: _Z18test_mac_4x8_8x16T12v64bfp16ebs813v128bfp16ebs8Dv64_u10__accfloat:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #972; nopb ; nopxm ; nops
 ; CHECK-NEXT:    vmac.f dm0, dm1, ex0, ey2, r0
 ; CHECK-NEXT:    ret lr
@@ -876,8 +849,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z18test_msc_4x8_8x16T12v64bfp16ebs813v128bfp16ebs8Dv64_u10__accfloat(%struct.v64bfp16ebs8 %a.coerce, %struct.v128bfp16ebs8 %b.coerce, <64 x float> inreg noundef %acc) local_unnamed_addr  {
 ; CHECK-LABEL: _Z18test_msc_4x8_8x16T12v64bfp16ebs813v128bfp16ebs8Dv64_u10__accfloat:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #972; nopb ; nopxm ; nops
 ; CHECK-NEXT:    vmsc.f dm0, dm1, ex0, ey2, r0
 ; CHECK-NEXT:    ret lr
@@ -902,8 +874,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z21test_addmac_4x8_8x16T12v64bfp16ebs813v128bfp16ebs8Dv64_u10__accfloatS1_(%struct.v64bfp16ebs8 %a.coerce, %struct.v128bfp16ebs8 %b.coerce, <64 x float> inreg noundef %acc1, <64 x float> inreg noundef %acc2) local_unnamed_addr  {
 ; CHECK-LABEL: _Z21test_addmac_4x8_8x16T12v64bfp16ebs813v128bfp16ebs8Dv64_u10__accfloatS1_:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopx ; vmov.d dm0, dm1
 ; CHECK-NEXT:    mova r0, #972
 ; CHECK-NEXT:    vaddmac.f dm0, dm0, dm2, ex0, ey2, r0
@@ -930,8 +901,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z21test_addmsc_4x8_8x16T12v64bfp16ebs813v128bfp16ebs8Dv64_u10__accfloatS1_(%struct.v64bfp16ebs8 %a.coerce, %struct.v128bfp16ebs8 %b.coerce, <64 x float> inreg noundef %acc1, <64 x float> inreg noundef %acc2) local_unnamed_addr  {
 ; CHECK-LABEL: _Z21test_addmsc_4x8_8x16T12v64bfp16ebs813v128bfp16ebs8Dv64_u10__accfloatS1_:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopx ; vmov.d dm0, dm1
 ; CHECK-NEXT:    mova r0, #972
 ; CHECK-NEXT:    vaddmsc.f dm0, dm0, dm2, ex0, ey2, r0
@@ -958,8 +928,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z18test_mul_4x8_8x16T12v64bfp16ebs8i13v128bfp16ebs8i(%struct.v64bfp16ebs8 %a.coerce, i32 noundef %sgn_x, %struct.v128bfp16ebs8 %b.coerce, i32 noundef %sgn_y) local_unnamed_addr  {
 ; CHECK-LABEL: _Z18test_mul_4x8_8x16T12v64bfp16ebs8i13v128bfp16ebs8i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r2, #9; nopxm
 ; CHECK-NEXT:    mova r3, #8; lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
@@ -991,8 +960,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z21test_negmul_4x8_8x16T12v64bfp16ebs8i13v128bfp16ebs8i(%struct.v64bfp16ebs8 %a.coerce, i32 noundef %sgn_x, %struct.v128bfp16ebs8 %b.coerce, i32 noundef %sgn_y) local_unnamed_addr  {
 ; CHECK-LABEL: _Z21test_negmul_4x8_8x16T12v64bfp16ebs8i13v128bfp16ebs8i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r2, #9; nopxm
 ; CHECK-NEXT:    mova r3, #8; lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
@@ -1024,8 +992,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z18test_mac_4x8_8x16T12v64bfp16ebs8i13v128bfp16ebs8iDv64_u10__accfloat(%struct.v64bfp16ebs8 %a.coerce, i32 noundef %sgn_x, %struct.v128bfp16ebs8 %b.coerce, i32 noundef %sgn_y, <64 x float> inreg noundef %acc) local_unnamed_addr  {
 ; CHECK-LABEL: _Z18test_mac_4x8_8x16T12v64bfp16ebs8i13v128bfp16ebs8iDv64_u10__accfloat:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r2, #9; nopxm
 ; CHECK-NEXT:    mova r3, #8; lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
@@ -1058,8 +1025,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z18test_msc_4x8_8x16T12v64bfp16ebs8i13v128bfp16ebs8iDv64_u10__accfloat(%struct.v64bfp16ebs8 %a.coerce, i32 noundef %sgn_x, %struct.v128bfp16ebs8 %b.coerce, i32 noundef %sgn_y, <64 x float> inreg noundef %acc) local_unnamed_addr  {
 ; CHECK-LABEL: _Z18test_msc_4x8_8x16T12v64bfp16ebs8i13v128bfp16ebs8iDv64_u10__accfloat:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r2, #9; nopxm
 ; CHECK-NEXT:    mova r3, #8; lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
@@ -1092,8 +1058,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z21test_addmac_4x8_8x16T12v64bfp16ebs8i13v128bfp16ebs8iDv64_u10__accfloatS1_(%struct.v64bfp16ebs8 %a.coerce, i32 noundef %sgn_x, %struct.v128bfp16ebs8 %b.coerce, i32 noundef %sgn_y, <64 x float> inreg noundef %acc1, <64 x float> inreg noundef %acc2) local_unnamed_addr  {
 ; CHECK-LABEL: _Z21test_addmac_4x8_8x16T12v64bfp16ebs8i13v128bfp16ebs8iDv64_u10__accfloatS1_:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r2, #9; nopx
 ; CHECK-NEXT:    mova r3, #8; lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
@@ -1127,8 +1092,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z21test_addmsc_4x8_8x16T12v64bfp16ebs8i13v128bfp16ebs8iDv64_u10__accfloatS1_(%struct.v64bfp16ebs8 %a.coerce, i32 noundef %sgn_x, %struct.v128bfp16ebs8 %b.coerce, i32 noundef %sgn_y, <64 x float> inreg noundef %acc1, <64 x float> inreg noundef %acc2) local_unnamed_addr  {
 ; CHECK-LABEL: _Z21test_addmsc_4x8_8x16T12v64bfp16ebs8i13v128bfp16ebs8iDv64_u10__accfloatS1_:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r2, #9; nopx
 ; CHECK-NEXT:    mova r3, #8; lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
@@ -1162,8 +1126,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z23test_mul_4x8_8x16T_conf12v64bfp16ebs813v128bfp16ebs8i(%struct.v64bfp16ebs8 %a.coerce, %struct.v128bfp16ebs8 %b.coerce, i32 noundef %sub_mul) local_unnamed_addr  {
 ; CHECK-LABEL: _Z23test_mul_4x8_8x16T_conf12v64bfp16ebs813v128bfp16ebs8i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r1, #11
 ; CHECK-NEXT:    mova r2, #972; lshl r0, r0, r1
 ; CHECK-NEXT:    or r0, r0, r2
@@ -1191,8 +1154,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z26test_negmul_4x8_8x16T_conf12v64bfp16ebs813v128bfp16ebs8i(%struct.v64bfp16ebs8 %a.coerce, %struct.v128bfp16ebs8 %b.coerce, i32 noundef %sub_mul) local_unnamed_addr  {
 ; CHECK-LABEL: _Z26test_negmul_4x8_8x16T_conf12v64bfp16ebs813v128bfp16ebs8i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r1, #11
 ; CHECK-NEXT:    mova r2, #972; lshl r0, r0, r1
 ; CHECK-NEXT:    or r0, r0, r2
@@ -1220,8 +1182,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z23test_mac_4x8_8x16T_conf12v64bfp16ebs813v128bfp16ebs8Dv64_u10__accfloatiii(%struct.v64bfp16ebs8 %a.coerce, %struct.v128bfp16ebs8 %b.coerce, <64 x float> inreg noundef %acc, i32 noundef %zero_acc, i32 noundef %sub_mul, i32 noundef %sub_acc1) local_unnamed_addr  {
 ; CHECK-LABEL: _Z23test_mac_4x8_8x16T_conf12v64bfp16ebs813v128bfp16ebs8Dv64_u10__accfloatiii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r3, #11; nopx
 ; CHECK-NEXT:    mova r4, #12; lshl r1, r1, r3
 ; CHECK-NEXT:    lshl r2, r2, r4
@@ -1256,8 +1217,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z23test_msc_4x8_8x16T_conf12v64bfp16ebs813v128bfp16ebs8Dv64_u10__accfloatiii(%struct.v64bfp16ebs8 %a.coerce, %struct.v128bfp16ebs8 %b.coerce, <64 x float> inreg noundef %acc, i32 noundef %zero_acc, i32 noundef %sub_mul, i32 noundef %sub_acc1) local_unnamed_addr  {
 ; CHECK-LABEL: _Z23test_msc_4x8_8x16T_conf12v64bfp16ebs813v128bfp16ebs8Dv64_u10__accfloatiii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r3, #11; nopx
 ; CHECK-NEXT:    mova r4, #12; lshl r1, r1, r3
 ; CHECK-NEXT:    lshl r2, r2, r4
@@ -1292,8 +1252,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z26test_addmac_4x8_8x16T_conf12v64bfp16ebs813v128bfp16ebs8Dv64_u10__accfloatS1_iiii(%struct.v64bfp16ebs8 %a.coerce, %struct.v128bfp16ebs8 %b.coerce, <64 x float> inreg noundef %acc1, <64 x float> inreg noundef %acc2, i32 noundef %zero_acc1, i32 noundef %sub_mul, i32 noundef %sub_acc1, i32 noundef %sub_acc2) local_unnamed_addr  {
 ; CHECK-LABEL: _Z26test_addmac_4x8_8x16T_conf12v64bfp16ebs813v128bfp16ebs8Dv64_u10__accfloatS1_iiii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r4, #11; nopb ; nopx
 ; CHECK-NEXT:    mova r5, #12; lshl r1, r1, r4
 ; CHECK-NEXT:    lshl r2, r2, r5
@@ -1333,8 +1292,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z26test_addmsc_4x8_8x16T_conf12v64bfp16ebs813v128bfp16ebs8Dv64_u10__accfloatS1_iiii(%struct.v64bfp16ebs8 %a.coerce, %struct.v128bfp16ebs8 %b.coerce, <64 x float> inreg noundef %acc1, <64 x float> inreg noundef %acc2, i32 noundef %zero_acc1, i32 noundef %sub_mul, i32 noundef %sub_acc1, i32 noundef %sub_acc2) local_unnamed_addr  {
 ; CHECK-LABEL: _Z26test_addmsc_4x8_8x16T_conf12v64bfp16ebs813v128bfp16ebs8Dv64_u10__accfloatS1_iiii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r4, #11; nopb ; nopx
 ; CHECK-NEXT:    mova r5, #12; lshl r1, r1, r4
 ; CHECK-NEXT:    lshl r2, r2, r5
@@ -1374,8 +1332,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z23test_mul_4x8_8x16T_conf12v64bfp16ebs8i13v128bfp16ebs8ii(%struct.v64bfp16ebs8 %a.coerce, i32 noundef %sgn_x, %struct.v128bfp16ebs8 %b.coerce, i32 noundef %sgn_y, i32 noundef %sub_mul) local_unnamed_addr  {
 ; CHECK-LABEL: _Z23test_mul_4x8_8x16T_conf12v64bfp16ebs8i13v128bfp16ebs8ii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r3, #11; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mova r4, #9; lshl r2, r2, r3
 ; CHECK-NEXT:    mova r3, #8; lshl r0, r0, r4
@@ -1411,8 +1368,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z26test_negmul_4x8_8x16T_conf12v64bfp16ebs8i13v128bfp16ebs8ii(%struct.v64bfp16ebs8 %a.coerce, i32 noundef %sgn_x, %struct.v128bfp16ebs8 %b.coerce, i32 noundef %sgn_y, i32 noundef %sub_mul) local_unnamed_addr  {
 ; CHECK-LABEL: _Z26test_negmul_4x8_8x16T_conf12v64bfp16ebs8i13v128bfp16ebs8ii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r3, #11; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mova r4, #9; lshl r2, r2, r3
 ; CHECK-NEXT:    mova r3, #8; lshl r0, r0, r4
@@ -1448,8 +1404,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z23test_mac_4x8_8x16T_conf12v64bfp16ebs8i13v128bfp16ebs8iDv64_u10__accfloatiii(%struct.v64bfp16ebs8 %a.coerce, i32 noundef %sgn_x, %struct.v128bfp16ebs8 %b.coerce, i32 noundef %sgn_y, <64 x float> inreg noundef %acc, i32 noundef %zero_acc, i32 noundef %sub_mul, i32 noundef %sub_acc1) local_unnamed_addr  {
 ; CHECK-LABEL: _Z23test_mac_4x8_8x16T_conf12v64bfp16ebs8i13v128bfp16ebs8iDv64_u10__accfloatiii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r6, #12; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mova r5, #11; nopb ; lshl r4, r4, r6
 ; CHECK-NEXT:    mova r5, #9; lshl r3, r3, r5
@@ -1492,8 +1447,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z23test_msc_4x8_8x16T_conf12v64bfp16ebs8i13v128bfp16ebs8iDv64_u10__accfloatiii(%struct.v64bfp16ebs8 %a.coerce, i32 noundef %sgn_x, %struct.v128bfp16ebs8 %b.coerce, i32 noundef %sgn_y, <64 x float> inreg noundef %acc, i32 noundef %zero_acc, i32 noundef %sub_mul, i32 noundef %sub_acc1) local_unnamed_addr  {
 ; CHECK-LABEL: _Z23test_msc_4x8_8x16T_conf12v64bfp16ebs8i13v128bfp16ebs8iDv64_u10__accfloatiii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r6, #12; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mova r5, #11; nopb ; lshl r4, r4, r6
 ; CHECK-NEXT:    mova r5, #9; lshl r3, r3, r5
@@ -1536,8 +1490,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z26test_addmac_4x8_8x16T_conf12v64bfp16ebs8i13v128bfp16ebs8iDv64_u10__accfloatS1_iiii(%struct.v64bfp16ebs8 %a.coerce, i32 noundef %sgn_x, %struct.v128bfp16ebs8 %b.coerce, i32 noundef %sgn_y, <64 x float> inreg noundef %acc1, <64 x float> inreg noundef %acc2, i32 noundef %zero_acc1, i32 noundef %sub_mul, i32 noundef %sub_acc1, i32 noundef %sub_acc2) local_unnamed_addr  {
 ; CHECK-LABEL: _Z26test_addmac_4x8_8x16T_conf12v64bfp16ebs8i13v128bfp16ebs8iDv64_u10__accfloatS1_iiii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r7, #12
 ; CHECK-NEXT:    mova r6, #11; lshl r4, r4, r7
 ; CHECK-NEXT:    mova r6, #13; lshl r3, r3, r6
@@ -1585,8 +1538,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z26test_addmsc_4x8_8x16T_conf12v64bfp16ebs8i13v128bfp16ebs8iDv64_u10__accfloatS1_iiii(%struct.v64bfp16ebs8 %a.coerce, i32 noundef %sgn_x, %struct.v128bfp16ebs8 %b.coerce, i32 noundef %sgn_y, <64 x float> inreg noundef %acc1, <64 x float> inreg noundef %acc2, i32 noundef %zero_acc1, i32 noundef %sub_mul, i32 noundef %sub_acc1, i32 noundef %sub_acc2) local_unnamed_addr  {
 ; CHECK-LABEL: _Z26test_addmsc_4x8_8x16T_conf12v64bfp16ebs8i13v128bfp16ebs8iDv64_u10__accfloatS1_iiii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r7, #12
 ; CHECK-NEXT:    mova r6, #11; lshl r4, r4, r7
 ; CHECK-NEXT:    mova r6, #13; lshl r3, r3, r6

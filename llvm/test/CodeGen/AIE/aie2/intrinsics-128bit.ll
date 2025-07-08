@@ -9,8 +9,7 @@
 
 define  <8 x i32> @test_extract_v4int32(i32 noundef %idx, <16 x i32> noundef %a)  {
 ; CHECK-LABEL: test_extract_v4int32:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mova r1, #4 // Delay Slot 4
@@ -28,8 +27,7 @@ entry:
 
 define  <32 x i16> @test_set_v32int16(i32 noundef %idx, ptr nocapture readonly %a)  {
 ; CHECK-LABEL: test_set_v32int16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    vlda.128 wl0, [p0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova r1, #4
@@ -53,8 +51,7 @@ entry:
 
 define <64 x i8> @insert_128_in_512(<64 x i8> noundef %v, i32 noundef %idx, <16 x i8> noundef %b) {
 ; CHECK-LABEL: insert_128_in_512:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov r5, r16; nopv
 ; CHECK-NEXT:    mova r1, #4
 ; CHECK-NEXT:    mova r2, #64
@@ -85,8 +82,7 @@ entry:
 
 define dso_local noundef <32 x i8> @insert_128_in_256(<32 x i8> noundef %v, i32 noundef %idx, <16 x i8> noundef %b) {
 ; CHECK-LABEL: insert_128_in_256:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov r5, r16; nopv
 ; CHECK-NEXT:    mova r1, #4
 ; CHECK-NEXT:    mova r2, #64
@@ -119,8 +115,7 @@ entry:
 
 define <64 x i8> @test_concat_4_v32uint4(<16 x i8> noundef %v0, <16 x i8> noundef %v1, <16 x i8> noundef %v2, <16 x i8> noundef %v3) {
 ; CHECK-LABEL: test_concat_4_v32uint4:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mov r3, r16
 ; CHECK-NEXT:    mov r4, r17
 ; CHECK-NEXT:    mov r5, r18
@@ -162,8 +157,7 @@ entry:
 
 define <32 x i8> @test_concat_2_v32uint4(<16 x i8> noundef %v0, <16 x i8> noundef %v1) {
 ; CHECK-LABEL: test_concat_2_v32uint4:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopx ; mov r1, r16
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    mova r0, #48 // Delay Slot 5

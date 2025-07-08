@@ -10,8 +10,7 @@
 
 define dso_local noundef <8 x i32> @_Z8test_andDv8_iS_(<8 x i32> noundef %a, <8 x i32> noundef %b) local_unnamed_addr #0 {
 ; AIE2-LABEL: _Z8test_andDv8_iS_:
-; AIE2:         .p2align 4
-; AIE2-NEXT:  // %bb.0: // %entry
+; AIE2:       // %bb.0: // %entry
 ; AIE2-NEXT:    ret lr
 ; AIE2-NEXT:    nop // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
@@ -20,8 +19,7 @@ define dso_local noundef <8 x i32> @_Z8test_andDv8_iS_(<8 x i32> noundef %a, <8 
 ; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: _Z8test_andDv8_iS_:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0: // %entry
+; AIE2P:       // %bb.0: // %entry
 ; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    nop // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -35,8 +33,7 @@ entry:
 
 define dso_local noundef <16 x i32> @_Z8test_andDv16_iS_(<16 x i32> noundef %a, <16 x i32> noundef %b) local_unnamed_addr #0 {
 ; AIE2-LABEL: _Z8test_andDv16_iS_:
-; AIE2:         .p2align 4
-; AIE2-NEXT:  // %bb.0: // %entry
+; AIE2:       // %bb.0: // %entry
 ; AIE2-NEXT:    ret lr
 ; AIE2-NEXT:    nop // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
@@ -45,8 +42,7 @@ define dso_local noundef <16 x i32> @_Z8test_andDv16_iS_(<16 x i32> noundef %a, 
 ; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: _Z8test_andDv16_iS_:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0: // %entry
+; AIE2P:       // %bb.0: // %entry
 ; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    nop // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -60,8 +56,7 @@ entry:
 
 define dso_local noundef <32 x i32> @_Z8test_andDv32_iS_(<32 x i32> noundef %a, <32 x i32> noundef %b) local_unnamed_addr #0 {
 ; AIE2-LABEL: _Z8test_andDv32_iS_:
-; AIE2:         .p2align 4
-; AIE2-NEXT:  // %bb.0: // %entry
+; AIE2:       // %bb.0: // %entry
 ; AIE2-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; AIE2-NEXT:    nopx // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
@@ -70,8 +65,7 @@ define dso_local noundef <32 x i32> @_Z8test_andDv32_iS_(<32 x i32> noundef %a, 
 ; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: _Z8test_andDv32_iS_:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0: // %entry
+; AIE2P:       // %bb.0: // %entry
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; AIE2P-NEXT:    nopx // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -85,8 +79,7 @@ entry:
 
 define dso_local noundef <8 x i32> @_Z7test_orDv8_iS_(<8 x i32> noundef %a, <8 x i32> noundef %b) local_unnamed_addr #0 {
 ; AIE2-LABEL: _Z7test_orDv8_iS_:
-; AIE2:         .p2align 4
-; AIE2-NEXT:  // %bb.0: // %entry
+; AIE2:       // %bb.0: // %entry
 ; AIE2-NEXT:    ret lr
 ; AIE2-NEXT:    nop // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
@@ -95,8 +88,7 @@ define dso_local noundef <8 x i32> @_Z7test_orDv8_iS_(<8 x i32> noundef %a, <8 x
 ; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: _Z7test_orDv8_iS_:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0: // %entry
+; AIE2P:       // %bb.0: // %entry
 ; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    nop // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -110,8 +102,7 @@ entry:
 
 define dso_local noundef <16 x i32> @_Z7test_orDv16_iS_(<16 x i32> noundef %a, <16 x i32> noundef %b) local_unnamed_addr #0 {
 ; AIE2-LABEL: _Z7test_orDv16_iS_:
-; AIE2:         .p2align 4
-; AIE2-NEXT:  // %bb.0: // %entry
+; AIE2:       // %bb.0: // %entry
 ; AIE2-NEXT:    ret lr
 ; AIE2-NEXT:    nop // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
@@ -120,8 +111,7 @@ define dso_local noundef <16 x i32> @_Z7test_orDv16_iS_(<16 x i32> noundef %a, <
 ; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: _Z7test_orDv16_iS_:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0: // %entry
+; AIE2P:       // %bb.0: // %entry
 ; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    nop // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -135,8 +125,7 @@ entry:
 
 define dso_local noundef <32 x i32> @_Z7test_orDv32_iS_(<32 x i32> noundef %a, <32 x i32> noundef %b) local_unnamed_addr #0 {
 ; AIE2-LABEL: _Z7test_orDv32_iS_:
-; AIE2:         .p2align 4
-; AIE2-NEXT:  // %bb.0: // %entry
+; AIE2:       // %bb.0: // %entry
 ; AIE2-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; AIE2-NEXT:    nopx // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
@@ -145,8 +134,7 @@ define dso_local noundef <32 x i32> @_Z7test_orDv32_iS_(<32 x i32> noundef %a, <
 ; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: _Z7test_orDv32_iS_:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0: // %entry
+; AIE2P:       // %bb.0: // %entry
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; AIE2P-NEXT:    nopx // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4

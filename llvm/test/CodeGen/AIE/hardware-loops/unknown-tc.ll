@@ -11,11 +11,9 @@
 
 define void @cbz_exit(ptr %in, ptr %res) {
 ; CHECK-LABEL: cbz_exit:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #-1; nopb ; nopxm
 ; CHECK-NEXT:    mova r1, #2
-; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_1: // %loop
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    nopa ; nopb ; add r0, r0, #1
@@ -59,11 +57,9 @@ exit:
 
 define void @cbnz_exit(ptr %in, ptr %res) {
 ; CHECK-LABEL: cbnz_exit:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #-1; nopb ; nopxm
 ; CHECK-NEXT:    mova r1, #2
-; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB1_1: // %loop
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    nopa ; nopb ; add r0, r0, #1

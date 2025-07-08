@@ -10,8 +10,7 @@
 
 define <64 x i8> @test_vmaxdiff_lt_v64int8(<64 x i8> %a, <64 x i8>  %b, i1 %sgn, ptr %cmp) {
 ; CHECK-LABEL: test_vmaxdiff_lt_v64int8:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; mova r1, #1; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; and r0, r0, r1
 ; CHECK-NEXT:    mov crVaddSign, r0
@@ -32,8 +31,7 @@ entry:
 
 define <64 x i8> @test_vmaxdiff_lt_v64uint8_sign0(<64 x i8>  %a, <64 x i8>  %b, ptr %cmp) {
 ; CHECK-LABEL: test_vmaxdiff_lt_v64uint8_sign0:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    vmax_lt.d8 x0, r25:r24, x2, x4 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -50,8 +48,7 @@ entry:
 
 define <64 x i8> @test_vmaxdiff_lt_v64uint8_sign1(<64 x i8>  %a, <64 x i8>  %b, ptr %cmp) {
 ; CHECK-LABEL: test_vmaxdiff_lt_v64uint8_sign1:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    vmax_lt.s8 x0, r25:r24, x2, x4 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -68,8 +65,7 @@ entry:
 
 define <32 x i16> @test_vmaxdiff_lt_v32uint16_tbRj(<32 x i16>  %a, <32 x i16>  %b, i1 %sgn, ptr  %cmp) {
 ; CHECK-LABEL: test_vmaxdiff_lt_v32uint16_tbRj:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; mova r1, #1; nops ; nopxm ; nopv
 ; CHECK-NEXT:    and r0, r0, r1
 ; CHECK-NEXT:    mov crVaddSign, r0
@@ -90,8 +86,7 @@ entry:
 
 define <32 x i16> @test_vmaxdiff_lt_v32uint16_sign0(<32 x i16>  %a, <32 x i16>  %b, ptr %cmp) {
 ; CHECK-LABEL: test_vmaxdiff_lt_v32uint16_sign0:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vmax_lt.d16 x0, r16, x2, x4 // Delay Slot 4
@@ -108,8 +103,7 @@ entry:
 
 define <32 x i16> @test_vmaxdiff_lt_v32uint16_sign1(<32 x i16>  %a, <32 x i16>  %b, ptr  %cmp) {
 ; CHECK-LABEL: test_vmaxdiff_lt_v32uint16_sign1:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vmax_lt.s16 x0, r16, x2, x4 // Delay Slot 4
@@ -126,8 +120,7 @@ entry:
 
 define <16 x i32> @test_vmaxdiff_lt_v16int32(<16 x i32>  %a, <16 x i32> %b, i1 %sgn, ptr  %cmp) {
 ; CHECK-LABEL: test_vmaxdiff_lt_v16int32:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; mova r1, #1; nops ; nopxm ; nopv
 ; CHECK-NEXT:    and r0, r0, r1
 ; CHECK-NEXT:    mov crVaddSign, r0
@@ -148,8 +141,7 @@ entry:
 
 define <16 x i32> @test_vmaxdiff_lt_v16int32_sign0(<16 x i32>  %a, <16 x i32> %b, ptr  %cmp) {
 ; CHECK-LABEL: test_vmaxdiff_lt_v16int32_sign0:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vmax_lt.d32 x0, r16, x2, x2 // Delay Slot 4
@@ -166,8 +158,7 @@ entry:
 
 define <16 x i32> @test_vmaxdiff_lt_v16int32_sign1(<16 x i32>  %a, <16 x i32>  %b, ptr  %cmp) {
 ; CHECK-LABEL: test_vmaxdiff_lt_v16int32_sign1:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vmax_lt.s32 x0, r16, x2, x4 // Delay Slot 4

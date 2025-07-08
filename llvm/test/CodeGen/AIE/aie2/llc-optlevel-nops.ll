@@ -12,8 +12,7 @@
 
 define i32 @load_ptr(i8 *%a) {
 ; O0-LABEL: load_ptr:
-; O0:         .p2align 4
-; O0-NEXT:  // %bb.0:
+; O0:       // %bb.0:
 ; O0-NEXT:    mova m0, #1; nopx
 ; O0-NEXT:    paddb [p0], m0
 ; O0-NEXT:    lda.s8 r0, [p0, #0]
@@ -26,8 +25,7 @@ define i32 @load_ptr(i8 *%a) {
 ; O0-NEXT:    extend.s8 r0, r0 // Delay Slot 1
 ;
 ; O2-LABEL: load_ptr:
-; O2:         .p2align 4
-; O2-NEXT:  // %bb.0:
+; O2:       // %bb.0:
 ; O2-NEXT:    nopb ; lda.s8 r0, [p0, #1]; nops ; nopxm ; nopv
 ; O2-NEXT:    nopa ; ret lr
 ; O2-NEXT:    nop // Delay Slot 5
@@ -43,8 +41,7 @@ define i32 @load_ptr(i8 *%a) {
 
 define i32 @load_ptr_optnone(i8 *%a) noinline optnone {
 ; O0-LABEL: load_ptr_optnone:
-; O0:         .p2align 4
-; O0-NEXT:  // %bb.0:
+; O0:       // %bb.0:
 ; O0-NEXT:    mova m0, #1; nopx
 ; O0-NEXT:    paddb [p0], m0
 ; O0-NEXT:    lda.s8 r0, [p0, #0]
@@ -57,8 +54,7 @@ define i32 @load_ptr_optnone(i8 *%a) noinline optnone {
 ; O0-NEXT:    extend.s8 r0, r0 // Delay Slot 1
 ;
 ; O2-LABEL: load_ptr_optnone:
-; O2:         .p2align 4
-; O2-NEXT:  // %bb.0:
+; O2:       // %bb.0:
 ; O2-NEXT:    nopb ; lda.s8 r0, [p0, #1]; nops ; nopxm ; nopv
 ; O2-NEXT:    nopa ; ret lr
 ; O2-NEXT:    nop // Delay Slot 5

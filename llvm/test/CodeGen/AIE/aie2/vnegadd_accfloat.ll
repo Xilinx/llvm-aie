@@ -9,8 +9,7 @@
 
 define dso_local noundef <8 x i64> @test_negadd_accfloat(<8 x i64> noundef %acc1, <8 x i64> noundef %acc2) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_negadd_accfloat:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #0; nopb ; nopxm ; nops
 ; CHECK-NEXT:    vnegadd.f bml0, bml1, bml2, r0
 ; CHECK-NEXT:    ret lr

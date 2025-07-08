@@ -9,8 +9,7 @@
 
 define <32 x i8> @test_pack_d8_d16_dyn(<32 x i16> %v, i32 %sign) {
 ; CHECK-LABEL: test_pack_d8_d16_dyn:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -24,8 +23,7 @@ entry:
 
 define <32 x i8> @test_pack_d4_d8_dyn(<64 x i8> %v, i32 %sign) {
 ; CHECK-LABEL: test_pack_d4_d8_dyn:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -40,8 +38,7 @@ entry:
 
 define <32 x i8> @test_pack_s8_s16(<32 x i16> %v) {
 ; CHECK-LABEL: test_pack_s8_s16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -55,8 +52,7 @@ entry:
 
 define <32 x i8> @test_pack_d8_d16(<32 x i16> %v) {
 ; CHECK-LABEL: test_pack_d8_d16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -70,8 +66,7 @@ entry:
 
 define <32 x i8> @test_pack_s4_s8(<64 x i8> %v) {
 ; CHECK-LABEL: test_pack_s4_s8:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -86,8 +81,7 @@ entry:
 
 define <32 x i8> @test_pack_d4_d8(<64 x i8> %v) {
 ; CHECK-LABEL: test_pack_d4_d8:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4

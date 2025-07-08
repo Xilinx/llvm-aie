@@ -10,8 +10,7 @@
 
 define noundef inreg <64 x i32> @test_select_64xi32(i1 noundef zeroext %sel, <64 x i32> inreg noundef %a, <64 x i32> inreg noundef %b) {
 ; AIE2P-LABEL: test_select_64xi32:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0: // %entry
+; AIE2P:       // %bb.0: // %entry
 ; AIE2P-NEXT:    nopa ; add r16, r0, #-1; nopm
 ; AIE2P-NEXT:    vmov x0, bmlh2
 ; AIE2P-NEXT:    vmov x2, bmhl2

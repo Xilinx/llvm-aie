@@ -9,8 +9,7 @@
 
 define dso_local ptr @test_byte_incr(ptr readnone %a, i32 noundef %incr) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_byte_incr:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mov p0, p1 // Delay Slot 4
@@ -25,8 +24,7 @@ entry:
 
 define dso_local ptr @test_add_2d_ptr(ptr %a, i32 noundef %off, i32 noundef %size1, ptr nocapture nonnull align 4 dereferenceable(4) %count1, i32 noundef %inc1) local_unnamed_addr #1 {
 ; CHECK-LABEL: test_add_2d_ptr:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r3, #6; nopx
 ; CHECK-NEXT:    mov dn0, r1
 ; CHECK-NEXT:    lda dc0, [p2, #0]
@@ -57,8 +55,7 @@ entry:
 
 define dso_local ptr @test_add_2d_byte(ptr %a, i32 noundef %off, i32 noundef %size1, ptr nocapture nonnull align 4 dereferenceable(4) %count1, i32 noundef %inc1) local_unnamed_addr #1 {
 ; CHECK-LABEL: test_add_2d_byte:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda dc0, [p2, #0]; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov m0, r0
@@ -85,8 +82,7 @@ entry:
 
 define dso_local ptr @test_add_3d_ptr(ptr %a, i32 noundef %off, i32 noundef %size1, ptr nocapture nonnull align 4 dereferenceable(4) %count1, i32 noundef %inc1, i32 noundef %size2, ptr nocapture nonnull align 4 dereferenceable(4) %count2, i32 noundef %inc2) local_unnamed_addr #1 {
 ; CHECK-LABEL: test_add_3d_ptr:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r5, #6; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopx ; mov dn0, r1
 ; CHECK-NEXT:    mov dn4, r3
@@ -130,8 +126,7 @@ entry:
 
 define dso_local ptr @test_add_3d_byte(ptr %a, i32 noundef %off, i32 noundef %size1, ptr nocapture nonnull align 4 dereferenceable(4) %count1, i32 noundef %inc1, i32 noundef %size2, ptr nocapture nonnull align 4 dereferenceable(4) %count2, i32 noundef %inc2) local_unnamed_addr #1 {
 ; CHECK-LABEL: test_add_3d_byte:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; mov m0, r0; nopv
 ; CHECK-NEXT:    lda dc0, [p2, #0]; nopx
 ; CHECK-NEXT:    lda dc4, [p3, #0]
@@ -168,8 +163,7 @@ entry:
 
 define dso_local ptr @test_add_2d_ptr_backTOback_call(ptr %a, i32 noundef %off, i32 noundef %size1, i32 noundef %inc1) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_add_2d_ptr_backTOback_call:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nops ; mov p0, p1
 ; CHECK-NEXT:    mova r3, #6
 ; CHECK-NEXT:    mova dc0, #0
@@ -198,8 +192,7 @@ entry:
 
 define dso_local ptr @test_add_3d_ptr_backTOback_call(ptr %a, i32 noundef %off, i32 noundef %size1, i32 noundef %inc1, i32 noundef %size2, i32 noundef %inc2) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_add_3d_ptr_backTOback_call:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nops ; mov p0, p1
 ; CHECK-NEXT:    mova r5, #6
 ; CHECK-NEXT:    mova dc0, #0

@@ -9,8 +9,7 @@
 
 define dso_local inreg noundef <16 x float> @test_broadcast_zero_to_v16accfloatv()  {
 ; CHECK-LABEL: test_broadcast_zero_to_v16accfloatv:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mova r0, #0 // Delay Slot 4
@@ -23,8 +22,7 @@ entry:
 
 define dso_local inreg noundef <32 x float> @test_broadcast_zero_to_v32accfloatv()  {
 ; CHECK-LABEL: test_broadcast_zero_to_v32accfloatv:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
 ; CHECK-NEXT:    mova r0, #0 // Delay Slot 5
 ; CHECK-NEXT:    vbcst.32 x0, r0 // Delay Slot 4
@@ -37,8 +35,7 @@ entry:
 
 define dso_local inreg noundef <64 x float> @test_broadcast_zero_to_v64accfloatv()  {
 ; CHECK-LABEL: test_broadcast_zero_to_v64accfloatv:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; vclr dm0
 ; CHECK-NEXT:    nopa ; nopb ; nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4

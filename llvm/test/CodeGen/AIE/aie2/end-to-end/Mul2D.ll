@@ -50,8 +50,7 @@ declare <16 x i64> @llvm.aie2.v32acc32()
 ; somehow gets an ordering edge with the vst.srs.
 define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_ptr, %struct.mul2d_params %params.coerce) {
 ; CHECK-LABEL: mul2d:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #2; nopb ; extend.u16 r1, r4; nopm
 ; CHECK-NEXT:    ltu r0, r1, r0
 ; CHECK-NEXT:    jnz r0, #.LBB0_5
@@ -89,7 +88,6 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
 ; CHECK-NEXT:  // %bb.2:
 ; CHECK-NEXT:    nopa ; nopb ; nopx ; vmov wh6, wl0
 ; CHECK-NEXT:    vmov wh4, wl0
-; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_3: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    vldb wl2, [p1], #32; nopxm
@@ -100,7 +98,6 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    vst.srs.d8.s32 cm0, s0, [p2], #32 // Delay Slot 2
 ; CHECK-NEXT:    vst.srs.d8.s32 cm1, s0, [p2], #32 // Delay Slot 1
-; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_4:
 ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vmov wh6, wl0; nopv
 ; CHECK-NEXT:    nopa ; vmov wh4, wl0
@@ -111,7 +108,6 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vst.srs.d8.s32 cm0, s0, [p2], #32
 ; CHECK-NEXT:    vst.srs.d8.s32 cm1, s0, [p2], #32; mov crSRSSign, #0
-; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_5: // %for.cond.cleanup
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5

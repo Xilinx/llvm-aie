@@ -16,8 +16,7 @@
 ; Function Attrs: mustprogress noinline
 define void @gelu_fn(ptr noalias %ifm, ptr noalias %ofm, ptr nonnull align 64 dereferenceable(64) %params) {
 ; CHECK-LABEL: gelu_fn:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], #64; nopb ; nops ; movxm r0, #16544; nopv
 ; CHECK-NEXT:    nopa ; nopx ; vbcst.16 x6, r0
 ; CHECK-NEXT:    movxm r0, #17280
@@ -62,7 +61,6 @@ define void @gelu_fn(ptr noalias %ifm, ptr noalias %ofm, ptr nonnull align 64 de
 ; CHECK-NEXT:    nopa ; nopb ; vfloor.s32.bf16 x1, wl10, s0; nopx ; vmin_ge.16 x3, r16, x1, x0, vaddsign1; nopv
 ; CHECK-NEXT:    nopa ; nopb ; vconv.bf16.fp32 x8, cml4; nopx ; vmax_lt.16 x3, r16, x3, x6, vaddsign1; nopv
 ; CHECK-NEXT:    padda [p1], m0; nopb ; vfloor.s32.bf16 x10, wh10, s0; nopxm ; nopv
-; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    nopa ; vconv.bf16.fp32 x3, cml2; nopx ; vadd.f dm2, dm1, dm2, r0

@@ -12,8 +12,7 @@
 
 define void @test(i32 %x) {
 ; CHECK-LABEL: test:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
 ; CHECK-NEXT:    jl #f
 ; CHECK-NEXT:    mov p0, sp // Delay Slot 5

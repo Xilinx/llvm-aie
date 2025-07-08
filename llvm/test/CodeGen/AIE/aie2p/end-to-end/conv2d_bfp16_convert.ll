@@ -14,8 +14,7 @@
 ; Function Attrs: mustprogress noinline
 define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noalias %out, ptr nonnull align 64 dereferenceable(64) %params) local_unnamed_addr #0 {
 ; CHECK-LABEL: convert_bf16_to_bfp16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda r0, [p2, #0]; nopb ; nops ; nopx ; mov m0, #4; nopv
 ; CHECK-NEXT:    padda [p2], m0; nopx
 ; CHECK-NEXT:    lda dn0, [p2], #4
@@ -37,7 +36,6 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ; CHECK-NEXT:    nopa ; vldb.pop.512.2d x2, [p0, lf0, r24, d1]; nops ; nopx ; vconv.fp32.bf16 cmh0, x2; nopv
 ; CHECK-NEXT:    nopa ; nopb ; movs dc0, dj0; nopx ; mov p2, p1; nopv
 ; CHECK-NEXT:    // implicit-def: $sf
-; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; vst.push.576.conv.bfp16ebs8.fp32 dm0, [p2, sf, r26]; nopxm ; nopv

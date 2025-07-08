@@ -13,8 +13,7 @@
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <16 x i32> @_Z18test_broadcast_s64Dv2_j(<2 x i32> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z18test_broadcast_s64Dv2_j:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -29,8 +28,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <16 x i32> @_Z27test_broadcast_to_v16uint32Dv2_j(<2 x i32> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z27test_broadcast_to_v16uint32Dv2_j:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -45,8 +43,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <16 x float> @_Z29test_broadcast_to_v16accfloatDv2_f(<2 x float> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z29test_broadcast_to_v16accfloatDv2_f:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -61,8 +58,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <16 x float> @_Z26test_broadcast_to_v16floatDv2_f(<2 x float> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z26test_broadcast_to_v16floatDv2_f:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -77,8 +73,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <16 x float> @_Z30test_broadcast_one_to_v16floatv() local_unnamed_addr  {
 ; CHECK-LABEL: _Z30test_broadcast_one_to_v16floatv:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -92,8 +87,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local noundef <16 x i32> @_Z23test_broadcast_elem_128Dv16_ii(<16 x i32> noundef %a, i32 noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z23test_broadcast_elem_128Dv16_ii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -108,8 +102,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <64 x i8> @_Z13test_upd_elemDv64_DB8_iS_(<64 x i8> noundef %v, i32 noundef %idx, i8 noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv64_DB8_iS_:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -124,8 +117,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <64 x i8> @_Z13test_upd_elemDv64_DB8_iDv2_S_(<64 x i8> noundef %v, i32 noundef %idx, <2 x i8> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv64_DB8_iDv2_S_:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -143,8 +135,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <64 x i8> @_Z13test_upd_elemDv64_DB8_iDv4_S_(<64 x i8> noundef %v, i32 noundef %idx, <4 x i8> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv64_DB8_iDv4_S_:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -162,8 +153,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <64 x i8> @_Z13test_upd_elemDv64_DB8_iDv8_S_(<64 x i8> noundef %v, i32 noundef %idx, <8 x i8> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv64_DB8_iDv8_S_:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm
 ; CHECK-NEXT:    mova r1, #1 // Delay Slot 5
 ; CHECK-NEXT:    lshl r29, r0, r1 // Delay Slot 4
@@ -186,8 +176,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <64 x i8> @_Z13test_upd_elemDv64_aiDv2_a(<64 x i8> noundef %v, i32 noundef %idx, <2 x i8> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv64_aiDv2_a:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -205,8 +194,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <64 x i8> @_Z13test_upd_elemDv64_aiDv4_a(<64 x i8> noundef %v, i32 noundef %idx, <4 x i8> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv64_aiDv4_a:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -224,8 +212,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <64 x i8> @_Z13test_upd_elemDv64_aiDv8_a(<64 x i8> noundef %v, i32 noundef %idx, <8 x i8> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv64_aiDv8_a:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm
 ; CHECK-NEXT:    mova r1, #1 // Delay Slot 5
 ; CHECK-NEXT:    lshl r29, r0, r1 // Delay Slot 4
@@ -248,8 +235,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <32 x i16> @_Z13test_upd_elemDv32_siDv2_s(<32 x i16> noundef %v, i32 noundef %idx, <2 x i16> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv32_siDv2_s:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -267,8 +253,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <32 x i16> @_Z13test_upd_elemDv32_siDv4_s(<32 x i16> noundef %v, i32 noundef %idx, <4 x i16> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv32_siDv4_s:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm
 ; CHECK-NEXT:    mova r1, #1 // Delay Slot 5
 ; CHECK-NEXT:    lshl r29, r0, r1 // Delay Slot 4
@@ -291,8 +276,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <16 x i32> @_Z13test_upd_elemDv16_iiDv2_i(<16 x i32> noundef %v, i32 noundef %idx, <2 x i32> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv16_iiDv2_i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm
 ; CHECK-NEXT:    mova r1, #1 // Delay Slot 5
 ; CHECK-NEXT:    lshl r29, r0, r1 // Delay Slot 4
@@ -312,8 +296,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <64 x i8> @_Z13test_upd_elemDv64_DU8_iS_(<64 x i8> noundef %v, i32 noundef %idx, i8 noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv64_DU8_iS_:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -328,8 +311,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <64 x i8> @_Z13test_upd_elemDv64_DU8_iDv2_S_(<64 x i8> noundef %v, i32 noundef %idx, <2 x i8> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv64_DU8_iDv2_S_:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r2, #-16; nopb ; nopxm ; nops
 ; CHECK-NEXT:    lshl r2, r1, r2
 ; CHECK-NEXT:    extend.u8 r1, r1
@@ -348,8 +330,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <64 x i8> @_Z13test_upd_elemDv64_DU8_iDv4_S_(<64 x i8> noundef %v, i32 noundef %idx, <4 x i8> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv64_DU8_iDv4_S_:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -365,8 +346,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <64 x i8> @_Z13test_upd_elemDv64_DU8_iDv8_S_(<64 x i8> noundef %v, i32 noundef %idx, <8 x i8> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv64_DU8_iDv8_S_:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm
 ; CHECK-NEXT:    mova r1, #1 // Delay Slot 5
 ; CHECK-NEXT:    lshl r29, r0, r1 // Delay Slot 4
@@ -389,8 +369,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <64 x i8> @_Z13test_upd_elemDv64_hih(<64 x i8> noundef %v, i32 noundef %idx, i8 noundef zeroext %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv64_hih:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -405,8 +384,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <64 x i8> @_Z13test_upd_elemDv64_hiDv2_h(<64 x i8> noundef %v, i32 noundef %idx, <2 x i8> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv64_hiDv2_h:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -424,8 +402,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <64 x i8> @_Z13test_upd_elemDv64_hiDv4_h(<64 x i8> noundef %v, i32 noundef %idx, <4 x i8> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv64_hiDv4_h:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -443,8 +420,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <64 x i8> @_Z13test_upd_elemDv64_hiDv8_h(<64 x i8> noundef %v, i32 noundef %idx, <8 x i8> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv64_hiDv8_h:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm
 ; CHECK-NEXT:    mova r1, #1 // Delay Slot 5
 ; CHECK-NEXT:    lshl r29, r0, r1 // Delay Slot 4
@@ -467,8 +443,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <32 x i16> @_Z13test_upd_elemDv32_tiDv2_t(<32 x i16> noundef %v, i32 noundef %idx, <2 x i16> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv32_tiDv2_t:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -486,8 +461,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <32 x i16> @_Z13test_upd_elemDv32_tiDv4_t(<32 x i16> noundef %v, i32 noundef %idx, <4 x i16> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv32_tiDv4_t:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm
 ; CHECK-NEXT:    mova r1, #1 // Delay Slot 5
 ; CHECK-NEXT:    lshl r29, r0, r1 // Delay Slot 4
@@ -510,8 +484,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <16 x i32> @_Z13test_upd_elemDv16_jij(<16 x i32> noundef %v, i32 noundef %idx, i32 noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv16_jij:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -526,8 +499,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <16 x i32> @_Z13test_upd_elemDv16_jiDv2_j(<16 x i32> noundef %v, i32 noundef %idx, <2 x i32> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv16_jiDv2_j:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm
 ; CHECK-NEXT:    mova r1, #1 // Delay Slot 5
 ; CHECK-NEXT:    lshl r29, r0, r1 // Delay Slot 4
@@ -547,8 +519,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <16 x float> @_Z13test_upd_elemDv16_fif(<16 x float> noundef %v, i32 noundef %idx, float noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv16_fif:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; jl #__floatsisf
 ; CHECK-NEXT:    paddxm [sp], #128 // Delay Slot 5
 ; CHECK-NEXT:    st r8, [sp, #-128] // 4-byte Folded Spill Delay Slot 4
@@ -578,8 +549,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <32 x bfloat> @_Z13test_upd_elemDv32_u6__bf16iu6__bf16(<32 x bfloat> noundef %v, i32 noundef %idx, bfloat noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv32_u6__bf16iu6__bf16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -594,8 +564,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local noundef <32 x bfloat> @_Z13test_upd_elemDv32_u6__bf16iDv2_u6__bf16(<32 x bfloat> noundef %v, i32 noundef %idx, <2 x bfloat> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv32_u6__bf16iDv2_u6__bf16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -610,8 +579,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local noundef <32 x bfloat> @_Z13test_upd_elemDv32_u6__bf16iDv4_u6__bf16(<32 x bfloat> noundef %v, i32 noundef %idx, <4 x bfloat> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv32_u6__bf16iDv4_u6__bf16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -626,8 +594,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local noundef <32 x bfloat> @_Z13test_upd_elemDv32_u6__bf16iy(<32 x bfloat> noundef %v, i32 noundef %idx, i64 noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_upd_elemDv32_u6__bf16iy:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mov r4, r1 // Delay Slot 4
@@ -643,8 +610,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <16 x float> @_Z16test_shiftl_elemDv16_u10__accfloatf(<16 x float> inreg noundef %a, float noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z16test_shiftl_elemDv16_u10__accfloatf:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm
 ; CHECK-NEXT:    vbcst.32 x0, r0 // Delay Slot 5
 ; CHECK-NEXT:    mova r1, #4; vmov x2, bmll1 // Delay Slot 4
@@ -664,8 +630,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <16 x float> @_Z16test_shiftr_elemDv16_u10__accfloatf(<16 x float> inreg noundef %a, float noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z16test_shiftr_elemDv16_u10__accfloatf:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm
 ; CHECK-NEXT:    vbcst.32 x0, r0 // Delay Slot 5
 ; CHECK-NEXT:    mova r1, #60; vmov x2, bmll1 // Delay Slot 4
@@ -685,8 +650,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef float @_Z13test_ext_elemDv16_fii(<16 x float> noundef %a, i32 noundef %b, i32 noundef %c) local_unnamed_addr  {
 ; CHECK-LABEL: _Z13test_ext_elemDv16_fii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; jl #__floatsisf; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    paddxm [sp], #64 // Delay Slot 4
@@ -716,8 +680,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <2 x float> @_Z16test_ext_v2floatDv16_fii(<16 x float> noundef %a, i32 noundef %b, i32 noundef %c) local_unnamed_addr  {
 ; CHECK-LABEL: _Z16test_ext_v2floatDv16_fii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; paddxm [sp], #64; nops
 ; CHECK-NEXT:    jl #__floatsisf
 ; CHECK-NEXT:    st r8, [sp, #-56] // 4-byte Folded Spill Delay Slot 5
@@ -759,8 +722,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef float @_Z17test_extract_elemDv16_fii(<16 x float> noundef %a, i32 noundef %b, i32 noundef %c) local_unnamed_addr  {
 ; CHECK-LABEL: _Z17test_extract_elemDv16_fii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; jl #__fixsfsi; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    paddxm [sp], #64 // Delay Slot 4
@@ -790,8 +752,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <2 x float> @_Z20test_extract_v2floatDv16_fii(<16 x float> noundef %a, i32 noundef %b, i32 noundef %c) local_unnamed_addr  {
 ; CHECK-LABEL: _Z20test_extract_v2floatDv16_fii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; paddxm [sp], #64; nops
 ; CHECK-NEXT:    jl #__floatsisf
 ; CHECK-NEXT:    st r8, [sp, #-56] // 4-byte Folded Spill Delay Slot 5
@@ -833,8 +794,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <2 x float> @_Z20test_extract_v2floatDv16_fi(<16 x float> noundef %a, i32 noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z20test_extract_v2floatDv16_fi:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; paddxm [sp], #64; nops
 ; CHECK-NEXT:    jl #__floatsisf
 ; CHECK-NEXT:    st r8, [sp, #-56] // 4-byte Folded Spill Delay Slot 5
@@ -876,8 +836,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <2 x i32> @_Z15test_ext_mask64Dv64_DU8_ii(<64 x i8> noundef %v, i32 noundef %idx, i32 noundef %sign) local_unnamed_addr  {
 ; CHECK-LABEL: _Z15test_ext_mask64Dv64_DU8_ii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm
 ; CHECK-NEXT:    mova r1, #1 // Delay Slot 5
 ; CHECK-NEXT:    lshl r2, r2, r1 // Delay Slot 4
@@ -898,8 +857,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <2 x i32> @_Z15test_ext_mask64Dv64_hii(<64 x i8> noundef %v, i32 noundef %idx, i32 noundef %sign) local_unnamed_addr  {
 ; CHECK-LABEL: _Z15test_ext_mask64Dv64_hii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm
 ; CHECK-NEXT:    mova r1, #1 // Delay Slot 5
 ; CHECK-NEXT:    lshl r2, r2, r1 // Delay Slot 4
@@ -920,8 +878,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <2 x i32> @_Z15test_ext_mask64Dv32_sii(<32 x i16> noundef %v, i32 noundef %idx, i32 noundef %sign) local_unnamed_addr  {
 ; CHECK-LABEL: _Z15test_ext_mask64Dv32_sii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm
 ; CHECK-NEXT:    mova r1, #1 // Delay Slot 5
 ; CHECK-NEXT:    lshl r2, r2, r1 // Delay Slot 4
@@ -942,8 +899,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <2 x i32> @_Z15test_ext_mask64Dv16_iii(<16 x i32> noundef %v, i32 noundef %idx, i32 noundef %sign) local_unnamed_addr  {
 ; CHECK-LABEL: _Z15test_ext_mask64Dv16_iii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm
 ; CHECK-NEXT:    mova r1, #1 // Delay Slot 5
 ; CHECK-NEXT:    lshl r2, r2, r1 // Delay Slot 4
@@ -963,8 +919,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <2 x i32> @_Z15test_ext_mask64Dv32_u6__bf16ii(<32 x bfloat> noundef %v, i32 noundef %idx, i32 noundef %sign) local_unnamed_addr  {
 ; CHECK-LABEL: _Z15test_ext_mask64Dv32_u6__bf16ii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm
 ; CHECK-NEXT:    mova r1, #1 // Delay Slot 5
 ; CHECK-NEXT:    lshl r2, r2, r1 // Delay Slot 4
@@ -985,8 +940,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <16 x i32> @_Z12test_shuffleDv16_u7__acc32S_j(<16 x i32> inreg noundef %a, <16 x i32> inreg noundef %b, i32 noundef %c) local_unnamed_addr  {
 ; CHECK-LABEL: _Z12test_shuffleDv16_u7__acc32S_j:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vmov x0, bmll1 // Delay Slot 4
@@ -1001,8 +955,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local noundef <16 x i32> @_Z16test_shuffle_s64Dv2_jj(<2 x i32> noundef %b, i32 noundef %m) local_unnamed_addr  {
 ; CHECK-LABEL: _Z16test_shuffle_s64Dv2_jj:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -1017,8 +970,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local noundef <16 x i32> @_Z16test_shuffle_u64Dv2_jj(<2 x i32> noundef %b, i32 noundef %m) local_unnamed_addr  {
 ; CHECK-LABEL: _Z16test_shuffle_u64Dv2_jj:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -1033,8 +985,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <16 x i32> @_Z11test_insertDv16_iiDv2_j(<16 x i32> noundef %v, i32 noundef %idx, <2 x i32> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z11test_insertDv16_iiDv2_j:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm
 ; CHECK-NEXT:    mova r1, #1 // Delay Slot 5
 ; CHECK-NEXT:    lshl r29, r0, r1 // Delay Slot 4
@@ -1054,8 +1005,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <64 x i8> @_Z11test_insertDv64_DU8_iDv2_j(<64 x i8> noundef %v, i32 noundef %idx, <2 x i32> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z11test_insertDv64_DU8_iDv2_j:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm
 ; CHECK-NEXT:    mova r1, #1 // Delay Slot 5
 ; CHECK-NEXT:    lshl r29, r0, r1 // Delay Slot 4
@@ -1077,8 +1027,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <64 x i8> @_Z11test_insertDv64_hiDv2_j(<64 x i8> noundef %v, i32 noundef %idx, <2 x i32> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z11test_insertDv64_hiDv2_j:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm
 ; CHECK-NEXT:    mova r1, #1 // Delay Slot 5
 ; CHECK-NEXT:    lshl r29, r0, r1 // Delay Slot 4
@@ -1100,8 +1049,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <32 x i16> @_Z11test_insertDv32_tiDv2_j(<32 x i16> noundef %v, i32 noundef %idx, <2 x i32> noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z11test_insertDv32_tiDv2_j:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm
 ; CHECK-NEXT:    mova r1, #1 // Delay Slot 5
 ; CHECK-NEXT:    lshl r29, r0, r1 // Delay Slot 4
@@ -1123,8 +1071,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local noundef <64 x i8> @_Z25test_broadcast_to_v64int8i(i32 noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: _Z25test_broadcast_to_v64int8i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -1141,8 +1088,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <16 x float> @_Z34test_broadcast_zero_to_v16accfloatv() local_unnamed_addr  {
 ; CHECK-LABEL: _Z34test_broadcast_zero_to_v16accfloatv:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mova r0, #0 // Delay Slot 4
@@ -1156,8 +1102,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <32 x float> @_Z34test_broadcast_zero_to_v32accfloatv() local_unnamed_addr  {
 ; CHECK-LABEL: _Z34test_broadcast_zero_to_v32accfloatv:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
 ; CHECK-NEXT:    mova r0, #0 // Delay Slot 5
 ; CHECK-NEXT:    vbcst.32 x0, r0 // Delay Slot 4
@@ -1171,8 +1116,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define dso_local inreg noundef <64 x float> @_Z34test_broadcast_zero_to_v64accfloatv() local_unnamed_addr  {
 ; CHECK-LABEL: _Z34test_broadcast_zero_to_v64accfloatv:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; vclr dm0
 ; CHECK-NEXT:    nopa ; nopb ; nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -1186,8 +1130,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local %struct.v64bfp16ebs8 @_Z12shuffle_test12v64bfp16ebs8S_j(%struct.v64bfp16ebs8 %a.coerce, %struct.v64bfp16ebs8 %b.coerce, i32 noundef %mode) local_unnamed_addr  {
 ; CHECK-LABEL: _Z12shuffle_test12v64bfp16ebs8S_j:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -1210,8 +1153,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local %struct.v64bfp16ebs16 @_Z12shuffle_test13v64bfp16ebs16S_j(%struct.v64bfp16ebs16 %a.coerce, %struct.v64bfp16ebs16 %b.coerce, i32 noundef %mode) local_unnamed_addr  {
 ; CHECK-LABEL: _Z12shuffle_test13v64bfp16ebs16S_j:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -1234,8 +1176,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local %struct.v64bfp16ebs8 @_Z12shuffle_test12v64bfp16ebs8j(%struct.v64bfp16ebs8 %a.coerce, i32 noundef %mode) local_unnamed_addr  {
 ; CHECK-LABEL: _Z12shuffle_test12v64bfp16ebs8j:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -1256,8 +1197,7 @@ entry:
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local %struct.v64bfp16ebs16 @_Z12shuffle_test13v64bfp16ebs16j(%struct.v64bfp16ebs16 %a.coerce, i32 noundef %mode) local_unnamed_addr  {
 ; CHECK-LABEL: _Z12shuffle_test13v64bfp16ebs16j:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4

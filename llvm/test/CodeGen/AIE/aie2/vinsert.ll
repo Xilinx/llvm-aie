@@ -9,8 +9,7 @@
 
 define dso_local noundef <64 x i8> @_Z12test_insert8Dv64_aic(<64 x i8> noundef %v, i32 noundef %idx, i8 noundef signext %b) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z12test_insert8Dv64_aic:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -27,8 +26,7 @@ entry:
 
 define dso_local noundef <64 x i8> @_Z13test_insert16Dv64_ais(<64 x i8> noundef %v, i32 noundef %idx, i16 noundef signext %b) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z13test_insert16Dv64_ais:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -45,8 +43,7 @@ entry:
 
 define dso_local noundef <64 x i8> @_Z13test_insert32Dv64_aii(<64 x i8> noundef %v, i32 noundef %idx, i32 noundef %b) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z13test_insert32Dv64_aii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -62,8 +59,7 @@ entry:
 
 define dso_local noundef <64 x i8> @_Z13test_insert64Dv64_aiDv8_a(<64 x i8> noundef %v, i32 noundef %idx, <8 x i8> noundef %b) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z13test_insert64Dv64_aiDv8_a:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -80,8 +76,7 @@ entry:
 
 define dso_local noundef <32 x i16> @_Z11test_insertDv32_tiy(<32 x i16> noundef %v, i32 noundef %idx, i64 noundef %b) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z11test_insertDv32_tiy:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mov r24, r1 // Delay Slot 4
@@ -103,8 +98,7 @@ declare <16 x i32> @llvm.aie2.vinsert64.I512(<16 x i32>, i32, <2 x i32>) #1
 
 define <2 x i32> @test_64bit(<2 x i32> %vec, i32 %c) {
 ; CHECK-LABEL: test_64bit:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -118,8 +112,7 @@ entry:
 
 define <2 x i32> @test_64bit_dyn_idx(<2 x i32> %vec, i32 %b, i32 %c) {
 ; CHECK-LABEL: test_64bit_dyn_idx:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -134,8 +127,7 @@ entry:
 
 define <8 x i32> @test_256bit(<8 x i32> %vec, i32 %c) {
 ; CHECK-LABEL: test_256bit:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -149,8 +141,7 @@ entry:
 
 define <16 x i16> @test_256bit_dyn_idx(<16 x i16> %vec, i32 %b, i16 %c) {
 ; CHECK-LABEL: test_256bit_dyn_idx:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -164,8 +155,7 @@ entry:
 
 define <64 x i8> @test_512bit(<64 x i8> %vec, i8 %c) {
 ; CHECK-LABEL: test_512bit:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -179,8 +169,7 @@ entry:
 
 define <32 x i16> @test_512bit_dyn_idx(<32 x i16> %vec, i32 %b, i16 %c) {
 ; CHECK-LABEL: test_512bit_dyn_idx:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -194,8 +183,7 @@ entry:
 
 define <128 x i8> @test_1024bit_lo(<128 x i8> %vec, i8 %c) {
 ; CHECK-LABEL: test_1024bit_lo:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vmov x4, x6 // Delay Slot 4
@@ -209,8 +197,7 @@ entry:
 
 define <128 x i8> @test_1024bit_hi(<128 x i8> %vec, i8 %c) {
 ; CHECK-LABEL: test_1024bit_hi:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vmov x4, x6 // Delay Slot 4
@@ -224,8 +211,7 @@ entry:
 
 define <32 x i32> @test_1024bit_dyn_idx(<32 x i32> %vec, i32 %b, i32 %c) {
 ; CHECK-LABEL: test_1024bit_dyn_idx:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; mova r2, #16; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mova r3, #0; nopb ; lt r27, r0, r2
 ; CHECK-NEXT:    sel.nez r2, r3, r2, r27

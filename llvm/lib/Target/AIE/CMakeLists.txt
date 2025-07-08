@@ -101,7 +101,6 @@ add_llvm_target(AIECodeGen
    AIELegalizerHelper.cpp
    AIELiveRegs.cpp
    AIEMachineAlignment.cpp
-   AIEMachineBlockPlacement.cpp
    AIEMachineFunctionInfo.cpp
    AIEMachineScheduler.cpp
    AIEMaxLatencyFinder.cpp
@@ -146,6 +145,7 @@ add_llvm_target(AIECodeGen
    aie1/AIE1InstructionSelector.cpp
    aie1/AIE1ISelLowering.cpp
    aie1/AIE1LegalizerInfo.cpp
+   aie1/AIE1MachineBlockPlacement.cpp
    aie1/AIE1RegisterBankInfo.cpp
    aie1/AIE1RegisterInfo.cpp
    aie1/AIE1Subtarget.cpp

@@ -10,8 +10,7 @@
 ; Function Attrs: mustprogress nofree nounwind memory(inaccessiblemem: readwrite)
 define dso_local noundef <8 x i64> @_Z5test0Dv16_s(<16 x i16> noundef %arg0) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test0Dv16_s:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; paddb [sp], #128; nopx
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    vst wl0, [sp, #-128]
@@ -59,8 +58,7 @@ declare void @llvm.lifetime.end.p0(i64 immarg, ptr nocapture) #1
 ; Function Attrs: mustprogress nofree nounwind memory(inaccessiblemem: readwrite)
 define dso_local noundef <8 x i64> @_Z5test1Dv8_i(<8 x i32> noundef %arg0) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test1Dv8_i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; paddb [sp], #128; nopx
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    vst wl0, [sp, #-128]
@@ -102,8 +100,7 @@ entry:
 ; Function Attrs: mustprogress nofree nounwind memory(inaccessiblemem: readwrite)
 define dso_local noundef <16 x i64> @_Z5test2Dv32_a(<32 x i8> noundef %arg0) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test2Dv32_a:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; paddb [sp], #256; nopx
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    vst wl0, [sp, #-256]
@@ -149,8 +146,7 @@ entry:
 ; Function Attrs: mustprogress nofree nounwind memory(inaccessiblemem: readwrite)
 define dso_local noundef <8 x i64> @_Z5test3Dv16_s(<16 x i16> noundef %arg0) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test3Dv16_s:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; paddb [sp], #128; nopx
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    vst wl0, [sp, #-128]
@@ -192,8 +188,7 @@ entry:
 ; Function Attrs: mustprogress nofree nounwind memory(inaccessiblemem: readwrite)
 define dso_local noundef <16 x i64> @_Z5test4Dv16_s(<16 x i16> noundef %arg0) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test4Dv16_s:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; paddb [sp], #256; nopx
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    vst wl0, [sp, #-256]
@@ -239,8 +234,7 @@ entry:
 ; Function Attrs: mustprogress nofree nounwind memory(inaccessiblemem: readwrite)
 define dso_local noundef <16 x i64> @_Z5test5Dv16_s(<16 x i16> noundef %arg0) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test5Dv16_s:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; paddb [sp], #256; nopx
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    vst wl0, [sp, #-256]
@@ -286,8 +280,7 @@ entry:
 ; Function Attrs: mustprogress nofree nounwind memory(inaccessiblemem: readwrite)
 define dso_local noundef <16 x i64> @_Z5test6Dv16_s(<16 x i16> noundef %arg0) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test6Dv16_s:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; paddb [sp], #256; nopx
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    vst wl0, [sp, #-256]
@@ -333,8 +326,7 @@ entry:
 ; Function Attrs: mustprogress nofree nounwind memory(inaccessiblemem: readwrite)
 define dso_local noundef <8 x i64> @_Z5test7Dv16_s(<16 x i16> noundef %arg0) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test7Dv16_s:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; paddb [sp], #128; nopx
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    vst wl0, [sp, #-128]
@@ -376,8 +368,7 @@ entry:
 ; Function Attrs: mustprogress nofree nounwind memory(inaccessiblemem: readwrite)
 define dso_local noundef <8 x i64> @_Z5test8Dv16_t(<16 x i16> noundef %arg0) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test8Dv16_t:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; paddb [sp], #128; nopx
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    vst wl0, [sp, #-128]

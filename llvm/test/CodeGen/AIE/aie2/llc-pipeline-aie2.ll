@@ -248,8 +248,6 @@
 ; AIE-O123-NEXT:      MachinePostDominator Tree Construction
 ; AIE-O123-NEXT:      Branch Probability Basic Block Placement
 
-; AIE-O0123-NEXT:      AIE Machine Block Alignment
-
 ; AIE-O123-NEXT:      MachineDominator Tree Construction
 ; AIE-O123-NEXT:      Machine Natural Loop Construction
 ; AIE-O123-NEXT:      ReachingDefAnalysis

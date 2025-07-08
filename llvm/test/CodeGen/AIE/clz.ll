@@ -21,8 +21,7 @@ define i32 @f(i32 %x) {
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    clz r0, r1 // Delay Slot 1
 ; COMMON-LABEL: f:
-; COMMON:         .p2align 4
-; COMMON-NEXT:  // %bb.0: // %entry
+; COMMON:       // %bb.0: // %entry
 ; COMMON-NEXT:    ret lr
 ; COMMON-NEXT:    nop // Delay Slot 5
 ; COMMON-NEXT:    nop // Delay Slot 4

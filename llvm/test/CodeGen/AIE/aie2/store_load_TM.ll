@@ -9,8 +9,7 @@
 
 define dso_local noundef i32 @_Z12test_read_tmj(i32 noundef %regAddr) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z12test_read_tmj:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    movxm r0, #524288
 ; CHECK-NEXT:    add r0, r1, r0
 ; CHECK-NEXT:    mov p0, r0
@@ -31,8 +30,7 @@ entry:
 
 define dso_local void @_Z13test_write_tmjj(i32 noundef %regVal, i32 noundef %regAddr) local_unnamed_addr #1 {
 ; CHECK-LABEL: _Z13test_write_tmjj:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
 ; CHECK-NEXT:    movxm r2, #524288 // Delay Slot 5
 ; CHECK-NEXT:    add r1, r1, r2 // Delay Slot 4
@@ -49,8 +47,7 @@ entry:
 
 define dso_local noundef i32 @_Z12test_read_tmjj(i32 noundef %regAddr, i32 noundef %TMAddrSpaceStart) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z12test_read_tmjj:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; add r0, r2, r1; nopm
 ; CHECK-NEXT:    mov p0, r0
 ; CHECK-NEXT:    lda.tm r0, [p0]
@@ -70,8 +67,7 @@ entry:
 
 define dso_local void @_Z13test_write_tmjjj(i32 noundef %regVal, i32 noundef %regAddr, i32 noundef %TMAddrSpaceStart) local_unnamed_addr #1 {
 ; CHECK-LABEL: _Z13test_write_tmjjj:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    add r1, r2, r1 // Delay Slot 4

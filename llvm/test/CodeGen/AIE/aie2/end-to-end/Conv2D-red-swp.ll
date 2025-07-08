@@ -222,8 +222,7 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ASM-NEXT:    paddb [sp], #-192 // Delay Slot 1
 ;
 ; DCL-LABEL: conv2d.loop.nest:
-; DCL:         .p2align 4
-; DCL-NEXT:  // %bb.0: // %newFuncRoot
+; DCL:       // %bb.0: // %newFuncRoot
 ; DCL-NEXT:    nopb ; nopa ; nops ; nopx ; mov s0, r0; nopv
 ; DCL-NEXT:    paddb [sp], #192; mov s1, r1
 ; DCL-NEXT:    st p6, [sp, #-188] // 4-byte Folded Spill
@@ -278,7 +277,6 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; DCL-NEXT:    lda m4, [p6, #0]; vst wh0, [sp, #-32]; movx r9, #31; mov m3, r14 // 32-byte Folded Spill
 ; DCL-NEXT:    // implicit-def: $x4
 ; DCL-NEXT:    // implicit-def: $x2
-; DCL-NEXT:    .p2align 4
 ; DCL-NEXT:  .LBB0_1: // %outer.loop.header
 ; DCL-NEXT:    // =>This Loop Header: Depth=1
 ; DCL-NEXT:    // Child Loop BB0_2 Depth 2
@@ -306,7 +304,6 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; DCL-NEXT:    vldb wh1, [p1], #32; add r1, r5, #-1; vshuffle x7, x4, x2, r2
 ; DCL-NEXT:    vldb wl10, [p1], #32; add r1, r1, #-1; vshuffle x9, x7, x0, r8
 ; DCL-NEXT:    vldb wh10, [p1], #32; and r10, r10, r9
-; DCL-NEXT:    .p2align 4
 ; DCL-NEXT:  .LBB0_2: // %inner.loop
 ; DCL-NEXT:    // Parent Loop BB0_1 Depth=1
 ; DCL-NEXT:    // => This Inner Loop Header: Depth=2
@@ -375,8 +372,7 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; DCL-NEXT:    paddb [sp], #-192 // Delay Slot 1
 ;
 ; ZOL-LABEL: conv2d.loop.nest:
-; ZOL:         .p2align 4
-; ZOL-NEXT:  // %bb.0: // %newFuncRoot
+; ZOL:       // %bb.0: // %newFuncRoot
 ; ZOL-NEXT:    nopb ; nopa ; nops ; nopx ; mov s0, r0; nopv
 ; ZOL-NEXT:    paddb [sp], #192; mov s1, r1
 ; ZOL-NEXT:    st p6, [sp, #-188] // 4-byte Folded Spill
@@ -431,7 +427,6 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-NEXT:    lda m4, [p6, #0]; vst wh0, [sp, #-32]; movx r9, #31; mov m3, r13 // 32-byte Folded Spill
 ; ZOL-NEXT:    // implicit-def: $x4
 ; ZOL-NEXT:    // implicit-def: $x2
-; ZOL-NEXT:    .p2align 4
 ; ZOL-NEXT:  .LBB0_1: // %outer.loop.header
 ; ZOL-NEXT:    // =>This Loop Header: Depth=1
 ; ZOL-NEXT:    // Child Loop BB0_2 Depth 2
@@ -459,7 +454,6 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-NEXT:    vldb wl10, [p1], #32; vshuffle x7, x4, x2, r2
 ; ZOL-NEXT:    vldb wh10, [p1], #32; vshuffle x9, x7, x0, r8
 ; ZOL-NEXT:    and r1, r1, r9; add.nc lc, r5, #-2
-; ZOL-NEXT:    .p2align 4
 ; ZOL-NEXT:  .LBB0_2: // %inner.loop
 ; ZOL-NEXT:    // Parent Loop BB0_1 Depth=1
 ; ZOL-NEXT:    // => This Inner Loop Header: Depth=2

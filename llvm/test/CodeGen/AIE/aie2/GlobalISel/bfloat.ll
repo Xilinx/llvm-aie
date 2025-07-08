@@ -10,8 +10,7 @@
 
 define dso_local %class.bfloat16 @_Z13test_bfloat168bfloat16(%class.bfloat16 returned %arg.coerce)  {
 ; CHECK-LABEL: _Z13test_bfloat168bfloat16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -24,9 +23,8 @@ entry:
 
 define dso_local %class.bfloat16 @_Z13test_ext_elemf(float noundef %x) {
 ; CHECK-LABEL: _Z13test_ext_elemf:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mov r2, r16
+; CHECK:       // %bb.0: // %entry
+; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r2, r16
 ; CHECK-NEXT:    mova r16, #0
 ; CHECK-NEXT:    mov r29, r16
 ; CHECK-NEXT:    vinsert.32 x0, x0, r29, r1

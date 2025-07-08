@@ -19,13 +19,11 @@
 
 define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef %size, i32 noundef %size2) {
 ; AIE2-LABEL: nested:
-; AIE2:         .p2align 4
-; AIE2-NEXT:  // %bb.0: // %for.cond3.preheader.lr.ph
+; AIE2:       // %bb.0: // %for.cond3.preheader.lr.ph
 ; AIE2-NEXT:    nopb ; mova r3, #0; nops ; nopxm ; nopv
 ; AIE2-NEXT:    mova r4, #2; nopx
 ; AIE2-NEXT:    movxm p2, #.LBB0_2
 ; AIE2-NEXT:    lda r2, [p0, #0]
-; AIE2-NEXT:    .p2align 4
 ; AIE2-NEXT:  .LBB0_1: // %for.cond3.preheader
 ; AIE2-NEXT:    // =>This Loop Header: Depth=1
 ; AIE2-NEXT:    // Child Loop BB0_2 Depth 2
@@ -37,7 +35,6 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; AIE2-NEXT:    nop
 ; AIE2-NEXT:    mova r6, #0
 ; AIE2-NEXT:    add.nc r5, r1, #-1
-; AIE2-NEXT:    .p2align 4
 ; AIE2-NEXT:  .LBB0_2: // %for.body6
 ; AIE2-NEXT:    // Parent Loop BB0_1 Depth=1
 ; AIE2-NEXT:    // => This Inner Loop Header: Depth=2
@@ -52,7 +49,6 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; AIE2-NEXT:    add r6, r6, #1 // Delay Slot 3
 ; AIE2-NEXT:    add r2, r2, r7 // Delay Slot 2
 ; AIE2-NEXT:    st r2, [p0, #0] // Delay Slot 1
-; AIE2-NEXT:    .p2align 4
 ; AIE2-NEXT:  // %bb.3: // %for.cond3.for.cond.cleanup5_crit_edge
 ; AIE2-NEXT:    // in Loop: Header=BB0_1 Depth=1
 ; AIE2-NEXT:    nopa ; nopb ; add r3, r3, #1; nopm
@@ -72,13 +68,11 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: nested:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0: // %for.cond3.preheader.lr.ph
+; AIE2P:       // %bb.0: // %for.cond3.preheader.lr.ph
 ; AIE2P-NEXT:    mova r3, #0; nopb ; nops ; nopxm ; nopv
 ; AIE2P-NEXT:    mova r4, #2; nopx
 ; AIE2P-NEXT:    movxm p2, #.LBB0_2
 ; AIE2P-NEXT:    lda r2, [p0, #0]
-; AIE2P-NEXT:    .p2align 4
 ; AIE2P-NEXT:  .LBB0_1: // %for.cond3.preheader
 ; AIE2P-NEXT:    // =>This Loop Header: Depth=1
 ; AIE2P-NEXT:    // Child Loop BB0_2 Depth 2
@@ -90,7 +84,6 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    mova r6, #0
 ; AIE2P-NEXT:    add.nc r5, r1, #-1
-; AIE2P-NEXT:    .p2align 4
 ; AIE2P-NEXT:  .LBB0_2: // %for.body6
 ; AIE2P-NEXT:    // Parent Loop BB0_1 Depth=1
 ; AIE2P-NEXT:    // => This Inner Loop Header: Depth=2
@@ -105,7 +98,6 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; AIE2P-NEXT:    add r6, r6, #1 // Delay Slot 3
 ; AIE2P-NEXT:    add r2, r2, r7 // Delay Slot 2
 ; AIE2P-NEXT:    st r2, [p0, #0] // Delay Slot 1
-; AIE2P-NEXT:    .p2align 4
 ; AIE2P-NEXT:  // %bb.3: // %for.cond3.for.cond.cleanup5_crit_edge
 ; AIE2P-NEXT:    // in Loop: Header=BB0_1 Depth=1
 ; AIE2P-NEXT:    nopa ; nopb ; add r3, r3, #1; nopm

@@ -11,8 +11,7 @@
 
 define dso_local noundef float @bfloat16_to_float_test(%class.bfloat16 %bf.coerce) {
 ; CHECK-LABEL: bfloat16_to_float_test:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4

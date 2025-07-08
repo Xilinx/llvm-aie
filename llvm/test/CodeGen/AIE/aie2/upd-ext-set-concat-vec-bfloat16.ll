@@ -9,8 +9,7 @@
 
 define noundef <8 x bfloat> @test_extract_v8bfloat16_512(<32 x bfloat> noundef %a, i32 noundef %idx) {
 ; CHECK-LABEL: test_extract_v8bfloat16_512:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mova r1, #4 // Delay Slot 4
@@ -30,8 +29,7 @@ entry:
 
 define noundef <8 x bfloat> @test_extract_v8bfloat16_256(<16 x bfloat> noundef %a, i32 noundef %idx) {
 ; CHECK-LABEL: test_extract_v8bfloat16_256:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mova r1, #4 // Delay Slot 4
@@ -52,8 +50,7 @@ entry:
 
 define noundef <16 x bfloat> @test_set_v8bfloat16_idx(i32 noundef %idx, <8 x bfloat> noundef %a) {
 ; CHECK-LABEL: test_set_v8bfloat16_idx:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
 ; CHECK-NEXT:    mova r1, #4 // Delay Slot 5
 ; CHECK-NEXT:    mova r2, #64; lshl r0, r0, r1 // Delay Slot 4
@@ -75,8 +72,7 @@ entry:
 
 define dso_local noundef <16 x bfloat> @test_extract_v16bfloat16_512(<32 x bfloat> noundef %a, i32 noundef %idx) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_extract_v16bfloat16_512:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -90,8 +86,7 @@ entry:
 
 define dso_local noundef <32 x bfloat> @test_insert_v16bfloat16_512(<32 x bfloat> noundef %a, i32 noundef %idx, <16 x bfloat> noundef %b) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_insert_v16bfloat16_512:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -105,8 +100,7 @@ entry:
 
 define dso_local noundef <32 x bfloat> @test_set_v16bfloat16_512(i32 noundef %idx, <16 x bfloat> noundef %b) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_set_v16bfloat16_512:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -120,8 +114,7 @@ entry:
 
 define dso_local noundef <32 x bfloat> @test_concat_v16bfloat16_512(<16 x bfloat> noundef %a0, <16 x bfloat> noundef %a1) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_concat_v16bfloat16_512:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -135,8 +128,7 @@ entry:
 
 define dso_local noundef <16 x bfloat> @test_extract_v16bfloat16_1024(<64 x bfloat> noundef %a, i32 noundef %idx) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_extract_v16bfloat16_1024:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -150,8 +142,7 @@ entry:
 
 define dso_local noundef <64 x bfloat> @test_insert_v16bfloat16_1024(<64 x bfloat> noundef %a, i32 noundef %idx, <16 x bfloat> noundef %b) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_insert_v16bfloat16_1024:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vmov x4, x6 // Delay Slot 4
@@ -165,8 +156,7 @@ entry:
 
 define dso_local noundef <64 x bfloat> @test_set_v16bfloat16_1024(i32 noundef %idx, <16 x bfloat> noundef %b) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_set_v16bfloat16_1024:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -180,8 +170,7 @@ entry:
 
 define dso_local noundef <64 x bfloat> @test_concat_v16bfloat16_1024(<16 x bfloat> noundef %a0, <16 x bfloat> noundef %a1, <16 x bfloat> noundef %a2, <16 x bfloat> noundef %a3) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_concat_v16bfloat16_1024:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    vmov wl4, wl0 // Delay Slot 5
 ; CHECK-NEXT:    vmov wh4, wl2 // Delay Slot 4
@@ -195,8 +184,7 @@ entry:
 
 define dso_local noundef <32 x bfloat> @test_extract_v32bfloat16_1024(<64 x bfloat> noundef %a, i32 noundef %idx) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_extract_v32bfloat16_1024:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -210,8 +198,7 @@ entry:
 
 define dso_local noundef <64 x bfloat> @test_insert_v32bfloat16_1024(<64 x bfloat> noundef %a, i32 noundef %idx, <32 x bfloat> noundef %b) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_insert_v32bfloat16_1024:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -225,8 +212,7 @@ entry:
 
 define dso_local noundef <64 x bfloat> @test_set_v32bfloat16_1024(i32 noundef %idx, <32 x bfloat> noundef %b) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_set_v32bfloat16_1024:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -240,8 +226,7 @@ entry:
 
 define dso_local noundef <64 x bfloat> @test_concat_v32bfloat16_1024(<32 x bfloat> noundef %a0, <32 x bfloat> noundef %a1) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_concat_v32bfloat16_1024:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4

@@ -33,8 +33,7 @@ declare { ptr, i20, i20 } @llvm.aie2.add.3d(ptr, i20, i20, i20, i20, i20, i20, i
 ; Function Attrs: mustprogress noinline
 define void @add2d(ptr noalias %params, ptr noalias %ifm1_data, ptr noalias %ifm2_data, ptr noalias %ofm_data, ptr %.out, ptr %conv.i.i.i.out, ptr %idx.ext9.out, ptr %.out1, ptr %.out2, ptr %.out3, ptr %.out4, ptr %.out5, ptr %conv.i.i.i.i.i.out, ptr %.out6, ptr %conv.i.i.i46.out, ptr %xtraiter.out, ptr %in_ptr1.051.unr.ce.out, ptr %in_ptr2.0.in50.unr.ce.out, ptr %out_ptr.049.unr.ce.out, ptr %itr_left_cnt0.048.unr.ce.out, ptr %itr_left_cnt1.047.unr.ce.out) #3 {
 ; ASM-LABEL: add2d:
-; ASM:         .p2align 4
-; ASM-NEXT:  // %bb.0: // %newFuncRoot
+; ASM:       // %bb.0: // %newFuncRoot
 ; ASM-NEXT:    paddb [p0], #40; nopx
 ; ASM-NEXT:    lda m2, [p0], #-4
 ; ASM-NEXT:    lda m3, [p0], #8
@@ -86,7 +85,6 @@ define void @add2d(ptr noalias %params, ptr noalias %ifm1_data, ptr noalias %ifm
 ; ASM-NEXT:    nop // Delay Slot 3
 ; ASM-NEXT:    nop // Delay Slot 2
 ; ASM-NEXT:    mova r1, #0 // Delay Slot 1
-; ASM-NEXT:    .p2align 4
 ; ASM-NEXT:  .LBB0_2: // %entry.new
 ; ASM-NEXT:    nopb ; vlda.ups.s32.d8 cm0, s1, [p1], m1; nops ; nopx ; mov dc0, #0; nopv
 ; ASM-NEXT:    vlda.ups.s32.d8 cm1, s1, [p1], m1; mov dc4, dc0
@@ -103,7 +101,6 @@ define void @add2d(ptr noalias %params, ptr noalias %ifm1_data, ptr noalias %ifm
 ; ASM-NEXT:    lshl r0, r0, r3; mov crSRSSign, r6
 ; ASM-NEXT:    add r0, r0, #1; mov s0, r5
 ; ASM-NEXT:    add.nc lc, r0, #-1
-; ASM-NEXT:    .p2align 4
 ; ASM-NEXT:  .LBB0_3: // %for.body
 ; ASM-NEXT:    // =>This Inner Loop Header: Depth=1
 ; ASM-NEXT:    nopb ; nopa ; nops ; nopxm ; vadd cm8, cm2, cm0, r1
@@ -131,7 +128,6 @@ define void @add2d(ptr noalias %params, ptr noalias %ifm1_data, ptr noalias %ifm
 ; ASM-NEXT:    vst.srs.d8.s32 cm2, s0, [p3], #32; mov r0, dc0
 ; ASM-NEXT:    vst.srs.d8.s32 cm3, s0, [p3], #32; mov r1, dc4
 ; ASM-NEXT:    mov crSRSSign, #0
-; ASM-NEXT:    .p2align 4
 ; ASM-NEXT:  .LBB0_5: // %for.cond.cleanup.unr-lcssa.split
 ; ASM-NEXT:    nopx ; mov p0, r10
 ; ASM-NEXT:    lda p7, [sp, #-32]; st r1, [p4, #0] // 4-byte Folded Reload

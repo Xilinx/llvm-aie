@@ -9,8 +9,7 @@
 
 define i32 @br_i32(i32  %a, i32  %b, i32 %v, i32* nocapture writeonly %c) {
 ; CHECK-LABEL: br_i32:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; geu r1, r2, r1; nopm ; nops
 ; CHECK-NEXT:    jnz r1, #.LBB0_2
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -20,7 +19,6 @@ define i32 @br_i32(i32  %a, i32  %b, i32 %v, i32* nocapture writeonly %c) {
 ; CHECK-NEXT:    mov r0, r3 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.then
 ; CHECK-NEXT:    nopb ; nopa ; st r0, [p0, #0]; nopxm ; nopv
-; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_2: // %if.end
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -43,8 +41,7 @@ if.end:                                           ; preds = %if.then, %entry
 ; if.end should be moved to the end to allow fall-through.
 define i32 @br_i32_reverse(i32  %a, i32  %b, i32 %v, i32* nocapture writeonly %c) {
 ; CHECK-LABEL: br_i32_reverse:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ltu r1, r2, r1; nopm ; nops
 ; CHECK-NEXT:    jz r1, #.LBB1_2
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -54,7 +51,6 @@ define i32 @br_i32_reverse(i32  %a, i32  %b, i32 %v, i32* nocapture writeonly %c
 ; CHECK-NEXT:    mov r0, r3 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.then
 ; CHECK-NEXT:    nopb ; nopa ; st r0, [p0, #0]; nopxm ; nopv
-; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB1_2: // %if.end
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -74,8 +70,7 @@ if.then:                                          ; preds = %entry
 
 define i32 @br_diamond(i32  %a, i32  %b, i32 %v, i32* nocapture writeonly %c) {
 ; CHECK-LABEL: br_diamond:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; geu r1, r2, r1; nopm ; nops
 ; CHECK-NEXT:    jnz r1, #.LBB2_2
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -90,7 +85,6 @@ define i32 @br_diamond(i32  %a, i32  %b, i32 %v, i32* nocapture writeonly %c) {
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    st r0, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB2_2: // %if.else
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
@@ -116,8 +110,7 @@ if.end:                                           ; preds = %if.then, %if.else
 ; to the previous example.
 define i32 @br_diamond_complex_end(i32  %a, i32  %b, i32 %v, i32* nocapture writeonly %c) {
 ; CHECK-LABEL: br_diamond_complex_end:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; geu r0, r2, r1
 ; CHECK-NEXT:    jnz r0, #.LBB3_2
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -132,7 +125,6 @@ define i32 @br_diamond_complex_end(i32  %a, i32  %b, i32 %v, i32* nocapture writ
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 1
-; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB3_2: // %if.else
 ; CHECK-NEXT:    nopb ; nopa ; nops ; jl #foo; nopv
 ; CHECK-NEXT:    nopa ; nopx // Delay Slot 5
@@ -140,7 +132,6 @@ define i32 @br_diamond_complex_end(i32  %a, i32  %b, i32 %v, i32* nocapture writ
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    mov r0, r16 // Delay Slot 1
-; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB3_3: // %if.end
 ; CHECK-NEXT:    nopb ; lda lr, [sp, #-28]; nops ; nopxm ; nopv // 4-byte Folded Reload
 ; CHECK-NEXT:    nop

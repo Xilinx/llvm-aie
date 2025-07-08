@@ -10,8 +10,7 @@
 
 define i32 @test_div_step(i32 noundef %a, i32 noundef %b, ptr nocapture nonnull align 4 dereferenceable(4) %remainder) {
 ; CHECK-LABEL: test_div_step:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -26,8 +25,7 @@ entry:
 
 define i32 @test_mod_step(i32 noundef %a, i32 noundef %b) {
 ; CHECK-LABEL: test_mod_step:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4

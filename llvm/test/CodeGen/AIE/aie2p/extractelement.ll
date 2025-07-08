@@ -10,8 +10,7 @@
 ; 256-bit vectors
 define i64 @extract_v4i64(<4 x i64> inreg %v) nounwind {
 ; AIE2P-LABEL: extract_v4i64:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
+; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; AIE2P-NEXT:    nopx // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -24,8 +23,7 @@ define i64 @extract_v4i64(<4 x i64> inreg %v) nounwind {
 
 define i64 @extract_v4i64_dyn(<4 x i64> inreg %v, i32 %idx) nounwind {
 ; AIE2P-LABEL: extract_v4i64_dyn:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
+; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; AIE2P-NEXT:    nopx // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -39,8 +37,7 @@ define i64 @extract_v4i64_dyn(<4 x i64> inreg %v, i32 %idx) nounwind {
 ; 512-bit vectors
 define i64 @extract_v8i64(<8 x i64> inreg %v) nounwind {
 ; AIE2P-LABEL: extract_v8i64:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
+; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; AIE2P-NEXT:    nopx // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -53,8 +50,7 @@ define i64 @extract_v8i64(<8 x i64> inreg %v) nounwind {
 
 define i64 @extract_v8i64_dyn(<8 x i64> inreg %v, i32 %idx) nounwind {
 ; AIE2P-LABEL: extract_v8i64_dyn:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
+; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; AIE2P-NEXT:    nopx // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -68,8 +64,7 @@ define i64 @extract_v8i64_dyn(<8 x i64> inreg %v, i32 %idx) nounwind {
 ; 1024-bit vectors
 define i64 @extract_v16i64(<16 x i64> inreg %v) nounwind {
 ; AIE2P-LABEL: extract_v16i64:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
+; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; AIE2P-NEXT:    nopx // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -82,8 +77,7 @@ define i64 @extract_v16i64(<16 x i64> inreg %v) nounwind {
 
 define i64 @extract_v16i64_dyn(<16 x i64> inreg %v, i32 %idx) nounwind {
 ; AIE2P-LABEL: extract_v16i64_dyn:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
+; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    mova r0, #8; nopx
 ; AIE2P-NEXT:    mova r1, #0
 ; AIE2P-NEXT:    vmov x0, bmlh0
@@ -103,8 +97,7 @@ define i64 @extract_v16i64_dyn(<16 x i64> inreg %v, i32 %idx) nounwind {
 ; 2048-bit vectors
 define i32 @extract_v64i32(<64 x i32> inreg %v) nounwind {
 ; AIE2P-LABEL: extract_v64i32:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
+; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; AIE2P-NEXT:    nopx // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -117,8 +110,7 @@ define i32 @extract_v64i32(<64 x i32> inreg %v) nounwind {
 
 define i32 @extract_v64i32_dyn(<64 x i32> inreg %v, i32 %idx) nounwind {
 ; AIE2P-LABEL: extract_v64i32_dyn:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
+; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    mova r0, #48; nopx
 ; AIE2P-NEXT:    mova r2, #32
 ; AIE2P-NEXT:    mova r3, #0
@@ -149,8 +141,7 @@ define i32 @extract_v64i32_dyn(<64 x i32> inreg %v, i32 %idx) nounwind {
 
 define i64 @extract_v32i64(<32 x i64> inreg %v) nounwind {
 ; AIE2P-LABEL: extract_v32i64:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
+; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; AIE2P-NEXT:    nopx // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -163,8 +154,7 @@ define i64 @extract_v32i64(<32 x i64> inreg %v) nounwind {
 
 define i64 @extract_v32i64_dyn(<32 x i64> inreg %v, i32 %idx) nounwind {
 ; AIE2P-LABEL: extract_v32i64_dyn:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
+; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    mova r0, #24; nopx
 ; AIE2P-NEXT:    mova r1, #16
 ; AIE2P-NEXT:    mova r3, #0

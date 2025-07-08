@@ -10,8 +10,7 @@
 
 define bfloat @test_fsub_bfloat(bfloat %a, bfloat %b) {
 ; CHECK-LABEL: test_fsub_bfloat:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; mova r16, #0; nops ; movx r0, #16; mov r3, r16; nopv
 ; CHECK-NEXT:    nopa ; lshl r1, r1, r0; mov r29, r16
 ; CHECK-NEXT:    lshl r0, r2, r0; vinsert.32 x0, x0, r29, r1
@@ -35,8 +34,7 @@ entry:
 
 define float @test_fsub_float(float %a, float %b) {
 ; CHECK-LABEL: test_fsub_float:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; jl #__subsf3; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4
@@ -63,8 +61,7 @@ entry:
 
 define double @test_fsub_double(double %a, double %b) {
 ; CHECK-LABEL: test_fsub_double:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; jl #__subdf3; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4

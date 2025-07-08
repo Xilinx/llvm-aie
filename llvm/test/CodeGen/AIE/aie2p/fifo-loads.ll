@@ -15,8 +15,7 @@
 
 define dso_local void @_Z17test_fifo_ld_fillRPDv64_DB8_R12fifo_state_t(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s) local_unnamed_addr #2 {
 ; CHECK-LABEL: _Z17test_fifo_ld_fillRPDv64_DB8_R12fifo_state_t:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda p0, [p0, #0]; mov dj0, #128
 ; CHECK-NEXT:    lda r24, [p1, dj0]; nopx
 ; CHECK-NEXT:    nop
@@ -53,8 +52,7 @@ entry:
 
 define dso_local noundef <64 x i8> @_Z16test_fifo_ld_popRPDv64_DB8_R12fifo_state_t(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s) local_unnamed_addr #2 {
 ; CHECK-LABEL: _Z16test_fifo_ld_popRPDv64_DB8_R12fifo_state_t:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda p0, [p0, #0]; mov dj0, #128
 ; CHECK-NEXT:    lda r24, [p1, dj0]; nopx
 ; CHECK-NEXT:    nop
@@ -92,8 +90,7 @@ entry:
 
 define dso_local noundef <64 x i8> @_Z24test_fifo_ld_pop_1d_byteRPDv64_DB8_R12fifo_state_ti(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s, i32 noundef %off) local_unnamed_addr #2 {
 ; CHECK-LABEL: _Z24test_fifo_ld_pop_1d_byteRPDv64_DB8_R12fifo_state_ti:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda p0, [p0, #0]; mov dj0, #128
 ; CHECK-NEXT:    lda r24, [p1, dj0]
 ; CHECK-NEXT:    nop
@@ -132,8 +129,7 @@ entry:
 
 define dso_local noundef <64 x i8> @_Z24test_fifo_ld_pop_2d_byteRPDv64_DB8_R12fifo_state_tiiRii(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s, i32 noundef %off, i32 noundef %size1, ptr nocapture nonnull align 4 dereferenceable(4) %count1, i32 noundef %inc1) local_unnamed_addr #2 {
 ; CHECK-LABEL: _Z24test_fifo_ld_pop_2d_byteRPDv64_DB8_R12fifo_state_tiiRii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda p0, [p0, #0]; nopb ; nopx
 ; CHECK-NEXT:    lda dc0, [p2, #0]; mov dj1, #128
 ; CHECK-NEXT:    lda r24, [p1, dj1]
@@ -180,8 +176,7 @@ entry:
 
 define dso_local noundef <64 x i8> @_Z24test_fifo_ld_pop_3d_byteRPDv64_DB8_R12fifo_state_tiiRiiiS5_i(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s, i32 noundef %off, i32 noundef %size1, ptr nocapture nonnull align 4 dereferenceable(4) %count1, i32 noundef %inc1, i32 noundef %size2, ptr nocapture nonnull align 4 dereferenceable(4) %count2, i32 noundef %inc2) local_unnamed_addr #2 {
 ; CHECK-LABEL: _Z24test_fifo_ld_pop_3d_byteRPDv64_DB8_R12fifo_state_tiiRiiiS5_i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda p0, [p0, #0]; nopb ; nopxm
 ; CHECK-NEXT:    lda dc0, [p2, #0]
 ; CHECK-NEXT:    lda dc4, [p3, #0]; mov dj1, #128
@@ -237,8 +232,7 @@ entry:
 
 define dso_local %struct.v64bfp16ebs8 @_Z16test_fifo_ld_popRP22v64bfp16ebs8_unalignedR12fifo_state_t(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s) local_unnamed_addr #2 {
 ; CHECK-LABEL: _Z16test_fifo_ld_popRP22v64bfp16ebs8_unalignedR12fifo_state_t:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda p0, [p0, #0]; mov dj0, #128
 ; CHECK-NEXT:    lda r24, [p1, dj0]; nopx
 ; CHECK-NEXT:    nop
@@ -279,8 +273,7 @@ entry:
 
 define dso_local %struct.v64bfp16ebs8 @_Z24test_fifo_ld_pop_1d_byteRP22v64bfp16ebs8_unalignedR12fifo_state_ti(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s, i32 noundef %off) local_unnamed_addr #2 {
 ; CHECK-LABEL: _Z24test_fifo_ld_pop_1d_byteRP22v64bfp16ebs8_unalignedR12fifo_state_ti:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda p0, [p0, #0]; mov dj0, #128
 ; CHECK-NEXT:    lda r24, [p1, dj0]
 ; CHECK-NEXT:    nop
@@ -322,8 +315,7 @@ entry:
 
 define dso_local %struct.v64bfp16ebs8 @_Z24test_fifo_ld_pop_2d_byteRP22v64bfp16ebs8_unalignedR12fifo_state_tiiRii(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s, i32 noundef %off, i32 noundef %size1, ptr nocapture nonnull align 4 dereferenceable(4) %count1, i32 noundef %inc1) local_unnamed_addr #2 {
 ; CHECK-LABEL: _Z24test_fifo_ld_pop_2d_byteRP22v64bfp16ebs8_unalignedR12fifo_state_tiiRii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda p0, [p0, #0]; nopb ; nopx
 ; CHECK-NEXT:    lda dc0, [p2, #0]; mov dj1, #128
 ; CHECK-NEXT:    lda r24, [p1, dj1]
@@ -373,8 +365,7 @@ entry:
 
 define dso_local %struct.v64bfp16ebs8 @_Z24test_fifo_ld_pop_3d_byteRP22v64bfp16ebs8_unalignedR12fifo_state_tiiRiiiS4_i(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s, i32 noundef %off, i32 noundef %size1, ptr nocapture nonnull align 4 dereferenceable(4) %count1, i32 noundef %inc1, i32 noundef %size2, ptr nocapture nonnull align 4 dereferenceable(4) %count2, i32 noundef %inc2) local_unnamed_addr #2 {
 ; CHECK-LABEL: _Z24test_fifo_ld_pop_3d_byteRP22v64bfp16ebs8_unalignedR12fifo_state_tiiRiiiS4_i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda p0, [p0, #0]; nopb ; nopxm
 ; CHECK-NEXT:    lda dc0, [p2, #0]
 ; CHECK-NEXT:    lda dc4, [p3, #0]; mov dj1, #128
@@ -433,8 +424,7 @@ entry:
 
 define dso_local %struct.v64bfp16ebs16 @_Z16test_fifo_ld_popRP23v64bfp16ebs16_unalignedR12fifo_state_t(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s) local_unnamed_addr #2 {
 ; CHECK-LABEL: _Z16test_fifo_ld_popRP23v64bfp16ebs16_unalignedR12fifo_state_t:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda p0, [p0, #0]; mov dj0, #128
 ; CHECK-NEXT:    lda r24, [p1, dj0]; nopx
 ; CHECK-NEXT:    nop
@@ -475,8 +465,7 @@ entry:
 
 define dso_local %struct.v64bfp16ebs16 @_Z24test_fifo_ld_pop_1d_byteRP23v64bfp16ebs16_unalignedR12fifo_state_ti(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s, i32 noundef %off) local_unnamed_addr #2 {
 ; CHECK-LABEL: _Z24test_fifo_ld_pop_1d_byteRP23v64bfp16ebs16_unalignedR12fifo_state_ti:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda p0, [p0, #0]; mov dj0, #128
 ; CHECK-NEXT:    lda r24, [p1, dj0]
 ; CHECK-NEXT:    nop
@@ -518,8 +507,7 @@ entry:
 
 define dso_local %struct.v64bfp16ebs16 @_Z24test_fifo_ld_pop_2d_byteRP23v64bfp16ebs16_unalignedR12fifo_state_tiiRii(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s, i32 noundef %off, i32 noundef %size1, ptr nocapture nonnull align 4 dereferenceable(4) %count1, i32 noundef %inc1) local_unnamed_addr #2 {
 ; CHECK-LABEL: _Z24test_fifo_ld_pop_2d_byteRP23v64bfp16ebs16_unalignedR12fifo_state_tiiRii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda p0, [p0, #0]; nopb ; nopx
 ; CHECK-NEXT:    lda dc0, [p2, #0]; mov dj1, #128
 ; CHECK-NEXT:    lda r24, [p1, dj1]
@@ -569,8 +557,7 @@ entry:
 
 define dso_local %struct.v64bfp16ebs16 @_Z24test_fifo_ld_pop_3d_byteRP23v64bfp16ebs16_unalignedR12fifo_state_tiiRiiiS4_i(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s, i32 noundef %off, i32 noundef %size1, ptr nocapture nonnull align 4 dereferenceable(4) %count1, i32 noundef %inc1, i32 noundef %size2, ptr nocapture nonnull align 4 dereferenceable(4) %count2, i32 noundef %inc2) local_unnamed_addr #2 {
 ; CHECK-LABEL: _Z24test_fifo_ld_pop_3d_byteRP23v64bfp16ebs16_unalignedR12fifo_state_tiiRiiiS4_i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda p0, [p0, #0]; nopb ; nopxm
 ; CHECK-NEXT:    lda dc0, [p2, #0]
 ; CHECK-NEXT:    lda dc4, [p3, #0]; mov dj1, #128
@@ -628,8 +615,7 @@ entry:
 
 define dso_local noundef <64 x i8> @_Z17test_fifo_ld_popxRPDv64_hR12fifo_state_t(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z17test_fifo_ld_popxRPDv64_hR12fifo_state_t:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda p0, [p0, #0]; nopb ; nopx ; mov dj0, #128
 ; CHECK-NEXT:    lda r24, [p1, dj0]
 ; CHECK-NEXT:    nop
@@ -672,8 +658,7 @@ entry:
 
 define dso_local void @_Z18test_fifo_ld_fillxRP22v64bfp16ebs8_unalignedR12fifo_state_tii(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s, i32 noundef %step, i32 noundef %mask) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z18test_fifo_ld_fillxRP22v64bfp16ebs8_unalignedR12fifo_state_tii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda p0, [p0, #0]; nopx ; mov dj0, #128
 ; CHECK-NEXT:    lda r24, [p1, dj0]
 ; CHECK-NEXT:    nop
@@ -718,8 +703,7 @@ entry:
 
 define dso_local void @_Z18test_fifo_ld_resetRrP23v128bfp16ebs8_unalignedR12fifo_state_t(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z18test_fifo_ld_resetRrP23v128bfp16ebs8_unalignedR12fifo_state_t:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda p0, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -755,8 +739,7 @@ entry:
 
 define dso_local void @_Z17test_fifo_ld_fillRrP23v128bfp16ebs8_unalignedR12fifo_state_t(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z17test_fifo_ld_fillRrP23v128bfp16ebs8_unalignedR12fifo_state_t:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda p0, [p0, #0]; mov dj0, #128
 ; CHECK-NEXT:    lda r24, [p1, dj0]; nopx
 ; CHECK-NEXT:    nop
@@ -793,8 +776,7 @@ entry:
 
 define dso_local %struct.v128bfp16ebs8 @_Z16test_fifo_ld_popRrP23v128bfp16ebs8_unalignedR12fifo_state_t(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z16test_fifo_ld_popRrP23v128bfp16ebs8_unalignedR12fifo_state_t:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda p0, [p0, #0]; mov dj0, #128
 ; CHECK-NEXT:    lda r24, [p1, dj0]
 ; CHECK-NEXT:    nop
@@ -865,8 +847,7 @@ entry:
 
 define dso_local %struct.v128bfp16ebs8 @_Z24test_fifo_ld_pop_1d_byteRrP23v128bfp16ebs8_unalignedR12fifo_state_ti(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s, i32 noundef %off) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z24test_fifo_ld_pop_1d_byteRrP23v128bfp16ebs8_unalignedR12fifo_state_ti:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda p0, [p0, #0]; nopb ; nops ; nopx ; mov dj0, #128; nopv
 ; CHECK-NEXT:    lda r24, [p1, dj0]; nopb ; nopx
 ; CHECK-NEXT:    nop
@@ -938,8 +919,7 @@ entry:
 
 define dso_local %struct.v128bfp16ebs8 @_Z24test_fifo_ld_pop_2d_byteRrP23v128bfp16ebs8_unalignedR12fifo_state_tiiRii(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s, i32 noundef %off, i32 noundef %size1, ptr nocapture nonnull align 4 dereferenceable(4) %count1, i32 noundef %inc1) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z24test_fifo_ld_pop_2d_byteRrP23v128bfp16ebs8_unalignedR12fifo_state_tiiRii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda p0, [p0, #0]; mov dj1, #128
 ; CHECK-NEXT:    lda r24, [p1, dj1]; nopx
 ; CHECK-NEXT:    nop
@@ -1019,8 +999,7 @@ entry:
 
 define dso_local %struct.v128bfp16ebs8 @_Z24test_fifo_ld_pop_3d_byteRrP23v128bfp16ebs8_unalignedR12fifo_state_tiiRiiiS5_i(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s, i32 noundef %off, i32 noundef %size1, ptr nocapture nonnull align 4 dereferenceable(4) %count1, i32 noundef %inc1, i32 noundef %size2, ptr nocapture nonnull align 4 dereferenceable(4) %count2, i32 noundef %inc2) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z24test_fifo_ld_pop_3d_byteRrP23v128bfp16ebs8_unalignedR12fifo_state_tiiRiiiS5_i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda p0, [p0, #0]; nopb ; nopx ; mov dj1, #128
 ; CHECK-NEXT:    lda r24, [p1, dj1]
 ; CHECK-NEXT:    nop

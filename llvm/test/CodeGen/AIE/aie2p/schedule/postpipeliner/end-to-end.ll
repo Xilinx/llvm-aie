@@ -15,8 +15,7 @@
 
 define <32 x i16> @zol(i32 %n, ptr %p) {
 ; CHECK-LABEL: zol:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    add.nc lc, r0, #-7
 ; CHECK-NEXT:    movxm ls, #.LBB0_1
 ; CHECK-NEXT:    movxm le, #.L_LEnd0
@@ -28,7 +27,6 @@ define <32 x i16> @zol(i32 %n, ptr %p) {
 ; CHECK-NEXT:    nopa ; vldb x0, [p0], #64; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; vldb x0, [p0], #64; nops ; nopxm ; nopv
 ; CHECK-NEXT:    // implicit-def: $x2
-; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:  .L_LEnd0:

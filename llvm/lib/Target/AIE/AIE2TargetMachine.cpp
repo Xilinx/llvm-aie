@@ -15,7 +15,6 @@
 #include "AIE2TargetMachine.h"
 #include "AIE2TargetTransformInfo.h"
 #include "AIEDumpArtifacts.h"
-#include "AIEMachineBlockPlacement.h"
 #include "AIEMachineFunctionInfo.h"
 #include "llvm/CodeGen/GlobalISel/IRTranslator.h"
 #include "llvm/CodeGen/GlobalISel/InstructionSelect.h"
@@ -202,9 +201,6 @@ void AIE2PassConfig::addPreSched2() {
   addPass(&DeadMachineInstructionElimID);
   if (getOptLevel() != CodeGenOptLevel::None)
     addPass(&MachineBlockPlacementID);
-  // As it is now, this just sets block alignment, which is a necessary
-  // step
-  addPass(createAIEMachineBlockPlacement());
 
   if (TM->getOptLevel() != CodeGenOptLevel::None)
     addPass(createAIEBaseHardwareLoopsPass());

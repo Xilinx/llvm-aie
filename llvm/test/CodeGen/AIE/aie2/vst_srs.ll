@@ -11,8 +11,7 @@
 ; Function Attrs: mustprogress nofree nounwind memory(inaccessiblemem: readwrite)
 define dso_local noundef <16 x i16> @_Z5test0Dv16_u7__acc32(<8 x i64> noundef %acc) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test0Dv16_u7__acc32:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #32
 ; CHECK-NEXT:    mova r0, #2
 ; CHECK-NEXT:    mov p0, sp
@@ -47,8 +46,7 @@ declare void @llvm.lifetime.end.p0(i64 immarg, ptr nocapture) #1
 ; Function Attrs: mustprogress nofree nounwind memory(inaccessiblemem: readwrite)
 define dso_local noundef <8 x i32> @_Z5test1Dv8_u7__acc64(<8 x i64> noundef %acc) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test1Dv8_u7__acc64:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #32
 ; CHECK-NEXT:    mova r0, #2
 ; CHECK-NEXT:    mov p0, sp
@@ -77,8 +75,7 @@ entry:
 ; Function Attrs: mustprogress nofree nounwind memory(inaccessiblemem: readwrite)
 define dso_local noundef <16 x i16> @_Z5test2Dv16_u7__acc32(<8 x i64> noundef %acc) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test2Dv16_u7__acc32:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #32
 ; CHECK-NEXT:    mova r0, #2
 ; CHECK-NEXT:    mov p0, sp
@@ -107,8 +104,7 @@ entry:
 ; Function Attrs: mustprogress nofree nounwind memory(inaccessiblemem: readwrite)
 define dso_local noundef <8 x i32> @_Z5test3Dv8_u7__acc64(<8 x i64> noundef %acc) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test3Dv8_u7__acc64:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #32
 ; CHECK-NEXT:    mova r0, #2
 ; CHECK-NEXT:    mov p0, sp
@@ -137,8 +133,7 @@ entry:
 ; Function Attrs: mustprogress nofree nounwind memory(inaccessiblemem: readwrite)
 define dso_local noundef <16 x i16> @_Z5test4Dv16_u7__acc64(<16 x i64> noundef %acc) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test4Dv16_u7__acc64:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #32
 ; CHECK-NEXT:    mova r0, #2
 ; CHECK-NEXT:    mov p0, sp
@@ -167,8 +162,7 @@ entry:
 ; Function Attrs: mustprogress nofree nounwind memory(inaccessiblemem: readwrite)
 define dso_local noundef <32 x i8> @_Z5test5Dv32_u7__acc32(<16 x i64> noundef %acc) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test5Dv32_u7__acc32:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #32
 ; CHECK-NEXT:    mova r0, #2
 ; CHECK-NEXT:    mov p0, sp
@@ -197,8 +191,7 @@ entry:
 ; Function Attrs: mustprogress nofree nounwind memory(inaccessiblemem: readwrite)
 define dso_local noundef <16 x i16> @_Z5test6Dv16_u7__acc64(<16 x i64> noundef %acc) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test6Dv16_u7__acc64:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #32
 ; CHECK-NEXT:    mova r0, #2
 ; CHECK-NEXT:    mov p0, sp
@@ -227,8 +220,7 @@ entry:
 ; Function Attrs: mustprogress nofree nounwind memory(inaccessiblemem: readwrite)
 define dso_local noundef <32 x i8> @_Z5test7Dv32_u7__acc32(<16 x i64> noundef %acc) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test7Dv32_u7__acc32:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #32
 ; CHECK-NEXT:    mova r0, #2
 ; CHECK-NEXT:    mov p0, sp
@@ -257,8 +249,7 @@ entry:
 ; Function Attrs: mustprogress nofree nounwind memory(inaccessiblemem: readwrite)
 define dso_local noundef <16 x i16> @_Z5test8Dv16_u7__acc64(<16 x i64> noundef %acc) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test8Dv16_u7__acc64:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #32
 ; CHECK-NEXT:    mova r0, #2
 ; CHECK-NEXT:    mov p0, sp
@@ -287,8 +278,7 @@ entry:
 ; Function Attrs: mustprogress nofree nounwind memory(inaccessiblemem: readwrite)
 define dso_local noundef <32 x i8> @_Z5test9Dv32_u7__acc32(<16 x i64> noundef %acc) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z5test9Dv32_u7__acc32:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #32
 ; CHECK-NEXT:    mova r0, #2
 ; CHECK-NEXT:    mov p0, sp
@@ -317,8 +307,7 @@ entry:
 ; Function Attrs: mustprogress nofree nounwind memory(inaccessiblemem: readwrite)
 define dso_local noundef <16 x i16> @_Z6test10Dv16_u7__acc32(<8 x i64> noundef %acc) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z6test10Dv16_u7__acc32:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #32
 ; CHECK-NEXT:    mova r0, #4
 ; CHECK-NEXT:    mov p0, sp
@@ -347,8 +336,7 @@ entry:
 ; Function Attrs: mustprogress nofree nounwind memory(inaccessiblemem: readwrite)
 define dso_local noundef <8 x i32> @_Z6test11Dv8_u7__acc64(<8 x i64> noundef %acc) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z6test11Dv8_u7__acc64:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #32
 ; CHECK-NEXT:    mova r0, #4
 ; CHECK-NEXT:    mov p0, sp
@@ -377,8 +365,7 @@ entry:
 ; Function Attrs: mustprogress nofree nounwind memory(inaccessiblemem: readwrite)
 define dso_local noundef <16 x i16> @test_postincrement(ptr %array, <8 x i64> noundef %acc) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_postincrement:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; mova r0, #2; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; mov s0, r0
 ; CHECK-NEXT:    vst.srs.d16.s32 bml0, s0, [p0, #0]

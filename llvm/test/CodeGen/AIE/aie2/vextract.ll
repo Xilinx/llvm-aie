@@ -9,8 +9,7 @@
 
 define dso_local noundef signext i32 @_Z15test_ext_v2int4Dv16_iii(<16 x i32> noundef %v, i32 noundef %idx, i32 noundef %sign) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z15test_ext_v2int4Dv16_iii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; mov r1, r16
 ; CHECK-NEXT:    mova r16, #63
 ; CHECK-NEXT:    ret lr
@@ -28,8 +27,7 @@ entry:
 
 define dso_local noundef signext i32 @_Z15test_ext_v4int4Dv16_iii(<16 x i32> noundef %v, i32 noundef %idx, i32 noundef %sign) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z15test_ext_v4int4Dv16_iii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; mov r1, r16
 ; CHECK-NEXT:    mova r16, #50
 ; CHECK-NEXT:    ret lr
@@ -47,8 +45,7 @@ entry:
 
 define dso_local noundef i32 @_Z15test_ext_v8int4Dv16_iii(<16 x i32> noundef %v, i32 noundef %idx, i32 noundef %sign) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z15test_ext_v8int4Dv16_iii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; mov r1, r16
 ; CHECK-NEXT:    mova r16, #10
 ; CHECK-NEXT:    ret lr
@@ -65,8 +62,7 @@ entry:
 
 define dso_local noundef signext i32 @_Z21test_ext_v2int4_sign1Dv16_ii(<16 x i32> noundef %v, i32 noundef %idx) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z21test_ext_v2int4_sign1Dv16_ii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    mova r16, #6 // Delay Slot 4
@@ -82,8 +78,7 @@ entry:
 
 define dso_local noundef signext i32 @_Z21test_ext_v4int4_sign1Dv16_ii(<16 x i32> noundef %v, i32 noundef %idx) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z21test_ext_v4int4_sign1Dv16_ii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    mova r16, #5 // Delay Slot 4
@@ -99,8 +94,7 @@ entry:
 
 define dso_local noundef i32 @_Z21test_ext_v8int4_sign1Dv16_ii(<16 x i32> noundef %v, i32 noundef %idx) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z21test_ext_v8int4_sign1Dv16_ii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    mova r16, #1 // Delay Slot 4
@@ -115,8 +109,7 @@ entry:
 
 define dso_local noundef signext i32 @_Z21test_ext_v2int4_sign0Dv16_ii(<16 x i32> noundef %v, i32 noundef %idx) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z21test_ext_v2int4_sign0Dv16_ii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    mova r16, #16 // Delay Slot 4
@@ -132,8 +125,7 @@ entry:
 
 define dso_local noundef signext i32 @_Z21test_ext_v4int4_sign0Dv16_ii(<16 x i32> noundef %v, i32 noundef %idx) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z21test_ext_v4int4_sign0Dv16_ii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    mova r16, #51 // Delay Slot 4
@@ -149,8 +141,7 @@ entry:
 
 define dso_local noundef i32 @_Z21test_ext_v8int4_sign0Dv16_ii(<16 x i32> noundef %v, i32 noundef %idx) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z21test_ext_v8int4_sign0Dv16_ii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    mova r16, #41 // Delay Slot 4
@@ -164,8 +155,7 @@ entry:
 
 define dso_local noundef <8 x i8> @_Z16test_ext_v16int4Dv64_DB8_ii(<64 x i8> noundef %v, i32 noundef %idx, i32 noundef %sign) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z16test_ext_v16int4Dv64_DB8_ii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mova r16, #1 // Delay Slot 5
 ; CHECK-NEXT:    mov crVaddSign, r1 // Delay Slot 4
@@ -181,8 +171,7 @@ entry:
 
 define dso_local noundef i64 @_Z12test_ext_u64Dv16_iii(<16 x i32> noundef %v, i32 noundef %idx, i32 noundef %sign) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z12test_ext_u64Dv16_iii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r4, r16; nops
 ; CHECK-NEXT:    mov r16, r2
 ; CHECK-NEXT:    mov crVaddSign, r3

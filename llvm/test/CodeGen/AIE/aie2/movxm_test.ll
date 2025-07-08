@@ -13,8 +13,7 @@
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(read, argmem: none, inaccessiblemem: none)
 define dso_local noundef i32 @_Z4getAv() {
 ; CHECK-LABEL: _Z4getAv:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    movxm p0, #(d+4)
 ; CHECK-NEXT:    lda r0, [p0, #0]
 ; CHECK-NEXT:    lda r1, [p0, #4]
@@ -39,8 +38,7 @@ entry:
 ; Function Attrs: mustprogress noinline nounwind optnone
 define dso_local noundef i32 @foo() {
 ; CHECK-LABEL: foo:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    movxm p0, #(X+4)
 ; CHECK-NEXT:    lda.s16 r0, [p0, #-2]
 ; CHECK-NEXT:    lda r1, [p0, #0]
@@ -66,8 +64,7 @@ entry:
 ; Function Attrs: mustprogress noinline nounwind optnone
 define dso_local noundef i32 @bar() {
 ; CHECK-LABEL: bar:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; movxm p0, #(Y+4)
 ; CHECK-NEXT:    lda.s16 r0, [p0, #-2]
 ; CHECK-NEXT:    lda.s16 r1, [p0, #-4]

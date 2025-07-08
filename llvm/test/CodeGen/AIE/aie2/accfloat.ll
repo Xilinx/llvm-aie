@@ -9,8 +9,7 @@
 
 define dso_local noundef <8 x i64> @test_add_conf(<8 x i64> noundef %acc1, <8 x i64> noundef %acc2, i32 noundef %zero_acc1, i32 noundef %sub_acc1, i32 noundef %sub_acc2) {
 ; CHECK-LABEL: test_add_conf:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; mova r3, #12; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mova r4, #13; nopx
 ; CHECK-NEXT:    mova r5, #28
@@ -39,8 +38,7 @@ entry:
 
 define dso_local noundef <8 x i64> @test_sub_conf(<8 x i64> noundef %acc1, <8 x i64> noundef %acc2, i32 noundef %zero_acc1, i32 noundef %sub_acc1, i32 noundef %sub_acc2) {
 ; CHECK-LABEL: test_sub_conf:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; mova r3, #12; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mova r4, #13; nopx
 ; CHECK-NEXT:    mova r5, #28
@@ -69,8 +67,7 @@ entry:
 
 define dso_local noundef <8 x i64> @test_add(<8 x i64> noundef %acc1, <8 x i64> noundef %acc2) {
 ; CHECK-LABEL: test_add:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #28; nopb ; nopxm ; nops
 ; CHECK-NEXT:    vadd.f bml0, bml1, bml2, r0
 ; CHECK-NEXT:    ret lr
@@ -87,8 +84,7 @@ entry:
 
 define dso_local noundef <8 x i64> @test_sub(<8 x i64> noundef %acc1, <8 x i64> noundef %acc2) {
 ; CHECK-LABEL: test_sub:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #28; nopb ; nopxm ; nops
 ; CHECK-NEXT:    vsub.f bml0, bml1, bml2, r0
 ; CHECK-NEXT:    ret lr
@@ -105,8 +101,7 @@ entry:
 
 define dso_local noundef <8 x i64> @test_broadcast_zero_to_v16accfloat() {
 ; CHECK-LABEL: test_broadcast_zero_to_v16accfloat:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; vclr bml0
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5

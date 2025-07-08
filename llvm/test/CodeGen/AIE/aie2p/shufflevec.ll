@@ -9,8 +9,7 @@
 
 define <16 x i32> @test_shuffle_vector_to_concat_vector(<8 x i32> noundef %a, <8 x i32> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_to_concat_vector:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -24,8 +23,7 @@ entry:
 
 define <16 x i32> @test_shuffle_vector_2x32Src(<2 x i32> noundef %a, <2 x i32> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_2x32Src:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -39,8 +37,7 @@ entry:
 
 define <16 x i16> @test_shuffle_vector_4x16Src(<4 x i16> noundef %a, <4 x i16> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_4x16Src:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -54,8 +51,7 @@ entry:
 
 define <32 x i8> @test_shuffle_vector_8x8Src(<8 x i8> noundef %a, <8 x i8> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_8x8Src:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -69,8 +65,7 @@ entry:
 
 define <16 x i16> @test_shuffle_vector_2x16Src(<2 x i16> noundef %a, <2 x i16> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_2x16Src:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -84,8 +79,7 @@ entry:
 
 define <32 x i8> @test_shuffle_vector_4x8Src(<4 x i8> noundef %a, <4 x i8> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_4x8Src:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -99,8 +93,7 @@ entry:
 
 define <16 x i32> @test_shuffle_vector_all_undef(<16 x i32> noundef %a, <16 x i32> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_all_undef:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -114,8 +107,7 @@ entry:
 
 define <16 x i32> @test_shuffle_vector_vsel_valid_mask_16_s32(<16 x i32> noundef %a, <16 x i32> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_vsel_valid_mask_16_s32:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -129,8 +121,7 @@ entry:
 
 define <32 x i16> @test_shuffle_vector_vsel_valid_mask_32_s16(<32 x i16> noundef %a, <32 x i16> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_vsel_valid_mask_32_s16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -144,8 +135,7 @@ entry:
 
 define <64 x i8> @test_shuffle_vector_vsel_valid_mask_64_s8(<64 x i8> noundef %a, <64 x i8> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_vsel_valid_mask_64_s8:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mova r0, #5 // Delay Slot 4
@@ -159,8 +149,7 @@ entry:
 
 define <16 x i32> @test_shuffle_vector_vsel_valid_mask_ordered_indices_with_undef(<16 x i32> noundef %a, <16 x i32> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_vsel_valid_mask_ordered_indices_with_undef:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -174,8 +163,7 @@ entry:
 
 define <16 x i32> @test_shuffle_vector_vsel_valid_mask_with_undef(<16 x i32> noundef %a, <16 x i32> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_vsel_valid_mask_with_undef:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -189,8 +177,7 @@ entry:
 
 define <16 x i32> @test_shuffle_vector_vsel_valid_mask_mixed_indices(<16 x i32> noundef %a, <16 x i32> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_vsel_valid_mask_mixed_indices:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -204,8 +191,7 @@ entry:
 
 define <16 x i32> @test_shuffle_vector_vsel_valid_mask_mixed_indices_with_undef(<16 x i32> noundef %a, <16 x i32> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_vsel_valid_mask_mixed_indices_with_undef:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -219,8 +205,7 @@ entry:
 
 define <16 x i32> @test_shuffle_vector_vsel_invalid_mask(<16 x i32> noundef %a, <16 x i32> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_vsel_invalid_mask:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
 ; CHECK-NEXT:    vextract.64 r1:r0, x2, #0, vaddsign1 // Delay Slot 5
 ; CHECK-NEXT:    mova r29, #0 // Delay Slot 4
@@ -234,8 +219,7 @@ entry:
 
 define <8 x i32> @test_shuffle_vector_to_extract_broadcast_vecElem(<8 x i32> noundef %a, <8 x i32> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_to_extract_broadcast_vecElem:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    vextract.32 r0, x2, #2, vaddsign1 // Delay Slot 4
@@ -249,8 +233,7 @@ entry:
 
 define <16 x i16> @test_shuffle_vector_to_extract_broadcast_s16(<16 x i16> noundef %a, <16 x i16> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_to_extract_broadcast_s16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    vextract.16 r0, x2, #2, vaddsign1 // Delay Slot 4
@@ -267,8 +250,7 @@ entry:
 
 define <4 x i8> @test_shuffle_vector_to_extract_subvec_4xs8Dst(<64 x i8> noundef %a, <64 x i8> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_to_extract_subvec_4xs8Dst:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -282,8 +264,7 @@ entry:
 
 define <2 x i16> @test_shuffle_vector_to_extract_subvec_2xs16Dst(<32 x i16> noundef %a, <32 x i16> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_to_extract_subvec_2xs16Dst:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -297,8 +278,7 @@ entry:
 
 define <8 x i8> @test_shuffle_vector_to_extract_subvec_8xs8Dst(<64 x i8> noundef %a, <64 x i8> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_to_extract_subvec_8xs8Dst:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -312,8 +292,7 @@ entry:
 
 define <4 x i16> @test_shuffle_vector_to_extract_subvec_4xs16Dst(<32 x i16> noundef %a, <32 x i16> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_to_extract_subvec_4xs16Dst:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -327,8 +306,7 @@ entry:
 
 define <2 x i32> @test_shuffle_vector_to_extract_subvec_2xs32Dst(<16 x i32> noundef %a, <16 x i32> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_to_extract_subvec_2xs32Dst:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -344,8 +322,7 @@ entry:
 
 define <2 x i32> @test_shuffle_vector_to_extract_subvec_256BitSrc(<8 x i32> noundef %a, <8 x i32> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_to_extract_subvec_256BitSrc:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -359,8 +336,7 @@ entry:
 
 define <2 x i32> @test_shuffle_vector_to_extract_subvec_1024BitSrc(<32 x i32> noundef %a, <32 x i32> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_to_extract_subvec_1024BitSrc:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -374,8 +350,7 @@ entry:
 
 define <2 x i32> @test_shuffle_vector_to_extract_subvec_2048BitSrc(<64 x i32> noundef %a, <64 x i32> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_to_extract_subvec_2048BitSrc:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; mov p0, sp; nopv
 ; CHECK-NEXT:    padda [p0], #-256
 ; CHECK-NEXT:    vlda bmll0, [p0, #0]
@@ -397,8 +372,7 @@ entry:
 
 define <64 x i8> @test_shuffle_vector_to_extract_broadcast_subvec_32(<64 x i8> noundef %a, <64 x i8> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_to_extract_broadcast_subvec_32:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -412,8 +386,7 @@ entry:
 
 define <16 x i16> @test_shuffle_vector_to_extract_broadcast_subvec_64(<16 x i16> noundef %a, <16 x i16> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_to_extract_broadcast_subvec_64:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -429,8 +402,7 @@ entry:
 
 define <8 x i32> @test_shuffle_vector_vector_unmerge_lo(<16 x i32> noundef %a, <16 x i32> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_vector_unmerge_lo:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -444,8 +416,7 @@ entry:
 
 define <8 x i32> @test_shuffle_vector_vector_unmerge_lo_4_unmerge_outputs(<32 x i32> noundef %a, <32 x i32> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_vector_unmerge_lo_4_unmerge_outputs:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -459,8 +430,7 @@ entry:
 
 define <4 x i32> @test_shuffle_vector_vector_unmerge_hi_128(<8 x i32> noundef %a, <8 x i32> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_vector_unmerge_hi_128:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -474,8 +444,7 @@ entry:
 
 define <8 x i32> @test_shuffle_vector_vector_unmerge_hi_256(<16 x i32> noundef %a, <16 x i32> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_vector_unmerge_hi_256:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -489,8 +458,7 @@ entry:
 
 define <16 x i32> @test_shuffle_vector_vector_unmerge_hi_512(<32 x i32> noundef %a, <32 x i32> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_vector_unmerge_hi_512:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -504,8 +472,7 @@ entry:
 
 define <32 x i32> @test_shuffle_vector_vector_unmerge_lo_1024(<64 x i32> noundef %a, <64 x i32> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_vector_unmerge_lo_1024:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nopx ; mov p0, sp; nops
 ; CHECK-NEXT:    padda [p0], #-256
 ; CHECK-NEXT:    vlda bmll0, [p0, #0]
@@ -526,8 +493,7 @@ entry:
 ; Combine G_SHUFFLE_VECTOR into COPY. Note: shufflevector doesn't accept scalar arguments.
 define <16 x i32> @shuffle_vector_to_copy_vec(<16 x i32> noundef %a, <16 x i32> noundef %b) {
 ; CHECK-LABEL: shuffle_vector_to_copy_vec:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -541,8 +507,7 @@ entry:
 
 define <8 x i32> @shuffle_vector_to_copy_no_combine(<8 x i32> noundef %a, <8 x i32> noundef %b) {
 ; CHECK-LABEL: shuffle_vector_to_copy_no_combine:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopx ; vextract.32 r1, x2, #5, vaddsign1
 ; CHECK-NEXT:    vextract.32 r2, x2, #6, vaddsign1
 ; CHECK-NEXT:    vextract.32 r3, x2, #7, vaddsign1
@@ -569,8 +534,7 @@ entry:
 
 define <16 x i32> @shuffle_vector_to_unmerge_concat_lo(<16 x i32> noundef %a, <16 x i32> noundef %b) {
 ; CHECK-LABEL: shuffle_vector_to_unmerge_concat_lo:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -584,8 +548,7 @@ entry:
 
 define <16 x i32> @shuffle_vector_to_unmerge_concat_hi(<16 x i32> noundef %a, <16 x i32> noundef %b) {
 ; CHECK-LABEL: shuffle_vector_to_unmerge_concat_hi:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -601,8 +564,7 @@ entry:
 ; TODO: We should be able to handle this swap pattern with an unmerge and concat
 define <16 x i32> @shuffle_vector_to_unmerge_concat_lo_hi(<16 x i32> noundef %a, <16 x i32> noundef %b) {
 ; CHECK-LABEL: shuffle_vector_to_unmerge_concat_lo_hi:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -616,8 +578,7 @@ entry:
 
 define fastcc void @shuffle_match_extracted_load_idx0() {
 ; CHECK-LABEL: shuffle_match_extracted_load_idx0:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova p0, #0; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    lda.s16 r0, [p0, #0]; nopx
 ; CHECK-NEXT:    nop
@@ -640,8 +601,7 @@ entry:
 
 define fastcc void @shuffle_match_extracted_load_idx_non_zero() {
 ; CHECK-LABEL: shuffle_match_extracted_load_idx_non_zero:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova p0, #6; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    lda.s16 r0, [p0, #0]
 ; CHECK-NEXT:    nop
@@ -665,8 +625,7 @@ entry:
 
 define <32 x i16> @shuffle_vector_to_extract_insert_elt_one_exception_second_input(<32 x i16> noundef %a, <32 x i16> noundef %b) {
 ; CHECK-LABEL: shuffle_vector_to_extract_insert_elt_one_exception_second_input:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vextract.16 r0, x4, #0, vaddsign1 // Delay Slot 4
@@ -680,8 +639,7 @@ entry:
 
 define <32 x i16> @shuffle_vector_to_extract_insert_elt_3_exceptions_second_input_reuse_extract_result(<32 x i16> noundef %a, <32 x i16> noundef %b) {
 ; CHECK-LABEL: shuffle_vector_to_extract_insert_elt_3_exceptions_second_input_reuse_extract_result:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vextract.16 r0, x4, #0, vaddsign1; nopv
 ; CHECK-NEXT:    mova r29, #0; nopx
 ; CHECK-NEXT:    vinsert.16 x0, x2, r29, r0
@@ -699,8 +657,7 @@ entry:
 
 define <32 x i16> @shuffle_vector_to_extract_insert_elt_one_exception_first_input(<32 x i16> noundef %a, <32 x i16> noundef %b) {
 ; CHECK-LABEL: shuffle_vector_to_extract_insert_elt_one_exception_first_input:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vextract.16 r0, x2, #15, vaddsign1 // Delay Slot 4
@@ -714,8 +671,7 @@ entry:
 
 define <32 x i16> @shuffle_vector_to_extract_insert_elt_two_exceptions_diff_input(<32 x i16> noundef %a, <32 x i16> noundef %b) {
 ; CHECK-LABEL: shuffle_vector_to_extract_insert_elt_two_exceptions_diff_input:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r29, #8; nopx
 ; CHECK-NEXT:    vextract.16 r0, x2, #15, vaddsign1
 ; CHECK-NEXT:    ret lr
@@ -731,8 +687,7 @@ entry:
 
 define <16 x i32> @shuffle_vector_to_extract_insert_elt_beyond_max_exceptions_no_combine(<16 x i32> noundef %a, <16 x i32> noundef %b) {
 ; CHECK-LABEL: shuffle_vector_to_extract_insert_elt_beyond_max_exceptions_no_combine:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nopx ; vextract.32 r1, x2, #1, vaddsign1; nops
 ; CHECK-NEXT:    vextract.32 r2, x2, #2, vaddsign1
 ; CHECK-NEXT:    vextract.32 r3, x2, #3, vaddsign1
@@ -767,8 +722,7 @@ entry:
 
 define <16 x i32> @shuffle_vector_to_extract_insert_elt_max_exceptions_combine(<16 x i32> noundef %a, <16 x i32> noundef %b) {
 ; CHECK-LABEL: shuffle_vector_to_extract_insert_elt_max_exceptions_combine:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopx ; vextract.32 r0, x2, #6, vaddsign1
 ; CHECK-NEXT:    mova r29, #9
 ; CHECK-NEXT:    vinsert.32 x0, x2, r29, r0
@@ -796,8 +750,7 @@ entry:
 
 define <16 x i32> @shuffle_concat_extracted_subvectors_vecToExtract_sameSize1(<16 x i32> %a, <16 x i32> %b) {
 ; CHECK-LABEL: shuffle_concat_extracted_subvectors_vecToExtract_sameSize1:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0:
+; CHECK:       // %bb.0:
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -810,8 +763,7 @@ define <16 x i32> @shuffle_concat_extracted_subvectors_vecToExtract_sameSize1(<1
 
 define <16 x i32> @shuffle_concat_extracted_subvectors_vecToExtract_sameSize2(<16 x i32> %a, <16 x i32> %b) {
 ; CHECK-LABEL: shuffle_concat_extracted_subvectors_vecToExtract_sameSize2:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0:
+; CHECK:       // %bb.0:
 ; CHECK-NEXT:    mova r0, #48; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mova r16, #15; nopx
 ; CHECK-NEXT:    vshift x0, x0, x2, r0
@@ -827,8 +779,7 @@ define <16 x i32> @shuffle_concat_extracted_subvectors_vecToExtract_sameSize2(<1
 
 define <16 x i32> @shuffle_concat_extracted_subvectors_vecToExtract_DiffSize1(<16 x i32> %a, <16 x i32> %b) {
 ; CHECK-LABEL: shuffle_concat_extracted_subvectors_vecToExtract_DiffSize1:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0:
+; CHECK:       // %bb.0:
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vmov wl4, wh4; nopv
 ; CHECK-NEXT:    mova r0, #16; nopx
 ; CHECK-NEXT:    mova r16, #15
@@ -848,8 +799,7 @@ define <16 x i32> @shuffle_concat_extracted_subvectors_vecToExtract_DiffSize1(<1
 
 define <16 x i32> @shuffle_concat_extracted_subvectors_vecToExtract_DiffSize2(<16 x i32> %a, <16 x i32> %b) {
 ; CHECK-LABEL: shuffle_concat_extracted_subvectors_vecToExtract_DiffSize2:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0:
+; CHECK:       // %bb.0:
 ; CHECK-NEXT:    mova r0, #16; nopx
 ; CHECK-NEXT:    mova r16, #15
 ; CHECK-NEXT:    vshift x0, x4, x0, r0
@@ -868,8 +818,7 @@ define <16 x i32> @shuffle_concat_extracted_subvectors_vecToExtract_DiffSize2(<1
 
 define <16 x i32> @shuffle_concat_extracted_subvectors_no_undef_at_extractidx(<16 x i32> %a, <16 x i32> %b) {
 ; CHECK-LABEL: shuffle_concat_extracted_subvectors_no_undef_at_extractidx:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0:
+; CHECK:       // %bb.0:
 ; CHECK-NEXT:    mova r0, #16; nopxm
 ; CHECK-NEXT:    mova r16, #15
 ; CHECK-NEXT:    vshift x0, x2, x0, r0
@@ -888,8 +837,7 @@ define <16 x i32> @shuffle_concat_extracted_subvectors_no_undef_at_extractidx(<1
 
 define <16 x i32> @shuffle_concat_extracted_subvectors_undef_at_extractidx(<16 x i32> %a, <16 x i32> %b) {
 ; CHECK-LABEL: shuffle_concat_extracted_subvectors_undef_at_extractidx:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0:
+; CHECK:       // %bb.0:
 ; CHECK-NEXT:    mova r0, #16; nopxm
 ; CHECK-NEXT:    mova r16, #15
 ; CHECK-NEXT:    vshift x0, x2, x0, r0
@@ -908,8 +856,7 @@ define <16 x i32> @shuffle_concat_extracted_subvectors_undef_at_extractidx(<16 x
 ; Exeptions submask is all exceptions
 define <16 x i32> @shuffle_concat_extracted_subvectors_nothing_but_exceptions(<16 x i32> %a, <16 x i32> %b) {
 ; CHECK-LABEL: shuffle_concat_extracted_subvectors_nothing_but_exceptions:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0:
+; CHECK:       // %bb.0:
 ; CHECK-NEXT:    mova r29, #0; nopx
 ; CHECK-NEXT:    vextract.64 r1:r0, x2, #2, vaddsign1
 ; CHECK-NEXT:    vextract.64 r3:r2, x2, #0, vaddsign1
@@ -932,8 +879,7 @@ define <16 x i32> @shuffle_concat_extracted_subvectors_nothing_but_exceptions(<1
 
 define <8 x i32> @shuffle_concat_extracted_subvectors_height_not_power2_no_combine(<8 x i32> %a, <8 x i32> %b) {
 ; CHECK-LABEL: shuffle_concat_extracted_subvectors_height_not_power2_no_combine:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0:
+; CHECK:       // %bb.0:
 ; CHECK-NEXT:    nopa ; nopx ; vextract.32 r1, x2, #2, vaddsign1
 ; CHECK-NEXT:    vextract.32 r2, x2, #3, vaddsign1
 ; CHECK-NEXT:    vextract.32 r0, x2, #1, vaddsign1
@@ -955,8 +901,7 @@ define <8 x i32> @shuffle_concat_extracted_subvectors_height_not_power2_no_combi
 
 define <16 x i32> @shuffle_concat_extracted_subvectors_numSubvecs_not_powerOf2_no_combine(<16 x i32> %a, <16 x i32> %b) {
 ; CHECK-LABEL: shuffle_concat_extracted_subvectors_numSubvecs_not_powerOf2_no_combine:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0:
+; CHECK:       // %bb.0:
 ; CHECK-NEXT:    nopa ; nopx ; vextract.32 r1, x2, #1, vaddsign1
 ; CHECK-NEXT:    vextract.32 r2, x2, #2, vaddsign1
 ; CHECK-NEXT:    vextract.32 r3, x2, #3, vaddsign1
@@ -986,8 +931,7 @@ define <16 x i32> @shuffle_concat_extracted_subvectors_numSubvecs_not_powerOf2_n
 
 define <64 x i8> @shuffle_concat_extracted_subvectors_exceptions_not_contiguous_no_combine(<8 x i64> %a, <8 x i64> %b) {
 ; CHECK-LABEL: shuffle_concat_extracted_subvectors_exceptions_not_contiguous_no_combine:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0:
+; CHECK:       // %bb.0:
 ; CHECK-NEXT:    vlda bmll0, [sp, #-64]
 ; CHECK-NEXT:    vlda bmll1, [sp, #-128]
 ; CHECK-NEXT:    nop

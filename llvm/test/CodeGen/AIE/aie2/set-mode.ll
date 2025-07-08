@@ -9,8 +9,7 @@
 
 define dso_local void @_Z16test_set_satmodej(i32 noundef %val) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z16test_set_satmodej:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -24,8 +23,7 @@ entry:
 
 define dso_local void @_Z12test_set_satv() local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z12test_set_satv:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -39,8 +37,7 @@ entry:
 
 define dso_local void @_Z15test_set_symsatv() local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z15test_set_symsatv:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -54,8 +51,7 @@ entry:
 
 define dso_local void @_Z12test_clr_satv() local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z12test_clr_satv:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -69,8 +65,7 @@ entry:
 
 define dso_local void @_Z12test_set_rndj(i32 noundef %val) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z12test_set_rndj:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -84,8 +79,7 @@ entry:
 
 define dso_local void @_Z22test_set_fpmulmac_maskj(i32 noundef %val) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z22test_set_fpmulmac_maskj:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -99,8 +93,7 @@ entry:
 
 define dso_local void @_Z20test_set_fp2int_maskj(i32 noundef %val) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z20test_set_fp2int_maskj:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -114,8 +107,7 @@ entry:
 
 define dso_local void @_Z19test_set_fp2bf_maskj(i32 noundef %val) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z19test_set_fp2bf_maskj:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -129,8 +121,7 @@ entry:
 
 define dso_local noundef i32 @_Z16test_get_satmodev() local_unnamed_addr #1 {
 ; CHECK-LABEL: _Z16test_get_satmodev:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -144,8 +135,7 @@ entry:
 
 define dso_local noundef i32 @_Z12test_get_satv() local_unnamed_addr #1 {
 ; CHECK-LABEL: _Z12test_get_satv:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -159,8 +149,7 @@ entry:
 
 define dso_local noundef i32 @_Z12test_get_rndv() local_unnamed_addr #1 {
 ; CHECK-LABEL: _Z12test_get_rndv:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -174,8 +163,7 @@ entry:
 
 define dso_local noundef i32 @_Z22test_get_fpmulmac_maskv() local_unnamed_addr #1 {
 ; CHECK-LABEL: _Z22test_get_fpmulmac_maskv:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -189,8 +177,7 @@ entry:
 
 define dso_local noundef i32 @_Z20test_get_fp2int_maskv() local_unnamed_addr #1 {
 ; CHECK-LABEL: _Z20test_get_fp2int_maskv:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -204,8 +191,7 @@ entry:
 
 define dso_local noundef i32 @_Z19test_get_fp2bf_maskv() local_unnamed_addr #1 {
 ; CHECK-LABEL: _Z19test_get_fp2bf_maskv:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4

@@ -9,8 +9,7 @@
 
 define dso_local noundef <64 x i8> @test_vsel_s8(<64 x i8> noundef %a, <64 x i8> noundef %b, i64 noundef %s) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_vsel_s8:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -25,8 +24,7 @@ entry:
 
 define dso_local noundef <64 x i8> @test_vsel_s8_zeroinit(<64 x i8> noundef %a, <64 x i8> noundef %b) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_vsel_s8_zeroinit:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mova r24, #0 // Delay Slot 4
@@ -40,8 +38,7 @@ entry:
 
 define dso_local noundef <64 x i8> @test_vsel_s8_zeroinit_from_s32(<64 x i8> noundef %a, <64 x i8> noundef %b, i32 noundef %s) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_vsel_s8_zeroinit_from_s32:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -56,8 +53,7 @@ entry:
 
 define dso_local noundef <32 x i16> @test_vsel_s16(<32 x i16> noundef %a, <32 x i16> noundef %b, i32 noundef %s) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_vsel_s16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -71,8 +67,7 @@ entry:
 
 define dso_local noundef <16 x i32> @test_vsel_s32(<16 x i32> noundef %a, <16 x i32> noundef %b, i32 noundef %s) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_vsel_s32:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4

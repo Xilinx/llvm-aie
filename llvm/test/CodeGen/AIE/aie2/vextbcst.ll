@@ -9,8 +9,7 @@
 
 define dso_local noundef <64 x i8> @_Z19test_broadcast_elemDv64_ai(<64 x i8> noundef %v, i32 noundef %idx) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z19test_broadcast_elemDv64_ai:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -24,8 +23,7 @@ entry:
 
 define dso_local noundef <32 x i16> @_Z19test_broadcast_elemDv32_si(<32 x i16> noundef %v, i32 noundef %idx) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z19test_broadcast_elemDv32_si:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -39,8 +37,7 @@ entry:
 
 define dso_local noundef <16 x i32> @_Z19test_broadcast_elemDv16_ii(<16 x i32> noundef %v, i32 noundef %idx) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z19test_broadcast_elemDv16_ii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -54,8 +51,7 @@ entry:
 
 define dso_local noundef <64 x i8> @_Z19test_broadcast_elemDv64_a(<64 x i8> noundef %v) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z19test_broadcast_elemDv64_a:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -69,8 +65,7 @@ entry:
 
 define dso_local noundef <32 x i16> @_Z19test_broadcast_elemDv32_s(<32 x i16> noundef %v) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z19test_broadcast_elemDv32_s:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -84,8 +79,7 @@ entry:
 
 define dso_local noundef <16 x i32> @_Z19test_broadcast_elemDv16_i(<16 x i32> noundef %v) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z19test_broadcast_elemDv16_i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
