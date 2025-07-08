@@ -731,7 +731,7 @@ llvm::StringRef tools::getLTOParallelism(const ArgList &Args, const Driver &D) {
 
 // PS4/PS5 uses -ffunction-sections and -fdata-sections by default.
 bool tools::isUseSeparateSections(const llvm::Triple &Triple) {
-  return Triple.isPS();
+  return Triple.isPS() || Triple.isAIE();
 }
 
 bool tools::isTLSDESCEnabled(const ToolChain &TC,
