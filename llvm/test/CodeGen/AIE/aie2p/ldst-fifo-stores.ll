@@ -15,8 +15,7 @@
 ; Function Attrs: mustprogress nounwind memory(write, argmem: readwrite, inaccessiblemem: none)
 define dso_local void @_Z18test_fifo_st_resetRPDv64_DB8_S0_R12fifo_state_t(ptr nocapture nonnull align 4 dereferenceable(4) %p, <64 x i8> noundef %v, ptr nocapture nonnull align 64 dereferenceable(256) %s) local_unnamed_addr #2 {
 ; CHECK-LABEL: _Z18test_fifo_st_resetRPDv64_DB8_S0_R12fifo_state_t:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    vlda sfl, [p1, #0]; nopx
 ; CHECK-NEXT:    lda p2, [p0, #0]
 ; CHECK-NEXT:    vlda sfh, [p1, #64]
@@ -46,8 +45,7 @@ entry:
 ; Function Attrs: mustprogress nounwind memory(write, argmem: readwrite, inaccessiblemem: none)
 define dso_local void @_Z17test_fifo_st_pushRPDv64_DB8_S0_R12fifo_state_t(ptr nocapture nonnull align 4 dereferenceable(4) %p, <64 x i8> noundef %v, ptr nocapture nonnull align 64 dereferenceable(256) %s) local_unnamed_addr #2 {
 ; CHECK-LABEL: _Z17test_fifo_st_pushRPDv64_DB8_S0_R12fifo_state_t:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    vlda sfl, [p1, #0]; nopb ; nopxm ; nops
 ; CHECK-NEXT:    lda p2, [p0, #0]; mov dj0, #128
 ; CHECK-NEXT:    lda r26, [p1, dj0]
@@ -83,8 +81,7 @@ entry:
 ; Function Attrs: mustprogress nounwind memory(write, argmem: readwrite, inaccessiblemem: none)
 define dso_local void @_Z18test_fifo_st_flushRPDv64_DB8_R12fifo_state_t(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s) local_unnamed_addr #2 {
 ; CHECK-LABEL: _Z18test_fifo_st_flushRPDv64_DB8_R12fifo_state_t:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    vlda sfl, [p1, #0]; nopb ; nopxm ; nops
 ; CHECK-NEXT:    lda p2, [p0, #0]; mov dj0, #128
 ; CHECK-NEXT:    lda r26, [p1, dj0]
@@ -119,8 +116,7 @@ entry:
 ; Function Attrs: mustprogress nounwind memory(write, argmem: readwrite, inaccessiblemem: none)
 define dso_local void @_Z26test_fifo_st_flush_1d_byteRPDv64_DB8_R12fifo_state_ti(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s, i32 noundef %off) local_unnamed_addr #2 {
 ; CHECK-LABEL: _Z26test_fifo_st_flush_1d_byteRPDv64_DB8_R12fifo_state_ti:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    vlda sfl, [p1, #0]; nopb ; nopxm
 ; CHECK-NEXT:    lda p2, [p0, #0]; mov dj0, #128
 ; CHECK-NEXT:    lda r26, [p1, dj0]
@@ -156,8 +152,7 @@ entry:
 ; Function Attrs: mustprogress nounwind memory(write, argmem: readwrite, inaccessiblemem: none)
 define dso_local void @_Z26test_fifo_st_flush_2d_byteRPDv64_DB8_R12fifo_state_tiiRii(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s, i32 noundef %off, i32 noundef %size1, ptr nocapture nonnull align 4 dereferenceable(4) %count1, i32 noundef %inc1) local_unnamed_addr #2 {
 ; CHECK-LABEL: _Z26test_fifo_st_flush_2d_byteRPDv64_DB8_R12fifo_state_tiiRii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda p4, [p0, #0]; nopx
 ; CHECK-NEXT:    lda dc0, [p2, #0]; mov dj1, #128
 ; CHECK-NEXT:    lda r26, [p1, dj1]
@@ -203,8 +198,7 @@ entry:
 ; Function Attrs: mustprogress nounwind memory(write, argmem: readwrite, inaccessiblemem: none)
 define dso_local void @_Z26test_fifo_st_flush_3d_byteRPDv64_DB8_R12fifo_state_tiiRiiiS5_i(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s, i32 noundef %off, i32 noundef %size1, ptr nocapture nonnull align 4 dereferenceable(4) %count1, i32 noundef %inc1, i32 noundef %size2, ptr nocapture nonnull align 4 dereferenceable(4) %count2, i32 noundef %inc2) local_unnamed_addr #2 {
 ; CHECK-LABEL: _Z26test_fifo_st_flush_3d_byteRPDv64_DB8_R12fifo_state_tiiRiiiS5_i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    vlda sfl, [p1, #0]; nopxm
 ; CHECK-NEXT:    lda p5, [p0, #0]
 ; CHECK-NEXT:    lda dc0, [p2, #0]
@@ -258,8 +252,7 @@ entry:
 ; Function Attrs: mustprogress nounwind memory(write, argmem: readwrite, inaccessiblemem: none)
 define dso_local void @_Z23test_fifo_st_flush_convRPDv64_DB8_R12fifo_state_t(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s) local_unnamed_addr #2 {
 ; CHECK-LABEL: _Z23test_fifo_st_flush_convRPDv64_DB8_R12fifo_state_t:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda p2, [p0, #0]; nopb ; nopx ; mov dj0, #128; nops
 ; CHECK-NEXT:    lda r26, [p1, dj0]
 ; CHECK-NEXT:    nop
@@ -295,8 +288,7 @@ entry:
 ; Function Attrs: mustprogress nounwind memory(write, argmem: readwrite, inaccessiblemem: none)
 define dso_local void @_Z31test_fifo_st_flush_conv_1d_byteRPDv64_DB8_R12fifo_state_ti(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s, i32 noundef %off) local_unnamed_addr #2 {
 ; CHECK-LABEL: _Z31test_fifo_st_flush_conv_1d_byteRPDv64_DB8_R12fifo_state_ti:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda p2, [p0, #0]; nopb ; nopx ; mov dj0, #128
 ; CHECK-NEXT:    lda r26, [p1, dj0]
 ; CHECK-NEXT:    nop
@@ -333,8 +325,7 @@ entry:
 ; Function Attrs: mustprogress nounwind memory(write, argmem: readwrite, inaccessiblemem: none)
 define dso_local void @_Z31test_fifo_st_flush_conv_2d_byteRPDv64_DB8_R12fifo_state_tiiRii(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s, i32 noundef %off, i32 noundef %size1, ptr nocapture nonnull align 4 dereferenceable(4) %count1, i32 noundef %inc1) local_unnamed_addr #2 {
 ; CHECK-LABEL: _Z31test_fifo_st_flush_conv_2d_byteRPDv64_DB8_R12fifo_state_tiiRii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    vlda sfl, [p1, #0]; nopb ; nopx
 ; CHECK-NEXT:    lda p4, [p0, #0]
 ; CHECK-NEXT:    lda dc0, [p2, #0]; mov dj1, #128
@@ -379,8 +370,7 @@ entry:
 ; Function Attrs: mustprogress nounwind memory(write, argmem: readwrite, inaccessiblemem: none)
 define dso_local void @_Z31test_fifo_st_flush_conv_3d_byteRPDv64_DB8_R12fifo_state_tiiRiiiS5_i(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s, i32 noundef %off, i32 noundef %size1, ptr nocapture nonnull align 4 dereferenceable(4) %count1, i32 noundef %inc1, i32 noundef %size2, ptr nocapture nonnull align 4 dereferenceable(4) %count2, i32 noundef %inc2) local_unnamed_addr #2 {
 ; CHECK-LABEL: _Z31test_fifo_st_flush_conv_3d_byteRPDv64_DB8_R12fifo_state_tiiRiiiS5_i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda p5, [p0, #0]; nopb ; nopx
 ; CHECK-NEXT:    lda dc0, [p2, #0]
 ; CHECK-NEXT:    lda dc4, [p3, #0]; mov dj1, #128
@@ -436,8 +426,7 @@ entry:
 ; Function Attrs: mustprogress nounwind memory(write, argmem: readwrite, inaccessiblemem: none)
 define dso_local void @test_fifo_st_reset_v64bfp16ebs16(ptr nocapture nonnull align 4 dereferenceable(4) %p, %struct.v64bfp16ebs16 %v.coerce, ptr nocapture nonnull align 64 dereferenceable(256) %s) local_unnamed_addr #2 {
 ; CHECK-LABEL: test_fifo_st_reset_v64bfp16ebs16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    vlda sfl, [p1, #0]; nopx
 ; CHECK-NEXT:    lda p2, [p0, #0]
 ; CHECK-NEXT:    vlda sfh, [p1, #64]
@@ -468,8 +457,7 @@ entry:
 ; Function Attrs: mustprogress nounwind memory(write, argmem: readwrite, inaccessiblemem: none)
 define dso_local void @test_fifo_st_push_v64bfp16ebs16(ptr nocapture nonnull align 4 dereferenceable(4) %p, %struct.v64bfp16ebs16 %v.coerce, ptr nocapture nonnull align 64 dereferenceable(256) %s) local_unnamed_addr #2 {
 ; CHECK-LABEL: test_fifo_st_push_v64bfp16ebs16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    vlda sfl, [p1, #0]; nopb ; nopxm ; nops
 ; CHECK-NEXT:    lda p2, [p0, #0]; mov dj0, #128
 ; CHECK-NEXT:    lda r26, [p1, dj0]
@@ -506,8 +494,7 @@ entry:
 ; Function Attrs: mustprogress nounwind memory(write, argmem: readwrite, inaccessiblemem: none)
 define dso_local void @test_fifo_st_reset_v64bfp16ebs8(ptr nocapture nonnull align 4 dereferenceable(4) %p, %struct.v64bfp16ebs8 %v.coerce, ptr nocapture nonnull align 64 dereferenceable(256) %s) local_unnamed_addr #2 {
 ; CHECK-LABEL: test_fifo_st_reset_v64bfp16ebs8:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    vlda sfl, [p1, #0]; nopx
 ; CHECK-NEXT:    lda p2, [p0, #0]
 ; CHECK-NEXT:    vlda sfh, [p1, #64]
@@ -538,8 +525,7 @@ entry:
 ; Function Attrs: mustprogress nounwind memory(write, argmem: readwrite, inaccessiblemem: none)
 define dso_local void @test_fifo_st_push_v64bfp16ebs8(ptr nocapture nonnull align 4 dereferenceable(4) %p, %struct.v64bfp16ebs8 %v.coerce, ptr nocapture nonnull align 64 dereferenceable(256) %s) local_unnamed_addr #2 {
 ; CHECK-LABEL: test_fifo_st_push_v64bfp16ebs8:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    vlda sfl, [p1, #0]; nopb ; nopxm ; nops
 ; CHECK-NEXT:    lda p2, [p0, #0]; mov dj0, #128
 ; CHECK-NEXT:    lda r26, [p1, dj0]
@@ -576,8 +562,7 @@ entry:
 
 define dso_local void @_Z17test_fifo_st_pushRrP23v128bfp16ebs8_unaligned13v128bfp16ebs8R12fifo_state_t(ptr nocapture nonnull align 4 dereferenceable(4) %p, %struct.v128bfp16ebs8 %v.coerce, ptr nocapture nonnull align 64 dereferenceable(256) %s) local_unnamed_addr #1 {
 ; CHECK-LABEL: _Z17test_fifo_st_pushRrP23v128bfp16ebs8_unaligned13v128bfp16ebs8R12fifo_state_t:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    vlda sfl, [p1, #0]; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    lda p2, [p0, #0]; mov dj0, #128
 ; CHECK-NEXT:    lda r26, [p1, dj0]; nopx
@@ -638,8 +623,7 @@ entry:
 
 define dso_local void @_Z18test_fifo_st_flushRrP23v128bfp16ebs8_unalignedR12fifo_state_t(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s) local_unnamed_addr #1 {
 ; CHECK-LABEL: _Z18test_fifo_st_flushRrP23v128bfp16ebs8_unalignedR12fifo_state_t:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    vlda sfl, [p1, #0]; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    lda p2, [p0, #0]; mov dj0, #128
 ; CHECK-NEXT:    lda r26, [p1, dj0]; nopx
@@ -696,8 +680,7 @@ entry:
 
 define dso_local void @_Z26test_fifo_st_flush_1d_byteRrP23v128bfp16ebs8_unalignedR12fifo_state_ti(ptr nocapture nonnull align 4 dereferenceable(4) %p, ptr nocapture nonnull align 64 dereferenceable(256) %s, i32 noundef %off) local_unnamed_addr #1 {
 ; CHECK-LABEL: _Z26test_fifo_st_flush_1d_byteRrP23v128bfp16ebs8_unalignedR12fifo_state_ti:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    vlda sfl, [p1, #0]; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    lda p2, [p0, #0]; mov dj0, #128
 ; CHECK-NEXT:    lda r26, [p1, dj0]

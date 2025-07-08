@@ -8,8 +8,7 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aie2p | FileCheck %s
 define dso_local noundef <32 x i8> @_Z15pack_I512_I4_I8Dv64_ai(<64 x i8> noundef %v, i32 noundef %sign)  {
 ; CHECK-LABEL: _Z15pack_I512_I4_I8Dv64_ai:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mov crpacksize, #0 // Delay Slot 4
@@ -23,8 +22,7 @@ entry:
 
 define dso_local noundef <32 x i8> @_Z16pack_I512_I8_I16Dv32_si(<32 x i16> noundef %v, i32 noundef %sign)  {
 ; CHECK-LABEL: _Z16pack_I512_I8_I16Dv32_si:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mov crpacksize, #1 // Delay Slot 4
@@ -38,8 +36,7 @@ entry:
 
 define dso_local noundef <64 x i8> @_Z16pack_I1024_I4_I8Dv128_ai(<128 x i8> noundef %v, i32 noundef %sign)  {
 ; CHECK-LABEL: _Z16pack_I1024_I4_I8Dv128_ai:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mov crpacksize, #0 // Delay Slot 4
@@ -53,8 +50,7 @@ entry:
 
 define dso_local noundef <64 x i8> @_Z17pack_I1024_I8_I16Dv64_ti(<64 x i16> noundef %v, i32 noundef %sign)  {
 ; CHECK-LABEL: _Z17pack_I1024_I8_I16Dv64_ti:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mov crpacksize, #1 // Delay Slot 4

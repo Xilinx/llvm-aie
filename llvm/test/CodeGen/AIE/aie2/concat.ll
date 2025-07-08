@@ -10,8 +10,7 @@
 
 define dso_local noundef <64 x i8> @_Z19test_concat_512_256Dv32_DU8_S0_(<32 x i8> noundef %a0, <32 x i8> noundef %a1) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z19test_concat_512_256Dv32_DU8_S0_:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -29,8 +28,7 @@ entry:
 
 define dso_local noundef <128 x i8> @_Z17test_concat_4x256Dv32_DU8_S0_S0_S0_(<32 x i8> noundef %a0, <32 x i8> noundef %a1, <32 x i8> noundef %a2, <32 x i8> noundef %a3) local_unnamed_addr #1 {
 ; CHECK-LABEL: _Z17test_concat_4x256Dv32_DU8_S0_S0_S0_:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    vmov wl4, wl0 // Delay Slot 5
 ; CHECK-NEXT:    vmov wh4, wl2 // Delay Slot 4
@@ -50,8 +48,7 @@ entry:
 
 define dso_local noundef <128 x i8> @_Z17test_concat_2x512Dv64_DU8_S0_(<64 x i8> noundef %a0, <64 x i8> noundef %a1) local_unnamed_addr #1 {
 ; CHECK-LABEL: _Z17test_concat_2x512Dv64_DU8_S0_:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -69,8 +66,7 @@ entry:
 
 define dso_local noundef <8 x i64> @_Z11test_concatDv8_u7__acc32S_(<4 x i64> noundef %a0, <4 x i64> noundef %a1) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z11test_concatDv8_u7__acc32S_:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -85,8 +81,7 @@ entry:
 
 define dso_local noundef <16 x i64> @_Z11test_concatDv8_u7__acc32S_S_S_(<4 x i64> noundef %a0, <4 x i64> noundef %a1, <4 x i64> noundef %a2, <4 x i64> noundef %a3) local_unnamed_addr #1 {
 ; CHECK-LABEL: _Z11test_concatDv8_u7__acc32S_S_S_:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    vmov amll0, amll1 // Delay Slot 5
 ; CHECK-NEXT:    vmov amlh0, amll2 // Delay Slot 4
@@ -101,8 +96,7 @@ entry:
 
 define dso_local noundef <16 x i64> @_Z11test_concatDv16_u7__acc32S_(<8 x i64> noundef %a0, <8 x i64> noundef %a1) local_unnamed_addr #1 {
 ; CHECK-LABEL: _Z11test_concatDv16_u7__acc32S_:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -117,8 +111,7 @@ entry:
 
 define dso_local noundef <8 x i64> @_Z11test_concatDv4_u7__acc64S_(<4 x i64> noundef %a0, <4 x i64> noundef %a1) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z11test_concatDv4_u7__acc64S_:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -133,8 +126,7 @@ entry:
 
 define dso_local noundef <16 x i64> @_Z11test_concatDv8_u7__acc64S_(<8 x i64> noundef %a0, <8 x i64> noundef %a1) local_unnamed_addr #1 {
 ; CHECK-LABEL: _Z11test_concatDv8_u7__acc64S_:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -149,8 +141,7 @@ entry:
 
 define dso_local noundef <16 x i64> @_Z11test_concatDv4_u7__acc64S_S_S_(<4 x i64> noundef %a0, <4 x i64> noundef %a1, <4 x i64> noundef %a2, <4 x i64> noundef %a3) local_unnamed_addr #1 {
 ; CHECK-LABEL: _Z11test_concatDv4_u7__acc64S_S_S_:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    vmov amll0, amll1 // Delay Slot 5
 ; CHECK-NEXT:    vmov amlh0, amll2 // Delay Slot 4

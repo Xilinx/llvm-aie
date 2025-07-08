@@ -10,8 +10,7 @@
 
 define bfloat @test_fmul_bfloat(bfloat %a, bfloat %b) {
 ; CHECK-LABEL: test_fmul_bfloat:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; jl #__mulsf3
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4
@@ -38,8 +37,7 @@ entry:
 
 define float @test_fmul_float(float %a, float %b) {
 ; CHECK-LABEL: test_fmul_float:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; jl #__mulsf3; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4
@@ -66,8 +64,7 @@ entry:
 
 define double @test_fmul_double(double %a, double %b) {
 ; CHECK-LABEL: test_fmul_double:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; jl #__muldf3; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4

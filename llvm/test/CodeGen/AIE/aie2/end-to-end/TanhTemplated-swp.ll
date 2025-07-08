@@ -60,8 +60,7 @@ declare <32 x i16> @llvm.aie2.vbroadcast16.I512(i32) #0
 ; Function Attrs: mustprogress noinline
 define dso_local void @TanhTemplated(ptr noalias %ifm, ptr noalias %ofm, ptr nonnull align 32 dereferenceable(64) %params) align 2 {
 ; CHECK-LABEL: TanhTemplated:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %for.body.lr.ph
+; CHECK:       // %bb.0: // %for.body.lr.ph
 ; CHECK-NEXT:    nopb ; nopa ; nops ; movxm r3, #16512; nopv
 ; CHECK-NEXT:    nopa ; movxm r4, #-16256
 ; CHECK-NEXT:    movxm r5, #32767
@@ -107,7 +106,6 @@ define dso_local void @TanhTemplated(ptr noalias %ifm, ptr noalias %ofm, ptr non
 ; CHECK-NEXT:    vconv.bf16.fp32 wl5, bmh7; vmin_ge.bf16 x3, r16, x3, x1
 ; CHECK-NEXT:    vmax_lt.bf16 x3, r16, x3, x8
 ; CHECK-NEXT:    mova r0, #28; vconv.bf16.fp32 wl7, bmh3; vmin_ge.bf16 x11, r16, x5, x1
-; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vband x9, x10, x3; nopv

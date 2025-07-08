@@ -12,8 +12,7 @@
 
 define dso_local noundef <32 x bfloat> @_Z11test_shiftxDv32_u6__bf16S_ii(<32 x bfloat> noundef %a, <32 x bfloat> noundef %b, i32 noundef %step, i32 noundef %shift) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z11test_shiftxDv32_u6__bf16S_ii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -28,8 +27,7 @@ entry:
 
 define dso_local noundef <32 x bfloat> @_Z11test_insertDv32_u6__bf16i8bfloat16(<32 x bfloat> noundef %v, i32 noundef %idx, %class.bfloat16 %b.coerce) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z11test_insertDv32_u6__bf16i8bfloat16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -45,8 +43,7 @@ entry:
 
 define dso_local noundef <32 x bfloat> @_Z11test_insertDv32_u6__bf16iDv2_u6__bf16(<32 x bfloat> noundef %v, i32 noundef %idx, <2 x bfloat> noundef %b) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z11test_insertDv32_u6__bf16iDv2_u6__bf16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -61,8 +58,7 @@ entry:
 
 define dso_local noundef <32 x bfloat> @_Z11test_insertDv32_u6__bf16iDv4_u6__bf16(<32 x bfloat> noundef %v, i32 noundef %idx, <4 x bfloat> noundef %b) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z11test_insertDv32_u6__bf16iDv4_u6__bf16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -77,8 +73,7 @@ entry:
 
 define dso_local noundef <32 x bfloat> @_Z11test_insertDv32_u6__bf16iy(<32 x bfloat> noundef %v, i32 noundef %idx, i64 noundef %b) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z11test_insertDv32_u6__bf16iy:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r24, r1 // Delay Slot 5
 ; CHECK-NEXT:    mov r29, r0 // Delay Slot 4
@@ -94,8 +89,7 @@ entry:
 
 define dso_local noundef <32 x bfloat> @_Z29test_broadcast_to_v32bfloat168bfloat16(%class.bfloat16 %b.coerce) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z29test_broadcast_to_v32bfloat168bfloat16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -111,8 +105,7 @@ entry:
 
 define dso_local noundef <32 x bfloat> @_Z29test_broadcast_to_v32bfloat16Dv2_u6__bf16(<2 x bfloat> noundef %b) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z29test_broadcast_to_v32bfloat16Dv2_u6__bf16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -127,8 +120,7 @@ entry:
 
 define dso_local noundef <32 x bfloat> @_Z29test_broadcast_to_v32bfloat16Dv4_u6__bf16(<4 x bfloat> noundef %b) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z29test_broadcast_to_v32bfloat16Dv4_u6__bf16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -143,8 +135,7 @@ entry:
 
 define dso_local noundef <32 x bfloat> @_Z21test_shuffle_bfloat168bfloat16j(%class.bfloat16 %b.coerce, i32 noundef %m) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z21test_shuffle_bfloat168bfloat16j:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -160,8 +151,7 @@ entry:
 
 define dso_local noundef <32 x bfloat> @_Z12test_shuffleDv32_u6__bf16S_j(<32 x bfloat> noundef %a, <32 x bfloat> noundef %b, i32 noundef %mode) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z12test_shuffleDv32_u6__bf16S_j:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -176,8 +166,7 @@ entry:
 
 define dso_local noundef <32 x bfloat> @_Z19test_broadcast_elemDv32_u6__bf16i(<32 x bfloat> noundef %v, i32 noundef %idx) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z19test_broadcast_elemDv32_u6__bf16i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -192,8 +181,7 @@ entry:
 
 define dso_local %class.bfloat16 @_Z13test_ext_elemDv32_u6__bf16ii(<32 x bfloat> noundef %v, i32 noundef %idx, i32 noundef %sign) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z13test_ext_elemDv32_u6__bf16ii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; mov r3, r16
 ; CHECK-NEXT:    mov r16, r1
 ; CHECK-NEXT:    ret lr
@@ -213,8 +201,7 @@ entry:
 
 define dso_local noundef <2 x bfloat> @_Z23test_extract_v2bfloat16Dv32_u6__bf16ii(<32 x bfloat> noundef %v, i32 noundef %idx, i32 noundef %sign) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z23test_extract_v2bfloat16Dv32_u6__bf16ii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; mov r3, r16
 ; CHECK-NEXT:    mov r16, r1
 ; CHECK-NEXT:    ret lr
@@ -232,8 +219,7 @@ entry:
 
 define dso_local noundef i64 @_Z12test_ext_u64Dv32_u6__bf16ii(<32 x bfloat> noundef %v, i32 noundef %idx, i32 noundef %sign) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z12test_ext_u64Dv32_u6__bf16ii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r4, r16; nops
 ; CHECK-NEXT:    mov r16, r2
 ; CHECK-NEXT:    mov crVaddSign, r3
@@ -253,8 +239,7 @@ entry:
 
 define dso_local noundef <4 x bfloat> @_Z23test_extract_v4bfloat16Dv32_u6__bf16ii(<32 x bfloat> noundef %v, i32 noundef %idx, i32 noundef %sign) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z23test_extract_v4bfloat16Dv32_u6__bf16ii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r16, r0 // Delay Slot 5
 ; CHECK-NEXT:    mov crVaddSign, r1 // Delay Slot 4

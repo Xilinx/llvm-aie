@@ -9,8 +9,7 @@
 
 define dso_local noundef <16 x i64> @test_sub_acc(<16 x i64> noundef %acc1, <16 x i64> noundef %acc2) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_sub_acc:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; mova r0, #0; nops ; nopxm ; nopv
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vsub cm0, cm1, cm2, r0 // Delay Slot 5
@@ -25,8 +24,7 @@ entry:
 
 define dso_local noundef <16 x i64> @test_sub_conf(<16 x i64> noundef %acc1, <16 x i64> noundef %acc2, i32 noundef %zero_acc1, i32 noundef %shift16, i32 noundef %sub_acc1, i32 noundef %sub_acc2) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_sub_conf:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r4, #10; nopb ; nopx
 ; CHECK-NEXT:    mova r5, #12
 ; CHECK-NEXT:    mova r6, #13

@@ -9,8 +9,7 @@
 
 define dso_local noundef <16 x i32> @_Z11test_shiftxDv16_iS_ii_test2(<16 x i32> noundef %a, <16 x i32> noundef %b, i32 noundef %step, i32 noundef %shift) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z11test_shiftxDv16_iS_ii_test2:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mov s0, r0 // Delay Slot 4
@@ -26,8 +25,7 @@ entry:
 
 define dso_local noundef <16 x i32> @_Z11test_shiftxDv16_iS_ii(<16 x i32> noundef %a, <16 x i32> noundef %b, i32 noundef %step, i32 noundef %shift) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z11test_shiftxDv16_iS_ii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -41,8 +39,7 @@ entry:
 
 define dso_local noundef <16 x i32> @_Z18test_shiftx_v16i32Dv16_iS_ii(<16 x i32> noundef %a, <16 x i32> noundef %b, i32 noundef %step, i32 noundef %shift) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z18test_shiftx_v16i32Dv16_iS_ii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -56,8 +53,7 @@ entry:
 
 define dso_local noundef <32 x i16> @_Z11test_shiftxDv32_tS_ii(<32 x i16> noundef %a, <32 x i16> noundef %b, i32 noundef %step, i32 noundef %shift) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z11test_shiftxDv32_tS_ii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -74,8 +70,7 @@ entry:
 
 define dso_local noundef <64 x i8> @_Z16test_shift_bytesDv64_aS_i(<64 x i8> noundef %a, <64 x i8> noundef %b, i32 noundef %shift) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z16test_shift_bytesDv64_aS_i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -92,8 +87,7 @@ entry:
 
 define dso_local noundef <64 x i8> @_Z10test_shiftDv64_hS_i(<64 x i8> noundef %a, <64 x i8> noundef %b, i32 noundef %shift_by) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z10test_shiftDv64_hS_i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4

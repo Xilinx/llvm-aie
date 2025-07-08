@@ -14,8 +14,7 @@ target triple = "aie2p"
 ; Function Attrs: mustprogress noinline nounwind optnone
 define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32> noundef %b, <16 x i8> noundef %c, <16 x i16> noundef %d, <8 x i32> noundef %e, <4 x i64> inreg noundef %f, <8 x i64> inreg noundef %g, <16 x i32> noundef %h) #0 {
 ; CHECK-LABEL: test_load_store_unaligned:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova m0, #-560; nopb ; nopx
 ; CHECK-NEXT:    paddxm [sp], #576
 ; CHECK-NEXT:    mov p0, sp

@@ -9,8 +9,7 @@
 
 define dso_local noundef <16 x i32> @test_bfloat16_to_int(<16 x bfloat> noundef %a, i32 noundef %shft)  {
 ; CHECK-LABEL: test_bfloat16_to_int:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    mov s0, r0 // Delay Slot 4
@@ -27,8 +26,7 @@ entry:
 
 define dso_local %struct.v64bfp16ebs8 @test_v64accfloat_to_v64bfp16ebs8(<64 x float> inreg noundef %a){
 ; CHECK-LABEL: test_v64accfloat_to_v64bfp16ebs8:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vconv.bfp16ebs8.fp32 ex0, dm0 // Delay Slot 4
@@ -46,8 +44,7 @@ entry:
 
 define dso_local %struct.v64bfp16ebs16 @test_v64accfloat_to_v64bfp16ebs16(<64 x float> inreg noundef %a){
 ; CHECK-LABEL: test_v64accfloat_to_v64bfp16ebs16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vconv.bfp16ebs16.fp32 ex0, dm0 // Delay Slot 4
@@ -65,8 +62,7 @@ entry:
 
 define dso_local %struct.v64bfp16ebs16 @test_v64bfp16ebs8_to_v64bfp16ebs8(%struct.v64bfp16ebs8 %a.coerce){
 ; CHECK-LABEL: test_v64bfp16ebs8_to_v64bfp16ebs8:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vconv.bfp16ebs16.ebs8 ex0, ex2 // Delay Slot 4

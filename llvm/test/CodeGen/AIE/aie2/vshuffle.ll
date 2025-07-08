@@ -9,8 +9,7 @@
 
 define dso_local noundef <32 x i16> @_Z12test_shuffleDv32_sS_j(<32 x i16> noundef %a, <32 x i16> noundef %b, i32 noundef %mode) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z12test_shuffleDv32_sS_j:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -27,8 +26,7 @@ entry:
 
 define dso_local noundef <8 x i64> @_Z18test_shuffle_acc64Dv16_iS_j(<16 x i32> noundef %a, <16 x i32> noundef %b, i32 noundef %mode) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z18test_shuffle_acc64Dv16_iS_j:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4

@@ -10,8 +10,7 @@
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local noundef i32 @_Z15test_get_coreidv() local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z15test_get_coreidv:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4

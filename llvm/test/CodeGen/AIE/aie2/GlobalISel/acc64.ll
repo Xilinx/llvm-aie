@@ -9,8 +9,7 @@
 
 define <16 x i64> @_Z31test_broadcast_zero_to_v16acc64v(){
 ; CHECK-LABEL: _Z31test_broadcast_zero_to_v16acc64v:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vclr cm0 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4

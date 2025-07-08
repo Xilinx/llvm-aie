@@ -9,8 +9,7 @@
 
 define <16 x i8> @test_undef_v32int4() {
 ; CHECK-LABEL: test_undef_v32int4:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -25,8 +24,7 @@ entry:
 
 define <16 x i8> @test_undef_v16int8() {
 ; CHECK-LABEL: test_undef_v16int8:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -40,8 +38,7 @@ entry:
 
 define <8 x i16> @test_undef_v8int16() {
 ; CHECK-LABEL: test_undef_v8int16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -55,8 +52,7 @@ entry:
 
 define <4 x i32> @test_undef_v4int32() {
 ; CHECK-LABEL: test_undef_v4int32:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -70,8 +66,7 @@ entry:
 
 define <32 x i8> @test_undef_v64int4() {
 ; CHECK-LABEL: test_undef_v64int4:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -86,8 +81,7 @@ entry:
 
 define <32 x i8> @test_undef_v32int8() {
 ; CHECK-LABEL: test_undef_v32int8:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -101,8 +95,7 @@ entry:
 
 define <16 x i16> @test_undef_v16int16() {
 ; CHECK-LABEL: test_undef_v16int16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -116,8 +109,7 @@ entry:
 
 define <8 x i32> @test_undef_v8int32() {
 ; CHECK-LABEL: test_undef_v8int32:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -131,8 +123,7 @@ entry:
 
 define <4 x i64> @test_undef_v8acc32() {
 ; CHECK-LABEL: test_undef_v8acc32:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -146,8 +137,7 @@ entry:
 
 define <4 x i64> @test_undef_v4acc64() {
 ; CHECK-LABEL: test_undef_v4acc64:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -161,8 +151,7 @@ entry:
 
 define <64 x i8> @test_undef_v128int4() {
 ; CHECK-LABEL: test_undef_v128int4:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -177,8 +166,7 @@ entry:
 
 define <64 x i8> @test_undef_v64int8() {
 ; CHECK-LABEL: test_undef_v64int8:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -192,8 +180,7 @@ entry:
 
 define <32 x i16> @test_undef_v32int16() {
 ; CHECK-LABEL: test_undef_v32int16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -207,8 +194,7 @@ entry:
 
 define <16 x i32> @test_undef_v16int32() {
 ; CHECK-LABEL: test_undef_v16int32:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -223,8 +209,7 @@ entry:
 
 define <8 x i64> @test_undef_v16acc32() {
 ; CHECK-LABEL: test_undef_v16acc32:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -238,8 +223,7 @@ entry:
 
 define <8 x i64> @test_undef_v8acc64() {
 ; CHECK-LABEL: test_undef_v8acc64:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -253,8 +237,7 @@ entry:
 
 define <128 x i8> @test_undef_v256int4() {
 ; CHECK-LABEL: test_undef_v256int4:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -269,8 +252,7 @@ entry:
 
 define <128 x i8> @test_undef_v128int8() {
 ; CHECK-LABEL: test_undef_v128int8:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -284,8 +266,7 @@ entry:
 
 define <64 x i16> @test_undef_v64int16() {
 ; CHECK-LABEL: test_undef_v64int16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -299,8 +280,7 @@ entry:
 
 define <32 x i32> @test_undef_v32int32() {
 ; CHECK-LABEL: test_undef_v32int32:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -314,8 +294,7 @@ entry:
 
 define <16 x i64> @test_undef_v32acc32() {
 ; CHECK-LABEL: test_undef_v32acc32:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -329,8 +308,7 @@ entry:
 
 define <16 x i64> @test_undef_v16acc64() {
 ; CHECK-LABEL: test_undef_v16acc64:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -344,8 +322,7 @@ entry:
 
 define <4 x i64> @test_undef_v8accfloat() {
 ; CHECK-LABEL: test_undef_v8accfloat:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -359,8 +336,7 @@ entry:
 
 define <8 x i64> @test_undef_v16accfloat() {
 ; CHECK-LABEL: test_undef_v16accfloat:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -374,8 +350,7 @@ entry:
 
 define <16 x i64> @test_undef_v32accfloat() {
 ; CHECK-LABEL: test_undef_v32accfloat:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -389,8 +364,7 @@ entry:
 
 define <8 x bfloat> @test_undef_v8bfloat16() {
 ; CHECK-LABEL: test_undef_v8bfloat16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -404,8 +378,7 @@ entry:
 
 define <16 x bfloat> @test_undef_v16bfloat16() {
 ; CHECK-LABEL: test_undef_v16bfloat16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -419,8 +392,7 @@ entry:
 
 define <32 x bfloat> @test_undef_v32bfloat16() {
 ; CHECK-LABEL: test_undef_v32bfloat16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -434,8 +406,7 @@ entry:
 
 define <64 x bfloat> @test_undef_v64bfloat16() {
 ; CHECK-LABEL: test_undef_v64bfloat16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -449,8 +420,7 @@ entry:
 
 define <8 x float> @test_undef_v8float()  {
 ; CHECK-LABEL: test_undef_v8float:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -464,8 +434,7 @@ entry:
 
 define <16 x float> @test_undef_v16float()  {
 ; CHECK-LABEL: test_undef_v16float:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -479,8 +448,7 @@ entry:
 
 define <32 x float> @test_undef_v32float()  {
 ; CHECK-LABEL: test_undef_v32float:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4

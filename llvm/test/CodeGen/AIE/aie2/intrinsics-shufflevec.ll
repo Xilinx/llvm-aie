@@ -9,8 +9,7 @@
 
 define <8 x i32> @test_extract_bottom_half(<16 x i32> noundef %a) {
 ; CHECK-LABEL: test_extract_bottom_half:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -24,8 +23,7 @@ entry:
 
 define <8 x i32> @test_extract_top_half(<16 x i32> noundef %a) {
 ; CHECK-LABEL: test_extract_top_half:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -39,8 +37,7 @@ entry:
 
 define <8 x i32> @test_conditional_extract_vector(<16 x i32> noundef %a, i32 noundef %idx) {
 ; CHECK-LABEL: test_conditional_extract_vector:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; jz r0, #.LBB2_2; nopv
 ; CHECK-NEXT:    nopa ; nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -49,7 +46,6 @@ define <8 x i32> @test_conditional_extract_vector(<16 x i32> noundef %a, i32 nou
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.end
 ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vmov wl0, wh0; nopv
-; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB2_2: // %return
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -76,8 +72,7 @@ return:
 
 define <16 x i32> @test_insert_vector(<16 x i32> noundef %a, i32 noundef %idx, <8 x i32> noundef %b) {
 ; CHECK-LABEL: test_insert_vector:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r24, r16; nops
 ; CHECK-NEXT:    mov r25, r17
 ; CHECK-NEXT:    mov r26, r18
@@ -154,7 +149,6 @@ define <16 x i32> @test_insert_vector(<16 x i32> noundef %a, i32 noundef %idx, <
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r11 // Delay Slot 3
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r13 // Delay Slot 2
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r15 // Delay Slot 1
-; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB3_2: // %if.then
 ; CHECK-NEXT:    nopb ; mova r16, #3; nops ; nopxm ; nopv
 ; CHECK-NEXT:    vextract.s32 r0, x0, r19
@@ -193,7 +187,6 @@ define <16 x i32> @test_insert_vector(<16 x i32> noundef %a, i32 noundef %idx, <
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r11
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r13
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r15
-; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB3_3: // %cleanup
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -221,8 +214,7 @@ cleanup:
 
 define <16 x i32> @test_concat_vector(<8 x i32> noundef %a, <8 x i32> noundef %b) {
 ; CHECK-LABEL: test_concat_vector:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopx ; mov r24, r16
 ; CHECK-NEXT:    mova r16, #0
 ; CHECK-NEXT:    vextract.s32 r0, x2, r16
@@ -273,8 +265,7 @@ entry:
 
 define <16 x i32> @test_set_vector(i32 noundef %idx, <8 x i32> noundef %a) {
 ; CHECK-LABEL: test_set_vector:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r9, r16
 ; CHECK-NEXT:    mova r16, #0
 ; CHECK-NEXT:    eqz r0, r0
@@ -323,8 +314,7 @@ entry:
 
 define i32 @test_extract_elem(<8 x i32> noundef %a, i32 noundef %idx) {
 ; CHECK-LABEL: test_extract_elem:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r2, r16 // Delay Slot 5
 ; CHECK-NEXT:    mov r16, r1 // Delay Slot 4

@@ -14,8 +14,7 @@
 
 define void @f() {
 ; CHECK-LABEL: f:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #1120; nopa ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    movxm m0, #-1115
 ; CHECK-NEXT:    jl #f0

@@ -14,9 +14,9 @@
 
 #include "AIE1TargetMachine.h"
 #include "AIE.h"
+#include "AIE1MachineBlockPlacement.h"
 #include "AIEDumpArtifacts.h"
 #include "AIEFinalizeBundle.h"
-#include "AIEMachineBlockPlacement.h"
 #include "AIETargetTransformInfo.h"
 #include "TargetInfo/AIETargetInfo.h"
 #include "aie2p/AIE2PTargetMachine.h"
@@ -73,7 +73,7 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETarget() {
   initializeAIEOutlineMemoryGEPPass(*PR);
   initializeAIEFinalizeBundlePass(*PR);
   initializeAIEMachineAlignmentPass(*PR);
-  initializeAIEMachineBlockPlacementPass(*PR);
+  initializeAIE1MachineBlockPlacementPass(*PR);
   initializeAIEBaseHardwareLoopsPass(*PR);
   initializeAIEBaseAAWrapperPassPass(*PR);
   initializeAIEBaseExternalAAWrapperPass(*PR);
@@ -127,5 +127,5 @@ void AIEPassConfig::addPreEmitPass() {
   addPass(createAIEDelaySlotFillerPass(getAIETargetMachine()));
   // As it is now, this just sets block alignment, which is a necessary
   // step
-  addPass(createAIEMachineBlockPlacement());
+  addPass(createAIE1MachineBlockPlacement());
 }

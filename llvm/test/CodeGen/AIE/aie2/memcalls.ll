@@ -8,8 +8,7 @@
 ; RUN: llc --mtriple=aie2 --issue-limit=1 %s -o - | FileCheck %s
 define void @callmemcpy(ptr %p, ptr %q) {
 ; CHECK-LABEL: callmemcpy:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; jl #memcpy
 ; CHECK-NEXT:    mov p2, p1 // Delay Slot 5
 ; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4
@@ -36,8 +35,7 @@ entry:
 
 define void @callmemmov(ptr %p, ptr %q) {
 ; CHECK-LABEL: callmemmov:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; j #memmov; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -52,8 +50,7 @@ entry:
 
 define void @callmemset(ptr %p) {
 ; CHECK-LABEL: callmemset:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; jl #memset
 ; CHECK-NEXT:    mova r0, #42 // Delay Slot 5
 ; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4

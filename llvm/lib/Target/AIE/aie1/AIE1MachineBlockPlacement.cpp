@@ -1,14 +1,14 @@
-//===- AIEMachineBlockPlacement.cpp -----------------------------*- C++ -*-===//
+//===- AIE1MachineBlockPlacement.cpp ----------------------------*- C++ -*-===//
 //
 // This file is licensed under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
-#include "AIEMachineBlockPlacement.h"
+#include "AIE1MachineBlockPlacement.h"
 #include "AIE.h"
 #include "llvm/CodeGen/MachineInstrBundle.h"
 
@@ -61,7 +61,7 @@ bool isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) {
   return true;
 }
 } // namespace
-bool AIEMachineBlockPlacement::runOnMachineFunction(MachineFunction &MF) {
+bool AIE1MachineBlockPlacement::runOnMachineFunction(MachineFunction &MF) {
   // This is replacing the only net effect of branch relaxation, which
   // was removed as it isn't necessary.
   // Renumbering looks good in the assembly and it salvages some of the
@@ -78,12 +78,12 @@ bool AIEMachineBlockPlacement::runOnMachineFunction(MachineFunction &MF) {
   return true;
 }
 
-INITIALIZE_PASS_BEGIN(AIEMachineBlockPlacement, DEBUG_TYPE,
+INITIALIZE_PASS_BEGIN(AIE1MachineBlockPlacement, DEBUG_TYPE,
                       "AIE Machine Block Placement", false, false)
-INITIALIZE_PASS_END(AIEMachineBlockPlacement, DEBUG_TYPE,
+INITIALIZE_PASS_END(AIE1MachineBlockPlacement, DEBUG_TYPE,
                     "AIE Machine Block Placement", false, false)
 
-char AIEMachineBlockPlacement::ID = 0;
-llvm::FunctionPass *llvm::createAIEMachineBlockPlacement() {
-  return new AIEMachineBlockPlacement();
+char AIE1MachineBlockPlacement::ID = 0;
+llvm::FunctionPass *llvm::createAIE1MachineBlockPlacement() {
+  return new AIE1MachineBlockPlacement();
 }

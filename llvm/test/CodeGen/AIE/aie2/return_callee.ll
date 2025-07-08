@@ -12,8 +12,7 @@
 
 define i32 @test() {
 ; CHECK-LABEL: test:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; jl #f; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4

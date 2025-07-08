@@ -9,8 +9,7 @@
 ; RUN:   | FileCheck %s
 define  <16 x i64> @_Z21test_mac_4x2_2x4_confiiiiii(i32 noundef %sgn_x, i32 noundef %sgn_y, i32 noundef %zero_acc1, i32 noundef %shift16, i32 noundef %sub_mul, i32 noundef %sub_acc1)  {
 ; CHECK-LABEL: _Z21test_mac_4x2_2x4_confiiiiii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; mova r6, #10; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mova r7, #11
 ; CHECK-NEXT:    mova r8, #12
@@ -58,8 +57,7 @@ entry:
 
 define  <16 x i64> @_Z16test_mac_4x2_2x8Dv32_tS_Dv16_u7__acc64(<32 x i16> noundef %a, <32 x i16> noundef %b, <16 x i64> %acc1)  {
 ; CHECK-LABEL: _Z16test_mac_4x2_2x8Dv32_tS_Dv16_u7__acc64:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; mova r0, #24; nops ; nopxm ; nopv
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vmac cm0, cm1, x0, x2, r0 // Delay Slot 5
@@ -77,8 +75,7 @@ entry:
 
 define  <16 x i64> @_Z21test_negmac_4x16_16x8Dv64_hDv16_jDv16_u7__acc64(<64 x i8> noundef %a, <16 x i32> noundef %b, <16 x i64> %acc1)  {
 ; CHECK-LABEL: _Z21test_negmac_4x16_16x8Dv64_hDv16_jDv16_u7__acc64:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; mova r0, #0; nops ; nopxm ; nopv
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vnegmac cm0, cm1, x0, x2, r0 // Delay Slot 5
@@ -94,8 +91,7 @@ entry:
 
 define  <16 x i64> @_Z21test_negmac_4x16_16x8Dv64_hiDv16_jiDv16_u7__acc64(<64 x i8> noundef %a, i32 noundef %sgn_x, <16 x i32> noundef %b, i32 noundef %sgn_y, <16 x i64> %acc1)  {
 ; CHECK-LABEL: _Z21test_negmac_4x16_16x8Dv64_hiDv16_jiDv16_u7__acc64:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; mova r2, #9; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mova r3, #8
 ; CHECK-NEXT:    lshl r0, r0, r2
@@ -118,8 +114,7 @@ entry:
 
 define  <16 x i64> @_Z24test_negmac_4x8_8x4_confDv32_sDv64_aDv16_u7__acc64iii(<32 x i16> noundef %a, <64 x i8> noundef %b, <16 x i64> %acc1, i32 noundef %zero_acc1, i32 noundef %sub_mul, i32 noundef %sub_acc1)  {
 ; CHECK-LABEL: _Z24test_negmac_4x8_8x4_confDv32_sDv64_aDv16_u7__acc64iii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r3, #11
 ; CHECK-NEXT:    mova r4, #12
 ; CHECK-NEXT:    mova r5, #818
@@ -149,8 +144,7 @@ entry:
 
 define  <16 x i64> @_Z19test_negmac_2x4_4x8Dv32_tiDv32_siDv16_u7__acc64(<32 x i16> noundef %a, i32 noundef %sgn_x, <32 x i16> noundef %b, i32 noundef %sgn_y, <16 x i64> %acc1)  {
 ; CHECK-LABEL: _Z19test_negmac_2x4_4x8Dv32_tiDv32_siDv16_u7__acc64:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r2, #9; nopb ; nopx
 ; CHECK-NEXT:    mova r3, #8
 ; CHECK-NEXT:    mova r4, #26
@@ -178,8 +172,7 @@ entry:
 
 define  <16 x i64> @_Z18test_msc_4x16_16x8Dv64_hDv16_jDv16_u7__acc64(<64 x i8> noundef %a, <16 x i32> noundef %b, <16 x i64> %acc1)  {
 ; CHECK-LABEL: _Z18test_msc_4x16_16x8Dv64_hDv16_jDv16_u7__acc64:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; mova r0, #0; nops ; nopxm ; nopv
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vmsc cm0, cm1, x0, x2, r0 // Delay Slot 5
@@ -195,8 +188,7 @@ entry:
 
 define  <16 x i64> @_Z18test_msc_elem_32_2Dv64_hS_Dv16_u7__acc64(<64 x i8> noundef %a, <64 x i8> noundef %b, <16 x i64> %acc1)  {
 ; CHECK-LABEL: _Z18test_msc_elem_32_2Dv64_hS_Dv16_u7__acc64:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; mova r0, #40; nops ; nopxm ; nopv
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vmsc cm0, cm1, x0, x2, r0 // Delay Slot 5
@@ -213,8 +205,7 @@ entry:
 
 define  <16 x i64> @_Z23test_msc_elem_16_2_confDv32_tiS_iDv16_u7__acc64iiii(<32 x i16> noundef %a, i32 noundef %sgn_x, <32 x i16> noundef %b, i32 noundef %sgn_y, <16 x i64> %acc1, i32 noundef %zero_acc1, i32 noundef %shift16, i32 noundef %sub_mul, i32 noundef %sub_acc1)  {
 ; CHECK-LABEL: _Z23test_msc_elem_16_2_confDv32_tiS_iDv16_u7__acc64iiii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; mova r6, #10; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mova r7, #11
 ; CHECK-NEXT:    mova r8, #12
@@ -259,8 +250,7 @@ entry:
 
 define  <16 x i64> @_Z21test_msc_4x4_4x4_confDv32_tDv32_sDv16_u7__acc64iiii(<32 x i16> noundef %a, <32 x i16> noundef %b, <16 x i64> %acc1, i32 noundef %zero_acc1, i32 noundef %shift16, i32 noundef %sub_mul, i32 noundef %sub_acc1)  {
 ; CHECK-LABEL: _Z21test_msc_4x4_4x4_confDv32_tDv32_sDv16_u7__acc64iiii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r4, #10; nopb ; nopx
 ; CHECK-NEXT:    mova r5, #11
 ; CHECK-NEXT:    mova r6, #12
@@ -293,8 +283,7 @@ entry:
 }
 define  <16 x i64> @_Z21test_negmsc_4x16_16x8Dv64_hDv16_jDv16_u7__acc64(<64 x i8> noundef %a, <16 x i32> noundef %b, <16 x i64> %acc1) {
 ; CHECK-LABEL: _Z21test_negmsc_4x16_16x8Dv64_hDv16_jDv16_u7__acc64:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; mova r0, #0; nops ; nopxm ; nopv
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vnegmsc cm0, cm1, x0, x2, r0 // Delay Slot 5
@@ -309,8 +298,7 @@ entry:
 
 define  <16 x i64> @_Z19test_negmsc_2x8_8x8Dv32_tDv64_hDv16_u7__acc64(<32 x i16> noundef %a, <64 x i8> noundef %b, <16 x i64> %acc1) {
 ; CHECK-LABEL: _Z19test_negmsc_2x8_8x8Dv32_tDv64_hDv16_u7__acc64:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; mova r0, #18; nops ; nopxm ; nopv
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vnegmsc cm0, cm1, x0, x2, r0 // Delay Slot 5
@@ -327,8 +315,7 @@ entry:
 
 define  <16 x i64> @_Z19test_negmsc_elem_32Dv32_tS_Dv16_u7__acc64(<32 x i16> noundef %a, <32 x i16> noundef %b, <16 x i64> %acc1) {
 ; CHECK-LABEL: _Z19test_negmsc_elem_32Dv32_tS_Dv16_u7__acc64:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; mova r0, #56; nops ; nopxm ; nopv
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vnegmsc cm0, cm1, x0, x2, r0 // Delay Slot 5

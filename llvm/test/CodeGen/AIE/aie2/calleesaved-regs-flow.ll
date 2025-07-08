@@ -12,8 +12,7 @@
 ; Make sure the CC takes precedence and they are not saved.
 define <2 x i32> @no_save_L(<2 x i32> %a) {
 ; CHECK-LABEL: no_save_L:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0:
+; CHECK:       // %bb.0:
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -28,8 +27,7 @@ define <2 x i32> @no_save_L(<2 x i32> %a) {
 ; Here we make sure %a is preserved accross the call to foo.
 define <2 x i32> @preserve_L(<2 x i32> %a, <2 x i32> %b) {
 ; CHECK-LABEL: preserve_L:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0:
+; CHECK:       // %bb.0:
 ; CHECK-NEXT:    nopa ; nopb ; jl #foo; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4
@@ -55,8 +53,7 @@ define <2 x i32> @preserve_L(<2 x i32> %a, <2 x i32> %b) {
 
 define i32 @preserve_R(i32 %a, <2 x i32> %b) {
 ; CHECK-LABEL: preserve_R:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0:
+; CHECK:       // %bb.0:
 ; CHECK-NEXT:    nopa ; nopb ; jl #foo; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4
@@ -82,8 +79,7 @@ define i32 @preserve_R(i32 %a, <2 x i32> %b) {
 
 define i32 @no_CC_CSR_overlap(i32 %a) {
 ; CHECK-LABEL: no_CC_CSR_overlap:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0:
+; CHECK:       // %bb.0:
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -95,8 +91,7 @@ define i32 @no_CC_CSR_overlap(i32 %a) {
 
 define void @no_CC_regs() {
 ; CHECK-LABEL: no_CC_regs:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0:
+; CHECK:       // %bb.0:
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4

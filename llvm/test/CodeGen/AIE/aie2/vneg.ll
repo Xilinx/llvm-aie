@@ -10,8 +10,7 @@
 
 define dso_local noundef <16 x i64> @test_vneg_acc32(<16 x i64> noundef %acc) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_vneg_acc32:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; mova r0, #0; nops ; nopxm ; nopv
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vneg cm0, cm1, r0 // Delay Slot 5
@@ -26,8 +25,7 @@ entry:
 
 define dso_local noundef <16 x i64> @test_vneg_acc64(<16 x i64> noundef %acc) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_vneg_acc64:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; mova r0, #2; nops ; nopxm ; nopv
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vneg cm0, cm1, r0 // Delay Slot 5

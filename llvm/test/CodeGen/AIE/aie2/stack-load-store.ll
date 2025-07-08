@@ -9,8 +9,7 @@
 
 define dso_local noundef <8 x i32> @_Z4testDv8_i(<8 x i32> noundef %vec) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z4testDv8_i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
 ; CHECK-NEXT:    vst wl2, [sp, #-32]
 ; CHECK-NEXT:    vlda wl0, [sp, #-32]
@@ -34,8 +33,7 @@ declare void @llvm.lifetime.end.p0(i64 immarg, ptr nocapture) #1
 
 define dso_local noundef <4 x i64> @_Z4testDv8_u7__acc32(<4 x i64> noundef %vec) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z4testDv8_u7__acc32:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
 ; CHECK-NEXT:    vst amll1, [sp, #-32]
 ; CHECK-NEXT:    vlda amll0, [sp, #-32]

@@ -9,8 +9,7 @@
 
 define dso_local void @_Z12test_put_mcdDv64_DB8_i(<64 x i8> noundef %a, i32 noundef %en)  {
 ; CHECK-LABEL: _Z12test_put_mcdDv64_DB8_i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -26,8 +25,7 @@ entry:
 
 define dso_local void @_Z12test_put_mcdDv8_u7__acc64i(<8 x i64> inreg noundef %a, i32 noundef %en)  {
 ; CHECK-LABEL: _Z12test_put_mcdDv8_u7__acc64i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -42,8 +40,7 @@ entry:
 
 define dso_local noundef i32 @_Z11test_get_ssv()  {
 ; CHECK-LABEL: _Z11test_get_ssv:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mov r0, ss; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
@@ -61,8 +58,7 @@ entry:
 
 define dso_local noundef i32 @_Z14test_get_ss_nbRbS_(ptr nocapture nonnull writeonly align 1 dereferenceable(1) %success, ptr nocapture nonnull writeonly align 1 dereferenceable(1) %tlast)  {
 ; CHECK-LABEL: _Z14test_get_ss_nbRbS_:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mov.nb r0, ss; nopb ; nopx
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -98,8 +94,7 @@ entry:
 
 define dso_local void @_Z11test_put_msii(i32 noundef %a, i32 noundef %tlast)  {
 ; CHECK-LABEL: _Z11test_put_msii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    mov r28, r1 // Delay Slot 4
@@ -114,8 +109,7 @@ entry:
 
 define dso_local void @_Z14test_put_ms_nbDv2_u6__bf16Rb(<2 x bfloat> noundef %val, ptr nocapture nonnull writeonly align 1 dereferenceable(1) %success)  {
 ; CHECK-LABEL: _Z14test_put_ms_nbDv2_u6__bf16Rb:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    st.s8 r0, [p0, #0]; nopb ; nopx ; mov.nb ms, r0
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
@@ -136,8 +130,7 @@ entry:
 
 define dso_local void @_Z19test_put_ms_v64bf16Dv64_u6__bf16ii(<64 x bfloat> noundef %a, i32 noundef %en, i32 noundef %tlast)  {
 ; CHECK-LABEL: _Z19test_put_ms_v64bf16Dv64_u6__bf16ii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nops ; vextract.64 r3:r2, x4, #0, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov ms, r2; vextract.64 r5:r4, x4, #1, vaddsign1

@@ -9,8 +9,7 @@
 
 define dso_local void @_Z9test_donev() local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z9test_donev:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; done ; nopm ; nopv
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5

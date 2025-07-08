@@ -9,8 +9,7 @@
 
 define dso_local noundef float @test_fix2float(i32 noundef %n) {
 ; CHECK-LABEL: test_fix2float:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mova r0, #0 // Delay Slot 4
@@ -24,8 +23,7 @@ entry:
 
 define dso_local noundef i32 @test_float2fix(float noundef %n) {
 ; CHECK-LABEL: test_float2fix:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mova r0, #0 // Delay Slot 4

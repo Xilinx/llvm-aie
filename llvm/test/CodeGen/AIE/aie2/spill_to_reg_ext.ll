@@ -8,8 +8,7 @@
 ; RUN: llc -O2 -mtriple=aie2 --issue-limit=1 %s -o - | FileCheck %s
 define dso_local noundef signext i8 @_Z21test_ext_v2int4_sign1Dv64_DB8_i(<64 x i8> noundef %v, i32 noundef %idx) {
 ; CHECK-LABEL: _Z21test_ext_v2int4_sign1Dv64_DB8_i:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopx ; mov r1, r16
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    mova r16, #6 // Delay Slot 5
@@ -24,8 +23,7 @@ entry:
 }
 define dso_local noundef <16 x i32> @_Z17test_max_v16int32Dv16_iS_b(<16 x i32> noundef %a, <16 x i32> noundef %b, i1 noundef zeroext %sgn) {
 ; CHECK-LABEL: _Z17test_max_v16int32Dv16_iS_b:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mov r1, r16
 ; CHECK-NEXT:    mov crVaddSign, r0
 ; CHECK-NEXT:    vmax_lt.d32 x0, r16, x2, x4

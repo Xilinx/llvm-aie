@@ -10,8 +10,7 @@
 
 define bfloat @test_fdiv_bfloat(bfloat %a, bfloat %b) {
 ; CHECK-LABEL: test_fdiv_bfloat:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; jl #__divsf3
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4
@@ -38,8 +37,7 @@ entry:
 
 define float @test_fdiv_float(float %a, float %b) {
 ; CHECK-LABEL: test_fdiv_float:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; jl #__divsf3; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4
@@ -66,8 +64,7 @@ entry:
 
 define double @test_fdiv_double(double %a, double %b) {
 ; CHECK-LABEL: test_fdiv_double:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; jl #__divdf3; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4

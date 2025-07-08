@@ -9,8 +9,7 @@
 
 define dso_local inreg noundef <64 x i32> @_Z16test_mul_8x2_2x8Dv16_jDv32_t(<16 x i32> noundef %a0, <32 x i16> noundef %b)  {
 ; CHECK-LABEL: _Z16test_mul_8x2_2x8Dv16_jDv32_t:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #3; nopx
 ; CHECK-NEXT:    vshuffle x4, x0, x0, r0
 ; CHECK-NEXT:    mova r0, #2; movx r1, #24
@@ -32,8 +31,7 @@ entry:
 }
 define dso_local inreg noundef <64 x i32> @_Z19test_negmul_8x2_2x8Dv16_jDv32_t(<16 x i32> noundef %a0, <32 x i16> noundef %b)  {
 ; CHECK-LABEL: _Z19test_negmul_8x2_2x8Dv16_jDv32_t:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #3; nopx
 ; CHECK-NEXT:    vshuffle x4, x0, x0, r0
 ; CHECK-NEXT:    mova r0, #2; movx r1, #24
@@ -55,8 +53,7 @@ entry:
 }
 define dso_local inreg noundef <64 x i32> @_Z16test_mac_8x2_2x8Dv16_jDv32_tDv64_u7__acc32(<16 x i32> noundef %a0, <32 x i16> noundef %b, <64 x i32> inreg noundef %acc1)  {
 ; CHECK-LABEL: _Z16test_mac_8x2_2x8Dv16_jDv32_tDv64_u7__acc32:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #3; nopx
 ; CHECK-NEXT:    vshuffle x4, x0, x0, r0
 ; CHECK-NEXT:    mova r0, #2; movx r1, #24
@@ -79,8 +76,7 @@ entry:
 }
 define dso_local inreg noundef <64 x i32> @_Z16test_msc_8x2_2x8Dv16_jDv32_tDv64_u7__acc32(<16 x i32> noundef %a0, <32 x i16> noundef %b, <64 x i32> inreg noundef %acc1)  {
 ; CHECK-LABEL: _Z16test_msc_8x2_2x8Dv16_jDv32_tDv64_u7__acc32:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #3; nopx
 ; CHECK-NEXT:    vshuffle x4, x0, x0, r0
 ; CHECK-NEXT:    mova r0, #2; movx r1, #24
@@ -103,8 +99,7 @@ entry:
 }
 define dso_local inreg noundef <64 x i32> @_Z27test_addmac_4x16_16x16_confDv64_hiDv128_DB8_iDv64_u7__acc32S2_iiiii(<64 x i8> noundef %a, i32 noundef %sgn_x, <128 x i8> noundef %b, i32 noundef %sgn_y, <64 x i32> inreg noundef %acc1, <64 x i32> inreg noundef %acc2, i32 noundef %zero_acc1, i32 noundef %shift16, i32 noundef %sub_mul, i32 noundef %sub_acc1, i32 noundef %sub_acc2)  {
 ; CHECK-LABEL: _Z27test_addmac_4x16_16x16_confDv64_hiDv128_DB8_iDv64_u7__acc32S2_iiiii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r17, #11; nopb ; nops ; nez r16, r1; nopm ; nopv
 ; CHECK-NEXT:    mova r7, #10; nopb ; lshl r4, r4, r17
 ; CHECK-NEXT:    mova r7, #12; lshl r3, r3, r7
@@ -167,8 +162,7 @@ entry:
 }
 define dso_local inreg noundef <64 x i32> @_Z27test_addmsc_4x16_16x16_confDv64_hiDv128_DB8_iDv64_u7__acc32S2_iiiii(<64 x i8> noundef %a, i32 noundef %sgn_x, <128 x i8> noundef %b, i32 noundef %sgn_y, <64 x i32> inreg noundef %acc1, <64 x i32> inreg noundef %acc2, i32 noundef %zero_acc1, i32 noundef %shift16, i32 noundef %sub_mul, i32 noundef %sub_acc1, i32 noundef %sub_acc2)  {
 ; CHECK-LABEL: _Z27test_addmsc_4x16_16x16_confDv64_hiDv128_DB8_iDv64_u7__acc32S2_iiiii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r17, #11; nopb ; nops ; nez r16, r1; nopm ; nopv
 ; CHECK-NEXT:    mova r7, #10; nopb ; lshl r4, r4, r17
 ; CHECK-NEXT:    mova r7, #12; lshl r3, r3, r7

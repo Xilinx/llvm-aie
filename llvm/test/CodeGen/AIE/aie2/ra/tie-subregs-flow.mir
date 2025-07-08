@@ -292,7 +292,7 @@ alignment:       16
 tracksRegLiveness: true
 body:             |
   ; CHECK-LABEL: name: test_padd_loop
-  ; CHECK: bb.0.entry (align 16):
+  ; CHECK: bb.0.entry:
   ; CHECK-NEXT:   successors: %bb.3(0x40000000), %bb.1(0x40000000)
   ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $r2, $r3, $r4
   ; CHECK-NEXT: {{  $}}
@@ -315,7 +315,7 @@ body:             |
   ; CHECK-NEXT:   $dj0 = MOV_mv_scl killed $r2
   ; CHECK-NEXT:   $dc0 = MOV_mv_scl killed $r3
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.2 (align 16):
+  ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.3(0x40000000), %bb.2(0x40000000)
   ; CHECK-NEXT:   liveins: $d0:0x0000000000000870, $dc0, $dj0, $dn0, $m0, $p0, $r0, $r4
   ; CHECK-NEXT: {{  $}}
@@ -330,7 +330,7 @@ body:             |
   ; CHECK-NEXT:   $p0, $dc0 = PADDA_2D killed $p0, $d0
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.3 (align 16):
+  ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
@@ -375,7 +375,7 @@ alignment:       16
 tracksRegLiveness: true
 body:             |
   ; CHECK-LABEL: name: test_padd_conditional
-  ; CHECK: bb.0.entry (align 16):
+  ; CHECK: bb.0.entry:
   ; CHECK-NEXT:   successors: %bb.2(0x40000000), %bb.1(0x40000000)
   ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $r2, $r3, $r4, $r5
   ; CHECK-NEXT: {{  $}}
@@ -393,7 +393,7 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $p0, $dc0 = PADDA_2D killed $p0, killed $d0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.2 (align 16):
+  ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   liveins: $dc0, $p0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   RET implicit $lr
@@ -433,11 +433,11 @@ alignment:       16
 tracksRegLiveness: true
 body:             |
   ; CHECK-LABEL: name: test_padd_diamond
-  ; CHECK: bb.0.entry (align 16):
-  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; CHECK: bb.0.entry:
+  ; CHECK-NEXT:   successors: %bb.2(0x40000000), %bb.1(0x40000000)
   ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $r2, $r3, $r4, $r5
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   JZ killed renamable $r4, %bb.2
+  ; CHECK-NEXT:   JZ killed renamable $r4, %bb.1
   ; CHECK-NEXT:   $m0 = MOV_mv_scl killed $r0
   ; CHECK-NEXT:   $dn0 = MOV_mv_scl killed $r1
   ; CHECK-NEXT:   $dj0 = MOV_mv_scl killed $r2
@@ -445,7 +445,7 @@ body:             |
   ; CHECK-NEXT:   $p0, $dc0 = PADDA_2D killed $p0, $d0
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors:
   ; CHECK-NEXT:   liveins: $d0:0x0000000000000860, $dj0, $dn0, $m0, $p0, $r5
   ; CHECK-NEXT: {{  $}}
@@ -457,7 +457,7 @@ body:             |
   ; CHECK-NEXT:   $p0, $dc0 = PADDA_2D killed $p0, killed $d0
   ; CHECK-NEXT:   DelayedSchedBarrier implicit killed renamable $dc0, implicit killed renamable $p0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.2 (align 16):
+  ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   liveins: $d0:0x0000000000000870, $dc0, $dj0, $dn0, $m0, $p0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   RET implicit $lr
@@ -499,7 +499,7 @@ alignment:       16
 tracksRegLiveness: true
 body:             |
   ; CHECK-LABEL: name: test_padd_phi_source
-  ; CHECK: bb.0.entry (align 16):
+  ; CHECK: bb.0.entry:
   ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
   ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $r2, $r3, $r4, $r5
   ; CHECK-NEXT: {{  $}}
@@ -517,7 +517,7 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $r3 = MOV_mv_scl killed $r4
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.2 (align 16):
+  ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $r2, $r3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   RET implicit $lr

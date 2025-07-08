@@ -14,8 +14,7 @@
 
 define  i32 @test(i8 signext %i) noinline nounwind optnone {
 ; AIE2-LABEL: test:
-; AIE2:         .p2align 4
-; AIE2-NEXT:  // %bb.0: // %entry
+; AIE2:       // %bb.0: // %entry
 ; AIE2-NEXT:    paddb [sp], #32; nopa ; nops ; nopxm ; nopv
 ; AIE2-NEXT:    st p6, [sp, #-32] // 4-byte Folded Spill
 ; AIE2-NEXT:    mov p6, sp
@@ -76,7 +75,6 @@ define  i32 @test(i8 signext %i) noinline nounwind optnone {
 ; AIE2-NEXT:    nop // Delay Slot 3
 ; AIE2-NEXT:    nop // Delay Slot 2
 ; AIE2-NEXT:    nop // Delay Slot 1
-; AIE2-NEXT:    .p2align 4
 ; AIE2-NEXT:  .LBB0_3: // %sw.bb1
 ; AIE2-NEXT:    jl #case2
 ; AIE2-NEXT:    nop // Delay Slot 5
@@ -90,7 +88,6 @@ define  i32 @test(i8 signext %i) noinline nounwind optnone {
 ; AIE2-NEXT:    nop // Delay Slot 3
 ; AIE2-NEXT:    nop // Delay Slot 2
 ; AIE2-NEXT:    nop // Delay Slot 1
-; AIE2-NEXT:    .p2align 4
 ; AIE2-NEXT:  .LBB0_4: // %sw.bb3
 ; AIE2-NEXT:    jl #case3
 ; AIE2-NEXT:    nop // Delay Slot 5
@@ -104,7 +101,6 @@ define  i32 @test(i8 signext %i) noinline nounwind optnone {
 ; AIE2-NEXT:    nop // Delay Slot 3
 ; AIE2-NEXT:    nop // Delay Slot 2
 ; AIE2-NEXT:    nop // Delay Slot 1
-; AIE2-NEXT:    .p2align 4
 ; AIE2-NEXT:  .LBB0_5: // %sw.bb5
 ; AIE2-NEXT:    jl #case4
 ; AIE2-NEXT:    nop // Delay Slot 5
@@ -118,7 +114,6 @@ define  i32 @test(i8 signext %i) noinline nounwind optnone {
 ; AIE2-NEXT:    nop // Delay Slot 3
 ; AIE2-NEXT:    nop // Delay Slot 2
 ; AIE2-NEXT:    nop // Delay Slot 1
-; AIE2-NEXT:    .p2align 4
 ; AIE2-NEXT:  .LBB0_6: // %sw.default
 ; AIE2-NEXT:    jl #caseb
 ; AIE2-NEXT:    nop // Delay Slot 5
@@ -126,7 +121,6 @@ define  i32 @test(i8 signext %i) noinline nounwind optnone {
 ; AIE2-NEXT:    nop // Delay Slot 3
 ; AIE2-NEXT:    nop // Delay Slot 2
 ; AIE2-NEXT:    nop // Delay Slot 1
-; AIE2-NEXT:    .p2align 4
 ; AIE2-NEXT:  .LBB0_7: // %sw.epilog
 ; AIE2-NEXT:    nopb ; lda lr, [sp, #-28]; nops ; nopxm ; nopv // 4-byte Folded Reload
 ; AIE2-NEXT:    nop
@@ -143,8 +137,7 @@ define  i32 @test(i8 signext %i) noinline nounwind optnone {
 ; AIE2-NEXT:    paddb [sp], #-32 // Delay Slot 1
 ;
 ; AIE2P-LABEL: test:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0: // %entry
+; AIE2P:       // %bb.0: // %entry
 ; AIE2P-NEXT:    mova m0, #-56; nopxm
 ; AIE2P-NEXT:    paddxm [sp], #64
 ; AIE2P-NEXT:    st p6, [sp, #-64] // 4-byte Folded Spill
@@ -206,7 +199,6 @@ define  i32 @test(i8 signext %i) noinline nounwind optnone {
 ; AIE2P-NEXT:    nop // Delay Slot 3
 ; AIE2P-NEXT:    nop // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
-; AIE2P-NEXT:    .p2align 4
 ; AIE2P-NEXT:  .LBB0_3: // %sw.bb1
 ; AIE2P-NEXT:    jl #case2
 ; AIE2P-NEXT:    nop // Delay Slot 5
@@ -220,7 +212,6 @@ define  i32 @test(i8 signext %i) noinline nounwind optnone {
 ; AIE2P-NEXT:    nop // Delay Slot 3
 ; AIE2P-NEXT:    nop // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
-; AIE2P-NEXT:    .p2align 4
 ; AIE2P-NEXT:  .LBB0_4: // %sw.bb3
 ; AIE2P-NEXT:    jl #case3
 ; AIE2P-NEXT:    nop // Delay Slot 5
@@ -234,7 +225,6 @@ define  i32 @test(i8 signext %i) noinline nounwind optnone {
 ; AIE2P-NEXT:    nop // Delay Slot 3
 ; AIE2P-NEXT:    nop // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
-; AIE2P-NEXT:    .p2align 4
 ; AIE2P-NEXT:  .LBB0_5: // %sw.bb5
 ; AIE2P-NEXT:    jl #case4
 ; AIE2P-NEXT:    nop // Delay Slot 5
@@ -248,7 +238,6 @@ define  i32 @test(i8 signext %i) noinline nounwind optnone {
 ; AIE2P-NEXT:    nop // Delay Slot 3
 ; AIE2P-NEXT:    nop // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
-; AIE2P-NEXT:    .p2align 4
 ; AIE2P-NEXT:  .LBB0_6: // %sw.default
 ; AIE2P-NEXT:    jl #caseb
 ; AIE2P-NEXT:    nop // Delay Slot 5
@@ -256,7 +245,6 @@ define  i32 @test(i8 signext %i) noinline nounwind optnone {
 ; AIE2P-NEXT:    nop // Delay Slot 3
 ; AIE2P-NEXT:    nop // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
-; AIE2P-NEXT:    .p2align 4
 ; AIE2P-NEXT:  .LBB0_7: // %sw.epilog
 ; AIE2P-NEXT:    lda lr, [sp, #-60]; nopb ; nopxm ; nops // 4-byte Folded Reload
 ; AIE2P-NEXT:    nop

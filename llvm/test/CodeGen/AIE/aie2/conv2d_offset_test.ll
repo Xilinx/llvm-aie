@@ -18,8 +18,7 @@ target triple = "aie2"
 ; Function Attrs: mustprogress noinline nounwind optnone
 define dso_local noundef i32 @_Z3foov() #0 {
 ; CHECK-LABEL: _Z3foov:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nop ; movxm p1, #(X+92)
 ; CHECK-NEXT:    mova m0, #-164
 ; CHECK-NEXT:    mov p0, p1

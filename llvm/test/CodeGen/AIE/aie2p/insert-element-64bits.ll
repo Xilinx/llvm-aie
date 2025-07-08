@@ -9,8 +9,7 @@
 
 define dso_local noundef <64 x i8> @insert_element_64(<8 x i64> noundef %v, i32 noundef %idx, i64 noundef %b) local_unnamed_addr  {
 ; CHECK-LABEL: insert_element_64:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    vlda bmll0, [sp, #-64]; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopx
 ; CHECK-NEXT:    nop

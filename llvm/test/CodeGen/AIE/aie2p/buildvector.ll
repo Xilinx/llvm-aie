@@ -9,8 +9,7 @@
 
 define void @test_single_diff_lane_buildvector() {
 ; CHECK-LABEL: test_single_diff_lane_buildvector:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #111; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mova r1, #777; nopx
 ; CHECK-NEXT:    mova r29, #0
@@ -27,8 +26,7 @@ entry:
 
 define void @test_splat_buildvector() {
 ; CHECK-LABEL: test_splat_buildvector:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
 ; CHECK-NEXT:    mova r0, #888 // Delay Slot 5
 ; CHECK-NEXT:    vbcst.32 x0, r0 // Delay Slot 4
@@ -42,8 +40,7 @@ entry:
 
 define void @test_symmetric_buildvector() {
 ; CHECK-LABEL: test_symmetric_buildvector:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #111; nopb ; nopxm ; nops
 ; CHECK-NEXT:    mova r1, #222
 ; CHECK-NEXT:    mova p0, #0
@@ -61,8 +58,7 @@ entry:
 
 define void @test_multi_diff_lane_buildvector() {
 ; CHECK-LABEL: test_multi_diff_lane_buildvector:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #111; nopxm
 ; CHECK-NEXT:    mova r1, #222
 ; CHECK-NEXT:    mova r2, #777

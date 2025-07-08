@@ -9,8 +9,7 @@
 
 define dso_local noundef <32 x bfloat> @band_v32bf16(<32 x bfloat> noundef %a, <32 x bfloat> noundef %b)  {
 ; CHECK-LABEL: band_v32bf16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -28,8 +27,7 @@ entry:
 
 define dso_local noundef <32 x bfloat> @bor_v32bf16(<32 x bfloat> noundef %a, <32 x bfloat> noundef %b)  {
 ; CHECK-LABEL: bor_v32bf16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -47,8 +45,7 @@ entry:
 
 define dso_local noundef <32 x bfloat> @bxor_v32bf16(<32 x bfloat> noundef %a, <32 x bfloat> noundef %b)  {
 ; CHECK-LABEL: bxor_v32bf16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mov r0, r16
 ; CHECK-NEXT:    vbneg_ltz.s16 x0, r16, x4
 ; CHECK-NEXT:    ret lr
@@ -74,8 +71,7 @@ entry:
 
 define dso_local noundef <32 x bfloat> @bneg_v32bf16(<32 x bfloat> noundef %a)  {
 ; CHECK-LABEL: bneg_v32bf16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -93,8 +89,7 @@ entry:
 
 define dso_local noundef <32 x bfloat> @abs_v32bf16(<32 x bfloat> noundef %a)  {
 ; CHECK-LABEL: abs_v32bf16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    movxm r0, #32767 // Delay Slot 4
@@ -111,8 +106,7 @@ entry:
 
 define dso_local noundef <32 x bfloat> @max_lt_v32bf16(<32 x bfloat> noundef %a, <32 x bfloat> noundef %b, ptr nocapture nonnull writeonly align 4 dereferenceable(4) %cmp)  {
 ; CHECK-LABEL: max_lt_v32bf16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vmax_lt.bf16 x0, r16, x2, x4 // Delay Slot 4
@@ -130,8 +124,7 @@ entry:
 
 define dso_local noundef <32 x bfloat> @max_v32bf16D(<32 x bfloat> noundef %a, <32 x bfloat> noundef %b)  {
 ; CHECK-LABEL: max_v32bf16D:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -146,8 +139,7 @@ entry:
 
 define dso_local noundef <32 x bfloat> @min_ge_v32bf16(<32 x bfloat> noundef %a, <32 x bfloat> noundef %b, ptr nocapture nonnull writeonly align 4 dereferenceable(4) %cmp)  {
 ; CHECK-LABEL: min_ge_v32bf16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vmin_ge.bf16 x0, r16, x2, x4 // Delay Slot 4
@@ -165,8 +157,7 @@ entry:
 
 define dso_local noundef <32 x bfloat> @min_v32bf16(<32 x bfloat> noundef %a, <32 x bfloat> noundef %b)  {
 ; CHECK-LABEL: min_v32bf16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -182,8 +173,7 @@ entry:
 
 define dso_local noundef <16 x i32> @test_bfloat16_to_int(<16 x bfloat> noundef %a, i32 noundef %shft)  {
 ; CHECK-LABEL: test_bfloat16_to_int:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4

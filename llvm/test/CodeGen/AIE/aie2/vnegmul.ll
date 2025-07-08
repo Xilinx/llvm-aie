@@ -9,8 +9,7 @@
 ; RUN:   | FileCheck %s
 define <16 x i64> @_Z19test_negmul_4x8_8x8ii(i32 noundef %sgn_x, i32 noundef %sgn_y) {
 ; CHECK-LABEL: _Z19test_negmul_4x8_8x8ii:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r2, #9; nopb ; nopxm
 ; CHECK-NEXT:    mova r3, #8
 ; CHECK-NEXT:    lshl r0, r0, r2
@@ -36,8 +35,7 @@ entry:
 
 define <16 x i64> @_Z21test_negmul_4x16_16x8v() {
 ; CHECK-LABEL: _Z21test_negmul_4x16_16x8v:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; mova r0, #0; nops ; nopxm ; nopv
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vnegmul cm0, x0, x0, r0 // Delay Slot 5
@@ -53,8 +51,7 @@ entry:
 }
 define <16 x i64> @_Z19test_negmul_2x8_8x8Dv32_tDv64_h(<32 x i16> noundef %a, <64 x i8> noundef %b)  {
 ; CHECK-LABEL: _Z19test_negmul_2x8_8x8Dv32_tDv64_h:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; mova r0, #18; nops ; nopxm ; nopv
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vnegmul cm0, x0, x2, r0 // Delay Slot 5

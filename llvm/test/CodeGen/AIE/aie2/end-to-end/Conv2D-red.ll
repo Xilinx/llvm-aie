@@ -35,8 +35,7 @@
 
 define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %cond, ptr %cond.i50, <16 x i32> %0, i32 %cond67.i79, i20 %idx.ext.i.i81, i20 %idx.ext.i404.i, i20 %idx.ext.i410.i, i20 %idx.ext.i434.i85, i32 %1, i20 %2, i20 %3, i20 %4, i20 %5, i20 %6, i32 %7, i32 %8, i32 %or9.i.i.i.i.i96, i32 %9, i20 %idx.ext.i422.i82, i20 %10, i20 %11, i20 %12, i20 %13, i20 %14, i20 %15, i20 %16, i20 %17, i20 %18, i20 %19, i20 %20, i20 %21, i20 %22, i20 %23, i32 %conv192.i107, i20 %24, i20 %idx.ext.i428.i, i20 %25, i20 %26, i20 %27, i32 %28) #1 {
 ; ASM-LABEL: conv2d.loop.nest:
-; ASM:         .p2align 4
-; ASM-NEXT:  // %bb.0: // %newFuncRoot
+; ASM:       // %bb.0: // %newFuncRoot
 ; ASM-NEXT:    paddb [sp], #32; nopx
 ; ASM-NEXT:    st p6, [sp, #-28] // 4-byte Folded Spill
 ; ASM-NEXT:    mov p6, sp
@@ -90,7 +89,6 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ASM-NEXT:    lda m4, [p6, #0]; movx r9, #31; mov r26, dj3
 ; ASM-NEXT:    // implicit-def: $x8
 ; ASM-NEXT:    // implicit-def: $x1
-; ASM-NEXT:    .p2align 4
 ; ASM-NEXT:  .LBB0_1: // %outer.loop.header
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
 ; ASM-NEXT:    // Child Loop BB0_2 Depth 2
@@ -110,7 +108,6 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ASM-NEXT:    vlda.ups.s32.s16 bml6, s0, [p2], m1; movxm le, #.L_LEnd0
 ; ASM-NEXT:    vlda.ups.s32.s16 bmh7, s0, [p2, #32]; and r0, r0, r9
 ; ASM-NEXT:    vlda.ups.s32.s16 bml7, s0, [p2, #0]; add r0, r0, #33; add.nc lc, r5, #0
-; ASM-NEXT:    .p2align 4
 ; ASM-NEXT:  .LBB0_2: // %inner.loop
 ; ASM-NEXT:    // Parent Loop BB0_1 Depth=1
 ; ASM-NEXT:    // => This Inner Loop Header: Depth=2

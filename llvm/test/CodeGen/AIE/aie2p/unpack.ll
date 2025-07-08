@@ -9,8 +9,7 @@
 
 define dso_local noundef <64 x i8> @_Z17unpack_I512_I8_I4Dv32_DB8_b(<32 x i8> noundef %v, i1 noundef zeroext %sign)  {
 ; CHECK-LABEL: _Z17unpack_I512_I8_I4Dv32_DB8_b:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; vunpack x0, wl2, unpacksign0; nopxm
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -26,8 +25,7 @@ entry:
 
 define dso_local noundef <32 x i16> @_Z18unpack_I512_I16_I8Dv32_hb(<32 x i8> noundef %v, i1 noundef zeroext %sign)  {
 ; CHECK-LABEL: _Z18unpack_I512_I16_I8Dv32_hb:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; vunpack x0, wl2, unpacksign0; nopxm
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -43,8 +41,7 @@ entry:
 
 define dso_local noundef <128 x i8> @_Z18unpack_I1024_I8_I4Dv64_DB8_b(<64 x i8> noundef %v, i1 noundef zeroext %sign)  {
 ; CHECK-LABEL: _Z18unpack_I1024_I8_I4Dv64_DB8_b:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; vunpack y2, x0, unpacksign0; nopxm
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -60,8 +57,7 @@ entry:
 
 define dso_local noundef <64 x i16> @_Z19unpack_I1024_I16_I8Dv64_ab(<64 x i8> noundef %v, i1 noundef zeroext %sign)  {
 ; CHECK-LABEL: _Z19unpack_I1024_I16_I8Dv64_ab:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; vunpack y2, x0, unpacksign0; nopxm
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5

@@ -13,8 +13,7 @@
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(readwrite, argmem: none, inaccessiblemem: none)
 define dso_local void @lowerMemcpyUsingWord() local_unnamed_addr #0 {
 ; CHECK-LABEL: lowerMemcpyUsingWord:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    movxm p0, #buffer2
 ; CHECK-NEXT:    lda r0, [p0], #4
 ; CHECK-NEXT:    lda r1, [p0], #4
@@ -41,8 +40,7 @@ declare void @llvm.memcpy.p0.p0.i32(ptr noalias nocapture writeonly, ptr noalias
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(readwrite, argmem: none, inaccessiblemem: none)
 define dso_local void @lowerMemcpyUsingWordByte() local_unnamed_addr #0 {
 ; CHECK-LABEL: lowerMemcpyUsingWordByte:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nop ; movxm p0, #(buffer2+8)
 ; CHECK-NEXT:    lda.s8 r0, [p0, #0]
 ; CHECK-NEXT:    lda r1, [p0, #-4]; movxm p1, #(buffer1+8)
@@ -70,8 +68,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(readwrite, argmem: none, inaccessiblemem: none)
 define dso_local void @lowerMemcpyUsingHalfByte() local_unnamed_addr #0 {
 ; CHECK-LABEL: lowerMemcpyUsingHalfByte:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; movxm p0, #buffer2; nops
 ; CHECK-NEXT:    lda.s16 r0, [p0, #0]; movxm p1, #buffer1
 ; CHECK-NEXT:    st.s16 r0, [p1, #0]
@@ -98,8 +95,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(readwrite, argmem: none, inaccessiblemem: none)
 define dso_local void @lowerMemcpyUsingWordHalfByte() local_unnamed_addr #0 {
 ; CHECK-LABEL: lowerMemcpyUsingWordHalfByte:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; movxm p0, #(buffer2+8); nopv
 ; CHECK-NEXT:    lda.s16 r0, [p0, #0]; nopb ; movxm p1, #(buffer1+8)
 ; CHECK-NEXT:    st.s16 r0, [p1, #0]
@@ -141,8 +137,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(readwrite, argmem: none, inaccessiblemem: none)
 define dso_local void @lowerMemcpyUsingVector16() local_unnamed_addr #0 {
 ; CHECK-LABEL: lowerMemcpyUsingVector16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; movxm p0, #buffer2; nops
 ; CHECK-NEXT:    vlda.128 wh0, [p0]
 ; CHECK-NEXT:    nop
@@ -163,8 +158,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(readwrite, argmem: none, inaccessiblemem: none)
 define dso_local void @lowerMemcpyUsingWordVector16() local_unnamed_addr #0 {
 ; CHECK-LABEL: lowerMemcpyUsingWordVector16:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; movxm p0, #buffer2; nopv
 ; CHECK-NEXT:    lda q0, [p0], #16; nopx
 ; CHECK-NEXT:    vlda.128 wh0, [p0]
@@ -186,8 +180,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(readwrite, argmem: none, inaccessiblemem: none)
 define dso_local void @lowerMemcpyUsingWordVector32() local_unnamed_addr #0 {
 ; CHECK-LABEL: lowerMemcpyUsingWordVector32:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; movxm p0, #buffer2
 ; CHECK-NEXT:    vldb wh0, [p0], #32
 ; CHECK-NEXT:    lda r0, [p0], #4
@@ -210,8 +203,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(readwrite, argmem: none, inaccessiblemem: none)
 define dso_local void @lowerMemcpyUsingAlignedWordCall() local_unnamed_addr #0 {
 ; CHECK-LABEL: lowerMemcpyUsingAlignedWordCall:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    jl #memcpy
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4
@@ -240,8 +232,7 @@ entry:
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(write, argmem: none, inaccessiblemem: none)
 define dso_local void @lowerMemsetUsingWordVector32() local_unnamed_addr #2 {
 ; CHECK-LABEL: lowerMemsetUsingWordVector32:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #0; nopb ; nopxm ; nops
 ; CHECK-NEXT:    vbcst.32 x0, r0
 ; CHECK-NEXT:    movxm p0, #buffer1
@@ -262,8 +253,7 @@ declare void @llvm.memset.p0.i32(ptr nocapture writeonly, i8, i32, i1 immarg) #3
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(write, argmem: none, inaccessiblemem: none)
 define dso_local void @lowerMemsetUsingWordByte() local_unnamed_addr #2 {
 ; CHECK-LABEL: lowerMemsetUsingWordByte:
-; CHECK:         .p2align 4
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; mova r0, #0; nops ; movxm p0, #(buffer1+4); nopv
 ; CHECK-NEXT:    nopa ; nopb ; nopx ; st r0, [p0, #-4]
 ; CHECK-NEXT:    st.s8 r0, [p0, #0]
