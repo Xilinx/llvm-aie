@@ -46,6 +46,10 @@
 
 using namespace llvm;
 
+extern cl::opt<unsigned> JumpInstCost;
+extern cl::opt<unsigned> MisfetchCost;
+extern cl::opt<bool> ForcePreciseRotationCost;
+
 static cl::opt<bool>
     EnableCustomAliasAnalysisOpt("aie-enable-alias-analysis",
                                  cl::desc("Enable AIE alias analysis pass"),
@@ -130,6 +134,17 @@ AIEBaseTargetMachine::AIEBaseTargetMachine(const Target &T, const Triple &TT,
       TLOF(std::make_unique<AIEELFTargetObjectFile>()) {
   initAsmInfo();
   EnableCustomAliasAnalysis = EnableCustomAliasAnalysisOpt;
+
+  setMBBPlacementOpts();
+}
+
+void AIEBaseTargetMachine::setMBBPlacementOpts() {
+  // 5 Branch Delay Slots
+  JumpInstCost = 5;
+  // No cache, so no Misfetch costs.
+  MisfetchCost = 0;
+  // Attempt to rotate loops based on profile data to reduce branch costs.
+  ForcePreciseRotationCost = true;
 }
 
 yaml::MachineFunctionInfo *

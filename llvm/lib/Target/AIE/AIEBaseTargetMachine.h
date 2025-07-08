@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -55,6 +55,8 @@ public:
   void registerPassBuilderCallbacks(PassBuilder &PB,
                                     bool PopulateClassToPassNames) override;
   bool isNoopAddrSpaceCast(unsigned SrcAS, unsigned DestAS) const override;
+
+  virtual void setMBBPlacementOpts();
 };
 
 class AIEBasePassConfig : public TargetPassConfig {

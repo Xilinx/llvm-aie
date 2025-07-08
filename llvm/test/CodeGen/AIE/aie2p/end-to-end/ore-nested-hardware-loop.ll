@@ -9,7 +9,7 @@
 ; RUN:   -pass-remarks-filter='aie-hardware-loops' %s -o - | FileCheck %s
 
 ; Verify that Zero-Overhead-Loop is attributed to the correct loop.
-; Loop Structure: 
+; Loop Structure:
 ; Loop 0
 ;   HW Loop 0_0
 ;   Loop 0_1
@@ -40,6 +40,7 @@ define weak_odr dso_local void @nestedInnerLoop(ptr noalias %in, ptr noalias %ou
 ; CHECK-NEXT: Function:        nestedInnerLoop
 ; CHECK-NEXT: Args:
 ; CHECK-NEXT:   - LoopID:          '0'
+; CHECK-NEXT:   - BasicBlock:      for.cond
 ; CHECK-NEXT:   - BasicBlock:      inner.loop
 ; CHECK-NEXT:   - BasicBlock:      inner.loop.body
 ; CHECK-NEXT:   - BasicBlock:      for.nested.regular.loop.cond.preheader
@@ -89,7 +90,7 @@ for.nested.regular.loop.cond:
 for.nested.body:
   br label %for.nested.regular.loop.cond
 
-for.body: 
+for.body:
   br label %for.cond
 }
 

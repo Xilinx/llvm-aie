@@ -304,20 +304,14 @@ define void @loopWithMul() {
 ; CHECK-NEXT:    mov.u20 r6, #buf2
 ; CHECK-NEXT:    mov r7, r12
 ; CHECK-NEXT:    mov r8, r12
-; CHECK-NEXT:    .p2align 4
-; CHECK-NEXT:  .LBB1_1: // =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    // Label of block must be emitted
-; CHECK-NEXT:    eq r0, r8, r12
-; CHECK-NEXT:    lt r9, r12, r8
-; CHECK-NEXT:    ltu r1, r13, r7
-; CHECK-NEXT:    ite_nez r9, r1, r9, r0
-; CHECK-NEXT:    bnez r9, .LBB1_3
+; CHECK-NEXT:    j .LBB1_2
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:  .LBB1_2: // in Loop: Header=BB1_1 Depth=1
+; CHECK-NEXT:    .p2align 4
+; CHECK-NEXT:  .LBB1_1: // in Loop: Header=BB1_2 Depth=1
 ; CHECK-NEXT:    // Label of block must be emitted
 ; CHECK-NEXT:    mov r9, p0
 ; CHECK-NEXT:    lshl r9, r7, r9
@@ -338,13 +332,19 @@ define void @loopWithMul() {
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st r0, [p1]
-; CHECK-NEXT:    j .LBB1_1
+; CHECK-NEXT:    .p2align 4
+; CHECK-NEXT:  .LBB1_2: // =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    // Label of block must be emitted
+; CHECK-NEXT:    eq r0, r8, r12
+; CHECK-NEXT:    lt r9, r12, r8
+; CHECK-NEXT:    ltu r1, r13, r7
+; CHECK-NEXT:    ite_nez r9, r1, r9, r0
+; CHECK-NEXT:    beqz r9, .LBB1_1
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB1_3: // Label of block must be emitted
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
