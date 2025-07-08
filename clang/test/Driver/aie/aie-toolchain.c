@@ -23,6 +23,8 @@
 // CC1: "-fno-builtin-memset"
 // CC1: "-fno-builtin-memcpy"
 // CC1: "-fno-builtin-memmove"
+// CC1: "-ffunction-sections"
+// CC1: "-fdata-sections"
 
 // RUN: %clang %s -### -no-canonical-prefixes --target=aie-none-unknown-elf 2>&1 -fbuiltin \
 // RUN:   | FileCheck -check-prefix=BUILTIN %s
@@ -75,6 +77,26 @@
 // CC1-PHI-FOLDING-OVERRIDE: clang{{.*}} "-cc1" "-triple" "[[AIE_ARCH]]-none-unknown-elf"
 // CC1-PHI-FOLDING-OVERRIDE: "-mllvm" "--two-entry-phi-node-folding-threshold=10"
 // CC1-PHI-FOLDING-OVERRIDE: "-mllvm" "--two-entry-phi-node-folding-threshold=5"
+
+// Check that we can override the -ffunction-section option
+// RUN: %clang %s -### -no-canonical-prefixes --target=aie-none-unknown-elf 2>&1 -fno-function-sections\
+// RUN:   | FileCheck -check-prefix=CC1-FNO-FUNCTION-SECTIONS -DAIE_ARCH=aie %s
+// RUN: %clang %s -### -no-canonical-prefixes --target=aie2-none-unknown-elf 2>&1 -fno-function-sections\
+// RUN:   | FileCheck -check-prefix=CC1-FNO-FUNCTION-SECTIONS -DAIE_ARCH=aie2 %s
+// RUN: %clang %s -### -no-canonical-prefixes --target=aie2p-none-unknown-elf 2>&1 -fno-function-sections\
+// RUN:   | FileCheck -check-prefix=CC1-FNO-FUNCTION-SECTIONS -DAIE_ARCH=aie2p %s
+// CC1-FNO-FUNCTION-SECTIONS: clang{{.*}} "-cc1" "-triple" "[[AIE_ARCH]]-none-unknown-elf"
+// CC1-FNO-FUNCTION-SECTIONS-NOT: "-ffunction-sections"
+
+// Check that we can override the -fdata-sections option
+// RUN: %clang %s -### -no-canonical-prefixes --target=aie-none-unknown-elf 2>&1 -fno-data-sections\
+// RUN:   | FileCheck -check-prefix=CC1-FNO-DATA-SECTIONS -DAIE_ARCH=aie %s
+// RUN: %clang %s -### -no-canonical-prefixes --target=aie2-none-unknown-elf 2>&1 -fno-data-sections\
+// RUN:   | FileCheck -check-prefix=CC1-FNO-DATA-SECTIONS -DAIE_ARCH=aie2 %s
+// RUN: %clang %s -### -no-canonical-prefixes --target=aie2p-none-unknown-elf 2>&1 -fno-data-sections\
+// RUN:   | FileCheck -check-prefix=CC1-FNO-DATA-SECTIONS -DAIE_ARCH=aie2p %s
+// CC1-FNO-DATA-SECTIONS: clang{{.*}} "-cc1" "-triple" "[[AIE_ARCH]]-none-unknown-elf"
+// CC1-FNO-DATA-SECTIONS-NOT: "-fdata-sections"
 
 // By default we want ctors, not init-array
 // RUN: %clang %s -### --target=aie-none-unknown-elf 2>&1 \
