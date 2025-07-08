@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements basic block placement transformations using the CFG
@@ -130,22 +133,21 @@ static cl::opt<bool>
                                  "precisely by using profile data."),
                         cl::init(false), cl::Hidden);
 
-static cl::opt<bool>
-    ForcePreciseRotationCost("force-precise-rotation-cost",
-                             cl::desc("Force the use of precise cost "
-                                      "loop rotation strategy."),
-                             cl::init(false), cl::Hidden);
+cl::opt<bool> ForcePreciseRotationCost("force-precise-rotation-cost",
+                                       cl::desc("Force the use of precise cost "
+                                                "loop rotation strategy."),
+                                       cl::init(false), cl::Hidden);
 
-static cl::opt<unsigned> MisfetchCost(
+cl::opt<unsigned> MisfetchCost(
     "misfetch-cost",
     cl::desc("Cost that models the probabilistic risk of an instruction "
              "misfetch due to a jump comparing to falling through, whose cost "
              "is zero."),
     cl::init(1), cl::Hidden);
 
-static cl::opt<unsigned> JumpInstCost("jump-inst-cost",
-                                      cl::desc("Cost of jump instructions."),
-                                      cl::init(1), cl::Hidden);
+cl::opt<unsigned> JumpInstCost("jump-inst-cost",
+                               cl::desc("Cost of jump instructions."),
+                               cl::init(1), cl::Hidden);
 static cl::opt<bool>
 TailDupPlacement("tail-dup-placement",
               cl::desc("Perform tail duplication during placement. "

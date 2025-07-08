@@ -64,6 +64,13 @@ body: |
   ; TAILMERGE-ON-NEXT:   $r0 = ADD_add_r_ri $r0, -4, implicit-def $srcarry
   ; TAILMERGE-ON-NEXT:   $cm0, $p0 = VLDA_UPS_S32_D8_ag_pstm_nrm $s0, $p0, $m0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<32 x s8>) from stack - 64)
   ; TAILMERGE-ON-NEXT:   $cm1, $p1, $dc0, $dc4 = VLDA_3D_UPS_S32_D8 $s0, $p1, $d0_3d, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<32 x s8>) from stack - 32)
+  ; TAILMERGE-ON-NEXT:   PseudoJ_jump_imm %bb.2
+  ; TAILMERGE-ON-NEXT: {{  $}}
+  ; TAILMERGE-ON-NEXT: bb.1:
+  ; TAILMERGE-ON-NEXT:   successors: %bb.2(0x80000000)
+  ; TAILMERGE-ON-NEXT:   liveins: $p0, $p1, $p2, $m0, $cm0, $cm1, $cm2, $s0, $x0, $r0, $r1, $d0_3d
+  ; TAILMERGE-ON-NEXT: {{  $}}
+  ; TAILMERGE-ON-NEXT:   $p2 = VST_SRS_D8_S32_ag_pstm_nrm_imm $p2, 32, $cm2, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<32 x s8>) into stack - 128)
   ; TAILMERGE-ON-NEXT: {{  $}}
   ; TAILMERGE-ON-NEXT: bb.2:
   ; TAILMERGE-ON-NEXT:   successors: %bb.3(0x07878788), %bb.1(0x78787878)
@@ -73,14 +80,7 @@ body: |
   ; TAILMERGE-ON-NEXT:   $r0 = ADD_add_r_ri $r0, -4, implicit-def $srcarry
   ; TAILMERGE-ON-NEXT:   $cm0, $p0 = VLDA_UPS_S32_D8_ag_pstm_nrm $s0, $p0, $m0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<32 x s8>) from stack - 64)
   ; TAILMERGE-ON-NEXT:   $cm1, $p1, $dc0, $dc4 = VLDA_3D_UPS_S32_D8 $s0, $p1, $d0_3d, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<32 x s8>) from stack - 32)
-  ; TAILMERGE-ON-NEXT:   PseudoJZ $r0, %bb.3
-  ; TAILMERGE-ON-NEXT: {{  $}}
-  ; TAILMERGE-ON-NEXT: bb.1:
-  ; TAILMERGE-ON-NEXT:   successors: %bb.2(0x80000000)
-  ; TAILMERGE-ON-NEXT:   liveins: $p0, $p1, $p2, $m0, $cm0, $cm1, $cm2, $s0, $x0, $r0, $r1, $d0_3d
-  ; TAILMERGE-ON-NEXT: {{  $}}
-  ; TAILMERGE-ON-NEXT:   $p2 = VST_SRS_D8_S32_ag_pstm_nrm_imm $p2, 32, $cm2, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<32 x s8>) into stack - 128)
-  ; TAILMERGE-ON-NEXT:   PseudoJ_jump_imm %bb.2
+  ; TAILMERGE-ON-NEXT:   PseudoJNZ $r0, %bb.1
   ; TAILMERGE-ON-NEXT: {{  $}}
   ; TAILMERGE-ON-NEXT: bb.3:
   ; TAILMERGE-ON-NEXT:   liveins: $p2, $cm0, $cm1, $cm2, $s0, $r1
