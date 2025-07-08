@@ -4,8 +4,9 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2 -run-pass=aie-cluster-base-address --aie-chain-addr-vec-ldst --aie-chain-addr-scl-ldst=false %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2p -run-pass=aie-cluster-base-address --aie-chain-addr-vec-ldst --aie-chain-addr-scl-ldst=false %s -verify-machineinstrs -o - | FileCheck %s
 
 # In this test, we chain the ptradds until we reach a store, then break the chain
 # to not create data dependencies later on.

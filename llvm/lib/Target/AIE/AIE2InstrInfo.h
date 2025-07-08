@@ -75,6 +75,9 @@ public:
   unsigned getMaxVectorBitSize() const override;
   unsigned getMaxSupportedLdStIncSize() const override;
 
+  ImmediateRangeBounds
+  getLoadStorePostIncImmediateRange(LLT MemType) const override;
+
   virtual unsigned
   getNumReservedDelaySlots(const MachineInstr &MI) const override;
 

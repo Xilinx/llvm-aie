@@ -1950,6 +1950,18 @@ unsigned AIE2PInstrInfo::getMaxVectorBitSize() const { return 2048; }
 
 unsigned AIE2PInstrInfo::getMaxSupportedLdStIncSize() const { return 2048; }
 
+AIEBaseInstrInfo::ImmediateRangeBounds
+AIE2PInstrInfo::getLoadStorePostIncImmediateRange(LLT MemType) const {
+  if (MemType.getSizeInBits() == 8)
+    return {7, -8};
+  else if (MemType.getSizeInBits() == 16)
+    return {14, -16};
+  else if (MemType.getSizeInBits() <= 32)
+    return {28, -32};
+  else
+    llvm_unreachable("Unsupported");
+}
+
 using AbstractOp = AIEBaseInstrInfo::AbstractOp;
 
 std::optional<const AbstractOp>

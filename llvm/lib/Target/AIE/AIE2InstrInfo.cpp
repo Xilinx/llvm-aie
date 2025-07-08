@@ -1743,3 +1743,15 @@ unsigned AIE2InstrInfo::getBasicVectorBitSize() const { return 512; }
 unsigned AIE2InstrInfo::getMaxVectorBitSize() const { return 1024; }
 
 unsigned AIE2InstrInfo::getMaxSupportedLdStIncSize() const { return 512; }
+
+AIEBaseInstrInfo::ImmediateRangeBounds
+AIE2InstrInfo::getLoadStorePostIncImmediateRange(LLT MemType) const {
+  if (MemType.getSizeInBits() == 8)
+    return {7, -8};
+  else if (MemType.getSizeInBits() == 16)
+    return {7, -8};
+  else if (MemType.getSizeInBits() <= 32)
+    return {252, -256};
+  else
+    llvm_unreachable("Unsupported");
+}

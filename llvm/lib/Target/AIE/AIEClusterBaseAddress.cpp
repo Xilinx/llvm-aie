@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -45,12 +45,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIE.h"
+#include "AIEBaseInstrInfo.h"
+#include "Utils/AIELoopUtils.h"
 #include "llvm/CodeGen/GlobalISel/CSEInfo.h"
 #include "llvm/CodeGen/GlobalISel/CSEMIRBuilder.h"
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/InitializePasses.h"
@@ -71,6 +74,11 @@ static cl::opt<bool> EnableChainsForScalarLdSt(
 static cl::opt<bool> EnableChainsForVectorLdSt(
     "aie-chain-addr-vec-ldst", cl::Hidden, cl::init(true),
     cl::desc("Enable ptradd chaining for vector loads and stores."));
+
+cl::opt<int> AddressChainCostLimit(
+    "aie-chain-cost-limit",
+    cl::desc("Maximum allowed cost for pointer add chains"), cl::init(-1),
+    cl::Hidden);
 
 namespace {
 
@@ -163,6 +171,8 @@ public:
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<MachineModuleInfoWrapperPass>();
     AU.addRequired<GISelCSEAnalysisWrapperPass>();
+    AU.addRequired<MachineLoopInfo>();
+    AU.addPreserved<MachineLoopInfo>();
     AU.addRequired<TargetPassConfig>();
     AU.setPreservesAll();
   }
@@ -223,10 +233,123 @@ private:
     if (Instrs.size() <= 1)
       return true;
 
-    // If the base reg is used in any of the successive MBBs, then we don't
-    // want to chain the corresponding ptr adds, since this would introduce a
-    // COPY and increase reg pressure.
-    return isRegUsedInSuccessiveMBBs(&MBB, PtrReg);
+    // If the base reg is used in any of the successive MBBs, would introduce a
+    // COPY and increase reg pressure. We only skip chaining in this case if it
+    // is considered unprofitable.
+    if (isRegUsedInSuccessiveMBBs(&MBB, PtrReg) &&
+        !isChainingProfitable(PtrReg, Instrs, MBB))
+      return true;
+
+    return false;
+  }
+
+  // Decide heuristically if chaining will be profitable
+  bool isChainingProfitable(Register PtrReg,
+                            const SmallVector<MachineInstr *, 8> &Instrs,
+                            MachineBasicBlock &MBB) {
+    const TargetSubtargetInfo &ST = MBB.getParent()->getSubtarget();
+    const AIEBaseInstrInfo *TII =
+        static_cast<const AIEBaseInstrInfo *>(ST.getInstrInfo());
+    using OffsetType = std::variant<int64_t, std::string>;
+    assert(Instrs.size() > 1);
+
+    bool InLoop = true;
+    MachineLoopInfo &MLI = getAnalysis<MachineLoopInfo>();
+    MachineLoop *ToLoop = MLI.getLoopFor(&MBB);
+    if (!ToLoop)
+      InLoop = false;
+
+    unsigned ChainedCost = 0;
+    unsigned ChainedCostLimit = Instrs.size() / 2; // Experimental threshold
+
+    if (AddressChainCostLimit > -1) {
+      ChainedCostLimit = AddressChainCostLimit;
+    }
+
+    if (isRegUsedInSuccessiveMBBs(&MBB, PtrReg)) {
+      if (InLoop)
+        return false;   // A copy in a loop is costly
+      ChainedCost += 1; // Add cost of resulting copy
+    }
+
+    int64_t ImmediateRangeMax = 0;
+    int64_t ImmediateRangeMin = 0;
+    bool ImmediateRangeSet = false;
+    int64_t AccumulatedOffset = 0;
+    int64_t NewOffset;
+    SmallVector<OffsetType, 8> Offsets;
+
+    for (unsigned I = 0; I < Instrs.size() - 1; I++) {
+      MachineInstr *MI = Instrs[I];
+      MachineInstr *MINext = Instrs[I + 1];
+
+      const Register PtrReg = MI->getOperand(0).getReg();
+      for (const MachineInstr &UseMI : MRI->use_instructions(PtrReg)) {
+        if (ImmediateRangeSet)
+          continue; // Check first use only
+        if (!UseMI.mayLoadOrStore())
+          continue;
+        const LLT MemType = getLoadStoreType(UseMI);
+        // Immediate ranges for vectors are sufficient so we
+        // assume chaining is always profitable.
+        if (MemType.isVector()) {
+          return true;
+        } else {
+          if (MemType.getSizeInBits() <= 32) {
+            ImmediateRangeMax = TII->getLoadStorePostIncImmediateRange(MemType)
+                                    .ImmediateRangeMax;
+            ImmediateRangeMin = TII->getLoadStorePostIncImmediateRange(MemType)
+                                    .ImmediateRangeMin;
+            ImmediateRangeSet = true;
+          } else {
+            llvm_unreachable(
+                "unreachable: Unsupported immediate range of scalar size ");
+          }
+        }
+      }
+
+      // If the immediate range is not set, the pointers aren't used by any
+      // loads and stores, so we return.
+      if (!ImmediateRangeSet) {
+        assert(ImmediateRangeMin == 0 && ImmediateRangeMax == 0);
+        return false;
+      }
+
+      auto OffsetMI =
+          getIConstantVRegValWithLookThrough(MI->getOperand(2).getReg(), *MRI);
+      auto OffsetMINext = getIConstantVRegValWithLookThrough(
+          MINext->getOperand(2).getReg(), *MRI);
+
+      if (shouldBreakChain(MI, MINext, OffsetMI, OffsetMINext)) {
+        ChainedCost++;
+        AccumulatedOffset = 0;
+        Offsets.push_back("Break");
+        continue;
+      }
+
+      const int64_t CurrOffset = OffsetMI->Value.getSExtValue();
+      const int64_t NextOffset = OffsetMINext->Value.getSExtValue();
+
+      assert(I == 0 || !Offsets.empty());
+      AccumulatedOffset +=
+          (I == 0 || (std::holds_alternative<std::string>(Offsets.back()) &&
+                      std::get<std::string>(Offsets.back()) == "Break"))
+              ? CurrOffset
+              : NewOffset;
+      Offsets.push_back(
+          (I == 0 || (std::holds_alternative<std::string>(Offsets.back()) &&
+                      std::get<std::string>(Offsets.back()) == "Break"))
+              ? CurrOffset
+              : OffsetType(NewOffset));
+
+      NewOffset = NextOffset - AccumulatedOffset;
+
+      if (NewOffset < ImmediateRangeMin || NewOffset > ImmediateRangeMax) {
+        ChainedCost += 1; // Immediate materialization cost
+      }
+    }
+
+    return ChainedCostLimit > ChainedCost;
   }
 
   // Build a chain (or set of chains) of G_PTR_ADDs. We consider as

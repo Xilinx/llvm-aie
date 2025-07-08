@@ -711,6 +711,16 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
     llvm_unreachable("Target didn't implement getMaxSupportedLdStIncSize!");
   }
 
+  struct ImmediateRangeBounds {
+    int64_t ImmediateRangeMax;
+    int64_t ImmediateRangeMin;
+  };
+  virtual ImmediateRangeBounds
+  getLoadStorePostIncImmediateRange(LLT MemType) const {
+    llvm_unreachable(
+        "Target didn't implement getLoadStorePostIncImmediateRange!");
+  }
+
   /// Abstract operations to help the decoding of complex operations.
   struct AbstractOp {
     enum class OperationType : unsigned {
