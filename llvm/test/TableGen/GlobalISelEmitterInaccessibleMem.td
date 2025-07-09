@@ -20,17 +20,16 @@ def : Pat<(int_intr_1 GPR32:$src),
 // CHECK-NEXT:       GIM_CheckOpcode, /*MI*/0, GIMT_Encode2(TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS),
 // CHECK-NEXT:       GIM_CheckNumOperands, /*MI*/0, /*Expected*/3,
 // CHECK-NEXT:       GIM_CheckIntrinsicID, /*MI*/0, /*Op*/1, GIMT_Encode2(Intrinsic::intr_1),
-// CHECK-NEXT:       GIM_CheckType, /*MI*/0, /*Op*/0, /*Type*/GILLT_s32,
-// CHECK-NEXT:       GIM_CheckType, /*MI*/0, /*Op*/2, /*Type*/GILLT_s32,
-// CHECK-NEXT:       GIM_CheckRegBankForClass, /*MI*/0, /*Op*/0, /*RC*/GIMT_Encode2(MyTarget::GPR32RegClassID),
-// CHECK-NEXT:       GIM_CheckRegBankForClass, /*MI*/0, /*Op*/2, /*RC*/GIMT_Encode2(MyTarget::GPR32RegClassID),
+// CHECK-NEXT:       GIM_RootCheckType, /*Op*/0, /*Type*/GILLT_s32,
+// CHECK-NEXT:       GIM_RootCheckType, /*Op*/2, /*Type*/GILLT_s32,
+// CHECK-NEXT:       GIM_RootCheckRegBankForClass, /*Op*/0, /*RC*/GIMT_Encode2(MyTarget::GPR32RegClassID),
+// CHECK-NEXT:       GIM_RootCheckRegBankForClass, /*Op*/2, /*RC*/GIMT_Encode2(MyTarget::GPR32RegClassID),
 // CHECK-NEXT:       // (intrinsic_w_chain:{ *:[i32] } 187:{ *:[iPTR] }, GPR32:{ *:[i32] }:$src)  =>  (NOP:{ *:[i32] } GPR32:{ *:[i32] }:$src)
-// CHECK-NEXT:       GIR_BuildMI, /*InsnID*/0, /*Opcode*/GIMT_Encode2(MyTarget::NOP),
-// CHECK-NEXT:       GIR_Copy, /*NewInsnID*/0, /*OldInsnID*/0, /*OpIdx*/0, // DstI[dst]
-// CHECK-NEXT:       GIR_Copy, /*NewInsnID*/0, /*OldInsnID*/0, /*OpIdx*/2, // src
-// CHECK-NEXT:       GIR_ConstrainSelectedInstOperands, /*InsnID*/0,
-// CHECK-NEXT:       GIR_EraseFromParent, /*InsnID*/0,
+// CHECK-NEXT:       GIR_BuildRootMI, /*Opcode*/GIMT_Encode2(MyTarget::NOP),
+// CHECK-NEXT:       GIR_RootToRootCopy, /*OpIdx*/0, // DstI[dst]
+// CHECK-NEXT:       GIR_RootToRootCopy, /*OpIdx*/2, // src
+// CHECK-NEXT:       GIR_RootConstrainSelectedInstOperands,
 // CHECK-NEXT:       // GIR_Coverage, 0,
-// CHECK-NEXT:       GIR_Done,
+// CHECK-NEXT:       GIR_EraseRootFromParent_Done,
 // CHECK-NEXT:     // Label 0: @[[NEXT_OPCODE_LABEL]]
 // CHECK-NEXT:     GIM_Reject,
