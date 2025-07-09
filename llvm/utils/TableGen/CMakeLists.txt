@@ -44,6 +44,7 @@ add_tablegen(llvm-tblgen LLVM
   AIEPreSchedLoweringEmitter.cpp
   AIESplitInstrTablesEmitter.cpp
   AIEVariableInstrItineraryEmitter.cpp
+  ARMTargetDefEmitter.cpp
   AsmMatcherEmitter.cpp
   AsmWriterEmitter.cpp
   Attributes.cpp
