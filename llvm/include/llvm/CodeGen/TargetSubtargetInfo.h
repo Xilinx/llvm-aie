@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -341,6 +341,12 @@ public:
   /// the pass, with architecture specific overrides providing the information
   /// where they are implemented.
   virtual bool supportsInitUndef() const { return false; }
+
+  /// Returns the critical path limit that EarlyIfConversion should use
+  /// when deciding about a specific conversion.
+  virtual unsigned getCriticalPathLimit() const {
+    return getSchedModel().MispredictPenalty / 2;
+  }
 };
 
 } // end namespace llvm

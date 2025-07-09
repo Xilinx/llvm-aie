@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // Early if-conversion is for out-of-order CPUs that don't have a lot of
@@ -912,10 +915,11 @@ bool EarlyIfConverter::shouldConvertIf() {
   unsigned MinCrit = std::min(TBBTrace.getCriticalPath(),
                               FBBTrace.getCriticalPath());
 
-  // Set a somewhat arbitrary limit on the critical path extension we accept.
-  unsigned CritLimit = SchedModel.MispredictPenalty/2;
-
   MachineBasicBlock &MBB = *IfConv.Head;
+  const TargetSubtargetInfo &STI = MBB.getParent()->getSubtarget();
+  // Set a somewhat arbitrary limit on the critical path extension we accept.
+  unsigned CritLimit = STI.getCriticalPathLimit();
+
   MachineOptimizationRemarkEmitter MORE(*MBB.getParent(), nullptr);
 
   // If-conversion only makes sense when there is unexploited ILP. Compute the
