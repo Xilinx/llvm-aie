@@ -18,8 +18,8 @@
 define dso_local void @conv2d_bfp16.for.body90.i(<32 x i32> %fW.sroa.0.1489.i, i32 %fW.sroa.14.1488.i, <32 x i32> %fA.sroa.0.1487.i, i32 %fA.sroa.18.1486.i, ptr addrspace(6) %pW.1485.i, ptr addrspace(5) %pA.1484.i, <64 x i32> %0, <64 x i32> %1, <64 x i32> %2, <64 x i32> %3, i32 %4, i32 %5, i20 %6, i20 %7, i20 %8, i20 %9, i20 %10, i20 %11, i32 %12, i32 %13, i32 %14, ptr %.out, ptr %.out1, ptr %.out2, ptr %.out3, ptr %.out4, ptr %.out5, ptr %pA.1.i.out, ptr %pW.1.i.out, ptr %fA.sroa.18.1.i.out, ptr %fA.sroa.0.1.i.out, ptr %fW.sroa.14.1.i.out, ptr %fW.sroa.0.1.i.out) #3 {
 ; CHECK-LABEL: conv2d_bfp16.for.body90.i:
 ; CHECK:       // %bb.0: // %newFuncRoot
-; CHECK-NEXT:    nopa ; nopb ; nops ; paddxm [sp], #64; nopv
-; CHECK-NEXT:    st p6, [sp, #-60]; nopx // 4-byte Folded Spill
+; CHECK-NEXT:    nopa ; nopb ; paddxm [sp], #64
+; CHECK-NEXT:    st p6, [sp, #-60] // 4-byte Folded Spill
 ; CHECK-NEXT:    mov p6, sp
 ; CHECK-NEXT:    padda [p6], #-320
 ; CHECK-NEXT:    vlda bmll3, [p6, #0]
@@ -36,17 +36,11 @@ define dso_local void @conv2d_bfp16.for.body90.i(<32 x i32> %fW.sroa.0.1489.i, i
 ; CHECK-NEXT:    padda [p6], m0
 ; CHECK-NEXT:    vlda bmll1, [p6, #0]
 ; CHECK-NEXT:    vlda bmlh1, [p6, #64]
-; CHECK-NEXT:    vlda bmhl1, [p6, #128]; movxm m0, #-1096
+; CHECK-NEXT:    vlda bmhl1, [p6, #128]; st p7, [sp, #-64]; movxm m0, #-1096 // 4-byte Folded Spill
 ; CHECK-NEXT:    vlda bmhh1, [p6, #192]; mov p6, sp
-; CHECK-NEXT:    padda [p6], m0
-; CHECK-NEXT:    lda m1, [p6, #0]
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    st p7, [sp, #-64] // 4-byte Folded Spill
-; CHECK-NEXT:    mov p7, sp
-; CHECK-NEXT:    movxm m0, #-1108
-; CHECK-NEXT:    mova dc4, #0
-; CHECK-NEXT:    mov p6, sp
+; CHECK-NEXT:    padda [p6], m0; mov p7, sp
+; CHECK-NEXT:    lda m1, [p6, #0]; movxm m0, #-1108
+; CHECK-NEXT:    mova dc4, #0; mov p6, sp
 ; CHECK-NEXT:    padda [p7], m0; movxm m0, #-1112
 ; CHECK-NEXT:    padda [p6], m0; movxm m0, #-1116
 ; CHECK-NEXT:    lda r7, [p6, #0]; mov p6, sp

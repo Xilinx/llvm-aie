@@ -16,10 +16,10 @@
   ; CHECK-LABEL: _Z1fPii:
   ; CHECK:         .p2align 4
   ; CHECK-NEXT:  // %bb.0: // %entry
-  ; CHECK-NEXT:    mova m0, #4; nopxm
+  ; CHECK-NEXT:    mova m0, #4; nopb ; nopxm
   ; CHECK-NEXT:    mova dn0, #16; mov m1, m0
-  ; CHECK-NEXT:    mova dc1, #0; movx r1, #4; mov dn1, dn0
-  ; CHECK-NEXT:    movs p1, p0; add.nc lc, r1, #-3
+  ; CHECK-NEXT:    mova r1, #4; mov dn1, dn0
+  ; CHECK-NEXT:    mova dc1, #0; movs p1, p0; add.nc lc, r1, #-3
   ; CHECK-NEXT:    movs dj1, m0; mov dc0, dc1
   ; CHECK-NEXT:    lda.2d r1, [p1], d1
   ; CHECK-NEXT:    nop

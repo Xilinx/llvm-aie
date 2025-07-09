@@ -45,7 +45,7 @@ body:             |
     ; CHECK-NEXT: [[DEF4:%[0-9]+]]:mr30_fifo_step_e1 = IMPLICIT_DEF
     ; CHECK-NEXT: $lfe = COPY [[DEF3]]
     ; CHECK-NEXT: [[VLDB_FILLX_512_:%[0-9]+]]:eps, [[VLDB_FILLX_512_1:%[0-9]+]]:eldfiforeg, [[VLDB_FILLX_512_2:%[0-9]+]]:erf2 = VLDB_FILLX_512 [[DEF4]], [[DEF4]], [[DEF]], [[DEF1]], [[DEF2]], implicit-def $lfe, implicit $lfe
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:mextra = COPY $lfe
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:mfifoextra = COPY $lfe
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDB_FILLX_512_]], implicit [[VLDB_FILLX_512_1]], implicit [[VLDB_FILLX_512_2]], implicit [[COPY]]
     %2:modregbank(s20) = G_IMPLICIT_DEF
     %4:ptrregbank(p0) = G_IMPLICIT_DEF
@@ -73,7 +73,7 @@ body:             |
     ; CHECK-NEXT: [[DEF4:%[0-9]+]]:mr30_fifo_step_e1 = IMPLICIT_DEF
     ; CHECK-NEXT: $lfe = COPY [[DEF3]]
     ; CHECK-NEXT: [[VLDB_POPX_512_:%[0-9]+]]:vec512, [[VLDB_POPX_512_1:%[0-9]+]]:eps, [[VLDB_POPX_512_2:%[0-9]+]]:eldfiforeg, [[VLDB_POPX_512_3:%[0-9]+]]:erf2 = VLDB_POPX_512 [[DEF4]], [[DEF4]], [[DEF]], [[DEF1]], [[DEF2]], implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:mextra = COPY $lfe
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:mfifoextra = COPY $lfe
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDB_POPX_512_]], implicit [[VLDB_POPX_512_1]], implicit [[VLDB_POPX_512_2]], implicit [[VLDB_POPX_512_3]], implicit [[COPY]]
     %3:modregbank(s20) = G_IMPLICIT_DEF
     %5:ptrregbank(p0) = G_IMPLICIT_DEF

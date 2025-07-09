@@ -2742,7 +2742,7 @@ bool AIE2PInstructionSelector::selectVLD_FIFO_FILLX(MachineInstr &I,
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI) &&
          constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *CopyBackLfeMI,
-                                  AIE2P::mExtraRegClass,
+                                  AIE2P::mFifoExtraRegClass,
                                   CopyBackLfeMI->getOperand(0));
 }
 
@@ -2791,7 +2791,7 @@ bool AIE2PInstructionSelector::selectVLD_FIFO_POPX(MachineInstr &I,
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI) &&
          constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *CopyBackLfeMI,
-                                  AIE2P::mExtraRegClass,
+                                  AIE2P::mFifoExtraRegClass,
                                   CopyBackLfeMI->getOperand(0));
 }
 

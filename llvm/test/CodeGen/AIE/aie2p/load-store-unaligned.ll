@@ -237,8 +237,8 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    st.s8 r23, [p2, dj0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vextract.16 r23, x4, #15, vaddsign1
 ; CHECK-NEXT:    nop
+; CHECK-NEXT:    vextract.16 r23, x4, #15, vaddsign1
 ; CHECK-NEXT:    mov p3, sp
 ; CHECK-NEXT:    padda [p3], #-512
 ; CHECK-NEXT:    st.s16 r0, [p3, #0]
