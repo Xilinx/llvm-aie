@@ -6,9 +6,9 @@
 # (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc %llcflags --filetype=obj -o %t
 # RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
-# TDOD: llc %llcflags --filetype=asm -o %t2
-# TODO: llvm-mc -triple aie2p -filetype=obj -o %t %t2
-# TODO: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
 
 ---
 name:      test_vld_pop_fill
