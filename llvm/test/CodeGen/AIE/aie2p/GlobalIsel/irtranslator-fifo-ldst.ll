@@ -492,7 +492,7 @@ define ptr @test_fifo_fillx(ptr noalias align 4 %ptr, <32 x i32> %buf, i32 %avai
   ; ISEL-NEXT:   [[COPY6:%[0-9]+]]:fifo512 = COPY [[COPY3]]
   ; ISEL-NEXT:   $lfe = COPY [[COPY6]]
   ; ISEL-NEXT:   [[VLDB_FILLX_512_:%[0-9]+]]:eps, [[VLDB_FILLX_512_1:%[0-9]+]]:eldfiforeg, [[VLDB_FILLX_512_2:%[0-9]+]]:erf2 = VLDB_FILLX_512 [[COPY4]], [[COPY4]], [[COPY]], [[COPY5]], [[COPY2]], implicit-def $lfe, implicit $lfe :: (load unknown-size from %ir.ptr, align 1)
-  ; ISEL-NEXT:   [[COPY7:%[0-9]+]]:mextra = COPY $lfe
+  ; ISEL-NEXT:   [[COPY7:%[0-9]+]]:mfifoextra = COPY $lfe
   ; ISEL-NEXT:   $p0 = COPY [[VLDB_FILLX_512_]]
   ; ISEL-NEXT:   PseudoRET implicit $lr, implicit $p0
 entry:
@@ -529,7 +529,7 @@ define ptr @test_fifo_popx(ptr noalias align 4 %ptr, <32 x i32> %buf, i32 %avail
   ; ISEL-NEXT:   [[COPY6:%[0-9]+]]:fifo512 = COPY [[COPY3]]
   ; ISEL-NEXT:   $lfe = COPY [[COPY6]]
   ; ISEL-NEXT:   [[VLDB_POPX_512_:%[0-9]+]]:vec512, [[VLDB_POPX_512_1:%[0-9]+]]:eps, [[VLDB_POPX_512_2:%[0-9]+]]:eldfiforeg, [[VLDB_POPX_512_3:%[0-9]+]]:erf2 = VLDB_POPX_512 [[COPY4]], [[COPY4]], [[COPY]], [[COPY5]], [[COPY2]], implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe :: (load unknown-size from %ir.ptr, align 1)
-  ; ISEL-NEXT:   [[COPY7:%[0-9]+]]:mextra = COPY $lfe
+  ; ISEL-NEXT:   [[COPY7:%[0-9]+]]:mfifoextra = COPY $lfe
   ; ISEL-NEXT:   $p0 = COPY [[VLDB_POPX_512_1]]
   ; ISEL-NEXT:   PseudoRET implicit $lr, implicit $p0
 entry:

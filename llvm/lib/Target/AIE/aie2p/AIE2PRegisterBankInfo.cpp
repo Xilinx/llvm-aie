@@ -1324,6 +1324,7 @@ AIE2PRegisterBankInfo::getRegBankFromRegClass(const TargetRegisterClass &RC,
   case AIE2P::eSpecial20_as_32BitRegClassID:
   case AIE2P::eSPRegClassID:
   case AIE2P::eSP_as_32BitRegClassID:
+  case AIE2P::mSPmRegClassID:
     return PTRs;
   case AIE2P::eMRegClassID:
   case AIE2P::eM_as_32BitRegClassID:

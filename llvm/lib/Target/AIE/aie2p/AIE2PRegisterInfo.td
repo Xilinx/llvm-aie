@@ -302,7 +302,7 @@ class AIE2PDim3DRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> 
   def eLdFifoReg : AIE2PVector1024RegisterClass<(add lf0, lf1)>;
 
   def mFifoHLReg : AIE2PVector512RegisterClass<(add sfh, sfl, lfh0, lfh1, lfl0, lfl1, lfe)>;
-  def mExtra : AIE2PVector512RegisterClass<(add lfe)>;
+  def mFifoExtra : AIE2PVector512RegisterClass<(add lfe)>;
   def mStFifo :  AIE2PVector1024RegisterClass<(add sf)>;
   def mStFifoh : AIE2PVector512RegisterClass<(add sfh)>;
   def mStFifol : AIE2PVector512RegisterClass<(add sfl)>;
@@ -982,5 +982,38 @@ def spill_eM_to_eR : AIE2PScalarRegisterClass<(add eM, eR, eDN)>;
 def spill_eDN_to_eR : AIE2PScalarRegisterClass<(add eDN, eR)>;
 def spill_eDJ_to_eR : AIE2PScalarRegisterClass<(add eDJ, eR, eDN)>;
 def spill_eDC_to_eR : AIE2PScalarRegisterClass<(add eDC, eR)>;
+
+def mSRF2IFlags : AIE2PScalarRegisterClass<(add srF2IFlags)>;
+def mCRFPNlfMask : AIE2PScalarRegisterClass<(add crFPNlfMask)>;
+def mSRFPCnvFl2Fx : AIE2PScalarRegisterClass<(add srFPCnvFl2Fx)>;
+def mLEm : AIE2PScalarRegisterClass<(add le)>;
+def mLRm : AIE2PScalarRegisterClass<(add lr)>;
+def mSRFifo_of : AIE2PScalarRegisterClass<(add srFifo_of)>;
+def mCRF2FMask : AIE2PScalarRegisterClass<(add crF2FMask)>;
+def mSRF2FFlags : AIE2PScalarRegisterClass<(add srF2FFlags)>;
+def mSRF2BFlags : AIE2PScalarRegisterClass<(add srF2BFlags)>;
+def mSRFPNlf : AIE2PScalarRegisterClass<(add srFPNlf)>;
+def mSRFPCnvFx2Fl : AIE2PScalarRegisterClass<(add srFPCnvFx2Fl)>;
+def mSRSparse_of : AIE2PScalarRegisterClass<(add srSparse_of)>;
+def mSRUPS_of : AIE2PScalarRegisterClass<(add srUPS_of)>;
+def mSRSRS_of : AIE2PScalarRegisterClass<(add srSRS_of)>;
+def mSRFPFlags : AIE2PScalarRegisterClass<(add srFPFlags)>;
+def mSRFifo_uf : AIE2PScalarRegisterClass<(add srFifo_uf)>;
+def mCRVaddSign : AIE2PScalarRegisterClass<(add eVaddSign)>;
+def mCRF2IMask : AIE2PScalarRegisterClass<(add crF2IMask)>;
+def mCRUnpackSign : AIE2PScalarRegisterClass<(add eUnpackSign)>;
+def mCRUPSSign : AIE2PScalarRegisterClass<(add eUPSSign)>;
+def mCRFPMask : AIE2PScalarRegisterClass<(add crFPMask)>;
+def mCRF2BMask : AIE2PScalarRegisterClass<(add crF2BMask)>;
+def mCRSRSSign : AIE2PScalarRegisterClass<(add eSRSSign)>;
+def mCRFPCnvFx2FlMask : AIE2PScalarRegisterClass<(add crFPCnvFx2FlMask)>;
+def mCRPackSign : AIE2PScalarRegisterClass<(add ePackSign)>;
+def mCRFPCnvFl2FxMask : AIE2PScalarRegisterClass<(add crFPCnvFl2FxMask)>;
+def mLCm : AIE2PScalarRegisterClass<(add lc)>;
+def mLSm : AIE2PScalarRegisterClass<(add ls)>;
+def mSPm : AIE2PScalarRegisterClass<(add sp)>;
+def mLCaCg : AIE2PScalarRegisterClass<(add lc)>;
+def mLCmCg : AIE2PScalarRegisterClass<(add lc)>;
+
 
 } // End AIE2P Namespace
