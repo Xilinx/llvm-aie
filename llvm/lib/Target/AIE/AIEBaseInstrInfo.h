@@ -521,6 +521,12 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual unsigned getRegionSizeInBytes(
       llvm::iterator_range<MachineBasicBlock::iterator> Region) const;
 
+  /// Return the required alignment in bytes of a machine basic block in a
+  /// specific target
+  virtual unsigned getMachineBlockAlignmentBytes() const {
+    llvm_unreachable("Target didn't implement getMachineBlockAlignmentBytes");
+  }
+
   /// Central place to compute RAW/WAR/WAW operand latencies.
   /// This uses itineraries when they exist. It returns std::nullopt for
   /// instructions that are not described.

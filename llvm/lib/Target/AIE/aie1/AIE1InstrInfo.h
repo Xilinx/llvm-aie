@@ -90,6 +90,8 @@ public:
   bool canHoistCheapInst(const MachineInstr &MI) const override;
   unsigned getBasicVecRegSize() const override { return 256; };
 
+  unsigned getMachineBlockAlignmentBytes() const override { return 16; }
+
 protected:
   SmallVector<AIEPseudoExpandInfo, 4>
   getSpillPseudoExpandInfo(const MachineInstr &MI) const override;

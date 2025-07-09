@@ -85,14 +85,15 @@ unsigned applyRegionAlignment(MachineBasicBlock::iterator MI,
   unsigned Size = 0;
   unsigned Stretchability = 0;
   unsigned f = 0;
+  const AIEBaseInstrInfo *TII = getTII(MI);
+  const unsigned MBBAlignment = TII->getMachineBlockAlignmentBytes();
   while (MI != EndMI) {
     if (MI->isBundle()) {
-      const AIEBaseInstrInfo *TII = getTII(MI);
       AIE::MachineBundle Bundle = TII->getAIEMachineBundle(MI);
       const VLIWFormat *Format = Bundle.getFormatOrNull();
       assert(Format);
       Size = Format->getSize();
-      Stretchability = 16 - Format->getSize();
+      Stretchability = MBBAlignment - Format->getSize();
       if (Stretchability == 0) {
         ++MI;
         continue;
@@ -116,7 +117,7 @@ unsigned applyRegionAlignment(MachineBasicBlock::iterator MI,
           if (Format->getSize() > Size) {
             elongateBundle(Bundle, *Format, &*MI, std::next(MI));
             Size = Format->getSize();
-            PadBytes = AllowCrossingPadBytes ? 16 - f : f;
+            PadBytes = AllowCrossingPadBytes ? MBBAlignment - f : f;
           }
         }
       } else {
@@ -140,13 +141,14 @@ void AIEMachineAlignment::applyBundlesAlignment(
     const std::vector<llvm::iterator_range<MachineBasicBlock::iterator>>
         &Regions,
     const AIEBaseInstrInfo *TII) {
+  const unsigned MBBAlignment = TII->getMachineBlockAlignmentBytes();
   for (auto Region : Regions) {
     unsigned Size = 0;
     unsigned PadBytes = 0;
     Size = TII->getRegionSizeInBytes(Region);
-    if ((Size % 16) == 0)
+    if ((Size % MBBAlignment) == 0)
       continue;
-    PadBytes = 16 - (Size % 16);
+    PadBytes = MBBAlignment - (Size % MBBAlignment);
     while (PadBytes) {
       PadBytes = applyRegionAlignment(Region.begin(), Region.end(), PadBytes,
                                       /*AllowCrossingPadBytes*/ false);

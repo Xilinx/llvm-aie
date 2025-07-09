@@ -1198,7 +1198,9 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
   auto ZOLSupport = getZOLSupport();
   const unsigned ZOLSetupToLoopEndDist =
       ZOLSupport.has_value() ? ZOLSupport->LoopSetupDistance : 0;
-  const unsigned LoopSetupSizeInBytes = 16 * ZOLSetupToLoopEndDist;
+  const unsigned LoopSetupSizeInBytes =
+      getMachineBlockAlignmentBytes() * ZOLSetupToLoopEndDist;
+  const unsigned MBBAlignment = getMachineBlockAlignmentBytes();
 
   auto GetPostZOLSetupRegionSize =
       [this](MachineBasicBlock &LoopMBB) -> std::pair<unsigned, unsigned> {
@@ -1230,9 +1232,9 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
     assert(ZOLSupport);
 
     // Exclude the LoopEnd bundle as it must be placed in its own standalone
-    // region to guarantee 128-bit instruction alignment. Additionally, there
-    // must be a 112-byte gap (in PM address space) between writing to the ls,
-    // le, and lc registers and the LoopEnd instruction.
+    // region to guarantee alignment. Additionally, there must be a gap
+    // (in PM address space) between writing to the ls, le, and lc registers and
+    // the LoopEnd instruction.
     const unsigned LoopSize = LoopSizeExcludingLastBundle(MBB);
 
     if (LoopSize < LoopSetupSizeInBytes) {
@@ -1258,20 +1260,19 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
       }
 
       // create regions of singleton bundle for schedule margin bundles,
-      // alignment algorithm will force fill each bundle to 128-bit due
-      // to the alignment requirement of 16-byte for the alignment region.
+      // alignment algorithm will force fill each bundle to the correct number
+      // of bits to fulfill the alignment requirement of the region.
       if (LoopPaddingInBytes > 0) {
         AlgnCandidates.emplace_back(MI);
         const int BundleSize = getAIEMachineBundleSize(MI);
-        LoopPaddingInBytes -= (16 - BundleSize);
+        LoopPaddingInBytes -= (MBBAlignment - BundleSize);
       }
 
       if (IsCall)
         DelaySlot = getNumDelaySlots(*MI);
 
-      // Distance in terms of fully-expanded 128-bit bundles that
-      // loop setup should maintain. We force each of these bundles to an
-      // alignment boundary, so that they will occupy 16 bytes.
+      // Distance in terms of fully-expanded bundles that loop setup should
+      // maintain. We force each of these bundles to an alignment boundary.
       if (ZOLSupport && isZOLSetupBundle(MI) && isLastZOLSetupBundleInMBB(MI)) {
         unsigned LoopSize = 0;
         // if we have only one MBB, it must be the loop.
@@ -1279,16 +1280,17 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
           MachineBasicBlock *LoopSucc = *MBB.successors().begin();
           LoopSize = LoopSizeExcludingLastBundle(*LoopSucc);
           // If we have a loop size, we can consider that it will
-          // have, at least, 16 bytes (alignment).
-          if (LoopSize > 0 && LoopSize < 16)
-            LoopSize = 16;
+          // have, at least, the number of bytes required by alignment.
+          if (LoopSize > 0 && LoopSize < getMachineBlockAlignmentBytes())
+            LoopSize = getMachineBlockAlignmentBytes();
         }
 
         if (LoopSize < LoopSetupSizeInBytes) {
           const auto [PostZOLBundleCount, PostZOLSize] =
               getPostZOLRegionSizeInfo(MBB);
           const int AvailablePaddingSpace =
-              PostZOLBundleCount * 16 - PostZOLSize;
+              PostZOLBundleCount * getMachineBlockAlignmentBytes() -
+              PostZOLSize;
           const int NeededPadding =
               LoopSetupSizeInBytes - LoopSize - PostZOLSize;
           LoopPaddingInBytes = std::min(AvailablePaddingSpace, NeededPadding);

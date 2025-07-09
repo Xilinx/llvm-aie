@@ -80,6 +80,8 @@ public:
   virtual unsigned
   getNumReservedDelaySlots(const MachineInstr &MI) const override;
 
+  unsigned getMachineBlockAlignmentBytes() const override { return 16; }
+
   bool isJNZ(unsigned Opc) const override;
   bool isJZ(unsigned Opc) const override;
   bool isCall(unsigned Opc) const override;
