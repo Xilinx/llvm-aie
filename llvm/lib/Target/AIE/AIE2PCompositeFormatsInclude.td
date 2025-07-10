@@ -25,19 +25,5 @@ class AIE2P__instr16__nop<dag slot_ins>
   let instr16 = {nop16};
 }
 
-class AIE2P__instr64__nop__alu__vec<dag slot_ins>
-  : AIE2P_instr64_Composite<slot_ins>
-{
-  // Base Slots
-  bits<20> alu;
-  bits<1> nop;
-  bits<26> vec;
-  // Intermediate fields
-  bits<60> inst_alu_vec;
-  // Hierarchical definition
-  let instr64 = {inst_alu_vec};
-  let inst_alu_vec = {nop, 0b000000000, alu, 0b01, vec, 0b10};
-}
-
 // nop_slot has all don't care bits
 def I16_NOP : AIE2P__instr16__nop<(ins nop_slot:$nop16)>;
