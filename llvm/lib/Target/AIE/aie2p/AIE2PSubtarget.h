@@ -60,6 +60,7 @@ public:
   bool enablePostRAMachineScheduler() const override { return true; }
   bool forcePostRAScheduling() const override { return true; }
   bool useAA() const override { return true; }
+  bool enableEarlyIfConversion() const override { return true; }
 
   CodeGenOptLevel getOptLevelToEnablePostRAScheduler() const override {
     // AIEngine hack: we currently rely on the post-RA scheduler to insert

@@ -105,6 +105,11 @@ cl::opt<bool> SimplifyCRSRRegs(
     "aie-simplify-crsr-edges", cl::Hidden, cl::init(true),
     cl::desc("Allow simplifying redundant CR and SR reg assignments"));
 
+cl::opt<bool>
+    EnableAIEIfConversion("aie-enable-if-conversion",
+                          cl::desc("Enable If Conversion optimization"),
+                          cl::init(true), cl::Hidden);
+
 static StringRef computeDataLayout(const Triple &TT) {
   return "e-m:e-p:20:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-f32:32:32-i64:32-"
          "f64:32-a:0:32-n32";

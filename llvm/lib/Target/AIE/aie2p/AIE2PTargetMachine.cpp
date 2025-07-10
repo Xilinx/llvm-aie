@@ -24,6 +24,7 @@ extern cl::opt<bool> EnablePreMISchedCoalescer;
 extern cl::opt<bool> EnableAddressChaining;
 extern cl::opt<bool> EnableGlobalPtrModOptimizer;
 extern cl::opt<bool> EnableWAWRegRewrite;
+extern cl::opt<bool> EnableAIEIfConversion;
 
 void AIE2PTargetMachine::anchor() {}
 
