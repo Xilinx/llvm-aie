@@ -645,7 +645,7 @@ static bool findUnmergeOrigin(MachineInstr &ConcatI, const unsigned UseOpIdx,
   MatchData.UnmergeSourceReg = UnmergeSourceReg;
 
   const int UnmergeDefIdx =
-      UnmergeInst->findRegisterDefOperandIdx(UnmergeDefReg);
+      UnmergeInst->findRegisterDefOperandIdx(UnmergeDefReg, nullptr);
   assert(UnmergeDefIdx >= 0);
   // Make sure Unmerge and Concat do not reorder the subvectors.
   return UseOpIdx == (unsigned)UnmergeDefIdx;
