@@ -20,6 +20,7 @@ set(LLVM_LINK_COMPONENTS Support)
 # ValueType definitions.
 add_tablegen(llvm-min-tblgen LLVM_HEADERS
   TableGen.cpp
+  ARMTargetDefEmitter.cpp
   Attributes.cpp
   DirectiveEmitter.cpp
   IntrinsicEmitter.cpp
@@ -43,6 +44,7 @@ add_tablegen(llvm-tblgen LLVM
   AIEPreSchedLoweringEmitter.cpp
   AIESplitInstrTablesEmitter.cpp
   AIEVariableInstrItineraryEmitter.cpp
+  ARMTargetDefEmitter.cpp
   AsmMatcherEmitter.cpp
   AsmWriterEmitter.cpp
   Attributes.cpp
