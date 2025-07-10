@@ -104,6 +104,7 @@ public:
 
   virtual std::optional<ZOLSupport> getZOLSupport() const override;
   virtual std::optional<JNZDSupport> getJNZDSupport() const override;
+  virtual std::optional<IfConvSupport> getIfConvSupport() const override;
 
   virtual bool
   isOffsetInImmediateRange(unsigned Opcode, unsigned LoadStoreSize,

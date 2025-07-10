@@ -66,6 +66,11 @@ static cl::opt<unsigned>
     UserLatencyMargin("aie-latency-margin", cl::Hidden, cl::init(0),
                       cl::desc("Define the latency on ExitSU edges"));
 
+static cl::opt<unsigned> IfConversionCritPathLimit(
+    "aie-if-conv-critical-path-limit",
+    cl::desc("Specify the critical path extension we accept for if conversion"),
+    cl::init(10), cl::Hidden);
+
 #define DEBUG_TYPE "aie-subtarget"
 
 // Perform target-specific adjustments to the latency of a schedule
@@ -911,4 +916,8 @@ AIEBaseSubtarget::getSMSMutationsImpl(const Triple &TT) {
 
 bool AIEBaseSubtarget::enableMachinePipeliner() const {
   return !ForcePostPipeliner;
+}
+
+unsigned AIEBaseSubtarget::getCriticalPathLimitImpl() const {
+  return IfConversionCritPathLimit;
 }

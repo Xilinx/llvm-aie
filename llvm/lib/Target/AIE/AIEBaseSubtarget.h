@@ -90,6 +90,10 @@ public:
   /// Whether to enable the pre-RA MachinePipeliner. This can be disabled to let
   /// the post-RA pipeliner handle the scheduling.
   bool enableMachinePipeliner() const;
+
+  /// Returns the critical path limit that EarlyIfConversion should use
+  /// when deciding about a specific conversion - common implementation.
+  unsigned getCriticalPathLimitImpl() const;
 };
 } // namespace llvm
 

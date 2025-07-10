@@ -1743,3 +1743,20 @@ unsigned AIE2InstrInfo::getBasicVectorBitSize() const { return 512; }
 unsigned AIE2InstrInfo::getMaxVectorBitSize() const { return 1024; }
 
 unsigned AIE2InstrInfo::getMaxSupportedLdStIncSize() const { return 512; }
+
+using IfConvSupport = AIEBaseInstrInfo::IfConvSupport;
+std::optional<IfConvSupport> AIE2InstrInfo::getIfConvSupport() const {
+  IfConvSupport Result;
+
+  Result.BranchToSelectMap[AIE2::PseudoJNZ] = AIE2::SELNEZ;
+  Result.BranchToSelectMap[AIE2::PseudoJZ] = AIE2::SELEQZ;
+
+  Result.ScalarRegisterClass = &AIE2::eRRegClass;
+  Result.SelectRegisterClass = &AIE2::eR27RegClass;
+
+  Result.registerOperandIndex(IfConvSupport::TrueReg, 0);
+  Result.registerOperandIndex(IfConvSupport::FalseReg, 1);
+  Result.registerOperandIndex(IfConvSupport::ConditionReg, 2);
+
+  return Result;
+}

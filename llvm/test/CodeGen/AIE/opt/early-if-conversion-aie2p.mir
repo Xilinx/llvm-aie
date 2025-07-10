@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie2p -run-pass=early-ifcvt %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2p -run-pass=early-ifcvt -aie-if-conv-critical-path-limit=5 %s -verify-machineinstrs -o - | FileCheck %s
 
 --- |
   define void @test1(ptr nocapture writeonly %params_ptr, i32 %conv, i16 %0) {
@@ -176,7 +176,6 @@ calleeSavedRegisters: [ '$lr', '$r8', '$r9', '$r10', '$r11', '$r12', '$r13',
 body:             |
   ; CHECK-LABEL: name: test1
   ; CHECK: bb.0.entry:
-  ; CHECK-NEXT:   successors: %bb.3(0x2aaaaaab), %bb.1(0x55555555)
   ; CHECK-NEXT:   liveins: $p0, $r0, $r1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -184,22 +183,12 @@ body:             |
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
   ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 16
   ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
-  ; CHECK-NEXT:   PseudoJZ [[COPY1]], %bb.3
-  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.1.entry:
-  ; CHECK-NEXT:   successors: %bb.3(0x40000001), %bb.2(0x3fffffff)
-  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[EQ:%[0-9]+]]:er = EQ [[COPY1]], [[MOV_RLC_imm11_pseudo]]
-  ; CHECK-NEXT:   PseudoJNZ [[EQ]], %bb.3
-  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.2.cond.false66:
-  ; CHECK-NEXT:   successors: %bb.3(0x80000000)
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.3.cond.end72:
-  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:er = PHI [[MOV_RLC_imm11_pseudo1]], %bb.0, [[MOV_RLC_imm11_pseudo1]], %bb.1, [[COPY2]], %bb.2
-  ; CHECK-NEXT:   ST_s16_idx_imm [[PHI]], [[COPY]], 0, implicit-def $pe2_ads, implicit $pe2_ads :: (store (s16) into %ir.params_ptr, align 4)
+  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:mr27_select = COPY [[EQ]]
+  ; CHECK-NEXT:   [[SEL_NEZ:%[0-9]+]]:er = SEL_NEZ [[MOV_RLC_imm11_pseudo1]], [[COPY2]], [[COPY3]]
+  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:mr27_select = COPY [[COPY1]]
+  ; CHECK-NEXT:   [[SEL_EQZ:%[0-9]+]]:er = SEL_EQZ [[MOV_RLC_imm11_pseudo1]], [[SEL_NEZ]], [[COPY4]]
+  ; CHECK-NEXT:   ST_s16_idx_imm [[SEL_EQZ]], [[COPY]], 0, implicit-def $pe2_ads, implicit $pe2_ads :: (store (s16) into %ir.params_ptr, align 4)
   ; CHECK-NEXT:   PseudoRET implicit $lr
   bb.1.entry:
     successors: %bb.3(0x2aaaaaab), %bb.4(0x55555555)
@@ -267,7 +256,6 @@ calleeSavedRegisters: [ '$lr', '$r8', '$r9', '$r10', '$r11', '$r12', '$r13',
 body:             |
   ; CHECK-LABEL: name: test2
   ; CHECK: bb.0.entry:
-  ; CHECK-NEXT:   successors: %bb.3(0x2aaaaaab), %bb.1(0x55555555)
   ; CHECK-NEXT:   liveins: $p0, $r0, $r1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -276,27 +264,12 @@ body:             |
   ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 16
   ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
   ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo2:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 2
-  ; CHECK-NEXT:   PseudoJZ [[COPY1]], %bb.3
-  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.1.entry:
-  ; CHECK-NEXT:   successors: %bb.4(0x40000001), %bb.2(0x3fffffff)
-  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[EQ:%[0-9]+]]:er = EQ [[COPY1]], [[MOV_RLC_imm11_pseudo]]
-  ; CHECK-NEXT:   PseudoJNZ [[EQ]], %bb.4
-  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.2.cond.false66:
-  ; CHECK-NEXT:   successors: %bb.4(0x80000000)
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.3.cond.false67:
-  ; CHECK-NEXT:   successors: %bb.4(0x80000000)
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.4.cond.end72:
-  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:er = PHI [[MOV_RLC_imm11_pseudo1]], %bb.1, [[COPY2]], %bb.2, [[MOV_RLC_imm11_pseudo2]], %bb.3
-  ; CHECK-NEXT:   ST_s16_idx_imm [[PHI]], [[COPY]], 0, implicit-def $pe2_ads, implicit $pe2_ads :: (store (s16) into %ir.params_ptr, align 4)
+  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:mr27_select = COPY [[EQ]]
+  ; CHECK-NEXT:   [[SEL_NEZ:%[0-9]+]]:er = SEL_NEZ [[MOV_RLC_imm11_pseudo1]], [[COPY2]], [[COPY3]]
+  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:mr27_select = COPY [[COPY1]]
+  ; CHECK-NEXT:   [[SEL_EQZ:%[0-9]+]]:er = SEL_EQZ [[MOV_RLC_imm11_pseudo2]], [[SEL_NEZ]], [[COPY4]]
+  ; CHECK-NEXT:   ST_s16_idx_imm [[SEL_EQZ]], [[COPY]], 0, implicit-def $pe2_ads, implicit $pe2_ads :: (store (s16) into %ir.params_ptr, align 4)
   ; CHECK-NEXT:   PseudoRET implicit $lr
   bb.1.entry:
     successors: %bb.3(0x2aaaaaab), %bb.5(0x55555555)
@@ -374,7 +347,6 @@ calleeSavedRegisters: [ '$lr', '$r8', '$r9', '$r10', '$r11', '$r12', '$r13',
 body:             |
   ; CHECK-LABEL: name: test3
   ; CHECK: bb.0.entry:
-  ; CHECK-NEXT:   successors: %bb.3(0x2aaaaaab), %bb.1(0x55555555)
   ; CHECK-NEXT:   liveins: $p0, $r0, $r1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -382,29 +354,13 @@ body:             |
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
   ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 16
   ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
-  ; CHECK-NEXT:   PseudoJZ [[COPY1]], %bb.3
-  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.1.entry:
-  ; CHECK-NEXT:   successors: %bb.4(0x40000001), %bb.2(0x3fffffff)
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[EQ:%[0-9]+]]:er = EQ [[COPY1]], [[MOV_RLC_imm11_pseudo]]
-  ; CHECK-NEXT:   PseudoJNZ [[EQ]], %bb.4
-  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.2.cond.false66:
-  ; CHECK-NEXT:   successors: %bb.4(0x80000000)
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.3.cond.false67:
-  ; CHECK-NEXT:   successors: %bb.4(0x80000000)
-  ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[ADD_add_r_ri:%[0-9]+]]:er = ADD_add_r_ri [[COPY2]], 3, implicit-def dead $srcarry
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.4.cond.end72:
-  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:er = PHI [[MOV_RLC_imm11_pseudo1]], %bb.1, [[COPY2]], %bb.2, [[ADD_add_r_ri]], %bb.3
-  ; CHECK-NEXT:   ST_s16_idx_imm [[PHI]], [[COPY]], 0, implicit-def $pe2_ads, implicit $pe2_ads :: (store (s16) into %ir.params_ptr, align 4)
+  ; CHECK-NEXT:   [[EQ:%[0-9]+]]:er = EQ [[COPY1]], [[MOV_RLC_imm11_pseudo]]
+  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:mr27_select = COPY [[EQ]]
+  ; CHECK-NEXT:   [[SEL_NEZ:%[0-9]+]]:er = SEL_NEZ [[MOV_RLC_imm11_pseudo1]], [[COPY2]], [[COPY3]]
+  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:mr27_select = COPY [[COPY1]]
+  ; CHECK-NEXT:   [[SEL_EQZ:%[0-9]+]]:er = SEL_EQZ [[ADD_add_r_ri]], [[SEL_NEZ]], [[COPY4]]
+  ; CHECK-NEXT:   ST_s16_idx_imm [[SEL_EQZ]], [[COPY]], 0, implicit-def $pe2_ads, implicit $pe2_ads :: (store (s16) into %ir.params_ptr, align 4)
   ; CHECK-NEXT:   PseudoRET implicit $lr
   bb.1.entry:
     successors: %bb.3(0x2aaaaaab), %bb.5(0x55555555)
@@ -501,7 +457,6 @@ calleeSavedRegisters: [ '$lr', '$r8', '$r9', '$r10', '$r11', '$r12', '$r13',
 body:             |
   ; CHECK-LABEL: name: test4
   ; CHECK: bb.0.entry:
-  ; CHECK-NEXT:   successors: %bb.3(0x2aaaaaab), %bb.1(0x55555555)
   ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $r2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -512,32 +467,16 @@ body:             |
   ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 4
   ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo2:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 7
   ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo3:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
-  ; CHECK-NEXT:   PseudoJZ [[COPY1]], %bb.3
-  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.1.entry:
-  ; CHECK-NEXT:   successors: %bb.4(0x40000001), %bb.2(0x3fffffff)
-  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[LSHL:%[0-9]+]]:er = LSHL [[COPY2]], [[MOV_RLC_imm11_pseudo1]]
+  ; CHECK-NEXT:   [[ADD_add_r_ri:%[0-9]+]]:er = ADD_add_r_ri [[LSHL]], 48, implicit-def dead $srcarry
   ; CHECK-NEXT:   [[EQ:%[0-9]+]]:er = EQ [[COPY1]], [[MOV_RLC_imm11_pseudo]]
-  ; CHECK-NEXT:   PseudoJNZ [[EQ]], %bb.4
-  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.2.cond.false66:
-  ; CHECK-NEXT:   successors: %bb.4(0x80000000)
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[LSHL:%[0-9]+]]:er = LSHL [[COPY2]], [[MOV_RLC_imm11_pseudo2]]
-  ; CHECK-NEXT:   [[ADD_alu_r_rr:%[0-9]+]]:er = ADD_alu_r_rr [[LSHL]], [[COPY3]], implicit-def dead $srcarry
-  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.3.cond.false67:
-  ; CHECK-NEXT:   successors: %bb.4(0x80000000)
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[LSHL1:%[0-9]+]]:er = LSHL [[COPY2]], [[MOV_RLC_imm11_pseudo1]]
-  ; CHECK-NEXT:   [[ADD_add_r_ri:%[0-9]+]]:er = ADD_add_r_ri [[LSHL1]], 48, implicit-def dead $srcarry
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.4.cond.end72:
-  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:er = PHI [[MOV_RLC_imm11_pseudo3]], %bb.1, [[ADD_alu_r_rr]], %bb.2, [[ADD_add_r_ri]], %bb.3
-  ; CHECK-NEXT:   ST_s16_idx_imm [[PHI]], [[COPY]], 0, implicit-def $pe2_ads, implicit $pe2_ads :: (store (s16) into %ir.params_ptr, align 4)
+  ; CHECK-NEXT:   [[LSHL1:%[0-9]+]]:er = LSHL [[COPY2]], [[MOV_RLC_imm11_pseudo2]]
+  ; CHECK-NEXT:   [[ADD_alu_r_rr:%[0-9]+]]:er = ADD_alu_r_rr [[LSHL1]], [[COPY3]], implicit-def dead $srcarry
+  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:mr27_select = COPY [[EQ]]
+  ; CHECK-NEXT:   [[SEL_NEZ:%[0-9]+]]:er = SEL_NEZ [[MOV_RLC_imm11_pseudo3]], [[ADD_alu_r_rr]], [[COPY4]]
+  ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:mr27_select = COPY [[COPY1]]
+  ; CHECK-NEXT:   [[SEL_EQZ:%[0-9]+]]:er = SEL_EQZ [[ADD_add_r_ri]], [[SEL_NEZ]], [[COPY5]]
+  ; CHECK-NEXT:   ST_s16_idx_imm [[SEL_EQZ]], [[COPY]], 0, implicit-def $pe2_ads, implicit $pe2_ads :: (store (s16) into %ir.params_ptr, align 4)
   ; CHECK-NEXT:   PseudoRET implicit $lr
   bb.1.entry:
     successors: %bb.3(0x2aaaaaab), %bb.5(0x55555555)
@@ -640,7 +579,6 @@ calleeSavedRegisters: [ '$lr', '$r8', '$r9', '$r10', '$r11', '$r12', '$r13',
 body:             |
   ; CHECK-LABEL: name: test5
   ; CHECK: bb.0.entry:
-  ; CHECK-NEXT:   successors: %bb.3(0x2aaaaaab), %bb.1(0x55555555)
   ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $r2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -651,32 +589,16 @@ body:             |
   ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 4
   ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo2:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 7
   ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo3:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
-  ; CHECK-NEXT:   PseudoJZ [[COPY1]], %bb.3
-  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.1.entry:
-  ; CHECK-NEXT:   successors: %bb.4(0x40000001), %bb.2(0x3fffffff)
-  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[LSHL:%[0-9]+]]:er = LSHL [[COPY2]], [[MOV_RLC_imm11_pseudo1]]
+  ; CHECK-NEXT:   [[ADD_add_r_ri:%[0-9]+]]:er = ADD_add_r_ri [[LSHL]], 48, implicit-def dead $srcarry
   ; CHECK-NEXT:   [[EQ:%[0-9]+]]:er = EQ [[COPY1]], [[MOV_RLC_imm11_pseudo]]
-  ; CHECK-NEXT:   PseudoJNZ [[EQ]], %bb.4
-  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.2.cond.false66:
-  ; CHECK-NEXT:   successors: %bb.4(0x80000000)
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[LSHL:%[0-9]+]]:er = LSHL [[COPY2]], [[MOV_RLC_imm11_pseudo2]]
-  ; CHECK-NEXT:   [[ADD_alu_r_rr:%[0-9]+]]:er = ADD_alu_r_rr [[LSHL]], [[COPY3]], implicit-def dead $srcarry
-  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.3.cond.false67:
-  ; CHECK-NEXT:   successors: %bb.4(0x80000000)
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[LSHL1:%[0-9]+]]:er = LSHL [[COPY2]], [[MOV_RLC_imm11_pseudo1]]
-  ; CHECK-NEXT:   [[ADD_add_r_ri:%[0-9]+]]:er = ADD_add_r_ri [[LSHL1]], 48, implicit-def dead $srcarry
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.4.cond.end72:
-  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:er = PHI [[MOV_RLC_imm11_pseudo3]], %bb.1, [[ADD_alu_r_rr]], %bb.2, [[ADD_add_r_ri]], %bb.3
-  ; CHECK-NEXT:   ST_s16_idx_imm [[PHI]], [[COPY]], 0, implicit-def $pe2_ads, implicit $pe2_ads :: (store (s16) into %ir.params_ptr, align 4)
+  ; CHECK-NEXT:   [[LSHL1:%[0-9]+]]:er = LSHL [[COPY2]], [[MOV_RLC_imm11_pseudo2]]
+  ; CHECK-NEXT:   [[ADD_alu_r_rr:%[0-9]+]]:er = ADD_alu_r_rr [[LSHL1]], [[COPY3]], implicit-def dead $srcarry
+  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:mr27_select = COPY [[EQ]]
+  ; CHECK-NEXT:   [[SEL_NEZ:%[0-9]+]]:er = SEL_NEZ [[MOV_RLC_imm11_pseudo3]], [[ADD_alu_r_rr]], [[COPY4]]
+  ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:mr27_select = COPY [[COPY1]]
+  ; CHECK-NEXT:   [[SEL_EQZ:%[0-9]+]]:er = SEL_EQZ [[ADD_add_r_ri]], [[SEL_NEZ]], [[COPY5]]
+  ; CHECK-NEXT:   ST_s16_idx_imm [[SEL_EQZ]], [[COPY]], 0, implicit-def $pe2_ads, implicit $pe2_ads :: (store (s16) into %ir.params_ptr, align 4)
   ; CHECK-NEXT:   PseudoRET implicit $lr
   bb.1.entry:
     successors: %bb.3(0x2aaaaaab), %bb.5(0x55555555)
