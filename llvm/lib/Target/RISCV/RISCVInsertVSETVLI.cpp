@@ -1639,15 +1639,16 @@ bool RISCVCoalesceVSETVLI::coalesceVSETVLIs(MachineBasicBlock &MBB) {
           if (NextMI->getOperand(1).isReg())
             NextMI->getOperand(1).setReg(RISCV::NoRegister);
 
-          if (OldVLReg) {
+          if (OldVLReg && OldVLReg.isVirtual()) {
+            // NextMI no longer uses OldVLReg so shrink its LiveInterval.
+            LIS->shrinkToUses(&LIS->getInterval(OldVLReg));
+
             MachineInstr *VLOpDef = MRI->getUniqueVRegDef(OldVLReg);
             if (VLOpDef && TII->isAddImmediate(*VLOpDef, OldVLReg) &&
-                MRI->use_nodbg_empty(OldVLReg))
+                MRI->use_nodbg_empty(OldVLReg)) {
               VLOpDef->eraseFromParent();
-
-            // NextMI no longer uses OldVLReg so shrink its LiveInterval.
-            if (OldVLReg.isVirtual())
-              LIS->shrinkToUses(&LIS->getInterval(OldVLReg));
+              LIS->removeInterval(OldVLReg);
+            }
           }
           MI.setDesc(NextMI->getDesc());
         }
