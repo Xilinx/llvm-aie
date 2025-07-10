@@ -22,14 +22,14 @@ int test_get_coreid() { return get_coreid(); }
 // CHECK-LABEL: define dso_local noundef i32 @_Z8test_clbj(
 // CHECK-SAME: i32 noundef [[X:%.*]]) local_unnamed_addr #[[ATTR1:[0-9]+]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.ctlz.i32(i32 [[X]], i1 false), !range [[RNG2:![0-9]+]]
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef range(i32 0, 33) i32 @llvm.ctlz.i32(i32 [[X]], i1 false)
 // CHECK-NEXT:    ret i32 [[TMP0]]
 //
 unsigned test_clb(unsigned x) { return clb(x);}
 // CHECK-LABEL: define dso_local noundef i32 @_Z8test_clby(
 // CHECK-SAME: i64 noundef [[X:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call i64 @llvm.ctlz.i64(i64 [[X]], i1 false), !range [[RNG3:![0-9]+]]
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call range(i64 0, 65) i64 @llvm.ctlz.i64(i64 [[X]], i1 false)
 // CHECK-NEXT:    [[CAST_I:%.*]] = trunc nuw nsw i64 [[TMP0]] to i32
 // CHECK-NEXT:    ret i32 [[CAST_I]]
 //
@@ -44,9 +44,9 @@ unsigned test_clb(int x) { return clb(x); }
 // CHECK-LABEL: define dso_local noundef i32 @_Z8test_clbx(
 // CHECK-SAME: i64 noundef [[X:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call i64 @llvm.ctlz.i64(i64 [[X]], i1 false), !range [[RNG3]]
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call range(i64 0, 65) i64 @llvm.ctlz.i64(i64 [[X]], i1 false)
 // CHECK-NEXT:    [[NOT_I:%.*]] = xor i64 [[X]], -1
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call i64 @llvm.ctlz.i64(i64 [[NOT_I]], i1 false), !range [[RNG3]]
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call range(i64 0, 65) i64 @llvm.ctlz.i64(i64 [[NOT_I]], i1 false)
 // CHECK-NEXT:    [[CMP4_I:%.*]] = icmp slt i64 [[X]], 0
 // CHECK-NEXT:    [[COND_V_I:%.*]] = select i1 [[CMP4_I]], i64 [[TMP1]], i64 [[TMP0]]
 // CHECK-NEXT:    [[COND_I:%.*]] = trunc nuw nsw i64 [[COND_V_I]] to i32
@@ -55,7 +55,3 @@ unsigned test_clb(int x) { return clb(x); }
 unsigned test_clb(long long x) {
   return clb(x);
 }
-//.
-// CHECK: [[RNG2]] = !{i32 0, i32 33}
-// CHECK: [[RNG3]] = !{i64 0, i64 65}
-//.
