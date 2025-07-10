@@ -46,6 +46,7 @@ extern cl::opt<bool> EnableSuperRegSplitting;
 extern cl::opt<bool> AllocateMRegsFirst;
 extern cl::opt<bool> EnablePreMISchedCoalescer;
 extern cl::opt<bool> EnableWAWRegRewrite;
+extern cl::opt<bool> EnableAIEIfConversion;
 
 extern bool AIEDumpArtifacts;
 
@@ -129,6 +130,12 @@ void AIE2PassConfig::addISelPrepare() {
   if (EnableOutlineMemoryGEP)
     addPass(createAIEOutlineMemoryGEP());
   TargetPassConfig::addISelPrepare();
+}
+
+bool AIE2PassConfig::addILPOpts() {
+  if (EnableAIEIfConversion)
+    addPass(&EarlyIfConverterID);
+  return true;
 }
 
 static bool onlyAllocate3DRegisters(const TargetRegisterInfo &TRI,

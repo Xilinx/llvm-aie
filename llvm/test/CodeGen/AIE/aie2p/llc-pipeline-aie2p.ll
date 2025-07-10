@@ -198,6 +198,8 @@
 ; AIE-O1-NEXT:      Remove dead machine instructions
 ; AIE-O1-NEXT:      MachineDominator Tree Construction
 ; AIE-O1-NEXT:      Machine Natural Loop Construction
+; AIE-O1-NEXT:      Machine Trace Metrics
+; AIE-O1-NEXT:      Early If-Conversion
 ; AIE-O1-NEXT:      Machine Block Frequency Analysis
 ; AIE-O1-NEXT:      Function Alias Analysis Results
 ; AIE-O1-NEXT:      Early Machine Loop Invariant Code Motion
@@ -402,6 +404,8 @@
 ; AIE-O23-NEXT:      Remove dead machine instructions
 ; AIE-O23-NEXT:      MachineDominator Tree Construction
 ; AIE-O23-NEXT:      Machine Natural Loop Construction
+; AIE-O23-NEXT:      Machine Trace Metrics
+; AIE-O23-NEXT:      Early If-Conversion
 ; AIE-O23-NEXT:      Machine Block Frequency Analysis
 ; AIE-O23-NEXT:      Function Alias Analysis Results
 ; AIE-O23-NEXT:      Early Machine Loop Invariant Code Motion

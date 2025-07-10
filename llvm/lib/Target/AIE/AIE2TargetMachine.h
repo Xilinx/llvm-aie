@@ -67,6 +67,7 @@ public:
   void addPreLegalizeMachineIR() override;
   void addPreRegBankSelect() override;
   void addISelPrepare() override;
+  bool addILPOpts() override;
 };
 
 } // namespace llvm
