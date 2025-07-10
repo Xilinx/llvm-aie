@@ -21,6 +21,7 @@
 #include "AIETiedRegOperands.h"
 #include "MCTargetDesc/AIEFormat.h"
 #include "MCTargetDesc/AIEMCFormats.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/CodeGen/ResourceCycle.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
@@ -75,6 +76,54 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
     unsigned DecTripCountOpcode;
     // Target Opcode for JNZD.
     unsigned LoopJNZDOpcode;
+  };
+
+  class IfConvSupport {
+  public:
+    // Mapping between a specific branch/jump type/condition opcode and a select
+    // counterpart (with same condition).
+    SmallDenseMap<unsigned, unsigned, 2> BranchToSelectMap;
+    // Scalar register class that can be used through select
+    // instructions i.e. values to be choosen depending on the
+    // condition.
+    const TargetRegisterClass *ScalarRegisterClass;
+    // Scalar register class that can be used through select
+    // instructions as a result of a comparison.
+    const TargetRegisterClass *SelectRegisterClass;
+
+    // Here we define the operand order for inputs.
+    enum OperandIndex {
+      ConditionReg = 0,
+      TrueReg,
+      FalseReg,
+    };
+
+    // Ordering information about the input operands of the select
+    // instruction (mapped by BranchToSelectMap). This will be used
+    // to build the target select instruction with the correct operand
+    // order.
+    OperandIndex SelectInputOperandsOrder[3];
+
+    // Register operand order to correctly build the instruction
+    // in a aie-independent way.
+    void registerOperandIndex(OperandIndex Op, unsigned Index) {
+      SelectInputOperandsOrder[Index] = Op;
+    }
+
+    // Retrieve a specific register operand that should be encoded
+    // at the Index-th position.
+    // Register array should follow the order: {CondReg, TrueReg, FalseReg}.
+    // This is used to encode the select instruction using the correct
+    // operand order.
+    Register getSelectSrcOperand(ArrayRef<Register> Registers,
+                                 unsigned SelectOpIdx) {
+      return Registers[SelectInputOperandsOrder[SelectOpIdx]];
+    }
+
+    // Convert a branch opcode to a select opcode.
+    unsigned branchToSelect(unsigned Opcode) {
+      return BranchToSelectMap[Opcode];
+    }
   };
 
   virtual bool isOffsetInImmediateRange(unsigned Opcode, unsigned LoadStoreSize,
@@ -379,6 +428,10 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   // All opcodes etc used for JNZD lowering. If this returns none, we have no
   // JNZD support.
   virtual std::optional<JNZDSupport> getJNZDSupport() const { return {}; }
+
+  // All information used for IfConversion support. If this returns none, we
+  // have no IfConversion support.
+  virtual std::optional<IfConvSupport> getIfConvSupport() const { return {}; }
 
   virtual unsigned getZOLBundlesCount(const MachineBasicBlock &MBB) const;
 
@@ -829,6 +882,16 @@ protected:
 
   bool isExtendLikelyToBeFolded(MachineInstr &ExtMI,
                                 MachineRegisterInfo &MRI) const override;
+
+  bool canInsertSelect(const MachineBasicBlock &MBB,
+                       ArrayRef<MachineOperand> Cond, Register DstReg,
+                       Register TrueReg, Register FalseReg, int &CondCycles,
+                       int &TrueCycles, int &FalseCycles) const override;
+
+  void insertSelect(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
+                    const DebugLoc &dl, Register DestReg,
+                    ArrayRef<MachineOperand> Cond, Register TrueReg,
+                    Register FalseReg) const override;
 };
 
 template <unsigned NumEncodingBits, unsigned Step>

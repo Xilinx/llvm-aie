@@ -29,6 +29,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/MachineScheduler.h"
+#include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
 #include "llvm/IR/IntrinsicsAIE2P.h"
 
@@ -1979,4 +1980,21 @@ AIE2PInstrInfo::parseAbstractOp(const MachineInstr &MI) const {
                       {}};
   }
   return std::nullopt;
+}
+
+using IfConvSupport = AIEBaseInstrInfo::IfConvSupport;
+std::optional<IfConvSupport> AIE2PInstrInfo::getIfConvSupport() const {
+  IfConvSupport Result;
+
+  Result.BranchToSelectMap[AIE2P::PseudoJNZ] = AIE2P::SEL_NEZ;
+  Result.BranchToSelectMap[AIE2P::PseudoJZ] = AIE2P::SEL_EQZ;
+
+  Result.ScalarRegisterClass = &AIE2P::eRRegClass;
+  Result.SelectRegisterClass = &AIE2P::mR27_selectRegClass;
+
+  Result.registerOperandIndex(IfConvSupport::TrueReg, 0);
+  Result.registerOperandIndex(IfConvSupport::FalseReg, 1);
+  Result.registerOperandIndex(IfConvSupport::ConditionReg, 2);
+
+  return Result;
 }

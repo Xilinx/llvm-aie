@@ -61,6 +61,9 @@ public:
   bool forcePostRAScheduling() const override { return true; }
   bool useAA() const override { return true; }
   bool enableEarlyIfConversion() const override { return true; }
+  unsigned getCriticalPathLimit() const override {
+    return AIEBaseSubtarget::getCriticalPathLimitImpl();
+  }
 
   CodeGenOptLevel getOptLevelToEnablePostRAScheduler() const override {
     // AIEngine hack: we currently rely on the post-RA scheduler to insert

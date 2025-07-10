@@ -1414,3 +1414,75 @@ bool AIEBaseInstrInfo::isExtendLikelyToBeFolded(
   const LLT ActualType = MRI.getType(ExtMI.getOperand(1).getReg());
   return ActualType == S20;
 }
+
+bool AIEBaseInstrInfo::canInsertSelect(const MachineBasicBlock &MBB,
+                                       ArrayRef<MachineOperand> Cond,
+                                       Register DstReg, Register TrueReg,
+                                       Register FalseReg, int &CondCycles,
+                                       int &TrueCycles,
+                                       int &FalseCycles) const {
+
+  auto Support = getIfConvSupport();
+
+  if (!Support) {
+    LLVM_DEBUG(dbgs() << "No If-Conversion support for this target\n");
+    return false;
+  }
+
+  // Check register classes.
+  const MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
+  const TargetRegisterClass *RCTrue = MRI.getRegClass(TrueReg);
+  const TargetRegisterClass *RCFalse = MRI.getRegClass(FalseReg);
+  const TargetRegisterClass *ScalarRegisterClass = Support->ScalarRegisterClass;
+
+  if (!RCTrue || !RCFalse)
+    return false;
+
+  if (ScalarRegisterClass->hasSubClassEq(RCTrue) &&
+      ScalarRegisterClass->hasSubClassEq(RCFalse)) {
+    // Latencies from Cond+Branch, TrueReg, and FalseReg to DstReg.
+    // We force a low Cond+Branch to be permissive as much as
+    // possible, considering that is better to control the behavior
+    // using getCriticalPathLimit instead of an unrealistic miss prediction
+    // penalty (no predictor in AIE).
+    CondCycles = 1;
+    TrueCycles = 1;
+    FalseCycles = 1;
+    return true;
+  }
+  return false;
+}
+
+void AIEBaseInstrInfo::insertSelect(MachineBasicBlock &MBB,
+                                    MachineBasicBlock::iterator MI,
+                                    const DebugLoc &DL, Register DestReg,
+                                    ArrayRef<MachineOperand> Cond,
+                                    Register TrueReg, Register FalseReg) const {
+
+  auto Support = getIfConvSupport();
+  assert(Support && "No If-Conversion support for this target\n");
+
+  // We need to respect the selection instruction register requirements (if any)
+  const TargetRegisterClass *SelectRegisterClass = Support->SelectRegisterClass;
+
+  MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
+  unsigned BranchOpcode = Cond[0].getImm();
+  Register ConditionReg = Cond[1].getReg();
+
+  const unsigned SelectOpcode = Support->branchToSelect(BranchOpcode);
+  Register ConstrainedCondReg = MRI.createVirtualRegister(SelectRegisterClass);
+
+  BuildMI(MBB, MI, DL, get(TargetOpcode::COPY), ConstrainedCondReg)
+      .addReg(ConditionReg);
+
+  // Retrieve the correct operand order.
+  SmallVector<Register, 3> InputOperands;
+  InputOperands.push_back(ConstrainedCondReg);
+  InputOperands.push_back(TrueReg);
+  InputOperands.push_back(FalseReg);
+
+  BuildMI(MBB, MI, DL, get(SelectOpcode), DestReg)
+      .addReg(Support->getSelectSrcOperand(InputOperands, 0))
+      .addReg(Support->getSelectSrcOperand(InputOperands, 1))
+      .addReg(Support->getSelectSrcOperand(InputOperands, 2));
+}
