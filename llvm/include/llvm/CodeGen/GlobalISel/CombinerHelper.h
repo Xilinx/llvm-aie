@@ -864,6 +864,9 @@ public:
   bool matchExtractVectorElementWithDifferentIndices(const MachineOperand &MO,
                                                      BuildFnTy &MatchInfo);
 
+  /// Combine insert vector element OOB.
+  bool matchInsertVectorElementOOB(MachineInstr &MI, BuildFnTy &MatchInfo);
+
   /// Transform:
   ///  G_INTTOPTR (int G_CONSTANT x) -> (pointer G_CONSTANT x)
   bool matchIntToPtrContant(MachineInstr &MI, MachineRegisterInfo &MRI,
