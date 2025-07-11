@@ -13,7 +13,6 @@ define amdgpu_kernel void @negated_cond(ptr addrspace(1) %arg1) {
 ; GCN-NEXT:    s_mov_b32 s8, s4
 ; GCN-NEXT:    s_mov_b32 s9, s5
 ; GCN-NEXT:    v_mov_b32_e32 v0, 0
-; GCN-NEXT:    s_mov_b32 s11, s7
 ; GCN-NEXT:    s_branch .LBB0_2
 ; GCN-NEXT:  .LBB0_1: ; %loop.exit.guard
 ; GCN-NEXT:    ; in Loop: Header=BB0_2 Depth=1
