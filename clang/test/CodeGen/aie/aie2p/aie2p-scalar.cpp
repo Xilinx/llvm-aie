@@ -19,14 +19,14 @@
 //
 int test_get_coreid() { return get_coreid(); }
 
-// CHECK-LABEL: define dso_local noundef i32 @_Z8test_clbj(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 33) i32 @_Z8test_clbj(
 // CHECK-SAME: i32 noundef [[X:%.*]]) local_unnamed_addr #[[ATTR1:[0-9]+]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef range(i32 0, 33) i32 @llvm.ctlz.i32(i32 [[X]], i1 false)
 // CHECK-NEXT:    ret i32 [[TMP0]]
 //
 unsigned test_clb(unsigned x) { return clb(x);}
-// CHECK-LABEL: define dso_local noundef i32 @_Z8test_clby(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 65) i32 @_Z8test_clby(
 // CHECK-SAME: i64 noundef [[X:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call range(i64 0, 65) i64 @llvm.ctlz.i64(i64 [[X]], i1 false)
@@ -41,7 +41,7 @@ unsigned test_clb(unsigned long long x) { return clb(x); }
 // CHECK-NEXT:    ret i32 [[TMP0]]
 //
 unsigned test_clb(int x) { return clb(x); }
-// CHECK-LABEL: define dso_local noundef i32 @_Z8test_clbx(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 65) i32 @_Z8test_clbx(
 // CHECK-SAME: i64 noundef [[X:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call range(i64 0, 65) i64 @llvm.ctlz.i64(i64 [[X]], i1 false)
