@@ -217,7 +217,7 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
       .clampScalar(0, S32, S64);
 
   getActionDefinitionsBuilder(G_FPEXT)
-      // .legalFor({{V16S32, V16S16}})
+      .legalFor({{V16S32, V16S16}})
       .libcallFor({{S64, S32}})
       .customFor({{S32, S16}})
       .narrowScalarFor({{S64, S16}}, llvm::LegalizeMutations::changeTo(0, S32));

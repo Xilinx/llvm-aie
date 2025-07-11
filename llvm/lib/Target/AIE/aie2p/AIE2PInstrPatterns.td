@@ -1285,3 +1285,11 @@ def : EventPat<EVENT_event0,  (i32 0)>;
 def : EventPat<EVENT_event1,  (i32 1)>;
 def : EventPat<EVENT_WARNING, (i32 2)>;
 def : EventPat<EVENT_ERROR,   (i32 3)>;
+
+class FPExt256To512Pat<ValueType DstTy, ValueType SrcTy, int Mode> :
+  Pat<(DstTy (fpext SrcTy:$src)),
+    (VSHUFFLE_vec_shuffle_x VEC256:$src, VEC256:$src,
+          (MOV_RLC_imm11_pseudo (i32 Mode))
+    )
+  >;
+// def : FPExt256To512Pat<v16s32, v16s16, 20>;
