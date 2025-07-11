@@ -217,9 +217,29 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
       .clampScalar(0, S32, S64);
 
   getActionDefinitionsBuilder(G_FPEXT)
+      // .legalFor({{V16S32, V16S16}})
       .libcallFor({{S64, S32}})
       .customFor({{S32, S16}})
       .narrowScalarFor({{S64, S16}}, llvm::LegalizeMutations::changeTo(0, S32));
+      // Add vector support for G_FPEXT
+      // .customFor({{V16S32, V16S16}});
+      // equivalent for above but more control.
+      // .customIf([=](const LegalityQuery &Query) {
+      //   const LLT &SrcTy = Query.Types[1];
+      //   const LLT &DstTy = Query.Types[0];
+      //   // Must be vectors and shapes should be same, only types change.
+      //   assert(SrcTy.isVector() && DstTy.isVector() && SrcTy.getNumElements() == DstTy.getNumElements() && 
+      //   "Must be vectors and shapes should be same");
+
+      //   const unsigned SrcSize = SrcTy.getElementType().getSizeInBits();
+      //   const unsigned DstSize = DstTy.getElementType().getSizeInBits();
+      //   // if src is 16 and dst is 32, return true
+      //   if (SrcSize == 16 && DstSize == 32) {
+      //     return true;
+      //   }
+
+      //   return false;
+      // });
 
   getActionDefinitionsBuilder({G_FPTOSI, G_FPTOUI})
       .libcallForCartesianProduct({S32, S64})
@@ -241,7 +261,19 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
 
   getActionDefinitionsBuilder({G_FADD, G_FSUB})
       .legalFor({AccV64S32})
-      .customFor({S16})
+      .moreElementsToNextPow2(0)  // <15xf32> (Doesn't work, Why?)
+      // For 2D vectors with < 64 f32 elements, widen to 64 elements
+      .moreElementsIf(
+          [=](const LegalityQuery &Query) {
+            const LLT &Ty = Query.Types[0];
+            return Ty.isVector() && Ty.getScalarSizeInBits() == 32 &&
+                   Ty.getNumElements() < 64;
+          },
+          [=](const LegalityQuery &Query) {
+            return std::make_pair(0, LLT::fixed_vector(64, S32));
+          })
+      // .widenVectorEltsToVectorMinSize(0, 32)  // vector check for s16
+      .customFor({S16}) // scalar check for 16
       .libcallFor({S32, S64});
 
   getActionDefinitionsBuilder({G_FDIV, G_FREM})

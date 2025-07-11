@@ -1206,16 +1206,66 @@ bool AIELegalizerHelper::legalizeG_FPEXT(LegalizerHelper &Helper,
   LLT DstTy = MRI.getType(DstReg);
   LLT SrcTy = MRI.getType(SrcReg);
 
+  // // Vectors
+  //  // === Case 1: Vector bf16 -> f32 ===
+  //  // We want something like below
+  //  // Vec = 16
+  //  // zeroMask = 16
+  //  // mode = 20 (Interleaving with mask)
+  //  // vshuffle(Vec, zeroMask, mode)
+  // if (DstTy.isVector() && SrcTy.isVector() &&
+  //     DstTy.getElementType() == LLT::scalar(32) &&
+  //     SrcTy.getElementType() == LLT::scalar(16) &&
+  //     DstTy.getNumElements() == SrcTy.getNumElements()) {
+    
+  //   llvm::errs() << "In vector case\n";
+  //   // Create a zero vector of same type as SrcTy
+  //   // zeroMask = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  //   auto ZeroVec = MIRBuilder.buildConstant(SrcTy, 0).getReg(0);
+
+  //   // Build constant mode=20 for shuffle
+  //   auto Mode20 = MIRBuilder.buildConstant(S32, 20).getReg(0);
+
+  //   // Build VSHUFFLE intrinsic: shuffle(Src, zero, 20)
+  //   // 3 ways to do this.
+  //   // 1. getGeneric*
+  //   // 2. Direct TargetOpcode::G_AIE_SHUFFLE_VECTOR
+  //   // 3. MI->GetOpcode()  - recursion as I recreate fpext again!
+
+  //   // const unsigned ShuffleOpc =
+  //   //   ST.getInstrInfo()->aie2p_vshuffle_576_bfp16();
+  //   // auto Result = MIRBuilder.buildIntrinsic(ShuffleOpc,
+  //   //                                       {DstTy}, {SrcReg, ZeroVec, Mode20}).getReg(0);
+
+  //   // AIE2PVShuffle
+  //   auto Result = MIRBuilder.buildIntrinsic(Intrinsic::AIE2PVShuffle,
+  //                                         {DstTy}, {SrcReg, ZeroVec, Mode20}).getReg(0);                                          
+
+  // // // Build the shuffle using the generic pattern
+  // // auto Result = MIRBuilder.buildInstr(TargetOpcode::G_AIE_SHUFFLE_VECTOR,
+  // //                                   {DstTy}, {SrcReg, ZeroVec, Mode20}).getReg(0);
+
+  //   // 3
+  //   // auto Result = MIRBuilder.buildInstr(MI.getOpcode(), {DstTy}, {SrcReg, ZeroVec, Mode20}).getReg(0);
+
+  //   MIRBuilder.buildCopy(DstReg, Result); 
+  //   MI.eraseFromParent();
+  //   return true;
+  // }
+
+  // Scalars
   // We only handle bfloat16 to single precision conversion
   if (DstTy != LLT::scalar(32) || SrcTy != LLT::scalar(16))
     return false;
 
+  llvm::errs() << "In scalar case\n";
+
   Register AnyExt = MIRBuilder.buildAnyExt(S32, SrcReg).getReg(0);
   Register Cst = MIRBuilder.buildConstant(S32, 16).getReg(0);
   MIRBuilder.buildShl(DstReg, AnyExt, Cst);
-
   MI.eraseFromParent();
   return true;
+
 }
 
 // Legalized by masking sign bit of both double and float
