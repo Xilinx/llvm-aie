@@ -891,7 +891,7 @@ public:
   // constructor for empty set
   explicit ResourceSegments(){};
   bool empty() const { return _Intervals.empty(); }
-  explicit ResourceSegments(std::list<IntervalTy> Intervals)
+  explicit ResourceSegments(const std::list<IntervalTy> &Intervals)
       : _Intervals(Intervals) {
     sortAndMerge();
   }

@@ -2633,6 +2633,14 @@ InputFile ASTReader::getInputFile(ModuleFile &F, unsigned ID, bool Complain) {
       F.StandardCXXModule && FileChange.Kind == Change::None)
     FileChange = HasInputContentChanged(FileChange);
 
+  // When we have StoredTime equal to zero and ValidateASTInputFilesContent,
+  // it is better to check the content of the input files because we cannot rely
+  // on the file modification time, which will be the same (zero) for these
+  // files.
+  if (!StoredTime && ValidateASTInputFilesContent &&
+      FileChange.Kind == Change::None)
+    FileChange = HasInputContentChanged(FileChange);
+
   // For an overridden file, there is nothing to validate.
   if (!Overridden && FileChange.Kind != Change::None) {
     if (Complain && !Diags.isDiagnosticInFlight()) {
@@ -11776,6 +11784,14 @@ void ASTRecordReader::readOMPChildren(OMPChildren *Data) {
     Data->getChildren()[I] = readStmt();
 }
 
+SmallVector<Expr *> ASTRecordReader::readOpenACCVarList() {
+  unsigned NumVars = readInt();
+  llvm::SmallVector<Expr *> VarList;
+  for (unsigned I = 0; I < NumVars; ++I)
+    VarList.push_back(readSubExpr());
+  return VarList;
+}
+
 OpenACCClause *ASTRecordReader::readOpenACCClause() {
   OpenACCClauseKind ClauseKind = readEnum<OpenACCClauseKind>();
   SourceLocation BeginLoc = readSourceLocation();
@@ -11821,6 +11837,12 @@ OpenACCClause *ASTRecordReader::readOpenACCClause() {
     return OpenACCVectorLengthClause::Create(getContext(), BeginLoc, LParenLoc,
                                              IntExpr, EndLoc);
   }
+  case OpenACCClauseKind::Private: {
+    SourceLocation LParenLoc = readSourceLocation();
+    llvm::SmallVector<Expr *> VarList = readOpenACCVarList();
+    return OpenACCPrivateClause::Create(getContext(), BeginLoc, LParenLoc,
+                                        VarList, EndLoc);
+  }
   case OpenACCClauseKind::Finalize:
   case OpenACCClauseKind::IfPresent:
   case OpenACCClauseKind::Seq:
@@ -11842,7 +11864,6 @@ OpenACCClause *ASTRecordReader::readOpenACCClause() {
   case OpenACCClauseKind::Link:
   case OpenACCClauseKind::NoCreate:
   case OpenACCClauseKind::Present:
-  case OpenACCClauseKind::Private:
   case OpenACCClauseKind::CopyOut:
   case OpenACCClauseKind::CopyIn:
   case OpenACCClauseKind::Create:
