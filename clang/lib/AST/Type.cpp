@@ -259,7 +259,8 @@ void DependentSizedArrayType::Profile(llvm::FoldingSetNodeID &ID,
   ID.AddPointer(ET.getAsOpaquePtr());
   ID.AddInteger(llvm::to_underlying(SizeMod));
   ID.AddInteger(TypeQuals);
-  E->Profile(ID, Context, true);
+  if (E)
+    E->Profile(ID, Context, true);
 }
 
 DependentVectorType::DependentVectorType(QualType ElementType,

@@ -2288,7 +2288,7 @@ static int getOpEnabled(bool IsSqrt, EVT VT, StringRef Override) {
     if (IsDisabled)
       RecipType = RecipType.substr(1);
 
-    if (RecipType.equals(VTName) || RecipType.equals(VTNameNoSize))
+    if (RecipType == VTName || RecipType == VTNameNoSize)
       return IsDisabled ? TargetLoweringBase::ReciprocalEstimate::Disabled
                         : TargetLoweringBase::ReciprocalEstimate::Enabled;
   }
@@ -2338,7 +2338,7 @@ static int getOpRefinementSteps(bool IsSqrt, EVT VT, StringRef Override) {
       continue;
 
     RecipType = RecipType.substr(0, RefPos);
-    if (RecipType.equals(VTName) || RecipType.equals(VTNameNoSize))
+    if (RecipType == VTName || RecipType == VTNameNoSize)
       return RefSteps;
   }
 
