@@ -459,6 +459,7 @@ NSAPI::getNSNumberFactoryMethodKind(QualType T) const {
 #define AIE_TYPE(Name, Id, Size, Algn) case BuiltinType::Id:
 #include "clang/Basic/AIETypes.def"
   case BuiltinType::BoundMember:
+  case BuiltinType::UnresolvedTemplate:
   case BuiltinType::Dependent:
   case BuiltinType::Overload:
   case BuiltinType::UnknownAny:
