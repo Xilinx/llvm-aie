@@ -14,6 +14,7 @@
 #include "AIEBaseInstrInfo.h"
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/VectorUtils.h"
 #include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
 #include "llvm/CodeGen/GlobalISel/LegalizerHelper.h"
@@ -49,6 +50,10 @@ static cl::opt<bool> EnableGreedyAddressCombine(
 
 cl::opt<bool> InlineMemCalls("aie-inline-mem-calls", cl::init(true), cl::Hidden,
                              cl::desc("Inline mem calls when profitable."));
+
+cl::opt<bool> FoldInvariantLoads(
+    "aie-try-fold-loads", cl::init(true), cl::Hidden,
+    cl::desc("Try to fold loads when the data can be proved as constant."));
 
 cl::opt<bool> CombineVecShiftByZero(
     "aie-combine-vec-shift-by-zero", cl::init(true), cl::Hidden,
@@ -3472,6 +3477,79 @@ bool llvm::matchCombineExtAndTrunc(MachineInstr &MI, MachineRegisterInfo &MRI,
     MatchInfo = [=](MachineIRBuilder &B) {
       B.buildTrunc(TruncDstReg, ExtSrcReg);
     };
+  return true;
+}
+
+bool llvm::matchConstLoad(MachineInstr &MI, MachineRegisterInfo &MRI,
+                          GISelChangeObserver &Observer, BuildFnTy &MatchInfo) {
+
+  if (!FoldInvariantLoads)
+    return false;
+
+  assert(MI.getOpcode() == TargetOpcode::G_LOAD && "Not G_LOAD");
+
+  const Register DataReg = MI.getOperand(0).getReg();
+  const Register PtrReg = MI.getOperand(1).getReg();
+
+  const MachineMemOperand *MMO = *MI.memoperands_begin();
+  if (!MMO || !MMO->isInvariant()) {
+    LLVM_DEBUG(dbgs() << "Non-invariant load: " << MI);
+    return false;
+  }
+
+  const LLT DataRegType = MRI.getType(DataReg);
+  if (!DataRegType.isScalar() || DataRegType.getSizeInBits() > 32) {
+    LLVM_DEBUG(dbgs() << "Non-optimizable invariant load: " << MI);
+    return false;
+  }
+
+  unsigned Offset = 0;
+  const MachineInstr *DefPtrReg = MRI.getVRegDef(PtrReg);
+  if (DefPtrReg->getOpcode() == TargetOpcode::G_PTR_ADD) {
+    Register OffsetReg = DefPtrReg->getOperand(2).getReg();
+    auto Cst = getIConstantVRegValWithLookThrough(OffsetReg, MRI);
+
+    if (!Cst)
+      return false;
+
+    Offset = Cst->Value.getZExtValue();
+    DefPtrReg = MRI.getVRegDef(DefPtrReg->getOperand(1).getReg());
+  }
+
+  if (DefPtrReg->getOpcode() != TargetOpcode::G_GLOBAL_VALUE)
+    return false;
+
+  const GlobalValue *GV = DefPtrReg->getOperand(1).getGlobal();
+  const Constant *ConstPtr = dyn_cast<const Constant>(GV);
+  if (!ConstPtr)
+    return false;
+
+  const Constant *ConstData = dyn_cast<Constant>(ConstPtr->getOperand(0));
+  if (!ConstData)
+    return false;
+
+  Type *IntTy =
+      Type::getIntNTy(ConstData->getContext(), DataRegType.getSizeInBits());
+  const Constant *ConstantToFold = llvm::ConstantFoldLoadFromConst(
+      const_cast<Constant *>(ConstData), IntTy, APInt(20, Offset),
+      GV->getParent()->getDataLayout());
+
+  if (!ConstantToFold) {
+    LLVM_DEBUG(dbgs() << "Non-optimizable invariant load using: " << ConstPtr);
+    return false;
+  }
+
+  const ConstantInt *ScalarConst = dyn_cast<ConstantInt>(ConstantToFold);
+  if (!ScalarConst)
+    return false;
+
+  const int64_t V = ScalarConst->getSExtValue();
+  MatchInfo = [=, &MI, &Observer](MachineIRBuilder &B) {
+    const Register IdxReg = B.buildConstant(DataRegType, V).getReg(0);
+    B.buildCopy(DataReg, IdxReg);
+    Observer.erasingInstr(MI);
+    MI.eraseFromParent();
+  };
 
   return true;
 }

@@ -7,8 +7,8 @@
 # (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2 -run-pass=aie2-prelegalizer-combiner -verify-machineinstrs %s -o - | FileCheck --check-prefix=AIE2-FOLD %s
 # RUN: llc -mtriple aie2p -run-pass=aie2p-prelegalizer-combiner -verify-machineinstrs %s -o - | FileCheck --check-prefix=AIE2P-FOLD %s
-# RUN: llc -mtriple aie2p -run-pass=aie2p-prelegalizer-combiner -verify-machineinstrs %s -o - | FileCheck --check-prefix=AIE2P-NOFOLD %s
-
+# RUN: llc -mtriple aie2p -run-pass=aie2p-prelegalizer-combiner \
+# RUN:      -aie-try-fold-loads=false -verify-machineinstrs %s -o - | FileCheck --check-prefix=AIE2P-NOFOLD %s
 --- |
   @constinit1 = local_unnamed_addr constant [16 x i32] [i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 1053459, i32 0, i32 320012288, i32 4883, i32 0, i32 0, i32 993394688, i32 0], align 4
 
@@ -71,168 +71,82 @@ body:             |
     ; AIE2-FOLD-LABEL: name: combine_all_constant_data
     ; AIE2-FOLD: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
     ; AIE2-FOLD-NEXT: [[C1:%[0-9]+]]:_(p0) = G_CONSTANT i20 0
-    ; AIE2-FOLD-NEXT: [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @constinit1
-    ; AIE2-FOLD-NEXT: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[GV]](p0) :: (dereferenceable invariant load (s32) from @constinit1)
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD]](s32), [[C1]](p0) :: (store (s32) into `ptr null`)
-    ; AIE2-FOLD-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; AIE2-FOLD-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C2]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 4)
-    ; AIE2-FOLD-NEXT: [[C3:%[0-9]+]]:_(p0) = G_CONSTANT i20 4
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD1]](s32), [[C3]](p0) :: (store (s32) into `ptr null` + 4)
-    ; AIE2-FOLD-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
-    ; AIE2-FOLD-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C4]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD2:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD1]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 8)
-    ; AIE2-FOLD-NEXT: [[C5:%[0-9]+]]:_(p0) = G_CONSTANT i20 8
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD2]](s32), [[C5]](p0) :: (store (s32) into `ptr null` + 8)
-    ; AIE2-FOLD-NEXT: [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 12
-    ; AIE2-FOLD-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C6]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD3:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD2]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 12)
-    ; AIE2-FOLD-NEXT: [[C7:%[0-9]+]]:_(p0) = G_CONSTANT i20 12
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD3]](s32), [[C7]](p0) :: (store (s32) into `ptr null` + 12)
-    ; AIE2-FOLD-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
-    ; AIE2-FOLD-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C8]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD4:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD3]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 16)
-    ; AIE2-FOLD-NEXT: [[C9:%[0-9]+]]:_(p0) = G_CONSTANT i20 16
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD4]](s32), [[C9]](p0) :: (store (s32) into `ptr null` + 16)
-    ; AIE2-FOLD-NEXT: [[C10:%[0-9]+]]:_(s20) = G_CONSTANT i20 20
-    ; AIE2-FOLD-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C10]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD5:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD4]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 20)
-    ; AIE2-FOLD-NEXT: [[C11:%[0-9]+]]:_(p0) = G_CONSTANT i20 20
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD5]](s32), [[C11]](p0) :: (store (s32) into `ptr null` + 20)
-    ; AIE2-FOLD-NEXT: [[C12:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
-    ; AIE2-FOLD-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C12]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD6:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD5]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 24)
-    ; AIE2-FOLD-NEXT: [[C13:%[0-9]+]]:_(p0) = G_CONSTANT i20 24
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD6]](s32), [[C13]](p0) :: (store (s32) into `ptr null` + 24)
-    ; AIE2-FOLD-NEXT: [[C14:%[0-9]+]]:_(s20) = G_CONSTANT i20 28
-    ; AIE2-FOLD-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C14]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD7:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD6]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 28)
-    ; AIE2-FOLD-NEXT: [[C15:%[0-9]+]]:_(p0) = G_CONSTANT i20 28
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD7]](s32), [[C15]](p0) :: (store (s32) into `ptr null` + 28)
-    ; AIE2-FOLD-NEXT: [[C16:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; AIE2-FOLD-NEXT: [[PTR_ADD7:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C16]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD8:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD7]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 32)
-    ; AIE2-FOLD-NEXT: [[C17:%[0-9]+]]:_(p0) = G_CONSTANT i20 32
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD8]](s32), [[C17]](p0) :: (store (s32) into `ptr null` + 32)
-    ; AIE2-FOLD-NEXT: [[C18:%[0-9]+]]:_(s20) = G_CONSTANT i20 36
-    ; AIE2-FOLD-NEXT: [[PTR_ADD8:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C18]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD9:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD8]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 36)
-    ; AIE2-FOLD-NEXT: [[C19:%[0-9]+]]:_(p0) = G_CONSTANT i20 36
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD9]](s32), [[C19]](p0) :: (store (s32) into `ptr null` + 36)
-    ; AIE2-FOLD-NEXT: [[C20:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
-    ; AIE2-FOLD-NEXT: [[PTR_ADD9:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C20]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD10:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD9]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 40)
-    ; AIE2-FOLD-NEXT: [[C21:%[0-9]+]]:_(p0) = G_CONSTANT i20 40
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD10]](s32), [[C21]](p0) :: (store (s32) into `ptr null` + 40)
-    ; AIE2-FOLD-NEXT: [[C22:%[0-9]+]]:_(s20) = G_CONSTANT i20 44
-    ; AIE2-FOLD-NEXT: [[PTR_ADD10:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C22]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD11:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD10]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 44)
-    ; AIE2-FOLD-NEXT: [[C23:%[0-9]+]]:_(p0) = G_CONSTANT i20 44
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD11]](s32), [[C23]](p0) :: (store (s32) into `ptr null` + 44)
-    ; AIE2-FOLD-NEXT: [[C24:%[0-9]+]]:_(s20) = G_CONSTANT i20 48
-    ; AIE2-FOLD-NEXT: [[PTR_ADD11:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C24]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD12:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD11]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 48)
-    ; AIE2-FOLD-NEXT: [[C25:%[0-9]+]]:_(p0) = G_CONSTANT i20 48
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD12]](s32), [[C25]](p0) :: (store (s32) into `ptr null` + 48)
-    ; AIE2-FOLD-NEXT: [[C26:%[0-9]+]]:_(s20) = G_CONSTANT i20 52
-    ; AIE2-FOLD-NEXT: [[PTR_ADD12:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C26]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD13:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD12]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 52)
-    ; AIE2-FOLD-NEXT: [[C27:%[0-9]+]]:_(p0) = G_CONSTANT i20 52
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD13]](s32), [[C27]](p0) :: (store (s32) into `ptr null` + 52)
-    ; AIE2-FOLD-NEXT: [[C28:%[0-9]+]]:_(s20) = G_CONSTANT i20 56
-    ; AIE2-FOLD-NEXT: [[PTR_ADD13:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C28]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD14:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD13]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 56)
-    ; AIE2-FOLD-NEXT: [[C29:%[0-9]+]]:_(p0) = G_CONSTANT i20 56
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD14]](s32), [[C29]](p0) :: (store (s32) into `ptr null` + 56)
-    ; AIE2-FOLD-NEXT: [[C30:%[0-9]+]]:_(s20) = G_CONSTANT i20 60
-    ; AIE2-FOLD-NEXT: [[PTR_ADD14:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C30]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD15:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD14]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 60)
-    ; AIE2-FOLD-NEXT: [[C31:%[0-9]+]]:_(p0) = G_CONSTANT i20 60
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD15]](s32), [[C31]](p0) :: (store (s32) into `ptr null` + 60)
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C1]](p0) :: (store (s32) into `ptr null`)
+    ; AIE2-FOLD-NEXT: [[C2:%[0-9]+]]:_(p0) = G_CONSTANT i20 4
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C2]](p0) :: (store (s32) into `ptr null` + 4)
+    ; AIE2-FOLD-NEXT: [[C3:%[0-9]+]]:_(p0) = G_CONSTANT i20 8
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C3]](p0) :: (store (s32) into `ptr null` + 8)
+    ; AIE2-FOLD-NEXT: [[C4:%[0-9]+]]:_(p0) = G_CONSTANT i20 12
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C4]](p0) :: (store (s32) into `ptr null` + 12)
+    ; AIE2-FOLD-NEXT: [[C5:%[0-9]+]]:_(p0) = G_CONSTANT i20 16
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C5]](p0) :: (store (s32) into `ptr null` + 16)
+    ; AIE2-FOLD-NEXT: [[C6:%[0-9]+]]:_(p0) = G_CONSTANT i20 20
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C6]](p0) :: (store (s32) into `ptr null` + 20)
+    ; AIE2-FOLD-NEXT: [[C7:%[0-9]+]]:_(p0) = G_CONSTANT i20 24
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C7]](p0) :: (store (s32) into `ptr null` + 24)
+    ; AIE2-FOLD-NEXT: [[C8:%[0-9]+]]:_(p0) = G_CONSTANT i20 28
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C8]](p0) :: (store (s32) into `ptr null` + 28)
+    ; AIE2-FOLD-NEXT: [[C9:%[0-9]+]]:_(s32) = G_CONSTANT i32 1053459
+    ; AIE2-FOLD-NEXT: [[C10:%[0-9]+]]:_(p0) = G_CONSTANT i20 32
+    ; AIE2-FOLD-NEXT: G_STORE [[C9]](s32), [[C10]](p0) :: (store (s32) into `ptr null` + 32)
+    ; AIE2-FOLD-NEXT: [[C11:%[0-9]+]]:_(p0) = G_CONSTANT i20 36
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C11]](p0) :: (store (s32) into `ptr null` + 36)
+    ; AIE2-FOLD-NEXT: [[C12:%[0-9]+]]:_(s32) = G_CONSTANT i32 320012288
+    ; AIE2-FOLD-NEXT: [[C13:%[0-9]+]]:_(p0) = G_CONSTANT i20 40
+    ; AIE2-FOLD-NEXT: G_STORE [[C12]](s32), [[C13]](p0) :: (store (s32) into `ptr null` + 40)
+    ; AIE2-FOLD-NEXT: [[C14:%[0-9]+]]:_(s32) = G_CONSTANT i32 4883
+    ; AIE2-FOLD-NEXT: [[C15:%[0-9]+]]:_(p0) = G_CONSTANT i20 44
+    ; AIE2-FOLD-NEXT: G_STORE [[C14]](s32), [[C15]](p0) :: (store (s32) into `ptr null` + 44)
+    ; AIE2-FOLD-NEXT: [[C16:%[0-9]+]]:_(p0) = G_CONSTANT i20 48
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C16]](p0) :: (store (s32) into `ptr null` + 48)
+    ; AIE2-FOLD-NEXT: [[C17:%[0-9]+]]:_(p0) = G_CONSTANT i20 52
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C17]](p0) :: (store (s32) into `ptr null` + 52)
+    ; AIE2-FOLD-NEXT: [[C18:%[0-9]+]]:_(s32) = G_CONSTANT i32 993394688
+    ; AIE2-FOLD-NEXT: [[C19:%[0-9]+]]:_(p0) = G_CONSTANT i20 56
+    ; AIE2-FOLD-NEXT: G_STORE [[C18]](s32), [[C19]](p0) :: (store (s32) into `ptr null` + 56)
+    ; AIE2-FOLD-NEXT: [[C20:%[0-9]+]]:_(p0) = G_CONSTANT i20 60
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C20]](p0) :: (store (s32) into `ptr null` + 60)
     ; AIE2-FOLD-NEXT: $r0 = COPY [[C]](s32)
     ; AIE2-FOLD-NEXT: PseudoRET implicit $lr, implicit $r0
     ;
     ; AIE2P-FOLD-LABEL: name: combine_all_constant_data
     ; AIE2P-FOLD: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
     ; AIE2P-FOLD-NEXT: [[C1:%[0-9]+]]:_(p0) = G_CONSTANT i20 0
-    ; AIE2P-FOLD-NEXT: [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @constinit1
-    ; AIE2P-FOLD-NEXT: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[GV]](p0) :: (dereferenceable invariant load (s32) from @constinit1)
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD]](s32), [[C1]](p0) :: (store (s32) into `ptr null`)
-    ; AIE2P-FOLD-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C2]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 4)
-    ; AIE2P-FOLD-NEXT: [[C3:%[0-9]+]]:_(p0) = G_CONSTANT i20 4
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD1]](s32), [[C3]](p0) :: (store (s32) into `ptr null` + 4)
-    ; AIE2P-FOLD-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C4]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD2:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD1]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 8)
-    ; AIE2P-FOLD-NEXT: [[C5:%[0-9]+]]:_(p0) = G_CONSTANT i20 8
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD2]](s32), [[C5]](p0) :: (store (s32) into `ptr null` + 8)
-    ; AIE2P-FOLD-NEXT: [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 12
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C6]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD3:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD2]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 12)
-    ; AIE2P-FOLD-NEXT: [[C7:%[0-9]+]]:_(p0) = G_CONSTANT i20 12
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD3]](s32), [[C7]](p0) :: (store (s32) into `ptr null` + 12)
-    ; AIE2P-FOLD-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C8]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD4:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD3]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 16)
-    ; AIE2P-FOLD-NEXT: [[C9:%[0-9]+]]:_(p0) = G_CONSTANT i20 16
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD4]](s32), [[C9]](p0) :: (store (s32) into `ptr null` + 16)
-    ; AIE2P-FOLD-NEXT: [[C10:%[0-9]+]]:_(s20) = G_CONSTANT i20 20
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C10]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD5:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD4]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 20)
-    ; AIE2P-FOLD-NEXT: [[C11:%[0-9]+]]:_(p0) = G_CONSTANT i20 20
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD5]](s32), [[C11]](p0) :: (store (s32) into `ptr null` + 20)
-    ; AIE2P-FOLD-NEXT: [[C12:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C12]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD6:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD5]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 24)
-    ; AIE2P-FOLD-NEXT: [[C13:%[0-9]+]]:_(p0) = G_CONSTANT i20 24
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD6]](s32), [[C13]](p0) :: (store (s32) into `ptr null` + 24)
-    ; AIE2P-FOLD-NEXT: [[C14:%[0-9]+]]:_(s20) = G_CONSTANT i20 28
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C14]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD7:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD6]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 28)
-    ; AIE2P-FOLD-NEXT: [[C15:%[0-9]+]]:_(p0) = G_CONSTANT i20 28
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD7]](s32), [[C15]](p0) :: (store (s32) into `ptr null` + 28)
-    ; AIE2P-FOLD-NEXT: [[C16:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD7:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C16]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD8:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD7]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 32)
-    ; AIE2P-FOLD-NEXT: [[C17:%[0-9]+]]:_(p0) = G_CONSTANT i20 32
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD8]](s32), [[C17]](p0) :: (store (s32) into `ptr null` + 32)
-    ; AIE2P-FOLD-NEXT: [[C18:%[0-9]+]]:_(s20) = G_CONSTANT i20 36
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD8:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C18]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD9:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD8]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 36)
-    ; AIE2P-FOLD-NEXT: [[C19:%[0-9]+]]:_(p0) = G_CONSTANT i20 36
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD9]](s32), [[C19]](p0) :: (store (s32) into `ptr null` + 36)
-    ; AIE2P-FOLD-NEXT: [[C20:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD9:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C20]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD10:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD9]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 40)
-    ; AIE2P-FOLD-NEXT: [[C21:%[0-9]+]]:_(p0) = G_CONSTANT i20 40
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD10]](s32), [[C21]](p0) :: (store (s32) into `ptr null` + 40)
-    ; AIE2P-FOLD-NEXT: [[C22:%[0-9]+]]:_(s20) = G_CONSTANT i20 44
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD10:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C22]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD11:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD10]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 44)
-    ; AIE2P-FOLD-NEXT: [[C23:%[0-9]+]]:_(p0) = G_CONSTANT i20 44
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD11]](s32), [[C23]](p0) :: (store (s32) into `ptr null` + 44)
-    ; AIE2P-FOLD-NEXT: [[C24:%[0-9]+]]:_(s20) = G_CONSTANT i20 48
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD11:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C24]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD12:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD11]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 48)
-    ; AIE2P-FOLD-NEXT: [[C25:%[0-9]+]]:_(p0) = G_CONSTANT i20 48
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD12]](s32), [[C25]](p0) :: (store (s32) into `ptr null` + 48)
-    ; AIE2P-FOLD-NEXT: [[C26:%[0-9]+]]:_(s20) = G_CONSTANT i20 52
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD12:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C26]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD13:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD12]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 52)
-    ; AIE2P-FOLD-NEXT: [[C27:%[0-9]+]]:_(p0) = G_CONSTANT i20 52
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD13]](s32), [[C27]](p0) :: (store (s32) into `ptr null` + 52)
-    ; AIE2P-FOLD-NEXT: [[C28:%[0-9]+]]:_(s20) = G_CONSTANT i20 56
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD13:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C28]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD14:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD13]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 56)
-    ; AIE2P-FOLD-NEXT: [[C29:%[0-9]+]]:_(p0) = G_CONSTANT i20 56
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD14]](s32), [[C29]](p0) :: (store (s32) into `ptr null` + 56)
-    ; AIE2P-FOLD-NEXT: [[C30:%[0-9]+]]:_(s20) = G_CONSTANT i20 60
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD14:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C30]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD15:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD14]](p0) :: (dereferenceable invariant load (s32) from @constinit1 + 60)
-    ; AIE2P-FOLD-NEXT: [[C31:%[0-9]+]]:_(p0) = G_CONSTANT i20 60
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD15]](s32), [[C31]](p0) :: (store (s32) into `ptr null` + 60)
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C1]](p0) :: (store (s32) into `ptr null`)
+    ; AIE2P-FOLD-NEXT: [[C2:%[0-9]+]]:_(p0) = G_CONSTANT i20 4
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C2]](p0) :: (store (s32) into `ptr null` + 4)
+    ; AIE2P-FOLD-NEXT: [[C3:%[0-9]+]]:_(p0) = G_CONSTANT i20 8
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C3]](p0) :: (store (s32) into `ptr null` + 8)
+    ; AIE2P-FOLD-NEXT: [[C4:%[0-9]+]]:_(p0) = G_CONSTANT i20 12
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C4]](p0) :: (store (s32) into `ptr null` + 12)
+    ; AIE2P-FOLD-NEXT: [[C5:%[0-9]+]]:_(p0) = G_CONSTANT i20 16
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C5]](p0) :: (store (s32) into `ptr null` + 16)
+    ; AIE2P-FOLD-NEXT: [[C6:%[0-9]+]]:_(p0) = G_CONSTANT i20 20
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C6]](p0) :: (store (s32) into `ptr null` + 20)
+    ; AIE2P-FOLD-NEXT: [[C7:%[0-9]+]]:_(p0) = G_CONSTANT i20 24
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C7]](p0) :: (store (s32) into `ptr null` + 24)
+    ; AIE2P-FOLD-NEXT: [[C8:%[0-9]+]]:_(p0) = G_CONSTANT i20 28
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C8]](p0) :: (store (s32) into `ptr null` + 28)
+    ; AIE2P-FOLD-NEXT: [[C9:%[0-9]+]]:_(s32) = G_CONSTANT i32 1053459
+    ; AIE2P-FOLD-NEXT: [[C10:%[0-9]+]]:_(p0) = G_CONSTANT i20 32
+    ; AIE2P-FOLD-NEXT: G_STORE [[C9]](s32), [[C10]](p0) :: (store (s32) into `ptr null` + 32)
+    ; AIE2P-FOLD-NEXT: [[C11:%[0-9]+]]:_(p0) = G_CONSTANT i20 36
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C11]](p0) :: (store (s32) into `ptr null` + 36)
+    ; AIE2P-FOLD-NEXT: [[C12:%[0-9]+]]:_(s32) = G_CONSTANT i32 320012288
+    ; AIE2P-FOLD-NEXT: [[C13:%[0-9]+]]:_(p0) = G_CONSTANT i20 40
+    ; AIE2P-FOLD-NEXT: G_STORE [[C12]](s32), [[C13]](p0) :: (store (s32) into `ptr null` + 40)
+    ; AIE2P-FOLD-NEXT: [[C14:%[0-9]+]]:_(s32) = G_CONSTANT i32 4883
+    ; AIE2P-FOLD-NEXT: [[C15:%[0-9]+]]:_(p0) = G_CONSTANT i20 44
+    ; AIE2P-FOLD-NEXT: G_STORE [[C14]](s32), [[C15]](p0) :: (store (s32) into `ptr null` + 44)
+    ; AIE2P-FOLD-NEXT: [[C16:%[0-9]+]]:_(p0) = G_CONSTANT i20 48
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C16]](p0) :: (store (s32) into `ptr null` + 48)
+    ; AIE2P-FOLD-NEXT: [[C17:%[0-9]+]]:_(p0) = G_CONSTANT i20 52
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C17]](p0) :: (store (s32) into `ptr null` + 52)
+    ; AIE2P-FOLD-NEXT: [[C18:%[0-9]+]]:_(s32) = G_CONSTANT i32 993394688
+    ; AIE2P-FOLD-NEXT: [[C19:%[0-9]+]]:_(p0) = G_CONSTANT i20 56
+    ; AIE2P-FOLD-NEXT: G_STORE [[C18]](s32), [[C19]](p0) :: (store (s32) into `ptr null` + 56)
+    ; AIE2P-FOLD-NEXT: [[C20:%[0-9]+]]:_(p0) = G_CONSTANT i20 60
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C20]](p0) :: (store (s32) into `ptr null` + 60)
     ; AIE2P-FOLD-NEXT: $r0 = COPY [[C]](s32)
     ; AIE2P-FOLD-NEXT: PseudoRET implicit $lr, implicit $r0
     ;
@@ -341,168 +255,86 @@ body:             |
     ; AIE2-FOLD-LABEL: name: combine_all_constant_struct
     ; AIE2-FOLD: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
     ; AIE2-FOLD-NEXT: [[C1:%[0-9]+]]:_(p0) = G_CONSTANT i20 0
-    ; AIE2-FOLD-NEXT: [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @constinit2
-    ; AIE2-FOLD-NEXT: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[GV]](p0) :: (dereferenceable invariant load (s32) from @constinit2)
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD]](s32), [[C1]](p0) :: (store (s32) into `ptr null`)
-    ; AIE2-FOLD-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; AIE2-FOLD-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C2]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 4)
-    ; AIE2-FOLD-NEXT: [[C3:%[0-9]+]]:_(p0) = G_CONSTANT i20 4
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD1]](s32), [[C3]](p0) :: (store (s32) into `ptr null` + 4)
-    ; AIE2-FOLD-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
-    ; AIE2-FOLD-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C4]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD2:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD1]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 8)
-    ; AIE2-FOLD-NEXT: [[C5:%[0-9]+]]:_(p0) = G_CONSTANT i20 8
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD2]](s32), [[C5]](p0) :: (store (s32) into `ptr null` + 8)
-    ; AIE2-FOLD-NEXT: [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 12
-    ; AIE2-FOLD-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C6]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD3:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD2]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 12)
-    ; AIE2-FOLD-NEXT: [[C7:%[0-9]+]]:_(p0) = G_CONSTANT i20 12
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD3]](s32), [[C7]](p0) :: (store (s32) into `ptr null` + 12)
-    ; AIE2-FOLD-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
-    ; AIE2-FOLD-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C8]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD4:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD3]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 16)
-    ; AIE2-FOLD-NEXT: [[C9:%[0-9]+]]:_(p0) = G_CONSTANT i20 16
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD4]](s32), [[C9]](p0) :: (store (s32) into `ptr null` + 16)
-    ; AIE2-FOLD-NEXT: [[C10:%[0-9]+]]:_(s20) = G_CONSTANT i20 20
-    ; AIE2-FOLD-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C10]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD5:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD4]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 20)
-    ; AIE2-FOLD-NEXT: [[C11:%[0-9]+]]:_(p0) = G_CONSTANT i20 20
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD5]](s32), [[C11]](p0) :: (store (s32) into `ptr null` + 20)
-    ; AIE2-FOLD-NEXT: [[C12:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
-    ; AIE2-FOLD-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C12]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD6:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD5]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 24)
+    ; AIE2-FOLD-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 1049634
+    ; AIE2-FOLD-NEXT: G_STORE [[C2]](s32), [[C1]](p0) :: (store (s32) into `ptr null`)
+    ; AIE2-FOLD-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 50528280
+    ; AIE2-FOLD-NEXT: [[C4:%[0-9]+]]:_(p0) = G_CONSTANT i20 4
+    ; AIE2-FOLD-NEXT: G_STORE [[C3]](s32), [[C4]](p0) :: (store (s32) into `ptr null` + 4)
+    ; AIE2-FOLD-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 34078720
+    ; AIE2-FOLD-NEXT: [[C6:%[0-9]+]]:_(p0) = G_CONSTANT i20 8
+    ; AIE2-FOLD-NEXT: G_STORE [[C5]](s32), [[C6]](p0) :: (store (s32) into `ptr null` + 8)
+    ; AIE2-FOLD-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 16256
+    ; AIE2-FOLD-NEXT: [[C8:%[0-9]+]]:_(p0) = G_CONSTANT i20 12
+    ; AIE2-FOLD-NEXT: G_STORE [[C7]](s32), [[C8]](p0) :: (store (s32) into `ptr null` + 12)
+    ; AIE2-FOLD-NEXT: [[C9:%[0-9]+]]:_(s32) = G_CONSTANT i32 65600
+    ; AIE2-FOLD-NEXT: [[C10:%[0-9]+]]:_(p0) = G_CONSTANT i20 16
+    ; AIE2-FOLD-NEXT: G_STORE [[C9]](s32), [[C10]](p0) :: (store (s32) into `ptr null` + 16)
+    ; AIE2-FOLD-NEXT: [[C11:%[0-9]+]]:_(s32) = G_CONSTANT i32 65537
+    ; AIE2-FOLD-NEXT: [[C12:%[0-9]+]]:_(p0) = G_CONSTANT i20 20
+    ; AIE2-FOLD-NEXT: G_STORE [[C11]](s32), [[C12]](p0) :: (store (s32) into `ptr null` + 20)
     ; AIE2-FOLD-NEXT: [[C13:%[0-9]+]]:_(p0) = G_CONSTANT i20 24
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD6]](s32), [[C13]](p0) :: (store (s32) into `ptr null` + 24)
-    ; AIE2-FOLD-NEXT: [[C14:%[0-9]+]]:_(s20) = G_CONSTANT i20 28
-    ; AIE2-FOLD-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C14]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD7:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD6]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 28)
-    ; AIE2-FOLD-NEXT: [[C15:%[0-9]+]]:_(p0) = G_CONSTANT i20 28
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD7]](s32), [[C15]](p0) :: (store (s32) into `ptr null` + 28)
-    ; AIE2-FOLD-NEXT: [[C16:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; AIE2-FOLD-NEXT: [[PTR_ADD7:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C16]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD8:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD7]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 32)
-    ; AIE2-FOLD-NEXT: [[C17:%[0-9]+]]:_(p0) = G_CONSTANT i20 32
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD8]](s32), [[C17]](p0) :: (store (s32) into `ptr null` + 32)
-    ; AIE2-FOLD-NEXT: [[C18:%[0-9]+]]:_(s20) = G_CONSTANT i20 36
-    ; AIE2-FOLD-NEXT: [[PTR_ADD8:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C18]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD9:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD8]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 36)
-    ; AIE2-FOLD-NEXT: [[C19:%[0-9]+]]:_(p0) = G_CONSTANT i20 36
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD9]](s32), [[C19]](p0) :: (store (s32) into `ptr null` + 36)
-    ; AIE2-FOLD-NEXT: [[C20:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
-    ; AIE2-FOLD-NEXT: [[PTR_ADD9:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C20]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD10:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD9]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 40)
-    ; AIE2-FOLD-NEXT: [[C21:%[0-9]+]]:_(p0) = G_CONSTANT i20 40
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD10]](s32), [[C21]](p0) :: (store (s32) into `ptr null` + 40)
-    ; AIE2-FOLD-NEXT: [[C22:%[0-9]+]]:_(s20) = G_CONSTANT i20 44
-    ; AIE2-FOLD-NEXT: [[PTR_ADD10:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C22]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD11:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD10]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 44)
-    ; AIE2-FOLD-NEXT: [[C23:%[0-9]+]]:_(p0) = G_CONSTANT i20 44
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD11]](s32), [[C23]](p0) :: (store (s32) into `ptr null` + 44)
-    ; AIE2-FOLD-NEXT: [[C24:%[0-9]+]]:_(s20) = G_CONSTANT i20 48
-    ; AIE2-FOLD-NEXT: [[PTR_ADD11:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C24]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD12:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD11]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 48)
-    ; AIE2-FOLD-NEXT: [[C25:%[0-9]+]]:_(p0) = G_CONSTANT i20 48
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD12]](s32), [[C25]](p0) :: (store (s32) into `ptr null` + 48)
-    ; AIE2-FOLD-NEXT: [[C26:%[0-9]+]]:_(s20) = G_CONSTANT i20 52
-    ; AIE2-FOLD-NEXT: [[PTR_ADD12:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C26]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD13:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD12]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 52)
-    ; AIE2-FOLD-NEXT: [[C27:%[0-9]+]]:_(p0) = G_CONSTANT i20 52
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD13]](s32), [[C27]](p0) :: (store (s32) into `ptr null` + 52)
-    ; AIE2-FOLD-NEXT: [[C28:%[0-9]+]]:_(s20) = G_CONSTANT i20 56
-    ; AIE2-FOLD-NEXT: [[PTR_ADD13:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C28]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD14:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD13]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 56)
-    ; AIE2-FOLD-NEXT: [[C29:%[0-9]+]]:_(p0) = G_CONSTANT i20 56
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD14]](s32), [[C29]](p0) :: (store (s32) into `ptr null` + 56)
-    ; AIE2-FOLD-NEXT: [[C30:%[0-9]+]]:_(s20) = G_CONSTANT i20 60
-    ; AIE2-FOLD-NEXT: [[PTR_ADD14:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C30]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD15:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD14]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 60)
-    ; AIE2-FOLD-NEXT: [[C31:%[0-9]+]]:_(p0) = G_CONSTANT i20 60
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD15]](s32), [[C31]](p0) :: (store (s32) into `ptr null` + 60)
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C13]](p0) :: (store (s32) into `ptr null` + 24)
+    ; AIE2-FOLD-NEXT: [[C14:%[0-9]+]]:_(p0) = G_CONSTANT i20 28
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C14]](p0) :: (store (s32) into `ptr null` + 28)
+    ; AIE2-FOLD-NEXT: [[C15:%[0-9]+]]:_(p0) = G_CONSTANT i20 32
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C15]](p0) :: (store (s32) into `ptr null` + 32)
+    ; AIE2-FOLD-NEXT: [[C16:%[0-9]+]]:_(p0) = G_CONSTANT i20 36
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C16]](p0) :: (store (s32) into `ptr null` + 36)
+    ; AIE2-FOLD-NEXT: [[C17:%[0-9]+]]:_(p0) = G_CONSTANT i20 40
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C17]](p0) :: (store (s32) into `ptr null` + 40)
+    ; AIE2-FOLD-NEXT: [[C18:%[0-9]+]]:_(p0) = G_CONSTANT i20 44
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C18]](p0) :: (store (s32) into `ptr null` + 44)
+    ; AIE2-FOLD-NEXT: [[C19:%[0-9]+]]:_(p0) = G_CONSTANT i20 48
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C19]](p0) :: (store (s32) into `ptr null` + 48)
+    ; AIE2-FOLD-NEXT: [[C20:%[0-9]+]]:_(p0) = G_CONSTANT i20 52
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C20]](p0) :: (store (s32) into `ptr null` + 52)
+    ; AIE2-FOLD-NEXT: [[C21:%[0-9]+]]:_(p0) = G_CONSTANT i20 56
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C21]](p0) :: (store (s32) into `ptr null` + 56)
+    ; AIE2-FOLD-NEXT: [[C22:%[0-9]+]]:_(p0) = G_CONSTANT i20 60
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C22]](p0) :: (store (s32) into `ptr null` + 60)
     ; AIE2-FOLD-NEXT: $r0 = COPY [[C]](s32)
     ; AIE2-FOLD-NEXT: PseudoRET implicit $lr, implicit $r0
     ;
     ; AIE2P-FOLD-LABEL: name: combine_all_constant_struct
     ; AIE2P-FOLD: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
     ; AIE2P-FOLD-NEXT: [[C1:%[0-9]+]]:_(p0) = G_CONSTANT i20 0
-    ; AIE2P-FOLD-NEXT: [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @constinit2
-    ; AIE2P-FOLD-NEXT: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[GV]](p0) :: (dereferenceable invariant load (s32) from @constinit2)
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD]](s32), [[C1]](p0) :: (store (s32) into `ptr null`)
-    ; AIE2P-FOLD-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C2]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 4)
-    ; AIE2P-FOLD-NEXT: [[C3:%[0-9]+]]:_(p0) = G_CONSTANT i20 4
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD1]](s32), [[C3]](p0) :: (store (s32) into `ptr null` + 4)
-    ; AIE2P-FOLD-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C4]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD2:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD1]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 8)
-    ; AIE2P-FOLD-NEXT: [[C5:%[0-9]+]]:_(p0) = G_CONSTANT i20 8
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD2]](s32), [[C5]](p0) :: (store (s32) into `ptr null` + 8)
-    ; AIE2P-FOLD-NEXT: [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 12
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C6]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD3:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD2]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 12)
-    ; AIE2P-FOLD-NEXT: [[C7:%[0-9]+]]:_(p0) = G_CONSTANT i20 12
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD3]](s32), [[C7]](p0) :: (store (s32) into `ptr null` + 12)
-    ; AIE2P-FOLD-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C8]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD4:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD3]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 16)
-    ; AIE2P-FOLD-NEXT: [[C9:%[0-9]+]]:_(p0) = G_CONSTANT i20 16
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD4]](s32), [[C9]](p0) :: (store (s32) into `ptr null` + 16)
-    ; AIE2P-FOLD-NEXT: [[C10:%[0-9]+]]:_(s20) = G_CONSTANT i20 20
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C10]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD5:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD4]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 20)
-    ; AIE2P-FOLD-NEXT: [[C11:%[0-9]+]]:_(p0) = G_CONSTANT i20 20
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD5]](s32), [[C11]](p0) :: (store (s32) into `ptr null` + 20)
-    ; AIE2P-FOLD-NEXT: [[C12:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C12]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD6:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD5]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 24)
+    ; AIE2P-FOLD-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 1049634
+    ; AIE2P-FOLD-NEXT: G_STORE [[C2]](s32), [[C1]](p0) :: (store (s32) into `ptr null`)
+    ; AIE2P-FOLD-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 50528280
+    ; AIE2P-FOLD-NEXT: [[C4:%[0-9]+]]:_(p0) = G_CONSTANT i20 4
+    ; AIE2P-FOLD-NEXT: G_STORE [[C3]](s32), [[C4]](p0) :: (store (s32) into `ptr null` + 4)
+    ; AIE2P-FOLD-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 34078720
+    ; AIE2P-FOLD-NEXT: [[C6:%[0-9]+]]:_(p0) = G_CONSTANT i20 8
+    ; AIE2P-FOLD-NEXT: G_STORE [[C5]](s32), [[C6]](p0) :: (store (s32) into `ptr null` + 8)
+    ; AIE2P-FOLD-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 16256
+    ; AIE2P-FOLD-NEXT: [[C8:%[0-9]+]]:_(p0) = G_CONSTANT i20 12
+    ; AIE2P-FOLD-NEXT: G_STORE [[C7]](s32), [[C8]](p0) :: (store (s32) into `ptr null` + 12)
+    ; AIE2P-FOLD-NEXT: [[C9:%[0-9]+]]:_(s32) = G_CONSTANT i32 65600
+    ; AIE2P-FOLD-NEXT: [[C10:%[0-9]+]]:_(p0) = G_CONSTANT i20 16
+    ; AIE2P-FOLD-NEXT: G_STORE [[C9]](s32), [[C10]](p0) :: (store (s32) into `ptr null` + 16)
+    ; AIE2P-FOLD-NEXT: [[C11:%[0-9]+]]:_(s32) = G_CONSTANT i32 65537
+    ; AIE2P-FOLD-NEXT: [[C12:%[0-9]+]]:_(p0) = G_CONSTANT i20 20
+    ; AIE2P-FOLD-NEXT: G_STORE [[C11]](s32), [[C12]](p0) :: (store (s32) into `ptr null` + 20)
     ; AIE2P-FOLD-NEXT: [[C13:%[0-9]+]]:_(p0) = G_CONSTANT i20 24
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD6]](s32), [[C13]](p0) :: (store (s32) into `ptr null` + 24)
-    ; AIE2P-FOLD-NEXT: [[C14:%[0-9]+]]:_(s20) = G_CONSTANT i20 28
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C14]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD7:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD6]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 28)
-    ; AIE2P-FOLD-NEXT: [[C15:%[0-9]+]]:_(p0) = G_CONSTANT i20 28
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD7]](s32), [[C15]](p0) :: (store (s32) into `ptr null` + 28)
-    ; AIE2P-FOLD-NEXT: [[C16:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD7:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C16]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD8:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD7]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 32)
-    ; AIE2P-FOLD-NEXT: [[C17:%[0-9]+]]:_(p0) = G_CONSTANT i20 32
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD8]](s32), [[C17]](p0) :: (store (s32) into `ptr null` + 32)
-    ; AIE2P-FOLD-NEXT: [[C18:%[0-9]+]]:_(s20) = G_CONSTANT i20 36
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD8:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C18]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD9:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD8]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 36)
-    ; AIE2P-FOLD-NEXT: [[C19:%[0-9]+]]:_(p0) = G_CONSTANT i20 36
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD9]](s32), [[C19]](p0) :: (store (s32) into `ptr null` + 36)
-    ; AIE2P-FOLD-NEXT: [[C20:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD9:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C20]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD10:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD9]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 40)
-    ; AIE2P-FOLD-NEXT: [[C21:%[0-9]+]]:_(p0) = G_CONSTANT i20 40
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD10]](s32), [[C21]](p0) :: (store (s32) into `ptr null` + 40)
-    ; AIE2P-FOLD-NEXT: [[C22:%[0-9]+]]:_(s20) = G_CONSTANT i20 44
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD10:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C22]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD11:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD10]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 44)
-    ; AIE2P-FOLD-NEXT: [[C23:%[0-9]+]]:_(p0) = G_CONSTANT i20 44
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD11]](s32), [[C23]](p0) :: (store (s32) into `ptr null` + 44)
-    ; AIE2P-FOLD-NEXT: [[C24:%[0-9]+]]:_(s20) = G_CONSTANT i20 48
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD11:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C24]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD12:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD11]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 48)
-    ; AIE2P-FOLD-NEXT: [[C25:%[0-9]+]]:_(p0) = G_CONSTANT i20 48
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD12]](s32), [[C25]](p0) :: (store (s32) into `ptr null` + 48)
-    ; AIE2P-FOLD-NEXT: [[C26:%[0-9]+]]:_(s20) = G_CONSTANT i20 52
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD12:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C26]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD13:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD12]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 52)
-    ; AIE2P-FOLD-NEXT: [[C27:%[0-9]+]]:_(p0) = G_CONSTANT i20 52
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD13]](s32), [[C27]](p0) :: (store (s32) into `ptr null` + 52)
-    ; AIE2P-FOLD-NEXT: [[C28:%[0-9]+]]:_(s20) = G_CONSTANT i20 56
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD13:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C28]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD14:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD13]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 56)
-    ; AIE2P-FOLD-NEXT: [[C29:%[0-9]+]]:_(p0) = G_CONSTANT i20 56
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD14]](s32), [[C29]](p0) :: (store (s32) into `ptr null` + 56)
-    ; AIE2P-FOLD-NEXT: [[C30:%[0-9]+]]:_(s20) = G_CONSTANT i20 60
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD14:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C30]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD15:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD14]](p0) :: (dereferenceable invariant load (s32) from @constinit2 + 60)
-    ; AIE2P-FOLD-NEXT: [[C31:%[0-9]+]]:_(p0) = G_CONSTANT i20 60
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD15]](s32), [[C31]](p0) :: (store (s32) into `ptr null` + 60)
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C13]](p0) :: (store (s32) into `ptr null` + 24)
+    ; AIE2P-FOLD-NEXT: [[C14:%[0-9]+]]:_(p0) = G_CONSTANT i20 28
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C14]](p0) :: (store (s32) into `ptr null` + 28)
+    ; AIE2P-FOLD-NEXT: [[C15:%[0-9]+]]:_(p0) = G_CONSTANT i20 32
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C15]](p0) :: (store (s32) into `ptr null` + 32)
+    ; AIE2P-FOLD-NEXT: [[C16:%[0-9]+]]:_(p0) = G_CONSTANT i20 36
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C16]](p0) :: (store (s32) into `ptr null` + 36)
+    ; AIE2P-FOLD-NEXT: [[C17:%[0-9]+]]:_(p0) = G_CONSTANT i20 40
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C17]](p0) :: (store (s32) into `ptr null` + 40)
+    ; AIE2P-FOLD-NEXT: [[C18:%[0-9]+]]:_(p0) = G_CONSTANT i20 44
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C18]](p0) :: (store (s32) into `ptr null` + 44)
+    ; AIE2P-FOLD-NEXT: [[C19:%[0-9]+]]:_(p0) = G_CONSTANT i20 48
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C19]](p0) :: (store (s32) into `ptr null` + 48)
+    ; AIE2P-FOLD-NEXT: [[C20:%[0-9]+]]:_(p0) = G_CONSTANT i20 52
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C20]](p0) :: (store (s32) into `ptr null` + 52)
+    ; AIE2P-FOLD-NEXT: [[C21:%[0-9]+]]:_(p0) = G_CONSTANT i20 56
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C21]](p0) :: (store (s32) into `ptr null` + 56)
+    ; AIE2P-FOLD-NEXT: [[C22:%[0-9]+]]:_(p0) = G_CONSTANT i20 60
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C22]](p0) :: (store (s32) into `ptr null` + 60)
     ; AIE2P-FOLD-NEXT: $r0 = COPY [[C]](s32)
     ; AIE2P-FOLD-NEXT: PseudoRET implicit $lr, implicit $r0
     ;
@@ -611,168 +443,86 @@ body:             |
     ; AIE2-FOLD-LABEL: name: combine_constant_struct_mixed
     ; AIE2-FOLD: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
     ; AIE2-FOLD-NEXT: [[C1:%[0-9]+]]:_(p0) = G_CONSTANT i20 0
-    ; AIE2-FOLD-NEXT: [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @constinit3
-    ; AIE2-FOLD-NEXT: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[GV]](p0) :: (dereferenceable invariant load (s32) from @constinit3)
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD]](s32), [[C1]](p0) :: (store (s32) into `ptr null`)
-    ; AIE2-FOLD-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; AIE2-FOLD-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C2]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 4)
-    ; AIE2-FOLD-NEXT: [[C3:%[0-9]+]]:_(p0) = G_CONSTANT i20 4
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD1]](s32), [[C3]](p0) :: (store (s32) into `ptr null` + 4)
-    ; AIE2-FOLD-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
-    ; AIE2-FOLD-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C4]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD2:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD1]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 8)
-    ; AIE2-FOLD-NEXT: [[C5:%[0-9]+]]:_(p0) = G_CONSTANT i20 8
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD2]](s32), [[C5]](p0) :: (store (s32) into `ptr null` + 8)
-    ; AIE2-FOLD-NEXT: [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 12
-    ; AIE2-FOLD-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C6]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD3:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD2]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 12)
-    ; AIE2-FOLD-NEXT: [[C7:%[0-9]+]]:_(p0) = G_CONSTANT i20 12
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD3]](s32), [[C7]](p0) :: (store (s32) into `ptr null` + 12)
-    ; AIE2-FOLD-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
-    ; AIE2-FOLD-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C8]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD4:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD3]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 16)
-    ; AIE2-FOLD-NEXT: [[C9:%[0-9]+]]:_(p0) = G_CONSTANT i20 16
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD4]](s32), [[C9]](p0) :: (store (s32) into `ptr null` + 16)
-    ; AIE2-FOLD-NEXT: [[C10:%[0-9]+]]:_(s20) = G_CONSTANT i20 20
-    ; AIE2-FOLD-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C10]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD5:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD4]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 20)
-    ; AIE2-FOLD-NEXT: [[C11:%[0-9]+]]:_(p0) = G_CONSTANT i20 20
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD5]](s32), [[C11]](p0) :: (store (s32) into `ptr null` + 20)
-    ; AIE2-FOLD-NEXT: [[C12:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
-    ; AIE2-FOLD-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C12]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD6:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD5]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 24)
+    ; AIE2-FOLD-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 1049634
+    ; AIE2-FOLD-NEXT: G_STORE [[C2]](s32), [[C1]](p0) :: (store (s32) into `ptr null`)
+    ; AIE2-FOLD-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 50528280
+    ; AIE2-FOLD-NEXT: [[C4:%[0-9]+]]:_(p0) = G_CONSTANT i20 4
+    ; AIE2-FOLD-NEXT: G_STORE [[C3]](s32), [[C4]](p0) :: (store (s32) into `ptr null` + 4)
+    ; AIE2-FOLD-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 34078720
+    ; AIE2-FOLD-NEXT: [[C6:%[0-9]+]]:_(p0) = G_CONSTANT i20 8
+    ; AIE2-FOLD-NEXT: G_STORE [[C5]](s32), [[C6]](p0) :: (store (s32) into `ptr null` + 8)
+    ; AIE2-FOLD-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 4210560
+    ; AIE2-FOLD-NEXT: [[C8:%[0-9]+]]:_(p0) = G_CONSTANT i20 12
+    ; AIE2-FOLD-NEXT: G_STORE [[C7]](s32), [[C8]](p0) :: (store (s32) into `ptr null` + 12)
+    ; AIE2-FOLD-NEXT: [[C9:%[0-9]+]]:_(s32) = G_CONSTANT i32 65537
+    ; AIE2-FOLD-NEXT: [[C10:%[0-9]+]]:_(p0) = G_CONSTANT i20 16
+    ; AIE2-FOLD-NEXT: G_STORE [[C9]](s32), [[C10]](p0) :: (store (s32) into `ptr null` + 16)
+    ; AIE2-FOLD-NEXT: [[C11:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; AIE2-FOLD-NEXT: [[C12:%[0-9]+]]:_(p0) = G_CONSTANT i20 20
+    ; AIE2-FOLD-NEXT: G_STORE [[C11]](s32), [[C12]](p0) :: (store (s32) into `ptr null` + 20)
     ; AIE2-FOLD-NEXT: [[C13:%[0-9]+]]:_(p0) = G_CONSTANT i20 24
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD6]](s32), [[C13]](p0) :: (store (s32) into `ptr null` + 24)
-    ; AIE2-FOLD-NEXT: [[C14:%[0-9]+]]:_(s20) = G_CONSTANT i20 28
-    ; AIE2-FOLD-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C14]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD7:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD6]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 28)
-    ; AIE2-FOLD-NEXT: [[C15:%[0-9]+]]:_(p0) = G_CONSTANT i20 28
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD7]](s32), [[C15]](p0) :: (store (s32) into `ptr null` + 28)
-    ; AIE2-FOLD-NEXT: [[C16:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; AIE2-FOLD-NEXT: [[PTR_ADD7:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C16]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD8:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD7]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 32)
-    ; AIE2-FOLD-NEXT: [[C17:%[0-9]+]]:_(p0) = G_CONSTANT i20 32
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD8]](s32), [[C17]](p0) :: (store (s32) into `ptr null` + 32)
-    ; AIE2-FOLD-NEXT: [[C18:%[0-9]+]]:_(s20) = G_CONSTANT i20 36
-    ; AIE2-FOLD-NEXT: [[PTR_ADD8:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C18]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD9:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD8]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 36)
-    ; AIE2-FOLD-NEXT: [[C19:%[0-9]+]]:_(p0) = G_CONSTANT i20 36
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD9]](s32), [[C19]](p0) :: (store (s32) into `ptr null` + 36)
-    ; AIE2-FOLD-NEXT: [[C20:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
-    ; AIE2-FOLD-NEXT: [[PTR_ADD9:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C20]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD10:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD9]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 40)
-    ; AIE2-FOLD-NEXT: [[C21:%[0-9]+]]:_(p0) = G_CONSTANT i20 40
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD10]](s32), [[C21]](p0) :: (store (s32) into `ptr null` + 40)
-    ; AIE2-FOLD-NEXT: [[C22:%[0-9]+]]:_(s20) = G_CONSTANT i20 44
-    ; AIE2-FOLD-NEXT: [[PTR_ADD10:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C22]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD11:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD10]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 44)
-    ; AIE2-FOLD-NEXT: [[C23:%[0-9]+]]:_(p0) = G_CONSTANT i20 44
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD11]](s32), [[C23]](p0) :: (store (s32) into `ptr null` + 44)
-    ; AIE2-FOLD-NEXT: [[C24:%[0-9]+]]:_(s20) = G_CONSTANT i20 48
-    ; AIE2-FOLD-NEXT: [[PTR_ADD11:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C24]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD12:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD11]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 48)
-    ; AIE2-FOLD-NEXT: [[C25:%[0-9]+]]:_(p0) = G_CONSTANT i20 48
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD12]](s32), [[C25]](p0) :: (store (s32) into `ptr null` + 48)
-    ; AIE2-FOLD-NEXT: [[C26:%[0-9]+]]:_(s20) = G_CONSTANT i20 52
-    ; AIE2-FOLD-NEXT: [[PTR_ADD12:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C26]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD13:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD12]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 52)
-    ; AIE2-FOLD-NEXT: [[C27:%[0-9]+]]:_(p0) = G_CONSTANT i20 52
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD13]](s32), [[C27]](p0) :: (store (s32) into `ptr null` + 52)
-    ; AIE2-FOLD-NEXT: [[C28:%[0-9]+]]:_(s20) = G_CONSTANT i20 56
-    ; AIE2-FOLD-NEXT: [[PTR_ADD13:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C28]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD14:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD13]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 56)
-    ; AIE2-FOLD-NEXT: [[C29:%[0-9]+]]:_(p0) = G_CONSTANT i20 56
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD14]](s32), [[C29]](p0) :: (store (s32) into `ptr null` + 56)
-    ; AIE2-FOLD-NEXT: [[C30:%[0-9]+]]:_(s20) = G_CONSTANT i20 60
-    ; AIE2-FOLD-NEXT: [[PTR_ADD14:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C30]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD15:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD14]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 60)
-    ; AIE2-FOLD-NEXT: [[C31:%[0-9]+]]:_(p0) = G_CONSTANT i20 60
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD15]](s32), [[C31]](p0) :: (store (s32) into `ptr null` + 60)
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C13]](p0) :: (store (s32) into `ptr null` + 24)
+    ; AIE2-FOLD-NEXT: [[C14:%[0-9]+]]:_(p0) = G_CONSTANT i20 28
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C14]](p0) :: (store (s32) into `ptr null` + 28)
+    ; AIE2-FOLD-NEXT: [[C15:%[0-9]+]]:_(p0) = G_CONSTANT i20 32
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C15]](p0) :: (store (s32) into `ptr null` + 32)
+    ; AIE2-FOLD-NEXT: [[C16:%[0-9]+]]:_(p0) = G_CONSTANT i20 36
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C16]](p0) :: (store (s32) into `ptr null` + 36)
+    ; AIE2-FOLD-NEXT: [[C17:%[0-9]+]]:_(p0) = G_CONSTANT i20 40
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C17]](p0) :: (store (s32) into `ptr null` + 40)
+    ; AIE2-FOLD-NEXT: [[C18:%[0-9]+]]:_(p0) = G_CONSTANT i20 44
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C18]](p0) :: (store (s32) into `ptr null` + 44)
+    ; AIE2-FOLD-NEXT: [[C19:%[0-9]+]]:_(p0) = G_CONSTANT i20 48
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C19]](p0) :: (store (s32) into `ptr null` + 48)
+    ; AIE2-FOLD-NEXT: [[C20:%[0-9]+]]:_(p0) = G_CONSTANT i20 52
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C20]](p0) :: (store (s32) into `ptr null` + 52)
+    ; AIE2-FOLD-NEXT: [[C21:%[0-9]+]]:_(p0) = G_CONSTANT i20 56
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C21]](p0) :: (store (s32) into `ptr null` + 56)
+    ; AIE2-FOLD-NEXT: [[C22:%[0-9]+]]:_(p0) = G_CONSTANT i20 60
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C22]](p0) :: (store (s32) into `ptr null` + 60)
     ; AIE2-FOLD-NEXT: $r0 = COPY [[C]](s32)
     ; AIE2-FOLD-NEXT: PseudoRET implicit $lr, implicit $r0
     ;
     ; AIE2P-FOLD-LABEL: name: combine_constant_struct_mixed
     ; AIE2P-FOLD: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
     ; AIE2P-FOLD-NEXT: [[C1:%[0-9]+]]:_(p0) = G_CONSTANT i20 0
-    ; AIE2P-FOLD-NEXT: [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @constinit3
-    ; AIE2P-FOLD-NEXT: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[GV]](p0) :: (dereferenceable invariant load (s32) from @constinit3)
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD]](s32), [[C1]](p0) :: (store (s32) into `ptr null`)
-    ; AIE2P-FOLD-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C2]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 4)
-    ; AIE2P-FOLD-NEXT: [[C3:%[0-9]+]]:_(p0) = G_CONSTANT i20 4
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD1]](s32), [[C3]](p0) :: (store (s32) into `ptr null` + 4)
-    ; AIE2P-FOLD-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C4]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD2:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD1]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 8)
-    ; AIE2P-FOLD-NEXT: [[C5:%[0-9]+]]:_(p0) = G_CONSTANT i20 8
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD2]](s32), [[C5]](p0) :: (store (s32) into `ptr null` + 8)
-    ; AIE2P-FOLD-NEXT: [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 12
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C6]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD3:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD2]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 12)
-    ; AIE2P-FOLD-NEXT: [[C7:%[0-9]+]]:_(p0) = G_CONSTANT i20 12
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD3]](s32), [[C7]](p0) :: (store (s32) into `ptr null` + 12)
-    ; AIE2P-FOLD-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C8]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD4:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD3]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 16)
-    ; AIE2P-FOLD-NEXT: [[C9:%[0-9]+]]:_(p0) = G_CONSTANT i20 16
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD4]](s32), [[C9]](p0) :: (store (s32) into `ptr null` + 16)
-    ; AIE2P-FOLD-NEXT: [[C10:%[0-9]+]]:_(s20) = G_CONSTANT i20 20
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C10]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD5:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD4]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 20)
-    ; AIE2P-FOLD-NEXT: [[C11:%[0-9]+]]:_(p0) = G_CONSTANT i20 20
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD5]](s32), [[C11]](p0) :: (store (s32) into `ptr null` + 20)
-    ; AIE2P-FOLD-NEXT: [[C12:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C12]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD6:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD5]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 24)
+    ; AIE2P-FOLD-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 1049634
+    ; AIE2P-FOLD-NEXT: G_STORE [[C2]](s32), [[C1]](p0) :: (store (s32) into `ptr null`)
+    ; AIE2P-FOLD-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 50528280
+    ; AIE2P-FOLD-NEXT: [[C4:%[0-9]+]]:_(p0) = G_CONSTANT i20 4
+    ; AIE2P-FOLD-NEXT: G_STORE [[C3]](s32), [[C4]](p0) :: (store (s32) into `ptr null` + 4)
+    ; AIE2P-FOLD-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 34078720
+    ; AIE2P-FOLD-NEXT: [[C6:%[0-9]+]]:_(p0) = G_CONSTANT i20 8
+    ; AIE2P-FOLD-NEXT: G_STORE [[C5]](s32), [[C6]](p0) :: (store (s32) into `ptr null` + 8)
+    ; AIE2P-FOLD-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 4210560
+    ; AIE2P-FOLD-NEXT: [[C8:%[0-9]+]]:_(p0) = G_CONSTANT i20 12
+    ; AIE2P-FOLD-NEXT: G_STORE [[C7]](s32), [[C8]](p0) :: (store (s32) into `ptr null` + 12)
+    ; AIE2P-FOLD-NEXT: [[C9:%[0-9]+]]:_(s32) = G_CONSTANT i32 65537
+    ; AIE2P-FOLD-NEXT: [[C10:%[0-9]+]]:_(p0) = G_CONSTANT i20 16
+    ; AIE2P-FOLD-NEXT: G_STORE [[C9]](s32), [[C10]](p0) :: (store (s32) into `ptr null` + 16)
+    ; AIE2P-FOLD-NEXT: [[C11:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; AIE2P-FOLD-NEXT: [[C12:%[0-9]+]]:_(p0) = G_CONSTANT i20 20
+    ; AIE2P-FOLD-NEXT: G_STORE [[C11]](s32), [[C12]](p0) :: (store (s32) into `ptr null` + 20)
     ; AIE2P-FOLD-NEXT: [[C13:%[0-9]+]]:_(p0) = G_CONSTANT i20 24
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD6]](s32), [[C13]](p0) :: (store (s32) into `ptr null` + 24)
-    ; AIE2P-FOLD-NEXT: [[C14:%[0-9]+]]:_(s20) = G_CONSTANT i20 28
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C14]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD7:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD6]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 28)
-    ; AIE2P-FOLD-NEXT: [[C15:%[0-9]+]]:_(p0) = G_CONSTANT i20 28
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD7]](s32), [[C15]](p0) :: (store (s32) into `ptr null` + 28)
-    ; AIE2P-FOLD-NEXT: [[C16:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD7:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C16]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD8:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD7]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 32)
-    ; AIE2P-FOLD-NEXT: [[C17:%[0-9]+]]:_(p0) = G_CONSTANT i20 32
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD8]](s32), [[C17]](p0) :: (store (s32) into `ptr null` + 32)
-    ; AIE2P-FOLD-NEXT: [[C18:%[0-9]+]]:_(s20) = G_CONSTANT i20 36
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD8:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C18]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD9:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD8]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 36)
-    ; AIE2P-FOLD-NEXT: [[C19:%[0-9]+]]:_(p0) = G_CONSTANT i20 36
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD9]](s32), [[C19]](p0) :: (store (s32) into `ptr null` + 36)
-    ; AIE2P-FOLD-NEXT: [[C20:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD9:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C20]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD10:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD9]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 40)
-    ; AIE2P-FOLD-NEXT: [[C21:%[0-9]+]]:_(p0) = G_CONSTANT i20 40
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD10]](s32), [[C21]](p0) :: (store (s32) into `ptr null` + 40)
-    ; AIE2P-FOLD-NEXT: [[C22:%[0-9]+]]:_(s20) = G_CONSTANT i20 44
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD10:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C22]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD11:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD10]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 44)
-    ; AIE2P-FOLD-NEXT: [[C23:%[0-9]+]]:_(p0) = G_CONSTANT i20 44
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD11]](s32), [[C23]](p0) :: (store (s32) into `ptr null` + 44)
-    ; AIE2P-FOLD-NEXT: [[C24:%[0-9]+]]:_(s20) = G_CONSTANT i20 48
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD11:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C24]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD12:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD11]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 48)
-    ; AIE2P-FOLD-NEXT: [[C25:%[0-9]+]]:_(p0) = G_CONSTANT i20 48
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD12]](s32), [[C25]](p0) :: (store (s32) into `ptr null` + 48)
-    ; AIE2P-FOLD-NEXT: [[C26:%[0-9]+]]:_(s20) = G_CONSTANT i20 52
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD12:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C26]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD13:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD12]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 52)
-    ; AIE2P-FOLD-NEXT: [[C27:%[0-9]+]]:_(p0) = G_CONSTANT i20 52
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD13]](s32), [[C27]](p0) :: (store (s32) into `ptr null` + 52)
-    ; AIE2P-FOLD-NEXT: [[C28:%[0-9]+]]:_(s20) = G_CONSTANT i20 56
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD13:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C28]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD14:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD13]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 56)
-    ; AIE2P-FOLD-NEXT: [[C29:%[0-9]+]]:_(p0) = G_CONSTANT i20 56
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD14]](s32), [[C29]](p0) :: (store (s32) into `ptr null` + 56)
-    ; AIE2P-FOLD-NEXT: [[C30:%[0-9]+]]:_(s20) = G_CONSTANT i20 60
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD14:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C30]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD15:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD14]](p0) :: (dereferenceable invariant load (s32) from @constinit3 + 60)
-    ; AIE2P-FOLD-NEXT: [[C31:%[0-9]+]]:_(p0) = G_CONSTANT i20 60
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD15]](s32), [[C31]](p0) :: (store (s32) into `ptr null` + 60)
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C13]](p0) :: (store (s32) into `ptr null` + 24)
+    ; AIE2P-FOLD-NEXT: [[C14:%[0-9]+]]:_(p0) = G_CONSTANT i20 28
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C14]](p0) :: (store (s32) into `ptr null` + 28)
+    ; AIE2P-FOLD-NEXT: [[C15:%[0-9]+]]:_(p0) = G_CONSTANT i20 32
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C15]](p0) :: (store (s32) into `ptr null` + 32)
+    ; AIE2P-FOLD-NEXT: [[C16:%[0-9]+]]:_(p0) = G_CONSTANT i20 36
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C16]](p0) :: (store (s32) into `ptr null` + 36)
+    ; AIE2P-FOLD-NEXT: [[C17:%[0-9]+]]:_(p0) = G_CONSTANT i20 40
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C17]](p0) :: (store (s32) into `ptr null` + 40)
+    ; AIE2P-FOLD-NEXT: [[C18:%[0-9]+]]:_(p0) = G_CONSTANT i20 44
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C18]](p0) :: (store (s32) into `ptr null` + 44)
+    ; AIE2P-FOLD-NEXT: [[C19:%[0-9]+]]:_(p0) = G_CONSTANT i20 48
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C19]](p0) :: (store (s32) into `ptr null` + 48)
+    ; AIE2P-FOLD-NEXT: [[C20:%[0-9]+]]:_(p0) = G_CONSTANT i20 52
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C20]](p0) :: (store (s32) into `ptr null` + 52)
+    ; AIE2P-FOLD-NEXT: [[C21:%[0-9]+]]:_(p0) = G_CONSTANT i20 56
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C21]](p0) :: (store (s32) into `ptr null` + 56)
+    ; AIE2P-FOLD-NEXT: [[C22:%[0-9]+]]:_(p0) = G_CONSTANT i20 60
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C22]](p0) :: (store (s32) into `ptr null` + 60)
     ; AIE2P-FOLD-NEXT: $r0 = COPY [[C]](s32)
     ; AIE2P-FOLD-NEXT: PseudoRET implicit $lr, implicit $r0
     ;
@@ -879,19 +629,13 @@ tracksRegLiveness: true
 body:             |
   bb.1.entry:
     ; AIE2-FOLD-LABEL: name: combine_constant_struct_aligned_load
-    ; AIE2-FOLD: [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @constinit4
-    ; AIE2-FOLD-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; AIE2-FOLD-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD]](p0) :: (dereferenceable invariant load (s32) from @constinit4 + 4)
-    ; AIE2-FOLD-NEXT: $r0 = COPY [[LOAD]](s32)
+    ; AIE2-FOLD: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 50528280
+    ; AIE2-FOLD-NEXT: $r0 = COPY [[C]](s32)
     ; AIE2-FOLD-NEXT: PseudoRET implicit $lr, implicit $r0
     ;
     ; AIE2P-FOLD-LABEL: name: combine_constant_struct_aligned_load
-    ; AIE2P-FOLD: [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @constinit4
-    ; AIE2P-FOLD-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD]](p0) :: (dereferenceable invariant load (s32) from @constinit4 + 4)
-    ; AIE2P-FOLD-NEXT: $r0 = COPY [[LOAD]](s32)
+    ; AIE2P-FOLD: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 50528280
+    ; AIE2P-FOLD-NEXT: $r0 = COPY [[C]](s32)
     ; AIE2P-FOLD-NEXT: PseudoRET implicit $lr, implicit $r0
     ;
     ; AIE2P-NOFOLD-LABEL: name: combine_constant_struct_aligned_load
@@ -918,19 +662,13 @@ tracksRegLiveness: true
 body:             |
   bb.1.entry:
     ; AIE2-FOLD-LABEL: name: combine_constant_struct_unaligned_load
-    ; AIE2-FOLD: [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @constinit4
-    ; AIE2-FOLD-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 5
-    ; AIE2-FOLD-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD]](p0) :: (dereferenceable invariant load (s32) from @constinit4 + 4)
-    ; AIE2-FOLD-NEXT: $r0 = COPY [[LOAD]](s32)
+    ; AIE2-FOLD: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 197376
+    ; AIE2-FOLD-NEXT: $r0 = COPY [[C]](s32)
     ; AIE2-FOLD-NEXT: PseudoRET implicit $lr, implicit $r0
     ;
     ; AIE2P-FOLD-LABEL: name: combine_constant_struct_unaligned_load
-    ; AIE2P-FOLD: [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @constinit4
-    ; AIE2P-FOLD-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 5
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD]](p0) :: (dereferenceable invariant load (s32) from @constinit4 + 4)
-    ; AIE2P-FOLD-NEXT: $r0 = COPY [[LOAD]](s32)
+    ; AIE2P-FOLD: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 197376
+    ; AIE2P-FOLD-NEXT: $r0 = COPY [[C]](s32)
     ; AIE2P-FOLD-NEXT: PseudoRET implicit $lr, implicit $r0
     ;
     ; AIE2P-NOFOLD-LABEL: name: combine_constant_struct_unaligned_load
@@ -957,32 +695,18 @@ tracksRegLiveness: true
 body:             |
   bb.1.entry:
     ; AIE2-FOLD-LABEL: name: combine_constant_struct_unaligned_load_mixed_types
-    ; AIE2-FOLD: [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @constinit4
-    ; AIE2-FOLD-NEXT: [[LOAD:%[0-9]+]]:_(s8) = G_LOAD [[GV]](p0) :: (dereferenceable invariant load (s8) from @constinit4)
-    ; AIE2-FOLD-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 1
-    ; AIE2-FOLD-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD1:%[0-9]+]]:_(s8) = G_LOAD [[PTR_ADD]](p0) :: (dereferenceable invariant load (s8) from @constinit4 + 1)
-    ; AIE2-FOLD-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 2
-    ; AIE2-FOLD-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C1]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD2:%[0-9]+]]:_(s8) = G_LOAD [[PTR_ADD1]](p0) :: (dereferenceable invariant load (s8) from @constinit4 + 2)
-    ; AIE2-FOLD-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; AIE2-FOLD-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C2]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD3:%[0-9]+]]:_(s20) = G_LOAD [[PTR_ADD2]](p0) :: (dereferenceable invariant load (s20) from @constinit4 + 4, align 4)
-    ; AIE2-FOLD-NEXT: PseudoRET implicit $lr, implicit [[LOAD]](s8), implicit [[LOAD1]](s8), implicit [[LOAD2]](s8), implicit [[LOAD3]](s20)
+    ; AIE2-FOLD: [[C:%[0-9]+]]:_(s8) = G_CONSTANT i8 34
+    ; AIE2-FOLD-NEXT: [[C1:%[0-9]+]]:_(s8) = G_CONSTANT i8 4
+    ; AIE2-FOLD-NEXT: [[C2:%[0-9]+]]:_(s8) = G_CONSTANT i8 16
+    ; AIE2-FOLD-NEXT: [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 196632
+    ; AIE2-FOLD-NEXT: PseudoRET implicit $lr, implicit [[C]](s8), implicit [[C1]](s8), implicit [[C2]](s8), implicit [[C3]](s20)
     ;
     ; AIE2P-FOLD-LABEL: name: combine_constant_struct_unaligned_load_mixed_types
-    ; AIE2P-FOLD: [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @constinit4
-    ; AIE2P-FOLD-NEXT: [[LOAD:%[0-9]+]]:_(s8) = G_LOAD [[GV]](p0) :: (dereferenceable invariant load (s8) from @constinit4)
-    ; AIE2P-FOLD-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 1
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD1:%[0-9]+]]:_(s8) = G_LOAD [[PTR_ADD]](p0) :: (dereferenceable invariant load (s8) from @constinit4 + 1)
-    ; AIE2P-FOLD-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 2
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C1]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD2:%[0-9]+]]:_(s8) = G_LOAD [[PTR_ADD1]](p0) :: (dereferenceable invariant load (s8) from @constinit4 + 2)
-    ; AIE2P-FOLD-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C2]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD3:%[0-9]+]]:_(s20) = G_LOAD [[PTR_ADD2]](p0) :: (dereferenceable invariant load (s20) from @constinit4 + 4, align 4)
-    ; AIE2P-FOLD-NEXT: PseudoRET implicit $lr, implicit [[LOAD]](s8), implicit [[LOAD1]](s8), implicit [[LOAD2]](s8), implicit [[LOAD3]](s20)
+    ; AIE2P-FOLD: [[C:%[0-9]+]]:_(s8) = G_CONSTANT i8 34
+    ; AIE2P-FOLD-NEXT: [[C1:%[0-9]+]]:_(s8) = G_CONSTANT i8 4
+    ; AIE2P-FOLD-NEXT: [[C2:%[0-9]+]]:_(s8) = G_CONSTANT i8 16
+    ; AIE2P-FOLD-NEXT: [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 196632
+    ; AIE2P-FOLD-NEXT: PseudoRET implicit $lr, implicit [[C]](s8), implicit [[C1]](s8), implicit [[C2]](s8), implicit [[C3]](s20)
     ;
     ; AIE2P-NOFOLD-LABEL: name: combine_constant_struct_unaligned_load_mixed_types
     ; AIE2P-NOFOLD: [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @constinit4
@@ -1025,168 +749,86 @@ body:             |
     ; AIE2-FOLD-LABEL: name: combine_all_constant_struct_first_is_array
     ; AIE2-FOLD: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
     ; AIE2-FOLD-NEXT: [[C1:%[0-9]+]]:_(p0) = G_CONSTANT i20 0
-    ; AIE2-FOLD-NEXT: [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @constinit5
-    ; AIE2-FOLD-NEXT: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[GV]](p0) :: (dereferenceable invariant load (s32) from @constinit5)
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD]](s32), [[C1]](p0) :: (store (s32) into `ptr null`)
-    ; AIE2-FOLD-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; AIE2-FOLD-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C2]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 4)
-    ; AIE2-FOLD-NEXT: [[C3:%[0-9]+]]:_(p0) = G_CONSTANT i20 4
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD1]](s32), [[C3]](p0) :: (store (s32) into `ptr null` + 4)
-    ; AIE2-FOLD-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
-    ; AIE2-FOLD-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C4]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD2:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD1]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 8)
-    ; AIE2-FOLD-NEXT: [[C5:%[0-9]+]]:_(p0) = G_CONSTANT i20 8
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD2]](s32), [[C5]](p0) :: (store (s32) into `ptr null` + 8)
-    ; AIE2-FOLD-NEXT: [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 12
-    ; AIE2-FOLD-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C6]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD3:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD2]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 12)
-    ; AIE2-FOLD-NEXT: [[C7:%[0-9]+]]:_(p0) = G_CONSTANT i20 12
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD3]](s32), [[C7]](p0) :: (store (s32) into `ptr null` + 12)
-    ; AIE2-FOLD-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
-    ; AIE2-FOLD-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C8]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD4:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD3]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 16)
-    ; AIE2-FOLD-NEXT: [[C9:%[0-9]+]]:_(p0) = G_CONSTANT i20 16
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD4]](s32), [[C9]](p0) :: (store (s32) into `ptr null` + 16)
-    ; AIE2-FOLD-NEXT: [[C10:%[0-9]+]]:_(s20) = G_CONSTANT i20 20
-    ; AIE2-FOLD-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C10]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD5:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD4]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 20)
-    ; AIE2-FOLD-NEXT: [[C11:%[0-9]+]]:_(p0) = G_CONSTANT i20 20
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD5]](s32), [[C11]](p0) :: (store (s32) into `ptr null` + 20)
-    ; AIE2-FOLD-NEXT: [[C12:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
-    ; AIE2-FOLD-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C12]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD6:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD5]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 24)
-    ; AIE2-FOLD-NEXT: [[C13:%[0-9]+]]:_(p0) = G_CONSTANT i20 24
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD6]](s32), [[C13]](p0) :: (store (s32) into `ptr null` + 24)
-    ; AIE2-FOLD-NEXT: [[C14:%[0-9]+]]:_(s20) = G_CONSTANT i20 28
-    ; AIE2-FOLD-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C14]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD7:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD6]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 28)
-    ; AIE2-FOLD-NEXT: [[C15:%[0-9]+]]:_(p0) = G_CONSTANT i20 28
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD7]](s32), [[C15]](p0) :: (store (s32) into `ptr null` + 28)
-    ; AIE2-FOLD-NEXT: [[C16:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; AIE2-FOLD-NEXT: [[PTR_ADD7:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C16]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD8:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD7]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 32)
-    ; AIE2-FOLD-NEXT: [[C17:%[0-9]+]]:_(p0) = G_CONSTANT i20 32
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD8]](s32), [[C17]](p0) :: (store (s32) into `ptr null` + 32)
-    ; AIE2-FOLD-NEXT: [[C18:%[0-9]+]]:_(s20) = G_CONSTANT i20 36
-    ; AIE2-FOLD-NEXT: [[PTR_ADD8:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C18]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD9:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD8]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 36)
-    ; AIE2-FOLD-NEXT: [[C19:%[0-9]+]]:_(p0) = G_CONSTANT i20 36
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD9]](s32), [[C19]](p0) :: (store (s32) into `ptr null` + 36)
-    ; AIE2-FOLD-NEXT: [[C20:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
-    ; AIE2-FOLD-NEXT: [[PTR_ADD9:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C20]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD10:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD9]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 40)
-    ; AIE2-FOLD-NEXT: [[C21:%[0-9]+]]:_(p0) = G_CONSTANT i20 40
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD10]](s32), [[C21]](p0) :: (store (s32) into `ptr null` + 40)
-    ; AIE2-FOLD-NEXT: [[C22:%[0-9]+]]:_(s20) = G_CONSTANT i20 44
-    ; AIE2-FOLD-NEXT: [[PTR_ADD10:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C22]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD11:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD10]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 44)
-    ; AIE2-FOLD-NEXT: [[C23:%[0-9]+]]:_(p0) = G_CONSTANT i20 44
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD11]](s32), [[C23]](p0) :: (store (s32) into `ptr null` + 44)
-    ; AIE2-FOLD-NEXT: [[C24:%[0-9]+]]:_(s20) = G_CONSTANT i20 48
-    ; AIE2-FOLD-NEXT: [[PTR_ADD11:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C24]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD12:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD11]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 48)
-    ; AIE2-FOLD-NEXT: [[C25:%[0-9]+]]:_(p0) = G_CONSTANT i20 48
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD12]](s32), [[C25]](p0) :: (store (s32) into `ptr null` + 48)
-    ; AIE2-FOLD-NEXT: [[C26:%[0-9]+]]:_(s20) = G_CONSTANT i20 52
-    ; AIE2-FOLD-NEXT: [[PTR_ADD12:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C26]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD13:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD12]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 52)
-    ; AIE2-FOLD-NEXT: [[C27:%[0-9]+]]:_(p0) = G_CONSTANT i20 52
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD13]](s32), [[C27]](p0) :: (store (s32) into `ptr null` + 52)
-    ; AIE2-FOLD-NEXT: [[C28:%[0-9]+]]:_(s20) = G_CONSTANT i20 56
-    ; AIE2-FOLD-NEXT: [[PTR_ADD13:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C28]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD14:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD13]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 56)
-    ; AIE2-FOLD-NEXT: [[C29:%[0-9]+]]:_(p0) = G_CONSTANT i20 56
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD14]](s32), [[C29]](p0) :: (store (s32) into `ptr null` + 56)
-    ; AIE2-FOLD-NEXT: [[C30:%[0-9]+]]:_(s20) = G_CONSTANT i20 60
-    ; AIE2-FOLD-NEXT: [[PTR_ADD14:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C30]](s20)
-    ; AIE2-FOLD-NEXT: [[LOAD15:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD14]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 60)
-    ; AIE2-FOLD-NEXT: [[C31:%[0-9]+]]:_(p0) = G_CONSTANT i20 60
-    ; AIE2-FOLD-NEXT: G_STORE [[LOAD15]](s32), [[C31]](p0) :: (store (s32) into `ptr null` + 60)
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C1]](p0) :: (store (s32) into `ptr null`)
+    ; AIE2-FOLD-NEXT: [[C2:%[0-9]+]]:_(p0) = G_CONSTANT i20 4
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C2]](p0) :: (store (s32) into `ptr null` + 4)
+    ; AIE2-FOLD-NEXT: [[C3:%[0-9]+]]:_(p0) = G_CONSTANT i20 8
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C3]](p0) :: (store (s32) into `ptr null` + 8)
+    ; AIE2-FOLD-NEXT: [[C4:%[0-9]+]]:_(p0) = G_CONSTANT i20 12
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C4]](p0) :: (store (s32) into `ptr null` + 12)
+    ; AIE2-FOLD-NEXT: [[C5:%[0-9]+]]:_(p0) = G_CONSTANT i20 16
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C5]](p0) :: (store (s32) into `ptr null` + 16)
+    ; AIE2-FOLD-NEXT: [[C6:%[0-9]+]]:_(p0) = G_CONSTANT i20 20
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C6]](p0) :: (store (s32) into `ptr null` + 20)
+    ; AIE2-FOLD-NEXT: [[C7:%[0-9]+]]:_(p0) = G_CONSTANT i20 24
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C7]](p0) :: (store (s32) into `ptr null` + 24)
+    ; AIE2-FOLD-NEXT: [[C8:%[0-9]+]]:_(p0) = G_CONSTANT i20 28
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C8]](p0) :: (store (s32) into `ptr null` + 28)
+    ; AIE2-FOLD-NEXT: [[C9:%[0-9]+]]:_(p0) = G_CONSTANT i20 32
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C9]](p0) :: (store (s32) into `ptr null` + 32)
+    ; AIE2-FOLD-NEXT: [[C10:%[0-9]+]]:_(p0) = G_CONSTANT i20 36
+    ; AIE2-FOLD-NEXT: G_STORE [[C]](s32), [[C10]](p0) :: (store (s32) into `ptr null` + 36)
+    ; AIE2-FOLD-NEXT: [[C11:%[0-9]+]]:_(s32) = G_CONSTANT i32 1049634
+    ; AIE2-FOLD-NEXT: [[C12:%[0-9]+]]:_(p0) = G_CONSTANT i20 40
+    ; AIE2-FOLD-NEXT: G_STORE [[C11]](s32), [[C12]](p0) :: (store (s32) into `ptr null` + 40)
+    ; AIE2-FOLD-NEXT: [[C13:%[0-9]+]]:_(s32) = G_CONSTANT i32 50528280
+    ; AIE2-FOLD-NEXT: [[C14:%[0-9]+]]:_(p0) = G_CONSTANT i20 44
+    ; AIE2-FOLD-NEXT: G_STORE [[C13]](s32), [[C14]](p0) :: (store (s32) into `ptr null` + 44)
+    ; AIE2-FOLD-NEXT: [[C15:%[0-9]+]]:_(s32) = G_CONSTANT i32 34078720
+    ; AIE2-FOLD-NEXT: [[C16:%[0-9]+]]:_(p0) = G_CONSTANT i20 48
+    ; AIE2-FOLD-NEXT: G_STORE [[C15]](s32), [[C16]](p0) :: (store (s32) into `ptr null` + 48)
+    ; AIE2-FOLD-NEXT: [[C17:%[0-9]+]]:_(s32) = G_CONSTANT i32 16256
+    ; AIE2-FOLD-NEXT: [[C18:%[0-9]+]]:_(p0) = G_CONSTANT i20 52
+    ; AIE2-FOLD-NEXT: G_STORE [[C17]](s32), [[C18]](p0) :: (store (s32) into `ptr null` + 52)
+    ; AIE2-FOLD-NEXT: [[C19:%[0-9]+]]:_(s32) = G_CONSTANT i32 65600
+    ; AIE2-FOLD-NEXT: [[C20:%[0-9]+]]:_(p0) = G_CONSTANT i20 56
+    ; AIE2-FOLD-NEXT: G_STORE [[C19]](s32), [[C20]](p0) :: (store (s32) into `ptr null` + 56)
+    ; AIE2-FOLD-NEXT: [[C21:%[0-9]+]]:_(s32) = G_CONSTANT i32 65537
+    ; AIE2-FOLD-NEXT: [[C22:%[0-9]+]]:_(p0) = G_CONSTANT i20 60
+    ; AIE2-FOLD-NEXT: G_STORE [[C21]](s32), [[C22]](p0) :: (store (s32) into `ptr null` + 60)
     ; AIE2-FOLD-NEXT: $r0 = COPY [[C]](s32)
     ; AIE2-FOLD-NEXT: PseudoRET implicit $lr, implicit $r0
     ;
     ; AIE2P-FOLD-LABEL: name: combine_all_constant_struct_first_is_array
     ; AIE2P-FOLD: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
     ; AIE2P-FOLD-NEXT: [[C1:%[0-9]+]]:_(p0) = G_CONSTANT i20 0
-    ; AIE2P-FOLD-NEXT: [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @constinit5
-    ; AIE2P-FOLD-NEXT: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[GV]](p0) :: (dereferenceable invariant load (s32) from @constinit5)
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD]](s32), [[C1]](p0) :: (store (s32) into `ptr null`)
-    ; AIE2P-FOLD-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C2]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 4)
-    ; AIE2P-FOLD-NEXT: [[C3:%[0-9]+]]:_(p0) = G_CONSTANT i20 4
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD1]](s32), [[C3]](p0) :: (store (s32) into `ptr null` + 4)
-    ; AIE2P-FOLD-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C4]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD2:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD1]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 8)
-    ; AIE2P-FOLD-NEXT: [[C5:%[0-9]+]]:_(p0) = G_CONSTANT i20 8
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD2]](s32), [[C5]](p0) :: (store (s32) into `ptr null` + 8)
-    ; AIE2P-FOLD-NEXT: [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 12
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C6]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD3:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD2]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 12)
-    ; AIE2P-FOLD-NEXT: [[C7:%[0-9]+]]:_(p0) = G_CONSTANT i20 12
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD3]](s32), [[C7]](p0) :: (store (s32) into `ptr null` + 12)
-    ; AIE2P-FOLD-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C8]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD4:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD3]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 16)
-    ; AIE2P-FOLD-NEXT: [[C9:%[0-9]+]]:_(p0) = G_CONSTANT i20 16
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD4]](s32), [[C9]](p0) :: (store (s32) into `ptr null` + 16)
-    ; AIE2P-FOLD-NEXT: [[C10:%[0-9]+]]:_(s20) = G_CONSTANT i20 20
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C10]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD5:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD4]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 20)
-    ; AIE2P-FOLD-NEXT: [[C11:%[0-9]+]]:_(p0) = G_CONSTANT i20 20
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD5]](s32), [[C11]](p0) :: (store (s32) into `ptr null` + 20)
-    ; AIE2P-FOLD-NEXT: [[C12:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C12]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD6:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD5]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 24)
-    ; AIE2P-FOLD-NEXT: [[C13:%[0-9]+]]:_(p0) = G_CONSTANT i20 24
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD6]](s32), [[C13]](p0) :: (store (s32) into `ptr null` + 24)
-    ; AIE2P-FOLD-NEXT: [[C14:%[0-9]+]]:_(s20) = G_CONSTANT i20 28
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C14]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD7:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD6]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 28)
-    ; AIE2P-FOLD-NEXT: [[C15:%[0-9]+]]:_(p0) = G_CONSTANT i20 28
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD7]](s32), [[C15]](p0) :: (store (s32) into `ptr null` + 28)
-    ; AIE2P-FOLD-NEXT: [[C16:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD7:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C16]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD8:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD7]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 32)
-    ; AIE2P-FOLD-NEXT: [[C17:%[0-9]+]]:_(p0) = G_CONSTANT i20 32
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD8]](s32), [[C17]](p0) :: (store (s32) into `ptr null` + 32)
-    ; AIE2P-FOLD-NEXT: [[C18:%[0-9]+]]:_(s20) = G_CONSTANT i20 36
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD8:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C18]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD9:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD8]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 36)
-    ; AIE2P-FOLD-NEXT: [[C19:%[0-9]+]]:_(p0) = G_CONSTANT i20 36
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD9]](s32), [[C19]](p0) :: (store (s32) into `ptr null` + 36)
-    ; AIE2P-FOLD-NEXT: [[C20:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD9:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C20]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD10:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD9]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 40)
-    ; AIE2P-FOLD-NEXT: [[C21:%[0-9]+]]:_(p0) = G_CONSTANT i20 40
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD10]](s32), [[C21]](p0) :: (store (s32) into `ptr null` + 40)
-    ; AIE2P-FOLD-NEXT: [[C22:%[0-9]+]]:_(s20) = G_CONSTANT i20 44
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD10:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C22]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD11:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD10]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 44)
-    ; AIE2P-FOLD-NEXT: [[C23:%[0-9]+]]:_(p0) = G_CONSTANT i20 44
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD11]](s32), [[C23]](p0) :: (store (s32) into `ptr null` + 44)
-    ; AIE2P-FOLD-NEXT: [[C24:%[0-9]+]]:_(s20) = G_CONSTANT i20 48
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD11:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C24]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD12:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD11]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 48)
-    ; AIE2P-FOLD-NEXT: [[C25:%[0-9]+]]:_(p0) = G_CONSTANT i20 48
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD12]](s32), [[C25]](p0) :: (store (s32) into `ptr null` + 48)
-    ; AIE2P-FOLD-NEXT: [[C26:%[0-9]+]]:_(s20) = G_CONSTANT i20 52
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD12:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C26]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD13:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD12]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 52)
-    ; AIE2P-FOLD-NEXT: [[C27:%[0-9]+]]:_(p0) = G_CONSTANT i20 52
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD13]](s32), [[C27]](p0) :: (store (s32) into `ptr null` + 52)
-    ; AIE2P-FOLD-NEXT: [[C28:%[0-9]+]]:_(s20) = G_CONSTANT i20 56
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD13:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C28]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD14:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD13]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 56)
-    ; AIE2P-FOLD-NEXT: [[C29:%[0-9]+]]:_(p0) = G_CONSTANT i20 56
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD14]](s32), [[C29]](p0) :: (store (s32) into `ptr null` + 56)
-    ; AIE2P-FOLD-NEXT: [[C30:%[0-9]+]]:_(s20) = G_CONSTANT i20 60
-    ; AIE2P-FOLD-NEXT: [[PTR_ADD14:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C30]](s20)
-    ; AIE2P-FOLD-NEXT: [[LOAD15:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD14]](p0) :: (dereferenceable invariant load (s32) from @constinit5 + 60)
-    ; AIE2P-FOLD-NEXT: [[C31:%[0-9]+]]:_(p0) = G_CONSTANT i20 60
-    ; AIE2P-FOLD-NEXT: G_STORE [[LOAD15]](s32), [[C31]](p0) :: (store (s32) into `ptr null` + 60)
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C1]](p0) :: (store (s32) into `ptr null`)
+    ; AIE2P-FOLD-NEXT: [[C2:%[0-9]+]]:_(p0) = G_CONSTANT i20 4
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C2]](p0) :: (store (s32) into `ptr null` + 4)
+    ; AIE2P-FOLD-NEXT: [[C3:%[0-9]+]]:_(p0) = G_CONSTANT i20 8
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C3]](p0) :: (store (s32) into `ptr null` + 8)
+    ; AIE2P-FOLD-NEXT: [[C4:%[0-9]+]]:_(p0) = G_CONSTANT i20 12
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C4]](p0) :: (store (s32) into `ptr null` + 12)
+    ; AIE2P-FOLD-NEXT: [[C5:%[0-9]+]]:_(p0) = G_CONSTANT i20 16
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C5]](p0) :: (store (s32) into `ptr null` + 16)
+    ; AIE2P-FOLD-NEXT: [[C6:%[0-9]+]]:_(p0) = G_CONSTANT i20 20
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C6]](p0) :: (store (s32) into `ptr null` + 20)
+    ; AIE2P-FOLD-NEXT: [[C7:%[0-9]+]]:_(p0) = G_CONSTANT i20 24
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C7]](p0) :: (store (s32) into `ptr null` + 24)
+    ; AIE2P-FOLD-NEXT: [[C8:%[0-9]+]]:_(p0) = G_CONSTANT i20 28
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C8]](p0) :: (store (s32) into `ptr null` + 28)
+    ; AIE2P-FOLD-NEXT: [[C9:%[0-9]+]]:_(p0) = G_CONSTANT i20 32
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C9]](p0) :: (store (s32) into `ptr null` + 32)
+    ; AIE2P-FOLD-NEXT: [[C10:%[0-9]+]]:_(p0) = G_CONSTANT i20 36
+    ; AIE2P-FOLD-NEXT: G_STORE [[C]](s32), [[C10]](p0) :: (store (s32) into `ptr null` + 36)
+    ; AIE2P-FOLD-NEXT: [[C11:%[0-9]+]]:_(s32) = G_CONSTANT i32 1049634
+    ; AIE2P-FOLD-NEXT: [[C12:%[0-9]+]]:_(p0) = G_CONSTANT i20 40
+    ; AIE2P-FOLD-NEXT: G_STORE [[C11]](s32), [[C12]](p0) :: (store (s32) into `ptr null` + 40)
+    ; AIE2P-FOLD-NEXT: [[C13:%[0-9]+]]:_(s32) = G_CONSTANT i32 50528280
+    ; AIE2P-FOLD-NEXT: [[C14:%[0-9]+]]:_(p0) = G_CONSTANT i20 44
+    ; AIE2P-FOLD-NEXT: G_STORE [[C13]](s32), [[C14]](p0) :: (store (s32) into `ptr null` + 44)
+    ; AIE2P-FOLD-NEXT: [[C15:%[0-9]+]]:_(s32) = G_CONSTANT i32 34078720
+    ; AIE2P-FOLD-NEXT: [[C16:%[0-9]+]]:_(p0) = G_CONSTANT i20 48
+    ; AIE2P-FOLD-NEXT: G_STORE [[C15]](s32), [[C16]](p0) :: (store (s32) into `ptr null` + 48)
+    ; AIE2P-FOLD-NEXT: [[C17:%[0-9]+]]:_(s32) = G_CONSTANT i32 16256
+    ; AIE2P-FOLD-NEXT: [[C18:%[0-9]+]]:_(p0) = G_CONSTANT i20 52
+    ; AIE2P-FOLD-NEXT: G_STORE [[C17]](s32), [[C18]](p0) :: (store (s32) into `ptr null` + 52)
+    ; AIE2P-FOLD-NEXT: [[C19:%[0-9]+]]:_(s32) = G_CONSTANT i32 65600
+    ; AIE2P-FOLD-NEXT: [[C20:%[0-9]+]]:_(p0) = G_CONSTANT i20 56
+    ; AIE2P-FOLD-NEXT: G_STORE [[C19]](s32), [[C20]](p0) :: (store (s32) into `ptr null` + 56)
+    ; AIE2P-FOLD-NEXT: [[C21:%[0-9]+]]:_(s32) = G_CONSTANT i32 65537
+    ; AIE2P-FOLD-NEXT: [[C22:%[0-9]+]]:_(p0) = G_CONSTANT i20 60
+    ; AIE2P-FOLD-NEXT: G_STORE [[C21]](s32), [[C22]](p0) :: (store (s32) into `ptr null` + 60)
     ; AIE2P-FOLD-NEXT: $r0 = COPY [[C]](s32)
     ; AIE2P-FOLD-NEXT: PseudoRET implicit $lr, implicit $r0
     ;

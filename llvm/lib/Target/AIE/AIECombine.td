@@ -198,6 +198,12 @@ def combine_trunc_ext: GICombineRule <
   (apply [{Helper.applyBuildFn(*${root}, ${matchinfo}); }])
 >;
 
+def combine_load_const : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_LOAD): $root,
+         [{ return matchConstLoad(*${root}, MRI, Observer, ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
+
 // AIE-specifc combines (currently shared by AIE2 and AIE2P).
 def aie_additional_combines : GICombineGroup<[
   combine_unpad_vector,
@@ -214,7 +220,8 @@ def aie_additional_combines : GICombineGroup<[
   combine_narrow_trunc_s20,
   combine_narrow_zext_s20,
   combine_concat_unmerge_phis,
-  combine_trunc_ext
+  combine_trunc_ext,
+  combine_load_const
 ]>;
 
 // AIE2P-specific combines.
@@ -228,7 +235,7 @@ def aie2p_additional_combines : GICombineGroup<[
   combine_vector_shuffle_to_extract_insert_elt,
   combine_vector_shuffle_concat_extracted_subvectors,
   combine_paired_extracts,
-  combine_vector_shuffle_to_extract_insert_elt_to_broadcast,
+  combine_vector_shuffle_to_extract_insert_elt_to_broadcast
 ]>;
 
 def AIE2PreLegalizerCombiner
