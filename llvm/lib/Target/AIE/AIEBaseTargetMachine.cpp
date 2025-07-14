@@ -42,6 +42,7 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Transforms/IPO/GlobalDCE.h"
 #include "llvm/Transforms/IPO/Internalize.h"
+#include "llvm/Transforms/IPO/SCCP.h"
 #include "llvm/Transforms/Scalar.h"
 
 using namespace llvm;
@@ -76,6 +77,10 @@ static cl::list<std::string>
 cl::opt<bool> EnableAddressChaining("aie-address-chaining", cl::Hidden,
                                     cl::init(true),
                                     cl::desc("Enable ptradd chaining."));
+
+// Option to run IPSCCP once more.
+cl::opt<bool> EnableIPSCCP("aie-enable-ipsccp", cl::Hidden, cl::init(true),
+                           cl::desc("Enable another run of IPSCCP."));
 
 cl::opt<bool> EnableGlobalPtrModOptimizer(
     "aie-global-ptr-mod-opt", cl::Hidden, cl::init(true),
@@ -228,6 +233,13 @@ void AIEBaseTargetMachine::registerPassBuilderCallbacks(PassBuilder &PB) {
             PM.addPass(InternalizePass(mustPreserveGV));
             PM.addPass(GlobalDCEPass());
           }
+        });
+  }
+
+  if (EnableIPSCCP) {
+    PB.registerOptimizerEarlyEPCallback(
+        [](ModulePassManager &PM, OptimizationLevel) {
+          PM.addPass(IPSCCPPass(IPSCCPOptions(/*AllowFuncSpec=*/false)));
         });
   }
 }
