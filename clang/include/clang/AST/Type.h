@@ -2520,6 +2520,7 @@ public:
   bool isRecordType() const;
   bool isClassType() const;
   bool isStructureType() const;
+  bool isStructureTypeWithFlexibleArrayMember() const;
   bool isObjCBoxableRecordType() const;
   bool isInterfaceType() const;
   bool isStructureOrClassType() const;
@@ -8061,7 +8062,10 @@ inline bool Type::isUndeducedType() const {
 /// Determines whether this is a type for which one can define
 /// an overloaded operator.
 inline bool Type::isOverloadableType() const {
-  return isDependentType() || isRecordType() || isEnumeralType();
+  if (!CanonicalType->isDependentType())
+    return isRecordType() || isEnumeralType();
+  return !isArrayType() && !isFunctionType() && !isAnyPointerType() &&
+         !isMemberPointerType();
 }
 
 /// Determines whether this type is written as a typedef-name.

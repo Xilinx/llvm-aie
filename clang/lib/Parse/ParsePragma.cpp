@@ -25,6 +25,7 @@
 #include "clang/Sema/EnterExpressionEvaluationContext.h"
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/SemaCUDA.h"
+#include "clang/Sema/SemaCodeCompletion.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include <optional>
@@ -1927,7 +1928,8 @@ void Parser::HandlePragmaAttribute() {
     if (Tok.is(tok::code_completion)) {
       cutOffParsing();
       // FIXME: suppress completion of unsupported attributes?
-      Actions.CodeCompleteAttribute(AttributeCommonInfo::Syntax::AS_GNU);
+      Actions.CodeCompletion().CodeCompleteAttribute(
+          AttributeCommonInfo::Syntax::AS_GNU);
       return SkipToEnd();
     }
 
