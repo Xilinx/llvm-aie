@@ -193,7 +193,7 @@ void AIEBaseTargetMachine::registerDefaultAliasAnalyses(AAManager &AAM) {
 static bool mustPreserveGV(const GlobalValue &GV) {
   if (const Function *F = dyn_cast<Function>(&GV)) {
     bool Skip = llvm::any_of(FunctionSkipList, [&](const std::string &Name) {
-      return F->getName().equals(Name);
+      return F->getName() == Name;
     });
     return F->isDeclaration() || Skip;
   }
