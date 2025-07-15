@@ -53,6 +53,8 @@ public:
                                 AssumptionCache &AC, TargetLibraryInfo *LibInfo,
                                 HardwareLoopInfo &HWLoopInfo);
   bool isProfitableOuterLSR(const Loop &L) const;
+
+  bool addrspacesMayAlias(unsigned AS0, unsigned AS1) const;
 };
 
 } // end namespace llvm

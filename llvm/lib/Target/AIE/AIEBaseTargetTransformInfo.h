@@ -48,12 +48,12 @@ private:
   const AIESubtarget *ST;
   const AIEBaseTargetLowering *TLI;
 
-  const AIESubtarget *getST() const { return ST; }
   const AIEBaseTargetLowering *getTLI() const { return TLI; }
   /// Helper function to access this as a T.
   T *thisT() { return static_cast<T *>(this); }
 
 protected:
+  const AIESubtarget *getST() const { return ST; }
   explicit AIEBaseTTIImpl(const TargetMachine *TM, const DataLayout &DL,
                           const AIESubtarget *Subtarget)
       : BaseT(TM, DL), ST(Subtarget), TLI(Subtarget->getTargetLowering()) {}
