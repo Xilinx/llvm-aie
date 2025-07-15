@@ -1196,6 +1196,7 @@ bool AIELegalizerHelper::legalizeG_FPTRUNC(LegalizerHelper &Helper,
 
 bool AIELegalizerHelper::legalizeG_FPEXT(LegalizerHelper &Helper,
                                          MachineInstr &MI) const {
+  const AIEBaseInstrInfo *II = ST.getInstrInfo();
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
   MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
 
@@ -1205,53 +1206,80 @@ bool AIELegalizerHelper::legalizeG_FPEXT(LegalizerHelper &Helper,
   Register SrcReg = MI.getOperand(1).getReg();
   LLT DstTy = MRI.getType(DstReg);
   LLT SrcTy = MRI.getType(SrcReg);
+  auto DstTyElement = DstTy.getElementType();
+  auto SrcTyElement = SrcTy.getElementType();
+  auto DstTyNumElements = DstTy.getNumElements();
+  auto SrcTyNumElements = SrcTy.getNumElements();
 
-  // // Vectors
-  //  // === Case 1: Vector bf16 -> f32 ===
-  //  // We want something like below
-  //  // Vec = 16
-  //  // zeroMask = 16
-  //  // mode = 20 (Interleaving with mask)
-  //  // vshuffle(Vec, zeroMask, mode)
-  // if (DstTy.isVector() && SrcTy.isVector() &&
-  //     DstTy.getElementType() == LLT::scalar(32) &&
-  //     SrcTy.getElementType() == LLT::scalar(16) &&
-  //     DstTy.getNumElements() == SrcTy.getNumElements()) {
+  // Vectors
+  // === Case 1: Vector bf16 -> f32 ===
+  // We want something like below
+  // zero_vec = G_AIE_BROADCAST 0
+  // 512_low = VSHUFFLE zero_vec, x, 2
+  // 512_hi = VSHUFFLE zero_vec, x, 3
+  // 1024_dst = G_CONCAT_VECTORS 512_low, 512_high
+  if (DstTy.isVector() && SrcTy.isVector() &&
+      DstTyElement == LLT::scalar(32) &&
+      SrcTyElement == LLT::scalar(16) &&
+      DstTyNumElements == SrcTyNumElements) {
     
-  //   llvm::errs() << "In vector case\n";
-  //   // Create a zero vector of same type as SrcTy
-  //   // zeroMask = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-  //   auto ZeroVec = MIRBuilder.buildConstant(SrcTy, 0).getReg(0);
+    // llvm::errs() << "In vector case\n";
+    
+    
+    Register Mode2 = MIRBuilder.buildConstant(S32, 2).getReg(0);
+    Register Mode3 = MIRBuilder.buildConstant(S32, 3).getReg(0);
+    Register Zero = MIRBuilder.buildConstant(S32, 0).getReg(0);
+    const unsigned BroadcastOpc = II->getGenericBroadcastVectorOpcode();
+    const unsigned VShuffleOpc = II->getGenericShuffleVectorOpcode();
+    
+    // Step 1: Create a zero vector using broadcast
+    Register ZeroVec = MIRBuilder.buildInstr(BroadcastOpc, {SrcTy}, 
+                                           {Zero}).getReg(0);
+    // Step 2: Create VSHUFFLE for lower 512 bits (mode 2)
+    Register VShuffleLow = MIRBuilder.buildInstr(VShuffleOpc, {SrcTy}, 
+                                               {ZeroVec, SrcReg, Mode2}).getReg(0);
+    // Step 3: Create VSHUFFLE for upper 512 bits (mode 3)
+    Register VShuffleHigh = MIRBuilder.buildInstr(VShuffleOpc, {SrcTy}, 
+                                                {ZeroVec, SrcReg, Mode3}).getReg(0);
 
-  //   // Build constant mode=20 for shuffle
-  //   auto Mode20 = MIRBuilder.buildConstant(S32, 20).getReg(0);
+    // print types of VShuffleLow and VShuffleHigh.
+    // llvm::errs() << "VShuffleLow: " << MRI.getType(VShuffleLow) << "\n";
+    // llvm::errs() << "VShuffleHigh: " << MRI.getType(VShuffleHigh) << "\n";
+    // llvm::errs() << "DstTy: " << MRI.getType(DstReg) << "\n";
+    // llvm::errs() << "SrcTy: " << MRI.getType(SrcReg) << "\n";
+    // llvm::errs() << "DstTy.elementType(): " << DstTyElement << "\n";
+    // llvm::errs() << "SrcTy.elementType(): " << SrcTyElement << "\n";
+    // llvm::errs() << "DstTy.getNumElements(): " << DstTyNumElements << "\n";
+    // llvm::errs() << "SrcTy.getNumElements(): " << SrcTyNumElements << "\n";
+  
+    // // print DstTy.getSizeInBits()
+    // llvm::errs() << "DstTy.getSizeInBits(): " << DstTy.getSizeInBits() << "\n";
+    // llvm::errs() << "SrcTy.getSizeInBits(): " << SrcTy.getSizeInBits() << "\n";
+    // llvm::errs() << "VShuffleLow.getSizeInBits(): " << MRI.getType(VShuffleLow).getSizeInBits() << "\n";
+    // llvm::errs() << "VShuffleHigh.getSizeInBits(): " << MRI.getType(VShuffleHigh).getSizeInBits() << "\n";
+    // llvm::errs() << "DstReg.getSizeInBits(): " << MRI.getType(DstReg).getSizeInBits() << "\n";
+    // llvm::errs() << "SrcReg.getSizeInBits(): " << MRI.getType(SrcReg).getSizeInBits() << "\n";
+    
+    // step 4: bitcast VShuffleLow and VShuffleHigh to s32
+    // VshuffleLow = <32xs16>
+    // VshuffleHigh = <32xs16>
+    // DstTy = <16xs32>
+    LLT CastToTy = LLT::vector(ElementCount::getFixed(SrcTyNumElements/2), DstTy.getElementType());
+    // llvm::errs() << "CastToTy: " << CastToTy << "\n";
+    // assert(VShuffleHigh.getLLTTy(*getMRI()).getSizeInBits() == CastToTy.getLLTTy(*getMRI()).getSizeInBits() && "invalid bitcast");
+    // assert(VShuffleLow.getLLTTy(*getMRI()).getSizeInBits() == CastToTy.getLLTTy(*getMRI()).getSizeInBits() && "invalid bitcast");
+    auto Inp1 = MIRBuilder.buildCast(CastToTy, VShuffleLow).getReg(0);
+    auto Inp2 = MIRBuilder.buildCast(CastToTy, VShuffleHigh).getReg(0);
 
-  //   // Build VSHUFFLE intrinsic: shuffle(Src, zero, 20)
-  //   // 3 ways to do this.
-  //   // 1. getGeneric*
-  //   // 2. Direct TargetOpcode::G_AIE_SHUFFLE_VECTOR
-  //   // 3. MI->GetOpcode()  - recursion as I recreate fpext again!
+    // llvm::errs() << "Inp1: " << MRI.getType(Inp1) << "\n";
+    // llvm::errs() << "Inp2: " << MRI.getType(Inp2) << "\n";
 
-  //   // const unsigned ShuffleOpc =
-  //   //   ST.getInstrInfo()->aie2p_vshuffle_576_bfp16();
-  //   // auto Result = MIRBuilder.buildIntrinsic(ShuffleOpc,
-  //   //                                       {DstTy}, {SrcReg, ZeroVec, Mode20}).getReg(0);
+    // Step 4: Concatenate the two 512-bit results into 1024-bit
+    MIRBuilder.buildConcatVectors(DstReg, {Inp1, Inp2});
 
-  //   // AIE2PVShuffle
-  //   auto Result = MIRBuilder.buildIntrinsic(Intrinsic::AIE2PVShuffle,
-  //                                         {DstTy}, {SrcReg, ZeroVec, Mode20}).getReg(0);                                          
-
-  // // // Build the shuffle using the generic pattern
-  // // auto Result = MIRBuilder.buildInstr(TargetOpcode::G_AIE_SHUFFLE_VECTOR,
-  // //                                   {DstTy}, {SrcReg, ZeroVec, Mode20}).getReg(0);
-
-  //   // 3
-  //   // auto Result = MIRBuilder.buildInstr(MI.getOpcode(), {DstTy}, {SrcReg, ZeroVec, Mode20}).getReg(0);
-
-  //   MIRBuilder.buildCopy(DstReg, Result); 
-  //   MI.eraseFromParent();
-  //   return true;
-  // }
+    MI.eraseFromParent();
+    return true;
+  }
 
   // Scalars
   // We only handle bfloat16 to single precision conversion
