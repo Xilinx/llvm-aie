@@ -335,7 +335,7 @@ Instruction *
 InstCombinerImpl::foldPHIArgInsertValueInstructionIntoPHI(PHINode &PN) {
   auto *FirstIVI = cast<InsertValueInst>(PN.getIncomingValue(0));
 
-  // Scan to see if all operands are `insertvalue`'s with the same indicies,
+  // Scan to see if all operands are `insertvalue`'s with the same indices,
   // and all have a single use.
   for (Value *V : drop_begin(PN.incoming_values())) {
     auto *I = dyn_cast<InsertValueInst>(V);
@@ -375,7 +375,7 @@ Instruction *
 InstCombinerImpl::foldPHIArgExtractValueInstructionIntoPHI(PHINode &PN) {
   auto *FirstEVI = cast<ExtractValueInst>(PN.getIncomingValue(0));
 
-  // Scan to see if all operands are `extractvalue`'s with the same indicies,
+  // Scan to see if all operands are `extractvalue`'s with the same indices,
   // and all have a single use.
   for (Value *V : drop_begin(PN.incoming_values())) {
     auto *I = dyn_cast<ExtractValueInst>(V);

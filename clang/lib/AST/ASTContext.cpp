@@ -2272,9 +2272,8 @@ TypeInfo ASTContext::getTypeInfoImpl(const Type *T) const {
   }
   case Type::BitInt: {
     const auto *EIT = cast<BitIntType>(T);
-    Align = std::clamp<unsigned>(llvm::PowerOf2Ceil(EIT->getNumBits()),
-                                 getCharWidth(), Target->getLongLongAlign());
-    Width = llvm::alignTo(EIT->getNumBits(), Align);
+    Align = Target->getBitIntAlign(EIT->getNumBits());
+    Width = Target->getBitIntWidth(EIT->getNumBits());
     break;
   }
   case Type::Record:
@@ -5929,7 +5928,8 @@ QualType ASTContext::getUnconstrainedType(QualType T) const {
   if (auto *AT = CanonT->getAs<AutoType>()) {
     if (!AT->isConstrained())
       return T;
-    return getQualifiedType(getAutoType(QualType(), AT->getKeyword(), false,
+    return getQualifiedType(getAutoType(QualType(), AT->getKeyword(),
+                                        AT->isDependentType(),
                                         AT->containsUnexpandedParameterPack()),
                             T.getQualifiers());
   }
