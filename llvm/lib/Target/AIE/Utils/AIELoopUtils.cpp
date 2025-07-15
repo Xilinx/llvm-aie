@@ -158,7 +158,7 @@ std::optional<const MDNode *> getLoopMetadata(const MDNode *LoopID,
     if (!S)
       continue;
 
-    if (Name.equals(S->getString()))
+    if (Name == S->getString())
       return MD;
   }
   return std::nullopt;
