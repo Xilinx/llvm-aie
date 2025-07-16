@@ -898,12 +898,8 @@ static SelSrcAndIdx getExtractOrInsertVectorEltInputs(
     /* create bitvector for vector select */
     // %6 = ADD %3, -1
     // %7 = VSEL_16 <sub_512bit_lo>, <sub_512bit_hi>, %6
-    const unsigned Src0RB = RBI.getRegBank(SrcReg0, MRI, TRI)->getID();
-    const bool IsVecRB = Src0RB == AIE2P::VRegBankID;
-    const unsigned Low512Idx =
-        IsVecRB ? AIE2P::sub_512_lo : AIE2P::sub_512_acc_lo;
-    const unsigned High512Idx =
-        IsVecRB ? AIE2P::sub_512_hi : AIE2P::sub_512_acc_hi;
+    const unsigned Low512Idx = AIE2P::sub_512_lo;
+    const unsigned High512Idx = AIE2P::sub_512_hi;
     if (!IdxVal) {
       auto SubRegCopyLo = MIB.buildInstr(TargetOpcode::COPY, {SrcRegLo}, {})
                               .addReg(SrcReg0, 0, Low512Idx);
@@ -986,9 +982,9 @@ static SelSrcAndIdx getExtractOrInsertVectorEltInputs(
       Register SrcReg512Reg4 = MRI.createVirtualRegister(RC512);
 
       MIB.buildInstr(TargetOpcode::COPY, {SrcReg1024Lo}, {})
-          .addReg(SrcReg0, 0, AIE2P::sub_1024_acc_lo);
+          .addReg(SrcReg0, 0, AIE2P::sub_1024_lo);
       MIB.buildInstr(TargetOpcode::COPY, {SrcReg1024Hi}, {})
-          .addReg(SrcReg0, 0, AIE2P::sub_1024_acc_hi);
+          .addReg(SrcReg0, 0, AIE2P::sub_1024_hi);
 
       auto SubReg512MICopy1 =
           MIB.buildInstr(TargetOpcode::COPY, {SrcReg512Reg1}, {})
@@ -1088,7 +1084,7 @@ static SelSrcAndIdx getExtractOrInsertVectorEltInputs(
       if (LaneIdx < QuarterNumLanes) {
         auto SubReg1024MI =
             MIB.buildInstr(TargetOpcode::COPY, {SrcReg1024Lo}, {})
-                .addReg(SrcReg0, 0, AIE2P::sub_1024_acc_lo);
+                .addReg(SrcReg0, 0, AIE2P::sub_1024_lo);
         auto SubReg1024MIReg = SubReg1024MI.getReg(0);
         unsigned AdjustedIdx = LaneIdx;
         SelSrcIdx.IdxReg = MIB.buildInstr(AIE2P::MOV_RLC_imm11_pseudo,
@@ -1105,7 +1101,7 @@ static SelSrcAndIdx getExtractOrInsertVectorEltInputs(
       } else if (LaneIdx < (QuarterNumLanes * 2)) {
         auto SubReg1024MI =
             MIB.buildInstr(TargetOpcode::COPY, {SrcReg1024Lo}, {})
-                .addReg(SrcReg0, 0, AIE2P::sub_1024_acc_lo);
+                .addReg(SrcReg0, 0, AIE2P::sub_1024_lo);
         auto SubReg1024MIReg = SubReg1024MI.getReg(0);
 
         unsigned AdjustedIdx = LaneIdx - QuarterNumLanes;
@@ -1122,7 +1118,7 @@ static SelSrcAndIdx getExtractOrInsertVectorEltInputs(
       } else if (LaneIdx < (QuarterNumLanes * 3)) {
         auto SubReg1024MI =
             MIB.buildInstr(TargetOpcode::COPY, {SrcReg1024Hi}, {})
-                .addReg(SrcReg0, 0, AIE2P::sub_1024_acc_hi);
+                .addReg(SrcReg0, 0, AIE2P::sub_1024_hi);
         unsigned AdjustedIdx = LaneIdx - HalfNumLanes;
         auto SubReg1024MIReg = SubReg1024MI.getReg(0);
         SelSrcIdx.IdxReg = MIB.buildInstr(AIE2P::MOV_RLC_imm11_pseudo,
@@ -1139,7 +1135,7 @@ static SelSrcAndIdx getExtractOrInsertVectorEltInputs(
       } else {
         auto SubReg1024MI =
             MIB.buildInstr(TargetOpcode::COPY, {SrcReg1024Hi}, {})
-                .addReg(SrcReg0, 0, AIE2P::sub_1024_acc_hi);
+                .addReg(SrcReg0, 0, AIE2P::sub_1024_hi);
         unsigned AdjustedIdx = LaneIdx - (QuarterNumLanes * 3);
         auto SubReg1024MIReg = SubReg1024MI.getReg(0);
         SelSrcIdx.IdxReg = MIB.buildInstr(AIE2P::MOV_RLC_imm11_pseudo,
@@ -1500,7 +1496,7 @@ bool AIE2PInstructionSelector::selectCascadeStreamInsn(MachineInstr &I,
             MIB.buildInstr(OpCode, {DstReg}, {}).addReg(CopyPosReg.getReg(0));
         auto DestMI = MIB.buildInstr(TargetOpcode::COPY, {CascadeReg}, {})
                           .addReg(CascadeMV->getOperand(0).getReg(), 0,
-                                  AIE2P::sub_1024_acc_lo);
+                                  AIE2P::sub_1024_lo);
         constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *DestMI,
                                  AIE2P::ACC1024RegClass, DestMI->getOperand(0));
       }
@@ -1523,7 +1519,7 @@ bool AIE2PInstructionSelector::selectCascadeStreamInsn(MachineInstr &I,
         RBI.constrainGenericRegister(R31, AIE2P::mR31_scdRegClass, MRI);
         auto DestMI = MIB.buildInstr(TargetOpcode::COPY, {CascadeReg}, {})
                           .addReg(CascadeMV->getOperand(0).getReg(), 0,
-                                  AIE2P::sub_1024_acc_lo);
+                                  AIE2P::sub_1024_lo);
         constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *DestMI,
                                  AIE2P::ACC1024RegClass, DestMI->getOperand(0));
       }
@@ -2419,9 +2415,9 @@ bool AIE2PInstructionSelector::selectWideG_AIE_LOAD_STORE(
   SmallVector<unsigned, 4> SubRegIdxes;
 
   if (RBID == AIE2P::AccRegBankID) {
-    SubRegIdxes = {AIE2P::sub_512_acc_lo, AIE2P::sub_512_acc_hi,
-                   AIE2P::sub_1024_acc_hi_then_sub_512_acc_lo,
-                   AIE2P::sub_1024_acc_hi_then_sub_512_acc_hi};
+    SubRegIdxes = {AIE2P::sub_512_lo, AIE2P::sub_512_hi,
+                   AIE2P::sub_1024_hi_then_sub_512_lo,
+                   AIE2P::sub_1024_hi_then_sub_512_hi};
     RC512 = &AIE2P::ACC512RegClass;
     RC1024 = &AIE2P::ACC1024RegClass;
   } else if (RBID == AIE2P::VRegBankID) {
@@ -2430,7 +2426,7 @@ bool AIE2PInstructionSelector::selectWideG_AIE_LOAD_STORE(
     RC1024 = &AIE2P::VEC1024RegClass;
   } else if (RBID == AIE2P::FifoRegBankID) {
     RC512 = &AIE2P::FIFO512RegClass;
-    SubRegIdxes = {AIE2P::sub_lo_fifo, AIE2P::sub_hi_fifo};
+    SubRegIdxes = {AIE2P::sub_512_lo, AIE2P::sub_512_hi};
     RC1024 = &AIE2P::FIFO1024RegClass;
   } else {
     llvm_unreachable("Unknown Register Bank ID!");

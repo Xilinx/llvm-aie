@@ -43,6 +43,12 @@ cl::opt<bool> EnableCoalescingForWideCopy(
 
 extern llvm::cl::opt<unsigned> ReservedGPRs;
 
+static llvm::cl::opt<bool>
+    SpillAccToVecOrAcc("aie2p-spill-accumulator-to-vec-or-acc", cl::Hidden,
+                       cl::init(true),
+                       cl::desc("Allow spilling accumulator registers to "
+                                "vector or accumulator registers"));
+
 AIE2PRegisterInfo::AIE2PRegisterInfo(unsigned HwMode)
     : AIE2PGenRegisterInfo(AIE2P::sp, /*DwarfFlavour*/ 0, /*EHFlavor*/ 0,
                            /*PC*/ 0, HwMode) {}
@@ -188,6 +194,8 @@ bool AIE2PRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   case AIE2P::VST_dmx_sts_bm_spill:
   case AIE2P::VST_dmx_sts_fifohl_spill:
   case AIE2P::VST_dmx_sts_x_spill:
+  case AIE2P::VLDA_512_COMPOSED_REG_SPILL:
+  case AIE2P::VST_512_COMPOSED_REG_SPILL:
     MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
     return false;
   case AIE2P::LDA_R_SPILL:
@@ -225,10 +233,12 @@ bool AIE2PRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   case AIE2P::VST_CM_SPILL:
   case AIE2P::VST_FIFO_SPILL:
   case AIE2P::VST_Y_SPILL:
+  case AIE2P::VST_1024_COMPOSED_REG_SPILL:
   case AIE2P::VLDA_DM_SPILL:
   case AIE2P::VLDA_CM_SPILL:
   case AIE2P::VLDA_FIFO_SPILL:
   case AIE2P::VLDA_Y_SPILL:
+  case AIE2P::VLDA_1024_COMPOSED_REG_SPILL:
     MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
     TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4));
     return true;
@@ -482,7 +492,30 @@ AIE2PRegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC,
 
   if (AIE2P::eSRegClass.hasSubClassEq(RC))
     return &AIE2P::spill_eS_to_eRRegClass;
+  if (SpillAccToVecOrAcc &&
+      (RC == &AIE2P::ACC1024RegClass || RC == &AIE2P::VEC1024RegClass))
+    return &AIE2P::spill_vec1024_to_compositeRegClass;
+  if (SpillAccToVecOrAcc &&
+      (RC == &AIE2P::ACC512RegClass || RC == &AIE2P::VEC512RegClass))
+    return &AIE2P::spill_vec512_to_compositeRegClass;
   return RC;
+}
+
+const TargetRegisterClass *
+AIE2PRegisterInfo::getSubClassWithSubReg(const TargetRegisterClass *RC,
+                                         unsigned Idx) const {
+  if ((RC == &AIE2P::spill_vec512_to_compositeRegClass ||
+       RC == &AIE2P::spill_acc512_to_compositeRegClass) &&
+      (Idx == AIE2P::sub_256_lo || Idx == AIE2P::sub_256_hi)) {
+    return &AIE2P::VEC512RegClass;
+  }
+  if ((RC == &AIE2P::spill_vec1024_to_compositeRegClass ||
+       RC == &AIE2P::spill_acc1024_to_compositeRegClass) &&
+      (Idx == AIE2P::sub_512_hi_256_lo || Idx == AIE2P::sub_512_hi_256_hi)) {
+    return &AIE2P::VEC1024RegClass;
+  }
+  // Forward to TableGen's default version.
+  return AIE2PGenRegisterInfo::getSubClassWithSubReg(RC, Idx);
 }
 
 const std::set<int> &AIE2PRegisterInfo::getSubRegSplit(int RegClassId) const {
@@ -540,14 +573,14 @@ void AIE2PRegisterInfo::getTargetSubRegs(std::vector<unsigned> &Subregs,
       Subregs.push_back(AIE2P::sub_256_hi);
       break;
     case 512:
-      Subregs.push_back(IsVecRB ? AIE2P::sub_512_lo : AIE2P::sub_512_acc_lo);
-      Subregs.push_back(IsVecRB ? AIE2P::sub_512_hi : AIE2P::sub_512_acc_hi);
+      Subregs.push_back(AIE2P::sub_512_lo);
+      Subregs.push_back(AIE2P::sub_512_hi);
       break;
     case 1024:
       assert(!IsVecRB &&
              "expected accumulator register bank for 256 dest type!");
-      Subregs.push_back(AIE2P::sub_1024_acc_lo);
-      Subregs.push_back(AIE2P::sub_1024_acc_hi);
+      Subregs.push_back(AIE2P::sub_1024_lo);
+      Subregs.push_back(AIE2P::sub_1024_hi);
       break;
     default:
       llvm_unreachable("Unsupported subreg type!");
@@ -618,6 +651,42 @@ bool AIE2PRegisterInfo::shouldCoalesce(
 
   const unsigned SrcSize = getRegSizeInBits(*SrcRC);
   const unsigned DstSize = getRegSizeInBits(*DstRC);
+
+  // if (SrcSize == 256 && (AIE2P::ACC2048RegClass.hasSubClassEq(DstRC) ||
+  //                        AIE2P::ACC1024RegClass.hasSubClassEq(DstRC) ||
+  //                        AIE2P::ACC512RegClass.hasSubClassEq(DstRC) ||
+  //                        &AIE2P::spill_vec512_to_compositeRegClass == DstRC))
+  //                        {
+  //   return false;
+  // }
+  // if (DstSize == 256 && (AIE2P::ACC2048RegClass.hasSubClassEq(SrcRC) ||
+  //                        AIE2P::ACC1024RegClass.hasSubClassEq(SrcRC) ||
+  //                        AIE2P::ACC512RegClass.hasSubClassEq(SrcRC) ||
+  //                        &AIE2P::spill_vec512_to_compositeRegClass == SrcRC))
+  //                        {
+  //   return false;
+  // }
+  // if ((&AIE2P::spill_vec512_to_compositeRegClass == DstRC &&
+  //      (AIE2P::ACC2048RegClass.hasSubClassEq(SrcRC) ||
+  //       AIE2P::ACC1024RegClass.hasSubClassEq(SrcRC) ||
+  //       AIE2P::ACC512RegClass.hasSubClassEq(SrcRC)))) {
+  //   return false;
+  // }
+  // if ((&AIE2P::spill_vec512_to_compositeRegClass == SrcRC &&
+  //      (AIE2P::ACC2048RegClass.hasSubClassEq(DstRC) ||
+  //       AIE2P::ACC1024RegClass.hasSubClassEq(DstRC) ||
+  //       AIE2P::ACC512RegClass.hasSubClassEq(DstRC)))) {
+  //   return false;
+  // }
+  // if (((&AIE2P::spill_vec512_to_compositeRegClass == SrcRC ||
+  //       &AIE2P::spill_vec1024_to_compositeRegClass == SrcRC ||
+  //       &AIE2P::spill_vec512_to_compositeRegClass == DstRC ||
+  //       &AIE2P::spill_vec1024_to_compositeRegClass == DstRC) &&
+  //      (AIE2P::ACC2048RegClass.hasSubClassEq(NewRC) ||
+  //       AIE2P::ACC1024RegClass.hasSubClassEq(NewRC) ||
+  //       AIE2P::ACC512RegClass.hasSubClassEq(NewRC)))) {
+  //   return false;
+  // }
   MachineFunction *MF = MI->getMF();
   const AIEBaseInstrInfo *TII =
       static_cast<const AIEBaseInstrInfo *>(MF->getSubtarget().getInstrInfo());

@@ -30,11 +30,8 @@ def sub_256_hi  : SubRegIndex<256, 256>;  // sub_512_lo_256_hi
 def sub_512_lo  : SubRegIndex<512,   0>;
 def sub_512_hi  : SubRegIndex<512, 512>;
 
-def sub_512_acc_lo  : SubRegIndex<512,   0>;
-def sub_512_acc_hi  : SubRegIndex<512, 512>;
-
-def sub_1024_acc_lo  : SubRegIndex<1024,   0>;
-def sub_1024_acc_hi  : SubRegIndex<1024, 1024>;
+def sub_1024_lo  : SubRegIndex<1024,   0>;
+def sub_1024_hi  : SubRegIndex<1024, 1024>;
 
 def sub_512_hi_256_lo : ComposedSubRegIndex<sub_512_hi, sub_256_lo>;
 def sub_512_hi_256_hi : ComposedSubRegIndex<sub_512_hi, sub_256_hi>;
@@ -207,16 +204,6 @@ class AIE2PRegisterClass <int size, int align, list<ValueType> regTypes, dag reg
   class AIE2PVector1024RegisterClass<dag reglist> :
       AIE2PRegisterClass<1024, 512, [v128i8, v64i16, v64bf16, v32i32, v16i64, v32f32], reglist>;
 
-  class AIE2PAcc512RegisterClass<dag reglist> :
-      AIE2PRegisterClass<512, 512, [v16i32, v8i64, v16f32], reglist> {
-    let hasCompleteDecoder = 0;
-  }
-
-  class AIE2PAcc1024RegisterClass<dag reglist> :
-      AIE2PRegisterClass<1024, 512, [v32i32, v16i64, v32f32], reglist> {
-    let hasCompleteDecoder = 0;
-  }
-
   class AIE2PAcc2048RegisterClass<dag reglist> :
       AIE2PRegisterClass<2048, 512, [v64i32, v32i64, v64f32], reglist> {
     let hasCompleteDecoder = 0;
@@ -275,21 +262,42 @@ class AIE2PDim3DRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> 
   // Core ID
   def CORE_ID : AIE2PSPLReg<10, "core_id">;
   def mCoreID : AIE2P20BitRegisterClass<(add CORE_ID)>;
+
+  let isArtificial = 1 in {
+  def dummy_sfh_l : AIE2P3BitReg<0, "dummy_sfh_l">;
+  def dummy_sfh_h : AIE2P3BitReg<0, "dummy_sfh_h">;
+  def dummy_sfl_l : AIE2P3BitReg<0, "dummy_sfl_l">;
+  def dummy_sfl_h : AIE2P3BitReg<0, "dummy_sfl_h">;
+
+  def dummy_lfh0_l : AIE2P3BitReg<0, "dummy_lfh0_l">;
+  def dummy_lfh0_h : AIE2P3BitReg<0, "dummy_lfh0_h">;
+  def dummy_lfl0_l : AIE2P3BitReg<0, "dummy_lfl0_l">;
+  def dummy_lfl0_h : AIE2P3BitReg<0, "dummy_lfl0_h">;
+
+  def dummy_lfh1_l : AIE2P3BitReg<0, "dummy_lfh1_l">;
+  def dummy_lfh1_h : AIE2P3BitReg<0, "dummy_lfh1_h">;
+  def dummy_lfl1_l : AIE2P3BitReg<0, "dummy_lfl1_l">;
+  def dummy_lfl1_h : AIE2P3BitReg<0, "dummy_lfl1_h">;
+  }
+
+  let SubRegIndices = [sub_256_lo, sub_256_hi], CoveredBySubRegs = 1 in {
   // Store FIFO register
-  def sfh : AIE2P3BitReg<0b110,"sfh">;
-  def sfl : AIE2P3BitReg<0b011,"sfl">;
+  def sfh : AIE2P3BitReg<0b110,"sfh", [dummy_sfh_l, dummy_sfh_h]>;
+  def sfl : AIE2P3BitReg<0b011,"sfl", [dummy_sfl_l, dummy_sfl_h]>;
   // Load FIFO register 0
-  def lfh0 : AIE2P1BitReg<0b0,"lfh0">;
-  def lfl0 : AIE2P1BitReg<0b0,"lfl0">;
+  def lfh0 : AIE2P1BitReg<0b0,"lfh0", [dummy_lfh0_l, dummy_lfh0_h]>;
+  def lfl0 : AIE2P1BitReg<0b0,"lfl0", [dummy_lfl0_l, dummy_lfl0_h]>;
   // Load FIFO register 1
-  def lfh1 : AIE2P1BitReg<0b1,"lfh1">;
-  def lfl1 : AIE2P1BitReg<0b1,"lfl1">;
+  def lfh1 : AIE2P1BitReg<0b1,"lfh1", [dummy_lfh1_l, dummy_lfh1_h]>;
+  def lfl1 : AIE2P1BitReg<0b1,"lfl1", [dummy_lfl1_l, dummy_lfl1_h]>;
+  }
+
   // Load FIFO extra register
   def lfe : AIE2P3BitReg<0b010,"lfe">;
 
   def sub_lo_fifo: SubRegIndex<512,  0>;
   def sub_hi_fifo : SubRegIndex<512, 512>;
-  let SubRegIndices = [sub_lo_fifo, sub_hi_fifo], CoveredBySubRegs = 1 in {
+  let SubRegIndices = [sub_512_lo, sub_512_hi], CoveredBySubRegs = 1 in {
     def lf0 : AIE2P1BitReg<0b0, "lf0", [lfl0, lfh0]>;
     def lf1 : AIE2P1BitReg<0b1, "lf1", [lfl1, lfh1]>;
     def sf : AIE2P1BitReg<0b1, "sf", [sfl, sfh]>;
@@ -408,70 +416,90 @@ class AIE2PDim3DRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> 
        srFifo_of, srFifo_uf,
        srSparse_of, srFPFlags, srF2IFlags, srF2FFlags,
        srF2BFlags, srFPNlf, srFPCnvFx2Fl, srFPCnvFl2Fx)>;
-
-
+       
+  let isArtificial = 1 in {
   foreach i = 0 - 4 in {
-    def bmll #i : AIE2P3BitReg<i, "bmll" #i>;
+    def dummy_acc256ll_l #i : AIE2P3BitReg<i, "dummy_acc256ll_l" #i>;
+    def dummy_acc256ll_h #i : AIE2P3BitReg<i, "dummy_acc256ll_h" #i>;
+  }
+  foreach i = 0 - 4 in {
+    def dummy_acc256lh_l #i : AIE2P3BitReg<i, "dummy_acc256lh_l" #i>;
+    def dummy_acc256lh_h #i : AIE2P3BitReg<i, "dummy_acc256lh_h" #i>;
+  }
+  foreach i = 0 - 4 in {
+    def dummy_acc256hl_l #i : AIE2P3BitReg<i, "dummy_acc256hl_l" #i>;
+    def dummy_acc256hl_h #i : AIE2P3BitReg<i, "dummy_acc256hl_h" #i>;
+  }
+  foreach i = 0 - 4 in {
+    def dummy_acc256hh_l #i : AIE2P3BitReg<i, "dummy_acc256hh_l" #i>;
+    def dummy_acc256hh_h #i : AIE2P3BitReg<i, "dummy_acc256hh_h" #i>;
+  }
+  }
+
+  let SubRegIndices = [sub_256_lo, sub_256_hi], CoveredBySubRegs = 1 in {
+  foreach i = 0 - 4 in {
+    def bmll #i : AIE2P3BitReg<i, "bmll" #i, [!cast<Register>("dummy_acc256ll_l" #i), !cast<Register>("dummy_acc256ll_h" #i)]>;
   }
 
   foreach i = 0 - 4 in {
-    def bmlh #i : AIE2P3BitReg<i, "bmlh" #i>;
+    def bmlh #i : AIE2P3BitReg<i, "bmlh" #i, [!cast<Register>("dummy_acc256lh_l" #i), !cast<Register>("dummy_acc256lh_h" #i)]>;
   }
 
   foreach i = 0 - 4 in {
-    def bmhl #i : AIE2P3BitReg<i, "bmhl" #i>;
+    def bmhl #i : AIE2P3BitReg<i, "bmhl" #i, [!cast<Register>("dummy_acc256hl_l" #i), !cast<Register>("dummy_acc256hl_h" #i)]>;
   }
 
   foreach i = 0 - 4 in {
-    def bmhh #i : AIE2P3BitReg<i, "bmhh" #i>;
+    def bmhh #i : AIE2P3BitReg<i, "bmhh" #i, [!cast<Register>("dummy_acc256hh_l" #i), !cast<Register>("dummy_acc256hh_h" #i)]>;
   }
+ } // let SubRegIndices = [sub_256_lo, sub_256_hi], CoveredBySubRegs = 1
 
-  def eBMLL : AIE2PAcc512RegisterClass<(add bmll0, bmll1, bmll2, bmll3, bmll4)>;
-  def eBMLH : AIE2PAcc512RegisterClass<(add bmlh0, bmlh1, bmlh2, bmlh3, bmlh4)>;
-  def eBMHL : AIE2PAcc512RegisterClass<(add bmhl0, bmhl1, bmhl2, bmhl3, bmhl4)>;
-  def eBMHH : AIE2PAcc512RegisterClass<(add bmhh0, bmhh1, bmhh2, bmhh3, bmhh4)>;
-  def mBMLLm : AIE2PAcc512RegisterClass<(add eBMLL)>;
-  def mBMLHm : AIE2PAcc512RegisterClass<(add eBMLH)>;
-  def mBMHLm : AIE2PAcc512RegisterClass<(add eBMHL)>;
-  def mBMHHm : AIE2PAcc512RegisterClass<(add eBMHH)>;
-  def mBMm : AIE2PAcc512RegisterClass<(add mBMLLm, mBMLHm, mBMHLm, mBMHHm)>;
-  def mBMs : AIE2PAcc512RegisterClass<(add mBMm)>;
-  def mMcdBMSrc : AIE2PAcc512RegisterClass<(add mBMm)>;
-  def eBMSLL : AIE2PAcc512RegisterClass<(add bmll0, bmll1, bmll2, bmll3)>;
-  def eBMSLH : AIE2PAcc512RegisterClass<(add bmlh0, bmlh1, bmlh2, bmlh3)>;
-  def eBMSHL : AIE2PAcc512RegisterClass<(add bmhl0, bmhl1, bmhl2, bmhl3)>;
-  def eBMSHH : AIE2PAcc512RegisterClass<(add bmhh0, bmhh1, bmhh2, bmhh3)>;
-  def mBMSm : AIE2PAcc512RegisterClass<(add eBMSLL, eBMSLH, eBMSHL, eBMSHH)>;
+  def eBMLL : AIE2PVector512RegisterClass<(add bmll0, bmll1, bmll2, bmll3, bmll4)>;
+  def eBMLH : AIE2PVector512RegisterClass<(add bmlh0, bmlh1, bmlh2, bmlh3, bmlh4)>;
+  def eBMHL : AIE2PVector512RegisterClass<(add bmhl0, bmhl1, bmhl2, bmhl3, bmhl4)>;
+  def eBMHH : AIE2PVector512RegisterClass<(add bmhh0, bmhh1, bmhh2, bmhh3, bmhh4)>;
+  def mBMLLm : AIE2PVector512RegisterClass<(add eBMLL)>;
+  def mBMLHm : AIE2PVector512RegisterClass<(add eBMLH)>;
+  def mBMHLm : AIE2PVector512RegisterClass<(add eBMHL)>;
+  def mBMHHm : AIE2PVector512RegisterClass<(add eBMHH)>;
+  def mBMm : AIE2PVector512RegisterClass<(add mBMLLm, mBMLHm, mBMHLm, mBMHHm)>;
+  def mBMs : AIE2PVector512RegisterClass<(add mBMm)>;
+  def mMcdBMSrc : AIE2PVector512RegisterClass<(add mBMm)>;
+  def eBMSLL : AIE2PVector512RegisterClass<(add bmll0, bmll1, bmll2, bmll3)>;
+  def eBMSLH : AIE2PVector512RegisterClass<(add bmlh0, bmlh1, bmlh2, bmlh3)>;
+  def eBMSHL : AIE2PVector512RegisterClass<(add bmhl0, bmhl1, bmhl2, bmhl3)>;
+  def eBMSHH : AIE2PVector512RegisterClass<(add bmhh0, bmhh1, bmhh2, bmhh3)>;
+  def mBMSm : AIE2PVector512RegisterClass<(add eBMSLL, eBMSLH, eBMSHL, eBMSHH)>;
 
 
-  let SubRegIndices = [sub_512_acc_lo, sub_512_acc_hi], CoveredBySubRegs = 1 in {
+  let SubRegIndices = [sub_512_lo, sub_512_hi], CoveredBySubRegs = 1 in {
     foreach i = 0 - 4 in {
       def cml #i : AIE2P3BitReg<i, "cml" #i, [!cast<Register>("bmll" #i), !cast<Register>("bmlh" #i)]>;
     }
     foreach i = 0 - 4 in {
       def cmh #i : AIE2P3BitReg<i, "cmh" #i, [!cast<Register>("bmhl" #i), !cast<Register>("bmhh" #i)]>;
     }
-  } // let SubRegIndices = [sub_512_acc_lo, sub_512_acc_hi], CoveredBySubRegs = 1
+  } // let SubRegIndices = [sub_512_lo, sub_512_hi], CoveredBySubRegs = 1
 
-  def eCML : AIE2PAcc1024RegisterClass<(add cml0, cml1, cml2, cml3, cml4)>;
-  def eCMH : AIE2PAcc1024RegisterClass<(add cmh0, cmh1, cmh2, cmh3, cmh4)>;
-  def mCMLm : AIE2PAcc1024RegisterClass<(add eCML)>;
-  def mCMHm : AIE2PAcc1024RegisterClass<(add eCMH)>;
-  def mCMLs : AIE2PAcc1024RegisterClass<(add eCML)>;
-  def mCMHs : AIE2PAcc1024RegisterClass<(add eCMH)>;  
-  def mCMm : AIE2PAcc1024RegisterClass<(add mCMLm, mCMHm)>;
-  def mCMs : AIE2PAcc1024RegisterClass<(add mCMm)>;
+  def eCML : AIE2PVector1024RegisterClass<(add cml0, cml1, cml2, cml3, cml4)>;
+  def eCMH : AIE2PVector1024RegisterClass<(add cmh0, cmh1, cmh2, cmh3, cmh4)>;
+  def mCMLm : AIE2PVector1024RegisterClass<(add eCML)>;
+  def mCMHm : AIE2PVector1024RegisterClass<(add eCMH)>;
+  def mCMLs : AIE2PVector1024RegisterClass<(add eCML)>;
+  def mCMHs : AIE2PVector1024RegisterClass<(add eCMH)>;  
+  def mCMm : AIE2PVector1024RegisterClass<(add mCMLm, mCMHm)>;
+  def mCMs : AIE2PVector1024RegisterClass<(add mCMm)>;
  
  class AIE2PVRegDM<bits<3> Enc, string n, list<Register> subregs = []> : Register<n> {
     let HWEncoding{2-0} = Enc;
     let SubRegs = subregs;
   }
 
-  let SubRegIndices = [sub_1024_acc_lo, sub_1024_acc_hi], CoveredBySubRegs = 1 in {
+  let SubRegIndices = [sub_1024_lo, sub_1024_hi], CoveredBySubRegs = 1 in {
     foreach i = 0 - 4 in {
       def dm #i : AIE2PVRegDM<i, "dm" #i, [!cast<Register>("cml" #i), !cast<Register>("cmh" #i)]>;
     }
-  } // let SubRegIndices = [sub_1024_acc_lo, sub_1024_acc_hi], CoveredBySubRegs = 1
+  } // let SubRegIndices = [sub_1024_lo, sub_1024_hi], CoveredBySubRegs = 1
 
   def eDM : AIE2PAcc2048RegisterClass<(add dm0, dm1, dm2, dm3, dm4)>;
   def mDMa : AIE2PAcc2048RegisterClass<(add eDM)>;
@@ -915,8 +943,8 @@ def VEC512 : AIE2PVector512RegisterClass<(add mXm)>;
 def VEC1024 : AIE2PVector1024RegisterClass<(add eY)>;
 def VEC576 : AIE2PVector576RegisterClass<(add mEXa)>;
 
-def ACC512 : AIE2PAcc512RegisterClass<(add mBMm)>;
-def ACC1024 : AIE2PAcc1024RegisterClass<(add mCMm)>;
+def ACC512 : AIE2PVector512RegisterClass<(add mBMm)>;
+def ACC1024 : AIE2PVector1024RegisterClass<(add mCMm)>;
 def ACC2048 : AIE2PAcc2048RegisterClass<(add eDM)>;
 
 def mAluCg : AIE2PScalarRegisterClass<(add eR, lc)>;
@@ -932,13 +960,13 @@ def mAguSrc : AIE2PScalarRegisterClass<(add mSclMS)>;
 def mAguDst : AIE2P20BitRegisterClass<(add eP, mDm)>;
 
 def mShflXDst : AIE2PVector512RegisterClass<(add mXm)>;
-def mShflBMDst : AIE2PAcc512RegisterClass<(add mBMSm)>;
+def mShflBMDst : AIE2PVector512RegisterClass<(add mBMSm)>;
 
 def mFp2B0 : AIE2PAcc2048RegisterClass<(add eDM)>;
 def mFp2B1 : AIE2PAcc2048RegisterClass<(add eDM)>;
 def mBp2Bp : AIE2PVector576RegisterClass<(add mEXa)>;
-def mWbfsrs : AIE2PAcc512RegisterClass<(add mBMs)>;
-def mXbfsrs : AIE2PAcc1024RegisterClass<(add mCMs)>;
+def mWbfsrs : AIE2PVector512RegisterClass<(add mBMs)>;
+def mXbfsrs : AIE2PVector1024RegisterClass<(add mCMs)>;
 def mFl2FxSrc_W : AIE2PVector256RegisterClass<(add mWm)>;
 
 // VMOV register classes
@@ -982,5 +1010,10 @@ def spill_eM_to_eR : AIE2PScalarRegisterClass<(add eM, eR, eDN)>;
 def spill_eDN_to_eR : AIE2PScalarRegisterClass<(add eDN, eR)>;
 def spill_eDJ_to_eR : AIE2PScalarRegisterClass<(add eDJ, eR, eDN)>;
 def spill_eDC_to_eR : AIE2PScalarRegisterClass<(add eDC, eR)>;
+
+def spill_vec512_to_composite : AIE2PVector512RegisterClass<(add mXm, mBMm, lfh0, lfh1, lfl0, lfl1)>;
+def spill_vec1024_to_composite : AIE2PVector1024RegisterClass<(add eY, mCMm, lf0, lf1)>;
+def spill_acc512_to_composite : AIE2PVector512RegisterClass<(add mBMm, mXm, lfh0, lfh1, lfl0, lfl1)>;
+def spill_acc1024_to_composite : AIE2PVector1024RegisterClass<(add mCMm, eY, lf0, lf1)>;
 
 } // End AIE2P Namespace
