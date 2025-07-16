@@ -885,6 +885,9 @@ public:
   bool matchIntToPtrContant(MachineInstr &MI, MachineRegisterInfo &MRI,
                             BuildFnTy &MatchInfo);
 
+  bool matchFreezeOfSingleMaybePoisonOperand(MachineInstr &MI,
+                                             BuildFnTy &MatchInfo);
+
 private:
   /// Checks for legality of an indexed variant of \p LdSt.
   bool isIndexedLoadStoreLegal(GLoadStore &LdSt) const;
