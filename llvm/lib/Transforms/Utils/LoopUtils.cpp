@@ -380,7 +380,7 @@ MDNode *llvm::updateIterCounts(LLVMContext &Context, MDNode *LoopID,
     MDNode *Node = cast<MDNode>(LoopID->getOperand(Lop));
     if (Node->getNumOperands()) {
       MDString *S = dyn_cast<MDString>(Node->getOperand(0));
-      if (S && S->getString().equals(IterCountName)) {
+      if (S && S->getString() == IterCountName) {
         if (Node->getNumOperands() > 1) {
           if (ConstantInt *IntMD =
                   mdconst::extract_or_null<ConstantInt>(Node->getOperand(1))) {
