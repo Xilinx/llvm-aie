@@ -4,6 +4,18 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+add_entrypoint_object(
+  init
+  SRCS
+    init.cpp
+)
+
+add_entrypoint_object(
+  fini
+  SRCS
+    fini.cpp
+)
+
 function(add_startup_object name)
   cmake_parse_arguments(
     "ADD_STARTUP_OBJECT"
