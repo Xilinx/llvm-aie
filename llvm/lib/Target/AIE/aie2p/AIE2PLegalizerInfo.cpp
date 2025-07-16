@@ -73,6 +73,31 @@ static LegalityPredicate isValidVectorAIEP(const unsigned TypeIdx) {
   };
 }
 
+// `V2 = G_FPEXT V1` on vectors is valid iff:
+// - V1 and V2 are floating-point vectors
+// - V2 is wider than V1 for total vector sizes
+// - Number of elements of both vectors are same
+// - Size of Element of V2 = 2 * Size of Element of V1
+static LegalityPredicate isValidVectorFPEXT(const unsigned TypeIdx_dst, const unsigned TypeIdx_src) {
+  return [=](const LegalityQuery &Query) {
+    const LLT DstTy = Query.Types[TypeIdx_dst];
+    const LLT SrcTy = Query.Types[TypeIdx_src];
+    auto DstElementCount = DstTy.getElementCount();
+    auto SrcElementCount = SrcTy.getElementCount();
+    auto DstElementType = DstTy.getElementType();
+    auto SrcElementType = SrcTy.getElementType();
+    auto DstElementSize = DstElementType.getSizeInBits();
+    auto SrcElementSize = SrcElementType.getSizeInBits();
+
+          // bf16 -> f64 not possible, wrong
+          // only bf16 -> f32 is possible or one level up possible.
+    return DstTy.isVector() && SrcTy.isVector() &&
+          DstTy.getSizeInBits() > SrcTy.getSizeInBits() &&
+          DstElementCount == SrcElementCount &&
+          (DstElementSize == (SrcElementSize * 2));
+  };
+}
+
 static LegalityPredicate
 negatePredicate(const std::function<bool(const LegalityQuery &)> &Func) {
   return [=](const LegalityQuery &Query) { return !Func(Query); };
@@ -220,25 +245,9 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
       .libcallFor({{S64, S32}})
       .customFor({{S32, S16}})
       // Add support for vector types
-      .customFor({{V32S32, V32S16}})
+      .customIf(isValidVectorFPEXT(0, 1))
+      // .customFor({{V32S32, V32S16}})
       .narrowScalarFor({{S64, S16}}, llvm::LegalizeMutations::changeTo(0, S32));
-      // equivalent for above but more control.
-      // .customIf([=](const LegalityQuery &Query) {
-      //   const LLT &SrcTy = Query.Types[1];
-      //   const LLT &DstTy = Query.Types[0];
-      //   // Must be vectors and shapes should be same, only types change.
-      //   assert(SrcTy.isVector() && DstTy.isVector() && SrcTy.getNumElements() == DstTy.getNumElements() && 
-      //   "Must be vectors and shapes should be same");
-
-      //   const unsigned SrcSize = SrcTy.getElementType().getSizeInBits();
-      //   const unsigned DstSize = DstTy.getElementType().getSizeInBits();
-      //   // if src is 16 and dst is 32, return true
-      //   if (SrcSize == 16 && DstSize == 32) {
-      //     return true;
-      //   }
-
-      //   return false;
-      // });
 
   getActionDefinitionsBuilder({G_FPTOSI, G_FPTOUI})
       .libcallForCartesianProduct({S32, S64})
