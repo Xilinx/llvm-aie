@@ -1264,9 +1264,9 @@ bool AIELegalizerHelper::legalizeG_FPEXT(LegalizerHelper &Helper,
   Register AnyExt = MIRBuilder.buildAnyExt(S32, SrcReg).getReg(0);
   Register Cst = MIRBuilder.buildConstant(S32, 16).getReg(0);
   MIRBuilder.buildShl(DstReg, AnyExt, Cst);
+
   MI.eraseFromParent();
   return true;
-
 }
 
 // Legalized by masking sign bit of both double and float

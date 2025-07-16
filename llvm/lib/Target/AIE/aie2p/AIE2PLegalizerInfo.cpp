@@ -82,9 +82,6 @@ static LegalityPredicate isValidVectorFPEXT(const unsigned TypeIdx_dst, const un
   return [=](const LegalityQuery &Query) {
     const LLT DstTy = Query.Types[TypeIdx_dst];
     const LLT SrcTy = Query.Types[TypeIdx_src];
-    // print both types
-    llvm::errs() << "DstTy: " << DstTy << "\n";
-    llvm::errs() << "SrcTy: " << SrcTy << "\n";
     auto DstElementCount = DstTy.getElementCount();
     auto SrcElementCount = SrcTy.getElementCount();
     auto DstElementType = DstTy.getElementType();
