@@ -1207,17 +1207,17 @@ bool AIELegalizerHelper::legalizeG_FPEXT(LegalizerHelper &Helper,
   LLT DstTy = MRI.getType(DstReg);
   LLT SrcTy = MRI.getType(SrcReg);
 
-// Vectors
-/*
- VDst = G_FPEXT VSrc
- converts to
- ZeroVec = G_AIE_BROADCAST_VECTOR VSrc
- VShuffleLow = G_AIE_SHUFFLE_VECTOR ZeroVec, VSrc, 2
- VShuffleHigh = G_AIE_SHUFFLE_VECTOR ZeroVec, VSrc, 3
- VShuffleLow = G_BITCAST VShuffleLow
- VShuffleHigh = G_BITCAST VShuffleHigh
- VDst = G_CONCAT_VECTORS VShuffleLow, VShuffleHigh
-*/
+  // Vectors
+  /*
+   VDst = G_FPEXT VSrc
+   converts to
+   ZeroVec = G_AIE_BROADCAST_VECTOR VSrc
+   VShuffleLow = G_AIE_SHUFFLE_VECTOR ZeroVec, VSrc, 2
+   VShuffleHigh = G_AIE_SHUFFLE_VECTOR ZeroVec, VSrc, 3
+   VShuffleLow = G_BITCAST VShuffleLow
+   VShuffleHigh = G_BITCAST VShuffleHigh
+   VDst = G_CONCAT_VECTORS VShuffleLow, VShuffleHigh
+  */
   if (DstTy.isVector() && SrcTy.isVector()) {
     // Extract type information
     auto DstElementType = DstTy.getElementType();
@@ -1229,26 +1229,37 @@ bool AIELegalizerHelper::legalizeG_FPEXT(LegalizerHelper &Helper,
     // Get the instructions
     const unsigned BroadcastOpc = II->getGenericBroadcastVectorOpcode();
     const unsigned VShuffleOpc = II->getGenericShuffleVectorOpcode();
-    
+
     // Step 1: Create a zero vector using broadcast
-    Register ZeroVec = MIRBuilder.buildInstr(BroadcastOpc, {SrcTy}, 
-                                           {Zero}).getReg(0);
+    Register ZeroVec =
+        MIRBuilder.buildInstr(BroadcastOpc, {SrcTy}, {Zero}).getReg(0);
     // Step 2: Create VSHUFFLE for lower 512 bits (mode 2)
-    Register VShuffleLow = MIRBuilder.buildInstr(VShuffleOpc, {SrcTy}, 
-                                               {ZeroVec, SrcReg, Mode2}).getReg(0);
+    Register VShuffleLow =
+        MIRBuilder.buildInstr(VShuffleOpc, {SrcTy}, {ZeroVec, SrcReg, Mode2})
+            .getReg(0);
     // Step 3: Create VSHUFFLE for high 512 bits (mode 3)
-    Register VShuffleHigh = MIRBuilder.buildInstr(VShuffleOpc, {SrcTy}, 
-                                                {ZeroVec, SrcReg, Mode3}).getReg(0);
+    Register VShuffleHigh =
+        MIRBuilder.buildInstr(VShuffleOpc, {SrcTy}, {ZeroVec, SrcReg, Mode3})
+            .getReg(0);
     // Step 4: bitcast VShuffleLow and VShuffleHigh
     // Example: <32xs16> -> <16xs32>
-    LLT CastToNewTy = LLT::vector(ElementCount::getFixed(SrcNumElements/2), DstElementType);
-    if (CastToNewTy.getSizeInBits() != MRI.getType(VShuffleLow).getSizeInBits() ||
-        CastToNewTy.getSizeInBits() != MRI.getType(VShuffleHigh).getSizeInBits()) {
-      llvm::errs() << "Error: Size mismatch in vector bitcast for G_FPEXT. Expected: " << CastToNewTy.getSizeInBits() << " bits, got: " << MRI.getType(VShuffleLow).getSizeInBits() << " and " << MRI.getType(VShuffleHigh).getSizeInBits() << " bits\n";
+    LLT CastToNewTy =
+        LLT::vector(ElementCount::getFixed(SrcNumElements / 2), DstElementType);
+    if (CastToNewTy.getSizeInBits() !=
+            MRI.getType(VShuffleLow).getSizeInBits() ||
+        CastToNewTy.getSizeInBits() !=
+            MRI.getType(VShuffleHigh).getSizeInBits()) {
+      llvm::errs()
+          << "Error: Size mismatch in vector bitcast for G_FPEXT. Expected: "
+          << CastToNewTy.getSizeInBits()
+          << " bits, got: " << MRI.getType(VShuffleLow).getSizeInBits()
+          << " and " << MRI.getType(VShuffleHigh).getSizeInBits() << " bits\n";
       return false;
     }
-    auto VShuffleLowCast = MIRBuilder.buildCast(CastToNewTy, VShuffleLow).getReg(0);
-    auto VShuffleHighCast = MIRBuilder.buildCast(CastToNewTy, VShuffleHigh).getReg(0);
+    auto VShuffleLowCast =
+        MIRBuilder.buildCast(CastToNewTy, VShuffleLow).getReg(0);
+    auto VShuffleHighCast =
+        MIRBuilder.buildCast(CastToNewTy, VShuffleHigh).getReg(0);
     // Step 5: Concatenate the two src vectors into dst vector
     MIRBuilder.buildConcatVectors(DstReg, {VShuffleLowCast, VShuffleHighCast});
 

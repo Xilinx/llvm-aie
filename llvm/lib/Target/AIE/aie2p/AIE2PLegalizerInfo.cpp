@@ -78,21 +78,23 @@ static LegalityPredicate isValidVectorAIEP(const unsigned TypeIdx) {
 // - V2 is wider than V1 for total vector sizes
 // - Number of elements of both vectors are same
 // - Size of Element of V2 = 2 * Size of Element of V1
-static LegalityPredicate isValidVectorFPEXT(const unsigned TypeIdx_dst, const unsigned TypeIdx_src) {
+static LegalityPredicate isValidVectorFPEXT(const unsigned TypeIdx_dst,
+                                            const unsigned TypeIdx_src) {
   return [=](const LegalityQuery &Query) {
     const LLT DstTy = Query.Types[TypeIdx_dst];
     const LLT SrcTy = Query.Types[TypeIdx_src];
-    auto DstElementCount = DstTy.getElementCount();
-    auto SrcElementCount = SrcTy.getElementCount();
-    auto DstElementType = DstTy.getElementType();
-    auto SrcElementType = SrcTy.getElementType();
-    auto DstElementSize = DstElementType.getSizeInBits();
-    auto SrcElementSize = SrcElementType.getSizeInBits();
-
-    return DstTy.isVector() && SrcTy.isVector() &&
-          DstTy.getSizeInBits() > SrcTy.getSizeInBits() &&
-          DstElementCount == SrcElementCount &&
-          (DstElementSize == (SrcElementSize * 2));
+    if (DstTy.isVector() && SrcTy.isVector()) {
+      auto DstElementCount = DstTy.getElementCount();
+      auto SrcElementCount = SrcTy.getElementCount();
+      auto DstElementType = DstTy.getElementType();
+      auto SrcElementType = SrcTy.getElementType();
+      auto DstElementSize = DstElementType.getSizeInBits();
+      auto SrcElementSize = SrcElementType.getSizeInBits();
+      return DstTy.getSizeInBits() > SrcTy.getSizeInBits() &&
+             DstElementCount == SrcElementCount &&
+             (DstElementSize == (SrcElementSize * 2));
+    }
+    return false;
   };
 }
 
@@ -271,19 +273,7 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
 
   getActionDefinitionsBuilder({G_FADD, G_FSUB})
       .legalFor({AccV64S32})
-      .moreElementsToNextPow2(0)  // <15xf32> (Doesn't work, Why?)
-      // For 2D vectors with < 64 f32 elements, widen to 64 elements
-      .moreElementsIf(
-          [=](const LegalityQuery &Query) {
-            const LLT &Ty = Query.Types[0];
-            return Ty.isVector() && Ty.getScalarSizeInBits() == 32 &&
-                   Ty.getNumElements() < 64;
-          },
-          [=](const LegalityQuery &Query) {
-            return std::make_pair(0, LLT::fixed_vector(64, S32));
-          })
-      // .widenVectorEltsToVectorMinSize(0, 32)  // vector check for s16
-      .customFor({S16}) // scalar check for 16
+      .customFor({S16})
       .libcallFor({S32, S64});
 
   getActionDefinitionsBuilder({G_FDIV, G_FREM})
