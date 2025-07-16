@@ -1206,29 +1206,27 @@ bool AIELegalizerHelper::legalizeG_FPEXT(LegalizerHelper &Helper,
   Register SrcReg = MI.getOperand(1).getReg();
   LLT DstTy = MRI.getType(DstReg);
   LLT SrcTy = MRI.getType(SrcReg);
-  // Extract type information
-  auto DstElementType = DstTy.getElementType();
-  auto SrcElementType = SrcTy.getElementType();
-  auto DstNumElements = DstTy.getNumElements();
-  auto SrcNumElements = SrcTy.getNumElements();
 
-  // ========================================================================
-  // VECTOR CASE: Vector bf16 -> f32 conversion
-  // ========================================================================
-  // We want something like below
-  // zero_vec = G_AIE_BROADCAST 0
-  // 512_low = VSHUFFLE zero_vec, x, 2
-  // 512_hi = VSHUFFLE zero_vec, x, 3
-  // 1024_dst = G_CONCAT_VECTORS 512_low, 512_high
-  if (DstTy.isVector() && SrcTy.isVector() &&
-      DstElementType == LLT::scalar(32) &&
-      SrcElementType == LLT::scalar(16) &&
-      DstNumElements == SrcNumElements) {
-    
+// Vectors
+/*
+ VDst = G_FPEXT VSrc
+ converts to
+ ZeroVec = G_AIE_BROADCAST_VECTOR VSrc
+ VShuffleLow = G_AIE_SHUFFLE_VECTOR ZeroVec, VSrc, 2
+ VShuffleHigh = G_AIE_SHUFFLE_VECTOR ZeroVec, VSrc, 3
+ VShuffleLow = G_BITCAST VShuffleLow
+ VShuffleHigh = G_BITCAST VShuffleHigh
+ VDst = G_CONCAT_VECTORS VShuffleLow, VShuffleHigh
+*/
+  if (DstTy.isVector() && SrcTy.isVector()) {
+    // Extract type information
+    auto DstElementType = DstTy.getElementType();
+    auto SrcNumElements = SrcTy.getNumElements();
     // Create constants for shuffle modes
     Register Mode2 = MIRBuilder.buildConstant(S32, 2).getReg(0);
     Register Mode3 = MIRBuilder.buildConstant(S32, 3).getReg(0);
     Register Zero = MIRBuilder.buildConstant(S32, 0).getReg(0);
+    // Get the instructions
     const unsigned BroadcastOpc = II->getGenericBroadcastVectorOpcode();
     const unsigned VShuffleOpc = II->getGenericShuffleVectorOpcode();
     
@@ -1238,52 +1236,21 @@ bool AIELegalizerHelper::legalizeG_FPEXT(LegalizerHelper &Helper,
     // Step 2: Create VSHUFFLE for lower 512 bits (mode 2)
     Register VShuffleLow = MIRBuilder.buildInstr(VShuffleOpc, {SrcTy}, 
                                                {ZeroVec, SrcReg, Mode2}).getReg(0);
-    // Step 3: Create VSHUFFLE for upper 512 bits (mode 3)
+    // Step 3: Create VSHUFFLE for high 512 bits (mode 3)
     Register VShuffleHigh = MIRBuilder.buildInstr(VShuffleOpc, {SrcTy}, 
                                                 {ZeroVec, SrcReg, Mode3}).getReg(0);
-
-    // print types of VShuffleLow and VShuffleHigh.
-    // llvm::errs() << "VShuffleLow: " << MRI.getType(VShuffleLow) << "\n";
-    // llvm::errs() << "VShuffleHigh: " << MRI.getType(VShuffleHigh) << "\n";
-    // llvm::errs() << "DstTy: " << MRI.getType(DstReg) << "\n";
-    // llvm::errs() << "SrcTy: " << MRI.getType(SrcReg) << "\n";
-    // llvm::errs() << "DstTy.elementType(): " << DstTyElement << "\n";
-    // llvm::errs() << "SrcTy.elementType(): " << SrcTyElement << "\n";
-    // llvm::errs() << "DstTy.getNumElements(): " << DstTyNumElements << "\n";
-    // llvm::errs() << "SrcTy.getNumElements(): " << SrcTyNumElements << "\n";
-  
-    // // print DstTy.getSizeInBits()
-    // llvm::errs() << "DstTy.getSizeInBits(): " << DstTy.getSizeInBits() << "\n";
-    // llvm::errs() << "SrcTy.getSizeInBits(): " << SrcTy.getSizeInBits() << "\n";
-    // llvm::errs() << "VShuffleLow.getSizeInBits(): " << MRI.getType(VShuffleLow).getSizeInBits() << "\n";
-    // llvm::errs() << "VShuffleHigh.getSizeInBits(): " << MRI.getType(VShuffleHigh).getSizeInBits() << "\n";
-    // llvm::errs() << "DstReg.getSizeInBits(): " << MRI.getType(DstReg).getSizeInBits() << "\n";
-    // llvm::errs() << "SrcReg.getSizeInBits(): " << MRI.getType(SrcReg).getSizeInBits() << "\n";
-    
-    // Step 4: bitcast VShuffleLow and VShuffleHigh to s32
-    // VshuffleLow = <32xs16>
-    // VshuffleHigh = <32xs16>
-    // DstTy = <16xs32>
-    LLT CastToTy = LLT::vector(ElementCount::getFixed(SrcNumElements/2), DstElementType);
-    
-    // // Validate cast type
-    // if (CastToTy.getSizeInBits() != MRI.getType(VShuffleLow).getSizeInBits() ||
-    //     CastToTy.getSizeInBits() != MRI.getType(VShuffleHigh).getSizeInBits()) {
-    //   llvm::errs() << "Error: Size mismatch in vector bitcast for G_FPEXT\n";
-    //   return false;
-    // }
-    
-    // llvm::errs() << "CastToTy: " << CastToTy << "\n";
-    // assert(VShuffleHigh.getLLTTy(*getMRI()).getSizeInBits() == CastToTy.getLLTTy(*getMRI()).getSizeInBits() && "invalid bitcast");
-    // assert(VShuffleLow.getLLTTy(*getMRI()).getSizeInBits() == CastToTy.getLLTTy(*getMRI()).getSizeInBits() && "invalid bitcast");
-    auto Inp1 = MIRBuilder.buildCast(CastToTy, VShuffleLow).getReg(0);
-    auto Inp2 = MIRBuilder.buildCast(CastToTy, VShuffleHigh).getReg(0);
-
-    // llvm::errs() << "Inp1: " << MRI.getType(Inp1) << "\n";
-    // llvm::errs() << "Inp2: " << MRI.getType(Inp2) << "\n";
-
-    // Step 5: Concatenate the two 512-bit results into 1024-bit
-    MIRBuilder.buildConcatVectors(DstReg, {Inp1, Inp2});
+    // Step 4: bitcast VShuffleLow and VShuffleHigh
+    // Example: <32xs16> -> <16xs32>
+    LLT CastToNewTy = LLT::vector(ElementCount::getFixed(SrcNumElements/2), DstElementType);
+    if (CastToNewTy.getSizeInBits() != MRI.getType(VShuffleLow).getSizeInBits() ||
+        CastToNewTy.getSizeInBits() != MRI.getType(VShuffleHigh).getSizeInBits()) {
+      llvm::errs() << "Error: Size mismatch in vector bitcast for G_FPEXT. Expected: " << CastToNewTy.getSizeInBits() << " bits, got: " << MRI.getType(VShuffleLow).getSizeInBits() << " and " << MRI.getType(VShuffleHigh).getSizeInBits() << " bits\n";
+      return false;
+    }
+    auto VShuffleLowCast = MIRBuilder.buildCast(CastToNewTy, VShuffleLow).getReg(0);
+    auto VShuffleHighCast = MIRBuilder.buildCast(CastToNewTy, VShuffleHigh).getReg(0);
+    // Step 5: Concatenate the two src vectors into dst vector
+    MIRBuilder.buildConcatVectors(DstReg, {VShuffleLowCast, VShuffleHighCast});
 
     MI.eraseFromParent();
     return true;
@@ -1293,8 +1260,6 @@ bool AIELegalizerHelper::legalizeG_FPEXT(LegalizerHelper &Helper,
   // We only handle bfloat16 to single precision conversion
   if (DstTy != LLT::scalar(32) || SrcTy != LLT::scalar(16))
     return false;
-
-  llvm::errs() << "In scalar case\n";
 
   Register AnyExt = MIRBuilder.buildAnyExt(S32, SrcReg).getReg(0);
   Register Cst = MIRBuilder.buildConstant(S32, 16).getReg(0);

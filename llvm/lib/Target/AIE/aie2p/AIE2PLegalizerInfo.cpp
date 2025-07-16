@@ -82,6 +82,9 @@ static LegalityPredicate isValidVectorFPEXT(const unsigned TypeIdx_dst, const un
   return [=](const LegalityQuery &Query) {
     const LLT DstTy = Query.Types[TypeIdx_dst];
     const LLT SrcTy = Query.Types[TypeIdx_src];
+    // print both types
+    llvm::errs() << "DstTy: " << DstTy << "\n";
+    llvm::errs() << "SrcTy: " << SrcTy << "\n";
     auto DstElementCount = DstTy.getElementCount();
     auto SrcElementCount = SrcTy.getElementCount();
     auto DstElementType = DstTy.getElementType();
@@ -89,8 +92,6 @@ static LegalityPredicate isValidVectorFPEXT(const unsigned TypeIdx_dst, const un
     auto DstElementSize = DstElementType.getSizeInBits();
     auto SrcElementSize = SrcElementType.getSizeInBits();
 
-          // bf16 -> f64 not possible, wrong
-          // only bf16 -> f32 is possible or one level up possible.
     return DstTy.isVector() && SrcTy.isVector() &&
           DstTy.getSizeInBits() > SrcTy.getSizeInBits() &&
           DstElementCount == SrcElementCount &&
@@ -245,7 +246,11 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
       .libcallFor({{S64, S32}})
       .customFor({{S32, S16}})
       // Add support for vector types
-      .customIf(isValidVectorFPEXT(0, 1))
+      // Extend vectors to have at least 512-bits
+      .clampMinNumElements(1, S8, 64)
+      .clampMinNumElements(1, S16, 32)
+      .clampMinNumElements(1, S32, 16)
+      .customIf(isValidVectorFPEXT(0 /* Dst */, 1 /* Src */))
       // .customFor({{V32S32, V32S16}})
       .narrowScalarFor({{S64, S16}}, llvm::LegalizeMutations::changeTo(0, S32));
 
