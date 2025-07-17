@@ -76,6 +76,7 @@ void VTEmitter::run(raw_ostream &OS) {
     bool IsVector = VT->getValueAsBit("isVector");
     bool IsScalable = VT->getValueAsBit("isScalable");
     bool IsAIE = VT->getValueAsBit("isAIE");
+    bool IsNormalValueType =  VT->getValueAsBit("isNormalValueType");
 
     UpdateVTRange("AIE_VECTOR_VALUETYPE", Name,
                   IsAIE && IsInteger && IsVector && !IsScalable);
@@ -93,7 +94,7 @@ void VTEmitter::run(raw_ostream &OS) {
     UpdateVTRange("VECTOR_VALUETYPE", Name, !IsAIE && IsVector);
     UpdateVTRange("INTEGER_VALUETYPE", Name, !IsAIE && IsInteger && !IsVector);
     UpdateVTRange("FP_VALUETYPE", Name, !IsAIE && IsFP && !IsVector);
-    UpdateVTRange("VALUETYPE", Name, Value < 224);
+    UpdateVTRange("VALUETYPE", Name, IsNormalValueType);
 
     // clang-format off
     OS << "  GET_VT_ATTR("
