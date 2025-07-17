@@ -36,6 +36,7 @@
 ; AIE-O0-NEXT:      Lower constant intrinsics
 ; AIE-O0-NEXT:      Remove unreachable blocks from the CFG
 ; AIE-O0-NEXT:      Expand vector predication intrinsics
+; AIE-O0-NEXT:      Instrument function entry/exit with calls to e.g. mcount() (post inlining)
 ; AIE-O0-NEXT:      Scalarize Masked Memory Intrinsics
 ; AIE-O0-NEXT:      Expand reduction intrinsics
 ; AIE-O0-NEXT:      Lower invoke and unwind, for unwindless code generators
@@ -140,6 +141,7 @@
 ; AIE-O1-NEXT:      Replace intrinsics with calls to vector library
 ; AIE-O1-NEXT:      Partially inline calls to library functions
 ; AIE-O1-NEXT:      Expand vector predication intrinsics
+; AIE-O1-NEXT:      Instrument function entry/exit with calls to e.g. mcount() (post inlining)
 ; AIE-O1-NEXT:      Scalarize Masked Memory Intrinsics
 ; AIE-O1-NEXT:      Expand reduction intrinsics
 ; AIE-O1-NEXT:      Natural Loop Information
@@ -343,6 +345,7 @@
 ; AIE-O23-NEXT:      Replace intrinsics with calls to vector library
 ; AIE-O23-NEXT:      Partially inline calls to library functions
 ; AIE-O23-NEXT:      Expand vector predication intrinsics
+; AIE-O23-NEXT:      Instrument function entry/exit with calls to e.g. mcount() (post inlining)
 ; AIE-O23-NEXT:      Scalarize Masked Memory Intrinsics
 ; AIE-O23-NEXT:      Expand reduction intrinsics
 ; AIE-O23-NEXT:      Natural Loop Information
