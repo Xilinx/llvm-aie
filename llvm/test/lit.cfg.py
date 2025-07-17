@@ -618,6 +618,9 @@ if "MemoryWithOrigins" in config.llvm_use_sanitizer:
 if "system-aix" in config.available_features:
     config.environment["OBJECT_MODE"] = "any"
 
+if config.has_logf128:
+    config.available_features.add("has_logf128")
+
 
 # Some tests on non-AIEngine architectures fail with AIEngine modifications.
 # This features is used to mark these tests
