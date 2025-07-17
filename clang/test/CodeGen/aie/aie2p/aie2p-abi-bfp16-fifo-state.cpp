@@ -18,6 +18,9 @@ extern "C" {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[RETVAL:%.*]] = alloca [[STRUCT_FIFO_STATE_T:%.*]], align 64
 // CHECK-NEXT:    call void @llvm.memset.p0.i64(ptr align 64 [[RETVAL]], i8 0, i64 256, i1 false)
+// CHECK-NEXT:    [[FIFO:%.*]] = getelementptr inbounds [[STRUCT_FIFO_STATE_T]], ptr [[RETVAL]], i32 0, i32 0
+// CHECK-NEXT:    [[POS:%.*]] = getelementptr inbounds [[STRUCT_FIFO_STATE_T]], ptr [[RETVAL]], i32 0, i32 1
+// CHECK-NEXT:    [[EXTRA:%.*]] = getelementptr inbounds [[STRUCT_FIFO_STATE_T]], ptr [[RETVAL]], i32 0, i32 2
 // CHECK-NEXT:    [[TMP0:%.*]] = load [[STRUCT_FIFO_STATE_T]], ptr [[RETVAL]], align 64
 // CHECK-NEXT:    ret [[STRUCT_FIFO_STATE_T]] [[TMP0]]
 //

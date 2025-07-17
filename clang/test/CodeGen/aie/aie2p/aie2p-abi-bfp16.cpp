@@ -33,6 +33,8 @@ extern "C" {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[RETVAL:%.*]] = alloca [[STRUCT_V64BFP16EBS16:%.*]], align 8
 // CHECK-NEXT:    call void @llvm.memset.p0.i64(ptr align 8 [[RETVAL]], i8 0, i64 72, i1 false)
+// CHECK-NEXT:    [[MANTISSA:%.*]] = getelementptr inbounds [[STRUCT_V64BFP16EBS16]], ptr [[RETVAL]], i32 0, i32 0
+// CHECK-NEXT:    [[EXPONENT:%.*]] = getelementptr inbounds [[STRUCT_V64BFP16EBS16]], ptr [[RETVAL]], i32 0, i32 1
 // CHECK-NEXT:    [[TMP0:%.*]] = load [[STRUCT_V64BFP16EBS16]], ptr [[RETVAL]], align 8
 // CHECK-NEXT:    ret [[STRUCT_V64BFP16EBS16]] [[TMP0]]
 //
@@ -50,6 +52,8 @@ extern "C" {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[RETVAL:%.*]] = alloca [[STRUCT_V64BFP16EBS8:%.*]], align 8
 // CHECK-NEXT:    call void @llvm.memset.p0.i64(ptr align 8 [[RETVAL]], i8 0, i64 72, i1 false)
+// CHECK-NEXT:    [[MANTISSA:%.*]] = getelementptr inbounds [[STRUCT_V64BFP16EBS8]], ptr [[RETVAL]], i32 0, i32 0
+// CHECK-NEXT:    [[EXPONENT:%.*]] = getelementptr inbounds [[STRUCT_V64BFP16EBS8]], ptr [[RETVAL]], i32 0, i32 1
 // CHECK-NEXT:    [[TMP0:%.*]] = load [[STRUCT_V64BFP16EBS8]], ptr [[RETVAL]], align 8
 // CHECK-NEXT:    ret [[STRUCT_V64BFP16EBS8]] [[TMP0]]
 //
@@ -67,6 +71,10 @@ extern "C" {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[RETVAL:%.*]] = alloca [[STRUCT_V128BFP16EBS16:%.*]], align 8
 // CHECK-NEXT:    call void @llvm.memset.p0.i64(ptr align 8 [[RETVAL]], i8 0, i64 144, i1 false)
+// CHECK-NEXT:    [[MANTISSAX0:%.*]] = getelementptr inbounds [[STRUCT_V128BFP16EBS16]], ptr [[RETVAL]], i32 0, i32 0
+// CHECK-NEXT:    [[MANTISSAX1:%.*]] = getelementptr inbounds [[STRUCT_V128BFP16EBS16]], ptr [[RETVAL]], i32 0, i32 1
+// CHECK-NEXT:    [[EXPONENTE0:%.*]] = getelementptr inbounds [[STRUCT_V128BFP16EBS16]], ptr [[RETVAL]], i32 0, i32 2
+// CHECK-NEXT:    [[EXPONENTE1:%.*]] = getelementptr inbounds [[STRUCT_V128BFP16EBS16]], ptr [[RETVAL]], i32 0, i32 3
 // CHECK-NEXT:    [[TMP0:%.*]] = load [[STRUCT_V128BFP16EBS16]], ptr [[RETVAL]], align 8
 // CHECK-NEXT:    ret [[STRUCT_V128BFP16EBS16]] [[TMP0]]
 //
@@ -84,6 +92,10 @@ extern "C" {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[RETVAL:%.*]] = alloca [[STRUCT_V128BFP16EBS8:%.*]], align 8
 // CHECK-NEXT:    call void @llvm.memset.p0.i64(ptr align 8 [[RETVAL]], i8 0, i64 144, i1 false)
+// CHECK-NEXT:    [[MANTISSAX0:%.*]] = getelementptr inbounds [[STRUCT_V128BFP16EBS8]], ptr [[RETVAL]], i32 0, i32 0
+// CHECK-NEXT:    [[MANTISSAX1:%.*]] = getelementptr inbounds [[STRUCT_V128BFP16EBS8]], ptr [[RETVAL]], i32 0, i32 1
+// CHECK-NEXT:    [[EXPONENTE0:%.*]] = getelementptr inbounds [[STRUCT_V128BFP16EBS8]], ptr [[RETVAL]], i32 0, i32 2
+// CHECK-NEXT:    [[EXPONENTE1:%.*]] = getelementptr inbounds [[STRUCT_V128BFP16EBS8]], ptr [[RETVAL]], i32 0, i32 3
 // CHECK-NEXT:    [[TMP0:%.*]] = load [[STRUCT_V128BFP16EBS8]], ptr [[RETVAL]], align 8
 // CHECK-NEXT:    ret [[STRUCT_V128BFP16EBS8]] [[TMP0]]
 //
