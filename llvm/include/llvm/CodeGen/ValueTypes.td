@@ -20,12 +20,12 @@ class ValueType<int size, int value> {
   int Value = value;
   int nElem = 1;
   ValueType ElementType = ?;
-  int isOverloaded = false;
-  int isInteger = false;
-  int isFP = false;
-  int isVector = false;
-  int isScalable = false;
-  int isAIE = false;
+  bit isOverloaded = false;
+  bit isInteger = false;
+  bit isFP = false;
+  bit isVector = false;
+  bit isScalable = false;
+  bit isAIE = false;
 }
 
 class VTAny<int value> : ValueType<0, value> {
@@ -283,18 +283,19 @@ def untyped   : ValueType<8,    193> { // Produces an untyped value
 }
 def funcref   : ValueType<0,    194>;  // WebAssembly's funcref type
 def externref : ValueType<0,    195>;  // WebAssembly's externref type
-def x86amx    : ValueType<8192, 196>;  // X86 AMX value
-def i64x8     : ValueType<512,  197>;  // 8 Consecutive GPRs (AArch64)
+def exnref    : ValueType<0,    196>;  // WebAssembly's exnref type
+def x86amx    : ValueType<8192, 197>;  // X86 AMX value
+def i64x8     : ValueType<512,  198>;  // 8 Consecutive GPRs (AArch64)
 def aarch64svcount
-              : ValueType<16,  198>;  // AArch64 predicate-as-counter
-def spirvbuiltin : ValueType<0, 199>; // SPIR-V's builtin type
+              : ValueType<16,  199>;  // AArch64 predicate-as-counter
+def spirvbuiltin : ValueType<0, 200>; // SPIR-V's builtin type
 
 /* AIE */
 let isAIE = true in {
-  def i48    : VTInt<48, 200>;    // 48-bit acc type
-  def i20    : VTInt<20, 201>;    //  20 bit pointers.
-  def v8i48  : VTVec<8, i48, 202>;   //  8 x i48 vector value
-  def v16i48 : VTVec<16, i48, 203>;   //  16 x i48 vector value
+  def i48    : VTInt<48, 201>;    // 48-bit acc type
+  def i20    : VTInt<20, 202>;    //  20 bit pointers.
+  def v8i48  : VTVec<8, i48, 203>;   //  8 x i48 vector value
+  def v16i48 : VTVec<16, i48, 204>;   //  16 x i48 vector value
 }
 /* End AIE */
 
