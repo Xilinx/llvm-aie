@@ -4378,6 +4378,9 @@ public:
   /// Return true if the target supports kcfi operand bundles.
   virtual bool supportKCFIBundles() const { return false; }
 
+  /// Return true if the target supports ptrauth operand bundles.
+  virtual bool supportPtrAuthBundles() const { return false; }
+
   /// Perform necessary initialization to handle a subset of CSRs explicitly
   /// via copies. This function is called at the beginning of instruction
   /// selection.
@@ -4489,6 +4492,14 @@ public:
     llvm_unreachable("Not Implemented");
   }
 
+  /// This structure contains the information necessary for lowering
+  /// pointer-authenticating indirect calls.  It is equivalent to the "ptrauth"
+  /// operand bundle found on the call instruction, if any.
+  struct PtrAuthInfo {
+    uint64_t Key;
+    SDValue Discriminator;
+  };
+
   /// This structure contains all information that is necessary for lowering
   /// calls. It is passed to TLI::LowerCallTo when the SelectionDAG builder
   /// needs to lower a call, and targets will see this struct in their LowerCall
@@ -4527,6 +4538,8 @@ public:
     SmallVector<SDValue, 4> InVals;
     const ConstantInt *CFIType = nullptr;
     SDValue ConvergenceControlToken;
+
+    std::optional<PtrAuthInfo> PAI;
 
     CallLoweringInfo(SelectionDAG &DAG)
         : RetSExt(false), RetZExt(false), IsVarArg(false), IsInReg(false),
@@ -4647,6 +4660,11 @@ public:
 
     CallLoweringInfo &setIsPreallocated(bool Value = true) {
       IsPreallocated = Value;
+      return *this;
+    }
+
+    CallLoweringInfo &setPtrAuth(PtrAuthInfo Value) {
+      PAI = Value;
       return *this;
     }
 
@@ -4773,12 +4791,6 @@ public:
   /// to duplicate return instructions to enable tailcall optimization.
   virtual bool mayBeEmittedAsTailCall(const CallInst *) const {
     return false;
-  }
-
-  /// Return the builtin name for the __builtin___clear_cache intrinsic
-  /// Default is to invoke the clear cache library call
-  virtual const char * getClearCacheBuiltinName() const {
-    return "__clear_cache";
   }
 
   /// Return the register ID of the name passed in. Used by named register
