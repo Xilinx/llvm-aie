@@ -22,7 +22,7 @@ define void @simple(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; AIE2-NEXT:  .LBB0_1: // %for.body
 ; AIE2-NEXT:    // =>This Inner Loop Header: Depth=1
 ; AIE2-NEXT:    nopb ; nopa ; nops ; lshl r4, r2, r3; nopm ; nopv
-; AIE2-NEXT:    mov dj0, r4
+; AIE2-NEXT:    nopa ; mov dj0, r4
 ; AIE2-NEXT:    lda r4, [p1, dj0]
 ; AIE2-NEXT:    nop
 ; AIE2-NEXT:    nop
@@ -33,7 +33,7 @@ define void @simple(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; AIE2-NEXT:    add r1, r1, r4 // Delay Slot 2
 ; AIE2-NEXT:    st r1, [p0, #0] // Delay Slot 1
 ; AIE2-NEXT:  // %bb.2: // %for.cond.cleanup
-; AIE2-NEXT:    nopa ; ret lr
+; AIE2-NEXT:    ret lr
 ; AIE2-NEXT:    nop // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
 ; AIE2-NEXT:    nop // Delay Slot 3
@@ -50,7 +50,7 @@ define void @simple(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; AIE2P-NEXT:  .LBB0_1: // %for.body
 ; AIE2P-NEXT:    // =>This Inner Loop Header: Depth=1
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; lshl r4, r2, r3; nopm ; nopv
-; AIE2P-NEXT:    mov dj0, r4
+; AIE2P-NEXT:    nopx ; mov dj0, r4
 ; AIE2P-NEXT:    lda r4, [p1, dj0]
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
@@ -61,7 +61,7 @@ define void @simple(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; AIE2P-NEXT:    add r1, r1, r4 // Delay Slot 2
 ; AIE2P-NEXT:    st r1, [p0, #0] // Delay Slot 1
 ; AIE2P-NEXT:  // %bb.2: // %for.cond.cleanup
-; AIE2P-NEXT:    nopa ; ret lr
+; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    nop // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
 ; AIE2P-NEXT:    nop // Delay Slot 3

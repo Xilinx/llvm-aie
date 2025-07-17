@@ -1,4 +1,4 @@
-//===- AIEMachineAlignment.cpp -----------------------------*- C++ -*-===//
+//===- AIEMachineAlignment.cpp ----------------------------------*- C++ -*-===//
 //
 // This file is licensed under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -12,13 +12,11 @@
 #include "AIE.h"
 #include "AIEBundle.h"
 #include "Utils/AIEMachineBasicBlockUtils.h"
-#include "llvm/ADT/BitVector.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/CodeGen/MachineInstrBundle.h"
 
-#include <iostream>
 using namespace llvm;
+using namespace AIEMachineBasicBlockUtils;
 
 #define DEBUG_TYPE "aie-machine-alignment"
 static cl::opt<bool> SkipMachineAlignment(
@@ -27,12 +25,26 @@ static cl::opt<bool> SkipMachineAlignment(
 
 namespace {
 
-/// Get TargetInstrInfo from a MachineBasicBlock::iterator
-const AIEBaseInstrInfo *getTII(MachineBasicBlock::iterator MII) {
-  const MachineBasicBlock *MBB = MII->getParent();
-  auto *MF = MBB->getParent();
-  auto &Subtarget = MF->getSubtarget();
+const AIEBaseInstrInfo *getTII(const MachineFunction &MF) {
+  auto &Subtarget = MF.getSubtarget();
   return static_cast<const AIEBaseInstrInfo *>(Subtarget.getInstrInfo());
+}
+
+/// Find Regions which are Alignment Candidate e.g. Region ending with Return
+/// Address, End of BB, ZOL distance, etc.
+std::vector<AIE::AlignmentRegion> findRegions(MachineBasicBlock &MBB) {
+  const AIEBaseInstrInfo *TII = getTII(*MBB.getParent());
+  std::vector<AIE::AlignmentRegion> Regions;
+  std::vector<MachineBasicBlock::iterator> AlignCandidate =
+      TII->getAlignmentBoundaries(MBB);
+
+  MachineBasicBlock::iterator RegionBegin = MBB.begin();
+  for (auto MII : AlignCandidate) {
+    MachineBasicBlock::iterator RegionEnd = MII;
+    Regions.emplace_back(llvm::make_range(RegionBegin, RegionEnd));
+    RegionBegin = RegionEnd;
+  }
+  return Regions;
 }
 
 const VLIWFormat *getElongatedFormat(AIE::MachineBundle &Bundle,
@@ -55,8 +67,7 @@ void elongateBundle(AIE::MachineBundle &Bundle,
   if (CurrentFormat->getSize() == ElongatedFormat.getSize())
     return;
   MachineBasicBlock &MBB = *Bundle.getInstrs()[0]->getParent();
-  auto *TII = static_cast<const AIEBaseInstrInfo *>(
-      MBB.getParent()->getSubtarget().getInstrInfo());
+  const AIEBaseInstrInfo *TII = getTII(*MBB.getParent());
 
   // Clear the NOPBundle
   if (Bundle.isNOPBundle())
@@ -82,105 +93,162 @@ void elongateBundle(AIE::MachineBundle &Bundle,
   }
 }
 
-unsigned applyRegionAlignment(MachineBasicBlock::iterator MI,
-                              MachineBasicBlock::iterator EndMI,
-                              unsigned PadBytes, bool AllowCrossingPadBytes) {
-  unsigned Size = 0;
-  unsigned Stretchability = 0;
-  unsigned f = 0;
-  const AIEBaseInstrInfo *TII = getTII(MI);
-  const unsigned MBBAlignment = TII->getMachineBlockAlignmentBytes();
-  while (MI != EndMI) {
-    if (MI->isBundle()) {
-      AIE::MachineBundle Bundle = TII->getAIEMachineBundle(MI);
+const VLIWFormat *findClosestBundleFormat(AIE::MachineBundle &Bundle,
+                                          const int OrigBundleSize,
+                                          int StartBundleSize,
+                                          const int EndBundleSize,
+                                          const int Step) {
+  const VLIWFormat *Format = nullptr;
+  for (; !Format && StartBundleSize > OrigBundleSize &&
+         StartBundleSize <= EndBundleSize;
+       StartBundleSize += Step) {
+    Format = getElongatedFormat(Bundle, StartBundleSize);
+  }
+  return Format;
+}
+
+/// \return Missing Bytes to reach alignment. Elongate Bundles between
+/// \p PadRegion to reach alignment. Some bundles can only grow
+/// by more than the 2 bytes, and we don't want to elongate
+/// these if they would overshoot the requested padding and others could supply
+/// an exact fit. \p MinimalPadding allows the Bundles to only add
+/// \p PadBytes to reach alignment. If set to false, It will add more than
+/// strictly necessary to achieve alignment.
+unsigned tryRegionAlignment(MultiBlockRegion &PadRegion, unsigned PadBytes,
+                            bool MinimalPadding) {
+
+  const AIEBaseInstrInfo &TII = PadRegion.getTII();
+  const unsigned MaxBundleSize = TII.getMachineBlockAlignmentBytes();
+  bool OvershotPadding = false;
+  for (AIE::AlignmentRegion &Region : PadRegion.getRegions()) {
+    for (auto MI = Region.begin(); MI != Region.end() && PadBytes != 0; ++MI) {
+      if (!MI->isBundle())
+        continue;
+
+      AIE::MachineBundle Bundle = TII.getAIEMachineBundle(MI);
       const VLIWFormat *Format = Bundle.getFormatOrNull();
       assert(Format);
-      Size = Format->getSize();
-      Stretchability = MBBAlignment - Format->getSize();
-      if (Stretchability == 0) {
-        ++MI;
+      const unsigned BundleSize = Format->getSize();
+      const unsigned NumFreeBytesInBundle = MaxBundleSize - BundleSize;
+
+      if (NumFreeBytesInBundle == 0)
         continue;
-      }
-      if (Stretchability >= PadBytes) {
-        Format = getElongatedFormat(Bundle, PadBytes + Size);
-        if (Format) {
-          elongateBundle(Bundle, *Format, &*MI, std::next(MI));
-          return 0;
+
+      const unsigned AddBytesToBundle =
+          std::min(NumFreeBytesInBundle, PadBytes);
+
+      // Elongate Bundle with MinimalPadding, i.e. try to minimize newly added
+      // NOPs.
+      const unsigned IdealBundleSize = BundleSize + AddBytesToBundle;
+      Format = getElongatedFormat(Bundle, /*Size=*/IdealBundleSize);
+      if (!Format) {
+        if (MinimalPadding) {
+          // Find largest possible Bundle without increasing the MBB
+          // unnecessarily.
+          Format = findClosestBundleFormat(
+              Bundle, /*OrigBundleSize=*/BundleSize,
+              /*StartBundleSize=*/IdealBundleSize,
+              /*EndBundleSize=*/BundleSize, /*Step=*/-2);
+
         } else {
-          // Try to expand to a ValidFormat of Size
-          // < (PadBytes + Size) if !AllowCrossingPadBytes or > (PadBytes +
-          // Size) if AllowCrossingPadBytes
-          for (f = 2;; f = f + 2) {
-            unsigned FormatSize = AllowCrossingPadBytes ? PadBytes + Size + f
-                                                        : PadBytes + Size - f;
-            Format = getElongatedFormat(Bundle, FormatSize);
-            if (Format)
-              break;
-          }
-          if (Format->getSize() > Size) {
-            elongateBundle(Bundle, *Format, &*MI, std::next(MI));
-            Size = Format->getSize();
-            PadBytes = AllowCrossingPadBytes ? MBBAlignment - f : f;
-          }
+          const unsigned BytesToAlignment = PadBytes + BundleSize;
+          // Find smallest bundle that overshoots the strictly needed padding.
+          Format = findClosestBundleFormat(
+              Bundle, /*OrigBundleSize=*/BundleSize,
+              /*StartBundleSize=*/BytesToAlignment,
+              /*EndBundleSize=*/MaxBundleSize, /*Step=*/2);
+          OvershotPadding = true;
         }
-      } else {
-        Format = getElongatedFormat(Bundle, Stretchability + Size);
-        assert(Format);
+      }
+      if (Format) {
+        const unsigned BytesAdded = (Format->getSize() - BundleSize);
+        assert(BytesAdded > 0);
         elongateBundle(Bundle, *Format, &*MI, std::next(MI));
-        Size = Format->getSize();
-        PadBytes = PadBytes - Stretchability;
-        ++MI;
-        continue;
+        PadBytes = (PadBytes - BytesAdded) % MaxBundleSize;
+        if (OvershotPadding)
+          return PadBytes;
       }
     }
-    ++MI;
   }
+
   return PadBytes;
 }
 
-} // namespace
+void padRegion(MultiBlockRegion &PadRegion, const unsigned AlignOffset) {
+  const AIEBaseInstrInfo &TII = PadRegion.getTII();
 
-void AIEMachineAlignment::applyBundlesAlignment(
-    const std::vector<llvm::iterator_range<MachineBasicBlock::iterator>>
-        &Regions,
-    const AIEBaseInstrInfo *TII) {
-  const unsigned MBBAlignment = TII->getMachineBlockAlignmentBytes();
-  for (auto Region : Regions) {
-    unsigned Size = 0;
-    unsigned PadBytes = 0;
-    Size = TII->getRegionSizeInBytes(Region);
-    if ((Size % MBBAlignment) == 0)
-      continue;
-    PadBytes = MBBAlignment - (Size % MBBAlignment);
-    while (PadBytes) {
-      PadBytes = applyRegionAlignment(Region.begin(), Region.end(), PadBytes,
-                                      /*AllowCrossingPadBytes*/ false);
-      if (PadBytes) {
-        PadBytes = applyRegionAlignment(Region.begin(), Region.end(), PadBytes,
-                                        /*AllowCrossingPadBytes*/ true);
-      }
+  const unsigned MachineBlockAlignment = TII.getMachineBlockAlignmentBytes();
+  const unsigned ModuloAlignOffset = AlignOffset % MachineBlockAlignment;
+  unsigned PadBytes =
+      (MachineBlockAlignment - ModuloAlignOffset) % MachineBlockAlignment;
+  if (PadBytes == 0) {
+    LLVM_DEBUG(dbgs() << "No Alignment needed for Region\n");
+    return;
+  }
+  LLVM_DEBUG(dbgs() << "  Need to pad by " << PadBytes << " bytes\n");
+
+  // Try to reach alignment with minimal nop insertions first. If we cannot
+  // reach the alignment, insert too many nops and try to align again.
+  bool UseMinimalPadding = true;
+  while (PadBytes != 0) {
+    PadBytes = tryRegionAlignment(PadRegion, PadBytes,
+                                  /*MinimalPadding=*/UseMinimalPadding);
+    // Allow too much padding, i.e. we may add more bytes than
+    // the needed PadBytes.
+    UseMinimalPadding = !UseMinimalPadding;
+  }
+}
+
+bool canMergeFirstRegion(MachineBasicBlock &MBB) {
+  const bool IsJumpTarget = !isBlockOnlyReachableByFallthrough(&MBB);
+  if (IsJumpTarget)
+    return false;
+
+  assert(MBB.pred_size() == 1);
+  MachineBasicBlock *PrevMBB = getPrevNonEmptyMBB(&MBB);
+  assert(PrevMBB);
+  const AIEBaseInstrInfo *TII = getTII(*MBB.getParent());
+  assert(TII);
+  // MBB cannot be merged with a ZOL body since the fallthrough of a ZOL body
+  // must be aligned.
+  return !TII->isZOLBody(*PrevMBB);
+}
+
+void verifyAlignment(MachineFunction &MF) {
+  const AIEBaseInstrInfo &TII = *getTII(MF);
+  LLVM_DEBUG(dbgs() << "Alignment Summary: \n");
+  unsigned Alignment = 0;
+  for (MachineBasicBlock &MBB : MF) {
+
+    if (!canMergeFirstRegion(MBB)) {
+      LLVM_DEBUG(dbgs() << "MBB " << MBB.getNumber() << " needs Alignment: "
+                        << Alignment % TII.getMachineBlockAlignmentBytes()
+                        << "\n");
+      assert(Alignment % TII.getMachineBlockAlignmentBytes() == 0 &&
+             "Jump Candidate Alignment is wrong");
     }
+
+    LLVM_DEBUG(dbgs() << "MBB " << MBB.getNumber() << " Alignment: "
+                      << Alignment % TII.getMachineBlockAlignmentBytes()
+                      << "\n");
+    const unsigned MBBSize = getMBBSizeInBytes(MBB);
+    LLVM_DEBUG(dbgs() << "MBB Size: " << MBBSize << "\n");
+    Alignment += MBBSize;
+  }
+  LLVM_DEBUG(dbgs() << "Final Alignment: "
+                    << Alignment % TII.getMachineBlockAlignmentBytes()
+                    << "\nFinal Size: " << Alignment << "\n");
+  assert(Alignment % TII.getMachineBlockAlignmentBytes() == 0);
+}
+
+void padRegions(std::vector<MultiBlockRegion> &AllRegions) {
+  for (auto [Idx, Region] : enumerate(AllRegions)) {
+    LLVM_DEBUG(dbgs() << "Aligning Region " << Idx << "\n");
+    padRegion(Region, Region.getRegionSize());
   }
 }
 
-// Find Regions for Alignment Candidate e.g. Region ending with Return Address,
-// End of BB, etc.
-std::vector<llvm::iterator_range<MachineBasicBlock::iterator>>
-AIEMachineAlignment::findRegions(MachineBasicBlock &MBB) {
-  auto *TII = static_cast<const AIEBaseInstrInfo *>(
-      MBB.getParent()->getSubtarget().getInstrInfo());
-  MachineBasicBlock::iterator RegionBegin = MBB.begin();
-  std::vector<llvm::iterator_range<MachineBasicBlock::iterator>> Regions;
-  std::vector<MachineBasicBlock::iterator> AlgnCandidate =
-      TII->getAlignmentBoundaries(MBB);
-  for (auto MII : AlgnCandidate) {
-    MachineBasicBlock::iterator RegionEnd = MII;
-    Regions.emplace_back(llvm::make_range(RegionBegin, RegionEnd));
-    RegionBegin = RegionEnd;
-  }
-  Regions.emplace_back(llvm::make_range(RegionBegin, MBB.end()));
-  return Regions;
-}
+} // namespace
 
 bool AIEMachineAlignment::runOnMachineFunction(MachineFunction &MF) {
   if (SkipMachineAlignment)
@@ -190,17 +258,69 @@ bool AIEMachineAlignment::runOnMachineFunction(MachineFunction &MF) {
   // ordering of the blocks within the function.
   MF.RenumberBlocks();
 
-  auto *TII =
-      static_cast<const AIEBaseInstrInfo *>(MF.getSubtarget().getInstrInfo());
+  const AIEBaseInstrInfo &TII = *getTII(MF);
+  std::vector<MultiBlockRegion> CollectedRegions;
+  LLVM_DEBUG(dbgs() << MF.getName() << "\n");
+  for (MachineBasicBlock &MBB : MF) {
+    if (MBB.empty())
+      continue; // no need to align empty MBBs.
 
-  for (auto &MBB : MF) {
-    std::vector<llvm::iterator_range<MachineBasicBlock::iterator>> Regions =
-        findRegions(MBB);
-    applyBundlesAlignment(Regions, TII);
-    // Clean up BB local Regions
-    Regions.clear();
+    LLVM_DEBUG(dbgs() << "bb." << MBB.getNumber() << "\n"; MBB.dump());
+
+    if (TII.isZOLBody(MBB)) {
+      // If the Preheader of the ZOL is not aligned properly when we call
+      // findRegions , the LoopBody gets too many Regions which enforce too many
+      // Alignments and thus unnecessarily increase program memory size.
+      LLVM_DEBUG(dbgs() << "Ensure ZOL Preheader is padded.\n");
+      padRegions(CollectedRegions);
+      CollectedRegions.clear();
+    }
+
+    std::vector<AIE::AlignmentRegion> Regions = findRegions(MBB);
+    assert(!Regions.empty());
+
+    LLVM_DEBUG(dbgs() << "Region " << CollectedRegions.size() << "\n");
+
+    // Check if the first Region can be appended to the previous
+    // MultiRegionBlock
+    const bool MergeFirstRegion = canMergeFirstRegion(MBB);
+    if (MergeFirstRegion) {
+      CollectedRegions.back().append(Regions[0]);
+    } else {
+      CollectedRegions.emplace_back(Regions[0], TII);
+    }
+
+    // Always align the following Regions
+    for (AIE::AlignmentRegion &RegionMBB : drop_begin(Regions, 1)) {
+      LLVM_DEBUG(dbgs() << "Region " << CollectedRegions.size() << "\n");
+      CollectedRegions.emplace_back(RegionMBB, TII);
+    }
   }
+  // Align the last unaligned Regions of the MF.
+  padRegions(CollectedRegions);
+
+  verifyAlignment(MF);
+
   return true;
+}
+
+MultiBlockRegion::MultiBlockRegion(const AIE::AlignmentRegion Region,
+                                   const AIEBaseInstrInfo &TII)
+    : Regions{Region}, TII(TII) {}
+
+void MultiBlockRegion::append(const AIE::AlignmentRegion &Region) {
+  LLVM_DEBUG(dbgs() << "Aligning with previous Region\n");
+  Regions.emplace_back(Region);
+}
+
+const AIEBaseInstrInfo &MultiBlockRegion::getTII() const { return TII; }
+
+unsigned MultiBlockRegion::getRegionSize() const {
+  unsigned Size = 0;
+  for (auto &Region : Regions) {
+    Size += TII.getRegionSizeInBytes(Region);
+  }
+  return Size;
 }
 
 INITIALIZE_PASS_BEGIN(AIEMachineAlignment, DEBUG_TYPE, "AIE Machine Alignment",

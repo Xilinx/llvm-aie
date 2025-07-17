@@ -116,7 +116,7 @@ define void @test_loop_dyn_alloca(i32 noundef %n) {
 ; AIE2-NEXT:    mov m0, r0 // Delay Slot 3
 ; AIE2-NEXT:    paddb [p1], m0 // Delay Slot 2
 ; AIE2-NEXT:    mov sp, p1 // Delay Slot 1
-; AIE2-NEXT:    nopa ; nopb ; add r17, r17, #1; nopm ; nops
+; AIE2-NEXT:    nopa ; add r17, r17, #1
 ; AIE2-NEXT:    ltu r0, r17, r16
 ; AIE2-NEXT:    add r21, r21, r0
 ; AIE2-NEXT:    xor r0, r17, r18
@@ -128,7 +128,7 @@ define void @test_loop_dyn_alloca(i32 noundef %n) {
 ; AIE2-NEXT:    nop // Delay Slot 2
 ; AIE2-NEXT:    mov sp, p6 // Delay Slot 1
 ; AIE2-NEXT:  // %bb.2: // %for.cond.cleanup
-; AIE2-NEXT:    nopa ; nopb ; nopx ; mov sp, p7
+; AIE2-NEXT:    mov sp, p7
 ; AIE2-NEXT:    lda p7, [sp, #-64] // 4-byte Folded Reload
 ; AIE2-NEXT:    lda p6, [sp, #-60] // 4-byte Folded Reload
 ; AIE2-NEXT:    lda lr, [sp, #-32] // 4-byte Folded Reload
@@ -177,7 +177,7 @@ define void @test_loop_dyn_alloca(i32 noundef %n) {
 ; AIE2P-NEXT:    mov m0, r0 // Delay Slot 3
 ; AIE2P-NEXT:    padda [p1], m0 // Delay Slot 2
 ; AIE2P-NEXT:    mov sp, p1 // Delay Slot 1
-; AIE2P-NEXT:    nopa ; nopb ; add r9, r9, #1; nopm ; nops
+; AIE2P-NEXT:    add r9, r9, #1
 ; AIE2P-NEXT:    ltu r0, r9, r8
 ; AIE2P-NEXT:    add r13, r13, r0
 ; AIE2P-NEXT:    xor r0, r9, r10
@@ -189,7 +189,7 @@ define void @test_loop_dyn_alloca(i32 noundef %n) {
 ; AIE2P-NEXT:    nop // Delay Slot 2
 ; AIE2P-NEXT:    mov sp, p6 // Delay Slot 1
 ; AIE2P-NEXT:  // %bb.2: // %for.cond.cleanup
-; AIE2P-NEXT:    nopa ; nopx ; mov sp, p7
+; AIE2P-NEXT:    mov sp, p7
 ; AIE2P-NEXT:    lda p7, [sp, #-64] // 4-byte Folded Reload
 ; AIE2P-NEXT:    lda p6, [sp, #-60] // 4-byte Folded Reload
 ; AIE2P-NEXT:    lda lr, [sp, #-32] // 4-byte Folded Reload

@@ -1187,12 +1187,12 @@ const PacketFormats &AIEBaseInstrInfo::getPacketFormats() const {
 
 std::vector<MachineBasicBlock::iterator>
 AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
-  std::vector<MachineBasicBlock::iterator> AlgnCandidates;
+  std::vector<MachineBasicBlock::iterator> AlignCandidates;
 
   unsigned DelaySlot = 0;
   // LoopSetupDistance will be set to number of instructions (7). In
   // PostRAScheduler, this is enforced by setting the exit latency in the
-  // schduler dag mutator.
+  // scheduler dag mutator.
   int LoopPaddingInBytes = 0;
   bool IsCall = false;
   auto ZOLSupport = getZOLSupport();
@@ -1256,14 +1256,14 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
         DelaySlot--;
         if (DelaySlot == 0)
           /* Region + 1 => RegionEnd */
-          AlgnCandidates.emplace_back(std::next(MI));
+          AlignCandidates.emplace_back(std::next(MI));
       }
 
-      // create regions of singleton bundle for schedule margin bundles,
+      // Create regions of singleton bundle for schedule margin bundles,
       // alignment algorithm will force fill each bundle to the correct number
       // of bits to fulfill the alignment requirement of the region.
       if (LoopPaddingInBytes > 0) {
-        AlgnCandidates.emplace_back(MI);
+        AlignCandidates.emplace_back(MI);
         const int BundleSize = getAIEMachineBundleSize(MI);
         LoopPaddingInBytes -= (MBBAlignment - BundleSize);
       }
@@ -1275,7 +1275,7 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
       // maintain. We force each of these bundles to an alignment boundary.
       if (ZOLSupport && isZOLSetupBundle(MI) && isLastZOLSetupBundleInMBB(MI)) {
         unsigned LoopSize = 0;
-        // if we have only one MBB, it must be the loop.
+        // If we have only one MBB, it must be the loop.
         if (MBB.succ_size() == 1) {
           MachineBasicBlock *LoopSucc = *MBB.successors().begin();
           LoopSize = LoopSizeExcludingLastBundle(*LoopSucc);
@@ -1301,9 +1301,9 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
         llvm_unreachable("Cannot have HWLoopEnd in branch delay slot!\n");
       // The previous instruction is the last bundle of the hardware loop
       // and should be aligned.
-      AlgnCandidates.emplace_back(std::prev(MI));
+      AlignCandidates.emplace_back(std::prev(MI));
     } else if (!MI->isMetaInstruction()) {
-      // single instruction, there should not be any
+      // Single instruction, there should not be any
       // after Bundle Finalization Pass.
       llvm_unreachable("Found an un-expected standalone instruction !");
     }
@@ -1312,7 +1312,8 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
   if (LoopPaddingInBytes > 0)
     llvm_unreachable("LoopStart/LoopBody: insufficient padding!\n");
 
-  return AlgnCandidates;
+  AlignCandidates.emplace_back(MBB.end());
+  return AlignCandidates;
 }
 
 bool llvm::AIEBaseInstrInfo::PTRModSupport::isNativeS20Consumer(

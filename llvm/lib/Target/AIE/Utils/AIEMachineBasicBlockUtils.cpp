@@ -8,6 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 #include "AIEMachineBasicBlockUtils.h"
+#include "AIEBaseInstrInfo.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBundle.h"
 
 namespace llvm::AIEMachineBasicBlockUtils {
@@ -16,13 +18,12 @@ bool isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) {
   if (!MBB)
     return false;
 
-  // If this is a landing pad, it isn't a fall through.  If it has no preds,
-  // then nothing falls through to it.
-  if (MBB->isEHPad() || MBB->pred_empty())
+  // If this is a landing pad, it isn't a fall through.
+  if (MBB->isEHPad())
     return false;
 
   // If there isn't exactly one predecessor, it can't be a fall through.
-  if (MBB->pred_size() > 1)
+  if (MBB->pred_size() != 1)
     return false;
 
   // The predecessor has to be immediately before this block.
@@ -30,9 +31,10 @@ bool isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) {
   if (!Pred->isLayoutSuccessor(MBB))
     return false;
 
-  // If the block is completely empty, then it definitely does fall through.
+  // If the block is completely empty, the Pred will be optimized away,
+  // therefore continue checking for fallthrough check.
   if (Pred->empty())
-    return true;
+    return isBlockOnlyReachableByFallthrough(Pred);
 
   // Check the terminators in the previous blocks
   for (const auto &MI : Pred->terminators()) {
@@ -53,4 +55,35 @@ bool isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) {
 
   return true;
 }
+
+MachineBasicBlock *getPrevNonEmptyMBB(MachineBasicBlock *MBB) {
+  if (!MBB)
+    return nullptr;
+
+  while ((MBB = MBB->getPrevNode())) {
+    if (MBB->empty())
+      continue;
+
+    return MBB;
+  }
+  return nullptr;
+}
+
+namespace {
+const AIEBaseInstrInfo *getTII(const MachineFunction &MF) {
+  auto &Subtarget = MF.getSubtarget();
+  return static_cast<const AIEBaseInstrInfo *>(Subtarget.getInstrInfo());
+}
+
+} // namespace
+
+unsigned getMBBSizeInBytes(MachineBasicBlock &MBB) {
+  const AIEBaseInstrInfo *TII = getTII(*MBB.getParent());
+  unsigned Size = 0;
+  for (auto &MI : MBB) {
+    Size += TII->getAIEMachineBundleSize(&MI);
+  }
+  return Size;
+}
+
 } // namespace llvm::AIEMachineBasicBlockUtils

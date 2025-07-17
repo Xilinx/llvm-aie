@@ -443,7 +443,8 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
 
   virtual bool isZOLBody(const MachineBasicBlock &MBB) const;
 
-  // Return the vector of Alignment Region Boundaries.
+  /// Return the vector of Alignment Region Boundaries.
+  /// Note: All the MBBs' Region Boundaries are considered.
   virtual std::vector<MachineBasicBlock::iterator>
   getAlignmentBoundaries(MachineBasicBlock &MBB) const;
 
