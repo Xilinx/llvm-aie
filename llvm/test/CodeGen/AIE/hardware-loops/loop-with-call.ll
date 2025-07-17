@@ -148,7 +148,7 @@ define dso_local void @_Z5test4i(i32 noundef %n) {
 ; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
 ; AIE2-LABEL: _Z5test4i:
 ; AIE2:       // %bb.0: // %entry
-; AIE2-NEXT:    nopa ; paddb [sp], #32; nopxm
+; AIE2-NEXT:    paddb [sp], #32; nopa ; nops ; nopxm ; nopv
 ; AIE2-NEXT:    mova r1, #0; st r16, [sp, #-24] // 4-byte Folded Spill
 ; AIE2-NEXT:    ge r0, r1, r0; mov r16, r0
 ; AIE2-NEXT:    jnz r0, #.LBB1_3
@@ -158,7 +158,7 @@ define dso_local void @_Z5test4i(i32 noundef %n) {
 ; AIE2-NEXT:    st p6, [sp, #-28] // 4-byte Folded Spill Delay Slot 2
 ; AIE2-NEXT:    st p7, [sp, #-32] // 4-byte Folded Spill Delay Slot 1
 ; AIE2-NEXT:  // %bb.1:
-; AIE2-NEXT:    nopa ; movxm p6, #.L.str
+; AIE2-NEXT:    movxm p6, #.L.str
 ; AIE2-NEXT:    movxm p7, #.L.str.1
 ; AIE2-NEXT:  .LBB1_2: // %for.body
 ; AIE2-NEXT:    // =>This Inner Loop Header: Depth=1
@@ -260,7 +260,7 @@ for.body:                                         ; preds = %entry, %for.body
 define dso_local void @memcpy_lowered_to_call(ptr nocapture writeonly %a, ptr nocapture readonly %b, i32 noundef %n) {
 ; AIE2-LABEL: memcpy_lowered_to_call:
 ; AIE2:       // %bb.0: // %entry
-; AIE2-NEXT:    paddb [sp], #32; nopxm
+; AIE2-NEXT:    nopa ; paddb [sp], #32; nopxm
 ; AIE2-NEXT:    mova r1, #0; st r16, [sp, #-20] // 4-byte Folded Spill
 ; AIE2-NEXT:    ge r0, r1, r0; mov r16, r0
 ; AIE2-NEXT:    jnz r0, #.LBB2_3
@@ -270,7 +270,7 @@ define dso_local void @memcpy_lowered_to_call(ptr nocapture writeonly %a, ptr no
 ; AIE2-NEXT:    st p6, [sp, #-28] // 4-byte Folded Spill Delay Slot 2
 ; AIE2-NEXT:    st p7, [sp, #-32] // 4-byte Folded Spill Delay Slot 1
 ; AIE2-NEXT:  // %bb.1:
-; AIE2-NEXT:    nopa ; mov p6, p0
+; AIE2-NEXT:    mov p6, p0
 ; AIE2-NEXT:    mov p7, p1
 ; AIE2-NEXT:    movxm r17, #4096
 ; AIE2-NEXT:  .LBB2_2: // %for.body
@@ -306,15 +306,15 @@ define dso_local void @memcpy_lowered_to_call(ptr nocapture writeonly %a, ptr no
 ; AIE2P-LABEL: memcpy_lowered_to_call:
 ; AIE2P:       // %bb.0: // %entry
 ; AIE2P-NEXT:    mova r1, #0; nopb ; nops ; paddxm [sp], #64; nopv
-; AIE2P-NEXT:    st r8, [sp, #-56]; ge r0, r1, r0; mov r8, r0 // 4-byte Folded Spill
+; AIE2P-NEXT:    nopa ; nopb ; st r8, [sp, #-56]; ge r0, r1, r0; mov r8, r0; nopv // 4-byte Folded Spill
 ; AIE2P-NEXT:    jnz r0, #.LBB2_3
-; AIE2P-NEXT:    nop // Delay Slot 5
+; AIE2P-NEXT:    nopx // Delay Slot 5
 ; AIE2P-NEXT:    st lr, [sp, #-52] // 4-byte Folded Spill Delay Slot 4
 ; AIE2P-NEXT:    st p6, [sp, #-60] // 4-byte Folded Spill Delay Slot 3
 ; AIE2P-NEXT:    st p7, [sp, #-64] // 4-byte Folded Spill Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
 ; AIE2P-NEXT:  // %bb.1:
-; AIE2P-NEXT:    nopa ; nopb ; movs p6, p0; nopx ; mov p7, p1; nopv
+; AIE2P-NEXT:    movs p6, p0; mov p7, p1
 ; AIE2P-NEXT:  .LBB2_2: // %for.body
 ; AIE2P-NEXT:    // =>This Inner Loop Header: Depth=1
 ; AIE2P-NEXT:    nopa ; nopb ; jl #memcpy

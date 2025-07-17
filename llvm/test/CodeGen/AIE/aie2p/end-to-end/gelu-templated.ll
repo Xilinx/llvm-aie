@@ -60,11 +60,11 @@ define void @gelu_fn(ptr noalias %ifm, ptr noalias %ofm, ptr nonnull align 64 de
 ; CHECK-NEXT:    padda [p1], m0; nopb ; vfloor.s32.bf16 x10, wh10, s0; nopxm ; nopv
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], #64; nopb ; nopx ; vconv.bf16.fp32 x3, cml2; vadd.f dm2, dm4, dm0, r0
-; CHECK-NEXT:    vst x3, [p1], #64; vmov cml4, cml1
-; CHECK-NEXT:    vconv.bf16.fp32 x5, cml4; vshuffle x1, x1, x10, r1; vmul.f dm4, x3, x2, r2
-; CHECK-NEXT:    vfloor.s32.bf16 x10, wh8, s0; vmin_ge.16 x7, r16, x1, x0, vaddsign1
-; CHECK-NEXT:    vfloor.s32.bf16 x1, wl8, s0; vmax_lt.16 x3, r16, x7, x6, vaddsign1
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], #64; nopb ; vconv.bf16.fp32 x3, cml2; nopxm ; vadd.f dm2, dm4, dm0, r0
+; CHECK-NEXT:    nopa ; nopb ; vst x3, [p1], #64; nopx ; vmov cml4, cml1; nopv
+; CHECK-NEXT:    nopa ; nopb ; vconv.bf16.fp32 x5, cml4; nopx ; vshuffle x1, x1, x10, r1; vmul.f dm4, x3, x2, r2
+; CHECK-NEXT:    nopa ; nopb ; vfloor.s32.bf16 x10, wh8, s0; nopx ; vmin_ge.16 x7, r16, x1, x0, vaddsign1; nopv
+; CHECK-NEXT:    nopa ; nopb ; vfloor.s32.bf16 x1, wl8, s0; nopx ; vmax_lt.16 x3, r16, x7, x6, vaddsign1; nopv
 ; CHECK-NEXT:  .L_LEnd0:
 ; CHECK-NEXT:    nopa ; nopb ; vconv.bf16.fp32 x8, cml3; nopxm ; vmul.f dm3, x5, x4, r2
 ; CHECK-NEXT:  // %bb.2:

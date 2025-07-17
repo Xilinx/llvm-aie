@@ -91,12 +91,17 @@ body:             |
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE {
   ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     NOPB
   ; CHECK-NEXT:     NOPXM
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOP
+  ; CHECK-NEXT:     NOPS
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
   ; CHECK-NEXT:     NOP

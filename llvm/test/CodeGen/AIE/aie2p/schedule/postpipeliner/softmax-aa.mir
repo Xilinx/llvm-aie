@@ -18,7 +18,7 @@
   ; CHECK-LABEL: softmax_row_major_base:
   ; CHECK:         .p2align 4
   ; CHECK-NEXT:  // %bb.0: // %entry
-  ; CHECK-NEXT:    mova r2, #0; nopb ; nopxm
+  ; CHECK-NEXT:    mova r2, #0; nopx
   ; CHECK-NEXT:    ge r2, r2, r0
   ; CHECK-NEXT:    jnz r2, #.LBB0_5
   ; CHECK-NEXT:    nop // Delay Slot 5
@@ -27,8 +27,8 @@
   ; CHECK-NEXT:    nop // Delay Slot 2
   ; CHECK-NEXT:    nop // Delay Slot 1
   ; CHECK-NEXT:  // %bb.1: // %for.cond2.preheader.lr.ph
-  ; CHECK-NEXT:    mova r3, #-4; nopb ; nops ; movxm r2, #16256; nopv
-  ; CHECK-NEXT:    mova r2, #828; nopb ; movs p0, p1; ashl r1, r1, r3; vbcst.16 x0, r2; nopv
+  ; CHECK-NEXT:    mova r3, #-4; movxm r2, #16256
+  ; CHECK-NEXT:    mova r2, #828; movs p0, p1; ashl r1, r1, r3; vbcst.16 x0, r2
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_2: // %for.cond2.preheader
   ; CHECK-NEXT:    // =>This Loop Header: Depth=1
@@ -125,7 +125,7 @@
   ; CHECK-LABEL: softmax_row_major_lock_step_outer_loop:
   ; CHECK:         .p2align 4
   ; CHECK-NEXT:  // %bb.0: // %entry
-  ; CHECK-NEXT:    mova r2, #0; nopb ; nopxm
+  ; CHECK-NEXT:    mova r2, #0
   ; CHECK-NEXT:    ge r2, r2, r0
   ; CHECK-NEXT:    jnz r2, #.LBB1_5
   ; CHECK-NEXT:    nop // Delay Slot 5
@@ -134,7 +134,7 @@
   ; CHECK-NEXT:    nop // Delay Slot 2
   ; CHECK-NEXT:    nop // Delay Slot 1
   ; CHECK-NEXT:  // %bb.1: // %for.cond2.preheader.lr.ph
-  ; CHECK-NEXT:    nopa ; nopb ; movxm r2, #16256; nops
+  ; CHECK-NEXT:    movxm r2, #16256
   ; CHECK-NEXT:    mova m0, #32; movx r3, #-4
   ; CHECK-NEXT:    mova r2, #828; movs p0, p1; ashl r1, r1, r3; vbcst.16 x0, r2
   ; CHECK-NEXT:    .p2align 4
@@ -238,7 +238,7 @@
   ; CHECK-LABEL: softmax_row_major_pipeline_fail_diff_step:
   ; CHECK:         .p2align 4
   ; CHECK-NEXT:  // %bb.0: // %entry
-  ; CHECK-NEXT:    mova r2, #0; nopb ; nopxm
+  ; CHECK-NEXT:    mova r2, #0; nopx
   ; CHECK-NEXT:    ge r2, r2, r0
   ; CHECK-NEXT:    jnz r2, #.LBB2_5
   ; CHECK-NEXT:    nop // Delay Slot 5
@@ -247,8 +247,8 @@
   ; CHECK-NEXT:    nop // Delay Slot 2
   ; CHECK-NEXT:    nop // Delay Slot 1
   ; CHECK-NEXT:  // %bb.1: // %for.cond2.preheader.lr.ph
-  ; CHECK-NEXT:    mova r3, #-4; nopb ; nops ; movxm r2, #16256; nopv
-  ; CHECK-NEXT:    mova r2, #828; nopb ; movs p0, p1; ashl r1, r1, r3; vbcst.16 x0, r2; nopv
+  ; CHECK-NEXT:    mova r3, #-4; movxm r2, #16256
+  ; CHECK-NEXT:    mova r2, #828; movs p0, p1; ashl r1, r1, r3; vbcst.16 x0, r2
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB2_2: // %for.cond2.preheader
   ; CHECK-NEXT:    // =>This Loop Header: Depth=1
@@ -338,7 +338,7 @@
   ; CHECK-LABEL: softmax_row_major_fail_not_lockstep:
   ; CHECK:         .p2align 4
   ; CHECK-NEXT:  // %bb.0: // %entry
-  ; CHECK-NEXT:    mova r2, #0; nopb ; nopxm
+  ; CHECK-NEXT:    mova r2, #0
   ; CHECK-NEXT:    ge r2, r2, r0
   ; CHECK-NEXT:    jnz r2, #.LBB3_5
   ; CHECK-NEXT:    nop // Delay Slot 5
@@ -347,7 +347,7 @@
   ; CHECK-NEXT:    nop // Delay Slot 2
   ; CHECK-NEXT:    nop // Delay Slot 1
   ; CHECK-NEXT:  // %bb.1: // %for.cond2.preheader.lr.ph
-  ; CHECK-NEXT:    nopa ; nopb ; movxm r2, #16256; nops
+  ; CHECK-NEXT:    movxm r2, #16256
   ; CHECK-NEXT:    mova m0, #32; movx r3, #-4
   ; CHECK-NEXT:    mova r2, #828; movs p0, p1; ashl r1, r1, r3; vbcst.16 x0, r2
   ; CHECK-NEXT:    .p2align 4

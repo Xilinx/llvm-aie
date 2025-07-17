@@ -15,7 +15,7 @@
   ; CHECK-LABEL: loadAddStore:
   ; CHECK:         .p2align 4
   ; CHECK-NEXT:  // %bb.0: // %entry
-  ; CHECK-NEXT:    mova r1, #0; nopb ; nopxm
+  ; CHECK-NEXT:    mova r1, #0; nopb ; nopx
   ; CHECK-NEXT:    ge r1, r1, r0
   ; CHECK-NEXT:    jnz r1, #.LBB0_4
   ; CHECK-NEXT:    nop // Delay Slot 5
@@ -24,8 +24,8 @@
   ; CHECK-NEXT:    nop // Delay Slot 2
   ; CHECK-NEXT:    nop // Delay Slot 1
   ; CHECK-NEXT:  // %bb.1: // %for.body.preheader
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; movxm ls, #.LBB0_2; nopv
-  ; CHECK-NEXT:    nopa ; add.nc lc, r0, #-8
+  ; CHECK-NEXT:    movxm ls, #.LBB0_2
+  ; CHECK-NEXT:    add.nc lc, r0, #-8
   ; CHECK-NEXT:    lda r0, [p1], #4; movxm le, #.L_LEnd0
   ; CHECK-NEXT:    nopb ; lda r0, [p1], #4; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; lda r0, [p1], #4; nops ; nopxm ; nopv

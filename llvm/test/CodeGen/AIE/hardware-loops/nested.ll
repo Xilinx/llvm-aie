@@ -51,7 +51,7 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; AIE2-NEXT:    st r2, [p0, #0] // Delay Slot 1
 ; AIE2-NEXT:  // %bb.3: // %for.cond3.for.cond.cleanup5_crit_edge
 ; AIE2-NEXT:    // in Loop: Header=BB0_1 Depth=1
-; AIE2-NEXT:    nopa ; nopb ; add r3, r3, #1; nopm
+; AIE2-NEXT:    nopa ; nopb ; add r3, r3, #1; nopm ; nops
 ; AIE2-NEXT:    eq r5, r0, r3
 ; AIE2-NEXT:    jz r5, #.LBB0_1
 ; AIE2-NEXT:    nop // Delay Slot 5
@@ -60,7 +60,7 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; AIE2-NEXT:    nop // Delay Slot 2
 ; AIE2-NEXT:    nop // Delay Slot 1
 ; AIE2-NEXT:  // %bb.4: // %for.cond.cleanup
-; AIE2-NEXT:    nopa ; ret lr
+; AIE2-NEXT:    ret lr
 ; AIE2-NEXT:    nop // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
 ; AIE2-NEXT:    nop // Delay Slot 3
@@ -100,7 +100,7 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; AIE2P-NEXT:    st r2, [p0, #0] // Delay Slot 1
 ; AIE2P-NEXT:  // %bb.3: // %for.cond3.for.cond.cleanup5_crit_edge
 ; AIE2P-NEXT:    // in Loop: Header=BB0_1 Depth=1
-; AIE2P-NEXT:    nopa ; nopb ; add r3, r3, #1; nopm
+; AIE2P-NEXT:    nopa ; nopb ; add r3, r3, #1; nopm ; nops
 ; AIE2P-NEXT:    eq r5, r0, r3
 ; AIE2P-NEXT:    jz r5, #.LBB0_1
 ; AIE2P-NEXT:    nop // Delay Slot 5
@@ -109,7 +109,7 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; AIE2P-NEXT:    nop // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
 ; AIE2P-NEXT:  // %bb.4: // %for.cond.cleanup
-; AIE2P-NEXT:    nopa ; ret lr
+; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    nop // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
 ; AIE2P-NEXT:    nop // Delay Slot 3

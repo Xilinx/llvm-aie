@@ -318,7 +318,7 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; DCL-NEXT:    vldb wl10, [p1], #32; add r0, r10, #33; mov r10, p0; vmac cm3, cm3, x11, x6, r4 // Delay Slot 2
 ; DCL-NEXT:    vldb wh10, [p1], #32; and r10, r10, r9; vmov x8, x10; vmac cm6, cm6, x11, x8, r4 // Delay Slot 1
 ; DCL-NEXT:  // %bb.3: // in Loop: Header=BB0_1 Depth=1
-; DCL-NEXT:    nopx ; vmov x11, x0
+; DCL-NEXT:    nopb ; nopa ; nops ; nopx ; vmov x11, x0; nopv
 ; DCL-NEXT:    vshuffle x0, x4, x2, r3
 ; DCL-NEXT:    vshuffle x11, x0, x11, r8
 ; DCL-NEXT:    nop
@@ -362,7 +362,7 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; DCL-NEXT:    padda.3d [p2], d3; st m7, [sp, #-96] // 4-byte Folded Spill Delay Slot 2
 ; DCL-NEXT:    padda.3d [p1], d2; mov r28, dc7 // Delay Slot 1
 ; DCL-NEXT:  // %bb.4: // %exitStub
-; DCL-NEXT:    lda p7, [sp, #-192]; nopb ; nopxm // 4-byte Folded Reload
+; DCL-NEXT:    lda p7, [sp, #-192] // 4-byte Folded Reload
 ; DCL-NEXT:    lda p6, [sp, #-188] // 4-byte Folded Reload
 ; DCL-NEXT:    ret lr
 ; DCL-NEXT:    nop // Delay Slot 5
@@ -468,7 +468,7 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-NEXT:  .L_LEnd0:
 ; ZOL-NEXT:    vldb wh10, [p1], #32; nopa ; nops ; and r1, r1, r9; vmov x8, x10; vmac cm6, cm6, x11, x8, r4
 ; ZOL-NEXT:  // %bb.3: // in Loop: Header=BB0_1 Depth=1
-; ZOL-NEXT:    nopx ; vmov x11, x0
+; ZOL-NEXT:    nopb ; nopa ; nops ; nopx ; vmov x11, x0; nopv
 ; ZOL-NEXT:    vshuffle x0, x4, x2, r3
 ; ZOL-NEXT:    vshuffle x11, x0, x11, r8
 ; ZOL-NEXT:    nop
@@ -512,7 +512,7 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-NEXT:    padda.3d [p2], d3; st m7, [sp, #-96] // 4-byte Folded Spill Delay Slot 2
 ; ZOL-NEXT:    padda.3d [p1], d2; mov r27, dc7 // Delay Slot 1
 ; ZOL-NEXT:  // %bb.4: // %exitStub
-; ZOL-NEXT:    lda p7, [sp, #-192]; nopb ; nopxm // 4-byte Folded Reload
+; ZOL-NEXT:    lda p7, [sp, #-192] // 4-byte Folded Reload
 ; ZOL-NEXT:    lda p6, [sp, #-188] // 4-byte Folded Reload
 ; ZOL-NEXT:    ret lr
 ; ZOL-NEXT:    nop // Delay Slot 5

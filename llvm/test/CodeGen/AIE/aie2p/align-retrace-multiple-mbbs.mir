@@ -43,15 +43,18 @@ body:             |
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $r0, implicit-def $r8, implicit killed $r8, implicit $sp, implicit killed $r1, implicit killed $r0 {
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPB
   ; CHECK-NEXT:     ST_dms_sts_spill killed $r8, -56, implicit $sp :: (store (s32) into %stack.1)
   ; CHECK-NEXT:     renamable $r0 = GE killed renamable $r1, killed $r0
   ; CHECK-NEXT:     $r8 = MOV_alu_mv_mv_mv_scl internal $r0
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit killed $r0 {
   ; CHECK-NEXT:     JNZ killed renamable $r0, %bb.3
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOP
+  ; CHECK-NEXT:     NOPX
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit $lr, implicit $sp {
   ; CHECK-NEXT:     ST_dms_sts_spill $lr, -52, implicit $sp :: (store (s32) into %stack.0)
@@ -72,12 +75,8 @@ body:             |
   ; CHECK-NEXT:   liveins: $p0, $p1, $r8
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   BUNDLE implicit-def $p6, implicit-def $p7, implicit killed $p0, implicit killed $p1 {
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPB
   ; CHECK-NEXT:     $p6 = MOVS killed $p0
-  ; CHECK-NEXT:     NOPX
   ; CHECK-NEXT:     $p7 = MOV_alu_mv_mv_mv_scl killed $p1
-  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:

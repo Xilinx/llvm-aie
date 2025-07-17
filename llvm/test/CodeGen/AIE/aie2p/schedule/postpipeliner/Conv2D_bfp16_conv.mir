@@ -16,7 +16,7 @@
   ; CONSERVATIVE-LABEL: convert_bf16_to_bfp16:
   ; CONSERVATIVE:         .p2align 4
   ; CONSERVATIVE-NEXT:  // %bb.0: // %entry
-  ; CONSERVATIVE-NEXT:    lda r0, [p2, #0]
+  ; CONSERVATIVE-NEXT:    lda r0, [p2, #0]; nopxm
   ; CONSERVATIVE-NEXT:    nop
   ; CONSERVATIVE-NEXT:    nop
   ; CONSERVATIVE-NEXT:    nop
@@ -30,7 +30,7 @@
   ; CONSERVATIVE-NEXT:    nop // Delay Slot 2
   ; CONSERVATIVE-NEXT:    nop // Delay Slot 1
   ; CONSERVATIVE-NEXT:  // %bb.1:
-  ; CONSERVATIVE-NEXT:    mova m0, #12; nopb ; nopx ; mov p3, p2
+  ; CONSERVATIVE-NEXT:    mova m0, #12; mov p3, p2
   ; CONSERVATIVE-NEXT:    padda [p3], m0
   ; CONSERVATIVE-NEXT:    lda m0, [p3], #-4
   ; CONSERVATIVE-NEXT:    lda m1, [p3], #-4
@@ -58,8 +58,8 @@
   ; CONSERVATIVE-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; vst.push.576.conv.bfp16ebs8.fp32 dm0, [p2, sf, r26]; nopxm ; nopv
   ; CONSERVATIVE-NEXT:    nopa ; vldb.pop.512 x0, [p0, lf0, r24]; vst.flush.512.conv [p2, sf, r26]; nopxm ; nopv
   ; CONSERVATIVE-NEXT:    nopa ; vldb.pop.512.2d x2, [p0, lf0, r24, d1]; vst.flush.512.conv.2d [p2, sf, r26, d0]; nopxm ; nopv
-  ; CONSERVATIVE-NEXT:    nopa ; nopb ; nopx ; vconv.fp32.bf16 cml0, x0
-  ; CONSERVATIVE-NEXT:    vconv.fp32.bf16 cmh0, x2
+  ; CONSERVATIVE-NEXT:    nopa ; nopb ; nops ; nopx ; vconv.fp32.bf16 cml0, x0; nopv
+  ; CONSERVATIVE-NEXT:    nopa ; nopb ; nops ; nopx ; vconv.fp32.bf16 cmh0, x2; nopv
   ; CONSERVATIVE-NEXT:  .L_LEnd0:
   ; CONSERVATIVE-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CONSERVATIVE-NEXT:  // %bb.3:
@@ -88,7 +88,7 @@
   ; OPTIMISTIC-LABEL: convert_bf16_to_bfp16:
   ; OPTIMISTIC:         .p2align 4
   ; OPTIMISTIC-NEXT:  // %bb.0: // %entry
-  ; OPTIMISTIC-NEXT:    lda r0, [p2, #0]
+  ; OPTIMISTIC-NEXT:    lda r0, [p2, #0]; nopb ; nops ; nopxm ; nopv
   ; OPTIMISTIC-NEXT:    nop
   ; OPTIMISTIC-NEXT:    nop
   ; OPTIMISTIC-NEXT:    nop
@@ -102,8 +102,8 @@
   ; OPTIMISTIC-NEXT:    nop // Delay Slot 2
   ; OPTIMISTIC-NEXT:    nop // Delay Slot 1
   ; OPTIMISTIC-NEXT:  // %bb.1:
-  ; OPTIMISTIC-NEXT:    mova m0, #12; nopb ; nops ; nopx ; mov p3, p2; nopv
-  ; OPTIMISTIC-NEXT:    padda [p3], m0; nopx
+  ; OPTIMISTIC-NEXT:    mova m0, #12; mov p3, p2
+  ; OPTIMISTIC-NEXT:    padda [p3], m0
   ; OPTIMISTIC-NEXT:    lda m0, [p3], #-4
   ; OPTIMISTIC-NEXT:    lda m1, [p3], #-4
   ; OPTIMISTIC-NEXT:    lda dn0, [p3, #0]

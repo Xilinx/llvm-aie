@@ -79,11 +79,18 @@ body:             |
   ; CHECK-NEXT:   BUNDLE {
   ; CHECK-NEXT:     $x1, $p3, $dc2 = VLDA_2D_dmx_lda_x killed $p3, $d2 :: (load (<32 x s16>))
   ; CHECK-NEXT:     renamable $x6, renamable $p0 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1 killed renamable $p0, renamable $m4, implicit $crunpacksize, implicit $unpacksign1 :: (load (<32 x s8>))
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPX
   ; CHECK-NEXT:     renamable $x9 = VADD_16 killed renamable $x7, killed renamable $x10
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
+  ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     renamable $x8, renamable $p0 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1 killed renamable $p0, renamable $m4, implicit $crunpacksize, implicit $unpacksign1 :: (load (<32 x s8>))
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPX
   ; CHECK-NEXT:     renamable $x11 = VADD_16 killed renamable $x9, killed renamable $x3
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
   ; CHECK-NEXT:     renamable $x10, renamable $p0 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1 killed renamable $p0, renamable $m4, implicit $crunpacksize, implicit $unpacksign1 :: (load (<32 x s8>))

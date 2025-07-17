@@ -34,7 +34,7 @@ declare { ptr, i20, i20 } @llvm.aie2.add.3d(ptr, i20, i20, i20, i20, i20, i20, i
 define void @add2d(ptr noalias %params, ptr noalias %ifm1_data, ptr noalias %ifm2_data, ptr noalias %ofm_data, ptr %.out, ptr %conv.i.i.i.out, ptr %idx.ext9.out, ptr %.out1, ptr %.out2, ptr %.out3, ptr %.out4, ptr %.out5, ptr %conv.i.i.i.i.i.out, ptr %.out6, ptr %conv.i.i.i46.out, ptr %xtraiter.out, ptr %in_ptr1.051.unr.ce.out, ptr %in_ptr2.0.in50.unr.ce.out, ptr %out_ptr.049.unr.ce.out, ptr %itr_left_cnt0.048.unr.ce.out, ptr %itr_left_cnt1.047.unr.ce.out) #3 {
 ; ASM-LABEL: add2d:
 ; ASM:       // %bb.0: // %newFuncRoot
-; ASM-NEXT:    paddb [p0], #40; nopx
+; ASM-NEXT:    paddb [p0], #40
 ; ASM-NEXT:    lda m2, [p0], #-4
 ; ASM-NEXT:    lda m3, [p0], #8
 ; ASM-NEXT:    lda m5, [p0], #8
@@ -79,8 +79,8 @@ define void @add2d(ptr noalias %params, ptr noalias %ifm1_data, ptr noalias %ifm
 ; ASM-NEXT:    st r6, [p7, #0]; paddb [p2], m5; and r8, r3, r0 // Delay Slot 2
 ; ASM-NEXT:    padda [p1], m2; paddb [p2], m4; movx r0, #0; st r8, [p0, #0] // Delay Slot 1
 ; ASM-NEXT:  // %bb.1:
-; ASM-NEXT:    nopb ; nopa ; nops ; j #.LBB0_5; nopv
-; ASM-NEXT:    nopa ; nopx // Delay Slot 5
+; ASM-NEXT:    j #.LBB0_5
+; ASM-NEXT:    nop // Delay Slot 5
 ; ASM-NEXT:    nop // Delay Slot 4
 ; ASM-NEXT:    nop // Delay Slot 3
 ; ASM-NEXT:    nop // Delay Slot 2

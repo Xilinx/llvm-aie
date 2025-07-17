@@ -135,7 +135,7 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ASM-NEXT:    nopb ; nopa ; nops ; add r0, r0, #33; nopm ; vmac cm7, cm7, x9, x10, r4
 ; ASM-NEXT:  // %bb.3: // %outer.loop.latch
 ; ASM-NEXT:    // in Loop: Header=BB0_1 Depth=1
-; ASM-NEXT:    nopb ; nopa ; vst.srs.s16.s32 bmh0, s2, [p3, #32]; nopxm ; nopv
+; ASM-NEXT:    vst.srs.s16.s32 bmh0, s2, [p3, #32]; nopb ; nopx
 ; ASM-NEXT:    vst.srs.s16.s32 bml0, s3, [p3], #64
 ; ASM-NEXT:    vst.srs.s16.s32 bmh1, s3, [p3, #32]
 ; ASM-NEXT:    vst.srs.s16.s32 bml1, s3, [p3], m4
@@ -159,7 +159,7 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ASM-NEXT:    padda.3d [p1], d2; paddb [p2], m1; mov m3, r14 // Delay Slot 2
 ; ASM-NEXT:    padda.3d [p2], d3; mov r25, dc5 // Delay Slot 1
 ; ASM-NEXT:  // %bb.4: // %exitStub
-; ASM-NEXT:    lda p7, [sp, #-32]; nopb ; nopxm // 4-byte Folded Reload
+; ASM-NEXT:    lda p7, [sp, #-32] // 4-byte Folded Reload
 ; ASM-NEXT:    lda p6, [sp, #-28] // 4-byte Folded Reload
 ; ASM-NEXT:    ret lr
 ; ASM-NEXT:    nop // Delay Slot 5

@@ -16,8 +16,8 @@ define dso_local i32 @dot(ptr nocapture readonly %a, ptr nocapture readonly %b, 
 ; of pseudos in pre-RA scheduling/pipelining
 ; CHECK-LABEL: dot:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r0, #0; nopb ; nopxm
-; CHECK-NEXT:    ge r2, r0, r1
+; CHECK-NEXT:    nopb ; mova r0, #0; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; ge r2, r0, r1
 ; CHECK-NEXT:    jnz r2, #.LBB0_7
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -35,7 +35,7 @@ define dso_local i32 @dot(ptr nocapture readonly %a, ptr nocapture readonly %b, 
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.2: // %for.body
-; CHECK-NEXT:    lda r4, [p1], m0; nopb ; add r5, r5, #-1; nopm
+; CHECK-NEXT:    lda r4, [p1], m0; add r5, r5, #-1
 ; CHECK-NEXT:    lda r1, [p0], m0; jz r5, #.LBB0_5
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4

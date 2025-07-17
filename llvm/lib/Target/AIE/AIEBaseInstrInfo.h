@@ -391,8 +391,10 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual bool isZOLBody(const MachineBasicBlock &MBB) const;
 
   // Return the vector of Alignment Region Boundaries.
+  // \p EnforceAsserts If true, asserts that the MBB is well-formed.
   virtual std::vector<MachineBasicBlock::iterator>
-  getAlignmentBoundaries(MachineBasicBlock &MBB) const;
+  getAlignmentBoundaries(MachineBasicBlock &MBB,
+                         const bool EnforceAsserts = true) const;
 
   virtual unsigned getPseudoJNZDOpcode() const {
     llvm_unreachable("Need to implement this hook for hardware loop support.");

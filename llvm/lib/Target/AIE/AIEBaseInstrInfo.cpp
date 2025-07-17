@@ -1186,7 +1186,8 @@ const PacketFormats &AIEBaseInstrInfo::getPacketFormats() const {
 }
 
 std::vector<MachineBasicBlock::iterator>
-AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
+AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB,
+                                         const bool EnforceAsserts) const {
   std::vector<MachineBasicBlock::iterator> AlgnCandidates;
 
   unsigned DelaySlot = 0;
@@ -1309,7 +1310,7 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
     }
   }
 
-  if (LoopPaddingInBytes > 0)
+  if (EnforceAsserts && LoopPaddingInBytes > 0)
     llvm_unreachable("LoopStart/LoopBody: insufficient padding!\n");
 
   return AlgnCandidates;

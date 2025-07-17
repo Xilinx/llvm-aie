@@ -19,7 +19,7 @@
   ; CHECK-LABEL: round:
   ; CHECK:         .p2align 4
   ; CHECK-NEXT:  // %bb.0: // %entry
-  ; CHECK-NEXT:    mova r1, #0; nopb ; nopxm
+  ; CHECK-NEXT:    mova r1, #0; nopb ; nopx
   ; CHECK-NEXT:    ge r1, r1, r0
   ; CHECK-NEXT:    jnz r1, #.LBB0_4
   ; CHECK-NEXT:    nop // Delay Slot 5
@@ -28,7 +28,7 @@
   ; CHECK-NEXT:    nop // Delay Slot 2
   ; CHECK-NEXT:    nop // Delay Slot 1
   ; CHECK-NEXT:  // %bb.1: // %for.body.preheader
-  ; CHECK-NEXT:    nopb ; vlda.ups.s32.s8 cm0, s0, [p0], #32; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vlda.ups.s32.s8 cm0, s0, [p0], #32
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vlda.ups.s32.s8 cm1, s0, [p0], #32
