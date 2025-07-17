@@ -17,7 +17,7 @@
   ; CHECK-LABEL: conv2d:
   ; CHECK:         .p2align 4
   ; CHECK-NEXT:  // %bb.0: // %entry
-  ; CHECK-NEXT:    mova r1, #0; nopb ; nopxm
+  ; CHECK-NEXT:    mova r1, #0
   ; CHECK-NEXT:    ge r1, r1, r0
   ; CHECK-NEXT:    jnz r1, #.LBB0_4
   ; CHECK-NEXT:    nop // Delay Slot 5
@@ -26,7 +26,7 @@
   ; CHECK-NEXT:    nop // Delay Slot 2
   ; CHECK-NEXT:    nop // Delay Slot 1
   ; CHECK-NEXT:  // %bb.1: // %for.body.preheader
-  ; CHECK-NEXT:    nopa ; vldb wh10, [p4, #32]; nopxm
+  ; CHECK-NEXT:    vldb wh10, [p4, #32]
   ; CHECK-NEXT:    vldb wl10, [p4], m4
   ; CHECK-NEXT:    vldb wh10, [p5, #32]
   ; CHECK-NEXT:    vldb wh7, [p4, #32]

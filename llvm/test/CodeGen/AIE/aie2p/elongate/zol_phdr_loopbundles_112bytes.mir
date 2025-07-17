@@ -43,9 +43,9 @@
   ; CHECK-NEXT:    vldb x0, [p0], #64; add r0, r0, #-1; vadd.16 x6, x4, x1
   ; CHECK-NEXT:    vldb x2, [p0], #64; vadd.16 x4, x6, x0
   ; CHECK-NEXT:  .L_LEnd0:
-  ; CHECK-NEXT:    nopa ; vldb x1, [p0], #128; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vldb x1, [p0], #128
   ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
-  ; CHECK-NEXT:    nops ; vadd.16 x6, x4, x1
+  ; CHECK-NEXT:    vadd.16 x6, x4, x1
   ; CHECK-NEXT:    vadd.16 x4, x6, x0
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vadd.16 x6, x4, x1

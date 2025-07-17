@@ -10,7 +10,7 @@
 define dso_local noundef <64 x i8> @_Z29test_set_v128uint_set_512_256iDv32_DU8_(i32 noundef %idx, <32 x i8> noundef %b) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z29test_set_v128uint_set_512_256iDv32_DU8_:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r1, #1; nopxm
+; CHECK-NEXT:    mova r1, #1; nopx
 ; CHECK-NEXT:    and r0, r0, r1
 ; CHECK-NEXT:    jz r0, #.LBB0_2
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -19,7 +19,7 @@ define dso_local noundef <64 x i8> @_Z29test_set_v128uint_set_512_256iDv32_DU8_(
 ; CHECK-NEXT:    vmov wl0, wl2 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.else.i
-; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vmov wh0, wl0; nopv
+; CHECK-NEXT:    vmov wh0, wl0
 ; CHECK-NEXT:  .LBB0_2: // %_ZL13set_v128uint4iDv32_DU8_.exit
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -77,7 +77,7 @@ define dso_local noundef <128 x i8> @_Z27test_set_v256uint4_1024_256iDv32_DU8_(i
 ; CHECK-NEXT:    st lr, [sp, #-156] // 4-byte Folded Spill Delay Slot 3
 ; CHECK-NEXT:    vst wh5, [sp, #-32] // 32-byte Folded Spill Delay Slot 2
 ; CHECK-NEXT:    mova r16, #2 // Delay Slot 1
-; CHECK-NEXT:    nopb ; nopa ; nops ; eq r1, r0, r16; nopm ; nopv
+; CHECK-NEXT:    nopa ; nopb ; eq r1, r0, r16; nopm ; nops
 ; CHECK-NEXT:    jnz r1, #.LBB2_5
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -85,7 +85,7 @@ define dso_local noundef <128 x i8> @_Z27test_set_v256uint4_1024_256iDv32_DU8_(i
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %entry
-; CHECK-NEXT:    mova r1, #1; nopb ; nopxm
+; CHECK-NEXT:    mova r1, #1
 ; CHECK-NEXT:    eq r1, r0, r1
 ; CHECK-NEXT:    jnz r1, #.LBB2_4
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -94,15 +94,15 @@ define dso_local noundef <128 x i8> @_Z27test_set_v256uint4_1024_256iDv32_DU8_(i
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.2: // %entry
-; CHECK-NEXT:    nopa ; nopb ; jnz r0, #.LBB2_6; nops
+; CHECK-NEXT:    jnz r0, #.LBB2_6
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vlda wh4, [sp, #-96] // 32-byte Folded Reload Delay Slot 4
 ; CHECK-NEXT:    vlda wl4, [sp, #-128] // 32-byte Folded Reload Delay Slot 3
 ; CHECK-NEXT:    vlda wh5, [sp, #-32] // 32-byte Folded Reload Delay Slot 2
 ; CHECK-NEXT:    vlda wl5, [sp, #-64] // 32-byte Folded Reload Delay Slot 1
 ; CHECK-NEXT:  // %bb.3: // %if.then.i
-; CHECK-NEXT:    nopb ; nopa ; nops ; j #.LBB2_6; nopv
-; CHECK-NEXT:    nopa ; nopx // Delay Slot 5
+; CHECK-NEXT:    j #.LBB2_6
+; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
@@ -194,7 +194,7 @@ entry:
 define dso_local noundef <128 x i8> @_Z27test_set_v256uint4_1024_512iDv64_DU8_(i32 noundef %idx, <64 x i8> noundef %b) local_unnamed_addr #1 {
 ; CHECK-LABEL: _Z27test_set_v256uint4_1024_512iDv64_DU8_:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r1, #1; nopxm
+; CHECK-NEXT:    mova r1, #1; nopx
 ; CHECK-NEXT:    and r0, r0, r1
 ; CHECK-NEXT:    jz r0, #.LBB4_2
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -203,7 +203,7 @@ define dso_local noundef <128 x i8> @_Z27test_set_v256uint4_1024_512iDv64_DU8_(i
 ; CHECK-NEXT:    vmov x4, x0 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.else.i
-; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vmov x5, x4; nopv
+; CHECK-NEXT:    vmov x5, x4
 ; CHECK-NEXT:  .LBB4_2: // %_ZL13set_v256uint4iDv64_DU8_.exit
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -252,7 +252,7 @@ entry:
 define dso_local noundef <8 x i64> @_Z17test_set_v16acc32iDv8_u7__acc32(i32 noundef %idx, <4 x i64> noundef %b) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z17test_set_v16acc32iDv8_u7__acc32:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r1, #1; nopxm
+; CHECK-NEXT:    mova r1, #1; nopx
 ; CHECK-NEXT:    and r0, r0, r1
 ; CHECK-NEXT:    jz r0, #.LBB6_2
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -261,7 +261,7 @@ define dso_local noundef <8 x i64> @_Z17test_set_v16acc32iDv8_u7__acc32(i32 noun
 ; CHECK-NEXT:    vmov amll0, amll1 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.else.i
-; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vmov amlh0, amll0; nopv
+; CHECK-NEXT:    vmov amlh0, amll0
 ; CHECK-NEXT:  .LBB6_2: // %_ZL12set_v16acc32iDv8_u7__acc32.exit
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -306,7 +306,7 @@ entry:
 define dso_local noundef <8 x i64> @_Z16test_set_v8acc64iDv4_u7__acc64(i32 noundef %idx, <4 x i64> noundef %b) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z16test_set_v8acc64iDv4_u7__acc64:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r1, #1; nopxm
+; CHECK-NEXT:    mova r1, #1; nopx
 ; CHECK-NEXT:    and r0, r0, r1
 ; CHECK-NEXT:    jz r0, #.LBB8_2
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -315,7 +315,7 @@ define dso_local noundef <8 x i64> @_Z16test_set_v8acc64iDv4_u7__acc64(i32 nound
 ; CHECK-NEXT:    vmov amll0, amll1 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.else.i
-; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vmov amlh0, amll0; nopv
+; CHECK-NEXT:    vmov amlh0, amll0
 ; CHECK-NEXT:  .LBB8_2: // %_ZL11set_v8acc64iDv4_u7__acc64.exit
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -370,14 +370,14 @@ define dso_local noundef <16 x i64> @_Z17test_set_v32acc32iDv8_u7__acc32(i32 nou
 ; CHECK-NEXT:    vst amhl0, [sp, #-64] // 32-byte Folded Spill Delay Slot 2
 ; CHECK-NEXT:    mova r16, #2 // Delay Slot 1
 ; CHECK-NEXT:    nopb ; nopa ; nops ; eq r1, r0, r16; nopm ; nopv
-; CHECK-NEXT:    jnz r1, #.LBB10_5
+; CHECK-NEXT:    nop ; jnz r1, #.LBB10_5
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %entry
-; CHECK-NEXT:    mova r1, #1; nopb ; nopxm
+; CHECK-NEXT:    mova r1, #1
 ; CHECK-NEXT:    eq r1, r0, r1
 ; CHECK-NEXT:    jnz r1, #.LBB10_4
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -386,7 +386,7 @@ define dso_local noundef <16 x i64> @_Z17test_set_v32acc32iDv8_u7__acc32(i32 nou
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.2: // %entry
-; CHECK-NEXT:    nopb ; vlda amhl0, [sp, #-64]; nops ; nopxm ; nopv // 32-byte Folded Reload
+; CHECK-NEXT:    vlda amhl0, [sp, #-64] // 32-byte Folded Reload
 ; CHECK-NEXT:    jnz r0, #.LBB10_6
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -394,8 +394,8 @@ define dso_local noundef <16 x i64> @_Z17test_set_v32acc32iDv8_u7__acc32(i32 nou
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.3: // %if.then.i
-; CHECK-NEXT:    nopb ; nopa ; nops ; j #.LBB10_7; nopv
-; CHECK-NEXT:    nopa ; nopx // Delay Slot 5
+; CHECK-NEXT:    j #.LBB10_7
+; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
@@ -480,7 +480,7 @@ entry:
 define dso_local noundef <16 x i64> @_Z17test_set_v32acc32iDv16_u7__acc32(i32 noundef %idx, <8 x i64> noundef %b) local_unnamed_addr #1 {
 ; CHECK-LABEL: _Z17test_set_v32acc32iDv16_u7__acc32:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r1, #1; nopxm
+; CHECK-NEXT:    mova r1, #1; nopx
 ; CHECK-NEXT:    and r0, r0, r1
 ; CHECK-NEXT:    jz r0, #.LBB12_2
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -489,7 +489,7 @@ define dso_local noundef <16 x i64> @_Z17test_set_v32acc32iDv16_u7__acc32(i32 no
 ; CHECK-NEXT:    vmov bml0, bml1 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.else.i
-; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vmov bmh0, bml0; nopv
+; CHECK-NEXT:    vmov bmh0, bml0
 ; CHECK-NEXT:  .LBB12_2: // %_ZL12set_v32acc32iDv16_u7__acc32.exit
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -544,14 +544,14 @@ define dso_local noundef <16 x i64> @_Z17test_set_v16acc64iDv4_u7__acc64(i32 nou
 ; CHECK-NEXT:    vst amhl0, [sp, #-64] // 32-byte Folded Spill Delay Slot 2
 ; CHECK-NEXT:    mova r16, #2 // Delay Slot 1
 ; CHECK-NEXT:    nopb ; nopa ; nops ; eq r1, r0, r16; nopm ; nopv
-; CHECK-NEXT:    jnz r1, #.LBB14_5
+; CHECK-NEXT:    nop ; jnz r1, #.LBB14_5
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %entry
-; CHECK-NEXT:    mova r1, #1; nopb ; nopxm
+; CHECK-NEXT:    mova r1, #1
 ; CHECK-NEXT:    eq r1, r0, r1
 ; CHECK-NEXT:    jnz r1, #.LBB14_4
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -560,7 +560,7 @@ define dso_local noundef <16 x i64> @_Z17test_set_v16acc64iDv4_u7__acc64(i32 nou
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.2: // %entry
-; CHECK-NEXT:    nopb ; vlda amhl0, [sp, #-64]; nops ; nopxm ; nopv // 32-byte Folded Reload
+; CHECK-NEXT:    vlda amhl0, [sp, #-64] // 32-byte Folded Reload
 ; CHECK-NEXT:    jnz r0, #.LBB14_6
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -568,8 +568,8 @@ define dso_local noundef <16 x i64> @_Z17test_set_v16acc64iDv4_u7__acc64(i32 nou
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.3: // %if.then.i
-; CHECK-NEXT:    nopb ; nopa ; nops ; j #.LBB14_7; nopv
-; CHECK-NEXT:    nopa ; nopx // Delay Slot 5
+; CHECK-NEXT:    j #.LBB14_7
+; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
@@ -654,7 +654,7 @@ entry:
 define dso_local noundef <16 x i64> @_Z17test_set_v16acc64iDv8_u7__acc64(i32 noundef %idx, <8 x i64> noundef %b) local_unnamed_addr #1 {
 ; CHECK-LABEL: _Z17test_set_v16acc64iDv8_u7__acc64:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r1, #1; nopxm
+; CHECK-NEXT:    mova r1, #1; nopx
 ; CHECK-NEXT:    and r0, r0, r1
 ; CHECK-NEXT:    jz r0, #.LBB16_2
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -663,7 +663,7 @@ define dso_local noundef <16 x i64> @_Z17test_set_v16acc64iDv8_u7__acc64(i32 nou
 ; CHECK-NEXT:    vmov bml0, bml1 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.else.i
-; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vmov bmh0, bml0; nopv
+; CHECK-NEXT:    vmov bmh0, bml0
 ; CHECK-NEXT:  .LBB16_2: // %_ZL12set_v16acc64iDv8_u7__acc64.exit
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5

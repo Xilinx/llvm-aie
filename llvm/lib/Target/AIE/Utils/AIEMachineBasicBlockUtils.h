@@ -24,6 +24,13 @@ namespace llvm::AIEMachineBasicBlockUtils {
 /// Note: code copied from AmsPrinter::isBlockOnlyReachableByFallthrough
 bool isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB);
 
+/// \return Previous MBB . If it is an empty MBB, get its previous non-empty
+/// MBB.
+MachineBasicBlock *getPrevNonEmptyMBB(MachineBasicBlock *MBB);
+
+/// \return the Size of \p MBB in Bytes.
+unsigned getMBBSizeInBytes(MachineBasicBlock &MBB);
+
 } // namespace llvm::AIEMachineBasicBlockUtils
 
 #endif

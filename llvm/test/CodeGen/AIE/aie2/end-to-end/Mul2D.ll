@@ -51,7 +51,7 @@ declare <16 x i64> @llvm.aie2.v32acc32()
 define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_ptr, %struct.mul2d_params %params.coerce) {
 ; CHECK-LABEL: mul2d:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r0, #2; nopb ; extend.u16 r1, r4; nopm
+; CHECK-NEXT:    nopb ; mova r0, #2; nops ; extend.u16 r1, r4; nopm ; nopv
 ; CHECK-NEXT:    ltu r0, r1, r0
 ; CHECK-NEXT:    jnz r0, #.LBB0_5
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -60,7 +60,7 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %for.body.lr.ph
-; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov p3, sp; nopv
+; CHECK-NEXT:    mov p3, sp
 ; CHECK-NEXT:    paddb [p3], #-4
 ; CHECK-NEXT:    lda.u8 r0, [p3, #0]; mov p3, sp
 ; CHECK-NEXT:    paddb [p3], #-8
@@ -86,7 +86,7 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
 ; CHECK-NEXT:    ne r2, r0, r2; vbcst.8 x0, r3 // Delay Slot 2
 ; CHECK-NEXT:    mova r0, #808; mov crSRSSign, r2 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.2:
-; CHECK-NEXT:    nopa ; nopb ; nopx ; vmov wh6, wl0
+; CHECK-NEXT:    vmov wh6, wl0
 ; CHECK-NEXT:    vmov wh4, wl0
 ; CHECK-NEXT:  .LBB0_3: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1

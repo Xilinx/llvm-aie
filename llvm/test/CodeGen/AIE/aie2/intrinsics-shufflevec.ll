@@ -39,13 +39,13 @@ define <8 x i32> @test_conditional_extract_vector(<16 x i32> noundef %a, i32 nou
 ; CHECK-LABEL: test_conditional_extract_vector:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; jz r0, #.LBB2_2; nopv
-; CHECK-NEXT:    nopa ; nopx // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    vmov x0, x2 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.end
-; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vmov wl0, wh0; nopv
+; CHECK-NEXT:    vmov wl0, wh0
 ; CHECK-NEXT:  .LBB2_2: // %return
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -73,7 +73,7 @@ return:
 define <16 x i32> @test_insert_vector(<16 x i32> noundef %a, i32 noundef %idx, <8 x i32> noundef %b) {
 ; CHECK-LABEL: test_insert_vector:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r24, r16; nops
+; CHECK-NEXT:    mov r24, r16
 ; CHECK-NEXT:    mov r25, r17
 ; CHECK-NEXT:    mov r26, r18
 ; CHECK-NEXT:    mov r27, r19
@@ -111,7 +111,7 @@ define <16 x i32> @test_insert_vector(<16 x i32> noundef %a, i32 noundef %idx, <
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r0 // Delay Slot 2
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r0 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.end
-; CHECK-NEXT:    mova r16, #3; nopxm
+; CHECK-NEXT:    mova r16, #3
 ; CHECK-NEXT:    vextract.s32 r0, x2, r19
 ; CHECK-NEXT:    vextract.s32 r1, x0, r19
 ; CHECK-NEXT:    vextract.s32 r2, x2, r18

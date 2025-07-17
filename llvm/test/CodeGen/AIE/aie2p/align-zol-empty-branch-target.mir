@@ -43,18 +43,15 @@ body:             |
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $r0, implicit-def $r8, implicit killed $r8, implicit $sp, implicit killed $r1, implicit killed $r0 {
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPB
   ; CHECK-NEXT:     ST_dms_sts_spill killed $r8, -56, implicit $sp :: (store (s32) into %stack.1)
   ; CHECK-NEXT:     renamable $r0 = GE killed renamable $r1, killed $r0
   ; CHECK-NEXT:     $r8 = MOV_alu_mv_mv_mv_scl internal $r0
-  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit killed $r0 {
   ; CHECK-NEXT:     JNZ killed renamable $r0, %bb.3
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPX
+  ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit $lr, implicit $sp {
   ; CHECK-NEXT:     ST_dms_sts_spill $lr, -52, implicit $sp :: (store (s32) into %stack.0)
@@ -72,38 +69,84 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
-  ; CHECK-NEXT:   liveins: $p0, $p1, $r8
+  ; CHECK-NEXT:   liveins: $p0, $p1, $r0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   BUNDLE implicit-def $p6, implicit-def $p7, implicit killed $p0, implicit killed $p1 {
-  ; CHECK-NEXT:     $p6 = MOVS killed $p0
-  ; CHECK-NEXT:     $p7 = MOV_alu_mv_mv_mv_scl killed $p1
+  ; CHECK-NEXT:   BUNDLE implicit-def $lc, implicit killed $r0 {
+  ; CHECK-NEXT:     $lc = ADD_NC_mv_add_ri killed $r0, 0
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE implicit-def $ls {
+  ; CHECK-NEXT:     $ls = MOVXM %bb.2
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE implicit-def $le {
+  ; CHECK-NEXT:     $le = MOVXM <mcsymbol .L_LEnd0>
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE {
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE {
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE {
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE {
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE {
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE {
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.2:
-  ; CHECK-NEXT:   successors: %bb.3(0x04000000), %bb.2(0x7c000000)
-  ; CHECK-NEXT:   liveins: $r8
+  ; CHECK-NEXT: bb.2 (align 16):
+  ; CHECK-NEXT:   successors: %bb.2(0x7c000000), %bb.3(0x04000000)
+  ; CHECK-NEXT:   liveins: $dc1, $dc5, $dm0, $dm1, $dm2, $dm3, $ex1, $ex2, $ex3, $ex4, $ex5, $ex6, $ex8, $ex10, $lf0, $lf1, $m4, $m5, $m7, $p0, $p1, $p3, $p4, $p5, $p6, $p7, $r3, $r6, $r7, $r8, $r9, $r16, $r17, $r24, $r25, $d3_3d:0x0001800000200C00
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   BUNDLE implicit $r8 {
-  ; CHECK-NEXT:     JNZ renamable $r8, %bb.2
+  ; CHECK-NEXT:   BUNDLE implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $p1, implicit killed $lf1, implicit killed $r25 {
+  ; CHECK-NEXT:     $p0, $lf0, $r24 = VLDA_FILL_512 killed $p0, killed $lf0, killed $r24 :: (load (<32 x s16>), addrspace 5)
+  ; CHECK-NEXT:     $p1, $lf1, $r25 = VLDB_FILL_512 killed $p1, killed $lf1, killed $r25 :: (load (<32 x s16>), addrspace 8)
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOP
+  ; CHECK-NEXT:   BUNDLE implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $p1, implicit killed $lf1, implicit killed $r25 {
+  ; CHECK-NEXT:     $p0, $lf0, $r24 = VLDA_FILL_512 killed $p0, killed $lf0, killed $r24 :: (load (<32 x s16>), addrspace 11)
+  ; CHECK-NEXT:     $p1, $lf1, $r25 = VLDB_FILL_512 killed $p1, killed $lf1, killed $r25 :: (load (<32 x s16>), addrspace 7)
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOP
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOP
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOP
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOP
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   DelayedSchedBarrier
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
+  ; CHECK-NEXT:   successors: %bb.4(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.4 (align 16):
   ; CHECK-NEXT:   BUNDLE implicit $lr {
   ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     RET implicit $lr
@@ -160,38 +203,54 @@ body:             |
 
   bb.1:
     successors: %bb.2(0x80000000)
-    liveins: $p0, $p1, $r8
+    liveins: $p0, $p1, $r0
 
-    BUNDLE implicit-def $p6, implicit-def $p7, implicit killed $p0, implicit killed $p1 {
-      $p6 = MOVS killed $p0
-      $p7 = MOV_alu_mv_mv_mv_scl killed $p1
+    BUNDLE implicit-def $lc, implicit killed $r0 {
+      $lc = ADD_NC_mv_add_ri killed $r0, 0
+    }
+    BUNDLE implicit-def $ls {
+      $ls = MOVXM %bb.2
+    }
+    BUNDLE implicit-def $le {
+      $le = MOVXM <mcsymbol .L_LEnd0>
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
     }
 
-  bb.2:
-    successors: %bb.3(0x04000000), %bb.2(0x7c000000)
-    liveins: $r8
+  bb.2 (align 16):
+    successors: %bb.2(0x7c000000), %bb.3(0x04000000)
+    liveins: $dc1, $dc5, $dm0, $dm1, $dm2, $dm3, $ex1, $ex2, $ex3, $ex4, $ex5, $ex6, $ex8, $ex10, $lf0, $lf1, $m4, $m5, $m7, $p0, $p1, $p3, $p4, $p5, $p6, $p7, $r3, $r6, $r7, $r8, $r9, $r16, $r17, $r24, $r25, $d3_3d:0x0001800000200C00
 
-    BUNDLE implicit $r8 {
-      JNZ renamable $r8, %bb.2
+    BUNDLE implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $p1, implicit killed $lf1, implicit killed $r25 {
+      $p0, $lf0, $r24 = VLDA_FILL_512 killed $p0, killed $lf0, killed $r24 :: (load (<32 x s16>), addrspace 5)
+      $p1, $lf1, $r25 = VLDB_FILL_512 killed $p1, killed $lf1, killed $r25 :: (load (<32 x s16>), addrspace 8)
     }
-    BUNDLE {
-      NOP
+    BUNDLE implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $p1, implicit killed $lf1, implicit killed $r25 {
+      $p0, $lf0, $r24 = VLDA_FILL_512 killed $p0, killed $lf0, killed $r24 :: (load (<32 x s16>), addrspace 11)
+      $p1, $lf1, $r25 = VLDB_FILL_512 killed $p1, killed $lf1, killed $r25 :: (load (<32 x s16>), addrspace 7)
     }
-    BUNDLE {
-      NOP
-    }
-    BUNDLE {
-      NOP
-    }
-    BUNDLE {
-      NOP
-    }
-    BUNDLE {
-      NOP
-    }
-    DelayedSchedBarrier
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
 
   bb.3:
+    successors: %bb.4(0x80000000)
+
+  bb.4 (align 16):
     BUNDLE implicit $lr {
       RET implicit $lr
     }
