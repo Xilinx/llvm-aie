@@ -274,41 +274,31 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
   getActionDefinitionsBuilder({G_FADD, G_FSUB})
       .legalFor({AccV64S32})
       // .moreElementsToNextPow2(0)  // non-power of 2
-      // Handle both bf16 and f32, incase the vector is smaller than 64 make it 64 x f32/bf16.
-      // Only changes the count and not the type.
       .moreElementsIf(
           [=](const LegalityQuery &Query) {
             const LLT &Ty = Query.Types[0];
-            return Ty.isVector() && (Ty.getScalarSizeInBits() == 32) &&
+            return Ty.isVector() && (Ty.getScalarSizeInBits() == 32 || Ty.getScalarSizeInBits() == 16) &&
                    Ty.getNumElements() < 32;
           },
           [=](const LegalityQuery &Query) {
-            return std::make_pair(0, LLT::fixed_vector(32, S32));
+            if (Query.Types[0].getScalarSizeInBits() == 32) {
+              return std::make_pair(0, LLT::fixed_vector(32, S32));
+            } else {
+              return std::make_pair(0, LLT::fixed_vector(32, S16));
+            }
           })
-      .moreElementsIf(
+      // converts <64xbf16> into 2 chunks of <32xbf16>
+      .fewerElementsIf(
           [=](const LegalityQuery &Query) {
             const LLT &Ty = Query.Types[0];
             return Ty.isVector() && (Ty.getScalarSizeInBits() == 16) &&
-                   Ty.getNumElements() < 32;
+                   Ty.getNumElements() == 64;
           },
           [=](const LegalityQuery &Query) {
             return std::make_pair(0, LLT::fixed_vector(32, S16));
           })
-      // solves type extension issue
-      // Tried bitcast way, failes, but I wonder why can't we just bitcast.
-      // .customIf([=](const LegalityQuery &Query) {
-      //   // const LLT &SrcLHS = Query.Types[1];
-      //   // const LLT &SrcRHS = Query.Types[2];
-      //   // const LLT &DstTy = Query.Types[0];
-      //   // print the types
-      //   // llvm::errs() << "SrcLHS: " << SrcLHS << "\n";
-      //   // llvm::errs() << "SrcRHS: " << SrcRHS << "\n";
-      //   // llvm::errs() << "DstTy: " << DstTy << "\n";
-      //   return true;
-      //   // return SrcLHS.isVector() && SrcRHS.isVector() && 
-      //   //        SrcLHS.getScalarSizeInBits() == 16 && SrcRHS.getScalarSizeInBits() == 16;
-      // })
-      .customFor({S16, V32S16, V64S16})   // <64 x s16> fpext to <64 x s32>
+      // Handle custom bf16 case for both scalar and vector types
+      .customFor({S16, V32S16})
       .libcallFor({S32, S64});
 
   getActionDefinitionsBuilder({G_FDIV, G_FREM})
