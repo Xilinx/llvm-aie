@@ -35,8 +35,7 @@ define zeroext i8 @abs_i8(i8 signext %arg) {
 ; GISEL-LABEL: abs_i8:
 ; GISEL:         .p2align 4
 ; GISEL-NEXT:  // %bb.0:
-; GISEL-NEXT:    se.8 r12, r6
-; GISEL-NEXT:    abs r12, r12
+; GISEL-NEXT:    abs r12, r6
 ; GISEL-NEXT:    ze.8 r0, r12
 ; GISEL-NEXT:    ret lr
 ; GISEL-NEXT:    nop // Delay Slot 5
@@ -68,8 +67,7 @@ define zeroext i16 @abs_i16(i16 signext %arg) {
 ; GISEL-LABEL: abs_i16:
 ; GISEL:         .p2align 4
 ; GISEL-NEXT:  // %bb.0:
-; GISEL-NEXT:    se.16 r12, r6
-; GISEL-NEXT:    abs r12, r12
+; GISEL-NEXT:    abs r12, r6
 ; GISEL-NEXT:    ze.16 r0, r12
 ; GISEL-NEXT:    ret lr
 ; GISEL-NEXT:    nop // Delay Slot 5

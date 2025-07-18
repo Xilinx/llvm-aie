@@ -78,6 +78,7 @@
 ; AIE-O123-NEXT:      Partially inline calls to library functions
 
 ; AIE-O0123-NEXT:      Expand vector predication intrinsics
+; AIE-O0123-NEXT:      Instrument function entry/exit with calls to e.g. mcount() (post inlining)
 ; AIE-O0123-NEXT:      Scalarize Masked Memory Intrinsics
 ; AIE-O0123-NEXT:      Expand reduction intrinsics
 
