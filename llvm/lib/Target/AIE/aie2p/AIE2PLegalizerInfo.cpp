@@ -277,7 +277,9 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
       .moreElementsIf(
           [=](const LegalityQuery &Query) {
             const LLT &Ty = Query.Types[0];
-            return Ty.isVector() && (Ty.getScalarSizeInBits() == 32 || Ty.getScalarSizeInBits() == 16) &&
+            return Ty.isVector() &&
+                   (Ty.getScalarSizeInBits() == 32 ||
+                    Ty.getScalarSizeInBits() == 16) &&
                    Ty.getNumElements() < 32;
           },
           [=](const LegalityQuery &Query) {
