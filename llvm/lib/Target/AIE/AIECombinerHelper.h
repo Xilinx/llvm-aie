@@ -276,6 +276,10 @@ bool matchCombineExtAndTrunc(MachineInstr &MI, MachineRegisterInfo &MRI,
 bool matchConstLoad(MachineInstr &MI, MachineRegisterInfo &MRI,
                     GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
 
+bool matchBitcastUnmerge(MachineInstr &Phi, MachineRegisterInfo &MRI,
+                         const AIEBaseInstrInfo &TII,
+                         GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
+
 } // namespace llvm
 
 #endif
