@@ -9,6 +9,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIE2TargetTransformInfo.h"
+#include "Utils/AIEIRUtils.h"
 #include "Utils/AIELoopUtils.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/BasicTTIImpl.h"
@@ -19,17 +20,6 @@
 using namespace llvm;
 
 #define DEBUG_TYPE "aie2tti"
-
-static std::optional<Instruction *>
-instCombineDemandedBits(InstCombiner &IC, IntrinsicInst &II, unsigned numBits) {
-  KnownBits ScalarKnown(32);
-  if (IC.SimplifyDemandedBits(&II, 0, APInt::getLowBitsSet(32, numBits),
-                              ScalarKnown)) {
-    return &II;
-  }
-
-  return std::nullopt;
-}
 
 bool AIE2TTICommon::isAllowedInZOL(Instruction &I) {
   // FMul is legalized to a VMUL for bfloat16 in other targets
@@ -46,9 +36,9 @@ AIE2TTIImpl::instCombineIntrinsic(InstCombiner &IC, IntrinsicInst &II) const {
   default:
     break;
   case Intrinsic::aie2_vbroadcast8_I512:
-    return instCombineDemandedBits(IC, II, 8);
+    return AIEIRUtils::instCombineDemandedBits(IC, II, 8);
   case Intrinsic::aie2_vbroadcast16_I512:
-    return instCombineDemandedBits(IC, II, 16);
+    return AIEIRUtils::instCombineDemandedBits(IC, II, 16);
   }
   return std::nullopt;
 }
