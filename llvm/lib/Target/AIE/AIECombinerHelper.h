@@ -280,6 +280,10 @@ bool matchBitcastUnmerge(MachineInstr &Phi, MachineRegisterInfo &MRI,
                          const AIEBaseInstrInfo &TII,
                          GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
 
+bool matchPhiBitcast(MachineInstr &Phi, MachineRegisterInfo &MRI,
+                     const AIEBaseInstrInfo &TII, GISelChangeObserver &Observer,
+                     BuildFnTy &MatchInfo);
+
 } // namespace llvm
 
 #endif

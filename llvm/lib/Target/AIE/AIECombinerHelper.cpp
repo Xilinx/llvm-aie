@@ -3632,3 +3632,82 @@ bool llvm::matchBitcastUnmerge(MachineInstr &Unmerge, MachineRegisterInfo &MRI,
 
   return true;
 }
+
+static std::optional<LLT> getUseBitcastedType(MachineInstr &Phi,
+                                              MachineRegisterInfo &MRI) {
+
+  for (unsigned I = 1; I < Phi.getNumOperands(); I += 2) {
+    Register IncomingReg = Phi.getOperand(I).getReg();
+    const MachineInstr *IncomingMI = MRI.getVRegDef(IncomingReg);
+
+    if (IncomingMI->getParent() != Phi.getParent())
+      continue;
+
+    if (IncomingMI->getOpcode() == TargetOpcode::G_BITCAST) {
+      return MRI.getType(IncomingMI->getOperand(1).getReg());
+    }
+  }
+  return std::nullopt;
+}
+
+static std::optional<LLT> getDefBitcastedType(MachineInstr &Phi,
+                                              MachineRegisterInfo &MRI) {
+  Register DefReg = Phi.getOperand(0).getReg();
+  if (!MRI.hasOneNonDBGUse(DefReg))
+    return std::nullopt;
+
+  const MachineInstr *UseMI = &*MRI.use_instr_nodbg_begin(DefReg);
+  if (UseMI->getOpcode() != TargetOpcode::G_BITCAST)
+    return std::nullopt;
+
+  return MRI.getType(UseMI->getOperand(0).getReg());
+}
+
+/// Transform this:
+///  bb.1:
+///    %0:_(<16 x s32>) = G_PHI %15(<16 x s32>), %bb.0, %12(<16 x s32>), %bb.1
+///    %X:_(<8 x s64>) = G_BITCAST %0(<16 x s32>)
+///    ...
+///    %Y ...
+///    %12:_(<16 x s32>) = G_BITCAST %Y(<8 x s64>)
+///    G_BR %bb.1
+/// Into this:
+///  bb.1:
+///    %16:_(<8 x s64>) = G_PHI %17(<8 x s64>), %bb.0, %Y(<8 x s64>), %bb.1
+///    ...
+///    %Y ...
+///    G_BR %bb.1
+bool llvm::matchPhiBitcast(MachineInstr &Phi, MachineRegisterInfo &MRI,
+                           const AIEBaseInstrInfo &TII,
+                           GISelChangeObserver &Observer,
+                           BuildFnTy &MatchInfo) {
+
+  assert(Phi.isPHI());
+  if (Phi.getNumOperands() != 5)
+    return false;
+
+  Register DefReg = Phi.getOperand(0).getReg();
+  LLT DefType = MRI.getType(DefReg);
+  if (DefType.getSizeInBits() != TII.getBasicVectorBitSize())
+    return false;
+
+  auto ToType = getDefBitcastedType(Phi, MRI);
+  if (!ToType)
+    return false;
+
+  auto FromType = getUseBitcastedType(Phi, MRI);
+  if (!FromType)
+    return false;
+
+  if (*FromType != *ToType)
+    return false;
+
+  const LLT NewType = *FromType;
+  MatchInfo = [=, &MRI, &Phi, &Observer](MachineIRBuilder &B) {
+    // We change the PHI node instead of building a new one,
+    // with all types bitcasted.
+    retypePhiNode(Phi, /*IsSigned*/ false, NewType, B, MRI, Observer);
+  };
+
+  return true;
+}
