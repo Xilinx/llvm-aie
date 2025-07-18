@@ -47,6 +47,9 @@ public:
       TTI::TargetCostKind CostKind,
       TTI::OperandValueInfo OpInfo = {TTI::OK_AnyValue, TTI::OP_None},
       const Instruction *I = nullptr);
+
+  std::optional<Instruction *> instCombineIntrinsic(InstCombiner &IC,
+                                                    IntrinsicInst &II) const;
 };
 
 } // end namespace llvm

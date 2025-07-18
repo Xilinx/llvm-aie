@@ -9,8 +9,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIE2PTargetTransformInfo.h"
+#include "Utils/AIEIRUtils.h"
 #include "Utils/AIELoopUtils.h"
 #include "llvm/IR/IntrinsicsAIE2P.h"
+#include "llvm/Transforms/InstCombine/InstCombiner.h"
 
 using namespace llvm;
 
@@ -145,4 +147,20 @@ InstructionCost AIE2PTTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src,
                                   CostKind, OpInfo, I);
 
   return Cost;
+}
+
+std::optional<Instruction *>
+AIE2PTTIImpl::instCombineIntrinsic(InstCombiner &IC, IntrinsicInst &II) const {
+  Intrinsic::ID IID = II.getIntrinsicID();
+  switch (IID) {
+  default:
+    break;
+  case Intrinsic::aie2p_vsel16:
+    if (AIEIRUtils::isUpperPartOfResultDiscarded(II))
+      return AIEIRUtils::instCombineDemandedBits(IC, II, 16, 2);
+    break;
+  case Intrinsic::aie2p_vsel32:
+    return AIEIRUtils::instCombineDemandedBits(IC, II, 16, 2);
+  }
+  return std::nullopt;
 }

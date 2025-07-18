@@ -5,7 +5,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 // RUN: %clang -O2 %s --target=aie2 -nostdlibinc -S -emit-llvm -o - | FileCheck %s -check-prefix=CHECK-COMMON -check-prefix=AIE2
@@ -789,7 +789,6 @@ unsigned long long test_eq_v64uint8(v64uint8 a, v64uint8 b) { return eq(a, b); }
 //
 unsigned long long test_ne_v64uint8(v64uint8 a, v64uint8 b) { return ne(a, b); }
 
-//
 // AIE2-LABEL: @_Z17test_sel_v64uint8Dv64_hS_y(
 // AIE2-NEXT:  entry:
 // AIE2-NEXT:    [[TMP0:%.*]] = bitcast i64 [[S:%.*]] to <2 x i32>
@@ -1051,7 +1050,6 @@ v64int8 test_min_ge_v64int8(v64int8 a, v64int8 b, unsigned long long &cmp) {
   return min_ge(a, b, cmp);
 }
 
-//
 // AIE2-LABEL: @_Z19test_min_ge_v64int8Dv64_aS_bRy(
 // AIE2-NEXT:  entry:
 // AIE2-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
@@ -5033,7 +5031,7 @@ unsigned int test_ge(v16float v1, v16float v2) {
 // AIE2P-NEXT:    store i32 [[AND_I_I]], ptr [[CMP:%.*]], align 4, !tbaa [[TBAA6]]
 // AIE2P-NEXT:    [[TMP11:%.*]] = bitcast <16 x float> [[V1]] to <16 x i32>
 // AIE2P-NEXT:    [[TMP12:%.*]] = bitcast <16 x float> [[V2]] to <16 x i32>
-// AIE2P-NEXT:    [[TMP13:%.*]] = tail call noundef <16 x i32> @llvm.aie2p.vsel32(<16 x i32> [[TMP11]], <16 x i32> [[TMP12]], i32 [[AND_I_I]])
+// AIE2P-NEXT:    [[TMP13:%.*]] = tail call noundef <16 x i32> @llvm.aie2p.vsel32(<16 x i32> [[TMP11]], <16 x i32> [[TMP12]], i32 [[TMP10]])
 // AIE2P-NEXT:    [[TMP14:%.*]] = bitcast <16 x i32> [[TMP13]] to <16 x float>
 // AIE2P-NEXT:    ret <16 x float> [[TMP14]]
 //
@@ -5075,10 +5073,9 @@ v16float test_min_ge(v16float v1, v16float v2, unsigned int &cmp) {
 // AIE2P-NEXT:    [[SHUFFLE1_I_I_I_I:%.*]] = shufflevector <16 x i32> [[SHUFFLE_I_I_I_I]], <16 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
 // AIE2P-NEXT:    [[TMP9:%.*]] = bitcast <16 x i32> [[SHUFFLE1_I_I_I_I]] to <32 x bfloat>
 // AIE2P-NEXT:    [[TMP10:%.*]] = tail call noundef i32 @llvm.aie2p.vgebf16(<32 x bfloat> [[TMP9]], <32 x bfloat> zeroinitializer)
-// AIE2P-NEXT:    [[AND_I_I:%.*]] = and i32 [[TMP10]], 65535
 // AIE2P-NEXT:    [[TMP11:%.*]] = bitcast <16 x float> [[V1]] to <16 x i32>
 // AIE2P-NEXT:    [[TMP12:%.*]] = bitcast <16 x float> [[V2]] to <16 x i32>
-// AIE2P-NEXT:    [[TMP13:%.*]] = tail call noundef <16 x i32> @llvm.aie2p.vsel32(<16 x i32> [[TMP11]], <16 x i32> [[TMP12]], i32 [[AND_I_I]])
+// AIE2P-NEXT:    [[TMP13:%.*]] = tail call noundef <16 x i32> @llvm.aie2p.vsel32(<16 x i32> [[TMP11]], <16 x i32> [[TMP12]], i32 [[TMP10]])
 // AIE2P-NEXT:    [[TMP14:%.*]] = bitcast <16 x i32> [[TMP13]] to <16 x float>
 // AIE2P-NEXT:    ret <16 x float> [[TMP14]]
 //
@@ -5175,9 +5172,8 @@ v16float test_abs(v16float v1) { return abs(v1); }
 // AIE2P-NEXT:    [[SHUFFLE1_I_I_I_I:%.*]] = shufflevector <16 x i32> [[SHUFFLE_I_I_I_I]], <16 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
 // AIE2P-NEXT:    [[TMP12:%.*]] = bitcast <16 x i32> [[SHUFFLE1_I_I_I_I]] to <32 x bfloat>
 // AIE2P-NEXT:    [[TMP13:%.*]] = tail call noundef i32 @llvm.aie2p.vgebf16(<32 x bfloat> [[TMP12]], <32 x bfloat> zeroinitializer)
-// AIE2P-NEXT:    [[AND_I_I:%.*]] = and i32 [[TMP13]], 65535
 // AIE2P-NEXT:    [[TMP14:%.*]] = bitcast <16 x float> [[V1]] to <16 x i32>
-// AIE2P-NEXT:    [[TMP15:%.*]] = tail call noundef <16 x i32> @llvm.aie2p.vsel32(<16 x i32> [[TMP14]], <16 x i32> [[TMP0]], i32 [[AND_I_I]])
+// AIE2P-NEXT:    [[TMP15:%.*]] = tail call noundef <16 x i32> @llvm.aie2p.vsel32(<16 x i32> [[TMP14]], <16 x i32> [[TMP0]], i32 [[TMP13]])
 // AIE2P-NEXT:    [[TMP16:%.*]] = bitcast <16 x i32> [[TMP15]] to <16 x float>
 // AIE2P-NEXT:    ret <16 x float> [[TMP16]]
 //
