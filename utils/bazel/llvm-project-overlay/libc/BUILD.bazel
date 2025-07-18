@@ -319,6 +319,7 @@ libc_support_library(
     name = "__support_cpp_expected",
     hdrs = ["src/__support/CPP/expected.h"],
     deps = [
+        ":__support_macros_attributes",
     ],
 )
 
@@ -1098,6 +1099,9 @@ libc_support_library(
 libc_support_library(
     name = "__support_threads_sleep",
     hdrs = ["src/__support/threads/sleep.h"],
+    deps = [
+        ":__support_macros_attributes",
+    ],
 )
 
 libc_support_library(

@@ -434,6 +434,10 @@ bool TargetTransformInfo::shouldFoldTerminatingConditionAfterLSR() const {
   return TTIImpl->shouldFoldTerminatingConditionAfterLSR();
 }
 
+bool TargetTransformInfo::shouldDropLSRSolutionIfLessProfitable() const {
+  return TTIImpl->shouldDropLSRSolutionIfLessProfitable();
+}
+
 bool TargetTransformInfo::isProfitableOuterLSR(const Loop &L) const {
   return TTIImpl->isProfitableOuterLSR(L);
 }

@@ -402,6 +402,10 @@ public:
         shouldFoldTerminatingConditionAfterLSR();
   }
 
+  bool shouldDropLSRSolutionIfLessProfitable() const {
+    return TargetTransformInfoImplBase::shouldDropLSRSolutionIfLessProfitable();
+  }
+
   bool isProfitableOuterLSR(const Loop &L) const {
     return TargetTransformInfoImplBase::isProfitableOuterLSR(L);
   }
