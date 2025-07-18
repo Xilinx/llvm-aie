@@ -43,6 +43,7 @@
 #include "clang/AST/TypeLoc.h"
 #include "clang/AST/TypeLocVisitor.h"
 #include "clang/AST/UnresolvedSet.h"
+#include "clang/Basic/ASTSourceDescriptor.h"
 #include "clang/Basic/CommentOptions.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/DiagnosticError.h"
