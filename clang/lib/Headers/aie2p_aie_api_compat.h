@@ -327,16 +327,8 @@ inline __attribute__((always_inline)) v16cint16 shift_bytes(v16cint16 , v16cint1
 inline __attribute__((always_inline)) v8cint32 shift_bytes(v8cint32 , v8cint32 , unsigned int );
 inline __attribute__((always_inline)) v16cint16 shift(v16cint16 , v16cint16 , unsigned int );
 inline __attribute__((always_inline)) v8cint32 shift(v8cint32 , v8cint32 , unsigned int );
-inline __attribute__((always_inline)) v64int8 broadcast_s8(int );
-inline __attribute__((always_inline)) v32int16 broadcast_s16(int );
-inline __attribute__((always_inline)) v64uint8 broadcast_u8(unsigned int );
-inline __attribute__((always_inline)) v32uint16 broadcast_u16(unsigned int );
 inline __attribute__((always_inline)) v16cint16 broadcast_c16(cint16 );
 inline __attribute__((always_inline)) v8cint32 broadcast_c32(cint32 );
-inline __attribute__((always_inline)) v32int16 broadcast_to_v32int16(int );
-inline __attribute__((always_inline)) v64uint8 broadcast_to_v64uint8(unsigned int );
-inline __attribute__((always_inline)) v32uint16 broadcast_to_v32uint16(unsigned int );
-inline __attribute__((always_inline)) v16uint32 broadcast_to_v16uint32(v2uint32 );
 inline __attribute__((always_inline)) v16cint16 broadcast_to_v16cint16(cint16 );
 inline __attribute__((always_inline)) v16cint16 broadcast_to_v16cint16(v2cint16 );
 inline __attribute__((always_inline)) v8cint32 broadcast_to_v8cint32(cint32 );

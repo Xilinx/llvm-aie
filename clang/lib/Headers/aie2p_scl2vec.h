@@ -31,14 +31,14 @@ inline decltype(auto) vector_extract64(T a, int idx, int sign) {
   return sign ? (v2int32){a[idx], a[idx + 1]} : (v2uint32){a[idx], a[idx + 1]};
 }
 
-inline v16int32 vector_broadcast64(v2int32 b) {
-  return {b[0], b[1], b[0], b[1], b[0], b[1], b[0], b[1],
-          b[0], b[1], b[0], b[1], b[0], b[1], b[0], b[1]};
-}
-inline v16uint32 vector_broadcast64(v2uint32 b) {
-  return {b[0], b[1], b[0], b[1], b[0], b[1], b[0], b[1],
-          b[0], b[1], b[0], b[1], b[0], b[1], b[0], b[1]};
-}
+#define VECTOR_BROADCAST64_FUNC(outType, inType)                               \
+  inline outType vector_broadcast64(inType b) {                                \
+    return {b[0], b[1], b[0], b[1], b[0], b[1], b[0], b[1],                    \
+            b[0], b[1], b[0], b[1], b[0], b[1], b[0], b[1]};                   \
+  }
+
+VECTOR_BROADCAST64_FUNC(v16int32, v2int32)
+VECTOR_BROADCAST64_FUNC(v16uint32, v2uint32)
 
 INTRINSIC(v128int4)
 shiftx(v128int4 a, v128int4 b, int step, unsigned int shift) {
@@ -1354,10 +1354,10 @@ INTRINSIC(void *) extract_address(v16int32 v, int idx) {
 }
 // broadcast from scalar (alternative syntax to broadcast to vector)
 INTRINSIC(v64int8)
-broadcast_s8(char b) { return b - v64int8{0}; }
+broadcast_s8(int b) { return (char)b - v64int8{0}; }
 
 INTRINSIC(v32int16)
-broadcast_s16(short b) { return b - v32int16{0}; }
+broadcast_s16(int b) { return (short)b - v32int16{0}; }
 
 INTRINSIC(v16int32)
 broadcast_s32(int b) { return b - v16int32{0}; }
@@ -1369,10 +1369,10 @@ INTRINSIC(v16int32)
 broadcast_v2s32(v2int32 b) { return vector_broadcast64(b); }
 
 INTRINSIC(v64uint8)
-broadcast_u8(unsigned char b) { return b - v64uint8{0}; }
+broadcast_u8(unsigned int b) { return (unsigned char)b - v64uint8{0}; }
 
 INTRINSIC(v32uint16)
-broadcast_u16(unsigned short b) { return b - v32uint16{0}; }
+broadcast_u16(unsigned int b) { return (unsigned short)b - v32uint16{0}; }
 
 INTRINSIC(v16uint32)
 broadcast_u32(unsigned int b) { return b - v16uint32{0}; }
@@ -1402,10 +1402,10 @@ broadcast_c32 (cint32 b) { return vector_broadcast64(b);}
 
 // broadcast to vector (alternative syntax to broadcast from scalar)
 INTRINSIC(v128int4)
-broadcast_to_v128int4(v2int4 b) { return b - v128int4{0}; }
+broadcast_to_v128int4(v2int4 b) { return broadcast_s8((int)(char)b); }
 
 INTRINSIC(v128int4)
-broadcast_to_v128int4(v4int4 b) { return broadcast_s16((short)b); }
+broadcast_to_v128int4(v4int4 b) { return broadcast_s16((int)(short)b); }
 
 INTRINSIC(v128int4)
 broadcast_to_v128int4(v8int4 b) { return broadcast_s32((int)b); }
@@ -1414,10 +1414,10 @@ INTRINSIC(v128int4)
 broadcast_to_v128int4(v16int4 b) { return vector_broadcast64((v2int32)b); }
 
 INTRINSIC(v64int8)
-broadcast_to_v64int8(char b) { return b - v64int8{0}; }
+broadcast_to_v64int8(int b) { return broadcast_s8(b); }
 
 INTRINSIC(v64int8)
-broadcast_to_v64int8(v2int8 b) { return broadcast_s16((short)b); }
+broadcast_to_v64int8(v2int8 b) { return broadcast_s16((int)(short)b); }
 
 INTRINSIC(v64int8)
 broadcast_to_v64int8(v4int8 b) { return broadcast_s32((int)b); }
@@ -1426,7 +1426,7 @@ INTRINSIC(v64int8)
 broadcast_to_v64int8(v8int8 b) { return vector_broadcast64((v2int32)b); }
 
 INTRINSIC(v32int16)
-broadcast_to_v32int16(short b) { return b - v32int16{0}; }
+broadcast_to_v32int16(int b) { return broadcast_s16(b); }
 
 INTRINSIC(v32int16)
 broadcast_to_v32int16(v2int16 b) { return broadcast_s32((int)b); }
@@ -1435,7 +1435,7 @@ INTRINSIC(v32int16)
 broadcast_to_v32int16(v4int16 b) { return vector_broadcast64((v2int32)b); }
 
 INTRINSIC(v16int32)
-broadcast_to_v16int32(int b) { return b - v16int32{0}; }
+broadcast_to_v16int32(int b) { return broadcast_s32(b); }
 
 INTRINSIC(v16int32)
 broadcast_to_v16int32(mask64 b) { return vector_broadcast64((v2int32)b); }
@@ -1444,10 +1444,14 @@ INTRINSIC(v16int32)
 broadcast_to_v16int32(v2int32 b) { return vector_broadcast64(b); }
 
 INTRINSIC(v128uint4)
-broadcast_to_v128uint4(v2uint4 b) { return b - v128uint4{0}; }
+broadcast_to_v128uint4(v2uint4 b) {
+  return broadcast_u8((unsigned int)(unsigned char)b);
+}
 
 INTRINSIC(v128uint4)
-broadcast_to_v128uint4(v4uint4 b) { return broadcast_u16((unsigned short)b); }
+broadcast_to_v128uint4(v4uint4 b) {
+  return broadcast_u16((unsigned int)(unsigned short)b);
+}
 
 INTRINSIC(v128uint4)
 broadcast_to_v128uint4(v8uint4 b) { return broadcast_u32((unsigned int)b); }
@@ -1456,10 +1460,12 @@ INTRINSIC(v128uint4)
 broadcast_to_v128uint4(v16uint4 b) { return vector_broadcast64((v2uint32)b); }
 
 INTRINSIC(v64uint8)
-broadcast_to_v64uint8(unsigned char b) { return b - v64uint8{0}; }
+broadcast_to_v64uint8(unsigned int b) { return broadcast_u8(b); }
 
 INTRINSIC(v64uint8)
-broadcast_to_v64uint8(v2uint8 b) { return broadcast_u16((unsigned short)b); }
+broadcast_to_v64uint8(v2uint8 b) {
+  return broadcast_u16((unsigned int)(unsigned short)b);
+}
 
 INTRINSIC(v64uint8)
 broadcast_to_v64uint8(v4uint8 b) { return broadcast_u32((unsigned int)b); }
@@ -1468,7 +1474,7 @@ INTRINSIC(v64uint8)
 broadcast_to_v64uint8(v8uint8 b) { return vector_broadcast64((v2uint32)b); }
 
 INTRINSIC(v32uint16)
-broadcast_to_v32uint16(unsigned short b) { return b - v32uint16{0}; }
+broadcast_to_v32uint16(unsigned int b) { return broadcast_u16(b); }
 
 INTRINSIC(v32uint16)
 broadcast_to_v32uint16(v2uint16 b) { return broadcast_u32((unsigned int)b); }
@@ -1477,7 +1483,7 @@ INTRINSIC(v32uint16)
 broadcast_to_v32uint16(v4uint16 b) { return vector_broadcast64((v2uint32)b); }
 
 INTRINSIC(v16uint32)
-broadcast_to_v16uint32(unsigned int b) { return b - v16uint32{0}; }
+broadcast_to_v16uint32(unsigned int b) { return broadcast_u32(b); }
 
 INTRINSIC(v16uint32)
 broadcast_to_v16uint32(mask64 b) { return vector_broadcast64((v2uint32)b); }
@@ -1529,15 +1535,6 @@ broadcast_to_v16float(v2float b) {
   mask64 as_mask64 = __builtin_bit_cast(mask64, b);
   return broadcast_s64(as_mask64);
 }
-
-INTRINSIC(v32bfloat16)
-broadcast_zero_to_v32bfloat16() { return broadcast_to_v32bfloat16(0); }
-
-INTRINSIC(v32bfloat16)
-broadcast_one_to_v32bfloat16() { return broadcast_to_v32bfloat16(1); }
-
-INTRINSIC(v16float)
-broadcast_one_to_v16float() { return broadcast_to_v16float(1); }
 
 // Right-most insertion (left shift)
 INTRINSIC(v64int8) shiftl_elem(v64int8 v, int s) {
@@ -1644,13 +1641,16 @@ INTRINSIC(v16uint32) broadcast_one_to_v16uint32() {
 INTRINSIC(v32bfloat16) broadcast_one_bfloat16() {
   return broadcast_bfloat16(1);
 }
+INTRINSIC(v32bfloat16)
+broadcast_one_to_v32bfloat16() { return broadcast_one_bfloat16(); }
+
+INTRINSIC(v16float)
+broadcast_one_to_v16float() { return broadcast_to_v16float(1); }
 
 #if 0
 INTRINSIC(v16cint16) broadcast_one_c16() { return broadcast_c16(1); }
 
 INTRINSIC(v8cint32) broadcast_one_c32() { return broadcast_c32(1); }
-
-INTRINSIC(v16float) broadcast_one_float() { return broadcast_float(1); }
 #endif
 
 // broadcast value zero(0) to all vector lanes
@@ -1708,13 +1708,9 @@ INTRINSIC(v16uint32) broadcast_zero_to_v16uint32() { return broadcast_u32(0); }
     broadcast_zero_bfloat16() {
   return broadcast_bfloat16(0);
 }
+INTRINSIC(v32bfloat16)
+broadcast_zero_to_v32bfloat16() { return broadcast_to_v32bfloat16(0); }
 
-[[deprecated(
-    "Function 'broadcast_zero_float' is deprecated. Please use the "
-    "'broadcast_zero_to_v16float' variant instead.")]] INTRINSIC(v16float)
-    broadcast_zero_float() {
-  return broadcast_float(0);
-}
 INTRINSIC(v16float) broadcast_zero_to_v16float() { return broadcast_float(0); }
 
 #if 0
@@ -1791,25 +1787,19 @@ broadcast_elem(v16float v, int idx) {
   return vector_broadcast64(ext_v2int32(v, idx, 0));
 }
 
-INTRINSIC(v64int8)
-broadcast_to_v64int8(int b) { return broadcast_s8((int)b); }
-
 INTRINSIC(v16acc64) broadcast_zero_to_v16acc64() { return v16acc64{}; }
-
 [[deprecated("Function 'clr' is deprecated. Please use the 'broadcast_zero_to' "
              "variant instead.")]] INTRINSIC(v16acc64) clr16() {
   return broadcast_zero_to_v16acc64();
 }
 
 INTRINSIC(v32acc64) broadcast_zero_to_v32acc64() { return v32acc64{}; }
-
 [[deprecated("Function 'clr' is deprecated. Please use the 'broadcast_zero_to' "
              "variant instead.")]] INTRINSIC(v32acc64) clr32() {
   return broadcast_zero_to_v32acc64();
 }
 
 INTRINSIC(v64acc32) broadcast_zero_to_v64acc32() { return v64acc32{}; }
-
 [[deprecated("Function 'clr' is deprecated. Please use the 'broadcast_zero_to' "
              "variant instead.")]] INTRINSIC(v64acc32) clr64() {
   return broadcast_zero_to_v64acc32();
