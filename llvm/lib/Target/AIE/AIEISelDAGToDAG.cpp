@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEISelDAGToDAG.h"
+#include "llvm/CodeGen/SelectionDAGISel.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "aie-isel"
@@ -66,10 +67,22 @@ bool AIEDAGToDAGISel::SelectFrameIndex(SDValue &N, SDValue &R) {
   return true;
 }
 
+class AIEDAGToDAGISelLegacy : public SelectionDAGISelLegacy {
+  static char ID;
+
+public:
+  explicit AIEDAGToDAGISelLegacy(TargetMachine &TM)
+      : SelectionDAGISelLegacy(ID, std::make_unique<AIEDAGToDAGISel>(TM)) {}
+
+  StringRef getPassName() const override {
+    return "AIE DAG->DAG Pattern Instruction Selection";
+  }
+};
+
+char AIEDAGToDAGISelLegacy::ID = 0;
+
 // This pass converts a legalized DAG into a AIE-specific DAG, ready
 // for instruction scheduling.
 FunctionPass *llvm::createAIEISelDag(AIETargetMachine &TM) {
-  return new AIEDAGToDAGISel(TM);
+  return new AIEDAGToDAGISelLegacy(TM);
 }
-
-char AIEDAGToDAGISel::ID = 0;
