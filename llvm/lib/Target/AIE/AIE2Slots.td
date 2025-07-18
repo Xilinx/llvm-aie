@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,8 +20,6 @@
 
 let Namespace = "AIE2" in
 {
-  def unknown_slot : InstSlot<"unknown", 0, true>;
-
   def lda_slot     : InstSlot<"Lda", 21> {
     let FieldToFind = "lda";
   }

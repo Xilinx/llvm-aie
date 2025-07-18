@@ -4,14 +4,12 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
 let Namespace = "AIE2P" in
 {
-    def unknown_slot : InstSlot<"unknown", 0, true>;
-
     // Cooked up Slot for 16-bit InsnFormat.
     // In AIE2P this has a single instruction nop. We keep the size small, so that
     // we can reuse it as artificial nop slot in other formats. This is another
