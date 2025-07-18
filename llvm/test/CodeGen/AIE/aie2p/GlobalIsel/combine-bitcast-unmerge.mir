@@ -21,9 +21,9 @@ body:             |
     ; CHECK: liveins: $cml0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s64>) = COPY $cml0
-    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<32 x s32>) = G_BITCAST [[COPY]](<16 x s64>)
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<16 x s32>), [[UV1:%[0-9]+]]:_(<16 x s32>) = G_UNMERGE_VALUES [[BITCAST]](<32 x s32>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[UV]](<16 x s32>)
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<8 x s64>), [[UV1:%[0-9]+]]:_(<8 x s64>) = G_UNMERGE_VALUES [[COPY]](<16 x s64>)
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[UV]](<8 x s64>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[BITCAST]](<16 x s32>)
     %0:_(<16 x s64>) = COPY $cml0
     %3:_(<32 x s32>) = G_BITCAST %0(<16 x s64>)
     %4:_(<16 x s32>), %5:_(<16 x s32>) = G_UNMERGE_VALUES %3(<32 x s32>)
@@ -45,9 +45,9 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<32 x s64>) = COPY $dm0
     ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<16 x s64>), [[UV1:%[0-9]+]]:_(<16 x s64>) = G_UNMERGE_VALUES [[COPY]](<32 x s64>)
-    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<32 x s32>) = G_BITCAST [[UV]](<16 x s64>)
-    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(<16 x s32>), [[UV3:%[0-9]+]]:_(<16 x s32>) = G_UNMERGE_VALUES [[BITCAST]](<32 x s32>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[UV2]](<16 x s32>)
+    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(<8 x s64>), [[UV3:%[0-9]+]]:_(<8 x s64>) = G_UNMERGE_VALUES [[UV]](<16 x s64>)
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[UV2]](<8 x s64>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[BITCAST]](<16 x s32>)
     %0:_(<32 x s64>) = COPY $dm0
     %1:_(<16 x s64>), %2:_(<16 x s64>) = G_UNMERGE_VALUES %0(<32 x s64>)
     %3:_(<32 x s32>) = G_BITCAST %1(<16 x s64>)
@@ -69,9 +69,10 @@ body:             |
     ; CHECK: liveins: $cml0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s64>) = COPY $cml0
-    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<32 x s32>) = G_BITCAST [[COPY]](<16 x s64>)
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<16 x s32>), [[UV1:%[0-9]+]]:_(<16 x s32>) = G_UNMERGE_VALUES [[BITCAST]](<32 x s32>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[UV]](<16 x s32>), implicit [[UV1]](<16 x s32>)
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<8 x s64>), [[UV1:%[0-9]+]]:_(<8 x s64>) = G_UNMERGE_VALUES [[COPY]](<16 x s64>)
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[UV]](<8 x s64>)
+    ; CHECK-NEXT: [[BITCAST1:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[UV1]](<8 x s64>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[BITCAST]](<16 x s32>), implicit [[BITCAST1]](<16 x s32>)
     %0:_(<16 x s64>) = COPY $cml0
     %3:_(<32 x s32>) = G_BITCAST %0(<16 x s64>)
     %4:_(<16 x s32>), %5:_(<16 x s32>) = G_UNMERGE_VALUES %3(<32 x s32>)
@@ -115,9 +116,9 @@ body:             |
     ; CHECK: liveins: $y0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<32 x s32>) = COPY $y0
-    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<16 x s64>) = G_BITCAST [[COPY]](<32 x s32>)
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<8 x s64>), [[UV1:%[0-9]+]]:_(<8 x s64>) = G_UNMERGE_VALUES [[BITCAST]](<16 x s64>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[UV]](<8 x s64>)
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<16 x s32>), [[UV1:%[0-9]+]]:_(<16 x s32>) = G_UNMERGE_VALUES [[COPY]](<32 x s32>)
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<8 x s64>) = G_BITCAST [[UV]](<16 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[BITCAST]](<8 x s64>)
     %0:_(<32 x s32>) = COPY $y0
     %3:_(<16 x s64>) = G_BITCAST %0(<32 x s32>)
     %4:_(<8 x s64>), %5:_(<8 x s64>) = G_UNMERGE_VALUES %3(<16 x s64>)
