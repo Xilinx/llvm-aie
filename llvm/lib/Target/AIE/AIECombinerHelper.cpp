@@ -3473,3 +3473,59 @@ bool llvm::matchCombineExtAndTrunc(MachineInstr &MI, MachineRegisterInfo &MRI,
 
   return true;
 }
+
+/// Transform this:
+///   %3:_(<32 x s32>) = G_BITCAST %0(<16 x s64>)
+///   %4:_(<16 x s32>), %5:_(<16 x s32>) = G_UNMERGE_VALUES %3(<32 x s32>)
+/// Into this:
+///    %4:_(<8 x s64>), %5:_(<8 x s64>) = G_UNMERGE_VALUES %0(<16 x s64>)
+///    %2:_(<16 x s32>) = G_BITCAST %4(<8 x s64>)
+///    %3:_(<16 x s32>) = G_BITCAST %5(<8 x s64>)
+/// The goal of this combiner is to expose accumulator use. For example,
+/// by rotating to unmerge->bitcast we can later optimize a phi node
+/// to carry directly an accumulator instead of vector (reducing moves).
+bool llvm::matchBitcastUnmerge(MachineInstr &Unmerge, MachineRegisterInfo &MRI,
+                               const AIEBaseInstrInfo &TII,
+                               GISelChangeObserver &Observer,
+                               BuildFnTy &MatchInfo) {
+  assert(Unmerge.getOpcode() == TargetOpcode::G_UNMERGE_VALUES);
+
+  Register FirstDefReg = Unmerge.getOperand(0).getReg();
+  const LLT DefType = MRI.getType(FirstDefReg);
+
+  if (DefType.getSizeInBits() != TII.getBasicVectorBitSize())
+    return false;
+
+  Register SrcReg = (Unmerge.uses().begin())->getReg();
+  MachineInstr *Bitcast = MRI.getVRegDef(SrcReg);
+
+  if (Bitcast->getOpcode() != TargetOpcode::G_BITCAST ||
+      !MRI.hasOneNonDBGUse(Bitcast->getOperand(0).getReg()))
+    return false;
+
+  Register BitcastSrcReg = Bitcast->getOperand(1).getReg();
+  const LLT BitcastSrcType = MRI.getType(BitcastSrcReg);
+  if (!BitcastSrcType.isFixedVector())
+    return false;
+
+  MatchInfo = [=, &MRI, &Unmerge, &Observer](MachineIRBuilder &B) {
+    const unsigned NumDefs = Unmerge.getNumDefs();
+    const LLT ReducedType = BitcastSrcType.divide(NumDefs);
+    Observer.changingInstr(Unmerge);
+    Unmerge.uses().begin()->setReg(BitcastSrcReg);
+    Observer.changedInstr(Unmerge);
+    B.setInsertPt(*Unmerge.getParent(), ++Unmerge.getIterator());
+
+    for (auto &OrigDef : Unmerge.defs()) {
+      Register DefReg = MRI.createGenericVirtualRegister(ReducedType);
+      Register OrigDefReg = OrigDef.getReg();
+      Observer.changingInstr(Unmerge);
+      OrigDef.setReg(DefReg);
+      Observer.changedInstr(Unmerge);
+
+      Observer.createdInstr(*B.buildBitcast(OrigDefReg, DefReg));
+    }
+  };
+
+  return true;
+}

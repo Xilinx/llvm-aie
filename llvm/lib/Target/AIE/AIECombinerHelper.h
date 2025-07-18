@@ -273,6 +273,10 @@ bool matchNarrowZext(MachineInstr &MI, MachineRegisterInfo &MRI,
 bool matchCombineExtAndTrunc(MachineInstr &MI, MachineRegisterInfo &MRI,
                              BuildFnTy &MatchInfo);
 
+bool matchBitcastUnmerge(MachineInstr &Phi, MachineRegisterInfo &MRI,
+                         const AIEBaseInstrInfo &TII,
+                         GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
+
 } // namespace llvm
 
 #endif

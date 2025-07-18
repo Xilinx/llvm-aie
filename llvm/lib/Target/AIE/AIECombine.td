@@ -199,6 +199,13 @@ def combine_trunc_ext: GICombineRule <
   (apply [{Helper.applyBuildFn(*${root}, ${matchinfo}); }])
 >;
 
+def combine_bitcast_unmerge_swap : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_UNMERGE_VALUES): $root,
+         [{ return matchBitcastUnmerge(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), Observer, ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
+
+
 // AIE-specifc combines (currently shared by AIE2 and AIE2P).
 def aie_additional_combines : GICombineGroup<[
   combine_unpad_vector,
@@ -230,6 +237,7 @@ def aie2p_additional_combines : GICombineGroup<[
   combine_vector_shuffle_concat_extracted_subvectors,
   combine_paired_extracts,
   combine_vector_shuffle_to_extract_insert_elt_to_broadcast,
+  combine_bitcast_unmerge_swap
 ]>;
 
 def AIE2PreLegalizerCombiner
