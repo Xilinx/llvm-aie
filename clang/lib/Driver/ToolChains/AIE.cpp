@@ -200,6 +200,10 @@ void AIEToolChain::addClangTargetOptions(
     CC1Args.push_back("-fno-builtin-memcpy");
     CC1Args.push_back("-fno-builtin-memmove");
   }
+
+  // Temporarily disable the warning to unblock AIE API compilation.
+  // FIXME: remove after all downstream code has been fixed
+  CC1Args.push_back("-Wno-missing-template-arg-list-after-template-kw");
 }
 
 // Avoid using newer dwarf versions, as the simulator doesn't understand newer
