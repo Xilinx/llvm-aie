@@ -3268,6 +3268,55 @@ isUsedByAnyS20Instruction(MachineInstr &Phi,
   return Result;
 }
 
+/// Change the type used in a phi node. The new type should have
+/// size in bits <= the old type
+static void retypePhiNode(MachineInstr &Phi, bool IsSigned, LLT NewType,
+                          MachineIRBuilder &B, MachineRegisterInfo &MRI,
+                          GISelChangeObserver &Observer) {
+
+  const Register NewDefReg = MRI.createGenericVirtualRegister(NewType);
+  const Register DefReg = Phi.getOperand(0).getReg();
+  const LLT OldType = MRI.getType(DefReg);
+  assert(NewType.getSizeInBits() <= OldType.getSizeInBits() &&
+         "New size > Older size");
+  const unsigned ChangeUseOpcode =
+      NewType.getSizeInBits() < OldType.getSizeInBits()
+          ? TargetOpcode::G_TRUNC
+          : TargetOpcode::G_BITCAST;
+  const unsigned ChangeDefOpcode =
+      NewType.getSizeInBits() < OldType.getSizeInBits()
+          ? (IsSigned ? TargetOpcode::G_SEXT : TargetOpcode::G_ZEXT)
+          : TargetOpcode::G_BITCAST;
+
+  MachineBasicBlock *MBB = Phi.getParent();
+  MachineBasicBlock::iterator InsertPt = MBB->getFirstNonPHI();
+  B.setInsertPt(*MBB, InsertPt);
+  // Change the output.
+  Observer.createdInstr(
+      *B.buildInstr(ChangeDefOpcode).addDef(DefReg).addUse(NewDefReg));
+  Phi.getOperand(0).setReg(NewDefReg);
+
+  // Change the inputs.
+  for (unsigned OpNum = 1; OpNum < Phi.getNumOperands(); OpNum += 2) {
+    const Register SrcReg = Phi.getOperand(OpNum).getReg();
+    MachineInstr *DefMI = MRI.getVRegDef(SrcReg);
+
+    MachineBasicBlock *DefMIMBB = DefMI->getParent();
+    MachineBasicBlock::iterator InsertPt = ++DefMI->getIterator();
+    if (InsertPt != DefMIMBB->end() && InsertPt->isPHI())
+      InsertPt = DefMIMBB->getFirstNonPHI();
+
+    B.setInsertPt(*DefMI->getParent(), InsertPt);
+    B.setDebugLoc(DefMI->getDebugLoc());
+    const Register NewSrcReg = MRI.createGenericVirtualRegister(NewType);
+    Observer.createdInstr(
+        *B.buildInstr(ChangeUseOpcode).addDef(NewSrcReg).addUse(SrcReg));
+    Observer.changingInstr(Phi);
+    Phi.getOperand(OpNum).setReg(NewSrcReg);
+    Observer.changedInstr(Phi);
+  }
+}
+
 /// Narrow Phi nodes to s20, when it is safe.
 bool llvm::matchNarrowPhi(MachineInstr &Phi, MachineRegisterInfo &MRI,
                           GISelChangeObserver &Observer, BuildFnTy &MatchInfo) {
@@ -3302,36 +3351,10 @@ bool llvm::matchNarrowPhi(MachineInstr &Phi, MachineRegisterInfo &MRI,
   MatchInfo = [=, &MRI, &Phi, &Observer](MachineIRBuilder &B) {
     // We change the PHI node instead of building a new one.
     const LLT S20 = LLT::scalar(20);
-    const Register NewDefReg = MRI.createGenericVirtualRegister(S20);
-    const Register DefReg = Phi.getOperand(0).getReg();
-
-    MachineBasicBlock *MBB = Phi.getParent();
-    MachineBasicBlock::iterator InsertPt = MBB->getFirstNonPHI();
-    B.setInsertPt(*Phi.getParent(), InsertPt);
-    // Extend the output.
-    // We use ZExt because it is the only safe, considering the
+    // We extend the output also truncate the inputs.
+    // We use ZExt (IsSigned) because it is the only safe, considering the
     // previous analysis (isUsedByAnyS20Instruction - trunc case).
-    Observer.createdInstr(*B.buildZExt(DefReg, NewDefReg));
-    Phi.getOperand(0).setReg(NewDefReg);
-
-    // Truncate the inputs.
-    for (unsigned OpNum = 1; OpNum < Phi.getNumOperands(); OpNum += 2) {
-      const Register SrcReg = Phi.getOperand(OpNum).getReg();
-      const Register NewSrcReg = MRI.createGenericVirtualRegister(S20);
-      MachineInstr *DefMI = MRI.getVRegDef(SrcReg);
-
-      MachineBasicBlock *DefMIMBB = DefMI->getParent();
-      MachineBasicBlock::iterator InsertPt = ++DefMI->getIterator();
-      if (InsertPt != DefMIMBB->end() && InsertPt->isPHI())
-        InsertPt = DefMIMBB->getFirstNonPHI();
-
-      B.setInsertPt(*DefMI->getParent(), InsertPt);
-      B.setDebugLoc(DefMI->getDebugLoc());
-      Observer.createdInstr(*B.buildTrunc(NewSrcReg, SrcReg));
-      Observer.changingInstr(Phi);
-      Phi.getOperand(OpNum).setReg(NewSrcReg);
-      Observer.changedInstr(Phi);
-    }
+    retypePhiNode(Phi, /*IsSigned=*/false, S20, B, MRI, Observer);
   };
 
   return true;
