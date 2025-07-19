@@ -351,6 +351,11 @@ Changes in existing checks
   <clang-tidy/checks/modernize/use-starts-ends-with>` check to also handle
   calls to ``compare`` method.
 
+- Improved :doc:`modernize-use-std-print
+  <clang-tidy/checks/modernize/use-std-print>` check to not crash if the
+  format string parameter of the function to be replaced is not of the
+  expected type.
+
 - Improved :doc:`modernize-use-using <clang-tidy/checks/modernize/use-using>`
   check by adding support for detection of typedefs declared on function level.
 
@@ -397,6 +402,11 @@ Changes in existing checks
 - Improved :doc:`readability-redundant-inline-specifier
   <clang-tidy/checks/readability/redundant-inline-specifier>` check to properly
   emit warnings for static data member with an in-class initializer.
+
+- Improved :doc:`readability-redundant-member-init
+  <clang-tidy/checks/readability/redundant-member-init>` check to avoid
+  false-positives when type of the member does not match the type of the
+  initializer.
 
 - Improved :doc:`readability-static-accessed-through-instance
   <clang-tidy/checks/readability/static-accessed-through-instance>` check to

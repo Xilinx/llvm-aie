@@ -1710,7 +1710,7 @@ static void inferFromTransitions(ArrayRef<PredTransition> LastTransitions,
     RecVec Preds;
     transform(LastTransition.PredTerm, std::back_inserter(Preds),
               [](const PredCheck &P) { return P.Predicate; });
-    Preds.erase(std::unique(Preds.begin(), Preds.end()), Preds.end());
+    Preds.erase(llvm::unique(Preds), Preds.end());
     dumpTransition(SchedModels, FromSC, SCTrans, Preds);
     SCTrans.PredTerm = std::move(Preds);
     SchedModels.getSchedClass(FromClassIdx)

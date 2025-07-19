@@ -29,14 +29,8 @@ using namespace llvm;
 // AIE-specific code to select AIE machine instructions for
 // SelectionDAG operations.
 class AIEDAGToDAGISel : public SelectionDAGISel {
-  static char ID;
-
 public:
-  explicit AIEDAGToDAGISel(TargetMachine &TM) : SelectionDAGISel(ID, TM) {}
-
-  StringRef getPassName() const override {
-    return "AIE DAG->DAG Pattern Instruction Selection";
-  }
+  explicit AIEDAGToDAGISel(TargetMachine &TM) : SelectionDAGISel(TM) {}
 
   void Select(SDNode *Node) override;
 

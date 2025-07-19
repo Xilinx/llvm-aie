@@ -402,6 +402,10 @@ public:
         shouldFoldTerminatingConditionAfterLSR();
   }
 
+  bool shouldDropLSRSolutionIfLessProfitable() const {
+    return TargetTransformInfoImplBase::shouldDropLSRSolutionIfLessProfitable();
+  }
+
   bool isProfitableOuterLSR(const Loop &L) const {
     return TargetTransformInfoImplBase::isProfitableOuterLSR(L);
   }
@@ -1983,6 +1987,9 @@ public:
       break;
     case Intrinsic::cos:
       ISD = ISD::FCOS;
+      break;
+    case Intrinsic::tan:
+      ISD = ISD::FTAN;
       break;
     case Intrinsic::exp:
       ISD = ISD::FEXP;

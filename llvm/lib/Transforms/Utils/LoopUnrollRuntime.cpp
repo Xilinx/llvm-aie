@@ -1019,12 +1019,17 @@ bool llvm::UnrollRuntimeLoopRemainder(
   LoopUnrollReport UnrollReport{};
   if (remainderLoop && UnrollRemainder) {
     LLVM_DEBUG(dbgs() << "Unrolling remainder loop\n");
-    UnrollReport =
-        UnrollLoop(remainderLoop,
-                   {/*Count*/ Count - 1, /*Force*/ false, /*Runtime*/ false,
-                    /*AllowExpensiveTripCount*/ false,
-                    /*UnrollRemainder*/ false, ForgetAllSCEV},
-                   LI, SE, DT, AC, TTI, /*ORE*/ nullptr, PreserveLCSSA);
+    UnrollLoopOptions ULO;
+    ULO.Count = Count - 1;
+    ULO.Force = false;
+    ULO.Runtime = false;
+    ULO.AllowExpensiveTripCount = false;
+    ULO.UnrollRemainder = false;
+    ULO.ForgetAllSCEV = ForgetAllSCEV;
+    assert(!getLoopConvergenceHeart(L) &&
+           "A loop with a convergence heart does not allow runtime unrolling.");
+    UnrollReport = UnrollLoop(remainderLoop, ULO, LI, SE, DT, AC, TTI,
+                              /*ORE*/ nullptr, PreserveLCSSA);
   }
 
   if (ResultLoop && UnrollReport.Result != LoopUnrollResult::FullyUnrolled)

@@ -3074,7 +3074,8 @@ def M68kRTD: DeclOrTypeAttr {
   let Documentation = [M68kRTDDocs];
 }
 
-def PreserveNone : DeclOrTypeAttr, TargetSpecificAttr<TargetAnyX86> {
+def PreserveNone : DeclOrTypeAttr,
+                   TargetSpecificAttr<TargetArch<!listconcat(TargetAArch64.Arches, TargetAnyX86.Arches)>> {
   let Spellings = [Clang<"preserve_none">];
   let Subjects = SubjectList<[FunctionLike]>;
   let Documentation = [PreserveNoneDocs];
@@ -4522,6 +4523,7 @@ def HLSLShader : InheritableAttr {
       case HLSLShaderAttr::Mesh:          return llvm::Triple::Mesh;
       case HLSLShaderAttr::Amplification: return llvm::Triple::Amplification;
     }
+    llvm_unreachable("unknown enumeration value");
   }
 }];
 }
