@@ -19,6 +19,7 @@
 #define LLVM_TRANSFORMS_UTILS_UNROLLLOOP_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Analysis/CodeMetrics.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Support/InstructionCost.h"
 
@@ -88,6 +89,7 @@ struct UnrollLoopOptions {
   bool AllowExpensiveTripCount;
   bool UnrollRemainder;
   bool ForgetAllSCEV;
+  const Instruction *Heart = nullptr;
 };
 
 LoopUnrollReport UnrollLoop(Loop *L, UnrollLoopOptions ULO, LoopInfo *LI,
@@ -143,14 +145,15 @@ class UnrollCostEstimator {
 
 public:
   unsigned NumInlineCandidates;
-  bool Convergent;
+  ConvergenceKind Convergence;
+  bool ConvergenceAllowsRuntime;
 
   UnrollCostEstimator(const Loop *L, const TargetTransformInfo &TTI,
                       const SmallPtrSetImpl<const Value *> &EphValues,
                       unsigned BEInsns);
 
   /// Whether it is legal to unroll this loop.
-  bool canUnroll() const { return LoopSize.isValid() && !NotDuplicatable; }
+  bool canUnroll() const;
 
   uint64_t getRolledLoopSize() const { return *LoopSize.getValue(); }
 
