@@ -1687,7 +1687,7 @@ bool SelectionDAGBuilder::handleDebugValue(ArrayRef<const Value *> Values,
           if (!FragmentExpr)
             continue;
           SDDbgValue *SDV = DAG.getVRegDbgValue(
-              Var, *FragmentExpr, RegAndSize.first, false, DbgLoc, SDNodeOrder);
+              Var, *FragmentExpr, RegAndSize.first, false, DbgLoc, Order);
           DAG.AddDbgValue(SDV, false);
           Offset += RegisterSize;
         }
@@ -1702,11 +1702,10 @@ bool SelectionDAGBuilder::handleDebugValue(ArrayRef<const Value *> Values,
   }
 
   // We have created a SDDbgOperand for each Value in Values.
-  // Should use Order instead of SDNodeOrder?
   assert(!LocationOps.empty());
-  SDDbgValue *SDV = DAG.getDbgValueList(Var, Expr, LocationOps, Dependencies,
-                                        /*IsIndirect=*/false, DbgLoc,
-                                        SDNodeOrder, IsVariadic);
+  SDDbgValue *SDV =
+      DAG.getDbgValueList(Var, Expr, LocationOps, Dependencies,
+                          /*IsIndirect=*/false, DbgLoc, Order, IsVariadic);
   DAG.AddDbgValue(SDV, /*isParameter=*/false);
   return true;
 }
