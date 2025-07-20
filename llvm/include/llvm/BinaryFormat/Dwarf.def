@@ -895,7 +895,7 @@ HANDLE_DW_OP(0xf8, PGI_omp_thread_num, -1, -1, 0, PGI)
 HANDLE_DW_OP(0xfb, GNU_addr_index, 1, 0, 0, GNU)
 HANDLE_DW_OP(0xfc, GNU_const_index, 1, 0, 0, GNU)
 
-HANDLE_DW_OP(0xfd, AIE_address_space, 0, AMD)
+HANDLE_DW_OP(0xfd, AIE_address_space, 1, 0, 0, AMD)
 
 // DW_OP_LLVM_user has two operands:
 //   (1) An unsigned LEB128 "LLVM Vendor Extension Opcode".
