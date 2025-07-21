@@ -49,57 +49,66 @@ set(aie_files
   aiebase_chess.h
   aiebase_typedefs.h
   aie_addlog.h
-  aiev1_undef.h
-  aiev1_upd_ext.h
-  aiev1_vfloat.h
-  aiev1_vmult.h
-  aiev1_vmac.h
-  aiev1_ldst.h
-  aiev1_vcmp.h
   aiev1intrin.h
-  aiev2_enums.h
-  aiev2_scalar.h
-  aiev2_srs.h
-  aiev2_streams.h
-  aiev2_undef.h
-  aiev2_vadd.h
-  aiev2_core.h
-  aiev2_vmult.h
-  aiev2_vld_sparse.h
-  aiev2_pckt_header.h
-  aiev2_scl2vec.h
-  aiev2_upd_ext.h
-  aiev2_ups.h
-  aiev2_set_mode.h
-  aiev2_locks.h
-  aiev2_defines.h
-  aiev2_addr.h
-  aiev2_addlog.h
-  aiev2_ldst.h
   aiev2intrin.h
-  aiev2_aie_api_compat.h
   aie2pintrin.h
-  aie2p_upd_ext.h
-  aie2p_ldst.h
-  aie2p_undef.h
-  aie2p_vmult.h
-  aie2p_enums.h
-  aie2p_defines.h
-  aie2p_set_mode.h
-  aie2p_ups.h
-  aie2p_srs.h
-  aie2p_addlog.h
-  aie2p_scalar.h
-  aie2p_locks.h
-  aie2p_vadd.h
-  aie2p_scl2vec.h
-  aie2p_addr.h
-  aie2p_streams.h
-  aie2p_cnvf2f.h
-  aie2p_nlf.h
-  aie2p_nlf_vector.h
-  aie2p_aie_api_compat.h
-)
+  )
+# aiev1
+set(aiev1_files
+  aiev1/aiev1_undef.h
+  aiev1/aiev1_upd_ext.h
+  aiev1/aiev1_vfloat.h
+  aiev1/aiev1_vmult.h
+  aiev1/aiev1_vmac.h
+  aiev1/aiev1_ldst.h
+  aiev1/aiev1_vcmp.h
+  )
+# aiev2 files
+set(aiev2_files
+  aiev2/aiev2_enums.h
+  aiev2/aiev2_scalar.h
+  aiev2/aiev2_srs.h
+  aiev2/aiev2_streams.h
+  aiev2/aiev2_undef.h
+  aiev2/aiev2_vadd.h
+  aiev2/aiev2_core.h
+  aiev2/aiev2_vmult.h
+  aiev2/aiev2_vld_sparse.h
+  aiev2/aiev2_pckt_header.h
+  aiev2/aiev2_scl2vec.h
+  aiev2/aiev2_upd_ext.h
+  aiev2/aiev2_ups.h
+  aiev2/aiev2_set_mode.h
+  aiev2/aiev2_locks.h
+  aiev2/aiev2_defines.h
+  aiev2/aiev2_addr.h
+  aiev2/aiev2_addlog.h
+  aiev2/aiev2_ldst.h
+  aiev2/aiev2_aie_api_compat.h
+  )
+# aie2p
+set(aie2p_files
+  aie2p/aie2p_upd_ext.h
+  aie2p/aie2p_ldst.h
+  aie2p/aie2p_undef.h
+  aie2p/aie2p_vmult.h
+  aie2p/aie2p_enums.h
+  aie2p/aie2p_defines.h
+  aie2p/aie2p_set_mode.h
+  aie2p/aie2p_ups.h
+  aie2p/aie2p_srs.h
+  aie2p/aie2p_addlog.h
+  aie2p/aie2p_scalar.h
+  aie2p/aie2p_locks.h
+  aie2p/aie2p_vadd.h
+  aie2p/aie2p_scl2vec.h
+  aie2p/aie2p_addr.h
+  aie2p/aie2p_streams.h
+  aie2p/aie2p_cnvf2f.h
+  aie2p/aie2p_nlf.h
+  aie2p/aie2p_nlf_vector.h
+  aie2p/aie2p_aie_api_compat.h
+  )
 
 set(arm_common_files
   # Headers shared by Arm and AArch64
@@ -439,7 +448,7 @@ endfunction(clang_generate_header)
 # Copy header files from the source directory to the build directory
 foreach( f ${files} ${cuda_wrapper_files} ${cuda_wrapper_bits_files}
            ${ppc_wrapper_files} ${openmp_wrapper_files} ${zos_wrapper_files} ${hlsl_files}
-           ${llvm_libc_wrapper_files})
+           ${llvm_libc_wrapper_files} ${aiev1_files} ${aiev2_files} ${aie2p_files})
   copy_header_to_output_dir(${CMAKE_CURRENT_SOURCE_DIR} ${f})
 endforeach( f )
 
@@ -609,6 +618,21 @@ install(
 install(
   FILES ${zos_wrapper_files}
   DESTINATION ${header_install_dir}/zos_wrappers
+  COMPONENT clang-resource-headers)
+
+install(
+  FILES ${aiev1_files}
+  DESTINATION ${header_install_dir}/aiev1
+  COMPONENT clang-resource-headers)
+
+install(
+  FILES ${aiev2_files}
+  DESTINATION ${header_install_dir}/aiev2
+  COMPONENT clang-resource-headers)
+
+install(
+  FILES ${aie2p_files}
+  DESTINATION ${header_install_dir}/aie2p
   COMPONENT clang-resource-headers)
 
 #############################################################
