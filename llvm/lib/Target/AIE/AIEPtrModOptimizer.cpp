@@ -52,7 +52,7 @@ bool AIEPtrModOptimizer::runOnMachineFunction(MachineFunction &MF) {
   const auto *TII =
       static_cast<const AIEBaseInstrInfo *>(MF.getSubtarget().getInstrInfo());
 
-  const MachineDominatorTree *MDT = &getAnalysis<MachineDominatorTree>();
+  const MachineDominatorTree *MDT = &getAnalysis<MachineDominatorTreeWrapperPass>().getDomTree();
 
   MachineSchedContext Context;
   Context.MF = &MF;
@@ -101,8 +101,8 @@ void AIEPtrModOptimizer::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<MachineModuleInfoWrapperPass>();
   AU.addRequired<GISelCSEAnalysisWrapperPass>();
   AU.addRequired<TargetPassConfig>();
-  AU.addRequired<MachineDominatorTree>();
-  AU.addPreserved<MachineDominatorTree>();
+  AU.addRequired<MachineDominatorTreeWrapperPass>();
+  AU.addPreserved<MachineDominatorTreeWrapperPass>();
   AU.addRequired<AAResultsWrapperPass>();
   AU.setPreservesAll();
 }
