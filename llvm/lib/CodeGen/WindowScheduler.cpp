@@ -621,7 +621,8 @@ void WindowScheduler::expand() {
   }
   ModuloSchedule MS(*MF, &Loop, std::move(OrderedInsts), std::move(Cycles),
                     std::move(Stages));
-  ModuloScheduleExpander MSE(*MF, MS, *Context->LIS,
+  auto LoopInfo = TII->analyzeLoopForPipelining(MBB);
+  ModuloScheduleExpander MSE(*MF, MS, *Context->LIS, LoopInfo.get(),
                              ModuloScheduleExpander::InstrChangesTy());
   MSE.expand();
   MSE.cleanup();
