@@ -273,23 +273,25 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
 
   getActionDefinitionsBuilder({G_FADD, G_FSUB})
       .legalFor({AccV64S32})
-      // .moreElementsToNextPow2(0)  // non-power of 2
+      // Handle custom bf16 case for both scalar and vector types
+      .customFor({S16, V32S16})
+      // Convert smaller than <32 x f32/bf16> to legal sizes, doesn't change types
       .moreElementsIf(
           [=](const LegalityQuery &Query) {
             const LLT &Ty = Query.Types[0];
             return Ty.isVector() &&
                    (Ty.getScalarSizeInBits() == 32 ||
                     Ty.getScalarSizeInBits() == 16) &&
-                   Ty.getNumElements() < 32;
+                   Ty.getNumElements() <= 32;
           },
           [=](const LegalityQuery &Query) {
             if (Query.Types[0].getScalarSizeInBits() == 32) {
-              return std::make_pair(0, LLT::fixed_vector(32, S32));
+              return std::make_pair(0, LLT::fixed_vector(64, S32));
             } else {
               return std::make_pair(0, LLT::fixed_vector(32, S16));
             }
           })
-      // converts <64xbf16> into 2 chunks of <32xbf16>
+      // Converts <64xbf16> into 2 chunks of <32xbf16>
       .fewerElementsIf(
           [=](const LegalityQuery &Query) {
             const LLT &Ty = Query.Types[0];
@@ -299,8 +301,6 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
           [=](const LegalityQuery &Query) {
             return std::make_pair(0, LLT::fixed_vector(32, S16));
           })
-      // Handle custom bf16 case for both scalar and vector types
-      .customFor({S16, V32S16})
       .libcallFor({S32, S64});
 
   getActionDefinitionsBuilder({G_FDIV, G_FREM})
