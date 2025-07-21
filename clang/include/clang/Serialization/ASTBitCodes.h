@@ -62,7 +62,7 @@ const unsigned VERSION_MINOR = 1;
 ///
 /// The ID numbers of identifiers are consecutive (in order of discovery)
 /// and start at 1. 0 is reserved for NULL.
-using IdentifierID = uint32_t;
+using IdentifierID = uint64_t;
 
 /// The number of predefined identifier IDs.
 const unsigned int NUM_PREDEF_IDENT_IDS = 1;
@@ -697,6 +697,12 @@ enum ASTRecordTypes {
   /// Record code for lexical and visible block for delayed namespace in
   /// reduced BMI.
   DELAYED_NAMESPACE_LEXICAL_VISIBLE_RECORD = 68,
+
+  /// Record code for \#pragma clang unsafe_buffer_usage begin/end
+  PP_UNSAFE_BUFFER_USAGE = 69,
+
+  /// Record code for vtables to emit.
+  VTABLES_TO_EMIT = 70,
 };
 
 /// Record types used within a source manager block.
@@ -1094,6 +1100,9 @@ enum PredefinedTypeIDs {
 // \brief WebAssembly reference types with auto numeration
 #define WASM_TYPE(Name, Id, SingletonId) PREDEF_TYPE_##Id##_ID,
 #include "clang/Basic/WebAssemblyReferenceTypes.def"
+// \brief AMDGPU types with auto numeration
+#define AMDGPU_TYPE(Name, Id, SingletonId) PREDEF_TYPE_##Id##_ID,
+#include "clang/Basic/AMDGPUTypes.def"
 // \brief AIE types with auto numeration
 #define AIE_TYPE(Name, Id, Size, Algn) PREDEF_TYPE_##Id##_ID,
 #include "clang/Basic/AIETypes.def"
@@ -1108,7 +1117,7 @@ enum PredefinedTypeIDs {
 ///
 /// Type IDs for non-predefined types will start at
 /// NUM_PREDEF_TYPE_IDs.
-const unsigned NUM_PREDEF_TYPE_IDS = 507;
+const unsigned NUM_PREDEF_TYPE_IDS = 508;
 
 // Ensure we do not overrun the predefined types we reserved
 // in the enum PredefinedTypeIDs above.
@@ -2000,9 +2009,9 @@ struct ObjCCategoriesInfo {
 
   ObjCCategoriesInfo() = default;
   ObjCCategoriesInfo(LocalDeclID ID, unsigned Offset)
-      : DefinitionID(ID.get()), Offset(Offset) {}
+      : DefinitionID(ID.getRawValue()), Offset(Offset) {}
 
-  LocalDeclID getDefinitionID() const { return LocalDeclID(DefinitionID); }
+  DeclID getDefinitionID() const { return DefinitionID; }
 
   friend bool operator<(const ObjCCategoriesInfo &X,
                         const ObjCCategoriesInfo &Y) {
