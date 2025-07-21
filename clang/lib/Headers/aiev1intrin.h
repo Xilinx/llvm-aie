@@ -18,17 +18,17 @@
 
 #include "aiebase_chess.h"
 #include "aiebase_typedefs.h"
-#include "aiev1_undef.h"
+#include "aiev1/aiev1_undef.h"
 
 #ifdef __cplusplus
 // In order to compile compiler-rt, we need a pure-C environment
 
-#include "aiev1_ldst.h"
-#include "aiev1_upd_ext.h"
-#include "aiev1_vcmp.h"
-#include "aiev1_vfloat.h"
-#include "aiev1_vmac.h"
-#include "aiev1_vmult.h"
+#include "aiev1/aiev1_ldst.h"
+#include "aiev1/aiev1_upd_ext.h"
+#include "aiev1/aiev1_vcmp.h"
+#include "aiev1/aiev1_vfloat.h"
+#include "aiev1/aiev1_vmac.h"
+#include "aiev1/aiev1_vmult.h"
 
 #endif /* __cplusplus */
 
