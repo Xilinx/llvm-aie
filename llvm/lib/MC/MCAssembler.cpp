@@ -1117,35 +1117,28 @@ bool MCAssembler::relaxAlignByPadding(MCAsmLayout &Layout,
   if (BytesNeeded == 0)
     return false;
 
-  // Walk backwards, finding appropriate instructions to pad.
   // Any instruction that can be relaxed sits in an FT_Relaxable fragment
-  for (MCFragment *F = &BF; F != nullptr; F = F->getPrevNode()) {
-    switch (F->getKind()) {
-      default:
-        break;
-      case MCFragment::FT_AlignByPadding:
-      case MCFragment::FT_Align: {
-        // Don't pad before other alignments
-        break;
-      }
-      case MCFragment::FT_Relaxable: {
-        auto &RF = cast<MCRelaxableFragment>(*F);
-        // If relaxing this instruction might contribute to our BytesNeeded,
-        // then try it. We should not overshoot, so never stretch more than the
-        // number of bytes we need.
-        unsigned Extra = getBackend().maxRelaxIncrement(RF.getInst(),
-                                                        *RF.getSubtargetInfo());
-        if (Extra > 0 && Extra <= BytesNeeded) {
-          forceRelaxInstruction(Layout, RF);
-          // This is a rather conservative approach that will likely result in re-entering this
-          // function.  It's possible that there is some O(N^2) runtime here, but N is probably
-          // always small, since we won't look very far to find an instruction that we can
-          // pad.
-          Layout.invalidateFragmentsFrom(&RF);
-          return true;
-        }
-        break;
-      }
+  SmallVector<MCRelaxableFragment *> RelaxableFragments;
+  for (MCFragment &F : *BF.getParent()) {
+    if (auto *RF = dyn_cast<MCRelaxableFragment>(&F)) {
+      RelaxableFragments.push_back(RF);
+    }
+  }
+  // Walk backwards, finding appropriate instructions to pad.
+  for (MCRelaxableFragment *RF : llvm::reverse(RelaxableFragments)) {
+    // If relaxing this instruction might contribute to our BytesNeeded,
+    // then try it. We should not overshoot, so never stretch more than the
+    // number of bytes we need.
+    unsigned Extra = getBackend().maxRelaxIncrement(RF->getInst(),
+                                                    *RF->getSubtargetInfo());
+    if (Extra > 0 && Extra <= BytesNeeded) {
+      forceRelaxInstruction(Layout, *RF);
+      // This is a rather conservative approach that will likely result in re-entering this
+      // function.  It's possible that there is some O(N^2) runtime here, but N is probably
+      // always small, since we won't look very far to find an instruction that we can
+      // pad.
+      Layout.invalidateFragmentsFrom(RF);
+      return true;
     }
   }
   return false;
