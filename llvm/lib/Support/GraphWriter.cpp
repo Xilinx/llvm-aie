@@ -31,6 +31,7 @@
 
 #ifdef __APPLE__
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ManagedStatic.h"
 #endif
 
 #include <string>
