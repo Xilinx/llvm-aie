@@ -500,6 +500,14 @@ void Sema::Initialize() {
 #include "clang/Basic/WebAssemblyReferenceTypes.def"
   }
 
+  if (Context.getTargetInfo().getTriple().isAMDGPU() ||
+      (Context.getAuxTargetInfo() &&
+       Context.getAuxTargetInfo()->getTriple().isAMDGPU())) {
+#define AMDGPU_TYPE(Name, Id, SingletonId)                                     \
+  addImplicitTypedef(Name, Context.SingletonId);
+#include "clang/Basic/AMDGPUTypes.def"
+  }
+
   if (Context.getTargetInfo().getTriple().isAIE()) {
 #define AIE_TYPE(Name, Id, Size, Algn)                                        \
   addImplicitTypedef(#Name, Context.Id##Ty);
@@ -2102,16 +2110,15 @@ void Sema::checkTypeSupport(QualType Ty, SourceLocation Loc, ValueDecl *D) {
     }
 
     // Don't allow SVE types in functions without a SVE target.
-    if (Ty->isSVESizelessBuiltinType() && FD && FD->hasBody()) {
+    if (Ty->isSVESizelessBuiltinType() && FD) {
       llvm::StringMap<bool> CallerFeatureMap;
       Context.getFunctionFeatureMap(CallerFeatureMap, FD);
       if (!Builtin::evaluateRequiredTargetFeatures("sve", CallerFeatureMap)) {
         if (!Builtin::evaluateRequiredTargetFeatures("sme", CallerFeatureMap))
-          Diag(D->getLocation(), diag::err_sve_vector_in_non_sve_target) << Ty;
+          Diag(Loc, diag::err_sve_vector_in_non_sve_target) << Ty;
         else if (!IsArmStreamingFunction(FD,
                                          /*IncludeLocallyStreaming=*/true)) {
-          Diag(D->getLocation(), diag::err_sve_vector_in_non_streaming_function)
-              << Ty;
+          Diag(Loc, diag::err_sve_vector_in_non_streaming_function) << Ty;
         }
       }
     }

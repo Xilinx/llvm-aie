@@ -71,6 +71,7 @@
 #include "llvm/CodeGen/ScheduleDAGMutation.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
+#include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/Config/llvm-config.h"
@@ -195,6 +196,10 @@ static cl::opt<int>
                       cl::desc("Margin representing the unused percentage of "
                                "the register pressure limit"));
 
+static cl::opt<bool>
+    MVECodeGen("pipeliner-mve-cg", cl::Hidden, cl::init(false),
+               cl::desc("Use the MVE code generator for software pipelining"));
+
 namespace llvm {
 
 // A command line option to enable the CopyToPhi DAG mutation.
@@ -209,6 +214,17 @@ cl::opt<int> SwpForceIssueWidth(
     cl::desc("Force pipeliner to use specified issue width."), cl::Hidden,
     cl::init(-1));
 
+/// A command line argument to set the window scheduling option.
+cl::opt<WindowSchedulingFlag> WindowSchedulingOption(
+    "window-sched", cl::Hidden, cl::init(WindowSchedulingFlag::WS_On),
+    cl::desc("Set how to use window scheduling algorithm."),
+    cl::values(clEnumValN(WindowSchedulingFlag::WS_Off, "off",
+                          "Turn off window algorithm."),
+               clEnumValN(WindowSchedulingFlag::WS_On, "on",
+                          "Use window algorithm after SMS algorithm fails."),
+               clEnumValN(WindowSchedulingFlag::WS_Force, "force",
+                          "Use window algorithm instead of SMS algorithm.")));
+
 } // end namespace llvm
 
 unsigned SwingSchedulerDAG::Circuits::MaxPaths = 5;
@@ -222,7 +238,7 @@ INITIALIZE_PASS_BEGIN(MachinePipeliner, DEBUG_TYPE,
                       "Modulo Software Pipelining", false, false)
 INITIALIZE_PASS_DEPENDENCY(AAResultsWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
-INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
+INITIALIZE_PASS_DEPENDENCY(MachineDominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LiveIntervals)
 INITIALIZE_PASS_END(MachinePipeliner, DEBUG_TYPE,
                     "Modulo Software Pipelining", false, false)
@@ -251,7 +267,7 @@ bool MachinePipeliner::runOnMachineFunction(MachineFunction &mf) {
 
   MF = &mf;
   MLI = &getAnalysis<MachineLoopInfo>();
-  MDT = &getAnalysis<MachineDominatorTree>();
+  MDT = &getAnalysis<MachineDominatorTreeWrapperPass>().getDomTree();
   ORE = &getAnalysis<MachineOptimizationRemarkEmitterPass>().getORE();
   TII = MF->getSubtarget().getInstrInfo();
   RegClassInfo.runOnMachineFunction(*MF);
@@ -295,8 +311,11 @@ bool MachinePipeliner::scheduleLoop(MachineLoop &L) {
   }
 
   ++NumTrytoPipeline;
+  if (useSwingModuloScheduler())
+    Changed = swingModuloScheduler(L);
 
-  Changed = swingModuloScheduler(L);
+  if (useWindowScheduler(Changed))
+    Changed = runWindowScheduler(L);
 
   LI.LoopPipelinerInfo.reset();
   return Changed;
@@ -484,10 +503,36 @@ void MachinePipeliner::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<AAResultsWrapperPass>();
   AU.addPreserved<AAResultsWrapperPass>();
   AU.addRequired<MachineLoopInfo>();
-  AU.addRequired<MachineDominatorTree>();
+  AU.addRequired<MachineDominatorTreeWrapperPass>();
   AU.addRequired<LiveIntervals>();
   AU.addRequired<MachineOptimizationRemarkEmitterPass>();
+  AU.addRequired<TargetPassConfig>();
   MachineFunctionPass::getAnalysisUsage(AU);
+}
+
+bool MachinePipeliner::runWindowScheduler(MachineLoop &L) {
+  MachineSchedContext Context;
+  Context.MF = MF;
+  Context.MLI = MLI;
+  Context.MDT = MDT;
+  Context.PassConfig = &getAnalysis<TargetPassConfig>();
+  Context.AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
+  Context.LIS = &getAnalysis<LiveIntervals>();
+  Context.RegClassInfo->runOnMachineFunction(*MF);
+  WindowScheduler WS(&Context, L);
+  return WS.run();
+}
+
+bool MachinePipeliner::useSwingModuloScheduler() {
+  // SwingModuloScheduler does not work when WindowScheduler is forced.
+  return WindowSchedulingOption != WindowSchedulingFlag::WS_Force;
+}
+
+bool MachinePipeliner::useWindowScheduler(bool Changed) {
+  // WindowScheduler does not work when it is off or when SwingModuloScheduler
+  // is successfully scheduled.
+  return WindowSchedulingOption == WindowSchedulingFlag::WS_Force ||
+         (WindowSchedulingOption == WindowSchedulingFlag::WS_On && !Changed);
 }
 
 void SwingSchedulerDAG::setMII(unsigned ResMII, unsigned RecMII) {
@@ -679,6 +724,11 @@ void SwingSchedulerDAG::schedule() {
   // The experimental code generator can't work if there are InstChanges.
   if (ExperimentalCodeGen && NewInstrChanges.empty()) {
     PeelingModuloScheduleExpander MSE(MF, MS, &LIS, LoopPipelinerInfo);
+    MSE.expand();
+  } else if (MVECodeGen && NewInstrChanges.empty() &&
+             LoopPipelinerInfo->isMVEExpanderSupported() &&
+             ModuloScheduleExpanderMVE::canApply(Loop)) {
+    ModuloScheduleExpanderMVE MSE(MF, MS, LIS);
     MSE.expand();
   } else {
     ModuloScheduleExpander MSE(MF, MS, LIS, LoopPipelinerInfo,

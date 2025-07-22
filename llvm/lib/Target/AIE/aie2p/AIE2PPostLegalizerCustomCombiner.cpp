@@ -110,8 +110,8 @@ public:
     getSelectionDAGFallbackAnalysisUsage(AU);
     AU.addRequired<GISelKnownBitsAnalysis>();
     AU.addPreserved<GISelKnownBitsAnalysis>();
-    AU.addRequired<MachineDominatorTree>();
-    AU.addPreserved<MachineDominatorTree>();
+    AU.addRequired<MachineDominatorTreeWrapperPass>();
+    AU.addPreserved<MachineDominatorTreeWrapperPass>();
     AU.addRequired<GISelCSEAnalysisWrapperPass>();
     AU.addPreserved<GISelCSEAnalysisWrapperPass>();
     if (EnableGlobalPtrModOptimizer) {
@@ -153,7 +153,7 @@ bool AIE2PPostLegalizerCustomCombiner::runOnMachineFunction(
   const auto *LI = ST.getLegalizerInfo();
 
   GISelKnownBits *KB = &getAnalysis<GISelKnownBitsAnalysis>().get(MF);
-  MachineDominatorTree *MDT = &getAnalysis<MachineDominatorTree>();
+  MachineDominatorTree *MDT = &getAnalysis<MachineDominatorTreeWrapperPass>().getDomTree();
 
   AIE::FoundCombiners *AIEGlobalPtrIncResults = nullptr;
   if (auto *PtrModOptPass = getAnalysisIfAvailable<AIEPtrModOptimizer>())

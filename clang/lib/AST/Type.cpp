@@ -3512,6 +3512,10 @@ StringRef BuiltinType::getName(const PrintingPolicy &Policy) const {
   case Id:                                                                     \
     return Name;
 #include "clang/Basic/WebAssemblyReferenceTypes.def"
+#define AMDGPU_TYPE(Name, Id, SingletonId)                                     \
+  case Id:                                                                     \
+    return Name;
+#include "clang/Basic/AMDGPUTypes.def"
 #define AIE_TYPE(Name, Id, Size, Algn) \
   case Id: \
     return #Name;
@@ -4785,6 +4789,8 @@ bool Type::canHaveNullability(bool ResultIfUnknown) const {
 #include "clang/Basic/RISCVVTypes.def"
 #define WASM_TYPE(Name, Id, SingletonId) case BuiltinType::Id:
 #include "clang/Basic/WebAssemblyReferenceTypes.def"
+#define AMDGPU_TYPE(Name, Id, SingletonId) case BuiltinType::Id:
+#include "clang/Basic/AMDGPUTypes.def"
 #define AIE_TYPE(Name, Id, Size, Algn) \
     case BuiltinType::Id:
 #include "clang/Basic/AIETypes.def"

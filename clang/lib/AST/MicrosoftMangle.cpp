@@ -902,6 +902,9 @@ void MicrosoftCXXNameMangler::mangleFloat(llvm::APFloat Number) {
   case APFloat::S_Float8E4M3FNUZ:
   case APFloat::S_Float8E4M3B11FNUZ:
   case APFloat::S_FloatTF32:
+  case APFloat::S_Float6E3M2FN:
+  case APFloat::S_Float6E2M3FN:
+  case APFloat::S_Float4E2M1FN:
     llvm_unreachable("Tried to mangle unexpected APFloat semantics");
   }
 
@@ -2612,6 +2615,8 @@ void MicrosoftCXXNameMangler::mangleType(const BuiltinType *T, Qualifiers,
 #include "clang/Basic/PPCTypes.def"
 #define RVV_TYPE(Name, Id, SingletonId) case BuiltinType::Id:
 #include "clang/Basic/RISCVVTypes.def"
+#define AMDGPU_TYPE(Name, Id, SingletonId) case BuiltinType::Id:
+#include "clang/Basic/AMDGPUTypes.def"
 #define AIE_TYPE(Name, Id, Size, Algn) case BuiltinType::Id:
 #include "clang/Basic/AIETypes.def"
   case BuiltinType::ShortAccum:
@@ -2753,7 +2758,7 @@ void MicrosoftCXXNameMangler::mangleFunctionType(const FunctionType *T,
       return;
     }
     Out << '@';
-  } else if (IsInLambda && D && isa<CXXConversionDecl>(D)) {
+  } else if (IsInLambda && isa_and_nonnull<CXXConversionDecl>(D)) {
     // The only lambda conversion operators are to function pointers, which
     // can differ by their calling convention and are typically deduced.  So
     // we make sure that this type gets mangled properly.

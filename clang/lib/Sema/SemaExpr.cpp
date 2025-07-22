@@ -6172,6 +6172,8 @@ static bool isPlaceholderToRemoveAsArg(QualType type) {
 #include "clang/Basic/RISCVVTypes.def"
 #define WASM_TYPE(Name, Id, SingletonId) case BuiltinType::Id:
 #include "clang/Basic/WebAssemblyReferenceTypes.def"
+#define AMDGPU_TYPE(Name, Id, SingletonId) case BuiltinType::Id:
+#include "clang/Basic/AMDGPUTypes.def"
 #define AIE_TYPE(Name, Id, Size, Algn) \
   case BuiltinType::Id:
 #include "clang/Basic/AIETypes.def"
@@ -6477,6 +6479,14 @@ ExprResult Sema::ActOnCallExpr(Scope *Scope, Expr *Fn, SourceLocation LParenLoc,
   if (LangOpts.CPlusPlus) {
     if (const auto *CE = dyn_cast<CallExpr>(Call.get()))
       DiagnosedUnqualifiedCallsToStdFunctions(*this, CE);
+
+    // If we previously found that the id-expression of this call refers to a
+    // consteval function but the call is dependent, we should not treat is an
+    // an invalid immediate call.
+    if (auto *DRE = dyn_cast<DeclRefExpr>(Fn->IgnoreParens());
+        DRE && Call.get()->isValueDependent()) {
+      currentEvaluationContext().ReferenceToConsteval.erase(DRE);
+    }
   }
   return Call;
 }
@@ -18098,16 +18108,17 @@ void Sema::MarkFunctionReferenced(SourceLocation Loc, FunctionDecl *Func,
 
         if (FirstInstantiation || TSK != TSK_ImplicitInstantiation ||
             Func->isConstexpr()) {
-          if (isa<CXXRecordDecl>(Func->getDeclContext()) &&
-              cast<CXXRecordDecl>(Func->getDeclContext())->isLocalClass() &&
-              CodeSynthesisContexts.size())
-            PendingLocalImplicitInstantiations.push_back(
-                std::make_pair(Func, PointOfInstantiation));
-          else if (Func->isConstexpr())
+          if (Func->isConstexpr())
             // Do not defer instantiations of constexpr functions, to avoid the
             // expression evaluator needing to call back into Sema if it sees a
             // call to such a function.
             InstantiateFunctionDefinition(PointOfInstantiation, Func);
+          else if (isa<CXXRecordDecl>(Func->getDeclContext()) &&
+                   cast<CXXRecordDecl>(Func->getDeclContext())
+                       ->isLocalClass() &&
+                   CodeSynthesisContexts.size())
+            PendingLocalImplicitInstantiations.push_back(
+                std::make_pair(Func, PointOfInstantiation));
           else {
             Func->setInstantiationIsPending(true);
             PendingInstantiations.push_back(
@@ -20989,6 +21000,8 @@ ExprResult Sema::CheckPlaceholderExpr(Expr *E) {
 #include "clang/Basic/RISCVVTypes.def"
 #define WASM_TYPE(Name, Id, SingletonId) case BuiltinType::Id:
 #include "clang/Basic/WebAssemblyReferenceTypes.def"
+#define AMDGPU_TYPE(Name, Id, SingletonId) case BuiltinType::Id:
+#include "clang/Basic/AMDGPUTypes.def"
 #define AIE_TYPE(Name, Id, Size, Algn) \
   case BuiltinType::Id:
 #include "clang/Basic/AIETypes.def"

@@ -261,6 +261,11 @@ serialization::TypeIdxFromBuiltin(const BuiltinType *BT) {
     ID = PREDEF_TYPE_##Id##_ID;                                                \
     break;
 #include "clang/Basic/WebAssemblyReferenceTypes.def"
+#define AMDGPU_TYPE(Name, Id, SingletonId)                                     \
+  case BuiltinType::Id:                                                        \
+    ID = PREDEF_TYPE_##Id##_ID;                                                \
+    break;
+#include "clang/Basic/AMDGPUTypes.def"
 #define AIE_TYPE(Name, Id, Size, Algn) \
   case BuiltinType::Id: \
     ID = PREDEF_TYPE_##Id##_ID; \

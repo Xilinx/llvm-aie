@@ -74,7 +74,7 @@ body: |
   ; TAILMERGE-ON-NEXT: {{  $}}
   ; TAILMERGE-ON-NEXT: bb.2:
   ; TAILMERGE-ON-NEXT:   successors: %bb.3(0x07878788), %bb.1(0x78787878)
-  ; TAILMERGE-ON-NEXT:   liveins: $p2, $d0_3d, $p0, $r1, $s0, $p1, $x0, $r0, $cm0, $cm1
+  ; TAILMERGE-ON-NEXT:   liveins: $p2, $d0_3d, $p0, $s0, $r1, $p1, $x0, $r0, $cm0, $cm1
   ; TAILMERGE-ON-NEXT: {{  $}}
   ; TAILMERGE-ON-NEXT:   $cm2 = VADD $cm0, $cm1, $r1
   ; TAILMERGE-ON-NEXT:   $r0 = ADD_add_r_ri $r0, -4, implicit-def $srcarry
