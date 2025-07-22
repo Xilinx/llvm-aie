@@ -339,8 +339,8 @@ class MCAlignByPaddingFragment : public MCFragment {
   unsigned Alignment;
 
 public:
-  MCAlignByPaddingFragment(unsigned Alignment, MCSection *Sec = nullptr)
-      : MCFragment(FT_AlignByPadding, false, Sec), Alignment(Alignment) {}
+  MCAlignByPaddingFragment(unsigned Alignment)
+      : MCFragment(FT_AlignByPadding, false), Alignment(Alignment) {}
 
   unsigned getAlignment() const { return Alignment; }
 
