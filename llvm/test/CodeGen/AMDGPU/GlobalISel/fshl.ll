@@ -5,6 +5,10 @@
 ; RUN: llc -global-isel -mtriple=amdgcn-amd-amdpal -mcpu=gfx1010 -o - %s | FileCheck -check-prefixes=GCN,GFX10 %s
 ; RUN: llc -global-isel -mtriple=amdgcn-amd-amdpal -mcpu=gfx1100 -o - %s | FileCheck -check-prefixes=GFX11 %s
 
+; Failing since:
+;   73a223272089  AMDGPU: Materialize bitwise not of inline immediates (#95960)
+; XFAIL: llvm-aie-regression
+
 define amdgpu_ps i7 @s_fshl_i7(i7 inreg %lhs, i7 inreg %rhs, i7 inreg %amt) {
 ; GFX6-LABEL: s_fshl_i7:
 ; GFX6:       ; %bb.0:

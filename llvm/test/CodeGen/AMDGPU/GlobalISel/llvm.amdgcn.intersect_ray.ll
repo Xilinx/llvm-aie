@@ -4,6 +4,10 @@
 ; RUN: llc -global-isel -mtriple=amdgcn -mcpu=gfx1100 -verify-machineinstrs < %s | FileCheck -check-prefixes=GCN,GFX11 %s
 ; RUN: not --crash llc -global-isel -mtriple=amdgcn -mcpu=gfx1012 -verify-machineinstrs < %s -o /dev/null 2>&1 | FileCheck -check-prefix=ERR %s
 
+; Failing since:
+;   73a223272089  AMDGPU: Materialize bitwise not of inline immediates (#95960)
+; XFAIL: llvm-aie-regression
+
 ; uint4 llvm.amdgcn.image.bvh.intersect.ray.i32.v4f32(uint node_ptr, float ray_extent, float3 ray_origin, float3 ray_dir, float3 ray_inv_dir, uint4 texture_descr)
 ; uint4 llvm.amdgcn.image.bvh.intersect.ray.i32.v4f16(uint node_ptr, float ray_extent, float3 ray_origin, half3 ray_dir, half3 ray_inv_dir, uint4 texture_descr)
 ; uint4 llvm.amdgcn.image.bvh.intersect.ray.i64.v4f32(ulong node_ptr, float ray_extent, float3 ray_origin, float3 ray_dir, float3 ray_inv_dir, uint4 texture_descr)

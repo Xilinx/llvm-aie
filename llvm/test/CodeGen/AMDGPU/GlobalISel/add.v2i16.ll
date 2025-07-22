@@ -5,6 +5,10 @@
 ; RUN: llc -global-isel -mtriple=amdgcn-amd-amdpal -mcpu=gfx1010 < %s | FileCheck -check-prefix=GFX10 %s
 ; RUN: llc -global-isel -mtriple=amdgcn-amd-amdpal -mcpu=gfx1100 -amdgpu-enable-delay-alu=0 < %s | FileCheck -check-prefix=GFX10 %s
 
+; Failing since:
+;   73a223272089  AMDGPU: Materialize bitwise not of inline immediates (#95960)
+; XFAIL: llvm-aie-regression
+
 define <2 x i16> @v_add_v2i16(<2 x i16> %a, <2 x i16> %b) {
 ; GFX7-LABEL: v_add_v2i16:
 ; GFX7:       ; %bb.0:
