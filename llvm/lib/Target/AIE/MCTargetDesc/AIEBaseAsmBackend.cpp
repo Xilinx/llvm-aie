@@ -10,10 +10,42 @@
 
 #include "AIEBaseAsmBackend.h"
 #include "llvm/MC/MCAssembler.h"
+#include "llvm/MC/MCELFStreamer.h"
+#include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCObjectStreamer.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 
 using namespace llvm;
+
+namespace {
+class AIEELFStreamer : public MCELFStreamer {
+public:
+  AIEELFStreamer(MCContext &Context, std::unique_ptr<MCAsmBackend> TAB,
+                 std::unique_ptr<MCObjectWriter> OW,
+                 std::unique_ptr<MCCodeEmitter> Emitter)
+      : MCELFStreamer(Context, std::move(TAB), std::move(OW),
+                      std::move(Emitter)) {}
+
+  void emitInstruction(const MCInst &Inst, const MCSubtargetInfo &STI) override;
+};
+} // end anonymous namespace
+
+void AIEELFStreamer::emitInstruction(const MCInst &Inst,
+                                     const MCSubtargetInfo &STI) {
+  auto &Backend = static_cast<AIEBaseAsmBackend &>(getAssembler().getBackend());
+  // Backend.emitInstructionBegin(S, Inst, STI);
+  this->MCObjectStreamer::emitInstruction(Inst, STI);
+  Backend.emitInstructionEnd(*this, Inst);
+}
+
+MCStreamer *llvm::createAIEELFStreamer(const Triple &T, MCContext &Context,
+                                       std::unique_ptr<MCAsmBackend> &&MAB,
+                                       std::unique_ptr<MCObjectWriter> &&MOW,
+                                       std::unique_ptr<MCCodeEmitter> &&MCE) {
+  return new AIEELFStreamer(Context, std::move(MAB), std::move(MOW),
+                             std::move(MCE));
+}
 
 bool AIEBaseAsmBackend::hasDelaySlotInstr(const MCInst &Inst, bool &IsCall,
                                           const Triple &TT) const {
@@ -66,7 +98,7 @@ void AIEBaseAsmBackend::emitInstructionEnd(MCObjectStreamer &OS,
   // scheduling of the branch.
   if (DelaySlot > 0) {
     if (NeedsAlign && DelaySlot == 1)
-      OS.insert(new MCAlignByPaddingFragment(16));
+      OS.insert(new MCAlignByPaddingFragment(Align(16)));
     DelaySlot--;
   }
 }

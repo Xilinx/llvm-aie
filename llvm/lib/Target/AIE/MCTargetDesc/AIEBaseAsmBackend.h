@@ -16,6 +16,7 @@
 #include "Utils/AIEBaseInfo.h"
 #include "llvm/ADT/bit.h"
 #include "llvm/MC/MCAsmBackend.h"
+#include "llvm/MC/MCSubtargetInfo.h"
 
 namespace llvm {
 class MCAssembler;
@@ -56,7 +57,7 @@ public:
   std::unique_ptr<MCObjectTargetWriter>
   createObjectTargetWriter() const override;
 
-  void emitInstructionEnd(MCObjectStreamer &OS, const MCInst &Inst) override;
+  void emitInstructionEnd(MCObjectStreamer &OS, const MCInst &Inst);
 
   bool fixupNeedsRelaxation(const MCFixup &Fixup, uint64_t Value,
                             const MCRelaxableFragment *DF,

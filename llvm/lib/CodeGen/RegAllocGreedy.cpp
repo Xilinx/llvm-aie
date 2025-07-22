@@ -2338,7 +2338,7 @@ void RAGreedy::tryHintRecoloring(const LiveInterval &VirtReg) {
 
     // This may be a skipped class
     if (!VRM->hasPhys(Reg)) {
-      assert(!ShouldAllocateClass(*TRI, *MRI->getRegClass(Reg)) &&
+      assert(!shouldAllocateRegister(Reg) &&
              "We have an unallocated variable which should have been handled");
       continue;
     }
@@ -2732,7 +2732,7 @@ bool RAGreedy::hasVirtRegAlloc() {
     const TargetRegisterClass *RC = MRI->getRegClass(Reg);
     if (!RC)
       continue;
-    if (ShouldAllocateClass(*TRI, *RC))
+    if (shouldAllocateRegister(Reg))
       return true;
   }
 

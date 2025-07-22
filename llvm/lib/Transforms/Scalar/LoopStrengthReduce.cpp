@@ -5609,7 +5609,7 @@ Value *LSRInstance::Expand(const LSRUse &LU, const LSRFixup &LF,
       if (C->getType() != OpTy) {
         C = ConstantFoldCastOperand(
             CastInst::getCastOpcode(C, false, OpTy, false), C, OpTy,
-            CI->getModule()->getDataLayout());
+            CI->getDataLayout());
         assert(C && "Cast of ConstantInt should have folded");
       }
 
@@ -5914,7 +5914,7 @@ LSRInstance::LSRInstance(Loop *L, IVUsers &IU, ScalarEvolution &SE,
       MSSAU(MSSAU), AMK(PreferredAddresingMode.getNumOccurrences() > 0
                             ? PreferredAddresingMode
                             : TTI.getPreferredAddressingMode(L, &SE)),
-      Rewriter(SE, L->getHeader()->getModule()->getDataLayout(), "lsr", false),
+      Rewriter(SE, L->getHeader()->getDataLayout(), "lsr", false),
       BaselineCost(L, SE, TTI, AMK) {
   // If LoopSimplify form is not available, stay out of trouble.
   if (!L->isLoopSimplifyForm())
@@ -6891,7 +6891,7 @@ canFoldTermCondOfLoop(Loop *L, ScalarEvolution &SE, DominatorTree &DT,
   }();
 
   const SCEV *BECount = SE.getBackedgeTakenCount(L);
-  const DataLayout &DL = L->getHeader()->getModule()->getDataLayout();
+  const DataLayout &DL = L->getHeader()->getDataLayout();
   SCEVExpander Expander(SE, DL, "lsr_fold_term_cond");
 
   PHINode *ToHelpFold = nullptr;
@@ -7027,7 +7027,7 @@ static bool ReduceLoopStrength(Loop *L, IVUsers &IU, ScalarEvolution &SE,
   Changed |= DeleteDeadPHIs(L->getHeader(), &TLI, MSSAU.get());
   if (EnablePhiElim && L->isLoopSimplifyForm()) {
     SmallVector<WeakTrackingVH, 16> DeadInsts;
-    const DataLayout &DL = L->getHeader()->getModule()->getDataLayout();
+    const DataLayout &DL = L->getHeader()->getDataLayout();
     SCEVExpander Rewriter(SE, DL, "lsr", false);
 #ifndef NDEBUG
     Rewriter.setDebugType(DEBUG_TYPE);
@@ -7048,7 +7048,7 @@ static bool ReduceLoopStrength(Loop *L, IVUsers &IU, ScalarEvolution &SE,
   // skip the updates in each loop iteration.
   if (L->isRecursivelyLCSSAForm(DT, LI) && L->getExitBlock()) {
     SmallVector<WeakTrackingVH, 16> DeadInsts;
-    const DataLayout &DL = L->getHeader()->getModule()->getDataLayout();
+    const DataLayout &DL = L->getHeader()->getDataLayout();
     SCEVExpander Rewriter(SE, DL, "lsr", true);
     int Rewrites = rewriteLoopExitValues(L, &LI, &TLI, &SE, &TTI, Rewriter, &DT,
                                          UnusedIndVarInLoop, DeadInsts);
@@ -7098,7 +7098,7 @@ static bool ReduceLoopStrength(Loop *L, IVUsers &IU, ScalarEvolution &SE,
         cast<Instruction>(LoopValue)->dropPoisonGeneratingFlags();
 
       // SCEVExpander for both use in preheader and latch
-      const DataLayout &DL = L->getHeader()->getModule()->getDataLayout();
+      const DataLayout &DL = L->getHeader()->getDataLayout();
       SCEVExpander Expander(SE, DL, "lsr_fold_term_cond");
 
       assert(Expander.isSafeToExpand(TermValueS) &&
