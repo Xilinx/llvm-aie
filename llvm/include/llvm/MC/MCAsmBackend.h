@@ -70,13 +70,6 @@ public:
   /// should not be added based on an offset which is not yet final.
   virtual bool relaxPerInstruction() const { return false; }
 
-  /// Give the target a chance to manipulate state related to instruction
-  /// alignment (e.g. padding for optimization), instruction relaxablility, etc.
-  /// before and after actually emitting the instruction.
-  virtual void emitInstructionBegin(MCObjectStreamer &OS, const MCInst &Inst,
-                                    const MCSubtargetInfo &STI) {}
-  virtual void emitInstructionEnd(MCObjectStreamer &OS, const MCInst &Inst) {}
-
   /// lifetime management
   virtual void reset() {}
 
