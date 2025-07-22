@@ -52,8 +52,7 @@ public:
                             const TargetSubtargetInfo *STI) const override;
 
   void registerDefaultAliasAnalyses(AAManager &) override;
-  void registerPassBuilderCallbacks(PassBuilder &PB,
-                                    bool PopulateClassToPassNames) override;
+  void registerPassBuilderCallbacks(PassBuilder &PB) override;
   bool isNoopAddrSpaceCast(unsigned SrcAS, unsigned DestAS) const override;
 
   virtual void setMBBPlacementOpts();

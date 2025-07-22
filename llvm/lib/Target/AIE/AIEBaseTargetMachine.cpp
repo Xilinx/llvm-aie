@@ -207,8 +207,7 @@ static bool mustPreserveGV(const GlobalValue &GV) {
   return !GV.use_empty();
 }
 
-void AIEBaseTargetMachine::registerPassBuilderCallbacks(
-    PassBuilder &PB, bool PopulateClassToPassNames) {
+void AIEBaseTargetMachine::registerPassBuilderCallbacks(PassBuilder &PB) {
   if (EnableCustomAliasAnalysis) {
     PB.registerAnalysisRegistrationCallback([](FunctionAnalysisManager &FAM) {
       FAM.registerPass([&] { return AIEBaseAA(); });
