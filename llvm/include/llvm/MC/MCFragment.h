@@ -336,13 +336,13 @@ public:
 
 class MCAlignByPaddingFragment : public MCFragment {
   /// The alignment to ensure, in bytes.
-  unsigned Alignment;
+  Align Alignment;
 
 public:
-  MCAlignByPaddingFragment(unsigned Alignment)
+  MCAlignByPaddingFragment(Align Alignment)
       : MCFragment(FT_AlignByPadding, false), Alignment(Alignment) {}
 
-  unsigned getAlignment() const { return Alignment; }
+  Align getAlignment() const { return Alignment; }
 
   static bool classof(const MCFragment *F) {
     return F->getKind() == MCFragment::FT_AlignByPadding;

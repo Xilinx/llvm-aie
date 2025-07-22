@@ -286,7 +286,7 @@ LLVM_DUMP_METHOD void MCFragment::dump() const {
   case MCFragment::FT_AlignByPadding: {
     const auto *AF = cast<MCAlignByPaddingFragment>(this);
     OS << "\n       ";
-    OS << " Alignment:" << AF->getAlignment() << ">";
+    OS << " Alignment:" << AF->getAlignment().value() << ">";
     break;
   }
   case MCFragment::FT_Data:  {

@@ -66,7 +66,7 @@ void AIEBaseAsmBackend::emitInstructionEnd(MCObjectStreamer &OS,
   // scheduling of the branch.
   if (DelaySlot > 0) {
     if (NeedsAlign && DelaySlot == 1)
-      OS.insert(new MCAlignByPaddingFragment(16));
+      OS.insert(new MCAlignByPaddingFragment(Align(16)));
     DelaySlot--;
   }
 }
