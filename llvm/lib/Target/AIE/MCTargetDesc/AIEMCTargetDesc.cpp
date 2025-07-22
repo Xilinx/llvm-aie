@@ -171,6 +171,9 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETargetMC() {
                                                  createAIEObjectTargetStreamer);
     // Support for ASM output files
     TargetRegistry::RegisterAsmTargetStreamer(*T, createTargetAsmStreamer);
+
+    // Register the ELF streamer
+    TargetRegistry::RegisterELFStreamer(*T, createAIEELFStreamer);
   }
   // Register the MC instruction info.
   TargetRegistry::RegisterMCInstrInfo(getTheAIETarget(), createAIEMCInstrInfo);
