@@ -31,18 +31,8 @@ public:
     return AIE::NumTargetFixupKinds;
   }
 
-  void relaxInstruction(MCInst &Inst,
-                        const MCSubtargetInfo &STI) const override;
-
-  unsigned maxRelaxIncrement(const MCInst &Inst,
-                             const MCSubtargetInfo &STI) const override;
-
   bool writeNopData(raw_ostream &OS, uint64_t Count,
                     const MCSubtargetInfo *STI) const override;
-
-  bool isCall(unsigned Opcode) const override;
-
-  bool isDelaySlotInstr(unsigned Opcode) const override;
 };
 } // namespace llvm
 
