@@ -4,9 +4,6 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
-// affiliates
-//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_MC_MCASMBACKEND_H
@@ -64,11 +61,6 @@ public:
   /// emitted into RelaxableFragment and then we can increase its size in a
   /// tricky way for optimization.
   virtual bool allowEnhancedRelaxation() const { return false; }
-
-  /// Relaxation will revisit a relaxed instruction immediately before relaxing
-  /// further instructions. This is useful for padding purposes, where padding
-  /// should not be added based on an offset which is not yet final.
-  virtual bool relaxPerInstruction() const { return false; }
 
   /// lifetime management
   virtual void reset() {}
@@ -164,17 +156,6 @@ public:
   virtual bool mayNeedRelaxation(const MCInst &Inst,
                                  const MCSubtargetInfo &STI) const {
     return false;
-  }
-
-  /// Return the maximum amount that this instruction will stretch when relaxed.
-  /// If it returns zero, it can not be relaxed.
-  /// This method is used to handle AlignByPadding fragments
-  /// \param Inst - The instruction to test.
-  /// \param STI - The MCSubtargetInfo in effect when the instruction was
-  /// encoded.
-  virtual unsigned maxRelaxIncrement(const MCInst &Inst,
-                                     const MCSubtargetInfo &STI) const {
-    return 0;
   }
 
   /// Target specific predicate for whether a given fixup requires the
