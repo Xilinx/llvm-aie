@@ -765,6 +765,38 @@ void AIE2PInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   } else if ((AIE2P::ePSRFLdFRegClass.contains(SrcReg)) &&
              (AIE2P::ePSRFLdFRegClass.contains(DstReg))) {
     copyThroughSubRegs(MBB, MBBI, DL, DstReg, SrcReg, KillSrc);
+  } else if ((AIE2P::mEhmRegClass.contains(SrcReg)) &&
+             (AIE2P::mEhmRegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::MOV_alu_mv_mv_mv_e_mv_eh_to_eh), DstReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
+  } else if ((AIE2P::mElmRegClass.contains(SrcReg)) &&
+             (AIE2P::mElmRegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::MOV_alu_mv_mv_mv_e_mv_el_to_el), DstReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
+  } else if ((AIE2P::mElmRegClass.contains(SrcReg)) &&
+             (AIE2P::mEhmRegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::MOV_alu_mv_mv_mv_e_mv_el_to_eh), DstReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
+  } else if ((AIE2P::mEhmRegClass.contains(SrcReg)) &&
+             (AIE2P::mElmRegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::MOV_alu_mv_mv_mv_e_mv_eh_to_el), DstReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
+  } else if ((AIE2P::mEhmRegClass.contains(SrcReg)) &&
+             (AIE2P::eRRegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::MOV_alu_mv_mv_mv_e_mv_eh_to_r), DstReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
+  } else if ((AIE2P::eRRegClass.contains(SrcReg)) &&
+             (AIE2P::mEhmRegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::MOV_alu_mv_mv_mv_e_mv_r_to_eh), DstReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
+  } else if ((AIE2P::mElmRegClass.contains(SrcReg)) &&
+             (AIE2P::eRRegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::MOV_alu_mv_mv_mv_e_mv_el_to_r), DstReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
+  } else if ((AIE2P::eRRegClass.contains(SrcReg)) &&
+             (AIE2P::mElmRegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::MOV_alu_mv_mv_mv_e_mv_r_to_el), DstReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
   } else {
     llvm_unreachable("unhandled case in copyPhysReg");
   }

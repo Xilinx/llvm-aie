@@ -345,3 +345,75 @@ body: |
     ; CHECK-NEXT: $bmlh0 = VMOV_alu_mv_mv_x $lfh0
   $cml0 = COPY $lf0
 ...
+
+---
+name:            test_copy_eh_to_eh
+body: |
+  bb.0:
+    ; CHECK-LABEL: name: test_copy_eh_to_eh
+    ; CHECK: $eh0 = MOV_alu_mv_mv_mv_e_mv_eh_to_eh $eh1
+  $eh0 = COPY $eh1
+...
+
+---
+name:            test_copy_el_to_el
+body: |
+  bb.0:
+    ; CHECK-LABEL: name: test_copy_el_to_el
+    ; CHECK: $el0 = MOV_alu_mv_mv_mv_e_mv_el_to_el $el1
+  $el0 = COPY $el1
+...
+
+---
+name:            test_copy_eh_to_el
+body: |
+  bb.0:
+    ; CHECK-LABEL: name: test_copy_eh_to_el
+    ; CHECK: $el0 = MOV_alu_mv_mv_mv_e_mv_eh_to_el $eh1
+  $el0 = COPY $eh1
+...
+
+---
+name:            test_copy_el_to_eh
+body: |
+  bb.0:
+    ; CHECK-LABEL: name: test_copy_el_to_eh
+    ; CHECK: $eh0 = MOV_alu_mv_mv_mv_e_mv_el_to_eh $el1
+  $eh0 = COPY $el1
+...
+
+---
+name:            test_copy_eh_to_r
+body: |
+  bb.0:
+    ; CHECK-LABEL: name: test_copy_eh_to_r
+    ; CHECK: $r0 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh1
+  $r0 = COPY $eh1
+...
+
+---
+name:            test_copy_r_to_eh
+body: |
+  bb.0:
+    ; CHECK-LABEL: name: test_copy_r_to_eh
+    ; CHECK: $eh0 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r1
+  $eh0 = COPY $r1
+...
+
+---
+name:            test_copy_el_to_r
+body: |
+  bb.0:
+    ; CHECK-LABEL: name: test_copy_el_to_r
+    ; CHECK: $r0 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el1
+  $r0 = COPY $el1
+...
+
+---
+name:            test_copy_r_to_el
+body: |
+  bb.0:
+    ; CHECK-LABEL: name: test_copy_r_to_el
+    ; CHECK: $el0 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r1
+  $el0 = COPY $r1
+...
