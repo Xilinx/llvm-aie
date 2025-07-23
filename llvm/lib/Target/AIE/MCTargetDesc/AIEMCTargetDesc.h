@@ -42,10 +42,6 @@ MCCodeEmitter *createAIEMCCodeEmitter(const MCInstrInfo &MCII,
 std::unique_ptr<MCObjectTargetWriter>
 createAIEELFObjectWriter(uint8_t OSABI, Triple TargetTriple);
 
-MCStreamer *createAIEELFStreamer(const Triple &T, MCContext &Context,
-                                 std::unique_ptr<MCAsmBackend> &&MAB,
-                                 std::unique_ptr<MCObjectWriter> &&MOW,
-                                 std::unique_ptr<MCCodeEmitter> &&MCE);
 } // end namespace llvm
 
 // Defines symbolic names for AIE registers.  This defines a mapping from
