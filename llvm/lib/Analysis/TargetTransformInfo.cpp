@@ -1365,7 +1365,7 @@ TargetIRAnalysis::Result TargetIRAnalysis::run(const Function &F,
 AnalysisKey TargetIRAnalysis::Key;
 
 TargetIRAnalysis::Result TargetIRAnalysis::getDefaultTTI(const Function &F) {
-  return Result(F.getParent()->getDataLayout());
+  return Result(F.getDataLayout());
 }
 
 // Register the basic pass.

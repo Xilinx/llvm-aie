@@ -16,6 +16,7 @@
 
 #include "AIE.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/IR/Module.h"
 
 namespace llvm {
 
@@ -65,7 +66,7 @@ public:
   using Result = AIEBaseAAResult;
 
   AIEBaseAAResult run(Function &F, AnalysisManager<Function> &AM) {
-    return AIEBaseAAResult(F.getParent()->getDataLayout());
+    return AIEBaseAAResult(F.getDataLayout());
   }
 };
 
