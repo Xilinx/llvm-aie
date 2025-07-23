@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -70,11 +70,22 @@ class immx4 <int n, ValueType vt>
 
 // A signed negative immediate with n+3 bits and the low-order 2 bits as 0 and sign-bit as 1.
 // This results in an n-bit encoded number
-class immx4_negative <int n, ValueType vt>
+class immx4_negative <int n, ValueType vt = i32>
     : immxstep<n, 4 /*step*/, 3 /*1 sign-bit + 2 lower-order bits as 0*/, vt>
 {
   let isNegative = true;
   let PrintMethod = "printImmOffset</*offset=*/0>";
+}
+
+// A signed immediate with n+3 bits and the low-order 3 bits as 0.
+// This results in an n-bit encoded number
+class immx8 <int n, ValueType vt = i32> : immxstep<n, 8 /*step*/, 3 /**lower-order as 0**/, vt>;
+
+// A signed negative immediate with n+4 bits and the low-order 3 bits as 0 and sign-bit as 1.
+// This results in an n-bit encoded number
+class immx8_negative <int n> : immxstep<n, 8 /*step*/, 4 /**1 sign-bit + 3 lower-order bits as 0**/>
+{
+  let isNegative = true;
 }
 
 // A signed immediate with n+4 bits and the low-order 4 bits as 0.
@@ -106,6 +117,17 @@ class immx64 <int n, ValueType vt = i32> : immxstep<n, 64 /**step**/, 6 /**lower
 // A signed negative immediate with n+7 bits and the low-order 6 bits as 0 and sign-bit as 1.
 // This results in an n-bit encoded number
 class immx64_negative <int n> : immxstep<n, 64 /*step*/, 7 /**1 sign-bit + 6 lower-order bits as 0**/>
+{
+  let isNegative = true;
+}
+
+// A signed immediate with n+7 bits and the low-order 7 bits as 0.
+// This results in an n-bit encoded number
+class immx128 <int n, ValueType vt = i32> : immxstep<n, 128 /**step**/, 7 /**lower-order as 0**/, vt>;
+
+// A signed negative immediate with n+8 bits and the low-order 7 bits as 0 and sign-bit as 1.
+// This results in an n-bit encoded number
+class immx128_negative <int n> : immxstep<n, 128 /*step*/, 8 /**1 sign-bit + 7 lower-order bits as 0**/>
 {
   let isNegative = true;
 }
