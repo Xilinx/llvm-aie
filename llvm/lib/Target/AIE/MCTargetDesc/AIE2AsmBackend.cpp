@@ -10,47 +10,8 @@
 
 #include "AIE2AsmBackend.h"
 #include "llvm/MC/MCObjectStreamer.h"
-#include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
-
-bool AIE2AsmBackend::isCall(unsigned Opcode) const {
-  switch (Opcode) {
-  default:
-    break;
-  case AIE2::JL:
-  case AIE2::JL_IND:
-    return true;
-  }
-  return false;
-}
-
-bool AIE2AsmBackend::isDelaySlotInstr(unsigned Opcode) const {
-  switch (Opcode) {
-  default:
-    break;
-  case AIE2::JL:
-  case AIE2::JL_IND:
-  case AIE2::J_jump_imm:
-  case AIE2::J_jump_ind:
-  case AIE2::JNZ:
-  case AIE2::JZ:
-  case AIE2::RET:
-  case AIE2::JNZD:
-    return true;
-  }
-  return false;
-}
-
-void AIE2AsmBackend::relaxInstruction(MCInst &Inst,
-                                      const MCSubtargetInfo &STI) const {
-  llvm_unreachable("relaxInstruction call not expected in AIE2");
-}
-
-unsigned AIE2AsmBackend::maxRelaxIncrement(const MCInst &Inst,
-                                           const MCSubtargetInfo &STI) const {
-  return 0;
-}
 
 bool AIE2AsmBackend::writeNopData(raw_ostream &OS, uint64_t Count,
                                   const MCSubtargetInfo *STI) const {

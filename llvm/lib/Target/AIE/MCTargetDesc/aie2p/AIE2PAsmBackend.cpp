@@ -10,39 +10,8 @@
 
 #include "AIE2PAsmBackend.h"
 #include "llvm/MC/MCObjectStreamer.h"
-#include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
-
-bool AIE2PAsmBackend::isCall(unsigned Opcode) const {
-  switch (Opcode) {
-  // TODO Add Call Opcode e.g. JL
-  default:
-    break;
-  }
-  return false;
-}
-
-bool AIE2PAsmBackend::isDelaySlotInstr(unsigned Opcode) const {
-  switch (Opcode) {
-  default:
-    break;
-  // TODO Add other opcode e.g. JL, JZ, etc.
-  case AIE2P::RET:
-    return true;
-  }
-  return false;
-}
-
-void AIE2PAsmBackend::relaxInstruction(MCInst &Inst,
-                                       const MCSubtargetInfo &STI) const {
-  llvm_unreachable("relaxInstruction call not expected in AIE2P");
-}
-
-unsigned AIE2PAsmBackend::maxRelaxIncrement(const MCInst &Inst,
-                                            const MCSubtargetInfo &STI) const {
-  return 0;
-}
 
 bool AIE2PAsmBackend::writeNopData(raw_ostream &OS, uint64_t Count,
                                    const MCSubtargetInfo *STI) const {

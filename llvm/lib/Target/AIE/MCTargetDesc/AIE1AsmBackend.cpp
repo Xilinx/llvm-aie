@@ -13,66 +13,6 @@
 
 using namespace llvm;
 
-bool AIE1AsmBackend::isCall(unsigned Opcode) const {
-  switch (Opcode) {
-  default:
-    break;
-  case AIE::JAL:
-    return true;
-  }
-  return false;
-}
-
-bool AIE1AsmBackend::isDelaySlotInstr(unsigned Opcode) const {
-  switch (Opcode) {
-  default:
-    break;
-  case AIE::JAL:
-  case AIE::J:
-  case AIE::BNEZ:
-    return true;
-  }
-  return false;
-}
-
-void AIE1AsmBackend::relaxInstruction(MCInst &Inst,
-                                      const MCSubtargetInfo &STI) const {
-  switch (Inst.getOpcode()) {
-  default:
-    llvm_unreachable("Opcode not expected!");
-  case AIE::JAL:
-    Inst.setOpcode(AIE::JAL64);
-    return;
-  case AIE::NOP:
-    Inst.setOpcode(AIE::NOP32);
-    return;
-  case AIE::NOP32:
-    Inst.setOpcode(AIE::NOP64);
-    return;
-  case AIE::NOP64:
-    Inst.setOpcode(AIE::NOP96);
-    return;
-  case AIE::NOP96:
-    Inst.setOpcode(AIE::NOP128);
-    return;
-  }
-}
-
-unsigned AIE1AsmBackend::maxRelaxIncrement(const MCInst &Inst,
-                                           const MCSubtargetInfo &STI) const {
-  switch (Inst.getOpcode()) {
-  default:
-    break;
-  case AIE::NOP:
-    return 2;
-  case AIE::NOP32:
-  case AIE::NOP64:
-  case AIE::NOP96:
-    return 4;
-  }
-  return 0;
-}
-
 bool AIE1AsmBackend::writeNopData(raw_ostream &OS, uint64_t Count,
                                   const MCSubtargetInfo *STI) const {
   unsigned MinNopLen = 2;

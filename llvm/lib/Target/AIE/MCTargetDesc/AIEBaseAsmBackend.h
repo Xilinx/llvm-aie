@@ -29,15 +29,6 @@ protected:
   uint8_t OSABI;
   const MCTargetOptions &TargetOptions;
   AIEABI::ABI TargetABI = AIEABI::ABI_VITIS;
-  /// DelaySlot and NeedsAlign are set in conjunction.
-  /// Delayslot counts down from the delay slot holder, and will assert that
-  /// delay slots don't contain other delay slot holders.
-  /// NeedsAlign is encoding an alignment request for the end of the last
-  /// delay slot, effectively saying whether the delay slot holder was a call
-  /// instruction, which needs alignment of the return address. Note that the
-  /// alignment of branch targets is done separately at the start of each block
-  int DelaySlot = 0;
-  bool NeedsAlign = false;
 
 public:
   AIEBaseAsmBackend(const MCSubtargetInfo &STI, uint8_t OSABI,
@@ -55,8 +46,6 @@ public:
 
   std::unique_ptr<MCObjectTargetWriter>
   createObjectTargetWriter() const override;
-
-  void emitInstructionEnd(MCObjectStreamer &OS, const MCInst &Inst) override;
 
   bool fixupNeedsRelaxation(const MCFixup &Fixup, uint64_t Value,
                             const MCRelaxableFragment *DF,
@@ -84,30 +73,11 @@ public:
     return Dummy;
   }
 
-  bool mayNeedRelaxation(const MCInst &Inst,
-                         const MCSubtargetInfo &STI) const override;
-
-  void relaxInstruction(MCInst &Inst,
-                        const MCSubtargetInfo &STI) const override = 0;
-
-  bool relaxPerInstruction() const override { return true; }
-  unsigned maxRelaxIncrement(const MCInst &Inst,
-                             const MCSubtargetInfo &STI) const override = 0;
-
   bool writeNopData(raw_ostream &OS, uint64_t Count,
                     const MCSubtargetInfo *STI) const override = 0;
 
   const MCTargetOptions &getTargetOptions() const { return TargetOptions; }
   AIEABI::ABI getTargetABI() const { return TargetABI; }
-
-  virtual bool isCall(unsigned Opcode) const = 0;
-  virtual bool isDelaySlotInstr(unsigned Opcode) const = 0;
-
-  /// Check if the given MCInst has a delay slot instruction, either as itself
-  /// or as a sub-instruction in a bundle; @param IsCallInstr Set to **true** if
-  /// the instruction with the delay slots is a call.
-  bool hasDelaySlotInstr(const MCInst &Inst, bool &IsCallInstr,
-                         const Triple &TargetTriple) const;
 };
 } // namespace llvm
 
