@@ -41,21 +41,6 @@ def c32s : txxs<32, i32>;
 
 def m_c04s : txxs<4, i32>;
 
-// A signed immediate with n+1 bits and the low-order 1 bits as 0.
-// This results in an n-bit encoded number
-class immx2 <int n, ValueType vt = i32> : immxstep<n, 2 /*step*/, 1 /**lower-order as 0**/, vt>;
-
-// A signed immediate with n+6 bits and the low-order 6 bits as 0.
-// This results in an n-bit encoded number
-class immx64 <int n, ValueType vt = i32> : immxstep<n, 64 /**step**/, 6 /**lower-order as 0**/, vt>;
-
-// A signed negative immediate with n+7 bits and the low-order 6 bits as 0 and sign-bit as 1.
-// This results in an n-bit encoded number
-class immx64_negative <int n> : immxstep<n, 64 /*step*/, 7 /**1 sign-bit + 6 lower-order bits as 0**/>
-{
-  let isNegative = true;
-}
-
 // Immediate for stack adjustments, thirteen bits scaled by 64
 def c19s_step64 : immx64<13, i32>;
 

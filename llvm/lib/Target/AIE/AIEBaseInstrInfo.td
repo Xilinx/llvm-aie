@@ -56,6 +56,10 @@ class immxstep <int n, int step, int fixedEncodedBits, ValueType vt = i32>
   let EncoderMethod = "getSImmOpValueXStep<" # n # ", "#step#", /*offset=*/0, "# isNegative #">";
 }
 
+// A signed immediate with n+1 bits and the low-order 1 bits as 0.
+// This results in an n-bit encoded number
+class immx2 <int n, ValueType vt = i32> : immxstep<n, 2 /*step*/, 1 /**lower-order as 0**/, vt>;
+
 // A signed immediate with n+2 bits and the low-order 2 bits as 0.
 // This results in an n-bit encoded number
 class immx4 <int n, ValueType vt>
@@ -91,6 +95,17 @@ class immx32 <int n, ValueType vt = i32> : immxstep<n, 32 /**step**/, 5 /**lower
 // A signed negative immediate with n+6 bits and the low-order 5 bits as 0 and sign-bit as 1.
 // This results in an n-bit encoded number
 class immx32_negative <int n> : immxstep<n, 32 /*step*/, 6 /**1 sign-bit + 5 lower-order bits as 0**/>
+{
+  let isNegative = true;
+}
+
+// A signed immediate with n+6 bits and the low-order 6 bits as 0.
+// This results in an n-bit encoded number
+class immx64 <int n, ValueType vt = i32> : immxstep<n, 64 /**step**/, 6 /**lower-order as 0**/, vt>;
+
+// A signed negative immediate with n+7 bits and the low-order 6 bits as 0 and sign-bit as 1.
+// This results in an n-bit encoded number
+class immx64_negative <int n> : immxstep<n, 64 /*step*/, 7 /**1 sign-bit + 6 lower-order bits as 0**/>
 {
   let isNegative = true;
 }
