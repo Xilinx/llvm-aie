@@ -4,9 +4,6 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
-// affiliates
-//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCAssembler.h"
@@ -339,9 +336,6 @@ uint64_t MCAssembler::computeFragmentSize(const MCAsmLayout &Layout,
   case MCFragment::FT_SymbolId:
     return 4;
 
-  case MCFragment::FT_AlignByPadding: {
-    return 0;
-  }
   case MCFragment::FT_Align: {
     const MCAlignFragment &AF = cast<MCAlignFragment>(F);
     unsigned Offset = Layout.getFragmentOffset(&AF);
@@ -622,9 +616,6 @@ static void writeFragment(raw_ostream &OS, const MCAssembler &Asm,
     }
     break;
   }
-  case MCFragment::FT_AlignByPadding:
-    // nothing to do
-    break;
 
   case MCFragment::FT_Data:
     ++stats::EmittedDataFragments;
@@ -1047,11 +1038,6 @@ bool MCAssembler::relaxInstruction(MCAsmLayout &Layout,
   if (!fragmentNeedsRelaxation(&F, Layout))
     return false;
 
-  return forceRelaxInstruction(Layout, F);
-}
-
-bool MCAssembler::forceRelaxInstruction(MCAsmLayout &Layout,
-                                   MCRelaxableFragment &F) {
   ++stats::RelaxedInstructions;
 
   // FIXME-PERF: We could immediately lower out instructions if we can tell
@@ -1145,41 +1131,6 @@ static bool needPadding(uint64_t StartAddr, uint64_t Size,
                         Align BoundaryAlignment) {
   return mayCrossBoundary(StartAddr, Size, BoundaryAlignment) ||
          isAgainstBoundary(StartAddr, Size, BoundaryAlignment);
-}
-
-bool MCAssembler::relaxAlignByPadding(MCAsmLayout &Layout,
-                                      MCAlignByPaddingFragment &BF) {
-  uint64_t AlignedOffset = Layout.getFragmentOffset(&BF);
-  Align Alignment(BF.getAlignment());
-  uint64_t BytesNeeded = offsetToAlignment(AlignedOffset, Alignment);
-  if (BytesNeeded == 0)
-    return false;
-
-  // Any instruction that can be relaxed sits in an FT_Relaxable fragment
-  SmallVector<MCRelaxableFragment *> RelaxableFragments;
-  for (MCFragment &F : *BF.getParent()) {
-    if (auto *RF = dyn_cast<MCRelaxableFragment>(&F)) {
-      RelaxableFragments.push_back(RF);
-    }
-  }
-  // Walk backwards, finding appropriate instructions to pad.
-  for (MCRelaxableFragment *RF : llvm::reverse(RelaxableFragments)) {
-    // If relaxing this instruction might contribute to our BytesNeeded,
-    // then try it. We should not overshoot, so never stretch more than the
-    // number of bytes we need.
-    unsigned Extra = getBackend().maxRelaxIncrement(RF->getInst(),
-                                                    *RF->getSubtargetInfo());
-    if (Extra > 0 && Extra <= BytesNeeded) {
-      forceRelaxInstruction(Layout, *RF);
-      // This is a rather conservative approach that will likely result in re-entering this
-      // function.  It's possible that there is some O(N^2) runtime here, but N is probably
-      // always small, since we won't look very far to find an instruction that we can
-      // pad.
-      Layout.invalidateFragmentsFrom(RF);
-      return true;
-    }
-  }
-  return false;
 }
 
 bool MCAssembler::relaxBoundaryAlign(MCAsmLayout &Layout,
@@ -1302,8 +1253,6 @@ bool MCAssembler::relaxFragment(MCAsmLayout &Layout, MCFragment &F) {
                                        cast<MCDwarfCallFrameFragment>(F));
   case MCFragment::FT_LEB:
     return relaxLEB(Layout, cast<MCLEBFragment>(F));
-  case MCFragment::FT_AlignByPadding:
-    return relaxAlignByPadding(Layout, cast<MCAlignByPaddingFragment>(F));
   case MCFragment::FT_BoundaryAlign:
     return relaxBoundaryAlign(Layout, cast<MCBoundaryAlignFragment>(F));
   case MCFragment::FT_CVInlineLines:
