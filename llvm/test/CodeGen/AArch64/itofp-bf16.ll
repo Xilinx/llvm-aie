@@ -4,6 +4,9 @@
 ; RUN: llc -mtriple=aarch64 -global-isel -global-isel-abort=2 -verify-machineinstrs %s -o - 2>&1 | FileCheck %s --check-prefixes=CHECK,CHECK-GI,CHECK-GI-NOFP16
 ; RUN: llc -mtriple=aarch64 -mattr=+fullfp16 -global-isel -global-isel-abort=2 -verify-machineinstrs %s -o - 2>&1 | FileCheck %s --check-prefixes=CHECK,CHECK-GI,CHECK-GI-FP16
 
+; Fails due to revert of 6b695846602b2d6aa66e5aae2f5db8eceb4bd41b
+; XFAIL: llvm-aie-regression
+
 define bfloat @stofp_i64_bf16(i64 %a) {
 ; CHECK-LABEL: stofp_i64_bf16:
 ; CHECK:       // %bb.0: // %entry

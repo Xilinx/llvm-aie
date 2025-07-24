@@ -10,9 +10,6 @@
 ; RUN: llc -mtriple=aarch64 -global-isel -global-isel-abort=2 -verify-machineinstrs %s -o - 2>&1 | FileCheck %s --check-prefixes=CHECK,CHECK-GI,CHECK-GI-NOFP16
 ; RUN: llc -mtriple=aarch64 -mattr=+fullfp16 -global-isel -global-isel-abort=2 -verify-machineinstrs %s -o - 2>&1 | FileCheck %s --check-prefixes=CHECK,CHECK-GI,CHECK-GI-FP16
 
-; Fails due to revert of 6b695846602b2d6aa66e5aae2f5db8eceb4bd41b
-; XFAIL: llvm-aie-regression
-
 ; CHECK-GI:       warning: Instruction selection used fallback path for stofp_i128_f128
 ; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_i128_f128
 ; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for stofp_i64_f128
