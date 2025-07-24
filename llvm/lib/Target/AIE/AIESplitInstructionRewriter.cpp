@@ -37,8 +37,8 @@ public:
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
-    AU.addUsedIfAvailable<SlotIndexes>();
-    AU.addPreserved<SlotIndexes>();
+    AU.addUsedIfAvailable<SlotIndexesWrapperPass>();
+    AU.addPreserved<SlotIndexesWrapperPass>();
     MachineFunctionPass::getAnalysisUsage(AU);
   }
 
@@ -116,12 +116,12 @@ void AIESplitInstrBuilder::rewriteInstruction(
   }
 
   MIB->cloneMemRefs(MF, MI);
-  if (SlotIndexes *Indexes = getAnalysisIfAvailable<SlotIndexes>()) {
+  if (SlotIndexesWrapperPass *Indexes = getAnalysisIfAvailable<SlotIndexesWrapperPass>()) {
     // Maintaining SlotIndexes is easy and help avoiding unnecessary test
     // updates. Renumbering instruction slots can cause LiveIntervals
     // to be estimated a different size, which then changes the allocation
     // priority inside Greedy.
-    Indexes->replaceMachineInstrInMaps(MI, *MIB);
+    Indexes->getSI().replaceMachineInstrInMaps(MI, *MIB);
   }
   MI.eraseFromBundle();
 }

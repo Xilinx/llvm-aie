@@ -665,7 +665,7 @@ ANALYZE_FUNCTION_RE = re.compile(
     flags=(re.X | re.S),
 )
 
-LV_DEBUG_RE = re.compile(
+LOOP_PASS_DEBUG_RE = re.compile(
     r"^\s*\'(?P<func>[\w.$-]+?)\'[^\n]*" r"\s*\n(?P<body>.*)$", flags=(re.X | re.S)
 )
 
@@ -1069,6 +1069,7 @@ class NamelessValue:
     name (as in e.g. `@some_global` or `%x`) or just a number (as in e.g. `%12`
     or `!4`).
     """
+
     def __init__(
         self,
         check_prefix,
@@ -1731,8 +1732,9 @@ def generalize_check_lines(
         regexp = ginfo.get_regexp()
 
     multiple_braces_re = re.compile(r"({{+)|(}}+)")
+
     def escape_braces(match_obj):
-        return '{{' + re.escape(match_obj.group(0)) + '}}'
+        return "{{" + re.escape(match_obj.group(0)) + "}}"
 
     if ginfo.is_ir():
         for i, line in enumerate(lines):

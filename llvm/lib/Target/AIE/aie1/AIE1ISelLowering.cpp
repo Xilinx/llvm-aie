@@ -1029,14 +1029,13 @@ AIE1TargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
   return TargetLowering::getRegForInlineAsmConstraint(TRI, Constraint, VT);
 }
 
-EVT AIE1TargetLowering::getShiftAmountTy(EVT LHSTy, const DataLayout &DL,
-                                         bool LegalTypes) const {
+EVT AIE1TargetLowering::getShiftAmountTy(EVT LHSTy, const DataLayout &DL) const {
   assert(LHSTy.isInteger() && "Shift amount is not an integer type!");
   if (LHSTy.isVector())
     return LHSTy;
   if (LHSTy.isInteger())
     return LHSTy;
-  return LegalTypes ? getScalarShiftAmountTy(DL, LHSTy) : getPointerTy(DL);
+  return getScalarShiftAmountTy(DL, LHSTy);
 }
 
 EVT AIE1TargetLowering::getSetCCResultType(const DataLayout &DL,

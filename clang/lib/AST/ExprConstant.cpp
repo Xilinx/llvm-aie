@@ -2862,6 +2862,9 @@ static bool handleIntIntBinOp(EvalInfo &Info, const BinaryOperator *E,
       else if (LHS.countl_zero() < SA)
         Info.CCEDiag(E, diag::note_constexpr_lshift_discards);
     }
+    if (Info.EvalStatus.Diag && !Info.EvalStatus.Diag->empty() &&
+        Info.getLangOpts().CPlusPlus11)
+      return false;
     Result = LHS << SA;
     return true;
   }
@@ -2885,6 +2888,10 @@ static bool handleIntIntBinOp(EvalInfo &Info, const BinaryOperator *E,
     if (SA != RHS)
       Info.CCEDiag(E, diag::note_constexpr_large_shift)
         << RHS << E->getType() << LHS.getBitWidth();
+
+    if (Info.EvalStatus.Diag && !Info.EvalStatus.Diag->empty() &&
+        Info.getLangOpts().CPlusPlus11)
+      return false;
     Result = LHS >> SA;
     return true;
   }
@@ -15864,9 +15871,12 @@ static bool FastEvaluateAsRValue(const Expr *Exp, Expr::EvalResult &Result,
 
   if (const auto *CE = dyn_cast<ConstantExpr>(Exp)) {
     if (CE->hasAPValueResult()) {
-      Result.Val = CE->getAPValueResult();
-      IsConst = true;
-      return true;
+      APValue APV = CE->getAPValueResult();
+      if (!APV.isLValue()) {
+        Result.Val = std::move(APV);
+        IsConst = true;
+        return true;
+      }
     }
 
     // The SubExpr is usually just an IntegerLiteral.

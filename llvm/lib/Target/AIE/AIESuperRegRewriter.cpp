@@ -45,17 +45,17 @@ public:
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
-    AU.addPreserved<MachineBlockFrequencyInfo>();
+    AU.addPreserved<MachineBlockFrequencyInfoWrapperPass>();
     AU.addRequired<VirtRegMap>();
     AU.addPreserved<VirtRegMap>();
-    AU.addRequired<SlotIndexes>();
-    AU.addPreserved<SlotIndexes>();
+    AU.addRequired<SlotIndexesWrapperPass>();
+    AU.addPreserved<SlotIndexesWrapperPass>();
     AU.addRequired<LiveDebugVariables>();
     AU.addPreserved<LiveDebugVariables>();
     AU.addRequired<LiveStacks>();
     AU.addPreserved<LiveStacks>();
-    AU.addRequired<LiveIntervals>();
-    AU.addPreserved<LiveIntervals>();
+    AU.addRequired<LiveIntervalsWrapperPass>();
+    AU.addPreserved<LiveIntervalsWrapperPass>();
     AU.addRequired<LiveRegMatrix>();
     AU.addPreserved<LiveRegMatrix>();
     MachineFunctionPass::getAnalysisUsage(AU);
@@ -145,8 +145,8 @@ bool AIESuperRegRewriter::runOnMachineFunction(MachineFunction &MF) {
       *static_cast<const AIEBaseRegisterInfo *>(MRI.getTargetRegisterInfo());
   VirtRegMap &VRM = getAnalysis<VirtRegMap>();
   LiveRegMatrix &LRM = getAnalysis<LiveRegMatrix>();
-  LiveIntervals &LIS = getAnalysis<LiveIntervals>();
-  SlotIndexes &Indexes = getAnalysis<SlotIndexes>();
+  LiveIntervals &LIS = getAnalysis<LiveIntervalsWrapperPass>().getLIS();
+  SlotIndexes &Indexes = getAnalysis<SlotIndexesWrapperPass>().getSI();
   LiveDebugVariables &DebugVars = getAnalysis<LiveDebugVariables>();
   std::map<Register, MCRegister> AssignedPhysRegs;
 

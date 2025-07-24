@@ -47,9 +47,8 @@ public:
   std::unique_ptr<MCObjectTargetWriter>
   createObjectTargetWriter() const override;
 
-  bool fixupNeedsRelaxation(const MCFixup &Fixup, uint64_t Value,
-                            const MCRelaxableFragment *DF,
-                            const MCAsmLayout &Layout) const override {
+  bool fixupNeedsRelaxation(const MCFixup &Fixup,
+                            uint64_t Value) const override {
     // All fixups are symbolic references that don't change by relaxation,
     // which only adds nop slots.
     return false;

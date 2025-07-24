@@ -24,7 +24,7 @@ static std::optional<Instruction *>
 instCombineDemandedBits(InstCombiner &IC, IntrinsicInst &II, unsigned numBits) {
   KnownBits ScalarKnown(32);
   if (IC.SimplifyDemandedBits(&II, 0, APInt::getLowBitsSet(32, numBits),
-                              ScalarKnown, 0)) {
+                              ScalarKnown)) {
     return &II;
   }
 

@@ -34,7 +34,7 @@
 #error "Unsupported architecture"
 #endif
 
-namespace LIBC_NAMESPACE {
+namespace LIBC_NAMESPACE_DECL {
 
 [[gnu::flatten]] LIBC_INLINE int inline_memcmp(const void *p1, const void *p2,
                                                size_t count) {
@@ -42,7 +42,7 @@ namespace LIBC_NAMESPACE {
       reinterpret_cast<CPtr>(p1), reinterpret_cast<CPtr>(p2), count));
 }
 
-} // namespace LIBC_NAMESPACE
+} // namespace LIBC_NAMESPACE_DECL
 
 #undef LIBC_SRC_STRING_MEMORY_UTILS_MEMCMP
 

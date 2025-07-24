@@ -81,16 +81,16 @@ public:
     AU.addPreserved<VirtRegMap>();
     // no Machine Instructions are added, therefore the SlotIndexes remain
     // constant and preserved
-    AU.addRequired<SlotIndexes>();
-    AU.addPreserved<SlotIndexes>();
+    AU.addRequired<SlotIndexesWrapperPass>();
+    AU.addPreserved<SlotIndexesWrapperPass>();
     // no new Virtual Registers are generated, therefore the LiveDebugVariables
     // do not have to be updated
     AU.addRequired<LiveDebugVariables>();
     AU.addPreserved<LiveDebugVariables>();
     AU.addRequired<LiveStacks>();
     AU.addPreserved<LiveStacks>();
-    AU.addRequired<LiveIntervals>();
-    AU.addPreserved<LiveIntervals>();
+    AU.addRequired<LiveIntervalsWrapperPass>();
+    AU.addPreserved<LiveIntervalsWrapperPass>();
     AU.addRequired<LiveRegMatrix>();
     AU.addPreserved<LiveRegMatrix>();
     MachineFunctionPass::getAnalysisUsage(AU);
@@ -201,7 +201,7 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   TRI = static_cast<const AIEBaseRegisterInfo *>(MRI->getTargetRegisterInfo());
   VRM = &getAnalysis<VirtRegMap>();
   LRM = &getAnalysis<LiveRegMatrix>();
-  LIS = &getAnalysis<LiveIntervals>();
+  LIS = &getAnalysis<LiveIntervalsWrapperPass>().getLIS();
   TII = MF.getSubtarget().getInstrInfo();
   bool Modified = false;
 

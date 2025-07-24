@@ -16,6 +16,7 @@
 #ifndef LLVM_LIB_TARGET_AIE_MCTARGETDESC_AIEMCEXPR_H
 #define LLVM_LIB_TARGET_AIE_MCTARGETDESC_AIEMCEXPR_H
 
+#include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCExpr.h"
 
 namespace llvm {
@@ -37,9 +38,6 @@ private:
 
   int64_t evaluateAsInt64(int64_t Value) const;
 
-  bool evaluatePCRelLo(MCValue &Res, const MCAsmLayout *Layout,
-                       const MCFixup *Fixup) const;
-
   explicit AIEMCExpr(const MCExpr *Expr, VariantKind Kind)
       : Expr(Expr), Kind(Kind) {}
 
@@ -52,7 +50,7 @@ public:
   const MCExpr *getSubExpr() const { return Expr; }
 
   void printImpl(raw_ostream &OS, const MCAsmInfo *MAI) const override;
-  bool evaluateAsRelocatableImpl(MCValue &Res, const MCAsmLayout *Layout,
+  bool evaluateAsRelocatableImpl(MCValue &Res, const MCAssembler *Layout,
                                  const MCFixup *Fixup) const override;
   void visitUsedExpr(MCStreamer &Streamer) const override;
   MCFragment *findAssociatedFragment() const override {
