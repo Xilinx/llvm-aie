@@ -1224,6 +1224,18 @@ let IntrProperties = [IntrInaccessibleMemOnly, IntrWillReturn, IntrStrictFP] in 
                                                       llvm_anyint_ty,
                                                       llvm_metadata_ty,
                                                       llvm_metadata_ty ]>;
+  def int_experimental_constrained_asin  : DefaultAttrsIntrinsic<[ llvm_anyfloat_ty ],
+                                                    [ LLVMMatchType<0>,
+                                                      llvm_metadata_ty,
+                                                      llvm_metadata_ty ]>;
+  def int_experimental_constrained_acos  : DefaultAttrsIntrinsic<[ llvm_anyfloat_ty ],
+                                                    [ LLVMMatchType<0>,
+                                                      llvm_metadata_ty,
+                                                      llvm_metadata_ty ]>;
+  def int_experimental_constrained_atan  : DefaultAttrsIntrinsic<[ llvm_anyfloat_ty ],
+                                                    [ LLVMMatchType<0>,
+                                                      llvm_metadata_ty,
+                                                      llvm_metadata_ty ]>;
   def int_experimental_constrained_sin  : DefaultAttrsIntrinsic<[ llvm_anyfloat_ty ],
                                                     [ LLVMMatchType<0>,
                                                       llvm_metadata_ty,
@@ -1233,6 +1245,18 @@ let IntrProperties = [IntrInaccessibleMemOnly, IntrWillReturn, IntrStrictFP] in 
                                                       llvm_metadata_ty,
                                                       llvm_metadata_ty ]>;
   def int_experimental_constrained_tan  : DefaultAttrsIntrinsic<[ llvm_anyfloat_ty ],
+                                                    [ LLVMMatchType<0>,
+                                                      llvm_metadata_ty,
+                                                      llvm_metadata_ty ]>;
+  def int_experimental_constrained_sinh  : DefaultAttrsIntrinsic<[ llvm_anyfloat_ty ],
+                                                    [ LLVMMatchType<0>,
+                                                      llvm_metadata_ty,
+                                                      llvm_metadata_ty ]>;
+  def int_experimental_constrained_cosh  : DefaultAttrsIntrinsic<[ llvm_anyfloat_ty ],
+                                                    [ LLVMMatchType<0>,
+                                                      llvm_metadata_ty,
+                                                      llvm_metadata_ty ]>;
+  def int_experimental_constrained_tanh  : DefaultAttrsIntrinsic<[ llvm_anyfloat_ty ],
                                                     [ LLVMMatchType<0>,
                                                       llvm_metadata_ty,
                                                       llvm_metadata_ty ]>;
