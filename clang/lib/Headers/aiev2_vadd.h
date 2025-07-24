@@ -107,14 +107,14 @@ INTRINSIC(v64uint8) bor(v64uint8 a, v64uint8 b) { return a | b; }
 
 INTRINSIC(v64uint8) bneg_ltz(v64uint8 a, unsigned long long &cmp) {
   v64uint8 r = __builtin_aiev2_vbneg_ltz8(a, cmp);
-  cmp = (unsigned long long)(-1);
+  cmp = (unsigned int)(-1);
   return r;
 }
 
 INTRINSIC(v64uint8) bneg_ltz(v64uint8 a, bool sgn, unsigned long long &cmp) {
   v64uint8 r = __builtin_aiev2_vbneg_ltz8(a, cmp);
   if (!sgn)
-    cmp = (unsigned long long)(-1);
+    cmp = (unsigned int)(-1);
   return r;
 }
 
@@ -313,7 +313,7 @@ INTRINSIC(v64int8) bneg_ltz(v64int8 a, unsigned long long &cmp) {
 INTRINSIC(v64int8) bneg_ltz(v64int8 a, bool sgn, unsigned long long &cmp) {
   v64int8 r = __builtin_aiev2_vbneg_ltz8(a, cmp);
   if (!sgn)
-    cmp = (unsigned long long)(-1);
+    cmp = (unsigned int)(-1);
   return r;
 }
 

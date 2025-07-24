@@ -125,7 +125,7 @@ INTRINSIC(v64uint8)
 bneg_ltz(v64uint8 a, unsigned long long &cmp) // static sign
 {
   v64uint8 r = __builtin_aie2p_vbneg_ltz8(a, cmp);
-  cmp = (unsigned long long)(-1);
+  cmp = 0;
   return r;
 }
 INTRINSIC(v64uint8)
@@ -133,7 +133,7 @@ bneg_ltz(v64uint8 a, bool sgn, unsigned long long &cmp) // dynamic sign
 {
   v64uint8 r = __builtin_aie2p_vbneg_ltz8(a, cmp);
   if (!sgn)
-    cmp = (unsigned long long)(-1);
+    cmp = 0;
   return r;
 }
 
@@ -352,7 +352,7 @@ bneg_ltz(v64int8 a, bool sgn, unsigned long long &cmp) // dynamic sign
 {
   v64int8 r = __builtin_aie2p_vbneg_ltz8(a, cmp);
   if (!sgn)
-    cmp = (unsigned long long)(-1);
+    cmp = 0;
   return r;
 }
 
@@ -565,7 +565,7 @@ INTRINSIC(v32uint16)
 bneg_ltz(v32uint16 a, unsigned int &cmp) // static sign
 {
   v32uint16 r = __builtin_aie2p_vbneg_ltz16(a, cmp);
-  cmp = (unsigned int)(-1);
+  cmp = 0;
   return r;
 }
 INTRINSIC(v32uint16)
@@ -573,7 +573,7 @@ bneg_ltz(v32uint16 a, bool sgn, unsigned int &cmp) // dynamic sign
 {
   v32uint16 r = __builtin_aie2p_vbneg_ltz16(a, cmp);
   if (!sgn)
-    cmp = (unsigned int)(-1);
+    cmp = 0;
   return r;
 }
 
@@ -789,7 +789,7 @@ bneg_ltz(v32int16 a, bool sgn, unsigned int &cmp) // dynamic sign
 {
   v32int16 r = __builtin_aie2p_vbneg_ltz16(a, cmp);
   if (!sgn)
-    cmp = (unsigned int)(-1);
+    cmp = 0;
   return r;
 }
 
@@ -1000,7 +1000,7 @@ INTRINSIC(v16uint32)
 bneg_ltz(v16uint32 a, unsigned int &cmp) // static sign
 {
   v16uint32 r = __builtin_aie2p_vbneg_ltz32(a, cmp);
-  cmp = (unsigned int)(-1);
+  cmp = 0;
   return r;
 }
 INTRINSIC(v16uint32)
@@ -1008,7 +1008,7 @@ bneg_ltz(v16uint32 a, bool sgn, unsigned int &cmp) // dynamic sign
 {
   v16uint32 r = __builtin_aie2p_vbneg_ltz32(a, cmp);
   if (!sgn)
-    cmp = (unsigned int)(-1);
+    cmp = 0;
   return r;
 }
 
@@ -1224,7 +1224,7 @@ bneg_ltz(v16int32 a, bool sgn, unsigned int &cmp) // dynamic sign
 {
   v16int32 r = __builtin_aie2p_vbneg_ltz32(a, cmp);
   if (!sgn)
-    cmp = (unsigned int)(-1);
+    cmp = 0;
   return r;
 }
 
