@@ -45,7 +45,7 @@ public:
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
-    AU.addPreserved<MachineBlockFrequencyInfo>();
+    AU.addPreserved<MachineBlockFrequencyInfoWrapperPass>();
     AU.addRequired<VirtRegMap>();
     AU.addPreserved<VirtRegMap>();
     AU.addRequired<SlotIndexesWrapperPass>();
