@@ -137,8 +137,8 @@ public:
   bool runOnMachineFunction(MachineFunction &MF) override;
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.addRequired<MachineLoopInfo>();
-    AU.addPreserved<MachineLoopInfo>();
+    AU.addRequired<MachineLoopInfoWrapperPass>();
+    AU.addPreserved<MachineLoopInfoWrapperPass>();
     MachineFunctionPass::getAnalysisUsage(AU);
   }
 
@@ -177,7 +177,7 @@ char &llvm::ReservedRegsLICMID = ReservedRegsLICM::ID;
 
 INITIALIZE_PASS_BEGIN(ReservedRegsLICM, DEBUG_TYPE,
                       "Machine LICM for reserved regs", false, false)
-INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
+INITIALIZE_PASS_DEPENDENCY(MachineLoopInfoWrapperPass)
 INITIALIZE_PASS_END(ReservedRegsLICM, DEBUG_TYPE,
                     "Machine LICM for reserved regs", false, false)
 
@@ -197,9 +197,9 @@ bool ReservedRegsLICM::runOnMachineFunction(MachineFunction &MF) {
   LLVM_DEBUG(dbgs() << "******** Reserved register LICM: " << MF.getName()
                     << " ********\n");
 
-  MachineLoopInfo &MLI = getAnalysis<MachineLoopInfo>();
+  MachineLoopInfo &MLI = getAnalysis<MachineLoopInfoWrapperPass>().getLI();
 
-  SmallVector<MachineLoop *, 4> Loops = MLI.getBase().getLoopsInPreorder();
+  SmallVector<MachineLoop *, 4> Loops = MLI.getLoopsInPreorder();
   for (MachineLoop *L : reverse(Loops)) {
     runOnLoop(*L);
   }
