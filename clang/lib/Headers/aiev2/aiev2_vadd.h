@@ -107,14 +107,14 @@ INTRINSIC(v64uint8) bor(v64uint8 a, v64uint8 b) { return a | b; }
 
 INTRINSIC(v64uint8) bneg_ltz(v64uint8 a, unsigned long long &cmp) {
   v64uint8 r = __builtin_aiev2_vbneg_ltz8(a, cmp);
-  cmp = (unsigned long long)(-1);
+  cmp = 0;
   return r;
 }
 
 INTRINSIC(v64uint8) bneg_ltz(v64uint8 a, bool sgn, unsigned long long &cmp) {
   v64uint8 r = __builtin_aiev2_vbneg_ltz8(a, cmp);
   if (!sgn)
-    cmp = (unsigned long long)(-1);
+    cmp = 0;
   return r;
 }
 
@@ -313,7 +313,7 @@ INTRINSIC(v64int8) bneg_ltz(v64int8 a, unsigned long long &cmp) {
 INTRINSIC(v64int8) bneg_ltz(v64int8 a, bool sgn, unsigned long long &cmp) {
   v64int8 r = __builtin_aiev2_vbneg_ltz8(a, cmp);
   if (!sgn)
-    cmp = (unsigned long long)(-1);
+    cmp = 0;
   return r;
 }
 
@@ -509,14 +509,14 @@ INTRINSIC(v32uint16) bor(v32uint16 a, v32uint16 b) { return a | b; }
 
 INTRINSIC(v32uint16) bneg_ltz(v32uint16 a, unsigned int &cmp) {
   v32uint16 r = __builtin_aiev2_vbneg_ltz16(a, cmp);
-  cmp = (unsigned int)(-1);
+  cmp = 0;
   return r;
 }
 
 INTRINSIC(v32uint16) bneg_ltz(v32uint16 a, bool sgn, unsigned int &cmp) {
   v32uint16 r = __builtin_aiev2_vbneg_ltz16(a, cmp);
   if (!sgn)
-    cmp = (unsigned int)(-1);
+    cmp = 0;
   return r;
 }
 
@@ -711,7 +711,7 @@ INTRINSIC(v32int16) bneg_ltz(v32int16 a, unsigned int &cmp) {
 INTRINSIC(v32int16) bneg_ltz(v32int16 a, bool sgn, unsigned int &cmp) {
   v32int16 r = __builtin_aiev2_vbneg_ltz16(a, cmp);
   if (!sgn)
-    cmp = (unsigned int)(-1);
+    cmp = 0;
   return r;
 }
 
@@ -903,14 +903,14 @@ INTRINSIC(v16uint32) bor(v16uint32 a, v16uint32 b) { return a | b; }
 
 INTRINSIC(v16uint32) bneg_ltz(v16uint32 a, unsigned int &cmp) {
   v16uint32 r = __builtin_aiev2_vbneg_ltz32(a, cmp);
-  cmp = (unsigned int)(-1);
+  cmp = 0;
   return r;
 }
 
 INTRINSIC(v16uint32) bneg_ltz(v16uint32 a, bool sgn, unsigned int &cmp) {
   v16uint32 r = __builtin_aiev2_vbneg_ltz32(a, cmp);
   if (!sgn)
-    cmp = (unsigned int)(-1);
+    cmp = 0;
   return r;
 }
 
@@ -1105,7 +1105,7 @@ INTRINSIC(v16int32) bneg_ltz(v16int32 a, unsigned int &cmp) {
 INTRINSIC(v16int32) bneg_ltz(v16int32 a, bool sgn, unsigned int &cmp) {
   v16int32 r = __builtin_aiev2_vbneg_ltz32(a, cmp);
   if (!sgn)
-    cmp = (unsigned int)(-1);
+    cmp = 0;
   return r;
 }
 
