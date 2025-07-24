@@ -3363,6 +3363,10 @@ static void encodeTypeForFunctionPointerAuth(const ASTContext &Ctx,
   case BuiltinType::Id:                                                        \
     return;
 #include "clang/Basic/AArch64SVEACLETypes.def"
+#define AIE_TYPE(Name, Id, Size, Align)                                        \
+  case BuiltinType::Id:                                                        \
+    return;
+#include "clang/Basic/AIETypes.def"
     case BuiltinType::Dependent:
       llvm_unreachable("should never get here");
     case BuiltinType::AMDGPUBufferRsrc:
