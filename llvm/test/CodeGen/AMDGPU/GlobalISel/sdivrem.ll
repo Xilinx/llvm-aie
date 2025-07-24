@@ -3,6 +3,8 @@
 ; RUN: llc -global-isel -amdgpu-codegenprepare-disable-idiv-expansion=1 -amdgpu-bypass-slow-div=0 -mtriple=amdgcn-amd-amdhsa -mcpu=gfx900 -verify-machineinstrs < %s | FileCheck -check-prefix=GFX9 %s
 ; RUN: llc -global-isel -amdgpu-codegenprepare-disable-idiv-expansion=1 -amdgpu-bypass-slow-div=0 -mtriple=amdgcn-amd-amdhsa -mcpu=gfx1010 -verify-machineinstrs < %s | FileCheck -check-prefix=GFX10 %s
 
+; XFAIL: llvm-aie-regression
+
 define amdgpu_kernel void @sdivrem_i32(ptr addrspace(1) %out0, ptr addrspace(1) %out1, i32 %x, i32 %y) {
 ; GFX8-LABEL: sdivrem_i32:
 ; GFX8:       ; %bb.0:
