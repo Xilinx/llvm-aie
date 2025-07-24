@@ -15,7 +15,6 @@
 
 #include "AIEMCExpr.h"
 #include "AIE.h"
-#include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCStreamer.h"
@@ -45,7 +44,7 @@ void AIEMCExpr::printImpl(raw_ostream &OS, const MCAsmInfo *MAI) const {
 
 
 bool AIEMCExpr::evaluateAsRelocatableImpl(MCValue &Res,
-                                            const MCAsmLayout *Layout,
+                                            const MCAssembler *Layout,
                                             const MCFixup *Fixup) const {
   // if (Kind == VK_AIE_PCREL_LO && evaluatePCRelLo(Res, Layout, Fixup))
   //   return true;
