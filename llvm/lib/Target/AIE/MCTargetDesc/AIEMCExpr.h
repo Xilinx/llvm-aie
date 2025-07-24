@@ -38,7 +38,7 @@ private:
 
   int64_t evaluateAsInt64(int64_t Value) const;
 
-  bool evaluatePCRelLo(MCValue &Res, const MCAsmLayout *Layout,
+  bool evaluatePCRelLo(MCValue &Res, const MCAssembler *Layout,
                        const MCFixup *Fixup) const;
 
   explicit AIEMCExpr(const MCExpr *Expr, VariantKind Kind)
