@@ -124,13 +124,17 @@ public:
 
     if (!isFunctionInPrintList(MF.getName()))
       return false;
-    MF.print(OutputFileStream, getAnalysisIfAvailable<SlotIndexes>());
+    // If SlotIndexes are available, use them to print the MachineFunction.
+    if (auto *SIWP = getAnalysisIfAvailable<SlotIndexesWrapperPass>())
+      MF.print(OutputFileStream, &SIWP->getSI());
+    else
+      MF.print(OutputFileStream);
     return false;
   }
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesAll();
-    AU.addUsedIfAvailable<SlotIndexes>();
+    AU.addUsedIfAvailable<SlotIndexesWrapperPass>();
     MachineFunctionPass::getAnalysisUsage(AU);
   }
 

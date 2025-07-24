@@ -192,7 +192,7 @@ public:
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
-    AU.addRequired<MachineLoopInfo>();
+    AU.addRequired<MachineLoopInfoWrapperPass>();
     AU.addRequired<ReachingDefAnalysis>();
     MachineFunctionPass::getAnalysisUsage(AU);
     AU.addRequired<MachineOptimizationRemarkEmitterPass>();
@@ -279,7 +279,7 @@ bool AIEBaseHardwareLoops::runOnMachineFunction(MachineFunction &mf) {
   LLVM_DEBUG(dbgs() << "AIE Hardware Loops on " << MF->getName()
                     << " ------------- \n");
 
-  MLI = &getAnalysis<MachineLoopInfo>();
+  MLI = &getAnalysis<MachineLoopInfoWrapperPass>().getLI();
   RDA = &getAnalysis<ReachingDefAnalysis>();
   MF->getProperties().set(MachineFunctionProperties::Property::TracksLiveness);
   MRI = &MF->getRegInfo();
