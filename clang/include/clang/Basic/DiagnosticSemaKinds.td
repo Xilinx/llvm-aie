@@ -2422,6 +2422,7 @@ def err_selected_explicit_constructor : Error<
   "chosen constructor is explicit in copy-initialization">;
 def note_explicit_ctor_deduction_guide_here : Note<
   "explicit %select{constructor|deduction guide}0 declared here">;
+def note_implicit_deduction_guide : Note<"implicit deduction guide declared as '%0'">;
 
 // C++11 auto
 def warn_cxx98_compat_auto_type_specifier : Warning<
@@ -3549,6 +3550,12 @@ def warn_alignment_not_power_of_two : Warning<
   InGroup<DiagGroup<"non-power-of-two-alignment">>;
 def err_alignment_dependent_typedef_name : Error<
   "requested alignment is dependent but declaration is not dependent">;
+def ext_c2y_alignof_incomplete_array : Extension<
+  "'alignof' on an incomplete array type is a C2y extension">,
+  InGroup<C2y>;
+def warn_c2y_compat_alignof_incomplete_array : Warning<
+  "'alignof' on an incomplete array type is incompatible with C standards "
+  "before C2y">, InGroup<CPre2yCompat>, DefaultIgnore;
 
 def warn_alignment_builtin_useless : Warning<
   "%select{aligning a value|the result of checking whether a value is aligned}0"
@@ -6565,28 +6572,28 @@ def warn_superclass_variable_sized_type_not_at_end : Warning<
   "field %0 can overwrite instance variable %1 with variable sized type %2"
   " in superclass %3">, InGroup<ObjCFlexibleArray>;
 
-def err_flexible_array_count_not_in_same_struct : Error<
-  "'counted_by' field %0 isn't within the same struct as the flexible array">;
-def err_counted_by_attr_not_on_ptr_or_flexible_array_member : Error<
-  "'counted_by' only applies to pointers or C99 flexible array members">;
+def err_count_attr_param_not_in_same_struct : Error<
+  "'%select{counted_by|sized_by|counted_by_or_null|sized_by_or_null}1' field %0 isn't within the same struct as the annotated %select{pointer|flexible array}2">;
+def err_count_attr_not_on_ptr_or_flexible_array_member : Error<
+  "'%select{counted_by|sized_by|counted_by_or_null|sized_by_or_null}0' only applies to pointers%select{ or C99 flexible array members|||}0%select{|; did you mean to use 'counted_by'?}1">;
 def err_counted_by_attr_on_array_not_flexible_array_member : Error<
   "'counted_by' on arrays only applies to C99 flexible array members">;
 def err_counted_by_attr_refer_to_itself : Error<
   "'counted_by' cannot refer to the flexible array member %0">;
-def err_counted_by_must_be_in_structure : Error<
-  "field %0 in 'counted_by' not inside structure">;
-def err_counted_by_attr_argument_not_integer : Error<
-  "'counted_by' requires a non-boolean integer type argument">;
-def err_counted_by_attr_only_support_simple_decl_reference : Error<
-  "'counted_by' argument must be a simple declaration reference">;
-def err_counted_by_attr_in_union : Error<
-  "'counted_by' cannot be applied to a union member">;
-def err_counted_by_attr_refer_to_union : Error<
-  "'counted_by' argument cannot refer to a union member">;
+def err_count_attr_must_be_in_structure : Error<
+  "field %0 in '%select{counted_by|sized_by|counted_by_or_null|sized_by_or_null}1' not inside structure">;
+def err_count_attr_argument_not_integer : Error<
+  "'%select{counted_by|sized_by|counted_by_or_null|sized_by_or_null}0' requires a non-boolean integer type argument">;
+def err_count_attr_only_support_simple_decl_reference : Error<
+  "'%select{counted_by|sized_by|counted_by_or_null|sized_by_or_null}0' argument must be a simple declaration reference">;
+def err_count_attr_in_union : Error<
+  "'%select{counted_by|sized_by|counted_by_or_null|sized_by_or_null}0' cannot be applied to a union member">;
+def err_count_attr_refer_to_union : Error<
+  "'%select{counted_by|sized_by|counted_by_or_null|sized_by_or_null}0' argument cannot refer to a union member">;
 def note_flexible_array_counted_by_attr_field : Note<
   "field %0 declared here">;
 def err_counted_by_attr_pointee_unknown_size : Error<
-  "'counted_by' %select{cannot|should not}3 be applied to %select{"
+  "'%select{counted_by|sized_by|counted_by_or_null|sized_by_or_null}4' %select{cannot|should not}3 be applied to %select{"
     "a pointer with pointee|" // pointer
     "an array with element}0" // array
   " of unknown size because %1 is %select{"
@@ -7668,8 +7675,12 @@ def ext_gnu_ptr_func_arith : Extension<
   InGroup<GNUPointerArith>;
 def err_readonly_message_assignment : Error<
   "assigning to 'readonly' return result of an Objective-C message not allowed">;
-def ext_increment_complex : Extension<
-  "'%select{--|++}0' on an object of complex type is a Clang extension">;
+def ext_c2y_increment_complex : Extension<
+  "'%select{--|++}0' on an object of complex type is a C2y extension">,
+  InGroup<C2y>;
+def warn_c2y_compat_increment_complex : Warning<
+  "'%select{--|++}0' on an object of complex type is incompatible with C "
+  "standards before C2y">, InGroup<CPre2yCompat>, DefaultIgnore;
 def ext_integer_complement_complex : Extension<
   "ISO C does not support '~' for complex conjugation of %0">;
 def err_nosetter_property_assignment : Error<
@@ -7690,7 +7701,6 @@ def err_qualified_objc_access : Error<
 def ext_freestanding_complex : Extension<
   "complex numbers are an extension in a freestanding C99 implementation">;
 
-// FIXME: Remove when we support imaginary.
 def err_imaginary_not_supported : Error<"imaginary types are not supported">;
 
 // Obj-c expressions
@@ -7983,8 +7993,11 @@ def ext_delete_void_ptr_operand : ExtWarn<
 def err_ambiguous_delete_operand : Error<
   "ambiguous conversion of delete expression of type %0 to a pointer">;
 def warn_delete_incomplete : Warning<
-  "deleting pointer to incomplete type %0 may cause undefined behavior">,
+  "deleting pointer to incomplete type %0 is incompatible with C++2c"
+  " and may cause undefined behavior">,
   InGroup<DeleteIncomplete>;
+def err_delete_incomplete : Error<
+  "cannot delete pointer to incomplete type %0">;
 def err_delete_incomplete_class_type : Error<
   "deleting incomplete class type %0; no conversions to pointer type">;
 def err_delete_explicit_conversion : Error<

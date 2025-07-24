@@ -1755,7 +1755,7 @@ std::string TargetInstrInfo::createMIROperandComment(
       OS << Info;
     }
 
-    return OS.str();
+    return Flags;
   }
 
   int FlagIdx = MI.findInlineAsmFlagIdx(OpIdx);
@@ -1789,7 +1789,7 @@ std::string TargetInstrInfo::createMIROperandComment(
       F.getRegMayBeFolded())
     OS << " foldable";
 
-  return OS.str();
+  return Flags;
 }
 
 TargetInstrInfo::PipelinerLoopInfo::~PipelinerLoopInfo() = default;

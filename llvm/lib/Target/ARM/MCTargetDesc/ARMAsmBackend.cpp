@@ -17,7 +17,6 @@
 #include "llvm/BinaryFormat/ELF.h"
 #include "llvm/BinaryFormat/MachO.h"
 #include "llvm/MC/MCAsmBackend.h"
-#include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDirectives.h"
@@ -1203,8 +1202,8 @@ uint32_t ARMAsmBackendDarwin::generateCompactUnwindEncoding(
       DEBUG_WITH_TYPE("compact-unwind",
                       llvm::dbgs()
                           << "CFI directive not compatible with compact "
-                             "unwind encoding, opcode=" << Inst.getOperation()
-                          << "\n");
+                             "unwind encoding, opcode="
+                          << uint8_t(Inst.getOperation()) << "\n");
       return CU::UNWIND_ARM_MODE_DWARF;
       break;
     }
