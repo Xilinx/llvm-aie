@@ -231,7 +231,7 @@ void verifyAlignment(MachineFunction &MF) {
     LLVM_DEBUG(dbgs() << "MBB " << MBB.getNumber() << " Alignment: "
                       << Alignment % TII.getMachineBlockAlignmentBytes()
                       << "\n");
-    const unsigned MBBSize = getMBBSizeInBytes(MBB);
+    const unsigned MBBSize = TII.getMBBSizeInBytes(MBB);
     LLVM_DEBUG(dbgs() << "MBB Size: " << MBBSize << "\n");
     Alignment += MBBSize;
   }

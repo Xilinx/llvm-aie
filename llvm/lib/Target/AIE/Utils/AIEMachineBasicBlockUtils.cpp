@@ -8,7 +8,6 @@
 //
 //===----------------------------------------------------------------------===//
 #include "AIEMachineBasicBlockUtils.h"
-#include "AIEBaseInstrInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBundle.h"
 
@@ -67,23 +66,6 @@ MachineBasicBlock *getPrevNonEmptyMBB(MachineBasicBlock *MBB) {
     return MBB;
   }
   return nullptr;
-}
-
-namespace {
-const AIEBaseInstrInfo *getTII(const MachineFunction &MF) {
-  auto &Subtarget = MF.getSubtarget();
-  return static_cast<const AIEBaseInstrInfo *>(Subtarget.getInstrInfo());
-}
-
-} // namespace
-
-unsigned getMBBSizeInBytes(MachineBasicBlock &MBB) {
-  const AIEBaseInstrInfo *TII = getTII(*MBB.getParent());
-  unsigned Size = 0;
-  for (auto &MI : MBB) {
-    Size += TII->getAIEMachineBundleSize(&MI);
-  }
-  return Size;
 }
 
 } // namespace llvm::AIEMachineBasicBlockUtils

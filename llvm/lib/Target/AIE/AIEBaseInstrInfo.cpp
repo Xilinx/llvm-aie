@@ -508,6 +508,15 @@ unsigned AIEBaseInstrInfo::getAIEMachineBundleSize(
   return 0;
 }
 
+unsigned
+AIEBaseInstrInfo::getMBBSizeInBytes(const MachineBasicBlock &MBB) const {
+  unsigned Size = 0;
+  for (auto &MI : MBB) {
+    Size += getAIEMachineBundleSize(&MI);
+  }
+  return Size;
+}
+
 unsigned computeRegStateFlags(const MachineOperand &RegOp) {
   assert(RegOp.isReg() && "Not a register operand");
   assert(!RegOp.getSubReg() && "RegOp has SubReg flags set");

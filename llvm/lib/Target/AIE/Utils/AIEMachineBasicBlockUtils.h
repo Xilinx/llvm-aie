@@ -28,9 +28,6 @@ bool isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB);
 /// MBB.
 MachineBasicBlock *getPrevNonEmptyMBB(MachineBasicBlock *MBB);
 
-/// \return the Size of \p MBB in Bytes.
-unsigned getMBBSizeInBytes(MachineBasicBlock &MBB);
-
 } // namespace llvm::AIEMachineBasicBlockUtils
 
 #endif

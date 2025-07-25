@@ -574,6 +574,7 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   getAIEMachineBundleSize(const MachineBasicBlock::const_iterator MII) const;
   virtual unsigned getRegionSizeInBytes(
       llvm::iterator_range<MachineBasicBlock::iterator> Region) const;
+  unsigned getMBBSizeInBytes(const MachineBasicBlock &MBB) const;
 
   /// Return the required alignment in bytes of a machine basic block in a
   /// specific target
