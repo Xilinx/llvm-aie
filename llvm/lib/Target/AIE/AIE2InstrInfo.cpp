@@ -1509,14 +1509,6 @@ bool AIE2InstrInfo::isOffsetInImmediateRange(
   }
 }
 
-namespace {
-static const AIEBaseInstrInfo::PTRModSupport AIE2PTRModSupport{};
-} // namespace
-
-const AIEBaseInstrInfo::PTRModSupport &AIE2InstrInfo::getPTRModSupport() const {
-  return AIE2PTRModSupport;
-}
-
 unsigned AIE2InstrInfo::getPseudoJNZDOpcode() const { return AIE2::PseudoJNZD; }
 
 unsigned AIE2InstrInfo::getNumBypassedCycles(const InstrItineraryData *ItinData,

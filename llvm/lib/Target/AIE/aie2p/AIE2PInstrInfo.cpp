@@ -1852,16 +1852,6 @@ bool AIE2PInstrInfo::isOffsetInImmediateRange(
   }
 }
 
-namespace {
-static const AIEBaseInstrInfo::PTRModSupport AIE2PPTRModSupport{};
-
-} // namespace
-
-const AIEBaseInstrInfo::PTRModSupport &
-AIE2PInstrInfo::getPTRModSupport() const {
-  return AIE2PPTRModSupport;
-}
-
 unsigned AIE2PInstrInfo::getGenericAddVectorEltOpcode() const {
   return AIE2P::G_AIE_ADD_VECTOR_ELT_HI;
 }

@@ -131,28 +131,15 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
     llvm_unreachable("Target didn't implement OffsetFitImmRange");
   }
 
-  class PTRModSupport {
+  /// \return whether \p MI consumes S20
+  bool isNativeS20Consumer(const MachineInstr &MI,
+                           const MachineRegisterInfo &MRI) const;
 
-  public:
-    PTRModSupport() {}
+  std::optional<unsigned> getInputPtrIdx(const MachineInstr &MI,
+                                         const MachineRegisterInfo &MRI) const;
 
-    /// \return whether \p MI consumes S20
-    bool isNativeS20Consumer(const MachineInstr &MI,
-                             const MachineRegisterInfo &MRI) const;
-
-    std::optional<unsigned>
-    getInputPtrIdx(const MachineInstr &MI,
-                   const MachineRegisterInfo &MRI) const;
-
-    std::optional<unsigned>
-    getOutputPtrIdx(const MachineInstr &MI,
-                    const MachineRegisterInfo &MRI) const;
-  };
-
-  /// Return PointerModifierSupport Class for querying
-  virtual const PTRModSupport &getPTRModSupport() const {
-    llvm_unreachable("Target didn't implement getPTRModSupport");
-  }
+  std::optional<unsigned> getOutputPtrIdx(const MachineInstr &MI,
+                                          const MachineRegisterInfo &MRI) const;
 
   /// Return the opcode for a return instruction
   virtual unsigned getReturnOpcode() const {

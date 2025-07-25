@@ -66,7 +66,6 @@ protected:
 
 public:
   using GenericCombiner::GenericCombiner;
-  const AIEBaseInstrInfo::PTRModSupport &PtrModSupport;
   const MachineRegisterInfo *MRI = nullptr;
   const AIEBaseInstrInfo *TII = nullptr;
   const AIE::DataDependenceHelper *DAG = nullptr;
@@ -76,8 +75,7 @@ public:
   PointerModifierCombiner(bool RemoveInstr, bool ReplaceInputPtr,
                           const MachineRegisterInfo *MRI,
                           const AIEBaseInstrInfo *TII, StringRef Name)
-      : GenericCombiner(Name), Gain({1, 1, 1}),
-        PtrModSupport(TII->getPTRModSupport()), MRI(MRI), TII(TII),
+      : GenericCombiner(Name), Gain({1, 1, 1}), MRI(MRI), TII(TII),
         RemovePtrMod(RemoveInstr), ReplacePtrModInstr(ReplaceInputPtr) {}
 
   ~PointerModifierCombiner() = default;
