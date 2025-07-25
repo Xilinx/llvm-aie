@@ -18,7 +18,9 @@
 #include "AIEMachineFunctionInfo.h"
 #include "llvm/CodeGen/GlobalISel/IRTranslator.h"
 #include "llvm/CodeGen/GlobalISel/InstructionSelect.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
+#include "llvm/MC/TargetRegistry.h"
 
 using namespace llvm;
 
@@ -139,17 +141,20 @@ bool AIE2PassConfig::addILPOpts() {
 }
 
 static bool onlyAllocate3DRegisters(const TargetRegisterInfo &TRI,
-                                    const TargetRegisterClass &RC) {
-  return AIE2::eDSRegClass.hasSubClassEq(&RC);
+                                    const MachineRegisterInfo &MRI,
+                                    const Register &R) {
+  return AIE2::eDSRegClass.hasSubClassEq(MRI.getRegClass(R));
 }
 static bool onlyAllocate3D2DRegisters(const TargetRegisterInfo &TRI,
-                                      const TargetRegisterClass &RC) {
-  return AIE2::eDSRegClass.hasSubClassEq(&RC) ||
-         AIE2::eDRegClass.hasSubClassEq(&RC);
+                                      const MachineRegisterInfo &MRI,
+                                      const Register &R) {
+  return AIE2::eDSRegClass.hasSubClassEq(MRI.getRegClass(R)) ||
+         AIE2::eDRegClass.hasSubClassEq(MRI.getRegClass(R));
 }
 static bool onlyAllocateMRegisters(const TargetRegisterInfo &TRI,
-                                   const TargetRegisterClass &RC) {
-  return AIE2::eMRegClass.hasSubClassEq(&RC);
+                                   const MachineRegisterInfo &MRI,
+                                   const Register &R) {
+  return AIE2::eMRegClass.hasSubClassEq(MRI.getRegClass(R));
 }
 
 bool AIE2PassConfig::addRegAssignAndRewriteOptimized() {
