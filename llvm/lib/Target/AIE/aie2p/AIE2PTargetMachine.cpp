@@ -71,17 +71,20 @@ void AIE2PPassConfig::addPreRegBankSelect() {
 }
 
 static bool onlyAllocate3DRegisters(const TargetRegisterInfo &TRI,
-                                    const TargetRegisterClass &RC) {
-  return AIE2P::eDSRegClass.hasSubClassEq(&RC);
+                                    const MachineRegisterInfo &MRI,
+                                    const Register &R) {
+  return AIE2P::eDSRegClass.hasSubClassEq(MRI.getRegClass(R));
 }
 static bool onlyAllocate3D2DRegisters(const TargetRegisterInfo &TRI,
-                                      const TargetRegisterClass &RC) {
-  return AIE2P::eDSRegClass.hasSubClassEq(&RC) ||
-         AIE2P::eDRegClass.hasSubClassEq(&RC);
+                                      const MachineRegisterInfo &MRI,
+                                      const Register &R) {
+  return AIE2P::eDSRegClass.hasSubClassEq(MRI.getRegClass(R)) ||
+         AIE2P::eDRegClass.hasSubClassEq(MRI.getRegClass(R));
 }
 static bool onlyAllocateMRegisters(const TargetRegisterInfo &TRI,
-                                   const TargetRegisterClass &RC) {
-  return AIE2P::eMRegClass.hasSubClassEq(&RC);
+                                   const MachineRegisterInfo &MRI,
+                                  const Register &R) {
+  return AIE2P::eMRegClass.hasSubClassEq(MRI.getRegClass(R));
 }
 
 bool AIE2PPassConfig::addRegAssignAndRewriteOptimized() {

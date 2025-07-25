@@ -15,6 +15,7 @@
 #include "AIETargetELFStreamer.h"
 #include "AIEMCTargetDesc.h"
 #include "Utils/AIEBaseInfo.h"
+#include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/TargetParser/Triple.h"
 #include "llvm/BinaryFormat/ELF.h"
 #include "llvm/MC/MCAssembler.h"
@@ -30,6 +31,7 @@ AIETargetELFStreamer::AIETargetELFStreamer(MCStreamer &S,
                                            const MCSubtargetInfo &STI)
     : AIETargetStreamer(S), STI(STI) {
   MCAssembler &MCA = getStreamer().getAssembler();
+  ELFObjectWriter &W = getStreamer().getWriter();
 
   unsigned EFlags = 0;
   switch (STI.getTargetTriple().getArch()) {
@@ -45,7 +47,7 @@ AIETargetELFStreamer::AIETargetELFStreamer(MCStreamer &S,
   default:
     llvm_unreachable("unknown aie triple");
   }
-  MCA.setELFHeaderEFlags(EFlags);
+  W.setELFHeaderEFlags(EFlags);
 
   // We get RelaxAll from the driver at -O0. It assumes that fully relaxing
   // all instructions doesn't change correctness, while not requiring other
