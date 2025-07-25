@@ -132,28 +132,21 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   }
 
   class PTRModSupport {
-    /// Map between GIntrinsic and the OperandIndices that consume S20 Operands
-    const std::map<unsigned, std::set<unsigned>> *S20Consumers = nullptr;
-    /// Map between GIntrinsic/Opcode and the <Input, Output> OperandIndices
-    const std::map<unsigned, std::pair<unsigned, unsigned>>
-        *PtrInputAndOutputIdx = nullptr;
-
-    unsigned getInputPtrIdx(const unsigned OpCode) const;
-    unsigned getOutputPtrIdx(const unsigned OpCode) const;
 
   public:
-    PTRModSupport(const std::map<unsigned, std::set<unsigned>> *S20Consumers,
-                  const std::map<unsigned, std::pair<unsigned, unsigned>>
-                      *PtrInputAndOutputIdx)
-        : S20Consumers(S20Consumers),
-          PtrInputAndOutputIdx(PtrInputAndOutputIdx) {}
+    PTRModSupport() {}
 
     /// \return whether \p MI consumes S20
-    bool isNativeS20Consumer(const MachineInstr &MI) const;
+    bool isNativeS20Consumer(const MachineInstr &MI,
+                             const MachineRegisterInfo &MRI) const;
 
-    std::optional<unsigned> getInputPtrIdx(const MachineInstr &MI) const;
+    std::optional<unsigned>
+    getInputPtrIdx(const MachineInstr &MI,
+                   const MachineRegisterInfo &MRI) const;
 
-    std::optional<unsigned> getOutputPtrIdx(const MachineInstr &MI) const;
+    std::optional<unsigned>
+    getOutputPtrIdx(const MachineInstr &MI,
+                    const MachineRegisterInfo &MRI) const;
   };
 
   /// Return PointerModifierSupport Class for querying

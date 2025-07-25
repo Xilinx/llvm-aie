@@ -1326,64 +1326,43 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
 }
 
 bool llvm::AIEBaseInstrInfo::PTRModSupport::isNativeS20Consumer(
-    const MachineInstr &MI) const {
-  switch (MI.getOpcode()) {
-  case TargetOpcode::G_PTR_ADD:
-    return true;
-  case TargetOpcode::G_INTRINSIC:
-  case TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS: {
-    const unsigned IntrinsicID = cast<GIntrinsic>(MI).getIntrinsicID();
-    return S20Consumers->count(IntrinsicID);
+    const MachineInstr &MI, const MachineRegisterInfo &MRI) const {
+  const LLT S20 = LLT::scalar(20);
+  for (const MachineOperand &MO : MI.uses()) {
+    if (!MO.isReg())
+      continue;
+    const LLT Type = MRI.getType(MO.getReg());
+    if (Type == S20)
+      return true;
   }
 
-  default:
-    return false;
-  }
+  return false;
 }
 
 std::optional<unsigned> llvm::AIEBaseInstrInfo::PTRModSupport::getInputPtrIdx(
-    const MachineInstr &MI) const {
-  switch (MI.getOpcode()) {
-  case TargetOpcode::G_PTR_ADD:
-    return 1;
-  case TargetOpcode::G_INTRINSIC:
-  case TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS: {
-    const unsigned IntrinsicID = cast<GIntrinsic>(MI).getIntrinsicID();
-    return getInputPtrIdx(IntrinsicID);
+    const MachineInstr &MI, const MachineRegisterInfo &MRI) const {
+  for (const MachineOperand &MO : MI.uses()) {
+    if (!MO.isReg())
+      continue;
+    const LLT Type = MRI.getType(MO.getReg());
+    if (Type.isPointer())
+      return MO.getOperandNo();
   }
-  default:
-    return {};
-  }
-}
 
-unsigned llvm::AIEBaseInstrInfo::PTRModSupport::getInputPtrIdx(
-    const unsigned OpCode) const {
-  auto It = PtrInputAndOutputIdx->find(OpCode);
-  assert(It != PtrInputAndOutputIdx->end());
-  return It->second.first;
+  return {};
 }
 
 std::optional<unsigned> llvm::AIEBaseInstrInfo::PTRModSupport::getOutputPtrIdx(
-    const MachineInstr &MI) const {
-  switch (MI.getOpcode()) {
-  case TargetOpcode::G_PTR_ADD:
-    return 0;
-  case TargetOpcode::G_INTRINSIC:
-  case TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS: {
-    const unsigned IntrinsicID = cast<GIntrinsic>(MI).getIntrinsicID();
-    return getOutputPtrIdx(IntrinsicID);
+    const MachineInstr &MI, const MachineRegisterInfo &MRI) const {
+  for (const MachineOperand &MO : MI.defs()) {
+    if (!MO.isReg())
+      continue;
+    const LLT Type = MRI.getType(MO.getReg());
+    if (Type.isPointer())
+      return MO.getOperandNo();
   }
 
-  default:
-    return {};
-  }
-}
-
-unsigned llvm::AIEBaseInstrInfo::PTRModSupport::getOutputPtrIdx(
-    const unsigned OpCode) const {
-  auto It = PtrInputAndOutputIdx->find(OpCode);
-  assert(It != PtrInputAndOutputIdx->end());
-  return It->second.second;
+  return {};
 }
 
 bool AIEBaseInstrInfo::isExtendLikelyToBeFolded(
