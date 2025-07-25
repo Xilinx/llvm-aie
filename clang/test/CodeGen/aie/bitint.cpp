@@ -13,10 +13,12 @@
 //
 // CHECK-LABEL: @_Z12bitint2_testDU2_(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[VAL_ADDR:%.*]] = alloca i2, align 1
-// CHECK-NEXT:    store i2 [[VAL:%.*]], ptr [[VAL_ADDR]], align 1
-// CHECK-NEXT:    [[TMP0:%.*]] = load i2, ptr [[VAL_ADDR]], align 1
-// CHECK-NEXT:    ret i2 [[TMP0]]
+// CHECK-NEXT:    [[VAL_ADDR:%.*]] = alloca i8, align 1
+// CHECK-NEXT:    [[STOREDV:%.*]] = zext i2 [[VAL:%.*]] to i8
+// CHECK-NEXT:    store i8 [[STOREDV]], ptr [[VAL_ADDR]], align 1
+// CHECK-NEXT:    [[TMP0:%.*]] = load i8, ptr [[VAL_ADDR]], align 1
+// CHECK-NEXT:    [[LOADEDV:%.*]] = trunc i8 [[TMP0]] to i2
+// CHECK-NEXT:    ret i2 [[LOADEDV]]
 //
 uint2_t bitint2_test(uint2_t val) {
   return val;
@@ -24,20 +26,24 @@ uint2_t bitint2_test(uint2_t val) {
 
 // CHECK-LABEL: @_Z12bitint4_testDU4_(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[VAL_ADDR:%.*]] = alloca i4, align 1
-// CHECK-NEXT:    store i4 [[VAL:%.*]], ptr [[VAL_ADDR]], align 1
-// CHECK-NEXT:    [[TMP0:%.*]] = load i4, ptr [[VAL_ADDR]], align 1
-// CHECK-NEXT:    ret i4 [[TMP0]]
+// CHECK-NEXT:    [[VAL_ADDR:%.*]] = alloca i8, align 1
+// CHECK-NEXT:    [[STOREDV:%.*]] = zext i4 [[VAL:%.*]] to i8
+// CHECK-NEXT:    store i8 [[STOREDV]], ptr [[VAL_ADDR]], align 1
+// CHECK-NEXT:    [[TMP0:%.*]] = load i8, ptr [[VAL_ADDR]], align 1
+// CHECK-NEXT:    [[LOADEDV:%.*]] = trunc i8 [[TMP0]] to i4
+// CHECK-NEXT:    ret i4 [[LOADEDV]]
 //
 uint4_t bitint4_test(uint4_t val) {
   return val;
 }
 // CHECK-LABEL: @_Z12bitint6_testDU6_(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[VAL_ADDR:%.*]] = alloca i6, align 1
-// CHECK-NEXT:    store i6 [[VAL:%.*]], ptr [[VAL_ADDR]], align 1
-// CHECK-NEXT:    [[TMP0:%.*]] = load i6, ptr [[VAL_ADDR]], align 1
-// CHECK-NEXT:    ret i6 [[TMP0]]
+// CHECK-NEXT:    [[VAL_ADDR:%.*]] = alloca i8, align 1
+// CHECK-NEXT:    [[STOREDV:%.*]] = zext i6 [[VAL:%.*]] to i8
+// CHECK-NEXT:    store i8 [[STOREDV]], ptr [[VAL_ADDR]], align 1
+// CHECK-NEXT:    [[TMP0:%.*]] = load i8, ptr [[VAL_ADDR]], align 1
+// CHECK-NEXT:    [[LOADEDV:%.*]] = trunc i8 [[TMP0]] to i6
+// CHECK-NEXT:    ret i6 [[LOADEDV]]
 //
 uint6_t bitint6_test(uint6_t val) {
   return val;
