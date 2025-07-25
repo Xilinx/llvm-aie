@@ -22,6 +22,7 @@
 // -verify-machineinstrs.
 //===----------------------------------------------------------------------===//
 
+#include "llvm/CodeGen/MachineVerifier.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
@@ -95,6 +96,9 @@ using namespace llvm;
 namespace {
 
   struct MachineVerifier {
+    MachineVerifier(MachineFunctionAnalysisManager &MFAM, const char *b)
+        : MFAM(&MFAM), Banner(b) {}
+
     MachineVerifier(Pass *pass, const char *b) : PASS(pass), Banner(b) {}
 
     MachineVerifier(const char *b, LiveVariables *LiveVars,
@@ -105,6 +109,7 @@ namespace {
 
     unsigned verify(const MachineFunction &MF);
 
+    MachineFunctionAnalysisManager *MFAM = nullptr;
     Pass *const PASS = nullptr;
     const char *Banner;
     const MachineFunction *MF = nullptr;
@@ -304,15 +309,15 @@ namespace {
     void verifyProperties(const MachineFunction &MF);
   };
 
-  struct MachineVerifierPass : public MachineFunctionPass {
+  struct MachineVerifierLegacyPass : public MachineFunctionPass {
     static char ID; // Pass ID, replacement for typeid
 
     const std::string Banner;
 
-    MachineVerifierPass(std::string banner = std::string())
-      : MachineFunctionPass(ID), Banner(std::move(banner)) {
-        initializeMachineVerifierPassPass(*PassRegistry::getPassRegistry());
-      }
+    MachineVerifierLegacyPass(std::string banner = std::string())
+        : MachineFunctionPass(ID), Banner(std::move(banner)) {
+      initializeMachineVerifierLegacyPassPass(*PassRegistry::getPassRegistry());
+    }
 
     void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addUsedIfAvailable<LiveStacks>();
@@ -340,13 +345,28 @@ namespace {
 
 } // end anonymous namespace
 
-char MachineVerifierPass::ID = 0;
+PreservedAnalyses
+MachineVerifierPass::run(MachineFunction &MF,
+                         MachineFunctionAnalysisManager &MFAM) {
+  // Skip functions that have known verification problems.
+  // FIXME: Remove this mechanism when all problematic passes have been
+  // fixed.
+  if (MF.getProperties().hasProperty(
+          MachineFunctionProperties::Property::FailsVerification))
+    return PreservedAnalyses::all();
+  unsigned FoundErrors = MachineVerifier(MFAM, Banner.c_str()).verify(MF);
+  if (FoundErrors)
+    report_fatal_error("Found " + Twine(FoundErrors) + " machine code errors.");
+  return PreservedAnalyses::all();
+}
 
-INITIALIZE_PASS(MachineVerifierPass, "machineverifier",
+char MachineVerifierLegacyPass::ID = 0;
+
+INITIALIZE_PASS(MachineVerifierLegacyPass, "machineverifier",
                 "Verify generated machine code", false, false)
 
 FunctionPass *llvm::createMachineVerifierPass(const std::string &Banner) {
-  return new MachineVerifierPass(Banner);
+  return new MachineVerifierLegacyPass(Banner);
 }
 
 void llvm::verifyMachineFunction(const std::string &Banner,
@@ -439,6 +459,14 @@ unsigned MachineVerifier::verify(const MachineFunction &MF) {
     LiveStks = PASS->getAnalysisIfAvailable<LiveStacks>();
     auto *SIWrapper = PASS->getAnalysisIfAvailable<SlotIndexesWrapperPass>();
     Indexes = SIWrapper ? &SIWrapper->getSI() : nullptr;
+  }
+  if (MFAM) {
+    MachineFunction &Func = const_cast<MachineFunction &>(MF);
+    LiveInts = MFAM->getCachedResult<LiveIntervalsAnalysis>(Func);
+    if (!LiveInts)
+      LiveVars = MFAM->getCachedResult<LiveVariablesAnalysis>(Func);
+    // TODO: LiveStks = MFAM->getCachedResult<LiveStacksAnalysis>(Func);
+    Indexes = MFAM->getCachedResult<SlotIndexesAnalysis>(Func);
   }
 
   verifySlotIndexes();
