@@ -48,11 +48,11 @@ std::optional<APInt> getImm(const MachineInstr &PtrAdd,
 
 const std::vector<Register> PointerModifierCombiner::getClusterRegs() const {
   auto *PtrMod = getPtrInc();
-  auto InputPtrIdx = PtrModSupport.getInputPtrIdx(*PtrMod);
+  auto InputPtrIdx = PtrModSupport.getInputPtrIdx(*PtrMod, *MRI);
   assert(InputPtrIdx);
   auto InputPtrReg = PtrMod->getOperand(*InputPtrIdx).getReg();
 
-  const auto OpIdx = PtrModSupport.getOutputPtrIdx(*PtrMod);
+  const auto OpIdx = PtrModSupport.getOutputPtrIdx(*PtrMod, *MRI);
   assert(OpIdx);
   auto OuputPtrReg = PtrMod->getOperand(*OpIdx).getReg();
   return {InputPtrReg, OuputPtrReg};
@@ -100,7 +100,7 @@ PointerModifierCombiner::getUsageCount(Register Addr,
     }
 
     LLVM_DEBUG(dbgs() << "Checking " << User);
-    if (PtrModSupport.isNativeS20Consumer(User))
+    if (PtrModSupport.isNativeS20Consumer(User, *MRI))
       PtrModCount += 1;
     else
       UseDefsPastUseInstr += 1;
@@ -386,7 +386,7 @@ bool OffsetCombiner::canReorder() const { return ImmOffset.has_value(); }
 bool OffsetCombiner::isReorderCandidate(
     const GenericCombiner *PostIncCombiner) const {
   auto GetInputPtr = [&](const MachineInstr *PtrMod) {
-    auto InputPtrIdx = PtrModSupport.getInputPtrIdx(*PtrMod);
+    auto InputPtrIdx = PtrModSupport.getInputPtrIdx(*PtrMod, *MRI);
     assert(InputPtrIdx);
     return PtrMod->getOperand(*InputPtrIdx);
   };
@@ -465,7 +465,7 @@ std::unique_ptr<GenericCombiner> PostIncCombiner::clone() const {
 void PostIncCombiner::adjustGain(const MachineDominatorTree &MDT) {
   const auto *PtrAdd = getPtrInc();
 
-  auto InputPtrIdx = PtrModSupport.getInputPtrIdx(*PtrAdd);
+  auto InputPtrIdx = PtrModSupport.getInputPtrIdx(*PtrAdd, *MRI);
   assert(InputPtrIdx);
 
   // Input pointer may be copied in later usages, penalize post-inc gain
