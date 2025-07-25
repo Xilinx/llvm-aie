@@ -46,9 +46,6 @@ static cl::opt<bool> EnableGreedyAddressCombine(
     "aie-greedy-address-combines", cl::Hidden, cl::init(false),
     cl::desc("Enable greedy combines without checking for later uses of the "
              "base pointer"));
-static cl::opt<bool>
-    EnableS20Narrowing("aie-s20-narrowing", cl::Hidden, cl::init(true),
-                       cl::desc("Enable s20 operand narrowing optimization"));
 
 cl::opt<bool> InlineMemCalls("aie-inline-mem-calls", cl::init(true), cl::Hidden,
                              cl::desc("Inline mem calls when profitable."));
