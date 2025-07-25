@@ -31,6 +31,7 @@
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/DiagnosticPrinter.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -682,8 +683,8 @@ SDValue AIE1TargetLowering::LowerCall(CallLoweringInfo &CLI,
     SDValue SizeNode = DAG.getConstant(Size, DL, MVT::i32);
 
     Chain = DAG.getMemcpy(Chain, DL, FIPtr, Arg, SizeNode, align,
-                          /*IsVolatile=*/false,
-                          /*AlwaysInline=*/false, IsTailCall,
+                          /*IsVolatile=*/false, /*AlwaysInline=*/false,
+                          dyn_cast_or_null<CallInst>(CLI.CB), IsTailCall,
                           MachinePointerInfo(), MachinePointerInfo());
     ByValArgs.push_back(FIPtr);
   }
