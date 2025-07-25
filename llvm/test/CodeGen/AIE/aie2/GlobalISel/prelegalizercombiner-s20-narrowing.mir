@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie2 -run-pass=aie2-prelegalizer-combiner --aie-s20-narrowing=true %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2 -run-pass=aie2-prelegalizer-combiner %s -verify-machineinstrs -o - | FileCheck %s
 
 
 # Simple case where a 32-bit constant is truncated

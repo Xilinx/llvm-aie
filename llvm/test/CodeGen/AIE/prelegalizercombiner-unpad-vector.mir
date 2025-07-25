@@ -5,8 +5,8 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie2 -run-pass=aie2-prelegalizer-combiner --aie-s20-narrowing=true %s -verify-machineinstrs -o - | FileCheck %s
-# RUN: llc -mtriple aie2p -run-pass=aie2p-prelegalizer-combiner --aie-s20-narrowing=true %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2 -run-pass=aie2-prelegalizer-combiner %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2p -run-pass=aie2p-prelegalizer-combiner %s -verify-machineinstrs -o - | FileCheck %s
 
 
 # Simple case where a 128-bit vector is "unpadded" from a 256-bit vector
