@@ -4,9 +4,6 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
-// affiliates
-//
 //===----------------------------------------------------------------------===//
 //
 //
@@ -14,7 +11,6 @@
 
 #include "AArch64Disassembler.h"
 #include "AArch64ExternalSymbolizer.h"
-#include "AArch64RegisterInfo.h"
 #include "MCTargetDesc/AArch64AddressingModes.h"
 #include "MCTargetDesc/AArch64MCTargetDesc.h"
 #include "TargetInfo/AArch64TargetInfo.h"
@@ -423,12 +419,6 @@ static DecodeStatus DecodePPR2Mul2RegisterClass(MCInst &Inst, unsigned RegNo,
       AArch64MCRegisterClasses[AArch64::PPR2RegClassID].getRegister(RegNo * 2);
   Inst.addOperand(MCOperand::createReg(Register));
   return Success;
-}
-
-static DecodeStatus DecodeMPRRegisterClass(MCInst &Inst, unsigned RegNo,
-                                           uint64_t Address,
-                                           const MCDisassembler *Decoder) {
-  return Decoder->decodeSingletonRegClass(Inst, AArch64::MPRRegClass);
 }
 
 static DecodeStatus DecodeFixedPointScaleImm32(MCInst &Inst, unsigned Imm,
