@@ -138,10 +138,6 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
     const std::map<unsigned, std::pair<unsigned, unsigned>>
         *PtrInputAndOutputIdx = nullptr;
 
-    /// \return whether \p OperandIdx of \p IntrinsicId is a native S20 Operand
-    bool isNativeS20ConsumerIntrinsicOperand(const unsigned IntrinsicID,
-                                             const unsigned OperandIdx) const;
-
     unsigned getInputPtrIdx(const unsigned OpCode) const;
     unsigned getOutputPtrIdx(const unsigned OpCode) const;
 
@@ -154,9 +150,6 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
 
     /// \return whether \p MI consumes S20
     bool isNativeS20Consumer(const MachineInstr &MI) const;
-
-    /// \return whether \p OperandIdx of \p MI is a native S20 operand
-    bool isNativeS20Operand(const MachineInstr &MI, unsigned OperandIdx) const;
 
     std::optional<unsigned> getInputPtrIdx(const MachineInstr &MI) const;
 

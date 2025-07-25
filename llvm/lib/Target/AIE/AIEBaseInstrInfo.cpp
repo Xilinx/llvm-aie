@@ -1341,31 +1341,6 @@ bool llvm::AIEBaseInstrInfo::PTRModSupport::isNativeS20Consumer(
   }
 }
 
-bool llvm::AIEBaseInstrInfo::PTRModSupport::isNativeS20Operand(
-    const MachineInstr &MI, unsigned OperandIdx) const {
-  switch (MI.getOpcode()) {
-  case TargetOpcode::G_PTR_ADD:
-    return true;
-  case TargetOpcode::G_INTRINSIC:
-  case TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS: {
-    const unsigned IntrinsicID = cast<GIntrinsic>(MI).getIntrinsicID();
-    return isNativeS20ConsumerIntrinsicOperand(IntrinsicID, OperandIdx);
-  }
-  default:
-    return false;
-  }
-}
-
-bool llvm::AIEBaseInstrInfo::PTRModSupport::isNativeS20ConsumerIntrinsicOperand(
-    const unsigned IntrinsicID, unsigned OperandIdx) const {
-  auto It = S20Consumers->find(IntrinsicID);
-  if (It == S20Consumers->end())
-    return false;
-
-  const std::set<unsigned> &Indices = It->second;
-  return Indices.find(OperandIdx) != Indices.end();
-}
-
 std::optional<unsigned> llvm::AIEBaseInstrInfo::PTRModSupport::getInputPtrIdx(
     const MachineInstr &MI) const {
   switch (MI.getOpcode()) {
