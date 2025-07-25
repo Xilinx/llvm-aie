@@ -1316,7 +1316,7 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
   return AlignCandidates;
 }
 
-bool llvm::AIEBaseInstrInfo::PTRModSupport::isNativeS20Consumer(
+bool AIEBaseInstrInfo::isNativeS20Consumer(
     const MachineInstr &MI, const MachineRegisterInfo &MRI) const {
   const LLT S20 = LLT::scalar(20);
   for (const MachineOperand &MO : MI.uses()) {
@@ -1330,8 +1330,9 @@ bool llvm::AIEBaseInstrInfo::PTRModSupport::isNativeS20Consumer(
   return false;
 }
 
-std::optional<unsigned> llvm::AIEBaseInstrInfo::PTRModSupport::getInputPtrIdx(
-    const MachineInstr &MI, const MachineRegisterInfo &MRI) const {
+std::optional<unsigned>
+AIEBaseInstrInfo::getInputPtrIdx(const MachineInstr &MI,
+                                 const MachineRegisterInfo &MRI) const {
   for (const MachineOperand &MO : MI.uses()) {
     if (!MO.isReg())
       continue;
@@ -1343,8 +1344,9 @@ std::optional<unsigned> llvm::AIEBaseInstrInfo::PTRModSupport::getInputPtrIdx(
   return {};
 }
 
-std::optional<unsigned> llvm::AIEBaseInstrInfo::PTRModSupport::getOutputPtrIdx(
-    const MachineInstr &MI, const MachineRegisterInfo &MRI) const {
+std::optional<unsigned>
+AIEBaseInstrInfo::getOutputPtrIdx(const MachineInstr &MI,
+                                  const MachineRegisterInfo &MRI) const {
   for (const MachineOperand &MO : MI.defs()) {
     if (!MO.isReg())
       continue;
