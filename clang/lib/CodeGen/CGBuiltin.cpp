@@ -699,23 +699,15 @@ static RValue emitLibraryCall(CodeGenFunction &CGF, const FunctionDecl *FD,
   RValue Call =
       CGF.EmitCall(E->getCallee()->getType(), callee, E, ReturnValueSlot());
 
-  // Check the supported intrinsic.
   if (unsigned BuiltinID = FD->getBuiltinID()) {
-    auto IsErrnoIntrinsic = [&]() -> unsigned {
-      switch (BuiltinID) {
-      case Builtin::BIexpf:
-      case Builtin::BI__builtin_expf:
-      case Builtin::BI__builtin_expf128:
-        return true;
-      }
-      // TODO: support more FP math libcalls
-      return false;
-    }();
-
+    // Check whether a FP math builtin function, such as BI__builtin_expf
+    ASTContext &Context = CGF.getContext();
+    bool ConstWithoutErrnoAndExceptions =
+        Context.BuiltinInfo.isConstWithoutErrnoAndExceptions(BuiltinID);
     // Restrict to target with errno, for example, MacOS doesn't set errno.
-    if (IsErrnoIntrinsic && CGF.CGM.getLangOpts().MathErrno &&
-        !CGF.Builder.getIsFPConstrained()) {
-      ASTContext &Context = CGF.getContext();
+    // TODO: Support builtin function with complex type returned, eg: cacosh
+    if (ConstWithoutErrnoAndExceptions && CGF.CGM.getLangOpts().MathErrno &&
+        !CGF.Builder.getIsFPConstrained() && Call.isScalar()) {
       // Emit "int" TBAA metadata on FP math libcalls.
       clang::QualType IntTy = Context.IntTy;
       TBAAAccessInfo TBAAInfo = CGF.CGM.getTBAAAccessInfo(IntTy);
@@ -1011,7 +1003,7 @@ CodeGenFunction::emitFlexibleArrayMemberSize(const Expr *E, unsigned Type,
 
   // Build a load of the counted_by field.
   bool IsSigned = CountedByFD->getType()->isSignedIntegerType();
-  Value *CountedByInst = EmitCountedByFieldExpr(Base, FAMDecl, CountedByFD);
+  Value *CountedByInst = EmitLoadOfCountedByField(Base, FAMDecl, CountedByFD);
   if (!CountedByInst)
     return getDefaultBuiltinObjectSizeResult(Type, ResType);
 
@@ -5993,8 +5985,6 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
         getTarget().getTriple().isAMDGCN() ||
         (getTarget().getTriple().isSPIRV() &&
          getTarget().getTriple().getVendor() == Triple::VendorType::AMD)) {
-      if (getLangOpts().OpenMPIsTargetDevice)
-        return EmitOpenMPDevicePrintfCallExpr(E);
       if (getTarget().getTriple().isNVPTX())
         return EmitNVPTXDevicePrintfCallExpr(E);
       if ((getTarget().getTriple().isAMDGCN() ||
@@ -14536,12 +14526,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     // TODO: If we had a "freeze" IR instruction to generate a fixed undef
     // value, we should use that here instead of a zero.
     return llvm::Constant::getNullValue(ConvertType(E->getType()));
-  case X86::BI__builtin_ia32_vec_init_v8qi:
-  case X86::BI__builtin_ia32_vec_init_v4hi:
-  case X86::BI__builtin_ia32_vec_init_v2si:
-    return Builder.CreateBitCast(BuildVector(Ops),
-                                 llvm::Type::getX86_MMXTy(getLLVMContext()));
-  case X86::BI__builtin_ia32_vec_ext_v2si:
+  case X86::BI__builtin_ia32_vec_ext_v4hi:
   case X86::BI__builtin_ia32_vec_ext_v16qi:
   case X86::BI__builtin_ia32_vec_ext_v8hi:
   case X86::BI__builtin_ia32_vec_ext_v4si:
@@ -14559,6 +14544,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     // Otherwise we could just do this in the header file.
     return Builder.CreateExtractElement(Ops[0], Index);
   }
+  case X86::BI__builtin_ia32_vec_set_v4hi:
   case X86::BI__builtin_ia32_vec_set_v16qi:
   case X86::BI__builtin_ia32_vec_set_v8hi:
   case X86::BI__builtin_ia32_vec_set_v4si:

@@ -275,7 +275,7 @@ bool llvm::canDelayMemOp(MachineInstr &MemI, MachineInstr &Dest,
   bool SawStore = MemI.mayStore();
   auto UnsafeToMovePast = [&](const MachineInstr &MI) {
     return isNonCoalesceableUseOf(MemI, MI, Dest, MRI) ||
-           !MI.isSafeToMove(nullptr, SawStore);
+           !MI.isSafeToMove(SawStore);
   };
   return none_of(InstrRange, UnsafeToMovePast);
 }

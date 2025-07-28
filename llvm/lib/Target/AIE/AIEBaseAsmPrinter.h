@@ -41,8 +41,7 @@ public:
 
   void EmitToStreamer(MCStreamer &S, const MCInst &Inst);
 
-  virtual bool emitPseudoExpansionLowering(MCStreamer &OutStreamer,
-                                           const MachineInstr *MI) = 0;
+  virtual bool lowerPseudoInstExpansion(const MachineInstr *MI, MCInst &Inst) = 0;
   void emitXXStructorList(const DataLayout &DL, const Constant *List,
                           bool IsCtor) override;
 

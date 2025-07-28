@@ -37,10 +37,12 @@ public:
 // CHECK-LABEL: @_Z5test05accumIL10AccumClass0ELj32ELj16EE(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[ACC:%.*]] = alloca [[CLASS_ACCUM:%.*]], align 32
-// CHECK-NEXT:    store [[CLASS_ACCUM]] [[ACC_COERCE:%.*]], ptr [[ACC]], align 32
-// CHECK-NEXT:    [[CALL:%.*]] = call noundef <8 x i64> @_ZNK5accumIL10AccumClass0ELj32ELj16EEcvDv8_u7__acc64Ev(ptr nonnull align 32 dereferenceable(64) [[ACC]])
-// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <8 x i64> [[CALL]] to <16 x i32>
-// CHECK-NEXT:    ret <16 x i32> [[TMP0]]
+// CHECK-NEXT:    [[TMP0:%.*]] = getelementptr inbounds [[CLASS_ACCUM]], ptr [[ACC]], i32 0, i32 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[CLASS_ACCUM]] [[ACC_COERCE:%.*]], 0
+// CHECK-NEXT:    store <8 x i64> [[TMP1]], ptr [[TMP0]], align 32
+// CHECK-NEXT:    [[CALL:%.*]] = call noundef <8 x i64> @_ZNK5accumIL10AccumClass0ELj32ELj16EEcvDv8_u7__acc64Ev(ptr nonnull align 32 dereferenceable(64) [[ACC]]) #[[ATTR2:[0-9]+]]
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <8 x i64> [[CALL]] to <16 x i32>
+// CHECK-NEXT:    ret <16 x i32> [[TMP2]]
 //
 v16int32 test0(accum<AccumClass::Int, 32, 16> acc) {
     return (v16int32)acc;
@@ -52,8 +54,8 @@ v16int32 test0(accum<AccumClass::Int, 32, 16> acc) {
 // CHECK-NEXT:    store <16 x i32> [[A:%.*]], ptr [[A_ADDR]], align 32
 // CHECK-NEXT:    [[TMP0:%.*]] = load <16 x i32>, ptr [[A_ADDR]], align 32
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <16 x i32> [[TMP0]] to <8 x i64>
-// CHECK-NEXT:    call void @_ZN5accumIL10AccumClass0ELj32ELj16EEC2EDv8_u7__acc64(ptr nonnull align 32 dereferenceable(64) [[ACC]], <8 x i64> noundef [[TMP1]])
-// CHECK-NEXT:    [[CALL:%.*]] = call noundef <8 x i64> @_ZNK5accumIL10AccumClass0ELj32ELj16EEcvDv8_u7__acc64Ev(ptr nonnull align 32 dereferenceable(64) [[ACC]])
+// CHECK-NEXT:    call void @_ZN5accumIL10AccumClass0ELj32ELj16EEC2EDv8_u7__acc64(ptr nonnull align 32 dereferenceable(64) [[ACC]], <8 x i64> noundef [[TMP1]]) #[[ATTR2]]
+// CHECK-NEXT:    [[CALL:%.*]] = call noundef <8 x i64> @_ZNK5accumIL10AccumClass0ELj32ELj16EEcvDv8_u7__acc64Ev(ptr nonnull align 32 dereferenceable(64) [[ACC]]) #[[ATTR2]]
 // CHECK-NEXT:    ret <8 x i64> [[CALL]]
 //
 v16acc32 test1 (v16int32 a) {

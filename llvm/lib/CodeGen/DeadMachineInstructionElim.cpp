@@ -109,7 +109,7 @@ bool DeadMachineInstructionElimImpl::isDead(const MachineInstr *MI) const {
 
   // Don't delete instructions with side effects.
   bool SawStore = false;
-  if (!MI->isSafeToMove(nullptr, SawStore) && !MI->isPHI())
+  if (!MI->isSafeToMove(SawStore) && !MI->isPHI())
     return false;
 
   // Examine each operand.

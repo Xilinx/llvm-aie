@@ -28,3 +28,5 @@ let Size = 32 in {
 
 // BASE: MyTargetGenRegisterBankInfo::MyTargetGenRegisterBankInfo(unsigned HwMode)
 // BASE:     : BaseRegBankInfo(RegBanks, MyTarget::NumRegisterBanks, Sizes, HwMode) {
+
+def GPRRegBank : RegisterBank<"GPR", [ClassA]>;

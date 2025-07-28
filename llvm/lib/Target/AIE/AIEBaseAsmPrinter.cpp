@@ -200,10 +200,12 @@ void AIEBaseAsmPrinter::emitInstruction(const MachineInstr *MI) {
         OutStreamer->getCommentOS()
             << "Delay Slot " << DelaySlotCounter-- << "\n";
       // Do any auto-generated pseudo lowerings.
-      if (emitPseudoExpansionLowering(*OutStreamer, &*I))
-        continue;
-
       MCInst TmpInst;
+      if (lowerPseudoInstExpansion(&*I, TmpInst)) {
+        EmitToStreamer(*OutStreamer, TmpInst);
+        continue;
+      }
+
       LowerAIEMachineInstrToMCInst(&*I, TmpInst, *this);
       EmitToStreamer(*OutStreamer, TmpInst);
     } while ((++I != E) && I->isInsideBundle()); // Delay slot check

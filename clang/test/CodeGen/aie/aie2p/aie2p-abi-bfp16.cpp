@@ -24,7 +24,12 @@ extern "C" {
 // CHECK-SAME: [[STRUCT_V64BFP16EBS16:%.*]] [[DOTCOERCE:%.*]]) #[[ATTR0:[0-9]+]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = alloca [[STRUCT_V64BFP16EBS16]], align 8
-// CHECK-NEXT:    store [[STRUCT_V64BFP16EBS16]] [[DOTCOERCE]], ptr [[TMP0]], align 8
+// CHECK-NEXT:    [[TMP1:%.*]] = getelementptr inbounds [[STRUCT_V64BFP16EBS16]], ptr [[TMP0]], i32 0, i32 0
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16]] [[DOTCOERCE]], 0
+// CHECK-NEXT:    store <64 x i8> [[TMP2]], ptr [[TMP1]], align 8
+// CHECK-NEXT:    [[TMP3:%.*]] = getelementptr inbounds [[STRUCT_V64BFP16EBS16]], ptr [[TMP0]], i32 0, i32 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16]] [[DOTCOERCE]], 1
+// CHECK-NEXT:    store <8 x i8> [[TMP4]], ptr [[TMP3]], align 8
 // CHECK-NEXT:    ret void
 //
     void pass_v64bfp16ebs16(v64bfp16ebs16){}
@@ -43,7 +48,12 @@ extern "C" {
 // CHECK-SAME: [[STRUCT_V64BFP16EBS8:%.*]] [[DOTCOERCE:%.*]]) #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = alloca [[STRUCT_V64BFP16EBS8]], align 8
-// CHECK-NEXT:    store [[STRUCT_V64BFP16EBS8]] [[DOTCOERCE]], ptr [[TMP0]], align 8
+// CHECK-NEXT:    [[TMP1:%.*]] = getelementptr inbounds [[STRUCT_V64BFP16EBS8]], ptr [[TMP0]], i32 0, i32 0
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[DOTCOERCE]], 0
+// CHECK-NEXT:    store <64 x i8> [[TMP2]], ptr [[TMP1]], align 8
+// CHECK-NEXT:    [[TMP3:%.*]] = getelementptr inbounds [[STRUCT_V64BFP16EBS8]], ptr [[TMP0]], i32 0, i32 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[DOTCOERCE]], 1
+// CHECK-NEXT:    store <8 x i8> [[TMP4]], ptr [[TMP3]], align 8
 // CHECK-NEXT:    ret void
 //
     void pass_v64bfp16ebs8(v64bfp16ebs8) {}
@@ -62,7 +72,18 @@ extern "C" {
 // CHECK-SAME: [[STRUCT_V128BFP16EBS16:%.*]] [[DOTCOERCE:%.*]]) #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = alloca [[STRUCT_V128BFP16EBS16]], align 8
-// CHECK-NEXT:    store [[STRUCT_V128BFP16EBS16]] [[DOTCOERCE]], ptr [[TMP0]], align 8
+// CHECK-NEXT:    [[TMP1:%.*]] = getelementptr inbounds [[STRUCT_V128BFP16EBS16]], ptr [[TMP0]], i32 0, i32 0
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[DOTCOERCE]], 0
+// CHECK-NEXT:    store <64 x i8> [[TMP2]], ptr [[TMP1]], align 8
+// CHECK-NEXT:    [[TMP3:%.*]] = getelementptr inbounds [[STRUCT_V128BFP16EBS16]], ptr [[TMP0]], i32 0, i32 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[DOTCOERCE]], 1
+// CHECK-NEXT:    store <64 x i8> [[TMP4]], ptr [[TMP3]], align 8
+// CHECK-NEXT:    [[TMP5:%.*]] = getelementptr inbounds [[STRUCT_V128BFP16EBS16]], ptr [[TMP0]], i32 0, i32 2
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[DOTCOERCE]], 2
+// CHECK-NEXT:    store <8 x i8> [[TMP6]], ptr [[TMP5]], align 8
+// CHECK-NEXT:    [[TMP7:%.*]] = getelementptr inbounds [[STRUCT_V128BFP16EBS16]], ptr [[TMP0]], i32 0, i32 3
+// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[DOTCOERCE]], 3
+// CHECK-NEXT:    store <8 x i8> [[TMP8]], ptr [[TMP7]], align 8
 // CHECK-NEXT:    ret void
 //
     void pass_v128bfp16ebs16(v128bfp16ebs16) {}
@@ -83,7 +104,18 @@ extern "C" {
 // CHECK-SAME: [[STRUCT_V128BFP16EBS8:%.*]] [[DOTCOERCE:%.*]]) #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = alloca [[STRUCT_V128BFP16EBS8]], align 8
-// CHECK-NEXT:    store [[STRUCT_V128BFP16EBS8]] [[DOTCOERCE]], ptr [[TMP0]], align 8
+// CHECK-NEXT:    [[TMP1:%.*]] = getelementptr inbounds [[STRUCT_V128BFP16EBS8]], ptr [[TMP0]], i32 0, i32 0
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[DOTCOERCE]], 0
+// CHECK-NEXT:    store <64 x i8> [[TMP2]], ptr [[TMP1]], align 8
+// CHECK-NEXT:    [[TMP3:%.*]] = getelementptr inbounds [[STRUCT_V128BFP16EBS8]], ptr [[TMP0]], i32 0, i32 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[DOTCOERCE]], 1
+// CHECK-NEXT:    store <64 x i8> [[TMP4]], ptr [[TMP3]], align 8
+// CHECK-NEXT:    [[TMP5:%.*]] = getelementptr inbounds [[STRUCT_V128BFP16EBS8]], ptr [[TMP0]], i32 0, i32 2
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[DOTCOERCE]], 2
+// CHECK-NEXT:    store <8 x i8> [[TMP6]], ptr [[TMP5]], align 8
+// CHECK-NEXT:    [[TMP7:%.*]] = getelementptr inbounds [[STRUCT_V128BFP16EBS8]], ptr [[TMP0]], i32 0, i32 3
+// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[DOTCOERCE]], 3
+// CHECK-NEXT:    store <8 x i8> [[TMP8]], ptr [[TMP7]], align 8
 // CHECK-NEXT:    ret void
 //
     void pass_v128bfp16ebs8(v128bfp16ebs8) {}
