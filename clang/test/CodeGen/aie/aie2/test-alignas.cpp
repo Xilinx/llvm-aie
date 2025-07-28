@@ -47,7 +47,7 @@ v16uint16 test_alignas() {
 // CHECK-NEXT:    [[S1:%.*]] = alloca [[STRUCT_S1:%.*]], align 512
 // CHECK-NEXT:    [[B:%.*]] = alloca i32, align 64
 // CHECK-NEXT:    [[S7:%.*]] = alloca [[STRUCT_S7:%.*]], align 1024
-// CHECK-NEXT:    [[N:%.*]] = getelementptr inbounds [[STRUCT_S1]], ptr [[S1]], i32 0, i32 0
+// CHECK-NEXT:    [[N:%.*]] = getelementptr inbounds nuw [[STRUCT_S1]], ptr [[S1]], i32 0, i32 0
 // CHECK-NEXT:    [[TMP0:%.*]] = load i32, ptr [[N]], align 512
 // CHECK-NEXT:    store i32 [[TMP0]], ptr [[B]], align 64
 // CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr @n9, align 1024
