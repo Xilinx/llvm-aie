@@ -29,7 +29,15 @@ fifo_state_t ret_fifo_state_t(void) { return {}; }
 // CHECK-LABEL: @pass_fifo_state_t(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = alloca [[STRUCT_FIFO_STATE_T:%.*]], align 64
-// CHECK-NEXT:    store [[STRUCT_FIFO_STATE_T]] [[DOTCOERCE:%.*]], ptr [[TMP0]], align 64
+// CHECK-NEXT:    [[TMP1:%.*]] = getelementptr inbounds [[STRUCT_FIFO_STATE_T]], ptr [[TMP0]], i32 0, i32 0
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_FIFO_STATE_T]] [[DOTCOERCE:%.*]], 0
+// CHECK-NEXT:    store <32 x i32> [[TMP2]], ptr [[TMP1]], align 64
+// CHECK-NEXT:    [[TMP3:%.*]] = getelementptr inbounds [[STRUCT_FIFO_STATE_T]], ptr [[TMP0]], i32 0, i32 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_FIFO_STATE_T]] [[DOTCOERCE]], 1
+// CHECK-NEXT:    store i32 [[TMP4]], ptr [[TMP3]], align 64
+// CHECK-NEXT:    [[TMP5:%.*]] = getelementptr inbounds [[STRUCT_FIFO_STATE_T]], ptr [[TMP0]], i32 0, i32 2
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_FIFO_STATE_T]] [[DOTCOERCE]], 2
+// CHECK-NEXT:    store <16 x i32> [[TMP6]], ptr [[TMP5]], align 64
 // CHECK-NEXT:    ret void
 //
 void pass_fifo_state_t(fifo_state_t) {}
