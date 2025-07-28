@@ -4029,6 +4029,11 @@ bool CodeGenModule::shouldEmitFunction(GlobalDecl GD) {
     return true;
 
   const auto *F = cast<FunctionDecl>(GD.getDecl());
+  // Inline builtins declaration must be emitted. They often are fortified
+  // functions.
+  if (F->isInlineBuiltinDeclaration())
+    return true;
+
   if (CodeGenOpts.OptimizationLevel == 0 && !F->hasAttr<AlwaysInlineAttr>())
     return false;
 
@@ -4073,11 +4078,6 @@ bool CodeGenModule::shouldEmitFunction(GlobalDecl GD) {
           return false;
     }
   }
-
-  // Inline builtins declaration must be emitted. They often are fortified
-  // functions.
-  if (F->isInlineBuiltinDeclaration())
-    return true;
 
   // PR9614. Avoid cases where the source code is lying to us. An available
   // externally function should have an equivalent function somewhere else,
@@ -5666,7 +5666,7 @@ void CodeGenModule::EmitExternalFunctionDeclaration(const FunctionDecl *FD) {
     if (getCodeGenOpts().hasReducedDebugInfo()) {
       auto *Ty = getTypes().ConvertType(FD->getType());
       StringRef MangledName = getMangledName(FD);
-      auto *Fn = dyn_cast<llvm::Function>(
+      auto *Fn = cast<llvm::Function>(
           GetOrCreateLLVMFunction(MangledName, Ty, FD, /* ForVTable */ false));
       if (!Fn->getSubprogram())
         DI->EmitFunctionDecl(FD, FD->getLocation(), FD->getType(), Fn);
@@ -7491,7 +7491,7 @@ void CodeGenModule::EmitOMPThreadPrivateDecl(const OMPThreadPrivateDecl *D) {
   // Do not emit threadprivates in simd-only mode.
   if (LangOpts.OpenMP && LangOpts.OpenMPSimd)
     return;
-  for (auto RefExpr : D->varlists()) {
+  for (auto RefExpr : D->varlist()) {
     auto *VD = cast<VarDecl>(cast<DeclRefExpr>(RefExpr)->getDecl());
     bool PerformInit =
         VD->getAnyInitializer() &&

@@ -17,6 +17,8 @@
 // 80-bit format, and this demangling test is failing on it.
 // XFAIL: LIBCXX-ANDROID-FIXME && target={{i686|x86_64}}-{{.+}}-android{{.*}}
 
+// XFAIL: win32-broken-printf-a-precision
+
 #include "support/timer.h"
 #include <algorithm>
 #include <cassert>
