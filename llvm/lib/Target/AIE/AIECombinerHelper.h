@@ -270,6 +270,9 @@ bool matchNarrowTrunc(MachineInstr &MI, MachineRegisterInfo &MRI,
 bool matchNarrowZext(MachineInstr &MI, MachineRegisterInfo &MRI,
                      GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
 
+bool matchCombineExtAndTrunc(MachineInstr &MI, MachineRegisterInfo &MRI,
+                             BuildFnTy &MatchInfo);
+
 } // namespace llvm
 
 #endif
