@@ -66,7 +66,7 @@
 
 ; AIE-O0123-NEXT:      Lower Garbage Collection Instructions
 ; AIE-O0123-NEXT:      Shadow Stack GC Lowering
-; AIE-O0123-NEXT:      Lower constant intrinsics
+; AIE-O3-NEXT:      Lower constant intrinsics
 ; AIE-O0123-NEXT:      Remove unreachable blocks from the CFG
 
 ; AIE-O123-NEXT:      Natural Loop Information

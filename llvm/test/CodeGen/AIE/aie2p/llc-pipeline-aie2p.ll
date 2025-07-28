@@ -33,7 +33,6 @@
 ; AIE-O0-NEXT:      Expand Atomic instructions
 ; AIE-O0-NEXT:      Lower Garbage Collection Instructions
 ; AIE-O0-NEXT:      Shadow Stack GC Lowering
-; AIE-O0-NEXT:      Lower constant intrinsics
 ; AIE-O0-NEXT:      Remove unreachable blocks from the CFG
 ; AIE-O0-NEXT:      Expand vector predication intrinsics
 ; AIE-O0-NEXT:      Instrument function entry/exit with calls to e.g. mcount() (post inlining)
@@ -131,7 +130,6 @@
 ; AIE-O1-NEXT:      Expand memcmp() to load/stores
 ; AIE-O1-NEXT:      Lower Garbage Collection Instructions
 ; AIE-O1-NEXT:      Shadow Stack GC Lowering
-; AIE-O1-NEXT:      Lower constant intrinsics
 ; AIE-O1-NEXT:      Remove unreachable blocks from the CFG
 ; AIE-O1-NEXT:      Natural Loop Information
 ; AIE-O1-NEXT:      Post-Dominator Tree Construction
@@ -337,7 +335,7 @@
 ; AIE-O23-NEXT:      Expand memcmp() to load/stores
 ; AIE-O23-NEXT:      Lower Garbage Collection Instructions
 ; AIE-O23-NEXT:      Shadow Stack GC Lowering
-; AIE-O23-NEXT:      Lower constant intrinsics
+; AIE-O3-NEXT:      Lower constant intrinsics
 ; AIE-O23-NEXT:      Remove unreachable blocks from the CFG
 ; AIE-O23-NEXT:      Natural Loop Information
 ; AIE-O23-NEXT:      Post-Dominator Tree Construction
