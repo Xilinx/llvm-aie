@@ -3438,3 +3438,38 @@ bool llvm::matchNarrowZext(MachineInstr &MI, MachineRegisterInfo &MRI,
 
   return false;
 }
+
+// Fold G_TRUNC (G_[ANY|S|Z]EXT x) -> X or (G_[ANY|S|Z]EXT x) or (G_TRUNC x).
+bool llvm::matchCombineExtAndTrunc(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                   BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TargetOpcode::G_TRUNC && "Expected a G_TRUNC");
+
+  Register TruncSrcReg = MI.getOperand(1).getReg();
+  const MachineInstr *SrcMI = MRI.getVRegDef(TruncSrcReg);
+  const unsigned SrcOpc = SrcMI->getOpcode();
+
+  if (SrcOpc != TargetOpcode::G_ANYEXT && SrcOpc != TargetOpcode::G_SEXT &&
+      SrcOpc != TargetOpcode::G_ZEXT) {
+    return false;
+  }
+
+  Register ExtSrcReg = SrcMI->getOperand(1).getReg();
+  Register TruncDstReg = MI.getOperand(0).getReg();
+  const unsigned SrcTySize = MRI.getType(ExtSrcReg).getSizeInBits();
+  const unsigned DstTySize = MRI.getType(TruncDstReg).getSizeInBits();
+
+  if (SrcTySize == DstTySize)
+    MatchInfo = [=](MachineIRBuilder &B) {
+      B.buildCopy(TruncDstReg, ExtSrcReg);
+    };
+  else if (SrcTySize < DstTySize)
+    MatchInfo = [=](MachineIRBuilder &B) {
+      B.buildInstr(SrcOpc, {TruncDstReg}, {ExtSrcReg});
+    };
+  else
+    MatchInfo = [=](MachineIRBuilder &B) {
+      B.buildTrunc(TruncDstReg, ExtSrcReg);
+    };
+
+  return true;
+}

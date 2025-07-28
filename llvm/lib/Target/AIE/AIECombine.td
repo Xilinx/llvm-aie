@@ -22,7 +22,7 @@ def aie_generic_combines : GICombineGroup<[trivial_combines, vector_ops_combines
   known_bits_simplifications, ext_ext_fold,
   not_cmp_fold, opt_brcond_by_inverting_cond,
   unmerge_merge, unmerge_cst, unmerge_dead_to_trunc,
-  unmerge_zext_to_zext, merge_unmerge, trunc_ext_fold, trunc_shift,
+  unmerge_zext_to_zext, merge_unmerge, trunc_shift,
   const_combines, xor_of_and_with_same_reg, ptr_add_with_zero,
   shift_immed_chain, shift_of_shifted_logic_chain, load_or_combine,
   div_rem_to_divrem, funnel_shift_combines, commute_shift,
@@ -188,6 +188,17 @@ def combine_concat_unmerge_phis : GICombineRule <
   (apply [{ applyConcatUnmergePhis(*${root}, MRI, B,${matchinfo}, Observer);}])
 >;
 
+// Fold trunc ([asz]ext x) -> x or ([asz]ext x) or (trunc x).
+// NOTE: we have similar upstream combiner, but with this
+// one we have more freedom to accept multiple uses of the
+// result of the EXT operation.
+def combine_trunc_ext: GICombineRule <
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_TRUNC):$root,
+         [{ return matchCombineExtAndTrunc(*${root}, MRI, ${matchinfo}); }]),
+  (apply [{Helper.applyBuildFn(*${root}, ${matchinfo}); }])
+>;
+
 // AIE-specifc combines (currently shared by AIE2 and AIE2P).
 def aie_additional_combines : GICombineGroup<[
   combine_unpad_vector,
@@ -203,7 +214,8 @@ def aie_additional_combines : GICombineGroup<[
   combine_vector_shuffle_extract_subvec,
   combine_narrow_trunc_s20,
   combine_narrow_zext_s20,
-  combine_concat_unmerge_phis
+  combine_concat_unmerge_phis,
+  combine_trunc_ext
 ]>;
 
 // AIE2P-specific combines.
