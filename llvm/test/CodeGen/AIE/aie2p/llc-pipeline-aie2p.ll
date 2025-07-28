@@ -34,7 +34,6 @@
 ; AIE-O0-NEXT:      Lower Garbage Collection Instructions
 ; AIE-O0-NEXT:      Shadow Stack GC Lowering
 ; AIE-O0-NEXT:      Remove unreachable blocks from the CFG
-; AIE-O0-NEXT:      Expand vector predication intrinsics
 ; AIE-O0-NEXT:      Instrument function entry/exit with calls to e.g. mcount() (post inlining)
 ; AIE-O0-NEXT:      Scalarize Masked Memory Intrinsics
 ; AIE-O0-NEXT:      Expand reduction intrinsics
@@ -138,7 +137,6 @@
 ; AIE-O1-NEXT:      Constant Hoisting
 ; AIE-O1-NEXT:      Replace intrinsics with calls to vector library
 ; AIE-O1-NEXT:      Partially inline calls to library functions
-; AIE-O1-NEXT:      Expand vector predication intrinsics
 ; AIE-O1-NEXT:      Instrument function entry/exit with calls to e.g. mcount() (post inlining)
 ; AIE-O1-NEXT:      Scalarize Masked Memory Intrinsics
 ; AIE-O1-NEXT:      Expand reduction intrinsics
@@ -155,6 +153,9 @@
 ; AIE-O1-NEXT:      Lazy Block Frequency Analysis
 ; AIE-O1-NEXT:      Optimization Remark Emitter
 ; AIE-O1-NEXT:      Hardware Loop Insertion
+; AIE-O1-NEXT:      Basic Alias Analysis (stateless AA impl)
+; AIE-O1-NEXT:      Function Alias Analysis Results
+; AIE-O1-NEXT:      ObjC ARC contraction
 ; AIE-O1-NEXT:      Prepare callbr
 ; AIE-O1-NEXT:      Safe Stack instrumentation pass
 ; AIE-O1-NEXT:      Insert stack protectors
@@ -344,7 +345,7 @@
 ; AIE-O23-NEXT:      Constant Hoisting
 ; AIE-O23-NEXT:      Replace intrinsics with calls to vector library
 ; AIE-O23-NEXT:      Partially inline calls to library functions
-; AIE-O23-NEXT:      Expand vector predication intrinsics
+; AIE-O3-NEXT:      Expand vector predication intrinsics
 ; AIE-O23-NEXT:      Instrument function entry/exit with calls to e.g. mcount() (post inlining)
 ; AIE-O23-NEXT:      Scalarize Masked Memory Intrinsics
 ; AIE-O23-NEXT:      Expand reduction intrinsics
@@ -361,6 +362,9 @@
 ; AIE-O23-NEXT:      Lazy Block Frequency Analysis
 ; AIE-O23-NEXT:      Optimization Remark Emitter
 ; AIE-O23-NEXT:      Hardware Loop Insertion
+; AIE-O23-NEXT:      Basic Alias Analysis (stateless AA impl)
+; AIE-O23-NEXT:      Function Alias Analysis Results
+; AIE-O23-NEXT:      ObjC ARC contraction
 ; AIE-O23-NEXT:      Prepare callbr
 ; AIE-O23-NEXT:      Safe Stack instrumentation pass
 ; AIE-O23-NEXT:      Insert stack protectors

@@ -77,7 +77,7 @@
 ; AIE-O123-NEXT:      Replace intrinsics with calls to vector library
 ; AIE-O123-NEXT:      Partially inline calls to library functions
 
-; AIE-O0123-NEXT:      Expand vector predication intrinsics
+; AIE-O3-NEXT:      Expand vector predication intrinsics
 ; AIE-O0123-NEXT:      Instrument function entry/exit with calls to e.g. mcount() (post inlining)
 ; AIE-O0123-NEXT:      Scalarize Masked Memory Intrinsics
 ; AIE-O0123-NEXT:      Expand reduction intrinsics
@@ -96,6 +96,9 @@
 ; AIE-O123-NEXT:      Lazy Block Frequency Analysis
 ; AIE-O123-NEXT:      Optimization Remark Emitter
 ; AIE-O123-NEXT:      Hardware Loop Insertion
+; AIE-O123-NEXT:      Basic Alias Analysis (stateless AA impl)
+; AIE-O123-NEXT:      Function Alias Analysis Results
+; AIE-O123-NEXT:      ObjC ARC contraction
 
 ; AIE-O0123-NEXT:      Prepare callbr
 ; AIE-O0123-NEXT:      Safe Stack instrumentation pass
