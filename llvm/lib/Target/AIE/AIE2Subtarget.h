@@ -62,6 +62,9 @@ public:
   bool enableMachinePipeliner() const override {
     return AIEBaseSubtarget::enableMachinePipeliner();
   }
+  bool enableWindowScheduler() const override {
+    return AIEBaseSubtarget::enableWindowScheduler();
+  }
   bool enablePostRAScheduler() const override { return true; }
   bool enablePostRAMachineScheduler() const override { return true; }
   bool forcePostRAScheduling() const override { return true; }

@@ -91,6 +91,8 @@ public:
   /// the post-RA pipeliner handle the scheduling.
   bool enableMachinePipeliner() const;
 
+  bool enableWindowScheduler() const;
+
   /// Returns the critical path limit that EarlyIfConversion should use
   /// when deciding about a specific conversion - common implementation.
   unsigned getCriticalPathLimitImpl() const;

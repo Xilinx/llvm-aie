@@ -918,6 +918,12 @@ bool AIEBaseSubtarget::enableMachinePipeliner() const {
   return !ForcePostPipeliner;
 }
 
+bool AIEBaseSubtarget::enableWindowScheduler() const {
+  // This pass triggers an assertion in AIEBundle.h
+  // Disable the pass until the root cause has been fixed.
+  return false;
+}
+
 unsigned AIEBaseSubtarget::getCriticalPathLimitImpl() const {
   return IfConversionCritPathLimit;
 }
