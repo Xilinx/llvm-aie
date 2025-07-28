@@ -396,12 +396,6 @@ public:
   void applyCombineExtOfExt(MachineInstr &MI,
                             std::tuple<Register, unsigned> &MatchInfo);
 
-  /// Transform trunc ([asz]ext x) to x or ([asz]ext x) or (trunc x).
-  bool matchCombineTruncOfExt(MachineInstr &MI,
-                              std::pair<Register, unsigned> &MatchInfo);
-  void applyCombineTruncOfExt(MachineInstr &MI,
-                              std::pair<Register, unsigned> &MatchInfo);
-
   /// Transform (shl (and x, imm1, imm2) to (shl x, imm2)
   ///    if (~imm1 << imm2) = 0
   bool matchCombineShlOfAnd(MachineInstr &MI, Register &Reg);
@@ -901,6 +895,10 @@ public:
   bool matchSubOfVScale(const MachineOperand &MO, BuildFnTy &MatchInfo);
 
   bool matchShlOfVScale(const MachineOperand &MO, BuildFnTy &MatchInfo);
+
+  /// Transform trunc ([asz]ext x) to x or ([asz]ext x) or (trunc x).
+  bool matchTruncateOfExt(const MachineInstr &Root, const MachineInstr &ExtMI,
+                          BuildFnTy &MatchInfo);
 
 private:
   /// Checks for legality of an indexed variant of \p LdSt.
