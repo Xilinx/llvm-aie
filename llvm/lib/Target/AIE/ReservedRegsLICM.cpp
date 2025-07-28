@@ -376,7 +376,7 @@ bool ReservedRegsLICM::isLoopInvariantInst(const CandidateInfo &Cand,
   // Check if it's safe to move the instruction.
   bool DontMoveAcrossStore = true;
   if (MI.mayLoadOrStore() ||
-      !MI.isSafeToMove(/*AA=*/nullptr, DontMoveAcrossStore)) {
+      !MI.isSafeToMove(DontMoveAcrossStore)) {
     LLVM_DEBUG(dbgs() << "LICM: Instruction not safe to move: " << MI);
     return false;
   }
