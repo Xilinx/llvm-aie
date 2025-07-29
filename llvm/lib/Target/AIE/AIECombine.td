@@ -19,7 +19,7 @@ def aie_generic_combines : GICombineGroup<[trivial_combines, vector_ops_combines
   reassocs, ptr_add_immed_chain,
   shl_ashr_to_sext_inreg, sext_inreg_of_load,
   width_reduction_combines, select_combines,
-  known_bits_simplifications, ext_ext_fold,
+  known_bits_simplifications, cast_combines,
   not_cmp_fold, opt_brcond_by_inverting_cond,
   unmerge_merge, unmerge_cst, unmerge_dead_to_trunc,
   unmerge_zext_to_zext, merge_unmerge, trunc_shift,

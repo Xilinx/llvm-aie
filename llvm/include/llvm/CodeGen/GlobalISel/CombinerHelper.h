@@ -396,12 +396,6 @@ public:
   /// Transform sext(trunc(x)) to x.
   bool matchCombineSextTrunc(MachineInstr &MI, Register &Reg);
 
-  /// Transform [asz]ext([asz]ext(x)) to [asz]ext x.
-  bool matchCombineExtOfExt(MachineInstr &MI,
-                            std::tuple<Register, unsigned> &MatchInfo);
-  void applyCombineExtOfExt(MachineInstr &MI,
-                            std::tuple<Register, unsigned> &MatchInfo);
-
   /// Transform (shl (and x, imm1, imm2) to (shl x, imm2)
   ///    if (~imm1 << imm2) = 0
   bool matchCombineShlOfAnd(MachineInstr &MI, Register &Reg);
@@ -918,6 +912,9 @@ public:
 
   // fold ((A-C1)+C2) -> (A+(C2-C1))
   bool matchFoldAMinusC1PlusC2(const MachineInstr &MI, BuildFnTy &MatchInfo);
+
+  bool matchExtOfExt(const MachineInstr &FirstMI, const MachineInstr &SecondMI,
+                     BuildFnTy &MatchInfo);
 
 private:
   /// Checks for legality of an indexed variant of \p LdSt.
