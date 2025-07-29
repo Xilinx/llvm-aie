@@ -186,7 +186,7 @@ v32acc32 test_add_conf(v32acc32 acc1, v32acc32 acc2, int zero_acc1,
 // CHECK-NEXT:    [[SHL1_I_I:%.*]] = shl i32 [[SHIFT16:%.*]], 10
 // CHECK-NEXT:    [[SHL4_I_I:%.*]] = shl i32 [[SUB_ACC1:%.*]], 12
 // CHECK-NEXT:    [[SHL6_I_I:%.*]] = shl i32 [[SUB_ACC2:%.*]], 13
-// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[SHL1_I_I]], [[ZERO_ACC1:%.*]]
+// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[ZERO_ACC1:%.*]], [[SHL1_I_I]]
 // CHECK-NEXT:    [[OR13_I_I:%.*]] = or i32 [[OR11_I_I]], [[SHL4_I_I]]
 // CHECK-NEXT:    [[OR17_I_I:%.*]] = or i32 [[OR13_I_I]], [[SHL6_I_I]]
 // CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR17_I_I]], 2
@@ -237,7 +237,7 @@ v32acc32 test_sub_conf(v32acc32 acc1, v32acc32 acc2, int zero_acc1,
 // CHECK-NEXT:    [[SHL1_I_I:%.*]] = shl i32 [[SHIFT16:%.*]], 10
 // CHECK-NEXT:    [[SHL4_I_I:%.*]] = shl i32 [[SUB_ACC1:%.*]], 12
 // CHECK-NEXT:    [[SHL6_I_I:%.*]] = shl i32 [[SUB_ACC2:%.*]], 13
-// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[SHL1_I_I]], [[ZERO_ACC1:%.*]]
+// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[ZERO_ACC1:%.*]], [[SHL1_I_I]]
 // CHECK-NEXT:    [[OR13_I_I:%.*]] = or i32 [[OR11_I_I]], [[SHL4_I_I]]
 // CHECK-NEXT:    [[OR17_I_I:%.*]] = or i32 [[OR13_I_I]], [[SHL6_I_I]]
 // CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR17_I_I]], 2
@@ -290,7 +290,7 @@ v16accfloat test_msc_4x8_8x4(v32bfloat16 a, v32bfloat16 b, v16accfloat acc1) {
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL:%.*]], 11
 // CHECK-NEXT:    [[SHL4_I_I:%.*]] = shl i32 [[SUB_ACC1:%.*]], 12
 // CHECK-NEXT:    [[SHL6_I_I:%.*]] = shl i32 [[SUB_ACC2:%.*]], 13
-// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[SHL2_I_I]], [[ZERO_ACC1:%.*]]
+// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[ZERO_ACC1:%.*]], [[SHL2_I_I]]
 // CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[OR11_I_I]], [[SHL4_I_I]]
 // CHECK-NEXT:    [[OR17_I_I:%.*]] = or i32 [[OR16_I_I]], [[SHL6_I_I]]
 // CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR17_I_I]], 60
@@ -309,7 +309,7 @@ v16accfloat test_addmac_elem_16_2_conf(v32bfloat16 a, v32bfloat16 b,
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL:%.*]], 11
 // CHECK-NEXT:    [[SHL4_I_I:%.*]] = shl i32 [[SUB_ACC1:%.*]], 12
 // CHECK-NEXT:    [[SHL6_I_I:%.*]] = shl i32 [[SUB_ACC2:%.*]], 13
-// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[SHL2_I_I]], [[ZERO_ACC1:%.*]]
+// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[ZERO_ACC1:%.*]], [[SHL2_I_I]]
 // CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[OR11_I_I]], [[SHL4_I_I]]
 // CHECK-NEXT:    [[OR17_I_I:%.*]] = or i32 [[OR16_I_I]], [[SHL6_I_I]]
 // CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR17_I_I]], 60
