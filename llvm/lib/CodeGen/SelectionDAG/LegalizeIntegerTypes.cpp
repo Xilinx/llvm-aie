@@ -1937,6 +1937,9 @@ bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
   case ISD::BUILD_VECTOR: Res = PromoteIntOp_BUILD_VECTOR(N); break;
   case ISD::CONCAT_VECTORS: Res = PromoteIntOp_CONCAT_VECTORS(N); break;
   case ISD::EXTRACT_VECTOR_ELT: Res = PromoteIntOp_EXTRACT_VECTOR_ELT(N); break;
+  case ISD::FAKE_USE:
+    Res = PromoteIntOp_FAKE_USE(N);
+    break;
   case ISD::INSERT_VECTOR_ELT:
     Res = PromoteIntOp_INSERT_VECTOR_ELT(N, OpNo);
     break;
@@ -2042,6 +2045,9 @@ bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
     break;
   case ISD::EXPERIMENTAL_VP_SPLICE:
     Res = PromoteIntOp_VP_SPLICE(N, OpNo);
+    break;
+  case ISD::EXPERIMENTAL_VECTOR_HISTOGRAM:
+    Res = PromoteIntOp_VECTOR_HISTOGRAM(N, OpNo);
     break;
   }
 
@@ -2755,6 +2761,14 @@ SDValue DAGTypeLegalizer::PromoteIntOp_VP_SPLICE(SDNode *N, unsigned OpNo) {
   return SDValue(DAG.UpdateNodeOperands(N, NewOps), 0);
 }
 
+SDValue DAGTypeLegalizer::PromoteIntOp_VECTOR_HISTOGRAM(SDNode *N,
+                                                        unsigned OpNo) {
+  assert(OpNo == 1 && "Unexpected operand for promotion");
+  SmallVector<SDValue, 7> NewOps(N->ops());
+  NewOps[1] = GetPromotedInteger(N->getOperand(1));
+  return SDValue(DAG.UpdateNodeOperands(N, NewOps), 0);
+}
+
 //===----------------------------------------------------------------------===//
 //  Integer Result Expansion
 //===----------------------------------------------------------------------===//
@@ -3305,7 +3319,7 @@ void DAGTypeLegalizer::ExpandIntRes_MINMAX(SDNode *N,
     SDValue HiNeg =
         DAG.getSetCC(DL, CCT, LHSH, DAG.getConstant(0, DL, NVT), ISD::SETLT);
     if (N->getOpcode() == ISD::SMIN) {
-      Lo = DAG.getSelect(DL, NVT, HiNeg, LHSL, DAG.getConstant(-1, DL, NVT));
+      Lo = DAG.getSelect(DL, NVT, HiNeg, LHSL, DAG.getAllOnesConstant(DL, NVT));
     } else {
       Lo = DAG.getSelect(DL, NVT, HiNeg, DAG.getConstant(0, DL, NVT), LHSL);
     }
@@ -4393,7 +4407,7 @@ void DAGTypeLegalizer::ExpandIntRes_MULFIX(SDNode *N, SDValue &Lo,
 
   SDValue SatMax, SatMin;
   SDValue NVTZero = DAG.getConstant(0, dl, NVT);
-  SDValue NVTNeg1 = DAG.getConstant(-1, dl, NVT);
+  SDValue NVTNeg1 = DAG.getAllOnesConstant(dl, NVT);
   EVT BoolNVT = getSetCCResultType(NVT);
 
   if (!Signed) {
@@ -5283,6 +5297,9 @@ bool DAGTypeLegalizer::ExpandIntegerOperand(SDNode *N, unsigned OpNo) {
   case ISD::BR_CC:             Res = ExpandIntOp_BR_CC(N); break;
   case ISD::BUILD_VECTOR:      Res = ExpandOp_BUILD_VECTOR(N); break;
   case ISD::EXTRACT_ELEMENT:   Res = ExpandOp_EXTRACT_ELEMENT(N); break;
+  case ISD::FAKE_USE:
+    Res = ExpandOp_FAKE_USE(N);
+    break;
   case ISD::INSERT_VECTOR_ELT: Res = ExpandOp_INSERT_VECTOR_ELT(N); break;
   case ISD::SCALAR_TO_VECTOR:  Res = ExpandOp_SCALAR_TO_VECTOR(N); break;
   case ISD::EXPERIMENTAL_VP_SPLAT:
@@ -6116,6 +6133,19 @@ SDValue DAGTypeLegalizer::PromoteIntOp_INSERT_SUBVECTOR(SDNode *N) {
   V0 = DAG.getAnyExtOrTrunc(V0, dl, PromVT);
   SDValue Ext = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, PromVT, V0, V1, Idx);
   return DAG.getAnyExtOrTrunc(Ext, dl, N->getValueType(0));
+}
+
+// FIXME: We wouldn't need this if clang could promote short integers
+// that are arguments to FAKE_USE.
+SDValue DAGTypeLegalizer::PromoteIntOp_FAKE_USE(SDNode *N) {
+  SDLoc dl(N);
+  SDValue V0 = N->getOperand(0);
+  SDValue V1 = N->getOperand(1);
+  EVT InVT1 = V1.getValueType();
+  SDValue VPromoted =
+      DAG.getNode(ISD::ANY_EXTEND, dl,
+                  TLI.getTypeToTransformTo(*DAG.getContext(), InVT1), V1);
+  return DAG.getNode(N->getOpcode(), dl, N->getValueType(0), V0, VPromoted);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_EXTRACT_SUBVECTOR(SDNode *N) {

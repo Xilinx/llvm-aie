@@ -132,6 +132,9 @@ bool SUnit::addPred(const SDep &D, bool Required) {
           }
         }
         PredDep.setLatency(D.getLatency());
+        // Changing latency, dirty the involved SUnits.
+        this->setDepthDirty();
+        D.getSUnit()->setHeightDirty();
       }
       return false;
     }
@@ -171,10 +174,8 @@ bool SUnit::addPred(const SDep &D, bool Required) {
   }
   Preds.push_back(D);
   N->Succs.push_back(P);
-  if (P.getLatency() != 0) {
-    this->setDepthDirty();
-    N->setHeightDirty();
-  }
+  this->setDepthDirty();
+  N->setHeightDirty();
   return true;
 }
 
@@ -216,10 +217,8 @@ void SUnit::removePred(const SDep &D) {
   }
   N->Succs.erase(Succ);
   Preds.erase(I);
-  if (P.getLatency() != 0) {
-    this->setDepthDirty();
-    N->setHeightDirty();
-  }
+  this->setDepthDirty();
+  N->setHeightDirty();
 }
 
 void SUnit::setDepthDirty() {

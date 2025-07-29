@@ -249,8 +249,6 @@ public:
 
   bool isNumRegsMajorCostOfLSR() const { return true; }
 
-  bool shouldFoldTerminatingConditionAfterLSR() const { return false; }
-
   bool shouldDropLSRSolutionIfLessProfitable() const { return false; }
 
   bool isProfitableOuterLSR(const Loop &L) const { return false; }

@@ -25,7 +25,6 @@
 #define LLVM_ANALYSIS_TARGETTRANSFORMINFO_H
 
 #include "llvm/ADT/APInt.h"
-#include "llvm/ADT/SmallBitVector.h"
 #include "llvm/IR/FMF.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/PassManager.h"
@@ -48,7 +47,6 @@ class AssumptionCache;
 class BlockFrequencyInfo;
 class DominatorTree;
 class BranchInst;
-class CallBase;
 class Function;
 class GlobalValue;
 class InstCombiner;
@@ -63,12 +61,11 @@ class ProfileSummaryInfo;
 class RecurrenceDescriptor;
 class SCEV;
 class ScalarEvolution;
+class SmallBitVector;
 class StoreInst;
 class SwitchInst;
 class TargetLibraryInfo;
 class Type;
-class User;
-class Value;
 class VPIntrinsic;
 struct KnownBits;
 
@@ -749,11 +746,6 @@ public:
   /// implement their own isLSRCostLess and unset number of registers as major
   /// cost should return false, otherwise return true.
   bool isNumRegsMajorCostOfLSR() const;
-
-  /// Return true if LSR should attempts to replace a use of an otherwise dead
-  /// primary IV in the latch condition with another IV available in the loop.
-  /// When successful, makes the primary IV dead.
-  bool shouldFoldTerminatingConditionAfterLSR() const;
 
   /// Return true if LSR should drop a found solution if it's calculated to be
   /// less profitable than the baseline.
@@ -1903,7 +1895,6 @@ public:
   virtual bool isLSRCostLess(const TargetTransformInfo::LSRCost &C1,
                              const TargetTransformInfo::LSRCost &C2) = 0;
   virtual bool isNumRegsMajorCostOfLSR() = 0;
-  virtual bool shouldFoldTerminatingConditionAfterLSR() const = 0;
   virtual bool shouldDropLSRSolutionIfLessProfitable() const = 0;
   virtual bool isProfitableOuterLSR(const Loop &L) const = 0;
   virtual bool isProfitableLSRChainElement(Instruction *I) = 0;
@@ -2385,9 +2376,6 @@ public:
   }
   bool isNumRegsMajorCostOfLSR() override {
     return Impl.isNumRegsMajorCostOfLSR();
-  }
-  bool shouldFoldTerminatingConditionAfterLSR() const override {
-    return Impl.shouldFoldTerminatingConditionAfterLSR();
   }
   bool shouldDropLSRSolutionIfLessProfitable() const override {
     return Impl.shouldDropLSRSolutionIfLessProfitable();

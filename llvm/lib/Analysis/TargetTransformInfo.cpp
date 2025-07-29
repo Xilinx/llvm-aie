@@ -434,10 +434,6 @@ bool TargetTransformInfo::isNumRegsMajorCostOfLSR() const {
   return TTIImpl->isNumRegsMajorCostOfLSR();
 }
 
-bool TargetTransformInfo::shouldFoldTerminatingConditionAfterLSR() const {
-  return TTIImpl->shouldFoldTerminatingConditionAfterLSR();
-}
-
 bool TargetTransformInfo::shouldDropLSRSolutionIfLessProfitable() const {
   return TTIImpl->shouldDropLSRSolutionIfLessProfitable();
 }

@@ -41,8 +41,6 @@ using namespace llvm::ELF;
 using namespace lld;
 using namespace lld::elf;
 
-const TargetInfo *elf::target;
-
 std::string lld::toString(RelType type) {
   StringRef s = getELFRelocationTypeName(elf::config->emachine, type,
                                          elf::config->eflags);
