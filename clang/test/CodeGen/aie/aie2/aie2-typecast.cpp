@@ -37,7 +37,7 @@ public:
 // CHECK-LABEL: @_Z5test05accumIL10AccumClass0ELj32ELj16EE(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[ACC:%.*]] = alloca [[CLASS_ACCUM:%.*]], align 32
-// CHECK-NEXT:    [[TMP0:%.*]] = getelementptr inbounds [[CLASS_ACCUM]], ptr [[ACC]], i32 0, i32 0
+// CHECK-NEXT:    [[TMP0:%.*]] = getelementptr inbounds nuw [[CLASS_ACCUM]], ptr [[ACC]], i32 0, i32 0
 // CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[CLASS_ACCUM]] [[ACC_COERCE:%.*]], 0
 // CHECK-NEXT:    store <8 x i64> [[TMP1]], ptr [[TMP0]], align 32
 // CHECK-NEXT:    [[CALL:%.*]] = call noundef <8 x i64> @_ZNK5accumIL10AccumClass0ELj32ELj16EEcvDv8_u7__acc64Ev(ptr nonnull align 32 dereferenceable(64) [[ACC]]) #[[ATTR2:[0-9]+]]

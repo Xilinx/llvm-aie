@@ -2027,8 +2027,7 @@ Value *llvm::addRuntimeChecks(
       expandBounds(PointerChecks, TheLoop, Loc, Exp, HoistRuntimeChecks);
 
   LLVMContext &Ctx = Loc->getContext();
-  IRBuilder<InstSimplifyFolder> ChkBuilder(Ctx,
-                                           Loc->getDataLayout());
+  IRBuilder ChkBuilder(Ctx, InstSimplifyFolder(Loc->getDataLayout()));
   ChkBuilder.SetInsertPoint(Loc);
   // Our instructions might fold to a constant.
   Value *MemoryRuntimeCheck = nullptr;
@@ -2081,8 +2080,7 @@ Value *llvm::addDiffRuntimeChecks(
     function_ref<Value *(IRBuilderBase &, unsigned)> GetVF, unsigned IC) {
 
   LLVMContext &Ctx = Loc->getContext();
-  IRBuilder<InstSimplifyFolder> ChkBuilder(Ctx,
-                                           Loc->getDataLayout());
+  IRBuilder ChkBuilder(Ctx, InstSimplifyFolder(Loc->getDataLayout()));
   ChkBuilder.SetInsertPoint(Loc);
   // Our instructions might fold to a constant.
   Value *MemoryRuntimeCheck = nullptr;

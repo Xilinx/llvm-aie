@@ -23,7 +23,6 @@ dims_2d_t test_dims_2d_t (unsigned int size1, int inc1, int inc2) {
   return dims_2d_t(size1,inc1, inc2);
 }
 
-//
 // CHECK-COMMON-LABEL: @_Z15test2_dims_2d_tjiii(
 // CHECK-COMMON-NEXT:  entry:
 // CHECK-COMMON-NEXT:    [[DOTFCA_0_INSERT:%.*]] = insertvalue [[STRUCT_DIMS_2D_T:%.*]] poison, i32 [[SIZE1:%.*]], 0
@@ -39,17 +38,17 @@ dims_2d_t test2_dims_2d_t (unsigned int size1, int inc1, int inc2, addr_t count1
 // CHECK-COMMON-LABEL: @_Z14test_dims_3d_tjijii(
 // CHECK-COMMON-NEXT:  entry:
 // CHECK-COMMON-NEXT:    store i32 [[SIZE1:%.*]], ptr [[AGG_RESULT:%.*]], align 4, !tbaa [[TBAA2:![0-9]+]]
-// CHECK-COMMON-NEXT:    [[INC12_I:%.*]] = getelementptr inbounds i8, ptr [[AGG_RESULT]], i20 4
+// CHECK-COMMON-NEXT:    [[INC12_I:%.*]] = getelementptr inbounds nuw i8, ptr [[AGG_RESULT]], i20 4
 // CHECK-COMMON-NEXT:    store i32 [[INC1:%.*]], ptr [[INC12_I]], align 4, !tbaa [[TBAA7:![0-9]+]]
-// CHECK-COMMON-NEXT:    [[NUM2_I:%.*]] = getelementptr inbounds i8, ptr [[AGG_RESULT]], i20 8
+// CHECK-COMMON-NEXT:    [[NUM2_I:%.*]] = getelementptr inbounds nuw i8, ptr [[AGG_RESULT]], i20 8
 // CHECK-COMMON-NEXT:    store i32 [[SIZE2:%.*]], ptr [[NUM2_I]], align 4, !tbaa [[TBAA8:![0-9]+]]
-// CHECK-COMMON-NEXT:    [[INC23_I:%.*]] = getelementptr inbounds i8, ptr [[AGG_RESULT]], i20 12
+// CHECK-COMMON-NEXT:    [[INC23_I:%.*]] = getelementptr inbounds nuw i8, ptr [[AGG_RESULT]], i20 12
 // CHECK-COMMON-NEXT:    store i32 [[INC2:%.*]], ptr [[INC23_I]], align 4, !tbaa [[TBAA9:![0-9]+]]
-// CHECK-COMMON-NEXT:    [[INC34_I:%.*]] = getelementptr inbounds i8, ptr [[AGG_RESULT]], i20 16
+// CHECK-COMMON-NEXT:    [[INC34_I:%.*]] = getelementptr inbounds nuw i8, ptr [[AGG_RESULT]], i20 16
 // CHECK-COMMON-NEXT:    store i32 [[INC3:%.*]], ptr [[INC34_I]], align 4, !tbaa [[TBAA10:![0-9]+]]
-// CHECK-COMMON-NEXT:    [[COUNT1_I:%.*]] = getelementptr inbounds i8, ptr [[AGG_RESULT]], i20 20
+// CHECK-COMMON-NEXT:    [[COUNT1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[AGG_RESULT]], i20 20
 // CHECK-COMMON-NEXT:    store i32 0, ptr [[COUNT1_I]], align 4, !tbaa [[TBAA11:![0-9]+]]
-// CHECK-COMMON-NEXT:    [[COUNT2_I:%.*]] = getelementptr inbounds i8, ptr [[AGG_RESULT]], i20 24
+// CHECK-COMMON-NEXT:    [[COUNT2_I:%.*]] = getelementptr inbounds nuw i8, ptr [[AGG_RESULT]], i20 24
 // CHECK-COMMON-NEXT:    store i32 0, ptr [[COUNT2_I]], align 4, !tbaa [[TBAA12:![0-9]+]]
 // CHECK-COMMON-NEXT:    ret void
 //
@@ -60,17 +59,17 @@ dims_3d_t test_dims_3d_t  (unsigned int size1, int inc1, unsigned int size2, int
 // CHECK-COMMON-LABEL: @_Z15test2_dims_3d_tjijiiii(
 // CHECK-COMMON-NEXT:  entry:
 // CHECK-COMMON-NEXT:    store i32 [[SIZE1:%.*]], ptr [[AGG_RESULT:%.*]], align 4, !tbaa [[TBAA2]]
-// CHECK-COMMON-NEXT:    [[INC12_I:%.*]] = getelementptr inbounds i8, ptr [[AGG_RESULT]], i20 4
+// CHECK-COMMON-NEXT:    [[INC12_I:%.*]] = getelementptr inbounds nuw i8, ptr [[AGG_RESULT]], i20 4
 // CHECK-COMMON-NEXT:    store i32 [[INC1:%.*]], ptr [[INC12_I]], align 4, !tbaa [[TBAA7]]
-// CHECK-COMMON-NEXT:    [[NUM2_I:%.*]] = getelementptr inbounds i8, ptr [[AGG_RESULT]], i20 8
+// CHECK-COMMON-NEXT:    [[NUM2_I:%.*]] = getelementptr inbounds nuw i8, ptr [[AGG_RESULT]], i20 8
 // CHECK-COMMON-NEXT:    store i32 [[SIZE2:%.*]], ptr [[NUM2_I]], align 4, !tbaa [[TBAA8]]
-// CHECK-COMMON-NEXT:    [[INC23_I:%.*]] = getelementptr inbounds i8, ptr [[AGG_RESULT]], i20 12
+// CHECK-COMMON-NEXT:    [[INC23_I:%.*]] = getelementptr inbounds nuw i8, ptr [[AGG_RESULT]], i20 12
 // CHECK-COMMON-NEXT:    store i32 [[INC2:%.*]], ptr [[INC23_I]], align 4, !tbaa [[TBAA9]]
-// CHECK-COMMON-NEXT:    [[INC34_I:%.*]] = getelementptr inbounds i8, ptr [[AGG_RESULT]], i20 16
+// CHECK-COMMON-NEXT:    [[INC34_I:%.*]] = getelementptr inbounds nuw i8, ptr [[AGG_RESULT]], i20 16
 // CHECK-COMMON-NEXT:    store i32 [[INC3:%.*]], ptr [[INC34_I]], align 4, !tbaa [[TBAA10]]
-// CHECK-COMMON-NEXT:    [[COUNT15_I:%.*]] = getelementptr inbounds i8, ptr [[AGG_RESULT]], i20 20
+// CHECK-COMMON-NEXT:    [[COUNT15_I:%.*]] = getelementptr inbounds nuw i8, ptr [[AGG_RESULT]], i20 20
 // CHECK-COMMON-NEXT:    store i32 [[COUNT1:%.*]], ptr [[COUNT15_I]], align 4, !tbaa [[TBAA11]]
-// CHECK-COMMON-NEXT:    [[COUNT26_I:%.*]] = getelementptr inbounds i8, ptr [[AGG_RESULT]], i20 24
+// CHECK-COMMON-NEXT:    [[COUNT26_I:%.*]] = getelementptr inbounds nuw i8, ptr [[AGG_RESULT]], i20 24
 // CHECK-COMMON-NEXT:    store i32 [[COUNT2:%.*]], ptr [[COUNT26_I]], align 4, !tbaa [[TBAA12]]
 // CHECK-COMMON-NEXT:    ret void
 //
@@ -227,11 +226,11 @@ const v16int32* test_add_2d_byte(const v16int32* a, int off, int size1, addr_t& 
 
 // AIE2-LABEL: @_Z15test_add_2d_ptrPDv16_iR9dims_2d_t(
 // AIE2-NEXT:  entry:
-// AIE2-NEXT:    [[INC2_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS:%.*]], i20 8
+// AIE2-NEXT:    [[INC2_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS:%.*]], i20 8
 // AIE2-NEXT:    [[TMP0:%.*]] = load i32, ptr [[INC2_I]], align 4, !tbaa [[TBAA14:![0-9]+]]
 // AIE2-NEXT:    [[TMP1:%.*]] = load i32, ptr [[PARAMS]], align 4, !tbaa [[TBAA16:![0-9]+]]
-// AIE2-NEXT:    [[COUNT1_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 12
-// AIE2-NEXT:    [[INC1_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 4
+// AIE2-NEXT:    [[COUNT1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS]], i20 12
+// AIE2-NEXT:    [[INC1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS]], i20 4
 // AIE2-NEXT:    [[TMP2:%.*]] = load i32, ptr [[INC1_I]], align 4, !tbaa [[TBAA17:![0-9]+]]
 // AIE2-NEXT:    [[MUL_I_I:%.*]] = shl i32 [[TMP0]], 6
 // AIE2-NEXT:    [[TMP3:%.*]] = trunc i32 [[MUL_I_I]] to i20
@@ -249,11 +248,11 @@ const v16int32* test_add_2d_byte(const v16int32* a, int off, int size1, addr_t& 
 //
 // AIE2P-LABEL: @_Z15test_add_2d_ptrPDv16_iR9dims_2d_t(
 // AIE2P-NEXT:  entry:
-// AIE2P-NEXT:    [[INC2_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS:%.*]], i20 8
+// AIE2P-NEXT:    [[INC2_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS:%.*]], i20 8
 // AIE2P-NEXT:    [[TMP0:%.*]] = load i32, ptr [[INC2_I]], align 4, !tbaa [[TBAA14:![0-9]+]]
 // AIE2P-NEXT:    [[TMP1:%.*]] = load i32, ptr [[PARAMS]], align 4, !tbaa [[TBAA16:![0-9]+]]
-// AIE2P-NEXT:    [[COUNT1_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 12
-// AIE2P-NEXT:    [[INC1_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 4
+// AIE2P-NEXT:    [[COUNT1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS]], i20 12
+// AIE2P-NEXT:    [[INC1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS]], i20 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = load i32, ptr [[INC1_I]], align 4, !tbaa [[TBAA17:![0-9]+]]
 // AIE2P-NEXT:    [[MUL_I_I:%.*]] = shl i32 [[TMP0]], 6
 // AIE2P-NEXT:    [[TMP3:%.*]] = trunc i32 [[MUL_I_I]] to i20
@@ -275,11 +274,11 @@ v16int32* test_add_2d_ptr(v16int32* a, dims_2d_t &params){
 
 // AIE2-LABEL: @_Z16test_add_2d_bytePDv16_iR9dims_2d_t(
 // AIE2-NEXT:  entry:
-// AIE2-NEXT:    [[INC2_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS:%.*]], i20 8
+// AIE2-NEXT:    [[INC2_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS:%.*]], i20 8
 // AIE2-NEXT:    [[TMP0:%.*]] = load i32, ptr [[INC2_I]], align 4, !tbaa [[TBAA14]]
 // AIE2-NEXT:    [[TMP1:%.*]] = load i32, ptr [[PARAMS]], align 4, !tbaa [[TBAA16]]
-// AIE2-NEXT:    [[COUNT1_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 12
-// AIE2-NEXT:    [[INC1_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 4
+// AIE2-NEXT:    [[COUNT1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS]], i20 12
+// AIE2-NEXT:    [[INC1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS]], i20 4
 // AIE2-NEXT:    [[TMP2:%.*]] = load i32, ptr [[INC1_I]], align 4, !tbaa [[TBAA17]]
 // AIE2-NEXT:    [[TMP3:%.*]] = trunc i32 [[TMP0]] to i20
 // AIE2-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP2]] to i20
@@ -295,11 +294,11 @@ v16int32* test_add_2d_ptr(v16int32* a, dims_2d_t &params){
 //
 // AIE2P-LABEL: @_Z16test_add_2d_bytePDv16_iR9dims_2d_t(
 // AIE2P-NEXT:  entry:
-// AIE2P-NEXT:    [[INC2_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS:%.*]], i20 8
+// AIE2P-NEXT:    [[INC2_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS:%.*]], i20 8
 // AIE2P-NEXT:    [[TMP0:%.*]] = load i32, ptr [[INC2_I]], align 4, !tbaa [[TBAA14]]
 // AIE2P-NEXT:    [[TMP1:%.*]] = load i32, ptr [[PARAMS]], align 4, !tbaa [[TBAA16]]
-// AIE2P-NEXT:    [[COUNT1_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 12
-// AIE2P-NEXT:    [[INC1_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 4
+// AIE2P-NEXT:    [[COUNT1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS]], i20 12
+// AIE2P-NEXT:    [[INC1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS]], i20 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = load i32, ptr [[INC1_I]], align 4, !tbaa [[TBAA17]]
 // AIE2P-NEXT:    [[TMP3:%.*]] = trunc i32 [[TMP0]] to i20
 // AIE2P-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP2]] to i20
@@ -319,16 +318,16 @@ v16int32* test_add_2d_byte(v16int32* a, dims_2d_t &params){
 
 // AIE2-LABEL: @_Z15test_add_3d_ptrPDv16_iR9dims_3d_t(
 // AIE2-NEXT:  entry:
-// AIE2-NEXT:    [[INC3_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS:%.*]], i20 16
+// AIE2-NEXT:    [[INC3_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS:%.*]], i20 16
 // AIE2-NEXT:    [[TMP0:%.*]] = load i32, ptr [[INC3_I]], align 4, !tbaa [[TBAA10]]
 // AIE2-NEXT:    [[TMP1:%.*]] = load i32, ptr [[PARAMS]], align 4, !tbaa [[TBAA2]]
-// AIE2-NEXT:    [[COUNT1_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 20
-// AIE2-NEXT:    [[INC1_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 4
+// AIE2-NEXT:    [[COUNT1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS]], i20 20
+// AIE2-NEXT:    [[INC1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS]], i20 4
 // AIE2-NEXT:    [[TMP2:%.*]] = load i32, ptr [[INC1_I]], align 4, !tbaa [[TBAA7]]
-// AIE2-NEXT:    [[NUM2_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 8
+// AIE2-NEXT:    [[NUM2_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS]], i20 8
 // AIE2-NEXT:    [[TMP3:%.*]] = load i32, ptr [[NUM2_I]], align 4, !tbaa [[TBAA8]]
-// AIE2-NEXT:    [[COUNT2_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 24
-// AIE2-NEXT:    [[INC2_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 12
+// AIE2-NEXT:    [[COUNT2_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS]], i20 24
+// AIE2-NEXT:    [[INC2_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS]], i20 12
 // AIE2-NEXT:    [[TMP4:%.*]] = load i32, ptr [[INC2_I]], align 4, !tbaa [[TBAA9]]
 // AIE2-NEXT:    [[MUL_I_I:%.*]] = shl i32 [[TMP0]], 6
 // AIE2-NEXT:    [[TMP5:%.*]] = trunc i32 [[MUL_I_I]] to i20
@@ -354,16 +353,16 @@ v16int32* test_add_2d_byte(v16int32* a, dims_2d_t &params){
 //
 // AIE2P-LABEL: @_Z15test_add_3d_ptrPDv16_iR9dims_3d_t(
 // AIE2P-NEXT:  entry:
-// AIE2P-NEXT:    [[INC3_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS:%.*]], i20 16
+// AIE2P-NEXT:    [[INC3_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS:%.*]], i20 16
 // AIE2P-NEXT:    [[TMP0:%.*]] = load i32, ptr [[INC3_I]], align 4, !tbaa [[TBAA10]]
 // AIE2P-NEXT:    [[TMP1:%.*]] = load i32, ptr [[PARAMS]], align 4, !tbaa [[TBAA2]]
-// AIE2P-NEXT:    [[COUNT1_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 20
-// AIE2P-NEXT:    [[INC1_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 4
+// AIE2P-NEXT:    [[COUNT1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS]], i20 20
+// AIE2P-NEXT:    [[INC1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS]], i20 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = load i32, ptr [[INC1_I]], align 4, !tbaa [[TBAA7]]
-// AIE2P-NEXT:    [[NUM2_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 8
+// AIE2P-NEXT:    [[NUM2_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS]], i20 8
 // AIE2P-NEXT:    [[TMP3:%.*]] = load i32, ptr [[NUM2_I]], align 4, !tbaa [[TBAA8]]
-// AIE2P-NEXT:    [[COUNT2_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 24
-// AIE2P-NEXT:    [[INC2_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 12
+// AIE2P-NEXT:    [[COUNT2_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS]], i20 24
+// AIE2P-NEXT:    [[INC2_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS]], i20 12
 // AIE2P-NEXT:    [[TMP4:%.*]] = load i32, ptr [[INC2_I]], align 4, !tbaa [[TBAA9]]
 // AIE2P-NEXT:    [[MUL_I_I:%.*]] = shl i32 [[TMP0]], 6
 // AIE2P-NEXT:    [[TMP5:%.*]] = trunc i32 [[MUL_I_I]] to i20
@@ -393,16 +392,16 @@ v16int32* test_add_3d_ptr(v16int32* a, dims_3d_t &params){
 
 // AIE2-LABEL: @_Z16test_add_3d_bytePDv16_iR9dims_3d_t(
 // AIE2-NEXT:  entry:
-// AIE2-NEXT:    [[INC3_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS:%.*]], i20 16
+// AIE2-NEXT:    [[INC3_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS:%.*]], i20 16
 // AIE2-NEXT:    [[TMP0:%.*]] = load i32, ptr [[INC3_I]], align 4, !tbaa [[TBAA10]]
 // AIE2-NEXT:    [[TMP1:%.*]] = load i32, ptr [[PARAMS]], align 4, !tbaa [[TBAA2]]
-// AIE2-NEXT:    [[COUNT1_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 20
-// AIE2-NEXT:    [[INC1_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 4
+// AIE2-NEXT:    [[COUNT1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS]], i20 20
+// AIE2-NEXT:    [[INC1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS]], i20 4
 // AIE2-NEXT:    [[TMP2:%.*]] = load i32, ptr [[INC1_I]], align 4, !tbaa [[TBAA7]]
-// AIE2-NEXT:    [[NUM2_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 8
+// AIE2-NEXT:    [[NUM2_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS]], i20 8
 // AIE2-NEXT:    [[TMP3:%.*]] = load i32, ptr [[NUM2_I]], align 4, !tbaa [[TBAA8]]
-// AIE2-NEXT:    [[COUNT2_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 24
-// AIE2-NEXT:    [[INC2_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 12
+// AIE2-NEXT:    [[COUNT2_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS]], i20 24
+// AIE2-NEXT:    [[INC2_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS]], i20 12
 // AIE2-NEXT:    [[TMP4:%.*]] = load i32, ptr [[INC2_I]], align 4, !tbaa [[TBAA9]]
 // AIE2-NEXT:    [[TMP5:%.*]] = trunc i32 [[TMP0]] to i20
 // AIE2-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP2]] to i20
@@ -425,16 +424,16 @@ v16int32* test_add_3d_ptr(v16int32* a, dims_3d_t &params){
 //
 // AIE2P-LABEL: @_Z16test_add_3d_bytePDv16_iR9dims_3d_t(
 // AIE2P-NEXT:  entry:
-// AIE2P-NEXT:    [[INC3_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS:%.*]], i20 16
+// AIE2P-NEXT:    [[INC3_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS:%.*]], i20 16
 // AIE2P-NEXT:    [[TMP0:%.*]] = load i32, ptr [[INC3_I]], align 4, !tbaa [[TBAA10]]
 // AIE2P-NEXT:    [[TMP1:%.*]] = load i32, ptr [[PARAMS]], align 4, !tbaa [[TBAA2]]
-// AIE2P-NEXT:    [[COUNT1_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 20
-// AIE2P-NEXT:    [[INC1_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 4
+// AIE2P-NEXT:    [[COUNT1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS]], i20 20
+// AIE2P-NEXT:    [[INC1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS]], i20 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = load i32, ptr [[INC1_I]], align 4, !tbaa [[TBAA7]]
-// AIE2P-NEXT:    [[NUM2_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 8
+// AIE2P-NEXT:    [[NUM2_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS]], i20 8
 // AIE2P-NEXT:    [[TMP3:%.*]] = load i32, ptr [[NUM2_I]], align 4, !tbaa [[TBAA8]]
-// AIE2P-NEXT:    [[COUNT2_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 24
-// AIE2P-NEXT:    [[INC2_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 12
+// AIE2P-NEXT:    [[COUNT2_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS]], i20 24
+// AIE2P-NEXT:    [[INC2_I:%.*]] = getelementptr inbounds nuw i8, ptr [[PARAMS]], i20 12
 // AIE2P-NEXT:    [[TMP4:%.*]] = load i32, ptr [[INC2_I]], align 4, !tbaa [[TBAA9]]
 // AIE2P-NEXT:    [[TMP5:%.*]] = trunc i32 [[TMP0]] to i20
 // AIE2P-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP2]] to i20

@@ -78,7 +78,7 @@
 ; AIE-O123-NEXT:      Replace intrinsics with calls to vector library
 ; AIE-O123-NEXT:      Partially inline calls to library functions
 
-; AIE-O0123-NEXT:      Expand vector predication intrinsics
+; AIE-O23-NEXT:      Expand vector predication intrinsics
 ; AIE-O0123-NEXT:      Instrument function entry/exit with calls to e.g. mcount() (post inlining)
 ; AIE-O0123-NEXT:      Scalarize Masked Memory Intrinsics
 ; AIE-O0123-NEXT:      Expand reduction intrinsics
@@ -89,10 +89,14 @@
 
 ; AIE-O0123-NEXT:      Lower invoke and unwind, for unwindless code generators
 ; AIE-O0123-NEXT:      Remove unreachable blocks from the CFG
+; AIE-O123-NEXT:      Dominator Tree Construction
+; AIE-O123-NEXT:      Basic Alias Analysis (stateless AA impl)
+; AIE-O123-NEXT:      Function Alias Analysis Results
+; AIE-O123-NEXT:      ObjC ARC contraction
 ; AIE-O0123-NEXT:      Prepare callbr
 ; AIE-O0123-NEXT:      Safe Stack instrumentation pass
 ; AIE-O0123-NEXT:      Insert stack protectors
-; AIE-O0123-NEXT:      Dominator Tree Construction
+; AIE-O0-NEXT:      Dominator Tree Construction
 ; AIE-O0123-NEXT:      Basic Alias Analysis (stateless AA impl)
 ; AIE-O0123-NEXT:      Function Alias Analysis Results
 ; AIE-O0123-NEXT:      Natural Loop Information

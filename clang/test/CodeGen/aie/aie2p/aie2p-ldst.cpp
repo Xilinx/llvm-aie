@@ -28,6 +28,7 @@ v32int16 test_unpack_v32i16_v32i8(v32int8 v) {
   return unpack(v);
 }
 
+//
 // CHECK-LABEL: @_Z21test_pack_v64i4_v64i8Dv64_hi(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2p.pack.I512.I4.I8(<64 x i8> [[V:%.*]], i32 [[SIGN:%.*]])
@@ -46,7 +47,6 @@ v64uint8 test_unpack_v64i8_v64i4(v64uint4 v) {
   return unpack(v);
 }
 
-//
 // CHECK-LABEL: @_Z22test_pack_v64i8_v64i16Dv64_ti(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x i8> @llvm.aie2p.pack.I1024.I8.I16(<64 x i16> [[V:%.*]], i32 [[SIGN:%.*]])
@@ -56,6 +56,7 @@ v64uint8 test_pack_v64i8_v64i16(v64uint16 v, int sign) {
   return pack(v, sign);
 }
 
+//
 // CHECK-LABEL: @_Z24test_unpack_v64i16_v64i8Dv64_h(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x i16> @llvm.aie2p.unpack.I1024.I16.I8(<64 x i8> [[V:%.*]], i32 0)
@@ -86,7 +87,7 @@ v128uint8 test_unpack_v128i8_v128i4(v128uint4 v) {
 
 // CHECK-LABEL: @_Z18test_fifo_st_resetRrPDv64_DB8_S0_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2:![0-9]+]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7:![0-9]+]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9:![0-9]+]]
@@ -106,7 +107,7 @@ void test_fifo_st_reset(v128int4 * restrict &p, v128int4 v, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_st_pushRrPDv64_DB8_S0_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10:![0-9]+]]
@@ -126,7 +127,7 @@ void test_fifo_st_push(v128int4 * restrict &p, v128int4 v, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z18test_fifo_st_flushRrPDv64_DB8_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -145,7 +146,7 @@ void test_fifo_st_flush(v128int4 * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_1d_byteRrPDv64_DB8_R12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -165,7 +166,7 @@ void test_fifo_st_flush_1d_byte(v128int4 * restrict &p, fifo_state_t &s, int off
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_2d_byteRrPDv64_DB8_R12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -193,7 +194,7 @@ void test_fifo_st_flush_2d_byte(v128int4 * restrict &p, fifo_state_t &s, int off
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_3d_byteRrPDv64_DB8_R12fifo_state_tiiRiiiS6_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -230,7 +231,7 @@ void test_fifo_st_flush_3d_byte(v128int4 * restrict &p, fifo_state_t &s, int off
 
 // CHECK-LABEL: @_Z23test_fifo_st_flush_bareRrPDv64_DB8_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -249,7 +250,7 @@ void test_fifo_st_flush_bare(v128int4 * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_1d_byteRrPDv64_DB8_R12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -269,7 +270,7 @@ void test_fifo_st_flush_bare_1d_byte(v128int4 * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_2d_byteRrPDv64_DB8_R12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -297,7 +298,7 @@ void test_fifo_st_flush_bare_2d_byte(v128int4 * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_3d_byteRrPDv64_DB8_R12fifo_state_tiiRiiiS6_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -334,7 +335,7 @@ void test_fifo_st_flush_bare_3d_byte(v128int4 * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z23test_fifo_st_flush_convRrPDv64_DB8_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -353,7 +354,7 @@ void test_fifo_st_flush_conv(v128int4 * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_1d_byteRrPDv64_DB8_R12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -373,7 +374,7 @@ void test_fifo_st_flush_conv_1d_byte(v128int4 * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_2d_byteRrPDv64_DB8_R12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -401,7 +402,7 @@ void test_fifo_st_flush_conv_2d_byte(v128int4 * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_3d_byteRrPDv64_DB8_R12fifo_state_tiiRiiiS6_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -438,7 +439,7 @@ void test_fifo_st_flush_conv_3d_byte(v128int4 * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z18test_fifo_st_resetRrPDv64_DU8_S0_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
@@ -458,7 +459,7 @@ void test_fifo_st_reset(v128uint4 * restrict &p, v128uint4 v, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_st_pushRrPDv64_DU8_S0_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -478,7 +479,7 @@ void test_fifo_st_push(v128uint4 * restrict &p, v128uint4 v, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z18test_fifo_st_flushRrPDv64_DU8_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -497,7 +498,7 @@ void test_fifo_st_flush(v128uint4 * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_1d_byteRrPDv64_DU8_R12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -517,7 +518,7 @@ void test_fifo_st_flush_1d_byte(v128uint4 * restrict &p, fifo_state_t &s, int of
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_2d_byteRrPDv64_DU8_R12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -545,7 +546,7 @@ void test_fifo_st_flush_2d_byte(v128uint4 * restrict &p, fifo_state_t &s, int of
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_3d_byteRrPDv64_DU8_R12fifo_state_tiiRiiiS6_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -582,7 +583,7 @@ void test_fifo_st_flush_3d_byte(v128uint4 * restrict &p, fifo_state_t &s, int of
 
 // CHECK-LABEL: @_Z23test_fifo_st_flush_bareRrPDv64_DU8_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -601,7 +602,7 @@ void test_fifo_st_flush_bare(v128uint4 * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_1d_byteRrPDv64_DU8_R12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -621,7 +622,7 @@ void test_fifo_st_flush_bare_1d_byte(v128uint4 * restrict &p, fifo_state_t &s, i
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_2d_byteRrPDv64_DU8_R12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -647,10 +648,9 @@ void test_fifo_st_flush_bare_2d_byte(v128uint4 * restrict &p, fifo_state_t &s, i
   return fifo_st_flush_bare_2d_byte(p, s, off, size1, count1, inc1);
 }
 
-//
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_3d_byteRrPDv64_DU8_R12fifo_state_tiiRiiiS6_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -687,7 +687,7 @@ void test_fifo_st_flush_bare_3d_byte(v128uint4 * restrict &p, fifo_state_t &s, i
 
 // CHECK-LABEL: @_Z23test_fifo_st_flush_convRrPDv64_DU8_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -706,7 +706,7 @@ void test_fifo_st_flush_conv(v128uint4 * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_1d_byteRrPDv64_DU8_R12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -726,7 +726,7 @@ void test_fifo_st_flush_conv_1d_byte(v128uint4 * restrict &p, fifo_state_t &s, i
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_2d_byteRrPDv64_DU8_R12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -754,7 +754,7 @@ void test_fifo_st_flush_conv_2d_byte(v128uint4 * restrict &p, fifo_state_t &s, i
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_3d_byteRrPDv64_DU8_R12fifo_state_tiiRiiiS6_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -791,7 +791,7 @@ void test_fifo_st_flush_conv_3d_byte(v128uint4 * restrict &p, fifo_state_t &s, i
 
 // CHECK-LABEL: @_Z18test_fifo_st_resetRrPDv64_aS_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
@@ -811,7 +811,7 @@ void test_fifo_st_reset(v64int8 * restrict &p, v64int8 v, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_st_pushRrPDv64_aS_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -831,7 +831,7 @@ void test_fifo_st_push(v64int8 * restrict &p, v64int8 v, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z18test_fifo_st_flushRrPDv64_aR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -850,7 +850,7 @@ void test_fifo_st_flush(v64int8 * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_1d_byteRrPDv64_aR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -870,7 +870,7 @@ void test_fifo_st_flush_1d_byte(v64int8 * restrict &p, fifo_state_t &s, int off)
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_2d_byteRrPDv64_aR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -898,7 +898,7 @@ void test_fifo_st_flush_2d_byte(v64int8 * restrict &p, fifo_state_t &s, int off,
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_3d_byteRrPDv64_aR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -935,7 +935,7 @@ void test_fifo_st_flush_3d_byte(v64int8 * restrict &p, fifo_state_t &s, int off,
 
 // CHECK-LABEL: @_Z23test_fifo_st_flush_bareRrPDv64_aR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -954,7 +954,7 @@ void test_fifo_st_flush_bare(v64int8 * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_1d_byteRrPDv64_aR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -974,7 +974,7 @@ void test_fifo_st_flush_bare_1d_byte(v64int8 * restrict &p, fifo_state_t &s, int
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_2d_byteRrPDv64_aR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1002,7 +1002,7 @@ void test_fifo_st_flush_bare_2d_byte(v64int8 * restrict &p, fifo_state_t &s, int
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_3d_byteRrPDv64_aR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1039,7 +1039,7 @@ void test_fifo_st_flush_bare_3d_byte(v64int8 * restrict &p, fifo_state_t &s, int
 
 // CHECK-LABEL: @_Z23test_fifo_st_flush_convRrPDv64_aR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1058,7 +1058,7 @@ void test_fifo_st_flush_conv(v64int8 * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_1d_byteRrPDv64_aR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1078,7 +1078,7 @@ void test_fifo_st_flush_conv_1d_byte(v64int8 * restrict &p, fifo_state_t &s, int
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_2d_byteRrPDv64_aR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1106,7 +1106,7 @@ void test_fifo_st_flush_conv_2d_byte(v64int8 * restrict &p, fifo_state_t &s, int
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_3d_byteRrPDv64_aR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1143,7 +1143,7 @@ void test_fifo_st_flush_conv_3d_byte(v64int8 * restrict &p, fifo_state_t &s, int
 
 // CHECK-LABEL: @_Z18test_fifo_st_resetRrPDv64_hS_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
@@ -1163,7 +1163,7 @@ void test_fifo_st_reset(v64uint8 * restrict &p, v64uint8 v, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_st_pushRrPDv64_hS_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1183,7 +1183,7 @@ void test_fifo_st_push(v64uint8 * restrict &p, v64uint8 v, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z18test_fifo_st_flushRrPDv64_hR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1202,7 +1202,7 @@ void test_fifo_st_flush(v64uint8 * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_1d_byteRrPDv64_hR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1222,7 +1222,7 @@ void test_fifo_st_flush_1d_byte(v64uint8 * restrict &p, fifo_state_t &s, int off
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_2d_byteRrPDv64_hR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1250,7 +1250,7 @@ void test_fifo_st_flush_2d_byte(v64uint8 * restrict &p, fifo_state_t &s, int off
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_3d_byteRrPDv64_hR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1287,7 +1287,7 @@ void test_fifo_st_flush_3d_byte(v64uint8 * restrict &p, fifo_state_t &s, int off
 
 // CHECK-LABEL: @_Z23test_fifo_st_flush_bareRrPDv64_hR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1306,7 +1306,7 @@ void test_fifo_st_flush_bare(v64uint8 * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_1d_byteRrPDv64_hR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1326,7 +1326,7 @@ void test_fifo_st_flush_bare_1d_byte(v64uint8 * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_2d_byteRrPDv64_hR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1354,7 +1354,7 @@ void test_fifo_st_flush_bare_2d_byte(v64uint8 * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_3d_byteRrPDv64_hR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1391,7 +1391,7 @@ void test_fifo_st_flush_bare_3d_byte(v64uint8 * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z23test_fifo_st_flush_convRrPDv64_hR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1410,7 +1410,7 @@ void test_fifo_st_flush_conv(v64uint8 * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_1d_byteRrPDv64_hR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1430,7 +1430,7 @@ void test_fifo_st_flush_conv_1d_byte(v64uint8 * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_2d_byteRrPDv64_hR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1458,7 +1458,7 @@ void test_fifo_st_flush_conv_2d_byte(v64uint8 * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_3d_byteRrPDv64_hR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1495,7 +1495,7 @@ void test_fifo_st_flush_conv_3d_byte(v64uint8 * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z18test_fifo_st_resetRrPDv32_sS_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
@@ -1515,7 +1515,7 @@ void test_fifo_st_reset(v32int16 * restrict &p, v32int16 v, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_st_pushRrPDv32_sS_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1535,7 +1535,7 @@ void test_fifo_st_push(v32int16 * restrict &p, v32int16 v, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z18test_fifo_st_flushRrPDv32_sR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1554,7 +1554,7 @@ void test_fifo_st_flush(v32int16 * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_1d_byteRrPDv32_sR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1574,7 +1574,7 @@ void test_fifo_st_flush_1d_byte(v32int16 * restrict &p, fifo_state_t &s, int off
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_2d_byteRrPDv32_sR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1602,7 +1602,7 @@ void test_fifo_st_flush_2d_byte(v32int16 * restrict &p, fifo_state_t &s, int off
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_3d_byteRrPDv32_sR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1639,7 +1639,7 @@ void test_fifo_st_flush_3d_byte(v32int16 * restrict &p, fifo_state_t &s, int off
 
 // CHECK-LABEL: @_Z23test_fifo_st_flush_bareRrPDv32_sR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1658,7 +1658,7 @@ void test_fifo_st_flush_bare(v32int16 * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_1d_byteRrPDv32_sR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1678,7 +1678,7 @@ void test_fifo_st_flush_bare_1d_byte(v32int16 * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_2d_byteRrPDv32_sR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1706,7 +1706,7 @@ void test_fifo_st_flush_bare_2d_byte(v32int16 * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_3d_byteRrPDv32_sR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1743,7 +1743,7 @@ void test_fifo_st_flush_bare_3d_byte(v32int16 * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z23test_fifo_st_flush_convRrPDv32_sR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1762,7 +1762,7 @@ void test_fifo_st_flush_conv(v32int16 * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_1d_byteRrPDv32_sR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1782,7 +1782,7 @@ void test_fifo_st_flush_conv_1d_byte(v32int16 * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_2d_byteRrPDv32_sR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1810,7 +1810,7 @@ void test_fifo_st_flush_conv_2d_byte(v32int16 * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_3d_byteRrPDv32_sR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1847,7 +1847,7 @@ void test_fifo_st_flush_conv_3d_byte(v32int16 * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z18test_fifo_st_resetRrPDv32_tS_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
@@ -1867,7 +1867,7 @@ void test_fifo_st_reset(v32uint16 * restrict &p, v32uint16 v, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_st_pushRrPDv32_tS_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1887,7 +1887,7 @@ void test_fifo_st_push(v32uint16 * restrict &p, v32uint16 v, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z18test_fifo_st_flushRrPDv32_tR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1906,7 +1906,7 @@ void test_fifo_st_flush(v32uint16 * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_1d_byteRrPDv32_tR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1926,7 +1926,7 @@ void test_fifo_st_flush_1d_byte(v32uint16 * restrict &p, fifo_state_t &s, int of
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_2d_byteRrPDv32_tR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1954,7 +1954,7 @@ void test_fifo_st_flush_2d_byte(v32uint16 * restrict &p, fifo_state_t &s, int of
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_3d_byteRrPDv32_tR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -1991,7 +1991,7 @@ void test_fifo_st_flush_3d_byte(v32uint16 * restrict &p, fifo_state_t &s, int of
 
 // CHECK-LABEL: @_Z23test_fifo_st_flush_bareRrPDv32_tR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2010,7 +2010,7 @@ void test_fifo_st_flush_bare(v32uint16 * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_1d_byteRrPDv32_tR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2030,7 +2030,7 @@ void test_fifo_st_flush_bare_1d_byte(v32uint16 * restrict &p, fifo_state_t &s, i
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_2d_byteRrPDv32_tR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2058,7 +2058,7 @@ void test_fifo_st_flush_bare_2d_byte(v32uint16 * restrict &p, fifo_state_t &s, i
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_3d_byteRrPDv32_tR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2095,7 +2095,7 @@ void test_fifo_st_flush_bare_3d_byte(v32uint16 * restrict &p, fifo_state_t &s, i
 
 // CHECK-LABEL: @_Z23test_fifo_st_flush_convRrPDv32_tR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2114,7 +2114,7 @@ void test_fifo_st_flush_conv(v32uint16 * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_1d_byteRrPDv32_tR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2134,7 +2134,7 @@ void test_fifo_st_flush_conv_1d_byte(v32uint16 * restrict &p, fifo_state_t &s, i
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_2d_byteRrPDv32_tR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2162,7 +2162,7 @@ void test_fifo_st_flush_conv_2d_byte(v32uint16 * restrict &p, fifo_state_t &s, i
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_3d_byteRrPDv32_tR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2199,7 +2199,7 @@ void test_fifo_st_flush_conv_3d_byte(v32uint16 * restrict &p, fifo_state_t &s, i
 
 // CHECK-LABEL: @_Z18test_fifo_st_resetRrPDv16_iS_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
@@ -2218,7 +2218,7 @@ void test_fifo_st_reset(v16int32 * restrict &p, v16int32 v, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_st_pushRrPDv16_iS_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2237,7 +2237,7 @@ void test_fifo_st_push(v16int32 * restrict &p, v16int32 v, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z18test_fifo_st_flushRrPDv16_iR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2256,7 +2256,7 @@ void test_fifo_st_flush(v16int32 * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_1d_byteRrPDv16_iR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2276,7 +2276,7 @@ void test_fifo_st_flush_1d_byte(v16int32 * restrict &p, fifo_state_t &s, int off
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_2d_byteRrPDv16_iR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2304,7 +2304,7 @@ void test_fifo_st_flush_2d_byte(v16int32 * restrict &p, fifo_state_t &s, int off
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_3d_byteRrPDv16_iR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2341,7 +2341,7 @@ void test_fifo_st_flush_3d_byte(v16int32 * restrict &p, fifo_state_t &s, int off
 
 // CHECK-LABEL: @_Z23test_fifo_st_flush_bareRrPDv16_iR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2360,7 +2360,7 @@ void test_fifo_st_flush_bare(v16int32 * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_1d_byteRrPDv16_iR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2380,7 +2380,7 @@ void test_fifo_st_flush_bare_1d_byte(v16int32 * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_2d_byteRrPDv16_iR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2408,7 +2408,7 @@ void test_fifo_st_flush_bare_2d_byte(v16int32 * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_3d_byteRrPDv16_iR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2445,7 +2445,7 @@ void test_fifo_st_flush_bare_3d_byte(v16int32 * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z23test_fifo_st_flush_convRrPDv16_iR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2464,7 +2464,7 @@ void test_fifo_st_flush_conv(v16int32 * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_1d_byteRrPDv16_iR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2484,7 +2484,7 @@ void test_fifo_st_flush_conv_1d_byte(v16int32 * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_2d_byteRrPDv16_iR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2512,7 +2512,7 @@ void test_fifo_st_flush_conv_2d_byte(v16int32 * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_3d_byteRrPDv16_iR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2549,7 +2549,7 @@ void test_fifo_st_flush_conv_3d_byte(v16int32 * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z18test_fifo_st_resetRrPDv16_jS_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
@@ -2568,7 +2568,7 @@ void test_fifo_st_reset(v16uint32 * restrict &p, v16uint32 v, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_st_pushRrPDv16_jS_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2587,7 +2587,7 @@ void test_fifo_st_push(v16uint32 * restrict &p, v16uint32 v, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z18test_fifo_st_flushRrPDv16_jR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2606,7 +2606,7 @@ void test_fifo_st_flush(v16uint32 * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_1d_byteRrPDv16_jR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2626,7 +2626,7 @@ void test_fifo_st_flush_1d_byte(v16uint32 * restrict &p, fifo_state_t &s, int of
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_2d_byteRrPDv16_jR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2654,7 +2654,7 @@ void test_fifo_st_flush_2d_byte(v16uint32 * restrict &p, fifo_state_t &s, int of
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_3d_byteRrPDv16_jR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2691,7 +2691,7 @@ void test_fifo_st_flush_3d_byte(v16uint32 * restrict &p, fifo_state_t &s, int of
 
 // CHECK-LABEL: @_Z23test_fifo_st_flush_bareRrPDv16_jR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2710,7 +2710,7 @@ void test_fifo_st_flush_bare(v16uint32 * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_1d_byteRrPDv16_jR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2730,7 +2730,7 @@ void test_fifo_st_flush_bare_1d_byte(v16uint32 * restrict &p, fifo_state_t &s, i
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_2d_byteRrPDv16_jR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2758,7 +2758,7 @@ void test_fifo_st_flush_bare_2d_byte(v16uint32 * restrict &p, fifo_state_t &s, i
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_3d_byteRrPDv16_jR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2795,7 +2795,7 @@ void test_fifo_st_flush_bare_3d_byte(v16uint32 * restrict &p, fifo_state_t &s, i
 
 // CHECK-LABEL: @_Z23test_fifo_st_flush_convRrPDv16_jR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2814,7 +2814,7 @@ void test_fifo_st_flush_conv(v16uint32 * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_1d_byteRrPDv16_jR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2834,7 +2834,7 @@ void test_fifo_st_flush_conv_1d_byte(v16uint32 * restrict &p, fifo_state_t &s, i
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_2d_byteRrPDv16_jR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2862,7 +2862,7 @@ void test_fifo_st_flush_conv_2d_byte(v16uint32 * restrict &p, fifo_state_t &s, i
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_3d_byteRrPDv16_jR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2899,7 +2899,7 @@ void test_fifo_st_flush_conv_3d_byte(v16uint32 * restrict &p, fifo_state_t &s, i
 
 // CHECK-LABEL: @_Z18test_fifo_st_resetRrPDv32_8bfloat16S0_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
@@ -2919,7 +2919,7 @@ void test_fifo_st_reset(v32bfloat16 * restrict &p, v32bfloat16 v, fifo_state_t &
 
 // CHECK-LABEL: @_Z17test_fifo_st_pushRrPDv32_8bfloat16S0_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2939,7 +2939,7 @@ void test_fifo_st_push(v32bfloat16 * restrict &p, v32bfloat16 v, fifo_state_t &s
 
 // CHECK-LABEL: @_Z18test_fifo_st_flushRrPDv32_8bfloat16R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2958,7 +2958,7 @@ void test_fifo_st_flush(v32bfloat16 * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_1d_byteRrPDv32_8bfloat16R12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -2978,7 +2978,7 @@ void test_fifo_st_flush_1d_byte(v32bfloat16 * restrict &p, fifo_state_t &s, int 
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_2d_byteRrPDv32_8bfloat16R12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3006,7 +3006,7 @@ void test_fifo_st_flush_2d_byte(v32bfloat16 * restrict &p, fifo_state_t &s, int 
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_3d_byteRrPDv32_8bfloat16R12fifo_state_tiiRiiiS6_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3043,7 +3043,7 @@ void test_fifo_st_flush_3d_byte(v32bfloat16 * restrict &p, fifo_state_t &s, int 
 
 // CHECK-LABEL: @_Z23test_fifo_st_flush_bareRrPDv32_8bfloat16R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3062,7 +3062,7 @@ void test_fifo_st_flush_bare(v32bfloat16 * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_1d_byteRrPDv32_8bfloat16R12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3083,7 +3083,7 @@ void test_fifo_st_flush_bare_1d_byte(v32bfloat16 * restrict &p, fifo_state_t &s,
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_2d_byteRrPDv32_8bfloat16R12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3111,7 +3111,7 @@ void test_fifo_st_flush_bare_2d_byte(v32bfloat16 * restrict &p, fifo_state_t &s,
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_3d_byteRrPDv32_8bfloat16R12fifo_state_tiiRiiiS6_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3148,7 +3148,7 @@ void test_fifo_st_flush_bare_3d_byte(v32bfloat16 * restrict &p, fifo_state_t &s,
 
 // CHECK-LABEL: @_Z23test_fifo_st_flush_convRrPDv32_8bfloat16R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3167,7 +3167,7 @@ void test_fifo_st_flush_conv(v32bfloat16 * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_1d_byteRrPDv32_8bfloat16R12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3188,7 +3188,7 @@ void test_fifo_st_flush_conv_1d_byte(v32bfloat16 * restrict &p, fifo_state_t &s,
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_2d_byteRrPDv32_8bfloat16R12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3216,7 +3216,7 @@ void test_fifo_st_flush_conv_2d_byte(v32bfloat16 * restrict &p, fifo_state_t &s,
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_3d_byteRrPDv32_8bfloat16R12fifo_state_tiiRiiiS6_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3253,7 +3253,7 @@ void test_fifo_st_flush_conv_3d_byte(v32bfloat16 * restrict &p, fifo_state_t &s,
 
 // CHECK-LABEL: @_Z18test_fifo_st_resetRrPDv16_fS_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
@@ -3273,7 +3273,7 @@ void test_fifo_st_reset(v16float * restrict &p, v16float v, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_st_pushRrPDv16_fS_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3293,7 +3293,7 @@ void test_fifo_st_push(v16float * restrict &p, v16float v, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z18test_fifo_st_flushRrPDv16_fR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3312,7 +3312,7 @@ void test_fifo_st_flush(v16float * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_1d_byteRrPDv16_fR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3332,7 +3332,7 @@ void test_fifo_st_flush_1d_byte(v16float * restrict &p, fifo_state_t &s, int off
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_2d_byteRrPDv16_fR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3360,7 +3360,7 @@ void test_fifo_st_flush_2d_byte(v16float * restrict &p, fifo_state_t &s, int off
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_3d_byteRrPDv16_fR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3397,7 +3397,7 @@ void test_fifo_st_flush_3d_byte(v16float * restrict &p, fifo_state_t &s, int off
 
 // CHECK-LABEL: @_Z23test_fifo_st_flush_bareRrPDv16_fR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3416,7 +3416,7 @@ void test_fifo_st_flush_bare(v16float * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_1d_byteRrPDv16_fR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3436,7 +3436,7 @@ void test_fifo_st_flush_bare_1d_byte(v16float * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_2d_byteRrPDv16_fR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3464,7 +3464,7 @@ void test_fifo_st_flush_bare_2d_byte(v16float * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_3d_byteRrPDv16_fR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3501,7 +3501,7 @@ void test_fifo_st_flush_bare_3d_byte(v16float * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z23test_fifo_st_flush_convRrPDv16_fR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3520,7 +3520,7 @@ void test_fifo_st_flush_conv(v16float * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_1d_byteRrPDv16_fR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3540,7 +3540,7 @@ void test_fifo_st_flush_conv_1d_byte(v16float * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_2d_byteRrPDv16_fR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3568,7 +3568,7 @@ void test_fifo_st_flush_conv_2d_byte(v16float * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_3d_byteRrPDv16_fR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3605,19 +3605,19 @@ void test_fifo_st_flush_conv_3d_byte(v16float * restrict &p, fifo_state_t &s, in
 
 // CHECK-LABEL: @_Z18test_fifo_st_resetRrP22v64bfp16ebs8_unaligned12v64bfp16ebs8R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[V_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8:%.*]] [[V_COERCE:%.*]], 0
-// CHECK-NEXT:    [[V_COERCE_FCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[V_COERCE]], 1
-// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8:%.*]] [[V_COERCE:%.*]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[V_COERCE]], 1
+// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
-// CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
-// CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16.p0.p0(ptr [[TMP0]], <64 x i8> [[V_COERCE_FCA_0_EXTRACT_I]], <8 x i8> [[V_COERCE_FCA_1_EXTRACT_I]], <32 x i32> [[TMP1]], i32 0)
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP2]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP2]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP2]], 2
-// CHECK-NEXT:    store <32 x i32> [[TMP4]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP5]], ptr [[POS_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP3]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP2:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
+// CHECK-NEXT:    [[TMP3:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// CHECK-NEXT:    [[TMP4:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16.p0.p0(ptr [[TMP2]], <64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <32 x i32> [[TMP3]], i32 0)
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP4]], 0
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP4]], 1
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP4]], 2
+// CHECK-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP7]], ptr [[POS_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP5]], ptr [[P]], align 4
 // CHECK-NEXT:    ret void
 //
 void test_fifo_st_reset(v64bfp16ebs8_unaligned * restrict &p, v64bfp16ebs8 v,
@@ -3627,19 +3627,19 @@ void test_fifo_st_reset(v64bfp16ebs8_unaligned * restrict &p, v64bfp16ebs8 v,
 
 // CHECK-LABEL: @_Z17test_fifo_st_pushRrP22v64bfp16ebs8_unaligned12v64bfp16ebs8R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[V_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8:%.*]] [[V_COERCE:%.*]], 0
-// CHECK-NEXT:    [[V_COERCE_FCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[V_COERCE]], 1
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
-// CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
-// CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
-// CHECK-NEXT:    [[TMP3:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16.p0.p0(ptr [[TMP0]], <64 x i8> [[V_COERCE_FCA_0_EXTRACT_I]], <8 x i8> [[V_COERCE_FCA_1_EXTRACT_I]], <32 x i32> [[TMP1]], i32 [[TMP2]])
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 0
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 1
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 2
-// CHECK-NEXT:    store <32 x i32> [[TMP5]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP6]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP4]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8:%.*]] [[V_COERCE:%.*]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[V_COERCE]], 1
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[TMP2:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
+// CHECK-NEXT:    [[TMP3:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// CHECK-NEXT:    [[TMP4:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16.p0.p0(ptr [[TMP2]], <64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <32 x i32> [[TMP3]], i32 [[TMP4]])
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP5]], 0
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP5]], 1
+// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP5]], 2
+// CHECK-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP8]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP6]], ptr [[P]], align 4
 // CHECK-NEXT:    ret void
 //
 void test_fifo_st_push(v64bfp16ebs8_unaligned * restrict &p, v64bfp16ebs8 v,
@@ -3649,7 +3649,7 @@ void test_fifo_st_push(v64bfp16ebs8_unaligned * restrict &p, v64bfp16ebs8 v,
 
 // CHECK-LABEL: @_Z18test_fifo_st_flushRrP22v64bfp16ebs8_unalignedR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3668,7 +3668,7 @@ void test_fifo_st_flush(v64bfp16ebs8_unaligned * restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_1d_byteRrP22v64bfp16ebs8_unalignedR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3689,7 +3689,7 @@ void test_fifo_st_flush_1d_byte(v64bfp16ebs8_unaligned * restrict &p, fifo_state
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_2d_byteRrP22v64bfp16ebs8_unalignedR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3717,7 +3717,7 @@ void test_fifo_st_flush_2d_byte(v64bfp16ebs8_unaligned * restrict &p, fifo_state
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_3d_byteRrP22v64bfp16ebs8_unalignedR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3754,7 +3754,7 @@ void test_fifo_st_flush_3d_byte(v64bfp16ebs8_unaligned * restrict &p, fifo_state
 
 // CHECK-LABEL: @_Z23test_fifo_st_flush_bareRrP22v64bfp16ebs8_unalignedR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3773,7 +3773,7 @@ void test_fifo_st_flush_bare(v64bfp16ebs8_unaligned * restrict &p, fifo_state_t 
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_1d_byteRrP22v64bfp16ebs8_unalignedR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3794,7 +3794,7 @@ void test_fifo_st_flush_bare_1d_byte(v64bfp16ebs8_unaligned * restrict &p,
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_2d_byteRrP22v64bfp16ebs8_unalignedR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3823,7 +3823,7 @@ void test_fifo_st_flush_bare_2d_byte(v64bfp16ebs8_unaligned * restrict &p,
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_3d_byteRrP22v64bfp16ebs8_unalignedR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3861,7 +3861,7 @@ void test_fifo_st_flush_bare_3d_byte(v64bfp16ebs8_unaligned * restrict &p,
 
 // CHECK-LABEL: @_Z23test_fifo_st_flush_convRrP22v64bfp16ebs8_unalignedR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3880,7 +3880,7 @@ void test_fifo_st_flush_conv(v64bfp16ebs8_unaligned * restrict &p, fifo_state_t 
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_1d_byteRrP22v64bfp16ebs8_unalignedR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3901,7 +3901,7 @@ void test_fifo_st_flush_conv_1d_byte(v64bfp16ebs8_unaligned * restrict &p,
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_2d_byteRrP22v64bfp16ebs8_unalignedR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3930,7 +3930,7 @@ void test_fifo_st_flush_conv_2d_byte(v64bfp16ebs8_unaligned * restrict &p,
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_3d_byteRrP22v64bfp16ebs8_unalignedR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -3968,19 +3968,19 @@ void test_fifo_st_flush_conv_3d_byte(v64bfp16ebs8_unaligned * restrict &p,
 
 // CHECK-LABEL: @_Z18test_fifo_st_resetRrP23v64bfp16ebs16_unaligned13v64bfp16ebs16R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[V_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16:%.*]] [[V_COERCE:%.*]], 0
-// CHECK-NEXT:    [[V_COERCE_FCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16]] [[V_COERCE]], 1
-// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16:%.*]] [[V_COERCE:%.*]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16]] [[V_COERCE]], 1
+// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
-// CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
-// CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.544.bfp16.p0.p0(ptr [[TMP0]], <64 x i8> [[V_COERCE_FCA_0_EXTRACT_I]], <8 x i8> [[V_COERCE_FCA_1_EXTRACT_I]], <32 x i32> [[TMP1]], i32 0)
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP2]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP2]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP2]], 2
-// CHECK-NEXT:    store <32 x i32> [[TMP4]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP5]], ptr [[POS_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP3]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP2:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
+// CHECK-NEXT:    [[TMP3:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// CHECK-NEXT:    [[TMP4:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.544.bfp16.p0.p0(ptr [[TMP2]], <64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <32 x i32> [[TMP3]], i32 0)
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP4]], 0
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP4]], 1
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP4]], 2
+// CHECK-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP7]], ptr [[POS_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP5]], ptr [[P]], align 4
 // CHECK-NEXT:    ret void
 //
 void test_fifo_st_reset(v64bfp16ebs16_unaligned * restrict &p, v64bfp16ebs16 v,
@@ -3990,19 +3990,19 @@ void test_fifo_st_reset(v64bfp16ebs16_unaligned * restrict &p, v64bfp16ebs16 v,
 
 // CHECK-LABEL: @_Z17test_fifo_st_pushRrP23v64bfp16ebs16_unaligned13v64bfp16ebs16R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[V_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16:%.*]] [[V_COERCE:%.*]], 0
-// CHECK-NEXT:    [[V_COERCE_FCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16]] [[V_COERCE]], 1
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
-// CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
-// CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
-// CHECK-NEXT:    [[TMP3:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.544.bfp16.p0.p0(ptr [[TMP0]], <64 x i8> [[V_COERCE_FCA_0_EXTRACT_I]], <8 x i8> [[V_COERCE_FCA_1_EXTRACT_I]], <32 x i32> [[TMP1]], i32 [[TMP2]])
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 0
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 1
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 2
-// CHECK-NEXT:    store <32 x i32> [[TMP5]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP6]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP4]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16:%.*]] [[V_COERCE:%.*]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16]] [[V_COERCE]], 1
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[TMP2:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
+// CHECK-NEXT:    [[TMP3:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// CHECK-NEXT:    [[TMP4:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.544.bfp16.p0.p0(ptr [[TMP2]], <64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <32 x i32> [[TMP3]], i32 [[TMP4]])
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP5]], 0
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP5]], 1
+// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP5]], 2
+// CHECK-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP8]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP6]], ptr [[P]], align 4
 // CHECK-NEXT:    ret void
 //
 void test_fifo_st_push(v64bfp16ebs16_unaligned * restrict &p, v64bfp16ebs16 v,
@@ -4012,7 +4012,7 @@ void test_fifo_st_push(v64bfp16ebs16_unaligned * restrict &p, v64bfp16ebs16 v,
 
 // CHECK-LABEL: @_Z18test_fifo_st_flushRrP23v64bfp16ebs16_unalignedR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4031,7 +4031,7 @@ void test_fifo_st_flush(v64bfp16ebs16_unaligned * restrict &p, fifo_state_t &s) 
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_1d_byteRrP23v64bfp16ebs16_unalignedR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4052,7 +4052,7 @@ void test_fifo_st_flush_1d_byte(v64bfp16ebs16_unaligned * restrict &p, fifo_stat
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_2d_byteRrP23v64bfp16ebs16_unalignedR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4080,7 +4080,7 @@ void test_fifo_st_flush_2d_byte(v64bfp16ebs16_unaligned * restrict &p, fifo_stat
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_3d_byteRrP23v64bfp16ebs16_unalignedR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4117,7 +4117,7 @@ void test_fifo_st_flush_3d_byte(v64bfp16ebs16_unaligned * restrict &p, fifo_stat
 
 // CHECK-LABEL: @_Z23test_fifo_st_flush_bareRrP23v64bfp16ebs16_unalignedR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4136,7 +4136,7 @@ void test_fifo_st_flush_bare(v64bfp16ebs16_unaligned * restrict &p, fifo_state_t
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_1d_byteRrP23v64bfp16ebs16_unalignedR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4157,7 +4157,7 @@ void test_fifo_st_flush_bare_1d_byte(v64bfp16ebs16_unaligned * restrict &p,
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_2d_byteRrP23v64bfp16ebs16_unalignedR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4186,7 +4186,7 @@ void test_fifo_st_flush_bare_2d_byte(v64bfp16ebs16_unaligned * restrict &p,
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_3d_byteRrP23v64bfp16ebs16_unalignedR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4224,7 +4224,7 @@ void test_fifo_st_flush_bare_3d_byte(v64bfp16ebs16_unaligned * restrict &p,
 
 // CHECK-LABEL: @_Z23test_fifo_st_flush_convRrP23v64bfp16ebs16_unalignedR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4243,7 +4243,7 @@ void test_fifo_st_flush_conv(v64bfp16ebs16_unaligned * restrict &p, fifo_state_t
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_1d_byteRrP23v64bfp16ebs16_unalignedR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4264,7 +4264,7 @@ void test_fifo_st_flush_conv_1d_byte(v64bfp16ebs16_unaligned * restrict &p,
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_2d_byteRrP23v64bfp16ebs16_unalignedR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4293,7 +4293,7 @@ void test_fifo_st_flush_conv_2d_byte(v64bfp16ebs16_unaligned * restrict &p,
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_3d_byteRrP23v64bfp16ebs16_unalignedR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4331,15 +4331,15 @@ void test_fifo_st_flush_conv_3d_byte(v64bfp16ebs16_unaligned * restrict &p,
 
 // CHECK-LABEL: @_Z18test_fifo_st_resetPU3AS522v64bfp16ebs8_unaligned12v64bfp16ebs8R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[V_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8:%.*]] [[V_COERCE:%.*]], 0
-// CHECK-NEXT:    [[V_COERCE_FCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[V_COERCE]], 1
-// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[TMP0:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call { ptr addrspace(5), <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16.p5.p5(ptr addrspace(5) [[P:%.*]], <64 x i8> [[V_COERCE_FCA_0_EXTRACT_I]], <8 x i8> [[V_COERCE_FCA_1_EXTRACT_I]], <32 x i32> [[TMP0]], i32 0)
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP1]], 1
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP1]], 2
-// CHECK-NEXT:    store <32 x i32> [[TMP2]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP3]], ptr [[POS_I]], align 64
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8:%.*]] [[V_COERCE:%.*]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[V_COERCE]], 1
+// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[TMP2:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// CHECK-NEXT:    [[TMP3:%.*]] = tail call { ptr addrspace(5), <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16.p5.p5(ptr addrspace(5) [[P:%.*]], <64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <32 x i32> [[TMP2]], i32 0)
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP3]], 1
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP3]], 2
+// CHECK-NEXT:    store <32 x i32> [[TMP4]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP5]], ptr [[POS_I]], align 64
 // CHECK-NEXT:    ret void
 //
 void test_fifo_st_reset(v64bfp16ebs8_unaligned __aie_dm_resource_a * restrict p, v64bfp16ebs8 v,
@@ -4349,16 +4349,16 @@ void test_fifo_st_reset(v64bfp16ebs8_unaligned __aie_dm_resource_a * restrict p,
 
 // CHECK-LABEL: @_Z17test_fifo_st_pushPU3AS522v64bfp16ebs8_unaligned12v64bfp16ebs8R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[V_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8:%.*]] [[V_COERCE:%.*]], 0
-// CHECK-NEXT:    [[V_COERCE_FCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[V_COERCE]], 1
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[TMP0:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
-// CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call { ptr addrspace(5), <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16.p5.p5(ptr addrspace(5) [[P:%.*]], <64 x i8> [[V_COERCE_FCA_0_EXTRACT_I]], <8 x i8> [[V_COERCE_FCA_1_EXTRACT_I]], <32 x i32> [[TMP0]], i32 [[TMP1]])
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP2]], 1
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP2]], 2
-// CHECK-NEXT:    store <32 x i32> [[TMP3]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP4]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8:%.*]] [[V_COERCE:%.*]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[V_COERCE]], 1
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[TMP2:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// CHECK-NEXT:    [[TMP3:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
+// CHECK-NEXT:    [[TMP4:%.*]] = tail call { ptr addrspace(5), <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16.p5.p5(ptr addrspace(5) [[P:%.*]], <64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <32 x i32> [[TMP2]], i32 [[TMP3]])
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP4]], 1
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { ptr addrspace(5), <32 x i32>, i32 } [[TMP4]], 2
+// CHECK-NEXT:    store <32 x i32> [[TMP5]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP6]], ptr [[POS1_I]], align 64
 // CHECK-NEXT:    ret void
 //
 void test_fifo_st_push(v64bfp16ebs8_unaligned __aie_dm_resource_a * restrict p, v64bfp16ebs8 v,
@@ -4368,7 +4368,7 @@ void test_fifo_st_push(v64bfp16ebs8_unaligned __aie_dm_resource_a * restrict p, 
 
 // CHECK-LABEL: @_Z18test_fifo_st_flushPU3AS522v64bfp16ebs8_unalignedR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP2:%.*]] = tail call { ptr addrspace(5), <32 x i32>, i32 } @llvm.aie2p.fifo.st.flush.p5.p5(ptr addrspace(5) [[P:%.*]], <32 x i32> [[TMP0]], i32 [[TMP1]])
@@ -4384,7 +4384,7 @@ void test_fifo_st_flush(v64bfp16ebs8_unaligned __aie_dm_resource_a * restrict p,
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_1d_bytePU3AS522v64bfp16ebs8_unalignedR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP2:%.*]] = trunc i32 [[OFF:%.*]] to i20
@@ -4403,7 +4403,7 @@ void test_fifo_st_flush_1d_byte(v64bfp16ebs8_unaligned __aie_dm_resource_a * res
 // CHECK
 // CHECK-LABEL: @_Z26test_fifo_st_flush_2d_bytePU3AS522v64bfp16ebs8_unalignedR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP2:%.*]] = trunc i32 [[OFF:%.*]] to i20
@@ -4428,7 +4428,7 @@ void test_fifo_st_flush_2d_byte(v64bfp16ebs8_unaligned __aie_dm_resource_a * res
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_3d_bytePU3AS522v64bfp16ebs8_unalignedR12fifo_state_tiiRiiiS4_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP2:%.*]] = trunc i32 [[OFF:%.*]] to i20
@@ -4462,7 +4462,7 @@ void test_fifo_st_flush_3d_byte(v64bfp16ebs8_unaligned __aie_dm_resource_a * res
 
 // CHECK-LABEL: @_Z18test_fifo_ld_resetRPDv64_DB8_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
@@ -4481,7 +4481,7 @@ void test_fifo_ld_reset(v128int4 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_fillRPDv64_DB8_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4500,7 +4500,7 @@ void test_fifo_ld_fill(v128int4 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z16test_fifo_ld_popRPDv64_DB8_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4520,7 +4520,7 @@ v128int4 test_fifo_ld_pop(v128int4 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_1d_byteRPDv64_DB8_R12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4541,7 +4541,7 @@ v128int4 test_fifo_ld_pop_1d_byte(v128int4 *&p, fifo_state_t &s, int off) {
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_2d_byteRPDv64_DB8_R12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4570,7 +4570,7 @@ v128int4 test_fifo_ld_pop_2d_byte(v128int4 *&p, fifo_state_t &s, int off,
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_3d_byteRPDv64_DB8_R12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4609,7 +4609,7 @@ v128int4 test_fifo_ld_pop_3d_byte(v128int4 *&p, fifo_state_t &s, int off,
 
 // CHECK-LABEL: @_Z18test_fifo_ld_resetRPDv64_DU8_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
@@ -4628,7 +4628,7 @@ void test_fifo_ld_reset(v128uint4 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_fillRPDv64_DU8_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4647,7 +4647,7 @@ void test_fifo_ld_fill(v128uint4 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z16test_fifo_ld_popRPDv64_DU8_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4667,7 +4667,7 @@ v128uint4 test_fifo_ld_pop(v128uint4 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_1d_byteRPDv64_DU8_R12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4688,7 +4688,7 @@ v128uint4 test_fifo_ld_pop_1d_byte(v128uint4 *&p, fifo_state_t &s, int off) {
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_2d_byteRPDv64_DU8_R12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4717,7 +4717,7 @@ v128uint4 test_fifo_ld_pop_2d_byte(v128uint4 *&p, fifo_state_t &s, int off,
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_3d_byteRPDv64_DU8_R12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4756,7 +4756,7 @@ v128uint4 test_fifo_ld_pop_3d_byte(v128uint4 *&p, fifo_state_t &s, int off,
 
 // CHECK-LABEL: @_Z18test_fifo_ld_resetRPDv64_aR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
@@ -4775,7 +4775,7 @@ void test_fifo_ld_reset(v64int8 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_fillRPDv64_aR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4794,7 +4794,7 @@ void test_fifo_ld_fill(v64int8 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z16test_fifo_ld_popRPDv64_aR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4814,7 +4814,7 @@ v64int8 test_fifo_ld_pop(v64int8 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_1d_byteRPDv64_aR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4835,7 +4835,7 @@ v64int8 test_fifo_ld_pop_1d_byte(v64int8 *&p, fifo_state_t &s, int off) {
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_2d_byteRPDv64_aR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4864,7 +4864,7 @@ v64int8 test_fifo_ld_pop_2d_byte(v64int8 *&p, fifo_state_t &s, int off,
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_3d_byteRPDv64_aR12fifo_state_tiiRiiiS4_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4902,7 +4902,7 @@ v64int8 test_fifo_ld_pop_3d_byte(v64int8 *&p, fifo_state_t &s, int off,
 
 // CHECK-LABEL: @_Z18test_fifo_ld_resetRPDv64_hR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
@@ -4921,7 +4921,7 @@ void test_fifo_ld_reset(v64uint8 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_fillRPDv64_hR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4940,7 +4940,7 @@ void test_fifo_ld_fill(v64uint8 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z16test_fifo_ld_popRPDv64_hR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4960,7 +4960,7 @@ v64uint8 test_fifo_ld_pop(v64uint8 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_1d_byteRPDv64_hR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -4981,7 +4981,7 @@ v64uint8 test_fifo_ld_pop_1d_byte(v64uint8 *&p, fifo_state_t &s, int off) {
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_2d_byteRPDv64_hR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5010,7 +5010,7 @@ v64uint8 test_fifo_ld_pop_2d_byte(v64uint8 *&p, fifo_state_t &s, int off,
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_3d_byteRPDv64_hR12fifo_state_tiiRiiiS4_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5048,7 +5048,7 @@ v64uint8 test_fifo_ld_pop_3d_byte(v64uint8 *&p, fifo_state_t &s, int off,
 
 // CHECK-LABEL: @_Z18test_fifo_ld_resetRPDv32_sR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
@@ -5067,7 +5067,7 @@ void test_fifo_ld_reset(v32int16 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_fillRPDv32_sR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5086,7 +5086,7 @@ void test_fifo_ld_fill(v32int16 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z16test_fifo_ld_popRPDv32_sR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5107,7 +5107,7 @@ v32int16 test_fifo_ld_pop(v32int16 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_1d_byteRPDv32_sR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5129,7 +5129,7 @@ v32int16 test_fifo_ld_pop_1d_byte(v32int16 *&p, fifo_state_t &s, int off) {
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_2d_byteRPDv32_sR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5159,7 +5159,7 @@ v32int16 test_fifo_ld_pop_2d_byte(v32int16 *&p, fifo_state_t &s, int off,
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_3d_byteRPDv32_sR12fifo_state_tiiRiiiS4_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5198,7 +5198,7 @@ v32int16 test_fifo_ld_pop_3d_byte(v32int16 *&p, fifo_state_t &s, int off,
 
 // CHECK-LABEL: @_Z18test_fifo_ld_resetRPDv32_tR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
@@ -5217,7 +5217,7 @@ void test_fifo_ld_reset(v32uint16 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_fillRPDv32_tR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5236,7 +5236,7 @@ void test_fifo_ld_fill(v32uint16 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z16test_fifo_ld_popRPDv32_tR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5257,7 +5257,7 @@ v32uint16 test_fifo_ld_pop(v32uint16 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_1d_byteRPDv32_tR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5279,7 +5279,7 @@ v32uint16 test_fifo_ld_pop_1d_byte(v32uint16 *&p, fifo_state_t &s, int off) {
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_2d_byteRPDv32_tR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5309,7 +5309,7 @@ v32uint16 test_fifo_ld_pop_2d_byte(v32uint16 *&p, fifo_state_t &s, int off,
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_3d_byteRPDv32_tR12fifo_state_tiiRiiiS4_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5348,7 +5348,7 @@ v32uint16 test_fifo_ld_pop_3d_byte(v32uint16 *&p, fifo_state_t &s, int off,
 
 // CHECK-LABEL: @_Z18test_fifo_ld_resetRPDv16_iR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
@@ -5367,7 +5367,7 @@ void test_fifo_ld_reset(v16int32 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_fillRPDv16_iR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5386,7 +5386,7 @@ void test_fifo_ld_fill(v16int32 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z16test_fifo_ld_popRPDv16_iR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5407,7 +5407,7 @@ v16int32 test_fifo_ld_pop(v16int32 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_1d_byteRPDv16_iR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5429,7 +5429,7 @@ v16int32 test_fifo_ld_pop_1d_byte(v16int32 *&p, fifo_state_t &s, int off) {
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_2d_byteRPDv16_iR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5459,7 +5459,7 @@ v16int32 test_fifo_ld_pop_2d_byte(v16int32 *&p, fifo_state_t &s, int off,
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_3d_byteRPDv16_iR12fifo_state_tiiRiiiS4_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5499,7 +5499,7 @@ v16int32 test_fifo_ld_pop_3d_byte(v16int32 *&p, fifo_state_t &s, int off,
 
 // CHECK-LABEL: @_Z18test_fifo_ld_resetRPDv16_jR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
@@ -5518,7 +5518,7 @@ void test_fifo_ld_reset(v16uint32 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_fillRPDv16_jR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5537,7 +5537,7 @@ void test_fifo_ld_fill(v16uint32 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z16test_fifo_ld_popRPDv16_jR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5558,7 +5558,7 @@ v16uint32 test_fifo_ld_pop(v16uint32 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_1d_byteRPDv16_jR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5580,7 +5580,7 @@ v16uint32 test_fifo_ld_pop_1d_byte(v16uint32 *&p, fifo_state_t &s, int off) {
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_2d_byteRPDv16_jR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5610,7 +5610,7 @@ v16uint32 test_fifo_ld_pop_2d_byte(v16uint32 *&p, fifo_state_t &s, int off,
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_3d_byteRPDv16_jR12fifo_state_tiiRiiiS4_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5650,7 +5650,7 @@ v16uint32 test_fifo_ld_pop_3d_byte(v16uint32 *&p, fifo_state_t &s, int off,
 
 // CHECK-LABEL: @_Z18test_fifo_ld_resetRPDv32_8bfloat16R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
@@ -5669,7 +5669,7 @@ void test_fifo_ld_reset(v32bfloat16 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_fillRPDv32_8bfloat16R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5688,7 +5688,7 @@ void test_fifo_ld_fill(v32bfloat16 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z16test_fifo_ld_popRPDv32_8bfloat16R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5709,7 +5709,7 @@ v32bfloat16 test_fifo_ld_pop(v32bfloat16 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_1d_byteRPDv32_8bfloat16R12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5732,7 +5732,7 @@ v32bfloat16 test_fifo_ld_pop_1d_byte(v32bfloat16 *&p, fifo_state_t &s,
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_2d_byteRPDv32_8bfloat16R12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5762,7 +5762,7 @@ v32bfloat16 test_fifo_ld_pop_2d_byte(v32bfloat16 *&p, fifo_state_t &s, int off,
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_3d_byteRPDv32_8bfloat16R12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5802,7 +5802,7 @@ v32bfloat16 test_fifo_ld_pop_3d_byte(v32bfloat16 *&p, fifo_state_t &s, int off,
 
 // CHECK-LABEL: @_Z18test_fifo_ld_resetRPDv16_fR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
@@ -5821,7 +5821,7 @@ void test_fifo_ld_reset(v16float *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_fillRPDv16_fR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5840,7 +5840,7 @@ void test_fifo_ld_fill(v16float *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z16test_fifo_ld_popRPDv16_fR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5861,7 +5861,7 @@ v16float test_fifo_ld_pop(v16float *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_1d_byteRPDv16_fR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5883,7 +5883,7 @@ v16float test_fifo_ld_pop_1d_byte(v16float *&p, fifo_state_t &s, int off) {
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_2d_byteRPDv16_fR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5913,7 +5913,7 @@ v16float test_fifo_ld_pop_2d_byte(v16float *&p, fifo_state_t &s, int off,
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_3d_byteRPDv16_fR12fifo_state_tiiRiiiS4_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5953,7 +5953,7 @@ v16float test_fifo_ld_pop_3d_byte(v16float *&p, fifo_state_t &s, int off,
 
 // CHECK-LABEL: @_Z18test_fifo_ld_resetRP22v64bfp16ebs8_unalignedR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
@@ -5972,7 +5972,7 @@ void test_fifo_ld_reset(v64bfp16ebs8_unaligned *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_fillRP22v64bfp16ebs8_unalignedR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -5991,7 +5991,7 @@ void test_fifo_ld_fill(v64bfp16ebs8_unaligned *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z16test_fifo_ld_popRP22v64bfp16ebs8_unalignedR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -6014,7 +6014,7 @@ v64bfp16ebs8 test_fifo_ld_pop(v64bfp16ebs8_unaligned *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_1d_byteRP22v64bfp16ebs8_unalignedR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -6039,7 +6039,7 @@ v64bfp16ebs8 test_fifo_ld_pop_1d_byte(v64bfp16ebs8_unaligned *&p,
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_2d_byteRP22v64bfp16ebs8_unalignedR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -6072,7 +6072,7 @@ v64bfp16ebs8 test_fifo_ld_pop_2d_byte(v64bfp16ebs8_unaligned *&p,
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_3d_byteRP22v64bfp16ebs8_unalignedR12fifo_state_tiiRiiiS4_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -6115,7 +6115,7 @@ v64bfp16ebs8 test_fifo_ld_pop_3d_byte(v64bfp16ebs8_unaligned *&p,
 
 // CHECK-LABEL: @_Z18test_fifo_ld_resetRP23v64bfp16ebs16_unalignedR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
@@ -6134,7 +6134,7 @@ void test_fifo_ld_reset(v64bfp16ebs16_unaligned *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_fillRP23v64bfp16ebs16_unalignedR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -6153,7 +6153,7 @@ void test_fifo_ld_fill(v64bfp16ebs16_unaligned *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z16test_fifo_ld_popRP23v64bfp16ebs16_unalignedR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -6176,7 +6176,7 @@ v64bfp16ebs16 test_fifo_ld_pop(v64bfp16ebs16_unaligned *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_1d_byteRP23v64bfp16ebs16_unalignedR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -6201,7 +6201,7 @@ v64bfp16ebs16 test_fifo_ld_pop_1d_byte(v64bfp16ebs16_unaligned *&p,
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_2d_byteRP23v64bfp16ebs16_unalignedR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -6234,7 +6234,7 @@ v64bfp16ebs16 test_fifo_ld_pop_2d_byte(v64bfp16ebs16_unaligned *&p,
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_3d_byteRP23v64bfp16ebs16_unalignedR12fifo_state_tiiRiiiS4_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
@@ -6276,7 +6276,7 @@ v64bfp16ebs16 test_fifo_ld_pop_3d_byte(v64bfp16ebs16_unaligned *&p,
 
 // CHECK-LABEL: @_Z18test_fifo_ld_resetPU3AS6Dv32_sR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call { ptr addrspace(6), <32 x i32>, i32 } @llvm.aie2p.fifo.ld.fill.p6.p6(ptr addrspace(6) [[P:%.*]], <32 x i32> [[TMP0]], i32 0)
@@ -6292,7 +6292,7 @@ void test_fifo_ld_reset(v32int16 __aie_dm_resource_b *p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_fillPU3AS6Dv32_sR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP2:%.*]] = tail call { ptr addrspace(6), <32 x i32>, i32 } @llvm.aie2p.fifo.ld.fill.p6.p6(ptr addrspace(6) [[P:%.*]], <32 x i32> [[TMP0]], i32 [[TMP1]])
@@ -6308,7 +6308,7 @@ void test_fifo_ld_fill(v32int16 __aie_dm_resource_b *p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z16test_fifo_ld_popPU3AS6Dv32_sR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP2:%.*]] = tail call { <64 x i8>, ptr addrspace(6), <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.unaligned.p6.p6(ptr addrspace(6) [[P:%.*]], <32 x i32> [[TMP0]], i32 [[TMP1]])
@@ -6326,7 +6326,7 @@ v32int16 test_fifo_ld_pop(v32int16 __aie_dm_resource_b *p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_1d_bytePU3AS6Dv32_sR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP2:%.*]] = trunc i32 [[OFF:%.*]] to i20
@@ -6345,7 +6345,7 @@ v32int16 test_fifo_ld_pop_1d_byte(v32int16 __aie_dm_resource_b *p, fifo_state_t 
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_2d_bytePU3AS6Dv32_sR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP2:%.*]] = trunc i32 [[OFF:%.*]] to i20
@@ -6372,7 +6372,7 @@ v32int16 test_fifo_ld_pop_2d_byte(v32int16 __aie_dm_resource_b *p, fifo_state_t 
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_3d_bytePU3AS6Dv32_sR12fifo_state_tiiRiiiS4_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP2:%.*]] = trunc i32 [[OFF:%.*]] to i20
@@ -6409,8 +6409,8 @@ v32int16 test_fifo_ld_pop_3d_byte(v32int16 __aie_dm_resource_b *p, fifo_state_t 
 
 // CHECK-LABEL: @_Z18test_fifo_ld_fillxRP22v64bfp16ebs8_unalignedR12fifo_state_tii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 192
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // CHECK-NEXT:    [[SHL_I:%.*]] = shl i32 [[STEP:%.*]], 6
 // CHECK-NEXT:    [[OR_I:%.*]] = or i32 [[SHL_I]], [[MASK:%.*]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -6434,8 +6434,8 @@ void test_fifo_ld_fillx(v64bfp16ebs8_unaligned *&p, fifo_state_t &s, int step, i
 
 // CHECK-LABEL: @_Z18test_fifo_ld_fillxRP22v64bfp16ebs8_unalignedR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 192
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -6457,8 +6457,8 @@ void test_fifo_ld_fillx(v64bfp16ebs8_unaligned *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z18test_fifo_ld_fillxRP23v64bfp16ebs16_unalignedR12fifo_state_tii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 192
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // CHECK-NEXT:    [[SHL_I:%.*]] = shl i32 [[STEP:%.*]], 6
 // CHECK-NEXT:    [[OR_I:%.*]] = or i32 [[SHL_I]], [[MASK:%.*]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -6482,8 +6482,8 @@ void test_fifo_ld_fillx(v64bfp16ebs16_unaligned *&p, fifo_state_t &s, int step, 
 
 // CHECK-LABEL: @_Z18test_fifo_ld_fillxRP23v64bfp16ebs16_unalignedR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 192
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -6506,8 +6506,8 @@ void test_fifo_ld_fillx(v64bfp16ebs16_unaligned *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_popxRPDv64_DB8_R12fifo_state_tii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 192
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // CHECK-NEXT:    [[SHL_I:%.*]] = shl i32 [[STEP:%.*]], 6
 // CHECK-NEXT:    [[OR_I:%.*]] = or i32 [[SHL_I]], [[MASK:%.*]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -6532,8 +6532,8 @@ v128int4 test_fifo_ld_popx(v128int4 *&p, fifo_state_t &s, int step, int mask) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_popxRPDv64_DB8_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 192
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -6556,8 +6556,8 @@ v128int4 test_fifo_ld_popx(v128int4 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_popxRPDv64_DU8_R12fifo_state_tii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 192
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // CHECK-NEXT:    [[SHL_I:%.*]] = shl i32 [[STEP:%.*]], 6
 // CHECK-NEXT:    [[OR_I:%.*]] = or i32 [[SHL_I]], [[MASK:%.*]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -6582,8 +6582,8 @@ v128uint4 test_fifo_ld_popx(v128uint4 *&p, fifo_state_t &s, int step, int mask) 
 
 // CHECK-LABEL: @_Z17test_fifo_ld_popxRPDv64_DU8_R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 192
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -6606,8 +6606,8 @@ v128uint4 test_fifo_ld_popx(v128uint4 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_popxRPDv64_aR12fifo_state_tii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 192
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // CHECK-NEXT:    [[SHL_I:%.*]] = shl i32 [[STEP:%.*]], 6
 // CHECK-NEXT:    [[OR_I:%.*]] = or i32 [[SHL_I]], [[MASK:%.*]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -6632,8 +6632,8 @@ v64int8 test_fifo_ld_popx(v64int8 *&p, fifo_state_t &s, int step, int mask) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_popxRPDv64_aR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 192
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -6656,8 +6656,8 @@ v64int8 test_fifo_ld_popx(v64int8 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_popxRPDv64_hR12fifo_state_tii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 192
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // CHECK-NEXT:    [[SHL_I:%.*]] = shl i32 [[STEP:%.*]], 6
 // CHECK-NEXT:    [[OR_I:%.*]] = or i32 [[SHL_I]], [[MASK:%.*]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -6682,8 +6682,8 @@ v64uint8 test_fifo_ld_popx(v64uint8 *&p, fifo_state_t &s, int step, int mask) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_popxRPDv64_hR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 192
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -6706,8 +6706,8 @@ v64uint8 test_fifo_ld_popx(v64uint8 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_popxRPDv32_sR12fifo_state_tii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 192
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // CHECK-NEXT:    [[SHL_I:%.*]] = shl i32 [[STEP:%.*]], 6
 // CHECK-NEXT:    [[OR_I:%.*]] = or i32 [[SHL_I]], [[MASK:%.*]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -6733,8 +6733,8 @@ v32int16 test_fifo_ld_popx(v32int16 *&p, fifo_state_t &s, int step, int mask) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_popxRPDv32_sR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 192
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -6758,8 +6758,8 @@ v32int16 test_fifo_ld_popx(v32int16 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_popxRPDv32_tR12fifo_state_tii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 192
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // CHECK-NEXT:    [[SHL_I:%.*]] = shl i32 [[STEP:%.*]], 6
 // CHECK-NEXT:    [[OR_I:%.*]] = or i32 [[SHL_I]], [[MASK:%.*]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -6785,8 +6785,8 @@ v32uint16 test_fifo_ld_popx(v32uint16 *&p, fifo_state_t &s, int step, int mask) 
 
 // CHECK-LABEL: @_Z17test_fifo_ld_popxRPDv32_tR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 192
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -6810,8 +6810,8 @@ v32uint16 test_fifo_ld_popx(v32uint16 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_popxRPDv16_iR12fifo_state_tii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 192
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // CHECK-NEXT:    [[SHL_I:%.*]] = shl i32 [[STEP:%.*]], 6
 // CHECK-NEXT:    [[OR_I:%.*]] = or i32 [[SHL_I]], [[MASK:%.*]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -6837,8 +6837,8 @@ v16int32 test_fifo_ld_popx(v16int32 *&p, fifo_state_t &s, int step, int mask) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_popxRPDv16_iR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 192
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -6862,8 +6862,8 @@ v16int32 test_fifo_ld_popx(v16int32 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_popxRPDv16_jR12fifo_state_tii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 192
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // CHECK-NEXT:    [[SHL_I:%.*]] = shl i32 [[STEP:%.*]], 6
 // CHECK-NEXT:    [[OR_I:%.*]] = or i32 [[SHL_I]], [[MASK:%.*]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -6889,8 +6889,8 @@ v16uint32 test_fifo_ld_popx(v16uint32 *&p, fifo_state_t &s, int step, int mask) 
 
 // CHECK-LABEL: @_Z17test_fifo_ld_popxRPDv16_jR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 192
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -6914,8 +6914,8 @@ v16uint32 test_fifo_ld_popx(v16uint32 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_popxRPDv32_8bfloat16R12fifo_state_tii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 192
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // CHECK-NEXT:    [[SHL_I:%.*]] = shl i32 [[STEP:%.*]], 6
 // CHECK-NEXT:    [[OR_I:%.*]] = or i32 [[SHL_I]], [[MASK:%.*]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -6941,8 +6941,8 @@ v32bfloat16 test_fifo_ld_popx(v32bfloat16 *&p, fifo_state_t &s, int step, int ma
 
 // CHECK-LABEL: @_Z17test_fifo_ld_popxRPDv32_8bfloat16R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 192
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -6966,8 +6966,8 @@ v32bfloat16 test_fifo_ld_popx(v32bfloat16 *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_popxRPDv16_fR12fifo_state_tii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 192
+// CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // CHECK-NEXT:    [[SHL_I:%.*]] = shl i32 [[STEP:%.*]], 6
 // CHECK-NEXT:    [[OR_I:%.*]] = or i32 [[SHL_I]], [[MASK:%.*]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -6993,8 +6993,8 @@ v16float test_fifo_ld_popx(v16float *&p, fifo_state_t &s, int step, int mask) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_popxRPDv16_fR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 192
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -7019,7 +7019,7 @@ v16float test_fifo_ld_popx(v16float *&p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z18test_fifo_ld_resetRrP23v128bfp16ebs8_unalignedR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I_I]], align 64, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
@@ -7038,7 +7038,7 @@ void test_fifo_ld_reset(v128bfp16ebs8_unaligned *restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z17test_fifo_ld_fillRrP23v128bfp16ebs8_unalignedR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -7057,7 +7057,7 @@ void test_fifo_ld_fill(v128bfp16ebs8_unaligned *restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z16test_fifo_ld_popRrP23v128bfp16ebs8_unalignedR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -7070,7 +7070,7 @@ void test_fifo_ld_fill(v128bfp16ebs8_unaligned *restrict &p, fifo_state_t &s) {
 // CHECK-NEXT:    store <32 x i32> [[TMP5]], ptr [[S]], align 128
 // CHECK-NEXT:    store i32 [[TMP6]], ptr [[POS1_I_I]], align 64
 // CHECK-NEXT:    store ptr [[TMP4]], ptr [[P]], align 4
-// CHECK-NEXT:    [[DOTFCA_0_INSERT_I23_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8:%.*]] poison, <64 x i8> [[TMP7]], 0
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I21_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8:%.*]] poison, <64 x i8> [[TMP7]], 0
 // CHECK-NEXT:    [[TMP9:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP10:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP11:%.*]] = tail call { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.576.bfp16.p0.p0(ptr [[TMP4]], <32 x i32> [[TMP9]], i32 [[TMP10]])
@@ -7082,10 +7082,10 @@ void test_fifo_ld_fill(v128bfp16ebs8_unaligned *restrict &p, fifo_state_t &s) {
 // CHECK-NEXT:    store <32 x i32> [[TMP13]], ptr [[S]], align 128
 // CHECK-NEXT:    store i32 [[TMP14]], ptr [[POS1_I_I]], align 64
 // CHECK-NEXT:    store ptr [[TMP12]], ptr [[P]], align 4
-// CHECK-NEXT:    [[DOTFCA_1_INSERT_I28_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_0_INSERT_I23_I]], <64 x i8> [[TMP15]], 1
-// CHECK-NEXT:    [[DOTFCA_2_INSERT_I29_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_1_INSERT_I28_I]], <8 x i8> [[TMP8]], 2
-// CHECK-NEXT:    [[DOTFCA_3_INSERT_I30_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_2_INSERT_I29_I]], <8 x i8> [[TMP16]], 3
-// CHECK-NEXT:    ret [[STRUCT_V128BFP16EBS8]] [[DOTFCA_3_INSERT_I30_I]]
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I26_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_0_INSERT_I21_I]], <64 x i8> [[TMP15]], 1
+// CHECK-NEXT:    [[DOTFCA_2_INSERT_I27_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_1_INSERT_I26_I]], <8 x i8> [[TMP8]], 2
+// CHECK-NEXT:    [[DOTFCA_3_INSERT_I28_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_2_INSERT_I27_I]], <8 x i8> [[TMP16]], 3
+// CHECK-NEXT:    ret [[STRUCT_V128BFP16EBS8]] [[DOTFCA_3_INSERT_I28_I]]
 //
 v128bfp16ebs8 test_fifo_ld_pop(v128bfp16ebs8_unaligned *restrict &p,
                                fifo_state_t &s) {
@@ -7094,7 +7094,7 @@ v128bfp16ebs8 test_fifo_ld_pop(v128bfp16ebs8_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_1d_byteRrP23v128bfp16ebs8_unalignedR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -7107,7 +7107,7 @@ v128bfp16ebs8 test_fifo_ld_pop(v128bfp16ebs8_unaligned *restrict &p,
 // CHECK-NEXT:    store <32 x i32> [[TMP5]], ptr [[S]], align 128
 // CHECK-NEXT:    store i32 [[TMP6]], ptr [[POS1_I_I]], align 64
 // CHECK-NEXT:    store ptr [[TMP4]], ptr [[P]], align 4
-// CHECK-NEXT:    [[DOTFCA_0_INSERT_I23_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8:%.*]] poison, <64 x i8> [[TMP7]], 0
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I21_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8:%.*]] poison, <64 x i8> [[TMP7]], 0
 // CHECK-NEXT:    [[TMP9:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP10:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP11:%.*]] = trunc i32 [[OFF:%.*]] to i20
@@ -7120,10 +7120,10 @@ v128bfp16ebs8 test_fifo_ld_pop(v128bfp16ebs8_unaligned *restrict &p,
 // CHECK-NEXT:    store <32 x i32> [[TMP14]], ptr [[S]], align 128
 // CHECK-NEXT:    store i32 [[TMP15]], ptr [[POS1_I_I]], align 64
 // CHECK-NEXT:    store ptr [[TMP13]], ptr [[P]], align 4
-// CHECK-NEXT:    [[DOTFCA_1_INSERT_I28_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_0_INSERT_I23_I]], <64 x i8> [[TMP16]], 1
-// CHECK-NEXT:    [[DOTFCA_2_INSERT_I29_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_1_INSERT_I28_I]], <8 x i8> [[TMP8]], 2
-// CHECK-NEXT:    [[DOTFCA_3_INSERT_I30_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_2_INSERT_I29_I]], <8 x i8> [[TMP17]], 3
-// CHECK-NEXT:    ret [[STRUCT_V128BFP16EBS8]] [[DOTFCA_3_INSERT_I30_I]]
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I26_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_0_INSERT_I21_I]], <64 x i8> [[TMP16]], 1
+// CHECK-NEXT:    [[DOTFCA_2_INSERT_I27_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_1_INSERT_I26_I]], <8 x i8> [[TMP8]], 2
+// CHECK-NEXT:    [[DOTFCA_3_INSERT_I28_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_2_INSERT_I27_I]], <8 x i8> [[TMP17]], 3
+// CHECK-NEXT:    ret [[STRUCT_V128BFP16EBS8]] [[DOTFCA_3_INSERT_I28_I]]
 //
 v128bfp16ebs8 test_fifo_ld_pop_1d_byte(v128bfp16ebs8_unaligned *restrict &p,
                                        fifo_state_t &s, int off) {
@@ -7132,7 +7132,7 @@ v128bfp16ebs8 test_fifo_ld_pop_1d_byte(v128bfp16ebs8_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_2d_byteRrP23v128bfp16ebs8_unalignedR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -7145,7 +7145,7 @@ v128bfp16ebs8 test_fifo_ld_pop_1d_byte(v128bfp16ebs8_unaligned *restrict &p,
 // CHECK-NEXT:    store <32 x i32> [[TMP5]], ptr [[S]], align 128
 // CHECK-NEXT:    store i32 [[TMP6]], ptr [[POS1_I_I]], align 64
 // CHECK-NEXT:    store ptr [[TMP4]], ptr [[P]], align 4
-// CHECK-NEXT:    [[DOTFCA_0_INSERT_I23_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8:%.*]] poison, <64 x i8> [[TMP7]], 0
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I21_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8:%.*]] poison, <64 x i8> [[TMP7]], 0
 // CHECK-NEXT:    [[TMP9:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP10:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP11:%.*]] = trunc i32 [[OFF:%.*]] to i20
@@ -7165,10 +7165,10 @@ v128bfp16ebs8 test_fifo_ld_pop_1d_byte(v128bfp16ebs8_unaligned *restrict &p,
 // CHECK-NEXT:    store <32 x i32> [[TMP18]], ptr [[S]], align 128
 // CHECK-NEXT:    store i32 [[TMP19]], ptr [[POS1_I_I]], align 64
 // CHECK-NEXT:    store ptr [[TMP17]], ptr [[P]], align 4
-// CHECK-NEXT:    [[DOTFCA_1_INSERT_I28_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_0_INSERT_I23_I]], <64 x i8> [[TMP20]], 1
-// CHECK-NEXT:    [[DOTFCA_2_INSERT_I29_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_1_INSERT_I28_I]], <8 x i8> [[TMP8]], 2
-// CHECK-NEXT:    [[DOTFCA_3_INSERT_I30_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_2_INSERT_I29_I]], <8 x i8> [[TMP21]], 3
-// CHECK-NEXT:    ret [[STRUCT_V128BFP16EBS8]] [[DOTFCA_3_INSERT_I30_I]]
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I26_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_0_INSERT_I21_I]], <64 x i8> [[TMP20]], 1
+// CHECK-NEXT:    [[DOTFCA_2_INSERT_I27_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_1_INSERT_I26_I]], <8 x i8> [[TMP8]], 2
+// CHECK-NEXT:    [[DOTFCA_3_INSERT_I28_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_2_INSERT_I27_I]], <8 x i8> [[TMP21]], 3
+// CHECK-NEXT:    ret [[STRUCT_V128BFP16EBS8]] [[DOTFCA_3_INSERT_I28_I]]
 //
 v128bfp16ebs8 test_fifo_ld_pop_2d_byte(v128bfp16ebs8_unaligned *restrict &p,
                                        fifo_state_t &s, int off, int size1,
@@ -7178,7 +7178,7 @@ v128bfp16ebs8 test_fifo_ld_pop_2d_byte(v128bfp16ebs8_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_3d_byteRrP23v128bfp16ebs8_unalignedR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -7191,7 +7191,7 @@ v128bfp16ebs8 test_fifo_ld_pop_2d_byte(v128bfp16ebs8_unaligned *restrict &p,
 // CHECK-NEXT:    store <32 x i32> [[TMP5]], ptr [[S]], align 128
 // CHECK-NEXT:    store i32 [[TMP6]], ptr [[POS1_I_I]], align 64
 // CHECK-NEXT:    store ptr [[TMP4]], ptr [[P]], align 4
-// CHECK-NEXT:    [[DOTFCA_0_INSERT_I23_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8:%.*]] poison, <64 x i8> [[TMP7]], 0
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I21_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8:%.*]] poison, <64 x i8> [[TMP7]], 0
 // CHECK-NEXT:    [[TMP9:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP10:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP11:%.*]] = trunc i32 [[OFF:%.*]] to i20
@@ -7218,10 +7218,10 @@ v128bfp16ebs8 test_fifo_ld_pop_2d_byte(v128bfp16ebs8_unaligned *restrict &p,
 // CHECK-NEXT:    store <32 x i32> [[TMP22]], ptr [[S]], align 128
 // CHECK-NEXT:    store i32 [[TMP23]], ptr [[POS1_I_I]], align 64
 // CHECK-NEXT:    store ptr [[TMP21]], ptr [[P]], align 4
-// CHECK-NEXT:    [[DOTFCA_1_INSERT_I28_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_0_INSERT_I23_I]], <64 x i8> [[TMP24]], 1
-// CHECK-NEXT:    [[DOTFCA_2_INSERT_I29_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_1_INSERT_I28_I]], <8 x i8> [[TMP8]], 2
-// CHECK-NEXT:    [[DOTFCA_3_INSERT_I30_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_2_INSERT_I29_I]], <8 x i8> [[TMP25]], 3
-// CHECK-NEXT:    ret [[STRUCT_V128BFP16EBS8]] [[DOTFCA_3_INSERT_I30_I]]
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I26_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_0_INSERT_I21_I]], <64 x i8> [[TMP24]], 1
+// CHECK-NEXT:    [[DOTFCA_2_INSERT_I27_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_1_INSERT_I26_I]], <8 x i8> [[TMP8]], 2
+// CHECK-NEXT:    [[DOTFCA_3_INSERT_I28_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS8]] [[DOTFCA_2_INSERT_I27_I]], <8 x i8> [[TMP25]], 3
+// CHECK-NEXT:    ret [[STRUCT_V128BFP16EBS8]] [[DOTFCA_3_INSERT_I28_I]]
 //
 v128bfp16ebs8 test_fifo_ld_pop_3d_byte(v128bfp16ebs8_unaligned *restrict &p,
                                        fifo_state_t &s, int off, int size1,
@@ -7233,7 +7233,7 @@ v128bfp16ebs8 test_fifo_ld_pop_3d_byte(v128bfp16ebs8_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z18test_fifo_ld_resetRrP24v128bfp16ebs16_unalignedR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I_I]], align 64, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
@@ -7253,7 +7253,7 @@ void test_fifo_ld_reset(v128bfp16ebs16_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z17test_fifo_ld_fillRrP24v128bfp16ebs16_unalignedR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -7272,7 +7272,7 @@ void test_fifo_ld_fill(v128bfp16ebs16_unaligned *restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z16test_fifo_ld_popRrP24v128bfp16ebs16_unalignedR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -7285,7 +7285,7 @@ void test_fifo_ld_fill(v128bfp16ebs16_unaligned *restrict &p, fifo_state_t &s) {
 // CHECK-NEXT:    store <32 x i32> [[TMP5]], ptr [[S]], align 128
 // CHECK-NEXT:    store i32 [[TMP6]], ptr [[POS1_I_I]], align 64
 // CHECK-NEXT:    store ptr [[TMP4]], ptr [[P]], align 4
-// CHECK-NEXT:    [[DOTFCA_0_INSERT_I23_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16:%.*]] poison, <64 x i8> [[TMP7]], 0
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I21_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16:%.*]] poison, <64 x i8> [[TMP7]], 0
 // CHECK-NEXT:    [[TMP9:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP10:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP11:%.*]] = tail call { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.544.bfp16.p0.p0(ptr [[TMP4]], <32 x i32> [[TMP9]], i32 [[TMP10]])
@@ -7297,10 +7297,10 @@ void test_fifo_ld_fill(v128bfp16ebs16_unaligned *restrict &p, fifo_state_t &s) {
 // CHECK-NEXT:    store <32 x i32> [[TMP13]], ptr [[S]], align 128
 // CHECK-NEXT:    store i32 [[TMP14]], ptr [[POS1_I_I]], align 64
 // CHECK-NEXT:    store ptr [[TMP12]], ptr [[P]], align 4
-// CHECK-NEXT:    [[DOTFCA_1_INSERT_I28_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_0_INSERT_I23_I]], <64 x i8> [[TMP15]], 1
-// CHECK-NEXT:    [[DOTFCA_2_INSERT_I29_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_1_INSERT_I28_I]], <8 x i8> [[TMP8]], 2
-// CHECK-NEXT:    [[DOTFCA_3_INSERT_I30_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_2_INSERT_I29_I]], <8 x i8> [[TMP16]], 3
-// CHECK-NEXT:    ret [[STRUCT_V128BFP16EBS16]] [[DOTFCA_3_INSERT_I30_I]]
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I26_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_0_INSERT_I21_I]], <64 x i8> [[TMP15]], 1
+// CHECK-NEXT:    [[DOTFCA_2_INSERT_I27_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_1_INSERT_I26_I]], <8 x i8> [[TMP8]], 2
+// CHECK-NEXT:    [[DOTFCA_3_INSERT_I28_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_2_INSERT_I27_I]], <8 x i8> [[TMP16]], 3
+// CHECK-NEXT:    ret [[STRUCT_V128BFP16EBS16]] [[DOTFCA_3_INSERT_I28_I]]
 //
 v128bfp16ebs16 test_fifo_ld_pop(v128bfp16ebs16_unaligned *restrict &p,
                                 fifo_state_t &s) {
@@ -7309,7 +7309,7 @@ v128bfp16ebs16 test_fifo_ld_pop(v128bfp16ebs16_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_1d_byteRrP24v128bfp16ebs16_unalignedR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -7322,7 +7322,7 @@ v128bfp16ebs16 test_fifo_ld_pop(v128bfp16ebs16_unaligned *restrict &p,
 // CHECK-NEXT:    store <32 x i32> [[TMP5]], ptr [[S]], align 128
 // CHECK-NEXT:    store i32 [[TMP6]], ptr [[POS1_I_I]], align 64
 // CHECK-NEXT:    store ptr [[TMP4]], ptr [[P]], align 4
-// CHECK-NEXT:    [[DOTFCA_0_INSERT_I23_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16:%.*]] poison, <64 x i8> [[TMP7]], 0
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I21_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16:%.*]] poison, <64 x i8> [[TMP7]], 0
 // CHECK-NEXT:    [[TMP9:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP10:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP11:%.*]] = trunc i32 [[OFF:%.*]] to i20
@@ -7335,10 +7335,10 @@ v128bfp16ebs16 test_fifo_ld_pop(v128bfp16ebs16_unaligned *restrict &p,
 // CHECK-NEXT:    store <32 x i32> [[TMP14]], ptr [[S]], align 128
 // CHECK-NEXT:    store i32 [[TMP15]], ptr [[POS1_I_I]], align 64
 // CHECK-NEXT:    store ptr [[TMP13]], ptr [[P]], align 4
-// CHECK-NEXT:    [[DOTFCA_1_INSERT_I28_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_0_INSERT_I23_I]], <64 x i8> [[TMP16]], 1
-// CHECK-NEXT:    [[DOTFCA_2_INSERT_I29_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_1_INSERT_I28_I]], <8 x i8> [[TMP8]], 2
-// CHECK-NEXT:    [[DOTFCA_3_INSERT_I30_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_2_INSERT_I29_I]], <8 x i8> [[TMP17]], 3
-// CHECK-NEXT:    ret [[STRUCT_V128BFP16EBS16]] [[DOTFCA_3_INSERT_I30_I]]
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I26_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_0_INSERT_I21_I]], <64 x i8> [[TMP16]], 1
+// CHECK-NEXT:    [[DOTFCA_2_INSERT_I27_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_1_INSERT_I26_I]], <8 x i8> [[TMP8]], 2
+// CHECK-NEXT:    [[DOTFCA_3_INSERT_I28_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_2_INSERT_I27_I]], <8 x i8> [[TMP17]], 3
+// CHECK-NEXT:    ret [[STRUCT_V128BFP16EBS16]] [[DOTFCA_3_INSERT_I28_I]]
 //
 v128bfp16ebs16 test_fifo_ld_pop_1d_byte(v128bfp16ebs16_unaligned *restrict &p,
                                         fifo_state_t &s, int off) {
@@ -7347,7 +7347,7 @@ v128bfp16ebs16 test_fifo_ld_pop_1d_byte(v128bfp16ebs16_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_2d_byteRrP24v128bfp16ebs16_unalignedR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -7360,7 +7360,7 @@ v128bfp16ebs16 test_fifo_ld_pop_1d_byte(v128bfp16ebs16_unaligned *restrict &p,
 // CHECK-NEXT:    store <32 x i32> [[TMP5]], ptr [[S]], align 128
 // CHECK-NEXT:    store i32 [[TMP6]], ptr [[POS1_I_I]], align 64
 // CHECK-NEXT:    store ptr [[TMP4]], ptr [[P]], align 4
-// CHECK-NEXT:    [[DOTFCA_0_INSERT_I23_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16:%.*]] poison, <64 x i8> [[TMP7]], 0
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I21_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16:%.*]] poison, <64 x i8> [[TMP7]], 0
 // CHECK-NEXT:    [[TMP9:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP10:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP11:%.*]] = trunc i32 [[OFF:%.*]] to i20
@@ -7380,10 +7380,10 @@ v128bfp16ebs16 test_fifo_ld_pop_1d_byte(v128bfp16ebs16_unaligned *restrict &p,
 // CHECK-NEXT:    store <32 x i32> [[TMP18]], ptr [[S]], align 128
 // CHECK-NEXT:    store i32 [[TMP19]], ptr [[POS1_I_I]], align 64
 // CHECK-NEXT:    store ptr [[TMP17]], ptr [[P]], align 4
-// CHECK-NEXT:    [[DOTFCA_1_INSERT_I28_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_0_INSERT_I23_I]], <64 x i8> [[TMP20]], 1
-// CHECK-NEXT:    [[DOTFCA_2_INSERT_I29_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_1_INSERT_I28_I]], <8 x i8> [[TMP8]], 2
-// CHECK-NEXT:    [[DOTFCA_3_INSERT_I30_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_2_INSERT_I29_I]], <8 x i8> [[TMP21]], 3
-// CHECK-NEXT:    ret [[STRUCT_V128BFP16EBS16]] [[DOTFCA_3_INSERT_I30_I]]
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I26_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_0_INSERT_I21_I]], <64 x i8> [[TMP20]], 1
+// CHECK-NEXT:    [[DOTFCA_2_INSERT_I27_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_1_INSERT_I26_I]], <8 x i8> [[TMP8]], 2
+// CHECK-NEXT:    [[DOTFCA_3_INSERT_I28_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_2_INSERT_I27_I]], <8 x i8> [[TMP21]], 3
+// CHECK-NEXT:    ret [[STRUCT_V128BFP16EBS16]] [[DOTFCA_3_INSERT_I28_I]]
 //
 v128bfp16ebs16 test_fifo_ld_pop_2d_byte(v128bfp16ebs16_unaligned *restrict &p,
                                         fifo_state_t &s, int off, int size1,
@@ -7393,7 +7393,7 @@ v128bfp16ebs16 test_fifo_ld_pop_2d_byte(v128bfp16ebs16_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z24test_fifo_ld_pop_3d_byteRrP24v128bfp16ebs16_unalignedR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -7406,7 +7406,7 @@ v128bfp16ebs16 test_fifo_ld_pop_2d_byte(v128bfp16ebs16_unaligned *restrict &p,
 // CHECK-NEXT:    store <32 x i32> [[TMP5]], ptr [[S]], align 128
 // CHECK-NEXT:    store i32 [[TMP6]], ptr [[POS1_I_I]], align 64
 // CHECK-NEXT:    store ptr [[TMP4]], ptr [[P]], align 4
-// CHECK-NEXT:    [[DOTFCA_0_INSERT_I23_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16:%.*]] poison, <64 x i8> [[TMP7]], 0
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I21_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16:%.*]] poison, <64 x i8> [[TMP7]], 0
 // CHECK-NEXT:    [[TMP9:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP10:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP11:%.*]] = trunc i32 [[OFF:%.*]] to i20
@@ -7433,10 +7433,10 @@ v128bfp16ebs16 test_fifo_ld_pop_2d_byte(v128bfp16ebs16_unaligned *restrict &p,
 // CHECK-NEXT:    store <32 x i32> [[TMP22]], ptr [[S]], align 128
 // CHECK-NEXT:    store i32 [[TMP23]], ptr [[POS1_I_I]], align 64
 // CHECK-NEXT:    store ptr [[TMP21]], ptr [[P]], align 4
-// CHECK-NEXT:    [[DOTFCA_1_INSERT_I28_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_0_INSERT_I23_I]], <64 x i8> [[TMP24]], 1
-// CHECK-NEXT:    [[DOTFCA_2_INSERT_I29_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_1_INSERT_I28_I]], <8 x i8> [[TMP8]], 2
-// CHECK-NEXT:    [[DOTFCA_3_INSERT_I30_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_2_INSERT_I29_I]], <8 x i8> [[TMP25]], 3
-// CHECK-NEXT:    ret [[STRUCT_V128BFP16EBS16]] [[DOTFCA_3_INSERT_I30_I]]
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I26_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_0_INSERT_I21_I]], <64 x i8> [[TMP24]], 1
+// CHECK-NEXT:    [[DOTFCA_2_INSERT_I27_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_1_INSERT_I26_I]], <8 x i8> [[TMP8]], 2
+// CHECK-NEXT:    [[DOTFCA_3_INSERT_I28_I:%.*]] = insertvalue [[STRUCT_V128BFP16EBS16]] [[DOTFCA_2_INSERT_I27_I]], <8 x i8> [[TMP25]], 3
+// CHECK-NEXT:    ret [[STRUCT_V128BFP16EBS16]] [[DOTFCA_3_INSERT_I28_I]]
 //
 v128bfp16ebs16 test_fifo_ld_pop_3d_byte(v128bfp16ebs16_unaligned *restrict &p,
                                         fifo_state_t &s, int off, int size1,
@@ -7448,30 +7448,30 @@ v128bfp16ebs16 test_fifo_ld_pop_3d_byte(v128bfp16ebs16_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z18test_fifo_st_resetRrP23v128bfp16ebs8_unaligned13v128bfp16ebs8R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
-// CHECK-NEXT:    [[M_COERCE_FCA_2_EXTRACT_I_I:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8:%.*]] [[V_COERCE:%.*]], 2
-// CHECK-NEXT:    [[M_COERCE_FCA_0_EXTRACT_I_I:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[V_COERCE]], 0
-// CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
-// CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16.p0.p0(ptr [[TMP0]], <64 x i8> [[M_COERCE_FCA_0_EXTRACT_I_I]], <8 x i8> [[M_COERCE_FCA_2_EXTRACT_I_I]], <32 x i32> [[TMP1]], i32 0)
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP2]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP2]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP2]], 2
-// CHECK-NEXT:    store <32 x i32> [[TMP4]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP5]], ptr [[POS_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP3]], ptr [[P]], align 4
-// CHECK-NEXT:    [[M_COERCE_FCA_3_EXTRACT_I26_I:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[V_COERCE]], 3
-// CHECK-NEXT:    [[M_COERCE_FCA_1_EXTRACT_I27_I:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[V_COERCE]], 1
-// CHECK-NEXT:    [[TMP6:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
-// CHECK-NEXT:    [[TMP7:%.*]] = load i32, ptr [[POS_I]], align 64, !tbaa [[TBAA10]]
-// CHECK-NEXT:    [[TMP8:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16.p0.p0(ptr [[TMP3]], <64 x i8> [[M_COERCE_FCA_1_EXTRACT_I27_I]], <8 x i8> [[M_COERCE_FCA_3_EXTRACT_I26_I]], <32 x i32> [[TMP6]], i32 [[TMP7]])
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP8]], 0
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP8]], 1
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP8]], 2
-// CHECK-NEXT:    store <32 x i32> [[TMP10]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP11]], ptr [[POS_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP9]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8:%.*]] [[V_COERCE:%.*]], 2
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[V_COERCE]], 0
+// CHECK-NEXT:    [[TMP2:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
+// CHECK-NEXT:    [[TMP3:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// CHECK-NEXT:    [[TMP4:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16.p0.p0(ptr [[TMP2]], <64 x i8> [[TMP1]], <8 x i8> [[TMP0]], <32 x i32> [[TMP3]], i32 0)
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP4]], 0
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP4]], 1
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP4]], 2
+// CHECK-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP7]], ptr [[POS_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP5]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[V_COERCE]], 3
+// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[V_COERCE]], 1
+// CHECK-NEXT:    [[TMP10:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// CHECK-NEXT:    [[TMP11:%.*]] = load i32, ptr [[POS_I]], align 64, !tbaa [[TBAA10]]
+// CHECK-NEXT:    [[TMP12:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16.p0.p0(ptr [[TMP5]], <64 x i8> [[TMP9]], <8 x i8> [[TMP8]], <32 x i32> [[TMP10]], i32 [[TMP11]])
+// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP12]], 0
+// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP12]], 1
+// CHECK-NEXT:    [[TMP15:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP12]], 2
+// CHECK-NEXT:    store <32 x i32> [[TMP14]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP15]], ptr [[POS_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP13]], ptr [[P]], align 4
 // CHECK-NEXT:    ret void
 //
 void test_fifo_st_reset(v128bfp16ebs8_unaligned *restrict &p, v128bfp16ebs8 v,
@@ -7481,30 +7481,30 @@ void test_fifo_st_reset(v128bfp16ebs8_unaligned *restrict &p, v128bfp16ebs8 v,
 
 // CHECK-LABEL: @_Z17test_fifo_st_pushRrP23v128bfp16ebs8_unaligned13v128bfp16ebs8R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[M_COERCE_FCA_2_EXTRACT_I_I:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8:%.*]] [[V_COERCE:%.*]], 2
-// CHECK-NEXT:    [[M_COERCE_FCA_0_EXTRACT_I_I:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[V_COERCE]], 0
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
-// CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
-// CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
-// CHECK-NEXT:    [[TMP3:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16.p0.p0(ptr [[TMP0]], <64 x i8> [[M_COERCE_FCA_0_EXTRACT_I_I]], <8 x i8> [[M_COERCE_FCA_2_EXTRACT_I_I]], <32 x i32> [[TMP1]], i32 [[TMP2]])
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 0
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 1
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 2
-// CHECK-NEXT:    store <32 x i32> [[TMP5]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP6]], ptr [[POS1_I_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP4]], ptr [[P]], align 4
-// CHECK-NEXT:    [[M_COERCE_FCA_3_EXTRACT_I25_I:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[V_COERCE]], 3
-// CHECK-NEXT:    [[M_COERCE_FCA_1_EXTRACT_I26_I:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[V_COERCE]], 1
-// CHECK-NEXT:    [[TMP7:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
-// CHECK-NEXT:    [[TMP8:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
-// CHECK-NEXT:    [[TMP9:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16.p0.p0(ptr [[TMP4]], <64 x i8> [[M_COERCE_FCA_1_EXTRACT_I26_I]], <8 x i8> [[M_COERCE_FCA_3_EXTRACT_I25_I]], <32 x i32> [[TMP7]], i32 [[TMP8]])
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP9]], 0
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP9]], 1
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP9]], 2
-// CHECK-NEXT:    store <32 x i32> [[TMP11]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP12]], ptr [[POS1_I_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP10]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8:%.*]] [[V_COERCE:%.*]], 2
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[V_COERCE]], 0
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[TMP2:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
+// CHECK-NEXT:    [[TMP3:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// CHECK-NEXT:    [[TMP4:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16.p0.p0(ptr [[TMP2]], <64 x i8> [[TMP1]], <8 x i8> [[TMP0]], <32 x i32> [[TMP3]], i32 [[TMP4]])
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP5]], 0
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP5]], 1
+// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP5]], 2
+// CHECK-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP8]], ptr [[POS1_I_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP6]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[V_COERCE]], 3
+// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[V_COERCE]], 1
+// CHECK-NEXT:    [[TMP11:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// CHECK-NEXT:    [[TMP12:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
+// CHECK-NEXT:    [[TMP13:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16.p0.p0(ptr [[TMP6]], <64 x i8> [[TMP10]], <8 x i8> [[TMP9]], <32 x i32> [[TMP11]], i32 [[TMP12]])
+// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP13]], 0
+// CHECK-NEXT:    [[TMP15:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP13]], 1
+// CHECK-NEXT:    [[TMP16:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP13]], 2
+// CHECK-NEXT:    store <32 x i32> [[TMP15]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP16]], ptr [[POS1_I_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP14]], ptr [[P]], align 4
 // CHECK-NEXT:    ret void
 //
 void test_fifo_st_push(v128bfp16ebs8_unaligned *restrict &p, v128bfp16ebs8 v,
@@ -7514,7 +7514,7 @@ void test_fifo_st_push(v128bfp16ebs8_unaligned *restrict &p, v128bfp16ebs8 v,
 
 // CHECK-LABEL: @_Z18test_fifo_st_flushRrP23v128bfp16ebs8_unalignedR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -7542,7 +7542,7 @@ void test_fifo_st_flush(v128bfp16ebs8_unaligned *restrict &p, fifo_state_t &s) {
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_1d_byteRrP23v128bfp16ebs8_unalignedR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -7572,7 +7572,7 @@ void test_fifo_st_flush_1d_byte(v128bfp16ebs8_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_2d_byteRrP23v128bfp16ebs8_unalignedR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -7610,7 +7610,7 @@ void test_fifo_st_flush_2d_byte(v128bfp16ebs8_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_3d_byteRrP23v128bfp16ebs8_unalignedR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -7656,7 +7656,7 @@ void test_fifo_st_flush_3d_byte(v128bfp16ebs8_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z23test_fifo_st_flush_bareRrP23v128bfp16ebs8_unalignedR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -7685,7 +7685,7 @@ void test_fifo_st_flush_bare(v128bfp16ebs8_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_1d_byteRrP23v128bfp16ebs8_unalignedR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -7715,7 +7715,7 @@ void test_fifo_st_flush_bare_1d_byte(v128bfp16ebs8_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_2d_byteRrP23v128bfp16ebs8_unalignedR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -7753,7 +7753,7 @@ void test_fifo_st_flush_bare_2d_byte(v128bfp16ebs8_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_3d_byteRrP23v128bfp16ebs8_unalignedR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -7800,7 +7800,7 @@ void test_fifo_st_flush_bare_3d_byte(v128bfp16ebs8_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z23test_fifo_st_flush_convRrP23v128bfp16ebs8_unalignedR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -7829,7 +7829,7 @@ void test_fifo_st_flush_conv(v128bfp16ebs8_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_1d_byteRrP23v128bfp16ebs8_unalignedR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -7859,7 +7859,7 @@ void test_fifo_st_flush_conv_1d_byte(v128bfp16ebs8_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_2d_byteRrP23v128bfp16ebs8_unalignedR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -7897,7 +7897,7 @@ void test_fifo_st_flush_conv_2d_byte(v128bfp16ebs8_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_3d_byteRrP23v128bfp16ebs8_unalignedR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -7944,30 +7944,30 @@ void test_fifo_st_flush_conv_3d_byte(v128bfp16ebs8_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z18test_fifo_st_resetRrP24v128bfp16ebs16_unaligned14v128bfp16ebs16R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
-// CHECK-NEXT:    [[M_COERCE_FCA_2_EXTRACT_I_I:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16:%.*]] [[V_COERCE:%.*]], 2
-// CHECK-NEXT:    [[M_COERCE_FCA_0_EXTRACT_I_I:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 0
-// CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
-// CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.544.bfp16.p0.p0(ptr [[TMP0]], <64 x i8> [[M_COERCE_FCA_0_EXTRACT_I_I]], <8 x i8> [[M_COERCE_FCA_2_EXTRACT_I_I]], <32 x i32> [[TMP1]], i32 0)
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP2]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP2]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP2]], 2
-// CHECK-NEXT:    store <32 x i32> [[TMP4]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP5]], ptr [[POS_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP3]], ptr [[P]], align 4
-// CHECK-NEXT:    [[M_COERCE_FCA_3_EXTRACT_I26_I:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 3
-// CHECK-NEXT:    [[M_COERCE_FCA_1_EXTRACT_I27_I:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 1
-// CHECK-NEXT:    [[TMP6:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
-// CHECK-NEXT:    [[TMP7:%.*]] = load i32, ptr [[POS_I]], align 64, !tbaa [[TBAA10]]
-// CHECK-NEXT:    [[TMP8:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.544.bfp16.p0.p0(ptr [[TMP3]], <64 x i8> [[M_COERCE_FCA_1_EXTRACT_I27_I]], <8 x i8> [[M_COERCE_FCA_3_EXTRACT_I26_I]], <32 x i32> [[TMP6]], i32 [[TMP7]])
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP8]], 0
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP8]], 1
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP8]], 2
-// CHECK-NEXT:    store <32 x i32> [[TMP10]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP11]], ptr [[POS_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP9]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16:%.*]] [[V_COERCE:%.*]], 2
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 0
+// CHECK-NEXT:    [[TMP2:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
+// CHECK-NEXT:    [[TMP3:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// CHECK-NEXT:    [[TMP4:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.544.bfp16.p0.p0(ptr [[TMP2]], <64 x i8> [[TMP1]], <8 x i8> [[TMP0]], <32 x i32> [[TMP3]], i32 0)
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP4]], 0
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP4]], 1
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP4]], 2
+// CHECK-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP7]], ptr [[POS_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP5]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 3
+// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 1
+// CHECK-NEXT:    [[TMP10:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// CHECK-NEXT:    [[TMP11:%.*]] = load i32, ptr [[POS_I]], align 64, !tbaa [[TBAA10]]
+// CHECK-NEXT:    [[TMP12:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.544.bfp16.p0.p0(ptr [[TMP5]], <64 x i8> [[TMP9]], <8 x i8> [[TMP8]], <32 x i32> [[TMP10]], i32 [[TMP11]])
+// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP12]], 0
+// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP12]], 1
+// CHECK-NEXT:    [[TMP15:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP12]], 2
+// CHECK-NEXT:    store <32 x i32> [[TMP14]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP15]], ptr [[POS_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP13]], ptr [[P]], align 4
 // CHECK-NEXT:    ret void
 //
 void test_fifo_st_reset(v128bfp16ebs16_unaligned *restrict &p, v128bfp16ebs16 v,
@@ -7977,30 +7977,30 @@ void test_fifo_st_reset(v128bfp16ebs16_unaligned *restrict &p, v128bfp16ebs16 v,
 
 // CHECK-LABEL: @_Z17test_fifo_st_pushRrP24v128bfp16ebs16_unaligned14v128bfp16ebs16R12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[M_COERCE_FCA_2_EXTRACT_I_I:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16:%.*]] [[V_COERCE:%.*]], 2
-// CHECK-NEXT:    [[M_COERCE_FCA_0_EXTRACT_I_I:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 0
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
-// CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
-// CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
-// CHECK-NEXT:    [[TMP3:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.544.bfp16.p0.p0(ptr [[TMP0]], <64 x i8> [[M_COERCE_FCA_0_EXTRACT_I_I]], <8 x i8> [[M_COERCE_FCA_2_EXTRACT_I_I]], <32 x i32> [[TMP1]], i32 [[TMP2]])
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 0
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 1
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 2
-// CHECK-NEXT:    store <32 x i32> [[TMP5]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP6]], ptr [[POS1_I_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP4]], ptr [[P]], align 4
-// CHECK-NEXT:    [[M_COERCE_FCA_3_EXTRACT_I25_I:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 3
-// CHECK-NEXT:    [[M_COERCE_FCA_1_EXTRACT_I26_I:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 1
-// CHECK-NEXT:    [[TMP7:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
-// CHECK-NEXT:    [[TMP8:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
-// CHECK-NEXT:    [[TMP9:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.544.bfp16.p0.p0(ptr [[TMP4]], <64 x i8> [[M_COERCE_FCA_1_EXTRACT_I26_I]], <8 x i8> [[M_COERCE_FCA_3_EXTRACT_I25_I]], <32 x i32> [[TMP7]], i32 [[TMP8]])
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP9]], 0
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP9]], 1
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP9]], 2
-// CHECK-NEXT:    store <32 x i32> [[TMP11]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP12]], ptr [[POS1_I_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP10]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16:%.*]] [[V_COERCE:%.*]], 2
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 0
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[TMP2:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
+// CHECK-NEXT:    [[TMP3:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// CHECK-NEXT:    [[TMP4:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.544.bfp16.p0.p0(ptr [[TMP2]], <64 x i8> [[TMP1]], <8 x i8> [[TMP0]], <32 x i32> [[TMP3]], i32 [[TMP4]])
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP5]], 0
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP5]], 1
+// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP5]], 2
+// CHECK-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP8]], ptr [[POS1_I_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP6]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 3
+// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue [[STRUCT_V128BFP16EBS16]] [[V_COERCE]], 1
+// CHECK-NEXT:    [[TMP11:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
+// CHECK-NEXT:    [[TMP12:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
+// CHECK-NEXT:    [[TMP13:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.544.bfp16.p0.p0(ptr [[TMP6]], <64 x i8> [[TMP10]], <8 x i8> [[TMP9]], <32 x i32> [[TMP11]], i32 [[TMP12]])
+// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP13]], 0
+// CHECK-NEXT:    [[TMP15:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP13]], 1
+// CHECK-NEXT:    [[TMP16:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP13]], 2
+// CHECK-NEXT:    store <32 x i32> [[TMP15]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP16]], ptr [[POS1_I_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP14]], ptr [[P]], align 4
 // CHECK-NEXT:    ret void
 //
 void test_fifo_st_push(v128bfp16ebs16_unaligned *restrict &p, v128bfp16ebs16 v,
@@ -8010,7 +8010,7 @@ void test_fifo_st_push(v128bfp16ebs16_unaligned *restrict &p, v128bfp16ebs16 v,
 
 // CHECK-LABEL: @_Z18test_fifo_st_flushRrP24v128bfp16ebs16_unalignedR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -8039,7 +8039,7 @@ void test_fifo_st_flush(v128bfp16ebs16_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_1d_byteRrP24v128bfp16ebs16_unalignedR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -8069,7 +8069,7 @@ void test_fifo_st_flush_1d_byte(v128bfp16ebs16_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_2d_byteRrP24v128bfp16ebs16_unalignedR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -8107,7 +8107,7 @@ void test_fifo_st_flush_2d_byte(v128bfp16ebs16_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z26test_fifo_st_flush_3d_byteRrP24v128bfp16ebs16_unalignedR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -8153,7 +8153,7 @@ void test_fifo_st_flush_3d_byte(v128bfp16ebs16_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z23test_fifo_st_flush_bareRrP24v128bfp16ebs16_unalignedR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -8182,7 +8182,7 @@ void test_fifo_st_flush_bare(v128bfp16ebs16_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_1d_byteRrP24v128bfp16ebs16_unalignedR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -8212,7 +8212,7 @@ void test_fifo_st_flush_bare_1d_byte(v128bfp16ebs16_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_2d_byteRrP24v128bfp16ebs16_unalignedR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -8250,7 +8250,7 @@ void test_fifo_st_flush_bare_2d_byte(v128bfp16ebs16_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_bare_3d_byteRrP24v128bfp16ebs16_unalignedR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -8297,7 +8297,7 @@ void test_fifo_st_flush_bare_3d_byte(v128bfp16ebs16_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z23test_fifo_st_flush_convRrP24v128bfp16ebs16_unalignedR12fifo_state_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -8326,7 +8326,7 @@ void test_fifo_st_flush_conv(v128bfp16ebs16_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_1d_byteRrP24v128bfp16ebs16_unalignedR12fifo_state_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -8356,7 +8356,7 @@ void test_fifo_st_flush_conv_1d_byte(v128bfp16ebs16_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_2d_byteRrP24v128bfp16ebs16_unalignedR12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
@@ -8394,7 +8394,7 @@ void test_fifo_st_flush_conv_2d_byte(v128bfp16ebs16_unaligned *restrict &p,
 
 // CHECK-LABEL: @_Z31test_fifo_st_flush_conv_3d_byteRrP24v128bfp16ebs16_unalignedR12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
+// CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I_I]], align 64, !tbaa [[TBAA10]]
