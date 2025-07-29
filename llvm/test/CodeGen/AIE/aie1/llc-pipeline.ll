@@ -203,6 +203,7 @@
 ; AIE-O0123-NEXT:      AIE Delay Slot Filler
 ; AIE-O0123-NEXT:      AIE Machine Block Alignment
 ; AIE-O0123-NEXT:      Contiguously Lay Out Funclets
+; AIE-O0123-NEXT:      Remove Loads Into Fake Uses
 ; AIE-O0123-NEXT:      StackMap Liveness Analysis
 ; AIE-O0123-NEXT:      Live DEBUG_VALUE analysis
 ; AIE-O0123-NEXT:      Machine Sanitizer Binary Metadata
