@@ -224,8 +224,7 @@ bool AIEBaseFrameLowering::spillCalleeSavedRegisters(
   GPRTOCSGPRMap.clear();
   for (const CalleeSavedInfo &Info : CSI) {
     if (Info.isSpilledToReg()) {
-      auto &SpilledGPR =
-          GPRTOCSGPRMap.FindAndConstruct(Info.getDstReg()).second;
+      auto &SpilledGPR = GPRTOCSGPRMap[Info.getDstReg()];
       SpilledGPR = Info.getReg();
     }
   }
