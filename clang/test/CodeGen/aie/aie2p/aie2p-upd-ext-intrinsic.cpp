@@ -152,7 +152,7 @@
     return ext_u64(a_, idx, elems, step, elem_mask);
   }
 
-// CHECK-LABEL: define dso_local noundef i32 @_Z13test_set_v2w4ij(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 241) i32 @_Z13test_set_v2w4ij(
 // CHECK-SAME: i32 noundef [[IDX:%.*]], i32 noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[AND1_I_I:%.*]] = and i32 [[VAL]], 15
@@ -165,7 +165,7 @@
   {
     return set_v2w4(idx, val);
   }
-// CHECK-LABEL: define dso_local noundef i32 @_Z13test_set_v4w4ij(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 61441) i32 @_Z13test_set_v4w4ij(
 // CHECK-SAME: i32 noundef [[IDX:%.*]], i32 noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[AND1_I_I:%.*]] = and i32 [[VAL]], 15
@@ -178,7 +178,7 @@
   {
      return set_v4w4(idx, val);
   }
-// CHECK-LABEL: define dso_local noundef i32 @_Z13test_set_v8w4ij(
+// CHECK-LABEL: define dso_local noundef range(i32 0, -268435455) i32 @_Z13test_set_v8w4ij(
 // CHECK-SAME: i32 noundef [[IDX:%.*]], i32 noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[AND1_I_I:%.*]] = and i32 [[VAL]], 15
@@ -207,7 +207,7 @@
   {
      return set_v16w4(idx, val);
   }
-// CHECK-LABEL: define dso_local noundef i32 @_Z13test_set_v2w8ij(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 65281) i32 @_Z13test_set_v2w8ij(
 // CHECK-SAME: i32 noundef [[IDX:%.*]], i32 noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[AND1_I_I:%.*]] = and i32 [[VAL]], 255
@@ -220,7 +220,7 @@
   {
      return set_v2w8(idx, val);
   }
-// CHECK-LABEL: define dso_local noundef i32 @_Z13test_set_v4w8ij(
+// CHECK-LABEL: define dso_local noundef range(i32 0, -16777215) i32 @_Z13test_set_v4w8ij(
 // CHECK-SAME: i32 noundef [[IDX:%.*]], i32 noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[AND1_I_I:%.*]] = and i32 [[VAL]], 255
@@ -249,7 +249,7 @@
   {
     return set_v8w8(idx, val);
   }
-// CHECK-LABEL: define dso_local noundef i32 @_Z14test_set_v2w16ij(
+// CHECK-LABEL: define dso_local noundef range(i32 0, -65535) i32 @_Z14test_set_v2w16ij(
 // CHECK-SAME: i32 noundef [[IDX:%.*]], i32 noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[AND1_I_I:%.*]] = and i32 [[VAL]], 65535
@@ -478,7 +478,7 @@
   {
     return upd_v2w32(a, idx, val);
   }
-// CHECK-LABEL: define dso_local noundef i32 @_Z13test_ext_v2w4ji(
+// CHECK-LABEL: define dso_local noundef range(i32 -8, 8) i32 @_Z13test_ext_v2w4ji(
 // CHECK-SAME: i32 noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[AND_I_I:%.*]] = and i32 [[IDX]], 1
@@ -493,7 +493,7 @@
   {
     return ext_v2w4(a, idx);
   }
-// CHECK-LABEL: define dso_local noundef i32 @_Z13test_ext_v4w4ji(
+// CHECK-LABEL: define dso_local noundef range(i32 -8, 8) i32 @_Z13test_ext_v4w4ji(
 // CHECK-SAME: i32 noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[AND_I_I:%.*]] = and i32 [[IDX]], 3
@@ -508,7 +508,7 @@
   {
     return ext_v4w4(a, idx);
   }
-// CHECK-LABEL: define dso_local noundef i32 @_Z13test_ext_v8w4ji(
+// CHECK-LABEL: define dso_local noundef range(i32 -8, 8) i32 @_Z13test_ext_v8w4ji(
 // CHECK-SAME: i32 noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[AND_I_I:%.*]] = and i32 [[IDX]], 7
@@ -523,7 +523,7 @@
   {
     return ext_v8w4(a, idx);
   }
-// CHECK-LABEL: define dso_local noundef i32 @_Z14test_ext_v16w4Dv2_ji(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 16) i32 @_Z14test_ext_v16w4Dv2_ji(
 // CHECK-SAME: <2 x i32> noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x i32> [[A]] to i64
@@ -539,7 +539,7 @@
   {
     return ext_v16w4(a, idx);
   }
-// CHECK-LABEL: define dso_local noundef i32 @_Z13test_ext_v2w8ji(
+// CHECK-LABEL: define dso_local noundef range(i32 -128, 128) i32 @_Z13test_ext_v2w8ji(
 // CHECK-SAME: i32 noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[AND_I_I:%.*]] = and i32 [[IDX]], 1
@@ -554,7 +554,7 @@
   {
     return ext_v2w8(a, idx);
   }
-// CHECK-LABEL: define dso_local noundef i32 @_Z13test_ext_v4w8ji(
+// CHECK-LABEL: define dso_local noundef range(i32 -128, 128) i32 @_Z13test_ext_v4w8ji(
 // CHECK-SAME: i32 noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[AND_I_I:%.*]] = and i32 [[IDX]], 3
@@ -569,7 +569,7 @@
   {
     return ext_v4w8(a, idx);
   }
-// CHECK-LABEL: define dso_local noundef i32 @_Z13test_ext_v8w8Dv2_ji(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 256) i32 @_Z13test_ext_v8w8Dv2_ji(
 // CHECK-SAME: <2 x i32> noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x i32> [[A]] to i64
@@ -586,7 +586,7 @@
     return ext_v8w8(a, idx);
   }
 
-// CHECK-LABEL: define dso_local noundef i32 @_Z14test_ext_v2w16ji(
+// CHECK-LABEL: define dso_local noundef range(i32 -32768, 32768) i32 @_Z14test_ext_v2w16ji(
 // CHECK-SAME: i32 noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[AND_I_I:%.*]] = and i32 [[IDX]], 1
@@ -601,7 +601,7 @@
   {
     return ext_v2w16(a, idx);
   }
-// CHECK-LABEL: define dso_local noundef i32 @_Z14test_ext_v4w16Dv2_ji(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 65536) i32 @_Z14test_ext_v4w16Dv2_ji(
 // CHECK-SAME: <2 x i32> noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x i32> [[A]] to i64
@@ -632,7 +632,7 @@
   {
     return ext_v2w32(a, idx);
   }
-// CHECK-LABEL: define dso_local noundef i32 @_Z13test_ext_v2u4ji(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 16) i32 @_Z13test_ext_v2u4ji(
 // CHECK-SAME: i32 noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[AND_I_I:%.*]] = shl i32 [[IDX]], 2
@@ -645,7 +645,7 @@
   {
     return ext_v2u4(a, idx);
   }
-// CHECK-LABEL: define dso_local noundef i32 @_Z13test_ext_v4u4ji(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 16) i32 @_Z13test_ext_v4u4ji(
 // CHECK-SAME: i32 noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[AND_I_I:%.*]] = shl i32 [[IDX]], 2
@@ -658,7 +658,7 @@
   {
     return ext_v4u4(a, idx);
   }
-// CHECK-LABEL: define dso_local noundef i32 @_Z13test_ext_v8u4ji(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 16) i32 @_Z13test_ext_v8u4ji(
 // CHECK-SAME: i32 noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[AND_I_I:%.*]] = shl i32 [[IDX]], 2
@@ -671,7 +671,7 @@
   {
     return ext_v8u4(a, idx);
   }
-// CHECK-LABEL: define dso_local noundef i32 @_Z14test_ext_v16u4Dv2_ji(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 16) i32 @_Z14test_ext_v16u4Dv2_ji(
 // CHECK-SAME: <2 x i32> noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x i32> [[A]] to i64
@@ -687,7 +687,7 @@
   {
     return ext_v16u4(a, idx);
   }
-// CHECK-LABEL: define dso_local noundef i32 @_Z13test_ext_v2u8ji(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 256) i32 @_Z13test_ext_v2u8ji(
 // CHECK-SAME: i32 noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[AND_I_I:%.*]] = shl i32 [[IDX]], 3
@@ -700,7 +700,7 @@
   {
     return ext_v2u8(a, idx);
   }
-// CHECK-LABEL: define dso_local noundef i32 @_Z13test_ext_v4u8ji(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 256) i32 @_Z13test_ext_v4u8ji(
 // CHECK-SAME: i32 noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[AND_I_I:%.*]] = shl i32 [[IDX]], 3
@@ -713,7 +713,7 @@
   {
     return ext_v4u8(a, idx);
   }
-// CHECK-LABEL: define dso_local noundef i32 @_Z13test_ext_v8u8Dv2_ji(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 256) i32 @_Z13test_ext_v8u8Dv2_ji(
 // CHECK-SAME: <2 x i32> noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x i32> [[A]] to i64
@@ -730,7 +730,7 @@
     return ext_v8u8(a, idx);
 
   }
-// CHECK-LABEL: define dso_local noundef i32 @_Z14test_ext_v2u16ji(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 65536) i32 @_Z14test_ext_v2u16ji(
 // CHECK-SAME: i32 noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[AND_I_I:%.*]] = shl i32 [[IDX]], 4
@@ -743,7 +743,7 @@
   {
     return ext_v2u16(a, idx);
   }
-// CHECK-LABEL: define dso_local noundef i32 @_Z14test_ext_v4u16Dv2_ji(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 65536) i32 @_Z14test_ext_v4u16Dv2_ji(
 // CHECK-SAME: <2 x i32> noundef [[A:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x i32> [[A]] to i64
@@ -775,7 +775,7 @@
     return ext_v2u32(a, idx);
   }
 
-// CHECK-LABEL: define dso_local noundef signext i8 @_Z15test_set_v2int4ii(
+// CHECK-LABEL: define dso_local noundef signext range(i8 0, -15) i8 @_Z15test_set_v2int4ii(
 // CHECK-SAME: i32 noundef [[IDX:%.*]], i32 noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[AND1_I_I_I:%.*]] = and i32 [[VAL]], 15
@@ -924,7 +924,7 @@ v2int32 test_set_v2int32  (int idx, int val)
  {
     return set_v2int32(idx, val);
  }
-// CHECK-LABEL: define dso_local noundef zeroext i8 @_Z16test_set_v2uint4ij(
+// CHECK-LABEL: define dso_local noundef zeroext range(i8 0, -15) i8 @_Z16test_set_v2uint4ij(
 // CHECK-SAME: i32 noundef [[IDX:%.*]], i32 noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[AND1_I_I_I:%.*]] = and i32 [[VAL]], 15
@@ -1478,7 +1478,7 @@ v2uint32 test_insert(v2uint32 v, int idx, unsigned int val)
     return insert(v, idx, val);
  }
 
-// CHECK-LABEL: define dso_local noundef i32 @_Z17test_extract_elemDB8_i(
+// CHECK-LABEL: define dso_local noundef range(i32 -8, 8) i32 @_Z17test_extract_elemDB8_i(
 // CHECK-SAME: i8 noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CONV_I:%.*]] = sext i8 [[V]] to i32
@@ -1494,7 +1494,7 @@ int test_extract_elem( v2int4 v, int idx)
 {
    return extract_elem(v, idx);
 }
-// CHECK-LABEL: define dso_local noundef i32 @_Z17test_extract_elemDv2_DB8_i(
+// CHECK-LABEL: define dso_local noundef range(i32 -8, 8) i32 @_Z17test_extract_elemDv2_DB8_i(
 // CHECK-SAME: <2 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x i8> [[V]] to i16
@@ -1511,7 +1511,7 @@ int test_extract_elem( v4int4 v, int idx)
 {
     return extract_elem(v, idx);
 }
-// CHECK-LABEL: define dso_local noundef i32 @_Z17test_extract_elemDv4_DB8_i(
+// CHECK-LABEL: define dso_local noundef range(i32 -8, 8) i32 @_Z17test_extract_elemDv4_DB8_i(
 // CHECK-SAME: <4 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <4 x i8> [[V]] to i32
@@ -1527,7 +1527,7 @@ int test_extract_elem( v8int4 v, int idx)
 {
     return extract_elem(v, idx);
 }
-// CHECK-LABEL: define dso_local noundef i32 @_Z17test_extract_elemDv8_DB8_i(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 16) i32 @_Z17test_extract_elemDv8_DB8_i(
 // CHECK-SAME: <8 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <8 x i8> [[V]] to i64
@@ -1543,7 +1543,7 @@ int test_extract_elem(v16int4 v, int idx)
 {
     return extract_elem(v, idx);
 }
-// CHECK-LABEL: define dso_local noundef i32 @_Z17test_extract_elemDv2_ai(
+// CHECK-LABEL: define dso_local noundef range(i32 -128, 128) i32 @_Z17test_extract_elemDv2_ai(
 // CHECK-SAME: <2 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x i8> [[V]] to i16
@@ -1560,7 +1560,7 @@ int test_extract_elem(v2int8 v,  int idx)
 {
     return extract_elem(v, idx);
 }
-// CHECK-LABEL: define dso_local noundef i32 @_Z17test_extract_elemDv4_ai(
+// CHECK-LABEL: define dso_local noundef range(i32 -128, 128) i32 @_Z17test_extract_elemDv4_ai(
 // CHECK-SAME: <4 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <4 x i8> [[V]] to i32
@@ -1576,7 +1576,7 @@ int test_extract_elem(v4int8 v,  int idx)
 {
     return extract_elem(v, idx);
 }
-// CHECK-LABEL: define dso_local noundef i32 @_Z17test_extract_elemDv8_ai(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 256) i32 @_Z17test_extract_elemDv8_ai(
 // CHECK-SAME: <8 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <8 x i8> [[V]] to i64
@@ -1592,7 +1592,7 @@ int test_extract_elem(v8int8 v,  int idx)
 {
     return extract_elem(v, idx);
 }
-// CHECK-LABEL: define dso_local noundef i32 @_Z17test_extract_elemDv2_si(
+// CHECK-LABEL: define dso_local noundef range(i32 -32768, 32768) i32 @_Z17test_extract_elemDv2_si(
 // CHECK-SAME: <2 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x i16> [[V]] to i32
@@ -1608,7 +1608,7 @@ int test_extract_elem(v2int16 v, int idx)
 {
     return extract_elem(v, idx);
 }
-// CHECK-LABEL: define dso_local noundef i32 @_Z17test_extract_elemDv4_si(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 65536) i32 @_Z17test_extract_elemDv4_si(
 // CHECK-SAME: <4 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <4 x i16> [[V]] to i64
@@ -1639,7 +1639,7 @@ int test_extract_elem(v2int32 v, int idx)
 {
     return extract_elem(v, idx);
 }
-// CHECK-LABEL: define dso_local noundef i32 @_Z17test_extract_elemDU8_i(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 16) i32 @_Z17test_extract_elemDU8_i(
 // CHECK-SAME: i8 noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CONV_I:%.*]] = zext i8 [[V]] to i32
@@ -1653,7 +1653,7 @@ unsigned int test_extract_elem( v2uint4 v, int idx)
 {
     return extract_elem(v, idx);
 }
-// CHECK-LABEL: define dso_local noundef i32 @_Z17test_extract_elemDv2_DU8_i(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 16) i32 @_Z17test_extract_elemDv2_DU8_i(
 // CHECK-SAME: <2 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x i8> [[V]] to i16
@@ -1668,7 +1668,7 @@ unsigned int test_extract_elem( v4uint4 v, int idx)
 {
     return extract_elem(v, idx);
 }
-// CHECK-LABEL: define dso_local noundef i32 @_Z17test_extract_elemDv4_DU8_i(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 16) i32 @_Z17test_extract_elemDv4_DU8_i(
 // CHECK-SAME: <4 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <4 x i8> [[V]] to i32
@@ -1682,7 +1682,7 @@ unsigned int test_extract_elem( v8uint4 v, int idx)
 {
     return extract_elem(v, idx);
 }
-// CHECK-LABEL: define dso_local noundef i32 @_Z17test_extract_elemDv8_DU8_i(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 16) i32 @_Z17test_extract_elemDv8_DU8_i(
 // CHECK-SAME: <8 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <8 x i8> [[V]] to i64
@@ -1698,7 +1698,7 @@ unsigned int test_extract_elem(v16uint4 v, int idx)
 {
     return extract_elem(v, idx);
 }
-// CHECK-LABEL: define dso_local noundef i32 @_Z17test_extract_elemDv2_hi(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 256) i32 @_Z17test_extract_elemDv2_hi(
 // CHECK-SAME: <2 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x i8> [[V]] to i16
@@ -1713,7 +1713,7 @@ unsigned int test_extract_elem(v2uint8  v, int idx)
 {
     return extract_elem(v, idx);
 }
-// CHECK-LABEL: define dso_local noundef i32 @_Z17test_extract_elemDv4_hi(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 256) i32 @_Z17test_extract_elemDv4_hi(
 // CHECK-SAME: <4 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <4 x i8> [[V]] to i32
@@ -1727,7 +1727,7 @@ unsigned int test_extract_elem(v4uint8  v, int idx)
 {
     return extract_elem(v, idx);
 }
-// CHECK-LABEL: define dso_local noundef i32 @_Z17test_extract_elemDv8_hi(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 256) i32 @_Z17test_extract_elemDv8_hi(
 // CHECK-SAME: <8 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <8 x i8> [[V]] to i64
@@ -1743,7 +1743,7 @@ unsigned int test_extract_elem(v8uint8  v, int idx)
 {
     return extract_elem(v, idx);
 }
-// CHECK-LABEL: define dso_local noundef i32 @_Z17test_extract_elemDv2_ti(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 65536) i32 @_Z17test_extract_elemDv2_ti(
 // CHECK-SAME: <2 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x i16> [[V]] to i32
@@ -1757,7 +1757,7 @@ unsigned int test_extract_elem(v2uint16 v, int idx)
 {
     return extract_elem(v, idx);
 }
-// CHECK-LABEL: define dso_local noundef i32 @_Z17test_extract_elemDv4_ti(
+// CHECK-LABEL: define dso_local noundef range(i32 0, 65536) i32 @_Z17test_extract_elemDv4_ti(
 // CHECK-SAME: <4 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <4 x i16> [[V]] to i64

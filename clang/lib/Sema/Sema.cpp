@@ -2874,6 +2874,7 @@ bool FunctionEffectDiff::shouldDiagnoseConversion(
       // matching is better.
       return true;
     }
+    llvm_unreachable("Unhandled FunctionEffectDiff::Kind enum");
   case FunctionEffect::Kind::Blocking:
   case FunctionEffect::Kind::Allocating:
     return false;
@@ -2899,6 +2900,7 @@ bool FunctionEffectDiff::shouldDiagnoseRedeclaration(
       // All these forms of mismatches are diagnosed.
       return true;
     }
+    llvm_unreachable("Unhandled FunctionEffectDiff::Kind enum");
   case FunctionEffect::Kind::Blocking:
   case FunctionEffect::Kind::Allocating:
     return false;
@@ -2930,6 +2932,7 @@ FunctionEffectDiff::shouldDiagnoseMethodOverride(
     case Kind::ConditionMismatch:
       return OverrideResult::Warn;
     }
+    llvm_unreachable("Unhandled FunctionEffectDiff::Kind enum");
 
   case FunctionEffect::Kind::Blocking:
   case FunctionEffect::Kind::Allocating:
