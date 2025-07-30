@@ -19,7 +19,7 @@
 // CHECK-NEXT:    [[SH_PROM_I:%.*]] = zext nneg i32 [[MUL_I]] to i64
 // CHECK-NEXT:    [[SHR_I:%.*]] = ashr i64 [[TMP0]], [[SH_PROM_I]]
 // CHECK-NEXT:    [[TMP1:%.*]] = trunc i64 [[SHR_I]] to i32
-// CHECK-NEXT:    [[VECEXT_I:%.*]] = and i32 [[TMP1]], [[ELEM_MASK:%.*]]
+// CHECK-NEXT:    [[VECEXT_I:%.*]] = and i32 [[ELEM_MASK:%.*]], [[TMP1]]
 // CHECK-NEXT:    ret i32 [[VECEXT_I]]
 //
 int test_ext_w64(mask64 a_, int idx, unsigned int elems, int step, unsigned int elem_mask){
@@ -210,6 +210,7 @@ v64uint4 test_extract_v64uint4 (v128uint4 a, int idx){
 }
 
 
+//
 // CHECK-LABEL: @_Z23test_insert_upd_512_256Dv64_DU8_iDv32_S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX:%.*]], 0
@@ -437,7 +438,6 @@ v256uint4 test_set_v256uint4_1024_512(int idx, v128uint4 b){
 }
 
 
-//
 // CHECK-LABEL: @_Z17test_concat_2x512Dv64_DU8_S0_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[A0:%.*]] to <16 x i32>
@@ -804,7 +804,6 @@ v8acc64 test_set_v8acc64 (int idx, v4acc64 b){
   return set_v8acc64(idx,b);
 }
 
-//
 // CHECK-LABEL: @_Z11test_concatDv4_u7__acc64S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i64> @llvm.aie2.concat.512.256.acc(<4 x i64> [[A0:%.*]], <4 x i64> [[A1:%.*]])
@@ -1228,6 +1227,7 @@ v32accfloat test_insert(v32accfloat a, int idx, v8accfloat b) {
    return insert(a, idx, b);
 }
 
+//
 // CHECK-LABEL: @_Z11test_insertDv32_u10__accfloatiDv16_u10__accfloat(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX:%.*]], 0
@@ -1401,6 +1401,7 @@ v16accfloat test_extract_v16accfloat(v32accfloat a, int idx) {
 
 /* Test Intrinsic using float type */
 
+//
 // CHECK-LABEL: @_Z11test_insertDv16_fiDv8_f(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX:%.*]], 0

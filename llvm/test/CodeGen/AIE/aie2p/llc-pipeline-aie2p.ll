@@ -81,6 +81,7 @@
 ; AIE-O0-NEXT:      Insert XRay ops
 ; AIE-O0-NEXT:      Implement the 'patchable-function' attribute
 ; AIE-O0-NEXT:      Contiguously Lay Out Funclets
+; AIE-O0-NEXT:      Remove Loads Into Fake Uses
 ; AIE-O0-NEXT:      StackMap Liveness Analysis
 ; AIE-O0-NEXT:      Live DEBUG_VALUE analysis
 ; AIE-O0-NEXT:      Machine Sanitizer Binary Metadata
@@ -288,6 +289,7 @@
 ; AIE-O1-NEXT:      Insert XRay ops
 ; AIE-O1-NEXT:      Implement the 'patchable-function' attribute
 ; AIE-O1-NEXT:      Contiguously Lay Out Funclets
+; AIE-O1-NEXT:      Remove Loads Into Fake Uses
 ; AIE-O1-NEXT:      StackMap Liveness Analysis
 ; AIE-O1-NEXT:      Live DEBUG_VALUE analysis
 ; AIE-O1-NEXT:      Machine Sanitizer Binary Metadata
@@ -505,6 +507,7 @@
 ; AIE-O23-NEXT:      Insert XRay ops
 ; AIE-O23-NEXT:      Implement the 'patchable-function' attribute
 ; AIE-O23-NEXT:      Contiguously Lay Out Funclets
+; AIE-O23-NEXT:      Remove Loads Into Fake Uses
 ; AIE-O23-NEXT:      StackMap Liveness Analysis
 ; AIE-O23-NEXT:      Live DEBUG_VALUE analysis
 ; AIE-O23-NEXT:      Machine Sanitizer Binary Metadata

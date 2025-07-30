@@ -252,6 +252,7 @@
 #include "llvm/Transforms/Scalar/LoopSimplifyCFG.h"
 #include "llvm/Transforms/Scalar/LoopSink.h"
 #include "llvm/Transforms/Scalar/LoopStrengthReduce.h"
+#include "llvm/Transforms/Scalar/LoopTermFold.h"
 #include "llvm/Transforms/Scalar/LoopUnrollAndJamPass.h"
 #include "llvm/Transforms/Scalar/LoopUnrollPass.h"
 #include "llvm/Transforms/Scalar/LoopVersioningLICM.h"
@@ -851,6 +852,8 @@ Expected<SimplifyCFGOptions> parseSimplifyCFGOptions(StringRef Params) {
       Result.needCanonicalLoops(Enable);
     } else if (ParamName == "hoist-common-insts") {
       Result.hoistCommonInsts(Enable);
+    } else if (ParamName == "hoist-loads-stores-with-cond-faulting") {
+      Result.hoistLoadsStoresWithCondFaulting(Enable);
     } else if (ParamName == "sink-common-insts") {
       Result.sinkCommonInsts(Enable);
     } else if (ParamName == "speculate-unpredictables") {
