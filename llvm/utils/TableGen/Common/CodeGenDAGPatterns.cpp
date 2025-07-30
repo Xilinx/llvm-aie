@@ -1609,14 +1609,11 @@ static TreePatternNode &getOperandNum(unsigned OpNo, TreePatternNode &N,
   OpNo -= NumResults;
 
   if (OpNo >= N.getNumChildren()) {
-    std::string S;
-    raw_string_ostream OS(S);
-    OS << "Invalid operand number in type constraint " << (OpNo + NumResults)
-       << " ";
-    N.print(OS);
-    PrintFatalError(S);
+    PrintFatalError([&N, OpNo, NumResults](raw_ostream &OS) {
+      OS << "Invalid operand number in type constraint " << (OpNo + NumResults);
+      N.print(OS);
+    });
   }
-
   return N.getChild(OpNo);
 }
 
@@ -3166,10 +3163,8 @@ void TreePattern::dump() const { print(errs()); }
 
 CodeGenDAGPatterns::CodeGenDAGPatterns(RecordKeeper &R,
                                        PatternRewriterFn PatternRewriter)
-    : Records(R), Target(R), LegalVTS(Target.getLegalValueTypes()),
-      PatternRewriter(PatternRewriter) {
-
-  Intrinsics = CodeGenIntrinsicTable(Records);
+    : Records(R), Target(R), Intrinsics(R),
+      LegalVTS(Target.getLegalValueTypes()), PatternRewriter(PatternRewriter) {
   ParseNodeInfo();
   ParseNodeTransforms();
   ParseComplexPatterns();
@@ -3345,7 +3340,7 @@ void CodeGenDAGPatterns::ParseDefaultOperands() {
 
   // Find some SDNode.
   assert(!SDNodes.empty() && "No SDNodes parsed?");
-  Init *SomeSDNode = DefInit::get(SDNodes.begin()->first);
+  Init *SomeSDNode = SDNodes.begin()->first->getDefInit();
 
   for (unsigned i = 0, e = DefaultOps.size(); i != e; ++i) {
     DagInit *DefaultInfo = DefaultOps[i]->getValueAsDag("DefaultOps");
