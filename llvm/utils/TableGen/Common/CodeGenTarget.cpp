@@ -237,7 +237,8 @@ const CodeGenRegister *CodeGenTarget::getRegisterByName(StringRef Name) const {
   return getRegBank().getRegistersByName().lookup(Name);
 }
 
-const CodeGenRegisterClass &CodeGenTarget::getRegisterClass(Record *R) const {
+const CodeGenRegisterClass &
+CodeGenTarget::getRegisterClass(const Record *R) const {
   return *getRegBank().getRegClass(R);
 }
 
