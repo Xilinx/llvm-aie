@@ -59,7 +59,7 @@ class TargetInstrInfo;
     /// maintaining super-reg to sub-reg relationships. E.g. making sure that
     /// different VRegs will still belong to a same physical super register
     /// after allocation.
-    IndexedMap<Register, VirtReg2IndexFunctor> Virt2RequiredPhysMap;
+    IndexedMap<MCRegister, VirtReg2IndexFunctor> Virt2RequiredPhysMap;
 
     /// Virt2StackSlotMap - This is virtual register to stack slot
     /// mapping. Each spilled virtual register has an entry in it
@@ -120,14 +120,14 @@ class TargetInstrInfo;
     /// returns true if the specified virtual register is
     /// required to be assigned to a specific physical register
     bool hasRequiredPhys(Register virtReg) const {
-      return getRequiredPhys(virtReg) != NO_PHYS_REG;
+      return getRequiredPhys(virtReg).isValid();
     }
 
     /// returns the physical register that the specified virtual register is
     /// required to be ultimately assigned to, or NO_PHYS_REG.
     MCRegister getRequiredPhys(Register virtReg) const {
       assert(virtReg.isVirtual());
-      return MCRegister::from(Virt2RequiredPhysMap[virtReg.id()]);
+      return MCRegister::from(Virt2RequiredPhysMap[virtReg]);
     }
 
     /// Sets the physical register that the specified virtual register is

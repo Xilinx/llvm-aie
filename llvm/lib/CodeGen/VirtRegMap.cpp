@@ -40,6 +40,7 @@
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/Config/llvm-config.h"
 #include "llvm/MC/LaneBitmask.h"
+#include "llvm/MC/MCRegister.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
@@ -117,14 +118,13 @@ void VirtRegMap::setRequiredPhys(Register virtReg, MCPhysReg physReg) {
   assert(virtReg.isVirtual() && Register::isPhysicalRegister(physReg));
   assert(!getRegInfo().isReserved(physReg) &&
          "Attempt to map virtReg to a reserved physReg");
-  assert(Virt2PhysMap[virtReg.id()] == NO_PHYS_REG ||
-         Virt2PhysMap[virtReg.id()] == physReg);
-  Virt2RequiredPhysMap[virtReg.id()] = physReg;
+  assert(!Virt2PhysMap[virtReg] || Virt2PhysMap[virtReg] == physReg);
+  Virt2RequiredPhysMap[virtReg] = physReg;
 }
 
 void VirtRegMap::unsetRequiredPhys(Register virtReg) {
   assert(virtReg.isVirtual());
-  Virt2RequiredPhysMap[virtReg.id()] = NO_PHYS_REG;
+  Virt2RequiredPhysMap[virtReg] = MCRegister();
 }
 
 unsigned VirtRegMap::createSpillSlot(const TargetRegisterClass *RC) {
