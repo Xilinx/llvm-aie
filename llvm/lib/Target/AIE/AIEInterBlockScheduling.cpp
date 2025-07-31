@@ -1192,8 +1192,10 @@ void BlockState::initInterBlock(const MachineSchedContext &Context,
 
     // perform static assignment of multi-slot pseudos
     if (EnableMultiSlotInstrMaterialization &&
-        PostSWP->isPostPipelineCandidate(*TheBlock))
-      staticallyMaterializeMultiSlotInstructions(*TheBlock, HR);
+        PostSWP->isPostPipelineCandidate(*TheBlock)) {
+      const bool MaterializeAll = true;
+      staticallyMaterializeMultiSlotInstructions(*TheBlock, HR, MaterializeAll);
+    }
   }
 
   // We are called just after the first round of scheduling a block.

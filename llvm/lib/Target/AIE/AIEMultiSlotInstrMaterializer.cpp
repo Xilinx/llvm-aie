@@ -15,6 +15,9 @@
 
 #include "AIEMultiSlotInstrMaterializer.h"
 #include "AIEHazardRecognizer.h"
+#include "AIESlotCounts.h"
+#include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
 
@@ -24,6 +27,7 @@ static cl::opt<bool> SkipSingleSlotAssignment(
     "aie-skip-single-slot-assignment", cl::Hidden, cl::init(true),
     cl::desc("Skip preassigning if all multi-slot instr are assigned to the "
              "same Slot."));
+
 namespace llvm::AIE {
 
 class SlotMapping {
@@ -189,6 +193,147 @@ bool assignSlots(SlotMapping &SlotToBanks, const MachineBasicBlock &MBB,
   return true;
 }
 
+namespace {
+uint64_t getSlotSet(unsigned Opcode, const AIEBaseInstrInfo *TII) {
+  auto *SlotInfo = TII->getSlotInfo(TII->getSlotKind(Opcode));
+  return SlotInfo ? SlotInfo->getSlotSet() : 0;
+}
+
+SlotCounts getSlotCounts(unsigned Opcode, const AIEBaseInstrInfo *TII) {
+  return SlotCounts{getSlotSet(Opcode, TII)};
+}
+
+class SlotStatistics {
+public:
+  // Q: Why do hours have 60 seconds?
+  // A: Because it has 1, 2, 3, 4, 5 and 6 as divisors.
+  static const int Unit = 60;
+
+  // The total of the fixed slots
+  SlotCounts Fixed;
+  // The total of the unmaterialized slots
+  SlotCounts Free;
+  // Set of MSPs in priority order. Note that they are first collected, then
+  // sorted.
+  std::vector<MachineInstr *> MSPs;
+  // The slot counts of each MSP
+  std::unordered_map<MachineInstr *, SlotCounts> MSPSlotCounts;
+  // The number of represented slots
+  int size() const { return std::max(Fixed.size(), Free.size()); }
+  void dump() {
+    dbgs() << "Fixed:\n  " << Fixed << "\n";
+
+    dbgs() << "MSPs:\n";
+    for (auto &[MSP, Counts] : MSPSlotCounts) {
+      dbgs() << "  " << Counts << "\n";
+    }
+    dbgs() << "Free:\n  " << Free << "\n";
+  }
+};
+
+SlotStatistics computeSlotStatistics(MachineBasicBlock &MBB,
+                                     const AIEBaseInstrInfo *TII) {
+  SlotStatistics Result;
+
+  const AIEBaseMCFormats *Formats = TII->getFormatInterface();
+  for (auto &MI : MBB) {
+    unsigned Opcode = MI.getOpcode();
+    ArrayRef<unsigned int> Alternatives =
+        Formats->getAlternateInstsOpcode(Opcode);
+    if (Alternatives.size() > 1) {
+      Result.MSPs.push_back(&MI);
+      SlotCounts Term;
+      for (unsigned AltOpcode : Alternatives) {
+        Term += getSlotCounts(AltOpcode, TII);
+      }
+      Term = Term * (SlotStatistics::Unit / Alternatives.size());
+      Result.MSPSlotCounts.emplace(&MI, Term);
+      Result.Free += Term;
+    } else {
+      Result.Fixed += SlotStatistics::Unit * getSlotCounts(Opcode, TII);
+    }
+  }
+  return Result;
+}
+
+void materializeMSP(MachineInstr *MSP, SlotStatistics &Statistics,
+                    const AIEBaseInstrInfo *TII) {
+
+  SlotCounts Counts = Statistics.MSPSlotCounts[MSP];
+
+  // 0. If we can't materialize in a given slot, we are worse
+  // 1. If Fixed is smaller than an alternative, we won't be increasing the
+  //    slot requirements
+  // 2. If Free is smaller than an alternative, we lower the probability that
+  //    we force another MSP past the current maximum.
+  auto Better = [&Statistics, &Counts](int A, int B) {
+    if (!Counts.at(A)) {
+      return false;
+    }
+    if (!Counts.at(B)) {
+      return true;
+    }
+    if (Statistics.Fixed.at(A) == Statistics.Fixed.at(B)) {
+      return Statistics.Free.at(A) < Statistics.Free.at(B);
+    }
+    return Statistics.Fixed.at(A) < Statistics.Fixed.at(B);
+  };
+  int BestSlot = 0;
+  for (int S = 1; S < Counts.size(); S++) {
+    if (Better(S, BestSlot)) {
+      BestSlot = S;
+    }
+  }
+  // We should always find an alternative, even if it's not perfect.
+  assert(Counts.at(BestSlot));
+  // Reverse lookup of the alternative that matches BestSlot.
+  auto FindOpcode = [TII, Opcode = MSP->getOpcode()](int BestSlot) {
+    const AIEBaseMCFormats *Formats = TII->getFormatInterface();
+    ArrayRef<unsigned int> Alternatives =
+        Formats->getAlternateInstsOpcode(Opcode);
+    for (auto Opcode : Alternatives) {
+      if (Formats->getSlotKind(Opcode) == MCSlotKind(BestSlot)) {
+        return Opcode;
+      }
+    }
+    llvm_unreachable("BestSlot alternative not found");
+  };
+
+  LLVM_DEBUG(dbgs() << "Materializing " << *MSP);
+
+  // Materialize MSP
+  MSP->setDesc(TII->get(FindOpcode(BestSlot)));
+  // Update statistics
+  Statistics.Fixed[BestSlot] += SlotStatistics::Unit;
+  Statistics.Free -= Counts;
+  LLVM_DEBUG(dbgs() << "           to " << *MSP);
+  LLVM_DEBUG(dbgs() << "New Fixed:\n" << Statistics.Fixed << "\n");
+}
+
+void materializeToMinimizeSlotTotals(MachineBasicBlock &MBB,
+                                     const AIEBaseInstrInfo *TII) {
+  SlotStatistics Statistics = computeSlotStatistics(MBB, TII);
+  // Sort the list by increasing alternative count
+  llvm::sort(Statistics.MSPs, [Formats = TII->getFormatInterface()](
+                                  MachineInstr *A, MachineInstr *B) {
+    auto AltA = Formats->getAlternateInstsOpcode(A->getOpcode());
+    auto AltB = Formats->getAlternateInstsOpcode(B->getOpcode());
+
+    return AltA.size() < AltB.size();
+  });
+  LLVM_DEBUG(dbgs() << "Statistics:\n");
+  LLVM_DEBUG(Statistics.dump());
+  LLVM_DEBUG(dbgs() << "----\n");
+
+  // This is still pretty greedy. Just materialize each instruction
+  // based on the current total slotcounts.
+  for (auto *MSP : Statistics.MSPs) {
+    materializeMSP(MSP, Statistics, TII);
+  }
+}
+
+} // namespace
+
 /// Materialise \p MI into its slot assigned by \p SlotToBanks .
 void materializeInstr(MachineInstr &MI, const SlotMapping &SlotToBanks,
                       const AIEBaseInstrInfo *TII,
@@ -223,7 +368,8 @@ void materializeSlots(const SlotMapping &SlotToBanks, MachineBasicBlock &MBB,
 }
 
 void staticallyMaterializeMultiSlotInstructions(MachineBasicBlock &MBB,
-                                                const AIEHazardRecognizer &HR) {
+                                                const AIEHazardRecognizer &HR,
+                                                bool MaterializeAll) {
   LLVM_DEBUG(dbgs() << "Statically Assigning multi slot pseudos for "
                     << MBB.getName() << "\n");
 
@@ -232,14 +378,17 @@ void staticallyMaterializeMultiSlotInstructions(MachineBasicBlock &MBB,
 
   auto SlotToBanks = getAssignedSlots(MBB, TII, HR);
 
-  if (!assignSlots(SlotToBanks, MBB, TII, HR)) {
+  if (assignSlots(SlotToBanks, MBB, TII, HR)) {
+    materializeSlots(SlotToBanks, MBB, TII, HR);
+  } else {
     LLVM_DEBUG(
         dbgs()
-        << "Could not find Slot Assignments, Skipping materialization\n");
-    return;
+        << "Could not find slot assignments, skipping bank materialization\n");
   }
 
-  materializeSlots(SlotToBanks, MBB, TII, HR);
+  if (MaterializeAll) {
+    materializeToMinimizeSlotTotals(MBB, TII);
+  }
 }
 } // namespace llvm::AIE
 //

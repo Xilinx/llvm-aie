@@ -28,12 +28,30 @@ SlotCounts::SlotCounts(const SlotCounts &Org) : Size(Org.Size) {
   }
 }
 
-int SlotCounts::max() {
+int SlotCounts::max() const {
   int Max = 0;
   for (int I = 0; I < Size; I++) {
-    Max = std::max(Max, int(Counts[I]));
+    Max = std::max(Max, Counts[I]);
   }
   return Max;
+}
+
+int SlotCounts::maxIndex() const {
+  int MaxIdx = 0;
+  for (int I = 1; I < Size; I++) {
+    if (Counts[I] > Counts[MaxIdx]) {
+      MaxIdx = I;
+    }
+  }
+  return MaxIdx;
+}
+
+int SlotCounts::totals() const {
+  int Totals = 0;
+  for (int I = 0; I < Size; I++) {
+    Totals += Counts[I];
+  }
+  return Totals;
 }
 
 SlotCounts &SlotCounts::operator+=(const SlotCounts &Other) {
@@ -51,9 +69,29 @@ SlotCounts &SlotCounts::operator+=(const SlotCounts &Other) {
   return *this;
 }
 
+SlotCounts &SlotCounts::operator-=(const SlotCounts &Other) {
+  // The common part
+  for (int I = 0; I < Size && I < Other.Size; I++) {
+    Counts[I] -= Other.Counts[I];
+  }
+  // Any excess from the other
+  while (Size < Other.Size) {
+    Counts[Size] = -Other.Counts[Size];
+    Size++;
+  }
+  assert(Size >= Other.Size);
+  assert(Size < MaxSlots);
+  return *this;
+}
+
 SlotCounts SlotCounts::operator+(const SlotCounts &Other) const {
   SlotCounts Result(*this);
   return Result += Other;
+}
+
+SlotCounts SlotCounts::operator-(const SlotCounts &Other) const {
+  SlotCounts Result(*this);
+  return Result -= Other;
 }
 
 SlotCounts &SlotCounts::operator*=(int Scalar) {

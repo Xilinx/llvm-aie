@@ -14,17 +14,17 @@ define void @load_store_with_call() {
 ; CHECK-NEXT:    paddxm [sp], #64
 ; CHECK-NEXT:    mova r0, #0; nopb ; movxm le, #.L_LEnd0; st lr, [sp, #-64] // 4-byte Folded Spill
 ; CHECK-NEXT:    mova p5, #0; add.nc lc, r0, #-7
-; CHECK-NEXT:    nopa ; vldb x0, [p5, #0]; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vldb x0, [p5, #0]; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vldb x0, [p5, #0]; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vldb x0, [p5, #0]; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vldb x0, [p5, #0]; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vldb x0, [p5, #0]; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vldb x0, [p5, #0]; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda x0, [p5, #0]; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda x0, [p5, #0]; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda x0, [p5, #0]; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda x0, [p5, #0]; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda x0, [p5, #0]; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda x0, [p5, #0]; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda x0, [p5, #0]; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:  .L_LEnd0:
-; CHECK-NEXT:    nopa ; vldb x0, [p5, #0]; vst x0, [p5, #0]; nopxm ; nopv
+; CHECK-NEXT:    vlda x0, [p5, #0]; nopb ; vst x0, [p5, #0]; nopxm ; nopv
 ; CHECK-NEXT:  // %bb.2: // %exit
 ; CHECK-NEXT:    vst x0, [p5, #0]; nopb ; nopx
 ; CHECK-NEXT:    vst x0, [p5, #0]

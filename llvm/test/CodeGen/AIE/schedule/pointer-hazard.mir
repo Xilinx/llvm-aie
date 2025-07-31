@@ -18,24 +18,24 @@
   ; CHECK:         .p2align 4
   ; CHECK-NEXT:  // %bb.0: // %entry
   ; CHECK-NEXT:    nopa ; event #0
-  ; CHECK-NEXT:    vldb wh2, [p0, #32]
+  ; CHECK-NEXT:    vlda wh2, [p0, #32]
   ; CHECK-NEXT:    vldb wl2, [p0], #64
-  ; CHECK-NEXT:    vldb wh2, [p0, #32]
+  ; CHECK-NEXT:    vlda wh2, [p0, #32]
   ; CHECK-NEXT:    vldb wl2, [p0], #64
-  ; CHECK-NEXT:    vldb wh2, [p0, #32]; movxm ls, #.LBB0_1
+  ; CHECK-NEXT:    vlda wh2, [p0, #32]; movxm ls, #.LBB0_1
   ; CHECK-NEXT:    mova r2, #-5; vldb wl2, [p0], #64; movxm le, #.L_LEnd0
-  ; CHECK-NEXT:    vldb wh2, [p0, #32]; lshl r1, r1, r2; vbcst.16 x0, r0
+  ; CHECK-NEXT:    vlda wh2, [p0, #32]; lshl r1, r1, r2; vbcst.16 x0, r0
   ; CHECK-NEXT:    mova r0, #824; vldb wl2, [p0], #64; add.nc lc, r1, #-7
-  ; CHECK-NEXT:    vldb wh2, [p0, #32]; nopa ; nops ; nopxm ; vmul cm0, x2, x0, r0
+  ; CHECK-NEXT:    nopb ; vlda wh2, [p0, #32]; nops ; nopxm ; vmul cm0, x2, x0, r0
   ; CHECK-NEXT:    vldb wl2, [p0], #64; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    vldb wh2, [p0, #32]; nopa ; nops ; nopxm ; vmul cm0, x2, x0, r0
+  ; CHECK-NEXT:    nopb ; vlda wh2, [p0, #32]; nops ; nopxm ; vmul cm0, x2, x0, r0
   ; CHECK-NEXT:    vldb wl2, [p0], #64; mova r3, #0; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    vldb wh2, [p0, #32]; nopa ; nops ; nopx ; mov s0, r3; vmul cm0, x2, x0, r0
+  ; CHECK-NEXT:    nopb ; vlda wh2, [p0, #32]; nops ; nopx ; mov s0, r3; vmul cm0, x2, x0, r0
   ; CHECK-NEXT:    vldb wl2, [p0], #64; nopa ; vst.srs.s16.s32 bmh0, s0, [p1, #32]; nopxm ; nopv
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_1: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-  ; CHECK-NEXT:    vldb wh2, [p0, #32]; nopa ; vst.srs.s16.s32 bml0, s0, [p1], #64; nopxm ; vmul cm0, x2, x0, r0
+  ; CHECK-NEXT:    nopb ; vlda wh2, [p0, #32]; vst.srs.s16.s32 bml0, s0, [p1], #64; nopxm ; vmul cm0, x2, x0, r0
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    vldb wl2, [p0], #64; nopa ; vst.srs.s16.s32 bmh0, s0, [p1, #32]; nopxm ; nopv
   ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup

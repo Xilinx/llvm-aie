@@ -34,13 +34,25 @@ public:
   SlotCounts &operator=(const SlotCounts &Rhs) = default;
 
   // Compute the number of required cycles
-  int max();
+  int max() const;
+
+  // Compute the index the max element
+  int maxIndex() const;
+
+  // Compute the total of the counts
+  int totals() const;
 
   // Add slot counts of Other to this
   SlotCounts &operator+=(const SlotCounts &Other);
 
   // By-value addition.
   SlotCounts operator+(const SlotCounts &Other) const;
+
+  // Subtract slot counts of Other from this
+  SlotCounts &operator-=(const SlotCounts &Other);
+
+  // By-value subtraction.
+  SlotCounts operator-(const SlotCounts &Other) const;
 
   // Multiply all elements with Scalar
   SlotCounts &operator*=(int Scalar);
@@ -49,7 +61,20 @@ public:
   SlotCounts operator*(int Scalar) const;
 
   // Indexing
-  const int &operator[](int I) const { return Counts[I]; };
+  int &operator[](int I) {
+    while (I >= Size) {
+      Counts[Size++] = 0;
+    }
+    return Counts[I];
+  };
+
+  const int &operator[](int I) const {
+    assert(I < Size);
+    return Counts[I];
+  };
+
+  // Retrieve value
+  int at(int I) const { return I >= Size ? 0 : Counts[I]; }
 
   int size() const { return Size; }
 };

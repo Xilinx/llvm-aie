@@ -19,24 +19,24 @@
   ; CHECK-NEXT:    event #0
   ; CHECK-NEXT:    event #1
   ; CHECK-NEXT:    event #0
-  ; CHECK-NEXT:    vldb x2, [p0], #64
-  ; CHECK-NEXT:    vldb x2, [p0], #64
-  ; CHECK-NEXT:    vldb x2, [p0], #64; movxm ls, #.LBB0_1
-  ; CHECK-NEXT:    mova r2, #-5; vldb x2, [p0], #64; movxm le, #.L_LEnd0
-  ; CHECK-NEXT:    vldb x2, [p0], #64; lshl r1, r1, r2; vbcst.16 x0, r0
-  ; CHECK-NEXT:    vldb x2, [p0], #64; add.nc lc, r1, #-13
-  ; CHECK-NEXT:    mova r0, #824; vldb x2, [p0], #64; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopxm ; vmul dm0, y1, y0,r0
-  ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopxm ; vmul dm0, y1, y0,r0
-  ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopxm ; vmul dm0, y1, y0,r0
-  ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopxm ; vmul dm0, y1, y0,r0
-  ; CHECK-NEXT:    mova r3, #0; vldb x2, [p0], #64; nops ; nopx ; mov crsrsmode, #0; vmul dm0, y1, y0,r0
-  ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopx ; mov s0, r3; vmul dm0, y1, y0,r0
+  ; CHECK-NEXT:    vlda x2, [p0], #64
+  ; CHECK-NEXT:    vlda x2, [p0], #64; movx r2, #-5
+  ; CHECK-NEXT:    vlda x2, [p0], #64; movxm ls, #.LBB0_1
+  ; CHECK-NEXT:    vlda x2, [p0], #64; movxm le, #.L_LEnd0
+  ; CHECK-NEXT:    vlda x2, [p0], #64; lshl r1, r1, r2; vbcst.16 x0, r0
+  ; CHECK-NEXT:    vlda x2, [p0], #64; add.nc lc, r1, #-13
+  ; CHECK-NEXT:    vlda x2, [p0], #64; nopb ; nops ; movx r0, #824; nopm ; nopv
+  ; CHECK-NEXT:    vlda x2, [p0], #64; nopb ; nops ; nopxm ; vmul dm0, y1, y0,r0
+  ; CHECK-NEXT:    vlda x2, [p0], #64; nopb ; nops ; nopxm ; vmul dm0, y1, y0,r0
+  ; CHECK-NEXT:    vlda x2, [p0], #64; nopb ; nops ; nopxm ; vmul dm0, y1, y0,r0
+  ; CHECK-NEXT:    vlda x2, [p0], #64; nopb ; nops ; nopxm ; vmul dm0, y1, y0,r0
+  ; CHECK-NEXT:    vlda x2, [p0], #64; nopb ; nops ; movx r3, #0; mov crsrsmode, #0; vmul dm0, y1, y0,r0
+  ; CHECK-NEXT:    vlda x2, [p0], #64; nopb ; nops ; nopx ; mov s0, r3; vmul dm0, y1, y0,r0
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_1: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
   ; CHECK-NEXT:  .L_LEnd0:
-  ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; vst.srs.2x cml0, s0, srssign1, [p1], #64; nopxm ; vmul dm0, y1, y0,r0
+  ; CHECK-NEXT:    vlda x2, [p0], #64; nopb ; vst.srs.2x cml0, s0, srssign1, [p1], #64; nopxm ; vmul dm0, y1, y0,r0
   ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
   ; CHECK-NEXT:    nopa ; nopb ; nopx ; vst.srs.2x cml0, s0, srssign1, [p1], #64; vmul dm0, y1, y0,r0
   ; CHECK-NEXT:    vst.srs.2x cml0, s0, srssign1, [p1], #64; vmul dm0, y1, y0,r0
