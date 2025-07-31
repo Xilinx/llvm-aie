@@ -114,7 +114,7 @@ void AIEVariableInstrItineraryEmitter::run(raw_ostream &OS) {
       Target.getInstructionsByEnumValue();
 
   for (const CodeGenInstruction *CGI : NumberedInstructions) {
-    Record *R = CGI->TheDef;
+    const Record *R = CGI->TheDef;
     if ((R->getValueAsString("Namespace") == "TargetOpcode") ||
         (!R->getValue("Inst") && !R->getValue("isMultiSlotPseudo")))
       continue;
