@@ -59,9 +59,8 @@ body:             |
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $p0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
-  ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 8
-  ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C]](s32)
-  ; CHECK-NEXT:   %Res:_(s32), %7:_(p0) = G_AIE_POSTINC_LOAD [[COPY]], [[TRUNC]](s20) :: (load (s32))
+  ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+  ; CHECK-NEXT:   %Res:_(s32), %7:_(p0) = G_AIE_POSTINC_LOAD [[COPY]], [[C]](s20) :: (load (s32))
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit %Res(s32), implicit %7(p0)
   bb.0:
     liveins: $p0, $p1

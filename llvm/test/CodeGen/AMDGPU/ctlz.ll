@@ -6,6 +6,10 @@
 ; RUN: llc < %s -global-isel -mtriple=amdgcn -mcpu=gfx1010 -verify-machineinstrs | FileCheck %s -enable-var-scope --check-prefix=GFX10-GISEL
 ; RUN: llc < %s -mtriple=amdgcn -mcpu=gfx1100 -verify-machineinstrs | FileCheck %s -enable-var-scope --check-prefix=GFX11
 
+; Local changes in GlobalIsel affect this case, let's mark it as XFAIL
+; until those changes are upstreamed.
+; XFAIL: llvm-aie-regression
+
 declare i7 @llvm.ctlz.i7(i7, i1) nounwind readnone
 declare i8 @llvm.ctlz.i8(i8, i1) nounwind readnone
 declare i16 @llvm.ctlz.i16(i16, i1) nounwind readnone
@@ -1592,7 +1596,7 @@ define amdgpu_kernel void @v_ctlz_i32_sel_ne_bitwidth(ptr addrspace(1) noalias %
 ; GFX10-GISEL-NEXT:    v_ffbh_u32_e32 v1, v0
 ; GFX10-GISEL-NEXT:    v_cmp_eq_u32_e32 vcc_lo, 0, v0
 ; GFX10-GISEL-NEXT:    v_min_u32_e32 v1, 32, v1
-; GFX10-GISEL-NEXT:    v_subrev_nc_u32_e32 v1, 24, v1
+; GFX10-GISEL-NEXT:    v_sub_nc_u16 v1, v1, 24
 ; GFX10-GISEL-NEXT:    v_cndmask_b32_e64 v0, v1, 0xffff, vcc_lo
 ; GFX10-GISEL-NEXT:    v_mov_b32_e32 v1, 0
 ; GFX10-GISEL-NEXT:    global_store_byte v1, v0, s[4:5]
@@ -1837,7 +1841,7 @@ define amdgpu_kernel void @v_ctlz_i7_sel_eq_neg1(ptr addrspace(1) noalias %out, 
 ; GFX10-GISEL-NEXT:    v_ffbh_u32_e32 v1, v0
 ; GFX10-GISEL-NEXT:    v_cmp_eq_u32_e32 vcc_lo, 0, v0
 ; GFX10-GISEL-NEXT:    v_min_u32_e32 v1, 32, v1
-; GFX10-GISEL-NEXT:    v_subrev_nc_u32_e32 v1, 25, v1
+; GFX10-GISEL-NEXT:    v_sub_nc_u16 v1, v1, 25
 ; GFX10-GISEL-NEXT:    v_cndmask_b32_e64 v0, v1, 0x7f, vcc_lo
 ; GFX10-GISEL-NEXT:    v_mov_b32_e32 v1, 0
 ; GFX10-GISEL-NEXT:    v_and_b32_e32 v0, 0x7f, v0

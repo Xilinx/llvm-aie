@@ -41,10 +41,8 @@ tracksRegLiveness: true
 body:             |
   bb.0:
     ; CHECK-LABEL: name: inttoptr_constant_trunc_p2_s64
-    ; CHECK: [[C:%[0-9]+]]:_(s64) = G_CONSTANT i64 0
-    ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(s32) = G_TRUNC [[C]](s64)
-    ; CHECK-NEXT: [[INTTOPTR:%[0-9]+]]:_(p2) = G_INTTOPTR [[TRUNC]](s32)
-    ; CHECK-NEXT: $vgpr0 = COPY [[INTTOPTR]](p2)
+    ; CHECK: [[C:%[0-9]+]]:_(p2) = G_CONSTANT i32 0
+    ; CHECK-NEXT: $vgpr0 = COPY [[C]](p2)
     %0:_(s64) = G_CONSTANT i64 0
     %1:_(s32) = G_TRUNC %0
     %2:_(p2) = G_INTTOPTR %1

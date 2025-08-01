@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements CombinerHelper for G_ANYEXT, G_SEXT, G_TRUNC, and
@@ -312,4 +315,60 @@ bool CombinerHelper::matchCastOfBuildVector(const MachineInstr &CastMI,
   };
 
   return true;
+}
+
+bool CombinerHelper::matchNarrowBinop(const MachineInstr &TruncMI,
+                                      const MachineInstr &BinopMI,
+                                      BuildFnTy &MatchInfo) {
+  const GTrunc *Trunc = cast<GTrunc>(&TruncMI);
+  const GBinOp *BinOp = cast<GBinOp>(&BinopMI);
+
+  if (!MRI.hasOneNonDBGUse(BinOp->getReg(0)))
+    return false;
+
+  Register Dst = Trunc->getReg(0);
+  Register Src = Trunc->getReg(1);
+  LLT DstTy = MRI.getType(Dst);
+  LLT SrcTy = MRI.getType(Src);
+
+  // Is narrow binop legal?
+  if (!isLegalOrBeforeLegalizer({BinOp->getOpcode(), {DstTy}}))
+    return false;
+
+  const MachineFunction *MF = TruncMI.getMF();
+  const DataLayout &DL = MF->getDataLayout();
+  LLVMContext &Ctx = MF->getFunction().getContext();
+  const auto &TLI = getTargetLowering();
+  // Be sure that replacing one truncation by two is cost-free.
+  if (!TLI.isTruncateFree(SrcTy, DstTy, DL, Ctx))
+    return false;
+
+  MatchInfo = [=](MachineIRBuilder &B) {
+    auto LHS = B.buildTrunc(DstTy, BinOp->getLHSReg());
+    auto RHS = B.buildTrunc(DstTy, BinOp->getRHSReg());
+    B.buildInstr(BinOp->getOpcode(), {Dst}, {LHS, RHS});
+  };
+
+  return true;
+}
+
+bool CombinerHelper::matchCastOfInteger(const MachineInstr &CastMI,
+                                        APInt &MatchInfo) {
+  const GExtOrTruncOp *Cast = cast<GExtOrTruncOp>(&CastMI);
+
+  APInt Input = getIConstantFromReg(Cast->getSrcReg(), MRI);
+
+  LLT DstTy = MRI.getType(Cast->getReg(0));
+
+  if (!isConstantLegalOrBeforeLegalizer(DstTy))
+    return false;
+
+  switch (Cast->getOpcode()) {
+  case TargetOpcode::G_TRUNC: {
+    MatchInfo = Input.trunc(DstTy.getScalarSizeInBits());
+    return true;
+  }
+  default:
+    return false;
+  }
 }
