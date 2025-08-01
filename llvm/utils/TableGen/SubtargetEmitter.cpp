@@ -1537,7 +1537,7 @@ void SubtargetEmitter::EmitNumResources(raw_ostream &OS) {
   if (SchedModels.hasItineraries()) {
     for (const CodeGenProcModel &ProcModel : SchedModels.procModels()) {
       StringRef Name = ProcModel.ItinsDef->getName();
-      RecVec FUs = ProcModel.ItinsDef->getValueAsListOfDefs("FU");
+      ConstRecVec FUs = ProcModel.ItinsDef->getValueAsListOfConstDefs("FU");
       if (FUs.empty())
         continue;
       OS << "#ifdef GET_NUM_RESOURCES\n"
