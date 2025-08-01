@@ -51,7 +51,7 @@ private:
   bool parseIdentifier(OperandVector &Operands) override;
   bool validateInstruction(MCInst &Inst, OperandVector &Operands) override;
   unsigned matchRegister(std::string Name) override;
-  bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
+  bool matchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                OperandVector &Operands, MCStreamer &Out,
                                uint64_t &ErrorInfo,
                                bool MatchingInlineAsm) override;
@@ -84,7 +84,7 @@ bool AIEAsmParser::validateInstruction(MCInst &Inst, OperandVector &Operands) {
   return false;
 }
 
-bool AIEAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
+bool AIEAsmParser::matchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                            OperandVector &Operands,
                                            MCStreamer &Out, uint64_t &ErrorInfo,
                                            bool MatchingInlineAsm) {
