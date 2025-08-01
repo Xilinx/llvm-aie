@@ -4631,7 +4631,6 @@ public:
   llvm::ScalableVectorType *getSVEType(const SVETypeFlags &TypeFlags);
   llvm::ScalableVectorType *getSVEPredType(const SVETypeFlags &TypeFlags);
   llvm::Value *EmitSVETupleSetOrGet(const SVETypeFlags &TypeFlags,
-                                    llvm::Type *ReturnType,
                                     ArrayRef<llvm::Value *> Ops);
   llvm::Value *EmitSVETupleCreate(const SVETypeFlags &TypeFlags,
                                   llvm::Type *ReturnType,
@@ -5349,6 +5348,9 @@ public:
   void
   EmitAArch64MultiVersionResolver(llvm::Function *Resolver,
                                   ArrayRef<MultiVersionResolverOption> Options);
+  void
+  EmitRISCVMultiVersionResolver(llvm::Function *Resolver,
+                                ArrayRef<MultiVersionResolverOption> Options);
 
 private:
   QualType getVarArgType(const Expr *Arg);

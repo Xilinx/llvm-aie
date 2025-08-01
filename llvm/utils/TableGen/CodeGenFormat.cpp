@@ -86,7 +86,7 @@ void CodeGenFormat::run(raw_ostream &o) {
   std::vector<TGInstrLayout> PseudoInstFormats;
 
   for (const CodeGenInstruction *CGI : NumberedInstructions) {
-    Record *R = CGI->TheDef;
+    const Record *R = CGI->TheDef;
 
     if ((R->getValueAsString("Namespace") == "TargetOpcode") ||
         (!R->getValue("Inst") && !R->getValue("isMultiSlotPseudo")))
@@ -324,7 +324,7 @@ TGInstrLayout::TGInstrLayout(const CodeGenInstruction *const CGI,
          "Expected Instruction Definition in the Record");
   assert(Slots.isFinalized() && "Slots Pool must be finalized");
 
-  Record *BaseRecord = CGI->TheDef;
+  const Record *BaseRecord = CGI->TheDef;
   InstrName = BaseRecord->getName().str();
   Target = BaseRecord->getValueAsString("Namespace").str();
   Size = BaseRecord->getValueAsBitsInit(InstrAttribute)->getNumBits();
@@ -387,13 +387,13 @@ void TGInstrLayout::dump(std::ostream &stream) const {
 }
 
 void TGInstrLayout::resolveIsComposite() {
-  Record *BaseRecord = CGI->TheDef;
+  const Record *BaseRecord = CGI->TheDef;
   if (BaseRecord->getValue("isComposite"))
     IsComposite = BaseRecord->getValueAsBit("isComposite");
 }
 
 void TGInstrLayout::resolveIsMultipleSlotOptions() {
-  Record *BaseRecord = CGI->TheDef;
+  const Record *BaseRecord = CGI->TheDef;
   if (BaseRecord->getValue("isMultiSlotPseudo"))
     IsMultipleSlotOptions =
         BaseRecord->getValueAsBitsInit("isMultiSlotPseudo")->getBit(0);
@@ -539,7 +539,7 @@ void TGInstrLayout::resolveMCOperandNumber() {
 }
 
 void TGInstrLayout::resolveIsSlotNOP() {
-  Record *BaseRecord = CGI->TheDef;
+  const Record *BaseRecord = CGI->TheDef;
   IsSlotNOP = BaseRecord->getValueAsBit("isSlotNOP");
   // If the instruction is a NOP representative of the slot
   // (isPacketFormat is an extra check...)
