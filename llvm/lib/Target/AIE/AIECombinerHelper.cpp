@@ -3375,12 +3375,14 @@ bool llvm::matchNarrowTrunc(MachineInstr &MI, MachineRegisterInfo &MRI,
   MachineInstr &SrcMI = *MRI.getVRegDef(SrcReg);
 
   if (SrcMI.getOpcode() == TargetOpcode::G_CONSTANT) {
-    MatchInfo = [=, &MI, &SrcMI, &MRI](MachineIRBuilder &B) {
+    MatchInfo = [=, &MI, &SrcMI, &MRI, &Observer](MachineIRBuilder &B) {
       auto NewConstant = B.buildConstant(
           LLT::scalar(20),
           *getIConstantVRegSExtVal(SrcMI.getOperand(0).getReg(), MRI));
-      MRI.replaceRegWith(MI.getOperand(0).getReg(),
-                         NewConstant->getOperand(0).getReg());
+      Register FromReg = MI.getOperand(0).getReg();
+      Observer.changingAllUsesOfReg(MRI, FromReg);
+      MRI.replaceRegWith(FromReg, NewConstant->getOperand(0).getReg());
+      Observer.finishedChangingAllUsesOfReg();
       MI.eraseFromParent();
     };
     return true;
