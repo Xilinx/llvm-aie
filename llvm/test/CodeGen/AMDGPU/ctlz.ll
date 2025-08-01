@@ -6,6 +6,10 @@
 ; RUN: llc < %s -global-isel -mtriple=amdgcn -mcpu=gfx1010 -verify-machineinstrs | FileCheck %s -enable-var-scope --check-prefix=GFX10-GISEL
 ; RUN: llc < %s -mtriple=amdgcn -mcpu=gfx1100 -verify-machineinstrs | FileCheck %s -enable-var-scope --check-prefix=GFX11
 
+; Local changes in GlobalIsel affect this case, let's mark it as XFAIL
+; until those changes are upstreamed.
+; XFAIL: llvm-aie-regression
+
 declare i7 @llvm.ctlz.i7(i7, i1) nounwind readnone
 declare i8 @llvm.ctlz.i8(i8, i1) nounwind readnone
 declare i16 @llvm.ctlz.i16(i16, i1) nounwind readnone

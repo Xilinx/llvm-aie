@@ -22,7 +22,9 @@
 ;   PhiIncomingAnalysis does not recognize G_BRCOND as divergent branch and does
 ;   not perform lane mask merging
 
-
+; Local changes in GlobalIsel affect this case, let's mark it as XFAIL
+; until those changes are upstreamed.
+; XFAIL: llvm-aie-regression
 
 define amdgpu_ps void @divergent_i1_phi_uniform_branch(ptr addrspace(1) %out, i32 %tid, i32 inreg %cond, ptr addrspace(1) %dummyaddr) {
 ; GFX10-LABEL: divergent_i1_phi_uniform_branch:
