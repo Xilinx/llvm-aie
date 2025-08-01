@@ -55,6 +55,7 @@ v64accfloat test_negmul_8x8_8x8T(v64bfp16ebs8 a, v64bfp16ebs8 b) {
 v64accfloat test_mac_8x8_8x8T(v64bfp16ebs8 a, v64bfp16ebs8 b, v64accfloat acc) {
   return mac_8x8_8x8T(a, b, acc);
 }
+//
 // CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z17test_msc_8x8_8x8T12v64bfp16ebs8S_Dv64_u10__accfloat(
 // CHECK-SAME: [[STRUCT_V64BFP16EBS8:%.*]] [[A_COERCE:%.*]], [[STRUCT_V64BFP16EBS8]] [[B_COERCE:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
@@ -113,8 +114,8 @@ v64accfloat test_addmsc_8x8_8x8T(v64bfp16ebs8 a, v64bfp16ebs8 b,
 // CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[B_COERCE]], 1
 // CHECK-NEXT:    [[SHL14_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL15_I_I:%.*]] = shl i32 [[SGN_Y]], 8
-// CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
-// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR5_I_I]], 12
+// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
+// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR16_I_I]], 12
 // CHECK-NEXT:    [[TMP4:%.*]] = tail call <64 x i32> @llvm.aie2p.BFP576.BFP576.ACC2048.mul.conf(<64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <64 x i8> [[TMP2]], <8 x i8> [[TMP3]], i32 [[OR19_I_I]])
 // CHECK-NEXT:    [[TMP5:%.*]] = bitcast <64 x i32> [[TMP4]] to <64 x float>
 // CHECK-NEXT:    ret <64 x float> [[TMP5]]
@@ -132,8 +133,8 @@ v64accfloat test_mul_8x8_8x8T(v64bfp16ebs8 a, int sgn_x, v64bfp16ebs8 b,
 // CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[B_COERCE]], 1
 // CHECK-NEXT:    [[SHL14_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL15_I_I:%.*]] = shl i32 [[SGN_Y]], 8
-// CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
-// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR5_I_I]], 12
+// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
+// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR16_I_I]], 12
 // CHECK-NEXT:    [[TMP4:%.*]] = tail call <64 x i32> @llvm.aie2p.BFP576.BFP576.ACC2048.negmul.conf(<64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <64 x i8> [[TMP2]], <8 x i8> [[TMP3]], i32 [[OR19_I_I]])
 // CHECK-NEXT:    [[TMP5:%.*]] = bitcast <64 x i32> [[TMP4]] to <64 x float>
 // CHECK-NEXT:    ret <64 x float> [[TMP5]]
@@ -151,8 +152,8 @@ v64accfloat test_negmul_8x8_8x8T(v64bfp16ebs8 a, int sgn_x, v64bfp16ebs8 b,
 // CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[B_COERCE]], 1
 // CHECK-NEXT:    [[SHL14_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL15_I_I:%.*]] = shl i32 [[SGN_Y]], 8
-// CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
-// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR5_I_I]], 12
+// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
+// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR16_I_I]], 12
 // CHECK-NEXT:    [[TMP4:%.*]] = bitcast <64 x float> [[ACC]] to <64 x i32>
 // CHECK-NEXT:    [[TMP5:%.*]] = tail call <64 x i32> @llvm.aie2p.BFP576.BFP576.ACC2048.mac.conf(<64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <64 x i8> [[TMP2]], <8 x i8> [[TMP3]], <64 x i32> [[TMP4]], i32 [[OR19_I_I]])
 // CHECK-NEXT:    [[TMP6:%.*]] = bitcast <64 x i32> [[TMP5]] to <64 x float>
@@ -171,8 +172,8 @@ v64accfloat test_mac_8x8_8x8T(v64bfp16ebs8 a, int sgn_x, v64bfp16ebs8 b,
 // CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[B_COERCE]], 1
 // CHECK-NEXT:    [[SHL14_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL15_I_I:%.*]] = shl i32 [[SGN_Y]], 8
-// CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
-// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR5_I_I]], 12
+// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
+// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR16_I_I]], 12
 // CHECK-NEXT:    [[TMP4:%.*]] = bitcast <64 x float> [[ACC]] to <64 x i32>
 // CHECK-NEXT:    [[TMP5:%.*]] = tail call <64 x i32> @llvm.aie2p.BFP576.BFP576.ACC2048.msc.conf(<64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <64 x i8> [[TMP2]], <8 x i8> [[TMP3]], <64 x i32> [[TMP4]], i32 [[OR19_I_I]])
 // CHECK-NEXT:    [[TMP6:%.*]] = bitcast <64 x i32> [[TMP5]] to <64 x float>
@@ -191,8 +192,8 @@ v64accfloat test_msc_8x8_8x8T(v64bfp16ebs8 a, int sgn_x, v64bfp16ebs8 b,
 // CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[B_COERCE]], 1
 // CHECK-NEXT:    [[SHL14_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL15_I_I:%.*]] = shl i32 [[SGN_Y]], 8
-// CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
-// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR5_I_I]], 12
+// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
+// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR16_I_I]], 12
 // CHECK-NEXT:    [[TMP4:%.*]] = bitcast <64 x float> [[ACC1]] to <64 x i32>
 // CHECK-NEXT:    [[TMP5:%.*]] = bitcast <64 x float> [[ACC2]] to <64 x i32>
 // CHECK-NEXT:    [[TMP6:%.*]] = tail call <64 x i32> @llvm.aie2p.BFP576.BFP576.ACC2048.addmac.conf(<64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <64 x i8> [[TMP2]], <8 x i8> [[TMP3]], <64 x i32> [[TMP4]], <64 x i32> [[TMP5]], i32 [[OR19_I_I]])
@@ -213,8 +214,8 @@ v64accfloat test_addmac_8x8_8x8T(v64bfp16ebs8 a, int sgn_x, v64bfp16ebs8 b,
 // CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[B_COERCE]], 1
 // CHECK-NEXT:    [[SHL14_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL15_I_I:%.*]] = shl i32 [[SGN_Y]], 8
-// CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
-// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR5_I_I]], 12
+// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
+// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR16_I_I]], 12
 // CHECK-NEXT:    [[TMP4:%.*]] = bitcast <64 x float> [[ACC1]] to <64 x i32>
 // CHECK-NEXT:    [[TMP5:%.*]] = bitcast <64 x float> [[ACC2]] to <64 x i32>
 // CHECK-NEXT:    [[TMP6:%.*]] = tail call <64 x i32> @llvm.aie2p.BFP576.BFP576.ACC2048.addmsc.conf(<64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <64 x i8> [[TMP2]], <8 x i8> [[TMP3]], <64 x i32> [[TMP4]], <64 x i32> [[TMP5]], i32 [[OR19_I_I]])
@@ -269,9 +270,9 @@ v64accfloat test_negmul_8x8_8x8T_conf(v64bfp16ebs8 a, v64bfp16ebs8 b,
 // CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[B_COERCE]], 1
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
 // CHECK-NEXT:    [[SHL4_I_I:%.*]] = shl i32 [[SUB_ACC1]], 12
-// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[ZERO_ACC]], [[SHL2_I_I]]
-// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[OR11_I_I]], [[SHL4_I_I]]
-// CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR16_I_I]], 780
+// CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[ZERO_ACC]], [[SHL2_I_I]]
+// CHECK-NEXT:    [[OR13_I_I:%.*]] = or i32 [[OR5_I_I]], [[SHL4_I_I]]
+// CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR13_I_I]], 780
 // CHECK-NEXT:    [[TMP4:%.*]] = bitcast <64 x float> [[ACC]] to <64 x i32>
 // CHECK-NEXT:    [[TMP5:%.*]] = tail call <64 x i32> @llvm.aie2p.BFP576.BFP576.ACC2048.mac.conf(<64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <64 x i8> [[TMP2]], <8 x i8> [[TMP3]], <64 x i32> [[TMP4]], i32 [[OR19_I_I]])
 // CHECK-NEXT:    [[TMP6:%.*]] = bitcast <64 x i32> [[TMP5]] to <64 x float>
@@ -291,9 +292,9 @@ v64accfloat test_mac_8x8_8x8T_conf(v64bfp16ebs8 a, v64bfp16ebs8 b,
 // CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[B_COERCE]], 1
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
 // CHECK-NEXT:    [[SHL4_I_I:%.*]] = shl i32 [[SUB_ACC1]], 12
-// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[ZERO_ACC]], [[SHL2_I_I]]
-// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[OR11_I_I]], [[SHL4_I_I]]
-// CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR16_I_I]], 780
+// CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[ZERO_ACC]], [[SHL2_I_I]]
+// CHECK-NEXT:    [[OR13_I_I:%.*]] = or i32 [[OR5_I_I]], [[SHL4_I_I]]
+// CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR13_I_I]], 780
 // CHECK-NEXT:    [[TMP4:%.*]] = bitcast <64 x float> [[ACC]] to <64 x i32>
 // CHECK-NEXT:    [[TMP5:%.*]] = tail call <64 x i32> @llvm.aie2p.BFP576.BFP576.ACC2048.msc.conf(<64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <64 x i8> [[TMP2]], <8 x i8> [[TMP3]], <64 x i32> [[TMP4]], i32 [[OR19_I_I]])
 // CHECK-NEXT:    [[TMP6:%.*]] = bitcast <64 x i32> [[TMP5]] to <64 x float>
@@ -315,9 +316,9 @@ v64accfloat test_msc_8x8_8x8T_conf(v64bfp16ebs8 a, v64bfp16ebs8 b,
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
 // CHECK-NEXT:    [[SHL4_I_I:%.*]] = shl i32 [[SUB_ACC1]], 12
 // CHECK-NEXT:    [[SHL6_I_I:%.*]] = shl i32 [[SUB_ACC2]], 13
-// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[ZERO_ACC1]], [[SHL2_I_I]]
-// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[OR11_I_I]], [[SHL4_I_I]]
-// CHECK-NEXT:    [[OR13_I_I:%.*]] = or i32 [[OR16_I_I]], [[SHL6_I_I]]
+// CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[ZERO_ACC1]], [[SHL2_I_I]]
+// CHECK-NEXT:    [[OR7_I_I:%.*]] = or i32 [[OR5_I_I]], [[SHL4_I_I]]
+// CHECK-NEXT:    [[OR13_I_I:%.*]] = or i32 [[OR7_I_I]], [[SHL6_I_I]]
 // CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR13_I_I]], 780
 // CHECK-NEXT:    [[TMP4:%.*]] = bitcast <64 x float> [[ACC1]] to <64 x i32>
 // CHECK-NEXT:    [[TMP5:%.*]] = bitcast <64 x float> [[ACC2]] to <64 x i32>
@@ -342,9 +343,9 @@ v64accfloat test_addmac_8x8_8x8T_conf(v64bfp16ebs8 a, v64bfp16ebs8 b,
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
 // CHECK-NEXT:    [[SHL4_I_I:%.*]] = shl i32 [[SUB_ACC1]], 12
 // CHECK-NEXT:    [[SHL6_I_I:%.*]] = shl i32 [[SUB_ACC2]], 13
-// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[ZERO_ACC1]], [[SHL2_I_I]]
-// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[OR11_I_I]], [[SHL4_I_I]]
-// CHECK-NEXT:    [[OR13_I_I:%.*]] = or i32 [[OR16_I_I]], [[SHL6_I_I]]
+// CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[ZERO_ACC1]], [[SHL2_I_I]]
+// CHECK-NEXT:    [[OR7_I_I:%.*]] = or i32 [[OR5_I_I]], [[SHL4_I_I]]
+// CHECK-NEXT:    [[OR13_I_I:%.*]] = or i32 [[OR7_I_I]], [[SHL6_I_I]]
 // CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR13_I_I]], 780
 // CHECK-NEXT:    [[TMP4:%.*]] = bitcast <64 x float> [[ACC1]] to <64 x i32>
 // CHECK-NEXT:    [[TMP5:%.*]] = bitcast <64 x float> [[ACC2]] to <64 x i32>
@@ -369,9 +370,9 @@ v64accfloat test_addmsc_8x8_8x8T_conf(v64bfp16ebs8 a, v64bfp16ebs8 b,
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
 // CHECK-NEXT:    [[SHL14_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL15_I_I:%.*]] = shl i32 [[SGN_Y]], 8
-// CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
-// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[OR5_I_I]], [[SHL2_I_I]]
-// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR16_I_I]], 12
+// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
+// CHECK-NEXT:    [[OR17_I_I:%.*]] = or i32 [[OR16_I_I]], [[SHL2_I_I]]
+// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR17_I_I]], 12
 // CHECK-NEXT:    [[TMP4:%.*]] = tail call <64 x i32> @llvm.aie2p.BFP576.BFP576.ACC2048.mul.conf(<64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <64 x i8> [[TMP2]], <8 x i8> [[TMP3]], i32 [[OR19_I_I]])
 // CHECK-NEXT:    [[TMP5:%.*]] = bitcast <64 x i32> [[TMP4]] to <64 x float>
 // CHECK-NEXT:    ret <64 x float> [[TMP5]]
@@ -390,9 +391,9 @@ v64accfloat test_mul_8x8_8x8T_conf(v64bfp16ebs8 a, int sgn_x, v64bfp16ebs8 b,
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
 // CHECK-NEXT:    [[SHL14_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL15_I_I:%.*]] = shl i32 [[SGN_Y]], 8
-// CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
-// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[OR5_I_I]], [[SHL2_I_I]]
-// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR16_I_I]], 12
+// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
+// CHECK-NEXT:    [[OR17_I_I:%.*]] = or i32 [[OR16_I_I]], [[SHL2_I_I]]
+// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR17_I_I]], 12
 // CHECK-NEXT:    [[TMP4:%.*]] = tail call <64 x i32> @llvm.aie2p.BFP576.BFP576.ACC2048.negmul.conf(<64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <64 x i8> [[TMP2]], <8 x i8> [[TMP3]], i32 [[OR19_I_I]])
 // CHECK-NEXT:    [[TMP5:%.*]] = bitcast <64 x i32> [[TMP4]] to <64 x float>
 // CHECK-NEXT:    ret <64 x float> [[TMP5]]
@@ -413,10 +414,10 @@ v64accfloat test_negmul_8x8_8x8T_conf(v64bfp16ebs8 a, int sgn_x, v64bfp16ebs8 b,
 // CHECK-NEXT:    [[SHL14_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL15_I_I:%.*]] = shl i32 [[SGN_Y]], 8
 // CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
-// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[OR5_I_I]], [[ZERO_ACC]]
-// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[OR11_I_I]], [[SHL2_I_I]]
-// CHECK-NEXT:    [[OR13_I_I:%.*]] = or i32 [[OR16_I_I]], [[SHL4_I_I]]
-// CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR13_I_I]], 12
+// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[OR5_I_I]], [[ZERO_ACC]]
+// CHECK-NEXT:    [[OR13_I_I:%.*]] = or i32 [[OR16_I_I]], [[SHL2_I_I]]
+// CHECK-NEXT:    [[OR17_I_I:%.*]] = or i32 [[OR13_I_I]], [[SHL4_I_I]]
+// CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR17_I_I]], 12
 // CHECK-NEXT:    [[TMP4:%.*]] = bitcast <64 x float> [[ACC]] to <64 x i32>
 // CHECK-NEXT:    [[TMP5:%.*]] = tail call <64 x i32> @llvm.aie2p.BFP576.BFP576.ACC2048.mac.conf(<64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <64 x i8> [[TMP2]], <8 x i8> [[TMP3]], <64 x i32> [[TMP4]], i32 [[OR19_I_I]])
 // CHECK-NEXT:    [[TMP6:%.*]] = bitcast <64 x i32> [[TMP5]] to <64 x float>
@@ -440,10 +441,10 @@ v64accfloat test_mac_8x8_8x8T_conf(v64bfp16ebs8 a, int sgn_x, v64bfp16ebs8 b,
 // CHECK-NEXT:    [[SHL14_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL15_I_I:%.*]] = shl i32 [[SGN_Y]], 8
 // CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
-// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[OR5_I_I]], [[ZERO_ACC]]
-// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[OR11_I_I]], [[SHL2_I_I]]
-// CHECK-NEXT:    [[OR13_I_I:%.*]] = or i32 [[OR16_I_I]], [[SHL4_I_I]]
-// CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR13_I_I]], 12
+// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[OR5_I_I]], [[ZERO_ACC]]
+// CHECK-NEXT:    [[OR13_I_I:%.*]] = or i32 [[OR16_I_I]], [[SHL2_I_I]]
+// CHECK-NEXT:    [[OR17_I_I:%.*]] = or i32 [[OR13_I_I]], [[SHL4_I_I]]
+// CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR17_I_I]], 12
 // CHECK-NEXT:    [[TMP4:%.*]] = bitcast <64 x float> [[ACC]] to <64 x i32>
 // CHECK-NEXT:    [[TMP5:%.*]] = tail call <64 x i32> @llvm.aie2p.BFP576.BFP576.ACC2048.msc.conf(<64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <64 x i8> [[TMP2]], <8 x i8> [[TMP3]], <64 x i32> [[TMP4]], i32 [[OR19_I_I]])
 // CHECK-NEXT:    [[TMP6:%.*]] = bitcast <64 x i32> [[TMP5]] to <64 x float>
@@ -468,8 +469,8 @@ v64accfloat test_msc_8x8_8x8T_conf(v64bfp16ebs8 a, int sgn_x, v64bfp16ebs8 b,
 // CHECK-NEXT:    [[SHL14_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL15_I_I:%.*]] = shl i32 [[SGN_Y]], 8
 // CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
-// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[OR5_I_I]], [[ZERO_ACC1]]
-// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[OR11_I_I]], [[SHL2_I_I]]
+// CHECK-NEXT:    [[OR7_I_I:%.*]] = or i32 [[OR5_I_I]], [[ZERO_ACC1]]
+// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[OR7_I_I]], [[SHL2_I_I]]
 // CHECK-NEXT:    [[OR13_I_I:%.*]] = or i32 [[OR16_I_I]], [[SHL4_I_I]]
 // CHECK-NEXT:    [[OR17_I_I:%.*]] = or i32 [[OR13_I_I]], [[SHL6_I_I]]
 // CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR17_I_I]], 12
@@ -499,8 +500,8 @@ v64accfloat test_addmac_8x8_8x8T_conf(v64bfp16ebs8 a, int sgn_x, v64bfp16ebs8 b,
 // CHECK-NEXT:    [[SHL14_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL15_I_I:%.*]] = shl i32 [[SGN_Y]], 8
 // CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
-// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[OR5_I_I]], [[ZERO_ACC1]]
-// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[OR11_I_I]], [[SHL2_I_I]]
+// CHECK-NEXT:    [[OR7_I_I:%.*]] = or i32 [[OR5_I_I]], [[ZERO_ACC1]]
+// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[OR7_I_I]], [[SHL2_I_I]]
 // CHECK-NEXT:    [[OR13_I_I:%.*]] = or i32 [[OR16_I_I]], [[SHL4_I_I]]
 // CHECK-NEXT:    [[OR17_I_I:%.*]] = or i32 [[OR13_I_I]], [[SHL6_I_I]]
 // CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR17_I_I]], 12
@@ -635,8 +636,8 @@ v64accfloat test_addmsc_4x8_8x16T(v64bfp16ebs8 a, v128bfp16ebs8 b,
 // CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[B_COERCE]], 3
 // CHECK-NEXT:    [[SHL14_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL15_I_I:%.*]] = shl i32 [[SGN_Y]], 8
-// CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
-// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR5_I_I]], 204
+// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
+// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR16_I_I]], 204
 // CHECK-NEXT:    [[TMP6:%.*]] = tail call <64 x i32> @llvm.aie2p.BFP576.BFP1152.ACC2048.mul.conf(<64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <64 x i8> [[TMP2]], <64 x i8> [[TMP3]], <8 x i8> [[TMP4]], <8 x i8> [[TMP5]], i32 [[OR19_I_I]])
 // CHECK-NEXT:    [[TMP7:%.*]] = bitcast <64 x i32> [[TMP6]] to <64 x float>
 // CHECK-NEXT:    ret <64 x float> [[TMP7]]
@@ -656,8 +657,8 @@ v64accfloat test_mul_4x8_8x16T(v64bfp16ebs8 a, int sgn_x, v128bfp16ebs8 b,
 // CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[B_COERCE]], 3
 // CHECK-NEXT:    [[SHL14_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL15_I_I:%.*]] = shl i32 [[SGN_Y]], 8
-// CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
-// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR5_I_I]], 204
+// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
+// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR16_I_I]], 204
 // CHECK-NEXT:    [[TMP6:%.*]] = tail call <64 x i32> @llvm.aie2p.BFP576.BFP1152.ACC2048.negmul.conf(<64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <64 x i8> [[TMP2]], <64 x i8> [[TMP3]], <8 x i8> [[TMP4]], <8 x i8> [[TMP5]], i32 [[OR19_I_I]])
 // CHECK-NEXT:    [[TMP7:%.*]] = bitcast <64 x i32> [[TMP6]] to <64 x float>
 // CHECK-NEXT:    ret <64 x float> [[TMP7]]
@@ -677,8 +678,8 @@ v64accfloat test_negmul_4x8_8x16T(v64bfp16ebs8 a, int sgn_x, v128bfp16ebs8 b,
 // CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[B_COERCE]], 3
 // CHECK-NEXT:    [[SHL14_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL15_I_I:%.*]] = shl i32 [[SGN_Y]], 8
-// CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
-// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR5_I_I]], 204
+// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
+// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR16_I_I]], 204
 // CHECK-NEXT:    [[TMP6:%.*]] = bitcast <64 x float> [[ACC]] to <64 x i32>
 // CHECK-NEXT:    [[TMP7:%.*]] = tail call <64 x i32> @llvm.aie2p.BFP576.BFP1152.ACC2048.mac.conf(<64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <64 x i8> [[TMP2]], <64 x i8> [[TMP3]], <8 x i8> [[TMP4]], <8 x i8> [[TMP5]], <64 x i32> [[TMP6]], i32 [[OR19_I_I]])
 // CHECK-NEXT:    [[TMP8:%.*]] = bitcast <64 x i32> [[TMP7]] to <64 x float>
@@ -699,8 +700,8 @@ v64accfloat test_mac_4x8_8x16T(v64bfp16ebs8 a, int sgn_x, v128bfp16ebs8 b,
 // CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[B_COERCE]], 3
 // CHECK-NEXT:    [[SHL14_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL15_I_I:%.*]] = shl i32 [[SGN_Y]], 8
-// CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
-// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR5_I_I]], 204
+// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
+// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR16_I_I]], 204
 // CHECK-NEXT:    [[TMP6:%.*]] = bitcast <64 x float> [[ACC]] to <64 x i32>
 // CHECK-NEXT:    [[TMP7:%.*]] = tail call <64 x i32> @llvm.aie2p.BFP576.BFP1152.ACC2048.msc.conf(<64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <64 x i8> [[TMP2]], <64 x i8> [[TMP3]], <8 x i8> [[TMP4]], <8 x i8> [[TMP5]], <64 x i32> [[TMP6]], i32 [[OR19_I_I]])
 // CHECK-NEXT:    [[TMP8:%.*]] = bitcast <64 x i32> [[TMP7]] to <64 x float>
@@ -721,8 +722,8 @@ v64accfloat test_msc_4x8_8x16T(v64bfp16ebs8 a, int sgn_x, v128bfp16ebs8 b,
 // CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[B_COERCE]], 3
 // CHECK-NEXT:    [[SHL14_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL15_I_I:%.*]] = shl i32 [[SGN_Y]], 8
-// CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
-// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR5_I_I]], 204
+// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
+// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR16_I_I]], 204
 // CHECK-NEXT:    [[TMP6:%.*]] = bitcast <64 x float> [[ACC1]] to <64 x i32>
 // CHECK-NEXT:    [[TMP7:%.*]] = bitcast <64 x float> [[ACC2]] to <64 x i32>
 // CHECK-NEXT:    [[TMP8:%.*]] = tail call <64 x i32> @llvm.aie2p.BFP576.BFP1152.ACC2048.addmac.conf(<64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <64 x i8> [[TMP2]], <64 x i8> [[TMP3]], <8 x i8> [[TMP4]], <8 x i8> [[TMP5]], <64 x i32> [[TMP6]], <64 x i32> [[TMP7]], i32 [[OR19_I_I]])
@@ -745,8 +746,8 @@ v64accfloat test_addmac_4x8_8x16T(v64bfp16ebs8 a, int sgn_x, v128bfp16ebs8 b,
 // CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[B_COERCE]], 3
 // CHECK-NEXT:    [[SHL14_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL15_I_I:%.*]] = shl i32 [[SGN_Y]], 8
-// CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
-// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR5_I_I]], 204
+// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
+// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR16_I_I]], 204
 // CHECK-NEXT:    [[TMP6:%.*]] = bitcast <64 x float> [[ACC1]] to <64 x i32>
 // CHECK-NEXT:    [[TMP7:%.*]] = bitcast <64 x float> [[ACC2]] to <64 x i32>
 // CHECK-NEXT:    [[TMP8:%.*]] = tail call <64 x i32> @llvm.aie2p.BFP576.BFP1152.ACC2048.addmsc.conf(<64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <64 x i8> [[TMP2]], <64 x i8> [[TMP3]], <8 x i8> [[TMP4]], <8 x i8> [[TMP5]], <64 x i32> [[TMP6]], <64 x i32> [[TMP7]], i32 [[OR19_I_I]])
@@ -807,9 +808,9 @@ v64accfloat test_negmul_4x8_8x16T_conf(v64bfp16ebs8 a, v128bfp16ebs8 b,
 // CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[B_COERCE]], 3
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
 // CHECK-NEXT:    [[SHL4_I_I:%.*]] = shl i32 [[SUB_ACC1]], 12
-// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[ZERO_ACC]], [[SHL2_I_I]]
-// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[OR11_I_I]], [[SHL4_I_I]]
-// CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR16_I_I]], 972
+// CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[ZERO_ACC]], [[SHL2_I_I]]
+// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[OR5_I_I]], [[SHL4_I_I]]
+// CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR11_I_I]], 972
 // CHECK-NEXT:    [[TMP6:%.*]] = bitcast <64 x float> [[ACC]] to <64 x i32>
 // CHECK-NEXT:    [[TMP7:%.*]] = tail call <64 x i32> @llvm.aie2p.BFP576.BFP1152.ACC2048.mac.conf(<64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <64 x i8> [[TMP2]], <64 x i8> [[TMP3]], <8 x i8> [[TMP4]], <8 x i8> [[TMP5]], <64 x i32> [[TMP6]], i32 [[OR19_I_I]])
 // CHECK-NEXT:    [[TMP8:%.*]] = bitcast <64 x i32> [[TMP7]] to <64 x float>
@@ -831,9 +832,9 @@ v64accfloat test_mac_4x8_8x16T_conf(v64bfp16ebs8 a, v128bfp16ebs8 b,
 // CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V128BFP16EBS8]] [[B_COERCE]], 3
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
 // CHECK-NEXT:    [[SHL4_I_I:%.*]] = shl i32 [[SUB_ACC1]], 12
-// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[ZERO_ACC]], [[SHL2_I_I]]
-// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[OR11_I_I]], [[SHL4_I_I]]
-// CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR16_I_I]], 972
+// CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[ZERO_ACC]], [[SHL2_I_I]]
+// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[OR5_I_I]], [[SHL4_I_I]]
+// CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR11_I_I]], 972
 // CHECK-NEXT:    [[TMP6:%.*]] = bitcast <64 x float> [[ACC]] to <64 x i32>
 // CHECK-NEXT:    [[TMP7:%.*]] = tail call <64 x i32> @llvm.aie2p.BFP576.BFP1152.ACC2048.msc.conf(<64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <64 x i8> [[TMP2]], <64 x i8> [[TMP3]], <8 x i8> [[TMP4]], <8 x i8> [[TMP5]], <64 x i32> [[TMP6]], i32 [[OR19_I_I]])
 // CHECK-NEXT:    [[TMP8:%.*]] = bitcast <64 x i32> [[TMP7]] to <64 x float>
@@ -856,10 +857,10 @@ v64accfloat test_msc_4x8_8x16T_conf(v64bfp16ebs8 a, v128bfp16ebs8 b,
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
 // CHECK-NEXT:    [[SHL4_I_I:%.*]] = shl i32 [[SUB_ACC1]], 12
 // CHECK-NEXT:    [[SHL6_I_I:%.*]] = shl i32 [[SUB_ACC2]], 13
-// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[ZERO_ACC1]], [[SHL2_I_I]]
-// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[OR11_I_I]], [[SHL4_I_I]]
-// CHECK-NEXT:    [[OR13_I_I:%.*]] = or i32 [[OR16_I_I]], [[SHL6_I_I]]
-// CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR13_I_I]], 972
+// CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[ZERO_ACC1]], [[SHL2_I_I]]
+// CHECK-NEXT:    [[OR7_I_I:%.*]] = or i32 [[OR5_I_I]], [[SHL4_I_I]]
+// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[OR7_I_I]], [[SHL6_I_I]]
+// CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR11_I_I]], 972
 // CHECK-NEXT:    [[TMP6:%.*]] = bitcast <64 x float> [[ACC1]] to <64 x i32>
 // CHECK-NEXT:    [[TMP7:%.*]] = bitcast <64 x float> [[ACC2]] to <64 x i32>
 // CHECK-NEXT:    [[TMP8:%.*]] = tail call <64 x i32> @llvm.aie2p.BFP576.BFP1152.ACC2048.addmac.conf(<64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <64 x i8> [[TMP2]], <64 x i8> [[TMP3]], <8 x i8> [[TMP4]], <8 x i8> [[TMP5]], <64 x i32> [[TMP6]], <64 x i32> [[TMP7]], i32 [[OR19_I_I]])
@@ -885,10 +886,10 @@ v64accfloat test_addmac_4x8_8x16T_conf(v64bfp16ebs8 a, v128bfp16ebs8 b,
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
 // CHECK-NEXT:    [[SHL4_I_I:%.*]] = shl i32 [[SUB_ACC1]], 12
 // CHECK-NEXT:    [[SHL6_I_I:%.*]] = shl i32 [[SUB_ACC2]], 13
-// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[ZERO_ACC1]], [[SHL2_I_I]]
-// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[OR11_I_I]], [[SHL4_I_I]]
-// CHECK-NEXT:    [[OR13_I_I:%.*]] = or i32 [[OR16_I_I]], [[SHL6_I_I]]
-// CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR13_I_I]], 972
+// CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[ZERO_ACC1]], [[SHL2_I_I]]
+// CHECK-NEXT:    [[OR7_I_I:%.*]] = or i32 [[OR5_I_I]], [[SHL4_I_I]]
+// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[OR7_I_I]], [[SHL6_I_I]]
+// CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR11_I_I]], 972
 // CHECK-NEXT:    [[TMP6:%.*]] = bitcast <64 x float> [[ACC1]] to <64 x i32>
 // CHECK-NEXT:    [[TMP7:%.*]] = bitcast <64 x float> [[ACC2]] to <64 x i32>
 // CHECK-NEXT:    [[TMP8:%.*]] = tail call <64 x i32> @llvm.aie2p.BFP576.BFP1152.ACC2048.addmsc.conf(<64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <64 x i8> [[TMP2]], <64 x i8> [[TMP3]], <8 x i8> [[TMP4]], <8 x i8> [[TMP5]], <64 x i32> [[TMP6]], <64 x i32> [[TMP7]], i32 [[OR19_I_I]])
@@ -914,9 +915,9 @@ v64accfloat test_addmsc_4x8_8x16T_conf(v64bfp16ebs8 a, v128bfp16ebs8 b,
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
 // CHECK-NEXT:    [[SHL14_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL15_I_I:%.*]] = shl i32 [[SGN_Y]], 8
-// CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
-// CHECK-NEXT:    [[OR7_I_I:%.*]] = or i32 [[OR5_I_I]], [[SHL2_I_I]]
-// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR7_I_I]], 204
+// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
+// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[OR16_I_I]], [[SHL2_I_I]]
+// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR11_I_I]], 204
 // CHECK-NEXT:    [[TMP6:%.*]] = tail call <64 x i32> @llvm.aie2p.BFP576.BFP1152.ACC2048.mul.conf(<64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <64 x i8> [[TMP2]], <64 x i8> [[TMP3]], <8 x i8> [[TMP4]], <8 x i8> [[TMP5]], i32 [[OR19_I_I]])
 // CHECK-NEXT:    [[TMP7:%.*]] = bitcast <64 x i32> [[TMP6]] to <64 x float>
 // CHECK-NEXT:    ret <64 x float> [[TMP7]]
@@ -937,9 +938,9 @@ v64accfloat test_mul_4x8_8x16T_conf(v64bfp16ebs8 a, int sgn_x, v128bfp16ebs8 b,
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
 // CHECK-NEXT:    [[SHL14_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL15_I_I:%.*]] = shl i32 [[SGN_Y]], 8
-// CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
-// CHECK-NEXT:    [[OR7_I_I:%.*]] = or i32 [[OR5_I_I]], [[SHL2_I_I]]
-// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR7_I_I]], 204
+// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
+// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[OR16_I_I]], [[SHL2_I_I]]
+// CHECK-NEXT:    [[OR19_I_I:%.*]] = or disjoint i32 [[OR11_I_I]], 204
 // CHECK-NEXT:    [[TMP6:%.*]] = tail call <64 x i32> @llvm.aie2p.BFP576.BFP1152.ACC2048.negmul.conf(<64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <64 x i8> [[TMP2]], <64 x i8> [[TMP3]], <8 x i8> [[TMP4]], <8 x i8> [[TMP5]], i32 [[OR19_I_I]])
 // CHECK-NEXT:    [[TMP7:%.*]] = bitcast <64 x i32> [[TMP6]] to <64 x float>
 // CHECK-NEXT:    ret <64 x float> [[TMP7]]
@@ -962,11 +963,11 @@ v64accfloat test_negmul_4x8_8x16T_conf(v64bfp16ebs8 a, int sgn_x,
 // CHECK-NEXT:    [[SHL4_I_I:%.*]] = shl i32 [[SUB_ACC1]], 12
 // CHECK-NEXT:    [[SHL14_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL15_I_I:%.*]] = shl i32 [[SGN_Y]], 8
-// CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
-// CHECK-NEXT:    [[OR7_I_I:%.*]] = or i32 [[OR5_I_I]], [[ZERO_ACC]]
-// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[OR7_I_I]], [[SHL2_I_I]]
-// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[OR11_I_I]], [[SHL4_I_I]]
-// CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR16_I_I]], 204
+// CHECK-NEXT:    [[OR11_I_I:%.*]] = or disjoint i32 [[SHL14_I_I]], 204
+// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[SHL15_I_I]], [[OR11_I_I]]
+// CHECK-NEXT:    [[OR13_I_I:%.*]] = or i32 [[OR16_I_I]], [[ZERO_ACC]]
+// CHECK-NEXT:    [[OR17_I_I:%.*]] = or i32 [[OR13_I_I]], [[SHL2_I_I]]
+// CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR17_I_I]], [[SHL4_I_I]]
 // CHECK-NEXT:    [[TMP6:%.*]] = bitcast <64 x float> [[ACC]] to <64 x i32>
 // CHECK-NEXT:    [[TMP7:%.*]] = tail call <64 x i32> @llvm.aie2p.BFP576.BFP1152.ACC2048.mac.conf(<64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <64 x i8> [[TMP2]], <64 x i8> [[TMP3]], <8 x i8> [[TMP4]], <8 x i8> [[TMP5]], <64 x i32> [[TMP6]], i32 [[OR19_I_I]])
 // CHECK-NEXT:    [[TMP8:%.*]] = bitcast <64 x i32> [[TMP7]] to <64 x float>
@@ -991,11 +992,11 @@ v64accfloat test_mac_4x8_8x16T_conf(v64bfp16ebs8 a, int sgn_x, v128bfp16ebs8 b,
 // CHECK-NEXT:    [[SHL4_I_I:%.*]] = shl i32 [[SUB_ACC1]], 12
 // CHECK-NEXT:    [[SHL14_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL15_I_I:%.*]] = shl i32 [[SGN_Y]], 8
-// CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
-// CHECK-NEXT:    [[OR7_I_I:%.*]] = or i32 [[OR5_I_I]], [[ZERO_ACC]]
-// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[OR7_I_I]], [[SHL2_I_I]]
-// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[OR11_I_I]], [[SHL4_I_I]]
-// CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR16_I_I]], 204
+// CHECK-NEXT:    [[OR11_I_I:%.*]] = or disjoint i32 [[SHL14_I_I]], 204
+// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[SHL15_I_I]], [[OR11_I_I]]
+// CHECK-NEXT:    [[OR13_I_I:%.*]] = or i32 [[OR16_I_I]], [[ZERO_ACC]]
+// CHECK-NEXT:    [[OR17_I_I:%.*]] = or i32 [[OR13_I_I]], [[SHL2_I_I]]
+// CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR17_I_I]], [[SHL4_I_I]]
 // CHECK-NEXT:    [[TMP6:%.*]] = bitcast <64 x float> [[ACC]] to <64 x i32>
 // CHECK-NEXT:    [[TMP7:%.*]] = tail call <64 x i32> @llvm.aie2p.BFP576.BFP1152.ACC2048.msc.conf(<64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <64 x i8> [[TMP2]], <64 x i8> [[TMP3]], <8 x i8> [[TMP4]], <8 x i8> [[TMP5]], <64 x i32> [[TMP6]], i32 [[OR19_I_I]])
 // CHECK-NEXT:    [[TMP8:%.*]] = bitcast <64 x i32> [[TMP7]] to <64 x float>
@@ -1021,12 +1022,12 @@ v64accfloat test_msc_4x8_8x16T_conf(v64bfp16ebs8 a, int sgn_x, v128bfp16ebs8 b,
 // CHECK-NEXT:    [[SHL6_I_I:%.*]] = shl i32 [[SUB_ACC2]], 13
 // CHECK-NEXT:    [[SHL14_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL15_I_I:%.*]] = shl i32 [[SGN_Y]], 8
-// CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
-// CHECK-NEXT:    [[OR7_I_I:%.*]] = or i32 [[OR5_I_I]], [[ZERO_ACC1]]
-// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[OR7_I_I]], [[SHL2_I_I]]
-// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[OR11_I_I]], [[SHL4_I_I]]
-// CHECK-NEXT:    [[OR13_I_I:%.*]] = or i32 [[OR16_I_I]], [[SHL6_I_I]]
-// CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR13_I_I]], 204
+// CHECK-NEXT:    [[OR7_I_I:%.*]] = or disjoint i32 [[SHL14_I_I]], 204
+// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[SHL15_I_I]], [[OR7_I_I]]
+// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[OR11_I_I]], [[ZERO_ACC1]]
+// CHECK-NEXT:    [[OR13_I_I:%.*]] = or i32 [[OR16_I_I]], [[SHL2_I_I]]
+// CHECK-NEXT:    [[OR17_I_I:%.*]] = or i32 [[OR13_I_I]], [[SHL4_I_I]]
+// CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR17_I_I]], [[SHL6_I_I]]
 // CHECK-NEXT:    [[TMP6:%.*]] = bitcast <64 x float> [[ACC1]] to <64 x i32>
 // CHECK-NEXT:    [[TMP7:%.*]] = bitcast <64 x float> [[ACC2]] to <64 x i32>
 // CHECK-NEXT:    [[TMP8:%.*]] = tail call <64 x i32> @llvm.aie2p.BFP576.BFP1152.ACC2048.addmac.conf(<64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <64 x i8> [[TMP2]], <64 x i8> [[TMP3]], <8 x i8> [[TMP4]], <8 x i8> [[TMP5]], <64 x i32> [[TMP6]], <64 x i32> [[TMP7]], i32 [[OR19_I_I]])
@@ -1055,12 +1056,12 @@ v64accfloat test_addmac_4x8_8x16T_conf(v64bfp16ebs8 a, int sgn_x,
 // CHECK-NEXT:    [[SHL6_I_I:%.*]] = shl i32 [[SUB_ACC2]], 13
 // CHECK-NEXT:    [[SHL14_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL15_I_I:%.*]] = shl i32 [[SGN_Y]], 8
-// CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[SHL14_I_I]], [[SHL15_I_I]]
-// CHECK-NEXT:    [[OR7_I_I:%.*]] = or i32 [[OR5_I_I]], [[ZERO_ACC1]]
-// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[OR7_I_I]], [[SHL2_I_I]]
-// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[OR11_I_I]], [[SHL4_I_I]]
-// CHECK-NEXT:    [[OR13_I_I:%.*]] = or i32 [[OR16_I_I]], [[SHL6_I_I]]
-// CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR13_I_I]], 204
+// CHECK-NEXT:    [[OR7_I_I:%.*]] = or disjoint i32 [[SHL14_I_I]], 204
+// CHECK-NEXT:    [[OR11_I_I:%.*]] = or i32 [[SHL15_I_I]], [[OR7_I_I]]
+// CHECK-NEXT:    [[OR16_I_I:%.*]] = or i32 [[OR11_I_I]], [[ZERO_ACC1]]
+// CHECK-NEXT:    [[OR13_I_I:%.*]] = or i32 [[OR16_I_I]], [[SHL2_I_I]]
+// CHECK-NEXT:    [[OR17_I_I:%.*]] = or i32 [[OR13_I_I]], [[SHL4_I_I]]
+// CHECK-NEXT:    [[OR19_I_I:%.*]] = or i32 [[OR17_I_I]], [[SHL6_I_I]]
 // CHECK-NEXT:    [[TMP6:%.*]] = bitcast <64 x float> [[ACC1]] to <64 x i32>
 // CHECK-NEXT:    [[TMP7:%.*]] = bitcast <64 x float> [[ACC2]] to <64 x i32>
 // CHECK-NEXT:    [[TMP8:%.*]] = tail call <64 x i32> @llvm.aie2p.BFP576.BFP1152.ACC2048.addmsc.conf(<64 x i8> [[TMP0]], <8 x i8> [[TMP1]], <64 x i8> [[TMP2]], <64 x i8> [[TMP3]], <8 x i8> [[TMP4]], <8 x i8> [[TMP5]], <64 x i32> [[TMP6]], <64 x i32> [[TMP7]], i32 [[OR19_I_I]])
