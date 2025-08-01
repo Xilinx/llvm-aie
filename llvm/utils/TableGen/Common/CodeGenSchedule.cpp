@@ -870,7 +870,7 @@ void CodeGenSchedModels::collectSchedClasses() {
     for (Record *AltItin : AltItinary) {
       Record *AltItinDef = AltItin->getValueAsDef("Itinerary");
       if (!Inst->TheDef->isValueUnset("SchedRW"))
-        findRWs(Inst->TheDef->getValueAsListOfDefs("SchedRW"), Writes, Reads);
+        findRWs(Inst->TheDef->getValueAsListOfConstDefs("SchedRW"), Writes, Reads);
       addSchedClass(AltItinDef, Writes, Reads,
                     /*ProcIndices*/ {0});
     }
