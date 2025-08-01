@@ -904,7 +904,7 @@ Instruction *InstCombinerImpl::foldPHIArgOpIntoPHI(PHINode &PN) {
 
   Instruction *FirstInst = cast<Instruction>(PN.getIncomingValue(0));
 
-  if (TTI.isProfitableFoldGEPIntoPHI() && isa<GetElementPtrInst>(FirstInst))
+  if (TTIForTargetIntrinsicsOnly.isProfitableFoldGEPIntoPHI() && isa<GetElementPtrInst>(FirstInst))
     return foldPHIArgGEPIntoPHI(PN);
   if (isa<LoadInst>(FirstInst))
     return foldPHIArgLoadIntoPHI(PN);
