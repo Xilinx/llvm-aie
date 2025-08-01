@@ -410,8 +410,7 @@ public:
     }
 
     int ArgIdx, Kind, TypeArgIdx;
-    std::vector<Record *> ImmCheckList = R->getValueAsListOfDefs("ImmChecks");
-    for (const auto *I : ImmCheckList) {
+    for (const Record *I : R->getValueAsListOfDefs("ImmChecks")) {
       unsigned EltSizeInBits = 0, VecSizeInBits = 0;
 
       ArgIdx = I->getValueAsInt("ImmArgIdx");
@@ -434,11 +433,11 @@ public:
 
       ImmChecks.emplace_back(ArgIdx, Kind, EltSizeInBits, VecSizeInBits);
     }
-    llvm::sort(ImmChecks.begin(), ImmChecks.end(),
-               [](const ImmCheck &a, const ImmCheck &b) {
-                 return a.getImmArgIdx() < b.getImmArgIdx();
-               }); // Sort for comparison with other intrinsics which map to the
-                   // same builtin
+    sort(ImmChecks.begin(), ImmChecks.end(),
+         [](const ImmCheck &a, const ImmCheck &b) {
+           return a.getImmArgIdx() < b.getImmArgIdx();
+         }); // Sort for comparison with other intrinsics which map to the
+             // same builtin
   }
 
   /// Get the Record that this intrinsic is based off.
@@ -456,7 +455,7 @@ public:
 
   /// Return true if the intrinsic takes an immediate operand.
   bool hasImmediate() const {
-    return llvm::any_of(Types, [](const Type &T) { return T.isImmediate(); });
+    return any_of(Types, [](const Type &T) { return T.isImmediate(); });
   }
 
   // Return if the supplied argument is an immediate
@@ -1320,8 +1319,8 @@ void Intrinsic::emitShadowedArgs() {
 }
 
 bool Intrinsic::protoHasScalar() const {
-  return llvm::any_of(
-      Types, [](const Type &T) { return T.isScalar() && !T.isImmediate(); });
+  return any_of(Types,
+                [](const Type &T) { return T.isScalar() && !T.isImmediate(); });
 }
 
 void Intrinsic::emitBodyAsBuiltinCall() {
@@ -1964,7 +1963,7 @@ Intrinsic &NeonEmitter::getIntrinsic(StringRef Name, ArrayRef<Type> Types,
       continue;
 
     unsigned ArgNum = 0;
-    bool MatchingArgumentTypes = llvm::all_of(Types, [&](const auto &Type) {
+    bool MatchingArgumentTypes = all_of(Types, [&](const auto &Type) {
       return Type == I.getParamType(ArgNum++);
     });
 
@@ -2022,7 +2021,7 @@ void NeonEmitter::createIntrinsic(const Record *R,
     }
   }
 
-  llvm::sort(NewTypeSpecs);
+  sort(NewTypeSpecs);
   NewTypeSpecs.erase(std::unique(NewTypeSpecs.begin(), NewTypeSpecs.end()),
 		     NewTypeSpecs.end());
   auto &Entry = IntrinsicMap[Name];
@@ -2404,7 +2403,7 @@ void NeonEmitter::run(raw_ostream &OS) {
   for (auto *I : Defs)
     I->indexBody();
 
-  llvm::stable_sort(Defs, llvm::deref<std::less<>>());
+  stable_sort(Defs, deref<std::less<>>());
 
   // Only emit a def when its requirements have been met.
   // FIXME: This loop could be made faster, but it's fast enough for now.
@@ -2417,7 +2416,7 @@ void NeonEmitter::run(raw_ostream &OS) {
          I != Defs.end(); /*No step*/) {
       bool DependenciesSatisfied = true;
       for (auto *II : (*I)->getDependencies()) {
-        if (llvm::is_contained(Defs, II))
+        if (is_contained(Defs, II))
           DependenciesSatisfied = false;
       }
       if (!DependenciesSatisfied) {
@@ -2511,7 +2510,7 @@ void NeonEmitter::runFP16(raw_ostream &OS) {
   for (auto *I : Defs)
     I->indexBody();
 
-  llvm::stable_sort(Defs, llvm::deref<std::less<>>());
+  stable_sort(Defs, deref<std::less<>>());
 
   // Only emit a def when its requirements have been met.
   // FIXME: This loop could be made faster, but it's fast enough for now.
@@ -2524,7 +2523,7 @@ void NeonEmitter::runFP16(raw_ostream &OS) {
          I != Defs.end(); /*No step*/) {
       bool DependenciesSatisfied = true;
       for (auto *II : (*I)->getDependencies()) {
-        if (llvm::is_contained(Defs, II))
+        if (is_contained(Defs, II))
           DependenciesSatisfied = false;
       }
       if (!DependenciesSatisfied) {
@@ -2619,7 +2618,7 @@ void NeonEmitter::runBF16(raw_ostream &OS) {
   for (auto *I : Defs)
     I->indexBody();
 
-  llvm::stable_sort(Defs, llvm::deref<std::less<>>());
+  stable_sort(Defs, deref<std::less<>>());
 
   // Only emit a def when its requirements have been met.
   // FIXME: This loop could be made faster, but it's fast enough for now.
@@ -2632,7 +2631,7 @@ void NeonEmitter::runBF16(raw_ostream &OS) {
          I != Defs.end(); /*No step*/) {
       bool DependenciesSatisfied = true;
       for (auto *II : (*I)->getDependencies()) {
-        if (llvm::is_contained(Defs, II))
+        if (is_contained(Defs, II))
           DependenciesSatisfied = false;
       }
       if (!DependenciesSatisfied) {

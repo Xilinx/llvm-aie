@@ -24,7 +24,7 @@ using namespace lld::elf;
 namespace {
 class Hexagon final : public TargetInfo {
 public:
-  Hexagon();
+  Hexagon(Ctx &);
   uint32_t calcEFlags() const override;
   RelExpr getRelExpr(RelType type, const Symbol &s,
                      const uint8_t *loc) const override;
@@ -38,7 +38,7 @@ public:
 };
 } // namespace
 
-Hexagon::Hexagon() {
+Hexagon::Hexagon(Ctx &ctx) : TargetInfo(ctx) {
   pltRel = R_HEX_JMP_SLOT;
   relativeRel = R_HEX_RELATIVE;
   gotRel = R_HEX_GLOB_DAT;
@@ -359,7 +359,7 @@ void Hexagon::writePltHeader(uint8_t *buf) const {
   memcpy(buf, pltData, sizeof(pltData));
 
   // Offset from PLT0 to the GOT.
-  uint64_t off = in.gotPlt->getVA() - in.plt->getVA();
+  uint64_t off = ctx.in.gotPlt->getVA() - ctx.in.plt->getVA();
   relocateNoSym(buf, R_HEX_B32_PCREL_X, off);
   relocateNoSym(buf + 4, R_HEX_6_PCREL_X, off);
 }
@@ -404,7 +404,7 @@ int64_t Hexagon::getImplicitAddend(const uint8_t *buf, RelType type) const {
   }
 }
 
-TargetInfo *elf::getHexagonTargetInfo() {
-  static Hexagon target;
+TargetInfo *elf::getHexagonTargetInfo(Ctx &ctx) {
+  static Hexagon target(ctx);
   return &target;
 }

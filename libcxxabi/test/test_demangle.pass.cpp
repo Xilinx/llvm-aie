@@ -9,9 +9,8 @@
 // This test is too big for most embedded devices.
 // XFAIL: LIBCXX-PICOLIBC-FIXME
 
-// https://llvm.org/PR51407 was not fixed in some previously-released
-// demanglers, which causes them to run into the infinite loop.
-// UNSUPPORTED: using-built-library-before-llvm-14
+// This test exercises support for char array initializer lists added in dd8b266ef.
+// UNSUPPORTED: using-built-library-before-llvm-20
 
 // Android's long double on x86[-64] is (64/128)-bits instead of Linux's usual
 // 80-bit format, and this demangling test is failing on it.
@@ -30024,6 +30023,9 @@ const char* cases[][2] =
     // See https://github.com/itanium-cxx-abi/cxx-abi/issues/165.
     {"_ZN1C1fIiEEvDTtlNS_UlT_TL0__E_EEE", "void C::f<int>(decltype(C::'lambda'(int, auto){}))"},
 
+    // See https://github.com/llvm/llvm-project/issues/108009.
+    {"_ZN3FooIiE6methodIb3BarEEvT0_IT_ES3_IiE", "void Foo<int>::method<bool, Bar>(Bar<bool>, Bar<int>)"},
+
     // C++20 class type non-type template parameters:
     {"_Z1fIXtl1BLPi0ELi1EEEEvv", "void f<B{(int*)0, 1}>()"},
     {"_Z1fIXtl1BLPi32EEEEvv", "void f<B{(int*)32}>()"},
@@ -30037,7 +30039,32 @@ const char* cases[][2] =
     // FIXME: This is not valid pointer-to-member syntax.
     {"_Z1fIXtl1DmcM7DerivedKiadL_ZN11MoreDerived1zEEn8EEEEvv", "void f<D{(int const Derived::*)(&MoreDerived::z)}>()"},
     {"_Z1fIXtl1Edi1nLi42EEEEvv", "void f<E{.n = 42}>()"},
-    {"_ZTAXtl1StlA32_cLc104ELc101ELc108ELc108ELc111ELc32ELc119ELc111ELc114ELc108ELc100EEEE", "template parameter object for S{char [32]{(char)104, (char)101, (char)108, (char)108, (char)111, (char)32, (char)119, (char)111, (char)114, (char)108, (char)100}}"},
+    // Arrays of char are formatted as string literals. Escape sequences are
+    // used for non-printable ASCII characters.
+    // FIXME: We should do the same for arrays of charN_t and wchar_t.
+    {"_ZTAXtl1StlA32_cLc104ELc101ELc108ELc108ELc111ELc32ELc119ELc111ELc114ELc108ELc100EEEE", "template parameter object for S{\"hello world\"}"},
+    {"_Z1fIXtl5HellotlA6_cLc72ELc101ELc108ELc108ELc111EEEEEvv", "void f<Hello{\"Hello\"}>()"},
+    {"_Z1fIXtl5HellotlA6_cLc72ELc101ELc108ELc111EEEEEvv", "void f<Hello{\"Helo\"}>()"},
+    {"_Z1fIXtl5HellotlA6_cLc72ELc101ELc0ELc108ELc111EEEEEvv", "void f<Hello{\"He\\0lo\"}>()"},
+    {"_Z1fIXtl5HellotlA6_cLc72ELc101ELc1ELc108ELc111EEEEEvv", "void f<Hello{\"He\\1lo\"}>()"},
+    {"_Z1fIXtl5HellotlA6_cLc72ELc101ELc6ELc108ELc111EEEEEvv", "void f<Hello{\"He\\6lo\"}>()"},
+    {"_Z1fIXtl5HellotlA6_cLc72ELc101ELc7ELc108ELc111EEEEEvv", "void f<Hello{\"He\\alo\"}>()"},
+    {"_Z1fIXtl5HellotlA6_cLc72ELc101ELc8ELc108ELc111EEEEEvv", "void f<Hello{\"He\\blo\"}>()"},
+    {"_Z1fIXtl5HellotlA6_cLc72ELc101ELc9ELc108ELc111EEEEEvv", "void f<Hello{\"He\\tlo\"}>()"},
+    {"_Z1fIXtl5HellotlA6_cLc72ELc101ELc10ELc108ELc111EEEEEvv", "void f<Hello{\"He\\nlo\"}>()"},
+    {"_Z1fIXtl5HellotlA6_cLc72ELc101ELc11ELc108ELc111EEEEEvv", "void f<Hello{\"He\\vlo\"}>()"},
+    {"_Z1fIXtl5HellotlA6_cLc72ELc101ELc12ELc108ELc111EEEEEvv", "void f<Hello{\"He\\flo\"}>()"},
+    {"_Z1fIXtl5HellotlA6_cLc72ELc101ELc13ELc108ELc111EEEEEvv", "void f<Hello{\"He\\rlo\"}>()"},
+    {"_Z1fIXtl5HellotlA6_cLc72ELc101ELc14ELc108ELc111EEEEEvv", "void f<Hello{\"He\\xElo\"}>()"},
+    {"_Z1fIXtl5HellotlA6_cLc72ELc101ELc15ELc108ELc111EEEEEvv", "void f<Hello{\"He\\xFlo\"}>()"},
+    {"_Z1fIXtl5HellotlA6_cLc72ELc101ELc16ELc108ELc111EEEEEvv", "void f<Hello{\"He\\x10lo\"}>()"},
+    {"_Z1fIXtl5HellotlA6_cLc72ELc101ELc34ELc108ELc111EEEEEvv", "void f<Hello{\"He\\\"lo\"}>()"},
+    {"_Z1fIXtl5HellotlA6_cLc72ELc101ELc92ELc108ELc111EEEEEvv", "void f<Hello{\"He\\\\lo\"}>()"},
+    {"_Z1fIXtl5HellotlA6_cLc15ELc101ELc108ELc108ELc111EEEEEvv", "void f<Hello{\"\\xF\"\"ello\"}>()"},
+    {"_Z1fIXtl5HellotlA6_cLc240ELc159ELc152ELc138ELc33EEEEEvv", "void f<Hello{\"😊!\"}>()"},
+    // Even non-null-terminated strings get this treatment, even though this
+    // isn't valid C++ syntax to initialize an array of char.
+    {"_Z1fIXtl5HellotlA5_cLc72ELc101ELc108ELc108ELc111EEEEEvv", "void f<Hello{\"Hello\"}>()"},
 
     // FIXME: This is wrong; the S2_ backref should expand to OT_ and then to
     // "double&&". But we can't cope with a substitution that represents a
@@ -30100,11 +30127,15 @@ const char* cases[][2] =
     // C++20 concepts, see https://github.com/itanium-cxx-abi/cxx-abi/issues/24.
     {"_Z2f0IiE1SIX1CIT_EEEv", "S<C<int>> f0<int>()"},
     {"_ZN5test21AIiEF1fEzQ4TrueIT_E", "test2::A<int>::friend f(...) requires True<T>"},
-    {"_ZN5test2F1gIvEEvzQaa4TrueIT_E4TrueITL0__E", "void test2::friend g<void>(...) requires True<T> && True<TL0_>"},
+    {"_ZN5test21AIbEF1fEzQ4TrueIT_E", "test2::A<bool>::friend f(...) requires True<T>"},
+    {"_ZN5test21AIiEF1gIvEEvzQaa4TrueIT_E4TrueITL0__E", "void test2::A<int>::friend g<void>(...) requires True<T> && True<TL0_>"},
+    {"_ZN5test21AIbEF1gIvEEvzQaa4TrueIT_E4TrueITL0__E", "void test2::A<bool>::friend g<void>(...) requires True<T> && True<TL0_>"},
     {"_ZN5test21hIvEEvzQ4TrueITL0__E", "void test2::h<void>(...) requires True<TL0_>"},
-    {"_ZN5test2F1iIvQaa4TrueIT_E4TrueITL0__EEEvz", "void test2::friend i<void>(...)"},
+    {"_ZN5test21AIiEF1iIvQaa4TrueIT_E4TrueITL0__EEEvz", "void test2::A<int>::friend i<void>(...)"},
+    {"_ZN5test21AIbEF1iIvQaa4TrueIT_E4TrueITL0__EEEvz", "void test2::A<bool>::friend i<void>(...)"},
     {"_ZN5test21jIvQ4TrueITL0__EEEvz", "void test2::j<void>(...)"},
-    {"_ZN5test2F1kITk4TruevQ4TrueIT_EEEvz", "void test2::friend k<void>(...)"},
+    {"_ZN5test21AIiEF1kITk4TruevQ4TrueIT_EEEvz", "void test2::A<int>::friend k<void>(...)"},
+    {"_ZN5test21AIbEF1kITk4TruevQ4TrueIT_EEEvz", "void test2::A<bool>::friend k<void>(...)"},
     {"_ZN5test21lITk4TruevEEvz", "void test2::l<void>(...)"},
     {"_ZN5test31dITnDaLi0EEEvv", "void test3::d<0>()"},
     {"_ZN5test31eITnDcLi0EEEvv", "void test3::e<0>()"},

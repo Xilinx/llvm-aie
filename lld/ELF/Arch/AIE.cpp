@@ -36,7 +36,7 @@ static const std::vector<std::vector<uint8_t>> nopInstructions = {
 
 class AIE final : public TargetInfo {
 public:
-  AIE();
+  AIE(Ctx &ctx);
   uint32_t calcEFlags() const override;
   RelExpr getRelExpr(RelType Type, const Symbol &S,
                      const uint8_t *Loc) const override;
@@ -50,7 +50,7 @@ private:
 
 } // end anonymous namespace
 
-AIE::AIE() {
+AIE::AIE(Ctx &ctx) : TargetInfo(ctx) {
   // FIXME: How do we represent this?
   // noneRel = R_AIE_NONE;
 
@@ -421,7 +421,7 @@ void AIE::relocate(uint8_t *Loc, const Relocation &rel, uint64_t Val) const {
   }
 }
 
-TargetInfo *elf::getAIETargetInfo() {
-  static AIE Target;
+TargetInfo *elf::getAIETargetInfo(Ctx &ctx) {
+  static AIE Target(ctx);
   return &Target;
 }

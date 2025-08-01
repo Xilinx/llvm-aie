@@ -339,11 +339,12 @@ public:
   /// Get the list of MacroFusion predicates.
   virtual std::vector<MacroFusionPredTy> getMacroFusions() const { return {}; };
 
-  /// supportsInitUndef is used to determine if an architecture supports
-  /// the Init Undef Pass. By default, it is assumed that it will not support
-  /// the pass, with architecture specific overrides providing the information
-  /// where they are implemented.
-  virtual bool supportsInitUndef() const { return false; }
+  /// Whether the target has instructions where an early-clobber result
+  /// operand cannot overlap with an undef input operand.
+  virtual bool requiresDisjointEarlyClobberAndUndef() const {
+    // Conservatively assume such instructions exist by default.
+    return true;
+  }
 
   /// Returns the critical path limit that EarlyIfConversion should use
   /// when deciding about a specific conversion.
@@ -351,7 +352,6 @@ public:
     return getSchedModel().MispredictPenalty / 2;
   }
 };
-
 } // end namespace llvm
 
 #endif // LLVM_CODEGEN_TARGETSUBTARGETINFO_H
