@@ -59,11 +59,10 @@ public:
   BuilderTy &Builder;
 
 protected:
-  /// Only used to call target-specific intrinsic combining and filtering
-  /// of non-profitable combining cases tied to target needs.
-  /// It must be used with caution, as InstCombine is a
+  /// Only used to call target specific intrinsic combining.
+  /// It must **NOT** be used for any other purpose, as InstCombine is a
   /// target-independent canonicalization transform.
-  TargetTransformInfo &TTI;
+  TargetTransformInfo &TTIForTargetIntrinsicsOnly;
 
   /// A worklist of the instructions that need to be simplified.
   InstructionWorklist &Worklist;
@@ -109,7 +108,7 @@ public:
                BlockFrequencyInfo *BFI, BranchProbabilityInfo *BPI,
                ProfileSummaryInfo *PSI, const DataLayout &DL,
                ReversePostOrderTraversal<BasicBlock *> &RPOT)
-      : Builder(Builder), TTI(TTI), Worklist(Worklist),
+      : Builder(Builder), TTIForTargetIntrinsicsOnly(TTI), Worklist(Worklist),
         MinimizeSize(MinimizeSize), AA(AA), AC(AC), TLI(TLI), DT(DT), DL(DL),
         SQ(DL, &TLI, &DT, &AC, nullptr, /*UseInstrInfo*/ true,
            /*CanUseUndef*/ true, &DC),

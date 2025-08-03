@@ -81,7 +81,7 @@ void insertNewGEPInst(const unsigned OpIdx, Instruction &InsertionPoint,
 
   GetElementPtrInst *NewGEPInstr = GetElementPtrInst::Create(
       GEP.getSourceElementType(), GEP.getPointerOperand(), Indices,
-      "reverse.arrayidx", &InsertionPoint);
+      "reverse.arrayidx", InsertionPoint.getIterator());
   NewGEPInstr->setIsInBounds(GEP.isInBounds());
 
   LLVM_DEBUG(dbgs() << "Created New " << *NewGEPInstr);

@@ -687,7 +687,8 @@ void ScheduleDAGInstrs::recordDbgInstrs() {
     FirstDbgValue = DbgMI;
 }
 
-class ScheduleDAGInstrs::Value2SUsMap : public MapVector<ValueType, SUList> {
+class ScheduleDAGInstrs::Value2SUsMap
+    : public SmallMapVector<ValueType, SUList, 4> {
   /// Current total number of SUs in map.
   unsigned NumNodes = 0;
 
@@ -722,7 +723,7 @@ public:
 
   /// Clears map from all contents.
   void clear() {
-    MapVector<ValueType, SUList>::clear();
+    SmallMapVector<ValueType, SUList, 4>::clear();
     NumNodes = 0;
   }
 

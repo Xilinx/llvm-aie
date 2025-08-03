@@ -406,7 +406,7 @@ void TGInstrLayout::addAlternateInstInMultiSlotPseudo(
       CGI->TheDef->getValueAsListOfDefs("materializableInto");
 
   std::set<const TGTargetSlot *> SupportedSlot;
-  for (Record *AltInst : AltInsts) {
+  for (const Record *AltInst : AltInsts) {
     bool Found = false;
     for (const TGInstrLayout &Inst : InstFormats) {
       if (Inst.InstrName == AltInst->getName()) {

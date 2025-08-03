@@ -3061,7 +3061,7 @@ public:
 #define WASM_TYPE(Name, Id, SingletonId) Id,
 #include "clang/Basic/WebAssemblyReferenceTypes.def"
 // AMDGPU types
-#define AMDGPU_TYPE(Name, Id, SingletonId) Id,
+#define AMDGPU_TYPE(Name, Id, SingletonId, Width, Align) Id,
 #include "clang/Basic/AMDGPUTypes.def"
 //AIE Types
 #define AIE_TYPE(Name, Id, Size, Algn) Id,
@@ -6182,10 +6182,18 @@ public:
   struct Attributes {
     // Data gathered from HLSL resource attributes
     llvm::dxil::ResourceClass ResourceClass;
+
+    LLVM_PREFERRED_TYPE(bool)
     uint8_t IsROV : 1;
-    Attributes(llvm::dxil::ResourceClass ResourceClass, bool IsROV)
-        : ResourceClass(ResourceClass), IsROV(IsROV) {}
-    Attributes() : ResourceClass(llvm::dxil::ResourceClass::UAV), IsROV(0) {}
+
+    LLVM_PREFERRED_TYPE(bool)
+    uint8_t RawBuffer : 1;
+
+    Attributes(llvm::dxil::ResourceClass ResourceClass, bool IsROV,
+               bool RawBuffer)
+        : ResourceClass(ResourceClass), IsROV(IsROV), RawBuffer(RawBuffer) {}
+
+    Attributes() : Attributes(llvm::dxil::ResourceClass::UAV, false, false) {}
   };
 
 private:
@@ -6197,7 +6205,9 @@ private:
 
   HLSLAttributedResourceType(QualType Canon, QualType Wrapped,
                              QualType Contained, const Attributes &Attrs)
-      : Type(HLSLAttributedResource, Canon, Wrapped->getDependence()),
+      : Type(HLSLAttributedResource, Canon,
+             Contained.isNull() ? TypeDependence::None
+                                : Contained->getDependence()),
         WrappedType(Wrapped), ContainedType(Contained), Attrs(Attrs) {}
 
 public:
@@ -6218,6 +6228,7 @@ public:
     ID.AddPointer(Contained.getAsOpaquePtr());
     ID.AddInteger(static_cast<uint32_t>(Attrs.ResourceClass));
     ID.AddBoolean(Attrs.IsROV);
+    ID.AddBoolean(Attrs.RawBuffer);
   }
 
   static bool classof(const Type *T) {

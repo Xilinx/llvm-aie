@@ -43,6 +43,7 @@ add_llvm_component_library(LLVMTransformUtils
   InlineFunction.cpp
   InjectTLIMappings.cpp
   InstructionNamer.cpp
+  Instrumentation.cpp
   IntegerDivision.cpp
   LCSSA.cpp
   LibCallsShrinkWrap.cpp

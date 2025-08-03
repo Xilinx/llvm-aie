@@ -30,9 +30,9 @@ def aie_generic_combines : GICombineGroup<[trivial_combines, vector_ops_combines
   constant_fold_cast_op, fabs_fneg_fold,
   intdiv_combines, mulh_combines, redundant_neg_operands,
   and_or_disjoint_mask, fma_combines, fold_binop_into_select,
-  sub_add_reg, select_to_minmax, redundant_binop_in_equality,
+  sub_add_reg, select_to_minmax, cmp_combines,
   fsub_to_fneg, commute_constant_to_rhs, match_ands, match_ors,
-  double_icmp_zero_and_or_combine, match_addos, combine_shuffle_concat]>;
+  match_addos, combine_shuffle_concat]>;
 
 // AIE-specific offset folding for G_GLOBAL_VALUE.
 def combine_globalval_offset_matchdata : GIDefMatchData<"uint64_t">;

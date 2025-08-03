@@ -119,15 +119,15 @@ void AIEVariableInstrItineraryEmitter::run(raw_ostream &OS) {
         (!R->getValue("Inst") && !R->getValue("isMultiSlotPseudo")))
       continue;
 
-    std::vector<Record *> AltItinary =
-        R->getValueAsListOfDefs("ItineraryRegPairs");
+    std::vector<const Record *> AltItinary =
+        R->getValueAsListOfConstDefs("ItineraryRegPairs");
     if (AltItinary.size()) {
       std::vector<std::tuple<llvm::StringRef,
                              std::vector<std::pair<llvm::StringRef, unsigned>>>>
           RegItineraryPairs;
-      for (const auto AltItinerary : AltItinary) {
-        std::vector<Record *> OpRegType =
-            AltItinerary->getValueAsListOfDefs("RegTypeList");
+      for (const Record *AltItinerary : AltItinary) {
+        std::vector<const Record *> OpRegType =
+            AltItinerary->getValueAsListOfConstDefs("RegTypeList");
         std::vector<std::pair<llvm::StringRef, unsigned>> OperandRegClass;
 
         auto checkUnique = [&OperandRegClass](unsigned OpIdx) {
@@ -136,7 +136,7 @@ void AIEVariableInstrItineraryEmitter::run(raw_ostream &OS) {
               [OpIdx](const auto &Operand) { return Operand.second == OpIdx; });
         };
 
-        for (const auto RegType : OpRegType) {
+        for (const Record *RegType : OpRegType) {
           unsigned OpIdx = RegType->getValueAsInt("OperandIdx");
           assert(checkUnique(OpIdx) && "OperandIdx must be unique");
           OperandRegClass.push_back(std::make_pair(

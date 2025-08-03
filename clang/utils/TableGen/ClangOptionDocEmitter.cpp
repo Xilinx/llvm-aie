@@ -136,7 +136,7 @@ Documentation extractDocumentation(const RecordKeeper &Records,
 
   auto DocumentationForOption = [&](const Record *R) -> DocumentedOption {
     auto &A = Aliases[R];
-    llvm::sort(A, CompareByName);
+    sort(A, CompareByName);
     return {R, std::move(A)};
   };
 
@@ -145,7 +145,7 @@ Documentation extractDocumentation(const RecordKeeper &Records,
     Documentation D;
 
     auto &Groups = GroupsInGroup[R];
-    llvm::sort(Groups, CompareByLocation);
+    sort(Groups, CompareByLocation);
     for (const Record *G : Groups) {
       D.Groups.emplace_back();
       D.Groups.back().Group = G;
@@ -156,7 +156,7 @@ Documentation extractDocumentation(const RecordKeeper &Records,
     }
 
     auto &Options = OptionsInGroup[R];
-    llvm::sort(Options, CompareByName);
+    sort(Options, CompareByName);
     for (const Record *O : Options)
       if (isOptionVisible(O, DocInfo))
         D.Options.push_back(DocumentationForOption(O));
@@ -282,11 +282,12 @@ void emitOptionName(StringRef Prefix, const Record *Option, raw_ostream &OS) {
     }
   }
 
-  emitOptionWithArgs(Prefix, Option, std::vector<StringRef>(Args.begin(), Args.end()), OS);
+  emitOptionWithArgs(Prefix, Option,
+                     std::vector<StringRef>(Args.begin(), Args.end()), OS);
 
   auto AliasArgs = Option->getValueAsListOfStrings("AliasArgs");
   if (!AliasArgs.empty()) {
-    Record *Alias = Option->getValueAsDef("Alias");
+    const Record *Alias = Option->getValueAsDef("Alias");
     OS << " (equivalent to ";
     emitOptionWithArgs(
         Alias->getValueAsListOfStrings("Prefixes").front(), Alias,
@@ -363,9 +364,8 @@ void emitOption(const DocumentedOption &Option, const Record *DocInfo,
 
   // Prefer a program specific help string.
   // This is a list of (visibilities, string) pairs.
-  std::vector<Record *> VisibilitiesHelp =
-      R->getValueAsListOfDefs("HelpTextsForVariants");
-  for (Record *VisibilityHelp : VisibilitiesHelp) {
+  for (const Record *VisibilityHelp :
+       R->getValueAsListOfDefs("HelpTextsForVariants")) {
     // This is a list of visibilities.
     ArrayRef<Init *> Visibilities =
         VisibilityHelp->getValueAsListInit("Visibilities")->getValues();

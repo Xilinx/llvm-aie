@@ -115,7 +115,7 @@ public:
   ///   ::= Identifier
   ///   ::= Identifier Operand [ "," Operand ]
   /// Parse an instruction \a Name, storing all operands in \a Operands
-  bool ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
+  bool parseInstruction(ParseInstructionInfo &Info, StringRef Name,
                         SMLoc NameLoc, OperandVector &Operands) override;
 };
 
@@ -359,7 +359,7 @@ bool AIEBaseAsmParser<Parser, BundleType, OperandType>::parseOperand(
 ///   ::= Token
 ///   ::= Token Operand [ "," Operand ]
 template <typename Parser, typename BundleType, typename OperandType>
-bool AIEBaseAsmParser<Parser, BundleType, OperandType>::ParseInstruction(
+bool AIEBaseAsmParser<Parser, BundleType, OperandType>::parseInstruction(
     ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
     OperandVector &Operands) {
   // First operand is token for instruction
