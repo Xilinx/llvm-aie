@@ -110,10 +110,10 @@ inline raw_ostream &operator<<(raw_ostream &O, const ConstTable &Table) {
 ///   instructions.
 /// - MCOperands information (positions and size).
 class CodeGenFormat {
-  RecordKeeper &Records;
+  const RecordKeeper &Records;
 
 public:
-  CodeGenFormat(RecordKeeper &R) : Records(R) {}
+  CodeGenFormat(const RecordKeeper &R) : Records(R) {}
 
   void run(raw_ostream &o);
 

@@ -31,20 +31,20 @@ class AIEVariableInstrItineraryEmitter {
       UniqueRegItineraryOpIdx;
 
 public:
-  AIEVariableInstrItineraryEmitter(RecordKeeper &R);
+  AIEVariableInstrItineraryEmitter(const RecordKeeper &R);
   void run(raw_ostream &OS);
   void emitAltItineraryInfo(raw_ostream &OS);
   void emitOperandIndexInfo(raw_ostream &OS);
 
 private:
-  RecordKeeper &Records;
+  const RecordKeeper &Records;
   CodeGenTarget Target;
 };
 
 } // namespace
 
 AIEVariableInstrItineraryEmitter::AIEVariableInstrItineraryEmitter(
-    RecordKeeper &R)
+    const RecordKeeper &R)
     : Records(R), Target(R) {}
 
 void AIEVariableInstrItineraryEmitter::emitAltItineraryInfo(raw_ostream &OS) {
@@ -120,14 +120,14 @@ void AIEVariableInstrItineraryEmitter::run(raw_ostream &OS) {
       continue;
 
     std::vector<const Record *> AltItinary =
-        R->getValueAsListOfConstDefs("ItineraryRegPairs");
+        R->getValueAsListOfDefs("ItineraryRegPairs");
     if (AltItinary.size()) {
       std::vector<std::tuple<llvm::StringRef,
                              std::vector<std::pair<llvm::StringRef, unsigned>>>>
           RegItineraryPairs;
       for (const Record *AltItinerary : AltItinary) {
         std::vector<const Record *> OpRegType =
-            AltItinerary->getValueAsListOfConstDefs("RegTypeList");
+            AltItinerary->getValueAsListOfDefs("RegTypeList");
         std::vector<std::pair<llvm::StringRef, unsigned>> OperandRegClass;
 
         auto checkUnique = [&OperandRegClass](unsigned OpIdx) {

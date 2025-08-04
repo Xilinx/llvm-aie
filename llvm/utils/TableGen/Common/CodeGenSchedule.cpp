@@ -864,12 +864,12 @@ void CodeGenSchedModels::collectSchedClasses() {
     InstrClassMap[Inst->TheDef] = SCIdx;
 
     // Read the alternative itineraries and add to schedClass
-    std::vector<Record *> AltItinary =
+    std::vector<const Record *> AltItinary =
         Inst->TheDef->getValueAsListOfDefs("ItineraryRegPairs");
-    for (Record *AltItin : AltItinary) {
-      Record *AltItinDef = AltItin->getValueAsDef("Itinerary");
+    for (const Record *AltItin : AltItinary) {
+      const Record *AltItinDef = AltItin->getValueAsDef("Itinerary");
       if (!Inst->TheDef->isValueUnset("SchedRW"))
-        findRWs(Inst->TheDef->getValueAsListOfConstDefs("SchedRW"), Writes, Reads);
+        findRWs(Inst->TheDef->getValueAsListOfDefs("SchedRW"), Writes, Reads);
       addSchedClass(AltItinDef, Writes, Reads,
                     /*ProcIndices*/ {0});
     }
