@@ -42,10 +42,10 @@ const VLIWFormat FormatData[] = {
     {0, nullptr, {}, 0, 0}};
 const PacketFormats MyFormats{FormatData};
 
-constexpr MCSlotInfo SlotInfos[4] = {{"ALU", 1, 0b0001, 0},
-                                     {"MV", 1, 0b0010, 0},
-                                     {"ST", 1, 0b0100, 0},
-                                     {"LNG", 1, 0b1000, 0}};
+constexpr MCSlotInfo SlotInfos[4] = {{1, "ALU", 1, 0b0001, 0xb0001, 0},
+                                     {2, "MV", 1, 0b0010, 0b0010, 0},
+                                     {3, "ST", 1, 0b0100, 0b0100, 0},
+                                     {4, "LNG", 1, 0b1000, 0b1000, 0}};
 
 // Stay clear of standard opcodes
 static const int FirstOpcode = 1000;

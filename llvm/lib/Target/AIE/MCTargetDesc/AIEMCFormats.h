@@ -84,15 +84,6 @@ private:
   const unsigned NopOpc;
 
 public:
-  constexpr MCSlotInfo(const char *SlotName, unsigned Size, SlotBits Bits,
-                       unsigned NopOpc)
-      : SlotName(SlotName), Size(Size), SlotOccupancy(Bits), ConflictBits(Bits),
-        NopOpc(NopOpc) {}
-
-  constexpr MCSlotInfo(int Kind, const char *SlotName, unsigned Size,
-                       SlotBits Bits, unsigned NopOpc)
-      : SlotName(SlotName), Size(Size), SlotOccupancy(Bits), ConflictBits(Bits),
-        NopOpc(NopOpc) {}
   constexpr MCSlotInfo(int Kind, const char *SlotName, unsigned Size,
                        SlotBits Bits, SlotBits Conflicts, unsigned NopOpc)
       : SlotName(SlotName), Size(Size), SlotOccupancy(Bits),
