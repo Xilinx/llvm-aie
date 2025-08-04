@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 // Utility classes to interface the generated Formats from CodeGenFormat with
@@ -93,18 +93,23 @@ private:
   const char *SlotName;
   /// Size of the slot (in bits)
   const unsigned Size;
-  /// Bitset representing the occupancy of the slot
+  /// Bitset representing the occupancy of the slots
   const SlotBits SlotOccupancy;
-  /// Opcode of the NOP inst. attached to the slot
+  /// The closure of SlotOccupancy with the computed exclusions,
+  /// e.g. XM implies X and M
+  const SlotBits ConflictBits;
+  /// Opcode of the NOP instruction attached to the slot
   const unsigned NopOpc;
 
 public:
   constexpr MCSlotInfo(const char *SlotName, unsigned Size, SlotBits Bits,
-                       unsigned NopOpc)
-      : SlotName(SlotName), Size(Size), SlotOccupancy(Bits), NopOpc(NopOpc) {}
+                       SlotBits ConflictBits, unsigned NopOpc)
+      : SlotName(SlotName), Size(Size), SlotOccupancy(Bits),
+        ConflictBits(ConflictBits), NopOpc(NopOpc) {}
 
   const char *getName() const { return SlotName; }
   SlotBits getSlotSet() const { return SlotOccupancy; }
+  SlotBits getConflictSet() const { return ConflictBits; }
   unsigned getNOPOpcode() const { return NopOpc; }
   unsigned getSize() const { return Size; }
 };
