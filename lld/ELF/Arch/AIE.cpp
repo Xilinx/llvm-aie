@@ -285,7 +285,7 @@ void AIE::relocateAIE1(uint8_t *Loc, const Relocation &rel,
                        uint64_t Val) const {
   if (errorHandler().verbose)
         lld::outs() << "Relocation expr=" << rel.expr << " " << rel.type << "@"
-                    << getErrorLocation(Loc) << "\n";
+                    << getErrorLoc(ctx, Loc) << "\n";
 
   // Relocation applied to debug_info
   if (rel.expr == R_NONE) {
@@ -316,7 +316,7 @@ void AIE::relocateAIE1(uint8_t *Loc, const Relocation &rel,
     return;
 
   default:
-    error(getErrorLocation(Loc) +
+    error(getErrorLoc(ctx, Loc) +
           "unimplemented relocation: " + toString(rel.type));
     return;
   }
@@ -325,7 +325,7 @@ void AIE::relocateAIE2(uint8_t *Loc, const Relocation &rel,
                        uint64_t Val) const {
   if (errorHandler().verbose)
     lld::outs() << "Relocation expr=" << rel.expr << " " << rel.type << "@"
-                << getErrorLocation(Loc) << "\n";
+                << getErrorLoc(ctx, Loc) << "\n";
 
   // Relocation applied to debug_info
   if (rel.expr == R_NONE) {
@@ -357,7 +357,7 @@ void AIE::relocateAIE2(uint8_t *Loc, const Relocation &rel,
     return;
 
   default:
-    error(getErrorLocation(Loc) +
+    error(getErrorLoc(ctx, Loc) +
           "unimplemented relocation: " + toString(rel.type));
     return;
   }
@@ -366,7 +366,7 @@ void AIE::relocateAIE2P(uint8_t *Loc, const Relocation &rel,
                         uint64_t Val) const {
   if (errorHandler().verbose)
     lld::outs() << "Relocation expr=" << rel.expr << " " << rel.type << "@"
-                << getErrorLocation(Loc) << "\n";
+                << getErrorLoc(ctx, Loc) << "\n";
 
   // Relocation applied to debug_info
   if (rel.expr == R_NONE) {
@@ -396,7 +396,7 @@ void AIE::relocateAIE2P(uint8_t *Loc, const Relocation &rel,
     patch4bytes(Loc, Val, 31, 0, 0);
     return;
   default:
-    error(getErrorLocation(Loc) +
+    error(getErrorLoc(ctx, Loc) +
           "unimplemented relocation: " + toString(rel.type));
     return;
   }
@@ -421,7 +421,6 @@ void AIE::relocate(uint8_t *Loc, const Relocation &rel, uint64_t Val) const {
   }
 }
 
-TargetInfo *elf::getAIETargetInfo(Ctx &ctx) {
-  static AIE Target(ctx);
-  return &Target;
+void elf::setAIETargetInfo(Ctx &ctx) {
+  ctx.target.reset(new AIE(ctx));
 }
