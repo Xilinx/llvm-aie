@@ -88,6 +88,11 @@ public:
 
   unsigned getBytesInStackArgArea() const { return BytesInStackArgArea; }
   void setBytesInStackArgArea(unsigned bytes) { BytesInStackArgArea = bytes; }
+
+  MachineFunctionInfo *
+  clone(BumpPtrAllocator &Allocator, MachineFunction &DestMF,
+        const DenseMap<MachineBasicBlock *, MachineBasicBlock *> &Src2DstMBB)
+      const override;
 };
 
 namespace yaml {
