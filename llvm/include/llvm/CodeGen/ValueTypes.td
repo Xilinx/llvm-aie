@@ -337,10 +337,10 @@ def spirvbuiltin : ValueType<0, 233>; // SPIR-V's builtin type
 
 /* AIE */
 let isAIE = true in {
-  def i48    : VTInt<48, 233>;      // 48-bit acc type
-  def i20    : VTInt<20, 234>;      // 20 bit pointers
-  def v8i48  : VTVec<8, i48, 235>;  // 8 x i48 vector value
-  def v16i48 : VTVec<16, i48, 236>; // 16 x i48 vector value
+  def i48    : VTInt<48, 234>;      // 48-bit acc type
+  def i20    : VTInt<20, 235>;      // 20 bit pointers
+  def v8i48  : VTVec<8, i48, 236>;  // 8 x i48 vector value
+  def v16i48 : VTVec<16, i48, 237>; // 16 x i48 vector value
 }
 /* End AIE */
 
