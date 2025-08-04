@@ -36,6 +36,7 @@
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/TableGen/SetTheory.h"
+#include "llvm/TableGen/TGTimer.h"
 #include "llvm/TableGen/TableGenBackend.h"
 #include <algorithm>
 #include <cassert>
@@ -1811,16 +1812,17 @@ void RegisterInfoEmitter::runTargetDesc(raw_ostream &OS) {
 }
 
 void RegisterInfoEmitter::run(raw_ostream &OS) {
-  Records.startTimer("Print enums");
+  TGTimer &Timer = Records.getTimer();
+  Timer.startTimer("Print enums");
   runEnums(OS);
 
-  Records.startTimer("Print MC registers");
+  Timer.startTimer("Print MC registers");
   runMCDesc(OS);
 
-  Records.startTimer("Print header fragment");
+  Timer.startTimer("Print header fragment");
   runTargetHeader(OS);
 
-  Records.startTimer("Print target registers");
+  Timer.startTimer("Print target registers");
   runTargetDesc(OS);
 
   if (RegisterInfoDebug)
