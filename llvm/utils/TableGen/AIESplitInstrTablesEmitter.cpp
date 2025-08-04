@@ -14,6 +14,7 @@
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/TableGen/TableGenBackend.h"
+#include "llvm/TableGen/TGTimer.h"
 
 using namespace llvm;
 
@@ -25,7 +26,7 @@ namespace {
 /// _split variants.
 class AIESplitInstrTablesEmitter {
 public:
-  AIESplitInstrTablesEmitter(RecordKeeper &R) : Records(R), Target(R) {}
+  AIESplitInstrTablesEmitter(const RecordKeeper &R) : Records(R), Target(R) {}
 
   /// Generate C++ code from \p Mappings.
   void emitMappingInfo(raw_ostream &OS, bool ToSplit);
@@ -37,9 +38,9 @@ public:
 private:
   /// Process a record derived from Instruction and SplitInstMapping.
   /// This populates \p Mappings.
-  void evaluateMapping(Record &Rec);
+  void evaluateMapping(const Record &Rec);
 
-  RecordKeeper &Records;
+  const RecordKeeper &Records;
   CodeGenTarget Target;
 
   struct SplitInstMapping {
@@ -51,7 +52,7 @@ private:
 
 } // namespace
 
-void AIESplitInstrTablesEmitter::evaluateMapping(Record &Rec) {
+void AIESplitInstrTablesEmitter::evaluateMapping(const Record &Rec) {
   LLVM_DEBUG(dbgs() << "_split instruction record: " << Rec.getName() << "\n");
   CodeGenInstruction SplitInstr(&Rec);
   DefInit *OrigInstrDef =
@@ -98,12 +99,13 @@ void AIESplitInstrTablesEmitter::emitMappingInfo(raw_ostream &OS,
 }
 
 void AIESplitInstrTablesEmitter::run(raw_ostream &OS) {
-  Records.startTimer("Process definitions");
-  for (Record *R : Records.getAllDerivedDefinitions("SplitPseudo"))
+  TGTimer &Timer = Records.getTimer();
+  Timer.startTimer("Process definitions");
+  for (const Record *R : Records.getAllDerivedDefinitions("SplitPseudo"))
     evaluateMapping(*R);
 
   // Generate tables to map original instructions to their _split counterpart.
-  Records.startTimer("Emit expansion code");
+  Timer.startTimer("Emit expansion code");
   emitSourceFileHeader("Mapping info for _split instructions Source Fragment",
                        OS);
   emitMappingInfo(OS, /*ToSplit=*/true);

@@ -45,7 +45,7 @@ void CodeGenFormat::run(raw_ostream &o) {
   CodeGenTarget Target(Records);
   const std::string CurrentNamespace = Target.getName().str();
 
-  std::vector<Record *> CodeGenFormatRecords =
+  std::vector<const Record *> CodeGenFormatRecords =
       Records.getAllDerivedDefinitions("CodeGenFormat");
   unsigned Size = CodeGenFormatRecords.size();
 
@@ -61,9 +61,9 @@ void CodeGenFormat::run(raw_ostream &o) {
   const std::string FormatClassEmitted("MCFormatDesc");
 
   TGTargetSlots Slots(CurrentNamespace, Records.getClass("InstSlot"));
-  std::vector<Record *> InstRecords =
+  std::vector<const Record *> InstRecords =
       Records.getAllDerivedDefinitions("Instruction");
-  std::vector<Record *> SlotRecords =
+  std::vector<const Record *> SlotRecords =
       Records.getAllDerivedDefinitions("InstSlot");
 
   // Register all Slot based Record into the data structure
@@ -333,7 +333,7 @@ TGInstrLayout::TGInstrLayout(const CodeGenInstruction *const CGI,
       CGI, InstrAttribute, nullptr, Size, TGFieldLayout::FieldType::Variable);
 
   if (IsMultipleSlotOptions) {
-    std::vector<Record *> SlotRecords =
+    std::vector<const Record *> SlotRecords =
         CGI->TheDef->getValueAsListOfDefs("materializableInto");
     assert(!SlotRecords.empty() &&
            "Expected Instructions for multi slot Pseudo instructions");
@@ -402,7 +402,7 @@ void TGInstrLayout::resolveIsMultipleSlotOptions() {
 void TGInstrLayout::addAlternateInstInMultiSlotPseudo(
     const std::vector<TGInstrLayout> &InstFormats) {
 
-  std::vector<Record *> AltInsts =
+  std::vector<const Record *> AltInsts =
       CGI->TheDef->getValueAsListOfDefs("materializableInto");
 
   std::set<const TGTargetSlot *> SupportedSlot;
@@ -460,7 +460,7 @@ void TGInstrLayout::resolveIsSlot() {
     }
   } else {
     // Slot of the BaseRecord
-    Record *SlotRecord = CGI->TheDef->getValueAsDef("Slot");
+    const Record *SlotRecord = CGI->TheDef->getValueAsDef("Slot");
     // If it's the default slot, then abort the procedure
     if (SlotRecord == SlotsRegistry.getDefaultSlot()->first)
       return;
@@ -847,7 +847,7 @@ void TGFieldLayout::resolveFieldsDefInHierarchy(
     const TGFieldLayoutPtr &BaseFieldPtr) {
   const Record *const BaseRecord = CGI->TheDef;
 
-  ArrayRef<std::pair<Record *, SMRange>> Hierarchy =
+  ArrayRef<std::pair<const Record *, SMRange>> Hierarchy =
       BaseRecord->getSuperClasses();
   BitsInit *BI = nullptr;
 

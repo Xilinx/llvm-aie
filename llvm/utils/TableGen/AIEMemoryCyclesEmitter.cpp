@@ -16,6 +16,7 @@
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/TableGen/TableGenBackend.h"
+#include "llvm/TableGen/TGTimer.h"
 #include <limits>
 
 using namespace llvm;
@@ -37,7 +38,7 @@ class AIEMemoryCyclesEmitter {
   };
 
 public:
-  AIEMemoryCyclesEmitter(RecordKeeper &R);
+  AIEMemoryCyclesEmitter(const RecordKeeper &R);
 
   /// Utility class computing minima and maxima
   class MemCycleGetter {
@@ -67,7 +68,7 @@ private:
   /// This populates \p ItinMemCycles.
   void evaluateSchedClass(const CodeGenSchedClass &SchedClass);
 
-  RecordKeeper &Records;
+  const RecordKeeper &Records;
   CodeGenTarget Target;
   CodeGenDAGPatterns CDP;
   const CodeGenSchedModels &SchedModels;
@@ -78,7 +79,7 @@ private:
 
 } // namespace
 
-AIEMemoryCyclesEmitter::AIEMemoryCyclesEmitter(RecordKeeper &R)
+AIEMemoryCyclesEmitter::AIEMemoryCyclesEmitter(const RecordKeeper &R)
     : Records(R), Target(R), CDP(R),
       SchedModels(CDP.getTargetInfo().getSchedModels()) {
   assert(SchedModels.hasItineraries());
@@ -177,12 +178,13 @@ void AIEMemoryCyclesEmitter::emitAllMemoryCyclesInfo(raw_ostream &OS) {
 }
 
 void AIEMemoryCyclesEmitter::run(raw_ostream &OS) {
-  Records.startTimer("Process definitions");
+  TGTimer &Timer = Records.getTimer();
+  Timer.startTimer("Process definitions");
   for (const CodeGenSchedClass &SchedClass : SchedModels.explicit_classes())
     evaluateSchedClass(SchedClass);
 
   // Generate code to access scheduling information for memory instructions.
-  Records.startTimer("Emit memory ops scheduling info");
+  Timer.startTimer("Emit memory ops scheduling info");
   emitSourceFileHeader("Memory ops scheduling info Source Fragment", OS);
   MemCycleGetter GetFirst(/*LastCycles=*/false);
   MemCycleGetter GetLast(/*LastCycles=*/true);

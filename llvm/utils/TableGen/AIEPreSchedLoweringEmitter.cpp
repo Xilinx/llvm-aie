@@ -14,6 +14,7 @@
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/TableGen/TableGenBackend.h"
+#include "llvm/TableGen/TGTimer.h"
 
 using namespace llvm;
 
@@ -25,7 +26,7 @@ namespace {
 /// of pseudo instructions.
 class AIEPreSchedLoweringEmitter {
 public:
-  AIEPreSchedLoweringEmitter(RecordKeeper &R) : Records(R), Target(R) {}
+  AIEPreSchedLoweringEmitter(const RecordKeeper &R) : Records(R), Target(R) {}
 
   /// Generate C++ code from \p Expansions.
   void emitLoweringInfo(raw_ostream &OS);
@@ -37,9 +38,9 @@ public:
 private:
   /// Process a record derived from Instruction and PreSchedInstExpansion.
   /// This populates \p Expansions.
-  void evaluateExpansion(Record &Rec);
+  void evaluateExpansion(const Record &Rec);
 
-  RecordKeeper &Records;
+  const RecordKeeper &Records;
   CodeGenTarget Target;
 
   struct PreSchedExpansion {
@@ -52,7 +53,7 @@ private:
 
 } // namespace
 
-void AIEPreSchedLoweringEmitter::evaluateExpansion(Record &Rec) {
+void AIEPreSchedLoweringEmitter::evaluateExpansion(const Record &Rec) {
   LLVM_DEBUG(dbgs() << "Pre-sched expansion: " << Rec.getName() << "\n");
   CodeGenInstruction SourceInstr(&Rec);
   DefInit *TargetInstrDef =
@@ -106,15 +107,16 @@ void AIEPreSchedLoweringEmitter::emitLoweringInfo(raw_ostream &OS) {
 }
 
 void AIEPreSchedLoweringEmitter::run(raw_ostream &OS) {
+  TGTimer &Timer = Records.getTimer();
   StringRef Classes[] = {"PreSchedInstExpansion", "Instruction"};
 
-  Records.startTimer("Process definitions");
-  for (Record *R : Records.getAllDerivedDefinitions(Classes))
+  Timer.startTimer("Process definitions");
+  for (const Record *R : Records.getAllDerivedDefinitions(Classes))
     evaluateExpansion(*R);
 
   // Generate expansion code to lower the pseudo to an MCInst of the real
   // instruction.
-  Records.startTimer("Emit expansion code");
+  Timer.startTimer("Emit expansion code");
   emitLoweringInfo(OS);
 }
 

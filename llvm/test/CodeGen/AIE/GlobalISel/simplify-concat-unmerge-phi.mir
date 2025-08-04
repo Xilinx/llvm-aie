@@ -292,9 +292,8 @@ body:             |
   ; COMMON-NEXT:   [[PHI:%[0-9]+]]:_(<32 x s32>) = G_PHI [[CONCAT_VECTORS]](<32 x s32>), %bb.0, %18(<32 x s32>), %bb.1
   ; COMMON-NEXT:   [[BITCAST:%[0-9]+]]:_(<16 x s64>) = G_BITCAST [[PHI]](<32 x s32>)
   ; COMMON-NEXT:   G_STORE [[BITCAST]](<16 x s64>), %ptr(p0) :: (store (<16 x s64>))
-  ; COMMON-NEXT:   [[DEF4:%[0-9]+]]:_(<16 x s64>) = G_IMPLICIT_DEF
-  ; COMMON-NEXT:   [[BITCAST1:%[0-9]+]]:_(<32 x s32>) = G_BITCAST [[DEF4]](<16 x s64>)
-  ; COMMON-NEXT:   [[UV:%[0-9]+]]:_(<8 x s32>), [[UV1:%[0-9]+]]:_(<8 x s32>), [[UV2:%[0-9]+]]:_(<8 x s32>), [[UV3:%[0-9]+]]:_(<8 x s32>) = G_UNMERGE_VALUES [[BITCAST1]](<32 x s32>)
+  ; COMMON-NEXT:   [[DEF4:%[0-9]+]]:_(<32 x s32>) = G_IMPLICIT_DEF
+  ; COMMON-NEXT:   [[DEF5:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
   ; COMMON-NEXT:   [[INT:%[0-9]+]]:_(s1) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.loop.decrement), [[C]](s32)
   ; COMMON-NEXT:   G_BRCOND [[INT]](s1), %bb.1
   ; COMMON-NEXT:   G_BR %bb.2

@@ -2897,7 +2897,7 @@ v4int32 test_get_ss_v4int32() { return get_ss_v4int32(); }
 
 // CHECK-LABEL: @_Z19test_get_ss_v32int4v(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2.v16int32()
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call <16 x i32> @llvm.aie2.v16int32()
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call { i32, i32 } @llvm.aie2.get.ss()
 // CHECK-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP1]], 0
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call noundef <16 x i32> @llvm.aie2.vinsert32.I512(<16 x i32> [[TMP0]], i32 0, i32 [[TMP2]])
@@ -2919,7 +2919,7 @@ v32int4 test_get_ss_v32int4() { return get_ss_v32int4(); }
 
 // CHECK-LABEL: @_Z20test_get_ss_v32uint4v(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2.v16int32()
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call <16 x i32> @llvm.aie2.v16int32()
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call { i32, i32 } @llvm.aie2.get.ss()
 // CHECK-NEXT:    [[TMP2:%.*]] = extractvalue { i32, i32 } [[TMP1]], 0
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call noundef <16 x i32> @llvm.aie2.vinsert32.I512(<16 x i32> [[TMP0]], i32 0, i32 [[TMP2]])
