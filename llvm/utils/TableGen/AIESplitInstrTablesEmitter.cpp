@@ -14,6 +14,7 @@
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/TableGen/TableGenBackend.h"
+#include "llvm/TableGen/TGTimer.h"
 
 using namespace llvm;
 
@@ -98,12 +99,13 @@ void AIESplitInstrTablesEmitter::emitMappingInfo(raw_ostream &OS,
 }
 
 void AIESplitInstrTablesEmitter::run(raw_ostream &OS) {
-  Records.startTimer("Process definitions");
+  TGTimer &Timer = Records.getTimer();
+  Timer.startTimer("Process definitions");
   for (const Record *R : Records.getAllDerivedDefinitions("SplitPseudo"))
     evaluateMapping(*R);
 
   // Generate tables to map original instructions to their _split counterpart.
-  Records.startTimer("Emit expansion code");
+  Timer.startTimer("Emit expansion code");
   emitSourceFileHeader("Mapping info for _split instructions Source Fragment",
                        OS);
   emitMappingInfo(OS, /*ToSplit=*/true);

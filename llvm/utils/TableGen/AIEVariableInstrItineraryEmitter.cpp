@@ -15,6 +15,7 @@
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/TableGen/TableGenBackend.h"
+#include "llvm/TableGen/TGTimer.h"
 
 using namespace llvm;
 
@@ -108,7 +109,8 @@ void AIEVariableInstrItineraryEmitter::emitAltItineraryInfo(raw_ostream &OS) {
 }
 
 void AIEVariableInstrItineraryEmitter::run(raw_ostream &OS) {
-  Records.startTimer("Process definitions");
+  TGTimer &Timer = Records.getTimer();
+  Timer.startTimer("Process definitions");
 
   ArrayRef<const CodeGenInstruction *> NumberedInstructions =
       Target.getInstructionsByEnumValue();
@@ -154,7 +156,7 @@ void AIEVariableInstrItineraryEmitter::run(raw_ostream &OS) {
 
   // Generate code to access scheduling information for instructions with
   // itininary based on RegClass used.
-  Records.startTimer(
+  Timer.startTimer(
       "Emit Instruction with Alternate Itininary based on RegClass used");
   emitSourceFileHeader("Instruction itininary based on RegClass", OS);
   emitAltItineraryInfo(OS);

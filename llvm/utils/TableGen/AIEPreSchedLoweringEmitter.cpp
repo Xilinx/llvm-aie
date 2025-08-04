@@ -14,6 +14,7 @@
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/TableGen/TableGenBackend.h"
+#include "llvm/TableGen/TGTimer.h"
 
 using namespace llvm;
 
@@ -106,15 +107,16 @@ void AIEPreSchedLoweringEmitter::emitLoweringInfo(raw_ostream &OS) {
 }
 
 void AIEPreSchedLoweringEmitter::run(raw_ostream &OS) {
+  TGTimer &Timer = Records.getTimer();
   StringRef Classes[] = {"PreSchedInstExpansion", "Instruction"};
 
-  Records.startTimer("Process definitions");
+  Timer.startTimer("Process definitions");
   for (const Record *R : Records.getAllDerivedDefinitions(Classes))
     evaluateExpansion(*R);
 
   // Generate expansion code to lower the pseudo to an MCInst of the real
   // instruction.
-  Records.startTimer("Emit expansion code");
+  Timer.startTimer("Emit expansion code");
   emitLoweringInfo(OS);
 }
 

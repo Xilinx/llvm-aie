@@ -16,6 +16,7 @@
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/TableGen/TableGenBackend.h"
+#include "llvm/TableGen/TGTimer.h"
 #include <limits>
 
 using namespace llvm;
@@ -177,12 +178,13 @@ void AIEMemoryCyclesEmitter::emitAllMemoryCyclesInfo(raw_ostream &OS) {
 }
 
 void AIEMemoryCyclesEmitter::run(raw_ostream &OS) {
-  Records.startTimer("Process definitions");
+  TGTimer &Timer = Records.getTimer();
+  Timer.startTimer("Process definitions");
   for (const CodeGenSchedClass &SchedClass : SchedModels.explicit_classes())
     evaluateSchedClass(SchedClass);
 
   // Generate code to access scheduling information for memory instructions.
-  Records.startTimer("Emit memory ops scheduling info");
+  Timer.startTimer("Emit memory ops scheduling info");
   emitSourceFileHeader("Memory ops scheduling info Source Fragment", OS);
   MemCycleGetter GetFirst(/*LastCycles=*/false);
   MemCycleGetter GetLast(/*LastCycles=*/true);
