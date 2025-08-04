@@ -30,6 +30,13 @@ void AIEMachineFunctionInfo::initializeBaseYamlFields(
     setVarArgsFrameIndex(*YamlMFI.VarArgsFrameIndex);
 }
 
+MachineFunctionInfo *AIEMachineFunctionInfo::clone(
+    BumpPtrAllocator &Allocator, MachineFunction &DestMF,
+    const DenseMap<MachineBasicBlock *, MachineBasicBlock *> &Src2DstMBB)
+    const {
+  return DestMF.cloneInfo<AIEMachineFunctionInfo>(*this);
+}
+
 namespace llvm {
 AIEMachineFunctionInfo::AIEMachineFunctionInfo(const Function &F,
                                                const TargetSubtargetInfo *STI,
