@@ -118,9 +118,11 @@ public:
   void run(raw_ostream &o);
 
   static unsigned getVariableBits(const std::string &VarName,
-                                  const BitsInit *BI, unsigned posBit);
+                                  const BitsInit *BI, unsigned BitPos);
   static unsigned getFixedBits(std::string &OutChunck, const BitsInit *BI,
-                               unsigned posBit);
+                               unsigned BitPos);
+  static void computeSlotSets(TGTargetSlots &Slots,
+                              std::vector<TGInstrLayout> &InstFormats);
 };
 
 /// Main class abstracting a CodeGenInstruction (CGI).
@@ -257,13 +259,28 @@ class TGTargetSlot {
   std::string SlotName;
   // The namespace of the current instruction
   std::string Namespace;
-  // primarely used when emitting the C++ enumeration constant
+  // primarily used when emitting the C++ enumeration constant
   std::string EnumerationString;
   // Name of the field to find in the hierarchy
   std::string FieldToFind;
+  // Artificial slots should not be considered for resource estimates
+  bool Artificial = false;
   // Unique number attributed (in the pool) for the slot.
   // It is used to generate a unique "SlotSet".
   int NumSlot;
+
+  // The Slot bits for this slot. These are the pristine bits that correspond
+  // to the slots a format accommodates.
+  uint64_t SlotBits = 0;
+
+  // The conflict bits for this slot. These are used to prevent format table
+  // searches as much as possible. It normally duplicates the SlotBit, since
+  // that is a trivial conflict.
+  // However, there may be more bits set. For example, XM conflicts with
+  // XM, X and M.
+  // Note that the scoreboard runs on these conflict bits.
+  uint64_t ConflictBits;
+
   // Size of the Slot, in bits.
   // The storage of the size is made using an integer value as the size could
   // be negative. In this case, the slot pool (TGTargetSlots) will consider
@@ -284,6 +301,7 @@ public:
         SlotName(SlotRecord->getValueAsString("SlotName")),
         Namespace(SlotRecord->getValueAsString("Namespace")),
         FieldToFind(SlotRecord->getValueAsString("FieldToFind")),
+        Artificial(SlotRecord->getValueAsBit("Artificial")),
         // NumSlot is defined as -1 for now.
         // When the pool of slots will be finalized, then the final ID will be
         // attributed.
@@ -337,12 +355,21 @@ public:
   const std::string &getLabelToFind() const { return FieldToFind; }
 
   unsigned getSlotSize() const { return static_cast<unsigned>(SlotSize); }
+  uint64_t getSlotBits() const { return SlotBits; }
+  uint64_t getConflictBits() const { return ConflictBits; }
 
   const std::string &getEnumerationString() const { return EnumerationString; }
   bool isDefaultSlot() const { return IsDefaultSlot; }
+  bool isArtificial() const { return Artificial; }
+  void setConflictBits(uint64_t Bits) { ConflictBits = Bits; }
 
 private:
-  void setNumSlot(int SlotID) { NumSlot = SlotID; }
+  void setNumSlot(int SlotID) {
+    NumSlot = SlotID;
+    const uint64_t Base = 1;
+    SlotBits = Base << SlotID;
+  }
+
   void setNopInst(const std::string &NOPName) { NOPInstrName = NOPName; }
 };
 
@@ -380,6 +407,8 @@ public:
 
   /// Add the Slot (if legal) in the Slot pool
   bool addSlot(const Record *const R);
+
+  RecordSlot &getSlot(unsigned N) { return Slots[N]; }
 
   /// This method performs a finalization of the slot pool. This finalization
   /// is composed of 2 stages: the attribution of a unique ID for each slot and

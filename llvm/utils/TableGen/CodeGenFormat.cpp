@@ -109,6 +109,8 @@ void CodeGenFormat::run(raw_ostream &o) {
 
   assert(Slots.size() != 0 && "no Slot detected");
 
+  computeSlotSets(Slots, InstFormats);
+
   o << "#ifdef GET_FORMATS_SLOTKINDS\n"
        "#undef GET_FORMATS_SLOTKINDS\n";
   Slots.emitTargetSlotKindEnum(o);
@@ -214,7 +216,6 @@ void CodeGenFormat::run(raw_ostream &o) {
 
     for (TGInstrLayout &Inst : InstFormats)
       if (Inst.isPacketFormat()) {
-        Inst.computeSlotSet();
         Packets.push_back(&Inst);
       }
 
@@ -248,6 +249,46 @@ void CodeGenFormat::run(raw_ostream &o) {
 
       o << "#endif // GET_FORMATS_PACKETS_TABLE\n\n";
     }
+  }
+}
+
+void CodeGenFormat::computeSlotSets(TGTargetSlots &Slots,
+                                    std::vector<TGInstrLayout> &InstFormats) {
+
+  // The slots accommodated by each format.
+  for (TGInstrLayout &Format : InstFormats) {
+    if (Format.isPacketFormat()) {
+      Format.computeSlotSet();
+    }
+  }
+
+  // The universe of all slots
+  uint64_t AllSlots = 0;
+  for (const auto &[Rec, Slot] : Slots) {
+    if (Slot.isDefaultSlot() || Slot.isArtificial()) {
+      continue;
+    }
+    AllSlots |= Slot.getSlotBits();
+  }
+
+  // Compute the conflict bits of all slots.
+  for (unsigned S = 0; S < Slots.size(); S++) {
+    // Effectively we check whether a slot cannot be combined with another
+    // slot in any format in which the first is accommodated. We start out
+    // with all slots excluded, and eliminate the exclusion when a format is
+    // encountered that allows both ThisSlot and the exclusion.
+    auto &Slot = Slots.getSlot(S).second;
+    const uint64_t ThisSlot = Slot.getSlotBits();
+    uint64_t Excluded = AllSlots;
+    for (TGInstrLayout &Format : InstFormats) {
+      if (Format.isPacketFormat()) {
+        uint64_t Slots = Format.getSlotSet();
+        if (Slots & ThisSlot) {
+          Excluded &= ~Slots & AllSlots;
+        }
+      }
+    }
+    Slot.setConflictBits(ThisSlot | Excluded);
   }
 }
 
@@ -1116,7 +1157,8 @@ void TGTargetSlots::emitSlotsInfoInstantiation(
       << "  " << TS.getSlotSize()
       << ",\n"
       // Right now, we're using the slot num as SlotSet
-      << "  " << (uint64_t(1) << TS.getNumSlot()) << ",\n"
+      << "  " << TS.getSlotBits() << ",\n"
+      << "  " << TS.getConflictBits() << ",\n"
       << "  " << NOPName << "\n"
       << "},\n";
   }
