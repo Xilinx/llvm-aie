@@ -55,7 +55,7 @@ private:
 void AIESplitInstrTablesEmitter::evaluateMapping(const Record &Rec) {
   LLVM_DEBUG(dbgs() << "_split instruction record: " << Rec.getName() << "\n");
   CodeGenInstruction SplitInstr(&Rec);
-  DefInit *OrigInstrDef =
+  const DefInit *OrigInstrDef =
       cast<DefInit>(Rec.getValue("OriginalInstr")->getValue());
   CodeGenInstruction OrigInstr(OrigInstrDef->getDef());
   Mappings.emplace_back(SplitInstMapping{OrigInstr, SplitInstr});

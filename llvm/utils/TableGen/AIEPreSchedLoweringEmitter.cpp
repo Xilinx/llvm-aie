@@ -56,10 +56,10 @@ private:
 void AIEPreSchedLoweringEmitter::evaluateExpansion(const Record &Rec) {
   LLVM_DEBUG(dbgs() << "Pre-sched expansion: " << Rec.getName() << "\n");
   CodeGenInstruction SourceInstr(&Rec);
-  DefInit *TargetInstrDef =
+  const DefInit *TargetInstrDef =
       cast<DefInit>(Rec.getValue("TargetInstr")->getValue());
   CodeGenInstruction TargetInstr(TargetInstrDef->getDef());
-  DefInit *BarrierInstrDef =
+  const DefInit *BarrierInstrDef =
       cast<DefInit>(Rec.getValue("BarrierInstr")->getValue());
   CodeGenInstruction BarrierInstr(BarrierInstrDef->getDef());
   Expansions.emplace_back(
