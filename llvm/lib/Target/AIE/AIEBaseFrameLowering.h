@@ -28,7 +28,7 @@ public:
                             /*LocalAreaOffset=*/0),
         STI(STI) {}
 
-  bool hasFP(const MachineFunction &MF) const override;
+  bool hasFPImpl(const MachineFunction &MF) const override;
   StackOffset getFrameIndexReference(const MachineFunction &MF, int FI,
                                      Register &FrameReg) const override;
 

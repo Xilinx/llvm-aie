@@ -36,7 +36,7 @@ using namespace llvm;
    way, be it from SP or from FP. For example, llvm.frameaddress could return SP
    in functions that don't have dynamic allocation.
  */
-bool AIEBaseFrameLowering::hasFP(const MachineFunction &MF) const {
+bool AIEBaseFrameLowering::hasFPImpl(const MachineFunction &MF) const {
   const MachineFrameInfo &MFI = MF.getFrameInfo();
   return MF.getTarget().Options.DisableFramePointerElim(MF) ||
          MFI.hasVarSizedObjects() || MFI.isFrameAddressTaken();
