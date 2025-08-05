@@ -222,6 +222,12 @@ def combine_phi_undef : GICombineRule<
          [{ return matchPhiOfUndef(*${root}, MRI, Observer, ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
 
+def combine_align_memset : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_MEMSET): $root,
+         [{ return matchAlignMemset(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), Observer, ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
+
 // AIE-specifc combines (currently shared by AIE2 and AIE2P).
 def aie_additional_combines : GICombineGroup<[
   combine_unpad_vector,
@@ -240,7 +246,8 @@ def aie_additional_combines : GICombineGroup<[
   combine_concat_unmerge_phis,
   combine_trunc_ext,
   combine_load_const,
-  combine_phi_undef
+  combine_phi_undef,
+  combine_align_memset
 ]>;
 
 // AIE2P-specific combines.
