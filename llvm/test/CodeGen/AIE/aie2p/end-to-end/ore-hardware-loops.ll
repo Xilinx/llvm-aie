@@ -67,6 +67,7 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ; CHECK-NEXT: 	movx	r24, #0
 ; CHECK-NEXT: 	mova	dj0, #0;		mov	r26, r24
 ; CHECK-NEXT: 	vldb.fill.512	 [p0, lf0, r24];		mov	dj1, dj0
+; CHECK-NEXT:                                         // kill: def $p0 killed $p0 def $lf0
 ; CHECK-NEXT: 	movs	dc1, dj0;		vldb.pop.512	 x0, [p0, lf0, r24];		mov	dn1, dn0
 ; CHECK-NEXT: 	vldb.pop.512.2d	 x2, [p0, lf0, r24, d1]
 ; CHECK-NEXT: 	nop	
