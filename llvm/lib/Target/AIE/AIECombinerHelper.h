@@ -288,6 +288,10 @@ bool matchPhiBitcast(MachineInstr &Phi, MachineRegisterInfo &MRI,
 bool matchPhiOfUndef(MachineInstr &MI, MachineRegisterInfo &MRI,
                      GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
 
+bool matchAlignMemset(MachineInstr &MI, MachineRegisterInfo &MRI,
+                      const AIEBaseInstrInfo &TII,
+                      GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
+
 } // namespace llvm
 
 #endif

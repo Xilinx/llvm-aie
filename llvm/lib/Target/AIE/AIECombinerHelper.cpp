@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/GlobalISel/LegalizerHelper.h"
 #include "llvm/CodeGen/GlobalISel/Utils.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegionInfo.h"
@@ -59,6 +60,10 @@ cl::opt<bool> FoldInvariantLoads(
 cl::opt<bool> CombineVecShiftByZero(
     "aie-combine-vec-shift-by-zero", cl::init(true), cl::Hidden,
     cl::desc("Combine vectors shift by zero into copies."));
+
+cl::opt<bool> MemsetOptimizations(
+    "aie-optimize-memsets", cl::init(true), cl::Hidden,
+    cl::desc("Apply memset optimizations (peeling/align/etc.)."));
 
 static unsigned getNumMaskUndefs(const ArrayRef<int> &Mask,
                                  unsigned StartIndex) {
@@ -3783,6 +3788,68 @@ bool llvm::matchPhiOfUndef(MachineInstr &Phi, MachineRegisterInfo &MRI,
     Observer.changingInstr(Phi);
     UndefMO->setReg(NewReg);
     Observer.changedInstr(Phi);
+  };
+
+  return true;
+}
+
+// If we have enough bytes set on a stack memset, we can simply
+// align this stack object to avoid store scalarization during
+// legalization.
+bool llvm::matchAlignMemset(MachineInstr &MI, MachineRegisterInfo &MRI,
+                            const AIEBaseInstrInfo &TII,
+                            GISelChangeObserver &Observer,
+                            BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TargetOpcode::G_MEMSET && "Expected a G_MEMSET");
+
+  if (!MemsetOptimizations)
+    return false;
+
+  // Try to keep alignment increase as minimum.
+  const unsigned BasicVectorByteSize = TII.getBasicVecRegSize() / 8;
+  // Half vectors are also supported.
+  const unsigned HalfVectorByteSize = BasicVectorByteSize / 2;
+
+  const Register CountReg = MI.getOperand(2).getReg();
+  auto Cst = getIConstantVRegValWithLookThrough(CountReg, MRI);
+  if (!Cst)
+    return false;
+  const unsigned ByteCount = Cst->Value.getZExtValue();
+
+  // Can we fill, at least, half of a basic vector?
+  if (ByteCount < HalfVectorByteSize)
+    return false;
+
+  const Register PtrReg = MI.getOperand(0).getReg();
+  const MachineInstr *DefDataInst = MRI.getUniqueVRegDef(PtrReg);
+
+  if (DefDataInst->getOpcode() != TargetOpcode::G_FRAME_INDEX)
+    return false;
+
+  if (MI.memoperands_empty())
+    return false;
+  MachineMemOperand *MMO = MI.memoperands().front();
+
+  const int FrameIndex = DefDataInst->getOperand(1).getIndex();
+
+  const Align OptimalAlign =
+      Align(ByteCount < BasicVectorByteSize ? HalfVectorByteSize
+                                            : BasicVectorByteSize);
+  const Align MMOAlign = MMO->getAlign();
+
+  if (MMOAlign == OptimalAlign)
+    return false;
+
+  MatchInfo = [=, &MI](MachineIRBuilder &B) {
+    MachineFunction *MF = MI.getMF();
+    MachineFrameInfo &MFI = MF->getFrameInfo();
+    MFI.setObjectAlignment(FrameIndex, OptimalAlign);
+    const LocationSize Size = MMO->getSize();
+    MI.dropMemRefs(*MF);
+    MI.addMemOperand(*MF,
+                     MF->getMachineMemOperand(
+                         MachinePointerInfo::getFixedStack(*MF, FrameIndex),
+                         MachineMemOperand::MOStore, Size, OptimalAlign));
   };
 
   return true;
