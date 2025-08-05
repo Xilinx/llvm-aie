@@ -411,7 +411,7 @@ v16int32 test_broadcast_elem_128(v16int32 a, int b){
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <16 x float> [[A]] to <16 x i32>
 // AIE2P-NEXT:    [[TMP2:%.*]] = bitcast <16 x float> [[TMP0]] to <16 x i32>
 // AIE2P-NEXT:    [[TMP3:%.*]] = shufflevector <16 x i32> [[TMP2]], <16 x i32> poison, <16 x i32> zeroinitializer
-// AIE2P-NEXT:    [[TMP4:%.*]] = tail call <16 x i32> @llvm.aie2p.vshift.I512.I512(<16 x i32> [[TMP1]], <16 x i32> [[TMP3]], i32 0, i32 4)
+// AIE2P-NEXT:    [[TMP4:%.*]] = tail call <16 x i32> @llvm.aie2p.vshift.I512.I512(<16 x i32> [[TMP1]], <16 x i32> [[TMP3]], i32 0, i32 range(i32 4, 61) 4)
 // AIE2P-NEXT:    [[TMP5:%.*]] = bitcast <16 x i32> [[TMP4]] to <16 x float>
 // AIE2P-NEXT:    ret <16 x float> [[TMP5]]
 //
@@ -426,7 +426,7 @@ v16int32 test_broadcast_elem_128(v16int32 a, int b){
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <16 x float> [[TMP0]] to <16 x i32>
 // AIE2P-NEXT:    [[TMP2:%.*]] = shufflevector <16 x i32> [[TMP1]], <16 x i32> poison, <16 x i32> zeroinitializer
 // AIE2P-NEXT:    [[TMP3:%.*]] = bitcast <16 x float> [[A]] to <16 x i32>
-// AIE2P-NEXT:    [[TMP4:%.*]] = tail call <16 x i32> @llvm.aie2p.vshift.I512.I512(<16 x i32> [[TMP2]], <16 x i32> [[TMP3]], i32 0, i32 60)
+// AIE2P-NEXT:    [[TMP4:%.*]] = tail call <16 x i32> @llvm.aie2p.vshift.I512.I512(<16 x i32> [[TMP2]], <16 x i32> [[TMP3]], i32 0, i32 range(i32 4, 61) 60)
 // AIE2P-NEXT:    [[TMP5:%.*]] = bitcast <16 x i32> [[TMP4]] to <16 x float>
 // AIE2P-NEXT:    ret <16 x float> [[TMP5]]
 //

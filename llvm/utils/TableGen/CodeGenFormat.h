@@ -117,9 +117,9 @@ public:
 
   void run(raw_ostream &o);
 
-  static unsigned getVariableBits(const std::string &VarName, BitsInit *BI,
-                                  unsigned posBit);
-  static unsigned getFixedBits(std::string &OutChunck, BitsInit *BI,
+  static unsigned getVariableBits(const std::string &VarName,
+                                  const BitsInit *BI, unsigned posBit);
+  static unsigned getFixedBits(std::string &OutChunck, const BitsInit *BI,
                                unsigned posBit);
 };
 

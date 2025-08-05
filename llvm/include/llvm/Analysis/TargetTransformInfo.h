@@ -1830,6 +1830,10 @@ public:
   /// \return The maximum number of function arguments the target supports.
   unsigned getMaxNumArgs() const;
 
+  /// \return For an array of given Size, return alignment boundary to
+  /// pad to. Default is no padding.
+  unsigned getNumBytesToPadGlobalArray(unsigned Size, Type *ArrayType) const;
+
   /// @}
 
 private:
@@ -2238,6 +2242,8 @@ public:
   getVPLegalizationStrategy(const VPIntrinsic &PI) const = 0;
   virtual bool hasArmWideBranch(bool Thumb) const = 0;
   virtual unsigned getMaxNumArgs() const = 0;
+  virtual unsigned getNumBytesToPadGlobalArray(unsigned Size,
+                                               Type *ArrayType) const = 0;
 };
 
 template <typename T>
@@ -3044,6 +3050,11 @@ public:
 
   unsigned getMaxNumArgs() const override {
     return Impl.getMaxNumArgs();
+  }
+
+  unsigned getNumBytesToPadGlobalArray(unsigned Size,
+                                       Type *ArrayType) const override {
+    return Impl.getNumBytesToPadGlobalArray(Size, ArrayType);
   }
 };
 

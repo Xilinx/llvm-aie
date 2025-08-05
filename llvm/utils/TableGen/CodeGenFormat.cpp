@@ -263,14 +263,14 @@ void CodeGenFormat::run(raw_ostream &o) {
 // NOTE1: the counting is made in descending order (i.e from bit n-1, left one,
 //        to bit 0)
 unsigned CodeGenFormat::getVariableBits(const std::string &VarName,
-                                        BitsInit *BI, unsigned posBit) {
+                                        const BitsInit *BI, unsigned posBit) {
   assert(BI && "BI pointer must be non-null");
   assert(posBit < BI->getNumBits() && "posBit out of range");
 
   unsigned counter = 0;
   for (int i = static_cast<int>(posBit); i >= 0; i--, counter++) {
-    VarBitInit *VBI = nullptr;
-    VarInit *VI = nullptr;
+    const VarBitInit *VBI = nullptr;
+    const VarInit *VI = nullptr;
     VBI = dyn_cast<VarBitInit>(BI->getBit(i));
     if (VBI)
       VI = dyn_cast<VarInit>(VBI->getBitVar());
@@ -286,7 +286,8 @@ unsigned CodeGenFormat::getVariableBits(const std::string &VarName,
 
 // Retrieve the number of consecutive bits (from posBit) that are part of the
 // same chunck of Fixed bits (placed into the OutChunck)
-unsigned CodeGenFormat::getFixedBits(std::string &OutChunck, BitsInit *BI,
+unsigned CodeGenFormat::getFixedBits(std::string &OutChunck,
+                                     const BitsInit *BI,
                                      unsigned posBit) {
   assert(BI && "BI pointer must be non-null");
   assert(posBit < BI->getNumBits() && "posBit out of range");
@@ -294,7 +295,7 @@ unsigned CodeGenFormat::getFixedBits(std::string &OutChunck, BitsInit *BI,
   OutChunck = "";
   unsigned counter = 0;
   for (int i = static_cast<int>(posBit); i >= 0; i--, counter++) {
-    BitInit *bitInit = nullptr;
+    const BitInit *bitInit = nullptr;
     bitInit = dyn_cast<BitInit>(BI->getBit(i));
     if (bitInit) {
       bool value = bitInit->getValue();
@@ -341,7 +342,7 @@ TGInstrLayout::TGInstrLayout(const CodeGenInstruction *const CGI,
     return;
   }
 
-  BitsInit *BI = nullptr;
+  const BitsInit *BI = nullptr;
   unsigned HierarchyLevel = 0;
 
   // Find the super Class where the definition of "Inst" begin
@@ -766,7 +767,7 @@ void TGInstrLayout::computeSlotSet() {
 }
 
 /// Returns true whether each all of the bits are not complete
-static bool areAllBitsNotComplete(BitsInit *BI) {
+static bool areAllBitsNotComplete(const BitsInit *BI) {
   unsigned i = 0, k = 0;
   unsigned e = BI->getNumBits();
   for (; i != e; ++i) {
@@ -779,7 +780,7 @@ static bool areAllBitsNotComplete(BitsInit *BI) {
 void TGFieldLayout::resolveFieldsDefInBaseRecord(
     const std::string &LabelToFind, const TGFieldLayoutPtr &BaseFieldPtr) {
   const Record *const BaseRecord = CGI->TheDef;
-  BitsInit *BI = nullptr;
+  const BitsInit *BI = nullptr;
 
   if (BaseRecord->getValue(LabelToFind))
     BI = BaseRecord->getValueAsBitsInit(LabelToFind);
@@ -791,9 +792,9 @@ void TGFieldLayout::resolveFieldsDefInBaseRecord(
   }
   DefRecord = BaseRecord;
 
-  VarBitInit *VBI = nullptr;
-  VarInit *VI = nullptr;
-  BitInit *BtI = nullptr;
+  const VarBitInit *VBI = nullptr;
+  const VarInit *VI = nullptr;
+  const BitInit *BtI = nullptr;
 
   for (int j = BI->getNumBits() - 1; j >= 0;) {
     VBI = nullptr;
@@ -849,7 +850,7 @@ void TGFieldLayout::resolveFieldsDefInHierarchy(
 
   ArrayRef<std::pair<const Record *, SMRange>> Hierarchy =
       BaseRecord->getSuperClasses();
-  BitsInit *BI = nullptr;
+  const BitsInit *BI = nullptr;
 
   // if we are out of range in the Hierarchy, stop recursion...
   if (HierarchyLevel >= Hierarchy.size()) {
@@ -894,9 +895,9 @@ void TGFieldLayout::resolveFieldsDefInHierarchy(
     DefRecord = CurrentLevelRecord;
   }
 
-  VarBitInit *VBI = nullptr;
-  VarInit *VI = nullptr;
-  BitInit *BtI = nullptr;
+  const VarBitInit *VBI = nullptr;
+  const VarInit *VI = nullptr;
+  const BitInit *BtI = nullptr;
 
   for (int j = BI->getNumBits() - 1; j >= 0;) {
     VBI = nullptr;

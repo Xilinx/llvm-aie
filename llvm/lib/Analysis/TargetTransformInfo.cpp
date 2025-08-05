@@ -1394,6 +1394,12 @@ bool TargetTransformInfo::isVectorShiftByScalarCheap(Type *Ty) const {
   return TTIImpl->isVectorShiftByScalarCheap(Ty);
 }
 
+unsigned
+TargetTransformInfo::getNumBytesToPadGlobalArray(unsigned Size,
+                                                 Type *ArrayType) const {
+  return TTIImpl->getNumBytesToPadGlobalArray(Size, ArrayType);
+}
+
 TargetTransformInfo::Concept::~Concept() = default;
 
 TargetIRAnalysis::TargetIRAnalysis() : TTICallback(&getDefaultTTI) {}
