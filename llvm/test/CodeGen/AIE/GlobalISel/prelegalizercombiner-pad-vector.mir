@@ -49,12 +49,9 @@ body:             |
     ; CHECK-LABEL: name: no_combine_lanes_shuffled
     ; CHECK: [[COPY:%[0-9]+]]:_(<4 x s32>) = COPY $q0
     ; CHECK-NEXT: [[UV:%[0-9]+]]:_(s32), [[UV1:%[0-9]+]]:_(s32), [[UV2:%[0-9]+]]:_(s32), [[UV3:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[COPY]](<4 x s32>)
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(s32) = G_IMPLICIT_DEF
     ; CHECK-NEXT: [[BUILD_VECTOR:%[0-9]+]]:_(<4 x s32>) = G_BUILD_VECTOR [[UV]](s32), [[UV2]](s32), [[UV1]](s32), [[UV3]](s32)
-    ; CHECK-NEXT: [[AIE_BROADCAST_VECTOR:%[0-9]+]]:_(<16 x s32>) = G_AIE_BROADCAST_VECTOR [[DEF]](s32)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<4 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_BROADCAST_VECTOR]](<16 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s32>) = G_CONCAT_VECTORS [[BUILD_VECTOR]](<4 x s32>), [[AIE_UNPAD_VECTOR]](<4 x s32>)
-    ; CHECK-NEXT: $wl0 = COPY [[CONCAT_VECTORS]](<8 x s32>)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<8 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[BUILD_VECTOR]](<4 x s32>)
+    ; CHECK-NEXT: $wl0 = COPY [[AIE_PAD_VECTOR_UNDEF]](<8 x s32>)
       %10:_(<4 x s32>) = COPY $q0
       %0:_(s32), %1:_(s32), %2:_(s32), %3:_(s32) = G_UNMERGE_VALUES %10
       %4:_(s32) = G_IMPLICIT_DEF
@@ -72,10 +69,8 @@ body:             |
     ; CHECK-NEXT: [[UV:%[0-9]+]]:_(s32), [[UV1:%[0-9]+]]:_(s32), [[UV2:%[0-9]+]]:_(s32), [[UV3:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[COPY]](<4 x s32>)
     ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(s32) = G_IMPLICIT_DEF
     ; CHECK-NEXT: [[BUILD_VECTOR:%[0-9]+]]:_(<4 x s32>) = G_BUILD_VECTOR [[UV]](s32), [[UV1]](s32), [[UV2]](s32), [[DEF]](s32)
-    ; CHECK-NEXT: [[AIE_BROADCAST_VECTOR:%[0-9]+]]:_(<16 x s32>) = G_AIE_BROADCAST_VECTOR [[DEF]](s32)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<4 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_BROADCAST_VECTOR]](<16 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s32>) = G_CONCAT_VECTORS [[BUILD_VECTOR]](<4 x s32>), [[AIE_UNPAD_VECTOR]](<4 x s32>)
-    ; CHECK-NEXT: $wl0 = COPY [[CONCAT_VECTORS]](<8 x s32>)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<8 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[BUILD_VECTOR]](<4 x s32>)
+    ; CHECK-NEXT: $wl0 = COPY [[AIE_PAD_VECTOR_UNDEF]](<8 x s32>)
       %10:_(<4 x s32>) = COPY $q0
       %0:_(s32), %1:_(s32), %2:_(s32), %3:_(s32) = G_UNMERGE_VALUES %10
       %4:_(s32) = G_IMPLICIT_DEF
@@ -112,12 +107,9 @@ body:             |
     ; CHECK-LABEL: name: no_combine_no_128_bit_input
     ; CHECK: [[COPY:%[0-9]+]]:_(<8 x s32>) = COPY $wh0
     ; CHECK-NEXT: [[UV:%[0-9]+]]:_(s32), [[UV1:%[0-9]+]]:_(s32), [[UV2:%[0-9]+]]:_(s32), [[UV3:%[0-9]+]]:_(s32), [[UV4:%[0-9]+]]:_(s32), [[UV5:%[0-9]+]]:_(s32), [[UV6:%[0-9]+]]:_(s32), [[UV7:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[COPY]](<8 x s32>)
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(s32) = G_IMPLICIT_DEF
     ; CHECK-NEXT: [[BUILD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_BUILD_VECTOR [[UV]](s32), [[UV2]](s32), [[UV1]](s32), [[UV3]](s32), [[UV4]](s32), [[UV5]](s32), [[UV6]](s32), [[UV7]](s32)
-    ; CHECK-NEXT: [[AIE_BROADCAST_VECTOR:%[0-9]+]]:_(<16 x s32>) = G_AIE_BROADCAST_VECTOR [[DEF]](s32)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_BROADCAST_VECTOR]](<16 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[BUILD_VECTOR]](<8 x s32>), [[AIE_UNPAD_VECTOR]](<8 x s32>)
-    ; CHECK-NEXT: $x0 = COPY [[CONCAT_VECTORS]](<16 x s32>)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[BUILD_VECTOR]](<8 x s32>)
+    ; CHECK-NEXT: $x0 = COPY [[AIE_PAD_VECTOR_UNDEF]](<16 x s32>)
       %10:_(<8 x s32>) = COPY $wh0
       %0:_(s32), %1:_(s32), %2:_(s32), %3:_(s32), %4:_(s32), %5:_(s32), %6:_(s32), %7:_(s32) = G_UNMERGE_VALUES %10
       %8:_(s32) = G_IMPLICIT_DEF
