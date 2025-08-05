@@ -72,6 +72,9 @@ class FuncUnitWrapper {
 
   /// The occupied slots. This is currently redundant with Bundle
   SlotBits Slots = 0;
+  /// Conflicts are just for speeding up conflict detection. They may be present
+  /// in cycles to be merged, but they will not be merged into the scoreboard.
+  SlotBits Conflicts = 0;
 
   /// The occupied bank
   MemoryBankBits MemoryBanks = 0;
@@ -105,10 +108,11 @@ public:
   /// Make this conflict with any non-empty cycle
   void blockResources();
   FuncUnitWrapper() = default;
-  FuncUnitWrapper(SlotBits Slots, MemoryBankBits MemoryBanks = 0,
+  FuncUnitWrapper(SlotBits Slots, SlotBits Conflicts,
+                  MemoryBankBits MemoryBanks = 0,
                   MemoryObjectsBits MemObjectsBits = 0)
-      : Slots(Slots), MemoryBanks(MemoryBanks), MemObjectsBits(MemObjectsBits) {
-  }
+      : Slots(Slots), Conflicts(Conflicts), MemoryBanks(MemoryBanks),
+        MemObjectsBits(MemObjectsBits) {}
 
   /// Compare two FuncUnitWrappers for equality. This is only used for
   /// dumping purposes, quite literally saying "this looks the same"
@@ -268,9 +272,10 @@ protected:
   static bool
   checkConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
                 const InstrItineraryData *ItinData, unsigned SchedClass,
-                SlotBits SlotSet, MemoryBankBits MemoryBanks,
-                uint64_t MemObjectsBits, SmallVector<int, 2> MemoryAccessCycles,
-                int DeltaCycles, std::optional<int> FUDepthLimit);
+                SlotBits SlotSet, SlotBits Conflicts,
+                MemoryBankBits MemoryBanks, uint64_t MemObjectsBits,
+                SmallVector<int, 2> MemoryAccessCycles, int DeltaCycles,
+                std::optional<int> FUDepthLimit);
 
   static void enterResources(ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
                              const InstrItineraryData *ItinData,
