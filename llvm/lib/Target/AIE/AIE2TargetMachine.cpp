@@ -136,7 +136,7 @@ void AIE2PassConfig::addISelPrepare() {
 
 bool AIE2PassConfig::addILPOpts() {
   if (EnableAIEIfConversion)
-    addPass(&EarlyIfConverterID);
+    addPass(&EarlyIfConverterLegacyID);
   return true;
 }
 
