@@ -31,6 +31,7 @@
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
+#include "llvm/CodeGen/VirtRegMap.h"
 #include "llvm/MC/MCRegister.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -77,8 +78,8 @@ public:
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
-    AU.addRequired<VirtRegMap>();
-    AU.addPreserved<VirtRegMap>();
+    AU.addRequired<VirtRegMapWrapperLegacy>();
+    AU.addPreserved<VirtRegMapWrapperLegacy>();
     // no Machine Instructions are added, therefore the SlotIndexes remain
     // constant and preserved
     AU.addRequired<SlotIndexesWrapperPass>();
@@ -91,8 +92,8 @@ public:
     AU.addPreserved<LiveStacks>();
     AU.addRequired<LiveIntervalsWrapperPass>();
     AU.addPreserved<LiveIntervalsWrapperPass>();
-    AU.addRequired<LiveRegMatrix>();
-    AU.addPreserved<LiveRegMatrix>();
+    AU.addRequired<LiveRegMatrixWrapperLegacy>();
+    AU.addPreserved<LiveRegMatrixWrapperLegacy>();
     MachineFunctionPass::getAnalysisUsage(AU);
   }
 
@@ -199,8 +200,8 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   this->MF = &MF;
   MRI = &MF.getRegInfo();
   TRI = static_cast<const AIEBaseRegisterInfo *>(MRI->getTargetRegisterInfo());
-  VRM = &getAnalysis<VirtRegMap>();
-  LRM = &getAnalysis<LiveRegMatrix>();
+  VRM = &getAnalysis<VirtRegMapWrapperLegacy>().getVRM();
+  LRM = &getAnalysis<LiveRegMatrixWrapperLegacy>().getLRM();
   LIS = &getAnalysis<LiveIntervalsWrapperPass>().getLIS();
   TII = MF.getSubtarget().getInstrInfo();
   bool Modified = false;
