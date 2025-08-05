@@ -61,7 +61,8 @@ void FuncUnitWrapper::setFormatInterface(const AIEBaseMCFormats *Formats) {
 
 bool FuncUnitWrapper::operator==(const FuncUnitWrapper &Other) const {
   return Required == Other.Required && Reserved == Other.Reserved &&
-         Slots == Other.Slots && MemoryBanks == Other.MemoryBanks &&
+         Slots == Other.Slots && Conflicts == Other.Conflicts &&
+         MemoryBanks == Other.MemoryBanks &&
          MemObjectsBits == Other.MemObjectsBits;
 }
 
@@ -95,6 +96,7 @@ void FuncUnitWrapper::clearResources() {
   Required.clear();
   Reserved.clear();
   Slots = 0;
+  Conflicts = 0;
   MemoryBanks = 0;
   MemObjectsBits = 0;
 }
@@ -117,6 +119,7 @@ FuncUnitWrapper &FuncUnitWrapper::operator|=(const FuncUnitWrapper &Other) {
   Required |= Other.Required;
   Reserved |= Other.Reserved;
   Slots |= Other.Slots;
+  Conflicts |= Other.Conflicts;
   MemoryBanks |= Other.MemoryBanks;
   MemObjectsBits |= Other.MemObjectsBits;
   return *this;
@@ -125,6 +128,7 @@ FuncUnitWrapper &FuncUnitWrapper::operator|=(const FuncUnitWrapper &Other) {
 bool FuncUnitWrapper::conflict(const FuncUnitWrapper &Other) const {
   if ((Slots & Other.Slots) != 0 || (MemoryBanks & Other.MemoryBanks) != 0 ||
       (MemObjectsBits & Other.MemObjectsBits) != 0 ||
+      (Conflicts & Other.Slots) != 0 || (Slots & Other.Conflicts) != 0 ||
       Required.overlap(Other.Required) || Reserved.overlap(Other.Required) ||
       Required.overlap(Other.Reserved)) {
 
@@ -482,6 +486,15 @@ static SlotBits getSlotSet(const MCInstrDesc &Desc,
   return IgnoreUnkownSlotSets ? 0 : ~0;
 }
 
+static SlotBits getConflictSet(const MCInstrDesc &Desc,
+                               const AIEBaseMCFormats &Formats) {
+  MCSlotKind SlotKind = Formats.getSlotKind(Desc.getOpcode());
+  if (SlotKind != MCSlotKind())
+    return Formats.getSlotInfo(SlotKind)->getConflictSet();
+
+  return 0;
+}
+
 namespace {
 auto toHazardType(bool Conflict) {
   return Conflict ? ScheduleHazardRecognizer::NoopHazard
@@ -525,8 +538,9 @@ ScheduleHazardRecognizer::HazardType AIEHazardRecognizer::getHazardType(
   return toHazardType(checkConflict(
       TheScoreboard, ItinData, SchedClass,
       getSlotSet(Desc, *TII->getFormatInterface(), IgnoreUnknownSlotSets),
-      MemoryBanks, MemObjectsBits, TII->getMemoryCycles(SchedClass),
-      DeltaCycles, FUDepthLimit));
+      getConflictSet(Desc, *TII->getFormatInterface()), MemoryBanks,
+      MemObjectsBits, TII->getMemoryCycles(SchedClass), DeltaCycles,
+      FUDepthLimit));
 }
 
 bool AIEHazardRecognizer::checkConflict(
@@ -540,25 +554,26 @@ bool AIEHazardRecognizer::checkConflict(
   return checkConflict(
       Scoreboard, ItinData, SchedClass,
       getSlotSet(Desc, *TII->getFormatInterface(), IgnoreUnknownSlotSets),
-      MemoryBanks, MemObjectsBits, TII->getMemoryCycles(SchedClass),
-      DeltaCycles, std::nullopt);
+      getConflictSet(Desc, *TII->getFormatInterface()), MemoryBanks,
+      MemObjectsBits, TII->getMemoryCycles(SchedClass), DeltaCycles,
+      std::nullopt);
 }
 
 bool AIEHazardRecognizer::checkConflict(
     const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
     const InstrItineraryData *ItinData, unsigned SchedClass, SlotBits SlotSet,
-    MemoryBankBits MemoryBanks, MemoryObjectsBits MemObjectsBits,
-    SmallVector<int, 2> MemoryAccessCycles, int DeltaCycles,
-    std::optional<int> FUDepthLimit) {
+    SlotBits ConflictSet, MemoryBankBits MemoryBanks,
+    MemoryObjectsBits MemObjectsBits, SmallVector<int, 2> MemoryAccessCycles,
+    int DeltaCycles, std::optional<int> FUDepthLimit) {
 
   // Verify format hazards
-  FuncUnitWrapper EmissionCycle(SlotSet);
+  FuncUnitWrapper EmissionCycle(SlotSet, ConflictSet);
   if (EmissionCycle.conflict(Scoreboard[DeltaCycles]))
     return true;
 
   // Verify memory bank and shared object hazards
   if (!MemoryAccessCycles.empty()) {
-    FuncUnitWrapper MemoryAccessCycle(/*SlotSet=*/0, MemoryBanks,
+    FuncUnitWrapper MemoryAccessCycle(/*SlotSet=*/0, 0, MemoryBanks,
                                       MemObjectsBits);
 
     for (auto Cycles : MemoryAccessCycles) {
@@ -644,13 +659,13 @@ void AIEHazardRecognizer::enterResources(
     std::optional<int> FUDepthLimit) {
 
   // Append slot usage
-  FuncUnitWrapper EmissionCycle(SlotSet);
+  FuncUnitWrapper EmissionCycle(SlotSet, 0);
   Scoreboard[DeltaCycles] |= EmissionCycle;
 
   // Append memory bank usage
   if (!MemoryAccessCycles.empty()) {
     FuncUnitWrapper MemoryBankAndObjectsAccessCycle(
-        /*SlotSet=*/0, MemoryBanks, MemObjectsBits);
+        /*SlotSet=*/0, 0, MemoryBanks, MemObjectsBits);
     for (auto Cycles : MemoryAccessCycles) {
       assert(Scoreboard.isInRange(DeltaCycles + Cycles - 1));
       Scoreboard[DeltaCycles + Cycles - 1] |= MemoryBankAndObjectsAccessCycle;

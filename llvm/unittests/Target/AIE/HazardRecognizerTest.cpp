@@ -135,7 +135,7 @@ public:
   bool hazard(unsigned SchedClass, int Delta, SlotBits SlotSet = 0,
               MemoryBankBits MemoryBanks = 0, MemoryObjectsBits ObjectsBits = 0,
               SmallVector<int, 2> MemoryAccessCycles = {}) {
-    return checkConflict(MockScoreboard, &Itins, SchedClass, SlotSet,
+    return checkConflict(MockScoreboard, &Itins, SchedClass, SlotSet, SlotSet,
                          MemoryBanks, ObjectsBits, MemoryAccessCycles, Delta,
                          std::nullopt);
   }
