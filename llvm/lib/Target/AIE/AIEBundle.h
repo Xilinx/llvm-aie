@@ -91,9 +91,15 @@ public:
     // Verify there is a format that can accommodate the new slots
     MCSlotKind Slot = FormatInterface->getSlotKind(InstOpCode);
     assert(Slot != MCSlotKind());
-    SlotBits NewSlots = FormatInterface->getSlotInfo(Slot)->getSlotSet();
-    return (OccupiedSlots & NewSlots) == 0 &&
-           FormatInterface->getPacketFormats().getFormat(OccupiedSlots |
+
+    auto *SlotInfo = FormatInterface->getSlotInfo(Slot);
+    // ConflictBits is a fast predictor of missing formats
+    SlotBits ConflictBits = SlotInfo->getConflictSet();
+    if (OccupiedSlots & ConflictBits) {
+      return false;
+    }
+    SlotBits NewSlots = OccupiedSlots | SlotInfo->getSlotSet();
+    return FormatInterface->getPacketFormats().getFormat(OccupiedSlots |
                                                          NewSlots);
   }
 
