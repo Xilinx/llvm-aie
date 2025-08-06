@@ -31,11 +31,9 @@ let Namespace = "TEST" in
 // CHECK:       #endif // GET_FORMATS_CLASS_DEF
 
 // CHECK:       #ifdef GET_FORMATS_SLOTS_DEFS
-// CHECK:         TESTSlotKind::TEST_SLOT_FU1,
-// CHECK-NEXT:    "fu1",
+// CHECK:    "fu1",
 // CHECK-NEXT:    32,
-// CHECK:         TESTSlotKind::TEST_SLOT_FSDSDS2,
-// CHECK-NEXT:    "fsdsds2",
+// CHECK:    "fsdsds2",
 // CHECK-NEXT:    45,
 // CHECK:       #endif // GET_FORMATS_SLOTS_DEFS
 }

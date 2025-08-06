@@ -1,10 +1,10 @@
-//===-- AIEFormats.h  Format utilities for AIE -----------------*- C++ -*-===//
+//===-- AIEBundle.h  Bundle representation utilities for AIE ------------*-===//
 //
 // This file is licensed under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 // Internal bundle representation with format checking
@@ -88,7 +88,7 @@ public:
     if (!FormatInterface->isSupportedInstruction(InstOpCode))
       return false;
 
-    // Veryfy there is a format that can accomodate the new slots
+    // Verify there is a format that can accommodate the new slots
     MCSlotKind Slot = FormatInterface->getSlotKind(InstOpCode);
     assert(Slot != MCSlotKind());
     SlotBits NewSlots = FormatInterface->getSlotInfo(Slot)->getSlotSet();

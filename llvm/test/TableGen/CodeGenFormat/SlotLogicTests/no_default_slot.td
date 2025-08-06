@@ -34,13 +34,11 @@ let Namespace = "TEST" in
 
 // Check there is no wild instantiation of the default slot
 // CHECK:       #ifdef GET_FORMATS_SLOTS_DEFS
-// CHECK:       static constexpr const TESTSlotInfo TESTSlots[] = {
+// CHECK:       static constexpr const MCSlotInfo TESTSlots[] = {
 
-// CHECK:       TESTSlotKind::TEST_SLOT_FU0,
-// CHECK-NEXT:  "fu0"
+// CHECK:  "fu0"
 // CHECK-NEXT:  12
-// CHECK:       TESTSlotKind::TEST_SLOT_FU1,
-// CHECK-NEXT:  "fu1"
+// CHECK:  "fu1"
 // CHECK NEXT:  42,
 // CHECK-NOT:   "unknown",
 // CHECK:       #endif // GET_FORMATS_SLOTS_DEFS
