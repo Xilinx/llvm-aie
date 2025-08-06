@@ -87,11 +87,13 @@ bool optimisePostIncrements(ArrayRef<MachineInstr *> PtrAdds,
   bool Changed = false;
 
   // Look for the following sequence:
-  // %0 = G_PTR_ADD %100, %101
-  // %1 = G_PTR_ADD %100, 32
-  // And swap the offsets if it is safe to get:
-  // %0 = G_PTR_ADD %100, 32
+  // %0 = G_PTR_ADD %100, 64
   // %1 = G_PTR_ADD %100, %101
+  // %2 = G_PTR_ADD %1, 32
+  // And swap the offsets if it is safe to get:
+  // %0 = G_PTR_ADD %100, 64
+  // %1 = G_PTR_ADD %100, 32
+  // %2 = G_PTR_ADD %1, %101
   for (MachineInstr *PtrAdd : PtrAdds) {
     assert(PtrAdd->getOpcode() == TargetOpcode::G_PTR_ADD);
     Register OutputPtr = PtrAdd->getOperand(0).getReg();
