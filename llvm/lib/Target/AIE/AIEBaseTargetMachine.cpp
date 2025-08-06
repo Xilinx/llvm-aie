@@ -34,6 +34,7 @@
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/MC/TargetRegistry.h"
+#include "llvm/Pass.h"
 #include "llvm/PassRegistry.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Support/CodeGen.h"
@@ -228,7 +229,7 @@ void AIEBaseTargetMachine::registerPassBuilderCallbacks(PassBuilder &PB) {
 
   if (InternalizeSymbols) {
     PB.registerPipelineEarlySimplificationEPCallback(
-        [](ModulePassManager &PM, OptimizationLevel) {
+        [](ModulePassManager &PM, OptimizationLevel, ThinOrFullLTOPhase) {
           if (InternalizeSymbols) {
             PM.addPass(InternalizePass(mustPreserveGV));
             PM.addPass(GlobalDCEPass());
@@ -238,7 +239,7 @@ void AIEBaseTargetMachine::registerPassBuilderCallbacks(PassBuilder &PB) {
 
   if (EnableIPSCCP) {
     PB.registerOptimizerEarlyEPCallback(
-        [](ModulePassManager &PM, OptimizationLevel) {
+        [](ModulePassManager &PM, OptimizationLevel, ThinOrFullLTOPhase) {
           PM.addPass(IPSCCPPass(IPSCCPOptions(/*AllowFuncSpec=*/false)));
         });
   }
