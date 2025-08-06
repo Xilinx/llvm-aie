@@ -228,6 +228,12 @@ def combine_align_memset : GICombineRule<
          [{ return matchAlignMemset(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), Observer, ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
 
+def combine_peel_memset : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_MEMSET): $root,
+         [{ return matchPeelMemset(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), Observer, ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
+
 // AIE-specifc combines (currently shared by AIE2 and AIE2P).
 def aie_additional_combines : GICombineGroup<[
   combine_unpad_vector,
@@ -247,7 +253,8 @@ def aie_additional_combines : GICombineGroup<[
   combine_trunc_ext,
   combine_load_const,
   combine_phi_undef,
-  combine_align_memset
+  combine_align_memset,
+  combine_peel_memset
 ]>;
 
 // AIE2P-specific combines.
