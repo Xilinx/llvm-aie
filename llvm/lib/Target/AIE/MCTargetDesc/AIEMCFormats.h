@@ -28,8 +28,6 @@ namespace llvm {
 
 static const int SLOT_UNKNOWN = -1;
 
-using SlotBits = uint64_t;
-class MCSlotInfo;
 class MCSlotKind {
   /// Kind of the slot
   int Kind;
