@@ -292,6 +292,9 @@ bool matchAlignMemset(MachineInstr &MI, MachineRegisterInfo &MRI,
                       const AIEBaseInstrInfo &TII,
                       GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
 
+bool matchPeelMemset(MachineInstr &MI, MachineRegisterInfo &MRI,
+                     const AIEBaseInstrInfo &TII, GISelChangeObserver &Observer,
+                     BuildFnTy &MatchInfo);
 } // namespace llvm
 
 #endif

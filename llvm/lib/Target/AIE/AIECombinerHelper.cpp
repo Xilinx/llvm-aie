@@ -28,6 +28,7 @@
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
 #include "llvm/IR/IntrinsicsAIE2P.h"
+#include "llvm/Support/Alignment.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <optional>
 
@@ -3850,6 +3851,180 @@ bool llvm::matchAlignMemset(MachineInstr &MI, MachineRegisterInfo &MRI,
                      MF->getMachineMemOperand(
                          MachinePointerInfo::getFixedStack(*MF, FrameIndex),
                          MachineMemOperand::MOStore, Size, OptimalAlign));
+  };
+
+  return true;
+}
+
+static std::optional<std::pair<Register, int64_t>>
+getPtrAndConstantOffset(const MachineInstr *MI, unsigned PointerIndex,
+                        MachineRegisterInfo &MRI) {
+  assert(MI->getOpcode() == TargetOpcode::G_PTR_ADD && "Expected a G_PTR_ADD");
+
+  const Register OffsetReg = MI->getOperand(2).getReg();
+  const auto Cst = getIConstantVRegValWithLookThrough(OffsetReg, MRI);
+
+  if (Cst)
+    return std::make_pair(MI->getOperand(PointerIndex).getReg(),
+                          Cst->Value.getSExtValue());
+
+  return std::nullopt;
+}
+
+template <uint64_t TargetAlign> constexpr bool matchAlignment(uint64_t Value) {
+  return isAligned(Align(TargetAlign), Value);
+}
+
+static bool isBasePointerWordAligned(Register BasePtr,
+                                     MachineRegisterInfo &MRI) {
+
+  auto IsBasePointerAligned = [&](const MachineInstr *MI) {
+    if (!isa<GLoadStore>(MI))
+      return false;
+    if (MI->memoperands_empty())
+      return false;
+    const MachineMemOperand *MMO = MI->memoperands().front();
+    return matchAlignment<4>(MMO->getAlign().value());
+  };
+
+  for (const MachineInstr &MI : MRI.use_instructions(BasePtr)) {
+    if (MI.getOpcode() == TargetOpcode::G_PTR_ADD) {
+      auto RegAndOffset = getPtrAndConstantOffset(&MI, 0, MRI);
+      if (!RegAndOffset || !matchAlignment<4>(RegAndOffset->second))
+        continue;
+      // In one user is aligned, it is enough for us.
+      if (any_of(MRI.use_instructions(RegAndOffset->first),
+                 [&](const MachineInstr &UseMI) {
+                   return IsBasePointerAligned(&UseMI);
+                 }))
+        return true;
+    } else if (IsBasePointerAligned(&MI)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+// We try to align MEMSETs by peeling out some stores.
+// To be effective, we need at least 3 bytes here:
+// If we are byte-aligned we can generate
+//  - G_STORE s8
+//  - G_STORE s16
+//  - G_MEMSET (... n - 3 ...)
+// If we are short-aligned we can generate
+//  - G_STORE s16
+//  - G_MEMSET (... n - 2 ...)
+bool llvm::matchPeelMemset(MachineInstr &MI, MachineRegisterInfo &MRI,
+                           const AIEBaseInstrInfo &TII,
+                           GISelChangeObserver &Observer,
+                           BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TargetOpcode::G_MEMSET && "Expected a G_MEMSET");
+
+  if (!MemsetOptimizations)
+    return false;
+
+  MachineMemOperand *MMO = MI.memoperands().front();
+
+  if (!MMO)
+    return false;
+  const Align MMOAlign = MMO->getAlign();
+
+  // If it is already aligned we have nothing to do.
+  if (matchAlignment<4>(MMOAlign.value()))
+    return false;
+
+  const Register SizeReg = MI.getOperand(2).getReg();
+
+  const auto Cst = getIConstantVRegValWithLookThrough(SizeReg, MRI);
+  if (!Cst)
+    return false;
+  const int64_t Size = Cst->Value.getSExtValue();
+
+  Register PtrReg = MI.getOperand(0).getReg();
+  const Register DataReg = MI.getOperand(1).getReg();
+  const auto CstInit = getIConstantVRegValWithLookThrough(DataReg, MRI);
+  if (!CstInit)
+    return false;
+  const uint64_t Initializer = CstInit->Value.getZExtValue();
+
+  unsigned Offset = 0;
+  const MachineInstr *DefPtrReg = MRI.getVRegDef(PtrReg);
+  if (DefPtrReg->getOpcode() == TargetOpcode::G_PTR_ADD) {
+    const auto RegAndOffset = getPtrAndConstantOffset(DefPtrReg, 1, MRI);
+
+    if (!RegAndOffset)
+      return false;
+
+    Offset = RegAndOffset->second;
+    PtrReg = RegAndOffset->first;
+  }
+
+  // Next step is to prove that the base pointer is word-aligned.
+  // As we cannot assume, we can search for aligned uses of the base pointer.
+  if (!isBasePointerWordAligned(PtrReg, MRI))
+    return false;
+
+  MatchInfo = [=, &MI, &MRI, &Observer](MachineIRBuilder &B) {
+    auto &MF = B.getMF();
+
+    auto BuildPADD = [&](int64_t CurrentOffset) {
+      Register NewPtrReg = MRI.cloneVirtualRegister(PtrReg);
+      Register OffsetReg =
+          B.buildConstant(LLT::scalar(20), CurrentOffset).getReg(0);
+      Observer.createdInstr(*B.buildInstr(TargetOpcode::G_PTR_ADD)
+                                 .addDef(NewPtrReg)
+                                 .addReg(PtrReg)
+                                 .addReg(OffsetReg));
+      return NewPtrReg;
+    };
+
+    auto BuildMMO = [&](LocationSize Size, Align A) {
+      MachineMemOperand *NewMMO = MF.getMachineMemOperand(
+          MMO->getPointerInfo(), MMO->getFlags(), Size, A);
+      return NewMMO;
+    };
+
+    int64_t PeelOffset = Offset;
+    // If offset is aligned, just fix the alignment.
+    if (!matchAlignment<4>(PeelOffset)) {
+      // If not short-aligned, align to the next short boundary (1 byte).
+      if (!matchAlignment<2>(PeelOffset)) {
+        B.buildStore(DataReg, BuildPADD(PeelOffset),
+                     *BuildMMO(MMO->getSize(), Align(1)));
+        PeelOffset++;
+      }
+
+      // If we are short-aligned, but still not word aligned, align to the
+      // next word boundary (2 bytes more).
+      if (!matchAlignment<4>(PeelOffset)) {
+        // Store the next two bytes to align to the next word boundary.
+        Register DataRegAdjustedToS16 =
+            B.buildConstant(LLT::scalar(16), (Initializer << 8) | Initializer)
+                .getReg(0);
+        B.buildStore(DataRegAdjustedToS16, BuildPADD(PeelOffset),
+                     *BuildMMO(2, Align(2)));
+        PeelOffset += 2;
+      }
+    }
+
+    const unsigned NewSize = Size - (PeelOffset - Offset);
+
+    // No bytes left to memset.
+    if (NewSize == 0) {
+      MI.eraseFromParent();
+      return;
+    }
+
+    const int64_t MemsetOffset = PeelOffset;
+    assert(matchAlignment<4>(MemsetOffset) && "Memset still unaligned?");
+    // Now, what remains is aligned, we just need to fix Offset, Size and MMO.
+    MachineMemOperand *NewMMOMemSet = BuildMMO(MMO->getSize(), Align(4));
+    MI.dropMemRefs(MF); // Safe to drop the MMO now.
+    MI.addMemOperand(MF, NewMMOMemSet);
+    MI.getOperand(2).setReg(
+        B.buildConstant(LLT::scalar(20), NewSize).getReg(0));
+    MI.getOperand(0).setReg(BuildPADD(MemsetOffset));
   };
 
   return true;
