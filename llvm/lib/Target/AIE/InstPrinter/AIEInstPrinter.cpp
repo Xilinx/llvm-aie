@@ -72,7 +72,7 @@ void AIEInstPrinter::printInst(const MCInst *MI, uint64_t Address,
   printAnnotation(O, Annot);
 }
 
-void AIEInstPrinter::printRegName(raw_ostream &O, MCRegister RegNo) const {
+void AIEInstPrinter::printRegName(raw_ostream &O, MCRegister RegNo) {
   O << getRegisterName(RegNo);
 }
 

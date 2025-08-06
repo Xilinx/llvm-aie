@@ -40,7 +40,7 @@ void AIE2PInstPrinter::printInst(const MCInst *MI, uint64_t Address,
   AIECommonInstPrinter::printInstr(MI, Address, Annot, STI, O);
 }
 
-void AIE2PInstPrinter::printRegName(raw_ostream &O, MCRegister RegNo) const {
+void AIE2PInstPrinter::printRegName(raw_ostream &O, MCRegister RegNo) {
   O << getRegisterName(RegNo);
 }
 
