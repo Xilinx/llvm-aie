@@ -326,6 +326,40 @@ bool AIELegalizerHelper::legalizeG_UNMERGE_VALUES_128bit(
   return true;
 }
 
+// Legalize G_MERGE_VALUES for scalars >= 128 bits.
+// For ex.:
+//   %0(s128) = G_MERGE_VALUES %1(s32), %2(s32), %3(s32), %4(s32)
+// To
+//   %5(V4S32) = G_BUILD_VECTOR %1(s32), %2(s32), %3(s32), %4(s32)
+//   %0(s128) = G_BITCAST %5(V4S32)
+bool AIELegalizerHelper::legalizeG_MERGE_VALUES(LegalizerHelper &Helper,
+                                                MachineInstr &MI) const {
+  MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+
+  const Register DstReg = MI.getOperand(0).getReg();
+
+  // Collect src regs.
+  SmallVector<Register, 8> SrcRegs;
+  for (unsigned I = 1; I < MI.getNumOperands(); ++I) {
+    SrcRegs.push_back(MI.getOperand(I).getReg());
+  }
+
+  const LLT SrcTy = MRI.getType(SrcRegs[0]);
+  const unsigned NumElems = SrcRegs.size();
+
+  // Build temp vector.
+  const LLT VecTy = LLT::fixed_vector(NumElems, SrcTy);
+  const Register VecReg = MRI.createGenericVirtualRegister(VecTy);
+  MIRBuilder.buildBuildVector(VecReg, SrcRegs);
+
+  // Bitcast back to scalar.
+  MIRBuilder.buildBitcast(DstReg, VecReg);
+
+  MI.eraseFromParent();
+  return true;
+}
+
 bool AIELegalizerHelper::legalizeG_UNMERGE_VALUES(LegalizerHelper &Helper,
                                                   MachineInstr &MI) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;

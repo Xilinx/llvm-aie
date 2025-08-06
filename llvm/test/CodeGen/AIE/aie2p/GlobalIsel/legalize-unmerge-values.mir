@@ -44,10 +44,18 @@ body:             |
     %0:_(s256) = G_IMPLICIT_DEF
     %1:_(s64), %2:_(s64), %3:_(s64), %4:_(s64) = G_UNMERGE_VALUES %0:_(s256)
     PseudoRET implicit $lr, implicit %1
+...
+
 ---
 name:           test_scalarSrc_s512
 body:             |
   bb.0.entry:
+    ; CHECK-LABEL: name: test_scalarSrc_s512
+    ; CHECK: [[DEF:%[0-9]+]]:_(s512) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<8 x s64>) = G_BITCAST [[DEF]](s512)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[BITCAST]](<8 x s64>), [[C]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
     %0:_(s512) = G_IMPLICIT_DEF
     %1:_(s64), %2:_(s64), %3:_(s64), %4:_(s64), %5:_(s64), %6:_(s64), %7:_(s64), %8:_(s64) = G_UNMERGE_VALUES %0:_(s512)
     PseudoRET implicit $lr, implicit %1

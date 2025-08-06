@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
 #include "llvm/CodeGen/GlobalISel/LegalizerInfo.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
+#include "llvm/Support/MathExtras.h"
 
 using namespace llvm;
 using namespace LegalityPredicates;
@@ -610,7 +611,24 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
   const LegalityPredicate IsNotValidDestinationVector =
       negatePredicate(isValidVectorAIEP(0));
 
-  getActionDefinitionsBuilder(G_MERGE_VALUES).legalFor({{S64, S32}});
+  getActionDefinitionsBuilder(G_MERGE_VALUES)
+      .legalFor({{S64, S32}})
+      .customIf([=](const LegalityQuery &Query) {
+        const LLT &DstTy = Query.Types[0];
+        const LLT &SrcTy = Query.Types[1];
+
+        if (!DstTy.isScalar() || DstTy.getSizeInBits() < 128)
+          return false;
+
+        const uint32_t DstSize = DstTy.getSizeInBits();
+        const uint32_t SrcSize = SrcTy.getSizeInBits();
+
+        if (!isPowerOf2_32(DstSize) || !isPowerOf2_32(SrcSize))
+          return false;
+
+        return (DstSize % SrcSize == 0);
+      });
+
   getActionDefinitionsBuilder(G_UNMERGE_VALUES)
       .legalFor({{S32, S64},
                  {S32, V2S32},
@@ -775,6 +793,8 @@ bool AIE2PLegalizerInfo::legalizeCustom(
     return AIEHelper.legalizeG_FMUL(Helper, MI);
   case TargetOpcode::G_BUILD_VECTOR:
     return AIEHelper.legalizeG_BUILD_VECTOR(Helper, MI);
+  case TargetOpcode::G_MERGE_VALUES:
+    return AIEHelper.legalizeG_MERGE_VALUES(Helper, MI);
   case TargetOpcode::G_UNMERGE_VALUES:
     return AIEHelper.legalizeG_UNMERGE_VALUES(Helper, MI);
   case TargetOpcode::G_SEXT_INREG:
