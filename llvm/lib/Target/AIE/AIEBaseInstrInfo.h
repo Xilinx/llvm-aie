@@ -16,7 +16,6 @@
 #define LLVM_LIB_TARGET_AIE_AIEBASEINSTRRINFO_H
 
 #include "AIE.h"
-#include "AIEBundle.h"
 #include "AIEMIRFormatter.h"
 #include "AIETiedRegOperands.h"
 #include "MCTargetDesc/AIEFormat.h"

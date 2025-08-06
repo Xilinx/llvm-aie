@@ -171,8 +171,8 @@ void CodeGenFormat::run(raw_ostream &o) {
   o << "  switch (Opcode) {\n";
   o << "  default:\n";
   o << "    return nullptr;\n";
-  for (unsigned int i = 0; i < PseudoInstFormats.size(); i++)
-    PseudoInstFormats[i].emitAlternateInstsOpcode(o, i);
+  for (unsigned int I = 0; I < PseudoInstFormats.size(); I++)
+    PseudoInstFormats[I].emitAlternateInstsOpcode(o, I);
   o << "  }\n}\n";
   o << "#endif // GET_ALTERNATE_INST_OPCODE_FUNC\n\n";
 
@@ -259,53 +259,51 @@ void CodeGenFormat::run(raw_ostream &o) {
   }
 }
 
-// Retrieve the number of consecutive bits (from posBit) that are part of the
+// Retrieve the number of consecutive bits (from BitPos) that are part of the
 // same "variable" (described by "VarName")
-// NOTE0: if the bit at posbit isn't a variable bit, then we simply return 0
+// NOTE0: if the bit at BitPos isn't a variable bit, then we simply return 0
 // NOTE1: the counting is made in descending order (i.e from bit n-1, left one,
 //        to bit 0)
 unsigned CodeGenFormat::getVariableBits(const std::string &VarName,
-                                        const BitsInit *BI, unsigned posBit) {
+                                        const BitsInit *BI, unsigned BitPos) {
   assert(BI && "BI pointer must be non-null");
-  assert(posBit < BI->getNumBits() && "posBit out of range");
+  assert(BitPos < BI->getNumBits() && "BitPos out of range");
 
-  unsigned counter = 0;
-  for (int i = static_cast<int>(posBit); i >= 0; i--, counter++) {
-    const VarBitInit *VBI = nullptr;
-    const VarInit *VI = nullptr;
-    VBI = dyn_cast<VarBitInit>(BI->getBit(i));
-    if (VBI)
-      VI = dyn_cast<VarInit>(VBI->getBitVar());
-    if (VI) {
+  unsigned Counter = 0;
+  for (int Bit = static_cast<int>(BitPos); Bit >= 0; Bit--, Counter++) {
+    const VarBitInit *const VBI = dyn_cast<const VarBitInit>(BI->getBit(Bit));
+    if (VBI) {
+      const VarInit *const VI = dyn_cast<const VarInit>(VBI->getBitVar());
       // if the name is different, stop counting
-      if (VI->getName() != VarName)
+      if (!VI || VI->getName() != VarName) {
         break;
-    } else
+      }
+    } else {
       break;
+    }
   }
-  return counter;
+  return Counter;
 }
 
-// Retrieve the number of consecutive bits (from posBit) that are part of the
+// Retrieve the number of consecutive bits (from BitPos) that are part of the
 // same chunck of Fixed bits (placed into the OutChunck)
-unsigned CodeGenFormat::getFixedBits(std::string &OutChunck,
-                                     const BitsInit *BI,
-                                     unsigned posBit) {
+unsigned CodeGenFormat::getFixedBits(std::string &OutChunck, const BitsInit *BI,
+                                     unsigned BitPos) {
   assert(BI && "BI pointer must be non-null");
-  assert(posBit < BI->getNumBits() && "posBit out of range");
+  assert(BitPos < BI->getNumBits() && "BitPos out of range");
 
   OutChunck = "";
-  unsigned counter = 0;
-  for (int i = static_cast<int>(posBit); i >= 0; i--, counter++) {
-    const BitInit *bitInit = nullptr;
-    bitInit = dyn_cast<BitInit>(BI->getBit(i));
-    if (bitInit) {
-      bool value = bitInit->getValue();
-      OutChunck += (value) ? "1" : "0";
-    } else
+  unsigned Counter = 0;
+  for (int Bit = static_cast<int>(BitPos); Bit >= 0; Bit--, Counter++) {
+    const BitInit *BInit = nullptr;
+    BInit = dyn_cast<const BitInit>(BI->getBit(Bit));
+    if (!BInit) {
       break;
+    }
+    bool Value = BInit->getValue();
+    OutChunck += Value ? "1" : "0";
   }
-  return counter;
+  return Counter;
 }
 
 TGInstrLayout::TGInstrLayout(const CodeGenInstruction *const CGI,
@@ -451,7 +449,7 @@ void TGInstrLayout::resolveIsSlot() {
         // find by Record
         TGTargetSlots::const_iterator SlotIt =
             SlotsRegistry.find(CGI->Operands[OpIdx].Rec);
-        if (SlotIt != SlotsRegistry.cend())
+        if (SlotIt != SlotsRegistry.end())
           Field->setSlot(SlotIt->second);
         else {
           dbgs() << "Operand " << CGI->Operands[OpIdx].Rec->getName()
@@ -473,7 +471,7 @@ void TGInstrLayout::resolveIsSlot() {
     // If the slot on which the Record is pointing isn't in the slot pool
     // This should not happened as the Backend has to crash when an invalid
     // slot is detected.
-    if (SlotPtr == SlotsRegistry.cend()) {
+    if (SlotPtr == SlotsRegistry.end()) {
       dbgs() << "error: Record " << InstrName
              << " pointing to an invalid "
                 "(unregistered) slot: "
@@ -747,7 +745,7 @@ void TGInstrLayout::emitPacketEntry(ConstTable &Packets,
   const std::string TargetSlotKindName = Target + SlotsRegistry.GenSlotKindName;
 
   SlotData << "// " << getInstrName() << " : " << SlotData.mark() << "\n";
-  for (auto Slot : slots()) {
+  for (auto *Slot : slots()) {
     SlotData << TargetSlotKindName
              << "::" << Slot->getSlot()->getEnumerationString();
     SlotData.next();
@@ -766,15 +764,15 @@ void TGInstrLayout::computeSlotSet() {
   SlotSet = Bits;
 }
 
-/// Returns true whether each all of the bits are not complete
+/// Returns true whether all of the bits are not complete
 static bool areAllBitsNotComplete(const BitsInit *BI) {
-  unsigned i = 0, k = 0;
-  unsigned e = BI->getNumBits();
-  for (; i != e; ++i) {
-    if (!BI->getBit(i)->isComplete())
-      k++;
+  unsigned E = BI->getNumBits();
+  for (unsigned B = 0; B != E; ++B) {
+    if (BI->getBit(B)->isComplete()) {
+      return false;
+    }
   }
-  return k == e;
+  return true;
 }
 
 void TGFieldLayout::resolveFieldsDefInBaseRecord(
@@ -787,7 +785,6 @@ void TGFieldLayout::resolveFieldsDefInBaseRecord(
 
   if (!BI) {
     // We will not find any Record defining this fields
-    DefRecord = nullptr;
     return;
   }
   DefRecord = BaseRecord;
@@ -796,49 +793,49 @@ void TGFieldLayout::resolveFieldsDefInBaseRecord(
   const VarInit *VI = nullptr;
   const BitInit *BtI = nullptr;
 
-  for (int j = BI->getNumBits() - 1; j >= 0;) {
+  for (int NBits = BI->getNumBits() - 1; NBits >= 0;) {
     VBI = nullptr;
     VI = nullptr;
     BtI = nullptr;
     std::string Componentlabel;
 
-    if ((VBI = dyn_cast<VarBitInit>(BI->getBit(j)))) {
+    if ((VBI = dyn_cast<VarBitInit>(BI->getBit(NBits)))) {
       VI = dyn_cast<VarInit>(VBI->getBitVar());
       if (VI)
         Componentlabel = VI->getName().str();
     } else {
-      BtI = dyn_cast<BitInit>(BI->getBit(j));
+      BtI = dyn_cast<BitInit>(BI->getBit(NBits));
     }
 
     if (VI) {
-      // See if they are others "variable" bits to group in the current
+      // See if there are other "variable" bits to group in the current
       // Variable.
       // NOTE: getVariableBits should always return >= 0 value in this context
       // as we know that there is at least one bit inside so varsize >= 1
-      unsigned VarSize = CodeGenFormat::getVariableBits(Componentlabel, BI, j);
+      unsigned VarSize =
+          CodeGenFormat::getVariableBits(Componentlabel, BI, NBits);
 
       std::shared_ptr<TGFieldLayout> const &FL =
           BaseFieldPtr->addSubField(std::make_shared<TGFieldLayout>(
               CGI, Componentlabel, BaseFieldPtr, VarSize,
               TGFieldLayout::FieldType::Variable));
 
-      // Recursive research of the new variable found
-      // Still in the Base-Record
+      // Recursive search of the new variable found
       FL->resolveFieldsDefInBaseRecord(Componentlabel, FL);
-      j -= VarSize; // we need also to record this into a proper data structure
+      NBits -= VarSize;
     } else if (BtI) {
       // let's try to see if there are other constant bits behind the current
       // one for the same reason, varsize >= 1, preventing us to be in an
       // infinite loop
       unsigned BitFieldSize =
-          CodeGenFormat::getFixedBits(Componentlabel, BI, j);
+          CodeGenFormat::getFixedBits(Componentlabel, BI, NBits);
 
       BaseFieldPtr->addSubField(std::make_shared<TGFieldLayout>(
           CGI, Componentlabel, BaseFieldPtr, BitFieldSize,
           TGFieldLayout::FieldType::FixedBits));
-      j -= BitFieldSize;
+      NBits -= BitFieldSize;
     } else {
-      j--;
+      NBits--;
     }
   }
 }
@@ -866,81 +863,82 @@ void TGFieldLayout::resolveFieldsDefInHierarchy(
     // }
     // Here, the labels "alu_st" and "mv_all" are only defined in the base
     // record I64_ST_LNG
-    return resolveFieldsDefInBaseRecord(LabelToFind, BaseFieldPtr);
+    resolveFieldsDefInBaseRecord(LabelToFind, BaseFieldPtr);
+    return;
   }
-  // HierarchyLevel < Hierarchy.size() => HierarchyLevel Still valid
-  else {
-    const Record *CurrentLevelRecord = Hierarchy[HierarchyLevel].first;
-    // if the label we are looking for isn't defined at this HierarchyLevel
-    if (!CurrentLevelRecord->getValue(LabelToFind))
-      // let's try on the upper level (if it is not defined there, the recursion
-      // will be stopped by the first if statement)
-      return resolveFieldsDefInHierarchy(LabelToFind, HierarchyLevel + 1,
-                                         BaseFieldPtr);
-    // Otherwise, the label is defined but it may not provide additionnal
-    // information
-    BI = CurrentLevelRecord->getValueAsBitsInit(LabelToFind);
-
-    // If the field is defined but gives not extra information in the current
-    // level
-    if (areAllBitsNotComplete(BI))
-      // then stop the execution of this one and request the same thing to the
-      // upper level
-      return resolveFieldsDefInHierarchy(LabelToFind, HierarchyLevel + 1,
-                                         BaseFieldPtr);
-
-    // areAllBitsNotComplete(BI) returned false
-    // => The field we're looking for is defined, at least partially, at this
-    // level
-    DefRecord = CurrentLevelRecord;
+  const Record *CurrentLevelRecord = Hierarchy[HierarchyLevel].first;
+  // if the label we are looking for isn't defined at this HierarchyLevel
+  if (!CurrentLevelRecord->getValue(LabelToFind)) {
+    // let's try on the upper level (if it is not defined there, the recursion
+    // will be stopped by the first if statement)
+    resolveFieldsDefInHierarchy(LabelToFind, HierarchyLevel + 1, BaseFieldPtr);
+    return;
   }
+  // Otherwise, the label is defined but it may not provide additionnal
+  // information
+  BI = CurrentLevelRecord->getValueAsBitsInit(LabelToFind);
+
+  // If the field is defined but gives not extra information in the current
+  // level
+  if (areAllBitsNotComplete(BI)) {
+    // then stop the execution of this one and request the same thing to the
+    // upper level
+    resolveFieldsDefInHierarchy(LabelToFind, HierarchyLevel + 1, BaseFieldPtr);
+    return;
+  }
+
+  // areAllBitsNotComplete(BI) returned false
+  // => The field we're looking for is defined, at least partially, at this
+  // level
+  DefRecord = CurrentLevelRecord;
 
   const VarBitInit *VBI = nullptr;
   const VarInit *VI = nullptr;
   const BitInit *BtI = nullptr;
 
-  for (int j = BI->getNumBits() - 1; j >= 0;) {
+  for (int NBits = BI->getNumBits() - 1; NBits >= 0;) {
     VBI = nullptr;
     VI = nullptr;
     BtI = nullptr;
     std::string Componentlabel;
 
-    if ((VBI = dyn_cast<VarBitInit>(BI->getBit(j)))) {
+    if ((VBI = dyn_cast<VarBitInit>(BI->getBit(NBits)))) {
       VI = dyn_cast<VarInit>(VBI->getBitVar());
       if (VI)
         Componentlabel = VI->getName().str();
     } else {
-      BtI = dyn_cast<BitInit>(BI->getBit(j));
+      BtI = dyn_cast<BitInit>(BI->getBit(NBits));
     }
 
     if (VI) {
-      // See if they are others "variable" bits to group in the current
+      // See if there are other "variable" bits to group in the current
       // Variable.
       // NOTE: getVariableBits should always return >= 0 value in this context
       // as we know that there is at least one bit inside so varsize >= 1
-      unsigned VarSize = CodeGenFormat::getVariableBits(Componentlabel, BI, j);
+      unsigned VarSize =
+          CodeGenFormat::getVariableBits(Componentlabel, BI, NBits);
 
       std::shared_ptr<TGFieldLayout> const &FL =
           BaseFieldPtr->addSubField(std::make_shared<TGFieldLayout>(
               CGI, Componentlabel, BaseFieldPtr, VarSize,
               TGFieldLayout::FieldType::Variable));
 
-      // Recursive research of the new variable found
+      // Recursive search of the new variable found
       FL->resolveFieldsDefInHierarchy(Componentlabel, HierarchyLevel + 1, FL);
-      j -= VarSize; // we need also to record this into a proper data structure
+      NBits -= VarSize;
     } else if (BtI) {
       // let's try to see if there are other constant bits behind the current
       // one for the same reason, varsize >= 1, preventing us to be in an
       // infinite loop
       unsigned BitFieldSize =
-          CodeGenFormat::getFixedBits(Componentlabel, BI, j);
+          CodeGenFormat::getFixedBits(Componentlabel, BI, NBits);
 
       BaseFieldPtr->addSubField(std::make_shared<TGFieldLayout>(
           CGI, Componentlabel, BaseFieldPtr, BitFieldSize,
           TGFieldLayout::FieldType::FixedBits));
-      j -= BitFieldSize;
+      NBits -= BitFieldSize;
     } else {
-      j--;
+      NBits--;
     }
   }
 }
@@ -1135,13 +1133,10 @@ void TGTargetSlots::emitSlotsInfoInstantiation(
     raw_ostream &o, const TGInstrLayout::NOPSlotMap &SlotMapper) const {
   assert(IsFinalized && "Internal vector needs to be finalized (i.e. sorted)");
 
-  using SlotBits = uint64_t;
-  const std::string TargetClassName = Target + GenSlotInfoName;
   const std::string TargetEnumName = Target + GenSlotKindName;
   const std::string TargetSlotsName = Target + "Slots";
 
-  o << "static constexpr const " << TargetClassName << " " << TargetSlotsName
-    << "[] = {\n";
+  o << "static constexpr const MCSlotInfo " << TargetSlotsName << "[] = {\n";
 
   for (const RecordSlot &Slot : Slots) {
     auto SlotMap = SlotMapper.find(Slot.first);
@@ -1154,12 +1149,11 @@ void TGTargetSlots::emitSlotsInfoInstantiation(
         SlotMap == SlotMapper.end() ? "0" : Target + "::" + SlotMap->second;
 
     o << "{\n"
-      << "  " << TargetEnumName << "::" << TS.getEnumerationString() << ",\n"
       << "  \"" << TS.getSlotName() << "\",\n"
       << "  " << TS.getSlotSize()
       << ",\n"
       // Right now, we're using the slot num as SlotSet
-      << "  " << (SlotBits(1) << TS.getNumSlot()) << ",\n"
+      << "  " << (uint64_t(1) << TS.getNumSlot()) << ",\n"
       << "  " << NOPName << "\n"
       << "},\n";
   }

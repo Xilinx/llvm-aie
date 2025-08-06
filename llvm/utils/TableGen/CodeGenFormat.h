@@ -411,14 +411,13 @@ public:
 
   /// Find a SlotRecord using "Label" as a SlotName
   const_iterator findBySlotName(const std::string &Label) const {
-    return std::find_if(
-        Slots.begin(), Slots.end(),
-        [&Label](const RecordSlot &RS) { return RS.second.SlotName == Label; });
+    return llvm::find_if(Slots, [&Label](const RecordSlot &RS) {
+      return RS.second.SlotName == Label;
+    });
   }
 
-  const_iterator cbegin() const { return Slots.begin(); }
-
-  const_iterator cend() const { return Slots.end(); }
+  const_iterator begin() const { return Slots.begin(); }
+  const_iterator end() const { return Slots.end(); }
 
   const TGTargetSlots::RecordSlot *getDefaultSlot() const {
     // Find the default slot in the pool
@@ -477,7 +476,7 @@ private:
   /// Parent reference
   std::shared_ptr<TGFieldLayout> Parent;
   /// TableGen Record defining the current Field Layout
-  const Record *DefRecord;
+  const Record *DefRecord = nullptr;
   /// Size (in bits) of the field
   unsigned Size;
   /// Type of the field
@@ -501,8 +500,8 @@ public:
   TGFieldLayout(const CodeGenInstruction *const CGI, const std::string &Label,
                 std::shared_ptr<TGFieldLayout> const &Parent, unsigned Size,
                 FieldType Type)
-      : CGI(CGI), Label(Label), Parent(Parent), DefRecord(nullptr), Size(Size),
-        Type(Type), GlobalOffsets{-1, -1}, MIOpIdx(-1), SlotClass(nullptr) {
+      : CGI(CGI), Label(Label), Parent(Parent), Size(Size), Type(Type),
+        GlobalOffsets{-1, -1}, MIOpIdx(-1), SlotClass(nullptr) {
     assert(CGI && CGI->TheDef &&
            "ill-formed reference on the CodeGenInstruction");
   }
