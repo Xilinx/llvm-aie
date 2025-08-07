@@ -118,12 +118,12 @@ static TargetOptions getTargetOptionsForBogusMachine() {
   return Opts;
 }
 
-template <typename STClass> class TestTargetMachine : public LLVMTargetMachine {
+template <typename STClass> class TestTargetMachine : public CodeGenTargetMachineImpl {
 public:
   TestTargetMachine()
-      : LLVMTargetMachine(Target(), "", Triple(""), "", "",
-                          getTargetOptionsForBogusMachine(), Reloc::Static,
-                          CodeModel::Small, CodeGenOptLevel::Default),
+      : CodeGenTargetMachineImpl(
+            Target(), "", Triple(""), "", "", getTargetOptionsForBogusMachine(),
+            Reloc::Static, CodeModel::Small, CodeGenOptLevel::Default),
         ST(*this) {}
 
   ~TestTargetMachine() override {}
