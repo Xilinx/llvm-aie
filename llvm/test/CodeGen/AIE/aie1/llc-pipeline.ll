@@ -84,7 +84,7 @@
 ; AIE-O0123-NEXT:      Expand reduction intrinsics
 
 ; AIE-O123-NEXT:      Natural Loop Information
-; AIE-O123-NEXT:      TLS Variable Hoist
+; AIE-O23-NEXT:      TLS Variable Hoist
 ; AIE-O123-NEXT:      CodeGen Prepare
 
 ; AIE-O0123-NEXT:      Lower invoke and unwind, for unwindless code generators
