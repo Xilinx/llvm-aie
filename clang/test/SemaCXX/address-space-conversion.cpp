@@ -1,4 +1,3 @@
-// XFAIL: *
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
 // This test checks for the various conversions and casting operations
