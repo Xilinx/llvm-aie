@@ -273,8 +273,8 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
 
   getActionDefinitionsBuilder({G_FADD, G_FSUB})
       .legalFor({AccV64S32})
-      // Handle custom bf16 case for both scalar and vector types
-      .customFor({S16, V32S16})
+      // Handle custom bf16/f32 case for both scalar and vector types
+      .customFor({S16, V32S16, V32S32})
       // Convert smaller than <32 x f32/bf16> to legal sizes, doesn't change types
       .moreElementsIf(
           [=](const LegalityQuery &Query) {
@@ -286,6 +286,7 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
           },
           [=](const LegalityQuery &Query) {
             if (Query.Types[0].getScalarSizeInBits() == 32) {
+              // Note: Can cause slowdown as BUILD_VECTOR adds scalars
               return std::make_pair(0, LLT::fixed_vector(64, S32));
             } else {
               return std::make_pair(0, LLT::fixed_vector(32, S16));
