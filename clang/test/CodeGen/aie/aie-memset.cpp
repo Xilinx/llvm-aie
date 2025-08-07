@@ -27,7 +27,7 @@
 // DEFAULT-NEXT:    store i8 [[CONV]], ptr [[P_CHAR_06]], align 1, !tbaa [[TBAA2:![0-9]+]]
 // DEFAULT-NEXT:    [[INCDEC_PTR]] = getelementptr inbounds nuw i8, ptr [[P_CHAR_06]], i20 1
 // DEFAULT-NEXT:    [[DEC]] = add nsw i32 [[N_ADDR_05]], -1
-// DEFAULT-NEXT:    [[CMP:%.*]] = icmp ugt i32 [[N_ADDR_05]], 1
+// DEFAULT-NEXT:    [[CMP:%.*]] = icmp samesign ugt i32 [[N_ADDR_05]], 1
 // DEFAULT-NEXT:    br i1 [[CMP]], label [[WHILE_BODY]], label [[WHILE_END]], !llvm.loop [[LOOP5:![0-9]+]]
 // DEFAULT:       while.end:
 // DEFAULT-NEXT:    ret ptr [[PTR]]
@@ -59,7 +59,7 @@
 // FNO-BUILTIN-NEXT:    store i8 [[CONV]], ptr [[P_CHAR_06]], align 1, !tbaa [[TBAA2:![0-9]+]]
 // FNO-BUILTIN-NEXT:    [[INCDEC_PTR]] = getelementptr inbounds nuw i8, ptr [[P_CHAR_06]], i20 1
 // FNO-BUILTIN-NEXT:    [[DEC]] = add nsw i32 [[N_ADDR_05]], -1
-// FNO-BUILTIN-NEXT:    [[CMP:%.*]] = icmp ugt i32 [[N_ADDR_05]], 1
+// FNO-BUILTIN-NEXT:    [[CMP:%.*]] = icmp samesign ugt i32 [[N_ADDR_05]], 1
 // FNO-BUILTIN-NEXT:    br i1 [[CMP]], label [[WHILE_BODY]], label [[WHILE_END]], !llvm.loop [[LOOP5:![0-9]+]]
 // FNO-BUILTIN:       while.end:
 // FNO-BUILTIN-NEXT:    ret ptr [[PTR]]
