@@ -35,8 +35,8 @@ for.cond.cleanup:                                 ; preds = %for.body
 ; We have uitofp in the loop body, and we check whether ZOL loops
 ; were created by looking for the hallmark intrinsics
 
-; CHECK: llvm.set.loop.iterations
-; CHECK: llvm.loop.decrement
+; CHECK-NOT: llvm.set.loop.iterations
+; CHECK-NOT: llvm.loop.decrement
 
 define dso_local float @uitofpConv(i32 noundef %n) local_unnamed_addr {
 entry:
@@ -59,8 +59,8 @@ for.cond.cleanup:                                 ; preds = %for.body
 ; We have sitofp in the loop body, and we check whether ZOL loops
 ; were created by looking for the hallmark intrinsics
 
-; CHECK: llvm.set.loop.iterations
-; CHECK: llvm.loop.decrement
+; CHECK-NOT: llvm.set.loop.iterations
+; CHECK-NOT: llvm.loop.decrement
 
 define dso_local float @sitofpConv(i32 noundef %n) local_unnamed_addr {
 entry:

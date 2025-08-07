@@ -132,6 +132,8 @@ bool AIETTICommon::isAllowedInZOL(Instruction &I) {
   case Instruction::FDiv:
   case Instruction::FPToSI:
   case Instruction::FPToUI:
+  case Instruction::UIToFP:
+  case Instruction::SIToFP:
     return false;
   }
   return true;
