@@ -24,12 +24,12 @@ using namespace llvm;
 
 namespace {
 
-std::unique_ptr<LLVMTargetMachine> createTargetMachine() {
+std::unique_ptr<TargetMachine> createTargetMachine() {
   auto TT(Triple::normalize("aie2--"));
   std::string Error;
   const Target *TheTarget = TargetRegistry::lookupTarget(TT, Error);
   llvm::errs() << Error << "\n";
-  return std::unique_ptr<LLVMTargetMachine>(static_cast<LLVMTargetMachine *>(
+  return std::unique_ptr<TargetMachine>(static_cast<TargetMachine *>(
       TheTarget->createTargetMachine(TT, "", "", TargetOptions(), std::nullopt,
                                      std::nullopt, CodeGenOptLevel::Default)));
 }
@@ -38,7 +38,7 @@ class VirtUnrollAliasAnalysisTest : public testing::Test {
 protected:
   static const char *MIRString;
   LLVMContext Context;
-  std::unique_ptr<LLVMTargetMachine> TM;
+  std::unique_ptr<TargetMachine> TM;
   std::unique_ptr<MachineModuleInfo> MMI;
   std::unique_ptr<MIRParser> Parser;
   std::unique_ptr<Module> M;

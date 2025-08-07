@@ -10,6 +10,7 @@
 
 #include "AIETestTarget.h"
 #include "AIEBaseInstrInfo.h"
+#include "llvm/CodeGen/CodeGenTargetMachineImpl.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/TargetFrameLowering.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
@@ -54,7 +55,7 @@ public:
                                         ProcModels) {}
 };
 
-LLVMTargetMachine *llvm::AIE::createAIETestTargetMachine() {
+TargetMachine *llvm::AIE::createAIETestTargetMachine() {
   static TestTargetMachine<AIETestSubTarget> AIETM;
   return &AIETM;
 }

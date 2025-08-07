@@ -45,7 +45,7 @@ public:
 // AIE2 Pass Setup
 class AIE2PassConfig : public AIEBasePassConfig {
 public:
-  AIE2PassConfig(LLVMTargetMachine &TM, PassManagerBase &PM)
+  AIE2PassConfig(TargetMachine &TM, PassManagerBase &PM)
       : AIEBasePassConfig(TM, PM) {
     if (!EnableSubregRenaming)
       disablePass(&RenameIndependentSubregsID);

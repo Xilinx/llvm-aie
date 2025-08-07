@@ -22,6 +22,7 @@
 #include "TargetInfo/AIETargetInfo.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/CSEConfigBase.h"
+#include "llvm/CodeGen/CodeGenTargetMachineImpl.h"
 #include "llvm/CodeGen/GlobalISel/CSEInfo.h"
 #include "llvm/CodeGen/GlobalISel/IRTranslator.h"
 #include "llvm/CodeGen/GlobalISel/InstructionSelect.h"
@@ -139,9 +140,10 @@ AIEBaseTargetMachine::AIEBaseTargetMachine(const Target &T, const Triple &TT,
                                            std::optional<Reloc::Model> RM,
                                            std::optional<CodeModel::Model> CM,
                                            CodeGenOptLevel OL, bool JIT)
-    : LLVMTargetMachine(T, computeDataLayout(TT), TT, CPU, FS, Options,
-                        getEffectiveRelocModel(TT, RM),
-                        getEffectiveCodeModel(CM, CodeModel::Small), OL),
+    : CodeGenTargetMachineImpl(T, computeDataLayout(TT), TT, CPU, FS, Options,
+                               getEffectiveRelocModel(TT, RM),
+                               getEffectiveCodeModel(CM, CodeModel::Small),
+                               OL),
       TLOF(std::make_unique<AIEELFTargetObjectFile>()) {
   initAsmInfo();
   EnableCustomAliasAnalysis = EnableCustomAliasAnalysisOpt;
@@ -245,7 +247,7 @@ void AIEBaseTargetMachine::registerPassBuilderCallbacks(PassBuilder &PB) {
   }
 }
 
-AIEBasePassConfig::AIEBasePassConfig(LLVMTargetMachine &TM, PassManagerBase &PM)
+AIEBasePassConfig::AIEBasePassConfig(TargetMachine &TM, PassManagerBase &PM)
     : TargetPassConfig(TM, PM) {
   EnableTailMerge = EnableTailMergingOpt;
   EnableCustomAliasAnalysis = EnableCustomAliasAnalysisOpt;

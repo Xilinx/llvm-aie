@@ -98,7 +98,7 @@ AIETargetMachine::AIETargetMachine(const Target &T, const Triple &TT,
 // AIE1 Pass Setup
 class AIEPassConfig final : public AIEBasePassConfig {
 public:
-  AIEPassConfig(LLVMTargetMachine &TM, PassManagerBase &PM)
+  AIEPassConfig(TargetMachine &TM, PassManagerBase &PM)
       : AIEBasePassConfig(TM, PM) {}
 
   AIETargetMachine &getAIETargetMachine() const {

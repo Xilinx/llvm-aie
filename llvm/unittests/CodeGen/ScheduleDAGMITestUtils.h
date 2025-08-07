@@ -45,7 +45,7 @@ protected:
 
 class ScheduleDAGMITest : public testing::Test {
 protected:
-  ScheduleDAGMITest(LLVMTargetMachine *TM = nullptr);
+  ScheduleDAGMITest(TargetMachine *TM = nullptr);
 
   /// Initialize a DummyScheduleDAGMI so it is ready to schedule instructions
   /// in \p MBB

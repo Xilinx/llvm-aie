@@ -45,7 +45,7 @@ AIE2PTargetMachine::AIE2PTargetMachine(const Target &T, const Triple &TT,
 // AIE2P Pass Setup
 class AIE2PPassConfig final : public AIE2PassConfig {
 public:
-  AIE2PPassConfig(LLVMTargetMachine &TM, PassManagerBase &PM)
+  AIE2PPassConfig(TargetMachine &TM, PassManagerBase &PM)
       : AIE2PassConfig(TM, PM) {}
   void addPreRegBankSelect() override;
   void addPreLegalizeMachineIR() override;

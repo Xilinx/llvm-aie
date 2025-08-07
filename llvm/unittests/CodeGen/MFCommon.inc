@@ -144,7 +144,7 @@ using BogusTargetMachine = TestTargetMachine<BogusSubTarget>;
 
 [[maybe_unused]] std::unique_ptr<MachineFunction>
 createMachineFunction(LLVMContext &Ctx, Module &M,
-                      LLVMTargetMachine *TM = nullptr) {
+                      TargetMachine *TM = nullptr) {
   auto Type = FunctionType::get(Type::getVoidTy(Ctx), false);
   auto F = Function::Create(Type, GlobalValue::ExternalLinkage, "Test", &M);
 
