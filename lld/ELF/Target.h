@@ -259,7 +259,7 @@ void setTarget(Ctx &);
 
 template <class ELFT> bool isMipsPIC(const Defined *sym);
 
-bool isAIE();
+bool isAIE(Ctx &ctx);
 
 const ELFSyncStream &operator<<(const ELFSyncStream &, RelType);
 

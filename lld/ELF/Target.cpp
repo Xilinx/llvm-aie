@@ -49,7 +49,7 @@ std::string elf::toStr(Ctx &ctx, RelType type) {
   return std::string(s);
 }
 
-bool lld::elf::isAIE() { return ctx.arg.emachine == EM_AIE; }
+bool lld::elf::isAIE(Ctx &ctx) { return ctx.arg.emachine == EM_AIE; }
 
 const ELFSyncStream &elf::operator<<(const ELFSyncStream &s, RelType type) {
   s << toStr(s.ctx, type);
