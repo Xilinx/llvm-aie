@@ -1557,7 +1557,7 @@ v16uint32 test_shiftr_elem(v16uint32 v, unsigned int s) {
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z21test_broadcast_one_u8v(
 // AIE2P-SAME: ) local_unnamed_addr #[[ATTR1]] {
 // AIE2P-NEXT:  entry:
-// AIE2P-NEXT:    ret <64 x i8> <i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1>
+// AIE2P-NEXT:    ret <64 x i8> splat (i8 1)
 //
 v64uint8 test_broadcast_one_u8 () {
    return broadcast_one_u8();
@@ -1572,7 +1572,7 @@ v64uint8 test_broadcast_one_u8 () {
 // AIE2P-LABEL: define dso_local noundef <32 x i16> @_Z22test_broadcast_one_u16v(
 // AIE2P-SAME: ) local_unnamed_addr #[[ATTR1]] {
 // AIE2P-NEXT:  entry:
-// AIE2P-NEXT:    ret <32 x i16> <i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1>
+// AIE2P-NEXT:    ret <32 x i16> splat (i16 1)
 //
 v32uint16 test_broadcast_one_u16 () {
    return broadcast_one_u16();
@@ -1587,7 +1587,7 @@ v32uint16 test_broadcast_one_u16 () {
 // AIE2P-LABEL: define dso_local noundef <16 x i32> @_Z22test_broadcast_one_u32v(
 // AIE2P-SAME: ) local_unnamed_addr #[[ATTR1]] {
 // AIE2P-NEXT:  entry:
-// AIE2P-NEXT:    ret <16 x i32> <i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1>
+// AIE2P-NEXT:    ret <16 x i32> splat (i32 1)
 //
 v16uint32 test_broadcast_one_u32 () {
    return broadcast_one_u32();

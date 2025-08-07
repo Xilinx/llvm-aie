@@ -209,7 +209,7 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:acc512 = COPY $bml1
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r0
     ; CHECK-NEXT: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er29 = MOV_RLC_imm10_pseudo 0
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:mxm = COPY [[COPY]]
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec512 = COPY [[COPY]]
     ; CHECK-NEXT: [[VINSERT_32_:%[0-9]+]]:mxm = VINSERT_32 [[COPY2]], [[MOV_RLC_imm10_pseudo]], [[COPY1]]
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY [[VINSERT_32_]]
     ; CHECK-NEXT: $bml0 = COPY [[COPY3]]

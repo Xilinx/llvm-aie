@@ -55,7 +55,7 @@ v16float test_broadcast_to_v16float(v2float b){
 // AIE2P-LABEL: define dso_local noundef <16 x float> @_Z30test_broadcast_one_to_v16floatv(
 // AIE2P-SAME: ) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
-// AIE2P-NEXT:    ret <16 x float> <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>
+// AIE2P-NEXT:    ret <16 x float> splat (float 1.000000e+00)
 //
 v16float test_broadcast_one_to_v16float() { return broadcast_one_to_v16float(); }
 

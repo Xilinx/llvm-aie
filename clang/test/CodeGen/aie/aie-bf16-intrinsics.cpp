@@ -114,7 +114,7 @@ v32bfloat16 bneg_v32bf16(v32bfloat16 a) {
 // AIE2P-LABEL: @_Z11abs_v32bf16Dv32_8bfloat16(
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <32 x bfloat> [[A:%.*]] to <16 x i32>
-// AIE2P-NEXT:    [[AND_I_I:%.*]] = and <16 x i32> [[TMP0]], <i32 2147450879, i32 2147450879, i32 2147450879, i32 2147450879, i32 2147450879, i32 2147450879, i32 2147450879, i32 2147450879, i32 2147450879, i32 2147450879, i32 2147450879, i32 2147450879, i32 2147450879, i32 2147450879, i32 2147450879, i32 2147450879>
+// AIE2P-NEXT:    [[AND_I_I:%.*]] = and <16 x i32> [[TMP0]], splat (i32 2147450879)
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <16 x i32> [[AND_I_I]] to <32 x bfloat>
 // AIE2P-NEXT:    ret <32 x bfloat> [[TMP1]]
 //

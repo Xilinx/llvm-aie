@@ -4759,7 +4759,7 @@ unsigned int test_gt_v32bfloat16(v32bfloat16 a, v32bfloat16 b) {
 //
 // AIE2P-LABEL: @_Z20test_ltz_v32bfloat16Dv32_8bfloat16(
 // AIE2P-NEXT:  entry:
-// AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vltbf16(<32 x bfloat> [[A:%.*]], <32 x bfloat> <bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000, bfloat 0xR8000>)
+// AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vltbf16(<32 x bfloat> [[A:%.*]], <32 x bfloat> splat (bfloat 0xR8000))
 // AIE2P-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_ltz_v32bfloat16(v32bfloat16 a) {
