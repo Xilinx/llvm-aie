@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "AVRRegisterInfo.h"
 #include "MCTargetDesc/AVRMCTargetDesc.h"
 #include "TargetInfo/AVRTargetInfo.h"
 
