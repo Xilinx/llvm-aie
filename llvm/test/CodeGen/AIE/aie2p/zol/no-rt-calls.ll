@@ -32,6 +32,54 @@ for.cond.cleanup:                                 ; preds = %for.body
   ret float %mul
 }
 
+; We have uitofp in the loop body, and we check whether ZOL loops
+; were created by looking for the hallmark intrinsics
+
+; CHECK: llvm.set.loop.iterations
+; CHECK: llvm.loop.decrement
+
+define dso_local float @uitofpConv(i32 noundef %n) local_unnamed_addr {
+entry:
+  %s32 = add i32 undef, 0
+  br label %for.body
+
+for.body:                                         ; preds = %entry, %for.body
+  %i.05 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
+  %20 = phi <16 x float> [ undef, %entry ], [ %vecins.i.i.i.i.i, %for.body ]
+  %conv = uitofp i32 %s32 to float
+  %vecins.i.i.i.i.i = insertelement <16 x float> %20, float %conv, i32 %s32
+  %inc = add nuw nsw i32 %i.05, 1
+  %exitcond.not = icmp eq i32 %inc, %n
+  br i1 %exitcond.not, label %for.cond.cleanup, label %for.body, !llvm.loop !0
+
+for.cond.cleanup:                                 ; preds = %for.body
+  ret float %conv
+}
+
+; We have sitofp in the loop body, and we check whether ZOL loops
+; were created by looking for the hallmark intrinsics
+
+; CHECK: llvm.set.loop.iterations
+; CHECK: llvm.loop.decrement
+
+define dso_local float @sitofpConv(i32 noundef %n) local_unnamed_addr {
+entry:
+  %s32 = add i32 undef, 0
+  br label %for.body
+
+for.body:                                         ; preds = %entry, %for.body
+  %i.05 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
+  %20 = phi <16 x float> [ undef, %entry ], [ %vecins.i.i.i.i.i, %for.body ]
+  %conv = sitofp i32 %s32 to float
+  %vecins.i.i.i.i.i = insertelement <16 x float> %20, float %conv, i32 %s32
+  %inc = add nuw nsw i32 %i.05, 1
+  %exitcond.not = icmp eq i32 %inc, %n
+  br i1 %exitcond.not, label %for.cond.cleanup, label %for.body, !llvm.loop !0
+
+for.cond.cleanup:                                 ; preds = %for.body
+  ret float %conv
+}
+
 !0 = distinct !{!0, !1, !2}
 !1 = !{!"llvm.loop.mustprogress"}
 !2 = !{!"llvm.loop.itercount.range", i64 10}
