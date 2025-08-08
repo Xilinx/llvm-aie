@@ -363,7 +363,7 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
       // type patterns in C++. Introducing bitcasts during legalization allows
       // to re-use the existing code for register bank selection and ISEL
       // patterns.
-      .bitcastIf(typeInSet(0, {AccV4S64, AccV8S64, AccV16S64}),
+      .bitcastIf(typeInSet(0, {AccV4S64, AccV8S64, AccV16S64, AccV32S64}),
                  bitcastAccToVectorType(0))
       .clampMaxNumElements(0, S8, 64)
       .clampMaxNumElements(0, S16, 32)
