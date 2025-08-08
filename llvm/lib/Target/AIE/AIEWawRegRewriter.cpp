@@ -88,8 +88,8 @@ public:
     // do not have to be updated
     AU.addRequired<LiveDebugVariablesWrapperLegacy>();
     AU.addPreserved<LiveDebugVariablesWrapperLegacy>();
-    AU.addRequired<LiveStacks>();
-    AU.addPreserved<LiveStacks>();
+    AU.addRequired<LiveStacksWrapperLegacy>();
+    AU.addPreserved<LiveStacksWrapperLegacy>();
     AU.addRequired<LiveIntervalsWrapperPass>();
     AU.addPreserved<LiveIntervalsWrapperPass>();
     AU.addRequired<LiveRegMatrixWrapperLegacy>();
