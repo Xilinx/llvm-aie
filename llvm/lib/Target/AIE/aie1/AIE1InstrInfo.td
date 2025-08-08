@@ -143,8 +143,8 @@ def LO20 : SDNodeXForm<imm, [{
 
 // Extract the most significant 12 bits from an immediate value.
 def HI12 : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(((N->getSExtValue()) >> 20),
-                                   SDLoc(N), N->getValueType(0));
+  return CurDAG->getSignedTargetConstant(((N->getSExtValue()) >> 20),
+                                         SDLoc(N), N->getValueType(0));
 }]>;
 def FPLO20 : SDNodeXForm<fpimm, [{
   const APInt &Imm = N->getValueAPF().bitcastToAPInt();
@@ -155,8 +155,8 @@ def FPLO20 : SDNodeXForm<fpimm, [{
 def FPHI12 : SDNodeXForm<fpimm, [{
   const APInt &Imm = N->getValueAPF().bitcastToAPInt();
   assert(Imm.getBitWidth() == 32);
-  return CurDAG->getTargetConstant((Imm.getSExtValue() >> 20),
-                                   SDLoc(N), MVT::i32);
+  return CurDAG->getSignedTargetConstant((Imm.getSExtValue() >> 20),
+                                         SDLoc(N), MVT::i32);
 }]>;
 
 // Define some special parsing for symbols used in a call.

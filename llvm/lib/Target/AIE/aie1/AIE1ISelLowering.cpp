@@ -726,7 +726,7 @@ SDValue AIE1TargetLowering::LowerCall(CallLoweringInfo &CLI,
           // Note that the code here needs to match
           // AIERegisterInfo::eliminateFrameIndex.
           SDValue PtrOff =
-              DAG.getIntPtrConstant(-(int64_t)NextVA.getLocMemOffset() - 4, DL);
+              DAG.getSignedConstant(-(int64_t)NextVA.getLocMemOffset() - 4, DL, PtrVT);
           // Emit the store as a pseudo-op that will get lowered later
           MemOpChains.push_back(Chain = DAG.getNode(AIEISD::STACK_SAVE, DL,
                                                     MVT::Other, Chain, Elem1,
@@ -734,13 +734,13 @@ SDValue AIE1TargetLowering::LowerCall(CallLoweringInfo &CLI,
         }
       } else {
         SDValue PtrOff =
-            DAG.getIntPtrConstant(-(int64_t)VA.getLocMemOffset() - 4, DL);
+            DAG.getSignedConstant(-(int64_t)VA.getLocMemOffset() - 4, DL, PtrVT);
         MemOpChains.push_back(Chain = DAG.getNode(AIEISD::STACK_SAVE, DL,
                                                   MVT::Other, Chain, Elem0,
                                                   PtrOff));
 
         // Store the second part.
-        PtrOff = DAG.getIntPtrConstant(-(int64_t)VA.getLocMemOffset() - 8, DL);
+        PtrOff = DAG.getSignedConstant(-(int64_t)VA.getLocMemOffset() - 8, DL, PtrVT);
         ;
         MemOpChains.push_back(Chain = DAG.getNode(AIEISD::STACK_SAVE, DL,
                                                   MVT::Other, Chain, Elem1,
@@ -756,7 +756,7 @@ SDValue AIE1TargetLowering::LowerCall(CallLoweringInfo &CLI,
       // Note that the code here needs to match
       // AIERegisterInfo::eliminateFrameIndex.
       SDValue PtrOff =
-          DAG.getIntPtrConstant(-(int64_t)VA.getLocMemOffset() - 4, DL);
+          DAG.getSignedConstant(-(int64_t)VA.getLocMemOffset() - 4, DL, PtrVT);
 
       // Emit the store as a pseudo-op that will get lowered later
       MemOpChains.push_back(Chain =
