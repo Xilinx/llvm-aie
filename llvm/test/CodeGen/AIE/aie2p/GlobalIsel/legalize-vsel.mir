@@ -183,3 +183,38 @@ body:             |
     %3:_(s1024) = G_SELECT %0(s32), %1, %2
     PseudoRET implicit $lr, implicit %3
 ...
+
+---
+name:            select_acc_2048
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: select_acc_2048
+    ; CHECK: [[COPY:%[0-9]+]]:_(s32) = COPY $r0
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<32 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<32 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[COPY]], [[C]]
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<64 x s32>) = G_BITCAST [[DEF]](<32 x s64>)
+    ; CHECK-NEXT: [[BITCAST1:%[0-9]+]]:_(<64 x s32>) = G_BITCAST [[DEF1]](<32 x s64>)
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<32 x s32>), [[UV1:%[0-9]+]]:_(<32 x s32>) = G_UNMERGE_VALUES [[BITCAST]](<64 x s32>)
+    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(<16 x s32>), [[UV3:%[0-9]+]]:_(<16 x s32>) = G_UNMERGE_VALUES [[UV]](<32 x s32>)
+    ; CHECK-NEXT: [[UV4:%[0-9]+]]:_(<16 x s32>), [[UV5:%[0-9]+]]:_(<16 x s32>) = G_UNMERGE_VALUES [[UV1]](<32 x s32>)
+    ; CHECK-NEXT: [[UV6:%[0-9]+]]:_(<32 x s32>), [[UV7:%[0-9]+]]:_(<32 x s32>) = G_UNMERGE_VALUES [[BITCAST1]](<64 x s32>)
+    ; CHECK-NEXT: [[UV8:%[0-9]+]]:_(<16 x s32>), [[UV9:%[0-9]+]]:_(<16 x s32>) = G_UNMERGE_VALUES [[UV6]](<32 x s32>)
+    ; CHECK-NEXT: [[UV10:%[0-9]+]]:_(<16 x s32>), [[UV11:%[0-9]+]]:_(<16 x s32>) = G_UNMERGE_VALUES [[UV7]](<32 x s32>)
+    ; CHECK-NEXT: [[SELECT:%[0-9]+]]:_(<16 x s32>) = G_SELECT [[AND]](s32), [[UV2]], [[UV8]]
+    ; CHECK-NEXT: [[SELECT1:%[0-9]+]]:_(<16 x s32>) = G_SELECT [[AND]](s32), [[UV3]], [[UV9]]
+    ; CHECK-NEXT: [[SELECT2:%[0-9]+]]:_(<16 x s32>) = G_SELECT [[AND]](s32), [[UV4]], [[UV10]]
+    ; CHECK-NEXT: [[SELECT3:%[0-9]+]]:_(<16 x s32>) = G_SELECT [[AND]](s32), [[UV5]], [[UV11]]
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[SELECT]](<16 x s32>), [[SELECT1]](<16 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[SELECT2]](<16 x s32>), [[SELECT3]](<16 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<64 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<32 x s32>), [[CONCAT_VECTORS1]](<32 x s32>)
+    ; CHECK-NEXT: [[BITCAST2:%[0-9]+]]:_(<32 x s64>) = G_BITCAST [[CONCAT_VECTORS2]](<64 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[BITCAST2]](<32 x s64>)
+    %0:_(s32) = COPY $r0
+    %1:_(s1) = G_TRUNC %0:_(s32)
+    %2:_(<32 x s64>) = G_IMPLICIT_DEF
+    %3:_(<32 x s64>) = G_IMPLICIT_DEF
+    %4:_(<32 x s64>) = G_SELECT %1:_(s1), %2(<32 x s64>), %3(<32 x s64>)
+    PseudoRET implicit $lr, implicit %4
+...
