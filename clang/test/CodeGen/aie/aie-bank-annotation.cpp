@@ -13,7 +13,7 @@
 // RUN: %clang -O1 --target=aie2p -nostdlibinc -S -emit-llvm %s -o - | FileCheck %s
 
 // CHECK-LABEL: define dso_local noundef i32 @_Z6squarePU3AS5iS0_(
-// CHECK-SAME: ptr addrspace(5) nocapture readonly [[NUM:%.*]], ptr addrspace(5) nocapture writeonly [[MEM:%.*]]) local_unnamed_addr #[[ATTR0:[0-9]+]] {
+// CHECK-SAME: ptr addrspace(5) nocapture readonly [[NUM:%.*]], ptr addrspace(5) nocapture writeonly initializes((0, 4)) [[MEM:%.*]]) local_unnamed_addr #[[ATTR0:[0-9]+]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = load i32, ptr addrspace(5) [[NUM]], align 4, !tbaa [[TBAA2:![0-9]+]]
 // CHECK-NEXT:    [[MUL:%.*]] = mul nsw i32 [[TMP0]], [[TMP0]]
@@ -26,7 +26,7 @@ int square(int __aie_dm_resource_a *num, int __aie_dm_resource_a *mem) {
 }
 
 // CHECK-LABEL: define dso_local noundef i32 @_Z6squarePU3AS6iS0_(
-// CHECK-SAME: ptr addrspace(6) nocapture readonly [[NUM:%.*]], ptr addrspace(6) nocapture writeonly [[MEM:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-SAME: ptr addrspace(6) nocapture readonly [[NUM:%.*]], ptr addrspace(6) nocapture writeonly initializes((0, 4)) [[MEM:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = load i32, ptr addrspace(6) [[NUM]], align 4, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[MUL:%.*]] = mul nsw i32 [[TMP0]], [[TMP0]]
