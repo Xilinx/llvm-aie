@@ -1,4 +1,3 @@
-// XFAIL: *
 // RUN: %clang_cc1 -x c++ -std=c++14 -fsyntax-only -verify %s
 
 template <int I, int J, int K>

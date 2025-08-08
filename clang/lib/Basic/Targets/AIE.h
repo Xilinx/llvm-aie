@@ -84,6 +84,10 @@ public:
     }
   }
 
+  bool isAddressSpaceSupersetOf(LangAS A, LangAS B) const override {
+    return A == LangAS::Default && isTargetAddressSpace(B);
+  }
+
   void getTargetDefines(const LangOptions &Opts,
                         MacroBuilder &Builder) const override;
 

@@ -1,4 +1,3 @@
-// XFAIL: *
 // RUN: %clang_cc1 %s -fsyntax-only -verify
 
 #define AS1 __attribute__((address_space(1)))

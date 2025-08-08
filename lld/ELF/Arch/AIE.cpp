@@ -317,7 +317,7 @@ void AIE::relocateAIE1(uint8_t *Loc, const Relocation &rel,
 
   default:
     error(getErrorLoc(ctx, Loc) +
-          "unimplemented relocation: " + toString(rel.type));
+          "unimplemented relocation: " + toStr(ctx, rel.type));
     return;
   }
 }
@@ -358,7 +358,7 @@ void AIE::relocateAIE2(uint8_t *Loc, const Relocation &rel,
 
   default:
     error(getErrorLoc(ctx, Loc) +
-          "unimplemented relocation: " + toString(rel.type));
+          "unimplemented relocation: " + toStr(ctx, rel.type));
     return;
   }
 }
@@ -397,7 +397,7 @@ void AIE::relocateAIE2P(uint8_t *Loc, const Relocation &rel,
     return;
   default:
     error(getErrorLoc(ctx, Loc) +
-          "unimplemented relocation: " + toString(rel.type));
+          "unimplemented relocation: " + toStr(ctx, rel.type));
     return;
   }
 }

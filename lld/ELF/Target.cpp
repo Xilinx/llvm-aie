@@ -41,22 +41,18 @@ using namespace llvm::ELF;
 using namespace lld;
 using namespace lld::elf;
 
-std::string lld::toString(RelType type) {
-  StringRef s = getELFRelocationTypeName(elf::ctx.arg.emachine, type,
-                                         elf::ctx.arg.eflags);
+std::string elf::toStr(Ctx &ctx, RelType type) {
+  StringRef s = getELFRelocationTypeName(ctx.arg.emachine, type,
+                                         ctx.arg.eflags);
   if (s == "Unknown")
     return ("Unknown (" + Twine(type) + ")").str();
   return std::string(s);
 }
 
-bool lld::elf::isAIE() { return ctx.arg.emachine == EM_AIE; }
+bool lld::elf::isAIE(Ctx &ctx) { return ctx.arg.emachine == EM_AIE; }
 
 const ELFSyncStream &elf::operator<<(const ELFSyncStream &s, RelType type) {
-  StringRef buf = getELFRelocationTypeName(s.ctx.arg.emachine, type);
-  if (buf == "Unknown")
-    s << "Unknown (" << type << ')';
-  else
-    s << buf;
+  s << toStr(s.ctx, type);
   return s;
 }
 
@@ -130,8 +126,7 @@ ErrorPlace elf::getErrorPlace(Ctx &ctx, const uint8_t *loc) {
 TargetInfo::~TargetInfo() {}
 
 int64_t TargetInfo::getImplicitAddend(const uint8_t *buf, RelType type) const {
-  internalLinkerError(getErrorLoc(ctx, buf),
-                      "cannot read addend for relocation " + toString(type));
+  InternalErr(ctx, buf) << "cannot read addend for relocation " << type;
   return 0;
 }
 

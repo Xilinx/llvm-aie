@@ -1,4 +1,3 @@
-// XFAIL: *
 // RUN: %clang_cc1 -fsyntax-only -Wno-pointer-to-int-cast -verify -pedantic -Wsign-conversion %s
 void foo(void) {
   *(0 ? (double *)0 : (void *)0) = 0;
