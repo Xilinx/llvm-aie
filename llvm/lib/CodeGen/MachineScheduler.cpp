@@ -4088,9 +4088,13 @@ bool PostGenericScheduler::tryCandidate(SchedCandidate &Cand,
                  TryCand, Cand, ResourceDemand))
     return TryCand.Reason != NoCand;
 
-  // Avoid serializing long latency dependence chains.
-  if (Cand.Policy.ReduceLatency && tryLatency(TryCand, Cand, Top)) {
-    return TryCand.Reason != NoCand;
+  // We only compare a subset of features when comparing nodes between
+  // Top and Bottom boundary.
+  if (Cand.AtTop == TryCand.AtTop) {
+    // Avoid serializing long latency dependence chains.
+    if (Cand.Policy.ReduceLatency &&
+        tryLatency(TryCand, Cand, Cand.AtTop ? Top : Bot))
+      return TryCand.Reason != NoCand;
   }
 
   // Fall through to original instruction order.
