@@ -7,6 +7,63 @@
 ; Fails due to revert of 6b695846602b2d6aa66e5aae2f5db8eceb4bd41b
 ; XFAIL: llvm-aie-regression
 
+; CHECK-GI:       warning: Instruction selection used fallback path for stofp_i64_bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_i64_bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for stofp_i32_bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_i32_bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for stofp_i16_bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_i16_bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for stofp_i8_bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_i8_bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for stofp_v2i64_v2bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_v2i64_v2bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for stofp_v3i64_v3bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_v3i64_v3bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for stofp_v4i64_v4bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_v4i64_v4bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for stofp_v8i64_v8bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_v8i64_v8bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for stofp_v16i64_v16bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_v16i64_v16bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for stofp_v32i64_v32bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_v32i64_v32bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for stofp_v2i32_v2bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_v2i32_v2bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for stofp_v3i32_v3bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_v3i32_v3bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for stofp_v4i32_v4bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_v4i32_v4bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for stofp_v8i32_v8bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_v8i32_v8bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for stofp_v16i32_v16bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_v16i32_v16bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for stofp_v32i32_v32bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_v32i32_v32bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for stofp_v2i16_v2bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_v2i16_v2bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for stofp_v3i16_v3bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_v3i16_v3bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for stofp_v4i16_v4bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_v4i16_v4bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for stofp_v8i16_v8bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_v8i16_v8bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for stofp_v16i16_v16bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_v16i16_v16bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for stofp_v32i16_v32bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_v32i16_v32bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for stofp_v2i8_v2bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_v2i8_v2bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for stofp_v3i8_v3bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_v3i8_v3bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for stofp_v4i8_v4bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_v4i8_v4bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for stofp_v8i8_v8bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_v8i8_v8bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for stofp_v16i8_v16bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_v16i8_v16bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for stofp_v32i8_v32bf16
+; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for utofp_v32i8_v32bf16
+
 define bfloat @stofp_i64_bf16(i64 %a) {
 ; CHECK-LABEL: stofp_i64_bf16:
 ; CHECK:       // %bb.0: // %entry
