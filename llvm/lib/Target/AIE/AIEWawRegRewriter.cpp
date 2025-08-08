@@ -86,8 +86,8 @@ public:
     AU.addPreserved<SlotIndexesWrapperPass>();
     // no new Virtual Registers are generated, therefore the LiveDebugVariables
     // do not have to be updated
-    AU.addRequired<LiveDebugVariables>();
-    AU.addPreserved<LiveDebugVariables>();
+    AU.addRequired<LiveDebugVariablesWrapperLegacy>();
+    AU.addPreserved<LiveDebugVariablesWrapperLegacy>();
     AU.addRequired<LiveStacks>();
     AU.addPreserved<LiveStacks>();
     AU.addRequired<LiveIntervalsWrapperPass>();
