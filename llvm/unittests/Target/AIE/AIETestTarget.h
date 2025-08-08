@@ -13,6 +13,6 @@
 namespace llvm::AIE {
 
 /// Create an AIE-like target that can be used for unit-tests.
-LLVMTargetMachine *createAIETestTargetMachine();
+TargetMachine *createAIETestTargetMachine();
 
 } // namespace llvm::AIE

@@ -118,12 +118,12 @@ static TargetOptions getTargetOptionsForBogusMachine() {
   return Opts;
 }
 
-template <typename STClass> class TestTargetMachine : public LLVMTargetMachine {
+template <typename STClass> class TestTargetMachine : public CodeGenTargetMachineImpl {
 public:
   TestTargetMachine()
-      : LLVMTargetMachine(Target(), "", Triple(""), "", "",
-                          getTargetOptionsForBogusMachine(), Reloc::Static,
-                          CodeModel::Small, CodeGenOptLevel::Default),
+      : CodeGenTargetMachineImpl(
+            Target(), "", Triple(""), "", "", getTargetOptionsForBogusMachine(),
+            Reloc::Static, CodeModel::Small, CodeGenOptLevel::Default),
         ST(*this) {}
 
   ~TestTargetMachine() override {}
@@ -144,7 +144,7 @@ using BogusTargetMachine = TestTargetMachine<BogusSubTarget>;
 
 [[maybe_unused]] std::unique_ptr<MachineFunction>
 createMachineFunction(LLVMContext &Ctx, Module &M,
-                      LLVMTargetMachine *TM = nullptr) {
+                      TargetMachine *TM = nullptr) {
   auto Type = FunctionType::get(Type::getVoidTy(Ctx), false);
   auto F = Function::Create(Type, GlobalValue::ExternalLinkage, "Test", &M);
 

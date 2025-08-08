@@ -5171,11 +5171,9 @@ insertNewDbgInst(DIBuilder &DIB, DbgAssignIntrinsic *Orig, AllocaInst *NewAddr,
                          DIAssignID::getDistinct(NewAddr->getContext()));
   }
 
-  Instruction *NewAssign =
-      DIB.insertDbgAssign(NewAddr, Orig->getValue(), Orig->getVariable(),
-                          NewFragmentExpr, NewAddr, NewAddrExpr,
-                          Orig->getDebugLoc())
-          .get<Instruction *>();
+  Instruction *NewAssign = cast<Instruction *>(DIB.insertDbgAssign(
+      NewAddr, Orig->getValue(), Orig->getVariable(), NewFragmentExpr, NewAddr,
+      NewAddrExpr, Orig->getDebugLoc()));
   LLVM_DEBUG(dbgs() << "Created new assign intrinsic: " << *NewAssign << "\n");
   (void)NewAssign;
 }
@@ -5595,12 +5593,11 @@ bool SROA::promoteAllocas(Function &F) {
   if (PromotableAllocas.empty())
     return false;
 
-  NumPromoted += PromotableAllocas.size();
-
   if (SROASkipMem2Reg) {
     LLVM_DEBUG(dbgs() << "Not promoting allocas with mem2reg!\n");
   } else {
     LLVM_DEBUG(dbgs() << "Promoting allocas with mem2reg...\n");
+    NumPromoted += PromotableAllocas.size();
     PromoteMemToReg(PromotableAllocas.getArrayRef(), DTU->getDomTree(), AC);
   }
 

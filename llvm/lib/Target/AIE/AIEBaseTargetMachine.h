@@ -16,6 +16,7 @@
 #ifndef LLVM_LIB_TARGET_AIE_BASETARGETMACHINE_H
 #define LLVM_LIB_TARGET_AIE_BASETARGETMACHINE_H
 
+#include "llvm/CodeGen/CodeGenTargetMachineImpl.h"
 #include "llvm/CodeGen/SelectionDAGTargetInfo.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/IR/DataLayout.h"
@@ -24,7 +25,7 @@
 
 namespace llvm {
 
-class AIEBaseTargetMachine : public LLVMTargetMachine {
+class AIEBaseTargetMachine : public CodeGenTargetMachineImpl {
 protected:
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
   bool EnableCustomAliasAnalysis = true;
@@ -63,7 +64,7 @@ protected:
   bool EnableCustomAliasAnalysis = true;
 
 public:
-  AIEBasePassConfig(LLVMTargetMachine &TM, PassManagerBase &PM);
+  AIEBasePassConfig(TargetMachine &TM, PassManagerBase &PM);
 
   bool addIRTranslator() override;
   bool addLegalizeMachineIR() override;

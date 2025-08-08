@@ -9,6 +9,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ScheduleDAGMITestUtils.h"
+#include "llvm/CodeGen/CodeGenTargetMachineImpl.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/TargetFrameLowering.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
@@ -82,7 +83,7 @@ void DummyScheduleDAGMI::scheduleInstr(MachineInstr *MI, SchedBoundary &Zone,
   Zone.bumpNode(getSUnit(MI), Delta);
 }
 
-ScheduleDAGMITest::ScheduleDAGMITest(LLVMTargetMachine *TM)
+ScheduleDAGMITest::ScheduleDAGMITest(TargetMachine *TM)
     : Mod("Module", Ctx) {
   MF = createMachineFunction(Ctx, Mod, TM);
   MBB = MF->CreateMachineBasicBlock();
