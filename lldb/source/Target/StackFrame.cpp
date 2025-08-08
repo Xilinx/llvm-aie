@@ -22,6 +22,7 @@
 #include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/ABI.h"
 #include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/LanguageRuntime.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StackFrameRecognizer.h"
@@ -1230,6 +1231,71 @@ bool StackFrame::IsHidden() {
   return false;
 }
 
+StructuredData::ObjectSP StackFrame::GetLanguageSpecificData() {
+  auto process_sp = CalculateProcess();
+  SourceLanguage language = GetLanguage();
+  if (!language)
+    return {};
+  if (auto runtime_sp =
+          process_sp->GetLanguageRuntime(language.AsLanguageType()))
+    return runtime_sp->GetLanguageSpecificData(
+        GetSymbolContext(eSymbolContextFunction));
+  return {};
+}
+
+const char *StackFrame::GetFunctionName() {
+  const char *name = nullptr;
+  SymbolContext sc = GetSymbolContext(
+      eSymbolContextFunction | eSymbolContextBlock | eSymbolContextSymbol);
+  if (sc.block) {
+    Block *inlined_block = sc.block->GetContainingInlinedBlock();
+    if (inlined_block) {
+      const InlineFunctionInfo *inlined_info =
+          inlined_block->GetInlinedFunctionInfo();
+      if (inlined_info)
+        name = inlined_info->GetName().AsCString();
+    }
+  }
+
+  if (name == nullptr) {
+    if (sc.function)
+      name = sc.function->GetName().GetCString();
+  }
+
+  if (name == nullptr) {
+    if (sc.symbol)
+      name = sc.symbol->GetName().GetCString();
+  }
+
+  return name;
+}
+
+const char *StackFrame::GetDisplayFunctionName() {
+  const char *name = nullptr;
+  SymbolContext sc = GetSymbolContext(
+      eSymbolContextFunction | eSymbolContextBlock | eSymbolContextSymbol);
+  if (sc.block) {
+    Block *inlined_block = sc.block->GetContainingInlinedBlock();
+    if (inlined_block) {
+      const InlineFunctionInfo *inlined_info =
+          inlined_block->GetInlinedFunctionInfo();
+      if (inlined_info)
+        name = inlined_info->GetDisplayName().AsCString();
+    }
+  }
+
+  if (name == nullptr) {
+    if (sc.function)
+      name = sc.function->GetDisplayName().GetCString();
+  }
+
+  if (name == nullptr) {
+    if (sc.symbol)
+      name = sc.symbol->GetDisplayName().GetCString();
+  }
+  return name;
+}
+
 SourceLanguage StackFrame::GetLanguage() {
   CompileUnit *cu = GetSymbolContext(eSymbolContextCompUnit).comp_unit;
   if (cu)
@@ -1954,19 +2020,9 @@ bool StackFrame::GetStatus(Stream &strm, bool show_frame_info, bool show_source,
           if (num_lines != 0)
             have_source = true;
           // TODO: Give here a one time warning if source file is missing.
-          if (!m_sc.line_entry.line) {
-            ConstString fn_name = m_sc.GetFunctionName();
-
-            if (!fn_name.IsEmpty())
-              strm.Printf(
-                  "Note: this address is compiler-generated code in function "
-                  "%s that has no source code associated with it.",
-                  fn_name.AsCString());
-            else
-              strm.Printf("Note: this address is compiler-generated code that "
-                          "has no source code associated with it.");
-            strm.EOL();
-          }
+          if (!m_sc.line_entry.line)
+            strm << "note: This address is not associated with a specific line "
+                    "of code. This may be due to compiler optimizations.\n";
         }
       }
       switch (disasm_display) {

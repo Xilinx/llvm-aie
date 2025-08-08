@@ -1915,7 +1915,7 @@ OperandInfo getOpInfo(const Record *TypeRecord) {
   bool HasCompleteDecoder =
       HasCompleteDecoderBit ? HasCompleteDecoderBit->getValue() : true;
 
-  return OperandInfo(Decoder, HasCompleteDecoder, IsZeroFieldDecodable);
+  return OperandInfo(std::move(Decoder), HasCompleteDecoder, IsZeroFieldDecodable);
 }
 
 static void parseVarLenInstOperand(const Record &Def,
@@ -2047,7 +2047,7 @@ populateInstruction(const CodeGenTarget &Target, const Record &EncodingDef,
     InsnOperands.emplace_back(OperandInfo(std::string(InstDecoder),
                                           HasCompleteInstDecoder,
                                           /*IsZeroFieldDecodable=*/false));
-    Operands[Opc] = InsnOperands;
+    Operands[Opc] = std::move(InsnOperands);
     return Bits.getNumBits();
   }
 
@@ -2082,7 +2082,7 @@ populateInstruction(const CodeGenTarget &Target, const Record &EncodingDef,
           MyName = Op.Name;
 
         TiedNames[MyName] = TiedName;
-        TiedNames[TiedName] = MyName;
+        TiedNames[TiedName] = std::move(MyName);
       }
     }
   }
@@ -2135,7 +2135,7 @@ populateInstruction(const CodeGenTarget &Target, const Record &EncodingDef,
 
           addOneOperandFields(EncodingDef, Bits, TiedNames, SubOpName,
                               SubOpInfo);
-          InsnOperands.push_back(SubOpInfo);
+          InsnOperands.push_back(std::move(SubOpInfo));
         }
         continue;
       }
@@ -2168,8 +2168,12 @@ populateInstruction(const CodeGenTarget &Target, const Record &EncodingDef,
       // to the MCInst being decoded. One cannot always insert decoding calls
       // for "zero-bits" operands, as some targets (e.g. AMDGPU) rely on this
       // mechanism to essentially "skip" operands.
+      // FIXME: it should be an error not to find a definition for a given
+      // operand, rather than just failing to add it to the resulting
+      // instruction! (This is a longstanding bug, which will be addressed in an
+      // upcoming change.)
       if (OpInfo.numFields() > 0 || OpInfo.IsZeroFieldDecodable)
-        InsnOperands.push_back(OpInfo);
+        InsnOperands.push_back(std::move(OpInfo));
     }
   }
   Operands[Opc] = InsnOperands;

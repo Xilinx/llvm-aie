@@ -202,6 +202,8 @@ public:
     return false;
   }
 
+  unsigned getEpilogueVectorizationMinVF() const { return 16; }
+
   bool preferPredicateOverEpilogue(TailFoldingInfo *TFI) const { return false; }
 
   TailFoldingStyle
@@ -399,6 +401,11 @@ public:
   bool isTargetIntrinsicWithScalarOpAtArg(Intrinsic::ID ID,
                                           unsigned ScalarOpdIdx) const {
     return false;
+  }
+
+  bool isVectorIntrinsicWithOverloadTypeAtArg(Intrinsic::ID ID,
+                                              int ScalarOpdIdx) const {
+    return ScalarOpdIdx == -1;
   }
 
   InstructionCost getScalarizationOverhead(VectorType *Ty,
