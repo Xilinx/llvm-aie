@@ -25,7 +25,7 @@
 // AIE: #define __ATOMIC_SEQ_CST 5
 // AIE: #define __BIGGEST_ALIGNMENT__ 4
 // AIE: #define __BITINT_MAXWIDTH__ 128
-// AIE: #define __BOOL_WIDTH__ 8
+// AIE: #define __BOOL_WIDTH__ 1
 // AIE: #define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // AIE: #define __CHAR16_TYPE__ unsigned short
 // AIE: #define __CHAR32_TYPE__ unsigned int
