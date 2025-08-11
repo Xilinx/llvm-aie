@@ -54,7 +54,7 @@ body: |
     ; AIE2P-NEXT: {{  $}}
     ; AIE2P-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r6
-    ; AIE2P-NEXT: ST_s8_idx_imm [[COPY1]], [[COPY]], 0, implicit-def $pe2_ads, implicit $pe2_ads :: (store (s8))
+    ; AIE2P-NEXT: ST_s8_idx_imm [[COPY1]], [[COPY]], 0, implicit-def dead $pe2_ads, implicit $pe2_ads :: (store (s8))
     %0:ptrregbank(p0) = COPY $p0
     %1:gprregbank(s32) = COPY $r6
     G_STORE %1, %0 :: (store (s8))
@@ -80,7 +80,7 @@ body: |
     ; AIE2P-NEXT: {{  $}}
     ; AIE2P-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r6
-    ; AIE2P-NEXT: ST_s16_idx_imm [[COPY1]], [[COPY]], 0, implicit-def $pe2_ads, implicit $pe2_ads :: (store (s16))
+    ; AIE2P-NEXT: ST_s16_idx_imm [[COPY1]], [[COPY]], 0, implicit-def dead $pe2_ads, implicit $pe2_ads :: (store (s16))
     %0:ptrregbank(p0) = COPY $p0
     %1:gprregbank(s32) = COPY $r6
     G_STORE %1, %0 :: (store (s16))

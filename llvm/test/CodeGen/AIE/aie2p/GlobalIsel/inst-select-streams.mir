@@ -322,12 +322,12 @@ body:             |
     ; CHECK-NEXT: [[MOV_nb_lda:%[0-9]+]]:er = MOV_nb_lda implicit-def $srss0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $srss0
     ; CHECK-NEXT: [[AND:%[0-9]+]]:er = AND [[COPY2]], [[MOV_RLC_imm11_pseudo]]
-    ; CHECK-NEXT: ST_s8_idx_imm [[AND]], [[COPY1]], 0, implicit-def $pe2_ads, implicit $pe2_ads :: (store (s8))
+    ; CHECK-NEXT: ST_s8_idx_imm [[AND]], [[COPY1]], 0, implicit-def dead $pe2_ads, implicit $pe2_ads :: (store (s8))
     ; CHECK-NEXT: [[EXTEND_u8_:%[0-9]+]]:er = EXTEND_u8 [[COPY2]]
     ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo -1
     ; CHECK-NEXT: [[LSHL:%[0-9]+]]:er = LSHL [[EXTEND_u8_]], [[MOV_RLC_imm11_pseudo1]]
     ; CHECK-NEXT: [[AND1:%[0-9]+]]:er = AND [[LSHL]], [[MOV_RLC_imm11_pseudo]]
-    ; CHECK-NEXT: ST_s8_idx_imm [[AND1]], [[COPY]], 0, implicit-def $pe2_ads, implicit $pe2_ads :: (store (s8))
+    ; CHECK-NEXT: ST_s8_idx_imm [[AND1]], [[COPY]], 0, implicit-def dead $pe2_ads, implicit $pe2_ads :: (store (s8))
     ; CHECK-NEXT: $r0 = COPY [[MOV_nb_lda]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:ptrregbank(p0) = COPY $p0
@@ -382,7 +382,7 @@ body:             |
     ; CHECK-NEXT: MOV_nb_st_mMStream_tlast_imm [[COPY]], implicit-def $srms0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $srms0
     ; CHECK-NEXT: [[NEZ:%[0-9]+]]:er = NEZ [[COPY2]]
-    ; CHECK-NEXT: ST_s8_idx_imm [[NEZ]], [[COPY1]], 0, implicit-def $pe2_ads, implicit $pe2_ads :: (store (s8))
+    ; CHECK-NEXT: ST_s8_idx_imm [[NEZ]], [[COPY1]], 0, implicit-def dead $pe2_ads, implicit $pe2_ads :: (store (s8))
     ; CHECK-NEXT: PseudoRET implicit $lr
     %0:gprregbank(<2 x s16>) = COPY $r0
     %1:ptrregbank(p0) = COPY $p0
@@ -480,7 +480,7 @@ body:             |
     ; CHECK-NEXT: MOV_nb_st_mMStream_tlast_reg [[COPY]], [[COPY1]], implicit-def $srms0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:er = COPY $srms0
     ; CHECK-NEXT: [[NEZ:%[0-9]+]]:er = NEZ [[COPY3]]
-    ; CHECK-NEXT: ST_s8_idx_imm [[NEZ]], [[COPY2]], 0, implicit-def $pe2_ads, implicit $pe2_ads :: (store (s8))
+    ; CHECK-NEXT: ST_s8_idx_imm [[NEZ]], [[COPY2]], 0, implicit-def dead $pe2_ads, implicit $pe2_ads :: (store (s8))
     ; CHECK-NEXT: PseudoRET implicit $lr
     %0:gprregbank(<2 x s16>) = COPY $r0
     %1:gprregbank(s32) = COPY $r1
