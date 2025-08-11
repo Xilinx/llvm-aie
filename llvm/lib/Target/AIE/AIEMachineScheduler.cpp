@@ -106,11 +106,11 @@ static AIEHazardRecognizer *getAIEHazardRecognizer(const SchedBoundary &Zone) {
 
 AIEPostRASchedStrategy::AIEPostRASchedStrategy(const MachineSchedContext *C)
     : PostGenericScheduler(C), InterBlock(C, InterBlockScoreboard) {
-  assert((!ForceBottomUp || !ForceTopDown) &&
+  assert(PostRADirection != MISched::Direction::Bidirectional &&
          "-misched-topdown incompatible with -misched-bottomup");
-  if (ForceTopDown)
+  if (PostRADirection == MISched::Direction::TopDown)
     this->IsTopDown = true;
-  else if (ForceBottomUp)
+  else if (PostRADirection == MISched::Direction::BottomUp)
     this->IsTopDown = false;
 }
 
@@ -420,7 +420,7 @@ static MachineInstr *getDelaySlotInstr(MachineBasicBlock::iterator RegionBegin,
 
 void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
   PostGenericScheduler::initialize(Dag);
-  assert(!ForceBottomUp && !ForceTopDown);
+  assert(PostRADirection == MISched::Direction::Unspecified);
 
   // Update Bot scoreboard of the bottom region with the foreseeable future
   // as found in the top regions of the successor blocks. If we don't know,

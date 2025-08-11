@@ -112,6 +112,7 @@ enum Direction {
 } // namespace MISched
 
 extern cl::opt<MISched::Direction> PreRADirection;
+extern cl::opt<MISched::Direction> PostRADirection;
 extern cl::opt<bool> VerifyScheduling;
 #ifndef NDEBUG
 extern cl::opt<bool> ViewMISchedDAGs;
