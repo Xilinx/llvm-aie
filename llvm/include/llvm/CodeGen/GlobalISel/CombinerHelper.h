@@ -417,12 +417,12 @@ public:
   bool matchCombineZextTrunc(MachineInstr &MI, Register &Reg) const;
 
   /// Transform sext(trunc(x)) to x.
-  bool matchCombineSextTrunc(MachineInstr &MI, Register &Reg);
+  bool matchCombineSextTrunc(MachineInstr &MI, Register &Reg) const;
 
   /// Transform (shl (and x, imm1, imm2) to (shl x, imm2)
   ///    if (~imm1 << imm2) = 0
-  bool matchCombineShlOfAnd(MachineInstr &MI, Register &Reg);
-  void applyCombineShlOfAnd(MachineInstr &MI, Register &Reg);
+  bool matchCombineShlOfAnd(MachineInstr &MI, Register &Reg) const;
+  void applyCombineShlOfAnd(MachineInstr &MI, Register &Reg) const;
 
   /// Transform trunc (shl x, K) to shl (trunc x), K
   ///    if K < VT.getScalarSizeInBits().
@@ -945,7 +945,7 @@ public:
   /// Transform:
   ///  G_INTTOPTR (int G_CONSTANT x) -> (pointer G_CONSTANT x)
   bool matchIntToPtrContant(MachineInstr &MI, MachineRegisterInfo &MRI,
-                            BuildFnTy &MatchInfo);
+                            BuildFnTy &MatchInfo) const;
 
   bool matchFreezeOfSingleMaybePoisonOperand(MachineInstr &MI,
                                              BuildFnTy &MatchInfo) const;

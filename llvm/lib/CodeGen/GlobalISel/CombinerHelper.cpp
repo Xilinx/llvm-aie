@@ -2593,7 +2593,8 @@ bool CombinerHelper::matchCombineZextTrunc(MachineInstr &MI,
   return false;
 }
 
-bool CombinerHelper::matchCombineSextTrunc(MachineInstr &MI, Register &Reg) {
+bool CombinerHelper::matchCombineSextTrunc(MachineInstr &MI,
+                                           Register &Reg) const {
   assert(MI.getOpcode() == TargetOpcode::G_SEXT && "Expected a G_SEXT");
   const Register DstReg = MI.getOperand(0).getReg();
   const Register SrcReg = MI.getOperand(1).getReg();
@@ -2607,7 +2608,8 @@ bool CombinerHelper::matchCombineSextTrunc(MachineInstr &MI, Register &Reg) {
   return false;
 }
 
-bool CombinerHelper::matchCombineShlOfAnd(MachineInstr &MI, Register &Reg) {
+bool CombinerHelper::matchCombineShlOfAnd(MachineInstr &MI,
+                                          Register &Reg) const {
   // We're trying to match the following pattern:
   //   %t = G_AND %x, imm1
   //   %root = G_SHL %t, imm2
@@ -2633,7 +2635,8 @@ bool CombinerHelper::matchCombineShlOfAnd(MachineInstr &MI, Register &Reg) {
   return !((~AndImm << ShiftImm) & Mask);
 }
 
-void CombinerHelper::applyCombineShlOfAnd(MachineInstr &MI, Register &Reg) {
+void CombinerHelper::applyCombineShlOfAnd(MachineInstr &MI,
+                                          Register &Reg) const {
   assert(MI.getOpcode() == TargetOpcode::G_SHL && "Expected a G_SHL");
   Observer.changingInstr(MI);
   MI.getOperand(1).setReg(Reg);
@@ -7544,7 +7547,7 @@ bool CombinerHelper::matchAddOverflow(MachineInstr &MI,
 
 bool CombinerHelper::matchIntToPtrContant(MachineInstr &MI,
                                           MachineRegisterInfo &MRI,
-                                          BuildFnTy &MatchInfo) {
+                                          BuildFnTy &MatchInfo) const {
 
   assert(MI.getOpcode() == TargetOpcode::G_INTTOPTR);
 
