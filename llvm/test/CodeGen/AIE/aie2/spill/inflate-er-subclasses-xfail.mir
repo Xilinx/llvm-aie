@@ -6,7 +6,7 @@
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 # RUN: not llc -mtriple=aie2 --verify-machineinstrs -run-pass=greedy %s -o - 2>&1 | FileCheck %s
 
-# CHECK: error: ran out of registers during register allocation
+# CHECK: error: <unknown>:0:0: ran out of registers during register allocation
 
 # A funny example where Greedy does not bother inflating %2's regclass to eR.
 # It shouldn't happen in real code because ISel will not constrain %2 to eR29
