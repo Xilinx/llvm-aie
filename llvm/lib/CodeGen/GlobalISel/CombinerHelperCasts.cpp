@@ -335,11 +335,10 @@ bool CombinerHelper::matchNarrowBinop(const MachineInstr &TruncMI,
     return false;
 
   const MachineFunction *MF = TruncMI.getMF();
-  const DataLayout &DL = MF->getDataLayout();
   LLVMContext &Ctx = MF->getFunction().getContext();
   const auto &TLI = getTargetLowering();
   // Be sure that replacing one truncation by two is cost-free.
-  if (!TLI.isTruncateFree(SrcTy, DstTy, DL, Ctx))
+  if (!TLI.isTruncateFree(SrcTy, DstTy, Ctx))
     return false;
 
   MatchInfo = [=](MachineIRBuilder &B) {
