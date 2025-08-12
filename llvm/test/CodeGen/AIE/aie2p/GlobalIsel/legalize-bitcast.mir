@@ -78,3 +78,40 @@ body:             |
     %2:_(<128 x s16>) = G_BITCAST %1
     PseudoRET implicit $lr, implicit %2
 ...
+
+---
+name:            test_bitcast_s32
+body:             |
+  bb.1.entry:
+    liveins: $r0
+    ; CHECK-LABEL: name: test_bitcast_s32
+    ; CHECK: liveins: $r0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<32 x s1>) = COPY $r0
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(s32) = G_BITCAST [[COPY]](<32 x s1>)
+    ; CHECK-NEXT: [[BITCAST1:%[0-9]+]]:_(<8 x s4>) = G_BITCAST [[BITCAST]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[BITCAST1]](<8 x s4>)
+    %0:_(<32 x s1>) = COPY $r0
+    %1:_(s32) = G_BITCAST %0(<32 x s1>)
+    %2:_(<8 x s4>) = G_BITCAST %1
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            test_bitcast_s64
+body:             |
+  bb.1.entry:
+    liveins: $l0
+
+    ; CHECK-LABEL: name: test_bitcast_s64
+    ; CHECK: liveins: $l0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<64 x s1>) = COPY $l0
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(s64) = G_BITCAST [[COPY]](<64 x s1>)
+    ; CHECK-NEXT: [[BITCAST1:%[0-9]+]]:_(<16 x s4>) = G_BITCAST [[BITCAST]](s64)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[BITCAST1]](<16 x s4>)
+    %0:_(<64 x s1>) = COPY $l0
+    %1:_(s64) = G_BITCAST %0(<64 x s1>)
+    %2:_(<16 x s4>) = G_BITCAST %1
+    PseudoRET implicit $lr, implicit %2
+...
