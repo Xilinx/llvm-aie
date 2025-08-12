@@ -26,10 +26,12 @@ using namespace LegalityPredicates;
 static LegalityPredicate isLegalBitCastType(unsigned TypeIdx) {
   return [=](const LegalityQuery &Query) {
     LLT Ty = Query.Types[TypeIdx];
+    const unsigned TypeSize = Ty.getSizeInBits();
     if (Ty.isScalar())
-      return Ty.getSizeInBits() >= 32;
-    const int EltSize = Ty.isVector() ? Ty.getElementType().getSizeInBits() : 0;
-    return EltSize >= 8 && isPowerOf2_32(EltSize);
+      return TypeSize >= 32;
+    const unsigned EltSize = Ty.getElementType().getSizeInBits();
+    return TypeSize == 32 || TypeSize == 64 ||
+           (EltSize >= 8 && isPowerOf2_32(EltSize));
   };
 }
 
