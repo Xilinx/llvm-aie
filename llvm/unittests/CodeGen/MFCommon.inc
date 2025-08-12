@@ -90,7 +90,7 @@ template <typename TIIClass> class TestSubTarget : public TargetSubtargetInfo {
 public:
   TestSubTarget(TargetMachine &TM, StringRef CPU = "", StringRef TuneCPU = "",
                 ArrayRef<SubtargetSubTypeKV> ProcDescs = {})
-      : TargetSubtargetInfo(Triple(""), CPU, TuneCPU, "", {}, ProcDescs,
+      : TargetSubtargetInfo(Triple(""), CPU, TuneCPU, "", {}, {}, ProcDescs,
                             nullptr, nullptr, nullptr, nullptr, nullptr,
                             nullptr),
         FL(), TL(TM) {}
