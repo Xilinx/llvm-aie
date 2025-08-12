@@ -284,6 +284,9 @@ bool matchPhiBitcast(MachineInstr &Phi, MachineRegisterInfo &MRI,
                      const AIEBaseInstrInfo &TII, GISelChangeObserver &Observer,
                      BuildFnTy &MatchInfo);
 
+bool matchPhiOfUndef(MachineInstr &MI, MachineRegisterInfo &MRI,
+                     GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
+
 } // namespace llvm
 
 #endif

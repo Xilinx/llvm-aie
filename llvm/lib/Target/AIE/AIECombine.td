@@ -216,6 +216,12 @@ def combine_phi_bitcast_swap : GICombineRule<
          [{ return matchPhiBitcast(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), Observer, ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
 
+def combine_phi_undef : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_PHI): $root,
+         [{ return matchPhiOfUndef(*${root}, MRI, Observer, ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
+
 // AIE-specifc combines (currently shared by AIE2 and AIE2P).
 def aie_additional_combines : GICombineGroup<[
   combine_unpad_vector,
@@ -233,7 +239,8 @@ def aie_additional_combines : GICombineGroup<[
   combine_narrow_zext_s20,
   combine_concat_unmerge_phis,
   combine_trunc_ext,
-  combine_load_const
+  combine_load_const,
+  combine_phi_undef
 ]>;
 
 // AIE2P-specific combines.

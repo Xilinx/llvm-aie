@@ -3711,3 +3711,52 @@ bool llvm::matchPhiBitcast(MachineInstr &Phi, MachineRegisterInfo &MRI,
 
   return true;
 }
+
+/// This combiner is intended to fully define undefined operands
+/// of s20 types in Phi instructions. The goal is to constrain
+/// the MIR to a fully well-defined shape that fits the requirements
+/// of our 2D/3D register allocation engine:
+/// * After phi-node elimination, we should be able to rewrite/rename
+///   each sub-lane copy individually, so all renamed registers should
+///   dominate their uses. This is not possible if one side of the Phi
+///   node is undefined - in this case the renamed register definition
+///   will happen only on the well-defined side of the phi node.
+bool llvm::matchPhiOfUndef(MachineInstr &Phi, MachineRegisterInfo &MRI,
+                           GISelChangeObserver &Observer,
+                           BuildFnTy &MatchInfo) {
+  assert(Phi.isPHI());
+
+  const LLT S20 = LLT::scalar(20);
+  const LLT DefType = MRI.getType(Phi.getOperand(0).getReg());
+
+  if (DefType != S20)
+    return false;
+
+  MachineInstr *UndefMI = nullptr;
+  MachineOperand *UndefMO = nullptr;
+  for (unsigned I = 1; I < Phi.getNumOperands(); I += 2) {
+    MachineOperand &MO = Phi.getOperand(I);
+    const Register IncomingReg = MO.getReg();
+    MachineInstr *DefMI = MRI.getVRegDef(IncomingReg);
+    if (DefMI->getOpcode() == TargetOpcode::G_IMPLICIT_DEF) {
+      // We found one case, the next operand can be another case,
+      // but let the fixed-point combiner engine to discover.
+      UndefMI = DefMI;
+      UndefMO = &MO;
+      break;
+    }
+  }
+
+  if (!UndefMI)
+    return false;
+
+  MatchInfo = [=, &Phi, &Observer](MachineIRBuilder &B) {
+    B.setInstrAndDebugLoc(*UndefMI);
+    const Register NewReg = B.buildConstant(S20, 0).getReg(0);
+    Observer.changingInstr(Phi);
+    UndefMO->setReg(NewReg);
+    Observer.changedInstr(Phi);
+  };
+
+  return true;
+}
