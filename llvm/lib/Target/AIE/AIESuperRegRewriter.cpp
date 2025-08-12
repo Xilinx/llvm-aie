@@ -51,10 +51,10 @@ public:
     AU.addPreserved<VirtRegMapWrapperLegacy>();
     AU.addRequired<SlotIndexesWrapperPass>();
     AU.addPreserved<SlotIndexesWrapperPass>();
-    AU.addRequired<LiveDebugVariables>();
-    AU.addPreserved<LiveDebugVariables>();
-    AU.addRequired<LiveStacks>();
-    AU.addPreserved<LiveStacks>();
+    AU.addRequired<LiveDebugVariablesWrapperLegacy>();
+    AU.addPreserved<LiveDebugVariablesWrapperLegacy>();
+    AU.addRequired<LiveStacksWrapperLegacy>();
+    AU.addPreserved<LiveStacksWrapperLegacy>();
     AU.addRequired<LiveIntervalsWrapperPass>();
     AU.addPreserved<LiveIntervalsWrapperPass>();
     AU.addRequired<LiveRegMatrixWrapperLegacy>();
@@ -148,7 +148,7 @@ bool AIESuperRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   LiveRegMatrix &LRM = getAnalysis<LiveRegMatrixWrapperLegacy>().getLRM();
   LiveIntervals &LIS = getAnalysis<LiveIntervalsWrapperPass>().getLIS();
   SlotIndexes &Indexes = getAnalysis<SlotIndexesWrapperPass>().getSI();
-  LiveDebugVariables &DebugVars = getAnalysis<LiveDebugVariables>();
+  LiveDebugVariables &DebugVars = getAnalysis<LiveDebugVariablesWrapperLegacy>().getLDV();
   std::map<Register, MCRegister> AssignedPhysRegs;
 
   // Collect already-assigned VRegs that can be split into smaller ones.

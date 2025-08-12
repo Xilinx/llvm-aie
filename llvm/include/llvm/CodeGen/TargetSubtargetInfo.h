@@ -361,6 +361,8 @@ public:
   virtual unsigned getCriticalPathLimit() const {
     return getSchedModel().MispredictPenalty / 2;
   }
+
+  virtual bool isRegisterReservedByUser(Register R) const { return false; }
 };
 } // end namespace llvm
 

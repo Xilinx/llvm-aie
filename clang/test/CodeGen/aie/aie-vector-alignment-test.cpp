@@ -28,7 +28,7 @@ void store_v_aligned(bfloat16 *ptr, v32bfloat16 data) {
 // CHECK-NEXT:    [[DATA:%.*]] = alloca <32 x bfloat>, align 32
 // CHECK-NEXT:    [[TMP0:%.*]] = call noundef <32 x bfloat> @llvm.aie2.v32bfloat16()
 // CHECK-NEXT:    store <32 x bfloat> [[TMP0]], ptr [[DATA]], align 32
-// CHECK-NEXT:    [[ARRAYDECAY:%.*]] = getelementptr inbounds [32 x bfloat], ptr [[BUFFER]], i32 0, i32 0
+// CHECK-NEXT:    [[ARRAYDECAY:%.*]] = getelementptr inbounds nuw [32 x bfloat], ptr [[BUFFER]], i32 0, i32 0
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x bfloat>, ptr [[DATA]], align 32
 // CHECK-NEXT:    store ptr [[ARRAYDECAY]], ptr [[PTR_ADDR_I]], align 4
 // CHECK-NEXT:    store <32 x bfloat> [[TMP1]], ptr [[DATA_ADDR_I]], align 32
@@ -46,7 +46,7 @@ void store_v_aligned(bfloat16 *ptr, v32bfloat16 data) {
 // CHECK-AIE2P-NEXT:    [[DATA:%.*]] = alloca <32 x bfloat>, align 64
 // CHECK-AIE2P-NEXT:    [[TMP0:%.*]] = load <32 x bfloat>, ptr [[VAL_I]], align 64
 // CHECK-AIE2P-NEXT:    store <32 x bfloat> [[TMP0]], ptr [[DATA]], align 64
-// CHECK-AIE2P-NEXT:    [[ARRAYDECAY:%.*]] = getelementptr inbounds [32 x bfloat], ptr [[BUFFER]], i32 0, i32 0
+// CHECK-AIE2P-NEXT:    [[ARRAYDECAY:%.*]] = getelementptr inbounds nuw [32 x bfloat], ptr [[BUFFER]], i32 0, i32 0
 // CHECK-AIE2P-NEXT:    [[TMP1:%.*]] = load <32 x bfloat>, ptr [[DATA]], align 64
 // CHECK-AIE2P-NEXT:    store ptr [[ARRAYDECAY]], ptr [[PTR_ADDR_I]], align 4
 // CHECK-AIE2P-NEXT:    store <32 x bfloat> [[TMP1]], ptr [[DATA_ADDR_I]], align 64

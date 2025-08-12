@@ -270,7 +270,8 @@ void test_intrinsic_default_pointer_reference_loop(
 // CHECK: [[TBAA5]] = !{[[META6:![0-9]+]], [[META6]], i64 0}
 // CHECK: [[META6]] = !{!"int", [[META3]], i64 0}
 // CHECK: [[TBAA7]] = !{[[META8:![0-9]+]], [[META8]], i64 0}
-// CHECK: [[META8]] = !{!"any pointer", [[META3]], i64 0}
+// CHECK: [[META8]] = !{!"p1 void", [[META9:![0-9]+]], i64 0}
+// CHECK: [[META9]] = !{!"any pointer", [[META3]], i64 0}
 // CHECK: [[LOOP9]] = distinct !{[[LOOP9]], [[META10:![0-9]+]], [[META11:![0-9]+]]}
 // CHECK: [[META10]] = !{!"llvm.loop.mustprogress"}
 // CHECK: [[META11]] = !{!"llvm.loop.unroll.disable"}

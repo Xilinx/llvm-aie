@@ -29,8 +29,8 @@ uint32 lcpPing[256];
 // CHECK-NEXT:    [[A:%.*]] = alloca [16 x i16], align 256
 // CHECK-NEXT:    [[B:%.*]] = alloca <16 x i16>, align 1024
 // CHECK-NEXT:    call void @llvm.memcpy.p0.p0.i32(ptr align 256 [[A]], ptr align 256 @__const._Z12test_alignasv.a, i32 32, i1 false)
-// CHECK-NEXT:    [[ARRAYDECAY:%.*]] = getelementptr inbounds [16 x i16], ptr [[A]], i32 0, i32 0
-// CHECK-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds <16 x i16>, ptr [[ARRAYDECAY]], i32 0
+// CHECK-NEXT:    [[ARRAYDECAY:%.*]] = getelementptr inbounds nuw [16 x i16], ptr [[A]], i32 0, i32 0
+// CHECK-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds nuw <16 x i16>, ptr [[ARRAYDECAY]], i32 0
 // CHECK-NEXT:    [[TMP0:%.*]] = load <16 x i16>, ptr [[ARRAYIDX]], align 256
 // CHECK-NEXT:    store <16 x i16> [[TMP0]], ptr [[B]], align 1024
 // CHECK-NEXT:    [[TMP1:%.*]] = load <16 x i16>, ptr [[B]], align 1024
