@@ -40,7 +40,7 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ; CHECK-NEXT: Args:
 ; CHECK-NEXT:   - BasicBlock:      for.body
 ; CHECK-NEXT:   - BundleCount:     '4'
-; CHECK-NEXT:   - ByteCount:       '64
+; CHECK-NEXT:   - ByteCount:       '64'
 ; CHECK-NEXT: ...
 ; CHECK-NEXT: --- !Analysis
 ; CHECK-NEXT: Pass:            aie-asm-printer
@@ -51,8 +51,8 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ; CHECK-NEXT:   - BundleCount:     '17'
 ; CHECK-NEXT:   - ByteCount:       '80'
 ; CHECK-NEXT: ...
-; CHECK-NEXT: 	.text
 ; CHECK-NEXT: 	.file	"ore-hardware-loops.ll"
+; CHECK-NEXT: 	.text
 ; CHECK-NEXT: 	.weak	convert_bf16_to_bfp16           // -- Begin function convert_bf16_to_bfp16
 ; CHECK-NEXT: 	.p2align	4
 ; CHECK-NEXT: 	.type	convert_bf16_to_bfp16,@function
