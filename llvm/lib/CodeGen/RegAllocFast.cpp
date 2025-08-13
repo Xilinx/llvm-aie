@@ -987,16 +987,23 @@ void RegAllocFastImpl::allocVirtRegUndef(MachineOperand &MO) {
   if (!shouldAllocateRegister(VirtReg))
     return;
 
-  LiveRegMap::const_iterator LRI = findLiveVirtReg(VirtReg);
+  LiveRegMap::iterator LRI = findLiveVirtReg(VirtReg);
   MCPhysReg PhysReg;
   if (LRI != LiveVirtRegs.end() && LRI->PhysReg) {
     PhysReg = LRI->PhysReg;
   } else {
     const TargetRegisterClass &RC = *MRI->getRegClass(VirtReg);
     ArrayRef<MCPhysReg> AllocationOrder = RegClassInfo.getOrder(&RC);
-    // FIXME: This can happen, and should fall back to a reserved entry in RC.
-    assert(!AllocationOrder.empty() && "Allocation order must not be empty");
-    PhysReg = AllocationOrder[0];
+    if (AllocationOrder.empty()) {
+      // All registers in the class were reserved.
+      //
+      // It might be OK to take any entry from the class as this is an undef
+      // use, but accepting this would give different behavior than greedy and
+      // basic.
+      PhysReg = getErrorAssignment(*LRI, *MO.getParent(), RC);
+      LRI->Error = true;
+    } else
+      PhysReg = AllocationOrder.front();
   }
 
   unsigned SubRegIdx = MO.getSubReg();
@@ -1194,10 +1201,9 @@ MCPhysReg RegAllocFastImpl::getErrorAssignment(const LiveReg &LR,
   if (AllocationOrder.empty()) {
     const Function &Fn = MF.getFunction();
     if (EmitError) {
-      DiagnosticInfoRegAllocFailure DI(
+      Fn.getContext().diagnose(DiagnosticInfoRegAllocFailure(
           "no registers from class available to allocate", Fn,
-          MI.getDebugLoc());
-      Fn.getContext().diagnose(DI);
+          MI.getDebugLoc()));
     }
 
     ArrayRef<MCPhysReg> RawRegs = RC.getRegisters();
@@ -1213,10 +1219,9 @@ MCPhysReg RegAllocFastImpl::getErrorAssignment(const LiveReg &LR,
           "inline assembly requires more registers than available");
     } else {
       const Function &Fn = MBB->getParent()->getFunction();
-      DiagnosticInfoRegAllocFailure DI(
+      Fn.getContext().diagnose(DiagnosticInfoRegAllocFailure(
           "ran out of registers during register allocation", Fn,
-          MI.getDebugLoc());
-      Fn.getContext().diagnose(DI);
+          MI.getDebugLoc()));
     }
   }
 

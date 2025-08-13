@@ -223,11 +223,11 @@
 #include "llvm/Transforms/Instrumentation/PGOCtxProfLowering.h"
 #include "llvm/Transforms/Instrumentation/PGOForceFunctionAttrs.h"
 #include "llvm/Transforms/Instrumentation/PGOInstrumentation.h"
-#include "llvm/Transforms/Instrumentation/PoisonChecking.h"
 #include "llvm/Transforms/Instrumentation/RealtimeSanitizer.h"
 #include "llvm/Transforms/Instrumentation/SanitizerBinaryMetadata.h"
 #include "llvm/Transforms/Instrumentation/SanitizerCoverage.h"
 #include "llvm/Transforms/Instrumentation/ThreadSanitizer.h"
+#include "llvm/Transforms/Instrumentation/TypeSanitizer.h"
 #include "llvm/Transforms/ObjCARC.h"
 #include "llvm/Transforms/Scalar/ADCE.h"
 #include "llvm/Transforms/Scalar/AlignmentFromAssumptions.h"
@@ -1283,6 +1283,33 @@ parseRegAllocFastPassOptions(PassBuilder &PB, StringRef Params) {
         inconvertibleErrorCode());
   }
   return Opts;
+}
+
+Expected<BoundsCheckingPass::ReportingMode>
+parseBoundsCheckingOptions(StringRef Params) {
+  BoundsCheckingPass::ReportingMode Mode =
+      BoundsCheckingPass::ReportingMode::Trap;
+  while (!Params.empty()) {
+    StringRef ParamName;
+    std::tie(ParamName, Params) = Params.split(';');
+    if (ParamName == "trap") {
+      Mode = BoundsCheckingPass::ReportingMode::Trap;
+    } else if (ParamName == "rt") {
+      Mode = BoundsCheckingPass::ReportingMode::FullRuntime;
+    } else if (ParamName == "rt-abort") {
+      Mode = BoundsCheckingPass::ReportingMode::FullRuntimeAbort;
+    } else if (ParamName == "min-rt") {
+      Mode = BoundsCheckingPass::ReportingMode::MinRuntime;
+    } else if (ParamName == "min-rt-abort") {
+      Mode = BoundsCheckingPass::ReportingMode::MinRuntimeAbort;
+    } else {
+      return make_error<StringError>(
+          formatv("invalid BoundsChecking pass parameter '{0}' ", ParamName)
+              .str(),
+          inconvertibleErrorCode());
+    }
+  }
+  return Mode;
 }
 
 } // namespace
