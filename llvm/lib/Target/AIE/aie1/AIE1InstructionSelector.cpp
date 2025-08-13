@@ -414,7 +414,7 @@ bool AIEInstructionSelector::selectPHI(MachineInstr &I,
       return false;
     }
 
-    const RegisterBank &RB = *RegClassOrBank.get<const RegisterBank *>();
+    const RegisterBank &RB = *cast<const RegisterBank *>(RegClassOrBank);
     DstRC = getMinClassForRegBank(RB);
     if (!DstRC) {
       LLVM_DEBUG(

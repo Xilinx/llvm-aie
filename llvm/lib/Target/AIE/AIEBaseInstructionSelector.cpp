@@ -281,7 +281,7 @@ bool AIEBaseInstructionSelector::selectG_IMPLICIT_DEF(
   const TargetRegisterClass *DstRC =
       RegClassOrBank.dyn_cast<const TargetRegisterClass *>();
   if (!DstRC) {
-    const RegisterBank &RB = *RegClassOrBank.get<const RegisterBank *>();
+    const RegisterBank &RB = *cast<const RegisterBank *>(RegClassOrBank);
     DstRC = &TRI.getMinClassForRegBank(RB, MRI.getType(DstReg));
   }
   return RBI.constrainGenericRegister(DstReg, *DstRC, MRI);
@@ -294,7 +294,7 @@ bool AIEBaseInstructionSelector::selectG_PHI(MachineInstr &I,
   const TargetRegisterClass *DstRC =
       RegClassOrBank.dyn_cast<const TargetRegisterClass *>();
   if (!DstRC) {
-    const RegisterBank &RB = *RegClassOrBank.get<const RegisterBank *>();
+    const RegisterBank &RB = *cast<const RegisterBank *>(RegClassOrBank);
     DstRC = &TRI.getMinClassForRegBank(RB, MRI.getType(DstReg));
   }
   I.setDesc(TII.get(TargetOpcode::PHI));
