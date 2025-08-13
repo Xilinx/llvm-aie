@@ -167,15 +167,14 @@ bool CombinerHelper::matchTruncateOfExt(const MachineInstr &Root,
 
 bool CombinerHelper::isCastFree(unsigned Opcode, LLT ToTy, LLT FromTy) const {
   const TargetLowering &TLI = getTargetLowering();
-  const DataLayout &DL = getDataLayout();
   LLVMContext &Ctx = getContext();
 
   switch (Opcode) {
   case TargetOpcode::G_ANYEXT:
   case TargetOpcode::G_ZEXT:
-    return TLI.isZExtFree(FromTy, ToTy, DL, Ctx);
+    return TLI.isZExtFree(FromTy, ToTy, Ctx);
   case TargetOpcode::G_TRUNC:
-    return TLI.isTruncateFree(FromTy, ToTy, DL, Ctx);
+    return TLI.isTruncateFree(FromTy, ToTy, Ctx);
   default:
     return false;
   }
@@ -336,11 +335,10 @@ bool CombinerHelper::matchNarrowBinop(const MachineInstr &TruncMI,
     return false;
 
   const MachineFunction *MF = TruncMI.getMF();
-  const DataLayout &DL = MF->getDataLayout();
   LLVMContext &Ctx = MF->getFunction().getContext();
   const auto &TLI = getTargetLowering();
   // Be sure that replacing one truncation by two is cost-free.
-  if (!TLI.isTruncateFree(SrcTy, DstTy, DL, Ctx))
+  if (!TLI.isTruncateFree(SrcTy, DstTy, Ctx))
     return false;
 
   MatchInfo = [=](MachineIRBuilder &B) {

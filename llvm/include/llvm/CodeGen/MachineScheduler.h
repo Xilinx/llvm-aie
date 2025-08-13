@@ -102,8 +102,17 @@
 
 namespace llvm {
 
-extern cl::opt<bool> ForceTopDown;
-extern cl::opt<bool> ForceBottomUp;
+namespace MISched {
+enum Direction {
+  Unspecified,
+  TopDown,
+  BottomUp,
+  Bidirectional,
+};
+} // namespace MISched
+
+extern cl::opt<MISched::Direction> PreRADirection;
+extern cl::opt<MISched::Direction> PostRADirection;
 extern cl::opt<bool> VerifyScheduling;
 #ifndef NDEBUG
 extern cl::opt<bool> ViewMISchedDAGs;

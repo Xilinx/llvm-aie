@@ -21,4 +21,4 @@ body:             |
     PseudoRET implicit $lr, implicit %20, implicit %0, implicit $s1, implicit $s2, implicit $s3
 ...
 
-# CHECK: LLVM ERROR: no registers from class available to allocate
+# CHECK: error: <unknown>:0:0: ran out of registers during register allocation

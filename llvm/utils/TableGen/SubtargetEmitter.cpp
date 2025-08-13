@@ -24,6 +24,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/MC/MCSchedule.h"
 #include "llvm/Support/Debug.h"
@@ -94,6 +95,7 @@ class SubtargetEmitter {
   void emitSubtargetInfoMacroCalls(raw_ostream &OS);
   unsigned featureKeyValues(raw_ostream &OS, const FeatureMapTy &FeatureMap);
   unsigned cpuKeyValues(raw_ostream &OS, const FeatureMapTy &FeatureMap);
+  unsigned cpuNames(raw_ostream &OS);
   void formItineraryStageString(const std::string &Names,
                                 const Record *ItinData, std::string &ItinString,
                                 unsigned &NStages);
@@ -300,6 +302,40 @@ unsigned SubtargetEmitter::featureKeyValues(raw_ostream &OS,
   OS << "};\n";
 
   return FeatureList.size();
+}
+
+unsigned SubtargetEmitter::cpuNames(raw_ostream &OS) {
+  // Begin processor name table.
+  OS << "// Sorted array of names of CPU subtypes, including aliases.\n"
+     << "extern const llvm::StringRef " << Target << "Names[] = {\n";
+
+  std::vector<const Record *> ProcessorList =
+      Records.getAllDerivedDefinitions("Processor");
+
+  std::vector<const Record *> ProcessorAliasList =
+      Records.getAllDerivedDefinitionsIfDefined("ProcessorAlias");
+
+  SmallVector<StringRef> Names;
+  Names.reserve(ProcessorList.size() + ProcessorAliasList.size());
+
+  for (const Record *Processor : ProcessorList) {
+    StringRef Name = Processor->getValueAsString("Name");
+    Names.push_back(Name);
+  }
+
+  for (const Record *Rec : ProcessorAliasList) {
+    auto Name = Rec->getValueAsString("Name");
+    Names.push_back(Name);
+  }
+
+  llvm::sort(Names);
+  llvm::interleave(
+      Names, OS, [&](StringRef Name) { OS << '"' << Name << '"'; }, ",\n");
+
+  // End processor name table.
+  OS << "};\n";
+
+  return Names.size();
 }
 
 //
@@ -1965,13 +2001,14 @@ void SubtargetEmitter::emitGenMCSubtargetInfo(raw_ostream &OS) {
      << "GenMCSubtargetInfo : public MCSubtargetInfo {\n";
   OS << "  " << Target << "GenMCSubtargetInfo(const Triple &TT,\n"
      << "    StringRef CPU, StringRef TuneCPU, StringRef FS,\n"
+     << "    ArrayRef<StringRef> PN,\n"
      << "    ArrayRef<SubtargetFeatureKV> PF,\n"
      << "    ArrayRef<SubtargetSubTypeKV> PD,\n"
      << "    const MCWriteProcResEntry *WPR,\n"
      << "    const MCWriteLatencyEntry *WL,\n"
      << "    const MCReadAdvanceEntry *RA, const InstrStage *IS,\n"
      << "    const unsigned *OC, const unsigned *FP) :\n"
-     << "      MCSubtargetInfo(TT, CPU, TuneCPU, FS, PF, PD,\n"
+     << "      MCSubtargetInfo(TT, CPU, TuneCPU, FS, PN, PF, PD,\n"
      << "                      WPR, WL, RA, IS, OC, FP) { }\n\n"
      << "  unsigned resolveVariantSchedClass(unsigned SchedClass,\n"
      << "      const MCInst *MI, const MCInstrInfo *MCII,\n"
@@ -2042,6 +2079,8 @@ void SubtargetEmitter::run(raw_ostream &OS) {
   OS << "\n";
   unsigned NumProcs = cpuKeyValues(OS, FeatureMap);
   OS << "\n";
+  unsigned NumNames = cpuNames(OS);
+  OS << "\n";
 
   // MCInstrInfo initialization routine.
   emitGenMCSubtargetInfo(OS);
@@ -2054,6 +2093,10 @@ void SubtargetEmitter::run(raw_ostream &OS) {
        << "  TuneCPU = AArch64::resolveCPUAlias(TuneCPU);\n";
   OS << "  return new " << Target
      << "GenMCSubtargetInfo(TT, CPU, TuneCPU, FS, ";
+  if (NumNames)
+    OS << Target << "Names, ";
+  else
+    OS << "{}, ";
   if (NumFeatures)
     OS << Target << "FeatureKV, ";
   else
@@ -2137,6 +2180,7 @@ void SubtargetEmitter::run(raw_ostream &OS) {
 
   OS << "#include \"llvm/CodeGen/TargetSchedule.h\"\n\n";
   OS << "namespace llvm {\n";
+  OS << "extern const llvm::StringRef " << Target << "Names[];\n";
   OS << "extern const llvm::SubtargetFeatureKV " << Target << "FeatureKV[];\n";
   OS << "extern const llvm::SubtargetSubTypeKV " << Target << "SubTypeKV[];\n";
   OS << "extern const llvm::MCWriteProcResEntry " << Target
@@ -2160,6 +2204,10 @@ void SubtargetEmitter::run(raw_ostream &OS) {
        << "                        AArch64::resolveCPUAlias(TuneCPU), FS, ";
   else
     OS << "  : TargetSubtargetInfo(TT, CPU, TuneCPU, FS, ";
+  if (NumNames)
+    OS << "ArrayRef(" << Target << "Names, " << NumNames << "), ";
+  else
+    OS << "{}, ";
   if (NumFeatures)
     OS << "ArrayRef(" << Target << "FeatureKV, " << NumFeatures << "), ";
   else

@@ -20,33 +20,33 @@ define void @core13() {
 ; CHECK-NEXT:    [[CONSTEXPR1:%.*]] = and i64 ptrtoint (ptr @a to i64), 28
 ; CHECK-NEXT:    [[CONSTEXPR2:%.*]] = icmp eq i64 [[CONSTEXPR1]], 0
 ; CHECK-NEXT:    tail call void @llvm.assume(i1 [[CONSTEXPR2]])
-; CHECK-NEXT:    store float 1.400000e+01, ptr getelementptr inbounds (i8, ptr @a, i20 12), align 4
-; CHECK-NEXT:    store float 8.000000e+00, ptr getelementptr inbounds (i8, ptr @a, i20 20), align 4
-; CHECK-NEXT:    store float 1.400000e+01, ptr getelementptr inbounds (i8, ptr @a, i20 36), align 4
+; CHECK-NEXT:    store float 1.400000e+01, ptr getelementptr inbounds nuw (i8, ptr @a, i20 12), align 4
+; CHECK-NEXT:    store float 8.000000e+00, ptr getelementptr inbounds nuw (i8, ptr @a, i20 20), align 4
+; CHECK-NEXT:    store float 1.400000e+01, ptr getelementptr inbounds nuw (i8, ptr @a, i20 36), align 4
 ; CHECK-NEXT:    [[UNMASKEDLOAD:%.*]] = load <8 x float>, ptr @a, align 4
 ; CHECK-NEXT:    [[TMP1:%.*]] = fmul <8 x float> [[UNMASKEDLOAD]], [[UNMASKEDLOAD]]
 ; CHECK-NEXT:    store <8 x float> [[TMP1]], ptr @a, align 4
-; CHECK-NEXT:    [[UNMASKEDLOAD1:%.*]] = load <8 x float>, ptr getelementptr inbounds (i8, ptr @a, i20 32), align 4
+; CHECK-NEXT:    [[UNMASKEDLOAD1:%.*]] = load <8 x float>, ptr getelementptr inbounds nuw (i8, ptr @a, i20 32), align 4
 ; CHECK-NEXT:    [[TMP2:%.*]] = fmul <8 x float> [[UNMASKEDLOAD1]], [[UNMASKEDLOAD1]]
-; CHECK-NEXT:    store <8 x float> [[TMP2]], ptr getelementptr inbounds (i8, ptr @a, i20 32), align 4
-; CHECK-NEXT:    [[UNMASKEDLOAD2:%.*]] = load <8 x float>, ptr getelementptr inbounds (i8, ptr @a, i20 64), align 4
+; CHECK-NEXT:    store <8 x float> [[TMP2]], ptr getelementptr inbounds nuw (i8, ptr @a, i20 32), align 4
+; CHECK-NEXT:    [[UNMASKEDLOAD2:%.*]] = load <8 x float>, ptr getelementptr inbounds nuw (i8, ptr @a, i20 64), align 4
 ; CHECK-NEXT:    [[TMP3:%.*]] = fmul <8 x float> [[UNMASKEDLOAD2]], [[UNMASKEDLOAD2]]
-; CHECK-NEXT:    store <8 x float> [[TMP3]], ptr getelementptr inbounds (i8, ptr @a, i20 64), align 4
-; CHECK-NEXT:    [[UNMASKEDLOAD3:%.*]] = load <8 x float>, ptr getelementptr inbounds (i8, ptr @a, i20 96), align 4
+; CHECK-NEXT:    store <8 x float> [[TMP3]], ptr getelementptr inbounds nuw (i8, ptr @a, i20 64), align 4
+; CHECK-NEXT:    [[UNMASKEDLOAD3:%.*]] = load <8 x float>, ptr getelementptr inbounds nuw (i8, ptr @a, i20 96), align 4
 ; CHECK-NEXT:    [[TMP4:%.*]] = fmul <8 x float> [[UNMASKEDLOAD3]], [[UNMASKEDLOAD3]]
-; CHECK-NEXT:    store <8 x float> [[TMP4]], ptr getelementptr inbounds (i8, ptr @a, i20 96), align 4
-; CHECK-NEXT:    [[UNMASKEDLOAD4:%.*]] = load <8 x float>, ptr getelementptr inbounds (i8, ptr @a, i20 128), align 4
+; CHECK-NEXT:    store <8 x float> [[TMP4]], ptr getelementptr inbounds nuw (i8, ptr @a, i20 96), align 4
+; CHECK-NEXT:    [[UNMASKEDLOAD4:%.*]] = load <8 x float>, ptr getelementptr inbounds nuw (i8, ptr @a, i20 128), align 4
 ; CHECK-NEXT:    [[TMP5:%.*]] = fmul <8 x float> [[UNMASKEDLOAD4]], [[UNMASKEDLOAD4]]
-; CHECK-NEXT:    store <8 x float> [[TMP5]], ptr getelementptr inbounds (i8, ptr @a, i20 128), align 4
-; CHECK-NEXT:    [[UNMASKEDLOAD5:%.*]] = load <8 x float>, ptr getelementptr inbounds (i8, ptr @a, i20 160), align 4
+; CHECK-NEXT:    store <8 x float> [[TMP5]], ptr getelementptr inbounds nuw (i8, ptr @a, i20 128), align 4
+; CHECK-NEXT:    [[UNMASKEDLOAD5:%.*]] = load <8 x float>, ptr getelementptr inbounds nuw (i8, ptr @a, i20 160), align 4
 ; CHECK-NEXT:    [[TMP6:%.*]] = fmul <8 x float> [[UNMASKEDLOAD5]], [[UNMASKEDLOAD5]]
-; CHECK-NEXT:    store <8 x float> [[TMP6]], ptr getelementptr inbounds (i8, ptr @a, i20 160), align 4
-; CHECK-NEXT:    [[UNMASKEDLOAD6:%.*]] = load <8 x float>, ptr getelementptr inbounds (i8, ptr @a, i20 192), align 4
+; CHECK-NEXT:    store <8 x float> [[TMP6]], ptr getelementptr inbounds nuw (i8, ptr @a, i20 160), align 4
+; CHECK-NEXT:    [[UNMASKEDLOAD6:%.*]] = load <8 x float>, ptr getelementptr inbounds nuw (i8, ptr @a, i20 192), align 4
 ; CHECK-NEXT:    [[TMP7:%.*]] = fmul <8 x float> [[UNMASKEDLOAD6]], [[UNMASKEDLOAD6]]
-; CHECK-NEXT:    store <8 x float> [[TMP7]], ptr getelementptr inbounds (i8, ptr @a, i20 192), align 4
-; CHECK-NEXT:    [[UNMASKEDLOAD7:%.*]] = load <8 x float>, ptr getelementptr inbounds (i8, ptr @a, i20 224), align 4
+; CHECK-NEXT:    store <8 x float> [[TMP7]], ptr getelementptr inbounds nuw (i8, ptr @a, i20 192), align 4
+; CHECK-NEXT:    [[UNMASKEDLOAD7:%.*]] = load <8 x float>, ptr getelementptr inbounds nuw (i8, ptr @a, i20 224), align 4
 ; CHECK-NEXT:    [[TMP8:%.*]] = fmul <8 x float> [[UNMASKEDLOAD7]], [[UNMASKEDLOAD7]]
-; CHECK-NEXT:    store <8 x float> [[TMP8]], ptr getelementptr inbounds (i8, ptr @a, i20 224), align 4
+; CHECK-NEXT:    store <8 x float> [[TMP8]], ptr getelementptr inbounds nuw (i8, ptr @a, i20 224), align 4
 ; CHECK-NEXT:    ret void
 ;
   %constexpr = ptrtoint ptr @a to i64

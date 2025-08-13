@@ -110,10 +110,10 @@ body: |
     ; CHECK-NEXT: [[ADD1:%[0-9]+]]:_(s32) = G_ADD [[COPY1]], [[COPY3]]
     ; CHECK-NEXT: [[ADD2:%[0-9]+]]:_(s32) = G_ADD [[ADD1]], [[ICMP]]
     ; CHECK-NEXT: [[COPY5:%[0-9]+]]:_(s32) = COPY [[ADD2]](s32)
-    ; CHECK-NEXT: [[ICMP1:%[0-9]+]]:_(s32) = G_ICMP intpred(ult), [[COPY5]](s32), [[COPY3]]
-    ; CHECK-NEXT: [[ICMP2:%[0-9]+]]:_(s32) = G_ICMP intpred(eq), [[COPY5]](s32), [[COPY3]]
-    ; CHECK-NEXT: [[ICMP3:%[0-9]+]]:_(s32) = G_ICMP intpred(ult), [[COPY4]](s32), [[COPY2]]
-    ; CHECK-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP2]](s32), [[ICMP3]], [[ICMP1]]
+    ; CHECK-NEXT: [[ICMP1:%[0-9]+]]:_(s32) = G_ICMP intpred(ult), [[COPY4]](s32), [[COPY2]]
+    ; CHECK-NEXT: [[ICMP2:%[0-9]+]]:_(s32) = G_ICMP intpred(ult), [[COPY5]](s32), [[COPY3]]
+    ; CHECK-NEXT: [[ICMP3:%[0-9]+]]:_(s32) = G_ICMP intpred(eq), [[COPY5]](s32), [[COPY3]]
+    ; CHECK-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP3]](s32), [[ICMP1]], [[ICMP2]]
     ; CHECK-NEXT: $r0 = COPY [[SELECT]](s32)
     ; CHECK-NEXT: $r1 = COPY [[COPY4]](s32)
     ; CHECK-NEXT: $r2 = COPY [[COPY5]](s32)
