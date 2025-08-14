@@ -1190,10 +1190,6 @@ AIEBaseInstrInfo::getSlotOpcode(const MCSlotKind Slot,
   return {};
 }
 
-const PacketFormats &AIEBaseInstrInfo::getPacketFormats() const {
-  return FormatInterface->getPacketFormats();
-}
-
 std::vector<MachineBasicBlock::iterator>
 AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
   std::vector<MachineBasicBlock::iterator> AlignCandidates;
