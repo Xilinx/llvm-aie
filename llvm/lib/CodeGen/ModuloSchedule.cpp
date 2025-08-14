@@ -904,7 +904,7 @@ void ModuloScheduleExpander::addBranches(MachineBasicBlock &PreheaderBB,
         LastEpi->eraseFromParent();
       }
       if (LastPro == KernelBB) {
-        LoopInfo->disposed();
+        LoopInfo->disposed(&LIS);
         NewKernel = nullptr;
       }
       LastPro->clear();

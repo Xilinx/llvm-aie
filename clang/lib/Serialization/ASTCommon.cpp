@@ -346,6 +346,7 @@ serialization::getDefinitiveDeclContext(const DeclContext *DC) {
   case Decl::CXXConversion:
   case Decl::ObjCMethod:
   case Decl::Block:
+  case Decl::OutlinedFunction:
   case Decl::Captured:
     // Objective C categories, category implementations, and class
     // implementations can only be defined in one place.
@@ -447,6 +448,7 @@ bool serialization::isRedeclarableDeclKind(unsigned Kind) {
   case Decl::FriendTemplate:
   case Decl::StaticAssert:
   case Decl::Block:
+  case Decl::OutlinedFunction:
   case Decl::Captured:
   case Decl::Import:
   case Decl::OMPThreadPrivate:

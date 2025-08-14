@@ -560,7 +560,7 @@ void ScheduleDAGInstrs::addVRegUseDeps(SUnit *SU, unsigned OperIdx) {
 
 
 bool ScheduleDAGInstrs::mayAlias(SUnit *SUa, SUnit *SUb, bool UseTBAA) {
-  return SUa->getInstr()->mayAlias(AAForDep, *SUb->getInstr(), UseTBAA);
+  return SUa->getInstr()->mayAlias(getAAForDep(), *SUb->getInstr(), UseTBAA);
 }
 
 void ScheduleDAGInstrs::addChainDependency (SUnit *SUa, SUnit *SUb,
@@ -859,7 +859,8 @@ void ScheduleDAGInstrs::buildEdges(AAResults *AA, RegPressureTracker *RPTracker,
   const TargetSubtargetInfo &ST = MF.getSubtarget();
   bool UseAA = EnableAASchedMI.getNumOccurrences() > 0 ? EnableAASchedMI
                                                        : ST.useAA();
-  AAForDep = UseAA ? AA : nullptr;
+  if (UseAA && AA)
+    AAForDep.emplace(*AA);
   BarrierChain = nullptr;
   this->TrackLaneMasks = TrackLaneMasks;
 

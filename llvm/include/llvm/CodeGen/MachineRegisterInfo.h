@@ -941,7 +941,7 @@ public:
     MCRegAliasIterator R(PhysReg, TRI, true);
 
     for (; R.isValid(); ++R)
-      ReservedRegs.set(*R);
+      ReservedRegs.set((*R).id());
   }
 
   /// reservedRegsFrozen - Returns true after freezeReservedRegs() was called
@@ -954,7 +954,7 @@ public:
   /// register.  Any register can be reserved before freezeReservedRegs() is
   /// called.
   bool canReserveReg(MCRegister PhysReg) const {
-    return !reservedRegsFrozen() || ReservedRegs.test(PhysReg);
+    return !reservedRegsFrozen() || ReservedRegs.test(PhysReg.id());
   }
 
   /// getReservedRegs - Returns a reference to the frozen set of reserved
