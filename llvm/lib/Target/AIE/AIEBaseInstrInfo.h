@@ -168,8 +168,6 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   /// \return wether \p MI is a multi-slot pseudo instruction
   bool isMultiSlotPseudo(const MachineInstr &MI) const;
 
-  /// Return the Packet formats for this target
-  virtual const PacketFormats &getPacketFormats() const;
   /// Return a nop of the given byte size, or the smallest if zero.
   virtual unsigned getNopOpcode(size_t Size = 0) const {
     llvm_unreachable("Target didn't implement getNopOpcode");
