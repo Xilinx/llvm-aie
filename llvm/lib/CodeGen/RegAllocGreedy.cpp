@@ -144,7 +144,7 @@ static cl::opt<bool> GreedyReverseLocalAssignment(
 static cl::opt<unsigned> SplitThresholdForRegWithHint(
     "split-threshold-for-reg-with-hint",
     cl::desc("The threshold for splitting a virtual register with a hint, in "
-             "percentate"),
+             "percentage"),
     cl::init(75), cl::Hidden);
 
 static cl::opt<bool> PreferPreviousRAAssignment(
@@ -387,6 +387,12 @@ unsigned DefaultPriorityAdvisor::getPriority(const LiveInterval &LI) const {
   }
 
   return Prio;
+}
+
+unsigned DummyPriorityAdvisor::getPriority(const LiveInterval &LI) const {
+  // Prioritize by virtual register number, lowest first.
+  Register Reg = LI.reg();
+  return ~Reg.virtRegIndex();
 }
 
 const LiveInterval *RAGreedy::dequeue() { return dequeue(Queue); }
@@ -2045,6 +2051,9 @@ unsigned RAGreedy::tryLastChanceRecoloring(const LiveInterval &VirtReg,
     // available colors.
     Matrix->assign(VirtReg, PhysReg);
 
+    // VirtReg may be deleted during tryRecoloringCandidates, save a copy.
+    Register ThisVirtReg = VirtReg.reg();
+
     // Save the current recoloring state.
     // If we cannot recolor all the interferences, we will have to start again
     // at this point for the next physical register.
@@ -2056,8 +2065,16 @@ unsigned RAGreedy::tryLastChanceRecoloring(const LiveInterval &VirtReg,
         NewVRegs.push_back(NewVReg);
       // Do not mess up with the global assignment process.
       // I.e., VirtReg must be unassigned.
-      Matrix->unassign(VirtReg);
-      return PhysReg;
+      if (VRM->hasPhys(ThisVirtReg)) {
+        Matrix->unassign(VirtReg);
+        return PhysReg;
+      }
+
+      // It is possible VirtReg will be deleted during tryRecoloringCandidates.
+      LLVM_DEBUG(dbgs() << "tryRecoloringCandidates deleted a fixed register "
+                        << printReg(ThisVirtReg) << '\n');
+      FixedRegisters.erase(ThisVirtReg);
+      return 0;
     }
 
     LLVM_DEBUG(dbgs() << "Fail to assign: " << VirtReg << " to "
