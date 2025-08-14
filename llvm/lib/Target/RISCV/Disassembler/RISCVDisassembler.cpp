@@ -710,6 +710,8 @@ DecodeStatus RISCVDisassembler::getInstruction32(MCInst &MI, uint64_t &Size,
       "Qualcomm uC Conditional Load Immediate custom opcode table");
   TRY_TO_DECODE_FEATURE(RISCV::FeatureVendorXqcicm, DecoderTableXqcicm32,
                         "Qualcomm uC Conditional Move custom opcode table");
+  TRY_TO_DECODE_FEATURE(RISCV::FeatureVendorXqciint, DecoderTableXqciint32,
+                        "Qualcomm uC Interrupts custom opcode table");
   TRY_TO_DECODE(true, DecoderTable32, "RISCV32 table");
 
   return MCDisassembler::Fail;
@@ -742,6 +744,8 @@ DecodeStatus RISCVDisassembler::getInstruction16(MCInst &MI, uint64_t &Size,
   TRY_TO_DECODE_FEATURE(
       RISCV::FeatureVendorXqcicm, DecoderTableXqcicm16,
       "Qualcomm uC Conditional Move custom 16bit opcode table");
+  TRY_TO_DECODE_FEATURE(RISCV::FeatureVendorXqciint, DecoderTableXqciint16,
+                        "Qualcomm uC Interrupts custom 16bit opcode table");
   TRY_TO_DECODE_AND_ADD_SP(STI.hasFeature(RISCV::FeatureVendorXwchc),
                            DecoderTableXwchc16,
                            "WCH QingKe XW custom opcode table");

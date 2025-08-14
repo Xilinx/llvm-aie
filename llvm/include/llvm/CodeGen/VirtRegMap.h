@@ -105,7 +105,7 @@ public:
 
   /// creates a mapping for the specified virtual register to
   /// the specified physical register
-  void assignVirt2Phys(Register virtReg, MCPhysReg physReg);
+  void assignVirt2Phys(Register virtReg, MCRegister physReg);
 
   /// returns true if the specified virtual register is
   /// required to be assigned to a specific physical register

@@ -719,6 +719,12 @@ class Attr {
   // attribute may be documented under multiple categories, more than one
   // Documentation entry may be listed.
   list<Documentation> Documentation;
+  // Set to true if deserialization of this attribute must be deferred until 
+  // the parent Decl is fully deserialized (during header module file
+  // deserialization). E.g., this is the case for the preferred_name attribute,
+  // since its type deserialization depends on its target Decl type.
+  // (See https://github.com/llvm/llvm-project/issues/56490 for details).
+  bit DeferDeserialization = 0;
 }
 
 /// Used to define a set of mutually exclusive attributes.
@@ -1522,11 +1528,22 @@ def SYCLKernel : InheritableAttr {
 
 def SYCLKernelEntryPoint : InheritableAttr {
   let Spellings = [Clang<"sycl_kernel_entry_point">];
-  let Args = [TypeArgument<"KernelName">];
+  let Args = [
+    // KernelName is required and specifies the kernel name type.
+    TypeArgument<"KernelName">,
+    // InvalidAttr is a fake argument used to track whether the
+    // semantic requirements of the attribute have been satisified.
+    // A fake argument is used to enable serialization support.
+    DefaultBoolArgument<"Invalid", /*default=*/0, /*fake=*/1>
+  ];
   let Subjects = SubjectList<[Function], ErrorDiag>;
   let TemplateDependent = 1;
   let LangOpts = [SYCLHost, SYCLDevice];
   let Documentation = [SYCLKernelEntryPointDocs];
+  let AdditionalMembers = [{
+    void setInvalidAttr() { invalid = true; }
+    bool isInvalidAttr() const { return invalid; }
+  }];
 }
 
 def SYCLSpecialClass: InheritableAttr {
@@ -1894,6 +1911,13 @@ def Leaf : InheritableAttr {
   let Spellings = [GCC<"leaf">];
   let Subjects = SubjectList<[Function]>;
   let Documentation = [LeafDocs];
+  let SimpleHandler = 1;
+}
+
+def ExplicitInit : InheritableAttr {
+  let Spellings = [Clang<"require_explicit_initialization">];
+  let Subjects = SubjectList<[Field], ErrorDiag>;
+  let Documentation = [ExplicitInitDocs];
   let SimpleHandler = 1;
 }
 
@@ -2872,6 +2896,13 @@ def ArmPreserves : TypeAttr, TargetSpecificAttr<TargetAArch64> {
   let Documentation = [ArmPreservesDocs];
 }
 
+def ArmAgnostic : TypeAttr, TargetSpecificAttr<TargetAArch64> {
+  let Spellings = [RegularKeyword<"__arm_agnostic">];
+  let Args = [VariadicStringArgument<"AgnosticArgs">];
+  let Subjects = SubjectList<[HasFunctionProto], ErrorDiag>;
+  let Documentation = [ArmAgnosticDocs];
+}
+
 def ArmLocallyStreaming : InheritableAttr, TargetSpecificAttr<TargetAArch64> {
   let Spellings = [RegularKeyword<"__arm_locally_streaming">];
   let Subjects = SubjectList<[Function], ErrorDiag>;
@@ -3235,6 +3266,11 @@ def PreferredName : InheritableAttr {
   let InheritEvenIfAlreadyPresent = 1;
   let MeaningfulToClassTemplateDefinition = 1;
   let TemplateDependent = 1;
+  // Type of this attribute depends on the target Decl type.
+  // Therefore, its deserialization must be deferred until
+  // deserialization of the target Decl is complete
+  // (for header modules).
+  let DeferDeserialization = 1;
 }
 
 def PreserveMost : DeclOrTypeAttr {
@@ -4358,6 +4394,16 @@ def HLSLLoopHint: StmtAttr {
   let Documentation = [HLSLLoopHintDocs, HLSLUnrollHintDocs];
 }
 
+def HLSLControlFlowHint: StmtAttr {
+  /// [branch]
+  /// [flatten]
+  let Spellings = [Microsoft<"branch">, Microsoft<"flatten">];
+  let Subjects = SubjectList<[IfStmt],
+                              ErrorDiag, "'if' statements">;
+  let LangOpts = [HLSL];
+  let Documentation = [InternalOnly];
+}
+
 def CapturedRecord : InheritableAttr {
   // This attribute has no spellings as it is only ever created implicitly.
   let Spellings = [];
@@ -4734,9 +4780,9 @@ def HLSLPackOffset: HLSLAnnotationAttr {
   let Args = [IntArgument<"Subcomponent">, IntArgument<"Component">];
   let Documentation = [HLSLPackOffsetDocs];
   let AdditionalMembers = [{
-      unsigned getOffset() {
-        return subcomponent * 4 + component;
-      }
+  unsigned getOffsetInBytes() {
+    return subcomponent * 16 + component * 4;
+  }
   }];
 }
 
