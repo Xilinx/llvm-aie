@@ -15,6 +15,7 @@
 #include "AIEBasePipelinerLoopInfo.h"
 #include "AIEBaseInstrInfo.h"
 #include "Utils/AIELoopUtils.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineOperand.h"
@@ -433,7 +434,7 @@ std::vector<MachineInstr *> getInstrSequence(SMSchedule &Sched) {
 }
 
 /// Replay the instructions in \p Seq and collect all the livein registers.
-std::vector<RegisterMaskPair>
+std::vector<VRegMaskOrUnit>
 collectLiveInRegs(const std::vector<MachineInstr *> &Seq,
                   const MachineFunction &MF) {
   const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
@@ -448,15 +449,15 @@ collectLiveInRegs(const std::vector<MachineInstr *> &Seq,
 
     RegisterOperands RegOpers;
     RegOpers.collect(*MI, *TRI, MF.getRegInfo(), true, true);
-    for (const RegisterMaskPair &Def : RegOpers.Defs)
+    for (const VRegMaskOrUnit &Def : RegOpers.Defs)
       LiveRegs.erase(Def);
-    for (const RegisterMaskPair &Use : RegOpers.Uses)
+    for (const VRegMaskOrUnit &Use : RegOpers.Uses)
       LiveRegs.insert(Use);
   }
 
-  std::vector<RegisterMaskPair> LiveInRegs;
+  SmallVector<VRegMaskOrUnit> LiveInRegs;
   LiveRegs.appendTo(LiveInRegs);
-  return LiveInRegs;
+  return {LiveInRegs.begin(), LiveInRegs.end()};
 }
 
 /// Estimate whether the register allocation pipeline will be able to allocate
@@ -497,7 +498,7 @@ bool canAllocate(SMSchedule &Sched) {
   };
 
   // Append pressure for each livein register
-  for (const RegisterMaskPair &LiveInReg : collectLiveInRegs(Seq, MF)) {
+  for (const VRegMaskOrUnit &LiveInReg : collectLiveInRegs(Seq, MF)) {
     LLVM_DEBUG(
         dbgs() << "Add Livein Pressure: "
                << printReg(LiveInReg.RegUnit, TRI, 0, &MF.getRegInfo()) << ":"
