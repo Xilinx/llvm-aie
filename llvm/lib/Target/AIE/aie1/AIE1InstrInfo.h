@@ -53,13 +53,15 @@ public:
                            bool IsKill, int FrameIndex,
                            const TargetRegisterClass *RC,
                            const TargetRegisterInfo *TRI,
-                           Register VReg) const override;
+                           Register VReg,
+                           MachineInstr::MIFlag Flags) const override;
 
   void loadRegFromStackSlot(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MBBI, Register DstReg,
                             int FrameIndex, const TargetRegisterClass *RC,
                             const TargetRegisterInfo *TRI,
-                            Register VReg) const override;
+                            Register VReg,
+                            MachineInstr::MIFlag Flags) const override;
 
   unsigned getInstSizeInBytes(const MachineInstr &MI) const override;
 
