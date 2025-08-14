@@ -103,7 +103,6 @@ class MockMCFormats : public AIEBaseMCFormats {
 
 class MockTII : public AIEInstrInfo {
 public:
-  const PacketFormats &getPacketFormats() const override { return MyFormats; }
   MockTII() {
     for (int i = 0; i < 10; i++) {
       MyInstrs[i].Opcode = FirstOpcode + i;
