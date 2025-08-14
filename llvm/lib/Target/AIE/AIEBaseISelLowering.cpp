@@ -61,12 +61,12 @@ static bool AllocateSplitArg(CCState &State, ArrayRef<MCPhysReg> RegList) {
 
   // If registers are given, try to get as many as needed, and fall back to the
   // stack entirely otherwise.
-  MCPhysReg RegBegin = State.AllocateRegBlock(RegList, NumChunks);
-  if (RegBegin) {
-    for (auto &PL : State.getPendingLocs()) {
-      PL.convertToReg(RegBegin);
+  ArrayRef<MCPhysReg> RegResult = State.AllocateRegBlock(RegList, NumChunks);
+  if (!RegResult.empty()) {
+    assert(RegResult.size() >= State.getPendingLocs().size());
+    for (const auto &[PL, Reg] : zip(State.getPendingLocs(), RegResult)) {
+      PL.convertToReg(Reg);
       State.addLoc(PL);
-      ++RegBegin;
     }
     State.getPendingLocs().clear();
     return true;
@@ -147,7 +147,7 @@ static ArrayRef<MCPhysReg> allocateRegs(CCState &State,
       std::tuple_size<typename RegSetType::value_type>::value;
 
   for (const auto &RegPair : RegSet) {
-    if (State.AllocateRegBlock(RegPair, NumRegs))
+    if (!State.AllocateRegBlock(RegPair, NumRegs).empty())
       return RegPair;
   }
   return ArrayRef<MCPhysReg>();
@@ -344,12 +344,12 @@ static bool CC_AIE_Handle_Split_Arg_Ret(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
   // in more than one register. Try r0-r1 before using the other regs.
   // TODO: check the ABI if e.g. r2 should be used with larger types
   auto NumChunks = State.getPendingLocs().size();
-  MCPhysReg RegBegin = State.AllocateRegBlock({AIE::r0, AIE::r1}, NumChunks);
-  if (!RegBegin) {
-    RegBegin = State.AllocateRegBlock({AIE::r6, AIE::r7, AIE::r8}, NumChunks);
+  ArrayRef<MCPhysReg> RegResult = State.AllocateRegBlock({AIE::r0, AIE::r1}, NumChunks);
+  if (RegResult.empty()) {
+    RegResult = State.AllocateRegBlock({AIE::r6, AIE::r7, AIE::r8}, NumChunks);
   }
 
-  if (!RegBegin) {
+  if (RegResult.empty()) {
 #ifndef NDEBUG
     dbgs() << "Could not allocate " << NumChunks
            << " GPRs for split type ValVT=" << EVT(ValVT).getEVTString()
@@ -358,10 +358,10 @@ static bool CC_AIE_Handle_Split_Arg_Ret(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
     llvm_unreachable("Unable to allocate split type");
   }
 
-  for (auto &PL : State.getPendingLocs()) {
-    PL.convertToReg(RegBegin);
+  assert(RegResult.size() >= State.getPendingLocs().size());
+  for (const auto &[PL, Reg] : zip(State.getPendingLocs(), RegResult)) {
+    PL.convertToReg(Reg);
     State.addLoc(PL);
-    ++RegBegin;
   }
   State.getPendingLocs().clear();
   return true;
