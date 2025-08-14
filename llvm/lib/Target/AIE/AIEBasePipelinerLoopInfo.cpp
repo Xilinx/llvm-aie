@@ -118,13 +118,6 @@ void AIEBasePipelinerLoopInfo::adjustTripCount(int TripCountAdjust) {
 /// loop state registers.
 void AIEBasePipelinerLoopInfo::setPreheader(MachineBasicBlock *NewPreheader) {}
 
-/// Called when the loop is being removed. This may happen when the loop kernel
-/// is only reached by the last iteration.
-/// This might remove loop setup
-/// Once this function is called, no other functions on this object are
-/// valid; the loop has been removed.
-void AIEBasePipelinerLoopInfo::disposed() {}
-
 MachineInstr *AIEBasePipelinerLoopInfo::getDefInstr(MachineInstr *MI,
                                                     unsigned Idx) {
   MachineOperand &MO = MI->getOperand(Idx);
