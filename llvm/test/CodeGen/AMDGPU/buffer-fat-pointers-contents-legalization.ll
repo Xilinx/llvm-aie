@@ -1982,7 +1982,6 @@ define void @store_v2i8(<2 x i8> %data, ptr addrspace(8) inreg %buf) {
 ; GISEL-LABEL: store_v2i8:
 ; GISEL:       ; %bb.0:
 ; GISEL-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
-; GISEL-NEXT:    v_and_b32_e32 v1, 0xff, v1
 ; GISEL-NEXT:    v_lshlrev_b16_e32 v1, 8, v1
 ; GISEL-NEXT:    v_or_b32_sdwa v0, v0, v1 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:BYTE_0 src1_sel:DWORD
 ; GISEL-NEXT:    buffer_store_short v0, off, s[16:19], 0
@@ -2032,7 +2031,6 @@ define void @store_v3i8(<3 x i8> %data, ptr addrspace(8) inreg %buf) {
 ; GISEL-LABEL: store_v3i8:
 ; GISEL:       ; %bb.0:
 ; GISEL-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
-; GISEL-NEXT:    v_and_b32_e32 v1, 0xff, v1
 ; GISEL-NEXT:    v_lshlrev_b16_e32 v1, 8, v1
 ; GISEL-NEXT:    v_or_b32_sdwa v0, v0, v1 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:BYTE_0 src1_sel:DWORD
 ; GISEL-NEXT:    buffer_store_short v0, off, s[16:19], 0
@@ -2090,9 +2088,8 @@ define void @store_v4i8(<4 x i8> %data, ptr addrspace(8) inreg %buf) {
 ; GISEL-NEXT:    v_lshlrev_b32_sdwa v1, v5, v1 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:DWORD src1_sel:BYTE_0
 ; GISEL-NEXT:    v_and_or_b32 v0, v0, v4, v1
 ; GISEL-NEXT:    v_and_b32_e32 v1, 0xff, v2
-; GISEL-NEXT:    v_and_b32_e32 v2, 0xff, v3
 ; GISEL-NEXT:    v_lshlrev_b32_e32 v1, 16, v1
-; GISEL-NEXT:    v_lshlrev_b32_e32 v2, 24, v2
+; GISEL-NEXT:    v_lshlrev_b32_e32 v2, 24, v3
 ; GISEL-NEXT:    v_or3_b32 v0, v0, v1, v2
 ; GISEL-NEXT:    buffer_store_dword v0, off, s[16:19], 0
 ; GISEL-NEXT:    s_waitcnt vmcnt(0)
@@ -2153,9 +2150,8 @@ define void @store_v5i8(<5 x i8> %data, ptr addrspace(8) inreg %buf) {
 ; GISEL-NEXT:    v_lshlrev_b32_sdwa v1, v6, v1 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:DWORD src1_sel:BYTE_0
 ; GISEL-NEXT:    v_and_or_b32 v0, v0, v5, v1
 ; GISEL-NEXT:    v_and_b32_e32 v1, 0xff, v2
-; GISEL-NEXT:    v_and_b32_e32 v2, 0xff, v3
 ; GISEL-NEXT:    v_lshlrev_b32_e32 v1, 16, v1
-; GISEL-NEXT:    v_lshlrev_b32_e32 v2, 24, v2
+; GISEL-NEXT:    v_lshlrev_b32_e32 v2, 24, v3
 ; GISEL-NEXT:    v_or3_b32 v0, v0, v1, v2
 ; GISEL-NEXT:    buffer_store_dword v0, off, s[16:19], 0
 ; GISEL-NEXT:    buffer_store_byte v4, off, s[16:19], 0 offset:4
@@ -2219,15 +2215,12 @@ define void @store_v6i8(<6 x i8> %data, ptr addrspace(8) inreg %buf) {
 ; GISEL-LABEL: store_v6i8:
 ; GISEL:       ; %bb.0:
 ; GISEL-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
-; GISEL-NEXT:    v_and_b32_e32 v1, 0xff, v1
 ; GISEL-NEXT:    v_lshlrev_b16_e32 v1, 8, v1
 ; GISEL-NEXT:    v_or_b32_sdwa v0, v0, v1 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:BYTE_0 src1_sel:DWORD
-; GISEL-NEXT:    v_and_b32_e32 v1, 0xff, v3
-; GISEL-NEXT:    v_lshlrev_b16_e32 v1, 8, v1
+; GISEL-NEXT:    v_lshlrev_b16_e32 v1, 8, v3
 ; GISEL-NEXT:    v_or_b32_sdwa v1, v2, v1 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:BYTE_0 src1_sel:DWORD
-; GISEL-NEXT:    v_and_b32_e32 v2, 0xff, v5
 ; GISEL-NEXT:    v_and_b32_e32 v0, 0xffff, v0
-; GISEL-NEXT:    v_lshlrev_b16_e32 v2, 8, v2
+; GISEL-NEXT:    v_lshlrev_b16_e32 v2, 8, v5
 ; GISEL-NEXT:    v_lshl_or_b32 v0, v1, 16, v0
 ; GISEL-NEXT:    v_or_b32_sdwa v2, v4, v2 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:BYTE_0 src1_sel:DWORD
 ; GISEL-NEXT:    buffer_store_dword v0, off, s[16:19], 0
@@ -2299,13 +2292,11 @@ define void @store_v7i8(<7 x i8> %data, ptr addrspace(8) inreg %buf) {
 ; GISEL-NEXT:    v_lshlrev_b32_sdwa v1, v8, v1 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:DWORD src1_sel:BYTE_0
 ; GISEL-NEXT:    v_and_or_b32 v0, v0, v7, v1
 ; GISEL-NEXT:    v_and_b32_e32 v1, 0xff, v2
-; GISEL-NEXT:    v_and_b32_e32 v2, 0xff, v3
 ; GISEL-NEXT:    v_lshlrev_b32_e32 v1, 16, v1
-; GISEL-NEXT:    v_lshlrev_b32_e32 v2, 24, v2
+; GISEL-NEXT:    v_lshlrev_b32_e32 v2, 24, v3
 ; GISEL-NEXT:    v_or3_b32 v0, v0, v1, v2
 ; GISEL-NEXT:    buffer_store_dword v0, off, s[16:19], 0
-; GISEL-NEXT:    v_and_b32_e32 v0, 0xff, v5
-; GISEL-NEXT:    v_lshlrev_b16_e32 v0, 8, v0
+; GISEL-NEXT:    v_lshlrev_b16_e32 v0, 8, v5
 ; GISEL-NEXT:    v_or_b32_sdwa v0, v4, v0 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:BYTE_0 src1_sel:DWORD
 ; GISEL-NEXT:    buffer_store_short v0, off, s[16:19], 0 offset:4
 ; GISEL-NEXT:    buffer_store_byte v6, off, s[16:19], 0 offset:6
@@ -2377,16 +2368,14 @@ define void @store_v8i8(<8 x i8> %data, ptr addrspace(8) inreg %buf) {
 ; GISEL-NEXT:    v_lshlrev_b32_sdwa v1, v9, v1 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:DWORD src1_sel:BYTE_0
 ; GISEL-NEXT:    v_and_or_b32 v0, v0, v8, v1
 ; GISEL-NEXT:    v_and_b32_e32 v1, 0xff, v2
-; GISEL-NEXT:    v_and_b32_e32 v2, 0xff, v3
 ; GISEL-NEXT:    v_lshlrev_b32_e32 v1, 16, v1
-; GISEL-NEXT:    v_lshlrev_b32_e32 v2, 24, v2
+; GISEL-NEXT:    v_lshlrev_b32_e32 v2, 24, v3
 ; GISEL-NEXT:    v_or3_b32 v0, v0, v1, v2
 ; GISEL-NEXT:    v_lshlrev_b32_sdwa v1, v9, v5 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:DWORD src1_sel:BYTE_0
 ; GISEL-NEXT:    v_and_b32_e32 v2, 0xff, v6
-; GISEL-NEXT:    v_and_b32_e32 v3, 0xff, v7
 ; GISEL-NEXT:    v_and_or_b32 v1, v4, v8, v1
 ; GISEL-NEXT:    v_lshlrev_b32_e32 v2, 16, v2
-; GISEL-NEXT:    v_lshlrev_b32_e32 v3, 24, v3
+; GISEL-NEXT:    v_lshlrev_b32_e32 v3, 24, v7
 ; GISEL-NEXT:    v_or3_b32 v1, v1, v2, v3
 ; GISEL-NEXT:    buffer_store_dwordx2 v[0:1], off, s[16:19], 0
 ; GISEL-NEXT:    s_waitcnt vmcnt(0)
@@ -2472,23 +2461,20 @@ define void @store_v12i8(<12 x i8> %data, ptr addrspace(8) inreg %buf) {
 ; GISEL-NEXT:    v_lshlrev_b32_sdwa v1, v13, v1 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:DWORD src1_sel:BYTE_0
 ; GISEL-NEXT:    v_and_or_b32 v0, v0, v12, v1
 ; GISEL-NEXT:    v_and_b32_e32 v1, 0xff, v2
-; GISEL-NEXT:    v_and_b32_e32 v2, 0xff, v3
 ; GISEL-NEXT:    v_lshlrev_b32_e32 v1, 16, v1
-; GISEL-NEXT:    v_lshlrev_b32_e32 v2, 24, v2
+; GISEL-NEXT:    v_lshlrev_b32_e32 v2, 24, v3
 ; GISEL-NEXT:    v_or3_b32 v0, v0, v1, v2
 ; GISEL-NEXT:    v_lshlrev_b32_sdwa v1, v13, v5 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:DWORD src1_sel:BYTE_0
 ; GISEL-NEXT:    v_and_b32_e32 v2, 0xff, v6
-; GISEL-NEXT:    v_and_b32_e32 v3, 0xff, v7
 ; GISEL-NEXT:    v_and_or_b32 v1, v4, v12, v1
 ; GISEL-NEXT:    v_lshlrev_b32_e32 v2, 16, v2
-; GISEL-NEXT:    v_lshlrev_b32_e32 v3, 24, v3
+; GISEL-NEXT:    v_lshlrev_b32_e32 v3, 24, v7
 ; GISEL-NEXT:    v_or3_b32 v1, v1, v2, v3
 ; GISEL-NEXT:    v_lshlrev_b32_sdwa v2, v13, v9 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:DWORD src1_sel:BYTE_0
 ; GISEL-NEXT:    v_and_b32_e32 v3, 0xff, v10
-; GISEL-NEXT:    v_and_b32_e32 v4, 0xff, v11
 ; GISEL-NEXT:    v_and_or_b32 v2, v8, v12, v2
 ; GISEL-NEXT:    v_lshlrev_b32_e32 v3, 16, v3
-; GISEL-NEXT:    v_lshlrev_b32_e32 v4, 24, v4
+; GISEL-NEXT:    v_lshlrev_b32_e32 v4, 24, v11
 ; GISEL-NEXT:    v_or3_b32 v2, v2, v3, v4
 ; GISEL-NEXT:    buffer_store_dwordx3 v[0:2], off, s[16:19], 0
 ; GISEL-NEXT:    s_waitcnt vmcnt(0)
@@ -2589,30 +2575,26 @@ define void @store_v16i8(<16 x i8> %data, ptr addrspace(8) inreg %buf) {
 ; GISEL-NEXT:    v_lshlrev_b32_sdwa v1, v17, v1 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:DWORD src1_sel:BYTE_0
 ; GISEL-NEXT:    v_and_or_b32 v0, v0, v16, v1
 ; GISEL-NEXT:    v_and_b32_e32 v1, 0xff, v2
-; GISEL-NEXT:    v_and_b32_e32 v2, 0xff, v3
 ; GISEL-NEXT:    v_lshlrev_b32_e32 v1, 16, v1
-; GISEL-NEXT:    v_lshlrev_b32_e32 v2, 24, v2
+; GISEL-NEXT:    v_lshlrev_b32_e32 v2, 24, v3
 ; GISEL-NEXT:    v_or3_b32 v0, v0, v1, v2
 ; GISEL-NEXT:    v_lshlrev_b32_sdwa v1, v17, v5 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:DWORD src1_sel:BYTE_0
 ; GISEL-NEXT:    v_and_b32_e32 v2, 0xff, v6
-; GISEL-NEXT:    v_and_b32_e32 v3, 0xff, v7
 ; GISEL-NEXT:    v_and_or_b32 v1, v4, v16, v1
 ; GISEL-NEXT:    v_lshlrev_b32_e32 v2, 16, v2
-; GISEL-NEXT:    v_lshlrev_b32_e32 v3, 24, v3
+; GISEL-NEXT:    v_lshlrev_b32_e32 v3, 24, v7
 ; GISEL-NEXT:    v_or3_b32 v1, v1, v2, v3
 ; GISEL-NEXT:    v_lshlrev_b32_sdwa v2, v17, v9 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:DWORD src1_sel:BYTE_0
 ; GISEL-NEXT:    v_and_b32_e32 v3, 0xff, v10
-; GISEL-NEXT:    v_and_b32_e32 v4, 0xff, v11
 ; GISEL-NEXT:    v_and_or_b32 v2, v8, v16, v2
 ; GISEL-NEXT:    v_lshlrev_b32_e32 v3, 16, v3
-; GISEL-NEXT:    v_lshlrev_b32_e32 v4, 24, v4
+; GISEL-NEXT:    v_lshlrev_b32_e32 v4, 24, v11
 ; GISEL-NEXT:    v_or3_b32 v2, v2, v3, v4
 ; GISEL-NEXT:    v_lshlrev_b32_sdwa v3, v17, v13 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:DWORD src1_sel:BYTE_0
 ; GISEL-NEXT:    v_and_b32_e32 v4, 0xff, v14
-; GISEL-NEXT:    v_and_b32_e32 v5, 0xff, v15
 ; GISEL-NEXT:    v_and_or_b32 v3, v12, v16, v3
 ; GISEL-NEXT:    v_lshlrev_b32_e32 v4, 16, v4
-; GISEL-NEXT:    v_lshlrev_b32_e32 v5, 24, v5
+; GISEL-NEXT:    v_lshlrev_b32_e32 v5, 24, v15
 ; GISEL-NEXT:    v_or3_b32 v3, v3, v4, v5
 ; GISEL-NEXT:    buffer_store_dwordx4 v[0:3], off, s[16:19], 0
 ; GISEL-NEXT:    s_waitcnt vmcnt(0)
@@ -2772,52 +2754,45 @@ define void @store_v32i8(<32 x i8> %data, ptr addrspace(8) inreg %buf) {
 ; GISEL-NEXT:    v_mov_b32_e32 v32, 0xff
 ; GISEL-NEXT:    v_and_or_b32 v0, v0, v32, v1
 ; GISEL-NEXT:    v_lshlrev_b32_sdwa v1, v31, v5 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:DWORD src1_sel:BYTE_0
-; GISEL-NEXT:    v_and_b32_e32 v5, 0xff, v7
+; GISEL-NEXT:    v_lshlrev_b32_e32 v5, 24, v7
 ; GISEL-NEXT:    buffer_load_ubyte v7, off, s[0:3], s32
-; GISEL-NEXT:    v_and_or_b32 v1, v4, v32, v1
 ; GISEL-NEXT:    v_and_b32_e32 v2, 0xff, v2
-; GISEL-NEXT:    v_and_b32_e32 v3, 0xff, v3
-; GISEL-NEXT:    v_and_b32_e32 v4, 0xff, v6
+; GISEL-NEXT:    v_and_or_b32 v1, v4, v32, v1
 ; GISEL-NEXT:    v_lshlrev_b32_e32 v2, 16, v2
 ; GISEL-NEXT:    v_lshlrev_b32_e32 v3, 24, v3
+; GISEL-NEXT:    v_and_b32_e32 v4, 0xff, v6
 ; GISEL-NEXT:    v_lshlrev_b32_e32 v4, 16, v4
-; GISEL-NEXT:    v_lshlrev_b32_e32 v5, 24, v5
 ; GISEL-NEXT:    v_or3_b32 v0, v0, v2, v3
-; GISEL-NEXT:    v_or3_b32 v1, v1, v4, v5
 ; GISEL-NEXT:    v_lshlrev_b32_sdwa v2, v31, v9 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:DWORD src1_sel:BYTE_0
 ; GISEL-NEXT:    v_and_b32_e32 v3, 0xff, v10
-; GISEL-NEXT:    v_and_b32_e32 v4, 0xff, v11
+; GISEL-NEXT:    v_or3_b32 v1, v1, v4, v5
 ; GISEL-NEXT:    v_and_or_b32 v2, v8, v32, v2
 ; GISEL-NEXT:    v_lshlrev_b32_e32 v3, 16, v3
-; GISEL-NEXT:    v_lshlrev_b32_e32 v4, 24, v4
+; GISEL-NEXT:    v_lshlrev_b32_e32 v4, 24, v11
 ; GISEL-NEXT:    v_or3_b32 v2, v2, v3, v4
 ; GISEL-NEXT:    v_lshlrev_b32_sdwa v3, v31, v13 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:DWORD src1_sel:BYTE_0
 ; GISEL-NEXT:    v_and_b32_e32 v4, 0xff, v14
-; GISEL-NEXT:    v_and_b32_e32 v5, 0xff, v15
 ; GISEL-NEXT:    v_and_or_b32 v3, v12, v32, v3
 ; GISEL-NEXT:    v_lshlrev_b32_e32 v4, 16, v4
-; GISEL-NEXT:    v_lshlrev_b32_e32 v5, 24, v5
+; GISEL-NEXT:    v_lshlrev_b32_e32 v5, 24, v15
 ; GISEL-NEXT:    v_or3_b32 v3, v3, v4, v5
 ; GISEL-NEXT:    v_lshlrev_b32_sdwa v4, v31, v17 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:DWORD src1_sel:BYTE_0
 ; GISEL-NEXT:    v_and_b32_e32 v5, 0xff, v18
-; GISEL-NEXT:    v_and_b32_e32 v6, 0xff, v19
 ; GISEL-NEXT:    v_and_or_b32 v4, v16, v32, v4
 ; GISEL-NEXT:    v_lshlrev_b32_e32 v5, 16, v5
-; GISEL-NEXT:    v_lshlrev_b32_e32 v6, 24, v6
+; GISEL-NEXT:    v_lshlrev_b32_e32 v6, 24, v19
 ; GISEL-NEXT:    v_lshlrev_b32_sdwa v8, v31, v21 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:DWORD src1_sel:BYTE_0
 ; GISEL-NEXT:    v_or3_b32 v4, v4, v5, v6
 ; GISEL-NEXT:    v_and_b32_e32 v5, 0xff, v22
-; GISEL-NEXT:    v_and_b32_e32 v6, 0xff, v23
 ; GISEL-NEXT:    v_and_or_b32 v8, v20, v32, v8
 ; GISEL-NEXT:    v_lshlrev_b32_e32 v5, 16, v5
-; GISEL-NEXT:    v_lshlrev_b32_e32 v6, 24, v6
+; GISEL-NEXT:    v_lshlrev_b32_e32 v6, 24, v23
 ; GISEL-NEXT:    v_or3_b32 v5, v8, v5, v6
 ; GISEL-NEXT:    v_lshlrev_b32_sdwa v6, v31, v25 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:DWORD src1_sel:BYTE_0
 ; GISEL-NEXT:    v_and_b32_e32 v8, 0xff, v26
-; GISEL-NEXT:    v_and_b32_e32 v9, 0xff, v27
 ; GISEL-NEXT:    v_and_or_b32 v6, v24, v32, v6
 ; GISEL-NEXT:    v_lshlrev_b32_e32 v8, 16, v8
-; GISEL-NEXT:    v_lshlrev_b32_e32 v9, 24, v9
+; GISEL-NEXT:    v_lshlrev_b32_e32 v9, 24, v27
 ; GISEL-NEXT:    v_or3_b32 v6, v6, v8, v9
 ; GISEL-NEXT:    v_lshlrev_b32_sdwa v8, v31, v29 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:DWORD src1_sel:BYTE_0
 ; GISEL-NEXT:    v_and_b32_e32 v9, 0xff, v30
@@ -3011,18 +2986,17 @@ define i40 @load_i40(ptr addrspace(8) inreg %buf) {
 ; GISEL-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
 ; GISEL-NEXT:    buffer_load_dword v0, off, s[16:19], 0
 ; GISEL-NEXT:    buffer_load_ubyte v1, off, s[16:19], 0 offset:4
-; GISEL-NEXT:    v_mov_b32_e32 v2, 0xff
+; GISEL-NEXT:    v_mov_b32_e32 v2, 8
+; GISEL-NEXT:    v_mov_b32_e32 v3, 0xff
 ; GISEL-NEXT:    s_waitcnt vmcnt(1)
-; GISEL-NEXT:    v_lshrrev_b32_e32 v3, 8, v0
+; GISEL-NEXT:    v_lshrrev_b32_sdwa v2, v2, v0 dst_sel:BYTE_1 dst_unused:UNUSED_PAD src0_sel:DWORD src1_sel:DWORD
 ; GISEL-NEXT:    v_lshrrev_b32_e32 v4, 24, v0
-; GISEL-NEXT:    v_and_b32_e32 v3, 0xff, v3
-; GISEL-NEXT:    v_and_b32_sdwa v2, v0, v2 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:WORD_1 src1_sel:DWORD
-; GISEL-NEXT:    v_lshlrev_b16_e32 v4, 8, v4
-; GISEL-NEXT:    v_lshlrev_b16_e32 v3, 8, v3
-; GISEL-NEXT:    v_or_b32_e32 v2, v2, v4
-; GISEL-NEXT:    v_or_b32_sdwa v0, v0, v3 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:BYTE_0 src1_sel:DWORD
-; GISEL-NEXT:    v_and_b32_e32 v2, 0xffff, v2
+; GISEL-NEXT:    v_and_b32_sdwa v3, v0, v3 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:WORD_1 src1_sel:DWORD
+; GISEL-NEXT:    v_or_b32_sdwa v0, v0, v2 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:BYTE_0 src1_sel:DWORD
+; GISEL-NEXT:    v_lshlrev_b16_e32 v2, 8, v4
+; GISEL-NEXT:    v_or_b32_e32 v2, v3, v2
 ; GISEL-NEXT:    v_and_b32_e32 v0, 0xffff, v0
+; GISEL-NEXT:    v_and_b32_e32 v2, 0xffff, v2
 ; GISEL-NEXT:    v_lshl_or_b32 v0, v2, 16, v0
 ; GISEL-NEXT:    s_waitcnt vmcnt(0)
 ; GISEL-NEXT:    s_setpc_b64 s[30:31]
@@ -3383,8 +3357,7 @@ define void @store_v4i4(<4 x i4> %data, ptr addrspace(8) inreg %buf) {
 ; GISEL-NEXT:    v_mov_b32_e32 v1, 15
 ; GISEL-NEXT:    v_and_b32_sdwa v1, v2, v1 dst_sel:BYTE_1 dst_unused:UNUSED_PAD src0_sel:DWORD src1_sel:DWORD
 ; GISEL-NEXT:    v_or_b32_e32 v0, v0, v1
-; GISEL-NEXT:    v_and_b32_e32 v1, 15, v3
-; GISEL-NEXT:    v_lshlrev_b16_e32 v1, 12, v1
+; GISEL-NEXT:    v_lshlrev_b16_e32 v1, 12, v3
 ; GISEL-NEXT:    v_or_b32_e32 v0, v0, v1
 ; GISEL-NEXT:    buffer_store_short v0, off, s[16:19], 0
 ; GISEL-NEXT:    s_waitcnt vmcnt(0)
@@ -3468,9 +3441,8 @@ define void @store_v8i4(<8 x i4> %data, ptr addrspace(8) inreg %buf) {
 ; GISEL-NEXT:    v_and_b32_sdwa v2, v4, v1 dst_sel:WORD_1 dst_unused:UNUSED_PAD src0_sel:DWORD src1_sel:DWORD
 ; GISEL-NEXT:    v_lshlrev_b32_e32 v3, 20, v3
 ; GISEL-NEXT:    v_or3_b32 v0, v0, v2, v3
-; GISEL-NEXT:    v_and_b32_e32 v2, 15, v7
 ; GISEL-NEXT:    v_and_b32_sdwa v1, v6, v1 dst_sel:BYTE_3 dst_unused:UNUSED_PAD src0_sel:DWORD src1_sel:DWORD
-; GISEL-NEXT:    v_lshlrev_b32_e32 v2, 28, v2
+; GISEL-NEXT:    v_lshlrev_b32_e32 v2, 28, v7
 ; GISEL-NEXT:    v_or3_b32 v0, v0, v1, v2
 ; GISEL-NEXT:    buffer_store_dword v0, off, s[16:19], 0
 ; GISEL-NEXT:    s_waitcnt vmcnt(0)
@@ -3626,9 +3598,8 @@ define void @volatile_store_v4i8(<4 x i8> %data, ptr addrspace(8) inreg %buf) {
 ; GISEL-NEXT:    v_lshlrev_b32_sdwa v1, v5, v1 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:DWORD src1_sel:BYTE_0
 ; GISEL-NEXT:    v_and_or_b32 v0, v0, v4, v1
 ; GISEL-NEXT:    v_and_b32_e32 v1, 0xff, v2
-; GISEL-NEXT:    v_and_b32_e32 v2, 0xff, v3
 ; GISEL-NEXT:    v_lshlrev_b32_e32 v1, 16, v1
-; GISEL-NEXT:    v_lshlrev_b32_e32 v2, 24, v2
+; GISEL-NEXT:    v_lshlrev_b32_e32 v2, 24, v3
 ; GISEL-NEXT:    v_or3_b32 v0, v0, v1, v2
 ; GISEL-NEXT:    buffer_store_dword v0, off, s[16:19], 0
 ; GISEL-NEXT:    s_waitcnt vmcnt(0)
@@ -3691,15 +3662,12 @@ define void @volatile_store_v6i8(<6 x i8> %data, ptr addrspace(8) inreg %buf) {
 ; GISEL-LABEL: volatile_store_v6i8:
 ; GISEL:       ; %bb.0:
 ; GISEL-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
-; GISEL-NEXT:    v_and_b32_e32 v1, 0xff, v1
 ; GISEL-NEXT:    v_lshlrev_b16_e32 v1, 8, v1
 ; GISEL-NEXT:    v_or_b32_sdwa v0, v0, v1 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:BYTE_0 src1_sel:DWORD
-; GISEL-NEXT:    v_and_b32_e32 v1, 0xff, v3
-; GISEL-NEXT:    v_lshlrev_b16_e32 v1, 8, v1
+; GISEL-NEXT:    v_lshlrev_b16_e32 v1, 8, v3
 ; GISEL-NEXT:    v_or_b32_sdwa v1, v2, v1 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:BYTE_0 src1_sel:DWORD
-; GISEL-NEXT:    v_and_b32_e32 v2, 0xff, v5
 ; GISEL-NEXT:    v_and_b32_e32 v0, 0xffff, v0
-; GISEL-NEXT:    v_lshlrev_b16_e32 v2, 8, v2
+; GISEL-NEXT:    v_lshlrev_b16_e32 v2, 8, v5
 ; GISEL-NEXT:    v_lshl_or_b32 v0, v1, 16, v0
 ; GISEL-NEXT:    v_or_b32_sdwa v2, v4, v2 dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:BYTE_0 src1_sel:DWORD
 ; GISEL-NEXT:    buffer_store_dword v0, off, s[16:19], 0
