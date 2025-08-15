@@ -1085,6 +1085,157 @@ def : Pat<(int_aie2p_vltbf16 VEC512:$s1, VEC512:$s2),
 def : Pat<(int_aie2p_vgebf16 VEC512:$s1, VEC512:$s2),
             (VGE_bf16 VEC512:$s1, VEC512:$s2)>;
 
+// direct comparisons without intrinsics.
+
+def SDTAIESetCC : SDTypeProfile<1, 3, [        // setcc
+  SDTCisInt<0>, SDTCisSameAs<1, 2>, SDTCisVT<3, OtherVT>
+]>;
+
+def aie_setcc : SDNode<"AIE2P::G_AIE_VECTOR_ICMP", SDTAIESetCC>;
+def : GINodeEquiv<G_AIE_VECTOR_ICMP, aie_setcc>;
+
+def aie_seteq  : PatFrag<(ops node:$lhs, node:$rhs),
+                     (aie_setcc node:$lhs, node:$rhs, SETEQ)>;
+def aie_setgt  : PatFrag<(ops node:$lhs, node:$rhs),
+                     (aie_setcc node:$lhs, node:$rhs, SETGT)>;
+def aie_setugt  : PatFrag<(ops node:$lhs, node:$rhs),
+                     (aie_setcc node:$lhs, node:$rhs, SETUGT)>;
+def aie_setge  : PatFrag<(ops node:$lhs, node:$rhs),
+                     (aie_setcc node:$lhs, node:$rhs, SETGE)>;
+def aie_setuge  : PatFrag<(ops node:$lhs, node:$rhs),
+                     (aie_setcc node:$lhs, node:$rhs, SETUGE)>;
+def aie_setlt  : PatFrag<(ops node:$lhs, node:$rhs),
+                     (aie_setcc node:$lhs, node:$rhs, SETLT)>;
+def aie_setult  : PatFrag<(ops node:$lhs, node:$rhs),
+                     (aie_setcc node:$lhs, node:$rhs, SETULT)>;
+def aie_setle  : PatFrag<(ops node:$lhs, node:$rhs),
+                     (aie_setcc node:$lhs, node:$rhs, SETLE)>;
+def aie_setule  : PatFrag<(ops node:$lhs, node:$rhs),
+                     (aie_setcc node:$lhs, node:$rhs, SETULE)>;
+def aie_setne  : PatFrag<(ops node:$lhs, node:$rhs),
+                     (aie_setcc node:$lhs, node:$rhs, SETNE)>;
+
+// LT
+def : Pat<(v64i1 (aie_setlt (v64i8 VEC512:$rs1), (v64i8 VEC512:$rs2))),
+	       (VLT_8_vaddSign1 VEC512:$rs1, VEC512:$rs2)>;
+def : Pat<(v32i1 (aie_setlt (v32i16 VEC512:$rs1), (v32i16 VEC512:$rs2))),
+	       (VLT_16_vaddSign1 VEC512:$rs1, VEC512:$rs2)>;
+def : Pat<(v32i1 (aie_setlt (v16i32 VEC512:$rs1), (v16i32 VEC512:$rs2))),
+	       (VLT_32_vaddSign1 VEC512:$rs1, VEC512:$rs2)>;
+
+def : Pat<(v64i1 (aie_setult (v64i8 VEC512:$rs1), (v64i8 VEC512:$rs2))),
+	       (VLT_8_vaddSign0 VEC512:$rs1, VEC512:$rs2)>;
+def : Pat<(v32i1 (aie_setult (v32i16 VEC512:$rs1), (v32i16 VEC512:$rs2))),
+	       (VLT_16_vaddSign0 VEC512:$rs1, VEC512:$rs2)>;
+def : Pat<(v32i1 (aie_setult (v16i32 VEC512:$rs1), (v16i32 VEC512:$rs2))),
+	       (VLT_32_vaddSign0 VEC512:$rs1, VEC512:$rs2)>;
+
+// LE
+def : Pat<(v64i1 (aie_setle (v64i8 VEC512:$rs1), (v64i8 VEC512:$rs2))),
+         (REG_SEQUENCE eL,
+            (XOR (EXTRACT_SUBREG
+                    (VLT_8_vaddSign1 VEC512:$rs2, VEC512:$rs1), sub_l_even),
+                    (MOV_RLC_imm11_pseudo (i32 -1))), sub_l_even,
+            (XOR (EXTRACT_SUBREG
+                     (VLT_8_vaddSign1 VEC512:$rs2, VEC512:$rs1), sub_l_odd),
+                     (MOV_RLC_imm11_pseudo (i32 -1))), sub_l_odd)>;
+
+def : Pat<(v32i1 (aie_setle (v32i16 VEC512:$rs1), (v32i16 VEC512:$rs2))),
+	       (OR
+            (VLT_16_vaddSign1 VEC512:$rs1, VEC512:$rs2),
+            (VEQZ_16 (VSUB_16 VEC512:$rs1, VEC512:$rs2)))>;
+
+def : Pat<(v32i1 (aie_setle (v16i32 VEC512:$rs1), (v16i32 VEC512:$rs2))),
+	       (OR
+            (VLT_32_vaddSign1 VEC512:$rs1, VEC512:$rs2),
+            (VEQZ_32 (VSUB_32 VEC512:$rs1, VEC512:$rs2)))>;
+
+def : Pat<(v64i1 (aie_setule (v64i8 VEC512:$rs1), (v64i8 VEC512:$rs2))),
+         (REG_SEQUENCE eL,
+            (XOR (EXTRACT_SUBREG
+                    (VLT_8_vaddSign0 VEC512:$rs2, VEC512:$rs1), sub_l_even),
+                    (MOV_RLC_imm11_pseudo (i32 -1))), sub_l_even,
+            (XOR (EXTRACT_SUBREG
+                     (VLT_8_vaddSign0 VEC512:$rs2, VEC512:$rs1), sub_l_odd),
+                     (MOV_RLC_imm11_pseudo (i32 -1))), sub_l_odd)>;
+
+def : Pat<(v32i1 (aie_setule (v32i16 VEC512:$rs1), (v32i16 VEC512:$rs2))),
+	       (OR
+            (VLT_16_vaddSign0 VEC512:$rs1, VEC512:$rs2),
+            (VEQZ_16 (VSUB_16 VEC512:$rs1, VEC512:$rs2)))>;
+
+def : Pat<(v32i1 (aie_setule (v16i32 VEC512:$rs1), (v16i32 VEC512:$rs2))),
+	       (OR
+            (VLT_32_vaddSign0 VEC512:$rs1, VEC512:$rs2),
+            (VEQZ_32 (VSUB_32 VEC512:$rs1, VEC512:$rs2)))>;
+
+// GE
+def  : Pat<(v64i1 (aie_setge (v64i8 VEC512:$rs1), (v64i8 VEC512:$rs2))),
+	       (VGE_8_vaddSign1 VEC512:$rs1, VEC512:$rs2)>;
+def  : Pat<(v32i1 (aie_setge (v32i16 VEC512:$rs1), (v32i16 VEC512:$rs2))),
+	       (VGE_16_vaddSign1 VEC512:$rs1, VEC512:$rs2)>;
+def  : Pat<(v32i1 (aie_setge (v16i32 VEC512:$rs1), (v16i32 VEC512:$rs2))),
+	       (VGE_32_vaddSign1 VEC512:$rs1, VEC512:$rs2)>;
+
+def  : Pat<(v64i1 (aie_setuge (v64i8 VEC512:$rs1), (v64i8 VEC512:$rs2))),
+	       (VGE_8_vaddSign0 VEC512:$rs1, VEC512:$rs2)>;
+def  : Pat<(v32i1 (aie_setuge (v32i16 VEC512:$rs1), (v32i16 VEC512:$rs2))),
+	       (VGE_16_vaddSign0 VEC512:$rs1, VEC512:$rs2)>;
+def  : Pat<(v32i1 (aie_setuge (v16i32 VEC512:$rs1), (v16i32 VEC512:$rs2))),
+	       (VGE_32_vaddSign0 VEC512:$rs1, VEC512:$rs2)>;
+
+// GT
+def  : Pat<(v64i1 (aie_setgt (v64i8 VEC512:$rs1), (v64i8 VEC512:$rs2))),
+         (REG_SEQUENCE eL,
+            (XOR (EXTRACT_SUBREG
+                    (VGE_8_vaddSign1 VEC512:$rs2, VEC512:$rs1), sub_l_even),
+                    (MOV_RLC_imm11_pseudo (i32 -1))), sub_l_even,
+            (XOR (EXTRACT_SUBREG
+                    (VGE_8_vaddSign1 VEC512:$rs2, VEC512:$rs1), sub_l_odd),
+                    (MOV_RLC_imm11_pseudo (i32 -1))), sub_l_odd)>;
+
+def  : Pat<(v32i1 (aie_setgt (v32i16 VEC512:$rs1), (v32i16 VEC512:$rs2))),
+	       (XOR (VGE_16_vaddSign1 VEC512:$rs2, VEC512:$rs1), (MOV_RLC_imm11_pseudo (i32 -1)))>;
+def  : Pat<(v32i1 (aie_setgt (v16i32 VEC512:$rs1), (v16i32 VEC512:$rs2))),
+	       (XOR (VGE_32_vaddSign1 VEC512:$rs2, VEC512:$rs1), (MOV_RLC_imm11_pseudo (i32 -1)))>;
+
+def  : Pat<(v64i1 (aie_setugt (v64i8 VEC512:$rs1), (v64i8 VEC512:$rs2))),
+         (REG_SEQUENCE eL,
+            (XOR (EXTRACT_SUBREG
+                    (VGE_8_vaddSign0 VEC512:$rs2, VEC512:$rs1), sub_l_even),
+                    (MOV_RLC_imm11_pseudo (i32 -1))), sub_l_even,
+            (XOR (EXTRACT_SUBREG
+                    (VGE_8_vaddSign0 VEC512:$rs2, VEC512:$rs1), sub_l_odd),
+                    (MOV_RLC_imm11_pseudo (i32 -1))), sub_l_odd)>;
+
+def  : Pat<(v32i1 (aie_setugt (v32i16 VEC512:$rs1), (v32i16 VEC512:$rs2))),
+	       (XOR (VGE_16_vaddSign0 VEC512:$rs2, VEC512:$rs1), (MOV_RLC_imm11_pseudo (i32 -1)))>;
+def  : Pat<(v32i1 (aie_setugt (v16i32 VEC512:$rs1), (v16i32 VEC512:$rs2))),
+	       (XOR (VGE_32_vaddSign0 VEC512:$rs2, VEC512:$rs1), (MOV_RLC_imm11_pseudo (i32 -1)))>;
+
+// EQ
+def  : Pat<(v64i1 (aie_seteq (v64i8 VEC512:$rs1), (v64i8 VEC512:$rs2))),
+	       (VEQZ_8 (VSUB_8 VEC512:$rs1, VEC512:$rs2))>;
+def  : Pat<(v32i1 (aie_seteq (v32i16 VEC512:$rs1), (v32i16 VEC512:$rs2))),
+	       (VEQZ_16 (VSUB_16 VEC512:$rs1, VEC512:$rs2))>;
+def  : Pat<(v32i1 (aie_seteq (v16i32 VEC512:$rs1), (v16i32 VEC512:$rs2))),
+	       (VEQZ_32 (VSUB_32 VEC512:$rs1, VEC512:$rs2))>;
+
+// NE
+def  : Pat<(v64i1 (aie_setne (v64i8 VEC512:$rs1), (v64i8 VEC512:$rs2))),
+          (REG_SEQUENCE eL,
+             (XOR (EXTRACT_SUBREG
+                (VEQZ_8 (VSUB_8 VEC512:$rs1, VEC512:$rs2)), sub_l_even),
+                (MOV_RLC_imm11_pseudo (i32 -1))), sub_l_even,
+              (XOR (EXTRACT_SUBREG
+                (VEQZ_8 (VSUB_8 VEC512:$rs1, VEC512:$rs2)), sub_l_odd),
+                (MOV_RLC_imm11_pseudo (i32 -1))), sub_l_odd)>;
+
+def  : Pat<(v32i1 (aie_setne (v32i16 VEC512:$rs1), (v32i16 VEC512:$rs2))),
+	       (XOR (VEQZ_16 (VSUB_16 VEC512:$rs1, VEC512:$rs2)), (MOV_RLC_imm11_pseudo (i32 -1)))>;
+def  : Pat<(v32i1 (aie_setne (v16i32 VEC512:$rs1), (v16i32 VEC512:$rs2))),
+	       (XOR (VEQZ_32 (VSUB_32 VEC512:$rs1, VEC512:$rs2)), (MOV_RLC_imm11_pseudo (i32 -1)))>;
+
 // VMAXDIFF_LT
 def : Pat<(int_aie2p_vmaxdiff_lt8 VEC512:$src1, VEC512:$src2, 0x0),
            (VMAX_LT_8_vaddSign0 VEC512:$src1, VEC512:$src2)>;
