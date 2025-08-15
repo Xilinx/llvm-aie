@@ -344,9 +344,14 @@ static bool CC_AIE_Handle_Split_Arg_Ret(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
   // in more than one register. Try r0-r1 before using the other regs.
   // TODO: check the ABI if e.g. r2 should be used with larger types
   auto NumChunks = State.getPendingLocs().size();
-  ArrayRef<MCPhysReg> RegResult = State.AllocateRegBlock({AIE::r0, AIE::r1}, NumChunks);
+  // FIXME: State.AllocateRegBlock returns an ArrayRef slice of its argument,
+  //        so we need carefully ensure the lifetime of said arguments, below,
+  //        is long enough to reach their use. Bad API design!
+  SmallVector<MCPhysReg> R0R1 = {AIE::r0, AIE::r1};
+  SmallVector<MCPhysReg> R6R8 = {AIE::r6, AIE::r7, AIE::r8};
+  ArrayRef<MCPhysReg> RegResult = State.AllocateRegBlock(R0R1, NumChunks);
   if (RegResult.empty()) {
-    RegResult = State.AllocateRegBlock({AIE::r6, AIE::r7, AIE::r8}, NumChunks);
+    RegResult = State.AllocateRegBlock(R6R8, NumChunks);
   }
 
   if (RegResult.empty()) {
