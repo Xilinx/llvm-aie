@@ -98,8 +98,10 @@ public:
     if (OccupiedSlots & ConflictBits) {
       return false;
     }
-    SlotBits NewSlots = OccupiedSlots | SlotInfo->getSlotSet();
-    return FormatInterface->getPacketFormats().getFormat(NewSlots);
+    const SlotBits NewSlots = OccupiedSlots | SlotInfo->getSlotSet();
+    // Note: Now that we have the conflict bits we may no longer need this
+    // final check, but it is cheap and represents proven technology.
+    return FormatInterface->isFormatAvailable(NewSlots);
   }
 
   /// Add an instruction to the bundle

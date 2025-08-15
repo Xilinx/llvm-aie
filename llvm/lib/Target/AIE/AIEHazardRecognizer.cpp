@@ -139,7 +139,7 @@ bool FuncUnitWrapper::conflict(const FuncUnitWrapper &Other) const {
   // This allows representing a blocked cycle (Slots = ~0) without knowing
   // the slot and format details.
   return Slots && Other.Slots &&
-         !FormatInterface->getPacketFormats().getFormat(Slots | Other.Slots);
+         !FormatInterface->isFormatAvailable(Slots | Other.Slots);
 }
 
 namespace {
