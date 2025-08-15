@@ -1896,6 +1896,10 @@ unsigned AIE2PInstrInfo::getGenericExtractSubvectorOpcode() const {
   return AIE2P::G_AIE_EXTRACT_SUBVECTOR;
 }
 
+unsigned AIE2PInstrInfo::getGenericIntegerComparisonOpcode() const {
+  return AIE2P::G_AIE_VECTOR_ICMP;
+}
+
 Register AIE2PInstrInfo::getSSStatusReg() const { return AIE2P::srSS0; }
 
 Register AIE2PInstrInfo::getMSStatusReg() const { return AIE2P::srMS0; }
