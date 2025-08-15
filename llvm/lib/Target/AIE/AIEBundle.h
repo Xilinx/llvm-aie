@@ -99,8 +99,7 @@ public:
       return false;
     }
     SlotBits NewSlots = OccupiedSlots | SlotInfo->getSlotSet();
-    return FormatInterface->getPacketFormats().getFormat(OccupiedSlots |
-                                                         NewSlots);
+    return FormatInterface->isFormatAvailable(OccupiedSlots | NewSlots);
   }
 
   /// Add an instruction to the bundle

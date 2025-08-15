@@ -99,6 +99,9 @@ class MockMCFormats : public AIEBaseMCFormats {
   const MCFormatDesc *getMCFormats() const override {
     llvm_unreachable("Un-implemented");
   }
+  ArrayRef<bool> getIsFormatAvailable() const override {
+    llvm_unreachable("Un-implemented");
+  }
 };
 
 class MockTII : public AIEInstrInfo {

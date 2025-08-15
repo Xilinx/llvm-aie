@@ -393,10 +393,14 @@ public:
 
   virtual const PacketFormats &getPacketFormats() const = 0;
 
+  virtual ArrayRef<bool> getIsFormatAvailable() const = 0;
+
   // \return all Slots that correspond to the load instructions
   virtual SmallVector<MCSlotKind, 2> getLoadSlotKinds() const {
     llvm_unreachable("Target didn't implement getLoadSlotKinds()");
   }
+
+  bool isFormatAvailable(uint64_t SlotSet) const;
 
 protected:
   /// Check if the Instruction is indeed into the Tables.
@@ -411,6 +415,7 @@ public:
   getFormatDescIndex(unsigned int Opcode) const override;
   const MCSlotInfo *getSlotInfo(const MCSlotKind Kind) const override;
   const MCFormatDesc *getMCFormats() const override;
+  ArrayRef<bool> getIsFormatAvailable() const override;
   const PacketFormats &getPacketFormats() const override;
 };
 
@@ -423,6 +428,7 @@ public:
   const MCSlotInfo *getSlotInfo(const MCSlotKind Kind) const override;
   const MCFormatDesc *getMCFormats() const override;
   const PacketFormats &getPacketFormats() const override;
+  ArrayRef<bool> getIsFormatAvailable() const override;
   SmallVector<MCSlotKind, 2> getLoadSlotKinds() const override;
 };
 
@@ -435,6 +441,7 @@ public:
   const MCSlotInfo *getSlotInfo(const MCSlotKind Kind) const override;
   const MCFormatDesc *getMCFormats() const override;
   const PacketFormats &getPacketFormats() const override;
+  ArrayRef<bool> getIsFormatAvailable() const override;
   SmallVector<MCSlotKind, 2> getLoadSlotKinds() const override;
 };
 
