@@ -105,10 +105,12 @@ static const LLT S256 = LLT::scalar(256);
 static const LLT S512 = LLT::scalar(512);
 static const LLT S1024 = LLT::scalar(1024);
 
-// 32-bit vectors
+// 16-bit vectors
+static const LLT V16S1 = LLT::fixed_vector(16, 1);
 static const LLT V2S8 = LLT::fixed_vector(2, 8);
 
 // 32-bit vectors
+static const LLT V32S1 = LLT::fixed_vector(32, 1);
 static const LLT V4S8 = LLT::fixed_vector(4, 8);
 static const LLT V2S16 = LLT::fixed_vector(2, 16);
 
@@ -116,6 +118,7 @@ static const LLT V2S16 = LLT::fixed_vector(2, 16);
 static const LLT V2S32 = LLT::fixed_vector(2, 32);
 static const LLT V4S16 = LLT::fixed_vector(4, 16);
 static const LLT V8S8 = LLT::fixed_vector(8, 8);
+static const LLT V64S1 = LLT::fixed_vector(64, 1);
 
 // 128-bit vectors
 static const LLT V16S8 = LLT::fixed_vector(16, 8);
@@ -186,7 +189,7 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
 
   getActionDefinitionsBuilder({G_IMPLICIT_DEF, G_FREEZE})
       .legalFor({S20, S32, P0, S128, S256, S512, S1024, V4S32, V8S16, V16S8,
-                 V2S32, V4S16, V8S8})
+                 V2S32, V4S16, V8S8, V32S1})
       .legalFor(AIE2PVectorTypes)
       .legalFor(AIE2PAccumulatorTypes)
       .legalFor({AccV2S1024})
@@ -203,7 +206,8 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
   getActionDefinitionsBuilder(G_ICMP)
       .legalFor({{S32, S32}, {S32, P0}})
       .clampScalar(0, S32, S32)
-      .clampScalar(1, S32, S32);
+      .clampScalar(1, S32, S32)
+      .customFor({{V32S1, V32S16}, {V64S1, V64S8}, {V16S1, V16S32}});
 
   getActionDefinitionsBuilder(G_FCMP)
       .clampScalar(0, S32, S32)
@@ -254,8 +258,14 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
   // Since the only integers smaller than 32 bits we produce are S20 (from
   // G_PTRTOINT), the only legal extension is S20 -> S32.
   // Extensions to types larger than 64 bits have to be broken down into
-  // multiple parts.
-  getActionDefinitionsBuilder({G_ANYEXT, G_SEXT, G_ZEXT})
+  // multiple parts. We also explicitly mark S16 -> S32 ZEXT as artificially
+  // legal because of G_ICMP, but this operation is removed by
+  // postlegalizer combiner.
+  getActionDefinitionsBuilder(G_ZEXT)
+      .legalFor({{S32, S20}, {S32, S16}})
+      .clampScalar(0, S32, S32);
+
+  getActionDefinitionsBuilder({G_ANYEXT, G_SEXT})
       .legalFor({{S32, S20}})
       .clampScalar(0, S32, S32);
   // FIXME: (s|z|any)ext s20 to s64 is broken.
@@ -605,7 +615,11 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
       .widenScalarToNextPow2(0)
       .clampScalar(0, S32, S32);
 
+  // We also explicitly mark V16S1 <-> S16 as artificially
+  // legal because of G_ICMP, but this operation is removed by
+  // postlegalizer combiner.
   getActionDefinitionsBuilder(G_BITCAST)
+      .legalForCartesianProduct({S16, V16S1})
       .legalIf(
           LegalityPredicates::all(isLegalBitCastType(0), isLegalBitCastType(1)))
       .customIf(typeInSet(0, {V2S8, S16}));
@@ -813,6 +827,8 @@ bool AIE2PLegalizerInfo::legalizeCustom(
     return AIEHelper.legalizeBinOp(Helper, MI);
   case TargetOpcode::G_TRUNC:
     return AIEHelper.legalizeG_TRUNC(Helper, MI);
+  case TargetOpcode::G_ICMP:
+    return AIEHelper.legalizeG_ICMP(Helper, cast<GICmp>(MI));
   }
   llvm_unreachable("Un-expected custom legalization");
 }

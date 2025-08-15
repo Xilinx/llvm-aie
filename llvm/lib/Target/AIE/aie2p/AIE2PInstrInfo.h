@@ -65,6 +65,7 @@ public:
   unsigned getGenericVShiftOpcode() const override;
   unsigned getGenericShuffleVectorOpcode() const override;
   unsigned getGenericExtractSubvectorOpcode() const override;
+  unsigned getGenericIntegerComparisonOpcode() const override;
   bool isLock(unsigned Opc) const override;
   std::optional<unsigned> getDoneLatency(unsigned) const override;
   bool isDelayedSchedBarrier(const MachineInstr &MI) const override;

@@ -140,3 +140,10 @@ def G_AIE_SHUFFLE_VECTOR : AIEGenericInstruction {
   let InOperandList = (ins type0:$src0, type0:$src1, type1:$mode);
   let hasSideEffects = false;
 }
+
+// AIE vector with integer element type comparison.
+def G_AIE_VECTOR_ICMP : AIEGenericInstruction {
+  let OutOperandList = (outs type0:$dst);
+  let InOperandList = (ins unknown:$tst, type1:$src1, type1:$src2);
+  let hasSideEffects = false;
+}

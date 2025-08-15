@@ -269,6 +269,11 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
     llvm_unreachable(
         "Target didn't implement getGenericExtractSubvectorOpcode!");
   }
+  /// Return the opcode to be used for integer comparison.
+  virtual unsigned getGenericIntegerComparisonOpcode() const {
+    llvm_unreachable(
+        "Target didn't implement getGenericIntegerComparisonOpcode!");
+  }
   /// Check whether Opc represents a lock instruction
   virtual bool isLock(unsigned Opc) const { return false; }
 

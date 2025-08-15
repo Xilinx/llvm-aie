@@ -23,6 +23,7 @@ struct AIEBaseInstrInfo;
 class AIEBaseSubtarget;
 class LegalizerHelper;
 class MachineInstr;
+class GICmp;
 
 class AIELegalizerHelper {
   const AIEBaseSubtarget &ST;
@@ -95,6 +96,7 @@ public:
   bool legalizeG_TRUNC(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool isUnaligned20BitStore(const LegalityQuery &Query) const;
   bool legalize_G_STORE(LegalizerHelper &Helper, GStore &StoreI) const;
+  bool legalizeG_ICMP(LegalizerHelper &Helper, GICmp &ICmp) const;
 };
 
 } // namespace llvm

@@ -1800,4 +1800,48 @@ bool AIELegalizerHelper::legalizeG_TRUNC(LegalizerHelper &Helper,
   return true;
 }
 
+bool AIELegalizerHelper::legalizeG_ICMP(LegalizerHelper &Helper,
+                                        GICmp &ICmp) const {
+  MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+
+  const Register DstReg = ICmp.getOperand(0).getReg();
+  const CmpInst::Predicate Pred = ICmp.getCond();
+  const Register Src0Reg = ICmp.getOperand(2).getReg();
+  const Register Src1Reg = ICmp.getOperand(3).getReg();
+
+  LLT DstType = MRI.getType(DstReg);
+  const bool IsResult16Bit = DstType.getSizeInBits() == 16;
+
+  const unsigned ICmpOpcode =
+      ST.getInstrInfo()->getGenericIntegerComparisonOpcode();
+
+  // Result will be padded.
+  if (IsResult16Bit)
+    DstType = LLT::fixed_vector(32, 1);
+
+  const Register NewDstReg = MRI.createGenericVirtualRegister(DstType);
+
+  MIRBuilder.buildInstr(ICmpOpcode, {NewDstReg}, {Pred, Src0Reg, Src1Reg});
+
+  if (IsResult16Bit) {
+    const Register NewDstRegScalar =
+        MRI.createGenericVirtualRegister(LLT::scalar(32));
+    MIRBuilder.buildBitcast(NewDstRegScalar, NewDstReg);
+    const Register NewDstRegAssert =
+        MRI.createGenericVirtualRegister(LLT::scalar(32));
+    MIRBuilder.buildAssertInstr(TargetOpcode::G_ASSERT_ZEXT, NewDstRegAssert,
+                                NewDstRegScalar, 16);
+    const Register NewDstTrunc =
+        MRI.createGenericVirtualRegister(LLT::scalar(16));
+    MIRBuilder.buildTrunc(NewDstTrunc, NewDstRegAssert);
+    MIRBuilder.buildBitcast(DstReg, NewDstTrunc);
+  } else {
+    MIRBuilder.buildCopy(DstReg, NewDstReg);
+  }
+
+  ICmp.eraseFromParent();
+  return true;
+}
+
 } // namespace llvm
