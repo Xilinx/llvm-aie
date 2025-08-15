@@ -12414,16 +12414,16 @@ static QualType DecodeTypeFromStr(const char *&Str, const ASTContext &Context,
     Type = Context.MFloat8Ty;
     break;
 /* AIE DecodeType Letters */
-  // TODO 'l' 'e' 'm' and 'n' are AIE Specific letters for acc32, acc48
-  // and acc64 handle this in custom way
+  // TODO 'n' and 'g' are AIE Specific letters for acc32, acc48, acc64
+  // and accfloat, handle this in custom way
   case 'n':
-    Type = Context.ACC32Ty;
-    break;
-  case 'e':
-    Type = Context.ACC48Ty;
-    break;
-  case 'm':
-    Type = Context.ACC64Ty;
+    assert(HowLong <= 2 && "Bad modifiers used with 'n'!");
+    if (HowLong == 0) // "n" => acc32
+      Type = Context.ACC32Ty;
+    else if (HowLong == 1) // "Ln" => acc48
+      Type = Context.ACC48Ty;
+    else if (HowLong == 2) // "LLn" => acc64
+      Type = Context.ACC64Ty;
     break;
   case 'g':
     Type = Context.ACCFLOATTy;
