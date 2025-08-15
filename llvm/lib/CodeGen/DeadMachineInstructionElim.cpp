@@ -42,7 +42,6 @@ public:
   bool runImpl(MachineFunction &MF, bool KeepLifetimeInstructions = false);
 
 private:
-  bool isDead(const MachineInstr *MI) const;
   bool eliminateDeadMI(MachineFunction &MF);
 };
 
@@ -86,47 +85,6 @@ char &llvm::DeadMachineInstructionElimID = DeadMachineInstructionElim::ID;
 
 INITIALIZE_PASS(DeadMachineInstructionElim, DEBUG_TYPE,
                 "Remove dead machine instructions", false, false)
-
-bool DeadMachineInstructionElimImpl::isDead(const MachineInstr *MI) const {
-  // Instructions without side-effects are dead iff they only define dead regs.
-  // This function is hot and this loop returns early in the common case,
-  // so only perform additional checks before this if absolutely necessary.
-  for (const MachineOperand &MO : MI->all_defs()) {
-    Register Reg = MO.getReg();
-    if (Reg.isPhysical()) {
-      // Don't delete live physreg defs, or any non-simplifiable physreg defs.
-      if (!LivePhysRegs.available(Reg) || !MRI->canSimplifyPhysReg(Reg))
-        return false;
-    } else {
-      if (MO.isDead()) {
-#ifndef NDEBUG
-        // Basic check on the register. All of them should be 'undef'.
-        for (auto &U : MRI->use_nodbg_operands(Reg))
-          assert(U.isUndef() && "'Undef' use on a 'dead' register is found!");
-#endif
-        continue;
-      }
-      for (const MachineInstr &Use : MRI->use_nodbg_instructions(Reg)) {
-        if (&Use != MI)
-          // This def has a non-debug use. Don't delete the instruction!
-          return false;
-      }
-    }
-  }
-
-  // Technically speaking inline asm without side effects and no defs can still
-  // be deleted. But there is so much bad inline asm code out there, we should
-  // let them be.
-  if (MI->isInlineAsm())
-    return false;
-
-  // FIXME: See issue #105950 for why LIFETIME markers are considered dead here.
-  if (MI->isLifetimeMarker())
-    return !KeepLifetimeInstructions;
-
-  // If there are no defs with uses, the instruction might be dead.
-  return MI->wouldBeTriviallyDead();
-}
 
 bool DeadMachineInstructionElimImpl::runImpl(MachineFunction &MF,
                                              bool LifetimeInstructions) {
@@ -176,7 +134,7 @@ bool DeadMachineInstructionElimImpl::eliminateDeadMI(MachineFunction &MF) {
     // liveness as we go.
     for (MachineInstr &MI : make_early_inc_range(reverse(*MBB))) {
       // If the instruction is dead, delete it!
-      if (isDead(&MI)) {
+      if (MI.isDead(*MRI, &LivePhysRegs, KeepLifetimeInstructions)) {
         LLVM_DEBUG(dbgs() << "DeadMachineInstructionElim: DELETING: " << MI);
         // It is possible that some DBG_VALUE instructions refer to this
         // instruction. They will be deleted in the live debug variable
@@ -186,7 +144,6 @@ bool DeadMachineInstructionElimImpl::eliminateDeadMI(MachineFunction &MF) {
         ++NumDeletes;
         continue;
       }
-
       LivePhysRegs.stepBackward(MI);
 
       // If the instruction is a call, conservatively assume that it reads
@@ -198,7 +155,6 @@ bool DeadMachineInstructionElimImpl::eliminateDeadMI(MachineFunction &MF) {
       }
     }
   }
-
   LivePhysRegs.clear();
   return AnyChanges;
 }

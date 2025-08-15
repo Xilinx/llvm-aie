@@ -53,7 +53,7 @@ void neg() {
 
 template <long int I>
 void tooBig() {
-  __attribute__((address_space(I))) int *bounds; // expected-error {{address space is larger than the maximum supported (8388586)}}
+  __attribute__((address_space(I))) int *bounds; // expected-error {{address space is larger than the maximum supported (8388585)}}
 }
 
 template <long int I>
