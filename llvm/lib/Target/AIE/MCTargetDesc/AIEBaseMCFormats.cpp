@@ -58,6 +58,11 @@ bool AIEBaseMCFormats::isSupportedInstruction(unsigned int Opcode) const {
   return getFormatDescIndex(Opcode) ? true : false;
 }
 
+bool AIEBaseMCFormats::isFormatAvailable(uint64_t SlotSet) const {
+  ArrayRef<bool> IsFormatsAvailable = getIsFormatAvailable();
+  return SlotSet < IsFormatsAvailable.size() && IsFormatsAvailable[SlotSet];
+}
+
 const MCSlotKind AIEBaseMCFormats::getSlotKind(unsigned int Opcode) const {
   // First, we check that the instruction has a format defined.
   // Some KILLs instructions are still in the pipeline for example...

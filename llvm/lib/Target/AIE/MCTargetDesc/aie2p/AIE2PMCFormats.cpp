@@ -37,6 +37,10 @@ const PacketFormats &AIE2PMCFormats::getPacketFormats() const {
   return Formats;
 }
 
+ArrayRef<bool> AIE2PMCFormats::getIsFormatAvailable() const {
+  return FormatAvailable;
+}
+
 SmallVector<MCSlotKind, 2> AIE2PMCFormats::getLoadSlotKinds() const {
   return {MCSlotKind::AIE2P_SLOT_LDB, MCSlotKind::AIE2P_SLOT_LDA};
 }
