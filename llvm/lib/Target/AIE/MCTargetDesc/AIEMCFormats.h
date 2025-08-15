@@ -117,18 +117,7 @@ public:
     unsigned RightOffset;
   };
 
-  enum class MCFormatFieldType { Variable, FixedBits };
-
 private:
-  /// ID of the Parent node in the current tree.
-  /// If the Parent is unknown, it is set to -1.
-  /// NOTE: Currently unused
-  const int ParentID;
-  /// Type of the field
-  const MCFormatFieldType Type;
-  /// Name of the field.
-  /// Set to nullptr if the field isn't defining a Variable field.
-  const char *FieldName = nullptr;
   /// Global (instruction encoding scope) offsets of the field indexed on the
   /// most significant bits
   std::optional<const GlobalOffsets> LocInfos;
@@ -136,12 +125,9 @@ private:
   const MCSlotKind SlotKind;
 
 public:
-  constexpr MCFormatField(int ParentID, MCFormatFieldType Type,
-                          const char *const FieldName,
-                          std::optional<const GlobalOffsets> LocInfos,
+  constexpr MCFormatField(std::optional<const GlobalOffsets> LocInfos,
                           const MCSlotKind &Slot)
-      : ParentID(ParentID), Type(Type), FieldName(FieldName),
-        LocInfos(LocInfos), SlotKind(Slot) {}
+      : LocInfos(LocInfos), SlotKind(Slot) {}
 
   inline unsigned getSize() const {
     return LocInfos->RightOffset - LocInfos->LeftOffset + 1;
@@ -150,12 +136,6 @@ public:
   /// Returns a couple of Offset (begin, end), indexed on the most significant
   /// bit.
   inline const GlobalOffsets &getOffsets() const { return LocInfos.value(); }
-
-  MCFormatFieldType getType() const { return Type; }
-
-  const char *getName() const { return FieldName; }
-
-  int getParentID() const { return ParentID; }
 
   MCSlotKind getSlotKind() const { return SlotKind; }
 };

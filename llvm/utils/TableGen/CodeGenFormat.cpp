@@ -608,21 +608,6 @@ void TGInstrLayout::emitFlatTree(ConstTable &FieldsHierarchy,
   for (const TGFieldLayout *Field : fields()) {
     FieldsHierarchy << Bracket;
     Bracket = "     { ";
-
-    // Emitting ParentID
-    if (Field->getParent() == nullptr)
-      FieldsHierarchy << "-1, ";
-    else
-      FieldsHierarchy << Field->getParent()->EmissionID << ", ";
-
-    if (Field->isFixedBits()) {
-      FieldsHierarchy
-          << "MCFormatField::MCFormatFieldType::FixedBits, nullptr, ";
-    } else {
-      FieldsHierarchy << "MCFormatField::MCFormatFieldType::Variable, " << '"'
-                      << Field->getLabel() << "\",";
-    }
-
     if (Field->isGlobalPositionKnown())
       FieldsHierarchy << " MCFormatField::GlobalOffsets{ "
                       << Field->GlobalOffsets.LeftOffset << ", "
