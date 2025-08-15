@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 // This file implements support related to the VLIW bundles
@@ -28,27 +28,21 @@ const VLIWFormat *PacketFormats::getFormat(SlotBits Slots) const {
 
 const VLIWFormat *PacketFormats::getFormatBySize(SlotBits Slots,
                                                  unsigned Size) const {
-  const VLIWFormat *Fmt = nullptr;
-  auto FormatsRange = getFormatsRangeBySlots(Slots);
-  for (auto it = FormatsRange.begin(), end = FormatsRange.end(); it != end;
-       ++it) {
-    const VLIWFormat *Format = *it;
-    // Find the first match
-    if (Format->getSize() == Size) {
-      Fmt = Format;
+  for (const VLIWFormat *Fmt = FormatsTable; Fmt->Opcode; Fmt++) {
+    unsigned ThisSize = Fmt->getSize();
+    if (ThisSize > Size) {
+      // Formats are sorted by size. Once we are beyond the requested Size,
+      // we won't find it
       break;
     }
+    if (ThisSize < Size) {
+      continue;
+    }
+    if (Fmt->covers(Slots)) {
+      return Fmt;
+    }
   }
-  return Fmt;
-}
-
-llvm::iterator_range<FormatIterator>
-PacketFormats::getFormatsRangeBySlots(SlotBits SlotSet) const {
-  const_iterator b =
-      FormatIterator(findFirstMatchingFormat(FormatsTable, SlotSet), SlotSet);
-  const_iterator e =
-      FormatIterator(findLastMatchingFormat(FormatsTable, SlotSet), SlotSet);
-  return llvm::make_range(b, ++e);
+  return nullptr;
 }
 
 } // namespace llvm
