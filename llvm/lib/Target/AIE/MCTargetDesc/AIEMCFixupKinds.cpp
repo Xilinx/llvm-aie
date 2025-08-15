@@ -45,22 +45,20 @@ MCFixupKind AIEMCFixupKinds::findFixupfromFixupFields(
 
   // Retrieve the signedness property of the relocatable instruction
   FixupFlag InstrSignedness = getInstrFieldSignedness(Inst.getOpcode());
-  auto FixupPredicate = [&](unsigned Candidate) -> bool {
+  auto FixupPredicate = [=](unsigned Candidate) -> bool {
+    if (getFixupFormatSize(Candidate) != FormatSize) {
+      return false;
+    }
     // If the InstrSignedness is Unrestricted, it means that we don't care
     // about the signedness of the fixup/reloc. Thus, if the size of the
     // format is correct, we can select the candidate.
-    if (getFixupFormatSize(Candidate) == FormatSize &&
-        InstrSignedness == FixupFlag::Unrestricted)
-      return true;
-
-    return getFixupFormatSize(Candidate) == FormatSize &&
-           getFixupSignedness(Candidate) == InstrSignedness;
+    return InstrSignedness == FixupFlag::Unrestricted ||
+           InstrSignedness == getFixupSignedness(Candidate);
   };
 
   const std::set<unsigned> &Candidates = CandidatesIt->second;
   // Select the fixup satisfiying the predicate above.
-  auto FixupSelectionIt =
-      std::find_if(Candidates.begin(), Candidates.end(), FixupPredicate);
+  auto FixupSelectionIt = llvm::find_if(Candidates, FixupPredicate);
 
   if (FixupSelectionIt == Candidates.end())
     llvm_unreachable("No fixup found");
