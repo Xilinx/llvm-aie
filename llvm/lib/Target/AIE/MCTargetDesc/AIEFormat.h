@@ -109,38 +109,13 @@ private:
 
 class PacketFormats {
 public:
-  using const_iterator = FormatIterator;
   PacketFormats(const VLIWFormat *Formats) : FormatsTable(Formats){};
 
   const VLIWFormat *getFormat(SlotBits SlotSet) const;
 
   const VLIWFormat *getFormatBySize(SlotBits SlotSet, unsigned Size) const;
 
-  llvm::iterator_range<FormatIterator>
-  getFormatsRangeBySlots(SlotBits SlotSet) const;
-
 private:
-  const VLIWFormat *findFirstMatchingFormat(const VLIWFormat *Fmts,
-                                            SlotBits Slots) const {
-    while (Fmts->Opcode && !Fmts->covers(Slots)) {
-      ++Fmts;
-    }
-    return Fmts->Opcode ? Fmts : nullptr;
-  }
-
-  const VLIWFormat *findLastMatchingFormat(const VLIWFormat *Fmts,
-                                           SlotBits Slots) const {
-    const VLIWFormat *lastFormat = nullptr;
-    while (Fmts->Opcode) {
-      if (Fmts->covers(Slots)) {
-        lastFormat = Fmts;
-        Fmts++;
-        continue;
-      }
-      ++Fmts;
-    }
-    return lastFormat;
-  }
   const VLIWFormat *FormatsTable;
 };
 
