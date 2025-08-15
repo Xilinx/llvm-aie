@@ -137,6 +137,9 @@
 ; AIE-O1-NEXT:      Block Frequency Analysis
 ; AIE-O1-NEXT:      Constant Hoisting
 ; AIE-O1-NEXT:      Replace intrinsics with calls to vector library
+; AIE-O1-NEXT:      Lazy Branch Probability Analysis
+; AIE-O1-NEXT:      Lazy Block Frequency Analysis
+; AIE-O1-NEXT:      Optimization Remark Emitter
 ; AIE-O1-NEXT:      Partially inline calls to library functions
 ; AIE-O1-NEXT:      Instrument function entry/exit with calls to e.g. mcount() (post inlining)
 ; AIE-O1-NEXT:      Scalarize Masked Memory Intrinsics
@@ -345,6 +348,9 @@
 ; AIE-O23-NEXT:      Block Frequency Analysis
 ; AIE-O23-NEXT:      Constant Hoisting
 ; AIE-O23-NEXT:      Replace intrinsics with calls to vector library
+; AIE-O23-NEXT:      Lazy Branch Probability Analysis
+; AIE-O23-NEXT:      Lazy Block Frequency Analysis
+; AIE-O23-NEXT:      Optimization Remark Emitter
 ; AIE-O23-NEXT:      Partially inline calls to library functions
 ; AIE-O3-NEXT:      Expand vector predication intrinsics
 ; AIE-O23-NEXT:      Instrument function entry/exit with calls to e.g. mcount() (post inlining)

@@ -97,13 +97,6 @@ public:
   /// Called when the loop's preheader has been modified to NewPreheader.
   void setPreheader(MachineBasicBlock *NewPreheader) override;
 
-  /// Called when the loop is being removed. Any instructions in the preheader
-  /// should be removed.
-  ///
-  /// Once this function is called, no other functions on this object are
-  /// valid; the loop has been removed.
-  void disposed() override;
-
   /// The default version, no special treatment for any instruction
   /// except the terminators
   bool shouldIgnoreForPipelining(const MachineInstr *MI) const override {

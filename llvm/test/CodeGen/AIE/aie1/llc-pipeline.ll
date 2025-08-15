@@ -76,6 +76,9 @@
 ; AIE-O123-NEXT:      Block Frequency Analysis
 ; AIE-O123-NEXT:      Constant Hoisting
 ; AIE-O123-NEXT:      Replace intrinsics with calls to vector library
+; AIE-O123-NEXT:      Lazy Branch Probability Analysis
+; AIE-O123-NEXT:      Lazy Block Frequency Analysis
+; AIE-O123-NEXT:      Optimization Remark Emitter
 ; AIE-O123-NEXT:      Partially inline calls to library functions
 
 ; AIE-O23-NEXT:      Expand vector predication intrinsics

@@ -24,6 +24,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/CodeGen/DFAPacketizer.h"
+#include "llvm/CodeGen/LiveIntervals.h"
 #include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineBranchProbabilityInfo.h"
@@ -798,7 +799,11 @@ public:
     Loop->getOperand(1).setReg(NewLoopCount);
   }
 
-  void disposed() override { Loop->eraseFromParent(); }
+  void disposed(LiveIntervals *LIS) override {
+    if (LIS)
+      LIS->RemoveMachineInstrFromMaps(*Loop);
+    Loop->eraseFromParent();
+  }
 };
 } // namespace
 
@@ -962,7 +967,8 @@ void HexagonInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                            Register SrcReg, bool isKill, int FI,
                                            const TargetRegisterClass *RC,
                                            const TargetRegisterInfo *TRI,
-                                           Register VReg) const {
+                                           Register VReg,
+                                           MachineInstr::MIFlag Flags) const {
   DebugLoc DL = MBB.findDebugLoc(I);
   MachineFunction &MF = *MBB.getParent();
   MachineFrameInfo &MFI = MF.getFrameInfo();
@@ -1005,12 +1011,10 @@ void HexagonInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   }
 }
 
-void HexagonInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
-                                            MachineBasicBlock::iterator I,
-                                            Register DestReg, int FI,
-                                            const TargetRegisterClass *RC,
-                                            const TargetRegisterInfo *TRI,
-                                            Register VReg) const {
+void HexagonInstrInfo::loadRegFromStackSlot(
+    MachineBasicBlock &MBB, MachineBasicBlock::iterator I, Register DestReg,
+    int FI, const TargetRegisterClass *RC, const TargetRegisterInfo *TRI,
+    Register VReg, MachineInstr::MIFlag Flags) const {
   DebugLoc DL = MBB.findDebugLoc(I);
   MachineFunction &MF = *MBB.getParent();
   MachineFrameInfo &MFI = MF.getFrameInfo();

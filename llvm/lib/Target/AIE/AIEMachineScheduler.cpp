@@ -1140,7 +1140,7 @@ PressureDiff estimatePressureDiff(const SUnit &SU,
     if (D.isReg() && D.getReg().isVirtual()) {
       // Note that we aren't in SSA anymore, so D.getReg() might already be live
       PDiff.addPressureChange(D.getReg(), /*IsDec=*/true, &MRI);
-      DefinedRegs.insert(RegisterMaskPair(D.getReg(), LaneBitmask::getAll()));
+      DefinedRegs.insert(VRegMaskOrUnit(D.getReg(), LaneBitmask::getAll()));
     }
   }
   for (const MachineOperand &U : MI.uses()) {

@@ -628,7 +628,8 @@ void AIE2InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                         Register SrcReg, bool IsKill, int FI,
                                         const TargetRegisterClass *RC,
                                         const TargetRegisterInfo *TRI,
-                                        Register VReg) const {
+                                        Register VReg,
+                                        MachineInstr::MIFlag Flags) const {
   DebugLoc DL;
   if (I != MBB.end())
     DL = I->getDebugLoc();
@@ -705,7 +706,8 @@ void AIE2InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                          Register DstReg, int FI,
                                          const TargetRegisterClass *RC,
                                          const TargetRegisterInfo *TRI,
-                                         Register VReg) const {
+                                         Register VReg,
+                                         MachineInstr::MIFlag Flags) const {
   DebugLoc DL;
   if (I != MBB.end())
     DL = I->getDebugLoc();
