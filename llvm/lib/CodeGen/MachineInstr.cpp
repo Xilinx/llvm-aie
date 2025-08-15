@@ -1352,15 +1352,17 @@ bool MachineInstr::wouldBeTriviallyDead() const {
 }
 
 bool MachineInstr::isDead(const MachineRegisterInfo &MRI,
-                          LiveRegUnits *LivePhysRegs) const {
+                          LiveRegUnits *LivePhysRegs,
+                          bool KeepLifetimeInstructions) const {
   // Instructions without side-effects are dead iff they only define dead regs.
   // This function is hot and this loop returns early in the common case,
   // so only perform additional checks before this if absolutely necessary.
   for (const MachineOperand &MO : all_defs()) {
     Register Reg = MO.getReg();
     if (Reg.isPhysical()) {
-      // Don't delete live physreg defs, or any reserved register defs.
-      if (!LivePhysRegs || !LivePhysRegs->available(Reg) || MRI.isReserved(Reg))
+      // Don't delete live physreg defs, or any non-simplifiable physreg defs.
+      if (!LivePhysRegs || !LivePhysRegs->available(Reg) ||
+          !MRI.canSimplifyPhysReg(Reg))
         return false;
     } else {
       if (MO.isDead())
@@ -1381,7 +1383,7 @@ bool MachineInstr::isDead(const MachineRegisterInfo &MRI,
 
   // FIXME: See issue #105950 for why LIFETIME markers are considered dead here.
   if (isLifetimeMarker())
-    return true;
+    return !KeepLifetimeInstructions;
 
   // If there are no defs with uses, then we call the instruction dead so long
   // as we do not suspect it may have sideeffects.
