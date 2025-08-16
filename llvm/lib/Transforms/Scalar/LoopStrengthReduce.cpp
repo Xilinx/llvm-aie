@@ -6141,7 +6141,7 @@ void LSRInstance::ImplementSolution(
     if (!llvm::all_of(BO->uses(),
                       [&](Use &U) {return DT.dominates(IVIncInsertPos, U);}))
       continue;
-    BO->moveBefore(IVIncInsertPos);
+    BO->moveBefore(IVIncInsertPos->getIterator());
     Changed = true;
   }
 
@@ -6179,11 +6179,11 @@ LSRInstance::LSRInstance(Loop *L, IVUsers &IU, ScalarEvolution &SE,
     // CatchSwitchInst.  Because the CatchSwitchInst cannot be split, there is
     // no good place to stick any instructions.
     if (auto *PN = dyn_cast<PHINode>(U.getUser())) {
-       auto *FirstNonPHI = PN->getParent()->getFirstNonPHI();
+       auto FirstNonPHI = PN->getParent()->getFirstNonPHIIt();
        if (isa<FuncletPadInst>(FirstNonPHI) ||
            isa<CatchSwitchInst>(FirstNonPHI))
          for (BasicBlock *PredBB : PN->blocks())
-           if (isa<CatchSwitchInst>(PredBB->getFirstNonPHI()))
+           if (isa<CatchSwitchInst>(PredBB->getFirstNonPHIIt()))
              return;
     }
   }
