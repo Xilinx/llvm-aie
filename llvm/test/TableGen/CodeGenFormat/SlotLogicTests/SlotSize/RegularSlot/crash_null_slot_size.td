@@ -19,5 +19,5 @@ let Namespace = "TEST" in
   def fu0_slot     : InstSlot<"fu0",  0>;
   // CHECK: assertion failed
   // CHECK: Size of the Slot must be > 0 if the slot isn't the default one, current size being: 0
-  // CHECK: Invalid size of the slot fu0_slot
+  // CHECK: :[[@LINE-3]]:7: error: assertion failed in this record
 }
