@@ -130,7 +130,7 @@ static bool CC_AIE2_Handle_Split_Arg(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
                                      CCState &State) {
   return Handle_Split_Arg(ValNo, ValVT, LocVT, LocInfo, ArgFlags, State,
                           {AIE2::r0, AIE2::r1, AIE2::r2, AIE2::r3, AIE2::r4,
-                           AIE2::r5, AIE2::r6, AIE::r7});
+                           AIE2::r5, AIE2::r6, AIE2::r7});
 }
 namespace {
 const std::array<std::array<MCPhysReg, 2>, 4> SparseRegPairs = {
