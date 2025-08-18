@@ -27,6 +27,7 @@
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
 #include "llvm/IR/IntrinsicsAIE2P.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <optional>
 
 #define DEBUG_TYPE "aie-combine"
@@ -3277,7 +3278,8 @@ isUsedByAnyS20Instruction(MachineInstr &Phi,
 /// size in bits <= the old type
 static void retypePhiNode(MachineInstr &Phi, bool IsSigned, LLT NewType,
                           MachineIRBuilder &B, MachineRegisterInfo &MRI,
-                          GISelChangeObserver &Observer) {
+                          GISelChangeObserver &Observer,
+                          CombinerHelper &Helper) {
 
   const Register NewDefReg = MRI.createGenericVirtualRegister(NewType);
   const Register DefReg = Phi.getOperand(0).getReg();
@@ -3299,8 +3301,9 @@ static void retypePhiNode(MachineInstr &Phi, bool IsSigned, LLT NewType,
   // Change the output.
   Observer.createdInstr(
       *B.buildInstr(ChangeDefOpcode).addDef(DefReg).addUse(NewDefReg));
+  Observer.changingInstr(Phi);
   Phi.getOperand(0).setReg(NewDefReg);
-
+  Observer.changedInstr(Phi);
   // Change the inputs.
   for (unsigned OpNum = 1; OpNum < Phi.getNumOperands(); OpNum += 2) {
     const Register SrcReg = Phi.getOperand(OpNum).getReg();
@@ -3313,9 +3316,28 @@ static void retypePhiNode(MachineInstr &Phi, bool IsSigned, LLT NewType,
 
     B.setInsertPt(*DefMI->getParent(), InsertPt);
     B.setDebugLoc(DefMI->getDebugLoc());
-    const Register NewSrcReg = MRI.createGenericVirtualRegister(NewType);
-    Observer.createdInstr(
-        *B.buildInstr(ChangeUseOpcode).addDef(NewSrcReg).addUse(SrcReg));
+    Register NewSrcReg = 0;
+    // Try to find an equivalent type conversion operation that dominates Phi,
+    // so reuse it. The uniqueness of type conversion are a key point for other
+    // combiners, in this way we ensure that all opportunities will be
+    // uncovered.
+    for (auto &OtherUser : MRI.use_instructions(SrcReg)) {
+      if (OtherUser.getOpcode() == ChangeUseOpcode) {
+        const Register OtherDstReg = OtherUser.getOperand(0).getReg();
+        const LLT OtherType = MRI.getType(OtherDstReg);
+        if (OtherType == NewType && Helper.dominates(OtherUser, Phi)) {
+          NewSrcReg = OtherDstReg;
+          break;
+        }
+      }
+    }
+
+    if (!NewSrcReg) {
+      NewSrcReg = MRI.createGenericVirtualRegister(NewType);
+      Observer.createdInstr(
+          *B.buildInstr(ChangeUseOpcode).addDef(NewSrcReg).addUse(SrcReg));
+    }
+
     Observer.changingInstr(Phi);
     Phi.getOperand(OpNum).setReg(NewSrcReg);
     Observer.changedInstr(Phi);
@@ -3324,7 +3346,8 @@ static void retypePhiNode(MachineInstr &Phi, bool IsSigned, LLT NewType,
 
 /// Narrow Phi nodes to s20, when it is safe.
 bool llvm::matchNarrowPhi(MachineInstr &Phi, MachineRegisterInfo &MRI,
-                          GISelChangeObserver &Observer, BuildFnTy &MatchInfo) {
+                          CombinerHelper &Helper, GISelChangeObserver &Observer,
+                          BuildFnTy &MatchInfo) {
 
   assert(Phi.getOpcode() == TargetOpcode::G_PHI);
 
@@ -3353,13 +3376,13 @@ bool llvm::matchNarrowPhi(MachineInstr &Phi, MachineRegisterInfo &MRI,
 
   // We will do the following transformation:
   // PHI(A, B) -> ZEXT(PHI(TRUNC(A), TRUNC(B)))
-  MatchInfo = [=, &MRI, &Phi, &Observer](MachineIRBuilder &B) {
+  MatchInfo = [=, &MRI, &Phi, &Observer, &Helper](MachineIRBuilder &B) {
     // We change the PHI node instead of building a new one.
     const LLT S20 = LLT::scalar(20);
     // We extend the output also truncate the inputs.
     // We use ZExt (IsSigned) because it is the only safe, considering the
     // previous analysis (isUsedByAnyS20Instruction - trunc case).
-    retypePhiNode(Phi, /*IsSigned=*/false, S20, B, MRI, Observer);
+    retypePhiNode(Phi, /*IsSigned=*/false, S20, B, MRI, Observer, Helper);
   };
 
   return true;
@@ -3678,7 +3701,7 @@ static std::optional<LLT> getDefBitcastedType(MachineInstr &Phi,
 ///    %Y ...
 ///    G_BR %bb.1
 bool llvm::matchPhiBitcast(MachineInstr &Phi, MachineRegisterInfo &MRI,
-                           const AIEBaseInstrInfo &TII,
+                           CombinerHelper &Helper, const AIEBaseInstrInfo &TII,
                            GISelChangeObserver &Observer,
                            BuildFnTy &MatchInfo) {
 
@@ -3703,10 +3726,10 @@ bool llvm::matchPhiBitcast(MachineInstr &Phi, MachineRegisterInfo &MRI,
     return false;
 
   const LLT NewType = *FromType;
-  MatchInfo = [=, &MRI, &Phi, &Observer](MachineIRBuilder &B) {
+  MatchInfo = [=, &MRI, &Phi, &Observer, &Helper](MachineIRBuilder &B) {
     // We change the PHI node instead of building a new one,
     // with all types bitcasted.
-    retypePhiNode(Phi, /*IsSigned*/ false, NewType, B, MRI, Observer);
+    retypePhiNode(Phi, /*IsSigned*/ false, NewType, B, MRI, Observer, Helper);
   };
 
   return true;
