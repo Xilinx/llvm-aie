@@ -1564,7 +1564,6 @@ bool IRTranslator::translateBitCast(const User &U,
 
 bool IRTranslator::translateCast(unsigned Opcode, const User &U,
                                  MachineIRBuilder &MIRBuilder) {
-
   uint32_t Flags = 0;
   if (const Instruction *I = dyn_cast<Instruction>(&U))
     Flags = MachineInstr::copyFlagsFromInstruction(*I);
