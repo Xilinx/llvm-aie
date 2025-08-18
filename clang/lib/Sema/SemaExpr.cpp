@@ -11803,7 +11803,7 @@ static std::optional<bool> isTautologicalBoundsCheck(Sema &S, const Expr *LHS,
                                                      const Expr *RHS,
                                                      BinaryOperatorKind Opc) {
   if (!LHS->getType()->isPointerType() ||
-      S.getLangOpts().isSignedOverflowDefined())
+      S.getLangOpts().PointerOverflowDefined)
     return std::nullopt;
 
   // Canonicalize to >= or < predicate.
@@ -17885,9 +17885,6 @@ void Sema::PopExpressionEvaluationContext() {
 
   WarnOnPendingNoDerefs(Rec);
   HandleImmediateInvocations(*this, Rec);
-
-  if (auto *FD = dyn_cast<FunctionDecl>(CurContext); FD && getCurFunction())
-    CheckImmediateEscalatingFunctionDefinition(FD, getCurFunction());
 
   // Warn on any volatile-qualified simple-assignments that are not discarded-
   // value expressions nor unevaluated operands (those cases get removed from
