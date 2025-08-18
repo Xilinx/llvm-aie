@@ -5,6 +5,8 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 /// \file
@@ -865,10 +867,19 @@ Expected<InstructionMatcher &> GlobalISelEmitter::createAndImportSelDAGMatcher(
     // predicate operand needs to be swapped from the last operand to the first
     // source.
 
-    unsigned NumChildren = Src.getNumChildren();
-    bool IsFCmp = SrcGIOrNull->TheDef->getName() == "G_FCMP";
+    auto StringEndsWith = [](std::string_view str, std::string_view suffix) {
+      return str.size() >= suffix.size() &&
+             str.compare(str.size() - suffix.size(), suffix.size(), suffix) ==
+                 0;
+    };
 
-    if (IsFCmp || SrcGIOrNull->TheDef->getName() == "G_ICMP") {
+    // We allow targets to build custom FCMP/ICMP variants to support
+    // distinguished type restrictions. In this way, we interpret any
+    // operator ending in "_FCMP" and "_ICMP" as a comparison operator.
+    unsigned NumChildren = Src.getNumChildren();
+    bool IsFCmp = StringEndsWith(SrcGIOrNull->TheDef->getName(), "_FCMP");
+
+    if (IsFCmp || StringEndsWith(SrcGIOrNull->TheDef->getName(), "_ICMP")) {
       const TreePatternNode &SrcChild = Src.getChild(NumChildren - 1);
       if (SrcChild.isLeaf()) {
         const DefInit *DI = dyn_cast<DefInit>(SrcChild.getLeafValue());
