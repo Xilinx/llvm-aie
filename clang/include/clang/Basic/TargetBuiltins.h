@@ -114,12 +114,12 @@ namespace clang {
 
   /// NVPTX builtins
   namespace NVPTX {
-    enum {
-        LastTIBuiltin = clang::Builtin::FirstTSBuiltin-1,
+  enum {
+    LastTIBuiltin = clang::Builtin::FirstTSBuiltin - 1,
 #define BUILTIN(ID, TYPE, ATTRS) BI##ID,
-#include "clang/Basic/BuiltinsNVPTX.def"
-        LastTSBuiltin
-    };
+#include "clang/Basic/BuiltinsNVPTX.inc"
+    LastTSBuiltin
+  };
   }
 
   /// AMDGPU builtins
@@ -367,12 +367,12 @@ namespace clang {
 
   /// Hexagon builtins
   namespace Hexagon {
-    enum {
-        LastTIBuiltin = clang::Builtin::FirstTSBuiltin-1,
+  enum {
+    LastTIBuiltin = clang::Builtin::FirstTSBuiltin - 1,
 #define BUILTIN(ID, TYPE, ATTRS) BI##ID,
-#include "clang/Basic/BuiltinsHexagon.def"
-        LastTSBuiltin
-    };
+#include "clang/Basic/BuiltinsHexagon.inc"
+    LastTSBuiltin
+  };
   }
 
   /// MIPS builtins
