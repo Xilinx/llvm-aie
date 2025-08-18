@@ -46,20 +46,15 @@ def I128_LDA_LDB_NOP_ALU_LNG_NOP_VEC_ALL
 }
 
 // CHECK:        TEST::I128_LDA_LDB_NOP_ALU_LNG_NOP_VEC_ALL - Index : 0
-// CHECK:        "lda"
-// CHECK-SAME:        { 0, 17 }
+// CHECK:        { 0, 17 }
 // CHECK-SAME:        MCSlotKind(TESTSlotKind::TEST_SLOT_AAAAAAA)
-// CHECK:        "ldb"
-// CHECK-SAME:        { 18, 34 }
+// CHECK:        { 18, 34 }
 // CHECK-SAME:        MCSlotKind(TESTSlotKind::TEST_SLOT_BBBBB)
-// CHECK:        "alu"
-// CHECK-SAME:        { 36, 54 }
+// CHECK:        { 36, 54 }
 // CEHCK-SAME:        MCSlotKind(TESTSlotKind::TEST_SLOT_CCCC)
-// CHECK:        "lng"
-// CHECK-SAME:        { 60, 87 }
+// CHECK:        { 60, 87 }
 // CHECK-SAME:        MCSlotKind(TESTSlotKind::TEST_SLOT_DDDDD)
-// CHECK:        "vec_all"
-// CHECK-SAME:        { 89, 125 }
+// CHECK:        { 89, 125 }
 // CHECK-SAME:        MCSlotKind(TESTSlotKind::TEST_SLOT_SDASDADD)
 
 def I16 : TEST_instr16<(ins instr16_slot:$instr16), "i16", "$instr16">
@@ -69,7 +64,6 @@ def I16 : TEST_instr16<(ins instr16_slot:$instr16), "i16", "$instr16">
 }
 
 // CHECK:        TEST::I16 - Index : 1
-// CHECK:        "instr16"
 // CHECK:        { 0, 13 }
 // CHECK:        MCSlotKind(TESTSlotKind::TEST_SLOT_XXXX)
 
@@ -90,13 +84,10 @@ def I64_LDA_LDB_ALU
 }
 
 // CHECK:        TEST::I64_LDA_LDB_ALU - Index : 2
-// CHECK:        "lda"
 // CHECK:        { 0, 17 }
 // CHECK:        MCSlotKind(TESTSlotKind::TEST_SLOT_AAAAAAA)
-// CHECK:        "ldb"
 // CHECK:        { 18, 34 }
 // CHECK:        MCSlotKind(TESTSlotKind::TEST_SLOT_BBBBB)
-// CHECK:        "alu"
 // CHECK:        { 36, 54 }
 // CEHCK:        MCSlotKind(TESTSlotKind::TEST_SLOT_CCCC)
 

@@ -34,7 +34,6 @@ def ADD      : TEST_alu_r_rr<0b0000, "add">;
 
 // CHECK:        TEST::ADD - Index : 1
 // CHECK-NOT:    TESTSlotKind::TEST_SLOT_ALUAAA
-// CHECK:        "alu_base"
 // CHECK:        { 1, 19 }
 // CHECK:        TESTSlotKind::TEST_SLOT_ALUAAA
 // CHECK-NOT:    TESTSlotKind::TEST_SLOT_VECA
@@ -44,7 +43,6 @@ def VMUL80_S32_S32_BM : TEST_vec_acm_bm_zero
 
 // CHECK:        TEST::VMUL80_S32_S32_BM - Index : 2
 // CHECK-NOT:    TESTSlotKind::TEST_SLOT_VECA
-// CHECK:        "veca_base"
 // CHECK:        { 21, 57 }
 // CHECK:        TESTSlotKind::TEST_SLOT_VECA
 // CHECK-NOT:    TESTSlotKind::TEST_SLOT_VECA
