@@ -164,7 +164,7 @@ def combine_broadcast_shl_to_add : GICombineRule<
 def combine_narrow_phi_node_s20 : GICombineRule<
   (defs root:$root, build_fn_matchinfo:$matchinfo),
   (match (wip_match_opcode G_PHI): $root,
-         [{ return matchNarrowPhi(*${root}, MRI, Observer, ${matchinfo}); }]),
+         [{ return matchNarrowPhi(*${root}, MRI, Helper, Observer, ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
 
 def combine_narrow_trunc_s20 : GICombineRule<
@@ -213,7 +213,7 @@ def combine_bitcast_unmerge_swap : GICombineRule<
 def combine_phi_bitcast_swap : GICombineRule<
   (defs root:$root, build_fn_matchinfo:$matchinfo),
   (match (wip_match_opcode G_PHI): $root,
-         [{ return matchPhiBitcast(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), Observer, ${matchinfo}); }]),
+         [{ return matchPhiBitcast(*${root}, MRI, Helper, (const AIEBaseInstrInfo &)B.getTII(), Observer, ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
 
 def combine_phi_undef : GICombineRule<

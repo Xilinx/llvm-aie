@@ -262,7 +262,8 @@ bool matchBroadcastToShl(MachineInstr &MI, MachineRegisterInfo &MRI,
                          const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
 
 bool matchNarrowPhi(MachineInstr &Phi, MachineRegisterInfo &MRI,
-                    GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
+                    CombinerHelper &Helper, GISelChangeObserver &Observer,
+                    BuildFnTy &MatchInfo);
 
 bool matchNarrowTrunc(MachineInstr &MI, MachineRegisterInfo &MRI,
                       GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
@@ -281,8 +282,8 @@ bool matchBitcastUnmerge(MachineInstr &Phi, MachineRegisterInfo &MRI,
                          GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
 
 bool matchPhiBitcast(MachineInstr &Phi, MachineRegisterInfo &MRI,
-                     const AIEBaseInstrInfo &TII, GISelChangeObserver &Observer,
-                     BuildFnTy &MatchInfo);
+                     CombinerHelper &Helper, const AIEBaseInstrInfo &TII,
+                     GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
 
 bool matchPhiOfUndef(MachineInstr &MI, MachineRegisterInfo &MRI,
                      GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
