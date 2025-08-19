@@ -10,6 +10,7 @@
 #define LIB_TOOLS_PDLL_PARSER_LEXER_H_
 
 #include "mlir/Support/LLVM.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/SMLoc.h"
 
@@ -77,7 +78,19 @@ public:
     dot,
     equal,
     equal_arrow,
+    equal_equal,
     semicolon,
+
+    /// Arithmetic.
+    abs,
+    add,
+    div,
+    exp2,
+    log2,
+    mod,
+    mul,
+    sub,
+
     /// Paired punctuation.
     less,
     greater,
@@ -179,12 +192,21 @@ public:
   /// opened, success otherwise.
   LogicalResult pushInclude(StringRef filename, SMRange includeLoc);
 
+  /// Returns the top include file entry from the stack
+  StringRef getCurrentInclude() const;
+
+  /// Returns wether we are lexing the main file
+  bool isLexingMainFile() const;
+
   /// Lex the next token and return it.
   Token lexToken();
 
   /// Change the position of the lexer cursor. The next token we lex will start
   /// at the designated point in the input.
   void resetPointer(const char *newPointer) { curPtr = newPointer; }
+
+  /// Print a warning
+  void emitWarning(SMRange loc, const Twine &msg);
 
   /// Emit an error to the lexer with the given location and message.
   Token emitError(SMRange loc, const Twine &msg);
@@ -202,6 +224,7 @@ private:
 
   /// Lex methods.
   void lexComment();
+  LogicalResult lexBlockComment();
   Token lexDirective(const char *tokStart);
   Token lexIdentifier(const char *tokStart);
   Token lexNumber(const char *tokStart);
@@ -221,6 +244,10 @@ private:
 
   /// The optional code completion point within the input file.
   const char *codeCompletionLocation;
+
+  // Allows to keep track of the stack of included files. These paths are stored
+  // in its canonicalized form
+  llvm::SmallVector<std::string> canonicalIncludeFileStack;
 };
 } // namespace pdll
 } // namespace mlir

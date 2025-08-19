@@ -15,6 +15,7 @@
 #include "mlir/Dialect/Tosa/IR/TosaOps.h"
 #include "mlir/IR/PatternMatch.h"
 #include "mlir/IR/TypeUtilities.h"
+#include "mlir/Transforms/DialectConversion.h"
 #include "mlir/Transforms/GreedyPatternRewriteDriver.h"
 
 using namespace mlir;
@@ -22,13 +23,23 @@ using namespace tosa;
 
 namespace {
 
-class ConstOpConverter : public OpRewritePattern<tosa::ConstOp> {
+class ConstOpConverter : public OpConversionPattern<tosa::ConstOp> {
 public:
-  using OpRewritePattern<tosa::ConstOp>::OpRewritePattern;
+  using OpConversionPattern::OpConversionPattern;
 
-  LogicalResult matchAndRewrite(tosa::ConstOp op,
-                                PatternRewriter &rewriter) const final {
-    rewriter.replaceOpWithNewOp<arith::ConstantOp>(op, op.getValue());
+  LogicalResult matchAndRewrite(tosa::ConstOp op, OpAdaptor adaptor,
+                                ConversionPatternRewriter &rewriter) const final {
+
+    auto elements = dyn_cast<DenseElementsAttr>(adaptor.getValue());
+    if (!elements) {
+       return rewriter.notifyMatchFailure(op, "expected dense elements attr");
+    }
+
+    auto convertedElTy = getTypeConverter()->convertType(elements.getElementType());
+    if (!convertedElTy) {
+      return rewriter.notifyMatchFailure(op, "type conversion failed");
+    }
+    rewriter.replaceOpWithNewOp<arith::ConstantOp>(op, elements.bitcast(convertedElTy));
     return success();
   }
 };
@@ -238,9 +249,9 @@ public:
 
 } // namespace
 
-void mlir::tosa::populateTosaToArithConversionPatterns(
+void mlir::tosa::populateTosaToArithConversionPatterns(TypeConverter &converter,
     RewritePatternSet *patterns) {
-  patterns->add<ConstOpConverter>(patterns->getContext());
+  patterns->add<ConstOpConverter>(converter, patterns->getContext());
 }
 
 void mlir::tosa::populateTosaRescaleToArithConversionPatterns(

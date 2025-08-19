@@ -519,8 +519,14 @@ Value CodeGen::genExprImpl(const ast::OperationExpr *expr) {
   for (const ast::Expr *result : expr->getResultTypes())
     results.push_back(genSingleExpr(result));
 
-  return builder.create<pdl::OperationOp>(loc, opName, operands, attrNames,
-                                          attrValues, results);
+  auto operationOp = builder.create<pdl::OperationOp>(
+      loc, opName, operands, attrNames, attrValues, results);
+
+  // numRegions
+  if (expr->getNumRegions() > 0)
+    operationOp.setNumRegions(expr->getNumRegions());
+
+  return operationOp;
 }
 
 Value CodeGen::genExprImpl(const ast::RangeExpr *expr) {

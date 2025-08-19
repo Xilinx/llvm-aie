@@ -116,9 +116,16 @@ def EmitC_OpaqueType : EmitC_Type<"Opaque", "opaque"> {
     ```
   }];
 
-  let parameters = (ins StringRefParameter<"the opaque value">:$value);
-  let assemblyFormat = "`<` $value `>`";
+  let parameters = (ins StringRefParameter<"the opaque value">:$value,
+                        OptionalArrayRefParameter<"Type">:$fmtArgs);
+  let assemblyFormat = "`<` $value (`,` custom<VariadicTypeFmtArgs>($fmtArgs)^)? `>`";
   let genVerifyDecl = 1;
+
+  let builders = [TypeBuilder<(ins "::llvm::StringRef":$value), [{ return $_get($_ctxt, value, SmallVector<Type>{}); }] >];
+
+  let extraClassDeclaration = [{
+    FailureOr<SmallVector<::mlir::emitc::ReplacementItem>> parseFormatString();
+  }];
 }
 
 def EmitC_PointerType : EmitC_Type<"Pointer", "ptr"> {

@@ -13,6 +13,9 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/SourceMgr.h"
 
+#include <filesystem>
+#include <system_error>
+
 using namespace mlir;
 using namespace mlir::pdll;
 
@@ -111,12 +114,23 @@ LogicalResult Lexer::pushInclude(StringRef filename, SMRange includeLoc) {
   if (!bufferID)
     return failure();
 
+  std::error_code ec;
+  std::filesystem::path canonicalPath =
+      std::filesystem::canonical(includedFile, ec);
+  if (ec) {
+    return failure();
+  }
+
+  canonicalIncludeFileStack.push_back(canonicalPath.string());
   curBufferID = bufferID;
   curBuffer = srcMgr.getMemoryBuffer(curBufferID)->getBuffer();
   curPtr = curBuffer.begin();
   return success();
 }
 
+void Lexer::emitWarning(SMRange loc, const Twine &msg) {
+  diagEngine.emitWarning(loc, msg);
+}
 Token Lexer::emitError(SMRange loc, const Twine &msg) {
   diagEngine.emitError(loc, msg);
   return formToken(Token::error, loc.Start.getPointer());
@@ -138,7 +152,7 @@ int Lexer::getNextChar() {
     return static_cast<unsigned char>(curChar);
   case 0: {
     // A nul character in the stream is either the end of the current buffer
-    // or a random nul in the file. Disambiguate that here.
+    // or a random nul in the file. Disambiguate that here.r
     if (curPtr - 1 != curBuffer.end())
       return 0;
 
@@ -155,6 +169,12 @@ int Lexer::getNextChar() {
       ++curPtr;
     return '\n';
   }
+}
+
+StringRef Lexer::getCurrentInclude() const { return canonicalIncludeFileStack.back(); }
+
+bool Lexer::isLexingMainFile() const {
+  return static_cast<int>(srcMgr.getMainFileID()) == curBufferID;
 }
 
 Token Lexer::lexToken() {
@@ -182,6 +202,7 @@ Token Lexer::lexToken() {
       // Check to see if we are in an included file.
       SMLoc parentIncludeLoc = srcMgr.getParentIncludeLoc(curBufferID);
       if (parentIncludeLoc.isValid()) {
+        canonicalIncludeFileStack.pop_back();
         curBufferID = srcMgr.FindBufferContainingLoc(parentIncludeLoc);
         curBuffer = srcMgr.getMemoryBuffer(curBufferID)->getBuffer();
         curPtr = parentIncludeLoc.getPointer();
@@ -196,7 +217,7 @@ Token Lexer::lexToken() {
         ++curPtr;
         return formToken(Token::arrow, tokStart);
       }
-      return emitError(tokStart, "unexpected character");
+      return formToken(Token::sub, tokStart);
     case ':':
       return formToken(Token::colon, tokStart);
     case ',':
@@ -207,6 +228,10 @@ Token Lexer::lexToken() {
       if (*curPtr == '>') {
         ++curPtr;
         return formToken(Token::equal_arrow, tokStart);
+      }
+      if (*curPtr == '=') {
+        ++curPtr;
+        return formToken(Token::equal_equal, tokStart);
       }
       return formToken(Token::equal, tokStart);
     case ';':
@@ -219,7 +244,12 @@ Token Lexer::lexToken() {
       return formToken(Token::l_square, tokStart);
     case ']':
       return formToken(Token::r_square, tokStart);
-
+    case '*':
+      return formToken(Token::mul, tokStart);
+    case '%':
+      return formToken(Token::mod, tokStart);
+    case '+':
+      return formToken(Token::add, tokStart);
     case '<':
       return formToken(Token::less, tokStart);
     case '>':
@@ -236,8 +266,12 @@ Token Lexer::lexToken() {
       if (*curPtr == '/') {
         lexComment();
         continue;
+      } else if (*curPtr == '*') {
+        if (failed(lexBlockComment()))
+          return emitError(tokStart, "unterminated comment, expected '*/'");
+        continue;
       }
-      return emitError(tokStart, "unexpected character");
+      return formToken(Token::div, tokStart);
 
     // Ignore whitespace characters.
     case 0:
@@ -292,6 +326,41 @@ void Lexer::lexComment() {
   }
 }
 
+/// Skip multi-line comments that start with /* and end with */.
+LogicalResult Lexer::lexBlockComment() {
+  // Advance over the '*' in a '/*' comment.
+  assert(*curPtr == '*');
+  ++curPtr;
+
+  while (true) {
+    switch (*curPtr++) {
+    case '*':
+      // Block ends with '*/'.
+      if (*curPtr++ == '/')
+        return success();
+      // Roll back one character if another '*' is encountered.
+      if (*(curPtr - 1) == '*') {
+        --curPtr;
+        break;
+      }
+      // Otherwise, fall through so that we check for EOF.
+      [[fallthrough]];
+    case 0:
+      // If this is the end of the buffer, we unexpectedly end the block
+      // comment. So, report failure.
+      if (curPtr - 1 == curBuffer.end()) {
+        --curPtr;
+        return failure();
+      }
+      [[fallthrough]];
+    default:
+      // Skip over other characters.
+      break;
+    }
+  }
+  return failure();
+}
+
 Token Lexer::lexDirective(const char *tokStart) {
   // Match the rest with an identifier regex: [0-9a-zA-Z_]*
   while (isalnum(*curPtr) || *curPtr == '_')
@@ -330,6 +399,9 @@ Token Lexer::lexIdentifier(const char *tokStart) {
                          .Case("ValueRange", Token::kw_ValueRange)
                          .Case("with", Token::kw_with)
                          .Case("_", Token::underscore)
+                         .Case("log2", Token::log2)
+                         .Case("exp2", Token::exp2)
+                         .Case("math_abs", Token::abs)
                          .Default(Token::identifier);
   return Token(kind, str);
 }
@@ -378,7 +450,7 @@ Token Lexer::lexString(const char *tokStart, bool isStringBlock) {
       --curPtr;
 
       StringRef expectedEndStr = isStringBlock ? "}]" : "\"";
-      return emitError(curPtr - 1,
+      return emitError(tokStart,
                        "expected '" + expectedEndStr + "' in string literal");
     }
 

@@ -12,10 +12,14 @@ The following convention is followed:
     operation, C++20 is required.
 *   If `ssize_t` is used, then the code requires the POSIX header `sys/types.h`
     or any of the C++ headers in which the type is defined.
+*   If `emitc.array` with a dimension of size zero, then the code
+    requires [a GCC extension](https://gcc.gnu.org/onlinedocs/gcc/Zero-Length.html).
 *   If `_Float16` is used, the code requires the support of C additional
     floating types.
 *   If `__bf16` is used, the code requires a compiler that supports it, such as 
     GCC or Clang.
+*   If `ub.posion` values should be initialized and have an opaque type,
+    C++ is generated.
 *   If `emitc.array` with a dimension of size zero is used, then the code
     requires [a GCC extension](https://gcc.gnu.org/onlinedocs/gcc/Zero-Length.html).
 *   Else the generated code is compatible with C99.

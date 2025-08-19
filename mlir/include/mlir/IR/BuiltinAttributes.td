@@ -354,6 +354,24 @@ def Builtin_DenseIntOrFPElementsAttr : Builtin_Attr<
                                               int64_t dataEltSize, bool isInt,
                                               bool isSigned);
   public:
+    /// Returns the internal buffer of a non-splatted DenseIntOrFPElementAttr.
+    /// Provided storage_t must be unsigned integer and match the bit-width of
+    /// the element type of the DenseIntOrFPElementAttr. \returns an
+    /// ArrayRef<storage_t> over the internal data
+    template <typename storage_t>
+    llvm::ArrayRef<storage_t> getNonSplatRawData() const {
+      assert(!isSplat() && "DenseElementAttr must not be splatted");
+      assert(getElementType().getIntOrFloatBitWidth() ==
+             sizeof(storage_t) * /*bits per byte*/ 8);
+
+      static_assert(std::numeric_limits<storage_t>::is_integer &&
+                        !std::numeric_limits<storage_t>::is_signed,
+                    "storage type must be integer and unsigned");
+
+      return llvm::ArrayRef<storage_t>(
+          reinterpret_cast<const storage_t *>(getRawData().data()),
+          getNumElements());
+    }
   }];
   let genAccessors = 0;
   let genStorageClass = 0;

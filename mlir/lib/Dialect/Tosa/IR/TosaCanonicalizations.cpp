@@ -17,6 +17,7 @@
 #include "mlir/Dialect/Tosa/Utils/ConversionUtils.h"
 #include "mlir/Dialect/Tosa/Utils/QuantUtils.h"
 #include "mlir/Dialect/Tosa/Utils/ShapeUtils.h"
+#include "mlir/IR/BuiltinAttributes.h"
 #include "mlir/IR/BuiltinTypeInterfaces.h"
 #include "mlir/IR/BuiltinTypes.h"
 #include "mlir/IR/DialectImplementation.h"
@@ -59,20 +60,338 @@ struct ConcatOptimization : public OpRewritePattern<tosa::ConcatOp> {
   }
 };
 
+struct SelfConcatToTile : public OpRewritePattern<tosa::ConcatOp> {
+  using OpRewritePattern<tosa::ConcatOp>::OpRewritePattern;
+
+  LogicalResult matchAndRewrite(tosa::ConcatOp concatOp,
+                                PatternRewriter &rewriter) const override {
+    if (llvm::all_equal(concatOp->getUsers())) {
+      const auto concatUser = llvm::dyn_cast<tosa::ConcatOp>(
+          concatOp->getUses().begin()->getOwner());
+      if (concatUser) {
+        // Try folding the concat into its consumer before rewriting it to a
+        // tile.
+        SmallVector<Value> replacementValues;
+        auto foldResult = rewriter.tryFold(concatUser, replacementValues);
+        if (foldResult.succeeded()) {
+          if (!replacementValues.empty()) {
+            rewriter.replaceOp(concatUser, replacementValues);
+          }
+          return success();
+        }
+      }
+    }
+
+    if (!llvm::all_equal(concatOp->getOperands())) {
+      return rewriter.notifyMatchFailure(
+          concatOp, "Requires all operands to be the same");
+    }
+    const auto concatType = dyn_cast<ShapedType>(concatOp.getType());
+    if (!concatType || !concatType.hasRank()) {
+      return rewriter.notifyMatchFailure(concatOp,
+                                         "Requires concat to be ranked");
+    }
+    SmallVector<int64_t> multiplies(concatType.getRank(), 1);
+    multiplies[concatOp.getAxis()] = concatOp->getNumOperands();
+    auto constantShapeValue =
+        getTosaConstShape(rewriter, concatOp->getLoc(), multiplies);
+    auto tileOp = rewriter.createOrFold<tosa::TileOp>(
+        concatOp->getLoc(), concatOp.getType(), concatOp->getOperand(0),
+        constantShapeValue);
+    rewriter.replaceOp(concatOp, {tileOp});
+    return success();
+  }
+};
+
 void ConcatOp::getCanonicalizationPatterns(RewritePatternSet &results,
                                            MLIRContext *context) {
   results.add<ConcatOptimization>(context);
+  results.add<SelfConcatToTile>(context);
 }
 
-LogicalResult SelectOp::canonicalize(SelectOp op, PatternRewriter &rewriter) {
-  auto notOp = op.getPred().getDefiningOp<tosa::LogicalNotOp>();
-  if (!notOp)
-    return failure();
-  rewriter.modifyOpInPlace(op, [&]() {
-    op.getOperation()->setOperands(
-        {notOp.getInput1(), op.getOnFalse(), op.getOnTrue()});
-  });
-  return success();
+struct FuseChainedTile : public OpRewritePattern<tosa::TileOp> {
+  using OpRewritePattern<tosa::TileOp>::OpRewritePattern;
+
+  LogicalResult matchAndRewrite(tosa::TileOp op,
+                                PatternRewriter &rewriter) const override {
+    SmallVector<int64_t> multiplies;
+    if (failed(op.getConstantMultiples(multiplies))) {
+      return rewriter.notifyMatchFailure(op, "Requires const multiplies");
+    }
+    auto inputTile = op.getInput1().getDefiningOp<TileOp>();
+    if (!inputTile) {
+      return rewriter.notifyMatchFailure(op, "Input is not a TileOp");
+    }
+    if (!inputTile->hasOneUse()) {
+      return rewriter.notifyMatchFailure(op,
+                                         "Input tile should only have one use");
+    }
+    SmallVector<int64_t> inputTileMultiples;
+    if (failed(inputTile.getConstantMultiples(inputTileMultiples))) {
+      return rewriter.notifyMatchFailure(
+          op, "Requires const multiplies on input tile");
+      ;
+    }
+
+    for (auto [idx, multiplier] : llvm::enumerate(inputTileMultiples)) {
+      multiplies[idx] *= multiplier;
+    }
+    auto constantShapeValue = getTosaConstShape(
+        rewriter,
+        rewriter.getFusedLoc(
+            {op.getMultiples().getLoc(), inputTile.getMultiples().getLoc()}),
+        multiplies);
+
+    rewriter.modifyOpInPlace(op, [&]() {
+      op.setOperand(0, inputTile->getOperand(0));
+      op.setOperand(1, constantShapeValue);
+      op.getOperation()->setLoc(
+          FusedLoc::get(getContext(), {inputTile->getLoc(), op.getLoc()}));
+    });
+
+    return success();
+  }
+};
+
+void TileOp::getCanonicalizationPatterns(RewritePatternSet &results,
+                                         MLIRContext *context) {
+  results.add<FuseChainedTile>(context);
+}
+
+struct SqrtReciprocalOptimization : public OpRewritePattern<tosa::PowOp> {
+  using OpRewritePattern<tosa::PowOp>::OpRewritePattern;
+  // Pattern that matches a Sqrt + Reciprocal to replace them by a rsqrt.
+  // Sqrt is represented in tosa by a Pow so we check for Pow + reciprocal.
+  LogicalResult matchAndRewrite(tosa::PowOp op,
+                                PatternRewriter &rewriter) const override {
+    // Check that the PowOp has a single user
+    if (!op->hasOneUse())
+      return rewriter.notifyMatchFailure(op,
+                                         "pow operator has more than one user");
+
+    Operation *user = *op->user_begin();
+    // Check that this user is a reciprocal
+    if (!isa<tosa::ReciprocalOp>(user))
+      return rewriter.notifyMatchFailure(op,
+                                         "expected a pow + reciprocal pattern");
+
+    // Check that the Pow op is an Sqrt - its second input should be the scale,
+    // 0.5 for Sqrt.
+    Operation *powScale = op.getInput2().getDefiningOp();
+    if (!powScale || !isa<tosa::ConstOp>(powScale))
+      return rewriter.notifyMatchFailure(
+          op, "expected the pow to have a constant scale input");
+
+    auto scale =
+        cast<DenseElementsAttr>(cast<tosa::ConstOp>(powScale).getValue());
+    if (!scale.isSplat())
+      return rewriter.notifyMatchFailure(
+          op, "expected the pow scale to be a splat tensor");
+
+    float scaleValue = scale.getSplatValue<llvm::APFloat>().convertToFloat();
+    if (scaleValue != 0.5)
+      return rewriter.notifyMatchFailure(
+          op, "expected the pow to have a scale of 0.5 to be a sqrt");
+
+    auto inputType = cast<ShapedType>(op.getOperand(0).getType());
+    auto outputType = cast<ShapedType>(op.getType());
+    // If the operator needs tiling, fail to match
+    // An improvement for the future would be to generate a tile operator here
+    // instead
+    if (inputType != outputType)
+      return rewriter.notifyMatchFailure(
+          op, "input type and output type are different, tiling is not "
+              "supported for this canonicalization");
+
+    auto rsqrtOp = rewriter.create<tosa::RsqrtOp>(
+        rewriter.getFusedLoc({op.getLoc(), user->getLoc()}), outputType,
+        op.getInput1());
+    rewriter.replaceOp(user, rsqrtOp);
+
+    return success();
+  }
+};
+
+void PowOp::getCanonicalizationPatterns(RewritePatternSet &results,
+                                        MLIRContext *context) {
+  results.add<SqrtReciprocalOptimization>(context);
+}
+
+struct SelectLogicalNotOptimization : public OpRewritePattern<tosa::SelectOp> {
+  using OpRewritePattern::OpRewritePattern;
+  LogicalResult matchAndRewrite(tosa::SelectOp op,
+                                PatternRewriter &rewriter) const override {
+    auto notOp = op.getPred().getDefiningOp<tosa::LogicalNotOp>();
+    if (!notOp)
+      return failure();
+    rewriter.modifyOpInPlace(op, [&]() {
+      op.getOperation()->setOperands(
+          {notOp.getInput1(), op.getOnFalse(), op.getOnTrue()});
+    });
+    return success();
+  }
+};
+
+// This canonicalizes the following patterns:
+// %0 = tosa.greater_equal(input, x)
+// %1 = tosa.select(%0, input, x)
+// to tosa.clamp{min = x, max = max}(input)
+// and
+// %0 = tosa.greater_equal(input, x)
+// %1 = tosa.select(%0, x, input)
+// to tosa.clamp{min = min, max = x}(input)
+// The first pattern occurs in decompositions of LeakyReLU/PReLU with an alpha
+// of zero
+struct SelectToClampOptimization : public OpRewritePattern<tosa::SelectOp> {
+  using OpRewritePattern::OpRewritePattern;
+  LogicalResult matchAndRewrite(tosa::SelectOp op,
+                                PatternRewriter &rewriter) const override {
+
+    auto geq = op.getPred().getDefiningOp<tosa::GreaterEqualOp>();
+    if (!geq) {
+      return rewriter.notifyMatchFailure(op,
+                                         "Predicate is not a GreaterEqualOp");
+    }
+
+    DenseElementsAttr geqIn2Attr;
+    if (!matchPattern(geq.getInput2(), m_Constant(&geqIn2Attr))) {
+      return rewriter.notifyMatchFailure(
+          op, "RHS of predicate GreaterEqualOp is not a constant");
+    }
+
+    auto isCompatibleSplat = [](DenseElementsAttr a,
+                                DenseElementsAttr b) -> bool {
+      if (!a.isSplat() || !b.isSplat()) {
+        return false;
+      }
+
+      auto aAsIntegerType = dyn_cast<IntegerType>(a.getElementType());
+      auto bAsIntegerType = dyn_cast<IntegerType>(b.getElementType());
+      if (aAsIntegerType && bAsIntegerType) {
+        if (aAsIntegerType.getSignedness() != bAsIntegerType.getSignedness()) {
+          return false;
+        }
+
+        auto aAsAPInt = a.getSplatValue<APInt>();
+        auto bAsAPInt = b.getSplatValue<APInt>();
+
+        const size_t aBitWidth = aAsAPInt.getBitWidth();
+        const size_t bBitWidth = bAsAPInt.getBitWidth();
+
+        if (aBitWidth >= bBitWidth) {
+          return aAsAPInt == (bAsIntegerType.isUnsigned()
+                                  ? bAsAPInt.zext(aBitWidth)
+                                  : bAsAPInt.sext(aBitWidth));
+        }
+        return (aAsIntegerType.isUnsigned()
+                    ? aAsAPInt.zext(bBitWidth)
+                    : aAsAPInt.sext(bBitWidth)) == bAsAPInt;
+      }
+
+      auto aAsFloatType = dyn_cast<FloatType>(a.getElementType());
+      auto bAsFloatType = dyn_cast<FloatType>(b.getElementType());
+      if (!aAsFloatType || aAsFloatType != bAsFloatType) {
+        return false;
+      }
+
+      return a.getSplatValue<APFloat>() == b.getSplatValue<APFloat>();
+    };
+
+    auto onFalse = op.getOnFalse();
+    auto onTrue = op.getOnTrue();
+    DenseElementsAttr onFalseAttr;
+    DenseElementsAttr onTrueAttr;
+
+    // Case one:
+    // %0 = tosa.greater_equal(input, cmp)
+    // %1 = tosa.select(%0, input, cmp)
+    // to tosa.clamp{min = cmp, max = max}(input)
+    // Predicate: geq.input2 == select.onFalse AND geq.input1 == select.onTrue
+    const bool isCaseOne =
+        matchPattern(onFalse, m_Constant(&onFalseAttr)) &&
+        isCompatibleSplat(onFalseAttr, geqIn2Attr) &&
+        onTrue.getDefiningOp() == geq.getInput1().getDefiningOp();
+
+    // Case two:
+    // %0 = tosa.greater_equal(input, cmp)
+    // %1 = tosa.select(%0, cmp, input)
+    // to tosa.clamp{min = input, max = cmp}(input)
+    // Predicate: geq.input2 == select.onTrue AND geq.input1 == select.onFalse
+    const bool isCaseTwo =
+        !isCaseOne && matchPattern(onTrue, m_Constant(&onTrueAttr)) &&
+        isCompatibleSplat(onTrueAttr, geqIn2Attr) &&
+        onFalse.getDefiningOp() == geq.getInput1().getDefiningOp();
+
+    if (!isCaseOne && !isCaseTwo) {
+      return rewriter.notifyMatchFailure(
+          op, "select does not match GEQ + select -> clamp pattern");
+    }
+
+    const auto inputElementType = geqIn2Attr.getElementType();
+    int64_t clampIntMin = std::numeric_limits<int64_t>::min();
+    int64_t clampIntMax = std::numeric_limits<int64_t>::max();
+    FloatAttr clampFloatMin;
+    FloatAttr clampFloatMax;
+    if (auto integerType = dyn_cast<IntegerType>(inputElementType)) {
+      int64_t splatValue;
+      if (integerType.isUnsigned()) {
+        if (integerType.getWidth() >= 63) {
+          return rewriter.notifyMatchFailure(
+              op, "Can not represent all values of input type as int64");
+        }
+        splatValue = geqIn2Attr.getSplatValue<APInt>().getZExtValue();
+      } else {
+        splatValue = geqIn2Attr.getSplatValue<APInt>().getSExtValue();
+      }
+      clampFloatMin =
+          rewriter.getF32FloatAttr(-std::numeric_limits<float>::infinity());
+      clampFloatMax =
+          rewriter.getF32FloatAttr(std::numeric_limits<float>::infinity());
+      if (isCaseOne) {
+        clampIntMin = splatValue;
+      } else {
+        clampIntMax = splatValue;
+      }
+    } else if (isa<FloatType>(inputElementType)) {
+      auto splatValue = geqIn2Attr.getSplatValue<APFloat>();
+      if (isCaseOne) {
+        clampFloatMin = rewriter.getFloatAttr(inputElementType, splatValue);
+        clampFloatMax = rewriter.getFloatAttr(
+            inputElementType,
+            APFloat::getInf(splatValue.getSemantics(), false));
+      } else {
+        clampFloatMin = rewriter.getFloatAttr(
+            inputElementType, APFloat::getInf(splatValue.getSemantics(), true));
+        clampFloatMax = rewriter.getFloatAttr(inputElementType, splatValue);
+      }
+    }
+
+    Value input = geq.getInput1();
+
+    // In case they do not have same bit width, insert a cast to still be able
+    // to do this canonicalization
+    const size_t geqBitWidth =
+        geq.getInput1().getType().getElementTypeBitWidth();
+    const size_t selectBitWidth = op.getType().getElementTypeBitWidth();
+    if (geqBitWidth != selectBitWidth) {
+      input = rewriter.create<tosa::CastOp>(
+          op->getLoc(),
+          geq.getInput1().getType().clone(op.getType().getElementType()),
+          input);
+    }
+
+    rewriter.replaceOpWithNewOp<tosa::ClampOp>(
+        op, op.getType(), input, rewriter.getI64IntegerAttr(clampIntMin),
+        rewriter.getI64IntegerAttr(clampIntMax), clampFloatMin, clampFloatMax);
+
+    return success();
+  }
+};
+
+void tosa::SelectOp::getCanonicalizationPatterns(RewritePatternSet &results,
+                                                 MLIRContext *context) {
+  results.add<SelectLogicalNotOptimization>(context);
+  results.add<SelectToClampOptimization>(context);
 }
 
 struct ConsolidateTransposeOptimization
@@ -111,8 +430,8 @@ struct ConsolidateTransposeOptimization
     auto permsTy =
         RankedTensorType::get(transposePerms.size(), rewriter.getI32Type());
     auto permsAttr = DenseIntElementsAttr::get(permsTy, perms);
-    Value permsValue =
-        rewriter.create<arith::ConstantOp>(transposeOp.getLoc(), permsAttr);
+    Value permsValue = rewriter.create<tosa::ConstOp>(transposeOp.getLoc(),
+                                                      permsTy, permsAttr);
 
     rewriter.replaceOpWithNewOp<tosa::TransposeOp>(
         transposeOp, transposeOp.getResult().getType(),
@@ -411,7 +730,7 @@ struct ClampClampOptimization : public OpRewritePattern<tosa::ClampOp> {
     const auto minInt = std::max(opMinInt, clampOpMinInt);
     const auto maxInt = std::min(opMaxInt, clampOpMaxInt);
     rewriter.replaceOpWithNewOp<tosa::ClampOp>(
-        op, op.getType(), clampOp.getInput(),
+        op, {op->getLoc(), clampOp->getLoc()}, op.getType(), clampOp.getInput(),
         rewriter.getI64IntegerAttr(minInt), rewriter.getI64IntegerAttr(maxInt),
         rewriter.getF32FloatAttr(minFp), rewriter.getF32FloatAttr(maxFp),
         rewriter.getStringAttr((opNanMode != clampNanMode) ? "IGNORE"
@@ -446,35 +765,121 @@ struct ConcatSliceOptimization : public OpRewritePattern<tosa::SliceOp> {
 
     llvm::SmallVector<int64_t> sliceStart(sliceOp.getStart());
     llvm::ArrayRef<int64_t> sliceSize = sliceOp.getSize();
-
-    // Validate slice on the concatenated axis. Slicing along this
-    // axis should span only one of the inputs to the concatenate
-    // operation.
-    std::optional<Value> replaceWithSlice;
+    llvm::SmallVector<Value> requiredConcatInputs;
+    int64_t processedOriginalConcatInputSize = 0;
+    int64_t droppedConcatInputSize = 0;
     for (auto input : inputs) {
-      auto inputType = dyn_cast<RankedTensorType>(input.getType());
+      const auto inputType = dyn_cast<RankedTensorType>(input.getType());
       if (!inputType || !inputType.hasStaticShape())
         return rewriter.notifyMatchFailure(
             sliceOp, "concat input must be a static ranked tensor");
-
-      if (sliceStart[axis] >= 0 &&
-          (sliceStart[axis] + sliceSize[axis]) <= inputType.getDimSize(axis)) {
-        replaceWithSlice = rewriter
-                               .create<tosa::SliceOp>(
-                                   sliceOp.getLoc(), sliceOp.getType(), input,
-                                   rewriter.getDenseI64ArrayAttr(sliceStart),
-                                   rewriter.getDenseI64ArrayAttr(sliceSize))
-                               .getResult();
-        break;
+      if (processedOriginalConcatInputSize <
+              (sliceStart[axis] + sliceSize[axis]) &&
+          (processedOriginalConcatInputSize + inputType.getDimSize(axis)) >
+              sliceStart[axis]) {
+        if (requiredConcatInputs.empty()) {
+          droppedConcatInputSize = processedOriginalConcatInputSize;
+        }
+        requiredConcatInputs.push_back(input);
       }
-      sliceStart[axis] -= inputType.getDimSize(axis);
+      processedOriginalConcatInputSize += inputType.getDimSize(axis);
+    }
+    if (requiredConcatInputs.size() == concatOp->getNumOperands()) {
+      return rewriter.notifyMatchFailure(
+          sliceOp, "Could not reduce number of inputs to preceding concat");
+    }
+    if (requiredConcatInputs.size() != 1 && !concatOp->hasOneUse()) {
+      return rewriter.notifyMatchFailure(
+          sliceOp,
+          "Preceding concat must have a single use"); // Do not introduce new
+                                                      // concats
+    }
+    if (requiredConcatInputs.empty()) {
+      return rewriter.notifyMatchFailure(
+          sliceOp, "degenerate slice with zero sized dim in output");
+    }
+    sliceStart[axis] -= droppedConcatInputSize;
+    auto newConcat = rewriter.create<tosa::ConcatOp>(
+        concatOp->getLoc(), requiredConcatInputs, axis);
+    auto newSlice = rewriter.create<tosa::SliceOp>(
+        sliceOp->getLoc(), sliceOp.getType(), newConcat,
+        rewriter.getDenseI64ArrayAttr(sliceStart),
+        rewriter.getDenseI64ArrayAttr(sliceSize));
+    rewriter.replaceOp(sliceOp, newSlice);
+    return success();
+  }
+};
+
+///  This patterns adjust the multipliers of a tile followed by a slice to only
+///  tile as much data as it is required by the slice
+struct TileSliceOptimization : public OpRewritePattern<tosa::SliceOp> {
+  using OpRewritePattern<tosa::SliceOp>::OpRewritePattern;
+
+  LogicalResult matchAndRewrite(tosa::SliceOp sliceOp,
+                                PatternRewriter &rewriter) const override {
+    Value sliceInput = sliceOp.getInput1();
+    auto tileOp = sliceInput.getDefiningOp<tosa::TileOp>();
+    if (!tileOp)
+      return rewriter.notifyMatchFailure(sliceOp,
+                                         "slice input must be tile operation");
+    if (!tileOp->hasOneUse())
+      return rewriter.notifyMatchFailure(
+          sliceOp, "preceding tile must have a single use"); // Do not insert
+                                                             // additional tiles
+
+    const auto tileOpInputType =
+        dyn_cast<RankedTensorType>(tileOp->getOperand(0).getType());
+    if (!tileOpInputType || !tileOpInputType.hasStaticShape())
+      return rewriter.notifyMatchFailure(
+          sliceOp, "input to preceding tile op must be a static ranked tensor");
+    llvm::SmallVector<int64_t> requiredMultipliers;
+    llvm::SmallVector<int64_t> newTileStarts;
+    requiredMultipliers.reserve(tileOpInputType.getRank());
+    newTileStarts.reserve(tileOpInputType.getRank());
+    SmallVector<int64_t> tileMultiplies;
+    const LogicalResult tileHasConstantMultiplies =
+        tileOp.getConstantMultiples(tileMultiplies);
+    for (auto [axis, sliceStart, sliceSize] :
+         llvm::enumerate(sliceOp.getStart(), sliceOp.getSize())) {
+      if (sliceSize <= 0) {
+        return rewriter.notifyMatchFailure(
+            sliceOp, "degenerate slice with zero sized dim");
+      }
+      const int64_t tileInputDimSize = tileOpInputType.getDimSize(axis);
+      const int64_t sliceOffsetInNewFirstTile = sliceStart % tileInputDimSize;
+      const int64_t sliceSizeInFirstTile =
+          std::min(tileInputDimSize - sliceOffsetInNewFirstTile, sliceSize);
+      assert(sliceSizeInFirstTile > 0);
+      const int64_t requiredMultiplierWithoutFirstTile =
+          llvm::divideCeil(sliceSize - sliceSizeInFirstTile, tileInputDimSize);
+      const int64_t requiredMultiplier =
+          requiredMultiplierWithoutFirstTile + (sliceSizeInFirstTile != 0);
+      assert(failed(tileHasConstantMultiplies) ||
+             requiredMultiplier <= tileMultiplies[axis]);
+      requiredMultipliers.push_back(requiredMultiplier);
+      newTileStarts.push_back(sliceOffsetInNewFirstTile);
     }
 
-    if (!replaceWithSlice)
+    if (succeeded(tileHasConstantMultiplies) &&
+        requiredMultipliers == tileMultiplies) {
       return rewriter.notifyMatchFailure(
-          sliceOp, "corresponding concat input not found for slice");
+          sliceOp, "could not reduce multipliers in preceding tile");
+    }
 
-    rewriter.replaceOp(sliceOp, replaceWithSlice.value());
+    llvm::SmallVector<int64_t> newTileShape(tileOpInputType.getShape());
+    for (auto [newShape, multiplier] :
+         llvm::zip_equal(newTileShape, requiredMultipliers)) {
+      newShape *= multiplier;
+    }
+    auto constantShapeValue = getTosaConstShape(
+        rewriter, tileOp.getMultiples().getLoc(), requiredMultipliers);
+    auto newTile = rewriter.create<tosa::TileOp>(
+        tileOp->getLoc(), tileOpInputType.clone(newTileShape),
+        tileOp->getOperand(0), constantShapeValue);
+    auto newSlice = rewriter.create<tosa::SliceOp>(
+        sliceOp->getLoc(), sliceOp.getType(), newTile,
+        rewriter.getDenseI64ArrayAttr(newTileStarts), sliceOp.getSizeAttr());
+    rewriter.replaceOp(sliceOp, newSlice);
     return success();
   }
 };
@@ -482,6 +887,93 @@ struct ConcatSliceOptimization : public OpRewritePattern<tosa::SliceOp> {
 void SliceOp::getCanonicalizationPatterns(RewritePatternSet &results,
                                           MLIRContext *context) {
   results.add<ConcatSliceOptimization>(context);
+  results.add<TileSliceOptimization>(context);
+}
+
+struct MinToClampOptimization : public OpRewritePattern<tosa::MinimumOp> {
+  using OpRewritePattern<tosa::MinimumOp>::OpRewritePattern;
+
+  LogicalResult matchAndRewrite(tosa::MinimumOp op,
+                                PatternRewriter &rewriter) const override {
+
+    DenseElementsAttr constant;
+    if (!matchPattern(op.getInput2(), m_Constant(&constant)) ||
+        !constant.isSplat())
+      return failure();
+
+    Value input = op.getInput1();
+    auto elementTy = llvm::cast<ShapedType>(input.getType()).getElementType();
+
+    int64_t minInt = std::numeric_limits<int32_t>::min();
+    float minFp = std::numeric_limits<float>::lowest();
+
+    int64_t maxInt;
+    float maxFp;
+    if (isa<FloatType>(elementTy)) {
+      auto constMin = constant.getSplatValue<llvm::APFloat>();
+      maxFp = constMin.convertToFloat();
+      maxInt = constMin.convertToFloat();
+    } else {
+      auto constMin = constant.getSplatValue<llvm::APInt>();
+      maxFp = constMin.getSExtValue();
+      maxInt = constMin.getSExtValue();
+    }
+
+    rewriter.replaceOpWithNewOp<tosa::ClampOp>(
+        op, op.getType(), input, rewriter.getI64IntegerAttr(minInt),
+        rewriter.getI64IntegerAttr(maxInt), rewriter.getF32FloatAttr(minFp),
+        rewriter.getF32FloatAttr(maxFp));
+
+    return success();
+  }
+};
+
+void MinimumOp::getCanonicalizationPatterns(RewritePatternSet &results,
+                                            MLIRContext *context) {
+  results.add<MinToClampOptimization>(context);
+}
+
+struct MaxToClampOptimization : public OpRewritePattern<tosa::MaximumOp> {
+  using OpRewritePattern<tosa::MaximumOp>::OpRewritePattern;
+
+  LogicalResult matchAndRewrite(tosa::MaximumOp op,
+                                PatternRewriter &rewriter) const override {
+
+    DenseElementsAttr constant;
+    if (!matchPattern(op.getInput2(), m_Constant(&constant)) ||
+        !constant.isSplat())
+      return failure();
+
+    Value input = op.getInput1();
+    auto elementTy = llvm::cast<ShapedType>(input.getType()).getElementType();
+
+    int64_t maxInt = std::numeric_limits<int64_t>::max();
+    float maxFp = std::numeric_limits<float>::max();
+
+    int64_t minInt;
+    float minFp;
+    if (isa<FloatType>(elementTy)) {
+      auto constMax = constant.getSplatValue<llvm::APFloat>();
+      minFp = constMax.convertToFloat();
+      minInt = constMax.convertToFloat();
+    } else {
+      auto constMax = constant.getSplatValue<llvm::APInt>();
+      minFp = constMax.getSExtValue();
+      minInt = constMax.getSExtValue();
+    }
+
+    rewriter.replaceOpWithNewOp<tosa::ClampOp>(
+        op, op.getType(), input, rewriter.getI64IntegerAttr(minInt),
+        rewriter.getI64IntegerAttr(maxInt), rewriter.getF32FloatAttr(minFp),
+        rewriter.getF32FloatAttr(maxFp));
+
+    return success();
+  }
+};
+
+void MaximumOp::getCanonicalizationPatterns(RewritePatternSet &results,
+                                            MLIRContext *context) {
+  results.add<MaxToClampOptimization>(context);
 }
 
 //===----------------------------------------------------------------------===//
@@ -656,7 +1148,7 @@ OpFoldResult MulOp::fold(FoldAdaptor adaptor) {
   auto lhsTy = llvm::dyn_cast<RankedTensorType>(lhs.getType());
   auto rhsTy = llvm::dyn_cast<RankedTensorType>(rhs.getType());
   auto resultTy = llvm::dyn_cast<RankedTensorType>(getType());
-  if (!lhsTy || !rhsTy || !resultTy)
+  if (!lhsTy || !rhsTy || !resultTy || !resultTy.hasStaticShape())
     return {};
 
   auto resultETy = resultTy.getElementType();
@@ -705,6 +1197,9 @@ OpFoldResult SubOp::fold(FoldAdaptor adaptor) {
     return getInput1();
 
   if (!lhsAttr || !rhsAttr)
+    return {};
+
+  if (lhsTy != rhsTy)
     return {};
 
   return binaryFolder<std::minus<APInt>, std::minus<APFloat>>(lhsAttr, rhsAttr,
@@ -796,6 +1291,31 @@ OpFoldResult EqualOp::fold(FoldAdaptor adaptor) {
 OpFoldResult CastOp::fold(FoldAdaptor adaptor) {
   if (getInput().getType() == getType())
     return getInput();
+
+  // cast-to-iN(cast-to-iM(x)) -> cast-to-iN(x) when N <= M
+  if (auto cast = getInput().getDefiningOp<CastOp>()) {
+    auto intermediateElTy =
+        cast.getType().getElementType().dyn_cast<IntegerType>();
+    auto finalElTy = getType().getElementType().dyn_cast<IntegerType>();
+    if (intermediateElTy && finalElTy &&
+        intermediateElTy.getSignedness() == finalElTy.getSignedness() &&
+        intermediateElTy.getWidth() >= finalElTy.getWidth()) {
+      getInputMutable().assign(cast.getInput());
+      return getResult();
+    }
+  }
+
+  // Fold cast from bf16 -> f32 -> bf16 into no-op.
+  if (auto cast = getInput().getDefiningOp<CastOp>()) {
+    auto sourceElTy = cast.getInput().getType().getElementType();
+    auto intermediateElTy = cast.getType().getElementType();
+    auto finalElTy = getType().getElementType();
+    if (isa<BFloat16Type>(sourceElTy) && isa<Float32Type>(intermediateElTy) &&
+        isa<BFloat16Type>(finalElTy)) {
+      getInputMutable().assign(cast.getInput());
+      return getResult();
+    }
+  }
 
   auto operand = llvm::dyn_cast_if_present<ElementsAttr>(adaptor.getInput());
   if (!operand)
@@ -898,6 +1418,10 @@ OpFoldResult ReshapeOp::fold(FoldAdaptor adaptor) {
   if (auto reshapeOp = llvm::dyn_cast_if_present<tosa::ReshapeOp>(
           getInput1().getDefiningOp())) {
     getInput1Mutable().assign(reshapeOp.getInput1());
+
+    // Fuse locations so that first ReshapeOp location isn't lost.
+    getResult().getDefiningOp()->setLoc(
+        mlir::FusedLoc::get(getContext(), {reshapeOp->getLoc(), getLoc()}));
     return getResult();
   }
 
@@ -990,6 +1514,30 @@ OpFoldResult ReverseOp::fold(FoldAdaptor adaptor) {
 }
 
 OpFoldResult SliceOp::fold(FoldAdaptor adaptor) {
+  const auto tryFoldWithPrecedingSlice = [this](FoldAdaptor adaptor) {
+    auto precedingSliceOp = getInput1().getDefiningOp<SliceOp>();
+    if (!precedingSliceOp)
+      return failure();
+    const auto precedingSliceStart = precedingSliceOp.getStart();
+    const auto thisSliceStart = getStart();
+    SmallVector<int64_t> newSliceStart;
+    newSliceStart.reserve(precedingSliceStart.size());
+    for (auto [startPreceding, startThis] :
+         llvm::zip_equal(precedingSliceStart, thisSliceStart)) {
+      newSliceStart.push_back(startPreceding + startThis);
+    }
+    setOperand(precedingSliceOp->getOperand(0));
+    setStart(newSliceStart);
+    getOperation()->setLoc(
+        FusedLoc::get(getContext(), {precedingSliceOp->getLoc(), getLoc()}));
+    return success();
+  };
+
+  // First try folding the preceding slice, this also works if the shapes are
+  // dynamic
+  if (succeeded(tryFoldWithPrecedingSlice(adaptor)))
+    return getResult();
+
   auto inputTy = llvm::dyn_cast<RankedTensorType>(getInput1().getType());
   auto outputTy = llvm::dyn_cast<RankedTensorType>(getType());
 
@@ -1038,21 +1586,13 @@ OpFoldResult tosa::SelectOp::fold(FoldAdaptor adaptor) {
 }
 
 OpFoldResult TileOp::fold(FoldAdaptor adaptor) {
-  if (getInput1().getType() == getType()) {
-    if (auto multiples = llvm::dyn_cast_if_present<DenseElementsAttr>(
-            adaptor.getMultiples())) {
-      if (multiples.isSplat() &&
-          multiples.getSplatValue<APInt>().getSExtValue() == 1)
-        return getInput1();
-      if (auto int_array_attr =
-              llvm::dyn_cast<DenseIntElementsAttr>(multiples)) {
-        if (llvm::all_of(int_array_attr.getValues<APInt>(),
-                         [](APInt v) { return v.getSExtValue() == 1; }))
-          return getInput1();
-      }
-    }
+  SmallVector<int64_t> multiples;
+  if (getInput1().getType() != getType() ||
+      failed(getConstantMultiples(multiples)) ||
+      !llvm::all_of(multiples, [](int64_t v) { return v == 1; })) {
+    return {};
   }
-  return {};
+  return getInput1();
 }
 
 OpFoldResult TransposeOp::fold(FoldAdaptor adaptor) {
@@ -1118,6 +1658,21 @@ OpFoldResult tosa::AbsOp::fold(FoldAdaptor adaptor) {
 }
 
 OpFoldResult ConcatOp::fold(FoldAdaptor adaptor) {
+  /// Remove operands that have zero elements.
+  bool changed = false;
+  for (size_t i = 0; i < getInput1().size();) {
+    auto input = cast<RankedTensorType>(getInput1()[i].getType());
+    // Ensure that we have at least one operand left.
+    if (input.getDimSize(getAxis()) == 0 && getInput1().size() > 1) {
+      getInput1Mutable().erase(i);
+      changed = true;
+    } else {
+      ++i;
+    }
+  }
+  if (changed)
+    return getResult();
+
   // Fold consecutive concats on the same axis into a single op.
   // Keep track of the operands so we are able to construct a new concat
   // later. Conservatively assume that we double the number of operands when
@@ -1136,6 +1691,14 @@ OpFoldResult ConcatOp::fold(FoldAdaptor adaptor) {
 
     // Not foldable if axes are not the same
     if (getAxis() != producer.getAxis())
+      continue;
+
+    // If there are multiple uses of this operand concat and they are different
+    // operations, this means that operand concat will have to happen, so do not
+    // add its operands to us to avoid repeating data concatenation
+    const bool allConcatUsersAreThisConcat = llvm::all_of(
+        producer->getUsers(), [&](Operation *user) { return *this == user; });
+    if (!allConcatUsersAreThisConcat)
       continue;
 
     // Replace the original operand with all incoming operands

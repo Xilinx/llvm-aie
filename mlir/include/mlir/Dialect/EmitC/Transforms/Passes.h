@@ -12,6 +12,10 @@
 #include "mlir/Pass/Pass.h"
 
 namespace mlir {
+
+#define GEN_PASS_DECL_ELIMINATELIBM
+#include "mlir/Dialect/EmitC/Transforms/Passes.h.inc"
+
 namespace emitc {
 
 //===----------------------------------------------------------------------===//

@@ -75,6 +75,7 @@ void registerInliner();
 void registerMemRefBoundCheck();
 void registerPatternsTestPass();
 void registerSimpleParametricTilingPass();
+void registerTestAffineExpressionBounds();
 void registerTestAffineLoopParametricTilingPass();
 void registerTestAliasAnalysisPass();
 void registerTestArithEmulateWideIntPass();
@@ -214,6 +215,7 @@ void registerTestPasses() {
   mlir::test::registerMemRefBoundCheck();
   mlir::test::registerPatternsTestPass();
   mlir::test::registerSimpleParametricTilingPass();
+  mlir::test::registerTestAffineExpressionBounds();
   mlir::test::registerTestAffineLoopParametricTilingPass();
   mlir::test::registerTestAliasAnalysisPass();
   mlir::test::registerTestArithEmulateWideIntPass();

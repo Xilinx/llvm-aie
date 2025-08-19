@@ -1,68 +1,68 @@
 
 // RUN: mlir-opt %s -convert-math-to-libm -canonicalize | FileCheck %s
 
-// CHECK-DAG: @acos(f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @acosf(f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @acosh(f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @acoshf(f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @asin(f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @asinf(f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @asinh(f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @asinhf(f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @atan(f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @atanf(f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @atanh(f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @atanhf(f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @erf(f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @erff(f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @exp(f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @expf(f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @exp2(f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @exp2f(f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @expm1(f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @expm1f(f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @log(f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @logf(f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @log2(f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @log2f(f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @log10(f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @log10f(f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @log1p(f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @log1pf(f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @fabs(f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @fabsf(f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @fma(f64, f64, f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @fmaf(f32, f32, f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @atan2(f64, f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @atan2f(f32, f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @cbrt(f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @cbrtf(f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @tan(f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @tanf(f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @tanh(f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @tanhf(f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @round(f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @roundf(f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @roundeven(f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @roundevenf(f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @trunc(f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @truncf(f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @cos(f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @cosf(f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @cosh(f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @coshf(f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @sin(f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @sinf(f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @floor(f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @floorf(f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @ceil(f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @ceilf(f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @sqrt(f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @sqrtf(f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @rsqrt(f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @rsqrtf(f32) -> f32 attributes {llvm.readnone}
-// CHECK-DAG: @pow(f64, f64) -> f64 attributes {llvm.readnone}
-// CHECK-DAG: @powf(f32, f32) -> f32 attributes {llvm.readnone}
+// CHECK-DAG: @acos(f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @acosf(f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @acosh(f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @acoshf(f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @asin(f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @asinf(f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @asinh(f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @asinhf(f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @atan(f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @atanf(f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @atanh(f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @atanhf(f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @erf(f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @erff(f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @exp(f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @expf(f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @exp2(f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @exp2f(f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @expm1(f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @expm1f(f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @log(f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @logf(f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @log2(f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @log2f(f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @log10(f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @log10f(f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @log1p(f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @log1pf(f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @fabs(f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @fabsf(f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @fma(f64, f64, f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @fmaf(f32, f32, f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @atan2(f64, f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @atan2f(f32, f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @cbrt(f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @cbrtf(f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @tan(f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @tanf(f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @tanh(f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @tanhf(f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @round(f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @roundf(f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @roundeven(f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @roundevenf(f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @trunc(f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @truncf(f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @cos(f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @cosf(f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @cosh(f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @coshf(f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @sin(f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @sinf(f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @floor(f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @floorf(f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @ceil(f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @ceilf(f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @sqrt(f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @sqrtf(f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @rsqrt(f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @rsqrtf(f32) -> f32 attributes {libm, llvm.readnone}
+// CHECK-DAG: @pow(f64, f64) -> f64 attributes {libm, llvm.readnone}
+// CHECK-DAG: @powf(f32, f32) -> f32 attributes {libm, llvm.readnone}
 
 // CHECK-LABEL: func @absf_caller
 // CHECK-SAME: %[[FLOAT:.*]]: f32

@@ -28,6 +28,9 @@ func.func @operations(%attribute: !pdl.attribute,
   // inferred results
   %op4 = pdl_interp.create_operation "arith.constant" -> <inferred>
 
+  // region
+  %op5 = pdl_interp.create_operation "foo.op" {} {"numRegions" = 1 : ui32}
+
   pdl_interp.finalize
 }
 

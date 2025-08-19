@@ -131,7 +131,7 @@ func.func @cast_tensor(%arg : tensor<f32>) {
 // -----
 
 func.func @cast_array(%arg : !emitc.array<4xf32>) {
-    // expected-error @+1 {{'emitc.cast' op operand type '!emitc.array<4xf32>' and result type '!emitc.array<4xf32>' are cast incompatible}}
+    // expected-error @+1 {{'emitc.cast' op cast of array must bear a reference}}
     %1 = emitc.cast %arg: !emitc.array<4xf32> to !emitc.array<4xf32>
     return
 }
@@ -314,7 +314,7 @@ func.func @test_expression_multiple_results(%arg0: i32) -> i32 {
 
 // -----
 
-// expected-error @+1 {{'emitc.func' op requires zero or exactly one result, but has 2}}
+// expected-error @+1 {{expected ')'}}
 emitc.func @multiple_results(%0: i32) -> (i32, i32) {
   emitc.return %0 : i32
 }
@@ -564,5 +564,87 @@ func.func @emitc_switch() {
     emitc.call_opaque "func2" (%3) : (f32) -> ()
     emitc.yield
   }
+  return
+}
+
+// -----
+
+// expected-error @+1 {{'emitc.global' op global reference initial value must be an opaque attribute, got dense<128>}}
+emitc.global const @myref : !emitc.array<2xi16> = dense<128> ref
+
+// -----
+
+// expected-error @+1 {{'emitc.global' op global reference must be initialized}}
+emitc.global const @myref : !emitc.array<2xi16> ref
+
+// -----
+
+func.func @test_verbatim(%arg0 : !emitc.ptr<i32>, %arg1 : i32) {
+  // expected-error @+1 {{'emitc.verbatim' op requires operands for each placeholder in the format string}}
+  emitc.verbatim "" args %arg0, %arg1 : !emitc.ptr<i32>, i32
+  return
+}
+
+// -----
+
+func.func @test_verbatim(%arg0 : !emitc.ptr<i32>, %arg1 : i32) {
+  // expected-error @+1 {{'emitc.verbatim' op requires operands for each placeholder in the format string}}
+  emitc.verbatim "abc" args %arg0, %arg1 : !emitc.ptr<i32>, i32
+  return
+}
+
+// -----
+
+func.func @test_verbatim(%arg0 : !emitc.ptr<i32>, %arg1 : i32) {
+  // expected-error @+1 {{'emitc.verbatim' op requires operands for each placeholder in the format string}}
+  emitc.verbatim "{}" args %arg0, %arg1 : !emitc.ptr<i32>, i32
+  return
+}
+
+// -----
+
+func.func @test_verbatim(%arg0 : !emitc.ptr<i32>, %arg1 : i32) {
+  // expected-error @+1 {{'emitc.verbatim' op requires operands for each placeholder in the format string}}
+  emitc.verbatim "{} {} {}" args %arg0, %arg1 : !emitc.ptr<i32>, i32
+  return
+}
+
+// -----
+
+func.func @test_verbatim(%arg0 : !emitc.ptr<i32>, %arg1 : i32) {
+  // expected-error @+1 {{'emitc.verbatim' op expected '}' after unescaped '{'}}
+  emitc.verbatim "{ " args %arg0, %arg1 : !emitc.ptr<i32>, i32
+  return
+}
+
+// -----
+
+func.func @test_verbatim(%arg0 : !emitc.ptr<i32>, %arg1 : i32) {
+  // expected-error @+1 {{'emitc.verbatim' op expected '}' after unescaped '{'}}
+  emitc.verbatim "{a} " args %arg0, %arg1 : !emitc.ptr<i32>, i32
+  return
+}
+
+// -----
+
+func.func @template_args_with_names(%arg0: i32) {
+  // expected-error @+1 {{'emitc.call_opaque' op number of template argument names must be equal to number of template arguments}}
+  emitc.call_opaque "kernel1"(%arg0)  {template_arg_names = ["N", "P"], template_args = [42 : i32]} : (i32) -> ()
+  return
+}
+
+// -----
+
+func.func @template_args_with_names(%arg0: i32) {
+  // expected-error @+1 {{'emitc.call_opaque' op number of template argument names must be equal to number of template arguments}}
+  emitc.call_opaque "kernel1"(%arg0)  {template_arg_names = ["N"], template_args = [42 : i32, 56 : i32]} : (i32) -> ()
+  return
+}
+
+// -----
+
+func.func @template_args_with_names(%arg0: i32) {
+  // expected-error @+1 {{'emitc.call_opaque' op should not have names for template arguments if it does not have template arguments}}
+  emitc.call_opaque "kernel1"(%arg0)  {template_arg_names = ["N"]} : (i32) -> ()
   return
 }

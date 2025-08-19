@@ -598,6 +598,10 @@ function(llvm_add_library name)
     # result in generating header files.  Add a dependendency so that
     # the generated header is created before this object library.
     if(ARG_LINK_LIBS)
+      # Link to LINK_LIBS to record which of their include directories
+      # are system directories. This information is not available in
+      # INCLUDE_DIRECTORIES property.
+      target_link_libraries(${obj_name} PRIVATE ${ARG_LINK_LIBS})
       cmake_parse_arguments(LINK_LIBS_ARG
         ""
         ""

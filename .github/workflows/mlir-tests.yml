@@ -1,0 +1,26 @@
+name: MLIR Tests
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  pull_request:
+  # Only builds on push populate the ccache that can be used by PRs
+  push:
+    branches: [ main, feature/fused-ops ]
+
+concurrency:
+  # Skip intermediate builds: always.
+  # Cancel intermediate builds: only if it is a pull request build.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
+jobs:
+  check_mlir:
+    name: Test mlir
+    uses: ./.github/workflows/llvm-project-tests.yml
+    with:
+      build_target: check-mlir
+      projects: mlir
+      extra_cmake_args: -DMLIR_ENABLE_BINDINGS_PYTHON=ON

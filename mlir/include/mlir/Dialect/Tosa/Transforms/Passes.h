@@ -26,15 +26,13 @@ namespace tosa {
 
 // Expose Rewrite Functions that decompose TOSA Ops into further TOSA Ops.
 // The rewrites can be selectively added to a conversion pass.
-void populateTosaDecomposeConv2D(MLIRContext *ctx, RewritePatternSet &patterns);
 void populateTosaDecomposeTransposeConv(MLIRContext *ctx,
                                         RewritePatternSet &patterns);
 void populateTosaDecomposeDepthwise(MLIRContext *ctx,
                                     RewritePatternSet &patterns);
-void populateTosaFoldConstantReciprocalPatterns(MLIRContext *ctx,
-                                                RewritePatternSet &patterns);
-void populateTosaFoldConstantTransposePatterns(MLIRContext *ctx,
-                                               RewritePatternSet &patterns);
+void populateTosaFoldConstantPatterns(
+    MLIRContext *ctx, RewritePatternSet &patterns,
+    const TosaLayerwiseConstantFoldPassOptions &options);
 void populateTosaConstantReduction(MLIRContext *ctx,
                                    RewritePatternSet &patterns,
                                    bool aggressiveReduceConstant);

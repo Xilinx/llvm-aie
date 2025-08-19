@@ -616,12 +616,12 @@ def Tosa_IntDivOp : Tosa_ElementwiseOp<"int_div", [SameOperandsAndResultElementT
   }];
 
   let arguments = (ins
-    Tosa_Int32Tensor:$input1,
-    Tosa_Int32Tensor:$input2
+    Tosa_IntTensor:$input1,
+    Tosa_IntTensor:$input2
   );
 
   let results = (outs
-    Tosa_Int32Tensor:$output
+    Tosa_IntTensor:$output
   );
 
   let hasFolder = 1;
@@ -762,6 +762,8 @@ def Tosa_MaximumOp : Tosa_ElementwiseOp<"maximum", [
   let results = (outs
     Tosa_Tensor:$output
   );
+
+  let hasCanonicalizer = 1;
 }
 
 //===----------------------------------------------------------------------===//
@@ -786,6 +788,8 @@ def Tosa_MinimumOp : Tosa_ElementwiseOp<"minimum", [
   let results = (outs
     Tosa_Tensor:$output
   );
+
+  let hasCanonicalizer = 1;
 }
 
 def MulOperandsAndResultElementType :
@@ -840,6 +844,8 @@ def Tosa_PowOp : Tosa_ElementwiseOp<"pow", [SameOperandsAndResultElementType]> {
   let results = (outs
     Tosa_Tensor:$output
   );
+
+  let hasCanonicalizer = 1;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1212,7 +1218,7 @@ def Tosa_SelectOp : Tosa_ElementwiseOp<"select"> {
   let results = (outs
     Tosa_Tensor:$output
   );
-  let hasCanonicalizeMethod = 1;
+  let hasCanonicalizer = 1;
   let hasFolder = 1;
 
   let assemblyFormat = [{
@@ -1334,8 +1340,9 @@ def Tosa_ReduceAllOp : Tosa_InferTensorTypeOp<"reduce_all"> {
     /// Method used by InferTypeOpInterface.
     static bool isCompatibleReturnTypes(TypeRange l, TypeRange r);
 
-    /// Return the AND result between two integer operands
-    static inline APInt calcOneElement(APInt leftOperand, APInt rightOperand) {
+    /// Return the AND result between two operands
+    template<typename T>
+    static T calcOneElement(T leftOperand, T rightOperand) {
       return leftOperand & rightOperand;
     }
   }];
@@ -1368,8 +1375,9 @@ def Tosa_ReduceAnyOp : Tosa_InferTensorTypeOp<"reduce_any"> {
     /// Method used by InferTypeOpInterface.
     static bool isCompatibleReturnTypes(TypeRange l, TypeRange r);
 
-    /// Return the OR result between two integer operands
-    static inline APInt calcOneElement(APInt leftOperand, APInt rightOperand) {
+    /// Return the OR result between two operands
+    template<typename T>
+    static T calcOneElement(T leftOperand, T rightOperand) {
       return leftOperand | rightOperand;
     }
   }];
@@ -1403,9 +1411,14 @@ def Tosa_ReduceMaxOp : Tosa_InferTensorTypeOp<"reduce_max"> {
     /// Method used by InferTypeOpInterface.
     static bool isCompatibleReturnTypes(TypeRange l, TypeRange r);
 
-    /// Return the max of the two integer operands
-    static inline APInt calcOneElement(APInt leftOperand, APInt rightOperand) {
-      const llvm::APInt subtractRes = leftOperand - rightOperand;
+   /// Return the max of the two operands
+    template<typename T>
+    static T calcOneElement(T leftOperand, T rightOperand) {
+      if constexpr (std::is_same_v<T, APFloat>) {
+        if (leftOperand.isNaN() || rightOperand.isNaN())
+          return APFloat::getNaN(leftOperand.getSemantics());
+      }
+      const T subtractRes = leftOperand - rightOperand;
       return (!subtractRes.isNegative()) ? leftOperand : rightOperand;
     }
   }];
@@ -1439,9 +1452,14 @@ def Tosa_ReduceMinOp : Tosa_InferTensorTypeOp<"reduce_min"> {
     /// Method used by InferTypeOpInterface.
     static bool isCompatibleReturnTypes(TypeRange l, TypeRange r);
 
-    /// Return the min of the two integer operands
-    static inline APInt calcOneElement(APInt leftOperand, APInt rightOperand) {
-      const llvm::APInt subtractRes = leftOperand - rightOperand;
+    /// Return the min of the two operands
+    template<typename T>
+    static T calcOneElement(T leftOperand, T rightOperand) {
+      if constexpr (std::is_same_v<T, APFloat>) {
+        if (leftOperand.isNaN() || rightOperand.isNaN())
+          return APFloat::getNaN(leftOperand.getSemantics());
+      }
+      const T subtractRes = leftOperand - rightOperand;
       return (!subtractRes.isNegative()) ? rightOperand : leftOperand;
     }
   }];
@@ -1474,8 +1492,9 @@ def Tosa_ReduceProdOp : Tosa_InferTensorTypeOp<"reduce_prod"> {
     /// Method used by InferTypeOpInterface.
     static bool isCompatibleReturnTypes(TypeRange l, TypeRange r);
 
-    /// Return the prod of the two integer operands
-    static inline APInt calcOneElement(APInt leftOperand, APInt rightOperand) {
+    /// Return the prod of the two operands
+    template<typename T>
+    static T calcOneElement(T leftOperand, T rightOperand) {
       return leftOperand * rightOperand;
     }
   }];
@@ -1508,8 +1527,9 @@ def Tosa_ReduceSumOp : Tosa_InferTensorTypeOp<"reduce_sum"> {
     /// Method used by InferTypeOpInterface.
     static bool isCompatibleReturnTypes(TypeRange l, TypeRange r);
 
-    /// Return the sum of the two integer operands
-    static inline APInt calcOneElement(APInt leftOperand, APInt rightOperand) {
+    /// Return the sum of the two operands
+    template<typename T>
+    static T calcOneElement(T leftOperand, T rightOperand) {
       return leftOperand + rightOperand;
     }
   }];
@@ -1540,6 +1560,8 @@ def Tosa_ConcatOp : Tosa_InferTensorTypeOp<"concat"> {
     Tosa_Tensor:$output
   );
 
+  let hasFolder = 1;
+
   let hasCanonicalizer = 1;
   let hasFolder = 1;
 
@@ -1548,6 +1570,8 @@ def Tosa_ConcatOp : Tosa_InferTensorTypeOp<"concat"> {
     /// Method used by InferTypeOpInterface.
     static bool isCompatibleReturnTypes(TypeRange l, TypeRange r);
   }];
+  let hasFolder = 1;
+  let hasVerifier = 1;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1707,6 +1731,7 @@ def Tosa_TileOp : Tosa_InferShapedTypeOp<"tile"> {
   }];
 
   let hasFolder = 1;
+  let hasCanonicalizer = 1;
   let hasVerifier = 1;
 }
 
@@ -1831,7 +1856,7 @@ def Tosa_ResizeOp : Tosa_InferShapedTypeOp<"resize"> {
 //===----------------------------------------------------------------------===//
 // Operator: cast
 //===----------------------------------------------------------------------===//
-def Tosa_CastOp: Tosa_Op<"cast", [Pure,
+def Tosa_CastOp: Tosa_Op<"cast", [Pure, SameOperandsAndResultShape,
       DeclareOpInterfaceMethods<InferShapedTypeOpInterface,
                               ["inferReturnTypeComponents"]>]> {
 
@@ -1860,6 +1885,15 @@ def Tosa_CastOp: Tosa_Op<"cast", [Pure,
     | signed 16 to float       | int16   | float   |
     | float 32 to float 64     | float32 | float64 |
     | float 64 to float 32     | float64 | float32 |
+
+    AMD extensions:
+    | signed to unsigned       | signed  | unsigned|
+    | unsigned to signed       | unsigned| signed  |
+    | unsigned to float        | unsigned| float  |
+      - unsigned to signed integer and signed to unsigned integer:
+        wrap on overflow
+      - unsigned to float:
+        uses llvm's float to int conversion with TOSA rounding mode
   }];
 
   let arguments = (ins

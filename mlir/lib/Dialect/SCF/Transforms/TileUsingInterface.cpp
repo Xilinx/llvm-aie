@@ -1119,8 +1119,10 @@ static std::tuple<OpResult, std::optional<OpOperand *>>
 getUntiledProducerFromSliceSource(OpOperand *source,
                                   ArrayRef<LoopLikeOpInterface> loops) {
   std::optional<OpOperand *> destinationIterArg;
+  assert(!loops.empty() && "expected non empty loops container");
   auto loopIt = loops.rbegin();
-  while (auto iterArg = dyn_cast<BlockArgument>(source->get())) {
+  while (loopIt != loops.rend() && isa<BlockArgument>(source->get())) {
+    auto iterArg = cast<BlockArgument>(source->get());
     auto loop = *loopIt;
     if (iterArg.getOwner()->getParentOp() != loop)
       break;
@@ -1389,7 +1391,8 @@ namespace {
 class SliceTrackingListener : public RewriterBase::Listener {
 public:
   explicit SliceTrackingListener(
-      std::optional<FrozenRewritePatternSet> patterns);
+      std::optional<FrozenRewritePatternSet> patterns,
+      scf::SCFTileAndFuseOptions::WorklistInsertFnTy worklistInsertFn);
   SliceTrackingListener() = default;
 
   /// Adds the given list of operations to the worklist, and if present,
@@ -1419,18 +1422,22 @@ private:
   /// Optional pattern set to apply when adding new operations to the
   /// worklist.
   std::optional<FrozenRewritePatternSet> patterns = std::nullopt;
+  scf::SCFTileAndFuseOptions::WorklistInsertFnTy worklistInsertFn;
 };
 
 SliceTrackingListener::SliceTrackingListener(
-    std::optional<FrozenRewritePatternSet> p) {
+    std::optional<FrozenRewritePatternSet> p,
+    scf::SCFTileAndFuseOptions::WorklistInsertFnTy w) {
   patterns = std::move(p);
+  worklistInsertFn = w;
 }
 
+/// Insert extract_slice ops into the worklist.
 LogicalResult
 SliceTrackingListener::insertAndApplyPatterns(ArrayRef<Operation *> ops) {
   for (Operation *op : ops) {
     if (auto slice = dyn_cast<tensor::ExtractSliceOp>(op))
-      worklist.push_back(slice);
+      worklistInsertFn(slice, worklist);
   }
 
   if (!patterns)
@@ -1442,12 +1449,14 @@ SliceTrackingListener::insertAndApplyPatterns(ArrayRef<Operation *> ops) {
   return applyOpPatternsGreedily(ops, patterns.value(), config);
 }
 
+/// Insert extract_slice ops created by cleanup patterns into the worklist.
+/// Triggered from applyOpPatternsAndFold() above.
 void SliceTrackingListener::notifyOperationInserted(
     Operation *op, OpBuilder::InsertPoint previous) {
   auto slice = dyn_cast<tensor::ExtractSliceOp>(op);
   if (!slice)
     return;
-  worklist.push_back(slice);
+  worklistInsertFn(slice, worklist);
 }
 
 // Scan the worklist for the given op and remove it if present. The
@@ -1578,7 +1587,7 @@ mlir::scf::tileConsumerAndFuseProducersUsingSCF(
   };
 
   SliceTrackingListener sliceTracker =
-      SliceTrackingListener(options.cleanupPatterns);
+      SliceTrackingListener(options.cleanupPatterns, options.worklistInsertFn);
 
   if (failed(
           sliceTracker.insertAndApplyPatterns(tilingResult->generatedSlices))) {
@@ -1594,6 +1603,8 @@ mlir::scf::tileConsumerAndFuseProducersUsingSCF(
                                           loops);
     if (!fusableProducer)
       continue;
+    LLVM_DEBUG(llvm::dbgs() << "worklist: producer is "
+                            << *(fusableProducer.getOwner()) << "\n");
 
     std::optional<SCFTileAndFuseOptions::ControlFnResult> controlFnResult =
         options.fusionControlFn(candidateSlice, fusableProducer,
@@ -1641,6 +1652,12 @@ mlir::scf::tileConsumerAndFuseProducersUsingSCF(
             fusedResult->tiledAndFusedProducer.getDefiningOp()) {
       fusedProducers.insert(fusedResult->origProducer.getDefiningOp());
       tiledAndFusedOps.insert(tiledAndFusedOp);
+    }
+
+    // Drop the extract_slice if it has been replaced by the tiled producer, and
+    // is no longer used.
+    if (worklistItem.candidateSlice->use_empty()) {
+      rewriter.eraseOp(worklistItem.candidateSlice);
     }
 
     if (failed(sliceTracker.insertAndApplyPatterns(worklistCandidates))) {

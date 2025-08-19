@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "PassDetail.h"
+#include "mlir/IR/AsmState.h"
 #include "mlir/IR/SymbolTable.h"
 #include "mlir/Pass/PassManager.h"
 #include "mlir/Support/FileUtilities.h"
@@ -342,6 +343,74 @@ struct FileTreeIRPrinterConfig : public PassManager::IRPrinterConfig {
   llvm::DenseMap<Operation *, unsigned> counters;
 };
 
+/// Print a pass pipeline like `builtin.module(func.func(cse))`
+/// from a list of scopes and the pass.
+template <typename RangeT>
+void printAsPassPipeline(RangeT scopes, Pass *pass, raw_ostream &os) {
+  // Add pass scopes like 'builtin.module(emitc.tu('
+  for (OperationName scope : scopes)
+    os << scope << "(";
+  pass->printAsTextualPipeline(os);
+  for (OperationName _ : scopes)
+    os << ")";
+}
+
+/// A pass instrumentation to dump the IR before each pass into
+/// numbered files.
+/// It includes a mlir_reproducer info to rerun the pass.
+class ReproducerBeforeAll : public PassInstrumentation {
+public:
+  ReproducerBeforeAll(mlir::StringRef outputDir) : outputDir(outputDir) {}
+  void runBeforePass(Pass *pass, Operation *op) override;
+
+  std::string outputDir;
+
+  uint32_t counter = 0;
+};
+
+void ReproducerBeforeAll::runBeforePass(Pass *pass, Operation *op) {
+  // Skip adator passes (which adopt FuncOp passes to ModuleOp pass managers).
+  if (isa<OpToOpPassAdaptor>(pass))
+    return;
+
+  llvm::SmallString<128> path(outputDir);
+  if (failed(createDirectoryOrPrintErr(path)))
+    return;
+
+  // Open output file.
+  std::string fileName =
+      llvm::formatv("{0,0+2}_{1}.mlir", counter++, pass->getArgument());
+  llvm::sys::path::append(path, fileName);
+
+  std::string error;
+  std::unique_ptr<llvm::ToolOutputFile> file = openOutputFile(path, &error);
+  if (!file) {
+    llvm::errs() << "Error opening output file " << path << ": " << error
+                 << "\n";
+    return;
+  }
+
+  SmallVector<OperationName> scopes;
+  scopes.push_back(op->getName());
+  while (Operation *parentOp = op->getParentOp()) {
+    scopes.push_back(parentOp->getName());
+    op = parentOp;
+  }
+
+  std::string pipelineStr;
+  llvm::raw_string_ostream passOS(pipelineStr);
+  printAsPassPipeline(llvm::reverse(scopes), pass, passOS);
+
+  AsmState state(op);
+  state.attachResourcePrinter("mlir_reproducer",
+                              [&](Operation *op, AsmResourceBuilder &builder) {
+                                builder.buildString("pipeline", pipelineStr);
+                                builder.buildBool("disable_threading", true);
+                                builder.buildBool("verify_each", true);
+                              });
+  op->print(file->os(), state);
+  file->keep();
+}
 } // namespace
 
 /// Add an instrumentation to print the IR before and after pass execution,
@@ -379,4 +448,12 @@ void PassManager::enableIRPrintingToFileTree(
       std::move(shouldPrintBeforePass), std::move(shouldPrintAfterPass),
       printModuleScope, printAfterOnlyOnChange, printAfterOnlyOnFailure,
       opPrintingFlags, printTreeDir));
+}
+
+/// Add an instrumentation to print the IR before and after pass execution.
+void PassManager::enableReproducerBeforeAll(StringRef outputDir) {
+  if (getContext()->isMultithreadingEnabled())
+    llvm::report_fatal_error("IR printing can't be setup on a pass-manager "
+                             "without disabling multi-threading first.");
+  addInstrumentation(std::make_unique<ReproducerBeforeAll>(outputDir));
 }

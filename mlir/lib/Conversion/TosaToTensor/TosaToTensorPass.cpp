@@ -12,6 +12,7 @@
 
 #include "mlir/Conversion/TosaToTensor/TosaToTensor.h"
 
+#include "mlir/Conversion/TosaToLinalg/TosaToLinalg.h"
 #include "mlir/Dialect/Arith/IR/Arith.h"
 #include "mlir/Dialect/Tensor/IR/Tensor.h"
 #include "mlir/Dialect/Tosa/IR/TosaOps.h"
@@ -20,6 +21,7 @@
 #include "mlir/Pass/PassManager.h"
 #include "mlir/Transforms/DialectConversion.h"
 #include "mlir/Transforms/GreedyPatternRewriteDriver.h"
+
 
 namespace mlir {
 #define GEN_PASS_DEF_TOSATOTENSOR

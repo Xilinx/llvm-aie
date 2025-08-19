@@ -11,6 +11,7 @@
 #include "mlir/Interfaces/SideEffectInterfaces.h"
 #include "mlir/Pass/Pass.h"
 #include "mlir/Pass/PassManager.h"
+#include <mlir/Dialect/PDL/IR/Builtins.h>
 #include <optional>
 
 using namespace mlir;
@@ -136,6 +137,8 @@ FrozenRewritePatternSet::FrozenRewritePatternSet(
   if (failed(convertPDLToPDLInterp(pdlModule, configMap)))
     llvm::report_fatal_error(
         "failed to lower PDL pattern module to the PDL Interpreter");
+
+  pdl::registerBuiltins(pdlPatterns);
 
   // Generate the pdl bytecode.
   impl->pdlByteCode = std::make_unique<detail::PDLByteCode>(

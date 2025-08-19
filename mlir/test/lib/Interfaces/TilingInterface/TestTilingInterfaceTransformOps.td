@@ -49,6 +49,29 @@ def TestFuseAndYieldOp : Op<Transform_Dialect, "test.fuse_and_yield",
   }];
 }
 
+def TestFuseOrderedOp : Op<Transform_Dialect, "test.tile_fuse_ordered",
+  [FunctionalStyleTransformOpTrait, MemoryEffectsOpInterface,
+   DeclareOpInterfaceMethods<TransformOpInterface>,
+   ReportTrackingListenerFailuresOpTrait]> {
+  let description = [{
+    Applies tiling and fusion to the operations pointed to by the target handle,
+    following the order given by each operation's tiling_priority attribute.
+
+    On success returns the tiled operations as well as generated loops. Emits
+    a definite failure if tiling fails.
+  }];
+
+  let arguments =
+    (ins TransformHandleTypeInterface:$target,
+        DefaultValuedAttr<I64ArrayAttr, "{}">:$tile_sizes);
+  let results = (outs TransformHandleTypeInterface:$transfomed,
+      Variadic<TransformHandleTypeInterface>:$loops);
+
+  let assemblyFormat = [{
+    $target ($tile_sizes^)? attr-dict `:` functional-type(operands, results)
+  }];
+}
+
 def TestFuseConsumerOp : Op<Transform_Dialect, "test.fuse_consumer",
        [DeclareOpInterfaceMethods<TransformOpInterface>,
         DeclareOpInterfaceMethods<MemoryEffectsOpInterface>,

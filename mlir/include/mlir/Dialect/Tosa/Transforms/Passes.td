@@ -23,13 +23,19 @@ def TosaLayerwiseConstantFoldPass : Pass<"tosa-layerwise-constant-fold", "func::
   }];
 
   let constructor = "createTosaLayerwiseConstantFoldPass()";
-
   let options = [
-      Option<"aggressiveReduceConstant", "aggressive-reduce-constant", "bool",
-             /*default=*/"false",
-             "Always perform the reduce constant optimization"
-             "May add more tosa.const but would reduce runtime calculations">,
-   ];
+    Option<"enableIntCastFolding", "enable-cast-folding-int-input", "bool",
+           "true", "Enable folding for casts from integer types">,
+    Option<"foldSplatOrSingleUseOnly", "fold-splat-or-single-use-only", "bool",
+           "true", "Only fold constants that are splat or have a single use">,
+    Option<"aggressiveReduceConstant", "aggressive-reduce-constant", "bool",
+            /*default=*/"false",
+            "Always perform the reduce constant optimization"
+            "May add more tosa.const but would reduce runtime calculations">,
+    Option<"enableTileFolding", "enable-tile-folding", "bool",
+            /*default=*/"false",
+            "Enables folding of tosa.tile operation. May generate bigger constant values.">,
+  ];
 }
 
 def TosaInferShapes : Pass<"tosa-infer-shapes", "func::FuncOp"> {

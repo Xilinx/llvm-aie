@@ -29,12 +29,15 @@ class Module;
 /// Parse an AST module from the main file of the given source manager.
 /// `enableDocumentation` is an optional flag that, when set, indicates that the
 /// parser should also include documentation when building the AST when
-/// possible. `codeCompleteContext` is an optional code completion context that
+/// possible. `emitWarningOnRepeatedIncludeAtMainFile` is an optional flag that
+/// allows the parser to emit warnings when include files are repeated at main
+/// file. `codeCompleteContext` is an optional code completion context that
 /// may be provided to receive code completion suggestions. If a completion is
 /// hit, this method returns a failure.
 FailureOr<ast::Module *>
 parsePDLLAST(ast::Context &ctx, llvm::SourceMgr &sourceMgr,
              bool enableDocumentation = false,
+             bool emitWarningOnRepeatedIncludeAtMainFile = false,
              CodeCompleteContext *codeCompleteContext = nullptr);
 } // namespace pdll
 } // namespace mlir

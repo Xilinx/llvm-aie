@@ -130,6 +130,20 @@ module @constraint_with_result_multiple {
 
 // -----
 
+// CHECK-LABEL: module @constraint_with_no_inputs
+module @constraint_with_no_inputs {
+  pdl.pattern : benefit(0) {
+    %attr = apply_native_constraint "constraint_no_inputs" : !pdl.attribute
+    %root = operation
+    rewrite %root with "rewriter"
+  }
+}
+
+// CHECK:  func @matcher(%arg0: !pdl.operation) {
+// CHECK:    pdl_interp.apply_constraint "constraint_no_inputs" : !pdl.attribute -> ^{{.*}}, ^{{.*}}
+
+// -----
+
 // CHECK-LABEL: module @negated_constraint
 module @negated_constraint {
   // CHECK: func @matcher(%[[ROOT:.*]]: !pdl.operation)
@@ -474,6 +488,27 @@ module @predicate_ordering {
   }
 }
 
+// -----
+
+// CHECK-LABEL: module @predicate_ordering_attr
+module @predicate_ordering_attr {
+  // Check that the result is checked for null first, before applying the
+  // constraint. 
+
+  // CHECK: func @matcher(%[[ROOT:.*]]: !pdl.operation)
+  // CHECK:   %[[RESULT:.*]] = pdl_interp.get_attribute "attr" of %[[ROOT]]
+  // CHECK-NEXT: pdl_interp.is_not_null %[[RESULT]]
+  // CHECK: pdl_interp.apply_constraint "constraint"
+
+
+  pdl.pattern : benefit(1) {
+    %attr = attribute
+    pdl.apply_native_constraint "constraint"(%attr: !pdl.attribute)
+    pdl.apply_native_constraint "constraint"(%attr: !pdl.attribute)
+    %root = operation  "foo.op" {"attr" = %attr}
+    rewrite %root with "rewriter"
+  }
+}
 
 // -----
 

@@ -738,6 +738,41 @@ LogicalResult tosa::ConcatOp::inferReturnTypeComponents(
   return success();
 }
 
+LogicalResult ConcatOp::verify() {
+  OperandRange inputs = getInput1();
+
+  auto inputRank = ShapedType::kDynamic;
+  bool hasRankedInputs = false;
+  for (auto input : inputs) {
+    auto inputType = llvm::cast<ShapedType>(input.getType());
+    if (inputType.hasRank()) {
+      hasRankedInputs = true;
+      inputRank = inputType.getRank();
+      break;
+    }
+  }
+
+  if (hasRankedInputs) {
+    int64_t axis = getAxis();
+    if (axis < 0 || axis >= std::max((int64_t)1, inputRank)) {
+      return emitOpError() << "axis must be in range 0 to " << inputRank - 1;
+    }
+
+    for (auto input : inputs) {
+      auto inputType = llvm::cast<ShapedType>(input.getType());
+      if (!inputType.hasRank()) {
+        continue;
+      }
+      if (inputRank != inputType.getRank()) {
+        return emitOpError()
+               << "rank of input " << inputType
+               << " does not match other input rank(s) (" << inputRank << ")";
+      }
+    }
+  }
+  return success();
+}
+
 LogicalResult tosa::EqualOp::inferReturnTypeComponents(
     MLIRContext *context, ::std::optional<Location> location,
     ValueShapeRange operands, DictionaryAttr attributes,
@@ -891,47 +926,22 @@ LogicalResult tosa::SliceOp::inferReturnTypeComponents(
     MLIRContext *context, ::std::optional<Location> location,
     SliceOp::Adaptor adaptor,
     SmallVectorImpl<ShapedTypeComponents> &inferredReturnShapes) {
-  auto start = adaptor.getStart();
-  auto size = adaptor.getSize();
-
-  // if size[i] is -1, all remaining elements in dimension i are included
-  // in the slice, similar to TF.
-  ShapeAdaptor inputShape(adaptor.getInput1().getType());
-  // initialize outputShape to all unknown
-  SmallVector<int64_t> outputShape(size.size(), ShapedType::kDynamic);
-  if (inputShape.hasRank()) {
-    for (size_t i = 0; i < size.size(); i++) {
-      if (size[i] != 0 && size[i] >= -1 && start[i] >= 0 &&
-          (ShapedType::isDynamic(inputShape.getDimSize(i)) ||
-           start[i] < inputShape.getDimSize(i))) {
-        // size[i] is not 0 and not < -1, and start[i] is in valid range
-        if (ShapedType::isDynamic(inputShape.getDimSize(i))) {
-          // input shape has unknown dim[i] - only valid if size[i] > 0
-          if (size[i] > 0) {
-            outputShape[i] = size[i];
-          }
-        } else {
-          // input shape has known dim[i]
-          if (size[i] == -1) {
-            outputShape[i] = inputShape.getDimSize(i) - start[i];
-          } else if (start[i] + size[i] <= inputShape.getDimSize(i)) {
-            // start[i] + size[i] is within bound of input shape's dim[i]
-            outputShape[i] = size[i];
-          }
-        }
-      }
-    }
-  } else {
-    outputShape = convertToMlirShape(size);
-  }
-  inferredReturnShapes.push_back(ShapedTypeComponents(outputShape));
+  inferredReturnShapes.push_back(
+      ShapedTypeComponents(convertToMlirShape(adaptor.getSize())));
   return success();
 }
 
 LogicalResult tosa::SliceOp::verify() {
   auto inputType = llvm::dyn_cast<RankedTensorType>(getInput1().getType());
-  if (!inputType)
+  auto outputType = llvm::dyn_cast<RankedTensorType>(getType());
+  if (!inputType || !outputType)
     return success();
+
+  if (inputType.getRank() != outputType.getRank()) {
+    return emitOpError() << "rank of input (" << inputType.getRank()
+                         << ") and output (" << outputType.getRank()
+                         << ") must match";
+  }
 
   if (static_cast<size_t>(inputType.getRank()) != getStart().size())
     return emitOpError(
@@ -940,6 +950,26 @@ LogicalResult tosa::SliceOp::verify() {
   if (static_cast<size_t>(inputType.getRank()) != getSize().size())
     return emitOpError(
         "length of size attribute is not equal rank of input shape");
+
+  for (int64_t dim = 0; dim < outputType.getRank(); ++dim) {
+    if (getSize()[dim] != -1 && !outputType.isDynamicDim(dim) &&
+        getSize()[dim] != outputType.getShape()[dim]) {
+      return emitOpError() << "size attribute (" << getSize()[dim]
+                           << ") does not match output type ("
+                           << outputType.getShape()[dim] << ") in dimension "
+                           << dim;
+    }
+  }
+
+  for (int i = 0; i < inputType.getRank(); ++i) {
+    if (getSize()[i] != -1 && !inputType.isDynamicDim(i) &&
+        getStart()[i] + getSize()[i] > inputType.getShape()[i]) {
+      return emitOpError() << "start (" << getStart()[i] << ") plus size ("
+                           << getSize()[i]
+                           << ") goes out of bounds of input size ("
+                           << inputType.getShape()[i] << ") in dimension " << i;
+    }
+  }
 
   return success();
 }
@@ -1136,13 +1166,30 @@ llvm::LogicalResult tosa::ReshapeOp::verify() {
         return emitOpError() << "cannot reshape " << inputElementsNum
                              << " elements into " << outputElementsNum;
       }
+      
+      if ((int64_t)getNewShape().size() != outputType.getRank()) {
+        return emitOpError()
+               << "rank of newShape (" << getNewShape().size()
+               << ") and output (" << outputType.getRank() << ") must match";
+      }
+
+      for (int64_t dim = 0; dim < outputType.getRank(); ++dim) {
+        if (getNewShape()[dim] != -1 &&
+            getNewShape()[dim] != outputType.getShape()[dim]) {
+          return emitOpError()
+                 << "newShape attribute (" << getNewShape()[dim]
+                 << ") does not match output type ("
+                 << outputType.getShape()[dim] << ") in dimension " << dim;
+        }
+      }
     }
 
+    // AMD: Switched checks with > to >= to allow zero dimensions
     int64_t newShapeElementsNum = std::accumulate(
         getNewShape().begin(), getNewShape().end(), 1LL,
-        [](int64_t acc, int64_t dim) { return (dim > 0) ? acc * dim : acc; });
+        [](int64_t acc, int64_t dim) { return (dim >= 0) ? acc * dim : acc; });
     bool isStaticNewShape =
-        llvm::all_of(getNewShape(), [](int64_t s) { return s > 0; });
+        llvm::all_of(getNewShape(), [](int64_t s) { return s >= 0; });
     if ((isStaticNewShape && inputElementsNum != newShapeElementsNum) ||
         (!isStaticNewShape && newShapeElementsNum > inputElementsNum)) {
       return emitOpError() << "cannot reshape " << inputElementsNum

@@ -1,0 +1,5 @@
+// RUN: not mlir-pdll %s -I %S 2>&1 | FileCheck %s
+
+#include "include/included.pdll"
+// CHECK: error: `IncludedPattern` has already been defined
+#include "include/included.pdll"

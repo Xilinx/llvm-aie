@@ -66,7 +66,8 @@ createCanonicalizerPass(const GreedyRewriteConfig &config,
                         ArrayRef<std::string> enabledPatterns = std::nullopt);
 
 /// Creates a pass to perform control-flow sinking.
-std::unique_ptr<Pass> createControlFlowSinkPass();
+std::unique_ptr<Pass> createControlFlowSinkPass(
+    function_ref<bool(Operation *, Region *)> shouldMoveIntoRegion = nullptr);
 
 /// Creates a pass to perform common sub expression elimination.
 std::unique_ptr<Pass> createCSEPass();

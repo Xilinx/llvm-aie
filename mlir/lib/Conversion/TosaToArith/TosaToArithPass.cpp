@@ -19,6 +19,7 @@
 #include "mlir/Pass/PassManager.h"
 #include "mlir/Transforms/DialectConversion.h"
 #include "mlir/Transforms/GreedyPatternRewriteDriver.h"
+#include "mlir/Conversion/TosaToLinalg/TosaToLinalg.h"
 
 namespace mlir {
 #define GEN_PASS_DEF_TOSATOARITH
@@ -34,12 +35,15 @@ public:
   TosaToArith(TosaToArithOptions &options) : TosaToArithBase(options) {}
 
   void runOnOperation() override {
+    TypeConverter converter;
+    mlir::tosa::populateTosaToLinalgTypeConversion(converter);
+
     RewritePatternSet patterns(&getContext());
     ConversionTarget target(getContext());
     target.addIllegalOp<tosa::ConstOp>();
     target.addLegalDialect<arith::ArithDialect>();
 
-    mlir::tosa::populateTosaToArithConversionPatterns(&patterns);
+    mlir::tosa::populateTosaToArithConversionPatterns(converter, &patterns);
 
     if (this->includeApplyRescale) {
       mlir::tosa::populateTosaRescaleToArithConversionPatterns(&patterns,

@@ -8,6 +8,7 @@
 
 #include "mlir/Dialect/EmitC/IR/EmitC.h"
 #include "mlir/Dialect/EmitC/IR/EmitCTraits.h"
+#include "mlir/Dialect/EmitC/IR/FunctionOpAssembly.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinAttributes.h"
 #include "mlir/IR/BuiltinTypes.h"
@@ -19,6 +20,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/TypeSwitch.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/FormatVariadic.h"
 
 using namespace mlir;
 using namespace mlir::emitc;
@@ -123,7 +125,7 @@ bool mlir::emitc::isSupportedFloatType(Type type) {
     }
     case 32:
     case 64:
-      return true;
+      return isa<Float32Type, Float64Type>(type);
     default:
       return false;
     }
@@ -131,10 +133,20 @@ bool mlir::emitc::isSupportedFloatType(Type type) {
   return false;
 }
 
+bool mlir::emitc::isIntegerOrOpaqueType(Type type) {
+  return isa<emitc::OpaqueType>(type) || isSupportedIntegerType(type);
+}
+
+bool mlir::emitc::isFloatOrOpaqueType(Type type) {
+  return isa<emitc::OpaqueType>(type) || isSupportedFloatType(type);
+}
+
 bool mlir::emitc::isPointerWideType(Type type) {
   return isa<emitc::SignedSizeTType, emitc::SizeTType, emitc::PtrDiffTType>(
       type);
 }
+
+StringRef mlir::emitc::getReferenceAttributeName() { return "emitc.reference"; }
 
 /// Check that the type of the initial value is compatible with the operations
 /// result type.
@@ -165,6 +177,64 @@ static LogicalResult verifyInitializationAttribute(Operation *op,
            << ")";
 
   return success();
+}
+
+/// Parse a format string and return a list of its parts.
+/// A part is either a StringRef that has to be printed as-is, or
+/// a Placeholder which requires printing the next operand of the VerbatimOp.
+/// In the format string, all `{}` are replaced by Placeholders, except if the
+/// `{` is escaped by `{{` - then it doesn't start a placeholder.
+template <class ArgType>
+FailureOr<SmallVector<ReplacementItem>>
+parseFormatString(StringRef toParse, ArgType fmtArgs,
+                  std::optional<llvm::function_ref<mlir::InFlightDiagnostic()>>
+                      emitError = {}) {
+  SmallVector<ReplacementItem> items;
+
+  // If there are not operands, the format string is not interpreted.
+  if (fmtArgs.empty()) {
+    items.push_back(toParse);
+    return items;
+  }
+
+  while (!toParse.empty()) {
+    size_t idx = toParse.find('{');
+    if (idx == StringRef::npos) {
+      // No '{'
+      items.push_back(toParse);
+      break;
+    }
+    if (idx > 0) {
+      // Take all chars excluding the '{'.
+      items.push_back(toParse.take_front(idx));
+      toParse = toParse.drop_front(idx);
+      continue;
+    }
+    if (toParse.size() < 2) {
+      // '{' is last character
+      items.push_back(toParse);
+      break;
+    }
+    // toParse contains at least two characters and starts with `{`.
+    char nextChar = toParse[1];
+    if (nextChar == '{') {
+      // Double '{{' -> '{' (escaping).
+      items.push_back(toParse.take_front(1));
+      toParse = toParse.drop_front(2);
+      continue;
+    }
+    if (nextChar == '}') {
+      items.push_back(Placeholder{});
+      toParse = toParse.drop_front(2);
+      continue;
+    }
+
+    if (emitError.has_value()) {
+      return (*emitError)() << "expected '}' after unescaped '{'";
+    }
+    return failure();
+  }
+  return items;
 }
 
 //===----------------------------------------------------------------------===//
@@ -247,11 +317,39 @@ LogicalResult emitc::AssignOp::verify() {
 bool CastOp::areCastCompatible(TypeRange inputs, TypeRange outputs) {
   Type input = inputs.front(), output = outputs.front();
 
+  // Opaque types are always allowed
+  if (isa<emitc::OpaqueType>(input) || isa<emitc::OpaqueType>(output))
+    return true;
+
+  // Cast to array is only possible from an array
+  if (isa<emitc::ArrayType>(input) != isa<emitc::ArrayType>(output))
+    return false;
+
+  // Arrays can be casted to arrays by reference.
+  if (isa<emitc::ArrayType>(input) && isa<emitc::ArrayType>(output))
+    return true;
+
+  // Scalars
   return (
       (emitc::isIntegerIndexOrOpaqueType(input) ||
        emitc::isSupportedFloatType(input) || isa<emitc::PointerType>(input)) &&
       (emitc::isIntegerIndexOrOpaqueType(output) ||
        emitc::isSupportedFloatType(output) || isa<emitc::PointerType>(output)));
+}
+
+LogicalResult CastOp::verify() {
+  bool isReference = getReference();
+
+  if (isa<emitc::ArrayType>(getDest().getType())) {
+    if (!isReference)
+      return emitOpError("cast of array must bear a reference");
+    return success();
+  }
+
+  if (isReference)
+    return emitOpError("cast of value type must not bear a reference");
+
+  return success();
 }
 
 //===----------------------------------------------------------------------===//
@@ -286,6 +384,19 @@ LogicalResult emitc::CallOpaqueOp::verify() {
     for (Attribute tArg : *templateArgsAttr) {
       if (!llvm::isa<TypeAttr, IntegerAttr, FloatAttr, emitc::OpaqueAttr>(tArg))
         return emitOpError("template argument has invalid type");
+    }
+  }
+
+  if (std::optional<ArrayAttr> templateArgNames = getTemplateArgNames()) {
+    if (std::optional<ArrayAttr> templateArgsAttr = getTemplateArgs()) {
+      if ((*templateArgNames).size() &&
+          (*templateArgNames).size() != (*templateArgsAttr).size()) {
+        return emitOpError("number of template argument names must be equal to "
+                           "number of template arguments");
+      }
+    } else {
+      return emitOpError("should not have names for template arguments if it "
+                         "does not have template arguments");
     }
   }
 
@@ -402,9 +513,9 @@ ParseResult ForOp::parse(OpAsmParser &parser, OperationState &result) {
   SmallVector<OpAsmParser::UnresolvedOperand, 4> operands;
   regionArgs.push_back(inductionVariable);
 
-  // Parse optional type, else assume Index.
+  // Parse optional type, else assume size_t.
   if (parser.parseOptionalColon())
-    type = builder.getIndexType();
+    type = emitc::SizeTType::get(builder.getContext());
   else if (parser.parseType(type))
     return failure();
 
@@ -434,7 +545,7 @@ void ForOp::print(OpAsmPrinter &p) {
     << getUpperBound() << " step " << getStep();
 
   p << ' ';
-  if (Type t = getInductionVar().getType(); !t.isIndex())
+  if (Type t = getInductionVar().getType(); !(isa<emitc::SizeTType>(t)))
     p << " : " << t << ' ';
   p.printRegion(getRegion(),
                 /*printEntryBlockArgs=*/false,
@@ -540,16 +651,15 @@ ParseResult FuncOp::parse(OpAsmParser &parser, OperationState &result) {
          function_interface_impl::VariadicFlag,
          std::string &) { return builder.getFunctionType(argTypes, results); };
 
-  return function_interface_impl::parseFunctionOp(
-      parser, result, /*allowVariadic=*/false,
-      getFunctionTypeAttrName(result.name), buildFuncType,
-      getArgAttrsAttrName(result.name), getResAttrsAttrName(result.name));
+  return parseFunctionOp(parser, result, /*allowVariadic=*/false,
+                         getFunctionTypeAttrName(result.name), buildFuncType,
+                         getArgAttrsAttrName(result.name),
+                         getResAttrsAttrName(result.name));
 }
 
 void FuncOp::print(OpAsmPrinter &p) {
-  function_interface_impl::printFunctionOp(
-      p, *this, /*isVariadic=*/false, getFunctionTypeAttrName(),
-      getArgAttrsAttrName(), getResAttrsAttrName());
+  printFunctionOp(p, *this, /*isVariadic=*/false, getFunctionTypeAttrName(),
+                  getArgAttrsAttrName(), getResAttrsAttrName());
 }
 
 LogicalResult FuncOp::verify() {
@@ -910,6 +1020,55 @@ LogicalResult emitc::SubscriptOp::verify() {
 }
 
 //===----------------------------------------------------------------------===//
+// VerbatimOp
+//===----------------------------------------------------------------------===//
+
+LogicalResult emitc::VerbatimOp::verify() {
+  auto errorCallback = [&]() -> InFlightDiagnostic {
+    return this->emitOpError();
+  };
+  FailureOr<SmallVector<ReplacementItem>> fmt =
+      ::parseFormatString(getValue(), getFmtArgs(), errorCallback);
+  if (failed(fmt))
+    return failure();
+
+  size_t numPlaceholders = llvm::count_if(*fmt, [](ReplacementItem &item) {
+    return std::holds_alternative<Placeholder>(item);
+  });
+
+  if (numPlaceholders != getFmtArgs().size()) {
+    return emitOpError()
+           << "requires operands for each placeholder in the format string";
+  }
+  return success();
+}
+
+static ParseResult parseVariadicTypeFmtArgs(AsmParser &p,
+                                            SmallVector<Type> &params) {
+  Type type;
+  if (p.parseType(type))
+    return failure();
+
+  params.push_back(type);
+  while (succeeded(p.parseOptionalComma())) {
+    if (p.parseType(type))
+      return failure();
+    params.push_back(type);
+  }
+
+  return success();
+}
+
+static void printVariadicTypeFmtArgs(AsmPrinter &p, ArrayRef<Type> params) {
+  llvm::interleaveComma(params, p, [&](Type type) { p.printType(type); });
+}
+
+FailureOr<SmallVector<ReplacementItem>> emitc::VerbatimOp::parseFormatString() {
+  // Error checking is done in verify.
+  return ::parseFormatString(getValue(), getFmtArgs());
+}
+
+//===----------------------------------------------------------------------===//
 // EmitC Enums
 //===----------------------------------------------------------------------===//
 
@@ -971,6 +1130,8 @@ LogicalResult emitc::ArrayType::verify(
     return emitError() << "shape must not be empty";
 
   for (int64_t dim : shape) {
+    if (dim == ShapedType::kDynamic)
+      return emitError() << "dimensions must have static size";
     if (dim < 0)
       return emitError() << "dimensions must have non-negative size";
   }
@@ -1017,7 +1178,7 @@ LogicalResult mlir::emitc::LValueType::verify(
 
 LogicalResult mlir::emitc::OpaqueType::verify(
     llvm::function_ref<mlir::InFlightDiagnostic()> emitError,
-    llvm::StringRef value) {
+    llvm::StringRef value, ArrayRef<Type> fmtArgs) {
   if (value.empty()) {
     return emitError() << "expected non empty string in !emitc.opaque type";
   }
@@ -1025,7 +1186,27 @@ LogicalResult mlir::emitc::OpaqueType::verify(
     return emitError() << "pointer not allowed as outer type with "
                           "!emitc.opaque, use !emitc.ptr instead";
   }
+
+  FailureOr<SmallVector<ReplacementItem>> fmt =
+      ::parseFormatString(value, fmtArgs, emitError);
+  if (failed(fmt))
+    return failure();
+
+  size_t numPlaceholders = llvm::count_if(*fmt, [](ReplacementItem &item) {
+    return std::holds_alternative<Placeholder>(item);
+  });
+
+  if (numPlaceholders != fmtArgs.size()) {
+    return emitError()
+           << "requires operands for each placeholder in the format string";
+  }
+
   return success();
+}
+
+FailureOr<SmallVector<ReplacementItem>> emitc::OpaqueType::parseFormatString() {
+  // Error checking is done in verify.
+  return ::parseFormatString(getValue(), getFmtArgs());
 }
 
 //===----------------------------------------------------------------------===//
@@ -1088,6 +1269,12 @@ LogicalResult GlobalOp::verify() {
   }
   if (getInitialValue().has_value()) {
     Attribute initValue = getInitialValue().value();
+    if (getReference() && !isa<emitc::OpaqueAttr>(initValue)) {
+      return emitOpError("global reference initial value must be an opaque "
+                         "attribute, got ")
+             << initValue;
+    }
+
     // Check that the type of the initial value is compatible with the type of
     // the global variable.
     if (auto elementsAttr = llvm::dyn_cast<ElementsAttr>(initValue)) {
@@ -1116,6 +1303,8 @@ LogicalResult GlobalOp::verify() {
                          "or opaque attribute, but got ")
              << initValue;
     }
+  } else if (getReference()) {
+    return emitOpError("global reference must be initialized");
   }
   if (getStaticSpecifier() && getExternSpecifier()) {
     return emitOpError("cannot have both static and extern specifiers");
@@ -1287,6 +1476,16 @@ void SwitchOp::getRegionInvocationBounds(
   for (unsigned regIndex = 0, regNum = getNumRegions(); regIndex < regNum;
        ++regIndex)
     bounds.emplace_back(/*lb=*/0, /*ub=*/regIndex == liveIndex);
+}
+
+//===----------------------------------------------------------------------===//
+// TranslationUnitOp
+//===----------------------------------------------------------------------===//
+void TranslationUnitOp::build(OpBuilder &builder, OperationState &state,
+                              StringRef id) {
+  state.addRegion()->emplaceBlock();
+  state.attributes.push_back(
+      builder.getNamedAttr("id", builder.getStringAttr(id)));
 }
 
 //===----------------------------------------------------------------------===//

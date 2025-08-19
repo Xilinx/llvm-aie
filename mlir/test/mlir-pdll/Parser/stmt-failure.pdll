@@ -98,6 +98,27 @@ Pattern {
 // -----
 
 Pattern {
+  // CHECK: expected `)` to close region list
+  let foo = op<>() ({};
+}
+
+// -----
+
+Pattern {
+  // CHECK: expected `}` to close region
+  let foo = op<>() ({;
+}
+
+// -----
+
+Pattern {
+  // CHECK: expected `{` to open region
+  let foo = op<>() ();
+}
+
+// -----
+
+Pattern {
   // CHECK: expected expression
   let foo: Value<>;
 }
@@ -126,7 +147,7 @@ Pattern {
 // -----
 
 Pattern {
-  // CHECK: expected expression
+  // CHECK: expected colon after integer literal
   let foo: ValueRange<10>;
 }
 

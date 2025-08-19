@@ -43,3 +43,12 @@ emitc.func private @extern_func(i32) attributes {specifiers = ["extern"]}
 
 emitc.func private @array_arg(!emitc.array<3xi32>) attributes {specifiers = ["extern"]}
 // CPP-DEFAULT: extern void array_arg(int32_t[3]);
+
+emitc.func private @reference_scalar_arg(i32 ref) attributes {specifiers = ["extern"]}
+// CPP-DEFAULT: extern void reference_scalar_arg(int32_t &);
+
+emitc.func private @reference_array_arg(!emitc.array<3xi32> ref) attributes {specifiers = ["extern"]}
+// CPP-DEFAULT: extern void reference_array_arg(int32_t (&)[3]);
+
+emitc.func private @reference_multi_arg(!emitc.array<3xi32> ref, !emitc.array<3xi32>, i32 ref) attributes {specifiers = ["extern"]}
+// CPP-DEFAULT: extern void reference_multi_arg(int32_t (&)[3], int32_t[3], int32_t &);

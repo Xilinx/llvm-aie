@@ -100,6 +100,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 250
+      - name: Install requirements.txt
+        if: inputs.projects == 'mlir'
+        run: |
+          apt-get update
+          apt-get install -y python3-pip
+          pip install -r mlir/python/requirements.txt
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1
         with:

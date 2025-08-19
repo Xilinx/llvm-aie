@@ -30,7 +30,12 @@ using namespace mlir;
 namespace {
 /// A control-flow sink pass.
 struct ControlFlowSink : public impl::ControlFlowSinkBase<ControlFlowSink> {
+  ControlFlowSink(
+      function_ref<bool(Operation *, Region *)> shouldMoveIntoRegion)
+      : shouldMoveIntoRegion(shouldMoveIntoRegion) {}
   void runOnOperation() override;
+
+  function_ref<bool(Operation *, Region *)> shouldMoveIntoRegion;
 };
 } // end anonymous namespace
 
@@ -40,19 +45,25 @@ void ControlFlowSink::runOnOperation() {
     SmallVector<Region *> regionsToSink;
     // Get the regions are that known to be executed at most once.
     getSinglyExecutedRegionsToSink(branch, regionsToSink);
-    // Sink side-effect free operations.
-    numSunk = controlFlowSink(
-        regionsToSink, domInfo,
-        [](Operation *op, Region *) { return isMemoryEffectFree(op); },
-        [](Operation *op, Region *region) {
-          // Move the operation to the beginning of the region's entry block.
-          // This guarantees the preservation of SSA dominance of all of the
-          // operation's uses are in the region.
-          op->moveBefore(&region->front(), region->front().begin());
-        });
+    numSunk = controlFlowSink(regionsToSink, domInfo, shouldMoveIntoRegion,
+                              [](Operation *op, Region *region) {
+                                // Move the operation to the beginning of the
+                                // region's entry block. This guarantees the
+                                // preservation of SSA dominance of all of the
+                                // operation's uses are in the region.
+                                op->moveBefore(&region->front(),
+                                               region->front().begin());
+                              });
   });
 }
 
-std::unique_ptr<Pass> mlir::createControlFlowSinkPass() {
-  return std::make_unique<ControlFlowSink>();
+std::unique_ptr<Pass> mlir::createControlFlowSinkPass(
+    function_ref<bool(Operation *, Region *)> shouldMoveIntoRegion) {
+  if (!shouldMoveIntoRegion) {
+    // Sink side-effect free operations.
+    shouldMoveIntoRegion = [](Operation *op, Region *) {
+      return isMemoryEffectFree(op);
+    };
+  }
+  return std::make_unique<ControlFlowSink>(shouldMoveIntoRegion);
 }

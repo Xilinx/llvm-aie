@@ -23,6 +23,7 @@ include "mlir/Interfaces/FunctionInterfaces.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 include "mlir/IR/OpAsmInterface.td"
 include "mlir/IR/RegionKindInterface.td"
+include "mlir/IR/BuiltinAttributes.td"
 
 //===----------------------------------------------------------------------===//
 // EmitC op definitions
@@ -55,6 +56,55 @@ def CExpression : NativeOpTrait<"emitc::CExpression">;
 def IntegerIndexOrOpaqueType : Type<CPred<"emitc::isIntegerIndexOrOpaqueType($_self)">,
 "integer, index or opaque type supported by EmitC">;
 def FloatIntegerIndexOrOpaqueType : AnyTypeOf<[EmitCFloatType, IntegerIndexOrOpaqueType]>;
+
+def EmitC_TranslationUnitOp : EmitC_Op<"tu",
+    [IsolatedFromAbove, NoRegionArguments, SymbolTable,
+    OpAsmOpInterface
+  ] # GraphRegionNoTerminator.traits> {
+  let summary = "A translation unit container operation";
+  let description = [{
+    A `tu` represents a translation unit that can be emitted
+    into a single C++ file.
+
+    `mlir-translate` emits only the translation unit selected via
+    the `-translation-unit-id=id` flag. By default, no translation units are
+    emitted.
+
+    Example:
+
+    ```mlir
+    emitc.tu "main" {
+      emitc.func @func_one() {
+        emitc.return
+      }
+    }
+    ```
+  }];
+
+  let arguments = (ins Builtin_StringAttr:$id);
+  let regions = (region SizedRegion<1>:$bodyRegion);
+
+  let assemblyFormat = "$id attr-dict-with-keyword $bodyRegion";
+  let builders = [OpBuilder<(ins CArg<"StringRef">:$id)>];
+  let extraClassDeclaration = [{
+    /// Construct a module from the given location with an optional name.
+    static TranslationUnitOp create(Location loc, StringRef name);
+
+    //===------------------------------------------------------------------===//
+    // OpAsmOpInterface Methods
+    //===------------------------------------------------------------------===//
+
+    /// EmitC ops in the body of the translation_unit can omit their 'emitc.'
+    /// prefix in the assembly.
+    static ::llvm::StringRef getDefaultDialect() {
+      return "emitc";
+    }
+  }];
+
+  // We need to ensure that the body region has a block;
+  // the auto-generated builders do not guarantee that.
+  let skipDefaultBuilders = 1;
+}
 
 def EmitC_AddOp : EmitC_BinaryOp<"add", [CExpression]> {
   let summary = "Addition operation";
@@ -242,6 +292,7 @@ def EmitC_CallOpaqueOp : EmitC_Op<"call_opaque", [CExpression]> {
     Arg<StrAttr, "the C++ function to call">:$callee,
     Arg<OptionalAttr<ArrayAttr>, "the order of operands and further attributes">:$args,
     Arg<OptionalAttr<ArrayAttr>, "template arguments">:$template_args,
+    Arg<OptionalAttr<StrArrayAttr>, "template argument names">:$template_arg_names,
     Variadic<EmitCType>:$operands
   );
   let results = (outs Variadic<EmitCType>);
@@ -251,8 +302,9 @@ def EmitC_CallOpaqueOp : EmitC_Op<"call_opaque", [CExpression]> {
       "::llvm::StringRef":$callee,
       "::mlir::ValueRange":$operands,
       CArg<"::mlir::ArrayAttr", "{}">:$args,
-      CArg<"::mlir::ArrayAttr", "{}">:$template_args), [{
-        build($_builder, $_state, resultTypes, callee, args, template_args,
+      CArg<"::mlir::ArrayAttr", "{}">:$template_args,
+      CArg<"::mlir::ArrayAttr", "{}">:$template_arg_names), [{
+        build($_builder, $_state, resultTypes, callee, args, template_args, template_arg_names,
             operands);
       }]
     >
@@ -266,8 +318,7 @@ def EmitC_CallOpaqueOp : EmitC_Op<"call_opaque", [CExpression]> {
 
 def EmitC_CastOp : EmitC_Op<"cast",
     [CExpression,
-     DeclareOpInterfaceMethods<CastOpInterface>,
-     SameOperandsAndResultShape]> {
+     DeclareOpInterfaceMethods<CastOpInterface>]> {
   let summary = "Cast operation";
   let description = [{
     The `emitc.cast` operation performs an explicit type conversion and is emitted
@@ -286,9 +337,11 @@ def EmitC_CastOp : EmitC_Op<"cast",
     ```
   }];
 
-  let arguments = (ins EmitCType:$source);
+  let arguments = (ins EmitCType:$source,
+                       UnitAttr:$reference);
   let results = (outs EmitCType:$dest);
-  let assemblyFormat = "$source attr-dict `:` type($source) `to` type($dest)";
+  let assemblyFormat = "$source attr-dict `:` type($source) `to` type($dest) (`ref` $reference^)?";
+  let hasVerifier = 1;
 }
 
 def EmitC_CmpOp : EmitC_BinaryOp<"cmp", [CExpression]> {
@@ -721,6 +774,11 @@ def EmitC_FuncOp : EmitC_Op<"func", [
     ArrayRef<Type> getResultTypes() { return getFunctionType().getResults(); }
 
     //===------------------------------------------------------------------===//
+    // SymbolOpInterface Methods
+    //===------------------------------------------------------------------===//
+
+    bool isDeclaration() { return isExternal(); }
+    
     // OpAsmOpInterface Methods
     //===------------------------------------------------------------------===//
 
@@ -1153,7 +1211,8 @@ def EmitC_GlobalOp : EmitC_Op<"global", [Symbol]> {
                        OptionalAttr<EmitC_OpaqueOrTypedAttr>:$initial_value,
                        UnitAttr:$extern_specifier,
                        UnitAttr:$static_specifier,
-                       UnitAttr:$const_specifier);
+                       UnitAttr:$const_specifier,
+                       UnitAttr:$reference);
 
   let assemblyFormat = [{
        (`extern` $extern_specifier^)?
@@ -1161,6 +1220,7 @@ def EmitC_GlobalOp : EmitC_Op<"global", [Symbol]> {
        (`const` $const_specifier^)?
        $sym_name
        `:` custom<EmitCGlobalOpTypeAndInitialValue>($type, $initial_value)
+       (`ref` $reference^)?
        attr-dict
   }];
 
@@ -1216,10 +1276,27 @@ def EmitC_VerbatimOp : EmitC_Op<"verbatim"> {
     }
     #endif
     ```
+
+    If the `emitc.verbatim` op has operands, then the `value` is interpreted as
+    format string, where `{}` is a placeholder for an operand in their order.
+    For example, `emitc.verbatim "#pragma my src={} dst={}" %src, %dest : i32, i32`
+    would be emitted as `#pragma my src=a dst=b` if `%src` became `a` and
+    `%dest` became `b` in the C code.
+    `{{` in the format string is interpreted as a single `{` and doesn't introduce
+    a placeholder.
   }];
 
-  let arguments = (ins StrAttr:$value);
-  let assemblyFormat = "$value attr-dict";
+  let extraClassDeclaration = [{
+    FailureOr<SmallVector<::mlir::emitc::ReplacementItem>> parseFormatString();
+  }];
+
+  let arguments = (ins StrAttr:$value,
+                   Variadic<EmitCType>:$fmtArgs);
+
+  let builders = [OpBuilder<(ins "::mlir::StringAttr":$value), [{ build($_builder, $_state, value, {}); }] >];
+  let builders = [OpBuilder<(ins "::llvm::StringRef":$value), [{ build($_builder, $_state, value, {}); }] >];
+  let hasVerifier = 1;
+  let assemblyFormat = "$value (`args` $fmtArgs^ `:` type($fmtArgs))? attr-dict";
 }
 
 def EmitC_AssignOp : EmitC_Op<"assign", []> {

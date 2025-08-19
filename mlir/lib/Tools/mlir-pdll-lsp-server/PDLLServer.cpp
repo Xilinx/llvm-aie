@@ -395,7 +395,8 @@ PDLDocument::PDLDocument(const lsp::URIForFile &uri, StringRef contents,
     if (auto lspDiag = getLspDiagnoticFromDiag(sourceMgr, diag, uri))
       diagnostics.push_back(std::move(*lspDiag));
   });
-  astModule = parsePDLLAST(astContext, sourceMgr, /*enableDocumentation=*/true);
+  astModule = parsePDLLAST(astContext, sourceMgr, /*enableDocumentation=*/true,
+                           /*emitWarningOnRepeatedIncludeAtMainFile=*/true);
 
   // Initialize the set of parsed includes.
   lsp::gatherIncludeFiles(sourceMgr, parsedIncludes);
@@ -812,6 +813,8 @@ public:
     while (scope) {
       for (const ast::Decl *decl : scope->getDecls()) {
         if (const auto *cst = dyn_cast<ast::UserConstraintDecl>(decl)) {
+          if (cst->getName().getName().starts_with("__builtin"))
+            continue;
           lsp::CompletionItem item;
           item.label = cst->getName().getName().str();
           item.kind = lsp::CompletionItemKind::Interface;
@@ -992,6 +995,7 @@ PDLDocument::getCodeCompletion(const lsp::URIForFile &uri,
 
   ast::Context tmpContext(tmpODSContext);
   (void)parsePDLLAST(tmpContext, sourceMgr, /*enableDocumentation=*/true,
+                     /*emitWarningOnRepeatedIncludeAtMainFile=*/true,
                      &lspCompleteContext);
 
   return completionList;
@@ -1147,6 +1151,7 @@ lsp::SignatureHelp PDLDocument::getSignatureHelp(const lsp::URIForFile &uri,
 
   ast::Context tmpContext(tmpODSContext);
   (void)parsePDLLAST(tmpContext, sourceMgr, /*enableDocumentation=*/true,
+                     /*emitWarningOnRepeatedIncludeAtMainFile=*/true,
                      &completeContext);
 
   return signatureHelp;

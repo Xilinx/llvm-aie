@@ -154,5 +154,256 @@ Pattern RangeExpr {
 
 // CHECK: pdl.pattern @TypeExpr
 // CHECK: %[[TYPE:.*]] = type : i32
-// CHECK: operation({{.*}}) -> (%[[TYPE]] : !pdl.type)
+// CHECK: operation({{.*}}) {} -> (%[[TYPE]] : !pdl.type)
 Pattern TypeExpr => erase op<> -> (type<"i32">);
+
+// -----
+
+//===----------------------------------------------------------------------===//
+// Parse attributes and rewrite
+//===----------------------------------------------------------------------===//
+
+// CHECK-LABEL:   pdl.pattern @RewriteOneEntryDictionary
+// CHECK:           %[[VAL_1:.*]] = operation "test.op"
+// CHECK:           %[[VAL_2:.*]] = attribute = "test"
+// CHECK:           rewrite %[[VAL_1]] {
+// CHECK:             %[[VAL_3:.*]] = attribute = {}
+// CHECK:             %[[VAL_4:.*]] = attribute = "firstAttr"
+// CHECK:             %[[VAL_5:.*]] = apply_native_rewrite "__builtin_addEntryToDictionaryAttr_rewrite"(%[[VAL_3]], %[[VAL_4]], %[[VAL_2]]
+// CHECK:             %[[VAL_6:.*]] = operation "test.success"  {"some_dictionary" = %[[VAL_5]]}
+// CHECK:             replace %[[VAL_1]] with %[[VAL_6]]
+Pattern RewriteOneEntryDictionary {
+  let root = op<test.op> -> ();
+  let attr1 = attr<"\"test\"">;
+  rewrite root with {
+      let newRoot = op<test.success>() { some_dictionary = {firstAttr=attr1} } -> ();
+      replace root with newRoot;
+  };
+}
+
+// -----
+
+// CHECK-LABEL:   pdl.pattern @RewriteMultipleEntriesDictionary
+// CHECK:           %[[VAL_1:.*]] = operation "test.op"
+// CHECK:           %[[VAL_2:.*]] = attribute = "test2"
+// CHECK:           %[[VAL_3:.*]] = attribute = "test3"
+// CHECK:           rewrite %[[VAL_1]] {
+// CHECK:             %[[VAL_4:.*]] = attribute = {}
+// CHECK:             %[[VAL_5:.*]] = attribute = "firstAttr"
+// CHECK:             %[[VAL_6:.*]] = attribute = "test1"
+// CHECK:             %[[VAL_7:.*]] = apply_native_rewrite "__builtin_addEntryToDictionaryAttr_rewrite"(%[[VAL_4]], %[[VAL_5]], %[[VAL_6]]
+// CHECK:             %[[VAL_8:.*]] = attribute = "secondAttr"
+// CHECK:             %[[VAL_9:.*]] = apply_native_rewrite "__builtin_addEntryToDictionaryAttr_rewrite"(%[[VAL_7]], %[[VAL_8]], %[[VAL_2]]
+// CHECK:             %[[VAL_10:.*]] = attribute = "thirdAttr"
+// CHECK:             %[[VAL_11:.*]] = apply_native_rewrite "__builtin_addEntryToDictionaryAttr_rewrite"(%[[VAL_9]], %[[VAL_10]], %[[VAL_3]]
+// CHECK:             %[[VAL_12:.*]] = operation "test.success"  {"some_dictionary" = %[[VAL_11]]}
+// CHECK:             replace %[[VAL_1]] with %[[VAL_12]]
+Pattern RewriteMultipleEntriesDictionary {
+  let root = op<test.op> -> ();
+  let attr2 = attr<"\"test2\"">;
+  let attr3 = attr<"\"test3\"">;
+  rewrite root with {
+      let newRoot = op<test.success>() { some_dictionary = {"firstAttr" = attr<"\"test1\"">, secondAttr = attr2, thirdAttr = attr3} } -> ();
+      replace root with newRoot;
+  };
+}
+
+// -----
+
+// CHECK-LABEL:   pdl.pattern @RewriteOneDictionaryArrayAttr
+// CHECK:           %[[VAL_1:.*]] = operation "test.op"
+// CHECK:           rewrite %[[VAL_1]] {
+// CHECK:             %[[VAL_2:.*]] = attribute = []
+// CHECK:             %[[VAL_3:.*]] = attribute = {}
+// CHECK:             %[[VAL_4:.*]] = attribute = "firstAttr"
+// CHECK:             %[[VAL_5:.*]] = attribute = "test1"
+// CHECK:             %[[VAL_6:.*]] = apply_native_rewrite "__builtin_addEntryToDictionaryAttr_rewrite"(%[[VAL_3]], %[[VAL_4]], %[[VAL_5]]
+// CHECK:             %[[VAL_7:.*]] = apply_native_rewrite "__builtin_addElemToArrayAttrRewriter"(%[[VAL_2]], %[[VAL_6]]
+// CHECK:             %[[VAL_8:.*]] = operation "test.success"  {"some_array" = %[[VAL_7]]}
+// CHECK:             replace %[[VAL_1]] with %[[VAL_8]]
+Pattern RewriteOneDictionaryArrayAttr {
+  let root = op<test.op> -> ();
+  rewrite root with {
+      let newRoot = op<test.success>() { some_array = [ {"firstAttr" = attr<"\"test1\"">}]} -> ();
+      replace root with newRoot;
+  };
+}
+
+// -----
+
+// CHECK-LABEL:   pdl.pattern @ConstraintWithArrayAttr
+// CHECK:           %[[VAL_0:.*]] = attribute = "test1"
+// CHECK:           %[[VAL_1:.*]] = attribute = "test2"
+// CHECK:           %[[VAL_2:.*]] = attribute = []
+// CHECK:           %[[VAL_3:.*]] = apply_native_constraint "__builtin_addElemToArrayAttrConstraint"(%[[VAL_2]], %[[VAL_0]]
+// CHECK:           %[[VAL_4:.*]] = apply_native_constraint "__builtin_addElemToArrayAttrConstraint"(%[[VAL_3]], %[[VAL_1]]
+// CHECK:           %[[VAL_5:.*]] = operation "test.op"
+// CHECK:           rewrite %[[VAL_5]] {
+// CHECK:             %[[VAL_6:.*]] = operation "test.success"  {"some_array" = %[[VAL_4]]}
+// CHECK:             replace %[[VAL_5]] with %[[VAL_6]]
+
+Pattern ConstraintWithArrayAttr {
+  let attr1 = attr<"\"test1\"">;
+  let attr2 = attr<"\"test2\"">;
+  let array = [attr1, attr2];
+  let root = op<test.op> -> ();
+  rewrite root with {
+      let newRoot = op<test.success>() { some_array = array} -> ();
+      replace root with newRoot;
+  };
+}
+
+// -----
+
+// CHECK-LABEL: pdl.pattern @ConstraintNotMatchingArrayAttrInAttrType
+// CHECK-NOT: apply_native_constraint "__builtin_addElemToArrayAttrConstraint"
+
+
+Constraint I64Value(value: Value);
+Pattern ConstraintNotMatchingArrayAttrInAttrType {
+  let root = op<my_dialect.foo>(arg: Value, arg2: Value, arg3: [Value, I64Value], arg);
+  replace root with arg;
+}
+
+
+// -----
+
+// CHECK-LABEL:   pdl.pattern @RewriteMultiplyElementsArrayAttr
+// CHECK:           %[[VAL_1:.*]] = operation "test.op"
+// CHECK:           %[[VAL_2:.*]] = attribute = "test2"
+// CHECK:           rewrite %[[VAL_1]] {
+// CHECK:             %[[VAL_3:.*]] = attribute = []
+// CHECK:             %[[VAL_4:.*]] = attribute = {}
+// CHECK:             %[[VAL_5:.*]] = attribute = "firstAttr"
+// CHECK:             %[[VAL_6:.*]] = attribute = "test1"
+// CHECK:             %[[VAL_7:.*]] = apply_native_rewrite "__builtin_addEntryToDictionaryAttr_rewrite"(%[[VAL_4]], %[[VAL_5]], %[[VAL_6]]
+// CHECK:             %[[VAL_8:.*]] = apply_native_rewrite "__builtin_addElemToArrayAttrRewriter"(%[[VAL_3]], %[[VAL_7]]
+// CHECK:             %[[VAL_9:.*]] = apply_native_rewrite "__builtin_addElemToArrayAttrRewriter"(%[[VAL_8]], %[[VAL_2]]
+// CHECK:             %[[VAL_10:.*]] = operation "test.success"  {"some_array" = %[[VAL_9]]}
+// CHECK:             replace %[[VAL_1]] with %[[VAL_10]]
+Pattern RewriteMultiplyElementsArrayAttr {
+  let root = op<test.op> -> ();
+  let attr2 = attr<"\"test2\"">;
+  rewrite root with {
+      let newRoot = op<test.success>() { some_array = [ {"firstAttr" = attr<"\"test1\"">}, attr2]} -> ();
+      replace root with newRoot;
+  };
+}
+
+// -----
+
+// CHECK-LABEL: pdl.pattern @TestMul : benefit(0) {
+// CHECK:         %[[VAL_0:.*]] = attribute = 4 : i32
+// CHECK:         %[[VAL_1:.*]] = attribute = 5 : i32
+// CHECK:         apply_native_constraint "__builtin_mulConstraint"(%[[VAL_0]], %[[VAL_1]] : !pdl.attribute, !pdl.attribute) : !pdl.attribute
+Pattern TestMul {
+  let val : Attr = attr<"4 : i32"> * attr<"5 : i32">;
+  replace op<test.simple> with op<test.success>;
+}
+
+// -----
+
+// CHECK-LABEL: pdl.pattern @TestDiv : benefit(0) {
+// CHECK:         %[[VAL_0:.*]] = attribute = 4 : i32
+// CHECK:         %[[VAL_1:.*]] = attribute = 5 : i32
+// CHECK:         apply_native_constraint "__builtin_divConstraint"(%[[VAL_0]], %[[VAL_1]] : !pdl.attribute, !pdl.attribute) : !pdl.attribute
+Pattern TestDiv {
+  let val : Attr = attr<"4 : i32"> / attr<"5 : i32">;
+  replace op<test.simple> with op<test.success>;
+}
+
+// -----
+
+// CHECK-LABEL: pdl.pattern @TestMod : benefit(0) {
+// CHECK:         %[[VAL_0:.*]] = attribute = 4 : i32
+// CHECK:         %[[VAL_1:.*]] = attribute = 5 : i32
+// CHECK:         apply_native_constraint "__builtin_modConstraint"(%[[VAL_0]], %[[VAL_1]] : !pdl.attribute, !pdl.attribute) : !pdl.attribute
+Pattern TestMod {
+  let val : Attr = attr<"4 : i32"> % attr<"5 : i32">;
+  replace op<test.simple> with op<test.success>;
+}
+
+// -----
+
+// CHECK-LABEL:    pdl.pattern @TestAdd : benefit(0) {
+// CHECK:            %[[VAL_0:.*]] = attribute = 4 : i32
+// CHECK:            %[[VAL_1:.*]] = attribute = 5 : i32
+// CHECK:            apply_native_constraint "__builtin_addConstraint"(%[[VAL_0]], %[[VAL_1]] : !pdl.attribute, !pdl.attribute) : !pdl.attribute
+Pattern TestAdd {
+  let val : Attr = attr<"4 : i32"> + attr<"5 : i32">;
+  replace op<test.simple> with op<test.success>;
+}
+
+// -----
+
+// CHECK-LABEL:    pdl.pattern @TestOperatorsNotInRewriteSection : benefit(0) {
+// CHECK:            %[[VAL_0:.*]] = attribute = 4 : i32
+// CHECK:            %[[VAL_1:.*]] = attribute = 5 : i32
+// CHECK:            apply_native_constraint "__builtin_addConstraint"(%[[VAL_0]], %[[VAL_1]] : !pdl.attribute, !pdl.attribute) : !pdl.attribute
+// CHECK:            apply_native_constraint "__builtin_subConstraint"(%[[VAL_0]], %[[VAL_1]] : !pdl.attribute, !pdl.attribute) : !pdl.attribute
+// CHECK:            apply_native_constraint "__builtin_mulConstraint"(%[[VAL_0]], %[[VAL_1]] : !pdl.attribute, !pdl.attribute) : !pdl.attribute
+// CHECK:            apply_native_constraint "__builtin_divConstraint"(%[[VAL_0]], %[[VAL_1]] : !pdl.attribute, !pdl.attribute) : !pdl.attribute
+// CHECK:            apply_native_constraint "__builtin_modConstraint"(%[[VAL_0]], %[[VAL_1]] : !pdl.attribute, !pdl.attribute) : !pdl.attribute
+// CHECK:            apply_native_constraint "__builtin_log2Constraint"(%[[VAL_0]] : !pdl.attribute) : !pdl.attribute
+// CHECK:            apply_native_constraint "__builtin_exp2Constraint"(%[[VAL_0]] : !pdl.attribute) : !pdl.attribute
+// CHECK:            apply_native_constraint "__builtin_absConstraint"(%[[VAL_0]] : !pdl.attribute) : !pdl.attribute
+
+Pattern TestOperatorsNotInRewriteSection {
+  let a : Attr = attr<"4 : i32">;
+  let b : Attr = attr<"5 : i32">;
+  let addConstraint : Attr = a + b;
+  let subConstraint : Attr = a - b;
+  let mulConstraint : Attr = a * b;
+  let divConstraint : Attr = a / b;
+  let modConstraint : Attr = a % b;
+  let log2Constraint : Attr = log2(a);
+  let exp2Constraint : Attr = exp2(a);
+  let absConstraint : Attr = math_abs(a);
+  replace op<test.simple> with op<test.success>;
+}
+
+// -----
+
+// CHECK-LABEL:    pdl.pattern @TestOperatorsInRewriteSection : benefit(0) {
+// CHECK:            rewrite
+// CHECK:              %[[VAL_0:.*]] = attribute = 4 : i32
+// CHECK:              %[[VAL_1:.*]] = attribute = 5 : i32
+// CHECK:              apply_native_rewrite "__builtin_addRewrite"(%[[VAL_0]], %[[VAL_1]] : !pdl.attribute, !pdl.attribute) : !pdl.attribute
+// CHECK:              apply_native_rewrite "__builtin_subRewrite"(%[[VAL_0]], %[[VAL_1]] : !pdl.attribute, !pdl.attribute) : !pdl.attribute
+// CHECK:              apply_native_rewrite "__builtin_mulRewrite"(%[[VAL_0]], %[[VAL_1]] : !pdl.attribute, !pdl.attribute) : !pdl.attribute
+// CHECK:              apply_native_rewrite "__builtin_divRewrite"(%[[VAL_0]], %[[VAL_1]] : !pdl.attribute, !pdl.attribute) : !pdl.attribute
+// CHECK:              apply_native_rewrite "__builtin_modRewrite"(%[[VAL_0]], %[[VAL_1]] : !pdl.attribute, !pdl.attribute) : !pdl.attribute
+// CHECK:              apply_native_rewrite "__builtin_log2Rewrite"(%[[VAL_0]] : !pdl.attribute) : !pdl.attribute
+// CHECK:              apply_native_rewrite "__builtin_exp2Rewrite"(%[[VAL_0]] : !pdl.attribute) : !pdl.attribute
+// CHECK:              apply_native_rewrite "__builtin_absRewrite"(%[[VAL_0]] : !pdl.attribute) : !pdl.attribute
+Pattern TestOperatorsInRewriteSection {
+  let root = op<>(operand: Value, operands: ValueRange) -> (type: Type, types: TypeRange);
+  rewrite root with {
+    let a = attr<"4 : i32">;
+    let b = attr<"5 : i32">;
+    let addRewrite : Attr = a + b;
+    let subRewrite : Attr = a - b;
+    let mulRewrite : Attr = a * b;
+    let divRewrite : Attr = a / b;
+    let modRewrite : Attr = a % b;
+    let log2Rewrite : Attr = log2(a);
+    let exp2Rewrite : Attr = exp2(a);
+    let absRewrite : Attr = math_abs(a);
+    erase root;
+  };
+}
+
+
+// -----
+// CHECK-LABEL:   pdl.pattern @TestEquals : benefit(0) {
+// CHECK:           %[[VAL_0:.*]] = operands
+// CHECK:           %[[VAL_1:.*]] = attribute
+// CHECK:           %[[VAL_2:.*]] = types
+// CHECK:           %[[VAL_3:.*]] = operation "test.op"(%[[VAL_0]] : !pdl.range<value>)  {"val" = %[[VAL_1]]} -> (%[[VAL_2]] : !pdl.range<type>)
+// CHECK:           %[[VAL_4:.*]] = attribute = 4 : i32
+// CHECK:           apply_native_constraint "__builtin_equals"(%[[VAL_1]], %[[VAL_4]] : !pdl.attribute, !pdl.attribute)
+Pattern TestEquals {
+    let op = op<test.op> {val = val : Attr};
+    val == attr<"4 : i32">;
+    replace op with op<test.success>;
+}

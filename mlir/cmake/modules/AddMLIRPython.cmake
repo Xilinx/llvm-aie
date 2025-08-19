@@ -23,6 +23,11 @@
 #     grouping. Source groupings form a DAG.
 #   SOURCES: List of specific source files relative to ROOT_DIR to include.
 #   SOURCES_GLOB: List of glob patterns relative to ROOT_DIR to include.
+
+if (POLICY CMP0175)
+  cmake_policy(SET CMP0175 OLD)
+endif()
+
 function(declare_mlir_python_sources name)
   cmake_parse_arguments(ARG
     ""

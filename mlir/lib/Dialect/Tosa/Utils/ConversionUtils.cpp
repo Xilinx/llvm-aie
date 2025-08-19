@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "mlir/Dialect/Tosa/Utils/ConversionUtils.h"
+#include "mlir/Dialect/Quant/IR/QuantTypes.h"
 #include "mlir/Dialect/Tosa/IR/TosaOps.h"
 
 using namespace mlir;
@@ -161,19 +162,72 @@ LogicalResult mlir::tosa::EqualizeRanks(ImplicitLocOpBuilder &builder,
   return success();
 }
 
-Value mlir::tosa::getTosaConstShape(PatternRewriter &rewriter, Location loc,
-                                    llvm::ArrayRef<int64_t> shape) {
-  auto attr = rewriter.getIndexTensorAttr(shape);
-  auto type = mlir::tosa::shapeType::get(rewriter.getContext(), shape.size());
-  mlir::Operation *mlir_op =
-      rewriter.create<tosa::ConstShapeOp>(loc, type, attr);
-  return mlir_op->getResult(0);
-}
-
 SmallVector<int64_t> mlir::tosa::convertFromMlirShape(ArrayRef<int64_t> shape) {
   return to_vector(llvm::map_range(shape, [](int64_t dim) {
     return ShapedType::isDynamic(dim) ? -1 : dim;
   }));
+}
+
+Value mlir::tosa::getTosaConstShape(ImplicitLocOpBuilder &builder,
+                                    llvm::ArrayRef<int64_t> shape) {
+  auto attr = builder.getIndexTensorAttr(convertFromMlirShape(shape));
+  auto type = mlir::tosa::shapeType::get(builder.getContext(), shape.size());
+  mlir::Operation *mlir_op = builder.create<tosa::ConstShapeOp>(type, attr);
+  return mlir_op->getResult(0);
+}
+
+Value mlir::tosa::getTosaConstShape(PatternRewriter &rewriter, Location loc,
+                                    llvm::ArrayRef<int64_t> shape) {
+  ImplicitLocOpBuilder builder(loc, rewriter);
+  return getTosaConstShape(builder, shape);
+}
+
+// AMD: Picked from torch-mlir 12250739bfe85b702f9503cad45c2e535ea8eb18
+// Get accumulator type for TOSA convolution ops
+LogicalResult mlir::tosa::getConvOpsAccType(PatternRewriter &rewriter,
+                                            RankedTensorType inputTy,
+                                            RankedTensorType weightTy,
+                                            RankedTensorType outputTy,
+                                            TypeAttr &accType) {
+  auto inputElemTy = inputTy.getElementType();
+  auto weightElemTy = weightTy.getElementType();
+  auto outputElemTy = outputTy.getElementType();
+
+  auto quantTy = dyn_cast<quant::QuantizedType>(inputElemTy);
+  if (quantTy)
+    inputElemTy = quantTy.getStorageType();
+
+  // Get TOSA conv ops acc type based on input, weight, and output types
+  // according to the spec:
+  // https://www.mlplatform.org/tosa/tosa_spec.html#_conv2d
+  // https://www.mlplatform.org/tosa/tosa_spec.html#_depthwise_conv2d
+  // https://www.mlplatform.org/tosa/tosa_spec.html#_conv3d
+  //
+  // For undefined dtypes in TOSA like I64 and F64, acc_type will be set to the
+  // output type but does not offer any guarantee on the numerical precision
+  // since such cases will fail TOSA validation.
+  if ((inputElemTy.isF32() && weightElemTy.isF32() && outputElemTy.isF32()) ||
+      (inputElemTy.isF16() && weightElemTy.isF16() && outputElemTy.isF16()) ||
+      (inputElemTy.isBF16() && weightElemTy.isBF16() &&
+       outputElemTy.isBF16())) {
+    accType = mlir::TypeAttr::get(rewriter.getF32Type());
+  } else if (inputElemTy.isInteger(8) &&
+             (weightElemTy.isInteger(8) || weightElemTy.isInteger(4)) &&
+             outputElemTy.isInteger(32)) {
+    accType = mlir::TypeAttr::get(rewriter.getIntegerType(32));
+  } else if (inputElemTy.isInteger(16) && weightElemTy.isInteger(8) &&
+             outputElemTy.isInteger(48)) {
+    accType = mlir::TypeAttr::get(rewriter.getIntegerType(48));
+  } else if ((isa<Float8E4M3Type>(inputElemTy) &&
+              isa<Float8E4M3Type>(weightElemTy) && outputElemTy.isF16()) ||
+             (isa<Float8E5M2Type>(inputElemTy) &&
+              isa<Float8E5M2Type>(weightElemTy) && outputElemTy.isF16())) {
+    accType = mlir::TypeAttr::get(rewriter.getF16Type());
+  } else {
+    accType = mlir::TypeAttr::get(outputElemTy);
+  }
+
+  return success();
 }
 
 bool mlir::tosa::getConstShapeValue(Operation *op,

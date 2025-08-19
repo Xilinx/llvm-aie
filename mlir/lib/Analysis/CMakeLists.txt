@@ -21,6 +21,7 @@ set(LLVM_OPTIONAL_SOURCES
 add_subdirectory(Presburger)
 
 add_mlir_library(MLIRAnalysis
+  AffineExprBounds.cpp
   AliasAnalysis.cpp
   CallGraph.cpp
   DataFlowFramework.cpp

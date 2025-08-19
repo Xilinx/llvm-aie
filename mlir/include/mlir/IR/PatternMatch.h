@@ -535,14 +535,24 @@ public:
   /// original op is erased.
   virtual void replaceOp(Operation *op, Operation *newOp);
 
+  /// Replaces the result op with a new op that is created without verification.
+  /// Use a given list of locations to generate a FusedLoc for the new op.
+  /// The result values of the two ops must be the same types.
+  template <typename OpTy, typename... Args>
+  OpTy replaceOpWithNewOp(Operation *op, ArrayRef<Location> locs,
+                          Args &&...args) {
+    auto newOp = create<OpTy>(getFusedLoc(locs), std::forward<Args>(args)...);
+    replaceOp(op, newOp.getOperation());
+    return newOp;
+  }
+
   /// Replace the results of the given (original) op with a new op that is
   /// created without verification (replacement). The result values of the two
   /// ops must match. The original op is erased.
   template <typename OpTy, typename... Args>
   OpTy replaceOpWithNewOp(Operation *op, Args &&...args) {
-    auto newOp = create<OpTy>(op->getLoc(), std::forward<Args>(args)...);
-    replaceOp(op, newOp.getOperation());
-    return newOp;
+    return replaceOpWithNewOp<OpTy, Args...>(op, {op->getLoc()},
+                                             std::forward<Args>(args)...);
   }
 
   /// This method erases an operation that is known to have no uses.
