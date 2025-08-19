@@ -233,14 +233,12 @@ entry:
 define dso_local void @lowerMemsetUsingWordVector32() local_unnamed_addr #2 {
 ; CHECK-LABEL: lowerMemsetUsingWordVector32:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r0, #0; nopb ; nopxm ; nops
-; CHECK-NEXT:    vbcst.32 x0, r0
-; CHECK-NEXT:    movxm p0, #buffer1
-; CHECK-NEXT:    vst wl0, [p0], #32; ret lr
-; CHECK-NEXT:    st r0, [p0], #4 // Delay Slot 5
-; CHECK-NEXT:    st r0, [p0], #4 // Delay Slot 4
-; CHECK-NEXT:    st r0, [p0, #0] // Delay Slot 3
-; CHECK-NEXT:    st r0, [p0, #4] // Delay Slot 2
+; CHECK-NEXT:    nop ; movxm p0, #buffer1
+; CHECK-NEXT:    mova r0, #0; ret lr
+; CHECK-NEXT:    vbcst.32 x0, r0 // Delay Slot 5
+; CHECK-NEXT:    vmov q0, wl0 // Delay Slot 4
+; CHECK-NEXT:    vst wl0, [p0, #0] // Delay Slot 3
+; CHECK-NEXT:    st q0, [p0, #32] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   tail call void @llvm.memset.p0.i32(ptr noundef nonnull align 32 dereferenceable(48) @buffer1, i8 0, i32 48, i1 false)

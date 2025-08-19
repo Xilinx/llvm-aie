@@ -3875,6 +3875,16 @@ template <uint64_t TargetAlign> constexpr bool matchAlignment(uint64_t Value) {
   return isAligned(Align(TargetAlign), Value);
 }
 
+static std::optional<std::pair<Register, int64_t>>
+getPtrAndConstantOffsetFromReg(Register PtrReg, MachineRegisterInfo &MRI) {
+
+  const MachineInstr *DefPtrReg = MRI.getVRegDef(PtrReg);
+  if (DefPtrReg->getOpcode() == TargetOpcode::G_PTR_ADD)
+    return getPtrAndConstantOffset(DefPtrReg, 1, MRI);
+
+  return std::make_pair(PtrReg, 0);
+}
+
 static bool isBasePointerWordAligned(Register BasePtr,
                                      MachineRegisterInfo &MRI) {
 
@@ -3948,17 +3958,12 @@ bool llvm::matchPeelMemset(MachineInstr &MI, MachineRegisterInfo &MRI,
     return false;
   const uint64_t Initializer = CstInit->Value.getZExtValue();
 
-  unsigned Offset = 0;
-  const MachineInstr *DefPtrReg = MRI.getVRegDef(PtrReg);
-  if (DefPtrReg->getOpcode() == TargetOpcode::G_PTR_ADD) {
-    const auto RegAndOffset = getPtrAndConstantOffset(DefPtrReg, 1, MRI);
+  const auto RegAndOffset = getPtrAndConstantOffsetFromReg(PtrReg, MRI);
+  if (!RegAndOffset)
+    return false;
 
-    if (!RegAndOffset)
-      return false;
-
-    Offset = RegAndOffset->second;
-    PtrReg = RegAndOffset->first;
-  }
+  const int64_t Offset = RegAndOffset->second;
+  PtrReg = RegAndOffset->first;
 
   // Next step is to prove that the base pointer is word-aligned.
   // As we cannot assume, we can search for aligned uses of the base pointer.
@@ -4025,6 +4030,171 @@ bool llvm::matchPeelMemset(MachineInstr &MI, MachineRegisterInfo &MRI,
     MI.getOperand(2).setReg(
         B.buildConstant(LLT::scalar(20), NewSize).getReg(0));
     MI.getOperand(0).setReg(BuildPADD(MemsetOffset));
+  };
+
+  return true;
+}
+
+static std::optional<std::pair<Register, int64_t>>
+getPtrAndConstantOffsetFromStore(const GStore *StMI, MachineRegisterInfo &MRI) {
+  return getPtrAndConstantOffsetFromReg(StMI->getPointerReg(), MRI);
+}
+
+// To make a store dead, we convert it to a dead G_ADD and let DCE to do the
+// removal
+static void makeStoreDead(GStore *StMI, const TargetInstrInfo &TII,
+                          MachineRegisterInfo &MRI) {
+  MachineFunction &MF = *StMI->getMF();
+  const Register DataReg = StMI->getValueReg();
+  StMI->dropMemRefs(MF);
+  for (int I = StMI->getNumOperands() - 1; I >= 0; I--)
+    StMI->removeOperand(I);
+  StMI->setDesc(TII.get(TargetOpcode::G_ADD));
+  StMI->addOperand(
+      MachineOperand::CreateReg(MRI.cloneVirtualRegister(DataReg), true));
+  StMI->addOperand(MachineOperand::CreateReg(DataReg, false));
+  StMI->addOperand(MachineOperand::CreateReg(DataReg, false));
+}
+
+// This combiner tries to pack sequential zero stores into memsets.
+// The goal is to reach an optimal number of stores provided we
+// use it synergically with the memset expand combiner.
+bool llvm::matchSequentialStores(GStore &StMI, MachineRegisterInfo &MRI,
+                                 GISelChangeObserver &Observer,
+                                 BuildFnTy &MatchInfo) {
+
+  if (!MemsetOptimizations)
+    return false;
+
+  const uint64_t MinVectorStoreSize = 16;
+  MachineMemOperand *MMO = StMI.memoperands().front();
+
+  if (!MMO)
+    return false;
+  const Align MMOAlign = MMO->getAlign();
+
+  if (MMOAlign.value() < 4)
+    return false;
+
+  const Register DataReg = StMI.getValueReg();
+  const LLT DataType = MRI.getType(DataReg);
+
+  // Small alignments are less interesting, we are trying to match
+  // vector stores here. Even though we can match some byte/short
+  // stores to word stores.
+  const bool IsVectorAlignment = MMOAlign.value() >= MinVectorStoreSize;
+  // We can merge over aligned small types, provided that
+  // the root of the memset (first store) is a byte or short
+  // store. The goal is to fold this store with the next ones.
+  if (!IsVectorAlignment && DataType.getSizeInBytes() >= 4)
+    return false;
+
+  //  A count of zero means that we are not storing zero at all.
+  auto GetZeroStoreSizeInBytes = [&](GStore &CurrSt) -> unsigned {
+    const Register DataReg = CurrSt.getValueReg();
+    const LLT DataType = MRI.getType(DataReg);
+    MachineMemOperand *CurrMMO = CurrSt.memoperands().front();
+
+    if (!CurrMMO)
+      return 0;
+    const Align CurrMMOAlign = MMO->getAlign();
+
+    // We already have a vector store, don't merge it.
+    if (DataType.getSizeInBytes() >= CurrMMOAlign.value())
+      return 0;
+    auto Cst = getIConstantVRegValWithLookThrough(DataReg, MRI);
+    return (Cst && Cst->Value.isZero()) ? DataType.getSizeInBytes() : 0;
+  };
+
+  auto PtrAndOffset = getPtrAndConstantOffsetFromStore(&StMI, MRI);
+  if (!PtrAndOffset)
+    return false;
+  const auto [Ptr, Offset] = *PtrAndOffset;
+
+  const unsigned ZeroBytes = GetZeroStoreSizeInBytes(StMI);
+  if (!ZeroBytes)
+    return false;
+  int64_t ExpectedOffset = Offset + ZeroBytes;
+
+  std::vector<GStore *> MatchedSeqStores;
+  for (MachineInstr &MI : make_range(std::next(StMI.getIterator()),
+                                     StMI.getParent()->instr_end())) {
+    if (auto *CurrSt = dyn_cast<GStore>(&MI)) {
+      const unsigned ZeroBytes = GetZeroStoreSizeInBytes(*CurrSt);
+      if (!ZeroBytes) // Non-zero store.
+        break;
+
+      auto PtrAndOffset = getPtrAndConstantOffsetFromStore(CurrSt, MRI);
+      if (!PtrAndOffset) // Non-constant offset.
+        break;
+
+      auto [CurrPtr, CurrOffset] = *PtrAndOffset;
+
+      // Pointers are different or we have non-linear store.
+      if ((CurrPtr != Ptr) || (ExpectedOffset != CurrOffset))
+        break;
+
+      MatchedSeqStores.push_back(CurrSt);
+      ExpectedOffset += ZeroBytes;
+
+    } else if (MI.mayLoadOrStore() || MI.hasUnmodeledSideEffects()) {
+      // Bailout to prevent problems related to store reordering.
+      break;
+    }
+  }
+
+  if (MatchedSeqStores.empty())
+    return false;
+
+  const unsigned NumberOfBytes = ExpectedOffset - Offset;
+  // If we cannot fill a vector, skip, because we will scalarize again
+  // and this will be matched again in a loop. However, if we have at least two
+  // scalars to merge, go for it. The rationale for scalar merging is: If we
+  // have the first scalar store whose size is smaller then the alignment, by
+  // combining with the next, we have a chance of reducing the number of stores.
+  // For example:
+  //   STORE i8 0, [p0] (Align 16)
+  //   STORE i16 0, [p0+1]
+  //   STORE i8 0, [p0+3]
+  // Will be transformed to:
+  //   STORE i32 0, [p0] (Align 16)
+  if (IsVectorAlignment && NumberOfBytes < MinVectorStoreSize)
+    return false;
+
+  // In a pessimistic case, for example:
+  //   STORE i8 0, [p0] (Align 16)
+  //   STORE i16 0, [p0+1]
+  // The result will be just "rotated":
+  //   STORE i16 0, [p0] (Align 16)
+  //   STORE i8 0, [p0+2]
+  // This will cause a loop. We prevent by restricting
+  // combinations that will expand again to the same
+  // types: 3 bytes.
+  if (NumberOfBytes == 3)
+    return false;
+
+  MatchInfo = [=, &StMI, &MRI, &Observer](MachineIRBuilder &B) {
+    auto &MF = B.getMF();
+
+    MachineMemOperand *NewMMO = MF.getMachineMemOperand(
+        MMO->getPointerInfo(), MMO->getFlags(), 8, MMOAlign);
+
+    const Register MemsetDataReg = B.buildConstant(LLT::scalar(8), 0).getReg(0);
+    const Register MemsetCountReg =
+        B.buildConstant(LLT::scalar(20), NumberOfBytes).getReg(0);
+    B.buildInstr(TargetOpcode::G_MEMSET, {},
+                 {StMI.getPointerReg(), MemsetDataReg, MemsetCountReg})
+        .addImm(0)
+        ->addMemOperand(MF, NewMMO);
+    Observer.erasingInstr(StMI);
+    StMI.eraseFromParent();
+
+    // Tricky part: we cannot erase the matched stores, make them dead.
+    for (GStore *ToDeleteMI : MatchedSeqStores) {
+      Observer.changingInstr(*ToDeleteMI);
+      makeStoreDead(ToDeleteMI, B.getTII(), MRI);
+      Observer.changedInstr(*ToDeleteMI);
+    }
   };
 
   return true;
