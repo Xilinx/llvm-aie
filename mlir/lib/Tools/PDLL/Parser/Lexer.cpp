@@ -11,9 +11,9 @@
 #include "mlir/Tools/PDLL/Parser/CodeComplete.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/SourceMgr.h"
 
-#include <filesystem>
 #include <system_error>
 
 using namespace mlir;
@@ -114,14 +114,12 @@ LogicalResult Lexer::pushInclude(StringRef filename, SMRange includeLoc) {
   if (!bufferID)
     return failure();
 
-  std::error_code ec;
-  std::filesystem::path canonicalPath =
-      std::filesystem::canonical(includedFile, ec);
-  if (ec) {
+  llvm::SmallString<128> canonicalPath;
+  if (llvm::sys::fs::real_path(includedFile, canonicalPath)) {
     return failure();
   }
 
-  canonicalIncludeFileStack.push_back(canonicalPath.string());
+  canonicalIncludeFileStack.push_back(canonicalPath.str().str());
   curBufferID = bufferID;
   curBuffer = srcMgr.getMemoryBuffer(curBufferID)->getBuffer();
   curPtr = curBuffer.begin();
