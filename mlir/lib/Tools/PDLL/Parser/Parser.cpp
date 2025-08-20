@@ -25,6 +25,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/TypeSwitch.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/SaveAndRestore.h"
@@ -32,7 +33,6 @@
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Parser.h"
 
-#include <filesystem>
 #include <optional>
 #include <string>
 
@@ -992,9 +992,8 @@ LogicalResult Parser::parseInclude(SmallVectorImpl<ast::Decl *> &decls) {
       return emitError(fileLoc,
                        "unable to open include file `" + filename + "`");
 
-    std::error_code ec;
-    std::filesystem::path canonicalPath =
-        std::filesystem::canonical(includedFile, ec);
+    llvm::SmallString<128> canonicalPath;
+    std::error_code ec = llvm::sys::fs::real_path(includedFile, canonicalPath);
     if (ec) {
       return emitError(fileLoc,
                        "unable to canonicalize path for include file `" +
@@ -1002,8 +1001,7 @@ LogicalResult Parser::parseInclude(SmallVectorImpl<ast::Decl *> &decls) {
     }
 
     // Check if included has been already processed
-    if (canonicalPathOfFilesMarkedWithOnceDirective.count(
-            canonicalPath.string())) {
+    if (canonicalPathOfFilesMarkedWithOnceDirective.count(canonicalPath)) {
       if (emitWarningOnRepeatedIncludeAtMainFile && lexer.isLexingMainFile()) {
         emitWarning(
             fileLoc,
