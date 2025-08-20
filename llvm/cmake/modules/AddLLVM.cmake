@@ -589,6 +589,10 @@ function(llvm_add_library name)
 
     # Bring in the target include directories from our original target.
     target_include_directories(${obj_name} PRIVATE $<TARGET_PROPERTY:${name},INCLUDE_DIRECTORIES>)
+    # AMD: Add compile options and definitions to
+    # make target_compile_options() on dependent libraries propagate correctly.
+    target_compile_options(${obj_name} PRIVATE $<TARGET_PROPERTY:${name},COMPILE_OPTIONS>)
+    target_compile_definitions(${obj_name} PRIVATE $<TARGET_PROPERTY:${name},COMPILE_DEFINITIONS>)
 
     set_target_properties(${obj_name} PROPERTIES FOLDER "${subproject_title}/Object Libraries")
     if(ARG_DEPENDS)
@@ -598,10 +602,6 @@ function(llvm_add_library name)
     # result in generating header files.  Add a dependendency so that
     # the generated header is created before this object library.
     if(ARG_LINK_LIBS)
-      # Link to LINK_LIBS to record which of their include directories
-      # are system directories. This information is not available in
-      # INCLUDE_DIRECTORIES property.
-      target_link_libraries(${obj_name} PRIVATE ${ARG_LINK_LIBS})
       cmake_parse_arguments(LINK_LIBS_ARG
         ""
         ""
