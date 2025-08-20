@@ -1166,7 +1166,7 @@ llvm::LogicalResult tosa::ReshapeOp::verify() {
         return emitOpError() << "cannot reshape " << inputElementsNum
                              << " elements into " << outputElementsNum;
       }
-      
+
       if ((int64_t)getNewShape().size() != outputType.getRank()) {
         return emitOpError()
                << "rank of newShape (" << getNewShape().size()

@@ -1151,7 +1151,7 @@ public:
 
   /// Enables breaking attributes on individual lines when there are more than
   /// the given number of attributes on an operation.
-  OpPrintingFlags& newlineAfterAttribute(int64_t attributeLimit = 2);
+  OpPrintingFlags &newlineAfterAttribute(int64_t attributeLimit = 2);
 
   /// Enables the elision of large resources strings by omitting them from the
   /// `dialect_resources` section. The `largeResourceLimit` is used to configure

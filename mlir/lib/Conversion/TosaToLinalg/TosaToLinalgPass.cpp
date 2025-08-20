@@ -106,8 +106,8 @@ void mlir::tosa::addTosaToLinalgPasses(
   // TODO: Remove pass that operates on const tensor and enable optionality
   TosaLayerwiseConstantFoldPassOptions tosaFoldOptions;
   tosaFoldOptions.aggressiveReduceConstant = options.aggressiveReduceConstant;
-  pm.addNestedPass<func::FuncOp>(tosa::createTosaLayerwiseConstantFoldPass(
-      tosaFoldOptions));
+  pm.addNestedPass<func::FuncOp>(
+      tosa::createTosaLayerwiseConstantFoldPass(tosaFoldOptions));
   pm.addNestedPass<func::FuncOp>(tosa::createTosaMakeBroadcastablePass());
   if (validationOptions)
     pm.addPass(tosa::createTosaValidation(*validationOptions));

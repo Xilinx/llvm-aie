@@ -279,8 +279,7 @@ static void getConstraintPredicates(pdl::ApplyNativeConstraintOp op,
       allPositions.push_back(inputs.lookup(arg));
 
     // Push the constraint to the furthest position.
-    pos = *llvm::max_element(allPositions,
-                            comparePosDepth);
+    pos = *llvm::max_element(allPositions, comparePosDepth);
   }
   assert(pos && "Must have a non-null value");
 

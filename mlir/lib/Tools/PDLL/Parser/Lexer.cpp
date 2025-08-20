@@ -171,7 +171,9 @@ int Lexer::getNextChar() {
   }
 }
 
-StringRef Lexer::getCurrentInclude() const { return canonicalIncludeFileStack.back(); }
+StringRef Lexer::getCurrentInclude() const {
+  return canonicalIncludeFileStack.back();
+}
 
 bool Lexer::isLexingMainFile() const {
   return static_cast<int>(srcMgr.getMainFileID()) == curBufferID;

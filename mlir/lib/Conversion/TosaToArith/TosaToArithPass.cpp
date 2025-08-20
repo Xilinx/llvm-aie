@@ -12,6 +12,7 @@
 
 #include "mlir/Conversion/TosaToArith/TosaToArith.h"
 
+#include "mlir/Conversion/TosaToLinalg/TosaToLinalg.h"
 #include "mlir/Dialect/Arith/IR/Arith.h"
 #include "mlir/Dialect/Tosa/IR/TosaOps.h"
 #include "mlir/Dialect/Tosa/Transforms/Passes.h"
@@ -19,7 +20,6 @@
 #include "mlir/Pass/PassManager.h"
 #include "mlir/Transforms/DialectConversion.h"
 #include "mlir/Transforms/GreedyPatternRewriteDriver.h"
-#include "mlir/Conversion/TosaToLinalg/TosaToLinalg.h"
 
 namespace mlir {
 #define GEN_PASS_DEF_TOSATOARITH

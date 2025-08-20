@@ -773,7 +773,8 @@ void Generator::generate(pdl_interp::ApplyConstraintOp op,
   // If a constraint and a rewrite of similar name are registered the
   // constraint takes precedence
   if (!constraintToMemIndex.contains(op.getName())) {
-    llvm::report_fatal_error(Twine("constraint not registered: ") + op.getName());
+    llvm::report_fatal_error(Twine("constraint not registered: ") +
+                             op.getName());
   }
   writer.append(OpCode::ApplyConstraint, constraintToMemIndex[op.getName()]);
   writer.appendPDLValueList(op.getArgs());

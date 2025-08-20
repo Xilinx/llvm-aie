@@ -27,19 +27,22 @@ class ConstOpConverter : public OpConversionPattern<tosa::ConstOp> {
 public:
   using OpConversionPattern::OpConversionPattern;
 
-  LogicalResult matchAndRewrite(tosa::ConstOp op, OpAdaptor adaptor,
-                                ConversionPatternRewriter &rewriter) const final {
+  LogicalResult
+  matchAndRewrite(tosa::ConstOp op, OpAdaptor adaptor,
+                  ConversionPatternRewriter &rewriter) const final {
 
     auto elements = dyn_cast<DenseElementsAttr>(adaptor.getValue());
     if (!elements) {
-       return rewriter.notifyMatchFailure(op, "expected dense elements attr");
+      return rewriter.notifyMatchFailure(op, "expected dense elements attr");
     }
 
-    auto convertedElTy = getTypeConverter()->convertType(elements.getElementType());
+    auto convertedElTy =
+        getTypeConverter()->convertType(elements.getElementType());
     if (!convertedElTy) {
       return rewriter.notifyMatchFailure(op, "type conversion failed");
     }
-    rewriter.replaceOpWithNewOp<arith::ConstantOp>(op, elements.bitcast(convertedElTy));
+    rewriter.replaceOpWithNewOp<arith::ConstantOp>(
+        op, elements.bitcast(convertedElTy));
     return success();
   }
 };
@@ -249,8 +252,8 @@ public:
 
 } // namespace
 
-void mlir::tosa::populateTosaToArithConversionPatterns(TypeConverter &converter,
-    RewritePatternSet *patterns) {
+void mlir::tosa::populateTosaToArithConversionPatterns(
+    TypeConverter &converter, RewritePatternSet *patterns) {
   patterns->add<ConstOpConverter>(converter, patterns->getContext());
 }
 
