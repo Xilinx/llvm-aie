@@ -1,3 +1,10 @@
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+
 include(GNUInstallDirs)
 include(LLVMDistributionSupport)
 
@@ -734,7 +741,7 @@ function(mlir_target_link_libraries target type)
   endif()
 
   if (MLIR_LINK_MLIR_DYLIB)
-    # AMD: Do not link shared, as this casues linking errors
+    # AMD: Do not link shared, as this causes linking errors
     target_link_libraries(${target} ${type} ${ARGN})
   else()
     target_link_libraries(${target} ${type} ${ARGN})
