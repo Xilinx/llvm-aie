@@ -64,6 +64,10 @@ struct PassManagerOptions {
                      "tree rooted at this directory. Use in conjunction with "
                      "mlir-print-ir-* flags")};
 
+  llvm::cl::opt<std::string> reproducerBeforeAllDir{
+      "mlir-reproducer-before-all",
+      llvm::cl::desc("Save a reproducer before each pass to this directory")};
+
   /// Add an IR printing instrumentation if enabled by any 'print-ir' flags.
   void addPrinterInstrumentation(PassManager &pm);
 
@@ -150,6 +154,9 @@ LogicalResult mlir::applyPassManagerCLOptions(PassManager &pm) {
   if (options->reproducerFile.getNumOccurrences())
     pm.enableCrashReproducerGeneration(options->reproducerFile,
                                        options->localReproducer);
+
+  if (!options->reproducerBeforeAllDir.empty())
+    pm.enableReproducerBeforeAll(options->reproducerBeforeAllDir);
 
   // Enable statistics dumping.
   if (options->passStatistics)

@@ -27,6 +27,7 @@
 #include "mlir/Transforms/DialectConversion.h"
 #include "mlir/Transforms/GreedyPatternRewriteDriver.h"
 #include "mlir/Transforms/Passes.h"
+#include <mlir/Dialect/Func/Transforms/FuncConversions.h>
 
 namespace mlir {
 #define GEN_PASS_DEF_TOSATOLINALG
@@ -61,14 +62,23 @@ public:
     target.addLegalOp<tosa::SliceOp>();
     target.addLegalOp<tosa::ReshapeOp>();
     target.addLegalOp<tosa::PadOp>();
-
+    TypeConverter converter;
+    target.addDynamicallyLegalOp<func::FuncOp>([&](func::FuncOp op) {
+      return converter.isSignatureLegal(op.getFunctionType());
+    });
+    target.addDynamicallyLegalDialect<func::FuncDialect>(
+        [&](Operation *op) { return converter.isLegal(op); });
     target.markUnknownOpDynamicallyLegal([](Operation *) { return true; });
 
-    TypeConverter converter;
     tosa::populateTosaTypeConversion(converter);
 
     FunctionOpInterface func = getOperation();
     mlir::tosa::populateTosaToLinalgConversionPatterns(converter, &patterns);
+    populateFunctionOpInterfaceTypeConversionPattern<func::FuncOp>(patterns,
+                                                                   converter);
+    populateCallOpTypeConversionPattern(patterns, converter);
+    populateReturnOpTypeConversionPattern(patterns, converter);
+
     if (failed(applyFullConversion(func, target, std::move(patterns))))
       signalPassFailure();
   }
@@ -94,8 +104,10 @@ void mlir::tosa::addTosaToLinalgPasses(
       tosa::createTosaToLinalgNamed(tosaToLinalgNamedOptions));
   pm.addNestedPass<func::FuncOp>(createCanonicalizerPass());
   // TODO: Remove pass that operates on const tensor and enable optionality
-  pm.addNestedPass<func::FuncOp>(tosa::createTosaLayerwiseConstantFoldPass(
-      {options.aggressiveReduceConstant}));
+  TosaLayerwiseConstantFoldPassOptions tosaFoldOptions;
+  tosaFoldOptions.aggressiveReduceConstant = options.aggressiveReduceConstant;
+  pm.addNestedPass<func::FuncOp>(
+      tosa::createTosaLayerwiseConstantFoldPass(tosaFoldOptions));
   pm.addNestedPass<func::FuncOp>(tosa::createTosaMakeBroadcastablePass());
   if (validationOptions)
     pm.addPass(tosa::createTosaValidation(*validationOptions));

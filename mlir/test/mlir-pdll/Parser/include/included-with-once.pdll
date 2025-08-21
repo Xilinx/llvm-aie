@@ -1,0 +1,5 @@
+// This file is included by several including .pdll test files.
+
+#once
+
+Constraint foo() {}

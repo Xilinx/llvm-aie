@@ -230,8 +230,7 @@ static void generateFusedElementwiseOpRegion(
   // `consumerToProducerLoopsMap` to map the producer indices.
   if (producer.hasIndexSemantics()) {
     // Add an index operation for every fused loop dimension.
-    unsigned numFusedOpLoops =
-        std::max(producer.getNumLoops(), consumer.getNumLoops());
+    unsigned numFusedOpLoops = consumerToProducerLoopsMap.getNumDims();
     SmallVector<Value> fusedIndices;
     fusedIndices.reserve(numFusedOpLoops);
     llvm::transform(llvm::seq<uint64_t>(0, numFusedOpLoops),
@@ -2143,11 +2142,13 @@ void mlir::linalg::populateFoldReshapeOpsByCollapsingPatterns(
 
 void mlir::linalg::populateElementwiseOpsFusionPatterns(
     RewritePatternSet &patterns,
-    const ControlFusionFn &controlElementwiseOpsFusion) {
+    const ControlFusionFn &controlElementwiseOpsFusion,
+    bool removeOutsDependency) {
   auto *context = patterns.getContext();
   patterns.add<FuseElementwiseOps>(context, controlElementwiseOpsFusion);
-  patterns.add<FoldFillWithGenericOp, FoldScalarOrSplatConstant,
-               RemoveOutsDependency>(context);
+  patterns.add<FoldFillWithGenericOp, FoldScalarOrSplatConstant>(context);
+  if (removeOutsDependency)
+    patterns.add<RemoveOutsDependency>(context);
   // Add the patterns that clean up dead operands and results.
   populateEraseUnusedOperandsAndResultsPatterns(patterns);
 }
@@ -2189,7 +2190,8 @@ struct LinalgElementwiseOpFusionPass
     };
 
     // Add elementwise op fusion patterns.
-    populateElementwiseOpsFusionPatterns(patterns, defaultControlFn);
+    populateElementwiseOpsFusionPatterns(patterns, defaultControlFn,
+                                         removeOutsDependency);
     populateFoldReshapeOpsByExpansionPatterns(patterns, defaultControlFn);
     tensor::populateBubbleUpExpandShapePatterns(patterns);
 

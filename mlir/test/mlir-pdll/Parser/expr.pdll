@@ -4,13 +4,159 @@
 // AttrExpr
 //===----------------------------------------------------------------------===//
 
-// CHECK: Module
-// CHECK: `-AttributeExpr {{.*}} Value<"10: i32">
+// CHECK-LABEL: Module
+// CHECK: AttributeExpr {{.*}} Value<"10: i32">
 Pattern {
   let attr = attr<"10: i32">;
 
   erase _: Op;
 }
+
+// -----
+
+// CHECK-LABEL: Module
+// CHECK: `-AttributeExpr {{.*}} Value<"10:i32">
+Pattern {
+  let attr = 10 : i32;
+  erase _: Op;
+}
+
+// -----
+
+// CHECK-LABEL: Module
+// CHECK: `-AttributeExpr {{.*}} Value<""value"">
+Pattern {
+  let attr = "value";
+  erase _: Op;
+}
+
+// -----
+
+// CHECK-LABEL: Module
+// CHECK: |-NamedAttributeDecl {{.*}}  Name<some_array>
+// CHECK: `-UserRewriteDecl {{.*}} Name<__builtin_addElemToArrayAttrRewriter> ResultType<Attr>
+// CHECK:   `Arguments`
+// CHECK:     CallExpr {{.*}} Type<Attr>
+// CHECK:       AttributeExpr {{.*}} Value<"[]">
+// CHECK:     CallExpr {{.*}} Type<Attr>
+// CHECK:       UserRewriteDecl {{.*}} Name<__builtin_addEntryToDictionaryAttr_rewrite> ResultType<Attr>
+// CHECK:         `Arguments`
+// CHECK:             AttributeExpr {{.*}} Value<"{}">
+// CHECK:             AttributeExpr {{.*}} Value<""firstAttr"">
+
+Pattern {
+  let root = op<test.op> -> ();
+  let attr = attr<"\"test\"">;
+  rewrite root with {
+      let newRoot = op<test.success>() { some_array =  [ {"firstAttr" = attr<"\"test\"">}], attr} -> ();
+      replace root with newRoot;
+  };
+}
+
+// -----
+
+// CHECK-LABEL: Module
+//     CHECK:LetStmt {{.*}}
+//CHECK-NEXT:`-VariableDecl {{.*}} Name<dictionary> Type<Attr>
+//CHECK-NEXT:  `-AttributeExpr {{.*}} Value<"{}">
+//CHECK-NEXT:ReturnStmt {{.*}}
+
+Constraint getEmptyDict() -> Attr {
+  let dictionary = {};
+  return dictionary;
+}
+
+// -----
+
+// CHECK-LABEL: Module
+//     CHECK:LetStmt {{.*}}
+//CHECK-NEXT:`-VariableDecl {{.*}} Name<dictionary> Type<Attr>
+//CHECK-NEXT:  `-CallExpr {{.*}} Type<Attr>
+//CHECK-NEXT:    `-DeclRefExpr {{.*}} Type<Constraint>
+//CHECK-NEXT:      `-UserConstraintDecl {{.*}} Name<__builtin_addEntryToDictionaryAttr_constraint> ResultType<Attr>
+//     CHECK:    `Arguments`
+//CHECK-NEXT:      |-AttributeExpr {{.*}} Value<"{}">
+//CHECK-NEXT:      |-DeclRefExpr {{.*}} Type<Attr>
+//CHECK-NEXT:      | `-VariableDecl {{.*}} Name<dict0> Type<Attr>
+//CHECK-NEXT:      |   `-AttributeExpr {{.*}} Value<""test"">
+//CHECK-NEXT:      `-AttributeExpr {{.*}} Value<""String"">
+//CHECK-NEXT:ReturnStmt {{.*}}
+
+Constraint getPopulatedDict() -> Attr {
+  let dictionary = { test = "String" };
+  return dictionary;
+}
+
+
+
+// -----
+
+// CHECK-LABEL: Module
+//     CHECK:LetStmt {{.*}}
+//CHECK-NEXT:`-VariableDecl {{.*}} Name<array> Type<Attr>
+//CHECK-NEXT:  `-AttributeExpr {{.*}} Value<"[]">
+//CHECK-NEXT:ReturnStmt {{.*}}
+
+Constraint getEmtpyArray() -> Attr {
+  let array = [];
+  return array;
+}
+
+// -----
+
+// CHECK-LABEL: Module
+//     CHECK:LetStmt {{.*}}
+//CHECK-NEXT:`-VariableDecl {{.*}} Name<array> Type<Attr>
+//CHECK-NEXT:  `-CallExpr {{.*}} Type<Attr>
+//CHECK-NEXT:    `-DeclRefExpr {{.*}} Type<Constraint>
+//CHECK-NEXT:      `-UserConstraintDecl {{.*}} Name<__builtin_addElemToArrayAttrConstraint> ResultType<Attr>
+//     CHECK:    `Arguments`
+//CHECK-NEXT:      |-AttributeExpr {{.*}} Value<"[]">
+//CHECK-NEXT:      `-AttributeExpr {{.*}} Value<""attr1"">
+//CHECK-NEXT:ReturnStmt {{.*}}
+
+Constraint getPopulateArray() -> Attr {
+  let array = ["attr1"];
+  return array;
+}
+
+
+// -----
+
+
+// CHECK-LABEL: Module
+//     CHECK:LetStmt {{.*}}
+//CHECK-NEXT:`-VariableDecl {{.*}} Name<array> Type<Attr>
+//CHECK-NEXT:  `-CallExpr {{.*}} Type<Attr>
+//CHECK-NEXT:    `-DeclRefExpr {{.*}} Type<Constraint>
+//CHECK-NEXT:      `-UserConstraintDecl {{.*}} Name<__builtin_addElemToArrayAttrConstraint> ResultType<Attr>
+// CHECK-DAG:    `Arguments`
+//CHECK-NEXT:      |-CallExpr {{.*}} Type<Attr>
+//CHECK-NEXT:        `-DeclRefExpr {{.*}} Type<Constraint>
+//CHECK-NEXT:     |    `-UserConstraintDecl {{.*}} Name<__builtin_addElemToArrayAttrConstraint> ResultType<Attr>
+// CHECK-DAG:        `Arguments`
+//CHECK-NEXT:        |-AttributeExpr {{.*}} Value<"[]">
+//CHECK-NEXT:        `-CallExpr {{.*}} Type<Attr>
+//CHECK-NEXT:          `-DeclRefExpr {{.*}} Type<Constraint>
+//CHECK-NEXT:            `-UserConstraintDecl {{.*}} Name<getA> ResultType<Attr>
+//     CHECK: `-CallExpr {{.*}} Type<Attr>
+//CHECK-NEXT:  `-DeclRefExpr {{.*}} Type<Constraint>
+//CHECK-NEXT:    `-UserConstraintDecl {{.*}} Name<getB> ResultType<Attr>
+// CHECK-DAG: -ReturnStmt {{.*}}
+
+Constraint getA() -> Attr {
+  return "A";
+}
+
+Constraint getB() -> Attr {
+  return "B";
+}
+
+Constraint getPopulateArrayFromOtherConstraints() -> Attr {
+  let array = [getA(), getB()];
+  return array;
+}
+
 
 // -----
 
@@ -87,6 +233,20 @@ Pattern {
 
 // -----
 
+// Implicitly convert single element Tuple<Attr> to Attr
+// CHECK: Module
+// CHECK: `-MemberAccessExpr {{.*}} Member<0> Type<Attr>
+// CHECK:   `-TupleExpr {{.*}} Type<Tuple<Attr>>
+// CHECK:     `-AttributeExpr {{.*}} Value<"10: i32">
+Constraint checkAttr(attr: Attr);
+Pattern {
+  let tuple = (attr<"10: i32">);
+  checkAttr(tuple);
+  erase _: Op;
+}
+
+// -----
+
 #include "include/ops.td"
 
 // CHECK: Module
@@ -152,7 +312,7 @@ Pattern {
 
 // -----
 
-// Test explicitly empty operand/result/etc. lists, which are different from the 
+// Test explicitly empty operand/result/etc. lists, which are different from the
 // "unconstrained" examples above.
 
 // CHECK: Module
@@ -257,6 +417,29 @@ Pattern {
 
 // -----
 
+// Test parsing of an op with an empty region
+
+// CHECK: Module
+// CHECK:  -PatternDecl {{.*}}
+// CHECK:  -RewriteStmt {{.*}}
+// CHECK:  -OperationExpr {{.*}} Type<Op<test.foo>>
+// CHECK-SAME: numRegions:0
+// CHECK:    `Operands`
+// CHECK:    `Result Types`
+// CHECK:    `Attributes`
+// CHECK:  -OperationExpr {{.*}} Type<Op<test.foo_with_region>>
+// CHECK-SAME: numRegions:1
+// CHECK:    `Operands`
+// CHECK:    `Result Types`
+// CHECK:    `Attributes`
+Pattern {
+  rewrite op<test.foo>(operand: Value) {attr=attr: Attr} -> (type : Type) with {
+    op<test.foo_with_region>(operand) {attr=attr} -> (type) ({});
+  };
+}
+
+// -----
+
 //===----------------------------------------------------------------------===//
 // TupleExpr
 //===----------------------------------------------------------------------===//
@@ -311,5 +494,212 @@ Pattern {
 Pattern {
   let type = type<"i64">;
 
+  erase _: Op;
+}
+
+//===----------------------------------------------------------------------===//
+// Builtins
+//===----------------------------------------------------------------------===//
+
+// -----
+
+// CHECK: Module 
+// CHECK: UserConstraintDecl {{.*}} Name<__builtin_addConstraint> ResultType<Attr>
+// CHECK: UserConstraintDecl {{.*}} Name<__builtin_subConstraint> ResultType<Attr>
+// CHECK: UserConstraintDecl {{.*}} Name<__builtin_mulConstraint> ResultType<Attr>
+// CHECK: UserConstraintDecl {{.*}} Name<__builtin_divConstraint> ResultType<Attr>
+// CHECK: UserConstraintDecl {{.*}} Name<__builtin_modConstraint> ResultType<Attr>
+// CHECK: UserConstraintDecl {{.*}} Name<__builtin_log2Constraint> ResultType<Attr>
+// CHECK: UserConstraintDecl {{.*}} Name<__builtin_exp2Constraint> ResultType<Attr>
+// CHECK: UserConstraintDecl {{.*}} Name<__builtin_absConstraint> ResultType<Attr>
+// CHECK: UserRewriteDecl {{.*}} Name<__builtin_addRewrite> ResultType<Attr>
+// CHECK: UserRewriteDecl {{.*}} Name<__builtin_subRewrite> ResultType<Attr>
+// CHECK: UserRewriteDecl {{.*}} Name<__builtin_mulRewrite> ResultType<Attr>
+// CHECK: UserRewriteDecl {{.*}} Name<__builtin_divRewrite> ResultType<Attr>
+// CHECK: UserRewriteDecl {{.*}} Name<__builtin_modRewrite> ResultType<Attr>
+// CHECK: UserRewriteDecl {{.*}} Name<__builtin_log2Rewrite> ResultType<Attr>
+// CHECK: UserRewriteDecl {{.*}} Name<__builtin_exp2Rewrite> ResultType<Attr>
+// CHECK: UserRewriteDecl {{.*}} Name<__builtin_absRewrite> ResultType<Attr>
+Pattern {
+  let root = op<>(operand: Value, operands: ValueRange) -> (type: Type, types: TypeRange);
+  let a : Attr = attr<"4 : i32">;
+  let b : Attr = attr<"5 : i32">;
+  let addConstraint : Attr = a + b;
+  let subConstraint : Attr = a - b;
+  let mulConstraint : Attr = a * b;
+  let divConstraint : Attr = a / b;
+  let modConstraint : Attr = a % b;
+  let log2Constraint : Attr = log2(a);
+  let exp2Constraint : Attr = exp2(b);
+  let absConstraint : Attr = math_abs(attr<"-4 : si32">);
+  rewrite root with {
+    let addRewrite : Attr = attr<"4 : i32"> + attr<"5 : i32">;
+    let subRewrite : Attr = attr<"4 : i32"> - attr<"5 : i32">;
+    let mulRewrite : Attr = attr<"4 : i32"> * attr<"5 : i32">;
+    let divRewrite : Attr = attr<"4 : i32"> / attr<"5 : i32">;
+    let modRewrite : Attr = attr<"4 : i32"> % attr<"5 : i32">;
+    let log2Rewrite : Attr = log2(attr<"4 : i32">);
+    let exp2Rewrite : Attr = exp2(attr<"4 : i32">);
+    let absRewrite : Attr = math_abs(attr<"-4 : si32">);
+    erase root;
+  };
+}
+
+// -----
+
+// CHECK: PatternDecl {{.*}} Name<TestOperatorContext>
+// CHECK: UserConstraintDecl {{.*}} Name<__builtin_addConstraint> ResultType<Attr>
+// CHECK: UserConstraintDecl {{.*}} Name<__builtin_subConstraint> ResultType<Attr>
+// CHECK: UserConstraintDecl {{.*}} Name<__builtin_mulConstraint> ResultType<Attr>
+// CHECK: UserConstraintDecl {{.*}} Name<__builtin_divConstraint> ResultType<Attr>
+// CHECK: UserConstraintDecl {{.*}} Name<__builtin_modConstraint> ResultType<Attr>
+// CHECK: UserConstraintDecl {{.*}} Name<__builtin_log2Constraint> ResultType<Attr>
+// CHECK: UserConstraintDecl {{.*}} Name<__builtin_exp2Constraint> ResultType<Attr>
+// CHECK: UserConstraintDecl {{.*}} Name<__builtin_absConstraint> ResultType<Attr>
+// CHECK: UserRewriteDecl {{.*}} Name<__builtin_addRewrite> ResultType<Attr>
+// CHECK: UserRewriteDecl {{.*}} Name<__builtin_subRewrite> ResultType<Attr>
+// CHECK: UserRewriteDecl {{.*}} Name<__builtin_mulRewrite> ResultType<Attr>
+// CHECK: UserRewriteDecl {{.*}} Name<__builtin_divRewrite> ResultType<Attr>
+// CHECK: UserRewriteDecl {{.*}} Name<__builtin_modRewrite> ResultType<Attr>
+// CHECK: UserRewriteDecl {{.*}} Name<__builtin_log2Rewrite> ResultType<Attr>
+// CHECK: UserRewriteDecl {{.*}} Name<__builtin_exp2Rewrite> ResultType<Attr>
+// CHECK: UserRewriteDecl {{.*}} Name<__builtin_absRewrite> ResultType<Attr>
+Constraint TestConstraint(attr: Attr, op: Op, type: Type, value: Value, typeRange: TypeRange, valueRange: ValueRange) {
+  let a : Attr = attr<"4 : i32">;
+  let b : Attr = attr<"5 : i32">;
+  let addConstraint : Attr = a + b;
+  let subConstraint : Attr = a - b;
+  let mulConstraint : Attr = a * b;
+  let divConstraint : Attr = a / b;
+  let modConstraint : Attr = a % b;
+  let log2Constraint : Attr = log2(a);
+  let exp2Constraint : Attr = exp2(b);
+  let absConstraint : Attr = math_abs(attr<"-4 : si32">);
+}
+
+Rewrite TestRewrite(attr: Attr, op: Op, type: Type, value: Value, typeRange: TypeRange, valueRange: ValueRange) {
+  let c : Attr = attr<"4 : i32">;
+  let d : Attr = attr<"5 : i32">;
+  let addRewrite : Attr = c + d;
+  let subRewrite : Attr = c - d;
+  let mulRewrite : Attr = c * d;
+  let divRewrite : Attr = c / d;
+  let modRewrite : Attr = c % d;
+  let log2Rewrite : Attr = log2(c);
+  let exp2Rewrite : Attr = exp2(d);
+  let absRewrite : Attr = math_abs(attr<"-4 : si32">);
+}
+
+Pattern TestOperatorContext {
+  let root = op<>(operand: Value, operands: ValueRange) -> (type: Type, types: TypeRange);
+  TestConstraint(/*attr=*/attr<"true">,  /*op=*/root, /*type=*/type, /*value=*/operand, /*typeRange=*/types, /*valueRange=*/operands);
+  rewrite root with {
+    TestRewrite(/*attr=*/attr<"true">, /*op=*/root, /*type=*/type, /*value=*/operand, /*typeRange=*/types, /*valueRange=*/operands);
+    erase root;
+  };
+}
+
+// -----
+
+// CHECK: -UserConstraintDecl {{.*}} Name<__builtin_log2Constraint> ResultType<Attr>
+// CHECK: Arguments
+// CHECK: -UserConstraintDecl {{.*}} Name<__builtin_addConstraint> ResultType<Attr>
+// CHECK: -UserConstraintDecl {{.*}} Name<__builtin_exp2Constraint> ResultType<Attr>
+// CHECK: Arguments
+// CHECK: -UserConstraintDecl {{.*}} Name<__builtin_addConstraint> ResultType<Attr>
+// CHECK: -UserConstraintDecl {{.*}} Name<__builtin_absConstraint> ResultType<Attr>
+// CHECK: Arguments
+// CHECK: -UserConstraintDecl {{.*}} Name<__builtin_addConstraint> ResultType<Attr>
+Pattern {
+  let log2Constraint : Attr = log2(attr<"4 : i32"> + attr<"4 : i32">);
+  let exp2Constraint : Attr = exp2(attr<"2 : i32"> + attr<"2 : i32">);
+  let absConstraint : Attr = math_abs(attr<"-4 : si32"> + attr<"-2 : si32">);
+  erase _: Op;
+}
+
+// -----
+// Operators without assignment allowed outside rewrite section
+
+// CHECK-NOT: LetStmt
+// CHECK: UserConstraintDecl {{.*}} Name<__builtin_addConstraint> ResultType<Attr>
+// CHECK: UserConstraintDecl {{.*}} Name<__builtin_subConstraint> ResultType<Attr>
+// CHECK: UserConstraintDecl {{.*}} Name<__builtin_mulConstraint> ResultType<Attr>
+// CHECK: UserConstraintDecl {{.*}} Name<__builtin_divConstraint> ResultType<Attr>
+// CHECK: UserConstraintDecl {{.*}} Name<__builtin_modConstraint> ResultType<Attr>
+// CHECK: UserConstraintDecl {{.*}} Name<__builtin_log2Constraint> ResultType<Attr>
+// CHECK: UserConstraintDecl {{.*}} Name<__builtin_exp2Constraint> ResultType<Attr>
+// CHECK: UserConstraintDecl {{.*}} Name<__builtin_absConstraint> ResultType<Attr>
+Pattern {
+  attr<"4 : i32"> + attr<"5 : i32">;
+  attr<"4 : i32"> - attr<"5 : i32">;
+  attr<"4 : i32"> * attr<"5 : i32">;
+  attr<"4 : i32"> / attr<"5 : i32">;
+  attr<"4 : i32"> % attr<"5 : i32">;
+  log2(attr<"4 : i32">);
+  exp2(attr<"4 : i32">);
+  math_abs(attr<"-4 : si32">);
+  erase _: Op;
+}
+
+// -----
+// CHECK: VariableDecl {{.*}} Name<a> Type<Attr>
+// CHECK: VariableDecl {{.*}} Name<b> Type<Attr>
+// CHECK: VariableDecl {{.*}} Name<c> Type<Attr>
+// CHECK: VariableDecl {{.*}} Name<d> Type<Attr>
+// CHECK:   UserConstraintDecl {{.*}} Name<__builtin_subConstraint> ResultType<Attr>
+// CHECK:     Arguments
+// CHECK:       UserConstraintDecl {{.*}} Name<__builtin_addConstraint> ResultType<Attr>
+// CHECK:         Arguments
+// CHECK:           VariableDecl {{.*}} Name<a> Type<Attr>
+// CHECK:           VariableDecl {{.*}} Name<b> Type<Attr>
+// CHECK:       VariableDecl {{.*}} Name<c> Type<Attr>
+// CHECK: UserConstraintDecl {{.*}} Name<__builtin_modConstraint> ResultType<Attr>
+// CHECK: Arguments
+// CHECK:   UserConstraintDecl {{.*}} Name<__builtin_divConstraint> ResultType<Attr>
+// CHECK:     Arguments
+// CHECK:       UserConstraintDecl {{.*}} Name<__builtin_mulConstraint> ResultType<Attr>
+// CHECK:         Arguments
+// CHECK:           VariableDecl {{.*}} Name<a> Type<Attr>
+// CHECK:           VariableDecl {{.*}} Name<b> Type<Attr>
+// CHECK:       VariableDecl {{.*}} Name<c> Type<Attr>
+// CHECK:    VariableDecl {{.*}} Name<d> Type<Attr>
+
+Pattern {
+  let a : Attr = attr<"4 : i32">;
+  let b : Attr = attr<"5 : i32">;
+  let c : Attr = attr<"6 : i32">;
+  let d : Attr = attr<"1 : i32">;
+  let x : Attr = a + b - c;
+  let y : Attr = a * b / c % d;
+  erase _: Op;
+}
+
+// -----
+// CHECK:  VariableDecl {{.*}} Name<a> Type<Attr>
+// CHECK:  VariableDecl {{.*}} Name<b> Type<Attr>
+// CHECK:  VariableDecl {{.*}} Name<c> Type<Attr>
+// CHECK:  UserConstraintDecl {{.*}} Name<__builtin_addConstraint> ResultType<Attr>
+// CHECK:    Arguments
+// CHECK:      VariableDecl {{.*}} Name<a> Type<Attr>
+// CHECK:      UserConstraintDecl {{.*}} Name<__builtin_mulConstraint> ResultType<Attr>
+// CHECK:        Arguments
+// CHECK:          VariableDecl {{.*}} Name<b> Type<Attr>
+// CHECK:          VariableDecl {{.*}} Name<c> Type<Attr>
+Pattern {
+  let a : Attr = attr<"4 : i32">;
+  let b : Attr = attr<"5 : i32">;
+  let c : Attr = attr<"6 : i32">;
+  let x : Attr = a + b * c;
+  erase _: Op;
+}
+
+// -----
+// CHECK: Module {{.*}}
+// CHECK: UserConstraintDecl {{.*}} Name<__builtin_equals> ResultType<Tuple<>>
+// CHECK: UserConstraintDecl {{.*}} Name<__builtin_equals> ResultType<Tuple<>>
+Pattern {
+  attr<"4 : i32"> == attr<"5 : i32">;
+  let a: Attr;
+  a == a;
   erase _: Op;
 }

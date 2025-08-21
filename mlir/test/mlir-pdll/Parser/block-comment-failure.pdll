@@ -1,0 +1,21 @@
+// RUN: not mlir-pdll %s -I %S -split-input-file 2>&1 | FileCheck %s
+
+// CHECK: error: unterminated comment, expected '*/'
+Pattern { /* Block Comment */
+  let input: /* Block Comment */  Op<dialect.op>; /* Ignored block
+}
+
+// -----
+
+// CHECK: error: unterminated comment, expected '*/'
+Constraint Cst() /*
+
+// -----
+
+// CHECK: error: unterminated comment, expected '*/'
+Rewrite Cst() /* ** *
+
+// -----
+
+// CHECK: error: unterminated comment, expected '*/'
+Rewrite Cst() /**

@@ -517,3 +517,57 @@ TEST(CopyCountAttr, PrintStripped) {
 }
 
 } // namespace
+
+//===----------------------------------------------------------------------===//
+// NonSplattedDenseElementAttr
+//===----------------------------------------------------------------------===//
+
+namespace {
+TEST(NonSplattedDenseElementAttrTest, GetNonSplatRawDataF32) {
+  constexpr std::size_t numberOfElements = 6;
+  static constexpr std::array<float, numberOfElements> rawValues = {
+      0., 2., 4., 8., 3.1, 10.4};
+
+  mlir::MLIRContext context;
+  mlir::OpBuilder b(&context);
+
+  llvm::SmallVector<mlir::Attribute> mlirValues;
+  llvm::transform(rawValues, std::back_inserter(mlirValues),
+                  [&](float v) { return b.getFloatAttr(b.getF32Type(), v); });
+
+  llvm::ArrayRef<uint32_t> expected(
+      reinterpret_cast<const uint32_t *>(rawValues.data()), rawValues.size());
+
+  auto values = mlir::DenseElementsAttr::get(
+      mlir::RankedTensorType::get({numberOfElements}, b.getF32Type()),
+      mlirValues);
+
+  EXPECT_EQ(mlir::cast<mlir::DenseIntOrFPElementsAttr>(values)
+                .getNonSplatRawData<uint32_t>(),
+            expected);
+}
+
+TEST(NonSplattedDenseElementAttrTest, GetNonSplatRawDataI16) {
+  constexpr std::size_t numberOfElements = 6;
+  static constexpr std::array<int16_t, numberOfElements> rawValues = {
+      12, 5723, 23, 2, 634, 321};
+
+  mlir::MLIRContext context;
+  mlir::OpBuilder b(&context);
+
+  llvm::SmallVector<mlir::Attribute> mlirValues;
+  llvm::transform(rawValues, std::back_inserter(mlirValues),
+                  [&](int16_t v) { return b.getI16IntegerAttr(v); });
+
+  llvm::ArrayRef<uint16_t> expected(
+      reinterpret_cast<const uint16_t *>(rawValues.data()), rawValues.size());
+
+  auto values = mlir::DenseElementsAttr::get(
+      mlir::RankedTensorType::get({numberOfElements}, b.getI16Type()),
+      mlirValues);
+
+  EXPECT_EQ(mlir::cast<mlir::DenseIntOrFPElementsAttr>(values)
+                .getNonSplatRawData<uint16_t>(),
+            expected);
+}
+} // namespace

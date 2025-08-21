@@ -1149,6 +1149,10 @@ public:
   OpPrintingFlags &
   printLargeElementsAttrWithHex(int64_t largeElementLimit = 100);
 
+  /// Enables breaking attributes on individual lines when there are more than
+  /// the given number of attributes on an operation.
+  OpPrintingFlags &newlineAfterAttribute(int64_t attributeLimit = 2);
+
   /// Enables the elision of large resources strings by omitting them from the
   /// `dialect_resources` section. The `largeResourceLimit` is used to configure
   /// what is considered to be a "large" resource by providing an upper limit to
@@ -1195,6 +1199,9 @@ public:
   /// Return the size limit for printing large ElementsAttr as hex string.
   int64_t getLargeElementsAttrHexLimit() const;
 
+  /// Return the size limit for printing newlines after attributes.
+  std::optional<unsigned> getNewlineAfterAttrLimit() const;
+
   /// Return the size limit in chars for printing large resources.
   std::optional<uint64_t> getLargeResourceStringLimit() const;
 
@@ -1230,6 +1237,10 @@ private:
   /// Elide large elements attributes if the number of elements is larger than
   /// the upper limit.
   std::optional<int64_t> elementsAttrElementLimit;
+
+  /// Print newlines after each attribute when an operation has more than
+  /// the given number of attributes.
+  std::optional<unsigned> newlineAfterAttr;
 
   /// Elide printing large resources based on size of string.
   std::optional<uint64_t> resourceStringCharLimit;

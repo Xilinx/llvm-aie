@@ -423,6 +423,10 @@ public:
       llvm::StringRef printTreeDir = ".pass_manager_output",
       OpPrintingFlags opPrintingFlags = OpPrintingFlags());
 
+  /// Dump a reproducer before each pass into a file in the given output
+  /// directory.
+  void enableReproducerBeforeAll(llvm::StringRef outputDir);
+
   //===--------------------------------------------------------------------===//
   // Pass Timing
 

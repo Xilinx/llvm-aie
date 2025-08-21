@@ -42,7 +42,7 @@ Pattern VarWithInit {
 // CHECK: %[[OPERAND_TYPES:.*]] = types
 // CHECK: %[[OPERANDS:.*]] = operands : %[[OPERAND_TYPES]]
 // CHECK: %[[RESULT_TYPES:.*]] = types
-// CHECK: operation(%[[OPERANDS]] : !pdl.range<value>)  -> (%[[RESULT_TYPES]] : !pdl.range<type>)
+// CHECK: operation(%[[OPERANDS]] : !pdl.range<value>) {} -> (%[[RESULT_TYPES]] : !pdl.range<type>)
 Pattern VarWithRangeConstraints {
   erase op<>(operands: ValueRange<operandTypes: TypeRange>) -> (results: TypeRange);
 }
@@ -69,13 +69,13 @@ Pattern VarWithConstraints {
 // CHECK: pdl.pattern @VarWithNoNameOpConstraint
 // CHECK: %[[OPERANDS:.*]] = operands
 // CHECK: %[[RESULT_TYPES:.*]] = types
-// CHECK: operation(%[[OPERANDS]] : !pdl.range<value>)  -> (%[[RESULT_TYPES]] : !pdl.range<type>)
+// CHECK: operation(%[[OPERANDS]] : !pdl.range<value>) {} -> (%[[RESULT_TYPES]] : !pdl.range<type>)
 Pattern VarWithNoNameOpConstraint => erase _: Op;
 
 // CHECK: pdl.pattern @VarWithNamedOpConstraint
 // CHECK: %[[OPERANDS:.*]] = operands
 // CHECK: %[[RESULT_TYPES:.*]] = types
-// CHECK: operation "test.op"(%[[OPERANDS]] : !pdl.range<value>)  -> (%[[RESULT_TYPES]] : !pdl.range<type>)
+// CHECK: operation "test.op"(%[[OPERANDS]] : !pdl.range<value>) {} -> (%[[RESULT_TYPES]] : !pdl.range<type>)
 Pattern VarWithNamedOpConstraint => erase _: Op<test.op>;
 
 // -----
@@ -85,7 +85,7 @@ Pattern VarWithNamedOpConstraint => erase _: Op<test.op>;
 // CHECK: pdl.pattern @VarWithUserConstraint
 // CHECK: %[[OPERANDS:.*]] = operands
 // CHECK: %[[RESULT_TYPES:.*]] = types
-// CHECK: %[[OP:.*]] = operation(%[[OPERANDS]] : !pdl.range<value>)  -> (%[[RESULT_TYPES]] : !pdl.range<type>)
+// CHECK: %[[OP:.*]] = operation(%[[OPERANDS]] : !pdl.range<value>) {} -> (%[[RESULT_TYPES]] : !pdl.range<type>)
 // CHECK: apply_native_constraint "NestedArgCst"(%[[OP]] : !pdl.operation)
 // CHECK: apply_native_constraint "NestedResCst"(%[[OP]] : !pdl.operation)
 // CHECK: apply_native_constraint "OpCst"(%[[OP]] : !pdl.operation)

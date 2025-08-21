@@ -52,6 +52,18 @@ func.func @transpose_fold_splat() -> tensor<3x2xf32> {
   return %1 : tensor<3x2xf32>
 }
 
+// CHECK-LABEL: @transpose_fold_2d_bfloat16
+func.func @transpose_fold_2d_bfloat16() -> tensor<3x2xbf16> {
+  %input = "tosa.const"() {value = dense<[[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]> : tensor<2x3xbf16>} : () -> tensor<2x3xbf16>
+  %perms = "tosa.const"() {value = dense<[1, 0]> : tensor<2xi32>} : () -> tensor<2xi32>
+  //               CHECK: %[[CST:.+]] = "tosa.const"()
+  // CHECK-SAME{LITERAL}: value = dense<[[0.000000e+00, 3.000000e+00], [1.000000e+00, 4.000000e+00], [2.000000e+00, 5.000000e+00]]> : tensor<3x2xbf16>
+  %1 = "tosa.transpose"(%input, %perms) : (tensor<2x3xbf16>, tensor<2xi32>) -> tensor<3x2xbf16>
+  // CHECK: return %[[CST]]
+  return %1 : tensor<3x2xbf16>
+}
+
+
 // CHECK-LABEL: @transpose_fold_2d_float
 func.func @transpose_fold_2d_float() -> tensor<3x2xf32> {
   %input = "tosa.const"() {value = dense<[[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]> : tensor<2x3xf32>} : () -> tensor<2x3xf32>
@@ -200,6 +212,28 @@ func.func @fold_add_splat_f32() -> tensor<10xf32> {
 
 // -----
 
+// CHECK-LABEL: @fold_add_zero_splat_different_shape_f32
+func.func @fold_add_zero_splat_different_shape_f32(%arg0: tensor<1x10xf32>) -> tensor<1x10xf32> {
+  %zero = "tosa.const"() {value = dense<0.0> : tensor<1x1xf32>} : () -> tensor<1x1xf32>
+  %add = "tosa.add"(%arg0, %zero) : (tensor<1x10xf32>, tensor<1x1xf32>) -> tensor<1x10xf32>
+  // CHECK: return %arg0
+  return %add : tensor<1x10xf32>
+}
+
+// -----
+
+// CHECK-LABEL: @fold_add_zero_broadcast_arg_f32
+func.func @fold_add_zero_broadcast_arg_f32(%arg0: tensor<1x10xf32>) -> tensor<4x10xf32> {
+  %zero = "tosa.const"() {value = dense<0.0> : tensor<4x10xf32>} : () -> tensor<4x10xf32>
+  %add = "tosa.add"(%arg0, %zero) : (tensor<1x10xf32>, tensor<4x10xf32>) -> tensor<4x10xf32>
+  // CHECK: %[[ZERO:.+]] = "tosa.const"() <{value = dense<0.000000e+00> : tensor<4x10xf32>}> : () -> tensor<4x10xf32>
+  // CHECK: %[[ADD:.+]] = tosa.add %arg0, %[[ZERO]] : (tensor<1x10xf32>, tensor<4x10xf32>) -> tensor<4x10xf32>
+  // CHECK: return %[[ADD]] : tensor<4x10xf32>
+  return %add : tensor<4x10xf32>
+}
+
+// -----
+
 // CHECK-LABEL: @fold_div_zero_lhs_i32
 func.func @fold_div_zero_lhs_i32(%arg0: tensor<i32>) -> tensor<i32> {
   %zero = "tosa.const"() {value = dense<0> : tensor<i32>} : () -> tensor<i32>
@@ -342,6 +376,29 @@ func.func @fold_mul_splat_f32() -> tensor<10xf32> {
 
 // -----
 
+// CHECK-LABEL: @fold_reciprocal_splat_f32
+func.func @fold_reciprocal_splat_f32() -> tensor<f32> {
+  %half = "tosa.const"() {value = dense<0.5> : tensor<f32>} : () -> tensor<f32>
+  %recp = "tosa.reciprocal"(%half) : (tensor<f32>) -> tensor<f32>
+  // CHECK: %[[CST:.*]] = "tosa.const"() <{value = dense<2.000000e+00> : tensor<f32>}>
+  // CHECK: return %[[CST]]
+  return %recp : tensor<f32>
+}
+
+// -----
+
+// CHECK-LABEL: @fold_reciprocal_splat_zero_f32
+func.func @fold_reciprocal_splat_zero_f32() -> tensor<f32> {
+  %zero = "tosa.const"() {value = dense<0.0> : tensor<f32>} : () -> tensor<f32>
+  %recp = "tosa.reciprocal"(%zero) : (tensor<f32>) -> tensor<f32>
+  // 0x7F800000 represents +inf as we have computed 1/0
+  // CHECK: %[[CST:.*]] = "tosa.const"() <{value = dense<0x7F800000> : tensor<f32>}>
+  // CHECK: return %[[CST]]
+  return %recp : tensor<f32>
+}
+
+// -----
+
 // CHECK-LABEL: @fold_sub_zero_rhs_f32
 func.func @fold_sub_zero_rhs_f32(%arg0: tensor<f32>) -> tensor<f32> {
   %zero = "tosa.const"() {value = dense<0.0> : tensor<f32>} : () -> tensor<f32>
@@ -382,6 +439,16 @@ func.func @fold_sub_splat_f32() -> tensor<10xf32> {
   // CHECK: %[[THREE:.+]] = "tosa.const"() <{value = dense<-1.000000e+00> : tensor<10xf32>}
   // CHECK: return %[[THREE]]
   return %sub : tensor<10xf32>
+}
+
+// -----
+
+// CHECK-LABEL: @fold_sub_zero_splat_different_shape_f32
+func.func @fold_sub_zero_splat_different_shape_f32(%arg0: tensor<1x10xf32>) -> tensor<1x10xf32> {
+  %zero = "tosa.const"() {value = dense<0.0> : tensor<1x1xf32>} : () -> tensor<1x1xf32>
+  %sub = "tosa.sub"(%arg0, %zero) : (tensor<1x10xf32>, tensor<1x1xf32>) -> tensor<1x10xf32>
+  // CHECK: return %arg0
+  return %sub : tensor<1x10xf32>
 }
 
 // -----
@@ -624,6 +691,36 @@ func.func @reverse_length_one(%arg0 : tensor<10x1xi32>) -> (tensor<10x1xi32>, te
 
 // -----
 
+  func.func @reduce_sum_constant() -> tensor<1x3xf32> {
+    // CHECK-LABEL:   func.func @reduce_sum_constant() -> tensor<1x3xf32>
+    // CHECK:   %[[VAL_0:.*]] = "tosa.const"() <{value = dense<{{\[\[}}5.000000e+00, 7.000000e+00, 9.000000e+00]]> : tensor<1x3xf32>}> : () -> tensor<1x3xf32>
+    %const = "tosa.const"() {value = dense<[[1.0,2.0,3.0], [4.0,5.0,6.0]]> : tensor<2x3xf32>} : () -> tensor<2x3xf32>
+    %0 = tosa.reduce_sum %const {axis = 0 : i32} : (tensor<2x3xf32>) -> tensor<1x3xf32>
+    return %0 : tensor<1x3xf32>
+  }
+
+// -----
+
+  func.func @reduce_sum_constant() -> tensor<1x3xf16> {
+    // CHECK-LABEL:   func.func @reduce_sum_constant() -> tensor<1x3xf16>
+    // CHECK:   %[[VAL_0:.*]] = "tosa.const"() <{value = dense<{{\[\[}}5.000000e+00, 7.000000e+00, 9.000000e+00]]> : tensor<1x3xf16>}> : () -> tensor<1x3xf16>
+    %const = "tosa.const"() {value = dense<[[1.0,2.0,3.0], [4.0,5.0,6.0]]> : tensor<2x3xf16>} : () -> tensor<2x3xf16>
+    %0 = tosa.reduce_sum %const {axis = 0 : i32} : (tensor<2x3xf16>) -> tensor<1x3xf16>
+    return %0 : tensor<1x3xf16>
+  }
+
+// -----
+
+  func.func @reduce_sum_constant() -> tensor<1x3xbf16> {
+    // CHECK-LABEL:   func.func @reduce_sum_constant() -> tensor<1x3xbf16>
+    // CHECK:   %[[VAL_0:.*]] = "tosa.const"() <{value = dense<{{\[\[}}5.000000e+00, 7.000000e+00, 9.000000e+00]]> : tensor<1x3xbf16>}> : () -> tensor<1x3xbf16>
+    %const = "tosa.const"() {value = dense<[[1.0,2.0,3.0], [4.0,5.0,6.0]]> : tensor<2x3xbf16>} : () -> tensor<2x3xbf16>
+    %0 = tosa.reduce_sum %const {axis = 0 : i32} : (tensor<2x3xbf16>) -> tensor<1x3xbf16>
+    return %0 : tensor<1x3xbf16>
+  }
+
+// -----
+
   func.func @reduce_sum_constant() -> tensor<2x1xi32> {
   // CHECK-LABEL:   func.func @reduce_sum_constant() -> tensor<2x1xi32> {
   // CHECK:           %[[VAL_0:.*]] = "tosa.const"() <{value = dense<{{\[\[}}6], [15]]> : tensor<2x1xi32>}> : () -> tensor<2x1xi32>
@@ -721,6 +818,42 @@ func.func @reduce_sum_constant() -> tensor<2x3x1x5xi32> {
 
 // -----
 
+  func.func @reduce_prod_constant() -> tensor<1x3xf32> {
+    // CHECK-LABEL:   func.func @reduce_prod_constant() -> tensor<1x3xf32> {
+    // CHECK:   %[[VAL_0:.*]] = "tosa.const"() <{value = dense<{{\[\[}}3.000000e+00, 5.000000e+00, 7.000000e+00]]> : tensor<1x3xf32>}> : () -> tensor<1x3xf32>
+    // CHECK:        return %[[VAL_0]] : tensor<1x3xf32>
+
+    %const = "tosa.const"() <{value = dense<[[1.5,2.5,3.5], [2.0,2.0,2.0]]> : tensor<2x3xf32>}> : () -> tensor<2x3xf32>
+    %0 = tosa.reduce_prod %const {axis = 0 : i32} : (tensor<2x3xf32>) -> tensor<1x3xf32>
+    return %0 : tensor<1x3xf32>
+  }
+
+// -----
+
+  func.func @reduce_prod_constant() -> tensor<1x3xf16> {
+    // CHECK-LABEL:   func.func @reduce_prod_constant() -> tensor<1x3xf16> {
+    // CHECK:   %[[VAL_0:.*]] = "tosa.const"() <{value = dense<{{\[\[}}3.000000e+00, 5.000000e+00, 7.000000e+00]]> : tensor<1x3xf16>}> : () -> tensor<1x3xf16>
+    // CHECK:        return %[[VAL_0]] : tensor<1x3xf16>
+
+    %const = "tosa.const"() <{value = dense<[[1.5,2.5,3.5], [2.0,2.0,2.0]]> : tensor<2x3xf16>}> : () -> tensor<2x3xf16>
+    %0 = tosa.reduce_prod %const {axis = 0 : i32} : (tensor<2x3xf16>) -> tensor<1x3xf16>
+    return %0 : tensor<1x3xf16>
+  }
+
+// -----
+
+  func.func @reduce_prod_constant() -> tensor<1x3xbf16> {
+    // CHECK-LABEL:   func.func @reduce_prod_constant() -> tensor<1x3xbf16> {
+    // CHECK:   %[[VAL_0:.*]] = "tosa.const"() <{value = dense<{{\[\[}}3.000000e+00, 5.000000e+00, 7.000000e+00]]> : tensor<1x3xbf16>}> : () -> tensor<1x3xbf16>
+    // CHECK:        return %[[VAL_0]] : tensor<1x3xbf16>
+
+    %const = "tosa.const"() <{value = dense<[[1.5,2.5,3.5], [2.0,2.0,2.0]]> : tensor<2x3xbf16>}> : () -> tensor<2x3xbf16>
+    %0 = tosa.reduce_prod %const {axis = 0 : i32} : (tensor<2x3xbf16>) -> tensor<1x3xbf16>
+    return %0 : tensor<1x3xbf16>
+  }
+
+// -----
+
   func.func @reduce_prod_constant() -> tensor<2x1xi32> {
   // CHECK-LABEL:   func.func @reduce_prod_constant() -> tensor<2x1xi32> {
   // CHECK:           %[[VAL_0:.*]] = "tosa.const"() <{value = dense<{{\[\[}}6], [120]]> : tensor<2x1xi32>}> : () -> tensor<2x1xi32>
@@ -794,28 +927,76 @@ func.func @reduce_prod_constant() -> tensor<1x1x1xi32> {
 
 // -----
 
-  func.func @reduce_max_constant() -> tensor<1x3xi32> {
-    // CHECK-LABEL:   func.func @reduce_max_constant() -> tensor<1x3xi32> {
-    // CHECK:    %[[VAL_0:.*]] = "tosa.const"() <{value = dense<{{\[\[}}4, 5, 6]]> : tensor<1x3xi32>}> : () -> tensor<1x3xi32>
-    // CHECK:         return %[[VAL_0]] : tensor<1x3xi32>
+func.func @reduce_max_constant() -> tensor<1x3xi32> {
+  // CHECK-LABEL:   func.func @reduce_max_constant() -> tensor<1x3xi32> {
+  // CHECK:    %[[VAL_0:.*]] = "tosa.const"() <{value = dense<{{\[\[}}4, 5, 6]]> : tensor<1x3xi32>}> : () -> tensor<1x3xi32>
+  // CHECK:         return %[[VAL_0]] : tensor<1x3xi32>
 
-    %const = "tosa.const"() <{value = dense<[[1,2,3], [4,5,6]]> : tensor<2x3xi32>}> : () -> tensor<2x3xi32>
-    %0 = tosa.reduce_max %const {axis = 0 : i32} : (tensor<2x3xi32>) -> tensor<1x3xi32>
-    return %0 : tensor<1x3xi32>
-  }
+  %const = "tosa.const"() <{value = dense<[[1,2,3], [4,5,6]]> : tensor<2x3xi32>}> : () -> tensor<2x3xi32>
+  %0 = tosa.reduce_max %const {axis = 0 : i32} : (tensor<2x3xi32>) -> tensor<1x3xi32>
+  return %0 : tensor<1x3xi32>
+}
 
 // -----
 
-  func.func @reduce_max_constant() -> tensor<2x1xi32> {
+func.func @reduce_max_constant() -> tensor<1x3xf32> {
+  // CHECK-LABEL:   func.func @reduce_max_constant() -> tensor<1x3xf32> {
+  // CHECK:    %[[VAL_0:.*]] = "tosa.const"() <{value = dense<{{\[\[}}1.300000e+00, 2.300000e+00, 3.700000e+00]]> : tensor<1x3xf32>}> : () -> tensor<1x3xf32>
+  // CHECK:         return %[[VAL_0]] : tensor<1x3xf32>
+
+  %const = "tosa.const"() <{value = dense<[[1.2,2.3,3.4], [1.3,2.2,3.7]]> : tensor<2x3xf32>}> : () -> tensor<2x3xf32>
+  %0 = tosa.reduce_max %const {axis = 0 : i32} : (tensor<2x3xf32>) -> tensor<1x3xf32>
+  return %0 : tensor<1x3xf32>
+}
+
+// -----
+
+func.func @reduce_max_constant() -> tensor<1x3xf32> {
+  // CHECK-LABEL:   func.func @reduce_max_constant() -> tensor<1x3xf32> {
+  // CHECK:    %[[VAL_0:.*]] = "tosa.const"() <{value = dense<0x7FC00000> : tensor<1x3xf32>}> : () -> tensor<1x3xf32>
+  // CHECK:         return %[[VAL_0]] : tensor<1x3xf32>
+
+  %const = "tosa.const"() <{value = dense<[[0x7FC00000,2.3,0x7FC00000], [1.3,0x7FC00000,3.7]]> : tensor<2x3xf32>}> : () -> tensor<2x3xf32>
+  %0 = tosa.reduce_max %const {axis = 0 : i32} : (tensor<2x3xf32>) -> tensor<1x3xf32>
+  return %0 : tensor<1x3xf32>
+}
+
+// -----
+
+func.func @reduce_max_constant() -> tensor<1x3xf16> {
+  // CHECK-LABEL:   func.func @reduce_max_constant() -> tensor<1x3xf16> {
+  // CHECK:    %[[VAL_0:.*]] = "tosa.const"() <{value = dense<{{\[\[}}1.500000e+00, 2.500000e+00, 3.500000e+00]]> : tensor<1x3xf16>}> : () -> tensor<1x3xf16>
+  // CHECK:         return %[[VAL_0]] : tensor<1x3xf16>
+
+  %const = "tosa.const"() <{value = dense<[[1.0,2.5,3.0], [1.5,2.0,3.5]]> : tensor<2x3xf16>}> : () -> tensor<2x3xf16>
+  %0 = tosa.reduce_max %const {axis = 0 : i32} : (tensor<2x3xf16>) -> tensor<1x3xf16>
+  return %0 : tensor<1x3xf16>
+}
+
+// -----
+
+func.func @reduce_max_constant() -> tensor<1x3xbf16> {
+  // CHECK-LABEL:   func.func @reduce_max_constant() -> tensor<1x3xbf16> {
+  // CHECK:    %[[VAL_0:.*]] = "tosa.const"() <{value = dense<{{\[\[}}1.500000e+00, 2.500000e+00, 3.500000e+00]]> : tensor<1x3xbf16>}> : () -> tensor<1x3xbf16>
+  // CHECK:         return %[[VAL_0]] : tensor<1x3xbf16>
+
+  %const = "tosa.const"() <{value = dense<[[1.0,2.5,3.0], [1.5,2.0,3.5]]> : tensor<2x3xbf16>}> : () -> tensor<2x3xbf16>
+  %0 = tosa.reduce_max %const {axis = 0 : i32} : (tensor<2x3xbf16>) -> tensor<1x3xbf16>
+  return %0 : tensor<1x3xbf16>
+}
+
+// -----
+
+func.func @reduce_max_constant() -> tensor<2x1xi32> {
   // CHECK-LABEL:   func.func @reduce_max_constant() -> tensor<2x1xi32> {
   // CHECK:           %[[VAL_0:.*]] = "tosa.const"() <{value = dense<{{\[\[}}3], [6]]> : tensor<2x1xi32>}> : () -> tensor<2x1xi32>
   // CHECK:           return %[[VAL_0]] : tensor<2x1xi32>
   // CHECK:         }
 
-    %const = "tosa.const"() <{value = dense<[[1,2,3], [4,5,6]]> : tensor<2x3xi32>}> : () -> tensor<2x3xi32>
-    %0 = tosa.reduce_max %const {axis = 1 : i32} : (tensor<2x3xi32>) -> tensor<2x1xi32>
-    return %0 : tensor<2x1xi32>
-  }
+  %const = "tosa.const"() <{value = dense<[[1,2,3], [4,5,6]]> : tensor<2x3xi32>}> : () -> tensor<2x3xi32>
+  %0 = tosa.reduce_max %const {axis = 1 : i32} : (tensor<2x3xi32>) -> tensor<2x1xi32>
+  return %0 : tensor<2x1xi32>
+}
 
 // -----
 
@@ -879,28 +1060,71 @@ func.func @reduce_max_constant() -> tensor<1x1x1xi32> {
 
 // -----
 
-  func.func @reduce_min_constant() -> tensor<1x3xi32> {
-    // CHECK-LABEL:   func.func @reduce_min_constant() -> tensor<1x3xi32> {
-    // CHECK:    %[[VAL_0:.*]] = "tosa.const"() <{value = dense<{{\[\[}}1, 2, 3]]> : tensor<1x3xi32>}> : () -> tensor<1x3xi32>
-    // CHECK:         return %[[VAL_0]] : tensor<1x3xi32>
-    %const = "tosa.const"() <{value = dense<[[1,2,3], [4,5,6]]> : tensor<2x3xi32>}> : () -> tensor<2x3xi32>
-    %0 = tosa.reduce_min %const {axis = 0 : i32} : (tensor<2x3xi32>) -> tensor<1x3xi32>
-    return %0 : tensor<1x3xi32>
-  }
-
+func.func @reduce_min_constant() -> tensor<1x3xi32> {
+  // CHECK-LABEL:   func.func @reduce_min_constant() -> tensor<1x3xi32> {
+  // CHECK:    %[[VAL_0:.*]] = "tosa.const"() <{value = dense<{{\[\[}}1, 2, 3]]> : tensor<1x3xi32>}> : () -> tensor<1x3xi32>
+  // CHECK:         return %[[VAL_0]] : tensor<1x3xi32>
+  %const = "tosa.const"() <{value = dense<[[1,2,3], [4,5,6]]> : tensor<2x3xi32>}> : () -> tensor<2x3xi32>
+  %0 = tosa.reduce_min %const {axis = 0 : i32} : (tensor<2x3xi32>) -> tensor<1x3xi32>
+  return %0 : tensor<1x3xi32>
+}
 
 // -----
 
-  func.func @reduce_min_constant() -> tensor<2x1xi32> {
+func.func @reduce_min_constant() -> tensor<1x3xf32> {
+  // CHECK-LABEL:   func.func @reduce_min_constant() -> tensor<1x3xf32> {
+  // CHECK:    %[[VAL_0:.*]] = "tosa.const"() <{value = dense<{{\[\[}}5.000000e-01, 2.100000e+00, 3.100000e+00]]> : tensor<1x3xf32>}> : () -> tensor<1x3xf32>
+  // CHECK:         return %[[VAL_0]] : tensor<1x3xf32>
+  %const = "tosa.const"() <{value = dense<[[1.1,2.1,3.1], [0.5,5.5,3.5]]> : tensor<2x3xf32>}> : () -> tensor<2x3xf32>
+  %0 = tosa.reduce_min %const {axis = 0 : i32} : (tensor<2x3xf32>) -> tensor<1x3xf32>
+  return %0 : tensor<1x3xf32>
+}
+
+// -----
+
+func.func @reduce_min_constant() -> tensor<1x3xf32> {
+  // CHECK-LABEL:   func.func @reduce_min_constant() -> tensor<1x3xf32> {
+  // CHECK:    %[[VAL_0:.*]] = "tosa.const"() <{value = dense<0x7FC00000> : tensor<1x3xf32>}> : () -> tensor<1x3xf32>
+  // CHECK:         return %[[VAL_0]] : tensor<1x3xf32>
+  %const = "tosa.const"() <{value = dense<[[0x7FC00000,2.1,3.1], [0.5,0x7FC00000,0x7FC00000]]> : tensor<2x3xf32>}> : () -> tensor<2x3xf32>
+  %0 = tosa.reduce_min %const {axis = 0 : i32} : (tensor<2x3xf32>) -> tensor<1x3xf32>
+  return %0 : tensor<1x3xf32>
+}
+
+// -----
+
+func.func @reduce_min_constant() -> tensor<1x3xf16> {
+  // CHECK-LABEL:   func.func @reduce_min_constant() -> tensor<1x3xf16> {
+  // CHECK:    %[[VAL_0:.*]] = "tosa.const"() <{value = dense<{{\[\[}}5.000000e-01, 2.500000e+00, 2.500000e+00]]> : tensor<1x3xf16>}> : () -> tensor<1x3xf16>
+  // CHECK:         return %[[VAL_0]] : tensor<1x3xf16>
+  %const = "tosa.const"() <{value = dense<[[1.1,2.5,2.5], [0.5,5.5,3.5]]> : tensor<2x3xf16>}> : () -> tensor<2x3xf16>
+  %0 = tosa.reduce_min %const {axis = 0 : i32} : (tensor<2x3xf16>) -> tensor<1x3xf16>
+  return %0 : tensor<1x3xf16>
+}
+
+// -----
+
+func.func @reduce_min_constant() -> tensor<1x3xbf16> {
+  // CHECK-LABEL:   func.func @reduce_min_constant() -> tensor<1x3xbf16> {
+  // CHECK:    %[[VAL_0:.*]] = "tosa.const"() <{value = dense<{{\[\[}}5.000000e-01, 2.500000e+00, 2.500000e+00]]> : tensor<1x3xbf16>}> : () -> tensor<1x3xbf16>
+  // CHECK:         return %[[VAL_0]] : tensor<1x3xbf16>
+  %const = "tosa.const"() <{value = dense<[[1.1,2.5,2.5], [0.5,5.5,3.5]]> : tensor<2x3xbf16>}> : () -> tensor<2x3xbf16>
+  %0 = tosa.reduce_min %const {axis = 0 : i32} : (tensor<2x3xbf16>) -> tensor<1x3xbf16>
+  return %0 : tensor<1x3xbf16>
+}
+
+// -----
+
+func.func @reduce_min_constant() -> tensor<2x1xi32> {
   // CHECK-LABEL:   func.func @reduce_min_constant() -> tensor<2x1xi32> {
   // CHECK:           %[[VAL_0:.*]] = "tosa.const"() <{value = dense<{{\[\[}}1], [4]]> : tensor<2x1xi32>}> : () -> tensor<2x1xi32>
   // CHECK:           return %[[VAL_0]] : tensor<2x1xi32>
   // CHECK:         }
 
-    %const = "tosa.const"() <{value = dense<[[1,2,3], [4,5,6]]> : tensor<2x3xi32>}> : () -> tensor<2x3xi32>
-    %0 = tosa.reduce_min %const {axis = 1 : i32} : (tensor<2x3xi32>) -> tensor<2x1xi32>
-    return %0 : tensor<2x1xi32>
-  }
+  %const = "tosa.const"() <{value = dense<[[1,2,3], [4,5,6]]> : tensor<2x3xi32>}> : () -> tensor<2x3xi32>
+  %0 = tosa.reduce_min %const {axis = 1 : i32} : (tensor<2x3xi32>) -> tensor<2x1xi32>
+  return %0 : tensor<2x1xi32>
+}
 
 // -----
 
@@ -1074,14 +1298,13 @@ func.func @reduce_sum_constant() -> tensor<1x3xi32> {
 
 // -----
 
-func.func @reduce_sum_constant() -> tensor<1x3xi32> {
-  // CHECK-LABEL:     func.func @reduce_sum_constant() -> tensor<1x3xi32> {
-  // CHECK:           %[[VAL_0:.*]] = "tosa.const"() <{value = dense<{{\[\[}}1, 2, 3], [4, 5, 6]]> : tensor<2x3xi32>}> : () -> tensor<2x3xi32>
+func.func @reduce_sum_constant(%arg0: tensor<2x3xi32>) -> tensor<1x3xi32> {
+  // CHECK-LABEL:     func.func @reduce_sum_constant
+  // CHECK-SAME: (%[[VAL_0:.*]]: tensor<2x3xi32>) -> tensor<1x3xi32> {
   // CHECK:           %[[VAL_1:.*]] = "tosa.const"() <{value = dense<{{\[\[}}1, 2, 3], [4, 5, 7]]> : tensor<2x3xi32>}> : () -> tensor<2x3xi32>
   // CHECK:           %[[VAL_2:.*]] = tosa.add %[[VAL_0]], %[[VAL_1]] : (tensor<2x3xi32>, tensor<2x3xi32>) -> tensor<2x3xi32>
   // CHECK:           %[[VAL_3:.*]] = tosa.reduce_sum %[[VAL_2]] {axis = 0 : i32} : (tensor<2x3xi32>) -> tensor<1x3xi32>
   // CHECK:           return %[[VAL_3]] : tensor<1x3xi32>
-  %arg0 = "tosa.const"() <{value = dense<[[1,2,3], [4,5,6]]> : tensor<2x3xi32>}> : () -> tensor<2x3xi32>
   %arg1 = "tosa.const"() <{value = dense<[[1,2,3], [4,5,7]]> : tensor<2x3xi32>}> : () -> tensor<2x3xi32>
   %arg2 = tosa.add %arg0, %arg1 : (tensor<2x3xi32>, tensor<2x3xi32>) -> tensor<2x3xi32>
   %0 = tosa.reduce_sum %arg2 {axis = 0 : i32} : (tensor<2x3xi32>) -> tensor<1x3xi32>

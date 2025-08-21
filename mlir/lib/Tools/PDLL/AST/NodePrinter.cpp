@@ -251,7 +251,7 @@ void NodePrinter::printImpl(const MemberAccessExpr *expr) {
 void NodePrinter::printImpl(const OperationExpr *expr) {
   os << "OperationExpr " << expr << " Type<";
   print(expr->getType());
-  os << ">\n";
+  os << "> numRegions:" << expr->getNumRegions() << "\n";
 
   printChildren(expr->getNameDecl());
   printChildren("Operands", expr->getOperands());

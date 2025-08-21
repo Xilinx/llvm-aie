@@ -32,7 +32,6 @@ public:
 
   /// Construct a new PDL value.
   PDLValue(const PDLValue &other) = default;
-  PDLValue(std::nullptr_t = nullptr) {}
   PDLValue(Attribute value)
       : value(value.getAsOpaquePointer()), kind(Kind::Attribute) {}
   PDLValue(Operation *value) : value(value), kind(Kind::Operation) {}
@@ -45,7 +44,6 @@ public:
   /// Returns true if the type of the held value is `T`.
   template <typename T>
   bool isa() const {
-    assert(value && "isa<> used on a null value");
     return kind == getKindOf<T>();
   }
 

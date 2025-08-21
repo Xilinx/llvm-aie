@@ -12,6 +12,16 @@ func.func @opaque_types() {
   emitc.call_opaque "f"() {template_args = [!emitc<opaque<"status_t">>]} : () -> ()
   // CHECK-NEXT: f<std::vector<std::string>>();
   emitc.call_opaque "f"() {template_args = [!emitc.opaque<"std::vector<std::string>">]} : () -> ()
+  // CHECK:  f<float>()
+  emitc.call_opaque "f"() {template_args = [!emitc<opaque<"{}", f32>>]} : () -> ()
+  // CHECK: f<int16_t {>();
+  emitc.call_opaque "f"() {template_args = [!emitc<opaque<"{} {{", si16>>]} : () -> ()
+  // CHECK: f<int8_t {>();
+  emitc.call_opaque "f"() {template_args = [!emitc<opaque<"{} {", i8>>]} : () -> ()
+  // CHECK: f<status_t>();
+  emitc.call_opaque "f"() {template_args = [!emitc<opaque<"{}", !emitc<opaque<"status_t">> >>]} : () -> ()
+  // CHECK: f<top<nested<float>,int32_t>>();
+  emitc.call_opaque "f"() {template_args = [!emitc<opaque<"top<{},{}>", !emitc<opaque<"nested<{}>", f32>>, i32>>]} : () -> ()
 
   return
 }

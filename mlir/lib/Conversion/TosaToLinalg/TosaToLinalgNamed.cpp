@@ -233,6 +233,35 @@ static void createDepthwiseConvCollapseMap(
       rewriter.getAffineDimExpr(outputRank));
 }
 
+static FailureOr<Value> collapseValue(OpBuilder &rewriter, Location loc,
+                                      Value value, ShapedType type) {
+  auto reassociationMap = getReassociationIndicesForReshape(
+      cast<ShapedType>(value.getType()), type);
+  if (!reassociationMap.has_value())
+    return failure();
+
+  return Value(rewriter.create<tensor::CollapseShapeOp>(
+      loc, type, value, reassociationMap.value()));
+}
+
+static FailureOr<SmallVector<Value>>
+collapseValues(OpBuilder &rewriter, Location loc, SmallVector<Value> values,
+               SmallVector<ShapedType> newTys, bool useMatmulForBatchOne) {
+  if (!useMatmulForBatchOne)
+    return values;
+
+  SmallVector<Value> newValues;
+  for (auto [idx, value] : llvm::enumerate(values)) {
+
+    auto newValue = collapseValue(rewriter, loc, value, newTys[idx]);
+    if (failed(newValue))
+      return failure();
+
+    newValues.push_back(*newValue);
+  }
+  return newValues;
+}
+
 namespace {
 
 template <typename TosaConvOp, typename LinalgConvOp, typename LinalgConvQOp>
@@ -561,6 +590,9 @@ public:
 
 class MatMulConverter : public OpConversionPattern<tosa::MatMulOp> {
 public:
+  MatMulConverter(MLIRContext *ctx, bool useMatmulForSingleBatch)
+      : OpConversionPattern<tosa::MatMulOp>(ctx),
+        useMatmulForSingleBatch(useMatmulForSingleBatch) {}
   using OpConversionPattern<tosa::MatMulOp>::OpConversionPattern;
   LogicalResult
   matchAndRewrite(tosa::MatMulOp op, OpAdaptor adaptor,
@@ -585,20 +617,57 @@ public:
       dynDims[2] = rewriter.create<tensor::DimOp>(loc, op->getOperand(1), 2);
     }
 
+    auto getTypeWithoutBatch = [&](ShapedType ty) {
+      auto shape2D = {ty.getDimSize(1), ty.getDimSize(2)};
+      return RankedTensorType::get(shape2D, ty.getElementType());
+    };
+
     SmallVector<Value> filteredDims = condenseValues(dynDims);
+
+    bool useMatmulForBatchOne =
+        outputTy.getDimSize(0) == 1 && this->useMatmulForSingleBatch;
+
+    auto firstOperandTy = cast<ShapedType>(op->getOperand(0).getType());
+    auto secondOperandTy = cast<ShapedType>(op->getOperand(1).getType());
+    auto newInput1Type = getTypeWithoutBatch(firstOperandTy);
+    auto newInput2Type = getTypeWithoutBatch(secondOperandTy);
+    auto newOutputType = getTypeWithoutBatch(outputTy);
+
+    SmallVector<Value> inputs = {adaptor.getA(), adaptor.getB()};
+    auto inputsOrFailure =
+        collapseValues(rewriter, loc, inputs, {newInput1Type, newInput2Type},
+                       useMatmulForBatchOne);
+    auto matmulMap = getReassociationIndicesForReshape(newOutputType, outputTy);
+
+    // If any of the reassociations of indices failed, don't use matmul.
+    if (failed(inputsOrFailure) || !matmulMap.has_value()) {
+      useMatmulForBatchOne = false;
+    } else {
+      inputs = *inputsOrFailure;
+    }
 
     auto zeroAttr = rewriter.getZeroAttr(outputElementTy);
     Value zero = rewriter.create<arith::ConstantOp>(loc, zeroAttr);
-    auto emptyTensor = rewriter.create<tensor::EmptyOp>(
-        loc, outputTy.getShape(), outputTy.getElementType(), filteredDims);
+
+    Value emptyTensor = rewriter.create<tensor::EmptyOp>(
+        loc,
+        useMatmulForBatchOne ? newOutputType.getShape() : outputTy.getShape(),
+        outputElementTy, filteredDims);
+
     Value zeroTensor = rewriter
                            .create<linalg::FillOp>(loc, ValueRange{zero},
                                                    ValueRange{emptyTensor})
                            .result();
+
     if (!op.getQuantizationInfo()) {
-      rewriter.replaceOpWithNewOp<linalg::BatchMatmulOp>(
-          op, TypeRange{op.getType()},
-          ValueRange{adaptor.getA(), adaptor.getB()}, ValueRange{zeroTensor});
+      if (useMatmulForBatchOne) {
+        auto matmul = rewriter.create<linalg::MatmulOp>(
+            loc, TypeRange{newOutputType}, inputs, ValueRange{zeroTensor});
+        rewriter.replaceOpWithNewOp<tensor::ExpandShapeOp>(
+            op, outputTy, matmul->getResult(0), matmulMap.value());
+      } else
+        rewriter.replaceOpWithNewOp<linalg::BatchMatmulOp>(
+            op, TypeRange{op.getType()}, inputs, ValueRange{zeroTensor});
       return success();
     }
 
@@ -607,12 +676,22 @@ public:
         loc, rewriter.getI32IntegerAttr(quantizationInfo.getAZp()));
     auto bZp = rewriter.create<arith::ConstantOp>(
         loc, rewriter.getI32IntegerAttr(quantizationInfo.getBZp()));
-    rewriter.replaceOpWithNewOp<linalg::QuantizedBatchMatmulOp>(
-        op, TypeRange{op.getType()},
-        ValueRange{adaptor.getA(), adaptor.getB(), aZp, bZp}, zeroTensor);
+    if (useMatmulForBatchOne) {
+      auto matmul = rewriter.create<linalg::QuantizedMatmulOp>(
+          loc, TypeRange{newOutputType},
+          ValueRange{inputs[0], inputs[1], aZp, bZp}, zeroTensor);
+      rewriter.replaceOpWithNewOp<tensor::ExpandShapeOp>(
+          op, outputTy, matmul->getResult(0), matmulMap.value());
+    } else
+      rewriter.replaceOpWithNewOp<linalg::QuantizedBatchMatmulOp>(
+          op, TypeRange{op.getType()},
+          ValueRange{inputs[0], inputs[1], aZp, bZp}, zeroTensor);
 
     return success();
   }
+
+private:
+  bool useMatmulForSingleBatch;
 };
 
 class FullyConnectedConverter
@@ -1086,7 +1165,7 @@ public:
 } // namespace
 
 void mlir::tosa::populateTosaToLinalgNamedConversionPatterns(
-    const TypeConverter &converter, RewritePatternSet *patterns,
+    TypeConverter &converter, RewritePatternSet *patterns,
     const TosaToLinalgNamedOptions &options) {
   if (options.preferConv2DKernelLayoutHWCF) {
     patterns->add<ConvConverter<tosa::Conv2DOp, linalg::Conv2DNhwcHwcfOp,
@@ -1101,14 +1180,14 @@ void mlir::tosa::populateTosaToLinalgNamedConversionPatterns(
       // clang-format off
       ConvConverter<tosa::Conv3DOp, linalg::Conv3DNdhwcDhwcfOp, linalg::Conv3DNdhwcDhwcfQOp>,
       DepthwiseConvConverter,
-      MatMulConverter,
       AvgPool2dConverter,
       FullyConnectedConverter,
       TransposeConverter
   >(patterns->getContext());
-
   patterns->add<
       MaxPool2dConverter
     >(converter, patterns->getContext());
+  patterns->add<
+      MatMulConverter>(patterns->getContext(), options.useMatmulForSingleBatch);
   // clang-format on
 }

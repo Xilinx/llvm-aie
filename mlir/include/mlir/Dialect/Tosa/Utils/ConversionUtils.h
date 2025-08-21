@@ -84,6 +84,18 @@ LogicalResult EqualizeRanks(PatternRewriter &rewriter, Location loc,
 LogicalResult EqualizeRanks(ImplicitLocOpBuilder &builder, Value &input1,
                             Value &input2);
 
+Value getTosaConstShape(ImplicitLocOpBuilder &builder,
+                        llvm::ArrayRef<int64_t> shape);
+
+Value getTosaConstShape(PatternRewriter &rewriter, Location loc,
+                        llvm::ArrayRef<int64_t> shape);
+
+// Get accumulator type for TOSA convolution ops
+LogicalResult getConvOpsAccType(PatternRewriter &rewriter,
+                                RankedTensorType inputTy,
+                                RankedTensorType weightTy,
+                                RankedTensorType outputTy, TypeAttr &accType);
+
 namespace {
 
 // Creates a TOSA operation and performs shape inference on the individual
@@ -217,7 +229,8 @@ TosaOp CreateOpAndInferShape(PatternRewriter &rewriter, Location loc,
 }
 
 // Apply an int32_t permutation to some input, that should be of the same
-// size as perms. Perms should contain some permutation of 0 - perms.size() - 1.
+// size as perms. Perms should contain some permutation of 0 - perms.size()
+// - 1.
 template <typename T>
 SmallVector<T> applyTOSAPermutation(ArrayRef<T> input,
                                     ArrayRef<int32_t> perms) {

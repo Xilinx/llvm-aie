@@ -107,6 +107,14 @@ void mlir::python::populatePassManagerSubmodule(nb::module_ &m) {
           "tree_printing_dir_path"_a.none() = nb::none(),
           "Enable IR printing, default as mlir-print-ir-after-all.")
       .def(
+          "enable_reproducer_before_all",
+          [](PyPassManager &passManager, const std::string &outputDir) {
+            mlirPassManagerEnableReproducerBeforeAll(
+                passManager.get(),
+                mlirStringRefCreate(outputDir.data(), outputDir.size()));
+          },
+          "Enable mlir-reproducer-before-all.")
+      .def(
           "enable_verifier",
           [](PyPassManager &passManager, bool enable) {
             mlirPassManagerEnableVerifier(passManager.get(), enable);

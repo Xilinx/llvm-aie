@@ -466,7 +466,7 @@ void PatternLowering::generate(BoolNode *boolNode, Block *&currentBlock,
         loc, cstQuestion->getResultTypes(), cstQuestion->getName(), args,
         cstQuestion->getIsNegated(), success, failure);
 
-    constraintOpMap.insert({cstQuestion, applyConstraintOp});
+    constraintOpMap[cstQuestion] = applyConstraintOp;
     break;
   }
   default:
@@ -758,9 +758,10 @@ void PatternLowering::generateRewriter(
 
   // Create the new operation.
   Location loc = operationOp.getLoc();
+  auto numRegions = operationOp.getNumRegions().value_or(0);
   Value createdOp = builder.create<pdl_interp::CreateOperationOp>(
       loc, *operationOp.getOpName(), types, hasInferredResultTypes, operands,
-      attributes, operationOp.getAttributeValueNames());
+      attributes, operationOp.getAttributeValueNames(), numRegions);
   rewriteValues[operationOp.getOp()] = createdOp;
 
   // Generate accesses for any results that have their types constrained.

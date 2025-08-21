@@ -15,3 +15,12 @@ func.func @testImportedInterface() -> i1 {
   %value = "builtin.unrealized_conversion_cast"() : () -> (i1)
   return %value : i1
 }
+
+// CHECK-LABEL: func @test_builtin
+func.func @test_builtin() {
+  // CHECK: test.success
+  // CHECK: test.equals_neg
+  "test.equals"() { val = 4 : i32 }: () -> ()
+  "test.equals_neg"() { val = 4 : i32 }: () -> ()
+  return
+}

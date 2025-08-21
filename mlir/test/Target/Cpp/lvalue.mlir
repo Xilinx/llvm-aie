@@ -24,5 +24,5 @@ emitc.func @lvalue_variables(%v1: i32, %v2: i32) -> i32 {
 // CHECK-NEXT: return [[VAR_LOAD]];
 
 
-emitc.func @zero(%arg0: !emitc.ptr<i32>) attributes {specifiers = ["extern"]}
+emitc.func private @zero(%arg0: !emitc.ptr<i32>) attributes {specifiers = ["extern"]}
 // CHECK-LABEL: extern void zero(int32_t*);

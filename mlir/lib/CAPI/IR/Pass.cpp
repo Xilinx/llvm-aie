@@ -71,6 +71,11 @@ void mlirPassManagerEnableIRPrinting(MlirPassManager passManager,
                                    unwrap(treePrintingPath), *unwrap(flags));
 }
 
+void mlirPassManagerEnableReproducerBeforeAll(MlirPassManager passManager,
+                                              MlirStringRef outputDir) {
+  return unwrap(passManager)->enableReproducerBeforeAll(unwrap(outputDir));
+}
+
 void mlirPassManagerEnableVerifier(MlirPassManager passManager, bool enable) {
   unwrap(passManager)->enableVerifier(enable);
 }

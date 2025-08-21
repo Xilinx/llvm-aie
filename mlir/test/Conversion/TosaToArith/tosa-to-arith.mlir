@@ -2,12 +2,16 @@
 // RUN: mlir-opt --split-input-file --tosa-to-arith="include-apply-rescale=false" %s -verify-diagnostics -o -| FileCheck --check-prefix="SCALE" %s
 
 // CHECK-LABEL: func @const_test
-func.func @const_test() -> (tensor<i32>) {
-  // CHECK: [[C3:%.+]] = arith.constant dense<3> : tensor<i32>
-  %result = "tosa.const"() {value = dense<3> : tensor<i32>} : () -> tensor<i32>
+func.func @const_test() -> (tensor<i32>, tensor<ui32>) {
+  // CHECK: %[[CI32:.+]] = arith.constant dense<3> : tensor<i32>
+  %i32 = "tosa.const"() {value = dense<3> : tensor<i32>} : () -> tensor<i32>
 
-  // CHECK: return [[C3]]
-  return %result : tensor<i32>
+  // CHECK: %[[CUI32:.+]] = arith.constant dense<3> : tensor<i32>
+  // CHECK: %[[CAST:.*]] = builtin.unrealized_conversion_cast %[[CUI32]] : tensor<i32> to tensor<ui32>
+  %ui32 = "tosa.const"() {value = dense<3> : tensor<ui32>} : () -> tensor<ui32>
+
+  // CHECK: return %[[CI32]], %[[CAST]]
+  return %i32, %ui32 : tensor<i32>,  tensor<ui32>
 }
 
 // -----

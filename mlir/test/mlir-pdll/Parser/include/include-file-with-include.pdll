@@ -1,0 +1,5 @@
+#once
+
+#include "include/included-with-once.pdll"
+
+Constraint bar() {}

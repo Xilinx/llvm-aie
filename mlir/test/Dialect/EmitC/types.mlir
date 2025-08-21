@@ -53,6 +53,12 @@ func.func @opaque_types() {
   emitc.call_opaque "f"() {template_args = [!emitc.opaque<"std::vector<std::string>">]} : () -> ()
   // CHECK-NEXT: !emitc.opaque<"SmallVector<int*, 4>">
   emitc.call_opaque "f"() {template_args = [!emitc.opaque<"SmallVector<int*, 4>">]} : () -> ()
+  // CHECK-NEXT: !emitc.opaque<"{}", i32>
+  emitc.call_opaque "f"() {template_args = [!emitc<opaque<"{}", i32>>]} : () -> ()
+  // CHECK-NEXT: !emitc.opaque<"{}, {}", i32, f32>]
+  emitc.call_opaque "f"() {template_args = [!emitc<opaque<"{}, {}", i32, f32>>]} : () -> ()
+  // CHECK-NEXT: !emitc.opaque<"{}"
+  emitc.call_opaque "f"() {template_args = [!emitc<opaque<"{}">>]} : () -> ()
 
   return
 }

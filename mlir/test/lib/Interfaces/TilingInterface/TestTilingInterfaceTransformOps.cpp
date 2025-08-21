@@ -14,13 +14,18 @@
 #include "mlir/Dialect/Affine/IR/AffineOps.h"
 #include "mlir/Dialect/Index/IR/IndexDialect.h"
 #include "mlir/Dialect/SCF/Transforms/TileUsingInterface.h"
+#include "mlir/Dialect/Tensor/IR/Tensor.h"
 #include "mlir/Dialect/Transform/IR/TransformAttrs.h"
 #include "mlir/Dialect/Transform/IR/TransformDialect.h"
 #include "mlir/Dialect/Transform/Interfaces/TransformInterfaces.h"
 #include "mlir/Dialect/Utils/StaticValueUtils.h"
 #include "mlir/IR/Dominance.h"
+#include "mlir/IR/OpDefinition.h"
 #include "mlir/IR/OpImplementation.h"
 #include "mlir/Interfaces/TilingInterface.h"
+#include <deque>
+#include <functional>
+#include <string>
 
 #define GET_OP_CLASSES
 #include "TestTilingInterfaceTransformOps.h.inc"
@@ -54,12 +59,13 @@ static llvm::SmallDenseSet<Operation *> collectTiledAndFusedOps(Operation *op) {
 /// Apply a tile and fuse transformation to all payload ops and store both the
 /// tiled operation as well as the created tile loops.
 template <typename Range>
-static LogicalResult
-applyTileAndFuseToAll(RewriterBase &rewriter, Operation *transformOp,
-                      Range &&payloadOps, unsigned numLoops,
-                      ArrayRef<OpFoldResult> tileSizes,
-                      ArrayRef<int64_t> interchange, bool useForall,
-                      TransformResults &transformResults) {
+static LogicalResult applyTileAndFuseToAll(
+    RewriterBase &rewriter, Operation *transformOp, Range &&payloadOps,
+    unsigned numLoops, ArrayRef<OpFoldResult> tileSizes,
+    ArrayRef<int64_t> interchange, bool useForall,
+    TransformResults &transformResults,
+    std::optional<scf::SCFTileAndFuseOptions::WorklistInsertFnTy>
+        insertIntoWorklist) {
   SmallVector<Operation *> tiledOps;
   SmallVector<SmallVector<Operation *>> loopOps(numLoops);
 
@@ -87,6 +93,9 @@ applyTileAndFuseToAll(RewriterBase &rewriter, Operation *transformOp,
     }
 
     scf::SCFTileAndFuseOptions tileAndFuseOptions;
+    if (insertIntoWorklist.has_value()) {
+      tileAndFuseOptions.setWorklistInsertFn(*insertIntoWorklist);
+    }
     tileAndFuseOptions.setTilingOptions(tilingOptions);
 
     scf::SCFTileAndFuseOptions::ControlFnTy controlFn =
@@ -157,7 +166,65 @@ transform::TestFuseAndYieldOp::apply(TransformRewriter &rewriter,
   LogicalResult result = applyTileAndFuseToAll(
       rewriter, getOperation(), state.getPayloadOps(getTarget()),
       tileSizes.size() - llvm::count(tileSizes, 0), tileSizesOfr,
-      tileInterchange, getUseForall(), transformResults);
+      tileInterchange, getUseForall(), transformResults, {});
+  return failed(result) ? DiagnosedSilenceableFailure::definiteFailure()
+                        : DiagnosedSilenceableFailure::success();
+}
+
+//===----------------------------------------------------------------------===//
+// TestFuseOrderedOp
+//===----------------------------------------------------------------------===//
+
+static std::optional<int64_t>
+getProducerTilingPriority(tensor::ExtractSliceOp op) {
+  auto *producer = op.getSource().getDefiningOp();
+  if (!producer)
+    return {};
+
+  if (!producer->hasAttrOfType<IntegerAttr>("tiling_priority"))
+    return {};
+
+  auto attr = producer->getAttrOfType<IntegerAttr>("tiling_priority");
+  return attr.getInt();
+}
+
+static void
+insertIntoWorklistOrdered(tensor::ExtractSliceOp op,
+                          std::deque<tensor::ExtractSliceOp> &worklist) {
+  std::optional<int64_t> opTilingOrder = getProducerTilingPriority(op);
+  if (!opTilingOrder) {
+    worklist.push_back(op);
+    return;
+  }
+
+  auto iterator = worklist.begin();
+  for (; iterator != worklist.end(); ++iterator) {
+    std::optional<int64_t> otherOpTilingOrder =
+        getProducerTilingPriority(*iterator);
+    if (!otherOpTilingOrder || *otherOpTilingOrder > *opTilingOrder)
+      break;
+  }
+  worklist.insert(iterator, op);
+}
+
+DiagnosedSilenceableFailure
+transform::TestFuseOrderedOp::apply(TransformRewriter &rewriter,
+                                    TransformResults &transformResults,
+                                    TransformState &state) {
+  SmallVector<int64_t> tileSizes =
+      extractFromIntegerArrayAttr<int64_t>(getTileSizes());
+  SmallVector<int64_t> tileInterchange;
+  for (size_t i = 0; i < tileSizes.size(); ++i) {
+    tileInterchange.push_back(i);
+  }
+
+  SmallVector<OpFoldResult> tileSizesOfr =
+      getAsIndexOpFoldResult(rewriter.getContext(), tileSizes);
+
+  LogicalResult result = applyTileAndFuseToAll(
+      rewriter, getOperation(), state.getPayloadOps(getTarget()),
+      tileSizes.size() - llvm::count(tileSizes, 0), tileSizesOfr, {}, false,
+      transformResults, insertIntoWorklistOrdered);
   return failed(result) ? DiagnosedSilenceableFailure::definiteFailure()
                         : DiagnosedSilenceableFailure::success();
 }

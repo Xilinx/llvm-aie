@@ -75,3 +75,27 @@ pdl.pattern : benefit(1) {
     %root = operation -> (%types : !pdl.range<type>)
     rewrite %root with "rewriter"
 }
+
+// -----
+
+// Ensure that there is no use-before-def
+
+pdl.pattern @a : benefit(2) {
+  %1 = attribute = "a"
+  %ty = types
+  %op = operation "opA" -> (%ty : !pdl.range<type>)
+  %constr = apply_native_constraint "same_constraint"(%1: !pdl.attribute): !pdl.attribute
+  rewrite %op {
+    replace %op with %op
+  }
+}
+pdl.pattern @b : benefit(200) {
+  %1 = attribute = "a"
+  %ty = types
+  %op = operation "opB"  {} -> (%ty : !pdl.range<type>)
+  %constr = apply_native_constraint "same_constraint"(%1: !pdl.attribute) : !pdl.attribute
+  %user = apply_native_constraint "some_use"(%constr : !pdl.attribute) : !pdl.attribute
+  rewrite %op {
+    replace %op with %op
+  }
+}

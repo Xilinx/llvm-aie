@@ -388,11 +388,8 @@ function(add_mlir_library name)
 
   if(TARGET ${name})
     target_link_libraries(${name} INTERFACE ${LLVM_COMMON_LIBS})
-    if(${ARG_INSTALL_WITH_TOOLCHAIN})
-      set(INSTALL_WITH_TOOLCHAIN INSTALL_WITH_TOOLCHAIN)
-    endif()
     if(NOT ARG_DISABLE_INSTALL)
-      add_mlir_library_install(${name} ${INSTALL_WITH_TOOLCHAIN})
+      add_mlir_library_install(${name})
     endif()
   else()
     # Add empty "phony" target
@@ -620,30 +617,26 @@ endfunction(add_mlir_aggregate)
 # This is usually done as part of add_mlir_library but is broken out for cases
 # where non-standard library builds can be installed.
 function(add_mlir_library_install name)
-  cmake_parse_arguments(ARG
-  "INSTALL_WITH_TOOLCHAIN"
-  ""
-  ""
-  ${ARGN})
-  if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY OR ARG_INSTALL_WITH_TOOLCHAIN)
-    get_target_export_arg(${name} MLIR export_to_mlirtargets UMBRELLA mlir-libraries)
-    install(TARGETS ${name}
-      COMPONENT ${name}
-      ${export_to_mlirtargets}
-      LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
-      ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX}
-      RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
-      # Note that CMake will create a directory like:
-      #   objects-${CMAKE_BUILD_TYPE}/obj.LibName
-      # and put object files there.
-      OBJECTS DESTINATION lib${LLVM_LIBDIR_SUFFIX})
+  if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
+  get_target_export_arg(${name} MLIR export_to_mlirtargets UMBRELLA mlir-libraries)
+  install(TARGETS ${name}
+    COMPONENT ${name}
+    ${export_to_mlirtargets}
+    LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
+    ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX}
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+    # Note that CMake will create a directory like:
+    #   objects-${CMAKE_BUILD_TYPE}/obj.LibName
+    # and put object files there.
+    OBJECTS DESTINATION lib${LLVM_LIBDIR_SUFFIX}
+  )
 
-    if (NOT LLVM_ENABLE_IDE)
-      add_llvm_install_targets(install-${name}
-                              DEPENDS ${name}
-                              COMPONENT ${name})
-    endif()
-    set_property(GLOBAL APPEND PROPERTY MLIR_ALL_LIBS ${name})
+  if (NOT LLVM_ENABLE_IDE)
+    add_llvm_install_targets(install-${name}
+                            DEPENDS ${name}
+                            COMPONENT ${name})
+  endif()
+  set_property(GLOBAL APPEND PROPERTY MLIR_ALL_LIBS ${name})
   endif()
   set_property(GLOBAL APPEND PROPERTY MLIR_EXPORTS ${name})
 endfunction()
@@ -748,7 +741,8 @@ function(mlir_target_link_libraries target type)
   endif()
 
   if (MLIR_LINK_MLIR_DYLIB)
-    target_link_libraries(${target} ${type} MLIR)
+    # AMD: Do not link shared, as this causes linking errors
+    target_link_libraries(${target} ${type} ${ARGN})
   else()
     target_link_libraries(${target} ${type} ${ARGN})
   endif()

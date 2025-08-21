@@ -98,3 +98,6 @@ func.func @use_global_array_write(%i: index, %val : f32) {
 // CPP-DECLTOP-SAME: (size_t [[V1:.*]], float [[V2:.*]])
 // CPP-DECLTOP-NEXT: myglobal[[[V1]]] = [[V2]];
 // CPP-DECLTOP-NEXT: return;
+
+emitc.global @ref : i32 = #emitc.opaque<"myglobal_int"> ref
+// CHECK: int32_t &ref = myglobal_int;

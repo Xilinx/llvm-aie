@@ -171,6 +171,11 @@ void CSEDriver::replaceUsesAndDelete(ScopedMapTy &knownValues, Operation *op,
   // current op.
   if (isa<UnknownLoc>(existing->getLoc()) && !isa<UnknownLoc>(op->getLoc()))
     existing->setLoc(op->getLoc());
+  else {
+    // Otherwise, fuse both locations.
+    existing->setLoc(mlir::FusedLoc::get(existing->getContext(),
+                                         {existing->getLoc(), op->getLoc()}));
+  }
 
   ++numCSE;
 }

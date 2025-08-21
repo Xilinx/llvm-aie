@@ -12,6 +12,7 @@
 
 #include "mlir/Conversion/TosaToArith/TosaToArith.h"
 
+#include "mlir/Conversion/TosaToLinalg/TosaToLinalg.h"
 #include "mlir/Dialect/Arith/IR/Arith.h"
 #include "mlir/Dialect/Tosa/IR/TosaOps.h"
 #include "mlir/Dialect/Tosa/Transforms/Passes.h"
@@ -34,12 +35,15 @@ public:
   TosaToArith(TosaToArithOptions &options) : TosaToArithBase(options) {}
 
   void runOnOperation() override {
+    TypeConverter converter;
+    mlir::tosa::populateTosaToLinalgTypeConversion(converter);
+
     RewritePatternSet patterns(&getContext());
     ConversionTarget target(getContext());
     target.addIllegalOp<tosa::ConstOp>();
     target.addLegalDialect<arith::ArithDialect>();
 
-    mlir::tosa::populateTosaToArithConversionPatterns(&patterns);
+    mlir::tosa::populateTosaToArithConversionPatterns(converter, &patterns);
 
     if (this->includeApplyRescale) {
       mlir::tosa::populateTosaRescaleToArithConversionPatterns(&patterns,

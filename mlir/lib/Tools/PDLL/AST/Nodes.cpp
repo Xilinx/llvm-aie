@@ -16,7 +16,7 @@ using namespace mlir;
 using namespace mlir::pdll::ast;
 
 /// Copy a string reference into the context with a null terminator.
-static StringRef copyStringWithNull(Context &ctx, StringRef str) {
+StringRef mlir::pdll::ast::copyStringWithNull(Context &ctx, StringRef str) {
   if (str.empty())
     return str;
 
@@ -303,11 +303,13 @@ MemberAccessExpr *MemberAccessExpr::create(Context &ctx, SMRange loc,
 // OperationExpr
 //===----------------------------------------------------------------------===//
 
-OperationExpr *
-OperationExpr::create(Context &ctx, SMRange loc, const ods::Operation *odsOp,
-                      const OpNameDecl *name, ArrayRef<Expr *> operands,
-                      ArrayRef<Expr *> resultTypes,
-                      ArrayRef<NamedAttributeDecl *> attributes) {
+OperationExpr *OperationExpr::create(Context &ctx, SMRange loc,
+                                     const ods::Operation *odsOp,
+                                     const OpNameDecl *name,
+                                     ArrayRef<Expr *> operands,
+                                     ArrayRef<Expr *> resultTypes,
+                                     ArrayRef<NamedAttributeDecl *> attributes,
+                                     unsigned numRegions) {
   unsigned allocSize =
       OperationExpr::totalSizeToAlloc<Expr *, NamedAttributeDecl *>(
           operands.size() + resultTypes.size(), attributes.size());
@@ -317,7 +319,7 @@ OperationExpr::create(Context &ctx, SMRange loc, const ods::Operation *odsOp,
   Type resultType = OperationType::get(ctx, name->getName(), odsOp);
   OperationExpr *opExpr = new (rawData)
       OperationExpr(loc, resultType, name, operands.size(), resultTypes.size(),
-                    attributes.size(), name->getLoc());
+                    attributes.size(), numRegions, name->getLoc());
   std::uninitialized_copy(operands.begin(), operands.end(),
                           opExpr->getOperands().begin());
   std::uninitialized_copy(resultTypes.begin(), resultTypes.end(),

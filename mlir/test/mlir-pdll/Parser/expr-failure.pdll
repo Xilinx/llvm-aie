@@ -124,6 +124,32 @@ Pattern {
 
 // -----
 
+Constraint checkAttr(attr: Attr);
+Pattern {
+  let tuple = (result1 = value: Value);
+  // CHECK: unable to convert expression of type `Tuple<result1: Value>` to the expected type of `Attr`
+  checkAttr(tuple);
+  erase _: Op;
+}
+
+// -----
+
+Pattern ConstraintArrayAttrWithAttrAndValue {
+  let root = op<test.op>(arg: Value) -> ();
+  let attr1 = attr<"\"test1\"">;
+  let array = [attr1, arg];
+  // CHECK:  unable to convert expression of type `Value` to the expected type of `Attr`
+  let root = op<test.op> -> ();
+  rewrite root with {
+      let newRoot = op<test.success>() { some_array = array} -> ();
+      replace root with newRoot;
+  };
+}
+
+// -----
+
+
+
 //===----------------------------------------------------------------------===//
 // Range Expr
 //===----------------------------------------------------------------------===//
@@ -223,7 +249,7 @@ Pattern {
 // -----
 
 Pattern {
-  // CHECK: expected expression
+  // CHECK: expected colon after integer literal
   let tuple = (10 = _: Value);
   erase op<>;
 }
@@ -253,6 +279,46 @@ Pattern {
 Pattern {
   // CHECK: expected `>` after attribute literal
   let foo = attr<""<>;
+}
+
+// -----
+
+Pattern {
+  let root = op<func.func> -> ();
+  // CHECK: expected expression. If you are trying to create an ArrayAttr, use a space between `[` and `{`.
+  rewrite root with {
+      let newRoot = op<func.func>() { some_array =  [{"firstAttr" = attr<"\"test\"">}]} -> ();
+      replace root with newRoot;
+  };;
+}
+
+// -----
+
+Pattern {
+  let root = op<func.func> -> ();
+  3;
+  // CHECK: expected colon after integer literal
+  replace root with root;
+}
+
+// -----
+
+Pattern {
+  let root = op<func.func> -> ();
+  3 :;
+  // CHECK: expected integer type
+  replace root with root;
+}
+
+// -----
+
+Pattern {
+  let root = op<func.func> -> ();
+  // CHECK: expected '}]' in string literal
+  rewrite root with {
+      let newRoot = op<func.func>() { some_array =  [{"firstAttr" = attr<"\"test\"">}, attr<"\"test\"">] } -> ();
+      replace root with newRoot;
+  };
 }
 
 // -----
@@ -398,4 +464,199 @@ Pattern {
 Pattern {
   // CHECK: expected `>` after type literal
   let foo = type<"";
+}
+
+//===----------------------------------------------------------------------===//
+// Builtins
+//===----------------------------------------------------------------------===//
+
+// -----
+
+Pattern {
+  // CHECK: expected expression
+  +
+  erase _: Op;
+}
+
+// -----
+
+Pattern {
+  // CHECK: expected expression
+  *
+  erase _: Op;
+}
+
+// -----
+
+Pattern {
+  // CHECK: expected expression
+  /
+  erase _: Op;
+}
+
+// -----
+
+Pattern {
+  // CHECK: expected expression
+  %
+  erase _: Op;
+}
+
+// -----
+
+Pattern {
+  // CHECK: expected expression
+  log2()
+  erase _: Op;
+}
+
+// -----
+
+Pattern {
+  // CHECK: expected expression
+  exp2()
+  erase _: Op;
+}
+
+// -----
+
+Pattern {
+  // CHECK: cannot evaluate add operator in rewrite section. Assign to a variable with `let`
+  let root = op<>(operand: Value, operands: ValueRange) -> (type: Type, types: TypeRange);
+  rewrite root with {
+    attr<"4 : i32"> + attr<"5 : i32">;
+    erase root;
+  };
+}
+
+// -----
+
+Pattern {
+  // CHECK: cannot evaluate sub operator in rewrite section. Assign to a variable with `let`
+  let root = op<>(operand: Value, operands: ValueRange) -> (type: Type, types: TypeRange);
+  rewrite root with {
+    attr<"4 : i32"> - attr<"5 : i32">;
+    erase root;
+  };
+}
+
+// -----
+
+Pattern {
+  // CHECK: cannot evaluate mul operator in rewrite section. Assign to a variable with `let`
+  let root = op<>(operand: Value, operands: ValueRange) -> (type: Type, types: TypeRange);
+  rewrite root with {
+    attr<"4 : i32"> * attr<"5 : i32">;
+    erase root;
+  };
+}
+
+// -----
+
+Pattern {
+  // CHECK: cannot evaluate div operator in rewrite section. Assign to a variable with `let`
+  let root = op<>(operand: Value, operands: ValueRange) -> (type: Type, types: TypeRange);
+  rewrite root with {
+    attr<"4 : i32"> / attr<"5 : i32">;
+    erase root;
+  };
+}
+
+// -----
+
+Pattern {
+  // CHECK: cannot evaluate mod operator in rewrite section. Assign to a variable with `let`
+  let root = op<>(operand: Value, operands: ValueRange) -> (type: Type, types: TypeRange);
+  rewrite root with {
+    attr<"4 : i32"> % attr<"5 : i32">;
+    erase root;
+  };
+}
+
+// -----
+
+Pattern {
+  // CHECK: cannot evaluate log2 operator in rewrite section. Assign to a variable with `let`
+  let root = op<>(operand: Value, operands: ValueRange) -> (type: Type, types: TypeRange);
+  rewrite root with {
+    log2(attr<"4 : i32">);
+    erase root;
+  };
+}
+
+// -----
+
+Pattern {
+  // CHECK: cannot evaluate exp2 operator in rewrite section. Assign to a variable with `let`
+  let root = op<>(operand: Value, operands: ValueRange) -> (type: Type, types: TypeRange);
+  rewrite root with {
+    exp2(attr<"4 : i32">);
+    erase root;
+  };
+}
+
+// -----
+
+Pattern {
+  // CHECK: cannot evaluate abs operator in rewrite section. Assign to a variable with `let`
+  let root = op<>(operand: Value, operands: ValueRange) -> (type: Type, types: TypeRange);
+  rewrite root with {
+    math_abs(attr<"-4 : si32">);
+    erase root;
+  };
+}
+
+// -----
+
+// check llvm::saveAndRestore works
+Pattern {
+  // CHECK: cannot evaluate exp2 operator in rewrite section. Assign to a variable with `let`
+  let root = op<>(operand: Value, operands: ValueRange) -> (type: Type, types: TypeRange);
+  rewrite root with {
+    let a : Attr = attr<"4 : i32"> + attr<"5 : i32">;
+    exp2(attr<"4 : i32">);
+    erase root;
+  };
+}
+
+// -----
+
+// check llvm::saveAndRestore works
+Pattern {
+  // CHECK: cannot evaluate log2 operator in rewrite section. Assign to a variable with `let`
+  let root = op<>(operand: Value, operands: ValueRange) -> (type: Type, types: TypeRange);
+  rewrite root with {
+    let a : Attr = attr<"4 : i32"> + attr<"5 : i32">;
+    log2(attr<"4 : i32">);
+    erase root;
+  };
+}
+
+// -----
+
+// check llvm::saveAndRestore works
+Pattern {
+  // CHECK: cannot evaluate abs operator in rewrite section. Assign to a variable with `let`
+  let root = op<>(operand: Value, operands: ValueRange) -> (type: Type, types: TypeRange);
+  rewrite root with {
+    let a : Attr = attr<"4 : i32"> + attr<"5 : i32">;
+    math_abs(attr<"4 : i32">);
+    erase root;
+  };
+}
+
+// -----
+
+Pattern {
+  // CHECK: expected expression
+  ==
+  erase _: Op;
+}
+
+// -----
+
+Pattern {
+  // CHECK: expected expression
+  attr<"4 : i32"> ==
+  erase _: Op;
 }

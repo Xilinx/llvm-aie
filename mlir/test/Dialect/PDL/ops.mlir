@@ -173,3 +173,39 @@ pdl.pattern @attribute_with_loc : benefit(1) {
   %root = operation {"attribute" = %attr}
   rewrite %root with "rewriter"
 }
+
+// -----
+
+// Check that we can attach a numRegions attribute to pdl.operation
+
+pdl.pattern @num_regions : benefit(1) {
+  // CHECK-GENERIC: "pdl.attribute"
+  // CHECK-GENERIC-NOT: value = loc
+  %root = operation {} {numRegions = 1 : ui32}
+  rewrite %root with "rewriter"
+}
+
+// -----
+
+pdl.pattern @num_regions_with_attr_vals : benefit(1) {
+  %attr = attribute
+  %root = operation {"attribute" = %attr} {numRegions = 1 : ui32}
+  rewrite %root with "rewriter"
+}
+
+// -----
+
+pdl.pattern @num_regions_with_operands : benefit(1) {
+  %types = types
+  %operands = operands : %types
+  %root = operation (%operands : !pdl.range<value>) {} {numRegions = 1 : ui32}
+  rewrite %root with "rewriter"
+}
+
+// -----
+
+pdl.pattern @num_regions_with_results : benefit(1) {
+  %types = types
+  %root = operation -> (%types : !pdl.range<type>) {numRegions = 1 : ui32}
+  rewrite %root with "rewriter"
+}

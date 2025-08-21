@@ -10,7 +10,7 @@
 #define MLIR_CONVERSION_PASSES
 
 include "mlir/Pass/PassBase.td"
-
+include "mlir/Dialect/Vector/Transforms/VectorTransformsBase.td"
 
 //===----------------------------------------------------------------------===//
 // ToLLVM
@@ -725,6 +725,12 @@ def ConvertMathToLibm : Pass<"convert-math-to-libm", "ModuleOp"> {
     "func::FuncDialect",
     "vector::VectorDialect",
   ];
+  let options = [
+    Option<"allowC23Features", "allow-c23-features", "bool", "true",
+           "Allow calls to C23-specific functions">,
+    Option<"roundingModeIsDefault", "rounding-mode-is-default", "bool", "false",
+           "Assume default rounding mode">
+  ];
 }
 
 //===----------------------------------------------------------------------===//
@@ -1218,13 +1224,13 @@ def TosaToLinalgNamed
     Pass that converts TOSA operations to the equivalent operations using the
     Linalg named operations.
   }];
-
   let options = [
-      Option<"preferConv2DKernelLayoutHWCF", "prefer-conv2d-kernel-layout-hwcf",
+    Option<"preferConv2DKernelLayoutHWCF", "prefer-conv2d-kernel-layout-hwcf",
            "bool", /*default=*/"false",
-           "Prefer generating linalg.conv_2d_nhwc_hwcf over linalg.conv_2d_nhwc_fhwc">
+           "Prefer generating linalg.conv_2d_nhwc_hwcf over linalg.conv_2d_nhwc_fhwc">,
+    Option<"useMatmulForSingleBatch", "use-matmul-for-single-batch", "bool", /*default=*/"false",
+      "Use linalg.matmul for 1x batch size instead of linalg.batch_matmul.">
   ];
-
   let constructor = "tosa::createTosaToLinalgNamed()";
 }
 
@@ -1271,6 +1277,25 @@ def TosaToTensor : Pass<"tosa-to-tensor"> {
   }];
 
   let constructor = "tosa::createTosaToTensor()";
+}
+
+//===----------------------------------------------------------------------===//
+// UBToEmitC
+//===----------------------------------------------------------------------===//
+
+def ConvertUBToEmitC : Pass<"convert-ub-to-emitc"> {
+  let summary = "Convert UB dialect to EmitC dialect";
+  let description = [{
+    This pass converts supported UB ops to EmitC dialect.
+    When the initialization of values is enabled and some types are opaque, the
+    generated code is C++.
+  }];
+  let dependentDialects = ["emitc::EmitCDialect"];
+  let options = [
+    Option<"noInitialization", "no-initialization", "bool",
+           /*default=*/"false",
+           "Do not initialize the generated variables">,
+  ];
 }
 
 //===----------------------------------------------------------------------===//
@@ -1440,10 +1465,32 @@ def ConvertVectorToLLVMPass : Pass<"convert-vector-to-llvm"> {
            "bool", /*default=*/"false",
            "Enables the use of X86Vector dialect while lowering the vector "
 	   "dialect.">,
-    Option<"vectorTransformsOptions", "vector-transform-options",
-           "vector::VectorTransformsOptions",
-           /*default=*/"vector::VectorTransformsOptions()",
-           "Options to lower some operations like contractions and transposes.">,
+    Option<"vectorContractLowering", "vector-contract-lowering",
+           "vector::VectorContractLowering",
+           /*default=*/"vector::VectorContractLowering::Dot",
+           VectorContractLoweringAttr.summary, [{::llvm::cl::values(
+           clEnumValN(::mlir::vector::VectorContractLowering::Dot, "dot",
+            "Progressively lower to finer grained `vector.contract` and dot-products. (default)"),
+           clEnumValN(::mlir::vector::VectorContractLowering::Matmul, "matmul",
+            "Lower to `vector.matrix_multiply`, maps 1-1 to LLVM matrix intrinsics."),
+           clEnumValN(::mlir::vector::VectorContractLowering::OuterProduct, "outerproduct",
+            "Lower to `vector.outerproduct`."),
+           clEnumValN(::mlir::vector::VectorContractLowering::ParallelArith, "parallelarith",
+            "Lower contract with all reduction dimensions unrolled to 1 to a vector elementwise operations.")
+	        )}]>,
+    Option<"vectorTransposeLowering", "vector-transpose-lowering",
+           "vector::VectorTransposeLowering",
+           /*default=*/"vector::VectorTransposeLowering::EltWise",
+           VectorTransposeLoweringAttr.summary, [{::llvm::cl::values(
+           clEnumValN(::mlir::vector::VectorTransposeLowering::EltWise, "eltwise",
+            "Lower transpose into element-wise extract and inserts (default)"),
+           clEnumValN(::mlir::vector::VectorTransposeLowering::Flat, "flat",
+            "Lower 2-D transpose to `vector.flat_transpose`, maps 1-1 to LLVM matrix intrinsics"),
+           clEnumValN(::mlir::vector::VectorTransposeLowering::Shuffle1D, "shuffle1d",
+            "Lower 2-D transpose to `vector.shuffle` on 1-D vector."),
+           clEnumValN(::mlir::vector::VectorTransposeLowering::Shuffle16x16, "shuffle16x16",
+            "Lower 2-D transpose to `vector.shuffle` on 16x16 vector.")
+          )}]>,
   ];
 }
 

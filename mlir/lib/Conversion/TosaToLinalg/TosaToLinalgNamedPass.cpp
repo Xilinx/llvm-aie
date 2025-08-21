@@ -48,7 +48,7 @@ public:
 
   void runOnOperation() override {
     TypeConverter converter;
-    tosa::populateTosaTypeConversion(converter);
+    mlir::tosa::populateTosaToLinalgTypeConversion(converter);
 
     RewritePatternSet patterns(&getContext());
     ConversionTarget target(getContext());
@@ -70,6 +70,7 @@ public:
     FunctionOpInterface func = getOperation();
     TosaToLinalgNamedOptions options;
     options.preferConv2DKernelLayoutHWCF = preferConv2DKernelLayoutHWCF;
+    options.useMatmulForSingleBatch = useMatmulForSingleBatch;
     tosa::populateTosaToLinalgNamedConversionPatterns(converter, &patterns,
                                                       options);
     if (failed(applyFullConversion(func, target, std::move(patterns))))

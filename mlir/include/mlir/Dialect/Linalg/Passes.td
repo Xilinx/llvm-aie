@@ -75,6 +75,11 @@ def LinalgElementwiseOpFusionPass : Pass<"linalg-fuse-elementwise-ops"> {
   let dependentDialects = [
     "affine::AffineDialect", "linalg::LinalgDialect", "memref::MemRefDialect"
   ];
+  let options = [
+    Option<"removeOutsDependency", "remove-outs-dependency", "bool",
+           /*default=*/"true",
+           "Replace out by tensor.empty">,
+  ];
 }
 
 def LinalgNamedOpConversionPass: Pass<"linalg-named-op-conversion"> {

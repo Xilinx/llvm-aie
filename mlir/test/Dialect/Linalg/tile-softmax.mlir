@@ -153,3 +153,56 @@ module attributes {transform.with_named_sequence} {
     transform.yield
   }
 }
+
+// -----
+
+// Check that tile-and-fuse works with SoftMax, i.e. that tiling of a SoftMax op
+// from a tile of its consumer is correct.
+// For this, use the FuseAndYield transform op.
+
+// CHECK-LABEL: @softmax_tile_from_consumer(
+// CHECK-SAME: %[[ARG0:[^:]*]]: tensor<16x64x256xf32>
+
+// CHECK-DAG: %[[C0:.*]] = arith.constant 0 : index
+// CHECK-DAG: %[[C2:.*]] = arith.constant 2 : index
+// CHECK-DAG: %[[C8:.*]] = arith.constant 8 : index
+// CHECK-DAG: %[[C16:.*]] = arith.constant 16 : index
+// CHECK-DAG: %[[C256:.*]] = arith.constant 256 : index
+
+// CHECK: %[[EMPTY:[^ ]*]] = tensor.empty() : tensor<16x64x256xf32>
+
+// CHECK: scf.for %[[I0:[^ ]*]] = %[[C0]] to %[[C16]] step %[[C2]]
+// CHECK: scf.for %[[I1:[^ ]*]] = %[[C0]] to %[[C256]] step %[[C8]]
+
+// CHECK: %[[SOFTMAX_IN:[^ ]*]] = tensor.extract_slice %[[ARG0]][%[[I0]], 0, %[[I1]]] [2, 64, 8] [1, 1, 1]
+// CHECK: %[[SOFTMAX:[^ ]*]] = linalg.softmax dimension(1) ins(%[[SOFTMAX_IN]] : tensor<2x64x8xf32>)
+// CHECK: %[[GENERIC:[^ ]*]] = linalg.generic {{.*}} ins(%[[SOFTMAX]] : tensor<2x64x8xf32>)
+
+func.func @softmax_tile_from_consumer(%arg0: tensor<16x64x256xf32>) -> tensor<16x64x256xf32> {
+  %cst = arith.constant 1.000000e+00 : f32
+  %empty0 = tensor.empty() : tensor<16x64x256xf32>
+  %1 = linalg.softmax
+         dimension(1) ins(%arg0 : tensor<16x64x256xf32>) outs(%empty0 : tensor<16x64x256xf32>) -> tensor<16x64x256xf32>
+  %empty1 = tensor.empty() : tensor<16x64x256xf32>
+  %eltwise = linalg.generic
+      {indexing_maps = [affine_map<(d0, d1, d2) -> (d0, d1, d2)>,
+                        affine_map<(d0, d1, d2) -> (d0, d1, d2)>],
+       iterator_types = ["parallel", "parallel", "parallel"]
+      }
+      ins(%1 : tensor<16x64x256xf32>)
+      outs(%empty1 : tensor<16x64x256xf32>) {
+    ^bb0(%arg2: f32, %arg3: f32):
+      %arg2Plus1 = arith.addf %arg2, %cst : f32
+      linalg.yield %arg2Plus1 : f32
+    } -> tensor<16x64x256xf32>
+
+  return %eltwise : tensor<16x64x256xf32>
+}
+
+module attributes {transform.with_named_sequence} {
+  transform.named_sequence @__transform_main(%arg1: !transform.any_op {transform.readonly}) {
+    %0 = transform.structured.match ops{["linalg.generic"]} in %arg1 : (!transform.any_op) -> !transform.any_op
+    %1, %loop:3 = transform.test.fuse_and_yield %0 [2, 64, 8] : (!transform.any_op) -> (!transform.any_op, !transform.any_op, !transform.any_op, !transform.any_op)
+    transform.yield
+  }
+}

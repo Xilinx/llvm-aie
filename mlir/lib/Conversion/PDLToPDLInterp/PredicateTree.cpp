@@ -266,13 +266,23 @@ static void getConstraintPredicates(pdl::ApplyNativeConstraintOp op,
                                     DenseMap<Value, Position *> &inputs) {
   OperandRange arguments = op.getArgs();
 
+  Position *pos = nullptr;
   std::vector<Position *> allPositions;
-  allPositions.reserve(arguments.size());
-  for (Value arg : arguments)
-    allPositions.push_back(inputs.lookup(arg));
 
-  // Push the constraint to the furthest position.
-  Position *pos = *llvm::max_element(allPositions, comparePosDepth);
+  // If this constraint has no arguments, this means it has no dependencies, and
+  // the same applies to all results
+  if (arguments.empty()) {
+    pos = builder.getRoot();
+  } else {
+    allPositions.reserve(arguments.size());
+    for (Value arg : arguments)
+      allPositions.push_back(inputs.lookup(arg));
+
+    // Push the constraint to the furthest position.
+    pos = *llvm::max_element(allPositions, comparePosDepth);
+  }
+  assert(pos && "Must have a non-null value");
+
   ResultRange results = op.getResults();
   PredicateBuilder::Predicate pred = builder.getConstraint(
       op.getName(), allPositions, SmallVector<Type>(results.getTypes()),
@@ -757,17 +767,25 @@ struct OrderedPredicate {
   /// model.
   bool operator<(const OrderedPredicate &rhs) const {
     // Sort by:
+    // * not being a constraint. Rational: When writing constraints, it is
+    //   sometimes assumed that checks for null or operation names are executed
+    //   before the constraint. As there is no dependency between this
+    //   operation, this is not always guaranteed, which can lead to bugs if the
+    //   constraints is not checking inputs for null itself. By ordering
+    //   constraints to the end, it is assured that implicit checks are nun
+    //   before them
     // * higher first and secondary order sums
     // * lower depth
     // * lower position dependency
     // * lower predicate dependency
     // * lower tie breaking ID
     auto *rhsPos = rhs.position;
-    return std::make_tuple(primary, secondary, rhsPos->getOperationDepth(),
+    return std::make_tuple(!isa<ConstraintQuestion>(question), primary,
+                           secondary, rhsPos->getOperationDepth(),
                            rhsPos->getKind(), rhs.question->getKind(), rhs.id) >
-           std::make_tuple(rhs.primary, rhs.secondary,
-                           position->getOperationDepth(), position->getKind(),
-                           question->getKind(), id);
+           std::make_tuple(!isa<ConstraintQuestion>(rhs.question), rhs.primary,
+                           rhs.secondary, position->getOperationDepth(),
+                           position->getKind(), question->getKind(), id);
   }
 };
 

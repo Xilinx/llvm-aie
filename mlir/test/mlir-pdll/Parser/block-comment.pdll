@@ -1,0 +1,67 @@
+// RUN: mlir-pdll %s -I %S -split-input-file | FileCheck %s
+
+// Any text between /* and */ is ignored
+
+// CHECK: Module
+// CHECK: LetStmt
+// CHECK:   `-VariableDecl {{.*}} Name<var> Type<ValueRange>
+// CHECK:     `-MemberAccessExpr {{.*}} Member<$results> Type<ValueRange>
+// CHECK:       `-DeclRefExpr {{.*}} Type<Op<dialect.op>>
+// CHECK:         `-VariableDecl {{.*}} Name<input>
+// CHECK:     `Constraints`
+// CHECK:       `-ValueRangeConstraintDecl
+Pattern { /* Block Comment */
+  /* let input: Op<dialect.op>; Ignored block */
+  let input: /* Block Comment */  Op<dialect.op>; /* Ignored block */
+
+  let var: /* Ignored block */ ValueRange = input /* Ignored block */;
+  erase _: /* Ignored block */ Op;
+}
+
+// -----
+
+// CHECK: Module
+// CHECK: UserConstraintDecl {{.*}} Name<TestConstraint>
+// CHECK:   -VariableDecl {{.*}} Name<op> Type<Op>
+// CHECK: UserRewriteDecl {{.*}} Name<TestRewrite>
+// CHECK:   -VariableDecl {{.*}} Name<op> Type<Op>
+// CHECK: PatternDecl {{.*}} Name<Test>
+// CHECK:   -LetStmt
+// CHECK:      -VariableDecl {{.*}} Name<root> Type<Op>
+// CHECK:   -CallExpr
+// CHECK:      `-DeclRefExpr {{.*}} Type<Constraint>
+// CHECK:   -RewriteStmt
+// CHECK:      `-CompoundStmt
+// CHECK:         `-DeclRefExpr {{.*}} Type<Rewrite>
+// CHECK:   -EraseStmt
+
+Constraint TestConstraint(attr: Attr, op: Op, type: Type, value: Value, typeRange: TypeRange, valueRange: ValueRange) [{
+  return success();
+}];
+
+Rewrite TestRewrite(attr: Attr, op: Op, type: Type, value: Value, typeRange: TypeRange, valueRange: ValueRange) [{ foo; }];
+
+Pattern Test {
+  let root = op<>(operand: Value, operands: ValueRange) -> (type: Type, types: TypeRange);
+  TestConstraint(/*attr=*/attr<"true">,  /*op=*/root, /*type=*/type, /*value=*/operand, /*typeRange=*/types, /*valueRange=*/operands);
+  rewrite root with {
+    TestRewrite(/*attr=*/attr<"true">, /*op=*/root, /*type=*/type, /*value=*/operand, /*typeRange=*/types, /*valueRange=*/operands);
+    erase root;
+  };
+}
+
+// -----
+
+// Test multiple combinations of block comments.
+
+// CHECK: Module
+// CHECK: PatternDecl {{.*}}
+// CHECK:   -LetStmt
+// CHECK:      -VariableDecl {{.*}} Name<input> Type<Op<dialect.op>>
+// CHECK:   -EraseStmt
+
+Pattern { /* Block Comment **//****/
+  let input: /* Block Comment **//**/  Op<dialect.op>; /* Block Comment **/
+  erase input;
+}
+/* Block Comment **/ /*****/

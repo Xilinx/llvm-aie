@@ -1,0 +1,11 @@
+// RUN: mlir-pdll -emit-warning-for-repeated-includes %s -I %S 2>&1 | FileCheck %s
+
+#include "include/included-with-once.pdll"
+#include "include/include-file-with-include.pdll"
+// CHECK-NOT: warning
+
+// CHECK: Module
+// CHECK: |-UserConstraintDecl {{.*}} Name<foo> ResultType<Tuple<>>
+// CHECK: | `-CompoundStmt
+// CHECK: `-UserConstraintDecl {{.*}} Name<bar> ResultType<Tuple<>>
+// CHECK:   `-CompoundStmt

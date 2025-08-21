@@ -10,6 +10,7 @@
 #define MLIR_DIALECT_SCF_TRANSFORMS_TILEUSINGINTERFACE_H
 
 #include "mlir/Dialect/SCF/IR/SCF.h"
+#include "mlir/Dialect/Tensor/IR/Tensor.h"
 #include "mlir/Dialect/Tensor/Transforms/Transforms.h"
 #include "mlir/IR/PatternMatch.h"
 #include "mlir/Interfaces/LoopLikeInterface.h"
@@ -194,6 +195,21 @@ struct SCFTileAndFuseOptions {
   /// before fusion. This will track deleted and newly inserted
   /// `tensor.extract_slice` ops and update the worklist.
   std::optional<FrozenRewritePatternSet> cleanupPatterns = std::nullopt;
+
+  /// A function to insert a tilable node into a list of nodes to be tiled.
+  /// This controls the order in which tiling and fusion happen.
+  using WorklistInsertFnTy = std::function<void(
+      tensor::ExtractSliceOp op, std::deque<tensor::ExtractSliceOp> &worklist)>;
+  /// By default, simply append the op at the end of the queue.
+  WorklistInsertFnTy worklistInsertFn =
+      [](tensor::ExtractSliceOp op,
+         std::deque<tensor::ExtractSliceOp> &worklist) {
+        worklist.push_back(op);
+      };
+  SCFTileAndFuseOptions &setWorklistInsertFn(WorklistInsertFnTy insertFn) {
+    worklistInsertFn = insertFn;
+    return *this;
+  }
 };
 
 /// Fuse the producer of the source of `candidateSliceOp` by computing the
