@@ -219,8 +219,10 @@ bool AIEBaseFrameLowering::spillCalleeSavedRegisters(
     ArrayRef<CalleeSavedInfo> CSI, const TargetRegisterInfo *TRI) const {
   MachineFunction *MF = MBB.getParent();
   auto *TII = static_cast<const AIEBaseInstrInfo *>(STI.getInstrInfo());
-  MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
-  DebugLoc DL = MBBI->getDebugLoc();
+  DebugLoc DL;
+  if (auto MBBI = MBB.getLastNonDebugInstr(); MBBI != MBB.end())
+    DL = MBBI->getDebugLoc(); // MBBI is valid
+
   GPRTOCSGPRMap.clear();
   for (const CalleeSavedInfo &Info : CSI) {
     if (Info.isSpilledToReg()) {
