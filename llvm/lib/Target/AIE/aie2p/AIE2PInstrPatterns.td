@@ -257,6 +257,12 @@ def : Pat<(v32bf16 (fmul v32bf16:$vec1, v32bf16:$vec2)),
                 (VMUL_f_vmul_bf_vmul_bf_core_X_X VEC512:$vec1, VEC512:$vec2, (i32 mulbf16_vecconf.ConfBits)),
                 sub_1024_acc_lo))>;
 
+// Scalar MAC
+def : Pat<(i32 (add eR:$rd, (mul eR:$rs1, eR:$rs2))),
+          (MAC eR:$rd, eR:$rs1, eR:$rs2)>;
+def : Pat<(i32 (sub eR:$rd, (mul eR:$rs1, eR:$rs2))),
+          (MSC eR:$rd, eR:$rs1, eR:$rs2)>; 
+
 // VMUL/VMAC Intrinsics
 
 def : Pat<(int_aie2p_I1024_I1024_ACC2048_addmac_conf VEC1024:$s1, VEC1024:$s2, ACC2048:$acc1, ACC2048:$acc2, eR:$acc),
