@@ -1,3 +1,4 @@
+// Modifications (c) Copyright 2023 - 2025 Advanced Micro Devices, Inc. or its affiliates
 // RUN: mlir-opt --split-input-file -canonicalize="test-convergence" %s | FileCheck %s
 
 // CHECK-LABEL: @argmax_nofold
@@ -985,6 +986,76 @@ func.func @tile_nofold(%arg0: tensor<3x4xf32>) -> tensor<3x8xf32> {
   %cst = tosa.const_shape { value = dense<[1, 2]> : tensor<2xindex> } : () -> !tosa.shape<2>
   %0 = tosa.tile %arg0, %cst: (tensor<3x4xf32>, !tosa.shape<2>) -> tensor<3x8xf32>
   return %0 : tensor<3x8xf32>
+}
+
+// -----
+
+
+// CHECK-LABEL: func.func @tile_on_one_sized_dim_front
+// CHECK-SAME: (%[[ARG:.*]]: tensor<2x3xf32>) -> tensor<4x2x3xf32>
+// CHECK: %[[CST:.*]] = tosa.const_shape {value = dense<[4, 1]> : tensor<2xindex>} : () -> !tosa.shape<2>
+// CHECK: %[[TILE:.*]] = tosa.tile %[[ARG]], %[[CST]] : (tensor<2x3xf32>, !tosa.shape<2>) -> tensor<8x3xf32>
+// CHECK: %[[RESHAPE:.*]] = tosa.reshape %[[TILE]] {new_shape = array<i64: 4, 2, 3>} : (tensor<8x3xf32>) -> tensor<4x2x3xf32>
+// CHECK: return %[[RESHAPE]] : tensor<4x2x3xf32>
+func.func @tile_on_one_sized_dim_front(%arg0: tensor<2x3xf32>) -> tensor<4x2x3xf32> {
+  %r = tosa.reshape %arg0 {new_shape = array<i64: 1, 2, 3>} : (tensor<2x3xf32>) -> tensor<1x2x3xf32>
+  %m = tosa.const_shape {value = dense<[4, 1, 1]> : tensor<3xindex>} : () -> !tosa.shape<3>
+  %t = tosa.tile %r, %m : (tensor<1x2x3xf32>, !tosa.shape<3>) -> tensor<4x2x3xf32>
+  return %t : tensor<4x2x3xf32>
+}
+
+// -----
+
+// CHECK-LABEL: func.func @tile_on_one_sized_dim_middle
+// CHECK-SAME: (%[[ARG:.*]]: tensor<2x3x5xf32>) -> tensor<2x4x3x5xf32>
+// CHECK: %[[CST:.*]] = tosa.const_shape {value = dense<[1, 4, 1]> : tensor<3xindex>} : () -> !tosa.shape<3>
+// CHECK: %[[TILE:.*]] = tosa.tile %[[ARG]], %[[CST]] : (tensor<2x3x5xf32>, !tosa.shape<3>) -> tensor<2x12x5xf32>
+// CHECK: %[[RESHAPE:.*]] = tosa.reshape %[[TILE]] {new_shape = array<i64: 2, 4, 3, 5>} : (tensor<2x12x5xf32>) -> tensor<2x4x3x5xf32>
+// CHECK: return %[[RESHAPE]] : tensor<2x4x3x5xf32>
+func.func @tile_on_one_sized_dim_middle(%arg0: tensor<2x3x5xf32>) -> tensor<2x4x3x5xf32> {
+  %r = tosa.reshape %arg0 {new_shape = array<i64: 2, 1, 3, 5>} : (tensor<2x3x5xf32>) -> tensor<2x1x3x5xf32>
+  %m = tosa.const_shape {value = dense<[1, 4, 1, 1]> : tensor<4xindex>} : () -> !tosa.shape<4>
+  %t = tosa.tile %r, %m : (tensor<2x1x3x5xf32>, !tosa.shape<4>) -> tensor<2x4x3x5xf32>
+  return %t : tensor<2x4x3x5xf32>
+}
+
+// -----
+
+// Negative: trailing added 1.
+// CHECK-LABEL: func.func @tile_on_one_sized_dim_trailing_one_no_match
+// CHECK: tosa.reshape %{{.*}} {new_shape = array<i64: 2, 3, 1>} : (tensor<2x3xf32>) -> tensor<2x3x1xf32>
+// CHECK: tosa.tile %{{.*}} : (tensor<2x3x1xf32>, !tosa.shape<3>) -> tensor<2x3x4xf32>
+func.func @tile_on_one_sized_dim_trailing_one_no_match(%arg0: tensor<2x3xf32>) -> tensor<2x3x4xf32> {
+  %r = tosa.reshape %arg0 {new_shape = array<i64: 2, 3, 1>} : (tensor<2x3xf32>) -> tensor<2x3x1xf32>
+  %m = tosa.const_shape {value = dense<[1, 1, 4]> : tensor<3xindex>} : () -> !tosa.shape<3>
+  %t = tosa.tile %r, %m : (tensor<2x3x1xf32>, !tosa.shape<3>) -> tensor<2x3x4xf32>
+  return %t : tensor<2x3x4xf32>
+}
+
+// -----
+
+// Negative: multiplier on inserted 1-dim is 1.
+// CHECK-LABEL: func.func @tile_on_one_sized_dim_multiplier_one_no_match
+// CHECK: tosa.reshape %{{.*}} {new_shape = array<i64: 1, 2, 3>}
+// CHECK: tosa.tile %{{.*}} : (tensor<1x2x3xf32>, !tosa.shape<3>) -> tensor<1x4x3xf32>
+func.func @tile_on_one_sized_dim_multiplier_one_no_match(%arg0: tensor<2x3xf32>) -> tensor<1x4x3xf32> {
+  %r = tosa.reshape %arg0 {new_shape = array<i64: 1, 2, 3>} : (tensor<2x3xf32>) -> tensor<1x2x3xf32>
+  %m = tosa.const_shape {value = dense<[1, 2, 1]> : tensor<3xindex>} : () -> !tosa.shape<3>
+  %t = tosa.tile %r, %m : (tensor<1x2x3xf32>, !tosa.shape<3>) -> tensor<1x4x3xf32>
+  return %t : tensor<1x4x3xf32>
+}
+
+// -----
+
+// Negative: reshape not only adding ones.
+// CHECK-LABEL: func.func @tile_on_one_sized_dim_not_only_adding_ones_no_match
+// CHECK: tosa.reshape %{{.*}} {new_shape = array<i64: 1, 3, 4>}
+// CHECK: tosa.tile %{{.*}} : (tensor<1x3x4xf32>, !tosa.shape<3>) -> tensor<2x3x4xf32>
+func.func @tile_on_one_sized_dim_not_only_adding_ones_no_match(%arg0: tensor<2x6xf32>) -> tensor<2x3x4xf32> {
+  %r = tosa.reshape %arg0 {new_shape = array<i64: 1, 3, 4>} : (tensor<2x6xf32>) -> tensor<1x3x4xf32>
+  %m = tosa.const_shape {value = dense<[2, 1, 1]> : tensor<3xindex>} : () -> !tosa.shape<3>
+  %t = tosa.tile %r, %m : (tensor<1x3x4xf32>, !tosa.shape<3>) -> tensor<2x3x4xf32>
+  return %t : tensor<2x3x4xf32>
 }
 
 // -----

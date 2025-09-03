@@ -109,6 +109,102 @@ void ConcatOp::getCanonicalizationPatterns(RewritePatternSet &results,
   results.add<SelfConcatToTile>(context);
 }
 
+/* Rewrites reshapes that are adding 1-sized dims and are followed by a tile on
+ * the one-sized dim to a tile on the original shape followed by a reshape. This
+ * is done to reduce the rank of tile ops. */
+struct TileOnOneSizedDim : public OpRewritePattern<tosa::TileOp> {
+  using OpRewritePattern<tosa::TileOp>::OpRewritePattern;
+
+  LogicalResult matchAndRewrite(tosa::TileOp tileOp,
+                                PatternRewriter &rewriter) const override {
+    SmallVector<int64_t> multiplies;
+    if (failed(tileOp.getConstantMultiples(multiplies))) {
+      return rewriter.notifyMatchFailure(tileOp, "Requires const multiplies");
+    }
+    auto tileResultType = dyn_cast<ShapedType>(tileOp.getResult().getType());
+    if (!tileResultType || !tileResultType.hasStaticShape()) {
+      return rewriter.notifyMatchFailure(tileOp, "Requires static shaped types");
+    }
+    const auto originalTileShape = tileResultType.getShape();
+    auto producerReshape = tileOp.getInput1().getDefiningOp<ReshapeOp>();
+    if (!producerReshape) {
+      return rewriter.notifyMatchFailure(tileOp, "Producer is not a reshape");
+    }
+
+    auto reshapeInputType =
+        dyn_cast<ShapedType>(producerReshape->getOperand(0).getType());
+    auto reshapeResultType =
+        dyn_cast<ShapedType>(producerReshape->getResult(0).getType());
+    if (!reshapeInputType || !reshapeResultType ||
+        !reshapeInputType.hasStaticShape() ||
+        !reshapeResultType.hasStaticShape()) {
+      return rewriter.notifyMatchFailure(tileOp, "Requires static shaped types");
+    }
+    const auto reshapeInShape = reshapeInputType.getShape();
+    const auto reshapeOutShape = reshapeResultType.getShape();
+    std::optional<size_t> firstAddedOneDim;
+    for (auto [idx, outDim] : llvm::enumerate(reshapeOutShape)) {
+      if (idx >= reshapeInShape.size()) {
+        return rewriter.notifyMatchFailure(
+            tileOp, "Did not find reshape just adding ones");
+      }
+      if (outDim == reshapeInShape[idx]) {
+        continue;
+      }
+      if (outDim == 1 && idx + 1 < reshapeOutShape.size() &&
+          reshapeOutShape[idx + 1] == reshapeInShape[idx]) {
+        firstAddedOneDim = idx;
+        break;
+      }
+    }
+    if (!firstAddedOneDim) {
+      return rewriter.notifyMatchFailure(
+          tileOp, "Producer reshape is not only adding one dims");
+    }
+    if (multiplies[*firstAddedOneDim] == 1) {
+      return rewriter.notifyMatchFailure(
+          tileOp, "Tile is not on a one sized dimension");
+    }
+    RewriterBase::InsertionGuard guard(rewriter);
+    rewriter.setInsertionPoint(tileOp);
+    SmallVector<int64_t> reshapeWithoutOneShape;
+    reshapeWithoutOneShape.reserve(reshapeOutShape.size() - 1);
+    for (auto [idx, dim] : llvm::enumerate(reshapeOutShape)) {
+      if (idx != *firstAddedOneDim) {
+        reshapeWithoutOneShape.push_back(dim);
+      }
+    }
+    auto removeOneDimReshape = rewriter.createOrFold<tosa::ReshapeOp>(
+        tileOp.getLoc(), producerReshape.getResult(), reshapeWithoutOneShape);
+    SmallVector<int64_t> newTileMultiples;
+    newTileMultiples.reserve(multiplies.size());
+    for (auto [idx, multiplie] : llvm::enumerate(multiplies)) {
+      if (idx == *firstAddedOneDim) {
+        continue;
+      }
+      if (idx == *firstAddedOneDim + 1) {
+        newTileMultiples.push_back(multiplie * multiplies[*firstAddedOneDim]);
+      } else {
+        newTileMultiples.push_back(multiplie);
+      }
+    }
+    auto newTileConstMults =
+        getTosaConstShape(rewriter, tileOp.getLoc(), newTileMultiples);
+    SmallVector<int64_t> newTileResultShape;
+    for (auto [dim, mult] :
+         llvm::zip_equal(reshapeWithoutOneShape, newTileMultiples)) {
+      newTileResultShape.push_back(dim * mult);
+    }
+    auto newTileResultType = tileResultType.clone(newTileResultShape);
+    auto newTileOp = rewriter.create<tosa::TileOp>(
+        tileOp.getLoc(), newTileResultType, removeOneDimReshape, newTileConstMults);
+    auto reshapeToOriginalResultShape = rewriter.create<tosa::ReshapeOp>(
+        tileOp.getLoc(), newTileOp.getResult(), originalTileShape);
+    rewriter.replaceOp(tileOp, reshapeToOriginalResultShape.getResult());
+    return success();
+  }
+};
+
 struct FuseChainedTile : public OpRewritePattern<tosa::TileOp> {
   using OpRewritePattern<tosa::TileOp>::OpRewritePattern;
 
@@ -155,6 +251,7 @@ struct FuseChainedTile : public OpRewritePattern<tosa::TileOp> {
 
 void TileOp::getCanonicalizationPatterns(RewritePatternSet &results,
                                          MLIRContext *context) {
+  results.add<TileOnOneSizedDim>(context);
   results.add<FuseChainedTile>(context);
 }
 
