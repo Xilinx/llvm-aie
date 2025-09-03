@@ -26,17 +26,7 @@ define void @load_store_with_call() {
 ; CHECK-NEXT:  .L_LEnd0:
 ; CHECK-NEXT:    nopa ; vldb x0, [p5, #0]; vst x0, [p5, #0]; nopxm ; nopv
 ; CHECK-NEXT:  // %bb.2: // %exit
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    vst x0, [p5, #0]
+; CHECK-NEXT:    vst x0, [p5, #0]; nopb ; nopx
 ; CHECK-NEXT:    vst x0, [p5, #0]
 ; CHECK-NEXT:    vst x0, [p5, #0]
 ; CHECK-NEXT:    vst x0, [p5, #0]
