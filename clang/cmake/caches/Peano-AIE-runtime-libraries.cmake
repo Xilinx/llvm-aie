@@ -66,7 +66,8 @@ foreach(target ${LLVM_BUILTIN_TARGETS})
   set(RUNTIMES_${target}_LIBC_ENABLE_USE_BY_CLANG ON CACHE STRING "")
   # LIBC includes C++ sources which by default trigger inclusion of standard libc++ headers
   # However these are not available while building libc, thus disable the include explicitly
-  set(RUNTIMES_${target}_LIBC_COMPILE_OPTIONS_DEFAULT "-nostdinc++" CACHE STRING "")
+  # Also disable inclusion of vitis headers to speed up compiler checks.
+  set(RUNTIMES_${target}_LIBC_COMPILE_OPTIONS_DEFAULT "-nostdinc++;-mno-vitis-headers" CACHE STRING "" FORCE)
 
   # configure libcxxabi build
   set(RUNTIMES_${target}_LIBCXXABI_ENABLE_SHARED OFF CACHE STRING "")

@@ -5,6 +5,14 @@
 //
 // (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 
+#if __AIEARCH__ == 20
+#include "aiev2intrin.h"
+#elif __AIEARCH__ == 21
+#include "aie2pintrin.h"
+#else
+#error "Unsupported __AIEARCH__ version"
+#endif
+
 extern "C" {
 extern int main(int, char **);
 void _Exit(int) { done(); }
