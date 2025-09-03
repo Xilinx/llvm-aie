@@ -1568,6 +1568,52 @@ body: |
 ...
 
 ---
+name: vector_1024_combine_postinc_2d
+body: |
+  bb.0:
+    ; CHECK-LABEL: name: vector_1024_combine_postinc_2d
+    ; CHECK: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(p0) = COPY $p1
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
+    ; CHECK-NEXT: [[LOAD:%[0-9]+]]:_(<32 x s32>) = G_LOAD [[COPY]](p0) :: (load (<32 x s32>))
+    ; CHECK-NEXT: G_STORE [[LOAD]](<32 x s32>), [[COPY1]](p0) :: (store (<32 x s32>))
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.2d), [[COPY]](p0), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20)
+    ; CHECK-NEXT: [[INT2:%[0-9]+]]:_(p0), [[INT3:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.2d), [[COPY1]](p0), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[INT]](p0), implicit [[INT2]](p0)
+      %0:_(p0) = COPY $p0
+      %6:_(p0) = COPY $p1
+      %1:_(s20) = G_CONSTANT i20 64
+      %4:_(<32 x s32>) = G_LOAD %0(p0) :: (load (<32 x s32>))
+      G_STORE %4, %6 :: (store (<32 x s32>))
+      %7:_(p0), %8:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.2d), %0:_(p0), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20)
+      %9:_(p0), %10:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.2d), %6:_(p0), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20)
+      PseudoRET implicit $lr, implicit %7, implicit %9
+...
+
+---
+name: vector_1024_combine_postinc_3d
+body: |
+  bb.0:
+    ; CHECK-LABEL: name: vector_1024_combine_postinc_3d
+    ; CHECK: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(p0) = COPY $p1
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
+    ; CHECK-NEXT: [[LOAD:%[0-9]+]]:_(<32 x s32>) = G_LOAD [[COPY]](p0) :: (load (<32 x s32>))
+    ; CHECK-NEXT: G_STORE [[LOAD]](<32 x s32>), [[COPY1]](p0) :: (store (<32 x s32>))
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20), [[INT2:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.3d), [[COPY]](p0), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20)
+    ; CHECK-NEXT: [[INT3:%[0-9]+]]:_(p0), [[INT4:%[0-9]+]]:_(s20), [[INT5:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.3d), [[COPY1]](p0), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[INT]](p0), implicit [[INT3]](p0)
+      %0:_(p0) = COPY $p0
+      %6:_(p0) = COPY $p1
+      %1:_(s20) = G_CONSTANT i20 64
+      %4:_(<32 x s32>) = G_LOAD %0(p0) :: (load (<32 x s32>))
+      G_STORE %4, %6 :: (store (<32 x s32>))
+      %10:_(p0), %11:_(s20), %12:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.3d), %0:_(p0), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20)
+      %13:_(p0), %14:_(s20), %15:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.3d), %6:_(p0), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20)
+      PseudoRET implicit $lr, implicit %10, implicit %13
+...
+
+---
 name: vector_2048_combine_postinc
 body: |
   bb.0:
@@ -1599,6 +1645,52 @@ body: |
 ...
 
 ---
+name: vector_2048_combine_postinc_2d
+body: |
+  bb.0:
+    ; CHECK-LABEL: name: vector_2048_combine_postinc_2d
+    ; CHECK: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(p0) = COPY $p1
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
+    ; CHECK-NEXT: [[LOAD:%[0-9]+]]:_(<64 x s32>) = G_LOAD [[COPY]](p0) :: (load (<64 x s32>))
+    ; CHECK-NEXT: G_STORE [[LOAD]](<64 x s32>), [[COPY1]](p0) :: (store (<64 x s32>))
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.2d), [[COPY]](p0), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20)
+    ; CHECK-NEXT: [[INT2:%[0-9]+]]:_(p0), [[INT3:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.2d), [[COPY1]](p0), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[INT]](p0), implicit [[INT2]](p0)
+      %0:_(p0) = COPY $p0
+      %6:_(p0) = COPY $p1
+      %1:_(s20) = G_CONSTANT i20 64
+      %4:_(<64 x s32>) = G_LOAD %0(p0) :: (load (<64 x s32>))
+      G_STORE %4, %6 :: (store (<64 x s32>))
+      %7:_(p0), %8:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.2d), %0:_(p0), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20)
+      %9:_(p0), %10:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.2d), %6:_(p0), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20)
+      PseudoRET implicit $lr, implicit %7, implicit %9
+...
+
+---
+name: vector_2048_combine_postinc_3d
+body: |
+  bb.0:
+    ; CHECK-LABEL: name: vector_2048_combine_postinc_3d
+    ; CHECK: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(p0) = COPY $p1
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
+    ; CHECK-NEXT: [[LOAD:%[0-9]+]]:_(<64 x s32>) = G_LOAD [[COPY]](p0) :: (load (<64 x s32>))
+    ; CHECK-NEXT: G_STORE [[LOAD]](<64 x s32>), [[COPY1]](p0) :: (store (<64 x s32>))
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20), [[INT2:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.3d), [[COPY]](p0), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20)
+    ; CHECK-NEXT: [[INT3:%[0-9]+]]:_(p0), [[INT4:%[0-9]+]]:_(s20), [[INT5:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.3d), [[COPY1]](p0), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[INT]](p0), implicit [[INT3]](p0)
+      %0:_(p0) = COPY $p0
+      %6:_(p0) = COPY $p1
+      %1:_(s20) = G_CONSTANT i20 64
+      %4:_(<64 x s32>) = G_LOAD %0(p0) :: (load (<64 x s32>))
+      G_STORE %4, %6 :: (store (<64 x s32>))
+      %10:_(p0), %11:_(s20), %12:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.3d), %0:_(p0), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20)
+      %13:_(p0), %14:_(s20), %15:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.3d), %6:_(p0), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20)
+      PseudoRET implicit $lr, implicit %10, implicit %13
+...
+
+---
 
 name: offset_combine_128bit_load
 body: |
@@ -1616,53 +1708,69 @@ body: |
 ...
 
 ---
-name: postinc_combine_128bit_load
+name: vector_128_combine_postinc
 body: |
   bb.0:
-    ; CHECK-LABEL: name: postinc_combine_128bit_load
+    ; CHECK-LABEL: name: vector_128_combine_postinc
     ; CHECK: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(p0) = COPY $p1
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
     ; CHECK-NEXT: [[AIE_POSTINC_LOAD:%[0-9]+]]:_(<4 x s32>), [[AIE_POSTINC_LOAD1:%[0-9]+]]:_(p0) = G_AIE_POSTINC_LOAD [[COPY]], [[C]](s20) :: (load (<4 x s32>))
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wl0, implicit [[AIE_POSTINC_LOAD]](<4 x s32>), implicit [[AIE_POSTINC_LOAD1]](p0)
+    ; CHECK-NEXT: [[AIE_POSTINC_STORE:%[0-9]+]]:_(p0) = G_AIE_POSTINC_STORE [[AIE_POSTINC_LOAD]](<4 x s32>), [[COPY1]], [[C]](s20) :: (store (<4 x s32>))
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
+    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[AIE_POSTINC_STORE]], [[C1]](s20)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_POSTINC_LOAD1]](p0), implicit [[AIE_POSTINC_STORE]](p0), implicit [[PTR_ADD]](p0)
       %0:_(p0) = COPY $p0
+      %6:_(p0) = COPY $p1
       %1:_(s20) = G_CONSTANT i20 64
-      %2:_(<4 x s32>) = G_LOAD %0(p0) :: (load (<4 x s32>))
+      %2:_(s20) = G_CONSTANT i20 64
+      %4:_(<4 x s32>) = G_LOAD %0(p0) :: (load (<4 x s32>))
+      G_STORE %4, %6 :: (store (<4 x s32>))
       %3:_(p0) = G_PTR_ADD %0, %1
-      PseudoRET implicit $lr, implicit $wl0, implicit %2, implicit %3
+      %7:_(p0) = G_PTR_ADD %6, %1
+      %5:_(p0) = G_PTR_ADD %6, %2
+      PseudoRET implicit $lr, implicit %3, implicit %7, implicit %5
 ...
 
 ---
-name: postinc_2d_combine_128bit_load
+name: vector_128_combine_postinc_2d
 body: |
   bb.0:
-    ; CHECK-LABEL: name: postinc_2d_combine_128bit_load
+    ; CHECK-LABEL: name: vector_128_combine_postinc_2d
     ; CHECK: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(p0) = COPY $p1
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
     ; CHECK-NEXT: [[AIE_POSTINC_2D_LOAD:%[0-9]+]]:_(<16 x s8>), [[AIE_POSTINC_2D_LOAD1:%[0-9]+]]:_(p0), [[AIE_POSTINC_2D_LOAD2:%[0-9]+]]:_(s20) = G_AIE_POSTINC_2D_LOAD [[COPY]], [[C]], [[C]], [[C]], [[C]] :: (load (<16 x s8>))
-    ; CHECK-NEXT: $p0 = COPY [[AIE_POSTINC_2D_LOAD1]](p0)
-    ; CHECK-NEXT: $q0 = COPY [[AIE_POSTINC_2D_LOAD]](<16 x s8>)
+    ; CHECK-NEXT: [[AIE_POSTINC_2D_STORE:%[0-9]+]]:_(p0), [[AIE_POSTINC_2D_STORE1:%[0-9]+]]:_(s20) = G_AIE_POSTINC_2D_STORE [[AIE_POSTINC_2D_LOAD]](<16 x s8>), [[COPY1]], [[C]], [[C]], [[C]], [[C]] :: (store (<16 x s8>))
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_POSTINC_2D_LOAD1]](p0), implicit [[AIE_POSTINC_2D_STORE]](p0)
       %0:_(p0) = COPY $p0
+      %6:_(p0) = COPY $p1
       %1:_(s20) = G_CONSTANT i20 64
-      %2:_(<16 x s8>) = G_LOAD %0(p0) :: (load (<16 x s8>))
-      %3:_(p0), %4:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.2d), %0:_(p0), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20)
-      $p0 = COPY %3
-      $q0 = COPY %2(<16 x s8>)
+      %4:_(<16 x s8>) = G_LOAD %0(p0) :: (load (<16 x s8>))
+      G_STORE %4, %6 :: (store (<16 x s8>))
+      %7:_(p0), %8:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.2d), %0:_(p0), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20)
+      %9:_(p0), %10:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.2d), %6:_(p0), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20)
+      PseudoRET implicit $lr, implicit %7, implicit %9
 ...
 
 ---
-name: postinc_3d_combine_128bit_load
+name: vector_128_combine_postinc_3d
 body: |
   bb.0:
-    ; CHECK-LABEL: name: postinc_3d_combine_128bit_load
+    ; CHECK-LABEL: name: vector_128_combine_postinc_3d
     ; CHECK: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(p0) = COPY $p1
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
     ; CHECK-NEXT: [[AIE_POSTINC_3D_LOAD:%[0-9]+]]:_(<16 x s8>), [[AIE_POSTINC_3D_LOAD1:%[0-9]+]]:_(p0), [[AIE_POSTINC_3D_LOAD2:%[0-9]+]]:_(s20), [[AIE_POSTINC_3D_LOAD3:%[0-9]+]]:_ = G_AIE_POSTINC_3D_LOAD [[COPY]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]] :: (load (<16 x s8>))
-    ; CHECK-NEXT: $p0 = COPY [[AIE_POSTINC_3D_LOAD1]](p0)
-    ; CHECK-NEXT: $q0 = COPY [[AIE_POSTINC_3D_LOAD]](<16 x s8>)
+    ; CHECK-NEXT: [[AIE_POSTINC_3D_STORE:%[0-9]+]]:_(p0), [[AIE_POSTINC_3D_STORE1:%[0-9]+]]:_(s20), [[AIE_POSTINC_3D_STORE2:%[0-9]+]]:_ = G_AIE_POSTINC_3D_STORE [[AIE_POSTINC_3D_LOAD]](<16 x s8>), [[COPY1]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]] :: (store (<16 x s8>))
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_POSTINC_3D_LOAD1]](p0), implicit [[AIE_POSTINC_3D_STORE]](p0)
       %0:_(p0) = COPY $p0
+      %6:_(p0) = COPY $p1
       %1:_(s20) = G_CONSTANT i20 64
-      %2:_(<16 x s8>) = G_LOAD %0(p0) :: (load (<16 x s8>))
-      %3:_(p0), %4:_(s20), %5:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.3d), %0:_(p0), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20)
-      $p0 = COPY %3
-      $q0 = COPY %2(<16 x s8>)
+      %4:_(<16 x s8>) = G_LOAD %0(p0) :: (load (<16 x s8>))
+      G_STORE %4, %6 :: (store (<16 x s8>))
+      %10:_(p0), %11:_(s20), %12:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.3d), %0:_(p0), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20)
+      %13:_(p0), %14:_(s20), %15:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2p.add.3d), %6:_(p0), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20)
+      PseudoRET implicit $lr, implicit %10, implicit %13
 ...
+
