@@ -355,6 +355,14 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard(ScoreboardTrust Trust) {
 
 void AIEPostRASchedStrategy::initializeTopScoreBoard() {
 
+  // Top Scoreboard is only used for Post-SWP epilogue merging.
+  // If we have a multiregion MBB, the epilogue will be scheduled
+  // in the first topological region. In this case, ignore scoreboard
+  // initialization for other regions.
+  const bool IsFirstRegion = DAG->begin() == CurMBB->begin();
+  if (!IsFirstRegion)
+    return;
+
   auto EpilogueContextOpt = InterBlock.getSWPEpilogueContext(CurMBB);
 
   if (!EpilogueContextOpt)
