@@ -3,7 +3,12 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
+#if __AIEARCH__ == 10
+#include "aiev1intrin.h"
+#else
+#error "Unsupported __AIEARCH__ version"
+#endif
 
 extern "C" {
 extern int main(int, char **);
