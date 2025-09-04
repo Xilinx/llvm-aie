@@ -3570,6 +3570,10 @@ bool llvm::matchConstLoad(MachineInstr &MI, MachineRegisterInfo &MRI,
   if (!ConstPtr)
     return false;
 
+  // External constants have zero operands (no visible initializer).
+  if (ConstPtr->getNumOperands() == 0)
+    return false;
+
   const Constant *ConstData = dyn_cast<Constant>(ConstPtr->getOperand(0));
   if (!ConstData)
     return false;
