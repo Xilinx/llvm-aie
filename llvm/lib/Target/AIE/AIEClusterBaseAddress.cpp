@@ -76,6 +76,12 @@ static cl::opt<bool> EnableChainsAcrossMultiBlocks(
     "aie-chain-addr-multi-block", cl::Hidden, cl::init(true),
     cl::desc("Enable ptradd chaining when Ptr is used across multiple MBBs."));
 
+static cl::opt<bool>
+    DetachCondLoadChain("aie-chain-addr-detach-cond-load-jump", cl::Hidden,
+                        cl::init(true),
+                        cl::desc("Disable ptradd chaining that feed "
+                                 "loads that are used in conditional jumps."));
+
 namespace {
 
 LLT getLoadStoreType(const MachineInstr &MI) {
@@ -194,6 +200,15 @@ private:
 
   // Find if a register is used in reachable MBBs.
   bool isRegUsedInSuccessiveMBBs(MachineBasicBlock *MBB, Register Reg);
+
+  /// Return a set of Load Instrs whose results are used in the path of
+  /// the conditional branch of \p MBB .
+  std::set<MachineInstr *>
+  getLoadsFeedingCondBranch(MachineBasicBlock &MBB) const;
+
+  /// \return whether PtrAdd uses a Load Instr in \p LoadsToAvoid .
+  bool avoidPtrAdd(MachineInstr *PtrAdd,
+                   const std::set<MachineInstr *> &LoadsToAvoid) const;
 };
 
 void AIEClusterBaseAddress::getAnalysisUsage(AnalysisUsage &AU) const {
@@ -263,12 +278,94 @@ bool AIEClusterBaseAddress::processBasicBlock(MachineBasicBlock &MBB,
   return Changed;
 }
 
+/// Recursively search bottom up for Load instrs in the use chain of \p MI .
+/// Stop the search when Exiting \p MBB . Return all found Load MachineInstr in
+/// \p LoadsFeedingInstrs .
+void findLoadsFeedingInstr(MachineInstr &MI, MachineBasicBlock *MBB,
+                           std::set<MachineInstr *> &LoadsFeedingInstrs,
+                           const MachineRegisterInfo &MRI) {
+  for (MachineOperand &MO : MI.uses()) {
+    if (!MO.isReg())
+      continue;
+
+    Register UseReg = MO.getReg();
+    if (!UseReg.isVirtual())
+      continue;
+
+    auto *UseMI = MRI.getUniqueVRegDef(UseReg);
+    if (!UseMI)
+      continue;
+
+    if (UseMI->getParent() != MBB || UseMI->isPHI())
+      continue;
+
+    if (UseMI->mayLoad()) {
+      LoadsFeedingInstrs.emplace(UseMI);
+      LLVM_DEBUG(dbgs() << "Found Feeding Load " << *UseMI);
+    }
+
+    findLoadsFeedingInstr(*UseMI, MBB, LoadsFeedingInstrs, MRI);
+  }
+}
+
+std::set<MachineInstr *>
+AIEClusterBaseAddress::getLoadsFeedingCondBranch(MachineBasicBlock &MBB) const {
+  assert(MRI);
+
+  if (!DetachCondLoadChain)
+    return {};
+
+  std::set<MachineInstr *> LoadsFeedingCondBranch;
+  for (auto &MI : make_range(MBB.getFirstTerminator(), MBB.end())) {
+    if (MI.isConditionalBranch()) {
+      findLoadsFeedingInstr(MI, &MBB, LoadsFeedingCondBranch, *MRI);
+      break;
+    }
+  }
+
+  return LoadsFeedingCondBranch;
+}
+
+bool AIEClusterBaseAddress::avoidPtrAdd(
+    MachineInstr *PtrAdd, const std::set<MachineInstr *> &LoadsToAvoid) const {
+  assert(PtrAdd->getOpcode() == TargetOpcode::G_PTR_ADD);
+
+  // Is G_PTR_ADD feeding a Load instruction?
+  const Register DefReg = PtrAdd->getOperand(0).getReg();
+  if (MRI->use_nodbg_empty(DefReg))
+    return false;
+
+  auto UseBegin = MRI->use_instr_nodbg_begin(DefReg);
+  MachineInstr *LoadMI = &*UseBegin;
+  if (!LoadMI->mayLoad())
+    return false;
+
+  const bool LoadFeedCondBranch = LoadsToAvoid.count(LoadMI);
+  LLVM_DEBUG(if (LoadFeedCondBranch) dbgs()
+                 << "Found Load feeding Cond Branch attached to " << *PtrAdd;);
+
+  return LoadFeedCondBranch;
+}
+
 AIEClusterBaseAddress::RegUseMap
 AIEClusterBaseAddress::collectPtrUses(MachineBasicBlock &MBB) {
+  // Initialize Load Instrs to avoid
+  const std::set<MachineInstr *> LoadsToAvoid = getLoadsFeedingCondBranch(MBB);
+
   RegUseMap RegAndUses;
-  for (MachineInstr &MI : MBB) {
-    if (MI.getOpcode() == TargetOpcode::G_PTR_ADD)
-      RegAndUses[MI.getOperand(1).getReg()].push_back(&MI);
+  for (MachineInstr &PtrAdd : MBB) {
+    // Only consider G_PTR_ADDs
+    if (PtrAdd.getOpcode() != TargetOpcode::G_PTR_ADD)
+      continue;
+
+    // If G_PTR_ADDs is used in a Load in LoadsToAvoid, ignore PtrAdd in
+    // chain collection. An example could be a Load Instr that feeds a
+    // conditional jump and increases the critical path because the Load
+    // Instr is delayed because of chaining.
+    if (!LoadsToAvoid.empty() && avoidPtrAdd(&PtrAdd, LoadsToAvoid))
+      continue;
+
+    RegAndUses[PtrAdd.getOperand(1).getReg()].push_back(&PtrAdd);
   }
   return RegAndUses;
 }
@@ -278,17 +375,11 @@ bool AIEClusterBaseAddress::shouldSkipChaining(
     MachineBasicBlock &MBB) {
 
   // No chain possibility at all.
-  if (Instrs.size() <= 1)
+  if (Instrs.size() <= 1 || (!EnableChainsAcrossMultiBlocks &&
+                             isRegUsedInSuccessiveMBBs(&MBB, PtrReg)))
     return true;
 
-  // Chain MBB regardless.
-  if (EnableChainsAcrossMultiBlocks)
-    return false;
-
-  // If the base reg is used in any of the successive MBBs, then we don't
-  // want to chain the corresponding ptr adds, since this would introduce a
-  // COPY and increase reg pressure.
-  return isRegUsedInSuccessiveMBBs(&MBB, PtrReg);
+  return false;
 }
 
 bool AIEClusterBaseAddress::buildChain(SmallVector<MachineInstr *, 8> &Instrs,
