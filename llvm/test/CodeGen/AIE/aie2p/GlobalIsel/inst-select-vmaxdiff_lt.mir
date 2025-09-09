@@ -48,8 +48,8 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x3
-    ; CHECK-NEXT: [[VMAX_LT_8_vaddSign0_:%[0-9]+]]:vec512, [[VMAX_LT_8_vaddSign0_1:%[0-9]+]]:ml8m = VMAX_LT_8_vaddSign0 [[COPY]], [[COPY1]], implicit $vaddsign0
-    ; CHECK-NEXT: $x0 = COPY [[VMAX_LT_8_vaddSign0_]]
+    ; CHECK-NEXT: [[VMAXDIFF_LT_8_vaddSign0_:%[0-9]+]]:vec512, [[VMAXDIFF_LT_8_vaddSign0_1:%[0-9]+]]:ml8m = VMAXDIFF_LT_8_vaddSign0 [[COPY]], [[COPY1]], implicit $vaddsign0
+    ; CHECK-NEXT: $x0 = COPY [[VMAXDIFF_LT_8_vaddSign0_]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
     %1:vregbank(<64 x s8>) = COPY $x2
     %11:vregbank(<64 x s8>) = COPY $x3
@@ -72,8 +72,8 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x3
-    ; CHECK-NEXT: [[VMAX_LT_8_vaddSign1_:%[0-9]+]]:vec512, [[VMAX_LT_8_vaddSign1_1:%[0-9]+]]:ml8m = VMAX_LT_8_vaddSign1 [[COPY]], [[COPY1]], implicit $vaddsign1
-    ; CHECK-NEXT: $x0 = COPY [[VMAX_LT_8_vaddSign1_]]
+    ; CHECK-NEXT: [[VMAXDIFF_LT_8_vaddSign1_:%[0-9]+]]:vec512, [[VMAXDIFF_LT_8_vaddSign1_1:%[0-9]+]]:ml8m = VMAXDIFF_LT_8_vaddSign1 [[COPY]], [[COPY1]], implicit $vaddsign1
+    ; CHECK-NEXT: $x0 = COPY [[VMAXDIFF_LT_8_vaddSign1_]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
     %1:vregbank(<64 x s8>) = COPY $x2
     %11:vregbank(<64 x s8>) = COPY $x3
@@ -123,8 +123,8 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x3
-    ; CHECK-NEXT: [[VMAX_LT_16_vaddSign0_:%[0-9]+]]:vec512, [[VMAX_LT_16_vaddSign0_1:%[0-9]+]]:mr16_vcompare = VMAX_LT_16_vaddSign0 [[COPY]], [[COPY1]], implicit $vaddsign0
-    ; CHECK-NEXT: $x0 = COPY [[VMAX_LT_16_vaddSign0_]]
+    ; CHECK-NEXT: [[VMAXDIFF_LT_16_vaddSign0_:%[0-9]+]]:vec512, [[VMAXDIFF_LT_16_vaddSign0_1:%[0-9]+]]:mr16_vcompare = VMAXDIFF_LT_16_vaddSign0 [[COPY]], [[COPY1]], implicit $vaddsign0
+    ; CHECK-NEXT: $x0 = COPY [[VMAXDIFF_LT_16_vaddSign0_]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
     %1:vregbank(<32 x s16>) = COPY $x2
     %11:vregbank(<32 x s16>) = COPY $x3
@@ -147,8 +147,8 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x3
-    ; CHECK-NEXT: [[VMAX_LT_16_vaddSign1_:%[0-9]+]]:vec512, [[VMAX_LT_16_vaddSign1_1:%[0-9]+]]:mr16_vcompare = VMAX_LT_16_vaddSign1 [[COPY]], [[COPY1]], implicit $vaddsign1
-    ; CHECK-NEXT: $x0 = COPY [[VMAX_LT_16_vaddSign1_]]
+    ; CHECK-NEXT: [[VMAXDIFF_LT_16_vaddSign1_:%[0-9]+]]:vec512, [[VMAXDIFF_LT_16_vaddSign1_1:%[0-9]+]]:mr16_vcompare = VMAXDIFF_LT_16_vaddSign1 [[COPY]], [[COPY1]], implicit $vaddsign1
+    ; CHECK-NEXT: $x0 = COPY [[VMAXDIFF_LT_16_vaddSign1_]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
     %1:vregbank(<32 x s16>) = COPY $x2
     %11:vregbank(<32 x s16>) = COPY $x3
@@ -198,8 +198,8 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x3
-    ; CHECK-NEXT: [[VMAX_LT_32_vaddSign0_:%[0-9]+]]:vec512, [[VMAX_LT_32_vaddSign0_1:%[0-9]+]]:mr16_vcompare = VMAX_LT_32_vaddSign0 [[COPY]], [[COPY1]], implicit $vaddsign0
-    ; CHECK-NEXT: $x0 = COPY [[VMAX_LT_32_vaddSign0_]]
+    ; CHECK-NEXT: [[VMAXDIFF_LT_32_vaddSign0_:%[0-9]+]]:vec512, [[VMAXDIFF_LT_32_vaddSign0_1:%[0-9]+]]:mr16_vcompare = VMAXDIFF_LT_32_vaddSign0 [[COPY]], [[COPY1]], implicit $vaddsign0
+    ; CHECK-NEXT: $x0 = COPY [[VMAXDIFF_LT_32_vaddSign0_]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
     %1:vregbank(<16 x s32>) = COPY $x2
     %11:vregbank(<16 x s32>) = COPY $x3
@@ -222,8 +222,8 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x3
-    ; CHECK-NEXT: [[VMAX_LT_32_vaddSign1_:%[0-9]+]]:vec512, [[VMAX_LT_32_vaddSign1_1:%[0-9]+]]:mr16_vcompare = VMAX_LT_32_vaddSign1 [[COPY]], [[COPY1]], implicit $vaddsign1
-    ; CHECK-NEXT: $x0 = COPY [[VMAX_LT_32_vaddSign1_]]
+    ; CHECK-NEXT: [[VMAXDIFF_LT_32_vaddSign1_:%[0-9]+]]:vec512, [[VMAXDIFF_LT_32_vaddSign1_1:%[0-9]+]]:mr16_vcompare = VMAXDIFF_LT_32_vaddSign1 [[COPY]], [[COPY1]], implicit $vaddsign1
+    ; CHECK-NEXT: $x0 = COPY [[VMAXDIFF_LT_32_vaddSign1_]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
     %1:vregbank(<16 x s32>) = COPY $x2
     %11:vregbank(<16 x s32>) = COPY $x3

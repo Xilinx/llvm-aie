@@ -1244,17 +1244,17 @@ def  : Pat<(v32i1 (aie_setne (v16i32 VEC512:$rs1), (v16i32 VEC512:$rs2))),
 
 // VMAXDIFF_LT
 def : Pat<(int_aie2p_vmaxdiff_lt8 VEC512:$src1, VEC512:$src2, 0x0),
-           (VMAX_LT_8_vaddSign0 VEC512:$src1, VEC512:$src2)>;
+           (VMAXDIFF_LT_8_vaddSign0 VEC512:$src1, VEC512:$src2)>;
 def : Pat<(int_aie2p_vmaxdiff_lt16 VEC512:$src1, VEC512:$src2, 0x0),
-           (VMAX_LT_16_vaddSign0 VEC512:$src1, VEC512:$src2)>;
+           (VMAXDIFF_LT_16_vaddSign0 VEC512:$src1, VEC512:$src2)>;
 def : Pat<(int_aie2p_vmaxdiff_lt32 VEC512:$src1, VEC512:$src2, 0x0),
-           (VMAX_LT_32_vaddSign0 VEC512:$src1, VEC512:$src2)>;
+           (VMAXDIFF_LT_32_vaddSign0 VEC512:$src1, VEC512:$src2)>;
 def : Pat<(int_aie2p_vmaxdiff_lt8 VEC512:$src1, VEC512:$src2, 0x1),
-           (VMAX_LT_8_vaddSign1 VEC512:$src1, VEC512:$src2)>;
+           (VMAXDIFF_LT_8_vaddSign1 VEC512:$src1, VEC512:$src2)>;
 def : Pat<(int_aie2p_vmaxdiff_lt16 VEC512:$src1, VEC512:$src2, 0x1),
-           (VMAX_LT_16_vaddSign1 VEC512:$src1, VEC512:$src2)>;
+           (VMAXDIFF_LT_16_vaddSign1 VEC512:$src1, VEC512:$src2)>;
 def : Pat<(int_aie2p_vmaxdiff_lt32 VEC512:$src1, VEC512:$src2, 0x1),
-           (VMAX_LT_32_vaddSign1 VEC512:$src1, VEC512:$src2)>;
+           (VMAXDIFF_LT_32_vaddSign1 VEC512:$src1, VEC512:$src2)>;
 
 // VMAX_LT
 // Note : Non-constant sign is handled in .cpp
