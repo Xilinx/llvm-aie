@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // Fold TOSA operations
@@ -308,7 +311,7 @@ DenseElementsAttr transpose(DenseElementsAttr attr, ShapedType inputType,
   if (baseType.isF64()) {
     return transposeTypeRaw<uint64_t>(attr, inputType, outputType, permValues);
   }
-  if (baseType.isBF16()) {
+  if (baseType.isBF16() || baseType.isF16()) {
     return transposeTypeRaw<uint16_t>(attr, inputType, outputType, permValues);
   }
 
@@ -652,9 +655,10 @@ struct TosaFoldConstantRSQRT
     auto floatVal = apFloatVal.convertToFloat();
     auto sqrtVal = std::sqrt(floatVal);
     APFloat apSqrtVal(sqrtVal);
-    // We fold only float32 and bfloat16, so we do not expect any precision loss
-    // for float32 and the tosa spec explicitly allows to implement bfloat16 as
-    // float32, so any precision loss on the conversion back is fine.
+    // We fold only float16, float32 and bfloat16, so we do not expect any
+    // precision loss for float32 and the tosa spec explicitly allows to
+    // implement float16 and bfloat16 as float32, so any precision loss on the
+    // conversion back is fine.
     bool losesInfo = false;
     apSqrtVal.convert(apFloatVal.getSemantics(), tosaRoundingMode, &losesInfo);
 
@@ -669,7 +673,7 @@ struct TosaFoldConstantRSQRT
   }
 
   bool isSupportedElementType(Type type) const {
-    return type.isBF16() || type.isF32();
+    return type.isBF16() || type.isF16() || type.isF32();
   }
 };
 
@@ -1238,9 +1242,9 @@ struct TosaFoldConstantErf
   }
 
   bool isSupportedElementType(Type type) const {
-    // Note: For now, we only support BF16 and F32 as std::erf may
+    // Note: For now, we only support BF16, F16 and F32 as std::erf may
     // have an impact on the accuracy of the returned value.
-    return type.isBF16() || type.isF32();
+    return type.isBF16() || type.isF16() || type.isF32();
   }
 };
 
@@ -1808,7 +1812,7 @@ DenseElementsAttr slice(ShapedType inputType, ElementsAttr inputValues,
   if (baseType.isF64()) {
     return sliceTypeRaw<uint64_t>(inputValues, inputType, start, outputType);
   }
-  if (baseType.isBF16()) {
+  if (baseType.isBF16() || baseType.isF16()) {
     return sliceTypeRaw<uint16_t>(inputValues, inputType, start, outputType);
   }
   return sliceType<APFloat>(inputValues, inputType, start, outputType);
@@ -1928,7 +1932,7 @@ DenseElementsAttr tile(DenseElementsAttr inputValues, ShapedType outputType) {
   if (baseType.isF64()) {
     return tileTypeRaw<uint64_t>(inputValues, inputType, outputType);
   }
-  if (baseType.isBF16()) {
+  if (baseType.isBF16() || baseType.isF16()) {
     return tileTypeRaw<uint16_t>(inputValues, inputType, outputType);
   }
   return tileType<APFloat>(inputValues, inputType, outputType);
