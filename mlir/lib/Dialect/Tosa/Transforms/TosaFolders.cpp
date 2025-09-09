@@ -311,7 +311,7 @@ DenseElementsAttr transpose(DenseElementsAttr attr, ShapedType inputType,
   if (baseType.isF64()) {
     return transposeTypeRaw<uint64_t>(attr, inputType, outputType, permValues);
   }
-  if (baseType.isBF16()) {
+  if (baseType.isBF16() || baseType.isF16()) {
     return transposeTypeRaw<uint16_t>(attr, inputType, outputType, permValues);
   }
 
@@ -1812,7 +1812,7 @@ DenseElementsAttr slice(ShapedType inputType, ElementsAttr inputValues,
   if (baseType.isF64()) {
     return sliceTypeRaw<uint64_t>(inputValues, inputType, start, outputType);
   }
-  if (baseType.isBF16()) {
+  if (baseType.isBF16() || baseType.isF16()) {
     return sliceTypeRaw<uint16_t>(inputValues, inputType, start, outputType);
   }
   return sliceType<APFloat>(inputValues, inputType, start, outputType);
@@ -1932,7 +1932,7 @@ DenseElementsAttr tile(DenseElementsAttr inputValues, ShapedType outputType) {
   if (baseType.isF64()) {
     return tileTypeRaw<uint64_t>(inputValues, inputType, outputType);
   }
-  if (baseType.isBF16()) {
+  if (baseType.isBF16() || baseType.isF16()) {
     return tileTypeRaw<uint16_t>(inputValues, inputType, outputType);
   }
   return tileType<APFloat>(inputValues, inputType, outputType);
