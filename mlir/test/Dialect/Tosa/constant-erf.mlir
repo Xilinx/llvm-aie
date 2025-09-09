@@ -1,3 +1,5 @@
+// Modifications (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its
+// affiliates
 // RUN: mlir-opt --split-input-file --tosa-layerwise-constant-fold %s | FileCheck %s
 
 // CHECK-LABEL: @erf_fold_single_valued
@@ -111,10 +113,10 @@ func.func @erf_no_fold(%arg0: tensor<?x?xf32>) -> tensor<?x?xf32> {
   return %0 : tensor<?x?xf32>
 }
 
-// CHECK-LABEL: @erf_no_fold_f16
-func.func @erf_no_fold_f16() -> tensor<12x7xf16> {
-  // CHECK: [[RES:]] ={{.*}}tosa.const{{.*}}6.250000e-02
-  // CHECK: tosa.erf
+// CHECK-LABEL: @erf_fold_f16
+func.func @erf_fold_f16() -> tensor<12x7xf16> {
+  // CHECK: [[RES:]] ={{.*}}tosa.const{{.*}}7.043450e-02
+  // CHECK-NOT: tosa.erf
   // CHECK: return [[RES]]
   %0 = "tosa.const"() {value = dense<6.250000e-02> : tensor<12x7xf16>} : () -> tensor<12x7xf16>
   %1 = "tosa.erf"(%0) : (tensor<12x7xf16>) -> tensor<12x7xf16>

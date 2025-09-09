@@ -1,3 +1,5 @@
+// Modifications (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its
+// affiliates
 // RUN: mlir-opt --split-input-file --tosa-layerwise-constant-fold %s | FileCheck %s
 
 // CHECK-LABEL: @rsqrt_fold_single_valued
@@ -131,6 +133,16 @@ func.func @rsqrt_fold_single_valued_bf16() -> tensor<bf16> {
   %0 = "tosa.const"() {value = dense<12.0> : tensor<bf16>} : () -> tensor<bf16>
   %1 = "tosa.rsqrt"(%0) : (tensor<bf16>) -> tensor<bf16>
   return %1 : tensor<bf16>
+}
+
+// CHECK-LABEL: @rsqrt_fold_single_valued_f16
+func.func @rsqrt_fold_single_valued_f16() -> tensor<f16> {
+  // CHECK: [[RES:]] ={{.*}}tosa.const{{.*}}2.885740e-01{{.*}}tensor<f16>
+  // CHECK-NOT: tosa.rsqrt
+  // CHECK: return [[RES]]
+  %0 = "tosa.const"() {value = dense<12.0> : tensor<f16>} : () -> tensor<f16>
+  %1 = "tosa.rsqrt"(%0) : (tensor<f16>) -> tensor<f16>
+  return %1 : tensor<f16>
 }
 
 // CHECK-LABEL: @rsqrt_of_const_sparse
