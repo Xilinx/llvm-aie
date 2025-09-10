@@ -324,9 +324,7 @@ def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC1024_bf_addmac_conf VEC512:$s1,
 
 def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC1024_bf_mac_conf VEC512:$s1, VEC512:$s2, ACC1024:$acc1, eR:$acc),
            (EXTRACT_SUBREG 
-            (VMAC_f_vmac_bf_vmul_bf_core_X_X 
-             (REG_SEQUENCE ACC2048, ACC1024:$acc1, sub_1024_acc_lo),
-             VEC512:$s1, VEC512:$s2, eR:$acc),
+            (VMAC_f_vmac_bf_vmul_bf_core_X_X_ACC1024 ACC1024:$acc1, VEC512:$s1, VEC512:$s2, eR:$acc),
            sub_1024_acc_lo)>;
 
 def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC1024_bf_mul_conf VEC512:$s1, VEC512:$s2, eR:$acc),

@@ -338,5 +338,11 @@ def VLDA_E_SPILL : Pseudo<(outs EXPVEC64:$dst), (ins c12n_step4:$imm), "vlda_e_s
 }
 }
 
+let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+let Itinerary = II_VMAC_f_vmac_bf_vmul_bf_core_X_X, Defs = [srFPFlags], Uses = [crFPMask] in
+    def VMAC_f_vmac_bf_vmul_bf_core_X_X_ACC1024 : Pseudo <(outs eDM:$dst), (ins eCML:$acc1, OP_mXv:$s1, OP_mXw:$s2, eR:$acc), "vmac.f", "$dst, $acc1, $s1, $s2, $acc">;
+}
+
+
 
 include "aie2p/AIE2PInstrPatterns.td"
