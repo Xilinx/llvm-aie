@@ -24,11 +24,17 @@
 #include "llvm/Transforms/Utils/ScalarEvolutionExpander.h"
 
 namespace llvm {
+
+class AIE2TTICommon : public AIETTICommon {
+private:
+  bool isAllowedInZOL(llvm::Instruction &Instr) override;
+};
+
 class AIE2TTIImpl : public AIEBaseTTIImpl<AIE2TTIImpl> {
   typedef AIEBaseTTIImpl<AIE2TTIImpl> BaseT;
   typedef TargetTransformInfo TTI;
   friend BaseT;
-  AIETTICommon Common;
+  AIE2TTICommon Common;
 
 public:
   explicit AIE2TTIImpl(const AIE2TargetMachine *TM, const Function &F)

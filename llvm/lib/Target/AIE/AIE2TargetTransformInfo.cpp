@@ -31,6 +31,14 @@ instCombineDemandedBits(InstCombiner &IC, IntrinsicInst &II, unsigned numBits) {
   return std::nullopt;
 }
 
+bool AIE2TTICommon::isAllowedInZOL(Instruction &I) {
+  // FMul is legalized to a VMUL for bfloat16 in other targets
+  if (I.getOpcode() == Instruction::FMul) {
+    return false;
+  }
+  return AIETTICommon::isAllowedInZOL(I);
+}
+
 std::optional<Instruction *>
 AIE2TTIImpl::instCombineIntrinsic(InstCombiner &IC, IntrinsicInst &II) const {
   Intrinsic::ID IID = II.getIntrinsicID();
