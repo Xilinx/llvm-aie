@@ -15,40 +15,45 @@ static DecodeStatus DecodeDms_lda_2D(MCInst &MI, InsnType &Insn,
                                      uint64_t Address,
                                      const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, 7);
-  if (dstRegRaw >= std::size(mLdaSclDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 7;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mLdaSclDecoderTable));
   Register dstReg = mLdaSclDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -59,40 +64,45 @@ static DecodeStatus DecodeDmv_lda_q_2D(MCInst &MI, InsnType &Insn,
                                        uint64_t Address,
                                        const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 9, 2);
-  if (dstRegRaw >= std::size(mQQsaDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 2;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 9, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mQQsaDecoderTable));
   Register dstReg = mQQsaDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -103,40 +113,45 @@ static DecodeStatus DecodeDmhb_lda_2D(MCInst &MI, InsnType &Insn,
                                       uint64_t Address,
                                       const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, 5);
-  if (dstRegRaw >= std::size(eRDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 5;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(eRDecoderTable));
   Register dstReg = eRDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -147,47 +162,53 @@ static DecodeStatus DecodeDms_lda_3D(MCInst &MI, InsnType &Insn,
                                      uint64_t Address,
                                      const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, 7);
-  if (dstRegRaw >= std::size(mLdaSclDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 7;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mLdaSclDecoderTable));
   Register dstReg = mLdaSclDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -198,47 +219,53 @@ static DecodeStatus DecodeDmv_lda_q_3D(MCInst &MI, InsnType &Insn,
                                        uint64_t Address,
                                        const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 9, 2);
-  if (dstRegRaw >= std::size(mQQsaDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 2;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 9, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mQQsaDecoderTable));
   Register dstReg = mQQsaDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -249,47 +276,53 @@ static DecodeStatus DecodeDmhb_lda_3D(MCInst &MI, InsnType &Insn,
                                       uint64_t Address,
                                       const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, 5);
-  if (dstRegRaw >= std::size(eRDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 5;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(eRDecoderTable));
   Register dstReg = eRDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -300,40 +333,45 @@ static DecodeStatus DecodeTm_lda_2D(MCInst &MI, InsnType &Insn,
                                     uint64_t Address,
                                     const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, 5);
-  if (dstRegRaw >= std::size(eRDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 5;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(eRDecoderTable));
   Register dstReg = eRDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -344,47 +382,53 @@ static DecodeStatus DecodeTm_lda_3D(MCInst &MI, InsnType &Insn,
                                     uint64_t Address,
                                     const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, 5);
-  if (dstRegRaw >= std::size(eRDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 5;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(eRDecoderTable));
   Register dstReg = eRDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -395,33 +439,37 @@ static DecodeStatus DecodeLda_ptr_inc_2D(MCInst &MI, InsnType &Insn,
                                          uint64_t Address,
                                          const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -432,40 +480,45 @@ static DecodeStatus DecodeLda_ptr_inc_3D(MCInst &MI, InsnType &Insn,
                                          uint64_t Address,
                                          const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -476,33 +529,37 @@ static DecodeStatus DecodeLdb_or1_2D(MCInst &MI, InsnType &Insn,
                                      uint64_t Address,
                                      const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 11, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -513,40 +570,45 @@ static DecodeStatus DecodeLdb_or1_3D(MCInst &MI, InsnType &Insn,
                                      uint64_t Address,
                                      const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 11, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -557,33 +619,37 @@ static DecodeStatus DecodeSt_ptr_inc_2D(MCInst &MI, InsnType &Insn,
                                         uint64_t Address,
                                         const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -594,40 +660,45 @@ static DecodeStatus DecodeSt_ptr_inc_3D(MCInst &MI, InsnType &Insn,
                                         uint64_t Address,
                                         const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -638,40 +709,45 @@ static DecodeStatus DecodeDms_sts_2D(MCInst &MI, InsnType &Insn,
                                      uint64_t Address,
                                      const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 4, 7);
-  if (srcRegRaw >= std::size(mSclStDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 7;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 4, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(mSclStDecoderTable));
   Register srcReg = mSclStDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -682,40 +758,45 @@ static DecodeStatus DecodeDmv_sts_q_2D(MCInst &MI, InsnType &Insn,
                                        uint64_t Address,
                                        const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 9, 2);
-  if (srcRegRaw >= std::size(mQQssDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 2;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 9, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(mQQssDecoderTable));
   Register srcReg = mQQssDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -726,40 +807,45 @@ static DecodeStatus DecodeDmhb_sts_2D(MCInst &MI, InsnType &Insn,
                                       uint64_t Address,
                                       const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 6, 5);
-  if (srcRegRaw >= std::size(eRDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 5;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 6, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(eRDecoderTable));
   Register srcReg = eRDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -770,47 +856,53 @@ static DecodeStatus DecodeDms_sts_3D(MCInst &MI, InsnType &Insn,
                                      uint64_t Address,
                                      const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 4, 7);
-  if (srcRegRaw >= std::size(mSclStDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 7;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 4, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(mSclStDecoderTable));
   Register srcReg = mSclStDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -821,47 +913,53 @@ static DecodeStatus DecodeDmv_sts_q_3D(MCInst &MI, InsnType &Insn,
                                        uint64_t Address,
                                        const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 9, 2);
-  if (srcRegRaw >= std::size(mQQssDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 2;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 9, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(mQQssDecoderTable));
   Register srcReg = mQQssDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -872,47 +970,53 @@ static DecodeStatus DecodeDmhb_sts_3D(MCInst &MI, InsnType &Insn,
                                       uint64_t Address,
                                       const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 6, 5);
-  if (srcRegRaw >= std::size(eRDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 5;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 6, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(eRDecoderTable));
   Register srcReg = eRDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -923,40 +1027,45 @@ static DecodeStatus DecodeTm_sts_2D(MCInst &MI, InsnType &Insn,
                                     uint64_t Address,
                                     const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 6, 5);
-  if (srcRegRaw >= std::size(eRDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 5;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 6, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(eRDecoderTable));
   Register srcReg = eRDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -967,47 +1076,53 @@ static DecodeStatus DecodeTm_sts_3D(MCInst &MI, InsnType &Insn,
                                     uint64_t Address,
                                     const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 6, 5);
-  if (srcRegRaw >= std::size(eRDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 5;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 6, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(eRDecoderTable));
   Register srcReg = eRDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -1018,40 +1133,45 @@ static DecodeStatus DecodeDmv_lda_w_2D(MCInst &MI, InsnType &Insn,
                                        uint64_t Address,
                                        const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, 5);
-  if (dstRegRaw >= std::size(mWaDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 5;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mWaDecoderTable));
   Register dstReg = mWaDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -1062,40 +1182,45 @@ static DecodeStatus DecodeDmw_lda_ups_bf_2D(MCInst &MI, InsnType &Insn,
                                             uint64_t Address,
                                             const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned opRegRaw = fieldFromInstruction(Insn, 6, 5);
-  if (opRegRaw >= std::size(mBMmDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned opRegRawNumBits = 5;
+  unsigned opRegRaw = fieldFromInstruction(Insn, 6, opRegRawNumBits);
+  static_assert((1 << opRegRawNumBits) == std::size(mBMmDecoderTable));
   Register opReg = mBMmDecoderTable[opRegRaw];
-  assert(opReg && "Register not found.");
+  if (!opReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(opReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -1106,40 +1231,45 @@ static DecodeStatus DecodeDmx_lda_ups_bf_2D(MCInst &MI, InsnType &Insn,
                                             uint64_t Address,
                                             const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned opRegRaw = fieldFromInstruction(Insn, 7, 4);
-  if (opRegRaw >= std::size(mCMmDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned opRegRawNumBits = 4;
+  unsigned opRegRaw = fieldFromInstruction(Insn, 7, opRegRawNumBits);
+  static_assert((1 << opRegRawNumBits) == std::size(mCMmDecoderTable));
   Register opReg = mCMmDecoderTable[opRegRaw];
-  assert(opReg && "Register not found.");
+  if (!opReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(opReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -1150,47 +1280,53 @@ static DecodeStatus DecodeDmw_lda_ups_w2b_2D(MCInst &MI, InsnType &Insn,
                                              uint64_t Address,
                                              const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, 5);
-  if (dstRegRaw >= std::size(mBMmDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 5;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mBMmDecoderTable));
   Register dstReg = mBMmDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned suRegRaw = fieldFromInstruction(Insn, 4, 2);
-  if (suRegRaw >= std::size(eSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned suRegRawNumBits = 2;
+  unsigned suRegRaw = fieldFromInstruction(Insn, 4, suRegRawNumBits);
+  static_assert((1 << suRegRawNumBits) == std::size(eSDecoderTable));
   Register suReg = eSDecoderTable[suRegRaw];
-  assert(suReg && "Register not found.");
+  if (!suReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(suReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -1201,47 +1337,53 @@ static DecodeStatus DecodeDmx_lda_ups_x2c_2D(MCInst &MI, InsnType &Insn,
                                              uint64_t Address,
                                              const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, 4);
-  if (dstRegRaw >= std::size(mCMmDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mCMmDecoderTable));
   Register dstReg = mCMmDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned suRegRaw = fieldFromInstruction(Insn, 5, 2);
-  if (suRegRaw >= std::size(eSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned suRegRawNumBits = 2;
+  unsigned suRegRaw = fieldFromInstruction(Insn, 5, suRegRawNumBits);
+  static_assert((1 << suRegRawNumBits) == std::size(eSDecoderTable));
   Register suReg = eSDecoderTable[suRegRaw];
-  assert(suReg && "Register not found.");
+  if (!suReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(suReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -1252,47 +1394,53 @@ static DecodeStatus DecodeDmw_lda_ups_w2c_2D(MCInst &MI, InsnType &Insn,
                                              uint64_t Address,
                                              const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, 4);
-  if (dstRegRaw >= std::size(mCMmDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mCMmDecoderTable));
   Register dstReg = mCMmDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned suRegRaw = fieldFromInstruction(Insn, 5, 2);
-  if (suRegRaw >= std::size(eSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned suRegRawNumBits = 2;
+  unsigned suRegRaw = fieldFromInstruction(Insn, 5, suRegRawNumBits);
+  static_assert((1 << suRegRawNumBits) == std::size(eSDecoderTable));
   Register suReg = eSDecoderTable[suRegRaw];
-  assert(suReg && "Register not found.");
+  if (!suReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(suReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -1303,47 +1451,53 @@ static DecodeStatus DecodeDmx_lda_ups_x2d_2D(MCInst &MI, InsnType &Insn,
                                              uint64_t Address,
                                              const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 8, 3);
-  if (dstRegRaw >= std::size(eDMDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 3;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 8, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(eDMDecoderTable));
   Register dstReg = eDMDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned suRegRaw = fieldFromInstruction(Insn, 6, 2);
-  if (suRegRaw >= std::size(eSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned suRegRawNumBits = 2;
+  unsigned suRegRaw = fieldFromInstruction(Insn, 6, suRegRawNumBits);
+  static_assert((1 << suRegRawNumBits) == std::size(eSDecoderTable));
   Register suReg = eSDecoderTable[suRegRaw];
-  assert(suReg && "Register not found.");
+  if (!suReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(suReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -1354,40 +1508,45 @@ static DecodeStatus DecodeDmw_lda_w_2D(MCInst &MI, InsnType &Insn,
                                        uint64_t Address,
                                        const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, 5);
-  if (dstRegRaw >= std::size(mWaDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 5;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mWaDecoderTable));
   Register dstReg = mWaDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -1398,40 +1557,45 @@ static DecodeStatus DecodeDmx_lda_bm_2D(MCInst &MI, InsnType &Insn,
                                         uint64_t Address,
                                         const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, 5);
-  if (dstRegRaw >= std::size(mBMmDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 5;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mBMmDecoderTable));
   Register dstReg = mBMmDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -1442,40 +1606,45 @@ static DecodeStatus DecodeDmx_lda_fifohl_2D(MCInst &MI, InsnType &Insn,
                                             uint64_t Address,
                                             const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 8, 3);
-  if (dstRegRaw >= std::size(mFifoHLRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 3;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 8, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mFifoHLRegDecoderTable));
   Register dstReg = mFifoHLRegDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -1486,40 +1655,45 @@ static DecodeStatus DecodeDmx_lda_x_2D(MCInst &MI, InsnType &Insn,
                                        uint64_t Address,
                                        const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, 4);
-  if (dstRegRaw >= std::size(mXaDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mXaDecoderTable));
   Register dstReg = mXaDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -1530,47 +1704,53 @@ static DecodeStatus DecodeDmv_lda_w_3D(MCInst &MI, InsnType &Insn,
                                        uint64_t Address,
                                        const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, 5);
-  if (dstRegRaw >= std::size(mWaDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 5;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mWaDecoderTable));
   Register dstReg = mWaDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -1581,47 +1761,53 @@ static DecodeStatus DecodeDmw_lda_ups_bf_3D(MCInst &MI, InsnType &Insn,
                                             uint64_t Address,
                                             const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned opRegRaw = fieldFromInstruction(Insn, 6, 5);
-  if (opRegRaw >= std::size(mBMmDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned opRegRawNumBits = 5;
+  unsigned opRegRaw = fieldFromInstruction(Insn, 6, opRegRawNumBits);
+  static_assert((1 << opRegRawNumBits) == std::size(mBMmDecoderTable));
   Register opReg = mBMmDecoderTable[opRegRaw];
-  assert(opReg && "Register not found.");
+  if (!opReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(opReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -1632,47 +1818,53 @@ static DecodeStatus DecodeDmx_lda_ups_bf_3D(MCInst &MI, InsnType &Insn,
                                             uint64_t Address,
                                             const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned opRegRaw = fieldFromInstruction(Insn, 7, 4);
-  if (opRegRaw >= std::size(mCMmDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned opRegRawNumBits = 4;
+  unsigned opRegRaw = fieldFromInstruction(Insn, 7, opRegRawNumBits);
+  static_assert((1 << opRegRawNumBits) == std::size(mCMmDecoderTable));
   Register opReg = mCMmDecoderTable[opRegRaw];
-  assert(opReg && "Register not found.");
+  if (!opReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(opReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -1683,54 +1875,61 @@ static DecodeStatus DecodeDmw_lda_ups_w2b_3D(MCInst &MI, InsnType &Insn,
                                              uint64_t Address,
                                              const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, 5);
-  if (dstRegRaw >= std::size(mBMmDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 5;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mBMmDecoderTable));
   Register dstReg = mBMmDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned suRegRaw = fieldFromInstruction(Insn, 4, 2);
-  if (suRegRaw >= std::size(eSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned suRegRawNumBits = 2;
+  unsigned suRegRaw = fieldFromInstruction(Insn, 4, suRegRawNumBits);
+  static_assert((1 << suRegRawNumBits) == std::size(eSDecoderTable));
   Register suReg = eSDecoderTable[suRegRaw];
-  assert(suReg && "Register not found.");
+  if (!suReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(suReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -1741,54 +1940,61 @@ static DecodeStatus DecodeDmx_lda_ups_x2c_3D(MCInst &MI, InsnType &Insn,
                                              uint64_t Address,
                                              const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, 4);
-  if (dstRegRaw >= std::size(mCMmDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mCMmDecoderTable));
   Register dstReg = mCMmDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned suRegRaw = fieldFromInstruction(Insn, 5, 2);
-  if (suRegRaw >= std::size(eSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned suRegRawNumBits = 2;
+  unsigned suRegRaw = fieldFromInstruction(Insn, 5, suRegRawNumBits);
+  static_assert((1 << suRegRawNumBits) == std::size(eSDecoderTable));
   Register suReg = eSDecoderTable[suRegRaw];
-  assert(suReg && "Register not found.");
+  if (!suReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(suReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -1799,54 +2005,61 @@ static DecodeStatus DecodeDmw_lda_ups_w2c_3D(MCInst &MI, InsnType &Insn,
                                              uint64_t Address,
                                              const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, 4);
-  if (dstRegRaw >= std::size(mCMmDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mCMmDecoderTable));
   Register dstReg = mCMmDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned suRegRaw = fieldFromInstruction(Insn, 5, 2);
-  if (suRegRaw >= std::size(eSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned suRegRawNumBits = 2;
+  unsigned suRegRaw = fieldFromInstruction(Insn, 5, suRegRawNumBits);
+  static_assert((1 << suRegRawNumBits) == std::size(eSDecoderTable));
   Register suReg = eSDecoderTable[suRegRaw];
-  assert(suReg && "Register not found.");
+  if (!suReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(suReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -1857,54 +2070,61 @@ static DecodeStatus DecodeDmx_lda_ups_x2d_3D(MCInst &MI, InsnType &Insn,
                                              uint64_t Address,
                                              const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 8, 3);
-  if (dstRegRaw >= std::size(eDMDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 3;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 8, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(eDMDecoderTable));
   Register dstReg = eDMDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned suRegRaw = fieldFromInstruction(Insn, 6, 2);
-  if (suRegRaw >= std::size(eSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned suRegRawNumBits = 2;
+  unsigned suRegRaw = fieldFromInstruction(Insn, 6, suRegRawNumBits);
+  static_assert((1 << suRegRawNumBits) == std::size(eSDecoderTable));
   Register suReg = eSDecoderTable[suRegRaw];
-  assert(suReg && "Register not found.");
+  if (!suReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(suReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -1915,47 +2135,53 @@ static DecodeStatus DecodeDmw_lda_w_3D(MCInst &MI, InsnType &Insn,
                                        uint64_t Address,
                                        const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, 5);
-  if (dstRegRaw >= std::size(mWaDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 5;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mWaDecoderTable));
   Register dstReg = mWaDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -1966,47 +2192,53 @@ static DecodeStatus DecodeDmx_lda_bm_3D(MCInst &MI, InsnType &Insn,
                                         uint64_t Address,
                                         const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, 5);
-  if (dstRegRaw >= std::size(mBMmDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 5;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mBMmDecoderTable));
   Register dstReg = mBMmDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -2017,47 +2249,53 @@ static DecodeStatus DecodeDmx_lda_fifohl_3D(MCInst &MI, InsnType &Insn,
                                             uint64_t Address,
                                             const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 8, 3);
-  if (dstRegRaw >= std::size(mFifoHLRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 3;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 8, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mFifoHLRegDecoderTable));
   Register dstReg = mFifoHLRegDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -2068,47 +2306,53 @@ static DecodeStatus DecodeDmx_lda_x_3D(MCInst &MI, InsnType &Insn,
                                        uint64_t Address,
                                        const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, 4);
-  if (dstRegRaw >= std::size(mXaDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mXaDecoderTable));
   Register dstReg = mXaDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -2119,47 +2363,57 @@ static DecodeStatus DecodeVLDA_FILL_512(MCInst &MI, InsnType &Insn,
                                         uint64_t Address,
                                         const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 17, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
   return MCDisassembler::Success;
@@ -2170,68 +2424,81 @@ static DecodeStatus
 DecodeDmx_lda_fifo_x__fifo_2d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
                                   const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, 4);
-  if (dstRegRaw >= std::size(mXaDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mXaDecoderTable));
   Register dstReg = mXaDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 17, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -2242,75 +2509,89 @@ static DecodeStatus
 DecodeDmx_lda_fifo_x__fifo_3d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
                                   const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, 4);
-  if (dstRegRaw >= std::size(mXaDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mXaDecoderTable));
   Register dstReg = mXaDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 17, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -2321,61 +2602,73 @@ static DecodeStatus
 DecodeVLDA_POP_512_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
                                const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, 4);
-  if (dstRegRaw >= std::size(mXaDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mXaDecoderTable));
   Register dstReg = mXaDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 17, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eMDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eMDecoderTable));
   Register modReg = eMDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -2386,54 +2679,65 @@ static DecodeStatus
 DecodeVLDA_POP_512_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
                               const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, 4);
-  if (dstRegRaw >= std::size(mXaDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mXaDecoderTable));
   Register dstReg = mXaDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 17, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
   return MCDisassembler::Success;
@@ -2445,68 +2749,81 @@ DecodeDmx_lda_fifo_ex_ebs16__fifo_2d_pop(MCInst &MI, InsnType &Insn,
                                          uint64_t Address,
                                          const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, 4);
-  if (dstRegRaw >= std::size(mEXaDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mEXaDecoderTable));
   Register dstReg = mEXaDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 17, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -2518,75 +2835,89 @@ DecodeDmx_lda_fifo_ex_ebs16__fifo_3d_pop(MCInst &MI, InsnType &Insn,
                                          uint64_t Address,
                                          const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, 4);
-  if (dstRegRaw >= std::size(mEXaDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mEXaDecoderTable));
   Register dstReg = mEXaDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 17, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -2597,61 +2928,73 @@ static DecodeStatus
 DecodeVLDA_POP_544_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
                                const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, 4);
-  if (dstRegRaw >= std::size(mEXaDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mEXaDecoderTable));
   Register dstReg = mEXaDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 17, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eMDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eMDecoderTable));
   Register modReg = eMDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -2662,54 +3005,65 @@ static DecodeStatus
 DecodeVLDA_POP_544_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
                               const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, 4);
-  if (dstRegRaw >= std::size(mEXaDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mEXaDecoderTable));
   Register dstReg = mEXaDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 17, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
   return MCDisassembler::Success;
@@ -2721,68 +3075,81 @@ DecodeDmx_lda_fifo_ex_ebs8__fifo_2d_pop(MCInst &MI, InsnType &Insn,
                                         uint64_t Address,
                                         const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, 4);
-  if (dstRegRaw >= std::size(mEXaDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mEXaDecoderTable));
   Register dstReg = mEXaDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 17, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -2794,75 +3161,89 @@ DecodeDmx_lda_fifo_ex_ebs8__fifo_3d_pop(MCInst &MI, InsnType &Insn,
                                         uint64_t Address,
                                         const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, 4);
-  if (dstRegRaw >= std::size(mEXaDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mEXaDecoderTable));
   Register dstReg = mEXaDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 17, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -2873,61 +3254,73 @@ static DecodeStatus
 DecodeVLDA_POP_576_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
                                const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, 4);
-  if (dstRegRaw >= std::size(mEXaDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mEXaDecoderTable));
   Register dstReg = mEXaDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 17, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eMDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eMDecoderTable));
   Register modReg = eMDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -2938,54 +3331,65 @@ static DecodeStatus
 DecodeVLDA_POP_576_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
                               const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, 4);
-  if (dstRegRaw >= std::size(mEXaDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 7, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mEXaDecoderTable));
   Register dstReg = mEXaDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 17, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
   return MCDisassembler::Success;
@@ -2996,68 +3400,81 @@ static DecodeStatus
 DecodeDmx_lda_fifo_qx__fifo_2d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
                                    const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 9, 2);
-  if (dstRegRaw >= std::size(mQXsaDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 2;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 9, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mQXsaDecoderTable));
   Register dstReg = mQXsaDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 17, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -3068,75 +3485,89 @@ static DecodeStatus
 DecodeDmx_lda_fifo_qx__fifo_3d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
                                    const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 9, 2);
-  if (dstRegRaw >= std::size(mQXsaDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 2;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 9, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mQXsaDecoderTable));
   Register dstReg = mQXsaDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 17, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -3147,61 +3578,73 @@ static DecodeStatus
 DecodeVLDA_POP_640_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
                                const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 9, 2);
-  if (dstRegRaw >= std::size(mQXsaDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 2;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 9, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mQXsaDecoderTable));
   Register dstReg = mQXsaDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 17, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eMDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eMDecoderTable));
   Register modReg = eMDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -3212,54 +3655,65 @@ static DecodeStatus
 DecodeVLDA_POP_640_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
                               const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 9, 2);
-  if (dstRegRaw >= std::size(mQXsaDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 2;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 9, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mQXsaDecoderTable));
   Register dstReg = mQXsaDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 17, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
   return MCDisassembler::Success;
@@ -3271,68 +3725,81 @@ DecodeDmx_lda_fifo_qex_ebs16__fifo_2d_pop(MCInst &MI, InsnType &Insn,
                                           uint64_t Address,
                                           const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 9, 2);
-  if (dstRegRaw >= std::size(mQEXsaDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 2;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 9, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mQEXsaDecoderTable));
   Register dstReg = mQEXsaDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 17, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -3344,75 +3811,89 @@ DecodeDmx_lda_fifo_qex_ebs16__fifo_3d_pop(MCInst &MI, InsnType &Insn,
                                           uint64_t Address,
                                           const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 9, 2);
-  if (dstRegRaw >= std::size(mQEXsaDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 2;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 9, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mQEXsaDecoderTable));
   Register dstReg = mQEXsaDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 17, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -3423,61 +3904,73 @@ static DecodeStatus
 DecodeVLDA_POP_704_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
                                const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 9, 2);
-  if (dstRegRaw >= std::size(mQEXsaDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 2;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 9, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mQEXsaDecoderTable));
   Register dstReg = mQEXsaDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 17, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eMDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eMDecoderTable));
   Register modReg = eMDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -3488,54 +3981,65 @@ static DecodeStatus
 DecodeVLDA_POP_704_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
                               const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 9, 2);
-  if (dstRegRaw >= std::size(mQEXsaDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 2;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 9, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mQEXsaDecoderTable));
   Register dstReg = mQEXsaDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 17, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 17, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
   return MCDisassembler::Success;
@@ -3546,40 +4050,45 @@ static DecodeStatus DecodeDmv_ldb_2D(MCInst &MI, InsnType &Insn,
                                      uint64_t Address,
                                      const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 3, 5);
-  if (dstRegRaw >= std::size(mWbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 5;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 3, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mWbDecoderTable));
   Register dstReg = mWbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 11, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -3590,40 +4099,45 @@ static DecodeStatus DecodeDmw_ldb_unpack_2D(MCInst &MI, InsnType &Insn,
                                             uint64_t Address,
                                             const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, 4);
-  if (dstRegRaw >= std::size(mXbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mXbDecoderTable));
   Register dstReg = mXbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 11, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -3634,40 +4148,45 @@ static DecodeStatus DecodeDmx_ldb_unpack_2D(MCInst &MI, InsnType &Insn,
                                             uint64_t Address,
                                             const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 5, 3);
-  if (dstRegRaw >= std::size(eYDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 3;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 5, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(eYDecoderTable));
   Register dstReg = eYDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 11, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -3678,40 +4197,45 @@ static DecodeStatus DecodeDmw_ldb_2D(MCInst &MI, InsnType &Insn,
                                      uint64_t Address,
                                      const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 3, 5);
-  if (dstRegRaw >= std::size(mWbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 5;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 3, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mWbDecoderTable));
   Register dstReg = mWbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 11, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -3722,40 +4246,45 @@ static DecodeStatus DecodeDmx_ldb_x_2D(MCInst &MI, InsnType &Insn,
                                        uint64_t Address,
                                        const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, 4);
-  if (dstRegRaw >= std::size(mXbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mXbDecoderTable));
   Register dstReg = mXbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 11, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -3766,47 +4295,53 @@ static DecodeStatus DecodeDmv_ldb_3D(MCInst &MI, InsnType &Insn,
                                      uint64_t Address,
                                      const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 3, 5);
-  if (dstRegRaw >= std::size(mWbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 5;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 3, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mWbDecoderTable));
   Register dstReg = mWbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 11, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -3817,47 +4352,53 @@ static DecodeStatus DecodeDmw_ldb_unpack_3D(MCInst &MI, InsnType &Insn,
                                             uint64_t Address,
                                             const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, 4);
-  if (dstRegRaw >= std::size(mXbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mXbDecoderTable));
   Register dstReg = mXbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 11, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -3868,47 +4409,53 @@ static DecodeStatus DecodeDmx_ldb_unpack_3D(MCInst &MI, InsnType &Insn,
                                             uint64_t Address,
                                             const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 5, 3);
-  if (dstRegRaw >= std::size(eYDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 3;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 5, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(eYDecoderTable));
   Register dstReg = eYDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 11, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -3919,47 +4466,53 @@ static DecodeStatus DecodeDmw_ldb_3D(MCInst &MI, InsnType &Insn,
                                      uint64_t Address,
                                      const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 3, 5);
-  if (dstRegRaw >= std::size(mWbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 5;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 3, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mWbDecoderTable));
   Register dstReg = mWbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 11, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -3970,47 +4523,53 @@ static DecodeStatus DecodeDmx_ldb_x_3D(MCInst &MI, InsnType &Insn,
                                        uint64_t Address,
                                        const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, 4);
-  if (dstRegRaw >= std::size(mXbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mXbDecoderTable));
   Register dstReg = mXbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 11, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -4021,25 +4580,30 @@ static DecodeStatus DecodeVLDB_FILLX_512(MCInst &MI, InsnType &Insn,
                                          uint64_t Address,
                                          const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
   // --------------------- Ins ------------------------
@@ -4055,25 +4619,30 @@ static DecodeStatus DecodeVLDB_FILLX_512(MCInst &MI, InsnType &Insn,
   unsigned conf_e7Reg = conf_e7RC.getRegister(0);
   MI.addOperand(MCOperand::createReg(conf_e7Reg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 14, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
   return MCDisassembler::Success;
@@ -4084,47 +4653,57 @@ static DecodeStatus DecodeVLDB_FILL_512(MCInst &MI, InsnType &Insn,
                                         uint64_t Address,
                                         const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 14, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
   return MCDisassembler::Success;
@@ -4135,32 +4714,38 @@ static DecodeStatus DecodeVLDB_POPX_512(MCInst &MI, InsnType &Insn,
                                         uint64_t Address,
                                         const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, 4);
-  if (dstRegRaw >= std::size(mXbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mXbDecoderTable));
   Register dstReg = mXbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
   // --------------------- Ins ------------------------
@@ -4176,25 +4761,30 @@ static DecodeStatus DecodeVLDB_POPX_512(MCInst &MI, InsnType &Insn,
   unsigned conf_e7Reg = conf_e7RC.getRegister(0);
   MI.addOperand(MCOperand::createReg(conf_e7Reg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 14, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
   return MCDisassembler::Success;
@@ -4205,68 +4795,81 @@ static DecodeStatus
 DecodeDmx_ldb_fifo_x__fifo_2d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
                                   const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, 4);
-  if (dstRegRaw >= std::size(mXbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mXbDecoderTable));
   Register dstReg = mXbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 14, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 11, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -4277,75 +4880,89 @@ static DecodeStatus
 DecodeDmx_ldb_fifo_x__fifo_3d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
                                   const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, 4);
-  if (dstRegRaw >= std::size(mXbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mXbDecoderTable));
   Register dstReg = mXbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 14, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 11, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -4356,61 +4973,73 @@ static DecodeStatus
 DecodeVLDB_POP_512_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
                                const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, 4);
-  if (dstRegRaw >= std::size(mXbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mXbDecoderTable));
   Register dstReg = mXbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 14, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (modRegRaw >= std::size(eMDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 11, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eMDecoderTable));
   Register modReg = eMDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -4421,54 +5050,65 @@ static DecodeStatus
 DecodeVLDB_POP_512_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
                               const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, 4);
-  if (dstRegRaw >= std::size(mXbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mXbDecoderTable));
   Register dstReg = mXbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 14, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
   return MCDisassembler::Success;
@@ -4480,68 +5120,81 @@ DecodeDmx_ldb_fifo_ex_ebs16__fifo_2d_pop(MCInst &MI, InsnType &Insn,
                                          uint64_t Address,
                                          const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, 4);
-  if (dstRegRaw >= std::size(mEXbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mEXbDecoderTable));
   Register dstReg = mEXbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 14, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 11, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -4553,75 +5206,89 @@ DecodeDmx_ldb_fifo_ex_ebs16__fifo_3d_pop(MCInst &MI, InsnType &Insn,
                                          uint64_t Address,
                                          const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, 4);
-  if (dstRegRaw >= std::size(mEXbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mEXbDecoderTable));
   Register dstReg = mEXbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 14, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 11, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -4632,61 +5299,73 @@ static DecodeStatus
 DecodeVLDB_POP_544_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
                                const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, 4);
-  if (dstRegRaw >= std::size(mEXbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mEXbDecoderTable));
   Register dstReg = mEXbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 14, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (modRegRaw >= std::size(eMDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 11, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eMDecoderTable));
   Register modReg = eMDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -4697,54 +5376,65 @@ static DecodeStatus
 DecodeVLDB_POP_544_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
                               const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, 4);
-  if (dstRegRaw >= std::size(mEXbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mEXbDecoderTable));
   Register dstReg = mEXbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 14, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
   return MCDisassembler::Success;
@@ -4756,68 +5446,81 @@ DecodeDmx_ldb_fifo_ex_ebs8__fifo_2d_pop(MCInst &MI, InsnType &Insn,
                                         uint64_t Address,
                                         const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, 4);
-  if (dstRegRaw >= std::size(mEXbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mEXbDecoderTable));
   Register dstReg = mEXbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 14, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 11, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -4829,75 +5532,89 @@ DecodeDmx_ldb_fifo_ex_ebs8__fifo_3d_pop(MCInst &MI, InsnType &Insn,
                                         uint64_t Address,
                                         const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, 4);
-  if (dstRegRaw >= std::size(mEXbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mEXbDecoderTable));
   Register dstReg = mEXbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 14, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 11, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -4908,61 +5625,73 @@ static DecodeStatus
 DecodeVLDB_POP_576_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
                                const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, 4);
-  if (dstRegRaw >= std::size(mEXbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mEXbDecoderTable));
   Register dstReg = mEXbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 14, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (modRegRaw >= std::size(eMDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 11, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eMDecoderTable));
   Register modReg = eMDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -4973,54 +5702,65 @@ static DecodeStatus
 DecodeVLDB_POP_576_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
                               const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, 4);
-  if (dstRegRaw >= std::size(mEXbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 4;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 4, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mEXbDecoderTable));
   Register dstReg = mEXbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 14, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
   return MCDisassembler::Success;
@@ -5031,68 +5771,81 @@ static DecodeStatus
 DecodeDmx_ldb_fifo_qx__fifo_2d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
                                    const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, 2);
-  if (dstRegRaw >= std::size(mQXsbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 2;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mQXsbDecoderTable));
   Register dstReg = mQXsbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 14, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 11, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -5103,75 +5856,89 @@ static DecodeStatus
 DecodeDmx_ldb_fifo_qx__fifo_3d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
                                    const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, 2);
-  if (dstRegRaw >= std::size(mQXsbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 2;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mQXsbDecoderTable));
   Register dstReg = mQXsbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 14, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 11, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -5182,61 +5949,73 @@ static DecodeStatus
 DecodeVLDB_POP_640_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
                                const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, 2);
-  if (dstRegRaw >= std::size(mQXsbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 2;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mQXsbDecoderTable));
   Register dstReg = mQXsbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 14, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (modRegRaw >= std::size(eMDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 11, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eMDecoderTable));
   Register modReg = eMDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -5247,54 +6026,65 @@ static DecodeStatus
 DecodeVLDB_POP_640_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
                               const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, 2);
-  if (dstRegRaw >= std::size(mQXsbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 2;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mQXsbDecoderTable));
   Register dstReg = mQXsbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 14, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
   return MCDisassembler::Success;
@@ -5306,68 +6096,81 @@ DecodeDmx_ldb_fifo_qex_ebs16__fifo_2d_pop(MCInst &MI, InsnType &Insn,
                                           uint64_t Address,
                                           const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, 2);
-  if (dstRegRaw >= std::size(mQEXsbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 2;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mQEXsbDecoderTable));
   Register dstReg = mQEXsbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 14, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 11, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -5379,75 +6182,89 @@ DecodeDmx_ldb_fifo_qex_ebs16__fifo_3d_pop(MCInst &MI, InsnType &Insn,
                                           uint64_t Address,
                                           const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, 2);
-  if (dstRegRaw >= std::size(mQEXsbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 2;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mQEXsbDecoderTable));
   Register dstReg = mQEXsbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 14, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 11, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -5458,61 +6275,73 @@ static DecodeStatus
 DecodeVLDB_POP_704_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
                                const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, 2);
-  if (dstRegRaw >= std::size(mQEXsbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 2;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mQEXsbDecoderTable));
   Register dstReg = mQEXsbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 14, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (modRegRaw >= std::size(eMDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 11, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eMDecoderTable));
   Register modReg = eMDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -5523,54 +6352,65 @@ static DecodeStatus
 DecodeVLDB_POP_704_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
                               const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, 2);
-  if (dstRegRaw >= std::size(mQEXsbDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dstRegRawNumBits = 2;
+  unsigned dstRegRaw = fieldFromInstruction(Insn, 6, dstRegRawNumBits);
+  static_assert((1 << dstRegRawNumBits) == std::size(mQEXsbDecoderTable));
   Register dstReg = mQEXsbDecoderTable[dstRegRaw];
-  assert(dstReg && "Register not found.");
+  if (!dstReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dstReg));
 
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 1;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_reg_outRegRawNumBits = 1;
+  unsigned fifo_reg_outRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_reg_outRegRawNumBits);
+  static_assert((1 << fifo_reg_outRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
-  assert(fifo_reg_outReg && "Register not found.");
+  if (!fifo_reg_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned pos_outRegRawNumBits = 1;
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, pos_outRegRawNumBits);
+  static_assert((1 << pos_outRegRawNumBits) == std::size(eRF2DecoderTable));
   Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
-  assert(pos_outReg && "Register not found.");
+  if (!pos_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(pos_outReg));
 
   // --------------------- Ins ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 1;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePSDecoderTable));
   Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned fifo_regRegRawNumBits = 1;
+  unsigned fifo_regRegRaw =
+      fieldFromInstruction(Insn, 14, fifo_regRegRawNumBits);
+  static_assert((1 << fifo_regRegRawNumBits) ==
+                std::size(eLdFifoRegDecoderTable));
   Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
+  if (!fifo_regReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(fifo_regReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned posRegRawNumBits = 1;
+  unsigned posRegRaw = fieldFromInstruction(Insn, 14, posRegRawNumBits);
+  static_assert((1 << posRegRawNumBits) == std::size(eRF2DecoderTable));
   Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
+  if (!posReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(posReg));
 
   return MCDisassembler::Success;
@@ -5581,40 +6421,45 @@ static DecodeStatus DecodeDmv_sts_w_2D(MCInst &MI, InsnType &Insn,
                                        uint64_t Address,
                                        const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 6, 5);
-  if (srcRegRaw >= std::size(mWsDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 5;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 6, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(mWsDecoderTable));
   Register srcReg = mWsDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -5625,40 +6470,45 @@ static DecodeStatus DecodeDmw_sts_srs_bf_2D(MCInst &MI, InsnType &Insn,
                                             uint64_t Address,
                                             const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 6, 5);
-  if (srcRegRaw >= std::size(mBMsDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 5;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 6, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(mBMsDecoderTable));
   Register srcReg = mBMsDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -5669,40 +6519,45 @@ static DecodeStatus DecodeDmx_sts_srs_bf_2D(MCInst &MI, InsnType &Insn,
                                             uint64_t Address,
                                             const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 7, 4);
-  if (srcRegRaw >= std::size(mCMsDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 4;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 7, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(mCMsDecoderTable));
   Register srcReg = mCMsDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -5713,40 +6568,45 @@ static DecodeStatus DecodeDmw_sts_pack_2D(MCInst &MI, InsnType &Insn,
                                           uint64_t Address,
                                           const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 7, 4);
-  if (srcRegRaw >= std::size(mXsDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 4;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 7, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(mXsDecoderTable));
   Register srcReg = mXsDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -5757,40 +6617,45 @@ static DecodeStatus DecodeDmx_sts_pack_2D(MCInst &MI, InsnType &Insn,
                                           uint64_t Address,
                                           const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 8, 3);
-  if (srcRegRaw >= std::size(eYDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 3;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 8, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(eYDecoderTable));
   Register srcReg = eYDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -5801,47 +6666,53 @@ static DecodeStatus DecodeDm_sts_srs_cm_2D(MCInst &MI, InsnType &Insn,
                                            uint64_t Address,
                                            const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 7, 4);
-  if (srcRegRaw >= std::size(mCMsDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 4;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 7, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(mCMsDecoderTable));
   Register srcReg = mCMsDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned suRegRaw = fieldFromInstruction(Insn, 4, 2);
-  if (suRegRaw >= std::size(eSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned suRegRawNumBits = 2;
+  unsigned suRegRaw = fieldFromInstruction(Insn, 4, suRegRawNumBits);
+  static_assert((1 << suRegRawNumBits) == std::size(eSDecoderTable));
   Register suReg = eSDecoderTable[suRegRaw];
-  assert(suReg && "Register not found.");
+  if (!suReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(suReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -5852,47 +6723,53 @@ static DecodeStatus DecodeDmw_sts_srs_bm_2D(MCInst &MI, InsnType &Insn,
                                             uint64_t Address,
                                             const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 6, 5);
-  if (srcRegRaw >= std::size(mBMsDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 5;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 6, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(mBMsDecoderTable));
   Register srcReg = mBMsDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned suRegRaw = fieldFromInstruction(Insn, 4, 2);
-  if (suRegRaw >= std::size(eSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned suRegRawNumBits = 2;
+  unsigned suRegRaw = fieldFromInstruction(Insn, 4, suRegRawNumBits);
+  static_assert((1 << suRegRawNumBits) == std::size(eSDecoderTable));
   Register suReg = eSDecoderTable[suRegRaw];
-  assert(suReg && "Register not found.");
+  if (!suReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(suReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -5903,47 +6780,53 @@ static DecodeStatus DecodeDmx_sts_srs_dm_2D(MCInst &MI, InsnType &Insn,
                                             uint64_t Address,
                                             const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 8, 3);
-  if (srcRegRaw >= std::size(eDMDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 3;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 8, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(eDMDecoderTable));
   Register srcReg = eDMDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned suRegRaw = fieldFromInstruction(Insn, 4, 2);
-  if (suRegRaw >= std::size(eSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned suRegRawNumBits = 2;
+  unsigned suRegRaw = fieldFromInstruction(Insn, 4, suRegRawNumBits);
+  static_assert((1 << suRegRawNumBits) == std::size(eSDecoderTable));
   Register suReg = eSDecoderTable[suRegRaw];
-  assert(suReg && "Register not found.");
+  if (!suReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(suReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -5954,40 +6837,45 @@ static DecodeStatus DecodeDmw_sts_w_2D(MCInst &MI, InsnType &Insn,
                                        uint64_t Address,
                                        const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 6, 5);
-  if (srcRegRaw >= std::size(mWsDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 5;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 6, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(mWsDecoderTable));
   Register srcReg = mWsDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -5998,40 +6886,45 @@ static DecodeStatus DecodeDmx_sts_bm_2D(MCInst &MI, InsnType &Insn,
                                         uint64_t Address,
                                         const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 6, 5);
-  if (srcRegRaw >= std::size(mBMsDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 5;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 6, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(mBMsDecoderTable));
   Register srcReg = mBMsDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -6042,40 +6935,45 @@ static DecodeStatus DecodeDmx_sts_fifohl_2D(MCInst &MI, InsnType &Insn,
                                             uint64_t Address,
                                             const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 8, 3);
-  if (srcRegRaw >= std::size(mFifoHLRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 3;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 8, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(mFifoHLRegDecoderTable));
   Register srcReg = mFifoHLRegDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -6086,40 +6984,45 @@ static DecodeStatus DecodeDmx_sts_x_2D(MCInst &MI, InsnType &Insn,
                                        uint64_t Address,
                                        const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 7, 4);
-  if (srcRegRaw >= std::size(mXsDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 4;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 7, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(mXsDecoderTable));
   Register srcReg = mXsDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -6130,47 +7033,53 @@ static DecodeStatus DecodeDmv_sts_w_3D(MCInst &MI, InsnType &Insn,
                                        uint64_t Address,
                                        const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 6, 5);
-  if (srcRegRaw >= std::size(mWsDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 5;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 6, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(mWsDecoderTable));
   Register srcReg = mWsDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -6181,47 +7090,53 @@ static DecodeStatus DecodeDmw_sts_srs_bf_3D(MCInst &MI, InsnType &Insn,
                                             uint64_t Address,
                                             const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 6, 5);
-  if (srcRegRaw >= std::size(mBMsDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 5;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 6, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(mBMsDecoderTable));
   Register srcReg = mBMsDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -6232,47 +7147,53 @@ static DecodeStatus DecodeDmx_sts_srs_bf_3D(MCInst &MI, InsnType &Insn,
                                             uint64_t Address,
                                             const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 7, 4);
-  if (srcRegRaw >= std::size(mCMsDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 4;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 7, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(mCMsDecoderTable));
   Register srcReg = mCMsDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -6283,47 +7204,53 @@ static DecodeStatus DecodeDmw_sts_pack_3D(MCInst &MI, InsnType &Insn,
                                           uint64_t Address,
                                           const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 7, 4);
-  if (srcRegRaw >= std::size(mXsDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 4;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 7, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(mXsDecoderTable));
   Register srcReg = mXsDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -6334,47 +7261,53 @@ static DecodeStatus DecodeDmx_sts_pack_3D(MCInst &MI, InsnType &Insn,
                                           uint64_t Address,
                                           const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 8, 3);
-  if (srcRegRaw >= std::size(eYDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 3;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 8, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(eYDecoderTable));
   Register srcReg = eYDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -6385,54 +7318,61 @@ static DecodeStatus DecodeDm_sts_srs_cm_3D(MCInst &MI, InsnType &Insn,
                                            uint64_t Address,
                                            const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 7, 4);
-  if (srcRegRaw >= std::size(mCMsDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 4;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 7, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(mCMsDecoderTable));
   Register srcReg = mCMsDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned suRegRaw = fieldFromInstruction(Insn, 4, 2);
-  if (suRegRaw >= std::size(eSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned suRegRawNumBits = 2;
+  unsigned suRegRaw = fieldFromInstruction(Insn, 4, suRegRawNumBits);
+  static_assert((1 << suRegRawNumBits) == std::size(eSDecoderTable));
   Register suReg = eSDecoderTable[suRegRaw];
-  assert(suReg && "Register not found.");
+  if (!suReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(suReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -6443,54 +7383,61 @@ static DecodeStatus DecodeDmw_sts_srs_bm_3D(MCInst &MI, InsnType &Insn,
                                             uint64_t Address,
                                             const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 6, 5);
-  if (srcRegRaw >= std::size(mBMsDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 5;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 6, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(mBMsDecoderTable));
   Register srcReg = mBMsDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned suRegRaw = fieldFromInstruction(Insn, 4, 2);
-  if (suRegRaw >= std::size(eSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned suRegRawNumBits = 2;
+  unsigned suRegRaw = fieldFromInstruction(Insn, 4, suRegRawNumBits);
+  static_assert((1 << suRegRawNumBits) == std::size(eSDecoderTable));
   Register suReg = eSDecoderTable[suRegRaw];
-  assert(suReg && "Register not found.");
+  if (!suReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(suReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -6501,54 +7448,61 @@ static DecodeStatus DecodeDmx_sts_srs_dm_3D(MCInst &MI, InsnType &Insn,
                                             uint64_t Address,
                                             const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 8, 3);
-  if (srcRegRaw >= std::size(eDMDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 3;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 8, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(eDMDecoderTable));
   Register srcReg = eDMDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned suRegRaw = fieldFromInstruction(Insn, 4, 2);
-  if (suRegRaw >= std::size(eSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned suRegRawNumBits = 2;
+  unsigned suRegRaw = fieldFromInstruction(Insn, 4, suRegRawNumBits);
+  static_assert((1 << suRegRawNumBits) == std::size(eSDecoderTable));
   Register suReg = eSDecoderTable[suRegRaw];
-  assert(suReg && "Register not found.");
+  if (!suReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(suReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -6559,47 +7513,53 @@ static DecodeStatus DecodeDmw_sts_w_3D(MCInst &MI, InsnType &Insn,
                                        uint64_t Address,
                                        const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 6, 5);
-  if (srcRegRaw >= std::size(mWsDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 5;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 6, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(mWsDecoderTable));
   Register srcReg = mWsDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -6610,47 +7570,53 @@ static DecodeStatus DecodeDmx_sts_bm_3D(MCInst &MI, InsnType &Insn,
                                         uint64_t Address,
                                         const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 6, 5);
-  if (srcRegRaw >= std::size(mBMsDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 5;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 6, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(mBMsDecoderTable));
   Register srcReg = mBMsDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -6661,47 +7627,53 @@ static DecodeStatus DecodeDmx_sts_fifohl_3D(MCInst &MI, InsnType &Insn,
                                             uint64_t Address,
                                             const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 8, 3);
-  if (srcRegRaw >= std::size(mFifoHLRegDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 3;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 8, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(mFifoHLRegDecoderTable));
   Register srcReg = mFifoHLRegDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -6712,47 +7684,53 @@ static DecodeStatus DecodeDmx_sts_x_3D(MCInst &MI, InsnType &Insn,
                                        uint64_t Address,
                                        const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptr_outRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptr_outRegRawNumBits = 3;
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, ptr_outRegRawNumBits);
+  static_assert((1 << ptr_outRegRawNumBits) == std::size(ePDecoderTable));
   Register ptr_outReg = ePDecoderTable[ptr_outRegRaw];
-  assert(ptr_outReg && "Register not found.");
+  if (!ptr_outReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
-  unsigned srcRegRaw = fieldFromInstruction(Insn, 7, 4);
-  if (srcRegRaw >= std::size(mXsDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned srcRegRawNumBits = 4;
+  unsigned srcRegRaw = fieldFromInstruction(Insn, 7, srcRegRawNumBits);
+  static_assert((1 << srcRegRawNumBits) == std::size(mXsDecoderTable));
   Register srcReg = mXsDecoderTable[srcRegRaw];
-  assert(srcReg && "Register not found.");
+  if (!srcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(srcReg));
 
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 3);
-  if (ptrRegRaw >= std::size(ePDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned ptrRegRawNumBits = 3;
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, ptrRegRawNumBits);
+  static_assert((1 << ptrRegRawNumBits) == std::size(ePDecoderTable));
   Register ptrReg = ePDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
+  if (!ptrReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(ptrReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -6782,11 +7760,12 @@ DecodeDmx_sts_fifo_bare_x__fifo_2d_flush(MCInst &MI, InsnType &Insn,
   unsigned avail_outReg = avail_outRC.getRegister(0);
   MI.addOperand(MCOperand::createReg(avail_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
@@ -6808,11 +7787,12 @@ DecodeDmx_sts_fifo_bare_x__fifo_2d_flush(MCInst &MI, InsnType &Insn,
   unsigned availReg = availRC.getRegister(0);
   MI.addOperand(MCOperand::createReg(availReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -6842,18 +7822,20 @@ DecodeDmx_sts_fifo_bare_x__fifo_3d_flush(MCInst &MI, InsnType &Insn,
   unsigned avail_outReg = avail_outRC.getRegister(0);
   MI.addOperand(MCOperand::createReg(avail_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
@@ -6875,11 +7857,12 @@ DecodeDmx_sts_fifo_bare_x__fifo_3d_flush(MCInst &MI, InsnType &Insn,
   unsigned availReg = availRC.getRegister(0);
   MI.addOperand(MCOperand::createReg(availReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -6909,11 +7892,12 @@ DecodeDmx_sts_fifo_conv_x__fifo_2d_flush(MCInst &MI, InsnType &Insn,
   unsigned avail_outReg = avail_outRC.getRegister(0);
   MI.addOperand(MCOperand::createReg(avail_outReg));
 
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dcRegRawNumBits = 3;
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, dcRegRawNumBits);
+  static_assert((1 << dcRegRawNumBits) == std::size(eDCDecoderTable));
   Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
+  if (!dcReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dcReg));
 
   // --------------------- Ins ------------------------
@@ -6935,11 +7919,12 @@ DecodeDmx_sts_fifo_conv_x__fifo_2d_flush(MCInst &MI, InsnType &Insn,
   unsigned availReg = availRC.getRegister(0);
   MI.addOperand(MCOperand::createReg(availReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (modRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 3;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDDecoderTable));
   Register modReg = eDDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;
@@ -6969,18 +7954,20 @@ DecodeDmx_sts_fifo_conv_x__fifo_3d_flush(MCInst &MI, InsnType &Insn,
   unsigned avail_outReg = avail_outRC.getRegister(0);
   MI.addOperand(MCOperand::createReg(avail_outReg));
 
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dclRegRawNumBits = 2;
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, dclRegRawNumBits);
+  static_assert((1 << dclRegRawNumBits) == std::size(eDCLDecoderTable));
   Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
+  if (!dclReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dclReg));
 
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned dchRegRawNumBits = 2;
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, dchRegRawNumBits);
+  static_assert((1 << dchRegRawNumBits) == std::size(eDCHDecoderTable));
   Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
+  if (!dchReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(dchReg));
 
   // --------------------- Ins ------------------------
@@ -7002,11 +7989,12 @@ DecodeDmx_sts_fifo_conv_x__fifo_3d_flush(MCInst &MI, InsnType &Insn,
   unsigned availReg = availRC.getRegister(0);
   MI.addOperand(MCOperand::createReg(availReg));
 
-  unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (modRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
+  const unsigned modRegRawNumBits = 2;
+  unsigned modRegRaw = fieldFromInstruction(Insn, 14, modRegRawNumBits);
+  static_assert((1 << modRegRawNumBits) == std::size(eDSDecoderTable));
   Register modReg = eDSDecoderTable[modRegRaw];
-  assert(modReg && "Register not found.");
+  if (!modReg)
+    return MCDisassembler::Fail;
   MI.addOperand(MCOperand::createReg(modReg));
 
   return MCDisassembler::Success;

@@ -37,9 +37,12 @@ TABLEBASEDDECODER(eR)
 static const unsigned eRF2DecoderTable[] = {r24, r25};
 static const unsigned eDNDecoderTable[] = {dn0, dn1, dn2, dn3,
                                            dn4, dn5, dn6, dn7};
-static const unsigned eEloDecoderTable[] = {el1, el3, el5, el7, el9, el11};
-static const unsigned eEhoDecoderTable[] = {eh1, eh3, eh5, eh7, eh9, eh11};
-static const unsigned eBMHHDecoderTable[] = {bmhh0, bmhh1, bmhh2, bmhh3, bmhh4};
+static const unsigned eEloDecoderTable[] = {el1, el3,  el5, el7,
+                                            el9, el11, 0,   0};
+static const unsigned eEhoDecoderTable[] = {eh1, eh3,  eh5, eh7,
+                                            eh9, eh11, 0,   0};
+static const unsigned eBMHHDecoderTable[] = {bmhh0, bmhh1, bmhh2, bmhh3,
+                                             bmhh4, 0,     0,     0};
 static const unsigned eDJDecoderTable[] = {dj0, dj1, dj2, dj3,
                                            dj4, dj5, dj6, dj7};
 TABLEBASEDDECODER(eDJ)
@@ -47,28 +50,35 @@ static const unsigned eLdFifoRegDecoderTable[] = {lf0, lf1};
 static const unsigned eQQsoDecoderTable[] = {q1, q3};
 static const unsigned eDSDecoderTable[] = {d0_3d, d1_3d, d2_3d, d3_3d};
 
-static const unsigned eDMDecoderTable[] = {dm0, dm1, dm2, dm3, dm4};
+static const unsigned eDMDecoderTable[] = {dm0, dm1, dm2, dm3, dm4, 0, 0, 0};
 TABLEBASEDDECODER(eDM)
 static const unsigned eQQseDecoderTable[] = {q0, q2};
-static const unsigned eEheDecoderTable[] = {eh0, eh2, eh4, eh6, eh8, eh10};
+static const unsigned eEheDecoderTable[] = {eh0, eh2,  eh4, eh6,
+                                            eh8, eh10, 0,   0};
 static const unsigned eBMHLDecoderTable[] = {bmhl0, bmhl1, bmhl2, bmhl3, bmhl4};
 static const unsigned eVaddSignDecoderTable[] = {vaddSign0, vaddSign1};
 static const unsigned ePDecoderTable[] = {p0, p1, p2, p3, p4, p5, p6, p7};
 TABLEBASEDDECODER(eP)
 static const unsigned eDNHDecoderTable[] = {dn4, dn5, dn6, dn7};
-static const unsigned eXoDecoderTable[] = {x1, x3, x5, x7, x9, x11};
-static const unsigned eYDecoderTable[] = {llvm::AIE2P::y0, llvm::AIE2P::y1,
-                                          llvm::AIE2P::y2, llvm::AIE2P::y3,
-                                          llvm::AIE2P::y4, llvm::AIE2P::y5};
+static const unsigned eXoDecoderTable[] = {x1, x3, x5, x7, x9, x11, 0, 0};
+static const unsigned eYDecoderTable[] = {llvm::AIE2P::y0,
+                                          llvm::AIE2P::y1,
+                                          llvm::AIE2P::y2,
+                                          llvm::AIE2P::y3,
+                                          llvm::AIE2P::y4,
+                                          llvm::AIE2P::y5,
+                                          0,
+                                          0};
 TABLEBASEDDECODER(eY)
-static const unsigned eWhoDecoderTable[] = {wh1, wh3, wh5, wh7, wh9, wh11};
+static const unsigned eWhoDecoderTable[] = {wh1, wh3,  wh5, wh7,
+                                            wh9, wh11, 0,   0};
 static const unsigned eDCDecoderTable[] = {dc0, dc1, dc2, dc3,
                                            dc4, dc5, dc6, dc7};
 static const unsigned eRS16DecoderTable[] = {r16, r17, r18, r19, r20, r21,
                                              r22, r23, r24, r25, r26, r27,
                                              r28, r29, r30, r31};
 TABLEBASEDDECODER(eRS16)
-static const unsigned eXeDecoderTable[] = {x0, x2, x4, x6, x8, x10};
+static const unsigned eXeDecoderTable[] = {x0, x2, x4, x6, x8, x10, 0, 0};
 static const unsigned eSRSSignDecoderTable[] = {srsSign0, srsSign1};
 static const unsigned eQYsDecoderTable[] = {qy0, qy1};
 TABLEBASEDDECODER(eQYs)
@@ -76,20 +86,27 @@ static const unsigned eDNLDecoderTable[] = {dn0, dn1, dn2, dn3};
 static const unsigned eQEYsDecoderTable[] = {qey0, qey1};
 TABLEBASEDDECODER(eQEYs)
 static const unsigned eBMSLHDecoderTable[] = {bmlh0, bmlh1, bmlh2, bmlh3};
-static const unsigned eWheDecoderTable[] = {wh0, wh2, wh4, wh6, wh8, wh10};
-static const unsigned eCMHDecoderTable[] = {cmh0, cmh1, cmh2, cmh3, cmh4};
+static const unsigned eWheDecoderTable[] = {wh0, wh2,  wh4, wh6,
+                                            wh8, wh10, 0,   0};
+static const unsigned eCMHDecoderTable[] = {cmh0, cmh1, cmh2, cmh3,
+                                            cmh4, 0,    0,    0};
 static const unsigned eBMSLLDecoderTable[] = {bmll0, bmll1, bmll2, bmll3};
-static const unsigned eEleDecoderTable[] = {el0, el2, el4, el6, el8, el10};
+static const unsigned eEleDecoderTable[] = {el0, el2,  el4, el6,
+                                            el8, el10, 0,   0};
 static const unsigned ePSDecoderTable[] = {p0, p1};
 static const unsigned eQXseDecoderTable[] = {qx0, qx2};
 static const unsigned eQEXseDecoderTable[] = {qex0, qex2};
 static const unsigned eDDecoderTable[] = {d0, d1, d2, d3, d4, d5, d6, d7};
-static const unsigned eWloDecoderTable[] = {wl1, wl3, wl5, wl7, wl9, wl11};
+static const unsigned eWloDecoderTable[] = {wl1, wl3,  wl5, wl7,
+                                            wl9, wl11, 0,   0};
 static const unsigned eSDecoderTable[] = {s0, s1, s2, s3};
 TABLEBASEDDECODER(eS)
-static const unsigned eWleDecoderTable[] = {wl0, wl2, wl4, wl6, wl8, wl10};
-static const unsigned eCMLDecoderTable[] = {cml0, cml1, cml2, cml3, cml4};
-static const unsigned eBMLLDecoderTable[] = {bmll0, bmll1, bmll2, bmll3, bmll4};
+static const unsigned eWleDecoderTable[] = {wl0, wl2,  wl4, wl6,
+                                            wl8, wl10, 0,   0};
+static const unsigned eCMLDecoderTable[] = {cml0, cml1, cml2, cml3,
+                                            cml4, 0,    0,    0};
+static const unsigned eBMLLDecoderTable[] = {bmll0, bmll1, bmll2, bmll3,
+                                             bmll4, 0,     0,     0};
 static const unsigned eMDecoderTable[] = {m0, m1, m2, m3, m4, m5, m6, m7};
 TABLEBASEDDECODER(eM)
 static const unsigned eBMSHHDecoderTable[] = {bmhh0, bmhh1, bmhh2, bmhh3};
@@ -97,20 +114,23 @@ static const unsigned eDJLDecoderTable[] = {dj0, dj1, dj2, dj3};
 static const unsigned eDCLDecoderTable[] = {dc0, dc1, dc2, dc3};
 // Decoder Tables for 'Compound' Register Classes.
 static const unsigned mWaDecoderTable[] = {
-    wh0, wl0, wh1, wl1, wh2, wl2, wh3, wl3, wh4,  wl4,  wh5,  wl5,
-    wh6, wl6, wh7, wl7, wh8, wl8, wh9, wl9, wh10, wl10, wh11, wl11};
+    wh0,  wl0,  wh1, wl1, wh2, wl2, wh3, wl3, wh4, wl4,  wh5,
+    wl5,  wh6,  wl6, wh7, wl7, wh8, wl8, wh9, wl9, wh10, wl10,
+    wh11, wl11, 0,   0,   0,   0,   0,   0,   0,   0};
 TABLEBASEDDECODER(mWa)
-static const unsigned mXmDecoderTable[] = {x0, x1, x2, x3, x4,  x5,
-                                           x6, x7, x8, x9, x10, x11};
+static const unsigned mXmDecoderTable[] = {x0, x1, x2,  x3,  x4, x5, x6, x7,
+                                           x8, x9, x10, x11, 0,  0,  0,  0};
 TABLEBASEDDECODER(mXm)
-static const unsigned mCMmDecoderTable[] = {cml0, cmh0, cml1, cmh1, cml2,
-                                            cmh2, cml3, cmh3, cml4, cmh4};
+static const unsigned mCMmDecoderTable[] = {cml0, cmh0, cml1, cmh1, cml2, cmh2,
+                                            cml3, cmh3, cml4, cmh4, 0,    0,
+                                            0,    0,    0,    0};
 TABLEBASEDDECODER(mCMm)
 static const unsigned mQEXsmDecoderTable[] = {qex0, qex1, qex2, qex3};
 TABLEBASEDDECODER(mQEXsm)
 static const unsigned mEsDecoderTable[] = {
-    eh0, el0, eh1, el1, eh2, el2, eh3, el3, eh4,  el4,  eh5,  el5,
-    eh6, el6, eh7, el7, eh8, el8, eh9, el9, eh10, el10, eh11, el11};
+    eh0,  el0,  eh1, el1, eh2, el2, eh3, el3, eh4, el4,  eh5,
+    el5,  eh6,  el6, eh7, el7, eh8, el8, eh9, el9, eh10, el10,
+    eh11, el11, 0,   0,   0,   0,   0,   0,   0,   0};
 static const unsigned mAguSrcDecoderTable[] = {
     r0,  dc0, p0, 0, r1,  dj0, 0, 0, r2,  dn0, 0, 0, r3,  m0, 0, 0,
     r4,  dc1, p1, 0, r5,  dj1, 0, 0, r6,  dn1, 0, 0, r7,  m1, 0, 0,
@@ -119,39 +139,42 @@ static const unsigned mAguSrcDecoderTable[] = {
     r16, dc4, p4, 0, r17, dj4, 0, 0, r18, dn4, 0, 0, r19, m4, 0, 0,
     r20, dc5, p5, 0, r21, dj5, 0, 0, r22, dn5, 0, 0, r23, m5, 0, 0,
     r24, dc6, p6, 0, r25, dj6, 0, 0, r26, dn6, 0, 0, r27, m6, 0, 0,
-    r28, dc7, p7, 0, r29, dj7, 0, 0, r30, dn7, 0, 0, r31, m7};
+    r28, dc7, p7, 0, r29, dj7, 0, 0, r30, dn7, 0, 0, r31, m7, 0, 0};
 TABLEBASEDDECODER(mAguSrc)
 static const unsigned mQXsbDecoderTable[] = {qx0, qx1, qx2, qx3};
-static const unsigned mEhmDecoderTable[] = {eh0, eh1, eh2, eh3, eh4,  eh5,
-                                            eh6, eh7, eh8, eh9, eh10, eh11};
+static const unsigned mEhmDecoderTable[] = {
+    eh0, eh1, eh2, eh3, eh4, eh5, eh6, eh7, eh8, eh9, eh10, eh11, 0, 0, 0, 0};
 TABLEBASEDDECODER(mEhm)
 static const unsigned mLdaSclDecoderTable[] = {
-    m0, eh0,  r0,  p0, dn0, el0,  r1,  lr, dj0, eh1,  r2,  0, dc0, el1,  r3,  0,
-    m1, eh2,  r4,  p1, dn1, el2,  r5,  0,  dj1, eh3,  r6,  0, dc1, el3,  r7,  0,
-    m2, eh4,  r8,  p2, dn2, el4,  r9,  0,  dj2, eh5,  r10, 0, dc2, el5,  r11, 0,
-    m3, eh6,  r12, p3, dn3, el6,  r13, 0,  dj3, eh7,  r14, 0, dc3, el7,  r15, 0,
-    m4, eh8,  r16, p4, dn4, el8,  r17, 0,  dj4, eh9,  r18, 0, dc4, el9,  r19, 0,
-    m5, eh10, r20, p5, dn5, el10, r21, 0,  dj5, eh11, r22, 0, dc5, el11, r23, 0,
-    m6, 0,    r24, p6, dn6, 0,    r25, 0,  dj6, 0,    r26, 0, dc6, 0,    r27, 0,
-    m7, 0,    r28, p7, dn7, 0,    r29, 0,  dj7, 0,    r30, 0, dc7, 0,    r31};
+    m0,  eh0, r0,   p0,   dn0, el0, r1,  lr,   dj0, eh1, r2,  0,    dc0,
+    el1, r3,  0,    m1,   eh2, r4,  p1,  dn1,  el2, r5,  0,   dj1,  eh3,
+    r6,  0,   dc1,  el3,  r7,  0,   m2,  eh4,  r8,  p2,  dn2, el4,  r9,
+    0,   dj2, eh5,  r10,  0,   dc2, el5, r11,  0,   m3,  eh6, r12,  p3,
+    dn3, el6, r13,  0,    dj3, eh7, r14, 0,    dc3, el7, r15, 0,    m4,
+    eh8, r16, p4,   dn4,  el8, r17, 0,   dj4,  eh9, r18, 0,   dc4,  el9,
+    r19, 0,   m5,   eh10, r20, p5,  dn5, el10, r21, 0,   dj5, eh11, r22,
+    0,   dc5, el11, r23,  0,   m6,  0,   r24,  p6,  dn6, 0,   r25,  0,
+    dj6, 0,   r26,  0,    dc6, 0,   r27, 0,    m7,  0,   r28, p7,   dn7,
+    0,   r29, 0,    dj7,  0,   r30, 0,   dc7,  0,   r31, 0};
 TABLEBASEDDECODER(mLdaScl)
 static const unsigned mQQsmDecoderTable[] = {q0, q1, q2, q3};
 TABLEBASEDDECODER(mQQsm)
 static const unsigned mWsDecoderTable[] = {
-    wh0, wl0, wh1, wl1, wh2, wl2, wh3, wl3, wh4,  wl4,  wh5,  wl5,
-    wh6, wl6, wh7, wl7, wh8, wl8, wh9, wl9, wh10, wl10, wh11, wl11};
+    wh0,  wl0,  wh1, wl1, wh2, wl2, wh3, wl3, wh4, wl4,  wh5,
+    wl5,  wh6,  wl6, wh7, wl7, wh8, wl8, wh9, wl9, wh10, wl10,
+    wh11, wl11, 0,   0,   0,   0,   0,   0,   0,   0};
 TABLEBASEDDECODER(mWs)
-static const unsigned mXwDecoderTable[] = {x0, x1, x2, x3, x4,  x5,
-                                           x6, x7, x8, x9, x10, x11};
+static const unsigned mXwDecoderTable[] = {x0, x1, x2,  x3,  x4, x5, x6, x7,
+                                           x8, x9, x10, x11, 0,  0,  0,  0};
 TABLEBASEDDECODER(mXw)
 static const unsigned mAguDstDecoderTable[] = {
     dc0, dj0, dn0, m0, p0, 0, 0, 0, dc1, dj1, dn1, m1, p1, 0, 0, 0,
     dc2, dj2, dn2, m2, p2, 0, 0, 0, dc3, dj3, dn3, m3, p3, 0, 0, 0,
     dc4, dj4, dn4, m4, p4, 0, 0, 0, dc5, dj5, dn5, m5, p5, 0, 0, 0,
-    dc6, dj6, dn6, m6, p6, 0, 0, 0, dc7, dj7, dn7, m7, p7};
+    dc6, dj6, dn6, m6, p6, 0, 0, 0, dc7, dj7, dn7, m7, p7, 0, 0, 0};
 TABLEBASEDDECODER(mAguDst)
-static const unsigned mEXmDecoderTable[] = {ex0, ex1, ex2, ex3, ex4,  ex5,
-                                            ex6, ex7, ex8, ex9, ex10, ex11};
+static const unsigned mEXmDecoderTable[] = {
+    ex0, ex1, ex2, ex3, ex4, ex5, ex6, ex7, ex8, ex9, ex10, ex11, 0, 0, 0, 0};
 TABLEBASEDDECODER(mEXm)
 static const unsigned mQXsaDecoderTable[] = {qx0, qx1, qx2, qx3};
 static const unsigned mDmDecoderTable[] = {
@@ -166,8 +189,9 @@ static const unsigned mShflBMDstDecoderTable[] = {
     bmll2, bmlh2, bmhl2, bmhh2, bmll3, bmlh3, bmhl3, bmhh3};
 TABLEBASEDDECODER(mShflBMDst)
 static const unsigned mBMmDecoderTable[] = {
-    bmll0, bmlh0, bmhl0, bmhh0, bmll1, bmlh1, bmhl1, bmhh1, bmll2, bmlh2,
-    bmhl2, bmhh2, bmll3, bmlh3, bmhl3, bmhh3, bmll4, bmlh4, bmhl4, bmhh4};
+    bmll0, bmlh0, bmhl0, bmhh0, bmll1, bmlh1, bmhl1, bmhh1, bmll2, bmlh2, bmhl2,
+    bmhh2, bmll3, bmlh3, bmhl3, bmhh3, bmll4, bmlh4, bmhl4, bmhh4, 0,     0,
+    0,     0,     0,     0,     0,     0,     0,     0,     0,     0};
 TABLEBASEDDECODER(mBMm)
 static const unsigned mMvBMXDstDecoderTable[] = {
     bmll0, x0,    bmlh0, lfh0,  bmhl0, x1,    bmhh0, 0,     bmll1, x2,    bmlh1,
@@ -307,10 +331,10 @@ static const unsigned mMvSclDstDecoderTable[] = {m0,
                                                  r31,
                                                  srsSign1};
 TABLEBASEDDECODER(mMvSclDst)
-static const unsigned mMcdXSrcDecoderTable[] = {x0, x1, x2, x3, x4,  x5,
-                                                x6, x7, x8, x9, x10, x11};
-static const unsigned mEXnDecoderTable[] = {ex0, ex1, ex2, ex3, ex4,  ex5,
-                                            ex6, ex7, ex8, ex9, ex10, ex11};
+static const unsigned mMcdXSrcDecoderTable[] = {
+    x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, 0, 0, 0, 0};
+static const unsigned mEXnDecoderTable[] = {
+    ex0, ex1, ex2, ex3, ex4, ex5, ex6, ex7, ex8, ex9, ex10, ex11, 0, 0, 0, 0};
 TABLEBASEDDECODER(mEXn)
 static const unsigned mMvSclDstCgDecoderTable[] = {m0,
                                                    r0,
@@ -448,20 +472,21 @@ static const unsigned mSclMSDecoderTable[] = {
     r16, 0, m4, 0, r17, 0, dn4, 0, r18, 0, dj4, 0, r19, p4, dc4, 0,
     r20, 0, m5, 0, r21, 0, dn5, 0, r22, 0, dj5, 0, r23, p5, dc5, 0,
     r24, 0, m6, 0, r25, 0, dn6, 0, r26, 0, dj6, 0, r27, p6, dc6, 0,
-    r28, 0, m7, 0, r29, 0, dn7, 0, r30, 0, dj7, 0, r31, p7, dc7};
+    r28, 0, m7, 0, r29, 0, dn7, 0, r30, 0, dj7, 0, r31, p7, dc7, 0};
 TABLEBASEDDECODER(mSclMS)
-static const unsigned mXnDecoderTable[] = {x0, x1, x2, x3, x4,  x5,
-                                           x6, x7, x8, x9, x10, x11};
+static const unsigned mXnDecoderTable[] = {x0, x1, x2,  x3,  x4, x5, x6, x7,
+                                           x8, x9, x10, x11, 0,  0,  0,  0};
 TABLEBASEDDECODER(mXn)
 static const unsigned mBMSmDecoderTable[] = {
     bmll0, bmlh0, bmhl0, bmhh0, bmll1, bmlh1, bmhl1, bmhh1,
     bmll2, bmlh2, bmhl2, bmhh2, bmll3, bmlh3, bmhl3, bmhh3};
-static const unsigned mXvDecoderTable[] = {x0, x1, x2, x3, x4,  x5,
-                                           x6, x7, x8, x9, x10, x11};
+static const unsigned mXvDecoderTable[] = {x0, x1, x2,  x3,  x4, x5, x6, x7,
+                                           x8, x9, x10, x11, 0,  0,  0,  0};
 TABLEBASEDDECODER(mXv)
 static const unsigned mWbDecoderTable[] = {
-    wh0, wl0, wh1, wl1, wh2, wl2, wh3, wl3, wh4,  wl4,  wh5,  wl5,
-    wh6, wl6, wh7, wl7, wh8, wl8, wh9, wl9, wh10, wl10, wh11, wl11};
+    wh0,  wl0,  wh1, wl1, wh2, wl2, wh3, wl3, wh4, wl4,  wh5,
+    wl5,  wh6,  wl6, wh7, wl7, wh8, wl8, wh9, wl9, wh10, wl10,
+    wh11, wl11, 0,   0,   0,   0,   0,   0,   0,   0};
 TABLEBASEDDECODER(mWb)
 static const unsigned mMvBMXSrcDecoderTable[] = {
     bmll0, x0,    bmlh0, lfh0,  bmhl0, x1,    bmhh0, 0,     bmll1, x2,    bmlh1,
@@ -474,43 +499,45 @@ static const unsigned mAluCgDecoderTable[] = {
     r0,  lc, r1,  0, r2,  0, r3,  0, r4,  0, r5,  0, r6,  0, r7,  0,
     r8,  0,  r9,  0, r10, 0, r11, 0, r12, 0, r13, 0, r14, 0, r15, 0,
     r16, 0,  r17, 0, r18, 0, r19, 0, r20, 0, r21, 0, r22, 0, r23, 0,
-    r24, 0,  r25, 0, r26, 0, r27, 0, r28, 0, r29, 0, r30, 0, r31};
+    r24, 0,  r25, 0, r26, 0, r27, 0, r28, 0, r29, 0, r30, 0, r31, 0};
 TABLEBASEDDECODER(mAluCg)
-static const unsigned mEXwDecoderTable[] = {ex0, ex1, ex2, ex3, ex4,  ex5,
-                                            ex6, ex7, ex8, ex9, ex10, ex11};
+static const unsigned mEXwDecoderTable[] = {
+    ex0, ex1, ex2, ex3, ex4, ex5, ex6, ex7, ex8, ex9, ex10, ex11, 0, 0, 0, 0};
 TABLEBASEDDECODER(mEXw)
-static const unsigned mXsDecoderTable[] = {x0, x1, x2, x3, x4,  x5,
-                                           x6, x7, x8, x9, x10, x11};
+static const unsigned mXsDecoderTable[] = {x0, x1, x2,  x3,  x4, x5, x6, x7,
+                                           x8, x9, x10, x11, 0,  0,  0,  0};
 TABLEBASEDDECODER(mXs)
-static const unsigned mEXsDecoderTable[] = {ex0, ex1, ex2, ex3, ex4,  ex5,
-                                            ex6, ex7, ex8, ex9, ex10, ex11};
+static const unsigned mEXsDecoderTable[] = {
+    ex0, ex1, ex2, ex3, ex4, ex5, ex6, ex7, ex8, ex9, ex10, ex11, 0, 0, 0, 0};
 TABLEBASEDDECODER(mEXs)
-static const unsigned mCMsDecoderTable[] = {cml0, cmh0, cml1, cmh1, cml2,
-                                            cmh2, cml3, cmh3, cml4, cmh4};
+static const unsigned mCMsDecoderTable[] = {cml0, cmh0, cml1, cmh1, cml2, cmh2,
+                                            cml3, cmh3, cml4, cmh4, 0,    0,
+                                            0,    0,    0,    0};
 TABLEBASEDDECODER(mCMs)
 static const unsigned mFifoHLRegDecoderTable[] = {lfh0, lfl0, lfe, sfl,
-                                                  lfh1, lfl1, sfh};
+                                                  lfh1, lfl1, sfh, 0};
 TABLEBASEDDECODER(mFifoHLReg)
 static const unsigned mSRmDecoderTable[] = {
     srCarry,      srF2BFlags, srF2FFlags, srF2IFlags,  srFPCnvFl2Fx,
     srFPCnvFx2Fl, srFPFlags,  srFPNlf,    srFifo_of,   srFifo_uf,
     srMS0,        srSRS_of,   srSS0,      srSparse_of, srUPS_of};
-static const unsigned mElmDecoderTable[] = {el0, el1, el2, el3, el4,  el5,
-                                            el6, el7, el8, el9, el10, el11};
+static const unsigned mElmDecoderTable[] = {
+    el0, el1, el2, el3, el4, el5, el6, el7, el8, el9, el10, el11, 0, 0, 0, 0};
 TABLEBASEDDECODER(mElm)
 static const unsigned mQEXswDecoderTable[] = {qex0, qex1, qex2, qex3};
 TABLEBASEDDECODER(mQEXsw)
 static const unsigned mQQsaDecoderTable[] = {q0, q1, q2, q3};
 TABLEBASEDDECODER(mQQsa)
-static const unsigned mEXvDecoderTable[] = {ex0, ex1, ex2, ex3, ex4,  ex5,
-                                            ex6, ex7, ex8, ex9, ex10, ex11};
+static const unsigned mEXvDecoderTable[] = {
+    ex0, ex1, ex2, ex3, ex4, ex5, ex6, ex7, ex8, ex9, ex10, ex11, 0, 0, 0, 0};
 TABLEBASEDDECODER(mEXv)
-static const unsigned mXaDecoderTable[] = {x0, x1, x2, x3, x4,  x5,
-                                           x6, x7, x8, x9, x10, x11};
+static const unsigned mXaDecoderTable[] = {x0, x1, x2,  x3,  x4, x5, x6, x7,
+                                           x8, x9, x10, x11, 0,  0,  0,  0};
 TABLEBASEDDECODER(mXa)
 static const unsigned mWmDecoderTable[] = {
-    wh0, wl0, wh1, wl1, wh2, wl2, wh3, wl3, wh4,  wl4,  wh5,  wl5,
-    wh6, wl6, wh7, wl7, wh8, wl8, wh9, wl9, wh10, wl10, wh11, wl11};
+    wh0,  wl0,  wh1, wl1, wh2, wl2, wh3, wl3, wh4, wl4,  wh5,
+    wl5,  wh6,  wl6, wh7, wl7, wh8, wl8, wh9, wl9, wh10, wl10,
+    wh11, wl11, 0,   0,   0,   0,   0,   0,   0,   0};
 TABLEBASEDDECODER(mWm)
 static const unsigned mMvSclSrcDecoderTable[] = {m0,
                                                  r0,
@@ -671,22 +698,24 @@ static const unsigned mCRmDecoderTable[] = {crF2BMask,
                                             crSCDEn};
 TABLEBASEDDECODER(mCRm)
 static const unsigned mSclStDecoderTable[] = {
-    m0, eh0,  r0,  p0, dn0, el0,  r1,  lr, dj0, eh1,  r2,  0, dc0, el1,  r3,  0,
-    m1, eh2,  r4,  p1, dn1, el2,  r5,  0,  dj1, eh3,  r6,  0, dc1, el3,  r7,  0,
-    m2, eh4,  r8,  p2, dn2, el4,  r9,  0,  dj2, eh5,  r10, 0, dc2, el5,  r11, 0,
-    m3, eh6,  r12, p3, dn3, el6,  r13, 0,  dj3, eh7,  r14, 0, dc3, el7,  r15, 0,
-    m4, eh8,  r16, p4, dn4, el8,  r17, 0,  dj4, eh9,  r18, 0, dc4, el9,  r19, 0,
-    m5, eh10, r20, p5, dn5, el10, r21, 0,  dj5, eh11, r22, 0, dc5, el11, r23, 0,
-    m6, 0,    r24, p6, dn6, 0,    r25, 0,  dj6, 0,    r26, 0, dc6, 0,    r27, 0,
-    m7, 0,    r28, p7, dn7, 0,    r29, 0,  dj7, 0,    r30, 0, dc7, 0,    r31};
+    m0,  eh0, r0,   p0,   dn0, el0, r1,  lr,   dj0, eh1, r2,  0,    dc0,
+    el1, r3,  0,    m1,   eh2, r4,  p1,  dn1,  el2, r5,  0,   dj1,  eh3,
+    r6,  0,   dc1,  el3,  r7,  0,   m2,  eh4,  r8,  p2,  dn2, el4,  r9,
+    0,   dj2, eh5,  r10,  0,   dc2, el5, r11,  0,   m3,  eh6, r12,  p3,
+    dn3, el6, r13,  0,    dj3, eh7, r14, 0,    dc3, el7, r15, 0,    m4,
+    eh8, r16, p4,   dn4,  el8, r17, 0,   dj4,  eh9, r18, 0,   dc4,  el9,
+    r19, 0,   m5,   eh10, r20, p5,  dn5, el10, r21, 0,   dj5, eh11, r22,
+    0,   dc5, el11, r23,  0,   m6,  0,   r24,  p6,  dn6, 0,   r25,  0,
+    dj6, 0,   r26,  0,    dc6, 0,   r27, 0,    m7,  0,   r28, p7,   dn7,
+    0,   r29, 0,    dj7,  0,   r30, 0,   dc7,  0,   r31, 0};
 TABLEBASEDDECODER(mSclSt)
 static const unsigned mMcdBMSrcDecoderTable[] = {
     bmll0, bmlh0, bmhl0, bmhh0, bmll1, bmlh1, bmhl1, bmhh1, bmll2, bmlh2,
     bmhl2, bmhh2, bmll3, bmlh3, bmhl3, bmhh3, bmll4, bmlh4, bmhl4, bmhh4};
 static const unsigned mQXswDecoderTable[] = {qx0, qx1, qx2, qx3};
 TABLEBASEDDECODER(mQXsw)
-static const unsigned mEXaDecoderTable[] = {ex0, ex1, ex2, ex3, ex4,  ex5,
-                                            ex6, ex7, ex8, ex9, ex10, ex11};
+static const unsigned mEXaDecoderTable[] = {
+    ex0, ex1, ex2, ex3, ex4, ex5, ex6, ex7, ex8, ex9, ex10, ex11, 0, 0, 0, 0};
 TABLEBASEDDECODER(mEXa)
 static const unsigned mQEXsbDecoderTable[] = {qex0, qex1, qex2, qex3};
 static const unsigned mLdaCgDecoderTable[] = {
@@ -697,21 +726,23 @@ static const unsigned mLdaCgDecoderTable[] = {
     r16, 0, m4, 0, r17, 0,  dn4, 0, r18, 0, dj4, 0, r19, p4, dc4, 0,
     r20, 0, m5, 0, r21, 0,  dn5, 0, r22, 0, dj5, 0, r23, p5, dc5, 0,
     r24, 0, m6, 0, r25, 0,  dn6, 0, r26, 0, dj6, 0, r27, p6, dc6, 0,
-    r28, 0, m7, 0, r29, 0,  dn7, 0, r30, 0, dj7, 0, r31, p7, dc7};
+    r28, 0, m7, 0, r29, 0,  dn7, 0, r30, 0, dj7, 0, r31, p7, dc7, 0};
 TABLEBASEDDECODER(mLdaCg)
 static const unsigned mFl2FxSrc_WDecoderTable[] = {
-    wh0, wl0, wh1, wl1, wh2, wl2, wh3, wl3, wh4,  wl4,  wh5,  wl5,
-    wh6, wl6, wh7, wl7, wh8, wl8, wh9, wl9, wh10, wl10, wh11, wl11};
+    wh0,  wl0,  wh1, wl1, wh2, wl2, wh3, wl3, wh4, wl4,  wh5,
+    wl5,  wh6,  wl6, wh7, wl7, wh8, wl8, wh9, wl9, wh10, wl10,
+    wh11, wl11, 0,   0,   0,   0,   0,   0,   0,   0};
 TABLEBASEDDECODER(mFl2FxSrc_W)
-static const unsigned mXbDecoderTable[] = {x0, x1, x2, x3, x4,  x5,
-                                           x6, x7, x8, x9, x10, x11};
+static const unsigned mXbDecoderTable[] = {x0, x1, x2,  x3,  x4, x5, x6, x7,
+                                           x8, x9, x10, x11, 0,  0,  0,  0};
 TABLEBASEDDECODER(mXb)
 static const unsigned mBMsDecoderTable[] = {
-    bmll0, bmlh0, bmhl0, bmhh0, bmll1, bmlh1, bmhl1, bmhh1, bmll2, bmlh2,
-    bmhl2, bmhh2, bmll3, bmlh3, bmhl3, bmhh3, bmll4, bmlh4, bmhl4, bmhh4};
+    bmll0, bmlh0, bmhl0, bmhh0, bmll1, bmlh1, bmhl1, bmhh1, bmll2, bmlh2, bmhl2,
+    bmhh2, bmll3, bmlh3, bmhl3, bmhh3, bmll4, bmlh4, bmhl4, bmhh4, 0,     0,
+    0,     0,     0,     0,     0,     0,     0,     0,     0,     0};
 TABLEBASEDDECODER(mBMs)
-static const unsigned mEXbDecoderTable[] = {ex0, ex1, ex2, ex3, ex4,  ex5,
-                                            ex6, ex7, ex8, ex9, ex10, ex11};
+static const unsigned mEXbDecoderTable[] = {
+    ex0, ex1, ex2, ex3, ex4, ex5, ex6, ex7, ex8, ex9, ex10, ex11, 0, 0, 0, 0};
 
 // Decoder Tables for Singleton Register Classes.
 FIXEDREGDECODER(mR30_fifo_step_e1)

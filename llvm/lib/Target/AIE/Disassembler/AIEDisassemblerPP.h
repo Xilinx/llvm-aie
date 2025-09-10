@@ -23,7 +23,8 @@
       return MCDisassembler::Fail;                                             \
     unsigned Reg = TableClassName##DecoderTable[RegNo];                        \
     LLVM_DEBUG(dbgs() << "RegEnc=" << RegNo << " Reg=" << Reg << "\n");        \
-    assert(Reg && "Register not found!");                                      \
+    if (!Reg)                                                                  \
+      return MCDisassembler::Fail;                                             \
     Inst.addOperand(MCOperand::createReg(Reg));                                \
     return MCDisassembler::Success;                                            \
   }
