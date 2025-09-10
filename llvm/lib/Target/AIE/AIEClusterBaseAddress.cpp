@@ -72,6 +72,10 @@ static cl::opt<bool> EnableChainsForVectorLdSt(
     "aie-chain-addr-vec-ldst", cl::Hidden, cl::init(true),
     cl::desc("Enable ptradd chaining for vector loads and stores."));
 
+static cl::opt<bool> EnableChainsAcrossMultiBlocks(
+    "aie-chain-addr-multi-block", cl::Hidden, cl::init(true),
+    cl::desc("Enable ptradd chaining when Ptr is used across multiple MBBs."));
+
 namespace {
 
 LLT getLoadStoreType(const MachineInstr &MI) {
@@ -272,6 +276,10 @@ bool AIEClusterBaseAddress::shouldSkipChaining(
   // No chain possibility at all.
   if (Instrs.size() <= 1)
     return true;
+
+  // Chain MBB regardless.
+  if (EnableChainsAcrossMultiBlocks)
+    return false;
 
   // If the base reg is used in any of the successive MBBs, then we don't
   // want to chain the corresponding ptr adds, since this would introduce a
