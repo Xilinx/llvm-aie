@@ -4,8 +4,8 @@
 ;
 ; (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -O2 -mtriple=aie2 -stop-after=irtranslator %s -o - | FileCheck %s
-; CHECK: llvm.set.loop.iterations
-; CHECK: llvm.loop.decrement
+; CHECK-NOT: llvm.set.loop.iterations
+; CHECK-NOT: llvm.loop.decrement
 
 define dso_local void @_Z3sqrPK8bfloat16PS_i(ptr noalias nocapture readonly %in, ptr noalias nocapture writeonly %out, i32 noundef %N) {
 entry:
