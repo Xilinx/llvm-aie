@@ -422,6 +422,123 @@ func.func @pad_determine_val_quant(%arg0: tensor<?x?xi32>, %arg1 : tensor<2x2xi3
 
 // -----
 
+// CHECK-LABEL: @pad_pad_optimization_dense_values_bf16
+func.func @pad_pad_optimization_dense_values_bf16(%arg0: tensor<1x478x640x32xbf16>) -> tensor<1x483x644x32xbf16> {
+  // CHECK-DAG: %[[CONST:.+]] = "tosa.const"() <{value = dense<2.000000e+00> : tensor<bf16>}> : () -> tensor<bf16>
+  // CHECK-DAG: %[[PADDING:.+]] = tosa.const_shape  {value = dense<[0, 0, 2, 3, 2, 2, 0, 0]> : tensor<8xindex>} : () -> !tosa.shape<8>
+  // CHECK:tosa.pad %arg0, %[[PADDING]], %[[CONST]]
+  %0 = tosa.const_shape  {value = dense<[0, 0, 0, 1, 0, 0, 0, 0]> : tensor<8xindex>} : () -> !tosa.shape<8>
+  %1 = "tosa.const"() <{value = dense<2.000000e+00> : tensor<bf16>}> : () -> tensor<bf16>
+  %2 = tosa.const_shape  {value = dense<[0, 0, 2, 2, 2, 2, 0, 0]> : tensor<8xindex>} : () -> !tosa.shape<8>
+  %3 = tosa.pad %arg0, %2, %1 : (tensor<1x478x640x32xbf16>, !tosa.shape<8>, tensor<bf16>) -> tensor<1x482x644x32xbf16>
+  %4 = tosa.pad %3, %0, %1 : (tensor<1x482x644x32xbf16>, !tosa.shape<8>, tensor<bf16>) -> tensor<1x483x644x32xbf16>
+  return %4 : tensor<1x483x644x32xbf16>
+}
+
+// -----
+
+// CHECK-LABEL: @pad_pad_optimization_dense_values_f16
+func.func @pad_pad_optimization_dense_values_f16(%arg0: tensor<1x478x640x32xf16>) -> tensor<1x483x644x32xf16> {
+  // CHECK-DAG: %[[CONST:.+]] = "tosa.const"() <{value = dense<2.000000e+00> : tensor<f16>}> : () -> tensor<f16>
+  // CHECK-DAG: %[[PADDING:.+]] = tosa.const_shape  {value = dense<[0, 0, 2, 3, 2, 2, 0, 0]> : tensor<8xindex>} : () -> !tosa.shape<8>
+  // CHECK:tosa.pad %arg0, %[[PADDING]], %[[CONST]]
+  %0 = tosa.const_shape  {value = dense<[0, 0, 0, 1, 0, 0, 0, 0]> : tensor<8xindex>} : () -> !tosa.shape<8>
+  %1 = "tosa.const"() <{value = dense<2.000000e+00> : tensor<f16>}> : () -> tensor<f16>
+  %2 = tosa.const_shape  {value = dense<[0, 0, 2, 2, 2, 2, 0, 0]> : tensor<8xindex>} : () -> !tosa.shape<8>
+  %3 = tosa.pad %arg0, %2, %1 : (tensor<1x478x640x32xf16>, !tosa.shape<8>, tensor<f16>) -> tensor<1x482x644x32xf16>
+  %4 = tosa.pad %3, %0, %1 : (tensor<1x482x644x32xf16>, !tosa.shape<8>, tensor<f16>) -> tensor<1x483x644x32xf16>
+  return %4 : tensor<1x483x644x32xf16>
+}
+
+// -----
+
+// CHECK-LABEL: @pad_pad_optimization_dense_values_i32
+func.func @pad_pad_optimization_dense_values_i32(%arg0: tensor<478x640xi32>) -> tensor<483x644xi32> {
+  // CHECK-DAG: %[[CONST:.+]] = "tosa.const"() <{value = dense<3> : tensor<i32>}> : () -> tensor<i32>
+  // CHECK-DAG: %[[PADDING:.+]] = tosa.const_shape  {value = dense<[2, 3, 2, 2]> : tensor<4xindex>} : () -> !tosa.shape<4>
+  // CHECK:tosa.pad %arg0, %[[PADDING]], %[[CONST]]
+  %0 = tosa.const_shape  {value = dense<[0, 1, 0, 0]> : tensor<4xindex>} : () -> !tosa.shape<4>
+  %1 = "tosa.const"() <{value = dense<3> : tensor<i32>}> : () -> tensor<i32>
+  %2 = tosa.const_shape  {value = dense<[2, 2, 2, 2]> : tensor<4xindex>} : () -> !tosa.shape<4>
+  %3 = tosa.pad %arg0, %2, %1 : (tensor<478x640xi32>, !tosa.shape<4>, tensor<i32>) -> tensor<482x644xi32>
+  %4 = tosa.pad %3, %0, %1 : (tensor<482x644xi32>, !tosa.shape<4>, tensor<i32>) -> tensor<483x644xi32>
+  return %4 : tensor<483x644xi32>
+}
+
+// -----
+
+// CHECK-LABEL:@pad_pad_optimization_splat_values
+func.func @pad_pad_optimization_splat_values(%arg0: tensor<1x478x640x32xbf16>) -> tensor<1x483x644x32xbf16> {
+  // CHECK-DAG: %[[CONST:.+]] = "tosa.const"() <{value = dense<0.000000e+00> : tensor<bf16>}> : () -> tensor<bf16>
+  // CHECK-DAG: %[[PADDING:.+]] = tosa.const_shape  {value = dense<4> : tensor<8xindex>} : () -> !tosa.shape<8>
+  // CHECK: tosa.pad %arg0, %[[PADDING]], %[[CONST]]
+  %0 = tosa.const_shape  {value = dense<1> : tensor<8xindex>} : () -> !tosa.shape<8>
+  %1 = "tosa.const"() <{value = dense<0.000000e+00> : tensor<bf16>}> : () -> tensor<bf16>
+  %2 = tosa.const_shape  {value = dense<3> : tensor<8xindex>} : () -> !tosa.shape<8>
+  %3 = tosa.pad %arg0, %2, %1 : (tensor<1x478x640x32xbf16>, !tosa.shape<8>, tensor<bf16>) -> tensor<1x482x644x32xbf16>
+  %4 = tosa.pad %3, %0, %1 : (tensor<1x482x644x32xbf16>, !tosa.shape<8>, tensor<bf16>) -> tensor<1x483x644x32xbf16>
+  return %4 : tensor<1x483x644x32xbf16>
+}
+
+// -----
+
+// CHECK-LABEL: @pad_pad_optimization_dense_and_splat_values
+func.func @pad_pad_optimization_dense_and_splat_values(%arg0: tensor<1x478x640x32xbf16>) -> tensor<1x483x644x32xbf16> {
+  // CHECK-DAG: %[[CONST:.+]] = "tosa.const"() <{value = dense<0.000000e+00> : tensor<bf16>}> : () -> tensor<bf16>
+  // CHECK-DAG: %[[PADDING:.+]] = tosa.const_shape  {value = dense<[1, 1, 3, 3, 3, 3, 1, 1]> : tensor<8xindex>} : () -> !tosa.shape<8>
+  // CHECK:tosa.pad %arg0, %[[PADDING]], %[[CONST]] : (tensor<1x478x640x32xbf16>, !tosa.shape<8>, tensor<bf16>) -> tensor<1x483x644x32xbf16>
+  %0 = tosa.const_shape  {value = dense<1> : tensor<8xindex>} : () -> !tosa.shape<8>
+  %1 = "tosa.const"() <{value = dense<0.000000e+00> : tensor<bf16>}> : () -> tensor<bf16>
+  %2 = tosa.const_shape  {value = dense<[0, 0, 2, 2, 2, 2, 0, 0]> : tensor<8xindex>} : () -> !tosa.shape<8>
+  %3 = tosa.pad %arg0, %2, %1 : (tensor<1x478x640x32xbf16>, !tosa.shape<8>, tensor<bf16>) -> tensor<1x482x644x32xbf16>
+  %4 = tosa.pad %3, %0, %1 : (tensor<1x482x644x32xbf16>, !tosa.shape<8>, tensor<bf16>) -> tensor<1x483x644x32xbf16>
+  return %4 : tensor<1x483x644x32xbf16>
+}
+
+// -----
+
+// CHECK-LABEL: @pad_pad_optimization_default_const_value
+func.func @pad_pad_optimization_default_const_value(%arg0: tensor<1x478x640x32xbf16>) -> tensor<1x483x644x32xbf16> {
+  // CHECK-DAG: %[[CONST:.+]] = "tosa.const"() <{value = dense<0.000000e+00> : tensor<bf16>}> : () -> tensor<bf16>
+  // CHECK-DAG: %[[PADDING:.+]] = tosa.const_shape  {value = dense<[1, 1, 3, 3, 3, 3, 1, 1]> : tensor<8xindex>} : () -> !tosa.shape<8>
+  // CHECK: tosa.pad %arg0, %[[PADDING]], %[[CONST]]
+  %0 = tosa.const_shape  {value = dense<1> : tensor<8xindex>} : () -> !tosa.shape<8>
+  %2 = tosa.const_shape  {value = dense<[0, 0, 2, 2, 2, 2, 0, 0]> : tensor<8xindex>} : () -> !tosa.shape<8>
+  %3 = tosa.pad %arg0, %2 : (tensor<1x478x640x32xbf16>, !tosa.shape<8>) -> tensor<1x482x644x32xbf16>
+  %5 = tosa.pad %3, %0 : (tensor<1x482x644x32xbf16>, !tosa.shape<8>) -> tensor<1x483x644x32xbf16>
+  return %5 : tensor<1x483x644x32xbf16>
+}
+
+// -----
+
+// CHECK-LABEL: @pad_pad_optimization_nonconst
+func.func @pad_pad_optimization_nonconst(%arg0: tensor<1x478x640x32xbf16>, %arg1: tensor<bf16>) -> tensor<1x483x644x32xbf16> {
+  // CHECK-DAG: %[[PADDING:.+]] = tosa.const_shape  {value = dense<[1, 1, 3, 3, 3, 3, 1, 1]> : tensor<8xindex>} : () -> !tosa.shape<8>
+  // CHECK:tosa.pad %arg0, %[[PADDING]], %arg1 : (tensor<1x478x640x32xbf16>, !tosa.shape<8>, tensor<bf16>) -> tensor<1x483x644x32xbf16>
+  %0 = tosa.const_shape  {value = dense<1> : tensor<8xindex>} : () -> !tosa.shape<8>
+  %1 = tosa.const_shape  {value = dense<[0, 0, 2, 2, 2, 2, 0, 0]> : tensor<8xindex>} : () -> !tosa.shape<8>
+  %2 = tosa.pad %arg0, %1, %arg1 : (tensor<1x478x640x32xbf16>, !tosa.shape<8>, tensor<bf16>) -> tensor<1x482x644x32xbf16>
+  %3 = tosa.pad %2, %0, %arg1 : (tensor<1x482x644x32xbf16>, !tosa.shape<8>, tensor<bf16>) -> tensor<1x483x644x32xbf16>
+  return %3 : tensor<1x483x644x32xbf16>
+}
+
+// -----
+
+// CHECK-LABEL: @no_pad_pad_optimization_different_value
+func.func @no_pad_pad_optimization_different_value(%arg0: tensor<1x478x640x32xbf16>) -> tensor<1x483x644x32xbf16> {
+  // CHECK: tosa.pad
+  // CHECK: tosa.pad
+  %0 = tosa.const_shape  {value = dense<1> : tensor<8xindex>} : () -> !tosa.shape<8>
+  %1 = "tosa.const"() <{value = dense<0.000000e+00> : tensor<bf16>}> : () -> tensor<bf16>
+  %2 = tosa.const_shape  {value = dense<[0, 0, 2, 2, 2, 2, 0, 0]> : tensor<8xindex>} : () -> !tosa.shape<8>
+  %3 = tosa.pad %arg0, %2, %1 : (tensor<1x478x640x32xbf16>, !tosa.shape<8>, tensor<bf16>) -> tensor<1x482x644x32xbf16>
+  %4 = "tosa.const"() <{value = dense<1.000000e+00> : tensor<bf16>}> : () -> tensor<bf16>
+  %5 = tosa.pad %3, %0, %4 : (tensor<1x482x644x32xbf16>, !tosa.shape<8>, tensor<bf16>) -> tensor<1x483x644x32xbf16>
+  return %5 : tensor<1x483x644x32xbf16>
+}
+
+// -----
+
 // CHECK-LABEL: @mul_one_float
 func.func @mul_one_float(%arg0: tensor<2x3xf32>) -> tensor<2x3xf32> {
   // CHECK: return %arg0

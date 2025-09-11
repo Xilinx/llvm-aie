@@ -551,9 +551,82 @@ struct MaterializePadValue : public OpRewritePattern<tosa::PadOp> {
   }
 };
 
+struct PadPadOptimization : public OpRewritePattern<tosa::PadOp> {
+  using OpRewritePattern::OpRewritePattern;
+
+  LogicalResult matchAndRewrite(tosa::PadOp padOp,
+                                PatternRewriter &rewriter) const override {
+
+    auto padType = dyn_cast<RankedTensorType>(padOp.getType());
+    if (!padType || !padType.hasStaticShape())
+      return rewriter.notifyMatchFailure(
+          padOp, "padOp must be a static ranked tensor");
+
+    auto input = padOp.getInput1();
+    auto prevPadOp = input.getDefiningOp<tosa::PadOp>();
+    if (!prevPadOp) {
+      return rewriter.notifyMatchFailure(padOp, "needs another pad operation.");
+    }
+
+    if (padOp.getPadConst() != prevPadOp.getPadConst()) {
+      return rewriter.notifyMatchFailure(
+          padOp, "pad+pad optimization requires the same constant pad value");
+    }
+
+    ElementsAttr paddingElems;
+    if (!matchPattern(padOp.getPadding(), m_Constant(&paddingElems))) {
+      return rewriter.notifyMatchFailure(
+          padOp, "padding must be a static shape value");
+    }
+    ElementsAttr prevPaddingElems;
+    if (!matchPattern(prevPadOp.getPadding(), m_Constant(&prevPaddingElems))) {
+      return rewriter.notifyMatchFailure(
+          padOp, "padding must be a static shape value");
+    }
+    if (!paddingElems || !prevPaddingElems) {
+      return rewriter.notifyMatchFailure(
+          padOp,
+          "needs constant padding values to perform pad+pad optimization");
+    }
+
+    if (paddingElems.isSplat()) {
+      paddingElems = DenseElementsAttr::get(
+          paddingElems.getShapedType(), paddingElems.getSplatValue<APInt>());
+    }
+    if (prevPaddingElems.isSplat()) {
+      prevPaddingElems =
+          DenseElementsAttr::get(prevPaddingElems.getShapedType(),
+                                 prevPaddingElems.getSplatValue<APInt>());
+    }
+
+    llvm::SmallVector<int64_t> paddingVals;
+    for (auto [padElem, prevPadElem] :
+         llvm::zip(paddingElems.getValues<APInt>(),
+                   prevPaddingElems.getValues<APInt>())) {
+      paddingVals.push_back(padElem.getZExtValue() +
+                            prevPadElem.getZExtValue());
+    }
+
+    auto padConst = tosa::getTosaConstShape(
+        rewriter,
+        FusedLoc::get(padOp->getContext(), {prevPadOp.getPadding().getLoc(),
+                                            padOp.getPadding().getLoc()}),
+        paddingVals);
+
+    auto newPadOp = rewriter.create<tosa::PadOp>(
+        FusedLoc::get(padOp->getContext(),
+                      {prevPadOp.getLoc(), padOp.getLoc()}),
+        padOp.getType(),
+        ValueRange{prevPadOp.getInput1(), padConst, padOp.getPadConst()},
+        padOp->getAttrs());
+    rewriter.replaceOp(padOp, newPadOp);
+    return success();
+  }
+};
+
 void PadOp::getCanonicalizationPatterns(RewritePatternSet &results,
                                         MLIRContext *context) {
-  results.add<MaterializePadValue>(context);
+  results.add<MaterializePadValue, PadPadOptimization>(context);
 }
 
 struct MaxPool2dIsNoOp : public OpRewritePattern<tosa::MaxPool2dOp> {
