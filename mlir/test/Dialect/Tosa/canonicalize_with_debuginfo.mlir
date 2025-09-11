@@ -85,3 +85,31 @@ func.func @reshape_canonicalize_double_fused_locs(%arg0: tensor<?x10xf32>) -> te
 
 #fused_loc0 = loc(fused[#loc0, #loc1])
 #fused_loc1 = loc(fused[#loc2, #loc3])
+
+// -----
+
+// CHECK-LABEL: @pad_pad_optimization_with_locs
+func.func @pad_pad_optimization_with_locs(%arg0: tensor<1x478x640x32xbf16>) -> tensor<1x483x644x32xbf16> {
+  // CHECK: %[[CST:.+]] = "tosa.const"() <{value = dense<2.000000e+00> : tensor<bf16>}> : () -> tensor<bf16> loc(#[[C:.*]])
+  // CHECK: %[[PADDING:.+]] = tosa.const_shape  {value = dense<[0, 0, 2, 3, 2, 2, 0, 0]> : tensor<8xindex>} : () -> !tosa.shape<8> loc(#[[LOC_CONSTSHAPE:.*]])
+  // CHECK: tosa.pad %arg0, %[[PADDING]], %[[CST]]
+  // CHECK-SAME: loc(#[[LOC_PAD:.*]])
+  %cst = "tosa.const"() <{value = dense<2.000000e+00> : tensor<bf16>}> : () -> tensor<bf16> loc(#loc0)
+  %0 = tosa.const_shape  {value = dense<[0, 0, 0, 1, 0, 0, 0, 0]> : tensor<8xindex>} : () -> !tosa.shape<8> loc(#loc1)
+  %1 = tosa.const_shape  {value = dense<[0, 0, 2, 2, 2, 2, 0, 0]> : tensor<8xindex>} : () -> !tosa.shape<8> loc(#loc2)
+  %2 = tosa.pad %arg0, %1, %cst : (tensor<1x478x640x32xbf16>, !tosa.shape<8>, tensor<bf16>) -> tensor<1x482x644x32xbf16> loc(#loc3)
+  %3 = tosa.pad %2, %0, %cst : (tensor<1x482x644x32xbf16>, !tosa.shape<8>, tensor<bf16>) -> tensor<1x483x644x32xbf16> loc(#loc4)
+  return %3 : tensor<1x483x644x32xbf16>
+}
+#loc0 = loc("Const")
+#loc1 = loc("ConstShapePad1")
+#loc2 = loc("ConstShapePad2")
+#loc3 = loc("Pad1")
+#loc4 = loc("Pad2")
+// CHECK-DAG: #[[A:.*]] = loc("ConstShapePad1")
+// CHECK-DAG: #[[B:.*]] = loc("ConstShapePad2")
+// CHECK-DAG: #[[C:.*]] = loc("Const")
+// CHECK-DAG: #[[D:.*]] = loc("Pad1")
+// CHECK-DAG: #[[E:.*]] = loc("Pad2")
+// CHECK-DAG: [[LOC_CONSTSHAPE]] = loc(fused[#[[B]], #[[A]]])
+// CHECK-DAG: [[LOC_PAD]] = loc(fused[#[[D]], #[[E]]])
