@@ -470,479 +470,812 @@ ulsrs_conf(v8acc64 acc, int shft, crsat_t sat, crrnd_t rnd) {
   set_rnd(prev_rnd);
   return r;
 }
-INTRINSIC(v32int8) srs_to_v32int8(v32acc32 acc, int shft, int sign) {
+INTRINSIC(v32int8) to_v32int8(v32acc32 acc, int shft, int sign) {
   return __builtin_aie2p_I256_v32_acc32_srs(acc, shft, sign);
 }
 INTRINSIC(v32int8)
-srs_to_v32int8_conf(v32acc32 acc, int shft, int sign, crsat_t sat,
-                    crrnd_t rnd) {
+to_v32int8_conf(v32acc32 acc, int shft, int sign, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v32int8 r = srs_to_v32int8(acc, shft, sign);
+  v32int8 r = to_v32int8(acc, shft, sign);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
-INTRINSIC(v32uint8) srs_to_v32uint8(v32acc32 acc, int shft, int sign) {
+INTRINSIC(v32uint8) to_v32uint8(v32acc32 acc, int shft, int sign) {
   return __builtin_aie2p_I256_v32_acc32_srs(acc, shft, sign);
 }
 INTRINSIC(v32uint8)
-srs_to_v32uint8_conf(v32acc32 acc, int shft, int sign, crsat_t sat,
-                     crrnd_t rnd) {
+to_v32uint8_conf(v32acc32 acc, int shft, int sign, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v32uint8 r = srs_to_v32uint8(acc, shft, sign);
+  v32uint8 r = to_v32uint8(acc, shft, sign);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
-INTRINSIC(v64int8) srs_to_v64int8(v64acc32 acc, int shft, int sign) {
+INTRINSIC(v64int8) to_v64int8(v64acc32 acc, int shft, int sign) {
   return __builtin_aie2p_I512_v64_acc32_srs(acc, shft, sign);
 }
 INTRINSIC(v64int8)
-srs_to_v64int8_conf(v64acc32 acc, int shft, int sign, crsat_t sat,
-                    crrnd_t rnd) {
+to_v64int8_conf(v64acc32 acc, int shft, int sign, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v64int8 r = srs_to_v64int8(acc, shft, sign);
+  v64int8 r = to_v64int8(acc, shft, sign);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
-INTRINSIC(v64uint8) srs_to_v64uint8(v64acc32 acc, int shft, int sign) {
+INTRINSIC(v64uint8) to_v64uint8(v64acc32 acc, int shft, int sign) {
   return __builtin_aie2p_I512_v64_acc32_srs(acc, shft, sign);
 }
 INTRINSIC(v64uint8)
-srs_to_v64uint8_conf(v64acc32 acc, int shft, int sign, crsat_t sat,
-                     crrnd_t rnd) {
+to_v64uint8_conf(v64acc32 acc, int shft, int sign, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v64uint8 r = srs_to_v64uint8(acc, shft, sign);
+  v64uint8 r = to_v64uint8(acc, shft, sign);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
 
-INTRINSIC(v32int16) srs_to_v32int16(v32acc32 acc, int shft, int sign) {
+[[deprecated("Function 'srs_to_v32int8 ()' is deprecated. Please use "
+             "'to_v32int8 ()' instead.")]] INTRINSIC(v32int8)
+    srs_to_v32int8(v32acc32 acc, int shft, int sign) {
+  return to_v32int8(acc, shft, sign);
+}
+[[deprecated("Function 'srs_to_v32int8_conf()' is deprecated. Please use "
+             "'to_v32int8_conf()' instead.")]] INTRINSIC(v32int8)
+    srs_to_v32int8_conf(v32acc32 acc, int shft, int sign, crsat_t sat,
+                        crrnd_t rnd) {
+  return to_v32int8_conf(acc, shft, sign, sat, rnd);
+}
+[[deprecated("Function 'srs_to_v32uint8 ()' is deprecated. Please use "
+             "'to_v32uint8 ()' instead.")]] INTRINSIC(v32uint8)
+    srs_to_v32uint8(v32acc32 acc, int shft, int sign) {
+  return to_v32uint8(acc, shft, sign);
+}
+[[deprecated("Function 'srs_to_v32uint8_conf()' is deprecated. Please use "
+             "'to_v32uint8_conf()' instead.")]] INTRINSIC(v32uint8)
+    srs_to_v32uint8_conf(v32acc32 acc, int shft, int sign, crsat_t sat,
+                         crrnd_t rnd) {
+  return to_v32uint8_conf(acc, shft, sign, sat, rnd);
+}
+[[deprecated("Function 'srs_to_v64int8 ()' is deprecated. Please use "
+             "'to_v64int8 ()' instead.")]] INTRINSIC(v64int8)
+    srs_to_v64int8(v64acc32 acc, int shft, int sign) {
+  return to_v64int8(acc, shft, sign);
+}
+[[deprecated("Function 'srs_to_v64int8_conf()' is deprecated. Please use "
+             "'to_v64int8_conf()' instead.")]] INTRINSIC(v64int8)
+    srs_to_v64int8_conf(v64acc32 acc, int shft, int sign, crsat_t sat,
+                        crrnd_t rnd) {
+  return to_v64int8_conf(acc, shft, sign, sat, rnd);
+}
+[[deprecated("Function 'srs_to_v64uint8 ()' is deprecated. Please use "
+             "'to_v64uint8 ()' instead.")]] INTRINSIC(v64uint8)
+    srs_to_v64uint8(v64acc32 acc, int shft, int sign) {
+  return to_v64uint8(acc, shft, sign);
+}
+[[deprecated("Function 'srs_to_v64uint8_conf()' is deprecated. Please use "
+             "'to_v64uint8_conf()' instead.")]] INTRINSIC(v64uint8)
+    srs_to_v64uint8_conf(v64acc32 acc, int shft, int sign, crsat_t sat,
+                         crrnd_t rnd) {
+  return to_v64uint8_conf(acc, shft, sign, sat, rnd);
+}
+
+INTRINSIC(v32int16) to_v32int16(v32acc32 acc, int shft, int sign) {
   return __builtin_aie2p_I512_v32_acc32_srs(acc, shft, sign);
 }
 INTRINSIC(v32int16)
-srs_to_v32int16_conf(v32acc32 acc, int shft, int sign, crsat_t sat,
-                     crrnd_t rnd) {
+to_v32int16_conf(v32acc32 acc, int shft, int sign, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v32int16 r = srs_to_v32int16(acc, shft, sign);
+  v32int16 r = to_v32int16(acc, shft, sign);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
-INTRINSIC(v32uint16) srs_to_v32uint16(v32acc32 acc, int shft, int sign) {
+INTRINSIC(v32uint16) to_v32uint16(v32acc32 acc, int shft, int sign) {
   return __builtin_aie2p_I512_v32_acc32_srs(acc, shft, sign);
 }
 INTRINSIC(v32uint16)
-srs_to_v32uint16_conf(v32acc32 acc, int shft, int sign, crsat_t sat,
-                      crrnd_t rnd) {
+to_v32uint16_conf(v32acc32 acc, int shft, int sign, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v32uint16 r = srs_to_v32uint16(acc, shft, sign);
+  v32uint16 r = to_v32uint16(acc, shft, sign);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
-INTRINSIC(v16int16) srs_to_v16int16(v16acc32 acc, int shft, int sign) {
+INTRINSIC(v16int16) to_v16int16(v16acc32 acc, int shft, int sign) {
   return __builtin_aie2p_I256_v16_acc32_srs(acc, shft, sign);
 }
 INTRINSIC(v16int16)
-srs_to_v16int16_conf(v16acc32 acc, int shft, int sign, crsat_t sat,
-                     crrnd_t rnd) {
+to_v16int16_conf(v16acc32 acc, int shft, int sign, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v16int16 r = srs_to_v16int16(acc, shft, sign);
+  v16int16 r = to_v16int16(acc, shft, sign);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
-INTRINSIC(v16uint16) srs_to_v16uint16(v16acc32 acc, int shft, int sign) {
+INTRINSIC(v16uint16) to_v16uint16(v16acc32 acc, int shft, int sign) {
   return __builtin_aie2p_I256_v16_acc32_srs(acc, shft, sign);
 }
 INTRINSIC(v16uint16)
-srs_to_v16uint16_conf(v16acc32 acc, int shft, int sign, crsat_t sat,
-                      crrnd_t rnd) {
+to_v16uint16_conf(v16acc32 acc, int shft, int sign, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v16uint16 r = srs_to_v16uint16(acc, shft, sign);
+  v16uint16 r = to_v16uint16(acc, shft, sign);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
 
-INTRINSIC(v16int16) srs_to_v16int16(v16acc64 acc, int shft, int sign) {
+[[deprecated("Function 'srs_to_v32int16 ()' is deprecated. Please use "
+             "'to_v32int16 ()' instead.")]] INTRINSIC(v32int16)
+    srs_to_v32int16(v32acc32 acc, int shft, int sign) {
+  return to_v32int16(acc, shft, sign);
+}
+[[deprecated("Function 'srs_to_v32int16_conf()' is deprecated. Please use "
+             "'to_v32int16_conf()' instead.")]] INTRINSIC(v32int16)
+    srs_to_v32int16_conf(v32acc32 acc, int shft, int sign, crsat_t sat,
+                         crrnd_t rnd) {
+  return to_v32int16_conf(acc, shft, sign, sat, rnd);
+}
+[[deprecated("Function 'srs_to_v32uint16 ()' is deprecated. Please use "
+             "'to_v32uint16 ()' instead.")]] INTRINSIC(v32uint16)
+    srs_to_v32uint16(v32acc32 acc, int shft, int sign) {
+  return to_v32uint16(acc, shft, sign);
+}
+[[deprecated("Function 'srs_to_v32uint16_conf()' is deprecated. Please use "
+             "'to_v32uint16_conf()' instead.")]] INTRINSIC(v32uint16)
+    srs_to_v32uint16_conf(v32acc32 acc, int shft, int sign, crsat_t sat,
+                          crrnd_t rnd) {
+  return to_v32uint16_conf(acc, shft, sign, sat, rnd);
+}
+[[deprecated("Function 'srs_to_v16int16 ()' is deprecated. Please use "
+             "'to_v16int16 ()' instead.")]] INTRINSIC(v16int16)
+    srs_to_v16int16(v16acc32 acc, int shft, int sign) {
+  return to_v16int16(acc, shft, sign);
+}
+[[deprecated("Function 'srs_to_v16int16_conf()' is deprecated. Please use "
+             "'to_v16int16_conf()' instead.")]] INTRINSIC(v16int16)
+    srs_to_v16int16_conf(v16acc32 acc, int shft, int sign, crsat_t sat,
+                         crrnd_t rnd) {
+  return to_v16int16_conf(acc, shft, sign, sat, rnd);
+}
+[[deprecated("Function 'srs_to_v16uint16 ()' is deprecated. Please use "
+             "'to_v16uint16 ()' instead.")]] INTRINSIC(v16uint16)
+    srs_to_v16uint16(v16acc32 acc, int shft, int sign) {
+  return to_v16uint16(acc, shft, sign);
+}
+[[deprecated("Function 'srs_to_v16uint16_conf()' is deprecated. Please use "
+             "'to_v16uint16_conf()' instead.")]] INTRINSIC(v16uint16)
+    srs_to_v16uint16_conf(v16acc32 acc, int shft, int sign, crsat_t sat,
+                          crrnd_t rnd) {
+  return to_v16uint16_conf(acc, shft, sign, sat, rnd);
+}
+
+INTRINSIC(v16int16) to_v16int16(v16acc64 acc, int shft, int sign) {
   return __builtin_aie2p_I256_v16_acc64_srs(acc, shft, sign);
 }
 INTRINSIC(v16int16)
-srs_to_v16int16_conf(v16acc64 acc, int shft, int sign, crsat_t sat,
-                     crrnd_t rnd) {
+to_v16int16_conf(v16acc64 acc, int shft, int sign, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v16int16 r = srs_to_v16int16(acc, shft, sign);
+  v16int16 r = to_v16int16(acc, shft, sign);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
-INTRINSIC(v16uint16) srs_to_v16uint16(v16acc64 acc, int shft, int sign) {
+INTRINSIC(v16uint16) to_v16uint16(v16acc64 acc, int shft, int sign) {
   return __builtin_aie2p_I256_v16_acc64_srs(acc, shft, sign);
 }
 INTRINSIC(v16uint16)
-srs_to_v16uint16_conf(v16acc64 acc, int shft, int sign, crsat_t sat,
-                      crrnd_t rnd) {
+to_v16uint16_conf(v16acc64 acc, int shft, int sign, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v16uint16 r = srs_to_v16uint16(acc, shft, sign);
+  v16uint16 r = to_v16uint16(acc, shft, sign);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
 
-INTRINSIC(v32int16) srs_to_v32int16(v32acc64 acc, int shft, int sign) {
+INTRINSIC(v32int16) to_v32int16(v32acc64 acc, int shft, int sign) {
   return __builtin_aie2p_I512_v32_acc64_srs(acc, shft, sign);
 }
 INTRINSIC(v32int16)
-srs_to_v32int16_conf(v32acc64 acc, int shft, int sign, crsat_t sat,
-                     crrnd_t rnd) {
+to_v32int16_conf(v32acc64 acc, int shft, int sign, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v32int16 r = srs_to_v32int16(acc, shft, sign);
+  v32int16 r = to_v32int16(acc, shft, sign);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
-INTRINSIC(v32uint16) srs_to_v32uint16(v32acc64 acc, int shft, int sign) {
+INTRINSIC(v32uint16) to_v32uint16(v32acc64 acc, int shft, int sign) {
   return __builtin_aie2p_I512_v32_acc64_srs(acc, shft, sign);
 }
 INTRINSIC(v32uint16)
-srs_to_v32uint16_conf(v32acc64 acc, int shft, int sign, crsat_t sat,
-                      crrnd_t rnd) {
+to_v32uint16_conf(v32acc64 acc, int shft, int sign, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v32uint16 r = srs_to_v32uint16(acc, shft, sign);
+  v32uint16 r = to_v32uint16(acc, shft, sign);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
 
-INTRINSIC(v16int32) srs_to_v16int32(v16acc64 acc, int shft, int sign) {
+[[deprecated("Function 'srs_to_v16int16 ()' is deprecated. Please use "
+             "'to_v16int16 ()' instead.")]] INTRINSIC(v16int16)
+    srs_to_v16int16(v16acc64 acc, int shft, int sign) {
+  return to_v16int16(acc, shft, sign);
+}
+[[deprecated("Function 'srs_to_v16int16 ()' is deprecated. Please use "
+             "'to_v16int16 ()' instead.")]] INTRINSIC(v16int16)
+    srs_to_v16int16_conf(v16acc64 acc, int shft, int sign, crsat_t sat,
+                         crrnd_t rnd) {
+  return to_v16int16_conf(acc, shft, sign, sat, rnd);
+}
+[[deprecated("Function 'srs_to_v16uint16 ()' is deprecated. Please use "
+             "'to_v16uint16 ()' instead.")]] INTRINSIC(v16uint16)
+    srs_to_v16uint16(v16acc64 acc, int shft, int sign) {
+  return to_v16uint16(acc, shft, sign);
+}
+[[deprecated("Function 'srs_to_v16uint16_conf()' is deprecated. Please use "
+             "'to_v16uint16_conf()' instead.")]] INTRINSIC(v16uint16)
+    srs_to_v16uint16_conf(v16acc64 acc, int shft, int sign, crsat_t sat,
+                          crrnd_t rnd) {
+  return to_v16uint16_conf(acc, shft, sign, sat, rnd);
+}
+
+[[deprecated("Function 'srs_to_v32int16 ()' is deprecated. Please use "
+             "'to_v32int16 ()' instead.")]] INTRINSIC(v32int16)
+    srs_to_v32int16(v32acc64 acc, int shft, int sign) {
+  return to_v32int16(acc, shft, sign);
+}
+[[deprecated("Function 'srs_to_v32int16_conf()' is deprecated. Please use "
+             "'to_v32int16_conf()' instead.")]] INTRINSIC(v32int16)
+    srs_to_v32int16_conf(v32acc64 acc, int shft, int sign, crsat_t sat,
+                         crrnd_t rnd) {
+  return to_v32int16_conf(acc, shft, sign, sat, rnd);
+}
+[[deprecated("Function 'srs_to_v32uint16 ()' is deprecated. Please use "
+             "'to_v32uint16 ()' instead.")]] INTRINSIC(v32uint16)
+    srs_to_v32uint16(v32acc64 acc, int shft, int sign) {
+  return to_v32uint16(acc, shft, sign);
+}
+[[deprecated("Function 'srs_to_v32uint16_conf()' is deprecated. Please use "
+             "'to_v32uint16_conf()' instead.")]] INTRINSIC(v32uint16)
+    srs_to_v32uint16_conf(v32acc64 acc, int shft, int sign, crsat_t sat,
+                          crrnd_t rnd) {
+  return to_v32uint16_conf(acc, shft, sign, sat, rnd);
+}
+
+INTRINSIC(v16int32) to_v16int32(v16acc64 acc, int shft, int sign) {
   return __builtin_aie2p_I512_v16_acc64_srs(acc, shft, sign);
 }
 INTRINSIC(v16int32)
-srs_to_v16int32_conf(v16acc64 acc, int shft, int sign, crsat_t sat,
-                     crrnd_t rnd) {
+to_v16int32_conf(v16acc64 acc, int shft, int sign, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v16int32 r = srs_to_v16int32(acc, shft, sign);
+  v16int32 r = to_v16int32(acc, shft, sign);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
-INTRINSIC(v16uint32) srs_to_v16uint32(v16acc64 acc, int shft, int sign) {
+INTRINSIC(v16uint32) to_v16uint32(v16acc64 acc, int shft, int sign) {
   return __builtin_aie2p_I512_v16_acc64_srs(acc, shft, sign);
 }
 INTRINSIC(v16uint32)
-srs_to_v16uint32_conf(v16acc64 acc, int shft, int sign, crsat_t sat,
-                      crrnd_t rnd) {
+to_v16uint32_conf(v16acc64 acc, int shft, int sign, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v16uint32 r = srs_to_v16uint32(acc, shft, sign);
+  v16uint32 r = to_v16uint32(acc, shft, sign);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
 
-INTRINSIC(v8int32) srs_to_v8int32(v8acc64 acc, int shft, int sign) {
+INTRINSIC(v8int32) to_v8int32(v8acc64 acc, int shft, int sign) {
   return __builtin_aie2p_I256_v8_acc64_srs(acc, shft, sign);
 }
 INTRINSIC(v8int32)
-srs_to_v8int32_conf(v8acc64 acc, int shft, int sign, crsat_t sat, crrnd_t rnd) {
+to_v8int32_conf(v8acc64 acc, int shft, int sign, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v8int32 r = srs_to_v8int32(acc, shft, sign);
+  v8int32 r = to_v8int32(acc, shft, sign);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
-INTRINSIC(v8uint32) srs_to_v8uint32(v8acc64 acc, int shft, int sign) {
+INTRINSIC(v8uint32) to_v8uint32(v8acc64 acc, int shft, int sign) {
   return __builtin_aie2p_I256_v8_acc64_srs(acc, shft, sign);
 }
 INTRINSIC(v8uint32)
-srs_to_v8uint32_conf(v8acc64 acc, int shft, int sign, crsat_t sat,
-                     crrnd_t rnd) {
+to_v8uint32_conf(v8acc64 acc, int shft, int sign, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v8uint32 r = srs_to_v8uint32(acc, shft, sign);
+  v8uint32 r = to_v8uint32(acc, shft, sign);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
 
-INTRINSIC(v32int8) srs_to_v32int8(v32acc32 acc, int shft) {
-  return srs_to_v32int8(acc, shft, __SIGN_SIGNED);
+[[deprecated("Function 'srs_to_v16int32 ()' is deprecated. Please use "
+             "'to_v16int32 ()' instead.")]] INTRINSIC(v16int32)
+    srs_to_v16int32(v16acc64 acc, int shft, int sign) {
+  return to_v16int32(acc, shft, sign);
+}
+[[deprecated("Function 'srs_to_v16int32_conf()' is deprecated. Please use "
+             "'to_v16int32_conf()' instead.")]] INTRINSIC(v16int32)
+    srs_to_v16int32_conf(v16acc64 acc, int shft, int sign, crsat_t sat,
+                         crrnd_t rnd) {
+  return to_v16int32_conf(acc, shft, sign, sat, rnd);
+}
+[[deprecated("Function 'srs_to_v16uint32 ()' is deprecated. Please use "
+             "'to_v16uint32 ()' instead.")]] INTRINSIC(v16uint32)
+    srs_to_v16uint32(v16acc64 acc, int shft, int sign) {
+  return to_v16uint32(acc, shft, sign);
+}
+[[deprecated("Function 'srs_to_v16uint32_conf()' is deprecated. Please use "
+             "'to_v16uint32_conf()' instead.")]] INTRINSIC(v16uint32)
+    srs_to_v16uint32_conf(v16acc64 acc, int shft, int sign, crsat_t sat,
+                          crrnd_t rnd) {
+  return to_v16uint32_conf(acc, shft, sign, sat, rnd);
+}
+
+[[deprecated("Function 'srs_to_v8int32 ()' is deprecated. Please use "
+             "'to_v8int32 ()' instead.")]] INTRINSIC(v8int32)
+    srs_to_v8int32(v8acc64 acc, int shft, int sign) {
+  return to_v8int32(acc, shft, sign);
+}
+[[deprecated("Function 'srs_to_v8int32_conf()' is deprecated. Please use "
+             "'to_v8int32_conf()' instead.")]] INTRINSIC(v8int32)
+    srs_to_v8int32_conf(v8acc64 acc, int shft, int sign, crsat_t sat,
+                        crrnd_t rnd) {
+  return to_v8int32_conf(acc, shft, sign, sat, rnd);
+}
+[[deprecated("Function 'srs_to_v8uint32 ()' is deprecated. Please use "
+             "'to_v8uint32 ()' instead.")]] INTRINSIC(v8uint32)
+    srs_to_v8uint32(v8acc64 acc, int shft, int sign) {
+  return to_v8uint32(acc, shft, sign);
+}
+[[deprecated("Function 'srs_to_v8uint32_conf()' is deprecated. Please use "
+             "'to_v8uint32_conf()' instead.")]] INTRINSIC(v8uint32)
+    srs_to_v8uint32_conf(v8acc64 acc, int shft, int sign, crsat_t sat,
+                         crrnd_t rnd) {
+  return to_v8uint32_conf(acc, shft, sign, sat, rnd);
+}
+
+INTRINSIC(v32int8) to_v32int8(v32acc32 acc, int shft) {
+  return __builtin_aie2p_I256_v32_acc32_srs(acc, shft, __SIGN_SIGNED);
 }
 INTRINSIC(v32int8)
-srs_to_v32int8_conf(v32acc32 acc, int shft, crsat_t sat, crrnd_t rnd) {
+to_v32int8_conf(v32acc32 acc, int shft, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v32int8 r = srs_to_v32int8(acc, shft);
+  v32int8 r = to_v32int8(acc, shft);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
-INTRINSIC(v32uint8) srs_to_v32uint8(v32acc32 acc, int shft) {
-  return srs_to_v32uint8(acc, shft, __SIGN_UNSIGNED);
+INTRINSIC(v32uint8) to_v32uint8(v32acc32 acc, int shft) {
+  return __builtin_aie2p_I256_v32_acc32_srs(acc, shft, __SIGN_UNSIGNED);
 }
 INTRINSIC(v32uint8)
-srs_to_v32uint8_conf(v32acc32 acc, int shft, crsat_t sat, crrnd_t rnd) {
+to_v32uint8_conf(v32acc32 acc, int shft, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v32uint8 r = srs_to_v32uint8(acc, shft);
+  v32uint8 r = to_v32uint8(acc, shft);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
-INTRINSIC(v64int8) srs_to_v64int8(v64acc32 acc, int shft) {
-  return srs_to_v64int8(acc, shft, __SIGN_SIGNED);
+INTRINSIC(v64int8) to_v64int8(v64acc32 acc, int shft) {
+  return __builtin_aie2p_I512_v64_acc32_srs(acc, shft, __SIGN_SIGNED);
 }
 INTRINSIC(v64int8)
-srs_to_v64int8_conf(v64acc32 acc, int shft, crsat_t sat, crrnd_t rnd) {
+to_v64int8_conf(v64acc32 acc, int shft, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v64int8 r = srs_to_v64int8(acc, shft);
+  v64int8 r = to_v64int8(acc, shft);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
-INTRINSIC(v64uint8) srs_to_v64uint8(v64acc32 acc, int shft) {
-  return srs_to_v64uint8(acc, shft, __SIGN_UNSIGNED);
+INTRINSIC(v64uint8) to_v64uint8(v64acc32 acc, int shft) {
+  return __builtin_aie2p_I512_v64_acc32_srs(acc, shft, __SIGN_UNSIGNED);
 }
 INTRINSIC(v64uint8)
-srs_to_v64uint8_conf(v64acc32 acc, int shft, crsat_t sat, crrnd_t rnd) {
+to_v64uint8_conf(v64acc32 acc, int shft, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v64uint8 r = srs_to_v64uint8(acc, shft);
+  v64uint8 r = to_v64uint8(acc, shft);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
 
-INTRINSIC(v32int16) srs_to_v32int16(v32acc32 acc, int shft) {
-  return srs_to_v32int16(acc, shft, __SIGN_SIGNED);
+[[deprecated("Function 'srs_to_v32int8 ()' is deprecated. Please use "
+             "'to_v32int8 ()' instead.")]] INTRINSIC(v32int8)
+    srs_to_v32int8(v32acc32 acc, int shft) {
+  return to_v32int8(acc, shft);
+}
+[[deprecated("Function 'srs_to_v32int8_conf()' is deprecated. Please use "
+             "'to_v32int8_conf()' instead.")]] INTRINSIC(v32int8)
+    srs_to_v32int8_conf(v32acc32 acc, int shft, crsat_t sat, crrnd_t rnd) {
+  return to_v32int8_conf(acc, shft, sat, rnd);
+}
+[[deprecated("Function 'srs_to_v32uint8 ()' is deprecated. Please use "
+             "'to_v32uint8 ()' instead.")]] INTRINSIC(v32uint8)
+    srs_to_v32uint8(v32acc32 acc, int shft) {
+  return to_v32uint8(acc, shft);
+}
+[[deprecated("Function 'srs_to_v32uint8_conf()' is deprecated. Please use "
+             "'to_v32uint8_conf()' instead.")]] INTRINSIC(v32uint8)
+    srs_to_v32uint8_conf(v32acc32 acc, int shft, crsat_t sat, crrnd_t rnd) {
+  return to_v32uint8_conf(acc, shft, sat, rnd);
+}
+[[deprecated("Function 'srs_to_v64int8 ()' is deprecated. Please use "
+             "'to_v64int8 ()' instead.")]] INTRINSIC(v64int8)
+    srs_to_v64int8(v64acc32 acc, int shft) {
+  return to_v64int8(acc, shft);
+}
+[[deprecated("Function 'srs_to_v64int8_conf()' is deprecated. Please use "
+             "'to_v64int8_conf()' instead.")]] INTRINSIC(v64int8)
+    srs_to_v64int8_conf(v64acc32 acc, int shft, crsat_t sat, crrnd_t rnd) {
+  return to_v64int8_conf(acc, shft, sat, rnd);
+}
+[[deprecated("Function 'srs_to_v64uint8 ()' is deprecated. Please use "
+             "'to_v64uint8 ()' instead.")]] INTRINSIC(v64uint8)
+    srs_to_v64uint8(v64acc32 acc, int shft) {
+  return to_v64uint8(acc, shft);
+}
+[[deprecated("Function 'srs_to_v64uint8_conf()' is deprecated. Please use "
+             "'to_v64uint8_conf()' instead.")]] INTRINSIC(v64uint8)
+    srs_to_v64uint8_conf(v64acc32 acc, int shft, crsat_t sat, crrnd_t rnd) {
+  return to_v64uint8_conf(acc, shft, sat, rnd);
+}
+
+INTRINSIC(v32int16) to_v32int16(v32acc32 acc, int shft) {
+  return __builtin_aie2p_I512_v32_acc32_srs(acc, shft, __SIGN_SIGNED);
 }
 INTRINSIC(v32int16)
-srs_to_v32int16_conf(v32acc32 acc, int shft, crsat_t sat, crrnd_t rnd) {
+to_v32int16_conf(v32acc32 acc, int shft, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v32int16 r = srs_to_v32int16(acc, shft);
+  v32int16 r = to_v32int16(acc, shft);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
-INTRINSIC(v32uint16) srs_to_v32uint16(v32acc32 acc, int shft) {
-  return srs_to_v32uint16(acc, shft, __SIGN_UNSIGNED);
+INTRINSIC(v32uint16) to_v32uint16(v32acc32 acc, int shft) {
+  return __builtin_aie2p_I512_v32_acc32_srs(acc, shft, __SIGN_UNSIGNED);
 }
 INTRINSIC(v32uint16)
-srs_to_v32uint16_conf(v32acc32 acc, int shft, crsat_t sat, crrnd_t rnd) {
+to_v32uint16_conf(v32acc32 acc, int shft, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v32uint16 r = srs_to_v32uint16(acc, shft);
+  v32uint16 r = to_v32uint16(acc, shft);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
-INTRINSIC(v16int16) srs_to_v16int16(v16acc32 acc, int shft) {
-  return srs_to_v16int16(acc, shft, __SIGN_SIGNED);
+INTRINSIC(v16int16) to_v16int16(v16acc32 acc, int shft) {
+  return __builtin_aie2p_I256_v16_acc32_srs(acc, shft, __SIGN_SIGNED);
 }
 INTRINSIC(v16int16)
-srs_to_v16int16_conf(v16acc32 acc, int shft, crsat_t sat, crrnd_t rnd) {
+to_v16int16_conf(v16acc32 acc, int shft, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v16int16 r = srs_to_v16int16(acc, shft);
+  v16int16 r = to_v16int16(acc, shft);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
-INTRINSIC(v16uint16) srs_to_v16uint16(v16acc32 acc, int shft) {
-  return srs_to_v16uint16(acc, shft, __SIGN_UNSIGNED);
+INTRINSIC(v16uint16) to_v16uint16(v16acc32 acc, int shft) {
+  return __builtin_aie2p_I256_v16_acc32_srs(acc, shft, __SIGN_UNSIGNED);
 }
 INTRINSIC(v16uint16)
-srs_to_v16uint16_conf(v16acc32 acc, int shft, crsat_t sat, crrnd_t rnd) {
+to_v16uint16_conf(v16acc32 acc, int shft, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v16uint16 r = srs_to_v16uint16(acc, shft);
+  v16uint16 r = to_v16uint16(acc, shft);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
 
-INTRINSIC(v16int16) srs_to_v16int16(v16acc64 acc, int shft) {
-  return srs_to_v16int16(acc, shft, __SIGN_SIGNED);
+[[deprecated("Function 'srs_to_v32int16 ()' is deprecated. Please use "
+             "'to_v32int16 ()' instead.")]] INTRINSIC(v32int16)
+    srs_to_v32int16(v32acc32 acc, int shft) {
+  return to_v32int16(acc, shft);
+}
+[[deprecated("Function 'srs_to_v32int16_conf()' is deprecated. Please use "
+             "'to_v32int16_conf()' instead.")]] INTRINSIC(v32int16)
+    srs_to_v32int16_conf(v32acc32 acc, int shft, crsat_t sat, crrnd_t rnd) {
+  return to_v32int16_conf(acc, shft, sat, rnd);
+}
+[[deprecated("Function 'srs_to_v32uint16 ()' is deprecated. Please use "
+             "'to_v32uint16 ()' instead.")]] INTRINSIC(v32uint16)
+    srs_to_v32uint16(v32acc32 acc, int shft) {
+  return to_v32uint16(acc, shft);
+}
+[[deprecated("Function 'srs_to_v32uint16_conf()' is deprecated. Please use "
+             "'to_v32uint16_conf()' instead.")]] INTRINSIC(v32uint16)
+    srs_to_v32uint16_conf(v32acc32 acc, int shft, crsat_t sat, crrnd_t rnd) {
+  return to_v32uint16_conf(acc, shft, sat, rnd);
+}
+[[deprecated("Function 'srs_to_v16int16 ()' is deprecated. Please use "
+             "'to_v16int16 ()' instead.")]] INTRINSIC(v16int16)
+    srs_to_v16int16(v16acc32 acc, int shft) {
+  return to_v16int16(acc, shft);
+}
+[[deprecated("Function 'srs_to_v16int16_conf()' is deprecated. Please use "
+             "'to_v16int16_conf()' instead.")]] INTRINSIC(v16int16)
+    srs_to_v16int16_conf(v16acc32 acc, int shft, crsat_t sat, crrnd_t rnd) {
+  return to_v16int16_conf(acc, shft, sat, rnd);
+}
+[[deprecated("Function 'srs_to_v16uint16 ()' is deprecated. Please use "
+             "'to_v16uint16 ()' instead.")]] INTRINSIC(v16uint16)
+    srs_to_v16uint16(v16acc32 acc, int shft) {
+  return to_v16uint16(acc, shft);
+}
+[[deprecated("Function 'srs_to_v16uint16_conf()' is deprecated. Please use "
+             "'to_v16uint16_conf()' instead.")]] INTRINSIC(v16uint16)
+    srs_to_v16uint16_conf(v16acc32 acc, int shft, crsat_t sat, crrnd_t rnd) {
+  return to_v16uint16_conf(acc, shft, sat, rnd);
+}
+
+INTRINSIC(v16int16) to_v16int16(v16acc64 acc, int shft) {
+  return __builtin_aie2p_I256_v16_acc64_srs(acc, shft, __SIGN_SIGNED);
 }
 INTRINSIC(v16int16)
-srs_to_v16int16_conf(v16acc64 acc, int shft, crsat_t sat, crrnd_t rnd) {
+to_v16int16_conf(v16acc64 acc, int shft, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v16int16 r = srs_to_v16int16(acc, shft);
+  v16int16 r = to_v16int16(acc, shft);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
-INTRINSIC(v16uint16) srs_to_v16uint16(v16acc64 acc, int shft) {
-  return srs_to_v16uint16(acc, shft, __SIGN_UNSIGNED);
+INTRINSIC(v16uint16) to_v16uint16(v16acc64 acc, int shft) {
+  return __builtin_aie2p_I256_v16_acc64_srs(acc, shft, __SIGN_UNSIGNED);
 }
 INTRINSIC(v16uint16)
-srs_to_v16uint16_conf(v16acc64 acc, int shft, crsat_t sat, crrnd_t rnd) {
+to_v16uint16_conf(v16acc64 acc, int shft, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v16uint16 r = srs_to_v16uint16(acc, shft);
+  v16uint16 r = to_v16uint16(acc, shft);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
 
-INTRINSIC(v32int16) srs_to_v32int16(v32acc64 acc, int shft) {
-  return srs_to_v32int16(acc, shft, __SIGN_SIGNED);
+INTRINSIC(v32int16) to_v32int16(v32acc64 acc, int shft) {
+  return __builtin_aie2p_I512_v32_acc64_srs(acc, shft, __SIGN_SIGNED);
 }
 INTRINSIC(v32int16)
-srs_to_v32int16_conf(v32acc64 acc, int shft, crsat_t sat, crrnd_t rnd) {
+to_v32int16_conf(v32acc64 acc, int shft, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v32int16 r = srs_to_v32int16(acc, shft);
+  v32int16 r = to_v32int16(acc, shft);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
-INTRINSIC(v32uint16) srs_to_v32uint16(v32acc64 acc, int shft) {
-  return srs_to_v32uint16(acc, shft, __SIGN_UNSIGNED);
+INTRINSIC(v32uint16) to_v32uint16(v32acc64 acc, int shft) {
+  return __builtin_aie2p_I512_v32_acc64_srs(acc, shft, __SIGN_UNSIGNED);
 }
 INTRINSIC(v32uint16)
-srs_to_v32uint16_conf(v32acc64 acc, int shft, crsat_t sat, crrnd_t rnd) {
+to_v32uint16_conf(v32acc64 acc, int shft, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v32uint16 r = srs_to_v32uint16(acc, shft);
+  v32uint16 r = to_v32uint16(acc, shft);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
 
-INTRINSIC(v16int32) srs_to_v16int32(v16acc64 acc, int shft) {
-  return srs_to_v16int32(acc, shft, __SIGN_SIGNED);
+[[deprecated("Function 'srs_to_v16int16 ()' is deprecated. Please use "
+             "'to_v16int16 ()' instead.")]] INTRINSIC(v16int16)
+    srs_to_v16int16(v16acc64 acc, int shft) {
+  return to_v16int16(acc, shft);
+}
+[[deprecated("Function 'srs_to_v16int16_conf()' is deprecated. Please use "
+             "'to_v16int16_conf()' instead.")]] INTRINSIC(v16int16)
+    srs_to_v16int16_conf(v16acc64 acc, int shft, crsat_t sat, crrnd_t rnd) {
+  return to_v16int16_conf(acc, shft, sat, rnd);
+}
+[[deprecated("Function 'srs_to_v16uint16 ()' is deprecated. Please use "
+             "'to_v16uint16 ()' instead.")]] INTRINSIC(v16uint16)
+    srs_to_v16uint16(v16acc64 acc, int shft) {
+  return to_v16uint16(acc, shft);
+}
+[[deprecated("Function 'srs_to_v16uint16_conf()' is deprecated. Please use "
+             "'to_v16uint16_conf()' instead.")]] INTRINSIC(v16uint16)
+    srs_to_v16uint16_conf(v16acc64 acc, int shft, crsat_t sat, crrnd_t rnd) {
+  return to_v16uint16_conf(acc, shft, sat, rnd);
+}
+
+[[deprecated("Function 'srs_to_v32int16 ()' is deprecated. Please use "
+             "'to_v32int16 ()' instead.")]] INTRINSIC(v32int16)
+    srs_to_v32int16(v32acc64 acc, int shft) {
+  return to_v32int16(acc, shft);
+}
+[[deprecated("Function 'srs_to_v32int16_conf()' is deprecated. Please use "
+             "'to_v32int16_conf()' instead.")]] INTRINSIC(v32int16)
+    srs_to_v32int16_conf(v32acc64 acc, int shft, crsat_t sat, crrnd_t rnd) {
+  return to_v32int16_conf(acc, shft, sat, rnd);
+}
+[[deprecated("Function 'srs_to_v32uint16 ()' is deprecated. Please use "
+             "'to_v32uint16 ()' instead.")]] INTRINSIC(v32uint16)
+    srs_to_v32uint16(v32acc64 acc, int shft) {
+  return to_v32uint16(acc, shft);
+}
+[[deprecated("Function 'srs_to_v32uint16_conf()' is deprecated. Please use "
+             "'to_v32uint16_conf()' instead.")]] INTRINSIC(v32uint16)
+    srs_to_v32uint16_conf(v32acc64 acc, int shft, crsat_t sat, crrnd_t rnd) {
+  return to_v32uint16_conf(acc, shft, sat, rnd);
+}
+
+INTRINSIC(v16int32) to_v16int32(v16acc64 acc, int shft) {
+  return __builtin_aie2p_I512_v16_acc64_srs(acc, shft, __SIGN_SIGNED);
 }
 INTRINSIC(v16int32)
-srs_to_v16int32_conf(v16acc64 acc, int shft, crsat_t sat, crrnd_t rnd) {
+to_v16int32_conf(v16acc64 acc, int shft, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v16int32 r = srs_to_v16int32(acc, shft);
+  v16int32 r = to_v16int32(acc, shft);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
-INTRINSIC(v16uint32) srs_to_v16uint32(v16acc64 acc, int shft) {
-  return srs_to_v16uint32(acc, shft, __SIGN_UNSIGNED);
+INTRINSIC(v16uint32) to_v16uint32(v16acc64 acc, int shft) {
+  return __builtin_aie2p_I512_v16_acc64_srs(acc, shft, __SIGN_UNSIGNED);
 }
 INTRINSIC(v16uint32)
-srs_to_v16uint32_conf(v16acc64 acc, int shft, crsat_t sat, crrnd_t rnd) {
+to_v16uint32_conf(v16acc64 acc, int shft, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v16uint32 r = srs_to_v16uint32(acc, shft);
+  v16uint32 r = to_v16uint32(acc, shft);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
 
-INTRINSIC(v8int32) srs_to_v8int32(v8acc64 acc, int shft) {
-  return srs_to_v8int32(acc, shft, __SIGN_SIGNED);
+INTRINSIC(v8int32) to_v8int32(v8acc64 acc, int shft) {
+  return __builtin_aie2p_I256_v8_acc64_srs(acc, shft, __SIGN_SIGNED);
 }
 INTRINSIC(v8int32)
-srs_to_v8int32_conf(v8acc64 acc, int shft, crsat_t sat, crrnd_t rnd) {
+to_v8int32_conf(v8acc64 acc, int shft, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v8int32 r = srs_to_v8int32(acc, shft);
+  v8int32 r = to_v8int32(acc, shft);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
 }
-INTRINSIC(v8uint32) srs_to_v8uint32(v8acc64 acc, int shft) {
-  return srs_to_v8uint32(acc, shft, __SIGN_UNSIGNED);
+INTRINSIC(v8uint32) to_v8uint32(v8acc64 acc, int shft) {
+  return __builtin_aie2p_I256_v8_acc64_srs(acc, shft, __SIGN_UNSIGNED);
 }
 INTRINSIC(v8uint32)
-srs_to_v8uint32_conf(v8acc64 acc, int shft, crsat_t sat, crrnd_t rnd) {
+to_v8uint32_conf(v8acc64 acc, int shft, crsat_t sat, crrnd_t rnd) {
   crsat_t prev_sat = get_sat();
   crrnd_t prev_rnd = get_rnd();
   set_satmode(sat);
   set_rnd(rnd);
-  v8uint32 r = srs_to_v8uint32(acc, shft);
+  v8uint32 r = to_v8uint32(acc, shft);
   set_satmode(prev_sat);
   set_rnd(prev_rnd);
   return r;
+}
+
+[[deprecated("Function 'srs_to_v16int32 ()' is deprecated. Please use "
+             "'to_v16int32 ()' instead.")]] INTRINSIC(v16int32)
+    srs_to_v16int32(v16acc64 acc, int shft) {
+  return to_v16int32(acc, shft);
+}
+[[deprecated("Function 'srs_to_v16int32_conf()' is deprecated. Please use "
+             "'to_v16int32_conf()' instead.")]] INTRINSIC(v16int32)
+    srs_to_v16int32_conf(v16acc64 acc, int shft, crsat_t sat, crrnd_t rnd) {
+  return to_v16int32_conf(acc, shft, sat, rnd);
+}
+[[deprecated("Function 'srs_to_v16uint32 ()' is deprecated. Please use "
+             "'to_v16uint32 ()' instead.")]] INTRINSIC(v16uint32)
+    srs_to_v16uint32(v16acc64 acc, int shft) {
+  return to_v16uint32(acc, shft);
+}
+[[deprecated("Function 'srs_to_v16uint32_conf()' is deprecated. Please use "
+             "'to_v16uint32_conf()' instead.")]] INTRINSIC(v16uint32)
+    srs_to_v16uint32_conf(v16acc64 acc, int shft, crsat_t sat, crrnd_t rnd) {
+  return to_v16uint32_conf(acc, shft, sat, rnd);
+}
+
+[[deprecated("Function 'srs_to_v8int32 ()' is deprecated. Please use "
+             "'to_v8int32 ()' instead.")]] INTRINSIC(v8int32)
+    srs_to_v8int32(v8acc64 acc, int shft) {
+  return to_v8int32(acc, shft);
+}
+[[deprecated("Function 'srs_to_v8int32_conf()' is deprecated. Please use "
+             "'to_v8int32_conf()' instead.")]] INTRINSIC(v8int32)
+    srs_to_v8int32_conf(v8acc64 acc, int shft, crsat_t sat, crrnd_t rnd) {
+  return to_v8int32_conf(acc, shft, sat, rnd);
+}
+[[deprecated("Function 'srs_to_v8uint32 ()' is deprecated. Please use "
+             "'to_v8uint32 ()' instead.")]] INTRINSIC(v8uint32)
+    srs_to_v8uint32(v8acc64 acc, int shft) {
+  return to_v8uint32(acc, shft);
+}
+[[deprecated("Function 'srs_to_v8uint32_conf()' is deprecated. Please use "
+             "'to_v8uint32_conf()' instead.")]] INTRINSIC(v8uint32)
+    srs_to_v8uint32_conf(v8acc64 acc, int shft, crsat_t sat, crrnd_t rnd) {
+  return to_v8uint32_conf(acc, shft, sat, rnd);
 }
 
 INTRINSIC(v16bfloat16) to_v16bfloat16(v16accfloat acc) {
