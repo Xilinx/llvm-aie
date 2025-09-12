@@ -14,9 +14,8 @@
 define void @simple(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef %size) {
 ; AIE2-LABEL: simple:
 ; AIE2:       // %bb.0: // %for.body.lr.ph
-; AIE2-NEXT:    mova r2, #0; nopb ; nopxm ; nops
-; AIE2-NEXT:    add.nc r0, r0, #-1
-; AIE2-NEXT:    mova r3, #2
+; AIE2-NEXT:    nopb ; nopa ; nops ; nopx ; add.nc r0, r0, #-1; nopv
+; AIE2-NEXT:    mova r2, #0; movx r3, #2
 ; AIE2-NEXT:    movxm p2, #.LBB0_1
 ; AIE2-NEXT:    lda r1, [p0, #0]
 ; AIE2-NEXT:  .LBB0_1: // %for.body
@@ -42,9 +41,8 @@ define void @simple(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ;
 ; AIE2P-LABEL: simple:
 ; AIE2P:       // %bb.0: // %for.body.lr.ph
-; AIE2P-NEXT:    mova r2, #0; nopb ; nopxm ; nops
-; AIE2P-NEXT:    add.nc r0, r0, #-1
-; AIE2P-NEXT:    mova r3, #2
+; AIE2P-NEXT:    nopa ; nopb ; nops ; nopx ; add.nc r0, r0, #-1; nopv
+; AIE2P-NEXT:    mova r2, #0; movx r3, #2
 ; AIE2P-NEXT:    movxm p2, #.LBB0_1
 ; AIE2P-NEXT:    lda r1, [p0, #0]
 ; AIE2P-NEXT:  .LBB0_1: // %for.body

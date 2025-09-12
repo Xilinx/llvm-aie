@@ -10,12 +10,8 @@
 define  <16 x i64> @_Z21test_mac_4x2_2x4_confiiiiii(i32 noundef %sgn_x, i32 noundef %sgn_y, i32 noundef %zero_acc1, i32 noundef %shift16, i32 noundef %sub_mul, i32 noundef %sub_acc1)  {
 ; CHECK-LABEL: _Z21test_mac_4x2_2x4_confiiiiii:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; mova r6, #10; nops ; nopxm ; nopv
-; CHECK-NEXT:    mova r7, #11
-; CHECK-NEXT:    mova r8, #12
-; CHECK-NEXT:    mova r9, #9
-; CHECK-NEXT:    mova r10, #8
-; CHECK-NEXT:    mova r11, #2
+; CHECK-NEXT:    mova r6, #10; movx r8, #12; mov r7, #11
+; CHECK-NEXT:    mova r9, #9; movx r11, #2; mov r10, #8
 ; CHECK-NEXT:    lshl r3, r3, r6
 ; CHECK-NEXT:    lshl r4, r4, r7
 ; CHECK-NEXT:    lshl r5, r5, r8
@@ -92,9 +88,8 @@ entry:
 define  <16 x i64> @_Z21test_negmac_4x16_16x8Dv64_hiDv16_jiDv16_u7__acc64(<64 x i8> noundef %a, i32 noundef %sgn_x, <16 x i32> noundef %b, i32 noundef %sgn_y, <16 x i64> %acc1)  {
 ; CHECK-LABEL: _Z21test_negmac_4x16_16x8Dv64_hiDv16_jiDv16_u7__acc64:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; mova r2, #9; nops ; nopxm ; nopv
-; CHECK-NEXT:    mova r3, #8
-; CHECK-NEXT:    lshl r0, r0, r2
+; CHECK-NEXT:    nopb ; mova r2, #9; nops ; movx r3, #8; nopm ; nopv
+; CHECK-NEXT:    nopa ; nopb ; lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
 ; CHECK-NEXT:    or r0, r1, r0
 ; CHECK-NEXT:    ret lr
@@ -115,9 +110,7 @@ entry:
 define  <16 x i64> @_Z24test_negmac_4x8_8x4_confDv32_sDv64_aDv16_u7__acc64iii(<32 x i16> noundef %a, <64 x i8> noundef %b, <16 x i64> %acc1, i32 noundef %zero_acc1, i32 noundef %sub_mul, i32 noundef %sub_acc1)  {
 ; CHECK-LABEL: _Z24test_negmac_4x8_8x4_confDv32_sDv64_aDv16_u7__acc64iii:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r3, #11
-; CHECK-NEXT:    mova r4, #12
-; CHECK-NEXT:    mova r5, #818
+; CHECK-NEXT:    mova r3, #11; nopb ; movx r5, #818; mov r4, #12
 ; CHECK-NEXT:    lshl r1, r1, r3
 ; CHECK-NEXT:    lshl r2, r2, r4
 ; CHECK-NEXT:    or r0, r1, r0
@@ -145,9 +138,7 @@ entry:
 define  <16 x i64> @_Z19test_negmac_2x4_4x8Dv32_tiDv32_siDv16_u7__acc64(<32 x i16> noundef %a, i32 noundef %sgn_x, <32 x i16> noundef %b, i32 noundef %sgn_y, <16 x i64> %acc1)  {
 ; CHECK-LABEL: _Z19test_negmac_2x4_4x8Dv32_tiDv32_siDv16_u7__acc64:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r2, #9; nopb ; nopx
-; CHECK-NEXT:    mova r3, #8
-; CHECK-NEXT:    mova r4, #26
+; CHECK-NEXT:    nopb ; mova r2, #9; nops ; movx r4, #26; mov r3, #8; nopv
 ; CHECK-NEXT:    lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
 ; CHECK-NEXT:    or r0, r0, r1
@@ -206,12 +197,8 @@ entry:
 define  <16 x i64> @_Z23test_msc_elem_16_2_confDv32_tiS_iDv16_u7__acc64iiii(<32 x i16> noundef %a, i32 noundef %sgn_x, <32 x i16> noundef %b, i32 noundef %sgn_y, <16 x i64> %acc1, i32 noundef %zero_acc1, i32 noundef %shift16, i32 noundef %sub_mul, i32 noundef %sub_acc1)  {
 ; CHECK-LABEL: _Z23test_msc_elem_16_2_confDv32_tiS_iDv16_u7__acc64iiii:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; mova r6, #10; nops ; nopxm ; nopv
-; CHECK-NEXT:    mova r7, #11
-; CHECK-NEXT:    mova r8, #12
-; CHECK-NEXT:    mova r9, #9
-; CHECK-NEXT:    mova r10, #8
-; CHECK-NEXT:    mova r11, #90
+; CHECK-NEXT:    mova r6, #10; movx r8, #12; mov r7, #11
+; CHECK-NEXT:    mova r9, #9; movx r11, #90; mov r10, #8
 ; CHECK-NEXT:    lshl r3, r3, r6
 ; CHECK-NEXT:    lshl r4, r4, r7
 ; CHECK-NEXT:    lshl r5, r5, r8
@@ -251,10 +238,8 @@ entry:
 define  <16 x i64> @_Z21test_msc_4x4_4x4_confDv32_tDv32_sDv16_u7__acc64iiii(<32 x i16> noundef %a, <32 x i16> noundef %b, <16 x i64> %acc1, i32 noundef %zero_acc1, i32 noundef %shift16, i32 noundef %sub_mul, i32 noundef %sub_acc1)  {
 ; CHECK-LABEL: _Z21test_msc_4x4_4x4_confDv32_tDv32_sDv16_u7__acc64iiii:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r4, #10; nopb ; nopx
-; CHECK-NEXT:    mova r5, #11
-; CHECK-NEXT:    mova r6, #12
-; CHECK-NEXT:    mova r7, #314
+; CHECK-NEXT:    mova r4, #10; nopxm
+; CHECK-NEXT:    mova r5, #11; movx r7, #314; mov r6, #12
 ; CHECK-NEXT:    lshl r1, r1, r4
 ; CHECK-NEXT:    lshl r2, r2, r5
 ; CHECK-NEXT:    lshl r3, r3, r6

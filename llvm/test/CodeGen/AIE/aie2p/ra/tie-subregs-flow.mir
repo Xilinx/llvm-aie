@@ -25,11 +25,16 @@ body:             |
     ; CHECK-LABEL: name: test_single_padd
     ; CHECK: liveins: $m0, $p0, $r0, $r1, $r2, $r3
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: $m1 = MOV_alu_mv_mv_mv_scl killed $r0
     ; CHECK-NEXT: RET implicit $lr
-    ; CHECK-NEXT: $dn1 = MOV_alu_mv_mv_mv_scl killed $r1
-    ; CHECK-NEXT: $dj1 = MOV_alu_mv_mv_mv_scl killed $r2
-    ; CHECK-NEXT: $dc1 = MOV_alu_mv_mv_mv_scl killed $r3
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: BUNDLE implicit-def $dn1, implicit-def $m1, implicit killed $r1, implicit killed $r0 {
+    ; CHECK-NEXT:   $dn1 = MOVS killed $r1
+    ; CHECK-NEXT:   $m1 = MOV_alu_mv_mv_mv_scl killed $r0
+    ; CHECK-NEXT: }
+    ; CHECK-NEXT: BUNDLE implicit-def $dc1, implicit-def $dj1, implicit killed $r3, implicit killed $r2 {
+    ; CHECK-NEXT:   $dc1 = MOVS killed $r3
+    ; CHECK-NEXT:   $dj1 = MOV_alu_mv_mv_mv_scl killed $r2
+    ; CHECK-NEXT: }
     ; CHECK-NEXT: $p0, dead $dc1 = PADDA_2D killed $p0, killed $d1
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: DelayedSchedBarrier implicit killed renamable $p0, implicit killed $m0
@@ -58,11 +63,16 @@ body:             |
     ; CHECK-LABEL: name: test_single_padd_simp
     ; CHECK: liveins: $m0, $p0, $r0, $r1, $r2, $r3
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: $m1 = MOV_alu_mv_mv_mv_scl killed $r0
     ; CHECK-NEXT: RET implicit $lr
-    ; CHECK-NEXT: $dn1 = MOV_alu_mv_mv_mv_scl killed $r1
-    ; CHECK-NEXT: $dj1 = MOV_alu_mv_mv_mv_scl killed $r2
-    ; CHECK-NEXT: $dc1 = MOV_alu_mv_mv_mv_scl killed $r3
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: BUNDLE implicit-def $dn1, implicit-def $m1, implicit killed $r1, implicit killed $r0 {
+    ; CHECK-NEXT:   $dn1 = MOVS killed $r1
+    ; CHECK-NEXT:   $m1 = MOV_alu_mv_mv_mv_scl killed $r0
+    ; CHECK-NEXT: }
+    ; CHECK-NEXT: BUNDLE implicit-def $dc1, implicit-def $dj1, implicit killed $r3, implicit killed $r2 {
+    ; CHECK-NEXT:   $dc1 = MOVS killed $r3
+    ; CHECK-NEXT:   $dj1 = MOV_alu_mv_mv_mv_scl killed $r2
+    ; CHECK-NEXT: }
     ; CHECK-NEXT: $p0, dead $dc1 = PADDA_2D killed $p0, killed $d1
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: DelayedSchedBarrier implicit killed renamable $p0, implicit killed $m0
@@ -96,11 +106,15 @@ body:             |
     ; CHECK-LABEL: name: test_2_padd
     ; CHECK: liveins: $m0, $p0, $p1, $r0, $r1, $r2, $r3
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: $m1 = MOV_alu_mv_mv_mv_scl killed $r0
-    ; CHECK-NEXT: $dn1 = MOV_alu_mv_mv_mv_scl killed $r1
     ; CHECK-NEXT: RET implicit $lr
-    ; CHECK-NEXT: $dj1 = MOV_alu_mv_mv_mv_scl killed $r2
-    ; CHECK-NEXT: $dc1 = MOV_alu_mv_mv_mv_scl killed $r3
+    ; CHECK-NEXT: BUNDLE implicit-def $dn1, implicit-def $m1, implicit killed $r1, implicit killed $r0 {
+    ; CHECK-NEXT:   $dn1 = MOVS killed $r1
+    ; CHECK-NEXT:   $m1 = MOV_alu_mv_mv_mv_scl killed $r0
+    ; CHECK-NEXT: }
+    ; CHECK-NEXT: BUNDLE implicit-def $dc1, implicit-def $dj1, implicit killed $r3, implicit killed $r2 {
+    ; CHECK-NEXT:   $dc1 = MOVS killed $r3
+    ; CHECK-NEXT:   $dj1 = MOV_alu_mv_mv_mv_scl killed $r2
+    ; CHECK-NEXT: }
     ; CHECK-NEXT: $p0, $dc1 = PADDA_2D killed $p0, $d1
     ; CHECK-NEXT: $p0, dead $dc1 = PADDA_2D killed $p0, killed $d1
     ; CHECK-NEXT: NOP
@@ -195,12 +209,14 @@ body:             |
     ; CHECK-NEXT: $dj7 = MOV_alu_mv_mv_mv_scl killed $r2
     ; CHECK-NEXT: $dc7 = MOV_alu_mv_mv_mv_scl killed $r3
     ; CHECK-NEXT: $p2 = MOV_alu_mv_mv_mv_scl $p1
-    ; CHECK-NEXT: $dn1 = MOV_alu_mv_mv_mv_scl killed $r5
     ; CHECK-NEXT: dead $p2, $dc7 = PADDA_2D killed $p2, $d7
-    ; CHECK-NEXT: $dj1 = MOV_alu_mv_mv_mv_scl killed $r6
+    ; CHECK-NEXT: $dn1 = MOV_alu_mv_mv_mv_scl killed $r5
     ; CHECK-NEXT: RET implicit $lr
     ; CHECK-NEXT: frame-destroy PADDXM_pstm_sp_imm -64, implicit-def $sp, implicit $sp
-    ; CHECK-NEXT: $dc1 = MOV_alu_mv_mv_mv_scl killed $r7
+    ; CHECK-NEXT: BUNDLE implicit-def $dc1, implicit-def $dj1, implicit killed $r7, implicit killed $r6 {
+    ; CHECK-NEXT:   $dc1 = MOVS killed $r7
+    ; CHECK-NEXT:   $dj1 = MOV_alu_mv_mv_mv_scl killed $r6
+    ; CHECK-NEXT: }
     ; CHECK-NEXT: $p0, dead $dc7 = PADDA_2D killed $p0, killed $d7
     ; CHECK-NEXT: $p1, dead $dc1 = PADDA_2D killed $p1, killed $d1
     ; CHECK-NEXT: NOP
@@ -381,10 +397,16 @@ body:             |
   ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $r2, $r3, $r4, $r5
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   JNZ killed renamable $r4, %bb.2
-  ; CHECK-NEXT:   $m0 = MOV_alu_mv_mv_mv_scl killed $r0
-  ; CHECK-NEXT:   $dn0 = MOV_alu_mv_mv_mv_scl killed $r1
-  ; CHECK-NEXT:   $dj0 = MOV_alu_mv_mv_mv_scl killed $r2
-  ; CHECK-NEXT:   $dc0 = MOV_alu_mv_mv_mv_scl killed $r3
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   BUNDLE implicit-def $dn0, implicit-def $m0, implicit killed $r1, implicit killed $r0 {
+  ; CHECK-NEXT:     $dn0 = MOVS killed $r1
+  ; CHECK-NEXT:     $m0 = MOV_alu_mv_mv_mv_scl killed $r0
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE implicit-def $dc0, implicit-def $dj0, implicit killed $r3, implicit killed $r2 {
+  ; CHECK-NEXT:     $dc0 = MOVS killed $r3
+  ; CHECK-NEXT:     $dj0 = MOV_alu_mv_mv_mv_scl killed $r2
+  ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $p0, $dc0 = PADDA_2D killed $p0, $d0
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
@@ -439,10 +461,16 @@ body:             |
   ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $r2, $r3, $r4, $r5
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   JZ killed renamable $r4, %bb.1
-  ; CHECK-NEXT:   $m0 = MOV_alu_mv_mv_mv_scl killed $r0
-  ; CHECK-NEXT:   $dn0 = MOV_alu_mv_mv_mv_scl killed $r1
-  ; CHECK-NEXT:   $dj0 = MOV_alu_mv_mv_mv_scl killed $r2
-  ; CHECK-NEXT:   $dc0 = MOV_alu_mv_mv_mv_scl killed $r3
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   BUNDLE implicit-def $dn0, implicit-def $m0, implicit killed $r1, implicit killed $r0 {
+  ; CHECK-NEXT:     $dn0 = MOVS killed $r1
+  ; CHECK-NEXT:     $m0 = MOV_alu_mv_mv_mv_scl killed $r0
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE implicit-def $dc0, implicit-def $dj0, implicit killed $r3, implicit killed $r2 {
+  ; CHECK-NEXT:     $dc0 = MOVS killed $r3
+  ; CHECK-NEXT:     $dj0 = MOV_alu_mv_mv_mv_scl killed $r2
+  ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $p0, $dc0 = PADDA_2D killed $p0, $d0
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
@@ -521,11 +549,16 @@ body:             |
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $r2, $r3
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $m0 = MOV_alu_mv_mv_mv_scl killed $r0
   ; CHECK-NEXT:   RET implicit $lr
-  ; CHECK-NEXT:   $dn0 = MOV_alu_mv_mv_mv_scl killed $r1
-  ; CHECK-NEXT:   $dj0 = MOV_alu_mv_mv_mv_scl killed $r2
-  ; CHECK-NEXT:   $dc0 = MOV_alu_mv_mv_mv_scl killed $r3
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   BUNDLE implicit-def $dn0, implicit-def $m0, implicit killed $r1, implicit killed $r0 {
+  ; CHECK-NEXT:     $dn0 = MOVS killed $r1
+  ; CHECK-NEXT:     $m0 = MOV_alu_mv_mv_mv_scl killed $r0
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE implicit-def $dc0, implicit-def $dj0, implicit killed $r3, implicit killed $r2 {
+  ; CHECK-NEXT:     $dc0 = MOVS killed $r3
+  ; CHECK-NEXT:     $dj0 = MOV_alu_mv_mv_mv_scl killed $r2
+  ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $p0, $dc0 = PADDA_2D killed $p0, killed $d0
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier implicit killed renamable $p0, implicit killed renamable $dc0

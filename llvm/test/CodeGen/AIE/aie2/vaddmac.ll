@@ -10,8 +10,7 @@
 define dso_local noundef <16 x i64> @test_addmac_acc32(<64 x i8> noundef %a, i32 noundef %sgn_x, <64 x i8> noundef %b, i32 noundef %sgn_y, <16 x i64> noundef %acc1, <16 x i64> noundef %acc2) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_addmac_acc32:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r2, #9; nopb ; nopxm
-; CHECK-NEXT:    mova r3, #8
+; CHECK-NEXT:    nopb ; mova r2, #9; nops ; movx r3, #8; nopm ; nopv
 ; CHECK-NEXT:    vmov cm0, cm1
 ; CHECK-NEXT:    lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
@@ -34,8 +33,7 @@ entry:
 define dso_local noundef <16 x i64> @test_addmsc_acc32(<64 x i8> noundef %a, i32 noundef %sgn_x, <64 x i8> noundef %b, i32 noundef %sgn_y, <16 x i64> noundef %acc1, <16 x i64> noundef %acc2) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_addmsc_acc32:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r2, #9; nopb ; nopxm
-; CHECK-NEXT:    mova r3, #8
+; CHECK-NEXT:    nopb ; mova r2, #9; nops ; movx r3, #8; nopm ; nopv
 ; CHECK-NEXT:    vmov cm0, cm1
 ; CHECK-NEXT:    lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
@@ -58,8 +56,7 @@ entry:
 define dso_local noundef <16 x i64> @test_submac_acc32(<64 x i8> noundef %a, i32 noundef %sgn_x, <64 x i8> noundef %b, i32 noundef %sgn_y, <16 x i64> noundef %acc1, <16 x i64> noundef %acc2) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_submac_acc32:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r2, #9; nopb ; nopxm
-; CHECK-NEXT:    mova r3, #8
+; CHECK-NEXT:    nopb ; mova r2, #9; nops ; movx r3, #8; nopm ; nopv
 ; CHECK-NEXT:    vmov cm0, cm1
 ; CHECK-NEXT:    lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
@@ -82,8 +79,7 @@ entry:
 define dso_local noundef <16 x i64> @test_submsc_acc32(<64 x i8> noundef %a, i32 noundef %sgn_x, <64 x i8> noundef %b, i32 noundef %sgn_y, <16 x i64> noundef %acc1, <16 x i64> noundef %acc2) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_submsc_acc32:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r2, #9; nopb ; nopxm
-; CHECK-NEXT:    mova r3, #8
+; CHECK-NEXT:    nopb ; mova r2, #9; nops ; movx r3, #8; nopm ; nopv
 ; CHECK-NEXT:    vmov cm0, cm1
 ; CHECK-NEXT:    lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
@@ -106,9 +102,7 @@ entry:
 define dso_local noundef <16 x i64> @test_addmac_acc64(<32 x i16> noundef %a, i32 noundef %sgn_x, <64 x i8> noundef %b, i32 noundef %sgn_y, <16 x i64> noundef %acc1, <16 x i64> noundef %acc2) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_addmac_acc64:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r2, #9
-; CHECK-NEXT:    mova r3, #8
-; CHECK-NEXT:    mova r4, #18
+; CHECK-NEXT:    mova r2, #9; nopb ; movx r4, #18; mov r3, #8
 ; CHECK-NEXT:    vmov cm0, cm1
 ; CHECK-NEXT:    lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
@@ -134,9 +128,7 @@ entry:
 define dso_local noundef <16 x i64> @test_addmsc_acc64(<32 x i16> noundef %a, i32 noundef %sgn_x, <64 x i8> noundef %b, i32 noundef %sgn_y, <16 x i64> noundef %acc1, <16 x i64> noundef %acc2) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_addmsc_acc64:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r2, #9
-; CHECK-NEXT:    mova r3, #8
-; CHECK-NEXT:    mova r4, #18
+; CHECK-NEXT:    mova r2, #9; nopb ; movx r4, #18; mov r3, #8
 ; CHECK-NEXT:    vmov cm0, cm1
 ; CHECK-NEXT:    lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
@@ -162,9 +154,7 @@ entry:
 define dso_local noundef <16 x i64> @test_subadd_acc64(<32 x i16> noundef %a, i32 noundef %sgn_x, <64 x i8> noundef %b, i32 noundef %sgn_y, <16 x i64> noundef %acc1, <16 x i64> noundef %acc2) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_subadd_acc64:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r2, #9
-; CHECK-NEXT:    mova r3, #8
-; CHECK-NEXT:    mova r4, #18
+; CHECK-NEXT:    mova r2, #9; nopb ; movx r4, #18; mov r3, #8
 ; CHECK-NEXT:    vmov cm0, cm1
 ; CHECK-NEXT:    lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
@@ -190,9 +180,7 @@ entry:
 define dso_local noundef <16 x i64> @test_submsc_acc64(<32 x i16> noundef %a, i32 noundef %sgn_x, <64 x i8> noundef %b, i32 noundef %sgn_y, <16 x i64> noundef %acc1, <16 x i64> noundef %acc2) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_submsc_acc64:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova r2, #9
-; CHECK-NEXT:    mova r3, #8
-; CHECK-NEXT:    mova r4, #18
+; CHECK-NEXT:    mova r2, #9; nopb ; movx r4, #18; mov r3, #8
 ; CHECK-NEXT:    vmov cm0, cm1
 ; CHECK-NEXT:    lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3

@@ -22,6 +22,9 @@
 
 namespace llvm {
 
+using MutateInstructionMap =
+    std::unordered_map<MachineInstr *,
+                       std::pair<MachineInstr *, const MCInstrDesc *>>;
 using MIAltDescsMap = std::unordered_map<MachineInstr *, const MCInstrDesc *>;
 
 class AIEAlternateDescriptors {
@@ -40,7 +43,11 @@ public:
     const AIEBaseSubtarget &STI = AIEBaseSubtarget::get(*MI->getMF());
     const AIEBaseInstrInfo *TII = STI.getInstrInfo();
 
-    AlternateDescs[MI] = &TII->get(AltInstOpcode);
+    setAlternateDescriptor(MI, &TII->get(AltInstOpcode));
+  }
+
+  void setAlternateDescriptor(MachineInstr *MI, const MCInstrDesc *AltDesc) {
+    AlternateDescs[MI] = AltDesc;
   }
 
   // Return the alternate descriptor for the given multi-opcode instruction.

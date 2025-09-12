@@ -73,16 +73,11 @@ return:
 define <16 x i32> @test_insert_vector(<16 x i32> noundef %a, i32 noundef %idx, <8 x i32> noundef %b) {
 ; CHECK-LABEL: test_insert_vector:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mov r24, r16
-; CHECK-NEXT:    mov r25, r17
-; CHECK-NEXT:    mov r26, r18
-; CHECK-NEXT:    mov r27, r19
-; CHECK-NEXT:    mova r19, #0
-; CHECK-NEXT:    mova r18, #1
-; CHECK-NEXT:    mova r17, #2
-; CHECK-NEXT:    mova r16, #3
+; CHECK-NEXT:    nopa ; nopb ; or r27, r19, r19; mov r26, r18
+; CHECK-NEXT:    or r24, r16, r16; mov r25, r17
+; CHECK-NEXT:    mova r19, #0; movx r16, #3; mov r18, #1
 ; CHECK-NEXT:    vextract.s32 r4, x4, r16
-; CHECK-NEXT:    mova r16, #4
+; CHECK-NEXT:    mova r17, #2; movx r16, #4
 ; CHECK-NEXT:    vextract.s32 r1, x4, r19
 ; CHECK-NEXT:    vextract.s32 r2, x4, r18
 ; CHECK-NEXT:    vextract.s32 r3, x4, r17
@@ -188,12 +183,12 @@ define <16 x i32> @test_insert_vector(<16 x i32> noundef %a, i32 noundef %idx, <
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r13
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r15
 ; CHECK-NEXT:  .LBB3_3: // %cleanup
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
+; CHECK-NEXT:    nopa ; ret lr ; nopm
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mov r19, r27 // Delay Slot 4
-; CHECK-NEXT:    mov r18, r26 // Delay Slot 3
-; CHECK-NEXT:    mov r17, r25 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r24 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    or r18, r26, r26; mov r19, r27 // Delay Slot 2
+; CHECK-NEXT:    or r16, r24, r24; mov r17, r25 // Delay Slot 1
 entry:
   %shuffle = shufflevector <8 x i32> %b, <8 x i32> undef, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
   %cmp = icmp eq i32 %idx, 0
@@ -315,9 +310,9 @@ entry:
 define i32 @test_extract_elem(<8 x i32> noundef %a, i32 noundef %idx) {
 ; CHECK-LABEL: test_extract_elem:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; CHECK-NEXT:    mov r2, r16 // Delay Slot 5
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 4
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    or r16, r1, r1; mov r2, r16 // Delay Slot 4
 ; CHECK-NEXT:    vextract.s32 r0, x0, r16 // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r2 // Delay Slot 1

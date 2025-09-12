@@ -69,9 +69,8 @@ entry:
 define dso_local noundef <8 x i32> @test4() {
 ; CHECK-LABEL: test4:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32; nopa ; nops ; nopxm ; nopv
-; CHECK-NEXT:    mova dj0, #512
-; CHECK-NEXT:    mov p0, sp
+; CHECK-NEXT:    nopb ; padda [sp], #32; nops ; movxm dj0, #512; nopv
+; CHECK-NEXT:    nopx ; mov p0, sp
 ; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    vldb.128 wl0, [p0, dj0]
 ; CHECK-NEXT:    ret lr

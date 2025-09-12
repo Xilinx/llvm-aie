@@ -10,9 +10,7 @@
 define dso_local noundef <8 x i64> @test_add_conf(<8 x i64> noundef %acc1, <8 x i64> noundef %acc2, i32 noundef %zero_acc1, i32 noundef %sub_acc1, i32 noundef %sub_acc2) {
 ; CHECK-LABEL: test_add_conf:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; mova r3, #12; nops ; nopxm ; nopv
-; CHECK-NEXT:    mova r4, #13; nopx
-; CHECK-NEXT:    mova r5, #28
+; CHECK-NEXT:    mova r3, #12; movx r5, #28; mov r4, #13
 ; CHECK-NEXT:    lshl r1, r1, r3
 ; CHECK-NEXT:    lshl r2, r2, r4
 ; CHECK-NEXT:    or r0, r1, r0
@@ -39,9 +37,7 @@ entry:
 define dso_local noundef <8 x i64> @test_sub_conf(<8 x i64> noundef %acc1, <8 x i64> noundef %acc2, i32 noundef %zero_acc1, i32 noundef %sub_acc1, i32 noundef %sub_acc2) {
 ; CHECK-LABEL: test_sub_conf:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; mova r3, #12; nops ; nopxm ; nopv
-; CHECK-NEXT:    mova r4, #13; nopx
-; CHECK-NEXT:    mova r5, #28
+; CHECK-NEXT:    mova r3, #12; movx r5, #28; mov r4, #13
 ; CHECK-NEXT:    lshl r1, r1, r3
 ; CHECK-NEXT:    lshl r2, r2, r4
 ; CHECK-NEXT:    or r0, r1, r0

@@ -275,12 +275,12 @@ define dso_local void @memcpy_lowered_to_call(ptr nocapture writeonly %a, ptr no
 ; AIE2-NEXT:    movxm r17, #4096
 ; AIE2-NEXT:  .LBB2_2: // %for.body
 ; AIE2-NEXT:    // =>This Inner Loop Header: Depth=1
-; AIE2-NEXT:    nopb ; nopa ; nops ; jl #memcpy; nopv
+; AIE2-NEXT:    nopa ; nopb ; jl #memcpy; nops
 ; AIE2-NEXT:    nop // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
-; AIE2-NEXT:    mov p1, p6 // Delay Slot 3
-; AIE2-NEXT:    mov p2, p7 // Delay Slot 2
-; AIE2-NEXT:    mov r0, r17 // Delay Slot 1
+; AIE2-NEXT:    nop // Delay Slot 3
+; AIE2-NEXT:    mov p1, p6 // Delay Slot 2
+; AIE2-NEXT:    or r0, r17, r17; mov p2, p7 // Delay Slot 1
 ; AIE2-NEXT:    nopb ; nopa ; nops ; add r16, r16, #-1; nopm ; nopv
 ; AIE2-NEXT:    jnz r16, #.LBB2_2
 ; AIE2-NEXT:    nop // Delay Slot 5
@@ -366,12 +366,12 @@ define void @__addsf3_lowered_to_call(ptr %a) {
 ; AIE2:       // %bb.0: // %entry
 ; AIE2-NEXT:    nopa ; paddb [sp], #32; nopx
 ; AIE2-NEXT:    st r20, [sp, #-24] // 4-byte Folded Spill
+; AIE2-NEXT:    st p6, [sp, #-32] // 4-byte Folded Spill
+; AIE2-NEXT:    mov p6, p0
 ; AIE2-NEXT:    st r18, [sp, #-16] // 4-byte Folded Spill
 ; AIE2-NEXT:    st r17, [sp, #-12] // 4-byte Folded Spill
 ; AIE2-NEXT:    st r16, [sp, #-8] // 4-byte Folded Spill
 ; AIE2-NEXT:    st r19, [sp, #-20] // 4-byte Folded Spill
-; AIE2-NEXT:    st p6, [sp, #-32] // 4-byte Folded Spill
-; AIE2-NEXT:    mov p6, p0
 ; AIE2-NEXT:    mova r20, #1; st lr, [sp, #-4] // 4-byte Folded Spill
 ; AIE2-NEXT:    mova r16, #0; st r21, [sp, #-28]; movxm r19, #16256 // 4-byte Folded Spill
 ; AIE2-NEXT:    mova r17, #0; movx r18, #16; mov r21, r16

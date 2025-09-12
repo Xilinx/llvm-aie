@@ -138,8 +138,8 @@ define <64 x i8> @test_shuffle_vector_vsel_valid_mask_64_s8(<64 x i8> noundef %a
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mova r0, #5 // Delay Slot 4
-; CHECK-NEXT:    mova r1, #0 // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    mova r0, #5; movx r1, #0 // Delay Slot 3
 ; CHECK-NEXT:    vsel.8 x0, x2, x4, r1:r0 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -764,8 +764,7 @@ define <16 x i32> @shuffle_concat_extracted_subvectors_vecToExtract_sameSize1(<1
 define <16 x i32> @shuffle_concat_extracted_subvectors_vecToExtract_sameSize2(<16 x i32> %a, <16 x i32> %b) {
 ; CHECK-LABEL: shuffle_concat_extracted_subvectors_vecToExtract_sameSize2:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    mova r0, #48; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    mova r16, #15; nopx
+; CHECK-NEXT:    mova r0, #48; movx r16, #15
 ; CHECK-NEXT:    vshift x0, x0, x2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vshift x4, x0, x2, r0 // Delay Slot 5
@@ -780,11 +779,10 @@ define <16 x i32> @shuffle_concat_extracted_subvectors_vecToExtract_sameSize2(<1
 define <16 x i32> @shuffle_concat_extracted_subvectors_vecToExtract_DiffSize1(<16 x i32> %a, <16 x i32> %b) {
 ; CHECK-LABEL: shuffle_concat_extracted_subvectors_vecToExtract_DiffSize1:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vmov wl4, wh4; nopv
-; CHECK-NEXT:    mova r0, #16; nopx
-; CHECK-NEXT:    mova r16, #15
+; CHECK-NEXT:    vmov wl4, wh4
+; CHECK-NEXT:    mova r0, #16
 ; CHECK-NEXT:    vshift x0, x2, x0, r0
-; CHECK-NEXT:    mova r0, #48
+; CHECK-NEXT:    mova r16, #15; movx r0, #48
 ; CHECK-NEXT:    vshift x6, x0, x2, r0
 ; CHECK-NEXT:    vmov wl2, wh2
 ; CHECK-NEXT:    ret lr
@@ -800,10 +798,9 @@ define <16 x i32> @shuffle_concat_extracted_subvectors_vecToExtract_DiffSize1(<1
 define <16 x i32> @shuffle_concat_extracted_subvectors_vecToExtract_DiffSize2(<16 x i32> %a, <16 x i32> %b) {
 ; CHECK-LABEL: shuffle_concat_extracted_subvectors_vecToExtract_DiffSize2:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    mova r0, #16; nopx
-; CHECK-NEXT:    mova r16, #15
+; CHECK-NEXT:    mova r0, #16; nopb ; nopx
 ; CHECK-NEXT:    vshift x0, x4, x0, r0
-; CHECK-NEXT:    mova r0, #48
+; CHECK-NEXT:    mova r16, #15; movx r0, #48
 ; CHECK-NEXT:    vshift x0, x0, x0, r0
 ; CHECK-NEXT:    vsel.32 x0, x0, x4, r16
 ; CHECK-NEXT:    ret lr
@@ -819,10 +816,9 @@ define <16 x i32> @shuffle_concat_extracted_subvectors_vecToExtract_DiffSize2(<1
 define <16 x i32> @shuffle_concat_extracted_subvectors_no_undef_at_extractidx(<16 x i32> %a, <16 x i32> %b) {
 ; CHECK-LABEL: shuffle_concat_extracted_subvectors_no_undef_at_extractidx:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    mova r0, #16; nopxm
-; CHECK-NEXT:    mova r16, #15
+; CHECK-NEXT:    mova r0, #16; nopb ; nopxm
 ; CHECK-NEXT:    vshift x0, x2, x0, r0
-; CHECK-NEXT:    mova r0, #48
+; CHECK-NEXT:    mova r16, #15; movx r0, #48
 ; CHECK-NEXT:    vshift x4, x0, x2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vsel.32 x4, x4, x0, r16 // Delay Slot 5
@@ -838,10 +834,9 @@ define <16 x i32> @shuffle_concat_extracted_subvectors_no_undef_at_extractidx(<1
 define <16 x i32> @shuffle_concat_extracted_subvectors_undef_at_extractidx(<16 x i32> %a, <16 x i32> %b) {
 ; CHECK-LABEL: shuffle_concat_extracted_subvectors_undef_at_extractidx:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    mova r0, #16; nopxm
-; CHECK-NEXT:    mova r16, #15
+; CHECK-NEXT:    mova r0, #16; nopb ; nopxm
 ; CHECK-NEXT:    vshift x0, x2, x0, r0
-; CHECK-NEXT:    mova r0, #48
+; CHECK-NEXT:    mova r16, #15; movx r0, #48
 ; CHECK-NEXT:    vshift x4, x0, x2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vsel.32 x4, x4, x0, r16 // Delay Slot 5

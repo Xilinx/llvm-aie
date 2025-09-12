@@ -78,8 +78,7 @@ define i64 @extract_v16i64(<16 x i64> inreg %v) nounwind {
 define i64 @extract_v16i64_dyn(<16 x i64> inreg %v, i32 %idx) nounwind {
 ; AIE2P-LABEL: extract_v16i64_dyn:
 ; AIE2P:       // %bb.0:
-; AIE2P-NEXT:    mova r0, #8; nopx
-; AIE2P-NEXT:    mova r1, #0
+; AIE2P-NEXT:    mova r0, #8; movx r1, #0; nopm
 ; AIE2P-NEXT:    vmov x0, bmlh0
 ; AIE2P-NEXT:    vmov x2, bmll0
 ; AIE2P-NEXT:    lt r27, r2, r0
@@ -111,9 +110,7 @@ define i32 @extract_v64i32(<64 x i32> inreg %v) nounwind {
 define i32 @extract_v64i32_dyn(<64 x i32> inreg %v, i32 %idx) nounwind {
 ; AIE2P-LABEL: extract_v64i32_dyn:
 ; AIE2P:       // %bb.0:
-; AIE2P-NEXT:    mova r0, #48; nopx
-; AIE2P-NEXT:    mova r2, #32
-; AIE2P-NEXT:    mova r3, #0
+; AIE2P-NEXT:    mova r0, #48; nopb ; movx r2, #32; nopm
 ; AIE2P-NEXT:    vmov x0, bmhh0
 ; AIE2P-NEXT:    vmov x2, bmlh0
 ; AIE2P-NEXT:    vmov x4, bmll0
@@ -122,7 +119,7 @@ define i32 @extract_v64i32_dyn(<64 x i32> inreg %v, i32 %idx) nounwind {
 ; AIE2P-NEXT:    add r16, r27, #-1
 ; AIE2P-NEXT:    sel.nez r0, r2, r0, r27
 ; AIE2P-NEXT:    lt r27, r1, r2
-; AIE2P-NEXT:    mova r2, #16
+; AIE2P-NEXT:    mova r3, #0; movx r2, #16
 ; AIE2P-NEXT:    add r17, r27, #-1
 ; AIE2P-NEXT:    sel.nez r0, r2, r0, r27
 ; AIE2P-NEXT:    lt r27, r1, r2
@@ -155,9 +152,7 @@ define i64 @extract_v32i64(<32 x i64> inreg %v) nounwind {
 define i64 @extract_v32i64_dyn(<32 x i64> inreg %v, i32 %idx) nounwind {
 ; AIE2P-LABEL: extract_v32i64_dyn:
 ; AIE2P:       // %bb.0:
-; AIE2P-NEXT:    mova r0, #24; nopx
-; AIE2P-NEXT:    mova r1, #16
-; AIE2P-NEXT:    mova r3, #0
+; AIE2P-NEXT:    mova r0, #24; nopb ; movx r1, #16; nopm
 ; AIE2P-NEXT:    vmov x0, bmhh0
 ; AIE2P-NEXT:    vmov x2, bmlh0
 ; AIE2P-NEXT:    vmov x4, bmll0
@@ -166,7 +161,7 @@ define i64 @extract_v32i64_dyn(<32 x i64> inreg %v, i32 %idx) nounwind {
 ; AIE2P-NEXT:    add r16, r27, #-1
 ; AIE2P-NEXT:    sel.nez r0, r1, r0, r27
 ; AIE2P-NEXT:    lt r27, r2, r1
-; AIE2P-NEXT:    mova r1, #8
+; AIE2P-NEXT:    mova r3, #0; movx r1, #8
 ; AIE2P-NEXT:    add r17, r27, #-1
 ; AIE2P-NEXT:    sel.nez r0, r1, r0, r27
 ; AIE2P-NEXT:    lt r27, r2, r1

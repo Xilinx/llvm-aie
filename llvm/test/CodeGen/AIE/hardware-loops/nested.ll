@@ -20,8 +20,7 @@
 define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef %size, i32 noundef %size2) {
 ; AIE2-LABEL: nested:
 ; AIE2:       // %bb.0: // %for.cond3.preheader.lr.ph
-; AIE2-NEXT:    nopb ; mova r3, #0; nops ; nopxm ; nopv
-; AIE2-NEXT:    mova r4, #2; nopx
+; AIE2-NEXT:    mova r3, #0; movx r4, #2
 ; AIE2-NEXT:    movxm p2, #.LBB0_2
 ; AIE2-NEXT:    lda r2, [p0, #0]
 ; AIE2-NEXT:  .LBB0_1: // %for.cond3.preheader
@@ -69,8 +68,7 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ;
 ; AIE2P-LABEL: nested:
 ; AIE2P:       // %bb.0: // %for.cond3.preheader.lr.ph
-; AIE2P-NEXT:    mova r3, #0; nopb ; nops ; nopxm ; nopv
-; AIE2P-NEXT:    mova r4, #2; nopx
+; AIE2P-NEXT:    mova r3, #0; movx r4, #2
 ; AIE2P-NEXT:    movxm p2, #.LBB0_2
 ; AIE2P-NEXT:    lda r2, [p0, #0]
 ; AIE2P-NEXT:  .LBB0_1: // %for.cond3.preheader

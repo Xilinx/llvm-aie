@@ -40,7 +40,7 @@ define dso_local void @conv2d_bfp16.for.body90.i(<32 x i32> %fW.sroa.0.1489.i, i
 ; CHECK-NEXT:    vlda bmhh1, [p6, #192]; mov p6, sp
 ; CHECK-NEXT:    padda [p6], m0; mov p7, sp
 ; CHECK-NEXT:    lda m1, [p6, #0]; movxm m0, #-1108
-; CHECK-NEXT:    mova dc4, #0; mov p6, sp
+; CHECK-NEXT:    mov p6, sp
 ; CHECK-NEXT:    padda [p7], m0; movxm m0, #-1112
 ; CHECK-NEXT:    padda [p6], m0; movxm m0, #-1116
 ; CHECK-NEXT:    lda r7, [p6, #0]; mov p6, sp
@@ -48,7 +48,7 @@ define dso_local void @conv2d_bfp16.for.body90.i(<32 x i32> %fW.sroa.0.1489.i, i
 ; CHECK-NEXT:    lda r3, [p6, #0]; mov p6, sp
 ; CHECK-NEXT:    padda [p6], m0; movxm m0, #-1088
 ; CHECK-NEXT:    lda r2, [p6, #0]; movx r25, #0; mov p6, sp
-; CHECK-NEXT:    padda [p6], m0; vldb.fill.512 [p1, lf1, r25]; mov dn0, p3
+; CHECK-NEXT:    mova dc4, #0; vldb.fill.512 [p1, lf1, r25]; padds [p6], m0; mov dn0, p3
 ; CHECK-NEXT:    // kill: def $p1 killed $p1 def $lf1
 ; CHECK-NEXT:    vlda bmll0, [p6, #0]; vldb.fill.512 [p1, lf1, r25]; movs dj0, p4; mov dn4, p5
 ; CHECK-NEXT:    vlda bmlh0, [p6, #64]; vldb.pop.576 ex0, [p1, lf1, r25]; movs dc0, dc4; mov m0, p2

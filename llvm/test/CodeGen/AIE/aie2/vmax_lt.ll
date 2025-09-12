@@ -167,13 +167,12 @@ entry:
 define dso_local noundef <32 x i16> @_Z21test_max_lt_v32uint16Dv32_tS_bRj(<32 x i16> noundef %a, <32 x i16> noundef %b, i1 noundef zeroext %sgn, ptr nocapture nonnull writeonly align 4 dereferenceable(4) %cmp) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z21test_max_lt_v32uint16Dv32_tS_bRj:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; mov crVaddSign, r0
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vmax_lt.d16 x0, r16, x2, x4 // Delay Slot 5
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 4
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
+; CHECK-NEXT:    nopa ; nopb ; ret lr
+; CHECK-NEXT:    mov crVaddSign, r0 // Delay Slot 5
+; CHECK-NEXT:    vmax_lt.d16 x0, r16, x2, x4 // Delay Slot 4
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    or r16, r1, r1; mov crVaddSign, #0 // Delay Slot 1
 entry:
   %conv.i = zext i1 %sgn to i32
   %0 = tail call { <32 x i16>, i32 } @llvm.aie2.vmax.lt16(<32 x i16> %a, <32 x i16> %b, i32 %conv.i)
@@ -201,12 +200,12 @@ entry:
 define dso_local noundef <32 x i16> @_Z18test_max_v32uint16Dv32_tS_b(<32 x i16> noundef %a, <32 x i16> noundef %b, i1 noundef zeroext %sgn) local_unnamed_addr #1 {
 ; CHECK-LABEL: _Z18test_max_v32uint16Dv32_tS_b:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
-; CHECK-NEXT:    mov crVaddSign, r0 // Delay Slot 5
-; CHECK-NEXT:    vmax_lt.d16 x0, r16, x2, x4 // Delay Slot 4
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nopa ; ret lr ; nopm
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    mov crVaddSign, r0 // Delay Slot 4
+; CHECK-NEXT:    vmax_lt.d16 x0, r16, x2, x4 // Delay Slot 3
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1; mov crVaddSign, #0 // Delay Slot 1
 entry:
   %conv.i.i = zext i1 %sgn to i32
   %0 = tail call { <32 x i16>, i32 } @llvm.aie2.vmax.lt16(<32 x i16> %a, <32 x i16> %b, i32 %conv.i.i)
@@ -236,13 +235,12 @@ entry:
 define dso_local noundef <32 x i16> @_Z20test_max_lt_v32int16Dv32_sS_bRj(<32 x i16> noundef %a, <32 x i16> noundef %b, i1 noundef zeroext %sgn, ptr nocapture nonnull writeonly align 4 dereferenceable(4) %cmp) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z20test_max_lt_v32int16Dv32_sS_bRj:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; mov crVaddSign, r0
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vmax_lt.d16 x0, r16, x2, x4 // Delay Slot 5
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 4
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
+; CHECK-NEXT:    nopa ; nopb ; ret lr
+; CHECK-NEXT:    mov crVaddSign, r0 // Delay Slot 5
+; CHECK-NEXT:    vmax_lt.d16 x0, r16, x2, x4 // Delay Slot 4
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    or r16, r1, r1; mov crVaddSign, #0 // Delay Slot 1
 entry:
   %conv.i = zext i1 %sgn to i32
   %0 = tail call { <32 x i16>, i32 } @llvm.aie2.vmax.lt16(<32 x i16> %a, <32 x i16> %b, i32 %conv.i)
@@ -270,12 +268,12 @@ entry:
 define dso_local noundef <32 x i16> @_Z17test_max_v32int16Dv32_sS_b(<32 x i16> noundef %a, <32 x i16> noundef %b, i1 noundef zeroext %sgn) local_unnamed_addr #1 {
 ; CHECK-LABEL: _Z17test_max_v32int16Dv32_sS_b:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
-; CHECK-NEXT:    mov crVaddSign, r0 // Delay Slot 5
-; CHECK-NEXT:    vmax_lt.d16 x0, r16, x2, x4 // Delay Slot 4
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nopa ; ret lr ; nopm
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    mov crVaddSign, r0 // Delay Slot 4
+; CHECK-NEXT:    vmax_lt.d16 x0, r16, x2, x4 // Delay Slot 3
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1; mov crVaddSign, #0 // Delay Slot 1
 entry:
   %conv.i.i = zext i1 %sgn to i32
   %0 = tail call { <32 x i16>, i32 } @llvm.aie2.vmax.lt16(<32 x i16> %a, <32 x i16> %b, i32 %conv.i.i)
@@ -287,13 +285,12 @@ entry:
 define dso_local noundef <16 x i32> @_Z21test_max_lt_v16uint32Dv16_jS_bRj(<16 x i32> noundef %a, <16 x i32> noundef %b, i1 noundef zeroext %sgn, ptr nocapture nonnull writeonly align 4 dereferenceable(4) %cmp) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z21test_max_lt_v16uint32Dv16_jS_bRj:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; mov crVaddSign, r0
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vmax_lt.d32 x0, r16, x2, x4 // Delay Slot 5
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 4
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
+; CHECK-NEXT:    nopa ; nopb ; ret lr
+; CHECK-NEXT:    mov crVaddSign, r0 // Delay Slot 5
+; CHECK-NEXT:    vmax_lt.d32 x0, r16, x2, x4 // Delay Slot 4
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    or r16, r1, r1; mov crVaddSign, #0 // Delay Slot 1
 entry:
   %conv.i = zext i1 %sgn to i32
   %0 = tail call { <16 x i32>, i32 } @llvm.aie2.vmax.lt32(<16 x i32> %a, <16 x i32> %b, i32 %conv.i)
@@ -321,12 +318,12 @@ entry:
 define dso_local noundef <16 x i32> @_Z18test_max_v16uint32Dv16_jS_b(<16 x i32> noundef %a, <16 x i32> noundef %b, i1 noundef zeroext %sgn) local_unnamed_addr #1 {
 ; CHECK-LABEL: _Z18test_max_v16uint32Dv16_jS_b:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
-; CHECK-NEXT:    mov crVaddSign, r0 // Delay Slot 5
-; CHECK-NEXT:    vmax_lt.d32 x0, r16, x2, x4 // Delay Slot 4
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nopa ; ret lr ; nopm
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    mov crVaddSign, r0 // Delay Slot 4
+; CHECK-NEXT:    vmax_lt.d32 x0, r16, x2, x4 // Delay Slot 3
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1; mov crVaddSign, #0 // Delay Slot 1
 entry:
   %conv.i.i = zext i1 %sgn to i32
   %0 = tail call { <16 x i32>, i32 } @llvm.aie2.vmax.lt32(<16 x i32> %a, <16 x i32> %b, i32 %conv.i.i)
@@ -356,13 +353,12 @@ entry:
 define dso_local noundef <16 x i32> @_Z20test_max_lt_v16int32Dv16_iS_bRj(<16 x i32> noundef %a, <16 x i32> noundef %b, i1 noundef zeroext %sgn, ptr nocapture nonnull writeonly align 4 dereferenceable(4) %cmp) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z20test_max_lt_v16int32Dv16_iS_bRj:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; mov crVaddSign, r0
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vmax_lt.d32 x0, r16, x2, x4 // Delay Slot 5
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 4
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
+; CHECK-NEXT:    nopa ; nopb ; ret lr
+; CHECK-NEXT:    mov crVaddSign, r0 // Delay Slot 5
+; CHECK-NEXT:    vmax_lt.d32 x0, r16, x2, x4 // Delay Slot 4
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    or r16, r1, r1; mov crVaddSign, #0 // Delay Slot 1
 entry:
   %conv.i = zext i1 %sgn to i32
   %0 = tail call { <16 x i32>, i32 } @llvm.aie2.vmax.lt32(<16 x i32> %a, <16 x i32> %b, i32 %conv.i)
@@ -390,12 +386,12 @@ entry:
 define dso_local noundef <16 x i32> @_Z17test_max_v16int32Dv16_iS_b(<16 x i32> noundef %a, <16 x i32> noundef %b, i1 noundef zeroext %sgn) local_unnamed_addr #1 {
 ; CHECK-LABEL: _Z17test_max_v16int32Dv16_iS_b:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
-; CHECK-NEXT:    mov crVaddSign, r0 // Delay Slot 5
-; CHECK-NEXT:    vmax_lt.d32 x0, r16, x2, x4 // Delay Slot 4
-; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 3
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    nopa ; ret lr ; nopm
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    mov crVaddSign, r0 // Delay Slot 4
+; CHECK-NEXT:    vmax_lt.d32 x0, r16, x2, x4 // Delay Slot 3
+; CHECK-NEXT:    or r1, r16, r16 // Delay Slot 2
+; CHECK-NEXT:    or r16, r1, r1; mov crVaddSign, #0 // Delay Slot 1
 entry:
   %conv.i.i = zext i1 %sgn to i32
   %0 = tail call { <16 x i32>, i32 } @llvm.aie2.vmax.lt32(<16 x i32> %a, <16 x i32> %b, i32 %conv.i.i)

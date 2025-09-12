@@ -17,16 +17,16 @@
 define void @gelu_fn(ptr noalias %ifm, ptr noalias %ofm, ptr nonnull align 64 dereferenceable(64) %params) {
 ; CHECK-LABEL: gelu_fn:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], #64; nopb ; nopxm ; nops
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], #64; nopb ; nopxm
 ; CHECK-NEXT:    movxm r0, #16544
 ; CHECK-NEXT:    vbcst.16 x6, r0
-; CHECK-NEXT:    lda r1, [p2, #0]; movxm r0, #17280
-; CHECK-NEXT:    mova r0, #60; vbcst.16 x2, r0
+; CHECK-NEXT:    movxm r0, #17280
+; CHECK-NEXT:    lda r1, [p2, #0]; movx r0, #60; vbcst.16 x2, r0
 ; CHECK-NEXT:    vadd.f dm3, dm1, dm0, r0
 ; CHECK-NEXT:    vconv.fp32.bf16 cml0, x6
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    movxm r2, #15821
-; CHECK-NEXT:    movx r4, #1
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    mova r4, #1; movxm r2, #15821
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml2, [p0], #64; movx r2, #255; vbcst.16 x4, r2
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], #64; vconv.bf16.fp32 x8, cml3; lshl r2, r1, r4; vbcst.16 x0, r2
 ; CHECK-NEXT:    mova r2, #828; mov m0, r2
