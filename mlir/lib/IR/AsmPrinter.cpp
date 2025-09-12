@@ -2363,13 +2363,19 @@ void AsmPrinter::Impl::printAttributeImpl(Attribute attr,
       for (size_t i = 0; i < separator.size() - 2; ++i) {
         separatorBracket.push_back(' ');
       }
+      ++newLine.curLine; // Increment new line counter
       os << separatorBracket;
     }
+    auto dictAttrValue = dictAttr.getValue();
+    if (breakOnNewLine)
+      newLine.curLine +=
+          ((std::distance(dictAttrValue.begin(), dictAttrValue.end())) - 1);
     interleave(
-        dictAttr.getValue(),
-        [&](NamedAttribute attr) { printNamedAttribute(attr); }, separator);
+        dictAttrValue, [&](NamedAttribute attr) { printNamedAttribute(attr); },
+        separator);
     if (breakOnNewLine) {
       separatorBracket.pop_back_n(2);
+      ++newLine.curLine;
       os << separatorBracket;
     }
     os << '}';
@@ -2422,14 +2428,19 @@ void AsmPrinter::Impl::printAttributeImpl(Attribute attr,
       for (size_t i = 0; i < separator.size() - 2; ++i) {
         separatorBracket.push_back(' ');
       }
+      ++newLine.curLine;
       os << separatorBracket;
+      auto arrayAttrValue = arrayAttr.getValue();
+      newLine.curLine +=
+          ((std::distance(arrayAttrValue.begin(), arrayAttrValue.end())) - 1);
       interleave(
-          arrayAttr.getValue(),
+          arrayAttrValue,
           [&](Attribute attr) {
             printAttribute(attr, AttrTypeElision::May, separator);
           },
           separator);
       separatorBracket.pop_back_n(2);
+      ++newLine.curLine;
       os << separatorBracket;
     } else {
       interleaveComma(arrayAttr.getValue(), [&](Attribute attr) {
@@ -2843,9 +2854,10 @@ void AsmPrinter::Impl::printOptionalAttrDict(ArrayRef<NamedAttribute> attrs,
     os << " {";
 
     SmallString<16> separator = StringRef(", ");
+    auto filteredAttrCount =
+        std::distance(filteredAttrs.begin(), filteredAttrs.end());
     if (printerFlags.getNewlineAfterAttrLimit() &&
-        std::distance(filteredAttrs.begin(), filteredAttrs.end()) >
-            *printerFlags.getNewlineAfterAttrLimit()) {
+        filteredAttrCount > *printerFlags.getNewlineAfterAttrLimit()) {
 
       // Increase indent to match the visually match the "{ " below.
       // currentIndent += 2;
@@ -2857,8 +2869,11 @@ void AsmPrinter::Impl::printOptionalAttrDict(ArrayRef<NamedAttribute> attrs,
         separator.push_back(' ');
 
       // Already put the first attribute on its own line.
-      os << "\n";
+      os << newLine;
       os.indent(currentIndent);
+
+      // Increment the new line counter by the number of attributes minus one.
+      newLine.curLine += (filteredAttrCount - 1);
     }
 
     // Otherwise, print them all out in braces.
