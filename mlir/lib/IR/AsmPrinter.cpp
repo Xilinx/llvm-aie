@@ -2369,7 +2369,7 @@ void AsmPrinter::Impl::printAttributeImpl(Attribute attr,
     auto dictAttrValue = dictAttr.getValue();
     if (breakOnNewLine)
       newLine.curLine +=
-          ((std::distance(dictAttrValue.begin(), dictAttrValue.end())) - 1);
+          ((std::distance(dictAttrValue.begin(), dictAttrValue.end()))-1);
     interleave(
         dictAttrValue, [&](NamedAttribute attr) { printNamedAttribute(attr); },
         separator);
@@ -2432,7 +2432,7 @@ void AsmPrinter::Impl::printAttributeImpl(Attribute attr,
       os << separatorBracket;
       auto arrayAttrValue = arrayAttr.getValue();
       newLine.curLine +=
-          ((std::distance(arrayAttrValue.begin(), arrayAttrValue.end())) - 1);
+          ((std::distance(arrayAttrValue.begin(), arrayAttrValue.end()))-1);
       interleave(
           arrayAttrValue,
           [&](Attribute attr) {
