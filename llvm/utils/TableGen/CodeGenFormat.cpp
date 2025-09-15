@@ -114,15 +114,6 @@ void CodeGenFormat::run(raw_ostream &o) {
   Slots.emitTargetSlotKindEnum(o);
   o << "#endif // GET_FORMATS_SLOTKINDS\n\n";
 
-  if (InstFormats.size() > 0) {
-    o << "#ifdef GET_FORMATS_INFO\n"
-      << "#undef GET_FORMATS_INFO\n"
-      << "enum GenFormatInfo {\n"
-      << "  NB_FORMATS_EMITTED = " << InstFormats.size() << "\n"
-      << "};\n"
-      << "#endif // GET_FORMATS_INFO\n\n";
-  }
-
   o << "#ifdef GET_FORMATS_SLOTS_DEFS\n"
     << "#undef GET_FORMATS_SLOTS_DEFS\n\n";
   Slots.emitSlotsInfoInstantiation(o, TGInstrLayout::getNOPSlotMapper());
