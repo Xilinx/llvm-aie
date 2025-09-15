@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 #include "AIEMCFormats.h"
@@ -16,7 +16,6 @@
 namespace llvm {
 
 #define GET_FORMATS_PACKETS_TABLE
-#define GET_FORMATS_CLASS_DEF
 #define GET_FORMATS_SLOTS_DEFS
 #define GET_FORMATS_SLOTINFOS_MAPPING
 #define GET_OPCODE_FORMATS_INDEX_FUNC

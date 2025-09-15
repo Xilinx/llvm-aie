@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -27,10 +27,6 @@ let Namespace = "TEST" in
 // CHECK:     SLOT_FU1
 // CHECK-NOT: SLOT_UNKNOWN
 // CHECK:     #endif // GET_FORMATS_SLOTKINDS
-
-// CHECK:       #ifdef GET_FORMATS_CLASS_DEF
-// CHECK:       class TESTSlotKind: public MCSlotKind
-// CHECK:       #endif // GET_FORMATS_CLASS_DEF
 
 // Check there is no wild instantiation of the default slot
 // CHECK:       #ifdef GET_FORMATS_SLOTS_DEFS
