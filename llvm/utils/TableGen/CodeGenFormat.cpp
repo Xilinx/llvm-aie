@@ -117,7 +117,6 @@ void CodeGenFormat::run(raw_ostream &o) {
   o << "#ifdef GET_FORMATS_CLASS_DEF\n"
        "#undef GET_FORMATS_CLASS_DEF\n\n";
   Slots.emitTargetSlotKindClass(o);
-  Slots.emitTargetSlotClass(o);
   o << "#endif // GET_FORMATS_CLASS_DEF\n\n";
 
   if (InstFormats.size() > 0) {
@@ -1143,25 +1142,6 @@ void TGTargetSlots::emitSlotsInfoInstantiation(
       << "},\n";
   }
   o << "};\n";
-}
-
-void TGTargetSlots::emitTargetSlotClass(raw_ostream &o) const {
-  const std::string TargetClassName = Target + GenSlotInfoName;
-  const std::string TargetEnumName = Target + GenSlotKindName;
-
-  o << "class " << TargetClassName << " : public MC" << GenSlotInfoName << "\n"
-    << "{\n"
-    << "  const " << TargetEnumName << " Kind;\n"
-    << "public:\n"
-    << "  constexpr " << TargetClassName << "(const " << TargetEnumName
-    << " Kind, " << "const char* SlotName, " << "unsigned Size, "
-    << "SlotBits SlotSet, " << "unsigned NopOpc)\n"
-    << "    : MC" << GenSlotInfoName
-    << "(SlotName, Size, SlotSet, NopOpc), Kind(Kind)\n"
-    << "  {\n  }\n\n"
-    << "  const " << TargetEnumName
-    << " &getSlotKind() const { return Kind; }\n"
-    << "};\n\n";
 }
 
 TGFieldIterator::TGFieldIterator(

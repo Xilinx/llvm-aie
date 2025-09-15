@@ -450,9 +450,6 @@ public:
   /// Emit the correspondence code between the slot kinds and their slot infos
   void emitTargetSlotMapping(raw_ostream &o) const;
 
-  /// Emit the "SlotInfo" class, specific to the "SlotKind"
-  void emitTargetSlotClass(raw_ostream &o) const;
-
   /// Emit the initialization code of all "SlotInfo" instances
   void emitSlotsInfoInstantiation(raw_ostream &o,
                                   const TGInstrLayout::NOPSlotMap &) const;
