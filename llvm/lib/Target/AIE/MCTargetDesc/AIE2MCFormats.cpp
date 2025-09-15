@@ -23,7 +23,6 @@ namespace llvm {
 #define GET_ALTERNATE_INST_OPCODE_FUNC
 #include "AIE2GenFormats.inc"
 namespace AIE2 {
-#define GET_FORMATS_INFO
 #define GET_FORMATS_FORMATS_DEFS
 #include "AIE2GenFormats.inc"
 } // namespace AIE2
