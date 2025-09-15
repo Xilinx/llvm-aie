@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// Modifications (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -47,15 +47,15 @@ def I128_LDA_LDB_NOP_ALU_LNG_NOP_VEC_ALL
 
 // CHECK:        TEST::I128_LDA_LDB_NOP_ALU_LNG_NOP_VEC_ALL - Index : 0
 // CHECK:        { 0, 17 }
-// CHECK-SAME:        TESTSlotKind(TESTSlotKind::TEST_SLOT_AAAAAAA)
+// CHECK-SAME:        MCSlotKind(MCSlotKind::TEST_SLOT_AAAAAAA)
 // CHECK:        { 18, 34 }
-// CHECK-SAME:        TESTSlotKind(TESTSlotKind::TEST_SLOT_BBBBB)
+// CHECK-SAME:        MCSlotKind(MCSlotKind::TEST_SLOT_BBBBB)
 // CHECK:        { 36, 54 }
-// CEHCK-SAME:        TESTSlotKind(TESTSlotKind::TEST_SLOT_CCCC)
+// CEHCK-SAME:        MCSlotKind(MCSlotKind::TEST_SLOT_CCCC)
 // CHECK:        { 60, 87 }
-// CHECK-SAME:        TESTSlotKind(TESTSlotKind::TEST_SLOT_DDDDD)
+// CHECK-SAME:        MCSlotKind(MCSlotKind::TEST_SLOT_DDDDD)
 // CHECK:        { 89, 125 }
-// CHECK-SAME:        TESTSlotKind(TESTSlotKind::TEST_SLOT_SDASDADD)
+// CHECK-SAME:        MCSlotKind(MCSlotKind::TEST_SLOT_SDASDADD)
 
 def I16 : TEST_instr16<(ins instr16_slot:$instr16), "i16", "$instr16">
 {
@@ -65,7 +65,7 @@ def I16 : TEST_instr16<(ins instr16_slot:$instr16), "i16", "$instr16">
 
 // CHECK:        TEST::I16 - Index : 1
 // CHECK:        { 0, 13 }
-// CHECK-SAME:        TESTSlotKind(TESTSlotKind::TEST_SLOT_XXXX)
+// CHECK-SAME:        MCSlotKind(MCSlotKind::TEST_SLOT_XXXX)
 
 def I64_LDA_LDB_ALU
     : TEST_i64_lda_fmts_i64_ldb
@@ -85,11 +85,11 @@ def I64_LDA_LDB_ALU
 
 // CHECK:        TEST::I64_LDA_LDB_ALU - Index : 2
 // CHECK:        { 0, 17 }
-// CHECK:        TESTSlotKind(TESTSlotKind::TEST_SLOT_AAAAAAA)
+// CHECK:        MCSlotKind(MCSlotKind::TEST_SLOT_AAAAAAA)
 // CHECK:        { 18, 34 }
-// CHECK:        TESTSlotKind(TESTSlotKind::TEST_SLOT_BBBBB)
+// CHECK:        MCSlotKind(MCSlotKind::TEST_SLOT_BBBBB)
 // CHECK:        { 36, 54 }
-// CEHCK:        TESTSlotKind(TESTSlotKind::TEST_SLOT_CCCC)
+// CEHCK:        MCSlotKind(MCSlotKind::TEST_SLOT_CCCC)
 
 
 // CHECK:        TEST::I128_LDA_LDB_NOP_ALU_LNG_NOP_VEC_ALL - Index : 0
@@ -104,17 +104,17 @@ def I64_LDA_LDB_ALU
 // CHECK-LABEL: FormatSlotData
 // CHECK: I16 : 0
 // I16 : 0
-// CHECK: TESTSlotKind::TEST_SLOT_XXXX,
+// CHECK: MCSlotKind::TEST_SLOT_XXXX,
 // CHECK: I64_LDA_LDB_ALU : 1
-// CHECK: TESTSlotKind::TEST_SLOT_AAAAAAA,
-// CHECK: TESTSlotKind::TEST_SLOT_BBBBB,
-// CHECK: TESTSlotKind::TEST_SLOT_CCCC,
+// CHECK: MCSlotKind::TEST_SLOT_AAAAAAA,
+// CHECK: MCSlotKind::TEST_SLOT_BBBBB,
+// CHECK: MCSlotKind::TEST_SLOT_CCCC,
 // CHECK: I128_LDA_LDB_NOP_ALU_LNG_NOP_VEC_ALL : 4
-// CHECK: TESTSlotKind::TEST_SLOT_AAAAAAA,
-// CHECK: TESTSlotKind::TEST_SLOT_BBBBB,
-// CHECK: TESTSlotKind::TEST_SLOT_CCCC,
-// CHECK: TESTSlotKind::TEST_SLOT_DDDDD,
-// CHECK: TESTSlotKind::TEST_SLOT_SDASDADD,
+// CHECK: MCSlotKind::TEST_SLOT_AAAAAAA,
+// CHECK: MCSlotKind::TEST_SLOT_BBBBB,
+// CHECK: MCSlotKind::TEST_SLOT_CCCC,
+// CHECK: MCSlotKind::TEST_SLOT_DDDDD,
+// CHECK: MCSlotKind::TEST_SLOT_SDASDADD,
 
 // CHECK-LABEL: FormatData
 // CHECK:        TEST::I16

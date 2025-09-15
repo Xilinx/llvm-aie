@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 // RUN: llvm-tblgen --gen-instr-format -I %p -I %p/../ -I %p/../../../../include %s 2>&1 | FileCheck %s
@@ -33,23 +33,23 @@ include "Inputs/CommonFormatTesting.td"
 def ADD      : TEST_alu_r_rr<0b0000, "add">;
 
 // CHECK:        TEST::ADD - Index : 1
-// CHECK-NOT:    TESTSlotKind::TEST_SLOT_ALUAAA
+// CHECK-NOT:    MCSlotKind::TEST_SLOT_ALUAAA
 // CHECK:        { 1, 19 }
-// CHECK:        TESTSlotKind::TEST_SLOT_ALUAAA
-// CHECK-NOT:    TESTSlotKind::TEST_SLOT_VECA
+// CHECK:        MCSlotKind::TEST_SLOT_ALUAAA
+// CHECK-NOT:    MCSlotKind::TEST_SLOT_VECA
 
 def VMUL80_S32_S32_BM : TEST_vec_acm_bm_zero
     <0b1, 0b0, 0b01, 0b0, 0b01, (outs), (ins), [], "", "">;
 
 // CHECK:        TEST::VMUL80_S32_S32_BM - Index : 2
-// CHECK-NOT:    TESTSlotKind::TEST_SLOT_VECA
+// CHECK-NOT:    MCSlotKind::TEST_SLOT_VECA
 // CHECK:        { 21, 57 }
-// CHECK:        TESTSlotKind::TEST_SLOT_VECA
-// CHECK-NOT:    TESTSlotKind::TEST_SLOT_VECA
+// CHECK:        MCSlotKind::TEST_SLOT_VECA
+// CHECK-NOT:    MCSlotKind::TEST_SLOT_VECA
 
 // CHECK:        SlotFieldPair
-// CHECK:        TESTSlotKind::TEST_SLOT_ALUAAA
-// CHECK:        TESTSlotKind::TEST_SLOT_VECA
+// CHECK:        MCSlotKind::TEST_SLOT_ALUAAA
+// CHECK:        MCSlotKind::TEST_SLOT_VECA
 
 def MultiSlotPseudo : TESTMultiSlot_Pseudo<[ADD,VMUL80_S32_S32_BM]>;
 

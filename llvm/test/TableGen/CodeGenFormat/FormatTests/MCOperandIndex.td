@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// Modifications (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -115,11 +115,11 @@ def MOV_U20 : TEST_mov20<(outs mMv0Cg20:$reg), (ins uimm20:$imm), [], "mov.u20",
 
 // CHECK-LABEL: static constexpr SlotFieldPair const SlotsFields[] = {
 // CHECK: I128_LDA_LDB_NOP_ALU_LNG_NOP_VEC_ALL [[#I128_INDEX]]
-// CHECK-NEXT: { TESTSlotKind::TEST_SLOT_LDA, &FieldsHierarchyTables[[[#%,I128_LDAINDEX:]]] },
-// CHECK-NEXT: { TESTSlotKind::TEST_SLOT_LDB, &FieldsHierarchyTables[[[#%,I128_LDBINDEX:]]] },
-// CHECK-NEXT: { TESTSlotKind::TEST_SLOT_ALU, &FieldsHierarchyTables[[[#%,I128_ALUINDEX:]]] },
-// CHECK-NEXT: { TESTSlotKind::TEST_SLOT_LNG, &FieldsHierarchyTables[[[#%,I128_LNGINDEX:]]] },
-// CHECK-NEXT: { TESTSlotKind::TEST_SLOT_VECA, &FieldsHierarchyTables[[[#%,I128_VECAINDEX:]]] },
+// CHECK-NEXT: { MCSlotKind::TEST_SLOT_LDA, &FieldsHierarchyTables[[[#%,I128_LDAINDEX:]]] },
+// CHECK-NEXT: { MCSlotKind::TEST_SLOT_LDB, &FieldsHierarchyTables[[[#%,I128_LDBINDEX:]]] },
+// CHECK-NEXT: { MCSlotKind::TEST_SLOT_ALU, &FieldsHierarchyTables[[[#%,I128_ALUINDEX:]]] },
+// CHECK-NEXT: { MCSlotKind::TEST_SLOT_LNG, &FieldsHierarchyTables[[[#%,I128_LNGINDEX:]]] },
+// CHECK-NEXT: { MCSlotKind::TEST_SLOT_VECA, &FieldsHierarchyTables[[[#%,I128_VECAINDEX:]]] },
 
 // CHECK-LABEL: static constexpr MCFormatDesc const Formats[] = {
 // CHECK: TEST::I128_LDA_LDB_NOP_ALU_LNG_NOP_VEC_ALL - Index : [[#I128_INDEX]]

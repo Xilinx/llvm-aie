@@ -114,11 +114,6 @@ void CodeGenFormat::run(raw_ostream &o) {
   Slots.emitTargetSlotKindEnum(o);
   o << "#endif // GET_FORMATS_SLOTKINDS\n\n";
 
-  o << "#ifdef GET_FORMATS_CLASS_DEF\n"
-       "#undef GET_FORMATS_CLASS_DEF\n\n";
-  Slots.emitTargetSlotKindClass(o);
-  o << "#endif // GET_FORMATS_CLASS_DEF\n\n";
-
   if (InstFormats.size() > 0) {
     o << "#ifdef GET_FORMATS_INFO\n"
       << "#undef GET_FORMATS_INFO\n"
@@ -614,7 +609,7 @@ void TGInstrLayout::emitFlatTree(ConstTable &FieldsHierarchy,
     else
       FieldsHierarchy << " /*LocInfos=*/std::nullopt,";
 
-    const std::string TargetKindName = Target + SlotsRegistry.GenSlotKindName;
+    const std::string TargetKindName = "MC" + SlotsRegistry.GenSlotKindName;
     const TGTargetSlot *SlotInfo = Field->getSlot();
     const TGTargetSlots::RecordSlot *DefaultSlotInfo =
         SlotsRegistry.getDefaultSlot();
@@ -668,7 +663,7 @@ void TGInstrLayout::emitFormat(ConstTable &FieldsHierarchy, ConstTable &o,
     << " /* hasMultipleSlotOptions */,\n"
     << "      /* Slots - Fields mapper */\n";
 
-  const std::string TargetClassName = Target + SlotsRegistry.GenSlotKindName;
+  const std::string TargetClassName = "MC" + SlotsRegistry.GenSlotKindName;
   SlotsFields.mark(InstrName.c_str());
 
   for (const auto &SlotField : slots()) {
@@ -726,7 +721,7 @@ void TGInstrLayout::emitPacketEntry(ConstTable &Packets,
           << "  " << Target << "::" << getInstrName() << ",\n"
           << "  \"" << getInstrName() << "\",\n";
 
-  const std::string TargetSlotKindName = Target + SlotsRegistry.GenSlotKindName;
+  const std::string TargetSlotKindName = "MC" + SlotsRegistry.GenSlotKindName;
 
   SlotData << "// " << getInstrName() << " : " << SlotData.mark() << "\n";
   for (auto *Slot : slots()) {
@@ -1062,42 +1057,12 @@ void TGTargetSlots::finalizeSlots() {
   IsFinalized = true;
 }
 
-void TGTargetSlots::emitTargetSlotKindClass(raw_ostream &o) const {
-  assert(IsFinalized && "Internal vector needs to be finalized (i.e. sorted)");
-
-  std::string TargetEnumName = Target + GenSlotKindName;
-
-  o << "class " << Target << GenSlotKindName << ": public MC" << GenSlotKindName
-    << " {\n"
-    << "public:\n";
-
-  // 1st Ctor - Initialization to default slot
-  o << "  constexpr " << TargetEnumName << "()\n"
-    << "    : MC" << GenSlotKindName << "()\n"
-    << "  {\n  }\n\n";
-
-  if (Slots.size() > 1) {
-    // 2nd Ctor - Initilization by SlotKind if valid
-    // We check in this constructor
-    o << "  constexpr " << TargetEnumName << '(' << "int" << " Kind)\n"
-      << "    : MC" << GenSlotKindName
-      << "((Kind >= "
-      // Default slot is always at index 0
-      << Slots[1].second.getEnumerationString()
-      << " && Kind <= " << Slots.back().second.getEnumerationString()
-      << ") ? Kind : SLOT_UNKNOWN)\n"
-      << "  {\n  }\n";
-  }
-
-  o << "};\n\n"; // class closing bracket
-}
-
 void TGTargetSlots::emitTargetSlotMapping(raw_ostream &o) const {
 
   o << "const MCSlotInfo *" << Target << "MCFormats::getSlotInfo";
   o << "(const MCSlotKind Kind) const {\n";
 
-  const std::string EnumCstPreamble = Target + GenSlotKindName + "::";
+  const std::string EnumCstPreamble = "MC" + GenSlotKindName + "::";
   int Size = 0;
   for (const RecordSlot &Slot : Slots) {
     const TGTargetSlot &TS = Slot.second;
@@ -1117,7 +1082,7 @@ void TGTargetSlots::emitSlotsInfoInstantiation(
     raw_ostream &o, const TGInstrLayout::NOPSlotMap &SlotMapper) const {
   assert(IsFinalized && "Internal vector needs to be finalized (i.e. sorted)");
 
-  const std::string TargetEnumName = Target + GenSlotKindName;
+  const std::string TargetEnumName = "MC" + GenSlotKindName;
   const std::string TargetSlotsName = Target + "Slots";
 
   o << "static constexpr const MCSlotInfo " << TargetSlotsName << "[] = {\n";
