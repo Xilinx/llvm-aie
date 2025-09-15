@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 #include "AIEMCFormats.h"
@@ -61,16 +61,14 @@ const MCFormatDesc &AIEBaseMCFormats::getFormatDesc(unsigned int Opcode) const {
     const MCFormatDesc *Formats = getMCFormats();
     assert(Formats[TableIdxVal].getOpcode() == Opcode);
     return Formats[TableIdxVal];
-  } else {
-    // Trigger an unreachable if the data isn't available
-    LLVM_DEBUG(dbgs() << "Unsupported instruction: " << Opcode << "\n"
-                      << "please verify that it isn't Pseudo/CodeGenOnly\n");
-    llvm_unreachable("[InstrFormats] Unsupported instruction");
   }
+  // Trigger an unreachable if the data isn't available
+  LLVM_DEBUG(dbgs() << "Unsupported instruction: " << Opcode << "\n"
+                    << "please verify that it isn't Pseudo/CodeGenOnly\n");
+  llvm_unreachable("[InstrFormats] Unsupported instruction");
 }
 
 bool AIEBaseMCFormats::isSupportedInstruction(unsigned int Opcode) const {
-  // getFormatDescIndex(...) defined in AIE2GenFormats.inc
   return getFormatDescIndex(Opcode) ? true : false;
 }
 
