@@ -351,3 +351,553 @@ v64bfp16ebs8 test_to_v64bfp16ebs8_conf(v64float a, crrnd_t rnd) {
 v64bfp16ebs16 test_to_v64bfp16ebs16_conf(v64float a, crrnd_t rnd) {
   return to_v64bfp16ebs16_conf(a, rnd);
 }
+// CHECK-LABEL: @_Z15test_to_v32int8Dv32_u7__acc32ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2p.I256.v32.acc32.srs(<32 x i32> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <32 x i8> [[TMP0]]
+//
+v32int8 test_to_v32int8(v32acc32 acc, int shft, int sign) {
+  return to_v32int8(acc, shft, sign);
+}
+// CHECK-LABEL: @_Z20test_to_v32int8_confDv32_u7__acc32iijj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[SAT:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i8> @llvm.aie2p.I256.v32.acc32.srs(<32 x i32> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[TMP0]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP1]])
+// CHECK-NEXT:    ret <32 x i8> [[TMP2]]
+//
+v32int8 test_to_v32int8_conf(v32acc32 acc, int shft, int sign, crsat_t sat,
+                    crrnd_t rnd) {
+  return to_v32int8_conf(acc, shft, sign, sat, rnd);
+}
+// CHECK-LABEL: @_Z16test_to_v32uint8Dv32_u7__acc32ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2p.I256.v32.acc32.srs(<32 x i32> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <32 x i8> [[TMP0]]
+//
+v32uint8 test_to_v32uint8(v32acc32 acc, int shft, int sign) {
+  return to_v32uint8(acc, shft, sign);
+}
+// CHECK-LABEL: @_Z21test_to_v32uint8_confDv32_u7__acc32iijj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[SAT:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i8> @llvm.aie2p.I256.v32.acc32.srs(<32 x i32> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[TMP0]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP1]])
+// CHECK-NEXT:    ret <32 x i8> [[TMP2]]
+//
+v32uint8 test_to_v32uint8_conf(v32acc32 acc, int shft, int sign, crsat_t sat,
+                     crrnd_t rnd) {
+  return to_v32uint8_conf(acc, shft, sign, sat, rnd);
+}
+// CHECK-LABEL: @_Z16test_to_v32int16Dv32_u7__acc32ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i16> @llvm.aie2p.I512.v32.acc32.srs(<32 x i32> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <32 x i16> [[TMP0]]
+//
+v32int16 test_to_v32int16(v32acc32 acc, int shft, int sign) {
+  return to_v32int16(acc, shft, sign);
+}
+// CHECK-LABEL: @_Z21test_to_v32int16_confDv32_u7__acc32iijj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[SAT:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i16> @llvm.aie2p.I512.v32.acc32.srs(<32 x i32> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[TMP0]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP1]])
+// CHECK-NEXT:    ret <32 x i16> [[TMP2]]
+//
+v32int16 test_to_v32int16_conf(v32acc32 acc, int shft, int sign, crsat_t sat,
+                     crrnd_t rnd) {
+  return to_v32int16_conf(acc, shft, sign, sat, rnd);
+}
+// CHECK-LABEL: @_Z17test_to_v32uint16Dv32_u7__acc32ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i16> @llvm.aie2p.I512.v32.acc32.srs(<32 x i32> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <32 x i16> [[TMP0]]
+//
+v32uint16 test_to_v32uint16(v32acc32 acc, int shft, int sign) {
+  return to_v32uint16(acc, shft, sign);
+}
+// CHECK-LABEL: @_Z22test_to_v32uint16_confDv32_u7__acc32iijj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[SAT:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i16> @llvm.aie2p.I512.v32.acc32.srs(<32 x i32> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[TMP0]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP1]])
+// CHECK-NEXT:    ret <32 x i16> [[TMP2]]
+//
+v32uint16 test_to_v32uint16_conf(v32acc32 acc, int shft, int sign, crsat_t sat,
+                      crrnd_t rnd) {
+  return to_v32uint16_conf(acc, shft, sign, sat, rnd);
+}
+// CHECK-LABEL: @_Z16test_to_v16int16Dv16_u7__acc32ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i16> @llvm.aie2p.I256.v16.acc32.srs(<16 x i32> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <16 x i16> [[TMP0]]
+//
+v16int16 test_to_v16int16(v16acc32 acc, int shft, int sign) {
+  return to_v16int16(acc, shft, sign);
+}
+// CHECK-LABEL: @_Z21test_to_v16int16_confDv16_u7__acc32iijj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[SAT:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i16> @llvm.aie2p.I256.v16.acc32.srs(<16 x i32> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[TMP0]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP1]])
+// CHECK-NEXT:    ret <16 x i16> [[TMP2]]
+//
+v16int16 test_to_v16int16_conf(v16acc32 acc, int shft, int sign, crsat_t sat,
+                     crrnd_t rnd) {
+  return to_v16int16_conf(acc, shft, sign, sat, rnd);
+}
+// CHECK-LABEL: @_Z17test_to_v16uint16Dv16_u7__acc32ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i16> @llvm.aie2p.I256.v16.acc32.srs(<16 x i32> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <16 x i16> [[TMP0]]
+//
+v16uint16 test_to_v16uint16(v16acc32 acc, int shft, int sign) {
+  return to_v16uint16(acc, shft, sign);
+}
+// CHECK-LABEL: @_Z22test_to_v16uint16_confDv16_u7__acc32iijj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[SAT:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i16> @llvm.aie2p.I256.v16.acc32.srs(<16 x i32> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[TMP0]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP1]])
+// CHECK-NEXT:    ret <16 x i16> [[TMP2]]
+//
+v16uint16 test_to_v16uint16_conf(v16acc32 acc, int shft, int sign, crsat_t sat,
+                      crrnd_t rnd) {
+  return to_v16uint16_conf(acc, shft, sign, sat, rnd);
+}
+// CHECK-LABEL: @_Z16test_to_v16int16Dv16_u7__acc64ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i16> @llvm.aie2p.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <16 x i16> [[TMP0]]
+//
+v16int16 test_to_v16int16(v16acc64 acc, int shft, int sign) {
+  return to_v16int16(acc, shft, sign);
+}
+// CHECK-LABEL: @_Z21test_to_v16int16_confDv16_u7__acc64iijj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[SAT:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i16> @llvm.aie2p.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[TMP0]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP1]])
+// CHECK-NEXT:    ret <16 x i16> [[TMP2]]
+//
+v16int16 test_to_v16int16_conf(v16acc64 acc, int shft, int sign, crsat_t sat,
+                     crrnd_t rnd) {
+  return to_v16int16_conf(acc, shft, sign, sat, rnd);
+}
+// CHECK-LABEL: @_Z17test_to_v16uint16Dv16_u7__acc64ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i16> @llvm.aie2p.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <16 x i16> [[TMP0]]
+//
+v16uint16 test_to_v16uint16(v16acc64 acc, int shft, int sign) {
+  return to_v16uint16(acc, shft, sign);
+}
+// CHECK-LABEL: @_Z22test_to_v16uint16_confDv16_u7__acc64iijj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[SAT:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i16> @llvm.aie2p.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[TMP0]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP1]])
+// CHECK-NEXT:    ret <16 x i16> [[TMP2]]
+//
+v16uint16 test_to_v16uint16_conf(v16acc64 acc, int shft, int sign, crsat_t sat,
+                      crrnd_t rnd) {
+  return to_v16uint16_conf(acc, shft, sign, sat, rnd);
+}
+// CHECK-LABEL: @_Z15test_to_v8int32Dv8_u7__acc64ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i32> @llvm.aie2p.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <8 x i32> [[TMP0]]
+//
+v8int32 test_to_v8int32(v8acc64 acc, int shft, int sign) {
+  return to_v8int32(acc, shft, sign);
+}
+// CHECK-LABEL: @_Z20test_to_v8int32_confDv8_u7__acc64iijj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[SAT:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <8 x i32> @llvm.aie2p.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[TMP0]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP1]])
+// CHECK-NEXT:    ret <8 x i32> [[TMP2]]
+//
+v8int32 test_to_v8int32_conf(v8acc64 acc, int shft, int sign, crsat_t sat, crrnd_t rnd) {
+  return to_v8int32_conf(acc, shft, sign, sat, rnd);
+}
+// CHECK-LABEL: @_Z16test_to_v8uint32Dv8_u7__acc64ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i32> @llvm.aie2p.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <8 x i32> [[TMP0]]
+//
+v8uint32 test_to_v8uint32(v8acc64 acc, int shft, int sign) {
+  return to_v8uint32(acc, shft, sign);
+}
+// CHECK-LABEL: @_Z21test_to_v8uint32_confDv8_u7__acc64iijj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[SAT:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <8 x i32> @llvm.aie2p.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[TMP0]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP1]])
+// CHECK-NEXT:    ret <8 x i32> [[TMP2]]
+//
+v8uint32 test_to_v8uint32_conf(v8acc64 acc, int shft, int sign, crsat_t sat, crrnd_t rnd) {
+  return to_v8uint32_conf(acc, shft, sign, sat, rnd);
+}
+// CHECK-LABEL: @_Z16test_to_v16int32Dv16_u7__acc64ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2p.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <16 x i32> [[TMP0]]
+//
+v16int32 test_to_v16int32(v16acc64 acc, int shft, int sign) {
+  return to_v16int32(acc, shft, sign);
+}
+// CHECK-LABEL: @_Z21test_to_v16int32_confDv16_u7__acc64iijj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[SAT:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i32> @llvm.aie2p.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[TMP0]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP1]])
+// CHECK-NEXT:    ret <16 x i32> [[TMP2]]
+//
+v16int32 test_to_v16int32_conf(v16acc64 acc, int shft, int sign, crsat_t sat,
+                     crrnd_t rnd) {
+  return to_v16int32_conf(acc, shft, sign, sat, rnd);
+}
+// CHECK-LABEL: @_Z17test_to_v16uint32Dv16_u7__acc64ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2p.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <16 x i32> [[TMP0]]
+//
+v16uint32 test_to_v16uint32(v16acc64 acc, int shft, int sign) {
+  return to_v16uint32(acc, shft, sign);
+}
+// CHECK-LABEL: @_Z22test_to_v16uint32_confDv16_u7__acc64iijj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[SAT:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i32> @llvm.aie2p.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[TMP0]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP1]])
+// CHECK-NEXT:    ret <16 x i32> [[TMP2]]
+//
+v16uint32 test_to_v16uint32_conf(v16acc64 acc, int shft, int sign, crsat_t sat,
+                      crrnd_t rnd) {
+  return to_v16uint32_conf(acc, shft, sign, sat, rnd);
+}
+// CHECK-LABEL: @_Z15test_to_v32int8Dv32_u7__acc32i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2p.I256.v32.acc32.srs(<32 x i32> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    ret <32 x i8> [[TMP0]]
+//
+v32int8 test_to_v32int8(v32acc32 acc, int shft) {
+  return to_v32int8(acc, shft);
+}
+// CHECK-LABEL: @_Z20test_to_v32int8_confDv32_u7__acc32ijj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[SAT:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i8> @llvm.aie2p.I256.v32.acc32.srs(<32 x i32> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[TMP0]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP1]])
+// CHECK-NEXT:    ret <32 x i8> [[TMP2]]
+//
+v32int8 test_to_v32int8_conf(v32acc32 acc, int shft, crsat_t sat,
+                                   crrnd_t rnd) {
+  return to_v32int8_conf(acc, shft, sat, rnd);
+}
+// CHECK-LABEL: @_Z16test_to_v32uint8Dv32_u7__acc32i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2p.I256.v32.acc32.srs(<32 x i32> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    ret <32 x i8> [[TMP0]]
+//
+v32uint8 test_to_v32uint8(v32acc32 acc, int shft) {
+  return to_v32uint8(acc, shft);
+}
+// CHECK-LABEL: @_Z21test_to_v32uint8_confDv32_u7__acc32ijj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[SAT:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i8> @llvm.aie2p.I256.v32.acc32.srs(<32 x i32> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[TMP0]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP1]])
+// CHECK-NEXT:    ret <32 x i8> [[TMP2]]
+//
+v32uint8 test_to_v32uint8_conf(v32acc32 acc, int shft, crsat_t sat,
+                                     crrnd_t rnd) {
+  return to_v32uint8_conf(acc, shft, sat, rnd);
+}
+// CHECK-LABEL: @_Z16test_to_v32int16Dv32_u7__acc32i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i16> @llvm.aie2p.I512.v32.acc32.srs(<32 x i32> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    ret <32 x i16> [[TMP0]]
+//
+v32int16 test_to_v32int16(v32acc32 acc, int shft) {
+  return to_v32int16(acc, shft);
+}
+// CHECK-LABEL: @_Z21test_to_v32int16_confDv32_u7__acc32ijj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[SAT:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i16> @llvm.aie2p.I512.v32.acc32.srs(<32 x i32> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[TMP0]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP1]])
+// CHECK-NEXT:    ret <32 x i16> [[TMP2]]
+//
+v32int16 test_to_v32int16_conf(v32acc32 acc, int shft, crsat_t sat,
+                                     crrnd_t rnd) {
+  return to_v32int16_conf(acc, shft, sat, rnd);
+}
+// CHECK-LABEL: @_Z17test_to_v32uint16Dv32_u7__acc32i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i16> @llvm.aie2p.I512.v32.acc32.srs(<32 x i32> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    ret <32 x i16> [[TMP0]]
+//
+v32uint16 test_to_v32uint16(v32acc32 acc, int shft) {
+  return to_v32uint16(acc, shft);
+}
+// CHECK-LABEL: @_Z22test_to_v32uint16_confDv32_u7__acc32ijj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[SAT:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i16> @llvm.aie2p.I512.v32.acc32.srs(<32 x i32> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[TMP0]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP1]])
+// CHECK-NEXT:    ret <32 x i16> [[TMP2]]
+//
+v32uint16 test_to_v32uint16_conf(v32acc32 acc, int shft, crsat_t sat,
+                                       crrnd_t rnd) {
+  return to_v32uint16_conf(acc, shft, sat, rnd);
+}
+// CHECK-LABEL: @_Z16test_to_v16int16Dv16_u7__acc32i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i16> @llvm.aie2p.I256.v16.acc32.srs(<16 x i32> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    ret <16 x i16> [[TMP0]]
+//
+v16int16 test_to_v16int16(v16acc32 acc, int shft) {
+  return to_v16int16(acc, shft);
+}
+// CHECK-LABEL: @_Z21test_to_v16int16_confDv16_u7__acc32ijj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[SAT:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i16> @llvm.aie2p.I256.v16.acc32.srs(<16 x i32> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[TMP0]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP1]])
+// CHECK-NEXT:    ret <16 x i16> [[TMP2]]
+//
+v16int16 test_to_v16int16_conf(v16acc32 acc, int shft, crsat_t sat,
+                                     crrnd_t rnd) {
+  return to_v16int16_conf(acc, shft, sat, rnd);
+}
+// CHECK-LABEL: @_Z17test_to_v16uint16Dv16_u7__acc32i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i16> @llvm.aie2p.I256.v16.acc32.srs(<16 x i32> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    ret <16 x i16> [[TMP0]]
+//
+v16uint16 test_to_v16uint16(v16acc32 acc, int shft) {
+  return to_v16uint16(acc, shft);
+}
+// CHECK-LABEL: @_Z22test_to_v16uint16_confDv16_u7__acc32ijj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[SAT:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i16> @llvm.aie2p.I256.v16.acc32.srs(<16 x i32> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[TMP0]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP1]])
+// CHECK-NEXT:    ret <16 x i16> [[TMP2]]
+//
+v16uint16 test_to_v16uint16_conf(v16acc32 acc, int shft, crsat_t sat,
+                                       crrnd_t rnd) {
+  return to_v16uint16_conf(acc, shft, sat, rnd);
+}
+// CHECK-LABEL: @_Z16test_to_v16int16Dv16_u7__acc64i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i16> @llvm.aie2p.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    ret <16 x i16> [[TMP0]]
+//
+v16int16 test_to_v16int16(v16acc64 acc, int shft) {
+  return to_v16int16(acc, shft);
+}
+// CHECK-LABEL: @_Z21test_to_v16int16_confDv16_u7__acc64ijj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[SAT:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i16> @llvm.aie2p.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[TMP0]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP1]])
+// CHECK-NEXT:    ret <16 x i16> [[TMP2]]
+//
+v16int16 test_to_v16int16_conf(v16acc64 acc, int shft, crsat_t sat,
+                                     crrnd_t rnd) {
+  return to_v16int16_conf(acc, shft, sat, rnd);
+}
+// CHECK-LABEL: @_Z17test_to_v16uint16Dv16_u7__acc64i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i16> @llvm.aie2p.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    ret <16 x i16> [[TMP0]]
+//
+v16uint16 test_to_v16uint16(v16acc64 acc, int shft) {
+  return to_v16uint16(acc, shft);
+}
+// CHECK-LABEL: @_Z22test_to_v16uint16_confDv16_u7__acc64ijj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[SAT:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i16> @llvm.aie2p.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[TMP0]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP1]])
+// CHECK-NEXT:    ret <16 x i16> [[TMP2]]
+//
+v16uint16 test_to_v16uint16_conf(v16acc64 acc, int shft, crsat_t sat,
+                                       crrnd_t rnd) {
+  return to_v16uint16_conf(acc, shft, sat, rnd);
+}
+// CHECK-LABEL: @_Z16test_to_v16int32Dv16_u7__acc64i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2p.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    ret <16 x i32> [[TMP0]]
+//
+v16int32 test_to_v16int32(v16acc64 acc, int shft) {
+  return to_v16int32(acc, shft);
+}
+// CHECK-LABEL: @_Z21test_to_v16int32_confDv16_u7__acc64ijj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[SAT:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i32> @llvm.aie2p.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[TMP0]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP1]])
+// CHECK-NEXT:    ret <16 x i32> [[TMP2]]
+//
+v16int32 test_to_v16int32_conf(v16acc64 acc, int shft, crsat_t sat,
+                                     crrnd_t rnd) {
+  return to_v16int32_conf(acc, shft, sat, rnd);
+}
+// CHECK-LABEL: @_Z17test_to_v16uint32Dv16_u7__acc64i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2p.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    ret <16 x i32> [[TMP0]]
+//
+v16uint32 test_to_v16uint32(v16acc64 acc, int shft) {
+  return to_v16uint32(acc, shft);
+}
+// CHECK-LABEL: @_Z22test_to_v16uint32_confDv16_u7__acc64ijj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[SAT:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i32> @llvm.aie2p.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[TMP0]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP1]])
+// CHECK-NEXT:    ret <16 x i32> [[TMP2]]
+//
+v16uint32 test_to_v16uint32_conf(v16acc64 acc, int shft, crsat_t sat,
+                                       crrnd_t rnd) {
+  return to_v16uint32_conf(acc, shft, sat, rnd);
+}
+// CHECK-LABEL: @_Z15test_to_v8int32Dv8_u7__acc64i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i32> @llvm.aie2p.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    ret <8 x i32> [[TMP0]]
+//
+v8int32 test_to_v8int32(v8acc64 acc, int shft) {
+  return to_v8int32(acc, shft);
+}
+// CHECK-LABEL: @_Z20test_to_v8int32_confDv8_u7__acc64ijj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[SAT:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <8 x i32> @llvm.aie2p.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[TMP0]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP1]])
+// CHECK-NEXT:    ret <8 x i32> [[TMP2]]
+//
+v8int32 test_to_v8int32_conf(v8acc64 acc, int shft, crsat_t sat,
+                                   crrnd_t rnd) {
+  return to_v8int32_conf(acc, shft, sat, rnd);
+}
+// CHECK-LABEL: @_Z16test_to_v8uint32Dv8_u7__acc64i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i32> @llvm.aie2p.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    ret <8 x i32> [[TMP0]]
+//
+v8uint32 test_to_v8uint32(v8acc64 acc, int shft) {
+  return to_v8uint32(acc, shft);
+}
+// CHECK-LABEL: @_Z21test_to_v8uint32_confDv8_u7__acc64ijj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[SAT:%.*]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <8 x i32> @llvm.aie2p.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[TMP0]])
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP1]])
+// CHECK-NEXT:    ret <8 x i32> [[TMP2]]
+//
+v8uint32 test_to_v8uint32_conf(v8acc64 acc, int shft, crsat_t sat,
+                                     crrnd_t rnd) {
+  return to_v8uint32_conf(acc, shft, sat, rnd);
+}
