@@ -3,6 +3,7 @@
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -139,6 +140,26 @@ def TosaReduceTransposes : Pass<"tosa-reduce-transposes", "func::FuncOp"> {
     The pass has an important use-case in cleaning up the results of frameworks
     that introduce a lot of data-layout transformations when legalizing to TOSA,
     a common one being transformations between NHWC and NCHW layouts.
+  }];
+}
+
+def SinkInputOpsThroughConcat : Pass<"sink-input-ops-through-concat", "mlir::ModuleOp"> {
+  let summary = "Sinks same operation through a Concat operation";
+  let description = [{
+    Pass that sinks the same operation through a concatenation, simplifying
+    later optimizations.
+
+    To explain with a picture:
+    ```
+    Replacing            with
+    - Op -\              -\
+    - Op ---> Concat ==> ---> Concat -> Op
+    - Op -/              -/
+    ```
+
+    The pass works greedy (i.e., it sinks operator chains) and does not do any
+    cost-benefit assessment. It it restricted to an explicit list of tosa
+    operations as input for the concatentation that are known to be "sinkable".
   }];
 }
 
