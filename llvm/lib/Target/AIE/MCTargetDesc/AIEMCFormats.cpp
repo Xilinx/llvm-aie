@@ -34,12 +34,16 @@ bool AIEInstFormat::hasSingleSlot() const {
   return (SlotsMap.size() == 1 && !HasMultipleSlotOptions);
 }
 
-unsigned AIEInstFormat::getSlotOffsetLoBit() const {
+unsigned AIEInstFormat::getLittleEndianSlotOffset() const {
+  assert(!HasMultipleSlotOptions);
   MCSlotKind Kind = getSlot();
-  return getSlotOffsetsLoBit(Kind).RightOffset;
+  auto BEOffsets = SlotsMap.at(Kind).FormatField->getOffsets();
+  // Offsets are stored as big-endian indexes.
+  // We need to make a transformation:
+  return getFormatSize() - BEOffsets.RightOffset - 1;
 }
 
-unsigned AIEInstFormat::getSlotOffsetHiBit() const {
+unsigned AIEInstFormat::getBigEndianSlotOffset() const {
   MCSlotKind Kind = getSlot();
   return getSlotOffsetsHiBit(Kind).LeftOffset;
 }

@@ -27,20 +27,6 @@ unsigned AIEPacketFormat::getNumberOfSlot() const {
   return SlotsMap.size();
 }
 
-unsigned AIEPacketFormat::getSlotOffsetLoBit(unsigned Idx) const {
-  MCSlotKind Kind = getSlot(Idx);
-  return getSlotOffsetsLoBit(Kind).RightOffset;
-}
-
-unsigned AIEPacketFormat::getSlotOffsetHiBit(unsigned Idx) const {
-  MCSlotKind Kind = getSlot(Idx);
-  return getSlotOffsetsHiBit(Kind).LeftOffset;
-}
-
-unsigned AIEPacketFormat::getSlotOffsetLoBit(const MCSlotKind Kind) const {
-  return getSlotOffsetsLoBit(Kind).RightOffset;
-}
-
 unsigned AIEPacketFormat::getSlotOffsetHiBit(const MCSlotKind Kind) const {
   return getSlotOffsetsHiBit(Kind).LeftOffset;
 }

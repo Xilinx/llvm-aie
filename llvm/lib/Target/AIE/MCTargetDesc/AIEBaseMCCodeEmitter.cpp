@@ -176,7 +176,7 @@ void AIEBaseMCCodeEmitter::getMachineOpValue(const MCInst &MI,
     assert(SlotInfo);
 
     // Get the offset of the slot in the Standalone instruction
-    unsigned StartPos = SubInstFormat.getSlotOffsetLoBit();
+    unsigned StartPos = SubInstFormat.getLittleEndianSlotOffset();
 
     // Extract the encoding of the slot in the Standalone instruction (to
     // prepare its emission as operand in the top-level Composite instruction)
@@ -203,7 +203,7 @@ SmallVector<MCFixup> AIEBaseMCCodeEmitter::translateFixupsInComposite(
   const MCSlotKind Slot = SubInstFormat.getSlot();
 
   // Get the current slot offset in the standalone instruction
-  unsigned SlotOffsetInSubInstruction = SubInstFormat.getSlotOffsetHiBit();
+  unsigned SlotOffsetInSubInstruction = SubInstFormat.getBigEndianSlotOffset();
   // Get the expected slot offset in the Composite Format
   unsigned SlotOffsetInCompositeInstr =
       CompositeFormat.getSlotOffsetHiBit(Slot);
