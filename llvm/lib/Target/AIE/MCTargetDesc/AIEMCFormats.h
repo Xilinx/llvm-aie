@@ -272,30 +272,6 @@ public:
     return SlotsMap.at(Kind).FormatField->getOffsets();
   }
 
-  /// Returns a pair of Offset of the Slot Kind, indexed on the Low bits:
-  ///
-  /// From LSB/Low = little-endian indexing
-  ///    MSB              |    Slot     |                   LSB
-  ///     |---------------|-------------|------------------->|
-  ///     |               |<= numBits =>|                    |
-  /// FormatSize-1        L <========== R <================= 0
-  ///
-  /// GlobalOffsets = {L, R}
-  MCFormatField::GlobalOffsets
-  getSlotOffsetsLoBit(const MCSlotKind &Kind) const {
-    assert(!HasMultipleSlotOptions);
-    using GlobalOffsets = typename MCFormatField::GlobalOffsets;
-
-    GlobalOffsets HiOffsets = SlotsMap.at(Kind).FormatField->getOffsets();
-
-    // Offsets are stored as big-endian indexes.
-    // We need to make a transformation:
-    GlobalOffsets LoOffsets;
-    LoOffsets.LeftOffset = getFormatSize() - HiOffsets.LeftOffset - 1;
-    LoOffsets.RightOffset = getFormatSize() - HiOffsets.RightOffset - 1;
-    return LoOffsets;
-  }
-
   /// Returns the list of field(s) covering the MCOperand Idx.
   /// Pre-condition: Idx must be valid. Otherwise, it triggers an assertion.
   ArrayRef<const MCFormatField *> getFieldsCoveredByOpIdx(unsigned Idx) const {
@@ -327,8 +303,7 @@ public:
   /// Returns the number of slots in the Packet Format
   inline unsigned getNumberOfSlot() const;
 
-  /// Returns the Offset of the slot Idx/Kind, indexed on the Low (respect.
-  /// High) bits:
+  /// Returns the Offset of the slot Idx/Kind, indexed on the High bits:
   ///
   /// From MSB/High = Big-endian indexing
   ///    MSB              |    Slot     |                   LSB
@@ -336,14 +311,6 @@ public:
   ///     |               |<= numBits =>|                    |
   ///     0 ==========> Offset                          FormatSize-1
   ///
-  /// From LSB/Low = little-endian indexing
-  ///    MSB              |    Slot     |                   LSB
-  ///     |---------------|-------------|------------------->|
-  ///     |               |<= numBits =>|                    |
-  /// FormatSize-1                    Offset <============== 0
-  unsigned getSlotOffsetLoBit(unsigned Idx) const;
-  unsigned getSlotOffsetHiBit(unsigned Idx) const;
-  unsigned getSlotOffsetLoBit(const MCSlotKind Kind) const;
   unsigned getSlotOffsetHiBit(const MCSlotKind Kind) const;
 
   static bool classof(const MCFormatDesc *FormatDesc) {
@@ -361,6 +328,11 @@ public:
   const MCSlotKind getSlot() const;
 
   /// Returns the Offset of the slot, indexed on the Low (respect. High) bits:
+  /// From LSB/Low = Little-endian indexing
+  ///    MSB              |    Slot     |                   LSB
+  ///     |---------------|-------------|------------------->|
+  ///     |               |<= numBits =>|                    |
+  /// InstSize-1                      Offset <============== 0
   ///
   /// From MSB/High = Big-endian indexing
   ///    MSB              |    Slot     |                   LSB
@@ -368,13 +340,8 @@ public:
   ///     |               |<= numBits =>|                    |
   ///     0 ==========> Offset                           InstSize-1
   ///
-  /// From LSB/Low = little-endian indexing
-  ///    MSB              |    Slot     |                   LSB
-  ///     |---------------|-------------|------------------->|
-  ///     |               |<= numBits =>|                    |
-  /// InstSize-1                      Offset <============== 0
-  unsigned getSlotOffsetLoBit() const;
-  unsigned getSlotOffsetHiBit() const;
+  unsigned getLittleEndianSlotOffset() const;
+  unsigned getBigEndianSlotOffset() const;
 
   static bool classof(const MCFormatDesc *FormatDesc) {
     return FormatDesc->isSubInst();
