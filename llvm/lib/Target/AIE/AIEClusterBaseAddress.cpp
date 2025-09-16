@@ -84,10 +84,10 @@ LLT getLoadStoreType(const MachineInstr &MI) {
 
 /// Try and re-order PTR_ADD instructions to maximise the size of constant
 /// PTR_ADD chains.
-bool optimisePostIncrements(ArrayRef<MachineInstr *> PtrAdds,
-                            const MachineRegisterInfo &MRI,
-                            MachineIRBuilder &MIB,
-                            GISelObserverWrapper &Observer) {
+bool bundleConstIncrements(ArrayRef<MachineInstr *> PtrAdds,
+                           const MachineRegisterInfo &MRI,
+                           MachineIRBuilder &MIB,
+                           GISelObserverWrapper &Observer) {
   bool Changed = false;
 
   // Look for the following sequence:
@@ -224,8 +224,7 @@ bool AIEClusterBaseAddress::runOnMachineFunction(MachineFunction &MF) {
 
   bool Changed = false;
   for (MachineBasicBlock &MBB : MF) {
-    while (processBasicBlock(MBB, MIB, Observer))
-      Changed = true;
+    Changed |= processBasicBlock(MBB, MIB, Observer);
   }
   return Changed;
 }
@@ -241,8 +240,13 @@ bool AIEClusterBaseAddress::processBasicBlock(MachineBasicBlock &MBB,
 
   // Optimise instruction order
   for (auto &RegAndUse : reverse(RegAndUses)) {
+    // Chaining acceptance criteria.
+    SmallVector<MachineInstr *, 8> &Instrs = RegAndUse.second;
+    if (shouldSkipChaining(RegAndUse.first, Instrs, MBB))
+      continue;
+
     ArrayRef<MachineInstr *> PtrAdds = RegAndUse.second;
-    Changed |= optimisePostIncrements(PtrAdds, *MRI, MIB, Observer);
+    Changed |= bundleConstIncrements(PtrAdds, *MRI, MIB, Observer);
   }
 
   // Create chains, when profitable.
