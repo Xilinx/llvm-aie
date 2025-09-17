@@ -128,3 +128,25 @@ bool AIE2PTTIImpl::isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
 bool AIE2PTTIImpl::isProfitableOuterLSR(const Loop &L) const {
   return Common.isProfitableOuterLSR(L);
 }
+
+unsigned AIE2PTTIImpl::getStoreVectorFactor(unsigned VF,
+                                            unsigned StoreSizeInBits,
+                                            unsigned ChainSizeInBytes,
+                                            VectorType *VecTy) const {
+  return Common.getStoreVectorFactor(VF, StoreSizeInBits, ChainSizeInBytes,
+                                     VecTy);
+}
+
+unsigned AIE2PTTIImpl::getLoadVectorFactor(unsigned VF, unsigned LoadSizeInBits,
+                                           unsigned ChainSizeInBytes,
+                                           VectorType *VecTy) const {
+  return Common.getLoadVectorFactor(VF, LoadSizeInBits, ChainSizeInBytes,
+                                    VecTy);
+}
+
+bool AIE2PTTIImpl::isLegalToVectorizeStoreChain(unsigned ChainSizeInBytes,
+                                                Align Alignment,
+                                                unsigned AddrSpace) const {
+  return Common.isLegalToVectorizeStoreChain(ChainSizeInBytes, Alignment,
+                                             AddrSpace);
+}

@@ -50,7 +50,9 @@
   define dso_local void @_Z17four_short_storesP2S4(ptr nocapture writeonly initializes((0, 8)) %B) {
 ; CHECK-LABEL: @_Z17four_short_storesP2S4(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    store <4 x i16> <i16 1, i16 2, i16 3, i16 4>, ptr [[B:%.*]], align 32, !tbaa [[TBAA5:![0-9]+]]
+; CHECK-NEXT:    store <2 x i16> <i16 1, i16 2>, ptr [[B:%.*]], align 32, !tbaa [[TBAA5:![0-9]+]]
+; CHECK-NEXT:    [[ARRAYIDX4:%.*]] = getelementptr inbounds nuw i8, ptr [[B]], i20 4
+; CHECK-NEXT:    store <2 x i16> <i16 3, i16 4>, ptr [[ARRAYIDX4]], align 4, !tbaa [[TBAA5]]
 ; CHECK-NEXT:    ret void
 ;
   entry:

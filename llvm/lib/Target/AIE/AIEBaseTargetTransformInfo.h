@@ -38,6 +38,15 @@ public:
                                 AssumptionCache &AC, TargetLibraryInfo *LibInfo,
                                 HardwareLoopInfo &HWLoopInfo);
   bool isProfitableOuterLSR(const Loop &L) const;
+
+  unsigned getStoreVectorFactor(unsigned VF, unsigned StoreSizeInBits,
+                                unsigned ChainSizeInBytes,
+                                VectorType *VecTy) const;
+  unsigned getLoadVectorFactor(unsigned VF, unsigned LoadSizeInBits,
+                               unsigned ChainSizeInBytes,
+                               VectorType *VecTy) const;
+  bool isLegalToVectorizeStoreChain(unsigned ChainSizeInBytes, Align Alignment,
+                                    unsigned AddrSpace) const;
 };
 
 template <typename T> class AIEBaseTTIImpl : public BasicTTIImplBase<T> {

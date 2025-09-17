@@ -144,7 +144,11 @@
 ; AIE-O1-NEXT:      Instrument function entry/exit with calls to e.g. mcount() (post inlining)
 ; AIE-O1-NEXT:      Scalarize Masked Memory Intrinsics
 ; AIE-O1-NEXT:      Expand reduction intrinsics
+; AIE-O1-NEXT:      Basic Alias Analysis (stateless AA impl)
+; AIE-O1-NEXT:      Function Alias Analysis Results
 ; AIE-O1-NEXT:      Natural Loop Information
+; AIE-O1-NEXT:      Scalar Evolution Analysis
+; AIE-O1-NEXT:      GPU Load and Store Vectorizer
 ; AIE-O1-NEXT:      CodeGen Prepare
 ; AIE-O1-NEXT:      Lower invoke and unwind, for unwindless code generators
 ; AIE-O1-NEXT:      Remove unreachable blocks from the CFG
@@ -356,7 +360,11 @@
 ; AIE-O23-NEXT:      Instrument function entry/exit with calls to e.g. mcount() (post inlining)
 ; AIE-O23-NEXT:      Scalarize Masked Memory Intrinsics
 ; AIE-O23-NEXT:      Expand reduction intrinsics
+; AIE-O23-NEXT:      Basic Alias Analysis (stateless AA impl)
+; AIE-O23-NEXT:      Function Alias Analysis Results
 ; AIE-O23-NEXT:      Natural Loop Information
+; AIE-O23-NEXT:      Scalar Evolution Analysis
+; AIE-O23-NEXT:      GPU Load and Store Vectorizer
 ; AIE-O3-NEXT:      TLS Variable Hoist
 ; AIE-O23-NEXT:      CodeGen Prepare
 ; AIE-O23-NEXT:      Lower invoke and unwind, for unwindless code generators
