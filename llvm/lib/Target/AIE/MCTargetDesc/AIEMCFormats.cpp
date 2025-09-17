@@ -48,9 +48,8 @@ unsigned AIEInstFormat::getSlotOffsetHiBit() const {
 const MCSlotKind AIEInstFormat::getSlot() const {
   // NOTE: for a regular instruction (not packet), the map contains only 1
   // value.
-  // NOTE: so... Overkill to use a map in this case?
   assert(hasSingleSlot());
-  return SlotsMap.begin()->first;
+  return SlotsMap.begin()->SlotKind;
 }
 
 
