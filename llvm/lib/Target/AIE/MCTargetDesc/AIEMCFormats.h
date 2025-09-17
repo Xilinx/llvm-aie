@@ -160,6 +160,12 @@ public:
   MCSlotKind getSlotKind() const { return SlotKind; }
 };
 
+class SlotFieldPair {
+public:
+  const MCSlotKind SlotKind;
+  const MCFormatField *FormatField;
+};
+
 } // end namespace llvm
 
 namespace llvm {
@@ -168,9 +174,31 @@ class MCFormatDesc {
 public:
   enum MCFormatKind { FK_Packet, FK_Instr };
 
-  using SlotsFieldsMap =
-      std::unordered_map<const MCSlotKind, const MCFormatField *,
-                         MCSlotKind::Hasher>;
+  /// This stores a slice of a lookup table of SlotFieldPairs and emulates a
+  /// map.
+  class SlotsFieldsMap {
+  public:
+    constexpr SlotsFieldsMap() : ValueSlice({}) {};
+    constexpr SlotsFieldsMap(const llvm::ArrayRef<SlotFieldPair> Values)
+        : ValueSlice(Values) {};
+
+    SlotFieldPair const &at(const MCSlotKind &Key) const {
+      auto Pair =
+          llvm::find_if(ValueSlice, [Key](SlotFieldPair const &SlotField) {
+            return SlotField.SlotKind == Key;
+          });
+      assert(Pair != ValueSlice.end());
+      return *Pair;
+    }
+
+    SlotFieldPair const *begin() const { return ValueSlice.begin(); }
+
+    size_t size() const { return ValueSlice.size(); }
+
+  private:
+    const llvm::ArrayRef<SlotFieldPair> ValueSlice;
+  };
+
   /// This behaves like an array of variable sized arrays.
   /// All elements are consecutive in memory. The outer dimension
   /// is an array of pointers into that memory array, which is passed
@@ -219,9 +247,11 @@ protected:
   const MCFormatField *const BaseField;
 
 public:
-  MCFormatDesc(unsigned Opcode, bool IsComposite, bool HasMultipleSlotOptions,
-               const SlotsFieldsMap &Slots, OperandsFieldsMap OpFormatMapper,
-               const MCFormatField *BaseField)
+  constexpr MCFormatDesc(unsigned Opcode, bool IsComposite,
+                         bool HasMultipleSlotOptions,
+                         const SlotsFieldsMap Slots,
+                         OperandsFieldsMap OpFormatMapper,
+                         const MCFormatField *BaseField)
       : Kind(IsComposite ? FK_Packet : FK_Instr),
         HasMultipleSlotOptions(HasMultipleSlotOptions), Opcode(Opcode),
         SlotsMap(Slots), OpFormatMapper(OpFormatMapper), BaseField(BaseField) {
@@ -259,8 +289,7 @@ public:
   MCFormatField::GlobalOffsets
   getSlotOffsetsHiBit(const MCSlotKind &Kind) const {
     assert(!HasMultipleSlotOptions);
-    assert(SlotsMap.find(Kind) != SlotsMap.end());
-    return SlotsMap.at(Kind)->getOffsets();
+    return SlotsMap.at(Kind).FormatField->getOffsets();
   }
 
   /// Returns a pair of Offset of the Slot Kind, indexed on the Low bits:
@@ -276,7 +305,9 @@ public:
   getSlotOffsetsLoBit(const MCSlotKind &Kind) const {
     assert(!HasMultipleSlotOptions);
     using GlobalOffsets = typename MCFormatField::GlobalOffsets;
-    GlobalOffsets HiOffsets = SlotsMap.at(Kind)->getOffsets();
+
+    GlobalOffsets HiOffsets = SlotsMap.at(Kind).FormatField->getOffsets();
+
     // Offsets are stored as big-endian indexes.
     // We need to make a transformation:
     GlobalOffsets LoOffsets;
@@ -312,7 +343,6 @@ public:
   /// - VEC_ALL is at the position 4.
   /// This is based on the ordering of the operands in the TableGen definition.
   const MCSlotKind getSlot(unsigned Idx) const;
-
 
   /// Returns the number of slots in the Packet Format
   inline unsigned getNumberOfSlot() const;

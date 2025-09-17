@@ -192,20 +192,22 @@ void CodeGenFormat::run(raw_ostream &o) {
     {
       ConstTable OpFields("const MCFormatField *", "OpFields");
       ConstTable FieldRanges("const MCFormatField * const *", "FieldRanges");
+      ConstTable SlotsFields("SlotFieldPair", "SlotsFields");
       ConstTable Formats(FormatClassEmitted, "Formats");
       for (const TGInstrLayout &Inst : InstFormats) {
-        Inst.emitFormat(FieldsHierarchy, Formats, OpFields, FieldRanges);
+        Inst.emitFormat(FieldsHierarchy, Formats, OpFields, FieldRanges,
+                        SlotsFields);
         Formats.next();
       }
 
       Formats.finish();
       OpFields.finish();
-      FieldRanges.mark("Sentinel");
-      FieldRanges << OpFields.refNext();
+      SlotsFields.finish();
       FieldRanges.finish();
 
       o << OpFields;
       o << FieldRanges;
+      o << SlotsFields;
       o << Formats;
       o << "#endif // GET_FORMATS_FORMATS_DEFS\n\n";
     }
@@ -672,8 +674,8 @@ void TGInstrLayout::emitOpcodeFormatIndex(raw_ostream &o) const {
 }
 
 void TGInstrLayout::emitFormat(ConstTable &FieldsHierarchy, ConstTable &o,
-                               ConstTable &OpFields,
-                               ConstTable &FieldRanges) const {
+                               ConstTable &OpFields, ConstTable &FieldRanges,
+                               ConstTable &SlotsFields) const {
   o << "    // " << Target << "::" << InstrName
     << " - Index : " << std::to_string(InstrID) << "\n"
     << "    {\n"
@@ -682,51 +684,49 @@ void TGInstrLayout::emitFormat(ConstTable &FieldsHierarchy, ConstTable &o,
     << "      " << (IsComposite ? "true" : "false") << " /* isComposite */,\n"
     << "      " << (IsMultipleSlotOptions ? "true" : "false")
     << " /* hasMultipleSlotOptions */,\n"
-    << "      " << "/* Slots - Fields mapper */\n"
-    << "      {";
+    << "      /* Slots - Fields mapper */\n";
 
   const std::string TargetClassName = Target + SlotsRegistry.GenSlotKindName;
+  SlotsFields.mark(InstrName.c_str());
 
-  bool firstIter = true;
   for (const auto &SlotField : slots()) {
-    if (!firstIter)
-      o << ", ";
-    else
-      firstIter = false;
-    o << "{ ";
-    o << TargetClassName << "::" << SlotField->SlotClass->getEnumerationString()
-      << ", ";
-    o << FieldsHierarchy.absRef(SlotField->EmissionID);
-    o << " }";
+    SlotsFields << "{ ";
+    SlotsFields << TargetClassName
+                << "::" << SlotField->SlotClass->getEnumerationString() << ", ";
+    SlotsFields << FieldsHierarchy.absRef(SlotField->EmissionID);
+    SlotsFields << " }";
+    SlotsFields.next();
   }
-  o << "},\n";
+  o << "      " << SlotsFields.arrayRef() << ",\n";
 
   // Group every field by their operand index (if they have one)
   // i.e. { 0 : {field0, field1}, 1 : {field2}}...
   std::map<unsigned, SmallVector<TGFieldLayout *>> FieldOpIndexMap;
   // Keep track of the maximum operand index
-  unsigned MaxIdx = 0;
+  unsigned NumOperands = 0;
   for (auto *OperandField : operands()) {
-    unsigned Idx = OperandField->getMCOperandIndex();
-    FieldOpIndexMap[Idx].push_back(OperandField);
-    MaxIdx = std::max(MaxIdx, Idx);
+    unsigned OperandIdx = OperandField->getMCOperandIndex();
+    FieldOpIndexMap[OperandIdx].push_back(OperandField);
+    NumOperands = std::max(NumOperands, OperandIdx);
   }
 
   o << "      /* MCOperand - Slots mapper */\n";
   OpFields.mark(InstrName.c_str());
   FieldRanges.mark(InstrName.c_str());
-  for (unsigned Idx = 0; Idx <= MaxIdx; Idx++) {
-    FieldRanges << OpFields.ref(Idx);
+  unsigned OpFieldIdx = 0;
+  for (unsigned OperandIdx = 0; OperandIdx <= NumOperands; OperandIdx++) {
+    FieldRanges << OpFields.ref(OpFieldIdx);
     FieldRanges.next();
-    auto It = FieldOpIndexMap.find(Idx);
+    auto It = FieldOpIndexMap.find(OperandIdx);
     if (It != FieldOpIndexMap.end()) {
       for (auto &MO : It->second) {
         OpFields << "  " << FieldsHierarchy.absRef(MO->EmissionID);
         OpFields.next();
+        OpFieldIdx++;
       }
     }
   }
-  o << "      {" << FieldRanges.ref(0) << ", " << MaxIdx + 1 << "},\n";
+  o << "      {" << FieldRanges.ref(0) << ", " << NumOperands + 1 << "},\n";
 
   auto *RootField = *fields().begin();
   o << "      " << FieldsHierarchy.absRef(RootField->EmissionID) << "\n"

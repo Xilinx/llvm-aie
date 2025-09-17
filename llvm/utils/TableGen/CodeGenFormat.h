@@ -57,16 +57,18 @@ class TGFieldIterator;
 // Helper class to create flat tables and some corresponding utilities
 class ConstTable {
   std::stringstream Text;
+  std::string Type;
   std::string Name;
   unsigned Mark = 0;
   unsigned Size = 0;
 
 public:
-  ConstTable(std::string Type, std::string Name) : Name(Name) {
-    Text << "static " << Type << " const " << Name << "[] = {\n";
+  ConstTable(std::string Type, std::string Name) : Type(Type), Name(Name) {
+    Text << "static constexpr " << Type << " const " << Name << "[] = {\n";
   }
   const std::stringstream &text() const { return Text; }
   std::stringstream &text() { return Text; }
+  unsigned size() { return Size; }
 
   // Mark the start of a block of items
   unsigned mark(const char *Comment = nullptr) {
@@ -85,6 +87,15 @@ public:
   std::string ref(unsigned Idx) const { return absRef(Mark + Idx); }
   // Make a reference to the next entry
   std::string refNext() const { return absRef(Size); }
+  // Return an ArrayRef of the entries since the last marked block
+  std::string arrayRef() const {
+    unsigned NumElements = Size - Mark;
+    if (NumElements == 0) {
+      return "{}";
+    }
+    return "llvm::ArrayRef<" + Type + ">(" + ref(0) + ", " +
+           std::to_string(NumElements) + ")";
+  }
 
   // Move to the next entry
   void next() {
@@ -207,7 +218,8 @@ public:
   void emitFlatTree(ConstTable &o, unsigned &BaseIndex) const;
   /// Emit the Format entries.
   void emitFormat(ConstTable &FieldHierarcht, ConstTable &Formats,
-                  ConstTable &OpFields, ConstTable &FieldRanges) const;
+                  ConstTable &OpFields, ConstTable &FieldRanges,
+                  ConstTable &SlotsFields) const;
   /// Emit a case table to get InstrID based of InstrName.
   void emitOpcodeFormatIndex(raw_ostream &o) const;
   /// Emit a set array to get AlternateInsts refs based of

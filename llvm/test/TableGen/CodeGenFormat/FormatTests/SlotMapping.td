@@ -49,6 +49,10 @@ def VMUL80_S32_S32_BM : TEST_vec_acm_bm_zero
 // CHECK:        TESTSlotKind::TEST_SLOT_VECA
 // CHECK-NOT:    TESTSlotKind::TEST_SLOT_VECA
 
+// CHECK:        SlotFieldPair
+// CHECK:        TESTSlotKind::TEST_SLOT_ALUAAA
+// CHECK:        TESTSlotKind::TEST_SLOT_VECA
+
 def MultiSlotPseudo : TESTMultiSlot_Pseudo<[ADD,VMUL80_S32_S32_BM]>;
 
 // CHECK:        TEST::MultiSlotPseudo - Index : 0
