@@ -46,6 +46,7 @@
 #include "llvm/Transforms/IPO/Internalize.h"
 #include "llvm/Transforms/IPO/SCCP.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Vectorize/LoadStoreVectorizer.h"
 
 using namespace llvm;
 
@@ -116,6 +117,11 @@ cl::opt<bool>
     EnableAIEIfConversion("aie-enable-if-conversion",
                           cl::desc("Enable If Conversion optimization"),
                           cl::init(true), cl::Hidden);
+
+cl::opt<bool>
+    VectorizePartWordStores("aie-enable-part-store-vect",
+                            cl::desc("Enable Part-word store vectorization"),
+                            cl::init(true), cl::Hidden);
 
 static StringRef computeDataLayout(const Triple &TT) {
   return "e-m:e-p:20:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-f32:32:32-i64:32-"
@@ -272,6 +278,10 @@ void AIEBasePassConfig::addIRPasses() {
   if (TM->getOptLevel() > CodeGenOptLevel::None)
     addPass(createInferAddressSpacesPass());
   TargetPassConfig::addIRPasses();
+  if (TM->getOptLevel() > CodeGenOptLevel::None) {
+    if (VectorizePartWordStores)
+      addPass(createLoadStoreVectorizerPass());
+  }
 }
 
 void AIEBasePassConfig::addMachineLateOptimization() {
