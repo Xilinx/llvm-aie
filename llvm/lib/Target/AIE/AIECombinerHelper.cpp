@@ -3417,10 +3417,10 @@ static void changeLoadStoreDataRegister(MachineInstr &MI, Register DataReg,
 }
 
 /// Narrow operations that are feeding truncations to s20.
-/// Covers G_LOAD and G_CONSTANT.
-bool llvm::matchNarrowTrunc(MachineInstr &MI, MachineRegisterInfo &MRI,
-                            GISelChangeObserver &Observer,
-                            BuildFnTy &MatchInfo) {
+/// Covers G_CONSTANT.
+bool llvm::matchNarrowTruncConstant(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                    GISelChangeObserver &Observer,
+                                    BuildFnTy &MatchInfo) {
 
   assert(MI.getOpcode() == TargetOpcode::G_TRUNC);
 
@@ -3431,38 +3431,59 @@ bool llvm::matchNarrowTrunc(MachineInstr &MI, MachineRegisterInfo &MRI,
 
   MachineInstr &SrcMI = *MRI.getVRegDef(SrcReg);
 
-  if (SrcMI.getOpcode() == TargetOpcode::G_CONSTANT) {
-    MatchInfo = [=, &MI, &SrcMI, &MRI, &Observer](MachineIRBuilder &B) {
-      auto NewConstant = B.buildConstant(
-          LLT::scalar(20),
-          *getIConstantVRegSExtVal(SrcMI.getOperand(0).getReg(), MRI));
-      Register FromReg = MI.getOperand(0).getReg();
-      Observer.changingAllUsesOfReg(MRI, FromReg);
-      MRI.replaceRegWith(FromReg, NewConstant->getOperand(0).getReg());
-      Observer.finishedChangingAllUsesOfReg();
-      MI.eraseFromParent();
-    };
-    return true;
-  }
-
-  // Ideally, we could allow more users, provided that they are all TRUNCs.
-  // However, if we have more users, the live range of this register could
-  // spread through more blocks, and this could lead to more register pressure
-  // on s20 registers.
-  if (!MRI.hasOneNonDBGUse(SrcReg) || !isUsedByLikelyLegalS20User(MRI, MI))
+  if (SrcMI.getOpcode() != TargetOpcode::G_CONSTANT)
     return false;
 
-  if (SrcMI.getOpcode() == TargetOpcode::G_LOAD) {
-    MatchInfo = [=, &MI, &SrcMI, &MRI, &Observer](MachineIRBuilder &B) {
-      Observer.changingInstr(SrcMI);
-      changeLoadStoreDataRegister(SrcMI, MI.getOperand(0).getReg(), MRI);
-      Observer.changedInstr(SrcMI);
-      MI.eraseFromParent();
-    };
-    return true;
-  }
+  MatchInfo = [=, &MI, &SrcMI, &MRI, &Observer](MachineIRBuilder &B) {
+    auto NewConstant = B.buildConstant(
+        LLT::scalar(20),
+        *getIConstantVRegSExtVal(SrcMI.getOperand(0).getReg(), MRI));
+    Register FromReg = MI.getOperand(0).getReg();
+    Observer.changingAllUsesOfReg(MRI, FromReg);
+    MRI.replaceRegWith(FromReg, NewConstant->getOperand(0).getReg());
+    Observer.finishedChangingAllUsesOfReg();
+    MI.eraseFromParent();
+  };
 
-  return false;
+  return true;
+}
+
+/// Narrow operations that are feeding truncations to s20.
+/// Covers G_LOAD.
+bool llvm::matchNarrowTruncLoad(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                CombinerHelper &Helper,
+                                GISelChangeObserver &Observer,
+                                BuildFnTy &MatchInfo) {
+
+  assert(MI.getOpcode() == TargetOpcode::G_LOAD);
+
+  const LLT S20 = LLT::scalar(20);
+  auto IsProfitableTruncToS20 = [&](const MachineInstr &MaybeTruncMI) {
+    if (MaybeTruncMI.getOpcode() != TargetOpcode::G_TRUNC)
+      return false;
+    const Register DstReg = MaybeTruncMI.getOperand(0).getReg();
+    if (MRI.getType(DstReg) != S20)
+      return false;
+    return isUsedByLikelyLegalS20User(MRI, MaybeTruncMI);
+  };
+
+  // We should have a G_LOAD feeding interesting truncations.
+  const Register DstReg = MI.getOperand(0).getReg();
+  if (!all_of(MRI.use_instructions(DstReg), IsProfitableTruncToS20))
+    return false;
+
+  MatchInfo = [=, &MI, &MRI, &Observer](MachineIRBuilder &B) {
+    const Register NewDstReg = MRI.createGenericVirtualRegister(S20);
+    Observer.changingInstr(MI);
+    changeLoadStoreDataRegister(MI, NewDstReg, MRI);
+    Observer.changedInstr(MI);
+    // Build Zext after the load, not before.
+    MachineBasicBlock &MBB = *MI.getParent();
+    B.setInsertPt(MBB, MI.getNextNode() ? MI.getNextNode() : MBB.end());
+    Observer.createdInstr(*B.buildZExt(DstReg, NewDstReg));
+  };
+
+  return true;
 }
 
 /// Narrow operations that are fed by zext from s20.
