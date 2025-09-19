@@ -167,10 +167,10 @@ def combine_narrow_phi_node_s20 : GICombineRule<
          [{ return matchNarrowPhi(*${root}, MRI, Helper, Observer, ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
 
-def combine_narrow_trunc_s20 : GICombineRule<
+def combine_narrow_trunc_s20_const : GICombineRule<
   (defs root:$root, build_fn_matchinfo:$matchinfo),
   (match (wip_match_opcode G_TRUNC): $root,
-         [{ return matchNarrowTrunc(*${root}, MRI, Observer, ${matchinfo}); }]),
+         [{ return matchNarrowTruncConstant(*${root}, MRI, Observer, ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
 
 def combine_narrow_zext_s20 : GICombineRule<
@@ -240,6 +240,12 @@ def combine_pack_stores_into_memset : GICombineRule<
          [{ return matchSequentialStores(cast<GStore>(*${root}), MRI, Observer, ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
 
+def combine_trunc_load : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_LOAD): $root,
+         [{ return matchNarrowTruncLoad(*${root}, MRI, Helper, Observer, ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
+
 // AIE-specifc combines (currently shared by AIE2 and AIE2P).
 def aie_additional_combines : GICombineGroup<[
   combine_unpad_vector,
@@ -253,7 +259,7 @@ def aie_additional_combines : GICombineGroup<[
   combine_symmetric_build_vector,
   combine_broadcast_shl_to_add,
   combine_vector_shuffle_extract_subvec,
-  combine_narrow_trunc_s20,
+  combine_narrow_trunc_s20_const,
   combine_narrow_zext_s20,
   combine_concat_unmerge_phis,
   combine_trunc_ext,
@@ -261,7 +267,8 @@ def aie_additional_combines : GICombineGroup<[
   combine_phi_undef,
   combine_align_memset,
   combine_peel_memset,
-  combine_pack_stores_into_memset
+  combine_pack_stores_into_memset,
+  combine_trunc_load
 ]>;
 
 // AIE2P-specific combines.

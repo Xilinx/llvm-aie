@@ -265,8 +265,9 @@ bool matchNarrowPhi(MachineInstr &Phi, MachineRegisterInfo &MRI,
                     CombinerHelper &Helper, GISelChangeObserver &Observer,
                     BuildFnTy &MatchInfo);
 
-bool matchNarrowTrunc(MachineInstr &MI, MachineRegisterInfo &MRI,
-                      GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
+bool matchNarrowTruncConstant(MachineInstr &MI, MachineRegisterInfo &MRI,
+                              GISelChangeObserver &Observer,
+                              BuildFnTy &MatchInfo);
 
 bool matchNarrowZext(MachineInstr &MI, MachineRegisterInfo &MRI,
                      GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
@@ -298,6 +299,10 @@ bool matchPeelMemset(MachineInstr &MI, MachineRegisterInfo &MRI,
 
 bool matchSequentialStores(GStore &MI, MachineRegisterInfo &MRI,
                            GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
+
+bool matchNarrowTruncLoad(MachineInstr &Phi, MachineRegisterInfo &MRI,
+                          CombinerHelper &Helper, GISelChangeObserver &Observer,
+                          BuildFnTy &MatchInfo);
 } // namespace llvm
 
 #endif
