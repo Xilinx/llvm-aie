@@ -975,6 +975,33 @@ foreach  Pair = BcstSubvec64Pairs in {
   def : BcstSubvecPat<Pair.Inst, v8i64, v2i32, Pair.IdxTy>;
 }
 
+// VEXTBCSTSHFL
+// 16 bit
+def : Pat<(int_aie2p_vshuffle
+              (v16i32 (bitconvert (v32bf16 (bcst_vector_node
+                  (i32 (vextract_sext (v32i16 VEC512:$s0), (i32 eR:$idx))))))),
+              undef, eR29:$mod),
+           (VEXTBCSTSHFL_16 VEC512:$s0, eR:$idx, eR29:$mod)>;
+//32 bit
+def : Pat<(int_aie2p_vshuffle
+              (v16i32 (bitconvert (v32bf16 (int_aie2p_vbroadcast32_bf512
+                (v2bf16 (bitconvert (i32 (vextract_sext (v16i32 VEC512:$s0), (i32 eR:$idx))))))))),
+              undef, eR29:$mod),
+           (VEXTBCSTSHFL_32 VEC512:$s0, eR:$idx, eR29:$mod)>;
+// 64 bit
+def : Pat<(int_aie2p_vshuffle
+              (v16i32 (bitconvert (v32bf16 (int_aie2p_vbroadcast64_bf512
+                (v4bf16 (bitconvert (v2i32 (extract_subvec_node (v16i32 VEC512:$s0), (i32 eR:$idx))))))))),
+              undef, eR29:$mod),
+           (VEXTBCSTSHFL_64 VEC512:$s0, eR:$idx, eR29:$mod)>;
+// 128 bit
+def : Pat<(int_aie2p_vshuffle
+              (v16i32(int_aie2p_vextract_broadcast128_I512 (v16i32 VEC512:$s0), (i32 eR:$idx))),
+              undef, eR29:$mod),
+           (VEXTBCSTSHFL_128 VEC512:$s0, eR:$idx, eR29:$mod)>;
+
+
+
 // VBCSTSHFL
 // Note: There are VBCSTSHFL instructions, which return accumulator types, but it seems no Intrinsics of that type.
 def : Pat<(int_aie2p_vbcst_shuffle8 eR:$s0, eR29:$idx),
