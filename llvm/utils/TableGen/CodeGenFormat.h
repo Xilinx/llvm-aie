@@ -200,6 +200,9 @@ public:
   unsigned getSize() const;
   uint64_t getSlotSet() const { return SlotSet; }
   const std::string &getInstrName() const { return InstrName; }
+  const std::string getFullInstrName() const {
+    return Target + "::" + InstrName;
+  }
   bool isPacketFormat() const { return IsComposite; }
   bool hasMultipleSlotOptions() const { return IsMultipleSlotOptions; }
   bool isSlotNOP() const { return IsSlotNOP; }
@@ -225,9 +228,6 @@ public:
                   ConstTable &SlotsFields) const;
   /// Emit a case table to get InstrID based of InstrName.
   void emitOpcodeFormatIndex(raw_ostream &o) const;
-  /// Emit a set array to get AlternateInsts refs based of
-  /// InstrName/PseudoOpcode
-  void emitAlternateInstsOpcodeSet(raw_ostream &o) const;
   /// Emit a case table to get AlternateInsts based of InstrName/PseudoOpcode
   void emitAlternateInstsOpcode(std::stringstream &OS, unsigned int Index,
                                 ConstTable &Opcodes) const;

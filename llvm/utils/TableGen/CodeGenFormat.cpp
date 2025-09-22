@@ -145,6 +145,20 @@ void CodeGenFormat::run(raw_ostream &o) {
   for (unsigned int I = 0; I < PseudoInstFormats.size(); I++) {
     PseudoInstFormats[I].emitAlternateInstsOpcode(Cases, I, AlternativeList);
   }
+  for (const CodeGenInstruction *CGI : NumberedInstructions) {
+    if (CGI->TheDef->getValue("Inst")) {
+      TGInstrLayout IL(CGI, Slots);
+      if (IL.isPacketFormat()) {
+        continue;
+      }
+      std::string InstrName = IL.getFullInstrName();
+      AlternativeList.mark(InstrName.c_str());
+      AlternativeList << InstrName;
+      AlternativeList.next();
+      Cases << "  case " << InstrName << ":\n";
+      Cases << "    return " << AlternativeList.arrayRef() << ";\n";
+    }
+  }
   if (!AlternativeList.size()) {
     AlternativeList << "0";
   }
@@ -605,16 +619,6 @@ void TGInstrLayout::emitFlatTree(ConstTable &FieldsHierarchy,
     FieldsHierarchy << ") }";
     FieldsHierarchy.next();
   }
-}
-
-void TGInstrLayout::emitAlternateInstsOpcodeSet(raw_ostream &o) const {
-  assert(AlternateInsts.size() &&
-         "AlternateInsts cannot be empty for multi slot pseudo instr");
-  o << "    // " << Target << "::" << InstrName << "\n  ";
-  for (const auto &AltInstr : AlternateInsts) {
-    o << AltInstr << ", ";
-  }
-  o << "\n";
 }
 
 void TGInstrLayout::emitAlternateInstsOpcode(std::stringstream &OS,
