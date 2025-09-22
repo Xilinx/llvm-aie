@@ -18,34 +18,44 @@
 define void @reduceMeanTemplated(ptr noalias %ifm, ptr addrspace(6) noalias %ofm) {
 ; CHECK-LABEL: reduceMeanTemplated:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    movxm ls, #.LBB0_1
-; CHECK-NEXT:    mova dj2, #128; movs p3, p1; movxm le, #.L_LEnd0
-; CHECK-NEXT:    mova m0, #0; movs p2, p1; mov dj1, dj2
-; CHECK-NEXT:    movs m1, m0; mov dj0, m0
-; CHECK-NEXT:    mova r0, #0; movs dj4, m0; mov dc1, m0
-; CHECK-NEXT:    mova r1, #1; movs dc2, m0; vbcst.32 x0, r0
-; CHECK-NEXT:    movs dn1, m0; add.nc lc, r1, #0
-; CHECK-NEXT:    nopa ; nopb ; movs dc0, m0; nopx ; mov dn0, m0; nopv
-; CHECK-NEXT:    nopa ; nopb ; movs dc4, m0; nopx ; mov dn4, m0; nopv
-; CHECK-NEXT:    nopa ; nopb ; movs m2, m0; nopx ; mov dn2, m0; vclr dm0
+; CHECK-NEXT:    mova dj2, #128; nopb ; nopxm ; nops
+; CHECK-NEXT:    mova m0, #0; movs p3, p1; mov dj1, dj2
+; CHECK-NEXT:    movs p2, p1; mov dj0, m0
+; CHECK-NEXT:    movs m1, m0; mov dj4, m0
+; CHECK-NEXT:    movs dc0, m0; mov dn0, m0
+; CHECK-NEXT:    movs dc4, m0; mov dn4, m0; vclr dm0
+; CHECK-NEXT:    vlda bmlh1, [p1, #64]; paddb.3d [p0], d0; movs dn1, m0; mov dc1, m0
+; CHECK-NEXT:    vlda.2d bmll1, [p1], d1
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    vlda bmlh1, [p1, #64]; paddb.3d [p0], d0; movx r0, #0
+; CHECK-NEXT:    vlda.2d bmll1, [p1], d1; movxm ls, #.LBB0_1; vadd.f dm2, dm1, dm0, r0
+; CHECK-NEXT:    mova r1, #1; movxm le, #.L_LEnd0
+; CHECK-NEXT:    add.nc lc, r1, #-3
+; CHECK-NEXT:    vlda bmlh1, [p1, #64]; paddb.3d [p0], d0; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda.2d bmll1, [p1], d1; nopb ; nops ; nopx ; mov dc2, m0; vadd.f dm2, dm1, dm0, r0
+; CHECK-NEXT:    nopa ; nopb ; movs m2, m0; nopx ; mov dn2, m0; nopv
+; CHECK-NEXT:    nopa ; nopb ; vst.2d bmll2, [p2], d2; nopx ; vbcst.32 x0, r0; nopv
 ; CHECK-NEXT:  .LBB0_1: // %for.body68
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    vlda bmlh1, [p1, #64]; paddb.3d [p0], d0; nops ; nopxm ; nopv
-; CHECK-NEXT:    vlda.2d bmll1, [p1], d1; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; nopxm
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    vadd.f dm2, dm1, dm0, r0
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    vst.2d bmll2, [p2], d2
-; CHECK-NEXT:  .L_LEnd0:
+; CHECK-NEXT:    vlda.2d bmll1, [p1], d1; nopb ; nops ; nopxm ; vadd.f dm2, dm1, dm0, r0
 ; CHECK-NEXT:    nopa ; nopb ; vst x0, [p3, #0]; nopx ; mov p3, p2; nopv
+; CHECK-NEXT:  .L_LEnd0:
+; CHECK-NEXT:    nopa ; nopb ; vst.2d bmll2, [p2], d2; nopxm ; nopv
 ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup67
-; CHECK-NEXT:    nopa ; ret lr
+; CHECK-NEXT:    nopa ; nopx
+; CHECK-NEXT:    vadd.f dm2, dm1, dm0, r0
+; CHECK-NEXT:    vst x0, [p3, #0]; mov p3, p2
+; CHECK-NEXT:    vst.2d bmll2, [p2], d2
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    vst x0, [p3, #0]; mov p3, p2
+; CHECK-NEXT:    vst.2d bmll2, [p2], d2
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    vst x0, [p3, #0]; mov p3, p2
+; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
