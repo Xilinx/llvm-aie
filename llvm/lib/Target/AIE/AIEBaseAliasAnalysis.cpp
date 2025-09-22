@@ -620,12 +620,43 @@ AliasResult AIEBaseAAResult::alias(const MemoryLocation &LocA,
   return AliasResult::MayAlias;
 }
 
+// Returns true if the pointer (Value) has an intrinsic padd as user.
+static bool hasIntrinsicPAddUser(const Value *V) {
+
+  for (const User *U : V->users()) {
+    const Instruction *Instr = dyn_cast<const Instruction>(U);
+    if (!Instr)
+      continue;
+    if (Instr->isCast())
+      return hasIntrinsicPAddUser(Instr);
+    if (const auto *MaybeIntrinsicCall = dyn_cast<CallBase>(Instr)) {
+      Intrinsic::ID ID = MaybeIntrinsicCall->getIntrinsicID();
+      unsigned PtrIdx;
+      if (isAIEPtrAddIntrinsic(ID, PtrIdx))
+        return true;
+    }
+  }
+  return false;
+}
+
+// If V is a GEP with one constant index, return it.
+static std::optional<int64_t> getGEPConstantOffset(const Value *V) {
+  const GEPOperator *GEP = dyn_cast<const GEPOperator>(V);
+  if (!GEP)
+    return std::nullopt;
+  if (GEP->getNumIndices() != 1)
+    return std::nullopt;
+  if (!GEP->hasAllConstantIndices())
+    return std::nullopt;
+  return cast<ConstantInt>(GEP->getOperand(1))->getSExtValue();
+}
+
 AliasResult AIE::aliasAcrossVirtualUnrolls(const MachineInstr *MIA,
                                            const MachineInstr *MIB,
                                            unsigned UnrollLevelMIA,
                                            unsigned UnrollLevelMIB) {
 
-  auto GetValueBasePair = [](const MachineMemOperand *MMO)
+  auto GetValueBasePair = [=](const MachineMemOperand *MMO)
       -> std::optional<std::pair<const Value *, const Value *>> {
     const Value *Val = MMO->getValue();
     // We know nothing about the MMO.
@@ -636,6 +667,29 @@ AliasResult AIE::aliasAcrossVirtualUnrolls(const MachineInstr *MIA,
     if (!Base)
       return std::nullopt;
 
+    if (auto ConstantOffset = getGEPConstantOffset(Val)) {
+      const int64_t Offset = *ConstantOffset;
+      const int64_t Size =
+          MMO->getSize().hasValue() ? MMO->getSize().getValue() : 0;
+      // This could be part of a big 2D/3D load/store, where we have a first
+      // offset load/store and a second paddXd post inc load/store (any order).
+      // The offset from the offset load/store must match the amount of
+      // loaded/stored data. Example:
+
+      // store <16 x i32> %X, ptr %Ptr
+      // %OffsetPtr = getelementptr inbounds i8 %Ptr, i20 64
+      // store <16 x i32> %Y, ptr %OffsetPtr <- we are interested in this one.
+      // %65 = tail call { ptr, i20 } @llvm.aie2p.add.2d(ptr %Ptr, ....)
+      if (Size == Offset) {
+        // Let's try to find a padd intrinsic for this whole memory operation.
+        // If we have an intrinsic that uses the same base, we can assume that
+        // this memory operation is related to the memory operation targeted by
+        // the intrinsic.
+        if (hasIntrinsicPAddUser(Base)) {
+          Val = Base;
+        }
+      }
+    }
     return std::make_pair(Val, Base);
   };
 
