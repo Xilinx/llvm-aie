@@ -22,10 +22,10 @@ let Namespace = "TEST" in
 
 // Let's check that the default slot isn't generated in the enumeration
 // CHECK:     #ifdef GET_FORMATS_SLOTKINDS
-// CHECK-NOT: SLOT_UNKNOWN
+// CHECK-NOT: SlotUnknown
 // CHECK:     SLOT_FU0
 // CHECK:     SLOT_FU1
-// CHECK-NOT: SLOT_UNKNOWN
+// CHECK-NOT: SlotUnknown
 // CHECK:     #endif // GET_FORMATS_SLOTKINDS
 
 // Check there is no wild instantiation of the default slot

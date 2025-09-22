@@ -21,8 +21,6 @@
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <cstddef>
-#include <map>
-#include <unordered_map>
 
 namespace llvm {
 
@@ -39,7 +37,7 @@ public:
     size_t operator()(MCSlotKind SK) const { return SK; }
   };
 
-  static const int SLOT_UNKNOWN = -1;
+  static const int SlotUnknown = -1;
 
   enum AIESlotKind : int {
 #define GET_FORMATS_SLOTKINDS
@@ -61,7 +59,7 @@ public:
   constexpr MCSlotKind(int Kind) : Kind(Kind) {}
 
   /// Default constructor, initialize the value at UNKNOWN
-  constexpr MCSlotKind() : Kind(SLOT_UNKNOWN) {}
+  constexpr MCSlotKind() : Kind(SlotUnknown) {}
   /// Copy/Move Ctor
   constexpr MCSlotKind(const MCSlotKind &) = default;
   constexpr MCSlotKind(MCSlotKind &&) = default;

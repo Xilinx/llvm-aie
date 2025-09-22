@@ -331,15 +331,15 @@ public:
 
       EnumerationString = Namespace + "_SLOT_" + EnumerationString;
     } else {
-      // a default slot has always the enumeration string "SLOT_UNKNOWN"
-      EnumerationString = "SLOT_UNKNOWN";
+      // a default slot has always the enumeration string "SlotUnknown"
+      EnumerationString = "SlotUnknown";
     }
   }
 
   // This constructor builds a default slot
   TGTargetSlot(const std::string Namespace)
       : InstanceName("unknown_slot"), SlotName("unknown"), Namespace(Namespace),
-        EnumerationString("SLOT_UNKNOWN"), FieldToFind(""), NumSlot(-1),
+        EnumerationString("SlotUnknown"), FieldToFind(""), NumSlot(-1),
         SlotSize(0), IsDefaultSlot(true) {}
 
   const std::string &getInstanceName() const { return InstanceName; }
