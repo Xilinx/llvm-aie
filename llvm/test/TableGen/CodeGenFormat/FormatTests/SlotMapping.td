@@ -22,13 +22,14 @@ def veca_slot : InstSlot<"veca", 37>;
 include "Inputs/CommonFormatTesting.td"
 
 // CHECK:        GET_ALTERNATE_INST_OPCODE_FUNC
-// CHECK:        static std::vector<unsigned int> const AlternateInsts[] = {
+// CHECK:        static constexpr unsigned int const AlternateInsts[] = {
 // CHECK:        TEST::MultiSlotPseudo
-// CHECK:        { TEST::ADD, TEST::VMUL80_S32_S32_BM }
+// CHECK-NEXT:   TEST::ADD,
+// CHECK-NEXT:   TEST::VMUL80_S32_S32_BM,
 
-// CHECK:        const std::vector<unsigned int> *TESTMCFormats::getAlternateInstsOpcode(unsigned int Opcode) const {
+// CHECK:        ArrayRef<unsigned int> TESTMCFormats::getAlternateInstsOpcode(unsigned int Opcode) const {
 // CHECK:        case TEST::MultiSlotPseudo:
-// CHECK:        return &AlternateInsts[0];
+// CHECK:        return{{.*}}(&AlternateInsts[0], 2)
 
 def ADD      : TEST_alu_r_rr<0b0000, "add">;
 

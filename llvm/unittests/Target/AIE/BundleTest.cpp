@@ -76,7 +76,7 @@ class MockMCFormats : public AIEBaseMCFormats {
     llvm_unreachable("Un-implemented");
   }
 
-  const std::vector<unsigned int> *
+  ArrayRef<unsigned int>
   getAlternateInstsOpcode(unsigned int Opcode) const override {
     llvm_unreachable("Un-implemented");
   }

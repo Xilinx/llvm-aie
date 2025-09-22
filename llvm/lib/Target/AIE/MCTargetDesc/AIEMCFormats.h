@@ -365,7 +365,7 @@ public:
 
   /// Returns a set of opcode for a given multi-slot pseudo intr, for an
   /// unsupported opcode it returns an empty set
-  virtual const std::vector<unsigned int> *
+  virtual ArrayRef<unsigned int>
   getAlternateInstsOpcode(unsigned int Opcode) const = 0;
 
   /// Retrieve directly the Packet Format, based on the opcode.
@@ -396,7 +396,7 @@ protected:
 
 class AIEMCFormats : public AIEBaseMCFormats {
 public:
-  const std::vector<unsigned int> *
+  ArrayRef<unsigned int>
   getAlternateInstsOpcode(unsigned int Opcode) const override;
   std::optional<unsigned int>
   getFormatDescIndex(unsigned int Opcode) const override;
@@ -407,7 +407,7 @@ public:
 
 class AIE2MCFormats : public AIEBaseMCFormats {
 public:
-  const std::vector<unsigned int> *
+  ArrayRef<unsigned int>
   getAlternateInstsOpcode(unsigned int Opcode) const override;
   std::optional<unsigned int>
   getFormatDescIndex(unsigned int Opcode) const override;
@@ -419,7 +419,7 @@ public:
 
 class AIE2PMCFormats : public AIEBaseMCFormats {
 public:
-  const std::vector<unsigned int> *
+  ArrayRef<unsigned int>
   getAlternateInstsOpcode(unsigned int Opcode) const override;
   std::optional<unsigned int>
   getFormatDescIndex(unsigned int Opcode) const override;

@@ -1174,16 +1174,20 @@ const MCSlotInfo *AIEBaseInstrInfo::getSlotInfo(const MCSlotKind Kind) const {
 }
 
 bool AIEBaseInstrInfo::isMultiSlotPseudo(const MachineInstr &MI) const {
-  return MI.isPseudo() &&
-         getFormatInterface()->getAlternateInstsOpcode(MI.getOpcode());
+  if (!MI.isPseudo()) {
+    return false;
+  }
+  ArrayRef<unsigned> Alternatives =
+      getFormatInterface()->getAlternateInstsOpcode(MI.getOpcode());
+  return Alternatives.size() > 1;
 }
 
 std::optional<unsigned>
 AIEBaseInstrInfo::getSlotOpcode(const MCSlotKind Slot,
                                 const MachineInstr &MI) const {
   assert(isMultiSlotPseudo(MI));
-  for (const auto &OpCode :
-       *getFormatInterface()->getAlternateInstsOpcode(MI.getOpcode())) {
+  for (unsigned OpCode :
+       getFormatInterface()->getAlternateInstsOpcode(MI.getOpcode())) {
     if (getSlotKind(OpCode) == Slot)
       return OpCode;
   }

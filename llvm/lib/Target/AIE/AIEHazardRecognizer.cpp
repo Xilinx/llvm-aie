@@ -176,32 +176,32 @@ bool AIEResourceCycle::canReserveResources(MachineInstr &MI) {
   // Note : canAdd() can only be called with a "fixed-slot" instruction or
   // Target specific OpCode
 
-  const std::vector<unsigned int> *AlternateInsts =
+  ArrayRef<unsigned int> AlternateInsts =
       Bundle.FormatInterface->getAlternateInstsOpcode(MI.getOpcode());
 
-  if (!AlternateInsts)
+  if (AlternateInsts.size() < 2)
     return Bundle.canAdd(&MI);
 
   // Limit VLD multislot instructions to be NFC for the SW pipeliner.
   if (MI.mayLoad())
-    return Bundle.canAdd(AlternateInsts->back());
+    return Bundle.canAdd(AlternateInsts.back());
 
-  return any_of(*AlternateInsts,
+  return any_of(AlternateInsts,
                 [&](unsigned AltOpcode) { return Bundle.canAdd(AltOpcode); });
 }
 
 void AIEResourceCycle::reserveResources(MachineInstr &MI) {
-  const std::vector<unsigned int> *AlternateInsts =
+  ArrayRef<unsigned int> AlternateInsts =
       Bundle.FormatInterface->getAlternateInstsOpcode(MI.getOpcode());
 
-  if (!AlternateInsts)
+  if (AlternateInsts.size() < 2)
     return Bundle.add(&MI);
 
   // Limit VLD multislot instructions to be NFC for the SW pipeliner.
   if (MI.mayLoad())
-    return Bundle.add(&MI, AlternateInsts->back());
+    return Bundle.add(&MI, AlternateInsts.back());
 
-  for (unsigned AltOpcode : *AlternateInsts) {
+  for (unsigned AltOpcode : AlternateInsts) {
     if (Bundle.canAdd(AltOpcode)) {
       return Bundle.add(&MI, AltOpcode);
     }
@@ -373,10 +373,10 @@ AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
     return NoopHazard;
   }
 
-  const std::vector<unsigned int> *AlternateInsts =
+  ArrayRef<unsigned int> AlternateInsts =
       TII->getFormatInterface()->getAlternateInstsOpcode(MI->getOpcode());
-  if (AlternateInsts) {
-    for (const auto AltInstOpcode : *AlternateInsts) {
+  if (AlternateInsts.size() > 1) {
+    for (const auto AltInstOpcode : AlternateInsts) {
       ScheduleHazardRecognizer::HazardType Haz =
           getHazardType(Scoreboard, MI, TII->get(AltInstOpcode), DeltaCycles);
       // Check if there is NoHazard, If there is a Hazard or NoopHazard check

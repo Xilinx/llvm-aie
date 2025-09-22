@@ -140,24 +140,22 @@ void CodeGenFormat::run(raw_ostream &o) {
   o << "#ifdef GET_ALTERNATE_INST_OPCODE_FUNC\n"
     << "#undef GET_ALTERNATE_INST_OPCODE_FUNC\n";
 
-  if (!PseudoInstFormats.empty()) {
-    o << "static std::vector<unsigned int> const AlternateInsts[] = {\n";
-    for (const auto &Inst : PseudoInstFormats) {
-      Inst.emitAlternateInstsOpcodeSet(o);
-      if (Inst.getInstrName() != PseudoInstFormats.back().getInstrName())
-        o << ", \n";
-    }
-    o << "\n};\n\n";
+  ConstTable AlternativeList("unsigned int", "AlternateInsts");
+  std::stringstream Cases;
+  for (unsigned int I = 0; I < PseudoInstFormats.size(); I++) {
+    PseudoInstFormats[I].emitAlternateInstsOpcode(Cases, I, AlternativeList);
   }
-
-  o << "const std::vector<unsigned int> *" << Target.getName().str()
+  if (!AlternativeList.size()) {
+    AlternativeList << "0";
+  }
+  o << AlternativeList.finish();
+  o << "ArrayRef<unsigned int> " << Target.getName().str()
     << "MCFormats::getAlternateInstsOpcode";
   o << "(unsigned int Opcode) const {\n";
   o << "  switch (Opcode) {\n";
   o << "  default:\n";
-  o << "    return nullptr;\n";
-  for (unsigned int I = 0; I < PseudoInstFormats.size(); I++)
-    PseudoInstFormats[I].emitAlternateInstsOpcode(o, I);
+  o << "    return {nullptr, size_t(0)};\n";
+  o << Cases.str();
   o << "  }\n}\n";
   o << "#endif // GET_ALTERNATE_INST_OPCODE_FUNC\n\n";
 
@@ -170,9 +168,8 @@ void CodeGenFormat::run(raw_ostream &o) {
     unsigned BaseIndex = 0;
     for (const TGInstrLayout &Inst : InstFormats)
       Inst.emitFlatTree(FieldsHierarchy, BaseIndex);
-    FieldsHierarchy.finish();
 
-    o << FieldsHierarchy;
+    o << FieldsHierarchy.finish();
 
     {
       ConstTable OpFields("const MCFormatField *", "OpFields");
@@ -185,15 +182,10 @@ void CodeGenFormat::run(raw_ostream &o) {
         Formats.next();
       }
 
-      Formats.finish();
-      OpFields.finish();
-      SlotsFields.finish();
-      FieldRanges.finish();
-
-      o << OpFields;
-      o << FieldRanges;
-      o << SlotsFields;
-      o << Formats;
+      o << OpFields.finish();
+      o << FieldRanges.finish();
+      o << SlotsFields.finish();
+      o << Formats.finish();
       o << "#endif // GET_FORMATS_FORMATS_DEFS\n\n";
     }
 
@@ -618,22 +610,25 @@ void TGInstrLayout::emitFlatTree(ConstTable &FieldsHierarchy,
 void TGInstrLayout::emitAlternateInstsOpcodeSet(raw_ostream &o) const {
   assert(AlternateInsts.size() &&
          "AlternateInsts cannot be empty for multi slot pseudo instr");
-  o << "    // " << Target << "::" << InstrName << "\n";
-  o << "    { ";
+  o << "    // " << Target << "::" << InstrName << "\n  ";
   for (const auto &AltInstr : AlternateInsts) {
-    o << AltInstr;
-    if (AltInstr != AlternateInsts.back())
-      o << ", ";
+    o << AltInstr << ", ";
   }
-  o << " }";
+  o << "\n";
 }
 
-void TGInstrLayout::emitAlternateInstsOpcode(raw_ostream &o,
-                                             unsigned int index) const {
+void TGInstrLayout::emitAlternateInstsOpcode(std::stringstream &OS,
+                                             unsigned int Index,
+                                             ConstTable &Opcodes) const {
   assert(AlternateInsts.size() &&
          "AlternateInsts cannot be empty for multi slot pseudo instr");
-  o << "  case " << Target << "::" << InstrName << ":\n"
-    << "    return &AlternateInsts[" << std::to_string(index) << "];\n";
+  OS << "  case " << Target << "::" << InstrName << ":\n";
+  Opcodes.mark((Target + "::" + InstrName).c_str());
+  for (auto AltOpcode : AlternateInsts) {
+    Opcodes << AltOpcode;
+    Opcodes.next();
+  }
+  OS << "    return " << Opcodes.arrayRef() << ";\n";
 }
 
 void TGInstrLayout::emitOpcodeFormatIndex(raw_ostream &o) const {

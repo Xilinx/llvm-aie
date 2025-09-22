@@ -102,7 +102,10 @@ public:
     Text << ",\n";
     Size++;
   }
-  void finish() { Text << "};\n\n"; }
+  ConstTable &finish() {
+    Text << "};\n\n";
+    return *this;
+  }
 };
 
 template <typename T> ConstTable &operator<<(ConstTable &Table, T Item) {
@@ -226,7 +229,8 @@ public:
   /// InstrName/PseudoOpcode
   void emitAlternateInstsOpcodeSet(raw_ostream &o) const;
   /// Emit a case table to get AlternateInsts based of InstrName/PseudoOpcode
-  void emitAlternateInstsOpcode(raw_ostream &o, unsigned int index) const;
+  void emitAlternateInstsOpcode(std::stringstream &OS, unsigned int Index,
+                                ConstTable &Opcodes) const;
 
   /// Emit the Packet-Format table, used in the FormatSelector.
   void emitPacketEntry(ConstTable &FormatData, ConstTable &SlotData) const;
