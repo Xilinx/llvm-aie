@@ -735,9 +735,9 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
     const MemoryObjectsBits ObjectBits = HR.getMemoryObjectsBits(MI);
     int Cycle = ModCycle;
     LLVM_DEBUG(dbgs() << "  Emit in " << Cycle << "\n");
-    for (int N = 0; N < NCopies; N++) {
-      if (N > 0 && HR.checkConflict(Scoreboard, *MI, Cycle)) {
-        LLVM_DEBUG(dbgs() << "Conflict in iteration N=" << N << "\n");
+    for (int S = 0; S < NCopies; S++) {
+      if (S > 0 && HR.checkConflict(Scoreboard, *MI, Cycle)) {
+        LLVM_DEBUG(dbgs() << "Conflict in iteration S=" << S << "\n");
         return false;
       }
 

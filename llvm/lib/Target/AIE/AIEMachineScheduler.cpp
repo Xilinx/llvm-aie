@@ -1525,7 +1525,7 @@ void AIEScheduleDAGMI::schedule() {
     // We are only gathering regions in the MBB, no scheduling to do.
     return;
   case SchedulingStage::Pipelining: {
-    // We've gone past regular scheduling. Try to find a valid modulo schedule
+    // Try to find a valid modulo schedule
     // If it succeeds, we need to implement it, if we fail we fall back on the
     // normal loop schedule
     SchedImpl->buildGraph(*this, AA);

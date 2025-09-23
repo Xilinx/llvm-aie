@@ -371,7 +371,7 @@ bool InterBlockScheduling::leaveBlock() {
   // After scheduling a basic block, check convergence to determine which block
   // to schedule next and with what parameters
   auto &BS = *CurrentBlockState;
-  switch (updateFixPoint(BS)) {
+  switch (BS.FixPoint.Stage = updateFixPoint(BS)) {
   case SchedulingStage::GatheringRegions:
   case SchedulingStage::SchedulingNotConverged:
   case SchedulingStage::Scheduling:
@@ -512,7 +512,7 @@ MachineInstr *InterBlockScheduling::latencyConverged(BlockState &BS) const {
 
 SchedulingStage InterBlockScheduling::updateFixPoint(BlockState &BS) {
   if (BS.Kind != BlockType::Loop) {
-    return BS.FixPoint.Stage = SchedulingStage::SchedulingDone;
+    return SchedulingStage::SchedulingDone;
   }
 
   if (BS.FixPoint.Stage == SchedulingStage::GatheringRegions) {
@@ -521,7 +521,7 @@ SchedulingStage InterBlockScheduling::updateFixPoint(BlockState &BS) {
     // Now we can create the interblock edges between the top and the bottom
     // region
     BS.initInterBlock(*Context, *HR);
-    return BS.FixPoint.Stage = SchedulingStage::Scheduling;
+    return SchedulingStage::Scheduling;
   }
 
   BS.FixPoint.NumIters++;
@@ -536,7 +536,8 @@ SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
   if (BS.FixPoint.NumIters >
       MaxExpensiveIterations + 2 * HR->getConflictHorizon()) {
     report_fatal_error("Inter-block scheduling did not converge.");
-    return BS.FixPoint.Stage = SchedulingStage::SchedulingNotConverged;
+
+    return SchedulingStage::SchedulingNotConverged;
   }
 
   if (MachineInstr *MINeedsHigherCap = latencyConverged(BS)) {
@@ -553,7 +554,7 @@ SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
                            << " LM=" << BS.FixPoint.LatencyMargin
                            << " MIM=" << Res.first->second << "\n");
     // Iterate on CurMBB
-    return BS.FixPoint.Stage = SchedulingStage::Scheduling;
+    return SchedulingStage::Scheduling;
   }
 
   // Before pushing BS.getBottom() instructions up to avoid resource hazards,
@@ -570,7 +571,7 @@ SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
         DEBUG_LOOPAWARE(dbgs() << "  not converged: resources ExtraDepth="
                                << ExtraDepth << "\n");
         // Iterate on CurMBB
-        return BS.FixPoint.Stage = SchedulingStage::Scheduling;
+        return SchedulingStage::Scheduling;
       }
       DEBUG_LOOPAWARE(dbgs() << "  not converged: Depth biasing failed\n");
     }
@@ -592,7 +593,7 @@ SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
                            << " LM=" << BS.FixPoint.LatencyMargin
                            << " MIM=" << Res.first->second << "\n");
     // Iterate on CurMBB
-    return BS.FixPoint.Stage = SchedulingStage::Scheduling;
+    return SchedulingStage::Scheduling;
   }
 
   DEBUG_LOOPAWARE(dbgs() << "Converged,"
@@ -607,23 +608,22 @@ SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
     if (PostSWP.isPostPipelineCandidate(*BS.TheBlock)) {
       BS.FixPoint.II = PostSWP.getResMII(*BS.TheBlock);
       BS.FixPoint.IITries = 1;
-      return BS.FixPoint.Stage = SchedulingStage::Pipelining;
+      return SchedulingStage::Pipelining;
     }
   }
-  return BS.FixPoint.Stage = SchedulingStage::SchedulingDone;
+  return SchedulingStage::SchedulingDone;
 }
 
 SchedulingStage InterBlockScheduling::updatePipelining(BlockState &BS) {
-  // We have been pipelining. Check whether we were successful.
+  // We may have been pipelining. Check whether we were successful.
   if (BS.FixPoint.Stage == SchedulingStage::PipeliningDone) {
-    return BS.FixPoint.Stage;
+    return SchedulingStage::PipeliningDone;
   }
-
   // Otherwise try a larger II.
   // We cut off at larger IIs to prevent excessive compilation time.
   if (++BS.FixPoint.II <= PostPipelinerMaxII &&
       ++BS.FixPoint.IITries <= PostPipelinerMaxTryII) {
-    return BS.FixPoint.Stage = SchedulingStage::Pipelining;
+    return SchedulingStage::Pipelining;
   }
 
   auto *BB = BS.TheBlock;
@@ -635,9 +635,8 @@ SchedulingStage InterBlockScheduling::updatePipelining(BlockState &BS) {
            << "No schedule found.";
   });
 
-  // Fall back to the loop schedule. Note that we can only have II != 0
-  // after the loop schedule has stabilized.
-  return BS.FixPoint.Stage = SchedulingStage::PipeliningFailed;
+  // Fall back to loop-aware scheduling
+  return SchedulingStage::PipeliningFailed;
 }
 
 bool InterBlockScheduling::successorsAreScheduled(
