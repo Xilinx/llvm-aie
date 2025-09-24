@@ -547,6 +547,8 @@ int PostPipeliner::computeMinScheduleLength() const {
   return MinLength;
 }
 
+namespace {
+
 void dumpGraph(const ScheduleInfo &Info, ScheduleDAGInstrs *DAG) {
   dbgs() << "digraph {\n";
 
@@ -604,9 +606,23 @@ void dumpGraph(const ScheduleInfo &Info, ScheduleDAGInstrs *DAG) {
   dbgs() << "}\n";
 }
 
+char slotLetter(const SlotCounts &Slots) {
+  // Slots are sorted by name in tablegen.
+  // alu, lda, ldb, lng, mov, nop, st, vec
+  const char *const L = "XABLMNSVW9";
+
+  for (int I = 0; I < 10; I++) {
+    if (Slots[I] > 0) {
+      return L[I];
+    }
+  }
+  return '*';
+}
+
 void dumpSchedule(const ScheduleInfo &Info, int MinLength, int II,
                   std::function<bool(int I, int K)> Select) {
   for (int K = 0; K < Info.NInstr; K++) {
+    char S = slotLetter(Info[K].Slots);
     std::string Head = "SU" + std::to_string(K);
     dbgs() << Head;
     for (int I = Head.length() - 6; I < MinLength; I++) {
@@ -614,7 +630,7 @@ void dumpSchedule(const ScheduleInfo &Info, int MinLength, int II,
         dbgs() << "|";
       }
       if (Select(I, K)) {
-        dbgs() << "*";
+        dbgs() << S;
       } else {
         dbgs() << " ";
       }
@@ -640,6 +656,7 @@ void dumpCycles(const ScheduleInfo &Info, int II) {
   dumpSchedule(Info, FullStageLength, II,
                [&](int I, int K) { return I == Info[K].Cycle; });
 }
+} // namespace
 
 int PostPipeliner::mostUrgent(PostPipelinerStrategy &Strategy) {
   assert(FirstUnscheduled <= LastUnscheduled);
@@ -831,6 +848,7 @@ bool PostPipeliner::scheduleWithStrategy(PostPipelinerStrategy &S) {
   return true;
 }
 
+namespace {
 int getMinOutputLat(ArrayRef<SDep> Edges) {
   int Min = std::numeric_limits<int>::max();
   for (const SDep &Dep : Edges) {
@@ -840,6 +858,7 @@ int getMinOutputLat(ArrayRef<SDep> Edges) {
   }
   return Min;
 }
+} // namespace
 
 class DefaultStrategy : public PostPipelinerStrategy {
 public:
