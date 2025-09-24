@@ -611,9 +611,21 @@ void dumpGraph(const ScheduleInfo &Info, ScheduleDAGInstrs *DAG) {
   dbgs() << "}\n";
 }
 
+int slotLetter(const SlotCounts &Slots) {
+  const char *const L = "0123456789";
+
+  for (int I = 0; I < 10; I++) {
+    if (Slots[I] > 0) {
+      return L[I];
+    }
+  }
+  return '*';
+}
+
 void dumpSchedule(const ScheduleInfo &Info, int MinLength, int II,
                   std::function<bool(int I, int K)> Select) {
   for (int K = 0; K < Info.NInstr; K++) {
+    char S = slotLetter(Info[K].Slots);
     std::string Head = "SU" + std::to_string(K);
     dbgs() << Head;
     for (int I = Head.length() - 6; I < MinLength; I++) {
@@ -621,7 +633,7 @@ void dumpSchedule(const ScheduleInfo &Info, int MinLength, int II,
         dbgs() << "|";
       }
       if (Select(I, K)) {
-        dbgs() << "*";
+        dbgs() << S;
       } else {
         dbgs() << " ";
       }
