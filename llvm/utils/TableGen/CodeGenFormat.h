@@ -229,7 +229,7 @@ public:
   /// Emit a case table to get InstrID based of InstrName.
   void emitOpcodeFormatIndex(raw_ostream &o) const;
   /// Emit a case table to get AlternateInsts based of InstrName/PseudoOpcode
-  void emitAlternateInstsOpcode(std::stringstream &OS, unsigned int Index,
+  void emitAlternateInstsOpcode(std::stringstream &OS,
                                 ConstTable &Opcodes) const;
 
   /// Emit the Packet-Format table, used in the FormatSelector.

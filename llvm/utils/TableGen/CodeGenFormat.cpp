@@ -142,8 +142,8 @@ void CodeGenFormat::run(raw_ostream &o) {
 
   ConstTable AlternativeList("unsigned int", "AlternateInsts");
   std::stringstream Cases;
-  for (unsigned int I = 0; I < PseudoInstFormats.size(); I++) {
-    PseudoInstFormats[I].emitAlternateInstsOpcode(Cases, I, AlternativeList);
+  for (auto &MSP : PseudoInstFormats) {
+    MSP.emitAlternateInstsOpcode(Cases, AlternativeList);
   }
   for (const CodeGenInstruction *CGI : NumberedInstructions) {
     if (CGI->TheDef->getValue("Inst")) {
@@ -622,7 +622,6 @@ void TGInstrLayout::emitFlatTree(ConstTable &FieldsHierarchy,
 }
 
 void TGInstrLayout::emitAlternateInstsOpcode(std::stringstream &OS,
-                                             unsigned int Index,
                                              ConstTable &Opcodes) const {
   assert(AlternateInsts.size() &&
          "AlternateInsts cannot be empty for multi slot pseudo instr");
