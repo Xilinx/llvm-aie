@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file describes an abstract interface used to get information about a
@@ -43,7 +46,7 @@ public:
   const uint16_t RegsSize;
   const uint16_t RegSetSize;
   const uint16_t ID;
-  const uint16_t RegSizeInBits;
+  const uint32_t RegSizeInBits;
   const int8_t CopyCost;
   const bool Allocatable;
   const bool BaseClass;
