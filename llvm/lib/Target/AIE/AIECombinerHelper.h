@@ -158,10 +158,10 @@ MachineInstr *getDefIgnoringCopiesAndBitcasts(Register Reg,
 
 bool matchExtractVecEltAndExt(
     MachineInstr &MI, MachineRegisterInfo &MRI, const AIEBaseInstrInfo &TII,
-    std::pair<MachineInstr *, std::pair<bool, bool>> &MatchInfo);
+    std::tuple<MachineInstr *, bool, bool> &MatchInfo);
 void applyExtractVecEltAndExt(
     MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B,
-    std::pair<MachineInstr *, std::pair<bool, bool>> &MatchInfo);
+    std::tuple<MachineInstr *, bool, bool> &MatchInfo);
 
 bool matchSplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                       std::pair<Register, Register> &MatchInfo);
