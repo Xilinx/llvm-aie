@@ -70,10 +70,9 @@ static void eliminateDuplicatePHIUses(MachineRegisterInfo &MRI,
 /// \param MI The instruction to check.
 static bool isPointerTypePHI(MachineRegisterInfo &MRI, const MachineInstr &MI) {
   assert(MI.getOpcode() == TargetOpcode::G_PHI);
-  const int DefaultAddrSpace = 0;
   const Register Reg = MI.getOperand(0).getReg();
   const LLT RegType = MRI.getType(Reg);
-  return RegType == LLT::pointer(DefaultAddrSpace, RegType.getSizeInBits());
+  return RegType.isPointer();
 }
 
 class AIEEliminateDuplicatePHI : public MachineFunctionPass {
