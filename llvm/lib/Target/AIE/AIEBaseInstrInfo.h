@@ -869,6 +869,9 @@ protected:
                     const DebugLoc &dl, Register DestReg,
                     ArrayRef<MachineOperand> Cond, Register TrueReg,
                     Register FalseReg) const override;
+
+  bool areMemAccessesTriviallyDisjoint(const MachineInstr &MIa,
+                                       const MachineInstr &MIb) const override;
 };
 
 template <unsigned NumEncodingBits, unsigned Step>

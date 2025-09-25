@@ -1448,3 +1448,61 @@ void AIEBaseInstrInfo::insertSelect(MachineBasicBlock &MBB,
       .addReg(Support->getSelectSrcOperand(InputOperands, 1))
       .addReg(Support->getSelectSrcOperand(InputOperands, 2));
 }
+
+bool AIEBaseInstrInfo::areMemAccessesTriviallyDisjoint(
+    const MachineInstr &MIa, const MachineInstr &MIb) const {
+  if (!MIa.hasOneMemOperand() || !MIb.hasOneMemOperand())
+    return false;
+
+  // If mem-operands show that the same address Value is used by both
+  // instructions, check for non-overlapping offsets and widths.
+  const MachineMemOperand *MMOa = *MIa.memoperands_begin();
+  const MachineMemOperand *MMOb = *MIb.memoperands_begin();
+
+  auto CheckOverlapping = [=](int64_t OffsetA, int64_t OffsetB) {
+    const LocationSize WidthA = MMOa->getSize(), WidthB = MMOb->getSize();
+    const int64_t LowOffset = OffsetA < OffsetB ? OffsetA : OffsetB;
+    const int64_t HighOffset = OffsetA < OffsetB ? OffsetB : OffsetA;
+    const LocationSize LowWidth = (LowOffset == OffsetA) ? WidthA : WidthB;
+    return (LowWidth.hasValue() &&
+            LowOffset + (int64_t)LowWidth.getValue() <= HighOffset);
+  };
+
+  const int64_t MMOOffsetA = MMOa->getOffset();
+  const int64_t MMOOffsetB = MMOb->getOffset();
+
+  const Value *VALa = MMOa->getValue();
+  const Value *VALb = MMOb->getValue();
+  const bool SameValue = (VALa && VALb && (VALa == VALb));
+  if (SameValue)
+    return CheckOverlapping(MMOOffsetA, MMOOffsetB);
+
+  const PseudoSourceValue *PSVa = MMOa->getPseudoValue();
+  const PseudoSourceValue *PSVb = MMOb->getPseudoValue();
+
+  const bool ExistBothPseudoSources = PSVa && PSVb;
+  if (!ExistBothPseudoSources)
+    return false;
+
+  const bool SamePseudoSource = PSVa == PSVb;
+  if (SamePseudoSource)
+    return CheckOverlapping(MMOOffsetA, MMOOffsetB);
+
+  const FixedStackPseudoSourceValue *FixedStackA =
+      dyn_cast<FixedStackPseudoSourceValue>(PSVa);
+  const FixedStackPseudoSourceValue *FixedStackB =
+      dyn_cast<FixedStackPseudoSourceValue>(PSVb);
+
+  // If we have different fixed stack objects, we have disjoint access
+  // when offsets are different and we don't have any partial overlap
+  // (SameVal check).
+  const bool ExistsBothFixedStackObjs = FixedStackA && FixedStackB;
+  if (!ExistsBothFixedStackObjs)
+    return false;
+
+  const MachineFrameInfo &MFI = MIa.getMF()->getFrameInfo();
+  const int64_t ObjOffsetA = MFI.getObjectOffset(FixedStackA->getFrameIndex());
+  const int64_t ObjOffsetB = MFI.getObjectOffset(FixedStackB->getFrameIndex());
+
+  return CheckOverlapping(ObjOffsetA, ObjOffsetB);
+}
