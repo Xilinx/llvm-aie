@@ -940,39 +940,74 @@ def : Pat<(int_aie2p_vextract_broadcast128_I512 VEC512:$src, c6u:$idx),
 
 // Combine G_AIE_BROADCAST(G_AIE_EXTRACT_SUBVECTOR) into VEXTBCST
 // Note:  Broadcast destination type is the same as subvector source type
-class BcstSubvecPat<AIE2PInst Inst, ValueType BcstDstTy, 
+class BcstExtSubvecPat<AIE2PInst Inst, ValueType BcstDstTy, 
                       ValueType SubvecDstTy, DAGOperand IdxTy> :
   Pat<(BcstDstTy (bcst_vector_node
                       (SubvecDstTy(extract_subvec_node(BcstDstTy VEC512:$s0), 
                                                       (i32 IdxTy:$idx))))), 
 (Inst VEC512:$s0, IdxTy:$idx)>;
 
-class BcstSubvecPair<AIE2PInst inst, DAGOperand idxTy>{
+// Extract scalar instead of a subvector
+class BcstExtScalarPat<AIE2PInst Inst, ValueType BcstDstTy, 
+                      ValueType ScalarDstTy, DAGOperand IdxTy> :
+  Pat<(BcstDstTy (bcst_vector_node
+                      (ScalarDstTy(vextract_sext(BcstDstTy VEC512:$s0), 
+                                                      (i32 IdxTy:$idx))))), 
+(Inst VEC512:$s0, IdxTy:$idx)>;
+
+class BcstExtrPair<AIE2PInst inst, DAGOperand idxTy>{
   AIE2PInst Inst = inst;
   DAGOperand IdxTy = idxTy;
 }
 
-defset list<BcstSubvecPair> BcstSubvec32Pairs={ 
-  def : BcstSubvecPair<VEXTBCST_32_vec_extract_broadcast_imm, c6u>;
-  def : BcstSubvecPair<VEXTBCST_32_vec_extract_broadcast_r, eRS4>;
+defset list<BcstExtrPair> BcstScalar8Pairs={ 
+  def : BcstExtrPair<VEXTBCST_8_vec_extract_broadcast_imm, c6u>;
+  def : BcstExtrPair<VEXTBCST_8_vec_extract_broadcast_r, eRS4>;
 
 }
 
-defset list<BcstSubvecPair> BcstSubvec64Pairs={ 
-  def : BcstSubvecPair<VEXTBCST_64_vec_extract_broadcast_imm, c6u>;
-  def : BcstSubvecPair<VEXTBCST_64_vec_extract_broadcast_r, eRS4>;
+defset list<BcstExtrPair> BcstScalar16Pairs={ 
+  def : BcstExtrPair<VEXTBCST_16_vec_extract_broadcast_imm, c6u>;
+  def : BcstExtrPair<VEXTBCST_16_vec_extract_broadcast_r, eRS4>;
 }
 
-foreach Pair = BcstSubvec32Pairs in {
-  def : BcstSubvecPat<Pair.Inst, v64i8, v4i8, Pair.IdxTy>;
-  def : BcstSubvecPat<Pair.Inst, v32i16, v2i16, Pair.IdxTy>;
+defset list<BcstExtrPair> BcstScalar32Pairs={ 
+  def : BcstExtrPair<VEXTBCST_32_vec_extract_broadcast_imm, c6u>;
+  def : BcstExtrPair<VEXTBCST_32_vec_extract_broadcast_r, eRS4>;
 }
 
-foreach  Pair = BcstSubvec64Pairs in {
-  def : BcstSubvecPat<Pair.Inst, v64i8, v8i8, Pair.IdxTy>;
-  def : BcstSubvecPat<Pair.Inst, v32i16, v4i16, Pair.IdxTy>;
-  def : BcstSubvecPat<Pair.Inst, v16i32, v2i32, Pair.IdxTy>;
-  def : BcstSubvecPat<Pair.Inst, v8i64, v2i32, Pair.IdxTy>;
+defset list<BcstExtrPair> BcstExtSubvec32Pairs={ 
+  def : BcstExtrPair<VEXTBCST_32_vec_extract_broadcast_imm, c6u>;
+  def : BcstExtrPair<VEXTBCST_32_vec_extract_broadcast_r, eRS4>;
+}
+
+defset list<BcstExtrPair> BcstExtSubvec64Pairs={ 
+  def : BcstExtrPair<VEXTBCST_64_vec_extract_broadcast_imm, c6u>;
+  def : BcstExtrPair<VEXTBCST_64_vec_extract_broadcast_r, eRS4>;
+}
+
+foreach  Pair = BcstScalar8Pairs in {
+  def : BcstExtScalarPat<Pair.Inst, v64i8, i32, Pair.IdxTy>;
+}
+
+foreach Pair = BcstScalar16Pairs in {
+  def : BcstExtScalarPat<Pair.Inst, v32i16, i32, Pair.IdxTy>;
+}
+
+foreach Pair = BcstScalar32Pairs in {
+  def : BcstExtScalarPat<Pair.Inst, v16i32, i32, Pair.IdxTy>;
+}
+
+foreach Pair = BcstExtSubvec32Pairs in {
+  def : BcstExtSubvecPat<Pair.Inst, v64i8, v4i8, Pair.IdxTy>;
+  def : BcstExtSubvecPat<Pair.Inst, v32i16, v2i16, Pair.IdxTy>;
+}
+
+foreach  Pair = BcstExtSubvec64Pairs in {
+  def : BcstExtSubvecPat<Pair.Inst, v64i8, v8i8, Pair.IdxTy>;
+  def : BcstExtSubvecPat<Pair.Inst, v32i16, v4i16, Pair.IdxTy>;
+  def : BcstExtSubvecPat<Pair.Inst, v16i32, v2i32, Pair.IdxTy>;
+  def : BcstExtSubvecPat<Pair.Inst, v8i64, v2i32, Pair.IdxTy>;
 }
 
 // VEXTBCSTSHFL
@@ -999,6 +1034,8 @@ def : Pat<(int_aie2p_vshuffle
               (v16i32(int_aie2p_vextract_broadcast128_I512 (v16i32 VEC512:$s0), (i32 eR:$idx))),
               undef, eR29:$mod),
            (VEXTBCSTSHFL_128 VEC512:$s0, eR:$idx, eR29:$mod)>;
+
+
 
 
 

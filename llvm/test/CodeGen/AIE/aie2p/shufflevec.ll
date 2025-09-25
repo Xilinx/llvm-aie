@@ -220,11 +220,11 @@ entry:
 define <8 x i32> @test_shuffle_vector_to_extract_broadcast_vecElem(<8 x i32> noundef %a, <8 x i32> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_to_extract_broadcast_vecElem:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
-; CHECK-NEXT:    nopx // Delay Slot 5
-; CHECK-NEXT:    vextract.32 r0, x2, #2, vaddsign1 // Delay Slot 4
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    vbcst.32 x0, r0 // Delay Slot 2
+; CHECK-NEXT:    vextbcst.32 x0, x2, #2 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %shuffle = shufflevector <8 x i32> %a, <8 x i32> %b, <8 x i32> <i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2>
