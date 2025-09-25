@@ -28,6 +28,7 @@
 # In this case, we have five fixed stack objects: 0, that is aliasing (same offset)
 # with 2 and 1 that is aliasing with 3. We also have an object 4 that partially alias
 # with 0 and 2.
+# Note: this tests AIEBaseInstrInfo::areMemAccessesTriviallyDisjoint()
 
 ---
 name:            load_and_store_chain
@@ -72,8 +73,8 @@ body:             |
     ; CHECK: SU(1):   %1:er = LDA_dms_lda_idx_imm %0:ep, 0 :: (invariant load (s32) from %fixed-stack.1)
     ; CHECK: Successors:
     ; CHECK: SU(6): Data Latency=7 Reg=%1
-    ; CHECK: SU(10): Ord  Latency=0 Memory
-    ; CHECK: SU(8): Ord  Latency=0 Memory
+    ; CHECK-NOT: SU(10): Ord  Latency=0 Memory
+    ; CHECK-NOT: SU(8): Ord  Latency=0 Memory
     ; CHECK: SU(6): Ord  Latency=0 Memory
 
     ; CHECK: SU(3):   %3:er = LDA_dms_lda_idx_imm %2:ep, 0 :: (invariant load (s32) from %fixed-stack.2, align 8)
@@ -82,7 +83,7 @@ body:             |
     ; CHECK: SU(8): Data Latency=7 Reg=%3
     ; CHECK: SU(10): Ord  Latency=0 Memory
     ; CHECK: SU(8): Ord  Latency=0 Memory
-    ; CHECK: SU(6): Ord  Latency=0 Memory
+    ; CHECK-NOT: SU(6): Ord  Latency=0 Memory
 
     ; CHECK: SU(6):   ST_dms_sts_idx_imm %1:er, %4:ep, 0 :: (store (s32) into %fixed-stack.3, align 32)
     ; CHECK: SU(8):   ST_dms_sts_idx_imm %3:er, %5:ep, 0 :: (store (s32) into %fixed-stack.4)
