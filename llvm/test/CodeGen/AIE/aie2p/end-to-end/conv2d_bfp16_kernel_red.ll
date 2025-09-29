@@ -22,22 +22,22 @@ define dso_local void @conv2d_bfp16.for.body90.i(<32 x i32> %fW.sroa.0.1489.i, i
 ; CHECK-NEXT:    st p6, [sp, #-60] // 4-byte Folded Spill
 ; CHECK-NEXT:    mov p6, sp
 ; CHECK-NEXT:    padda [p6], #-320
-; CHECK-NEXT:    vlda bmll3, [p6, #0]
-; CHECK-NEXT:    vlda bmlh3, [p6, #64]
-; CHECK-NEXT:    vlda bmhl3, [p6, #128]; mov m0, #-576
-; CHECK-NEXT:    vlda bmhh3, [p6, #192]; mov p6, sp
+; CHECK-NEXT:    vlda bmhh3, [p6, #192]
+; CHECK-NEXT:    vlda bmhl3, [p6, #128]
+; CHECK-NEXT:    vlda bmlh3, [p6, #64]; mov m0, #-576
+; CHECK-NEXT:    vlda bmll3, [p6, #0]; mov p6, sp
 ; CHECK-NEXT:    padda [p6], m0
-; CHECK-NEXT:    vlda bmll2, [p6, #0]
-; CHECK-NEXT:    vlda bmlh2, [p6, #64]
-; CHECK-NEXT:    vlda bmhl2, [p6, #128]; movxm m0, #-1092
-; CHECK-NEXT:    vlda bmhh2, [p6, #192]; mov p6, sp
+; CHECK-NEXT:    vlda bmhh2, [p6, #192]
+; CHECK-NEXT:    vlda bmhl2, [p6, #128]
+; CHECK-NEXT:    vlda bmlh2, [p6, #64]; movxm m0, #-1092
+; CHECK-NEXT:    vlda bmll2, [p6, #0]; mov p6, sp
 ; CHECK-NEXT:    mova m0, #-832; paddb [p6], m0
 ; CHECK-NEXT:    lda dj4, [p6, #0]; mov p6, sp
 ; CHECK-NEXT:    padda [p6], m0
-; CHECK-NEXT:    vlda bmll1, [p6, #0]
-; CHECK-NEXT:    vlda bmlh1, [p6, #64]
-; CHECK-NEXT:    vlda bmhl1, [p6, #128]; st p7, [sp, #-64]; movxm m0, #-1096 // 4-byte Folded Spill
-; CHECK-NEXT:    vlda bmhh1, [p6, #192]; mov p6, sp
+; CHECK-NEXT:    vlda bmhh1, [p6, #192]
+; CHECK-NEXT:    vlda bmhl1, [p6, #128]
+; CHECK-NEXT:    vlda bmlh1, [p6, #64]; st p7, [sp, #-64]; movxm m0, #-1096 // 4-byte Folded Spill
+; CHECK-NEXT:    vlda bmll1, [p6, #0]; mov p6, sp
 ; CHECK-NEXT:    padda [p6], m0; mov p7, sp
 ; CHECK-NEXT:    lda m1, [p6, #0]; movxm m0, #-1108
 ; CHECK-NEXT:    mova dc4, #0; mov p6, sp
@@ -50,13 +50,13 @@ define dso_local void @conv2d_bfp16.for.body90.i(<32 x i32> %fW.sroa.0.1489.i, i
 ; CHECK-NEXT:    lda r2, [p6, #0]; movx r25, #0; mov p6, sp
 ; CHECK-NEXT:    padda [p6], m0; vldb.fill.512 [p1, lf1, r25]; mov dn0, p3
 ; CHECK-NEXT:    // kill: def $p1 killed $p1 def $lf1
-; CHECK-NEXT:    vlda bmll0, [p6, #0]; vldb.fill.512 [p1, lf1, r25]; movs dj0, p4; mov dn4, p5
-; CHECK-NEXT:    vlda bmlh0, [p6, #64]; vldb.pop.576 ex0, [p1, lf1, r25]; movs dc0, dc4; mov m0, p2
-; CHECK-NEXT:    vlda bmhl0, [p6, #128]; vldb.pop.576.3d ex2, [p1, lf1, r25, d0]; movx r24, #0
+; CHECK-NEXT:    vlda bmhh0, [p6, #192]; vldb.fill.512 [p1, lf1, r25]; movs dj0, p4; mov dn4, p5
+; CHECK-NEXT:    vlda bmhl0, [p6, #128]; vldb.pop.576 ex0, [p1, lf1, r25]; movs dc0, dc4; mov m0, p2
+; CHECK-NEXT:    vlda bmlh0, [p6, #64]; vldb.pop.576.3d ex2, [p1, lf1, r25, d0]; movx r24, #0
 ; CHECK-NEXT:    vlda.fill.512 [p0, lf0, r24]; vldb.fill.512 [p1, lf1, r25]
 ; CHECK-NEXT:    // kill: def $p0 killed $p0 def $lf0
 ; CHECK-NEXT:    vlda.pop.576 ex4, [p0, lf0, r24]; vldb.fill.512 [p1, lf1, r25]; add r1, r6, #-1
-; CHECK-NEXT:    vlda bmhh0, [p6, #192]; vldb.pop.576 ex0, [p1, lf1, r25]; movxm ls, #.LBB0_1
+; CHECK-NEXT:    vlda bmll0, [p6, #0]; vldb.pop.576 ex0, [p1, lf1, r25]; movxm ls, #.LBB0_1
 ; CHECK-NEXT:    vlda.pop.576 ex6, [p0, lf0, r24, m1]; vldb.pop.576.3d ex2, [p1, lf1, r25, d0]; movxm le, #.L_LEnd0
 ; CHECK-NEXT:    vlda.fill.512 [p0, lf0, r24]; vldb.fill.512 [p1, lf1, r25]; add.nc lc, r1, #-4
 ; CHECK-NEXT:    vlda.pop.576 ex4, [p0, lf0, r24]; vldb.fill.512 [p1, lf1, r25]; nops ; nopxm ; nopv
@@ -89,23 +89,23 @@ define dso_local void @conv2d_bfp16.for.body90.i(<32 x i32> %fW.sroa.0.1489.i, i
 ; CHECK-NEXT:    vmac.f dm2, dm2, ex8, ex6, r0
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vst bmll0, [p7, #0]
-; CHECK-NEXT:    vst bmlh0, [p7, #64]
-; CHECK-NEXT:    vst bmhl0, [p7, #128]
 ; CHECK-NEXT:    vst bmhh0, [p7, #192]
-; CHECK-NEXT:    vst bmll1, [p0, #0]
-; CHECK-NEXT:    vst bmlh1, [p0, #64]
+; CHECK-NEXT:    vst bmhl0, [p7, #128]
+; CHECK-NEXT:    vst bmlh0, [p7, #64]
+; CHECK-NEXT:    vst bmll0, [p7, #0]
+; CHECK-NEXT:    vst bmhh1, [p0, #192]
 ; CHECK-NEXT:    vst bmhl1, [p0, #128]
-; CHECK-NEXT:    vst bmhh1, [p0, #192]; mov p0, r3
-; CHECK-NEXT:    vst bmll2, [p0, #0]
-; CHECK-NEXT:    vst bmlh2, [p0, #64]
+; CHECK-NEXT:    vst bmlh1, [p0, #64]
+; CHECK-NEXT:    vst bmll1, [p0, #0]; mov p0, r3
+; CHECK-NEXT:    vst bmhh2, [p0, #192]
 ; CHECK-NEXT:    vst bmhl2, [p0, #128]
-; CHECK-NEXT:    lda p7, [sp, #-64]; vst bmhh2, [p0, #192] // 4-byte Folded Reload
+; CHECK-NEXT:    vst bmlh2, [p0, #64]
+; CHECK-NEXT:    lda p7, [sp, #-64]; vst bmll2, [p0, #0] // 4-byte Folded Reload
 ; CHECK-NEXT:    movs p0, r2; ret lr
-; CHECK-NEXT:    vst bmll3, [p0, #0] // Delay Slot 5
-; CHECK-NEXT:    vst bmlh3, [p0, #64] // Delay Slot 4
-; CHECK-NEXT:    vst bmhl3, [p0, #128] // Delay Slot 3
-; CHECK-NEXT:    vst bmhh3, [p0, #192]; paddxm [sp], #-64 // Delay Slot 2
+; CHECK-NEXT:    vst bmhh3, [p0, #192] // Delay Slot 5
+; CHECK-NEXT:    vst bmhl3, [p0, #128] // Delay Slot 4
+; CHECK-NEXT:    vst bmlh3, [p0, #64] // Delay Slot 3
+; CHECK-NEXT:    vst bmll3, [p0, #0]; paddxm [sp], #-64 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 newFuncRoot:
   br label %for.body90.i
