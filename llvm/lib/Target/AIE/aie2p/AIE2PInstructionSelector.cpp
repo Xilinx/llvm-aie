@@ -2462,7 +2462,10 @@ bool AIE2PInstructionSelector::selectWideG_AIE_LOAD_STORE(
   case AIE2P::G_AIE_POSTINC_STORE:
   case AIE2P::G_AIE_POSTINC_2D_STORE:
   case AIE2P::G_AIE_POSTINC_3D_STORE: {
-    for (unsigned SubRegIdx = 0; SubRegIdx < SplitFactor; ++SubRegIdx) {
+    for (unsigned Part = 0; Part < SplitFactor; ++Part) {
+      const unsigned SubRegIdx = AMI.MemI.getOpcode() == AIE2P::G_STORE
+                                     ? Part
+                                     : SplitFactor - Part - 1;
       const unsigned Offset = SubRegIdx * 64;
       auto Copy = MIB.buildInstr(TargetOpcode::COPY, {SubRegs[SubRegIdx]}, {})
                       .addReg(AMI.SrcDstOp.getReg(), 0,
@@ -2534,7 +2537,9 @@ bool AIE2PInstructionSelector::selectWideG_AIE_LOAD_STORE(
   case AIE2P::G_AIE_POSTINC_LOAD:
   case AIE2P::G_AIE_POSTINC_2D_LOAD:
   case AIE2P::G_AIE_POSTINC_3D_LOAD: {
-    for (unsigned SubRegIdx = 0; SubRegIdx < SplitFactor; ++SubRegIdx) {
+    for (unsigned Part = 0; Part < SplitFactor; ++Part) {
+      const unsigned SubRegIdx =
+          AMI.MemI.getOpcode() == AIE2P::G_LOAD ? Part : SplitFactor - Part - 1;
       MachineInstrBuilder Load;
       if (SubRegIdx == 0) {
         Load = MIB.buildInstr(LSO.ISelOpcode, {SubRegs[0]}, {});
