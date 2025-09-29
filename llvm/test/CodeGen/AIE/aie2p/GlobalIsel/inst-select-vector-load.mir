@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
 
 ---
@@ -217,9 +217,9 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 0 :: (load (<16 x s32>), align 128)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm1:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 64 :: (load (<16 x s32>) from unknown-address + 64)
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:fifo1024 = REG_SEQUENCE [[VLDA_dmx_lda_fifohl_idx_imm]], %subreg.sub_lo_fifo, [[VLDA_dmx_lda_fifohl_idx_imm1]], %subreg.sub_hi_fifo
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 64 :: (load (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm1:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 0 :: (load (<16 x s32>) from unknown-address + 64)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:fifo1024 = REG_SEQUENCE [[VLDA_dmx_lda_fifohl_idx_imm1]], %subreg.sub_lo_fifo, [[VLDA_dmx_lda_fifohl_idx_imm]], %subreg.sub_hi_fifo
     ; CHECK-NEXT: $lf0 = COPY [[REG_SEQUENCE]]
     %1:ptrregbank(p0) = COPY $p0
     %0:fiforegbank(<32 x s32>) = G_LOAD %1(p0) :: (load (<32 x s32>))
@@ -238,9 +238,9 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 0 :: (load (<32 x s16>), align 128)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm1:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 64 :: (load (<32 x s16>) from unknown-address + 64)
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:fifo1024 = REG_SEQUENCE [[VLDA_dmx_lda_fifohl_idx_imm]], %subreg.sub_lo_fifo, [[VLDA_dmx_lda_fifohl_idx_imm1]], %subreg.sub_hi_fifo
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 64 :: (load (<32 x s16>), align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm1:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 0 :: (load (<32 x s16>) from unknown-address + 64)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:fifo1024 = REG_SEQUENCE [[VLDA_dmx_lda_fifohl_idx_imm1]], %subreg.sub_lo_fifo, [[VLDA_dmx_lda_fifohl_idx_imm]], %subreg.sub_hi_fifo
     ; CHECK-NEXT: $lf0 = COPY [[REG_SEQUENCE]]
     %1:ptrregbank(p0) = COPY $p0
     %0:fiforegbank(<64 x s16>) = G_LOAD %1(p0) :: (load (<64 x s16>))
@@ -258,9 +258,9 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 0 :: (load (<64 x s8>), align 128)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm1:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 64 :: (load (<64 x s8>) from unknown-address + 64)
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:fifo1024 = REG_SEQUENCE [[VLDA_dmx_lda_fifohl_idx_imm]], %subreg.sub_lo_fifo, [[VLDA_dmx_lda_fifohl_idx_imm1]], %subreg.sub_hi_fifo
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 64 :: (load (<64 x s8>), align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm1:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 0 :: (load (<64 x s8>) from unknown-address + 64)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:fifo1024 = REG_SEQUENCE [[VLDA_dmx_lda_fifohl_idx_imm1]], %subreg.sub_lo_fifo, [[VLDA_dmx_lda_fifohl_idx_imm]], %subreg.sub_hi_fifo
     ; CHECK-NEXT: $lf0 = COPY [[REG_SEQUENCE]]
     %1:ptrregbank(p0) = COPY $p0
     %0:fiforegbank(<128 x s8>) = G_LOAD %1(p0) :: (load (<128 x s8>))
@@ -278,9 +278,9 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[COPY]], 0 :: (load (<32 x s16>), align 128)
-    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo1:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[COPY]], 64 :: (load (<32 x s16>) from unknown-address + 64)
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec1024 = REG_SEQUENCE [[VLD_x_idx_imm_pseudo]], %subreg.sub_512_lo, [[VLD_x_idx_imm_pseudo1]], %subreg.sub_512_hi
+    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[COPY]], 64 :: (load (<32 x s16>), align 128)
+    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo1:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[COPY]], 0 :: (load (<32 x s16>) from unknown-address + 64)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec1024 = REG_SEQUENCE [[VLD_x_idx_imm_pseudo1]], %subreg.sub_512_lo, [[VLD_x_idx_imm_pseudo]], %subreg.sub_512_hi
     ; CHECK-NEXT: $y0 = COPY [[REG_SEQUENCE]]
     %1:ptrregbank(p0) = COPY $p0
     %0:vregbank(<64 x s16>) = G_LOAD %1(p0) :: (load (<64 x s16>))
@@ -298,9 +298,9 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[COPY]], 0 :: (load (<16 x s32>), align 128)
-    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo1:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[COPY]], 64 :: (load (<16 x s32>) from unknown-address + 64)
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec1024 = REG_SEQUENCE [[VLD_x_idx_imm_pseudo]], %subreg.sub_512_lo, [[VLD_x_idx_imm_pseudo1]], %subreg.sub_512_hi
+    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[COPY]], 64 :: (load (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo1:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[COPY]], 0 :: (load (<16 x s32>) from unknown-address + 64)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec1024 = REG_SEQUENCE [[VLD_x_idx_imm_pseudo1]], %subreg.sub_512_lo, [[VLD_x_idx_imm_pseudo]], %subreg.sub_512_hi
     ; CHECK-NEXT: $y0 = COPY [[REG_SEQUENCE]]
     %1:ptrregbank(p0) = COPY $p0
     %0:vregbank(<32 x s32>) = G_LOAD %1(p0) :: (load (<32 x s32>))
@@ -318,9 +318,9 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[COPY]], 0 :: (load (<64 x s8>), align 128)
-    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo1:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[COPY]], 64 :: (load (<64 x s8>) from unknown-address + 64)
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec1024 = REG_SEQUENCE [[VLD_x_idx_imm_pseudo]], %subreg.sub_512_lo, [[VLD_x_idx_imm_pseudo1]], %subreg.sub_512_hi
+    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[COPY]], 64 :: (load (<64 x s8>), align 128)
+    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo1:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[COPY]], 0 :: (load (<64 x s8>) from unknown-address + 64)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec1024 = REG_SEQUENCE [[VLD_x_idx_imm_pseudo1]], %subreg.sub_512_lo, [[VLD_x_idx_imm_pseudo]], %subreg.sub_512_hi
     ; CHECK-NEXT: $y0 = COPY [[REG_SEQUENCE]]
     %1:ptrregbank(p0) = COPY $p0
     %0:vregbank(<128 x s8>) = G_LOAD %1(p0) :: (load (<128 x s8>))
@@ -338,9 +338,9 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 0 :: (load (<16 x s32>), align 128)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm1:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 64 :: (load (<16 x s32>) from unknown-address + 64)
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_dmx_lda_bm_idx_imm]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm1]], %subreg.sub_512_acc_hi
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 64 :: (load (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm1:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 0 :: (load (<16 x s32>) from unknown-address + 64)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_dmx_lda_bm_idx_imm1]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm]], %subreg.sub_512_acc_hi
     ; CHECK-NEXT: $cml0 = COPY [[REG_SEQUENCE]]
     %1:ptrregbank(p0) = COPY $p0
     %0:accregbank(<32 x s32>) = G_LOAD %1(p0) :: (load (<32 x s32>))
@@ -358,9 +358,9 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 0 :: (load (<8 x s64>), align 128)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm1:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 64 :: (load (<8 x s64>) from unknown-address + 64)
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_dmx_lda_bm_idx_imm]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm1]], %subreg.sub_512_acc_hi
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 64 :: (load (<8 x s64>), align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm1:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 0 :: (load (<8 x s64>) from unknown-address + 64)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_dmx_lda_bm_idx_imm1]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm]], %subreg.sub_512_acc_hi
     ; CHECK-NEXT: $cml0 = COPY [[REG_SEQUENCE]]
     %1:ptrregbank(p0) = COPY $p0
     %0:accregbank(<16 x s64>) = G_LOAD %1(p0) :: (load (<16 x s64>))
@@ -378,11 +378,11 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 0 :: (load (<16 x s32>), align 256)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm1:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 64 :: (load (<16 x s32>) from unknown-address + 64)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm2:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 128 :: (load (<16 x s32>) from unknown-address + 128, align 128)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm3:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 192 :: (load (<16 x s32>) from unknown-address + 192)
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:acc2048 = REG_SEQUENCE [[VLDA_dmx_lda_bm_idx_imm]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm1]], %subreg.sub_512_acc_hi, [[VLDA_dmx_lda_bm_idx_imm2]], %subreg.sub_1024_acc_hi_then_sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm3]], %subreg.sub_1024_acc_hi_then_sub_512_acc_hi
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 192 :: (load (<16 x s32>), align 256)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm1:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 128 :: (load (<16 x s32>) from unknown-address + 64)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm2:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 64 :: (load (<16 x s32>) from unknown-address + 128, align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm3:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 0 :: (load (<16 x s32>) from unknown-address + 192)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:acc2048 = REG_SEQUENCE [[VLDA_dmx_lda_bm_idx_imm3]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm2]], %subreg.sub_512_acc_hi, [[VLDA_dmx_lda_bm_idx_imm1]], %subreg.sub_1024_acc_hi_then_sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm]], %subreg.sub_1024_acc_hi_then_sub_512_acc_hi
     ; CHECK-NEXT: $dm0 = COPY [[REG_SEQUENCE]]
     %1:ptrregbank(p0) = COPY $p0
     %0:accregbank(<64 x s32>) = G_LOAD %1(p0) :: (load (<64 x s32>))
@@ -400,11 +400,11 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 0 :: (load (<8 x s64>), align 256)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm1:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 64 :: (load (<8 x s64>) from unknown-address + 64)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm2:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 128 :: (load (<8 x s64>) from unknown-address + 128, align 128)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm3:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 192 :: (load (<8 x s64>) from unknown-address + 192)
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:acc2048 = REG_SEQUENCE [[VLDA_dmx_lda_bm_idx_imm]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm1]], %subreg.sub_512_acc_hi, [[VLDA_dmx_lda_bm_idx_imm2]], %subreg.sub_1024_acc_hi_then_sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm3]], %subreg.sub_1024_acc_hi_then_sub_512_acc_hi
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 192 :: (load (<8 x s64>), align 256)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm1:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 128 :: (load (<8 x s64>) from unknown-address + 64)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm2:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 64 :: (load (<8 x s64>) from unknown-address + 128, align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm3:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 0 :: (load (<8 x s64>) from unknown-address + 192)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:acc2048 = REG_SEQUENCE [[VLDA_dmx_lda_bm_idx_imm3]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm2]], %subreg.sub_512_acc_hi, [[VLDA_dmx_lda_bm_idx_imm1]], %subreg.sub_1024_acc_hi_then_sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm]], %subreg.sub_1024_acc_hi_then_sub_512_acc_hi
     ; CHECK-NEXT: $dm0 = COPY [[REG_SEQUENCE]]
     %1:ptrregbank(p0) = COPY $p0
     %0:accregbank(<32 x s64>) = G_LOAD %1(p0) :: (load (<32 x s64>))

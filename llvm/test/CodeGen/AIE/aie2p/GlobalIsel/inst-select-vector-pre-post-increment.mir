@@ -842,23 +842,23 @@ body: |
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:em = COPY [[COPY1]]
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo 32
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:em = MOV_PD_imm11_pseudo 512
-    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_pstm_nrm:%[0-9]+]]:fifo512, [[VLDA_dmx_lda_fifohl_pstm_nrm1:%[0-9]+]]:ep = VLDA_dmx_lda_fifohl_pstm_nrm [[COPY]], [[COPY2]] :: (load (<16 x s32>) from stack - 64, basealign 128)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 64 :: (load (<16 x s32>) from stack, align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 64 :: (load (<16 x s32>) from stack - 64, basealign 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_pstm_nrm:%[0-9]+]]:fifo512, [[VLDA_dmx_lda_fifohl_pstm_nrm1:%[0-9]+]]:ep = VLDA_dmx_lda_fifohl_pstm_nrm [[COPY]], [[COPY2]] :: (load (<16 x s32>) from stack, align 128)
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:fifo1024 = REG_SEQUENCE [[VLDA_dmx_lda_fifohl_pstm_nrm]], %subreg.sub_lo_fifo, [[VLDA_dmx_lda_fifohl_idx_imm]], %subreg.sub_hi_fifo
-    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_pstm_nrm_imm:%[0-9]+]]:fifo512, [[VLDA_dmx_lda_fifohl_pstm_nrm_imm1:%[0-9]+]]:ep = VLDA_dmx_lda_fifohl_pstm_nrm_imm [[VLDA_dmx_lda_fifohl_pstm_nrm1]], 448 :: (load (<16 x s32>) from stack - 64, basealign 128)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm1:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[VLDA_dmx_lda_fifohl_pstm_nrm1]], 64 :: (load (<16 x s32>) from stack, align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm1:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[VLDA_dmx_lda_fifohl_pstm_nrm1]], 64 :: (load (<16 x s32>) from stack - 64, basealign 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_pstm_nrm_imm:%[0-9]+]]:fifo512, [[VLDA_dmx_lda_fifohl_pstm_nrm_imm1:%[0-9]+]]:ep = VLDA_dmx_lda_fifohl_pstm_nrm_imm [[VLDA_dmx_lda_fifohl_pstm_nrm1]], 448 :: (load (<16 x s32>) from stack, align 128)
     ; CHECK-NEXT: [[REG_SEQUENCE1:%[0-9]+]]:fifo1024 = REG_SEQUENCE [[VLDA_dmx_lda_fifohl_pstm_nrm_imm]], %subreg.sub_lo_fifo, [[VLDA_dmx_lda_fifohl_idx_imm1]], %subreg.sub_hi_fifo
-    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_pstm_nrm_imm2:%[0-9]+]]:fifo512, [[VLDA_dmx_lda_fifohl_pstm_nrm_imm3:%[0-9]+]]:ep = VLDA_dmx_lda_fifohl_pstm_nrm_imm [[VLDA_dmx_lda_fifohl_pstm_nrm_imm1]], -512 :: (load (<16 x s32>) from stack - 64, basealign 128)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm2:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[VLDA_dmx_lda_fifohl_pstm_nrm_imm1]], 64 :: (load (<16 x s32>) from stack, align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm2:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[VLDA_dmx_lda_fifohl_pstm_nrm_imm1]], 64 :: (load (<16 x s32>) from stack - 64, basealign 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_pstm_nrm_imm2:%[0-9]+]]:fifo512, [[VLDA_dmx_lda_fifohl_pstm_nrm_imm3:%[0-9]+]]:ep = VLDA_dmx_lda_fifohl_pstm_nrm_imm [[VLDA_dmx_lda_fifohl_pstm_nrm_imm1]], -512 :: (load (<16 x s32>) from stack, align 128)
     ; CHECK-NEXT: [[REG_SEQUENCE2:%[0-9]+]]:fifo1024 = REG_SEQUENCE [[VLDA_dmx_lda_fifohl_pstm_nrm_imm2]], %subreg.sub_lo_fifo, [[VLDA_dmx_lda_fifohl_idx_imm2]], %subreg.sub_hi_fifo
-    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_pstm_nrm_imm4:%[0-9]+]]:fifo512, [[VLDA_dmx_lda_fifohl_pstm_nrm_imm5:%[0-9]+]]:ep = VLDA_dmx_lda_fifohl_pstm_nrm_imm [[VLDA_dmx_lda_fifohl_pstm_nrm_imm3]], 0 :: (load (<16 x s32>) from stack - 64, basealign 128)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm3:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[VLDA_dmx_lda_fifohl_pstm_nrm_imm3]], 64 :: (load (<16 x s32>) from stack, align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm3:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[VLDA_dmx_lda_fifohl_pstm_nrm_imm3]], 64 :: (load (<16 x s32>) from stack - 64, basealign 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_pstm_nrm_imm4:%[0-9]+]]:fifo512, [[VLDA_dmx_lda_fifohl_pstm_nrm_imm5:%[0-9]+]]:ep = VLDA_dmx_lda_fifohl_pstm_nrm_imm [[VLDA_dmx_lda_fifohl_pstm_nrm_imm3]], 0 :: (load (<16 x s32>) from stack, align 128)
     ; CHECK-NEXT: [[REG_SEQUENCE3:%[0-9]+]]:fifo1024 = REG_SEQUENCE [[VLDA_dmx_lda_fifohl_pstm_nrm_imm4]], %subreg.sub_lo_fifo, [[VLDA_dmx_lda_fifohl_idx_imm3]], %subreg.sub_hi_fifo
-    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_pstm_nrm2:%[0-9]+]]:fifo512, [[VLDA_dmx_lda_fifohl_pstm_nrm3:%[0-9]+]]:ep = VLDA_dmx_lda_fifohl_pstm_nrm [[VLDA_dmx_lda_fifohl_pstm_nrm_imm5]], [[MOV_PD_imm11_pseudo]] :: (load (<16 x s32>) from stack - 64, basealign 128)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm4:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[VLDA_dmx_lda_fifohl_pstm_nrm_imm5]], 64 :: (load (<16 x s32>) from stack, align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm4:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[VLDA_dmx_lda_fifohl_pstm_nrm_imm5]], 64 :: (load (<16 x s32>) from stack - 64, basealign 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_pstm_nrm2:%[0-9]+]]:fifo512, [[VLDA_dmx_lda_fifohl_pstm_nrm3:%[0-9]+]]:ep = VLDA_dmx_lda_fifohl_pstm_nrm [[VLDA_dmx_lda_fifohl_pstm_nrm_imm5]], [[MOV_PD_imm11_pseudo]] :: (load (<16 x s32>) from stack, align 128)
     ; CHECK-NEXT: [[REG_SEQUENCE4:%[0-9]+]]:fifo1024 = REG_SEQUENCE [[VLDA_dmx_lda_fifohl_pstm_nrm2]], %subreg.sub_lo_fifo, [[VLDA_dmx_lda_fifohl_idx_imm4]], %subreg.sub_hi_fifo
-    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_pstm_nrm4:%[0-9]+]]:fifo512, [[VLDA_dmx_lda_fifohl_pstm_nrm5:%[0-9]+]]:ep = VLDA_dmx_lda_fifohl_pstm_nrm [[VLDA_dmx_lda_fifohl_pstm_nrm3]], [[MOV_PD_imm11_pseudo1]] :: (load (<16 x s32>) from stack - 64, basealign 128)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm5:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[VLDA_dmx_lda_fifohl_pstm_nrm3]], 64 :: (load (<16 x s32>) from stack, align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm5:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[VLDA_dmx_lda_fifohl_pstm_nrm3]], 64 :: (load (<16 x s32>) from stack - 64, basealign 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_pstm_nrm4:%[0-9]+]]:fifo512, [[VLDA_dmx_lda_fifohl_pstm_nrm5:%[0-9]+]]:ep = VLDA_dmx_lda_fifohl_pstm_nrm [[VLDA_dmx_lda_fifohl_pstm_nrm3]], [[MOV_PD_imm11_pseudo1]] :: (load (<16 x s32>) from stack, align 128)
     ; CHECK-NEXT: [[REG_SEQUENCE5:%[0-9]+]]:fifo1024 = REG_SEQUENCE [[VLDA_dmx_lda_fifohl_pstm_nrm4]], %subreg.sub_lo_fifo, [[VLDA_dmx_lda_fifohl_idx_imm5]], %subreg.sub_hi_fifo
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE5]]
     %0:ptrregbank(p0) = COPY $p0
@@ -895,8 +895,8 @@ body: |
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo2:%[0-9]+]]:edn = MOV_PD_imm11_pseudo 3
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo3:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 4
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm11_pseudo]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_count
-    ; CHECK-NEXT: [[VLDA_2D_dmx_lda_fifohl:%[0-9]+]]:fifo512, [[VLDA_2D_dmx_lda_fifohl1:%[0-9]+]]:ep, [[VLDA_2D_dmx_lda_fifohl2:%[0-9]+]]:edc = VLDA_2D_dmx_lda_fifohl [[COPY]], [[REG_SEQUENCE]] :: (load (<16 x s32>), align 128)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 64 :: (load (<16 x s32>) from unknown-address + 64)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 64 :: (load (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[VLDA_2D_dmx_lda_fifohl:%[0-9]+]]:fifo512, [[VLDA_2D_dmx_lda_fifohl1:%[0-9]+]]:ep, [[VLDA_2D_dmx_lda_fifohl2:%[0-9]+]]:edc = VLDA_2D_dmx_lda_fifohl [[COPY]], [[REG_SEQUENCE]] :: (load (<16 x s32>) from unknown-address + 64)
     ; CHECK-NEXT: [[REG_SEQUENCE1:%[0-9]+]]:fifo1024 = REG_SEQUENCE [[VLDA_2D_dmx_lda_fifohl]], %subreg.sub_lo_fifo, [[VLDA_dmx_lda_fifohl_idx_imm]], %subreg.sub_hi_fifo
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE1]]
     %0:ptrregbank(p0) = COPY $p0
@@ -959,30 +959,30 @@ body: |
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo 32
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:em = MOV_PD_imm11_pseudo 512
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:fifo1024 = COPY $lf0
-    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:fifo512 = COPY [[COPY3]].sub_lo_fifo
-    ; CHECK-NEXT: [[VST_dmx_sts_fifohl_pstm_nrm:%[0-9]+]]:ep = VST_dmx_sts_fifohl_pstm_nrm [[COPY4]], [[COPY]], [[COPY2]] :: (store (<16 x s32>) into stack - 64, basealign 128)
-    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:fifo512 = COPY [[COPY3]].sub_hi_fifo
-    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY5]], [[COPY]], 64 :: (store (<16 x s32>) into stack, align 128)
-    ; CHECK-NEXT: [[COPY6:%[0-9]+]]:fifo512 = COPY [[COPY3]].sub_lo_fifo
-    ; CHECK-NEXT: [[VST_dmx_sts_fifohl_pstm_nrm_imm:%[0-9]+]]:ep = VST_dmx_sts_fifohl_pstm_nrm_imm [[COPY6]], [[VST_dmx_sts_fifohl_pstm_nrm]], 448 :: (store (<16 x s32>) into stack - 64, basealign 128)
-    ; CHECK-NEXT: [[COPY7:%[0-9]+]]:fifo512 = COPY [[COPY3]].sub_hi_fifo
-    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY7]], [[VST_dmx_sts_fifohl_pstm_nrm]], 64 :: (store (<16 x s32>) into stack, align 128)
-    ; CHECK-NEXT: [[COPY8:%[0-9]+]]:fifo512 = COPY [[COPY3]].sub_lo_fifo
-    ; CHECK-NEXT: [[VST_dmx_sts_fifohl_pstm_nrm_imm1:%[0-9]+]]:ep = VST_dmx_sts_fifohl_pstm_nrm_imm [[COPY8]], [[VST_dmx_sts_fifohl_pstm_nrm_imm]], -512 :: (store (<16 x s32>) into stack - 64, basealign 128)
-    ; CHECK-NEXT: [[COPY9:%[0-9]+]]:fifo512 = COPY [[COPY3]].sub_hi_fifo
-    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY9]], [[VST_dmx_sts_fifohl_pstm_nrm_imm]], 64 :: (store (<16 x s32>) into stack, align 128)
-    ; CHECK-NEXT: [[COPY10:%[0-9]+]]:fifo512 = COPY [[COPY3]].sub_lo_fifo
-    ; CHECK-NEXT: [[VST_dmx_sts_fifohl_pstm_nrm_imm2:%[0-9]+]]:ep = VST_dmx_sts_fifohl_pstm_nrm_imm [[COPY10]], [[VST_dmx_sts_fifohl_pstm_nrm_imm1]], 0 :: (store (<16 x s32>) into stack - 64, basealign 128)
-    ; CHECK-NEXT: [[COPY11:%[0-9]+]]:fifo512 = COPY [[COPY3]].sub_hi_fifo
-    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY11]], [[VST_dmx_sts_fifohl_pstm_nrm_imm1]], 64 :: (store (<16 x s32>) into stack, align 128)
-    ; CHECK-NEXT: [[COPY12:%[0-9]+]]:fifo512 = COPY [[COPY3]].sub_lo_fifo
-    ; CHECK-NEXT: [[VST_dmx_sts_fifohl_pstm_nrm1:%[0-9]+]]:ep = VST_dmx_sts_fifohl_pstm_nrm [[COPY12]], [[VST_dmx_sts_fifohl_pstm_nrm_imm2]], [[MOV_PD_imm11_pseudo]] :: (store (<16 x s32>) into stack - 64, basealign 128)
-    ; CHECK-NEXT: [[COPY13:%[0-9]+]]:fifo512 = COPY [[COPY3]].sub_hi_fifo
-    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY13]], [[VST_dmx_sts_fifohl_pstm_nrm_imm2]], 64 :: (store (<16 x s32>) into stack, align 128)
-    ; CHECK-NEXT: [[COPY14:%[0-9]+]]:fifo512 = COPY [[COPY3]].sub_lo_fifo
-    ; CHECK-NEXT: [[VST_dmx_sts_fifohl_pstm_nrm2:%[0-9]+]]:ep = VST_dmx_sts_fifohl_pstm_nrm [[COPY14]], [[VST_dmx_sts_fifohl_pstm_nrm1]], [[MOV_PD_imm11_pseudo1]] :: (store (<16 x s32>) into stack - 64, basealign 128)
-    ; CHECK-NEXT: [[COPY15:%[0-9]+]]:fifo512 = COPY [[COPY3]].sub_hi_fifo
-    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY15]], [[VST_dmx_sts_fifohl_pstm_nrm1]], 64 :: (store (<16 x s32>) into stack, align 128)
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:fifo512 = COPY [[COPY3]].sub_hi_fifo
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY4]], [[COPY]], 64 :: (store (<16 x s32>) into stack - 64, basealign 128)
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:fifo512 = COPY [[COPY3]].sub_lo_fifo
+    ; CHECK-NEXT: [[VST_dmx_sts_fifohl_pstm_nrm:%[0-9]+]]:ep = VST_dmx_sts_fifohl_pstm_nrm [[COPY5]], [[COPY]], [[COPY2]] :: (store (<16 x s32>) into stack, align 128)
+    ; CHECK-NEXT: [[COPY6:%[0-9]+]]:fifo512 = COPY [[COPY3]].sub_hi_fifo
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY6]], [[VST_dmx_sts_fifohl_pstm_nrm]], 64 :: (store (<16 x s32>) into stack - 64, basealign 128)
+    ; CHECK-NEXT: [[COPY7:%[0-9]+]]:fifo512 = COPY [[COPY3]].sub_lo_fifo
+    ; CHECK-NEXT: [[VST_dmx_sts_fifohl_pstm_nrm_imm:%[0-9]+]]:ep = VST_dmx_sts_fifohl_pstm_nrm_imm [[COPY7]], [[VST_dmx_sts_fifohl_pstm_nrm]], 448 :: (store (<16 x s32>) into stack, align 128)
+    ; CHECK-NEXT: [[COPY8:%[0-9]+]]:fifo512 = COPY [[COPY3]].sub_hi_fifo
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY8]], [[VST_dmx_sts_fifohl_pstm_nrm_imm]], 64 :: (store (<16 x s32>) into stack - 64, basealign 128)
+    ; CHECK-NEXT: [[COPY9:%[0-9]+]]:fifo512 = COPY [[COPY3]].sub_lo_fifo
+    ; CHECK-NEXT: [[VST_dmx_sts_fifohl_pstm_nrm_imm1:%[0-9]+]]:ep = VST_dmx_sts_fifohl_pstm_nrm_imm [[COPY9]], [[VST_dmx_sts_fifohl_pstm_nrm_imm]], -512 :: (store (<16 x s32>) into stack, align 128)
+    ; CHECK-NEXT: [[COPY10:%[0-9]+]]:fifo512 = COPY [[COPY3]].sub_hi_fifo
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY10]], [[VST_dmx_sts_fifohl_pstm_nrm_imm1]], 64 :: (store (<16 x s32>) into stack - 64, basealign 128)
+    ; CHECK-NEXT: [[COPY11:%[0-9]+]]:fifo512 = COPY [[COPY3]].sub_lo_fifo
+    ; CHECK-NEXT: [[VST_dmx_sts_fifohl_pstm_nrm_imm2:%[0-9]+]]:ep = VST_dmx_sts_fifohl_pstm_nrm_imm [[COPY11]], [[VST_dmx_sts_fifohl_pstm_nrm_imm1]], 0 :: (store (<16 x s32>) into stack, align 128)
+    ; CHECK-NEXT: [[COPY12:%[0-9]+]]:fifo512 = COPY [[COPY3]].sub_hi_fifo
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY12]], [[VST_dmx_sts_fifohl_pstm_nrm_imm2]], 64 :: (store (<16 x s32>) into stack - 64, basealign 128)
+    ; CHECK-NEXT: [[COPY13:%[0-9]+]]:fifo512 = COPY [[COPY3]].sub_lo_fifo
+    ; CHECK-NEXT: [[VST_dmx_sts_fifohl_pstm_nrm1:%[0-9]+]]:ep = VST_dmx_sts_fifohl_pstm_nrm [[COPY13]], [[VST_dmx_sts_fifohl_pstm_nrm_imm2]], [[MOV_PD_imm11_pseudo]] :: (store (<16 x s32>) into stack, align 128)
+    ; CHECK-NEXT: [[COPY14:%[0-9]+]]:fifo512 = COPY [[COPY3]].sub_hi_fifo
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY14]], [[VST_dmx_sts_fifohl_pstm_nrm1]], 64 :: (store (<16 x s32>) into stack - 64, basealign 128)
+    ; CHECK-NEXT: [[COPY15:%[0-9]+]]:fifo512 = COPY [[COPY3]].sub_lo_fifo
+    ; CHECK-NEXT: [[VST_dmx_sts_fifohl_pstm_nrm2:%[0-9]+]]:ep = VST_dmx_sts_fifohl_pstm_nrm [[COPY15]], [[VST_dmx_sts_fifohl_pstm_nrm1]], [[MOV_PD_imm11_pseudo1]] :: (store (<16 x s32>) into stack, align 128)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VST_dmx_sts_fifohl_pstm_nrm2]]
     %0:ptrregbank(p0) = COPY $p0
     %1:gprregbank(s32) = COPY $r0
@@ -1020,11 +1020,11 @@ body: |
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo3:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 4
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:fifo1024 = COPY $lf0
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm11_pseudo]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_count
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:fifo512 = COPY [[COPY1]].sub_lo_fifo
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:mxs = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VST_2D_dmx_sts_x:%[0-9]+]]:ep, [[VST_2D_dmx_sts_x1:%[0-9]+]]:edc = VST_2D_dmx_sts_x [[COPY3]], [[COPY]], [[REG_SEQUENCE]] :: (store (<16 x s32>), align 128)
-    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:fifo512 = COPY [[COPY1]].sub_hi_fifo
-    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY4]], [[COPY]], 64 :: (store (<16 x s32>) into unknown-address + 64)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:fifo512 = COPY [[COPY1]].sub_hi_fifo
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY2]], [[COPY]], 64 :: (store (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:fifo512 = COPY [[COPY1]].sub_lo_fifo
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:mxs = COPY [[COPY3]]
+    ; CHECK-NEXT: [[VST_2D_dmx_sts_x:%[0-9]+]]:ep, [[VST_2D_dmx_sts_x1:%[0-9]+]]:edc = VST_2D_dmx_sts_x [[COPY4]], [[COPY]], [[REG_SEQUENCE]] :: (store (<16 x s32>) into unknown-address + 64)
     ; CHECK-NEXT: PseudoRET implicit $lr
     %0:ptrregbank(p0) = COPY $p0
     %1:em(s20) = G_CONSTANT i20 1
@@ -1057,11 +1057,11 @@ body: |
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo6:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 7
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:fifo1024 = COPY $lf0
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:eds = REG_SEQUENCE [[MOV_PD_imm11_pseudo]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo5]], %subreg.sub_dim_count, [[MOV_PD_imm11_pseudo4]], %subreg.sub_hi_dim_then_sub_dim_size, [[MOV_PD_imm11_pseudo2]], %subreg.sub_hi_dim_then_sub_dim_stride, [[MOV_PD_imm11_pseudo6]], %subreg.sub_hi_dim_then_sub_dim_count
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:fifo512 = COPY [[COPY1]].sub_lo_fifo
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:mxs = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VST_3D_dmx_sts_x:%[0-9]+]]:ep, [[VST_3D_dmx_sts_x1:%[0-9]+]]:edcl, [[VST_3D_dmx_sts_x2:%[0-9]+]]:edch = VST_3D_dmx_sts_x [[COPY3]], [[COPY]], [[REG_SEQUENCE]] :: (store (<16 x s32>), align 128)
-    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:fifo512 = COPY [[COPY1]].sub_hi_fifo
-    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY4]], [[COPY]], 64 :: (store (<16 x s32>) into unknown-address + 64)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:fifo512 = COPY [[COPY1]].sub_hi_fifo
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY2]], [[COPY]], 64 :: (store (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:fifo512 = COPY [[COPY1]].sub_lo_fifo
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:mxs = COPY [[COPY3]]
+    ; CHECK-NEXT: [[VST_3D_dmx_sts_x:%[0-9]+]]:ep, [[VST_3D_dmx_sts_x1:%[0-9]+]]:edcl, [[VST_3D_dmx_sts_x2:%[0-9]+]]:edch = VST_3D_dmx_sts_x [[COPY4]], [[COPY]], [[REG_SEQUENCE]] :: (store (<16 x s32>) into unknown-address + 64)
     ; CHECK-NEXT: PseudoRET implicit $lr
     %0:ptrregbank(p0) = COPY $p0
     %1:em(s20) = G_CONSTANT i20 1
@@ -1092,23 +1092,23 @@ body: |
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:em = COPY [[COPY1]]
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo 32
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:em = MOV_PD_imm11_pseudo 512
-    ; CHECK-NEXT: [[VLD_x_pstm_nrm_pseudo:%[0-9]+]]:vec512, [[VLD_x_pstm_nrm_pseudo1:%[0-9]+]]:ep = VLD_x_pstm_nrm_pseudo [[COPY]], [[COPY2]] :: (load (<16 x s32>) from stack - 64, basealign 128)
-    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[COPY]], 64 :: (load (<16 x s32>) from stack, align 128)
+    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[COPY]], 64 :: (load (<16 x s32>) from stack - 64, basealign 128)
+    ; CHECK-NEXT: [[VLD_x_pstm_nrm_pseudo:%[0-9]+]]:vec512, [[VLD_x_pstm_nrm_pseudo1:%[0-9]+]]:ep = VLD_x_pstm_nrm_pseudo [[COPY]], [[COPY2]] :: (load (<16 x s32>) from stack, align 128)
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec1024 = REG_SEQUENCE [[VLD_x_pstm_nrm_pseudo]], %subreg.sub_512_lo, [[VLD_x_idx_imm_pseudo]], %subreg.sub_512_hi
-    ; CHECK-NEXT: [[VLD_x_pstm_nrm_imm_pseudo:%[0-9]+]]:vec512, [[VLD_x_pstm_nrm_imm_pseudo1:%[0-9]+]]:ep = VLD_x_pstm_nrm_imm_pseudo [[VLD_x_pstm_nrm_pseudo1]], 448 :: (load (<16 x s32>) from stack - 64, basealign 128)
-    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo1:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[VLD_x_pstm_nrm_pseudo1]], 64 :: (load (<16 x s32>) from stack, align 128)
+    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo1:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[VLD_x_pstm_nrm_pseudo1]], 64 :: (load (<16 x s32>) from stack - 64, basealign 128)
+    ; CHECK-NEXT: [[VLD_x_pstm_nrm_imm_pseudo:%[0-9]+]]:vec512, [[VLD_x_pstm_nrm_imm_pseudo1:%[0-9]+]]:ep = VLD_x_pstm_nrm_imm_pseudo [[VLD_x_pstm_nrm_pseudo1]], 448 :: (load (<16 x s32>) from stack, align 128)
     ; CHECK-NEXT: [[REG_SEQUENCE1:%[0-9]+]]:vec1024 = REG_SEQUENCE [[VLD_x_pstm_nrm_imm_pseudo]], %subreg.sub_512_lo, [[VLD_x_idx_imm_pseudo1]], %subreg.sub_512_hi
-    ; CHECK-NEXT: [[VLD_x_pstm_nrm_imm_pseudo2:%[0-9]+]]:vec512, [[VLD_x_pstm_nrm_imm_pseudo3:%[0-9]+]]:ep = VLD_x_pstm_nrm_imm_pseudo [[VLD_x_pstm_nrm_imm_pseudo1]], -512 :: (load (<16 x s32>) from stack - 64, basealign 128)
-    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo2:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[VLD_x_pstm_nrm_imm_pseudo1]], 64 :: (load (<16 x s32>) from stack, align 128)
+    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo2:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[VLD_x_pstm_nrm_imm_pseudo1]], 64 :: (load (<16 x s32>) from stack - 64, basealign 128)
+    ; CHECK-NEXT: [[VLD_x_pstm_nrm_imm_pseudo2:%[0-9]+]]:vec512, [[VLD_x_pstm_nrm_imm_pseudo3:%[0-9]+]]:ep = VLD_x_pstm_nrm_imm_pseudo [[VLD_x_pstm_nrm_imm_pseudo1]], -512 :: (load (<16 x s32>) from stack, align 128)
     ; CHECK-NEXT: [[REG_SEQUENCE2:%[0-9]+]]:vec1024 = REG_SEQUENCE [[VLD_x_pstm_nrm_imm_pseudo2]], %subreg.sub_512_lo, [[VLD_x_idx_imm_pseudo2]], %subreg.sub_512_hi
-    ; CHECK-NEXT: [[VLD_x_pstm_nrm_imm_pseudo4:%[0-9]+]]:vec512, [[VLD_x_pstm_nrm_imm_pseudo5:%[0-9]+]]:ep = VLD_x_pstm_nrm_imm_pseudo [[VLD_x_pstm_nrm_imm_pseudo3]], 0 :: (load (<16 x s32>) from stack - 64, basealign 128)
-    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo3:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[VLD_x_pstm_nrm_imm_pseudo3]], 64 :: (load (<16 x s32>) from stack, align 128)
+    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo3:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[VLD_x_pstm_nrm_imm_pseudo3]], 64 :: (load (<16 x s32>) from stack - 64, basealign 128)
+    ; CHECK-NEXT: [[VLD_x_pstm_nrm_imm_pseudo4:%[0-9]+]]:vec512, [[VLD_x_pstm_nrm_imm_pseudo5:%[0-9]+]]:ep = VLD_x_pstm_nrm_imm_pseudo [[VLD_x_pstm_nrm_imm_pseudo3]], 0 :: (load (<16 x s32>) from stack, align 128)
     ; CHECK-NEXT: [[REG_SEQUENCE3:%[0-9]+]]:vec1024 = REG_SEQUENCE [[VLD_x_pstm_nrm_imm_pseudo4]], %subreg.sub_512_lo, [[VLD_x_idx_imm_pseudo3]], %subreg.sub_512_hi
-    ; CHECK-NEXT: [[VLD_x_pstm_nrm_pseudo2:%[0-9]+]]:vec512, [[VLD_x_pstm_nrm_pseudo3:%[0-9]+]]:ep = VLD_x_pstm_nrm_pseudo [[VLD_x_pstm_nrm_imm_pseudo5]], [[MOV_PD_imm11_pseudo]] :: (load (<16 x s32>) from stack - 64, basealign 128)
-    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo4:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[VLD_x_pstm_nrm_imm_pseudo5]], 64 :: (load (<16 x s32>) from stack, align 128)
+    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo4:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[VLD_x_pstm_nrm_imm_pseudo5]], 64 :: (load (<16 x s32>) from stack - 64, basealign 128)
+    ; CHECK-NEXT: [[VLD_x_pstm_nrm_pseudo2:%[0-9]+]]:vec512, [[VLD_x_pstm_nrm_pseudo3:%[0-9]+]]:ep = VLD_x_pstm_nrm_pseudo [[VLD_x_pstm_nrm_imm_pseudo5]], [[MOV_PD_imm11_pseudo]] :: (load (<16 x s32>) from stack, align 128)
     ; CHECK-NEXT: [[REG_SEQUENCE4:%[0-9]+]]:vec1024 = REG_SEQUENCE [[VLD_x_pstm_nrm_pseudo2]], %subreg.sub_512_lo, [[VLD_x_idx_imm_pseudo4]], %subreg.sub_512_hi
-    ; CHECK-NEXT: [[VLD_x_pstm_nrm_pseudo4:%[0-9]+]]:vec512, [[VLD_x_pstm_nrm_pseudo5:%[0-9]+]]:ep = VLD_x_pstm_nrm_pseudo [[VLD_x_pstm_nrm_pseudo3]], [[MOV_PD_imm11_pseudo1]] :: (load (<16 x s32>) from stack - 64, basealign 128)
-    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo5:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[VLD_x_pstm_nrm_pseudo3]], 64 :: (load (<16 x s32>) from stack, align 128)
+    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo5:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[VLD_x_pstm_nrm_pseudo3]], 64 :: (load (<16 x s32>) from stack - 64, basealign 128)
+    ; CHECK-NEXT: [[VLD_x_pstm_nrm_pseudo4:%[0-9]+]]:vec512, [[VLD_x_pstm_nrm_pseudo5:%[0-9]+]]:ep = VLD_x_pstm_nrm_pseudo [[VLD_x_pstm_nrm_pseudo3]], [[MOV_PD_imm11_pseudo1]] :: (load (<16 x s32>) from stack, align 128)
     ; CHECK-NEXT: [[REG_SEQUENCE5:%[0-9]+]]:vec1024 = REG_SEQUENCE [[VLD_x_pstm_nrm_pseudo4]], %subreg.sub_512_lo, [[VLD_x_idx_imm_pseudo5]], %subreg.sub_512_hi
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE5]]
     %0:ptrregbank(p0) = COPY $p0
@@ -1145,8 +1145,8 @@ body: |
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo2:%[0-9]+]]:edn = MOV_PD_imm11_pseudo 3
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo3:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 4
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm11_pseudo]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_count
-    ; CHECK-NEXT: [[VLD_2D_x_pseudo:%[0-9]+]]:vec512, [[VLD_2D_x_pseudo1:%[0-9]+]]:ep, [[VLD_2D_x_pseudo2:%[0-9]+]]:edc = VLD_2D_x_pseudo [[COPY]], [[REG_SEQUENCE]] :: (load (<16 x s32>), align 128)
-    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[COPY]], 64 :: (load (<16 x s32>) from unknown-address + 64)
+    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[COPY]], 64 :: (load (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[VLD_2D_x_pseudo:%[0-9]+]]:vec512, [[VLD_2D_x_pseudo1:%[0-9]+]]:ep, [[VLD_2D_x_pseudo2:%[0-9]+]]:edc = VLD_2D_x_pseudo [[COPY]], [[REG_SEQUENCE]] :: (load (<16 x s32>) from unknown-address + 64)
     ; CHECK-NEXT: [[REG_SEQUENCE1:%[0-9]+]]:vec1024 = REG_SEQUENCE [[VLD_2D_x_pseudo]], %subreg.sub_512_lo, [[VLD_x_idx_imm_pseudo]], %subreg.sub_512_hi
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE1]]
     %0:ptrregbank(p0) = COPY $p0
@@ -1178,8 +1178,8 @@ body: |
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo5:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 6
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo6:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 7
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:eds = REG_SEQUENCE [[MOV_PD_imm11_pseudo]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo5]], %subreg.sub_dim_count, [[MOV_PD_imm11_pseudo4]], %subreg.sub_hi_dim_then_sub_dim_size, [[MOV_PD_imm11_pseudo2]], %subreg.sub_hi_dim_then_sub_dim_stride, [[MOV_PD_imm11_pseudo6]], %subreg.sub_hi_dim_then_sub_dim_count
-    ; CHECK-NEXT: [[VLD_3D_x_pseudo:%[0-9]+]]:vec512, [[VLD_3D_x_pseudo1:%[0-9]+]]:ep, [[VLD_3D_x_pseudo2:%[0-9]+]]:edcl, [[VLD_3D_x_pseudo3:%[0-9]+]]:edch = VLD_3D_x_pseudo [[COPY]], [[REG_SEQUENCE]] :: (load (<16 x s32>), align 128)
-    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[COPY]], 64 :: (load (<16 x s32>) from unknown-address + 64)
+    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[COPY]], 64 :: (load (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[VLD_3D_x_pseudo:%[0-9]+]]:vec512, [[VLD_3D_x_pseudo1:%[0-9]+]]:ep, [[VLD_3D_x_pseudo2:%[0-9]+]]:edcl, [[VLD_3D_x_pseudo3:%[0-9]+]]:edch = VLD_3D_x_pseudo [[COPY]], [[REG_SEQUENCE]] :: (load (<16 x s32>) from unknown-address + 64)
     ; CHECK-NEXT: [[REG_SEQUENCE1:%[0-9]+]]:vec1024 = REG_SEQUENCE [[VLD_3D_x_pseudo]], %subreg.sub_512_lo, [[VLD_x_idx_imm_pseudo]], %subreg.sub_512_hi
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE1]]
     %0:ptrregbank(p0) = COPY $p0
@@ -1211,30 +1211,30 @@ body: |
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo 32
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:em = MOV_PD_imm11_pseudo 512
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:vec1024 = COPY $y0
-    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:vec512 = COPY [[COPY3]].sub_512_lo
-    ; CHECK-NEXT: [[VST_dmx_sts_x_pstm_nrm:%[0-9]+]]:ep = VST_dmx_sts_x_pstm_nrm [[COPY4]], [[COPY]], [[COPY2]] :: (store (<16 x s32>) into stack - 64, basealign 128)
-    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:vec512 = COPY [[COPY3]].sub_512_hi
-    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY5]], [[COPY]], 64 :: (store (<16 x s32>) into stack, align 128)
-    ; CHECK-NEXT: [[COPY6:%[0-9]+]]:vec512 = COPY [[COPY3]].sub_512_lo
-    ; CHECK-NEXT: [[VST_dmx_sts_x_pstm_nrm_imm:%[0-9]+]]:ep = VST_dmx_sts_x_pstm_nrm_imm [[COPY6]], [[VST_dmx_sts_x_pstm_nrm]], 448 :: (store (<16 x s32>) into stack - 64, basealign 128)
-    ; CHECK-NEXT: [[COPY7:%[0-9]+]]:vec512 = COPY [[COPY3]].sub_512_hi
-    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY7]], [[VST_dmx_sts_x_pstm_nrm]], 64 :: (store (<16 x s32>) into stack, align 128)
-    ; CHECK-NEXT: [[COPY8:%[0-9]+]]:vec512 = COPY [[COPY3]].sub_512_lo
-    ; CHECK-NEXT: [[VST_dmx_sts_x_pstm_nrm_imm1:%[0-9]+]]:ep = VST_dmx_sts_x_pstm_nrm_imm [[COPY8]], [[VST_dmx_sts_x_pstm_nrm_imm]], -512 :: (store (<16 x s32>) into stack - 64, basealign 128)
-    ; CHECK-NEXT: [[COPY9:%[0-9]+]]:vec512 = COPY [[COPY3]].sub_512_hi
-    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY9]], [[VST_dmx_sts_x_pstm_nrm_imm]], 64 :: (store (<16 x s32>) into stack, align 128)
-    ; CHECK-NEXT: [[COPY10:%[0-9]+]]:vec512 = COPY [[COPY3]].sub_512_lo
-    ; CHECK-NEXT: [[VST_dmx_sts_x_pstm_nrm_imm2:%[0-9]+]]:ep = VST_dmx_sts_x_pstm_nrm_imm [[COPY10]], [[VST_dmx_sts_x_pstm_nrm_imm1]], 0 :: (store (<16 x s32>) into stack - 64, basealign 128)
-    ; CHECK-NEXT: [[COPY11:%[0-9]+]]:vec512 = COPY [[COPY3]].sub_512_hi
-    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY11]], [[VST_dmx_sts_x_pstm_nrm_imm1]], 64 :: (store (<16 x s32>) into stack, align 128)
-    ; CHECK-NEXT: [[COPY12:%[0-9]+]]:vec512 = COPY [[COPY3]].sub_512_lo
-    ; CHECK-NEXT: [[VST_dmx_sts_x_pstm_nrm1:%[0-9]+]]:ep = VST_dmx_sts_x_pstm_nrm [[COPY12]], [[VST_dmx_sts_x_pstm_nrm_imm2]], [[MOV_PD_imm11_pseudo]] :: (store (<16 x s32>) into stack - 64, basealign 128)
-    ; CHECK-NEXT: [[COPY13:%[0-9]+]]:vec512 = COPY [[COPY3]].sub_512_hi
-    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY13]], [[VST_dmx_sts_x_pstm_nrm_imm2]], 64 :: (store (<16 x s32>) into stack, align 128)
-    ; CHECK-NEXT: [[COPY14:%[0-9]+]]:vec512 = COPY [[COPY3]].sub_512_lo
-    ; CHECK-NEXT: [[VST_dmx_sts_x_pstm_nrm2:%[0-9]+]]:ep = VST_dmx_sts_x_pstm_nrm [[COPY14]], [[VST_dmx_sts_x_pstm_nrm1]], [[MOV_PD_imm11_pseudo1]] :: (store (<16 x s32>) into stack - 64, basealign 128)
-    ; CHECK-NEXT: [[COPY15:%[0-9]+]]:vec512 = COPY [[COPY3]].sub_512_hi
-    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY15]], [[VST_dmx_sts_x_pstm_nrm1]], 64 :: (store (<16 x s32>) into stack, align 128)
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:vec512 = COPY [[COPY3]].sub_512_hi
+    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY4]], [[COPY]], 64 :: (store (<16 x s32>) into stack - 64, basealign 128)
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:vec512 = COPY [[COPY3]].sub_512_lo
+    ; CHECK-NEXT: [[VST_dmx_sts_x_pstm_nrm:%[0-9]+]]:ep = VST_dmx_sts_x_pstm_nrm [[COPY5]], [[COPY]], [[COPY2]] :: (store (<16 x s32>) into stack, align 128)
+    ; CHECK-NEXT: [[COPY6:%[0-9]+]]:vec512 = COPY [[COPY3]].sub_512_hi
+    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY6]], [[VST_dmx_sts_x_pstm_nrm]], 64 :: (store (<16 x s32>) into stack - 64, basealign 128)
+    ; CHECK-NEXT: [[COPY7:%[0-9]+]]:vec512 = COPY [[COPY3]].sub_512_lo
+    ; CHECK-NEXT: [[VST_dmx_sts_x_pstm_nrm_imm:%[0-9]+]]:ep = VST_dmx_sts_x_pstm_nrm_imm [[COPY7]], [[VST_dmx_sts_x_pstm_nrm]], 448 :: (store (<16 x s32>) into stack, align 128)
+    ; CHECK-NEXT: [[COPY8:%[0-9]+]]:vec512 = COPY [[COPY3]].sub_512_hi
+    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY8]], [[VST_dmx_sts_x_pstm_nrm_imm]], 64 :: (store (<16 x s32>) into stack - 64, basealign 128)
+    ; CHECK-NEXT: [[COPY9:%[0-9]+]]:vec512 = COPY [[COPY3]].sub_512_lo
+    ; CHECK-NEXT: [[VST_dmx_sts_x_pstm_nrm_imm1:%[0-9]+]]:ep = VST_dmx_sts_x_pstm_nrm_imm [[COPY9]], [[VST_dmx_sts_x_pstm_nrm_imm]], -512 :: (store (<16 x s32>) into stack, align 128)
+    ; CHECK-NEXT: [[COPY10:%[0-9]+]]:vec512 = COPY [[COPY3]].sub_512_hi
+    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY10]], [[VST_dmx_sts_x_pstm_nrm_imm1]], 64 :: (store (<16 x s32>) into stack - 64, basealign 128)
+    ; CHECK-NEXT: [[COPY11:%[0-9]+]]:vec512 = COPY [[COPY3]].sub_512_lo
+    ; CHECK-NEXT: [[VST_dmx_sts_x_pstm_nrm_imm2:%[0-9]+]]:ep = VST_dmx_sts_x_pstm_nrm_imm [[COPY11]], [[VST_dmx_sts_x_pstm_nrm_imm1]], 0 :: (store (<16 x s32>) into stack, align 128)
+    ; CHECK-NEXT: [[COPY12:%[0-9]+]]:vec512 = COPY [[COPY3]].sub_512_hi
+    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY12]], [[VST_dmx_sts_x_pstm_nrm_imm2]], 64 :: (store (<16 x s32>) into stack - 64, basealign 128)
+    ; CHECK-NEXT: [[COPY13:%[0-9]+]]:vec512 = COPY [[COPY3]].sub_512_lo
+    ; CHECK-NEXT: [[VST_dmx_sts_x_pstm_nrm1:%[0-9]+]]:ep = VST_dmx_sts_x_pstm_nrm [[COPY13]], [[VST_dmx_sts_x_pstm_nrm_imm2]], [[MOV_PD_imm11_pseudo]] :: (store (<16 x s32>) into stack, align 128)
+    ; CHECK-NEXT: [[COPY14:%[0-9]+]]:vec512 = COPY [[COPY3]].sub_512_hi
+    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY14]], [[VST_dmx_sts_x_pstm_nrm1]], 64 :: (store (<16 x s32>) into stack - 64, basealign 128)
+    ; CHECK-NEXT: [[COPY15:%[0-9]+]]:vec512 = COPY [[COPY3]].sub_512_lo
+    ; CHECK-NEXT: [[VST_dmx_sts_x_pstm_nrm2:%[0-9]+]]:ep = VST_dmx_sts_x_pstm_nrm [[COPY15]], [[VST_dmx_sts_x_pstm_nrm1]], [[MOV_PD_imm11_pseudo1]] :: (store (<16 x s32>) into stack, align 128)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VST_dmx_sts_x_pstm_nrm2]]
     %0:ptrregbank(p0) = COPY $p0
     %1:gprregbank(s32) = COPY $r0
@@ -1272,10 +1272,10 @@ body: |
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo3:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 4
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec1024 = COPY $y0
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm11_pseudo]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_count
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec512 = COPY [[COPY1]].sub_512_lo
-    ; CHECK-NEXT: [[VST_2D_dmx_sts_x:%[0-9]+]]:ep, [[VST_2D_dmx_sts_x1:%[0-9]+]]:edc = VST_2D_dmx_sts_x [[COPY2]], [[COPY]], [[REG_SEQUENCE]] :: (store (<16 x s32>), align 128)
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:vec512 = COPY [[COPY1]].sub_512_hi
-    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY3]], [[COPY]], 64 :: (store (<16 x s32>) into unknown-address + 64)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec512 = COPY [[COPY1]].sub_512_hi
+    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY2]], [[COPY]], 64 :: (store (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:vec512 = COPY [[COPY1]].sub_512_lo
+    ; CHECK-NEXT: [[VST_2D_dmx_sts_x:%[0-9]+]]:ep, [[VST_2D_dmx_sts_x1:%[0-9]+]]:edc = VST_2D_dmx_sts_x [[COPY3]], [[COPY]], [[REG_SEQUENCE]] :: (store (<16 x s32>) into unknown-address + 64)
     ; CHECK-NEXT: PseudoRET implicit $lr
     %0:ptrregbank(p0) = COPY $p0
     %1:em(s20) = G_CONSTANT i20 1
@@ -1308,10 +1308,10 @@ body: |
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo6:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 7
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec1024 = COPY $y0
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:eds = REG_SEQUENCE [[MOV_PD_imm11_pseudo]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo5]], %subreg.sub_dim_count, [[MOV_PD_imm11_pseudo4]], %subreg.sub_hi_dim_then_sub_dim_size, [[MOV_PD_imm11_pseudo2]], %subreg.sub_hi_dim_then_sub_dim_stride, [[MOV_PD_imm11_pseudo6]], %subreg.sub_hi_dim_then_sub_dim_count
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec512 = COPY [[COPY1]].sub_512_lo
-    ; CHECK-NEXT: [[VST_3D_dmx_sts_x:%[0-9]+]]:ep, [[VST_3D_dmx_sts_x1:%[0-9]+]]:edcl, [[VST_3D_dmx_sts_x2:%[0-9]+]]:edch = VST_3D_dmx_sts_x [[COPY2]], [[COPY]], [[REG_SEQUENCE]] :: (store (<16 x s32>), align 128)
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:vec512 = COPY [[COPY1]].sub_512_hi
-    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY3]], [[COPY]], 64 :: (store (<16 x s32>) into unknown-address + 64)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec512 = COPY [[COPY1]].sub_512_hi
+    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY2]], [[COPY]], 64 :: (store (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:vec512 = COPY [[COPY1]].sub_512_lo
+    ; CHECK-NEXT: [[VST_3D_dmx_sts_x:%[0-9]+]]:ep, [[VST_3D_dmx_sts_x1:%[0-9]+]]:edcl, [[VST_3D_dmx_sts_x2:%[0-9]+]]:edch = VST_3D_dmx_sts_x [[COPY3]], [[COPY]], [[REG_SEQUENCE]] :: (store (<16 x s32>) into unknown-address + 64)
     ; CHECK-NEXT: PseudoRET implicit $lr
     %0:ptrregbank(p0) = COPY $p0
     %1:em(s20) = G_CONSTANT i20 1
@@ -1342,23 +1342,23 @@ body: |
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:em = COPY [[COPY1]]
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo 32
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:em = MOV_PD_imm11_pseudo 512
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_pstm_nrm:%[0-9]+]]:acc512, [[VLDA_dmx_lda_bm_pstm_nrm1:%[0-9]+]]:ep = VLDA_dmx_lda_bm_pstm_nrm [[COPY]], [[COPY2]] :: (load (<16 x s32>) from stack - 64, basealign 128)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 64 :: (load (<16 x s32>) from stack, align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 64 :: (load (<16 x s32>) from stack - 64, basealign 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_pstm_nrm:%[0-9]+]]:acc512, [[VLDA_dmx_lda_bm_pstm_nrm1:%[0-9]+]]:ep = VLDA_dmx_lda_bm_pstm_nrm [[COPY]], [[COPY2]] :: (load (<16 x s32>) from stack, align 128)
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_dmx_lda_bm_pstm_nrm]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm]], %subreg.sub_512_acc_hi
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_pstm_nrm_imm:%[0-9]+]]:acc512, [[VLDA_dmx_lda_bm_pstm_nrm_imm1:%[0-9]+]]:ep = VLDA_dmx_lda_bm_pstm_nrm_imm [[VLDA_dmx_lda_bm_pstm_nrm1]], 448 :: (load (<16 x s32>) from stack - 64, basealign 128)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm1:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm1]], 64 :: (load (<16 x s32>) from stack, align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm1:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm1]], 64 :: (load (<16 x s32>) from stack - 64, basealign 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_pstm_nrm_imm:%[0-9]+]]:acc512, [[VLDA_dmx_lda_bm_pstm_nrm_imm1:%[0-9]+]]:ep = VLDA_dmx_lda_bm_pstm_nrm_imm [[VLDA_dmx_lda_bm_pstm_nrm1]], 448 :: (load (<16 x s32>) from stack, align 128)
     ; CHECK-NEXT: [[REG_SEQUENCE1:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_dmx_lda_bm_pstm_nrm_imm]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm1]], %subreg.sub_512_acc_hi
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_pstm_nrm_imm2:%[0-9]+]]:acc512, [[VLDA_dmx_lda_bm_pstm_nrm_imm3:%[0-9]+]]:ep = VLDA_dmx_lda_bm_pstm_nrm_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm1]], -512 :: (load (<16 x s32>) from stack - 64, basealign 128)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm2:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm1]], 64 :: (load (<16 x s32>) from stack, align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm2:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm1]], 64 :: (load (<16 x s32>) from stack - 64, basealign 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_pstm_nrm_imm2:%[0-9]+]]:acc512, [[VLDA_dmx_lda_bm_pstm_nrm_imm3:%[0-9]+]]:ep = VLDA_dmx_lda_bm_pstm_nrm_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm1]], -512 :: (load (<16 x s32>) from stack, align 128)
     ; CHECK-NEXT: [[REG_SEQUENCE2:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_dmx_lda_bm_pstm_nrm_imm2]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm2]], %subreg.sub_512_acc_hi
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_pstm_nrm_imm4:%[0-9]+]]:acc512, [[VLDA_dmx_lda_bm_pstm_nrm_imm5:%[0-9]+]]:ep = VLDA_dmx_lda_bm_pstm_nrm_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm3]], 0 :: (load (<16 x s32>) from stack - 64, basealign 128)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm3:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm3]], 64 :: (load (<16 x s32>) from stack, align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm3:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm3]], 64 :: (load (<16 x s32>) from stack - 64, basealign 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_pstm_nrm_imm4:%[0-9]+]]:acc512, [[VLDA_dmx_lda_bm_pstm_nrm_imm5:%[0-9]+]]:ep = VLDA_dmx_lda_bm_pstm_nrm_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm3]], 0 :: (load (<16 x s32>) from stack, align 128)
     ; CHECK-NEXT: [[REG_SEQUENCE3:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_dmx_lda_bm_pstm_nrm_imm4]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm3]], %subreg.sub_512_acc_hi
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_pstm_nrm2:%[0-9]+]]:acc512, [[VLDA_dmx_lda_bm_pstm_nrm3:%[0-9]+]]:ep = VLDA_dmx_lda_bm_pstm_nrm [[VLDA_dmx_lda_bm_pstm_nrm_imm5]], [[MOV_PD_imm11_pseudo]] :: (load (<16 x s32>) from stack - 64, basealign 128)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm4:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm5]], 64 :: (load (<16 x s32>) from stack, align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm4:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm5]], 64 :: (load (<16 x s32>) from stack - 64, basealign 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_pstm_nrm2:%[0-9]+]]:acc512, [[VLDA_dmx_lda_bm_pstm_nrm3:%[0-9]+]]:ep = VLDA_dmx_lda_bm_pstm_nrm [[VLDA_dmx_lda_bm_pstm_nrm_imm5]], [[MOV_PD_imm11_pseudo]] :: (load (<16 x s32>) from stack, align 128)
     ; CHECK-NEXT: [[REG_SEQUENCE4:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_dmx_lda_bm_pstm_nrm2]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm4]], %subreg.sub_512_acc_hi
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_pstm_nrm4:%[0-9]+]]:acc512, [[VLDA_dmx_lda_bm_pstm_nrm5:%[0-9]+]]:ep = VLDA_dmx_lda_bm_pstm_nrm [[VLDA_dmx_lda_bm_pstm_nrm3]], [[MOV_PD_imm11_pseudo1]] :: (load (<16 x s32>) from stack - 64, basealign 128)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm5:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm3]], 64 :: (load (<16 x s32>) from stack, align 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm5:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm3]], 64 :: (load (<16 x s32>) from stack - 64, basealign 128)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_pstm_nrm4:%[0-9]+]]:acc512, [[VLDA_dmx_lda_bm_pstm_nrm5:%[0-9]+]]:ep = VLDA_dmx_lda_bm_pstm_nrm [[VLDA_dmx_lda_bm_pstm_nrm3]], [[MOV_PD_imm11_pseudo1]] :: (load (<16 x s32>) from stack, align 128)
     ; CHECK-NEXT: [[REG_SEQUENCE5:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_dmx_lda_bm_pstm_nrm4]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm5]], %subreg.sub_512_acc_hi
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE5]]
     %0:ptrregbank(p0) = COPY $p0
@@ -1395,8 +1395,8 @@ body: |
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo2:%[0-9]+]]:edn = MOV_PD_imm11_pseudo 3
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo3:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 4
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm11_pseudo]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_count
-    ; CHECK-NEXT: [[VLDA_2D_dmx_lda_bm:%[0-9]+]]:acc512, [[VLDA_2D_dmx_lda_bm1:%[0-9]+]]:ep, [[VLDA_2D_dmx_lda_bm2:%[0-9]+]]:edc = VLDA_2D_dmx_lda_bm [[COPY]], [[REG_SEQUENCE]] :: (load (<16 x s32>), align 128)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 64 :: (load (<16 x s32>) from unknown-address + 64)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 64 :: (load (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[VLDA_2D_dmx_lda_bm:%[0-9]+]]:acc512, [[VLDA_2D_dmx_lda_bm1:%[0-9]+]]:ep, [[VLDA_2D_dmx_lda_bm2:%[0-9]+]]:edc = VLDA_2D_dmx_lda_bm [[COPY]], [[REG_SEQUENCE]] :: (load (<16 x s32>) from unknown-address + 64)
     ; CHECK-NEXT: [[REG_SEQUENCE1:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_2D_dmx_lda_bm]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm]], %subreg.sub_512_acc_hi
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE1]]
     %0:ptrregbank(p0) = COPY $p0
@@ -1459,30 +1459,30 @@ body: |
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo 32
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:em = MOV_PD_imm11_pseudo 512
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc1024 = COPY $cml0
-    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_lo
-    ; CHECK-NEXT: [[VST_dmx_sts_bm_pstm_nrm:%[0-9]+]]:ep = VST_dmx_sts_bm_pstm_nrm [[COPY4]], [[COPY]], [[COPY2]] :: (store (<16 x s32>) into stack - 64, basealign 128)
-    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY5]], [[COPY]], 64 :: (store (<16 x s32>) into stack, align 128)
-    ; CHECK-NEXT: [[COPY6:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_lo
-    ; CHECK-NEXT: [[VST_dmx_sts_bm_pstm_nrm_imm:%[0-9]+]]:ep = VST_dmx_sts_bm_pstm_nrm_imm [[COPY6]], [[VST_dmx_sts_bm_pstm_nrm]], 448 :: (store (<16 x s32>) into stack - 64, basealign 128)
-    ; CHECK-NEXT: [[COPY7:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY7]], [[VST_dmx_sts_bm_pstm_nrm]], 64 :: (store (<16 x s32>) into stack, align 128)
-    ; CHECK-NEXT: [[COPY8:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_lo
-    ; CHECK-NEXT: [[VST_dmx_sts_bm_pstm_nrm_imm1:%[0-9]+]]:ep = VST_dmx_sts_bm_pstm_nrm_imm [[COPY8]], [[VST_dmx_sts_bm_pstm_nrm_imm]], -512 :: (store (<16 x s32>) into stack - 64, basealign 128)
-    ; CHECK-NEXT: [[COPY9:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY9]], [[VST_dmx_sts_bm_pstm_nrm_imm]], 64 :: (store (<16 x s32>) into stack, align 128)
-    ; CHECK-NEXT: [[COPY10:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_lo
-    ; CHECK-NEXT: [[VST_dmx_sts_bm_pstm_nrm_imm2:%[0-9]+]]:ep = VST_dmx_sts_bm_pstm_nrm_imm [[COPY10]], [[VST_dmx_sts_bm_pstm_nrm_imm1]], 0 :: (store (<16 x s32>) into stack - 64, basealign 128)
-    ; CHECK-NEXT: [[COPY11:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY11]], [[VST_dmx_sts_bm_pstm_nrm_imm1]], 64 :: (store (<16 x s32>) into stack, align 128)
-    ; CHECK-NEXT: [[COPY12:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_lo
-    ; CHECK-NEXT: [[VST_dmx_sts_bm_pstm_nrm1:%[0-9]+]]:ep = VST_dmx_sts_bm_pstm_nrm [[COPY12]], [[VST_dmx_sts_bm_pstm_nrm_imm2]], [[MOV_PD_imm11_pseudo]] :: (store (<16 x s32>) into stack - 64, basealign 128)
-    ; CHECK-NEXT: [[COPY13:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY13]], [[VST_dmx_sts_bm_pstm_nrm_imm2]], 64 :: (store (<16 x s32>) into stack, align 128)
-    ; CHECK-NEXT: [[COPY14:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_lo
-    ; CHECK-NEXT: [[VST_dmx_sts_bm_pstm_nrm2:%[0-9]+]]:ep = VST_dmx_sts_bm_pstm_nrm [[COPY14]], [[VST_dmx_sts_bm_pstm_nrm1]], [[MOV_PD_imm11_pseudo1]] :: (store (<16 x s32>) into stack - 64, basealign 128)
-    ; CHECK-NEXT: [[COPY15:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY15]], [[VST_dmx_sts_bm_pstm_nrm1]], 64 :: (store (<16 x s32>) into stack, align 128)
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY4]], [[COPY]], 64 :: (store (<16 x s32>) into stack - 64, basealign 128)
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_lo
+    ; CHECK-NEXT: [[VST_dmx_sts_bm_pstm_nrm:%[0-9]+]]:ep = VST_dmx_sts_bm_pstm_nrm [[COPY5]], [[COPY]], [[COPY2]] :: (store (<16 x s32>) into stack, align 128)
+    ; CHECK-NEXT: [[COPY6:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY6]], [[VST_dmx_sts_bm_pstm_nrm]], 64 :: (store (<16 x s32>) into stack - 64, basealign 128)
+    ; CHECK-NEXT: [[COPY7:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_lo
+    ; CHECK-NEXT: [[VST_dmx_sts_bm_pstm_nrm_imm:%[0-9]+]]:ep = VST_dmx_sts_bm_pstm_nrm_imm [[COPY7]], [[VST_dmx_sts_bm_pstm_nrm]], 448 :: (store (<16 x s32>) into stack, align 128)
+    ; CHECK-NEXT: [[COPY8:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY8]], [[VST_dmx_sts_bm_pstm_nrm_imm]], 64 :: (store (<16 x s32>) into stack - 64, basealign 128)
+    ; CHECK-NEXT: [[COPY9:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_lo
+    ; CHECK-NEXT: [[VST_dmx_sts_bm_pstm_nrm_imm1:%[0-9]+]]:ep = VST_dmx_sts_bm_pstm_nrm_imm [[COPY9]], [[VST_dmx_sts_bm_pstm_nrm_imm]], -512 :: (store (<16 x s32>) into stack, align 128)
+    ; CHECK-NEXT: [[COPY10:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY10]], [[VST_dmx_sts_bm_pstm_nrm_imm1]], 64 :: (store (<16 x s32>) into stack - 64, basealign 128)
+    ; CHECK-NEXT: [[COPY11:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_lo
+    ; CHECK-NEXT: [[VST_dmx_sts_bm_pstm_nrm_imm2:%[0-9]+]]:ep = VST_dmx_sts_bm_pstm_nrm_imm [[COPY11]], [[VST_dmx_sts_bm_pstm_nrm_imm1]], 0 :: (store (<16 x s32>) into stack, align 128)
+    ; CHECK-NEXT: [[COPY12:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY12]], [[VST_dmx_sts_bm_pstm_nrm_imm2]], 64 :: (store (<16 x s32>) into stack - 64, basealign 128)
+    ; CHECK-NEXT: [[COPY13:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_lo
+    ; CHECK-NEXT: [[VST_dmx_sts_bm_pstm_nrm1:%[0-9]+]]:ep = VST_dmx_sts_bm_pstm_nrm [[COPY13]], [[VST_dmx_sts_bm_pstm_nrm_imm2]], [[MOV_PD_imm11_pseudo]] :: (store (<16 x s32>) into stack, align 128)
+    ; CHECK-NEXT: [[COPY14:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY14]], [[VST_dmx_sts_bm_pstm_nrm1]], 64 :: (store (<16 x s32>) into stack - 64, basealign 128)
+    ; CHECK-NEXT: [[COPY15:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_lo
+    ; CHECK-NEXT: [[VST_dmx_sts_bm_pstm_nrm2:%[0-9]+]]:ep = VST_dmx_sts_bm_pstm_nrm [[COPY15]], [[VST_dmx_sts_bm_pstm_nrm1]], [[MOV_PD_imm11_pseudo1]] :: (store (<16 x s32>) into stack, align 128)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VST_dmx_sts_bm_pstm_nrm2]]
     %0:ptrregbank(p0) = COPY $p0
     %1:gprregbank(s32) = COPY $r0
@@ -1520,10 +1520,10 @@ body: |
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo3:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 4
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:acc1024 = COPY $cml0
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm11_pseudo]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_count
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_lo
-    ; CHECK-NEXT: [[VST_2D_dmx_sts_bm:%[0-9]+]]:ep, [[VST_2D_dmx_sts_bm1:%[0-9]+]]:edc = VST_2D_dmx_sts_bm [[COPY2]], [[COPY]], [[REG_SEQUENCE]] :: (store (<16 x s32>), align 128)
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY3]], [[COPY]], 64 :: (store (<16 x s32>) into unknown-address + 64)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY2]], [[COPY]], 64 :: (store (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_lo
+    ; CHECK-NEXT: [[VST_2D_dmx_sts_bm:%[0-9]+]]:ep, [[VST_2D_dmx_sts_bm1:%[0-9]+]]:edc = VST_2D_dmx_sts_bm [[COPY3]], [[COPY]], [[REG_SEQUENCE]] :: (store (<16 x s32>) into unknown-address + 64)
     ; CHECK-NEXT: PseudoRET implicit $lr
     %0:ptrregbank(p0) = COPY $p0
     %1:em(s20) = G_CONSTANT i20 1
@@ -1556,10 +1556,10 @@ body: |
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo6:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 7
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:acc1024 = COPY $cml0
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:eds = REG_SEQUENCE [[MOV_PD_imm11_pseudo]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo5]], %subreg.sub_dim_count, [[MOV_PD_imm11_pseudo4]], %subreg.sub_hi_dim_then_sub_dim_size, [[MOV_PD_imm11_pseudo2]], %subreg.sub_hi_dim_then_sub_dim_stride, [[MOV_PD_imm11_pseudo6]], %subreg.sub_hi_dim_then_sub_dim_count
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_lo
-    ; CHECK-NEXT: [[VST_3D_dmx_sts_bm:%[0-9]+]]:ep, [[VST_3D_dmx_sts_bm1:%[0-9]+]]:edcl, [[VST_3D_dmx_sts_bm2:%[0-9]+]]:edch = VST_3D_dmx_sts_bm [[COPY2]], [[COPY]], [[REG_SEQUENCE]] :: (store (<16 x s32>), align 128)
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY3]], [[COPY]], 64 :: (store (<16 x s32>) into unknown-address + 64)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY2]], [[COPY]], 64 :: (store (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_lo
+    ; CHECK-NEXT: [[VST_3D_dmx_sts_bm:%[0-9]+]]:ep, [[VST_3D_dmx_sts_bm1:%[0-9]+]]:edcl, [[VST_3D_dmx_sts_bm2:%[0-9]+]]:edch = VST_3D_dmx_sts_bm [[COPY3]], [[COPY]], [[REG_SEQUENCE]] :: (store (<16 x s32>) into unknown-address + 64)
     ; CHECK-NEXT: PseudoRET implicit $lr
     %0:ptrregbank(p0) = COPY $p0
     %1:em(s20) = G_CONSTANT i20 1
@@ -1590,36 +1590,36 @@ body: |
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:em = COPY [[COPY1]]
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo 32
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:em = MOV_PD_imm11_pseudo 512
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_pstm_nrm:%[0-9]+]]:acc512, [[VLDA_dmx_lda_bm_pstm_nrm1:%[0-9]+]]:ep = VLDA_dmx_lda_bm_pstm_nrm [[COPY]], [[COPY2]] :: (load (<16 x s32>) from stack - 64, basealign 256)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 64 :: (load (<16 x s32>) from stack, align 256)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm1:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 128 :: (load (<16 x s32>) from stack + 64, basealign 256)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm2:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 192 :: (load (<16 x s32>) from stack + 128, align 128, basealign 256)
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:acc2048 = REG_SEQUENCE [[VLDA_dmx_lda_bm_pstm_nrm]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm]], %subreg.sub_512_acc_hi, [[VLDA_dmx_lda_bm_idx_imm1]], %subreg.sub_1024_acc_hi_then_sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm2]], %subreg.sub_1024_acc_hi_then_sub_512_acc_hi
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_pstm_nrm_imm:%[0-9]+]]:acc512, [[VLDA_dmx_lda_bm_pstm_nrm_imm1:%[0-9]+]]:ep = VLDA_dmx_lda_bm_pstm_nrm_imm [[VLDA_dmx_lda_bm_pstm_nrm1]], 448 :: (load (<16 x s32>) from stack - 64, basealign 256)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm3:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm1]], 64 :: (load (<16 x s32>) from stack, align 256)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm4:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm1]], 128 :: (load (<16 x s32>) from stack + 64, basealign 256)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm5:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm1]], 192 :: (load (<16 x s32>) from stack + 128, align 128, basealign 256)
-    ; CHECK-NEXT: [[REG_SEQUENCE1:%[0-9]+]]:acc2048 = REG_SEQUENCE [[VLDA_dmx_lda_bm_pstm_nrm_imm]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm3]], %subreg.sub_512_acc_hi, [[VLDA_dmx_lda_bm_idx_imm4]], %subreg.sub_1024_acc_hi_then_sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm5]], %subreg.sub_1024_acc_hi_then_sub_512_acc_hi
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_pstm_nrm_imm2:%[0-9]+]]:acc512, [[VLDA_dmx_lda_bm_pstm_nrm_imm3:%[0-9]+]]:ep = VLDA_dmx_lda_bm_pstm_nrm_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm1]], -512 :: (load (<16 x s32>) from stack - 64, basealign 256)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm6:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm1]], 64 :: (load (<16 x s32>) from stack, align 256)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm7:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm1]], 128 :: (load (<16 x s32>) from stack + 64, basealign 256)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm8:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm1]], 192 :: (load (<16 x s32>) from stack + 128, align 128, basealign 256)
-    ; CHECK-NEXT: [[REG_SEQUENCE2:%[0-9]+]]:acc2048 = REG_SEQUENCE [[VLDA_dmx_lda_bm_pstm_nrm_imm2]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm6]], %subreg.sub_512_acc_hi, [[VLDA_dmx_lda_bm_idx_imm7]], %subreg.sub_1024_acc_hi_then_sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm8]], %subreg.sub_1024_acc_hi_then_sub_512_acc_hi
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_pstm_nrm_imm4:%[0-9]+]]:acc512, [[VLDA_dmx_lda_bm_pstm_nrm_imm5:%[0-9]+]]:ep = VLDA_dmx_lda_bm_pstm_nrm_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm3]], 0 :: (load (<16 x s32>) from stack - 64, basealign 256)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm9:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm3]], 64 :: (load (<16 x s32>) from stack, align 256)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm10:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm3]], 128 :: (load (<16 x s32>) from stack + 64, basealign 256)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm11:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm3]], 192 :: (load (<16 x s32>) from stack + 128, align 128, basealign 256)
-    ; CHECK-NEXT: [[REG_SEQUENCE3:%[0-9]+]]:acc2048 = REG_SEQUENCE [[VLDA_dmx_lda_bm_pstm_nrm_imm4]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm9]], %subreg.sub_512_acc_hi, [[VLDA_dmx_lda_bm_idx_imm10]], %subreg.sub_1024_acc_hi_then_sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm11]], %subreg.sub_1024_acc_hi_then_sub_512_acc_hi
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_pstm_nrm2:%[0-9]+]]:acc512, [[VLDA_dmx_lda_bm_pstm_nrm3:%[0-9]+]]:ep = VLDA_dmx_lda_bm_pstm_nrm [[VLDA_dmx_lda_bm_pstm_nrm_imm5]], [[MOV_PD_imm11_pseudo]] :: (load (<16 x s32>) from stack - 64, basealign 256)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm12:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm5]], 64 :: (load (<16 x s32>) from stack, align 256)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm13:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm5]], 128 :: (load (<16 x s32>) from stack + 64, basealign 256)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm14:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm5]], 192 :: (load (<16 x s32>) from stack + 128, align 128, basealign 256)
-    ; CHECK-NEXT: [[REG_SEQUENCE4:%[0-9]+]]:acc2048 = REG_SEQUENCE [[VLDA_dmx_lda_bm_pstm_nrm2]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm12]], %subreg.sub_512_acc_hi, [[VLDA_dmx_lda_bm_idx_imm13]], %subreg.sub_1024_acc_hi_then_sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm14]], %subreg.sub_1024_acc_hi_then_sub_512_acc_hi
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_pstm_nrm4:%[0-9]+]]:acc512, [[VLDA_dmx_lda_bm_pstm_nrm5:%[0-9]+]]:ep = VLDA_dmx_lda_bm_pstm_nrm [[VLDA_dmx_lda_bm_pstm_nrm3]], [[MOV_PD_imm11_pseudo1]] :: (load (<16 x s32>) from stack - 64, basealign 256)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm15:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm3]], 64 :: (load (<16 x s32>) from stack, align 256)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm16:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm3]], 128 :: (load (<16 x s32>) from stack + 64, basealign 256)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm17:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm3]], 192 :: (load (<16 x s32>) from stack + 128, align 128, basealign 256)
-    ; CHECK-NEXT: [[REG_SEQUENCE5:%[0-9]+]]:acc2048 = REG_SEQUENCE [[VLDA_dmx_lda_bm_pstm_nrm4]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm15]], %subreg.sub_512_acc_hi, [[VLDA_dmx_lda_bm_idx_imm16]], %subreg.sub_1024_acc_hi_then_sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm17]], %subreg.sub_1024_acc_hi_then_sub_512_acc_hi
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 192 :: (load (<16 x s32>) from stack - 64, basealign 256)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm1:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 128 :: (load (<16 x s32>) from stack, align 256)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm2:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 64 :: (load (<16 x s32>) from stack + 64, basealign 256)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_pstm_nrm:%[0-9]+]]:acc512, [[VLDA_dmx_lda_bm_pstm_nrm1:%[0-9]+]]:ep = VLDA_dmx_lda_bm_pstm_nrm [[COPY]], [[COPY2]] :: (load (<16 x s32>) from stack + 128, align 128, basealign 256)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:acc2048 = REG_SEQUENCE [[VLDA_dmx_lda_bm_pstm_nrm]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm2]], %subreg.sub_512_acc_hi, [[VLDA_dmx_lda_bm_idx_imm1]], %subreg.sub_1024_acc_hi_then_sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm]], %subreg.sub_1024_acc_hi_then_sub_512_acc_hi
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm3:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm1]], 192 :: (load (<16 x s32>) from stack - 64, basealign 256)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm4:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm1]], 128 :: (load (<16 x s32>) from stack, align 256)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm5:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm1]], 64 :: (load (<16 x s32>) from stack + 64, basealign 256)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_pstm_nrm_imm:%[0-9]+]]:acc512, [[VLDA_dmx_lda_bm_pstm_nrm_imm1:%[0-9]+]]:ep = VLDA_dmx_lda_bm_pstm_nrm_imm [[VLDA_dmx_lda_bm_pstm_nrm1]], 448 :: (load (<16 x s32>) from stack + 128, align 128, basealign 256)
+    ; CHECK-NEXT: [[REG_SEQUENCE1:%[0-9]+]]:acc2048 = REG_SEQUENCE [[VLDA_dmx_lda_bm_pstm_nrm_imm]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm5]], %subreg.sub_512_acc_hi, [[VLDA_dmx_lda_bm_idx_imm4]], %subreg.sub_1024_acc_hi_then_sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm3]], %subreg.sub_1024_acc_hi_then_sub_512_acc_hi
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm6:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm1]], 192 :: (load (<16 x s32>) from stack - 64, basealign 256)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm7:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm1]], 128 :: (load (<16 x s32>) from stack, align 256)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm8:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm1]], 64 :: (load (<16 x s32>) from stack + 64, basealign 256)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_pstm_nrm_imm2:%[0-9]+]]:acc512, [[VLDA_dmx_lda_bm_pstm_nrm_imm3:%[0-9]+]]:ep = VLDA_dmx_lda_bm_pstm_nrm_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm1]], -512 :: (load (<16 x s32>) from stack + 128, align 128, basealign 256)
+    ; CHECK-NEXT: [[REG_SEQUENCE2:%[0-9]+]]:acc2048 = REG_SEQUENCE [[VLDA_dmx_lda_bm_pstm_nrm_imm2]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm8]], %subreg.sub_512_acc_hi, [[VLDA_dmx_lda_bm_idx_imm7]], %subreg.sub_1024_acc_hi_then_sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm6]], %subreg.sub_1024_acc_hi_then_sub_512_acc_hi
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm9:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm3]], 192 :: (load (<16 x s32>) from stack - 64, basealign 256)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm10:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm3]], 128 :: (load (<16 x s32>) from stack, align 256)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm11:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm3]], 64 :: (load (<16 x s32>) from stack + 64, basealign 256)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_pstm_nrm_imm4:%[0-9]+]]:acc512, [[VLDA_dmx_lda_bm_pstm_nrm_imm5:%[0-9]+]]:ep = VLDA_dmx_lda_bm_pstm_nrm_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm3]], 0 :: (load (<16 x s32>) from stack + 128, align 128, basealign 256)
+    ; CHECK-NEXT: [[REG_SEQUENCE3:%[0-9]+]]:acc2048 = REG_SEQUENCE [[VLDA_dmx_lda_bm_pstm_nrm_imm4]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm11]], %subreg.sub_512_acc_hi, [[VLDA_dmx_lda_bm_idx_imm10]], %subreg.sub_1024_acc_hi_then_sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm9]], %subreg.sub_1024_acc_hi_then_sub_512_acc_hi
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm12:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm5]], 192 :: (load (<16 x s32>) from stack - 64, basealign 256)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm13:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm5]], 128 :: (load (<16 x s32>) from stack, align 256)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm14:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm_imm5]], 64 :: (load (<16 x s32>) from stack + 64, basealign 256)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_pstm_nrm2:%[0-9]+]]:acc512, [[VLDA_dmx_lda_bm_pstm_nrm3:%[0-9]+]]:ep = VLDA_dmx_lda_bm_pstm_nrm [[VLDA_dmx_lda_bm_pstm_nrm_imm5]], [[MOV_PD_imm11_pseudo]] :: (load (<16 x s32>) from stack + 128, align 128, basealign 256)
+    ; CHECK-NEXT: [[REG_SEQUENCE4:%[0-9]+]]:acc2048 = REG_SEQUENCE [[VLDA_dmx_lda_bm_pstm_nrm2]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm14]], %subreg.sub_512_acc_hi, [[VLDA_dmx_lda_bm_idx_imm13]], %subreg.sub_1024_acc_hi_then_sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm12]], %subreg.sub_1024_acc_hi_then_sub_512_acc_hi
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm15:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm3]], 192 :: (load (<16 x s32>) from stack - 64, basealign 256)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm16:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm3]], 128 :: (load (<16 x s32>) from stack, align 256)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm17:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[VLDA_dmx_lda_bm_pstm_nrm3]], 64 :: (load (<16 x s32>) from stack + 64, basealign 256)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_pstm_nrm4:%[0-9]+]]:acc512, [[VLDA_dmx_lda_bm_pstm_nrm5:%[0-9]+]]:ep = VLDA_dmx_lda_bm_pstm_nrm [[VLDA_dmx_lda_bm_pstm_nrm3]], [[MOV_PD_imm11_pseudo1]] :: (load (<16 x s32>) from stack + 128, align 128, basealign 256)
+    ; CHECK-NEXT: [[REG_SEQUENCE5:%[0-9]+]]:acc2048 = REG_SEQUENCE [[VLDA_dmx_lda_bm_pstm_nrm4]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm17]], %subreg.sub_512_acc_hi, [[VLDA_dmx_lda_bm_idx_imm16]], %subreg.sub_1024_acc_hi_then_sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm15]], %subreg.sub_1024_acc_hi_then_sub_512_acc_hi
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE5]]
     %0:ptrregbank(p0) = COPY $p0
     %1:gprregbank(s32) = COPY $r0
@@ -1655,11 +1655,11 @@ body: |
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo2:%[0-9]+]]:edn = MOV_PD_imm11_pseudo 3
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo3:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 4
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm11_pseudo]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_count
-    ; CHECK-NEXT: [[VLDA_2D_dmx_lda_bm:%[0-9]+]]:acc512, [[VLDA_2D_dmx_lda_bm1:%[0-9]+]]:ep, [[VLDA_2D_dmx_lda_bm2:%[0-9]+]]:edc = VLDA_2D_dmx_lda_bm [[COPY]], [[REG_SEQUENCE]] :: (load (<16 x s32>), align 256)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 64 :: (load (<16 x s32>) from unknown-address + 64)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm1:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 128 :: (load (<16 x s32>) from unknown-address + 128, align 128)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm2:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 192 :: (load (<16 x s32>) from unknown-address + 192)
-    ; CHECK-NEXT: [[REG_SEQUENCE1:%[0-9]+]]:acc2048 = REG_SEQUENCE [[VLDA_2D_dmx_lda_bm]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm]], %subreg.sub_512_acc_hi, [[VLDA_dmx_lda_bm_idx_imm1]], %subreg.sub_1024_acc_hi_then_sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm2]], %subreg.sub_1024_acc_hi_then_sub_512_acc_hi
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 192 :: (load (<16 x s32>), align 256)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm1:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 128 :: (load (<16 x s32>) from unknown-address + 64)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_bm_idx_imm2:%[0-9]+]]:acc512 = VLDA_dmx_lda_bm_idx_imm [[COPY]], 64 :: (load (<16 x s32>) from unknown-address + 128, align 128)
+    ; CHECK-NEXT: [[VLDA_2D_dmx_lda_bm:%[0-9]+]]:acc512, [[VLDA_2D_dmx_lda_bm1:%[0-9]+]]:ep, [[VLDA_2D_dmx_lda_bm2:%[0-9]+]]:edc = VLDA_2D_dmx_lda_bm [[COPY]], [[REG_SEQUENCE]] :: (load (<16 x s32>) from unknown-address + 192)
+    ; CHECK-NEXT: [[REG_SEQUENCE1:%[0-9]+]]:acc2048 = REG_SEQUENCE [[VLDA_2D_dmx_lda_bm]], %subreg.sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm2]], %subreg.sub_512_acc_hi, [[VLDA_dmx_lda_bm_idx_imm1]], %subreg.sub_1024_acc_hi_then_sub_512_acc_lo, [[VLDA_dmx_lda_bm_idx_imm]], %subreg.sub_1024_acc_hi_then_sub_512_acc_hi
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE1]]
     %0:ptrregbank(p0) = COPY $p0
     %1:em(s20) = G_CONSTANT i20 1
@@ -1721,54 +1721,54 @@ body: |
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo 32
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:em = MOV_PD_imm11_pseudo 512
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc2048 = COPY $dm0
-    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_lo
-    ; CHECK-NEXT: [[VST_dmx_sts_bm_pstm_nrm:%[0-9]+]]:ep = VST_dmx_sts_bm_pstm_nrm [[COPY4]], [[COPY]], [[COPY2]] :: (store (<16 x s32>) into stack - 64, basealign 256)
-    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY5]], [[COPY]], 64 :: (store (<16 x s32>) into stack, align 256)
-    ; CHECK-NEXT: [[COPY6:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_1024_acc_hi_then_sub_512_acc_lo
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY6]], [[COPY]], 128 :: (store (<16 x s32>) into stack + 64, basealign 256)
-    ; CHECK-NEXT: [[COPY7:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_1024_acc_hi_then_sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY7]], [[COPY]], 192 :: (store (<16 x s32>) into stack + 128, align 128, basealign 256)
-    ; CHECK-NEXT: [[COPY8:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_lo
-    ; CHECK-NEXT: [[VST_dmx_sts_bm_pstm_nrm_imm:%[0-9]+]]:ep = VST_dmx_sts_bm_pstm_nrm_imm [[COPY8]], [[VST_dmx_sts_bm_pstm_nrm]], 448 :: (store (<16 x s32>) into stack - 64, basealign 256)
-    ; CHECK-NEXT: [[COPY9:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY9]], [[VST_dmx_sts_bm_pstm_nrm]], 64 :: (store (<16 x s32>) into stack, align 256)
-    ; CHECK-NEXT: [[COPY10:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_1024_acc_hi_then_sub_512_acc_lo
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY10]], [[VST_dmx_sts_bm_pstm_nrm]], 128 :: (store (<16 x s32>) into stack + 64, basealign 256)
-    ; CHECK-NEXT: [[COPY11:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_1024_acc_hi_then_sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY11]], [[VST_dmx_sts_bm_pstm_nrm]], 192 :: (store (<16 x s32>) into stack + 128, align 128, basealign 256)
-    ; CHECK-NEXT: [[COPY12:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_lo
-    ; CHECK-NEXT: [[VST_dmx_sts_bm_pstm_nrm_imm1:%[0-9]+]]:ep = VST_dmx_sts_bm_pstm_nrm_imm [[COPY12]], [[VST_dmx_sts_bm_pstm_nrm_imm]], -512 :: (store (<16 x s32>) into stack - 64, basealign 256)
-    ; CHECK-NEXT: [[COPY13:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY13]], [[VST_dmx_sts_bm_pstm_nrm_imm]], 64 :: (store (<16 x s32>) into stack, align 256)
-    ; CHECK-NEXT: [[COPY14:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_1024_acc_hi_then_sub_512_acc_lo
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY14]], [[VST_dmx_sts_bm_pstm_nrm_imm]], 128 :: (store (<16 x s32>) into stack + 64, basealign 256)
-    ; CHECK-NEXT: [[COPY15:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_1024_acc_hi_then_sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY15]], [[VST_dmx_sts_bm_pstm_nrm_imm]], 192 :: (store (<16 x s32>) into stack + 128, align 128, basealign 256)
-    ; CHECK-NEXT: [[COPY16:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_lo
-    ; CHECK-NEXT: [[VST_dmx_sts_bm_pstm_nrm_imm2:%[0-9]+]]:ep = VST_dmx_sts_bm_pstm_nrm_imm [[COPY16]], [[VST_dmx_sts_bm_pstm_nrm_imm1]], 0 :: (store (<16 x s32>) into stack - 64, basealign 256)
-    ; CHECK-NEXT: [[COPY17:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY17]], [[VST_dmx_sts_bm_pstm_nrm_imm1]], 64 :: (store (<16 x s32>) into stack, align 256)
-    ; CHECK-NEXT: [[COPY18:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_1024_acc_hi_then_sub_512_acc_lo
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY18]], [[VST_dmx_sts_bm_pstm_nrm_imm1]], 128 :: (store (<16 x s32>) into stack + 64, basealign 256)
-    ; CHECK-NEXT: [[COPY19:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_1024_acc_hi_then_sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY19]], [[VST_dmx_sts_bm_pstm_nrm_imm1]], 192 :: (store (<16 x s32>) into stack + 128, align 128, basealign 256)
-    ; CHECK-NEXT: [[COPY20:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_lo
-    ; CHECK-NEXT: [[VST_dmx_sts_bm_pstm_nrm1:%[0-9]+]]:ep = VST_dmx_sts_bm_pstm_nrm [[COPY20]], [[VST_dmx_sts_bm_pstm_nrm_imm2]], [[MOV_PD_imm11_pseudo]] :: (store (<16 x s32>) into stack - 64, basealign 256)
-    ; CHECK-NEXT: [[COPY21:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY21]], [[VST_dmx_sts_bm_pstm_nrm_imm2]], 64 :: (store (<16 x s32>) into stack, align 256)
-    ; CHECK-NEXT: [[COPY22:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_1024_acc_hi_then_sub_512_acc_lo
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY22]], [[VST_dmx_sts_bm_pstm_nrm_imm2]], 128 :: (store (<16 x s32>) into stack + 64, basealign 256)
-    ; CHECK-NEXT: [[COPY23:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_1024_acc_hi_then_sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY23]], [[VST_dmx_sts_bm_pstm_nrm_imm2]], 192 :: (store (<16 x s32>) into stack + 128, align 128, basealign 256)
-    ; CHECK-NEXT: [[COPY24:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_lo
-    ; CHECK-NEXT: [[VST_dmx_sts_bm_pstm_nrm2:%[0-9]+]]:ep = VST_dmx_sts_bm_pstm_nrm [[COPY24]], [[VST_dmx_sts_bm_pstm_nrm1]], [[MOV_PD_imm11_pseudo1]] :: (store (<16 x s32>) into stack - 64, basealign 256)
-    ; CHECK-NEXT: [[COPY25:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY25]], [[VST_dmx_sts_bm_pstm_nrm1]], 64 :: (store (<16 x s32>) into stack, align 256)
-    ; CHECK-NEXT: [[COPY26:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_1024_acc_hi_then_sub_512_acc_lo
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY26]], [[VST_dmx_sts_bm_pstm_nrm1]], 128 :: (store (<16 x s32>) into stack + 64, basealign 256)
-    ; CHECK-NEXT: [[COPY27:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_1024_acc_hi_then_sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY27]], [[VST_dmx_sts_bm_pstm_nrm1]], 192 :: (store (<16 x s32>) into stack + 128, align 128, basealign 256)
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_1024_acc_hi_then_sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY4]], [[COPY]], 192 :: (store (<16 x s32>) into stack - 64, basealign 256)
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_1024_acc_hi_then_sub_512_acc_lo
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY5]], [[COPY]], 128 :: (store (<16 x s32>) into stack, align 256)
+    ; CHECK-NEXT: [[COPY6:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY6]], [[COPY]], 64 :: (store (<16 x s32>) into stack + 64, basealign 256)
+    ; CHECK-NEXT: [[COPY7:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_lo
+    ; CHECK-NEXT: [[VST_dmx_sts_bm_pstm_nrm:%[0-9]+]]:ep = VST_dmx_sts_bm_pstm_nrm [[COPY7]], [[COPY]], [[COPY2]] :: (store (<16 x s32>) into stack + 128, align 128, basealign 256)
+    ; CHECK-NEXT: [[COPY8:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_1024_acc_hi_then_sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY8]], [[VST_dmx_sts_bm_pstm_nrm]], 192 :: (store (<16 x s32>) into stack - 64, basealign 256)
+    ; CHECK-NEXT: [[COPY9:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_1024_acc_hi_then_sub_512_acc_lo
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY9]], [[VST_dmx_sts_bm_pstm_nrm]], 128 :: (store (<16 x s32>) into stack, align 256)
+    ; CHECK-NEXT: [[COPY10:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY10]], [[VST_dmx_sts_bm_pstm_nrm]], 64 :: (store (<16 x s32>) into stack + 64, basealign 256)
+    ; CHECK-NEXT: [[COPY11:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_lo
+    ; CHECK-NEXT: [[VST_dmx_sts_bm_pstm_nrm_imm:%[0-9]+]]:ep = VST_dmx_sts_bm_pstm_nrm_imm [[COPY11]], [[VST_dmx_sts_bm_pstm_nrm]], 448 :: (store (<16 x s32>) into stack + 128, align 128, basealign 256)
+    ; CHECK-NEXT: [[COPY12:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_1024_acc_hi_then_sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY12]], [[VST_dmx_sts_bm_pstm_nrm_imm]], 192 :: (store (<16 x s32>) into stack - 64, basealign 256)
+    ; CHECK-NEXT: [[COPY13:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_1024_acc_hi_then_sub_512_acc_lo
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY13]], [[VST_dmx_sts_bm_pstm_nrm_imm]], 128 :: (store (<16 x s32>) into stack, align 256)
+    ; CHECK-NEXT: [[COPY14:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY14]], [[VST_dmx_sts_bm_pstm_nrm_imm]], 64 :: (store (<16 x s32>) into stack + 64, basealign 256)
+    ; CHECK-NEXT: [[COPY15:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_lo
+    ; CHECK-NEXT: [[VST_dmx_sts_bm_pstm_nrm_imm1:%[0-9]+]]:ep = VST_dmx_sts_bm_pstm_nrm_imm [[COPY15]], [[VST_dmx_sts_bm_pstm_nrm_imm]], -512 :: (store (<16 x s32>) into stack + 128, align 128, basealign 256)
+    ; CHECK-NEXT: [[COPY16:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_1024_acc_hi_then_sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY16]], [[VST_dmx_sts_bm_pstm_nrm_imm1]], 192 :: (store (<16 x s32>) into stack - 64, basealign 256)
+    ; CHECK-NEXT: [[COPY17:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_1024_acc_hi_then_sub_512_acc_lo
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY17]], [[VST_dmx_sts_bm_pstm_nrm_imm1]], 128 :: (store (<16 x s32>) into stack, align 256)
+    ; CHECK-NEXT: [[COPY18:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY18]], [[VST_dmx_sts_bm_pstm_nrm_imm1]], 64 :: (store (<16 x s32>) into stack + 64, basealign 256)
+    ; CHECK-NEXT: [[COPY19:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_lo
+    ; CHECK-NEXT: [[VST_dmx_sts_bm_pstm_nrm_imm2:%[0-9]+]]:ep = VST_dmx_sts_bm_pstm_nrm_imm [[COPY19]], [[VST_dmx_sts_bm_pstm_nrm_imm1]], 0 :: (store (<16 x s32>) into stack + 128, align 128, basealign 256)
+    ; CHECK-NEXT: [[COPY20:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_1024_acc_hi_then_sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY20]], [[VST_dmx_sts_bm_pstm_nrm_imm2]], 192 :: (store (<16 x s32>) into stack - 64, basealign 256)
+    ; CHECK-NEXT: [[COPY21:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_1024_acc_hi_then_sub_512_acc_lo
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY21]], [[VST_dmx_sts_bm_pstm_nrm_imm2]], 128 :: (store (<16 x s32>) into stack, align 256)
+    ; CHECK-NEXT: [[COPY22:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY22]], [[VST_dmx_sts_bm_pstm_nrm_imm2]], 64 :: (store (<16 x s32>) into stack + 64, basealign 256)
+    ; CHECK-NEXT: [[COPY23:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_lo
+    ; CHECK-NEXT: [[VST_dmx_sts_bm_pstm_nrm1:%[0-9]+]]:ep = VST_dmx_sts_bm_pstm_nrm [[COPY23]], [[VST_dmx_sts_bm_pstm_nrm_imm2]], [[MOV_PD_imm11_pseudo]] :: (store (<16 x s32>) into stack + 128, align 128, basealign 256)
+    ; CHECK-NEXT: [[COPY24:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_1024_acc_hi_then_sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY24]], [[VST_dmx_sts_bm_pstm_nrm1]], 192 :: (store (<16 x s32>) into stack - 64, basealign 256)
+    ; CHECK-NEXT: [[COPY25:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_1024_acc_hi_then_sub_512_acc_lo
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY25]], [[VST_dmx_sts_bm_pstm_nrm1]], 128 :: (store (<16 x s32>) into stack, align 256)
+    ; CHECK-NEXT: [[COPY26:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY26]], [[VST_dmx_sts_bm_pstm_nrm1]], 64 :: (store (<16 x s32>) into stack + 64, basealign 256)
+    ; CHECK-NEXT: [[COPY27:%[0-9]+]]:acc512 = COPY [[COPY3]].sub_512_acc_lo
+    ; CHECK-NEXT: [[VST_dmx_sts_bm_pstm_nrm2:%[0-9]+]]:ep = VST_dmx_sts_bm_pstm_nrm [[COPY27]], [[VST_dmx_sts_bm_pstm_nrm1]], [[MOV_PD_imm11_pseudo1]] :: (store (<16 x s32>) into stack + 128, align 128, basealign 256)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VST_dmx_sts_bm_pstm_nrm2]]
     %0:ptrregbank(p0) = COPY $p0
     %1:gprregbank(s32) = COPY $r0
@@ -1806,14 +1806,14 @@ body: |
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo3:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 4
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:acc2048 = COPY $dm0
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm11_pseudo]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_count
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_lo
-    ; CHECK-NEXT: [[VST_2D_dmx_sts_bm:%[0-9]+]]:ep, [[VST_2D_dmx_sts_bm1:%[0-9]+]]:edc = VST_2D_dmx_sts_bm [[COPY2]], [[COPY]], [[REG_SEQUENCE]] :: (store (<16 x s32>), align 256)
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY3]], [[COPY]], 64 :: (store (<16 x s32>) into unknown-address + 64)
-    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_1024_acc_hi_then_sub_512_acc_lo
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY4]], [[COPY]], 128 :: (store (<16 x s32>) into unknown-address + 128, align 128)
-    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_1024_acc_hi_then_sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY5]], [[COPY]], 192 :: (store (<16 x s32>) into unknown-address + 192)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_1024_acc_hi_then_sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY2]], [[COPY]], 192 :: (store (<16 x s32>), align 256)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_1024_acc_hi_then_sub_512_acc_lo
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY3]], [[COPY]], 128 :: (store (<16 x s32>) into unknown-address + 64)
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY4]], [[COPY]], 64 :: (store (<16 x s32>) into unknown-address + 128, align 128)
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_lo
+    ; CHECK-NEXT: [[VST_2D_dmx_sts_bm:%[0-9]+]]:ep, [[VST_2D_dmx_sts_bm1:%[0-9]+]]:edc = VST_2D_dmx_sts_bm [[COPY5]], [[COPY]], [[REG_SEQUENCE]] :: (store (<16 x s32>) into unknown-address + 192)
     ; CHECK-NEXT: PseudoRET implicit $lr
     %0:ptrregbank(p0) = COPY $p0
     %1:em(s20) = G_CONSTANT i20 1
@@ -1846,14 +1846,14 @@ body: |
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo6:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 7
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:acc2048 = COPY $dm0
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:eds = REG_SEQUENCE [[MOV_PD_imm11_pseudo]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo5]], %subreg.sub_dim_count, [[MOV_PD_imm11_pseudo4]], %subreg.sub_hi_dim_then_sub_dim_size, [[MOV_PD_imm11_pseudo2]], %subreg.sub_hi_dim_then_sub_dim_stride, [[MOV_PD_imm11_pseudo6]], %subreg.sub_hi_dim_then_sub_dim_count
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_lo
-    ; CHECK-NEXT: [[VST_3D_dmx_sts_bm:%[0-9]+]]:ep, [[VST_3D_dmx_sts_bm1:%[0-9]+]]:edcl, [[VST_3D_dmx_sts_bm2:%[0-9]+]]:edch = VST_3D_dmx_sts_bm [[COPY2]], [[COPY]], [[REG_SEQUENCE]] :: (store (<16 x s32>), align 256)
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY3]], [[COPY]], 64 :: (store (<16 x s32>) into unknown-address + 64)
-    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_1024_acc_hi_then_sub_512_acc_lo
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY4]], [[COPY]], 128 :: (store (<16 x s32>) into unknown-address + 128, align 128)
-    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_1024_acc_hi_then_sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY5]], [[COPY]], 192 :: (store (<16 x s32>) into unknown-address + 192)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_1024_acc_hi_then_sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY2]], [[COPY]], 192 :: (store (<16 x s32>), align 256)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_1024_acc_hi_then_sub_512_acc_lo
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY3]], [[COPY]], 128 :: (store (<16 x s32>) into unknown-address + 64)
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY4]], [[COPY]], 64 :: (store (<16 x s32>) into unknown-address + 128, align 128)
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_lo
+    ; CHECK-NEXT: [[VST_3D_dmx_sts_bm:%[0-9]+]]:ep, [[VST_3D_dmx_sts_bm1:%[0-9]+]]:edcl, [[VST_3D_dmx_sts_bm2:%[0-9]+]]:edch = VST_3D_dmx_sts_bm [[COPY5]], [[COPY]], [[REG_SEQUENCE]] :: (store (<16 x s32>) into unknown-address + 192)
     ; CHECK-NEXT: PseudoRET implicit $lr
     %0:ptrregbank(p0) = COPY $p0
     %1:em(s20) = G_CONSTANT i20 1
