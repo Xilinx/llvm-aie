@@ -64,9 +64,7 @@ define dso_local noundef i32 @_Z5test3iiiiiiii(i32 noundef %a, i32 noundef %a1, 
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $p0 = MOV_mv_scl $sp
   ; CHECK-NEXT:   $p0 = PADD_imm9_pseudo $p0, -4
-  ; CHECK-NEXT:   renamable $r0 = LDA_dms_lda_idx_imm killed renamable $p0, 0 :: (invariant load (s32) from %fixed-stack.1)
-  ; CHECK-NEXT:   $p0 = MOV_mv_scl $sp
-  ; CHECK-NEXT:   $p0 = PADD_imm9_pseudo $p0, -4
+  ; CHECK-NEXT:   renamable $r0 = LDA_dms_lda_idx_imm renamable $p0, 0 :: (invariant load (s32) from %fixed-stack.1)
   ; CHECK-NEXT:   ST_dms_sts_idx_imm killed renamable $r0, killed renamable $p0, 0 :: (store (s32) into %fixed-stack.0, align 32)
   ; CHECK-NEXT:   PseudoJ_TCO_jump_imm @_Z5func1iiiiiiii, csr_aie2, implicit $r1, implicit $r2, implicit $r3, implicit $r4, implicit $r5, implicit $r6, implicit $r7
 entry:
@@ -83,13 +81,9 @@ define dso_local noundef i32 @_Z5test4iiiiiiiii(i32 noundef %a, i32 noundef %a1,
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $p0 = MOV_mv_scl $sp
   ; CHECK-NEXT:   $p0 = PADD_imm9_pseudo $p0, -4
-  ; CHECK-NEXT:   renamable $r0 = LDA_dms_lda_idx_imm killed renamable $p0, 0 :: (invariant load (s32) from %fixed-stack.2)
-  ; CHECK-NEXT:   $p0 = MOV_mv_scl $sp
-  ; CHECK-NEXT:   $p0 = PADD_imm9_pseudo $p0, -8
-  ; CHECK-NEXT:   renamable $r8 = LDA_dms_lda_idx_imm killed renamable $p0, 0 :: (invariant load (s32) from %fixed-stack.1, align 8)
+  ; CHECK-NEXT:   renamable $r0 = LDA_dms_lda_idx_imm renamable $p0, 0 :: (invariant load (s32) from %fixed-stack.2)
+  ; CHECK-NEXT:   renamable $r8 = LDA_dms_lda_idx_imm renamable $p0, -4 :: (invariant load (s32) from %fixed-stack.1, align 8)
   ; CHECK-NEXT:   renamable $r0 = nsw ADD killed renamable $r8, killed renamable $r0, implicit-def dead $srcarry
-  ; CHECK-NEXT:   $p0 = MOV_mv_scl $sp
-  ; CHECK-NEXT:   $p0 = PADD_imm9_pseudo $p0, -4
   ; CHECK-NEXT:   ST_dms_sts_idx_imm killed renamable $r0, killed renamable $p0, 0 :: (store (s32) into %fixed-stack.0, align 32)
   ; CHECK-NEXT:   PseudoJ_TCO_jump_imm @_Z5func1iiiiiiii, csr_aie2, implicit $r1, implicit $r2, implicit $r3, implicit $r4, implicit $r5, implicit $r6, implicit $r7
 entry:

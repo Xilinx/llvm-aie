@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -45,9 +45,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIE.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/CodeGen/GlobalISel/CSEInfo.h"
 #include "llvm/CodeGen/GlobalISel/CSEMIRBuilder.h"
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -81,6 +83,10 @@ static cl::opt<bool>
                         cl::init(true),
                         cl::desc("Disable ptradd chaining that feed "
                                  "loads that are used in conditional jumps."));
+
+static cl::opt<bool>
+    EnableStackChaining("aie-chain-stack", cl::Hidden, cl::init(true),
+                        cl::desc("Enable pointer chaining for stack access."));
 
 namespace {
 
@@ -163,6 +169,10 @@ private:
   bool processBasicBlock(MachineBasicBlock &MBB, MachineIRBuilder &MIB,
                          GISelObserverWrapper &Observer);
 
+  // Create chaining opportunities related to FRAME_INDEX.
+  bool convertFIToPtrAdd(MachineBasicBlock &MBB, MachineIRBuilder &MIB,
+                         GISelObserverWrapper &Observer);
+
   // Get all candidates, i.e. groups of G_PTR_ADDs in the same
   // basic block that shares the same input pointer.
   RegUseMap collectPtrUses(MachineBasicBlock &MBB);
@@ -238,7 +248,10 @@ bool AIEClusterBaseAddress::runOnMachineFunction(MachineFunction &MF) {
   }
 
   bool Changed = false;
+
   for (MachineBasicBlock &MBB : MF) {
+    if (EnableStackChaining)
+      Changed |= convertFIToPtrAdd(MBB, MIB, Observer);
     Changed |= processBasicBlock(MBB, MIB, Observer);
   }
   return Changed;
@@ -345,6 +358,52 @@ bool AIEClusterBaseAddress::avoidPtrAdd(
                  << "Found Load feeding Cond Branch attached to " << *PtrAdd;);
 
   return LoadFeedCondBranch;
+}
+
+bool AIEClusterBaseAddress::convertFIToPtrAdd(MachineBasicBlock &MBB,
+                                              MachineIRBuilder &MIB,
+                                              GISelObserverWrapper &Observer) {
+
+  const MachineFrameInfo &MFI = MBB.getParent()->getFrameInfo();
+  std::vector<MachineInstr *> FIs;
+
+  for (MachineInstr &FIInstr : MBB) {
+    // Only consider G_FRAME_INDEX
+    if (FIInstr.getOpcode() != TargetOpcode::G_FRAME_INDEX)
+      continue;
+
+    const int FrameIdx = FIInstr.getOperand(1).getIndex();
+    if (!MFI.isFixedObjectIndex(FrameIdx))
+      continue;
+
+    FIs.push_back(&FIInstr);
+  }
+
+  bool Changed = false;
+  if (FIs.size() < 2)
+    return Changed;
+
+  const MachineInstr *FirstMI = FIs[0];
+  const int64_t FirstOffset =
+      MFI.getObjectOffset(FirstMI->getOperand(1).getIndex());
+  const Register FirstPtr = FirstMI->getOperand(0).getReg();
+
+  for (MachineInstr *FI : make_range(next(FIs.begin()), FIs.end())) {
+    const int64_t Offset =
+        MFI.getObjectOffset(FI->getOperand(1).getIndex()) - FirstOffset;
+    MIB.setInstrAndDebugLoc(*FI);
+    const Register NewOffsetReg =
+        MIB.buildConstant(LLT::scalar(20), Offset).getReg(0);
+
+    Observer.createdInstr(*MIB.buildInstr(TargetOpcode::G_PTR_ADD,
+                                          {FI->getOperand(0).getReg()},
+                                          {FirstPtr, NewOffsetReg}));
+    Observer.erasingInstr(*FI);
+    FI->eraseFromParent();
+    Changed = true;
+  }
+
+  return Changed;
 }
 
 AIEClusterBaseAddress::RegUseMap
