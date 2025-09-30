@@ -279,7 +279,7 @@ extern void foo(v8acc48);
 // CHECK-LABEL: @_Z12call_v8acc48v(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i48> @llvm.aie.v8i48undef()
-// CHECK-NEXT:    tail call void @_Z3fooDv8_u7__acc48(<8 x i48> noundef [[TMP0]])
+// CHECK-NEXT:    tail call void @_Z3fooDv8_u7__acc48(<8 x i48> noundef [[TMP0]]) #[[ATTR10:[0-9]+]]
 // CHECK-NEXT:    ret void
 //
 void call_v8acc48()
@@ -291,7 +291,7 @@ extern void bar(v8acc80);
 // CHECK-LABEL: @_Z12call_v8acc80v(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i48> @llvm.aie.v16i48undef()
-// CHECK-NEXT:    tail call void @_Z3barDv16_u7__acc48(<16 x i48> noundef [[TMP0]])
+// CHECK-NEXT:    tail call void @_Z3barDv16_u7__acc48(<16 x i48> noundef [[TMP0]]) #[[ATTR10]]
 // CHECK-NEXT:    ret void
 //
 void call_v8acc80()
@@ -303,7 +303,7 @@ extern void foo_v4acc80(v4acc80);
 // CHECK-LABEL: @_Z12call_v4acc80v(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i48> @llvm.aie.v8i48undef()
-// CHECK-NEXT:    tail call void @_Z11foo_v4acc80Dv8_u7__acc48(<8 x i48> noundef [[TMP0]])
+// CHECK-NEXT:    tail call void @_Z11foo_v4acc80Dv8_u7__acc48(<8 x i48> noundef [[TMP0]]) #[[ATTR10]]
 // CHECK-NEXT:    ret void
 //
 void call_v4acc80()
@@ -315,7 +315,7 @@ extern void foo_v16acc48(v16acc48);
 // CHECK-LABEL: @_Z13call_v16acc48v(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i48> @llvm.aie.v16i48undef()
-// CHECK-NEXT:    tail call void @_Z12foo_v16acc48Dv16_u7__acc48(<16 x i48> noundef [[TMP0]])
+// CHECK-NEXT:    tail call void @_Z12foo_v16acc48Dv16_u7__acc48(<16 x i48> noundef [[TMP0]]) #[[ATTR10]]
 // CHECK-NEXT:    ret void
 //
 void call_v16acc48()
@@ -361,9 +361,8 @@ void bsrs_st_test()
 }
 // CHECK-LABEL: @_Z9mac16_symDv16_u7__acc48Dv64_sDv8_i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <2 x i32> @llvm.aie.v2i32undef()
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <16 x i48> @llvm.aie.mac16.v64int16(<64 x i16> [[LBUFF:%.*]], <8 x i32> [[RBUFF:%.*]], <16 x i48> [[ACC:%.*]], i32 2, i32 2, i32 12, <2 x i32> <i32 50462976, i32 8464>, <2 x i32> <i32 117835012, i32 4609>, <2 x i32> <i32 32768, i32 0>)
-// CHECK-NEXT:    ret <16 x i48> [[TMP1]]
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i48> @llvm.aie.mac16.v64int16(<64 x i16> [[LBUFF:%.*]], <8 x i32> [[RBUFF:%.*]], <16 x i48> [[ACC:%.*]], i32 2, i32 2, i32 12, <2 x i32> <i32 50462976, i32 8464>, <2 x i32> <i32 117835012, i32 4609>, <2 x i32> <i32 32768, i32 0>)
+// CHECK-NEXT:    ret <16 x i48> [[TMP0]]
 //
 v16acc48 mac16_sym(v16acc48 acc, v64int16 lbuff, v8int32 rbuff) {
   return mac16_sym(acc, lbuff, 2, 0x03020100, 0x2110, 2, rbuff, 12, 0x07060504, 0x1201);
@@ -381,9 +380,8 @@ v16acc48 msc16(v16acc48 acc, v128int8 xbuff, v32int8 zbuff) {
 }
 // CHECK-LABEL: @_Z13mul16_antisymDv32_iDv16_s(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <2 x i32> @llvm.aie.v2i32undef()
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <16 x i48> @llvm.aie.mul16.v32int32(<32 x i32> [[XBUFF:%.*]], <16 x i16> [[ZBUFF:%.*]], i32 0, i32 16, i32 0, <2 x i32> <i32 286265616, i32 12576>, <2 x i32> <i32 -2004353024, i32 12816>, <2 x i32> <i32 98304, i32 0>)
-// CHECK-NEXT:    ret <16 x i48> [[TMP1]]
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i48> @llvm.aie.mul16.v32int32(<32 x i32> [[XBUFF:%.*]], <16 x i16> [[ZBUFF:%.*]], i32 0, i32 16, i32 0, <2 x i32> <i32 286265616, i32 12576>, <2 x i32> <i32 -2004353024, i32 12816>, <2 x i32> <i32 98304, i32 0>)
+// CHECK-NEXT:    ret <16 x i48> [[TMP0]]
 //
 v16acc48 mul16_antisym(v32int32 xbuff, v16int16 zbuff) {
   return mul16_antisym(xbuff, 0, 0x11101110, 0x3120, 16, zbuff, 0, 0x88880000, 0x3210);

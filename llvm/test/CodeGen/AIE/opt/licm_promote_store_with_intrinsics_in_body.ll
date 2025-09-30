@@ -56,9 +56,10 @@ define void @promote_store_aie2_intrinsics(ptr noalias %param, ptr addrspace(5) 
 ; CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i32> @llvm.aie2.vshuffle(<16 x i32> [[TMP1]], <16 x i32> zeroinitializer, i32 0)
 ; CHECK-NEXT:    store <16 x i32> [[TMP2]], ptr addrspace(5) [[PTR_INC]], align 64
 ; CHECK-NEXT:    [[INC]] = add i32 [[LOOP_CTR]], 1
-; CHECK-NEXT:    store i32 [[INC]], ptr [[COUNT2_I_I_I]], align 4, !alias.scope [[META3:![0-9]+]]
 ; CHECK-NEXT:    br i1 false, label %[[EXIT:.*]], label %[[FOR_BODY_I31_I]]
 ; CHECK:       [[EXIT]]:
+; CHECK-NEXT:    [[INC_LCSSA:%.*]] = phi i32 [ [[INC]], %[[FOR_BODY_I31_I]] ]
+; CHECK-NEXT:    store i32 [[INC_LCSSA]], ptr [[COUNT2_I_I_I]], align 4, !alias.scope [[META3:![0-9]+]]
 ; CHECK-NEXT:    ret void
 ;
 entry:
@@ -96,9 +97,10 @@ define void @promote_store_aie2p_intrinsics(ptr noalias %param, ptr addrspace(5)
 ; CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i32> @llvm.aie2p.vshuffle(<16 x i32> [[TMP1]], <16 x i32> zeroinitializer, i32 0)
 ; CHECK-NEXT:    store <16 x i32> [[TMP2]], ptr addrspace(5) [[PTR_INC]], align 64
 ; CHECK-NEXT:    [[INC]] = add i32 [[LOOP_CTR]], 1
-; CHECK-NEXT:    store i32 [[INC]], ptr [[COUNT2_I_I_I]], align 4, !alias.scope [[META6:![0-9]+]]
 ; CHECK-NEXT:    br i1 false, label %[[EXIT:.*]], label %[[FOR_BODY_I31_I]]
 ; CHECK:       [[EXIT]]:
+; CHECK-NEXT:    [[INC_LCSSA:%.*]] = phi i32 [ [[INC]], %[[FOR_BODY_I31_I]] ]
+; CHECK-NEXT:    store i32 [[INC_LCSSA]], ptr [[COUNT2_I_I_I]], align 4, !alias.scope [[META6:![0-9]+]]
 ; CHECK-NEXT:    ret void
 ;
 entry:
