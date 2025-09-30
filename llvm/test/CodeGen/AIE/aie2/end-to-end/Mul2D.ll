@@ -51,7 +51,7 @@ declare <16 x i64> @llvm.aie2.v32acc32()
 define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_ptr, %struct.mul2d_params %params.coerce) {
 ; CHECK-LABEL: mul2d:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; mova r0, #2; nops ; extend.u16 r1, r4; nopm ; nopv
+; CHECK-NEXT:    mova r0, #2; nopb ; extend.u16 r1, r4; nopm ; nops
 ; CHECK-NEXT:    ltu r0, r1, r0
 ; CHECK-NEXT:    jnz r0, #.LBB0_5
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -62,17 +62,12 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
 ; CHECK-NEXT:  // %bb.1: // %for.body.lr.ph
 ; CHECK-NEXT:    mov p3, sp
 ; CHECK-NEXT:    paddb [p3], #-4
-; CHECK-NEXT:    lda.u8 r0, [p3, #0]; mov p3, sp
-; CHECK-NEXT:    paddb [p3], #-8
-; CHECK-NEXT:    lda dj0, [p3, #0]; mov p3, sp
-; CHECK-NEXT:    paddb [p3], #-12
-; CHECK-NEXT:    lda dj4, [p3, #0]; mov p3, sp
-; CHECK-NEXT:    paddb [p3], #-16
-; CHECK-NEXT:    lda dn0, [p3, #0]; mov p3, sp
-; CHECK-NEXT:    paddb [p3], #-20
-; CHECK-NEXT:    lda dn4, [p3, #0]; mov p3, sp
-; CHECK-NEXT:    paddb [p3], #-24
-; CHECK-NEXT:    lda m0, [p3, #0]
+; CHECK-NEXT:    lda.u8 r0, [p3], #-4
+; CHECK-NEXT:    lda dj0, [p3], #-4
+; CHECK-NEXT:    lda dj4, [p3], #-4
+; CHECK-NEXT:    lda dn0, [p3], #-4
+; CHECK-NEXT:    lda dn4, [p3, #0]
+; CHECK-NEXT:    lda m0, [p3, #-4]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
