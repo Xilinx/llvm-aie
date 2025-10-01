@@ -955,6 +955,13 @@ class ExtBcstScalarPat<AIE2PInst Inst, ValueType BcstDstTy,
                                                       (i32 IdxTy:$idx))))), 
 (Inst VEC512:$s0, IdxTy:$idx)>;
 
+class ExtZExtBcstScalarPat<AIE2PInst Inst, ValueType BcstDstTy, 
+                      ValueType ScalarDstTy, DAGOperand IdxTy> :
+  Pat<(BcstDstTy (bcst_vector_node
+                      (ScalarDstTy(vextract_zext(BcstDstTy VEC512:$s0), 
+                                                      (i32 IdxTy:$idx))))), 
+(Inst VEC512:$s0, IdxTy:$idx)>;
+
 class ExtBcstPair<AIE2PInst inst, DAGOperand idxTy>{
   AIE2PInst Inst = inst;
   DAGOperand IdxTy = idxTy;
@@ -983,16 +990,19 @@ defset list<ExtBcstPair> ExtBcst64Pairs={
 
 foreach  Pair = ExtBcst8Pairs in {
   def : ExtBcstScalarPat<Pair.Inst, v64i8, i32, Pair.IdxTy>;
+  def : ExtZExtBcstScalarPat<Pair.Inst, v64i8, i32, Pair.IdxTy>;
 }
 
 foreach Pair = ExtBcst16Pairs in {
   def : ExtBcstScalarPat<Pair.Inst, v32i16, i32, Pair.IdxTy>;
+  def : ExtZExtBcstScalarPat<Pair.Inst, v32i16, i32, Pair.IdxTy>;
 }
 
 foreach Pair = ExtBcst32Pairs in {
   def : ExtBcstSubvecPat<Pair.Inst, v64i8, v4i8, Pair.IdxTy>;
   def : ExtBcstSubvecPat<Pair.Inst, v32i16, v2i16, Pair.IdxTy>;
   def : ExtBcstScalarPat<Pair.Inst, v16i32, i32, Pair.IdxTy>;
+  def : ExtZExtBcstScalarPat<Pair.Inst, v16i32, i32, Pair.IdxTy>;
 }
 
 foreach  Pair = ExtBcst64Pairs in {
