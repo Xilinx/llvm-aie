@@ -948,10 +948,10 @@ class ExtBcstSubvecPat<AIE2PInst Inst, ValueType BcstDstTy,
 (Inst VEC512:$s0, IdxTy:$idx)>;
 
 // Extract scalar instead of a subvector
-class ExtBcstScalarPat<AIE2PInst Inst, ValueType BcstDstTy, 
+class ExtBcstScalarPat<SDPatternOperator VextrExt, AIE2PInst Inst, ValueType BcstDstTy, 
                       ValueType ScalarDstTy, DAGOperand IdxTy> :
   Pat<(BcstDstTy (bcst_vector_node
-                      (ScalarDstTy(vextract_sext(BcstDstTy VEC512:$s0), 
+                      (ScalarDstTy(VextrExt(BcstDstTy VEC512:$s0), 
                                                       (i32 IdxTy:$idx))))), 
 (Inst VEC512:$s0, IdxTy:$idx)>;
 
@@ -982,17 +982,20 @@ defset list<ExtBcstPair> ExtBcst64Pairs={
 }
 
 foreach  Pair = ExtBcst8Pairs in {
-  def : ExtBcstScalarPat<Pair.Inst, v64i8, i32, Pair.IdxTy>;
+  def : ExtBcstScalarPat<vextract_sext, Pair.Inst, v64i8, i32, Pair.IdxTy>;
+  def : ExtBcstScalarPat<vextract_zext, Pair.Inst, v64i8, i32, Pair.IdxTy>;
 }
 
 foreach Pair = ExtBcst16Pairs in {
-  def : ExtBcstScalarPat<Pair.Inst, v32i16, i32, Pair.IdxTy>;
+  def : ExtBcstScalarPat<vextract_sext, Pair.Inst, v32i16, i32, Pair.IdxTy>;
+  def : ExtBcstScalarPat<vextract_zext,Pair.Inst, v32i16, i32, Pair.IdxTy>;
 }
 
 foreach Pair = ExtBcst32Pairs in {
   def : ExtBcstSubvecPat<Pair.Inst, v64i8, v4i8, Pair.IdxTy>;
   def : ExtBcstSubvecPat<Pair.Inst, v32i16, v2i16, Pair.IdxTy>;
-  def : ExtBcstScalarPat<Pair.Inst, v16i32, i32, Pair.IdxTy>;
+  def : ExtBcstScalarPat<vextract_sext, Pair.Inst, v16i32, i32, Pair.IdxTy>;
+  def : ExtBcstScalarPat<vextract_zext, Pair.Inst, v16i32, i32, Pair.IdxTy>;
 }
 
 foreach  Pair = ExtBcst64Pairs in {
