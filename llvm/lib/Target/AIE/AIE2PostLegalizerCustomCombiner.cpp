@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -25,7 +25,7 @@
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/InitializePasses.h"
 
-#define DEBUG_TYPE "aie2-postlegalizer-custom-combiner"
+#define DEBUG_TYPE "postlegalizer-custom-combiner"
 
 #define GET_GICOMBINER_DEPS
 #include "AIE2GenPostLegalizerGICustomCombiner.inc"
@@ -154,7 +154,8 @@ bool AIE2PostLegalizerCustomCombiner::runOnMachineFunction(
   const auto *LI = ST.getLegalizerInfo();
 
   GISelKnownBits *KB = &getAnalysis<GISelKnownBitsAnalysis>().get(MF);
-  MachineDominatorTree *MDT = &getAnalysis<MachineDominatorTreeWrapperPass>().getDomTree();
+  MachineDominatorTree *MDT =
+      &getAnalysis<MachineDominatorTreeWrapperPass>().getDomTree();
 
   AIE::FoundCombiners *AIEGlobalPtrIncResults = nullptr;
   if (auto *PtrModOptPass = getAnalysisIfAvailable<AIEPtrModOptimizer>())

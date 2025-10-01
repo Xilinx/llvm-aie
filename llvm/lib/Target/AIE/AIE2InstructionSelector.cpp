@@ -26,7 +26,7 @@
 #include <optional>
 #include <utility>
 
-#define DEBUG_TYPE "aie2-isel"
+#define DEBUG_TYPE "aie-isel"
 
 using namespace llvm;
 using namespace MIPatternMatch;
