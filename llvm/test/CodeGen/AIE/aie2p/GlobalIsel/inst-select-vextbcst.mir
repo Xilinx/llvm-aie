@@ -377,9 +377,8 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: %ptr:ep = COPY $p0
     ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo %ptr, 0 :: (load (<64 x s8>))
-    ; CHECK-NEXT: [[VEXTRACT_8_vec_extract_imm_vaddSign0_:%[0-9]+]]:er = VEXTRACT_8_vec_extract_imm_vaddSign0 [[VLD_x_idx_imm_pseudo]], 0, implicit $vaddsign0
-    ; CHECK-NEXT: [[VBCST_8_:%[0-9]+]]:vec512 = VBCST_8 [[VEXTRACT_8_vec_extract_imm_vaddSign0_]]
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VBCST_8_]]
+    ; CHECK-NEXT: [[VEXTBCST_8_vec_extract_broadcast_imm:%[0-9]+]]:vec512 = VEXTBCST_8_vec_extract_broadcast_imm [[VLD_x_idx_imm_pseudo]], 0
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VEXTBCST_8_vec_extract_broadcast_imm]]
     %ptr:ptrregbank(p0) = COPY $p0
     %1:vregbank(<16 x s32>) = G_IMPLICIT_DEF
     %2:gprregbank(s32) = G_CONSTANT i32 28
@@ -429,9 +428,8 @@ body:             |
     ; CHECK-NEXT: %ptr:ep = COPY $p0
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:er = COPY $r4
     ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo %ptr, 0 :: (load (<64 x s8>))
-    ; CHECK-NEXT: [[VEXTRACT_8_vec_extract_r_vaddSign0_:%[0-9]+]]:er = VEXTRACT_8_vec_extract_r_vaddSign0 [[VLD_x_idx_imm_pseudo]], [[COPY]], implicit $vaddsign0
-    ; CHECK-NEXT: [[VBCST_8_:%[0-9]+]]:vec512 = VBCST_8 [[VEXTRACT_8_vec_extract_r_vaddSign0_]]
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VBCST_8_]]
+    ; CHECK-NEXT: [[VEXTBCST_8_vec_extract_broadcast_r:%[0-9]+]]:vec512 = VEXTBCST_8_vec_extract_broadcast_r [[VLD_x_idx_imm_pseudo]], [[COPY]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VEXTBCST_8_vec_extract_broadcast_r]]
     %ptr:ptrregbank(p0) = COPY $p0
     %1:vregbank(<16 x s32>) = G_IMPLICIT_DEF
     %2:gprregbank(s32) = G_CONSTANT i32 28
@@ -478,9 +476,8 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: %ptr:ep = COPY $p0
     ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo %ptr, 0 :: (load (<32 x s16>))
-    ; CHECK-NEXT: [[VEXTRACT_16_vec_extract_imm_vaddSign0_:%[0-9]+]]:er = VEXTRACT_16_vec_extract_imm_vaddSign0 [[VLD_x_idx_imm_pseudo]], 0, implicit $vaddsign0
-    ; CHECK-NEXT: [[VBCST_16_:%[0-9]+]]:vec512 = VBCST_16 [[VEXTRACT_16_vec_extract_imm_vaddSign0_]]
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VBCST_16_]]
+    ; CHECK-NEXT: [[VEXTBCST_16_vec_extract_broadcast_imm:%[0-9]+]]:vec512 = VEXTBCST_16_vec_extract_broadcast_imm [[VLD_x_idx_imm_pseudo]], 0
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VEXTBCST_16_vec_extract_broadcast_imm]]
     %ptr:ptrregbank(p0) = COPY $p0
     %1:vregbank(<16 x s32>) = G_IMPLICIT_DEF
     %2:gprregbank(s32) = G_CONSTANT i32 28
@@ -529,9 +526,8 @@ body:             |
     ; CHECK-NEXT: %ptr:ep = COPY $p0
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:er = COPY $r2
     ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo %ptr, 0 :: (load (<32 x s16>))
-    ; CHECK-NEXT: [[VEXTRACT_16_vec_extract_r_vaddSign0_:%[0-9]+]]:er = VEXTRACT_16_vec_extract_r_vaddSign0 [[VLD_x_idx_imm_pseudo]], [[COPY]], implicit $vaddsign0
-    ; CHECK-NEXT: [[VBCST_16_:%[0-9]+]]:vec512 = VBCST_16 [[VEXTRACT_16_vec_extract_r_vaddSign0_]]
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VBCST_16_]]
+    ; CHECK-NEXT: [[VEXTBCST_16_vec_extract_broadcast_r:%[0-9]+]]:vec512 = VEXTBCST_16_vec_extract_broadcast_r [[VLD_x_idx_imm_pseudo]], [[COPY]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VEXTBCST_16_vec_extract_broadcast_r]]
     %ptr:ptrregbank(p0) = COPY $p0
     %1:vregbank(<16 x s32>) = G_IMPLICIT_DEF
     %2:gprregbank(s32) = G_CONSTANT i32 28
@@ -576,9 +572,8 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: %ptr:ep = COPY $p0
     ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo %ptr, 0 :: (load (<16 x s32>))
-    ; CHECK-NEXT: [[VEXTRACT_32_vec_extract_imm_vaddSign0_:%[0-9]+]]:er = VEXTRACT_32_vec_extract_imm_vaddSign0 [[VLD_x_idx_imm_pseudo]], 0, implicit $vaddsign0
-    ; CHECK-NEXT: [[VBCST_32_:%[0-9]+]]:vec512 = VBCST_32 [[VEXTRACT_32_vec_extract_imm_vaddSign0_]]
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VBCST_32_]]
+    ; CHECK-NEXT: [[VEXTBCST_32_vec_extract_broadcast_imm:%[0-9]+]]:vec512 = VEXTBCST_32_vec_extract_broadcast_imm [[VLD_x_idx_imm_pseudo]], 0
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VEXTBCST_32_vec_extract_broadcast_imm]]
     %ptr:ptrregbank(p0) = COPY $p0
     %4:vregbank(<16 x s32>) = G_LOAD %ptr(p0) :: (load (<16 x s32>))
     %483:gprregbank(s32) = G_CONSTANT i32 0
@@ -623,9 +618,8 @@ body:             |
     ; CHECK-NEXT: %ptr:ep = COPY $p0
     ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo %ptr, 0 :: (load (<16 x s32>))
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
-    ; CHECK-NEXT: [[VEXTRACT_32_vec_extract_r_vaddSign0_:%[0-9]+]]:er = VEXTRACT_32_vec_extract_r_vaddSign0 [[VLD_x_idx_imm_pseudo]], [[COPY]], implicit $vaddsign0
-    ; CHECK-NEXT: [[VBCST_32_:%[0-9]+]]:vec512 = VBCST_32 [[VEXTRACT_32_vec_extract_r_vaddSign0_]]
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VBCST_32_]]
+    ; CHECK-NEXT: [[VEXTBCST_32_vec_extract_broadcast_r:%[0-9]+]]:vec512 = VEXTBCST_32_vec_extract_broadcast_r [[VLD_x_idx_imm_pseudo]], [[COPY]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VEXTBCST_32_vec_extract_broadcast_r]]
     %ptr:ptrregbank(p0) = COPY $p0
     %4:vregbank(<16 x s32>) = G_LOAD %ptr(p0) :: (load (<16 x s32>))
     %483:gprregbank(s32) = COPY $r6
