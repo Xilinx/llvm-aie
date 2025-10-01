@@ -366,6 +366,32 @@ body:             |
 ...
 
 ---
+name:              VEXTBCST_8_extract_i32_ZEXT_imm
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: VEXTBCST_8_extract_i32_ZEXT_imm
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: %ptr:ep = COPY $p0
+    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo %ptr, 0 :: (load (<64 x s8>))
+    ; CHECK-NEXT: [[VEXTRACT_8_vec_extract_imm_vaddSign0_:%[0-9]+]]:er = VEXTRACT_8_vec_extract_imm_vaddSign0 [[VLD_x_idx_imm_pseudo]], 0, implicit $vaddsign0
+    ; CHECK-NEXT: [[VBCST_8_:%[0-9]+]]:vec512 = VBCST_8 [[VEXTRACT_8_vec_extract_imm_vaddSign0_]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VBCST_8_]]
+    %ptr:ptrregbank(p0) = COPY $p0
+    %1:vregbank(<16 x s32>) = G_IMPLICIT_DEF
+    %2:gprregbank(s32) = G_CONSTANT i32 28
+    %3:gprregbank(s32) = G_CONSTANT i32 0
+    %4:vregbank(<64 x s8>) = G_LOAD %ptr(p0) :: (load (<64 x s8>))
+    %5:gprregbank(s32) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT %4(<64 x s8>), %3(s32)
+    %7:vregbank(<64 x s8>) = G_AIE_BROADCAST_VECTOR %5(s32)
+    PseudoRET implicit $lr, implicit %7(<64 x s8>)
+...
+
+
+---
 name:              VEXTBCST_8_extract_i32_r
 legalized:       true
 regBankSelected: true
@@ -391,6 +417,32 @@ body:             |
 ...
 
 ---
+name:              VEXTBCST_8_extract_i32_ZEXT_r
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $r4
+    ; CHECK-LABEL: name: VEXTBCST_8_extract_i32_ZEXT_r
+    ; CHECK: liveins: $p0, $r4
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: %ptr:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:er = COPY $r4
+    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo %ptr, 0 :: (load (<64 x s8>))
+    ; CHECK-NEXT: [[VEXTRACT_8_vec_extract_r_vaddSign0_:%[0-9]+]]:er = VEXTRACT_8_vec_extract_r_vaddSign0 [[VLD_x_idx_imm_pseudo]], [[COPY]], implicit $vaddsign0
+    ; CHECK-NEXT: [[VBCST_8_:%[0-9]+]]:vec512 = VBCST_8 [[VEXTRACT_8_vec_extract_r_vaddSign0_]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VBCST_8_]]
+    %ptr:ptrregbank(p0) = COPY $p0
+    %1:vregbank(<16 x s32>) = G_IMPLICIT_DEF
+    %2:gprregbank(s32) = G_CONSTANT i32 28
+    %3:gprregbank(s32) = COPY $r4
+    %4:vregbank(<64 x s8>) = G_LOAD %ptr(p0) :: (load (<64 x s8>))
+    %5:gprregbank(s32) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT %4(<64 x s8>), %3(s32)
+    %7:vregbank(<64 x s8>) = G_AIE_BROADCAST_VECTOR %5(s32)
+    PseudoRET implicit $lr, implicit %7(<64 x s8>)
+...
+
+---
 name:              VEXTBCST_16_extract_i32_imm
 legalized:       true
 regBankSelected: true
@@ -410,6 +462,31 @@ body:             |
     %3:gprregbank(s32) = G_CONSTANT i32 0
     %4:vregbank(<32 x s16>) = G_LOAD %ptr(p0) :: (load (<32 x s16>))
     %5:gprregbank(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %4(<32 x s16>), %3(s32)
+    %7:vregbank(<32 x s16>) = G_AIE_BROADCAST_VECTOR %5(s32)
+    PseudoRET implicit $lr, implicit %7(<32 x s16>)
+...
+
+---
+name:              VEXTBCST_16_extract_i32_ZEXT_imm
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: VEXTBCST_16_extract_i32_ZEXT_imm
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: %ptr:ep = COPY $p0
+    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo %ptr, 0 :: (load (<32 x s16>))
+    ; CHECK-NEXT: [[VEXTRACT_16_vec_extract_imm_vaddSign0_:%[0-9]+]]:er = VEXTRACT_16_vec_extract_imm_vaddSign0 [[VLD_x_idx_imm_pseudo]], 0, implicit $vaddsign0
+    ; CHECK-NEXT: [[VBCST_16_:%[0-9]+]]:vec512 = VBCST_16 [[VEXTRACT_16_vec_extract_imm_vaddSign0_]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VBCST_16_]]
+    %ptr:ptrregbank(p0) = COPY $p0
+    %1:vregbank(<16 x s32>) = G_IMPLICIT_DEF
+    %2:gprregbank(s32) = G_CONSTANT i32 28
+    %3:gprregbank(s32) = G_CONSTANT i32 0
+    %4:vregbank(<32 x s16>) = G_LOAD %ptr(p0) :: (load (<32 x s16>))
+    %5:gprregbank(s32) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT %4(<32 x s16>), %3(s32)
     %7:vregbank(<32 x s16>) = G_AIE_BROADCAST_VECTOR %5(s32)
     PseudoRET implicit $lr, implicit %7(<32 x s16>)
 ...
@@ -440,6 +517,32 @@ body:             |
 ...
 
 ---
+name:              VEXTBCST_16_extract_i32_ZEXT_r
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $r2
+    ; CHECK-LABEL: name: VEXTBCST_16_extract_i32_ZEXT_r
+    ; CHECK: liveins: $p0, $r2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: %ptr:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:er = COPY $r2
+    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo %ptr, 0 :: (load (<32 x s16>))
+    ; CHECK-NEXT: [[VEXTRACT_16_vec_extract_r_vaddSign0_:%[0-9]+]]:er = VEXTRACT_16_vec_extract_r_vaddSign0 [[VLD_x_idx_imm_pseudo]], [[COPY]], implicit $vaddsign0
+    ; CHECK-NEXT: [[VBCST_16_:%[0-9]+]]:vec512 = VBCST_16 [[VEXTRACT_16_vec_extract_r_vaddSign0_]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VBCST_16_]]
+    %ptr:ptrregbank(p0) = COPY $p0
+    %1:vregbank(<16 x s32>) = G_IMPLICIT_DEF
+    %2:gprregbank(s32) = G_CONSTANT i32 28
+    %3:gprregbank(s32) = COPY $r2
+    %4:vregbank(<32 x s16>) = G_LOAD %ptr(p0) :: (load (<32 x s16>))
+    %5:gprregbank(s32) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT %4(<32 x s16>), %3(s32)
+    %7:vregbank(<32 x s16>) = G_AIE_BROADCAST_VECTOR %5(s32)
+    PseudoRET implicit $lr, implicit %7(<32 x s16>)
+...
+
+---
 name:              VEXTBCST_32_extract_i32_imm
 legalized:       true
 regBankSelected: true
@@ -457,6 +560,29 @@ body:             |
     %4:vregbank(<16 x s32>) = G_LOAD %ptr(p0) :: (load (<16 x s32>))
     %483:gprregbank(s32) = G_CONSTANT i32 0
     %484:gprregbank(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %4(<16 x s32>), %483(s32)
+    %485:vregbank(<16 x s32>) = G_AIE_BROADCAST_VECTOR %484(s32)
+    PseudoRET implicit $lr, implicit %485(<16 x s32>)
+...
+
+---
+name:              VEXTBCST_32_extract_i32_ZEXT_imm
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: VEXTBCST_32_extract_i32_ZEXT_imm
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: %ptr:ep = COPY $p0
+    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo %ptr, 0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VEXTRACT_32_vec_extract_imm_vaddSign0_:%[0-9]+]]:er = VEXTRACT_32_vec_extract_imm_vaddSign0 [[VLD_x_idx_imm_pseudo]], 0, implicit $vaddsign0
+    ; CHECK-NEXT: [[VBCST_32_:%[0-9]+]]:vec512 = VBCST_32 [[VEXTRACT_32_vec_extract_imm_vaddSign0_]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VBCST_32_]]
+    %ptr:ptrregbank(p0) = COPY $p0
+    %4:vregbank(<16 x s32>) = G_LOAD %ptr(p0) :: (load (<16 x s32>))
+    %483:gprregbank(s32) = G_CONSTANT i32 0
+    %484:gprregbank(s32) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT %4(<16 x s32>), %483(s32)
     %485:vregbank(<16 x s32>) = G_AIE_BROADCAST_VECTOR %484(s32)
     PseudoRET implicit $lr, implicit %485(<16 x s32>)
 ...
@@ -480,6 +606,30 @@ body:             |
     %4:vregbank(<16 x s32>) = G_LOAD %ptr(p0) :: (load (<16 x s32>))
     %483:gprregbank(s32) = COPY $r6
     %484:gprregbank(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %4(<16 x s32>), %483(s32)
+    %485:vregbank(<16 x s32>) = G_AIE_BROADCAST_VECTOR %484(s32)
+    PseudoRET implicit $lr, implicit %485(<16 x s32>)
+...
+
+---
+name:              VEXTBCST_32_extract_i32_ZEXT_r
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $r6
+    ; CHECK-LABEL: name: VEXTBCST_32_extract_i32_ZEXT_r
+    ; CHECK: liveins: $p0, $r6
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: %ptr:ep = COPY $p0
+    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo %ptr, 0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; CHECK-NEXT: [[VEXTRACT_32_vec_extract_r_vaddSign0_:%[0-9]+]]:er = VEXTRACT_32_vec_extract_r_vaddSign0 [[VLD_x_idx_imm_pseudo]], [[COPY]], implicit $vaddsign0
+    ; CHECK-NEXT: [[VBCST_32_:%[0-9]+]]:vec512 = VBCST_32 [[VEXTRACT_32_vec_extract_r_vaddSign0_]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VBCST_32_]]
+    %ptr:ptrregbank(p0) = COPY $p0
+    %4:vregbank(<16 x s32>) = G_LOAD %ptr(p0) :: (load (<16 x s32>))
+    %483:gprregbank(s32) = COPY $r6
+    %484:gprregbank(s32) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT %4(<16 x s32>), %483(s32)
     %485:vregbank(<16 x s32>) = G_AIE_BROADCAST_VECTOR %484(s32)
     PseudoRET implicit $lr, implicit %485(<16 x s32>)
 ...
