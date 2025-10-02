@@ -4220,3 +4220,74 @@ bool llvm::matchSequentialStores(GStore &StMI, MachineRegisterInfo &MRI,
 
   return true;
 }
+
+namespace {
+MachineInstr *getBcstFeedByAssertExtVecExtr(MachineInstr &MI,
+                                            MachineRegisterInfo &MRI,
+                                            const AIEBaseInstrInfo &TII) {
+  assert(MI.getOpcode() == TII.getGenericExtractVectorEltOpcode(false) ||
+         MI.getOpcode() == TII.getGenericExtractVectorEltOpcode(true));
+
+  /// Get single NonDebug User of \p MI with the opcode \p UseMIOpcode
+  auto GetSingleNonDbgUser = [&MRI](MachineInstr &MI,
+                                    unsigned UseMIOpcode) -> MachineInstr * {
+    const Register Dst = MI.getOperand(0).getReg();
+    if (!MRI.hasOneNonDBGUse(Dst))
+      // No convexity due to multiple users, skip.
+      return nullptr;
+
+    MachineInstr *UserMI = &*MRI.use_nodbg_instructions(Dst).begin();
+    if (UserMI->getOpcode() != UseMIOpcode)
+      return nullptr; // Did not match Opcode, skip.
+
+    // Found single non debug user with matching opcode.
+    return UserMI;
+  };
+
+  // Find G_ASSERT_[S/Z]EXT
+  MachineInstr *AnyExtMI = nullptr;
+  AnyExtMI = GetSingleNonDbgUser(MI, TargetOpcode::G_ASSERT_SEXT);
+  if (!AnyExtMI)
+    AnyExtMI = GetSingleNonDbgUser(MI, TargetOpcode::G_ASSERT_ZEXT);
+
+  if (!AnyExtMI)
+    // Could not find G_ASSERT_[S/Z]EXT
+    return nullptr;
+
+  MachineInstr *BcstMI =
+      GetSingleNonDbgUser(*AnyExtMI, TII.getGenericBroadcastVectorOpcode());
+  return BcstMI;
+}
+} // namespace
+
+bool llvm::matchExtractVecEltAssertBcst(MachineInstr &MI,
+                                        MachineRegisterInfo &MRI,
+                                        const AIEBaseInstrInfo &TII,
+                                        GISelChangeObserver &Observer,
+                                        BuildFnTy &MatchInfo) {
+  assert((MI.getOpcode() == TII.getGenericExtractVectorEltOpcode(false) ||
+          MI.getOpcode() == TII.getGenericExtractVectorEltOpcode(true)) &&
+         "Expected a extract_vector_elt");
+  const MachineInstr *BcstMI = getBcstFeedByAssertExtVecExtr(MI, MRI, TII);
+  if (!BcstMI)
+    return false;
+
+  MatchInfo = [=, &MI, &MRI, &Observer](MachineIRBuilder &B) {
+    MachineInstr &AssertExt =
+        *MRI.use_nodbg_instructions(MI.getOperand(0).getReg()).begin();
+
+    MachineOperand &VextrDstMO = MI.getOperand(0);
+    Register AssertDst = AssertExt.getOperand(0).getReg();
+
+    // Skip G_ASSERT_[S/Z]EXT
+    Observer.changingInstr(MI);
+    VextrDstMO.setReg(AssertDst);
+    Observer.changedInstr(MI);
+
+    // Remove G_ASSERT_[S/Z]EXT
+    Observer.erasingInstr(AssertExt);
+    AssertExt.removeFromParent();
+  };
+
+  return true;
+}
