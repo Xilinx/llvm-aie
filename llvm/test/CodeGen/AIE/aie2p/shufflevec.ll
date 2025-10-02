@@ -234,11 +234,11 @@ entry:
 define <16 x i16> @test_shuffle_vector_to_extract_broadcast_s16(<16 x i16> noundef %a, <16 x i16> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_to_extract_broadcast_s16:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
-; CHECK-NEXT:    nopx // Delay Slot 5
-; CHECK-NEXT:    vextract.16 r0, x2, #2, vaddsign1 // Delay Slot 4
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    vbcst.16 x0, r0 // Delay Slot 2
+; CHECK-NEXT:    vextbcst.16 x0, x2, #2 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %shuffle = shufflevector <16 x i16> %a, <16 x i16> %b, <16 x i32> <i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2>
