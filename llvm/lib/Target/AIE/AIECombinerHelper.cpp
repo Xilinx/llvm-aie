@@ -1049,9 +1049,12 @@ void llvm::applyGlobalValOffset(MachineInstr &MI, MachineRegisterInfo &MRI,
 }
 
 namespace {
-bool feedsAnyExtBcstUse(MachineInstr &MI, MachineRegisterInfo &MRI,
-                        const AIEBaseInstrInfo &TII) {
-  assert(MI.getOpcode() == TargetOpcode::G_EXTRACT_VECTOR_ELT);
+MachineInstr *getBcstFeedByExtExtrVec(MachineInstr &MI,
+                                      MachineRegisterInfo &MRI,
+                                      const AIEBaseInstrInfo &TII) {
+  assert(MI.getOpcode() == TargetOpcode::G_EXTRACT_VECTOR_ELT ||
+         MI.getOpcode() == TII.getGenericExtractVectorEltOpcode(false) ||
+         MI.getOpcode() == TII.getGenericExtractVectorEltOpcode(true));
 
   auto GetSingleNonDbgUse = [&MRI](MachineInstr &MI,
                                    unsigned UseMIOpcode) -> MachineInstr * {
@@ -1065,13 +1068,33 @@ bool feedsAnyExtBcstUse(MachineInstr &MI, MachineRegisterInfo &MRI,
     return UseMI;
   };
 
-  auto *AnyExtMI = GetSingleNonDbgUse(MI, TargetOpcode::G_ANYEXT);
-  if (!AnyExtMI)
-    return false;
+  // Look through a chain of EXT MachineInstrs
+  int ExtCount = 0;
+  MachineInstr *CurrentRootMI = &MI;
+  MachineInstr *AnyExtMI = nullptr;
+  do {
+    AnyExtMI = GetSingleNonDbgUse(*CurrentRootMI, TargetOpcode::G_ANYEXT);
+    if (!AnyExtMI)
+      AnyExtMI =
+          GetSingleNonDbgUse(*CurrentRootMI, TargetOpcode::G_ASSERT_SEXT);
+    if (!AnyExtMI)
+      AnyExtMI =
+          GetSingleNonDbgUse(*CurrentRootMI, TargetOpcode::G_ASSERT_ZEXT);
 
-  auto *BcstMI =
-      GetSingleNonDbgUse(*AnyExtMI, TII.getGenericBroadcastVectorOpcode());
-  return (bool)BcstMI;
+    if (AnyExtMI) {
+      ExtCount++;
+      CurrentRootMI = AnyExtMI;
+    }
+  } while (AnyExtMI && (AnyExtMI->getOpcode() == TargetOpcode::G_ANYEXT ||
+                        AnyExtMI->getOpcode() == TargetOpcode::G_ASSERT_SEXT ||
+                        AnyExtMI->getOpcode() == TargetOpcode::G_ASSERT_ZEXT));
+
+  if (ExtCount == 0)
+    return nullptr; // Did not find any Ext
+
+  MachineInstr *BcstMI =
+      GetSingleNonDbgUse(*CurrentRootMI, TII.getGenericBroadcastVectorOpcode());
+  return BcstMI;
 }
 } // namespace
 
@@ -1089,7 +1112,8 @@ bool llvm::matchExtractVecEltAndExt(
   if (!MRI.hasOneNonDBGUse(DstReg))
     return false;
 
-  const bool BuildAssert = !feedsAnyExtBcstUse(MI, MRI, TII);
+  const bool FoundBcstMI = (bool)getBcstFeedByExtExtrVec(MI, MRI, TII);
+  const bool BuildAssert = !FoundBcstMI;
   MachineInstr *ExtMI = &*MRI.use_instr_nodbg_begin(DstReg);
   switch (ExtMI->getOpcode()) {
   case TargetOpcode::G_ANYEXT:
@@ -4244,6 +4268,36 @@ bool llvm::matchSequentialStores(GStore &StMI, MachineRegisterInfo &MRI,
       makeStoreDead(ToDeleteMI, B.getTII(), MRI);
       Observer.changedInstr(*ToDeleteMI);
     }
+  };
+
+  return true;
+}
+
+bool llvm::matchExtractVecEltAssertBcst(MachineInstr &MI,
+                                        MachineRegisterInfo &MRI,
+                                        const AIEBaseInstrInfo &TII,
+                                        GISelChangeObserver &Observer,
+                                        BuildFnTy &MatchInfo) {
+  assert((MI.getOpcode() == TII.getGenericExtractVectorEltOpcode(false) ||
+          MI.getOpcode() == TII.getGenericExtractVectorEltOpcode(true)) &&
+         "Expected a extract_vector_elt");
+  const MachineInstr *BcstMI = getBcstFeedByExtExtrVec(MI, MRI, TII);
+  if (!BcstMI)
+    return false;
+
+  MatchInfo = [=, &MI, &MRI, &Observer](MachineIRBuilder &B) {
+    MachineInstr &AssertExt =
+        *MRI.use_nodbg_instructions(MI.getOperand(0).getReg()).begin();
+
+    Register AssertDst = AssertExt.getOperand(0).getReg();
+
+    Observer.changingInstr(MI);
+    MachineOperand &DstMO = MI.getOperand(0);
+    DstMO.setReg(AssertDst);
+    Observer.changedInstr(MI);
+
+    Observer.erasingInstr(AssertExt);
+    AssertExt.removeFromParent();
   };
 
   return true;

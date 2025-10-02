@@ -304,6 +304,11 @@ bool matchSequentialStores(GStore &MI, MachineRegisterInfo &MRI,
 bool matchNarrowTruncLoad(MachineInstr &Phi, MachineRegisterInfo &MRI,
                           CombinerHelper &Helper, GISelChangeObserver &Observer,
                           BuildFnTy &MatchInfo);
+
+bool matchExtractVecEltAssertBcst(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                  const AIEBaseInstrInfo &TII,
+                                  GISelChangeObserver &Observer,
+                                  BuildFnTy &MatchInfo);
 } // namespace llvm
 
 #endif
