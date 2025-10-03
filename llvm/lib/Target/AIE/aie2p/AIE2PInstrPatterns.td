@@ -1329,6 +1329,48 @@ def : Pat<(int_aie2p_vmax_lt32 VEC512:$s1, VEC512:$s2, 0x1),
 def : Pat<(int_aie2p_vmax_ltbf16 VEC512:$s1, VEC512:$s2),
            (VMAX_LT_bf16 VEC512:$s1, VEC512:$s2)>;
 
+// VBOR / VBAND
+foreach vec256Ty = [v32i8, v16i16, v8i32] in {
+  def : Pat<(vec256Ty (or VEC256:$src1, VEC256:$src2)),
+            (vec256Ty (EXTRACT_SUBREG (VBOR
+                        (v32i16 (REG_SEQUENCE VEC512, VEC256:$src1, sub_256_lo)),
+                        (v32i16 (REG_SEQUENCE VEC512, VEC256:$src2, sub_256_lo))),
+                       sub_256_lo))>;
+  def : Pat<(vec256Ty (and VEC256:$src1, VEC256:$src2)),
+            (vec256Ty (EXTRACT_SUBREG (VBAND
+                        (v32i16 (REG_SEQUENCE VEC512, VEC256:$src1, sub_256_lo)),
+                        (v32i16 (REG_SEQUENCE VEC512, VEC256:$src2, sub_256_lo))),
+                       sub_256_lo))>;
+}
+foreach vec512Ty = [v64i8, v32i16, v16i32] in {
+  def : Pat<(vec512Ty (or VEC512:$src1, VEC512:$src2)), (VBOR VEC512:$src1, VEC512:$src2)>;
+  def : Pat<(vec512Ty (and VEC512:$src1, VEC512:$src2)), (VBAND VEC512:$src1, VEC512:$src2)>;
+}
+foreach vec1024Ty = [v128i8, v64i16, v32i32] in {
+def : Pat<(vec1024Ty (or VEC1024:$src1, VEC1024:$src2)),
+          (REG_SEQUENCE VEC1024,
+                 (VBOR (v16i32 (EXTRACT_SUBREG VEC1024:$src1, sub_512_lo)),
+                       (v16i32 (EXTRACT_SUBREG VEC1024:$src2, sub_512_lo))), sub_512_lo,
+                 (VBOR (v16i32 (EXTRACT_SUBREG VEC1024:$src1, sub_512_hi)),
+                       (v16i32 (EXTRACT_SUBREG VEC1024:$src2, sub_512_hi))), sub_512_hi
+          )>;
+def : Pat<(vec1024Ty (and VEC1024:$src1, VEC1024:$src2)),
+          (REG_SEQUENCE VEC1024,
+                 (VBAND (v16i32 (EXTRACT_SUBREG VEC1024:$src1, sub_512_lo)),
+                        (v16i32 (EXTRACT_SUBREG VEC1024:$src2, sub_512_lo))), sub_512_lo,
+                 (VBAND (v16i32 (EXTRACT_SUBREG VEC1024:$src1, sub_512_hi)),
+                        (v16i32 (EXTRACT_SUBREG VEC1024:$src2, sub_512_hi))), sub_512_hi
+          )>;
+}
+
+// For vector select, VSEL instruction is used, since it does select word by word
+// sel input is modified, "sel ? v1 : v2 is equivalent to vsel(sel-1, v1, v2)"
+// rs1(sel) is zero-extended from the original 1 bit type
+foreach vec512Ty = [v64i8, v32i16, v16i32] in {
+  def : Pat<(vec512Ty (select (i32 eR:$rs1), VEC512:$rs2, VEC512:$rs3)),
+            (vec512Ty (VSEL_32 VEC512:$rs2, VEC512:$rs3, (ADD_add_r_ri eR:$rs1, (i32 -1))))>;
+}
+
 // VMIN_GE
 // Note : Non-constant sign is handled in .cpp
 def : Pat<(int_aie2p_vmin_ge8 VEC512:$s1, VEC512:$s2, 0x0),
