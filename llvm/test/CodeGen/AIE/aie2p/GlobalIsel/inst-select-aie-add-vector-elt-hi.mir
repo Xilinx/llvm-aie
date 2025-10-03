@@ -19,10 +19,10 @@ stack:
 body:             |
   bb.0.entry:
     ; AIE2P-LABEL: name: vpush_int64_512
-    ; AIE2P: [[MOVXM:%[0-9]+]]:mmvscldstcg = MOVXM 12
-    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:el = COPY [[MOVXM]]
+    ; AIE2P: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 12
     ; AIE2P-NEXT: [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
-    ; AIE2P-NEXT: [[VPUSH_hi_64_:%[0-9]+]]:vec512 = VPUSH_hi_64 [[DEF]], [[COPY]]
+    ; AIE2P-NEXT: [[REG_SEQUENCE:%[0-9]+]]:el = REG_SEQUENCE [[MOV_RLC_imm11_pseudo]], %subreg.sub_l_even
+    ; AIE2P-NEXT: [[VPUSH_hi_64_:%[0-9]+]]:vec512 = VPUSH_hi_64 [[DEF]], [[REG_SEQUENCE]]
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VPUSH_hi_64_]]
     %0:gprregbank(s32) = G_CONSTANT i32 12
     %1:vregbank(<8 x s64>) = G_IMPLICIT_DEF

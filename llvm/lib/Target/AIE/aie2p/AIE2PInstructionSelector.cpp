@@ -54,7 +54,6 @@ public:
                   unsigned crUPSModeVal);
   bool selectG_AIE_LOAD_UPS(MachineInstr &StoreI, MachineRegisterInfo &MRI,
                             unsigned crUPSModeVal);
-  bool selectG_AIE_ADD_VECTOR_ELT_HI(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVCONVbfp16(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_AIE_PAD_VECTOR_UNDEF(MachineInstr &I, MachineOperand &DstReg,
                                     MachineOperand &SrcReg,
@@ -427,8 +426,6 @@ bool AIE2PInstructionSelector::select(MachineInstr &I) {
     return selectLRegSequence(MIB, I, MRI);
   case G_UNMERGE_VALUES:
     return selectG_UNMERGE_VALUES(MIB, I, MRI);
-  case AIE2P::G_AIE_ADD_VECTOR_ELT_HI:
-    return selectG_AIE_ADD_VECTOR_ELT_HI(I, MRI);
   case AIE2P::G_AIE_BROADCAST_VECTOR:
     return selectG_AIE_BROADCAST_VECTOR(I, MRI);
   default:
@@ -2904,42 +2901,6 @@ bool AIE2PInstructionSelector::selectG_AIE_STORE_SRS(MachineInstr &StoreI,
   makeDeadMI(*SrsOp, MRI);
   StoreI.eraseFromParent();
   return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
-}
-
-bool AIE2PInstructionSelector::selectG_AIE_ADD_VECTOR_ELT_HI(
-    MachineInstr &I, MachineRegisterInfo &MRI) {
-  const Register Dst = I.getOperand(0).getReg();
-  const Register Src = I.getOperand(1).getReg();
-  const Register Value = I.getOperand(2).getReg();
-  const LLT VecEltDstTy = MRI.getType(Dst).getElementType();
-  const TypeSize VecEltDstTySize = VecEltDstTy.getSizeInBits();
-  auto VecDstSize = MRI.getType(Dst).getSizeInBits();
-  if (VecDstSize != 512) {
-    llvm_unreachable(
-        "Unexpected vector size in selection of G_AIE_ADD_VECTOR_ELT_HI");
-  }
-  unsigned Opcode;
-  switch (VecEltDstTySize) {
-  case 8:
-    Opcode = AIE2P::VPUSH_hi_8;
-    break;
-  case 16:
-    Opcode = AIE2P::VPUSH_hi_16;
-    break;
-  case 32:
-    Opcode = AIE2P::VPUSH_hi_32;
-    break;
-  case 64:
-    Opcode = AIE2P::VPUSH_hi_64;
-    break;
-  default:
-    llvm_unreachable(
-        "Unexpected vector size in selection of G_AIE_ADD_VECTOR_ELT_HI");
-  }
-
-  MachineInstr &MI = *MIB.buildInstr(Opcode, {Dst}, {Src, Value});
-  I.eraseFromParent();
-  return constrainSelectedInstRegOperands(MI, TII, TRI, RBI);
 }
 
 bool AIE2PInstructionSelector::selectReadTM(MachineInstr &I,

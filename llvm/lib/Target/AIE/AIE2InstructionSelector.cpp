@@ -56,7 +56,6 @@ public:
   bool select(MachineInstr &I) override;
   bool selectCascadeStreamInsn(MachineInstr &I, MachineRegisterInfo &MRI,
                                bool isWrite);
-  bool selectG_AIE_ADD_VECTOR_ELT_HI(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_BRINDIRECT(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_JUMP_TABLE(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_GLOBAL_VALUE(MachineInstr &I, MachineRegisterInfo &MRI);
@@ -429,8 +428,6 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
     return selectG_STORE(I, MRI);
   case G_UNMERGE_VALUES:
     return selectG_UNMERGE_VALUES(MIB, I, MRI);
-  case AIE2::G_AIE_ADD_VECTOR_ELT_HI:
-    return selectG_AIE_ADD_VECTOR_ELT_HI(I, MRI);
   case AIE2::G_AIE_OFFSET_STORE:
   case AIE2::G_AIE_POSTINC_STORE:
   case AIE2::G_AIE_POSTINC_2D_STORE:
@@ -484,42 +481,6 @@ bool AIE2InstructionSelector::selectStartLoop(MachineInstr &I,
                   .addImm(-1);
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*ADDI, TII, TRI, RBI);
-}
-
-bool AIE2InstructionSelector::selectG_AIE_ADD_VECTOR_ELT_HI(
-    MachineInstr &I, MachineRegisterInfo &MRI) {
-  const Register Dst = I.getOperand(0).getReg();
-  const Register Src = I.getOperand(1).getReg();
-  const Register Value = I.getOperand(2).getReg();
-  const LLT VecEltDstTy = MRI.getType(Dst).getElementType();
-  const TypeSize VecEltDstTySize = VecEltDstTy.getSizeInBits();
-
-  // We assume that we always receive a vector operand and that the vector types
-  // are always true. As of 03/24, this may not be true due to vint64s being
-  // used for accumulators instead.
-  unsigned Opcode;
-  switch (VecEltDstTySize) {
-  case 8:
-    Opcode = AIE2::VPUSH_HI_8;
-    break;
-  case 16:
-    Opcode = AIE2::VPUSH_HI_16;
-    break;
-  case 32:
-    Opcode = AIE2::VPUSH_HI_32;
-    break;
-  case 64:
-    llvm_unreachable("Unexpected accumulator vector in selection of "
-                     "G_AIE_ADD_VECTOR_ELT_HI");
-  default:
-    llvm_unreachable(
-        "Unexpected vector size in selection of G_AIE_ADD_VECTOR_ELT_HI");
-  }
-
-  MachineInstr &MI = *MIB.buildInstr(Opcode, {Dst}, {Src, Value});
-  I.eraseFromParent();
-
-  return constrainSelectedInstRegOperands(MI, TII, TRI, RBI);
 }
 
 bool AIE2InstructionSelector::selectG_BRINDIRECT(MachineInstr &I,
