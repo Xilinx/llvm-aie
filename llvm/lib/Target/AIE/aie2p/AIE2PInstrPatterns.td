@@ -1480,6 +1480,26 @@ def : Insert512Imm0Pat<v32i16, (i32 eR:$idx), (i32 0), VINSERT_16_mIdxImm0>;
 def : Insert512Imm0Pat<v16i32, (i32 eR:$idx), (i32 0), VINSERT_32_mIdxImm0>;
 def : Insert512Imm0Pat<v8i64, (i64 eL:$idx), (i32 0), VINSERT_64_mIdxImm0>;
 
+// G_AIE_ADD_VECTOR_ELT_HI
+def add_elt_hi_node : SDNode<"AIE2P::G_AIE_ADD_VECTOR_ELT_HI",
+                          SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisInt<2>,
+                                               SDTCisSameAs<0,1>]>>;
+def : GINodeEquiv<G_AIE_ADD_VECTOR_ELT_HI, add_elt_hi_node>;
+
+def : Pat<(v64i8 (add_elt_hi_node VEC512:$vec, (i32 eR:$scalar))),
+          (VPUSH_hi_8 VEC512:$vec, eR:$scalar)>;
+def : Pat<(v32i16 (add_elt_hi_node VEC512:$vec, (i32 eR:$scalar))),
+          (VPUSH_hi_16 VEC512:$vec, eR:$scalar)>;
+def : Pat<(v16i32 (add_elt_hi_node VEC512:$vec, (i32 eR:$scalar))),
+          (VPUSH_hi_32 VEC512:$vec, eR:$scalar)>;
+
+// Compatibility pattern allowing 32-bit scalar to be pushed into 64-bit element vector
+def : Pat<(v8i64 (add_elt_hi_node VEC512:$vec, (i32 eR:$scalar))),
+          (VPUSH_hi_64 VEC512:$vec, (REG_SEQUENCE eL, eR:$scalar, sub_l_even))>;
+
+def : Pat<(v8i64 (add_elt_hi_node VEC512:$vec, (i64 eL:$scalar))),
+          (VPUSH_hi_64 VEC512:$vec, eL:$scalar)>;
+
 // G_TRUNC
 
 // The G_TRUNC operation can be efficiently implemented using a VSHUFFLE

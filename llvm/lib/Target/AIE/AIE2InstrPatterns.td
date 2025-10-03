@@ -1082,3 +1082,16 @@ defm : Extract_512<i20, v16i32, (i32 eR:$idx), VEXTRACT_D32, VEXTRACT_S32>;
 def : Insert512Pat<v64i8, (i32 eR:$val), (i32 eR:$idx), VINSERT_8>;
 def : Insert512Pat<v32i16, (i32 eR:$val), (i32 eR:$idx), VINSERT_16>;
 def : Insert512Pat<v16i32, (i32 eR:$val), (i32 eR:$idx), VINSERT_32>;
+
+// G_AIE_ADD_VECTOR_ELT_HI
+def add_elt_hi_node : SDNode<"AIE2::G_AIE_ADD_VECTOR_ELT_HI",
+                          SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisInt<2>,
+                                               SDTCisSameAs<0,1>]>>;
+def : GINodeEquiv<G_AIE_ADD_VECTOR_ELT_HI, add_elt_hi_node>;
+
+def : Pat<(v64i8 (add_elt_hi_node VEC512:$vec, (i32 eR:$scalar))),
+          (VPUSH_HI_8 VEC512:$vec, eR:$scalar)>;
+def : Pat<(v32i16 (add_elt_hi_node VEC512:$vec, (i32 eR:$scalar))),
+          (VPUSH_HI_16 VEC512:$vec, eR:$scalar)>;
+def : Pat<(v16i32 (add_elt_hi_node VEC512:$vec, (i32 eR:$scalar))),
+          (VPUSH_HI_32 VEC512:$vec, eR:$scalar)>;
