@@ -2628,11 +2628,19 @@ bool CombinerHelper::matchCombineShlOfAnd(MachineInstr &MI,
                 m_GShl(m_OneNonDBGUse(m_GAnd(m_Reg(Reg), m_ICst(AndImm))),
                        m_ICst(ShiftImm))))
     return false;
-  // Check if AndImm has bits set only in positions that will be shifted out by
-  // ShiftImm. If any significant bits remain after the shift, the AND operation
+
+  // Shift is out of range, handled by different combines.
+  if (ShiftImm < 0 || ShiftImm >= 64)
+    return false;
+
+  uint64_t AndVal = static_cast<uint64_t>(AndImm);
+  uint64_t ShAmount = static_cast<uint64_t>(ShiftImm);
+
+  // Check if AndVal has bits set only in positions that will be shifted out by
+  // ShAmount. If any significant bits remain after the shift, the AND operation
   // cannot be removed.
   uint64_t Mask = ~0ULL >> (64 - Size);
-  return !((~AndImm << ShiftImm) & Mask);
+  return !((~AndVal << ShAmount) & Mask);
 }
 
 void CombinerHelper::applyCombineShlOfAnd(MachineInstr &MI,
