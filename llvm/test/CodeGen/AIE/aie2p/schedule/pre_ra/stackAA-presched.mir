@@ -1,0 +1,105 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -mtriple=aie2p -run-pass=machine-scheduler -debug-only=machine-scheduler -o - %s \
+# RUN:  2>&1 | FileCheck %s
+
+--- |
+  target datalayout = "e-m:e-p:20:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-f32:32:32-i64:32-f64:32-a:0:32-n32"
+  target triple = "aie2p"
+  
+  %struct.params = type <{ i32, i32, i32, i32, i32, i32, i8, i8, i32, i32 }>
+  
+  ; Function Attrs: mustprogress noinline
+  declare dso_local void @anchor(%struct.params)
+  
+  ; Function Attrs: mustprogress noinline
+  define dso_local void @load_and_store_chain(ptr %ifm, ptr %ofm, %struct.params %sm_params.coerce) {
+  entry:
+    tail call void @anchor(%struct.params %sm_params.coerce) #1
+    ret void
+  }
+
+...
+
+# This test is intended to verify memory disambiguation related to stack objects.
+# In this case, we have five fixed stack objects: 0, that is aliasing (same offset)
+# with 2 and 1 that is aliasing with 3. We also have an object 4 that partially alias
+# with 0 and 2.
+
+---
+name:            load_and_store_chain
+alignment:       16
+exposesReturnsTwice: false
+tracksRegLiveness: true
+frameInfo:
+  hasTailCall:     true
+
+fixedStack:
+  - { id: 0, type: default, offset: -8, size: 4, alignment: 8, stack-id: default, 
+      isImmutable: false, isAliased: false, callee-saved-register: '', 
+      callee-saved-restored: true, debug-info-variable: '', debug-info-expression: '', 
+      debug-info-location: '' }
+  - { id: 1, type: default, offset: -4, size: 4, alignment: 4, stack-id: default, 
+      isImmutable: false, isAliased: false, callee-saved-register: '', 
+      callee-saved-restored: true, debug-info-variable: '', debug-info-expression: '', 
+      debug-info-location: '' }
+  - { id: 2, type: default, offset: -8, size: 4, alignment: 8, stack-id: default, 
+      isImmutable: false, isAliased: false, callee-saved-register: '', 
+      callee-saved-restored: true, debug-info-variable: '', debug-info-expression: '', 
+      debug-info-location: '' }
+  - { id: 3, type: default, offset: -4, size: 4, alignment: 4, stack-id: default, 
+      isImmutable: false, isAliased: false, callee-saved-register: '', 
+      callee-saved-restored: true, debug-info-variable: '', debug-info-expression: '', 
+      debug-info-location: '' }
+  - { id: 4, type: default, offset: -10, size: 2, alignment: 2, stack-id: default, 
+      isImmutable: false, isAliased: false, callee-saved-register: '', 
+      callee-saved-restored: true, debug-info-variable: '', debug-info-expression: '', 
+      debug-info-location: '' }
+stack:           []
+entry_values:    []
+callSites:       []
+debugValueSubstitutions: []
+constants:       []
+machineFunctionInfo:
+  varArgsFrameIndex: 0
+body:             |
+  bb.0.entry:
+    ; CHECK: ********** MI Scheduling **********
+    ; CHECK-LABEL: load_and_store_chain:%bb.0 entry
+    ; CHECK: SU(1):   %1:er = LDA_dms_lda_idx_imm %0:ep, 0 :: (invariant load (s32) from %fixed-stack.1)
+    ; CHECK: Successors:
+    ; CHECK: SU(6): Data Latency=7 Reg=%1
+    ; CHECK: SU(10): Ord  Latency=0 Memory
+    ; CHECK: SU(8): Ord  Latency=0 Memory
+    ; CHECK: SU(6): Ord  Latency=0 Memory
+
+    ; CHECK: SU(3):   %3:er = LDA_dms_lda_idx_imm %2:ep, 0 :: (invariant load (s32) from %fixed-stack.2, align 8)
+    ; CHECK: Successors:
+    ; CHECK: SU(10): Data Latency=7 Reg=%3
+    ; CHECK: SU(8): Data Latency=7 Reg=%3
+    ; CHECK: SU(10): Ord  Latency=0 Memory
+    ; CHECK: SU(8): Ord  Latency=0 Memory
+    ; CHECK: SU(6): Ord  Latency=0 Memory
+
+    ; CHECK: SU(6):   ST_dms_sts_idx_imm %1:er, %4:ep, 0 :: (store (s32) into %fixed-stack.3, align 32)
+    ; CHECK: SU(8):   ST_dms_sts_idx_imm %3:er, %5:ep, 0 :: (store (s32) into %fixed-stack.4)
+    ; CHECK: SU(10):  ST_dms_sts_idx_imm %3:er, %6:ep, 0 :: (store (s32) into %fixed-stack.0)
+
+    %14:ep = PseudoFI %fixed-stack.3, implicit $sp
+    %10:er = LDA_dms_lda_idx_imm %14, 0 :: (invariant load (s32) from %fixed-stack.3)
+    %15:ep = PseudoFI %fixed-stack.2, implicit $sp
+    %11:er = LDA_dms_lda_idx_imm %15, 0 :: (invariant load (s32) from %fixed-stack.2, align 8)
+    ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    %18:ep = PseudoFI %fixed-stack.1, implicit $sp
+    ST_dms_sts_idx_imm %10, %18, 0 :: (store (s32) into %fixed-stack.1, align 32)
+    %19:ep = PseudoFI %fixed-stack.0, implicit $sp
+    ST_dms_sts_idx_imm %11, %19, 0 :: (store (s32) into %fixed-stack.0)
+    %20:ep = PseudoFI %fixed-stack.4, implicit $sp
+    ST_dms_sts_idx_imm %11, %20, 0 :: (store (s32) into %fixed-stack.4)
+    ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    PseudoJ_TCO_jump_imm @anchor, csr_aie2p
+
+...
