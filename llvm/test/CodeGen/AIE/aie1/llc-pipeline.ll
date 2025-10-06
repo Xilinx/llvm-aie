@@ -85,12 +85,9 @@
 ; AIE-O0123-NEXT:      Instrument function entry/exit with calls to e.g. mcount() (post inlining)
 ; AIE-O0123-NEXT:      Scalarize Masked Memory Intrinsics
 ; AIE-O0123-NEXT:      Expand reduction intrinsics
-; AIE-O123-NEXT:      Basic Alias Analysis (stateless AA impl)
-; AIE-O123-NEXT:      Function Alias Analysis Results
 
 ; AIE-O123-NEXT:      Natural Loop Information
-; AIE-O123-NEXT:      Scalar Evolution Analysis
-; AIE-O123-NEXT:      GPU Load and Store Vectorizer
+; AIE-O23-NEXT:      TLS Variable Hoist
 ; AIE-O123-NEXT:      CodeGen Prepare
 
 ; AIE-O0123-NEXT:      Lower invoke and unwind, for unwindless code generators
