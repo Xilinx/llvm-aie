@@ -45,7 +45,7 @@ v32int8 test_ssrs(v32acc32 acc, int shft, int sign) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i8> @llvm.aie2.I256.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <32 x i8> @llvm.aie2.I256.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <32 x i8> [[TMP2]]
@@ -85,7 +85,7 @@ v32uint8 test_ussrs(v32acc32 acc, int shft, int sign) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i8> @llvm.aie2.I256.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <32 x i8> @llvm.aie2.I256.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <32 x i8> [[TMP2]]
@@ -125,7 +125,7 @@ v32int16 test_lsrs(v32acc32 acc, int shft, int sign) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i16> @llvm.aie2.I512.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <32 x i16> @llvm.aie2.I512.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <32 x i16> [[TMP2]]
@@ -165,7 +165,7 @@ v32uint16 test_ulsrs(v32acc32 acc, int shft, int sign) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i16> @llvm.aie2.I512.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <32 x i16> @llvm.aie2.I512.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <32 x i16> [[TMP2]]
@@ -205,7 +205,7 @@ v16int16 test_lsrs(v16acc32 acc, int shft, int sign) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc32.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i16> @llvm.aie2.I256.v16.acc32.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <16 x i16> [[TMP2]]
@@ -245,7 +245,7 @@ v16uint16 test_ulsrs(v16acc32 acc, int shft, int sign) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc32.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i16> @llvm.aie2.I256.v16.acc32.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <16 x i16> [[TMP2]]
@@ -285,7 +285,7 @@ v16int16 test_ssrs(v16acc64 acc, int shft, int sign) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i16> @llvm.aie2.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <16 x i16> [[TMP2]]
@@ -325,7 +325,7 @@ v16uint16 test_ussrs(v16acc64 acc, int shft, int sign) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i16> @llvm.aie2.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <16 x i16> [[TMP2]]
@@ -365,7 +365,7 @@ v16int32 test_lsrs(v16acc64 acc, int shft, int sign) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <16 x i32> [[TMP2]]
@@ -405,7 +405,7 @@ v16uint32 test_ulsrs(v16acc64 acc, int shft, int sign) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <16 x i32> [[TMP2]]
@@ -445,7 +445,7 @@ v8int32 test_lsrs(v8acc64 acc, int shft, int sign) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <8 x i32> [[TMP2]]
@@ -485,7 +485,7 @@ v8uint32 test_ulsrs(v8acc64 acc, int shft, int sign) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <8 x i32> [[TMP2]]
@@ -525,7 +525,7 @@ v32int8 test_ssrs(v32acc32 acc, int shft) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i8> @llvm.aie2.I256.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <32 x i8> @llvm.aie2.I256.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <32 x i8> [[TMP2]]
@@ -565,7 +565,7 @@ v32uint8 test_ussrs(v32acc32 acc, int shft) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i8> @llvm.aie2.I256.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <32 x i8> @llvm.aie2.I256.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <32 x i8> [[TMP2]]
@@ -585,6 +585,7 @@ v32uint8 test_ussrs_conf(v32acc32 acc, int shft, crsat_t sat, crrnd_t rnd) {
   return ussrs_conf(acc, shft, sat, rnd);
 }
 
+//
 // CHECK-LABEL: @_Z9test_lsrsDv32_u7__acc32i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i16> @llvm.aie2.I512.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
@@ -605,7 +606,7 @@ v32int16 test_lsrs(v32acc32 acc, int shft) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i16> @llvm.aie2.I512.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <32 x i16> @llvm.aie2.I512.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <32 x i16> [[TMP2]]
@@ -645,7 +646,7 @@ v32uint16 test_ulsrs(v32acc32 acc, int shft) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i16> @llvm.aie2.I512.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <32 x i16> @llvm.aie2.I512.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <32 x i16> [[TMP2]]
@@ -685,7 +686,7 @@ v16int16 test_lsrs(v16acc32 acc, int shft) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc32.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i16> @llvm.aie2.I256.v16.acc32.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <16 x i16> [[TMP2]]
@@ -725,7 +726,7 @@ v16uint16 test_ulsrs(v16acc32 acc, int shft) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc32.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i16> @llvm.aie2.I256.v16.acc32.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <16 x i16> [[TMP2]]
@@ -765,7 +766,7 @@ v16int16 test_ssrs(v16acc64 acc, int shft) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i16> @llvm.aie2.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <16 x i16> [[TMP2]]
@@ -805,7 +806,7 @@ v16uint16 test_ussrs(v16acc64 acc, int shft) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i16> @llvm.aie2.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <16 x i16> [[TMP2]]
@@ -845,7 +846,7 @@ v16int32 test_lsrs(v16acc64 acc, int shft) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <16 x i32> [[TMP2]]
@@ -885,7 +886,7 @@ v16uint32 test_ulsrs(v16acc64 acc, int shft) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <16 x i32> [[TMP2]]
@@ -925,7 +926,7 @@ v8int32 test_lsrs(v8acc64 acc, int shft) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <8 x i32> [[TMP2]]
@@ -965,7 +966,7 @@ v8uint32 test_ulsrs(v8acc64 acc, int shft) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <8 x i32> [[TMP2]]
@@ -1005,7 +1006,7 @@ v32int8 test_srs_to_v32int8(v32acc32 acc, int shft, int sign) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i8> @llvm.aie2.I256.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <32 x i8> @llvm.aie2.I256.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <32 x i8> [[TMP2]]
@@ -1046,7 +1047,7 @@ v32uint8 test_srs_to_v32uint8(v32acc32 acc, int shft, int sign) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i8> @llvm.aie2.I256.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <32 x i8> @llvm.aie2.I256.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <32 x i8> [[TMP2]]
@@ -1087,7 +1088,7 @@ v32int16 test_srs_to_v32int16(v32acc32 acc, int shft, int sign) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i16> @llvm.aie2.I512.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <32 x i16> @llvm.aie2.I512.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <32 x i16> [[TMP2]]
@@ -1128,7 +1129,7 @@ v32uint16 test_srs_to_v32uint16(v32acc32 acc, int shft, int sign) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i16> @llvm.aie2.I512.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <32 x i16> @llvm.aie2.I512.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <32 x i16> [[TMP2]]
@@ -1169,7 +1170,7 @@ v16int16 test_srs_to_v16int16(v16acc32 acc, int shft, int sign) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc32.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i16> @llvm.aie2.I256.v16.acc32.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <16 x i16> [[TMP2]]
@@ -1210,7 +1211,7 @@ v16uint16 test_srs_to_v16uint16(v16acc32 acc, int shft, int sign) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc32.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i16> @llvm.aie2.I256.v16.acc32.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <16 x i16> [[TMP2]]
@@ -1251,7 +1252,7 @@ v16int16 test_srs_to_v16int16(v16acc64 acc, int shft, int sign) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i16> @llvm.aie2.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <16 x i16> [[TMP2]]
@@ -1292,7 +1293,7 @@ v16uint16 test_srs_to_v16uint16(v16acc64 acc, int shft, int sign) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i16> @llvm.aie2.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <16 x i16> [[TMP2]]
@@ -1334,7 +1335,7 @@ v8int32 test_srs_to_v8int32(v8acc64 acc, int shft, int sign) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <8 x i32> [[TMP2]]
@@ -1374,7 +1375,7 @@ v8uint32 test_srs_to_v8uint32(v8acc64 acc, int shft, int sign) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <8 x i32> [[TMP2]]
@@ -1414,7 +1415,7 @@ v16int32 test_srs_to_v16int32(v16acc64 acc, int shft, int sign) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <16 x i32> [[TMP2]]
@@ -1455,7 +1456,7 @@ v16uint32 test_srs_to_v16uint32(v16acc64 acc, int shft, int sign) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <16 x i32> [[TMP2]]
@@ -1496,7 +1497,7 @@ v32int8 test_srs_to_v32int8(v32acc32 acc, int shft) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i8> @llvm.aie2.I256.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <32 x i8> @llvm.aie2.I256.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <32 x i8> [[TMP2]]
@@ -1537,7 +1538,7 @@ v32uint8 test_srs_to_v32uint8(v32acc32 acc, int shft) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i8> @llvm.aie2.I256.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <32 x i8> @llvm.aie2.I256.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <32 x i8> [[TMP2]]
@@ -1578,7 +1579,7 @@ v32int16 test_srs_to_v32int16(v32acc32 acc, int shft) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i16> @llvm.aie2.I512.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <32 x i16> @llvm.aie2.I512.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <32 x i16> [[TMP2]]
@@ -1619,7 +1620,7 @@ v32uint16 test_srs_to_v32uint16(v32acc32 acc, int shft) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i16> @llvm.aie2.I512.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <32 x i16> @llvm.aie2.I512.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <32 x i16> [[TMP2]]
@@ -1660,7 +1661,7 @@ v16int16 test_srs_to_v16int16(v16acc32 acc, int shft) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc32.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i16> @llvm.aie2.I256.v16.acc32.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <16 x i16> [[TMP2]]
@@ -1701,7 +1702,7 @@ v16uint16 test_srs_to_v16uint16(v16acc32 acc, int shft) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc32.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i16> @llvm.aie2.I256.v16.acc32.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <16 x i16> [[TMP2]]
@@ -1742,7 +1743,7 @@ v16int16 test_srs_to_v16int16(v16acc64 acc, int shft) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i16> @llvm.aie2.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <16 x i16> [[TMP2]]
@@ -1783,7 +1784,7 @@ v16uint16 test_srs_to_v16uint16(v16acc64 acc, int shft) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i16> @llvm.aie2.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <16 x i16> [[TMP2]]
@@ -1824,7 +1825,7 @@ v16int32 test_srs_to_v16int32(v16acc64 acc, int shft) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <16 x i32> [[TMP2]]
@@ -1865,7 +1866,7 @@ v16uint32 test_srs_to_v16uint32(v16acc64 acc, int shft) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <16 x i32> [[TMP2]]
@@ -1906,7 +1907,7 @@ v8int32 test_srs_to_v8int32(v8acc64 acc, int shft) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <8 x i32> [[TMP2]]
@@ -1947,7 +1948,7 @@ v8uint32 test_srs_to_v8uint32(v8acc64 acc, int shft) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.get.ctrl.reg(i32 6)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[SAT:%.*]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[RND:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 [[TMP0]])
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 6, i32 [[TMP1]])
 // CHECK-NEXT:    ret <8 x i32> [[TMP2]]
