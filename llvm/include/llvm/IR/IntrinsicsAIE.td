@@ -18,14 +18,14 @@ let TargetPrefix = "aie" in {
 class EventIntrinsic
     : Intrinsic<[],
                 [llvm_i32_ty],
-                [IntrHasSideEffects, IntrNoMem, IntrWillReturn]>; //[IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<0>>]>;
+                [IntrHasSideEffects, IntrNoMem]>; //[IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<0>>]>;
 // Atomics
 // FIXME: The flags for this are wrong.  However, when setting the
 // flags "correctly", then clang -O3 complains.
 class LockIntrinsic
     : Intrinsic<[],
                 [llvm_i32_ty, llvm_i32_ty],
-                [IntrWillReturn]>; // IntrHasSideEffects, IntrNoMem]>; //, ImmArg<ArgIndex<1>>]>;
+                []>; // IntrHasSideEffects, IntrNoMem]>; //, ImmArg<ArgIndex<1>>]>;
 // class LockImmIntrinsic
 //     : Intrinsic<[],
 //                 [llvm_i32_ty, llvm_i32_ty],
@@ -33,160 +33,160 @@ class LockIntrinsic
 class PacketHeaderIntrinsic
     : Intrinsic<[llvm_i32_ty],
                 [llvm_i32_ty, llvm_i32_ty],
-                [IntrWillReturn]>; //IntrHasSideEffects, IntrNoMem]; //, ImmArg<ArgIndex<1>>, ImmArg<ArgIndex<2>>]>;
+                []>; //IntrHasSideEffects, IntrNoMem]; //, ImmArg<ArgIndex<1>>, ImmArg<ArgIndex<2>>]>;
 class CtrlPacketHeaderIntrinsic
     : Intrinsic<[llvm_i32_ty],
                 [llvm_i20_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
-                [IntrWillReturn]>; //IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<1>>, ImmArg<ArgIndex<2>>]>;
+                []>; //IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<1>>, ImmArg<ArgIndex<2>>]>;
 class StreamReadIntrinsic
     : Intrinsic<[llvm_i32_ty],
                 [llvm_i32_ty],
-					 [IntrNoMem, IntrWillReturn]>; //, ImmArg<ArgIndex<0>>]>;
+					 [IntrNoMem]>; //, ImmArg<ArgIndex<0>>]>;
                 //[IntrHasSideEffects, IntrNoMem]>; //, ImmArg<ArgIndex<0>>]>;
 class StreamWriteIntrinsic
     : Intrinsic<[],
                 [llvm_i32_ty, llvm_i32_ty],
-                [IntrHasSideEffects, IntrNoMem, IntrWillReturn]>; //, ImmArg<ArgIndex<0>>]>;
+                [IntrHasSideEffects, IntrNoMem]>; //, ImmArg<ArgIndex<0>>]>;
 class StreamWriteLastIntrinsic
     : Intrinsic<[],
                 [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
-                [IntrHasSideEffects, IntrNoMem, IntrWillReturn, ImmArg<ArgIndex<0>>]>;
+                [IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<0>>]>;
 class StreamReadFIntrinsic
     : Intrinsic<[llvm_float_ty],
                 [llvm_i32_ty],
-                [IntrHasSideEffects, IntrNoMem, IntrWillReturn, ImmArg<ArgIndex<0>>]>;
+                [IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<0>>]>;
 class StreamWriteFIntrinsic
     : Intrinsic<[],
                 [llvm_i32_ty, llvm_float_ty],
-                [IntrHasSideEffects, IntrNoMem, IntrWillReturn, ImmArg<ArgIndex<0>>]>;
+                [IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<0>>]>;
 class StreamWriteFLastIntrinsic
     : Intrinsic<[],
                 [llvm_i32_ty, llvm_float_ty, llvm_i32_ty],
-                [IntrHasSideEffects, IntrNoMem, IntrWillReturn, ImmArg<ArgIndex<0>>]>;
+                [IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<0>>]>;
 
 // Set/Get a bit in a value, mapped to a GPR
 class BitSetIntrinsic
 	 : Intrinsic<[llvm_i32_ty],
 		          [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
-					 [IntrNoMem, IntrWillReturn]>; //, ImmArg<ArgIndex<2>>]>;
+					 [IntrNoMem]>; //, ImmArg<ArgIndex<2>>]>;
 class BitGetIntrinsic
 	 : Intrinsic<[llvm_i32_ty],
 		          [llvm_i32_ty, llvm_i32_ty],
-					 [IntrNoMem, IntrWillReturn]>; //, ImmArg<ArgIndex<1>>]>;
+					 [IntrNoMem]>; //, ImmArg<ArgIndex<1>>]>;
 
 // Set/Get a bit in a specific control/status register
 class BitSetRegIntrinsic
 	 : Intrinsic<[llvm_i32_ty],
 		          [llvm_i32_ty, llvm_i32_ty],
-					 [IntrNoMem, IntrWillReturn]>; //, ImmArg<ArgIndex<1>>]>;
+					 [IntrNoMem]>; //, ImmArg<ArgIndex<1>>]>;
 class BitGetRegIntrinsic
 	 : Intrinsic<[llvm_i32_ty],
 		          [llvm_i32_ty],
-					 [IntrNoMem, IntrWillReturn]>; //, ImmArg<ArgIndex<0>>]>;
+					 [IntrNoMem]>; //, ImmArg<ArgIndex<0>>]>;
 
 // Non-linear functions
 class NLFFltFltIntrinsic
     : Intrinsic<[llvm_float_ty],
                 [llvm_float_ty],
-                [IntrNoMem, IntrWillReturn]>;
+                [IntrNoMem]>;
 class NLFFltFixIntrinsic
     : Intrinsic<[llvm_float_ty],
                 [llvm_i32_ty, llvm_i32_ty],
-                [IntrNoMem, IntrWillReturn]>;
+                [IntrNoMem]>;
 class NLFFixFltIntrinsic
     : Intrinsic<[llvm_i32_ty],
                 [llvm_i32_ty, llvm_float_ty],
-                [IntrNoMem, IntrWillReturn]>;
+                [IntrNoMem]>;
 class NLFFixFixIntrinsic
     : Intrinsic<[llvm_i32_ty],
                 [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
-                [IntrNoMem, IntrWillReturn]>;
+                [IntrNoMem]>;
 
 class VecFP4Intrinsic
-     : Intrinsic<[llvm_v4f32_ty], [], [IntrNoMem, IntrWillReturn]>;
+     : Intrinsic<[llvm_v4f32_ty], [], [IntrNoMem]>;
 class VecFP8Intrinsic
-     : Intrinsic<[llvm_v8f32_ty], [], [IntrNoMem, IntrWillReturn]>;
+     : Intrinsic<[llvm_v8f32_ty], [], [IntrNoMem]>;
 class VecFP16Intrinsic
-     : Intrinsic<[llvm_v16f32_ty], [], [IntrNoMem, IntrWillReturn]>;
+     : Intrinsic<[llvm_v16f32_ty], [], [IntrNoMem]>;
 class VecFP32Intrinsic
-     : Intrinsic<[llvm_v32f32_ty], [], [IntrNoMem, IntrWillReturn]>;
+     : Intrinsic<[llvm_v32f32_ty], [], [IntrNoMem]>;
 //Vector Int
 class VecV2I32Intrinsic
-     : Intrinsic<[llvm_v2i32_ty], [], [IntrNoMem, IntrWillReturn]>;
+     : Intrinsic<[llvm_v2i32_ty], [], [IntrNoMem]>;
 class VecV16I16Intrinsic
-     : Intrinsic<[llvm_v16i16_ty], [], [IntrNoMem, IntrWillReturn]>;
+     : Intrinsic<[llvm_v16i16_ty], [], [IntrNoMem]>;
 class VecV32I16Intrinsic
-     : Intrinsic<[llvm_v32i16_ty], [], [IntrNoMem, IntrWillReturn]>;
+     : Intrinsic<[llvm_v32i16_ty], [], [IntrNoMem]>;
 class VecV16I32Intrinsic
-     : Intrinsic<[llvm_v16i32_ty], [], [IntrNoMem, IntrWillReturn]>;
+     : Intrinsic<[llvm_v16i32_ty], [], [IntrNoMem]>;
 class VecV32I32Intrinsic
-     : Intrinsic<[llvm_v32i32_ty], [], [IntrNoMem, IntrWillReturn]>;
+     : Intrinsic<[llvm_v32i32_ty], [], [IntrNoMem]>;
 class VecV128I8Intrinsic
-     : Intrinsic<[llvm_v128i8_ty], [], [IntrNoMem, IntrWillReturn]>;
+     : Intrinsic<[llvm_v128i8_ty], [], [IntrNoMem]>;
 
 class VecV8I48Intrinsic
-     : Intrinsic<[llvm_v8i48_ty], [], [IntrNoMem, IntrWillReturn]>;
+     : Intrinsic<[llvm_v8i48_ty], [], [IntrNoMem]>;
 
 class VecV16I48Intrinsic
-     : Intrinsic<[llvm_v16i48_ty], [], [IntrNoMem, IntrWillReturn]>;
+     : Intrinsic<[llvm_v16i48_ty], [], [IntrNoMem]>;
 
 class UPDVV8I32Intrinsic
 	 : Intrinsic<[llvm_v8i32_ty],
 		          [llvm_v8i32_ty, llvm_v4i32_ty],
-					 [IntrNoMem, IntrWillReturn]>; //, ImmArg<ArgIndex<0>>]>;
+					 [IntrNoMem]>; //, ImmArg<ArgIndex<0>>]>;
 
 class UPDWV16I32Intrinsic
 	 : Intrinsic<[llvm_v16i32_ty],
 		          [llvm_v16i32_ty, llvm_v8i32_ty],
-					 [IntrNoMem, IntrWillReturn]>; //, ImmArg<ArgIndex<0>>]>;
+					 [IntrNoMem]>; //, ImmArg<ArgIndex<0>>]>;
 class EXTVV8I32Intrinsic
 	 : Intrinsic<[llvm_v4i32_ty],
 		          [llvm_v8i32_ty],
-					 [IntrNoMem, IntrWillReturn]>; //, ImmArg<ArgIndex<0>>]>;
+					 [IntrNoMem]>; //, ImmArg<ArgIndex<0>>]>;
 
 class EXTWV16I32Intrinsic
 	 : Intrinsic<[llvm_v8i32_ty],
 		          [llvm_v16i32_ty],
-					 [IntrNoMem, IntrWillReturn]>; //, ImmArg<ArgIndex<0>>]>;
+					 [IntrNoMem]>; //, ImmArg<ArgIndex<0>>]>;
 class EXTWV32I16Intrinsic
 	 : Intrinsic<[llvm_v16i16_ty],
 		          [llvm_v32i16_ty],
-					 [IntrNoMem, IntrWillReturn]>; //, ImmArg<ArgIndex<0>>]>;
+					 [IntrNoMem]>; //, ImmArg<ArgIndex<0>>]>;
 class ConcatV32I16Intrinsic
 	 : Intrinsic<[llvm_v32i16_ty],
 		          [llvm_v16i16_ty, llvm_v16i16_ty],
-					 [IntrNoMem, IntrWillReturn]>; //, ImmArg<ArgIndex<0>>]>;
+					 [IntrNoMem]>; //, ImmArg<ArgIndex<0>>]>;
 class ConcatV64I16Intrinsic
 	 : Intrinsic<[llvm_v64i16_ty],
 		          [llvm_v32i16_ty, llvm_v32i16_ty],
-					 [IntrNoMem, IntrWillReturn]>; //, ImmArg<ArgIndex<0>>]>;
+					 [IntrNoMem]>; //, ImmArg<ArgIndex<0>>]>;
 
 class VLMUL4V32I32Intrinsic
 	 : Intrinsic<[llvm_v8i48_ty],
 		          [llvm_v32i32_ty, llvm_v8i32_ty, llvm_i32_ty, llvm_i32_ty,
                    llvm_i32_ty, llvm_v2i32_ty, llvm_v2i32_ty, llvm_v2i32_ty],
-					 [IntrNoMem, IntrWillReturn]>; //, ImmArg<ArgIndex<0>>]>;
+					 [IntrNoMem]>; //, ImmArg<ArgIndex<0>>]>;
 class VLMUL4V16I32Intrinsic
 	 : Intrinsic<[llvm_v8i48_ty],
 		          [llvm_v16i32_ty, llvm_v8i32_ty, llvm_i32_ty, llvm_i32_ty,
                    llvm_i32_ty, llvm_v2i32_ty, llvm_v2i32_ty, llvm_v2i32_ty],
-					 [IntrNoMem, IntrWillReturn]>; //, ImmArg<ArgIndex<0>>]>;
+					 [IntrNoMem]>; //, ImmArg<ArgIndex<0>>]>;
 class VLMUL8V32I32Intrinsic
 	 : Intrinsic<[llvm_v16i48_ty],
 		          [llvm_v32i32_ty, llvm_v8i32_ty, llvm_i32_ty, llvm_i32_ty,
                    llvm_i32_ty, llvm_v2i32_ty, llvm_v2i32_ty, llvm_v2i32_ty],
-					 [IntrNoMem, IntrWillReturn]>; //, ImmArg<ArgIndex<0>>]>;
+					 [IntrNoMem]>; //, ImmArg<ArgIndex<0>>]>;
 class VMUL16V32I32Intrinsic
 	 : Intrinsic<[llvm_v16i48_ty],
 		          [llvm_v32i32_ty, llvm_v16i16_ty, llvm_i32_ty, llvm_i32_ty,
                    llvm_i32_ty, llvm_v2i32_ty, llvm_v2i32_ty, llvm_v2i32_ty],
-					 [IntrNoMem, IntrWillReturn]>; //, ImmArg<ArgIndex<0>>]>;
+					 [IntrNoMem]>; //, ImmArg<ArgIndex<0>>]>;
 
 class VMUL16V128I8Intrinsic
 	 : Intrinsic<[llvm_v16i48_ty],
 		          [llvm_v128i8_ty, llvm_v32i8_ty, llvm_i32_ty, llvm_i32_ty,
                    llvm_i32_ty, llvm_v2i32_ty, llvm_v2i32_ty, llvm_v2i32_ty],
-					 [IntrNoMem, IntrWillReturn]>; //, ImmArg<ArgIndex<0>>]>;
+					 [IntrNoMem]>; //, ImmArg<ArgIndex<0>>]>;
 //class VMUL16V128I8Intrinsic
 //	 : Intrinsic<[llvm_v16i48_ty],
 //		          [llvm_v128i8_ty, llvm_i32_ty, llvm_v2i32_ty, llvm_i32_ty,
@@ -196,68 +196,68 @@ class VMAC16V32I32Intrinsic
 	 : Intrinsic<[llvm_v16i48_ty],
 		          [llvm_v32i32_ty, llvm_v16i16_ty, llvm_v16i48_ty, llvm_i32_ty, llvm_i32_ty,
                    llvm_i32_ty, llvm_v2i32_ty, llvm_v2i32_ty, llvm_v2i32_ty],
-					 [IntrNoMem, IntrWillReturn]>; //, ImmArg<ArgIndex<0>>]>;
+					 [IntrNoMem]>; //, ImmArg<ArgIndex<0>>]>;
 class VMAC16V64I16Intrinsic
 	 : Intrinsic<[llvm_v16i48_ty],
 		          [llvm_v64i16_ty, llvm_v8i32_ty, llvm_v16i48_ty, llvm_i32_ty, llvm_i32_ty,
                    llvm_i32_ty, llvm_v2i32_ty, llvm_v2i32_ty, llvm_v2i32_ty],
-					 [IntrNoMem, IntrWillReturn]>; //, ImmArg<ArgIndex<0>>]>;
+					 [IntrNoMem]>; //, ImmArg<ArgIndex<0>>]>;
 class VMAC16V128I8Intrinsic
 	 : Intrinsic<[llvm_v16i48_ty],
 		          [llvm_v128i8_ty, llvm_v32i8_ty, llvm_v16i48_ty, llvm_i32_ty, llvm_i32_ty,
                    llvm_i32_ty, llvm_v2i32_ty, llvm_v2i32_ty, llvm_v2i32_ty],
-					 [IntrNoMem, IntrWillReturn]>; //, ImmArg<ArgIndex<0>>]>;
+					 [IntrNoMem]>; //, ImmArg<ArgIndex<0>>]>;
 class VMAC80Intrinsic
 	 : Intrinsic<[llvm_v16i48_ty],
 		          [llvm_v8i64_ty, llvm_v32i32_ty, llvm_v16i48_ty, llvm_i32_ty, llvm_i32_ty,
                    llvm_i32_ty, llvm_v2i32_ty, llvm_v2i32_ty, llvm_v2i32_ty],
-					 [IntrNoMem, IntrWillReturn]>; //, ImmArg<ArgIndex<0>>]>;
+					 [IntrNoMem]>; //, ImmArg<ArgIndex<0>>]>;
 class VecFPMULIntrinsic
 	 : Intrinsic<[llvm_v8f32_ty],
 		          [llvm_v32f32_ty, llvm_i32_ty, llvm_i32_ty,
                    llvm_v8f32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
-					 [IntrNoMem, IntrWillReturn]>; //, ImmArg<ArgIndex<0>>]>;
+					 [IntrNoMem]>; //, ImmArg<ArgIndex<0>>]>;
 class VecFPMACIntrinsic
 	 : Intrinsic<[llvm_v8f32_ty],
 		          [llvm_v8f32_ty, llvm_v32f32_ty, llvm_i32_ty, llvm_i32_ty,
                                   llvm_v8f32_ty, llvm_i32_ty, llvm_i32_ty,
                                   llvm_i32_ty, llvm_i32_ty],
-					 [IntrNoMem, IntrWillReturn]>; //, ImmArg<ArgIndex<0>>]>;
+					 [IntrNoMem]>; //, ImmArg<ArgIndex<0>>]>;
 
 // Floating point intrinsics with symmetric operand types
 class VecFPSimpleMULIntrinsic
 	 : Intrinsic<[llvm_v8f32_ty/*, llvm_i32_ty*/], [llvm_v8f32_ty, llvm_v8f32_ty,
                                    llvm_i32_ty, llvm_i32_ty],
-					 [IntrNoMem, IntrWillReturn]>; //, ImmArg<ArgIndex<0>>]>;
+					 [IntrNoMem]>; //, ImmArg<ArgIndex<0>>]>;
 class VecFPSimpleMACIntrinsic
 	 : Intrinsic<[llvm_v8f32_ty/*, llvm_i32_ty*/], [llvm_v8f32_ty,
                                    llvm_v8f32_ty, llvm_v8f32_ty,
                                    llvm_i32_ty, llvm_i32_ty],
-					 [IntrNoMem, IntrWillReturn]>; //, ImmArg<ArgIndex<0>>]>;
+					 [IntrNoMem]>; //, ImmArg<ArgIndex<0>>]>;
 //srs
 class BsrsV16I8V16Acc48
 	 : Intrinsic<[llvm_v16i8_ty], [llvm_v16i48_ty, llvm_i32_ty],
-					 [IntrNoMem, IntrWillReturn]>; //, ImmArg<ArgIndex<0>>]>;
+					 [IntrNoMem]>; //, ImmArg<ArgIndex<0>>]>;
 //compare intrinsic
 class VCMPV32INT16
 	 : Intrinsic<[llvm_v32i16_ty],
 		          [llvm_v32i16_ty, llvm_i32_ty, llvm_i32_ty,
                            llvm_v2i32_ty, llvm_v2i32_ty, llvm_v2i32_ty],
-					 [IntrNoMem, IntrWillReturn]>;
+					 [IntrNoMem]>;
 class VCMPV32INT16_CMP
 	 : Intrinsic<[llvm_v32i16_ty],
 		          [llvm_v32i16_ty, llvm_i32_ty, llvm_i32_ty,
                            llvm_v2i32_ty, llvm_v2i32_ty, llvm_v2i32_ty, llvm_i32_ty],
-					 [IntrNoMem, IntrWillReturn]>;
+					 [IntrNoMem]>;
 class VCMPV32INT16_SELECT
 	 : Intrinsic<[llvm_v32i16_ty],
 		          [llvm_v32i16_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
                            llvm_v2i32_ty, llvm_v2i32_ty, llvm_v2i32_ty],
-					 [IntrNoMem, IntrWillReturn]>;
+					 [IntrNoMem]>;
 //pac-unpack
 class VPACKV16INT16
 	 : Intrinsic<[llvm_v16i8_ty], [llvm_v16i16_ty],
-					 [IntrNoMem, IntrWillReturn]>;
+					 [IntrNoMem]>;
 
 def int_aie_event : ClangBuiltin<"__builtin_aie_event">, EventIntrinsic;
 def int_aie_lock_acquire_reg :

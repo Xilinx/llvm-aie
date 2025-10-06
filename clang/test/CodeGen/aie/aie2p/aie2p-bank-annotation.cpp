@@ -185,7 +185,7 @@ v128uint4 test_intrinsic_annotated_pointer_reference_fill_pop(v64bfp16ebs8_unali
 }
 
 // CHECK-LABEL: define dso_local void @_Z47test_intrinsic_annotated_pointer_reference_loopRPU3AS522v64bfp16ebs8_unaligned12v64bfp16ebs8i(
-// CHECK-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], [[STRUCT_V64BFP16EBS8:%.*]] [[V_COERCE:%.*]], i32 noundef [[NUM:%.*]]) local_unnamed_addr #[[ATTR4:[0-9]+]] {
+// CHECK-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], [[STRUCT_V64BFP16EBS8:%.*]] [[V_COERCE:%.*]], i32 noundef [[NUM:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP6:%.*]] = icmp sgt i32 [[NUM]], 0
 // CHECK-NEXT:    br i1 [[CMP6]], label [[FOR_BODY_LR_PH:%.*]], label [[FOR_COND_CLEANUP:%.*]]
@@ -212,7 +212,7 @@ v128uint4 test_intrinsic_annotated_pointer_reference_fill_pop(v64bfp16ebs8_unali
 // CHECK-NEXT:    store ptr addrspace(5) [[TMP8]], ptr [[P]], align 4
 // CHECK-NEXT:    [[INC]] = add nuw nsw i32 [[I_09]], 1
 // CHECK-NEXT:    [[EXITCOND_NOT:%.*]] = icmp eq i32 [[INC]], [[NUM]]
-// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label [[FOR_COND_CLEANUP]], label [[FOR_BODY]], !llvm.loop [[LOOP10:![0-9]+]]
+// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label [[FOR_COND_CLEANUP]], label [[FOR_BODY]], !llvm.loop [[LOOP9:![0-9]+]]
 //
 void test_intrinsic_annotated_pointer_reference_loop(
     v64bfp16ebs8_unaligned __aie_dm_resource_a *&p, v64bfp16ebs8 v, int num) {
@@ -225,7 +225,7 @@ void test_intrinsic_annotated_pointer_reference_loop(
 }
 
 // CHECK-LABEL: define dso_local void @_Z45test_intrinsic_default_pointer_reference_loopRP22v64bfp16ebs8_unaligned12v64bfp16ebs8i(
-// CHECK-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], [[STRUCT_V64BFP16EBS8:%.*]] [[V_COERCE:%.*]], i32 noundef [[NUM:%.*]]) local_unnamed_addr #[[ATTR4]] {
+// CHECK-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], [[STRUCT_V64BFP16EBS8:%.*]] [[V_COERCE:%.*]], i32 noundef [[NUM:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP6:%.*]] = icmp sgt i32 [[NUM]], 0
 // CHECK-NEXT:    br i1 [[CMP6]], label [[FOR_BODY_LR_PH:%.*]], label [[FOR_COND_CLEANUP:%.*]]
@@ -252,7 +252,7 @@ void test_intrinsic_annotated_pointer_reference_loop(
 // CHECK-NEXT:    store ptr [[TMP8]], ptr [[P]], align 4
 // CHECK-NEXT:    [[INC]] = add nuw nsw i32 [[I_09]], 1
 // CHECK-NEXT:    [[EXITCOND_NOT:%.*]] = icmp eq i32 [[INC]], [[NUM]]
-// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label [[FOR_COND_CLEANUP]], label [[FOR_BODY]], !llvm.loop [[LOOP13:![0-9]+]]
+// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label [[FOR_COND_CLEANUP]], label [[FOR_BODY]], !llvm.loop [[LOOP12:![0-9]+]]
 //
 void test_intrinsic_default_pointer_reference_loop(
     v64bfp16ebs8_unaligned *&p, v64bfp16ebs8 v, int num) {
@@ -272,8 +272,8 @@ void test_intrinsic_default_pointer_reference_loop(
 // CHECK: [[TBAA7]] = !{[[META8:![0-9]+]], [[META8]], i64 0}
 // CHECK: [[META8]] = !{!"p1 void", [[META9:![0-9]+]], i64 0}
 // CHECK: [[META9]] = !{!"any pointer", [[META3]], i64 0}
-// CHECK: [[LOOP10]] = distinct !{[[LOOP10]], [[META11:![0-9]+]], [[META12:![0-9]+]]}
-// CHECK: [[META11]] = !{!"llvm.loop.mustprogress"}
-// CHECK: [[META12]] = !{!"llvm.loop.unroll.disable"}
-// CHECK: [[LOOP13]] = distinct !{[[LOOP13]], [[META11]], [[META12]]}
+// CHECK: [[LOOP9]] = distinct !{[[LOOP9]], [[META10:![0-9]+]], [[META11:![0-9]+]]}
+// CHECK: [[META10]] = !{!"llvm.loop.mustprogress"}
+// CHECK: [[META11]] = !{!"llvm.loop.unroll.disable"}
+// CHECK: [[LOOP12]] = distinct !{[[LOOP12]], [[META10]], [[META11]]}
 //.
