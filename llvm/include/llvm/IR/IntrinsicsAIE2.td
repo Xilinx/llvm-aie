@@ -17,88 +17,88 @@ let TargetPrefix = "aie2" in {
 
 //===----------------------------------------------------------------------===//
 class AIE2EventIntrinsic
-    : Intrinsic<[],
+    : DefaultAttrsIntrinsic<[],
                 [llvm_i32_ty],
                 [IntrHasSideEffects, IntrNoMem]>; //[IntrHasSideEffects, IntrNoMem, ImmArg<ArgIndex<0>>]>;
 //Semaphores
 class AIE2LockIntr
-     : Intrinsic<[],
+     : DefaultAttrsIntrinsic<[],
                  [llvm_i32_ty /* unsigned */, llvm_i32_ty /* (un)signed */],
                  [IntrHasSideEffects, IntrNoMem]>;
 class AIE2LockCondIntr
-     : Intrinsic<[],
+     : DefaultAttrsIntrinsic<[],
                  [llvm_i32_ty /* unsigned */, llvm_i32_ty /* (un)signed */, llvm_i32_ty /* (un)signed */],
                  [IntrHasSideEffects, IntrNoMem]>;
 class AIE2DoneIntr
-     : Intrinsic<[], [], [IntrHasSideEffects, IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[], [], [IntrHasSideEffects, IntrNoMem]>;
 
 // Sparse
 class AIEV2I512I1024MULConf
-      : Intrinsic<[llvm_v16i64_ty], [llvm_v64i8_ty, llvm_v64i8_ty, llvm_i128_ty, llvm_i32_ty],
+      : DefaultAttrsIntrinsic<[llvm_v16i64_ty], [llvm_v64i8_ty, llvm_v64i8_ty, llvm_i128_ty, llvm_i32_ty],
 					 [IntrNoMem]>;
 
 class AIEV2I512I1024MACConf
-      : Intrinsic<[llvm_v16i64_ty], [llvm_v64i8_ty, llvm_v64i8_ty, llvm_i128_ty, llvm_v16i64_ty, llvm_i32_ty],
+      : DefaultAttrsIntrinsic<[llvm_v16i64_ty], [llvm_v64i8_ty, llvm_v64i8_ty, llvm_i128_ty, llvm_v16i64_ty, llvm_i32_ty],
 					 [IntrNoMem]>;
 
 class AIEV2I512I1024ADDMACConf
-      : Intrinsic<[llvm_v16i64_ty], [llvm_v64i8_ty, llvm_v64i8_ty, llvm_i128_ty, llvm_v16i64_ty, llvm_v16i64_ty, llvm_i32_ty],
+      : DefaultAttrsIntrinsic<[llvm_v16i64_ty], [llvm_v64i8_ty, llvm_v64i8_ty, llvm_i128_ty, llvm_v16i64_ty, llvm_v16i64_ty, llvm_i32_ty],
 					 [IntrNoMem]>;
 
 class AIEV2I1024I1024MULConf
-      : Intrinsic<[llvm_v16i64_ty], [llvm_v128i8_ty, llvm_v16i32_ty, llvm_i128_ty, llvm_i32_ty],
+      : DefaultAttrsIntrinsic<[llvm_v16i64_ty], [llvm_v128i8_ty, llvm_v16i32_ty, llvm_i128_ty, llvm_i32_ty],
 					 [IntrNoMem]>;
 
 class AIEV2I1024I1024MACConf
-      : Intrinsic<[llvm_v16i64_ty], [llvm_v128i8_ty, llvm_v16i32_ty, llvm_i128_ty, llvm_v16i64_ty, llvm_i32_ty],
+      : DefaultAttrsIntrinsic<[llvm_v16i64_ty], [llvm_v128i8_ty, llvm_v16i32_ty, llvm_i128_ty, llvm_v16i64_ty, llvm_i32_ty],
 					 [IntrNoMem]>;
 
 class AIEV2I1024I1024ADDMACConf
-      : Intrinsic<[llvm_v16i64_ty], [llvm_v128i8_ty, llvm_v16i32_ty, llvm_i128_ty, llvm_v16i64_ty, llvm_v16i64_ty, llvm_i32_ty],
+      : DefaultAttrsIntrinsic<[llvm_v16i64_ty], [llvm_v128i8_ty, llvm_v16i32_ty, llvm_i128_ty, llvm_v16i64_ty, llvm_v16i64_ty, llvm_i32_ty],
 					 [IntrNoMem]>;
 
 class AIEV2I1024I1024MULConfBF16
-      : Intrinsic<[llvm_v8i64_ty], [llvm_v64bf16_ty, llvm_v32bf16_ty, llvm_i128_ty, llvm_i32_ty],
+      : DefaultAttrsIntrinsic<[llvm_v8i64_ty], [llvm_v64bf16_ty, llvm_v32bf16_ty, llvm_i128_ty, llvm_i32_ty],
 					 [IntrReadMem, IntrInaccessibleMemOnly]>;
 
 class AIEV2I1024I1024MACConfBF16
-      : Intrinsic<[llvm_v8i64_ty], [llvm_v64bf16_ty, llvm_v32bf16_ty, llvm_i128_ty, llvm_v8i64_ty, llvm_i32_ty],
+      : DefaultAttrsIntrinsic<[llvm_v8i64_ty], [llvm_v64bf16_ty, llvm_v32bf16_ty, llvm_i128_ty, llvm_v8i64_ty, llvm_i32_ty],
 					 [IntrReadMem, IntrInaccessibleMemOnly]>;
 
 class AIEV2I1024I1024ADDMACConfBF16
-      : Intrinsic<[llvm_v8i64_ty], [llvm_v64bf16_ty, llvm_v32bf16_ty, llvm_i128_ty, llvm_v8i64_ty, llvm_v8i64_ty, llvm_i32_ty],
+      : DefaultAttrsIntrinsic<[llvm_v8i64_ty], [llvm_v64bf16_ty, llvm_v32bf16_ty, llvm_i128_ty, llvm_v8i64_ty, llvm_v8i64_ty, llvm_i32_ty],
 					 [IntrReadMem, IntrInaccessibleMemOnly]>;
 
 class AIEV2I512I1024MULConfBF16
-      : Intrinsic<[llvm_v8i64_ty], [llvm_v32bf16_ty, llvm_v32bf16_ty, llvm_i128_ty, llvm_i32_ty],
+      : DefaultAttrsIntrinsic<[llvm_v8i64_ty], [llvm_v32bf16_ty, llvm_v32bf16_ty, llvm_i128_ty, llvm_i32_ty],
 					 [IntrReadMem, IntrInaccessibleMemOnly]>;
 
 class AIEV2I512I1024MACConfBF16
-      : Intrinsic<[llvm_v8i64_ty], [llvm_v32bf16_ty, llvm_v32bf16_ty, llvm_i128_ty, llvm_v8i64_ty, llvm_i32_ty],
+      : DefaultAttrsIntrinsic<[llvm_v8i64_ty], [llvm_v32bf16_ty, llvm_v32bf16_ty, llvm_i128_ty, llvm_v8i64_ty, llvm_i32_ty],
 					 [IntrReadMem, IntrInaccessibleMemOnly]>;
 
 class AIEV2I512I1024ADDMACConfBF16
-      : Intrinsic<[llvm_v8i64_ty], [llvm_v32bf16_ty, llvm_v32bf16_ty, llvm_i128_ty, llvm_v8i64_ty, llvm_v8i64_ty, llvm_i32_ty],
+      : DefaultAttrsIntrinsic<[llvm_v8i64_ty], [llvm_v32bf16_ty, llvm_v32bf16_ty, llvm_i128_ty, llvm_v8i64_ty, llvm_v8i64_ty, llvm_i32_ty],
 					 [IntrReadMem, IntrInaccessibleMemOnly]>;
 
 class AIEV2I512I512MULConf
-	 : Intrinsic<[llvm_v16i64_ty], [llvm_v64i8_ty, llvm_v16i32_ty, llvm_i32_ty],
+	 : DefaultAttrsIntrinsic<[llvm_v16i64_ty], [llvm_v64i8_ty, llvm_v16i32_ty, llvm_i32_ty],
 					 [IntrNoMem]>;
 class AIEV2I512I512MACConf
-	 : Intrinsic<[llvm_v16i64_ty], [llvm_v64i8_ty, llvm_v16i32_ty, llvm_v16i64_ty, llvm_i32_ty],
+	 : DefaultAttrsIntrinsic<[llvm_v16i64_ty], [llvm_v64i8_ty, llvm_v16i32_ty, llvm_v16i64_ty, llvm_i32_ty],
 					 [IntrNoMem]>;
 class AIEV2I512I512AddMaconf
-	 : Intrinsic<[llvm_v16i64_ty], [llvm_v64i8_ty, llvm_v16i32_ty, llvm_v16i64_ty, llvm_v16i64_ty, llvm_i32_ty],
+	 : DefaultAttrsIntrinsic<[llvm_v16i64_ty], [llvm_v64i8_ty, llvm_v16i32_ty, llvm_v16i64_ty, llvm_v16i64_ty, llvm_i32_ty],
 					 [IntrNoMem]>;
 
 class AIE2bf16MULConf
-    : Intrinsic<[llvm_v8i64_ty], [llvm_v32bf16_ty, llvm_v32bf16_ty, llvm_i32_ty],
+    : DefaultAttrsIntrinsic<[llvm_v8i64_ty], [llvm_v32bf16_ty, llvm_v32bf16_ty, llvm_i32_ty],
 	   	       [IntrReadMem, IntrInaccessibleMemOnly]>;
 class AIE2bf16MACConf 
-    : Intrinsic<[llvm_v8i64_ty], [llvm_v32bf16_ty, llvm_v32bf16_ty, llvm_v8i64_ty, llvm_i32_ty],
+    : DefaultAttrsIntrinsic<[llvm_v8i64_ty], [llvm_v32bf16_ty, llvm_v32bf16_ty, llvm_v8i64_ty, llvm_i32_ty],
 					 [IntrReadMem, IntrInaccessibleMemOnly]>;
 class AIE2bf16AddMACConf 
-    : Intrinsic<[llvm_v8i64_ty], [llvm_v32bf16_ty, llvm_v32bf16_ty, llvm_v8i64_ty, llvm_v8i64_ty, llvm_i32_ty],
+    : DefaultAttrsIntrinsic<[llvm_v8i64_ty], [llvm_v32bf16_ty, llvm_v32bf16_ty, llvm_v8i64_ty, llvm_v8i64_ty, llvm_i32_ty],
 					 [IntrReadMem, IntrInaccessibleMemOnly]>;
  
 class AIEV2AddSubAcc : DefaultAttrsIntrinsic<[llvm_v16i64_ty], [llvm_v16i64_ty, llvm_v16i64_ty, llvm_i32_ty],
@@ -113,246 +113,246 @@ class AIEV2NEGFPCONF : DefaultAttrsIntrinsic<[llvm_v8i64_ty],
                                              [llvm_v8i64_ty, llvm_i32_ty],
                                              [IntrReadMem, IntrInaccessibleMemOnly]>;
 
-class AIEV2V16AccFloatToV16Bf : Intrinsic<[llvm_v16bf16_ty],
+class AIEV2V16AccFloatToV16Bf : DefaultAttrsIntrinsic<[llvm_v16bf16_ty],
                                           [llvm_v8i64_ty],
                                           [IntrReadMem, IntrInaccessibleMemOnly]>;
-class AIEV2V16BfToV16AccFloat : Intrinsic<[llvm_v8i64_ty], [llvm_v16bf16_ty], [IntrNoMem]>;
+class AIEV2V16BfToV16AccFloat : DefaultAttrsIntrinsic<[llvm_v8i64_ty], [llvm_v16bf16_ty], [IntrNoMem]>;
 
 class AIEV2UNDV4Int32
-     : Intrinsic<[llvm_v4i32_ty], [], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v4i32_ty], [], [IntrNoMem]>;
 class AIEV2UNDV16Int8
-     : Intrinsic<[llvm_v16i8_ty], [], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16i8_ty], [], [IntrNoMem]>;
 class AIEV2UNDV8Int16
-     : Intrinsic<[llvm_v8i16_ty], [], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v8i16_ty], [], [IntrNoMem]>;
 class AIEV2UNDV8Int32
-     : Intrinsic<[llvm_v8i32_ty], [], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v8i32_ty], [], [IntrNoMem]>;
 class AIEV2UNDV32Int8
-     : Intrinsic<[llvm_v32i8_ty], [], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v32i8_ty], [], [IntrNoMem]>;
 class AIEV2UNDV16Int16
-     : Intrinsic<[llvm_v16i16_ty], [], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16i16_ty], [], [IntrNoMem]>;
 class AIEV2UNDV16Int32
-     : Intrinsic<[llvm_v16i32_ty], [], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16i32_ty], [], [IntrNoMem]>;
 class AIEV2UNDV32Int32
-     : Intrinsic<[llvm_v32i32_ty], [], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v32i32_ty], [], [IntrNoMem]>;
 class AIEV2UNDV64Int8
-     : Intrinsic<[llvm_v64i8_ty], [], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v64i8_ty], [], [IntrNoMem]>;
 class AIEV2UNDV32Int16
-     : Intrinsic<[llvm_v32i16_ty], [], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v32i16_ty], [], [IntrNoMem]>;
 class AIEV2UNDV128Int8
-     : Intrinsic<[llvm_v128i8_ty], [], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v128i8_ty], [], [IntrNoMem]>;
 class AIEV2UNDV64Int16
-     : Intrinsic<[llvm_v64i16_ty], [], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v64i16_ty], [], [IntrNoMem]>;
 class AIEV2UNDV4ACC64
-     : Intrinsic<[llvm_v4i64_ty], [], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v4i64_ty], [], [IntrNoMem]>;
 class AIEV2UNDV8ACC64
-     : Intrinsic<[llvm_v8i64_ty], [], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v8i64_ty], [], [IntrNoMem]>;
 class AIEV2UNDV16ACC64
-     : Intrinsic<[llvm_v16i64_ty], [], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16i64_ty], [], [IntrNoMem]>;
 class AIEV2UND8Bf16
-     : Intrinsic<[llvm_v8bf16_ty], [], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v8bf16_ty], [], [IntrNoMem]>;
 class AIEV2UND16Bf16
-     : Intrinsic<[llvm_v16bf16_ty], [], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16bf16_ty], [], [IntrNoMem]>;
 class AIEV2UND32Bf16
-     : Intrinsic<[llvm_v32bf16_ty], [], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v32bf16_ty], [], [IntrNoMem]>;
 class AIEV2UND64Bf16
-     : Intrinsic<[llvm_v64bf16_ty], [], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v64bf16_ty], [], [IntrNoMem]>;
 class AIEV2UNDV8Float
-     : Intrinsic<[llvm_v8f32_ty], [], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v8f32_ty], [], [IntrNoMem]>;
 class AIEV2UNDV16Float
-     : Intrinsic<[llvm_v16f32_ty], [], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16f32_ty], [], [IntrNoMem]>;
 class AIEV2UNDV32Float
-     : Intrinsic<[llvm_v32f32_ty], [], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v32f32_ty], [], [IntrNoMem]>;
 
 class AIEV2GET_I256_I128
-     : Intrinsic<[llvm_v8i32_ty], [llvm_v4i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v8i32_ty], [llvm_v4i32_ty], [IntrNoMem]>;
 
 // VSHIFT
 class AIEV2VShift_I512_I512
-     : Intrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty,llvm_v16i32_ty,llvm_i32_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty,llvm_v16i32_ty,llvm_i32_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2VShift_bf128_bf512
-     : Intrinsic<[llvm_v8bf16_ty], [llvm_v32bf16_ty,llvm_v32bf16_ty,llvm_i32_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v8bf16_ty], [llvm_v32bf16_ty,llvm_v32bf16_ty,llvm_i32_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2VShift_bf512_bf512
-     : Intrinsic<[llvm_v32bf16_ty], [llvm_v32bf16_ty,llvm_v32bf16_ty,llvm_i32_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v32bf16_ty], [llvm_v32bf16_ty,llvm_v32bf16_ty,llvm_i32_ty,llvm_i32_ty], [IntrNoMem]>;
 // VINSERT.X
 class AIEV2VInsert8_I512
-     : Intrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty,llvm_i32_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty,llvm_i32_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2VInsert16_I512
-     : Intrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty,llvm_i32_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty,llvm_i32_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2VInsert32_I512
-     : Intrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty,llvm_i32_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty,llvm_i32_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2VInsert64_I512
-     : Intrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty,llvm_i32_ty,llvm_v2i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty,llvm_i32_ty,llvm_v2i32_ty], [IntrNoMem]>;
 class AIEV2VInsert16_bf512
-     : Intrinsic<[llvm_v32bf16_ty], [llvm_v32bf16_ty,llvm_i32_ty,llvm_bfloat_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v32bf16_ty], [llvm_v32bf16_ty,llvm_i32_ty,llvm_bfloat_ty], [IntrNoMem]>;
 class AIEV2VInsert32_bf512
-     : Intrinsic<[llvm_v32bf16_ty], [llvm_v32bf16_ty,llvm_i32_ty,llvm_v2bf16_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v32bf16_ty], [llvm_v32bf16_ty,llvm_i32_ty,llvm_v2bf16_ty], [IntrNoMem]>;
 class AIEV2VInsert64_bf512
-     : Intrinsic<[llvm_v32bf16_ty], [llvm_v32bf16_ty,llvm_i32_ty,llvm_v4bf16_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v32bf16_ty], [llvm_v32bf16_ty,llvm_i32_ty,llvm_v4bf16_ty], [IntrNoMem]>;
 class AIEV2VInsert32_accfloat
-     : Intrinsic<[llvm_v8i64_ty], [llvm_v8i64_ty,llvm_i32_ty,llvm_float_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v8i64_ty], [llvm_v8i64_ty,llvm_i32_ty,llvm_float_ty], [IntrNoMem]>;
 
 // VBCST.X
 class AIEV2VBCST8I512
-     : Intrinsic<[llvm_v64i8_ty], [llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v64i8_ty], [llvm_i32_ty], [IntrNoMem]>;
 class AIEV2VBCST16I512
-     : Intrinsic<[llvm_v32i16_ty], [llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v32i16_ty], [llvm_i32_ty], [IntrNoMem]>;
 class AIEV2VBCST32I512
-     : Intrinsic<[llvm_v16i32_ty], [llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16i32_ty], [llvm_i32_ty], [IntrNoMem]>;
 class AIEV2VBCST64I512
-     : Intrinsic<[llvm_v16i32_ty], [llvm_v2i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16i32_ty], [llvm_v2i32_ty], [IntrNoMem]>;
 class AIEV2VBCST16bf512
-     : Intrinsic<[llvm_v32bf16_ty], [llvm_bfloat_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v32bf16_ty], [llvm_bfloat_ty], [IntrNoMem]>;
 class AIEV2VBCST32bf512
-     : Intrinsic<[llvm_v32bf16_ty], [llvm_v2bf16_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v32bf16_ty], [llvm_v2bf16_ty], [IntrNoMem]>;
 class AIEV2VBCST64bf512
-     : Intrinsic<[llvm_v32bf16_ty], [llvm_v4bf16_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v32bf16_ty], [llvm_v4bf16_ty], [IntrNoMem]>;
 class AIEV2VBCSTF32I512
-     : Intrinsic<[llvm_v16f32_ty], [llvm_float_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16f32_ty], [llvm_float_ty], [IntrNoMem]>;
 // VEXTBCST.X
 class AIEV2VEXTBCST8I512
-     : Intrinsic<[llvm_v64i8_ty], [llvm_v64i8_ty, llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v64i8_ty], [llvm_v64i8_ty, llvm_i32_ty], [IntrNoMem]>;
 class AIEV2VEXTBCST16I512
-     : Intrinsic<[llvm_v32i16_ty], [llvm_v32i16_ty, llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v32i16_ty], [llvm_v32i16_ty, llvm_i32_ty], [IntrNoMem]>;
 class AIEV2VEXTBCST32I512
-     : Intrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty, llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty, llvm_i32_ty], [IntrNoMem]>;
 class AIEV2VEXTBCST32Bf512
-     : Intrinsic<[llvm_v32bf16_ty], [llvm_v32bf16_ty, llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v32bf16_ty], [llvm_v32bf16_ty, llvm_i32_ty], [IntrNoMem]>;
 // VEXTRACT
 class AIEV2VExtElem8I512
-     : Intrinsic<[llvm_i32_ty], [llvm_v64i8_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_i32_ty], [llvm_v64i8_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
 class AIEV2VExtElem16I512
-     : Intrinsic<[llvm_i32_ty], [llvm_v32i16_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_i32_ty], [llvm_v32i16_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
 class AIEV2VExtElem32I512
-     : Intrinsic<[llvm_i32_ty], [llvm_v16i32_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_i32_ty], [llvm_v16i32_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
 class AIEV2VExtElem64I512
-     : Intrinsic<[llvm_v2i32_ty], [llvm_v16i32_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v2i32_ty], [llvm_v16i32_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
 // VSEL.X
 class AIEV2Sel8_I512
-     : Intrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty,llvm_v16i32_ty,llvm_v2i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty,llvm_v16i32_ty,llvm_v2i32_ty], [IntrNoMem]>;
 class AIEV2Sel16_I512
-     : Intrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty,llvm_v16i32_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty,llvm_v16i32_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2Sel32_I512
-     : Intrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty,llvm_v16i32_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty,llvm_v16i32_ty,llvm_i32_ty], [IntrNoMem]>;
 // UPD
 class AIEV2UPD_I64_I32
-     : Intrinsic<[llvm_v2i32_ty], [llvm_v2i32_ty,llvm_i32_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v2i32_ty], [llvm_v2i32_ty,llvm_i32_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2UPD_I512_I256
-     : Intrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty,llvm_v8i32_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty,llvm_v8i32_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2UPD_I1024_I512
-     : Intrinsic<[llvm_v32i32_ty], [llvm_v32i32_ty,llvm_v16i32_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v32i32_ty], [llvm_v32i32_ty,llvm_v16i32_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2UPD_I1024_I256
-     : Intrinsic<[llvm_v32i32_ty], [llvm_v32i32_ty,llvm_v8i32_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v32i32_ty], [llvm_v32i32_ty,llvm_v8i32_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2UPD_bf512_bf256
-     : Intrinsic<[llvm_v32bf16_ty], [llvm_v32bf16_ty,llvm_v16bf16_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v32bf16_ty], [llvm_v32bf16_ty,llvm_v16bf16_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2UPD_bf1024_bf512
-     : Intrinsic<[llvm_v64bf16_ty], [llvm_v64bf16_ty,llvm_v32bf16_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v64bf16_ty], [llvm_v64bf16_ty,llvm_v32bf16_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2UPD_bf1024_bf256
-     : Intrinsic<[llvm_v64bf16_ty], [llvm_v64bf16_ty,llvm_v16bf16_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v64bf16_ty], [llvm_v64bf16_ty,llvm_v16bf16_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2UPD_512_256_acc
-     : Intrinsic<[llvm_v8i64_ty], [llvm_v8i64_ty,llvm_v4i64_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v8i64_ty], [llvm_v8i64_ty,llvm_v4i64_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2UPD_1024_512_acc
-     : Intrinsic<[llvm_v16i64_ty], [llvm_v16i64_ty,llvm_v8i64_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16i64_ty], [llvm_v16i64_ty,llvm_v8i64_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2UPD_1024_256_acc
-     : Intrinsic<[llvm_v16i64_ty], [llvm_v16i64_ty,llvm_v4i64_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16i64_ty], [llvm_v16i64_ty,llvm_v4i64_ty,llvm_i32_ty], [IntrNoMem]>;
 // SET
 class AIEV2SET_I64_I32
-     : Intrinsic<[llvm_v2i32_ty], [llvm_i32_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v2i32_ty], [llvm_i32_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2SET_I512_I256
-     : Intrinsic<[llvm_v16i32_ty], [llvm_v8i32_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16i32_ty], [llvm_v8i32_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2SET_I1024_I512
-     : Intrinsic<[llvm_v32i32_ty], [llvm_v16i32_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v32i32_ty], [llvm_v16i32_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2SET_I1024_I256
-     : Intrinsic<[llvm_v32i32_ty], [llvm_v8i32_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v32i32_ty], [llvm_v8i32_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2SET_bf512_bf256
-     : Intrinsic<[llvm_v32bf16_ty], [llvm_v16bf16_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v32bf16_ty], [llvm_v16bf16_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2SET_bf1024_bf512
-     : Intrinsic<[llvm_v64bf16_ty], [llvm_v32bf16_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v64bf16_ty], [llvm_v32bf16_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2SET_bf1024_bf256
-     : Intrinsic<[llvm_v64bf16_ty], [llvm_v16bf16_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v64bf16_ty], [llvm_v16bf16_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2SET_512_256_acc
-     : Intrinsic<[llvm_v8i64_ty], [llvm_v4i64_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v8i64_ty], [llvm_v4i64_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2SET_1024_512_acc
-     : Intrinsic<[llvm_v16i64_ty], [llvm_v8i64_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16i64_ty], [llvm_v8i64_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2SET_1024_256_acc
-     : Intrinsic<[llvm_v16i64_ty], [llvm_v4i64_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16i64_ty], [llvm_v4i64_ty,llvm_i32_ty], [IntrNoMem]>;
 // EXT
 class AIEV2EXT_I32_I64
-     : Intrinsic<[llvm_i32_ty], [llvm_v2i32_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_i32_ty], [llvm_v2i32_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2EXT_I256_I512
-     : Intrinsic<[llvm_v8i32_ty] , [llvm_v16i32_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v8i32_ty] , [llvm_v16i32_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2EXT_I512_I1024
-     : Intrinsic<[llvm_v16i32_ty], [llvm_v32i32_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16i32_ty], [llvm_v32i32_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2EXT_I256_I1024
-     : Intrinsic<[llvm_v8i32_ty] , [llvm_v32i32_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v8i32_ty] , [llvm_v32i32_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2EXT_bf256_bf512
-     : Intrinsic<[llvm_v16bf16_ty] , [llvm_v32bf16_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16bf16_ty] , [llvm_v32bf16_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2EXT_bf512_bf1024
-     : Intrinsic<[llvm_v32bf16_ty], [llvm_v64bf16_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v32bf16_ty], [llvm_v64bf16_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2EXT_bf256_bf1024
-     : Intrinsic<[llvm_v16bf16_ty] , [llvm_v64bf16_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16bf16_ty] , [llvm_v64bf16_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2EXT_256_512_acc
-     : Intrinsic<[llvm_v4i64_ty] , [llvm_v8i64_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v4i64_ty] , [llvm_v8i64_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2EXT_512_1024_acc
-     : Intrinsic<[llvm_v8i64_ty], [llvm_v16i64_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v8i64_ty], [llvm_v16i64_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2EXT_256_1024_acc
-     : Intrinsic<[llvm_v4i64_ty] , [llvm_v16i64_ty,llvm_i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v4i64_ty] , [llvm_v16i64_ty,llvm_i32_ty], [IntrNoMem]>;
 // Concat
 class AIEV2Concat_I512_I256
-     : Intrinsic<[llvm_v16i32_ty], [llvm_v8i32_ty,llvm_v8i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16i32_ty], [llvm_v8i32_ty,llvm_v8i32_ty], [IntrNoMem]>;
 class AIEV2Concat_I1024_I256
-     : Intrinsic<[llvm_v32i32_ty], [llvm_v8i32_ty,llvm_v8i32_ty,llvm_v8i32_ty,llvm_v8i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v32i32_ty], [llvm_v8i32_ty,llvm_v8i32_ty,llvm_v8i32_ty,llvm_v8i32_ty], [IntrNoMem]>;
 class AIEV2Concat_I1024_I512
-     : Intrinsic<[llvm_v32i32_ty], [llvm_v16i32_ty,llvm_v16i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v32i32_ty], [llvm_v16i32_ty,llvm_v16i32_ty], [IntrNoMem]>;
 class AIEV2Concat_bf512_bf256
-     : Intrinsic<[llvm_v32bf16_ty], [llvm_v16bf16_ty,llvm_v16bf16_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v32bf16_ty], [llvm_v16bf16_ty,llvm_v16bf16_ty], [IntrNoMem]>;
 class AIEV2Concat_bf1024_bf256
-     : Intrinsic<[llvm_v64bf16_ty], [llvm_v16bf16_ty,llvm_v16bf16_ty,llvm_v16bf16_ty,llvm_v16bf16_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v64bf16_ty], [llvm_v16bf16_ty,llvm_v16bf16_ty,llvm_v16bf16_ty,llvm_v16bf16_ty], [IntrNoMem]>;
 class AIEV2Concat_bf1024_bf512
-     : Intrinsic<[llvm_v64bf16_ty], [llvm_v32bf16_ty,llvm_v32bf16_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v64bf16_ty], [llvm_v32bf16_ty,llvm_v32bf16_ty], [IntrNoMem]>;
 class AIEV2Concat_512_256_acc
-     : Intrinsic<[llvm_v8i64_ty], [llvm_v4i64_ty,llvm_v4i64_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v8i64_ty], [llvm_v4i64_ty,llvm_v4i64_ty], [IntrNoMem]>;
 class AIEV2Concat_1024_256_acc
-     : Intrinsic<[llvm_v16i64_ty], [llvm_v4i64_ty,llvm_v4i64_ty,llvm_v4i64_ty,llvm_v4i64_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16i64_ty], [llvm_v4i64_ty,llvm_v4i64_ty,llvm_v4i64_ty,llvm_v4i64_ty], [IntrNoMem]>;
 class AIEV2Concat_1024_512_acc
-     : Intrinsic<[llvm_v16i64_ty], [llvm_v8i64_ty,llvm_v8i64_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16i64_ty], [llvm_v8i64_ty,llvm_v8i64_ty], [IntrNoMem]>;
 
 //srs
 class AIEV2I256V16Acc32I
-	 : Intrinsic<[llvm_v16i16_ty], [llvm_v8i64_ty, llvm_i32_ty, llvm_i32_ty],
+	 : DefaultAttrsIntrinsic<[llvm_v16i16_ty], [llvm_v8i64_ty, llvm_i32_ty, llvm_i32_ty],
 					 [IntrReadMem, IntrInaccessibleMemOnly]>;
 class AIEV2I256V16Acc64I
-	 : Intrinsic<[llvm_v16i16_ty], [llvm_v16i64_ty, llvm_i32_ty, llvm_i32_ty],
+	 : DefaultAttrsIntrinsic<[llvm_v16i16_ty], [llvm_v16i64_ty, llvm_i32_ty, llvm_i32_ty],
 					 [IntrReadMem, IntrInaccessibleMemOnly]>;
 class AIEV2I256V32Acc32I
-	 : Intrinsic<[llvm_v32i8_ty], [llvm_v16i64_ty, llvm_i32_ty, llvm_i32_ty],
+	 : DefaultAttrsIntrinsic<[llvm_v32i8_ty], [llvm_v16i64_ty, llvm_i32_ty, llvm_i32_ty],
 					 [IntrReadMem, IntrInaccessibleMemOnly]>;
 class AIEV2I256V8Acc64I
-	 : Intrinsic<[llvm_v8i32_ty], [llvm_v8i64_ty, llvm_i32_ty, llvm_i32_ty],
+	 : DefaultAttrsIntrinsic<[llvm_v8i32_ty], [llvm_v8i64_ty, llvm_i32_ty, llvm_i32_ty],
 					 [IntrReadMem, IntrInaccessibleMemOnly]>;
 class AIEV2I512V16Acc64I
-	 : Intrinsic<[llvm_v16i32_ty], [llvm_v16i64_ty, llvm_i32_ty, llvm_i32_ty],
+	 : DefaultAttrsIntrinsic<[llvm_v16i32_ty], [llvm_v16i64_ty, llvm_i32_ty, llvm_i32_ty],
 					 [IntrReadMem, IntrInaccessibleMemOnly]>;
 class AIEV2I512V32Acc32I
-	 : Intrinsic<[llvm_v32i16_ty], [llvm_v16i64_ty, llvm_i32_ty, llvm_i32_ty],
+	 : DefaultAttrsIntrinsic<[llvm_v32i16_ty], [llvm_v16i64_ty, llvm_i32_ty, llvm_i32_ty],
 					 [IntrReadMem, IntrInaccessibleMemOnly]>;
 
 // VUPS
-class AIEV2Acc32V16I256I : Intrinsic<[llvm_v8i64_ty],
+class AIEV2Acc32V16I256I : DefaultAttrsIntrinsic<[llvm_v8i64_ty],
                               [llvm_v16i16_ty, llvm_i32_ty, llvm_i32_ty],
                               [IntrReadMem, IntrInaccessibleMemOnly]>;
-class AIEV2Acc32V32I256I : Intrinsic<[llvm_v16i64_ty],
+class AIEV2Acc32V32I256I : DefaultAttrsIntrinsic<[llvm_v16i64_ty],
                               [llvm_v32i8_ty, llvm_i32_ty, llvm_i32_ty],
                               [IntrReadMem, IntrInaccessibleMemOnly]>;
-class AIEV2Acc32V32I512I : Intrinsic<[llvm_v16i64_ty],
+class AIEV2Acc32V32I512I : DefaultAttrsIntrinsic<[llvm_v16i64_ty],
                               [llvm_v32i16_ty, llvm_i32_ty, llvm_i32_ty],
                               [IntrReadMem, IntrInaccessibleMemOnly]>;
-class AIEV2Acc64V16I256I : Intrinsic<[llvm_v16i64_ty],
+class AIEV2Acc64V16I256I : DefaultAttrsIntrinsic<[llvm_v16i64_ty],
                               [llvm_v16i16_ty, llvm_i32_ty, llvm_i32_ty],
                               [IntrReadMem, IntrInaccessibleMemOnly]>;
-class AIEV2Acc64V16I512I : Intrinsic<[llvm_v16i64_ty],
+class AIEV2Acc64V16I512I : DefaultAttrsIntrinsic<[llvm_v16i64_ty],
                               [llvm_v16i32_ty, llvm_i32_ty, llvm_i32_ty],
                               [IntrReadMem, IntrInaccessibleMemOnly]>;
-class AIEV2Acc64V8I256I  : Intrinsic<[llvm_v8i64_ty],
+class AIEV2Acc64V8I256I  : DefaultAttrsIntrinsic<[llvm_v8i64_ty],
                               [llvm_v8i32_ty, llvm_i32_ty, llvm_i32_ty],
                               [IntrReadMem, IntrInaccessibleMemOnly]>;
 
@@ -383,53 +383,53 @@ class AIEV2V16I32I32V16I32V16I32I32 : DefaultAttrsIntrinsic<[llvm_v16i32_ty, llv
 class AIEV2V32BF16I32V32BF16V32BF16I32 : DefaultAttrsIntrinsic<[llvm_v32bf16_ty, llvm_i32_ty], [llvm_v32bf16_ty, llvm_v32bf16_ty], [IntrNoMem]>;
 
 // VBCSTSHFL
-class AIEV2VBcstShfl_bf16 : Intrinsic<[llvm_v32bf16_ty], [llvm_bfloat_ty, llvm_i32_ty], [IntrNoMem]>;
-class AIEV2VBcstShfl_I32 : Intrinsic<[llvm_v16i32_ty], [llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
-class AIEV2VBcstShfl_I64 : Intrinsic<[llvm_v16i32_ty], [llvm_v2i32_ty, llvm_i32_ty], [IntrNoMem]>;
+class AIEV2VBcstShfl_bf16 : DefaultAttrsIntrinsic<[llvm_v32bf16_ty], [llvm_bfloat_ty, llvm_i32_ty], [IntrNoMem]>;
+class AIEV2VBcstShfl_I32 : DefaultAttrsIntrinsic<[llvm_v16i32_ty], [llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
+class AIEV2VBcstShfl_I64 : DefaultAttrsIntrinsic<[llvm_v16i32_ty], [llvm_v2i32_ty, llvm_i32_ty], [IntrNoMem]>;
 
 // VSHUFFLE
-class AIEV2VShuffle : Intrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty, llvm_v16i32_ty, llvm_i32_ty], [IntrNoMem]>;
-class AIEV2VShuffleBf16 : Intrinsic<[llvm_v32bf16_ty], [llvm_v32bf16_ty, llvm_v32bf16_ty, llvm_i32_ty], [IntrNoMem]>;
+class AIEV2VShuffle : DefaultAttrsIntrinsic<[llvm_v16i32_ty], [llvm_v16i32_ty, llvm_v16i32_ty, llvm_i32_ty], [IntrNoMem]>;
+class AIEV2VShuffleBf16 : DefaultAttrsIntrinsic<[llvm_v32bf16_ty], [llvm_v32bf16_ty, llvm_v32bf16_ty, llvm_i32_ty], [IntrNoMem]>;
 
 
 // PADDX.XX
-class AIEV2Add2D : Intrinsic<[llvm_ptr_ty, llvm_i20_ty],
+class AIEV2Add2D : DefaultAttrsIntrinsic<[llvm_ptr_ty, llvm_i20_ty],
       [llvm_ptr_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty],
       [IntrNoMem]>;
-class AIEV2Add3D : Intrinsic<[llvm_ptr_ty, llvm_i20_ty, llvm_i20_ty],
+class AIEV2Add3D : DefaultAttrsIntrinsic<[llvm_ptr_ty, llvm_i20_ty, llvm_i20_ty],
       [llvm_ptr_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty],
       [IntrNoMem]>;
 
 // VLD.SPARSE.POP / VLD.SPARSE.PEEK
-class AIEV2SPARSE_OP_V64I16_set_lo : Intrinsic<[llvm_ptr_ty, llvm_v32i16_ty, llvm_i128_ty],
+class AIEV2SPARSE_OP_V64I16_set_lo : DefaultAttrsIntrinsic<[llvm_ptr_ty, llvm_v32i16_ty, llvm_i128_ty],
      [llvm_v32i16_ty, llvm_i128_ty, llvm_ptr_ty],
      []>;
-class AIEV2SPARSE_OP_V64I16_insert_hi : Intrinsic<[llvm_ptr_ty, llvm_v32i16_ty, llvm_i128_ty],
+class AIEV2SPARSE_OP_V64I16_insert_hi : DefaultAttrsIntrinsic<[llvm_ptr_ty, llvm_v32i16_ty, llvm_i128_ty],
      [llvm_v32i16_ty, llvm_i128_ty, llvm_v32i16_ty, llvm_i128_ty, llvm_ptr_ty],
      []>;
 
-class AIEV2SPARSE_OP_V128I8_set_lo : Intrinsic<[llvm_ptr_ty, llvm_v64i8_ty, llvm_i128_ty],
+class AIEV2SPARSE_OP_V128I8_set_lo : DefaultAttrsIntrinsic<[llvm_ptr_ty, llvm_v64i8_ty, llvm_i128_ty],
      [llvm_v64i8_ty, llvm_i128_ty, llvm_ptr_ty],
      []>;
-class AIEV2SPARSE_OP_V128I8_insert_hi : Intrinsic<[llvm_ptr_ty, llvm_v64i8_ty, llvm_i128_ty],
+class AIEV2SPARSE_OP_V128I8_insert_hi : DefaultAttrsIntrinsic<[llvm_ptr_ty, llvm_v64i8_ty, llvm_i128_ty],
      [llvm_v64i8_ty, llvm_i128_ty, llvm_v64i8_ty, llvm_i128_ty, llvm_ptr_ty],
      []>;
 
-class AIEV2SPARSE_OP_V256I4_set_lo : Intrinsic<[llvm_ptr_ty, llvm_v16i32_ty, llvm_i128_ty],
+class AIEV2SPARSE_OP_V256I4_set_lo : DefaultAttrsIntrinsic<[llvm_ptr_ty, llvm_v16i32_ty, llvm_i128_ty],
      [llvm_v16i32_ty, llvm_i128_ty, llvm_ptr_ty],
      []>;
-class AIEV2SPARSE_OP_V256I4_insert_hi : Intrinsic<[llvm_ptr_ty, llvm_v16i32_ty, llvm_i128_ty],
+class AIEV2SPARSE_OP_V256I4_insert_hi : DefaultAttrsIntrinsic<[llvm_ptr_ty, llvm_v16i32_ty, llvm_i128_ty],
      [llvm_v16i32_ty, llvm_i128_ty, llvm_v16i32_ty, llvm_i128_ty, llvm_ptr_ty],
      []>;
 
-class AIEV2SPARSE_OP_V64BF16_set_lo : Intrinsic<[llvm_ptr_ty, llvm_v32bf16_ty, llvm_i128_ty],
+class AIEV2SPARSE_OP_V64BF16_set_lo : DefaultAttrsIntrinsic<[llvm_ptr_ty, llvm_v32bf16_ty, llvm_i128_ty],
      [llvm_v32bf16_ty, llvm_i128_ty, llvm_ptr_ty],
      []>;
-class AIEV2SPARSE_OP_V64BF16_insert_hi : Intrinsic<[llvm_ptr_ty, llvm_v32bf16_ty, llvm_i128_ty],
+class AIEV2SPARSE_OP_V64BF16_insert_hi : DefaultAttrsIntrinsic<[llvm_ptr_ty, llvm_v32bf16_ty, llvm_i128_ty],
      [llvm_v32bf16_ty, llvm_i128_ty, llvm_v32bf16_ty, llvm_i128_ty, llvm_ptr_ty],
      []>;
 
-class AIEV2SPARSE_RESET_FILL : Intrinsic<[llvm_ptr_ty],
+class AIEV2SPARSE_RESET_FILL : DefaultAttrsIntrinsic<[llvm_ptr_ty],
      [llvm_ptr_ty],
      []>;
 
@@ -439,10 +439,10 @@ class AIEV2LOAD4X : DefaultAttrsIntrinsic<[llvm_v8i32_ty], [llvm_v8i32_ty],
 
 
 // bfloat16 conversions
-class AIEV2BF16ToInt : Intrinsic<[llvm_i32_ty],
+class AIEV2BF16ToInt : DefaultAttrsIntrinsic<[llvm_i32_ty],
       [llvm_bfloat_ty],
       [IntrNoMem]>;
-class AIEV2V16BF16ToV16I : Intrinsic<[llvm_v16i32_ty],
+class AIEV2V16BF16ToV16I : DefaultAttrsIntrinsic<[llvm_v16i32_ty],
       [llvm_v16bf16_ty, llvm_i32_ty],
       [IntrReadMem, IntrInaccessibleMemOnly]>;
 
@@ -466,45 +466,45 @@ class AIEV2I32I32I32I32I32I32 : DefaultAttrsIntrinsic<[llvm_i32_ty],
                                                        [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
                                                        [IntrInaccessibleMemOnly]>;
 
-class AIEV2ReadTM : Intrinsic<[llvm_i32_ty], [llvm_ptr_ty], [IntrReadMem]>;
-class AIEV2WriteTM : Intrinsic<[], [llvm_i32_ty, llvm_ptr_ty], [IntrWriteMem]>;
+class AIEV2ReadTM : DefaultAttrsIntrinsic<[llvm_i32_ty], [llvm_ptr_ty], [IntrReadMem]>;
+class AIEV2WriteTM : DefaultAttrsIntrinsic<[], [llvm_i32_ty, llvm_ptr_ty], [IntrWriteMem]>;
 
 // Mode Settings
 // Set Control Reg
-class AIEV2SetCtrlReg : Intrinsic<[], [llvm_i32_ty, llvm_i32_ty], [IntrWriteMem, IntrInaccessibleMemOnly]>;
+class AIEV2SetCtrlReg : DefaultAttrsIntrinsic<[], [llvm_i32_ty, llvm_i32_ty], [IntrWriteMem, IntrInaccessibleMemOnly]>;
 // Get Control Reg
-class AIEV2GetCtrlReg : Intrinsic<[llvm_i32_ty], [llvm_i32_ty], [IntrReadMem, IntrInaccessibleMemOnly]>;
+class AIEV2GetCtrlReg : DefaultAttrsIntrinsic<[llvm_i32_ty], [llvm_i32_ty], [IntrReadMem, IntrInaccessibleMemOnly]>;
 
 
 // Get CoreID
-class AIEV2GetCoreID : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
+class AIEV2GetCoreID : DefaultAttrsIntrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
 
 // CLB
-class AIEV2CLB : Intrinsic<[llvm_i32_ty], [llvm_i32_ty], [IntrNoMem]>;
+class AIEV2CLB : DefaultAttrsIntrinsic<[llvm_i32_ty], [llvm_i32_ty], [IntrNoMem]>;
 
 // DIVS
-class AIEV2DIVS : Intrinsic<[llvm_i32_ty, llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
+class AIEV2DIVS : DefaultAttrsIntrinsic<[llvm_i32_ty, llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
 
 // Pack-Unpack
-class AIEV2PackI4I8 : Intrinsic<[llvm_v32i8_ty], [llvm_v32i16_ty, llvm_i32_ty], [IntrReadMem, IntrInaccessibleMemOnly]>;
-class AIEV2PackI8I16 : Intrinsic<[llvm_v32i8_ty], [llvm_v32i16_ty, llvm_i32_ty], [IntrReadMem, IntrInaccessibleMemOnly]>;
-class AIEV2UnPackI8I4 : Intrinsic<[llvm_v32i16_ty], [llvm_v32i8_ty, llvm_i32_ty], [IntrNoMem]>;
-class AIEV2UnPackI16I8 : Intrinsic<[llvm_v32i16_ty], [llvm_v32i8_ty, llvm_i32_ty], [IntrNoMem]>;
+class AIEV2PackI4I8 : DefaultAttrsIntrinsic<[llvm_v32i8_ty], [llvm_v32i16_ty, llvm_i32_ty], [IntrReadMem, IntrInaccessibleMemOnly]>;
+class AIEV2PackI8I16 : DefaultAttrsIntrinsic<[llvm_v32i8_ty], [llvm_v32i16_ty, llvm_i32_ty], [IntrReadMem, IntrInaccessibleMemOnly]>;
+class AIEV2UnPackI8I4 : DefaultAttrsIntrinsic<[llvm_v32i16_ty], [llvm_v32i8_ty, llvm_i32_ty], [IntrNoMem]>;
+class AIEV2UnPackI16I8 : DefaultAttrsIntrinsic<[llvm_v32i16_ty], [llvm_v32i8_ty, llvm_i32_ty], [IntrNoMem]>;
 
 // Scheduling barrier
-class AIEV2SchedBarrier : Intrinsic<[], [], [IntrNoMem, IntrHasSideEffects, IntrConvergent, IntrWillReturn]>;
+class AIEV2SchedBarrier : DefaultAttrsIntrinsic<[], [], [IntrNoMem, IntrHasSideEffects, IntrConvergent, IntrWillReturn]>;
 
 // clear accumulator
-class AIEV2CLR16F : Intrinsic<[llvm_v8i64_ty], [], [IntrReadMem, IntrInaccessibleMemOnly]>;
-class AIEV2VCLRACC1024 : Intrinsic<[llvm_v16i64_ty], [], [IntrNoMem]>;
+class AIEV2CLR16F : DefaultAttrsIntrinsic<[llvm_v8i64_ty], [], [IntrReadMem, IntrInaccessibleMemOnly]>;
+class AIEV2VCLRACC1024 : DefaultAttrsIntrinsic<[llvm_v16i64_ty], [], [IntrNoMem]>;
 
 // Extract Sub-Vector
 class AIEV2Extract_I128_I512
-     : Intrinsic<[llvm_v4i32_ty], [llvm_v16i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v4i32_ty], [llvm_v16i32_ty], [IntrNoMem]>;
 
 // Set Sub-Vector
 class AIEV2Set_I512_I128
-     : Intrinsic<[llvm_v16i32_ty], [llvm_v4i32_ty], [IntrNoMem]>;
+     : DefaultAttrsIntrinsic<[llvm_v16i32_ty], [llvm_v4i32_ty], [IntrNoMem]>;
 
 def int_aie2_event : ClangBuiltin<"__builtin_aiev2_event">, AIE2EventIntrinsic;
 //Locks
