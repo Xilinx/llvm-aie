@@ -279,7 +279,7 @@ void AIEBasePassConfig::addIRPasses() {
     addPass(createInferAddressSpacesPass());
   TargetPassConfig::addIRPasses();
   if (TM->getOptLevel() > CodeGenOptLevel::None) {
-    if (VectorizePartWordStores)
+    if (VectorizePartWordStores && !TM->getTargetTriple().isAIE1())
       addPass(createLoadStoreVectorizerPass());
   }
 }
