@@ -42,11 +42,11 @@ def combine_globalval_offset : GICombineRule<
   (apply [{  applyGlobalValOffset(*${root}, MRI, B, Observer, ${matchinfo});}])
 >;
 
-def combine_extract_vector_elt_and_zsa_ext_matchdata: GIDefMatchData<"std::pair<MachineInstr *, std::pair<bool, bool>>">;
+def combine_extract_vector_elt_and_zsa_ext_matchdata: GIDefMatchData<"std::pair<MachineInstr *, bool>">;
 def combine_extract_vector_elt_and_zsa_ext : GICombineRule<
   (defs root:$root, combine_extract_vector_elt_and_zsa_ext_matchdata:$matchinfo),
   (match (wip_match_opcode G_EXTRACT_VECTOR_ELT): $root,
-  [{ return matchExtractVecEltAndExt(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  [{ return matchExtractVecEltAndExt(*${root}, MRI, ${matchinfo}); }]),
   (apply [{ applyExtractVecEltAndExt(*${root}, MRI, B, ${matchinfo}); }])
 >;
 
