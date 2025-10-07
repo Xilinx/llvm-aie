@@ -1053,8 +1053,8 @@ bool feedsAnyExtBcstUse(MachineInstr &MI, MachineRegisterInfo &MRI,
                         const AIEBaseInstrInfo &TII) {
   assert(MI.getOpcode() == TargetOpcode::G_EXTRACT_VECTOR_ELT);
 
-  auto GetSingleNonDbgUse = [&MRI](MachineInstr &MI,
-                                   unsigned UseMIOpcode) -> MachineInstr * {
+  auto IsSingleNonDbgUse = [&MRI](MachineInstr &MI,
+                                  unsigned UseMIOpcode) -> MachineInstr * {
     const Register Dst = MI.getOperand(0).getReg();
     if (!MRI.hasOneNonDBGUse(Dst))
       return nullptr;
@@ -1065,19 +1065,19 @@ bool feedsAnyExtBcstUse(MachineInstr &MI, MachineRegisterInfo &MRI,
     return UseMI;
   };
 
-  auto *AnyExtMI = GetSingleNonDbgUse(MI, TargetOpcode::G_ANYEXT);
+  auto *AnyExtMI = IsSingleNonDbgUse(MI, TargetOpcode::G_ANYEXT);
   if (!AnyExtMI)
     return false;
 
   auto *BcstMI =
-      GetSingleNonDbgUse(*AnyExtMI, TII.getGenericBroadcastVectorOpcode());
-  return (bool)BcstMI;
+      IsSingleNonDbgUse(*AnyExtMI, TII.getGenericBroadcastVectorOpcode());
+  return BcstMI;
 }
 } // namespace
 
 bool llvm::matchExtractVecEltAndExt(
     MachineInstr &MI, MachineRegisterInfo &MRI, const AIEBaseInstrInfo &TII,
-    std::tuple<MachineInstr *, bool, bool> &MatchInfo) {
+    std::pair<MachineInstr *, std::pair<bool, bool>> &MatchInfo) {
   assert(MI.getOpcode() == TargetOpcode::G_EXTRACT_VECTOR_ELT &&
          "Expected a extract_vector_elt");
   Register DstReg = MI.getOperand(0).getReg();
@@ -1094,10 +1094,10 @@ bool llvm::matchExtractVecEltAndExt(
   switch (ExtMI->getOpcode()) {
   case TargetOpcode::G_ANYEXT:
   case TargetOpcode::G_SEXT:
-    MatchInfo = {ExtMI, /*SEXT=*/true, BuildAssert};
+    MatchInfo = std::make_pair(ExtMI, std::make_pair(/*SEXT=*/1, BuildAssert));
     return true;
   case TargetOpcode::G_ZEXT:
-    MatchInfo = {ExtMI, /*SEXT=*/false, BuildAssert};
+    MatchInfo = std::make_pair(ExtMI, std::make_pair(/*SEXT=*/0, BuildAssert));
     return true;
   default:
     return false;
@@ -1107,9 +1107,10 @@ bool llvm::matchExtractVecEltAndExt(
 
 void llvm::applyExtractVecEltAndExt(
     MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B,
-    std::tuple<MachineInstr *, bool, bool> &MatchInfo) {
+    std::pair<MachineInstr *, std::pair<bool, bool>> &MatchInfo) {
   B.setInstrAndDebugLoc(MI);
-  auto [MatchMI, IsSignedExt, BuildAssert] = MatchInfo;
+  auto [MatchMI, BoolPair] = MatchInfo;
+  auto [IsSignedExt, BuildAssert] = BoolPair;
 
   const Register ExtractDstReg = MI.getOperand(0).getReg();
   const LLT ExtractDstTy = MRI.getType(ExtractDstReg);
