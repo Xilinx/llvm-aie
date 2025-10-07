@@ -156,12 +156,11 @@ bool canAdvanceOp(MachineInstr &MemI, MachineInstr &Dest,
 MachineInstr *getDefIgnoringCopiesAndBitcasts(Register Reg,
                                               const MachineRegisterInfo &MRI);
 
-bool matchExtractVecEltAndExt(
-    MachineInstr &MI, MachineRegisterInfo &MRI, const AIEBaseInstrInfo &TII,
-    std::pair<MachineInstr *, std::pair<bool, bool>> &MatchInfo);
-void applyExtractVecEltAndExt(
-    MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B,
-    std::pair<MachineInstr *, std::pair<bool, bool>> &MatchInfo);
+bool matchExtractVecEltAndExt(MachineInstr &MI, MachineRegisterInfo &MRI,
+                              std::pair<MachineInstr *, bool> &MatchInfo);
+void applyExtractVecEltAndExt(MachineInstr &MI, MachineRegisterInfo &MRI,
+                              MachineIRBuilder &B,
+                              std::pair<MachineInstr *, bool> &MatchInfo);
 
 bool matchSplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                       std::pair<Register, Register> &MatchInfo);
