@@ -1,0 +1,54 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -mtriple=aie2 -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+# RUN: not --crash llc -mtriple=aie2p -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+
+# This test ensures that the Machine Verifier detects illegal G_AIE_ADD_VECTOR_ELT_HI
+
+---
+name:            ok
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    %0:_(s32) = G_CONSTANT i32 0
+    %1:_(<64 x s8>) = G_IMPLICIT_DEF
+    %2:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_HI %1, %0
+    %3:_(<32 x s16>) = G_IMPLICIT_DEF
+    %4:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_HI %3, %0
+    %5:_(<16 x s32>) = G_IMPLICIT_DEF
+    %6:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI %5, %0
+    %7:_(<64 x s8>) = G_IMPLICIT_DEF
+    %8:_(s64) = G_CONSTANT i64 0
+    %9:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_HI %7, %8
+...
+
+---
+name:            nok_dst
+legalized: true
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; CHECK-COUNT-2: Bad machine code: Expected 32/64bit scalar source
+    ; CHECK-COUNT-2: Bad machine code: Scalar size must match vector element size
+    ; CHECK: Bad machine code: Operation is only legal for 512-bit vector destinations
+    ; CHECK-NOT: Bad machine code
+    %0:_(<32 x s16>) = COPY $x0
+    %1:_(s32) = G_CONSTANT i32 1
+    %2:_(s8) = G_TRUNC %1
+    %3:_(s16) = G_TRUNC %1
+    %4:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_HI %0, %2
+    %5:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_HI %0, %3
+    %6:_(s64) = G_MERGE_VALUES %1, %1
+    %7:_(<16 x s32>) = COPY $x0
+    %8:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI %7(<16 x s32>), %6(s64)
+    %9:_(<8 x s64>) = COPY $x0
+    %10:_(<8 x s64>) = G_AIE_ADD_VECTOR_ELT_HI %9(<8 x s64>), %1(s32)
+
+    %11:_(<16 x s16>) = COPY $wl0
+    %12:_(<16 x s16>) = G_AIE_ADD_VECTOR_ELT_HI %11, %1(s32)
+...
