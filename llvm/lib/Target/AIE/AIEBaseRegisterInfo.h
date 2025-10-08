@@ -112,6 +112,10 @@ struct AIEBaseRegisterInfo : public TargetRegisterInfo {
                       LiveIntervals &LIS) const override;
 };
 
+template <int N, unsigned step> bool isEncodableAsNegativeInt(int Value) {
+  return isInt<N + CTLog2<step>() + 1>(Value);
+}
+
 } // namespace llvm
 
 #endif // LLVM_LIB_TARGET_AIE_AIEBASEREGISTERINFO_H

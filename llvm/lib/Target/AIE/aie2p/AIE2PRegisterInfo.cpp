@@ -115,12 +115,6 @@ const uint32_t *AIE2PRegisterInfo::getNoPreservedMask() const {
   return CSR_NoRegs_RegMask;
 }
 
-namespace {
-template <int N, unsigned step> bool isEncodableAsNegativeInt(int Value) {
-  return isInt<N + CTLog2<step>() + 1>(Value);
-}
-} // namespace
-
 bool AIE2PRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                             int SPAdj, unsigned FIOperandNum,
                                             RegScavenger *RS) const {
