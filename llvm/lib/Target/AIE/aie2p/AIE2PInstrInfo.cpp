@@ -200,6 +200,29 @@ bool AIE2PInstrInfo::verifyGenericInstruction(const MachineInstr &MI,
     return verifySameLaneTypes(MI, ErrInfo) &&
            isLegalTypeToPad(MRI.getType(MI.getOperand(0).getReg()), &ErrInfo) &&
            isLegalTypeToUnpad(MRI.getType(MI.getOperand(1).getReg()), &ErrInfo);
+  case AIE2P::G_AIE_ADD_VECTOR_ELT_HI: {
+    const LLT DstTy = MRI.getType(MI.getOperand(0).getReg());
+    const LLT SrcTy = MRI.getType(MI.getOperand(2).getReg());
+    // This operation is only supported on the basic vector length
+    if (DstTy.getSizeInBits() != AIE2PInstrInfo::getBasicVectorBitSize()) {
+      ErrInfo = "Operation is only legal for 512-bit vector destinations";
+      return false;
+    }
+    // This operation only supports 32-/64-bit scalar operands
+    if (!(MRI.getType(MI.getOperand(2).getReg()) == LLT::scalar(32) ||
+          MRI.getType(MI.getOperand(2).getReg()) == LLT::scalar(64))) {
+      ErrInfo = "Expected 32/64bit scalar source";
+      return false;
+    }
+
+    // Element types >= 32-bit must match scalar size (8/16-bit scalars are
+    // extended to 32-bit)
+    if (DstTy.getScalarSizeInBits() >= 32 && DstTy.getScalarType() != SrcTy) {
+      ErrInfo = "Scalar size must match vector element size";
+      return false;
+    }
+    return true;
+  }
   default:
     return true;
   }
