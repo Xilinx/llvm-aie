@@ -1394,12 +1394,6 @@ bool AIELegalizerHelper::legalizeG_FMUL(LegalizerHelper &Helper,
 
   SrcLHS = MIRBuilder.buildAnyExt(S32, SrcLHS).getReg(0);
   SrcRHS = MIRBuilder.buildAnyExt(S32, SrcRHS).getReg(0);
-  SrcLHS = MIRBuilder
-               .buildAssertInstr(TargetOpcode::G_ASSERT_ZEXT, {S32}, SrcLHS, 16)
-               .getReg(0);
-  SrcRHS = MIRBuilder
-               .buildAssertInstr(TargetOpcode::G_ASSERT_ZEXT, {S32}, SrcRHS, 16)
-               .getReg(0);
 
   const LLT BroadcastVecLLT = V32BF16;
   const unsigned BroadcastOpc =
@@ -1416,7 +1410,7 @@ bool AIELegalizerHelper::legalizeG_FMUL(LegalizerHelper &Helper,
 
   const Register IdxReg = MIRBuilder.buildConstant(S32, 0).getReg(0);
   const unsigned ExtractEltOpc =
-      ST.getInstrInfo()->getGenericExtractVectorEltOpcode(/*ZeroExt*/ false);
+      ST.getInstrInfo()->getGenericExtractVectorEltOpcode(/*SignExt=*/false);
   Res = MIRBuilder.buildInstr(ExtractEltOpc, {S32}, {Res, IdxReg}).getReg(0);
   Res = MIRBuilder.buildAssertInstr(TargetOpcode::G_ASSERT_ZEXT, {S32}, Res, 16)
             .getReg(0);
