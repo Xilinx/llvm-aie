@@ -1534,11 +1534,6 @@ def : Pat<(v32i16 (add_elt_hi_node VEC512:$vec, (i32 eR:$scalar))),
           (VPUSH_hi_16 VEC512:$vec, eR:$scalar)>;
 def : Pat<(v16i32 (add_elt_hi_node VEC512:$vec, (i32 eR:$scalar))),
           (VPUSH_hi_32 VEC512:$vec, eR:$scalar)>;
-
-// Compatibility pattern allowing 32-bit scalar to be pushed into 64-bit element vector
-def : Pat<(v8i64 (add_elt_hi_node VEC512:$vec, (i32 eR:$scalar))),
-          (VPUSH_hi_64 VEC512:$vec, (REG_SEQUENCE eL, eR:$scalar, sub_l_even))>;
-
 def : Pat<(v8i64 (add_elt_hi_node VEC512:$vec, (i64 eL:$scalar))),
           (VPUSH_hi_64 VEC512:$vec, eL:$scalar)>;
 
