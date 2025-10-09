@@ -96,6 +96,11 @@ cl::opt<bool>
     EnableStagedRA("aie-staged-ra", cl::Hidden, cl::init(true),
                    cl::desc("Enable multi-stage register allocation"));
 
+cl::opt<bool> EnableFineGrainedStagedRA(
+    "aie-staged-ra-fine-grained-alloc", cl::Hidden, cl::init(true),
+    cl::desc("Enable multi-stage register allocation with fine-grained "
+             "selection of live intervals"));
+
 cl::opt<bool>
     EnableWAWRegRewrite("aie-wawreg-rewrite",
                         cl::desc("Enable the WAW Register Renaming in loops"),
