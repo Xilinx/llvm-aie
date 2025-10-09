@@ -10,6 +10,7 @@
 
 #include "AIEBaseInstrInfo.h"
 #include "AIEBaseRegisterInfo.h"
+#include "AIESuperRegUtils.h"
 
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallSet.h"
@@ -63,79 +64,7 @@ public:
   }
 
   bool runOnMachineFunction(MachineFunction &Fn) override;
-
-private:
-  void rewriteSuperReg(Register Reg, Register AssignedPhysReg,
-                       MachineRegisterInfo &MRI, const AIEBaseRegisterInfo &TRI,
-                       VirtRegMap &VRM, LiveRegMatrix &LRM, LiveIntervals &LIS,
-                       SlotIndexes &Indexes, LiveDebugVariables &DebugVars);
 };
-
-/// Returns the subreg indices that can be used to rewrite \p Reg into smaller
-/// regs. Returns {} if the rewrite isn't possible.
-static SmallSet<int, 8> getRewritableSubRegs(Register Reg,
-                                             const MachineRegisterInfo &MRI,
-                                             const AIEBaseRegisterInfo &TRI,
-                                             std::set<Register> &VisitedVRegs) {
-  if (Reg.isPhysical()) {
-    // TODO: One could use collectSubRegs() in AIEBaseInstrInfo.cpp
-    // But given that MOD registers are not part of the ABI, they should
-    // not appear as physical registers before RA.
-    LLVM_DEBUG(dbgs() << "  Cannot rewrite physreg " << printReg(Reg, &TRI)
-                      << "\n");
-    return {};
-  }
-
-  auto &SubRegSplit = TRI.getSubRegSplit(MRI.getRegClass(Reg)->getID());
-  if (SubRegSplit.size() <= 1) {
-    // Register does not have multiple subregs to be rewritten into.
-    LLVM_DEBUG(dbgs() << "  Cannot rewrite " << printReg(Reg, &TRI, 0, &MRI)
-                      << ": no sub-reg split\n");
-    return {};
-  }
-
-  VisitedVRegs.insert(Reg);
-  SmallSet<int, 8> UsedSubRegs;
-  for (MachineOperand &RegOp : MRI.reg_operands(Reg)) {
-    int SubReg = RegOp.getSubReg();
-    if (SubReg && SubRegSplit.count(SubReg)) {
-      UsedSubRegs.insert(SubReg);
-    } else if (RegOp.getParent()->isFullCopy()) {
-      // To rewrite a full copy, both operands need to be rewritable using
-      // their subregs.
-      Register DstReg = RegOp.getParent()->getOperand(0).getReg();
-      if (!VisitedVRegs.count(DstReg) &&
-          getRewritableSubRegs(DstReg, MRI, TRI, VisitedVRegs).empty()) {
-        LLVM_DEBUG(dbgs() << "  Cannot rewrite "
-                          << printReg(DstReg, &TRI, 0, &MRI) << " in "
-                          << *RegOp.getParent());
-        return {};
-      }
-      Register SrcReg = RegOp.getParent()->getOperand(1).getReg();
-      if (!VisitedVRegs.count(SrcReg) &&
-          getRewritableSubRegs(SrcReg, MRI, TRI, VisitedVRegs).empty()) {
-        LLVM_DEBUG(dbgs() << "  Cannot rewrite "
-                          << printReg(SrcReg, &TRI, 0, &MRI) << " in "
-                          << *RegOp.getParent());
-        return {};
-      }
-      UsedSubRegs.insert(SubRegSplit.begin(), SubRegSplit.end());
-    } else {
-      LLVM_DEBUG(dbgs() << "  Cannot rewrite " << RegOp << " in "
-                        << *RegOp.getParent());
-      return {};
-    }
-  }
-
-  return UsedSubRegs;
-}
-
-static SmallSet<int, 8> getRewritableSubRegs(Register Reg,
-                                             const MachineRegisterInfo &MRI,
-                                             const AIEBaseRegisterInfo &TRI) {
-  std::set<Register> VisitedVRegs;
-  return getRewritableSubRegs(Reg, MRI, TRI, VisitedVRegs);
-}
 
 bool AIESuperRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   LLVM_DEBUG(llvm::dbgs() << "*** Splitting super-registers: " << MF.getName()
@@ -149,7 +78,7 @@ bool AIESuperRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   LiveIntervals &LIS = getAnalysis<LiveIntervalsWrapperPass>().getLIS();
   SlotIndexes &Indexes = getAnalysis<SlotIndexesWrapperPass>().getSI();
   LiveDebugVariables &DebugVars = getAnalysis<LiveDebugVariablesWrapperLegacy>().getLDV();
-  std::map<Register, MCRegister> AssignedPhysRegs;
+  std::map<Register, std::pair<MCRegister, SmallSet<int, 8>>> AssignedPhysRegs;
 
   // Collect already-assigned VRegs that can be split into smaller ones.
   LLVM_DEBUG(VRM.dump());
@@ -173,8 +102,11 @@ bool AIESuperRegRewriter::runOnMachineFunction(MachineFunction &MF) {
 
     LLVM_DEBUG(dbgs() << "Analysing " << printReg(Reg, &TRI, 0, &MRI) << ":"
                       << printRegClassOrBank(Reg, MRI, &TRI) << '\n');
-    if (!getRewritableSubRegs(Reg, MRI, TRI).empty()) {
-      AssignedPhysRegs[Reg] = VRM.getPhys(Reg);
+    SmallSet<int, 8> RewritableSubRegs =
+        AIESuperRegUtils::getRewritableSubRegs(Reg, MRI, TRI);
+    if (!RewritableSubRegs.empty()) {
+      AssignedPhysRegs[Reg] =
+          std::make_pair(VRM.getPhys(Reg), RewritableSubRegs);
       LRM.unassign(LIS.getInterval(Reg));
     } else {
       LLVM_DEBUG(dbgs() << "Could not rewrite " << printReg(Reg, &TRI, 0, &MRI)
@@ -183,161 +115,15 @@ bool AIESuperRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   }
 
   // Re-write all the collected VRegs
-  for (auto &[VReg, PhysReg] : AssignedPhysRegs) {
-    rewriteSuperReg(VReg, PhysReg, MRI, TRI, VRM, LRM, LIS, Indexes, DebugVars);
+  for (auto &[VReg, PhysRegAndSubRegs] : AssignedPhysRegs) {
+    const Register PhysReg = PhysRegAndSubRegs.first;
+    SmallSet<int, 8> &SubRegs = PhysRegAndSubRegs.second;
+    AIESuperRegUtils::rewriteSuperReg(VReg, PhysReg, SubRegs, MRI, TRI, VRM,
+                                      LRM, LIS, Indexes, DebugVars);
   }
 
   LLVM_DEBUG(VRM.dump());
   return !AssignedPhysRegs.empty();
-}
-
-/// Return a mask of all the lanes that are live at \p Index
-static LaneBitmask getLiveLanesAt(SlotIndex Index, Register Reg,
-                                  const LiveIntervals &LIS) {
-  const LiveInterval &LI = LIS.getInterval(Reg);
-  if (!LI.hasSubRanges())
-    return LaneBitmask::getAll();
-
-  LaneBitmask LiveLanes;
-  for (const LiveInterval::SubRange &SubLI : LI.subranges()) {
-    if (SubLI.liveAt(Index))
-      LiveLanes |= SubLI.LaneMask;
-  }
-  return LiveLanes;
-}
-
-/// Rewrite a full copy into multiple copies using the subregs in \p CopySubRegs
-static void rewriteFullCopy(MachineInstr &MI, const std::set<int> &CopySubRegs,
-                            LiveIntervals &LIS, const TargetInstrInfo &TII,
-                            const TargetRegisterInfo &TRI, VirtRegMap &VRM,
-                            LiveRegMatrix &LRM) {
-  assert(MI.isFullCopy());
-  SlotIndex CopyIndex = LIS.getInstructionIndex(MI);
-  LLVM_DEBUG(dbgs() << "  Changing full copy at " << CopyIndex << ": " << MI);
-  Register DstReg = MI.getOperand(0).getReg();
-  Register SrcReg = MI.getOperand(1).getReg();
-  LaneBitmask LiveSrcLanes = getLiveLanesAt(CopyIndex, SrcReg, LIS);
-
-  LIS.removeVRegDefAt(LIS.getInterval(DstReg), CopyIndex.getRegSlot());
-
-  SmallSet<Register, 8> RegistersToRepair;
-  for (int SubRegIdx : CopySubRegs) {
-    if ((LiveSrcLanes & TRI.getSubRegIndexLaneMask(SubRegIdx)).none()) {
-      LLVM_DEBUG(dbgs() << "        Skip undef subreg "
-                        << TRI.getSubRegIndexName(SubRegIdx) << "\n");
-      continue;
-    }
-
-    MachineInstr *PartCopy = BuildMI(*MI.getParent(), MI, MI.getDebugLoc(),
-                                     TII.get(TargetOpcode::COPY))
-                                 .addReg(DstReg, RegState::Define, SubRegIdx)
-                                 .addReg(SrcReg, 0, SubRegIdx)
-                                 .getInstr();
-    LLVM_DEBUG(dbgs() << "        to " << *PartCopy);
-    LIS.InsertMachineInstrInMaps(*PartCopy);
-    LIS.getInterval(PartCopy->getOperand(0).getReg());
-    RegistersToRepair.insert(PartCopy->getOperand(1).getReg());
-  }
-
-  LIS.RemoveMachineInstrFromMaps(MI);
-  MI.eraseFromParent();
-  // As we don't handle all registers now (selective LI filter),
-  // We should make sure that all LiveIntervals are correct.
-  // If we dont't repair, MI will compose the LIs of some registers,
-  // what is not correct because MI was deleted.
-  for (Register R : RegistersToRepair) {
-
-    if (!LIS.hasInterval(R))
-      continue;
-
-    if (VRM.hasPhys(R)) {
-      const MCRegister PhysReg = VRM.getPhys(R);
-      const LiveInterval &OldLI = LIS.getInterval(R);
-      LRM.unassign(OldLI);
-      LIS.removeInterval(R);
-      const LiveInterval &LI = LIS.createAndComputeVirtRegInterval(R);
-      LRM.assign(LI, PhysReg);
-    } else {
-      LIS.removeInterval(R);
-      LIS.createAndComputeVirtRegInterval(R);
-    }
-  }
-}
-
-void AIESuperRegRewriter::rewriteSuperReg(
-    Register Reg, Register AssignedPhysReg, MachineRegisterInfo &MRI,
-    const AIEBaseRegisterInfo &TRI, VirtRegMap &VRM, LiveRegMatrix &LRM,
-    LiveIntervals &LIS, SlotIndexes &Indexes, LiveDebugVariables &DebugVars) {
-  LLVM_DEBUG(dbgs() << "Rewriting " << printReg(Reg, &TRI, 0, &MRI) << '\n');
-  auto *TII = static_cast<const AIEBaseInstrInfo *>(
-      VRM.getMachineFunction().getSubtarget().getInstrInfo());
-
-  // Collect all the subreg indices to rewrite as independent vregs.
-  SmallMapVector<int, Register, 8> SubRegToVReg;
-  const TargetRegisterClass *SuperRC = MRI.getRegClass(Reg);
-  SmallSet<int, 8> SubRegs = getRewritableSubRegs(Reg, MRI, TRI);
-  assert(!SubRegs.empty());
-  for (int SubReg : SubRegs) {
-    const TargetRegisterClass *SubRC = TRI.getSubRegisterClass(SuperRC, SubReg);
-    SubRegToVReg[SubReg] = MRI.createVirtualRegister(SubRC);
-  }
-
-  // Rewrite full copies into multiple copies using subregs
-  for (MachineInstr &MI : make_early_inc_range(MRI.reg_instructions(Reg))) {
-    if (MI.isFullCopy())
-      rewriteFullCopy(MI, TRI.getSubRegSplit(MRI.getRegClass(Reg)->getID()),
-                      LIS, *TII, TRI, VRM, LRM);
-  }
-
-  LLVM_DEBUG(dbgs() << "  Splitting range " << LIS.getInterval(Reg) << "\n");
-  for (MachineOperand &RegOp : make_early_inc_range(MRI.reg_operands(Reg))) {
-    LLVM_DEBUG(dbgs() << "  Changing " << *RegOp.getParent());
-    int SubReg = RegOp.getSubReg();
-    assert(SubReg);
-    RegOp.setReg(SubRegToVReg[SubReg]);
-    RegOp.setSubReg(0);
-
-    // There might have been a write-undef due to only writing one sub-lane.
-    // Now that each sub-lane has its own VReg, the qualifier is invalid.
-    if (RegOp.isDef())
-      RegOp.setIsUndef(false);
-
-    // Make sure the right reg class is applied, some MIs might use compound
-    // classes with both 20 and 32 bits registers.
-    const TargetRegisterClass *OpRC = TII->getRegClass(
-        RegOp.getParent()->getDesc(), RegOp.getParent()->getOperandNo(&RegOp),
-        &TRI, VRM.getMachineFunction());
-    MRI.constrainRegClass(SubRegToVReg[SubReg], OpRC);
-
-    LLVM_DEBUG(dbgs() << "        to " << *RegOp.getParent());
-  }
-
-  VRM.grow();
-  LIS.removeInterval(Reg);
-
-  for (auto &[SubRegIdx, VReg] : SubRegToVReg) {
-    MCRegister SubPhysReg = TRI.getSubReg(AssignedPhysReg, SubRegIdx);
-    LiveInterval &SubRegLI = LIS.getInterval(VReg);
-    LLVM_DEBUG(dbgs() << "  Assigning Range: " << SubRegLI << '\n');
-
-    // By giving an independent VReg to each lane, we might have created
-    // multiple separate components. Give a VReg to each separate component.
-    SmallVector<LiveInterval *, 4> LIComponents;
-    LIS.splitSeparateComponents(SubRegLI, LIComponents);
-    LIComponents.push_back(&SubRegLI);
-    VRM.grow();
-
-    for (LiveInterval *LI : LIComponents) {
-      LRM.assign(*LI, SubPhysReg);
-      VRM.setRequiredPhys(LI->reg(), SubPhysReg);
-      LLVM_DEBUG(dbgs() << "  Assigned " << printReg(LI->reg()) << "\n");
-    }
-  }
-
-  // Announce new VRegs so DBG locations can be updated.
-  auto NewVRegs = SmallVector<Register, 8>(llvm::map_range(
-      SubRegToVReg, [&](auto &Mapping) { return Mapping.second; }));
-  DebugVars.splitRegister(Reg, NewVRegs, LIS);
 }
 
 } // end anonymous namespace
