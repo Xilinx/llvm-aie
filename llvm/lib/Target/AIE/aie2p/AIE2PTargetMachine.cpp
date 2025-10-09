@@ -14,6 +14,7 @@
 
 #include "AIE2PTargetMachine.h"
 #include "AIE2PTargetTransformInfo.h"
+#include "AIESuperRegUtils.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 
@@ -62,21 +63,6 @@ void AIE2PPassConfig::addPreRegBankSelect() {
   }
 }
 
-static bool isRegUsedBy2DOr3DInstruction(const MachineRegisterInfo &MRI,
-                                         const Register &R) {
-
-  return llvm::any_of(
-      MRI.use_nodbg_instructions(R), [&](const MachineInstr &MI) {
-        auto &TII = *static_cast<const AIEBaseInstrInfo *>(
-            MI.getMF()->getSubtarget().getInstrInfo());
-
-        // We should recognize both cases, with and without splitting. A 2D/3D
-        // instruction will always be split os splittable.
-        return TII.getOpcodeWithTupleOperands(MI.getOpcode()).has_value() ||
-               TII.getOpcodeWithAtomicOperands(MI.getOpcode()).has_value();
-      });
-}
-
 static bool onlyAllocate3DRegisters(const TargetRegisterInfo &TRI,
                                     const MachineRegisterInfo &MRI,
                                     const Register &R) {
@@ -84,8 +70,9 @@ static bool onlyAllocate3DRegisters(const TargetRegisterInfo &TRI,
   const TargetRegisterClass *RegClass = MRI.getRegClass(R);
   if (!AIE2P::eDSRegClass.hasSubClassEq(RegClass))
     return false;
-  return EnableFineGrainedStagedRA ? isRegUsedBy2DOr3DInstruction(MRI, R)
-                                   : true;
+  return EnableFineGrainedStagedRA
+             ? AIESuperRegUtils::isRegUsedBy2DOr3DInstruction(MRI, R)
+             : true;
 }
 
 static bool onlyAllocate3D2DRegisters(const TargetRegisterInfo &TRI,
@@ -95,8 +82,9 @@ static bool onlyAllocate3D2DRegisters(const TargetRegisterInfo &TRI,
   if (!AIE2P::eDSRegClass.hasSubClassEq(RegClass) &&
       !AIE2P::eDRegClass.hasSubClassEq(RegClass))
     return false;
-  return EnableFineGrainedStagedRA ? isRegUsedBy2DOr3DInstruction(MRI, R)
-                                   : true;
+  return EnableFineGrainedStagedRA
+             ? AIESuperRegUtils::isRegUsedBy2DOr3DInstruction(MRI, R)
+             : true;
 }
 
 static bool onlyAllocateMRegisters(const TargetRegisterInfo &TRI,

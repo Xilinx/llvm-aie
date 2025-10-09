@@ -124,6 +124,7 @@ add_llvm_target(AIECodeGen
    AIESubRegConstrainer.cpp
    AIESWPSolver.cpp
    AIESuperRegRewriter.cpp
+   AIESuperRegUtils.cpp
    AIETargetObjectFile.cpp
    AIE2AsmPrinter.cpp
    AIE2FrameLowering.cpp
