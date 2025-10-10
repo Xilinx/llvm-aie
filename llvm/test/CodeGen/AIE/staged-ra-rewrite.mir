@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc -O2 -mtriple=aie2 -verify-machineinstrs -run-pass=greedy,aie-superreg-rewrite %s -o - | FileCheck %s --check-prefix=AIE2-VREGS
 # RUN: llc -O2 -mtriple=aie2 -verify-machineinstrs --aie-staged-ra -start-before=greedy -stop-after=virtregrewriter %s -o - \
@@ -291,15 +291,16 @@ body:             |
   ; AIE2P-RA-NEXT:   renamable $r0 = LDA_dms_lda_idx_imm renamable $p1, 4
   ; AIE2P-RA-NEXT:   renamable $r1 = LDA_dms_lda_idx_imm renamable $p1, 8
   ; AIE2P-RA-NEXT:   renamable $r2 = LDA_dms_lda_idx_imm killed renamable $p1, 12
-  ; AIE2P-RA-NEXT:   renamable $dn1 = COPY killed renamable $r0
-  ; AIE2P-RA-NEXT:   renamable $dj1 = COPY killed renamable $r1
-  ; AIE2P-RA-NEXT:   renamable $dc1 = COPY killed renamable $r2
+  ; AIE2P-RA-NEXT:   renamable $dn0 = COPY killed renamable $r0
+  ; AIE2P-RA-NEXT:   renamable $m0 = COPY killed renamable $m1
+  ; AIE2P-RA-NEXT:   renamable $dj0 = COPY killed renamable $r1
+  ; AIE2P-RA-NEXT:   renamable $dc0 = COPY killed renamable $r2
   ; AIE2P-RA-NEXT: {{  $}}
   ; AIE2P-RA-NEXT: bb.1:
-  ; AIE2P-RA-NEXT:   liveins: $dc1, $dj1, $dn1, $m1, $p0
+  ; AIE2P-RA-NEXT:   liveins: $dc0, $dj0, $dn0, $m0, $p0
   ; AIE2P-RA-NEXT: {{  $}}
-  ; AIE2P-RA-NEXT:   $p0, $dc1 = PADDA_2D_split killed $p0, killed $m1, killed $dn1, killed $dj1, killed $dc1
-  ; AIE2P-RA-NEXT:   PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc1
+  ; AIE2P-RA-NEXT:   $p0, $dc0 = PADDA_2D_split killed $p0, killed $m0, killed $dn0, killed $dj0, killed $dc0
+  ; AIE2P-RA-NEXT:   PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0
   bb.1.entry:
     liveins: $p0, $p1, $d1
     %20:ep = COPY $p0
@@ -444,10 +445,14 @@ body:             |
   ; AIE2P-RA-NEXT:   renamable $dc1 = MOV_PD_imm11_pseudo 0
   ; AIE2P-RA-NEXT: {{  $}}
   ; AIE2P-RA-NEXT: bb.1:
-  ; AIE2P-RA-NEXT:   liveins: $dc1, $dj1, $dn1, $m1, $p0
+  ; AIE2P-RA-NEXT:   liveins: $d1:0x0000000000200E00, $p0
   ; AIE2P-RA-NEXT: {{  $}}
-  ; AIE2P-RA-NEXT:   $p0, $dc1 = PADDA_2D_split killed $p0, killed $m1, killed $dn1, killed $dj1, killed $dc1
-  ; AIE2P-RA-NEXT:   PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc1
+  ; AIE2P-RA-NEXT:   renamable $dc0 = COPY renamable $dc1
+  ; AIE2P-RA-NEXT:   renamable $dn0 = COPY renamable $dn1
+  ; AIE2P-RA-NEXT:   renamable $dj0 = COPY renamable $dj1
+  ; AIE2P-RA-NEXT:   renamable $m0 = COPY killed renamable $m1
+  ; AIE2P-RA-NEXT:   $p0, $dc0 = PADDA_2D_split killed $p0, killed $m0, killed $dn0, killed $dj0, killed $dc0
+  ; AIE2P-RA-NEXT:   PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0
   bb.1.entry:
     liveins: $p0, $m1, $dn1, $dj1
     %20:ep = COPY $p0
@@ -623,7 +628,7 @@ body:             |
   ; AIE2P-RA-NEXT:   renamable $dc0 = LDA_dms_lda_idx_imm killed renamable $p1, 12
   ; AIE2P-RA-NEXT: {{  $}}
   ; AIE2P-RA-NEXT: bb.1:
-  ; AIE2P-RA-NEXT:   liveins: $dc0, $dj0, $dn0, $p0
+  ; AIE2P-RA-NEXT:   liveins: $d0:0x0000000000000E00, $p0
   ; AIE2P-RA-NEXT: {{  $}}
   ; AIE2P-RA-NEXT:   $p0, $dc0 = PADDA_2D_split killed $p0, undef $m0, killed $dn0, killed $dj0, killed $dc0
   ; AIE2P-RA-NEXT:   PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0

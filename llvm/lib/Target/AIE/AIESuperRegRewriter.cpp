@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -153,6 +153,7 @@ bool AIESuperRegRewriter::runOnMachineFunction(MachineFunction &MF) {
 
   // Collect already-assigned VRegs that can be split into smaller ones.
   LLVM_DEBUG(VRM.dump());
+  LLVM_DEBUG(LIS.dump());
   for (unsigned VRegIdx = 0, End = MRI.getNumVirtRegs(); VRegIdx != End;
        ++VRegIdx) {
     Register Reg = Register::index2VirtReg(VRegIdx);
@@ -208,7 +209,8 @@ static LaneBitmask getLiveLanesAt(SlotIndex Index, Register Reg,
 /// Rewrite a full copy into multiple copies using the subregs in \p CopySubRegs
 static void rewriteFullCopy(MachineInstr &MI, const std::set<int> &CopySubRegs,
                             LiveIntervals &LIS, const TargetInstrInfo &TII,
-                            const TargetRegisterInfo &TRI) {
+                            const TargetRegisterInfo &TRI, VirtRegMap &VRM,
+                            LiveRegMatrix &LRM) {
   assert(MI.isFullCopy());
   SlotIndex CopyIndex = LIS.getInstructionIndex(MI);
   LLVM_DEBUG(dbgs() << "  Changing full copy at " << CopyIndex << ": " << MI);
@@ -217,6 +219,8 @@ static void rewriteFullCopy(MachineInstr &MI, const std::set<int> &CopySubRegs,
   LaneBitmask LiveSrcLanes = getLiveLanesAt(CopyIndex, SrcReg, LIS);
 
   LIS.removeVRegDefAt(LIS.getInterval(DstReg), CopyIndex.getRegSlot());
+
+  SmallSet<Register, 8> RegistersToRepair;
   for (int SubRegIdx : CopySubRegs) {
     if ((LiveSrcLanes & TRI.getSubRegIndexLaneMask(SubRegIdx)).none()) {
       LLVM_DEBUG(dbgs() << "        Skip undef subreg "
@@ -232,10 +236,32 @@ static void rewriteFullCopy(MachineInstr &MI, const std::set<int> &CopySubRegs,
     LLVM_DEBUG(dbgs() << "        to " << *PartCopy);
     LIS.InsertMachineInstrInMaps(*PartCopy);
     LIS.getInterval(PartCopy->getOperand(0).getReg());
+    RegistersToRepair.insert(PartCopy->getOperand(1).getReg());
   }
 
   LIS.RemoveMachineInstrFromMaps(MI);
   MI.eraseFromParent();
+  // As we don't handle all registers now (selective LI filter),
+  // We should make sure that all LiveIntervals are correct.
+  // If we dont't repair, MI will compose the LIs of some registers,
+  // what is not correct because MI was deleted.
+  for (Register R : RegistersToRepair) {
+
+    if (!LIS.hasInterval(R))
+      continue;
+
+    if (VRM.hasPhys(R)) {
+      const MCRegister PhysReg = VRM.getPhys(R);
+      const LiveInterval &OldLI = LIS.getInterval(R);
+      LRM.unassign(OldLI);
+      LIS.removeInterval(R);
+      const LiveInterval &LI = LIS.createAndComputeVirtRegInterval(R);
+      LRM.assign(LI, PhysReg);
+    } else {
+      LIS.removeInterval(R);
+      LIS.createAndComputeVirtRegInterval(R);
+    }
+  }
 }
 
 void AIESuperRegRewriter::rewriteSuperReg(
@@ -260,7 +286,7 @@ void AIESuperRegRewriter::rewriteSuperReg(
   for (MachineInstr &MI : make_early_inc_range(MRI.reg_instructions(Reg))) {
     if (MI.isFullCopy())
       rewriteFullCopy(MI, TRI.getSubRegSplit(MRI.getRegClass(Reg)->getID()),
-                      LIS, *TII, TRI);
+                      LIS, *TII, TRI, VRM, LRM);
   }
 
   LLVM_DEBUG(dbgs() << "  Splitting range " << LIS.getInterval(Reg) << "\n");
