@@ -114,6 +114,8 @@ bool AIE2PPassConfig::addRegAssignAndRewriteOptimized() {
     addPass(createAIESuperRegRewriter());
     addPass(createGreedyRegisterAllocator(onlyAllocate3D2DRegisters));
     addPass(createAIESuperRegRewriter());
+    if (EnableFineGrainedStagedRA)
+      addPass(createAIEUnallocatedSuperRegRewriter());
   }
   addPass(createGreedyRegisterAllocator());
   if (EnableWAWRegRewrite) {

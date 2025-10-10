@@ -191,21 +191,26 @@ LaneBitmask getLiveLanesAt(SlotIndex Index, Register Reg,
   return LiveLanes;
 }
 
-void rewriteSuperReg(Register Reg, Register AssignedPhysReg,
+void rewriteSuperReg(Register Reg, std::optional<Register> AssignedPhysReg,
                      SmallSet<int, 8> &SubRegs, MachineRegisterInfo &MRI,
                      const AIEBaseRegisterInfo &TRI, VirtRegMap &VRM,
                      LiveRegMatrix &LRM, LiveIntervals &LIS,
                      SlotIndexes &Indexes, LiveDebugVariables &DebugVars) {
   LLVM_DEBUG(dbgs() << "Rewriting " << printReg(Reg, &TRI, 0, &MRI) << '\n');
-  auto *TII = static_cast<const AIEBaseInstrInfo *>(
-      VRM.getMachineFunction().getSubtarget().getInstrInfo());
+  MachineFunction &MF = VRM.getMachineFunction();
+  auto *TII =
+      static_cast<const AIEBaseInstrInfo *>(MF.getSubtarget().getInstrInfo());
 
   // Collect all the subreg indices to rewrite as independent vregs.
   SmallMapVector<int, Register, 8> SubRegToVReg;
   const TargetRegisterClass *SuperRC = MRI.getRegClass(Reg);
   assert(!SubRegs.empty());
   for (int SubReg : SubRegs) {
-    const TargetRegisterClass *SubRC = TRI.getSubRegisterClass(SuperRC, SubReg);
+    const TargetRegisterClass *SubRC =
+        AssignedPhysReg.has_value()
+            ? TRI.getSubRegisterClass(SuperRC, SubReg)
+            : TRI.getLargestLegalSuperClass(
+                  TRI.getSubRegisterClass(SuperRC, SubReg), MF);
     SubRegToVReg[SubReg] = MRI.createVirtualRegister(SubRC);
   }
 
@@ -251,7 +256,6 @@ void rewriteSuperReg(Register Reg, Register AssignedPhysReg,
   LIS.removeInterval(Reg);
 
   for (auto &[SubRegIdx, VReg] : SubRegToVReg) {
-    MCRegister SubPhysReg = TRI.getSubReg(AssignedPhysReg, SubRegIdx);
     LiveInterval &SubRegLI = LIS.getInterval(VReg);
     LLVM_DEBUG(dbgs() << "  Assigning Range: " << SubRegLI << '\n');
 
@@ -262,6 +266,10 @@ void rewriteSuperReg(Register Reg, Register AssignedPhysReg,
     LIComponents.push_back(&SubRegLI);
     VRM.grow();
 
+    if (!AssignedPhysReg.has_value())
+      continue;
+
+    MCRegister SubPhysReg = TRI.getSubReg(*AssignedPhysReg, SubRegIdx);
     for (LiveInterval *LI : LIComponents) {
       LRM.assign(*LI, SubPhysReg);
       VRM.setRequiredPhys(LI->reg(), SubPhysReg);

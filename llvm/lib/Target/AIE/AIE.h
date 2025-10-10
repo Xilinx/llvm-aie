@@ -60,6 +60,7 @@ MachineFunctionPass *createAIEEliminateDuplicatePHI();
 FunctionPass *createAIEOutlineMemoryGEP();
 FunctionPass *createAIESuperRegRewriter();
 FunctionPass *createAIEWawRegRewriter();
+FunctionPass *createAIEUnallocatedSuperRegRewriter();
 FunctionPass *createAIEPostSelectOptimize();
 MachineFunctionPass *
 createDeadMachineInstructionElim(bool KeepLifetimeInstructions);
@@ -84,6 +85,8 @@ extern char &AIESuperRegRewriterID;
 void initializeAIESuperRegRewriterPass(PassRegistry &);
 extern char &AIEWawRegRewriterID;
 void initializeAIEWawRegRewriterPass(PassRegistry &);
+extern char &AIEUnallocatedSuperRegRewriterID;
+void initializeAIEUnallocatedSuperRegRewriterPass(PassRegistry &);
 extern char &AIEOutlineMemoryGEPID;
 void initializeAIEOutlineMemoryGEPPass(PassRegistry &);
 
