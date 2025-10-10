@@ -15,6 +15,7 @@
 #define LLVM_LIB_TARGET_AIE_AIESUPERREGUTILS_H
 
 #include "llvm/ADT/SmallSet.h"
+#include <optional>
 
 namespace llvm {
 class Register;
@@ -63,7 +64,7 @@ void rewriteFullCopy(MachineInstr &MI, const std::set<int> &CopySubRegs,
 LaneBitmask getLiveLanesAt(SlotIndex Index, Register Reg,
                            const LiveIntervals &LIS);
 
-void rewriteSuperReg(Register Reg, Register AssignedPhysReg,
+void rewriteSuperReg(Register Reg, std::optional<Register> AssignedPhysReg,
                      SmallSet<int, 8> &SubRegs, MachineRegisterInfo &MRI,
                      const AIEBaseRegisterInfo &TRI, VirtRegMap &VRM,
                      LiveRegMatrix &LRM, LiveIntervals &LIS,

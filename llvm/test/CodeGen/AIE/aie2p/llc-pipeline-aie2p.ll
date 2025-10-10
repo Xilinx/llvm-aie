@@ -247,6 +247,7 @@
 ; AIE-O1-NEXT:      AIE super-reg rewrite
 ; AIE-O1-NEXT:      Greedy Register Allocator
 ; AIE-O1-NEXT:      AIE super-reg rewrite
+; AIE-O1-NEXT:      AIE unallocated super-reg rewrite
 ; AIE-O1-NEXT:      Greedy Register Allocator
 ; AIE-O1-NEXT:      AIE waw-reg rewrite
 ; AIE-O1-NEXT:      Greedy Register Allocator
@@ -472,6 +473,7 @@
 ; AIE-O23-NEXT:      AIE super-reg rewrite
 ; AIE-O23-NEXT:      Greedy Register Allocator
 ; AIE-O23-NEXT:      AIE super-reg rewrite
+; AIE-O23-NEXT:      AIE unallocated super-reg rewrite
 ; AIE-O23-NEXT:      Greedy Register Allocator
 ; AIE-O23-NEXT:      AIE waw-reg rewrite
 ; AIE-O23-NEXT:      Greedy Register Allocator

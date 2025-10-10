@@ -24,13 +24,13 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:erf2 = MOV_RLC_imm11_pseudo 0
   ; CHECK-NEXT:   undef [[VBCST_32_:%[0-9]+]].sub_512_lo:vec1024 = VBCST_32 [[MOV_RLC_imm11_pseudo]]
-  ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]]:em_as_32bit = MOV_PD_imm11_pseudo 0
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:edjl = COPY [[MOV_PD_imm11_pseudo]]
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ednl = COPY [[MOV_PD_imm11_pseudo]]
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:edcl = COPY [[MOV_PD_imm11_pseudo]]
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:ednh = COPY [[MOV_PD_imm11_pseudo]]
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:edch = COPY [[MOV_PD_imm11_pseudo]]
-  ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:edjh = COPY [[COPY]]
+  ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]]:magusrc_and_magudst_and_spill_em_to_er = MOV_PD_imm11_pseudo 0
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:spill_edj_to_er = COPY [[MOV_PD_imm11_pseudo]]
+  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:spill_edn_to_er = COPY [[MOV_PD_imm11_pseudo]]
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:spill_edc_to_er = COPY [[MOV_PD_imm11_pseudo]]
+  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:spill_edn_to_er = COPY [[MOV_PD_imm11_pseudo]]
+  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:spill_edc_to_er = COPY [[MOV_PD_imm11_pseudo]]
+  ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:spill_edj_to_er = COPY [[COPY]]
   ; CHECK-NEXT:   [[VBCST_32_:%[0-9]+]].sub_512_hi:vec1024 = COPY [[VBCST_32_]].sub_512_lo
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:eldfiforeg = COPY [[VBCST_32_]]
   ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo1:%[0-9]+]]:eps = MOV_PD_imm11_pseudo 0
@@ -48,7 +48,7 @@ body:             |
   ; CHECK-NEXT:   undef [[COPY14:%[0-9]+]].sub_ptr:epsrfldf = COPY [[MOV_PD_imm11_pseudo1]]
   ; CHECK-NEXT:   [[COPY14:%[0-9]+]].sub_fifo:epsrfldf = COPY [[COPY6]]
   ; CHECK-NEXT:   [[COPY14:%[0-9]+]].sub_avail:epsrfldf = COPY [[MOV_RLC_imm11_pseudo]]
-  ; CHECK-NEXT:   dead [[VLD_POP_576_3D_pseudo_split:%[0-9]+]]:vec576, dead [[COPY14:%[0-9]+]].sub_ptr:epsrfldf, dead [[COPY14:%[0-9]+]].sub_fifo:epsrfldf, dead [[COPY14:%[0-9]+]].sub_avail:epsrfldf, dead [[COPY7:%[0-9]+]]:edcl, dead [[COPY11:%[0-9]+]]:edch = VLD_POP_576_3D_pseudo_split [[COPY14]].sub_ptr, [[COPY14]].sub_fifo, [[COPY14]].sub_avail, [[COPY10]], [[COPY8]], [[COPY9]], [[COPY7]], undef %23:em_as_32bit, [[COPY12]], [[COPY13]], [[COPY11]], implicit-def $srfifo_uf :: (load unknown-size from `ptr addrspace(5) null`, align 1, addrspace 5)
+  ; CHECK-NEXT:   dead [[VLD_POP_576_3D_pseudo_split:%[0-9]+]]:vec576, dead [[COPY14:%[0-9]+]].sub_ptr:epsrfldf, dead [[COPY14:%[0-9]+]].sub_fifo:epsrfldf, dead [[COPY14:%[0-9]+]].sub_avail:epsrfldf, dead [[COPY7:%[0-9]+]]:edcl, dead [[COPY11:%[0-9]+]]:edch = VLD_POP_576_3D_pseudo_split [[COPY14]].sub_ptr, [[COPY14]].sub_fifo, [[COPY14]].sub_avail, [[COPY10]], [[COPY8]], [[COPY9]], [[COPY7]], undef %15:em_as_32bit, [[COPY12]], [[COPY13]], [[COPY11]], implicit-def $srfifo_uf :: (load unknown-size from `ptr addrspace(5) null`, align 1, addrspace 5)
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
   bb.0:
     successors: %bb.1(0x80000000)
