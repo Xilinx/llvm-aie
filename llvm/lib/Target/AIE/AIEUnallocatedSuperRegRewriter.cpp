@@ -128,6 +128,67 @@ void rewriteCandidates(RegRewriteInfo &RegistersToRewrite,
   }
 }
 
+/// Unbundle COPY/KILL instruction bundles for registers being rewritten.
+/// Bundled instructions are separated into individual instructions with updated
+/// slot indexes, and live intervals are repaired for affected registers.
+static void expandCopyBundles(RegRewriteInfo &RegistersToRewrite,
+                              MachineRegisterInfo &MRI, SlotIndexes &Indexes,
+                              LiveIntervals &LIS, VirtRegMap &VRM,
+                              LiveRegMatrix &LRM) {
+
+  SmallSet<Register, 8> RegistersToRepair;
+  for (auto [VReg, SubRegs] : RegistersToRewrite) {
+
+    for (MachineInstr &MI : MRI.def_instructions(VReg)) {
+
+      // Finding the last instruction in a COPY/KILL bundle (which has a
+      // predecessor but no successor).
+      if (!MI.isBundledWithPred() || MI.isBundledWithSucc())
+        continue;
+
+      SmallVector<MachineInstr *, 8> MIs({&MI});
+
+      // Walking backwards through the bundle to collect all bundled
+      // instructions.
+      // Only do this when the complete bundle is made out of COPYs and KILLs.
+      MachineBasicBlock &MBB = *MI.getParent();
+      for (MachineBasicBlock::reverse_instr_iterator
+               I = std::next(MI.getReverseIterator()),
+               E = MBB.instr_rend();
+           I != E && I->isBundledWithSucc(); ++I) {
+        if (!I->isCopy() && !I->isKill())
+          break;
+        MIs.push_back(&*I);
+      }
+
+      // Unbundling them one by one from the end.
+      MachineInstr *FirstMI = MIs.back();
+      MachineInstr *BundleStart = FirstMI;
+      for (MachineInstr *BundledMI : llvm::reverse(MIs)) {
+        //  If instruction is in the middle of the bundle, move it before the
+        //  bundle starts, otherwise, just unbundle it. When we get to the last
+        //  instruction, the bundle will have been completely undone.
+        if (BundledMI != BundleStart) {
+          BundledMI->removeFromBundle();
+          MBB.insert(BundleStart, BundledMI);
+        } else if (BundledMI->isBundledWithSucc()) {
+          BundledMI->unbundleFromSucc();
+          BundleStart = &*std::next(BundledMI->getIterator());
+        }
+
+        if (BundledMI != FirstMI) {
+          Indexes.insertMachineInstrInMaps(*BundledMI);
+          RegistersToRepair.insert(BundledMI->getOperand(0).getReg());
+          RegistersToRepair.insert(BundledMI->getOperand(1).getReg());
+          BundledMI->getOperand(0).setIsInternalRead(false);
+        }
+      }
+    }
+  }
+
+  AIESuperRegUtils::repairLiveIntervals(RegistersToRepair, VRM, LRM, LIS);
+}
+
 bool AIEUnallocatedSuperRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   LLVM_DEBUG(llvm::dbgs() << "*** Splitting unallocated super-registers: "
                           << MF.getName() << " ***\n");
@@ -149,6 +210,9 @@ bool AIEUnallocatedSuperRegRewriter::runOnMachineFunction(MachineFunction &MF) {
     LLVM_DEBUG(dbgs() << "No candidates found, skipping rewrite\n");
     return false;
   }
+
+  LLVM_DEBUG(dbgs() << "Expanding copy bundles...\n");
+  expandCopyBundles(RegistersToRewrite, MRI, Indexes, LIS, VRM, LRM);
 
   LLVM_DEBUG(dbgs() << "Performing register rewrites...\n");
   rewriteCandidates(RegistersToRewrite, MRI, TRI, VRM, LRM, LIS, Indexes,
