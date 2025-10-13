@@ -184,6 +184,7 @@ add_llvm_target(AIECodeGen
    TargetParser
    TransformUtils
    GlobalISel
+   Vectorize
 
    ADD_TO_COMPONENT
    AIE
