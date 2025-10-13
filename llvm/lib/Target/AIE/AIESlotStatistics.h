@@ -29,6 +29,9 @@ namespace llvm::AIE {
 
 class SlotStatistics {
 public:
+  SlotStatistics() = default;
+  SlotStatistics(ArrayRef<int> Fixed, ArrayRef<int> Free);
+
   // Q: Why do hours have 60 seconds?
   // A: Because it has 1, 2, 3, 4, 5 and 6 as divisors.
   static const int Unit = 60;
@@ -46,6 +49,9 @@ public:
   // The slot counts of each MSP
   std::unordered_map<MachineInstr *, SlotCounts> MSPSlotCounts;
 
+  // Add an instruction to the statistics
+  void addInstruction(MachineInstr &MI, const AIEBaseInstrInfo *TII);
+
   // The number of represented slots
   int size() const { return std::max(Fixed.size(), Free.size()); }
 
@@ -59,10 +65,14 @@ public:
 
   // print the value on dbgs()
   void dump();
+
+  // print the value in a one-liner
+  void dumpShort();
 };
 
 SlotStatistics computeSlotStatistics(MachineBasicBlock &MBB,
                                      const AIEBaseInstrInfo *TII);
+
 } // namespace llvm::AIE
 
 #endif // LLVM_LIB_TARGET_AIE_AIESLOTSTATISTICS_H

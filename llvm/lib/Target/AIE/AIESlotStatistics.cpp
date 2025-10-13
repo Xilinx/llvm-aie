@@ -10,6 +10,7 @@
 
 #include "AIESlotStatistics.h"
 #include "AIEBaseInstrInfo.h"
+#include "AIESlotCounts.h"
 #include "llvm/CodeGen/MachineInstr.h"
 
 namespace llvm::AIE {
@@ -18,8 +19,43 @@ uint64_t getSlotSet(unsigned Opcode, const AIEBaseInstrInfo *TII) {
   return SlotInfo ? SlotInfo->getSlotSet() : 0;
 }
 
+SlotStatistics::SlotStatistics(ArrayRef<int> FixedValue,
+                               ArrayRef<int> FreeValue) {
+  for (unsigned I = 0; I < FixedValue.size(); I++) {
+    Fixed[I] = FixedValue[I];
+  }
+  for (unsigned I = 0; I < FreeValue.size(); I++) {
+    Free[I] = FreeValue[I];
+  }
+}
+
 SlotCounts getSlotCounts(unsigned Opcode, const AIEBaseInstrInfo *TII) {
   return SlotCounts{getSlotSet(Opcode, TII)};
+}
+
+void SlotStatistics::addInstruction(MachineInstr &MI,
+                                    const AIEBaseInstrInfo *TII) {
+  const unsigned Opcode = MI.getOpcode();
+  const AIEBaseMCFormats *const Formats = TII->getFormatInterface();
+  const auto *const Alternatives = Formats->getAlternateInstsOpcode(Opcode);
+  if (Alternatives) {
+    MSPs.push_back(&MI);
+    SlotCounts Term;
+    const int Scale = SlotStatistics::Unit / Alternatives->size();
+    for (unsigned AltOpcode : *Alternatives) {
+      Term += Scale * getSlotCounts(AltOpcode, TII);
+    }
+    MSPSlotCounts.emplace(&MI, Term);
+    Free += Term;
+  } else {
+    const int Scale = SlotStatistics::Unit;
+    const SlotCounts Term = Scale * getSlotCounts(Opcode, TII);
+    Fixed += Term;
+  }
+}
+
+int SlotStatistics::distance(const SlotStatistics &Other) const {
+  return Fixed.distance(Other.Fixed) + Free.distance(Other.Free);
 }
 
 void SlotStatistics::dump() {
@@ -32,26 +68,15 @@ void SlotStatistics::dump() {
   dbgs() << "Free:\n  " << Free << "\n";
 }
 
+void SlotStatistics::dumpShort() {
+  dbgs() << "{ " << Fixed << ", " << Free << " },\n";
+}
+
 SlotStatistics computeSlotStatistics(MachineBasicBlock &MBB,
                                      const AIEBaseInstrInfo *TII) {
   SlotStatistics Result;
-
-  const AIEBaseMCFormats *Formats = TII->getFormatInterface();
   for (auto &MI : MBB) {
-    unsigned Opcode = MI.getOpcode();
-    const auto *Alternatives = Formats->getAlternateInstsOpcode(Opcode);
-    if (Alternatives) {
-      Result.MSPs.push_back(&MI);
-      SlotCounts Term;
-      for (unsigned AltOpcode : *Alternatives) {
-        Term += getSlotCounts(AltOpcode, TII);
-      }
-      Term *= (SlotStatistics::Unit / Alternatives->size());
-      Result.MSPSlotCounts.emplace(&MI, Term);
-      Result.Free += Term;
-    } else {
-      Result.Fixed += SlotStatistics::Unit * getSlotCounts(Opcode, TII);
-    }
+    Result.addInstruction(MI, TII);
   }
   return Result;
 }
