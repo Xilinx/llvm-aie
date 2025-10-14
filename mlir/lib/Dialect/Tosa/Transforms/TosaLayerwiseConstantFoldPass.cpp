@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements constant folding transformations on TOSA operations
@@ -57,6 +60,7 @@ struct TosaLayerwiseConstantFoldPass
     options.foldSplatOrSingleUseOnly = foldSplatOrSingleUseOnly;
     options.aggressiveReduceConstant = aggressiveReduceConstant;
     options.enableTileFolding = enableTileFolding;
+    options.maxTileFoldSize = maxTileFoldSize;
 
     mlir::tosa::populateTosaFoldConstantPatterns(ctx, patterns, options);
     mlir::tosa::populateTosaConstantReduction(ctx, patterns,
