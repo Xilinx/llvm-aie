@@ -1,4 +1,6 @@
-// RUN: mlir-opt --split-input-file --tosa-layerwise-constant-fold=enable-tile-folding=true %s | FileCheck %s
+// Modifications (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its
+// affiliates
+// RUN: mlir-opt --split-input-file --tosa-layerwise-constant-fold="enable-tile-folding=true max-tile-fold-size=1024" %s | FileCheck %s
 // RUN: mlir-opt --split-input-file --tosa-layerwise-constant-fold %s | FileCheck --check-prefix=NO-FOLDING-CHECK %s
 
 // CHECK-LABEL: @tile_int_one_dim
@@ -9,6 +11,16 @@ func.func @tile_int_one_dim() -> (tensor<6xi32>) {
   %cst = tosa.const_shape { value = dense<[2]> : tensor<1xindex> } : () -> !tosa.shape<1>
   %1 = tosa.tile %0, %cst : (tensor<3xi32>, !tosa.shape<1>) -> tensor<6xi32>
   return %1 : tensor<6xi32>
+  // NO-FOLDING-CHECK: tosa.tile
+}
+
+// CHECK-LABEL: @tile_int_one_dim_large
+func.func @tile_int_one_dim_large() -> (tensor<1500xi32>) {
+  // CHECK: tosa.tile
+  %0 = "tosa.const"() {value = dense<[60, 2, 3]> : tensor<3xi32>} : () -> tensor<3xi32>
+  %cst = tosa.const_shape { value = dense<[500]> : tensor<1xindex> } : () -> !tosa.shape<1>
+  %1 = tosa.tile %0, %cst : (tensor<3xi32>, !tosa.shape<1>) -> tensor<1500xi32>
+  return %1 : tensor<1500xi32>
   // NO-FOLDING-CHECK: tosa.tile
 }
 
