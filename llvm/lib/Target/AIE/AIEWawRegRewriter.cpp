@@ -53,6 +53,16 @@ static cl::opt<bool> PreAlloc(
     "aie-realloc-loopaware", cl::Hidden, cl::init(false),
     cl::desc("Prime the LRU queue to make the allocations more loop-aware"));
 
+static cl::opt<unsigned>
+    MinRegisterLatency("aie-waw-reg-rewrite-min-lat", cl::Hidden,
+                       cl::desc("Minimum operand latency that should be "
+                                "considered for WAW rewriting"),
+                       cl::init(3));
+
+static cl::opt<bool>
+    LatencyAware("aie-realloc-latencyaware", cl::Hidden, cl::init(false),
+                 cl::desc("Enable latency-aware allocation strategy"));
+
 namespace {
 
 // Defines the next register to use in reallocation.
@@ -178,6 +188,12 @@ private:
   /// instruction.
   IndexedMap<const MachineInstr *, VirtReg2IndexFunctor>
   getLastVRegDef(const MachineBasicBlock &MBB) const;
+
+  /// For a given MBB, get the physical registers that are mapped to register
+  /// operands with high output latency. This also includes alias and
+  /// sub-registers.
+  std::set<MCRegister>
+  getHighOutputLatencyRegs(const MachineBasicBlock *MBB) const;
 };
 
 MCPhysReg AIEWawRegRewriter::getAssignedPhysReg(const Register Reg) const {
@@ -330,6 +346,8 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   IndexedMap<const MachineInstr *, VirtReg2IndexFunctor> LastVRegDef =
       getLastVRegDef(*MBB);
 
+  std::set<MCRegister> HighLatencyRegs = getHighOutputLatencyRegs(MBB);
+
   OriginalAllocation Candidates;
 
   for (const MachineInstr &MI : *MBB) {
@@ -361,7 +379,14 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
       if (isWorthRenaming(Reg, VRegWithCopies)) {
         assert(VRM->hasPhys(Reg));
         MCRegister AssignedPhysReg = VRM->getPhys(Reg);
-        Candidates.emplace_back(&MO, AssignedPhysReg);
+
+        // High latency registers should be renamed first, therefore insert them
+        // at the front.
+        const auto InsertPoint = HighLatencyRegs.count(AssignedPhysReg)
+                                     ? Candidates.begin()
+                                     : Candidates.end();
+        Candidates.emplace(InsertPoint, &MO, AssignedPhysReg);
+
         LLVM_DEBUG(dbgs() << "Candidate " << printReg(Reg, TRI, 0, MRI) << ":"
                           << TRI->getRegClassName(MRI->getRegClass(Reg)) << " ("
                           << TRI->getName(AssignedPhysReg) << ")\n");
@@ -607,6 +632,47 @@ AIEWawRegRewriter::getLastVRegDef(const MachineBasicBlock &MBB) const {
     }
   }
   return LastVRegDef;
+}
+
+std::set<MCRegister> AIEWawRegRewriter::getHighOutputLatencyRegs(
+    const MachineBasicBlock *MBB) const {
+
+  if (!LatencyAware)
+    return {};
+
+  auto *ItinData = MF->getSubtarget().getInstrItineraryData();
+  std::set<MCRegister> HighLatRegisters;
+  for (const MachineInstr &MI : *MBB) {
+    const unsigned SchedClass = MI.getDesc().getSchedClass();
+    for (unsigned I = 0, E = MI.getNumOperands(); I != E; ++I) {
+      const MachineOperand &MO = MI.getOperand(I);
+      if (!MO.isReg() || !MO.isDef())
+        continue;
+
+      const Register Reg = MO.getReg();
+      if (!Reg.isVirtual())
+        continue;
+
+      auto IsHighLatInstrOperand = [&]() {
+        auto OperandCycle = ItinData->getOperandCycle(SchedClass, I);
+        if (OperandCycle)
+          return OperandCycle.value() >= MinRegisterLatency;
+        // If we have an instruction without OperandCycles, it is most probably
+        // a pseudo instruction (no itinerary). In this case, if it is a _split
+        // load, consider it as high latency.
+        return MI.mayLoad();
+      };
+
+      if (!IsHighLatInstrOperand())
+        continue;
+
+      const MCRegister AssignedPhysReg = VRM->getPhys(Reg);
+      for (MCRegAliasIterator AI(AssignedPhysReg, TRI, true); AI.isValid();
+           ++AI)
+        HighLatRegisters.insert(*AI);
+    }
+  }
+  return HighLatRegisters;
 }
 
 } // end anonymous namespace
