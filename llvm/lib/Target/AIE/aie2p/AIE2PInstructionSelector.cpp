@@ -45,7 +45,6 @@ public:
 
   bool select(MachineInstr &I) override;
   bool selectG_GLOBAL_VALUE(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectGetCoreID(MachineInstr &MI, MachineRegisterInfo &MRI);
   bool selectSetControlRegister(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectGetControlRegister(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVSRS(MachineInstr &I, MachineRegisterInfo &MRI,
@@ -243,7 +242,7 @@ bool AIE2PInstructionSelector::select(MachineInstr &I) {
   case G_INTRINSIC:
     switch (cast<GIntrinsic>(I).getIntrinsicID()) {
     case Intrinsic::aie2p_get_coreid:
-      return selectGetCoreID(I, MRI);
+      return selectGetCoreID(I, MRI, AIE2P::CORE_ID);
     case Intrinsic::aie2p_add_2d:
     case Intrinsic::aie2p_add_3d:
       return selectAddrInsn(MIB, I, MRI);
@@ -576,21 +575,6 @@ bool AIE2PInstructionSelector::selectG_GLOBAL_VALUE(MachineInstr &I,
   I.setDesc(TII.get(AIE2P::MOVXM));
   I.getOperand(1).setTargetFlags(AIEII::MO_GLOBAL);
   return constrainSelectedInstRegOperands(I, TII, TRI, RBI);
-}
-
-bool AIE2PInstructionSelector::selectGetCoreID(MachineInstr &I,
-                                               MachineRegisterInfo &MRI) {
-
-  Register DstReg = I.getOperand(0).getReg();
-
-  auto CopyInstr =
-      MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {}).addReg(AIE2P::CORE_ID);
-  if (!selectCopy(*CopyInstr, MRI)) {
-    return false;
-  }
-
-  I.eraseFromParent();
-  return true;
 }
 
 // Build Instruction to get control register

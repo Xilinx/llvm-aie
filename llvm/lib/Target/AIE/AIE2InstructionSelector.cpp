@@ -62,7 +62,6 @@ public:
   bool selectG_LOAD(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_STORE(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectGetControlRegister(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectGetCoreID(MachineInstr &MI, MachineRegisterInfo &MRI);
   bool selectReadTM(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectSetControlRegister(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVEXTRACT(MachineInstr &I, MachineRegisterInfo &MRI);
@@ -297,7 +296,7 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
     case Intrinsic::aie2_add_3d:
       return selectAddrInsn(MIB, I, MRI);
     case Intrinsic::aie2_get_coreid:
-      return selectGetCoreID(I, MRI);
+      return selectGetCoreID(I, MRI, AIE2::CORE_ID);
 
     case Intrinsic::aie2_extract_I128_I512:
       return selectExtractI128(I, I.getOperand(0).getReg(),
@@ -597,21 +596,6 @@ bool AIE2InstructionSelector::selectG_STORE(MachineInstr &I,
     SplitVectorStore512Bits(Higher512Bits.getReg(0), 64, MRI, I, 4);
     SplitVectorStore512Bits(Lower512Bits.getReg(0), 0, MRI, I, 4);
   } else {
-    return false;
-  }
-
-  I.eraseFromParent();
-  return true;
-}
-
-bool AIE2InstructionSelector::selectGetCoreID(MachineInstr &I,
-                                              MachineRegisterInfo &MRI) {
-
-  Register DstReg = I.getOperand(0).getReg();
-
-  auto CopyInstr =
-      MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {}).addReg(AIE2::CORE_ID);
-  if (!selectCopy(*CopyInstr, MRI)) {
     return false;
   }
 
