@@ -87,6 +87,8 @@ public:
                           const std::pair<unsigned, unsigned> &Opcodes);
   bool selectG_TRUNC(MachineInstr &I, MachineRegisterInfo &MRI,
                      unsigned SubRegIdx);
+  bool selectGetCoreID(MachineInstr &I, MachineRegisterInfo &MRI,
+                       Register CoreID);
   void renderFrameIndex(MachineInstrBuilder &MIB, const MachineInstr &MI,
                         int OpIdx) const;
   void renderNegateImm(MachineInstrBuilder &MIB, const MachineInstr &MI,

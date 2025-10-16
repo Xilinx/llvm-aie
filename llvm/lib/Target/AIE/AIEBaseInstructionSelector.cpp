@@ -1001,3 +1001,19 @@ bool AIEBaseInstructionSelector::selectG_CONSTANT(MachineInstr &I,
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(MI, TII, TRI, RBI);
 }
+
+bool AIEBaseInstructionSelector::selectGetCoreID(MachineInstr &I,
+                                                 MachineRegisterInfo &MRI,
+                                                 Register CoreID) {
+
+  Register DstReg = I.getOperand(0).getReg();
+
+  auto CopyInstr =
+      MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {}).addReg(CoreID);
+  if (!selectCopy(*CopyInstr, MRI)) {
+    return false;
+  }
+
+  I.eraseFromParent();
+  return true;
+}
