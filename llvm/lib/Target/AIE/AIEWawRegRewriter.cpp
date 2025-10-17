@@ -17,6 +17,7 @@
 #include "AIEBaseInstrInfo.h"
 #include "AIEBaseRegisterInfo.h"
 #include "AIEDataDependenceHelper.h"
+#include "AIELoopClass.h"
 #include "AIESlotStatistics.h"
 #include "Utils/AIELoopUtils.h"
 
@@ -45,6 +46,9 @@ using namespace llvm;
 
 #define DEBUG_TYPE "aie-waw-reg-rewrite"
 
+// This might be compatible with a future extension of the DEBUG rigging
+#define DEBUG_DETAIL(x) DEBUG_WITH_TYPE("aie-waw-reg-rewrite:2", x)
+
 static cl::opt<bool> AggressiveReAlloc(
     "aie-aggressive-realloc", cl::Hidden, cl::init(false),
     cl::desc("Aggressively de-allocate live-through registers to favor "
@@ -65,6 +69,13 @@ static cl::opt<unsigned>
 static cl::opt<bool>
     LatencyAware("aie-realloc-latencyaware", cl::Hidden, cl::init(true),
                  cl::desc("Enable latency-aware allocation strategy"));
+
+static cl::opt<bool>
+    SWPAware("aie-realloc-swp-aware", cl::Hidden, cl::init(true),
+             cl::desc("Use assignment order based on interleaved swp stages"));
+
+static cl::opt<int> MinIIBias("aie-realloc-ii-bias", cl::Hidden, cl::init(0),
+                              cl::desc("MinII bias for swp-aware"));
 
 namespace {
 
@@ -128,6 +139,9 @@ private:
   /// that can be used in the reallocation.
   RoundRobin computeLRURegisters(
       const std::map<const TargetRegisterClass *, bool> &RegClasses);
+
+  /// Sort the candidates to mimic interleaving the pipeline stages
+  void sortSWPAware(OriginalAllocation &Candidates, MachineBasicBlock &MBB);
 
   /// Pre-allocate all virtual registers in Candidates. The sole purpose of
   /// this is to prime the LRURegisters, so that the end of the loop is
@@ -380,8 +394,10 @@ void AIEWawRegRewriter::sortSWPAware(OriginalAllocation &Candidates,
   // account for them interfering. Hence the modulo cycle estimate won't be
   // too far off.
   AIE::SlotStatistics Statistics = AIE::computeSlotStatistics(MBB, TII);
-  DEBUG_DETAIL(dbgs() << "Stats="; Statistics.dumpShort());
-  int MinII = Statistics.getMinII();
+  DEBUG_DETAIL(dbgs() << "Stats="; Statistics.dumpShort(); dbgs() << "\n");
+  DEBUG_DETAIL(dbgs() << "LoopClass=" << llvm::AIE::classifyLoop(Statistics)
+                      << "\n");
+  const int MinII = std::max(Statistics.getMinII() + MinIIBias, 1);
 
   MachineSchedContext Context;
   Context.MF = MF;
@@ -510,31 +526,11 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
       }
     }
   }
-  auto &NCMBB = *(const_cast<MachineBasicBlock *>(MBB));
 
-  MachineSchedContext Context;
-  Context.MF = MF;
-  Context.AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
-  AIE::DataDependenceHelper DDG(Context);
-  for (auto &MI : NCMBB) {
-    if (!MI.isTerminator())
-      DDG.initSUnit(MI);
+  if (SWPAware) {
+    auto &NCMBB = *(const_cast<MachineBasicBlock *>(MBB));
+    sortSWPAware(Candidates, NCMBB);
   }
-  DDG.buildEdges();
-  for (auto &SU : DDG.SUnits) {
-    LLVM_DEBUG(dbgs() << format("%4d : ", SU.NodeNum) << *SU.getInstr());
-  }
-  LLVM_DEBUG(DDG.dumpDot(dbgs(), false));
-  int MaxDepth = DDG.maxDepth();
-  LLVM_DEBUG(dbgs() << format("MaxDepth = %d\n", MaxDepth));
-
-  AIE::SlotStatistics Statistics = AIE::computeSlotStatistics(NCMBB, TII);
-  int MinII = Statistics.getMinII();
-
-  LLVM_DEBUG(Statistics.dump());
-
-  LLVM_DEBUG(dbgs() << format("MinII = %d\nStages = %d\n", MinII,
-                              (MaxDepth + MinII - 1) / MinII));
 
   // Least-Recently-Used list of physical registers for assignments to VRegs.
   // Physical registers that have recently been used are moved to the back.

@@ -478,11 +478,11 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   renamable $x0 = VBCST_8 $r25
   ; CHECK-NEXT:   renamable $cm0 = VLDA_UPS_S64_S16_ag_idx $s0, $p0, $dj0, implicit-def $srups_of, implicit $crsat
-  ; CHECK-NEXT:   renamable $bmh1 = VMUL_F_vmac_bm_core_dense killed renamable $x0, renamable $x0, $r25, implicit-def $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   renamable $bmh2 = VADD_F killed renamable $bmh1, renamable $bmh1, $r25, implicit-def $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   renamable $cm3 = VADD killed renamable $cm0, renamable $cm0, $r25
-  ; CHECK-NEXT:   VST_SRS_D16_S32_ag_idx $p0, $dj0, killed renamable $bmh2, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
-  ; CHECK-NEXT:   VST_SRS_D8_S32_ag_idx $p0, $dj0, killed renamable $cm3, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+  ; CHECK-NEXT:   renamable $bmh3 = VMUL_F_vmac_bm_core_dense killed renamable $x0, renamable $x0, $r25, implicit-def $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $bmh1 = VADD_F killed renamable $bmh3, renamable $bmh3, $r25, implicit-def $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $cm2 = VADD killed renamable $cm0, renamable $cm0, $r25
+  ; CHECK-NEXT:   VST_SRS_D16_S32_ag_idx $p0, $dj0, killed renamable $bmh1, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+  ; CHECK-NEXT:   VST_SRS_D8_S32_ag_idx $p0, $dj0, killed renamable $cm2, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
@@ -538,30 +538,30 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   renamable $wl0, renamable $p1 = VLD_pstm_imm_4x32_pseudo killed renamable $p1, 32
   ; CHECK-NEXT:   renamable $wh0, renamable $p1 = VLD_pstm_imm_4x32_pseudo killed renamable $p1, 32
-  ; CHECK-NEXT:   renamable $wl2, renamable $p1 = VLD_pstm_imm_4x32_pseudo killed renamable $p1, 32
-  ; CHECK-NEXT:   renamable $wh2, renamable $p1 = VLD_pstm_imm_4x32_pseudo killed renamable $p1, 32
-  ; CHECK-NEXT:   renamable $p1 = PADD_mod_pseudo killed renamable $p1, renamable $m0
-  ; CHECK-NEXT:   renamable $wl4, renamable $p1 = VLD_pstm_imm_4x32_pseudo killed renamable $p1, 32
-  ; CHECK-NEXT:   renamable $wh4, renamable $p1 = VLD_pstm_imm_4x32_pseudo killed renamable $p1, 32
   ; CHECK-NEXT:   renamable $wl6, renamable $p1 = VLD_pstm_imm_4x32_pseudo killed renamable $p1, 32
-  ; CHECK-NEXT:   $wh6, $p1, $dc2, $dc6 = VLD_3D_pseudo killed $p1, $d2_3d
-  ; CHECK-NEXT:   renamable $x8 = VSHUFFLE renamable $x0, renamable $x4, renamable $r0
-  ; CHECK-NEXT:   renamable $x10 = VSHUFFLE killed renamable $x0, killed renamable $x4, renamable $r1
-  ; CHECK-NEXT:   renamable $x1 = VSHUFFLE renamable $x2, renamable $x6, renamable $r0
-  ; CHECK-NEXT:   renamable $x3 = VSHUFFLE killed renamable $x2, killed renamable $x6, renamable $r1
-  ; CHECK-NEXT:   renamable $wl5, renamable $p0 = VLD_pstm_pseudo killed renamable $p0, renamable $m3
-  ; CHECK-NEXT:   renamable $wh5, renamable $p0 = VLD_pstm_pseudo killed renamable $p0, renamable $m4
-  ; CHECK-NEXT:   renamable $wl7, renamable $p0 = VLD_pstm_pseudo killed renamable $p0, renamable $m3
-  ; CHECK-NEXT:   renamable $wh7, renamable $p0 = VLD_pstm_pseudo killed renamable $p0, renamable $m4
-  ; CHECK-NEXT:   renamable $wl9, renamable $p0 = VLD_pstm_pseudo killed renamable $p0, renamable $m3
-  ; CHECK-NEXT:   renamable $wh9, renamable $p0 = VLD_pstm_pseudo killed renamable $p0, renamable $m4
+  ; CHECK-NEXT:   renamable $wh6, renamable $p1 = VLD_pstm_imm_4x32_pseudo killed renamable $p1, 32
+  ; CHECK-NEXT:   renamable $p1 = PADD_mod_pseudo killed renamable $p1, renamable $m0
+  ; CHECK-NEXT:   renamable $wl5, renamable $p1 = VLD_pstm_imm_4x32_pseudo killed renamable $p1, 32
+  ; CHECK-NEXT:   renamable $wh5, renamable $p1 = VLD_pstm_imm_4x32_pseudo killed renamable $p1, 32
+  ; CHECK-NEXT:   renamable $wl2, renamable $p1 = VLD_pstm_imm_4x32_pseudo killed renamable $p1, 32
+  ; CHECK-NEXT:   $wh2, $p1, $dc2, $dc6 = VLD_3D_pseudo killed $p1, $d2_3d
+  ; CHECK-NEXT:   renamable $x7 = VSHUFFLE renamable $x0, renamable $x5, renamable $r0
+  ; CHECK-NEXT:   renamable $x9 = VSHUFFLE killed renamable $x0, killed renamable $x5, renamable $r1
+  ; CHECK-NEXT:   renamable $x0 = VSHUFFLE renamable $x6, renamable $x2, renamable $r0
+  ; CHECK-NEXT:   renamable $x6 = VSHUFFLE killed renamable $x6, killed renamable $x2, renamable $r1
+  ; CHECK-NEXT:   renamable $wl2, renamable $p0 = VLD_pstm_pseudo killed renamable $p0, renamable $m3
+  ; CHECK-NEXT:   renamable $wh2, renamable $p0 = VLD_pstm_pseudo killed renamable $p0, renamable $m4
+  ; CHECK-NEXT:   renamable $wl8, renamable $p0 = VLD_pstm_pseudo killed renamable $p0, renamable $m3
+  ; CHECK-NEXT:   renamable $wh8, renamable $p0 = VLD_pstm_pseudo killed renamable $p0, renamable $m4
+  ; CHECK-NEXT:   renamable $wl1, renamable $p0 = VLD_pstm_pseudo killed renamable $p0, renamable $m3
+  ; CHECK-NEXT:   renamable $wh1, renamable $p0 = VLD_pstm_pseudo killed renamable $p0, renamable $m4
   ; CHECK-NEXT:   renamable $wl11, renamable $p0 = VLD_pstm_pseudo killed renamable $p0, renamable $m3
   ; CHECK-NEXT:   $wh11, $p0, $dc1, $dc5 = VLD_3D_pseudo killed $p0, $d1_3d
-  ; CHECK-NEXT:   renamable $x5 = VSHUFFLE killed renamable $x5, renamable $x5, renamable $r2
-  ; CHECK-NEXT:   renamable $x7 = VSHUFFLE killed renamable $x7, renamable $x7, renamable $r2
-  ; CHECK-NEXT:   renamable $x9 = VSHUFFLE killed renamable $x9, renamable $x9, renamable $r2
+  ; CHECK-NEXT:   renamable $x4 = VSHUFFLE killed renamable $x2, renamable $x2, renamable $r2
+  ; CHECK-NEXT:   renamable $x10 = VSHUFFLE killed renamable $x8, renamable $x8, renamable $r2
+  ; CHECK-NEXT:   renamable $x3 = VSHUFFLE killed renamable $x1, renamable $x1, renamable $r2
   ; CHECK-NEXT:   renamable $x11 = VSHUFFLE killed renamable $x11, renamable $x11, renamable $r2
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit killed renamable $x8, implicit killed renamable $x10, implicit killed renamable $x1, implicit killed renamable $x3, implicit killed renamable $x5, implicit killed renamable $x7, implicit killed renamable $x9, implicit killed renamable $x11
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1, implicit killed renamable $x7, implicit killed renamable $x9, implicit killed renamable $x0, implicit killed renamable $x6, implicit killed renamable $x4, implicit killed renamable $x10, implicit killed renamable $x3, implicit killed renamable $x11
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   PseudoRET implicit $lr

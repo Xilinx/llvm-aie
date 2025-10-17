@@ -55,49 +55,49 @@ define dso_local void @conv2d_dw_bf16(i32 %0, ptr %output, ptr %input, ptr addrs
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova dc0, #0
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p3, #0]; mov dc1, dc0
-; CHECK-NEXT:    vlda x1, [p1], #64; vldb.2d x3, [p2], d1; mov dj0, p5
-; CHECK-NEXT:    vlda x10, [p1], #64; movs dc4, dc0; mov m0, p4
-; CHECK-NEXT:    vlda.3d x8, [p1], d0
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml4, [p3, #0]; mov dc1, dc0
+; CHECK-NEXT:    vlda x2, [p1], #64; vldb.2d x4, [p2], d1; mov dj0, p5
+; CHECK-NEXT:    vlda x6, [p1], #64; movs dc4, dc0; mov m0, p4
+; CHECK-NEXT:    vlda.3d x11, [p1], d0
 ; CHECK-NEXT:    add.nc lc, r1, #-1
 ; CHECK-NEXT:    movxm ls, #.LBB0_1
 ; CHECK-NEXT:    movxm le, #.L_LEnd0
-; CHECK-NEXT:    vmov cml0, cml1
-; CHECK-NEXT:    mova r0, #16; vextbcst.128 x5, x3, #0
-; CHECK-NEXT:    mova r5, #60; vshift x7, x1, x10, r0
-; CHECK-NEXT:    vextbcst.128 x9, x3, #1; vmac.f dm2, dm1, x1, x5, r5
-; CHECK-NEXT:    mova r3, #32; vshift x11, x10, x8, r0; vmac.f dm1, dm0, x10, x5, r5
-; CHECK-NEXT:    mova r4, #48; vshift x2, x1, x10, r3
+; CHECK-NEXT:    vmov cml1, cml4
+; CHECK-NEXT:    mova r0, #16; vextbcst.128 x9, x4, #0
+; CHECK-NEXT:    mova r5, #60; vshift x8, x2, x6, r0
+; CHECK-NEXT:    vextbcst.128 x7, x4, #1; vmac.f dm0, dm4, x2, x9, r5
+; CHECK-NEXT:    mova r3, #32; vshift x1, x6, x11, r0; vmac.f dm1, dm1, x6, x9, r5
+; CHECK-NEXT:    mova r4, #48; vshift x3, x2, x6, r3
 ; CHECK-NEXT:  .LBB0_1: // %for.body28
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    vlda x1, [p1], #64; vldb.2d x3, [p2], d1; nopx ; vextbcst.128 x5, x3, #2; vmac.f dm0, dm2, x7, x9, r5
-; CHECK-NEXT:    vlda x10, [p1], #64; vshift x7, x10, x8, r3; vmac.f dm4, dm1, x11, x9, r5
-; CHECK-NEXT:    vlda.3d x8, [p1], d0; vshift x6, x1, x10, r4
-; CHECK-NEXT:    vextbcst.128 x4, x3, #3; vmac.f dm3, dm0, x2, x5, r5
-; CHECK-NEXT:    vshift x2, x10, x8, r4; vmac.f dm2, dm4, x7, x5, r5
+; CHECK-NEXT:    vlda x2, [p1], #64; vldb.2d x4, [p2], d1; nopx ; vextbcst.128 x5, x4, #2; vmac.f dm0, dm0, x8, x7, r5
+; CHECK-NEXT:    vlda x6, [p1], #64; vshift x10, x6, x11, r3; vmac.f dm3, dm1, x1, x7, r5
+; CHECK-NEXT:    vlda.3d x11, [p1], d0; vshift x2, x2, x6, r4
+; CHECK-NEXT:    vextbcst.128 x3, x4, #3; vmac.f dm2, dm0, x3, x5, r5
+; CHECK-NEXT:    vshift x8, x6, x11, r4; vmac.f dm3, dm3, x10, x5, r5
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vmac.f dm1, dm3, x6, x4, r5
-; CHECK-NEXT:    vextbcst.128 x5, x3, #0; vmac.f dm0, dm2, x2, x4, r5
-; CHECK-NEXT:    vshift x7, x1, x10, r0
-; CHECK-NEXT:    vextbcst.128 x9, x3, #1; vmac.f dm2, dm1, x1, x5, r5
-; CHECK-NEXT:    vshift x11, x10, x8, r0; vmac.f dm1, dm0, x10, x5, r5
+; CHECK-NEXT:    vmac.f dm4, dm2, x2, x3, r5
+; CHECK-NEXT:    vextbcst.128 x9, x4, #0; vmac.f dm1, dm3, x8, x3, r5
+; CHECK-NEXT:    vshift x8, x2, x6, r0
+; CHECK-NEXT:    vextbcst.128 x7, x4, #1; vmac.f dm0, dm4, x2, x9, r5
+; CHECK-NEXT:    vshift x1, x6, x11, r0; vmac.f dm1, dm1, x6, x9, r5
 ; CHECK-NEXT:  .L_LEnd0:
-; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vshift x2, x1, x10, r3; nopv
+; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vshift x3, x2, x6, r3; nopv
 ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup27
-; CHECK-NEXT:    lda p6, [sp, #-64]; nopb ; nops ; nopx ; vextbcst.128 x5, x3, #2; vmac.f dm0, dm2, x7, x9, r5 // 4-byte Folded Reload
-; CHECK-NEXT:    nopx ; vshift x7, x10, x8, r3; vmac.f dm4, dm1, x11, x9, r5
-; CHECK-NEXT:    vshift x6, x1, x10, r4
-; CHECK-NEXT:    vextbcst.128 x4, x3, #3; vmac.f dm3, dm0, x2, x5, r5
-; CHECK-NEXT:    vshift x2, x10, x8, r4; vmac.f dm2, dm4, x7, x5, r5
+; CHECK-NEXT:    lda p6, [sp, #-64]; nopb ; nops ; nopx ; vextbcst.128 x5, x4, #2; vmac.f dm0, dm0, x8, x7, r5 // 4-byte Folded Reload
+; CHECK-NEXT:    nopx ; vshift x10, x6, x11, r3; vmac.f dm3, dm1, x1, x7, r5
+; CHECK-NEXT:    vshift x2, x2, x6, r4
+; CHECK-NEXT:    vextbcst.128 x3, x4, #3; vmac.f dm2, dm0, x3, x5, r5
+; CHECK-NEXT:    vshift x8, x6, x11, r4; vmac.f dm3, dm3, x10, x5, r5
 ; CHECK-NEXT:    paddxm [sp], #-64
-; CHECK-NEXT:    vmac.f dm1, dm3, x6, x4, r5
-; CHECK-NEXT:    vmac.f dm0, dm2, x2, x4, r5
+; CHECK-NEXT:    vmac.f dm4, dm2, x2, x3, r5
+; CHECK-NEXT:    vmac.f dm1, dm3, x8, x3, r5
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vconv.bf16.fp32 x2, cml1
-; CHECK-NEXT:    vconv.bf16.fp32 x4, cml0
+; CHECK-NEXT:    vconv.bf16.fp32 x2, cml4
+; CHECK-NEXT:    vconv.bf16.fp32 x4, cml1
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vshuffle x2, x2, x4, r2 // Delay Slot 5
 ; CHECK-NEXT:    vmax_lt.bf16 x0, r16, x2, x0 // Delay Slot 4

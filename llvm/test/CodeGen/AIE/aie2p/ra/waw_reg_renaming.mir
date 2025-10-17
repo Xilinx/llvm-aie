@@ -87,16 +87,16 @@ body:             |
   ; CHECK-NEXT:   $p1, $lf1, $r25 = VLD_FILL_512_pseudo $p1, $lf1, $r25
   ; CHECK-NEXT:   $p1, $lf1, $r25 = VLD_FILL_512_pseudo $p1, $lf1, $r25
   ; CHECK-NEXT:   $p0, $lf0, $r24 = VLD_FILL_512_pseudo $p0, $lf0, $r24
-  ; CHECK-NEXT:   $ex0, $p1, $lf1, $r25 = VLD_POP_576_normal_pop_pseudo $p1, $lf1, $r25, implicit-def $srfifo_uf
-  ; CHECK-NEXT:   $ex2, $p1, $lf1, $r25, $dc0, $dc4 = VLD_POP_576_3D_pseudo $p1, $lf1, $r25, $d0_3d, implicit-def $srfifo_uf
-  ; CHECK-NEXT:   $ex4, $p0, $lf0, $r24 = VLD_POP_576_normal_pop_pseudo $p0, $lf0, $r24, implicit-def $srfifo_uf
-  ; CHECK-NEXT:   $ex6, $p0, $lf0, $r24 = VLD_POP_576_fifo_1d_pop_pseudo $p0, $lf0, $r24, $m1, implicit-def $srfifo_uf
-  ; CHECK-NEXT:   renamable $ex8 = VSHUFFLE_vec_shuffle_ex renamable $ex0, renamable $ex2, renamable $r4
-  ; CHECK-NEXT:   renamable $ex10 = VSHUFFLE_vec_shuffle_ex killed renamable $ex0, killed renamable $ex2, renamable $r4
-  ; CHECK-NEXT:   renamable $dm0 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX killed renamable $dm0, renamable $ex8, renamable $ex4, renamable $r1, implicit-def dead $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   renamable $dm1 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX killed renamable $dm1, renamable $ex10, killed renamable $ex4, renamable $r1, implicit-def dead $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   renamable $dm2 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX killed renamable $dm2, killed renamable $ex8, renamable $ex6, renamable $r1, implicit-def dead $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   renamable $dm3 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX killed renamable $dm3, killed renamable $ex10, killed renamable $ex6, renamable $r1, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   $ex2, $p1, $lf1, $r25 = VLD_POP_576_normal_pop_pseudo $p1, $lf1, $r25, implicit-def $srfifo_uf
+  ; CHECK-NEXT:   $ex4, $p1, $lf1, $r25, $dc0, $dc4 = VLD_POP_576_3D_pseudo $p1, $lf1, $r25, $d0_3d, implicit-def $srfifo_uf
+  ; CHECK-NEXT:   $ex6, $p0, $lf0, $r24 = VLD_POP_576_normal_pop_pseudo $p0, $lf0, $r24, implicit-def $srfifo_uf
+  ; CHECK-NEXT:   $ex0, $p0, $lf0, $r24 = VLD_POP_576_fifo_1d_pop_pseudo $p0, $lf0, $r24, $m1, implicit-def $srfifo_uf
+  ; CHECK-NEXT:   renamable $ex8 = VSHUFFLE_vec_shuffle_ex renamable $ex2, renamable $ex4, renamable $r4
+  ; CHECK-NEXT:   renamable $ex10 = VSHUFFLE_vec_shuffle_ex killed renamable $ex2, killed renamable $ex4, renamable $r4
+  ; CHECK-NEXT:   renamable $dm0 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX killed renamable $dm0, renamable $ex8, renamable $ex6, renamable $r1, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $dm1 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX killed renamable $dm1, renamable $ex10, killed renamable $ex6, renamable $r1, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $dm2 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX killed renamable $dm2, killed renamable $ex8, renamable $ex0, renamable $r1, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $dm3 = VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX killed renamable $dm3, killed renamable $ex10, killed renamable $ex0, renamable $r1, implicit-def dead $srfpflags, implicit $crfpmask
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
