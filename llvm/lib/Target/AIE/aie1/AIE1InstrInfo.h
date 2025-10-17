@@ -52,15 +52,13 @@ public:
                            MachineBasicBlock::iterator MBBI, Register SrcReg,
                            bool IsKill, int FrameIndex,
                            const TargetRegisterClass *RC,
-                           const TargetRegisterInfo *TRI,
-                           Register VReg,
+                           const TargetRegisterInfo *TRI, Register VReg,
                            MachineInstr::MIFlag Flags) const override;
 
   void loadRegFromStackSlot(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MBBI, Register DstReg,
                             int FrameIndex, const TargetRegisterClass *RC,
-                            const TargetRegisterInfo *TRI,
-                            Register VReg,
+                            const TargetRegisterInfo *TRI, Register VReg,
                             MachineInstr::MIFlag Flags) const override;
 
   unsigned getInstSizeInBytes(const MachineInstr &MI) const override;
@@ -97,7 +95,8 @@ public:
 
 protected:
   SmallVector<AIEPseudoExpandInfo, 4>
-  getSpillPseudoExpandInfo(const MachineInstr &MI) const override;
+  getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
+                           MachineInstr &MI) const override;
 };
 } // namespace llvm
 #endif // LLVM_LIB_TARGET_AIE_AIE1INSTRINFO_H

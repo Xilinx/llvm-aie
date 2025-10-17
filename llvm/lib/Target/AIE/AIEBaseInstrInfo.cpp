@@ -573,7 +573,7 @@ public:
 void AIEBaseInstrInfo::expandSpillPseudo(
     MachineInstr &MI, const TargetRegisterInfo &TRI, Align SubRegOffsetAlign,
     Register SPReg, std::optional<int64_t> OffsetVal) const {
-  auto ExpandInfos = getSpillPseudoExpandInfo(MI);
+  auto ExpandInfos = getSpillPseudoExpandInfo(TRI, MI);
   if (ExpandInfos.empty()) {
     // Nothing to expand
     return;

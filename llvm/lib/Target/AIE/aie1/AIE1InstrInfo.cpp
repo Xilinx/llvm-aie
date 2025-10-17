@@ -274,7 +274,8 @@ unsigned getVCMPforPseudoVCMP(unsigned opcode) {
 }
 
 SmallVector<AIEBaseInstrInfo::AIEPseudoExpandInfo, 4>
-AIEInstrInfo::getSpillPseudoExpandInfo(const MachineInstr &MI) const {
+AIEInstrInfo::getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
+                                       MachineInstr &MI) const {
   if (!MI.isPseudo())
     return {};
 
@@ -525,14 +526,11 @@ void AIEInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
       .addMemOperand(CreateMMO(FI));
 }
 
-// Load a register to a stack slot.  Used in eliminating FrameIndex pseduo-ops.
-void AIEInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
-                                        MachineBasicBlock::iterator I,
-                                        Register DstReg, int FI,
-                                        const TargetRegisterClass *RC,
-                                        const TargetRegisterInfo *TRI,
-                                        Register VReg,
-                                        MachineInstr::MIFlag Flags) const {
+// Load a register to a stack slot.  Used in eliminating FrameIndex pseudo-ops.
+void AIEInstrInfo::loadRegFromStackSlot(
+    MachineBasicBlock &MBB, MachineBasicBlock::iterator I, Register DstReg,
+    int FI, const TargetRegisterClass *RC, const TargetRegisterInfo *TRI,
+    Register VReg, MachineInstr::MIFlag Flags) const {
   DebugLoc DL;
   if (I != MBB.end())
     DL = I->getDebugLoc();
