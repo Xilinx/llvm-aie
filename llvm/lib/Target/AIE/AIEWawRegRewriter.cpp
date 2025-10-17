@@ -14,7 +14,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIE.h"
+#include "AIEBaseInstrInfo.h"
 #include "AIEBaseRegisterInfo.h"
+#include "AIEDataDependenceHelper.h"
+#include "AIESlotStatistics.h"
 #include "Utils/AIELoopUtils.h"
 
 #include "llvm/ADT/BitVector.h"
@@ -103,6 +106,7 @@ public:
     AU.addRequired<LiveIntervalsWrapperPass>();
     AU.addPreserved<LiveIntervalsWrapperPass>();
     AU.addRequired<LiveRegMatrixWrapperLegacy>();
+    AU.addRequired<AAResultsWrapperPass>();
     AU.addPreserved<LiveRegMatrixWrapperLegacy>();
     MachineFunctionPass::getAnalysisUsage(AU);
   }
@@ -116,9 +120,14 @@ private:
   VirtRegMap *VRM = nullptr;
   LiveRegMatrix *LRM = nullptr;
   LiveIntervals *LIS = nullptr;
-  const TargetInstrInfo *TII = nullptr;
+  const AIEBaseInstrInfo *TII = nullptr;
 
   bool renameMBBPhysRegs(const MachineBasicBlock *MBB);
+
+  /// From the regclasses and the function context, compute the registers
+  /// that can be used in the reallocation.
+  RoundRobin computeLRURegisters(
+      const std::map<const TargetRegisterClass *, bool> &RegClasses);
 
   /// Pre-allocate all virtual registers in Candidates. The sole purpose of
   /// this is to prime the LRURegisters, so that the end of the loop is
@@ -219,7 +228,7 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   VRM = &getAnalysis<VirtRegMapWrapperLegacy>().getVRM();
   LRM = &getAnalysis<LiveRegMatrixWrapperLegacy>().getLRM();
   LIS = &getAnalysis<LiveIntervalsWrapperPass>().getLIS();
-  TII = MF.getSubtarget().getInstrInfo();
+  TII = static_cast<const AIEBaseInstrInfo *>(MF.getSubtarget().getInstrInfo());
   bool Modified = false;
 
   LLVM_DEBUG(dbgs() << "*** WAW Loop Register Rewriting: " << MF.getName());
@@ -332,6 +341,34 @@ void AIEWawRegRewriter::revertAllocation(OriginalAllocation &Candidates,
   }
 }
 
+RoundRobin AIEWawRegRewriter::computeLRURegisters(
+    const std::map<const TargetRegisterClass *, bool> &RegClasses) {
+  RoundRobin LRURegisters;
+
+  // ExcludedPhysregs makes sure that each register is only added once to the
+  // LRU queue. Additionally, it excludes the callee saved registers
+  BitVector ExcludedPhysRegs{TRI->getNumRegs()};
+
+  for (const MCPhysReg *CSR = MRI->getCalleeSavedRegs(); CSR && *CSR; ++CSR)
+    ExcludedPhysRegs[*CSR] = true;
+
+  // For each reg class, allocate the candidates in round-robin fashion.
+  // If we fail, we fall back to the original allocation
+  for (const auto [RC, Success] : RegClasses) {
+    LLVM_DEBUG(dbgs() << "Allowed registers in RC=" << TRI->getRegClassName(RC)
+                      << ":");
+    for (MCPhysReg PhysReg : RC->getRegisters()) {
+      if (!ExcludedPhysRegs[PhysReg]) {
+        LLVM_DEBUG(dbgs() << " " << printReg(PhysReg, TRI));
+        LRURegisters.push_back(PhysReg);
+      }
+      ExcludedPhysRegs[PhysReg] = true;
+    }
+    LLVM_DEBUG(dbgs() << "\n");
+  }
+  return LRURegisters;
+}
+
 bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   LLVM_DEBUG(dbgs() << "WAW Reg Renaming BasicBlock "; MBB->dump();
              dbgs() << "\n");
@@ -422,31 +459,35 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
       }
     }
   }
+  auto &NCMBB = *(const_cast<MachineBasicBlock *>(MBB));
+
+  MachineSchedContext Context;
+  Context.MF = MF;
+  Context.AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
+  AIE::DataDependenceHelper DDG(Context);
+  for (auto &MI : NCMBB) {
+    if (!MI.isTerminator())
+      DDG.initSUnit(MI);
+  }
+  DDG.buildEdges();
+  for (auto &SU : DDG.SUnits) {
+    LLVM_DEBUG(dbgs() << format("%4d : ", SU.NodeNum) << *SU.getInstr());
+  }
+  LLVM_DEBUG(DDG.dumpDot(dbgs(), false));
+  int MaxDepth = DDG.maxDepth();
+  LLVM_DEBUG(dbgs() << format("MaxDepth = %d\n", MaxDepth));
+
+  AIE::SlotStatistics Statistics = AIE::computeSlotStatistics(NCMBB, TII);
+  int MinII = Statistics.getMinII();
+
+  LLVM_DEBUG(Statistics.dump());
+
+  LLVM_DEBUG(dbgs() << format("MinII = %d\nStages = %d\n", MinII,
+                              (MaxDepth + MinII - 1) / MinII));
 
   // Least-Recently-Used list of physical registers for assignments to VRegs.
   // Physical registers that have recently been used are moved to the back.
-  RoundRobin LRURegisters;
-
-  // For each reg class, allocate the candidates in round-robin fashion.
-  // If we fail, we fall back to the original allocation
-  BitVector ExcludedPhysRegs{TRI->getNumRegs()};
-
-  // Exclude CSRs
-  for (const MCPhysReg *CSR = MRI->getCalleeSavedRegs(); CSR && *CSR; ++CSR)
-    ExcludedPhysRegs[*CSR] = true;
-
-  for (const auto [RC, Success] : RegClasses) {
-    LLVM_DEBUG(dbgs() << "Allowed registers in RC=" << TRI->getRegClassName(RC)
-                      << ":");
-    for (MCPhysReg PhysReg : RC->getRegisters()) {
-      if (!ExcludedPhysRegs[PhysReg]) {
-        LLVM_DEBUG(dbgs() << " " << printReg(PhysReg, TRI));
-        LRURegisters.push_back(PhysReg);
-      }
-      ExcludedPhysRegs[PhysReg] = true;
-    }
-    LLVM_DEBUG(dbgs() << "\n");
-  }
+  RoundRobin LRURegisters = computeLRURegisters(RegClasses);
 
   // Prime the LRURegisters, so that the allocation is loop-aware.
   if (PreAlloc) {
