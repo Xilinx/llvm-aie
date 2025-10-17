@@ -807,7 +807,8 @@ protected:
   /// need expanding. Otherwise, the size of the vector will match the number
   /// of instructions which \ref MI needs to be expanded to.
   virtual SmallVector<AIEPseudoExpandInfo, 4>
-  getSpillPseudoExpandInfo(const MachineInstr &MI) const {
+  getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
+                           MachineInstr &MI) const {
     return {};
   };
 

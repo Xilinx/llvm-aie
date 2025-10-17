@@ -919,7 +919,7 @@ Register AIE2PInstrInfo::isStoreToStackSlot(const MachineInstr &MI,
   return 0;
 }
 
-// Store a register to a stack slot.  Used in eliminating FrameIndex pseduo-ops.
+// Store a register to a stack slot.  Used in eliminating FrameIndex pseudo-ops.
 void AIE2PInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                          MachineBasicBlock::iterator I,
                                          Register SrcReg, bool IsKill, int FI,
@@ -1003,14 +1003,11 @@ void AIE2PInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
       .addMemOperand(CreateMMO(FI));
 }
 
-// Load a register to a stack slot.  Used in eliminating FrameIndex pseduo-ops.
-void AIE2PInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
-                                          MachineBasicBlock::iterator I,
-                                          Register DstReg, int FI,
-                                          const TargetRegisterClass *RC,
-                                          const TargetRegisterInfo *TRI,
-                                          Register VReg,
-                                          MachineInstr::MIFlag Flags) const {
+// Load a register to a stack slot.  Used in eliminating FrameIndex pseudo-ops.
+void AIE2PInstrInfo::loadRegFromStackSlot(
+    MachineBasicBlock &MBB, MachineBasicBlock::iterator I, Register DstReg,
+    int FI, const TargetRegisterClass *RC, const TargetRegisterInfo *TRI,
+    Register VReg, MachineInstr::MIFlag Flags) const {
   DebugLoc DL;
   if (I != MBB.end())
     DL = I->getDebugLoc();
@@ -1086,7 +1083,8 @@ void AIE2PInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 }
 
 SmallVector<AIEBaseInstrInfo::AIEPseudoExpandInfo, 4>
-AIE2PInstrInfo::getSpillPseudoExpandInfo(const MachineInstr &MI) const {
+AIE2PInstrInfo::getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
+                                         MachineInstr &MI) const {
   if (!MI.isPseudo())
     return {};
 
