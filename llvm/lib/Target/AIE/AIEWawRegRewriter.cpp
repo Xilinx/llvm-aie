@@ -369,6 +369,57 @@ RoundRobin AIEWawRegRewriter::computeLRURegisters(
   return LRURegisters;
 }
 
+void AIEWawRegRewriter::sortSWPAware(OriginalAllocation &Candidates,
+                                     MachineBasicBlock &MBB) {
+
+  // We estimate the length of the schedule based on latencies and the
+  // minimum II based on slots. We then estimate the modulo cycle of each
+  // instruction based on its depth and apply LRU in the order of the modulo
+  // cycle.
+  // Note that both the depth and the II are underestimations since we don't
+  // account for them interfering. Hence the modulo cycle estimate won't be
+  // too far off.
+  AIE::SlotStatistics Statistics = AIE::computeSlotStatistics(MBB, TII);
+  DEBUG_DETAIL(dbgs() << "Stats="; Statistics.dumpShort());
+  int MinII = Statistics.getMinII();
+
+  MachineSchedContext Context;
+  Context.MF = MF;
+  Context.AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
+  AIE::DataDependenceHelper DDG(Context, true, false);
+  for (auto &MI : MBB) {
+    if (!MI.isTerminator())
+      DDG.initSUnit(MI);
+  }
+  DDG.buildEdges();
+  DEBUG_DETAIL(DDG.dumpDot(dbgs(), false));
+
+  // Compute and record the modulo cycle of each instruction.
+  std::map<const MachineInstr *, int> ModuloCycle;
+  int MaxDepth = 0;
+  for (auto &SU : DDG.SUnits) {
+    int D = SU.getDepth();
+    ModuloCycle.emplace(SU.getInstr(), D % MinII);
+    MaxDepth = std::max(MaxDepth, D);
+    LLVM_DEBUG(dbgs() << format("%4d D=%4d: ", SU.NodeNum, D)
+                      << *SU.getInstr());
+  }
+
+  LLVM_DEBUG(dbgs() << format("MaxDepth = %d\n", MaxDepth));
+  LLVM_DEBUG(dbgs() << format("MinII = %d\nStages = %d\n", MinII,
+                              (MaxDepth + MinII - 1) / MinII));
+
+  // Now sort the candidates to simulate the parallelism
+  using Element = std::pair<const MachineOperand *, Register>;
+  auto ModuloCycleLess = [&ModuloCycle](const Element &A, const Element &B) {
+    const MachineInstr *IA = A.first->getParent();
+    const MachineInstr *IB = B.first->getParent();
+
+    return ModuloCycle[IA] < ModuloCycle[IB];
+  };
+  llvm::sort(Candidates, ModuloCycleLess);
+}
+
 bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   LLVM_DEBUG(dbgs() << "WAW Reg Renaming BasicBlock "; MBB->dump();
              dbgs() << "\n");

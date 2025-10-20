@@ -60,7 +60,9 @@ bool AIEPtrModOptimizer::runOnMachineFunction(MachineFunction &MF) {
 
   // To build the edges in the DAG, the reserved Registers have to be freezed
   MRI.freezeReservedRegs();
-  AIE::DataDependenceHelper DAG(Context, /*AddMutators=*/false);
+  const bool AddMutators = false;
+  const bool ExactLatencies = false;
+  AIE::DataDependenceHelper DAG(Context, AddMutators, ExactLatencies);
 
   // Fixme: these combiners should be provided by tablegen
   std::vector<const AIE::GenericCombiner *> Combiners;
