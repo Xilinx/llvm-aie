@@ -671,6 +671,17 @@ std::set<MCRegister> AIEWawRegRewriter::getHighOutputLatencyRegs(
       }
     }
   }
+
+  // This metric gives us an idea about the "demand" for high latency registers
+  // in a specific loop. If the demand is low, clear HighLatRegisters to skip
+  // latency-aware heuristic. Basically, we evaluate high latency register count
+  // to instruction count ratio in percent.
+  // TODO: this should be replaced by more stable metrics related to SWP.
+  const int HighLatencyRegisterInstrRatio =
+      ((HighLatRegisters.size() * 100) / MBB->size());
+  if (HighLatencyRegisterInstrRatio < 250 /*calibrated value*/)
+    HighLatRegisters.clear();
+
   return HighLatRegisters;
 }
 
