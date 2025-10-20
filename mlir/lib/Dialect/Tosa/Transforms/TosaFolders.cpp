@@ -566,7 +566,8 @@ struct TosaFoldConstantTranspose
     if (inputValues.isSplat())
       return failure();
     // Make sure the input is a constant that has a single user.
-    if (!llvm::hasSingleElement(op.getInput1().getDefiningOp()->getUsers()))
+    if (!llvm::hasSingleElement(op.getInput1().getDefiningOp()->getUsers()) &&
+        foldSplatOrSingleUseOnly)
       return failure();
 
     DenseIntElementsAttr permAttr;
@@ -1005,7 +1006,8 @@ struct TosaFoldConstantCast : public TosaFoldConstantBase<CastOp> {
 
     // Only fold splat tensors and those used only once to avoid duplicating
     // them and increasing memory consumption.
-    if (!inputTensor.hasOneUse() && !isa<SplatElementsAttr>(elements)) {
+    if (!inputTensor.hasOneUse() && !isa<SplatElementsAttr>(elements) &&
+        foldSplatOrSingleUseOnly) {
       return rewriter.notifyMatchFailure(
           tosaCast, "Currently, casts will only be folded "
                     "if its input only has a single user or is a splat value.");
