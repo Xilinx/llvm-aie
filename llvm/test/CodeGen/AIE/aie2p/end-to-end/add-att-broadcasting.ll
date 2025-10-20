@@ -22,7 +22,7 @@ declare <32 x bfloat> @llvm.aie2p.v32accfloat.to.v32bf16(<32 x float>) #1
 define dso_local void @add_attribute_bcast(ptr noalias %ifm2, ptr noalias %ifm1, ptr noalias %params, i32 %div16, ptr noalias %ofm) {
 ; CHECK-LABEL: add_attribute_bcast:
 ; CHECK:       // %bb.0: // %newFuncRoot
-; CHECK-NEXT:    mova dj0, #32; nopb ; nopxm
+; CHECK-NEXT:    mova dj0, #32
 ; CHECK-NEXT:    lda m0, [p2, dj0]
 ; CHECK-NEXT:    mova dj0, #36
 ; CHECK-NEXT:    lda m1, [p2, dj0]
@@ -31,35 +31,36 @@ define dso_local void @add_attribute_bcast(ptr noalias %ifm2, ptr noalias %ifm1,
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cml4, [p0], m1
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], m1
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml0, [p1], m0
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cml3, [p1], m0
-; CHECK-NEXT:    movxm ls, #.LBB0_1
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cml4, [p0], m1; movx r1, #60; add.nc lc, r0, #-2
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], m1; movxm le, #.L_LEnd0; vadd.f dm2, dm0, dm4, r1
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cml0, [p1], m0; nopb ; nops ; nopxm ; vadd.f dm0, dm3, dm1, r1
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cml3, [p1], m0; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], m1
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml4, [p0], m1
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml2, [p1], m0
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml0, [p1], m0; movx r1, #60
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], m1; add.nc lc, r0, #-3; vadd.f dm3, dm0, dm1, r1
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml4, [p0], m1; movxm ls, #.LBB0_1
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml2, [p1], m0; movxm le, #.L_LEnd0; vadd.f dm2, dm2, dm4, r1
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml0, [p1], m0; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], m1; nopb ; nops ; nopxm ; vadd.f dm3, dm0, dm1, r1
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml4, [p0], m1; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml2, [p1], m0; nopb ; vst.conv.bf16.fp32 cml3, [p3], #64; nopxm ; vadd.f dm2, dm2, dm4, r1
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml0, [p1], m0; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], m1; nopb ; vst.conv.bf16.fp32 cml2, [p3], #64; nopxm ; vadd.f dm3, dm0, dm1, r1
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml4, [p0], m1; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], m1; nopb ; nops ; nopxm ; vadd.f dm2, dm0, dm4, r1
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cml0, [p1], m0; nopb ; vst.conv.bf16.fp32 cml2, [p3], #64; nopxm ; vadd.f dm0, dm3, dm1, r1
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cml3, [p1], m0; nopb ; vst.conv.bf16.fp32 cml0, [p3], #64; nopxm ; nopv
 ; CHECK-NEXT:  .L_LEnd0:
-; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml2, [p1], m0; nopb ; vst.conv.bf16.fp32 cml3, [p3], #64; nopxm ; vadd.f dm2, dm2, dm4, r1
 ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
-; CHECK-NEXT:    nopx
-; CHECK-NEXT:    vadd.f dm2, dm0, dm4, r1
-; CHECK-NEXT:    vst.conv.bf16.fp32 cml2, [p3], #64; vadd.f dm0, dm3, dm1, r1
-; CHECK-NEXT:    vst.conv.bf16.fp32 cml0, [p3], #64
+; CHECK-NEXT:    nopa ; nopb ; nopxm ; nops
+; CHECK-NEXT:    vst.conv.bf16.fp32 cml2, [p3], #64; vadd.f dm3, dm0, dm1, r1
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    vst.conv.bf16.fp32 cml3, [p3], #64; vadd.f dm2, dm2, dm4, r1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vst.conv.bf16.fp32 cml2, [p3], #64
-; CHECK-NEXT:    vst.conv.bf16.fp32 cml0, [p3], #64
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    vst.conv.bf16.fp32 cml3, [p3], #64
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    vst.conv.bf16.fp32 cml2, [p3], #64
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
