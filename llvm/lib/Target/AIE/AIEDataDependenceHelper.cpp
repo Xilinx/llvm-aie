@@ -21,14 +21,15 @@ static cl::opt<bool>
             cl::desc("Allow memory dependences in DataDependenceHelper "));
 
 DataDependenceHelper::DataDependenceHelper(const MachineSchedContext &Context,
-                                           bool AddMutators)
+                                           bool AddMutators,
+                                           bool ExactLatencies)
     : ScheduleDAGInstrs(*Context.MF, Context.MLI), Context(Context) {
   if (!AddMutators)
     return;
 
   auto &Subtarget = Context.MF->getSubtarget();
   auto TT = Subtarget.getTargetTriple();
-  for (auto &M : AIEBaseSubtarget::getInterBlockMutationsImpl(TT)) {
+  for (auto &M : AIEBaseSubtarget::getDDGMutationsImpl(TT, ExactLatencies)) {
     Mutations.emplace_back(std::move(M));
   }
 }

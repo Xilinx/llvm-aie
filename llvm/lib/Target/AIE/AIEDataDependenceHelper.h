@@ -39,11 +39,8 @@ class DataDependenceHelper : public ScheduleDAGInstrs {
   bool mayAlias(SUnit *SUa, SUnit *SUb, bool TBAA) override;
 
 public:
-  DataDependenceHelper(const MachineSchedContext &Context,
-                       bool AddMutators = true);
-
-  // After adding the nodes, create the edges, using the order in which the
-  // nodes were added.
+  DataDependenceHelper(const MachineSchedContext &Context, bool AddMutators,
+                       bool ExactLatencies);
   void buildEdges();
 
   // Compute the maximum depth of all nodes. The depth is the earliest cycle
