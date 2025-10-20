@@ -195,6 +195,7 @@ bool updateSuccLatency(SDep &SuccEdge, SUnit &PredSU, int Latency) {
 // The initial graph will have ordering edges induced by hasSideEffects of the
 // locks/DONE.
 class LockDelays : public ScheduleDAGMutation {
+  bool ExactLatencies = true;
   void apply(ScheduleDAGInstrs *DAG) override {
     const auto *TII = static_cast<const AIEBaseInstrInfo *>(DAG->TII);
     const int CoreStallCycle = TII->getCoreStallCycleAfterLock();
@@ -218,8 +219,11 @@ class LockDelays : public ScheduleDAGMutation {
           continue;
         }
         // Ensure memory operation happens before the core stalls
-        int Delay = *TII->getLastMemoryCycle(LdSt->getDesc().SchedClass) -
-                    CoreStallCycle + 1;
+        auto OptLastMemCycle =
+            TII->getLastMemoryCycle(LdSt->getDesc().SchedClass);
+        assert(!ExactLatencies || OptLastMemCycle);
+        const int LastMemCycle = OptLastMemCycle.value_or(7);
+        const int Delay = LastMemCycle - CoreStallCycle + 1;
         updatePredLatency(PredEdge, SU, Delay);
       }
       for (auto &SuccEdge : SU.Succs) {
@@ -227,13 +231,19 @@ class LockDelays : public ScheduleDAGMutation {
         if (SuccEdge.getKind() != SDep::Order || !LdSt->mayLoadOrStore()) {
           continue;
         }
+        auto OptFirstMemCycle =
+            TII->getFirstMemoryCycle(LdSt->getDesc().SchedClass);
+        assert(!ExactLatencies || OptFirstMemCycle);
+        const int FirstMemCycle = OptFirstMemCycle.value_or(4);
         // Ensure memory operation happens after the core resumes
-        int Delay = CoreResumeCycle -
-                    *TII->getFirstMemoryCycle(LdSt->getDesc().SchedClass) + 1;
+        const int Delay = CoreResumeCycle - FirstMemCycle + 1;
         updateSuccLatency(SuccEdge, SU, Delay);
       }
     }
-  };
+  }
+
+public:
+  LockDelays(bool ExactLatencies) : ExactLatencies(ExactLatencies) {};
 };
 
 #undef DEBUG_TYPE
@@ -649,6 +659,7 @@ public:
 /// fix the latencies to preserve the ordering.
 /// E.g. in AIE2: VST.SRS stores in E7, while VLDA reads in E5.
 class MemoryEdges : public ScheduleDAGMutation {
+  bool ExactLatencies = true;
   void apply(ScheduleDAGInstrs *DAG) override {
     const auto *TII = static_cast<const AIEBaseInstrInfo *>(DAG->TII);
     // Run over all instructions that may load or store, and correct the
@@ -677,16 +688,22 @@ class MemoryEdges : public ScheduleDAGMutation {
         // Get the correct latency from the Sched model.
         std::optional<int> MemLat = TII->getMemoryLatency(
             SrcMI.getDesc().getSchedClass(), MI.getDesc().getSchedClass());
-        if (!MemLat.has_value()) {
+        int Latency = 1;
+        if (MemLat.has_value()) {
+          Latency = *MemLat;
+        } else if (ExactLatencies) {
           LLVM_DEBUG(llvm::dbgs()
                      << "Error: no memory latency info for dependency\n  from: "
                      << SrcMI << "    to: " << MI);
           report_fatal_error("Missing memory latency info.");
         }
-        updatePredLatency(PredEdge, SU, *MemLat);
+        updatePredLatency(PredEdge, SU, Latency);
       }
     }
-  };
+  }
+
+public:
+  MemoryEdges(bool ExactLatencies) : ExactLatencies(ExactLatencies) {};
 };
 
 void dumpDependencies(ScheduleDAGInstrs *DAG, SDep::Kind depType,
@@ -865,12 +882,12 @@ class WAWStickyRegistersEdges : public ScheduleDAGMutation {
 std::vector<std::unique_ptr<ScheduleDAGMutation>>
 AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT) {
   std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
-  Mutations.emplace_back(std::make_unique<LockDelays>());
+  Mutations.emplace_back(std::make_unique<LockDelays>(true));
   if (!TT.isAIE1()) {
     if (EnableWAWStickyRegisters)
       Mutations.emplace_back(std::make_unique<WAWStickyRegistersEdges>());
     Mutations.emplace_back(std::make_unique<RegionEndEdges>());
-    Mutations.emplace_back(std::make_unique<MemoryEdges>());
+    Mutations.emplace_back(std::make_unique<MemoryEdges>(true));
     Mutations.emplace_back(std::make_unique<MachineSchedWAWEdges>());
     Mutations.emplace_back(std::make_unique<BiasDepth>());
     Mutations.emplace_back(std::make_unique<EmitFixedSUnits>());
@@ -880,12 +897,12 @@ AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT) {
 
 // List the Mutations that apply to the interblock DAG construction.
 std::vector<std::unique_ptr<ScheduleDAGMutation>>
-AIEBaseSubtarget::getInterBlockMutationsImpl(const Triple &TT) {
+AIEBaseSubtarget::getDDGMutationsImpl(const Triple &TT, bool ExactLatencies) {
   std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
-  Mutations.emplace_back(std::make_unique<LockDelays>());
+  Mutations.emplace_back(std::make_unique<LockDelays>(ExactLatencies));
   if (!TT.isAIE1()) {
     Mutations.emplace_back(std::make_unique<RegionEndEdges>());
-    Mutations.emplace_back(std::make_unique<MemoryEdges>());
+    Mutations.emplace_back(std::make_unique<MemoryEdges>(ExactLatencies));
     Mutations.emplace_back(std::make_unique<MachineSchedWAWEdges>());
   }
   return Mutations;

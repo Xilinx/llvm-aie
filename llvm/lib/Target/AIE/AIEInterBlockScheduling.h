@@ -46,7 +46,8 @@ class InterBlockEdges {
   IndexMap SuccMap;
 
 public:
-  InterBlockEdges(const MachineSchedContext &Context) : DDG(Context) {}
+  InterBlockEdges(const MachineSchedContext &Context)
+      : DDG(Context, true, true) {}
 
   /// Add a Node to the DAG.
   void addNode(MachineInstr *);
