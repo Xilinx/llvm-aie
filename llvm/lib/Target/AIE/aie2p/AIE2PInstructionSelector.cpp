@@ -558,67 +558,6 @@ bool AIE2PInstructionSelector::selectG_CONCAT_VECTORS(
 
   LLT DstTy = MRI.getType(Dst);
   LLT Src0Ty = MRI.getType(Src0);
-  LLT Src1Ty = MRI.getType(Src1);
-
-  // 128-bit vectors are not sub-registers of 256-bit vectors, so we use
-  // VSHIFT and VSEL to concatenate 128-bit vectors.
-  // The 128-bit input are expanded to 512-bit vectors. The first input is
-  // shifted 48-bytes to the right using VSHIFT and VSEL is used to select the
-  // higher 128 bits from the first input and the lower 128 bits from the second
-  // input. For other sizes we select a reg_sequence using tablegen patterns.
-  if (DstTy.getSizeInBits() == 256 && Src0Ty.getSizeInBits() == 128 &&
-      Src1Ty.getSizeInBits() == 128) {
-    auto ShiftIdx =
-        MIB.buildInstr(AIE2P::MOV_RLC_imm11_pseudo, {&AIE2P::eRRegClass}, {})
-            .addImm(48);
-    auto SelIdx =
-        MIB.buildInstr(AIE2P::MOV_RLC_imm11_pseudo, {&AIE2P::eRS16RegClass}, {})
-            .addImm(15);
-
-    Register Dst256Reg0 = MRI.createVirtualRegister(&AIE2P::VEC256RegClass);
-    Register Dst512Reg0 = MRI.createVirtualRegister(&AIE2P::VEC512RegClass);
-    Register Undef512Reg = MRI.createVirtualRegister(&AIE2P::VEC512RegClass);
-    Register ShiftDstReg = MRI.createVirtualRegister(&AIE2P::VEC512RegClass);
-    Register Dst256Reg1 = MRI.createVirtualRegister(&AIE2P::VEC256RegClass);
-    Register Dst512Reg1 = MRI.createVirtualRegister(&AIE2P::VEC512RegClass);
-    Register SelDstReg = MRI.createVirtualRegister(&AIE2P::VEC512RegClass);
-
-    // step1: Pad 128-bit src0 to 512
-    MachineInstr *CopyMI0 =
-        MIB.buildInstr(TargetOpcode::COPY, {Dst256Reg0}, {Src0});
-    constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *CopyMI0,
-                             AIE2P::VEC128RegClass, CopyMI0->getOperand(1));
-    MIB.buildInstr(TargetOpcode::REG_SEQUENCE, {Dst512Reg0}, {})
-        .addReg(Dst256Reg0)
-        .addImm(AIE2P::sub_256_lo);
-
-    // step 2: Pad 128-bit src1 to 512
-    MachineInstr *CopyMI1 =
-        MIB.buildInstr(TargetOpcode::COPY, {Dst256Reg1}, {Src1});
-    constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *CopyMI1,
-                             AIE2P::VEC128RegClass, CopyMI1->getOperand(1));
-
-    MIB.buildInstr(TargetOpcode::REG_SEQUENCE, {Dst512Reg1}, {})
-        .addReg(Dst256Reg1)
-        .addImm(AIE2P::sub_256_lo);
-
-    // step 3: Shift src1 128-bit left
-    MIB.buildInstr(TargetOpcode::IMPLICIT_DEF, {Undef512Reg}, {});
-    MIB.buildInstr(AIE2P::VSHIFT, {ShiftDstReg},
-                   {Undef512Reg, Dst512Reg1, ShiftIdx});
-
-    // step 4: Select Dst = ShiftDstReg{255:128}:src0{127:0}
-    MIB.buildInstr(AIE2P::VSEL_32, {SelDstReg},
-                   {ShiftDstReg, Dst512Reg0, SelIdx});
-
-    MachineInstr *CopyMI2 = MIB.buildInstr(TargetOpcode::COPY, {Dst}, {})
-                                .addReg(SelDstReg, 0, AIE2P::sub_256_lo);
-
-    I.eraseFromParent();
-    return constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *CopyMI2,
-                                    AIE2P::VEC256RegClass,
-                                    CopyMI2->getOperand(0));
-  }
 
   // FIXME: Add this as a TableGen pattern. v4i64 is not yet a legal register
   // type for vector registers.

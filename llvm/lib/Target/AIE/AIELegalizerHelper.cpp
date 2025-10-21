@@ -1554,6 +1554,93 @@ bool AIELegalizerHelper::legalizeG_SELECT(LegalizerHelper &Helper,
   return true;
 }
 
+// Legalize G_CONCAT_VECTORS of two 128-bit vectors into a 256-bit vector.
+// 128-bit vectors are not sub-registers of 256-bit vectors, so we use
+// G_AIE_VSHIFT_RIGHT and G_AIE_VSEL to concatenate them.
+// The algorithm:
+//   1. Pad both 128-bit inputs to 512-bit using G_AIE_PAD_VECTOR_UNDEF
+//   2. Shift the second input 48 bytes to the right using
+//   G_AIE_VSHIFT_RIGHT
+//   3. Use G_AIE_VSEL to select the high 128 bits from shifted and low 128 bits
+//   from first input
+//   4. Extract the 256-bit result using G_AIE_UNPAD_VECTOR
+bool AIELegalizerHelper::legalizeG_CONCAT_VECTORS_128bit(
+    LegalizerHelper &Helper, MachineInstr &MI) const {
+  MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+  const AIEBaseInstrInfo *TII = ST.getInstrInfo();
+
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register Src0 = MI.getOperand(1).getReg();
+  const Register Src1 = MI.getOperand(2).getReg();
+
+  const LLT DstTy = MRI.getType(DstReg);
+  const LLT Src0Ty = MRI.getType(Src0);
+  const LLT Src1Ty = MRI.getType(Src1);
+  (void)Src1Ty; // Suppress unused variable warning
+
+  assert(DstTy.getSizeInBits() == 256 && Src0Ty.getSizeInBits() == 128 &&
+         Src1Ty.getSizeInBits() == 128 &&
+         "Expected concatenation of two 128-bit vectors into 256-bit");
+
+  // Step 1: Pad both 128-bit inputs to 512-bit
+  const LLT Vec512Ty = Src0Ty.multiplyElements(4);
+  const unsigned PadOpc = TII->getGenericPadVectorOpcode();
+
+  const Register Src0_512 =
+      MIRBuilder.buildInstr(PadOpc, {Vec512Ty}, {Src0}).getReg(0);
+  const Register Src1_512 =
+      MIRBuilder.buildInstr(PadOpc, {Vec512Ty}, {Src1}).getReg(0);
+
+  // Step 2: Bitcast to <16 x s32> for G_AIE_VSEL
+  // G_AIE_VSEL's behavior depends on the element type. The select mask "15"
+  // is designed for 32-bit elements, so we must bitcast to <16 x s32> before
+  // using G_AIE_VSEL, then bitcast back to the original element type.
+  const LLT Vec16S32 = LLT::fixed_vector(16, 32);
+  const bool NeedsBitcast = (Vec512Ty.getElementType().getSizeInBits() != 32);
+
+  const Register Src0_512_S32 =
+      NeedsBitcast ? MIRBuilder.buildBitcast(Vec16S32, Src0_512).getReg(0)
+                   : Src0_512;
+  const Register Src1_512_S32 =
+      NeedsBitcast ? MIRBuilder.buildBitcast(Vec16S32, Src1_512).getReg(0)
+                   : Src1_512;
+
+  // Step 3: Shift src1 48 bytes to the right
+  const Register ShiftAmt = MIRBuilder.buildConstant(S32, 48).getReg(0);
+  const Register Undef512_S32 = MIRBuilder.buildUndef(Vec16S32).getReg(0);
+
+  const unsigned VShiftOpc = TII->getGenericVShiftOpcode();
+  const Register Shifted =
+      MIRBuilder
+          .buildInstr(VShiftOpc, {Vec16S32},
+                      {Undef512_S32, Src1_512_S32, ShiftAmt})
+          .getReg(0);
+
+  // Step 4: Use VSEL to select high 128 bits from shifted and low 128 bits from
+  // src0 Select index 15 means: select bits [255:128] from first operand and
+  // [127:0] from second operand (when operating on <16 x s32> vectors)
+  const Register SelIdx = MIRBuilder.buildConstant(S32, 15).getReg(0);
+
+  const unsigned VSelOpc = TII->getGenericVSelOpcode();
+  const Register Result512_S32 =
+      MIRBuilder
+          .buildInstr(VSelOpc, {Vec16S32}, {Shifted, Src0_512_S32, SelIdx})
+          .getReg(0);
+
+  // Step 5: Bitcast back to original element type if needed
+  const Register Result512 =
+      NeedsBitcast ? MIRBuilder.buildBitcast(Vec512Ty, Result512_S32).getReg(0)
+                   : Result512_S32;
+
+  // Step 6: Extract the 256-bit result
+  const unsigned UnpadOpc = TII->getGenericUnpadVectorOpcode();
+  MIRBuilder.buildInstr(UnpadOpc, {DstReg}, {Result512});
+
+  MI.eraseFromParent();
+  return true;
+}
+
 /// Legalize the incoming \p MI G_CONCAT_VECTORS to half the number of inputs,
 /// but at least 2 inputs.
 bool AIELegalizerHelper::legalizeG_CONCAT_VECTORS(LegalizerHelper &Helper,
@@ -1564,6 +1651,13 @@ bool AIELegalizerHelper::legalizeG_CONCAT_VECTORS(LegalizerHelper &Helper,
   assert(DstTy.isVector() && SrcTy.isVector() && "Expected vector types");
   assert(SrcTy.getSizeInBits() >= 128 &&
          "Vectors < 128-bit should be lowered to insert vector elt");
+
+  // Handle the special case of concatenating two 128-bit vectors into 256-bit
+  // for AIE2P (128-bit vectors are not sub-registers of 256-bit vectors)
+  if (ST.isAIE2P() && DstTy.getSizeInBits() == 256 &&
+      SrcTy.getSizeInBits() == 128 && MI.getNumOperands() == 3) {
+    return legalizeG_CONCAT_VECTORS_128bit(Helper, MI);
+  }
 
   // Prevent infinite looping in the Legalizer. The base case should be legal
   // and we should not reach this.
