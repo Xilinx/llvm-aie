@@ -30,8 +30,8 @@ define void @call_v8int16() {
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoJL @callee_v8int16, csr_aie2p, implicit-def $lr, implicit-def $wl0
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<8 x s32>) = COPY $wl0
-  ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(<8 x s16>) = G_TRUNC [[COPY]](<8 x s32>)
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<16 x s16>) = COPY $wl0
+  ; CHECK-NEXT:   [[UV:%[0-9]+]]:_(<8 x s16>), [[UV1:%[0-9]+]]:_(<8 x s16>) = G_UNMERGE_VALUES [[COPY]](<16 x s16>)
   ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   %res = call <8 x i16> @callee_v8int16()
@@ -44,8 +44,8 @@ define void @call_v16int8() {
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoJL @callee_v16int8, csr_aie2p, implicit-def $lr, implicit-def $wl0
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<16 x s16>) = COPY $wl0
-  ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(<16 x s8>) = G_TRUNC [[COPY]](<16 x s16>)
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<32 x s8>) = COPY $wl0
+  ; CHECK-NEXT:   [[UV:%[0-9]+]]:_(<16 x s8>), [[UV1:%[0-9]+]]:_(<16 x s8>) = G_UNMERGE_VALUES [[COPY]](<32 x s8>)
   ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   %res = call <16 x i8> @callee_v16int8()

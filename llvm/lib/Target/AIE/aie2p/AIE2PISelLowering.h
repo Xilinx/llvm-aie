@@ -23,6 +23,14 @@ class AIE2PTargetLowering : public AIEBaseTargetLowering {
 public:
   explicit AIE2PTargetLowering(const TargetMachine &TM,
                                const AIEBaseSubtarget &STI);
+  MVT getRegisterTypeForCallingConvAssignment(LLVMContext &Context,
+                                              CallingConv::ID CC,
+                                              EVT VT) const override;
+  MVT getRegisterTypeForCallingConv(LLVMContext &Context, CallingConv::ID CC,
+                                    EVT VT) const override;
+  TargetLoweringBase::LegalizeTypeAction
+  getPreferredVectorAction(MVT VT) const override;
+
   bool functionArgumentNeedsConsecutiveRegisters(
       Type *Ty, CallingConv::ID CallConv, bool isVarArg,
       const DataLayout &DL) const override;

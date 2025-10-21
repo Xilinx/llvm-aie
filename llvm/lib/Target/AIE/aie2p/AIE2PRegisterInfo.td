@@ -189,8 +189,9 @@ class AIE2PRegisterClass <int size, int align, list<ValueType> regTypes, dag reg
   def mLm : AIE2PScalar64RegisterClass<(add eL)>;
   def mL8m : AIE2PScalar64RegisterClass<(add l8)>;
 
-  class AIE2PVector128RegisterClass<dag reglist> :
-      AIE2PRegisterClass<128, 128, [v16i8, v8i16, v8bf16, v4i32, v4f32], reglist> {
+  class AIE2PVector128RegisterClass<dag reglist>
+      : AIE2PRegisterClass<128, 128, [i128, v16i8, v8i16, v8bf16, v4i32, v4f32],
+                           reglist> {
     let hasCompleteDecoder = 0;
   }
 

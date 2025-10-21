@@ -20,7 +20,7 @@ define void @call_v4int32() {
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
   ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<4 x s32>) = G_BUILD_VECTOR [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32)
-  ; CHECK-NEXT:   ADJCALLSTACKUP 64, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   ADJCALLSTACKUP 32, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   [[UV:%[0-9]+]]:_(s32), [[UV1:%[0-9]+]]:_(s32), [[UV2:%[0-9]+]]:_(s32), [[UV3:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<4 x s32>)
   ; CHECK-NEXT:   [[DEF:%[0-9]+]]:_(s32) = G_IMPLICIT_DEF
   ; CHECK-NEXT:   [[BUILD_VECTOR1:%[0-9]+]]:_(<8 x s32>) = G_BUILD_VECTOR [[UV]](s32), [[UV1]](s32), [[UV2]](s32), [[UV3]](s32), [[DEF]](s32), [[DEF]](s32), [[DEF]](s32), [[DEF]](s32)
@@ -93,19 +93,13 @@ define void @call_v4int32() {
   ; CHECK-NEXT:   [[UV92:%[0-9]+]]:_(s32), [[UV93:%[0-9]+]]:_(s32), [[UV94:%[0-9]+]]:_(s32), [[UV95:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<4 x s32>)
   ; CHECK-NEXT:   [[DEF23:%[0-9]+]]:_(s32) = G_IMPLICIT_DEF
   ; CHECK-NEXT:   [[BUILD_VECTOR24:%[0-9]+]]:_(<8 x s32>) = G_BUILD_VECTOR [[UV92]](s32), [[UV93]](s32), [[UV94]](s32), [[UV95]](s32), [[DEF23]](s32), [[DEF23]](s32), [[DEF23]](s32), [[DEF23]](s32)
-  ; CHECK-NEXT:   [[UV96:%[0-9]+]]:_(s32), [[UV97:%[0-9]+]]:_(s32), [[UV98:%[0-9]+]]:_(s32), [[UV99:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<4 x s32>)
-  ; CHECK-NEXT:   [[DEF24:%[0-9]+]]:_(s32) = G_IMPLICIT_DEF
-  ; CHECK-NEXT:   [[BUILD_VECTOR25:%[0-9]+]]:_(<8 x s32>) = G_BUILD_VECTOR [[UV96]](s32), [[UV97]](s32), [[UV98]](s32), [[UV99]](s32), [[DEF24]](s32), [[DEF24]](s32), [[DEF24]](s32), [[DEF24]](s32)
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $sp
-  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 -32
+  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 -16
   ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s20)
-  ; CHECK-NEXT:   G_STORE [[BUILD_VECTOR25]](<8 x s32>), [[PTR_ADD]](p0) :: (store (<8 x s32>) into stack - 32)
-  ; CHECK-NEXT:   [[UV100:%[0-9]+]]:_(s32), [[UV101:%[0-9]+]]:_(s32), [[UV102:%[0-9]+]]:_(s32), [[UV103:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<4 x s32>)
-  ; CHECK-NEXT:   [[DEF25:%[0-9]+]]:_(s32) = G_IMPLICIT_DEF
-  ; CHECK-NEXT:   [[BUILD_VECTOR26:%[0-9]+]]:_(<8 x s32>) = G_BUILD_VECTOR [[UV100]](s32), [[UV101]](s32), [[UV102]](s32), [[UV103]](s32), [[DEF25]](s32), [[DEF25]](s32), [[DEF25]](s32), [[DEF25]](s32)
-  ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 -64
+  ; CHECK-NEXT:   G_STORE [[BUILD_VECTOR]](<4 x s32>), [[PTR_ADD]](p0) :: (store (<4 x s32>) into stack - 16, basealign 32)
+  ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 -32
   ; CHECK-NEXT:   [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C2]](s20)
-  ; CHECK-NEXT:   G_STORE [[BUILD_VECTOR26]](<8 x s32>), [[PTR_ADD1]](p0) :: (store (<8 x s32>) into stack - 64)
+  ; CHECK-NEXT:   G_STORE [[BUILD_VECTOR]](<4 x s32>), [[PTR_ADD1]](p0) :: (store (<4 x s32>) into stack - 32)
   ; CHECK-NEXT:   $wl0 = COPY [[BUILD_VECTOR1]](<8 x s32>)
   ; CHECK-NEXT:   $wl2 = COPY [[BUILD_VECTOR2]](<8 x s32>)
   ; CHECK-NEXT:   $wl4 = COPY [[BUILD_VECTOR3]](<8 x s32>)
@@ -131,7 +125,7 @@ define void @call_v4int32() {
   ; CHECK-NEXT:   $wh9 = COPY [[BUILD_VECTOR23]](<8 x s32>)
   ; CHECK-NEXT:   $wh11 = COPY [[BUILD_VECTOR24]](<8 x s32>)
   ; CHECK-NEXT:   PseudoJL @callee_v4int32, csr_aie2p, implicit-def $lr, implicit $wl0, implicit $wl2, implicit $wl4, implicit $wl6, implicit $wl8, implicit $wl10, implicit $wl1, implicit $wl3, implicit $wl5, implicit $wl7, implicit $wl9, implicit $wl11, implicit $wh0, implicit $wh2, implicit $wh4, implicit $wh6, implicit $wh8, implicit $wh10, implicit $wh1, implicit $wh3, implicit $wh5, implicit $wh7, implicit $wh9, implicit $wh11
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 64, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 32, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   call void @callee_v4int32(<4 x i32> zeroinitializer, <4 x i32> zeroinitializer, <4 x i32> zeroinitializer, <4 x i32> zeroinitializer, <4 x i32> zeroinitializer, <4 x i32> zeroinitializer,
                             <4 x i32> zeroinitializer, <4 x i32> zeroinitializer, <4 x i32> zeroinitializer, <4 x i32> zeroinitializer, <4 x i32> zeroinitializer, <4 x i32> zeroinitializer,
@@ -151,66 +145,112 @@ define void @call_v8int16() {
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s16) = G_CONSTANT i16 0
   ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<8 x s16>) = G_BUILD_VECTOR [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16)
-  ; CHECK-NEXT:   ADJCALLSTACKUP 64, 0, implicit-def $sp, implicit $sp
-  ; CHECK-NEXT:   [[ANYEXT:%[0-9]+]]:_(<8 x s32>) = G_ANYEXT [[BUILD_VECTOR]](<8 x s16>)
-  ; CHECK-NEXT:   [[ANYEXT1:%[0-9]+]]:_(<8 x s32>) = G_ANYEXT [[BUILD_VECTOR]](<8 x s16>)
-  ; CHECK-NEXT:   [[ANYEXT2:%[0-9]+]]:_(<8 x s32>) = G_ANYEXT [[BUILD_VECTOR]](<8 x s16>)
-  ; CHECK-NEXT:   [[ANYEXT3:%[0-9]+]]:_(<8 x s32>) = G_ANYEXT [[BUILD_VECTOR]](<8 x s16>)
-  ; CHECK-NEXT:   [[ANYEXT4:%[0-9]+]]:_(<8 x s32>) = G_ANYEXT [[BUILD_VECTOR]](<8 x s16>)
-  ; CHECK-NEXT:   [[ANYEXT5:%[0-9]+]]:_(<8 x s32>) = G_ANYEXT [[BUILD_VECTOR]](<8 x s16>)
-  ; CHECK-NEXT:   [[ANYEXT6:%[0-9]+]]:_(<8 x s32>) = G_ANYEXT [[BUILD_VECTOR]](<8 x s16>)
-  ; CHECK-NEXT:   [[ANYEXT7:%[0-9]+]]:_(<8 x s32>) = G_ANYEXT [[BUILD_VECTOR]](<8 x s16>)
-  ; CHECK-NEXT:   [[ANYEXT8:%[0-9]+]]:_(<8 x s32>) = G_ANYEXT [[BUILD_VECTOR]](<8 x s16>)
-  ; CHECK-NEXT:   [[ANYEXT9:%[0-9]+]]:_(<8 x s32>) = G_ANYEXT [[BUILD_VECTOR]](<8 x s16>)
-  ; CHECK-NEXT:   [[ANYEXT10:%[0-9]+]]:_(<8 x s32>) = G_ANYEXT [[BUILD_VECTOR]](<8 x s16>)
-  ; CHECK-NEXT:   [[ANYEXT11:%[0-9]+]]:_(<8 x s32>) = G_ANYEXT [[BUILD_VECTOR]](<8 x s16>)
-  ; CHECK-NEXT:   [[ANYEXT12:%[0-9]+]]:_(<8 x s32>) = G_ANYEXT [[BUILD_VECTOR]](<8 x s16>)
-  ; CHECK-NEXT:   [[ANYEXT13:%[0-9]+]]:_(<8 x s32>) = G_ANYEXT [[BUILD_VECTOR]](<8 x s16>)
-  ; CHECK-NEXT:   [[ANYEXT14:%[0-9]+]]:_(<8 x s32>) = G_ANYEXT [[BUILD_VECTOR]](<8 x s16>)
-  ; CHECK-NEXT:   [[ANYEXT15:%[0-9]+]]:_(<8 x s32>) = G_ANYEXT [[BUILD_VECTOR]](<8 x s16>)
-  ; CHECK-NEXT:   [[ANYEXT16:%[0-9]+]]:_(<8 x s32>) = G_ANYEXT [[BUILD_VECTOR]](<8 x s16>)
-  ; CHECK-NEXT:   [[ANYEXT17:%[0-9]+]]:_(<8 x s32>) = G_ANYEXT [[BUILD_VECTOR]](<8 x s16>)
-  ; CHECK-NEXT:   [[ANYEXT18:%[0-9]+]]:_(<8 x s32>) = G_ANYEXT [[BUILD_VECTOR]](<8 x s16>)
-  ; CHECK-NEXT:   [[ANYEXT19:%[0-9]+]]:_(<8 x s32>) = G_ANYEXT [[BUILD_VECTOR]](<8 x s16>)
-  ; CHECK-NEXT:   [[ANYEXT20:%[0-9]+]]:_(<8 x s32>) = G_ANYEXT [[BUILD_VECTOR]](<8 x s16>)
-  ; CHECK-NEXT:   [[ANYEXT21:%[0-9]+]]:_(<8 x s32>) = G_ANYEXT [[BUILD_VECTOR]](<8 x s16>)
-  ; CHECK-NEXT:   [[ANYEXT22:%[0-9]+]]:_(<8 x s32>) = G_ANYEXT [[BUILD_VECTOR]](<8 x s16>)
-  ; CHECK-NEXT:   [[ANYEXT23:%[0-9]+]]:_(<8 x s32>) = G_ANYEXT [[BUILD_VECTOR]](<8 x s16>)
-  ; CHECK-NEXT:   [[ANYEXT24:%[0-9]+]]:_(<8 x s32>) = G_ANYEXT [[BUILD_VECTOR]](<8 x s16>)
+  ; CHECK-NEXT:   ADJCALLSTACKUP 32, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   [[UV:%[0-9]+]]:_(s16), [[UV1:%[0-9]+]]:_(s16), [[UV2:%[0-9]+]]:_(s16), [[UV3:%[0-9]+]]:_(s16), [[UV4:%[0-9]+]]:_(s16), [[UV5:%[0-9]+]]:_(s16), [[UV6:%[0-9]+]]:_(s16), [[UV7:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<8 x s16>)
+  ; CHECK-NEXT:   [[DEF:%[0-9]+]]:_(s16) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR1:%[0-9]+]]:_(<16 x s16>) = G_BUILD_VECTOR [[UV]](s16), [[UV1]](s16), [[UV2]](s16), [[UV3]](s16), [[UV4]](s16), [[UV5]](s16), [[UV6]](s16), [[UV7]](s16), [[DEF]](s16), [[DEF]](s16), [[DEF]](s16), [[DEF]](s16), [[DEF]](s16), [[DEF]](s16), [[DEF]](s16), [[DEF]](s16)
+  ; CHECK-NEXT:   [[UV8:%[0-9]+]]:_(s16), [[UV9:%[0-9]+]]:_(s16), [[UV10:%[0-9]+]]:_(s16), [[UV11:%[0-9]+]]:_(s16), [[UV12:%[0-9]+]]:_(s16), [[UV13:%[0-9]+]]:_(s16), [[UV14:%[0-9]+]]:_(s16), [[UV15:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<8 x s16>)
+  ; CHECK-NEXT:   [[DEF1:%[0-9]+]]:_(s16) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR2:%[0-9]+]]:_(<16 x s16>) = G_BUILD_VECTOR [[UV8]](s16), [[UV9]](s16), [[UV10]](s16), [[UV11]](s16), [[UV12]](s16), [[UV13]](s16), [[UV14]](s16), [[UV15]](s16), [[DEF1]](s16), [[DEF1]](s16), [[DEF1]](s16), [[DEF1]](s16), [[DEF1]](s16), [[DEF1]](s16), [[DEF1]](s16), [[DEF1]](s16)
+  ; CHECK-NEXT:   [[UV16:%[0-9]+]]:_(s16), [[UV17:%[0-9]+]]:_(s16), [[UV18:%[0-9]+]]:_(s16), [[UV19:%[0-9]+]]:_(s16), [[UV20:%[0-9]+]]:_(s16), [[UV21:%[0-9]+]]:_(s16), [[UV22:%[0-9]+]]:_(s16), [[UV23:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<8 x s16>)
+  ; CHECK-NEXT:   [[DEF2:%[0-9]+]]:_(s16) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR3:%[0-9]+]]:_(<16 x s16>) = G_BUILD_VECTOR [[UV16]](s16), [[UV17]](s16), [[UV18]](s16), [[UV19]](s16), [[UV20]](s16), [[UV21]](s16), [[UV22]](s16), [[UV23]](s16), [[DEF2]](s16), [[DEF2]](s16), [[DEF2]](s16), [[DEF2]](s16), [[DEF2]](s16), [[DEF2]](s16), [[DEF2]](s16), [[DEF2]](s16)
+  ; CHECK-NEXT:   [[UV24:%[0-9]+]]:_(s16), [[UV25:%[0-9]+]]:_(s16), [[UV26:%[0-9]+]]:_(s16), [[UV27:%[0-9]+]]:_(s16), [[UV28:%[0-9]+]]:_(s16), [[UV29:%[0-9]+]]:_(s16), [[UV30:%[0-9]+]]:_(s16), [[UV31:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<8 x s16>)
+  ; CHECK-NEXT:   [[DEF3:%[0-9]+]]:_(s16) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR4:%[0-9]+]]:_(<16 x s16>) = G_BUILD_VECTOR [[UV24]](s16), [[UV25]](s16), [[UV26]](s16), [[UV27]](s16), [[UV28]](s16), [[UV29]](s16), [[UV30]](s16), [[UV31]](s16), [[DEF3]](s16), [[DEF3]](s16), [[DEF3]](s16), [[DEF3]](s16), [[DEF3]](s16), [[DEF3]](s16), [[DEF3]](s16), [[DEF3]](s16)
+  ; CHECK-NEXT:   [[UV32:%[0-9]+]]:_(s16), [[UV33:%[0-9]+]]:_(s16), [[UV34:%[0-9]+]]:_(s16), [[UV35:%[0-9]+]]:_(s16), [[UV36:%[0-9]+]]:_(s16), [[UV37:%[0-9]+]]:_(s16), [[UV38:%[0-9]+]]:_(s16), [[UV39:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<8 x s16>)
+  ; CHECK-NEXT:   [[DEF4:%[0-9]+]]:_(s16) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR5:%[0-9]+]]:_(<16 x s16>) = G_BUILD_VECTOR [[UV32]](s16), [[UV33]](s16), [[UV34]](s16), [[UV35]](s16), [[UV36]](s16), [[UV37]](s16), [[UV38]](s16), [[UV39]](s16), [[DEF4]](s16), [[DEF4]](s16), [[DEF4]](s16), [[DEF4]](s16), [[DEF4]](s16), [[DEF4]](s16), [[DEF4]](s16), [[DEF4]](s16)
+  ; CHECK-NEXT:   [[UV40:%[0-9]+]]:_(s16), [[UV41:%[0-9]+]]:_(s16), [[UV42:%[0-9]+]]:_(s16), [[UV43:%[0-9]+]]:_(s16), [[UV44:%[0-9]+]]:_(s16), [[UV45:%[0-9]+]]:_(s16), [[UV46:%[0-9]+]]:_(s16), [[UV47:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<8 x s16>)
+  ; CHECK-NEXT:   [[DEF5:%[0-9]+]]:_(s16) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR6:%[0-9]+]]:_(<16 x s16>) = G_BUILD_VECTOR [[UV40]](s16), [[UV41]](s16), [[UV42]](s16), [[UV43]](s16), [[UV44]](s16), [[UV45]](s16), [[UV46]](s16), [[UV47]](s16), [[DEF5]](s16), [[DEF5]](s16), [[DEF5]](s16), [[DEF5]](s16), [[DEF5]](s16), [[DEF5]](s16), [[DEF5]](s16), [[DEF5]](s16)
+  ; CHECK-NEXT:   [[UV48:%[0-9]+]]:_(s16), [[UV49:%[0-9]+]]:_(s16), [[UV50:%[0-9]+]]:_(s16), [[UV51:%[0-9]+]]:_(s16), [[UV52:%[0-9]+]]:_(s16), [[UV53:%[0-9]+]]:_(s16), [[UV54:%[0-9]+]]:_(s16), [[UV55:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<8 x s16>)
+  ; CHECK-NEXT:   [[DEF6:%[0-9]+]]:_(s16) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR7:%[0-9]+]]:_(<16 x s16>) = G_BUILD_VECTOR [[UV48]](s16), [[UV49]](s16), [[UV50]](s16), [[UV51]](s16), [[UV52]](s16), [[UV53]](s16), [[UV54]](s16), [[UV55]](s16), [[DEF6]](s16), [[DEF6]](s16), [[DEF6]](s16), [[DEF6]](s16), [[DEF6]](s16), [[DEF6]](s16), [[DEF6]](s16), [[DEF6]](s16)
+  ; CHECK-NEXT:   [[UV56:%[0-9]+]]:_(s16), [[UV57:%[0-9]+]]:_(s16), [[UV58:%[0-9]+]]:_(s16), [[UV59:%[0-9]+]]:_(s16), [[UV60:%[0-9]+]]:_(s16), [[UV61:%[0-9]+]]:_(s16), [[UV62:%[0-9]+]]:_(s16), [[UV63:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<8 x s16>)
+  ; CHECK-NEXT:   [[DEF7:%[0-9]+]]:_(s16) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR8:%[0-9]+]]:_(<16 x s16>) = G_BUILD_VECTOR [[UV56]](s16), [[UV57]](s16), [[UV58]](s16), [[UV59]](s16), [[UV60]](s16), [[UV61]](s16), [[UV62]](s16), [[UV63]](s16), [[DEF7]](s16), [[DEF7]](s16), [[DEF7]](s16), [[DEF7]](s16), [[DEF7]](s16), [[DEF7]](s16), [[DEF7]](s16), [[DEF7]](s16)
+  ; CHECK-NEXT:   [[UV64:%[0-9]+]]:_(s16), [[UV65:%[0-9]+]]:_(s16), [[UV66:%[0-9]+]]:_(s16), [[UV67:%[0-9]+]]:_(s16), [[UV68:%[0-9]+]]:_(s16), [[UV69:%[0-9]+]]:_(s16), [[UV70:%[0-9]+]]:_(s16), [[UV71:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<8 x s16>)
+  ; CHECK-NEXT:   [[DEF8:%[0-9]+]]:_(s16) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR9:%[0-9]+]]:_(<16 x s16>) = G_BUILD_VECTOR [[UV64]](s16), [[UV65]](s16), [[UV66]](s16), [[UV67]](s16), [[UV68]](s16), [[UV69]](s16), [[UV70]](s16), [[UV71]](s16), [[DEF8]](s16), [[DEF8]](s16), [[DEF8]](s16), [[DEF8]](s16), [[DEF8]](s16), [[DEF8]](s16), [[DEF8]](s16), [[DEF8]](s16)
+  ; CHECK-NEXT:   [[UV72:%[0-9]+]]:_(s16), [[UV73:%[0-9]+]]:_(s16), [[UV74:%[0-9]+]]:_(s16), [[UV75:%[0-9]+]]:_(s16), [[UV76:%[0-9]+]]:_(s16), [[UV77:%[0-9]+]]:_(s16), [[UV78:%[0-9]+]]:_(s16), [[UV79:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<8 x s16>)
+  ; CHECK-NEXT:   [[DEF9:%[0-9]+]]:_(s16) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR10:%[0-9]+]]:_(<16 x s16>) = G_BUILD_VECTOR [[UV72]](s16), [[UV73]](s16), [[UV74]](s16), [[UV75]](s16), [[UV76]](s16), [[UV77]](s16), [[UV78]](s16), [[UV79]](s16), [[DEF9]](s16), [[DEF9]](s16), [[DEF9]](s16), [[DEF9]](s16), [[DEF9]](s16), [[DEF9]](s16), [[DEF9]](s16), [[DEF9]](s16)
+  ; CHECK-NEXT:   [[UV80:%[0-9]+]]:_(s16), [[UV81:%[0-9]+]]:_(s16), [[UV82:%[0-9]+]]:_(s16), [[UV83:%[0-9]+]]:_(s16), [[UV84:%[0-9]+]]:_(s16), [[UV85:%[0-9]+]]:_(s16), [[UV86:%[0-9]+]]:_(s16), [[UV87:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<8 x s16>)
+  ; CHECK-NEXT:   [[DEF10:%[0-9]+]]:_(s16) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR11:%[0-9]+]]:_(<16 x s16>) = G_BUILD_VECTOR [[UV80]](s16), [[UV81]](s16), [[UV82]](s16), [[UV83]](s16), [[UV84]](s16), [[UV85]](s16), [[UV86]](s16), [[UV87]](s16), [[DEF10]](s16), [[DEF10]](s16), [[DEF10]](s16), [[DEF10]](s16), [[DEF10]](s16), [[DEF10]](s16), [[DEF10]](s16), [[DEF10]](s16)
+  ; CHECK-NEXT:   [[UV88:%[0-9]+]]:_(s16), [[UV89:%[0-9]+]]:_(s16), [[UV90:%[0-9]+]]:_(s16), [[UV91:%[0-9]+]]:_(s16), [[UV92:%[0-9]+]]:_(s16), [[UV93:%[0-9]+]]:_(s16), [[UV94:%[0-9]+]]:_(s16), [[UV95:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<8 x s16>)
+  ; CHECK-NEXT:   [[DEF11:%[0-9]+]]:_(s16) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR12:%[0-9]+]]:_(<16 x s16>) = G_BUILD_VECTOR [[UV88]](s16), [[UV89]](s16), [[UV90]](s16), [[UV91]](s16), [[UV92]](s16), [[UV93]](s16), [[UV94]](s16), [[UV95]](s16), [[DEF11]](s16), [[DEF11]](s16), [[DEF11]](s16), [[DEF11]](s16), [[DEF11]](s16), [[DEF11]](s16), [[DEF11]](s16), [[DEF11]](s16)
+  ; CHECK-NEXT:   [[UV96:%[0-9]+]]:_(s16), [[UV97:%[0-9]+]]:_(s16), [[UV98:%[0-9]+]]:_(s16), [[UV99:%[0-9]+]]:_(s16), [[UV100:%[0-9]+]]:_(s16), [[UV101:%[0-9]+]]:_(s16), [[UV102:%[0-9]+]]:_(s16), [[UV103:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<8 x s16>)
+  ; CHECK-NEXT:   [[DEF12:%[0-9]+]]:_(s16) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR13:%[0-9]+]]:_(<16 x s16>) = G_BUILD_VECTOR [[UV96]](s16), [[UV97]](s16), [[UV98]](s16), [[UV99]](s16), [[UV100]](s16), [[UV101]](s16), [[UV102]](s16), [[UV103]](s16), [[DEF12]](s16), [[DEF12]](s16), [[DEF12]](s16), [[DEF12]](s16), [[DEF12]](s16), [[DEF12]](s16), [[DEF12]](s16), [[DEF12]](s16)
+  ; CHECK-NEXT:   [[UV104:%[0-9]+]]:_(s16), [[UV105:%[0-9]+]]:_(s16), [[UV106:%[0-9]+]]:_(s16), [[UV107:%[0-9]+]]:_(s16), [[UV108:%[0-9]+]]:_(s16), [[UV109:%[0-9]+]]:_(s16), [[UV110:%[0-9]+]]:_(s16), [[UV111:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<8 x s16>)
+  ; CHECK-NEXT:   [[DEF13:%[0-9]+]]:_(s16) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR14:%[0-9]+]]:_(<16 x s16>) = G_BUILD_VECTOR [[UV104]](s16), [[UV105]](s16), [[UV106]](s16), [[UV107]](s16), [[UV108]](s16), [[UV109]](s16), [[UV110]](s16), [[UV111]](s16), [[DEF13]](s16), [[DEF13]](s16), [[DEF13]](s16), [[DEF13]](s16), [[DEF13]](s16), [[DEF13]](s16), [[DEF13]](s16), [[DEF13]](s16)
+  ; CHECK-NEXT:   [[UV112:%[0-9]+]]:_(s16), [[UV113:%[0-9]+]]:_(s16), [[UV114:%[0-9]+]]:_(s16), [[UV115:%[0-9]+]]:_(s16), [[UV116:%[0-9]+]]:_(s16), [[UV117:%[0-9]+]]:_(s16), [[UV118:%[0-9]+]]:_(s16), [[UV119:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<8 x s16>)
+  ; CHECK-NEXT:   [[DEF14:%[0-9]+]]:_(s16) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR15:%[0-9]+]]:_(<16 x s16>) = G_BUILD_VECTOR [[UV112]](s16), [[UV113]](s16), [[UV114]](s16), [[UV115]](s16), [[UV116]](s16), [[UV117]](s16), [[UV118]](s16), [[UV119]](s16), [[DEF14]](s16), [[DEF14]](s16), [[DEF14]](s16), [[DEF14]](s16), [[DEF14]](s16), [[DEF14]](s16), [[DEF14]](s16), [[DEF14]](s16)
+  ; CHECK-NEXT:   [[UV120:%[0-9]+]]:_(s16), [[UV121:%[0-9]+]]:_(s16), [[UV122:%[0-9]+]]:_(s16), [[UV123:%[0-9]+]]:_(s16), [[UV124:%[0-9]+]]:_(s16), [[UV125:%[0-9]+]]:_(s16), [[UV126:%[0-9]+]]:_(s16), [[UV127:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<8 x s16>)
+  ; CHECK-NEXT:   [[DEF15:%[0-9]+]]:_(s16) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR16:%[0-9]+]]:_(<16 x s16>) = G_BUILD_VECTOR [[UV120]](s16), [[UV121]](s16), [[UV122]](s16), [[UV123]](s16), [[UV124]](s16), [[UV125]](s16), [[UV126]](s16), [[UV127]](s16), [[DEF15]](s16), [[DEF15]](s16), [[DEF15]](s16), [[DEF15]](s16), [[DEF15]](s16), [[DEF15]](s16), [[DEF15]](s16), [[DEF15]](s16)
+  ; CHECK-NEXT:   [[UV128:%[0-9]+]]:_(s16), [[UV129:%[0-9]+]]:_(s16), [[UV130:%[0-9]+]]:_(s16), [[UV131:%[0-9]+]]:_(s16), [[UV132:%[0-9]+]]:_(s16), [[UV133:%[0-9]+]]:_(s16), [[UV134:%[0-9]+]]:_(s16), [[UV135:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<8 x s16>)
+  ; CHECK-NEXT:   [[DEF16:%[0-9]+]]:_(s16) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR17:%[0-9]+]]:_(<16 x s16>) = G_BUILD_VECTOR [[UV128]](s16), [[UV129]](s16), [[UV130]](s16), [[UV131]](s16), [[UV132]](s16), [[UV133]](s16), [[UV134]](s16), [[UV135]](s16), [[DEF16]](s16), [[DEF16]](s16), [[DEF16]](s16), [[DEF16]](s16), [[DEF16]](s16), [[DEF16]](s16), [[DEF16]](s16), [[DEF16]](s16)
+  ; CHECK-NEXT:   [[UV136:%[0-9]+]]:_(s16), [[UV137:%[0-9]+]]:_(s16), [[UV138:%[0-9]+]]:_(s16), [[UV139:%[0-9]+]]:_(s16), [[UV140:%[0-9]+]]:_(s16), [[UV141:%[0-9]+]]:_(s16), [[UV142:%[0-9]+]]:_(s16), [[UV143:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<8 x s16>)
+  ; CHECK-NEXT:   [[DEF17:%[0-9]+]]:_(s16) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR18:%[0-9]+]]:_(<16 x s16>) = G_BUILD_VECTOR [[UV136]](s16), [[UV137]](s16), [[UV138]](s16), [[UV139]](s16), [[UV140]](s16), [[UV141]](s16), [[UV142]](s16), [[UV143]](s16), [[DEF17]](s16), [[DEF17]](s16), [[DEF17]](s16), [[DEF17]](s16), [[DEF17]](s16), [[DEF17]](s16), [[DEF17]](s16), [[DEF17]](s16)
+  ; CHECK-NEXT:   [[UV144:%[0-9]+]]:_(s16), [[UV145:%[0-9]+]]:_(s16), [[UV146:%[0-9]+]]:_(s16), [[UV147:%[0-9]+]]:_(s16), [[UV148:%[0-9]+]]:_(s16), [[UV149:%[0-9]+]]:_(s16), [[UV150:%[0-9]+]]:_(s16), [[UV151:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<8 x s16>)
+  ; CHECK-NEXT:   [[DEF18:%[0-9]+]]:_(s16) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR19:%[0-9]+]]:_(<16 x s16>) = G_BUILD_VECTOR [[UV144]](s16), [[UV145]](s16), [[UV146]](s16), [[UV147]](s16), [[UV148]](s16), [[UV149]](s16), [[UV150]](s16), [[UV151]](s16), [[DEF18]](s16), [[DEF18]](s16), [[DEF18]](s16), [[DEF18]](s16), [[DEF18]](s16), [[DEF18]](s16), [[DEF18]](s16), [[DEF18]](s16)
+  ; CHECK-NEXT:   [[UV152:%[0-9]+]]:_(s16), [[UV153:%[0-9]+]]:_(s16), [[UV154:%[0-9]+]]:_(s16), [[UV155:%[0-9]+]]:_(s16), [[UV156:%[0-9]+]]:_(s16), [[UV157:%[0-9]+]]:_(s16), [[UV158:%[0-9]+]]:_(s16), [[UV159:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<8 x s16>)
+  ; CHECK-NEXT:   [[DEF19:%[0-9]+]]:_(s16) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR20:%[0-9]+]]:_(<16 x s16>) = G_BUILD_VECTOR [[UV152]](s16), [[UV153]](s16), [[UV154]](s16), [[UV155]](s16), [[UV156]](s16), [[UV157]](s16), [[UV158]](s16), [[UV159]](s16), [[DEF19]](s16), [[DEF19]](s16), [[DEF19]](s16), [[DEF19]](s16), [[DEF19]](s16), [[DEF19]](s16), [[DEF19]](s16), [[DEF19]](s16)
+  ; CHECK-NEXT:   [[UV160:%[0-9]+]]:_(s16), [[UV161:%[0-9]+]]:_(s16), [[UV162:%[0-9]+]]:_(s16), [[UV163:%[0-9]+]]:_(s16), [[UV164:%[0-9]+]]:_(s16), [[UV165:%[0-9]+]]:_(s16), [[UV166:%[0-9]+]]:_(s16), [[UV167:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<8 x s16>)
+  ; CHECK-NEXT:   [[DEF20:%[0-9]+]]:_(s16) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR21:%[0-9]+]]:_(<16 x s16>) = G_BUILD_VECTOR [[UV160]](s16), [[UV161]](s16), [[UV162]](s16), [[UV163]](s16), [[UV164]](s16), [[UV165]](s16), [[UV166]](s16), [[UV167]](s16), [[DEF20]](s16), [[DEF20]](s16), [[DEF20]](s16), [[DEF20]](s16), [[DEF20]](s16), [[DEF20]](s16), [[DEF20]](s16), [[DEF20]](s16)
+  ; CHECK-NEXT:   [[UV168:%[0-9]+]]:_(s16), [[UV169:%[0-9]+]]:_(s16), [[UV170:%[0-9]+]]:_(s16), [[UV171:%[0-9]+]]:_(s16), [[UV172:%[0-9]+]]:_(s16), [[UV173:%[0-9]+]]:_(s16), [[UV174:%[0-9]+]]:_(s16), [[UV175:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<8 x s16>)
+  ; CHECK-NEXT:   [[DEF21:%[0-9]+]]:_(s16) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR22:%[0-9]+]]:_(<16 x s16>) = G_BUILD_VECTOR [[UV168]](s16), [[UV169]](s16), [[UV170]](s16), [[UV171]](s16), [[UV172]](s16), [[UV173]](s16), [[UV174]](s16), [[UV175]](s16), [[DEF21]](s16), [[DEF21]](s16), [[DEF21]](s16), [[DEF21]](s16), [[DEF21]](s16), [[DEF21]](s16), [[DEF21]](s16), [[DEF21]](s16)
+  ; CHECK-NEXT:   [[UV176:%[0-9]+]]:_(s16), [[UV177:%[0-9]+]]:_(s16), [[UV178:%[0-9]+]]:_(s16), [[UV179:%[0-9]+]]:_(s16), [[UV180:%[0-9]+]]:_(s16), [[UV181:%[0-9]+]]:_(s16), [[UV182:%[0-9]+]]:_(s16), [[UV183:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<8 x s16>)
+  ; CHECK-NEXT:   [[DEF22:%[0-9]+]]:_(s16) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR23:%[0-9]+]]:_(<16 x s16>) = G_BUILD_VECTOR [[UV176]](s16), [[UV177]](s16), [[UV178]](s16), [[UV179]](s16), [[UV180]](s16), [[UV181]](s16), [[UV182]](s16), [[UV183]](s16), [[DEF22]](s16), [[DEF22]](s16), [[DEF22]](s16), [[DEF22]](s16), [[DEF22]](s16), [[DEF22]](s16), [[DEF22]](s16), [[DEF22]](s16)
+  ; CHECK-NEXT:   [[UV184:%[0-9]+]]:_(s16), [[UV185:%[0-9]+]]:_(s16), [[UV186:%[0-9]+]]:_(s16), [[UV187:%[0-9]+]]:_(s16), [[UV188:%[0-9]+]]:_(s16), [[UV189:%[0-9]+]]:_(s16), [[UV190:%[0-9]+]]:_(s16), [[UV191:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<8 x s16>)
+  ; CHECK-NEXT:   [[DEF23:%[0-9]+]]:_(s16) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR24:%[0-9]+]]:_(<16 x s16>) = G_BUILD_VECTOR [[UV184]](s16), [[UV185]](s16), [[UV186]](s16), [[UV187]](s16), [[UV188]](s16), [[UV189]](s16), [[UV190]](s16), [[UV191]](s16), [[DEF23]](s16), [[DEF23]](s16), [[DEF23]](s16), [[DEF23]](s16), [[DEF23]](s16), [[DEF23]](s16), [[DEF23]](s16), [[DEF23]](s16)
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $sp
-  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 -32
+  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 -16
   ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s20)
-  ; CHECK-NEXT:   G_STORE [[ANYEXT24]](<8 x s32>), [[PTR_ADD]](p0) :: (store (<8 x s32>) into stack - 32)
-  ; CHECK-NEXT:   [[ANYEXT25:%[0-9]+]]:_(<8 x s32>) = G_ANYEXT [[BUILD_VECTOR]](<8 x s16>)
-  ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 -64
+  ; CHECK-NEXT:   G_STORE [[BUILD_VECTOR]](<8 x s16>), [[PTR_ADD]](p0) :: (store (<8 x s16>) into stack - 16, basealign 32)
+  ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 -32
   ; CHECK-NEXT:   [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C2]](s20)
-  ; CHECK-NEXT:   G_STORE [[ANYEXT25]](<8 x s32>), [[PTR_ADD1]](p0) :: (store (<8 x s32>) into stack - 64)
-  ; CHECK-NEXT:   $wl0 = COPY [[ANYEXT]](<8 x s32>)
-  ; CHECK-NEXT:   $wl2 = COPY [[ANYEXT1]](<8 x s32>)
-  ; CHECK-NEXT:   $wl4 = COPY [[ANYEXT2]](<8 x s32>)
-  ; CHECK-NEXT:   $wl6 = COPY [[ANYEXT3]](<8 x s32>)
-  ; CHECK-NEXT:   $wl8 = COPY [[ANYEXT4]](<8 x s32>)
-  ; CHECK-NEXT:   $wl10 = COPY [[ANYEXT5]](<8 x s32>)
-  ; CHECK-NEXT:   $wl1 = COPY [[ANYEXT6]](<8 x s32>)
-  ; CHECK-NEXT:   $wl3 = COPY [[ANYEXT7]](<8 x s32>)
-  ; CHECK-NEXT:   $wl5 = COPY [[ANYEXT8]](<8 x s32>)
-  ; CHECK-NEXT:   $wl7 = COPY [[ANYEXT9]](<8 x s32>)
-  ; CHECK-NEXT:   $wl9 = COPY [[ANYEXT10]](<8 x s32>)
-  ; CHECK-NEXT:   $wl11 = COPY [[ANYEXT11]](<8 x s32>)
-  ; CHECK-NEXT:   $wh0 = COPY [[ANYEXT12]](<8 x s32>)
-  ; CHECK-NEXT:   $wh2 = COPY [[ANYEXT13]](<8 x s32>)
-  ; CHECK-NEXT:   $wh4 = COPY [[ANYEXT14]](<8 x s32>)
-  ; CHECK-NEXT:   $wh6 = COPY [[ANYEXT15]](<8 x s32>)
-  ; CHECK-NEXT:   $wh8 = COPY [[ANYEXT16]](<8 x s32>)
-  ; CHECK-NEXT:   $wh10 = COPY [[ANYEXT17]](<8 x s32>)
-  ; CHECK-NEXT:   $wh1 = COPY [[ANYEXT18]](<8 x s32>)
-  ; CHECK-NEXT:   $wh3 = COPY [[ANYEXT19]](<8 x s32>)
-  ; CHECK-NEXT:   $wh5 = COPY [[ANYEXT20]](<8 x s32>)
-  ; CHECK-NEXT:   $wh7 = COPY [[ANYEXT21]](<8 x s32>)
-  ; CHECK-NEXT:   $wh9 = COPY [[ANYEXT22]](<8 x s32>)
-  ; CHECK-NEXT:   $wh11 = COPY [[ANYEXT23]](<8 x s32>)
+  ; CHECK-NEXT:   G_STORE [[BUILD_VECTOR]](<8 x s16>), [[PTR_ADD1]](p0) :: (store (<8 x s16>) into stack - 32)
+  ; CHECK-NEXT:   $wl0 = COPY [[BUILD_VECTOR1]](<16 x s16>)
+  ; CHECK-NEXT:   $wl2 = COPY [[BUILD_VECTOR2]](<16 x s16>)
+  ; CHECK-NEXT:   $wl4 = COPY [[BUILD_VECTOR3]](<16 x s16>)
+  ; CHECK-NEXT:   $wl6 = COPY [[BUILD_VECTOR4]](<16 x s16>)
+  ; CHECK-NEXT:   $wl8 = COPY [[BUILD_VECTOR5]](<16 x s16>)
+  ; CHECK-NEXT:   $wl10 = COPY [[BUILD_VECTOR6]](<16 x s16>)
+  ; CHECK-NEXT:   $wl1 = COPY [[BUILD_VECTOR7]](<16 x s16>)
+  ; CHECK-NEXT:   $wl3 = COPY [[BUILD_VECTOR8]](<16 x s16>)
+  ; CHECK-NEXT:   $wl5 = COPY [[BUILD_VECTOR9]](<16 x s16>)
+  ; CHECK-NEXT:   $wl7 = COPY [[BUILD_VECTOR10]](<16 x s16>)
+  ; CHECK-NEXT:   $wl9 = COPY [[BUILD_VECTOR11]](<16 x s16>)
+  ; CHECK-NEXT:   $wl11 = COPY [[BUILD_VECTOR12]](<16 x s16>)
+  ; CHECK-NEXT:   $wh0 = COPY [[BUILD_VECTOR13]](<16 x s16>)
+  ; CHECK-NEXT:   $wh2 = COPY [[BUILD_VECTOR14]](<16 x s16>)
+  ; CHECK-NEXT:   $wh4 = COPY [[BUILD_VECTOR15]](<16 x s16>)
+  ; CHECK-NEXT:   $wh6 = COPY [[BUILD_VECTOR16]](<16 x s16>)
+  ; CHECK-NEXT:   $wh8 = COPY [[BUILD_VECTOR17]](<16 x s16>)
+  ; CHECK-NEXT:   $wh10 = COPY [[BUILD_VECTOR18]](<16 x s16>)
+  ; CHECK-NEXT:   $wh1 = COPY [[BUILD_VECTOR19]](<16 x s16>)
+  ; CHECK-NEXT:   $wh3 = COPY [[BUILD_VECTOR20]](<16 x s16>)
+  ; CHECK-NEXT:   $wh5 = COPY [[BUILD_VECTOR21]](<16 x s16>)
+  ; CHECK-NEXT:   $wh7 = COPY [[BUILD_VECTOR22]](<16 x s16>)
+  ; CHECK-NEXT:   $wh9 = COPY [[BUILD_VECTOR23]](<16 x s16>)
+  ; CHECK-NEXT:   $wh11 = COPY [[BUILD_VECTOR24]](<16 x s16>)
   ; CHECK-NEXT:   PseudoJL @callee_v8int16, csr_aie2p, implicit-def $lr, implicit $wl0, implicit $wl2, implicit $wl4, implicit $wl6, implicit $wl8, implicit $wl10, implicit $wl1, implicit $wl3, implicit $wl5, implicit $wl7, implicit $wl9, implicit $wl11, implicit $wh0, implicit $wh2, implicit $wh4, implicit $wh6, implicit $wh8, implicit $wh10, implicit $wh1, implicit $wh3, implicit $wh5, implicit $wh7, implicit $wh9, implicit $wh11
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 64, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 32, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   call void @callee_v8int16(<8 x i16> zeroinitializer, <8 x i16> zeroinitializer, <8 x i16> zeroinitializer, <8 x i16> zeroinitializer, <8 x i16> zeroinitializer, <8 x i16> zeroinitializer,
                             <8 x i16> zeroinitializer, <8 x i16> zeroinitializer, <8 x i16> zeroinitializer, <8 x i16> zeroinitializer, <8 x i16> zeroinitializer, <8 x i16> zeroinitializer,
@@ -230,66 +270,112 @@ define void @call_v16int8() {
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s8) = G_CONSTANT i8 0
   ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<16 x s8>) = G_BUILD_VECTOR [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8)
-  ; CHECK-NEXT:   ADJCALLSTACKUP 64, 0, implicit-def $sp, implicit $sp
-  ; CHECK-NEXT:   [[ANYEXT:%[0-9]+]]:_(<16 x s16>) = G_ANYEXT [[BUILD_VECTOR]](<16 x s8>)
-  ; CHECK-NEXT:   [[ANYEXT1:%[0-9]+]]:_(<16 x s16>) = G_ANYEXT [[BUILD_VECTOR]](<16 x s8>)
-  ; CHECK-NEXT:   [[ANYEXT2:%[0-9]+]]:_(<16 x s16>) = G_ANYEXT [[BUILD_VECTOR]](<16 x s8>)
-  ; CHECK-NEXT:   [[ANYEXT3:%[0-9]+]]:_(<16 x s16>) = G_ANYEXT [[BUILD_VECTOR]](<16 x s8>)
-  ; CHECK-NEXT:   [[ANYEXT4:%[0-9]+]]:_(<16 x s16>) = G_ANYEXT [[BUILD_VECTOR]](<16 x s8>)
-  ; CHECK-NEXT:   [[ANYEXT5:%[0-9]+]]:_(<16 x s16>) = G_ANYEXT [[BUILD_VECTOR]](<16 x s8>)
-  ; CHECK-NEXT:   [[ANYEXT6:%[0-9]+]]:_(<16 x s16>) = G_ANYEXT [[BUILD_VECTOR]](<16 x s8>)
-  ; CHECK-NEXT:   [[ANYEXT7:%[0-9]+]]:_(<16 x s16>) = G_ANYEXT [[BUILD_VECTOR]](<16 x s8>)
-  ; CHECK-NEXT:   [[ANYEXT8:%[0-9]+]]:_(<16 x s16>) = G_ANYEXT [[BUILD_VECTOR]](<16 x s8>)
-  ; CHECK-NEXT:   [[ANYEXT9:%[0-9]+]]:_(<16 x s16>) = G_ANYEXT [[BUILD_VECTOR]](<16 x s8>)
-  ; CHECK-NEXT:   [[ANYEXT10:%[0-9]+]]:_(<16 x s16>) = G_ANYEXT [[BUILD_VECTOR]](<16 x s8>)
-  ; CHECK-NEXT:   [[ANYEXT11:%[0-9]+]]:_(<16 x s16>) = G_ANYEXT [[BUILD_VECTOR]](<16 x s8>)
-  ; CHECK-NEXT:   [[ANYEXT12:%[0-9]+]]:_(<16 x s16>) = G_ANYEXT [[BUILD_VECTOR]](<16 x s8>)
-  ; CHECK-NEXT:   [[ANYEXT13:%[0-9]+]]:_(<16 x s16>) = G_ANYEXT [[BUILD_VECTOR]](<16 x s8>)
-  ; CHECK-NEXT:   [[ANYEXT14:%[0-9]+]]:_(<16 x s16>) = G_ANYEXT [[BUILD_VECTOR]](<16 x s8>)
-  ; CHECK-NEXT:   [[ANYEXT15:%[0-9]+]]:_(<16 x s16>) = G_ANYEXT [[BUILD_VECTOR]](<16 x s8>)
-  ; CHECK-NEXT:   [[ANYEXT16:%[0-9]+]]:_(<16 x s16>) = G_ANYEXT [[BUILD_VECTOR]](<16 x s8>)
-  ; CHECK-NEXT:   [[ANYEXT17:%[0-9]+]]:_(<16 x s16>) = G_ANYEXT [[BUILD_VECTOR]](<16 x s8>)
-  ; CHECK-NEXT:   [[ANYEXT18:%[0-9]+]]:_(<16 x s16>) = G_ANYEXT [[BUILD_VECTOR]](<16 x s8>)
-  ; CHECK-NEXT:   [[ANYEXT19:%[0-9]+]]:_(<16 x s16>) = G_ANYEXT [[BUILD_VECTOR]](<16 x s8>)
-  ; CHECK-NEXT:   [[ANYEXT20:%[0-9]+]]:_(<16 x s16>) = G_ANYEXT [[BUILD_VECTOR]](<16 x s8>)
-  ; CHECK-NEXT:   [[ANYEXT21:%[0-9]+]]:_(<16 x s16>) = G_ANYEXT [[BUILD_VECTOR]](<16 x s8>)
-  ; CHECK-NEXT:   [[ANYEXT22:%[0-9]+]]:_(<16 x s16>) = G_ANYEXT [[BUILD_VECTOR]](<16 x s8>)
-  ; CHECK-NEXT:   [[ANYEXT23:%[0-9]+]]:_(<16 x s16>) = G_ANYEXT [[BUILD_VECTOR]](<16 x s8>)
-  ; CHECK-NEXT:   [[ANYEXT24:%[0-9]+]]:_(<16 x s16>) = G_ANYEXT [[BUILD_VECTOR]](<16 x s8>)
+  ; CHECK-NEXT:   ADJCALLSTACKUP 32, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   [[UV:%[0-9]+]]:_(s8), [[UV1:%[0-9]+]]:_(s8), [[UV2:%[0-9]+]]:_(s8), [[UV3:%[0-9]+]]:_(s8), [[UV4:%[0-9]+]]:_(s8), [[UV5:%[0-9]+]]:_(s8), [[UV6:%[0-9]+]]:_(s8), [[UV7:%[0-9]+]]:_(s8), [[UV8:%[0-9]+]]:_(s8), [[UV9:%[0-9]+]]:_(s8), [[UV10:%[0-9]+]]:_(s8), [[UV11:%[0-9]+]]:_(s8), [[UV12:%[0-9]+]]:_(s8), [[UV13:%[0-9]+]]:_(s8), [[UV14:%[0-9]+]]:_(s8), [[UV15:%[0-9]+]]:_(s8) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<16 x s8>)
+  ; CHECK-NEXT:   [[DEF:%[0-9]+]]:_(s8) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR1:%[0-9]+]]:_(<32 x s8>) = G_BUILD_VECTOR [[UV]](s8), [[UV1]](s8), [[UV2]](s8), [[UV3]](s8), [[UV4]](s8), [[UV5]](s8), [[UV6]](s8), [[UV7]](s8), [[UV8]](s8), [[UV9]](s8), [[UV10]](s8), [[UV11]](s8), [[UV12]](s8), [[UV13]](s8), [[UV14]](s8), [[UV15]](s8), [[DEF]](s8), [[DEF]](s8), [[DEF]](s8), [[DEF]](s8), [[DEF]](s8), [[DEF]](s8), [[DEF]](s8), [[DEF]](s8), [[DEF]](s8), [[DEF]](s8), [[DEF]](s8), [[DEF]](s8), [[DEF]](s8), [[DEF]](s8), [[DEF]](s8), [[DEF]](s8)
+  ; CHECK-NEXT:   [[UV16:%[0-9]+]]:_(s8), [[UV17:%[0-9]+]]:_(s8), [[UV18:%[0-9]+]]:_(s8), [[UV19:%[0-9]+]]:_(s8), [[UV20:%[0-9]+]]:_(s8), [[UV21:%[0-9]+]]:_(s8), [[UV22:%[0-9]+]]:_(s8), [[UV23:%[0-9]+]]:_(s8), [[UV24:%[0-9]+]]:_(s8), [[UV25:%[0-9]+]]:_(s8), [[UV26:%[0-9]+]]:_(s8), [[UV27:%[0-9]+]]:_(s8), [[UV28:%[0-9]+]]:_(s8), [[UV29:%[0-9]+]]:_(s8), [[UV30:%[0-9]+]]:_(s8), [[UV31:%[0-9]+]]:_(s8) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<16 x s8>)
+  ; CHECK-NEXT:   [[DEF1:%[0-9]+]]:_(s8) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR2:%[0-9]+]]:_(<32 x s8>) = G_BUILD_VECTOR [[UV16]](s8), [[UV17]](s8), [[UV18]](s8), [[UV19]](s8), [[UV20]](s8), [[UV21]](s8), [[UV22]](s8), [[UV23]](s8), [[UV24]](s8), [[UV25]](s8), [[UV26]](s8), [[UV27]](s8), [[UV28]](s8), [[UV29]](s8), [[UV30]](s8), [[UV31]](s8), [[DEF1]](s8), [[DEF1]](s8), [[DEF1]](s8), [[DEF1]](s8), [[DEF1]](s8), [[DEF1]](s8), [[DEF1]](s8), [[DEF1]](s8), [[DEF1]](s8), [[DEF1]](s8), [[DEF1]](s8), [[DEF1]](s8), [[DEF1]](s8), [[DEF1]](s8), [[DEF1]](s8), [[DEF1]](s8)
+  ; CHECK-NEXT:   [[UV32:%[0-9]+]]:_(s8), [[UV33:%[0-9]+]]:_(s8), [[UV34:%[0-9]+]]:_(s8), [[UV35:%[0-9]+]]:_(s8), [[UV36:%[0-9]+]]:_(s8), [[UV37:%[0-9]+]]:_(s8), [[UV38:%[0-9]+]]:_(s8), [[UV39:%[0-9]+]]:_(s8), [[UV40:%[0-9]+]]:_(s8), [[UV41:%[0-9]+]]:_(s8), [[UV42:%[0-9]+]]:_(s8), [[UV43:%[0-9]+]]:_(s8), [[UV44:%[0-9]+]]:_(s8), [[UV45:%[0-9]+]]:_(s8), [[UV46:%[0-9]+]]:_(s8), [[UV47:%[0-9]+]]:_(s8) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<16 x s8>)
+  ; CHECK-NEXT:   [[DEF2:%[0-9]+]]:_(s8) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR3:%[0-9]+]]:_(<32 x s8>) = G_BUILD_VECTOR [[UV32]](s8), [[UV33]](s8), [[UV34]](s8), [[UV35]](s8), [[UV36]](s8), [[UV37]](s8), [[UV38]](s8), [[UV39]](s8), [[UV40]](s8), [[UV41]](s8), [[UV42]](s8), [[UV43]](s8), [[UV44]](s8), [[UV45]](s8), [[UV46]](s8), [[UV47]](s8), [[DEF2]](s8), [[DEF2]](s8), [[DEF2]](s8), [[DEF2]](s8), [[DEF2]](s8), [[DEF2]](s8), [[DEF2]](s8), [[DEF2]](s8), [[DEF2]](s8), [[DEF2]](s8), [[DEF2]](s8), [[DEF2]](s8), [[DEF2]](s8), [[DEF2]](s8), [[DEF2]](s8), [[DEF2]](s8)
+  ; CHECK-NEXT:   [[UV48:%[0-9]+]]:_(s8), [[UV49:%[0-9]+]]:_(s8), [[UV50:%[0-9]+]]:_(s8), [[UV51:%[0-9]+]]:_(s8), [[UV52:%[0-9]+]]:_(s8), [[UV53:%[0-9]+]]:_(s8), [[UV54:%[0-9]+]]:_(s8), [[UV55:%[0-9]+]]:_(s8), [[UV56:%[0-9]+]]:_(s8), [[UV57:%[0-9]+]]:_(s8), [[UV58:%[0-9]+]]:_(s8), [[UV59:%[0-9]+]]:_(s8), [[UV60:%[0-9]+]]:_(s8), [[UV61:%[0-9]+]]:_(s8), [[UV62:%[0-9]+]]:_(s8), [[UV63:%[0-9]+]]:_(s8) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<16 x s8>)
+  ; CHECK-NEXT:   [[DEF3:%[0-9]+]]:_(s8) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR4:%[0-9]+]]:_(<32 x s8>) = G_BUILD_VECTOR [[UV48]](s8), [[UV49]](s8), [[UV50]](s8), [[UV51]](s8), [[UV52]](s8), [[UV53]](s8), [[UV54]](s8), [[UV55]](s8), [[UV56]](s8), [[UV57]](s8), [[UV58]](s8), [[UV59]](s8), [[UV60]](s8), [[UV61]](s8), [[UV62]](s8), [[UV63]](s8), [[DEF3]](s8), [[DEF3]](s8), [[DEF3]](s8), [[DEF3]](s8), [[DEF3]](s8), [[DEF3]](s8), [[DEF3]](s8), [[DEF3]](s8), [[DEF3]](s8), [[DEF3]](s8), [[DEF3]](s8), [[DEF3]](s8), [[DEF3]](s8), [[DEF3]](s8), [[DEF3]](s8), [[DEF3]](s8)
+  ; CHECK-NEXT:   [[UV64:%[0-9]+]]:_(s8), [[UV65:%[0-9]+]]:_(s8), [[UV66:%[0-9]+]]:_(s8), [[UV67:%[0-9]+]]:_(s8), [[UV68:%[0-9]+]]:_(s8), [[UV69:%[0-9]+]]:_(s8), [[UV70:%[0-9]+]]:_(s8), [[UV71:%[0-9]+]]:_(s8), [[UV72:%[0-9]+]]:_(s8), [[UV73:%[0-9]+]]:_(s8), [[UV74:%[0-9]+]]:_(s8), [[UV75:%[0-9]+]]:_(s8), [[UV76:%[0-9]+]]:_(s8), [[UV77:%[0-9]+]]:_(s8), [[UV78:%[0-9]+]]:_(s8), [[UV79:%[0-9]+]]:_(s8) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<16 x s8>)
+  ; CHECK-NEXT:   [[DEF4:%[0-9]+]]:_(s8) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR5:%[0-9]+]]:_(<32 x s8>) = G_BUILD_VECTOR [[UV64]](s8), [[UV65]](s8), [[UV66]](s8), [[UV67]](s8), [[UV68]](s8), [[UV69]](s8), [[UV70]](s8), [[UV71]](s8), [[UV72]](s8), [[UV73]](s8), [[UV74]](s8), [[UV75]](s8), [[UV76]](s8), [[UV77]](s8), [[UV78]](s8), [[UV79]](s8), [[DEF4]](s8), [[DEF4]](s8), [[DEF4]](s8), [[DEF4]](s8), [[DEF4]](s8), [[DEF4]](s8), [[DEF4]](s8), [[DEF4]](s8), [[DEF4]](s8), [[DEF4]](s8), [[DEF4]](s8), [[DEF4]](s8), [[DEF4]](s8), [[DEF4]](s8), [[DEF4]](s8), [[DEF4]](s8)
+  ; CHECK-NEXT:   [[UV80:%[0-9]+]]:_(s8), [[UV81:%[0-9]+]]:_(s8), [[UV82:%[0-9]+]]:_(s8), [[UV83:%[0-9]+]]:_(s8), [[UV84:%[0-9]+]]:_(s8), [[UV85:%[0-9]+]]:_(s8), [[UV86:%[0-9]+]]:_(s8), [[UV87:%[0-9]+]]:_(s8), [[UV88:%[0-9]+]]:_(s8), [[UV89:%[0-9]+]]:_(s8), [[UV90:%[0-9]+]]:_(s8), [[UV91:%[0-9]+]]:_(s8), [[UV92:%[0-9]+]]:_(s8), [[UV93:%[0-9]+]]:_(s8), [[UV94:%[0-9]+]]:_(s8), [[UV95:%[0-9]+]]:_(s8) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<16 x s8>)
+  ; CHECK-NEXT:   [[DEF5:%[0-9]+]]:_(s8) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR6:%[0-9]+]]:_(<32 x s8>) = G_BUILD_VECTOR [[UV80]](s8), [[UV81]](s8), [[UV82]](s8), [[UV83]](s8), [[UV84]](s8), [[UV85]](s8), [[UV86]](s8), [[UV87]](s8), [[UV88]](s8), [[UV89]](s8), [[UV90]](s8), [[UV91]](s8), [[UV92]](s8), [[UV93]](s8), [[UV94]](s8), [[UV95]](s8), [[DEF5]](s8), [[DEF5]](s8), [[DEF5]](s8), [[DEF5]](s8), [[DEF5]](s8), [[DEF5]](s8), [[DEF5]](s8), [[DEF5]](s8), [[DEF5]](s8), [[DEF5]](s8), [[DEF5]](s8), [[DEF5]](s8), [[DEF5]](s8), [[DEF5]](s8), [[DEF5]](s8), [[DEF5]](s8)
+  ; CHECK-NEXT:   [[UV96:%[0-9]+]]:_(s8), [[UV97:%[0-9]+]]:_(s8), [[UV98:%[0-9]+]]:_(s8), [[UV99:%[0-9]+]]:_(s8), [[UV100:%[0-9]+]]:_(s8), [[UV101:%[0-9]+]]:_(s8), [[UV102:%[0-9]+]]:_(s8), [[UV103:%[0-9]+]]:_(s8), [[UV104:%[0-9]+]]:_(s8), [[UV105:%[0-9]+]]:_(s8), [[UV106:%[0-9]+]]:_(s8), [[UV107:%[0-9]+]]:_(s8), [[UV108:%[0-9]+]]:_(s8), [[UV109:%[0-9]+]]:_(s8), [[UV110:%[0-9]+]]:_(s8), [[UV111:%[0-9]+]]:_(s8) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<16 x s8>)
+  ; CHECK-NEXT:   [[DEF6:%[0-9]+]]:_(s8) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR7:%[0-9]+]]:_(<32 x s8>) = G_BUILD_VECTOR [[UV96]](s8), [[UV97]](s8), [[UV98]](s8), [[UV99]](s8), [[UV100]](s8), [[UV101]](s8), [[UV102]](s8), [[UV103]](s8), [[UV104]](s8), [[UV105]](s8), [[UV106]](s8), [[UV107]](s8), [[UV108]](s8), [[UV109]](s8), [[UV110]](s8), [[UV111]](s8), [[DEF6]](s8), [[DEF6]](s8), [[DEF6]](s8), [[DEF6]](s8), [[DEF6]](s8), [[DEF6]](s8), [[DEF6]](s8), [[DEF6]](s8), [[DEF6]](s8), [[DEF6]](s8), [[DEF6]](s8), [[DEF6]](s8), [[DEF6]](s8), [[DEF6]](s8), [[DEF6]](s8), [[DEF6]](s8)
+  ; CHECK-NEXT:   [[UV112:%[0-9]+]]:_(s8), [[UV113:%[0-9]+]]:_(s8), [[UV114:%[0-9]+]]:_(s8), [[UV115:%[0-9]+]]:_(s8), [[UV116:%[0-9]+]]:_(s8), [[UV117:%[0-9]+]]:_(s8), [[UV118:%[0-9]+]]:_(s8), [[UV119:%[0-9]+]]:_(s8), [[UV120:%[0-9]+]]:_(s8), [[UV121:%[0-9]+]]:_(s8), [[UV122:%[0-9]+]]:_(s8), [[UV123:%[0-9]+]]:_(s8), [[UV124:%[0-9]+]]:_(s8), [[UV125:%[0-9]+]]:_(s8), [[UV126:%[0-9]+]]:_(s8), [[UV127:%[0-9]+]]:_(s8) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<16 x s8>)
+  ; CHECK-NEXT:   [[DEF7:%[0-9]+]]:_(s8) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR8:%[0-9]+]]:_(<32 x s8>) = G_BUILD_VECTOR [[UV112]](s8), [[UV113]](s8), [[UV114]](s8), [[UV115]](s8), [[UV116]](s8), [[UV117]](s8), [[UV118]](s8), [[UV119]](s8), [[UV120]](s8), [[UV121]](s8), [[UV122]](s8), [[UV123]](s8), [[UV124]](s8), [[UV125]](s8), [[UV126]](s8), [[UV127]](s8), [[DEF7]](s8), [[DEF7]](s8), [[DEF7]](s8), [[DEF7]](s8), [[DEF7]](s8), [[DEF7]](s8), [[DEF7]](s8), [[DEF7]](s8), [[DEF7]](s8), [[DEF7]](s8), [[DEF7]](s8), [[DEF7]](s8), [[DEF7]](s8), [[DEF7]](s8), [[DEF7]](s8), [[DEF7]](s8)
+  ; CHECK-NEXT:   [[UV128:%[0-9]+]]:_(s8), [[UV129:%[0-9]+]]:_(s8), [[UV130:%[0-9]+]]:_(s8), [[UV131:%[0-9]+]]:_(s8), [[UV132:%[0-9]+]]:_(s8), [[UV133:%[0-9]+]]:_(s8), [[UV134:%[0-9]+]]:_(s8), [[UV135:%[0-9]+]]:_(s8), [[UV136:%[0-9]+]]:_(s8), [[UV137:%[0-9]+]]:_(s8), [[UV138:%[0-9]+]]:_(s8), [[UV139:%[0-9]+]]:_(s8), [[UV140:%[0-9]+]]:_(s8), [[UV141:%[0-9]+]]:_(s8), [[UV142:%[0-9]+]]:_(s8), [[UV143:%[0-9]+]]:_(s8) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<16 x s8>)
+  ; CHECK-NEXT:   [[DEF8:%[0-9]+]]:_(s8) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR9:%[0-9]+]]:_(<32 x s8>) = G_BUILD_VECTOR [[UV128]](s8), [[UV129]](s8), [[UV130]](s8), [[UV131]](s8), [[UV132]](s8), [[UV133]](s8), [[UV134]](s8), [[UV135]](s8), [[UV136]](s8), [[UV137]](s8), [[UV138]](s8), [[UV139]](s8), [[UV140]](s8), [[UV141]](s8), [[UV142]](s8), [[UV143]](s8), [[DEF8]](s8), [[DEF8]](s8), [[DEF8]](s8), [[DEF8]](s8), [[DEF8]](s8), [[DEF8]](s8), [[DEF8]](s8), [[DEF8]](s8), [[DEF8]](s8), [[DEF8]](s8), [[DEF8]](s8), [[DEF8]](s8), [[DEF8]](s8), [[DEF8]](s8), [[DEF8]](s8), [[DEF8]](s8)
+  ; CHECK-NEXT:   [[UV144:%[0-9]+]]:_(s8), [[UV145:%[0-9]+]]:_(s8), [[UV146:%[0-9]+]]:_(s8), [[UV147:%[0-9]+]]:_(s8), [[UV148:%[0-9]+]]:_(s8), [[UV149:%[0-9]+]]:_(s8), [[UV150:%[0-9]+]]:_(s8), [[UV151:%[0-9]+]]:_(s8), [[UV152:%[0-9]+]]:_(s8), [[UV153:%[0-9]+]]:_(s8), [[UV154:%[0-9]+]]:_(s8), [[UV155:%[0-9]+]]:_(s8), [[UV156:%[0-9]+]]:_(s8), [[UV157:%[0-9]+]]:_(s8), [[UV158:%[0-9]+]]:_(s8), [[UV159:%[0-9]+]]:_(s8) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<16 x s8>)
+  ; CHECK-NEXT:   [[DEF9:%[0-9]+]]:_(s8) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR10:%[0-9]+]]:_(<32 x s8>) = G_BUILD_VECTOR [[UV144]](s8), [[UV145]](s8), [[UV146]](s8), [[UV147]](s8), [[UV148]](s8), [[UV149]](s8), [[UV150]](s8), [[UV151]](s8), [[UV152]](s8), [[UV153]](s8), [[UV154]](s8), [[UV155]](s8), [[UV156]](s8), [[UV157]](s8), [[UV158]](s8), [[UV159]](s8), [[DEF9]](s8), [[DEF9]](s8), [[DEF9]](s8), [[DEF9]](s8), [[DEF9]](s8), [[DEF9]](s8), [[DEF9]](s8), [[DEF9]](s8), [[DEF9]](s8), [[DEF9]](s8), [[DEF9]](s8), [[DEF9]](s8), [[DEF9]](s8), [[DEF9]](s8), [[DEF9]](s8), [[DEF9]](s8)
+  ; CHECK-NEXT:   [[UV160:%[0-9]+]]:_(s8), [[UV161:%[0-9]+]]:_(s8), [[UV162:%[0-9]+]]:_(s8), [[UV163:%[0-9]+]]:_(s8), [[UV164:%[0-9]+]]:_(s8), [[UV165:%[0-9]+]]:_(s8), [[UV166:%[0-9]+]]:_(s8), [[UV167:%[0-9]+]]:_(s8), [[UV168:%[0-9]+]]:_(s8), [[UV169:%[0-9]+]]:_(s8), [[UV170:%[0-9]+]]:_(s8), [[UV171:%[0-9]+]]:_(s8), [[UV172:%[0-9]+]]:_(s8), [[UV173:%[0-9]+]]:_(s8), [[UV174:%[0-9]+]]:_(s8), [[UV175:%[0-9]+]]:_(s8) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<16 x s8>)
+  ; CHECK-NEXT:   [[DEF10:%[0-9]+]]:_(s8) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR11:%[0-9]+]]:_(<32 x s8>) = G_BUILD_VECTOR [[UV160]](s8), [[UV161]](s8), [[UV162]](s8), [[UV163]](s8), [[UV164]](s8), [[UV165]](s8), [[UV166]](s8), [[UV167]](s8), [[UV168]](s8), [[UV169]](s8), [[UV170]](s8), [[UV171]](s8), [[UV172]](s8), [[UV173]](s8), [[UV174]](s8), [[UV175]](s8), [[DEF10]](s8), [[DEF10]](s8), [[DEF10]](s8), [[DEF10]](s8), [[DEF10]](s8), [[DEF10]](s8), [[DEF10]](s8), [[DEF10]](s8), [[DEF10]](s8), [[DEF10]](s8), [[DEF10]](s8), [[DEF10]](s8), [[DEF10]](s8), [[DEF10]](s8), [[DEF10]](s8), [[DEF10]](s8)
+  ; CHECK-NEXT:   [[UV176:%[0-9]+]]:_(s8), [[UV177:%[0-9]+]]:_(s8), [[UV178:%[0-9]+]]:_(s8), [[UV179:%[0-9]+]]:_(s8), [[UV180:%[0-9]+]]:_(s8), [[UV181:%[0-9]+]]:_(s8), [[UV182:%[0-9]+]]:_(s8), [[UV183:%[0-9]+]]:_(s8), [[UV184:%[0-9]+]]:_(s8), [[UV185:%[0-9]+]]:_(s8), [[UV186:%[0-9]+]]:_(s8), [[UV187:%[0-9]+]]:_(s8), [[UV188:%[0-9]+]]:_(s8), [[UV189:%[0-9]+]]:_(s8), [[UV190:%[0-9]+]]:_(s8), [[UV191:%[0-9]+]]:_(s8) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<16 x s8>)
+  ; CHECK-NEXT:   [[DEF11:%[0-9]+]]:_(s8) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR12:%[0-9]+]]:_(<32 x s8>) = G_BUILD_VECTOR [[UV176]](s8), [[UV177]](s8), [[UV178]](s8), [[UV179]](s8), [[UV180]](s8), [[UV181]](s8), [[UV182]](s8), [[UV183]](s8), [[UV184]](s8), [[UV185]](s8), [[UV186]](s8), [[UV187]](s8), [[UV188]](s8), [[UV189]](s8), [[UV190]](s8), [[UV191]](s8), [[DEF11]](s8), [[DEF11]](s8), [[DEF11]](s8), [[DEF11]](s8), [[DEF11]](s8), [[DEF11]](s8), [[DEF11]](s8), [[DEF11]](s8), [[DEF11]](s8), [[DEF11]](s8), [[DEF11]](s8), [[DEF11]](s8), [[DEF11]](s8), [[DEF11]](s8), [[DEF11]](s8), [[DEF11]](s8)
+  ; CHECK-NEXT:   [[UV192:%[0-9]+]]:_(s8), [[UV193:%[0-9]+]]:_(s8), [[UV194:%[0-9]+]]:_(s8), [[UV195:%[0-9]+]]:_(s8), [[UV196:%[0-9]+]]:_(s8), [[UV197:%[0-9]+]]:_(s8), [[UV198:%[0-9]+]]:_(s8), [[UV199:%[0-9]+]]:_(s8), [[UV200:%[0-9]+]]:_(s8), [[UV201:%[0-9]+]]:_(s8), [[UV202:%[0-9]+]]:_(s8), [[UV203:%[0-9]+]]:_(s8), [[UV204:%[0-9]+]]:_(s8), [[UV205:%[0-9]+]]:_(s8), [[UV206:%[0-9]+]]:_(s8), [[UV207:%[0-9]+]]:_(s8) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<16 x s8>)
+  ; CHECK-NEXT:   [[DEF12:%[0-9]+]]:_(s8) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR13:%[0-9]+]]:_(<32 x s8>) = G_BUILD_VECTOR [[UV192]](s8), [[UV193]](s8), [[UV194]](s8), [[UV195]](s8), [[UV196]](s8), [[UV197]](s8), [[UV198]](s8), [[UV199]](s8), [[UV200]](s8), [[UV201]](s8), [[UV202]](s8), [[UV203]](s8), [[UV204]](s8), [[UV205]](s8), [[UV206]](s8), [[UV207]](s8), [[DEF12]](s8), [[DEF12]](s8), [[DEF12]](s8), [[DEF12]](s8), [[DEF12]](s8), [[DEF12]](s8), [[DEF12]](s8), [[DEF12]](s8), [[DEF12]](s8), [[DEF12]](s8), [[DEF12]](s8), [[DEF12]](s8), [[DEF12]](s8), [[DEF12]](s8), [[DEF12]](s8), [[DEF12]](s8)
+  ; CHECK-NEXT:   [[UV208:%[0-9]+]]:_(s8), [[UV209:%[0-9]+]]:_(s8), [[UV210:%[0-9]+]]:_(s8), [[UV211:%[0-9]+]]:_(s8), [[UV212:%[0-9]+]]:_(s8), [[UV213:%[0-9]+]]:_(s8), [[UV214:%[0-9]+]]:_(s8), [[UV215:%[0-9]+]]:_(s8), [[UV216:%[0-9]+]]:_(s8), [[UV217:%[0-9]+]]:_(s8), [[UV218:%[0-9]+]]:_(s8), [[UV219:%[0-9]+]]:_(s8), [[UV220:%[0-9]+]]:_(s8), [[UV221:%[0-9]+]]:_(s8), [[UV222:%[0-9]+]]:_(s8), [[UV223:%[0-9]+]]:_(s8) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<16 x s8>)
+  ; CHECK-NEXT:   [[DEF13:%[0-9]+]]:_(s8) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR14:%[0-9]+]]:_(<32 x s8>) = G_BUILD_VECTOR [[UV208]](s8), [[UV209]](s8), [[UV210]](s8), [[UV211]](s8), [[UV212]](s8), [[UV213]](s8), [[UV214]](s8), [[UV215]](s8), [[UV216]](s8), [[UV217]](s8), [[UV218]](s8), [[UV219]](s8), [[UV220]](s8), [[UV221]](s8), [[UV222]](s8), [[UV223]](s8), [[DEF13]](s8), [[DEF13]](s8), [[DEF13]](s8), [[DEF13]](s8), [[DEF13]](s8), [[DEF13]](s8), [[DEF13]](s8), [[DEF13]](s8), [[DEF13]](s8), [[DEF13]](s8), [[DEF13]](s8), [[DEF13]](s8), [[DEF13]](s8), [[DEF13]](s8), [[DEF13]](s8), [[DEF13]](s8)
+  ; CHECK-NEXT:   [[UV224:%[0-9]+]]:_(s8), [[UV225:%[0-9]+]]:_(s8), [[UV226:%[0-9]+]]:_(s8), [[UV227:%[0-9]+]]:_(s8), [[UV228:%[0-9]+]]:_(s8), [[UV229:%[0-9]+]]:_(s8), [[UV230:%[0-9]+]]:_(s8), [[UV231:%[0-9]+]]:_(s8), [[UV232:%[0-9]+]]:_(s8), [[UV233:%[0-9]+]]:_(s8), [[UV234:%[0-9]+]]:_(s8), [[UV235:%[0-9]+]]:_(s8), [[UV236:%[0-9]+]]:_(s8), [[UV237:%[0-9]+]]:_(s8), [[UV238:%[0-9]+]]:_(s8), [[UV239:%[0-9]+]]:_(s8) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<16 x s8>)
+  ; CHECK-NEXT:   [[DEF14:%[0-9]+]]:_(s8) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR15:%[0-9]+]]:_(<32 x s8>) = G_BUILD_VECTOR [[UV224]](s8), [[UV225]](s8), [[UV226]](s8), [[UV227]](s8), [[UV228]](s8), [[UV229]](s8), [[UV230]](s8), [[UV231]](s8), [[UV232]](s8), [[UV233]](s8), [[UV234]](s8), [[UV235]](s8), [[UV236]](s8), [[UV237]](s8), [[UV238]](s8), [[UV239]](s8), [[DEF14]](s8), [[DEF14]](s8), [[DEF14]](s8), [[DEF14]](s8), [[DEF14]](s8), [[DEF14]](s8), [[DEF14]](s8), [[DEF14]](s8), [[DEF14]](s8), [[DEF14]](s8), [[DEF14]](s8), [[DEF14]](s8), [[DEF14]](s8), [[DEF14]](s8), [[DEF14]](s8), [[DEF14]](s8)
+  ; CHECK-NEXT:   [[UV240:%[0-9]+]]:_(s8), [[UV241:%[0-9]+]]:_(s8), [[UV242:%[0-9]+]]:_(s8), [[UV243:%[0-9]+]]:_(s8), [[UV244:%[0-9]+]]:_(s8), [[UV245:%[0-9]+]]:_(s8), [[UV246:%[0-9]+]]:_(s8), [[UV247:%[0-9]+]]:_(s8), [[UV248:%[0-9]+]]:_(s8), [[UV249:%[0-9]+]]:_(s8), [[UV250:%[0-9]+]]:_(s8), [[UV251:%[0-9]+]]:_(s8), [[UV252:%[0-9]+]]:_(s8), [[UV253:%[0-9]+]]:_(s8), [[UV254:%[0-9]+]]:_(s8), [[UV255:%[0-9]+]]:_(s8) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<16 x s8>)
+  ; CHECK-NEXT:   [[DEF15:%[0-9]+]]:_(s8) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR16:%[0-9]+]]:_(<32 x s8>) = G_BUILD_VECTOR [[UV240]](s8), [[UV241]](s8), [[UV242]](s8), [[UV243]](s8), [[UV244]](s8), [[UV245]](s8), [[UV246]](s8), [[UV247]](s8), [[UV248]](s8), [[UV249]](s8), [[UV250]](s8), [[UV251]](s8), [[UV252]](s8), [[UV253]](s8), [[UV254]](s8), [[UV255]](s8), [[DEF15]](s8), [[DEF15]](s8), [[DEF15]](s8), [[DEF15]](s8), [[DEF15]](s8), [[DEF15]](s8), [[DEF15]](s8), [[DEF15]](s8), [[DEF15]](s8), [[DEF15]](s8), [[DEF15]](s8), [[DEF15]](s8), [[DEF15]](s8), [[DEF15]](s8), [[DEF15]](s8), [[DEF15]](s8)
+  ; CHECK-NEXT:   [[UV256:%[0-9]+]]:_(s8), [[UV257:%[0-9]+]]:_(s8), [[UV258:%[0-9]+]]:_(s8), [[UV259:%[0-9]+]]:_(s8), [[UV260:%[0-9]+]]:_(s8), [[UV261:%[0-9]+]]:_(s8), [[UV262:%[0-9]+]]:_(s8), [[UV263:%[0-9]+]]:_(s8), [[UV264:%[0-9]+]]:_(s8), [[UV265:%[0-9]+]]:_(s8), [[UV266:%[0-9]+]]:_(s8), [[UV267:%[0-9]+]]:_(s8), [[UV268:%[0-9]+]]:_(s8), [[UV269:%[0-9]+]]:_(s8), [[UV270:%[0-9]+]]:_(s8), [[UV271:%[0-9]+]]:_(s8) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<16 x s8>)
+  ; CHECK-NEXT:   [[DEF16:%[0-9]+]]:_(s8) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR17:%[0-9]+]]:_(<32 x s8>) = G_BUILD_VECTOR [[UV256]](s8), [[UV257]](s8), [[UV258]](s8), [[UV259]](s8), [[UV260]](s8), [[UV261]](s8), [[UV262]](s8), [[UV263]](s8), [[UV264]](s8), [[UV265]](s8), [[UV266]](s8), [[UV267]](s8), [[UV268]](s8), [[UV269]](s8), [[UV270]](s8), [[UV271]](s8), [[DEF16]](s8), [[DEF16]](s8), [[DEF16]](s8), [[DEF16]](s8), [[DEF16]](s8), [[DEF16]](s8), [[DEF16]](s8), [[DEF16]](s8), [[DEF16]](s8), [[DEF16]](s8), [[DEF16]](s8), [[DEF16]](s8), [[DEF16]](s8), [[DEF16]](s8), [[DEF16]](s8), [[DEF16]](s8)
+  ; CHECK-NEXT:   [[UV272:%[0-9]+]]:_(s8), [[UV273:%[0-9]+]]:_(s8), [[UV274:%[0-9]+]]:_(s8), [[UV275:%[0-9]+]]:_(s8), [[UV276:%[0-9]+]]:_(s8), [[UV277:%[0-9]+]]:_(s8), [[UV278:%[0-9]+]]:_(s8), [[UV279:%[0-9]+]]:_(s8), [[UV280:%[0-9]+]]:_(s8), [[UV281:%[0-9]+]]:_(s8), [[UV282:%[0-9]+]]:_(s8), [[UV283:%[0-9]+]]:_(s8), [[UV284:%[0-9]+]]:_(s8), [[UV285:%[0-9]+]]:_(s8), [[UV286:%[0-9]+]]:_(s8), [[UV287:%[0-9]+]]:_(s8) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<16 x s8>)
+  ; CHECK-NEXT:   [[DEF17:%[0-9]+]]:_(s8) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR18:%[0-9]+]]:_(<32 x s8>) = G_BUILD_VECTOR [[UV272]](s8), [[UV273]](s8), [[UV274]](s8), [[UV275]](s8), [[UV276]](s8), [[UV277]](s8), [[UV278]](s8), [[UV279]](s8), [[UV280]](s8), [[UV281]](s8), [[UV282]](s8), [[UV283]](s8), [[UV284]](s8), [[UV285]](s8), [[UV286]](s8), [[UV287]](s8), [[DEF17]](s8), [[DEF17]](s8), [[DEF17]](s8), [[DEF17]](s8), [[DEF17]](s8), [[DEF17]](s8), [[DEF17]](s8), [[DEF17]](s8), [[DEF17]](s8), [[DEF17]](s8), [[DEF17]](s8), [[DEF17]](s8), [[DEF17]](s8), [[DEF17]](s8), [[DEF17]](s8), [[DEF17]](s8)
+  ; CHECK-NEXT:   [[UV288:%[0-9]+]]:_(s8), [[UV289:%[0-9]+]]:_(s8), [[UV290:%[0-9]+]]:_(s8), [[UV291:%[0-9]+]]:_(s8), [[UV292:%[0-9]+]]:_(s8), [[UV293:%[0-9]+]]:_(s8), [[UV294:%[0-9]+]]:_(s8), [[UV295:%[0-9]+]]:_(s8), [[UV296:%[0-9]+]]:_(s8), [[UV297:%[0-9]+]]:_(s8), [[UV298:%[0-9]+]]:_(s8), [[UV299:%[0-9]+]]:_(s8), [[UV300:%[0-9]+]]:_(s8), [[UV301:%[0-9]+]]:_(s8), [[UV302:%[0-9]+]]:_(s8), [[UV303:%[0-9]+]]:_(s8) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<16 x s8>)
+  ; CHECK-NEXT:   [[DEF18:%[0-9]+]]:_(s8) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR19:%[0-9]+]]:_(<32 x s8>) = G_BUILD_VECTOR [[UV288]](s8), [[UV289]](s8), [[UV290]](s8), [[UV291]](s8), [[UV292]](s8), [[UV293]](s8), [[UV294]](s8), [[UV295]](s8), [[UV296]](s8), [[UV297]](s8), [[UV298]](s8), [[UV299]](s8), [[UV300]](s8), [[UV301]](s8), [[UV302]](s8), [[UV303]](s8), [[DEF18]](s8), [[DEF18]](s8), [[DEF18]](s8), [[DEF18]](s8), [[DEF18]](s8), [[DEF18]](s8), [[DEF18]](s8), [[DEF18]](s8), [[DEF18]](s8), [[DEF18]](s8), [[DEF18]](s8), [[DEF18]](s8), [[DEF18]](s8), [[DEF18]](s8), [[DEF18]](s8), [[DEF18]](s8)
+  ; CHECK-NEXT:   [[UV304:%[0-9]+]]:_(s8), [[UV305:%[0-9]+]]:_(s8), [[UV306:%[0-9]+]]:_(s8), [[UV307:%[0-9]+]]:_(s8), [[UV308:%[0-9]+]]:_(s8), [[UV309:%[0-9]+]]:_(s8), [[UV310:%[0-9]+]]:_(s8), [[UV311:%[0-9]+]]:_(s8), [[UV312:%[0-9]+]]:_(s8), [[UV313:%[0-9]+]]:_(s8), [[UV314:%[0-9]+]]:_(s8), [[UV315:%[0-9]+]]:_(s8), [[UV316:%[0-9]+]]:_(s8), [[UV317:%[0-9]+]]:_(s8), [[UV318:%[0-9]+]]:_(s8), [[UV319:%[0-9]+]]:_(s8) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<16 x s8>)
+  ; CHECK-NEXT:   [[DEF19:%[0-9]+]]:_(s8) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR20:%[0-9]+]]:_(<32 x s8>) = G_BUILD_VECTOR [[UV304]](s8), [[UV305]](s8), [[UV306]](s8), [[UV307]](s8), [[UV308]](s8), [[UV309]](s8), [[UV310]](s8), [[UV311]](s8), [[UV312]](s8), [[UV313]](s8), [[UV314]](s8), [[UV315]](s8), [[UV316]](s8), [[UV317]](s8), [[UV318]](s8), [[UV319]](s8), [[DEF19]](s8), [[DEF19]](s8), [[DEF19]](s8), [[DEF19]](s8), [[DEF19]](s8), [[DEF19]](s8), [[DEF19]](s8), [[DEF19]](s8), [[DEF19]](s8), [[DEF19]](s8), [[DEF19]](s8), [[DEF19]](s8), [[DEF19]](s8), [[DEF19]](s8), [[DEF19]](s8), [[DEF19]](s8)
+  ; CHECK-NEXT:   [[UV320:%[0-9]+]]:_(s8), [[UV321:%[0-9]+]]:_(s8), [[UV322:%[0-9]+]]:_(s8), [[UV323:%[0-9]+]]:_(s8), [[UV324:%[0-9]+]]:_(s8), [[UV325:%[0-9]+]]:_(s8), [[UV326:%[0-9]+]]:_(s8), [[UV327:%[0-9]+]]:_(s8), [[UV328:%[0-9]+]]:_(s8), [[UV329:%[0-9]+]]:_(s8), [[UV330:%[0-9]+]]:_(s8), [[UV331:%[0-9]+]]:_(s8), [[UV332:%[0-9]+]]:_(s8), [[UV333:%[0-9]+]]:_(s8), [[UV334:%[0-9]+]]:_(s8), [[UV335:%[0-9]+]]:_(s8) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<16 x s8>)
+  ; CHECK-NEXT:   [[DEF20:%[0-9]+]]:_(s8) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR21:%[0-9]+]]:_(<32 x s8>) = G_BUILD_VECTOR [[UV320]](s8), [[UV321]](s8), [[UV322]](s8), [[UV323]](s8), [[UV324]](s8), [[UV325]](s8), [[UV326]](s8), [[UV327]](s8), [[UV328]](s8), [[UV329]](s8), [[UV330]](s8), [[UV331]](s8), [[UV332]](s8), [[UV333]](s8), [[UV334]](s8), [[UV335]](s8), [[DEF20]](s8), [[DEF20]](s8), [[DEF20]](s8), [[DEF20]](s8), [[DEF20]](s8), [[DEF20]](s8), [[DEF20]](s8), [[DEF20]](s8), [[DEF20]](s8), [[DEF20]](s8), [[DEF20]](s8), [[DEF20]](s8), [[DEF20]](s8), [[DEF20]](s8), [[DEF20]](s8), [[DEF20]](s8)
+  ; CHECK-NEXT:   [[UV336:%[0-9]+]]:_(s8), [[UV337:%[0-9]+]]:_(s8), [[UV338:%[0-9]+]]:_(s8), [[UV339:%[0-9]+]]:_(s8), [[UV340:%[0-9]+]]:_(s8), [[UV341:%[0-9]+]]:_(s8), [[UV342:%[0-9]+]]:_(s8), [[UV343:%[0-9]+]]:_(s8), [[UV344:%[0-9]+]]:_(s8), [[UV345:%[0-9]+]]:_(s8), [[UV346:%[0-9]+]]:_(s8), [[UV347:%[0-9]+]]:_(s8), [[UV348:%[0-9]+]]:_(s8), [[UV349:%[0-9]+]]:_(s8), [[UV350:%[0-9]+]]:_(s8), [[UV351:%[0-9]+]]:_(s8) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<16 x s8>)
+  ; CHECK-NEXT:   [[DEF21:%[0-9]+]]:_(s8) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR22:%[0-9]+]]:_(<32 x s8>) = G_BUILD_VECTOR [[UV336]](s8), [[UV337]](s8), [[UV338]](s8), [[UV339]](s8), [[UV340]](s8), [[UV341]](s8), [[UV342]](s8), [[UV343]](s8), [[UV344]](s8), [[UV345]](s8), [[UV346]](s8), [[UV347]](s8), [[UV348]](s8), [[UV349]](s8), [[UV350]](s8), [[UV351]](s8), [[DEF21]](s8), [[DEF21]](s8), [[DEF21]](s8), [[DEF21]](s8), [[DEF21]](s8), [[DEF21]](s8), [[DEF21]](s8), [[DEF21]](s8), [[DEF21]](s8), [[DEF21]](s8), [[DEF21]](s8), [[DEF21]](s8), [[DEF21]](s8), [[DEF21]](s8), [[DEF21]](s8), [[DEF21]](s8)
+  ; CHECK-NEXT:   [[UV352:%[0-9]+]]:_(s8), [[UV353:%[0-9]+]]:_(s8), [[UV354:%[0-9]+]]:_(s8), [[UV355:%[0-9]+]]:_(s8), [[UV356:%[0-9]+]]:_(s8), [[UV357:%[0-9]+]]:_(s8), [[UV358:%[0-9]+]]:_(s8), [[UV359:%[0-9]+]]:_(s8), [[UV360:%[0-9]+]]:_(s8), [[UV361:%[0-9]+]]:_(s8), [[UV362:%[0-9]+]]:_(s8), [[UV363:%[0-9]+]]:_(s8), [[UV364:%[0-9]+]]:_(s8), [[UV365:%[0-9]+]]:_(s8), [[UV366:%[0-9]+]]:_(s8), [[UV367:%[0-9]+]]:_(s8) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<16 x s8>)
+  ; CHECK-NEXT:   [[DEF22:%[0-9]+]]:_(s8) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR23:%[0-9]+]]:_(<32 x s8>) = G_BUILD_VECTOR [[UV352]](s8), [[UV353]](s8), [[UV354]](s8), [[UV355]](s8), [[UV356]](s8), [[UV357]](s8), [[UV358]](s8), [[UV359]](s8), [[UV360]](s8), [[UV361]](s8), [[UV362]](s8), [[UV363]](s8), [[UV364]](s8), [[UV365]](s8), [[UV366]](s8), [[UV367]](s8), [[DEF22]](s8), [[DEF22]](s8), [[DEF22]](s8), [[DEF22]](s8), [[DEF22]](s8), [[DEF22]](s8), [[DEF22]](s8), [[DEF22]](s8), [[DEF22]](s8), [[DEF22]](s8), [[DEF22]](s8), [[DEF22]](s8), [[DEF22]](s8), [[DEF22]](s8), [[DEF22]](s8), [[DEF22]](s8)
+  ; CHECK-NEXT:   [[UV368:%[0-9]+]]:_(s8), [[UV369:%[0-9]+]]:_(s8), [[UV370:%[0-9]+]]:_(s8), [[UV371:%[0-9]+]]:_(s8), [[UV372:%[0-9]+]]:_(s8), [[UV373:%[0-9]+]]:_(s8), [[UV374:%[0-9]+]]:_(s8), [[UV375:%[0-9]+]]:_(s8), [[UV376:%[0-9]+]]:_(s8), [[UV377:%[0-9]+]]:_(s8), [[UV378:%[0-9]+]]:_(s8), [[UV379:%[0-9]+]]:_(s8), [[UV380:%[0-9]+]]:_(s8), [[UV381:%[0-9]+]]:_(s8), [[UV382:%[0-9]+]]:_(s8), [[UV383:%[0-9]+]]:_(s8) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<16 x s8>)
+  ; CHECK-NEXT:   [[DEF23:%[0-9]+]]:_(s8) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR24:%[0-9]+]]:_(<32 x s8>) = G_BUILD_VECTOR [[UV368]](s8), [[UV369]](s8), [[UV370]](s8), [[UV371]](s8), [[UV372]](s8), [[UV373]](s8), [[UV374]](s8), [[UV375]](s8), [[UV376]](s8), [[UV377]](s8), [[UV378]](s8), [[UV379]](s8), [[UV380]](s8), [[UV381]](s8), [[UV382]](s8), [[UV383]](s8), [[DEF23]](s8), [[DEF23]](s8), [[DEF23]](s8), [[DEF23]](s8), [[DEF23]](s8), [[DEF23]](s8), [[DEF23]](s8), [[DEF23]](s8), [[DEF23]](s8), [[DEF23]](s8), [[DEF23]](s8), [[DEF23]](s8), [[DEF23]](s8), [[DEF23]](s8), [[DEF23]](s8), [[DEF23]](s8)
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $sp
-  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 -32
+  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 -16
   ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s20)
-  ; CHECK-NEXT:   G_STORE [[ANYEXT24]](<16 x s16>), [[PTR_ADD]](p0) :: (store (<16 x s16>) into stack - 32)
-  ; CHECK-NEXT:   [[ANYEXT25:%[0-9]+]]:_(<16 x s16>) = G_ANYEXT [[BUILD_VECTOR]](<16 x s8>)
-  ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 -64
+  ; CHECK-NEXT:   G_STORE [[BUILD_VECTOR]](<16 x s8>), [[PTR_ADD]](p0) :: (store (<16 x s8>) into stack - 16, basealign 32)
+  ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 -32
   ; CHECK-NEXT:   [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C2]](s20)
-  ; CHECK-NEXT:   G_STORE [[ANYEXT25]](<16 x s16>), [[PTR_ADD1]](p0) :: (store (<16 x s16>) into stack - 64)
-  ; CHECK-NEXT:   $wl0 = COPY [[ANYEXT]](<16 x s16>)
-  ; CHECK-NEXT:   $wl2 = COPY [[ANYEXT1]](<16 x s16>)
-  ; CHECK-NEXT:   $wl4 = COPY [[ANYEXT2]](<16 x s16>)
-  ; CHECK-NEXT:   $wl6 = COPY [[ANYEXT3]](<16 x s16>)
-  ; CHECK-NEXT:   $wl8 = COPY [[ANYEXT4]](<16 x s16>)
-  ; CHECK-NEXT:   $wl10 = COPY [[ANYEXT5]](<16 x s16>)
-  ; CHECK-NEXT:   $wl1 = COPY [[ANYEXT6]](<16 x s16>)
-  ; CHECK-NEXT:   $wl3 = COPY [[ANYEXT7]](<16 x s16>)
-  ; CHECK-NEXT:   $wl5 = COPY [[ANYEXT8]](<16 x s16>)
-  ; CHECK-NEXT:   $wl7 = COPY [[ANYEXT9]](<16 x s16>)
-  ; CHECK-NEXT:   $wl9 = COPY [[ANYEXT10]](<16 x s16>)
-  ; CHECK-NEXT:   $wl11 = COPY [[ANYEXT11]](<16 x s16>)
-  ; CHECK-NEXT:   $wh0 = COPY [[ANYEXT12]](<16 x s16>)
-  ; CHECK-NEXT:   $wh2 = COPY [[ANYEXT13]](<16 x s16>)
-  ; CHECK-NEXT:   $wh4 = COPY [[ANYEXT14]](<16 x s16>)
-  ; CHECK-NEXT:   $wh6 = COPY [[ANYEXT15]](<16 x s16>)
-  ; CHECK-NEXT:   $wh8 = COPY [[ANYEXT16]](<16 x s16>)
-  ; CHECK-NEXT:   $wh10 = COPY [[ANYEXT17]](<16 x s16>)
-  ; CHECK-NEXT:   $wh1 = COPY [[ANYEXT18]](<16 x s16>)
-  ; CHECK-NEXT:   $wh3 = COPY [[ANYEXT19]](<16 x s16>)
-  ; CHECK-NEXT:   $wh5 = COPY [[ANYEXT20]](<16 x s16>)
-  ; CHECK-NEXT:   $wh7 = COPY [[ANYEXT21]](<16 x s16>)
-  ; CHECK-NEXT:   $wh9 = COPY [[ANYEXT22]](<16 x s16>)
-  ; CHECK-NEXT:   $wh11 = COPY [[ANYEXT23]](<16 x s16>)
+  ; CHECK-NEXT:   G_STORE [[BUILD_VECTOR]](<16 x s8>), [[PTR_ADD1]](p0) :: (store (<16 x s8>) into stack - 32)
+  ; CHECK-NEXT:   $wl0 = COPY [[BUILD_VECTOR1]](<32 x s8>)
+  ; CHECK-NEXT:   $wl2 = COPY [[BUILD_VECTOR2]](<32 x s8>)
+  ; CHECK-NEXT:   $wl4 = COPY [[BUILD_VECTOR3]](<32 x s8>)
+  ; CHECK-NEXT:   $wl6 = COPY [[BUILD_VECTOR4]](<32 x s8>)
+  ; CHECK-NEXT:   $wl8 = COPY [[BUILD_VECTOR5]](<32 x s8>)
+  ; CHECK-NEXT:   $wl10 = COPY [[BUILD_VECTOR6]](<32 x s8>)
+  ; CHECK-NEXT:   $wl1 = COPY [[BUILD_VECTOR7]](<32 x s8>)
+  ; CHECK-NEXT:   $wl3 = COPY [[BUILD_VECTOR8]](<32 x s8>)
+  ; CHECK-NEXT:   $wl5 = COPY [[BUILD_VECTOR9]](<32 x s8>)
+  ; CHECK-NEXT:   $wl7 = COPY [[BUILD_VECTOR10]](<32 x s8>)
+  ; CHECK-NEXT:   $wl9 = COPY [[BUILD_VECTOR11]](<32 x s8>)
+  ; CHECK-NEXT:   $wl11 = COPY [[BUILD_VECTOR12]](<32 x s8>)
+  ; CHECK-NEXT:   $wh0 = COPY [[BUILD_VECTOR13]](<32 x s8>)
+  ; CHECK-NEXT:   $wh2 = COPY [[BUILD_VECTOR14]](<32 x s8>)
+  ; CHECK-NEXT:   $wh4 = COPY [[BUILD_VECTOR15]](<32 x s8>)
+  ; CHECK-NEXT:   $wh6 = COPY [[BUILD_VECTOR16]](<32 x s8>)
+  ; CHECK-NEXT:   $wh8 = COPY [[BUILD_VECTOR17]](<32 x s8>)
+  ; CHECK-NEXT:   $wh10 = COPY [[BUILD_VECTOR18]](<32 x s8>)
+  ; CHECK-NEXT:   $wh1 = COPY [[BUILD_VECTOR19]](<32 x s8>)
+  ; CHECK-NEXT:   $wh3 = COPY [[BUILD_VECTOR20]](<32 x s8>)
+  ; CHECK-NEXT:   $wh5 = COPY [[BUILD_VECTOR21]](<32 x s8>)
+  ; CHECK-NEXT:   $wh7 = COPY [[BUILD_VECTOR22]](<32 x s8>)
+  ; CHECK-NEXT:   $wh9 = COPY [[BUILD_VECTOR23]](<32 x s8>)
+  ; CHECK-NEXT:   $wh11 = COPY [[BUILD_VECTOR24]](<32 x s8>)
   ; CHECK-NEXT:   PseudoJL @callee_v16int8, csr_aie2p, implicit-def $lr, implicit $wl0, implicit $wl2, implicit $wl4, implicit $wl6, implicit $wl8, implicit $wl10, implicit $wl1, implicit $wl3, implicit $wl5, implicit $wl7, implicit $wl9, implicit $wl11, implicit $wh0, implicit $wh2, implicit $wh4, implicit $wh6, implicit $wh8, implicit $wh10, implicit $wh1, implicit $wh3, implicit $wh5, implicit $wh7, implicit $wh9, implicit $wh11
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 64, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 32, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   call void @callee_v16int8(<16 x i8> zeroinitializer, <16 x i8> zeroinitializer, <16 x i8> zeroinitializer, <16 x i8> zeroinitializer, <16 x i8> zeroinitializer, <16 x i8> zeroinitializer,
                             <16 x i8> zeroinitializer, <16 x i8> zeroinitializer, <16 x i8> zeroinitializer, <16 x i8> zeroinitializer, <16 x i8> zeroinitializer, <16 x i8> zeroinitializer,
@@ -309,7 +395,7 @@ define void @call_v4float() {
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s32) = G_FCONSTANT float 0.000000e+00
   ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<4 x s32>) = G_BUILD_VECTOR [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32)
-  ; CHECK-NEXT:   ADJCALLSTACKUP 64, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   ADJCALLSTACKUP 32, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   [[UV:%[0-9]+]]:_(s32), [[UV1:%[0-9]+]]:_(s32), [[UV2:%[0-9]+]]:_(s32), [[UV3:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<4 x s32>)
   ; CHECK-NEXT:   [[DEF:%[0-9]+]]:_(s32) = G_IMPLICIT_DEF
   ; CHECK-NEXT:   [[BUILD_VECTOR1:%[0-9]+]]:_(<8 x s32>) = G_BUILD_VECTOR [[UV]](s32), [[UV1]](s32), [[UV2]](s32), [[UV3]](s32), [[DEF]](s32), [[DEF]](s32), [[DEF]](s32), [[DEF]](s32)
@@ -382,19 +468,13 @@ define void @call_v4float() {
   ; CHECK-NEXT:   [[UV92:%[0-9]+]]:_(s32), [[UV93:%[0-9]+]]:_(s32), [[UV94:%[0-9]+]]:_(s32), [[UV95:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<4 x s32>)
   ; CHECK-NEXT:   [[DEF23:%[0-9]+]]:_(s32) = G_IMPLICIT_DEF
   ; CHECK-NEXT:   [[BUILD_VECTOR24:%[0-9]+]]:_(<8 x s32>) = G_BUILD_VECTOR [[UV92]](s32), [[UV93]](s32), [[UV94]](s32), [[UV95]](s32), [[DEF23]](s32), [[DEF23]](s32), [[DEF23]](s32), [[DEF23]](s32)
-  ; CHECK-NEXT:   [[UV96:%[0-9]+]]:_(s32), [[UV97:%[0-9]+]]:_(s32), [[UV98:%[0-9]+]]:_(s32), [[UV99:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<4 x s32>)
-  ; CHECK-NEXT:   [[DEF24:%[0-9]+]]:_(s32) = G_IMPLICIT_DEF
-  ; CHECK-NEXT:   [[BUILD_VECTOR25:%[0-9]+]]:_(<8 x s32>) = G_BUILD_VECTOR [[UV96]](s32), [[UV97]](s32), [[UV98]](s32), [[UV99]](s32), [[DEF24]](s32), [[DEF24]](s32), [[DEF24]](s32), [[DEF24]](s32)
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $sp
-  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 -32
+  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 -16
   ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s20)
-  ; CHECK-NEXT:   G_STORE [[BUILD_VECTOR25]](<8 x s32>), [[PTR_ADD]](p0) :: (store (<8 x s32>) into stack - 32)
-  ; CHECK-NEXT:   [[UV100:%[0-9]+]]:_(s32), [[UV101:%[0-9]+]]:_(s32), [[UV102:%[0-9]+]]:_(s32), [[UV103:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<4 x s32>)
-  ; CHECK-NEXT:   [[DEF25:%[0-9]+]]:_(s32) = G_IMPLICIT_DEF
-  ; CHECK-NEXT:   [[BUILD_VECTOR26:%[0-9]+]]:_(<8 x s32>) = G_BUILD_VECTOR [[UV100]](s32), [[UV101]](s32), [[UV102]](s32), [[UV103]](s32), [[DEF25]](s32), [[DEF25]](s32), [[DEF25]](s32), [[DEF25]](s32)
-  ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 -64
+  ; CHECK-NEXT:   G_STORE [[BUILD_VECTOR]](<4 x s32>), [[PTR_ADD]](p0) :: (store (<4 x s32>) into stack - 16, basealign 32)
+  ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 -32
   ; CHECK-NEXT:   [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C2]](s20)
-  ; CHECK-NEXT:   G_STORE [[BUILD_VECTOR26]](<8 x s32>), [[PTR_ADD1]](p0) :: (store (<8 x s32>) into stack - 64)
+  ; CHECK-NEXT:   G_STORE [[BUILD_VECTOR]](<4 x s32>), [[PTR_ADD1]](p0) :: (store (<4 x s32>) into stack - 32)
   ; CHECK-NEXT:   $wl0 = COPY [[BUILD_VECTOR1]](<8 x s32>)
   ; CHECK-NEXT:   $wl2 = COPY [[BUILD_VECTOR2]](<8 x s32>)
   ; CHECK-NEXT:   $wl4 = COPY [[BUILD_VECTOR3]](<8 x s32>)
@@ -420,7 +500,7 @@ define void @call_v4float() {
   ; CHECK-NEXT:   $wh9 = COPY [[BUILD_VECTOR23]](<8 x s32>)
   ; CHECK-NEXT:   $wh11 = COPY [[BUILD_VECTOR24]](<8 x s32>)
   ; CHECK-NEXT:   PseudoJL @callee_v4float, csr_aie2p, implicit-def $lr, implicit $wl0, implicit $wl2, implicit $wl4, implicit $wl6, implicit $wl8, implicit $wl10, implicit $wl1, implicit $wl3, implicit $wl5, implicit $wl7, implicit $wl9, implicit $wl11, implicit $wh0, implicit $wh2, implicit $wh4, implicit $wh6, implicit $wh8, implicit $wh10, implicit $wh1, implicit $wh3, implicit $wh5, implicit $wh7, implicit $wh9, implicit $wh11
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 64, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 32, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   call void @callee_v4float(<4 x float> zeroinitializer, <4 x float> zeroinitializer, <4 x float> zeroinitializer, <4 x float> zeroinitializer, <4 x float> zeroinitializer, <4 x float> zeroinitializer,
                             <4 x float> zeroinitializer, <4 x float> zeroinitializer, <4 x float> zeroinitializer, <4 x float> zeroinitializer, <4 x float> zeroinitializer, <4 x float> zeroinitializer,
