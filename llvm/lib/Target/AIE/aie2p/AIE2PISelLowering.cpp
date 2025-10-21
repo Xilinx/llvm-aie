@@ -15,6 +15,7 @@
 #include "AIE2PISelLowering.h"
 #include "AIEBaseSubtarget.h"
 #include "MCTargetDesc/aie2p/AIE2PMCTargetDesc.h"
+#include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/IR/IntrinsicsAIE2P.h"
 
 using namespace llvm;
@@ -127,4 +128,35 @@ bool AIE2PTargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
     return true;
   }
   return false;
+}
+
+MVT AIE2PTargetLowering::getRegisterTypeForCallingConvAssignment(
+    LLVMContext &Context, CallingConv::ID CC, EVT VT) const {
+  // 128-bit vectors are passed in 256-bit W registers
+  if (VT.isSimple() && VT.is128BitVector())
+    return getRegisterType(VT.getSimpleVT());
+
+  return AIEBaseTargetLowering::getRegisterTypeForCallingConvAssignment(Context,
+                                                                        CC, VT);
+}
+
+MVT AIE2PTargetLowering::getRegisterTypeForCallingConv(LLVMContext &Context,
+                                                       CallingConv::ID CC,
+                                                       EVT VT) const {
+  // 128-bits registers aren't considered legal because AIE2P only has vector
+  // ops for 256+ bits vectors. However, for ABI compatibility reasons, we still
+  // want to keep those vectors as is, because they are passed differently
+  // compared to 256-bits vectors.
+  if (VT.isSimple() && VT.is128BitVector())
+    return VT.getSimpleVT();
+
+  return AIEBaseTargetLowering::getRegisterTypeForCallingConv(Context, CC, VT);
+}
+
+TargetLoweringBase::LegalizeTypeAction
+AIE2PTargetLowering::getPreferredVectorAction(MVT VT) const {
+  if (VT.is128BitVector())
+    return TypeWidenVector;
+
+  return TargetLoweringBase::getPreferredVectorAction(VT);
 }

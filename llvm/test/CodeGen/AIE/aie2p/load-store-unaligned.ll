@@ -15,7 +15,7 @@ target triple = "aie2p"
 define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32> noundef %b, <16 x i8> noundef %c, <16 x i16> noundef %d, <8 x i32> noundef %e, <4 x i64> inreg noundef %f, <8 x i64> inreg noundef %g, <16 x i32> noundef %h) #0 {
 ; CHECK-LABEL: test_load_store_unaligned:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova m0, #-560; nopb ; nopx
+; CHECK-NEXT:    mova m0, #-560; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    paddxm [sp], #576
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    mov p2, sp
@@ -69,119 +69,119 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    mov r24, p0
 ; CHECK-NEXT:    mov p0, r17
 ; CHECK-NEXT:    st.s16 r0, [p0, #0]
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    vextract.32 r0, x0, #0, vaddsign1
+; CHECK-NEXT:    vmov q1, wl0
+; CHECK-NEXT:    vmov q2, wl2
+; CHECK-NEXT:    vmov wl2, q1
+; CHECK-NEXT:    vextract.16 r0, x2, #0, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st.s16 r1, [p0, #2]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vextract.32 r1, x0, #1, vaddsign1
+; CHECK-NEXT:    vextract.16 r1, x2, #1, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st.s16 r2, [p0, #4]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vextract.32 r2, x0, #2, vaddsign1
+; CHECK-NEXT:    vextract.16 r2, x2, #2, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st.s16 r3, [p0, #6]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vextract.32 r3, x0, #3, vaddsign1
+; CHECK-NEXT:    vextract.16 r3, x2, #3, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st.s16 r4, [p0, #8]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vextract.32 r4, x0, #4, vaddsign1
+; CHECK-NEXT:    vextract.16 r4, x2, #4, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st.s16 r5, [p0, #10]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vextract.32 r5, x0, #5, vaddsign1
+; CHECK-NEXT:    vextract.16 r5, x2, #5, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st.s16 r6, [p0, #12]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vextract.32 r6, x0, #6, vaddsign1
+; CHECK-NEXT:    vextract.16 r6, x2, #6, vaddsign1
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vmov q0, wl2
+; CHECK-NEXT:    vextract.16 r7, x2, #7, vaddsign1
 ; CHECK-NEXT:    st.s16 r7, [p0, #14]
-; CHECK-NEXT:    vextract.32 r7, x0, #7, vaddsign1
-; CHECK-NEXT:    vmov wl0, q0
+; CHECK-NEXT:    vmov wl2, q2
 ; CHECK-NEXT:    mov r29, p0
-; CHECK-NEXT:    vextract.32 r0, x0, #0, vaddsign1
-; CHECK-NEXT:    vextract.32 r1, x0, #1, vaddsign1
+; CHECK-NEXT:    vextract.32 r0, x2, #0, vaddsign1
+; CHECK-NEXT:    vextract.32 r1, x2, #1, vaddsign1
 ; CHECK-NEXT:    mov p0, r16
-; CHECK-NEXT:    st r1, [p0, #4]
+; CHECK-NEXT:    vextract.32 r2, x2, #2, vaddsign1
 ; CHECK-NEXT:    st r0, [p0, #0]
-; CHECK-NEXT:    st.s8 r0, [p2, #0]
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    vextract.16 r0, x4, #0, vaddsign1
-; CHECK-NEXT:    vextract.32 r2, x0, #2, vaddsign1
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    st r1, [p0, #4]
 ; CHECK-NEXT:    st r2, [p0, #8]
+; CHECK-NEXT:    st.s8 r0, [p2, #0]
+; CHECK-NEXT:    vmov q0, wl4
+; CHECK-NEXT:    vextract.32 r3, x2, #3, vaddsign1
+; CHECK-NEXT:    vmov wl2, q0
+; CHECK-NEXT:    vextract.8 r0, x2, #0, vaddsign1
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    st r3, [p0, #12]
 ; CHECK-NEXT:    st.s8 r1, [p2, #1]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vextract.16 r1, x4, #1, vaddsign1
-; CHECK-NEXT:    vextract.32 r3, x0, #3, vaddsign1
+; CHECK-NEXT:    vextract.8 r1, x2, #1, vaddsign1
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    st r3, [p0, #12]
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st.s8 r2, [p2, #2]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vextract.16 r2, x4, #2, vaddsign1
+; CHECK-NEXT:    vextract.8 r2, x2, #2, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st.s8 r3, [p2, #3]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vextract.16 r3, x4, #3, vaddsign1
+; CHECK-NEXT:    vextract.8 r3, x2, #3, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st.s8 r4, [p2, #4]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vextract.16 r4, x4, #4, vaddsign1
+; CHECK-NEXT:    vextract.8 r4, x2, #4, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st.s8 r5, [p2, #5]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vextract.16 r5, x4, #5, vaddsign1
+; CHECK-NEXT:    vextract.8 r5, x2, #5, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st.s8 r6, [p2, #6]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vextract.16 r6, x4, #6, vaddsign1
+; CHECK-NEXT:    vextract.8 r6, x2, #6, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st.s8 r7, [p2, #7]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vextract.16 r7, x4, #7, vaddsign1
+; CHECK-NEXT:    vextract.8 r7, x2, #7, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova dj0, #8
 ; CHECK-NEXT:    st r8, [sp, #-564] // 4-byte Folded Spill
@@ -189,56 +189,56 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vextract.16 r16, x4, #8, vaddsign1
+; CHECK-NEXT:    vextract.8 r16, x2, #8, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova dj0, #9
 ; CHECK-NEXT:    st.s8 r17, [p2, dj0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vextract.16 r17, x4, #9, vaddsign1
+; CHECK-NEXT:    vextract.8 r17, x2, #9, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova dj2, #10
 ; CHECK-NEXT:    st.s8 r18, [p2, dj2]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vextract.16 r18, x4, #10, vaddsign1
+; CHECK-NEXT:    vextract.8 r18, x2, #10, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova dj0, #11
 ; CHECK-NEXT:    st.s8 r19, [p2, dj0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vextract.16 r19, x4, #11, vaddsign1
+; CHECK-NEXT:    vextract.8 r19, x2, #11, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova dj1, #12
 ; CHECK-NEXT:    st.s8 r20, [p2, dj1]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vextract.16 r20, x4, #12, vaddsign1
+; CHECK-NEXT:    vextract.8 r20, x2, #12, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova dj0, #13
 ; CHECK-NEXT:    st.s8 r21, [p2, dj0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vextract.16 r21, x4, #13, vaddsign1
+; CHECK-NEXT:    vextract.8 r21, x2, #13, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova dj3, #14
 ; CHECK-NEXT:    st.s8 r22, [p2, dj3]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vextract.16 r22, x4, #14, vaddsign1
+; CHECK-NEXT:    vextract.8 r22, x2, #14, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova dj0, #15
 ; CHECK-NEXT:    st.s8 r23, [p2, dj0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vextract.16 r23, x4, #15, vaddsign1
+; CHECK-NEXT:    vextract.8 r23, x2, #15, vaddsign1
 ; CHECK-NEXT:    mov p3, sp
 ; CHECK-NEXT:    padda [p3], #-512
 ; CHECK-NEXT:    st.s16 r0, [p3, #0]
@@ -307,7 +307,7 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    mova dj6, #40
 ; CHECK-NEXT:    mova dj0, #18
 ; CHECK-NEXT:    st.s16 r17, [p3, dj0]
-; CHECK-NEXT:    vmov x2, bmll0
+; CHECK-NEXT:    vmov x0, bmll0
 ; CHECK-NEXT:    mov p1, sp
 ; CHECK-NEXT:    vextract.16 r17, x6, #9, vaddsign1
 ; CHECK-NEXT:    vextract.32 r2, x8, #2, vaddsign1
@@ -316,16 +316,16 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    st r2, [p0, #8]
 ; CHECK-NEXT:    st r3, [p0, #12]
 ; CHECK-NEXT:    st.s16 r18, [p3, dj0]
-; CHECK-NEXT:    vmov bmll0, x2
+; CHECK-NEXT:    vmov bmll0, x0
 ; CHECK-NEXT:    padda [p1], #-448
-; CHECK-NEXT:    vmov x0, bmll0
+; CHECK-NEXT:    vmov x2, bmll0
 ; CHECK-NEXT:    vextract.16 r18, x6, #10, vaddsign1
-; CHECK-NEXT:    vextract.64 r1:r0, x0, #0, vaddsign1
+; CHECK-NEXT:    vextract.64 r1:r0, x2, #0, vaddsign1
 ; CHECK-NEXT:    mova dj0, #22
 ; CHECK-NEXT:    st r1, [p1, #4]
 ; CHECK-NEXT:    st.s16 r19, [p3, dj0]
 ; CHECK-NEXT:    mova dj7, #44
-; CHECK-NEXT:    vmov bmll0, x2
+; CHECK-NEXT:    mov r31, p0
 ; CHECK-NEXT:    vextract.16 r19, x6, #11, vaddsign1
 ; CHECK-NEXT:    vextract.32 r4, x8, #4, vaddsign1
 ; CHECK-NEXT:    vextract.32 r5, x8, #5, vaddsign1
@@ -333,11 +333,11 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    st r4, [p0, #16]
 ; CHECK-NEXT:    st r5, [p0, #20]
 ; CHECK-NEXT:    st.s16 r20, [p3, dj0]
-; CHECK-NEXT:    mov r31, p0
+; CHECK-NEXT:    vmov bmll0, x0
 ; CHECK-NEXT:    mova dj2, #60
 ; CHECK-NEXT:    vextract.16 r20, x6, #12, vaddsign1
-; CHECK-NEXT:    vmov x0, bmll0
-; CHECK-NEXT:    vextract.64 r3:r2, x0, #1, vaddsign1
+; CHECK-NEXT:    vmov x2, bmll0
+; CHECK-NEXT:    vextract.64 r3:r2, x2, #1, vaddsign1
 ; CHECK-NEXT:    mova dj0, #26
 ; CHECK-NEXT:    st r2, [p1, #8]
 ; CHECK-NEXT:    st r3, [p1, #12]
@@ -351,11 +351,11 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    st r6, [p0, #24]
 ; CHECK-NEXT:    st r7, [p0, #28]
 ; CHECK-NEXT:    st.s16 r22, [p3, dj0]
-; CHECK-NEXT:    vmov bmll0, x2
+; CHECK-NEXT:    vmov bmll0, x0
 ; CHECK-NEXT:    vextract.16 r22, x6, #14, vaddsign1
-; CHECK-NEXT:    vmov x0, bmll0
-; CHECK-NEXT:    vmov bmll0, x2
-; CHECK-NEXT:    vextract.64 r5:r4, x0, #2, vaddsign1
+; CHECK-NEXT:    vmov x2, bmll0
+; CHECK-NEXT:    vmov bmll0, x0
+; CHECK-NEXT:    vextract.64 r5:r4, x2, #2, vaddsign1
 ; CHECK-NEXT:    mova dj0, #30
 ; CHECK-NEXT:    st r4, [p1, #16]
 ; CHECK-NEXT:    st r5, [p1, #20]
