@@ -8,8 +8,10 @@
 # (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
 
 # Basic test for the WAW register renaming pass. Check AIE2 tests for more coverage.
+# Additional pass options are disabled because we are testing the basic mechanism.
 
-# RUN: llc -mtriple=aie2p -verify-machineinstrs --start-before=greedy --stop-after=virtregrewriter %s -o - | FileCheck %s
+# RUN: llc -mtriple=aie2p -verify-machineinstrs --aie-realloc-latencyaware=false --start-before=greedy \
+# RUN:   --stop-after=virtregrewriter %s -o - | FileCheck %s
 
 # Make sure VLD and VMAX define different X registers.
 ---
