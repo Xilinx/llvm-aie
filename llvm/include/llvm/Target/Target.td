@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// Modifications (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -369,6 +369,9 @@ class RegisterClass<string namespace, list<ValueType> regTypes, int alignment,
   // classes will be resolved in the order defined by this value, with lower values
   // taking precedence over higher ones. Ties are resolved by enumeration order.
   int BaseClassOrder = ?;
+
+  // Consider Register Pressure during Machine Scheduling
+  bit ConsiderInMachineScheduling = true;
 }
 
 // The memberList in a RegisterClass is a dag of set operations. TableGen

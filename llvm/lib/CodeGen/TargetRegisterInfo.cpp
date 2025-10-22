@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the TargetRegisterInfo interface.
@@ -51,12 +54,17 @@ static cl::opt<unsigned>
 
 TargetRegisterInfo::TargetRegisterInfo(
     const TargetRegisterInfoDesc *ID, regclass_iterator RCB,
-    regclass_iterator RCE, const char *const *SRINames,
-    const SubRegCoveredBits *SubIdxRanges, const LaneBitmask *SRILaneMasks,
-    LaneBitmask SRICoveringLanes, const RegClassInfo *const RCIs,
-    const MVT::SimpleValueType *const RCVTLists, unsigned Mode)
+    regclass_iterator RCE,
+    RegPressureIdxIgnoreMachineSched_iterator RegPressureIgnoreMSBegin,
+    RegPressureIdxIgnoreMachineSched_iterator RegPressureIgnoreMSEnd,
+    const char *const *SRINames, const SubRegCoveredBits *SubIdxRanges,
+    const LaneBitmask *SRILaneMasks, LaneBitmask SRICoveringLanes,
+    const RegClassInfo *const RCIs, const MVT::SimpleValueType *const RCVTLists,
+    unsigned Mode)
     : InfoDesc(ID), SubRegIndexNames(SRINames), SubRegIdxRanges(SubIdxRanges),
       SubRegIndexLaneMasks(SRILaneMasks), RegClassBegin(RCB), RegClassEnd(RCE),
+      RegPressureSetIdxIgnoreInMachineSchedulerBegin(RegPressureIgnoreMSBegin),
+      RegPressureSetIdxIgnoreInMachineSchedulerEnd(RegPressureIgnoreMSEnd),
       CoveringLanes(SRICoveringLanes), RCInfos(RCIs), RCVTLists(RCVTLists),
       HwMode(Mode) {}
 

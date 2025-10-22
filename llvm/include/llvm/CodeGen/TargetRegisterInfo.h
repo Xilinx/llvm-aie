@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -239,6 +239,7 @@ class TargetRegisterInfo : public MCRegisterInfo {
 public:
   using regclass_iterator = const TargetRegisterClass * const *;
   using vt_iterator = const MVT::SimpleValueType *;
+  using RegPressureIdxIgnoreMachineSched_iterator = const uint16_t *;
   struct RegClassInfo {
     unsigned RegSize, SpillSize, SpillAlignment;
     unsigned VTListOffset;
@@ -260,20 +261,26 @@ private:
   // Pointer to array of lane masks, one per sub-reg index.
   const LaneBitmask *SubRegIndexLaneMasks;
 
-  regclass_iterator RegClassBegin, RegClassEnd;   // List of regclasses
+  regclass_iterator RegClassBegin, RegClassEnd; // List of regclasses
+  // List of Register Pressure IDs to ignore during Machine Scheduling
+  RegPressureIdxIgnoreMachineSched_iterator
+      RegPressureSetIdxIgnoreInMachineSchedulerBegin,
+      RegPressureSetIdxIgnoreInMachineSchedulerEnd;
   LaneBitmask CoveringLanes;
   const RegClassInfo *const RCInfos;
   const MVT::SimpleValueType *const RCVTLists;
   unsigned HwMode;
 
 protected:
-  TargetRegisterInfo(const TargetRegisterInfoDesc *ID, regclass_iterator RCB,
-                     regclass_iterator RCE, const char *const *SRINames,
-                     const SubRegCoveredBits *SubIdxRanges,
-                     const LaneBitmask *SRILaneMasks, LaneBitmask CoveringLanes,
-                     const RegClassInfo *const RCIs,
-                     const MVT::SimpleValueType *const RCVTLists,
-                     unsigned Mode = 0);
+  TargetRegisterInfo(
+      const TargetRegisterInfoDesc *ID, regclass_iterator RCB,
+      regclass_iterator RCE,
+      RegPressureIdxIgnoreMachineSched_iterator RegPressureIgnoreMSBegin,
+      RegPressureIdxIgnoreMachineSched_iterator RegPressureIgnoreMSEnd,
+      const char *const *SRINames, const SubRegCoveredBits *SubIdxRanges,
+      const LaneBitmask *SRILaneMasks, LaneBitmask CoveringLanes,
+      const RegClassInfo *const RCIs,
+      const MVT::SimpleValueType *const RCVTLists, unsigned Mode = 0);
   virtual ~TargetRegisterInfo();
 
 public:
@@ -878,6 +885,20 @@ public:
   virtual const TargetRegisterClass *
   getPointerRegClass(const MachineFunction &MF, unsigned Kind=0) const {
     llvm_unreachable("Target didn't implement getPointerRegClass!");
+  }
+
+  RegPressureIdxIgnoreMachineSched_iterator
+  regPressureSetIgnoreInMachineScheduler_begin() const {
+    return RegPressureSetIdxIgnoreInMachineSchedulerBegin;
+  }
+  RegPressureIdxIgnoreMachineSched_iterator
+  regPressureSetIgnoreInMachineScheduler_end() const {
+    return RegPressureSetIdxIgnoreInMachineSchedulerEnd;
+  }
+  iterator_range<RegPressureIdxIgnoreMachineSched_iterator>
+  regPressureSetIndicesIgnoreInMachineScheduler() const {
+    return make_range(regPressureSetIgnoreInMachineScheduler_begin(),
+                      regPressureSetIgnoreInMachineScheduler_end());
   }
 
   /// Returns a legal register class to copy a register in the specified class
