@@ -984,7 +984,9 @@ def spill_eDN_to_eR : AIE2PScalarRegisterClass<(add eDN, eR)>;
 def spill_eDJ_to_eR : AIE2PScalarRegisterClass<(add eDJ, eR, eDN)>;
 def spill_eDC_to_eR : AIE2PScalarRegisterClass<(add eDC, eR)>;
 
-def spill_vec512_to_composite : AIE2PVector512RegisterClass<(add mXm, mBMm, lfh0, lfh1, lfl0, lfl1, sfl, sfh, lfe)>;
+def spill_vec512_to_composite : AIE2PVector512RegisterClass<(add mXm, mBMm, lfh0, lfh1, lfl0, lfl1, sfl, sfh, lfe)> {
+  let ConsiderInPreRAScheduling = false;
+}
 
 def mSRF2IFlags : AIE2PScalarRegisterClass<(add srF2IFlags)>;
 def mCRFPNlfMask : AIE2PScalarRegisterClass<(add crFPNlfMask)>;

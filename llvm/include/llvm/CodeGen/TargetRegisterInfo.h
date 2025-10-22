@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -260,7 +260,9 @@ private:
   // Pointer to array of lane masks, one per sub-reg index.
   const LaneBitmask *SubRegIndexLaneMasks;
 
-  regclass_iterator RegClassBegin, RegClassEnd;   // List of regclasses
+  regclass_iterator RegClassBegin, RegClassEnd; // List of regclasses
+  // List of Register Pressure IDs to ignore
+  ArrayRef<uint16_t> IgnoreRegPressureSets;
   LaneBitmask CoveringLanes;
   const RegClassInfo *const RCInfos;
   const MVT::SimpleValueType *const RCVTLists;
@@ -268,7 +270,9 @@ private:
 
 protected:
   TargetRegisterInfo(const TargetRegisterInfoDesc *ID, regclass_iterator RCB,
-                     regclass_iterator RCE, const char *const *SRINames,
+                     regclass_iterator RCE,
+                     ArrayRef<uint16_t> IgnoreRegPressureSets,
+                     const char *const *SRINames,
                      const SubRegCoveredBits *SubIdxRanges,
                      const LaneBitmask *SRILaneMasks, LaneBitmask CoveringLanes,
                      const RegClassInfo *const RCIs,
@@ -878,6 +882,10 @@ public:
   virtual const TargetRegisterClass *
   getPointerRegClass(const MachineFunction &MF, unsigned Kind=0) const {
     llvm_unreachable("Target didn't implement getPointerRegClass!");
+  }
+
+  ArrayRef<uint16_t> getIgnoreRegPressureSets() const {
+    return IgnoreRegPressureSets;
   }
 
   /// Returns a legal register class to copy a register in the specified class
