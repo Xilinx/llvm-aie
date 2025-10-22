@@ -65,6 +65,20 @@ define void @test_call_i64() {
   ret void
 }
 
+declare void @callee_i128(i128 %a)
+define void @test_call_i128() {
+  ; CHECK-LABEL: name: test_call_i128
+  ; CHECK: bb.1 (%ir-block.0):
+  ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s128) = G_CONSTANT i128 0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   $q0 = COPY [[C]](s128)
+  ; CHECK-NEXT:   PseudoJL @callee_i128, csr_aie2p, implicit-def $lr, implicit $q0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoRET implicit $lr
+  call void @callee_i128(i128 0)
+  ret void
+}
+
 declare void @take_i1(i1)
 define void @test_abi_exts_call_i1(i1* %addr) {
   ; CHECK-LABEL: name: test_abi_exts_call_i1
