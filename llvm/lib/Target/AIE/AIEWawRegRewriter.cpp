@@ -60,7 +60,7 @@ static cl::opt<unsigned>
                        cl::init(3));
 
 static cl::opt<bool>
-    LatencyAware("aie-realloc-latencyaware", cl::Hidden, cl::init(false),
+    LatencyAware("aie-realloc-latencyaware", cl::Hidden, cl::init(true),
                  cl::desc("Enable latency-aware allocation strategy"));
 
 namespace {
