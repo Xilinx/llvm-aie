@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -32,12 +32,17 @@ protected:
 
 static TargetRegisterClass *const BogusRegisterClasses[] = {nullptr};
 
+static const uint16_t BogusIgnoreRegPressureSets[] = {
+    65535, // no reg pressure entry
+};
+
 class BogusRegisterInfo : public TargetRegisterInfo {
 public:
   BogusRegisterInfo()
-      : TargetRegisterInfo(nullptr, BogusRegisterClasses, BogusRegisterClasses,
-                           nullptr, nullptr, nullptr, LaneBitmask(~0u), nullptr,
-                           nullptr) {
+      : TargetRegisterInfo(
+            nullptr, BogusRegisterClasses, BogusRegisterClasses,
+            ArrayRef<uint16_t>(BogusIgnoreRegPressureSets, size_t{0}), nullptr,
+            nullptr, nullptr, LaneBitmask(~0u), nullptr, nullptr) {
     InitMCRegisterInfo(nullptr, 0, 0, 0, nullptr, 0, nullptr, 0, nullptr,
                        nullptr, nullptr, nullptr, nullptr, 0, nullptr);
   }

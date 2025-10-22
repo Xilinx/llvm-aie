@@ -4,6 +4,8 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
 //===----------------------------------------------------------------------===//
 //
 // This file defines structures to encapsulate information gleaned from the
@@ -365,6 +367,8 @@ public:
   /// Generate register pressure set for this register class and any class
   /// synthesized from it.
   bool GeneratePressureSet;
+  ///  Consider register pressure during Pre RA Scheduling
+  bool UseRegPressureInPreRAScheduling;
 
   // Return the Record that defined this class, or NULL if the class was
   // created by TableGen.
@@ -632,6 +636,10 @@ class CodeGenRegBank {
   // Give each register unit set an order based on sorting criteria.
   std::vector<unsigned> RegUnitSetOrder;
 
+  // Indices of Pressure Sets to ignore during Register Pressure Calculation in
+  // the Machine Scheduler.
+  std::vector<unsigned> IgnoreRegPressureSets;
+
   // Keep track of synthesized definitions generated in TupleExpander.
   std::vector<std::unique_ptr<Record>> SynthDefs;
 
@@ -674,6 +682,10 @@ class CodeGenRegBank {
   /// Computes a lane mask for each register unit enumerated by a physical
   /// register.
   void computeRegUnitLaneMasks();
+
+  /// Computes the list of register pressure sets to ignore during Pre RA
+  /// Scheduling.
+  void computeIgnoreRegPressureSetsInPreRAScheduling();
 
 public:
   CodeGenRegBank(const RecordKeeper &, const CodeGenHwModes &);
@@ -793,6 +805,10 @@ public:
   const CodeGenRegisterClass *
   getMinimalPhysRegClass(const Record *RegRecord,
                          ValueTypeByHwMode *VT = nullptr);
+
+  const std::vector<unsigned> &getIgnoreRegPressureSets() const {
+    return IgnoreRegPressureSets;
+  }
 
   // Get the sum of unit weights.
   unsigned getRegUnitSetWeight(const std::vector<unsigned> &Units) const {

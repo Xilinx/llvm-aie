@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -1060,6 +1060,21 @@ void RegisterInfoEmitter::runMCDesc(raw_ostream &OS) {
 
   OS << "};\n\n";
 
+  const std::string IgnoreRegPressureSetsName =
+      std::string(Target.getName()) + "IgnoreRegPressureSets";
+  OS << "extern const uint16_t " << IgnoreRegPressureSetsName << "[] = {\n";
+  for (unsigned PSetID : RegBank.getIgnoreRegPressureSets()) {
+    const RegUnitSet &Set = RegBank.getRegPressureSet(PSetID);
+    // Emit the ordered pressure set ID to match the IDs used by
+    // getRegClassPressureSets().
+    OS << Set.Order << ", // " << Set.Name << "\n";
+  }
+  // If no elements are in IgnoreRegPressureSets we need to
+  // add a no entry, since C standard requires array to have at least one
+  // element.
+  OS << 65535 << ", // no reg pressure entry \n";
+  OS << "};\n\n";
+
   EmitRegMappingTables(OS, Regs, false);
 
   // Emit Reg encoding table
@@ -1201,6 +1216,10 @@ void RegisterInfoEmitter::runTargetDesc(raw_ostream &OS) {
   // Start out by emitting each of the register classes.
   const auto &RegisterClasses = RegBank.getRegClasses();
   const auto &SubRegIndices = RegBank.getSubRegIndices();
+  const auto IgnoreRegPressureSetsSize =
+      RegBank.getIgnoreRegPressureSets().size();
+  const std::string IgnoreRegPressureSetsName =
+      std::string(Target.getName()) + "IgnoreRegPressureSets";
 
   // Collect all registers belonging to any allocatable class.
   std::set<const Record *> AllocatableRegs;
@@ -1634,6 +1653,7 @@ void RegisterInfoEmitter::runTargetDesc(raw_ostream &OS) {
   OS << "extern const MCPhysReg " << TargetName << "RegUnitRoots[][2];\n";
   OS << "extern const uint16_t " << TargetName << "SubRegIdxLists[];\n";
   OS << "extern const uint16_t " << TargetName << "RegEncodingTable[];\n";
+  OS << "extern const uint16_t " << IgnoreRegPressureSetsName << "[];\n";
 
   EmitRegMappingTables(OS, Regs, true);
 
@@ -1643,6 +1663,8 @@ void RegisterInfoEmitter::runTargetDesc(raw_ostream &OS) {
         "      unsigned PC, unsigned HwMode)\n"
      << "  : " << RIBaseClass << "(&" << TargetName << "RegInfoDesc"
      << ", RegisterClasses, RegisterClasses+" << RegisterClasses.size() << ",\n"
+     << "             ArrayRef<uint16_t>(" << IgnoreRegPressureSetsName
+     << ", size_t{" << IgnoreRegPressureSetsSize << "}),\n"
      << "             SubRegIndexNameTable, SubRegIdxRangeTable, "
         "SubRegIndexLaneMaskTable,\n"
      << "             ";
