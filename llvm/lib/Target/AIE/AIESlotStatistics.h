@@ -64,10 +64,10 @@ public:
   int getMinII() const;
 
   // print the value on dbgs()
-  void dump();
+  void dump() const;
 
   // print the value in a one-liner
-  void dumpShort();
+  void dumpShort() const;
 };
 
 SlotStatistics computeSlotStatistics(MachineBasicBlock &MBB,

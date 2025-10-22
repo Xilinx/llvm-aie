@@ -49,7 +49,7 @@ int SlotStatistics::distance(const SlotStatistics &Other) const {
   return Fixed.distance(Other.Fixed) + Free.distance(Other.Free);
 }
 
-void SlotStatistics::dump() {
+void SlotStatistics::dump() const {
   dbgs() << "Fixed:\n  " << Fixed << "\n";
 
   dbgs() << "MSPs:\n";
@@ -59,7 +59,7 @@ void SlotStatistics::dump() {
   dbgs() << "Free:\n  " << Free << "\n";
 }
 
-void SlotStatistics::dumpShort() {
+void SlotStatistics::dumpShort() const {
   dbgs() << "{ " << Fixed << ", " << Free << " },\n";
 }
 
