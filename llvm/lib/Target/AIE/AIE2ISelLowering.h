@@ -39,10 +39,6 @@ public:
   // I wonder why this isn't the default.
   bool isCheapToSpeculateCtlz(Type *) const override { return true; }
 
-  unsigned getNumRegistersForCallingConv(LLVMContext &Context,
-                                         CallingConv::ID CC,
-                                         EVT VT) const override;
-
   bool functionArgumentNeedsConsecutiveRegisters(
       Type *Ty, CallingConv::ID CallConv, bool isVarArg,
       const DataLayout &DL) const override;
