@@ -168,8 +168,8 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   /// \return wether \p MI is a multi-slot pseudo instruction
   bool isMultiSlotPseudo(const MachineInstr &MI) const;
 
-  /// Return a nop of the given byte size, or the smallest if zero.
-  virtual unsigned getNopOpcode(size_t Size = 0) const {
+  /// Return the opcode for smallest nop
+  virtual unsigned getNopOpcode() const {
     llvm_unreachable("Target didn't implement getNopOpcode");
   }
   /// Return an opcode that reverses the branch condition of a given
@@ -306,7 +306,9 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
 
   /// Returns the number of delay slots that should be reserved, i.e.
   /// not filled in by the scheduler.
-  virtual unsigned getNumReservedDelaySlots(const MachineInstr &MI) const;
+  virtual unsigned getNumReservedDelaySlots(const MachineInstr &MI) const {
+    llvm_unreachable("Target didn't implement getNumReservedDelaySlots");
+  }
 
   /// Check whether Opc represents a JNZ instruction. This is mainly for
   /// detecting a downcounting loop branch.

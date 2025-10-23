@@ -34,7 +34,7 @@ public:
   unsigned getReturnOpcode() const override;
   unsigned getCallOpcode(const MachineFunction &CallerF, bool IsIndirect,
                          bool IsTailCall) const override;
-  unsigned getNopOpcode(size_t Size = 0) const override;
+  unsigned getNopOpcode() const override;
   unsigned getOppositeBranchOpcode(unsigned Opc) const override;
   unsigned getJumpOpcode() const override;
   unsigned getPseudoMoveOpcode() const override;
