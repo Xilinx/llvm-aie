@@ -5,7 +5,7 @@
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
 ; (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
-; RUN: llc -mtriple=aie2p --aie-realloc-latencyaware=true %s -o - | FileCheck %s
+; RUN: llc -mtriple=aie2p --aie-reg-rewrite-mode=latencyaware %s -o - | FileCheck %s
 
 ; Test postSWP capabilities related to conv2d_dw_bf16.
 
