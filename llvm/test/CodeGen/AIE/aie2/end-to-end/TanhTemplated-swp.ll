@@ -4,9 +4,11 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 
-; RUN: llc -O2 -mtriple=aie2 %s -o - | FileCheck %s
+; RUN: llc -O2 -mtriple=aie2 \
+; RUN:    --aie-reg-rewrite-mode=latencyaware \
+; RUN:    %s -o - | FileCheck %s
 
 ; The test is meant as a quick way to spot QoR regressions. In this test, the
 ; code can only be pipelined (Pre-SWP) because of the removal of some WAW
