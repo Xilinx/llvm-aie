@@ -694,24 +694,7 @@ unsigned AIEInstrInfo::getCallOpcode(const MachineFunction &CallerF,
 
 bool AIEInstrInfo::isCall(unsigned Opc) const { return Opc == AIE::JAL; }
 
-unsigned AIEInstrInfo::getNopOpcode(size_t Size) const {
-  switch (Size) {
-  case 0:
-  case 2:
-    return AIE::NOP;
-  case 4:
-    return AIE::NOP32;
-  case 8:
-    return AIE::NOP64;
-  case 12:
-    return AIE::NOP96;
-  case 16:
-    return AIE::NOP128;
-  default:
-    llvm_unreachable("Unsupported nop size.\n");
-  }
-  return AIE::NOP;
-}
+unsigned AIEInstrInfo::getNopOpcode() const { return AIE::NOP; }
 
 unsigned AIEInstrInfo::getMvSclOpcode() const {
   llvm_unreachable("Un-implemented for this target.\n");

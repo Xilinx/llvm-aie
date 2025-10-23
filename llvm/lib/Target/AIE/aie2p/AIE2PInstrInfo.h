@@ -32,7 +32,7 @@ public:
   unsigned getReturnOpcode() const override;
   unsigned getCallOpcode(const MachineFunction &CallerF, bool IsIndirect,
                          bool IsTailCall) const override;
-  unsigned getNopOpcode(size_t Size = 0) const override;
+  unsigned getNopOpcode() const override;
   unsigned getMvSclOpcode() const override;
   unsigned getAddrIntrinsic2D() const override;
   unsigned getAddrIntrinsic3D() const override;

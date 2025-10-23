@@ -65,10 +65,7 @@ unsigned AIE2PInstrInfo::getCallOpcode(const MachineFunction &CallerF,
   return IsIndirect ? AIE2P::PseudoJL_IND : AIE2P::PseudoJL;
 }
 
-unsigned AIE2PInstrInfo::getNopOpcode(size_t Size) const {
-  assert(Size == 0);
-  return AIE2P::NOP;
-}
+unsigned AIE2PInstrInfo::getNopOpcode() const { return AIE2P::NOP; }
 
 unsigned AIE2PInstrInfo::getMvSclOpcode() const {
   return AIE2P::MOV_alu_mv_mv_mv_scl;

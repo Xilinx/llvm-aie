@@ -59,11 +59,6 @@ AIEBaseInstrInfo::getNumDelaySlots(const MachineInstr &MI,
   return MI.hasDelaySlot(Query) ? NumDelaySlots : 0;
 }
 
-unsigned
-AIEBaseInstrInfo::getNumReservedDelaySlots(const MachineInstr &MI) const {
-  return getNumDelaySlots(MI);
-}
-
 std::optional<AIEBaseInstrInfo::PseudoBranchExpandInfo>
 AIEBaseInstrInfo::getPseudoBranchExpandInfo(const MachineInstr &MI) const {
   return {};

@@ -74,10 +74,7 @@ unsigned AIE2InstrInfo::getCallOpcode(const MachineFunction &CallerF,
   return IsIndirect ? AIE2::PseudoJL_IND : AIE2::PseudoJL;
 }
 
-unsigned AIE2InstrInfo::getNopOpcode(size_t Size) const {
-  assert(Size == 0);
-  return AIE2::NOP;
-}
+unsigned AIE2InstrInfo::getNopOpcode() const { return AIE2::NOP; }
 
 unsigned AIE2InstrInfo::getOppositeBranchOpcode(unsigned Opc) const {
   switch (Opc) {

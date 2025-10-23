@@ -85,7 +85,7 @@ public:
   unsigned getCallOpcode(const MachineFunction &CallerF, bool IsIndirect,
                          bool IsTailCall) const override;
   bool isCall(unsigned Opc) const override;
-  unsigned getNopOpcode(size_t Size = 0) const override;
+  unsigned getNopOpcode() const override;
   unsigned getMvSclOpcode() const override;
 
   bool canHoistCheapInst(const MachineInstr &MI) const override;
