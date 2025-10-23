@@ -66,13 +66,17 @@ static cl::opt<unsigned>
                                 "considered for WAW rewriting"),
                        cl::init(3));
 
-static cl::opt<bool>
-    LatencyAware("aie-realloc-latencyaware", cl::Hidden, cl::init(true),
+static cl::opt<int>
+    LatencyAware("aie-realloc-latencyaware", cl::Hidden, cl::init(1),
                  cl::desc("Enable latency-aware allocation strategy"));
 
-static cl::opt<bool>
-    SWPAware("aie-realloc-swp-aware", cl::Hidden, cl::init(true),
+static cl::opt<int>
+    SWPAware("aie-realloc-swpaware", cl::Hidden, cl::init(0),
              cl::desc("Use assignment order based on interleaved swp stages"));
+
+static cl::opt<bool>
+    SelectMinIIBias("aie-realloc-select-ii-bias", cl::Hidden, cl::init(false),
+                    cl::desc("Decide MinII bias based on LoopClass"));
 
 static cl::opt<int> MinIIBias("aie-realloc-ii-bias", cl::Hidden, cl::init(0),
                               cl::desc("MinII bias for swp-aware"));
@@ -88,6 +92,63 @@ using OriginalAllocation =
 
 // Record success for a whole register class.
 using RegClassSuccess = std::map<const TargetRegisterClass *, bool>;
+
+bool runLatencyAware(int LoopClass) {
+  switch (LatencyAware) {
+  case 0:
+    return false;
+  case 1:
+    return true;
+  default:
+    break;
+  }
+  switch (LoopClass) {
+  case 14:
+  case 29:
+  case 47:
+    return false;
+  default:
+    return true;
+  }
+}
+
+bool runSwpAware(int LoopClass) {
+  switch (SWPAware) {
+  case 0:
+    return false;
+  case 1:
+    return true;
+  default:
+    break;
+  }
+  if (runLatencyAware(LoopClass)) {
+    return false;
+  }
+
+  switch (LoopClass) {
+  case 14:
+  case 29:
+  case 47:
+    return true;
+  default:
+    return false;
+  }
+}
+
+int getMinIIBias(int LoopClass) {
+  if (SelectMinIIBias) {
+    switch (LoopClass) {
+    case 14:
+      return -1;
+    case 18:
+    case 29:
+      return 1;
+    default:
+      break;
+    }
+  }
+  return MinIIBias;
+}
 
 ///
 /// This pass rewrites physical register assignments in critical parts of the
@@ -141,7 +202,8 @@ private:
       const std::map<const TargetRegisterClass *, bool> &RegClasses);
 
   /// Sort the candidates to mimic interleaving the pipeline stages
-  void sortSWPAware(OriginalAllocation &Candidates, MachineBasicBlock &MBB);
+  void sortSWPAware(OriginalAllocation &Candidates, MachineBasicBlock &MBB,
+                    const llvm::AIE::SlotStatistics &Statistics, int LoopClass);
 
   /// Pre-allocate all virtual registers in Candidates. The sole purpose of
   /// this is to prime the LRURegisters, so that the end of the loop is
@@ -215,8 +277,8 @@ private:
   /// For a given MBB, get the physical registers that are mapped to register
   /// operands with high output latency. This also includes alias and
   /// sub-registers.
-  std::set<MCRegister>
-  getHighOutputLatencyRegs(const MachineBasicBlock *MBB) const;
+  std::set<MCRegister> getHighOutputLatencyRegs(const MachineBasicBlock *MBB,
+                                                int LoopClass) const;
 };
 
 MCPhysReg AIEWawRegRewriter::getAssignedPhysReg(const Register Reg) const {
@@ -383,21 +445,25 @@ RoundRobin AIEWawRegRewriter::computeLRURegisters(
   return LRURegisters;
 }
 
-void AIEWawRegRewriter::sortSWPAware(OriginalAllocation &Candidates,
-                                     MachineBasicBlock &MBB) {
-
+void AIEWawRegRewriter::sortSWPAware(
+    OriginalAllocation &Candidates, MachineBasicBlock &MBB,
+    const llvm::AIE::SlotStatistics &Statistics, int LoopClass) {
   // We estimate the length of the schedule based on latencies and the
   // minimum II based on slots. We then estimate the modulo cycle of each
   // instruction based on its depth and apply LRU in the order of the modulo
   // cycle.
-  // Note that both the depth and the II are underestimations since we don't
+  // Note that both the depth and
+  // the II are underestimations since we don't
   // account for them interfering. Hence the modulo cycle estimate won't be
   // too far off.
-  AIE::SlotStatistics Statistics = AIE::computeSlotStatistics(MBB, TII);
-  DEBUG_DETAIL(dbgs() << "Stats="; Statistics.dumpShort(); dbgs() << "\n");
-  DEBUG_DETAIL(dbgs() << "LoopClass=" << llvm::AIE::classifyLoop(Statistics)
+  if (!runSwpAware(LoopClass)) {
+    LLVM_DEBUG(dbgs() << "Skipping sortSWPAware for LoopClass=" << LoopClass
                       << "\n");
-  const int MinII = std::max(Statistics.getMinII() + MinIIBias, 1);
+    return;
+  }
+
+  const int Bias = getMinIIBias(LoopClass);
+  const int MinII = std::max(Statistics.getMinII() + Bias, 1);
 
   MachineSchedContext Context;
   Context.MF = MF;
@@ -454,7 +520,14 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   IndexedMap<const MachineInstr *, VirtReg2IndexFunctor> LastVRegDef =
       getLastVRegDef(*MBB);
 
-  std::set<MCRegister> HighLatencyRegs = getHighOutputLatencyRegs(MBB);
+  auto &NonConstMBB = *(const_cast<MachineBasicBlock *>(MBB));
+  AIE::SlotStatistics Statistics = AIE::computeSlotStatistics(NonConstMBB, TII);
+  const int LoopClass = llvm::AIE::classifyLoop(Statistics);
+  LLVM_DEBUG(dbgs() << "Stats="; Statistics.dumpShort(); dbgs() << "\n");
+  LLVM_DEBUG(dbgs() << "LoopClass=" << LoopClass << "\n");
+
+  std::set<MCRegister> HighLatencyRegs =
+      getHighOutputLatencyRegs(MBB, LoopClass);
 
   OriginalAllocation Candidates;
 
@@ -532,8 +605,7 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   }
 
   if (SWPAware) {
-    auto &NCMBB = *(const_cast<MachineBasicBlock *>(MBB));
-    sortSWPAware(Candidates, NCMBB);
+    sortSWPAware(Candidates, NonConstMBB, Statistics, LoopClass);
   }
 
   // Least-Recently-Used list of physical registers for assignments to VRegs.
@@ -726,10 +798,11 @@ AIEWawRegRewriter::getLastVRegDef(const MachineBasicBlock &MBB) const {
   return LastVRegDef;
 }
 
-std::set<MCRegister> AIEWawRegRewriter::getHighOutputLatencyRegs(
-    const MachineBasicBlock *MBB) const {
+std::set<MCRegister>
+AIEWawRegRewriter::getHighOutputLatencyRegs(const MachineBasicBlock *MBB,
+                                            int LoopClass) const {
 
-  if (!LatencyAware)
+  if (!runLatencyAware(LoopClass))
     return {};
 
   auto *ItinData = MF->getSubtarget().getInstrItineraryData();
