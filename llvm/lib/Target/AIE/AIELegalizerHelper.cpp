@@ -772,25 +772,44 @@ bool AIELegalizerHelper::legalizeG_EXTRACT_VECTOR_ELT(LegalizerHelper &Helper,
       // Step 3: Select the correct mode for vshuffle. In AIE2P, Mode 8 maps
       // first 128-bits of src1 vector to lsb positions of output. Mode 9 maps
       // the second 128-bits to lsb positions of output.
+      auto GetShuffleModes = [&]() {
+        if (ST.isAIE2P())
+          return std::make_pair(/*Lo*/ 8, /*Hi*/ 9);
+        llvm_unreachable("vshuffle mode value needed for target.");
+      };
+      const auto [ModeLoValue, ModeHiValue] = GetShuffleModes();
+
       const Register ModeReg = MRI.createGenericVirtualRegister(S32);
       auto IdxVal = getIConstantVRegValWithLookThrough(IdxReg, MRI);
+      MachineInstrBuilder ShuffleOrCopyInstr;
       if (!IdxVal) {
-        const Register Mode8Reg = MIRBuilder.buildConstant(S32, 8).getReg(0);
-        const Register Mode9Reg = MIRBuilder.buildConstant(S32, 9).getReg(0);
-        MIRBuilder.buildSelect(ModeReg, IdxReg, Mode9Reg, Mode8Reg);
+        const Register ModeLoReg =
+            MIRBuilder.buildConstant(S32, ModeLoValue).getReg(0);
+        const Register ModeHiReg =
+            MIRBuilder.buildConstant(S32, ModeHiValue).getReg(0);
+        MIRBuilder.buildSelect(ModeReg, IdxReg, ModeHiReg, ModeLoReg);
+        // step 4: Create vshuffle.
+        ShuffleOrCopyInstr =
+            MIRBuilder.buildInstr(II->getGenericShuffleVectorOpcode(), {V64S8},
+                                  {RegSrcPadded, RegUndef, ModeReg});
       } else {
         const unsigned LaneIdx = IdxVal->Value.getZExtValue();
-        MIRBuilder.buildConstant(ModeReg, LaneIdx ? 9 : 8);
+        MIRBuilder.buildConstant(ModeReg, ModeHiValue);
+        // step 4: Create vshuffle. For LaneIdx 0, we don't have to use the
+        // shuffle, padded register itself is enough.
+        if (LaneIdx) {
+          ShuffleOrCopyInstr =
+              MIRBuilder.buildInstr(II->getGenericShuffleVectorOpcode(),
+                                    {V64S8}, {RegSrcPadded, RegUndef, ModeReg});
+        } else {
+          ShuffleOrCopyInstr = MIRBuilder.buildCopy({V64S8}, {RegSrcPadded});
+        }
       }
-      // step 4: Create vshuffle
-      auto ShuffleInstr =
-          MIRBuilder.buildInstr(II->getGenericShuffleVectorOpcode(), {V64S8},
-                                {RegSrcPadded, RegUndef, ModeReg});
 
       const unsigned UnpadOpc = II->getGenericUnpadVectorOpcode();
       // Finally, unpad the 512-bit result to 128-bit
       auto UnpadInstr =
-          MIRBuilder.buildInstr(UnpadOpc, {V16S8}, {ShuffleInstr});
+          MIRBuilder.buildInstr(UnpadOpc, {V16S8}, {ShuffleOrCopyInstr});
       MIRBuilder.buildBitcast(DstReg, {UnpadInstr});
       break;
     }
