@@ -1,3 +1,5 @@
+# Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+# affiliates
 name: "Check code formatting"
 
 permissions:
@@ -26,15 +28,6 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           fetch-depth: 2
-
-      # We need to set the repo checkout as safe, otherwise tj-actions/changed-files
-      # will fail due to the changed ownership inside the container.
-      # TODO(boomanaiden154): We should probably fix this by having the default user
-      # in the container have the same ID as the GHA user on the host.
-      - name: Set Safe Directory
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-format') }}
-        run: |
-          chown -R root $(pwd)
 
       - name: Get changed files
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-format') }}
