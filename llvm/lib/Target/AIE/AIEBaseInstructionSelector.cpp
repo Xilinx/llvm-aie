@@ -1017,3 +1017,32 @@ bool AIEBaseInstructionSelector::selectGetCoreID(MachineInstr &I,
   I.eraseFromParent();
   return true;
 }
+
+bool AIEBaseInstructionSelector::selectReadTM(MachineInstr &I,
+                                              MachineRegisterInfo &MRI,
+                                              unsigned Opcode) {
+  Register Dest = I.getOperand(0).getReg();
+  Register Ptr = I.getOperand(2).getReg();
+
+  MachineMemOperand *MMO = getTileMemOperand(
+      I, MachineMemOperand::MOLoad | MachineMemOperand::MOVolatile);
+  MachineInstrBuilder MI =
+      MIB.buildInstr(Opcode, {Dest}, {Ptr}).addMemOperand(MMO).addImm(0x0);
+
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+}
+
+bool AIEBaseInstructionSelector::selectWriteTM(MachineInstr &I,
+                                               MachineRegisterInfo &MRI,
+                                               unsigned Opcode) {
+  Register Value = I.getOperand(1).getReg();
+  Register Ptr = I.getOperand(2).getReg();
+
+  MachineMemOperand *MMO = getTileMemOperand(I, MachineMemOperand::MOStore);
+  MachineInstrBuilder MI =
+      MIB.buildInstr(Opcode, {}, {Value, Ptr}).addMemOperand(MMO).addImm(0x0);
+
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+}

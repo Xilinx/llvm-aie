@@ -171,6 +171,10 @@ public:
 
   bool selectG_CONSTANT(MachineInstr &I, MachineRegisterInfo &MRI);
 
+  bool selectWriteTM(MachineInstr &I, MachineRegisterInfo &MRI,
+                     unsigned Opcode);
+  bool selectReadTM(MachineInstr &I, MachineRegisterInfo &MRI, unsigned Opcode);
+
 protected:
   void makeDeadMI(MachineInstr &MI, MachineRegisterInfo &MRI);
   virtual std::optional<AddressingModeInfo>

@@ -121,8 +121,6 @@ public:
                      MachineOperand &SrcReg, MachineRegisterInfo &MRI);
   bool selectExtractI128(MachineInstr &I, Register DstReg, Register SrcReg,
                          MachineRegisterInfo &MRI);
-  bool selectWriteTM(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectReadTM(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVUNPACK(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVPACK(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVSHUFFLE_BFP(MachineInstr &I, MachineRegisterInfo &MRI);
@@ -347,9 +345,9 @@ bool AIE2PInstructionSelector::select(MachineInstr &I) {
     case Intrinsic::aie2p_pack_I512_I4_I8:
       return selectVPACK(I, MRI);
     case Intrinsic::aie2p_read_tm:
-      return selectReadTM(I, MRI);
+      return selectReadTM(I, MRI, AIE2P::LDA_TM_idx_imm);
     case Intrinsic::aie2p_write_tm:
-      return selectWriteTM(I, MRI);
+      return selectWriteTM(I, MRI, AIE2P::ST_TM_idx_imm);
     case Intrinsic::aie2p_scd_read_vec:
     case Intrinsic::aie2p_scd_read_acc32:
     case Intrinsic::aie2p_scd_expand_lo:
@@ -2884,36 +2882,6 @@ bool AIE2PInstructionSelector::selectG_AIE_STORE_SRS(MachineInstr &StoreI,
   makeDeadMI(*SrsOp, MRI);
   StoreI.eraseFromParent();
   return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
-}
-
-bool AIE2PInstructionSelector::selectReadTM(MachineInstr &I,
-                                            MachineRegisterInfo &MRI) {
-  Register Dest = I.getOperand(0).getReg();
-  Register Ptr = I.getOperand(2).getReg();
-
-  MachineMemOperand *MMO = getTileMemOperand(
-      I, MachineMemOperand::MOLoad | MachineMemOperand::MOVolatile);
-  MachineInstrBuilder MI = MIB.buildInstr(AIE2P::LDA_TM_idx_imm, {Dest}, {Ptr})
-                               .addMemOperand(MMO)
-                               .addImm(0x0);
-
-  I.eraseFromParent();
-  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
-}
-
-bool AIE2PInstructionSelector::selectWriteTM(MachineInstr &I,
-                                             MachineRegisterInfo &MRI) {
-  Register Value = I.getOperand(1).getReg();
-  Register Ptr = I.getOperand(2).getReg();
-
-  MachineMemOperand *MMO = getTileMemOperand(I, MachineMemOperand::MOStore);
-  MachineInstrBuilder MI =
-      MIB.buildInstr(AIE2P::ST_TM_idx_imm, {}, {Value, Ptr})
-          .addMemOperand(MMO)
-          .addImm(0x0);
-
-  I.eraseFromParent();
-  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
 }
 
 bool AIE2PInstructionSelector::selectVUNPACK(MachineInstr &I,
