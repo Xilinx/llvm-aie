@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the RegisterPressure class which can be used to track
@@ -945,11 +948,11 @@ void RegPressureTracker::advance() {
 }
 
 /// Find the max change in excess pressure across all sets.
-static void computeExcessPressureDelta(ArrayRef<unsigned> OldPressureVec,
-                                       ArrayRef<unsigned> NewPressureVec,
-                                       RegPressureDelta &Delta,
-                                       const RegisterClassInfo *RCI,
-                                       ArrayRef<unsigned> LiveThruPressureVec) {
+static void computeExcessPressureDelta(
+    ArrayRef<unsigned> OldPressureVec, ArrayRef<unsigned> NewPressureVec,
+    RegPressureDelta &Delta, const RegisterClassInfo *RCI,
+    ArrayRef<unsigned> LiveThruPressureVec,
+    iterator_range<const uint16_t *> IgnorePressureSetIDs) {
   Delta.Excess = PressureChange();
   for (unsigned i = 0, e = OldPressureVec.size(); i < e; ++i) {
     unsigned POld = OldPressureVec[i];
@@ -957,6 +960,13 @@ static void computeExcessPressureDelta(ArrayRef<unsigned> OldPressureVec,
     int PDiff = (int)PNew - (int)POld;
     if (!PDiff) // No change in this set in the common case.
       continue;
+
+    // // Ignore Reg Pressure Set ID
+    const unsigned PSID = i;
+    if (std::find(IgnorePressureSetIDs.begin(), IgnorePressureSetIDs.end(),
+                  PSID) != IgnorePressureSetIDs.end())
+      continue;
+
     // Only consider change beyond the limit.
     unsigned Limit = RCI->getRegPressureSetLimit(i);
     if (!LiveThruPressureVec.empty())
@@ -984,11 +994,11 @@ static void computeExcessPressureDelta(ArrayRef<unsigned> OldPressureVec,
 /// FIXME: comparing each element of the old and new MaxPressure vectors here is
 /// silly. It's done now to demonstrate the concept but will go away with a
 /// RegPressureTracker API change to work with pressure differences.
-static void computeMaxPressureDelta(ArrayRef<unsigned> OldMaxPressureVec,
-                                    ArrayRef<unsigned> NewMaxPressureVec,
-                                    ArrayRef<PressureChange> CriticalPSets,
-                                    ArrayRef<unsigned> MaxPressureLimit,
-                                    RegPressureDelta &Delta) {
+static void computeMaxPressureDelta(
+    ArrayRef<unsigned> OldMaxPressureVec, ArrayRef<unsigned> NewMaxPressureVec,
+    ArrayRef<PressureChange> CriticalPSets, ArrayRef<unsigned> MaxPressureLimit,
+    RegPressureDelta &Delta,
+    iterator_range<const uint16_t *> IgnorePressureSetIDs) {
   Delta.CriticalMax = PressureChange();
   Delta.CurrentMax = PressureChange();
 
@@ -997,6 +1007,12 @@ static void computeMaxPressureDelta(ArrayRef<unsigned> OldMaxPressureVec,
     unsigned POld = OldMaxPressureVec[i];
     unsigned PNew = NewMaxPressureVec[i];
     if (PNew == POld) // No change in this set in the common case.
+      continue;
+
+    // // Ignore Reg Pressure Set ID
+    const unsigned PSID = i;
+    if (std::find(IgnorePressureSetIDs.begin(), IgnorePressureSetIDs.end(),
+                  PSID) != IgnorePressureSetIDs.end())
       continue;
 
     if (!Delta.CriticalMax.isValid()) {
@@ -1095,10 +1111,13 @@ getMaxUpwardPressureDelta(const MachineInstr *MI, PressureDiff *PDiff,
 
   bumpUpwardPressure(MI);
 
+  iterator_range<const uint16_t *> IgnorePressureSetIDs =
+      TRI->regPressureSetIndicesIgnoreInMachineScheduler();
+
   computeExcessPressureDelta(SavedPressure, CurrSetPressure, Delta, RCI,
-                             LiveThruPressure);
+                             LiveThruPressure, IgnorePressureSetIDs);
   computeMaxPressureDelta(SavedMaxPressure, P.MaxSetPressure, CriticalPSets,
-                          MaxPressureLimit, Delta);
+                          MaxPressureLimit, Delta, IgnorePressureSetIDs);
   assert(Delta.CriticalMax.getUnitInc() >= 0 &&
          Delta.CurrentMax.getUnitInc() >= 0 && "cannot decrease max pressure");
 
@@ -1155,6 +1174,9 @@ getUpwardPressureDelta(const MachineInstr *MI, /*const*/ PressureDiff &PDiff,
                        RegPressureDelta &Delta,
                        ArrayRef<PressureChange> CriticalPSets,
                        ArrayRef<unsigned> MaxPressureLimit) const {
+  iterator_range<const uint16_t *> IgnorePressureSetIDs =
+      TRI->regPressureSetIndicesIgnoreInMachineScheduler();
+
   unsigned CritIdx = 0, CritEnd = CriticalPSets.size();
   for (PressureDiff::const_iterator
          PDiffI = PDiff.begin(), PDiffE = PDiff.end();
@@ -1162,6 +1184,12 @@ getUpwardPressureDelta(const MachineInstr *MI, /*const*/ PressureDiff &PDiff,
 
     unsigned PSetID = PDiffI->getPSet();
     unsigned Limit = RCI->getRegPressureSetLimit(PSetID);
+
+    // Ignore Reg Pressure Set ID
+    if (std::find(IgnorePressureSetIDs.begin(), IgnorePressureSetIDs.end(),
+                  PSetID) != IgnorePressureSetIDs.end())
+      continue;
+
     if (!LiveThruPressure.empty())
       Limit += LiveThruPressure[PSetID];
 
@@ -1331,20 +1359,23 @@ void RegPressureTracker::bumpDownwardPressure(const MachineInstr *MI) {
 /// bumpDownwardPressure to recompute the pressure sets based on current
 /// liveness. We don't yet have a fast version of downward pressure tracking
 /// analogous to getUpwardPressureDelta.
-void RegPressureTracker::
-getMaxDownwardPressureDelta(const MachineInstr *MI, RegPressureDelta &Delta,
-                            ArrayRef<PressureChange> CriticalPSets,
-                            ArrayRef<unsigned> MaxPressureLimit) {
+void RegPressureTracker::getMaxDownwardPressureDelta(
+    const MachineInstr *MI, RegPressureDelta &Delta,
+    ArrayRef<PressureChange> CriticalPSets,
+    ArrayRef<unsigned> MaxPressureLimit) {
   // Snapshot Pressure.
   std::vector<unsigned> SavedPressure = CurrSetPressure;
   std::vector<unsigned> SavedMaxPressure = P.MaxSetPressure;
 
+  iterator_range<const uint16_t *> IgnorePressureSetIDs =
+      TRI->regPressureSetIndicesIgnoreInMachineScheduler();
+
   bumpDownwardPressure(MI);
 
   computeExcessPressureDelta(SavedPressure, CurrSetPressure, Delta, RCI,
-                             LiveThruPressure);
+                             LiveThruPressure, IgnorePressureSetIDs);
   computeMaxPressureDelta(SavedMaxPressure, P.MaxSetPressure, CriticalPSets,
-                          MaxPressureLimit, Delta);
+                          MaxPressureLimit, Delta, IgnorePressureSetIDs);
   assert(Delta.CriticalMax.getUnitInc() >= 0 &&
          Delta.CurrentMax.getUnitInc() >= 0 && "cannot decrease max pressure");
 
