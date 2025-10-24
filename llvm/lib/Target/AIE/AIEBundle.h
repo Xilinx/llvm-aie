@@ -227,7 +227,7 @@ public:
     }
     return true;
   }
-  void clearBundle() const {
+  void clearMBBBundle() const {
     const VLIWFormat *Format = getFormatOrNull();
     assert(Format);
     for (MCSlotKind Slot : Format->getSlots()) {
