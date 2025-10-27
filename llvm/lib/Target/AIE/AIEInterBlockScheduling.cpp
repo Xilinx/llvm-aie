@@ -16,9 +16,11 @@
 #include "AIEBundle.h"
 #include "AIEHazardRecognizer.h"
 #include "AIELiveRegs.h"
+#include "AIELoopClass.h"
 #include "AIEMachineScheduler.h"
 #include "AIEMaxLatencyFinder.h"
 #include "AIEMultiSlotInstrMaterializer.h"
+#include "AIESlotStatistics.h"
 #include "Utils/AIELoopUtils.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
@@ -74,6 +76,15 @@ static cl::opt<bool>
 static cl::opt<int> PostPipelinerMaxTryII(
     "aie-postpipeliner-maxtry-ii", cl::init(20),
     cl::desc("[AIE] Maximum II steps to be tried in the post-ra pipeliner"));
+
+static bool runMaterializeAll(int LoopClass) {
+  switch (LoopClass) {
+  // Fill in specific loop classes based on experimental results if needed.
+  // Default: fall back to CLI option.
+  default:
+    return MaterializeAll;
+  }
+}
 
 namespace llvm::AIE {
 
@@ -1198,7 +1209,16 @@ void BlockState::initInterBlock(const MachineSchedContext &Context,
     // perform static assignment of multi-slot pseudos
     if (EnableMultiSlotInstrMaterialization &&
         PostSWP->isPostPipelineCandidate(*TheBlock)) {
-      staticallyMaterializeMultiSlotInstructions(*TheBlock, HR, MaterializeAll);
+      // Classify loop to tailor full materialization per-loop, similar to
+      // SWP-aware tuning.
+      const AIEBaseInstrInfo *TII = static_cast<const AIEBaseInstrInfo *>(
+          TheBlock->getParent()->getSubtarget().getInstrInfo());
+      AIE::SlotStatistics Statistics =
+          AIE::computeSlotStatistics(*TheBlock, TII);
+      const int LoopClass = llvm::AIE::classifyLoop(Statistics);
+      const bool MaterializeAllByClass = runMaterializeAll(LoopClass);
+      staticallyMaterializeMultiSlotInstructions(*TheBlock, HR,
+                                                 MaterializeAllByClass);
     }
   }
 
