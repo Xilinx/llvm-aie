@@ -48,13 +48,6 @@ protected:
     PMI_FIFO1024 = 17
   };
 
-  enum ValueMappingIdx {
-    InvalidIdx = 0,
-    First3OpsIdx = 1,
-    Last3OpsIdx = 10,
-    DistanceBetweenRegBanks = 3,
-  };
-
   static unsigned getRegBankBaseIdxOffset(unsigned RBIdx, unsigned Size);
 
   /// Get the pointer to the ValueMapping representing the RegisterBank

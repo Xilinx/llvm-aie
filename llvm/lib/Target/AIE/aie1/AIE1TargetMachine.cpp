@@ -47,42 +47,6 @@ using namespace llvm;
 
 extern bool AIEDumpArtifacts;
 
-extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETarget() {
-  RegisterTargetMachine<AIETargetMachine> X(getTheAIETarget());
-  RegisterTargetMachine<AIE2TargetMachine> Y(getTheAIE2Target());
-  RegisterTargetMachine<AIE2PTargetMachine> A(getTheAIE2PTarget());
-  //  auto PR = PassRegistry::getPassRegistry();
-  //  initializeAIEExpandPseudoPass(*PR);
-  auto *PR = PassRegistry::getPassRegistry();
-  initializeGlobalISel(*PR);
-  initializeAIEAddressSpaceFlatteningPass(*PR);
-  initializeAIEEliminateDuplicatePHIPass(*PR);
-  initializeAIEClusterBaseAddressPass(*PR);
-  initializeAIEPtrModOptimizerPass(*PR);
-  initializeAIE2PreLegalizerCombinerPass(*PR);
-  initializeAIE2PPreLegalizerCombinerPass(*PR);
-  initializeAIE2PostLegalizerGenericCombinerPass(*PR);
-  initializeAIE2PPostLegalizerGenericCombinerPass(*PR);
-  initializeAIE2PostLegalizerCustomCombinerPass(*PR);
-  initializeAIE2PPostLegalizerCustomCombinerPass(*PR);
-  initializeAIEPostSelectOptimizePass(*PR);
-  initializeAIEPseudoBranchExpansionPass(*PR);
-  initializeAIESubRegConstrainerPass(*PR);
-  initializeAIESuperRegRewriterPass(*PR);
-  initializeAIEWawRegRewriterPass(*PR);
-  initializeAIEOutlineMemoryGEPPass(*PR);
-  initializeAIEFinalizeBundlePass(*PR);
-  initializeAIEMachineAlignmentPass(*PR);
-  initializeAIE1MachineBlockPlacementPass(*PR);
-  initializeAIEBaseHardwareLoopsPass(*PR);
-  initializeAIEBaseAAWrapperPassPass(*PR);
-  initializeAIEBaseExternalAAWrapperPass(*PR);
-  initializeAIESplitInstrBuilderPass(*PR);
-  initializeAIESplitInstrReplacerPass(*PR);
-  initializeAIERegClassConstrainerPass(*PR);
-  initializeReservedRegsLICMPass(*PR);
-}
-
 AIETargetMachine::AIETargetMachine(const Target &T, const Triple &TT,
                                    StringRef CPU, StringRef FS,
                                    const TargetOptions &Options,
