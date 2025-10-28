@@ -45,6 +45,16 @@ public:
   bool targetSchedulesPostRAScheduling() const override { return true; }
 };
 
+// AIE2P Pass Setup
+class AIE2PPassConfig : public AIE2PassConfig {
+public:
+  AIE2PPassConfig(TargetMachine &TM, PassManagerBase &PM)
+      : AIE2PassConfig(TM, PM) {}
+  void addPreRegBankSelect() override;
+  void addPreLegalizeMachineIR() override;
+  bool addRegAssignAndRewriteOptimized() override;
+};
+
 } // namespace llvm
 
 #endif
