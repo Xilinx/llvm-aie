@@ -39,7 +39,7 @@ class CombinerGain {
 public:
   // Hierarchical gain vector. Larger Indices are less important in the Gain
   // calculation
-  std::array<int, 3> GainVector;
+  std::array<int, 3> GainVector{0, 0, 0};
 
   CombinerGain() : CombinerGain({}) {}
   CombinerGain(std::initializer_list<int> InitialGain);
