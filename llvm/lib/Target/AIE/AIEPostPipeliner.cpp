@@ -13,7 +13,7 @@
 
 #include "AIEPostPipeliner.h"
 #include "AIESWPSolver.h"
-#include "AIESlotCounts.h"
+#include "AIESlotUtils.h"
 #include "Utils/AIELoopUtils.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Analysis/OptimizationRemarkEmitter.h"
@@ -144,15 +144,6 @@ bool PostPipeliner::isPostPipelineCandidate(MachineBasicBlock &LoopBlock) {
 
 namespace {
 
-uint64_t getSlotSet(MachineInstr &MI, const AIEBaseInstrInfo *TII) {
-  auto *SlotInfo = TII->getSlotInfo(TII->getSlotKind(MI.getOpcode()));
-  return SlotInfo ? SlotInfo->getSlotSet() : 0;
-}
-
-SlotCounts getSlotCounts(MachineInstr &MI, const AIEBaseInstrInfo *TII) {
-  return SlotCounts{getSlotSet(MI, TII)};
-}
-
 // Our definition of side-effect free. There are no implicit defs, no stores
 // and it doesn't touch anything that is live in to the loop.
 // We explicitly use the fact that out-of-bounds loads do not cause an
@@ -173,7 +164,7 @@ int PostPipeliner::getResMII(MachineBasicBlock &LoopBlock) {
   // Add up all slot requirements and return the maximum slot count
   SlotCounts Counts;
   for (auto &MI : LoopBlock) {
-    Counts += getSlotCounts(MI, TII);
+    Counts += getSlotCounts(MI.getOpcode(), TII);
   }
   int MII = Counts.max();
   LLVM_DEBUG(dbgs() << "PostPipeliner: ResMII=" << MII << "\n");
@@ -453,7 +444,8 @@ bool PostPipeliner::computeLoopCarriedParameters() {
 
   // Initialize slot counts.
   for (int K = 0; K < NTotalInstrs; K++) {
-    Info[K].Slots = getSlotCounts(*DAG->SUnits[K].getInstr(), TII);
+    auto *MI = DAG->SUnits[K].getInstr();
+    Info[K].Slots = getSlotCounts(MI->getOpcode(), TII);
   }
 
   // Forward properties like Earliest and Ancestors.
