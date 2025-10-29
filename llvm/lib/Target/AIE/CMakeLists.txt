@@ -92,6 +92,7 @@ add_llvm_target(AIECodeGen
    AIEBaseSubtarget.cpp
    AIEBaseTargetMachine.cpp
    AIECallLowering.cpp
+   AIEDataDependenceHelper.cpp
    AIEDumpArtifacts.cpp
    AIEEliminateDuplicatePHI.cpp
    AIEFinalizeBundle.cpp
@@ -116,6 +117,8 @@ add_llvm_target(AIECodeGen
    AIERegClassConstrainer.cpp
    AIERegMemEventTracker.cpp
    AIESlotCounts.cpp
+   AIESlotStatistics.cpp
+   AIESlotUtils.cpp
    AIESplitInstructionRewriter.cpp
    AIESubRegConstrainer.cpp
    AIESWPSolver.cpp

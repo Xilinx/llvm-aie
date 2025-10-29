@@ -36,7 +36,7 @@ public:
   // Compute the number of required cycles
   int max() const;
 
-  // Compute the index the max element
+  // Compute the index of the max element
   int maxIndex() const;
 
   // Compute the total of the counts
