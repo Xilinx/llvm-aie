@@ -8,16 +8,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AIESlotStatistics.h"
 #include "AIEBaseInstrInfo.h"
-#include "AIESlotCounts.h"
+#include "AIESlotUtils.h"
 #include "llvm/CodeGen/MachineInstr.h"
 
 namespace llvm::AIE {
-uint64_t getSlotSet(unsigned Opcode, const AIEBaseInstrInfo *TII) {
-  auto *SlotInfo = TII->getSlotInfo(TII->getSlotKind(Opcode));
-  return SlotInfo ? SlotInfo->getSlotSet() : 0;
-}
 
 SlotStatistics::SlotStatistics(ArrayRef<int> FixedValue,
                                ArrayRef<int> FreeValue) {
@@ -27,10 +22,6 @@ SlotStatistics::SlotStatistics(ArrayRef<int> FixedValue,
   for (unsigned I = 0; I < FreeValue.size(); I++) {
     Free[I] = FreeValue[I];
   }
-}
-
-SlotCounts getSlotCounts(unsigned Opcode, const AIEBaseInstrInfo *TII) {
-  return SlotCounts{getSlotSet(Opcode, TII)};
 }
 
 void SlotStatistics::addInstruction(MachineInstr &MI,
