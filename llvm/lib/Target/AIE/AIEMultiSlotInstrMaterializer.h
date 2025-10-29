@@ -12,11 +12,11 @@
 // block loop to help loop pipelining.
 //
 //===----------------------------------------------------------------------===//
-#include "AIEBaseInstrInfo.h"
 
 namespace llvm {
 class AIEHazardRecognizer;
-}
+class MachineBasicBlock;
+} // namespace llvm
 
 namespace llvm::AIE {
 
@@ -24,6 +24,7 @@ namespace llvm::AIE {
 /// \p MBB .
 /// FIXME: Currently we are only handling multi-slot memory load pseudos.
 void staticallyMaterializeMultiSlotInstructions(MachineBasicBlock &MBB,
-                                                const AIEHazardRecognizer &HR);
+                                                const AIEHazardRecognizer &HR,
+                                                bool MaterializeAll = false);
 
 } // namespace llvm::AIE
