@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 // Implementations of the classes used to support inter-block scheduling
@@ -66,6 +66,10 @@ static cl::opt<bool> EnableMultiSlotInstrMaterialization(
     "aie-preassign-multi-slot-instr", cl::Hidden, cl::init(true),
     cl::desc("Statically materialize Multi-Slot Pseudo Instructions in "
              "loops."));
+
+static cl::opt<bool>
+    MaterializeAll("aie-materialize-all", cl::Hidden, cl::init(false),
+                   cl::desc("Materialize all Multi-Slot Pseudo Instructions."));
 
 static cl::opt<int> PostPipelinerMaxTryII(
     "aie-postpipeliner-maxtry-ii", cl::init(20),
@@ -1184,8 +1188,9 @@ void BlockState::initInterBlock(const MachineSchedContext &Context,
 
     // perform static assignment of multi-slot pseudos
     if (EnableMultiSlotInstrMaterialization &&
-        PostSWP->isPostPipelineCandidate(*TheBlock))
-      staticallyMaterializeMultiSlotInstructions(*TheBlock, HR);
+        PostSWP->isPostPipelineCandidate(*TheBlock)) {
+      staticallyMaterializeMultiSlotInstructions(*TheBlock, HR, MaterializeAll);
+    }
   }
 
   // We are called just after the first round of scheduling a block.
