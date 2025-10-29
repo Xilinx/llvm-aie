@@ -31,7 +31,7 @@
 #define LLVM_LIB_TARGET_AIE_AIEGLOBALCOMBINER_H
 
 #include "AIEBaseInstrInfo.h"
-#include "AIEInterBlockScheduling.h"
+#include "AIEDataDependenceHelper.h"
 
 namespace llvm::AIE {
 

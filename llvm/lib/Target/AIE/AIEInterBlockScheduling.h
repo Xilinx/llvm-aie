@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -19,6 +19,7 @@
 
 #include "AIEBaseSubtarget.h"
 #include "AIEBundle.h"
+#include "AIEDataDependenceHelper.h"
 #include "AIEHazardRecognizer.h"
 #include "AIEPostPipeliner.h"
 #include "Utils/AIELoopUtils.h"
@@ -29,40 +30,6 @@
 #include <memory>
 
 namespace llvm::AIE {
-
-/// Class to derive actual helpers from. It is a placeholder for the future
-/// stand-alone DDG class, it just implements the unrelated schedule() as
-/// a dummy
-/// It copies the Mutations mechanism from ScheduleDAGMI; this represents a
-/// change of perspective on DAGMutations: They are target-dependent ways to
-/// modify the dependence graph, not target-dependent ways to tweak the
-/// scheduler.
-class DataDependenceHelper : public ScheduleDAGInstrs {
-  /// Ordered list of DAG postprocessing steps.
-  std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
-  const MachineSchedContext &Context;
-  void schedule() override{};
-
-public:
-  DataDependenceHelper(const MachineSchedContext &Context,
-                       bool AddMutators = true)
-      : ScheduleDAGInstrs(*Context.MF, Context.MLI), Context(Context) {
-    if (!AddMutators)
-      return;
-
-    auto &Subtarget = Context.MF->getSubtarget();
-    auto TT = Subtarget.getTargetTriple();
-    for (auto &M : AIEBaseSubtarget::getInterBlockMutationsImpl(TT)) {
-      Mutations.emplace_back(std::move(M));
-    }
-  }
-  void buildEdges() {
-    ScheduleDAGInstrs::buildEdges(Context.AA);
-    for (auto &M : Mutations) {
-      M->apply(this);
-    }
-  }
-};
 
 /// This class generates all edges between nodes in two flow-adjacent regions
 /// The nodes are added in forward flow order, marking the boundary at the
