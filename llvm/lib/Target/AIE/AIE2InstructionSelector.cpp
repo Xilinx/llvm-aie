@@ -207,22 +207,8 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
   case G_BITCAST:
     I.setDesc(TII.get(COPY));
     return selectCopy(I, MRI);
-  case G_TRUNC: {
-    Register SrcReg = I.getOperand(1).getReg();
-    LLT SrcTy = MRI.getType(SrcReg);
-    unsigned Size = SrcTy.getSizeInBits();
-    // G_TRUNC S32 <- S64
-    if (Size == 64) {
-      Register DstReg = I.getOperand(0).getReg();
-      MachineInstrBuilder MI = MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {})
-                                   .addReg(SrcReg, 0, AIE2::sub_l_even);
-      I.eraseFromParent();
-      return selectCopy(*MI.getInstr(), MRI);
-    } else {
-      I.setDesc(TII.get(COPY));
-      return selectCopy(I, MRI);
-    }
-  }
+  case G_TRUNC:
+    return selectG_TRUNC(I, MRI, AIE2::sub_l_even);
   case G_SEXT_INREG:
     return selectG_SEXT_INREG(I, MRI, {AIE2::EXTENDs8, AIE2::EXTENDs16});
   case G_BRCOND:

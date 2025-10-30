@@ -954,6 +954,28 @@ bool AIEBaseInstructionSelector::selectG_SEXT_INREG(
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
 }
 
+bool AIEBaseInstructionSelector::selectG_TRUNC(MachineInstr &I,
+                                               MachineRegisterInfo &MRI,
+                                               const unsigned SubRegIdx) {
+  Register SrcReg = I.getOperand(1).getReg();
+  LLT SrcTy = MRI.getType(SrcReg);
+  unsigned SrcSize = SrcTy.getSizeInBits();
+  // G_TRUNC S32 <- S64
+  if (SrcSize == 64) {
+    Register DstReg = I.getOperand(0).getReg();
+    MachineInstrBuilder MI = MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {})
+                                 .addReg(SrcReg, 0, SubRegIdx);
+    I.eraseFromParent();
+    return selectCopy(*MI.getInstr(), MRI);
+  } else if (SrcTy.isVector()) {
+    assert(SrcSize >= 512 && "Invalid vector size for G_TRUNC source vector!");
+    return selectImpl(I, *CoverageInfo);
+  } else {
+    I.setDesc(TII.get(TargetOpcode::COPY));
+    return selectCopy(I, MRI);
+  }
+}
+
 bool AIEBaseInstructionSelector::selectG_CONSTANT(MachineInstr &I,
                                                   MachineRegisterInfo &MRI) {
   // TODO: it isn't easy to rely on TableGen patterns, as there's poor support
