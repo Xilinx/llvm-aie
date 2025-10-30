@@ -437,13 +437,13 @@ define void @__addsf3_lowered_to_call(ptr %a) {
 ; AIE2P-NEXT:    nop // Delay Slot 3
 ; AIE2P-NEXT:    nop // Delay Slot 2
 ; AIE2P-NEXT:    mova r2, #0; mov r1, r0 // Delay Slot 1
-; AIE2P-NEXT:    xor r0, r11, r8; vinsert.32 x0, x0, #0, r0
+; AIE2P-NEXT:    xor r0, r11, r8; vinsert.32 x4, x0, #0, r0
 ; AIE2P-NEXT:    st.s16 r10, [p6, #0]; jnz r0, #.LBB3_1
-; AIE2P-NEXT:    vmov bmll0, x0 // Delay Slot 5
+; AIE2P-NEXT:    vmov bmll0, x4 // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
-; AIE2P-NEXT:    vconv.bf16.fp32 wl2, bmll0 // Delay Slot 3
+; AIE2P-NEXT:    vconv.bf16.fp32 wl6, bmll0 // Delay Slot 3
 ; AIE2P-NEXT:    nop // Delay Slot 2
-; AIE2P-NEXT:    mova r11, #1; vextract.16 r10, x2, #0, vaddsign1 // Delay Slot 1
+; AIE2P-NEXT:    mova r11, #1; vextract.16 r10, x6, #0, vaddsign1 // Delay Slot 1
 ; AIE2P-NEXT:  // %bb.2: // %for.cond.cleanup
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    lda lr, [sp, #-44] // 4-byte Folded Reload
