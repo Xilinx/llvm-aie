@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -79,6 +79,8 @@ struct AIE2RegisterInfo : public AIE2GenRegisterInfo {
   getGPRRegClass(const MachineFunction &MF) const override;
   unsigned getVectorRegBankID() const override;
   unsigned getGPRRegBankID() const override;
+  unsigned getMODRegBankID() const override;
+  unsigned getPTRRegBankID() const override;
   const std::set<int> &getSubRegSplit(int RegClassId) const override;
   SmallSet<int, 8>
   getCoveringSubRegs(const TargetRegisterClass &RC) const override;

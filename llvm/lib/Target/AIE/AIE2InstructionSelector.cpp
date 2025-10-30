@@ -59,7 +59,6 @@ public:
   bool selectG_AIE_ADD_VECTOR_ELT_HI(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_BRINDIRECT(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_JUMP_TABLE(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectG_CONSTANT(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_GLOBAL_VALUE(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_LOAD(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_SEXT_INREG(MachineInstr &I, MachineRegisterInfo &MRI);
@@ -534,32 +533,6 @@ bool AIE2InstructionSelector::selectG_JUMP_TABLE(MachineInstr &I,
                                                  MachineRegisterInfo &MRI) {
   I.setDesc(TII.get(AIE2::MOVXM_lng_cg));
   return constrainSelectedInstRegOperands(I, TII, TRI, RBI);
-}
-
-bool AIE2InstructionSelector::selectG_CONSTANT(MachineInstr &I,
-                                               MachineRegisterInfo &MRI) {
-  // TODO: it isn't easy to rely on TableGen patterns, as there's poor support
-  // for pointer types. If GlobalISel ever get its own pattern language with
-  // pointer types properly supported, we should use it.
-  const Register DstReg = I.getOperand(0).getReg();
-  const LLT Ty = MRI.getType(DstReg);
-  assert((Ty == LLT::pointer(0, 20) || Ty == LLT::scalar(20) ||
-          Ty == LLT::scalar(32)) &&
-         "Only support 20, 32-bit integer and 20-bit pointer constants");
-  const RegisterBank &DstRB = *RBI.getRegBank(DstReg, MRI, TRI);
-  assert((DstRB.getID() == AIE2::PTRRegBankID ||
-          DstRB.getID() == AIE2::MODRegBankID ||
-          DstRB.getID() == AIE2::GPRRegBankID) &&
-         "Expected constants only on GPR, MOD and PTR register banks");
-
-  APInt Imm = I.getOperand(1).getCImm()->getValue();
-  auto OpCode = TII.getConstantMovOpcode(MRI, DstReg, Imm);
-  MachineInstr &MI = *MIB.buildInstr(OpCode, {DstReg}, {})
-                          .addImm(Imm.getSExtValue())
-                          .getInstr();
-
-  I.eraseFromParent();
-  return constrainSelectedInstRegOperands(MI, TII, TRI, RBI);
 }
 
 bool AIE2InstructionSelector::selectG_GLOBAL_VALUE(MachineInstr &I,

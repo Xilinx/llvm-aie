@@ -163,6 +163,8 @@ public:
 
   void insertPtrAddForOffset(MachineRegisterInfo &MRI, MachineInstr &MemI);
 
+  bool selectG_CONSTANT(MachineInstr &I, MachineRegisterInfo &MRI);
+
 protected:
   void makeDeadMI(MachineInstr &MI, MachineRegisterInfo &MRI);
   virtual std::optional<AddressingModeInfo>

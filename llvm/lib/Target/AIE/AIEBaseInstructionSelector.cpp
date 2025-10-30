@@ -925,3 +925,29 @@ bool AIEBaseInstructionSelector::selectStartLoop(MachineInstr &I,
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*ADDI, TII, TRI, RBI);
 }
+
+bool AIEBaseInstructionSelector::selectG_CONSTANT(MachineInstr &I,
+                                                  MachineRegisterInfo &MRI) {
+  // TODO: it isn't easy to rely on TableGen patterns, as there's poor support
+  // for pointer types. If GlobalISel ever get its own pattern language with
+  // pointer types properly supported, we should use it.
+  const Register DstReg = I.getOperand(0).getReg();
+  const LLT Ty = MRI.getType(DstReg);
+  assert((Ty == LLT::pointer(0, 20) || Ty == LLT::scalar(20) ||
+          Ty == LLT::scalar(32)) &&
+         "Only support 20, 32-bit integer and 20-bit pointer constants");
+  const RegisterBank &DstRB = *RBI.getRegBank(DstReg, MRI, TRI);
+  assert((DstRB.getID() == TRI.getPTRRegBankID() ||
+          DstRB.getID() == TRI.getMODRegBankID() ||
+          DstRB.getID() == TRI.getGPRRegBankID()) &&
+         "Expected constants only on GPR, MOD and PTR register banks");
+
+  APInt Imm = I.getOperand(1).getCImm()->getValue();
+  auto OpCode = TII.getConstantMovOpcode(MRI, DstReg, Imm);
+  MachineInstr &MI = *MIB.buildInstr(OpCode, {DstReg}, {})
+                          .addImm(Imm.getSExtValue())
+                          .getInstr();
+
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(MI, TII, TRI, RBI);
+}

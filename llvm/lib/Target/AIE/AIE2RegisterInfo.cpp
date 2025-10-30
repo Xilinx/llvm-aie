@@ -440,6 +440,14 @@ unsigned AIE2RegisterInfo::getGPRRegBankID() const {
   return AIE2::GPRRegBankID;
 }
 
+unsigned AIE2RegisterInfo::getMODRegBankID() const {
+  return AIE2::MODRegBankID;
+}
+
+unsigned AIE2RegisterInfo::getPTRRegBankID() const {
+  return AIE2::PTRRegBankID;
+}
+
 void AIE2RegisterInfo::getTargetSubRegs(std::vector<unsigned> &Subregs,
                                         unsigned Size,
                                         const RegisterBank &RB) const {

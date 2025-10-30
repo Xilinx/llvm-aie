@@ -44,7 +44,6 @@ public:
                            const AIE2PRegisterBankInfo &RBI);
 
   bool select(MachineInstr &I) override;
-  bool selectG_CONSTANT(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_GLOBAL_VALUE(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_SEXT_INREG(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectGetCoreID(MachineInstr &MI, MachineRegisterInfo &MRI);
@@ -575,32 +574,6 @@ bool AIE2PInstructionSelector::selectG_CONCAT_VECTORS(
   }
 
   return selectImpl(I, *CoverageInfo);
-}
-
-bool AIE2PInstructionSelector::selectG_CONSTANT(MachineInstr &I,
-                                                MachineRegisterInfo &MRI) {
-  // TODO: it isn't easy to rely on TableGen patterns, as there's poor support
-  // for pointer types. If GlobalISel ever get its own pattern language with
-  // pointer types properly supported, we should use it.
-  const Register DstReg = I.getOperand(0).getReg();
-  const LLT Ty = MRI.getType(DstReg);
-  assert((Ty == LLT::pointer(0, 20) || Ty == LLT::scalar(20) ||
-          Ty == LLT::scalar(32)) &&
-         "Only support 20, 32-bit integer and 20-bit pointer constants");
-  const RegisterBank &DstRB = *RBI.getRegBank(DstReg, MRI, TRI);
-  assert((DstRB.getID() == AIE2P::PTRRegBankID ||
-          DstRB.getID() == AIE2P::MODRegBankID ||
-          DstRB.getID() == AIE2P::GPRRegBankID) &&
-         "Expected constants only on GPR, MOD and PTR register banks");
-
-  APInt Imm = I.getOperand(1).getCImm()->getValue();
-  auto OpCode = TII.getConstantMovOpcode(MRI, DstReg, Imm);
-  MachineInstr &MI = *MIB.buildInstr(OpCode, {DstReg}, {})
-                          .addImm(Imm.getSExtValue())
-                          .getInstr();
-
-  I.eraseFromParent();
-  return constrainSelectedInstRegOperands(MI, TII, TRI, RBI);
 }
 
 bool AIE2PInstructionSelector::selectG_GLOBAL_VALUE(MachineInstr &I,
