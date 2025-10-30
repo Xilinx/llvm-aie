@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2
 # RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2P
 
@@ -23,10 +23,7 @@ body: |
   ; AIE2-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
   ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
   ; AIE2-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r8
-  ; AIE2-NEXT:   [[EQZ:%[0-9]+]]:er = EQZ [[COPY2]]
-  ; AIE2-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 1
-  ; AIE2-NEXT:   [[AND:%[0-9]+]]:er = AND [[EQZ]], [[MOV_RLC_imm10_pseudo]]
-  ; AIE2-NEXT:   PseudoJNZ [[AND]], %bb.1
+  ; AIE2-NEXT:   PseudoJZ [[COPY2]], %bb.1
   ; AIE2-NEXT:   PseudoJ_jump_imm %bb.2
   ; AIE2-NEXT: {{  $}}
   ; AIE2-NEXT: bb.1:
@@ -46,10 +43,7 @@ body: |
   ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
   ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
   ; AIE2P-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r8
-  ; AIE2P-NEXT:   [[EQZ:%[0-9]+]]:er = EQZ [[COPY2]]
-  ; AIE2P-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-  ; AIE2P-NEXT:   [[AND:%[0-9]+]]:er = AND [[EQZ]], [[MOV_RLC_imm11_pseudo]]
-  ; AIE2P-NEXT:   PseudoJNZ [[AND]], %bb.1
+  ; AIE2P-NEXT:   PseudoJZ [[COPY2]], %bb.1
   ; AIE2P-NEXT:   PseudoJ_jump_imm %bb.2
   ; AIE2P-NEXT: {{  $}}
   ; AIE2P-NEXT: bb.1:
@@ -68,20 +62,18 @@ body: |
     %2:gprregbank(s32) = COPY $r8
     %3:gprregbank(s32) = G_CONSTANT i32 0
     %4:gprregbank(s32) = G_ICMP intpred(eq), %2, %3
-    %5:gprregbank(s32) = G_CONSTANT i32 1
-    %6:gprregbank(s32) = G_AND %4, %5
-    G_BRCOND %6, %bb.1
+    G_BRCOND %4, %bb.1
     G_BR %bb.2
 
   bb.1:
     successors: %bb.2
 
-    %7:gprregbank(s32) = COPY %1
+    %5:gprregbank(s32) = COPY %1
     G_BR %bb.2
 
   bb.2:
-    %8:gprregbank(s32) = G_PHI %0, %bb.0, %7, %bb.1
-    $r0 = COPY %8
+    %6:gprregbank(s32) = G_PHI %0, %bb.0, %5, %bb.1
+    $r0 = COPY %6
 ...
 
 ---
@@ -99,10 +91,7 @@ body: |
   ; AIE2-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
   ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p1
   ; AIE2-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r6
-  ; AIE2-NEXT:   [[EQZ:%[0-9]+]]:er = EQZ [[COPY2]]
-  ; AIE2-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 1
-  ; AIE2-NEXT:   [[AND:%[0-9]+]]:er = AND [[EQZ]], [[MOV_RLC_imm10_pseudo]]
-  ; AIE2-NEXT:   PseudoJNZ [[AND]], %bb.1
+  ; AIE2-NEXT:   PseudoJZ [[COPY2]], %bb.1
   ; AIE2-NEXT:   PseudoJ_jump_imm %bb.2
   ; AIE2-NEXT: {{  $}}
   ; AIE2-NEXT: bb.1:
@@ -122,10 +111,7 @@ body: |
   ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
   ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p1
   ; AIE2P-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r6
-  ; AIE2P-NEXT:   [[EQZ:%[0-9]+]]:er = EQZ [[COPY2]]
-  ; AIE2P-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-  ; AIE2P-NEXT:   [[AND:%[0-9]+]]:er = AND [[EQZ]], [[MOV_RLC_imm11_pseudo]]
-  ; AIE2P-NEXT:   PseudoJNZ [[AND]], %bb.1
+  ; AIE2P-NEXT:   PseudoJZ [[COPY2]], %bb.1
   ; AIE2P-NEXT:   PseudoJ_jump_imm %bb.2
   ; AIE2P-NEXT: {{  $}}
   ; AIE2P-NEXT: bb.1:
@@ -145,20 +131,18 @@ body: |
     %2:gprregbank(s32) = COPY $r6
     %3:gprregbank(s32) = G_CONSTANT i32 0
     %4:gprregbank(s32) = G_ICMP intpred(eq), %2, %3
-    %5:gprregbank(s32) = G_CONSTANT i32 1
-    %6:gprregbank(s32) = G_AND %4, %5
-    G_BRCOND %6, %bb.1
+    G_BRCOND %4, %bb.1
     G_BR %bb.2
 
   bb.1:
     successors: %bb.2
 
-    %7:ptrregbank(p0) = COPY %1
+    %5:ptrregbank(p0) = COPY %1
     G_BR %bb.2
 
   bb.2:
-    %8:ptrregbank(p0) = G_PHI %0, %bb.0, %7, %bb.1
-    $p0 = COPY %8
+    %6:ptrregbank(p0) = G_PHI %0, %bb.0, %5, %bb.1
+    $p0 = COPY %6
 ...
 
 ---
@@ -171,16 +155,12 @@ body: |
   ; AIE2-LABEL: name: phi_s20
   ; AIE2: bb.0:
   ; AIE2-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
-  ; AIE2-NEXT:   liveins: $r0, $m1, $r8
+  ; AIE2-NEXT:   liveins: $dj0, $m1, $r8
   ; AIE2-NEXT: {{  $}}
-  ; AIE2-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:mdm = COPY [[COPY]]
-  ; AIE2-NEXT:   [[COPY2:%[0-9]+]]:mdm = COPY $m1
-  ; AIE2-NEXT:   [[COPY3:%[0-9]+]]:er = COPY $r8
-  ; AIE2-NEXT:   [[EQZ:%[0-9]+]]:er = EQZ [[COPY3]]
-  ; AIE2-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 1
-  ; AIE2-NEXT:   [[AND:%[0-9]+]]:er = AND [[EQZ]], [[MOV_RLC_imm10_pseudo]]
-  ; AIE2-NEXT:   PseudoJNZ [[AND]], %bb.1
+  ; AIE2-NEXT:   [[COPY:%[0-9]+]]:mdm = COPY $dj0
+  ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:mdm = COPY $m1
+  ; AIE2-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r8
+  ; AIE2-NEXT:   PseudoJZ [[COPY2]], %bb.1
   ; AIE2-NEXT:   PseudoJ_jump_imm %bb.2
   ; AIE2-NEXT: {{  $}}
   ; AIE2-NEXT: bb.1:
@@ -189,22 +169,18 @@ body: |
   ; AIE2-NEXT:   PseudoJ_jump_imm %bb.2
   ; AIE2-NEXT: {{  $}}
   ; AIE2-NEXT: bb.2:
-  ; AIE2-NEXT:   [[PHI:%[0-9]+]]:mdm = PHI [[COPY1]], %bb.0, [[COPY2]], %bb.1
+  ; AIE2-NEXT:   [[PHI:%[0-9]+]]:mdm = PHI [[COPY]], %bb.0, [[COPY1]], %bb.1
   ; AIE2-NEXT:   $m2 = COPY [[PHI]]
   ;
   ; AIE2P-LABEL: name: phi_s20
   ; AIE2P: bb.0:
   ; AIE2P-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
-  ; AIE2P-NEXT:   liveins: $r0, $m1, $r8
+  ; AIE2P-NEXT:   liveins: $dj0, $m1, $r8
   ; AIE2P-NEXT: {{  $}}
-  ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
-  ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:mdm = COPY [[COPY]]
-  ; AIE2P-NEXT:   [[COPY2:%[0-9]+]]:mdm = COPY $m1
-  ; AIE2P-NEXT:   [[COPY3:%[0-9]+]]:er = COPY $r8
-  ; AIE2P-NEXT:   [[EQZ:%[0-9]+]]:er = EQZ [[COPY3]]
-  ; AIE2P-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-  ; AIE2P-NEXT:   [[AND:%[0-9]+]]:er = AND [[EQZ]], [[MOV_RLC_imm11_pseudo]]
-  ; AIE2P-NEXT:   PseudoJNZ [[AND]], %bb.1
+  ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:mdm = COPY $dj0
+  ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:mdm = COPY $m1
+  ; AIE2P-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r8
+  ; AIE2P-NEXT:   PseudoJZ [[COPY2]], %bb.1
   ; AIE2P-NEXT:   PseudoJ_jump_imm %bb.2
   ; AIE2P-NEXT: {{  $}}
   ; AIE2P-NEXT: bb.1:
@@ -213,31 +189,28 @@ body: |
   ; AIE2P-NEXT:   PseudoJ_jump_imm %bb.2
   ; AIE2P-NEXT: {{  $}}
   ; AIE2P-NEXT: bb.2:
-  ; AIE2P-NEXT:   [[PHI:%[0-9]+]]:mdm = PHI [[COPY1]], %bb.0, [[COPY2]], %bb.1
+  ; AIE2P-NEXT:   [[PHI:%[0-9]+]]:mdm = PHI [[COPY]], %bb.0, [[COPY1]], %bb.1
   ; AIE2P-NEXT:   $m2 = COPY [[PHI]]
   bb.0:
     successors: %bb.1, %bb.2
-    liveins: $r0, $m1, $r8
-    %9:gprregbank(s32) = COPY $r0
-    %0:modregbank(s20) = G_TRUNC %9
+    liveins: $dj0, $m1, $r8
+    %0:modregbank(s20) = COPY $dj0
     %1:modregbank(s20) = COPY $m1
     %2:gprregbank(s32) = COPY $r8
     %3:gprregbank(s32) = G_CONSTANT i32 0
     %4:gprregbank(s32) = G_ICMP intpred(eq), %2, %3
-    %5:gprregbank(s32) = G_CONSTANT i32 1
-    %6:gprregbank(s32) = G_AND %4, %5
-    G_BRCOND %6, %bb.1
+    G_BRCOND %4, %bb.1
     G_BR %bb.2
 
   bb.1:
     successors: %bb.2
 
-    %7:modregbank(s20) = COPY %1
+    %5:modregbank(s20) = COPY %1
     G_BR %bb.2
 
   bb.2:
-    %8:modregbank(s20) = G_PHI %0:modregbank(s20), %bb.0, %7:modregbank(s20), %bb.1
-    $m2 = COPY %8
+    %6:modregbank(s20) = G_PHI %0:modregbank(s20), %bb.0, %5:modregbank(s20), %bb.1
+    $m2 = COPY %6
 ...
 
 ---
@@ -250,15 +223,12 @@ body: |
   ; AIE2-LABEL: name: phi_s20_gpr
   ; AIE2: bb.0:
   ; AIE2-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
-  ; AIE2-NEXT:   liveins: $r0, $m1, $r8
+  ; AIE2-NEXT:   liveins: $dj0, $m1, $r8
   ; AIE2-NEXT: {{  $}}
-  ; AIE2-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
+  ; AIE2-NEXT:   [[COPY:%[0-9]+]]:er = COPY $dj0
   ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:mdm = COPY $m1
   ; AIE2-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r8
-  ; AIE2-NEXT:   [[EQZ:%[0-9]+]]:er = EQZ [[COPY2]]
-  ; AIE2-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 1
-  ; AIE2-NEXT:   [[AND:%[0-9]+]]:er = AND [[EQZ]], [[MOV_RLC_imm10_pseudo]]
-  ; AIE2-NEXT:   PseudoJNZ [[AND]], %bb.1
+  ; AIE2-NEXT:   PseudoJZ [[COPY2]], %bb.1
   ; AIE2-NEXT:   PseudoJ_jump_imm %bb.2
   ; AIE2-NEXT: {{  $}}
   ; AIE2-NEXT: bb.1:
@@ -273,15 +243,12 @@ body: |
   ; AIE2P-LABEL: name: phi_s20_gpr
   ; AIE2P: bb.0:
   ; AIE2P-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
-  ; AIE2P-NEXT:   liveins: $r0, $m1, $r8
+  ; AIE2P-NEXT:   liveins: $dj0, $m1, $r8
   ; AIE2P-NEXT: {{  $}}
-  ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
+  ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:er = COPY $dj0
   ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:mdm = COPY $m1
   ; AIE2P-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r8
-  ; AIE2P-NEXT:   [[EQZ:%[0-9]+]]:er = EQZ [[COPY2]]
-  ; AIE2P-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-  ; AIE2P-NEXT:   [[AND:%[0-9]+]]:er = AND [[EQZ]], [[MOV_RLC_imm11_pseudo]]
-  ; AIE2P-NEXT:   PseudoJNZ [[AND]], %bb.1
+  ; AIE2P-NEXT:   PseudoJZ [[COPY2]], %bb.1
   ; AIE2P-NEXT:   PseudoJ_jump_imm %bb.2
   ; AIE2P-NEXT: {{  $}}
   ; AIE2P-NEXT: bb.1:
@@ -294,25 +261,22 @@ body: |
   ; AIE2P-NEXT:   $m2 = COPY [[PHI]]
   bb.0:
     successors: %bb.1, %bb.2
-    liveins: $r0, $m1, $r8
-    %9:gprregbank(s32) = COPY $r0
-    %0:gprregbank(s20) = G_TRUNC %9
+    liveins: $dj0, $m1, $r8
+    %0:gprregbank(s20) = COPY $dj0
     %1:modregbank(s20) = COPY $m1
     %2:gprregbank(s32) = COPY $r8
     %3:gprregbank(s32) = G_CONSTANT i32 0
     %4:gprregbank(s32) = G_ICMP intpred(eq), %2, %3
-    %5:gprregbank(s32) = G_CONSTANT i32 1
-    %6:gprregbank(s32) = G_AND %4, %5
-    G_BRCOND %6, %bb.1
+    G_BRCOND %4, %bb.1
     G_BR %bb.2
 
   bb.1:
     successors: %bb.2
 
-    %7:modregbank(s20) = COPY %1
+    %5:modregbank(s20) = COPY %1
     G_BR %bb.2
 
   bb.2:
-    %8:modregbank(s20) = G_PHI %0:gprregbank(s20), %bb.0, %7:modregbank(s20), %bb.1
-    $m2 = COPY %8
+    %6:modregbank(s20) = G_PHI %0:gprregbank(s20), %bb.0, %5:modregbank(s20), %bb.1
+    $m2 = COPY %6
 ...
