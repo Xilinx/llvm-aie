@@ -118,6 +118,9 @@ private:
   LiveIntervals *LIS = nullptr;
   const TargetInstrInfo *TII = nullptr;
 
+  /// Set Architecture specific Options
+  void setArchSpecificPassOptions();
+
   bool renameMBBPhysRegs(const MachineBasicBlock *MBB);
 
   /// Pre-allocate all virtual registers in Candidates. The sole purpose of
@@ -205,6 +208,18 @@ MCPhysReg AIEWawRegRewriter::getAssignedPhysReg(const Register Reg) const {
   return Reg;
 }
 
+void AIEWawRegRewriter::setArchSpecificPassOptions() {
+  // TODO: use loop classes to enable WAW strategies.
+  // This optimization is specifically only tested for AIE2P.
+  if (!MF->getTarget().getTargetTriple().isAIE2P())
+    return;
+
+  // NumOccurrences increments if it is set by a command line argument
+  const bool UseDefaultPreAlloc = PreAlloc.getNumOccurrences() == 0;
+  if (UseDefaultPreAlloc)
+    PreAlloc = true;
+}
+
 bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
 
   SmallVector<const MachineBasicBlock *, 4> LoopMBBs =
@@ -221,6 +236,7 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   LIS = &getAnalysis<LiveIntervalsWrapperPass>().getLIS();
   TII = MF.getSubtarget().getInstrInfo();
   bool Modified = false;
+  setArchSpecificPassOptions();
 
   LLVM_DEBUG(dbgs() << "*** WAW Loop Register Rewriting: " << MF.getName());
   LLVM_DEBUG(dbgs() << " ***\n");
