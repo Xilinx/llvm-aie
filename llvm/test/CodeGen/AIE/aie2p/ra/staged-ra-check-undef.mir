@@ -1,0 +1,87 @@
+
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: not --crash llc -O2 -mtriple=aie2p -start-before=greedy \
+# RUN:     -stop-before=aie-unallocated-superreg-rewrite -o /dev/null %s 2>&1 | FileCheck %s
+
+# The goal of this test is to check if we properly insert undef flag on the def side
+# of a expanded full copy.  On a sub-register def operand, it refers to the part of the
+# register that isn't written. A sub-register def implicitly reads the other parts of the
+# register being redefined unless the <undef> flag is set, and a missing flag can
+# force the related register to be inserted in liveout set of the predecessors block,
+# causing dominance problems.
+
+# CHECK: LLVM ERROR: Found 1 machine code errors
+
+---
+name:            use_all_2d_regs
+tracksRegLiveness: true
+body:             |
+  bb.0:
+    successors: %bb.1(0x80000000)
+  
+    undef %80.sub_dim_stride:ed = MOV_PD_imm11_pseudo 1
+    %80.sub_mod:ed = MOV_PD_imm11_pseudo 0
+    undef %105.sub_dim_size:ed = MOV_PD_imm11_pseudo -1
+    %105.sub_mod:ed = COPY %80.sub_dim_stride
+    %105.sub_dim_stride:ed = COPY %80.sub_mod
+    undef %101.sub_dim_size:ed = COPY %80.sub_mod
+    undef %97.sub_dim_size:ed = COPY %80.sub_mod
+    undef %90.sub_dim_size:ed = COPY %80.sub_mod
+    undef %86.sub_dim_size:ed = COPY %80.sub_mod
+    undef %82.sub_dim_size:ed = COPY %80.sub_mod
+    %80.sub_dim_size:ed = COPY %80.sub_mod
+    %105.sub_dim_count:ed = COPY %80.sub_mod
+    %97.sub_dim_count:ed = COPY %80.sub_mod
+    %90.sub_dim_count:ed = COPY %80.sub_mod
+    %101.sub_dim_count:ed = COPY %80.sub_mod
+    undef %94.sub_dim_count:ed = COPY %80.sub_mod
+    %86.sub_dim_count:ed = COPY %80.sub_mod
+    %82.sub_dim_count:ed = COPY %80.sub_mod
+    %80.sub_dim_count:ed = COPY %80.sub_mod
+    undef %77.sub_dim_count:ed = COPY %80.sub_mod
+  
+  bb.1:
+    successors: %bb.1(0x80000000)
+  
+    %10:ep = MOV_PD_imm11_pseudo 0
+    %18:ep = MOV_PD_imm11_pseudo 0
+    %22:ep = MOV_PD_imm11_pseudo 0
+    %26:ep = MOV_PD_imm11_pseudo 0
+    dead %10:ep, %105.sub_dim_count:ed = PADD_2D_pseudo_split %10, %105.sub_mod, %105.sub_dim_size, %105.sub_dim_stride, %105.sub_dim_count
+    %30:ep = MOV_PD_imm11_pseudo 0
+    %101.sub_mod:ed = COPY %105.sub_mod
+    %101.sub_dim_stride:ed = COPY %105.sub_dim_stride
+    dead %18:ep, %101.sub_dim_count:ed = PADD_2D_pseudo_split %18, %101.sub_mod, %101.sub_dim_size, %101.sub_dim_stride, %101.sub_dim_count
+    %34:ep = MOV_PD_imm11_pseudo 0
+    %97.sub_mod:ed = COPY %105.sub_mod
+    %97.sub_dim_stride:ed = COPY %105.sub_dim_stride
+    dead %22:ep, %97.sub_dim_count:ed = PADD_2D_pseudo_split %22, %97.sub_mod, %97.sub_dim_size, %97.sub_dim_stride, %97.sub_dim_count
+    %94.sub_mod:ed = COPY %105.sub_mod
+    %94.sub_dim_size:ed = COPY %105.sub_dim_size
+    %38:ep = MOV_PD_imm11_pseudo 0
+    %94.sub_dim_stride:ed = COPY %105.sub_dim_stride
+    dead %26:ep, %94.sub_dim_count:ed = PADD_2D_pseudo_split %26, %94.sub_mod, %94.sub_dim_size, %94.sub_dim_stride, %94.sub_dim_count
+    %90.sub_mod:ed = COPY %105.sub_mod
+    %90.sub_dim_stride:ed = COPY %105.sub_dim_stride
+    dead %30:ep, %90.sub_dim_count:ed = PADD_2D_pseudo_split %30, %90.sub_mod, %90.sub_dim_size, %90.sub_dim_stride, %90.sub_dim_count
+    %42:ep = MOV_PD_imm11_pseudo 0
+    %86.sub_mod:ed = COPY %105.sub_mod
+    %86.sub_dim_stride:ed = COPY %105.sub_dim_stride
+    dead %34:ep, %86.sub_dim_count:ed = PADD_2D_pseudo_split %34, %86.sub_mod, %86.sub_dim_size, %86.sub_dim_stride, %86.sub_dim_count
+    dead %42:ep, %80.sub_dim_count:ed = PADD_2D_pseudo_split %42, %80.sub_mod, %80.sub_dim_size, %80.sub_dim_stride, %80.sub_dim_count
+    %82.sub_mod:ed = COPY %105.sub_mod
+    %46:ep = MOV_PD_imm11_pseudo 0
+    %82.sub_dim_stride:ed = COPY %105.sub_dim_stride
+    dead %38:ep, %82.sub_dim_count:ed = PADD_2D_pseudo_split %38, %82.sub_mod, %82.sub_dim_size, %82.sub_dim_stride, %82.sub_dim_count
+    %77.sub_dim_size:ed = COPY %80.sub_mod
+    %77.sub_mod:ed = COPY %80.sub_mod
+    %77.sub_dim_stride:ed = COPY %105.sub_dim_stride
+    dead %46:ep, %77.sub_dim_count:ed = PADD_2D_pseudo_split %46, %77.sub_mod, %77.sub_dim_size, %77.sub_dim_stride, %77.sub_dim_count
+    PseudoJ_jump_imm %bb.1
+
+...
