@@ -83,6 +83,8 @@ public:
   bool selectG_PHI(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_PTR_ADD(MachineIRBuilder &MIB, MachineInstr &I,
                        MachineRegisterInfo &MRI);
+  bool selectG_SEXT_INREG(MachineInstr &I, MachineRegisterInfo &MRI,
+                          const std::pair<unsigned, unsigned> &Opcodes);
   void renderFrameIndex(MachineInstrBuilder &MIB, const MachineInstr &MI,
                         int OpIdx) const;
   void renderNegateImm(MachineInstrBuilder &MIB, const MachineInstr &MI,
