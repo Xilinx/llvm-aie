@@ -45,7 +45,6 @@ public:
 
   bool select(MachineInstr &I) override;
   bool selectG_GLOBAL_VALUE(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectG_SEXT_INREG(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectGetCoreID(MachineInstr &MI, MachineRegisterInfo &MRI);
   bool selectSetControlRegister(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectGetControlRegister(MachineInstr &I, MachineRegisterInfo &MRI);
@@ -225,7 +224,7 @@ bool AIE2PInstructionSelector::select(MachineInstr &I) {
     return selectG_TRUNC(I, MRI);
   }
   case G_SEXT_INREG:
-    return selectG_SEXT_INREG(I, MRI);
+    return selectG_SEXT_INREG(I, MRI, {AIE2P::EXTEND_s8, AIE2P::EXTEND_s16});
   case G_IMPLICIT_DEF:
     return selectG_IMPLICIT_DEF(I, MRI);
   case G_CONSTANT:
@@ -581,32 +580,6 @@ bool AIE2PInstructionSelector::selectG_GLOBAL_VALUE(MachineInstr &I,
   I.setDesc(TII.get(AIE2P::MOVXM));
   I.getOperand(1).setTargetFlags(AIEII::MO_GLOBAL);
   return constrainSelectedInstRegOperands(I, TII, TRI, RBI);
-}
-
-bool AIE2PInstructionSelector::selectG_SEXT_INREG(MachineInstr &I,
-                                                  MachineRegisterInfo &MRI) {
-  Register DstReg = I.getOperand(0).getReg();
-  Register SrcReg = I.getOperand(1).getReg();
-
-  const RegisterBank *DstRB = RBI.getRegBank(DstReg, MRI, TRI);
-  const RegisterBank *SrcRB = RBI.getRegBank(SrcReg, MRI, TRI);
-
-  // We only support sign-extension on GPRs
-  if (DstRB->getID() != SrcRB->getID() || DstRB->getID() != AIE2P::GPRRegBankID)
-    return false;
-
-  int64_t Imm = I.getOperand(2).getImm();
-  MachineInstrBuilder MI;
-  if (Imm == 8) {
-    MI = MIB.buildInstr(AIE2P::EXTEND_s8, {DstReg}, {SrcReg});
-  } else if (Imm == 16) {
-    MI = MIB.buildInstr(AIE2P::EXTEND_s16, {DstReg}, {SrcReg});
-  } else {
-    llvm_unreachable("Cannot handle type in selectG_SEXT_INREG");
-  }
-
-  I.eraseFromParent();
-  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
 }
 
 bool AIE2PInstructionSelector::selectGetCoreID(MachineInstr &I,

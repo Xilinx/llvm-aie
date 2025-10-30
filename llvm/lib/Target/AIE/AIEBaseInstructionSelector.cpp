@@ -926,6 +926,34 @@ bool AIEBaseInstructionSelector::selectStartLoop(MachineInstr &I,
   return constrainSelectedInstRegOperands(*ADDI, TII, TRI, RBI);
 }
 
+bool AIEBaseInstructionSelector::selectG_SEXT_INREG(
+    MachineInstr &I, MachineRegisterInfo &MRI,
+    const std::pair<unsigned, unsigned> &Opcodes) {
+  Register DstReg = I.getOperand(0).getReg();
+  Register SrcReg = I.getOperand(1).getReg();
+
+  const RegisterBank *DstRB = RBI.getRegBank(DstReg, MRI, TRI);
+  const RegisterBank *SrcRB = RBI.getRegBank(SrcReg, MRI, TRI);
+
+  // We only support sign-extension on GPRs
+  if (DstRB->getID() != SrcRB->getID() ||
+      DstRB->getID() != TRI.getGPRRegBankID())
+    return false;
+
+  int64_t Imm = I.getOperand(2).getImm();
+  MachineInstrBuilder MI;
+  if (Imm == 8) {
+    MI = MIB.buildInstr(Opcodes.first, {DstReg}, {SrcReg});
+  } else if (Imm == 16) {
+    MI = MIB.buildInstr(Opcodes.second, {DstReg}, {SrcReg});
+  } else {
+    llvm_unreachable("Cannot handle type in selectG_SEXT_INREG");
+  }
+
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+}
+
 bool AIEBaseInstructionSelector::selectG_CONSTANT(MachineInstr &I,
                                                   MachineRegisterInfo &MRI) {
   // TODO: it isn't easy to rely on TableGen patterns, as there's poor support
