@@ -108,8 +108,26 @@ void rewriteFullCopy(MachineInstr &CopyMI, LiveIntervals &LIS,
   const std::set<int> CopySubRegs =
       TRI.getSubRegSplit(MRI.getRegClass(DstReg)->getID());
 
-  LIS.removeVRegDefAt(LIS.getInterval(DstReg), CopyIndex.getRegSlot());
+  if (!VRM.hasPhys(DstReg)) {
+    // FIXME: This pass may cause verification failures. The fix should
+    // be in the MachineVerifier. This is a very uncommon case where the
+    // destination register was not allocated yet.
+    // The machine verifier does not properly handle the semantics of:
+    // 1. **Partial register definitions with `undefined`**: When the first
+    // subregister is defined with `undefined`, it doesn't expect subsequent
+    // definitions to implicitly read that lane.
+    // 2. **Lane-based liveness for composite registers**: The verifier expects
+    // a continuous live range for the entire register, but with subregister
+    // definitions, different lanes have different live ranges that are being
+    // built up incrementally.
+    // 3. **Implicit reads in partial definitions**: The verifier doesn't
+    // recognize that `%18.sub_dim_size:ed = COPY ...` implicitly reads the
+    // previously defined `%18.sub_dim_count` lane.
+    CopyMI.getMF()->getProperties().set(
+        MachineFunctionProperties::Property::FailsVerification);
+  }
 
+  MachineInstr *FirstMI = nullptr;
   SmallSet<Register, 8> RegistersToRepair;
   for (int SubRegIdx : CopySubRegs) {
     if ((LiveSrcLanes & TRI.getSubRegIndexLaneMask(SubRegIdx)).none()) {
@@ -124,13 +142,32 @@ void rewriteFullCopy(MachineInstr &CopyMI, LiveIntervals &LIS,
             .addReg(DstReg, RegState::Define, SubRegIdx)
             .addReg(SrcReg, 0, SubRegIdx)
             .getInstr();
+
+    // Only set undefined on the first partial copy. The first copy doesn't read
+    // other lanes, but subsequent copies do read the previously written lanes.
+    // Setting undefined on all copies breaks live interval tracking and causes
+    // machine verifier errors.
+    if (!FirstMI) {
+      PartCopy->getOperand(0).setIsUndef();
+      FirstMI = PartCopy;
+    }
     LLVM_DEBUG(dbgs() << "        to " << *PartCopy);
     LIS.InsertMachineInstrInMaps(*PartCopy);
-    LIS.getInterval(PartCopy->getOperand(0).getReg());
+    // We need to repair only the Src register. For the Dst register,
+    // we don't need to do anything explicit, because we will replace the
+    // original copy by the first lane copy in LIS. We avoid the explicit repair
+    // of Dst reg because LIS will create a exclusive range for each copy,
+    // because it considers that every sub-lane copy will make the preceding
+    // one dead, what is not true for composite registers.
+    // TODO: investigate why subregister liveness is being ignored by LIS
+    // at this point.
     RegistersToRepair.insert(PartCopy->getOperand(1).getReg());
   }
 
-  LIS.RemoveMachineInstrFromMaps(CopyMI);
+  // Replace the original copy by the first one, so we automatically repair
+  // DstReg's LI. This will ensure that the LR will start on first instruction
+  // and will not end because the next instruction's slot index.
+  LIS.ReplaceMachineInstrInMaps(CopyMI, *FirstMI);
   CopyMI.eraseFromParent();
   // As we don't handle all registers now (selective LI filter),
   // We should make sure that all LiveIntervals are correct.
@@ -188,8 +225,17 @@ void rewriteSuperReg(Register Reg, Register AssignedPhysReg,
 
     // There might have been a write-undefined due to only writing one sub-lane.
     // Now that each sub-lane has its own VReg, the qualifier is invalid.
-    if (RegOp.isDef())
+    if (RegOp.isDef()) {
       RegOp.setIsUndef(false);
+      // Also unset correctly the dead flag if the instruction
+      // is not the dead slot in the live range (the def is still alive).
+      LiveInterval &LI = LIS.getInterval(Reg);
+      MachineInstr *DefMI = RegOp.getParent();
+      SlotIndex Def = LIS.getInstructionIndex(*DefMI);
+      LiveRange::iterator I = LI.FindSegmentContaining(Def);
+      if (I->end != Def.getDeadSlot())
+        RegOp.setIsDead(false);
+    }
 
     // Make sure the right reg class is applied, some MIs might use compound
     // classes with both 20 and 32 bits registers.
@@ -263,6 +309,10 @@ void repairLiveIntervals(SmallSet<Register, 8> &RegistersToRepair,
       LIS.removeInterval(R);
       LIS.createAndComputeVirtRegInterval(R);
     }
+
+    // After recomputing, shrink the interval to remove any invalid segments
+    // This is important for registers with undefined definitions.
+    LIS.shrinkToUses(&LIS.getInterval(R));
   }
 }
 
