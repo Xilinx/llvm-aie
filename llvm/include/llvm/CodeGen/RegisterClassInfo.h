@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the RegisterClassInfo class which provides dynamic
@@ -148,6 +151,9 @@ public:
       PSetLimits[Idx] = computePSetLimit(Idx);
     return PSetLimits[Idx];
   }
+
+  /// Get TargetRegisterInfo
+  const TargetRegisterInfo *getTargetRegisterInfo() const { return TRI; }
 
 protected:
   unsigned computePSetLimit(unsigned Idx) const;
