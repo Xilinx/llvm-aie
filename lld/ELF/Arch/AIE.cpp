@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -136,23 +136,28 @@ static void writeNBytes(int N, uint8_t *Loc, uint64_t Value) {
 /// aligns the field value to the right position, selects bits from the
 /// image and the patch field using a selection mask and writes the result
 /// back to the section data.
-class Patch {
-  // Workspace
-  uint64_t val[2];
+class RelocationPatch {
+  // Workspace (256-bit = 4x64-bit lanes)
+  uint64_t val[4];
 
 public:
-  Patch() {
+  RelocationPatch() {
     val[0] = 0;
     val[1] = 0;
+    val[2] = 0;
+    val[3] = 0;
   }
-  Patch(uint64_t vl, uint64_t vh = 0) {
+  RelocationPatch(uint64_t vl, uint64_t vh = 0) {
     val[0] = vl;
     val[1] = vh;
+    val[2] = 0;
+    val[3] = 0;
   }
 
   /// Construct a value from the \p n bytes in memory pointed by \p loc
-  Patch(int n, uint8_t *loc) {
-    assert(n <= 16);
+  /// Widened to support up to 32 bytes (256 bits).
+  RelocationPatch(int n, uint8_t *loc) {
+    assert(n <= 32);
     int i = 0;
     while (n > 8) {
       val[i++] = readNBytes(8, loc);
@@ -160,40 +165,62 @@ public:
       loc += 8;
     }
     val[i] = readNBytes(n, loc);
+    // Zero any remaining lanes
+    while (++i < 4)
+      val[i] = 0;
   }
 
-  /// Shift \p *this left by \p shift bits
-  Patch operator<<(int shift) {
-    Patch r;
-    assert(shift < 64);
-    if (shift >= 64) {
-      r.val[1] = val[0] << (shift - 64);
-      r.val[0] = 0;
-    } else {
-      r.val[0] = val[0] << shift;
-      r.val[1] = (val[0] >> (64 - shift)) | (val[1] << shift);
+  /// Shift \p *this left by \p shift bits (0 <= shift < 256)
+  RelocationPatch operator<<(int shift) const {
+    RelocationPatch r = *this;
+    assert(shift < 256);
+    assert(shift >= 0);
+    if (shift == 0) {
+      // Avoid UB: val[0] >> (64 - shift) would right-shift by 64 when shift==0.
+      return r;
     }
+
+    // First shift by words
+    while (shift >= 64) {
+      for (int i = 3; i > 0; i--) {
+        r.val[i] = r.val[i - 1];
+      }
+      r.val[0] = 0;
+      shift -= 64;
+    }
+
+    // Then shift remaining bits across words
+    if (shift != 0) {
+      const int rshift = 64 - shift;
+      for (int i = 3; i > 0; i--) {
+        r.val[i] = (r.val[i] << shift) | (r.val[i - 1] >> rshift);
+      }
+      r.val[0] = r.val[0] << shift;
+    }
+
     return r;
   }
 
   /// Patch \size bits of \p field at position \p shift in the workspace
-  void patch(Patch field, uint32_t size, uint32_t shift) {
+  void patch(RelocationPatch field, uint32_t size, uint32_t shift) {
     assert(size <= 64);
     // Create a mask of the field size
-    Patch mask(~(~uint64_t(0) << size));
+    RelocationPatch mask(~(size == 64 ? uint64_t(0) : ~uint64_t(0) << size));
 
     // Shift both into position
     field = field << shift;
     mask = mask << shift;
 
-    // Do the insertion
+    // Do the insertion across all lanes
     val[0] = (val[0] & ~mask.val[0]) | (field.val[0] & mask.val[0]);
     val[1] = (val[1] & ~mask.val[1]) | (field.val[1] & mask.val[1]);
+    val[2] = (val[2] & ~mask.val[2]) | (field.val[2] & mask.val[2]);
+    val[3] = (val[3] & ~mask.val[3]) | (field.val[3] & mask.val[3]);
   }
 
   /// Write the \p n bytes patch back to memory at location \p loc
   void write(int n, uint8_t *loc) {
-    assert(n <= 16);
+    assert(n <= 32);
     int i = 0;
     while (n > 8) {
       writeNBytes(8, loc, val[i++]);
@@ -230,14 +257,14 @@ static void patchNBytes(uint32_t N, uint8_t *Loc, uint64_t V, uint32_t Hi,
   assert(Pos + FieldSize <= BitSize);
 
   // Read bytes to be patched in wide representation
-  Patch Image(N, Loc);
+  RelocationPatch Image(N, Loc);
 
   // Pos is the msb, the shift count needs the lsb
-  uint32_t Shift = BitSize - Pos - FieldSize;
+  const uint32_t Shift = BitSize - Pos - FieldSize;
 
   // Align field with bit 0, and put it in a wide representation.
   // Excess high bits will be masked off when patching
-  Patch Field(V >> Lo);
+  RelocationPatch Field(V >> Lo);
 
   // Patch it
   Image.patch(Field, FieldSize, Shift);
