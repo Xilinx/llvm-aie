@@ -16,34 +16,34 @@ define void @sigmoid_int8_1() {
 ; CHECK-NEXT:    movxm le, #.L_LEnd0
 ; CHECK-NEXT:    mova r1, #1; mov crsrsmode, #0
 ; CHECK-NEXT:    mova r0, #0; vbcst.16 x0, r1
-; CHECK-NEXT:    vbcst.16 x4, r0
-; CHECK-NEXT:    vmov x7, x4; vclr dm0
-; CHECK-NEXT:    vmov x6, x4
+; CHECK-NEXT:    vbcst.16 x2, r0
+; CHECK-NEXT:    vmov x7, x2; vclr dm0
+; CHECK-NEXT:    vmov x6, x2
 ; CHECK-NEXT:    vldb.unpack x8, unpacksign0, [p0, #0]; vmin_ge.16 x10, r16, x8, x0, vaddsign0
-; CHECK-NEXT:    vmax_lt.16 x8, r16, x10, x4, vaddsign0
+; CHECK-NEXT:    vmax_lt.16 x8, r16, x10, x2, vaddsign0
 ; CHECK-NEXT:    vmov x9, x8
-; CHECK-NEXT:    vbcst.32 x2, r0
-; CHECK-NEXT:    vmov x3, x2; vmac dm1, dm0, y4, y3,r0
+; CHECK-NEXT:    vbcst.32 x4, r0
+; CHECK-NEXT:    vmov x5, x4; vmac dm1, dm0, y4, y3,r0
 ; CHECK-NEXT:    add.nc lc, r0, #-2
-; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; mov s0, r0; vmsc dm2, dm1, y1, y4,r0
+; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; mov s0, r0; vmsc dm2, dm1, y2, y4,r0
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    nopa ; vldb.unpack x8, unpacksign0, [p0, #0]; nops ; nopx ; vmin_ge.16 x10, r16, x8, x0, vaddsign0; nopv
-; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vmax_lt.16 x8, r16, x10, x4, vaddsign0; nopv
+; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vmax_lt.16 x8, r16, x10, x2, vaddsign0; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vmov x9, x8; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; vmac dm1, dm0, y4, y3,r0
 ; CHECK-NEXT:    nopa ; nopb ; vsrs.4x wh1, cml2, s0, srssign0; nopxm ; nopv
 ; CHECK-NEXT:  .L_LEnd0:
-; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; vmsc dm2, dm1, y1, y4,r0
+; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; vmsc dm2, dm1, y2, y4,r0
 ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
 ; CHECK-NEXT:    nopa ; nopb ; nopx ; vmin_ge.16 x10, r16, x8, x0, vaddsign0; nops
-; CHECK-NEXT:    vmax_lt.16 x8, r16, x10, x4, vaddsign0
+; CHECK-NEXT:    vmax_lt.16 x8, r16, x10, x2, vaddsign0
 ; CHECK-NEXT:    vmov x9, x8
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vmac dm1, dm0, y4, y3,r0
 ; CHECK-NEXT:    vsrs.4x wh1, cml2, s0, srssign0
-; CHECK-NEXT:    vmsc dm2, dm1, y1, y4,r0
+; CHECK-NEXT:    vmsc dm2, dm1, y2, y4,r0
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
