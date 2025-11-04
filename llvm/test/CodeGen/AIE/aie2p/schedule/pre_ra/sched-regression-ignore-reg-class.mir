@@ -24,13 +24,13 @@ body:             |
   ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:erf2 = MOV_RLC_imm11_pseudo 0
   ; CHECK-NEXT:   undef [[VBCST_32_:%[0-9]+]].sub_512_lo:vec1024 = VBCST_32 [[MOV_RLC_imm11_pseudo]]
   ; CHECK-NEXT:   undef [[MOV_PD_imm11_pseudo:%[0-9]+]].sub_mod:eds = MOV_PD_imm11_pseudo 0
+  ; CHECK-NEXT:   [[VBCST_32_:%[0-9]+]].sub_512_hi:vec1024 = COPY [[VBCST_32_]].sub_512_lo
   ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]].sub_dim_stride:eds = COPY [[MOV_PD_imm11_pseudo]].sub_mod
   ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]].sub_dim_size:eds = COPY [[MOV_PD_imm11_pseudo]].sub_mod
   ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]].sub_dim_count:eds = COPY [[MOV_PD_imm11_pseudo]].sub_mod
   ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]].sub_hi_dim_then_sub_dim_size:eds = COPY [[MOV_PD_imm11_pseudo]].sub_mod
   ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = COPY [[MOV_PD_imm11_pseudo]].sub_mod
   ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[MOV_PD_imm11_pseudo]].sub_dim_stride
-  ; CHECK-NEXT:   [[VBCST_32_:%[0-9]+]].sub_512_hi:vec1024 = COPY [[VBCST_32_]].sub_512_lo
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:eldfiforeg = COPY [[VBCST_32_]]
   ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo1:%[0-9]+]]:eps = MOV_PD_imm11_pseudo 0
   ; CHECK-NEXT: {{  $}}

@@ -905,6 +905,7 @@ Register AIE2PInstrInfo::isStoreToStackSlot(const MachineInstr &MI,
   case AIE2P::VST_Y_SPILL:
   case AIE2P::VST_E_SPILL:
   case AIE2P::VST_EX_SPILL:
+  case AIE2P::VST_512_COMPOSED_REG_SPILL:
     break;
   }
 
@@ -984,6 +985,9 @@ void AIE2PInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     Opcode = AIE2P::ST_R_SPILL;
     SrcReg = ScratchReg;
     IsKill = true;
+  } else if (regClassMatches(AIE2P::spill_vec512_to_compositeRegClass, RC,
+                             SrcReg)) {
+    Opcode = AIE2P::VST_512_COMPOSED_REG_SPILL;
   } else {
     LLVM_DEBUG(I->dump());
     llvm_unreachable("Can't store this register to stack slot: is it virtual?");
@@ -1064,7 +1068,12 @@ void AIE2PInstrInfo::loadRegFromStackSlot(
     BuildMI(MBB, I, DL, get(AIE2P::MOV_alu_mv_mv_mv_scl), DstReg)
         .addReg(Reg, getKillRegState(true));
     return;
+  } else if (regClassMatches(AIE2P::spill_vec512_to_compositeRegClass, RC,
+                             DstReg)) {
+    Opcode = AIE2P::VLDA_512_COMPOSED_REG_SPILL;
   } else {
+    LLVM_DEBUG(std::prev(I)->dump(); I->dump(); std::next(I)->dump();
+               llvm::dbgs() << TRI->getRegClassName(RC));
     llvm_unreachable(
         "Can't load this register from stack slot: is it virtual?");
   }
@@ -1172,6 +1181,11 @@ AIE2PInstrInfo::getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
   case AIE2P::VST_EX_SPILL:
     return {{AIE2P::VST_dmx_sts_x_spill, AIE2P::sub_bfp16_x},
             {AIE2P::VST_E_SPILL, AIE2P::sub_bfp16_e}};
+  case AIE2P::VLDA_512_COMPOSED_REG_SPILL:
+    // No expansion needed - this is handled in expandPostRAPseudo() where the
+    // pseudo is directly replaced with native 512-bit load
+    // instructions.
+    return {};
   }
   llvm_unreachable("Un-implemented");
 }
@@ -1254,13 +1268,43 @@ bool AIE2PInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
   MachineBasicBlock &MBB = *MI.getParent();
   switch (MI.getOpcode()) {
   case AIE2P::PseudoMove: {
-    Register Dst = MI.getOperand(0).getReg();
-    Register Src = MI.getOperand(1).getReg();
+    const Register Dst = MI.getOperand(0).getReg();
+    const Register Src = MI.getOperand(1).getReg();
     const unsigned MOVSclOpcode = getScalarMovOpcode(Dst, Src);
     BuildMI(MBB, MI, DL, get(MOVSclOpcode), Dst)
         .addReg(Src, getKillRegState(MI.getOperand(1).isKill()));
     MI.eraseFromParent();
     return true;
+  }
+  case AIE2P::VLDA_512_COMPOSED_REG_SPILL: {
+    unsigned int Opcode;
+    const Register Dst = MI.getOperand(0).getReg();
+    if (AIE2P::VEC512RegClass.contains(Dst)) {
+      Opcode = AIE2P::VLDA_dmx_lda_x_spill;
+    } else if (AIE2P::FIFO512RegClass.contains(Dst)) {
+      Opcode = AIE2P::VLDA_dmx_lda_fifohl_spill;
+    } else if (AIE2P::ACC512RegClass.contains(Dst)) {
+      Opcode = AIE2P::VLDA_dmx_lda_bm_spill;
+    } else {
+      llvm_unreachable("Not a valid register for VLDA_512_COMPOSED_REG_SPILL");
+    }
+    MI.setDesc(get(Opcode));
+    return false;
+  }
+  case AIE2P::VST_512_COMPOSED_REG_SPILL: {
+    unsigned int Opcode;
+    const Register Src = MI.getOperand(0).getReg();
+    if (AIE2P::VEC512RegClass.contains(Src)) {
+      Opcode = AIE2P::VST_dmx_sts_x_spill;
+    } else if (AIE2P::FIFO512RegClass.contains(Src)) {
+      Opcode = AIE2P::VST_dmx_sts_fifohl_spill;
+    } else if (AIE2P::ACC512RegClass.contains(Src)) {
+      Opcode = AIE2P::VST_dmx_sts_bm_spill;
+    } else {
+      llvm_unreachable("Not a valid register for VST_512_COMPOSED_REG_SPILL");
+    }
+    MI.setDesc(get(Opcode));
+    return false;
   }
   }
   return false;
