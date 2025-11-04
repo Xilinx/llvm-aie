@@ -413,18 +413,17 @@ void AIEBaseHardwareLoops::expandLoopStart(LowOverheadLoop &LoLoop) {
           TII->get(LoweringData->SetLoopCountOpcode), LoweringData->LCRegister)
       .addReg(Start->getOperand(0).getReg())
       .addImm(Start->getOperand(1).getImm());
+  auto LoopStart = BuildMI(*MBB, Start, Start->getDebugLoc(),
+                           TII->get(LoweringData->SetLoopStartOpcode));
+  if (LoweringData->LSRegister)
+    LoopStart.addDef(*LoweringData->LSRegister);
+  LoopStart.addMBB(LoLoop.LoopEnd->getOperand(1).getMBB());
 
-  BuildMI(*MBB, Start, Start->getDebugLoc(),
-          TII->get(LoweringData->SetAddressOpcode), LoweringData->LSRegister)
-      .addMBB(LoLoop.LoopEnd->getOperand(1).getMBB());
-  MachineInstrBuilder MIB;
-  MIB = BuildMI(*MBB, Start, Start->getDebugLoc(),
-                TII->get(LoweringData->SetAddressOpcode),
-                LoweringData->LERegister)
-            .addSym(LoLoop.LoopEnd->getOperand(0).getMCSymbol());
-  MachineInstr *MI = MIB.getInstr();
-  MI->getOperand(1).ChangeToMCSymbol(
-      LoLoop.LoopEnd->getOperand(0).getMCSymbol());
+  auto LoopEnd = BuildMI(*MBB, Start, Start->getDebugLoc(),
+                         TII->get(LoweringData->SetLoopEndOpcode));
+  if (LoweringData->LERegister)
+    LoopEnd.addDef(*LoweringData->LERegister);
+  LoopEnd.addSym(LoLoop.LoopEnd->getOperand(0).getMCSymbol());
 
   LoLoop.remove(LoLoop.Start);
 }

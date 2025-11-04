@@ -52,10 +52,11 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
     unsigned SetLoopCountOpcode;
     Register LCRegister;
 
-    // SetAddress takes an address and writes it to a loop register
-    unsigned SetAddressOpcode;
-    Register LSRegister;
-    Register LERegister;
+    // SetLoop{Start,End} takes an address and writes it to a loop register
+    unsigned SetLoopStartOpcode;
+    unsigned SetLoopEndOpcode;
+    std::optional<Register> LSRegister;
+    std::optional<Register> LERegister;
     // The distance between setup and the start of the loop, in units
     // of bundles.
     unsigned LoopSetupDistance;
