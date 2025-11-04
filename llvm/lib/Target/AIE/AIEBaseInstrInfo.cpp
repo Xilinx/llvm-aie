@@ -361,9 +361,14 @@ bool AIEBaseInstrInfo::isZeroOverheadLoopSetupInstr(
   }
 
   return isZOLTripCountDef(MI) ||
-         (MI.getOpcode() == ZOLSupport->SetAddressOpcode &&
-          (MI.getOperand(0).getReg() == ZOLSupport->LSRegister ||
-           MI.getOperand(0).getReg() == ZOLSupport->LERegister));
+         ((MI.getOpcode() == ZOLSupport->SetLoopStartOpcode ||
+           MI.getOpcode() == ZOLSupport->SetLoopEndOpcode) &&
+          ((!ZOLSupport->LSRegister.has_value() &&
+            !ZOLSupport->LERegister.has_value()) ||
+           (ZOLSupport->LSRegister.has_value() &&
+            MI.getOperand(0).getReg() == *ZOLSupport->LSRegister) ||
+           (ZOLSupport->LERegister.has_value() &&
+            MI.getOperand(0).getReg() == *ZOLSupport->LERegister)));
 }
 
 void AIEBaseInstrInfo::adjustTripCount(MachineInstr &MI, int Adjustment) const {
