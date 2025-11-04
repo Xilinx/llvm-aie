@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -66,12 +66,6 @@ public:
   bool enableEarlyIfConversion() const override { return true; }
   unsigned getCriticalPathLimit() const override {
     return AIEBaseSubtarget::getCriticalPathLimitImpl();
-  }
-
-  CodeGenOptLevel getOptLevelToEnablePostRAScheduler() const override {
-    // AIEngine hack: we currently rely on the post-RA scheduler to insert
-    // NoOps for correcteness, make sure it runs even when the opt level is -O0.
-    return CodeGenOptLevel::None;
   }
 
   void overrideSchedPolicy(MachineSchedPolicy &Policy,
