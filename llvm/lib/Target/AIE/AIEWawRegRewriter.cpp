@@ -67,15 +67,15 @@ static cl::opt<unsigned>
                        cl::init(3));
 
 static cl::opt<int>
-    LatencyAware("aie-realloc-latencyaware", cl::Hidden, cl::init(1),
+    LatencyAware("aie-realloc-latencyaware", cl::Hidden, cl::init(2),
                  cl::desc("Enable latency-aware allocation strategy"));
 
 static cl::opt<int>
-    SWPAware("aie-realloc-swpaware", cl::Hidden, cl::init(0),
+    SWPAware("aie-realloc-swpaware", cl::Hidden, cl::init(2),
              cl::desc("Use assignment order based on interleaved swp stages"));
 
 static cl::opt<bool>
-    SelectMinIIBias("aie-realloc-select-ii-bias", cl::Hidden, cl::init(false),
+    SelectMinIIBias("aie-realloc-select-ii-bias", cl::Hidden, cl::init(true),
                     cl::desc("Decide MinII bias based on LoopClass"));
 
 static cl::opt<int> MinIIBias("aie-realloc-ii-bias", cl::Hidden, cl::init(0),
