@@ -4222,7 +4222,6 @@ bool llvm::matchSequentialStores(GStore &StMI, MachineRegisterInfo &MRI,
   return true;
 }
 
-namespace {
 MachineInstr *getBcstFeedByAssertExtVecExtr(MachineInstr &MI,
                                             MachineRegisterInfo &MRI,
                                             const AIEBaseInstrInfo &TII) {
@@ -4259,7 +4258,6 @@ MachineInstr *getBcstFeedByAssertExtVecExtr(MachineInstr &MI,
       GetSingleNonDbgUser(*AnyExtMI, TII.getGenericBroadcastVectorOpcode());
   return BcstMI;
 }
-} // namespace
 
 bool llvm::matchExtractVecEltAssertBcst(MachineInstr &MI,
                                         MachineRegisterInfo &MRI,
@@ -4288,6 +4286,381 @@ bool llvm::matchExtractVecEltAssertBcst(MachineInstr &MI,
     // Remove G_ASSERT_[S/Z]EXT
     Observer.erasingInstr(AssertExt);
     AssertExt.removeFromParent();
+  };
+
+  return true;
+}
+
+/// Helper structure to represent a pointer as base + constant offset
+struct PointerInfo {
+  Register BaseReg;
+  int64_t Offset;
+
+  bool operator==(const PointerInfo &Other) const {
+    return BaseReg == Other.BaseReg && Offset == Other.Offset;
+  }
+};
+
+/// Extract base pointer and offset from a register
+/// Returns base register and offset only if it's a G_PTR_ADD with constant
+/// offset Returns std::nullopt otherwise to avoid unsafe assumptions
+static std::optional<PointerInfo> getPointerInfo(Register PtrReg,
+                                                 MachineRegisterInfo &MRI) {
+  MachineInstr *DefMI = MRI.getVRegDef(PtrReg);
+
+  if (DefMI->getOpcode() == TargetOpcode::G_PTR_ADD) {
+    Register BaseReg = DefMI->getOperand(1).getReg();
+    Register OffsetReg = DefMI->getOperand(2).getReg();
+
+    auto OffsetCst = getIConstantVRegValWithLookThrough(OffsetReg, MRI);
+    if (OffsetCst) {
+      return PointerInfo{BaseReg, OffsetCst->Value.getSExtValue()};
+    }
+  }
+
+  // Not a G_PTR_ADD or non-constant offset - cannot safely determine pointer
+  // info
+  return std::nullopt;
+}
+
+/// Search forward from LoadMI to find an equivalent load
+/// Two loads are equivalent if they use equivalent pointers (same base +
+/// offset) Stops searching if we encounter an instruction that may not be part
+/// of a load sequence.
+/// Searches for loads with PreferredLoadTy first, then FallbackLoadTy if
+/// PreferredOpcode is specified, prioritizes finding loads with that opcode
+static MachineInstr *
+findEquivalentLoad(MachineInstr &LoadMI, Register PtrReg,
+                   const LLT &PreferredLoadTy, MachineRegisterInfo &MRI,
+                   unsigned PreferredOpcode = TargetOpcode::G_LOAD,
+                   const LLT &FallbackLoadTy = LLT()) {
+  auto TargetPtrOpt = getPointerInfo(PtrReg, MRI);
+
+  // If we can't extract pointer info, we can't safely deduplicate
+  if (!TargetPtrOpt)
+    return nullptr;
+
+  const PointerInfo &TargetPtr = *TargetPtrOpt;
+  MachineBasicBlock *MBB = LoadMI.getParent();
+
+  MachineInstr *FallbackLoad = nullptr;
+
+  auto IsEndOfLoadSequence = [](const MachineInstr &MI) {
+    return !MI.mayLoad() && MI.getOpcode() != TargetOpcode::G_CONSTANT &&
+           MI.getOpcode() != TargetOpcode::G_PTR_ADD;
+  };
+
+  // Search forward from LoadMI (scalar loads are created after the vector load)
+  for (MachineBasicBlock::instr_iterator I = std::next(LoadMI.getIterator()),
+                                         E = MBB->instr_end();
+       I != E; ++I) {
+    MachineInstr &MI = *I;
+
+    // Stop if we hit a store or call (could modify memory)
+    if (IsEndOfLoadSequence(MI))
+      break;
+
+    // Check if this is a load
+    const unsigned Opcode = MI.getOpcode();
+    if (Opcode == TargetOpcode::G_LOAD || Opcode == TargetOpcode::G_ZEXTLOAD ||
+        Opcode == TargetOpcode::G_SEXTLOAD) {
+      Register LoadDstReg = MI.getOperand(0).getReg();
+      const LLT LoadDstTy = MRI.getType(LoadDstReg);
+
+      // Check if it uses an equivalent pointer
+      Register LoadPtrReg = MI.getOperand(1).getReg();
+      auto LoadPtrOpt = getPointerInfo(LoadPtrReg, MRI);
+
+      // Skip if we can't extract pointer info for this load
+      if (!LoadPtrOpt)
+        continue;
+
+      const PointerInfo &LoadPtr = *LoadPtrOpt;
+
+      if (LoadPtr == TargetPtr) {
+        // Check if it loads the preferred type with preferred opcode
+        if (LoadDstTy == PreferredLoadTy && Opcode == PreferredOpcode)
+          return &MI;
+
+        // Check if it loads the preferred type (any opcode)
+        if (LoadDstTy == PreferredLoadTy && !FallbackLoad)
+          FallbackLoad = &MI;
+
+        // Check if it loads the fallback type (for extending loads)
+        if (FallbackLoadTy.isValid() && LoadDstTy == FallbackLoadTy &&
+            !FallbackLoad)
+          FallbackLoad = &MI;
+      }
+    }
+  }
+
+  // Return fallback if we didn't find the preferred opcode
+  return FallbackLoad;
+}
+
+/// Helper function to recursively check if all uses of a register are valid
+/// for the unaligned extract load combiner.
+/// Automatically traverses through bitcasts to validate all usage patterns.
+/// Valid terminal uses are: direct extracts or pad vector operations (with use
+/// check).
+static bool areLoadUsesValidForExtractCombine(Register Reg,
+                                              unsigned ZExtExtractOpcode,
+                                              unsigned SExtExtractOpcode,
+                                              unsigned PadVectorOpcode,
+                                              MachineRegisterInfo &MRI) {
+
+  auto IsValidExtractOpcode = [&](unsigned Opcode) {
+    return Opcode == TargetOpcode::G_EXTRACT_VECTOR_ELT ||
+           Opcode == ZExtExtractOpcode || Opcode == SExtExtractOpcode;
+  };
+
+  for (const MachineInstr &Use : MRI.use_nodbg_instructions(Reg)) {
+    const unsigned UseOpcode = Use.getOpcode();
+
+    if (UseOpcode == TargetOpcode::G_BITCAST) {
+      // Recursively check bitcast uses
+      const Register BitcastDst = Use.getOperand(0).getReg();
+      if (!areLoadUsesValidForExtractCombine(BitcastDst, ZExtExtractOpcode,
+                                             SExtExtractOpcode, PadVectorOpcode,
+                                             MRI))
+        return false;
+      continue;
+    }
+
+    if (IsValidExtractOpcode(UseOpcode)) {
+      // Direct extract is valid (plain, zext, or sext)
+      continue;
+    }
+
+    if (UseOpcode == PadVectorOpcode) {
+      // Pad is valid if only used by extracts
+      const Register PadDst = Use.getOperand(0).getReg();
+      for (const MachineInstr &PadUse : MRI.use_nodbg_instructions(PadDst)) {
+        if (!IsValidExtractOpcode(PadUse.getOpcode()))
+          return false;
+      }
+      continue;
+    }
+
+    // Invalid use
+    return false;
+  }
+
+  return true;
+}
+
+/// Match unaligned vector loads that are only used for extracting elements
+/// and convert them to direct scalar loads.
+/// Supports s8, s16 and s32 element extractions from various vector
+/// configurations. Pattern:
+///   %vec:_(<N x sM>) = G_LOAD %ptr(p0) :: (align < M/8)
+///   %bitcast:_(<K x sX>) = G_BITCAST %vec
+///   %idx:_(s32) = G_CONSTANT i32 N
+///   %elt:_(sX) = G_EXTRACT_VECTOR_ELT %bitcast, %idx
+/// Or with G_AIE_PAD_VECTOR_UNDEF:
+///   %vec = G_LOAD %ptr :: (unaligned)
+///   %bitcast = G_BITCAST %vec
+///   %padded = G_AIE_PAD_VECTOR_UNDEF %bitcast
+///   %result:_(s32) = G_AIE_[Z/S]EXT_EXTRACT_VECTOR_ELT %padded, %idx
+/// Converts to:
+///   %offset:_(s20) = G_CONSTANT i20 (N * sizeof(sX))
+///   %new_ptr:_(p0) = G_PTR_ADD %ptr, %offset
+///   %elt:_(sX) = G_LOAD %new_ptr :: (align 1)
+///   %result:_(s32) = G_[Z/S]EXT %elt
+bool llvm::matchUnalignedExtractLoad(MachineInstr &ExtractMI,
+                                     MachineRegisterInfo &MRI,
+                                     GISelChangeObserver &Observer,
+                                     BuildFnTy &MatchInfo) {
+  const MachineFunction &MF = *ExtractMI.getMF();
+  const AIEBaseInstrInfo &TII =
+      *static_cast<const AIEBaseInstrInfo *>(MF.getSubtarget().getInstrInfo());
+
+  const unsigned Opcode = ExtractMI.getOpcode();
+  const unsigned ZExtExtractOpcode =
+      TII.getGenericExtractVectorEltOpcode(false);
+  const unsigned SExtExtractOpcode = TII.getGenericExtractVectorEltOpcode(true);
+  const unsigned PadVectorOpcode = TII.getGenericPadVectorOpcode();
+
+  const bool IsZExtExtract = (Opcode == ZExtExtractOpcode);
+  const bool IsSExtExtract = (Opcode == SExtExtractOpcode);
+  const bool IsPlainExtract = (Opcode == TargetOpcode::G_EXTRACT_VECTOR_ELT);
+
+  if (!IsZExtExtract && !IsSExtExtract && !IsPlainExtract)
+    return false;
+
+  // Get the index operand
+  const Register IdxReg = ExtractMI.getOperand(2).getReg();
+  const auto IdxCst = getIConstantVRegValWithLookThrough(IdxReg, MRI);
+  if (!IdxCst)
+    return false;
+  const int64_t Index = IdxCst->Value.getSExtValue();
+
+  // Get the vector operand
+  const Register VecReg = ExtractMI.getOperand(1).getReg();
+  const LLT VecTy = MRI.getType(VecReg);
+
+  // Check if vector has extractable element types (s8, s16, or s32)
+  if (!VecTy.isVector())
+    return false;
+
+  const LLT ElemTy = VecTy.getElementType();
+  const unsigned ElemSize = ElemTy.getSizeInBits();
+  if (ElemSize != 8 && ElemSize != 16 && ElemSize != 32)
+    return false;
+
+  // Trace back through G_AIE_PAD_VECTOR_UNDEF if present
+  MachineInstr *VecDefMI = MRI.getVRegDef(VecReg);
+  Register SourceVecReg = VecReg;
+
+  if (VecDefMI->getOpcode() == PadVectorOpcode) {
+    SourceVecReg = VecDefMI->getOperand(1).getReg();
+    VecDefMI = MRI.getVRegDef(SourceVecReg);
+  }
+
+  // Check for G_BITCAST (or direct vector if no bitcast needed)
+  Register LoadVecReg = SourceVecReg;
+  if (VecDefMI->getOpcode() == TargetOpcode::G_BITCAST)
+    LoadVecReg = VecDefMI->getOperand(1).getReg();
+
+  MachineInstr *LoadMI = MRI.getVRegDef(LoadVecReg);
+
+  // Check if it's a load
+  if (LoadMI->getOpcode() != TargetOpcode::G_LOAD)
+    return false;
+
+  // Check if the load is unaligned relative to the vector's total size
+  if (LoadMI->memoperands_empty())
+    return false;
+
+  const MachineMemOperand *MMO = LoadMI->memoperands().front();
+  const LLT LoadVecTy = MRI.getType(LoadVecReg);
+  const unsigned LoadVecSizeInBytes = LoadVecTy.getSizeInBytes();
+  // Vector is unaligned if alignment < vector size
+  // This allows extracting elements when the vector load itself is unaligned
+  if (MMO->getAlign().value() >= LoadVecSizeInBytes)
+    return false;
+
+  // Check that the loaded vector is only used by extracts (through bitcast and
+  // pad). The helper function will automatically traverse through bitcasts.
+  const Register LoadDstReg = LoadMI->getOperand(0).getReg();
+
+  if (!areLoadUsesValidForExtractCombine(LoadDstReg, ZExtExtractOpcode,
+                                         SExtExtractOpcode, PadVectorOpcode,
+                                         MRI))
+    return false;
+
+  // All checks passed, we can combine
+  MatchInfo = [=, &ExtractMI, &MRI, &Observer](MachineIRBuilder &B) {
+    Register PtrReg = LoadMI->getOperand(1).getReg();
+    const LLT S20 = LLT::scalar(20);
+    const LLT S32 = LLT::scalar(32);
+
+    const unsigned ElemSizeInBytes = ElemSize / 8;
+    int64_t ByteOffset = Index * ElemSizeInBytes;
+
+    // Set insertion point right after the original vector load
+    B.setInsertPt(*LoadMI->getParent(), std::next(LoadMI->getIterator()));
+    B.setDebugLoc(LoadMI->getDebugLoc());
+
+    auto ParentPtrInfo = getPointerInfo(PtrReg, MRI);
+
+    // If we have a parent pointer info, it means that both offets will be
+    // folded together with the original pointer as base (in another generic
+    // combiner). If we don't fold now, we will not be able to match any
+    // aquivalent load, because the other load will use a folded pointer add
+    // as well.
+    // See test:
+    // test_load_dedup_with_ptr_add_same_base_same_offset_parent_offset
+    if (ParentPtrInfo) {
+      PtrReg = ParentPtrInfo->BaseReg;
+      ByteOffset += ParentPtrInfo->Offset;
+    }
+
+    // Create offset constant and pointer add. This may be not necessasy if we
+    // hit an equivalent load, but this simplifies a lot the search and keeps
+    // the code simple.
+    const Register OffsetReg = B.buildConstant(S20, ByteOffset).getReg(0);
+    const Register NewPtrReg =
+        B.buildPtrAdd(MRI.getType(PtrReg), PtrReg, OffsetReg).getReg(0);
+
+    // Determine the preferred load opcode based on the extract type
+    unsigned PreferredOpcode = TargetOpcode::G_LOAD;
+    LLT PreferredLoadTy = ElemTy;
+    LLT FallbackLoadTy;
+
+    if (IsZExtExtract) {
+      PreferredOpcode = TargetOpcode::G_ZEXTLOAD;
+      PreferredLoadTy = S32;
+      FallbackLoadTy = ElemTy; // Also accept plain loads with element type
+    } else if (IsSExtExtract) {
+      PreferredOpcode = TargetOpcode::G_SEXTLOAD;
+      PreferredLoadTy = S32;
+      FallbackLoadTy = ElemTy; // Also accept plain loads with element type
+    }
+
+    // Try to find an equivalent load before creating a new one
+    MachineInstr *EquivLoad =
+        findEquivalentLoad(*LoadMI, NewPtrReg, PreferredLoadTy, MRI,
+                           PreferredOpcode, FallbackLoadTy);
+
+    Register LoadResultReg;
+    bool NeedsExtension = false;
+
+    if (EquivLoad) {
+      // Reuse the existing equivalent load
+      LoadResultReg = EquivLoad->getOperand(0).getReg();
+      const unsigned EquivOpcode = EquivLoad->getOpcode();
+
+      // Check if we still need an extension
+      if ((IsZExtExtract && EquivOpcode != TargetOpcode::G_ZEXTLOAD) ||
+          (IsSExtExtract && EquivOpcode != TargetOpcode::G_SEXTLOAD)) {
+        NeedsExtension = true;
+      }
+    } else {
+      // Calculate alignment for scalar load based on original vector load
+      // alignment using GCD to find the maximum provable alignment
+      const unsigned OrigAlign = MMO->getAlign().value();
+      const unsigned ScalarAlign = std::gcd(OrigAlign, OrigAlign + ByteOffset);
+
+      // Create new scalar load with derived alignment
+      MachineFunction &MF = B.getMF();
+      MachineMemOperand *NewMMO =
+          MF.getMachineMemOperand(MMO->getPointerInfo(), MMO->getFlags(),
+                                  ElemSizeInBytes, Align(ScalarAlign));
+
+      LoadResultReg = MRI.createGenericVirtualRegister(PreferredLoadTy);
+
+      // Build the appropriate load type
+      if (PreferredOpcode == TargetOpcode::G_ZEXTLOAD) {
+        Observer.createdInstr(*B.buildLoadInstr(
+            TargetOpcode::G_ZEXTLOAD, LoadResultReg, NewPtrReg, *NewMMO));
+      } else if (PreferredOpcode == TargetOpcode::G_SEXTLOAD) {
+        Observer.createdInstr(*B.buildLoadInstr(
+            TargetOpcode::G_SEXTLOAD, LoadResultReg, NewPtrReg, *NewMMO));
+      } else {
+        Observer.createdInstr(*B.buildLoad(LoadResultReg, NewPtrReg, *NewMMO));
+      }
+    }
+
+    // Now set insertion point at the extract position for the copy/extension
+    B.setInstr(ExtractMI);
+
+    // Handle the result based on the original opcode and what we found
+    const Register DstReg = ExtractMI.getOperand(0).getReg();
+
+    if (NeedsExtension) {
+      if (IsZExtExtract) {
+        Observer.createdInstr(*B.buildZExt(DstReg, LoadResultReg));
+      } else if (IsSExtExtract) {
+        Observer.createdInstr(*B.buildSExt(DstReg, LoadResultReg));
+      }
+    } else {
+      // No extension needed - either plain extract or extending load matched
+      Observer.createdInstr(*B.buildCopy(DstReg, LoadResultReg));
+    }
+
+    Observer.erasingInstr(ExtractMI);
+    ExtractMI.eraseFromParent();
   };
 
   return true;

@@ -252,6 +252,12 @@ def combine_trunc_load : GICombineRule<
          [{ return matchNarrowTruncLoad(*${root}, MRI, Helper, Observer, ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
 
+def combine_unaligned_extract_load : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_EXTRACT_VECTOR_ELT, G_AIE_ZEXT_EXTRACT_VECTOR_ELT, G_AIE_SEXT_EXTRACT_VECTOR_ELT): $root,
+         [{ return matchUnalignedExtractLoad(*${root}, MRI, Observer, ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
+
 // AIE-specifc combines (currently shared by AIE2 and AIE2P).
 def aie_additional_combines : GICombineGroup<[
   combine_unpad_vector,
@@ -274,7 +280,8 @@ def aie_additional_combines : GICombineGroup<[
   combine_align_memset,
   combine_peel_memset,
   combine_pack_stores_into_memset,
-  combine_trunc_load
+  combine_trunc_load,
+  combine_unaligned_extract_load
 ]>;
 
 // AIE2P-specific combines.
@@ -408,4 +415,3 @@ def AIE2PPostLegalizerCustomCombiner
                                                             combine_add_vector_elt_undef,
                                                              ]> {
 }
-

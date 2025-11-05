@@ -308,6 +308,11 @@ bool matchExtractVecEltAssertBcst(MachineInstr &MI, MachineRegisterInfo &MRI,
                                   const AIEBaseInstrInfo &TII,
                                   GISelChangeObserver &Observer,
                                   BuildFnTy &MatchInfo);
+
+bool matchUnalignedExtractLoad(MachineInstr &ExtractMI,
+                               MachineRegisterInfo &MRI,
+                               GISelChangeObserver &Observer,
+                               BuildFnTy &MatchInfo);
 } // namespace llvm
 
 #endif
