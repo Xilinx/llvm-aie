@@ -1155,16 +1155,7 @@ void BlockState::classify() {
   // This can only be done if we have an epilogue and the epilogue is not itself
   // a loop.
   auto IsLoop = [](const MachineBasicBlock *MBB) {
-    int NumLoopEdges = 0;
-    int NumExitEdges = 0;
-    for (auto *S : MBB->successors()) {
-      if (S == MBB) {
-        NumLoopEdges++;
-      } else {
-        NumExitEdges++;
-      }
-    }
-    return NumLoopEdges == 1 && NumExitEdges == 1;
+    return AIELoopUtils::isSingleMBBLoop(MBB);
   };
 
   // We generalize slightly; we require the epilogue to be a dedicated exit of
