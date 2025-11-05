@@ -437,6 +437,10 @@ void AIEWawRegRewriter::sortSWPAware(OriginalAllocation &Candidates,
 }
 
 bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
+  // We do this mainly for the postpipeliner
+  if (!TII->isZOLBody(*MBB)) {
+    return false;
+  }
   LLVM_DEBUG(dbgs() << "WAW Reg Renaming BasicBlock "; MBB->dump();
              dbgs() << "\n");
 
