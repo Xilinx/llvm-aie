@@ -116,27 +116,24 @@ RewriteMode selectMode(RewriteMode Mode, int LoopClass) {
   }
 }
 
-bool runSWPAware(RewriteMode Mode, int LoopClass, int &Bias) {
-  Bias = MinIIBias;
+std::optional<int> getMinIIBias(RewriteMode Mode, int LoopClass) {
   switch (Mode) {
   case RewriteMode::SWPAwareAutoBias:
     break;
   case RewriteMode::SWPAware:
-    return true;
+    return MinIIBias;
   default:
-    return false;
+    return {};
   }
 
   switch (LoopClass) {
   case 14:
-    Bias = -1;
-    return true;
+    return -1;
   case 18:
   case 29:
-    Bias = 1;
-    return true;
+    return 1;
   default:
-    return true;
+    return MinIIBias;
   }
 }
 
@@ -598,9 +595,8 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
     }
   }
 
-  int Bias = MinIIBias;
-  if (runSWPAware(Mode, LoopClass, Bias)) {
-    sortSWPAware(Candidates, NonConstMBB, Statistics, Bias);
+  if (auto Bias = getMinIIBias(Mode, LoopClass)) {
+    sortSWPAware(Candidates, NonConstMBB, Statistics, *Bias);
   }
 
   // Least-Recently-Used list of physical registers for assignments to VRegs.
