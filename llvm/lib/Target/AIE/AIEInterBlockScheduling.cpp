@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 // Implementations of the classes used to support inter-block scheduling
@@ -1140,16 +1140,7 @@ void BlockState::classify() {
   // This can only be done if we have an epilogue and the epilogue is not itself
   // a loop.
   auto IsLoop = [](const MachineBasicBlock *MBB) {
-    int NumLoopEdges = 0;
-    int NumExitEdges = 0;
-    for (auto *S : MBB->successors()) {
-      if (S == MBB) {
-        NumLoopEdges++;
-      } else {
-        NumExitEdges++;
-      }
-    }
-    return NumLoopEdges == 1 && NumExitEdges == 1;
+    return AIELoopUtils::isSingleMBBLoop(MBB);
   };
 
   // We generalize slightly; we require the epilogue to be a dedicated exit of
