@@ -16,6 +16,9 @@
 #include "AIE.h"
 #include "AIEBaseInstrInfo.h"
 #include "AIEBaseRegisterInfo.h"
+#include "AIEDataDependenceHelper.h"
+#include "AIELoopClass.h"
+#include "AIESlotStatistics.h"
 #include "Utils/AIELoopUtils.h"
 
 #include "llvm/ADT/BitVector.h"
@@ -43,6 +46,9 @@ using namespace llvm;
 
 #define DEBUG_TYPE "aie-waw-reg-rewrite"
 
+// This might be compatible with a future extension of the DEBUG rigging
+#define DEBUG_DETAIL(x) DEBUG_WITH_TYPE("aie-waw-reg-rewrite:2", x)
+
 static cl::opt<bool> AggressiveReAlloc(
     "aie-aggressive-realloc", cl::Hidden, cl::init(false),
     cl::desc("Aggressively de-allocate live-through registers to favor "
@@ -63,6 +69,13 @@ static cl::opt<unsigned>
 static cl::opt<bool>
     LatencyAware("aie-realloc-latencyaware", cl::Hidden, cl::init(true),
                  cl::desc("Enable latency-aware allocation strategy"));
+
+static cl::opt<bool>
+    SWPAware("aie-realloc-swp-aware", cl::Hidden, cl::init(false),
+             cl::desc("Use assignment order based on interleaved swp stages"));
+
+static cl::opt<int> MinIIBias("aie-realloc-ii-bias", cl::Hidden, cl::init(0),
+                              cl::desc("MinII bias for swp-aware"));
 
 namespace {
 
@@ -104,6 +117,7 @@ public:
     AU.addRequired<LiveIntervalsWrapperPass>();
     AU.addPreserved<LiveIntervalsWrapperPass>();
     AU.addRequired<LiveRegMatrixWrapperLegacy>();
+    AU.addRequired<AAResultsWrapperPass>();
     AU.addPreserved<LiveRegMatrixWrapperLegacy>();
     MachineFunctionPass::getAnalysisUsage(AU);
   }
@@ -125,6 +139,9 @@ private:
   /// that can be used in the reallocation.
   RoundRobin computeLRURegisters(
       const std::map<const TargetRegisterClass *, bool> &RegClasses);
+
+  /// Sort the candidates to mimic interleaving the pipeline stages
+  void sortSWPAware(OriginalAllocation &Candidates, MachineBasicBlock &MBB);
 
   /// Pre-allocate all virtual registers in Candidates. The sole purpose of
   /// this is to prime the LRURegisters, so that the end of the loop is
@@ -366,6 +383,55 @@ RoundRobin AIEWawRegRewriter::computeLRURegisters(
   return LRURegisters;
 }
 
+void AIEWawRegRewriter::sortSWPAware(OriginalAllocation &Candidates,
+                                     MachineBasicBlock &MBB) {
+
+  // We estimate the length of the schedule based on latencies and the
+  // minimum II based on slots. We then estimate the modulo cycle of each
+  // instruction based on its depth and apply LRU in the order of the modulo
+  // cycle.
+  // Note that both the depth and the II are underestimations since we don't
+  // account for them interfering. Hence the modulo cycle estimate won't be
+  // too far off.
+  AIE::SlotStatistics Statistics = AIE::computeSlotStatistics(MBB, TII);
+  DEBUG_DETAIL(dbgs() << "Stats="; Statistics.dumpShort(); dbgs() << "\n");
+  DEBUG_DETAIL(dbgs() << "LoopClass=" << llvm::AIE::classifyLoop(Statistics)
+                      << "\n");
+  const int MinII = std::max(Statistics.getMinII() + MinIIBias, 1);
+
+  MachineSchedContext Context;
+  Context.MF = MF;
+  Context.AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
+  AIE::DataDependenceHelper DDG(Context, true, false);
+  for (auto &MI : MBB) {
+    if (!MI.isTerminator())
+      DDG.initSUnit(MI);
+  }
+  DDG.buildEdges();
+  DEBUG_DETAIL(DDG.dumpDot(dbgs(), false));
+
+  // Compute and record the modulo cycle of each instruction.
+  std::map<const MachineInstr *, int> ModuloCycle;
+  for (auto &SU : DDG.SUnits) {
+    int D = SU.getDepth();
+    ModuloCycle.emplace(SU.getInstr(), D % MinII);
+    LLVM_DEBUG(dbgs() << format("%4d D=%4d: ", SU.NodeNum, D)
+                      << *SU.getInstr());
+  }
+
+  LLVM_DEBUG(dbgs() << format("MinII = %d\n", MinII));
+
+  // Now sort the candidates to simulate the parallelism
+  using Element = std::pair<const MachineOperand *, Register>;
+  auto ModuloCycleLess = [&ModuloCycle](const Element &A, const Element &B) {
+    const MachineInstr *IA = A.first->getParent();
+    const MachineInstr *IB = B.first->getParent();
+
+    return ModuloCycle[IA] < ModuloCycle[IB];
+  };
+  llvm::sort(Candidates, ModuloCycleLess);
+}
+
 bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   LLVM_DEBUG(dbgs() << "WAW Reg Renaming BasicBlock "; MBB->dump();
              dbgs() << "\n");
@@ -457,13 +523,10 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
     }
   }
 
-  // For each reg class, allocate the candidates in round-robin fashion.
-  // If we fail, we fall back to the original allocation
-  BitVector ExcludedPhysRegs{TRI->getNumRegs()};
-
-  // Exclude CSRs
-  for (const MCPhysReg *CSR = MRI->getCalleeSavedRegs(); CSR && *CSR; ++CSR)
-    ExcludedPhysRegs[*CSR] = true;
+  if (SWPAware) {
+    auto &NCMBB = *(const_cast<MachineBasicBlock *>(MBB));
+    sortSWPAware(Candidates, NCMBB);
+  }
 
   // Least-Recently-Used list of physical registers for assignments to VRegs.
   // Physical registers that have recently been used are moved to the back.
