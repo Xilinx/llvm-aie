@@ -46,10 +46,8 @@ public:
   unsigned getConstantMovOpcode(MachineRegisterInfo &MRI, unsigned int Reg,
                                 APInt &Val) const override;
   unsigned getScalarMovOpcode(Register DstReg, Register SrcReg) const override;
-  unsigned getMvScl2MS(unsigned ConstTLastVal) const override;
-  unsigned getMvNBScl2MS(unsigned ConstTLastVal) const override;
-  unsigned getMvScl2MSTlastRegOpcode() const override;
-  unsigned getMvNBScl2MSTlastRegOpcode() const override;
+  unsigned getMoveToMSOpcode(MachineInstr &I,
+                             unsigned ConstTLastVal) const override;
   Register getSSStatusReg() const override;
   Register getMSStatusReg() const override;
   Register getPackSignCReg() const override;

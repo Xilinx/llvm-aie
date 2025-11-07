@@ -467,6 +467,10 @@ unsigned AIE2InstrInfo::getOpCode(MachineInstr &I) const {
     else
       return isSigned ? AIE2::VUNPACK_S16_S8 : AIE2::VUNPACK_D16_D8;
   }
+  case Intrinsic::aie2_put_ms:
+    return AIE2::MOV_mv_scl2ms_doTlast_reg;
+  case Intrinsic::aie2_put_ms_nb:
+    return AIE2::MOV_NB_mv_scl2ms_doTlast_reg;
   default:
     llvm_unreachable("Unexpected Intrinsic ID");
   }
@@ -950,21 +954,18 @@ unsigned AIE2InstrInfo::getMvSclMultiSlotPseudoOpcode() const {
 
 unsigned AIE2InstrInfo::getAddSclOpcode() const { return AIE2::ADD; }
 
-unsigned AIE2InstrInfo::getMvScl2MSTlastRegOpcode() const {
-  return AIE2::MOV_mv_scl2ms_doTlast_reg;
-}
-
-unsigned AIE2InstrInfo::getMvNBScl2MSTlastRegOpcode() const {
-  return AIE2::MOV_NB_mv_scl2ms_doTlast_reg;
-}
-
-unsigned AIE2InstrInfo::getMvScl2MS(unsigned ConstTLastVal) const {
-  return (ConstTLastVal == 0 ? AIE2::MOV_mv_scl2ms : AIE2::MOV_TLAST_mv_scl2ms);
-}
-
-unsigned AIE2InstrInfo::getMvNBScl2MS(unsigned ConstTLastVal) const {
-  return (ConstTLastVal == 0 ? AIE2::MOV_NB_mv_scl2ms
-                             : AIE2::MOV_NB_TLAST_mv_scl2ms);
+unsigned AIE2InstrInfo::getMoveToMSOpcode(MachineInstr &I,
+                                          unsigned ConstTLastVal) const {
+  const bool UseTLastImm = (ConstTLastVal == 0);
+  const unsigned IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
+  switch (IntrinsicID) {
+  case Intrinsic::aie2_put_ms:
+    return UseTLastImm ? AIE2::MOV_mv_scl2ms : AIE2::MOV_TLAST_mv_scl2ms;
+  case Intrinsic::aie2_put_ms_nb:
+    return UseTLastImm ? AIE2::MOV_NB_mv_scl2ms : AIE2::MOV_NB_TLAST_mv_scl2ms;
+  default:
+    llvm_unreachable("Unexpected Intrinsic ID");
+  }
 }
 
 unsigned AIE2InstrInfo::getCycleSeparatorOpcode() const {
