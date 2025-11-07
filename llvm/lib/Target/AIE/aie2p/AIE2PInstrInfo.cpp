@@ -562,6 +562,10 @@ unsigned AIE2PInstrInfo::getOpCode(MachineInstr &I) const {
   }
   case Intrinsic::aie2p_vshuffle_576_bfp16:
     return AIE2P::VSHUFFLE_vec_shuffle_ex;
+  case Intrinsic::aie2p_put_ms:
+    return AIE2P::MOV_st_mMStream_tlast_reg;
+  case Intrinsic::aie2p_put_ms_nb:
+    return AIE2P::MOV_nb_st_mMStream_tlast_reg;
   default:
     llvm_unreachable("Unexpected Intrinsic ID");
   }
@@ -1970,22 +1974,19 @@ Register AIE2PInstrInfo::getSSStatusReg() const { return AIE2P::srSS0; }
 
 Register AIE2PInstrInfo::getMSStatusReg() const { return AIE2P::srMS0; }
 
-unsigned AIE2PInstrInfo::getMvScl2MSTlastRegOpcode() const {
-  return AIE2P::MOV_st_mMStream_tlast_reg;
-}
-
-unsigned AIE2PInstrInfo::getMvNBScl2MSTlastRegOpcode() const {
-  return AIE2P::MOV_nb_st_mMStream_tlast_reg;
-}
-
-unsigned AIE2PInstrInfo::getMvScl2MS(unsigned ConstTLastVal) const {
-  return (ConstTLastVal == 0) ? AIE2P::MOV_st_mMStream_tlast_imm
-                              : AIE2P::MOV_tlast;
-}
-
-unsigned AIE2PInstrInfo::getMvNBScl2MS(unsigned ConstTLastVal) const {
-  return (ConstTLastVal == 0) ? AIE2P::MOV_nb_st_mMStream_tlast_imm
-                              : AIE2P::MOV_nb_tlast;
+unsigned AIE2PInstrInfo::getMoveToMSOpcode(MachineInstr &I,
+                                           unsigned ConstTLastVal) const {
+  const bool UseTLastImm = (ConstTLastVal == 0);
+  const unsigned IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
+  switch (IntrinsicID) {
+  case Intrinsic::aie2p_put_ms:
+    return UseTLastImm ? AIE2P::MOV_st_mMStream_tlast_imm : AIE2P::MOV_tlast;
+  case Intrinsic::aie2p_put_ms_nb:
+    return UseTLastImm ? AIE2P::MOV_nb_st_mMStream_tlast_imm
+                       : AIE2P::MOV_nb_tlast;
+  default:
+    llvm_unreachable("Unexpected Intrinsic ID");
+  }
 }
 
 Register AIE2PInstrInfo::getPackSignCReg() const { return AIE2P::packSign0; }

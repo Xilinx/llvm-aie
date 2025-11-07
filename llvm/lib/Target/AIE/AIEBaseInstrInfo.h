@@ -444,20 +444,13 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual Register getMSStatusReg() const {
     llvm_unreachable("Target didn't implement getMSStatusReg");
   }
-  virtual unsigned getMvScl2MS(unsigned ConstTLastVal) const {
-    llvm_unreachable("Target didn't implement getMvScl2MS");
+  virtual unsigned getMoveToMSOpcode(MachineInstr &I,
+                                     unsigned ConstTLastVal) const {
+    llvm_unreachable("Target didn't implement getMoveToMSOpcode");
   }
 
   virtual unsigned getMvNBScl2MS(unsigned ConstTLastVal) const {
     llvm_unreachable("Target didn't implement getMvNBScl2MS");
-  }
-
-  virtual unsigned getMvScl2MSTlastRegOpcode() const {
-    llvm_unreachable("Target didn't implement getMvScl2MSTlastRegOpcode");
-  }
-
-  virtual unsigned getMvNBScl2MSTlastRegOpcode() const {
-    llvm_unreachable("Target didn't implement getMvNBScl2MSTlastRegOpcode");
   }
 
   virtual Register getPackSignCReg() const {

@@ -535,10 +535,10 @@ bool AIEBaseInstructionSelector::selectPutMSB(MachineInstr &I,
   Register ValReg = I.getOperand(1).getReg();
   Register TLastReg = I.getOperand(2).getReg();
   auto TLastVal = getIConstantVRegValWithLookThrough(TLastReg, MRI);
-  unsigned OpCode = TII.getMvScl2MSTlastRegOpcode();
+  unsigned OpCode = TII.getOpCode(I);
   if (TLastVal) {
     unsigned ConstTLastVal = TLastVal->Value.getZExtValue();
-    OpCode = TII.getMvScl2MS(ConstTLastVal);
+    OpCode = TII.getMoveToMSOpcode(I, ConstTLastVal);
   }
   MachineInstrBuilder MI = MIB.buildInstr(OpCode, {}, {ValReg});
   if (!TLastVal) {
@@ -557,10 +557,10 @@ bool AIEBaseInstructionSelector::selectPutMSNB(MachineInstr &I,
   Register ValReg = I.getOperand(2).getReg();
   Register TLastReg = I.getOperand(3).getReg();
   auto TLastVal = getIConstantVRegValWithLookThrough(TLastReg, MRI);
-  unsigned OpCode = TII.getMvNBScl2MSTlastRegOpcode();
+  unsigned OpCode = TII.getOpCode(I);
   if (TLastVal) {
     unsigned ConstTLastVal = TLastVal->Value.getZExtValue();
-    OpCode = TII.getMvNBScl2MS(ConstTLastVal);
+    OpCode = TII.getMoveToMSOpcode(I, ConstTLastVal);
   }
   MachineInstrBuilder MI = MIB.buildInstr(OpCode, {}, {ValReg});
   if (!TLastVal) {
