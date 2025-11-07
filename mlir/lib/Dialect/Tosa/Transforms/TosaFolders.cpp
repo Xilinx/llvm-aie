@@ -355,7 +355,8 @@ struct TosaFoldConstantBase : public OpRewritePattern<TosaOp> {
                                       DenseElementsAttr valuesSecond) const {
     if (!foldSplatOrSingleUseOnly)
       return true;
-    assert(binaryOp->getNumOperands() == 2);
+    assert(binaryOp->getNumOperands() >= 2 &&
+           "binary folding expects at least two operands");
     auto firstOp = binaryOp->getOperand(0);
     auto secondOp = binaryOp->getOperand(1);
 
@@ -750,10 +751,19 @@ struct TosaFoldConstantMul
   DenseElementsAttr computeInteger(DenseElementsAttr lhsValues,
                                    DenseElementsAttr rhsValues,
                                    PatternRewriter &rewriter, MulOp op) const {
-    if (op.getShift() > 0) {
-      (void)rewriter.notifyMatchFailure(
-          op, "Non-zero shift folding is currently not implemented.");
-      return {};
+    if (Value shiftVal = op.getShift()) {
+      ElementsAttr shiftAttr;
+      if (!matchPattern(shiftVal, m_Constant(&shiftAttr))) {
+        (void)rewriter.notifyMatchFailure(
+            op, "shift must be a constant for folding.");
+        return {};
+      }
+      if (llvm::any_of(shiftAttr.getValues<IntegerAttr>(),
+                       [](IntegerAttr attr) { return attr.getInt() != 0; })) {
+        (void)rewriter.notifyMatchFailure(
+            op, "Non-zero shift folding is currently not implemented.");
+        return {};
+      }
     }
 
     auto resultElementWidth =
