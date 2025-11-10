@@ -1247,11 +1247,34 @@ unsigned AIE2PInstrInfo::getCycleSeparatorOpcode() const {
   return AIE2P::CYCLE_SEPARATOR;
 }
 
+static void expandVMACACC1024Pseudo(MachineInstr &MI, unsigned Opcode,
+                                    MachineBasicBlock &MBB, DebugLoc DL,
+                                    const AIE2PInstrInfo *TII,
+                                    const TargetRegisterInfo *TRI) {
+  const Register Dst = MI.getOperand(0).getReg();
+  const Register AccSrc = MI.getOperand(1).getReg();
+  const Register VecSrc1 = MI.getOperand(2).getReg();
+  const Register VecSrc2 = MI.getOperand(3).getReg();
+  const Register ConfSrc = MI.getOperand(4).getReg();
+
+  // Turn the 1024-bit accumulator source register into its corresponding
+  // 2048-bit super register
+  const Register AccSuperReg = TRI->getMatchingSuperReg(
+      AccSrc, AIE2P::sub_1024_acc_lo, &AIE2P::ACC2048RegClass);
+  BuildMI(MBB, MI, DL, TII->get(Opcode), Dst)
+      .addReg(AccSuperReg, getKillRegState(MI.getOperand(1).isKill()))
+      .addReg(VecSrc1, getKillRegState(MI.getOperand(2).isKill()))
+      .addReg(VecSrc2, getKillRegState(MI.getOperand(3).isKill()))
+      .addReg(ConfSrc, getKillRegState(MI.getOperand(4).isKill()));
+  MI.eraseFromParent();
+}
+
 // Note: Some pseudos like spill/reload are already expanded in
 // eliminateFrameIndex.
 bool AIE2PInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
   auto DL = MI.getDebugLoc();
   MachineBasicBlock &MBB = *MI.getParent();
+  auto *TRI = MI.getMF()->getSubtarget().getRegisterInfo();
   switch (MI.getOpcode()) {
   case AIE2P::PseudoMove: {
     Register Dst = MI.getOperand(0).getReg();
@@ -1260,6 +1283,11 @@ bool AIE2PInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
     BuildMI(MBB, MI, DL, get(MOVSclOpcode), Dst)
         .addReg(Src, getKillRegState(MI.getOperand(1).isKill()));
     MI.eraseFromParent();
+    return true;
+  }
+  case AIE2P::VMAC_f_vmac_bf_vmul_bf_core_X_X_ACC1024: {
+    expandVMACACC1024Pseudo(MI, AIE2P::VMAC_f_vmac_bf_vmul_bf_core_X_X, MBB, DL,
+                            this, TRI);
     return true;
   }
   }
