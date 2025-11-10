@@ -3405,7 +3405,8 @@ static bool isUsedByLikelyLegalS20User(MachineRegisterInfo &MRI,
                          UseMI.getOpcode() == TargetOpcode::G_STORE ||
                          UseMI.getOpcode() == TargetOpcode::G_INTRINSIC ||
                          UseMI.getOpcode() ==
-                             TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS;
+                             TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS ||
+                         UseMI.getOpcode() == TargetOpcode::G_INTTOPTR;
                 });
 }
 
