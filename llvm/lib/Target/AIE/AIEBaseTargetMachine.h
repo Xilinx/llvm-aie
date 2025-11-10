@@ -56,6 +56,7 @@ public:
   void registerPassBuilderCallbacks(PassBuilder &PB) override;
   bool isNoopAddrSpaceCast(unsigned SrcAS, unsigned DestAS) const override;
 
+  /// Set AIE specific MBB placement options.
   virtual void setMBBPlacementOpts();
 };
 
