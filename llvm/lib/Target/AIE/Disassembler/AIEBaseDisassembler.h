@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -77,23 +77,27 @@ static DecodeStatus decodeSImmOperandX1(MCInst &Inst, uint64_t Imm,
   return MCDisassembler::Success;
 }
 
-template <unsigned N, unsigned step, bool isNegative>
+template <unsigned N, unsigned step, bool isNegative, bool isUnsigned>
 static DecodeStatus decodeSImmOperandXStep(MCInst &Inst, uint64_t Imm,
                                            int64_t Address,
                                            const MCDisassembler *Decoder) {
   assert(isUInt<N>(Imm) && "Invalid immediate");
-  const unsigned fixedZeroBits = CTLog2<step>();
+  const unsigned FixedZeroBits = CTLog2<step>();
   if (isNegative)
     // Decode and sign extend a negative number encoded as fixed 1
     // <encoded_length bits> fixedZeroBits
     Inst.addOperand(MCOperand::createImm(
-        SignExtend64((Imm << fixedZeroBits) | 1 << (N + fixedZeroBits),
-                     N + 1 + fixedZeroBits)));
+        SignExtend64((Imm << FixedZeroBits) | 1 << (N + FixedZeroBits),
+                     N + 1 + FixedZeroBits)));
+  else if (isUnsigned)
+    // Decode an unsigned N+fixedZeroBits bit number encoded in N bits,
+    // with the LSBs as zero.
+    Inst.addOperand(MCOperand::createImm(Imm << FixedZeroBits));
   else
     // Decode and sign extend an N+fixedZeroBits bit number encoded in N bits,
     // with the LSBs as zero.
     Inst.addOperand(MCOperand::createImm(
-        SignExtend64(Imm << fixedZeroBits, N + fixedZeroBits)));
+        SignExtend64(Imm << FixedZeroBits, N + FixedZeroBits)));
   return MCDisassembler::Success;
 }
 } // namespace

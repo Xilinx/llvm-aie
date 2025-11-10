@@ -52,8 +52,10 @@ class immx1_negative <int n, ValueType vt> : Operand<vt>, ImmLeaf<vt, [{return i
 class immxstep <int n, int step, int fixedEncodedBits, ValueType vt = i32>
     : Operand<vt>, ImmLeaf<vt, [{return isInt<}] # n # [{+}] # fixedEncodedBits # [{>(Imm) && (Imm % }] # step # [{) == 0;}]> {
   bits<1> isNegative = false;
-  let DecoderMethod = "decodeSImmOperandXStep<" # n # ", "#step#", "# isNegative #">";
-  let EncoderMethod = "getSImmOpValueXStep<" # n # ", "#step#", /*offset=*/0, "# isNegative #">";
+  // Note: If isNegative is true, isUnsigned is ignored
+  bits<1> isUnsigned = false;
+  let DecoderMethod = "decodeSImmOperandXStep<" # n # ", "#step#", "# isNegative #", "# isUnsigned #">";
+  let EncoderMethod = "getSImmOpValueXStep<" # n # ", "#step#", /*offset=*/0, "# isNegative #", "# isUnsigned #">";
 }
 
 // A signed immediate with n+1 bits and the low-order 1 bits as 0.
@@ -130,6 +132,13 @@ class immx128 <int n, ValueType vt = i32> : immxstep<n, 128 /**step**/, 7 /**low
 class immx128_negative <int n> : immxstep<n, 128 /*step*/, 8 /**1 sign-bit + 7 lower-order bits as 0**/>
 {
   let isNegative = true;
+}
+
+// An unsigned immediate with n+7 bits and the low-order 7 bits as 0
+// This results in an n-bit encoded number
+class immx128_unsigned <int n, ValueType vt = i32> : immxstep<n, 128 /*step*/, 7 /**7 lower-order bits as 0**/, vt>
+{
+  let isUnsigned = true;
 }
 
 // A signed immediate which fits in n bits after being negated.
