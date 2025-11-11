@@ -618,34 +618,3 @@ bool AIE2PRegisterInfo::isFifoPhysReg(const Register Reg) const {
   return Reg.isPhysical() && (AIE2P::FIFO512RegClass.contains(Reg) ||
                               AIE2P::FIFO1024RegClass.contains(Reg));
 }
-
-bool AIE2PRegisterInfo::shouldCoalesce(
-    MachineInstr *MI, const TargetRegisterClass *SrcRC, unsigned SubReg,
-    const TargetRegisterClass *DstRC, unsigned DstSubReg,
-    const TargetRegisterClass *NewRC, LiveIntervals &LIS) const {
-
-  const unsigned SrcSize = getRegSizeInBits(*SrcRC);
-  const unsigned DstSize = getRegSizeInBits(*DstRC);
-  MachineFunction *MF = MI->getMF();
-  const AIEBaseInstrInfo *TII =
-      static_cast<const AIEBaseInstrInfo *>(MF->getSubtarget().getInstrInfo());
-  const unsigned BasicVectorSize = TII->getBasicVecRegSize();
-  // Should not coalesce if copying from bigger source.
-  if (!EnableCoalescingForWideCopy && SrcSize < DstSize &&
-      (SrcSize >= BasicVectorSize || DstSize >= BasicVectorSize)) {
-    MachineBasicBlock *MBB = MI->getParent();
-    LiveInterval &LI = LIS.getInterval(MI->getOperand(1).getReg());
-    const MachineInstr *FirstMI =
-        LI.empty() ? nullptr : LIS.getInstructionFromIndex(LI.beginIndex());
-    const MachineInstr *LastMI =
-        LI.empty() ? nullptr : LIS.getInstructionFromIndex(LI.endIndex());
-    // Coalescing inside the same basic block found beneficial. So, check that
-    // the LiveInterval is not just local to MBB.
-    if (!FirstMI || FirstMI->getParent() != MBB || !LastMI ||
-        LastMI->getParent() != MBB)
-      return false;
-  }
-
-  return TargetRegisterInfo::shouldCoalesce(MI, SrcRC, SubReg, DstRC, DstSubReg,
-                                            NewRC, LIS);
-}
