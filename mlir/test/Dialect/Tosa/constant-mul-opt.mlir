@@ -17,7 +17,8 @@ func.func @mul_fold_float() -> tensor<4xf16> {
                         dense<[-132.7, -3.0, -0.0, 5.0]> :
                         tensor<4xf16>
                       } : () -> tensor<4xf16>
-  %2 = "tosa.mul"(%0, %1) : (tensor<4xf16>, tensor<4xf16>) -> tensor<4xf16>
+  %shift = "tosa.const"() <{value = dense<0> : tensor<1xi8>}> : () -> tensor<1xi8>
+  %2 = "tosa.mul"(%0, %1, %shift) : (tensor<4xf16>, tensor<4xf16>, tensor<1xi8>) -> tensor<4xf16>
   return %2 : tensor<4xf16>
 }
 
@@ -34,7 +35,8 @@ func.func @mul_fold_float_infinity_nan() -> tensor<7xf32> {
                         dense<[3.0, -3.0, -3.0, 3.0, 1.0, 0xFF800000, 0.0]> :
                         tensor<7xf32>
                       } : () -> tensor<7xf32>
-  %2 = "tosa.mul"(%0, %1) : (tensor<7xf32>, tensor<7xf32>) -> tensor<7xf32>
+  %shift = "tosa.const"() <{value = dense<0> : tensor<1xi8>}> : () -> tensor<1xi8>
+  %2 = "tosa.mul"(%0, %1, %shift) : (tensor<7xf32>, tensor<7xf32>, tensor<1xi8>) -> tensor<7xf32>
   return %2 : tensor<7xf32>
 }
 
@@ -51,7 +53,8 @@ func.func @add_fold_float_overflow() -> tensor<2xf32> {
                         dense<[2.1e+38, 1.1e+38]> :
                         tensor<2xf32>
                       } : () -> tensor<2xf32>
-  %2 = "tosa.mul"(%0, %1) : (tensor<2xf32>, tensor<2xf32>) -> tensor<2xf32>
+  %shift = "tosa.const"() <{value = dense<0> : tensor<1xi8>}> : () -> tensor<1xi8>
+  %2 = "tosa.mul"(%0, %1, %shift) : (tensor<2xf32>, tensor<2xf32>, tensor<1xi8>) -> tensor<2xf32>
   return %2 : tensor<2xf32>
 }
 
