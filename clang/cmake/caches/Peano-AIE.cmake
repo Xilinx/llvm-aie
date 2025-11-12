@@ -3,7 +3,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 
 # This file sets up a CMakeCache for the Peano AIE toolchain build.
 
@@ -63,7 +63,7 @@ endif()
 
 # Switch it on if you have Z3 installed and want to use the solver mode 
 # of the postpipeliner
-# option(LLVM_ENABLE_Z3_SOLVER "" ON)
+option(LLVM_ENABLE_Z3_SOLVER "" ON)
 
 # there's some bug here where if you list(APPEND ...) to a CACHE variable
 # it doesn't work (neither libLLVM nor clang-cpp were being successfully installed)
