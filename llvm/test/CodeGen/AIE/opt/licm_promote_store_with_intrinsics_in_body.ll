@@ -7,7 +7,7 @@
 ; (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
 
 ; RUN: opt --passes=licm -o - -S  %s | FileCheck %s
-; REQUIRES: aie
+; REQUIRES: aie-registered-target
 
 
 ; promote store %inc to exit block
