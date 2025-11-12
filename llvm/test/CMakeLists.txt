@@ -1,3 +1,10 @@
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+
 llvm_canonicalize_cmake_booleans(
   BUILD_SHARED_LIBS
   HAVE_OCAMLOPT
@@ -29,6 +36,7 @@ llvm_canonicalize_cmake_booleans(
   LLVM_INCLUDE_SPIRV_TOOLS_TESTS
   LLVM_APPEND_VC_REV
   LLVM_HAS_LOGF128
+  LLVM_ENABLE_Z3_SOLVER
   )
 
 configure_lit_site_cfg(
