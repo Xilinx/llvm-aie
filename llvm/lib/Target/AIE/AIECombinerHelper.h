@@ -313,6 +313,10 @@ bool matchUnalignedExtractLoad(MachineInstr &ExtractMI,
                                MachineRegisterInfo &MRI,
                                GISelChangeObserver &Observer,
                                BuildFnTy &MatchInfo);
+
+bool matchUnalignedVectorLoad(MachineInstr &LoadMI, MachineRegisterInfo &MRI,
+                              GISelChangeObserver &Observer,
+                              BuildFnTy &MatchInfo);
 } // namespace llvm
 
 #endif

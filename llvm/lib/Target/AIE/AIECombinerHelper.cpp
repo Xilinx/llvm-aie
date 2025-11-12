@@ -4665,3 +4665,118 @@ bool llvm::matchUnalignedExtractLoad(MachineInstr &ExtractMI,
 
   return true;
 }
+
+/// Match unaligned vector loads and transform them to use a better-aligned
+/// element type based on the actual alignment.
+/// Pattern:
+///   %vec:_(<32 x s16>) = G_LOAD %ptr(p0) :: (align 4)
+/// Converts to:
+///   %vec_new:_(<16 x s32>) = G_LOAD %ptr(p0) :: (align 4)
+///   %vec:_(<32 x s16>) = G_BITCAST %vec_new(<16 x s32>)
+bool llvm::matchUnalignedVectorLoad(MachineInstr &LoadMI,
+                                    MachineRegisterInfo &MRI,
+                                    GISelChangeObserver &Observer,
+                                    BuildFnTy &MatchInfo) {
+  assert(LoadMI.getOpcode() == TargetOpcode::G_LOAD && "Expected G_LOAD");
+
+  // Get load information
+  const Register DstReg = LoadMI.getOperand(0).getReg();
+  const LLT DstTy = MRI.getType(DstReg);
+
+  // Only process vector loads
+  if (!DstTy.isVector())
+    return false;
+
+  // Check memory operand for alignment
+  if (LoadMI.memoperands_empty())
+    return false;
+
+  const MachineMemOperand *MMO = LoadMI.memoperands().front();
+  const unsigned Alignment = MMO->getAlign().value();
+
+  // Skip if the vector is already well-aligned (alignment >= vector size)
+  const unsigned VecSizeInBytes = DstTy.getSizeInBytes();
+  if (Alignment >= VecSizeInBytes)
+    return false;
+
+  // Get element type information
+  const LLT ElemTy = DstTy.getElementType();
+  const unsigned ElemSizeInBits = ElemTy.getSizeInBits();
+
+  // Skip if the load is only used for extracts - let matchUnalignedExtractLoad
+  // handle it. This prevents the two combiners from competing for the same
+  // opportunities
+  const MachineFunction &MF = *LoadMI.getMF();
+  const AIEBaseInstrInfo &TII =
+      *static_cast<const AIEBaseInstrInfo *>(MF.getSubtarget().getInstrInfo());
+  const unsigned ZExtExtractOpcode =
+      TII.getGenericExtractVectorEltOpcode(false);
+  const unsigned SExtExtractOpcode = TII.getGenericExtractVectorEltOpcode(true);
+  const unsigned PadVectorOpcode = TII.getGenericPadVectorOpcode();
+
+  if (areLoadUsesValidForExtractCombine(
+          DstReg, ZExtExtractOpcode, SExtExtractOpcode, PadVectorOpcode, MRI))
+    return false;
+
+  // Skip if the load has a single user that is a G_STORE with the same
+  // alignment. This case can be perfectly scalarized during legalization
+  if (MRI.hasOneNonDBGUse(DstReg)) {
+    const MachineInstr *UserMI = &*MRI.use_instr_nodbg_begin(DstReg);
+    if (UserMI->getOpcode() == TargetOpcode::G_STORE) {
+      const GStore *StoreMI = cast<GStore>(UserMI);
+      if (!StoreMI->memoperands_empty()) {
+        const MachineMemOperand *StoreMMO = StoreMI->memoperands().front();
+        // If store has the same alignment as the load, skip
+        if (StoreMMO->getAlign().value() == Alignment)
+          return false;
+      }
+    }
+  }
+
+  // We already have the best element size option.
+  if (Alignment == ElemSizeInBits / 8)
+    return false;
+
+  // Only handle s8 and s16 element types that can be promoted to s32
+  if (ElemSizeInBits != 8 && ElemSizeInBits != 16)
+    return false;
+
+  // Determine the optimal element type based on alignment
+  unsigned NewElemSizeInBits = 0;
+  if (Alignment >= 4) {
+    NewElemSizeInBits = 32;
+  } else if (Alignment >= 2) {
+    NewElemSizeInBits = 16;
+  } else {
+    // Alignment doesn't allow for a better element type
+    return false;
+  }
+
+  // Check if the vector size is compatible with the new element size
+  const unsigned VecSizeInBits = DstTy.getSizeInBits();
+  if (VecSizeInBits % NewElemSizeInBits != 0)
+    return false;
+
+  MatchInfo = [=, PtrReg = LoadMI.getOperand(1).getReg(), &MRI,
+               &Observer](MachineIRBuilder &B) {
+    MachineFunction &MF = B.getMF();
+
+    // Calculate new number of elements
+    const unsigned NewNumElems = VecSizeInBits / NewElemSizeInBits;
+
+    // Create the new vector type with better-aligned elements
+    const LLT NewVecTy = LLT::fixed_vector(NewNumElems, NewElemSizeInBits);
+    const Register NewLoadReg = MRI.createGenericVirtualRegister(NewVecTy);
+
+    // Create a new MMO with the same properties but updated type
+    MachineMemOperand *NewMMO = MF.getMachineMemOperand(
+        MMO->getPointerInfo(), MMO->getFlags(), NewVecTy, MMO->getAlign());
+
+    Observer.createdInstr(*B.buildLoad(NewLoadReg, PtrReg, *NewMMO));
+
+    // Bitcast back to the original type
+    Observer.createdInstr(*B.buildBitcast(DstReg, NewLoadReg));
+  };
+
+  return true;
+}

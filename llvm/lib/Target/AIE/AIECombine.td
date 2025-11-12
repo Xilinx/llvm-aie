@@ -258,6 +258,12 @@ def combine_unaligned_extract_load : GICombineRule<
          [{ return matchUnalignedExtractLoad(*${root}, MRI, Observer, ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
 
+def combine_unaligned_vector_load : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_LOAD): $root,
+         [{ return matchUnalignedVectorLoad(*${root}, MRI, Observer, ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
+
 // AIE-specifc combines (currently shared by AIE2 and AIE2P).
 def aie_additional_combines : GICombineGroup<[
   combine_unpad_vector,
@@ -281,7 +287,8 @@ def aie_additional_combines : GICombineGroup<[
   combine_peel_memset,
   combine_pack_stores_into_memset,
   combine_trunc_load,
-  combine_unaligned_extract_load
+  combine_unaligned_extract_load,
+  combine_unaligned_vector_load
 ]>;
 
 // AIE2P-specific combines.
