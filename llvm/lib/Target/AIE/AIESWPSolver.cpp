@@ -63,11 +63,12 @@ Slot &SolverData::addSlot(int N) {
   return It->second;
 }
 
-int SolverData::addInstruction(int SlotNumber, uint64_t MemoryBanks,
-                               bool HasSideEffect) {
+int SolverData::addInstruction(int SlotNumber, uint64_t SlotConflicts,
+                               uint64_t MemoryBanks, bool HasSideEffect) {
   Slot *const Slot = &addSlot(SlotNumber);
   const int Id = Instructions.size();
-  Instructions.emplace_back(Id, Slot, MemoryBanks, HasSideEffect);
+  Instructions.emplace_back(Id, Slot, SlotConflicts, MemoryBanks,
+                            HasSideEffect);
   Slot->Instructions.insert(Id);
   return Id;
 }
