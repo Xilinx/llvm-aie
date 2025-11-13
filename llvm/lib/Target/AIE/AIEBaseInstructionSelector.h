@@ -217,6 +217,13 @@ protected:
   bool selectGetControlRegister(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectSetStatusRegister(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectGetStatusRegister(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectVUPS(MachineInstr &I, MachineRegisterInfo &MRI,
+                  std::optional<unsigned> crUPSModeVal = std::nullopt);
+  virtual bool selectG_AIE_LOAD_UPS(MachineInstr &StoreI,
+                                    MachineRegisterInfo &MRI,
+                                    std::optional<unsigned> crUPSModeVal) {
+    return false;
+  }
 
 protected:
   MachineIRBuilder MIB;

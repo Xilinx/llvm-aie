@@ -70,12 +70,12 @@ public:
   getOrDefineAddressingRegister(MachineInstr &MemI,
                                 MachineRegisterInfo &MRI) final;
   bool selectG_AIE_LOAD_UNPACK(MachineInstr &StoreI, MachineRegisterInfo &MRI);
-  bool selectG_AIE_LOAD_UPS(MachineInstr &StoreI, MachineRegisterInfo &MRI);
+  bool selectG_AIE_LOAD_UPS(MachineInstr &StoreI, MachineRegisterInfo &MRI,
+                            std::optional<unsigned> crUPSModeVal) override;
   bool select512BitG_AIE_LOAD_UPS(MachineInstr &UPSI, LoadStoreOpcodes &LSO,
                                   AddressingModeInfo &AMI, Register DstReg,
                                   Register ShftReg, Register SignReg,
                                   bool ConstantSign, MachineRegisterInfo &MRI);
-  bool selectVUPS(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectWriteTM(MachineInstr &I, MachineRegisterInfo &MRI);
   LoadStoreOpcodes getLoadStoreOpcode(const MachineInstr &I,
                                       const MachineRegisterInfo &MRI,
@@ -1835,8 +1835,9 @@ bool AIE2InstructionSelector::select512BitG_AIE_LOAD_UPS(
   }
 }
 
-bool AIE2InstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
-                                                   MachineRegisterInfo &MRI) {
+bool AIE2InstructionSelector::selectG_AIE_LOAD_UPS(
+    MachineInstr &UPSI, MachineRegisterInfo &MRI,
+    std::optional<unsigned> crUPSModeVal) {
 
   // First use is the G_INTRINSIC_W_SIDE_EFFECTS ID
   Register LoadResult = UPSI.getOperand(2).getReg();
@@ -1903,33 +1904,6 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
   UPSI.eraseFromParent();
   AMI->MemI.eraseFromParent();
   return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
-}
-
-bool AIE2InstructionSelector::selectVUPS(MachineInstr &I,
-                                         MachineRegisterInfo &MRI) {
-  // First try to match UPS combine
-  if (selectG_AIE_LOAD_UPS(I, MRI))
-    return true;
-
-  Register DstReg = I.getOperand(0).getReg();
-  // In this case of G_INTRINSIC_W_SIDE_EFFECTS operand 1 is target intrinsic
-  Register SrcReg = I.getOperand(2).getReg();
-  Register ShftReg = I.getOperand(3).getReg();
-  Register SignReg = I.getOperand(4).getReg();
-
-  if (auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI)) {
-    // Handle constant sign through instruction patterns
-    return selectImpl(I, *CoverageInfo);
-  }
-
-  unsigned OpCode = TII.getOpCode(I);
-  MachineInstrBuilder MI =
-      MIB.buildInstr(OpCode, {DstReg}, {}).addReg(SrcReg).addReg(ShftReg);
-
-  setUnsetCtrlRegister(MIB, *MI, MRI, AIE2::crUPSSign, SignReg);
-
-  I.eraseFromParent();
-  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
 }
 
 bool AIE2InstructionSelector::selectVSRS(MachineInstr &I,

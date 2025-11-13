@@ -47,10 +47,8 @@ public:
   bool selectG_GLOBAL_VALUE(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVSRS(MachineInstr &I, MachineRegisterInfo &MRI,
                   unsigned crSRSModeVal);
-  bool selectVUPS(MachineInstr &I, MachineRegisterInfo &MRI,
-                  unsigned crUPSModeVal);
   bool selectG_AIE_LOAD_UPS(MachineInstr &StoreI, MachineRegisterInfo &MRI,
-                            unsigned crUPSModeVal);
+                            std::optional<unsigned> crUPSModeVal) override;
   bool selectVCONVbfp16(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_AIE_BROADCAST_VECTOR(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_CONCAT_VECTORS(MachineInstr &I, MachineRegisterInfo &MRI);
@@ -499,9 +497,9 @@ bool AIE2PInstructionSelector::selectVSRS(MachineInstr &I,
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
 }
 
-bool AIE2PInstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
-                                                    MachineRegisterInfo &MRI,
-                                                    unsigned crUPSModeVal) {
+bool AIE2PInstructionSelector::selectG_AIE_LOAD_UPS(
+    MachineInstr &UPSI, MachineRegisterInfo &MRI,
+    std::optional<unsigned> crUPSModeVal) {
 
   // Operand 0 is the def, operand 1 is the intrinsic ID, operand 2 is the
   // source register (loaded value).
@@ -556,11 +554,13 @@ bool AIE2PInstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
            (DstRegSize != 1024 || DstRegSize != 2048))) &&
          "Unexpected VLDA.UPS size");
 
+  if (!crUPSModeVal.has_value())
+    return false;
   // Selects the mode of the accumulator for UPS instructions
   // 0 – 32-bit accumulator lane
   // 1 – 64-bit accumulator lane
   MIB.setInstr(*InsertionPoint);
-  setCtrlRegister(MIB, AIE2P::crUPSMode, crUPSModeVal);
+  setCtrlRegister(MIB, AIE2P::crUPSMode, *crUPSModeVal);
 
   auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
 
@@ -582,40 +582,6 @@ bool AIE2PInstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
   UPSI.eraseFromParent();
   makeDeadMI(*LoadOp, MRI);
   return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
-}
-
-bool AIE2PInstructionSelector::selectVUPS(MachineInstr &I,
-                                          MachineRegisterInfo &MRI,
-                                          unsigned crUPSModeVal) {
-  // First try to match UPS combine
-  if (selectG_AIE_LOAD_UPS(I, MRI, crUPSModeVal))
-    return true;
-
-  // TODO Match UPS combine
-  Register DstReg = I.getOperand(0).getReg();
-  // In this case of G_INTRINSIC_W_SIDE_EFFECTS operand 1 is target intrinsic
-  Register SrcReg = I.getOperand(2).getReg();
-  Register ShftReg = I.getOperand(3).getReg();
-  Register SignReg = I.getOperand(4).getReg();
-  // Selects the mode of the accumulator for UPS instructions
-  // 0 – 32-bit accumulator lane
-  // 1 – 64-bit accumulator lane
-  MIB.setInstr(I);
-  setCtrlRegister(MIB, AIE2P::crUPSMode, crUPSModeVal);
-
-  if (auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI)) {
-    // Handle constant sign through instruction patterns
-    return selectImpl(I, *CoverageInfo);
-  }
-
-  unsigned OpCode = TII.getOpCode(I);
-  MachineInstrBuilder MI =
-      MIB.buildInstr(OpCode, {DstReg}, {}).addReg(SrcReg).addReg(ShftReg);
-
-  setUnsetCtrlRegister(MIB, *MI, MRI, AIE2P::upsSign0, SignReg);
-
-  I.eraseFromParent();
-  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
 }
 
 bool AIE2PInstructionSelector::selectVCONVbfp16(MachineInstr &I,

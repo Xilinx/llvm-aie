@@ -1280,3 +1280,39 @@ bool AIEBaseInstructionSelector::selectGetStatusRegister(
   I.eraseFromParent();
   return true;
 }
+
+bool AIEBaseInstructionSelector::selectVUPS(
+    MachineInstr &I, MachineRegisterInfo &MRI,
+    std::optional<unsigned> crUPSModeVal) {
+  // First try to match UPS combine
+  if (selectG_AIE_LOAD_UPS(I, MRI, crUPSModeVal))
+    return true;
+
+  const Register DstReg = I.getOperand(0).getReg();
+  // In this case of G_INTRINSIC_W_SIDE_EFFECTS operand 1 is target intrinsic
+  const Register SrcReg = I.getOperand(2).getReg();
+  const Register ShftReg = I.getOperand(3).getReg();
+  const Register SignReg = I.getOperand(4).getReg();
+
+  if (crUPSModeVal.has_value()) {
+    // Selects the mode of the accumulator for UPS instructions
+    // 0 – 32-bit accumulator lane
+    // 1 – 64-bit accumulator lane
+    MIB.setInstr(I);
+    setCtrlRegister(MIB, TII.getUPSModeControlRegister(), *crUPSModeVal);
+  }
+
+  if (const auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI)) {
+    // Handle constant sign through instruction patterns
+    return selectImpl(I, *CoverageInfo);
+  }
+
+  const unsigned OpCode = TII.getOpCode(I);
+  MachineInstrBuilder MI =
+      MIB.buildInstr(OpCode, {DstReg}, {}).addReg(SrcReg).addReg(ShftReg);
+
+  setUnsetCtrlRegister(MIB, *MI, MRI, TII.getUPSSignControlRegister(), SignReg);
+
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+}
