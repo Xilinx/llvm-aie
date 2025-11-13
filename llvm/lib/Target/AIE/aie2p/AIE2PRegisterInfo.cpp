@@ -650,3 +650,27 @@ bool AIE2PRegisterInfo::shouldCoalesce(
   return TargetRegisterInfo::shouldCoalesce(MI, SrcRC, SubReg, DstRC, DstSubReg,
                                             NewRC, LIS);
 }
+
+unsigned
+AIE2PRegisterInfo::matchControlRegisterBitwidth(Register CtrlReg,
+                                                unsigned SrcConstVal) const {
+  // Modulo by width of control regs.  To constrain the max possible value in
+  // the register according to register width.
+  switch (CtrlReg) {
+  case AIE2P::crSat:
+    return SrcConstVal % (1 << 2);
+  case AIE2P::crRnd:
+    return SrcConstVal % (1 << 4);
+  case AIE2P::crF2FMask:
+  case AIE2P::crF2IMask:
+  case AIE2P::crFPMask:
+  case AIE2P::crF2BMask:
+    return SrcConstVal % (1 << 5);
+  case AIE2P::crFPNlfMask:
+  case AIE2P::crFPCnvFx2FlMask:
+  case AIE2P::crFPCnvFl2FxMask:
+    return SrcConstVal % (1 << 8);
+  default:
+    llvm_unreachable("Unknown control register.");
+  }
+}

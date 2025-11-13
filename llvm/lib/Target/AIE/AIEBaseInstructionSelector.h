@@ -211,6 +211,8 @@ protected:
   bool selectG_AIE_LOAD_CONV(MachineInstr &CONVI, MachineRegisterInfo &MRI);
   bool selectVCONV(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectStartLoop(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectSetControlRegister(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectGetControlRegister(MachineInstr &I, MachineRegisterInfo &MRI);
 
 protected:
   MachineIRBuilder MIB;
@@ -255,6 +257,19 @@ inline MachineMemOperand *getTileMemOperand(MachineInstr &I,
   const auto *MFI = MF->getInfo<AIEMachineFunctionInfo>();
   MachinePointerInfo PtrInfo = MachinePointerInfo(MFI->getTileMemory());
   return MF->getMachineMemOperand(PtrInfo, Mode, 4, Align(4));
+}
+
+/// Get a constant VReg value or call llvm_unreachable with the provided message
+/// \param VReg The virtual register to lookup
+/// \param MRI The machine register info
+/// \param ErrorMsg The error message to display if constant is not found
+/// \return The ValueAndVReg containing the constant value
+inline ValueAndVReg getIConstantVRegValWithLookThroughOrFail(
+    Register VReg, const MachineRegisterInfo &MRI, const char *ErrorMsg) {
+  auto Result = getIConstantVRegValWithLookThrough(VReg, MRI);
+  if (!Result)
+    llvm_unreachable(ErrorMsg);
+  return *Result;
 }
 
 } // namespace llvm

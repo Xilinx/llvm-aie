@@ -61,9 +61,7 @@ public:
   bool selectG_GLOBAL_VALUE(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_LOAD(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_STORE(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectGetControlRegister(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectReadTM(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectSetControlRegister(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVEXTRACT(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVSRS(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVUNPACK(MachineInstr &I, MachineRegisterInfo &MRI);
@@ -2090,84 +2088,6 @@ Register AIE2InstructionSelector::createDSRegSequence(
                            MI->getOperand(13));
 
   return MI.getReg(0);
-}
-
-// Build Instruction to get control register
-bool AIE2InstructionSelector::selectGetControlRegister(
-    MachineInstr &I, MachineRegisterInfo &MRI) {
-
-  Register DstReg = I.getOperand(0).getReg();
-  // In this case of G_INTRINSIC operand 1 is target intrinsic
-  Register IdxReg = I.getOperand(2).getReg();
-  Register CtrlReg;
-
-  // Check if the argument is constant for register map index.
-  if (auto Idx = getIConstantVRegValWithLookThrough(IdxReg, MRI))
-    CtrlReg = TRI.getControlRegister(Idx->Value.getZExtValue());
-  else
-    llvm_unreachable("Expected const value for control register map index.");
-
-  if (!RBI.constrainGenericRegister(DstReg, AIE2::eRRegClass, MRI))
-    return false;
-
-  auto CopyInstr =
-      MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {}).addReg(CtrlReg);
-  if (!selectCopy(*CopyInstr, MRI)) {
-    return false;
-  }
-  I.eraseFromParent();
-  return true;
-}
-
-// Build Instruction to set control register
-bool AIE2InstructionSelector::selectSetControlRegister(
-    MachineInstr &I, MachineRegisterInfo &MRI) {
-
-  Register IdxReg = I.getOperand(1).getReg();
-  Register SrcReg = I.getOperand(2).getReg();
-  Register CtrlReg;
-
-  // Check if the argument is constant for register map index.
-  if (auto Idx = getIConstantVRegValWithLookThrough(IdxReg, MRI))
-    CtrlReg = TRI.getControlRegister(Idx->Value.getZExtValue());
-  else
-    llvm_unreachable("Expected const value for control register map index.");
-
-  // Handle const input val for control regs.
-  if (auto Src = getIConstantVRegValWithLookThrough(SrcReg, MRI)) {
-    unsigned SrcConstVal = Src->Value.getZExtValue();
-    /* Modulo by width of control regs.
-       To constrain the max possible value in the register
-       according to register width.
-    */
-    switch (CtrlReg) {
-    case AIE2::crSat:
-      SrcConstVal = SrcConstVal % (1 << 2);
-      break;
-    case AIE2::crRnd:
-      SrcConstVal = SrcConstVal % (1 << 4);
-      break;
-    case AIE2::crF2FMask:
-    case AIE2::crF2IMask:
-    case AIE2::crFPMask:
-      SrcConstVal = SrcConstVal % (1 << 5);
-      break;
-    default:
-      break;
-    }
-
-    MachineInstrBuilder MI = setCtrlRegister(MIB, CtrlReg, SrcConstVal);
-    I.eraseFromParent();
-    return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
-  }
-
-  auto CopyInstr =
-      MIB.buildInstr(TargetOpcode::COPY, {CtrlReg}, {}).addReg(SrcReg);
-  if (!selectCopy(*CopyInstr, MRI))
-    return false;
-
-  I.eraseFromParent();
-  return true;
 }
 
 bool AIE2InstructionSelector::selectWriteTM(MachineInstr &I,

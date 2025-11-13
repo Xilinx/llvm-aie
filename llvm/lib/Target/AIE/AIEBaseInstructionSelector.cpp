@@ -1077,6 +1077,38 @@ bool AIEBaseInstructionSelector::selectExtractI128(MachineInstr &I,
   return true;
 }
 
+// Build Instruction to set control register
+bool AIEBaseInstructionSelector::selectSetControlRegister(
+    MachineInstr &I, MachineRegisterInfo &MRI) {
+
+  const Register IdxReg = I.getOperand(1).getReg();
+  const Register SrcReg = I.getOperand(2).getReg();
+
+  // Check if the argument is constant for register map index.
+  const auto Idx = getIConstantVRegValWithLookThroughOrFail(
+      IdxReg, MRI, "Expected const value for control register map index.");
+
+  const Register CtrlReg = TRI.getControlRegister(Idx.Value.getZExtValue());
+
+  // Handle const input val for control regs.
+  if (const auto Src = getIConstantVRegValWithLookThrough(SrcReg, MRI)) {
+    const unsigned SrcConstVal =
+        TRI.matchControlRegisterBitwidth(CtrlReg, Src->Value.getZExtValue());
+
+    MachineInstrBuilder MI = setCtrlRegister(MIB, CtrlReg, SrcConstVal);
+    I.eraseFromParent();
+    return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+  }
+
+  auto CopyInstr =
+      MIB.buildInstr(TargetOpcode::COPY, {CtrlReg}, {}).addReg(SrcReg);
+  if (!selectCopy(*CopyInstr, MRI))
+    return false;
+
+  I.eraseFromParent();
+  return true;
+}
+
 bool AIEBaseInstructionSelector::selectG_AIE_UNPAD_VECTOR(
     MachineInstr &I, Register DstReg, Register SrcReg, MachineRegisterInfo &MRI,
     MachineFunction &MF) {
@@ -1128,6 +1160,33 @@ bool AIEBaseInstructionSelector::selectSetI128(MachineInstr &I,
   } else {
     llvm_unreachable("Expected 256 or 512 bit input vector");
   }
+
+  I.eraseFromParent();
+  return true;
+}
+
+// Build Instruction to get control register
+bool AIEBaseInstructionSelector::selectGetControlRegister(
+    MachineInstr &I, MachineRegisterInfo &MRI) {
+
+  const Register DstReg = I.getOperand(0).getReg();
+  // In this case of G_INTRINSIC operand 1 is target intrinsic
+  const Register IdxReg = I.getOperand(2).getReg();
+
+  // Check if the argument is constant for register map index.
+  const auto Idx = getIConstantVRegValWithLookThroughOrFail(
+      IdxReg, MRI, "Expected const value for control register map index.");
+
+  const Register CtrlReg = TRI.getControlRegister(Idx.Value.getZExtValue());
+  const MachineFunction &MF = *I.getParent()->getParent();
+
+  if (!RBI.constrainGenericRegister(DstReg, *TRI.getGPRRegClass(MF), MRI))
+    return false;
+
+  auto CopyInstr =
+      MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {}).addReg(CtrlReg);
+  if (!selectCopy(*CopyInstr, MRI))
+    return false;
 
   I.eraseFromParent();
   return true;
