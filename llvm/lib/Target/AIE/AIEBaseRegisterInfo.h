@@ -110,6 +110,14 @@ struct AIEBaseRegisterInfo : public TargetRegisterInfo {
                       unsigned SubReg, const TargetRegisterClass *DstRC,
                       unsigned DstSubReg, const TargetRegisterClass *NewRC,
                       LiveIntervals &LIS) const override;
+
+  virtual unsigned matchControlRegisterBitwidth(Register CtrlReg,
+                                                unsigned SrcConstVal) const {
+    llvm_unreachable("Target didn't implement matchControlRegisterBitwidth!");
+  }
+  virtual Register getControlRegister(unsigned Idx) const {
+    llvm_unreachable("Target didn't implement getControlRegister!");
+  }
 };
 
 template <int N, unsigned step> bool isEncodableAsNegativeInt(int Value) {

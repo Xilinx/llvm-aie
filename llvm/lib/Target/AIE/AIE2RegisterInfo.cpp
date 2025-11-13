@@ -539,3 +539,22 @@ bool AIE2RegisterInfo::isVecOrAccRegClass(const TargetRegisterClass &RC) const {
 
   return false;
 }
+
+unsigned
+AIE2RegisterInfo::matchControlRegisterBitwidth(Register CtrlReg,
+                                               unsigned SrcConstVal) const {
+  // Modulo by width of control regs.  To constrain the max possible value in
+  // the register according to register width.
+  switch (CtrlReg) {
+  case AIE2::crSat:
+    return SrcConstVal % (1 << 2);
+  case AIE2::crRnd:
+    return SrcConstVal % (1 << 4);
+  case AIE2::crF2FMask:
+  case AIE2::crF2IMask:
+  case AIE2::crFPMask:
+    return SrcConstVal % (1 << 5);
+  default:
+    llvm_unreachable("Unknown control register.");
+  }
+}
