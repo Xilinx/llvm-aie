@@ -479,6 +479,9 @@ unsigned AIE2InstrInfo::getOpCode(MachineInstr &I) const {
 Register AIE2InstrInfo::getVaddSignControlRegister() const {
   return AIE2::crVaddSign;
 }
+Register AIE2InstrInfo::getUPSSignControlRegister() const {
+  return AIE2::crUPSSign;
+}
 
 // Implement CopyToReg/CopyFromReg
 void AIE2InstrInfo::copyPhysReg(MachineBasicBlock &MBB,

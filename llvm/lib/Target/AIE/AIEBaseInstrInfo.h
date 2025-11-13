@@ -397,6 +397,12 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual Register getVaddSignControlRegister() const {
     llvm_unreachable("Target didn't implement vaddSign control register");
   }
+  virtual Register getUPSModeControlRegister() const {
+    llvm_unreachable("Target didn't implement UPSMode control register");
+  }
+  virtual Register getUPSSignControlRegister() const {
+    llvm_unreachable("Target didn't implement UPSSign control register");
+  }
   // Opcodes related to hardware loop handling
   virtual bool isHardwareLoopDec(unsigned Opcode) const;
   virtual bool isHardwareLoopJNZ(unsigned Opcode) const;
