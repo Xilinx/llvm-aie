@@ -708,7 +708,7 @@ void AIE2InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     // Can't spill these directly.  Need to bounce through a GPR.
     MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
     Register ScratchReg = MRI.createVirtualRegister(&AIE2::eRRegClass);
-    BuildMI(MBB, I, DL, get(AIE2::MOV_mv_scl), ScratchReg)
+    BuildMI(MBB, I, DL, get(TargetOpcode::COPY), ScratchReg)
         .addReg(SrcReg, getKillRegState(IsKill));
     Opcode = AIE2::ST_dms_spill;
     SrcReg = ScratchReg;
@@ -786,7 +786,7 @@ void AIE2InstrInfo::loadRegFromStackSlot(
     BuildMI(MBB, I, DL, get(AIE2::LDA_dms_spill), Reg)
         .addFrameIndex(FI)
         .addMemOperand(CreateMMO(FI));
-    BuildMI(MBB, I, DL, get(AIE2::MOV_mv_scl), DstReg)
+    BuildMI(MBB, I, DL, get(TargetOpcode::COPY), DstReg)
         .addReg(Reg, getKillRegState(true));
     return;
   } else {
