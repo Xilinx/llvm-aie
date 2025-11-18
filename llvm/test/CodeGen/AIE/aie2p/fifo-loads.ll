@@ -22,8 +22,8 @@ define dso_local void @_Z17test_fifo_ld_fillRPDv64_DB8_R12fifo_state_t(ptr nocap
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs p2, p0
-; CHECK-NEXT:    vlda lfh0, [p1, #64]
+; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs p2, p0
+; CHECK-NEXT:    vlda lfl0, [p1, #0]
 ; CHECK-NEXT:    vldb.fill.512 [p0, lf0, r24]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -31,8 +31,8 @@ define dso_local void @_Z17test_fifo_ld_fillRPDv64_DB8_R12fifo_state_t(ptr nocap
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    st r24, [p1, dj0] // Delay Slot 5
-; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
-; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
+; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 4
+; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 3
 ; CHECK-NEXT:    st p0, [p2, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -59,8 +59,8 @@ define dso_local noundef <64 x i8> @_Z16test_fifo_ld_popRPDv64_DB8_R12fifo_state
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs p2, p0
-; CHECK-NEXT:    vlda lfh0, [p1, #64]
+; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs p2, p0
+; CHECK-NEXT:    vlda lfl0, [p1, #0]
 ; CHECK-NEXT:    vldb.pop.512 x0, [p0, lf0, r24]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -68,8 +68,8 @@ define dso_local noundef <64 x i8> @_Z16test_fifo_ld_popRPDv64_DB8_R12fifo_state
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    st r24, [p1, dj0] // Delay Slot 5
-; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
-; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
+; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 4
+; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 3
 ; CHECK-NEXT:    st p0, [p2, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -97,8 +97,8 @@ define dso_local noundef <64 x i8> @_Z24test_fifo_ld_pop_1d_byteRPDv64_DB8_R12fi
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs p2, p0
-; CHECK-NEXT:    vlda lfh0, [p1, #64]; mov m0, r0
+; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs p2, p0
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; mov m0, r0
 ; CHECK-NEXT:    vldb.pop.512 x0, [p0, lf0, r24, m0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -106,8 +106,8 @@ define dso_local noundef <64 x i8> @_Z24test_fifo_ld_pop_1d_byteRPDv64_DB8_R12fi
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    st r24, [p1, dj0] // Delay Slot 5
-; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
-; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
+; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 4
+; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 3
 ; CHECK-NEXT:    st p0, [p2, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -137,8 +137,8 @@ define dso_local noundef <64 x i8> @_Z24test_fifo_ld_pop_2d_byteRPDv64_DB8_R12fi
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    movs p3, p0
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; mov m0, r0
-; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs dn0, r1; mov dj0, r2
+; CHECK-NEXT:    vlda lfh0, [p1, #64]; mov m0, r0
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs dn0, r1; mov dj0, r2
 ; CHECK-NEXT:    vldb.pop.512.2d x0, [p0, lf0, r24, d0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -146,8 +146,8 @@ define dso_local noundef <64 x i8> @_Z24test_fifo_ld_pop_2d_byteRPDv64_DB8_R12fi
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st dc0, [p2, #0]; ret lr
 ; CHECK-NEXT:    st r24, [p1, dj1] // Delay Slot 5
-; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
-; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
+; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 4
+; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 3
 ; CHECK-NEXT:    st p0, [p3, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -185,8 +185,8 @@ define dso_local noundef <64 x i8> @_Z24test_fifo_ld_pop_3d_byteRPDv64_DB8_R12fi
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    movs p4, p0
 ; CHECK-NEXT:    mov m0, r0
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs dn0, r1; mov dj0, r2
-; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs dn4, r3; mov dj4, r4
+; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs dn0, r1; mov dj0, r2
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs dn4, r3; mov dj4, r4
 ; CHECK-NEXT:    vldb.pop.512.3d x0, [p0, lf0, r24, d0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -194,8 +194,8 @@ define dso_local noundef <64 x i8> @_Z24test_fifo_ld_pop_3d_byteRPDv64_DB8_R12fi
 ; CHECK-NEXT:    st dc0, [p2, #0]
 ; CHECK-NEXT:    st dc4, [p3, #0]; ret lr
 ; CHECK-NEXT:    st r24, [p1, dj1] // Delay Slot 5
-; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
-; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
+; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 4
+; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 3
 ; CHECK-NEXT:    st p0, [p4, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -239,8 +239,8 @@ define dso_local %struct.v64bfp16ebs8 @_Z16test_fifo_ld_popRP22v64bfp16ebs8_unal
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs p2, p0
-; CHECK-NEXT:    vlda lfh0, [p1, #64]
+; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs p2, p0
+; CHECK-NEXT:    vlda lfl0, [p1, #0]
 ; CHECK-NEXT:    vldb.pop.576 ex0, [p0, lf0, r24]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -248,8 +248,8 @@ define dso_local %struct.v64bfp16ebs8 @_Z16test_fifo_ld_popRP22v64bfp16ebs8_unal
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    st r24, [p1, dj0] // Delay Slot 5
-; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
-; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
+; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 4
+; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 3
 ; CHECK-NEXT:    st p0, [p2, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -280,8 +280,8 @@ define dso_local %struct.v64bfp16ebs8 @_Z24test_fifo_ld_pop_1d_byteRP22v64bfp16e
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs p2, p0
-; CHECK-NEXT:    vlda lfh0, [p1, #64]; mov m0, r0
+; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs p2, p0
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; mov m0, r0
 ; CHECK-NEXT:    vldb.pop.576 ex0, [p0, lf0, r24, m0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -289,8 +289,8 @@ define dso_local %struct.v64bfp16ebs8 @_Z24test_fifo_ld_pop_1d_byteRP22v64bfp16e
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    st r24, [p1, dj0] // Delay Slot 5
-; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
-; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
+; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 4
+; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 3
 ; CHECK-NEXT:    st p0, [p2, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -323,8 +323,8 @@ define dso_local %struct.v64bfp16ebs8 @_Z24test_fifo_ld_pop_2d_byteRP22v64bfp16e
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    movs p3, p0
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; mov m0, r0
-; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs dn0, r1; mov dj0, r2
+; CHECK-NEXT:    vlda lfh0, [p1, #64]; mov m0, r0
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs dn0, r1; mov dj0, r2
 ; CHECK-NEXT:    vldb.pop.576.2d ex0, [p0, lf0, r24, d0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -332,8 +332,8 @@ define dso_local %struct.v64bfp16ebs8 @_Z24test_fifo_ld_pop_2d_byteRP22v64bfp16e
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st dc0, [p2, #0]; ret lr
 ; CHECK-NEXT:    st r24, [p1, dj1] // Delay Slot 5
-; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
-; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
+; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 4
+; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 3
 ; CHECK-NEXT:    st p0, [p3, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -374,8 +374,8 @@ define dso_local %struct.v64bfp16ebs8 @_Z24test_fifo_ld_pop_3d_byteRP22v64bfp16e
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    movs p4, p0
 ; CHECK-NEXT:    mov m0, r0
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs dn0, r1; mov dj0, r2
-; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs dn4, r3; mov dj4, r4
+; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs dn0, r1; mov dj0, r2
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs dn4, r3; mov dj4, r4
 ; CHECK-NEXT:    vldb.pop.576.3d ex0, [p0, lf0, r24, d0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -383,8 +383,8 @@ define dso_local %struct.v64bfp16ebs8 @_Z24test_fifo_ld_pop_3d_byteRP22v64bfp16e
 ; CHECK-NEXT:    st dc0, [p2, #0]
 ; CHECK-NEXT:    st dc4, [p3, #0]; ret lr
 ; CHECK-NEXT:    st r24, [p1, dj1] // Delay Slot 5
-; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
-; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
+; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 4
+; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 3
 ; CHECK-NEXT:    st p0, [p4, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -431,8 +431,8 @@ define dso_local %struct.v64bfp16ebs16 @_Z16test_fifo_ld_popRP23v64bfp16ebs16_un
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs p2, p0
-; CHECK-NEXT:    vlda lfh0, [p1, #64]
+; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs p2, p0
+; CHECK-NEXT:    vlda lfl0, [p1, #0]
 ; CHECK-NEXT:    vldb.pop.544 ex0, [p0, lf0, r24]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -440,8 +440,8 @@ define dso_local %struct.v64bfp16ebs16 @_Z16test_fifo_ld_popRP23v64bfp16ebs16_un
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    st r24, [p1, dj0] // Delay Slot 5
-; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
-; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
+; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 4
+; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 3
 ; CHECK-NEXT:    st p0, [p2, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -472,8 +472,8 @@ define dso_local %struct.v64bfp16ebs16 @_Z24test_fifo_ld_pop_1d_byteRP23v64bfp16
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs p2, p0
-; CHECK-NEXT:    vlda lfh0, [p1, #64]; mov m0, r0
+; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs p2, p0
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; mov m0, r0
 ; CHECK-NEXT:    vldb.pop.544 ex0, [p0, lf0, r24, m0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -481,8 +481,8 @@ define dso_local %struct.v64bfp16ebs16 @_Z24test_fifo_ld_pop_1d_byteRP23v64bfp16
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    st r24, [p1, dj0] // Delay Slot 5
-; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
-; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
+; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 4
+; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 3
 ; CHECK-NEXT:    st p0, [p2, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -515,8 +515,8 @@ define dso_local %struct.v64bfp16ebs16 @_Z24test_fifo_ld_pop_2d_byteRP23v64bfp16
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    movs p3, p0
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; mov m0, r0
-; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs dn0, r1; mov dj0, r2
+; CHECK-NEXT:    vlda lfh0, [p1, #64]; mov m0, r0
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs dn0, r1; mov dj0, r2
 ; CHECK-NEXT:    vldb.pop.544.2d ex0, [p0, lf0, r24, d0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -524,8 +524,8 @@ define dso_local %struct.v64bfp16ebs16 @_Z24test_fifo_ld_pop_2d_byteRP23v64bfp16
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st dc0, [p2, #0]; ret lr
 ; CHECK-NEXT:    st r24, [p1, dj1] // Delay Slot 5
-; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
-; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
+; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 4
+; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 3
 ; CHECK-NEXT:    st p0, [p3, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -566,8 +566,8 @@ define dso_local %struct.v64bfp16ebs16 @_Z24test_fifo_ld_pop_3d_byteRP23v64bfp16
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    movs p4, p0
 ; CHECK-NEXT:    mov m0, r0
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs dn0, r1; mov dj0, r2
-; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs dn4, r3; mov dj4, r4
+; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs dn0, r1; mov dj0, r2
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs dn4, r3; mov dj4, r4
 ; CHECK-NEXT:    vldb.pop.544.3d ex0, [p0, lf0, r24, d0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -575,8 +575,8 @@ define dso_local %struct.v64bfp16ebs16 @_Z24test_fifo_ld_pop_3d_byteRP23v64bfp16
 ; CHECK-NEXT:    st dc0, [p2, #0]
 ; CHECK-NEXT:    st dc4, [p3, #0]; ret lr
 ; CHECK-NEXT:    st r24, [p1, dj1] // Delay Slot 5
-; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
-; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
+; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 4
+; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 3
 ; CHECK-NEXT:    st p0, [p4, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -621,8 +621,8 @@ define dso_local noundef <64 x i8> @_Z17test_fifo_ld_popxRPDv64_hR12fifo_state_t
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda lfl0, [p1, #0]
-; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs p2, p0
+; CHECK-NEXT:    vlda lfh0, [p1, #64]
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs p2, p0
 ; CHECK-NEXT:    vlda lfe, [p1, #192]; movxm r30, #2015
 ; CHECK-NEXT:    vldb.popx.512 x0, [p0, lf0, r24]
 ; CHECK-NEXT:    nop
@@ -632,8 +632,8 @@ define dso_local noundef <64 x i8> @_Z17test_fifo_ld_popxRPDv64_hR12fifo_state_t
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st r24, [p1, dj0]; ret lr
 ; CHECK-NEXT:    vst lfe, [p1, #192] // Delay Slot 5
-; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
-; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
+; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 4
+; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 3
 ; CHECK-NEXT:    st p0, [p2, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -663,9 +663,9 @@ define dso_local void @_Z18test_fifo_ld_fillxRP22v64bfp16ebs8_unalignedR12fifo_s
 ; CHECK-NEXT:    lda r24, [p1, dj0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda lfl0, [p1, #0]
+; CHECK-NEXT:    vlda lfh0, [p1, #64]
 ; CHECK-NEXT:    mova r2, #6
-; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs p2, p0; lshl r0, r0, r2
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs p2, p0; lshl r0, r0, r2
 ; CHECK-NEXT:    vlda lfe, [p1, #192]; or r30, r0, r1
 ; CHECK-NEXT:    vldb.fillx.512 [p0, lf0, r24]
 ; CHECK-NEXT:    nop
@@ -675,8 +675,8 @@ define dso_local void @_Z18test_fifo_ld_fillxRP22v64bfp16ebs8_unalignedR12fifo_s
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st r24, [p1, dj0]; ret lr
 ; CHECK-NEXT:    vst lfe, [p1, #192] // Delay Slot 5
-; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
-; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
+; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 4
+; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 3
 ; CHECK-NEXT:    st p0, [p2, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -708,8 +708,8 @@ define dso_local void @_Z18test_fifo_ld_resetRrP23v128bfp16ebs8_unalignedR12fifo
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; mov dj0, #128
-; CHECK-NEXT:    vlda lfh0, [p1, #64]; movx r24, #0; mov p2, p0
+; CHECK-NEXT:    vlda lfh0, [p1, #64]; mov dj0, #128
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; movx r24, #0; mov p2, p0
 ; CHECK-NEXT:    st r24, [p1, dj0]
 ; CHECK-NEXT:    vldb.fill.512 [p0, lf0, r24]
 ; CHECK-NEXT:    nop
@@ -718,8 +718,8 @@ define dso_local void @_Z18test_fifo_ld_resetRrP23v128bfp16ebs8_unalignedR12fifo
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    st r24, [p1, dj0] // Delay Slot 5
-; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
-; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
+; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 4
+; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 3
 ; CHECK-NEXT:    st p0, [p2, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -746,8 +746,8 @@ define dso_local void @_Z17test_fifo_ld_fillRrP23v128bfp16ebs8_unalignedR12fifo_
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs p2, p0
-; CHECK-NEXT:    vlda lfh0, [p1, #64]
+; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs p2, p0
+; CHECK-NEXT:    vlda lfl0, [p1, #0]
 ; CHECK-NEXT:    vldb.fill.512 [p0, lf0, r24]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -755,8 +755,8 @@ define dso_local void @_Z17test_fifo_ld_fillRrP23v128bfp16ebs8_unalignedR12fifo_
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    st r24, [p1, dj0] // Delay Slot 5
-; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
-; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
+; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 4
+; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 3
 ; CHECK-NEXT:    st p0, [p2, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -783,8 +783,8 @@ define dso_local %struct.v128bfp16ebs8 @_Z16test_fifo_ld_popRrP23v128bfp16ebs8_u
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs p2, p0
-; CHECK-NEXT:    vlda lfh0, [p1, #64]
+; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs p2, p0
+; CHECK-NEXT:    vlda lfl0, [p1, #0]
 ; CHECK-NEXT:    vldb.pop.576 ex0, [p0, lf0, r24]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -792,16 +792,16 @@ define dso_local %struct.v128bfp16ebs8 @_Z16test_fifo_ld_popRrP23v128bfp16ebs8_u
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st r24, [p1, dj0]
-; CHECK-NEXT:    vst lfl0, [p1, #0]
 ; CHECK-NEXT:    vst lfh0, [p1, #64]
+; CHECK-NEXT:    vst lfl0, [p1, #0]
 ; CHECK-NEXT:    st p0, [p2, #0]
 ; CHECK-NEXT:    lda r24, [p1, dj0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda lfl0, [p1, #0]
 ; CHECK-NEXT:    vlda lfh0, [p1, #64]
+; CHECK-NEXT:    vlda lfl0, [p1, #0]
 ; CHECK-NEXT:    vldb.pop.576 ex1, [p0, lf0, r24]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -809,8 +809,8 @@ define dso_local %struct.v128bfp16ebs8 @_Z16test_fifo_ld_popRrP23v128bfp16ebs8_u
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    st r24, [p1, dj0] // Delay Slot 5
-; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
-; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
+; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 4
+; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 3
 ; CHECK-NEXT:    st p0, [p2, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -854,8 +854,8 @@ define dso_local %struct.v128bfp16ebs8 @_Z24test_fifo_ld_pop_1d_byteRrP23v128bfp
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs p2, p0
-; CHECK-NEXT:    vlda lfh0, [p1, #64]
+; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs p2, p0
+; CHECK-NEXT:    vlda lfl0, [p1, #0]
 ; CHECK-NEXT:    vldb.pop.576 ex0, [p0, lf0, r24]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -863,16 +863,16 @@ define dso_local %struct.v128bfp16ebs8 @_Z24test_fifo_ld_pop_1d_byteRrP23v128bfp
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st r24, [p1, dj0]
-; CHECK-NEXT:    vst lfl0, [p1, #0]
 ; CHECK-NEXT:    vst lfh0, [p1, #64]
+; CHECK-NEXT:    vst lfl0, [p1, #0]
 ; CHECK-NEXT:    st p0, [p2, #0]
 ; CHECK-NEXT:    lda r24, [p1, dj0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda lfl0, [p1, #0]
-; CHECK-NEXT:    vlda lfh0, [p1, #64]; mov m0, r0
+; CHECK-NEXT:    vlda lfh0, [p1, #64]
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; mov m0, r0
 ; CHECK-NEXT:    vldb.pop.576 ex1, [p0, lf0, r24, m0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -880,8 +880,8 @@ define dso_local %struct.v128bfp16ebs8 @_Z24test_fifo_ld_pop_1d_byteRrP23v128bfp
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    st r24, [p1, dj0] // Delay Slot 5
-; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
-; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
+; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 4
+; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 3
 ; CHECK-NEXT:    st p0, [p2, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -926,8 +926,8 @@ define dso_local %struct.v128bfp16ebs8 @_Z24test_fifo_ld_pop_2d_byteRrP23v128bfp
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs p3, p0
-; CHECK-NEXT:    vlda lfh0, [p1, #64]
+; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs p3, p0
+; CHECK-NEXT:    vlda lfl0, [p1, #0]
 ; CHECK-NEXT:    vldb.pop.576 ex0, [p0, lf0, r24]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -935,8 +935,8 @@ define dso_local %struct.v128bfp16ebs8 @_Z24test_fifo_ld_pop_2d_byteRrP23v128bfp
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st r24, [p1, dj1]
-; CHECK-NEXT:    vst lfl0, [p1, #0]
 ; CHECK-NEXT:    vst lfh0, [p1, #64]
+; CHECK-NEXT:    vst lfl0, [p1, #0]
 ; CHECK-NEXT:    st p0, [p3, #0]
 ; CHECK-NEXT:    lda r24, [p1, dj1]
 ; CHECK-NEXT:    lda dc0, [p2, #0]
@@ -944,8 +944,8 @@ define dso_local %struct.v128bfp16ebs8 @_Z24test_fifo_ld_pop_2d_byteRrP23v128bfp
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; mov m0, r0
-; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs dn0, r1; mov dj0, r2
+; CHECK-NEXT:    vlda lfh0, [p1, #64]; mov m0, r0
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs dn0, r1; mov dj0, r2
 ; CHECK-NEXT:    vldb.pop.576.2d ex1, [p0, lf0, r24, d0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -953,8 +953,8 @@ define dso_local %struct.v128bfp16ebs8 @_Z24test_fifo_ld_pop_2d_byteRrP23v128bfp
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st dc0, [p2, #0]; ret lr
 ; CHECK-NEXT:    st r24, [p1, dj1] // Delay Slot 5
-; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
-; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
+; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 4
+; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 3
 ; CHECK-NEXT:    st p0, [p3, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -1006,8 +1006,8 @@ define dso_local %struct.v128bfp16ebs8 @_Z24test_fifo_ld_pop_3d_byteRrP23v128bfp
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs p4, p0
-; CHECK-NEXT:    vlda lfh0, [p1, #64]
+; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs p4, p0
+; CHECK-NEXT:    vlda lfl0, [p1, #0]
 ; CHECK-NEXT:    vldb.pop.576 ex0, [p0, lf0, r24]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -1015,8 +1015,8 @@ define dso_local %struct.v128bfp16ebs8 @_Z24test_fifo_ld_pop_3d_byteRrP23v128bfp
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st r24, [p1, dj1]
-; CHECK-NEXT:    vst lfl0, [p1, #0]
 ; CHECK-NEXT:    vst lfh0, [p1, #64]
+; CHECK-NEXT:    vst lfl0, [p1, #0]
 ; CHECK-NEXT:    st p0, [p4, #0]
 ; CHECK-NEXT:    lda r24, [p1, dj1]
 ; CHECK-NEXT:    lda dc0, [p2, #0]
@@ -1025,8 +1025,8 @@ define dso_local %struct.v128bfp16ebs8 @_Z24test_fifo_ld_pop_3d_byteRrP23v128bfp
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov m0, r0
-; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs dn0, r1; mov dj0, r2
-; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs dn4, r3; mov dj4, r4
+; CHECK-NEXT:    vlda lfh0, [p1, #64]; movs dn0, r1; mov dj0, r2
+; CHECK-NEXT:    vlda lfl0, [p1, #0]; movs dn4, r3; mov dj4, r4
 ; CHECK-NEXT:    vldb.pop.576.3d ex1, [p0, lf0, r24, d0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -1034,8 +1034,8 @@ define dso_local %struct.v128bfp16ebs8 @_Z24test_fifo_ld_pop_3d_byteRrP23v128bfp
 ; CHECK-NEXT:    st dc0, [p2, #0]
 ; CHECK-NEXT:    st dc4, [p3, #0]; ret lr
 ; CHECK-NEXT:    st r24, [p1, dj1] // Delay Slot 5
-; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
-; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
+; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 4
+; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 3
 ; CHECK-NEXT:    st p0, [p4, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:

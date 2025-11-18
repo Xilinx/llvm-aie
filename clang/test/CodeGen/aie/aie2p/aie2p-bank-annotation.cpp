@@ -35,7 +35,7 @@ void test_intrinsic_annotated_pointer(v64bfp16ebs8_unaligned __aie_dm_resource_a
 }
 
 // CHECK-LABEL: define dso_local noundef <64 x i8> @_Z43test_intrinsic_annotated_pointer_fillx_popxPU3AS522v64bfp16ebs8_unalignedPU3AS6Dv64_DB8_R12fifo_state_t(
-// CHECK-SAME: ptr addrspace(5) [[P_UNALIGNED:%.*]], ptr addrspace(6) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]]) local_unnamed_addr #[[ATTR1:[0-9]+]] {
+// CHECK-SAME: ptr addrspace(5) [[P_UNALIGNED:%.*]], ptr addrspace(6) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
@@ -65,7 +65,7 @@ v128uint4 test_intrinsic_annotated_pointer_fillx_popx(v64bfp16ebs8_unaligned __a
 }
 
 // CHECK-LABEL: define dso_local noundef <64 x i8> @_Z41test_intrinsic_annotated_pointer_fill_popPU3AS522v64bfp16ebs8_unalignedPU3AS6Dv64_DB8_R12fifo_state_t(
-// CHECK-SAME: ptr addrspace(5) [[P_UNALIGNED:%.*]], ptr addrspace(6) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// CHECK-SAME: ptr addrspace(5) [[P_UNALIGNED:%.*]], ptr addrspace(6) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA2]]
@@ -89,7 +89,7 @@ v128uint4 test_intrinsic_annotated_pointer_fill_pop(v64bfp16ebs8_unaligned __aie
 }
 
 // CHECK-LABEL: define dso_local void @_Z42test_intrinsic_annotated_pointer_referenceRPU3AS522v64bfp16ebs8_unaligned12v64bfp16ebs8R12fifo_state_t(
-// CHECK-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], [[STRUCT_V64BFP16EBS8:%.*]] [[V_COERCE:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]]) local_unnamed_addr #[[ATTR2:[0-9]+]] {
+// CHECK-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], [[STRUCT_V64BFP16EBS8:%.*]] [[V_COERCE:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]]) local_unnamed_addr #[[ATTR1:[0-9]+]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[V_COERCE]], 0
 // CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[V_COERCE]], 1
@@ -114,7 +114,7 @@ void test_intrinsic_annotated_pointer_reference(v64bfp16ebs8_unaligned __aie_dm_
 
 
 // CHECK-LABEL: define dso_local noundef <64 x i8> @_Z53test_intrinsic_annotated_pointer_reference_fillx_popxRPU3AS522v64bfp16ebs8_unalignedRPU3AS6Dv64_DB8_R12fifo_state_t(
-// CHECK-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P_UNALIGNED:%.*]], ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]]) local_unnamed_addr #[[ATTR3:[0-9]+]] {
+// CHECK-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P_UNALIGNED:%.*]], ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]]) local_unnamed_addr #[[ATTR2:[0-9]+]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 192
@@ -153,7 +153,7 @@ v128uint4 test_intrinsic_annotated_pointer_reference_fillx_popx(v64bfp16ebs8_una
 }
 
 // CHECK-LABEL: define dso_local noundef <64 x i8> @_Z51test_intrinsic_annotated_pointer_reference_fill_popRPU3AS522v64bfp16ebs8_unalignedRPU3AS6Dv64_DB8_R12fifo_state_t(
-// CHECK-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P_UNALIGNED:%.*]], ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]]) local_unnamed_addr #[[ATTR3]] {
+// CHECK-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P_UNALIGNED:%.*]], ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr addrspace(5), ptr [[P_UNALIGNED]], align 4, !tbaa [[TBAA7]]
@@ -185,7 +185,7 @@ v128uint4 test_intrinsic_annotated_pointer_reference_fill_pop(v64bfp16ebs8_unali
 }
 
 // CHECK-LABEL: define dso_local void @_Z47test_intrinsic_annotated_pointer_reference_loopRPU3AS522v64bfp16ebs8_unaligned12v64bfp16ebs8i(
-// CHECK-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], [[STRUCT_V64BFP16EBS8:%.*]] [[V_COERCE:%.*]], i32 noundef [[NUM:%.*]]) local_unnamed_addr #[[ATTR4:[0-9]+]] {
+// CHECK-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], [[STRUCT_V64BFP16EBS8:%.*]] [[V_COERCE:%.*]], i32 noundef [[NUM:%.*]]) local_unnamed_addr #[[ATTR3:[0-9]+]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP6:%.*]] = icmp sgt i32 [[NUM]], 0
 // CHECK-NEXT:    br i1 [[CMP6]], label [[FOR_BODY_LR_PH:%.*]], label [[FOR_COND_CLEANUP:%.*]]
@@ -225,7 +225,7 @@ void test_intrinsic_annotated_pointer_reference_loop(
 }
 
 // CHECK-LABEL: define dso_local void @_Z45test_intrinsic_default_pointer_reference_loopRP22v64bfp16ebs8_unaligned12v64bfp16ebs8i(
-// CHECK-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], [[STRUCT_V64BFP16EBS8:%.*]] [[V_COERCE:%.*]], i32 noundef [[NUM:%.*]]) local_unnamed_addr #[[ATTR4]] {
+// CHECK-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], [[STRUCT_V64BFP16EBS8:%.*]] [[V_COERCE:%.*]], i32 noundef [[NUM:%.*]]) local_unnamed_addr #[[ATTR3]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP6:%.*]] = icmp sgt i32 [[NUM]], 0
 // CHECK-NEXT:    br i1 [[CMP6]], label [[FOR_BODY_LR_PH:%.*]], label [[FOR_COND_CLEANUP:%.*]]

@@ -66,10 +66,10 @@ define signext i8 @extract_v16i8_signext(<16 x i8> %v) nounwind {
 ;
 ; AIE2P-LABEL: extract_v16i8_signext:
 ; AIE2P:       // %bb.0:
-; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
+; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    nop // Delay Slot 5
-; AIE2P-NEXT:    mova r0, #0 // Delay Slot 4
-; AIE2P-NEXT:    vshuffle x0, x0, x0, r0 // Delay Slot 3
+; AIE2P-NEXT:    nop // Delay Slot 4
+; AIE2P-NEXT:    nop // Delay Slot 3
 ; AIE2P-NEXT:    vextract.8 r0, x0, #0, vaddsign1 // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
   %1 = extractelement <16 x i8> %v, i32 0
@@ -88,10 +88,10 @@ define zeroext i8 @extract_v16i8_zeroext(<16 x i8> %v) nounwind {
 ;
 ; AIE2P-LABEL: extract_v16i8_zeroext:
 ; AIE2P:       // %bb.0:
-; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
+; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    nop // Delay Slot 5
-; AIE2P-NEXT:    mova r0, #0 // Delay Slot 4
-; AIE2P-NEXT:    vshuffle x0, x0, x0, r0 // Delay Slot 3
+; AIE2P-NEXT:    nop // Delay Slot 4
+; AIE2P-NEXT:    nop // Delay Slot 3
 ; AIE2P-NEXT:    vextract.8 r0, x0, #0, vaddsign0 // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
   %1 = extractelement <16 x i8> %v, i32 0
@@ -110,10 +110,10 @@ define zeroext i8 @extract_v16i8_dyn(<16 x i8> %v, i32 %idx) nounwind {
 ;
 ; AIE2P-LABEL: extract_v16i8_dyn:
 ; AIE2P:       // %bb.0:
-; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
+; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    nop // Delay Slot 5
-; AIE2P-NEXT:    mova r0, #0 // Delay Slot 4
-; AIE2P-NEXT:    vshuffle x0, x0, x0, r0 // Delay Slot 3
+; AIE2P-NEXT:    nop // Delay Slot 4
+; AIE2P-NEXT:    nop // Delay Slot 3
 ; AIE2P-NEXT:    vextract.8 r0, x0, r1, vaddsign0 // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
   %1 = extractelement <16 x i8> %v, i32 %idx
@@ -132,10 +132,10 @@ define signext i16 @extract_v8i16_signext(<8 x i16> %v) nounwind {
 ;
 ; AIE2P-LABEL: extract_v8i16_signext:
 ; AIE2P:       // %bb.0:
-; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
+; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    nop // Delay Slot 5
-; AIE2P-NEXT:    mova r0, #2 // Delay Slot 4
-; AIE2P-NEXT:    vshuffle x0, x0, x0, r0 // Delay Slot 3
+; AIE2P-NEXT:    nop // Delay Slot 4
+; AIE2P-NEXT:    nop // Delay Slot 3
 ; AIE2P-NEXT:    vextract.16 r0, x0, #0, vaddsign1 // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
   %1 = extractelement <8 x i16> %v, i32 0
@@ -154,10 +154,10 @@ define zeroext i16 @extract_v8i16_zeroext(<8 x i16> %v) nounwind {
 ;
 ; AIE2P-LABEL: extract_v8i16_zeroext:
 ; AIE2P:       // %bb.0:
-; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
+; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    nop // Delay Slot 5
-; AIE2P-NEXT:    mova r0, #2 // Delay Slot 4
-; AIE2P-NEXT:    vshuffle x0, x0, x0, r0 // Delay Slot 3
+; AIE2P-NEXT:    nop // Delay Slot 4
+; AIE2P-NEXT:    nop // Delay Slot 3
 ; AIE2P-NEXT:    vextract.16 r0, x0, #0, vaddsign0 // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
   %1 = extractelement <8 x i16> %v, i32 0
@@ -176,10 +176,10 @@ define signext i16 @extract_v8i16_dyn(<8 x i16> %v, i32 %idx) nounwind {
 ;
 ; AIE2P-LABEL: extract_v8i16_dyn:
 ; AIE2P:       // %bb.0:
-; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
+; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    nop // Delay Slot 5
-; AIE2P-NEXT:    mova r0, #2 // Delay Slot 4
-; AIE2P-NEXT:    vshuffle x0, x0, x0, r0 // Delay Slot 3
+; AIE2P-NEXT:    nop // Delay Slot 4
+; AIE2P-NEXT:    nop // Delay Slot 3
 ; AIE2P-NEXT:    vextract.16 r0, x0, r1, vaddsign1 // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
   %1 = extractelement <8 x i16> %v, i32 %idx

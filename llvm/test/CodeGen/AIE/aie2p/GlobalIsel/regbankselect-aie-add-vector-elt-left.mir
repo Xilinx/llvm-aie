@@ -15,14 +15,16 @@ body:             |
     ; CHECK-LABEL: name: test_acc512
     ; CHECK: [[COPY:%[0-9]+]]:accregbank(<8 x s64>) = COPY $bmll0
     ; CHECK-NEXT: [[DEF:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[MV:%[0-9]+]]:gprregbank(s64) = G_MERGE_VALUES [[DEF]](s32), [[DEF]](s32)
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vregbank(<8 x s64>) = COPY [[COPY]](<8 x s64>)
-    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT:%[0-9]+]]:vregbank(<8 x s64>) = G_AIE_ADD_VECTOR_ELT_HI [[COPY1]], [[DEF]](s32)
-    ; CHECK-NEXT: $bmll1 = COPY [[AIE_ADD_VECTOR_ELT_LEFT]](<8 x s64>)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_HI:%[0-9]+]]:vregbank(<8 x s64>) = G_AIE_ADD_VECTOR_ELT_HI [[COPY1]], [[MV]](s64)
+    ; CHECK-NEXT: $bmll1 = COPY [[AIE_ADD_VECTOR_ELT_HI]](<8 x s64>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $bmll1
     %0:_(<8 x s64>) = COPY $bmll0
     %1:_(s32) = G_IMPLICIT_DEF
-    %2:_(<8 x s64>) = G_AIE_ADD_VECTOR_ELT_HI %0(<8 x s64>), %1(s32)
-    $bmll1 = COPY %2(<8 x s64>)
+    %2:_(s64) =  G_MERGE_VALUES %1(s32), %1(s32)
+    %3:_(<8 x s64>) = G_AIE_ADD_VECTOR_ELT_HI %0(<8 x s64>), %2(s64)
+    $bmll1 = COPY %3(<8 x s64>)
     PseudoRET implicit $lr, implicit $bmll1
 ...
 
@@ -34,8 +36,8 @@ body:             |
     ; CHECK-LABEL: name: test_vec512
     ; CHECK: [[COPY:%[0-9]+]]:vregbank(<16 x s32>) = COPY $x0
     ; CHECK-NEXT: [[DEF:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT:%[0-9]+]]:vregbank(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI [[COPY]], [[DEF]](s32)
-    ; CHECK-NEXT: $x1 = COPY [[AIE_ADD_VECTOR_ELT_LEFT]](<16 x s32>)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_HI:%[0-9]+]]:vregbank(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI [[COPY]], [[DEF]](s32)
+    ; CHECK-NEXT: $x1 = COPY [[AIE_ADD_VECTOR_ELT_HI]](<16 x s32>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x1
     %0:_(<16 x s32>) = COPY $x0
     %1:_(s32) = G_IMPLICIT_DEF

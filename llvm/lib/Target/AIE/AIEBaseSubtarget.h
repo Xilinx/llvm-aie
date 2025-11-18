@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -77,7 +77,7 @@ public:
 
   /// Required DAG mutations for InterBlock dependence analysis
   static std::vector<std::unique_ptr<ScheduleDAGMutation>>
-  getInterBlockMutationsImpl(const Triple &TT);
+  getDDGMutationsImpl(const Triple &TT, bool ExactLatencies);
 
   /// Required DAG mutations during Pre-RA scheduling.
   static std::vector<std::unique_ptr<ScheduleDAGMutation>>

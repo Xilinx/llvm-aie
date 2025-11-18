@@ -91,10 +91,17 @@ public:
     // Verify there is a format that can accommodate the new slots
     MCSlotKind Slot = FormatInterface->getSlotKind(InstOpCode);
     assert(Slot != MCSlotKind());
-    SlotBits NewSlots = FormatInterface->getSlotInfo(Slot)->getSlotSet();
-    return (OccupiedSlots & NewSlots) == 0 &&
-           FormatInterface->getPacketFormats().getFormat(OccupiedSlots |
-                                                         NewSlots);
+
+    auto *SlotInfo = FormatInterface->getSlotInfo(Slot);
+    // ConflictBits is a fast predictor of missing formats
+    SlotBits ConflictBits = SlotInfo->getConflictSet();
+    if (OccupiedSlots & ConflictBits) {
+      return false;
+    }
+    const SlotBits NewSlots = OccupiedSlots | SlotInfo->getSlotSet();
+    // Note: Now that we have the conflict bits we may no longer need this
+    // final check, but it is cheap and represents proven technology.
+    return FormatInterface->isFormatAvailable(NewSlots);
   }
 
   /// Add an instruction to the bundle
@@ -227,7 +234,7 @@ public:
     }
     return true;
   }
-  void clearBundle() const {
+  void clearMBBBundle() const {
     const VLIWFormat *Format = getFormatOrNull();
     assert(Format);
     for (MCSlotKind Slot : Format->getSlots()) {

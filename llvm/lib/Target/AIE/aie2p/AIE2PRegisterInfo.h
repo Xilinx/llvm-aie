@@ -81,6 +81,8 @@ struct AIE2PRegisterInfo : public AIE2PGenRegisterInfo {
 
   unsigned getVectorRegBankID() const override;
   unsigned getGPRRegBankID() const override;
+  unsigned getMODRegBankID() const override;
+  unsigned getPTRRegBankID() const override;
 
   void getTargetSubRegs(std::vector<unsigned> &, unsigned Size,
                         const RegisterBank &RB) const override;

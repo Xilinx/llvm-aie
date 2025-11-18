@@ -62,4 +62,8 @@ const MCFormatDesc *AIEMCFormats::getMCFormats() const { return AIE::Formats; }
 
 const PacketFormats &AIEMCFormats::getPacketFormats() const { return Formats; }
 
+ArrayRef<bool> AIEMCFormats::getIsFormatAvailable() const {
+  return FormatAvailable;
+}
+
 } // end namespace llvm

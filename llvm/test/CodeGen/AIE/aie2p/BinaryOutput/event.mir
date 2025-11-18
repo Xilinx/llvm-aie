@@ -3,11 +3,11 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 #
 # RUN: llc %llcflags --filetype=obj -o %t
 # RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
-# TODO: llc %llcflags --filetype=asm -o %t2
+# RUN: llc %llcflags --filetype=asm -o %t2
 # TODO: llvm-mc -triple aie2p -filetype=obj -o %t %t2
 # TODO: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
 #

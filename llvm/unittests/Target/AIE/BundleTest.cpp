@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -42,10 +42,10 @@ const VLIWFormat FormatData[] = {
     {0, nullptr, {}, 0, 0}};
 const PacketFormats MyFormats{FormatData};
 
-constexpr MCSlotInfo SlotInfos[4] = {{"ALU", 1, 0b0001, 0},
-                                     {"MV", 1, 0b0010, 0},
-                                     {"ST", 1, 0b0100, 0},
-                                     {"LNG", 1, 0b1000, 0}};
+constexpr MCSlotInfo SlotInfos[4] = {{"ALU", 1, 0b0001, 0b0001, 0},
+                                     {"MV", 1, 0b0010, 0b0010, 0},
+                                     {"ST", 1, 0b0100, 0b0100, 0},
+                                     {"LNG", 1, 0b1000, 0b1000, 0}};
 
 // Stay clear of standard opcodes
 static const int FirstOpcode = 1000;
@@ -97,6 +97,9 @@ class MockMCFormats : public AIEBaseMCFormats {
   }
 
   const MCFormatDesc *getMCFormats() const override {
+    llvm_unreachable("Un-implemented");
+  }
+  ArrayRef<bool> getIsFormatAvailable() const override {
     llvm_unreachable("Un-implemented");
   }
 };

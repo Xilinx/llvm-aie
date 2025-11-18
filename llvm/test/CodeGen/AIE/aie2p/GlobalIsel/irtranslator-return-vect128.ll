@@ -28,8 +28,10 @@ define <8 x i16> @callee_v8int16() {
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s16) = G_CONSTANT i16 0
   ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<8 x s16>) = G_BUILD_VECTOR [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16)
-  ; CHECK-NEXT:   [[ANYEXT:%[0-9]+]]:_(<8 x s32>) = G_ANYEXT [[BUILD_VECTOR]](<8 x s16>)
-  ; CHECK-NEXT:   $wl0 = COPY [[ANYEXT]](<8 x s32>)
+  ; CHECK-NEXT:   [[UV:%[0-9]+]]:_(s16), [[UV1:%[0-9]+]]:_(s16), [[UV2:%[0-9]+]]:_(s16), [[UV3:%[0-9]+]]:_(s16), [[UV4:%[0-9]+]]:_(s16), [[UV5:%[0-9]+]]:_(s16), [[UV6:%[0-9]+]]:_(s16), [[UV7:%[0-9]+]]:_(s16) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<8 x s16>)
+  ; CHECK-NEXT:   [[DEF:%[0-9]+]]:_(s16) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR1:%[0-9]+]]:_(<16 x s16>) = G_BUILD_VECTOR [[UV]](s16), [[UV1]](s16), [[UV2]](s16), [[UV3]](s16), [[UV4]](s16), [[UV5]](s16), [[UV6]](s16), [[UV7]](s16), [[DEF]](s16), [[DEF]](s16), [[DEF]](s16), [[DEF]](s16), [[DEF]](s16), [[DEF]](s16), [[DEF]](s16), [[DEF]](s16)
+  ; CHECK-NEXT:   $wl0 = COPY [[BUILD_VECTOR1]](<16 x s16>)
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $wl0
   ret <8 x i16> zeroinitializer
 }
@@ -39,8 +41,10 @@ define <16 x i8> @callee_v16int8() {
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s8) = G_CONSTANT i8 0
   ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<16 x s8>) = G_BUILD_VECTOR [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8)
-  ; CHECK-NEXT:   [[ANYEXT:%[0-9]+]]:_(<16 x s16>) = G_ANYEXT [[BUILD_VECTOR]](<16 x s8>)
-  ; CHECK-NEXT:   $wl0 = COPY [[ANYEXT]](<16 x s16>)
+  ; CHECK-NEXT:   [[UV:%[0-9]+]]:_(s8), [[UV1:%[0-9]+]]:_(s8), [[UV2:%[0-9]+]]:_(s8), [[UV3:%[0-9]+]]:_(s8), [[UV4:%[0-9]+]]:_(s8), [[UV5:%[0-9]+]]:_(s8), [[UV6:%[0-9]+]]:_(s8), [[UV7:%[0-9]+]]:_(s8), [[UV8:%[0-9]+]]:_(s8), [[UV9:%[0-9]+]]:_(s8), [[UV10:%[0-9]+]]:_(s8), [[UV11:%[0-9]+]]:_(s8), [[UV12:%[0-9]+]]:_(s8), [[UV13:%[0-9]+]]:_(s8), [[UV14:%[0-9]+]]:_(s8), [[UV15:%[0-9]+]]:_(s8) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<16 x s8>)
+  ; CHECK-NEXT:   [[DEF:%[0-9]+]]:_(s8) = G_IMPLICIT_DEF
+  ; CHECK-NEXT:   [[BUILD_VECTOR1:%[0-9]+]]:_(<32 x s8>) = G_BUILD_VECTOR [[UV]](s8), [[UV1]](s8), [[UV2]](s8), [[UV3]](s8), [[UV4]](s8), [[UV5]](s8), [[UV6]](s8), [[UV7]](s8), [[UV8]](s8), [[UV9]](s8), [[UV10]](s8), [[UV11]](s8), [[UV12]](s8), [[UV13]](s8), [[UV14]](s8), [[UV15]](s8), [[DEF]](s8), [[DEF]](s8), [[DEF]](s8), [[DEF]](s8), [[DEF]](s8), [[DEF]](s8), [[DEF]](s8), [[DEF]](s8), [[DEF]](s8), [[DEF]](s8), [[DEF]](s8), [[DEF]](s8), [[DEF]](s8), [[DEF]](s8), [[DEF]](s8), [[DEF]](s8)
+  ; CHECK-NEXT:   $wl0 = COPY [[BUILD_VECTOR1]](<32 x s8>)
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $wl0
   ret <16 x i8> zeroinitializer
 }

@@ -23,6 +23,7 @@ tablegen(LLVM AIEGenRegisterBank.inc -gen-register-bank -base-register-bank-clas
 tablegen(LLVM AIEGenRegisterInfo.inc -gen-register-info -base-registerinfo-class AIEBaseRegisterInfo)
 tablegen(LLVM AIEGenSubtargetInfo.inc -gen-subtarget)
 #tablegen(LLVM AIEGenSystemOperands.inc -gen-searchable-tables)
+#aie2
 set(LLVM_TARGET_DEFINITIONS AIE2.td)
 tablegen(LLVM AIE2GenAsmMatcher.inc -gen-asm-matcher)
 tablegen(LLVM AIE2GenAsmWriter.inc -gen-asm-writer)
@@ -47,6 +48,7 @@ tablegen(LLVM AIE2GenRegisterInfo.inc -gen-register-info -base-registerinfo-clas
 tablegen(LLVM AIE2GenSubtargetInfo.inc -gen-subtarget)
 tablegen(LLVM AIE2GenGlobalISel.inc -gen-global-isel --warn-on-skipped-patterns)
 
+#aie2p
 set(LLVM_TARGET_DEFINITIONS AIE2P.td)
 tablegen(LLVM AIE2PGenInstrInfo.inc -gen-instr-info -base-instrinfo-class AIEBaseInstrInfo)
 tablegen(LLVM AIE2PGenRegisterInfo.inc -gen-register-info -base-registerinfo-class AIEBaseRegisterInfo)
@@ -90,6 +92,7 @@ add_llvm_target(AIECodeGen
    AIEBaseSubtarget.cpp
    AIEBaseTargetMachine.cpp
    AIECallLowering.cpp
+   AIEDataDependenceHelper.cpp
    AIEDumpArtifacts.cpp
    AIEEliminateDuplicatePHI.cpp
    AIEFinalizeBundle.cpp
@@ -100,6 +103,7 @@ add_llvm_target(AIECodeGen
    AIEISelDAGToDAG.cpp
    AIELegalizerHelper.cpp
    AIELiveRegs.cpp
+   AIELoopClass.cpp
    AIEMachineAlignment.cpp
    AIEMachineFunctionInfo.cpp
    AIEMachineScheduler.cpp
@@ -114,6 +118,8 @@ add_llvm_target(AIECodeGen
    AIERegClassConstrainer.cpp
    AIERegMemEventTracker.cpp
    AIESlotCounts.cpp
+   AIESlotStatistics.cpp
+   AIESlotUtils.cpp
    AIESplitInstructionRewriter.cpp
    AIESubRegConstrainer.cpp
    AIESWPSolver.cpp
@@ -137,6 +143,7 @@ add_llvm_target(AIECodeGen
    ReservedRegsLICM.cpp
    AIEOutlineMemoryGEP.cpp
    AIEWawRegRewriter.cpp
+   # aie1
    aie1/AIE1AsmPrinter.cpp
    aie1/AIE1AsmPrinter.cpp
    aie1/AIE1DelaySlotFiller.cpp
@@ -151,6 +158,7 @@ add_llvm_target(AIECodeGen
    aie1/AIE1RegisterInfo.cpp
    aie1/AIE1Subtarget.cpp
    aie1/AIE1TargetMachine.cpp
+   # aie2p
    aie2p/AIE2PSubtarget.cpp
    aie2p/AIE2PTargetMachine.cpp
    aie2p/AIE2PTargetTransformInfo.cpp
@@ -184,6 +192,7 @@ add_llvm_target(AIECodeGen
    TargetParser
    TransformUtils
    GlobalISel
+   Vectorize
 
    ADD_TO_COMPONENT
    AIE

@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -1399,12 +1399,15 @@ void ScheduleDAGMILive::initRegPressure() {
            BotRPTracker.getPos() == priorNonDebug(RegionEnd, RegionBegin))) &&
          "Can't find the region bottom");
 
+  ArrayRef<uint16_t> IgnoreRegPressureSets = TRI->getIgnoreRegPressureSets();
   // Cache the list of excess pressure sets in this region. This will also track
   // the max pressure in the scheduled code for these sets.
   RegionCriticalPSets.clear();
   const std::vector<unsigned> &RegionPressure =
     RPTracker.getPressure().MaxSetPressure;
   for (unsigned i = 0, e = RegionPressure.size(); i < e; ++i) {
+    if (is_contained(IgnoreRegPressureSets, i))
+      continue;
     unsigned Limit = RegClassInfo->getRegPressureSetLimit(i);
     if (RegionPressure[i] > Limit) {
       LLVM_DEBUG(dbgs() << TRI->getRegPressureSetName(i) << " Limit " << Limit

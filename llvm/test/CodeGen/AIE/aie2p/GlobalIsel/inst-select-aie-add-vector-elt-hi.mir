@@ -19,13 +19,16 @@ stack:
 body:             |
   bb.0.entry:
     ; AIE2P-LABEL: name: vpush_int64_512
-    ; AIE2P: [[MOVXM:%[0-9]+]]:mmvscldstcg = MOVXM 12
-    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:el = COPY [[MOVXM]]
+    ; AIE2P: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 12
+    ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
+    ; AIE2P-NEXT: [[REG_SEQUENCE:%[0-9]+]]:el = REG_SEQUENCE [[MOV_RLC_imm11_pseudo]], %subreg.sub_l_even, [[MOV_RLC_imm11_pseudo1]], %subreg.sub_l_odd
     ; AIE2P-NEXT: [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
-    ; AIE2P-NEXT: [[VPUSH_hi_64_:%[0-9]+]]:vec512 = VPUSH_hi_64 [[DEF]], [[COPY]]
+    ; AIE2P-NEXT: [[VPUSH_hi_64_:%[0-9]+]]:vec512 = VPUSH_hi_64 [[DEF]], [[REG_SEQUENCE]]
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VPUSH_hi_64_]]
     %0:gprregbank(s32) = G_CONSTANT i32 12
-    %1:vregbank(<8 x s64>) = G_IMPLICIT_DEF
-    %2:vregbank(<8 x s64>) = G_AIE_ADD_VECTOR_ELT_HI %1, %0(s32)
-    PseudoRET implicit $lr, implicit %2
+    %1:gprregbank(s32) = G_CONSTANT i32 0
+    %2:gprregbank(s64) = G_MERGE_VALUES %0, %1
+    %3:vregbank(<8 x s64>) = G_IMPLICIT_DEF
+    %4:vregbank(<8 x s64>) = G_AIE_ADD_VECTOR_ELT_HI %3, %2(s64)
+    PseudoRET implicit $lr, implicit %4
 ...

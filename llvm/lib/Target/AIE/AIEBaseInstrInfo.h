@@ -52,10 +52,11 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
     unsigned SetLoopCountOpcode;
     Register LCRegister;
 
-    // SetAddress takes an address and writes it to a loop register
-    unsigned SetAddressOpcode;
-    Register LSRegister;
-    Register LERegister;
+    // SetLoop{Start,End} takes an address and writes it to a loop register
+    unsigned SetLoopStartOpcode;
+    unsigned SetLoopEndOpcode;
+    std::optional<Register> LSRegister;
+    std::optional<Register> LERegister;
     // The distance between setup and the start of the loop, in units
     // of bundles.
     unsigned LoopSetupDistance;
@@ -168,8 +169,8 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   /// \return wether \p MI is a multi-slot pseudo instruction
   bool isMultiSlotPseudo(const MachineInstr &MI) const;
 
-  /// Return a nop of the given byte size, or the smallest if zero.
-  virtual unsigned getNopOpcode(size_t Size = 0) const {
+  /// Return the opcode for smallest nop
+  virtual unsigned getNopOpcode() const {
     llvm_unreachable("Target didn't implement getNopOpcode");
   }
   /// Return an opcode that reverses the branch condition of a given
@@ -306,7 +307,9 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
 
   /// Returns the number of delay slots that should be reserved, i.e.
   /// not filled in by the scheduler.
-  virtual unsigned getNumReservedDelaySlots(const MachineInstr &MI) const;
+  virtual unsigned getNumReservedDelaySlots(const MachineInstr &MI) const {
+    llvm_unreachable("Target didn't implement getNumReservedDelaySlots");
+  }
 
   /// Check whether Opc represents a JNZ instruction. This is mainly for
   /// detecting a downcounting loop branch.
@@ -441,20 +444,13 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual Register getMSStatusReg() const {
     llvm_unreachable("Target didn't implement getMSStatusReg");
   }
-  virtual unsigned getMvScl2MS(unsigned ConstTLastVal) const {
-    llvm_unreachable("Target didn't implement getMvScl2MS");
+  virtual unsigned getMoveToMSOpcode(MachineInstr &I,
+                                     unsigned ConstTLastVal) const {
+    llvm_unreachable("Target didn't implement getMoveToMSOpcode");
   }
 
   virtual unsigned getMvNBScl2MS(unsigned ConstTLastVal) const {
     llvm_unreachable("Target didn't implement getMvNBScl2MS");
-  }
-
-  virtual unsigned getMvScl2MSTlastRegOpcode() const {
-    llvm_unreachable("Target didn't implement getMvScl2MSTlastRegOpcode");
-  }
-
-  virtual unsigned getMvNBScl2MSTlastRegOpcode() const {
-    llvm_unreachable("Target didn't implement getMvNBScl2MSTlastRegOpcode");
   }
 
   virtual Register getPackSignCReg() const {
@@ -807,7 +803,8 @@ protected:
   /// need expanding. Otherwise, the size of the vector will match the number
   /// of instructions which \ref MI needs to be expanded to.
   virtual SmallVector<AIEPseudoExpandInfo, 4>
-  getSpillPseudoExpandInfo(const MachineInstr &MI) const {
+  getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
+                           MachineInstr &MI) const {
     return {};
   };
 
@@ -869,6 +866,9 @@ protected:
                     const DebugLoc &dl, Register DestReg,
                     ArrayRef<MachineOperand> Cond, Register TrueReg,
                     Register FalseReg) const override;
+
+  bool areMemAccessesTriviallyDisjoint(const MachineInstr &MIa,
+                                       const MachineInstr &MIb) const override;
 };
 
 template <unsigned NumEncodingBits, unsigned Step>

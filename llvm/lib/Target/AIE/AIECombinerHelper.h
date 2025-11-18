@@ -156,12 +156,11 @@ bool canAdvanceOp(MachineInstr &MemI, MachineInstr &Dest,
 MachineInstr *getDefIgnoringCopiesAndBitcasts(Register Reg,
                                               const MachineRegisterInfo &MRI);
 
-bool matchExtractVecEltAndExt(
-    MachineInstr &MI, MachineRegisterInfo &MRI, const AIEBaseInstrInfo &TII,
-    std::tuple<MachineInstr *, bool, bool> &MatchInfo);
-void applyExtractVecEltAndExt(
-    MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B,
-    std::tuple<MachineInstr *, bool, bool> &MatchInfo);
+bool matchExtractVecEltAndExt(MachineInstr &MI, MachineRegisterInfo &MRI,
+                              std::pair<MachineInstr *, bool> &MatchInfo);
+void applyExtractVecEltAndExt(MachineInstr &MI, MachineRegisterInfo &MRI,
+                              MachineIRBuilder &B,
+                              std::pair<MachineInstr *, bool> &MatchInfo);
 
 bool matchSplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                       std::pair<Register, Register> &MatchInfo);
@@ -304,6 +303,11 @@ bool matchSequentialStores(GStore &MI, MachineRegisterInfo &MRI,
 bool matchNarrowTruncLoad(MachineInstr &Phi, MachineRegisterInfo &MRI,
                           CombinerHelper &Helper, GISelChangeObserver &Observer,
                           BuildFnTy &MatchInfo);
+
+bool matchExtractVecEltAssertBcst(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                  const AIEBaseInstrInfo &TII,
+                                  GISelChangeObserver &Observer,
+                                  BuildFnTy &MatchInfo);
 } // namespace llvm
 
 #endif

@@ -1,0 +1,38 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -mtriple=aie2 -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+# RUN: not --crash llc -mtriple=aie2p -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+
+# This test ensures that the Machine Verifier detects illegal G_AIE_INSERT_VECTOR_ELT
+
+---
+name:            ok
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    %0:_(<32 x s16>) = COPY $x0
+    %1:_(s32) = G_CONSTANT i32 1
+    %2:_(s32) = G_CONSTANT i32 42
+    %3:_(s32) = G_AIE_INSERT_VECTOR_ELT %0(<32 x s16>), %1(s32), %2(s32)
+...
+
+---
+name:            nok_dst
+legalized: true
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; CHECK-COUNT-2: Bad machine code: Operation is only legal for 512-bit vector destinations
+    ; CHECK-NOT: Bad machine code
+    %0:_(<16 x s16>) = COPY $wl0
+    %1:_(s32) = G_CONSTANT i32 1
+    %2:_(s32) = G_CONSTANT i32 42
+    %3:_(s32) = G_AIE_INSERT_VECTOR_ELT %0(<16 x s16>), %1(s32), %2(s32)
+    %4:_(<64 x s16>) = COPY $y2
+    %5:_(s32) = G_AIE_INSERT_VECTOR_ELT %4(<64 x s16>), %1(s32), %2(s32)
+...

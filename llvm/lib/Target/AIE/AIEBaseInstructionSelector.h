@@ -83,6 +83,12 @@ public:
   bool selectG_PHI(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_PTR_ADD(MachineIRBuilder &MIB, MachineInstr &I,
                        MachineRegisterInfo &MRI);
+  bool selectG_SEXT_INREG(MachineInstr &I, MachineRegisterInfo &MRI,
+                          const std::pair<unsigned, unsigned> &Opcodes);
+  bool selectG_TRUNC(MachineInstr &I, MachineRegisterInfo &MRI,
+                     unsigned SubRegIdx);
+  bool selectGetCoreID(MachineInstr &I, MachineRegisterInfo &MRI,
+                       Register CoreID);
   void renderFrameIndex(MachineInstrBuilder &MIB, const MachineInstr &MI,
                         int OpIdx) const;
   void renderNegateImm(MachineInstrBuilder &MIB, const MachineInstr &MI,
@@ -162,6 +168,12 @@ public:
                           MachineIRBuilder &MIB);
 
   void insertPtrAddForOffset(MachineRegisterInfo &MRI, MachineInstr &MemI);
+
+  bool selectG_CONSTANT(MachineInstr &I, MachineRegisterInfo &MRI);
+
+  bool selectWriteTM(MachineInstr &I, MachineRegisterInfo &MRI,
+                     unsigned Opcode);
+  bool selectReadTM(MachineInstr &I, MachineRegisterInfo &MRI, unsigned Opcode);
 
 protected:
   void makeDeadMI(MachineInstr &MI, MachineRegisterInfo &MRI);

@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines structures to encapsulate information gleaned from the
@@ -842,6 +845,9 @@ CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank,
     const BitInit *Bit = cast<BitInit>(TSF->getBit(I));
     TSFlags |= uint8_t(Bit->getValue()) << I;
   }
+
+  UseRegPressureInPreRAScheduling =
+      R->getValueAsBit("ConsiderInPreRAScheduling");
 }
 
 // Create an inferred register class that was missing from the .td files.
@@ -852,7 +858,7 @@ CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank,
     : Members(*Props.Members), TheDef(nullptr), Name(std::string(Name)),
       TopoSigs(RegBank.getNumTopoSigs()), EnumValue(-1), RSI(Props.RSI),
       CopyCost(0), Allocatable(true), AllocationPriority(0),
-      GlobalPriority(false), TSFlags(0) {
+      GlobalPriority(false), TSFlags(0), UseRegPressureInPreRAScheduling(true) {
   Artificial = true;
   GeneratePressureSet = false;
   for (const auto R : Members) {
@@ -883,6 +889,7 @@ void CodeGenRegisterClass::inheritProperties(CodeGenRegBank &RegBank) {
   GlobalPriority = Super.GlobalPriority;
   TSFlags = Super.TSFlags;
   GeneratePressureSet |= Super.GeneratePressureSet;
+  UseRegPressureInPreRAScheduling = Super.UseRegPressureInPreRAScheduling;
 
   // Copy all allocation orders, filter out foreign registers from the larger
   // super-class.
@@ -2239,6 +2246,10 @@ void CodeGenRegBank::computeDerivedInfo() {
   for (unsigned Idx = 0, EndIdx = RegUnitSets.size(); Idx != EndIdx; ++Idx) {
     RegUnitSets[RegUnitSetOrder[Idx]].Order = Idx;
   }
+
+  // Now that pressure sets are computed, build the ignore list for
+  // MachineScheduler.
+  computeIgnoreRegPressureSetsInPreRAScheduling();
 }
 
 //
@@ -2553,4 +2564,18 @@ void CodeGenRegBank::printRegUnitName(unsigned Unit) const {
     dbgs() << ' ' << RegUnits[Unit].Roots[0]->getName();
   else
     dbgs() << " #" << Unit;
+}
+
+void CodeGenRegBank::computeIgnoreRegPressureSetsInPreRAScheduling() {
+  std::set<unsigned> RegPressureIDs;
+  for (auto &RC : RegClasses) {
+    if (RC.UseRegPressureInPreRAScheduling)
+      continue;
+
+    // Collect pressure set IDs for this class.
+    for (unsigned PSetID : getRCPressureSetIDs(RC.EnumValue))
+      RegPressureIDs.emplace(PSetID);
+  }
+
+  IgnoreRegPressureSets.assign(RegPressureIDs.begin(), RegPressureIDs.end());
 }

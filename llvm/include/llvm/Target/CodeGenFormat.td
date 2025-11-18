@@ -45,6 +45,10 @@ class InstSlot<string slotname, int Size, bit isDefault=false>  : Operand<OtherV
   // Namespace.
   bit isDefaultSlot = isDefault;
 
+  // Mark a slot as artificial. This will exclude it from any resource
+  // estimations.
+  bit Artificial = false;
+
   let DecoderMethod = "decode" # SlotName # "Slot";
 }
 

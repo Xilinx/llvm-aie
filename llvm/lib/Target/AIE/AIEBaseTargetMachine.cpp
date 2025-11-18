@@ -15,11 +15,14 @@
 
 #include "AIEBaseTargetMachine.h"
 #include "AIE.h"
+#include "AIE2TargetMachine.h"
 #include "AIEBaseAliasAnalysis.h"
 #include "AIEMachineFunctionInfo.h"
 #include "AIEMachineScheduler.h"
 #include "AIETargetObjectFile.h"
 #include "TargetInfo/AIETargetInfo.h"
+#include "aie1/AIE1TargetMachine.h"
+#include "aie2p/AIE2PTargetMachine.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/CSEConfigBase.h"
 #include "llvm/CodeGen/CodeGenTargetMachineImpl.h"
@@ -126,6 +129,42 @@ cl::opt<bool>
 static StringRef computeDataLayout(const Triple &TT) {
   return "e-m:e-p:20:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-f32:32:32-i64:32-"
          "f64:32-a:0:32-n32";
+}
+
+extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETarget() {
+  RegisterTargetMachine<AIETargetMachine> X(getTheAIETarget());
+  RegisterTargetMachine<AIE2TargetMachine> Y(getTheAIE2Target());
+  RegisterTargetMachine<AIE2PTargetMachine> A(getTheAIE2PTarget());
+  //  auto PR = PassRegistry::getPassRegistry();
+  //  initializeAIEExpandPseudoPass(*PR);
+  auto *PR = PassRegistry::getPassRegistry();
+  initializeGlobalISel(*PR);
+  initializeAIEAddressSpaceFlatteningPass(*PR);
+  initializeAIEEliminateDuplicatePHIPass(*PR);
+  initializeAIEClusterBaseAddressPass(*PR);
+  initializeAIEPtrModOptimizerPass(*PR);
+  initializeAIE2PreLegalizerCombinerPass(*PR);
+  initializeAIE2PPreLegalizerCombinerPass(*PR);
+  initializeAIE2PostLegalizerGenericCombinerPass(*PR);
+  initializeAIE2PPostLegalizerGenericCombinerPass(*PR);
+  initializeAIE2PostLegalizerCustomCombinerPass(*PR);
+  initializeAIE2PPostLegalizerCustomCombinerPass(*PR);
+  initializeAIEPostSelectOptimizePass(*PR);
+  initializeAIEPseudoBranchExpansionPass(*PR);
+  initializeAIESubRegConstrainerPass(*PR);
+  initializeAIESuperRegRewriterPass(*PR);
+  initializeAIEWawRegRewriterPass(*PR);
+  initializeAIEOutlineMemoryGEPPass(*PR);
+  initializeAIEFinalizeBundlePass(*PR);
+  initializeAIEMachineAlignmentPass(*PR);
+  initializeAIE1MachineBlockPlacementPass(*PR);
+  initializeAIEBaseHardwareLoopsPass(*PR);
+  initializeAIEBaseAAWrapperPassPass(*PR);
+  initializeAIEBaseExternalAAWrapperPass(*PR);
+  initializeAIESplitInstrBuilderPass(*PR);
+  initializeAIESplitInstrReplacerPass(*PR);
+  initializeAIERegClassConstrainerPass(*PR);
+  initializeReservedRegsLICMPass(*PR);
 }
 
 static Reloc::Model getEffectiveRelocModel(const Triple &TT,

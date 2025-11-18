@@ -341,7 +341,7 @@ CombinerSolution CombineCandidates::getGreedySolution() const {
 
   BitVector Conflicts(NumCombiner);
   CombinerSolution GreedySolution(NumCombiner);
-  CombinerGain ZeroGain;
+  CombinerGain ZeroGain{};
 
   for (unsigned Idx = 0; Idx < Combiners.size(); Idx++) {
     const auto *Combiner = Combiners[Idx];
@@ -736,7 +736,8 @@ CombinerGain CombinerGain::operator-(const CombinerGain &Rhs) const {
 // -------------------------- CombinerSolution -------------------------------//
 
 CombinerSolution::CombinerSolution(const unsigned NumCombiners)
-    : Index(0), Combiners(NumCombiners), ConflictCombiners(NumCombiners) {}
+    : Index(0), Gain({}), Combiners(NumCombiners),
+      ConflictCombiners(NumCombiners) {}
 
 CombinerSolution::CombinerSolution(
     const CombinerSolution &Other, const GenericCombiner *Combiner,

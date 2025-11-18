@@ -7,6 +7,34 @@
 ; (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -O2 -mtriple=aie2p -verify-machineinstrs --issue-limit=1 %s -o - | FileCheck %s
 
+define <8 x i32> @test_shuffle_vector_to_concat_vector_8x32_v4x32(<4 x i32> noundef %a, <4 x i32> noundef %b) {
+; CHECK-LABEL: test_shuffle_vector_to_concat_vector_8x32_v4x32:
+; CHECK:       // %bb.0: // %entry
+; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
+; CHECK-NEXT:    mova r0, #48 // Delay Slot 5
+; CHECK-NEXT:    mova r16, #15 // Delay Slot 4
+; CHECK-NEXT:    vshift x0, x0, x4, r0 // Delay Slot 3
+; CHECK-NEXT:    vsel.32 x0, x0, x2, r16 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %shuffle = shufflevector <4 x i32> %a, <4 x i32> %b, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+  ret <8 x i32> %shuffle
+}
+
+define <16 x i16> @test_shuffle_vector_to_concat_vector_16x16_v8x16(<8 x i16> noundef %a, <8 x i16> noundef %b) {
+; CHECK-LABEL: test_shuffle_vector_to_concat_vector_16x16_v8x16:
+; CHECK:       // %bb.0: // %entry
+; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
+; CHECK-NEXT:    mova r0, #48 // Delay Slot 5
+; CHECK-NEXT:    mova r16, #15 // Delay Slot 4
+; CHECK-NEXT:    vshift x0, x0, x4, r0 // Delay Slot 3
+; CHECK-NEXT:    vsel.32 x0, x0, x2, r16 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+  ret <16 x i16> %shuffle
+}
+
 define <16 x i32> @test_shuffle_vector_to_concat_vector(<8 x i32> noundef %a, <8 x i32> noundef %b) {
 ; CHECK-LABEL: test_shuffle_vector_to_concat_vector:
 ; CHECK:       // %bb.0: // %entry
@@ -930,24 +958,24 @@ define <16 x i32> @shuffle_concat_extracted_subvectors_numSubvecs_not_powerOf2_n
 define <64 x i8> @shuffle_concat_extracted_subvectors_exceptions_not_contiguous_no_combine(<8 x i64> %a, <8 x i64> %b) {
 ; CHECK-LABEL: shuffle_concat_extracted_subvectors_exceptions_not_contiguous_no_combine:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    vlda bmll0, [sp, #-64]
-; CHECK-NEXT:    vlda bmll1, [sp, #-128]
+; CHECK-NEXT:    vlda bmll0, [sp, #-64]; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    mov p0, sp
+; CHECK-NEXT:    padda [p0], #-64
+; CHECK-NEXT:    vlda bmll1, [p0, #-64]
 ; CHECK-NEXT:    vmov x0, bmll0
-; CHECK-NEXT:    vmov x2, bmll1
-; CHECK-NEXT:    vextract.64 r3:r2, x2, #1, vaddsign1
-; CHECK-NEXT:    vextract.64 r5:r4, x2, #2, vaddsign1
-; CHECK-NEXT:    vextract.64 r7:r6, x2, #3, vaddsign1
+; CHECK-NEXT:    vextract.64 r1:r0, x0, #0, vaddsign1
 ; CHECK-NEXT:    vextract.64 r17:r16, x0, #1, vaddsign1
 ; CHECK-NEXT:    vextract.64 r19:r18, x0, #2, vaddsign1
 ; CHECK-NEXT:    vextract.64 r21:r20, x0, #3, vaddsign1
-; CHECK-NEXT:    vextract.64 r1:r0, x0, #0, vaddsign1
 ; CHECK-NEXT:    vextract.64 r23:r22, x0, #4, vaddsign1
+; CHECK-NEXT:    vmov x2, bmll1
 ; CHECK-NEXT:    vpush.hi.64 x0, x0, r1:r0
+; CHECK-NEXT:    vextract.64 r5:r4, x2, #2, vaddsign1
+; CHECK-NEXT:    vextract.64 r3:r2, x2, #1, vaddsign1
+; CHECK-NEXT:    vextract.64 r7:r6, x2, #3, vaddsign1
 ; CHECK-NEXT:    vpush.hi.64 x0, x0, r3:r2
 ; CHECK-NEXT:    vpush.hi.64 x0, x0, r5:r4
 ; CHECK-NEXT:    vpush.hi.64 x0, x0, r7:r6

@@ -32,7 +32,7 @@ public:
   unsigned getReturnOpcode() const override;
   unsigned getCallOpcode(const MachineFunction &CallerF, bool IsIndirect,
                          bool IsTailCall) const override;
-  unsigned getNopOpcode(size_t Size = 0) const override;
+  unsigned getNopOpcode() const override;
   unsigned getMvSclOpcode() const override;
   unsigned getAddrIntrinsic2D() const override;
   unsigned getAddrIntrinsic3D() const override;
@@ -46,10 +46,8 @@ public:
   unsigned getConstantMovOpcode(MachineRegisterInfo &MRI, unsigned int Reg,
                                 APInt &Val) const override;
   unsigned getScalarMovOpcode(Register DstReg, Register SrcReg) const override;
-  unsigned getMvScl2MS(unsigned ConstTLastVal) const override;
-  unsigned getMvNBScl2MS(unsigned ConstTLastVal) const override;
-  unsigned getMvScl2MSTlastRegOpcode() const override;
-  unsigned getMvNBScl2MSTlastRegOpcode() const override;
+  unsigned getMoveToMSOpcode(MachineInstr &I,
+                             unsigned ConstTLastVal) const override;
   Register getSSStatusReg() const override;
   Register getMSStatusReg() const override;
   Register getPackSignCReg() const override;
@@ -173,15 +171,13 @@ public:
                            MachineBasicBlock::iterator MBBI, Register SrcReg,
                            bool IsKill, int FrameIndex,
                            const TargetRegisterClass *RC,
-                           const TargetRegisterInfo *TRI,
-                           Register VReg,
+                           const TargetRegisterInfo *TRI, Register VReg,
                            MachineInstr::MIFlag Flags) const override;
 
   void loadRegFromStackSlot(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MBBI, Register DstReg,
                             int FrameIndex, const TargetRegisterClass *RC,
-                            const TargetRegisterInfo *TRI,
-                            Register VReg,
+                            const TargetRegisterInfo *TRI, Register VReg,
                             MachineInstr::MIFlag Flags) const override;
 
   bool expandPostRAPseudo(MachineInstr &MI) const override;
@@ -200,7 +196,8 @@ public:
 
 protected:
   SmallVector<AIEPseudoExpandInfo, 4>
-  getSpillPseudoExpandInfo(const MachineInstr &MI) const override;
+  getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
+                           MachineInstr &MI) const override;
 
   AIERegOffsetSpillInstrInfo
   getRegOffsetSpillInstrInfoFromImmOffset(const unsigned Opcode) const override;

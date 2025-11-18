@@ -65,10 +65,7 @@ unsigned AIE2PInstrInfo::getCallOpcode(const MachineFunction &CallerF,
   return IsIndirect ? AIE2P::PseudoJL_IND : AIE2P::PseudoJL;
 }
 
-unsigned AIE2PInstrInfo::getNopOpcode(size_t Size) const {
-  assert(Size == 0);
-  return AIE2P::NOP;
-}
+unsigned AIE2PInstrInfo::getNopOpcode() const { return AIE2P::NOP; }
 
 unsigned AIE2PInstrInfo::getMvSclOpcode() const {
   return AIE2P::MOV_alu_mv_mv_mv_scl;
@@ -200,6 +197,29 @@ bool AIE2PInstrInfo::verifyGenericInstruction(const MachineInstr &MI,
     return verifySameLaneTypes(MI, ErrInfo) &&
            isLegalTypeToPad(MRI.getType(MI.getOperand(0).getReg()), &ErrInfo) &&
            isLegalTypeToUnpad(MRI.getType(MI.getOperand(1).getReg()), &ErrInfo);
+  case AIE2P::G_AIE_ADD_VECTOR_ELT_HI: {
+    const LLT DstTy = MRI.getType(MI.getOperand(0).getReg());
+    const LLT SrcTy = MRI.getType(MI.getOperand(2).getReg());
+    // This operation is only supported on the basic vector length
+    if (DstTy.getSizeInBits() != AIE2PInstrInfo::getBasicVectorBitSize()) {
+      ErrInfo = "Operation is only legal for 512-bit vector destinations";
+      return false;
+    }
+    // This operation only supports 32-/64-bit scalar operands
+    if (!(MRI.getType(MI.getOperand(2).getReg()) == LLT::scalar(32) ||
+          MRI.getType(MI.getOperand(2).getReg()) == LLT::scalar(64))) {
+      ErrInfo = "Expected 32/64bit scalar source";
+      return false;
+    }
+
+    // Element types >= 32-bit must match scalar size (8/16-bit scalars are
+    // extended to 32-bit)
+    if (DstTy.getScalarSizeInBits() >= 32 && DstTy.getScalarType() != SrcTy) {
+      ErrInfo = "Scalar size must match vector element size";
+      return false;
+    }
+    return true;
+  }
   default:
     return true;
   }
@@ -542,6 +562,10 @@ unsigned AIE2PInstrInfo::getOpCode(MachineInstr &I) const {
   }
   case Intrinsic::aie2p_vshuffle_576_bfp16:
     return AIE2P::VSHUFFLE_vec_shuffle_ex;
+  case Intrinsic::aie2p_put_ms:
+    return AIE2P::MOV_st_mMStream_tlast_reg;
+  case Intrinsic::aie2p_put_ms_nb:
+    return AIE2P::MOV_nb_st_mMStream_tlast_reg;
   default:
     llvm_unreachable("Unexpected Intrinsic ID");
   }
@@ -885,6 +909,7 @@ Register AIE2PInstrInfo::isStoreToStackSlot(const MachineInstr &MI,
   case AIE2P::VST_Y_SPILL:
   case AIE2P::VST_E_SPILL:
   case AIE2P::VST_EX_SPILL:
+  case AIE2P::VST_512_COMPOSED_REG_SPILL:
     break;
   }
 
@@ -896,7 +921,7 @@ Register AIE2PInstrInfo::isStoreToStackSlot(const MachineInstr &MI,
   return 0;
 }
 
-// Store a register to a stack slot.  Used in eliminating FrameIndex pseduo-ops.
+// Store a register to a stack slot.  Used in eliminating FrameIndex pseudo-ops.
 void AIE2PInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                          MachineBasicBlock::iterator I,
                                          Register SrcReg, bool IsKill, int FI,
@@ -959,11 +984,14 @@ void AIE2PInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     // Can't spill these directly.  Need to bounce through a GPR.
     MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
     Register ScratchReg = MRI.createVirtualRegister(&AIE2P::eRRegClass);
-    BuildMI(MBB, I, DL, get(AIE2P::MOV_alu_mv_mv_mv_scl), ScratchReg)
+    BuildMI(MBB, I, DL, get(TargetOpcode::COPY), ScratchReg)
         .addReg(SrcReg, getKillRegState(IsKill));
     Opcode = AIE2P::ST_R_SPILL;
     SrcReg = ScratchReg;
     IsKill = true;
+  } else if (regClassMatches(AIE2P::spill_vec512_to_compositeRegClass, RC,
+                             SrcReg)) {
+    Opcode = AIE2P::VST_512_COMPOSED_REG_SPILL;
   } else {
     LLVM_DEBUG(I->dump());
     llvm_unreachable("Can't store this register to stack slot: is it virtual?");
@@ -980,14 +1008,11 @@ void AIE2PInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
       .addMemOperand(CreateMMO(FI));
 }
 
-// Load a register to a stack slot.  Used in eliminating FrameIndex pseduo-ops.
-void AIE2PInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
-                                          MachineBasicBlock::iterator I,
-                                          Register DstReg, int FI,
-                                          const TargetRegisterClass *RC,
-                                          const TargetRegisterInfo *TRI,
-                                          Register VReg,
-                                          MachineInstr::MIFlag Flags) const {
+// Load a register to a stack slot.  Used in eliminating FrameIndex pseudo-ops.
+void AIE2PInstrInfo::loadRegFromStackSlot(
+    MachineBasicBlock &MBB, MachineBasicBlock::iterator I, Register DstReg,
+    int FI, const TargetRegisterClass *RC, const TargetRegisterInfo *TRI,
+    Register VReg, MachineInstr::MIFlag Flags) const {
   DebugLoc DL;
   if (I != MBB.end())
     DL = I->getDebugLoc();
@@ -1044,10 +1069,15 @@ void AIE2PInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     BuildMI(MBB, I, DL, get(AIE2P::LDA_R_SPILL), Reg)
         .addFrameIndex(FI)
         .addMemOperand(CreateMMO(FI));
-    BuildMI(MBB, I, DL, get(AIE2P::MOV_alu_mv_mv_mv_scl), DstReg)
+    BuildMI(MBB, I, DL, get(TargetOpcode::COPY), DstReg)
         .addReg(Reg, getKillRegState(true));
     return;
+  } else if (regClassMatches(AIE2P::spill_vec512_to_compositeRegClass, RC,
+                             DstReg)) {
+    Opcode = AIE2P::VLDA_512_COMPOSED_REG_SPILL;
   } else {
+    LLVM_DEBUG(std::prev(I)->dump(); I->dump(); std::next(I)->dump();
+               llvm::dbgs() << TRI->getRegClassName(RC));
     llvm_unreachable(
         "Can't load this register from stack slot: is it virtual?");
   }
@@ -1063,7 +1093,8 @@ void AIE2PInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 }
 
 SmallVector<AIEBaseInstrInfo::AIEPseudoExpandInfo, 4>
-AIE2PInstrInfo::getSpillPseudoExpandInfo(const MachineInstr &MI) const {
+AIE2PInstrInfo::getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
+                                         MachineInstr &MI) const {
   if (!MI.isPseudo())
     return {};
 
@@ -1154,6 +1185,11 @@ AIE2PInstrInfo::getSpillPseudoExpandInfo(const MachineInstr &MI) const {
   case AIE2P::VST_EX_SPILL:
     return {{AIE2P::VST_dmx_sts_x_spill, AIE2P::sub_bfp16_x},
             {AIE2P::VST_E_SPILL, AIE2P::sub_bfp16_e}};
+  case AIE2P::VLDA_512_COMPOSED_REG_SPILL:
+    // No expansion needed - this is handled in expandPostRAPseudo() where the
+    // pseudo is directly replaced with native 512-bit load
+    // instructions.
+    return {};
   }
   llvm_unreachable("Un-implemented");
 }
@@ -1236,13 +1272,43 @@ bool AIE2PInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
   MachineBasicBlock &MBB = *MI.getParent();
   switch (MI.getOpcode()) {
   case AIE2P::PseudoMove: {
-    Register Dst = MI.getOperand(0).getReg();
-    Register Src = MI.getOperand(1).getReg();
+    const Register Dst = MI.getOperand(0).getReg();
+    const Register Src = MI.getOperand(1).getReg();
     const unsigned MOVSclOpcode = getScalarMovOpcode(Dst, Src);
     BuildMI(MBB, MI, DL, get(MOVSclOpcode), Dst)
         .addReg(Src, getKillRegState(MI.getOperand(1).isKill()));
     MI.eraseFromParent();
     return true;
+  }
+  case AIE2P::VLDA_512_COMPOSED_REG_SPILL: {
+    unsigned int Opcode;
+    const Register Dst = MI.getOperand(0).getReg();
+    if (AIE2P::VEC512RegClass.contains(Dst)) {
+      Opcode = AIE2P::VLDA_dmx_lda_x_spill;
+    } else if (AIE2P::FIFO512RegClass.contains(Dst)) {
+      Opcode = AIE2P::VLDA_dmx_lda_fifohl_spill;
+    } else if (AIE2P::ACC512RegClass.contains(Dst)) {
+      Opcode = AIE2P::VLDA_dmx_lda_bm_spill;
+    } else {
+      llvm_unreachable("Not a valid register for VLDA_512_COMPOSED_REG_SPILL");
+    }
+    MI.setDesc(get(Opcode));
+    return false;
+  }
+  case AIE2P::VST_512_COMPOSED_REG_SPILL: {
+    unsigned int Opcode;
+    const Register Src = MI.getOperand(0).getReg();
+    if (AIE2P::VEC512RegClass.contains(Src)) {
+      Opcode = AIE2P::VST_dmx_sts_x_spill;
+    } else if (AIE2P::FIFO512RegClass.contains(Src)) {
+      Opcode = AIE2P::VST_dmx_sts_fifohl_spill;
+    } else if (AIE2P::ACC512RegClass.contains(Src)) {
+      Opcode = AIE2P::VST_dmx_sts_bm_spill;
+    } else {
+      llvm_unreachable("Not a valid register for VST_512_COMPOSED_REG_SPILL");
+    }
+    MI.setDesc(get(Opcode));
+    return false;
   }
   }
   return false;
@@ -1763,7 +1829,8 @@ AIE2PInstrInfo::getZOLSupport() const {
   Result.LoopStartOpcode = AIE2P::LoopStart;
   Result.LoopEndOpcode = AIE2P::PseudoLoopEnd;
   Result.SetLoopCountOpcode = AIE2P::ADD_NC_mv_add_ri;
-  Result.SetAddressOpcode = AIE2P::MOVXM;
+  Result.SetLoopStartOpcode = AIE2P::MOVXM;
+  Result.SetLoopEndOpcode = AIE2P::MOVXM;
   // We need at 112 bytes distance from the loop setup to the loop end label,
   // which requires 7 bundles of 16 bytes.
   Result.LoopSetupDistance = 7;
@@ -1907,22 +1974,19 @@ Register AIE2PInstrInfo::getSSStatusReg() const { return AIE2P::srSS0; }
 
 Register AIE2PInstrInfo::getMSStatusReg() const { return AIE2P::srMS0; }
 
-unsigned AIE2PInstrInfo::getMvScl2MSTlastRegOpcode() const {
-  return AIE2P::MOV_st_mMStream_tlast_reg;
-}
-
-unsigned AIE2PInstrInfo::getMvNBScl2MSTlastRegOpcode() const {
-  return AIE2P::MOV_nb_st_mMStream_tlast_reg;
-}
-
-unsigned AIE2PInstrInfo::getMvScl2MS(unsigned ConstTLastVal) const {
-  return (ConstTLastVal == 0) ? AIE2P::MOV_st_mMStream_tlast_imm
-                              : AIE2P::MOV_tlast;
-}
-
-unsigned AIE2PInstrInfo::getMvNBScl2MS(unsigned ConstTLastVal) const {
-  return (ConstTLastVal == 0) ? AIE2P::MOV_nb_st_mMStream_tlast_imm
-                              : AIE2P::MOV_nb_tlast;
+unsigned AIE2PInstrInfo::getMoveToMSOpcode(MachineInstr &I,
+                                           unsigned ConstTLastVal) const {
+  const bool UseTLastImm = (ConstTLastVal == 0);
+  const unsigned IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
+  switch (IntrinsicID) {
+  case Intrinsic::aie2p_put_ms:
+    return UseTLastImm ? AIE2P::MOV_st_mMStream_tlast_imm : AIE2P::MOV_tlast;
+  case Intrinsic::aie2p_put_ms_nb:
+    return UseTLastImm ? AIE2P::MOV_nb_st_mMStream_tlast_imm
+                       : AIE2P::MOV_nb_tlast;
+  default:
+    llvm_unreachable("Unexpected Intrinsic ID");
+  }
 }
 
 Register AIE2PInstrInfo::getPackSignCReg() const { return AIE2P::packSign0; }

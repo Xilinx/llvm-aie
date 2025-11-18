@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
 
 ---
@@ -219,10 +219,10 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:fifo1024 = COPY $lf0
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:fifo512 = COPY [[COPY1]].sub_lo_fifo
-    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY2]], [[COPY]], 0 :: (store (<16 x s32>), align 128)
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:fifo512 = COPY [[COPY1]].sub_hi_fifo
-    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY3]], [[COPY]], 64 :: (store (<16 x s32>) into unknown-address + 64)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:fifo512 = COPY [[COPY1]].sub_hi_fifo
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY2]], [[COPY]], 64 :: (store (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:fifo512 = COPY [[COPY1]].sub_lo_fifo
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY3]], [[COPY]], 0 :: (store (<16 x s32>) into unknown-address + 64)
     %0:ptrregbank(p0) = COPY $p0
     %1:fiforegbank(<32 x s32>) = COPY $lf0
     G_STORE %1(<32 x s32>), %0(p0) :: (store (<32 x s32>))
@@ -241,10 +241,10 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:fifo1024 = COPY $lf0
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:fifo512 = COPY [[COPY1]].sub_lo_fifo
-    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY2]], [[COPY]], 0 :: (store (<32 x s16>), align 128)
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:fifo512 = COPY [[COPY1]].sub_hi_fifo
-    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY3]], [[COPY]], 64 :: (store (<32 x s16>) into unknown-address + 64)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:fifo512 = COPY [[COPY1]].sub_hi_fifo
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY2]], [[COPY]], 64 :: (store (<32 x s16>), align 128)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:fifo512 = COPY [[COPY1]].sub_lo_fifo
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY3]], [[COPY]], 0 :: (store (<32 x s16>) into unknown-address + 64)
     %0:ptrregbank(p0) = COPY $p0
     %1:fiforegbank(<64 x s16>) = COPY $lf0
     G_STORE %1(<64 x s16>), %0(p0) :: (store (<64 x s16>))
@@ -262,10 +262,10 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:fifo1024 = COPY $lf0
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:fifo512 = COPY [[COPY1]].sub_lo_fifo
-    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY2]], [[COPY]], 0 :: (store (<64 x s8>), align 128)
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:fifo512 = COPY [[COPY1]].sub_hi_fifo
-    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY3]], [[COPY]], 64 :: (store (<64 x s8>) into unknown-address + 64)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:fifo512 = COPY [[COPY1]].sub_hi_fifo
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY2]], [[COPY]], 64 :: (store (<64 x s8>), align 128)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:fifo512 = COPY [[COPY1]].sub_lo_fifo
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY3]], [[COPY]], 0 :: (store (<64 x s8>) into unknown-address + 64)
     %0:ptrregbank(p0) = COPY $p0
     %1:fiforegbank(<128 x s8>) = COPY $lf0
     G_STORE %1(<128 x s8>), %0(p0) :: (store (<128 x s8>))
@@ -283,10 +283,10 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec1024 = COPY $y0
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec512 = COPY [[COPY1]].sub_512_lo
-    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY2]], [[COPY]], 0 :: (store (<32 x s16>), align 128)
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:vec512 = COPY [[COPY1]].sub_512_hi
-    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY3]], [[COPY]], 64 :: (store (<32 x s16>) into unknown-address + 64)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec512 = COPY [[COPY1]].sub_512_hi
+    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY2]], [[COPY]], 64 :: (store (<32 x s16>), align 128)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:vec512 = COPY [[COPY1]].sub_512_lo
+    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY3]], [[COPY]], 0 :: (store (<32 x s16>) into unknown-address + 64)
     %0:ptrregbank(p0) = COPY $p0
     %1:vregbank(<64 x s16>) = COPY $y0
     G_STORE %1(<64 x s16>), %0(p0) :: (store (<64 x s16>))
@@ -304,10 +304,10 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec1024 = COPY $y0
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec512 = COPY [[COPY1]].sub_512_lo
-    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY2]], [[COPY]], 0 :: (store (<16 x s32>), align 128)
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:vec512 = COPY [[COPY1]].sub_512_hi
-    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY3]], [[COPY]], 64 :: (store (<16 x s32>) into unknown-address + 64)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec512 = COPY [[COPY1]].sub_512_hi
+    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY2]], [[COPY]], 64 :: (store (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:vec512 = COPY [[COPY1]].sub_512_lo
+    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY3]], [[COPY]], 0 :: (store (<16 x s32>) into unknown-address + 64)
     %0:ptrregbank(p0) = COPY $p0
     %1:vregbank(<32 x s32>) = COPY $y0
     G_STORE %1(<32 x s32>), %0(p0) :: (store (<32 x s32>))
@@ -325,10 +325,10 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec1024 = COPY $y0
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec512 = COPY [[COPY1]].sub_512_lo
-    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY2]], [[COPY]], 0 :: (store (<64 x s8>), align 128)
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:vec512 = COPY [[COPY1]].sub_512_hi
-    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY3]], [[COPY]], 64 :: (store (<64 x s8>) into unknown-address + 64)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec512 = COPY [[COPY1]].sub_512_hi
+    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY2]], [[COPY]], 64 :: (store (<64 x s8>), align 128)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:vec512 = COPY [[COPY1]].sub_512_lo
+    ; CHECK-NEXT: VST_dmx_sts_x_idx_imm [[COPY3]], [[COPY]], 0 :: (store (<64 x s8>) into unknown-address + 64)
     %0:ptrregbank(p0) = COPY $p0
     %1:vregbank(<128 x s8>) = COPY $y0
     G_STORE %1(<128 x s8>), %0(p0) :: (store (<128 x s8>))
@@ -346,10 +346,10 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:acc1024 = COPY $cml0
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_lo
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY2]], [[COPY]], 0 :: (store (<16 x s32>), align 128)
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY3]], [[COPY]], 64 :: (store (<16 x s32>) into unknown-address + 64)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY2]], [[COPY]], 64 :: (store (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_lo
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY3]], [[COPY]], 0 :: (store (<16 x s32>) into unknown-address + 64)
     %0:ptrregbank(p0) = COPY $p0
     %1:accregbank(<32 x s32>) = COPY $cml0
     G_STORE %1(<32 x s32>), %0(p0) :: (store (<32 x s32>))
@@ -367,10 +367,10 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:acc1024 = COPY $cml0
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_lo
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY2]], [[COPY]], 0 :: (store (<8 x s64>), align 128)
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY3]], [[COPY]], 64 :: (store (<8 x s64>) into unknown-address + 64)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY2]], [[COPY]], 64 :: (store (<8 x s64>), align 128)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_lo
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY3]], [[COPY]], 0 :: (store (<8 x s64>) into unknown-address + 64)
     %0:ptrregbank(p0) = COPY $p0
     %1:accregbank(<16 x s64>) = COPY $cml0
     G_STORE %1(<16 x s64>), %0(p0) :: (store (<16 x s64>))
@@ -388,14 +388,14 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:acc2048 = COPY $dm0
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_lo
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY2]], [[COPY]], 0 :: (store (<16 x s32>), align 256)
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY3]], [[COPY]], 64 :: (store (<16 x s32>) into unknown-address + 64)
-    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_1024_acc_hi_then_sub_512_acc_lo
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY4]], [[COPY]], 128 :: (store (<16 x s32>) into unknown-address + 128, align 128)
-    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_1024_acc_hi_then_sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY5]], [[COPY]], 192 :: (store (<16 x s32>) into unknown-address + 192)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_1024_acc_hi_then_sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY2]], [[COPY]], 192 :: (store (<16 x s32>), align 256)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_1024_acc_hi_then_sub_512_acc_lo
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY3]], [[COPY]], 128 :: (store (<16 x s32>) into unknown-address + 64)
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY4]], [[COPY]], 64 :: (store (<16 x s32>) into unknown-address + 128, align 128)
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_lo
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY5]], [[COPY]], 0 :: (store (<16 x s32>) into unknown-address + 192)
     %0:ptrregbank(p0) = COPY $p0
     %1:accregbank(<64 x s32>) = COPY $dm0
     G_STORE %1(<64 x s32>), %0(p0) :: (store (<64 x s32>))
@@ -413,14 +413,14 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:acc2048 = COPY $dm0
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_lo
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY2]], [[COPY]], 0 :: (store (<8 x s64>), align 256)
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY3]], [[COPY]], 64 :: (store (<8 x s64>) into unknown-address + 64)
-    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_1024_acc_hi_then_sub_512_acc_lo
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY4]], [[COPY]], 128 :: (store (<8 x s64>) into unknown-address + 128, align 128)
-    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_1024_acc_hi_then_sub_512_acc_hi
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY5]], [[COPY]], 192 :: (store (<8 x s64>) into unknown-address + 192)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_1024_acc_hi_then_sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY2]], [[COPY]], 192 :: (store (<8 x s64>), align 256)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_1024_acc_hi_then_sub_512_acc_lo
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY3]], [[COPY]], 128 :: (store (<8 x s64>) into unknown-address + 64)
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_hi
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY4]], [[COPY]], 64 :: (store (<8 x s64>) into unknown-address + 128, align 128)
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:acc512 = COPY [[COPY1]].sub_512_acc_lo
+    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY5]], [[COPY]], 0 :: (store (<8 x s64>) into unknown-address + 192)
     %0:ptrregbank(p0) = COPY $p0
     %1:accregbank(<32 x s64>) = COPY $dm0
     G_STORE %1(<32 x s64>), %0(p0) :: (store (<32 x s64>))

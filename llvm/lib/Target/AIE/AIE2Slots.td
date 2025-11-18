@@ -59,6 +59,7 @@ let Namespace = "AIE2" in
   // 64 bit one. 
   def nop_slot     : InstSlot<"Nop", 1> {
     let FieldToFind = "nop";
+    let Artificial = true;
   }
 }
 

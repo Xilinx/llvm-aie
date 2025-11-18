@@ -14,6 +14,8 @@
 
 #include "AIEBasePipelinerLoopInfo.h"
 #include "AIEBaseInstrInfo.h"
+#include "AIELoopClass.h"
+#include "AIESlotStatistics.h"
 #include "Utils/AIELoopUtils.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
@@ -647,7 +649,9 @@ class ZeroOverheadLoop : public AIEBasePipelinerLoopInfo {
   MachineInstr *DefTripCount;
   MachineBasicBlock *LoopStartBlock;
 
-  // Decide whether the postpipeliner may do a better job
+  // Decide whether the postpipeliner may do a better job,
+  // A priori, or after scheduling
+  bool preferPostPipeliner();
   bool preferPostPipeliner(SMSchedule &SMS);
 
 public:
@@ -664,6 +668,23 @@ public:
 
   bool shouldUseSchedule(SwingSchedulerDAG &SSD, SMSchedule &SMS) override;
 };
+
+static const std::set<int> RejectedLoopClasses{1000};
+
+bool ZeroOverheadLoop::preferPostPipeliner() {
+  AIE::SlotStatistics Stats = AIE::computeSlotStatistics(*LoopBlock, &TII);
+  int LoopClass = classifyLoop(Stats);
+  LLVM_DEBUG(dbgs() << "Stats="; Stats.dumpShort();
+             dbgs() << format("\nLoopClass=%d", LoopClass));
+
+  if (RejectedLoopClasses.count(LoopClass)) {
+    LLVM_DEBUG(dbgs() << format("PLI: Leaving loopclass %d for PostPipeliner\n",
+                                LoopClass));
+    return true;
+  }
+
+  return false;
+}
 
 ZeroOverheadLoop::Assessment ZeroOverheadLoop::accept(MachineInstr *EndLoop) {
   if (!MinTripCount) {
@@ -716,6 +737,10 @@ ZeroOverheadLoop::Assessment ZeroOverheadLoop::accept(MachineInstr *EndLoop) {
   if (TII.isIConst(DefTripCount->getOpcode())) {
     int64_t InitVal = DefTripCount->getOperand(1).getImm();
     setMinTripCount(InitVal);
+  }
+
+  if (preferPostPipeliner()) {
+    return Assessment::PostPipelinerCandidate;
   }
 
   LLVM_DEBUG(dbgs() << "Loop accepted\n");
@@ -853,7 +878,6 @@ createAIEBasePipelinerLoopInfo(MachineInstr *EndLoop,
                                const AIEBaseInstrInfo &TII) {
   LLVM_DEBUG(dbgs() << "PLI: ----START LOOP----\n");
   LLVM_DEBUG(dbgs() << "  Trying DownCountLoop\n");
-
   DownCountLoop DCL(EndLoop, TII);
   auto Outcome = DCL.accept(EndLoop);
   if (Outcome == AIEBasePipelinerLoopInfo::Assessment::Accept) {

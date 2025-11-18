@@ -56,16 +56,12 @@ public:
   bool select(MachineInstr &I) override;
   bool selectCascadeStreamInsn(MachineInstr &I, MachineRegisterInfo &MRI,
                                bool isWrite);
-  bool selectG_AIE_ADD_VECTOR_ELT_HI(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_BRINDIRECT(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_JUMP_TABLE(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectG_CONSTANT(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_GLOBAL_VALUE(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_LOAD(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectG_SEXT_INREG(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_STORE(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectGetControlRegister(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectGetCoreID(MachineInstr &MI, MachineRegisterInfo &MRI);
   bool selectReadTM(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectSetControlRegister(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVEXTRACT(MachineInstr &I, MachineRegisterInfo &MRI);
@@ -210,24 +206,10 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
   case G_BITCAST:
     I.setDesc(TII.get(COPY));
     return selectCopy(I, MRI);
-  case G_TRUNC: {
-    Register SrcReg = I.getOperand(1).getReg();
-    LLT SrcTy = MRI.getType(SrcReg);
-    unsigned Size = SrcTy.getSizeInBits();
-    // G_TRUNC S32 <- S64
-    if (Size == 64) {
-      Register DstReg = I.getOperand(0).getReg();
-      MachineInstrBuilder MI = MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {})
-                                   .addReg(SrcReg, 0, AIE2::sub_l_even);
-      I.eraseFromParent();
-      return selectCopy(*MI.getInstr(), MRI);
-    } else {
-      I.setDesc(TII.get(COPY));
-      return selectCopy(I, MRI);
-    }
-  }
+  case G_TRUNC:
+    return selectG_TRUNC(I, MRI, AIE2::sub_l_even);
   case G_SEXT_INREG:
-    return selectG_SEXT_INREG(I, MRI);
+    return selectG_SEXT_INREG(I, MRI, {AIE2::EXTENDs8, AIE2::EXTENDs16});
   case G_BRCOND:
     return selectG_BRCOND(I, MRI);
   case G_BRINDIRECT:
@@ -314,7 +296,7 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
     case Intrinsic::aie2_add_3d:
       return selectAddrInsn(MIB, I, MRI);
     case Intrinsic::aie2_get_coreid:
-      return selectGetCoreID(I, MRI);
+      return selectGetCoreID(I, MRI, AIE2::CORE_ID);
 
     case Intrinsic::aie2_extract_I128_I512:
       return selectExtractI128(I, I.getOperand(0).getReg(),
@@ -431,8 +413,6 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
     return selectG_STORE(I, MRI);
   case G_UNMERGE_VALUES:
     return selectG_UNMERGE_VALUES(MIB, I, MRI);
-  case AIE2::G_AIE_ADD_VECTOR_ELT_HI:
-    return selectG_AIE_ADD_VECTOR_ELT_HI(I, MRI);
   case AIE2::G_AIE_OFFSET_STORE:
   case AIE2::G_AIE_POSTINC_STORE:
   case AIE2::G_AIE_POSTINC_2D_STORE:
@@ -488,42 +468,6 @@ bool AIE2InstructionSelector::selectStartLoop(MachineInstr &I,
   return constrainSelectedInstRegOperands(*ADDI, TII, TRI, RBI);
 }
 
-bool AIE2InstructionSelector::selectG_AIE_ADD_VECTOR_ELT_HI(
-    MachineInstr &I, MachineRegisterInfo &MRI) {
-  const Register Dst = I.getOperand(0).getReg();
-  const Register Src = I.getOperand(1).getReg();
-  const Register Value = I.getOperand(2).getReg();
-  const LLT VecEltDstTy = MRI.getType(Dst).getElementType();
-  const TypeSize VecEltDstTySize = VecEltDstTy.getSizeInBits();
-
-  // We assume that we always receive a vector operand and that the vector types
-  // are always true. As of 03/24, this may not be true due to vint64s being
-  // used for accumulators instead.
-  unsigned Opcode;
-  switch (VecEltDstTySize) {
-  case 8:
-    Opcode = AIE2::VPUSH_HI_8;
-    break;
-  case 16:
-    Opcode = AIE2::VPUSH_HI_16;
-    break;
-  case 32:
-    Opcode = AIE2::VPUSH_HI_32;
-    break;
-  case 64:
-    llvm_unreachable("Unexpected accumulator vector in selection of "
-                     "G_AIE_ADD_VECTOR_ELT_HI");
-  default:
-    llvm_unreachable(
-        "Unexpected vector size in selection of G_AIE_ADD_VECTOR_ELT_HI");
-  }
-
-  MachineInstr &MI = *MIB.buildInstr(Opcode, {Dst}, {Src, Value});
-  I.eraseFromParent();
-
-  return constrainSelectedInstRegOperands(MI, TII, TRI, RBI);
-}
-
 bool AIE2InstructionSelector::selectG_BRINDIRECT(MachineInstr &I,
                                                  MachineRegisterInfo &MRI) {
   I.setDesc(TII.get(AIE2::PseudoJ_jump_ind));
@@ -534,32 +478,6 @@ bool AIE2InstructionSelector::selectG_JUMP_TABLE(MachineInstr &I,
                                                  MachineRegisterInfo &MRI) {
   I.setDesc(TII.get(AIE2::MOVXM_lng_cg));
   return constrainSelectedInstRegOperands(I, TII, TRI, RBI);
-}
-
-bool AIE2InstructionSelector::selectG_CONSTANT(MachineInstr &I,
-                                               MachineRegisterInfo &MRI) {
-  // TODO: it isn't easy to rely on TableGen patterns, as there's poor support
-  // for pointer types. If GlobalISel ever get its own pattern language with
-  // pointer types properly supported, we should use it.
-  const Register DstReg = I.getOperand(0).getReg();
-  const LLT Ty = MRI.getType(DstReg);
-  assert((Ty == LLT::pointer(0, 20) || Ty == LLT::scalar(20) ||
-          Ty == LLT::scalar(32)) &&
-         "Only support 20, 32-bit integer and 20-bit pointer constants");
-  const RegisterBank &DstRB = *RBI.getRegBank(DstReg, MRI, TRI);
-  assert((DstRB.getID() == AIE2::PTRRegBankID ||
-          DstRB.getID() == AIE2::MODRegBankID ||
-          DstRB.getID() == AIE2::GPRRegBankID) &&
-         "Expected constants only on GPR, MOD and PTR register banks");
-
-  APInt Imm = I.getOperand(1).getCImm()->getValue();
-  auto OpCode = TII.getConstantMovOpcode(MRI, DstReg, Imm);
-  MachineInstr &MI = *MIB.buildInstr(OpCode, {DstReg}, {})
-                          .addImm(Imm.getSExtValue())
-                          .getInstr();
-
-  I.eraseFromParent();
-  return constrainSelectedInstRegOperands(MI, TII, TRI, RBI);
 }
 
 bool AIE2InstructionSelector::selectG_GLOBAL_VALUE(MachineInstr &I,
@@ -611,32 +529,6 @@ bool AIE2InstructionSelector::selectG_LOAD(MachineInstr &I,
   }
 
   return selectImpl(I, *CoverageInfo);
-}
-
-bool AIE2InstructionSelector::selectG_SEXT_INREG(MachineInstr &I,
-                                                 MachineRegisterInfo &MRI) {
-  Register DstReg = I.getOperand(0).getReg();
-  Register SrcReg = I.getOperand(1).getReg();
-
-  const RegisterBank *DstRB = RBI.getRegBank(DstReg, MRI, TRI);
-  const RegisterBank *SrcRB = RBI.getRegBank(SrcReg, MRI, TRI);
-
-  // We only support sign-extension on GPRs
-  if (DstRB->getID() != SrcRB->getID() || DstRB->getID() != AIE2::GPRRegBankID)
-    return false;
-
-  int64_t Imm = I.getOperand(2).getImm();
-  MachineInstrBuilder MI;
-  if (Imm == 8) {
-    MI = MIB.buildInstr(AIE2::EXTENDs8, {DstReg}, {SrcReg});
-  } else if (Imm == 16) {
-    MI = MIB.buildInstr(AIE2::EXTENDs16, {DstReg}, {SrcReg});
-  } else {
-    llvm_unreachable("Cannot handle type in selectG_SEXT_INREG");
-  }
-
-  I.eraseFromParent();
-  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
 }
 
 bool AIE2InstructionSelector::selectG_STORE(MachineInstr &I,
@@ -704,21 +596,6 @@ bool AIE2InstructionSelector::selectG_STORE(MachineInstr &I,
     SplitVectorStore512Bits(Higher512Bits.getReg(0), 64, MRI, I, 4);
     SplitVectorStore512Bits(Lower512Bits.getReg(0), 0, MRI, I, 4);
   } else {
-    return false;
-  }
-
-  I.eraseFromParent();
-  return true;
-}
-
-bool AIE2InstructionSelector::selectGetCoreID(MachineInstr &I,
-                                              MachineRegisterInfo &MRI) {
-
-  Register DstReg = I.getOperand(0).getReg();
-
-  auto CopyInstr =
-      MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {}).addReg(AIE2::CORE_ID);
-  if (!selectCopy(*CopyInstr, MRI)) {
     return false;
   }
 

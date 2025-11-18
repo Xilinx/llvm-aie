@@ -16,9 +16,9 @@
 #include "AIEPtrModOptimizer.h"
 #include "AIE.h"
 #include "AIEBaseInstrInfo.h"
+#include "AIEDataDependenceHelper.h"
 #include "AIEGlobalCombiner.h"
 #include "AIEGlobalCombinerPtrMods.h"
-#include "AIEInterBlockScheduling.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/GlobalISel/CSEInfo.h"
 #include "llvm/CodeGen/MachineDominators.h"
@@ -60,7 +60,9 @@ bool AIEPtrModOptimizer::runOnMachineFunction(MachineFunction &MF) {
 
   // To build the edges in the DAG, the reserved Registers have to be freezed
   MRI.freezeReservedRegs();
-  AIE::DataDependenceHelper DAG(Context, /*AddMutators=*/false);
+  const bool AddMutators = false;
+  const bool ExactLatencies = false;
+  AIE::DataDependenceHelper DAG(Context, AddMutators, ExactLatencies);
 
   // Fixme: these combiners should be provided by tablegen
   std::vector<const AIE::GenericCombiner *> Combiners;

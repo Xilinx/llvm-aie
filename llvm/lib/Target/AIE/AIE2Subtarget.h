@@ -74,12 +74,6 @@ public:
     return AIEBaseSubtarget::getCriticalPathLimitImpl();
   }
 
-  CodeGenOptLevel getOptLevelToEnablePostRAScheduler() const override {
-    // AIEngine V2 hack: we currently rely on the post-RA scheduler to insert
-    // NoOps for correcteness, make sure it runs even when the opt level is -O0.
-    return CodeGenOptLevel::None;
-  }
-
   void overrideSchedPolicy(MachineSchedPolicy &Policy,
                            unsigned NumRegionInstrs) const override {
     AIEBaseSubtarget::overrideSchedPolicyBase(Policy, NumRegionInstrs);

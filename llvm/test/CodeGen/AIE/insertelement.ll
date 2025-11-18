@@ -381,8 +381,8 @@ define <128 x i8> @insert_v128i8_dyn(<128 x i8> %v, i8 %e, i32 %idx) nounwind {
 ; AIE2P-NEXT:    and r1, r1, r2
 ; AIE2P-NEXT:    mov dj0, r1
 ; AIE2P-NEXT:    padda [p0], #-128
-; AIE2P-NEXT:    vst x6, [p0, #0]
 ; AIE2P-NEXT:    vst x7, [p0, #64]
+; AIE2P-NEXT:    vst x6, [p0, #0]
 ; AIE2P-NEXT:    st.s8 r0, [p0, dj0]
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
@@ -390,8 +390,8 @@ define <128 x i8> @insert_v128i8_dyn(<128 x i8> %v, i8 %e, i32 %idx) nounwind {
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
-; AIE2P-NEXT:    vldb x4, [p0, #0]
 ; AIE2P-NEXT:    vldb x5, [p0, #64]
+; AIE2P-NEXT:    vldb x4, [p0, #0]
 ; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    nop // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -467,8 +467,8 @@ define <64 x i16> @insert_v64i16_dyn(<64 x i16> %v, i16 %e, i32 %idx) nounwind {
 ; AIE2P-NEXT:    lshl r1, r1, r2
 ; AIE2P-NEXT:    padda [p0], #-128
 ; AIE2P-NEXT:    mov dj0, r1
-; AIE2P-NEXT:    vst x6, [p0, #0]
 ; AIE2P-NEXT:    vst x7, [p0, #64]
+; AIE2P-NEXT:    vst x6, [p0, #0]
 ; AIE2P-NEXT:    st.s16 r0, [p0, dj0]
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
@@ -476,8 +476,8 @@ define <64 x i16> @insert_v64i16_dyn(<64 x i16> %v, i16 %e, i32 %idx) nounwind {
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
-; AIE2P-NEXT:    vldb x4, [p0, #0]
 ; AIE2P-NEXT:    vldb x5, [p0, #64]
+; AIE2P-NEXT:    vldb x4, [p0, #0]
 ; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    nop // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -547,11 +547,11 @@ define <32 x i32> @insert_v32i32_dyn(<32 x i32> %v, i32 %e, i32 %idx) nounwind {
 ; AIE2P-NEXT:    lshl r1, r1, r2
 ; AIE2P-NEXT:    padda [p0], #-128
 ; AIE2P-NEXT:    mov dj0, r1
-; AIE2P-NEXT:    vst x6, [p0, #0]
 ; AIE2P-NEXT:    vst x7, [p0, #64]
+; AIE2P-NEXT:    vst x6, [p0, #0]
 ; AIE2P-NEXT:    st r0, [p0, dj0]
-; AIE2P-NEXT:    vldb x4, [p0, #0]
 ; AIE2P-NEXT:    vldb x5, [p0, #64]
+; AIE2P-NEXT:    vldb x4, [p0, #0]
 ; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    nop // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4

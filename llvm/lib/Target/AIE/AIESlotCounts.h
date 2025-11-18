@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 // This defines a class that can be used to tally up the slots required for
@@ -34,7 +34,16 @@ public:
   SlotCounts &operator=(const SlotCounts &Rhs) = default;
 
   // Compute the number of required cycles
-  int max();
+  int max() const;
+
+  // Compute the index of the max element
+  int maxIndex() const;
+
+  // Compute the total of the counts
+  int totals() const;
+
+  // Compute L1 distance to another SlotCounts
+  int distance(const SlotCounts &Other) const;
 
   // Add slot counts of Other to this
   SlotCounts &operator+=(const SlotCounts &Other);
@@ -42,11 +51,32 @@ public:
   // By-value addition.
   SlotCounts operator+(const SlotCounts &Other) const;
 
+  // Subtract slot counts of Other from this
+  SlotCounts &operator-=(const SlotCounts &Other);
+
+  // By-value subtraction.
+  SlotCounts operator-(const SlotCounts &Other) const;
+
+  // Multiply all elements with Scalar
+  SlotCounts &operator*=(int Scalar);
+
+  // By-value scalar multiplication
+  SlotCounts operator*(int Scalar) const;
+
   // Indexing
-  const int &operator[](int I) const { return Counts[I]; };
+  int &operator[](int I);
+  const int &operator[](int I) const;
+
+  // Retrieve value
+  int at(int I) const { return I >= Size ? 0 : Counts[I]; }
 
   int size() const { return Size; }
 };
+
+// Symmetric version of scalar multiplication
+
+SlotCounts operator*(int Scalar, const SlotCounts &Slots);
+
 } // namespace AIE
 
 raw_ostream &operator<<(raw_ostream &OS, const AIE::SlotCounts &Val);

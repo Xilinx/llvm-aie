@@ -69,9 +69,14 @@ void elongateBundle(AIE::MachineBundle &Bundle,
   MachineBasicBlock &MBB = *Bundle.getInstrs()[0]->getParent();
   const AIEBaseInstrInfo *TII = getTII(*MBB.getParent());
 
-  // Clear the NOPBundle
-  if (Bundle.isNOPBundle())
-    Bundle.clearBundle();
+  // Most nop bundles contain the 16-bit nop, which can not be represented
+  // in other formats. Therefore, we remove all nops both from the bundle and
+  // from the basic block, reconstituting a fresh nop bundle from the format's
+  // native nops.
+  if (Bundle.isNOPBundle()) {
+    Bundle.clearMBBBundle();
+    Bundle.clear();
+  }
   // Run over the slots of the format and either insert the occupying
   // instruction or a nop. Reapply bundling.
   for (MCSlotKind Slot : ElongatedFormat.getSlots()) {

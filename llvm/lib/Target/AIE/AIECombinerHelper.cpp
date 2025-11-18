@@ -1048,56 +1048,33 @@ void llvm::applyGlobalValOffset(MachineInstr &MI, MachineRegisterInfo &MRI,
       B.buildConstant(LLT::scalar(20), -static_cast<int64_t>(Offset)));
 }
 
-namespace {
-bool feedsAnyExtBcstUse(MachineInstr &MI, MachineRegisterInfo &MRI,
-                        const AIEBaseInstrInfo &TII) {
-  assert(MI.getOpcode() == TargetOpcode::G_EXTRACT_VECTOR_ELT);
-
-  auto GetSingleNonDbgUse = [&MRI](MachineInstr &MI,
-                                   unsigned UseMIOpcode) -> MachineInstr * {
-    const Register Dst = MI.getOperand(0).getReg();
-    if (!MRI.hasOneNonDBGUse(Dst))
-      return nullptr;
-
-    MachineInstr *UseMI = &*MRI.use_nodbg_instructions(Dst).begin();
-    if (UseMI->getOpcode() != UseMIOpcode)
-      return nullptr;
-    return UseMI;
-  };
-
-  auto *AnyExtMI = GetSingleNonDbgUse(MI, TargetOpcode::G_ANYEXT);
-  if (!AnyExtMI)
-    return false;
-
-  auto *BcstMI =
-      GetSingleNonDbgUse(*AnyExtMI, TII.getGenericBroadcastVectorOpcode());
-  return (bool)BcstMI;
-}
-} // namespace
-
 bool llvm::matchExtractVecEltAndExt(
-    MachineInstr &MI, MachineRegisterInfo &MRI, const AIEBaseInstrInfo &TII,
-    std::tuple<MachineInstr *, bool, bool> &MatchInfo) {
+    MachineInstr &MI, MachineRegisterInfo &MRI,
+    std::pair<MachineInstr *, bool> &MatchInfo) {
+
   assert(MI.getOpcode() == TargetOpcode::G_EXTRACT_VECTOR_ELT &&
          "Expected a extract_vector_elt");
   Register DstReg = MI.getOperand(0).getReg();
+  const LLT S8 = LLT::scalar(8);
+  const LLT S16 = LLT::scalar(16);
   LLT SrcVecTy = MRI.getType(MI.getOperand(1).getReg());
   // Extracts from vectors <= 64-bits are lowered to bit-arithmetic in
   // legalization
   if (SrcVecTy.getSizeInBits() <= 64)
     return false;
+  LLT SrcEltTy = SrcVecTy.getElementType();
+  if (SrcEltTy != S8 && SrcEltTy != S16)
+    return false;
   if (!MRI.hasOneNonDBGUse(DstReg))
     return false;
-
-  const bool BuildAssert = !feedsAnyExtBcstUse(MI, MRI, TII);
   MachineInstr *ExtMI = &*MRI.use_instr_nodbg_begin(DstReg);
   switch (ExtMI->getOpcode()) {
   case TargetOpcode::G_ANYEXT:
   case TargetOpcode::G_SEXT:
-    MatchInfo = {ExtMI, /*SEXT=*/true, BuildAssert};
+    MatchInfo = std::make_pair(ExtMI, 1);
     return true;
   case TargetOpcode::G_ZEXT:
-    MatchInfo = {ExtMI, /*SEXT=*/false, BuildAssert};
+    MatchInfo = std::make_pair(ExtMI, 0);
     return true;
   default:
     return false;
@@ -1107,10 +1084,9 @@ bool llvm::matchExtractVecEltAndExt(
 
 void llvm::applyExtractVecEltAndExt(
     MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B,
-    std::tuple<MachineInstr *, bool, bool> &MatchInfo) {
+    std::pair<MachineInstr *, bool> &MatchInfo) {
   B.setInstrAndDebugLoc(MI);
-  auto [MatchMI, IsSignedExt, BuildAssert] = MatchInfo;
-
+  auto [MatchMI, IsSignedExt] = MatchInfo;
   const Register ExtractDstReg = MI.getOperand(0).getReg();
   const LLT ExtractDstTy = MRI.getType(ExtractDstReg);
   const Register ExtendDstReg = MatchMI->getOperand(0).getReg();
@@ -1121,23 +1097,19 @@ void llvm::applyExtractVecEltAndExt(
   const AIEBaseInstrInfo &AIETII = (const AIEBaseInstrInfo &)B.getTII();
   const unsigned Opcode =
       AIETII.getGenericExtractVectorEltOpcode(/*sign ext*/ IsSignedExt);
-
-  const Register ExtractElt32BitDst =
-      BuildAssert ? MRI.createGenericVirtualRegister(S32) : ExtendDstReg;
+  const Register ExtractElt32BitDst = MRI.createGenericVirtualRegister(S32);
   B.buildInstr(Opcode, {ExtractElt32BitDst}, {SrcReg0, SrcReg1});
 
-  if (BuildAssert) {
-    const unsigned AssertOpcode =
-        IsSignedExt ? TargetOpcode::G_ASSERT_SEXT : TargetOpcode::G_ASSERT_ZEXT;
-    if (ExtendDstTy == LLT::scalar(32)) {
-      B.buildAssertInstr(AssertOpcode, ExtendDstReg, ExtractElt32BitDst,
-                         ExtractDstTy.getSizeInBits());
-    } else {
-      const Register Assert32BitDst = MRI.createGenericVirtualRegister(S32);
-      B.buildAssertInstr(AssertOpcode, Assert32BitDst, ExtractElt32BitDst,
-                         ExtractDstTy.getSizeInBits());
-      B.buildExtOrTrunc(MatchMI->getOpcode(), ExtendDstReg, Assert32BitDst);
-    }
+  const unsigned AssertOpcode =
+      IsSignedExt ? TargetOpcode::G_ASSERT_SEXT : TargetOpcode::G_ASSERT_ZEXT;
+  if (ExtendDstTy == LLT::scalar(32)) {
+    B.buildAssertInstr(AssertOpcode, ExtendDstReg, ExtractElt32BitDst,
+                       ExtractDstTy.getSizeInBits());
+  } else {
+    const Register Assert32BitDst = MRI.createGenericVirtualRegister(S32);
+    B.buildAssertInstr(AssertOpcode, Assert32BitDst, ExtractElt32BitDst,
+                       ExtractDstTy.getSizeInBits());
+    B.buildExtOrTrunc(MatchMI->getOpcode(), ExtendDstReg, Assert32BitDst);
   }
 
   MI.eraseFromParent();
@@ -3433,7 +3405,8 @@ static bool isUsedByLikelyLegalS20User(MachineRegisterInfo &MRI,
                          UseMI.getOpcode() == TargetOpcode::G_STORE ||
                          UseMI.getOpcode() == TargetOpcode::G_INTRINSIC ||
                          UseMI.getOpcode() ==
-                             TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS;
+                             TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS ||
+                         UseMI.getOpcode() == TargetOpcode::G_INTTOPTR;
                 });
 }
 
@@ -4244,6 +4217,77 @@ bool llvm::matchSequentialStores(GStore &StMI, MachineRegisterInfo &MRI,
       makeStoreDead(ToDeleteMI, B.getTII(), MRI);
       Observer.changedInstr(*ToDeleteMI);
     }
+  };
+
+  return true;
+}
+
+namespace {
+MachineInstr *getBcstFeedByAssertExtVecExtr(MachineInstr &MI,
+                                            MachineRegisterInfo &MRI,
+                                            const AIEBaseInstrInfo &TII) {
+  assert(MI.getOpcode() == TII.getGenericExtractVectorEltOpcode(false) ||
+         MI.getOpcode() == TII.getGenericExtractVectorEltOpcode(true));
+
+  /// Get single NonDebug User of \p MI with the opcode \p UseMIOpcode
+  auto GetSingleNonDbgUser = [&MRI](MachineInstr &MI,
+                                    unsigned UseMIOpcode) -> MachineInstr * {
+    const Register Dst = MI.getOperand(0).getReg();
+    if (!MRI.hasOneNonDBGUse(Dst))
+      // No convexity due to multiple users, skip.
+      return nullptr;
+
+    MachineInstr *UserMI = &*MRI.use_nodbg_instructions(Dst).begin();
+    if (UserMI->getOpcode() != UseMIOpcode)
+      return nullptr; // Did not match Opcode, skip.
+
+    // Found single non debug user with matching opcode.
+    return UserMI;
+  };
+
+  // Find G_ASSERT_[S/Z]EXT
+  MachineInstr *AnyExtMI = nullptr;
+  AnyExtMI = GetSingleNonDbgUser(MI, TargetOpcode::G_ASSERT_SEXT);
+  if (!AnyExtMI)
+    AnyExtMI = GetSingleNonDbgUser(MI, TargetOpcode::G_ASSERT_ZEXT);
+
+  if (!AnyExtMI)
+    // Could not find G_ASSERT_[S/Z]EXT
+    return nullptr;
+
+  MachineInstr *BcstMI =
+      GetSingleNonDbgUser(*AnyExtMI, TII.getGenericBroadcastVectorOpcode());
+  return BcstMI;
+}
+} // namespace
+
+bool llvm::matchExtractVecEltAssertBcst(MachineInstr &MI,
+                                        MachineRegisterInfo &MRI,
+                                        const AIEBaseInstrInfo &TII,
+                                        GISelChangeObserver &Observer,
+                                        BuildFnTy &MatchInfo) {
+  assert((MI.getOpcode() == TII.getGenericExtractVectorEltOpcode(false) ||
+          MI.getOpcode() == TII.getGenericExtractVectorEltOpcode(true)) &&
+         "Expected a extract_vector_elt");
+  const MachineInstr *BcstMI = getBcstFeedByAssertExtVecExtr(MI, MRI, TII);
+  if (!BcstMI)
+    return false;
+
+  MatchInfo = [=, &MI, &MRI, &Observer](MachineIRBuilder &B) {
+    MachineInstr &AssertExt =
+        *MRI.use_nodbg_instructions(MI.getOperand(0).getReg()).begin();
+
+    MachineOperand &VextrDstMO = MI.getOperand(0);
+    Register AssertDst = AssertExt.getOperand(0).getReg();
+
+    // Skip G_ASSERT_[S/Z]EXT
+    Observer.changingInstr(MI);
+    VextrDstMO.setReg(AssertDst);
+    Observer.changedInstr(MI);
+
+    // Remove G_ASSERT_[S/Z]EXT
+    Observer.erasingInstr(AssertExt);
+    AssertExt.removeFromParent();
   };
 
   return true;

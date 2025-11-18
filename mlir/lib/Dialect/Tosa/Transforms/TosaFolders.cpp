@@ -566,7 +566,8 @@ struct TosaFoldConstantTranspose
     if (inputValues.isSplat())
       return failure();
     // Make sure the input is a constant that has a single user.
-    if (!llvm::hasSingleElement(op.getInput1().getDefiningOp()->getUsers()))
+    if (!llvm::hasSingleElement(op.getInput1().getDefiningOp()->getUsers()) &&
+        foldSplatOrSingleUseOnly)
       return failure();
 
     DenseIntElementsAttr permAttr;
@@ -1005,7 +1006,8 @@ struct TosaFoldConstantCast : public TosaFoldConstantBase<CastOp> {
 
     // Only fold splat tensors and those used only once to avoid duplicating
     // them and increasing memory consumption.
-    if (!inputTensor.hasOneUse() && !isa<SplatElementsAttr>(elements)) {
+    if (!inputTensor.hasOneUse() && !isa<SplatElementsAttr>(elements) &&
+        foldSplatOrSingleUseOnly) {
       return rewriter.notifyMatchFailure(
           tosaCast, "Currently, casts will only be folded "
                     "if its input only has a single user or is a splat value.");
@@ -1939,7 +1941,11 @@ DenseElementsAttr tile(DenseElementsAttr inputValues, ShapedType outputType) {
 }
 
 struct TosaFoldConstantTile : public TosaFoldConstantBase<tosa::TileOp> {
-  using TosaFoldConstantBase::TosaFoldConstantBase;
+
+  TosaFoldConstantTile(MLIRContext *ctxt, bool foldSplatOrSingleUseOnly,
+                       int maxSizeToFold)
+      : TosaFoldConstantBase<tosa::TileOp>(ctxt, foldSplatOrSingleUseOnly),
+        maxSizeToFold(maxSizeToFold) {}
 
   LogicalResult matchAndRewrite(tosa::TileOp op,
                                 PatternRewriter &rewriter) const override {
@@ -1958,10 +1964,22 @@ struct TosaFoldConstantTile : public TosaFoldConstantBase<tosa::TileOp> {
         foldSplatOrSingleUseOnly)
       return failure();
 
+    assert(maxSizeToFold >= 0 && "maxSizeToFold should be non-negative");
+    if (maxSizeToFold > 0) {
+      if (!outputType.hasStaticShape())
+        return failure();
+      const int64_t numOfElements = outputType.getNumElements();
+      if (numOfElements * (outputType.getElementTypeBitWidth() / 8) >
+          static_cast<int64_t>(maxSizeToFold))
+        return failure();
+    }
+
     rewriter.replaceOpWithNewOp<tosa::ConstOp>(op, outputType,
                                                tile(inputValues, outputType));
     return success();
   }
+
+  const int maxSizeToFold;
 };
 
 /// Getting the axes position of the element which is located
@@ -2275,7 +2293,8 @@ void mlir::tosa::populateTosaFoldConstantPatterns(
   patterns.add<TosaFoldConstantMatMul>(ctx, options.foldSplatOrSingleUseOnly);
   patterns.add<TosaFoldConstantConcat>(ctx, options.foldSplatOrSingleUseOnly);
   if (options.enableTileFolding)
-    patterns.add<TosaFoldConstantTile>(ctx, options.foldSplatOrSingleUseOnly);
+    patterns.add<TosaFoldConstantTile>(ctx, options.foldSplatOrSingleUseOnly,
+                                       options.maxTileFoldSize);
 }
 
 void mlir::tosa::populateTosaConstantReduction(MLIRContext *ctx,

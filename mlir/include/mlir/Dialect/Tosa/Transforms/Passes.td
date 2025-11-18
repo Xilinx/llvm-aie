@@ -5,6 +5,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 // Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
 //
+// Modifications (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its
+// affiliates
+
 //===----------------------------------------------------------------------===//
 //
 // This file declares the passes for the TOSA Dialect in MLIR.
@@ -36,6 +39,9 @@ def TosaLayerwiseConstantFoldPass : Pass<"tosa-layerwise-constant-fold", "func::
     Option<"enableTileFolding", "enable-tile-folding", "bool",
             /*default=*/"false",
             "Enables folding of tosa.tile operation. May generate bigger constant values.">,
+    Option<"maxTileFoldSize", "max-tile-fold-size", "int",
+            /*default=*/"0",
+            "Maximum size in bytes of the constant to be generated when folding a tosa.tile operation. A value of 0 means no limit.">,
   ];
 }
 

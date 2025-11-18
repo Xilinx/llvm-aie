@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //===----------------------------------------------------------------------===//
@@ -189,8 +189,9 @@ class AIE2PRegisterClass <int size, int align, list<ValueType> regTypes, dag reg
   def mLm : AIE2PScalar64RegisterClass<(add eL)>;
   def mL8m : AIE2PScalar64RegisterClass<(add l8)>;
 
-  class AIE2PVector128RegisterClass<dag reglist> :
-      AIE2PRegisterClass<128, 128, [v16i8, v8i16, v8bf16, v4i32, v4f32], reglist> {
+  class AIE2PVector128RegisterClass<dag reglist>
+      : AIE2PRegisterClass<128, 128, [i128, v16i8, v8i16, v8bf16, v4i32, v4f32],
+                           reglist> {
     let hasCompleteDecoder = 0;
   }
 
@@ -982,6 +983,10 @@ def spill_eM_to_eR : AIE2PScalarRegisterClass<(add eM, eR, eDN)>;
 def spill_eDN_to_eR : AIE2PScalarRegisterClass<(add eDN, eR)>;
 def spill_eDJ_to_eR : AIE2PScalarRegisterClass<(add eDJ, eR, eDN)>;
 def spill_eDC_to_eR : AIE2PScalarRegisterClass<(add eDC, eR)>;
+
+def spill_vec512_to_composite : AIE2PVector512RegisterClass<(add mXm, mBMm, lfh0, lfh1, lfl0, lfl1, sfl, sfh, lfe)> {
+  let ConsiderInPreRAScheduling = false;
+}
 
 def mSRF2IFlags : AIE2PScalarRegisterClass<(add srF2IFlags)>;
 def mCRFPNlfMask : AIE2PScalarRegisterClass<(add crFPNlfMask)>;

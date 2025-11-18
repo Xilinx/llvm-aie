@@ -772,25 +772,44 @@ bool AIELegalizerHelper::legalizeG_EXTRACT_VECTOR_ELT(LegalizerHelper &Helper,
       // Step 3: Select the correct mode for vshuffle. In AIE2P, Mode 8 maps
       // first 128-bits of src1 vector to lsb positions of output. Mode 9 maps
       // the second 128-bits to lsb positions of output.
+      auto GetShuffleModes = [&]() {
+        if (ST.isAIE2P())
+          return std::make_pair(/*Lo*/ 8, /*Hi*/ 9);
+        llvm_unreachable("vshuffle mode value needed for target.");
+      };
+      const auto [ModeLoValue, ModeHiValue] = GetShuffleModes();
+
       const Register ModeReg = MRI.createGenericVirtualRegister(S32);
       auto IdxVal = getIConstantVRegValWithLookThrough(IdxReg, MRI);
+      MachineInstrBuilder ShuffleOrCopyInstr;
       if (!IdxVal) {
-        const Register Mode8Reg = MIRBuilder.buildConstant(S32, 8).getReg(0);
-        const Register Mode9Reg = MIRBuilder.buildConstant(S32, 9).getReg(0);
-        MIRBuilder.buildSelect(ModeReg, IdxReg, Mode9Reg, Mode8Reg);
+        const Register ModeLoReg =
+            MIRBuilder.buildConstant(S32, ModeLoValue).getReg(0);
+        const Register ModeHiReg =
+            MIRBuilder.buildConstant(S32, ModeHiValue).getReg(0);
+        MIRBuilder.buildSelect(ModeReg, IdxReg, ModeHiReg, ModeLoReg);
+        // step 4: Create vshuffle.
+        ShuffleOrCopyInstr =
+            MIRBuilder.buildInstr(II->getGenericShuffleVectorOpcode(), {V64S8},
+                                  {RegSrcPadded, RegUndef, ModeReg});
       } else {
         const unsigned LaneIdx = IdxVal->Value.getZExtValue();
-        MIRBuilder.buildConstant(ModeReg, LaneIdx ? 9 : 8);
+        MIRBuilder.buildConstant(ModeReg, ModeHiValue);
+        // step 4: Create vshuffle. For LaneIdx 0, we don't have to use the
+        // shuffle, padded register itself is enough.
+        if (LaneIdx) {
+          ShuffleOrCopyInstr =
+              MIRBuilder.buildInstr(II->getGenericShuffleVectorOpcode(),
+                                    {V64S8}, {RegSrcPadded, RegUndef, ModeReg});
+        } else {
+          ShuffleOrCopyInstr = MIRBuilder.buildCopy({V64S8}, {RegSrcPadded});
+        }
       }
-      // step 4: Create vshuffle
-      auto ShuffleInstr =
-          MIRBuilder.buildInstr(II->getGenericShuffleVectorOpcode(), {V64S8},
-                                {RegSrcPadded, RegUndef, ModeReg});
 
       const unsigned UnpadOpc = II->getGenericUnpadVectorOpcode();
       // Finally, unpad the 512-bit result to 128-bit
       auto UnpadInstr =
-          MIRBuilder.buildInstr(UnpadOpc, {V16S8}, {ShuffleInstr});
+          MIRBuilder.buildInstr(UnpadOpc, {V16S8}, {ShuffleOrCopyInstr});
       MIRBuilder.buildBitcast(DstReg, {UnpadInstr});
       break;
     }
@@ -1394,12 +1413,6 @@ bool AIELegalizerHelper::legalizeG_FMUL(LegalizerHelper &Helper,
 
   SrcLHS = MIRBuilder.buildAnyExt(S32, SrcLHS).getReg(0);
   SrcRHS = MIRBuilder.buildAnyExt(S32, SrcRHS).getReg(0);
-  SrcLHS = MIRBuilder
-               .buildAssertInstr(TargetOpcode::G_ASSERT_ZEXT, {S32}, SrcLHS, 16)
-               .getReg(0);
-  SrcRHS = MIRBuilder
-               .buildAssertInstr(TargetOpcode::G_ASSERT_ZEXT, {S32}, SrcRHS, 16)
-               .getReg(0);
 
   const LLT BroadcastVecLLT = V32BF16;
   const unsigned BroadcastOpc =
@@ -1416,7 +1429,7 @@ bool AIELegalizerHelper::legalizeG_FMUL(LegalizerHelper &Helper,
 
   const Register IdxReg = MIRBuilder.buildConstant(S32, 0).getReg(0);
   const unsigned ExtractEltOpc =
-      ST.getInstrInfo()->getGenericExtractVectorEltOpcode(/*ZeroExt*/ false);
+      ST.getInstrInfo()->getGenericExtractVectorEltOpcode(/*SignExt=*/false);
   Res = MIRBuilder.buildInstr(ExtractEltOpc, {S32}, {Res, IdxReg}).getReg(0);
   Res = MIRBuilder.buildAssertInstr(TargetOpcode::G_ASSERT_ZEXT, {S32}, Res, 16)
             .getReg(0);
@@ -1560,6 +1573,93 @@ bool AIELegalizerHelper::legalizeG_SELECT(LegalizerHelper &Helper,
   return true;
 }
 
+// Legalize G_CONCAT_VECTORS of two 128-bit vectors into a 256-bit vector.
+// 128-bit vectors are not sub-registers of 256-bit vectors, so we use
+// G_AIE_VSHIFT_RIGHT and G_AIE_VSEL to concatenate them.
+// The algorithm:
+//   1. Pad both 128-bit inputs to 512-bit using G_AIE_PAD_VECTOR_UNDEF
+//   2. Shift the second input 48 bytes to the right using
+//   G_AIE_VSHIFT_RIGHT
+//   3. Use G_AIE_VSEL to select the high 128 bits from shifted and low 128 bits
+//   from first input
+//   4. Extract the 256-bit result using G_AIE_UNPAD_VECTOR
+bool AIELegalizerHelper::legalizeG_CONCAT_VECTORS_128bit(
+    LegalizerHelper &Helper, MachineInstr &MI) const {
+  MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+  const AIEBaseInstrInfo *TII = ST.getInstrInfo();
+
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register Src0 = MI.getOperand(1).getReg();
+  const Register Src1 = MI.getOperand(2).getReg();
+
+  const LLT DstTy = MRI.getType(DstReg);
+  const LLT Src0Ty = MRI.getType(Src0);
+  const LLT Src1Ty = MRI.getType(Src1);
+  (void)Src1Ty; // Suppress unused variable warning
+
+  assert(DstTy.getSizeInBits() == 256 && Src0Ty.getSizeInBits() == 128 &&
+         Src1Ty.getSizeInBits() == 128 &&
+         "Expected concatenation of two 128-bit vectors into 256-bit");
+
+  // Step 1: Pad both 128-bit inputs to 512-bit
+  const LLT Vec512Ty = Src0Ty.multiplyElements(4);
+  const unsigned PadOpc = TII->getGenericPadVectorOpcode();
+
+  const Register Src0_512 =
+      MIRBuilder.buildInstr(PadOpc, {Vec512Ty}, {Src0}).getReg(0);
+  const Register Src1_512 =
+      MIRBuilder.buildInstr(PadOpc, {Vec512Ty}, {Src1}).getReg(0);
+
+  // Step 2: Bitcast to <16 x s32> for G_AIE_VSEL
+  // G_AIE_VSEL's behavior depends on the element type. The select mask "15"
+  // is designed for 32-bit elements, so we must bitcast to <16 x s32> before
+  // using G_AIE_VSEL, then bitcast back to the original element type.
+  const LLT Vec16S32 = LLT::fixed_vector(16, 32);
+  const bool NeedsBitcast = (Vec512Ty.getElementType().getSizeInBits() != 32);
+
+  const Register Src0_512_S32 =
+      NeedsBitcast ? MIRBuilder.buildBitcast(Vec16S32, Src0_512).getReg(0)
+                   : Src0_512;
+  const Register Src1_512_S32 =
+      NeedsBitcast ? MIRBuilder.buildBitcast(Vec16S32, Src1_512).getReg(0)
+                   : Src1_512;
+
+  // Step 3: Shift src1 48 bytes to the right
+  const Register ShiftAmt = MIRBuilder.buildConstant(S32, 48).getReg(0);
+  const Register Undef512_S32 = MIRBuilder.buildUndef(Vec16S32).getReg(0);
+
+  const unsigned VShiftOpc = TII->getGenericVShiftOpcode();
+  const Register Shifted =
+      MIRBuilder
+          .buildInstr(VShiftOpc, {Vec16S32},
+                      {Undef512_S32, Src1_512_S32, ShiftAmt})
+          .getReg(0);
+
+  // Step 4: Use VSEL to select high 128 bits from shifted and low 128 bits from
+  // src0 Select index 15 means: select bits [255:128] from first operand and
+  // [127:0] from second operand (when operating on <16 x s32> vectors)
+  const Register SelIdx = MIRBuilder.buildConstant(S32, 15).getReg(0);
+
+  const unsigned VSelOpc = TII->getGenericVSelOpcode();
+  const Register Result512_S32 =
+      MIRBuilder
+          .buildInstr(VSelOpc, {Vec16S32}, {Shifted, Src0_512_S32, SelIdx})
+          .getReg(0);
+
+  // Step 5: Bitcast back to original element type if needed
+  const Register Result512 =
+      NeedsBitcast ? MIRBuilder.buildBitcast(Vec512Ty, Result512_S32).getReg(0)
+                   : Result512_S32;
+
+  // Step 6: Extract the 256-bit result
+  const unsigned UnpadOpc = TII->getGenericUnpadVectorOpcode();
+  MIRBuilder.buildInstr(UnpadOpc, {DstReg}, {Result512});
+
+  MI.eraseFromParent();
+  return true;
+}
+
 /// Legalize the incoming \p MI G_CONCAT_VECTORS to half the number of inputs,
 /// but at least 2 inputs.
 bool AIELegalizerHelper::legalizeG_CONCAT_VECTORS(LegalizerHelper &Helper,
@@ -1570,6 +1670,13 @@ bool AIELegalizerHelper::legalizeG_CONCAT_VECTORS(LegalizerHelper &Helper,
   assert(DstTy.isVector() && SrcTy.isVector() && "Expected vector types");
   assert(SrcTy.getSizeInBits() >= 128 &&
          "Vectors < 128-bit should be lowered to insert vector elt");
+
+  // Handle the special case of concatenating two 128-bit vectors into 256-bit
+  // for AIE2P (128-bit vectors are not sub-registers of 256-bit vectors)
+  if (ST.isAIE2P() && DstTy.getSizeInBits() == 256 &&
+      SrcTy.getSizeInBits() == 128 && MI.getNumOperands() == 3) {
+    return legalizeG_CONCAT_VECTORS_128bit(Helper, MI);
+  }
 
   // Prevent infinite looping in the Legalizer. The base case should be legal
   // and we should not reach this.

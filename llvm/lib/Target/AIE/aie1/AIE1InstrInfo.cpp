@@ -274,7 +274,8 @@ unsigned getVCMPforPseudoVCMP(unsigned opcode) {
 }
 
 SmallVector<AIEBaseInstrInfo::AIEPseudoExpandInfo, 4>
-AIEInstrInfo::getSpillPseudoExpandInfo(const MachineInstr &MI) const {
+AIEInstrInfo::getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
+                                       MachineInstr &MI) const {
   if (!MI.isPseudo())
     return {};
 
@@ -525,14 +526,11 @@ void AIEInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
       .addMemOperand(CreateMMO(FI));
 }
 
-// Load a register to a stack slot.  Used in eliminating FrameIndex pseduo-ops.
-void AIEInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
-                                        MachineBasicBlock::iterator I,
-                                        Register DstReg, int FI,
-                                        const TargetRegisterClass *RC,
-                                        const TargetRegisterInfo *TRI,
-                                        Register VReg,
-                                        MachineInstr::MIFlag Flags) const {
+// Load a register to a stack slot.  Used in eliminating FrameIndex pseudo-ops.
+void AIEInstrInfo::loadRegFromStackSlot(
+    MachineBasicBlock &MBB, MachineBasicBlock::iterator I, Register DstReg,
+    int FI, const TargetRegisterClass *RC, const TargetRegisterInfo *TRI,
+    Register VReg, MachineInstr::MIFlag Flags) const {
   DebugLoc DL;
   if (I != MBB.end())
     DL = I->getDebugLoc();
@@ -696,24 +694,7 @@ unsigned AIEInstrInfo::getCallOpcode(const MachineFunction &CallerF,
 
 bool AIEInstrInfo::isCall(unsigned Opc) const { return Opc == AIE::JAL; }
 
-unsigned AIEInstrInfo::getNopOpcode(size_t Size) const {
-  switch (Size) {
-  case 0:
-  case 2:
-    return AIE::NOP;
-  case 4:
-    return AIE::NOP32;
-  case 8:
-    return AIE::NOP64;
-  case 12:
-    return AIE::NOP96;
-  case 16:
-    return AIE::NOP128;
-  default:
-    llvm_unreachable("Unsupported nop size.\n");
-  }
-  return AIE::NOP;
-}
+unsigned AIEInstrInfo::getNopOpcode() const { return AIE::NOP; }
 
 unsigned AIEInstrInfo::getMvSclOpcode() const {
   llvm_unreachable("Un-implemented for this target.\n");

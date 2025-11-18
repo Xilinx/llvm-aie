@@ -109,6 +109,8 @@ void CodeGenFormat::run(raw_ostream &o) {
 
   assert(Slots.size() != 0 && "no Slot detected");
 
+  computeSlotSets(Slots, InstFormats);
+
   o << "#ifdef GET_FORMATS_SLOTKINDS\n"
        "#undef GET_FORMATS_SLOTKINDS\n\n";
   Slots.emitTargetSlotKindEnum(o);
@@ -207,7 +209,6 @@ void CodeGenFormat::run(raw_ostream &o) {
 
     for (TGInstrLayout &Inst : InstFormats)
       if (Inst.isPacketFormat()) {
-        Inst.computeSlotSet();
         Packets.push_back(&Inst);
       }
 
@@ -239,8 +240,86 @@ void CodeGenFormat::run(raw_ostream &o) {
       o << SlotData << FormatData
         << "static const PacketFormats Formats {FormatData};\n\n";
 
+      // Create an O(1) function of available formats by ticking them in
+      // a lookup table;
+      uint64_t MaxSlotSet = 0;
+      for (const TGInstrLayout *Packet : Packets) {
+        MaxSlotSet = std::max(MaxSlotSet, Packet->getSlotSet());
+      }
+      const size_t Size = MaxSlotSet + 1;
+      // Catering for 16 slots for now, just to check the logic.
+      assert(Size <= 65536);
+      std::vector<bool> LUT(Size, false);
+      // First the trivial ones, without nops.
+      for (const TGInstrLayout *Packet : Packets) {
+        LUT[Packet->getSlotSet()] = true;
+      }
+      // Then the remaining ones
+      for (uint64_t SlotSet = 0; SlotSet < Size; SlotSet++) {
+        if (LUT[SlotSet]) {
+          continue;
+        }
+        // We start with the largest packets, since they cover more.
+        for (const TGInstrLayout *Packet : reverse(Packets)) {
+          // If the packet clears all bits of SlotSet, it can hold all these
+          // slots. Slots that are not present in SlotSet can be filled
+          // with nops.
+          if ((SlotSet & ~Packet->getSlotSet()) == 0) {
+            LUT[SlotSet] = true;
+            break;
+          }
+        }
+      }
+      o << "const size_t SlotSetSize = " << Size << ";\n";
+      o << "static const bool FormatAvailable[SlotSetSize] = {\n";
+      for (size_t Index = 0; Index < Size; Index++) {
+        o << "\t/* " << Index << " */ " << LUT[Index] << ",\n";
+      }
+      o << "};\n";
+
       o << "#endif // GET_FORMATS_PACKETS_TABLE\n\n";
     }
+  }
+}
+
+void CodeGenFormat::computeSlotSets(TGTargetSlots &Slots,
+                                    std::vector<TGInstrLayout> &InstFormats) {
+
+  // The slots accommodated by each format.
+  for (TGInstrLayout &Format : InstFormats) {
+    if (Format.isPacketFormat()) {
+      Format.computeSlotSet();
+    }
+  }
+
+  // The universe of all slots
+  uint64_t AllSlots = 0;
+  for (const auto &[_, Slot] : Slots) {
+    if (Slot.isDefaultSlot() || Slot.isArtificial()) {
+      continue;
+    }
+    AllSlots |= Slot.getSlotBits();
+  }
+
+  // Compute the conflict bits of all slots.
+  for (unsigned S = 0; S < Slots.size(); S++) {
+    // Effectively we check whether a slot cannot be combined with another
+    // slot in any format in which the first is accommodated. We start out
+    // with all slots excluded, and eliminate the exclusion when a format is
+    // encountered that allows both ThisSlot and the exclusion.
+    auto &Slot = Slots.getSlot(S).second;
+    const uint64_t ThisSlot = Slot.getSlotBits();
+    uint64_t Excluded = AllSlots;
+    for (TGInstrLayout &Format : InstFormats) {
+      if (!Format.isPacketFormat()) {
+        continue;
+      }
+      uint64_t SlotSet = Format.getSlotSet();
+      if (SlotSet & ThisSlot) {
+        Excluded &= ~SlotSet & AllSlots;
+      }
+    }
+    Slot.setConflictBits(ThisSlot | Excluded);
   }
 }
 
@@ -1093,7 +1172,8 @@ void TGTargetSlots::emitSlotsInfoInstantiation(
       << "  " << TS.getSlotSize()
       << ",\n"
       // Right now, we're using the slot num as SlotSet
-      << "  " << (uint64_t(1) << TS.getNumSlot()) << ",\n"
+      << "  " << TS.getSlotBits() << ",\n"
+      << "  " << TS.getConflictBits() << ",\n"
       << "  " << NOPName << "\n"
       << "},\n";
   }

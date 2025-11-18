@@ -13,7 +13,7 @@
 
 #include "AIEPostPipeliner.h"
 #include "AIESWPSolver.h"
-#include "AIESlotCounts.h"
+#include "AIESlotUtils.h"
 #include "Utils/AIELoopUtils.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Analysis/OptimizationRemarkEmitter.h"
@@ -144,15 +144,6 @@ bool PostPipeliner::isPostPipelineCandidate(MachineBasicBlock &LoopBlock) {
 
 namespace {
 
-uint64_t getSlotSet(MachineInstr &MI, const AIEBaseInstrInfo *TII) {
-  auto *SlotInfo = TII->getSlotInfo(TII->getSlotKind(MI.getOpcode()));
-  return SlotInfo ? SlotInfo->getSlotSet() : 0;
-}
-
-SlotCounts getSlotCounts(MachineInstr &MI, const AIEBaseInstrInfo *TII) {
-  return SlotCounts{getSlotSet(MI, TII)};
-}
-
 // Our definition of side-effect free. There are no implicit defs, no stores
 // and it doesn't touch anything that is live in to the loop.
 // We explicitly use the fact that out-of-bounds loads do not cause an
@@ -173,7 +164,7 @@ int PostPipeliner::getResMII(MachineBasicBlock &LoopBlock) {
   // Add up all slot requirements and return the maximum slot count
   SlotCounts Counts;
   for (auto &MI : LoopBlock) {
-    Counts += getSlotCounts(MI, TII);
+    Counts += getSlotCounts(MI.getOpcode(), TII);
   }
   int MII = Counts.max();
   LLVM_DEBUG(dbgs() << "PostPipeliner: ResMII=" << MII << "\n");
@@ -453,7 +444,8 @@ bool PostPipeliner::computeLoopCarriedParameters() {
 
   // Initialize slot counts.
   for (int K = 0; K < NTotalInstrs; K++) {
-    Info[K].Slots = getSlotCounts(*DAG->SUnits[K].getInstr(), TII);
+    auto *MI = DAG->SUnits[K].getInstr();
+    Info[K].Slots = getSlotCounts(MI->getOpcode(), TII);
   }
 
   // Forward properties like Earliest and Ancestors.
@@ -555,6 +547,8 @@ int PostPipeliner::computeMinScheduleLength() const {
   return MinLength;
 }
 
+namespace {
+
 void dumpGraph(const ScheduleInfo &Info, ScheduleDAGInstrs *DAG) {
   dbgs() << "digraph {\n";
 
@@ -612,9 +606,23 @@ void dumpGraph(const ScheduleInfo &Info, ScheduleDAGInstrs *DAG) {
   dbgs() << "}\n";
 }
 
+char slotLetter(const SlotCounts &Slots) {
+  // Slots are sorted by name in tablegen.
+  // alu, lda, ldb, lng, mov, nop, st, vec
+  const char *const L = "XABLMNSVW9";
+
+  for (int I = 0; I < 10; I++) {
+    if (Slots[I] > 0) {
+      return L[I];
+    }
+  }
+  return '*';
+}
+
 void dumpSchedule(const ScheduleInfo &Info, int MinLength, int II,
                   std::function<bool(int I, int K)> Select) {
   for (int K = 0; K < Info.NInstr; K++) {
+    char S = slotLetter(Info[K].Slots);
     std::string Head = "SU" + std::to_string(K);
     dbgs() << Head;
     for (int I = Head.length() - 6; I < MinLength; I++) {
@@ -622,7 +630,7 @@ void dumpSchedule(const ScheduleInfo &Info, int MinLength, int II,
         dbgs() << "|";
       }
       if (Select(I, K)) {
-        dbgs() << "*";
+        dbgs() << S;
       } else {
         dbgs() << " ";
       }
@@ -648,6 +656,7 @@ void dumpCycles(const ScheduleInfo &Info, int II) {
   dumpSchedule(Info, FullStageLength, II,
                [&](int I, int K) { return I == Info[K].Cycle; });
 }
+} // namespace
 
 int PostPipeliner::mostUrgent(PostPipelinerStrategy &Strategy) {
   assert(FirstUnscheduled <= LastUnscheduled);
@@ -839,6 +848,7 @@ bool PostPipeliner::scheduleWithStrategy(PostPipelinerStrategy &S) {
   return true;
 }
 
+namespace {
 int getMinOutputLat(ArrayRef<SDep> Edges) {
   int Min = std::numeric_limits<int>::max();
   for (const SDep &Dep : Edges) {
@@ -848,6 +858,7 @@ int getMinOutputLat(ArrayRef<SDep> Edges) {
   }
   return Min;
 }
+} // namespace
 
 class DefaultStrategy : public PostPipelinerStrategy {
 public:

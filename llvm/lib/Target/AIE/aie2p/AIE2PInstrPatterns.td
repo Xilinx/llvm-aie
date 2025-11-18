@@ -948,10 +948,10 @@ class ExtBcstSubvecPat<AIE2PInst Inst, ValueType BcstDstTy,
 (Inst VEC512:$s0, IdxTy:$idx)>;
 
 // Extract scalar instead of a subvector
-class ExtBcstScalarPat<AIE2PInst Inst, ValueType BcstDstTy, 
+class ExtBcstScalarPat<SDPatternOperator VextrExt, AIE2PInst Inst, ValueType BcstDstTy, 
                       ValueType ScalarDstTy, DAGOperand IdxTy> :
   Pat<(BcstDstTy (bcst_vector_node
-                      (ScalarDstTy(vextract_sext(BcstDstTy VEC512:$s0), 
+                      (ScalarDstTy(VextrExt(BcstDstTy VEC512:$s0), 
                                                       (i32 IdxTy:$idx))))), 
 (Inst VEC512:$s0, IdxTy:$idx)>;
 
@@ -982,17 +982,20 @@ defset list<ExtBcstPair> ExtBcst64Pairs={
 }
 
 foreach  Pair = ExtBcst8Pairs in {
-  def : ExtBcstScalarPat<Pair.Inst, v64i8, i32, Pair.IdxTy>;
+  def : ExtBcstScalarPat<vextract_sext, Pair.Inst, v64i8, i32, Pair.IdxTy>;
+  def : ExtBcstScalarPat<vextract_zext, Pair.Inst, v64i8, i32, Pair.IdxTy>;
 }
 
 foreach Pair = ExtBcst16Pairs in {
-  def : ExtBcstScalarPat<Pair.Inst, v32i16, i32, Pair.IdxTy>;
+  def : ExtBcstScalarPat<vextract_sext, Pair.Inst, v32i16, i32, Pair.IdxTy>;
+  def : ExtBcstScalarPat<vextract_zext,Pair.Inst, v32i16, i32, Pair.IdxTy>;
 }
 
 foreach Pair = ExtBcst32Pairs in {
   def : ExtBcstSubvecPat<Pair.Inst, v64i8, v4i8, Pair.IdxTy>;
   def : ExtBcstSubvecPat<Pair.Inst, v32i16, v2i16, Pair.IdxTy>;
-  def : ExtBcstScalarPat<Pair.Inst, v16i32, i32, Pair.IdxTy>;
+  def : ExtBcstScalarPat<vextract_sext, Pair.Inst, v16i32, i32, Pair.IdxTy>;
+  def : ExtBcstScalarPat<vextract_zext, Pair.Inst, v16i32, i32, Pair.IdxTy>;
 }
 
 foreach  Pair = ExtBcst64Pairs in {
@@ -1326,6 +1329,48 @@ def : Pat<(int_aie2p_vmax_lt32 VEC512:$s1, VEC512:$s2, 0x1),
 def : Pat<(int_aie2p_vmax_ltbf16 VEC512:$s1, VEC512:$s2),
            (VMAX_LT_bf16 VEC512:$s1, VEC512:$s2)>;
 
+// VBOR / VBAND
+foreach vec256Ty = [v32i8, v16i16, v8i32] in {
+  def : Pat<(vec256Ty (or VEC256:$src1, VEC256:$src2)),
+            (vec256Ty (EXTRACT_SUBREG (VBOR
+                        (v32i16 (REG_SEQUENCE VEC512, VEC256:$src1, sub_256_lo)),
+                        (v32i16 (REG_SEQUENCE VEC512, VEC256:$src2, sub_256_lo))),
+                       sub_256_lo))>;
+  def : Pat<(vec256Ty (and VEC256:$src1, VEC256:$src2)),
+            (vec256Ty (EXTRACT_SUBREG (VBAND
+                        (v32i16 (REG_SEQUENCE VEC512, VEC256:$src1, sub_256_lo)),
+                        (v32i16 (REG_SEQUENCE VEC512, VEC256:$src2, sub_256_lo))),
+                       sub_256_lo))>;
+}
+foreach vec512Ty = [v64i8, v32i16, v16i32] in {
+  def : Pat<(vec512Ty (or VEC512:$src1, VEC512:$src2)), (VBOR VEC512:$src1, VEC512:$src2)>;
+  def : Pat<(vec512Ty (and VEC512:$src1, VEC512:$src2)), (VBAND VEC512:$src1, VEC512:$src2)>;
+}
+foreach vec1024Ty = [v128i8, v64i16, v32i32] in {
+def : Pat<(vec1024Ty (or VEC1024:$src1, VEC1024:$src2)),
+          (REG_SEQUENCE VEC1024,
+                 (VBOR (v16i32 (EXTRACT_SUBREG VEC1024:$src1, sub_512_lo)),
+                       (v16i32 (EXTRACT_SUBREG VEC1024:$src2, sub_512_lo))), sub_512_lo,
+                 (VBOR (v16i32 (EXTRACT_SUBREG VEC1024:$src1, sub_512_hi)),
+                       (v16i32 (EXTRACT_SUBREG VEC1024:$src2, sub_512_hi))), sub_512_hi
+          )>;
+def : Pat<(vec1024Ty (and VEC1024:$src1, VEC1024:$src2)),
+          (REG_SEQUENCE VEC1024,
+                 (VBAND (v16i32 (EXTRACT_SUBREG VEC1024:$src1, sub_512_lo)),
+                        (v16i32 (EXTRACT_SUBREG VEC1024:$src2, sub_512_lo))), sub_512_lo,
+                 (VBAND (v16i32 (EXTRACT_SUBREG VEC1024:$src1, sub_512_hi)),
+                        (v16i32 (EXTRACT_SUBREG VEC1024:$src2, sub_512_hi))), sub_512_hi
+          )>;
+}
+
+// For vector select, VSEL instruction is used, since it does select word by word
+// sel input is modified, "sel ? v1 : v2 is equivalent to vsel(sel-1, v1, v2)"
+// rs1(sel) is zero-extended from the original 1 bit type
+foreach vec512Ty = [v64i8, v32i16, v16i32] in {
+  def : Pat<(vec512Ty (select (i32 eR:$rs1), VEC512:$rs2, VEC512:$rs3)),
+            (vec512Ty (VSEL_32 VEC512:$rs2, VEC512:$rs3, (ADD_add_r_ri eR:$rs1, (i32 -1))))>;
+}
+
 // VMIN_GE
 // Note : Non-constant sign is handled in .cpp
 def : Pat<(int_aie2p_vmin_ge8 VEC512:$s1, VEC512:$s2, 0x0),
@@ -1476,6 +1521,21 @@ def : Insert512Imm0Pat<v64i8, (i32 eR:$idx), (i32 0), VINSERT_8_mIdxImm0>;
 def : Insert512Imm0Pat<v32i16, (i32 eR:$idx), (i32 0), VINSERT_16_mIdxImm0>;
 def : Insert512Imm0Pat<v16i32, (i32 eR:$idx), (i32 0), VINSERT_32_mIdxImm0>;
 def : Insert512Imm0Pat<v8i64, (i64 eL:$idx), (i32 0), VINSERT_64_mIdxImm0>;
+
+// G_AIE_ADD_VECTOR_ELT_HI
+def add_elt_hi_node : SDNode<"AIE2P::G_AIE_ADD_VECTOR_ELT_HI",
+                          SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisInt<2>,
+                                               SDTCisSameAs<0,1>]>>;
+def : GINodeEquiv<G_AIE_ADD_VECTOR_ELT_HI, add_elt_hi_node>;
+
+def : Pat<(v64i8 (add_elt_hi_node VEC512:$vec, (i32 eR:$scalar))),
+          (VPUSH_hi_8 VEC512:$vec, eR:$scalar)>;
+def : Pat<(v32i16 (add_elt_hi_node VEC512:$vec, (i32 eR:$scalar))),
+          (VPUSH_hi_16 VEC512:$vec, eR:$scalar)>;
+def : Pat<(v16i32 (add_elt_hi_node VEC512:$vec, (i32 eR:$scalar))),
+          (VPUSH_hi_32 VEC512:$vec, eR:$scalar)>;
+def : Pat<(v8i64 (add_elt_hi_node VEC512:$vec, (i64 eL:$scalar))),
+          (VPUSH_hi_64 VEC512:$vec, eL:$scalar)>;
 
 // G_TRUNC
 

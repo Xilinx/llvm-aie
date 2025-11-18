@@ -14,7 +14,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIE.h"
+#include "AIEBaseInstrInfo.h"
 #include "AIEBaseRegisterInfo.h"
+#include "AIEDataDependenceHelper.h"
+#include "AIELoopClass.h"
+#include "AIESlotStatistics.h"
 #include "Utils/AIELoopUtils.h"
 
 #include "llvm/ADT/BitVector.h"
@@ -42,6 +46,17 @@ using namespace llvm;
 
 #define DEBUG_TYPE "aie-waw-reg-rewrite"
 
+// This might be compatible with a future extension of the DEBUG rigging
+#define DEBUG_DETAIL(x) DEBUG_WITH_TYPE("aie-waw-reg-rewrite:2", x)
+
+enum class RewriteMode {
+  Basic,
+  Automatic,
+  LatencyAware,
+  SWPAware,
+  SWPAwareAutoBias,
+};
+
 static cl::opt<bool> AggressiveReAlloc(
     "aie-aggressive-realloc", cl::Hidden, cl::init(false),
     cl::desc("Aggressively de-allocate live-through registers to favor "
@@ -52,6 +67,28 @@ static cl::opt<bool> GPRRealloc("aie-gpr-realloc", cl::Hidden, cl::init(false),
 static cl::opt<bool> PreAlloc(
     "aie-realloc-loopaware", cl::Hidden, cl::init(false),
     cl::desc("Prime the LRU queue to make the allocations more loop-aware"));
+
+static cl::opt<unsigned>
+    MinRegisterLatency("aie-waw-reg-rewrite-min-lat", cl::Hidden,
+                       cl::desc("Minimum operand latency that should be "
+                                "considered for WAW rewriting"),
+                       cl::init(3));
+
+static cl::opt<RewriteMode> RegRewriteMode(
+    "aie-reg-rewrite-mode", cl::Hidden, cl::init(RewriteMode::Automatic),
+    cl::desc("Set the rewriting mode"),
+    cl::values(clEnumValN(RewriteMode::Basic, "basic", "Basic"),
+               clEnumValN(RewriteMode::Automatic, "auto",
+                          "Automatic selection based on loop class"),
+               clEnumValN(RewriteMode::LatencyAware, "latencyaware",
+                          "Latency aware"),
+               clEnumValN(RewriteMode::SWPAware, "swpaware",
+                          "SWP aware with default bias"),
+               clEnumValN(RewriteMode::SWPAwareAutoBias, "swpaware-auto",
+                          "SWP aware with automatic bias")));
+
+static cl::opt<int> MinIIBias("aie-realloc-ii-bias", cl::Hidden, cl::init(0),
+                              cl::desc("Set default MinII bias for swpaware"));
 
 namespace {
 
@@ -64,6 +101,41 @@ using OriginalAllocation =
 
 // Record success for a whole register class.
 using RegClassSuccess = std::map<const TargetRegisterClass *, bool>;
+
+RewriteMode selectMode(RewriteMode Mode, int LoopClass) {
+  if (Mode != RewriteMode::Automatic) {
+    return Mode;
+  }
+  switch (LoopClass) {
+  case 14:
+  case 29:
+  case 47:
+    return RewriteMode::SWPAwareAutoBias;
+  default:
+    return RewriteMode::LatencyAware;
+  }
+}
+
+std::optional<int> getMinIIBias(RewriteMode Mode, int LoopClass) {
+  switch (Mode) {
+  case RewriteMode::SWPAwareAutoBias:
+    break;
+  case RewriteMode::SWPAware:
+    return MinIIBias;
+  default:
+    return {};
+  }
+
+  switch (LoopClass) {
+  case 14:
+    return -1;
+  case 18:
+  case 29:
+    return 1;
+  default:
+    return MinIIBias;
+  }
+}
 
 ///
 /// This pass rewrites physical register assignments in critical parts of the
@@ -93,6 +165,7 @@ public:
     AU.addRequired<LiveIntervalsWrapperPass>();
     AU.addPreserved<LiveIntervalsWrapperPass>();
     AU.addRequired<LiveRegMatrixWrapperLegacy>();
+    AU.addRequired<AAResultsWrapperPass>();
     AU.addPreserved<LiveRegMatrixWrapperLegacy>();
     MachineFunctionPass::getAnalysisUsage(AU);
   }
@@ -106,9 +179,21 @@ private:
   VirtRegMap *VRM = nullptr;
   LiveRegMatrix *LRM = nullptr;
   LiveIntervals *LIS = nullptr;
-  const TargetInstrInfo *TII = nullptr;
+  const AIEBaseInstrInfo *TII = nullptr;
+
+  /// Set Architecture specific Options
+  void setArchSpecificPassOptions();
 
   bool renameMBBPhysRegs(const MachineBasicBlock *MBB);
+
+  /// From the regclasses and the function context, compute the registers
+  /// that can be used in the reallocation.
+  RoundRobin computeLRURegisters(
+      const std::map<const TargetRegisterClass *, bool> &RegClasses);
+
+  /// Sort the candidates to mimic interleaving the pipeline stages
+  void sortSWPAware(OriginalAllocation &Candidates, MachineBasicBlock &MBB,
+                    const llvm::AIE::SlotStatistics &Statistics, int LoopClass);
 
   /// Pre-allocate all virtual registers in Candidates. The sole purpose of
   /// this is to prime the LRURegisters, so that the end of the loop is
@@ -178,6 +263,12 @@ private:
   /// instruction.
   IndexedMap<const MachineInstr *, VirtReg2IndexFunctor>
   getLastVRegDef(const MachineBasicBlock &MBB) const;
+
+  /// For a given MBB, get the physical registers that are mapped to register
+  /// operands with high output latency. This also includes alias and
+  /// sub-registers.
+  std::set<MCRegister>
+  getHighOutputLatencyRegs(const MachineBasicBlock *MBB) const;
 };
 
 MCPhysReg AIEWawRegRewriter::getAssignedPhysReg(const Register Reg) const {
@@ -187,6 +278,18 @@ MCPhysReg AIEWawRegRewriter::getAssignedPhysReg(const Register Reg) const {
     return VRM->getPhys(Reg);
 
   return Reg;
+}
+
+void AIEWawRegRewriter::setArchSpecificPassOptions() {
+  // TODO: use loop classes to enable WAW strategies.
+  // This optimization is specifically only tested for AIE2P.
+  if (!MF->getTarget().getTargetTriple().isAIE2P())
+    return;
+
+  // NumOccurrences increments if it is set by a command line argument
+  const bool UseDefaultPreAlloc = PreAlloc.getNumOccurrences() == 0;
+  if (UseDefaultPreAlloc)
+    PreAlloc = true;
 }
 
 bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
@@ -203,8 +306,9 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   VRM = &getAnalysis<VirtRegMapWrapperLegacy>().getVRM();
   LRM = &getAnalysis<LiveRegMatrixWrapperLegacy>().getLRM();
   LIS = &getAnalysis<LiveIntervalsWrapperPass>().getLIS();
-  TII = MF.getSubtarget().getInstrInfo();
+  TII = static_cast<const AIEBaseInstrInfo *>(MF.getSubtarget().getInstrInfo());
   bool Modified = false;
+  setArchSpecificPassOptions();
 
   LLVM_DEBUG(dbgs() << "*** WAW Loop Register Rewriting: " << MF.getName());
   LLVM_DEBUG(dbgs() << " ***\n");
@@ -316,6 +420,79 @@ void AIEWawRegRewriter::revertAllocation(OriginalAllocation &Candidates,
   }
 }
 
+RoundRobin AIEWawRegRewriter::computeLRURegisters(
+    const std::map<const TargetRegisterClass *, bool> &RegClasses) {
+  RoundRobin LRURegisters;
+
+  // ExcludedPhysregs makes sure that each register is only added once to the
+  // LRU queue. Additionally, it excludes the callee saved registers
+  BitVector ExcludedPhysRegs{TRI->getNumRegs()};
+
+  for (const MCPhysReg *CSR = MRI->getCalleeSavedRegs(); CSR && *CSR; ++CSR)
+    ExcludedPhysRegs[*CSR] = true;
+
+  // For each reg class, allocate the candidates in round-robin fashion.
+  // If we fail, we fall back to the original allocation
+  for (const auto [RC, Success] : RegClasses) {
+    LLVM_DEBUG(dbgs() << "Allowed registers in RC=" << TRI->getRegClassName(RC)
+                      << ":");
+    for (MCPhysReg PhysReg : RC->getRegisters()) {
+      if (!ExcludedPhysRegs[PhysReg]) {
+        LLVM_DEBUG(dbgs() << " " << printReg(PhysReg, TRI));
+        LRURegisters.push_back(PhysReg);
+      }
+      ExcludedPhysRegs[PhysReg] = true;
+    }
+    LLVM_DEBUG(dbgs() << "\n");
+  }
+  return LRURegisters;
+}
+
+void AIEWawRegRewriter::sortSWPAware(
+    OriginalAllocation &Candidates, MachineBasicBlock &MBB,
+    const llvm::AIE::SlotStatistics &Statistics, int Bias) {
+  // We estimate the length of the schedule based on latencies and the
+  // minimum II based on slots. We then estimate the modulo cycle of each
+  // instruction based on its depth and apply LRU in the order of the modulo
+  // cycle.
+  // Note that both the depth and the II are underestimations since we don't
+  // account for them interfering. Hence the modulo cycle estimate won't be
+  // too far off.
+  const int MinII = std::max(Statistics.getMinII() + Bias, 1);
+
+  MachineSchedContext Context;
+  Context.MF = MF;
+  Context.AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
+  AIE::DataDependenceHelper DDG(Context, true, false);
+  for (auto &MI : MBB) {
+    if (!MI.isTerminator())
+      DDG.initSUnit(MI);
+  }
+  DDG.buildEdges();
+  DEBUG_DETAIL(DDG.dumpDot(dbgs(), false));
+
+  // Compute and record the modulo cycle of each instruction.
+  std::map<const MachineInstr *, int> ModuloCycle;
+  for (auto &SU : DDG.SUnits) {
+    int D = SU.getDepth();
+    ModuloCycle.emplace(SU.getInstr(), D % MinII);
+    LLVM_DEBUG(dbgs() << format("%4d D=%4d: ", SU.NodeNum, D)
+                      << *SU.getInstr());
+  }
+
+  LLVM_DEBUG(dbgs() << format("MinII = %d\n", MinII));
+
+  // Now sort the candidates to simulate the parallelism
+  using Element = std::pair<const MachineOperand *, Register>;
+  auto ModuloCycleLess = [&ModuloCycle](const Element &A, const Element &B) {
+    const MachineInstr *IA = A.first->getParent();
+    const MachineInstr *IB = B.first->getParent();
+
+    return ModuloCycle[IA] < ModuloCycle[IB];
+  };
+  llvm::sort(Candidates, ModuloCycleLess);
+}
+
 bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   LLVM_DEBUG(dbgs() << "WAW Reg Renaming BasicBlock "; MBB->dump();
              dbgs() << "\n");
@@ -329,6 +506,19 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
 
   IndexedMap<const MachineInstr *, VirtReg2IndexFunctor> LastVRegDef =
       getLastVRegDef(*MBB);
+
+  auto &NonConstMBB = *(const_cast<MachineBasicBlock *>(MBB));
+  AIE::SlotStatistics Statistics = AIE::computeSlotStatistics(NonConstMBB, TII);
+  const int LoopClass = llvm::AIE::classifyLoop(Statistics);
+  LLVM_DEBUG(dbgs() << "Stats="; Statistics.dumpShort(); dbgs() << "\n");
+  LLVM_DEBUG(dbgs() << "LoopClass=" << LoopClass << "\n");
+
+  RewriteMode Mode = selectMode(RegRewriteMode, LoopClass);
+
+  std::set<MCRegister> HighLatencyRegs;
+  if (Mode == RewriteMode::LatencyAware) {
+    HighLatencyRegs = getHighOutputLatencyRegs(MBB);
+  }
 
   OriginalAllocation Candidates;
 
@@ -361,7 +551,14 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
       if (isWorthRenaming(Reg, VRegWithCopies)) {
         assert(VRM->hasPhys(Reg));
         MCRegister AssignedPhysReg = VRM->getPhys(Reg);
-        Candidates.emplace_back(&MO, AssignedPhysReg);
+
+        // High latency registers should be renamed first, therefore insert them
+        // at the front.
+        const auto InsertPoint = HighLatencyRegs.count(AssignedPhysReg)
+                                     ? Candidates.begin()
+                                     : Candidates.end();
+        Candidates.emplace(InsertPoint, &MO, AssignedPhysReg);
+
         LLVM_DEBUG(dbgs() << "Candidate " << printReg(Reg, TRI, 0, MRI) << ":"
                           << TRI->getRegClassName(MRI->getRegClass(Reg)) << " ("
                           << TRI->getName(AssignedPhysReg) << ")\n");
@@ -398,30 +595,13 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
     }
   }
 
+  if (auto Bias = getMinIIBias(Mode, LoopClass)) {
+    sortSWPAware(Candidates, NonConstMBB, Statistics, *Bias);
+  }
+
   // Least-Recently-Used list of physical registers for assignments to VRegs.
   // Physical registers that have recently been used are moved to the back.
-  RoundRobin LRURegisters;
-
-  // For each reg class, allocate the candidates in round-robin fashion.
-  // If we fail, we fall back to the original allocation
-  BitVector ExcludedPhysRegs{TRI->getNumRegs()};
-
-  // Exclude CSRs
-  for (const MCPhysReg *CSR = MRI->getCalleeSavedRegs(); CSR && *CSR; ++CSR)
-    ExcludedPhysRegs[*CSR] = true;
-
-  for (const auto [RC, Success] : RegClasses) {
-    LLVM_DEBUG(dbgs() << "Allowed registers in RC=" << TRI->getRegClassName(RC)
-                      << ":");
-    for (MCPhysReg PhysReg : RC->getRegisters()) {
-      if (!ExcludedPhysRegs[PhysReg]) {
-        LLVM_DEBUG(dbgs() << " " << printReg(PhysReg, TRI));
-        LRURegisters.push_back(PhysReg);
-      }
-      ExcludedPhysRegs[PhysReg] = true;
-    }
-    LLVM_DEBUG(dbgs() << "\n");
-  }
+  RoundRobin LRURegisters = computeLRURegisters(RegClasses);
 
   // Prime the LRURegisters, so that the allocation is loop-aware.
   if (PreAlloc) {
@@ -607,6 +787,54 @@ AIEWawRegRewriter::getLastVRegDef(const MachineBasicBlock &MBB) const {
     }
   }
   return LastVRegDef;
+}
+
+std::set<MCRegister> AIEWawRegRewriter::getHighOutputLatencyRegs(
+    const MachineBasicBlock *MBB) const {
+  auto *ItinData = MF->getSubtarget().getInstrItineraryData();
+  std::set<MCRegister> HighLatRegisters;
+  for (const MachineInstr &MI : *MBB) {
+    const unsigned SchedClass = MI.getDesc().getSchedClass();
+    for (unsigned I = 0, E = MI.getNumOperands(); I != E; ++I) {
+      const MachineOperand &MO = MI.getOperand(I);
+      if (!MO.isReg() || !MO.isDef())
+        continue;
+
+      const Register Reg = MO.getReg();
+      if (!Reg.isVirtual())
+        continue;
+
+      auto IsHighLatInstrOperand = [&]() {
+        auto OperandCycle = ItinData->getOperandCycle(SchedClass, I);
+        if (OperandCycle)
+          return OperandCycle.value() >= MinRegisterLatency;
+        // If we have an instruction without OperandCycles, it is most probably
+        // a pseudo instruction (no itinerary). In this case, if it is a _split
+        // load, consider it as high latency.
+        return MI.mayLoad();
+      };
+
+      if (!IsHighLatInstrOperand())
+        continue;
+
+      const MCRegister AssignedPhysReg = VRM->getPhys(Reg);
+      for (MCRegAliasIterator AI(AssignedPhysReg, TRI, true); AI.isValid();
+           ++AI)
+        HighLatRegisters.insert(*AI);
+    }
+  }
+
+  // This metric gives us an idea about the "demand" for high latency registers
+  // in a specific loop. If the demand is low, clear HighLatRegisters to skip
+  // latency-aware heuristic. Basically, we evaluate high latency register count
+  // to instruction count ratio in percent.
+  // TODO: this should be replaced by more stable metrics related to SWP.
+  const int HighLatencyRegisterInstrRatio =
+      ((HighLatRegisters.size() * 100) / MBB->size());
+  if (HighLatencyRegisterInstrRatio < 250 /*calibrated value*/)
+    HighLatRegisters.clear();
+
+  return HighLatRegisters;
 }
 
 } // end anonymous namespace

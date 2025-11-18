@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -115,23 +115,33 @@ namespace {
 /// \param Fixups The fixups for the instruction
 /// \param STI The subtarget
 
-template <int N, unsigned step, int offset, bool isNegative>
+template <int N, unsigned step, int offset, bool isNegative, bool isUnsigned>
 void getSImmOpValueXStep(const MCInst &MI, unsigned OpNo, APInt &Op,
                          SmallVectorImpl<MCFixup> &Fixups,
                          const MCSubtargetInfo &STI) {
   const MCOperand &MO = MI.getOperand(OpNo);
-  const unsigned fixedZeroBits = CTLog2<step>();
+  const unsigned FixedZeroBits = CTLog2<step>();
 
   if (MO.isImm()) {
     constexpr int hexValue = step - 1;
     int64_t Imm = MO.getImm();
-    int64_t Min = isNegative ? minIntN(N + fixedZeroBits + 1)
-                             : minIntN(N + fixedZeroBits);
-    int64_t Max = isNegative ? -step : maxIntN(N + fixedZeroBits);
+    int64_t Min, Max;
+    if (isNegative) {
+      Min = minIntN(N + FixedZeroBits + 1);
+      // Note: step is unsigned; cast to signed before negating to avoid
+      // unsigned wraparound.
+      Max = -static_cast<int64_t>(step);
+    } else if (isUnsigned) {
+      Min = 0;
+      Max = maxUIntN(N + FixedZeroBits);
+    } else {
+      Min = minIntN(N + FixedZeroBits);
+      Max = maxIntN(N + FixedZeroBits);
+    }
     assert((Imm & hexValue) == 0 && "Value must be divisible by step!");
     assert(Imm >= Min && Imm <= Max &&
            "can not represent value in the given immediate type range!");
-    Imm >>= fixedZeroBits;
+    Imm >>= FixedZeroBits;
     Op = Imm;
   } else
     llvm_unreachable("Unhandled expression!");

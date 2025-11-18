@@ -42,13 +42,19 @@ def combine_globalval_offset : GICombineRule<
   (apply [{  applyGlobalValOffset(*${root}, MRI, B, Observer, ${matchinfo});}])
 >;
 
-def combine_extract_vector_elt_and_zsa_ext_matchdata: GIDefMatchData<"std::tuple<MachineInstr *, bool, bool>">;
+def combine_extract_vector_elt_and_zsa_ext_matchdata: GIDefMatchData<"std::pair<MachineInstr *, bool>">;
 def combine_extract_vector_elt_and_zsa_ext : GICombineRule<
   (defs root:$root, combine_extract_vector_elt_and_zsa_ext_matchdata:$matchinfo),
   (match (wip_match_opcode G_EXTRACT_VECTOR_ELT): $root,
-  [{ return matchExtractVecEltAndExt(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  [{ return matchExtractVecEltAndExt(*${root}, MRI, ${matchinfo}); }]),
   (apply [{ applyExtractVecEltAndExt(*${root}, MRI, B, ${matchinfo}); }])
 >;
+
+def combine_extract_vector_assert_combine : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_AIE_ZEXT_EXTRACT_VECTOR_ELT, G_AIE_SEXT_EXTRACT_VECTOR_ELT): $root,
+  [{ return matchExtractVecEltAssertBcst(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), Observer, ${matchinfo}); }]),
+   (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
 
 def combine_symmetric_build_vector : GICombineRule<
   (defs root:$root, build_fn_matchinfo:$matchinfo),
@@ -392,7 +398,9 @@ def AIE2PostLegalizerCustomCombiner
 }
 
 def AIE2PPostLegalizerCustomCombiner
-    : GICombiner<"AIE2PPostLegalizerCustomCombinerImpl", [  combine_global_load_store_increment,
+    : GICombiner<"AIE2PPostLegalizerCustomCombinerImpl", [  
+                                                            combine_extract_vector_assert_combine,
+                                                            combine_global_load_store_increment,
                                                             combine_load_store_increment,
                                                             ptr_add_immed_chain,
                                                             combine_offset_load_store_ptradd,

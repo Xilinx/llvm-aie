@@ -39,6 +39,12 @@ struct AIEBaseRegisterInfo : public TargetRegisterInfo {
   virtual unsigned getGPRRegBankID() const {
     llvm_unreachable("Target didn't implement getGPRRegBankID!");
   }
+  virtual unsigned getMODRegBankID() const {
+    llvm_unreachable("Target didn't implement getMODRegBankID!");
+  }
+  virtual unsigned getPTRRegBankID() const {
+    llvm_unreachable("Target didn't implement getPTRRegBankID!");
+  }
   /// Returns the SubReg indices that can be used to split a vreg in
   /// \p RegClassId into multiple smaller registers.
   /// Returns {NoSubRegister} if splitting is not possible.
@@ -105,6 +111,10 @@ struct AIEBaseRegisterInfo : public TargetRegisterInfo {
                       unsigned DstSubReg, const TargetRegisterClass *NewRC,
                       LiveIntervals &LIS) const override;
 };
+
+template <int N, unsigned step> bool isEncodableAsNegativeInt(int Value) {
+  return isInt<N + CTLog2<step>() + 1>(Value);
+}
 
 } // namespace llvm
 

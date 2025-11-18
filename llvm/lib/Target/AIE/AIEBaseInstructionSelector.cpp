@@ -535,10 +535,10 @@ bool AIEBaseInstructionSelector::selectPutMSB(MachineInstr &I,
   Register ValReg = I.getOperand(1).getReg();
   Register TLastReg = I.getOperand(2).getReg();
   auto TLastVal = getIConstantVRegValWithLookThrough(TLastReg, MRI);
-  unsigned OpCode = TII.getMvScl2MSTlastRegOpcode();
+  unsigned OpCode = TII.getOpCode(I);
   if (TLastVal) {
     unsigned ConstTLastVal = TLastVal->Value.getZExtValue();
-    OpCode = TII.getMvScl2MS(ConstTLastVal);
+    OpCode = TII.getMoveToMSOpcode(I, ConstTLastVal);
   }
   MachineInstrBuilder MI = MIB.buildInstr(OpCode, {}, {ValReg});
   if (!TLastVal) {
@@ -557,10 +557,10 @@ bool AIEBaseInstructionSelector::selectPutMSNB(MachineInstr &I,
   Register ValReg = I.getOperand(2).getReg();
   Register TLastReg = I.getOperand(3).getReg();
   auto TLastVal = getIConstantVRegValWithLookThrough(TLastReg, MRI);
-  unsigned OpCode = TII.getMvNBScl2MSTlastRegOpcode();
+  unsigned OpCode = TII.getOpCode(I);
   if (TLastVal) {
     unsigned ConstTLastVal = TLastVal->Value.getZExtValue();
-    OpCode = TII.getMvNBScl2MS(ConstTLastVal);
+    OpCode = TII.getMoveToMSOpcode(I, ConstTLastVal);
   }
   MachineInstrBuilder MI = MIB.buildInstr(OpCode, {}, {ValReg});
   if (!TLastVal) {
@@ -924,4 +924,125 @@ bool AIEBaseInstructionSelector::selectStartLoop(MachineInstr &I,
                   .addImm(-1);
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*ADDI, TII, TRI, RBI);
+}
+
+bool AIEBaseInstructionSelector::selectG_SEXT_INREG(
+    MachineInstr &I, MachineRegisterInfo &MRI,
+    const std::pair<unsigned, unsigned> &Opcodes) {
+  Register DstReg = I.getOperand(0).getReg();
+  Register SrcReg = I.getOperand(1).getReg();
+
+  const RegisterBank *DstRB = RBI.getRegBank(DstReg, MRI, TRI);
+  const RegisterBank *SrcRB = RBI.getRegBank(SrcReg, MRI, TRI);
+
+  // We only support sign-extension on GPRs
+  if (DstRB->getID() != SrcRB->getID() ||
+      DstRB->getID() != TRI.getGPRRegBankID())
+    return false;
+
+  int64_t Imm = I.getOperand(2).getImm();
+  MachineInstrBuilder MI;
+  if (Imm == 8) {
+    MI = MIB.buildInstr(Opcodes.first, {DstReg}, {SrcReg});
+  } else if (Imm == 16) {
+    MI = MIB.buildInstr(Opcodes.second, {DstReg}, {SrcReg});
+  } else {
+    llvm_unreachable("Cannot handle type in selectG_SEXT_INREG");
+  }
+
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+}
+
+bool AIEBaseInstructionSelector::selectG_TRUNC(MachineInstr &I,
+                                               MachineRegisterInfo &MRI,
+                                               const unsigned SubRegIdx) {
+  Register SrcReg = I.getOperand(1).getReg();
+  LLT SrcTy = MRI.getType(SrcReg);
+  unsigned SrcSize = SrcTy.getSizeInBits();
+  // G_TRUNC S32 <- S64
+  if (SrcSize == 64) {
+    Register DstReg = I.getOperand(0).getReg();
+    MachineInstrBuilder MI = MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {})
+                                 .addReg(SrcReg, 0, SubRegIdx);
+    I.eraseFromParent();
+    return selectCopy(*MI.getInstr(), MRI);
+  } else if (SrcTy.isVector()) {
+    assert(SrcSize >= 512 && "Invalid vector size for G_TRUNC source vector!");
+    return selectImpl(I, *CoverageInfo);
+  } else {
+    I.setDesc(TII.get(TargetOpcode::COPY));
+    return selectCopy(I, MRI);
+  }
+}
+
+bool AIEBaseInstructionSelector::selectG_CONSTANT(MachineInstr &I,
+                                                  MachineRegisterInfo &MRI) {
+  // TODO: it isn't easy to rely on TableGen patterns, as there's poor support
+  // for pointer types. If GlobalISel ever get its own pattern language with
+  // pointer types properly supported, we should use it.
+  const Register DstReg = I.getOperand(0).getReg();
+  const LLT Ty = MRI.getType(DstReg);
+  assert((Ty == LLT::pointer(0, 20) || Ty == LLT::scalar(20) ||
+          Ty == LLT::scalar(32)) &&
+         "Only support 20, 32-bit integer and 20-bit pointer constants");
+  const RegisterBank &DstRB = *RBI.getRegBank(DstReg, MRI, TRI);
+  assert((DstRB.getID() == TRI.getPTRRegBankID() ||
+          DstRB.getID() == TRI.getMODRegBankID() ||
+          DstRB.getID() == TRI.getGPRRegBankID()) &&
+         "Expected constants only on GPR, MOD and PTR register banks");
+
+  APInt Imm = I.getOperand(1).getCImm()->getValue();
+  auto OpCode = TII.getConstantMovOpcode(MRI, DstReg, Imm);
+  MachineInstr &MI = *MIB.buildInstr(OpCode, {DstReg}, {})
+                          .addImm(Imm.getSExtValue())
+                          .getInstr();
+
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(MI, TII, TRI, RBI);
+}
+
+bool AIEBaseInstructionSelector::selectGetCoreID(MachineInstr &I,
+                                                 MachineRegisterInfo &MRI,
+                                                 Register CoreID) {
+
+  Register DstReg = I.getOperand(0).getReg();
+
+  auto CopyInstr =
+      MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {}).addReg(CoreID);
+  if (!selectCopy(*CopyInstr, MRI)) {
+    return false;
+  }
+
+  I.eraseFromParent();
+  return true;
+}
+
+bool AIEBaseInstructionSelector::selectReadTM(MachineInstr &I,
+                                              MachineRegisterInfo &MRI,
+                                              unsigned Opcode) {
+  Register Dest = I.getOperand(0).getReg();
+  Register Ptr = I.getOperand(2).getReg();
+
+  MachineMemOperand *MMO = getTileMemOperand(
+      I, MachineMemOperand::MOLoad | MachineMemOperand::MOVolatile);
+  MachineInstrBuilder MI =
+      MIB.buildInstr(Opcode, {Dest}, {Ptr}).addMemOperand(MMO).addImm(0x0);
+
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+}
+
+bool AIEBaseInstructionSelector::selectWriteTM(MachineInstr &I,
+                                               MachineRegisterInfo &MRI,
+                                               unsigned Opcode) {
+  Register Value = I.getOperand(1).getReg();
+  Register Ptr = I.getOperand(2).getReg();
+
+  MachineMemOperand *MMO = getTileMemOperand(I, MachineMemOperand::MOStore);
+  MachineInstrBuilder MI =
+      MIB.buildInstr(Opcode, {}, {Value, Ptr}).addMemOperand(MMO).addImm(0x0);
+
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
 }

@@ -720,6 +720,14 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
       .legalIf(isValidVectorMergeUnmergeOp(1, 0));
 
   getActionDefinitionsBuilder(G_CONCAT_VECTORS)
+      .customIf([=](const LegalityQuery &Query) {
+        const LLT &DstTy = Query.Types[0];
+        const LLT &SrcTy = Query.Types[1];
+        // Custom legalize concatenation of two 128-bit vectors into 256-bit
+        // (128-bit vectors are not sub-registers of 256-bit vectors in AIE2P)
+        return DstTy.isVector() && SrcTy.isVector() &&
+               DstTy.getSizeInBits() == 256 && SrcTy.getSizeInBits() == 128;
+      })
       .legalIf(isValidVectorMergeUnmergeOp(0, 1))
       .customIf([=](const LegalityQuery &Query) {
         const LLT &DstTy = Query.Types[0];
