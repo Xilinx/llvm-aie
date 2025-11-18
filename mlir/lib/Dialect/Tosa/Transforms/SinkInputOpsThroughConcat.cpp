@@ -375,7 +375,16 @@ struct SinkInputOpsThroughConcat
           SinkInputOpsThroughConcat> {
 
   SinkInputOpsThroughConcat() = default;
-  SinkInputOpsThroughConcat(llvm::raw_ostream &os) : os(os) {};
+  explicit SinkInputOpsThroughConcat(
+      const SinkInputOpsThroughConcatOptions &options, llvm::raw_ostream &os)
+      : tosa::impl::SinkInputOpsThroughConcatBase<SinkInputOpsThroughConcat>(
+            options),
+        os(os) {}
+
+  explicit SinkInputOpsThroughConcat(
+      const SinkInputOpsThroughConcatOptions &options)
+      : tosa::impl::SinkInputOpsThroughConcatBase<SinkInputOpsThroughConcat>(
+            options) {}
 
   void runOnOperation() override {
     auto func = getOperation();
@@ -392,47 +401,57 @@ private:
   void populateSinkInputOpsThroughConcatPattern(RewritePatternSet &patterns,
                                                 MLIRContext *ctx) {
     // elementwise
-    patterns
-        .add<SinkSpecificOp<tosa::AbsOp>, SinkSpecificOp<tosa::BitwiseNotOp>,
-             SinkSpecificOp<tosa::CeilOp>, SinkSpecificOp<tosa::ClampOp>,
-             SinkSpecificOp<tosa::ClzOp>, SinkSpecificOp<tosa::CosOp>,
-             SinkSpecificOp<tosa::ErfOp>, SinkSpecificOp<tosa::ExpOp>,
-             SinkSpecificOp<tosa::FloorOp>, SinkSpecificOp<tosa::LogicalNotOp>,
-             SinkSpecificOp<tosa::NegateOp>, SinkSpecificOp<tosa::ReciprocalOp>,
-             SinkSpecificOp<tosa::RsqrtOp>, SinkSpecificOp<tosa::SigmoidOp>,
-             SinkSpecificOp<tosa::SinOp>, SinkSpecificOp<tosa::TanhOp>>(
-            ctx, /*benefit=*/2);
-    patterns.add<SinkElementwiseBroadcastableOp<tosa::AddOp>,
-                 SinkElementwiseBroadcastableOp<tosa::ArithmeticRightShiftOp>,
-                 SinkElementwiseBroadcastableOp<tosa::BitwiseAndOp>,
-                 SinkElementwiseBroadcastableOp<tosa::BitwiseOrOp>,
-                 SinkElementwiseBroadcastableOp<tosa::BitwiseXorOp>,
-                 SinkElementwiseBroadcastableOp<tosa::EqualOp>,
-                 SinkElementwiseBroadcastableOp<tosa::GreaterOp>,
-                 SinkElementwiseBroadcastableOp<tosa::GreaterEqualOp>,
-                 SinkElementwiseBroadcastableOp<tosa::IntDivOp>,
-                 SinkElementwiseBroadcastableOp<tosa::LogOp>,
-                 SinkElementwiseBroadcastableOp<tosa::LogicalAndOp>,
-                 SinkElementwiseBroadcastableOp<tosa::LogicalLeftShiftOp>,
-                 SinkElementwiseBroadcastableOp<tosa::LogicalOrOp>,
-                 SinkElementwiseBroadcastableOp<tosa::LogicalRightShiftOp>,
-                 SinkElementwiseBroadcastableOp<tosa::LogicalXorOp>,
-                 SinkElementwiseBroadcastableOp<tosa::MaximumOp>,
-                 SinkElementwiseBroadcastableOp<tosa::MinimumOp>,
-                 SinkElementwiseBroadcastableOp<tosa::PowOp>,
-                 SinkElementwiseBroadcastableOp<tosa::SelectOp>,
-                 SinkElementwiseBroadcastableOp<tosa::SubOp>>(ctx,
-                                                              /*benefit=*/2);
+    if (enableElementwises) {
+      patterns.add<
+          SinkSpecificOp<tosa::AbsOp>, SinkSpecificOp<tosa::BitwiseNotOp>,
+          SinkSpecificOp<tosa::CeilOp>, SinkSpecificOp<tosa::ClampOp>,
+          SinkSpecificOp<tosa::ClzOp>, SinkSpecificOp<tosa::CosOp>,
+          SinkSpecificOp<tosa::ErfOp>, SinkSpecificOp<tosa::ExpOp>,
+          SinkSpecificOp<tosa::FloorOp>, SinkSpecificOp<tosa::LogicalNotOp>,
+          SinkSpecificOp<tosa::NegateOp>, SinkSpecificOp<tosa::ReciprocalOp>,
+          SinkSpecificOp<tosa::RsqrtOp>, SinkSpecificOp<tosa::SigmoidOp>,
+          SinkSpecificOp<tosa::SinOp>, SinkSpecificOp<tosa::TanhOp>>(
+          ctx, /*benefit=*/2);
+      patterns.add<SinkElementwiseBroadcastableOp<tosa::AddOp>,
+                   SinkElementwiseBroadcastableOp<tosa::ArithmeticRightShiftOp>,
+                   SinkElementwiseBroadcastableOp<tosa::BitwiseAndOp>,
+                   SinkElementwiseBroadcastableOp<tosa::BitwiseOrOp>,
+                   SinkElementwiseBroadcastableOp<tosa::BitwiseXorOp>,
+                   SinkElementwiseBroadcastableOp<tosa::EqualOp>,
+                   SinkElementwiseBroadcastableOp<tosa::GreaterOp>,
+                   SinkElementwiseBroadcastableOp<tosa::GreaterEqualOp>,
+                   SinkElementwiseBroadcastableOp<tosa::IntDivOp>,
+                   SinkElementwiseBroadcastableOp<tosa::LogOp>,
+                   SinkElementwiseBroadcastableOp<tosa::LogicalAndOp>,
+                   SinkElementwiseBroadcastableOp<tosa::LogicalLeftShiftOp>,
+                   SinkElementwiseBroadcastableOp<tosa::LogicalOrOp>,
+                   SinkElementwiseBroadcastableOp<tosa::LogicalRightShiftOp>,
+                   SinkElementwiseBroadcastableOp<tosa::LogicalXorOp>,
+                   SinkElementwiseBroadcastableOp<tosa::MaximumOp>,
+                   SinkElementwiseBroadcastableOp<tosa::MinimumOp>,
+                   SinkElementwiseBroadcastableOp<tosa::PowOp>,
+                   SinkElementwiseBroadcastableOp<tosa::SelectOp>,
+                   SinkElementwiseBroadcastableOp<tosa::SubOp>>(ctx,
+                                                                /*benefit=*/2);
+    }
     // reduce
-    patterns
-        .add<SinkReduceOp<tosa::ReduceAllOp>, SinkReduceOp<tosa::ReduceAnyOp>,
-             SinkReduceOp<tosa::ReduceMaxOp>, SinkReduceOp<tosa::ReduceMinOp>,
-             SinkReduceOp<tosa::ReduceProdOp>, SinkReduceOp<tosa::ReduceSumOp>>(
-            ctx, /*benefit=*/2);
+    if (enableReductions) {
+      patterns
+          .add<SinkReduceOp<tosa::ReduceAllOp>, SinkReduceOp<tosa::ReduceAnyOp>,
+               SinkReduceOp<tosa::ReduceMaxOp>, SinkReduceOp<tosa::ReduceMinOp>,
+               SinkReduceOp<tosa::ReduceProdOp>,
+               SinkReduceOp<tosa::ReduceSumOp>>(ctx, /*benefit=*/2);
+    }
     // others
-    patterns.add<SinkMatmulOp>(ctx, /*benefit=*/2);
-    patterns.add<SinkReshapeOp>(ctx, /*benefit=*/2);
-    patterns.add<SinkGenericOp>(ctx, /*benefit=*/1, operationFrequency, os);
+    if (enableMatmul) {
+      patterns.add<SinkMatmulOp>(ctx, /*benefit=*/2);
+    }
+    if (enableReshape) {
+      patterns.add<SinkReshapeOp>(ctx, /*benefit=*/2);
+    }
+    if (matchUntransformedOperations) {
+      patterns.add<SinkGenericOp>(ctx, /*benefit=*/1, operationFrequency, os);
+    }
   }
 
   llvm::StringMap<unsigned> operationFrequency;
@@ -440,11 +459,7 @@ private:
 };
 } // namespace
 
-std::unique_ptr<Pass>
-mlir::tosa::createSinkInputOpsThroughConcatPass(llvm::raw_ostream &os) {
-  return std::make_unique<SinkInputOpsThroughConcat>(os);
-}
-
-std::unique_ptr<Pass> mlir::tosa::createSinkInputOpsThroughConcatPass() {
-  return std::make_unique<SinkInputOpsThroughConcat>();
+std::unique_ptr<Pass> mlir::tosa::createSinkInputOpsThroughConcatPass(
+    SinkInputOpsThroughConcatOptions &options, llvm::raw_ostream &os) {
+  return std::make_unique<SinkInputOpsThroughConcat>(options, os);
 }

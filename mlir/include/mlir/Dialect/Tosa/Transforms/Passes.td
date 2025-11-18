@@ -161,6 +161,23 @@ def SinkInputOpsThroughConcat : Pass<"sink-input-ops-through-concat", "mlir::Mod
     cost-benefit assessment. It it restricted to an explicit list of tosa
     operations as input for the concatentation that are known to be "sinkable".
   }];
+  let options = [
+      Option<"enableElementwises", "enable-elementwises", "bool",
+             /*default=*/"true",
+             "Sink down elementwise operations.">,
+      Option<"enableReductions", "enable-reductions", "bool",
+             /*default=*/"true",
+             "Sink down reduce operations.">,
+      Option<"enableReshape", "enable-reshape", "bool",
+             /*default=*/"true",
+             "Sink down the reshape operation.">,
+      Option<"enableMatmul", "enable-matmul", "bool",
+             /*default=*/"true",
+             "Sink down the matrix multiplication.">,
+      Option<"matchUntransformedOperations", "match-untransformed-operations", "bool",
+             /*default=*/"false",
+             "Print operations that have potential to be sunken but are not actually sunken down.">,
+   ];
 }
 
 #endif // MLIR_DIALECT_TOSA_TRANSFORMS_PASSES
