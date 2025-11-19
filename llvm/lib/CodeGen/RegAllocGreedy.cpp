@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -56,6 +56,7 @@
 #include "llvm/CodeGen/SpillPlacement.h"
 #include "llvm/CodeGen/Spiller.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
+#include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/CodeGen/VirtRegMap.h"
@@ -2805,8 +2806,18 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
       getAnalysis<RegAllocPriorityAdvisorAnalysis>().getAdvisor(*MF, *this);
 
   VRAI = std::make_unique<VirtRegAuxInfo>(*MF, *LIS, *VRM, *Loops, *MBFI);
-  SpillerInstance.reset(
-      createInlineSpiller({*LIS, LSS, *DomTree, *MBFI}, *MF, *VRM, *VRAI));
+
+  // Use TargetPassConfig hook for spiller creation
+  const TargetPassConfig *PassConfig =
+      getAnalysisIfAvailable<TargetPassConfig>();
+  if (PassConfig) {
+    SpillerInstance.reset(PassConfig->createSpiller(
+        {*LIS, LSS, *DomTree, *MBFI}, *MF, *VRM, *VRAI));
+  } else {
+    // Fallback if PassConfig not available
+    SpillerInstance.reset(
+        createInlineSpiller({*LIS, LSS, *DomTree, *MBFI}, *MF, *VRM, *VRAI));
+  }
 
   VRAI->calculateSpillWeightsAndHints();
 

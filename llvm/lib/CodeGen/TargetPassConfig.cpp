@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines interfaces to access the target independent code
@@ -1496,6 +1499,13 @@ void TargetPassConfig::addOptimizedRegAlloc() {
     // FIXME: can this move into MachineLateOptimization?
     addPass(&MachineLICMID);
   }
+}
+
+Spiller *
+TargetPassConfig::createSpiller(const Spiller::RequiredAnalyses &Analyses,
+                                MachineFunction &MF, VirtRegMap &VRM,
+                                VirtRegAuxInfo &VRAI) const {
+  return createInlineSpiller(Analyses, MF, VRM, VRAI);
 }
 
 //===---------------------------------------------------------------------===//

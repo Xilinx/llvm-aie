@@ -4,6 +4,8 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
 //===----------------------------------------------------------------------===//
 //
 // This file contains a Partitioned Boolean Quadratic Programming (PBQP) based
@@ -58,6 +60,7 @@
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/CodeGen/Spiller.h"
+#include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/CodeGen/VirtRegMap.h"
@@ -809,8 +812,19 @@ bool RegAllocPBQP::runOnMachineFunction(MachineFunction &MF) {
   // LiveRangeEdit make its own VirtRegAuxInfo object.
   VirtRegAuxInfo DefaultVRAI(
       MF, LIS, VRM, getAnalysis<MachineLoopInfoWrapperPass>().getLI(), MBFI);
-  std::unique_ptr<Spiller> VRegSpiller(
-      createInlineSpiller({LIS, LiveStks, MDT, MBFI}, MF, VRM, DefaultVRAI));
+
+  // Use TargetPassConfig hook for spiller creation
+  std::unique_ptr<Spiller> VRegSpiller;
+  const TargetPassConfig *PassConfig =
+      getAnalysisIfAvailable<TargetPassConfig>();
+  if (PassConfig) {
+    VRegSpiller.reset(PassConfig->createSpiller({LIS, LiveStks, MDT, MBFI}, MF,
+                                                VRM, DefaultVRAI));
+  } else {
+    // Fallback if PassConfig not available
+    VRegSpiller.reset(
+        createInlineSpiller({LIS, LiveStks, MDT, MBFI}, MF, VRM, DefaultVRAI));
+  }
 
   MF.getRegInfo().freezeReservedRegs();
 

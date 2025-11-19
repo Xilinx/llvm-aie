@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -31,6 +31,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/CodeGen/Spiller.h"
+#include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/VirtRegMap.h"
 #include "llvm/Pass.h"
@@ -327,8 +328,17 @@ bool RABasic::runOnMachineFunction(MachineFunction &mf) {
                       &getAnalysis<ProfileSummaryInfoWrapperPass>().getPSI());
   VRAI.calculateSpillWeightsAndHints();
 
-  SpillerInstance.reset(
-      createInlineSpiller({*LIS, LiveStks, MDT, MBFI}, *MF, *VRM, VRAI));
+  // Use TargetPassConfig hook for spiller creation
+  const TargetPassConfig *PassConfig =
+      getAnalysisIfAvailable<TargetPassConfig>();
+  if (PassConfig) {
+    SpillerInstance.reset(PassConfig->createSpiller({*LIS, LiveStks, MDT, MBFI},
+                                                    *MF, *VRM, VRAI));
+  } else {
+    // Fallback if PassConfig not available
+    SpillerInstance.reset(
+        createInlineSpiller({*LIS, LiveStks, MDT, MBFI}, *MF, *VRM, VRAI));
+  }
 
   allocatePhysRegs();
   postOptimization();

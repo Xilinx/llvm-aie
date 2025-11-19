@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 /// \file
 /// Target-Independent Code Generator Pass Configuration Options pass.
@@ -13,6 +16,7 @@
 #ifndef LLVM_CODEGEN_TARGETPASSCONFIG_H
 #define LLVM_CODEGEN_TARGETPASSCONFIG_H
 
+#include "llvm/CodeGen/Spiller.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Support/Error.h"
@@ -27,7 +31,6 @@ class PassConfigImpl;
 class ScheduleDAGInstrs;
 class CSEConfigBase;
 class PassInstrumentationCallbacks;
-
 // The old pass manager infrastructure is hidden in a legacy namespace now.
 namespace legacy {
 
@@ -236,6 +239,14 @@ public:
   /// Return true if the default global register allocator is in use and
   /// has not be overriden on the command line with '-regalloc=...'
   bool usingDefaultRegAlloc() const;
+
+  /// Create a spiller for this target at the current optimization level.
+  /// Targets can override this to provide specialized spilling strategies.
+  ///
+  /// The default implementation returns the standard InlineSpiller.
+  virtual Spiller *createSpiller(const Spiller::RequiredAnalyses &Analyses,
+                                 MachineFunction &MF, VirtRegMap &VRM,
+                                 VirtRegAuxInfo &VRAI) const;
 
   /// High level function that adds all passes necessary to go from llvm IR
   /// representation to the MI representation.
