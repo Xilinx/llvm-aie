@@ -85,6 +85,10 @@ public:
   ScheduleDAGInstrs *
   createMachineScheduler(MachineSchedContext *C) const override;
 
+  Spiller *createSpiller(const Spiller::RequiredAnalyses &Analyses,
+                         MachineFunction &MF, VirtRegMap &VRM,
+                         VirtRegAuxInfo &VRAI) const override;
+
   std::unique_ptr<CSEConfigBase> getCSEConfig() const override;
 };
 
