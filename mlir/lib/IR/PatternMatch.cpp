@@ -137,19 +137,15 @@ ReplaceOpAction::ReplaceOpAction(ArrayRef<IRUnit> irUnits,
 
 void ReplaceOpAction::print(raw_ostream &os) const {
   OpPrintingFlags flags;
-  flags.elideLargeElementsAttrs(10);
+  flags.elideLargeElementsAttrs();
   os << "`" << tag << "` replacing operation `";
   getOp()->print(os, flags);
   os << "` by ";
-  bool first = true;
-  for (auto r : replacement) {
-    if (!first)
-      os << ", ";
+  llvm::interleaveComma(replacement, os, [&](Value r) {
     os << "`";
     r.print(os, flags);
     os << "`";
-    first = false;
-  }
+  });
 }
 
 Operation *ReplaceOpAction::getOp() const {
@@ -297,7 +293,7 @@ void RewriterBase::replaceUsesWithIf(Value from, Value to,
     if (replace) {
       if (auto *fromOp = from.getDefiningOp())
         getContext()->executeAction<ReplaceOpAction>(
-            []() {}, ArrayRef<IRUnit>{fromOp}, to);
+            /*actionFn=*/[]() {}, ArrayRef<IRUnit>{fromOp}, to);
       modifyOpInPlace(operand.getOwner(), [&]() { operand.set(to); });
     }
     allReplaced &= replace;

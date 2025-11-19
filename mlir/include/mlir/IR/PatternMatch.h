@@ -11,9 +11,9 @@
 
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
+#include "mlir/IR/PatternMatchAction.h"
 #include "llvm/ADT/FunctionExtras.h"
 #include "llvm/Support/TypeName.h"
-#include <mlir/IR/PatternMatchAction.h>
 #include <optional>
 
 using llvm::SmallPtrSetImpl;
@@ -655,7 +655,7 @@ public:
   void replaceAllUsesWith(Value from, Value to) {
     if (auto *fromOp = from.getDefiningOp())
       getContext()->executeAction<ReplaceOpAction>(
-          []() {}, ArrayRef<IRUnit>{fromOp}, to);
+          /*actionFn=*/[]() {}, ArrayRef<IRUnit>{fromOp}, to);
     for (OpOperand &operand : llvm::make_early_inc_range(from.getUses())) {
       Operation *op = operand.getOwner();
       modifyOpInPlace(op, [&]() { operand.set(to); });
