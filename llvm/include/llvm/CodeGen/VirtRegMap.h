@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -69,10 +69,10 @@ class VirtRegMap {
   /// information.
   DenseMap<Register, ShapeT> Virt2ShapeMap;
 
+public:
   /// createSpillSlot - Allocate a spill slot for RC from MFI.
   unsigned createSpillSlot(const TargetRegisterClass *RC);
 
-public:
   static constexpr int NO_STACK_SLOT = INT_MAX;
 
   VirtRegMap() : Virt2StackSlotMap(NO_STACK_SLOT) {}
