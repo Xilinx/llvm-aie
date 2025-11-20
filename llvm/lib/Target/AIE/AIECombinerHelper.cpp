@@ -4292,3 +4292,34 @@ bool llvm::matchExtractVecEltAssertBcst(MachineInstr &MI,
 
   return true;
 }
+
+/// Check if a scalar register contains an MSB-only constant.
+/// This is used to optimize XOR operations with MSB-only constants into ADD.
+/// XOR with MSB toggles the sign bit, which is equivalent to ADD for these
+/// values.
+bool llvm::matchMsbScalar(Register ScalarReg, Register BroadcastReg,
+                          MachineRegisterInfo &MRI) {
+  auto Cst = getIConstantVRegValWithLookThrough(ScalarReg, MRI);
+  if (!Cst)
+    return false;
+
+  // Get the element type from the broadcast vector destination
+  const LLT BroadcastTy = MRI.getType(BroadcastReg);
+  if (!BroadcastTy.isVector())
+    return false;
+
+  unsigned ElemBitWidth = BroadcastTy.getElementType().getSizeInBits();
+
+  // Get the value as unsigned to properly compare with MSB masks
+  const uint64_t Value = Cst->Value.getZExtValue();
+
+  // Check if only MSB is set for the vector element type
+  if (ElemBitWidth == 8)
+    return Value == 0x80; // 128
+  if (ElemBitWidth == 16)
+    return Value == 0x8000; // 32768
+  if (ElemBitWidth == 32)
+    return Value == 0x80000000; // 2147483648 (or -2147483648 as signed)
+
+  return false;
+}
