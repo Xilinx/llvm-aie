@@ -167,6 +167,16 @@ def combine_broadcast_shl_to_add : GICombineRule<
          [{ return matchBroadcastToShl(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
 
+// Transform XOR with MSB-only broadcast constant to ADD
+// XOR(vec, broadcast(MSB_constant)) -> ADD(vec, broadcast(MSB_constant))
+// Valid because XOR with MSB toggles sign bit, equivalent to ADD for MSB-only values
+def combine_xor_msb_broadcast_to_add : GICombineRule<
+  (defs root:$dst),
+  (match (G_AIE_BROADCAST_VECTOR $bcst, $scalar),
+         (G_XOR $dst, $vec, $bcst):$root,
+         [{ return matchMsbScalar(${scalar}.getReg(), ${bcst}.getReg(), MRI); }]),
+  (apply (G_ADD $dst, $vec, $bcst))>;
+
 def combine_narrow_phi_node_s20 : GICombineRule<
   (defs root:$root, build_fn_matchinfo:$matchinfo),
   (match (wip_match_opcode G_PHI): $root,
@@ -264,6 +274,7 @@ def aie_additional_combines : GICombineGroup<[
   combine_single_diff_build_vector,
   combine_symmetric_build_vector,
   combine_broadcast_shl_to_add,
+  combine_xor_msb_broadcast_to_add,
   combine_vector_shuffle_extract_subvec,
   combine_narrow_trunc_s20_const,
   combine_narrow_zext_s20,

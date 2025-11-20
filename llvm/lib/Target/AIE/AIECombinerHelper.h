@@ -308,6 +308,14 @@ bool matchExtractVecEltAssertBcst(MachineInstr &MI, MachineRegisterInfo &MRI,
                                   const AIEBaseInstrInfo &TII,
                                   GISelChangeObserver &Observer,
                                   BuildFnTy &MatchInfo);
+
+/// Check if a scalar register contains an MSB-only constant
+/// (0x80 for s8, 0x8000 for s16, 0x80000000 for s32)
+/// The element type is determined from the broadcast vector destination
+/// register
+bool matchMsbScalar(Register ScalarReg, Register BroadcastReg,
+                    MachineRegisterInfo &MRI);
+
 } // namespace llvm
 
 #endif
