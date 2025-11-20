@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -187,6 +187,11 @@ void AIEToolChain::addClangTargetOptions(
 
   // Enable Loop Iteration Count Assumptions
   CC1Args.append({"-mllvm", "-enable-loop-iter-count-assumptions=true"});
+
+  // Disable VectorCombine due to suboptimal code generation, like
+  // unaligned vector loads creation. All missed opportunities like bitcast and
+  // shuffle combiners are handled directly by the backend.
+  CC1Args.append({"-mllvm", "-disable-vector-combine=true"});
 
   bool UseBuiltins = DriverArgs.hasFlag(options::OPT_fbuiltin,
                                         options::OPT_fno_builtin, false);

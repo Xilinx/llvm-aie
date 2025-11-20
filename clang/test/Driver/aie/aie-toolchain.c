@@ -151,3 +151,63 @@
 // RUN: %clang %s -### --target=aie2p-none-unknown-elf -fthreadsafe-statics 2>&1 \
 // RUN:   | FileCheck -check-prefix=CC1-STATICS-OVERRIDE %s
 // CC1-STATICS-OVERRIDE-NOT: -fno-threadsafe-statics
+
+// Check that mandatory-inlining-before-opt is disabled by default
+// RUN: %clang %s -### -no-canonical-prefixes --target=aie-none-unknown-elf 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-MANDATORY-INLINING -DAIE_ARCH=aie %s
+// RUN: %clang %s -### -no-canonical-prefixes --target=aie2-none-unknown-elf 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-MANDATORY-INLINING -DAIE_ARCH=aie2 %s
+// RUN: %clang %s -### -no-canonical-prefixes --target=aie2p-none-unknown-elf 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-MANDATORY-INLINING -DAIE_ARCH=aie2p %s
+// CC1-MANDATORY-INLINING: clang{{.*}} "-cc1" "-triple" "[[AIE_ARCH]]-none-unknown-elf"
+// CC1-MANDATORY-INLINING: "-mllvm" "-mandatory-inlining-before-opt=false"
+
+// Check that basic-aa-full-phi-analysis is enabled by default
+// RUN: %clang %s -### -no-canonical-prefixes --target=aie-none-unknown-elf 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-BASIC-AA-PHI -DAIE_ARCH=aie %s
+// RUN: %clang %s -### -no-canonical-prefixes --target=aie2-none-unknown-elf 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-BASIC-AA-PHI -DAIE_ARCH=aie2 %s
+// RUN: %clang %s -### -no-canonical-prefixes --target=aie2p-none-unknown-elf 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-BASIC-AA-PHI -DAIE_ARCH=aie2p %s
+// CC1-BASIC-AA-PHI: clang{{.*}} "-cc1" "-triple" "[[AIE_ARCH]]-none-unknown-elf"
+// CC1-BASIC-AA-PHI: "-mllvm" "-basic-aa-full-phi-analysis=true"
+
+// Check that basic-aa-max-lookup-search-depth is set to 10 by default
+// RUN: %clang %s -### -no-canonical-prefixes --target=aie-none-unknown-elf 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-BASIC-AA-DEPTH -DAIE_ARCH=aie %s
+// RUN: %clang %s -### -no-canonical-prefixes --target=aie2-none-unknown-elf 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-BASIC-AA-DEPTH -DAIE_ARCH=aie2 %s
+// RUN: %clang %s -### -no-canonical-prefixes --target=aie2p-none-unknown-elf 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-BASIC-AA-DEPTH -DAIE_ARCH=aie2p %s
+// CC1-BASIC-AA-DEPTH: clang{{.*}} "-cc1" "-triple" "[[AIE_ARCH]]-none-unknown-elf"
+// CC1-BASIC-AA-DEPTH: "-mllvm" "-basic-aa-max-lookup-search-depth=10"
+
+// Check that loop iteration count assumptions are enabled by default
+// RUN: %clang %s -### -no-canonical-prefixes --target=aie-none-unknown-elf 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-LOOP-ITER-ASSUMPTIONS -DAIE_ARCH=aie %s
+// RUN: %clang %s -### -no-canonical-prefixes --target=aie2-none-unknown-elf 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-LOOP-ITER-ASSUMPTIONS -DAIE_ARCH=aie2 %s
+// RUN: %clang %s -### -no-canonical-prefixes --target=aie2p-none-unknown-elf 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-LOOP-ITER-ASSUMPTIONS -DAIE_ARCH=aie2p %s
+// CC1-LOOP-ITER-ASSUMPTIONS: clang{{.*}} "-cc1" "-triple" "[[AIE_ARCH]]-none-unknown-elf"
+// CC1-LOOP-ITER-ASSUMPTIONS: "-mllvm" "-enable-loop-iter-count-assumptions=true"
+
+// Check that vector-combine is disabled by default
+// RUN: %clang %s -### -no-canonical-prefixes --target=aie-none-unknown-elf 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-VECTOR-COMBINE -DAIE_ARCH=aie %s
+// RUN: %clang %s -### -no-canonical-prefixes --target=aie2-none-unknown-elf 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-VECTOR-COMBINE -DAIE_ARCH=aie2 %s
+// RUN: %clang %s -### -no-canonical-prefixes --target=aie2p-none-unknown-elf 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-VECTOR-COMBINE -DAIE_ARCH=aie2p %s
+// CC1-VECTOR-COMBINE: clang{{.*}} "-cc1" "-triple" "[[AIE_ARCH]]-none-unknown-elf"
+// CC1-VECTOR-COMBINE: "-mllvm" "-disable-vector-combine=true"
+
+// Check that the missing-template-arg-list-after-template-kw warning is disabled by default
+// RUN: %clang %s -### -no-canonical-prefixes --target=aie-none-unknown-elf 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-TEMPLATE-WARNING -DAIE_ARCH=aie %s
+// RUN: %clang %s -### -no-canonical-prefixes --target=aie2-none-unknown-elf 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-TEMPLATE-WARNING -DAIE_ARCH=aie2 %s
+// RUN: %clang %s -### -no-canonical-prefixes --target=aie2p-none-unknown-elf 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-TEMPLATE-WARNING -DAIE_ARCH=aie2p %s
+// CC1-TEMPLATE-WARNING: clang{{.*}} "-cc1" "-triple" "[[AIE_ARCH]]-none-unknown-elf"
+// CC1-TEMPLATE-WARNING: "-Wno-missing-template-arg-list-after-template-kw"

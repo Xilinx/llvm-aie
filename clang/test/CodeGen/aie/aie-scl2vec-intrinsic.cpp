@@ -6,7 +6,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 // RUN: %clang -O1 %s --target=aie2 -nostdlibinc -S -emit-llvm -o - | FileCheck %s -check-prefix=AIE2
@@ -301,7 +301,7 @@ v16accfloat shiftxTest10(v16accfloat a, v16accfloat b, int step, unsigned int sh
 // AIE2-NEXT:    ret <64 x i8> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z13test_upd_elemDv64_aic(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i8 noundef signext [[B:%.*]]) local_unnamed_addr #[[ATTR1:[0-9]+]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i8 noundef signext [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <64 x i8> [[V]], i8 [[B]], i32 [[IDX]]
 // AIE2P-NEXT:    ret <64 x i8> [[VECINS_I_I]]
@@ -319,7 +319,7 @@ v64int8 test_upd_elem(v64int8 v, int idx, char b) {
 // AIE2-NEXT:    ret <32 x i16> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <32 x i16> @_Z13test_upd_elemDv32_sis(
-// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i16 noundef signext [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i16 noundef signext [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <32 x i16> [[V]], i16 [[B]], i32 [[IDX]]
 // AIE2P-NEXT:    ret <32 x i16> [[VECINS_I_I]]
@@ -334,7 +334,7 @@ v32int16 test_upd_elem(v32int16 v, int idx, short b) {
 // AIE2-NEXT:    ret <16 x i32> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <16 x i32> @_Z13test_upd_elemDv16_iii(
-// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <16 x i32> [[V]], i32 [[B]], i32 [[IDX]]
 // AIE2P-NEXT:    ret <16 x i32> [[VECINS_I_I]]
@@ -352,7 +352,7 @@ v16int32 test_upd_elem(v16int32 v, int idx, int b) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z13test_upd_elemDv64_hih(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i8 noundef zeroext [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i8 noundef zeroext [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <64 x i8> [[V]], i8 [[B]], i32 [[IDX]]
 // AIE2P-NEXT:    ret <64 x i8> [[VECINS_I_I]]
@@ -370,7 +370,7 @@ v64uint8 test_upd_elem(v64uint8 v, int idx, unsigned char b) {
 // AIE2-NEXT:    ret <32 x i16> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <32 x i16> @_Z13test_upd_elemDv32_tit(
-// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i16 noundef zeroext [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i16 noundef zeroext [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <32 x i16> [[V]], i16 [[B]], i32 [[IDX]]
 // AIE2P-NEXT:    ret <32 x i16> [[VECINS_I_I]]
@@ -385,7 +385,7 @@ v32uint16 test_upd_elem(v32uint16 v, int idx, unsigned short b) {
 // AIE2-NEXT:    ret <16 x i32> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <16 x i32> @_Z13test_upd_elemDv16_jij(
-// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <16 x i32> [[V]], i32 [[B]], i32 [[IDX]]
 // AIE2P-NEXT:    ret <16 x i32> [[VECINS_I_I]]
@@ -404,7 +404,7 @@ v16uint32 test_upd_elem(v16uint32 v, int idx, unsigned int b) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z13upd_elemTest1Dv64_aic(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i8 noundef signext [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i8 noundef signext [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <64 x i8> [[V]], i8 [[B]], i32 [[IDX]]
 // AIE2P-NEXT:    ret <64 x i8> [[VECINS_I_I]]
@@ -422,7 +422,7 @@ v64int8 upd_elemTest1(v64int8 v, int idx, char b) {
 // AIE2-NEXT:    ret <32 x i16> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <32 x i16> @_Z13upd_elemTest2Dv32_sis(
-// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i16 noundef signext [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i16 noundef signext [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <32 x i16> [[V]], i16 [[B]], i32 [[IDX]]
 // AIE2P-NEXT:    ret <32 x i16> [[VECINS_I_I]]
@@ -437,7 +437,7 @@ v32int16 upd_elemTest2(v32int16 v, int idx, short b) {
 // AIE2-NEXT:    ret <16 x i32> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <16 x i32> @_Z13upd_elemTest3Dv16_iii(
-// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <16 x i32> [[V]], i32 [[B]], i32 [[IDX]]
 // AIE2P-NEXT:    ret <16 x i32> [[VECINS_I_I]]
@@ -455,7 +455,7 @@ v16int32 upd_elemTest3(v16int32 v, int idx, int b) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z13upd_elemTest4Dv64_hih(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i8 noundef zeroext [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i8 noundef zeroext [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <64 x i8> [[V]], i8 [[B]], i32 [[IDX]]
 // AIE2P-NEXT:    ret <64 x i8> [[VECINS_I_I]]
@@ -473,7 +473,7 @@ v64uint8 upd_elemTest4(v64uint8 v, int idx, unsigned char b) {
 // AIE2-NEXT:    ret <32 x i16> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <32 x i16> @_Z13upd_elemTest5Dv32_tit(
-// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i16 noundef zeroext [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i16 noundef zeroext [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <32 x i16> [[V]], i16 [[B]], i32 [[IDX]]
 // AIE2P-NEXT:    ret <32 x i16> [[VECINS_I_I]]
@@ -488,7 +488,7 @@ v32uint16 upd_elemTest5(v32uint16 v, int idx, unsigned short b) {
 // AIE2-NEXT:    ret <16 x i32> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <16 x i32> @_Z13upd_elemTest6Dv16_jij(
-// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <16 x i32> [[V]], i32 [[B]], i32 [[IDX]]
 // AIE2P-NEXT:    ret <16 x i32> [[VECINS_I_I]]
@@ -503,7 +503,7 @@ v16uint32 upd_elemTest6(v16uint32 v, int idx, unsigned int b) {
 // AIE2-NEXT:    ret <32 x bfloat> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <32 x bfloat> @_Z13upd_elemTest7Dv32_8bfloat16iS_(
-// AIE2P-SAME: <32 x bfloat> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], bfloat noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <32 x bfloat> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], bfloat noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <32 x bfloat> [[V]], bfloat [[B]], i32 [[IDX]]
 // AIE2P-NEXT:    ret <32 x bfloat> [[VECINS_I_I]]
@@ -522,7 +522,7 @@ v32bfloat16 upd_elemTest7(v32bfloat16 v, int idx, bfloat16 b) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z11insertTest1Dv64_DB8_iS_(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i8 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i8 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <64 x i8> [[V]], i8 [[B]], i32 [[IDX]]
 // AIE2P-NEXT:    ret <64 x i8> [[VECINS_I_I]]
@@ -541,7 +541,7 @@ v128int4 insertTest1(v128int4 v, int idx, v2int4 b) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP3]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z11insertTest2Dv64_DB8_iDv2_S_(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <2 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <2 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V]] to <32 x i16>
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <2 x i8> [[B]] to i16
@@ -562,7 +562,7 @@ v128int4 insertTest2(v128int4 v, int idx, v4int4 b) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP3]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z11insertTest3Dv64_DB8_iDv4_S_(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <4 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <4 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V]] to <16 x i32>
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <4 x i8> [[B]] to i32
@@ -583,7 +583,7 @@ v128int4 insertTest3(v128int4 v, int idx, v8int4 b) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP3]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z11insertTest4Dv64_DB8_iDv8_S_(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <8 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <8 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V]] to <16 x i32>
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <8 x i8> [[B]] to <2 x i32>
@@ -625,7 +625,7 @@ v32bfloat16 insertTest5(v32bfloat16 v, int idx, v2bfloat16 b) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z11test_insertDv64_DB8_iS_(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i8 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i8 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <64 x i8> [[V]], i8 [[B]], i32 [[IDX]]
 // AIE2P-NEXT:    ret <64 x i8> [[VECINS_I_I]]
@@ -644,7 +644,7 @@ v128int4 test_insert(v128int4 v, int idx, v2int4 b) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP3]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z11test_insertDv64_DB8_iDv2_S_(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <2 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <2 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V]] to <32 x i16>
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <2 x i8> [[B]] to i16
@@ -665,7 +665,7 @@ v128int4 test_insert(v128int4 v, int idx, v4int4 b) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP3]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z11test_insertDv64_DB8_iDv4_S_(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <4 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <4 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V]] to <16 x i32>
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <4 x i8> [[B]] to i32
@@ -686,7 +686,7 @@ v128int4 test_insert(v128int4 v, int idx, v8int4 b) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP3]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z11test_insertDv64_DB8_iDv8_S_(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <8 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <8 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V]] to <16 x i32>
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <8 x i8> [[B]] to <2 x i32>
@@ -713,7 +713,7 @@ v128int4 test_insert(v128int4 v, int idx, v16int4 b) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z11test_insertDv64_aic(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i8 noundef signext [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i8 noundef signext [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <64 x i8> [[V]], i8 [[B]], i32 [[IDX]]
 // AIE2P-NEXT:    ret <64 x i8> [[VECINS_I_I]]
@@ -731,7 +731,7 @@ v64int8 test_insert(v64int8 v, int idx, char b) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z23test_insert_signed_charDv64_aia(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i8 noundef signext [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i8 noundef signext [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <64 x i8> [[V]], i8 [[B]], i32 [[IDX]]
 // AIE2P-NEXT:    ret <64 x i8> [[VECINS_I_I]]
@@ -750,7 +750,7 @@ v64int8 test_insert_signed_char(v64int8 v, int idx, signed char b) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP3]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z11test_insertDv64_aiDv2_a(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <2 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <2 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V]] to <32 x i16>
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <2 x i8> [[B]] to i16
@@ -771,7 +771,7 @@ v64int8 test_insert(v64int8 v, int idx, v2int8 b) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP3]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z11test_insertDv64_aiDv4_a(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <4 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <4 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V]] to <16 x i32>
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <4 x i8> [[B]] to i32
@@ -792,7 +792,7 @@ v64int8 test_insert(v64int8 v, int idx, v4int8 b) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP3]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z11test_insertDv64_aiDv8_a(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <8 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <8 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V]] to <16 x i32>
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <8 x i8> [[B]] to <2 x i32>
@@ -819,7 +819,7 @@ v64int8 test_insert(v64int8 v, int idx, v8int8 b) {
 // AIE2-NEXT:    ret <32 x i16> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <32 x i16> @_Z11test_insertDv32_sis(
-// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i16 noundef signext [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i16 noundef signext [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <32 x i16> [[V]], i16 [[B]], i32 [[IDX]]
 // AIE2P-NEXT:    ret <32 x i16> [[VECINS_I_I]]
@@ -837,7 +837,7 @@ v32int16 test_insert(v32int16 v, int idx, short b) {
 // AIE2-NEXT:    ret <32 x i16> [[TMP3]]
 //
 // AIE2P-LABEL: define dso_local noundef <32 x i16> @_Z11test_insertDv32_siDv2_s(
-// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <2 x i16> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <2 x i16> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <32 x i16> [[V]] to <16 x i32>
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <2 x i16> [[B]] to i32
@@ -858,7 +858,7 @@ v32int16 test_insert(v32int16 v, int idx, v2int16 b) {
 // AIE2-NEXT:    ret <32 x i16> [[TMP3]]
 //
 // AIE2P-LABEL: define dso_local noundef <32 x i16> @_Z11test_insertDv32_siDv4_s(
-// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <4 x i16> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <4 x i16> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <32 x i16> [[V]] to <16 x i32>
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <4 x i16> [[B]] to <2 x i32>
@@ -885,7 +885,7 @@ v32int16 test_insert(v32int16 v, int idx, v4int16 b) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z11test_insertDv64_DU8_iS_(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i8 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i8 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <64 x i8> [[V]], i8 [[B]], i32 [[IDX]]
 // AIE2P-NEXT:    ret <64 x i8> [[VECINS_I_I]]
@@ -904,7 +904,7 @@ v128uint4 test_insert(v128uint4 v, int idx, v2uint4 b) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP3]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z11test_insertDv64_DU8_iDv2_S_(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <2 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <2 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[CONV_I_I:%.*]] = extractelement <2 x i8> [[B]], i64 0
 // AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <64 x i8> [[V]], i8 [[CONV_I_I]], i32 [[IDX]]
@@ -923,7 +923,7 @@ v128uint4 test_insert(v128uint4 v, int idx, v4uint4 b) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP3]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z11test_insertDv64_DU8_iDv4_S_(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <4 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <4 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[CONV_I_I:%.*]] = extractelement <4 x i8> [[B]], i64 0
 // AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <64 x i8> [[V]], i8 [[CONV_I_I]], i32 [[IDX]]
@@ -942,7 +942,7 @@ v128uint4 test_insert(v128uint4 v, int idx, v8uint4 b) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP3]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z11test_insertDv64_DU8_iDv8_S_(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <8 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <8 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V]] to <16 x i32>
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <8 x i8> [[B]] to <2 x i32>
@@ -969,7 +969,7 @@ v128uint4 test_insert(v128uint4 v, int idx, v16uint4 b) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z11test_insertDv64_hih(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i8 noundef zeroext [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i8 noundef zeroext [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <64 x i8> [[V]], i8 [[B]], i32 [[IDX]]
 // AIE2P-NEXT:    ret <64 x i8> [[VECINS_I_I]]
@@ -988,7 +988,7 @@ v64uint8 test_insert(v64uint8 v, int idx, unsigned char b) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP3]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z11test_insertDv64_hiDv2_h(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <2 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <2 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V]] to <32 x i16>
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <2 x i8> [[B]] to i16
@@ -1009,7 +1009,7 @@ v64uint8 test_insert(v64uint8 v, int idx, v2uint8 b) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP3]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z11test_insertDv64_hiDv4_h(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <4 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <4 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V]] to <16 x i32>
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <4 x i8> [[B]] to i32
@@ -1030,7 +1030,7 @@ v64uint8 test_insert(v64uint8 v, int idx, v4uint8 b) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP3]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z11test_insertDv64_hiDv8_h(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <8 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <8 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V]] to <16 x i32>
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <8 x i8> [[B]] to <2 x i32>
@@ -1057,7 +1057,7 @@ v64uint8 test_insert(v64uint8 v, int idx, v8uint8 b) {
 // AIE2-NEXT:    ret <32 x i16> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <32 x i16> @_Z11test_insertDv32_tit(
-// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i16 noundef zeroext [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i16 noundef zeroext [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <32 x i16> [[V]], i16 [[B]], i32 [[IDX]]
 // AIE2P-NEXT:    ret <32 x i16> [[VECINS_I_I]]
@@ -1075,7 +1075,7 @@ v32uint16 test_insert(v32uint16 v, int idx, unsigned short b) {
 // AIE2-NEXT:    ret <32 x i16> [[TMP3]]
 //
 // AIE2P-LABEL: define dso_local noundef <32 x i16> @_Z11test_insertDv32_tiDv2_t(
-// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <2 x i16> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <2 x i16> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <32 x i16> [[V]] to <16 x i32>
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <2 x i16> [[B]] to i32
@@ -1096,7 +1096,7 @@ v32uint16 test_insert(v32uint16 v, int idx, v2uint16 b) {
 // AIE2-NEXT:    ret <32 x i16> [[TMP3]]
 //
 // AIE2P-LABEL: define dso_local noundef <32 x i16> @_Z11test_insertDv32_tiDv4_t(
-// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <4 x i16> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <4 x i16> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <32 x i16> [[V]] to <16 x i32>
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <4 x i16> [[B]] to <2 x i32>
@@ -1122,7 +1122,7 @@ v32uint16 test_insert(v32uint16 v, int idx, v4uint16 b) {
 // AIE2-NEXT:    ret i8 [[CONV_I]]
 //
 // AIE2P-LABEL: define dso_local noundef signext i8 @_Z13ext_elemTest1Dv64_aii(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECEXT_I_I:%.*]] = extractelement <64 x i8> [[V]], i32 [[IDX]]
 // AIE2P-NEXT:    ret i8 [[VECEXT_I_I]]
@@ -1141,7 +1141,7 @@ char ext_elemTest1(v64int8 v, int idx, int sign) {
 // AIE2-NEXT:    ret <2 x i8> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <2 x i8> @_Z13ext_elemTest2Dv64_aii(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V]] to <32 x i16>
 // AIE2P-NEXT:    [[VECEXT_I_I:%.*]] = extractelement <32 x i16> [[TMP0]], i32 [[IDX]]
@@ -1161,7 +1161,7 @@ v2int8 ext_elemTest2(v64int8 v, int idx, int sign) {
 // AIE2-NEXT:    ret <4 x i8> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <4 x i8> @_Z13ext_elemTest3Dv64_aii(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V]] to <16 x i32>
 // AIE2P-NEXT:    [[VECEXT_I_I:%.*]] = extractelement <16 x i32> [[TMP0]], i32 [[IDX]]
@@ -1181,7 +1181,7 @@ v4int8 ext_elemTest3(v64int8 v, int idx, int sign) {
 // AIE2-NEXT:    ret <8 x i8> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <8 x i8> @_Z13ext_elemTest4Dv64_DB8_ii(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V]] to <16 x i32>
 // AIE2P-NEXT:    [[MUL_I_I:%.*]] = shl nsw i32 [[IDX]], 1
@@ -1205,7 +1205,7 @@ v16int4 ext_elemTest4(v128int4 v, int idx, int sign) {
 // AIE2-NEXT:    ret <4 x i16> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <4 x i16> @_Z13ext_elemTest5Dv64_DB8_ii(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V]] to <16 x i32>
 // AIE2P-NEXT:    [[MUL_I_I:%.*]] = shl nsw i32 [[IDX]], 1
@@ -1229,7 +1229,7 @@ v4int16 ext_elemTest5(v128int4 v, int idx, int sign) {
 // AIE2-NEXT:    ret <32 x i16> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <32 x i16> @_Z18test_broadcast_s16s(
-// AIE2P-SAME: i16 noundef signext [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: i16 noundef signext [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[SPLAT_SPLATINSERT_I:%.*]] = insertelement <32 x i16> poison, i16 [[B]], i64 0
 // AIE2P-NEXT:    [[SPLAT_SPLAT_I:%.*]] = shufflevector <32 x i16> [[SPLAT_SPLATINSERT_I]], <32 x i16> poison, <32 x i32> zeroinitializer
@@ -1246,7 +1246,7 @@ v32int16 test_broadcast_s16 (short b) {
 // AIE2-NEXT:    ret <16 x i32> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <16 x i32> @_Z18test_broadcast_s32i(
-// AIE2P-SAME: i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[SPLAT_SPLATINSERT_I:%.*]] = insertelement <16 x i32> poison, i32 [[B]], i64 0
 // AIE2P-NEXT:    [[SPLAT_SPLAT_I:%.*]] = shufflevector <16 x i32> [[SPLAT_SPLATINSERT_I]], <16 x i32> poison, <16 x i32> zeroinitializer
@@ -1264,7 +1264,7 @@ v16int32 test_broadcast_s32 (int b) {
 // AIE2-NEXT:    ret <16 x i32> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <16 x i32> @_Z20test_broadcast_v2s32Dv2_i(
-// AIE2P-SAME: <2 x i32> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <2 x i32> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECINIT30_I_I:%.*]] = shufflevector <2 x i32> [[B]], <2 x i32> poison, <16 x i32> <i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1>
 // AIE2P-NEXT:    ret <16 x i32> [[VECINIT30_I_I]]
@@ -1281,7 +1281,7 @@ v16int32 test_broadcast_v2s32 (v2int32 b) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z26test_broadcast_to_v128int4DB8_(
-// AIE2P-SAME: i8 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: i8 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[SPLAT_SPLATINSERT_I:%.*]] = insertelement <64 x i8> poison, i8 [[B]], i64 0
 // AIE2P-NEXT:    [[SPLAT_SPLAT_I:%.*]] = shufflevector <64 x i8> [[SPLAT_SPLATINSERT_I]], <64 x i8> poison, <64 x i32> zeroinitializer
@@ -1301,7 +1301,7 @@ v128int4 test_broadcast_to_v128int4 (v2int4 b) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z25test_broadcast_to_v64int8Dv2_a(
-// AIE2P-SAME: <2 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <2 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <2 x i8> [[B]] to i16
 // AIE2P-NEXT:    [[SPLAT_SPLATINSERT_I_I:%.*]] = insertelement <32 x i16> poison, i16 [[TMP0]], i64 0
@@ -1322,7 +1322,7 @@ v64int8 test_broadcast_to_v64int8 (v2int8 b) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z26test_broadcast_to_v128int4Dv8_DB8_(
-// AIE2P-SAME: <8 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <8 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <8 x i8> [[B]] to <2 x i32>
 // AIE2P-NEXT:    [[VECINIT30_I_I:%.*]] = shufflevector <2 x i32> [[TMP0]], <2 x i32> poison, <16 x i32> <i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1>
@@ -1342,7 +1342,7 @@ v128int4 test_broadcast_to_v128int4 (v16int4 b) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z25test_broadcast_to_v64int8Dv8_a(
-// AIE2P-SAME: <8 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <8 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <8 x i8> [[B]] to <2 x i32>
 // AIE2P-NEXT:    [[VECINIT30_I_I:%.*]] = shufflevector <2 x i32> [[TMP0]], <2 x i32> poison, <16 x i32> <i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1>
@@ -1360,7 +1360,7 @@ v64int8 test_broadcast_to_v64int8 (v8int8 b) {
 // AIE2-NEXT:    ret <16 x i32> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <16 x i32> @_Z26test_broadcast_to_v16int32i(
-// AIE2P-SAME: i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[SPLAT_SPLATINSERT_I:%.*]] = insertelement <16 x i32> poison, i32 [[B]], i64 0
 // AIE2P-NEXT:    [[SPLAT_SPLAT_I:%.*]] = shufflevector <16 x i32> [[SPLAT_SPLATINSERT_I]], <16 x i32> poison, <16 x i32> zeroinitializer
@@ -1377,7 +1377,7 @@ v16int32 test_broadcast_to_v16int32 (int b) {
 // AIE2-NEXT:    ret <16 x i32> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <16 x i32> @_Z26test_broadcast_to_v16int32Dv2_i(
-// AIE2P-SAME: <2 x i32> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <2 x i32> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECINIT30_I_I:%.*]] = shufflevector <2 x i32> [[B]], <2 x i32> poison, <16 x i32> <i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1>
 // AIE2P-NEXT:    ret <16 x i32> [[VECINIT30_I_I]]
@@ -1396,7 +1396,7 @@ v16int32 test_broadcast_to_v16int32 (v2int32 b) {
 // AIE2-NEXT:    ret <16 x float> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <16 x float> @_Z20test_broadcast_floatf(
-// AIE2P-SAME: float noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: float noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = insertelement <16 x float> poison, float [[B]], i64 0
 // AIE2P-NEXT:    [[TMP1:%.*]] = shufflevector <16 x float> [[TMP0]], <16 x float> poison, <16 x i32> zeroinitializer
@@ -1555,7 +1555,7 @@ v16uint32 test_shiftr_elem(v16uint32 v, unsigned int s) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z21test_broadcast_one_u8v(
-// AIE2P-SAME: ) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: ) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    ret <64 x i8> splat (i8 1)
 //
@@ -1570,7 +1570,7 @@ v64uint8 test_broadcast_one_u8 () {
 // AIE2-NEXT:    ret <32 x i16> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <32 x i16> @_Z22test_broadcast_one_u16v(
-// AIE2P-SAME: ) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: ) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    ret <32 x i16> splat (i16 1)
 //
@@ -1585,7 +1585,7 @@ v32uint16 test_broadcast_one_u16 () {
 // AIE2-NEXT:    ret <16 x i32> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <16 x i32> @_Z22test_broadcast_one_u32v(
-// AIE2P-SAME: ) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: ) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    ret <16 x i32> splat (i32 1)
 //
@@ -1600,7 +1600,7 @@ v16uint32 test_broadcast_one_u32 () {
 // AIE2-NEXT:    ret <64 x i8> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z30test_broadcast_zero_to_v64int8v(
-// AIE2P-SAME: ) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: ) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    ret <64 x i8> zeroinitializer
 //
@@ -1615,7 +1615,7 @@ v64uint8 test_broadcast_zero_to_v64int8 () {
 // AIE2-NEXT:    ret <32 x i16> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <32 x i16> @_Z31test_broadcast_zero_to_v32int16v(
-// AIE2P-SAME: ) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: ) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    ret <32 x i16> zeroinitializer
 //
@@ -1630,7 +1630,7 @@ v32uint16 test_broadcast_zero_to_v32int16 () {
 // AIE2-NEXT:    ret <16 x i32> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <16 x i32> @_Z31test_broadcast_zero_to_v16int32v(
-// AIE2P-SAME: ) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: ) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    ret <16 x i32> zeroinitializer
 //
@@ -1646,7 +1646,7 @@ v16uint32 test_broadcast_zero_to_v16int32 () {
 // AIE2-NEXT:    ret <16 x float> [[TMP1]]
 //
 // AIE2P-LABEL: define dso_local noundef <16 x float> @_Z31test_broadcast_zero_to_v16floatv(
-// AIE2P-SAME: ) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: ) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    ret <16 x float> zeroinitializer
 //
@@ -1661,7 +1661,7 @@ v16float test_broadcast_zero_to_v16float () {
 // AIE2-NEXT:    ret <16 x i64> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local inreg noundef <16 x i64> @_Z31test_broadcast_zero_to_v16acc64v(
-// AIE2P-SAME: ) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: ) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    ret <16 x i64> zeroinitializer
 //
@@ -1676,7 +1676,7 @@ v16acc64 test_broadcast_zero_to_v16acc64 () {
 // AIE2-NEXT:    ret <32 x i16> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <32 x i16> @_Z19test_broadcast_elemDv32_si(
-// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECEXT_I_I_I:%.*]] = extractelement <32 x i16> [[V]], i32 [[IDX]]
 // AIE2P-NEXT:    [[SPLAT_SPLATINSERT_I_I:%.*]] = insertelement <32 x i16> poison, i16 [[VECEXT_I_I_I]], i64 0
@@ -1694,7 +1694,7 @@ v32int16 test_broadcast_elem (v32int16 v, int idx) {
 // AIE2-NEXT:    ret <64 x i8> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z19test_broadcast_elemDv64_hi(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECEXT_I_I_I:%.*]] = extractelement <64 x i8> [[V]], i32 [[IDX]]
 // AIE2P-NEXT:    [[SPLAT_SPLATINSERT_I_I:%.*]] = insertelement <64 x i8> poison, i8 [[VECEXT_I_I_I]], i64 0
@@ -1712,7 +1712,7 @@ v64uint8 test_broadcast_elem (v64uint8 v, int idx) {
 // AIE2-NEXT:    ret <32 x i16> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <32 x i16> @_Z19test_broadcast_elemDv32_ti(
-// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECEXT_I_I_I:%.*]] = extractelement <32 x i16> [[V]], i32 [[IDX]]
 // AIE2P-NEXT:    [[SPLAT_SPLATINSERT_I_I:%.*]] = insertelement <32 x i16> poison, i16 [[VECEXT_I_I_I]], i64 0
@@ -1730,7 +1730,7 @@ v32uint16 test_broadcast_elem (v32uint16 v, int idx) {
 // AIE2-NEXT:    ret <16 x i32> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <16 x i32> @_Z19test_broadcast_elemDv16_ji(
-// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECEXT_I_I_I:%.*]] = extractelement <16 x i32> [[V]], i32 [[IDX]]
 // AIE2P-NEXT:    [[SPLAT_SPLATINSERT_I_I:%.*]] = insertelement <16 x i32> poison, i32 [[VECEXT_I_I_I]], i64 0
@@ -1817,7 +1817,7 @@ v16int32 test_shuffle_s32 (int b, unsigned int m) {
 // AIE2-NEXT:    ret i8 [[CONV_I]]
 //
 // AIE2P-LABEL: define dso_local noundef signext i8 @_Z15test_ext_v2int4Dv64_DB8_ii(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECEXT_I_I:%.*]] = extractelement <64 x i8> [[V]], i32 [[IDX]]
 // AIE2P-NEXT:    ret i8 [[VECEXT_I_I]]
@@ -1834,7 +1834,7 @@ v2int4 test_ext_v2int4(v128int4 v, int idx, int sign) {
 // AIE2-NEXT:    ret i8 [[CONV_I]]
 //
 // AIE2P-LABEL: define dso_local noundef signext i8 @_Z13test_ext_elemDv64_aii(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECEXT_I_I:%.*]] = extractelement <64 x i8> [[V]], i32 [[IDX]]
 // AIE2P-NEXT:    ret i8 [[VECEXT_I_I]]
@@ -1851,7 +1851,7 @@ char test_ext_elem(v64int8 v, int idx, int sign) {
 // AIE2-NEXT:    ret i8 [[CONV_I]]
 //
 // AIE2P-LABEL: define dso_local noundef signext i8 @_Z18test_ext_elem_idx3Dv64_ai(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECEXT_I_I:%.*]] = extractelement <64 x i8> [[V]], i64 3
 // AIE2P-NEXT:    ret i8 [[VECEXT_I_I]]
@@ -1870,7 +1870,7 @@ char test_ext_elem_idx3(v64int8 v, int sign) {
 // AIE2-NEXT:    ret <2 x i8> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <2 x i8> @_Z16test_ext_v2uint8Dv64_hii(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V]] to <32 x i16>
 // AIE2P-NEXT:    [[VECEXT_I_I:%.*]] = extractelement <32 x i16> [[TMP0]], i32 [[IDX]]
@@ -1889,7 +1889,7 @@ v2uint8 test_ext_v2uint8(v64uint8 v, int idx, int sign) {
 // AIE2-NEXT:    ret i16 [[CONV_I]]
 //
 // AIE2P-LABEL: define dso_local noundef zeroext i16 @_Z13test_ext_elemDv32_tii(
-// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECEXT_I_I:%.*]] = extractelement <32 x i16> [[V]], i32 [[IDX]]
 // AIE2P-NEXT:    ret i16 [[VECEXT_I_I]]
@@ -1906,7 +1906,7 @@ unsigned short test_ext_elem(v32uint16 v, int idx, int sign) {
 // AIE2-NEXT:    ret i16 [[CONV_I]]
 //
 // AIE2P-LABEL: define dso_local noundef zeroext i16 @_Z18test_ext_elem_idx4Dv32_ti(
-// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECEXT_I_I:%.*]] = extractelement <32 x i16> [[V]], i64 4
 // AIE2P-NEXT:    ret i16 [[VECEXT_I_I]]
@@ -1924,7 +1924,7 @@ unsigned short test_ext_elem_idx4(v32uint16 v, int sign) {
 // AIE2-NEXT:    ret <2 x i16> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <2 x i16> @_Z16test_ext_v2int16Dv32_sii(
-// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <32 x i16> [[V]] to <16 x i32>
 // AIE2P-NEXT:    [[VECEXT_I_I:%.*]] = extractelement <16 x i32> [[TMP0]], i32 [[IDX]]
@@ -1942,7 +1942,7 @@ v2int16 test_ext_v2int16(v32int16 v, int idx, int sign) {
 // AIE2-NEXT:    ret i32 [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef i32 @_Z13test_ext_elemDv16_iii(
-// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECEXT_I_I:%.*]] = extractelement <16 x i32> [[V]], i32 [[IDX]]
 // AIE2P-NEXT:    ret i32 [[VECEXT_I_I]]
@@ -1958,7 +1958,7 @@ int test_ext_elem(v16int32 v, int idx, int sign) {
 // AIE2-NEXT:    ret i32 [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef i32 @_Z18test_ext_elem_idx5Dv16_ii(
-// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECEXT_I_I:%.*]] = extractelement <16 x i32> [[V]], i64 5
 // AIE2P-NEXT:    ret i32 [[VECEXT_I_I]]
@@ -1976,7 +1976,7 @@ int test_ext_elem_idx5(v16int32 v, int sign) {
 // AIE2-NEXT:    ret <4 x i16> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <4 x i16> @_Z16test_ext_v4int16Dv32_sii(
-// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <32 x i16> [[V]] to <16 x i32>
 // AIE2P-NEXT:    [[MUL_I_I:%.*]] = shl nsw i32 [[IDX]], 1
@@ -1999,7 +1999,7 @@ v4int16 test_ext_v4int16(v32int16 v, int idx, int sign) {
 // AIE2-NEXT:    ret <2 x i32> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <2 x i32> @_Z16test_ext_v2int32Dv16_iii(
-// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[MUL_I_I:%.*]] = shl nsw i32 [[IDX]], 1
 // AIE2P-NEXT:    [[VECEXT_I_I:%.*]] = extractelement <16 x i32> [[V]], i32 [[MUL_I_I]]
@@ -2020,7 +2020,7 @@ v2int32 test_ext_v2int32(v16int32 v, int idx, int sign) {
 // AIE2-NEXT:    ret <2 x i32> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <2 x i32> @_Z21test_ext_v2int32_idx4Dv16_ii(
-// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECINIT2_I_I:%.*]] = shufflevector <16 x i32> [[V]], <16 x i32> poison, <2 x i32> <i32 8, i32 9>
 // AIE2P-NEXT:    ret <2 x i32> [[VECINIT2_I_I]]
@@ -2038,7 +2038,7 @@ v2int32 test_ext_v2int32_idx4(v16int32 v, int sign) {
 // AIE2-NEXT:    ret <4 x i8> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <4 x i8> @_Z19test_extract_v8int4Dv64_DB8_ii(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V]] to <16 x i32>
 // AIE2P-NEXT:    [[VECEXT_I_I:%.*]] = extractelement <16 x i32> [[TMP0]], i32 [[IDX]]
@@ -2058,7 +2058,7 @@ v8int4 test_extract_v8int4(v128int4 v, int idx, int sign) {
 // AIE2-NEXT:    ret <8 x i8> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <8 x i8> @_Z19test_extract_v8int8Dv64_aii(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V]] to <16 x i32>
 // AIE2P-NEXT:    [[MUL_I_I:%.*]] = shl nsw i32 [[IDX]], 1
@@ -2081,7 +2081,7 @@ v8int8 test_extract_v8int8(v64int8 v, int idx, int sign) {
 // AIE2-NEXT:    ret i32 [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef i32 @_Z17test_extract_elemDv16_jii(
-// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECEXT_I_I:%.*]] = extractelement <16 x i32> [[V]], i32 [[IDX]]
 // AIE2P-NEXT:    ret i32 [[VECEXT_I_I]]
@@ -2099,7 +2099,7 @@ unsigned int test_extract_elem(v16uint32 v, int idx, int sign) {
 // AIE2-NEXT:    ret float [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef float @_Z23test_extract_elem_floatDv16_fii(
-// AIE2P-SAME: <16 x float> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <16 x float> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECEXT_I_I:%.*]] = extractelement <16 x float> [[V]], i32 [[IDX]]
 // AIE2P-NEXT:    ret float [[VECEXT_I_I]]
@@ -2115,7 +2115,7 @@ float test_extract_elem_float(v16float v, int idx, int sign) {
 // AIE2-NEXT:    ret i32 [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef i32 @_Z22test_extract_elem_idx5Dv16_ji(
-// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECEXT_I_I:%.*]] = extractelement <16 x i32> [[V]], i64 5
 // AIE2P-NEXT:    ret i32 [[VECEXT_I_I]]
@@ -2132,7 +2132,7 @@ unsigned int test_extract_elem_idx5(v16uint32 v, int sign) {
 // AIE2-NEXT:    ret i8 [[CONV_I_I]]
 //
 // AIE2P-LABEL: define dso_local noundef signext i8 @_Z13test_ext_elemDv64_ai(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECEXT_I_I_I:%.*]] = extractelement <64 x i8> [[V]], i32 [[IDX]]
 // AIE2P-NEXT:    ret i8 [[VECEXT_I_I_I]]
@@ -2151,7 +2151,7 @@ char test_ext_elem(v64int8 v, int idx) {
 // AIE2-NEXT:    ret <2 x i8> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <2 x i8> @_Z15test_ext_v2int8Dv64_ai(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V]] to <32 x i16>
 // AIE2P-NEXT:    [[VECEXT_I_I_I:%.*]] = extractelement <32 x i16> [[TMP0]], i32 [[IDX]]
@@ -2172,7 +2172,7 @@ v2int8 test_ext_v2int8(v64int8 v, int idx) {
 // AIE2-NEXT:    ret <2 x i8> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <2 x i8> @_Z20test_ext_v2int8_idx2Dv64_a(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V]] to <32 x i16>
 // AIE2P-NEXT:    [[VECEXT_I_I_I:%.*]] = extractelement <32 x i16> [[TMP0]], i64 2
@@ -2190,7 +2190,7 @@ v2int8 test_ext_v2int8_idx2(v64int8 v) {
 // AIE2-NEXT:    ret <2 x i32> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <2 x i32> @_Z17test_ext_v2uint32Dv16_ji(
-// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[MUL_I_I_I:%.*]] = shl nsw i32 [[IDX]], 1
 // AIE2P-NEXT:    [[VECEXT_I_I_I:%.*]] = extractelement <16 x i32> [[V]], i32 [[MUL_I_I_I]]
@@ -2213,7 +2213,7 @@ v2uint32 test_ext_v2uint32(v16uint32 v, int idx) {
 // AIE2-NEXT:    ret <4 x i8> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <4 x i8> @_Z20test_extract_v8uint4Dv64_DU8_i(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V]] to <16 x i32>
 // AIE2P-NEXT:    [[VECEXT_I_I_I_I:%.*]] = extractelement <16 x i32> [[TMP0]], i32 [[IDX]]
@@ -2233,7 +2233,7 @@ v8uint4 test_extract_v8uint4(v128uint4 v, int idx) {
 // AIE2-NEXT:    ret <4 x i8> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <4 x i8> @_Z25test_extract_v8uint4_idx1Dv64_DU8_(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V]] to <16 x i32>
 // AIE2P-NEXT:    [[VECEXT_I_I_I_I:%.*]] = extractelement <16 x i32> [[TMP0]], i64 1
@@ -2253,7 +2253,7 @@ v8uint4 test_extract_v8uint4_idx1(v128uint4 v) {
 // AIE2-NEXT:    ret ptr [[TMP1]]
 //
 // AIE2P-LABEL: define dso_local ptr @_Z17test_ext_address1Dv64_ai(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECEXT_I_I:%.*]] = extractelement <64 x i8> [[V]], i32 [[IDX]]
 // AIE2P-NEXT:    [[CONV_I:%.*]] = sext i8 [[VECEXT_I_I]] to i20
@@ -2273,7 +2273,7 @@ void * test_ext_address1(v64int8 v, int idx) {
 // AIE2-NEXT:    ret ptr [[TMP1]]
 //
 // AIE2P-LABEL: define dso_local ptr @_Z17test_ext_address2Dv32_si(
-// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECEXT_I_I:%.*]] = extractelement <32 x i16> [[V]], i32 [[IDX]]
 // AIE2P-NEXT:    [[CONV_I:%.*]] = sext i16 [[VECEXT_I_I]] to i20
@@ -2293,7 +2293,7 @@ void * test_ext_address2(v32int16 v, int idx) {
 // AIE2-NEXT:    ret ptr [[TMP1]]
 //
 // AIE2P-LABEL: define dso_local ptr @_Z17test_ext_address3Dv16_ii(
-// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECEXT_I_I:%.*]] = extractelement <16 x i32> [[V]], i32 [[IDX]]
 // AIE2P-NEXT:    [[CONV_I:%.*]] = trunc i32 [[VECEXT_I_I]] to i20
@@ -2383,7 +2383,7 @@ v16accfloat test_shift(v16accfloat a, v16accfloat b, unsigned int shift_by) {
 // AIE2-NEXT:    ret <8 x i64> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local inreg noundef <16 x float> @_Z29test_broadcast_to_v16accfloatf(
-// AIE2P-SAME: float noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: float noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = insertelement <16 x float> poison, float [[B]], i64 0
 // AIE2P-NEXT:    [[TMP1:%.*]] = shufflevector <16 x float> [[TMP0]], <16 x float> poison, <16 x i32> zeroinitializer
@@ -2402,7 +2402,7 @@ v16accfloat test_broadcast_to_v16accfloat (float b) {
 // AIE2-NEXT:    ret <16 x float> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <16 x float> @_Z26test_broadcast_to_v16floatf(
-// AIE2P-SAME: float noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: float noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = insertelement <16 x float> poison, float [[B]], i64 0
 // AIE2P-NEXT:    [[TMP1:%.*]] = shufflevector <16 x float> [[TMP0]], <16 x float> poison, <16 x i32> zeroinitializer
@@ -2435,7 +2435,7 @@ v32bfloat16 test_shiftx(v32bfloat16 a, v32bfloat16 b, int step, unsigned int shi
 // AIE2-NEXT:    ret <32 x bfloat> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <32 x bfloat> @_Z11test_insertDv32_8bfloat16iS_(
-// AIE2P-SAME: <32 x bfloat> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], bfloat noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <32 x bfloat> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], bfloat noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <32 x bfloat> [[V]], bfloat [[B]], i32 [[IDX]]
 // AIE2P-NEXT:    ret <32 x bfloat> [[VECINS_I_I]]
@@ -2501,7 +2501,7 @@ v32bfloat16 test_insert(v32bfloat16 v, int idx, unsigned long long b) {
 // AIE2-NEXT:    ret <32 x bfloat> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <32 x bfloat> @_Z29test_broadcast_to_v32bfloat168bfloat16(
-// AIE2P-SAME: bfloat noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: bfloat noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[SPLAT_SPLATINSERT_I_I:%.*]] = insertelement <32 x bfloat> poison, bfloat [[B]], i64 0
 // AIE2P-NEXT:    [[SPLAT_SPLAT_I_I:%.*]] = shufflevector <32 x bfloat> [[SPLAT_SPLATINSERT_I_I]], <32 x bfloat> poison, <32 x i32> zeroinitializer
@@ -2565,7 +2565,7 @@ v32bfloat16 test_shuffle_bfloat16(bfloat16 b, unsigned int m) {  return shuffle_
 // AIE2-NEXT:    ret bfloat [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef bfloat @_Z13test_ext_elemDv32_8bfloat16ii(
-// AIE2P-SAME: <32 x bfloat> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <32 x bfloat> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = extractelement <32 x bfloat> [[V]], i32 [[IDX]]
 // AIE2P-NEXT:    ret bfloat [[TMP0]]
@@ -2618,7 +2618,7 @@ v32bfloat16 test_shuffle(v32bfloat16 a, v32bfloat16 b, unsigned int mode) {
 // AIE2-NEXT:    ret <2 x bfloat> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <2 x bfloat> @_Z23test_extract_v2bfloat16Dv32_8bfloat16ii(
-// AIE2P-SAME: <32 x bfloat> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <32 x bfloat> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <32 x bfloat> [[V]] to <16 x i32>
 // AIE2P-NEXT:    [[VECEXT_I_I_I:%.*]] = extractelement <16 x i32> [[TMP0]], i32 [[IDX]]
@@ -2640,7 +2640,7 @@ v2bfloat16 test_extract_v2bfloat16(v32bfloat16 v, int idx, int sign) {
 // AIE2-NEXT:    ret <4 x bfloat> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <4 x bfloat> @_Z23test_extract_v4bfloat16Dv32_8bfloat16ii(
-// AIE2P-SAME: <32 x bfloat> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <32 x bfloat> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <32 x bfloat> [[V]] to <16 x i32>
 // AIE2P-NEXT:    [[MUL_I_I_I:%.*]] = shl nsw i32 [[IDX]], 1
@@ -2667,7 +2667,7 @@ v4bfloat16 test_extract_v4bfloat16(v32bfloat16 v, int idx, int sign) {
 // AIE2-NEXT:    ret <16 x float> [[TMP3]]
 //
 // AIE2P-LABEL: define dso_local noundef <16 x float> @_Z11test_insertDv16_fif(
-// AIE2P-SAME: <16 x float> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], float noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <16 x float> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], float noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <16 x float> [[V]], float [[B]], i32 [[IDX]]
 // AIE2P-NEXT:    ret <16 x float> [[VECINS_I_I]]
@@ -2845,7 +2845,7 @@ v16float test_shiftr_elem(v16float v, float s) {
 // AIE2-NEXT:    ret <16 x float> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <16 x float> @_Z19test_broadcast_elemDv16_fi(
-// AIE2P-SAME: <16 x float> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <16 x float> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[V]] to <16 x i32>
 // AIE2P-NEXT:    [[MUL_I_I_I:%.*]] = shl nsw i32 [[IDX]], 1
@@ -2854,9 +2854,9 @@ v16float test_shiftr_elem(v16float v, float s) {
 // AIE2P-NEXT:    [[ADD_I_I_I:%.*]] = or disjoint i32 [[MUL_I_I_I]], 1
 // AIE2P-NEXT:    [[VECEXT1_I_I_I:%.*]] = extractelement <16 x i32> [[TMP0]], i32 [[ADD_I_I_I]]
 // AIE2P-NEXT:    [[VECINIT2_I_I_I:%.*]] = insertelement <2 x i32> [[VECINIT_I_I_I]], i32 [[VECEXT1_I_I_I]], i64 1
-// AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[VECINIT2_I_I_I]] to <2 x float>
-// AIE2P-NEXT:    [[TMP2:%.*]] = shufflevector <2 x float> [[TMP1]], <2 x float> poison, <16 x i32> <i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1>
-// AIE2P-NEXT:    ret <16 x float> [[TMP2]]
+// AIE2P-NEXT:    [[VECINIT30_I_I:%.*]] = shufflevector <2 x i32> [[VECINIT2_I_I_I]], <2 x i32> poison, <16 x i32> <i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1>
+// AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <16 x i32> [[VECINIT30_I_I]] to <16 x float>
+// AIE2P-NEXT:    ret <16 x float> [[TMP1]]
 //
 v16float test_broadcast_elem (v16float v, int idx) {
    return broadcast_elem(v, idx);
@@ -2887,7 +2887,7 @@ v16float test_shuffle_float(float b, unsigned int m) {  return shuffle_float(b,m
 // AIE2-NEXT:    ret <64 x i8> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z15broadcast_Test1c(
-// AIE2P-SAME: i8 noundef signext [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: i8 noundef signext [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[SPLAT_SPLATINSERT_I:%.*]] = insertelement <64 x i8> poison, i8 [[B]], i64 0
 // AIE2P-NEXT:    [[SPLAT_SPLAT_I:%.*]] = shufflevector <64 x i8> [[SPLAT_SPLATINSERT_I]], <64 x i8> poison, <64 x i32> zeroinitializer
@@ -2902,7 +2902,7 @@ v64int8 broadcast_Test1(char b) { return broadcast_s8(b); }
 // AIE2-NEXT:    ret <32 x i16> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <32 x i16> @_Z15broadcast_Test2s(
-// AIE2P-SAME: i16 noundef signext [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: i16 noundef signext [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[SPLAT_SPLATINSERT_I:%.*]] = insertelement <32 x i16> poison, i16 [[B]], i64 0
 // AIE2P-NEXT:    [[SPLAT_SPLAT_I:%.*]] = shufflevector <32 x i16> [[SPLAT_SPLATINSERT_I]], <32 x i16> poison, <32 x i32> zeroinitializer
@@ -2916,7 +2916,7 @@ v32int16 broadcast_Test2(short b) { return broadcast_s16(b); }
 // AIE2-NEXT:    ret <16 x i32> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <16 x i32> @_Z15broadcast_Test3i(
-// AIE2P-SAME: i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[SPLAT_SPLATINSERT_I:%.*]] = insertelement <16 x i32> poison, i32 [[B]], i64 0
 // AIE2P-NEXT:    [[SPLAT_SPLAT_I:%.*]] = shufflevector <16 x i32> [[SPLAT_SPLATINSERT_I]], <16 x i32> poison, <16 x i32> zeroinitializer
@@ -2931,7 +2931,7 @@ v16int32 broadcast_Test3(int b) { return broadcast_s32(b); }
 // AIE2-NEXT:    ret <32 x bfloat> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <32 x bfloat> @_Z15broadcast_Test58bfloat16(
-// AIE2P-SAME: bfloat noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: bfloat noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[SPLAT_SPLATINSERT_I:%.*]] = insertelement <32 x bfloat> poison, bfloat [[B]], i64 0
 // AIE2P-NEXT:    [[SPLAT_SPLAT_I:%.*]] = shufflevector <32 x bfloat> [[SPLAT_SPLATINSERT_I]], <32 x bfloat> poison, <32 x i32> zeroinitializer
@@ -2946,7 +2946,7 @@ v32bfloat16 broadcast_Test5(bfloat16 b) { return broadcast_bfloat16(b); }
 // AIE2-NEXT:    ret <64 x i8> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z23extract_broadcast_Test1Dv64_ai(
-// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECEXT_I_I_I:%.*]] = extractelement <64 x i8> [[V]], i32 [[IDX]]
 // AIE2P-NEXT:    [[SPLAT_SPLATINSERT_I_I:%.*]] = insertelement <64 x i8> poison, i8 [[VECEXT_I_I_I]], i64 0
@@ -2961,7 +2961,7 @@ v64int8 extract_broadcast_Test1(v64int8 v, int idx) { return broadcast_elem(v, i
 // AIE2-NEXT:    ret <32 x i16> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <32 x i16> @_Z23extract_broadcast_Test2Dv32_si(
-// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECEXT_I_I_I:%.*]] = extractelement <32 x i16> [[V]], i32 [[IDX]]
 // AIE2P-NEXT:    [[SPLAT_SPLATINSERT_I_I:%.*]] = insertelement <32 x i16> poison, i16 [[VECEXT_I_I_I]], i64 0
@@ -2976,7 +2976,7 @@ v32int16 extract_broadcast_Test2(v32int16 v, int idx) { return broadcast_elem(v,
 // AIE2-NEXT:    ret <16 x i32> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <16 x i32> @_Z23extract_broadcast_Test3Dv16_ii(
-// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECEXT_I_I_I:%.*]] = extractelement <16 x i32> [[V]], i32 [[IDX]]
 // AIE2P-NEXT:    [[SPLAT_SPLATINSERT_I_I:%.*]] = insertelement <16 x i32> poison, i32 [[VECEXT_I_I_I]], i64 0
@@ -2991,7 +2991,7 @@ v16int32 extract_broadcast_Test3(v16int32 v, int idx) { return broadcast_elem(v,
 // AIE2-NEXT:    ret <16 x i32> [[TMP0]]
 //
 // AIE2P-LABEL: define dso_local noundef <16 x i32> @_Z23extract_broadcast_Test4Dv16_ii(
-// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[MUL_I_I_I:%.*]] = shl nsw i32 [[IDX]], 1
 // AIE2P-NEXT:    [[VECEXT_I_I_I:%.*]] = extractelement <16 x i32> [[V]], i32 [[MUL_I_I_I]]
@@ -3013,7 +3013,7 @@ v16int32 extract_broadcast_Test4(v16int32 v, int idx) { return broadcast_elem_s6
 // AIE2-NEXT:    ret <16 x float> [[TMP2]]
 //
 // AIE2P-LABEL: define dso_local noundef <16 x float> @_Z23extract_broadcast_Test5Dv16_fi(
-// AIE2P-SAME: <16 x float> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2P-SAME: <16 x float> noundef [[V:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[V]] to <16 x i32>
 // AIE2P-NEXT:    [[MUL_I_I_I:%.*]] = shl nsw i32 [[IDX]], 1
@@ -3022,8 +3022,8 @@ v16int32 extract_broadcast_Test4(v16int32 v, int idx) { return broadcast_elem_s6
 // AIE2P-NEXT:    [[ADD_I_I_I:%.*]] = or disjoint i32 [[MUL_I_I_I]], 1
 // AIE2P-NEXT:    [[VECEXT1_I_I_I:%.*]] = extractelement <16 x i32> [[TMP0]], i32 [[ADD_I_I_I]]
 // AIE2P-NEXT:    [[VECINIT2_I_I_I:%.*]] = insertelement <2 x i32> [[VECINIT_I_I_I]], i32 [[VECEXT1_I_I_I]], i64 1
-// AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[VECINIT2_I_I_I]] to <2 x float>
-// AIE2P-NEXT:    [[TMP2:%.*]] = shufflevector <2 x float> [[TMP1]], <2 x float> poison, <16 x i32> <i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1>
-// AIE2P-NEXT:    ret <16 x float> [[TMP2]]
+// AIE2P-NEXT:    [[VECINIT30_I_I:%.*]] = shufflevector <2 x i32> [[VECINIT2_I_I_I]], <2 x i32> poison, <16 x i32> <i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1>
+// AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <16 x i32> [[VECINIT30_I_I]] to <16 x float>
+// AIE2P-NEXT:    ret <16 x float> [[TMP1]]
 //
 v16float extract_broadcast_Test5(v16float v, int idx) { return broadcast_elem(v, idx); }
