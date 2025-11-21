@@ -192,7 +192,17 @@ bool AIE2PSRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   case AIE2PS::LDA_D_SPILL:
   case AIE2PS::ST_D_SPILL:
   case AIE2PS::LDA_DS_SPILL:
-  case AIE2PS::ST_DS_SPILL: {
+  case AIE2PS::ST_DS_SPILL:
+  case AIE2PS::VLDA_E_SPILL:
+  case AIE2PS::VST_E_SPILL:
+  case AIE2PS::VLDA_G_SPILL:
+  case AIE2PS::VST_G_SPILL:
+  case AIE2PS::VLDA_GG_SPILL:
+  case AIE2PS::VST_GG_SPILL:
+  case AIE2PS::VLDA_EW_SPILL:
+  case AIE2PS::VST_EW_SPILL:
+  case AIE2PS::VLDA_FEW_SPILL:
+  case AIE2PS::VST_FEW_SPILL: {
     // When a pseudo instruction expands to multiple instructions, this case
     // looks for the smallest encodable offset that can be used.
     // The stack grows upward so if Offset is in range, the offsets of its
@@ -211,7 +221,21 @@ bool AIE2PSRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     return true;
   }
   case AIE2PS::LDA_L_SPILL:
-  case AIE2PS::ST_L_SPILL: {
+  case AIE2PS::ST_L_SPILL:
+  case AIE2PS::VLDA_EE_SPILL:
+  case AIE2PS::VST_EE_SPILL:
+  case AIE2PS::VLDA_F_SPILL:
+  case AIE2PS::VST_F_SPILL:
+  case AIE2PS::VLDA_EG_SPILL:
+  case AIE2PS::VST_EG_SPILL:
+  case AIE2PS::VLDA_EX_SPILL:
+  case AIE2PS::VST_EX_SPILL:
+  case AIE2PS::VLDA_FEX_SPILL:
+  case AIE2PS::VST_FEX_SPILL:
+  case AIE2PS::VLDA_EY_SPILL:
+  case AIE2PS::VST_EY_SPILL:
+  case AIE2PS::VLDA_FEY_SPILL:
+  case AIE2PS::VST_FEY_SPILL: {
     if (isEncodableAsNegativeInt<9, 8>(Offset)) {
       MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
       TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4));
@@ -226,7 +250,13 @@ bool AIE2PSRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     return true;
   }
   case AIE2PS::VLDA_V_SPILL:
-  case AIE2PS::VST_V_SPILL: {
+  case AIE2PS::VST_V_SPILL:
+  case AIE2PS::VLDA_FF_SPILL:
+  case AIE2PS::VST_FF_SPILL:
+  case AIE2PS::VLDA_EG2_SPILL:
+  case AIE2PS::VST_EG2_SPILL:
+  case AIE2PS::VLDA_FEG_SPILL:
+  case AIE2PS::VST_FEG_SPILL: {
     if (isEncodableAsNegativeInt<9, 16>(Offset)) {
       MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
       TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4));
@@ -241,7 +271,9 @@ bool AIE2PSRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     return true;
   }
   case AIE2PS::VLDA_W_SPILL:
-  case AIE2PS::VST_W_SPILL: {
+  case AIE2PS::VST_W_SPILL:
+  case AIE2PS::VLDA_FEG2_SPILL:
+  case AIE2PS::VST_FEG2_SPILL: {
     if (isEncodableAsNegativeInt<9, 32>(Offset)) {
       MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
       TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4));

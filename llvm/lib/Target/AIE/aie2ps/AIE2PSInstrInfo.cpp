@@ -411,6 +411,22 @@ Register AIE2PSInstrInfo::isLoadFromStackSlot(const MachineInstr &MI,
   case AIE2PS::VLDA_BM_SPILL:
   case AIE2PS::VLDA_CM_SPILL:
   case AIE2PS::VLDA_DM_SPILL:
+  case AIE2PS::VLDA_E_SPILL:
+  case AIE2PS::VLDA_EE_SPILL:
+  case AIE2PS::VLDA_F_SPILL:
+  case AIE2PS::VLDA_FF_SPILL:
+  case AIE2PS::VLDA_G_SPILL:
+  case AIE2PS::VLDA_GG_SPILL:
+  case AIE2PS::VLDA_EG_SPILL:
+  case AIE2PS::VLDA_EG2_SPILL:
+  case AIE2PS::VLDA_FEG_SPILL:
+  case AIE2PS::VLDA_FEG2_SPILL:
+  case AIE2PS::VLDA_EW_SPILL:
+  case AIE2PS::VLDA_EX_SPILL:
+  case AIE2PS::VLDA_EY_SPILL:
+  case AIE2PS::VLDA_FEW_SPILL:
+  case AIE2PS::VLDA_FEX_SPILL:
+  case AIE2PS::VLDA_FEY_SPILL:
     break;
   }
 
@@ -438,6 +454,22 @@ Register AIE2PSInstrInfo::isStoreToStackSlot(const MachineInstr &MI,
   case AIE2PS::VST_BM_SPILL:
   case AIE2PS::VST_CM_SPILL:
   case AIE2PS::VST_DM_SPILL:
+  case AIE2PS::VST_E_SPILL:
+  case AIE2PS::VST_EE_SPILL:
+  case AIE2PS::VST_F_SPILL:
+  case AIE2PS::VST_FF_SPILL:
+  case AIE2PS::VST_G_SPILL:
+  case AIE2PS::VST_GG_SPILL:
+  case AIE2PS::VST_EG_SPILL:
+  case AIE2PS::VST_EG2_SPILL:
+  case AIE2PS::VST_FEG_SPILL:
+  case AIE2PS::VST_FEG2_SPILL:
+  case AIE2PS::VST_EW_SPILL:
+  case AIE2PS::VST_EX_SPILL:
+  case AIE2PS::VST_EY_SPILL:
+  case AIE2PS::VST_FEW_SPILL:
+  case AIE2PS::VST_FEX_SPILL:
+  case AIE2PS::VST_FEY_SPILL:
     break;
   }
 
@@ -494,6 +526,88 @@ AIE2PSInstrInfo::getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
   case AIE2PS::VST_DM_SPILL:
     return {{AIE2PS::VST_CM_SPILL, AIE2PS::sub_1024_acc_lo},
             {AIE2PS::VST_CM_SPILL, AIE2PS::sub_1024_acc_hi}};
+  case AIE2PS::VST_E_SPILL:
+    return {{AIE2PS::ST_dms_sts_scalar_spill, AIE2PS::NoSubRegister, 4}};
+  case AIE2PS::VST_EE_SPILL:
+    return {{AIE2PS::ST_dml_sts_scalar_spill, AIE2PS::NoSubRegister, 8}};
+  case AIE2PS::VST_F_SPILL:
+    return {{AIE2PS::ST_dml_sts_scalar_spill, AIE2PS::NoSubRegister, 8}};
+  case AIE2PS::VST_FF_SPILL:
+    return {{AIE2PS::ST_dmv_sts_f_spill, AIE2PS::NoSubRegister, 16}};
+  case AIE2PS::VST_G_SPILL:
+    return {{AIE2PS::ST_dms_sts_g_spill, AIE2PS::NoSubRegister, 4}};
+  case AIE2PS::VST_GG_SPILL:
+    return {{AIE2PS::ST_dml_sts_scalar_spill, AIE2PS::NoSubRegister, 8}};
+  case AIE2PS::VST_EG_SPILL:
+    return {{AIE2PS::ST_dml_sts_scalar_spill, AIE2PS::NoSubRegister, 8}};
+  case AIE2PS::VST_EG2_SPILL:
+    return {{AIE2PS::VST_128_dmv_sts_eg_spill, AIE2PS::NoSubRegister, 16}};
+  case AIE2PS::VST_FEG_SPILL:
+    return {{AIE2PS::VST_128_dmv_sts_feg_spill, AIE2PS::NoSubRegister, 16}};
+  case AIE2PS::VST_FEG2_SPILL:
+    return {{AIE2PS::VST_dmw_sts_feg2_spill, AIE2PS::NoSubRegister, 32}};
+  case AIE2PS::VST_EW_SPILL: // FIXME: Use VST_EG_SPILL
+    return {{AIE2PS::VST_W_SPILL, AIE2PS::sub_bfp_v256},
+            {AIE2PS::VST_G_SPILL, AIE2PS::sub_bfp_g32},
+            {AIE2PS::VST_E_SPILL, AIE2PS::sub_bfp_e32}};
+  case AIE2PS::VST_EX_SPILL: // FIXME: Use VST_X_SPILL and VST_EG2_SPILL
+    return {{AIE2PS::VST_W_SPILL, AIE2PS::sub_bfp_v256},
+            {AIE2PS::VST_W_SPILL, AIE2PS::sub_bfp320_hi_then_sub_bfp_v256},
+            {AIE2PS::VST_G_SPILL, AIE2PS::sub_bfp_g32},
+            {AIE2PS::VST_G_SPILL, AIE2PS::sub_bfp320_hi_then_sub_bfp_g32},
+            {AIE2PS::VST_E_SPILL, AIE2PS::sub_bfp_e32},
+            {AIE2PS::VST_E_SPILL, AIE2PS::sub_bfp320_hi_then_sub_bfp_e32}};
+  case AIE2PS::VST_EY_SPILL: // FIXME: Use 2xVST_X_SPILL and 2xVST_EG2_SPILL
+    return {{AIE2PS::VST_W_SPILL, AIE2PS::sub_bfp_v256},
+            {AIE2PS::VST_W_SPILL, AIE2PS::sub_bfp320_hi_then_sub_bfp_v256},
+            {AIE2PS::VST_W_SPILL, AIE2PS::sub_bfp640_hi_then_sub_bfp_v256},
+            {AIE2PS::VST_W_SPILL,
+             AIE2PS::sub_bfp640_hi_then_sub_bfp320_hi_then_sub_bfp_v256},
+            {AIE2PS::VST_G_SPILL, AIE2PS::sub_bfp_g32},
+            {AIE2PS::VST_G_SPILL, AIE2PS::sub_bfp320_hi_then_sub_bfp_g32},
+            {AIE2PS::VST_G_SPILL, AIE2PS::sub_bfp640_hi_then_sub_bfp_g32},
+            {AIE2PS::VST_G_SPILL,
+             AIE2PS::sub_bfp640_hi_then_sub_bfp320_hi_then_sub_bfp_g32},
+            {AIE2PS::VST_E_SPILL, AIE2PS::sub_bfp_e32},
+            {AIE2PS::VST_E_SPILL, AIE2PS::sub_bfp320_hi_then_sub_bfp_e32},
+            {AIE2PS::VST_E_SPILL, AIE2PS::sub_bfp640_hi_then_sub_bfp_e32},
+            {AIE2PS::VST_E_SPILL,
+             AIE2PS::sub_bfp640_hi_then_sub_bfp320_hi_then_sub_bfp_e32}};
+  case AIE2PS::VST_FEW_SPILL: // FIXME: Use VST_FEG_SPILL
+    return {{AIE2PS::VST_W_SPILL, AIE2PS::sub_few_bfp_w},
+            {AIE2PS::VST_F_SPILL, AIE2PS::sub_few_bfp_f64},
+            {AIE2PS::VST_G_SPILL, AIE2PS::sub_few_bfp_g32},
+            {AIE2PS::VST_E_SPILL, AIE2PS::sub_few_bfp_e32}};
+  case AIE2PS::VST_FEX_SPILL: // FIXME: Use VST_X_SPILL and VST_FEG2_SPILL
+    return {{AIE2PS::VST_W_SPILL, AIE2PS::sub_few_bfp_w},
+            {AIE2PS::VST_W_SPILL, AIE2PS::sub_bfp384_hi_then_sub_few_bfp_w},
+            {AIE2PS::VST_F_SPILL, AIE2PS::sub_few_bfp_f64},
+            {AIE2PS::VST_F_SPILL, AIE2PS::sub_bfp384_hi_then_sub_few_bfp_f64},
+            {AIE2PS::VST_G_SPILL, AIE2PS::sub_few_bfp_g32},
+            {AIE2PS::VST_G_SPILL, AIE2PS::sub_bfp384_hi_then_sub_few_bfp_g32},
+            {AIE2PS::VST_E_SPILL, AIE2PS::sub_few_bfp_e32},
+            {AIE2PS::VST_E_SPILL, AIE2PS::sub_bfp384_hi_then_sub_few_bfp_e32}};
+  case AIE2PS::VST_FEY_SPILL: // FIXME: Use 2xVST_X_SPILL and 2xVST_FEG2_SPILL
+    return {{AIE2PS::VST_W_SPILL, AIE2PS::sub_few_bfp_w},
+            {AIE2PS::VST_W_SPILL, AIE2PS::sub_bfp384_hi_then_sub_few_bfp_w},
+            {AIE2PS::VST_W_SPILL, AIE2PS::sub_bfp768_hi_then_sub_few_bfp_w},
+            {AIE2PS::VST_W_SPILL,
+             AIE2PS::sub_bfp768_hi_then_sub_bfp384_hi_then_sub_few_bfp_w},
+            {AIE2PS::VST_F_SPILL, AIE2PS::sub_few_bfp_f64},
+            {AIE2PS::VST_F_SPILL, AIE2PS::sub_bfp384_hi_then_sub_few_bfp_f64},
+            {AIE2PS::VST_F_SPILL, AIE2PS::sub_bfp768_hi_then_sub_few_bfp_f64},
+            {AIE2PS::VST_F_SPILL,
+             AIE2PS::sub_bfp768_hi_then_sub_bfp384_hi_then_sub_few_bfp_f64},
+            {AIE2PS::VST_G_SPILL, AIE2PS::sub_few_bfp_g32},
+            {AIE2PS::VST_G_SPILL, AIE2PS::sub_bfp384_hi_then_sub_few_bfp_g32},
+            {AIE2PS::VST_G_SPILL, AIE2PS::sub_bfp768_hi_then_sub_few_bfp_g32},
+            {AIE2PS::VST_G_SPILL,
+             AIE2PS::sub_bfp768_hi_then_sub_bfp384_hi_then_sub_few_bfp_g32},
+            {AIE2PS::VST_E_SPILL, AIE2PS::sub_few_bfp_e32},
+            {AIE2PS::VST_E_SPILL, AIE2PS::sub_bfp384_hi_then_sub_few_bfp_e32},
+            {AIE2PS::VST_E_SPILL, AIE2PS::sub_bfp768_hi_then_sub_few_bfp_e32},
+            {AIE2PS::VST_E_SPILL,
+             AIE2PS::sub_bfp768_hi_then_sub_bfp384_hi_then_sub_few_bfp_e32}};
 
   case AIE2PS::LDA_R_SPILL:
     return {{AIE2PS::LDA_dms_lda_scalar_spill, AIE2PS::NoSubRegister, 4}};
@@ -533,6 +647,89 @@ AIE2PSInstrInfo::getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
   case AIE2PS::VLDA_DM_SPILL:
     return {{AIE2PS::VLDA_CM_SPILL, AIE2PS::sub_1024_acc_lo},
             {AIE2PS::VLDA_CM_SPILL, AIE2PS::sub_1024_acc_hi}};
+  case AIE2PS::VLDA_E_SPILL:
+    return {{AIE2PS::LDA_dms_lda_scalar_spill, AIE2PS::NoSubRegister, 4}};
+  case AIE2PS::VLDA_EE_SPILL:
+    return {{AIE2PS::LDA_dml_lda2_scalar_EE_spill, AIE2PS::NoSubRegister, 8}};
+  case AIE2PS::VLDA_F_SPILL:
+    return {{AIE2PS::LDA_dml_lda_scalar_F_spill, AIE2PS::NoSubRegister, 8}};
+  case AIE2PS::VLDA_FF_SPILL:
+    return {{AIE2PS::LDA_dmv_lda_f_spill, AIE2PS::NoSubRegister, 16}};
+  case AIE2PS::VLDA_G_SPILL:
+    return {{AIE2PS::LDA_dms_lda_g_spill, AIE2PS::NoSubRegister, 4}};
+  case AIE2PS::VLDA_GG_SPILL:
+    return {{AIE2PS::LDA_dml_lda2_scalar_GG_spill, AIE2PS::NoSubRegister, 8}};
+  case AIE2PS::VLDA_EG_SPILL:
+    return {{AIE2PS::LDA_dml_lda2_scalar_EG_spill, AIE2PS::NoSubRegister, 8}};
+  case AIE2PS::VLDA_EG2_SPILL:
+    return {{AIE2PS::LDA_dmv_lda_eg2_spill, AIE2PS::NoSubRegister, 16}};
+  case AIE2PS::VLDA_FEG_SPILL:
+    return {{AIE2PS::LDA_dmv_lda_feg_spill, AIE2PS::NoSubRegister, 16}};
+  case AIE2PS::VLDA_FEG2_SPILL:
+    return {{AIE2PS::VLDA_dmw_lda_feg2_spill, AIE2PS::NoSubRegister, 32}};
+  case AIE2PS::VLDA_EW_SPILL: // FIXME: Use VLDA_EG_SPILL
+    return {{AIE2PS::VLDA_W_SPILL, AIE2PS::sub_bfp_v256},
+            {AIE2PS::VLDA_G_SPILL, AIE2PS::sub_bfp_g32},
+            {AIE2PS::VLDA_E_SPILL, AIE2PS::sub_bfp_e32}};
+  case AIE2PS::VLDA_EX_SPILL: // FIXME: Use VLDA_EG2_SPILL
+    return {{AIE2PS::VLDA_W_SPILL, AIE2PS::sub_bfp_v256},
+            {AIE2PS::VLDA_W_SPILL, AIE2PS::sub_bfp320_hi_then_sub_bfp_v256},
+            {AIE2PS::VLDA_G_SPILL, AIE2PS::sub_bfp_g32},
+            {AIE2PS::VLDA_G_SPILL, AIE2PS::sub_bfp320_hi_then_sub_bfp_g32},
+            {AIE2PS::VLDA_E_SPILL, AIE2PS::sub_bfp_e32},
+            {AIE2PS::VLDA_E_SPILL, AIE2PS::sub_bfp320_hi_then_sub_bfp_e32}};
+  case AIE2PS::VLDA_EY_SPILL: // FIXME: Use 2xVLDA_X_SPILL and 2xVLDA_EG2_SPILL
+    return {{AIE2PS::VLDA_W_SPILL, AIE2PS::sub_bfp_v256},
+            {AIE2PS::VLDA_W_SPILL, AIE2PS::sub_bfp320_hi_then_sub_bfp_v256},
+            {AIE2PS::VLDA_W_SPILL, AIE2PS::sub_bfp640_hi_then_sub_bfp_v256},
+            {AIE2PS::VLDA_W_SPILL,
+             AIE2PS::sub_bfp640_hi_then_sub_bfp320_hi_then_sub_bfp_v256},
+            {AIE2PS::VLDA_G_SPILL, AIE2PS::sub_bfp_g32},
+            {AIE2PS::VLDA_G_SPILL, AIE2PS::sub_bfp320_hi_then_sub_bfp_g32},
+            {AIE2PS::VLDA_G_SPILL, AIE2PS::sub_bfp640_hi_then_sub_bfp_g32},
+            {AIE2PS::VLDA_G_SPILL,
+             AIE2PS::sub_bfp640_hi_then_sub_bfp320_hi_then_sub_bfp_g32},
+            {AIE2PS::VLDA_E_SPILL, AIE2PS::sub_bfp_e32},
+            {AIE2PS::VLDA_E_SPILL, AIE2PS::sub_bfp320_hi_then_sub_bfp_e32},
+            {AIE2PS::VLDA_E_SPILL, AIE2PS::sub_bfp640_hi_then_sub_bfp_e32},
+            {AIE2PS::VLDA_E_SPILL,
+             AIE2PS::sub_bfp640_hi_then_sub_bfp320_hi_then_sub_bfp_e32}};
+  case AIE2PS::VLDA_FEW_SPILL: // FIXME: Use VLDA_FEG_SPILL
+    return {{AIE2PS::VLDA_W_SPILL, AIE2PS::sub_few_bfp_w},
+            {AIE2PS::VLDA_F_SPILL, AIE2PS::sub_few_bfp_f64},
+            {AIE2PS::VLDA_G_SPILL, AIE2PS::sub_few_bfp_g32},
+            {AIE2PS::VLDA_E_SPILL, AIE2PS::sub_few_bfp_e32}};
+  case AIE2PS::VLDA_FEX_SPILL: // FIXME: Use VLDA_X_SPILL and VLDA_FEG2_SPILL
+    return {{AIE2PS::VLDA_W_SPILL, AIE2PS::sub_few_bfp_w},
+            {AIE2PS::VLDA_W_SPILL, AIE2PS::sub_bfp384_hi_then_sub_few_bfp_w},
+            {AIE2PS::VLDA_F_SPILL, AIE2PS::sub_few_bfp_f64},
+            {AIE2PS::VLDA_F_SPILL, AIE2PS::sub_bfp384_hi_then_sub_few_bfp_f64},
+            {AIE2PS::VLDA_G_SPILL, AIE2PS::sub_few_bfp_g32},
+            {AIE2PS::VLDA_G_SPILL, AIE2PS::sub_bfp384_hi_then_sub_few_bfp_g32},
+            {AIE2PS::VLDA_E_SPILL, AIE2PS::sub_few_bfp_e32},
+            {AIE2PS::VLDA_E_SPILL, AIE2PS::sub_bfp384_hi_then_sub_few_bfp_e32}};
+  case AIE2PS::VLDA_FEY_SPILL: // FIXME: Use 2xVLDA_X_SPILL and
+                               // 2xVLDA_FEG2_SPILL
+    return {{AIE2PS::VLDA_W_SPILL, AIE2PS::sub_few_bfp_w},
+            {AIE2PS::VLDA_W_SPILL, AIE2PS::sub_bfp384_hi_then_sub_few_bfp_w},
+            {AIE2PS::VLDA_W_SPILL, AIE2PS::sub_bfp768_hi_then_sub_few_bfp_w},
+            {AIE2PS::VLDA_W_SPILL,
+             AIE2PS::sub_bfp768_hi_then_sub_bfp384_hi_then_sub_few_bfp_w},
+            {AIE2PS::VLDA_F_SPILL, AIE2PS::sub_few_bfp_f64},
+            {AIE2PS::VLDA_F_SPILL, AIE2PS::sub_bfp384_hi_then_sub_few_bfp_f64},
+            {AIE2PS::VLDA_F_SPILL, AIE2PS::sub_bfp768_hi_then_sub_few_bfp_f64},
+            {AIE2PS::VLDA_F_SPILL,
+             AIE2PS::sub_bfp768_hi_then_sub_bfp384_hi_then_sub_few_bfp_f64},
+            {AIE2PS::VLDA_G_SPILL, AIE2PS::sub_few_bfp_g32},
+            {AIE2PS::VLDA_G_SPILL, AIE2PS::sub_bfp384_hi_then_sub_few_bfp_g32},
+            {AIE2PS::VLDA_G_SPILL, AIE2PS::sub_bfp768_hi_then_sub_few_bfp_g32},
+            {AIE2PS::VLDA_G_SPILL,
+             AIE2PS::sub_bfp768_hi_then_sub_bfp384_hi_then_sub_few_bfp_g32},
+            {AIE2PS::VLDA_E_SPILL, AIE2PS::sub_few_bfp_e32},
+            {AIE2PS::VLDA_E_SPILL, AIE2PS::sub_bfp384_hi_then_sub_few_bfp_e32},
+            {AIE2PS::VLDA_E_SPILL, AIE2PS::sub_bfp768_hi_then_sub_few_bfp_e32},
+            {AIE2PS::VLDA_E_SPILL,
+             AIE2PS::sub_bfp768_hi_then_sub_bfp384_hi_then_sub_few_bfp_e32}};
   default:
     // TODO: Implement other pseudos. Unreachable is replaced with return of an
     // empty struct to allow testing elimination of frame index. This is
@@ -579,9 +776,9 @@ void AIE2PSInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                TRI, VReg, Flags);
   };
 
-  if (regClassMatches(AIE2PS::mSclStRegClass, RC, SrcReg)) {
+  if (regClassMatches(AIE2PS::eRRegClass, RC, SrcReg)) {
     Opcode = AIE2PS::ST_R_SPILL;
-  } else if (regClassMatches(AIE2PS::mlStsRegClass, RC, SrcReg)) {
+  } else if (regClassMatches(AIE2PS::eLRegClass, RC, SrcReg)) {
     Opcode = AIE2PS::ST_L_SPILL;
   } else if (regClassMatches(AIE2PS::eDRegClass, RC, SrcReg)) {
     Opcode = AIE2PS::ST_D_SPILL;
@@ -603,6 +800,41 @@ void AIE2PSInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     return bounceViaRegClass(&AIE2PS::VEC512RegClass);
   } else if (regClassMatches(AIE2PS::FIFO1024RegClass, RC, SrcReg)) {
     return bounceViaRegClass(&AIE2PS::VEC1024RegClass);
+  } else if (regClassMatches(AIE2PS::mEsRegClass, RC, SrcReg)) {
+    Opcode = AIE2PS::VST_E_SPILL;
+  } else if (regClassMatches(AIE2PS::mEEsRegClass, RC, SrcReg)) {
+    Opcode = AIE2PS::VST_EE_SPILL;
+  } else if (regClassMatches(AIE2PS::mFsRegClass, RC, SrcReg)) {
+    Opcode = AIE2PS::VST_F_SPILL;
+  } else if (regClassMatches(AIE2PS::mFFsRegClass, RC, SrcReg)) {
+    Opcode = AIE2PS::VST_FF_SPILL;
+  } else if (regClassMatches(AIE2PS::mGsRegClass, RC, SrcReg)) {
+    Opcode = AIE2PS::VST_G_SPILL;
+  } else if (regClassMatches(AIE2PS::mGGsRegClass, RC, SrcReg)) {
+    Opcode = AIE2PS::VST_GG_SPILL;
+  } else if (regClassMatches(AIE2PS::mEGsRegClass, RC, SrcReg)) {
+    Opcode = AIE2PS::VST_EG_SPILL;
+  } else if (regClassMatches(AIE2PS::mEG2sRegClass, RC, SrcReg)) {
+    Opcode = AIE2PS::VST_EG2_SPILL;
+  } else if (regClassMatches(AIE2PS::mFEGsRegClass, RC, SrcReg)) {
+    Opcode = AIE2PS::VST_FEG_SPILL;
+  } else if (regClassMatches(AIE2PS::mFEG2sRegClass, RC, SrcReg)) {
+    Opcode = AIE2PS::VST_FEG2_SPILL;
+  } else if (regClassMatches(AIE2PS::mEWmRegClass, RC, SrcReg)) {
+    Opcode = AIE2PS::VST_EW_SPILL;
+  } else if (regClassMatches(AIE2PS::mEXmRegClass, RC, SrcReg)) {
+    Opcode = AIE2PS::VST_EX_SPILL;
+  } else if (regClassMatches(AIE2PS::mEYwRegClass, RC, SrcReg)) {
+    Opcode = AIE2PS::VST_EY_SPILL;
+  } else if (regClassMatches(AIE2PS::mFEWmRegClass, RC, SrcReg)) {
+    Opcode = AIE2PS::VST_FEW_SPILL;
+  } else if (regClassMatches(AIE2PS::mFEXmRegClass, RC, SrcReg)) {
+    Opcode = AIE2PS::VST_FEX_SPILL;
+  } else if (regClassMatches(AIE2PS::mFEYwRegClass, RC, SrcReg)) {
+    Opcode = AIE2PS::VST_FEY_SPILL;
+  } else if (regClassMatches(AIE2PS::mSclStRegClass, RC, SrcReg)) {
+    // Anything that can be stored in a scalar register can use R_SPILL.
+    Opcode = AIE2PS::ST_R_SPILL;
   } else if (regClassMatches(AIE2PS::eSRegClass, RC, SrcReg) ||
              regClassMatches(AIE2PS::spill_eS_to_eRRegClass, RC, SrcReg)) {
     // Can't spill these directly.  Need to bounce through a GPR.
@@ -654,9 +886,9 @@ void AIE2PSInstrInfo::loadRegFromStackSlot(
     return;
   };
 
-  if (regClassMatches(AIE2PS::mSclStRegClass, RC, DstReg)) {
+  if (regClassMatches(AIE2PS::eRRegClass, RC, DstReg)) {
     Opcode = AIE2PS::LDA_R_SPILL;
-  } else if (regClassMatches(AIE2PS::mlStsRegClass, RC, DstReg)) {
+  } else if (regClassMatches(AIE2PS::eLRegClass, RC, DstReg)) {
     Opcode = AIE2PS::LDA_L_SPILL;
   } else if (regClassMatches(AIE2PS::eDRegClass, RC, DstReg)) {
     Opcode = AIE2PS::LDA_D_SPILL;
@@ -678,6 +910,41 @@ void AIE2PSInstrInfo::loadRegFromStackSlot(
     return bounceViaRegClass(&AIE2PS::VEC512RegClass);
   } else if (regClassMatches(AIE2PS::FIFO1024RegClass, RC, DstReg)) {
     return bounceViaRegClass(&AIE2PS::VEC1024RegClass);
+  } else if (regClassMatches(AIE2PS::mEsRegClass, RC, DstReg)) {
+    Opcode = AIE2PS::VLDA_E_SPILL;
+  } else if (regClassMatches(AIE2PS::mEEsRegClass, RC, DstReg)) {
+    Opcode = AIE2PS::VLDA_EE_SPILL;
+  } else if (regClassMatches(AIE2PS::mFsRegClass, RC, DstReg)) {
+    Opcode = AIE2PS::VLDA_F_SPILL;
+  } else if (regClassMatches(AIE2PS::mFFsRegClass, RC, DstReg)) {
+    Opcode = AIE2PS::VLDA_FF_SPILL;
+  } else if (regClassMatches(AIE2PS::mGsRegClass, RC, DstReg)) {
+    Opcode = AIE2PS::VLDA_G_SPILL;
+  } else if (regClassMatches(AIE2PS::mGGsRegClass, RC, DstReg)) {
+    Opcode = AIE2PS::VLDA_GG_SPILL;
+  } else if (regClassMatches(AIE2PS::mEGsRegClass, RC, DstReg)) {
+    Opcode = AIE2PS::VLDA_EG_SPILL;
+  } else if (regClassMatches(AIE2PS::mEG2sRegClass, RC, DstReg)) {
+    Opcode = AIE2PS::VLDA_EG2_SPILL;
+  } else if (regClassMatches(AIE2PS::mFEGsRegClass, RC, DstReg)) {
+    Opcode = AIE2PS::VLDA_FEG_SPILL;
+  } else if (regClassMatches(AIE2PS::mFEG2sRegClass, RC, DstReg)) {
+    Opcode = AIE2PS::VLDA_FEG2_SPILL;
+  } else if (regClassMatches(AIE2PS::mEWmRegClass, RC, DstReg)) {
+    Opcode = AIE2PS::VLDA_EW_SPILL;
+  } else if (regClassMatches(AIE2PS::mEXmRegClass, RC, DstReg)) {
+    Opcode = AIE2PS::VLDA_EX_SPILL;
+  } else if (regClassMatches(AIE2PS::mEYwRegClass, RC, DstReg)) {
+    Opcode = AIE2PS::VLDA_EY_SPILL;
+  } else if (regClassMatches(AIE2PS::mFEWmRegClass, RC, DstReg)) {
+    Opcode = AIE2PS::VLDA_FEW_SPILL;
+  } else if (regClassMatches(AIE2PS::mFEXmRegClass, RC, DstReg)) {
+    Opcode = AIE2PS::VLDA_FEX_SPILL;
+  } else if (regClassMatches(AIE2PS::mFEYwRegClass, RC, DstReg)) {
+    Opcode = AIE2PS::VLDA_FEY_SPILL;
+  } else if (regClassMatches(AIE2PS::mLdaSclRegClass, RC, DstReg)) {
+    // Anything that can be loaded into a scalar register can use R_SPILL.
+    Opcode = AIE2PS::LDA_R_SPILL;
   } else if (regClassMatches(AIE2PS::eSRegClass, RC, DstReg) ||
              regClassMatches(AIE2PS::spill_eS_to_eRRegClass, RC, DstReg)) {
     // Can't spill these directly.  Need to bounce through a GPR.
@@ -1822,6 +2089,21 @@ AIE2PSInstrInfo::getRegOffsetSpillInstrInfoFromImmOffset(
   case AIE2PS::VST_dmx_sts_bm_spill:
     return {AIE2PS::VST_dmx_sts_bm_st_idx, AIE2PS::MOVXM_lng_cg,
             &AIE2PS::eDJ_as_32BitRegClass};
+  case AIE2PS::ST_dmv_sts_f_spill:
+    return {AIE2PS::ST_dmv_sts_f_st_idx, AIE2PS::MOVXM_lng_cg,
+            &AIE2PS::eDJ_as_32BitRegClass};
+  case AIE2PS::ST_dms_sts_g_spill:
+    return {AIE2PS::ST_dms_sts_g_st_idx, AIE2PS::MOVXM_lng_cg,
+            &AIE2PS::eDJ_as_32BitRegClass};
+  case AIE2PS::VST_128_dmv_sts_eg_spill:
+    return {AIE2PS::VST_128_dmv_sts_eg_st_idx, AIE2PS::MOVXM_lng_cg,
+            &AIE2PS::eDJ_as_32BitRegClass};
+  case AIE2PS::VST_128_dmv_sts_feg_spill:
+    return {AIE2PS::VST_128_dmv_sts_feg_st_idx, AIE2PS::MOVXM_lng_cg,
+            &AIE2PS::eDJ_as_32BitRegClass};
+  case AIE2PS::VST_dmw_sts_feg2_spill:
+    return {AIE2PS::VST_dmw_sts_feg2_st_idx, AIE2PS::MOVXM_lng_cg,
+            &AIE2PS::eDJ_as_32BitRegClass};
   case AIE2PS::LDA_dms_lda_scalar_spill:
     return {AIE2PS::LDA_dms_lda_scalar_ld_idx, AIE2PS::MOVXM_lng_cg,
             &AIE2PS::eDJ_as_32BitRegClass};
@@ -1839,6 +2121,33 @@ AIE2PSInstrInfo::getRegOffsetSpillInstrInfoFromImmOffset(
             &AIE2PS::eDJ_as_32BitRegClass};
   case AIE2PS::VLDA_dmx_lda_bm_spill:
     return {AIE2PS::VLDA_dmx_lda_bm_ld_idx, AIE2PS::MOVXM_lng_cg,
+            &AIE2PS::eDJ_as_32BitRegClass};
+  case AIE2PS::LDA_dml_lda2_scalar_EE_spill:
+    return {AIE2PS::LDA_dml_lda2_scalar_EE_ld_idx, AIE2PS::MOVXM_lng_cg,
+            &AIE2PS::eDJ_as_32BitRegClass};
+  case AIE2PS::LDA_dml_lda_scalar_F_spill:
+    return {AIE2PS::LDA_dml_lda_scalar_F_ld_idx, AIE2PS::MOVXM_lng_cg,
+            &AIE2PS::eDJ_as_32BitRegClass};
+  case AIE2PS::LDA_dmv_lda_f_spill:
+    return {AIE2PS::LDA_dmv_lda_f_ld_idx, AIE2PS::MOVXM_lng_cg,
+            &AIE2PS::eDJ_as_32BitRegClass};
+  case AIE2PS::LDA_dms_lda_g_spill:
+    return {AIE2PS::LDA_dms_lda_g_ld_idx, AIE2PS::MOVXM_lng_cg,
+            &AIE2PS::eDJ_as_32BitRegClass};
+  case AIE2PS::LDA_dml_lda2_scalar_GG_spill:
+    return {AIE2PS::LDA_dml_lda2_scalar_GG_ld_idx, AIE2PS::MOVXM_lng_cg,
+            &AIE2PS::eDJ_as_32BitRegClass};
+  case AIE2PS::LDA_dml_lda2_scalar_EG_spill:
+    return {AIE2PS::LDA_dml_lda2_scalar_EG_ld_idx, AIE2PS::MOVXM_lng_cg,
+            &AIE2PS::eDJ_as_32BitRegClass};
+  case AIE2PS::LDA_dmv_lda_eg2_spill:
+    return {AIE2PS::LDA_dmv_lda_eg2_ld_idx, AIE2PS::MOVXM_lng_cg,
+            &AIE2PS::eDJ_as_32BitRegClass};
+  case AIE2PS::LDA_dmv_lda_feg_spill:
+    return {AIE2PS::LDA_dmv_lda_feg_ld_idx, AIE2PS::MOVXM_lng_cg,
+            &AIE2PS::eDJ_as_32BitRegClass};
+  case AIE2PS::VLDA_dmw_lda_feg2_spill:
+    return {AIE2PS::VLDA_dmw_lda_feg2_ld_idx, AIE2PS::MOVXM_lng_cg,
             &AIE2PS::eDJ_as_32BitRegClass};
   default:
     llvm_unreachable("Offset register spill instruction info un-implemented");

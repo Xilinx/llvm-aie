@@ -149,7 +149,7 @@ let hasSideEffects = 0, Uses = [sp] in {
 // can streamline the code and improve readability.
 let mayLoad = false, mayStore = true in {
 def ST_R_SPILL : Pseudo<(outs ), (ins OP_mSclSt:$src, c12n_step4:$imm), "st_r_spill", "$src, [sp, $imm]">;
-def ST_L_SPILL : Pseudo<(outs ), (ins OP_mlSts:$src, c13n_step8:$imm), "st_l_spill", "$src, [sp, $imm]">;
+def ST_L_SPILL : Pseudo<(outs ), (ins eL:$src, c13n_step8:$imm), "st_l_spill", "$src, [sp, $imm]">;
 def ST_D_SPILL : Pseudo<(outs ), (ins eD:$src, c12n_step4:$imm), "st_d_spill", "$src, [sp, $imm]">;
 def ST_DS_SPILL : Pseudo<(outs ), (ins eDS:$src, c12n_step4:$imm), "st_ds_spill", "$src, [sp, $imm]">;
 
@@ -160,6 +160,24 @@ def VST_Y_SPILL : Pseudo<(outs ), (ins VEC1024:$src, c17n_step128:$imm), "vst_y_
 def VST_BM_SPILL : Pseudo<(outs ), (ins ACC512:$src, c16n_step64:$imm), "vst_bm_spill", "$src, [sp, $imm]">;
 def VST_CM_SPILL : Pseudo<(outs ), (ins ACC1024:$src, c17n_step128:$imm), "vst_cm_spill", "$src, [sp, $imm]">;
 def VST_DM_SPILL : Pseudo<(outs ), (ins ACC2048:$src, c17n_step128:$imm), "vst_dm_spill", "$src, [sp, $imm]">;
+
+def VST_E_SPILL : Pseudo<(outs ), (ins mEs:$src, c12n_step4:$imm), "vst_e_spill", "$src, [sp, $imm]">;
+def VST_EE_SPILL : Pseudo<(outs ), (ins mEEs:$src, c13n_step8:$imm), "vst_ee_spill", "$src, [sp, $imm]">;
+def VST_F_SPILL : Pseudo<(outs ), (ins mFs:$src, c13n_step8:$imm), "vst_f_spill", "$src, [sp, $imm]">;
+def VST_FF_SPILL : Pseudo<(outs ), (ins mFFs:$src, c14n_step16:$imm), "vst_ff_spill", "$src, [sp, $imm]">;
+def VST_G_SPILL : Pseudo<(outs ), (ins mGs:$src, c12n_step4:$imm), "vst_g_spill", "$src, [sp, $imm]">;
+def VST_GG_SPILL : Pseudo<(outs ), (ins mGGs:$src, c13n_step8:$imm), "vst_gg_spill", "$src, [sp, $imm]">;
+def VST_EG_SPILL : Pseudo<(outs ), (ins mEGs:$src, c13n_step8:$imm), "vst_eg_spill", "$src, [sp, $imm]">;
+def VST_EG2_SPILL : Pseudo<(outs ), (ins mEG2s:$src, c14n_step16:$imm), "vst_eg2_spill", "$src, [sp, $imm]">;
+def VST_FEG_SPILL : Pseudo<(outs ), (ins mFEGs:$src, c14n_step16:$imm), "vst_feg_spill", "$src, [sp, $imm]">;
+def VST_FEG2_SPILL : Pseudo<(outs ), (ins mFEG2s:$src, c15n_step32:$imm), "vst_feg2_spill", "$src, [sp, $imm]">;
+
+def VST_EW_SPILL : Pseudo<(outs ), (ins mEWm:$src, c12n_step4:$imm), "vst_ew_spill", "$src, [sp, $imm]">;
+def VST_EX_SPILL : Pseudo<(outs ), (ins mEXm:$src, c13n_step8:$imm), "vst_ex_spill", "$src, [sp, $imm]">;
+def VST_EY_SPILL : Pseudo<(outs ), (ins mEYw:$src, c13n_step8:$imm), "vst_ey_spill", "$src, [sp, $imm]">;
+def VST_FEW_SPILL : Pseudo<(outs ), (ins mFEWm:$src, c12n_step4:$imm), "vst_few_spill", "$src, [sp, $imm]">;
+def VST_FEX_SPILL : Pseudo<(outs ), (ins mFEXm:$src, c13n_step8:$imm), "vst_fex_spill", "$src, [sp, $imm]">;
+def VST_FEY_SPILL : Pseudo<(outs ), (ins mFEYw:$src, c13n_step8:$imm), "vst_fey_spill", "$src, [sp, $imm]">;
 }
 
 let mayLoad = true, mayStore = false in {
@@ -175,6 +193,24 @@ def VLDA_Y_SPILL : Pseudo<(outs VEC1024:$dst), (ins c17n_step128:$imm), "vlda_y_
 def VLDA_BM_SPILL : Pseudo<(outs ACC512:$dst), (ins c16n_step64:$imm), "vlda_bm_spill", "${dst}, [sp, $imm]">;
 def VLDA_CM_SPILL : Pseudo<(outs ACC1024:$dst), (ins c17n_step128:$imm), "vlda_cm_spill", "${dst}, [sp, $imm]">;
 def VLDA_DM_SPILL : Pseudo<(outs ACC2048:$dst), (ins c17n_step128:$imm), "vlda_dm_spill", "${dst}, [sp, $imm]">;
+
+def VLDA_E_SPILL : Pseudo<(outs mEs:$dst), (ins c12n_step4:$imm), "vlda_e_spill", "$dst, [sp, $imm]">;
+def VLDA_EE_SPILL : Pseudo<(outs mEEs:$dst), (ins c13n_step8:$imm), "vlda_ee_spill", "$dst, [sp, $imm]">;
+def VLDA_F_SPILL : Pseudo<(outs mFs:$dst), (ins c13n_step8:$imm), "vlda_f_spill", "$dst, [sp, $imm]">;
+def VLDA_FF_SPILL : Pseudo<(outs mFFs:$dst), (ins c14n_step16:$imm), "vlda_ff_spill", "$dst, [sp, $imm]">;
+def VLDA_G_SPILL : Pseudo<(outs mGs:$dst), (ins c12n_step4:$imm), "vlda_g_spill", "$dst, [sp, $imm]">;
+def VLDA_GG_SPILL : Pseudo<(outs mGGs:$dst), (ins c13n_step8:$imm), "vlda_gg_spill", "$dst, [sp, $imm]">;
+def VLDA_EG_SPILL : Pseudo<(outs mEGs:$dst), (ins c13n_step8:$imm), "vlda_eg_spill", "$dst, [sp, $imm]">;
+def VLDA_EG2_SPILL : Pseudo<(outs mEG2s:$dst), (ins c14n_step16:$imm), "vlda_eg2_spill", "$dst, [sp, $imm]">;
+def VLDA_FEG_SPILL : Pseudo<(outs mFEGs:$dst), (ins c14n_step16:$imm), "vlda_feg_spill", "$dst, [sp, $imm]">;
+def VLDA_FEG2_SPILL : Pseudo<(outs mFEG2s:$dst), (ins c15n_step32:$imm), "vlda_feg2_spill", "$dst, [sp, $imm]">;
+
+def VLDA_EW_SPILL : Pseudo<(outs mEWm:$dst), (ins c12n_step4:$imm), "vlda_ew_spill", "$dst, [sp, $imm]">;
+def VLDA_EX_SPILL : Pseudo<(outs mEXm:$dst), (ins c13n_step8:$imm), "vlda_ex_spill", "$dst, [sp, $imm]">;
+def VLDA_EY_SPILL : Pseudo<(outs mEYw:$dst), (ins c13n_step8:$imm), "vlda_ey_spill", "$dst, [sp, $imm]">;
+def VLDA_FEW_SPILL : Pseudo<(outs mFEWm:$dst), (ins c12n_step4:$imm), "vlda_few_spill", "$dst, [sp, $imm]">;
+def VLDA_FEX_SPILL : Pseudo<(outs mFEXm:$dst), (ins c13n_step8:$imm), "vlda_fex_spill", "$dst, [sp, $imm]">;
+def VLDA_FEY_SPILL : Pseudo<(outs mFEYw:$dst), (ins c13n_step8:$imm), "vlda_fey_spill", "$dst, [sp, $imm]">;
 }
 }
 
