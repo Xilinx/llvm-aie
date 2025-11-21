@@ -177,7 +177,6 @@ body:             |
     VST_CM_SPILL $cml0, %stack.0, implicit $sp :: (store (s1024) into %stack.0, align 64)
 ...
 
-
 ---
 name:            test_acc2048
 alignment:       16
@@ -198,6 +197,348 @@ body:             |
     ; CHECK-NEXT: VST_dmx_sts_bm_spill $bmhh0, -64, implicit $sp :: (store (s512) into %stack.0 + 192)
     $dm0 = VLDA_DM_SPILL %stack.0, implicit $sp :: (load (s2048) from %stack.0, align 64)
     VST_DM_SPILL $dm0, %stack.0, implicit $sp :: (store (s1024) into %stack.0, align 64)
+...
+
+---
+name:            test_e
+alignment:       16
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 256, alignment: 64 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_e
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 256, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $el0 = LDA_dms_lda_scalar_spill -256, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_scalar_spill $el0, -256, implicit $sp
+    $el0 = VLDA_E_SPILL %stack.0, implicit $sp
+    VST_E_SPILL $el0, %stack.0, implicit $sp
+...
+
+---
+name:            test_ee
+alignment:       16
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 256, alignment: 64 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_ee
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 256, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $e0 = LDA_dml_lda2_scalar_EE_spill -256, implicit $sp
+    ; CHECK-NEXT: ST_dml_sts_scalar_spill $e0, -256, implicit $sp
+    $e0 = VLDA_EE_SPILL %stack.0, implicit $sp
+    VST_EE_SPILL $e0, %stack.0, implicit $sp
+...
+
+---
+name:            test_f
+alignment:       16
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 256, alignment: 64 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_f
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 256, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $fl0 = LDA_dml_lda_scalar_F_spill -256, implicit $sp
+    ; CHECK-NEXT: ST_dml_sts_scalar_spill $fl0, -256, implicit $sp
+    $fl0 = VLDA_F_SPILL %stack.0, implicit $sp
+    VST_F_SPILL $fl0, %stack.0, implicit $sp
+...
+
+---
+name:            test_ff
+alignment:       16
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 256, alignment: 64 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_ff
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 256, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $f0 = LDA_dmv_lda_f_spill -256, implicit $sp
+    ; CHECK-NEXT: ST_dmv_sts_f_spill $f0, -256, implicit $sp
+    $f0 = VLDA_FF_SPILL %stack.0, implicit $sp
+    VST_FF_SPILL $f0, %stack.0, implicit $sp
+...
+
+---
+name:            test_g
+alignment:       16
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 256, alignment: 64 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_g
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 256, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $gl0 = LDA_dms_lda_g_spill -256, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_g_spill $gl0, -256, implicit $sp
+    $gl0 = VLDA_G_SPILL %stack.0, implicit $sp
+    VST_G_SPILL $gl0, %stack.0, implicit $sp
+...
+
+---
+name:            test_gg
+alignment:       16
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 256, alignment: 64 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_gg
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 256, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $g0 = LDA_dml_lda2_scalar_GG_spill -256, implicit $sp
+    ; CHECK-NEXT: ST_dml_sts_scalar_spill $g0, -256, implicit $sp
+    $g0 = VLDA_GG_SPILL %stack.0, implicit $sp
+    VST_GG_SPILL $g0, %stack.0, implicit $sp
+...
+
+---
+name:            test_eg
+alignment:       16
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 256, alignment: 64 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_eg
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 256, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $egl0 = LDA_dml_lda2_scalar_EG_spill -256, implicit $sp
+    ; CHECK-NEXT: ST_dml_sts_scalar_spill $egl0, -256, implicit $sp
+    $egl0 = VLDA_EG_SPILL %stack.0, implicit $sp
+    VST_EG_SPILL $egl0, %stack.0, implicit $sp
+...
+
+---
+name:            test_eg2
+alignment:       16
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 256, alignment: 64 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_eg2
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 256, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $eg0 = LDA_dmv_lda_eg2_spill -256, implicit $sp
+    ; CHECK-NEXT: VST_128_dmv_sts_eg_spill $eg0, -256, implicit $sp
+    $eg0 = VLDA_EG2_SPILL %stack.0, implicit $sp
+    VST_EG2_SPILL $eg0, %stack.0, implicit $sp
+...
+
+---
+name:            test_feg
+alignment:       16
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 256, alignment: 64 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_feg
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 256, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $fegl0 = LDA_dmv_lda_feg_spill -256, implicit $sp
+    ; CHECK-NEXT: VST_128_dmv_sts_feg_spill $fegl0, -256, implicit $sp
+    $fegl0 = VLDA_FEG_SPILL %stack.0, implicit $sp
+    VST_FEG_SPILL $fegl0, %stack.0, implicit $sp
+...
+
+---
+name:            test_feg2
+alignment:       16
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 256, alignment: 64 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_feg2
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 256, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $feg0 = VLDA_dmw_lda_feg2_spill -256, implicit $sp
+    ; CHECK-NEXT: VST_dmw_sts_feg2_spill $feg0, -256, implicit $sp
+    $feg0 = VLDA_FEG2_SPILL %stack.0, implicit $sp
+    VST_FEG2_SPILL $feg0, %stack.0, implicit $sp
+...
+
+---
+name:            test_ew
+alignment:       16
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 256, alignment: 64 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_ew
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 256, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $wl0 = VLDA_dmw_lda_w_spill -256, implicit $sp
+    ; CHECK-NEXT: $gl0 = LDA_dms_lda_g_spill -224, implicit $sp
+    ; CHECK-NEXT: $el0 = LDA_dms_lda_scalar_spill -220, implicit $sp
+    ; CHECK-NEXT: VST_dmw_sts_w_spill $wl0, -256, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_g_spill $gl0, -224, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_scalar_spill $el0, -220, implicit $sp
+    $ewl0 = VLDA_EW_SPILL %stack.0, implicit $sp
+    VST_EW_SPILL $ewl0, %stack.0, implicit $sp
+...
+
+---
+name:            test_ex
+alignment:       16
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 256, alignment: 64 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_ex
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 256, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $wl0 = VLDA_dmw_lda_w_spill -256, implicit $sp
+    ; CHECK-NEXT: $wh0 = VLDA_dmw_lda_w_spill -224, implicit $sp
+    ; CHECK-NEXT: $gl0 = LDA_dms_lda_g_spill -192, implicit $sp
+    ; CHECK-NEXT: $gh0 = LDA_dms_lda_g_spill -188, implicit $sp
+    ; CHECK-NEXT: $el0 = LDA_dms_lda_scalar_spill -184, implicit $sp
+    ; CHECK-NEXT: $eh0 = LDA_dms_lda_scalar_spill -180, implicit $sp
+    ; CHECK-NEXT: VST_dmw_sts_w_spill $wl0, -256, implicit $sp
+    ; CHECK-NEXT: VST_dmw_sts_w_spill $wh0, -224, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_g_spill $gl0, -192, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_g_spill $gh0, -188, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_scalar_spill $el0, -184, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_scalar_spill $eh0, -180, implicit $sp
+    $ex0 = VLDA_EX_SPILL %stack.0, implicit $sp
+    VST_EX_SPILL $ex0, %stack.0, implicit $sp
+...
+
+---
+name:            test_ey
+alignment:       16
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 256, alignment: 64 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_ey
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 256, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $wl0 = VLDA_dmw_lda_w_spill -256, implicit $sp
+    ; CHECK-NEXT: $wh0 = VLDA_dmw_lda_w_spill -224, implicit $sp
+    ; CHECK-NEXT: $wl1 = VLDA_dmw_lda_w_spill -192, implicit $sp
+    ; CHECK-NEXT: $wh1 = VLDA_dmw_lda_w_spill -160, implicit $sp
+    ; CHECK-NEXT: $gl0 = LDA_dms_lda_g_spill -128, implicit $sp
+    ; CHECK-NEXT: $gh0 = LDA_dms_lda_g_spill -124, implicit $sp
+    ; CHECK-NEXT: $gl1 = LDA_dms_lda_g_spill -120, implicit $sp
+    ; CHECK-NEXT: $gh1 = LDA_dms_lda_g_spill -116, implicit $sp
+    ; CHECK-NEXT: $el0 = LDA_dms_lda_scalar_spill -112, implicit $sp
+    ; CHECK-NEXT: $eh0 = LDA_dms_lda_scalar_spill -108, implicit $sp
+    ; CHECK-NEXT: $el1 = LDA_dms_lda_scalar_spill -104, implicit $sp
+    ; CHECK-NEXT: $eh1 = LDA_dms_lda_scalar_spill -100, implicit $sp
+    ; CHECK-NEXT: VST_dmw_sts_w_spill $wl0, -256, implicit $sp
+    ; CHECK-NEXT: VST_dmw_sts_w_spill $wh0, -224, implicit $sp
+    ; CHECK-NEXT: VST_dmw_sts_w_spill $wl1, -192, implicit $sp
+    ; CHECK-NEXT: VST_dmw_sts_w_spill $wh1, -160, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_g_spill $gl0, -128, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_g_spill $gh0, -124, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_g_spill $gl1, -120, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_g_spill $gh1, -116, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_scalar_spill $el0, -112, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_scalar_spill $eh0, -108, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_scalar_spill $el1, -104, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_scalar_spill $eh1, -100, implicit $sp
+    $ey0 = VLDA_EY_SPILL %stack.0, implicit $sp
+    VST_EY_SPILL $ey0, %stack.0, implicit $sp
+...
+
+---
+name:            test_few
+alignment:       16
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 256, alignment: 64 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_few
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 256, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $wl0 = VLDA_dmw_lda_w_spill -256, implicit $sp
+    ; CHECK-NEXT: $fl0 = LDA_dml_lda_scalar_F_spill -224, implicit $sp
+    ; CHECK-NEXT: $gl0 = LDA_dms_lda_g_spill -216, implicit $sp
+    ; CHECK-NEXT: $el0 = LDA_dms_lda_scalar_spill -212, implicit $sp
+    ; CHECK-NEXT: VST_dmw_sts_w_spill $wl0, -256, implicit $sp
+    ; CHECK-NEXT: ST_dml_sts_scalar_spill $fl0, -224, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_g_spill $gl0, -216, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_scalar_spill $el0, -212, implicit $sp
+    $fewl0 = VLDA_FEW_SPILL %stack.0, implicit $sp
+    VST_FEW_SPILL $fewl0, %stack.0, implicit $sp
+...
+
+---
+name:            test_fex
+alignment:       16
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 256, alignment: 64 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_fex
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 256, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $wl0 = VLDA_dmw_lda_w_spill -256, implicit $sp
+    ; CHECK-NEXT: $wh0 = VLDA_dmw_lda_w_spill -224, implicit $sp
+    ; CHECK-NEXT: $fl0 = LDA_dml_lda_scalar_F_spill -192, implicit $sp
+    ; CHECK-NEXT: $fh0 = LDA_dml_lda_scalar_F_spill -184, implicit $sp
+    ; CHECK-NEXT: $gl0 = LDA_dms_lda_g_spill -176, implicit $sp
+    ; CHECK-NEXT: $gh0 = LDA_dms_lda_g_spill -172, implicit $sp
+    ; CHECK-NEXT: $el0 = LDA_dms_lda_scalar_spill -168, implicit $sp
+    ; CHECK-NEXT: $eh0 = LDA_dms_lda_scalar_spill -164, implicit $sp
+    ; CHECK-NEXT: VST_dmw_sts_w_spill $wl0, -256, implicit $sp
+    ; CHECK-NEXT: VST_dmw_sts_w_spill $wh0, -224, implicit $sp
+    ; CHECK-NEXT: ST_dml_sts_scalar_spill $fl0, -192, implicit $sp
+    ; CHECK-NEXT: ST_dml_sts_scalar_spill $fh0, -184, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_g_spill $gl0, -176, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_g_spill $gh0, -172, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_scalar_spill $el0, -168, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_scalar_spill $eh0, -164, implicit $sp
+    $fex0 = VLDA_FEX_SPILL %stack.0, implicit $sp
+    VST_FEX_SPILL $fex0, %stack.0, implicit $sp
+...
+
+---
+name:            test_fey
+alignment:       16
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 256, alignment: 64 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_fey
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 256, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $wl0 = VLDA_dmw_lda_w_spill -256, implicit $sp
+    ; CHECK-NEXT: $wh0 = VLDA_dmw_lda_w_spill -224, implicit $sp
+    ; CHECK-NEXT: $wl1 = VLDA_dmw_lda_w_spill -192, implicit $sp
+    ; CHECK-NEXT: $wh1 = VLDA_dmw_lda_w_spill -160, implicit $sp
+    ; CHECK-NEXT: $fl0 = LDA_dml_lda_scalar_F_spill -128, implicit $sp
+    ; CHECK-NEXT: $fh0 = LDA_dml_lda_scalar_F_spill -120, implicit $sp
+    ; CHECK-NEXT: $fl1 = LDA_dml_lda_scalar_F_spill -112, implicit $sp
+    ; CHECK-NEXT: $fh1 = LDA_dml_lda_scalar_F_spill -104, implicit $sp
+    ; CHECK-NEXT: $gl0 = LDA_dms_lda_g_spill -96, implicit $sp
+    ; CHECK-NEXT: $gh0 = LDA_dms_lda_g_spill -92, implicit $sp
+    ; CHECK-NEXT: $gl1 = LDA_dms_lda_g_spill -88, implicit $sp
+    ; CHECK-NEXT: $gh1 = LDA_dms_lda_g_spill -84, implicit $sp
+    ; CHECK-NEXT: $el0 = LDA_dms_lda_scalar_spill -80, implicit $sp
+    ; CHECK-NEXT: $eh0 = LDA_dms_lda_scalar_spill -76, implicit $sp
+    ; CHECK-NEXT: $el1 = LDA_dms_lda_scalar_spill -72, implicit $sp
+    ; CHECK-NEXT: $eh1 = LDA_dms_lda_scalar_spill -68, implicit $sp
+    ; CHECK-NEXT: VST_dmw_sts_w_spill $wl0, -256, implicit $sp
+    ; CHECK-NEXT: VST_dmw_sts_w_spill $wh0, -224, implicit $sp
+    ; CHECK-NEXT: VST_dmw_sts_w_spill $wl1, -192, implicit $sp
+    ; CHECK-NEXT: VST_dmw_sts_w_spill $wh1, -160, implicit $sp
+    ; CHECK-NEXT: ST_dml_sts_scalar_spill $fl0, -128, implicit $sp
+    ; CHECK-NEXT: ST_dml_sts_scalar_spill $fh0, -120, implicit $sp
+    ; CHECK-NEXT: ST_dml_sts_scalar_spill $fl1, -112, implicit $sp
+    ; CHECK-NEXT: ST_dml_sts_scalar_spill $fh1, -104, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_g_spill $gl0, -96, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_g_spill $gh0, -92, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_g_spill $gl1, -88, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_g_spill $gh1, -84, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_scalar_spill $el0, -80, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_scalar_spill $eh0, -76, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_scalar_spill $el1, -72, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_scalar_spill $eh1, -68, implicit $sp
+    $fey0 = VLDA_FEY_SPILL %stack.0, implicit $sp
+    VST_FEY_SPILL $fey0, %stack.0, implicit $sp
 ...
 
 ---
@@ -590,6 +931,690 @@ body:             |
     ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     $dm0 = VLDA_DM_SPILL %stack.0, implicit $sp :: (load (s2048) from %stack.0, align 64)
     VST_DM_SPILL $dm0, %stack.0, implicit $sp :: (store (s1024) into %stack.0, align 64)
+    ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    PseudoRET implicit $lr
+...
+
+---
+name:            test_e_big_offset
+alignment:       16
+frameInfo:
+  adjustsStack:    true
+stack:
+  - { id: 0, name: '', type: default, offset: 0, size: 2200, alignment: 16 }
+  - { id: 1, name: '', type: spill-slot, offset: 0, size: 4, alignment: 4 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_e_big_offset
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 2240, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $m0 = MOVXM_lng_cg -2240
+    ; CHECK-NEXT: $p0 = PADD_mod_pseudo $p0, killed $m0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -2240
+    ; CHECK-NEXT: $el0 = LDA_dms_lda_scalar_ld_idx killed $p0, killed $dj0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -2240
+    ; CHECK-NEXT: ST_dms_sts_scalar_st_idx $el0, killed $p0, killed $dj0
+    ; CHECK-NEXT: frame-destroy PADDXM_pstm_sp_imm -2240, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    renamable $p0 = PseudoFI %stack.0, implicit $sp
+    ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    $el0 = VLDA_E_SPILL %stack.0, implicit $sp
+    VST_E_SPILL $el0, %stack.0, implicit $sp
+    ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    PseudoRET implicit $lr
+...
+
+---
+name:            test_ee_big_offset
+alignment:       16
+frameInfo:
+  adjustsStack:    true
+stack:
+  - { id: 0, name: '', type: default, offset: 0, size: 4200, alignment: 16 }
+  - { id: 1, name: '', type: spill-slot, offset: 0, size: 8, alignment: 8 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_ee_big_offset
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 4224, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $m0 = MOVXM_lng_cg -4224
+    ; CHECK-NEXT: $p0 = PADD_mod_pseudo $p0, killed $m0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4224
+    ; CHECK-NEXT: $e0 = LDA_dml_lda2_scalar_EE_ld_idx killed $p0, killed $dj0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4224
+    ; CHECK-NEXT: ST_dml_sts_scalar_st_idx $e0, killed $p0, killed $dj0
+    ; CHECK-NEXT: frame-destroy PADDXM_pstm_sp_imm -4224, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    renamable $p0 = PseudoFI %stack.0, implicit $sp
+    ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    $e0 = VLDA_EE_SPILL %stack.0, implicit $sp
+    VST_EE_SPILL $e0, %stack.0, implicit $sp
+    ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    PseudoRET implicit $lr
+...
+
+---
+name:            test_f_big_offset
+alignment:       16
+frameInfo:
+  adjustsStack:    true
+stack:
+  - { id: 0, name: '', type: default, offset: 0, size: 4200, alignment: 16 }
+  - { id: 1, name: '', type: spill-slot, offset: 0, size: 8, alignment: 8 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_f_big_offset
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 4224, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $m0 = MOVXM_lng_cg -4224
+    ; CHECK-NEXT: $p0 = PADD_mod_pseudo $p0, killed $m0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4224
+    ; CHECK-NEXT: $fl0 = LDA_dml_lda_scalar_F_ld_idx killed $p0, killed $dj0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4224
+    ; CHECK-NEXT: ST_dml_sts_scalar_st_idx $fl0, killed $p0, killed $dj0
+    ; CHECK-NEXT: frame-destroy PADDXM_pstm_sp_imm -4224, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    renamable $p0 = PseudoFI %stack.0, implicit $sp
+    ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    $fl0 = VLDA_F_SPILL %stack.0, implicit $sp
+    VST_F_SPILL $fl0, %stack.0, implicit $sp
+    ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    PseudoRET implicit $lr
+...
+
+---
+name:            test_ff_big_offset
+alignment:       16
+frameInfo:
+  adjustsStack:    true
+stack:
+  - { id: 0, name: '', type: default, offset: 0, size: 8200, alignment: 16 }
+  - { id: 1, name: '', type: spill-slot, offset: 0, size: 16, alignment: 16 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_ff_big_offset
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 8256, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $m0 = MOVXM_lng_cg -8256
+    ; CHECK-NEXT: $p0 = PADD_mod_pseudo $p0, killed $m0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -8256
+    ; CHECK-NEXT: $f0 = LDA_dmv_lda_f_ld_idx killed $p0, killed $dj0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -8256
+    ; CHECK-NEXT: ST_dmv_sts_f_st_idx $f0, killed $p0, killed $dj0
+    ; CHECK-NEXT: frame-destroy PADDXM_pstm_sp_imm -8256, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    renamable $p0 = PseudoFI %stack.0, implicit $sp
+    ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    $f0 = VLDA_FF_SPILL %stack.0, implicit $sp
+    VST_FF_SPILL $f0, %stack.0, implicit $sp
+    ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    PseudoRET implicit $lr
+...
+
+---
+name:            test_g_big_offset
+alignment:       16
+frameInfo:
+  adjustsStack:    true
+stack:
+  - { id: 0, name: '', type: default, offset: 0, size: 2200, alignment: 16 }
+  - { id: 1, name: '', type: spill-slot, offset: 0, size: 4, alignment: 4 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_g_big_offset
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 2240, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $m0 = MOVXM_lng_cg -2240
+    ; CHECK-NEXT: $p0 = PADD_mod_pseudo $p0, killed $m0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -2240
+    ; CHECK-NEXT: $gl0 = LDA_dms_lda_g_ld_idx killed $p0, killed $dj0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -2240
+    ; CHECK-NEXT: ST_dms_sts_g_st_idx $gl0, killed $p0, killed $dj0
+    ; CHECK-NEXT: frame-destroy PADDXM_pstm_sp_imm -2240, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    renamable $p0 = PseudoFI %stack.0, implicit $sp
+    ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    $gl0 = VLDA_G_SPILL %stack.0, implicit $sp
+    VST_G_SPILL $gl0, %stack.0, implicit $sp
+    ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    PseudoRET implicit $lr
+...
+
+---
+name:            test_gg_big_offset
+alignment:       16
+frameInfo:
+  adjustsStack:    true
+stack:
+  - { id: 0, name: '', type: default, offset: 0, size: 2200, alignment: 16 }
+  - { id: 1, name: '', type: spill-slot, offset: 0, size: 8, alignment: 8 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_gg_big_offset
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 2240, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $m0 = MOVXM_lng_cg -2240
+    ; CHECK-NEXT: $p0 = PADD_mod_pseudo $p0, killed $m0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -2240
+    ; CHECK-NEXT: $g0 = LDA_dml_lda2_scalar_GG_ld_idx killed $p0, killed $dj0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -2240
+    ; CHECK-NEXT: ST_dml_sts_scalar_st_idx $g0, killed $p0, killed $dj0
+    ; CHECK-NEXT: frame-destroy PADDXM_pstm_sp_imm -2240, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    renamable $p0 = PseudoFI %stack.0, implicit $sp
+    ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    $g0 = VLDA_GG_SPILL %stack.0, implicit $sp
+    VST_GG_SPILL $g0, %stack.0, implicit $sp
+    ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    PseudoRET implicit $lr
+...
+
+---
+name:            test_eg_big_offset
+alignment:       16
+frameInfo:
+  adjustsStack:    true
+stack:
+  - { id: 0, name: '', type: default, offset: 0, size: 4200, alignment: 16 }
+  - { id: 1, name: '', type: spill-slot, offset: 0, size: 8, alignment: 8 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_eg_big_offset
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 4224, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $m0 = MOVXM_lng_cg -4224
+    ; CHECK-NEXT: $p0 = PADD_mod_pseudo $p0, killed $m0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4224
+    ; CHECK-NEXT: $egl0 = LDA_dml_lda2_scalar_EG_ld_idx killed $p0, killed $dj0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4224
+    ; CHECK-NEXT: ST_dml_sts_scalar_st_idx $egl0, killed $p0, killed $dj0
+    ; CHECK-NEXT: frame-destroy PADDXM_pstm_sp_imm -4224, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    renamable $p0 = PseudoFI %stack.0, implicit $sp
+    ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    $egl0 = VLDA_EG_SPILL %stack.0, implicit $sp
+    VST_EG_SPILL $egl0, %stack.0, implicit $sp
+    ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    PseudoRET implicit $lr
+...
+
+---
+name:            test_eg2_big_offset
+alignment:       16
+frameInfo:
+  adjustsStack:    true
+stack:
+  - { id: 0, name: '', type: default, offset: 0, size: 8200, alignment: 16 }
+  - { id: 1, name: '', type: spill-slot, offset: 0, size: 16, alignment: 16 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_eg2_big_offset
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 8256, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $m0 = MOVXM_lng_cg -8256
+    ; CHECK-NEXT: $p0 = PADD_mod_pseudo $p0, killed $m0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -8256
+    ; CHECK-NEXT: $eg0 = LDA_dmv_lda_eg2_ld_idx killed $p0, killed $dj0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -8256
+    ; CHECK-NEXT: VST_128_dmv_sts_eg_st_idx $eg0, killed $p0, killed $dj0
+    ; CHECK-NEXT: frame-destroy PADDXM_pstm_sp_imm -8256, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    renamable $p0 = PseudoFI %stack.0, implicit $sp
+    ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    $eg0 = VLDA_EG2_SPILL %stack.0, implicit $sp
+    VST_EG2_SPILL $eg0, %stack.0, implicit $sp
+    ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    PseudoRET implicit $lr
+...
+
+---
+name:            test_feg_big_offset
+alignment:       16
+frameInfo:
+  adjustsStack:    true
+stack:
+  - { id: 0, name: '', type: default, offset: 0, size: 8200, alignment: 16 }
+  - { id: 1, name: '', type: spill-slot, offset: 0, size: 16, alignment: 16 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_feg_big_offset
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 8256, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $m0 = MOVXM_lng_cg -8256
+    ; CHECK-NEXT: $p0 = PADD_mod_pseudo $p0, killed $m0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -8256
+    ; CHECK-NEXT: $fegl0 = LDA_dmv_lda_feg_ld_idx killed $p0, killed $dj0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -8256
+    ; CHECK-NEXT: VST_128_dmv_sts_feg_st_idx $fegl0, killed $p0, killed $dj0
+    ; CHECK-NEXT: frame-destroy PADDXM_pstm_sp_imm -8256, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    renamable $p0 = PseudoFI %stack.0, implicit $sp
+    ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    $fegl0 = VLDA_FEG_SPILL %stack.0, implicit $sp
+    VST_FEG_SPILL $fegl0, %stack.0, implicit $sp
+    ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    PseudoRET implicit $lr
+...
+
+---
+name:            test_feg2_big_offset
+alignment:       16
+frameInfo:
+  adjustsStack:    true
+stack:
+  - { id: 0, name: '', type: default, offset: 0, size: 22200, alignment: 16 }
+  - { id: 1, name: '', type: spill-slot, offset: 0, size: 32, alignment: 32 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_feg2_big_offset
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 22272, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $m0 = MOVXM_lng_cg -22240
+    ; CHECK-NEXT: $p0 = PADD_mod_pseudo $p0, killed $m0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -22240
+    ; CHECK-NEXT: $feg0 = VLDA_dmw_lda_feg2_ld_idx killed $p0, killed $dj0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -22240
+    ; CHECK-NEXT: VST_dmw_sts_feg2_st_idx $feg0, killed $p0, killed $dj0
+    ; CHECK-NEXT: frame-destroy PADDXM_pstm_sp_imm -22272, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    renamable $p0 = PseudoFI %stack.0, implicit $sp
+    ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    $feg0 = VLDA_FEG2_SPILL %stack.0, implicit $sp
+    VST_FEG2_SPILL $feg0, %stack.0, implicit $sp
+    ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    PseudoRET implicit $lr
+...
+
+---
+name:            test_ew_big_offset
+alignment:       16
+frameInfo:
+  adjustsStack:    true
+stack:
+  - { id: 0, name: '', type: default, offset: 0, size: 2200, alignment: 16 }
+  - { id: 1, name: '', type: spill-slot, offset: 0, size: 36, alignment: 32 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_ew_big_offset
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 2304, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $m0 = MOVXM_lng_cg -2256
+    ; CHECK-NEXT: $p0 = PADD_mod_pseudo $p0, killed $m0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -2256
+    ; CHECK-NEXT: $wl0 = VLDA_dmw_lda_w_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -2224
+    ; CHECK-NEXT: $gl0 = LDA_dms_lda_g_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -2220
+    ; CHECK-NEXT: $el0 = LDA_dms_lda_scalar_ld_idx killed $p0, killed $dj0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -2256
+    ; CHECK-NEXT: VST_dmw_sts_w_st_idx $wl0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -2224
+    ; CHECK-NEXT: ST_dms_sts_g_st_idx $gl0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -2220
+    ; CHECK-NEXT: ST_dms_sts_scalar_st_idx $el0, killed $p0, killed $dj0
+    ; CHECK-NEXT: frame-destroy PADDXM_pstm_sp_imm -2304, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    renamable $p0 = PseudoFI %stack.0, implicit $sp
+    ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    $ewl0 = VLDA_EW_SPILL %stack.0, implicit $sp
+    VST_EW_SPILL $ewl0, %stack.0, implicit $sp
+    ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    PseudoRET implicit $lr
+...
+
+---
+name:            test_ex_big_offset
+alignment:       16
+frameInfo:
+  adjustsStack:    true
+stack:
+  - { id: 0, name: '', type: default, offset: 0, size: 4200, alignment: 16 }
+  - { id: 1, name: '', type: spill-slot, offset: 0, size: 72, alignment: 64 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_ex_big_offset
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 4288, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $m0 = MOVXM_lng_cg -4208
+    ; CHECK-NEXT: $p0 = PADD_mod_pseudo $p0, killed $m0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4208
+    ; CHECK-NEXT: $wl0 = VLDA_dmw_lda_w_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4176
+    ; CHECK-NEXT: $wh0 = VLDA_dmw_lda_w_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4144
+    ; CHECK-NEXT: $gl0 = LDA_dms_lda_g_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4140
+    ; CHECK-NEXT: $gh0 = LDA_dms_lda_g_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4136
+    ; CHECK-NEXT: $el0 = LDA_dms_lda_scalar_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4132
+    ; CHECK-NEXT: $eh0 = LDA_dms_lda_scalar_ld_idx killed $p0, killed $dj0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4208
+    ; CHECK-NEXT: VST_dmw_sts_w_st_idx $wl0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4176
+    ; CHECK-NEXT: VST_dmw_sts_w_st_idx $wh0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4144
+    ; CHECK-NEXT: ST_dms_sts_g_st_idx $gl0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4140
+    ; CHECK-NEXT: ST_dms_sts_g_st_idx $gh0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4136
+    ; CHECK-NEXT: ST_dms_sts_scalar_st_idx $el0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4132
+    ; CHECK-NEXT: ST_dms_sts_scalar_st_idx $eh0, killed $p0, killed $dj0
+    ; CHECK-NEXT: frame-destroy PADDXM_pstm_sp_imm -4288, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    renamable $p0 = PseudoFI %stack.0, implicit $sp
+    ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    $ex0 = VLDA_EX_SPILL %stack.0, implicit $sp
+    VST_EX_SPILL $ex0, %stack.0, implicit $sp
+    ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    PseudoRET implicit $lr
+...
+
+---
+name:            test_ey_big_offset
+alignment:       16
+frameInfo:
+  adjustsStack:    true
+stack:
+  - { id: 0, name: '', type: default, offset: 0, size: 4200, alignment: 16 }
+  - { id: 1, name: '', type: spill-slot, offset: 0, size: 144, alignment: 64 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_ey_big_offset
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 4352, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $m0 = MOVXM_lng_cg -4208
+    ; CHECK-NEXT: $p0 = PADD_mod_pseudo $p0, killed $m0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4208
+    ; CHECK-NEXT: $wl0 = VLDA_dmw_lda_w_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4176
+    ; CHECK-NEXT: $wh0 = VLDA_dmw_lda_w_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4144
+    ; CHECK-NEXT: $wl1 = VLDA_dmw_lda_w_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4112
+    ; CHECK-NEXT: $wh1 = VLDA_dmw_lda_w_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4080
+    ; CHECK-NEXT: $gl0 = LDA_dms_lda_g_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4076
+    ; CHECK-NEXT: $gh0 = LDA_dms_lda_g_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4072
+    ; CHECK-NEXT: $gl1 = LDA_dms_lda_g_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4068
+    ; CHECK-NEXT: $gh1 = LDA_dms_lda_g_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4064
+    ; CHECK-NEXT: $el0 = LDA_dms_lda_scalar_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4060
+    ; CHECK-NEXT: $eh0 = LDA_dms_lda_scalar_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4056
+    ; CHECK-NEXT: $el1 = LDA_dms_lda_scalar_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4052
+    ; CHECK-NEXT: $eh1 = LDA_dms_lda_scalar_ld_idx killed $p0, killed $dj0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4208
+    ; CHECK-NEXT: VST_dmw_sts_w_st_idx $wl0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4176
+    ; CHECK-NEXT: VST_dmw_sts_w_st_idx $wh0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4144
+    ; CHECK-NEXT: VST_dmw_sts_w_st_idx $wl1, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4112
+    ; CHECK-NEXT: VST_dmw_sts_w_st_idx $wh1, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4080
+    ; CHECK-NEXT: ST_dms_sts_g_st_idx $gl0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4076
+    ; CHECK-NEXT: ST_dms_sts_g_st_idx $gh0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4072
+    ; CHECK-NEXT: ST_dms_sts_g_st_idx $gl1, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4068
+    ; CHECK-NEXT: ST_dms_sts_g_st_idx $gh1, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4064
+    ; CHECK-NEXT: ST_dms_sts_scalar_st_idx $el0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4060
+    ; CHECK-NEXT: ST_dms_sts_scalar_st_idx $eh0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4056
+    ; CHECK-NEXT: ST_dms_sts_scalar_st_idx $el1, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4052
+    ; CHECK-NEXT: ST_dms_sts_scalar_st_idx $eh1, killed $p0, killed $dj0
+    ; CHECK-NEXT: frame-destroy PADDXM_pstm_sp_imm -4352, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    renamable $p0 = PseudoFI %stack.0, implicit $sp
+    ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    $ey0 = VLDA_EY_SPILL %stack.0, implicit $sp
+    VST_EY_SPILL $ey0, %stack.0, implicit $sp
+    ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    PseudoRET implicit $lr
+...
+
+---
+name:            test_few_big_offset
+alignment:       16
+frameInfo:
+  adjustsStack:    true
+stack:
+  - { id: 0, name: '', type: default, offset: 0, size: 2200, alignment: 16 }
+  - { id: 1, name: '', type: spill-slot, offset: 0, size: 44, alignment: 32 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_few_big_offset
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 2304, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $m0 = MOVXM_lng_cg -2256
+    ; CHECK-NEXT: $p0 = PADD_mod_pseudo $p0, killed $m0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -2256
+    ; CHECK-NEXT: $wl0 = VLDA_dmw_lda_w_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -2224
+    ; CHECK-NEXT: $fl0 = LDA_dml_lda_scalar_F_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -2216
+    ; CHECK-NEXT: $gl0 = LDA_dms_lda_g_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -2212
+    ; CHECK-NEXT: $el0 = LDA_dms_lda_scalar_ld_idx killed $p0, killed $dj0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -2256
+    ; CHECK-NEXT: VST_dmw_sts_w_st_idx $wl0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -2224
+    ; CHECK-NEXT: ST_dml_sts_scalar_st_idx $fl0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -2216
+    ; CHECK-NEXT: ST_dms_sts_g_st_idx $gl0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -2212
+    ; CHECK-NEXT: ST_dms_sts_scalar_st_idx $el0, killed $p0, killed $dj0
+    ; CHECK-NEXT: frame-destroy PADDXM_pstm_sp_imm -2304, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    renamable $p0 = PseudoFI %stack.0, implicit $sp
+    ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    $fewl0 = VLDA_FEW_SPILL %stack.0, implicit $sp
+    VST_FEW_SPILL $fewl0, %stack.0, implicit $sp
+    ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    PseudoRET implicit $lr
+...
+
+---
+name:            test_fex_big_offset
+alignment:       16
+frameInfo:
+  adjustsStack:    true
+stack:
+  - { id: 0, name: '', type: default, offset: 0, size: 4200, alignment: 16 }
+  - { id: 1, name: '', type: spill-slot, offset: 0, size: 88, alignment: 64 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_fex_big_offset
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 4352, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $m0 = MOVXM_lng_cg -4256
+    ; CHECK-NEXT: $p0 = PADD_mod_pseudo $p0, killed $m0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4256
+    ; CHECK-NEXT: $wl0 = VLDA_dmw_lda_w_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4224
+    ; CHECK-NEXT: $wh0 = VLDA_dmw_lda_w_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4192
+    ; CHECK-NEXT: $fl0 = LDA_dml_lda_scalar_F_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4184
+    ; CHECK-NEXT: $fh0 = LDA_dml_lda_scalar_F_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4176
+    ; CHECK-NEXT: $gl0 = LDA_dms_lda_g_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4172
+    ; CHECK-NEXT: $gh0 = LDA_dms_lda_g_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4168
+    ; CHECK-NEXT: $el0 = LDA_dms_lda_scalar_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4164
+    ; CHECK-NEXT: $eh0 = LDA_dms_lda_scalar_ld_idx killed $p0, killed $dj0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4256
+    ; CHECK-NEXT: VST_dmw_sts_w_st_idx $wl0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4224
+    ; CHECK-NEXT: VST_dmw_sts_w_st_idx $wh0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4192
+    ; CHECK-NEXT: ST_dml_sts_scalar_st_idx $fl0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4184
+    ; CHECK-NEXT: ST_dml_sts_scalar_st_idx $fh0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4176
+    ; CHECK-NEXT: ST_dms_sts_g_st_idx $gl0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4172
+    ; CHECK-NEXT: ST_dms_sts_g_st_idx $gh0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4168
+    ; CHECK-NEXT: ST_dms_sts_scalar_st_idx $el0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4164
+    ; CHECK-NEXT: ST_dms_sts_scalar_st_idx $eh0, killed $p0, killed $dj0
+    ; CHECK-NEXT: frame-destroy PADDXM_pstm_sp_imm -4352, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    renamable $p0 = PseudoFI %stack.0, implicit $sp
+    ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    $fex0 = VLDA_FEX_SPILL %stack.0, implicit $sp
+    VST_FEX_SPILL $fex0, %stack.0, implicit $sp
+    ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    PseudoRET implicit $lr
+...
+
+---
+name:            test_fey_big_offset
+alignment:       16
+frameInfo:
+  adjustsStack:    true
+stack:
+  - { id: 0, name: '', type: default, offset: 0, size: 4200, alignment: 16 }
+  - { id: 1, name: '', type: spill-slot, offset: 0, size: 176, alignment: 64 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_fey_big_offset
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 4416, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $m0 = MOVXM_lng_cg -4240
+    ; CHECK-NEXT: $p0 = PADD_mod_pseudo $p0, killed $m0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4240
+    ; CHECK-NEXT: $wl0 = VLDA_dmw_lda_w_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4208
+    ; CHECK-NEXT: $wh0 = VLDA_dmw_lda_w_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4176
+    ; CHECK-NEXT: $wl1 = VLDA_dmw_lda_w_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4144
+    ; CHECK-NEXT: $wh1 = VLDA_dmw_lda_w_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4112
+    ; CHECK-NEXT: $fl0 = LDA_dml_lda_scalar_F_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4104
+    ; CHECK-NEXT: $fh0 = LDA_dml_lda_scalar_F_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4096
+    ; CHECK-NEXT: $fl1 = LDA_dml_lda_scalar_F_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4088
+    ; CHECK-NEXT: $fh1 = LDA_dml_lda_scalar_F_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4080
+    ; CHECK-NEXT: $gl0 = LDA_dms_lda_g_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4076
+    ; CHECK-NEXT: $gh0 = LDA_dms_lda_g_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4072
+    ; CHECK-NEXT: $gl1 = LDA_dms_lda_g_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4068
+    ; CHECK-NEXT: $gh1 = LDA_dms_lda_g_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4064
+    ; CHECK-NEXT: $el0 = LDA_dms_lda_scalar_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4060
+    ; CHECK-NEXT: $eh0 = LDA_dms_lda_scalar_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4056
+    ; CHECK-NEXT: $el1 = LDA_dms_lda_scalar_ld_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4052
+    ; CHECK-NEXT: $eh1 = LDA_dms_lda_scalar_ld_idx killed $p0, killed $dj0
+    ; CHECK-NEXT: $p0 = MOV_alu_mv_mv_mv_scl $sp
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4240
+    ; CHECK-NEXT: VST_dmw_sts_w_st_idx $wl0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4208
+    ; CHECK-NEXT: VST_dmw_sts_w_st_idx $wh0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4176
+    ; CHECK-NEXT: VST_dmw_sts_w_st_idx $wl1, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4144
+    ; CHECK-NEXT: VST_dmw_sts_w_st_idx $wh1, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4112
+    ; CHECK-NEXT: ST_dml_sts_scalar_st_idx $fl0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4104
+    ; CHECK-NEXT: ST_dml_sts_scalar_st_idx $fh0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4096
+    ; CHECK-NEXT: ST_dml_sts_scalar_st_idx $fl1, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4088
+    ; CHECK-NEXT: ST_dml_sts_scalar_st_idx $fh1, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4080
+    ; CHECK-NEXT: ST_dms_sts_g_st_idx $gl0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4076
+    ; CHECK-NEXT: ST_dms_sts_g_st_idx $gh0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4072
+    ; CHECK-NEXT: ST_dms_sts_g_st_idx $gl1, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4068
+    ; CHECK-NEXT: ST_dms_sts_g_st_idx $gh1, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4064
+    ; CHECK-NEXT: ST_dms_sts_scalar_st_idx $el0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4060
+    ; CHECK-NEXT: ST_dms_sts_scalar_st_idx $eh0, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4056
+    ; CHECK-NEXT: ST_dms_sts_scalar_st_idx $el1, $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVXM_lng_cg -4052
+    ; CHECK-NEXT: ST_dms_sts_scalar_st_idx $eh1, killed $p0, killed $dj0
+    ; CHECK-NEXT: frame-destroy PADDXM_pstm_sp_imm -4416, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    renamable $p0 = PseudoFI %stack.0, implicit $sp
+    ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    $fey0 = VLDA_FEY_SPILL %stack.0, implicit $sp
+    VST_FEY_SPILL $fey0, %stack.0, implicit $sp
     ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
     PseudoRET implicit $lr
 ...
