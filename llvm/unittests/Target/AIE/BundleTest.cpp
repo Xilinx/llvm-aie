@@ -27,23 +27,25 @@ constexpr const MCSlotKind SLOTST(2);
 constexpr const MCSlotKind SLOTLNG(3);
 
 const MCSlotKind Slots[] = {
-    SLOTALU, SLOTMV, SLOTLNG, SLOTST, SLOTALU, SLOTMV, SLOTLNG, SLOTST,
+    SLOTALU, SLOTMV, SLOTLNG, SLOTST, SLOTALU, SLOTMV, SLOTST,
 };
 
 const VLIWFormat FormatData[] = {
-    {0b1100, "ALUMV", {&Slots[0], &Slots[2]}, 8, 0b11}, // in slotkind order
-    {0b0011,
-     "LNGST",
-     {&Slots[2], &Slots[4]},
-     12,
-     0b1100}, // not in slotkind order
-    // Superslot, only use if necessary
-    {0b1111, "ALL", {&Slots[4], &Slots[8]}, 12, 0b1111},
+    // in slotkind order
+    {0b1100, "ALUMV", {&Slots[0], &Slots[2]}, 8, 0b11},
+    // not in slotkind order
+    {0b0011, "LNGST", {&Slots[2], &Slots[4]}, 12, 0b1100},
+    {0b0111, "SXM", {&Slots[4], &Slots[7]}, 12, 0x1110},
+
     {0, nullptr, {}, 0, 0}};
 const PacketFormats MyFormats{FormatData};
+static const bool FormatAvailable[] = {true, true,  true,  true,  true,  true,
+                                       true, true,  true,  false, false, false,
+                                       true, false, false, false};
 
-constexpr MCSlotInfo SlotInfos[4] = {{"ALU", 1, 0b0001, 0b0001, 0},
-                                     {"MV", 1, 0b0010, 0b0010, 0},
+// Note: conflict bits are not used in this test
+constexpr MCSlotInfo SlotInfos[4] = {{"ALU", 1, 0b0001, 0b1001, 0},
+                                     {"MV", 1, 0b0010, 0b1010, 0},
                                      {"ST", 1, 0b0100, 0b0100, 0},
                                      {"LNG", 1, 0b1000, 0b1000, 0}};
 
@@ -100,7 +102,7 @@ class MockMCFormats : public AIEBaseMCFormats {
     llvm_unreachable("Un-implemented");
   }
   ArrayRef<bool> getIsFormatAvailable() const override {
-    llvm_unreachable("Un-implemented");
+    return FormatAvailable;
   }
 };
 
