@@ -127,6 +127,31 @@ void RewriterBase::replaceAllOpUsesWith(Operation *from, Operation *to) {
   replaceAllUsesWith(from->getResults(), to->getResults());
 }
 
+ReplaceOpAction::ReplaceOpAction(ArrayRef<IRUnit> irUnits,
+                                 ValueRange replacement)
+    : Base(irUnits), replacement(replacement) {
+  assert(irUnits.size() == 1);
+  assert(irUnits[0]);
+  assert(isa<Operation *>(irUnits[0]));
+}
+
+void ReplaceOpAction::print(raw_ostream &os) const {
+  OpPrintingFlags flags;
+  flags.elideLargeElementsAttrs();
+  os << "`" << tag << "` replacing operation `";
+  getOp()->print(os, flags);
+  os << "` by ";
+  llvm::interleaveComma(replacement, os, [&](Value r) {
+    os << "`";
+    r.print(os, flags);
+    os << "`";
+  });
+}
+
+Operation *ReplaceOpAction::getOp() const {
+  return cast<Operation *>(getContextIRUnits()[0]);
+}
+
 /// This method replaces the results of the operation with the specified list of
 /// values. The number of provided values must match the number of results of
 /// the operation. The replaced op is erased.
@@ -265,8 +290,12 @@ void RewriterBase::replaceUsesWithIf(Value from, Value to,
   bool allReplaced = true;
   for (OpOperand &operand : llvm::make_early_inc_range(from.getUses())) {
     bool replace = functor(operand);
-    if (replace)
+    if (replace) {
+      if (auto *fromOp = from.getDefiningOp())
+        getContext()->executeAction<ReplaceOpAction>(
+            /*actionFn=*/[]() {}, ArrayRef<IRUnit>{fromOp}, to);
       modifyOpInPlace(operand.getOwner(), [&]() { operand.set(to); });
+    }
     allReplaced &= replace;
   }
   if (allUsesReplaced)

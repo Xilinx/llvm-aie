@@ -11,6 +11,7 @@
 
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
+#include "mlir/IR/PatternMatchAction.h"
 #include "llvm/ADT/FunctionExtras.h"
 #include "llvm/Support/TypeName.h"
 #include <optional>
@@ -652,6 +653,9 @@ public:
   /// Find uses of `from` and replace them with `to`. Also notify the listener
   /// about every in-place op modification (for every use that was replaced).
   void replaceAllUsesWith(Value from, Value to) {
+    if (auto *fromOp = from.getDefiningOp())
+      getContext()->executeAction<ReplaceOpAction>(
+          /*actionFn=*/[]() {}, ArrayRef<IRUnit>{fromOp}, to);
     for (OpOperand &operand : llvm::make_early_inc_range(from.getUses())) {
       Operation *op = operand.getOwner();
       modifyOpInPlace(op, [&]() { operand.set(to); });
