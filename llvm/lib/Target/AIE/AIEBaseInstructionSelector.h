@@ -134,6 +134,11 @@ public:
   virtual Register createDRegSequence(Register ModifierReg, Register IncrReg,
                                       Register SizeReg, Register CountReg,
                                       MachineRegisterInfo &MRI) = 0;
+  // Get target-specific subregister indices
+  virtual unsigned getSub256LoIdx() const = 0;
+  virtual unsigned getNoSubRegIdx() const = 0;
+  virtual const TargetRegisterClass &getVEC128RegClass() const = 0;
+  virtual const TargetRegisterClass &getVEC256RegClass() const = 0;
   bool selectAddrInsn(MachineIRBuilder &MIB, MachineInstr &I,
                       MachineRegisterInfo &MRI);
   bool selectGetSS(MachineInstr &I, MachineRegisterInfo &MRI,
@@ -174,6 +179,12 @@ public:
   bool selectWriteTM(MachineInstr &I, MachineRegisterInfo &MRI,
                      unsigned Opcode);
   bool selectReadTM(MachineInstr &I, MachineRegisterInfo &MRI, unsigned Opcode);
+
+  bool selectExtractI128(MachineInstr &I, Register DstReg, Register SrcReg,
+                         MachineRegisterInfo &MRI, MachineFunction &MF);
+  bool selectG_AIE_UNPAD_VECTOR(MachineInstr &I, Register DstReg,
+                                Register SrcReg, MachineRegisterInfo &MRI,
+                                MachineFunction &MF);
 
 protected:
   void makeDeadMI(MachineInstr &MI, MachineRegisterInfo &MRI);

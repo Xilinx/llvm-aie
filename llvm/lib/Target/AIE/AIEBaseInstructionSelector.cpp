@@ -1046,3 +1046,56 @@ bool AIEBaseInstructionSelector::selectWriteTM(MachineInstr &I,
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
 }
+
+// Select extract 128-bit vectors
+bool AIEBaseInstructionSelector::selectExtractI128(MachineInstr &I,
+                                                   Register DstReg,
+                                                   Register SrcReg,
+                                                   MachineRegisterInfo &MRI,
+                                                   MachineFunction &MF) {
+  LLT DstTy = MRI.getType(DstReg);
+  assert(DstTy.getSizeInBits() == 128);
+  LLT SrcTy = MRI.getType(SrcReg);
+
+  unsigned SubReg = getNoSubRegIdx();
+  switch (SrcTy.getSizeInBits()) {
+  case 256:
+    SubReg = getNoSubRegIdx();
+    break;
+  case 512:
+    SubReg = getSub256LoIdx();
+    break;
+  default:
+    llvm_unreachable("Unexpected input size for extracting 128-bit vector");
+  }
+
+  // Select using a COPY to a 128-bit register.
+  MachineInstr *CopyMI = MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {})
+                             .addReg(SrcReg, 0, SubReg);
+  constrainOperandRegClass(MF, TRI, MRI, TII, RBI, *CopyMI, getVEC128RegClass(),
+                           CopyMI->getOperand(0));
+
+  I.eraseFromParent();
+  return true;
+}
+
+bool AIEBaseInstructionSelector::selectG_AIE_UNPAD_VECTOR(
+    MachineInstr &I, Register DstReg, Register SrcReg, MachineRegisterInfo &MRI,
+    MachineFunction &MF) {
+  const LLT DstTy = MRI.getType(DstReg);
+  if (DstTy.getSizeInBits() == 128)
+    return selectExtractI128(I, DstReg, SrcReg, MRI, MF);
+
+  assert(DstTy.getSizeInBits() == 256);
+  const LLT SrcTy = MRI.getType(SrcReg);
+  const unsigned SrcTySize = SrcTy.getSizeInBits();
+  assert(SrcTySize == 512);
+
+  // Select using a COPY to a 256-bit register.
+  MachineInstr *CopyMI = MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {})
+                             .addReg(SrcReg, 0, getSub256LoIdx());
+  constrainOperandRegClass(MF, TRI, MRI, TII, RBI, *CopyMI, getVEC256RegClass(),
+                           CopyMI->getOperand(0));
+  I.eraseFromParent();
+  return true;
+}

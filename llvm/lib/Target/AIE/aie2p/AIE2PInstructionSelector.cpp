@@ -57,8 +57,6 @@ public:
   bool selectG_AIE_PAD_VECTOR_UNDEF(MachineInstr &I, MachineOperand &DstReg,
                                     MachineOperand &SrcReg,
                                     MachineRegisterInfo &MRI);
-  bool selectG_AIE_UNPAD_VECTOR(MachineInstr &I, Register DstReg,
-                                Register SrcReg, MachineRegisterInfo &MRI);
   bool selectG_AIE_BROADCAST_VECTOR(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_CONCAT_VECTORS(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectCascadeStreamInsn(MachineInstr &I, MachineRegisterInfo &MRI,
@@ -119,8 +117,15 @@ public:
   bool selectVLD_FIFO_POPX(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectSetI128(MachineInstr &I, MachineOperand &DstReg,
                      MachineOperand &SrcReg, MachineRegisterInfo &MRI);
-  bool selectExtractI128(MachineInstr &I, Register DstReg, Register SrcReg,
-                         MachineRegisterInfo &MRI);
+
+  unsigned getSub256LoIdx() const override { return AIE2P::sub_256_lo; }
+  unsigned getNoSubRegIdx() const override { return AIE2P::NoSubRegister; }
+  const TargetRegisterClass &getVEC128RegClass() const override {
+    return AIE2P::VEC128RegClass;
+  }
+  const TargetRegisterClass &getVEC256RegClass() const override {
+    return AIE2P::VEC256RegClass;
+  }
   bool selectVUNPACK(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVPACK(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVSHUFFLE_BFP(MachineInstr &I, MachineRegisterInfo &MRI);
@@ -312,7 +317,7 @@ bool AIE2PInstructionSelector::select(MachineInstr &I) {
                                         MRI);
   case AIE2P::G_AIE_UNPAD_VECTOR:
     return selectG_AIE_UNPAD_VECTOR(I, I.getOperand(0).getReg(),
-                                    I.getOperand(1).getReg(), MRI);
+                                    I.getOperand(1).getReg(), MRI, MF);
   case G_INTRINSIC_W_SIDE_EFFECTS:
     switch (cast<GIntrinsic>(I).getIntrinsicID()) {
     case Intrinsic::aie2p_set_ctrl_reg:
@@ -485,58 +490,6 @@ bool AIE2PInstructionSelector::selectG_AIE_PAD_VECTOR_UNDEF(
   constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, I, OutRC, DstReg);
   MIB.buildInstr(AIE2P::REG_SEQUENCE, {DstReg}, {SrcReg})
       .addImm(AIE2P::sub_256_lo);
-  I.eraseFromParent();
-  return true;
-}
-
-// Select extract 128-bit Intrinsics
-bool AIE2PInstructionSelector::selectExtractI128(MachineInstr &I,
-                                                 Register DstReg,
-                                                 Register SrcReg,
-                                                 MachineRegisterInfo &MRI) {
-  LLT DstTy = MRI.getType(DstReg);
-  assert(DstTy.getSizeInBits() == 128);
-  LLT SrcTy = MRI.getType(SrcReg);
-
-  unsigned SubReg = AIE2P::NoSubRegister;
-  switch (SrcTy.getSizeInBits()) {
-  case 256:
-    SubReg = AIE2P::NoSubRegister;
-    break;
-  case 512:
-    SubReg = AIE2P::sub_256_lo;
-    break;
-  default:
-    llvm_unreachable("Unexpected input size for extracting 128-bit vector");
-  }
-
-  // Select using a COPY to a 128-bit register.
-  MachineInstr *CopyMI = MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {})
-                             .addReg(SrcReg, 0, SubReg);
-  constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *CopyMI,
-                           AIE2P::VEC128RegClass, CopyMI->getOperand(0));
-
-  I.eraseFromParent();
-  return true;
-}
-
-bool AIE2PInstructionSelector::selectG_AIE_UNPAD_VECTOR(
-    MachineInstr &I, Register DstReg, Register SrcReg,
-    MachineRegisterInfo &MRI) {
-  const LLT DstTy = MRI.getType(DstReg);
-  if (DstTy.getSizeInBits() == 128)
-    return selectExtractI128(I, DstReg, SrcReg, MRI);
-
-  assert(DstTy.getSizeInBits() == 256);
-  const LLT SrcTy = MRI.getType(SrcReg);
-  const unsigned SrcTySize = SrcTy.getSizeInBits();
-  assert(SrcTySize == 512);
-
-  // Select using a COPY to a 256-bit register.
-  MachineInstr *CopyMI = MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {})
-                             .addReg(SrcReg, 0, AIE2P::sub_256_lo);
-  constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *CopyMI,
-                           AIE2P::VEC256RegClass, CopyMI->getOperand(0));
   I.eraseFromParent();
   return true;
 }
