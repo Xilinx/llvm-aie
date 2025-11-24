@@ -54,9 +54,6 @@ public:
   bool selectG_AIE_LOAD_UPS(MachineInstr &StoreI, MachineRegisterInfo &MRI,
                             unsigned crUPSModeVal);
   bool selectVCONVbfp16(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectG_AIE_PAD_VECTOR_UNDEF(MachineInstr &I, MachineOperand &DstReg,
-                                    MachineOperand &SrcReg,
-                                    MachineRegisterInfo &MRI);
   bool selectG_AIE_BROADCAST_VECTOR(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_CONCAT_VECTORS(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectCascadeStreamInsn(MachineInstr &I, MachineRegisterInfo &MRI,
@@ -115,8 +112,6 @@ public:
   bool selectVLD_FIFO_POP_BFP16_3D(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVLD_FIFO_FILLX(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVLD_FIFO_POPX(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectSetI128(MachineInstr &I, MachineOperand &DstReg,
-                     MachineOperand &SrcReg, MachineRegisterInfo &MRI);
 
   unsigned getSub256LoIdx() const override { return AIE2P::sub_256_lo; }
   unsigned getNoSubRegIdx() const override { return AIE2P::NoSubRegister; }
@@ -125,6 +120,9 @@ public:
   }
   const TargetRegisterClass &getVEC256RegClass() const override {
     return AIE2P::VEC256RegClass;
+  }
+  const TargetRegisterClass &getVEC512RegClass() const override {
+    return AIE2P::VEC512RegClass;
   }
   bool selectVUNPACK(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVPACK(MachineInstr &I, MachineRegisterInfo &MRI);
@@ -314,7 +312,7 @@ bool AIE2PInstructionSelector::select(MachineInstr &I) {
     return selectG_AIE_LOAD_STORE(I, MRI);
   case AIE2P::G_AIE_PAD_VECTOR_UNDEF:
     return selectG_AIE_PAD_VECTOR_UNDEF(I, I.getOperand(0), I.getOperand(1),
-                                        MRI);
+                                        MRI, MF);
   case AIE2P::G_AIE_UNPAD_VECTOR:
     return selectG_AIE_UNPAD_VECTOR(I, I.getOperand(0).getReg(),
                                     I.getOperand(1).getReg(), MRI, MF);
@@ -434,64 +432,6 @@ bool AIE2PInstructionSelector::select(MachineInstr &I) {
   }
 
   return false;
-}
-
-// Select set 128-bit Intrinsics
-bool AIE2PInstructionSelector::selectSetI128(MachineInstr &I,
-                                             MachineOperand &DstReg,
-                                             MachineOperand &SrcReg,
-                                             MachineRegisterInfo &MRI) {
-  LLT SrcTy = MRI.getType(SrcReg.getReg());
-  assert(SrcTy.getSizeInBits() == 128);
-  LLT DstTy = MRI.getType(DstReg.getReg());
-  const unsigned DstTySize = DstTy.getSizeInBits();
-  assert(DstTySize == 256 || DstTySize == 512);
-
-  // Constrain input vector to VEC128 RC, and output to VEC256/VEC512
-  const TargetRegisterClass &OutRC =
-      DstTySize == 256 ? AIE2P::VEC256RegClass : AIE2P::VEC512RegClass;
-  constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, I, AIE2P::VEC128RegClass,
-                           SrcReg);
-  constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, I, OutRC, DstReg);
-
-  if (DstTySize == 256) {
-    MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {SrcReg});
-  } else if (DstTySize == 512) {
-    auto SrcInW =
-        MIB.buildInstr(TargetOpcode::COPY, {&AIE2P::VEC256RegClass}, {SrcReg});
-    // Create 512-bit sources from 256-bit sources.
-    MIB.buildInstr(TargetOpcode::REG_SEQUENCE, {DstReg}, {})
-        .addReg(SrcInW.getReg(0))
-        .addImm(AIE2P::sub_256_lo);
-  } else {
-    llvm_unreachable("Expected 256 or 512 bit input vector");
-  }
-
-  I.eraseFromParent();
-  return true;
-}
-
-bool AIE2PInstructionSelector::selectG_AIE_PAD_VECTOR_UNDEF(
-    MachineInstr &I, MachineOperand &DstReg, MachineOperand &SrcReg,
-    MachineRegisterInfo &MRI) {
-  const LLT SrcTy = MRI.getType(SrcReg.getReg());
-  if (SrcTy.getSizeInBits() == 128)
-    return selectSetI128(I, DstReg, SrcReg, MRI);
-
-  assert(SrcTy.getSizeInBits() == 256);
-  const LLT DstTy = MRI.getType(DstReg.getReg());
-  const unsigned DstTySize = DstTy.getSizeInBits();
-  assert(DstTySize == 512);
-
-  // Constrain input vector to VEC256 RC, and output to VEC512
-  const TargetRegisterClass &OutRC = AIE2P::VEC512RegClass;
-  constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, I, AIE2P::VEC256RegClass,
-                           SrcReg);
-  constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, I, OutRC, DstReg);
-  MIB.buildInstr(AIE2P::REG_SEQUENCE, {DstReg}, {SrcReg})
-      .addImm(AIE2P::sub_256_lo);
-  I.eraseFromParent();
-  return true;
 }
 
 bool AIE2PInstructionSelector::selectG_CONCAT_VECTORS(
