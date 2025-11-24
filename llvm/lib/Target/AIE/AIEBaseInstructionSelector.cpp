@@ -1099,3 +1099,61 @@ bool AIEBaseInstructionSelector::selectG_AIE_UNPAD_VECTOR(
   I.eraseFromParent();
   return true;
 }
+
+bool AIEBaseInstructionSelector::selectSetI128(MachineInstr &I,
+                                               MachineOperand &DstReg,
+                                               MachineOperand &SrcReg,
+                                               MachineRegisterInfo &MRI,
+                                               MachineFunction &MF) {
+  LLT SrcTy = MRI.getType(SrcReg.getReg());
+  assert(SrcTy.getSizeInBits() == 128);
+  LLT DstTy = MRI.getType(DstReg.getReg());
+  const unsigned DstTySize = DstTy.getSizeInBits();
+  assert(DstTySize == 256 || DstTySize == 512);
+
+  // Constrain input vector to VEC128 RC, and output to VEC256/VEC512
+  const TargetRegisterClass &OutRC =
+      DstTySize == 256 ? getVEC256RegClass() : getVEC512RegClass();
+  constrainOperandRegClass(MF, TRI, MRI, TII, RBI, I, getVEC128RegClass(),
+                           SrcReg);
+  constrainOperandRegClass(MF, TRI, MRI, TII, RBI, I, OutRC, DstReg);
+
+  if (DstTySize == 256) {
+    MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {SrcReg});
+  } else if (DstTySize == 512) {
+    auto SrcInW =
+        MIB.buildInstr(TargetOpcode::COPY, {&getVEC256RegClass()}, {SrcReg});
+    // Create 512-bit sources from 256-bit sources.
+    MIB.buildInstr(TargetOpcode::REG_SEQUENCE, {DstReg}, {})
+        .addReg(SrcInW.getReg(0))
+        .addImm(getSub256LoIdx());
+  } else {
+    llvm_unreachable("Expected 256 or 512 bit input vector");
+  }
+
+  I.eraseFromParent();
+  return true;
+}
+
+bool AIEBaseInstructionSelector::selectG_AIE_PAD_VECTOR_UNDEF(
+    MachineInstr &I, MachineOperand &DstReg, MachineOperand &SrcReg,
+    MachineRegisterInfo &MRI, MachineFunction &MF) {
+  const LLT SrcTy = MRI.getType(SrcReg.getReg());
+  if (SrcTy.getSizeInBits() == 128)
+    return selectSetI128(I, DstReg, SrcReg, MRI, MF);
+
+  assert(SrcTy.getSizeInBits() == 256);
+  const LLT DstTy = MRI.getType(DstReg.getReg());
+  const unsigned DstTySize = DstTy.getSizeInBits();
+  assert(DstTySize == 512);
+
+  // Constrain input vector to VEC256 RC, and output to VEC512
+  const TargetRegisterClass &OutRC = getVEC512RegClass();
+  constrainOperandRegClass(MF, TRI, MRI, TII, RBI, I, getVEC256RegClass(),
+                           SrcReg);
+  constrainOperandRegClass(MF, TRI, MRI, TII, RBI, I, OutRC, DstReg);
+  MIB.buildInstr(TargetOpcode::REG_SEQUENCE, {DstReg}, {SrcReg})
+      .addImm(getSub256LoIdx());
+  I.eraseFromParent();
+  return true;
+}
