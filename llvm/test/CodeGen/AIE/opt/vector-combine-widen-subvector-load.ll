@@ -19,7 +19,8 @@
 ; Without cost model, this is vectorized.
 define <32 x i16> @test_widen_i16_to_v32i16_via_shuffle(ptr align 2 dereferenceable(64) %p) {
 ; CHECK-LABEL: @test_widen_i16_to_v32i16_via_shuffle(
-; CHECK-NEXT:    [[INSERT:%.*]] = load <32 x i16>, ptr [[P:%.*]], align 2
+; CHECK-NEXT:    [[SCALAR:%.*]] = load i16, ptr [[P:%.*]], align 2
+; CHECK-NEXT:    [[INSERT:%.*]] = insertelement <32 x i16> poison, i16 [[SCALAR]], i64 0
 ; CHECK-NEXT:    [[SPLAT:%.*]] = shufflevector <32 x i16> [[INSERT]], <32 x i16> poison, <32 x i32> zeroinitializer
 ; CHECK-NEXT:    ret <32 x i16> [[SPLAT]]
 ;
@@ -31,7 +32,8 @@ define <32 x i16> @test_widen_i16_to_v32i16_via_shuffle(ptr align 2 dereferencea
 
 define <16 x i16> @test_broadcast_i16_to_v16i16(ptr align 2 dereferenceable(32) %p) {
 ; CHECK-LABEL: @test_broadcast_i16_to_v16i16(
-; CHECK-NEXT:    [[INSERT:%.*]] = load <16 x i16>, ptr [[P:%.*]], align 2
+; CHECK-NEXT:    [[SCALAR:%.*]] = load i16, ptr [[P:%.*]], align 2
+; CHECK-NEXT:    [[INSERT:%.*]] = insertelement <16 x i16> poison, i16 [[SCALAR]], i64 0
 ; CHECK-NEXT:    [[SPLAT:%.*]] = shufflevector <16 x i16> [[INSERT]], <16 x i16> poison, <16 x i32> zeroinitializer
 ; CHECK-NEXT:    ret <16 x i16> [[SPLAT]]
 ;
@@ -43,7 +45,8 @@ define <16 x i16> @test_broadcast_i16_to_v16i16(ptr align 2 dereferenceable(32) 
 
 define <32 x i8> @test_broadcast_i8_to_v32i8(ptr align 1 dereferenceable(32) %p) {
 ; CHECK-LABEL: @test_broadcast_i8_to_v32i8(
-; CHECK-NEXT:    [[INSERT:%.*]] = load <32 x i8>, ptr [[P:%.*]], align 1
+; CHECK-NEXT:    [[SCALAR:%.*]] = load i8, ptr [[P:%.*]], align 1
+; CHECK-NEXT:    [[INSERT:%.*]] = insertelement <32 x i8> poison, i8 [[SCALAR]], i64 0
 ; CHECK-NEXT:    [[SPLAT:%.*]] = shufflevector <32 x i8> [[INSERT]], <32 x i8> poison, <32 x i32> zeroinitializer
 ; CHECK-NEXT:    ret <32 x i8> [[SPLAT]]
 ;
@@ -55,7 +58,8 @@ define <32 x i8> @test_broadcast_i8_to_v32i8(ptr align 1 dereferenceable(32) %p)
 
 define <8 x i32> @test_broadcast_i32_to_v8i32(ptr align 4 dereferenceable(32) %p) {
 ; CHECK-LABEL: @test_broadcast_i32_to_v8i32(
-; CHECK-NEXT:    [[INSERT:%.*]] = load <8 x i32>, ptr [[P:%.*]], align 4
+; CHECK-NEXT:    [[SCALAR:%.*]] = load i32, ptr [[P:%.*]], align 4
+; CHECK-NEXT:    [[INSERT:%.*]] = insertelement <8 x i32> poison, i32 [[SCALAR]], i64 0
 ; CHECK-NEXT:    [[SPLAT:%.*]] = shufflevector <8 x i32> [[INSERT]], <8 x i32> poison, <8 x i32> zeroinitializer
 ; CHECK-NEXT:    ret <8 x i32> [[SPLAT]]
 ;
@@ -67,7 +71,8 @@ define <8 x i32> @test_broadcast_i32_to_v8i32(ptr align 4 dereferenceable(32) %p
 
 define <32 x i16> @test_unaligned_v32i16_load(ptr align 1 dereferenceable(64) %p) {
 ; CHECK-LABEL: @test_unaligned_v32i16_load(
-; CHECK-NEXT:    [[INSERT:%.*]] = load <32 x i16>, ptr [[P:%.*]], align 1
+; CHECK-NEXT:    [[SCALAR:%.*]] = load i16, ptr [[P:%.*]], align 1
+; CHECK-NEXT:    [[INSERT:%.*]] = insertelement <32 x i16> poison, i16 [[SCALAR]], i64 0
 ; CHECK-NEXT:    [[SPLAT:%.*]] = shufflevector <32 x i16> [[INSERT]], <32 x i16> poison, <32 x i32> zeroinitializer
 ; CHECK-NEXT:    ret <32 x i16> [[SPLAT]]
 ;
