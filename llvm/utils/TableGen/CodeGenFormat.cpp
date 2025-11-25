@@ -1112,11 +1112,9 @@ void TGTargetSlots::finalizeSlots() {
 
   // Give an ID for each slot
   int SlotID = 0;
-  for (RecordSlot &Slot : Slots)
-    if (Slot.second.isDefaultSlot())
-      Slot.second.setNumSlot(-1);
-    else
-      Slot.second.setNumSlot(SlotID++);
+  for (auto &[_, Slot] : Slots)
+    if (!Slot.isDefaultSlot())
+      Slot.setNumSlot(SlotID++);
 
   // Sort the slot container by ID
   std::sort(Slots.begin(), Slots.end(),

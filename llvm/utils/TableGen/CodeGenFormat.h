@@ -279,7 +279,7 @@ class TGTargetSlot {
   bool Artificial = false;
   // Unique number attributed (in the pool) for the slot.
   // It is used to generate a unique "SlotSet".
-  int NumSlot;
+  int NumSlot = -1;
 
   // The Slot bits for this slot. These are the pristine bits that correspond
   // to the slots a format accommodates.
