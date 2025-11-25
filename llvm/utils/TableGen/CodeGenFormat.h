@@ -377,6 +377,7 @@ public:
 
 private:
   void setNumSlot(int SlotID) {
+    assert(SlotID >= 0);
     NumSlot = SlotID;
     const uint64_t Base = 1;
     SlotBits = Base << SlotID;
