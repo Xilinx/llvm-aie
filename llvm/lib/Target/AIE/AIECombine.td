@@ -195,6 +195,12 @@ def combine_narrow_zext_s20 : GICombineRule<
          [{ return matchNarrowZext(*${root}, MRI, Observer, ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
 
+def combine_widen_fmul : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_FMUL): $root,
+         [{ return matchWidenFMul(*${root}, MRI, Observer, ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
+
 def concat_unmerge_matchdata : GIDefMatchData<"AIEConcatUnmergeCombineMatchData">;
 def combine_concat_unmerge_phis : GICombineRule <
   (defs root:$root, concat_unmerge_matchdata:$matchinfo),
@@ -299,6 +305,7 @@ def aie2p_additional_combines : GICombineGroup<[
   combine_vector_shuffle_to_extract_insert_elt,
   combine_vector_shuffle_concat_extracted_subvectors,
   combine_paired_extracts,
+  combine_widen_fmul,
   combine_vector_shuffle_to_extract_insert_elt_to_broadcast,
   combine_bitcast_unmerge_swap,
   combine_phi_bitcast_swap
