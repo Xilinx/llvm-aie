@@ -118,6 +118,9 @@ struct AIEBaseRegisterInfo : public TargetRegisterInfo {
   virtual Register getControlRegister(unsigned Idx) const {
     llvm_unreachable("Target didn't implement getControlRegister!");
   }
+  virtual Register getStatusRegister(unsigned Idx) const {
+    llvm_unreachable("Target didn't implement getStatusRegister!");
+  }
 };
 
 template <int N, unsigned step> bool isEncodableAsNegativeInt(int Value) {

@@ -543,9 +543,17 @@ bool AIE2RegisterInfo::isVecOrAccRegClass(const TargetRegisterClass &RC) const {
 unsigned
 AIE2RegisterInfo::matchControlRegisterBitwidth(Register CtrlReg,
                                                unsigned SrcConstVal) const {
-  // Modulo by width of control regs.  To constrain the max possible value in
+  // Modulo by width of control regs. To constrain the max possible value in
   // the register according to register width.
   switch (CtrlReg) {
+  case AIE2::crVaddSign:
+  case AIE2::crMCDEn:
+  case AIE2::crPackSign:
+  case AIE2::crSCDEn:
+  case AIE2::crSRSSign:
+  case AIE2::crUPSSign:
+  case AIE2::crUnpackSign:
+    return SrcConstVal % (1 << 1);
   case AIE2::crSat:
     return SrcConstVal % (1 << 2);
   case AIE2::crRnd:
