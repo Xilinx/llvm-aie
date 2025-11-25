@@ -51,6 +51,11 @@ static cl::opt<bool> EnableGreedyAddressCombine(
     cl::desc("Enable greedy combines without checking for later uses of the "
              "base pointer"));
 
+static cl::opt<bool> PreferBroadcastOverInsert(
+    "aie-prefer-broadcast-over-insert", cl::Hidden, cl::init(true),
+    cl::desc("Use broadcast rather than insert-in-undefined to create "
+             "scalar values in vector"));
+
 cl::opt<bool> InlineMemCalls("aie-inline-mem-calls", cl::init(true), cl::Hidden,
                              cl::desc("Inline mem calls when profitable."));
 
@@ -67,6 +72,15 @@ cl::opt<bool> MemsetOptimizations(
     cl::desc("Apply memset optimizations (peeling/align/etc.)."));
 
 namespace {
+
+const LLT S8 = LLT::scalar(8);
+const LLT S16 = LLT::scalar(16);
+const LLT S32 = LLT::scalar(32);
+const LLT V32S16 = LLT::fixed_vector(32, 16);
+
+const llvm::AIEBaseInstrInfo &getAIETII(MachineIRBuilder &B) {
+  return static_cast<const AIEBaseInstrInfo &>(B.getTII());
+}
 
 bool isGenericExtractOpcode(unsigned Opc, const AIEBaseInstrInfo &TII) {
   // Check if it's either SEXT or ZEXT extract
@@ -123,40 +137,106 @@ bool verifyBroadcastUsesOnlyExtractZero(Register Reg, MachineRegisterInfo &MRI,
                                               MRI, TII);
     // For unmerge, the useful operand should be the first one,
     // the other ones, they should be dead.
-  } else if (Opcode == TargetOpcode::G_UNMERGE_VALUES) {
+  }
+  if (Opcode == TargetOpcode::G_UNMERGE_VALUES) {
     unsigned OpCount = 0;
     for (auto &MO : UserMI->defs()) {
       Register DefReg = MO.getReg();
       if (OpCount == 0 && !MRI.hasOneUse(DefReg))
         return false;
-      else if (OpCount && !MRI.use_empty(DefReg))
+      if (OpCount && !MRI.use_empty(DefReg))
         return false;
       OpCount++;
     }
     return verifyBroadcastUsesOnlyExtractZero(UserMI->getOperand(0).getReg(),
                                               MRI, TII);
     // If we extract from zero, we succeed, otherwise we fail.
-  } else if (isGenericExtractOpcode(Opcode, TII)) {
+  }
+  if (isGenericExtractOpcode(Opcode, TII)) {
     const Register UseIdxReg = UserMI->getOperand(2).getReg();
     auto UseIdx = getIConstantVRegValWithLookThrough(UseIdxReg, MRI);
     return UseIdx && UseIdx->Value.getZExtValue() == 0;
     // If we bitcast, we may need other lanes.
-  } else if (Opcode == TargetOpcode::G_BITCAST) {
+  }
+  if (Opcode == TargetOpcode::G_BITCAST) {
     return false;
-  } else {
-    if (mayMIShiftElements(UserMI))
-      return false;
-    return verifyBroadcastUsesOnlyExtractZero(UserMI->getOperand(0).getReg(),
-                                              MRI, TII);
+  }
+  if (mayMIShiftElements(UserMI)) {
+    return false;
   }
 
-  return false;
+  return verifyBroadcastUsesOnlyExtractZero(UserMI->getOperand(0).getReg(), MRI,
+                                            TII);
 }
 
-} // namespace
+Register buildInsertInUndef(MachineIRBuilder &B, Register Src, LLT VecTy) {
+  auto *MRI = B.getMRI();
+  if (MRI->getType(Src) != S32) {
+    Src = B.buildAnyExt(S32, Src).getReg(0);
+  }
+  const AIEBaseInstrInfo &TII = getAIETII(B);
+  const Register IdxReg = B.buildConstant(S32, 0).getReg(0);
+  const Register UndefVec = B.buildUndef(VecTy).getReg(0);
+  const unsigned InsertEltOpc = TII.getGenericInsertVectorEltOpcode();
+  return B.buildInstr(InsertEltOpc, {VecTy}, {UndefVec, Src, IdxReg}).getReg(0);
+}
 
-static unsigned getNumMaskUndefs(const ArrayRef<int> &Mask,
-                                 unsigned StartIndex) {
+Register buildBroadcast(MachineIRBuilder &B, Register Src, LLT VecTy) {
+  auto *MRI = B.getMRI();
+  if (MRI->getType(Src) != S32) {
+    Src = B.buildAnyExt(S32, Src).getReg(0);
+  }
+  const AIEBaseInstrInfo &TII = getAIETII(B);
+  const unsigned InsertEltOpc = TII.getGenericBroadcastVectorOpcode();
+  return B.buildInstr(InsertEltOpc, {VecTy}, {Src}).getReg(0);
+}
+
+Register buildScalarAsVector(MachineIRBuilder &B, Register Src, LLT VecTy) {
+  return PreferBroadcastOverInsert ? buildBroadcast(B, Src, VecTy)
+                                   : buildInsertInUndef(B, Src, VecTy);
+}
+
+// Build an element-wise multiplication into a vector of double width. These are
+// typical MAC operations with the incoming accumulator configured to be zero.
+// If Negate is true, uses the negating multiply intrinsic.
+Register buildWidenMulScalarAsVector(MachineIRBuilder &B, Register Lft,
+                                     Register Rgt, bool Negate) {
+  // Mode and intrinsic are target dependent.
+  auto *MRI = B.getMRI();
+  const int MulMode1x1 = 60;
+  LLT InTy = MRI->getType(Lft);
+  LLT OutTy = InTy.changeElementSize(InTy.getScalarSizeInBits() * 2);
+  const Register Acc = B.getMRI()->createGenericVirtualRegister(OutTy);
+  const Register Mode = B.buildConstant(S32, MulMode1x1).getReg(0);
+
+  // Choose the appropriate intrinsic based on whether we need negation.
+  // Both bf_mul_conf and bf_negmul_conf use the same mode parameter, which
+  // controls data types and multiplication configuration (see VecConf in
+  // AIE2PInstrPatterns.td). The intrinsic opcode controls the negation
+  // behavior via the dynMulNeg bit in the underlying instruction.
+  const Intrinsic::ID IntrID =
+      Negate ? Intrinsic::aie2p_I512_I512_ACC1024_bf_negmul_conf
+             : Intrinsic::aie2p_I512_I512_ACC1024_bf_mul_conf;
+
+  B.buildIntrinsic(IntrID, Acc, true, false)
+      .addUse(Lft)
+      .addUse(Rgt)
+      .addUse(Mode);
+  return Acc;
+}
+
+Register buildGetFirstElement(MachineIRBuilder &B, Register Vec) {
+  auto *MRI = B.getMRI();
+  const LLT DstTy = MRI->getType(Vec).getElementType();
+  const AIEBaseInstrInfo &TII = getAIETII(B);
+  const Register Index = B.buildConstant(S32, 0).getReg(0);
+  return B
+      .buildInstr(TII.getGenericExtractVectorEltOpcode(/*SignExt*/ true),
+                  {DstTy}, {Vec, Index})
+      .getReg(0);
+}
+
+unsigned getNumMaskUndefs(const ArrayRef<int> &Mask, unsigned StartIndex) {
   unsigned Count = 0;
   for (unsigned I = StartIndex; I < Mask.size(); ++I) {
     if (Mask[I] == -1) {
@@ -165,6 +245,8 @@ static unsigned getNumMaskUndefs(const ArrayRef<int> &Mask,
   }
   return Count;
 }
+
+} // namespace
 
 bool MaskMatch::isValidMask(const ArrayRef<int> Mask) const {
   for (unsigned Idx = 0; Idx < Mask.size(); ++Idx) {
@@ -1161,8 +1243,6 @@ bool llvm::matchExtractVecEltAndExt(
   assert(MI.getOpcode() == TargetOpcode::G_EXTRACT_VECTOR_ELT &&
          "Expected a extract_vector_elt");
   Register DstReg = MI.getOperand(0).getReg();
-  const LLT S8 = LLT::scalar(8);
-  const LLT S16 = LLT::scalar(16);
   LLT SrcVecTy = MRI.getType(MI.getOperand(1).getReg());
   // Extracts from vectors <= 64-bits are lowered to bit-arithmetic in
   // legalization
@@ -3654,6 +3734,64 @@ bool llvm::matchNarrowZext(MachineInstr &MI, MachineRegisterInfo &MRI,
   }
 
   return false;
+}
+
+namespace {
+// We match widenings from 16 bit, with possible negations on top.
+// Negations commute with conversions and multiplications. We keep track of the
+// total number of negations modulo two.
+class ExtendOperand {
+public:
+  Register Source{};
+  bool Negate = false;
+  ExtendOperand operator-() { return {Source, !Negate}; }
+  operator bool() { return Source; }
+};
+
+ExtendOperand matchExtend(Register SrcReg, MachineRegisterInfo &MRI) {
+  const MachineInstr *SrcMI = MRI.getVRegDef(SrcReg);
+  if (SrcMI->getOpcode() == TargetOpcode::G_FPEXT) {
+    const Register HalfOp = SrcMI->getOperand(1).getReg();
+    if (MRI.getType(HalfOp) != S16) {
+      return {};
+    }
+    return {HalfOp, false};
+  }
+  if (SrcMI->getOpcode() == TargetOpcode::G_FNEG) {
+    return -matchExtend(SrcMI->getOperand(1).getReg(), MRI);
+  }
+  return {};
+}
+} // namespace
+
+bool llvm::matchWidenFMul(MachineInstr &FMul, MachineRegisterInfo &MRI,
+                          GISelChangeObserver &Observer, BuildFnTy &MatchInfo) {
+  if (!FMul.getMF()->getTarget().getTargetTriple().isAIE2P()) {
+    return false;
+  }
+
+  ExtendOperand Lft = matchExtend(FMul.getOperand(1).getReg(), MRI);
+  if (!Lft) {
+    return false;
+  }
+  ExtendOperand Rgt = matchExtend(FMul.getOperand(2).getReg(), MRI);
+  if (!Rgt) {
+    return false;
+  }
+
+  const Register DstReg = FMul.getOperand(0).getReg();
+  const bool Negate = Lft.Negate ^ Rgt.Negate;
+
+  // We build extract(mul(tovector(Lft), tovector(Rgt)), 0)
+  MatchInfo = [=](MachineIRBuilder &B) {
+    const LLT VecTy = V32S16;
+    const Register VLhs = buildScalarAsVector(B, Lft.Source, VecTy);
+    const Register VRhs = buildScalarAsVector(B, Rgt.Source, VecTy);
+    const Register Acc = buildWidenMulScalarAsVector(B, VLhs, VRhs, Negate);
+    B.buildCopy(DstReg, buildGetFirstElement(B, Acc));
+  };
+
+  return true;
 }
 
 // Fold G_TRUNC (G_[ANY|S|Z]EXT x) -> X or (G_[ANY|S|Z]EXT x) or (G_TRUNC x).

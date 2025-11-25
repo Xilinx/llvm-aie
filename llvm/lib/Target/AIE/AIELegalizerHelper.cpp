@@ -1405,7 +1405,7 @@ bool AIELegalizerHelper::legalizeG_FMUL(LegalizerHelper &Helper,
   MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
 
   const Register DstReg = MI.getOperand(0).getReg();
-  assert(MRI.getType(DstReg) == LLT::scalar(16) &&
+  assert(MRI.getType(DstReg) == S16 &&
          "Expected bfloat16 type in custom legalization.");
 
   Register SrcLHS = MI.getOperand(1).getReg();
