@@ -38,6 +38,10 @@ public:
                                 AssumptionCache &AC, TargetLibraryInfo *LibInfo,
                                 HardwareLoopInfo &HWLoopInfo);
   bool isProfitableOuterLSR(const Loop &L) const;
+
+  InstructionCost getMemoryOpCost(unsigned Opcode, Type *Src, Align Alignment,
+                                  unsigned AddressSpace,
+                                  const DataLayout &DL) const;
 };
 
 template <typename T> class AIEBaseTTIImpl : public BasicTTIImplBase<T> {

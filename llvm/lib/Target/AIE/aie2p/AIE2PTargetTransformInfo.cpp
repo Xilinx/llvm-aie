@@ -128,3 +128,21 @@ bool AIE2PTTIImpl::isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
 bool AIE2PTTIImpl::isProfitableOuterLSR(const Loop &L) const {
   return Common.isProfitableOuterLSR(L);
 }
+
+InstructionCost AIE2PTTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src,
+                                              Align Alignment,
+                                              unsigned AddressSpace,
+                                              TTI::TargetCostKind CostKind,
+                                              TTI::OperandValueInfo OpInfo,
+                                              const Instruction *I) {
+  // Try AIE-specific cost model first
+  InstructionCost Cost =
+      Common.getMemoryOpCost(Opcode, Src, Alignment, AddressSpace, DL);
+
+  // If AIE-specific cost model doesn't handle it, use base implementation
+  if (!Cost.isValid())
+    return BaseT::getMemoryOpCost(Opcode, Src, Alignment, AddressSpace,
+                                  CostKind, OpInfo, I);
+
+  return Cost;
+}

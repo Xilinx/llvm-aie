@@ -251,3 +251,48 @@ bool AIETTICommon::isProfitableOuterLSR(const Loop &L) const {
   return ConsiderLSROuterLoops.getNumOccurrences() > 0 ? ConsiderLSROuterLoops
                                                        : true;
 }
+
+InstructionCost AIETTICommon::getMemoryOpCost(unsigned Opcode, Type *Src,
+                                              Align Alignment,
+                                              unsigned AddressSpace,
+                                              const DataLayout &DL) const {
+  // Only handle Load operations with this custom cost model
+  if (Opcode != Instruction::Load)
+    return InstructionCost::getInvalid();
+
+  // Only handle vector types
+  auto *VTy = dyn_cast<VectorType>(Src);
+  if (!VTy)
+    return InstructionCost::getInvalid();
+
+  // Calculate vector size in bytes
+  const TypeSize VectorSize = DL.getTypeStoreSize(VTy);
+
+  // Only handle fixed-size vectors
+  if (VectorSize.isScalable())
+    return InstructionCost::getInvalid();
+
+  const unsigned VectorSizeInBytes = VectorSize.getFixedValue();
+  const unsigned AlignmentInBytes = Alignment.value();
+
+  // Check if the load is unaligned
+  // A vector load is unaligned when alignment in bytes < total vector size in
+  // bytes
+  if (AlignmentInBytes < VectorSizeInBytes) {
+    // Unaligned vector load is expensive!
+    // Cost = NumElements × ScalarLoadCost + NumElements × InsertElementCost
+    auto *FVTy = cast<FixedVectorType>(VTy);
+    const unsigned NumElts = FVTy->getNumElements();
+
+    // Assume scalar load cost is 1 (TCC_Basic) and insert element cost is 1
+    // This gives us: NumElts * (1 + 1) = NumElts * 2
+    const InstructionCost ScalarLoadCost = TTI::TCC_Basic;
+    const InstructionCost InsertCost = TTI::TCC_Basic;
+
+    // Total cost for unaligned load
+    return NumElts * (ScalarLoadCost + InsertCost);
+  }
+
+  // For aligned loads, return invalid to let the base implementation handle it
+  return InstructionCost::getInvalid();
+}
