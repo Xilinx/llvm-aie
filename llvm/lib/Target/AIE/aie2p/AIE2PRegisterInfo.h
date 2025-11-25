@@ -72,6 +72,7 @@ struct AIE2PRegisterInfo : public AIE2PGenRegisterInfo {
 
   Register getStackPointerRegister() const override;
   Register getControlRegister(unsigned Idx) const override;
+  Register getStatusRegister(unsigned Idx) const override;
 
   const TargetRegisterClass *
   getLargestLegalSuperClass(const TargetRegisterClass *RC,
