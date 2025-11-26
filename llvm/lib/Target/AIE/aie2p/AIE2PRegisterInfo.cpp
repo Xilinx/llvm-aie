@@ -695,3 +695,33 @@ AIE2PRegisterInfo::matchControlRegisterBitwidth(Register CtrlReg,
     llvm_unreachable("Unknown control register.");
   }
 }
+
+unsigned
+AIE2PRegisterInfo::matchStatusRegisterBitwidth(Register StatusReg,
+                                               unsigned SrcConstVal) const {
+  // Modulo by width of status regs. To constrain the max possible value in
+  // the register according to register width.
+  switch (StatusReg) {
+  case AIE2P::srCarry:
+  case AIE2P::srSRS_of:
+  case AIE2P::srUPS_of:
+  case AIE2P::srSparse_of:
+  case AIE2P::srFifo_of:
+  case AIE2P::srFifo_uf:
+    return SrcConstVal % (1 << 1);
+  case AIE2P::srFPFlags:
+  case AIE2P::srF2IFlags:
+  case AIE2P::srF2FFlags:
+  case AIE2P::srF2BFlags:
+    return SrcConstVal % (1 << 5);
+  case AIE2P::srFPNlf:
+  case AIE2P::srFPCnvFx2Fl:
+  case AIE2P::srFPCnvFl2Fx:
+    return SrcConstVal % (1 << 8);
+  case AIE2P::srSS0:
+  case AIE2P::srMS0:
+    return SrcConstVal;
+  default:
+    llvm_unreachable("Unknown status register.");
+  }
+}
