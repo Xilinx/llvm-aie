@@ -361,6 +361,13 @@ def combine_add_vector_elt_undef : GICombineRule <
   (apply [{ applyAddVecEltUndef(*${root}, MRI, B); }] )
 >;
 
+def combine_insert_extract_vector_elt_to_copy : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_AIE_INSERT_VECTOR_ELT): $root,
+  [{ return matchInsertExtractVectorEltToCopy(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])
+>;
+
 def combine_load_store_split_matchdata: GIDefMatchData<"unsigned">;
 def combine_load_store_split : GICombineRule<
   (defs root:$root, combine_load_store_split_matchdata:$matchinfo),
@@ -404,7 +411,8 @@ def AIE2PostLegalizerCustomCombiner
                                                           combine_add_vector_elt_undef,
                                                           combine_extract_concat,
                                                           combine_unmerge_concat,
-                                                          combine_upd_to_concat, 
+                                                          combine_upd_to_concat,
+                                                          combine_insert_extract_vector_elt_to_copy
                                                           ]> {
 }
 
@@ -417,6 +425,6 @@ def AIE2PPostLegalizerCustomCombiner
                                                             combine_offset_load_store_ptradd,
                                                             combine_offset_load_store_share_ptradd,
                                                             combine_add_vector_elt_undef,
+                                                            combine_insert_extract_vector_elt_to_copy
                                                              ]> {
 }
-
