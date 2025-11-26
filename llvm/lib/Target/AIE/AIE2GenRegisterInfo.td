@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -33,6 +33,7 @@ class AIE2RegisterClass <int size, int align, list<ValueType> regTypes, dag regl
       [DefaultMode],
       [RegInfo</*size*/size, /*spill size*/size, /*spill alignment*/align>]>;
   let DecodeZeroBitOperand = true;
+  let hasCompleteDecoder = false;
 }
 
   class AIE2ScalarRegisterClass<dag reglist, RegAltNameIndex idx = NoRegAltName>
@@ -45,38 +46,26 @@ class AIE2RegisterClass <int size, int align, list<ValueType> regTypes, dag regl
                           idx>;
 
   class AIE2Vector128RegisterClass<dag reglist> :
-      AIE2RegisterClass<128, 128, [v16i8, v8i16, v8bf16, v4i32, v4f32, i128], reglist> {
-    let hasCompleteDecoder = 0;
-  }
+      AIE2RegisterClass<128, 128, [v16i8, v8i16, v8bf16, v4i32, v4f32, i128], reglist>;
 
   class AIE2Vector256RegisterClass<dag reglist> :
-      AIE2RegisterClass<256, 256, [v32i8, v16i16, v16bf16, v8f32, v8i32], reglist> {
-    let hasCompleteDecoder = 0;
-  }
+      AIE2RegisterClass<256, 256, [v32i8, v16i16, v16bf16, v8f32, v8i32], reglist>;
 
   class AIE2Vector512RegisterClass<dag reglist> :
-      AIE2RegisterClass<512, 256, [v64i8, v32i16, v32bf16, v16i32, v16f32], reglist> {
-    let hasCompleteDecoder = 0;
-  }
+      AIE2RegisterClass<512, 256, [v64i8, v32i16, v32bf16, v16i32, v16f32], reglist>;
 
   class AIE2Vector1024RegisterClass<dag reglist> :
 
       AIE2RegisterClass<1024, 256, [v128i8, v64i16, v64bf16, v32i32, v32f32], reglist>;
 
   class AIE2Acc256RegisterClass<dag reglist> :
-      AIE2RegisterClass<256, 256, [v4i64], reglist> {
-    let hasCompleteDecoder = 0;
-  }
+      AIE2RegisterClass<256, 256, [v4i64], reglist>;
 
   class AIE2Acc512RegisterClass<dag reglist> :
-      AIE2RegisterClass<512, 256, [v8i64, v16f32], reglist> {
-    let hasCompleteDecoder = 0;
-  }
+      AIE2RegisterClass<512, 256, [v8i64, v16f32], reglist>;
 
   class AIE2Acc1024RegisterClass<dag reglist> :
-      AIE2RegisterClass<1024, 256, [v16i64], reglist> {
-    let hasCompleteDecoder = 0;
-  }
+      AIE2RegisterClass<1024, 256, [v16i64], reglist>;
 
 class AIE220BitRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> :
                  RegisterClass<"AIE2", [i20], /*alignment*/ 32, reglist, idx> {

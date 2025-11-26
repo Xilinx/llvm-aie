@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -207,6 +207,7 @@ class AIERegisterClass <int size, list<ValueType> regTypes, dag reglist, RegAltN
   let RegInfos = RegInfoByHwMode<
       [DefaultMode],
       [RegInfo</*size*/size, /*spill size*/size, /*spill alignment*/size>]>;
+  let hasCompleteDecoder = false;
 }
 class AIEScalarRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> :
 		AIERegisterClass<32, [v8i1, v16i1, i20, i32, f32], reglist, idx>;

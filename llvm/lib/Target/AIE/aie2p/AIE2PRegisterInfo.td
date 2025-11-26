@@ -110,6 +110,7 @@ class AIE2PRegisterClass <int size, int align, list<ValueType> regTypes, dag reg
       [DefaultMode],
       [RegInfo</*size*/size, /*spill size*/size, /*spill alignment*/align>]>;
   let DecodeZeroBitOperand = true;
+  let hasCompleteDecoder = false;
 }
 
   class AIE2PScalarRegisterClass<dag reglist, RegAltNameIndex idx = NoRegAltName>
@@ -191,37 +192,25 @@ class AIE2PRegisterClass <int size, int align, list<ValueType> regTypes, dag reg
 
   class AIE2PVector128RegisterClass<dag reglist>
       : AIE2PRegisterClass<128, 128, [i128, v16i8, v8i16, v8bf16, v4i32, v4f32],
-                           reglist> {
-    let hasCompleteDecoder = 0;
-  }
+                           reglist>;
 
   class AIE2PVector256RegisterClass<dag reglist> :
-      AIE2PRegisterClass<256, 256, [v32i8, v16i16, v16bf16, v8f32, v8i32], reglist> {
-    let hasCompleteDecoder = 0;
-  }
+      AIE2PRegisterClass<256, 256, [v32i8, v16i16, v16bf16, v8f32, v8i32], reglist>;
 
   class AIE2PVector512RegisterClass<dag reglist> :
-      AIE2PRegisterClass<512, 512, [v64i8, v32i16, v32bf16, v16i32, v8i64, v16f32], reglist> {
-    let hasCompleteDecoder = 0;
-  }
+      AIE2PRegisterClass<512, 512, [v64i8, v32i16, v32bf16, v16i32, v8i64, v16f32], reglist>;
 
   class AIE2PVector1024RegisterClass<dag reglist> :
       AIE2PRegisterClass<1024, 512, [v128i8, v64i16, v64bf16, v32i32, v16i64, v32f32], reglist>;
 
   class AIE2PAcc512RegisterClass<dag reglist> :
-      AIE2PRegisterClass<512, 512, [v16i32, v8i64, v16f32], reglist> {
-    let hasCompleteDecoder = 0;
-  }
+      AIE2PRegisterClass<512, 512, [v16i32, v8i64, v16f32], reglist>;
 
   class AIE2PAcc1024RegisterClass<dag reglist> :
-      AIE2PRegisterClass<1024, 512, [v32i32, v16i64, v32f32], reglist> {
-    let hasCompleteDecoder = 0;
-  }
+      AIE2PRegisterClass<1024, 512, [v32i32, v16i64, v32f32], reglist>;
 
   class AIE2PAcc2048RegisterClass<dag reglist> :
-      AIE2PRegisterClass<2048, 512, [v64i32, v32i64, v64f32], reglist> {
-    let hasCompleteDecoder = 0;
-  }
+      AIE2PRegisterClass<2048, 512, [v64i32, v32i64, v64f32], reglist>;
 
 class AIE2P20BitRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> :
                  RegisterClass<"AIE2P", [i20], /*alignment*/ 32, reglist, idx> {
@@ -964,9 +953,7 @@ foreach RC = [eP, eM, eDN, eDJ, eDC, eSP, eSpecial20] in
     def RC # _as_32Bit : AIE2PScalarRegisterClass<(add RC)>;
 
 class AIE2PVector1076FifoRegisterClass<dag reglist> :
-    AIE2PRegisterClass<1088, 512, [i32], reglist> {
-  let hasCompleteDecoder = 0;
-}
+    AIE2PRegisterClass<1088, 512, [i32], reglist>;
 def sub_ptr : SubRegIndex<20,  0>;
 def sub_fifo : SubRegIndex<1024, 20>;
 def sub_avail : SubRegIndex<32, 1044>;
