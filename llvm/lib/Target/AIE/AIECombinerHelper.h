@@ -327,6 +327,11 @@ bool matchExtractVecEltAssertBcst(MachineInstr &MI, MachineRegisterInfo &MRI,
 bool matchMsbScalar(Register ScalarReg, Register BroadcastReg,
                     MachineRegisterInfo &MRI);
 
+bool matchInsertExtractVectorEltToCopy(MachineInstr &MI,
+                                       MachineRegisterInfo &MRI,
+                                       const AIEBaseInstrInfo &TII,
+                                       BuildFnTy &MatchInfo);
+
 } // namespace llvm
 
 #endif
