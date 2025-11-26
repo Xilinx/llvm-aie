@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
 
 ---
@@ -326,6 +326,250 @@ body:             |
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:gprregbank(s32) = G_CONSTANT i32 24
     %0:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.get.ctrl.reg), %1:gprregbank(s32)
+    $r0 = COPY %0:gprregbank(s32)
+    PseudoRET implicit $lr, implicit $r0
+...
+
+---
+name:            set_srcarry
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $r0
+    ; CHECK-LABEL: name: set_srcarry
+    ; CHECK: liveins: $r0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:er = COPY $r0
+    ; CHECK-NEXT: $srcarry = COPY [[COPY]]
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    %0:gprregbank(s32) = COPY $r0
+    %1:gprregbank(s32) = G_CONSTANT i32 25
+    G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.set.status.reg), %1:gprregbank(s32), %0:gprregbank(s32)
+    PseudoRET implicit $lr
+...
+
+---
+name:            set_srss0
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: set_srss0
+    ; CHECK: $srss0 = MOV_scalar_imm11_pseudo 1
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    %0:gprregbank(s32) = G_CONSTANT i32 26
+    %1:gprregbank(s32) = G_CONSTANT i32 1
+    G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.set.status.reg), %0:gprregbank(s32), %1:gprregbank(s32)
+    PseudoRET implicit $lr
+...
+
+---
+name:            set_srms0
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: set_srms0
+    ; CHECK: $srms0 = MOV_scalar_imm11_pseudo 0
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    %0:gprregbank(s32) = G_CONSTANT i32 27
+    %1:gprregbank(s32) = G_CONSTANT i32 0
+    G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.set.status.reg), %0:gprregbank(s32), %1:gprregbank(s32)
+    PseudoRET implicit $lr
+...
+
+---
+name:            set_srsrs_of
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $r0
+    ; CHECK-LABEL: name: set_srsrs_of
+    ; CHECK: liveins: $r0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:er = COPY $r0
+    ; CHECK-NEXT: $srsrs_of = COPY [[COPY]]
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    %0:gprregbank(s32) = COPY $r0
+    %1:gprregbank(s32) = G_CONSTANT i32 28
+    G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.set.status.reg), %1:gprregbank(s32), %0:gprregbank(s32)
+    PseudoRET implicit $lr
+...
+
+---
+name:            set_srups_of
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: set_srups_of
+    ; CHECK: $srups_of = MOV_scalar_imm11_pseudo 0
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    %0:gprregbank(s32) = G_CONSTANT i32 8
+    %1:gprregbank(s32) = G_CONSTANT i32 29
+    G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.set.status.reg), %1:gprregbank(s32), %0:gprregbank(s32)
+    PseudoRET implicit $lr
+...
+
+---
+name:            set_srfpflags
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $r0
+    ; CHECK-LABEL: name: set_srfpflags
+    ; CHECK: liveins: $r0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:er = COPY $r0
+    ; CHECK-NEXT: $srfpflags = COPY [[COPY]]
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    %0:gprregbank(s32) = COPY $r0
+    %1:gprregbank(s32) = G_CONSTANT i32 33
+    G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.set.status.reg), %1:gprregbank(s32), %0:gprregbank(s32)
+    PseudoRET implicit $lr
+...
+
+---
+name:            get_srcarry
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: get_srcarry
+    ; CHECK: [[COPY:%[0-9]+]]:er = COPY $srcarry
+    ; CHECK-NEXT: $r0 = COPY [[COPY]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
+    %1:gprregbank(s32) = G_CONSTANT i32 25
+    %0:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.get.status.reg), %1:gprregbank(s32)
+    $r0 = COPY %0:gprregbank(s32)
+    PseudoRET implicit $lr, implicit $r0
+...
+
+---
+name:            get_srss0
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: get_srss0
+    ; CHECK: [[COPY:%[0-9]+]]:er = COPY $srss0
+    ; CHECK-NEXT: $r0 = COPY [[COPY]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
+    %1:gprregbank(s32) = G_CONSTANT i32 26
+    %0:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.get.status.reg), %1:gprregbank(s32)
+    $r0 = COPY %0:gprregbank(s32)
+    PseudoRET implicit $lr, implicit $r0
+...
+
+---
+name:            get_srms0
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: get_srms0
+    ; CHECK: [[COPY:%[0-9]+]]:er = COPY $srms0
+    ; CHECK-NEXT: $r0 = COPY [[COPY]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
+    %1:gprregbank(s32) = G_CONSTANT i32 27
+    %0:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.get.status.reg), %1:gprregbank(s32)
+    $r0 = COPY %0:gprregbank(s32)
+    PseudoRET implicit $lr, implicit $r0
+...
+
+---
+name:            get_srsrs_of
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: get_srsrs_of
+    ; CHECK: [[COPY:%[0-9]+]]:er = COPY $srsrs_of
+    ; CHECK-NEXT: $r0 = COPY [[COPY]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
+    %1:gprregbank(s32) = G_CONSTANT i32 28
+    %0:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.get.status.reg), %1:gprregbank(s32)
+    $r0 = COPY %0:gprregbank(s32)
+    PseudoRET implicit $lr, implicit $r0
+...
+
+---
+name:            get_srups_of
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: get_srups_of
+    ; CHECK: [[COPY:%[0-9]+]]:er = COPY $srups_of
+    ; CHECK-NEXT: $r0 = COPY [[COPY]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
+    %1:gprregbank(s32) = G_CONSTANT i32 29
+    %0:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.get.status.reg), %1:gprregbank(s32)
+    $r0 = COPY %0:gprregbank(s32)
+    PseudoRET implicit $lr, implicit $r0
+...
+
+---
+name:            get_srfpflags
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: get_srfpflags
+    ; CHECK: [[COPY:%[0-9]+]]:er = COPY $srfpflags
+    ; CHECK-NEXT: $r0 = COPY [[COPY]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
+    %1:gprregbank(s32) = G_CONSTANT i32 33
+    %0:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.get.status.reg), %1:gprregbank(s32)
+    $r0 = COPY %0:gprregbank(s32)
+    PseudoRET implicit $lr, implicit $r0
+...
+
+---
+name:            get_srf2iflags
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: get_srf2iflags
+    ; CHECK: [[COPY:%[0-9]+]]:er = COPY $srf2iflags
+    ; CHECK-NEXT: $r0 = COPY [[COPY]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
+    %1:gprregbank(s32) = G_CONSTANT i32 34
+    %0:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.get.status.reg), %1:gprregbank(s32)
+    $r0 = COPY %0:gprregbank(s32)
+    PseudoRET implicit $lr, implicit $r0
+...
+
+---
+name:            get_srfpnlf
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: get_srfpnlf
+    ; CHECK: [[COPY:%[0-9]+]]:er = COPY $srfpnlf
+    ; CHECK-NEXT: $r0 = COPY [[COPY]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
+    %1:gprregbank(s32) = G_CONSTANT i32 37
+    %0:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.get.status.reg), %1:gprregbank(s32)
     $r0 = COPY %0:gprregbank(s32)
     PseudoRET implicit $lr, implicit $r0
 ...

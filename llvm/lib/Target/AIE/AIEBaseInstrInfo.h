@@ -213,6 +213,12 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual unsigned getMvSclMultiSlotPseudoOpcode() const {
     llvm_unreachable("Target didn't implement getMvSclOpcode");
   }
+  /// Return the opcode to set a status register with an immediate value.
+  /// Targets should override this to provide the correct opcode.
+  virtual unsigned getSetStatusRegisterOpcode() const {
+    // Fallback to multi-slot pseudo move if target doesn't override.
+    return getMvSclMultiSlotPseudoOpcode();
+  }
   /// Return the 3-address integer ADD opcode
   virtual unsigned getAddSclOpcode() const {
     llvm_unreachable("Target didn't implement getAddSclOpcode");

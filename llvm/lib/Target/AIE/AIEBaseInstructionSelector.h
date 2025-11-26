@@ -104,6 +104,8 @@ public:
                             unsigned DefaultCRVal = 0);
   MachineInstrBuilder setCtrlRegister(MachineIRBuilder &MIB, Register CRReg,
                                       unsigned Val);
+  MachineInstrBuilder setStatusRegister(MachineIRBuilder &MIB,
+                                        Register StatusReg, unsigned Val);
   AddressingModeInfo createAddressModeInfo(MachineInstr &MemI,
                                            MachineOperand &SrcDstOp,
                                            MachineOperand &PtrOp,
@@ -213,6 +215,8 @@ protected:
   bool selectStartLoop(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectSetControlRegister(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectGetControlRegister(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectSetStatusRegister(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectGetStatusRegister(MachineInstr &I, MachineRegisterInfo &MRI);
 
 protected:
   MachineIRBuilder MIB;

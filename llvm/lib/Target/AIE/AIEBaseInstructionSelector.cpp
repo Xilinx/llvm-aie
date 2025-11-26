@@ -339,6 +339,12 @@ AIEBaseInstructionSelector::setCtrlRegister(MachineIRBuilder &MIB,
   return MIB.buildInstr(Opcode, {CRReg}, {}).addImm(Val);
 }
 
+MachineInstrBuilder AIEBaseInstructionSelector::setStatusRegister(
+    MachineIRBuilder &MIB, Register StatusReg, unsigned Val) {
+  auto Opcode = TII.getSetStatusRegisterOpcode();
+  return MIB.buildInstr(Opcode, {StatusReg}, {}).addImm(Val);
+}
+
 void AIEBaseInstructionSelector::addSplitMemOperands(
     MachineInstr &I, MachineInstrBuilder &Higher, MachineInstrBuilder &Lower,
     unsigned Offset, unsigned SplitFactor) {
@@ -1211,6 +1217,66 @@ bool AIEBaseInstructionSelector::selectG_AIE_PAD_VECTOR_UNDEF(
   constrainOperandRegClass(MF, TRI, MRI, TII, RBI, I, OutRC, DstReg);
   MIB.buildInstr(TargetOpcode::REG_SEQUENCE, {DstReg}, {SrcReg})
       .addImm(getSub256LoIdx());
+
+  I.eraseFromParent();
+  return true;
+}
+
+// Build Instruction to set status register
+bool AIEBaseInstructionSelector::selectSetStatusRegister(
+    MachineInstr &I, MachineRegisterInfo &MRI) {
+
+  const Register IdxReg = I.getOperand(1).getReg();
+  const Register SrcReg = I.getOperand(2).getReg();
+
+  // Check if the argument is constant for register map index.
+  const auto Idx = getIConstantVRegValWithLookThroughOrFail(
+      IdxReg, MRI, "Expected const value for status register map index.");
+
+  const Register StatusReg = TRI.getStatusRegister(Idx.Value.getZExtValue());
+
+  // Handle const input val for status regs.
+  if (const auto Src = getIConstantVRegValWithLookThrough(SrcReg, MRI)) {
+    const unsigned SrcConstVal =
+        TRI.matchStatusRegisterBitwidth(StatusReg, Src->Value.getZExtValue());
+
+    MachineInstrBuilder MI = setStatusRegister(MIB, StatusReg, SrcConstVal);
+    I.eraseFromParent();
+    return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+  }
+
+  auto CopyInstr =
+      MIB.buildInstr(TargetOpcode::COPY, {StatusReg}, {}).addReg(SrcReg);
+  if (!selectCopy(*CopyInstr, MRI))
+    return false;
+
+  I.eraseFromParent();
+  return true;
+}
+
+// Build Instruction to get status register
+bool AIEBaseInstructionSelector::selectGetStatusRegister(
+    MachineInstr &I, MachineRegisterInfo &MRI) {
+
+  const Register DstReg = I.getOperand(0).getReg();
+  // In this case of G_INTRINSIC operand 1 is target intrinsic
+  const Register IdxReg = I.getOperand(2).getReg();
+
+  // Check if the argument is constant for register map index.
+  const auto Idx = getIConstantVRegValWithLookThroughOrFail(
+      IdxReg, MRI, "Expected const value for status register map index.");
+
+  const Register StatusReg = TRI.getStatusRegister(Idx.Value.getZExtValue());
+  const MachineFunction &MF = *I.getParent()->getParent();
+
+  if (!RBI.constrainGenericRegister(DstReg, *TRI.getGPRRegClass(MF), MRI))
+    return false;
+
+  auto CopyInstr =
+      MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {}).addReg(StatusReg);
+  if (!selectCopy(*CopyInstr, MRI))
+    return false;
+
   I.eraseFromParent();
   return true;
 }

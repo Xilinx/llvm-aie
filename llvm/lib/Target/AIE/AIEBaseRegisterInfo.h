@@ -121,6 +121,10 @@ struct AIEBaseRegisterInfo : public TargetRegisterInfo {
   virtual Register getStatusRegister(unsigned Idx) const {
     llvm_unreachable("Target didn't implement getStatusRegister!");
   }
+  virtual unsigned matchStatusRegisterBitwidth(Register StatusReg,
+                                               unsigned SrcConstVal) const {
+    llvm_unreachable("Target didn't implement matchStatusRegisterBitwidth!");
+  }
 };
 
 template <int N, unsigned step> bool isEncodableAsNegativeInt(int Value) {
