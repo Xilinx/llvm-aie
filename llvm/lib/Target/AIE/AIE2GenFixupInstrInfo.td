@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -450,14 +450,7 @@ let hasSideEffects = false, mayLoad = true, mayStore = false in {
 
 // 3.3 VLD.UNPACK – Vector Loads with unpacking
 
-// VLDB.UNPACK uses mXs register class which doesn't have a power-of-2 number of registers.
-// PADDB uses an immediate value seperated with a fixed {0b11} field. This field coincides with
-// mXs register field in VLDB.UNPACK. Because of this, it could happen that we try to decode a
-// PADDB instruction as VLDB.UNPACK assuming that the latter has a complete decoder.
-// To avoid this, we set hasCompleteDecoder to false in VLDB.UNPACK instructions.
-// Setting hasCompleteDecoder to false in the mXs register class is not enough because
-// VLDB.2D.UNPACK and VLDB.3D.UNPACK instructions have custom decoder methods
-let hasSideEffects = false, mayLoad = true, mayStore = false, hasCompleteDecoder= false in {
+let hasSideEffects = false, mayLoad = true, mayStore = false in {
   let Itinerary = II_VLDB_UNPACK in {
     class VLDB_ag_idx_dmw_ldb_unpack<bits<1> sgn, bits<1> sz, string opcodestr> :
         AIE2_dmw_ldb_unpack_inst_ldb<sgn, sz, (outs mXs:$dst), (ins eP:$ptr, eDJ:$dj), opcodestr, "$dst, [$ptr, $dj]">;
@@ -517,7 +510,7 @@ let hasSideEffects = false, mayLoad = true, mayStore = false, hasCompleteDecoder
       }
     }
 
-} // hasSideEffects = false, mayLoad = true, mayStore = false, hasCompleteDecoder= false
+} // hasSideEffects = false, mayLoad = true, mayStore = false
 
 // 3.10 VST - Vector Stores
 let hasSideEffects = false, mayLoad = false, mayStore = true in {
