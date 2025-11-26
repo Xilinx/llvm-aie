@@ -66,6 +66,20 @@ cl::opt<bool> MemsetOptimizations(
     "aie-optimize-memsets", cl::init(true), cl::Hidden,
     cl::desc("Apply memset optimizations (peeling/align/etc.)."));
 
+namespace {
+
+bool isGenericExtractOpcode(unsigned Opc, const AIEBaseInstrInfo &TII) {
+  // Check if it's either SEXT or ZEXT extract
+  const unsigned ExtractSextOpc = TII.getGenericExtractVectorEltOpcode(true);
+  if (Opc == ExtractSextOpc) {
+    return true;
+  }
+  const unsigned ExtractZextOpc = TII.getGenericExtractVectorEltOpcode(false);
+  return Opc == ExtractZextOpc;
+}
+
+} // namespace
+
 static unsigned getNumMaskUndefs(const ArrayRef<int> &Mask,
                                  unsigned StartIndex) {
   unsigned Count = 0;
@@ -4226,8 +4240,7 @@ namespace {
 MachineInstr *getBcstFeedByAssertExtVecExtr(MachineInstr &MI,
                                             MachineRegisterInfo &MRI,
                                             const AIEBaseInstrInfo &TII) {
-  assert(MI.getOpcode() == TII.getGenericExtractVectorEltOpcode(false) ||
-         MI.getOpcode() == TII.getGenericExtractVectorEltOpcode(true));
+  assert(isGenericExtractOpcode(MI.getOpcode(), TII));
 
   /// Get single NonDebug User of \p MI with the opcode \p UseMIOpcode
   auto GetSingleNonDbgUser = [&MRI](MachineInstr &MI,
@@ -4266,8 +4279,7 @@ bool llvm::matchExtractVecEltAssertBcst(MachineInstr &MI,
                                         const AIEBaseInstrInfo &TII,
                                         GISelChangeObserver &Observer,
                                         BuildFnTy &MatchInfo) {
-  assert((MI.getOpcode() == TII.getGenericExtractVectorEltOpcode(false) ||
-          MI.getOpcode() == TII.getGenericExtractVectorEltOpcode(true)) &&
+  assert(isGenericExtractOpcode(MI.getOpcode(), TII) &&
          "Expected a extract_vector_elt");
   const MachineInstr *BcstMI = getBcstFeedByAssertExtVecExtr(MI, MRI, TII);
   if (!BcstMI)
@@ -4322,4 +4334,70 @@ bool llvm::matchMsbScalar(Register ScalarReg, Register BroadcastReg,
     return Value == 0x80000000; // 2147483648 (or -2147483648 as signed)
 
   return false;
+}
+
+/// Match a pattern where:
+/// %18:_(<16 x s32>) = COPY $x0
+/// %10:_(<16 x s32>) = G_IMPLICIT_DEF
+/// %9:_(s32) = G_CONSTANT i32 0
+/// %8:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %18(<16 x s32>), %9(s32)
+/// %22:_(<16 x s32>) = G_AIE_INSERT_VECTOR_ELT %10, %8(s32), %9(s32)
+///
+/// This can be simplified to:
+/// %22:_(<16 x s32>) = COPY %18
+bool llvm::matchInsertExtractVectorEltToCopy(MachineInstr &MI,
+                                             MachineRegisterInfo &MRI,
+                                             const AIEBaseInstrInfo &TII,
+                                             BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TII.getGenericInsertVectorEltOpcode() &&
+         "Expected G_AIE_INSERT_VECTOR_ELT");
+
+  // Get the insert operands
+  const Register InsertDstReg = MI.getOperand(0).getReg();
+  const Register InsertSrcVecReg = MI.getOperand(1).getReg();
+  const Register InsertedEltReg = MI.getOperand(2).getReg();
+  const Register InsertIdxReg = MI.getOperand(3).getReg();
+
+  // Check that the insert source vector is G_IMPLICIT_DEF
+  const MachineInstr *InsertSrcMI = MRI.getVRegDef(InsertSrcVecReg);
+  if (!InsertSrcMI || InsertSrcMI->getOpcode() != TargetOpcode::G_IMPLICIT_DEF)
+    return false;
+
+  // Get the definition of the inserted element
+  const MachineInstr *ExtractMI = MRI.getVRegDef(InsertedEltReg);
+  if (!ExtractMI)
+    return false;
+
+  // Check if it's either SEXT or ZEXT extract
+  if (!isGenericExtractOpcode(ExtractMI->getOpcode(), TII))
+    return false;
+
+  // Get extract operands
+  const Register ExtractSrcVecReg = ExtractMI->getOperand(1).getReg();
+  const Register ExtractIdxReg = ExtractMI->getOperand(2).getReg();
+
+  // Verify that the insert destination vector type matches the extract source
+  // vector type
+  const LLT InsertDstTy = MRI.getType(InsertDstReg);
+  const LLT ExtractSrcTy = MRI.getType(ExtractSrcVecReg);
+
+  if (InsertDstTy != ExtractSrcTy)
+    return false;
+
+  // Check that insert and extract indices are the same
+  // They can be the same register, or both constants with the same value
+  if (InsertIdxReg != ExtractIdxReg) {
+    auto InsertIdxCst = getIConstantVRegValWithLookThrough(InsertIdxReg, MRI);
+    auto ExtractIdxCst = getIConstantVRegValWithLookThrough(ExtractIdxReg, MRI);
+    if (!InsertIdxCst || !ExtractIdxCst ||
+        InsertIdxCst->Value != ExtractIdxCst->Value)
+      return false;
+  }
+
+  // Copy the extract source vector (the real vector) to the insert destination
+  MatchInfo = [=](MachineIRBuilder &B) {
+    B.buildCopy(InsertDstReg, ExtractSrcVecReg);
+  };
+
+  return true;
 }
