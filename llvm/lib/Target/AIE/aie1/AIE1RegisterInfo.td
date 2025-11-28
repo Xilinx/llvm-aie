@@ -12,6 +12,8 @@
 //  Declarations that describe the AIEngine register files
 //===----------------------------------------------------------------------===//
 
+include "AIEBaseRegisterInfo.td"
+
 let Namespace = "AIE" in {
 
 class AIEReg<string n> : Register<n> {
@@ -201,19 +203,17 @@ let SubRegIndices = [sub_32_lo, sub_32_hi], CoveredBySubRegs = 1 in {
 // We have lots of different register classes, representing register
 // restrictions for different instructions
 class AIERegisterClass <int size, list<ValueType> regTypes, dag reglist, RegAltNameIndex idx = NoRegAltName> :
-		RegisterClass<"AIE", regTypes, /*alignment*/size, reglist, idx> {
+		AIEBaseRegisterClass<"AIE", regTypes, /*alignment*/size, reglist, idx> {
   dag Regs = reglist;
-  let DecodeZeroBitOperand = true;
   let RegInfos = RegInfoByHwMode<
       [DefaultMode],
       [RegInfo</*size*/size, /*spill size*/size, /*spill alignment*/size>]>;
-  let hasCompleteDecoder = false;
 }
 class AIEScalarRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> :
 		AIERegisterClass<32, [v8i1, v16i1, i20, i32, f32], reglist, idx>;
 
 class AIEPointerRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> :
-		  RegisterClass<"AIE", [i20], /*alignment*/ 32, reglist, idx> {
+		  AIEBaseRegisterClass<"AIE", [i20], /*alignment*/ 32, reglist, idx> {
   dag Regs = reglist;
   let RegInfos = RegInfoByHwMode<
       [DefaultMode],

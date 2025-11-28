@@ -93,48 +93,44 @@ def immfp32    : ImmLeaf<f32, [{return true;}] >;
 // code to encode registers correctly on a per-registerClass basis.
 // (Note that decoding in the disassembler is done on a
 // per-registerClass basis by default.)
-class AIERegisterOperand<RegisterClass c> : RegisterOperand<c> {
-  let EncoderMethod = "get" # c # OpValue;
-  let hasCompleteDecoder = false;
-}
 
 // WARNING: These register classes contain registers of different
 // sizes!  This case is not well handled in LLVM and can silently
 // cause miscompilations if a 20-bit (PTR) register is chosen to store
 // a value that doesn't fit!  Codegen patterns should use the
 // more specialized *_GPR and *_PTR register classes below.
-def OP_mMvScl   : AIERegisterOperand<mMvScl>;
-def OP_mSclSt   : AIERegisterOperand<mSclSt>;
-def OP_mLdaScl  : AIERegisterOperand<mLdaScl>;
+def OP_mMvScl   : AIEBaseRegisterOperand<mMvScl>;
+def OP_mSclSt   : AIEBaseRegisterOperand<mSclSt>;
+def OP_mLdaScl  : AIEBaseRegisterOperand<mLdaScl>;
 
 let EncoderMethod = "get" # mMvScl # OpValue in {
-def OP_mMvScl_GPR   : AIERegisterOperand<mRCm>;
-def OP_mMvScl_PTR   : AIERegisterOperand<PTRMODCSCB>;
+def OP_mMvScl_GPR   : AIEBaseRegisterOperand<mRCm>;
+def OP_mMvScl_PTR   : AIEBaseRegisterOperand<PTRMODCSCB>;
 }
 let EncoderMethod = "get" # mSclSt # OpValue in {
-def OP_mSclSt_GPR   : AIERegisterOperand<mRCm>;
-def OP_mSclSt_PTR   : AIERegisterOperand<mSclSt_PTR>;
-def OP_mSclSt_MOD   : AIERegisterOperand<MOD>;
+def OP_mSclSt_GPR   : AIEBaseRegisterOperand<mRCm>;
+def OP_mSclSt_PTR   : AIEBaseRegisterOperand<mSclSt_PTR>;
+def OP_mSclSt_MOD   : AIEBaseRegisterOperand<MOD>;
 }
 let EncoderMethod = "get" # mLdaScl # OpValue in {
-def OP_mLdaScl_GPR   : AIERegisterOperand<mRCm>;
-def OP_mLdaScl_PTR   : AIERegisterOperand<PTRMODCSCB>;
-def OP_mLdaScl_MOD   : AIERegisterOperand<MOD>;
+def OP_mLdaScl_GPR   : AIEBaseRegisterOperand<mRCm>;
+def OP_mLdaScl_PTR   : AIEBaseRegisterOperand<PTRMODCSCB>;
+def OP_mLdaScl_MOD   : AIEBaseRegisterOperand<MOD>;
 }
 
-def OP_mLdbScl  : AIERegisterOperand<mLdbScl>;
-def OP_mAluCg12 : AIERegisterOperand<mAluCg12>;
-def OP_mMv0Cg20 : AIERegisterOperand<mMv0Cg20>;
-def OP_mRCm     : AIERegisterOperand<mRCm>;
-def OP_mWAv    : AIERegisterOperand<mWAv>;
-def OP_mWABv   : AIERegisterOperand<mWABv>;
-def OP_mWABDv   : AIERegisterOperand<mWABDv>;
-def OP_mWBDv    : AIERegisterOperand<mWBDv>;
-def OP_mWCDv    : AIERegisterOperand<mWCDv>;
-def OP_mXABv    : AIERegisterOperand<mXABv>;
-def OP_mXCDv    : AIERegisterOperand<mXCDv>;
+def OP_mLdbScl  : AIEBaseRegisterOperand<mLdbScl>;
+def OP_mAluCg12 : AIEBaseRegisterOperand<mAluCg12>;
+def OP_mMv0Cg20 : AIEBaseRegisterOperand<mMv0Cg20>;
+def OP_mRCm     : AIEBaseRegisterOperand<mRCm>;
+def OP_mWAv    : AIEBaseRegisterOperand<mWAv>;
+def OP_mWABv   : AIEBaseRegisterOperand<mWABv>;
+def OP_mWABDv   : AIEBaseRegisterOperand<mWABDv>;
+def OP_mWBDv    : AIEBaseRegisterOperand<mWBDv>;
+def OP_mWCDv    : AIEBaseRegisterOperand<mWCDv>;
+def OP_mXABv    : AIEBaseRegisterOperand<mXABv>;
+def OP_mXCDv    : AIEBaseRegisterOperand<mXCDv>;
 //mVn, mVs, mVm, mVa
-def OP_mVn      : AIERegisterOperand<mVn>;
+def OP_mVn      : AIEBaseRegisterOperand<mVn>;
 
 // Extract least significant 20 bits from an immediate value.
 def LO20 : SDNodeXForm<imm, [{

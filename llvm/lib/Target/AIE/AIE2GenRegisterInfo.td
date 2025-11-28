@@ -15,6 +15,8 @@
 //===----------------------------------------------------------------------===//
 //* Automatically generated file, do not edit! *
 
+include "AIEBaseRegisterInfo.td"
+
 let Namespace = "AIE2" in {
 
   class AIE2Reg<string n> : Register<n> {
@@ -27,13 +29,11 @@ let Namespace = "AIE2" in {
   }
 
 class AIE2RegisterClass <int size, int align, list<ValueType> regTypes, dag reglist, RegAltNameIndex idx = NoRegAltName> :
-               RegisterClass<"AIE2", regTypes, /*alignment*/size, reglist, idx> {
+               AIEBaseRegisterClass<"AIE2", regTypes, /*alignment*/size, reglist, idx> {
   dag Regs = reglist;
   let RegInfos = RegInfoByHwMode<
       [DefaultMode],
       [RegInfo</*size*/size, /*spill size*/size, /*spill alignment*/align>]>;
-  let DecodeZeroBitOperand = true;
-  let hasCompleteDecoder = false;
 }
 
   class AIE2ScalarRegisterClass<dag reglist, RegAltNameIndex idx = NoRegAltName>
@@ -68,7 +68,7 @@ class AIE2RegisterClass <int size, int align, list<ValueType> regTypes, dag regl
       AIE2RegisterClass<1024, 256, [v16i64], reglist>;
 
 class AIE220BitRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> :
-                 RegisterClass<"AIE2", [i20], /*alignment*/ 32, reglist, idx> {
+                 AIEBaseRegisterClass<"AIE2", [i20], /*alignment*/ 32, reglist, idx> {
   dag Regs = reglist;
   let RegInfos = RegInfoByHwMode<
       [DefaultMode],
@@ -76,7 +76,7 @@ class AIE220BitRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> :
 }
 
 class AIE2Dim2DRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> :
-                 RegisterClass<"AIE2", [i20], /*alignment*/ 32, reglist, idx> {
+                 AIEBaseRegisterClass<"AIE2", [i20], /*alignment*/ 32, reglist, idx> {
   dag Regs = reglist;
   let RegInfos = RegInfoByHwMode<
       [DefaultMode],
@@ -84,7 +84,7 @@ class AIE2Dim2DRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> :
 }
 
 class AIE2Dim3DRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> :
-                 RegisterClass<"AIE2", [i20], /*alignment*/ 32, reglist, idx> {
+                 AIEBaseRegisterClass<"AIE2", [i20], /*alignment*/ 32, reglist, idx> {
   dag Regs = reglist;
   let RegInfos = RegInfoByHwMode<
       [DefaultMode],
