@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 ;
 ; RUN: llc -O2 -mtriple=aie2 %s -o - | FileCheck %s
 
@@ -35,25 +35,21 @@ entry:
 define float @test_fsub_float(float %a, float %b) {
 ; CHECK-LABEL: test_fsub_float:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; nopa ; nops ; jl #__subsf3; nopv
-; CHECK-NEXT:    nopx // Delay Slot 5
-; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4
-; CHECK-NEXT:    st lr, [sp, #-32] // 4-byte Folded Spill Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:    lda lr, [sp, #-32] // 4-byte Folded Reload
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    mova r16, #0; nopb ; nopx ; mov r3, r16
+; CHECK-NEXT:    mov r29, r16
+; CHECK-NEXT:    vinsert.32 x0, x0, r29, r1
+; CHECK-NEXT:    vinsert.32 x2, x0, r29, r2
+; CHECK-NEXT:    mova r0, #28; vmov bmh0, x0
+; CHECK-NEXT:    vmov bmh1, x2; vsub.f bmh0, bmh0, bmh1, r0
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    vmov x0, bmh0 // Delay Slot 4
+; CHECK-NEXT:    vextract.s32 r0, x0, r16 // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    mov r16, r3 // Delay Slot 1
 entry:
   %fsub = fsub float %a, %b
   ret float %fsub

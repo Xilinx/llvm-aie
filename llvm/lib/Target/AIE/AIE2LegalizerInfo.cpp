@@ -205,8 +205,9 @@ AIE2LegalizerInfo::AIE2LegalizerInfo(const AIE2Subtarget &ST) : AIEHelper(ST) {
 
   getActionDefinitionsBuilder({G_FADD, G_FSUB})
       .legalFor({V16S32})
-      .customFor({S16})
-      .libcallFor({S32, S64});
+      .clampScalar(0, S32, S64)
+      .customFor({S32})
+      .libcallFor({S64});
 
   getActionDefinitionsBuilder({G_FMUL, G_FDIV, G_FREM})
       .clampScalar(0, S32, S64)

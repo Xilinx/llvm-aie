@@ -1441,19 +1441,19 @@ bool AIELegalizerHelper::legalizeG_FMUL(LegalizerHelper &Helper,
 
 bool AIELegalizerHelper::legalizeG_FADD_G_FSUB(LegalizerHelper &Helper,
                                                MachineInstr &MI) const {
+
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
   MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
-
   const Register DstReg = MI.getOperand(0).getReg();
+
   Register SrcLHS = MI.getOperand(1).getReg();
   Register SrcRHS = MI.getOperand(2).getReg();
 
-  assert(MRI.getType(DstReg) == LLT::scalar(16) &&
-         "Expected bfloat16 type in custom legalization.");
+  assert(MRI.getType(DstReg) == S32 &&
+         "Expected float32 type in custom legalization.");
 
   const LLT InsertVecLLT = V16FP32;
-  SrcLHS = MIRBuilder.buildFPExt(S32, SrcLHS).getReg(0);
-  SrcRHS = MIRBuilder.buildFPExt(S32, SrcRHS).getReg(0);
+
   const Register IdxReg = MIRBuilder.buildConstant(S32, 0).getReg(0);
   const Register UndefVec = MIRBuilder.buildUndef(InsertVecLLT).getReg(0);
 
@@ -1479,29 +1479,16 @@ bool AIELegalizerHelper::legalizeG_FADD_G_FSUB(LegalizerHelper &Helper,
           .getReg(0);
 
   if (ST.isAIE2()) {
-    Res = MIRBuilder.buildBitcast(V8ACC64, Res).getReg(0);
+    if (MRI.getType(Res) != V16S32) {
+      Res = MIRBuilder.buildBitcast(V16S32, Res).getReg(0);
+    }
   } else if (ST.isAIE2P()) {
-    Res = MIRBuilder.buildUnmerge(V32ACC32, Res).getReg(0);
-  }
-
-  const int VecSize = MRI.getType(Res).getSizeInBits();
-  const LLT DstLLT = ST.isAIE2P() ? V32BF16 : V16BF16;
-  Res = MIRBuilder
-            .buildIntrinsic(getFpTrunc32ToBF16IntrID(ST, VecSize), {DstLLT},
-                            true, false)
-            .addUse(Res)
-            .getReg(0);
-
-  if (ST.isAIE2()) {
-    Res = emitPadUndefVector(MRI, MIRBuilder, V32BF16, Res);
+    Res = MIRBuilder.buildUnmerge(V16S32, Res).getReg(0);
   }
 
   const unsigned ExtractEltOpc =
       ST.getInstrInfo()->getGenericExtractVectorEltOpcode(/*SignExt*/ true);
-  Res = MIRBuilder.buildInstr(ExtractEltOpc, {S32}, {Res, IdxReg}).getReg(0);
-  Res = MIRBuilder.buildAssertInstr(TargetOpcode::G_ASSERT_SEXT, {S32}, Res, 16)
-            .getReg(0);
-  MIRBuilder.buildTrunc(DstReg, Res);
+  MIRBuilder.buildInstr(ExtractEltOpc, {DstReg}, {Res, IdxReg});
 
   MI.eraseFromParent();
   return true;
