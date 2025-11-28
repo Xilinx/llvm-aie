@@ -19,6 +19,7 @@
 
 #include "AIE.h"
 #include "AIEGlobalCombiner.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
@@ -40,6 +41,12 @@ class FoundCombiners {
   /// The keys are to be replaced MachineInstructions, and the values the newly
   /// inserted Instructions.
   std::map<MachineInstr *, MachineInstr *> ConvertedInstrs;
+
+  /// Instructions to be deleted at the end of the combining pass.
+  /// We defer deletion because analysis pass results contain raw pointers
+  /// to instructions, and later combiners may reference already-removed
+  /// instructions via remapping.
+  SmallVector<MachineInstr *, 32> DeferredDeletes;
 
   /// If a MachineInstr is remapped to a new Instruction through a previous
   /// Combiner, update the MachineInstr and \return valid MachineInstructions
@@ -71,6 +78,26 @@ public:
 
   /// \return whether Analysis Pass generated this Object
   bool hasAnalysis() const { return GeneratedFromAnalysisPass; }
+
+  /// Add an instruction to be deleted at the end of the combining pass.
+  /// Has to be called *after* removeFromParent()
+  void deferDelete(MachineInstr *MI) {
+    assert(!MI->getParent() &&
+           "Instruction must not have a parent before deferring");
+    DeferredDeletes.push_back(MI);
+  }
+
+  /// Actually delete all deferred instructions. Should be called at the end
+  /// of the combining pass after all iterations complete.
+  void finalizeDeferredDeletes(MachineFunction &MF) {
+    llvm::dbgs() << "Finalizing deferred deletes\n";
+    for (MachineInstr *MI : DeferredDeletes) {
+      // Instructions have been removed from their BB via removeFromParent().
+      // Use MachineFunction::deleteMachineInstr() to deallocate them.
+      MF.deleteMachineInstr(MI);
+    }
+    DeferredDeletes.clear();
+  }
 };
 } // namespace llvm::AIE
 

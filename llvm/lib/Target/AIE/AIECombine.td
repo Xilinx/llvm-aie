@@ -47,7 +47,7 @@ def combine_extract_vector_elt_and_zsa_ext : GICombineRule<
   (defs root:$root, combine_extract_vector_elt_and_zsa_ext_matchdata:$matchinfo),
   (match (wip_match_opcode G_EXTRACT_VECTOR_ELT): $root,
   [{ return matchExtractVecEltAndExt(*${root}, MRI, ${matchinfo}); }]),
-  (apply [{ applyExtractVecEltAndExt(*${root}, MRI, B, ${matchinfo}); }])
+  (apply [{ applyExtractVecEltAndExt(*${root}, MRI, B, ${matchinfo}, Observer); }])
 >;
 
 def combine_extract_vector_assert_combine : GICombineRule<
@@ -68,7 +68,7 @@ def combine_splat_vector : GICombineRule<
   (defs root:$root, combine_splat_vector_matchdata:$matchinfo),
   (match (wip_match_opcode G_BUILD_VECTOR): $root,
   [{ return matchSplatVector(*${root}, MRI, ${matchinfo}); }]),
-  (apply [{ applySplatVector(*${root}, MRI, B, ${matchinfo}); }])
+  (apply [{ applySplatVector(*${root}, MRI, B, ${matchinfo}, Observer); }])
 >;
 
 def combine_single_diff_build_vector_matchdata: GIDefMatchData<"AIESingleDiffLaneBuildVectorMatchData">;
@@ -76,7 +76,7 @@ def combine_single_diff_build_vector : GICombineRule<
   (defs root:$root, combine_single_diff_build_vector_matchdata:$matchinfo),
   (match (wip_match_opcode G_BUILD_VECTOR): $root,
   [{ return matchSingleDiffLaneBuildVector(*${root}, MRI, ${matchinfo}); }]),
-  (apply [{ applySingleDiffLaneBuildVector(*${root}, MRI, B, ${matchinfo}); }])
+  (apply [{ applySingleDiffLaneBuildVector(*${root}, MRI, B, ${matchinfo}, Observer); }])
 >;
 
 def combine_pad_vector_matchdata: GIDefMatchData<"Register">;
@@ -84,28 +84,28 @@ def combine_pad_vector : GICombineRule<
   (defs root:$root, combine_pad_vector_matchdata:$matchinfo),
   (match (wip_match_opcode G_BUILD_VECTOR): $root,
   [{ return matchPadVector(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
-  (apply [{ applyPadVector(*${root}, MRI, B, ${matchinfo}); }])
+  (apply [{ applyPadVector(*${root}, MRI, B, ${matchinfo}, Observer); }])
 >;
 
 def combine_concat_to_pad_vector : GICombineRule<
   (defs root:$root, combine_pad_vector_matchdata:$matchinfo),
   (match (wip_match_opcode G_CONCAT_VECTORS): $root,
   [{ return matchConcatPadVector(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
-  (apply [{ applyPadVector(*${root}, MRI, B, ${matchinfo}); }])
+  (apply [{ applyPadVector(*${root}, MRI, B, ${matchinfo}, Observer); }])
 >;
 
 def combine_unpad_vector : GICombineRule<
   (defs root:$root),
   (match (wip_match_opcode G_UNMERGE_VALUES): $root,
   [{ return matchUnpadVector(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII()); }]),
-  (apply [{ applyUnpadVector(*${root}, MRI, B); }])
+  (apply [{ applyUnpadVector(*${root}, MRI, B, Observer); }])
 >;
 
 def combine_vector_broadcast : GICombineRule<
   (defs root:$root, combine_splat_vector_matchdata:$matchinfo),
   (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
          [{ return matchBroadcastElement(*${root}, MRI, ${matchinfo}); }]),
-  (apply [{ applySplatVector(*${root}, MRI, B, ${matchinfo}); }])>;
+  (apply [{ applySplatVector(*${root}, MRI, B, ${matchinfo}, Observer); }])>;
 
 def combine_vector_shuffle_broadcast : GICombineRule<
   (defs root:$root, build_fn_matchinfo:$matchinfo),
@@ -152,7 +152,7 @@ def combine_vector_shuffle_bcst_to_copy : GICombineRule<
 def combine_paired_extracts : GICombineRule<
   (defs root:$root, build_fn_matchinfo:$matchinfo),
   (match (wip_match_opcode G_EXTRACT_VECTOR_ELT): $root,
-         [{ return matchPairedExtracts(*${root}, MRI, Helper, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+         [{ return matchPairedExtracts(*${root}, MRI, Helper, (const AIEBaseInstrInfo &)B.getTII(), Observer, ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
 
 def combine_vector_shuffle_to_extract_insert_elt_to_broadcast : GICombineRule<
@@ -328,7 +328,7 @@ def combine_extract_concat : GICombineRule<
   (defs root:$root, combine_extract_concat_matchdata:$matchinfo),
   (match (wip_match_opcode G_INTRINSIC): $root,
   [{ return matchExtractConcat(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
-  (apply [{ applyExtractConcat(*${root}, MRI, B, ${matchinfo}); }])
+  (apply [{ applyExtractConcat(*${root}, MRI, B, ${matchinfo}, Observer); }])
 >;
 
 def combine_unmerge_concat_matchdata: GIDefMatchData<"std::pair<MachineInstr *, unsigned>">;
@@ -336,7 +336,7 @@ def combine_unmerge_concat : GICombineRule<
   (defs root:$root, combine_unmerge_concat_matchdata:$matchinfo),
   (match (wip_match_opcode G_UNMERGE_VALUES): $root,
   [{ return matchUnmergeConcat(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
-  (apply [{ applyUnmergeConcat(*${root}, MRI, B, ${matchinfo}); }])
+  (apply [{ applyUnmergeConcat(*${root}, MRI, B, ${matchinfo}, Observer); }])
 >;
 
 def combine_upd_to_concat_matchdata: GIDefMatchData<"std::map<unsigned, Register>">;
@@ -344,7 +344,7 @@ def combine_upd_to_concat : GICombineRule<
   (defs root:$root, combine_upd_to_concat_matchdata:$matchinfo),
   (match (wip_match_opcode G_INTRINSIC): $root,
   [{ return matchUpdToConcat(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
-  (apply [{ applyUpdToConcat(*${root}, MRI, B, ${matchinfo}); }])
+  (apply [{ applyUpdToConcat(*${root}, MRI, B, ${matchinfo}, Observer); }])
 >;
 
 def combine_load_store_increment : GICombineRule <
@@ -358,7 +358,7 @@ def combine_add_vector_elt_undef : GICombineRule <
   (defs root:$root),
   (match (wip_match_opcode G_AIE_ADD_VECTOR_ELT_HI):$root,
           [{ return matchAddVecEltUndef(*${root}, MRI, B.getTII()); }]),
-  (apply [{ applyAddVecEltUndef(*${root}, MRI, B); }] )
+  (apply [{ applyAddVecEltUndef(*${root}, MRI, B, Observer); }] )
 >;
 
 def combine_load_store_split_matchdata: GIDefMatchData<"unsigned">;
@@ -366,7 +366,7 @@ def combine_load_store_split : GICombineRule<
   (defs root:$root, combine_load_store_split_matchdata:$matchinfo),
   (match (wip_match_opcode G_LOAD, G_STORE): $root,
   [{ return matchLoadStoreSplit(cast<GLoadStore>(*${root}), MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
-  (apply [{ applyLoadStoreSplit(cast<GLoadStore>(*${root}), MRI, B, ${matchinfo}); }])
+  (apply [{ applyLoadStoreSplit(cast<GLoadStore>(*${root}), MRI, B, ${matchinfo}, Observer); }])
 >;
 
 def combine_offset_load_store_ptradd_matchdata: GIDefMatchData<"std::pair<Register, int64_t>">;
@@ -374,7 +374,7 @@ def combine_offset_load_store_ptradd : GICombineRule<
   (defs root:$root, combine_offset_load_store_ptradd_matchdata:$matchinfo),
   (match (wip_match_opcode G_AIE_OFFSET_LOAD, G_AIE_OFFSET_STORE): $root,
   [{ return matchOffsetLoadStorePtrAdd(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
-  (apply [{ applyOffsetLoadStorePtrAdd(*${root}, MRI, B, ${matchinfo}); }])
+  (apply [{ applyOffsetLoadStorePtrAdd(*${root}, MRI, B, ${matchinfo}, Observer); }])
 >;
 
 def combine_offset_load_store_share_ptradd_matchdata: GIDefMatchData<"Register">;
@@ -382,7 +382,7 @@ def combine_offset_load_store_share_ptradd : GICombineRule<
   (defs root:$root, combine_offset_load_store_share_ptradd_matchdata:$matchinfo),
   (match (wip_match_opcode G_AIE_OFFSET_LOAD, G_AIE_OFFSET_STORE): $root,
   [{ return matchOffsetLoadStoreSharePtrAdd(*${root}, MRI, Helper, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
-  (apply [{ applyOffsetLoadStoreSharePtrAdd(*${root}, MRI, B, ${matchinfo}); }])
+  (apply [{ applyOffsetLoadStoreSharePtrAdd(*${root}, MRI, B, ${matchinfo}, Observer); }])
 >;
 
 

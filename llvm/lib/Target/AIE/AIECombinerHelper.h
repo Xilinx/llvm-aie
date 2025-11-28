@@ -120,7 +120,7 @@ bool matchAddVecEltUndef(MachineInstr &MI, MachineRegisterInfo &MRI,
                          const TargetInstrInfo &TII);
 /// Combine G_AIE_ADD_VECTOR_ELT_HI with COPY
 void applyAddVecEltUndef(MachineInstr &MI, MachineRegisterInfo &MRI,
-                         MachineIRBuilder &B);
+                         MachineIRBuilder &B, GISelChangeObserver &Observer);
 /// combine G_GLOBAL_VALUE with G_CONSTANT and store in \a MatchData
 /// \return true if it is possible to combine
 void applyGlobalValOffset(MachineInstr &MI, MachineRegisterInfo &MRI,
@@ -160,20 +160,23 @@ bool matchExtractVecEltAndExt(MachineInstr &MI, MachineRegisterInfo &MRI,
                               std::pair<MachineInstr *, bool> &MatchInfo);
 void applyExtractVecEltAndExt(MachineInstr &MI, MachineRegisterInfo &MRI,
                               MachineIRBuilder &B,
-                              std::pair<MachineInstr *, bool> &MatchInfo);
+                              std::pair<MachineInstr *, bool> &MatchInfo,
+                              GISelChangeObserver &Observer);
 
 bool matchSplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                       std::pair<Register, Register> &MatchInfo);
 bool applySplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                       MachineIRBuilder &B,
-                      std::pair<Register, Register> &MatchInfo);
+                      std::pair<Register, Register> &MatchInfo,
+                      GISelChangeObserver &Observer);
 
 bool matchSingleDiffLaneBuildVector(
     MachineInstr &MI, MachineRegisterInfo &MRI,
     AIESingleDiffLaneBuildVectorMatchData &MatchInfo);
 bool applySingleDiffLaneBuildVector(
     MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B,
-    AIESingleDiffLaneBuildVectorMatchData &MatchInfo);
+    AIESingleDiffLaneBuildVectorMatchData &MatchInfo,
+    GISelChangeObserver &Observer);
 
 bool matchSymmetricBuildVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                                GISelChangeObserver &Observer,
@@ -182,7 +185,7 @@ bool matchSymmetricBuildVector(MachineInstr &MI, MachineRegisterInfo &MRI,
 bool matchUnpadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                       const AIEBaseInstrInfo &TII);
 void applyUnpadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
-                      MachineIRBuilder &B);
+                      MachineIRBuilder &B, GISelChangeObserver &Observer);
 
 bool matchPadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                     const AIEBaseInstrInfo &TII, Register &MatchedInputVector);
@@ -190,32 +193,38 @@ bool matchConcatPadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                           const AIEBaseInstrInfo &TII,
                           Register &MatchedInputVector);
 void applyPadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
-                    MachineIRBuilder &B, Register MatchedInputVector);
-bool tryToCombineVectorShiftsByZero(MachineInstr &MI, MachineRegisterInfo &MRI);
+                    MachineIRBuilder &B, Register MatchedInputVector,
+                    GISelChangeObserver &Observer);
+bool tryToCombineVectorShiftsByZero(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                    GISelChangeObserver &Observer);
 
 bool matchExtractConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
                         const AIEBaseInstrInfo &TII, Register &MatchInfo);
 void applyExtractConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
-                        MachineIRBuilder &B, Register &MatchInfo);
+                        MachineIRBuilder &B, Register &MatchInfo,
+                        GISelChangeObserver &Observer);
 
 bool matchUnmergeConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
                         const AIEBaseInstrInfo &TII,
                         std::pair<MachineInstr *, unsigned> &MatchInfo);
 void applyUnmergeConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
                         MachineIRBuilder &B,
-                        std::pair<MachineInstr *, unsigned> &MatchInfo);
+                        std::pair<MachineInstr *, unsigned> &MatchInfo,
+                        GISelChangeObserver &Observer);
 
 bool matchUpdToConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
                       const AIEBaseInstrInfo &TII,
                       std::map<unsigned, Register> &IndexRegMap);
 void applyUpdToConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
                       MachineIRBuilder &B,
-                      std::map<unsigned, Register> &IndexRegMap);
+                      std::map<unsigned, Register> &IndexRegMap,
+                      GISelChangeObserver &Observer);
 
 bool matchLoadStoreSplit(GLoadStore &MI, MachineRegisterInfo &MRI,
                          const AIEBaseInstrInfo &TII, unsigned &MaxMemSize);
 void applyLoadStoreSplit(GLoadStore &MI, MachineRegisterInfo &MRI,
-                         MachineIRBuilder &B, const unsigned MaxMemSize);
+                         MachineIRBuilder &B, const unsigned MaxMemSize,
+                         GISelChangeObserver &Observer);
 
 bool matchOffsetLoadStorePtrAdd(MachineInstr &MI, MachineRegisterInfo &MRI,
                                 const AIEBaseInstrInfo &TII,
@@ -223,7 +232,8 @@ bool matchOffsetLoadStorePtrAdd(MachineInstr &MI, MachineRegisterInfo &MRI,
 
 void applyOffsetLoadStorePtrAdd(MachineInstr &MI, MachineRegisterInfo &MRI,
                                 MachineIRBuilder &B,
-                                const std::pair<Register, int64_t> &RegOffset);
+                                const std::pair<Register, int64_t> &RegOffset,
+                                GISelChangeObserver &Observer);
 
 bool matchOffsetLoadStoreSharePtrAdd(MachineInstr &MI, MachineRegisterInfo &MRI,
                                      CombinerHelper &Helper,
@@ -231,7 +241,8 @@ bool matchOffsetLoadStoreSharePtrAdd(MachineInstr &MI, MachineRegisterInfo &MRI,
                                      Register &PtrAddReg);
 
 void applyOffsetLoadStoreSharePtrAdd(MachineInstr &MI, MachineRegisterInfo &MRI,
-                                     MachineIRBuilder &B, Register &PtrAddReg);
+                                     MachineIRBuilder &B, Register &PtrAddReg,
+                                     GISelChangeObserver &Observer);
 
 bool matchShuffleToExtractSubvec(MachineInstr &MI, MachineRegisterInfo &MRI,
                                  const AIEBaseInstrInfo &TII,
@@ -252,7 +263,7 @@ bool matchShuffleToExtractInsertElt(MachineInstr &MI, MachineRegisterInfo &MRI,
 
 bool matchPairedExtracts(MachineInstr &MI, MachineRegisterInfo &MRI,
                          CombinerHelper &Helper, const TargetInstrInfo &TII,
-                         BuildFnTy &MatchInfo);
+                         GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
 
 bool matchShuffleToExtractInsertEltToBroadcast(MachineInstr &MI,
                                                MachineRegisterInfo &MRI,
