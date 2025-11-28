@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===--------------------------------------------------------------------===//
 //
@@ -165,7 +165,14 @@ bool AIE2PPostLegalizerCustomCombiner::runOnMachineFunction(
   AIE2PPostLegalizerCustomCombinerImpl Impl(MF, CInfo, TPC, *KB, CSEInfo,
                                             AIEGlobalPtrIncResults, RuleConfig,
                                             ST, MDT, LI);
-  return Impl.combineMachineInstrs();
+  bool Changed = Impl.combineMachineInstrs();
+
+  // Now that all combining iterations are complete, it's safe to delete
+  // the instructions that were removed (but not erased) during combining.
+  if (AIEGlobalPtrIncResults)
+    AIEGlobalPtrIncResults->finalizeDeferredDeletes(MF);
+
+  return Changed;
 }
 
 char AIE2PPostLegalizerCustomCombiner::ID = 0;

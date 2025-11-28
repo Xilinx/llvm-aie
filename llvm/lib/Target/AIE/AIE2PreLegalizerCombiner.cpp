@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -382,7 +382,7 @@ bool AIE2PreLegalizerCombinerImpl::tryToCombineIntrinsic(
   switch (IntrinsicID) {
   case Intrinsic::aie2_vshift_I512_I512: {
     return CombineVecShiftByZero &&
-           llvm::tryToCombineVectorShiftsByZero(MI, MRI);
+           llvm::tryToCombineVectorShiftsByZero(MI, MRI, Observer);
   }
   case Intrinsic::aie2_set_I512_I128: {
     return tryToCombineSetExtract(MI);

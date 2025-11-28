@@ -741,7 +741,8 @@ void llvm::applyConcatUnmergePhis(MachineInstr &ConcatI,
       MRI.getVRegDef(*MatchInfo.UnmergeSourceReg)->getParent();
   NewPHI->addOperand(MachineOperand::CreateMBB(UnmergeMBB));
   LLVM_DEBUG(dbgs() << "Created New Instruction " << *NewPHI.getInstr());
-  ConcatI.removeFromParent();
+  Observer.erasingInstr(ConcatI);
+  ConcatI.eraseFromParent();
 }
 
 bool llvm::matchGlobalPtrModOptimizer(MachineInstr &MemI,
@@ -811,7 +812,9 @@ void llvm::applyLdStInc(MachineInstr &MemI, MachineRegisterInfo &MRI,
     if (Helper.dominates(*Instr, *NewInstr))
       continue;
 
+    Observer.changingInstr(*Instr);
     Instr->moveBefore(NewInstr);
+    Observer.changedInstr(*Instr);
     LLVM_DEBUG(dbgs() << "Move Instr before " << *Instr);
   }
 
@@ -827,7 +830,9 @@ void llvm::applyLdStInc(MachineInstr &MemI, MachineRegisterInfo &MRI,
         continue;
 
       LLVM_DEBUG(dbgs() << "Delaying Instr " << *Instr);
+      Observer.changingInstr(*Instr);
       Instr->moveBefore(CombinedInsertionPoint);
+      Observer.changedInstr(*Instr);
     }
   }
 
@@ -866,9 +871,19 @@ void llvm::applyLdStInc(MachineInstr &MemI, MachineRegisterInfo &MRI,
     assert(RemoveMI->getParent() &&
            "RemoveMI was already deleted. This Combiner may have a conflict "
            "with the Combiner that already removed the MachineInstr.");
+    // Notify observer, then remove from BB, then defer deletion.
+    // We defer actual deallocation until end of combining pass because
+    // later combiners may reference this instruction via the remapping
+    // mechanism (createMapping/getMappedInstr).
+    Observer.erasingInstr(*RemoveMI);
     RemoveMI->removeFromParent();
+    GlobalCombinerPtr->deferDelete(RemoveMI);
   }
+
+  // Notify observer, remove from BB, then defer deletion for root instruction.
+  Observer.erasingInstr(MemI);
   MemI.removeFromParent();
+  GlobalCombinerPtr->deferDelete(&MemI);
 }
 
 // Match all equivalents of these:
@@ -897,10 +912,12 @@ bool llvm::matchAddVecEltUndef(MachineInstr &MI, MachineRegisterInfo &MRI,
 }
 
 void llvm::applyAddVecEltUndef(MachineInstr &MI, MachineRegisterInfo &MRI,
-                               MachineIRBuilder &B) {
+                               MachineIRBuilder &B,
+                               GISelChangeObserver &Observer) {
   B.setDebugLoc(MI.getDebugLoc());
   B.buildCopy(MI.getOperand(0), MI.getOperand(1));
-  MI.removeFromParent();
+  Observer.erasingInstr(MI);
+  MI.eraseFromParent();
 }
 
 // Return the base offset, base offset is decided based on the
@@ -1082,9 +1099,10 @@ bool llvm::matchExtractVecEltAndExt(
   return false;
 }
 
-void llvm::applyExtractVecEltAndExt(
-    MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B,
-    std::pair<MachineInstr *, bool> &MatchInfo) {
+void llvm::applyExtractVecEltAndExt(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                    MachineIRBuilder &B,
+                                    std::pair<MachineInstr *, bool> &MatchInfo,
+                                    GISelChangeObserver &Observer) {
   B.setInstrAndDebugLoc(MI);
   auto [MatchMI, IsSignedExt] = MatchInfo;
   const Register ExtractDstReg = MI.getOperand(0).getReg();
@@ -1112,7 +1130,9 @@ void llvm::applyExtractVecEltAndExt(
     B.buildExtOrTrunc(MatchMI->getOpcode(), ExtendDstReg, Assert32BitDst);
   }
 
+  Observer.erasingInstr(MI);
   MI.eraseFromParent();
+  Observer.erasingInstr(*MatchMI);
   MatchMI->eraseFromParent();
 }
 
@@ -1261,10 +1281,12 @@ static void buildBroadcastVector(MachineIRBuilder &B, MachineRegisterInfo &MRI,
 
 bool llvm::applySplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                             MachineIRBuilder &B,
-                            std::pair<Register, Register> &MatchInfo) {
+                            std::pair<Register, Register> &MatchInfo,
+                            GISelChangeObserver &Observer) {
   B.setInstrAndDebugLoc(MI);
   auto [DstVecReg, SrcReg] = MatchInfo;
   buildBroadcastVector(B, MRI, SrcReg, DstVecReg);
+  Observer.erasingInstr(MI);
   MI.eraseFromParent();
   return true;
 }
@@ -1341,7 +1363,8 @@ bool llvm::matchSingleDiffLaneBuildVector(
 
 bool llvm::applySingleDiffLaneBuildVector(
     MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B,
-    AIESingleDiffLaneBuildVectorMatchData &MatchInfo) {
+    AIESingleDiffLaneBuildVectorMatchData &MatchInfo,
+    GISelChangeObserver &Observer) {
   B.setInstrAndDebugLoc(MI);
   const Register DstVecReg = MatchInfo.DstVecReg;
   const LLT DstVecRegTy = MRI.getType(DstVecReg);
@@ -1353,6 +1376,7 @@ bool llvm::applySingleDiffLaneBuildVector(
       B.buildConstant(S32, MatchInfo.DifferingIndex).getReg(0);
   B.buildInsertVectorElement(DstVecReg, BcstDstReg, MatchInfo.DifferingReg,
                              IdxReg);
+  Observer.erasingInstr(MI);
   MI.eraseFromParent();
   return true;
 }
@@ -1436,12 +1460,14 @@ bool llvm::matchUnpadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
 }
 
 void llvm::applyUnpadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
-                            MachineIRBuilder &B) {
+                            MachineIRBuilder &B,
+                            GISelChangeObserver &Observer) {
   B.setInstrAndDebugLoc(MI);
   const AIEBaseInstrInfo &AIETII = (const AIEBaseInstrInfo &)B.getTII();
   Register DstReg = MI.getOperand(0).getReg();
   Register SrcReg = MI.getOperand(MI.getNumDefs()).getReg();
   B.buildInstr(AIETII.getGenericUnpadVectorOpcode(), {DstReg}, {SrcReg});
+  Observer.erasingInstr(MI);
   MI.eraseFromParent();
 }
 
@@ -1513,12 +1539,14 @@ bool llvm::matchConcatPadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
 }
 
 void llvm::applyPadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
-                          MachineIRBuilder &B, Register MatchedInputVector) {
+                          MachineIRBuilder &B, Register MatchedInputVector,
+                          GISelChangeObserver &Observer) {
   B.setInstrAndDebugLoc(MI);
   const AIEBaseInstrInfo &AIETII = (const AIEBaseInstrInfo &)B.getTII();
   Register DstReg = MI.getOperand(0).getReg();
   B.buildInstr(AIETII.getGenericPadVectorOpcode(), {DstReg},
                {MatchedInputVector});
+  Observer.erasingInstr(MI);
   MI.eraseFromParent();
 }
 
@@ -1570,12 +1598,14 @@ bool llvm::matchExtractConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
 }
 
 void llvm::applyExtractConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
-                              MachineIRBuilder &B, Register &MatchInfo) {
+                              MachineIRBuilder &B, Register &MatchInfo,
+                              GISelChangeObserver &Observer) {
   B.setInstrAndDebugLoc(MI);
   Register DstReg = MI.getOperand(0).getReg();
   Register SrcReg = MatchInfo;
 
   B.buildCopy(DstReg, SrcReg);
+  Observer.erasingInstr(MI);
   MI.eraseFromParent();
 }
 
@@ -1611,7 +1641,8 @@ bool llvm::matchUnmergeConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
 
 void llvm::applyUnmergeConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
                               MachineIRBuilder &B,
-                              std::pair<MachineInstr *, unsigned> &MatchInfo) {
+                              std::pair<MachineInstr *, unsigned> &MatchInfo,
+                              GISelChangeObserver &Observer) {
   B.setInstrAndDebugLoc(MI);
   auto [ConcatMI, Offset] = MatchInfo;
 
@@ -1621,6 +1652,7 @@ void llvm::applyUnmergeConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
     B.buildCopy(DstReg, SrcReg);
   }
 
+  Observer.erasingInstr(MI);
   MI.eraseFromParent();
 }
 
@@ -1708,7 +1740,8 @@ MachineInstr &findClosestToUseInsertPoint(MachineInstr &MI,
 
 void llvm::applyUpdToConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
                             MachineIRBuilder &B,
-                            std::map<unsigned, Register> &IndexRegMap) {
+                            std::map<unsigned, Register> &IndexRegMap,
+                            GISelChangeObserver &Observer) {
   B.setDebugLoc(MI.getDebugLoc());
   B.setInstr(findClosestToUseInsertPoint(MI, MRI));
 
@@ -1719,6 +1752,7 @@ void llvm::applyUpdToConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
 
   B.buildConcatVectors(MI.getOperand(0).getReg(), SrcRegs);
 
+  Observer.erasingInstr(MI);
   MI.eraseFromParent();
 }
 
@@ -1750,7 +1784,8 @@ bool llvm::matchLoadStoreSplit(GLoadStore &MI, MachineRegisterInfo &MRI,
 }
 
 void llvm::applyLoadStoreSplit(GLoadStore &MI, MachineRegisterInfo &MRI,
-                               MachineIRBuilder &B, const unsigned MaxMemSize) {
+                               MachineIRBuilder &B, const unsigned MaxMemSize,
+                               GISelChangeObserver &Observer) {
 
   assert(MaxMemSize && "MaxMemSize should be specified!");
   B.setInstrAndDebugLoc(MI);
@@ -1790,6 +1825,7 @@ void llvm::applyLoadStoreSplit(GLoadStore &MI, MachineRegisterInfo &MRI,
     B.buildConcatVectors(ValReg, NarrowRegs);
   }
 
+  Observer.erasingInstr(MI);
   MI.eraseFromParent();
 }
 
@@ -1835,14 +1871,17 @@ bool llvm::matchOffsetLoadStorePtrAdd(MachineInstr &MI,
 
 void llvm::applyOffsetLoadStorePtrAdd(
     MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B,
-    const std::pair<Register, int64_t> &RegOffset) {
+    const std::pair<Register, int64_t> &RegOffset,
+    GISelChangeObserver &Observer) {
   B.setInstrAndDebugLoc(MI);
 
   Register NewOffsetReg =
       B.buildConstant(LLT::scalar(20), RegOffset.second).getReg(0);
 
+  Observer.changingInstr(MI);
   MI.getOperand(1).setReg(RegOffset.first);
   MI.getOperand(2).setReg(NewOffsetReg);
+  Observer.changedInstr(MI);
 }
 
 /// Match something like this:
@@ -1906,12 +1945,15 @@ bool llvm::matchOffsetLoadStoreSharePtrAdd(MachineInstr &MI,
 void llvm::applyOffsetLoadStoreSharePtrAdd(MachineInstr &MI,
                                            MachineRegisterInfo &MRI,
                                            MachineIRBuilder &B,
-                                           Register &PtrAddReg) {
+                                           Register &PtrAddReg,
+                                           GISelChangeObserver &Observer) {
 
   Register NewOffsetReg = B.buildConstant(LLT::scalar(20), 0).getReg(0);
 
+  Observer.changingInstr(MI);
   MI.getOperand(1).setReg(PtrAddReg);
   MI.getOperand(2).setReg(NewOffsetReg);
+  Observer.changedInstr(MI);
 }
 
 static bool isPowerOfTwoOrZero(unsigned Height) {
@@ -1935,7 +1977,8 @@ static bool isPowerOfTwoOrZero(unsigned Height) {
 ///        %1:_(<16 x s32>), %2:_(s32), %2:_(s32)
 /// To :   3%:_(<16 x s32>) = COPY %X
 bool llvm::tryToCombineVectorShiftsByZero(MachineInstr &MI,
-                                          MachineRegisterInfo &MRI) {
+                                          MachineRegisterInfo &MRI,
+                                          GISelChangeObserver &Observer) {
 
   const Register DstReg = MI.getOperand(0).getReg();
   const Register SrcReg = MI.getOperand(2).getReg();
@@ -1952,6 +1995,7 @@ bool llvm::tryToCombineVectorShiftsByZero(MachineInstr &MI,
 
   MachineIRBuilder MIRBuilder(MI);
   MIRBuilder.buildCopy(DstReg, SrcReg);
+  Observer.erasingInstr(MI);
   MI.eraseFromParent();
 
   return true;
@@ -3069,6 +3113,7 @@ bool llvm::matchShuffleBcstToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
 bool llvm::matchPairedExtracts(MachineInstr &MI, MachineRegisterInfo &MRI,
                                CombinerHelper &Helper,
                                const TargetInstrInfo &TII,
+                               GISelChangeObserver &Observer,
                                BuildFnTy &MatchInfo) {
   assert(MI.getOpcode() == TargetOpcode::G_EXTRACT_VECTOR_ELT);
   const AIEBaseInstrInfo &AIETII = (const AIEBaseInstrInfo &)TII;
@@ -3129,7 +3174,7 @@ bool llvm::matchPairedExtracts(MachineInstr &MI, MachineRegisterInfo &MRI,
   if (!NextExtractMI)
     return false;
 
-  MatchInfo = [=, &MRI](MachineIRBuilder &B) {
+  MatchInfo = [=, &MRI, &Observer](MachineIRBuilder &B) {
     const Register NewExtendedDstReg = MRI.createGenericVirtualRegister(S64);
     const Register NewIdxReg = B.buildConstant(S32, *IndexCst / 2).getReg(0);
 
@@ -3142,7 +3187,9 @@ bool llvm::matchPairedExtracts(MachineInstr &MI, MachineRegisterInfo &MRI,
     // so DCE will remove it. Another practical effect is, if we don't do
     // this, we will have a SSA violation because of the last buildCopy.
     const Register NewDeadReg = MRI.cloneVirtualRegister(NextDstReg);
+    Observer.changingInstr(*NextExtractMI);
     NextExtractMI->getOperand(0).setReg(NewDeadReg);
+    Observer.changedInstr(*NextExtractMI);
 
     B.buildExtractVectorElement(NewExtendedDstReg, CastedVecReg, NewIdxReg);
     auto Split = B.buildUnmerge(S32, NewExtendedDstReg);
@@ -3305,8 +3352,7 @@ static void retypePhiNode(MachineInstr &Phi, bool IsSigned, LLT NewType,
   MachineBasicBlock::iterator InsertPt = MBB->getFirstNonPHI();
   B.setInsertPt(*MBB, InsertPt);
   // Change the output.
-  Observer.createdInstr(
-      *B.buildInstr(ChangeDefOpcode).addDef(DefReg).addUse(NewDefReg));
+  B.buildInstr(ChangeDefOpcode).addDef(DefReg).addUse(NewDefReg);
   Observer.changingInstr(Phi);
   Phi.getOperand(0).setReg(NewDefReg);
   Observer.changedInstr(Phi);
@@ -3340,8 +3386,7 @@ static void retypePhiNode(MachineInstr &Phi, bool IsSigned, LLT NewType,
 
     if (!NewSrcReg) {
       NewSrcReg = MRI.createGenericVirtualRegister(NewType);
-      Observer.createdInstr(
-          *B.buildInstr(ChangeUseOpcode).addDef(NewSrcReg).addUse(SrcReg));
+      B.buildInstr(ChangeUseOpcode).addDef(NewSrcReg).addUse(SrcReg);
     }
 
     Observer.changingInstr(Phi);
@@ -3443,6 +3488,7 @@ bool llvm::matchNarrowTruncConstant(MachineInstr &MI, MachineRegisterInfo &MRI,
     Observer.changingAllUsesOfReg(MRI, FromReg);
     MRI.replaceRegWith(FromReg, NewConstant->getOperand(0).getReg());
     Observer.finishedChangingAllUsesOfReg();
+    Observer.erasingInstr(MI);
     MI.eraseFromParent();
   };
 
@@ -3481,7 +3527,7 @@ bool llvm::matchNarrowTruncLoad(MachineInstr &MI, MachineRegisterInfo &MRI,
     // Build Zext after the load, not before.
     MachineBasicBlock &MBB = *MI.getParent();
     B.setInsertPt(MBB, MI.getNextNode() ? MI.getNextNode() : MBB.end());
-    Observer.createdInstr(*B.buildZExt(DstReg, NewDstReg));
+    B.buildZExt(DstReg, NewDstReg);
   };
 
   return true;
@@ -3512,6 +3558,7 @@ bool llvm::matchNarrowZext(MachineInstr &MI, MachineRegisterInfo &MRI,
       Observer.changingInstr(DstMI);
       changeLoadStoreDataRegister(DstMI, MI.getOperand(1).getReg(), MRI);
       Observer.changedInstr(DstMI);
+      Observer.erasingInstr(MI);
       MI.eraseFromParent();
     };
     return true;
@@ -3681,7 +3728,7 @@ bool llvm::matchBitcastUnmerge(MachineInstr &Unmerge, MachineRegisterInfo &MRI,
       OrigDef.setReg(DefReg);
       Observer.changedInstr(Unmerge);
 
-      Observer.createdInstr(*B.buildBitcast(OrigDefReg, DefReg));
+      B.buildBitcast(OrigDefReg, DefReg);
     }
   };
 
@@ -3999,10 +4046,10 @@ bool llvm::matchPeelMemset(MachineInstr &MI, MachineRegisterInfo &MRI,
       Register NewPtrReg = MRI.cloneVirtualRegister(PtrReg);
       Register OffsetReg =
           B.buildConstant(LLT::scalar(20), CurrentOffset).getReg(0);
-      Observer.createdInstr(*B.buildInstr(TargetOpcode::G_PTR_ADD)
-                                 .addDef(NewPtrReg)
-                                 .addReg(PtrReg)
-                                 .addReg(OffsetReg));
+      B.buildInstr(TargetOpcode::G_PTR_ADD)
+          .addDef(NewPtrReg)
+          .addReg(PtrReg)
+          .addReg(OffsetReg);
       return NewPtrReg;
     };
 
@@ -4039,6 +4086,7 @@ bool llvm::matchPeelMemset(MachineInstr &MI, MachineRegisterInfo &MRI,
 
     // No bytes left to memset.
     if (NewSize == 0) {
+      Observer.erasingInstr(MI);
       MI.eraseFromParent();
       return;
     }
@@ -4047,11 +4095,13 @@ bool llvm::matchPeelMemset(MachineInstr &MI, MachineRegisterInfo &MRI,
     assert(matchAlignment<4>(MemsetOffset) && "Memset still unaligned?");
     // Now, what remains is aligned, we just need to fix Offset, Size and MMO.
     MachineMemOperand *NewMMOMemSet = BuildMMO(MMO->getSize(), Align(4));
+    Observer.changingInstr(MI);
     MI.dropMemRefs(MF); // Safe to drop the MMO now.
     MI.addMemOperand(MF, NewMMOMemSet);
     MI.getOperand(2).setReg(
         B.buildConstant(LLT::scalar(20), NewSize).getReg(0));
     MI.getOperand(0).setReg(BuildPADD(MemsetOffset));
+    Observer.changedInstr(MI);
   };
 
   return true;
@@ -4287,7 +4337,7 @@ bool llvm::matchExtractVecEltAssertBcst(MachineInstr &MI,
 
     // Remove G_ASSERT_[S/Z]EXT
     Observer.erasingInstr(AssertExt);
-    AssertExt.removeFromParent();
+    AssertExt.eraseFromParent();
   };
 
   return true;
