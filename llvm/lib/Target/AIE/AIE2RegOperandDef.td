@@ -7,36 +7,32 @@
 // (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
-class AIE2RegisterOperand<RegisterClass c> : RegisterOperand<c> {
-  let EncoderMethod = "get" # c # OpValue;
-  let hasCompleteDecoder = false;
-}
- def OP_mDm : AIE2RegisterOperand<mDm>;
+ def OP_mDm : AIEBaseRegisterOperand<mDm>;
  def OP_mMvSclDst_and_eR : RegisterOperand<eR> {
   let EncoderMethod = "getmMvSclDstOpValue";
  }
- def OP_mAluCg : AIE2RegisterOperand<mAluCg>;
- def OP_mMvSclDst : AIE2RegisterOperand<mMvSclDst>;
- def OP_mMvSclDstCg : AIE2RegisterOperand<mMvSclDstCg>;
- def OP_mMvSclSrc : AIE2RegisterOperand<mMvSclSrc>;
- def OP_mLdaScl : AIE2RegisterOperand<mLdaScl>;
- def OP_mSclSt : AIE2RegisterOperand<mSclSt>;
- def OP_mSclMS : AIE2RegisterOperand<mSclMS>;
- def OP_mLdaCg : AIE2RegisterOperand<mLdaCg>;
- def OP_mWm_1  : AIE2RegisterOperand<mWm_1>;
+ def OP_mAluCg : AIEBaseRegisterOperand<mAluCg>;
+ def OP_mMvSclDst : AIEBaseRegisterOperand<mMvSclDst>;
+ def OP_mMvSclDstCg : AIEBaseRegisterOperand<mMvSclDstCg>;
+ def OP_mMvSclSrc : AIEBaseRegisterOperand<mMvSclSrc>;
+ def OP_mLdaScl : AIEBaseRegisterOperand<mLdaScl>;
+ def OP_mSclSt : AIEBaseRegisterOperand<mSclSt>;
+ def OP_mSclMS : AIEBaseRegisterOperand<mSclMS>;
+ def OP_mLdaCg : AIEBaseRegisterOperand<mLdaCg>;
+ def OP_mWm_1  : AIEBaseRegisterOperand<mWm_1>;
 
  // VMOV Operands
- def OP_mMvAMWQSrc : AIE2RegisterOperand<mMvAMWQSrc>;
- def OP_mMvAMWQDst : AIE2RegisterOperand<mMvAMWQDst>;
- def OP_mMvBMXSrc : AIE2RegisterOperand<mMvBMXSrc>;
- def OP_mMvBMXDst : AIE2RegisterOperand<mMvBMXDst>;
- def OP_mMcdSrc : AIE2RegisterOperand<mMvBMXDst>;
- def OP_mScdDst : AIE2RegisterOperand<mMvBMXDst>;
+ def OP_mMvAMWQSrc : AIEBaseRegisterOperand<mMvAMWQSrc>;
+ def OP_mMvAMWQDst : AIEBaseRegisterOperand<mMvAMWQDst>;
+ def OP_mMvBMXSrc : AIEBaseRegisterOperand<mMvBMXSrc>;
+ def OP_mMvBMXDst : AIEBaseRegisterOperand<mMvBMXDst>;
+ def OP_mMcdSrc : AIEBaseRegisterOperand<mMvBMXDst>;
+ def OP_mScdDst : AIEBaseRegisterOperand<mMvBMXDst>;
 
  // VSHUFFLE Operands
- def OP_mShflDst : AIE2RegisterOperand<mShflDst>;
+ def OP_mShflDst : AIEBaseRegisterOperand<mShflDst>;
 
- def OP_mRS4m : AIE2RegisterOperand<eRS4>;
+ def OP_mRS4m : AIEBaseRegisterOperand<eRS4>;
 
 // VLDB.SPARSE Operands
-def OP_mQXHLb : AIE2RegisterOperand<mQXHLb>;
+def OP_mQXHLb : AIEBaseRegisterOperand<mQXHLb>;
