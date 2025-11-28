@@ -27,7 +27,7 @@ class GICmp;
 
 class AIELegalizerHelper {
   const AIEBaseSubtarget &ST;
-
+  const LLT S16 = LLT::scalar(16);
   const LLT S32 = LLT::scalar(32);
   const LLT V2S16 = LLT::fixed_vector(2, 16);
   const LLT V2S32 = LLT::fixed_vector(2, 32);

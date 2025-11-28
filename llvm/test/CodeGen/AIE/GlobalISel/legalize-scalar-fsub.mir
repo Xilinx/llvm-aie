@@ -26,12 +26,16 @@ body: |
     ; AIE2-NEXT: [[AIE_INSERT_VECTOR_ELT:%[0-9]+]]:_(<16 x s32>) = G_AIE_INSERT_VECTOR_ELT [[DEF]], [[SHL]](s32), [[C1]](s32)
     ; AIE2-NEXT: [[AIE_INSERT_VECTOR_ELT1:%[0-9]+]]:_(<16 x s32>) = G_AIE_INSERT_VECTOR_ELT [[DEF]], [[SHL1]](s32), [[C1]](s32)
     ; AIE2-NEXT: [[FSUB:%[0-9]+]]:_(<16 x s32>) = G_FSUB [[AIE_INSERT_VECTOR_ELT]], [[AIE_INSERT_VECTOR_ELT1]]
-    ; AIE2-NEXT: [[BITCAST:%[0-9]+]]:_(<8 x s64>) = G_BITCAST [[FSUB]](<16 x s32>)
+    ; AIE2-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[FSUB]](<16 x s32>), [[C1]](s32)
+    ; AIE2-NEXT: [[COPY2:%[0-9]+]]:_(<16 x s32>) = COPY [[DEF]](<16 x s32>)
+    ; AIE2-NEXT: [[COPY3:%[0-9]+]]:_(s32) = COPY [[C1]](s32)
+    ; AIE2-NEXT: [[AIE_INSERT_VECTOR_ELT2:%[0-9]+]]:_(<16 x s32>) = G_AIE_INSERT_VECTOR_ELT [[COPY2]], [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s32), [[COPY3]](s32)
+    ; AIE2-NEXT: [[BITCAST:%[0-9]+]]:_(<8 x s64>) = G_BITCAST [[AIE_INSERT_VECTOR_ELT2]](<16 x s32>)
     ; AIE2-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), [[BITCAST]](<8 x s64>)
     ; AIE2-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s16>) = G_IMPLICIT_DEF
     ; AIE2-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[INT]](<16 x s16>), [[DEF1]](<16 x s16>)
-    ; AIE2-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS]](<32 x s16>), [[C1]](s32)
-    ; AIE2-NEXT: [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[AIE_SEXT_EXTRACT_VECTOR_ELT]], 16
+    ; AIE2-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT1:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS]](<32 x s16>), [[COPY3]](s32)
+    ; AIE2-NEXT: [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[AIE_SEXT_EXTRACT_VECTOR_ELT1]], 16
     ; AIE2-NEXT: $r0 = COPY [[ASSERT_SEXT]](s32)
     ; AIE2-NEXT: PseudoRET implicit $lr, implicit $r0
     ;
@@ -57,9 +61,16 @@ body: |
     ; AIE2P-NEXT: [[CONCAT_VECTORS5:%[0-9]+]]:_(<64 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS3]](<32 x s32>), [[CONCAT_VECTORS4]](<32 x s32>)
     ; AIE2P-NEXT: [[FSUB:%[0-9]+]]:_(<64 x s32>) = G_FSUB [[CONCAT_VECTORS2]], [[CONCAT_VECTORS5]]
     ; AIE2P-NEXT: [[UV:%[0-9]+]]:_(<32 x s32>), [[UV1:%[0-9]+]]:_(<32 x s32>) = G_UNMERGE_VALUES [[FSUB]](<64 x s32>)
-    ; AIE2P-NEXT: [[INT:%[0-9]+]]:_(<32 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.v32accfloat.to.v32bf16), [[UV]](<32 x s32>)
-    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[INT]](<32 x s16>), [[C1]](s32)
-    ; AIE2P-NEXT: [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[AIE_SEXT_EXTRACT_VECTOR_ELT]], 16
+    ; AIE2P-NEXT: [[UV2:%[0-9]+]]:_(<16 x s32>), [[UV3:%[0-9]+]]:_(<16 x s32>) = G_UNMERGE_VALUES [[UV]](<32 x s32>)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<16 x s32>), [[C1]](s32)
+    ; AIE2P-NEXT: [[COPY4:%[0-9]+]]:_(<16 x s32>) = COPY [[DEF]](<16 x s32>)
+    ; AIE2P-NEXT: [[COPY5:%[0-9]+]]:_(s32) = COPY [[C1]](s32)
+    ; AIE2P-NEXT: [[AIE_INSERT_VECTOR_ELT2:%[0-9]+]]:_(<16 x s32>) = G_AIE_INSERT_VECTOR_ELT [[COPY4]], [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s32), [[COPY5]](s32)
+    ; AIE2P-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.v16accfloat.to.v16bf16), [[AIE_INSERT_VECTOR_ELT2]](<16 x s32>)
+    ; AIE2P-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s16>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[CONCAT_VECTORS6:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[INT]](<16 x s16>), [[DEF1]](<16 x s16>)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT1:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS6]](<32 x s16>), [[COPY5]](s32)
+    ; AIE2P-NEXT: [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[AIE_SEXT_EXTRACT_VECTOR_ELT1]], 16
     ; AIE2P-NEXT: $r0 = COPY [[ASSERT_SEXT]](s32)
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit $r0
     %0:_(s32) = COPY $r1
