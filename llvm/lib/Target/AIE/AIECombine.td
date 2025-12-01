@@ -368,6 +368,13 @@ def combine_insert_extract_vector_elt_to_copy : GICombineRule<
   (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])
 >;
 
+def combine_broadcast_extract_to_copy : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_AIE_BROADCAST_VECTOR): $root,
+  [{ return matchBroadcastExtractToCopy(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])
+>;
+
 def combine_load_store_split_matchdata: GIDefMatchData<"unsigned">;
 def combine_load_store_split : GICombineRule<
   (defs root:$root, combine_load_store_split_matchdata:$matchinfo),
@@ -402,7 +409,8 @@ def combine_global_load_store_increment : GICombineRule <
 
 
 def AIE2PostLegalizerCustomCombiner
-    : GICombiner<"AIE2PostLegalizerCustomCombinerImpl", [ combine_global_load_store_increment,
+    : GICombiner<"AIE2PostLegalizerCustomCombinerImpl", [ combine_broadcast_extract_to_copy,
+                                                          combine_global_load_store_increment,
                                                           combine_load_store_split,
                                                           ptr_add_immed_chain,
                                                           combine_load_store_increment,
@@ -418,6 +426,7 @@ def AIE2PostLegalizerCustomCombiner
 
 def AIE2PPostLegalizerCustomCombiner
     : GICombiner<"AIE2PPostLegalizerCustomCombinerImpl", [  
+                                                            combine_broadcast_extract_to_copy,
                                                             combine_extract_vector_assert_combine,
                                                             combine_global_load_store_increment,
                                                             combine_load_store_increment,

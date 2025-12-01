@@ -332,6 +332,10 @@ bool matchInsertExtractVectorEltToCopy(MachineInstr &MI,
                                        const AIEBaseInstrInfo &TII,
                                        BuildFnTy &MatchInfo);
 
+bool matchBroadcastExtractToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                 const AIEBaseInstrInfo &TII,
+                                 BuildFnTy &MatchInfo);
+
 } // namespace llvm
 
 #endif
