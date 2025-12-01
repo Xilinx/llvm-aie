@@ -78,6 +78,81 @@ bool isGenericExtractOpcode(unsigned Opc, const AIEBaseInstrInfo &TII) {
   return Opc == ExtractZextOpc;
 }
 
+/// We conservatively implement only known cases.
+bool mayMIShiftElements(const MachineInstr *MI) {
+  switch (MI->getOpcode()) {
+  case TargetOpcode::G_FMUL:
+  case TargetOpcode::G_FADD:
+  case TargetOpcode::G_FSUB:
+    return false;
+  case TargetOpcode::G_INTRINSIC:
+  case TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS: {
+    switch (cast<GIntrinsic>(MI)->getIntrinsicID()) {
+    case Intrinsic::aie2_v16accfloat_to_v16bf16:
+    case Intrinsic::aie2p_v16accfloat_to_v16bf16:
+    case Intrinsic::aie2p_v32accfloat_to_v32bf16:
+    case Intrinsic::aie2p_I512_I512_ACC1024_bf_mul_conf:
+      return false;
+    }
+  }
+  default:
+    return true;
+  }
+}
+
+/// Verify that all uses of a broadcast vector through a chain of operations
+/// only extract from position 0. The chain may include G_CONCAT_VECTORS,
+/// G_UNMERGE_VALUES, and vector operations.
+/// \param Reg The register to verify uses for
+/// \param MRI Machine register info
+/// \param TII Target instruction info
+/// \return true if all uses only extract position 0
+bool verifyBroadcastUsesOnlyExtractZero(Register Reg, MachineRegisterInfo &MRI,
+                                        const AIEBaseInstrInfo &TII) {
+  if (!MRI.hasOneNonDBGUser(Reg))
+    return false;
+
+  MachineInstr *UserMI = &*MRI.use_nodbg_instructions(Reg).begin();
+  unsigned Opcode = UserMI->getOpcode();
+
+  // For concat, Reg should be the first src operand.
+  if (Opcode == TargetOpcode::G_CONCAT_VECTORS) {
+    if (UserMI->getOperand(1).getReg() != Reg)
+      return false;
+    return verifyBroadcastUsesOnlyExtractZero(UserMI->getOperand(0).getReg(),
+                                              MRI, TII);
+    // For unmerge, the useful operand should be the first one,
+    // the other ones, they should be dead.
+  } else if (Opcode == TargetOpcode::G_UNMERGE_VALUES) {
+    unsigned OpCount = 0;
+    for (auto &MO : UserMI->defs()) {
+      Register DefReg = MO.getReg();
+      if (OpCount == 0 && !MRI.hasOneUse(DefReg))
+        return false;
+      else if (OpCount && !MRI.use_empty(DefReg))
+        return false;
+      OpCount++;
+    }
+    return verifyBroadcastUsesOnlyExtractZero(UserMI->getOperand(0).getReg(),
+                                              MRI, TII);
+    // If we extract from zero, we succeed, otherwise we fail.
+  } else if (isGenericExtractOpcode(Opcode, TII)) {
+    const Register UseIdxReg = UserMI->getOperand(2).getReg();
+    auto UseIdx = getIConstantVRegValWithLookThrough(UseIdxReg, MRI);
+    return UseIdx && UseIdx->Value.getZExtValue() == 0;
+    // If we bitcast, we may need other lanes.
+  } else if (Opcode == TargetOpcode::G_BITCAST) {
+    return false;
+  } else {
+    if (mayMIShiftElements(UserMI))
+      return false;
+    return verifyBroadcastUsesOnlyExtractZero(UserMI->getOperand(0).getReg(),
+                                              MRI, TII);
+  }
+
+  return false;
+}
+
 } // namespace
 
 static unsigned getNumMaskUndefs(const ArrayRef<int> &Mask,
@@ -4398,6 +4473,66 @@ bool llvm::matchInsertExtractVectorEltToCopy(MachineInstr &MI,
   // Copy the extract source vector (the real vector) to the insert destination
   MatchInfo = [=](MachineIRBuilder &B) {
     B.buildCopy(InsertDstReg, ExtractSrcVecReg);
+  };
+
+  return true;
+}
+
+/// Match a pattern where a broadcast is fed by an extract from position 0,
+/// and all uses of the broadcast through a chain of operations only extract
+/// from position 0. This allows us to replace the broadcast with a copy of
+/// the original vector.
+///
+/// Pattern:
+/// %200:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %50(<16 x s32>), %3(s32) // pos
+/// 0 %5:_(<16 x s32>) = G_AIE_BROADCAST_VECTOR %200(s32)
+/// ... (chain of concat/unmerge/vector ops)
+/// %2:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %result(<16 x s32>), %3(s32) //
+/// pos 0
+///
+/// Transforms to:
+/// %200:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %50(<16 x s32>), %3(s32)
+/// %5:_(<16 x s32>) = COPY %50(<16 x s32>)  // Copy source vector instead of
+/// broadcast
+/// ... (chain of operations)
+/// %2:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %result(<16 x s32>), %3(s32)
+bool llvm::matchBroadcastExtractToCopy(MachineInstr &MI,
+                                       MachineRegisterInfo &MRI,
+                                       const AIEBaseInstrInfo &TII,
+                                       BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TII.getGenericBroadcastVectorOpcode() &&
+         "Expected G_AIE_BROADCAST_VECTOR");
+
+  // 1. Verify broadcast source is extract from position 0
+  const Register BroadcastSrcReg = MI.getOperand(1).getReg();
+  const MachineInstr *ExtractMI = MRI.getVRegDef(BroadcastSrcReg);
+
+  if (!ExtractMI || !isGenericExtractOpcode(ExtractMI->getOpcode(), TII))
+    return false;
+
+  // Verify extraction is from position 0
+  const Register ExtractIdxReg = ExtractMI->getOperand(2).getReg();
+  auto ExtractIdx = getIConstantVRegValWithLookThrough(ExtractIdxReg, MRI);
+  if (!ExtractIdx || ExtractIdx->Value.getZExtValue() != 0)
+    return false;
+
+  // Get the source vector that was extracted from
+  const Register ExtractSrcVecReg = ExtractMI->getOperand(1).getReg();
+  const LLT ExtractSrcVecTy = MRI.getType(ExtractSrcVecReg);
+  const LLT BroadcastDstTy = MRI.getType(MI.getOperand(0).getReg());
+
+  // Types must match exactly
+  if (ExtractSrcVecTy != BroadcastDstTy)
+    return false;
+
+  // 2. Verify all uses through the chain only extract position 0
+  //    using the helper function with single-use checks
+  const Register BroadcastDstReg = MI.getOperand(0).getReg();
+  if (!verifyBroadcastUsesOnlyExtractZero(BroadcastDstReg, MRI, TII))
+    return false;
+
+  MatchInfo = [ExtractSrcVecReg, BroadcastDstReg](MachineIRBuilder &B) {
+    B.buildCopy(BroadcastDstReg, ExtractSrcVecReg);
   };
 
   return true;
