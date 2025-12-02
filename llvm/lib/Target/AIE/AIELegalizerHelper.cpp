@@ -1340,6 +1340,7 @@ bool AIELegalizerHelper::legalizeG_FPTRUNC(LegalizerHelper &Helper,
 
 bool AIELegalizerHelper::legalizeG_FPEXT(LegalizerHelper &Helper,
                                          MachineInstr &MI) const {
+  const AIEBaseInstrInfo *II = ST.getInstrInfo();
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
   MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
 
@@ -1350,6 +1351,68 @@ bool AIELegalizerHelper::legalizeG_FPEXT(LegalizerHelper &Helper,
   LLT DstTy = MRI.getType(DstReg);
   LLT SrcTy = MRI.getType(SrcReg);
 
+  /* Vectors
+   VDst = G_FPEXT VSrc
+   converts to
+   ZeroVec = G_AIE_BROADCAST_VECTOR VSrc
+   VShuffleLow = G_AIE_SHUFFLE_VECTOR ZeroVec, VSrc, 18
+   VShuffleHigh = G_AIE_SHUFFLE_VECTOR ZeroVec, VSrc, 19
+   VShuffleLow = G_BITCAST VShuffleLow
+   VShuffleHigh = G_BITCAST VShuffleHigh
+   VDst = G_CONCAT_VECTORS VShuffle, VShuffleHigh
+  */
+  if (DstTy.isVector() && SrcTy.isVector()) {
+    // Extract type information
+    auto DstElementType = DstTy.getElementType();
+    auto SrcNumElements = SrcTy.getNumElements();
+    // Create constants for shuffle modes
+    Register Mode18 = MIRBuilder.buildConstant(S32, 18).getReg(0);
+    Register Mode19 = MIRBuilder.buildConstant(S32, 19).getReg(0);
+    Register Zero = MIRBuilder.buildConstant(S32, 0).getReg(0);
+    // Get the instructions
+    const unsigned BroadcastOpc = II->getGenericBroadcastVectorOpcode();
+    const unsigned VShuffleOpc = II->getGenericShuffleVectorOpcode();
+
+    // Step 1: Create a zero vector using broadcast
+    Register ZeroVec =
+        MIRBuilder.buildInstr(BroadcastOpc, {SrcTy}, {Zero}).getReg(0);
+    // Step 2: Create VSHUFFLE for lower 512 bits (mode 18)
+    Register VShuffleLow =
+        MIRBuilder.buildInstr(VShuffleOpc, {SrcTy}, {ZeroVec, SrcReg, Mode18})
+            .getReg(0);
+    // Step 3: Create VSHUFFLE for high 512 bits (mode 19)
+    Register VShuffleHigh =
+        MIRBuilder.buildInstr(VShuffleOpc, {SrcTy}, {ZeroVec, SrcReg, Mode19})
+            .getReg(0);
+    // Step 4: bitcast VShuffleLow and VShuffleHigh
+    // Example: <32xs16> -> <16xs32>
+    LLT CastToNewTy =
+        LLT::vector(ElementCount::getFixed(SrcNumElements / 2), DstElementType);
+    if (CastToNewTy.getSizeInBits() !=
+            MRI.getType(VShuffleLow).getSizeInBits() ||
+        CastToNewTy.getSizeInBits() !=
+            MRI.getType(VShuffleHigh).getSizeInBits()) {
+      llvm::errs()
+          << "Error: Size mismatch in vector bitcast for G_FPEXT. Expected: "
+          << CastToNewTy.getSizeInBits()
+          << " bits, got: " << MRI.getType(VShuffleLow).getSizeInBits()
+          << " and " << MRI.getType(VShuffleHigh).getSizeInBits() << " bits\n";
+      return false;
+    }
+    auto VShuffleLowCast =
+        MIRBuilder.buildCast(CastToNewTy, VShuffleLow).getReg(0);
+    auto VShuffleHighCast =
+        MIRBuilder.buildCast(CastToNewTy, VShuffleHigh).getReg(0);
+    // Step 5: Concatenate the two src vectors into dst vector
+    MIRBuilder.buildConcatVectors(DstReg, {VShuffleLowCast, VShuffleHighCast});
+    // Possibly above line might be wrong, not tested enough.
+    // MIRBuilder.buildConcatVectors(DstReg, {VShuffleHighCast, VShuffleLowCast});
+
+    MI.eraseFromParent();
+    return true;
+  }
+
+  // Scalars
   // We only handle bfloat16 to single precision conversion
   if (DstTy != LLT::scalar(32) || SrcTy != LLT::scalar(16))
     return false;
@@ -1438,6 +1501,12 @@ bool AIELegalizerHelper::legalizeG_FMUL(LegalizerHelper &Helper,
   MI.eraseFromParent();
   return true;
 }
+bool isBF16Vector(const LLT Ty) {
+  return Ty.isVector() && Ty.getScalarSizeInBits() == 16;
+}
+bool isF32Vector(const LLT Ty) {
+  return Ty.isVector() && Ty.getScalarSizeInBits() == 32;
+}
 
 bool AIELegalizerHelper::legalizeG_FADD_G_FSUB(LegalizerHelper &Helper,
                                                MachineInstr &MI) const {
@@ -1447,6 +1516,138 @@ bool AIELegalizerHelper::legalizeG_FADD_G_FSUB(LegalizerHelper &Helper,
   const Register DstReg = MI.getOperand(0).getReg();
   Register SrcLHS = MI.getOperand(1).getReg();
   Register SrcRHS = MI.getOperand(2).getReg();
+  const LLT SrcLHSTy = MRI.getType(SrcLHS);
+  const LLT SrcRHSTy = MRI.getType(SrcRHS);
+
+  // Can be combined with the bf16 vector case
+  if (isF32Vector(SrcLHSTy) && isF32Vector(SrcRHSTy)) {
+    // vector should be of size 32 asssert
+    assert(SrcLHSTy.getNumElements() == 32 && SrcRHSTy.getNumElements() == 32 &&
+           "Expected vector of size 32, type(f32) for inputs of G_FADD/G_FSUB");
+
+    // // Step 1: Convert bf16 vectors to f32 vectors using FPExt
+    const LLT F32VecTy = SrcLHSTy;
+        // LLT::fixed_vector(SrcLHSTy.getNumElements(), LLT::scalar(32));
+    // Register SrcLHSF32 = MRI.createGenericVirtualRegister(F32VecTy);
+    // Register SrcRHSF32 = MRI.createGenericVirtualRegister(F32VecTy);
+    // MIRBuilder.buildFPExt(SrcLHSF32, SrcLHS);
+    // MIRBuilder.buildFPExt(SrcRHSF32, SrcRHS);
+
+    // Step 2: Input is going to be <32 x bf16> pad it to <64 x f32> for AIE2P
+    // as AccV64S32 is legal on AIE2P.
+    if (ST.isAIE2P()) {
+      const Register UndefVec = MIRBuilder.buildUndef(F32VecTy).getReg(0);
+      const Register ConcatLHS = MRI.createGenericVirtualRegister(V64FP32);
+      const Register ConcatRHS = MRI.createGenericVirtualRegister(V64FP32);
+      MIRBuilder.buildConcatVectors(ConcatLHS, {SrcLHS, UndefVec});
+      MIRBuilder.buildConcatVectors(ConcatRHS, {SrcRHS, UndefVec});
+      SrcLHS = ConcatLHS;
+      SrcRHS = ConcatRHS;
+    }
+
+    // Step 3: Perform the floating point operation
+    Register Res = MIRBuilder
+                       .buildInstr(MI.getOpcode(), {MRI.getType(SrcLHS)},
+                                   {SrcLHS, SrcRHS})
+                       .getReg(0);
+
+    // Step 4: Handle accumulator conversion based on target
+    if (ST.isAIE2()) {
+      Res = MIRBuilder.buildBitcast(V8ACC64, Res).getReg(0);
+    } else if (ST.isAIE2P()) {
+      // Unmerge to get 2 vectors of <32xf32> as FADD/FSUB was done on <64xf32>
+      SmallVector<Register, 2> UnmergedRegs;
+      const auto Unmerge = MIRBuilder.buildUnmerge(F32VecTy, Res);
+      getUnmergeResults(UnmergedRegs, *Unmerge);
+      Res = UnmergedRegs[0]; // Take the first <32xf32> vector, other half is
+                             // just zeros.
+    }
+
+    // // Step 5: Convert back to bf16 using the truncation intrinsic
+    // const int VecSize = MRI.getType(Res).getSizeInBits();
+    // const LLT DstLLT = ST.isAIE2P() ? V32BF16 : V16BF16;
+    // Res = MIRBuilder
+    //           .buildIntrinsic(getFpTrunc32ToBF16IntrID(ST, VecSize), {DstLLT},
+    //                           true, false)
+    //           .addUse(Res)
+    //           .getReg(0);
+
+    // // Handle AIE2 padding
+    // if (ST.isAIE2()) {
+    //   Res = emitPadUndefVector(MRI, MIRBuilder, V32BF16, Res);
+    // }
+
+    MIRBuilder.buildCopy(DstReg, Res);
+
+    MI.eraseFromParent();
+    return true;
+  }
+
+  // Handle bf16 vectors code assumes the input is <32 x bf16>, the
+  // LegalizerInfo makes sure that the input is either padded or unmerged to <32
+  // x bf16>.
+  if (isBF16Vector(SrcLHSTy) && isBF16Vector(SrcRHSTy)) {
+    // vector should be of size 32 asssert
+    assert(SrcLHSTy.getNumElements() == 32 && SrcRHSTy.getNumElements() == 32 &&
+           "Expected vector of size 32 for inputs of G_FADD/G_FSUB");
+
+    // Step 1: Convert bf16 vectors to f32 vectors using FPExt
+    const LLT F32VecTy =
+        LLT::fixed_vector(SrcLHSTy.getNumElements(), LLT::scalar(32));
+    Register SrcLHSF32 = MRI.createGenericVirtualRegister(F32VecTy);
+    Register SrcRHSF32 = MRI.createGenericVirtualRegister(F32VecTy);
+    MIRBuilder.buildFPExt(SrcLHSF32, SrcLHS);
+    MIRBuilder.buildFPExt(SrcRHSF32, SrcRHS);
+
+    // Step 2: Input is going to be <32 x bf16> pad it to <64 x f32> for AIE2P
+    // as AccV64S32 is legal on AIE2P.
+    if (ST.isAIE2P()) {
+      const Register UndefVec = MIRBuilder.buildUndef(F32VecTy).getReg(0);
+      const Register ConcatLHS = MRI.createGenericVirtualRegister(V64FP32);
+      const Register ConcatRHS = MRI.createGenericVirtualRegister(V64FP32);
+      MIRBuilder.buildConcatVectors(ConcatLHS, {SrcLHSF32, UndefVec});
+      MIRBuilder.buildConcatVectors(ConcatRHS, {SrcRHSF32, UndefVec});
+      SrcLHSF32 = ConcatLHS;
+      SrcRHSF32 = ConcatRHS;
+    }
+
+    // Step 3: Perform the floating point operation
+    Register Res = MIRBuilder
+                       .buildInstr(MI.getOpcode(), {MRI.getType(SrcLHSF32)},
+                                   {SrcLHSF32, SrcRHSF32})
+                       .getReg(0);
+
+    // Step 4: Handle accumulator conversion based on target
+    if (ST.isAIE2()) {
+      Res = MIRBuilder.buildBitcast(V8ACC64, Res).getReg(0);
+    } else if (ST.isAIE2P()) {
+      // Unmerge to get 2 vectors of <32xf32> as FADD/FSUB was done on <64xf32>
+      SmallVector<Register, 2> UnmergedRegs;
+      const auto Unmerge = MIRBuilder.buildUnmerge(F32VecTy, Res);
+      getUnmergeResults(UnmergedRegs, *Unmerge);
+      Res = UnmergedRegs[0]; // Take the first <32xf32> vector, other half is
+                             // just zeros.
+    }
+
+    // Step 5: Convert back to bf16 using the truncation intrinsic
+    const int VecSize = MRI.getType(Res).getSizeInBits();
+    const LLT DstLLT = ST.isAIE2P() ? V32BF16 : V16BF16;
+    Res = MIRBuilder
+              .buildIntrinsic(getFpTrunc32ToBF16IntrID(ST, VecSize), {DstLLT},
+                              true, false)
+              .addUse(Res)
+              .getReg(0);
+
+    // Handle AIE2 padding
+    if (ST.isAIE2()) {
+      Res = emitPadUndefVector(MRI, MIRBuilder, V32BF16, Res);
+    }
+
+    MIRBuilder.buildCopy(DstReg, Res);
+
+    MI.eraseFromParent();
+    return true;
+  }
 
   assert(MRI.getType(DstReg) == LLT::scalar(16) &&
          "Expected bfloat16 type in custom legalization.");

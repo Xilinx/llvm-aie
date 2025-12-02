@@ -76,6 +76,31 @@ static LegalityPredicate isValidVectorAIEP(const unsigned TypeIdx) {
   };
 }
 
+// `V2 = G_FPEXT V1` on vectors is valid iff:
+// - V1 and V2 are floating-point vectors
+// - V2 is wider than V1 for total vector sizes
+// - Number of elements of both vectors are same
+// - Size of Element of V2 = 2 * Size of Element of V1
+static LegalityPredicate isValidVectorFPEXT(const unsigned TypeIdx_dst,
+                                            const unsigned TypeIdx_src) {
+  return [=](const LegalityQuery &Query) {
+    const LLT DstTy = Query.Types[TypeIdx_dst];
+    const LLT SrcTy = Query.Types[TypeIdx_src];
+    if (DstTy.isVector() && SrcTy.isVector()) {
+      auto DstElementCount = DstTy.getElementCount();
+      auto SrcElementCount = SrcTy.getElementCount();
+      auto DstElementType = DstTy.getElementType();
+      auto SrcElementType = SrcTy.getElementType();
+      auto DstElementSize = DstElementType.getSizeInBits();
+      auto SrcElementSize = SrcElementType.getSizeInBits();
+      return DstTy.getSizeInBits() > SrcTy.getSizeInBits() &&
+             DstElementCount == SrcElementCount &&
+             (DstElementSize == (SrcElementSize * 2));
+    }
+    return false;
+  };
+}
+
 static LegalityPredicate
 negatePredicate(const std::function<bool(const LegalityQuery &)> &Func) {
   return [=](const LegalityQuery &Query) { return !Func(Query); };
@@ -224,6 +249,13 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
   getActionDefinitionsBuilder(G_FPEXT)
       .libcallFor({{S64, S32}})
       .customFor({{S32, S16}})
+      // Add support for vector types
+      // Extend vectors to have at least 512-bits
+      .clampMinNumElements(1, S8, 64)
+      .clampMinNumElements(1, S16, 32)
+      .clampMinNumElements(1, S32, 16)
+      .customIf(isValidVectorFPEXT(0 /* Dst */, 1 /* Src */))
+      // .customFor({{V32S32, V32S16}})
       .narrowScalarFor({{S64, S16}}, llvm::LegalizeMutations::changeTo(0, S32));
 
   getActionDefinitionsBuilder({G_FPTOSI, G_FPTOUI})
@@ -246,7 +278,35 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
 
   getActionDefinitionsBuilder({G_FADD, G_FSUB})
       .legalFor({AccV64S32})
-      .customFor({S16})
+      // Handle custom bf16/f32 case for both scalar and vector types
+      .customFor({S16, V32S16, V32S32})
+      // Convert smaller than <32 x f32/bf16> to legal sizes, doesn't change types
+      .moreElementsIf(
+          [=](const LegalityQuery &Query) {
+            const LLT &Ty = Query.Types[0];
+            return Ty.isVector() &&
+                   (Ty.getScalarSizeInBits() == 32 ||
+                    Ty.getScalarSizeInBits() == 16) &&
+                   Ty.getNumElements() <= 32;
+          },
+          [=](const LegalityQuery &Query) {
+            if (Query.Types[0].getScalarSizeInBits() == 32) {
+              // Note: Can cause slowdown as BUILD_VECTOR adds scalars
+              return std::make_pair(0, LLT::fixed_vector(64, S32));
+            } else {
+              return std::make_pair(0, LLT::fixed_vector(32, S16));
+            }
+          })
+      // Converts <64xbf16> into 2 chunks of <32xbf16>
+      .fewerElementsIf(
+          [=](const LegalityQuery &Query) {
+            const LLT &Ty = Query.Types[0];
+            return Ty.isVector() && (Ty.getScalarSizeInBits() == 16) &&
+                   Ty.getNumElements() == 64;
+          },
+          [=](const LegalityQuery &Query) {
+            return std::make_pair(0, LLT::fixed_vector(32, S16));
+          })
       .libcallFor({S32, S64});
 
   getActionDefinitionsBuilder({G_FDIV, G_FREM})
