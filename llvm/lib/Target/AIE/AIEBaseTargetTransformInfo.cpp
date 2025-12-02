@@ -251,29 +251,3 @@ bool AIETTICommon::isProfitableOuterLSR(const Loop &L) const {
   return ConsiderLSROuterLoops.getNumOccurrences() > 0 ? ConsiderLSROuterLoops
                                                        : true;
 }
-
-unsigned AIETTICommon::getStoreVectorFactor(unsigned VF,
-                                            unsigned StoreSizeInBits,
-                                            unsigned ChainSizeInBytes,
-                                            VectorType *VecTy) const {
-
-  // The cases of interest are 8 and 16-bit only.
-  return (StoreSizeInBits == 8) ? 4 : (StoreSizeInBits == 16) ? 2 : 1;
-}
-
-unsigned AIETTICommon::getLoadVectorFactor(unsigned VF,
-                                           unsigned StoreSizeInBits,
-                                           unsigned ChainSizeInBytes,
-                                           VectorType *VecTy) const {
-  // Block load vectorization, it is costly to extract elements from vectors.
-  return 1;
-}
-
-bool AIETTICommon::isLegalToVectorizeStoreChain(unsigned ChainSizeInBytes,
-                                                Align Alignment,
-                                                unsigned AddrSpace) const {
-  // Start from 4 byte sequences, to reach word stores. Alignment is
-  // considered by default by the pass.
-  // Default return of allowsMisalignedMemoryAccesses is false.
-  return ChainSizeInBytes >= 4;
-}
