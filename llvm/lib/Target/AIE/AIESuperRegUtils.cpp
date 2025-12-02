@@ -108,26 +108,7 @@ void rewriteFullCopy(MachineInstr &CopyMI, LiveIntervals &LIS,
   const std::set<int> CopySubRegs =
       TRI.getSubRegSplit(MRI.getRegClass(DstReg)->getID());
 
-  if (!VRM.hasPhys(DstReg)) {
-    // FIXME: This pass may cause verification failures. The fix should
-    // be in the MachineVerifier. This is a very uncommon case where the
-    // destination register was not allocated yet.
-    // The machine verifier does not properly handle the semantics of:
-    // 1. **Partial register definitions with `undefined`**: When the first
-    // subregister is defined with `undefined`, it doesn't expect subsequent
-    // definitions to implicitly read that lane.
-    // 2. **Lane-based liveness for composite registers**: The verifier expects
-    // a continuous live range for the entire register, but with subregister
-    // definitions, different lanes have different live ranges that are being
-    // built up incrementally.
-    // 3. **Implicit reads in partial definitions**: The verifier doesn't
-    // recognize that `%18.sub_dim_size:ed = COPY ...` implicitly reads the
-    // previously defined `%18.sub_dim_count` lane.
-    CopyMI.getMF()->getProperties().set(
-        MachineFunctionProperties::Property::FailsVerification);
-  }
-
-  MachineInstr *FirstMI = nullptr;
+  unsigned AdditionalFlags = RegState::Undef;
   SmallSet<Register, 8> RegistersToRepair;
   for (int SubRegIdx : CopySubRegs) {
     if ((LiveSrcLanes & TRI.getSubRegIndexLaneMask(SubRegIdx)).none()) {
@@ -139,40 +120,26 @@ void rewriteFullCopy(MachineInstr &CopyMI, LiveIntervals &LIS,
     MachineInstr *PartCopy =
         BuildMI(*CopyMI.getParent(), CopyMI, CopyMI.getDebugLoc(),
                 TII.get(TargetOpcode::COPY))
-            .addReg(DstReg, RegState::Define, SubRegIdx)
+            .addReg(DstReg, RegState::Define | AdditionalFlags, SubRegIdx)
             .addReg(SrcReg, 0, SubRegIdx)
             .getInstr();
+    // Only for the first copy set the undefined flag
+    AdditionalFlags = 0;
 
-    // Only set undefined on the first partial copy. The first copy doesn't read
-    // other lanes, but subsequent copies do read the previously written lanes.
-    // Setting undefined on all copies breaks live interval tracking and causes
-    // machine verifier errors.
-    if (!FirstMI) {
-      PartCopy->getOperand(0).setIsUndef();
-      FirstMI = PartCopy;
-    }
     LLVM_DEBUG(dbgs() << "        to " << *PartCopy);
     LIS.InsertMachineInstrInMaps(*PartCopy);
-    // We need to repair only the Src register. For the Dst register,
-    // we don't need to do anything explicit, because we will replace the
-    // original copy by the first lane copy in LIS. We avoid the explicit repair
-    // of Dst reg because LIS will create a exclusive range for each copy,
-    // because it considers that every sub-lane copy will make the preceding
-    // one dead, what is not true for composite registers.
-    // TODO: investigate why subregister liveness is being ignored by LIS
-    // at this point.
+    // Since we modified Source and Destination registers, we need to repair
+    // both LiveIntervals
     RegistersToRepair.insert(PartCopy->getOperand(1).getReg());
+    RegistersToRepair.insert(PartCopy->getOperand(0).getReg());
   }
 
-  // Replace the original copy by the first one, so we automatically repair
-  // DstReg's LI. This will ensure that the LR will start on first instruction
-  // and will not end because the next instruction's slot index.
-  LIS.ReplaceMachineInstrInMaps(CopyMI, *FirstMI);
+  LLVM_DEBUG(dbgs() << "  Erasing copy at " << CopyIndex << ": " << CopyMI
+                    << "\n");
+  LIS.RemoveMachineInstrFromMaps(CopyMI);
   CopyMI.eraseFromParent();
-  // As we don't handle all registers now (selective LI filter),
-  // We should make sure that all LiveIntervals are correct.
-  // If we don't repair, MI will compose the LIs of some registers,
-  // what is not correct because MI was deleted.
+
+  // Update Liveinterval of all modified Registers
   repairLiveIntervals(RegistersToRepair, VRM, LRM, LIS);
 }
 
@@ -222,7 +189,8 @@ void rewriteSuperReg(Register Reg, std::optional<Register> AssignedPhysReg,
 
   LLVM_DEBUG(dbgs() << "  Splitting range " << LIS.getInterval(Reg) << "\n");
   for (MachineOperand &RegOp : make_early_inc_range(MRI.reg_operands(Reg))) {
-    LLVM_DEBUG(dbgs() << "  Changing " << *RegOp.getParent());
+    LLVM_DEBUG(dbgs() << printReg(RegOp.getReg(), &TRI, 0, &MRI)
+                      << "  Changing " << *RegOp.getParent());
     int SubReg = RegOp.getSubReg();
     assert(SubReg);
     RegOp.setReg(SubRegToVReg[SubReg]);
@@ -232,14 +200,6 @@ void rewriteSuperReg(Register Reg, std::optional<Register> AssignedPhysReg,
     // Now that each sub-lane has its own VReg, the qualifier is invalid.
     if (RegOp.isDef()) {
       RegOp.setIsUndef(false);
-      // Also unset correctly the dead flag if the instruction
-      // is not the dead slot in the live range (the def is still alive).
-      LiveInterval &LI = LIS.getInterval(Reg);
-      MachineInstr *DefMI = RegOp.getParent();
-      SlotIndex Def = LIS.getInstructionIndex(*DefMI);
-      LiveRange::iterator I = LI.FindSegmentContaining(Def);
-      if (I->end != Def.getDeadSlot())
-        RegOp.setIsDead(false);
     }
 
     // Make sure the right reg class is applied, some MIs might use compound
@@ -252,7 +212,6 @@ void rewriteSuperReg(Register Reg, std::optional<Register> AssignedPhysReg,
     LLVM_DEBUG(dbgs() << "        to " << *RegOp.getParent());
   }
 
-  VRM.grow();
   LIS.removeInterval(Reg);
 
   for (auto &[SubRegIdx, VReg] : SubRegToVReg) {
@@ -264,6 +223,8 @@ void rewriteSuperReg(Register Reg, std::optional<Register> AssignedPhysReg,
     SmallVector<LiveInterval *, 4> LIComponents;
     LIS.splitSeparateComponents(SubRegLI, LIComponents);
     LIComponents.push_back(&SubRegLI);
+    // todo: there is a bug in splitSeparateComponents, so we have to manually
+    // grow the VRM (due to abstraction complexity on MRI::Delegate "protocol")
     VRM.grow();
 
     if (!AssignedPhysReg.has_value())
@@ -273,7 +234,7 @@ void rewriteSuperReg(Register Reg, std::optional<Register> AssignedPhysReg,
     for (LiveInterval *LI : LIComponents) {
       LRM.assign(*LI, SubPhysReg);
       VRM.setRequiredPhys(LI->reg(), SubPhysReg);
-      LLVM_DEBUG(dbgs() << "  Assigned " << printReg(LI->reg()) << "\n");
+      LLVM_DEBUG(dbgs() << "  Assigned " << *LI << " \n");
     }
   }
 
