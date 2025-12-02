@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -41,15 +41,6 @@ public:
                                 AssumptionCache &AC, TargetLibraryInfo *LibInfo,
                                 HardwareLoopInfo &HWLoopInfo);
   bool isProfitableOuterLSR(const Loop &L) const;
-
-  unsigned getStoreVectorFactor(unsigned VF, unsigned StoreSizeInBits,
-                                unsigned ChainSizeInBytes,
-                                VectorType *VecTy) const;
-  unsigned getLoadVectorFactor(unsigned VF, unsigned LoadSizeInBits,
-                               unsigned ChainSizeInBytes,
-                               VectorType *VecTy) const;
-  bool isLegalToVectorizeStoreChain(unsigned ChainSizeInBytes, Align Alignment,
-                                    unsigned AddrSpace) const;
 };
 
 } // end namespace llvm
