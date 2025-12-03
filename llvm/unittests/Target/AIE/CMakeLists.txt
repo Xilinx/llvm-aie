@@ -34,6 +34,7 @@ add_llvm_target_unittest(AIETests
   HazardRecognizerTest.cpp
   StaticBitSetTest.cpp
   SlotCountsTest.cpp
+  SlotOccupancyTest.cpp
   SlotStatisticsTest.cpp
   VirtUnrollAliasAnalysisTest.cpp
   )
