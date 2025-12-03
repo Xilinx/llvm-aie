@@ -90,7 +90,6 @@ public:
   /// Actually delete all deferred instructions. Should be called at the end
   /// of the combining pass after all iterations complete.
   void finalizeDeferredDeletes(MachineFunction &MF) {
-    llvm::dbgs() << "Finalizing deferred deletes\n";
     for (MachineInstr *MI : DeferredDeletes) {
       // Instructions have been removed from their BB via removeFromParent().
       // Use MachineFunction::deleteMachineInstr() to deallocate them.
