@@ -7,12 +7,36 @@
 // (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
+#include "../AIESlotStructure.h"
 #include "AIEMCFormats.h"
 
 #undef DEBUG_TYPE
 #define DEBUG_TYPE "mcformats"
 
 namespace llvm {
+
+// Stub implementation of AIESlotStructure for default behavior
+// This will be replaced by concrete implementations in each architecture
+namespace {
+class StubSlotStructure : public AIESlotStructure {
+public:
+  unsigned getNumRealSlots() const override {
+    llvm_unreachable("SlotStructure not implemented for this architecture");
+  }
+
+  SlotBits getMSPComposition(unsigned ClassIdx) const override {
+    llvm_unreachable("SlotStructure not implemented for this architecture");
+  }
+};
+
+static StubSlotStructure DefaultSlotStructure;
+} // anonymous namespace
+
+const AIESlotStructure &AIEBaseMCFormats::getSlotStructure() const {
+  // Default implementation returns stub
+  // Concrete format classes will override this
+  return DefaultSlotStructure;
+}
 
 const MCSlotKind AIEPacketFormat::getSlot(unsigned Idx) const {
   // NOTE: we can't directly retrieve the slot by querying the SlotsMap as the

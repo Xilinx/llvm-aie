@@ -26,6 +26,9 @@
 
 namespace llvm {
 
+// Forward declaration
+class AIESlotStructure;
+
 using SlotBits = uint64_t;
 class MCSlotInfo;
 class MCSlotKind {
@@ -396,7 +399,14 @@ public:
     llvm_unreachable("Target didn't implement getLoadSlotKinds()");
   }
 
-  bool isFormatAvailable(uint64_t SlotSet) const;
+  virtual bool isFormatAvailable(uint64_t SlotSet) const;
+
+  /// Get the slot structure interface for this architecture
+  /// \return Reference to the slot structure providing slot definitions,
+  ///         MSP compositions, and capacity information
+  /// Default implementation returns a stub that will be overridden by
+  /// concrete format classes when slot structure is implemented
+  virtual const AIESlotStructure &getSlotStructure() const;
 
 protected:
   /// Check if the Instruction is indeed into the Tables.
