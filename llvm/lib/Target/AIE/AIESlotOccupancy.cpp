@@ -87,6 +87,52 @@ bool SlotOccupancy::conflict(const SlotOccupancy &Other,
   return !tryMaterializeMSPs(FormatInterface, Combined, RealSlotOccupancy);
 }
 
+namespace {
+
+/// Helper to assign MSP instances to available slots
+/// \tparam AssignmentHandler Functor called for each assignment: (MSPClassIdx,
+/// InstanceIdx, Bit)
+/// \param AvailableSlots Bitmask of slots available for this MSP
+/// \param Count Number of instances to assign
+/// \param MSPClassIdx The MSP class being assigned
+/// \param NewRealSlots Output: updated real slot occupancy
+/// \param Handler Functor to record assignments (optional)
+/// \return true if all instances were successfully assigned
+template <typename AssignmentHandler>
+bool assignMSPInstances(SlotBits AvailableSlots, uint8_t Count,
+                        unsigned MSPClassIdx, SlotBits &NewRealSlots,
+                        AssignmentHandler &&Handler) {
+  SlotBits Available = AvailableSlots;
+  SlotBits BitMask = 1;
+  unsigned Bit = 0;
+
+  for (unsigned Assigned = 0; Assigned < Count; ++Assigned) {
+    if (Available == 0) {
+      // Not enough free slots in the composition - cannot materialize
+      return false;
+    }
+
+    // Find next available slot
+    while (!(Available & BitMask)) {
+      BitMask <<= 1;
+      ++Bit;
+    }
+
+    NewRealSlots |= BitMask;
+    Available &= ~BitMask; // Consume this slot
+
+    // Record assignment if handler provided
+    Handler(MSPClassIdx, Assigned, Bit);
+
+    BitMask <<= 1; // Advance to next bit for next iteration
+    ++Bit;
+  }
+
+  return true;
+}
+
+} // anonymous namespace
+
 bool SlotOccupancy::tryMaterializeMSPs(const AIEBaseMCFormats &FormatInterface,
                                        const SlotOccupancy &RemainingOccupancy,
                                        SlotBits CurrentRealSlots) const {
@@ -116,21 +162,9 @@ bool SlotOccupancy::tryMaterializeMSPs(const AIEBaseMCFormats &FormatInterface,
 
   // Greedily assign the MSP instances to available slots
   SlotBits NewRealSlots = CurrentRealSlots;
-  SlotBits BitMask = 1;
-
-  for (unsigned Assigned = 0; Assigned < Count; ++Assigned) {
-    // Find next available slot
-    while (BitMask != 0 && !(AvailableSlots & BitMask)) {
-      BitMask <<= 1;
-    }
-
-    if (BitMask == 0) {
-      // Not enough free slots in the composition - cannot materialize
-      return false;
-    }
-
-    NewRealSlots |= BitMask;
-    BitMask <<= 1; // Advance to next bit for next iteration
+  if (!assignMSPInstances(AvailableSlots, Count, MSPClassIdx, NewRealSlots,
+                          [](unsigned, unsigned, unsigned) {})) {
+    return false;
   }
 
   // Create new remaining occupancy with this MSP class zeroed out
@@ -244,28 +278,13 @@ bool MSPSlotMapping::tryMaterializeMSPsWithMapping(
   // Greedily assign the MSP instances to available slots
   // Store the assignments for later retrieval
   SlotBits NewRealSlots = CurrentRealSlots;
-  SlotBits BitMask = 1;
-  unsigned Bit = 0;
-
-  for (unsigned Assigned = 0; Assigned < Count; ++Assigned) {
-    // Find next available slot
-    while (BitMask != 0 && !(AvailableSlots & BitMask)) {
-      BitMask <<= 1;
-      ++Bit;
-    }
-
-    if (BitMask == 0) {
-      // Not enough free slots in the composition - cannot materialize
-      return false;
-    }
-
-    NewRealSlots |= BitMask;
-
-    // Record this assignment
-    Assignments.push_back({MSPClassIdx, Assigned, Bit});
-
-    BitMask <<= 1; // Advance to next bit for next iteration
-    ++Bit;
+  if (!assignMSPInstances(AvailableSlots, Count, MSPClassIdx, NewRealSlots,
+                          [&Assignments](unsigned MSPClassIdx,
+                                         unsigned InstanceIdx, unsigned Bit) {
+                            Assignments.push_back(
+                                {MSPClassIdx, InstanceIdx, Bit});
+                          })) {
+    return false;
   }
 
   // Create new remaining occupancy with this MSP class zeroed out
