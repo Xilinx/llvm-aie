@@ -119,15 +119,14 @@ bool SlotOccupancy::tryMaterializeMSPs(const AIEBaseMCFormats &FormatInterface,
   SlotBits BitMask = 1;
 
   for (unsigned Assigned = 0; Assigned < Count; ++Assigned) {
-    // Check if we have any available slots left
-    if (AvailableSlots == 0) {
-      // Not enough free slots in the composition - cannot materialize
-      return false;
+    // Find next available slot
+    while (BitMask != 0 && !(AvailableSlots & BitMask)) {
+      BitMask <<= 1;
     }
 
-    // Find next available slot
-    while (!(AvailableSlots & BitMask)) {
-      BitMask <<= 1;
+    if (BitMask == 0) {
+      // Not enough free slots in the composition - cannot materialize
+      return false;
     }
 
     NewRealSlots |= BitMask;
@@ -249,16 +248,15 @@ bool MSPSlotMapping::tryMaterializeMSPsWithMapping(
   unsigned Bit = 0;
 
   for (unsigned Assigned = 0; Assigned < Count; ++Assigned) {
-    // Check if we have any available slots left
-    if (AvailableSlots == 0) {
-      // Not enough free slots in the composition - cannot materialize
-      return false;
-    }
-
     // Find next available slot
-    while (!(AvailableSlots & BitMask)) {
+    while (BitMask != 0 && !(AvailableSlots & BitMask)) {
       BitMask <<= 1;
       ++Bit;
+    }
+
+    if (BitMask == 0) {
+      // Not enough free slots in the composition - cannot materialize
+      return false;
     }
 
     NewRealSlots |= BitMask;
