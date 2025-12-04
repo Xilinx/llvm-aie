@@ -116,21 +116,22 @@ bool SlotOccupancy::tryMaterializeMSPs(const AIEBaseMCFormats &FormatInterface,
 
   // Greedily assign the MSP instances to available slots
   SlotBits NewRealSlots = CurrentRealSlots;
-  SlotBits Available = AvailableSlots;
+  SlotBits BitMask = 1;
 
   for (unsigned Assigned = 0; Assigned < Count; ++Assigned) {
-    // Find next available slot
-    if (Available == 0) {
+    // Check if we have any available slots left
+    if (AvailableSlots == 0) {
       // Not enough free slots in the composition - cannot materialize
       return false;
     }
 
-    // Get the lowest set bit
-    const unsigned Bit = llvm::countr_zero(Available);
-    NewRealSlots |= (1ULL << Bit);
+    // Find next available slot
+    while (!(AvailableSlots & BitMask)) {
+      BitMask <<= 1;
+    }
 
-    // Clear this bit from available slots
-    Available &= ~(1ULL << Bit);
+    NewRealSlots |= BitMask;
+    BitMask <<= 1; // Advance to next bit for next iteration
   }
 
   // Create new remaining occupancy with this MSP class zeroed out
@@ -244,24 +245,29 @@ bool MSPSlotMapping::tryMaterializeMSPsWithMapping(
   // Greedily assign the MSP instances to available slots
   // Store the assignments for later retrieval
   SlotBits NewRealSlots = CurrentRealSlots;
-  SlotBits Available = AvailableSlots;
+  SlotBits BitMask = 1;
+  unsigned Bit = 0;
 
   for (unsigned Assigned = 0; Assigned < Count; ++Assigned) {
-    // Find next available slot
-    if (Available == 0) {
+    // Check if we have any available slots left
+    if (AvailableSlots == 0) {
       // Not enough free slots in the composition - cannot materialize
       return false;
     }
 
-    // Get the lowest set bit
-    const unsigned Bit = llvm::countr_zero(Available);
-    NewRealSlots |= (1ULL << Bit);
+    // Find next available slot
+    while (!(AvailableSlots & BitMask)) {
+      BitMask <<= 1;
+      ++Bit;
+    }
+
+    NewRealSlots |= BitMask;
 
     // Record this assignment
     Assignments.push_back({MSPClassIdx, Assigned, Bit});
 
-    // Clear this bit from available slots
-    Available &= ~(1ULL << Bit);
+    BitMask <<= 1; // Advance to next bit for next iteration
+    ++Bit;
   }
 
   // Create new remaining occupancy with this MSP class zeroed out
