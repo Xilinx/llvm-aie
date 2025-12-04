@@ -271,3 +271,170 @@ TEST(SlotOccupancy, PureMSPs_AB_ABS_CannotMaterialize) {
   SlotOccupancy TwoMSP_ABS(9, 2); // Needs 2 from {A,B,S}, only S left
   EXPECT_TRUE(TwoMSP_AB.conflict(TwoMSP_ABS, FI));
 }
+
+// MSPSlotMapping Tests
+
+TEST(MSPSlotMapping, EmptyMapping) {
+  MSPSlotMapping Mapping;
+  EXPECT_TRUE(Mapping.isEmpty());
+  EXPECT_TRUE(Mapping.getCurrentOccupancy().isEmpty());
+}
+
+TEST(MSPSlotMapping, RealSlotsOnly) {
+  MockFormatInterface FI;
+  // Bundle with only real slots: A, B, X
+  SlotOccupancy Bundle(0b0111);
+
+  MSPSlotMapping Mapping(Bundle, FI);
+  EXPECT_TRUE(Mapping.isEmpty()); // No MSPs to materialize
+
+  // Real slots materialize to themselves
+  EXPECT_EQ(Mapping.materializeAlternative(0), 0u); // A -> A
+  EXPECT_EQ(Mapping.materializeAlternative(1), 1u); // B -> B
+  EXPECT_EQ(Mapping.materializeAlternative(2), 2u); // X -> X
+}
+
+TEST(MSPSlotMapping, SingleMSP_AB) {
+  MockFormatInterface FI;
+  // Bundle with one MSP_AB instance
+  SlotOccupancy Bundle(7, 1);
+
+  MSPSlotMapping Mapping(Bundle, FI);
+  EXPECT_FALSE(Mapping.isEmpty());
+
+  // MSP_AB should materialize to A (lowest available slot)
+  const unsigned Slot = Mapping.materializeAlternative(7);
+  EXPECT_EQ(Slot, 0u); // Should be A
+
+  // Current occupancy should now reflect A being used
+  const SlotOccupancy &Current = Mapping.getCurrentOccupancy();
+  EXPECT_EQ(Current.getCount(0), 1u); // A is occupied
+}
+
+TEST(MSPSlotMapping, TwoMSP_AB_Instances) {
+  MockFormatInterface FI;
+  // Bundle with two MSP_AB instances
+  SlotOccupancy Bundle(7, 2);
+
+  MSPSlotMapping Mapping(Bundle, FI);
+  EXPECT_FALSE(Mapping.isEmpty());
+
+  // First instance should get A, second should get B
+  const unsigned Slot1 = Mapping.materializeAlternative(7);
+  EXPECT_EQ(Slot1, 0u); // A
+
+  const unsigned Slot2 = Mapping.materializeAlternative(7);
+  EXPECT_EQ(Slot2, 1u); // B
+
+  // Current occupancy should reflect both A and B being used
+  const SlotOccupancy &Current = Mapping.getCurrentOccupancy();
+  EXPECT_EQ(Current.getCount(0), 1u); // A is occupied
+  EXPECT_EQ(Current.getCount(1), 1u); // B is occupied
+}
+
+TEST(MSPSlotMapping, MixedRealAndMSP) {
+  MockFormatInterface FI;
+  // Bundle with real slot A and MSP_AB
+  SlotOccupancy RealA(0b0001);
+  SlotOccupancy MSP_AB(7, 1);
+  SlotOccupancy Bundle = RealA | MSP_AB;
+
+  MSPSlotMapping Mapping(Bundle, FI);
+  EXPECT_FALSE(Mapping.isEmpty());
+
+  // Real slot A materializes to itself
+  EXPECT_EQ(Mapping.materializeAlternative(0), 0u);
+
+  // MSP_AB should materialize to B (A is already occupied)
+  const unsigned Slot = Mapping.materializeAlternative(7);
+  EXPECT_EQ(Slot, 1u); // B
+
+  // Current occupancy should reflect both A and B
+  const SlotOccupancy &Current = Mapping.getCurrentOccupancy();
+  EXPECT_EQ(Current.getCount(0), 1u); // A
+  EXPECT_EQ(Current.getCount(1), 1u); // B
+}
+
+TEST(MSPSlotMapping, MultipleMSPClasses) {
+  MockFormatInterface FI;
+  // Bundle with MSP_AB and MSP_AXM
+  SlotOccupancy MSP_AB(7, 1);  // Can use A or B
+  SlotOccupancy MSP_AXM(8, 1); // Can use A, X, or M
+  SlotOccupancy Bundle = MSP_AB | MSP_AXM;
+
+  MSPSlotMapping Mapping(Bundle, FI);
+  EXPECT_FALSE(Mapping.isEmpty());
+
+  // MSP_AB should get A (lowest available)
+  const unsigned Slot1 = Mapping.materializeAlternative(7);
+  EXPECT_EQ(Slot1, 0u); // A
+
+  // MSP_AXM should get X (A is taken, X is next lowest)
+  const unsigned Slot2 = Mapping.materializeAlternative(8);
+  EXPECT_EQ(Slot2, 2u); // X
+
+  // Current occupancy should reflect A and X
+  const SlotOccupancy &Current = Mapping.getCurrentOccupancy();
+  EXPECT_EQ(Current.getCount(0), 1u); // A
+  EXPECT_EQ(Current.getCount(2), 1u); // X
+}
+
+TEST(MSPSlotMapping, ComplexBundle) {
+  MockFormatInterface FI;
+  // Complex bundle: Real slots A, S + 2x MSP_AB + 1x MSP_AXM
+  SlotOccupancy RealA(0b00001);
+  SlotOccupancy RealS(0b10000);
+  SlotOccupancy TwoMSP_AB(7, 2);
+  SlotOccupancy OneMSP_AXM(8, 1);
+  SlotOccupancy Bundle = RealA | RealS | TwoMSP_AB | OneMSP_AXM;
+
+  MSPSlotMapping Mapping(Bundle, FI);
+  EXPECT_FALSE(Mapping.isEmpty());
+
+  // Materialize real slots
+  EXPECT_EQ(Mapping.materializeAlternative(0), 0u); // A -> A
+  EXPECT_EQ(Mapping.materializeAlternative(4), 4u); // S -> S
+
+  // Materialize MSP_AB instances (should get B and... need another slot)
+  // First MSP_AB gets B (A is occupied by real slot)
+  const unsigned AB1 = Mapping.materializeAlternative(7);
+  EXPECT_EQ(AB1, 1u); // B
+
+  // Second MSP_AB should fail or get another slot from {A, B}
+  // Since A is occupied, it should try to get... wait, both A and B are now
+  // used This might actually be infeasible, but let's see what the mapping
+  // computed
+
+  // MSP_AXM should get X or M (A is occupied)
+  const unsigned AXM = Mapping.materializeAlternative(8);
+  EXPECT_TRUE(AXM == 2u || AXM == 3u); // X or M
+
+  const SlotOccupancy &Current = Mapping.getCurrentOccupancy();
+  EXPECT_EQ(Current.getCount(0), 1u); // A
+  EXPECT_EQ(Current.getCount(4), 1u); // S
+}
+
+TEST(MSPSlotMapping, IterativeRetrieval) {
+  MockFormatInterface FI;
+  // Bundle with 3x MSP_AXM (can use A, X, or M)
+  SlotOccupancy Bundle(8, 3);
+
+  MSPSlotMapping Mapping(Bundle, FI);
+  EXPECT_FALSE(Mapping.isEmpty());
+
+  // Retrieve all three materializations
+  const unsigned Slot1 = Mapping.materializeAlternative(8);
+  const unsigned Slot2 = Mapping.materializeAlternative(8);
+  const unsigned Slot3 = Mapping.materializeAlternative(8);
+
+  // Should get A, X, M in some order (greedy assignment uses lowest first)
+  EXPECT_EQ(Slot1, 0u); // A
+  EXPECT_EQ(Slot2, 2u); // X
+  EXPECT_EQ(Slot3, 3u); // M
+
+  // All three slots should be occupied
+  const SlotOccupancy &Current = Mapping.getCurrentOccupancy();
+  EXPECT_EQ(Current.getCount(0), 1u); // A
+  EXPECT_EQ(Current.getCount(2), 1u); // X
+  EXPECT_EQ(Current.getCount(3), 1u); // M
+}

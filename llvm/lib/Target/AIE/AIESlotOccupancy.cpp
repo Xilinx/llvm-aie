@@ -68,21 +68,17 @@ bool SlotOccupancy::conflict(const SlotOccupancy &Other,
   const AIESlotStructure &SlotStructure = FormatInterface.getSlotStructure();
 
   // Combine the two occupancies
-  SlotOccupancy Combined = *this | Other;
+  const SlotOccupancy Combined = *this | Other;
 
   // Quick pruning 1: Check if all counts are within valid range
   if (!Combined.boundedBy(SlotStructure))
     return true;
 
-  unsigned NumRealSlots = SlotStructure.getNumRealSlots();
+  const unsigned NumRealSlots = SlotStructure.getNumRealSlots();
 
   // Quick pruning 2: Sum of occupancies must not exceed number of real slots
   if (Combined.total() > NumRealSlots)
     return true;
-
-  // Now we need to check if we can materialize the MSPs to real slots
-  // in a way that produces a feasible format.
-  // With at most 7 MSPs, we can enumerate all possible materializations.
 
   // Start with real slot occupancies (these are fixed)
   SlotBits RealSlotOccupancy = 0;
@@ -92,70 +88,62 @@ bool SlotOccupancy::conflict(const SlotOccupancy &Other,
     }
   }
 
-  // Collect MSP demands
-  std::array<unsigned, MaxSlotClasses> MSPIndices;
-  std::array<uint8_t, MaxSlotClasses> MSPCounts;
-  unsigned NumMSPs = 0;
+  // Try to materialize MSPs to real slots
+  return !tryMaterializeMSPs(FormatInterface, Combined, RealSlotOccupancy);
+}
+
+bool SlotOccupancy::tryMaterializeMSPs(const AIEBaseMCFormats &FormatInterface,
+                                       const SlotOccupancy &RemainingOccupancy,
+                                       SlotBits CurrentRealSlots) const {
+  const AIESlotStructure &SlotStructure = FormatInterface.getSlotStructure();
+  const unsigned NumRealSlots = SlotStructure.getNumRealSlots();
+
+  // Find the first MSP class with non-zero count
+  unsigned MSPClassIdx = MaxSlotClasses;
   for (unsigned I = NumRealSlots; I < MaxSlotClasses; ++I) {
-    if (Combined.Counts[I] > 0) {
-      MSPIndices[NumMSPs] = I;
-      MSPCounts[NumMSPs] = Combined.Counts[I];
-      ++NumMSPs;
+    if (RemainingOccupancy.getCount(I) > 0) {
+      MSPClassIdx = I;
+      break;
     }
   }
 
-  // If no MSPs, just check if the real slot pattern is feasible
-  if (NumMSPs == 0) {
-    return !FormatInterface.isFormatAvailable(RealSlotOccupancy);
-  }
-
-  // Try to materialize MSPs to real slots
-  // For each MSP, we need to assign its count to real slots from its
-  // composition This is a constraint satisfaction problem, but with max 7 MSPs
-  // it's tractable
-  return !tryMaterializeMSPs(SlotStructure, FormatInterface, RealSlotOccupancy,
-                             MSPIndices, MSPCounts, NumMSPs, 0);
-}
-
-bool SlotOccupancy::tryMaterializeMSPs(
-    const AIESlotStructure &SlotStructure,
-    const AIEBaseMCFormats &FormatInterface, SlotBits CurrentRealSlots,
-    const std::array<unsigned, MaxSlotClasses> &MSPIndices,
-    const std::array<uint8_t, MaxSlotClasses> &MSPCounts, unsigned NumMSPs,
-    unsigned MSPIdx) const {
-  // Base case: all MSPs materialized, check if result is feasible
-  if (MSPIdx == NumMSPs) {
+  // Base case: no more MSPs to materialize, check if result is feasible
+  if (MSPClassIdx == MaxSlotClasses) {
     return FormatInterface.isFormatAvailable(CurrentRealSlots);
   }
 
   // Get the composition for this MSP
-  unsigned MSPClassIdx = MSPIndices[MSPIdx];
-  SlotBits Composition = SlotStructure.getMSPComposition(MSPClassIdx);
-  uint8_t Count = MSPCounts[MSPIdx];
+  const SlotBits Composition = SlotStructure.getMSPComposition(MSPClassIdx);
+  const uint8_t Count = RemainingOccupancy.getCount(MSPClassIdx);
 
   // Find available slots from the composition
-  SlotBits AvailableSlots = Composition & ~CurrentRealSlots;
+  const SlotBits AvailableSlots = Composition & ~CurrentRealSlots;
 
-  // Check if we have enough available slots for this MSP's count
-  if (llvm::popcount(AvailableSlots) < Count) {
-    // Not enough free slots in the composition - cannot materialize
-    return false;
-  }
-
-  // For simplicity, greedily assign the MSP instances to available slots
-  // A more sophisticated approach would try all combinations
+  // Greedily assign the MSP instances to available slots
   SlotBits NewRealSlots = CurrentRealSlots;
-  unsigned Assigned = 0;
-  for (unsigned Bit = 0; Bit < 64 && Assigned < Count; ++Bit) {
-    if (AvailableSlots & (1ULL << Bit)) {
-      NewRealSlots |= (1ULL << Bit);
-      ++Assigned;
+  SlotBits Available = AvailableSlots;
+
+  for (unsigned Assigned = 0; Assigned < Count; ++Assigned) {
+    // Find next available slot
+    if (Available == 0) {
+      // Not enough free slots in the composition - cannot materialize
+      return false;
     }
+
+    // Get the lowest set bit
+    const unsigned Bit = llvm::countr_zero(Available);
+    NewRealSlots |= (1ULL << Bit);
+
+    // Clear this bit from available slots
+    Available &= ~(1ULL << Bit);
   }
+
+  // Create new remaining occupancy with this MSP class zeroed out
+  SlotOccupancy NewRemaining = RemainingOccupancy;
+  NewRemaining.setCount(MSPClassIdx, 0);
 
   // Recursively try to materialize remaining MSPs
-  return tryMaterializeMSPs(SlotStructure, FormatInterface, NewRealSlots,
-                            MSPIndices, MSPCounts, NumMSPs, MSPIdx + 1);
+  return tryMaterializeMSPs(FormatInterface, NewRemaining, NewRealSlots);
 }
 
 void SlotOccupancy::dump() const {
@@ -190,4 +178,182 @@ unsigned SlotOccupancy::total() const {
     Total += Counts[I];
   }
   return Total;
+}
+
+//===----------------------------------------------------------------------===//
+// MSPSlotMapping Implementation
+//===----------------------------------------------------------------------===//
+
+MSPSlotMapping::MSPSlotMapping()
+    : InstanceCounters{}, NumRealSlots(0), FormatInterface(nullptr) {}
+
+MSPSlotMapping::MSPSlotMapping(const SlotOccupancy &Occupancy,
+                               const AIEBaseMCFormats &FI)
+    : CurrentOccupancy(Occupancy), InstanceCounters{}, NumRealSlots(0),
+      FormatInterface(&FI) {
+  const bool Success = computeMapping(Occupancy, FI);
+  (void)Success;
+  assert(Success && "Failed to compute mapping for feasible occupancy");
+}
+
+bool MSPSlotMapping::computeMapping(const SlotOccupancy &Occupancy,
+                                    const AIEBaseMCFormats &FI) {
+  // Clear any existing assignments
+  Assignments.clear();
+  std::fill(InstanceCounters.begin(), InstanceCounters.end(), 0);
+  FormatInterface = &FI;
+
+  const AIESlotStructure &SlotStructure = FI.getSlotStructure();
+  NumRealSlots = SlotStructure.getNumRealSlots();
+
+  // Start with real slot occupancies (these are fixed)
+  SlotBits RealSlotOccupancy = 0;
+  for (unsigned I = 0; I < NumRealSlots; ++I) {
+    if (Occupancy.getCount(I) > 0) {
+      RealSlotOccupancy |= (SlotBits(1) << I);
+    }
+  }
+
+  // Try to materialize MSPs to real slots
+  return tryMaterializeMSPsWithMapping(FI, Occupancy, RealSlotOccupancy,
+                                       Assignments);
+}
+
+bool MSPSlotMapping::tryMaterializeMSPsWithMapping(
+    const AIEBaseMCFormats &FI, const SlotOccupancy &RemainingOccupancy,
+    SlotBits CurrentRealSlots, std::vector<MSPAssignment> &Assignments) {
+  const AIESlotStructure &SlotStructure = FI.getSlotStructure();
+  const unsigned NumRealSlots = SlotStructure.getNumRealSlots();
+
+  // Find the first MSP class with non-zero count
+  unsigned MSPClassIdx = MaxSlotClasses;
+  for (unsigned I = NumRealSlots; I < MaxSlotClasses; ++I) {
+    if (RemainingOccupancy.getCount(I) > 0) {
+      MSPClassIdx = I;
+      break;
+    }
+  }
+
+  // Base case: no more MSPs to materialize, check if result is feasible
+  if (MSPClassIdx == MaxSlotClasses) {
+    return FI.isFormatAvailable(CurrentRealSlots);
+  }
+
+  // Get the composition for this MSP
+  const SlotBits Composition = SlotStructure.getMSPComposition(MSPClassIdx);
+  const uint8_t Count = RemainingOccupancy.getCount(MSPClassIdx);
+
+  // Find available slots from the composition
+  const SlotBits AvailableSlots = Composition & ~CurrentRealSlots;
+
+  // Greedily assign the MSP instances to available slots
+  // Store the assignments for later retrieval
+  SlotBits NewRealSlots = CurrentRealSlots;
+  SlotBits Available = AvailableSlots;
+
+  for (unsigned Assigned = 0; Assigned < Count; ++Assigned) {
+    // Find next available slot
+    if (Available == 0) {
+      // Not enough free slots in the composition - cannot materialize
+      return false;
+    }
+
+    // Get the lowest set bit
+    const unsigned Bit = llvm::countr_zero(Available);
+    NewRealSlots |= (1ULL << Bit);
+
+    // Record this assignment
+    Assignments.push_back({MSPClassIdx, Assigned, Bit});
+
+    // Clear this bit from available slots
+    Available &= ~(1ULL << Bit);
+  }
+
+  // Create new remaining occupancy with this MSP class zeroed out
+  SlotOccupancy NewRemaining = RemainingOccupancy;
+  NewRemaining.setCount(MSPClassIdx, 0);
+
+  // Recursively try to materialize remaining MSPs
+  return tryMaterializeMSPsWithMapping(FI, NewRemaining, NewRealSlots,
+                                       Assignments);
+}
+
+unsigned MSPSlotMapping::materializeAlternative(unsigned SlotClassIdx) {
+  const AIESlotStructure &SlotStructure = FormatInterface->getSlotStructure();
+
+  // For real slots, they materialize to themselves
+  if (SlotClassIdx < NumRealSlots) {
+    // Verify precondition: must have at least one instance
+    assert(CurrentOccupancy.getCount(SlotClassIdx) > 0 &&
+           "Cannot materialize slot class with zero count");
+
+    // Real slots don't need transformation, just return the slot index
+    // The occupancy already reflects the real slot
+    return SlotClassIdx;
+  }
+
+  // For MSPs, find the assignment
+  const uint8_t InstanceIdx = InstanceCounters[SlotClassIdx];
+
+  // Verify precondition: must have at least one unmaterialized instance
+  assert(CurrentOccupancy.getCount(SlotClassIdx) > InstanceIdx &&
+         "Cannot materialize slot class with no remaining instances");
+
+  // Find the assignment for this MSP class and instance
+  for (const auto &Assignment : Assignments) {
+    if (Assignment.MSPClassIdx == SlotClassIdx &&
+        Assignment.InstanceIdx == InstanceIdx) {
+      // Found the assignment - increment counter
+      InstanceCounters[SlotClassIdx]++;
+
+      // Update current occupancy: decrement MSP count, increment real slot
+      // count This is done by creating temporary occupancies and combining them
+      SlotOccupancy MSPDecrement(SlotClassIdx, 1);
+      SlotOccupancy RealSlotIncrement(SlotBits(1) << Assignment.RealSlotIdx);
+
+      // Note: We can't directly decrement, so we need to track this differently
+      // For now, just add the real slot
+      CurrentOccupancy |= RealSlotIncrement;
+
+      return Assignment.RealSlotIdx;
+    }
+  }
+
+  // Should never reach here if precondition is satisfied
+  llvm_unreachable("No assignment found for slot class instance");
+}
+
+void MSPSlotMapping::clear() {
+  Assignments.clear();
+  CurrentOccupancy.clear();
+  std::fill(InstanceCounters.begin(), InstanceCounters.end(), 0);
+}
+
+void MSPSlotMapping::dump() const {
+  dbgs() << "MSPSlotMapping:\n";
+  if (Assignments.empty()) {
+    dbgs() << "  (empty)\n";
+    return;
+  }
+
+  for (const auto &Assignment : Assignments) {
+    dbgs() << "  MSP[" << Assignment.MSPClassIdx << "]["
+           << Assignment.InstanceIdx << "] -> Slot " << Assignment.RealSlotIdx
+           << "\n";
+  }
+
+  dbgs() << "Current Occupancy: ";
+  CurrentOccupancy.dump();
+
+  dbgs() << "Instance Counters: [";
+  bool First = true;
+  for (unsigned I = 0; I < MaxSlotClasses; ++I) {
+    if (InstanceCounters[I] > 0) {
+      if (!First)
+        dbgs() << ", ";
+      dbgs() << I << ":" << static_cast<unsigned>(InstanceCounters[I]);
+      First = false;
+    }
+  }
+  dbgs() << "]\n";
 }

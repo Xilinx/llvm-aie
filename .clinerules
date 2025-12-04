@@ -1,0 +1,93 @@
+# Cline Rules for llvm-aie Repository
+
+## Copyright Headers
+
+When updating any file in this repository, always:
+1. Add a copyright header if the file doesn't have one
+2. Update the year in existing copyright messages to include the current year (2025)
+
+### Standard Copyright Header Format
+
+For files with AMD copyright:
+```
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+```
+
+For C/C++ files:
+```cpp
+//
+// This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+```
+
+### Examples
+
+- If a file has `(c) Copyright 2023-2024`, update it to `(c) Copyright 2023-2025`
+- If a file has `(c) Copyright 2024`, update it to `(c) Copyright 2024-2025`
+- If a file has no copyright header and you're making substantial changes, add the appropriate header
+
+## Project-Specific Guidelines
+
+- This is an LLVM-based project, so follow LLVM coding standards
+- AIE-specific code is located in `llvm/lib/Target/AIE/` and `llvm/test/CodeGen/AIE/`
+- When modifying test infrastructure, prefer localized changes (e.g., in `lit.local.cfg` files) over global changes when possible
+
+## C++ Class Member Ordering
+
+When defining C++ classes, organize members in the following order to minimize the need for access specifiers:
+1. Private members (data and helper methods) first
+2. Public interface last
+
+This allows the class to start without an explicit access specifier (defaulting to private for classes) and requires only a single `public:` label before the public interface. Avoid using multiple `private:` labels by grouping all private members together at the beginning of the class definition.
+
+Example:
+```cpp
+class MyClass {
+  // Private data members
+  int PrivateData;
+  
+  // Private helper methods
+  void helperMethod();
+
+public:
+  // Public interface
+  MyClass();
+  void publicMethod();
+};
+```
+
+## Const Correctness
+
+Make local variable declarations `const` whenever possible to improve code clarity and prevent accidental modifications:
+
+- Use `const` for variables that are initialized once and never modified
+- Use `const` for references and pointers when the referenced/pointed-to data should not be modified
+- This makes the code's intent clearer and helps catch bugs at compile time
+
+Example:
+```cpp
+// Good - const when possible
+const unsigned NumSlots = getNumSlots();
+const auto &Config = getConfig();
+
+// Avoid - non-const when not needed
+unsigned NumSlots = getNumSlots();  // Will not be modified
+auto &Config = getConfig();         // Will not be modified
+```
+
+## Build Verification
+
+After making changes to AIE target code, verify the changes by running the AIE CodeGen tests:
+
+```bash
+cd Release && ninja check-llvm-codegen-aie
+```
+
+This ensures that your changes don't break existing functionality and that all AIE-specific code generation tests pass.
