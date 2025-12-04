@@ -3,6 +3,8 @@
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -23,6 +25,7 @@ namespace detail {
 
 struct QuantizedTypeStorage;
 struct AnyQuantizedTypeStorage;
+struct BlockFloatQuantizedTypeStorage;
 struct UniformQuantizedTypeStorage;
 struct UniformQuantizedPerAxisTypeStorage;
 struct CalibratedQuantizedTypeStorage;
@@ -222,6 +225,93 @@ public:
   verifyInvariants(function_ref<InFlightDiagnostic()> emitError, unsigned flags,
                    Type storageType, Type expressedType, int64_t storageTypeMin,
                    int64_t storageTypeMax);
+};
+
+/// Represents block floating point quantization where multiple elements share
+/// data along a particular axis (e.g. BFP16). The concrete block format
+/// determines the implied storage characteristics and is not exposed in the IR.
+/// This class is experimental and may be subject to change.
+/// Design decisions:
+///  - The base class requires an integral storage type. For
+///  block-quantized/packed types, the required storage with depends on the
+///  number of elements. For example, a single BFP16 element requires 16 bits to
+///  be represented, but a block of 8 BFP16 elements can be packed into 9 bits
+///  per element on average (72 bits total). The storage type for
+///  BlockFloatQuantizedType is the "packed" type, so for BFP16 i9.
+///  -- As accessing properties like min/max storage values and integral width
+///  depend on the block size, these methods are overridden to return errors.
+///  - The expressed type is not stored yet, this may change if there is a use
+///  for it.
+///  - The axis is signed to match MLIR convention, but enforced to be
+///  non-negative.
+class BlockFloatQuantizedType
+    : public Type::TypeBase<BlockFloatQuantizedType, QuantizedType,
+                            detail::BlockFloatQuantizedTypeStorage> {
+public:
+  using Base::Base;
+  using Base::getChecked;
+
+  static constexpr StringLiteral name = "quant.block_float";
+
+  // MX6 refers to the MicoExponent format, not to the OCP MicroScaling format
+  // with the same name.
+  enum class BlockMode : uint32_t { BFP16 = 0, MX6 = 1, MAX_VALUE = MX6 };
+
+  static std::optional<BlockMode> parseBlockMode(StringRef name);
+  static StringRef getBlockModeName(BlockMode blockMode);
+
+  static BlockFloatQuantizedType get(MLIRContext *ctx, BlockMode blockMode,
+                                     int32_t axis);
+  static BlockFloatQuantizedType
+  getChecked(function_ref<InFlightDiagnostic()> emitError, MLIRContext *ctx,
+             BlockMode blockMode, int32_t axis);
+
+  static LogicalResult
+  verifyInvariants(function_ref<InFlightDiagnostic()> emitError,
+                   uint32_t blockModeRaw, int32_t axis, unsigned flags,
+                   Type storageType, Type expressedType, int64_t storageTypeMin,
+                   int64_t storageTypeMax);
+
+  Type getStorageType() const {
+    assert(false &&
+           "BlockFloatQuantizedType does not have a direct storage type");
+    return QuantizedType::getStorageType();
+  }
+
+  int64_t getStorageTypeMin() const {
+    assert(false &&
+           "BlockFloatQuantizedType does not have a direct storage type");
+    return QuantizedType::getStorageTypeMin();
+  }
+
+  int64_t getStorageTypeMax() const {
+    assert(false &&
+           "BlockFloatQuantizedType does not have a direct storage type");
+    return QuantizedType::getStorageTypeMax();
+  }
+
+  bool hasStorageTypeBounds() const {
+    assert(false &&
+           "BlockFloatQuantizedType does not have a direct storage type");
+    return QuantizedType::hasStorageTypeBounds();
+  }
+
+  unsigned getStorageTypeIntegralWidth() const {
+    assert(false &&
+           "BlockFloatQuantizedType does not have a direct storage type");
+    return QuantizedType::getStorageTypeIntegralWidth();
+  }
+
+  BlockMode getBlockMode() const;
+  int32_t getAxis() const;
+
+  /// Number of elements in a block
+  unsigned getBlockSize() const;
+  /// Average number of bits used to represent each element in the block
+  unsigned getAverageBitsPerElement() const;
+  /// Returns the size in bits  required to represent a single, not
+  /// blocked/packed element.
+  unsigned getSingleElementStorageSize() const;
 };
 
 /// Represents a family of uniform, quantized types.

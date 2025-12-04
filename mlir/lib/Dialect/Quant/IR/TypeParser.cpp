@@ -3,6 +3,8 @@
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -316,6 +318,38 @@ static Type parseCalibratedType(DialectAsmParser &parser) {
   return parser.getChecked<CalibratedQuantizedType>(expressedType, min, max);
 }
 
+static Type parseBlockFloatQuantizedType(DialectAsmParser &parser) {
+  if (parser.parseLess())
+    return nullptr;
+
+  if (parser.parseKeyword("mode") || parser.parseEqual())
+    return nullptr;
+
+  StringRef name;
+  if (failed(parser.parseKeyword(&name)))
+    return nullptr;
+
+  const auto blockMode = BlockFloatQuantizedType::parseBlockMode(name);
+  if (!blockMode) {
+    parser.emitError(parser.getNameLoc())
+        << "unknown block quantized mode " << name;
+    return nullptr;
+  }
+
+  if (parser.parseComma() || parser.parseKeyword("axis") || parser.parseEqual())
+    return nullptr;
+
+  int32_t axis;
+  if (parser.parseInteger(axis))
+    return nullptr;
+
+  if (parser.parseGreater())
+    return nullptr;
+
+  return parser.getChecked<BlockFloatQuantizedType>(
+      parser.getBuilder().getContext(), *blockMode, axis);
+}
+
 /// Parse a type registered to this dialect.
 Type QuantDialect::parseType(DialectAsmParser &parser) const {
   // All types start with an identifier that we switch on.
@@ -329,6 +363,8 @@ Type QuantDialect::parseType(DialectAsmParser &parser) const {
     return parseAnyType(parser);
   if (typeNameSpelling == "calibrated")
     return parseCalibratedType(parser);
+  if (typeNameSpelling == "block_float")
+    return parseBlockFloatQuantizedType(parser);
 
   parser.emitError(parser.getNameLoc(),
                    "unknown quantized type " + typeNameSpelling);
@@ -413,6 +449,13 @@ static void printCalibratedQuantizedType(CalibratedQuantizedType type,
   out << ">";
 }
 
+static void printBlockFloatQuantizedType(BlockFloatQuantizedType type,
+                                         DialectAsmPrinter &out) {
+  out << "block_float<mode="
+      << BlockFloatQuantizedType::getBlockModeName(type.getBlockMode())
+      << ", axis=" << type.getAxis() << ">";
+}
+
 /// Print a type registered to this dialect.
 void QuantDialect::printType(Type type, DialectAsmPrinter &os) const {
   if (auto anyType = llvm::dyn_cast<AnyQuantizedType>(type))
@@ -423,6 +466,8 @@ void QuantDialect::printType(Type type, DialectAsmPrinter &os) const {
     printUniformQuantizedPerAxisType(perAxisType, os);
   else if (auto calibratedType = llvm::dyn_cast<CalibratedQuantizedType>(type))
     printCalibratedQuantizedType(calibratedType, os);
+  else if (auto blockType = llvm::dyn_cast<BlockFloatQuantizedType>(type))
+    printBlockFloatQuantizedType(blockType, os);
   else
     llvm_unreachable("Unhandled quantized type");
 }

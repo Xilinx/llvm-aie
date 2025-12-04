@@ -3,6 +3,8 @@
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -90,6 +92,59 @@ struct AnyQuantizedTypeStorage : public QuantizedTypeStorage {
   }
 
   static unsigned hashKey(const KeyTy &key) { return key.getHashValue(); }
+};
+
+struct BlockFloatQuantizedTypeStorage : public QuantizedTypeStorage {
+  struct KeyTy {
+    KeyTy(uint32_t blockType, int32_t axis, unsigned flags, Type storageType,
+          Type expressedType, int64_t storageTypeMin, int64_t storageTypeMax)
+        : blockType(blockType), axis(axis), flags(flags),
+          storageType(storageType), expressedType(expressedType),
+          storageTypeMin(storageTypeMin), storageTypeMax(storageTypeMax) {}
+    uint32_t blockType;
+    int32_t axis;
+
+    // "inherited" members from QuantizedTypeStorage. These are derivable from
+    // the blockType and do not contribute to the hash/comparison
+    unsigned flags;
+    Type storageType;
+    Type expressedType;
+    int64_t storageTypeMin;
+    int64_t storageTypeMax;
+
+    template <typename T, typename U>
+    static bool genericIsEqual(const T &lhs, const U &rhs) {
+      return lhs.axis == rhs.axis && lhs.blockType == rhs.blockType;
+    }
+
+    bool operator==(const KeyTy &other) const {
+      return genericIsEqual(*this, other);
+    }
+
+    unsigned getHashValue() const {
+      return llvm::hash_combine(axis, blockType);
+    }
+  };
+
+  BlockFloatQuantizedTypeStorage(const KeyTy &key)
+      : QuantizedTypeStorage(key.flags, key.storageType, key.expressedType,
+                             key.storageTypeMin, key.storageTypeMax),
+        blockType(key.blockType), axis(key.axis) {}
+
+  bool operator==(const KeyTy &key) const {
+    return KeyTy::genericIsEqual(*this, key);
+  }
+
+  static BlockFloatQuantizedTypeStorage *
+  construct(TypeStorageAllocator &allocator, const KeyTy &key) {
+    return new (allocator.allocate<BlockFloatQuantizedTypeStorage>())
+        BlockFloatQuantizedTypeStorage(key);
+  }
+
+  static unsigned hashKey(const KeyTy &key) { return key.getHashValue(); }
+
+  uint32_t blockType;
+  int32_t axis;
 };
 
 struct UniformQuantizedTypeStorage : public QuantizedTypeStorage {

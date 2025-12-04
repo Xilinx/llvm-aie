@@ -1,3 +1,5 @@
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
 // RUN: mlir-opt -emit-bytecode %s | mlir-opt | FileCheck %s
 
 //===----------------------------------------------------------------------===//
@@ -64,3 +66,18 @@ module @parseUniformPerAxisMixed attributes {
   bytecode.test = !quant.uniform<i8:f32:1, {2.0e+2,0.99872:120}>
 } {}
 
+//===----------------------------------------------------------------------===//
+// BlockFloatQuantized
+//===----------------------------------------------------------------------===//
+
+// CHECK-LABEL: parseBlockFloatQuantized
+module @parseBlockFloatQuantized attributes {
+  // CHECK: bytecode.test = !quant.block_float<mode=MX6, axis=3>
+  bytecode.test = !quant.block_float<mode=MX6, axis=3>
+} {}
+
+// CHECK-LABEL: parseBlockFloatQuantizedWithExpressed
+module @parseBlockFloatQuantizedWithExpressed attributes {
+  // CHECK: bytecode.test = !quant.block_float<mode=BFP16, axis=2>
+  bytecode.test = !quant.block_float<mode=BFP16, axis=2>
+} {}

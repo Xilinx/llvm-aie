@@ -3,6 +3,8 @@
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -37,27 +39,59 @@ namespace {
 LogicalResult verifyPerAxisQuantization(Operation *op,
                                         QuantizedType quantizedType,
                                         Type containerType) {
-  auto quantizedPerAxisType = dyn_cast<UniformQuantizedPerAxisType>(quantizedType);
+  auto quantizedPerAxisType =
+      dyn_cast<UniformQuantizedPerAxisType>(quantizedType);
   if (!quantizedPerAxisType)
     return success();
 
-  auto tensorType = dyn_cast<TensorType>(containerType);
-  if (!tensorType)
+  auto shapedType = dyn_cast<ShapedType>(containerType);
+  if (!shapedType)
     return op->emitError("scalar types may not use per-axis quantization");
 
-  if (!tensorType.hasRank())
+  if (!shapedType.hasRank())
     return success();
 
   int64_t quantizedDimension = quantizedPerAxisType.getQuantizedDimension();
-  if (quantizedDimension >= tensorType.getRank())
+  if (quantizedDimension >= shapedType.getRank())
     return op->emitError("quantized dimension must be less than tensor rank");
 
-  int64_t quantizedDimensionSize = tensorType.getDimSize(quantizedDimension);
+  int64_t quantizedDimensionSize = shapedType.getDimSize(quantizedDimension);
   if (quantizedDimensionSize != ShapedType::kDynamic &&
-      quantizedDimensionSize != (int64_t)quantizedPerAxisType.getScales().size())
+      quantizedDimensionSize !=
+          (int64_t)quantizedPerAxisType.getScales().size())
     return op->emitError(
         "quantized dimension size does not match number of scales");
 
+  return success();
+}
+
+// Verify the integrity of block float quantization information, if present.
+//
+// - quantizedType
+//   Any quantized type. Any quantized type with no block float quantization is
+//   ignored.
+//
+// - containerType
+//   Original input or result type of the operation using the provided quantized
+//   type. Used to ensure that the quantized type appears within a tensor and
+//   that the tensor is compatible with block float quantization information.
+//
+LogicalResult verifyBlockFloatQuantization(Operation *op,
+                                           QuantizedType quantizedType,
+                                           Type containerType) {
+  auto blockModeType = dyn_cast<BlockFloatQuantizedType>(quantizedType);
+  if (!blockModeType)
+    return success();
+
+  auto shapedType = dyn_cast<ShapedType>(containerType);
+  if (!shapedType)
+    return op->emitError("scalar types may not use block float quantization");
+  if (!shapedType.hasRank())
+    return success();
+  // We could also check that the tensor is a multiple of the block size, but
+  // that requires that all padding is visible in MLIR
+  if (blockModeType.getAxis() >= shapedType.getRank())
+    return op->emitError("block axis must be less than tensor rank");
   return success();
 }
 
@@ -76,12 +110,18 @@ LogicalResult verifyPerAxisQuantization(Operation *op,
 //
 LogicalResult verifyQuantizationOp(Operation *op, QuantizedType quantizedType,
                                    FloatType floatType, Type containerType) {
-  if (quantizedType.getExpressedType() != floatType)
+  if (!isa<BlockFloatQuantizedType>(quantizedType) &&
+      quantizedType.getExpressedType() != floatType)
     return op->emitError(
         "expressed type in quantized type expected to match float type");
 
-  // Veriy integrity of per-axis quantization information, if present.
-  return verifyPerAxisQuantization(op, quantizedType, containerType);
+  if (failed(verifyPerAxisQuantization(op, quantizedType, containerType)))
+    return failure();
+
+  if (failed(verifyBlockFloatQuantization(op, quantizedType, containerType)))
+    return failure();
+
+  return success();
 }
 
 }  // namespace
@@ -92,8 +132,8 @@ LogicalResult verifyQuantizationOp(Operation *op, QuantizedType quantizedType,
 //===----------------------------------------------------------------------===//
 
 void QuantDialect::initialize() {
-  addTypes<AnyQuantizedType, CalibratedQuantizedType, UniformQuantizedType,
-           UniformQuantizedPerAxisType>();
+  addTypes<AnyQuantizedType, BlockFloatQuantizedType, CalibratedQuantizedType,
+           UniformQuantizedType, UniformQuantizedPerAxisType>();
   addOperations<
 #define GET_OP_LIST
 #include "mlir/Dialect/Quant/IR/QuantOps.cpp.inc"
@@ -167,6 +207,9 @@ QuantizedType QuantizeCastOp::getQuantizedType() {
 
 LogicalResult StorageCastOp::verify() {
   auto quantizedType = getQuantizedType();
+  if (isa<BlockFloatQuantizedType>(quantizedType))
+    return getOperation()->emitError(
+        "storage cast not supported for block float quantized types");
   auto integerType = getIntegerType();
   if (quantizedType.getStorageType() != integerType)
     return emitError(
