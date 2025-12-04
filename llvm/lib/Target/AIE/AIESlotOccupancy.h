@@ -44,9 +44,6 @@ public:
   /// Construct with concrete slot bits (for regular instructions)
   explicit SlotOccupancy(SlotBits Slots);
 
-  /// Construct with a single class occupation (for MSPs)
-  SlotOccupancy(unsigned ClassIdx, uint8_t Count);
-
   /// Check if this occupancy is empty
   bool isEmpty() const;
 

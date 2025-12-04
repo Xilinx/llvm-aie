@@ -103,6 +103,15 @@ public:
   ArrayRef<bool> getIsFormatAvailable() const override { return {}; }
 };
 
+// Utility function to create SlotOccupancy with a count for a specific class
+SlotOccupancy makeOccupancy(unsigned ClassIdx, uint8_t Count) {
+  SlotOccupancy Result;
+  for (uint8_t I = 0; I < Count; ++I) {
+    Result |= SlotOccupancy(SlotBits(1) << ClassIdx);
+  }
+  return Result;
+}
+
 } // anonymous namespace
 
 // Basic functionality tests
@@ -112,7 +121,7 @@ TEST(SlotOccupancy, ConstructorFromSlotBits) {
 }
 
 TEST(SlotOccupancy, ConstructorFromClassIndex) {
-  SlotOccupancy Occ(7, 2);
+  SlotOccupancy Occ = makeOccupancy(7, 2);
   EXPECT_FALSE(Occ.isEmpty());
 }
 
@@ -120,7 +129,7 @@ TEST(SlotOccupancy, Total) {
   SlotOccupancy Occ1(0b0111);
   EXPECT_EQ(Occ1.total(), 3u);
 
-  SlotOccupancy Occ2(7, 2);
+  SlotOccupancy Occ2 = makeOccupancy(7, 2);
   EXPECT_EQ(Occ2.total(), 2u);
 }
 
@@ -144,7 +153,7 @@ TEST(SlotOccupancy, MSP_AB_NoConflictWithFixedA) {
   MockFormatInterface FI;
   // MSP_AB can use B since A is occupied
   SlotOccupancy FixedA(0b0001);
-  SlotOccupancy MSP_AB(7, 1);
+  SlotOccupancy MSP_AB = makeOccupancy(7, 1);
   EXPECT_FALSE(MSP_AB.conflict(FixedA, FI));
 }
 
@@ -152,7 +161,7 @@ TEST(SlotOccupancy, MSP_AB_NoConflictWithFixedB) {
   MockFormatInterface FI;
   // MSP_AB can use A since B is occupied
   SlotOccupancy FixedB(0b0010);
-  SlotOccupancy MSP_AB(7, 1);
+  SlotOccupancy MSP_AB = makeOccupancy(7, 1);
   EXPECT_FALSE(MSP_AB.conflict(FixedB, FI));
 }
 
@@ -160,23 +169,23 @@ TEST(SlotOccupancy, MSP_AB_ConflictsWithFixedAB) {
   MockFormatInterface FI;
   // MSP_AB cannot materialize if both A and B are occupied
   SlotOccupancy FixedAB(0b0011);
-  SlotOccupancy MSP_AB(7, 1);
+  SlotOccupancy MSP_AB = makeOccupancy(7, 1);
   EXPECT_TRUE(MSP_AB.conflict(FixedAB, FI));
 }
 
 TEST(SlotOccupancy, TwoMSP_AB_NoConflict) {
   MockFormatInterface FI;
   // Two MSP_ABs can use A and B respectively
-  SlotOccupancy MSP1(7, 1);
-  SlotOccupancy MSP2(7, 1);
+  SlotOccupancy MSP1 = makeOccupancy(7, 1);
+  SlotOccupancy MSP2 = makeOccupancy(7, 1);
   EXPECT_FALSE(MSP1.conflict(MSP2, FI));
 }
 
 TEST(SlotOccupancy, ThreeMSP_AB_ExceedsCapacity) {
   MockFormatInterface FI;
   // Three MSP_ABs exceed capacity of 2
-  SlotOccupancy MSP1(7, 2);
-  SlotOccupancy MSP2(7, 1);
+  SlotOccupancy MSP1 = makeOccupancy(7, 2);
+  SlotOccupancy MSP2 = makeOccupancy(7, 1);
   EXPECT_TRUE(MSP1.conflict(MSP2, FI));
 }
 
@@ -184,7 +193,7 @@ TEST(SlotOccupancy, MSP_AXM_WithOneSlotOccupied) {
   MockFormatInterface FI;
   // MSP_AXM {A,X,M} can still use 2 other slots if one is occupied
   SlotOccupancy FixedA(0b0001);
-  SlotOccupancy MSP_AXM(8, 1);
+  SlotOccupancy MSP_AXM = makeOccupancy(8, 1);
   EXPECT_FALSE(MSP_AXM.conflict(FixedA, FI));
 }
 
@@ -192,7 +201,7 @@ TEST(SlotOccupancy, MSP_AXM_WithTwoSlotsOccupied) {
   MockFormatInterface FI;
   // MSP_AXM can still use M if A and X are occupied
   SlotOccupancy FixedAX(0b0101);
-  SlotOccupancy MSP_AXM(8, 1);
+  SlotOccupancy MSP_AXM = makeOccupancy(8, 1);
   EXPECT_FALSE(MSP_AXM.conflict(FixedAX, FI));
 }
 
@@ -200,15 +209,15 @@ TEST(SlotOccupancy, MSP_AXM_ConflictsWithAllSlotsOccupied) {
   MockFormatInterface FI;
   // MSP_AXM cannot materialize if A, X, and M are all occupied
   SlotOccupancy FixedAXM(0b1101);
-  SlotOccupancy MSP_AXM(8, 1);
+  SlotOccupancy MSP_AXM = makeOccupancy(8, 1);
   EXPECT_TRUE(MSP_AXM.conflict(FixedAXM, FI));
 }
 
 TEST(SlotOccupancy, TwoMSPs_AB_AXM_NoConflict) {
   MockFormatInterface FI;
   // MSP_AB can use B, MSP_AXM can use X or M - no conflict
-  SlotOccupancy MSP_AB(7, 1);
-  SlotOccupancy MSP_AXM(8, 1);
+  SlotOccupancy MSP_AB = makeOccupancy(7, 1);
+  SlotOccupancy MSP_AXM = makeOccupancy(8, 1);
   EXPECT_FALSE(MSP_AB.conflict(MSP_AXM, FI));
 }
 
@@ -216,14 +225,14 @@ TEST(SlotOccupancy, MSP_ABXM_WithThreeSlotsOccupied) {
   MockFormatInterface FI;
   // MSP_ABXM can use the one remaining slot
   SlotOccupancy FixedABX(0b0111);
-  SlotOccupancy MSP_ABXM(10, 1);
+  SlotOccupancy MSP_ABXM = makeOccupancy(10, 1);
   EXPECT_FALSE(MSP_ABXM.conflict(FixedABX, FI));
 }
 
 TEST(SlotOccupancy, FourMSP_ABXM_FillAllSlots) {
   MockFormatInterface FI;
   // Four MSP_ABXMs can each use one of A, B, X, M
-  SlotOccupancy MSP(10, 4);
+  SlotOccupancy MSP = makeOccupancy(10, 4);
   EXPECT_FALSE(MSP.isEmpty());
   // Should not conflict with itself at capacity
   MockSlotStructure SS;
@@ -250,7 +259,7 @@ TEST(SlotOccupancy, MSP_AXM_NoConflictWithFixedL) {
   MockFormatInterface FI;
   // MSP_AXM can materialize to A, which doesn't conflict with L
   SlotOccupancy FixedL(0b1000000);
-  SlotOccupancy MSP_AXM(8, 1);
+  SlotOccupancy MSP_AXM = makeOccupancy(8, 1);
   EXPECT_FALSE(MSP_AXM.conflict(FixedL, FI));
 }
 
@@ -258,7 +267,7 @@ TEST(SlotOccupancy, MSP_AB_NoConflictWithFixedL) {
   MockFormatInterface FI;
   // MSP_AB uses A or B, which don't conflict with L
   SlotOccupancy FixedL(0b1000000);
-  SlotOccupancy MSP_AB(7, 1);
+  SlotOccupancy MSP_AB = makeOccupancy(7, 1);
   EXPECT_FALSE(MSP_AB.conflict(FixedL, FI));
 }
 
@@ -267,8 +276,9 @@ TEST(SlotOccupancy, PureMSPs_AB_ABS_CannotMaterialize) {
   // 2x MSP_AB will use A and B
   // 2x MSP_ABS needs 2 slots from {A,B,S}, but A and B are taken
   // Only S is available, which is insufficient for 2 instances
-  SlotOccupancy TwoMSP_AB(7, 2);  // Uses A and B
-  SlotOccupancy TwoMSP_ABS(9, 2); // Needs 2 from {A,B,S}, only S left
+  SlotOccupancy TwoMSP_AB = makeOccupancy(7, 2); // Uses A and B
+  SlotOccupancy TwoMSP_ABS =
+      makeOccupancy(9, 2); // Needs 2 from {A,B,S}, only S left
   EXPECT_TRUE(TwoMSP_AB.conflict(TwoMSP_ABS, FI));
 }
 
@@ -297,7 +307,7 @@ TEST(MSPSlotMapping, RealSlotsOnly) {
 TEST(MSPSlotMapping, SingleMSP_AB) {
   MockFormatInterface FI;
   // Bundle with one MSP_AB instance
-  SlotOccupancy Bundle(7, 1);
+  SlotOccupancy Bundle = makeOccupancy(7, 1);
 
   MSPSlotMapping Mapping(Bundle, FI);
   EXPECT_FALSE(Mapping.isEmpty());
@@ -314,7 +324,7 @@ TEST(MSPSlotMapping, SingleMSP_AB) {
 TEST(MSPSlotMapping, TwoMSP_AB_Instances) {
   MockFormatInterface FI;
   // Bundle with two MSP_AB instances
-  SlotOccupancy Bundle(7, 2);
+  SlotOccupancy Bundle = makeOccupancy(7, 2);
 
   MSPSlotMapping Mapping(Bundle, FI);
   EXPECT_FALSE(Mapping.isEmpty());
@@ -336,7 +346,7 @@ TEST(MSPSlotMapping, MixedRealAndMSP) {
   MockFormatInterface FI;
   // Bundle with real slot A and MSP_AB
   SlotOccupancy RealA(0b0001);
-  SlotOccupancy MSP_AB(7, 1);
+  SlotOccupancy MSP_AB = makeOccupancy(7, 1);
   SlotOccupancy Bundle = RealA | MSP_AB;
 
   MSPSlotMapping Mapping(Bundle, FI);
@@ -358,8 +368,8 @@ TEST(MSPSlotMapping, MixedRealAndMSP) {
 TEST(MSPSlotMapping, MultipleMSPClasses) {
   MockFormatInterface FI;
   // Bundle with MSP_AB and MSP_AXM
-  SlotOccupancy MSP_AB(7, 1);  // Can use A or B
-  SlotOccupancy MSP_AXM(8, 1); // Can use A, X, or M
+  SlotOccupancy MSP_AB = makeOccupancy(7, 1);  // Can use A or B
+  SlotOccupancy MSP_AXM = makeOccupancy(8, 1); // Can use A, X, or M
   SlotOccupancy Bundle = MSP_AB | MSP_AXM;
 
   MSPSlotMapping Mapping(Bundle, FI);
@@ -384,8 +394,8 @@ TEST(MSPSlotMapping, ComplexBundle) {
   // Complex bundle: Real slots A, S + 2x MSP_AB + 1x MSP_AXM
   SlotOccupancy RealA(0b00001);
   SlotOccupancy RealS(0b10000);
-  SlotOccupancy TwoMSP_AB(7, 2);
-  SlotOccupancy OneMSP_AXM(8, 1);
+  SlotOccupancy TwoMSP_AB = makeOccupancy(7, 2);
+  SlotOccupancy OneMSP_AXM = makeOccupancy(8, 1);
   SlotOccupancy Bundle = RealA | RealS | TwoMSP_AB | OneMSP_AXM;
 
   MSPSlotMapping Mapping(Bundle, FI);
@@ -417,7 +427,7 @@ TEST(MSPSlotMapping, ComplexBundle) {
 TEST(MSPSlotMapping, IterativeRetrieval) {
   MockFormatInterface FI;
   // Bundle with 3x MSP_AXM (can use A, X, or M)
-  SlotOccupancy Bundle(8, 3);
+  SlotOccupancy Bundle = makeOccupancy(8, 3);
 
   MSPSlotMapping Mapping(Bundle, FI);
   EXPECT_FALSE(Mapping.isEmpty());

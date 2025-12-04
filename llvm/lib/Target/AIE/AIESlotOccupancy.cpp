@@ -30,11 +30,6 @@ SlotOccupancy::SlotOccupancy(SlotBits Slots) : Counts{} {
   }
 }
 
-SlotOccupancy::SlotOccupancy(unsigned ClassIdx, uint8_t Count) : Counts{} {
-  assert(ClassIdx < MaxSlotClasses && "Class index out of bounds");
-  Counts[ClassIdx] = Count;
-}
-
 bool SlotOccupancy::isEmpty() const {
   return std::all_of(Counts.begin(), Counts.end(),
                      [](uint8_t C) { return C == 0; });
@@ -306,14 +301,8 @@ unsigned MSPSlotMapping::materializeAlternative(unsigned SlotClassIdx) {
       // Found the assignment - increment counter
       InstanceCounters[SlotClassIdx]++;
 
-      // Update current occupancy: decrement MSP count, increment real slot
-      // count This is done by creating temporary occupancies and combining them
-      SlotOccupancy MSPDecrement(SlotClassIdx, 1);
-      SlotOccupancy RealSlotIncrement(SlotBits(1) << Assignment.RealSlotIdx);
-
-      // Note: We can't directly decrement, so we need to track this differently
-      // For now, just add the real slot
-      CurrentOccupancy |= RealSlotIncrement;
+      // Update current occupancy: add the real slot
+      CurrentOccupancy |= SlotOccupancy(SlotBits(1) << Assignment.RealSlotIdx);
 
       return Assignment.RealSlotIdx;
     }
