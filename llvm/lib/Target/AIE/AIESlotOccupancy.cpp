@@ -297,8 +297,6 @@ bool MSPSlotMapping::tryMaterializeMSPsWithMapping(
 }
 
 unsigned MSPSlotMapping::materializeAlternative(unsigned SlotClassIdx) {
-  const AIESlotStructure &SlotStructure = FormatInterface->getSlotStructure();
-
   // For real slots, they materialize to themselves
   if (SlotClassIdx < NumRealSlots) {
     // Verify precondition: must have at least one instance

@@ -82,6 +82,29 @@ unsigned NumSlots = getNumSlots();  // Will not be modified
 auto &Config = getConfig();         // Will not be modified
 ```
 
+## Eliminate Unused Variables
+
+Always eliminate unused variables to keep code clean and avoid compiler warnings:
+
+- Remove any variable declarations that are not used
+- If a variable is only needed for its side effects, use `(void)variable;` to explicitly mark it as intentionally unused
+- Do not leave unused variables in the code, even temporarily
+
+Example:
+```cpp
+// Bad - unused variable
+const unsigned NumSlots = getNumSlots();
+doSomething();  // NumSlots never used
+
+// Good - variable removed
+doSomething();
+
+// Good - explicitly marked as unused (rare cases)
+const bool Success = tryOperation();
+(void)Success;  // Used in assert in debug builds
+assert(Success && "Operation must succeed");
+```
+
 ## Build Verification
 
 After making changes to AIE target code, verify the changes by running the AIE CodeGen tests:
@@ -91,3 +114,17 @@ cd Release && ninja check-llvm-codegen-aie
 ```
 
 This ensures that your changes don't break existing functionality and that all AIE-specific code generation tests pass.
+
+## Git Commit Guidelines
+
+**NEVER add build trees to git commits:**
+- Do not add `Release/`, `Debug/`, or any other build directories
+- Do not add `.cline_storage/` or other IDE-specific directories
+- When committing, explicitly specify only the source files that were modified
+- Use `git add <specific-files>` instead of `git add -A` or `git add .`
+
+Example of correct commit workflow:
+```bash
+git add llvm/lib/Target/AIE/MyFile.cpp llvm/lib/Target/AIE/MyFile.h
+git commit -m "Description of changes"
+```
