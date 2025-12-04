@@ -96,7 +96,7 @@ bool SlotOccupancy::tryMaterializeMSPs(const AIEBaseMCFormats &FormatInterface,
   // Find the first MSP class with non-zero count
   unsigned MSPClassIdx = MaxSlotClasses;
   for (unsigned I = NumRealSlots; I < MaxSlotClasses; ++I) {
-    if (RemainingOccupancy.getCount(I) > 0) {
+    if (RemainingOccupancy.at(I) > 0) {
       MSPClassIdx = I;
       break;
     }
@@ -109,7 +109,7 @@ bool SlotOccupancy::tryMaterializeMSPs(const AIEBaseMCFormats &FormatInterface,
 
   // Get the composition for this MSP
   const SlotBits Composition = SlotStructure.getMSPComposition(MSPClassIdx);
-  const uint8_t Count = RemainingOccupancy.getCount(MSPClassIdx);
+  const uint8_t Count = RemainingOccupancy.at(MSPClassIdx);
 
   // Find available slots from the composition
   const SlotBits AvailableSlots = Composition & ~CurrentRealSlots;
@@ -204,7 +204,7 @@ bool MSPSlotMapping::computeMapping(const SlotOccupancy &Occupancy,
   // Start with real slot occupancies (these are fixed)
   SlotBits RealSlotOccupancy = 0;
   for (unsigned I = 0; I < NumRealSlots; ++I) {
-    if (Occupancy.getCount(I) > 0) {
+    if (Occupancy.at(I) > 0) {
       RealSlotOccupancy |= (SlotBits(1) << I);
     }
   }
@@ -223,7 +223,7 @@ bool MSPSlotMapping::tryMaterializeMSPsWithMapping(
   // Find the first MSP class with non-zero count
   unsigned MSPClassIdx = MaxSlotClasses;
   for (unsigned I = NumRealSlots; I < MaxSlotClasses; ++I) {
-    if (RemainingOccupancy.getCount(I) > 0) {
+    if (RemainingOccupancy.at(I) > 0) {
       MSPClassIdx = I;
       break;
     }
@@ -236,7 +236,7 @@ bool MSPSlotMapping::tryMaterializeMSPsWithMapping(
 
   // Get the composition for this MSP
   const SlotBits Composition = SlotStructure.getMSPComposition(MSPClassIdx);
-  const uint8_t Count = RemainingOccupancy.getCount(MSPClassIdx);
+  const uint8_t Count = RemainingOccupancy.at(MSPClassIdx);
 
   // Find available slots from the composition
   const SlotBits AvailableSlots = Composition & ~CurrentRealSlots;
@@ -279,7 +279,7 @@ unsigned MSPSlotMapping::materializeAlternative(unsigned SlotClassIdx) {
   // For real slots, they materialize to themselves
   if (SlotClassIdx < NumRealSlots) {
     // Verify precondition: must have at least one instance
-    assert(CurrentOccupancy.getCount(SlotClassIdx) > 0 &&
+    assert(CurrentOccupancy.at(SlotClassIdx) > 0 &&
            "Cannot materialize slot class with zero count");
 
     // Real slots don't need transformation, just return the slot index
@@ -291,7 +291,7 @@ unsigned MSPSlotMapping::materializeAlternative(unsigned SlotClassIdx) {
   const uint8_t InstanceIdx = InstanceCounters[SlotClassIdx];
 
   // Verify precondition: must have at least one unmaterialized instance
-  assert(CurrentOccupancy.getCount(SlotClassIdx) > InstanceIdx &&
+  assert(CurrentOccupancy.at(SlotClassIdx) > InstanceIdx &&
          "Cannot materialize slot class with no remaining instances");
 
   // Find the assignment for this MSP class and instance

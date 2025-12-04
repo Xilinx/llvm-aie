@@ -86,13 +86,10 @@ public:
   /// \return Sum of all counts
   unsigned total() const;
 
-  /// Get the occupation count for a specific slot class
+  /// Get the occupation count for a specific slot class (STL-style)
   /// \param ClassIdx The slot class index to query
   /// \return The occupation count for that class
-  uint8_t getCount(unsigned ClassIdx) const {
-    assert(ClassIdx < MaxSlotClasses && "Class index out of bounds");
-    return Counts[ClassIdx];
-  }
+  uint8_t at(unsigned ClassIdx) const { return Counts.at(ClassIdx); }
 
   /// Set the occupation count for a specific slot class
   /// \param ClassIdx The slot class index to set

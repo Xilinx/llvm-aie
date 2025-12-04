@@ -318,7 +318,7 @@ TEST(MSPSlotMapping, SingleMSP_AB) {
 
   // Current occupancy should now reflect A being used
   const SlotOccupancy &Current = Mapping.getCurrentOccupancy();
-  EXPECT_EQ(Current.getCount(0), 1u); // A is occupied
+  EXPECT_EQ(Current.at(0), 1u); // A is occupied
 }
 
 TEST(MSPSlotMapping, TwoMSP_AB_Instances) {
@@ -338,8 +338,8 @@ TEST(MSPSlotMapping, TwoMSP_AB_Instances) {
 
   // Current occupancy should reflect both A and B being used
   const SlotOccupancy &Current = Mapping.getCurrentOccupancy();
-  EXPECT_EQ(Current.getCount(0), 1u); // A is occupied
-  EXPECT_EQ(Current.getCount(1), 1u); // B is occupied
+  EXPECT_EQ(Current.at(0), 1u); // A is occupied
+  EXPECT_EQ(Current.at(1), 1u); // B is occupied
 }
 
 TEST(MSPSlotMapping, MixedRealAndMSP) {
@@ -361,8 +361,8 @@ TEST(MSPSlotMapping, MixedRealAndMSP) {
 
   // Current occupancy should reflect both A and B
   const SlotOccupancy &Current = Mapping.getCurrentOccupancy();
-  EXPECT_EQ(Current.getCount(0), 1u); // A
-  EXPECT_EQ(Current.getCount(1), 1u); // B
+  EXPECT_EQ(Current.at(0), 1u); // A
+  EXPECT_EQ(Current.at(1), 1u); // B
 }
 
 TEST(MSPSlotMapping, MultipleMSPClasses) {
@@ -385,8 +385,8 @@ TEST(MSPSlotMapping, MultipleMSPClasses) {
 
   // Current occupancy should reflect A and X
   const SlotOccupancy &Current = Mapping.getCurrentOccupancy();
-  EXPECT_EQ(Current.getCount(0), 1u); // A
-  EXPECT_EQ(Current.getCount(2), 1u); // X
+  EXPECT_EQ(Current.at(0), 1u); // A
+  EXPECT_EQ(Current.at(2), 1u); // X
 }
 
 TEST(MSPSlotMapping, ComplexBundle) {
@@ -420,8 +420,8 @@ TEST(MSPSlotMapping, ComplexBundle) {
   EXPECT_TRUE(AXM == 2u || AXM == 3u); // X or M
 
   const SlotOccupancy &Current = Mapping.getCurrentOccupancy();
-  EXPECT_EQ(Current.getCount(0), 1u); // A
-  EXPECT_EQ(Current.getCount(4), 1u); // S
+  EXPECT_EQ(Current.at(0), 1u); // A
+  EXPECT_EQ(Current.at(4), 1u); // S
 }
 
 TEST(MSPSlotMapping, IterativeRetrieval) {
@@ -444,7 +444,7 @@ TEST(MSPSlotMapping, IterativeRetrieval) {
 
   // All three slots should be occupied
   const SlotOccupancy &Current = Mapping.getCurrentOccupancy();
-  EXPECT_EQ(Current.getCount(0), 1u); // A
-  EXPECT_EQ(Current.getCount(2), 1u); // X
-  EXPECT_EQ(Current.getCount(3), 1u); // M
+  EXPECT_EQ(Current.at(0), 1u); // A
+  EXPECT_EQ(Current.at(2), 1u); // X
+  EXPECT_EQ(Current.at(3), 1u); // M
 }
