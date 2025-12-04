@@ -27,6 +27,9 @@
 
 namespace llvm {
 
+// Forward declaration
+class SlotOccupancy;
+
 // MaxSlotClasses is defined in AIESlotOccupancy.h
 // We use a forward declaration here to avoid circular dependencies
 constexpr unsigned MaxSlotClasses = 32;
@@ -61,6 +64,10 @@ public:
   uint8_t getCapacity(unsigned ClassIdx) const {
     return llvm::popcount(getMSPComposition(ClassIdx));
   }
+
+  /// Get the capacity bounds for all slot classes as a SlotOccupancy
+  /// \return SlotOccupancy with each slot class set to its capacity
+  SlotOccupancy getCapacityBounds() const;
 };
 
 } // end namespace llvm

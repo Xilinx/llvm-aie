@@ -77,10 +77,11 @@ public:
   /// Equality comparison (for testing/debugging)
   bool operator==(const SlotOccupancy &Other) const;
 
-  /// Check if all counts are bounded by their respective capacities
-  /// \param SlotStructure Interface for querying capacity limits
-  /// \return true if all counts are within valid range
-  bool boundedBy(const AIESlotStructure &SlotStructure) const;
+  /// Check if all counts are bounded by the given bounds
+  /// \param Bounds SlotOccupancy representing the upper bounds for each slot
+  /// class
+  /// \return true if all counts are within the bounds
+  bool boundedBy(const SlotOccupancy &Bounds) const;
 
   /// Get the total of all occupation counts
   /// \return Sum of all counts

@@ -236,7 +236,8 @@ TEST(SlotOccupancy, FourMSP_ABXM_FillAllSlots) {
   EXPECT_FALSE(MSP.isEmpty());
   // Should not conflict with itself at capacity
   MockSlotStructure SS;
-  EXPECT_TRUE(MSP.boundedBy(SS));
+  const SlotOccupancy Bounds = SS.getCapacityBounds();
+  EXPECT_TRUE(MSP.boundedBy(Bounds));
 }
 
 // L slot conflicts

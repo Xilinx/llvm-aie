@@ -18,6 +18,22 @@
 
 using namespace llvm;
 
+//===----------------------------------------------------------------------===//
+// AIESlotStructure Implementation
+//===----------------------------------------------------------------------===//
+
+SlotOccupancy AIESlotStructure::getCapacityBounds() const {
+  SlotOccupancy Bounds;
+  for (unsigned I = 0; I < MaxSlotClasses; ++I) {
+    Bounds.setCount(I, getCapacity(I));
+  }
+  return Bounds;
+}
+
+//===----------------------------------------------------------------------===//
+// SlotOccupancy Implementation
+//===----------------------------------------------------------------------===//
+
 SlotOccupancy::SlotOccupancy(SlotBits Slots) : Counts{} {
   // Expand each bit in Slots to an occupation count of 1
   // This unifies regular slots (capacity 1) and MSP slot classes (capacity > 1)
@@ -66,7 +82,8 @@ bool SlotOccupancy::conflict(const SlotOccupancy &Other,
   const SlotOccupancy Combined = *this | Other;
 
   // Quick pruning 1: Check if all counts are within valid range
-  if (!Combined.boundedBy(SlotStructure))
+  const SlotOccupancy CapacityBounds = SlotStructure.getCapacityBounds();
+  if (!Combined.boundedBy(CapacityBounds))
     return true;
 
   const unsigned NumRealSlots = SlotStructure.getNumRealSlots();
@@ -193,9 +210,9 @@ bool SlotOccupancy::operator==(const SlotOccupancy &Other) const {
   return Counts == Other.Counts;
 }
 
-bool SlotOccupancy::boundedBy(const AIESlotStructure &SlotStructure) const {
+bool SlotOccupancy::boundedBy(const SlotOccupancy &Bounds) const {
   for (unsigned I = 0; I < MaxSlotClasses; ++I) {
-    if (Counts[I] > SlotStructure.getCapacity(I))
+    if (Counts[I] > Bounds.at(I))
       return false;
   }
   return true;
