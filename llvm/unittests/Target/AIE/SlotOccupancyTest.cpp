@@ -391,36 +391,30 @@ TEST(MSPSlotMapping, MultipleMSPClasses) {
 
 TEST(MSPSlotMapping, ComplexBundle) {
   MockFormatInterface FI;
-  // Complex bundle: Real slots A, S + 2x MSP_AB + 1x MSP_AXM
-  SlotOccupancy RealA(0b00001);
+  // Complex bundle: Real slot S + 1x MSP_AB + 1x MSP_AXM
+  // This is feasible: MSP_AB can use A or B, MSP_AXM can use A, X, or M
   SlotOccupancy RealS(0b10000);
-  SlotOccupancy TwoMSP_AB = makeOccupancy(7, 2);
+  SlotOccupancy OneMSP_AB = makeOccupancy(7, 1);
   SlotOccupancy OneMSP_AXM = makeOccupancy(8, 1);
-  SlotOccupancy Bundle = RealA | RealS | TwoMSP_AB | OneMSP_AXM;
+  SlotOccupancy Bundle = RealS | OneMSP_AB | OneMSP_AXM;
 
   MSPSlotMapping Mapping(Bundle, FI);
   EXPECT_FALSE(Mapping.isEmpty());
 
-  // Materialize real slots
-  EXPECT_EQ(Mapping.materializeAlternative(0), 0u); // A -> A
+  // Materialize real slot
   EXPECT_EQ(Mapping.materializeAlternative(4), 4u); // S -> S
 
-  // Materialize MSP_AB instances (should get B and... need another slot)
-  // First MSP_AB gets B (A is occupied by real slot)
-  const unsigned AB1 = Mapping.materializeAlternative(7);
-  EXPECT_EQ(AB1, 1u); // B
+  // Materialize MSP_AB (should get A, lowest available)
+  const unsigned AB = Mapping.materializeAlternative(7);
+  EXPECT_EQ(AB, 0u); // A
 
-  // Second MSP_AB should fail or get another slot from {A, B}
-  // Since A is occupied, it should try to get... wait, both A and B are now
-  // used This might actually be infeasible, but let's see what the mapping
-  // computed
-
-  // MSP_AXM should get X or M (A is occupied)
+  // MSP_AXM should get X (A is taken, X is next lowest in composition)
   const unsigned AXM = Mapping.materializeAlternative(8);
-  EXPECT_TRUE(AXM == 2u || AXM == 3u); // X or M
+  EXPECT_EQ(AXM, 2u); // X
 
   const SlotOccupancy &Current = Mapping.getCurrentOccupancy();
   EXPECT_EQ(Current.at(0), 1u); // A
+  EXPECT_EQ(Current.at(2), 1u); // X
   EXPECT_EQ(Current.at(4), 1u); // S
 }
 
