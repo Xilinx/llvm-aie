@@ -163,6 +163,10 @@ void CodeGenFormat::run(raw_ostream &o) {
   o << "  }\n}\n";
   o << "#endif // GET_ALTERNATE_INST_OPCODE_FUNC\n\n";
 
+  // Emit SlotStructure tables for unified slot class indexing
+  CodeGenFormat::emitSlotStructureTables(o, Target, Slots, InstFormats,
+                                         PseudoInstFormats);
+
   if (InstFormats.size() > 0 && Slots.size() > 0) {
     o << "#ifdef GET_FORMATS_FORMATS_DEFS\n"
       << "#undef GET_FORMATS_FORMATS_DEFS\n\n";
@@ -1238,6 +1242,180 @@ TGFieldLayout *TGFieldIterator::operator*() const { return FieldCurrent; }
 
 bool TGFieldIterator::operator==(const TGFieldIterator &Other) const {
   return FieldCurrent == Other.FieldCurrent;
+}
+
+void CodeGenFormat::emitSlotStructureTables(
+    raw_ostream &o, CodeGenTarget &Target, const TGTargetSlots &Slots,
+    const std::vector<TGInstrLayout> &InstFormats,
+    const std::vector<TGInstrLayout> &PseudoInstFormats) {
+
+  const std::string TargetName = Target.getName().str();
+
+  // Count real slots (non-default, non-artificial)
+  unsigned NumRealSlots = 0;
+  for (const auto &[_, Slot] : Slots) {
+    if (!Slot.isDefaultSlot() && !Slot.isArtificial()) {
+      NumRealSlots++;
+    }
+  }
+
+  // Build a map from instruction name to its slot bits
+  std::map<std::string, uint64_t> InstrToSlotBits;
+  for (const TGInstrLayout &Inst : InstFormats) {
+    if (!Inst.hasMultipleSlotOptions() && !Inst.isPacketFormat()) {
+      // Find the slot for this instruction
+      for (const auto *SlotField : Inst.slots()) {
+        const TGTargetSlot *Slot = SlotField->getSlot();
+        if (Slot && !Slot->isDefaultSlot()) {
+          InstrToSlotBits[Inst.getInstrName()] = Slot->getSlotBits();
+          break;
+        }
+      }
+    }
+  }
+
+  // Compute MSP compositions and deduplicate by composition
+  std::map<uint64_t, unsigned> CompositionToClassIdx;
+  std::vector<std::pair<std::string, uint64_t>> MSPCompositions;
+
+  for (const TGInstrLayout &PseudoInst : PseudoInstFormats) {
+    uint64_t Composition = 0;
+    const std::vector<std::string> &AltInsts = PseudoInst.getAlternateInsts();
+
+    // Compute composition from alternate instructions
+    for (const std::string &AltInstFull : AltInsts) {
+      // Extract instruction name from "Target::InstrName"
+      size_t ColonPos = AltInstFull.find("::");
+      std::string AltInstName = (ColonPos != std::string::npos)
+                                    ? AltInstFull.substr(ColonPos + 2)
+                                    : AltInstFull;
+
+      auto It = InstrToSlotBits.find(AltInstName);
+      if (It != InstrToSlotBits.end()) {
+        Composition |= It->second;
+      }
+    }
+
+    if (Composition != 0) {
+      MSPCompositions.push_back({PseudoInst.getInstrName(), Composition});
+
+      // Assign class index if this composition is new
+      if (CompositionToClassIdx.find(Composition) ==
+          CompositionToClassIdx.end()) {
+        CompositionToClassIdx[Composition] =
+            NumRealSlots + CompositionToClassIdx.size();
+      }
+    }
+  }
+
+  const unsigned NumMSPClasses = CompositionToClassIdx.size();
+  const unsigned TotalClasses = NumRealSlots + NumMSPClasses;
+
+  // Emit GET_SLOTSTRUCTURE_NUMREALSLOTS
+  o << "#ifdef GET_SLOTSTRUCTURE_NUMREALSLOTS\n"
+    << "#undef GET_SLOTSTRUCTURE_NUMREALSLOTS\n"
+    << "static constexpr unsigned NumRealSlots = " << NumRealSlots << ";\n"
+    << "static constexpr unsigned NumMSPClasses = " << NumMSPClasses << ";\n"
+    << "static constexpr unsigned TotalSlotClasses = " << TotalClasses << ";\n"
+    << "#endif // GET_SLOTSTRUCTURE_NUMREALSLOTS\n\n";
+
+  // Emit GET_SLOTSTRUCTURE_COMPOSITIONS using ConstTable
+  o << "#ifdef GET_SLOTSTRUCTURE_COMPOSITIONS\n"
+    << "#undef GET_SLOTSTRUCTURE_COMPOSITIONS\n";
+
+  ConstTable Compositions("uint64_t", "SlotCompositions");
+
+  // Real slots: composition is (1 << slotIdx)
+  for (const auto &[_, Slot] : Slots) {
+    if (!Slot.isDefaultSlot() && !Slot.isArtificial()) {
+      Compositions << Slot.getSlotBits()
+                   << "ULL /* Real slot: " << Slot.getSlotName() << " */";
+      Compositions.next();
+    }
+  }
+
+  // MSP classes: emit in order of class index
+  std::vector<std::pair<unsigned, uint64_t>> MSPClassEntries;
+  for (const auto &[Composition, ClassIdx] : CompositionToClassIdx) {
+    MSPClassEntries.push_back({ClassIdx, Composition});
+  }
+  std::sort(MSPClassEntries.begin(), MSPClassEntries.end());
+
+  for (const auto &[ClassIdx, Composition] : MSPClassEntries) {
+    Compositions << Composition << "ULL /* MSP class " << ClassIdx << " */";
+    Compositions.next();
+  }
+
+  Compositions.finish();
+  o << Compositions;
+  o << "#endif // GET_SLOTSTRUCTURE_COMPOSITIONS\n\n";
+
+  // Emit GET_SLOTSTRUCTURE_MSP_OPCODE_TO_CLASS
+  o << "#ifdef GET_SLOTSTRUCTURE_MSP_OPCODE_TO_CLASS\n"
+    << "#undef GET_SLOTSTRUCTURE_MSP_OPCODE_TO_CLASS\n"
+    << "static MultiSlotClass getMSPClassIndexForOpcode(unsigned Opcode) {\n"
+    << "  switch (Opcode) {\n"
+    << "  default:\n"
+    << "    return MultiSlotClass::NoClass; // Not an MSP\n";
+
+  for (const auto &[MSPName, Composition] : MSPCompositions) {
+    unsigned ClassIdx = CompositionToClassIdx[Composition];
+    o << "  case " << TargetName << "::" << MSPName << ":\n"
+      << "    return static_cast<MultiSlotClass>(" << ClassIdx << ");\n";
+  }
+
+  o << "  }\n"
+    << "}\n"
+    << "#endif // GET_SLOTSTRUCTURE_MSP_OPCODE_TO_CLASS\n\n";
+
+  // Emit GET_SLOTSTRUCTURE_MSP_MATERIALIZATION
+  // This provides (opcode, slot index) -> real instruction opcode mapping
+  o << "#ifdef GET_SLOTSTRUCTURE_MSP_MATERIALIZATION\n"
+    << "#undef GET_SLOTSTRUCTURE_MSP_MATERIALIZATION\n"
+    << "static unsigned getMaterializedOpcodeImpl(unsigned Opcode, unsigned "
+       "SlotIdx) {\n"
+    << "  switch (Opcode) {\n"
+    << "  default:\n"
+    << "    return 0; // Not an MSP or invalid\n";
+
+  // For each MSP, emit a nested switch on slot index
+  for (const TGInstrLayout &PseudoInst : PseudoInstFormats) {
+    const std::vector<std::string> &AltInsts = PseudoInst.getAlternateInsts();
+    if (AltInsts.empty())
+      continue;
+
+    o << "  case " << TargetName << "::" << PseudoInst.getInstrName() << ":\n"
+      << "    switch (SlotIdx) {\n"
+      << "    default: return 0;\n";
+
+    // Map each alternate instruction to its slot index
+    for (const std::string &AltInstFull : AltInsts) {
+      // Extract instruction name
+      size_t ColonPos = AltInstFull.find("::");
+      std::string AltInstName = (ColonPos != std::string::npos)
+                                    ? AltInstFull.substr(ColonPos + 2)
+                                    : AltInstFull;
+
+      // Find the slot index for this instruction
+      auto It = InstrToSlotBits.find(AltInstName);
+      if (It != InstrToSlotBits.end()) {
+        uint64_t SlotBit = It->second;
+        // Find the slot index from the bit position
+        unsigned SlotIndex = 0;
+        while (SlotBit > 1) {
+          SlotBit >>= 1;
+          SlotIndex++;
+        }
+        o << "    case " << SlotIndex << ": return " << AltInstFull << ";\n";
+      }
+    }
+
+    o << "    }\n";
+  }
+
+  o << "  }\n"
+    << "}\n"
+    << "#endif // GET_SLOTSTRUCTURE_MSP_MATERIALIZATION\n\n";
 }
 
 static TableGen::Emitter::OptClass<CodeGenFormat>

@@ -26,8 +26,18 @@
 
 namespace llvm {
 
-// Forward declaration
+// Forward declarations
 class AIESlotStructure;
+
+/// MultiSlotClass represents a unified slot class index.
+/// Real slots occupy indices [0..NumRealSlots-1].
+/// MSP classes occupy indices [NumRealSlots..TotalSlotClasses-1].
+/// This type unifies both regular instructions (which use a single real slot)
+/// and multi-slot pseudos (which can materialize to multiple slots).
+enum class MultiSlotClass : int {
+  NoClass = -1 // Invalid/unknown class
+  // Actual class indices are architecture-specific and start from 0
+};
 
 using SlotBits = uint64_t;
 class MCSlotInfo;
@@ -408,6 +418,23 @@ public:
   /// concrete format classes when slot structure is implemented
   virtual const AIESlotStructure &getSlotStructure() const;
 
+  /// Get the MultiSlotClass for an instruction opcode
+  /// \param Opcode The instruction opcode (can be MSP or real instruction)
+  /// \return The MultiSlotClass, or MultiSlotClass::NoClass if unknown
+  virtual MultiSlotClass getMultiSlotClass(unsigned Opcode) const {
+    return MultiSlotClass::NoClass;
+  }
+
+  /// Get the materialized real instruction opcode for an MSP in a specific slot
+  /// \param MSPOpcode The MSP pseudo opcode
+  /// \param SlotIdx The target slot index (0-based, corresponding to real
+  /// slots)
+  /// \return The real instruction opcode, or 0 if invalid
+  virtual unsigned getMaterializedOpcode(unsigned MSPOpcode,
+                                         unsigned SlotIdx) const {
+    return 0; // Default: no materialization
+  }
+
 protected:
   /// Check if the Instruction is indeed into the Tables.
   void checkInstructionIsSupported(unsigned int Opcode) const;
@@ -423,6 +450,10 @@ public:
   const MCFormatDesc *getMCFormats() const override;
   ArrayRef<bool> getIsFormatAvailable() const override;
   const PacketFormats &getPacketFormats() const override;
+  const AIESlotStructure &getSlotStructure() const override;
+  MultiSlotClass getMultiSlotClass(unsigned Opcode) const override;
+  unsigned getMaterializedOpcode(unsigned Opcode,
+                                 unsigned SlotIdx) const override;
 };
 
 class AIE2MCFormats : public AIEBaseMCFormats {
@@ -436,6 +467,10 @@ public:
   const PacketFormats &getPacketFormats() const override;
   ArrayRef<bool> getIsFormatAvailable() const override;
   SmallVector<MCSlotKind, 2> getLoadSlotKinds() const override;
+  const AIESlotStructure &getSlotStructure() const override;
+  MultiSlotClass getMultiSlotClass(unsigned Opcode) const override;
+  unsigned getMaterializedOpcode(unsigned Opcode,
+                                 unsigned SlotIdx) const override;
 };
 
 class AIE2PMCFormats : public AIEBaseMCFormats {
@@ -449,6 +484,10 @@ public:
   const PacketFormats &getPacketFormats() const override;
   ArrayRef<bool> getIsFormatAvailable() const override;
   SmallVector<MCSlotKind, 2> getLoadSlotKinds() const override;
+  const AIESlotStructure &getSlotStructure() const override;
+  MultiSlotClass getMultiSlotClass(unsigned Opcode) const override;
+  unsigned getMaterializedOpcode(unsigned Opcode,
+                                 unsigned SlotIdx) const override;
 };
 
 } // end namespace llvm

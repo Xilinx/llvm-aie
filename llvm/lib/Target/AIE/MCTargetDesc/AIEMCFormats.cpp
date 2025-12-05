@@ -8,6 +8,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "AIEMCFormats.h"
+#include "../AIESlotStructure.h"
 #include "AIE.h"
 
 #undef DEBUG_TYPE
@@ -20,6 +21,10 @@ namespace llvm {
 #define GET_FORMATS_SLOTINFOS_MAPPING
 #define GET_OPCODE_FORMATS_INDEX_FUNC
 #define GET_ALTERNATE_INST_OPCODE_FUNC
+#define GET_SLOTSTRUCTURE_NUMREALSLOTS
+#define GET_SLOTSTRUCTURE_COMPOSITIONS
+#define GET_SLOTSTRUCTURE_MSP_OPCODE_TO_CLASS
+#define GET_SLOTSTRUCTURE_MSP_MATERIALIZATION
 #include "AIEGenFormats.inc"
 
 namespace AIE {
@@ -27,6 +32,22 @@ namespace AIE {
 #define GET_FORMATS_FORMATS_DEFS
 #include "AIEGenFormats.inc"
 } // end namespace AIE
+
+/// AIE1-specific SlotStructure implementation
+class AIESlotStructureImpl final : public AIESlotStructure {
+public:
+  unsigned getNumRealSlots() const override { return NumRealSlots; }
+
+  SlotBits getMSPComposition(unsigned ClassIdx) const override {
+    if (ClassIdx >= TotalSlotClasses) {
+      return 0;
+    }
+    return SlotCompositions[ClassIdx];
+  }
+};
+
+// Static instance
+static const AIESlotStructureImpl SlotStructureInstance;
 
 /***************** AIEInstFormat *******************/
 
@@ -55,7 +76,6 @@ const MCSlotKind AIEInstFormat::getSlot() const {
   return SlotsMap.begin()->SlotKind;
 }
 
-
 /***************** AIEMCFormats *******************/
 
 const MCFormatDesc *AIEMCFormats::getMCFormats() const { return AIE::Formats; }
@@ -64,6 +84,19 @@ const PacketFormats &AIEMCFormats::getPacketFormats() const { return Formats; }
 
 ArrayRef<bool> AIEMCFormats::getIsFormatAvailable() const {
   return FormatAvailable;
+}
+
+const AIESlotStructure &AIEMCFormats::getSlotStructure() const {
+  return SlotStructureInstance;
+}
+
+MultiSlotClass AIEMCFormats::getMultiSlotClass(unsigned Opcode) const {
+  return getMSPClassIndexForOpcode(Opcode);
+}
+
+unsigned AIEMCFormats::getMaterializedOpcode(unsigned Opcode,
+                                             unsigned SlotIdx) const {
+  return getMaterializedOpcodeImpl(Opcode, SlotIdx);
 }
 
 } // end namespace llvm
