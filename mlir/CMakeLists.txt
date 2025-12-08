@@ -1,3 +1,4 @@
+# Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
 # MLIR project.
 cmake_minimum_required(VERSION 3.20.0)
 set(LLVM_SUBPROJECT_TITLE "MLIR")
@@ -207,13 +208,10 @@ include_directories(BEFORE
 # MLIR_TABLEGEN_EXE in PARENT_SCOPE which gets lost if that folder is included
 # from another directory like tools
 add_subdirectory(tools/mlir-linalg-ods-gen)
-add_subdirectory(tools/mlir-pdll)
 add_subdirectory(tools/mlir-tblgen)
 add_subdirectory(tools/mlir-src-sharder)
 set(MLIR_TABLEGEN_EXE "${MLIR_TABLEGEN_EXE}" CACHE INTERNAL "")
 set(MLIR_TABLEGEN_TARGET "${MLIR_TABLEGEN_TARGET}" CACHE INTERNAL "")
-set(MLIR_PDLL_TABLEGEN_EXE "${MLIR_PDLL_TABLEGEN_EXE}" CACHE INTERNAL "")
-set(MLIR_PDLL_TABLEGEN_TARGET "${MLIR_PDLL_TABLEGEN_TARGET}" CACHE INTERNAL "")
 set(MLIR_SRC_SHARDER_TABLEGEN_EXE "${MLIR_SRC_SHARDER_TABLEGEN_EXE}" CACHE INTERNAL "")
 set(MLIR_SRC_SHARDER_TABLEGEN_TARGET "${MLIR_SRC_SHARDER_TABLEGEN_TARGET}" CACHE INTERNAL "")
 
@@ -223,7 +221,16 @@ add_subdirectory(lib)
 add_subdirectory(lib/CAPI)
 
 if (MLIR_INCLUDE_TESTS)
+  # This needs to be set before mlir-pdll, which depends on it
   add_definitions(-DMLIR_INCLUDE_TESTS)
+endif()  
+
+# mlir-pdll is a tablegen-like tool but depends on dialects, so needs to be built after lib/
+add_subdirectory(tools/mlir-pdll)
+set(MLIR_PDLL_TABLEGEN_EXE "${MLIR_PDLL_TABLEGEN_EXE}" CACHE INTERNAL "")
+set(MLIR_PDLL_TABLEGEN_TARGET "${MLIR_PDLL_TABLEGEN_TARGET}" CACHE INTERNAL "")
+
+if (MLIR_INCLUDE_TESTS)
   add_custom_target(MLIRUnitTests)
   set_target_properties(MLIRUnitTests PROPERTIES FOLDER "MLIR/Tests")
   if (TARGET llvm_gtest)
