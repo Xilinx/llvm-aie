@@ -365,7 +365,11 @@ class RegionEndEdges : public ScheduleDAGMutation {
 /// the parent pipelined loop, thereby eliminating the need to reassess
 /// dependencies related to EntrySU in other mutations
 class EmitFixedSUnits : public ScheduleDAGMutation {
+  AAResults *AA;
+
 public:
+  EmitFixedSUnits(AAResults *AA) : AA(AA) {}
+
   void apply(ScheduleDAGInstrs *DAG) override {
     AIEPostRASchedStrategy *Scheduler =
         static_cast<AIEScheduleDAGMI *>(DAG)->getSchedImpl();
@@ -880,7 +884,7 @@ class WAWStickyRegistersEdges : public ScheduleDAGMutation {
 } // namespace
 
 std::vector<std::unique_ptr<ScheduleDAGMutation>>
-AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT) {
+AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT, AAResults *AA) {
   std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
   Mutations.emplace_back(std::make_unique<LockDelays>(true));
   if (!TT.isAIE1()) {
@@ -890,7 +894,7 @@ AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT) {
     Mutations.emplace_back(std::make_unique<MemoryEdges>(true));
     Mutations.emplace_back(std::make_unique<MachineSchedWAWEdges>());
     Mutations.emplace_back(std::make_unique<BiasDepth>());
-    Mutations.emplace_back(std::make_unique<EmitFixedSUnits>());
+    Mutations.emplace_back(std::make_unique<EmitFixedSUnits>(AA));
   }
   return Mutations;
 }

@@ -379,7 +379,7 @@ AIEBasePassConfig::createPostMachineScheduler(MachineSchedContext *C) const {
       new AIEScheduleDAGMI(C, std::make_unique<AIEPostRASchedStrategy>(C),
                            /* RemoveKillFlags=*/true);
   for (auto &Mutation :
-       AIEBaseSubtarget::getPostRAMutationsImpl(TM->getTargetTriple()))
+       AIEBaseSubtarget::getPostRAMutationsImpl(TM->getTargetTriple(), C->AA))
     DAG->addMutation(std::move(Mutation));
   return DAG;
 }
