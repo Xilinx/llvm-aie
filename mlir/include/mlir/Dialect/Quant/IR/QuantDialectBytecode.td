@@ -3,6 +3,8 @@
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -81,6 +83,14 @@ def UniformQuantizedPerAxisType: DialectType<(type
   }];
 }
 
+def BlockFloatQuantizedType: DialectType<(type
+  WithGetter<"static_cast<uint32_t>($_attrType.getBlockMode())", VarInt>:$blockMode,
+  VarInt:$axis
+)> {
+  let cBuilder = "get<$_resultType>(context, "
+                 " static_cast<BlockFloatQuantizedType::BlockMode>(blockMode), axis)";
+}
+
 /// This enum contains marker codes used to indicate which attribute is
 /// currently being decoded, and how it should be decoded. The order of these
 /// codes should generally be unchanged, as any changes will inevitably break
@@ -93,7 +103,8 @@ def QuantDialectTypes : DialectTypes<"Quant"> {
     AnyQuantizedTypeWithExpressedType,
     CalibratedQuantizedType,
     UniformQuantizedType,
-    UniformQuantizedPerAxisType
+    UniformQuantizedPerAxisType,
+    BlockFloatQuantizedType
   ];
 }
 

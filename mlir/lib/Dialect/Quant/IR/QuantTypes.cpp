@@ -3,12 +3,14 @@
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
 //
 //===----------------------------------------------------------------------===//
 
+#include "mlir/Dialect/Quant/IR/QuantTypes.h"
 #include "TypeDetail.h"
 #include "mlir/Dialect/Quant/IR/Quant.h"
-#include "mlir/Dialect/Quant/IR/QuantTypes.h"
 
 #include "mlir/IR/BuiltinTypes.h"
 #include "mlir/IR/MLIRContext.h"
@@ -34,7 +36,31 @@ double getMaxScale(Type expressedType) {
   return APFloat::getLargest(floatType.getFloatSemantics()).convertToDouble();
 }
 
-}  // namespace
+struct BlockFloatQuantizedTypeConfig {
+  StringRef mode;
+  unsigned singleElementBitWidth;
+  unsigned averageBitsPerElement;
+  unsigned blockSize;
+};
+
+const BlockFloatQuantizedTypeConfig &
+getBlockFloatQuantizedTypeConfig(BlockFloatQuantizedType::BlockMode blockMode) {
+  switch (blockMode) {
+  case BlockFloatQuantizedType::BlockMode::BFP16: {
+    static constexpr BlockFloatQuantizedTypeConfig config = {
+        StringLiteral("BFP16"), 16, 9, 8};
+    return config;
+  }
+  case BlockFloatQuantizedType::BlockMode::MX6: {
+    static constexpr BlockFloatQuantizedTypeConfig config = {
+        StringLiteral("MX6"), 13, 6, 16};
+    return config;
+  }
+  }
+  llvm_unreachable("unknown block quantized type");
+}
+
+} // namespace
 
 unsigned QuantizedType::getFlags() const {
   return static_cast<ImplType *>(impl)->flags;
@@ -333,6 +359,108 @@ double UniformQuantizedType::getScale() const { return getImpl()->scale; }
 
 int64_t UniformQuantizedType::getZeroPoint() const {
   return getImpl()->zeroPoint;
+}
+
+struct BlockFloatQuantizedParams {
+  unsigned flags;
+  Type storageType;
+  int64_t storageTypeMin;
+  int64_t storageTypeMax;
+};
+
+static BlockFloatQuantizedParams
+getBlockFloatQuantizedParams(MLIRContext *ctx,
+                             BlockFloatQuantizedType::BlockMode blockMode) {
+  const BlockFloatQuantizedTypeConfig &config =
+      getBlockFloatQuantizedTypeConfig(blockMode);
+  const unsigned flags = 0;
+  const bool isSigned =
+      false; // this does not really make sense for block
+             // types, just fix to unsigned to make the base class happy
+  Type storageType = IntegerType::get(ctx, config.averageBitsPerElement);
+  int64_t storageTypeMin = QuantizedType::getDefaultMinimumForInteger(
+      isSigned, config.averageBitsPerElement);
+  int64_t storageTypeMax = QuantizedType::getDefaultMaximumForInteger(
+      isSigned, config.averageBitsPerElement);
+  return {flags, storageType, storageTypeMin, storageTypeMax};
+}
+
+BlockFloatQuantizedType BlockFloatQuantizedType::get(MLIRContext *ctx,
+                                                     BlockMode blockMode,
+                                                     int32_t axis) {
+  const BlockFloatQuantizedParams params =
+      getBlockFloatQuantizedParams(ctx, blockMode);
+  return Base::get(ctx, static_cast<uint32_t>(blockMode), axis, params.flags,
+                   params.storageType, /*expressedType*/ Type(),
+                   params.storageTypeMin, params.storageTypeMax);
+}
+
+BlockFloatQuantizedType BlockFloatQuantizedType::getChecked(
+    function_ref<InFlightDiagnostic()> emitError, MLIRContext *ctx,
+    BlockMode blockMode, int32_t axis) {
+  const BlockFloatQuantizedParams params =
+      getBlockFloatQuantizedParams(ctx, blockMode);
+  return Base::getChecked(emitError, ctx, static_cast<uint32_t>(blockMode),
+                          axis, params.flags, params.storageType,
+                          /*expressedType*/ Type(), params.storageTypeMin,
+                          params.storageTypeMax);
+}
+
+LogicalResult BlockFloatQuantizedType::verifyInvariants(
+    function_ref<InFlightDiagnostic()> emitError, uint32_t blockModeRaw,
+    int32_t axis, unsigned flags, Type storageType, Type expressedType,
+    int64_t storageTypeMin, int64_t storageTypeMax) {
+  // storage type, expressed type, storageTypeMin, storageTypeMax and flags can
+  // be derived from blockMode. But inside this function we do not have access
+  // to ctx to construct those values, so we need to pass them in to be able
+  // to forward them to the base class verification.
+  // MLIR requires the TypeStorage KeyTy and verifyInvariants to share the same
+  // signature, forcing us to also pass these derivable args to the TypeStorage.
+  if (failed(QuantizedType::verifyInvariants(emitError, flags, storageType,
+                                             expressedType, storageTypeMin,
+                                             storageTypeMax)))
+    return failure();
+
+  if (blockModeRaw >
+      static_cast<uint32_t>(BlockFloatQuantizedType::BlockMode::MAX_VALUE))
+    return emitError() << "invalid block mode: " << blockModeRaw;
+
+  if (axis < 0)
+    return emitError() << "axis must be non-negative";
+
+  return success();
+}
+
+int32_t BlockFloatQuantizedType::getAxis() const { return getImpl()->axis; }
+
+BlockFloatQuantizedType::BlockMode
+BlockFloatQuantizedType::getBlockMode() const {
+  return static_cast<BlockMode>(getImpl()->blockType);
+}
+
+unsigned BlockFloatQuantizedType::getAverageBitsPerElement() const {
+  return getBlockFloatQuantizedTypeConfig(getBlockMode()).averageBitsPerElement;
+}
+
+unsigned BlockFloatQuantizedType::getSingleElementStorageSize() const {
+  return getBlockFloatQuantizedTypeConfig(getBlockMode()).singleElementBitWidth;
+}
+
+unsigned BlockFloatQuantizedType::getBlockSize() const {
+  return getBlockFloatQuantizedTypeConfig(getBlockMode()).blockSize;
+}
+
+std::optional<BlockFloatQuantizedType::BlockMode>
+BlockFloatQuantizedType::parseBlockMode(StringRef name) {
+  if (name == "BFP16")
+    return BlockMode::BFP16;
+  if (name == "MX6")
+    return BlockMode::MX6;
+  return std::nullopt;
+}
+
+StringRef BlockFloatQuantizedType::getBlockModeName(BlockMode blockMode) {
+  return getBlockFloatQuantizedTypeConfig(blockMode).mode;
 }
 
 UniformQuantizedPerAxisType UniformQuantizedPerAxisType::get(

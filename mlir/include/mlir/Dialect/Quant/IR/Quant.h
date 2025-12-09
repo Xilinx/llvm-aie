@@ -3,6 +3,8 @@
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -25,6 +27,7 @@ namespace mlir {
 namespace quant {
 
 class QuantizedType;
+class BlockFloatQuantizedType;
 class UniformQuantizedType;
 class UniformQuantizedPerAxisType;
 

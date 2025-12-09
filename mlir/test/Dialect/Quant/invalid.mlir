@@ -1,3 +1,6 @@
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
+
 // RUN: mlir-opt %s -split-input-file -verify-diagnostics
 
 func.func @dcast_invalid_input(%arg0: f32) {
@@ -256,3 +259,39 @@ func.func @scast_per_axis_invalid_rank(%arg0: tensor<2x3x4xi8>) {
   return
 }
 
+// -----
+
+// expected-error@+1 {{unknown block quantized mode foo}}
+!unknown_block = !quant.block_float<mode=foo, axis=0>
+
+// -----
+
+// expected-error@+1 {{axis must be non-negative}}
+!negative_axis = !quant.block_float<mode=BFP16, axis=-1>
+
+// -----
+
+!block_scalar = !quant.block_float<mode=BFP16, axis=0>
+func.func @block_quant_scalar(%arg0: !block_scalar) {
+  // expected-error@+1 {{scalar types may not use block float quantization}}
+  %0 = quant.dcast %arg0 : !block_scalar to f32
+  return
+}
+
+// -----
+
+!block_axis = !quant.block_float<mode=BFP16, axis=1>
+func.func @block_quant_axis(%arg0: tensor<2x!block_axis>) {
+  // expected-error@+1 {{block axis must be less than tensor rank}}
+  %0 = quant.dcast %arg0 : tensor<2x!block_axis> to tensor<2xf32>
+  return
+}
+
+// -----
+
+!block_axis = !quant.block_float<mode=BFP16, axis=1>
+func.func @block_quant_storage_cast(%arg0: tensor<2x!block_axis>) {
+  // expected-error@+1 {{storage cast not supported for block float quantized types}}
+  %0 = quant.scast %arg0 : tensor<2x!block_axis> to tensor<2xi9>
+  return
+}
