@@ -27,7 +27,6 @@ declare <32 x bfloat> @llvm.aie2p.v32accfloat.to.v32bf16(<32 x float>) #1
 define dso_local void @add_attribute_bcast_prologue1(ptr %ifm2, ptr %ifm1, i32 %div16, ptr noalias %ofm, ptr noalias %targetptr, ptr %targetptrmayalias) {
 ; CHECK-LABEL: add_attribute_bcast_prologue1:
 ; CHECK:       // %bb.0: // %newFuncRoot
-; CHECK-NEXT:    nopa ; nopb ; st r0, [p3, #0]; nopxm ; nopv
 ; CHECK-NEXT:    st r0, [p4, #0]; nopx
 ; CHECK-NEXT:    mova m0, #32
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p1], m0
@@ -40,7 +39,7 @@ define dso_local void @add_attribute_bcast_prologue1(ptr %ifm2, ptr %ifm1, i32 %
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml3, [p1], m0; movxm le, #.L_LEnd0; vadd.f dm3, dm3, dm0, r1
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p1], m0; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml2, [p0], m0; nopb ; nops ; nopxm ; vadd.f dm4, dm1, dm2, r1
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cml0, [p0], m0; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml0, [p0], m0; nopb ; st r0, [p3, #0]; nopxm ; nopv
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml3, [p1], m0; nopb ; vst.conv.bf16.fp32 cml4, [p2], #64; nopxm ; vadd.f dm3, dm3, dm0, r1
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
@@ -146,8 +145,7 @@ for.cond.cleanup.ret.exitStub:                    ; preds = %for.cond.cleanup
 define dso_local void @add_attribute_bcast_prologue2(ptr %ifm2, ptr %ifm1, i32 %div16, ptr noalias %ofm, ptr noalias %targetptr) {
 ; CHECK-LABEL: add_attribute_bcast_prologue2:
 ; CHECK:       // %bb.0: // %newFuncRoot
-; CHECK-NEXT:    st.s16 r0, [p3, #0]; nopxm
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    st.s16 r0, [p3, #0]; nopb ; nopxm
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop

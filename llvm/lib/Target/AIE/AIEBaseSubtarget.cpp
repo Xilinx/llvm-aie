@@ -453,7 +453,8 @@ public:
       }
 
       MachineInstr *FixedDepMI =
-          AIE::findEarliestRef(MI, BotFixedBundles, BotFixedBundles.size()).MI;
+          AIE::findEarliestRef(MI, BotFixedBundles, BotFixedBundles.size(), AA)
+              .MI;
       if (!FixedDepMI)
         continue;
 

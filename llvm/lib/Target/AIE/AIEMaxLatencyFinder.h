@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -37,7 +37,8 @@ struct InstrAndCycle {
 ///          bound and the instruction responsible for the dependency if it is
 ///          found.
 InstrAndCycle findEarliestRef(const MachineInstr &SrcMI,
-                              ArrayRef<MachineBundle> Bundles, int Prune);
+                              ArrayRef<MachineBundle> Bundles, int Prune,
+                              AAResults *AA = nullptr);
 
 class MaxLatencyFinder {
   const AIEPostRASchedStrategy *const Scheduler;
