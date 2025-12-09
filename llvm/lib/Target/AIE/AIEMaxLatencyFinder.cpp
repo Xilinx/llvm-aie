@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -89,22 +89,13 @@ static bool overlap(const MachineOperand &SrcOp, const MachineOperand &DstOp,
 
 /// Check whether Dst depends on Src
 static bool depends(const MachineInstr &Src, const MachineInstr &Dst,
-                    const TargetRegisterInfo *TRI) {
+                    const TargetRegisterInfo *TRI, AAResults *AA) {
 
   const AIEBaseInstrInfo *const TII = static_cast<const AIEBaseInstrInfo *>(
       Src.getMF()->getSubtarget().getInstrInfo());
   // Detect dependency between lock and ld/st intructions.
   if ((TII->isLock(Src.getOpcode()) && (Dst.mayLoadOrStore())) ||
       (TII->isLock(Dst.getOpcode()) && (Src.mayLoadOrStore()))) {
-    return true;
-  }
-  // We don't try anything clever in terms of alias analysis
-  // The memory latency is accounted for by maxLatency() and any
-  // possible dependence will be corrected for by its scheduled cycle.
-  // (RAW || WAW) ||
-  // (WAR)
-  if ((Src.mayStore() && (Dst.mayLoad() || Dst.mayStore())) ||
-      (Src.mayLoad() && Dst.mayStore())) {
     return true;
   }
 
@@ -127,11 +118,28 @@ static bool depends(const MachineInstr &Src, const MachineInstr &Dst,
     }
   }
 
+  // Use alias analysis if available.
+  // The memory latency is accounted for by maxLatency() and any
+  // possible dependence will be corrected for by its scheduled cycle.
+  // (RAW || WAW) ||
+  // (WAR)
+  if ((Src.mayStore() && (Dst.mayLoad() || Dst.mayStore())) ||
+      (Src.mayLoad() && Dst.mayStore())) {
+
+    // TODO: Filter partword operations.
+    if (AA) {
+      return Src.mayAlias(AA, Dst, true);
+    }
+
+    return true;
+  }
+
   return false;
 }
 
 InstrAndCycle findEarliestRef(const MachineInstr &SrcMI,
-                              ArrayRef<MachineBundle> Bundles, int Prune) {
+                              ArrayRef<MachineBundle> Bundles, int Prune,
+                              AAResults *AA) {
   const TargetRegisterInfo *TRI =
       SrcMI.getMF()->getSubtarget().getRegisterInfo();
   int Cycle = 0;
@@ -142,7 +150,7 @@ InstrAndCycle findEarliestRef(const MachineInstr &SrcMI,
     }
     for (MachineInstr *DstMI : Bundle.getInstrs()) {
       LLVM_DEBUG(dbgs() << " " << *DstMI);
-      if (depends(SrcMI, *DstMI, TRI)) {
+      if (depends(SrcMI, *DstMI, TRI, AA)) {
         LLVM_DEBUG(dbgs() << "    depends in cycle=" << Cycle << "\n");
         return {DstMI, Cycle};
       }
