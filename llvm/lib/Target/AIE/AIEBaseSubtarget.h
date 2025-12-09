@@ -73,7 +73,7 @@ public:
 
   /// Required DAG mutations during Post-RA scheduling.
   static std::vector<std::unique_ptr<ScheduleDAGMutation>>
-  getPostRAMutationsImpl(const Triple &TT);
+  getPostRAMutationsImpl(const Triple &TT, AAResults *AA);
 
   /// Required DAG mutations for InterBlock dependence analysis
   static std::vector<std::unique_ptr<ScheduleDAGMutation>>
