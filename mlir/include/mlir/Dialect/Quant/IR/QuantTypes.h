@@ -237,7 +237,8 @@ public:
 ///  number of elements. For example, a single BFP16 element requires 16 bits to
 ///  be represented, but a block of 8 BFP16 elements can be packed into 9 bits
 ///  per element on average (72 bits total). The storage type for
-///  BlockFloatQuantizedType is the "packed" type, so for BFP16 i9.
+///  an element from BlockFloatQuantizedType is the "packed" type
+///  divided by the number of packed elements, so for BFP16 i9.
 ///  -- As accessing properties like min/max storage values and integral width
 ///  depend on the block size, these methods are overridden to return errors.
 ///  - The expressed type is not stored yet, this may change if there is a use
