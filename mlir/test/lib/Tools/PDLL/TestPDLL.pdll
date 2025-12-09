@@ -3,6 +3,8 @@
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,4 +22,12 @@ Pattern TestEquals {
     let op = op<test.equals> {val = val : Attr};
     val == attr<"4 : i32">;
     replace op with op<test.success>;
+}
+
+Pattern TestNotBuiltinDialect {
+    let op = op<some_unknown_test.operation>;
+    rewrite op with {
+        let newOp = op<some_unknown_test.other_operation>()-> (type<"!test.test_type">);
+        replace op with op<some_unknown_test.another_operation>(newOp.0);
+    };
 }

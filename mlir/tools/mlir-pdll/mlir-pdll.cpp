@@ -3,10 +3,13 @@
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//  Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
 //
 //===----------------------------------------------------------------------===//
 
 #include "mlir/IR/BuiltinOps.h"
+#include "mlir/InitAllDialects.h"
 #include "mlir/Support/FileUtilities.h"
 #include "mlir/Support/ToolUtilities.h"
 #include "mlir/Tools/PDLL/AST/Context.h"
@@ -20,6 +23,12 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include <set>
+
+#ifdef MLIR_INCLUDE_TESTS
+namespace test {
+void registerTestDialect(mlir::DialectRegistry &);
+} // namespace test
+#endif
 
 using namespace mlir;
 using namespace mlir::pdll;
@@ -74,7 +83,12 @@ processBuffer(raw_ostream &os, std::unique_ptr<llvm::MemoryBuffer> chunkBuffer,
     return success();
   }
 
-  MLIRContext mlirContext;
+  DialectRegistry registry;
+  registerAllDialects(registry);
+#ifdef MLIR_INCLUDE_TESTS
+  ::test::registerTestDialect(registry);
+#endif
+  MLIRContext mlirContext(registry);
   OwningOpRef<ModuleOp> pdlModule =
       codegenPDLLToMLIR(&mlirContext, astContext, sourceMgr, **module);
   if (!pdlModule)
