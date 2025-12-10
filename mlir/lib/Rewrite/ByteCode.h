@@ -3,6 +3,8 @@
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -210,6 +212,10 @@ private:
   /// A set of user defined functions invoked via PDL.
   std::vector<PDLConstraintFunction> constraintFunctions;
   std::vector<PDLRewriteFunction> rewriteFunctions;
+
+  /// The names of the user defined functions used for debug printing.
+  std::vector<std::string> constraintFunctionNames;
+  std::vector<std::string> rewriteFunctionNames;
 
   /// The maximum memory index used by a value.
   ByteCodeField maxValueMemoryIndex = 0;

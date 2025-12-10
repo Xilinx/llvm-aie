@@ -3,6 +3,8 @@
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -1077,10 +1079,14 @@ PDLByteCode::PDLByteCode(
   generator.generate(module);
 
   // Initialize the external functions.
-  for (auto &it : constraintFns)
+  for (auto &it : constraintFns) {
     constraintFunctions.push_back(std::move(it.second));
-  for (auto &it : rewriteFns)
+    constraintFunctionNames.push_back(it.first().str());
+  }
+  for (auto &it : rewriteFns) {
     rewriteFunctions.push_back(std::move(it.second));
+    rewriteFunctionNames.push_back(it.first().str());
+  }
 }
 
 /// Initialize the given state such that it can be used to execute the current
@@ -1137,7 +1143,9 @@ public:
       ArrayRef<PatternBenefit> currentPatternBenefits,
       ArrayRef<PDLByteCodePattern> patterns,
       ArrayRef<PDLConstraintFunction> constraintFunctions,
-      ArrayRef<PDLRewriteFunction> rewriteFunctions)
+      ArrayRef<PDLRewriteFunction> rewriteFunctions,
+      ArrayRef<std::string> constraintFunctionNames,
+      ArrayRef<std::string> rewriteFunctionNames)
       : curCodeIt(curCodeIt), memory(memory), opRangeMemory(opRangeMemory),
         typeRangeMemory(typeRangeMemory),
         allocatedTypeRangeMemory(allocatedTypeRangeMemory),
@@ -1146,7 +1154,9 @@ public:
         loopIndex(loopIndex), uniquedMemory(uniquedMemory), code(code),
         currentPatternBenefits(currentPatternBenefits), patterns(patterns),
         constraintFunctions(constraintFunctions),
-        rewriteFunctions(rewriteFunctions) {}
+        rewriteFunctions(rewriteFunctions),
+        constraintFunctionNames(constraintFunctionNames),
+        rewriteFunctionNames(rewriteFunctionNames) {}
 
   /// Start executing the code at the current bytecode index. `matches` is an
   /// optional field provided when this function is executed in a matching
@@ -1431,12 +1441,16 @@ private:
   ArrayRef<PDLByteCodePattern> patterns;
   ArrayRef<PDLConstraintFunction> constraintFunctions;
   ArrayRef<PDLRewriteFunction> rewriteFunctions;
+  ArrayRef<std::string> constraintFunctionNames;
+  ArrayRef<std::string> rewriteFunctionNames;
 };
 } // namespace
 
 void ByteCodeExecutor::executeApplyConstraint(PatternRewriter &rewriter) {
-  LLVM_DEBUG(llvm::dbgs() << "Executing ApplyConstraint:\n");
+  LLVM_DEBUG(llvm::dbgs() << "Executing ApplyConstraint ");
   ByteCodeField fun_idx = read();
+  LLVM_DEBUG(llvm::dbgs() << constraintFunctionNames[fun_idx] << ":\n");
+
   SmallVector<PDLValue, 16> args;
   readList<PDLValue>(args);
 
@@ -1477,8 +1491,12 @@ void ByteCodeExecutor::executeApplyConstraint(PatternRewriter &rewriter) {
 }
 
 LogicalResult ByteCodeExecutor::executeApplyRewrite(PatternRewriter &rewriter) {
-  LLVM_DEBUG(llvm::dbgs() << "Executing ApplyRewrite:\n");
-  const PDLRewriteFunction &rewriteFn = rewriteFunctions[read()];
+  LLVM_DEBUG(llvm::dbgs() << "Executing ApplyRewrite ");
+
+  ByteCodeField fun_idx = read();
+  LLVM_DEBUG(llvm::dbgs() << rewriteFunctionNames[fun_idx] << ":\n");
+  const PDLRewriteFunction &rewriteFn = rewriteFunctions[fun_idx];
+
   SmallVector<PDLValue, 16> args;
   readList<PDLValue>(args);
 
@@ -2356,7 +2374,8 @@ void PDLByteCode::match(Operation *op, PatternRewriter &rewriter,
       state.typeRangeMemory, state.allocatedTypeRangeMemory,
       state.valueRangeMemory, state.allocatedValueRangeMemory, state.loopIndex,
       uniquedData, matcherByteCode, state.currentPatternBenefits, patterns,
-      constraintFunctions, rewriteFunctions);
+      constraintFunctions, rewriteFunctions, constraintFunctionNames,
+      rewriteFunctionNames);
   LogicalResult executeResult = executor.execute(rewriter, &matches);
   (void)executeResult;
   assert(succeeded(executeResult) && "unexpected matcher execution failure");
@@ -2385,7 +2404,8 @@ LogicalResult PDLByteCode::rewrite(PatternRewriter &rewriter,
       state.allocatedTypeRangeMemory, state.valueRangeMemory,
       state.allocatedValueRangeMemory, state.loopIndex, uniquedData,
       rewriterByteCode, state.currentPatternBenefits, patterns,
-      constraintFunctions, rewriteFunctions);
+      constraintFunctions, rewriteFunctions, constraintFunctionNames,
+      rewriteFunctionNames);
   LogicalResult result =
       executor.execute(rewriter, /*matches=*/nullptr, match.location);
 
