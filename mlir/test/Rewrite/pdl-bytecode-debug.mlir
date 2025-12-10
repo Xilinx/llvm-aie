@@ -1,11 +1,7 @@
-// Copyright (C) 2025 Advanced Micro Devices, Inc. All rights reserved.
+// Modifications Copyright (C) 2025 Advanced Micro Devices, Inc.
+// These tests are copied from mlir/test/Rewrite/pdl-bytecode.mlir
 
 // RUN: mlir-opt %s -test-pdl-bytecode-pass -split-input-file --debug 2>&1 | FileCheck %s
-
-// Note: Tests here are written using the PDL Interpreter dialect to avoid
-// unnecessarily testing unnecessary aspects of the pattern compilation
-// pipeline. These tests are written such that we can focus solely on the
-// lowering/execution of the bytecode itself.
 
 //===----------------------------------------------------------------------===//
 // pdl_interp::ApplyConstraintOp
