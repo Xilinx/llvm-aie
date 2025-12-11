@@ -19,6 +19,7 @@
 
 #include "AIEBaseInstrInfo.h"
 #include "AIEBundle.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include <map>
@@ -31,8 +32,8 @@ class AIERegMemEventTracker {
 public:
   AIERegMemEventTracker(const InstrItineraryData *Itins,
                         const TargetRegisterInfo *TRI,
-                        const AIEBaseInstrInfo *TII)
-      : InstrItins(Itins), TRI(TRI), TII(TII) {};
+                        const AIEBaseInstrInfo *TII, AAResults *AA = nullptr)
+      : InstrItins(Itins), TRI(TRI), TII(TII), AA(AA) {};
 
   // This function calculates the cycles in which each register will be last
   // materialized or used, taking into account a specified sequence of timed
@@ -48,9 +49,11 @@ private:
   const InstrItineraryData *InstrItins;
   const TargetRegisterInfo *TRI;
   const AIEBaseInstrInfo *TII;
+  AAResults *AA;
   std::map<MCRegister, unsigned> RegisterToCycleDef;
   std::map<MCRegister, unsigned> RegisterToCycleUse;
   int LastStoreCycle = 0;
+  std::map<int, std::vector<MachineInstr *>> MemoryCycleToStoreInstrs;
 
   const std::map<MCRegister, unsigned> &getRegToCycleMap(bool IsDef) const;
 
@@ -61,6 +64,10 @@ private:
   void updateLastStoreCycle(int LastStoreCycle);
 
   int getLastStoreCycle() const { return LastStoreCycle; }
+
+  void addPerInstructionLastStoreCycle(int LastStoreCycle, MachineInstr *MI);
+
+  int getMaxAliasingStoreCycle(const MachineInstr &MI) const;
 };
 
 } // end namespace llvm
