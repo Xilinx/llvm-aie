@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -272,8 +272,15 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
     llvm_unreachable(
         "Target didn't implement getGenericIntegerComparisonOpcode!");
   }
+
   /// Check whether Opc represents a lock instruction
   virtual bool isLock(unsigned Opc) const { return false; }
+
+  /// Check whether MI is a part-word memory instruction (e.g., byte or
+  /// half-word load/store). Part-word stores typically have read-modify-write
+  /// behavior and may access memory multiple times and don't respect
+  /// normal aliasing rules.
+  virtual bool isPartWordMemoryInst(const MachineInstr &MI) const;
 
   /// Return an optional latency if Opc is DONE.
   virtual std::optional<unsigned> getDoneLatency(const unsigned Opc) const {

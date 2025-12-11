@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -126,11 +126,20 @@ static bool depends(const MachineInstr &Src, const MachineInstr &Dst,
   if ((Src.mayStore() && (Dst.mayLoad() || Dst.mayStore())) ||
       (Src.mayLoad() && Dst.mayStore())) {
 
-    // TODO: Filter partword operations.
-    if (AA) {
+    // For non-part-word memory instructions, use alias analysis (if available)
+    // to determine if Src and Dst may alias. Part-word instructions are always
+    // treated conservatively due to their read-modify-write behavior.
+    auto IsPartWordStore = [&TII](const MachineInstr &MaybePartStore) {
+      return MaybePartStore.mayStore() &&
+             TII->isPartWordMemoryInst(MaybePartStore);
+    };
+
+    if (AA && !IsPartWordStore(Src)) {
       return Src.mayAlias(AA, Dst, true);
     }
 
+    // Conservative: assume dependency for part-word instructions or when AA
+    // is unavailable
     return true;
   }
 

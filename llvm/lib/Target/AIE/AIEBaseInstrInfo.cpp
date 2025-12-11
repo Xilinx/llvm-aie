@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -1176,6 +1176,25 @@ const MCSlotInfo *AIEBaseInstrInfo::getSlotInfo(const MCSlotKind Kind) const {
 bool AIEBaseInstrInfo::isMultiSlotPseudo(const MachineInstr &MI) const {
   return MI.isPseudo() &&
          getFormatInterface()->getAlternateInstsOpcode(MI.getOpcode());
+}
+
+bool AIEBaseInstrInfo::isPartWordMemoryInst(const MachineInstr &MI) const {
+  // Not a memory instruction
+  if (!MI.mayLoadOrStore())
+    return false;
+
+  // Conservative: assume part-word if no memory operands
+  if (MI.memoperands_empty())
+    return true;
+
+  // Check if any memory operand has unknown size or accesses less than a full
+  // word
+  return llvm::any_of(MI.memoperands(), [](const MachineMemOperand *MMO) {
+    // The word size for this target
+    const unsigned WordSizeInBytes = 4;
+    const LocationSize Size = MMO->getSize();
+    return (!Size.hasValue() || Size.getValue() < WordSizeInBytes);
+  });
 }
 
 std::optional<unsigned>

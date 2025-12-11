@@ -169,7 +169,12 @@ int AIERegMemEventTracker::getMaxAliasingStoreCycle(
   int MaxAliasingStoreCycle = 0;
   for (const auto &[Cycle, Stores] : MemoryCycleToStoreInstrs) {
     for (const MachineInstr *Store : Stores) {
-      if (MI.mayAlias(AA, *Store, /*UseTBAA=*/true)) {
+      // Part-word stores (e.g., byte/half-word) have read-modify-write
+      // behavior and must be treated conservatively. For other stores,
+      // use alias analysis to check if they may alias with MI. If either
+      // condition is true, we need to enforce a dependency.
+      if (TII->isPartWordMemoryInst(*Store) ||
+          MI.mayAlias(AA, *Store, /*UseTBAA=*/true)) {
         MaxAliasingStoreCycle = std::max(MaxAliasingStoreCycle, Cycle);
       }
     }

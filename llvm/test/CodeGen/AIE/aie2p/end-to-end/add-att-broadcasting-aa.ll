@@ -145,7 +145,8 @@ for.cond.cleanup.ret.exitStub:                    ; preds = %for.cond.cleanup
 define dso_local void @add_attribute_bcast_prologue2(ptr %ifm2, ptr %ifm1, i32 %div16, ptr noalias %ofm, ptr noalias %targetptr) {
 ; CHECK-LABEL: add_attribute_bcast_prologue2:
 ; CHECK:       // %bb.0: // %newFuncRoot
-; CHECK-NEXT:    st.s16 r0, [p3, #0]; nopb ; nopxm
+; CHECK-NEXT:    st.s16 r0, [p3, #0]; nopxm
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
