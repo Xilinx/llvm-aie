@@ -52,6 +52,10 @@ static cl::opt<bool> EnableWAWStickyRegisters(
     "aie-pipeliner-waw-sticky-registers", cl::Hidden, cl::init(true),
     cl::desc("Apply sticky registers WAW dependency removal"));
 
+static cl::opt<bool> EnableAAInEmitFixedSUnits(
+    "aie-enable-aa-emit-fixed-sunits", cl::Hidden, cl::init(true),
+    cl::desc("Enable alias analysis in EmitFixedSUnits mutation"));
+
 static cl::opt<bool> ForcePostPipeliner(
     "aie-force-postpipeliner",
     cl::desc(
@@ -379,7 +383,7 @@ public:
     const BlockState &BS =
         Scheduler->getInterBlock().getBlockState(DAG->getBB());
     const Region &CurRegion = BS.getCurrentRegion();
-    AIERegMemEventTracker RET{ItinData, TRI, TII};
+    AIERegMemEventTracker RET{ItinData, TRI, TII, AA};
 
     // First, create SUnits for all "fixed" instructions
     // Those will be chained from/to the EntrySU/ExitSU to ensure they are
@@ -895,7 +899,8 @@ AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT, AAResults *AA) {
     Mutations.emplace_back(std::make_unique<MemoryEdges>(true));
     Mutations.emplace_back(std::make_unique<MachineSchedWAWEdges>());
     Mutations.emplace_back(std::make_unique<BiasDepth>());
-    Mutations.emplace_back(std::make_unique<EmitFixedSUnits>(AA));
+    Mutations.emplace_back(std::make_unique<EmitFixedSUnits>(
+        EnableAAInEmitFixedSUnits ? AA : nullptr));
   }
   return Mutations;
 }

@@ -50,7 +50,7 @@ void AIERegMemEventTracker::computeUseDefForward(
 
       // We need to be conservative with memory access/dependencies.
       if (BundledMI->mayStore()) {
-        // Recorde getLastMemoryCycle of this instruction if this is a
+        // Record getLastMemoryCycle of this instruction if this is a
         // store.
         auto OptLastStoreCycle = TII->getLastMemoryCycle(SchedClass);
         assert(OptLastStoreCycle && "Store instruction without MemoryCycles");
@@ -58,7 +58,11 @@ void AIERegMemEventTracker::computeUseDefForward(
         int LastStoreCycle = Cycle + LastMemoryCycle - 1;
         if (InSeparateRegion)
           LastStoreCycle = LastStoreCycle - TotalCycles;
+        // This is used when we have no AA information of partword store.
         updateLastStoreCycle(LastStoreCycle);
+        // Track memory instructions by their completion cycle. This is
+        // used when we have AA information.
+        addPerInstructionLastStoreCycle(LastStoreCycle, BundledMI);
       }
 
       for (unsigned OpNum = 0; OpNum < BundledMI->getNumOperands(); OpNum++) {
@@ -104,8 +108,17 @@ AIERegMemEventTracker::getSafeOperandsDistance(const MachineInstr &MI) const {
     // this case: 21 - (5 - 1) + 1 = 18. Be aware that we need to cap to zero
     // when it is negative.
     const int MIMemoryCycle = MemoryPipelineStage.value() - 1;
-    const int MemoryDep = getLastStoreCycle() - MIMemoryCycle + 1;
-    MaxLatency = std::max(MemoryDep, 0);
+
+    if (AA) {
+      // Precise: Only consider stores that may alias with MI
+      const int MaxAliasingStoreCycle = getMaxAliasingStoreCycle(MI);
+      const int MemoryDep = MaxAliasingStoreCycle - MIMemoryCycle + 1;
+      MaxLatency = std::max(MemoryDep, 0);
+    } else {
+      // Conservative: Use global LastStoreCycle
+      const int MemoryDep = getLastStoreCycle() - MIMemoryCycle + 1;
+      MaxLatency = std::max(MemoryDep, 0);
+    }
   }
 
   for (const MachineOperand &MO : MI.operands()) {
@@ -144,4 +157,22 @@ AIERegMemEventTracker::getSafeOperandsDistance(const MachineInstr &MI) const {
 
 void AIERegMemEventTracker::updateLastStoreCycle(int StoreCycle) {
   LastStoreCycle = std::max(LastStoreCycle, StoreCycle);
+}
+
+void AIERegMemEventTracker::addPerInstructionLastStoreCycle(int LastStoreCycle,
+                                                            MachineInstr *MI) {
+  MemoryCycleToStoreInstrs[LastStoreCycle].push_back(MI);
+}
+
+int AIERegMemEventTracker::getMaxAliasingStoreCycle(
+    const MachineInstr &MI) const {
+  int MaxAliasingStoreCycle = 0;
+  for (const auto &[Cycle, Stores] : MemoryCycleToStoreInstrs) {
+    for (const MachineInstr *Store : Stores) {
+      if (MI.mayAlias(AA, *Store, /*UseTBAA=*/true)) {
+        MaxAliasingStoreCycle = std::max(MaxAliasingStoreCycle, Cycle);
+      }
+    }
+  }
+  return MaxAliasingStoreCycle;
 }
