@@ -229,24 +229,24 @@ def quant_QuantizedType :
 
 def quant_ScalarType :
     Type<Or<[
-      AnySignlessInteger.predicate,
+      AnyInteger.predicate,
       AnyFloat.predicate,
       quant_QuantizedType.predicate
     ]>,
-    "signless integer, float, or quantized scalar">;
+    "integer, float, or quantized scalar">;
 
 def quant_IntegerOrQuantizedType :
     Type<Or<[
-      AnySignlessInteger.predicate,
+      AnyInteger.predicate,
       quant_QuantizedType.predicate
     ]>,
-    "signless integer or quantized type">;
+    "integer or quantized type">;
 
 def quant_FloatScalarOrTensor :
     quant_ScalarOrTensorOf<AnyFloat>;
 
 def quant_IntegerScalarOrTensor :
-    quant_ScalarOrTensorOf<AnySignlessInteger>;
+    quant_ScalarOrTensorOf<AnyInteger>;
 
 def quant_QuantizedScalarOrTensor :
     quant_ScalarOrTensorOf<quant_QuantizedType>;
