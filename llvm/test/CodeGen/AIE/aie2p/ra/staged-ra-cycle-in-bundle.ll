@@ -45,8 +45,8 @@ define void @heavy_3d_user(i32 %dimsAI.sroa.5.0.copyload.i, i32 %dimsAI.sroa.7.0
 ; FINE-GRAINED-NEXT:  .LBB0_1: // %for.body.i
 ; FINE-GRAINED-NEXT:    // =>This Loop Header: Depth=1
 ; FINE-GRAINED-NEXT:    // Child Loop BB0_2 Depth 2
-; FINE-GRAINED-NEXT:    nopa ; nopb ; nops ; nopx ; mov dn2, r3; nopv
-; FINE-GRAINED-NEXT:    movs dj2, p6; nopx ; mov dn6, r3
+; FINE-GRAINED-NEXT:    mov dn2, r3
+; FINE-GRAINED-NEXT:    movs dj2, p6; mov dn6, r3
 ; FINE-GRAINED-NEXT:    movs dj6, p6; mov m2, m4
 ; FINE-GRAINED-NEXT:    mova p1, #0; movs dc6, r4; mov r25, r18
 ; FINE-GRAINED-NEXT:    vldb.pop.576.3d ex0, [p1, lf1, r25, d2]
@@ -56,18 +56,17 @@ define void @heavy_3d_user(i32 %dimsAI.sroa.5.0.copyload.i, i32 %dimsAI.sroa.7.0
 ; FINE-GRAINED-NEXT:    movs dn5, r3; vmov lfh1, lfh0
 ; FINE-GRAINED-NEXT:    mova p0, #0; movs dj5, m5; mov dc5, r19
 ; FINE-GRAINED-NEXT:    paddb.3d [p0], d1
-; FINE-GRAINED-NEXT:    mova p0, #0; mov r19, dc5
+; FINE-GRAINED-NEXT:    mov r19, dc5
 ; FINE-GRAINED-NEXT:  .LBB0_2: // %for.body125.i
 ; FINE-GRAINED-NEXT:    // Parent Loop BB0_1 Depth=1
 ; FINE-GRAINED-NEXT:    // => This Inner Loop Header: Depth=2
-; FINE-GRAINED-NEXT:    nopa ; nopb ; nopx ; mov dc6, dc0
-; FINE-GRAINED-NEXT:    mov dn2, r3
-; FINE-GRAINED-NEXT:    movs dc2, dc0; mov dj2, r0
-; FINE-GRAINED-NEXT:    movs m2, r8; mov dj6, r13
-; FINE-GRAINED-NEXT:    movs dn6, r1; mov r25, r18
-; FINE-GRAINED-NEXT:    movs p1, p0; vmov lfl1, x2
+; FINE-GRAINED-NEXT:    nopa ; nopb ; movs dc6, dc0; nopx ; mov dc2, dc0; nopv
+; FINE-GRAINED-NEXT:    movs dj2, r0; mov dn2, r3
+; FINE-GRAINED-NEXT:    movs m2, r8; mov dn6, r1
+; FINE-GRAINED-NEXT:    mova p1, #0; movs dj6, r13; mov r25, r18
+; FINE-GRAINED-NEXT:    vldb.pop.576.3d ex4, [p1, lf1, r25, d2]; vmov lfl1, x2
 ; FINE-GRAINED-NEXT:  .L_LEnd0:
-; FINE-GRAINED-NEXT:    nopa ; vldb.pop.576.3d ex4, [p1, lf1, r25, d2]; nops ; nopx ; vmov lfh1, x3; nopv
+; FINE-GRAINED-NEXT:    nopa ; nopb ; nops ; nopx ; vmov lfh1, x3; nopv
 ; FINE-GRAINED-NEXT:  // %bb.3: // %for.cond.cleanup124.i
 ; FINE-GRAINED-NEXT:    // in Loop: Header=BB0_1 Depth=1
 ; FINE-GRAINED-NEXT:    nopa ; nopb ; nops ; nopx ; mov m0, m5; nopv
@@ -167,7 +166,7 @@ define void @heavy_3d_user(i32 %dimsAI.sroa.5.0.copyload.i, i32 %dimsAI.sroa.7.0
 ; COARSE-GRAINED-NEXT:  .LBB0_1: // %for.body.i
 ; COARSE-GRAINED-NEXT:    // =>This Loop Header: Depth=1
 ; COARSE-GRAINED-NEXT:    // Child Loop BB0_2 Depth 2
-; COARSE-GRAINED-NEXT:    lda m0, [sp, #-344]; nopb ; nopx // 4-byte Folded Reload
+; COARSE-GRAINED-NEXT:    lda m0, [sp, #-344]; nopxm // 4-byte Folded Reload
 ; COARSE-GRAINED-NEXT:    lda dc0, [sp, #-332] // 4-byte Folded Reload
 ; COARSE-GRAINED-NEXT:    lda dj4, [sp, #-320] // 4-byte Folded Reload
 ; COARSE-GRAINED-NEXT:    nop
@@ -195,16 +194,16 @@ define void @heavy_3d_user(i32 %dimsAI.sroa.5.0.copyload.i, i32 %dimsAI.sroa.7.0
 ; COARSE-GRAINED-NEXT:    mova p0, #0; st dn5, [sp, #-228] // 4-byte Folded Spill
 ; COARSE-GRAINED-NEXT:    paddb.3d [p0], d1; st dj5, [sp, #-224] // 4-byte Folded Spill
 ; COARSE-GRAINED-NEXT:    st dc1, [sp, #-236] // 4-byte Folded Spill
-; COARSE-GRAINED-NEXT:    mova p0, #0; st dc5, [sp, #-220] // 4-byte Folded Spill
+; COARSE-GRAINED-NEXT:    st dc5, [sp, #-220] // 4-byte Folded Spill
 ; COARSE-GRAINED-NEXT:  .LBB0_2: // %for.body125.i
 ; COARSE-GRAINED-NEXT:    // Parent Loop BB0_1 Depth=1
 ; COARSE-GRAINED-NEXT:    // => This Inner Loop Header: Depth=2
-; COARSE-GRAINED-NEXT:    nops ; mov dn1, dn3
-; COARSE-GRAINED-NEXT:    movs m1, m3; mov dj1, dj3
-; COARSE-GRAINED-NEXT:    movs dc1, dc3; mov dn5, dn7
-; COARSE-GRAINED-NEXT:    movs m5, m7; mov dc5, dc7
-; COARSE-GRAINED-NEXT:    movs dj5, dj7; mov r25, r3
-; COARSE-GRAINED-NEXT:    movs p1, p0; vmov lfl1, x2
+; COARSE-GRAINED-NEXT:    nopa ; nopx ; mov m1, m3
+; COARSE-GRAINED-NEXT:    mov dj1, dj3
+; COARSE-GRAINED-NEXT:    movs dn1, dn3; mov dc1, dc3
+; COARSE-GRAINED-NEXT:    movs m5, m7; mov dj5, dj7
+; COARSE-GRAINED-NEXT:    movs dn5, dn7; mov r25, r3
+; COARSE-GRAINED-NEXT:    mova p1, #0; movs dc5, dc7; vmov lfl1, x2
 ; COARSE-GRAINED-NEXT:  .L_LEnd0:
 ; COARSE-GRAINED-NEXT:    nopa ; vldb.pop.576.3d ex4, [p1, lf1, r25, d1]; nops ; nopx ; vmov lfh1, x3; nopv
 ; COARSE-GRAINED-NEXT:  // %bb.3: // %for.cond.cleanup124.i
