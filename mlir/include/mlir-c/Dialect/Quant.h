@@ -5,6 +5,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef MLIR_C_DIALECT_QUANT_H
@@ -95,6 +98,44 @@ MLIR_CAPI_EXPORTED MlirType mlirQuantizedTypeCastToExpressedType(MlirType type);
 /// equivalent type based on storage type of the same quantized type.
 MLIR_CAPI_EXPORTED MlirType
 mlirQuantizedTypeCastExpressedToStorageType(MlirType type, MlirType candidate);
+
+//===---------------------------------------------------------------------===//
+// BlockFloatQuantizedType
+//===---------------------------------------------------------------------===//
+
+/// Supported BlockFloatQuantizedModes
+typedef enum MlirBlockFloatQuantizedTypeBlockMode {
+  MlirBlockFloatQuantizedTypeBlockModeBFP16 = 0,
+  MlirBlockFloatQuantizedTypeBlockModeMX6 = 1,
+} MlirBlockFloatQuantizedTypeBlockMode;
+
+/// Returns `true` if the given type is a BlockFloatQuantizedType.
+MLIR_CAPI_EXPORTED bool mlirTypeIsABlockFloatQuantizedType(MlirType type);
+
+/// Creates an instance of BlockFloatQuantizedType with the given parameters in
+/// the provided context and returns it. The instance is owned by the context.
+MLIR_CAPI_EXPORTED MlirType mlirBlockFloatQuantizedTypeGet(
+    MlirContext ctx, MlirBlockFloatQuantizedTypeBlockMode blockMode,
+    int32_t axis);
+
+/// Returns the axis along which the values are blocked.
+MLIR_CAPI_EXPORTED int32_t mlirBlockFloatQuantizedTypeGetAxis(MlirType type);
+
+/// Returns the block mode used by the type.
+MLIR_CAPI_EXPORTED MlirBlockFloatQuantizedTypeBlockMode
+mlirBlockFloatQuantizedTypeGetBlockMode(MlirType type);
+
+/// Returns the number of elements in a block for the given type.
+MLIR_CAPI_EXPORTED unsigned
+mlirBlockFloatQuantizedTypeGetBlockSize(MlirType type);
+
+/// Returns the average number of bits per element for the given type.
+MLIR_CAPI_EXPORTED unsigned
+mlirBlockFloatQuantizedTypeGetAverageBitsPerElement(MlirType type);
+
+/// Returns the number of bits required to store a single unpacked element.
+MLIR_CAPI_EXPORTED unsigned
+mlirBlockFloatQuantizedTypeGetSingleElementStorageSize(MlirType type);
 
 //===---------------------------------------------------------------------===//
 // AnyQuantizedType

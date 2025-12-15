@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "mlir-c/Dialect/Quant.h"
@@ -102,6 +105,47 @@ MlirType mlirQuantizedTypeCastExpressedToStorageType(MlirType type,
                                                      MlirType candidate) {
   return wrap(cast<quant::QuantizedType>(unwrap(type))
                   .castExpressedToStorageType(unwrap(candidate)));
+}
+
+//===---------------------------------------------------------------------===//
+// BlockFloatQuantizedType
+//===---------------------------------------------------------------------===//
+
+bool mlirTypeIsABlockFloatQuantizedType(MlirType type) {
+  return isa<quant::BlockFloatQuantizedType>(unwrap(type));
+}
+
+MlirType
+mlirBlockFloatQuantizedTypeGet(MlirContext ctx,
+                               MlirBlockFloatQuantizedTypeBlockMode blockMode,
+                               int32_t axis) {
+  return wrap(quant::BlockFloatQuantizedType::get(
+      unwrap(ctx),
+      static_cast<quant::BlockFloatQuantizedType::BlockMode>(blockMode), axis));
+}
+
+int32_t mlirBlockFloatQuantizedTypeGetAxis(MlirType type) {
+  return cast<quant::BlockFloatQuantizedType>(unwrap(type)).getAxis();
+}
+
+MlirBlockFloatQuantizedTypeBlockMode
+mlirBlockFloatQuantizedTypeGetBlockMode(MlirType type) {
+  auto mode = cast<quant::BlockFloatQuantizedType>(unwrap(type)).getBlockMode();
+  return static_cast<MlirBlockFloatQuantizedTypeBlockMode>(mode);
+}
+
+unsigned mlirBlockFloatQuantizedTypeGetBlockSize(MlirType type) {
+  return cast<quant::BlockFloatQuantizedType>(unwrap(type)).getBlockSize();
+}
+
+unsigned mlirBlockFloatQuantizedTypeGetAverageBitsPerElement(MlirType type) {
+  return cast<quant::BlockFloatQuantizedType>(unwrap(type))
+      .getAverageBitsPerElement();
+}
+
+unsigned mlirBlockFloatQuantizedTypeGetSingleElementStorageSize(MlirType type) {
+  return cast<quant::BlockFloatQuantizedType>(unwrap(type))
+      .getSingleElementStorageSize();
 }
 
 //===---------------------------------------------------------------------===//

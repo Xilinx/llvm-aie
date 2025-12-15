@@ -5,6 +5,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 // RUN: mlir-capi-quant-test 2>&1 | FileCheck %s
@@ -34,6 +37,9 @@ static void testTypeHierarchy(MlirContext ctx) {
   MlirType calibrated = mlirTypeParseGet(
       ctx,
       mlirStringRefCreateFromCString("!quant.calibrated<f32<-0.998:1.2321>>"));
+  MlirType blockFloat = mlirTypeParseGet(
+      ctx,
+      mlirStringRefCreateFromCString("!quant.block_float<mode=BFP16, axis=1>"));
 
   // The parser itself is checked in C++ dialect tests.
   assert(!mlirTypeIsNull(any) && "couldn't parse AnyQuantizedType");
@@ -42,6 +48,8 @@ static void testTypeHierarchy(MlirContext ctx) {
          "couldn't parse UniformQuantizedPerAxisType");
   assert(!mlirTypeIsNull(calibrated) &&
          "couldn't parse CalibratedQuantizedType");
+  assert(!mlirTypeIsNull(blockFloat) &&
+         "couldn't parse BlockFloatQuantizedType");
 
   // CHECK: i8 isa QuantizedType: 0
   fprintf(stderr, "i8 isa QuantizedType: %d\n", mlirTypeIsAQuantizedType(i8));
@@ -56,6 +64,9 @@ static void testTypeHierarchy(MlirContext ctx) {
   // CHECK: calibrated isa QuantizedType: 1
   fprintf(stderr, "calibrated isa QuantizedType: %d\n",
           mlirTypeIsAQuantizedType(calibrated));
+  // CHECK: blockFloat isa QuantizedType: 1
+  fprintf(stderr, "blockFloat isa QuantizedType: %d\n",
+          mlirTypeIsAQuantizedType(blockFloat));
 
   // CHECK: any isa AnyQuantizedType: 1
   fprintf(stderr, "any isa AnyQuantizedType: %d\n",
@@ -69,6 +80,9 @@ static void testTypeHierarchy(MlirContext ctx) {
   // CHECK: calibrated isa CalibratedQuantizedType: 1
   fprintf(stderr, "calibrated isa CalibratedQuantizedType: %d\n",
           mlirTypeIsACalibratedQuantizedType(calibrated));
+  // CHECK: blockFloat isa BlockFloatQuantizedType: 1
+  fprintf(stderr, "blockFloat isa BlockFloatQuantizedType: %d\n",
+          mlirTypeIsABlockFloatQuantizedType(blockFloat));
 
   // CHECK: perAxis isa UniformQuantizedType: 0
   fprintf(stderr, "perAxis isa UniformQuantizedType: %d\n",
@@ -76,6 +90,12 @@ static void testTypeHierarchy(MlirContext ctx) {
   // CHECK: uniform isa CalibratedQuantizedType: 0
   fprintf(stderr, "uniform isa CalibratedQuantizedType: %d\n",
           mlirTypeIsACalibratedQuantizedType(uniform));
+  // CHECK: any isa BlockFloatQuantizedType: 0
+  fprintf(stderr, "any isa BlockFloatQuantizedType: %d\n",
+          mlirTypeIsABlockFloatQuantizedType(any));
+  // CHECK: uniform isa BlockFloatQuantizedType: 0
+  fprintf(stderr, "uniform isa BlockFloatQuantizedType: %d\n",
+          mlirTypeIsABlockFloatQuantizedType(uniform));
   fprintf(stderr, "\n");
 }
 
@@ -203,6 +223,39 @@ void testUniformPerAxisType(MlirContext ctx) {
   fprintf(stderr, "\n\n");
 }
 
+// CHECK-LABEL: testBlockFloatType
+void testBlockFloatType(MlirContext ctx) {
+  fprintf(stderr, "testBlockFloatType\n");
+
+  MlirType parsed = mlirTypeParseGet(
+      ctx,
+      mlirStringRefCreateFromCString("!quant.block_float<mode=MX6, axis=2>"));
+  MlirType block = mlirBlockFloatQuantizedTypeGet(
+      ctx, MlirBlockFloatQuantizedTypeBlockModeMX6, /*axis=*/2);
+
+  // CHECK: axis: 2
+  fprintf(stderr, "axis: %" PRId32 "\n",
+          mlirBlockFloatQuantizedTypeGetAxis(block));
+  // CHECK: block mode: 1
+  fprintf(stderr, "block mode: %d\n",
+          (int)mlirBlockFloatQuantizedTypeGetBlockMode(block));
+  // CHECK: block size: 16
+  fprintf(stderr, "block size: %u\n",
+          mlirBlockFloatQuantizedTypeGetBlockSize(block));
+  // CHECK: average bits: 6
+  fprintf(stderr, "average bits: %u\n",
+          mlirBlockFloatQuantizedTypeGetAverageBitsPerElement(block));
+  // CHECK: single element bits: 13
+  fprintf(stderr, "single element bits: %u\n",
+          mlirBlockFloatQuantizedTypeGetSingleElementStorageSize(block));
+
+  // CHECK: equal: 1
+  fprintf(stderr, "equal: %d\n", mlirTypeEqual(block, parsed));
+  // CHECK: !quant.block_float<mode=MX6, axis=2>
+  mlirTypeDump(block);
+  fprintf(stderr, "\n\n");
+}
+
 // CHECK-LABEL: testCalibratedType
 void testCalibratedType(MlirContext ctx) {
   fprintf(stderr, "testCalibratedType\n");
@@ -233,6 +286,7 @@ int main(void) {
   testAnyQuantizedType(ctx);
   testUniformType(ctx);
   testUniformPerAxisType(ctx);
+  testBlockFloatType(ctx);
   testCalibratedType(ctx);
   mlirContextDestroy(ctx);
   return EXIT_SUCCESS;
