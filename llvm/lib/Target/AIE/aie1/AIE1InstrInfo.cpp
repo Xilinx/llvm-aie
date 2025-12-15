@@ -568,7 +568,7 @@ void AIEInstrInfo::loadRegFromStackSlot(
         .addFrameIndex(FI)
         .addMemOperand(CreateMMO(FI));
     BuildMI(MBB, I, DL, get(AIE::LDA_SPIL_GPR))
-        .addReg(DstReg, RegState::DefineNoRead, AIE::sub_32_hi)
+        .addReg(DstReg, RegState::Define, AIE::sub_32_hi)
         .addFrameIndex(FI)
         .addMemOperand(CreateMMO(FI));
     return;
