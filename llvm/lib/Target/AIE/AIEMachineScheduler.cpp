@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -1457,14 +1457,16 @@ void llvm::AIEPostRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
   auto &BS = InterBlock.getBlockState(CurMBB);
   const auto &Region = BS.getCurrentRegion();
   int NCopies = 1;
-  if (int II = BS.FixPoint.II) {
+  if (BS.FixPoint.II) {
     assert(BS.Kind == BlockType::Loop);
     assert(BS.getRegions().size() == 1);
+    assert(Region.getBotFixedBundles().empty());
+    assert(Region.getTopFixedBundles().empty());
     // Try to wrap the linear schedule within II.
-    // We virtually unroll the body by the stagecount, computed from rounding
-    // up the length divided by II, adding one more stage to account for
-    // the added resource contention
-    NCopies = (BS.getScheduleLength() + II - 1) / II + 1;
+    // We create two copies of the loop body, which will make the loop-carried
+    // dependences appear as forward dependences between the first and the
+    // second iteration.
+    NCopies = 2;
   }
   DEBUG_BLOCKS(dbgs() << "    buildGraph, NCopies=" << NCopies << "\n");
   for (int S = 0; S < NCopies; S++) {

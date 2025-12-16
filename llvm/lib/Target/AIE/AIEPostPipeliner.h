@@ -112,10 +112,10 @@ public:
   // rounded up to an integer multiple of II. Computed after scheduling
   // the first iteration.
   int Length = 0;
-  void init(int NOrig, int NCopies) {
+  void init(int NOrig) {
     NInstr = NOrig;
     Nodes.clear();
-    Nodes.resize(NInstr * NCopies);
+    Nodes.resize(2 * NInstr);
     Length = 0;
   }
   NodeInfo &operator[](int N) { return Nodes[N]; }
@@ -201,7 +201,6 @@ class PostPipeliner {
   ScheduleDAGMI *DAG = nullptr;
   const AIEBaseInstrInfo *TII = nullptr;
 
-  int NTotalInstrs = 0;
   int FirstUnscheduled = 0;
   int LastUnscheduled = -1;
 
@@ -233,7 +232,7 @@ class PostPipeliner {
 
   /// Basic modulo scheduling parameters.
   int NInstr;
-  int NCopies;
+  int ScoreboardSize;
   int II = 1;
   int NStages = 0;
   int NPrologueStages = 0;
