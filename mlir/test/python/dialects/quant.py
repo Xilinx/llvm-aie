@@ -1,3 +1,6 @@
+# Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+# affiliates
+
 # RUN: %PYTHON %s | FileCheck %s
 
 from mlir.ir import *
@@ -19,20 +22,24 @@ def test_type_hierarchy():
         uniform = Type.parse("!quant.uniform<i8<-8:7>:f32, 0.99872:127>")
         per_axis = Type.parse("!quant.uniform<i8:f32:1, {2.0e+2,0.99872:120}>")
         calibrated = Type.parse("!quant.calibrated<f32<-0.998:1.2321>>")
+        block_float = Type.parse("!quant.block_float<mode=BFP16, axis=1>")
 
         assert not quant.QuantizedType.isinstance(i8)
         assert quant.QuantizedType.isinstance(any)
         assert quant.QuantizedType.isinstance(uniform)
         assert quant.QuantizedType.isinstance(per_axis)
         assert quant.QuantizedType.isinstance(calibrated)
+        assert quant.QuantizedType.isinstance(block_float)
 
         assert quant.AnyQuantizedType.isinstance(any)
         assert quant.UniformQuantizedType.isinstance(uniform)
         assert quant.UniformQuantizedPerAxisType.isinstance(per_axis)
         assert quant.CalibratedQuantizedType.isinstance(calibrated)
+        assert quant.BlockFloatQuantizedType.isinstance(block_float)
 
         assert not quant.AnyQuantizedType.isinstance(uniform)
         assert not quant.UniformQuantizedType.isinstance(per_axis)
+        assert not quant.BlockFloatQuantizedType.isinstance(uniform)
 
 
 # CHECK-LABEL: TEST: test_any_quantized_type
@@ -119,6 +126,39 @@ def test_uniform_per_axis_type():
         # CHECK: !quant.uniform<i8:f32:1, {2.000000e+02,9.987200e-01:120}>
         print(per_axis)
         assert per_axis == Type.parse("!quant.uniform<i8:f32:1, {2.0e+2,0.99872:120}>")
+
+
+# CHECK-LABEL: TEST: test_block_float_type
+@run
+def test_block_float_type():
+    with Context():
+        block = quant.BlockFloatQuantizedType.get(
+            quant.BlockFloatQuantizedType.BLOCK_MODE_BFP16, axis=1
+        )
+        mx6 = quant.BlockFloatQuantizedType.get(
+            quant.BlockFloatQuantizedType.BLOCK_MODE_MX6, axis=0
+        )
+
+        # CHECK: axis: 1
+        print(f"axis: {block.axis}")
+        # CHECK: block mode: 0
+        print(f"block mode: {block.block_mode}")
+        # CHECK: block size: 8
+        print(f"block size: {block.block_size}")
+        # CHECK: average bits: 9
+        print(f"average bits: {block.average_bits_per_element}")
+        # CHECK: single element bits: 16
+        print(f"single element bits: {block.single_element_storage_size}")
+        # CHECK: !quant.block_float<mode=BFP16, axis=1>
+        print(block)
+        assert block == Type.parse("!quant.block_float<mode=BFP16, axis=1>")
+
+        # CHECK: mx6 axis: 0
+        print(f"mx6 axis: {mx6.axis}")
+        # CHECK: mx6 block mode: 1
+        print(f"mx6 block mode: {mx6.block_mode}")
+        # CHECK: mx6 block size: 16
+        print(f"mx6 block size: {mx6.block_size}")
 
 
 # CHECK-LABEL: TEST: test_calibrated_type

@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include <cstdint>
@@ -175,6 +178,57 @@ static void populateDialectQuantSubmodule(const nb::module_ &m) {
       nb::arg("cls"), nb::arg("flags"), nb::arg("storage_type"),
       nb::arg("expressed_type"), nb::arg("storage_type_min"),
       nb::arg("storage_type_max"));
+
+  //===-------------------------------------------------------------------===//
+  // BlockFloatQuantizedType
+  //===-------------------------------------------------------------------===//
+
+  auto blockFloatQuantizedType = mlir_type_subclass(
+      m, "BlockFloatQuantizedType", mlirTypeIsABlockFloatQuantizedType,
+      quantizedType.get_class());
+  blockFloatQuantizedType.def_classmethod(
+      "get",
+      [](nb::object cls, unsigned blockMode, int32_t axis, MlirContext ctx) {
+        return cls(mlirBlockFloatQuantizedTypeGet(
+            ctx, static_cast<MlirBlockFloatQuantizedTypeBlockMode>(blockMode),
+            axis));
+      },
+      "Gets an instance of BlockFloatQuantizedType in the provided (or current)"
+      " context.",
+      nb::arg("cls"), nb::arg("block_mode"), nb::arg("axis"),
+      nb::arg("context").none() = nb::none());
+  blockFloatQuantizedType.def_property_readonly(
+      "axis",
+      [](MlirType type) { return mlirBlockFloatQuantizedTypeGetAxis(type); },
+      "Axis along which the values are blocked.");
+  blockFloatQuantizedType.def_property_readonly(
+      "block_mode",
+      [](MlirType type) {
+        return static_cast<int>(mlirBlockFloatQuantizedTypeGetBlockMode(type));
+      },
+      "Block floating point mode.");
+  blockFloatQuantizedType.def_property_readonly(
+      "block_size",
+      [](MlirType type) {
+        return mlirBlockFloatQuantizedTypeGetBlockSize(type);
+      },
+      "Number of elements in a block.");
+  blockFloatQuantizedType.def_property_readonly(
+      "average_bits_per_element",
+      [](MlirType type) {
+        return mlirBlockFloatQuantizedTypeGetAverageBitsPerElement(type);
+      },
+      "Average number of bits consumed per element.");
+  blockFloatQuantizedType.def_property_readonly(
+      "single_element_storage_size",
+      [](MlirType type) {
+        return mlirBlockFloatQuantizedTypeGetSingleElementStorageSize(type);
+      },
+      "Number of bits needed to store a single unpacked element.");
+  blockFloatQuantizedType.get_class().attr("BLOCK_MODE_BFP16") =
+      nb::int_(static_cast<int>(MlirBlockFloatQuantizedTypeBlockModeBFP16));
+  blockFloatQuantizedType.get_class().attr("BLOCK_MODE_MX6") =
+      nb::int_(static_cast<int>(MlirBlockFloatQuantizedTypeBlockModeMX6));
 
   //===-------------------------------------------------------------------===//
   // UniformQuantizedType
