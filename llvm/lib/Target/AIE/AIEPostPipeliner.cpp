@@ -19,6 +19,7 @@
 #include "llvm/Analysis/OptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
+#include "llvm/CodeGen/ResourceScoreboard.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include "llvm/Transforms/Utils/LoopUtils.h"
@@ -220,7 +221,7 @@ void PostPipeliner::scheduleNode(SUnit &SU, int Cycle,
   LLVM_DEBUG(dbgs() << "\n");
 
   int Next = SU.NodeNum + NInstr;
-  if (Next < NTotalInstrs) {
+  if (Next < int(Info.Nodes.size())) {
     Info[Next].Earliest = std::max(Info[Next].Earliest, Cycle + II);
   }
 }
@@ -443,7 +444,7 @@ void PostPipeliner::computeRecMII() {
 bool PostPipeliner::computeLoopCarriedParameters() {
 
   // Initialize slot counts.
-  for (int K = 0; K < NTotalInstrs; K++) {
+  for (int K = 0; K < NInstr; K++) {
     auto *MI = DAG->SUnits[K].getInstr();
     Info[K].Slots = getSlotCounts(MI->getOpcode(), TII);
   }
@@ -471,10 +472,12 @@ bool PostPipeliner::computeLoopCarriedParameters() {
     auto &Me = Info[K];
     SlotCounts ASlots(Me.Slots);
     for (int A : Me.Ancestors) {
+      assert(A < NInstr && "Ancestor index must be < NInstr");
       ASlots += Info[A].Slots;
     }
     SlotCounts OSlots(Me.Slots);
     for (int O : Me.Offspring) {
+      assert(O < NInstr && "Offspring index must be < NInstr");
       OSlots += Info[O].Slots;
     }
     LLVM_DEBUG(dbgs() << "SU" << K << " : " << Info[K].Earliest << " - "
@@ -524,10 +527,11 @@ bool PostPipeliner::computeLoopCarriedParameters() {
   }
 
   LLVM_DEBUG(dbgs() << "Final Earliest - Latest:\n");
-  for (int K = 0; K < NTotalInstrs; K++) {
-    auto &Me = Info[K];
-    LLVM_DEBUG(dbgs() << "  SU" << K << " : " << Me.Earliest << " - "
-                      << Me.Latest << "\n");
+  int K = 0;
+  for (const auto &N : Info.Nodes) {
+    LLVM_DEBUG(dbgs() << "  SU" << K << " : " << N.Earliest << " - " << N.Latest
+                      << "\n");
+    K++;
   }
 
   MinLength = computeMinScheduleLength();
@@ -699,13 +703,14 @@ int PostPipeliner::mostUrgent(PostPipelinerStrategy &Strategy) {
 
 void PostPipeliner::resetSchedule(bool FullReset) {
   Scoreboard.clear();
-  for (int K = 0; K < NTotalInstrs; K++) {
-    auto &N = Info[K];
+  int K = 0;
+  for (auto &N : Info.Nodes) {
     N.reset(FullReset);
     if (K < NInstr) {
       N.Earliest = N.TweakedEarliest ? *N.TweakedEarliest : N.StaticEarliest;
       N.Latest = N.TweakedLatest ? *N.TweakedLatest : N.StaticLatest;
     }
+    K++;
   }
 
   FirstUnscheduled = 0;
@@ -714,6 +719,7 @@ void PostPipeliner::resetSchedule(bool FullReset) {
 
 bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
   // Set up the basic schedule from the original instructions
+  const int PipelineDepth = HR.getPipelineDepth();
   for (int K = 0; K < NInstr; K++) {
     const int N = mostUrgent(Strategy);
     LLVM_DEBUG(dbgs() << "  Trying " << N << "\n");
@@ -743,16 +749,25 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
     const MemoryBankBits MemoryBanks = HR.getMemoryBanks(MI);
     const MemoryObjectsBits ObjectBits = HR.getMemoryObjectsBits(MI);
     int Cycle = ModCycle;
+    // We are scheduling the first iteration, checking for conflicts with other
+    // instructions that were scheduled earlier.
+    // Newly scheduled instruction have ModCycle < II,
+    // and have no conflict beyond
+    // ModCycle + PipelineDepth
+    const int Horizon =
+        std::min(II + PipelineDepth, ScoreboardSize - PipelineDepth);
     LLVM_DEBUG(dbgs() << "  Emit in " << Cycle << "\n");
-    for (int N = 0; N < NCopies; N++) {
-      if (N > 0 && HR.checkConflict(Scoreboard, *MI, Cycle)) {
-        LLVM_DEBUG(dbgs() << "Conflict in iteration N=" << N << "\n");
+    int Iter = 0;
+    while (Cycle < Horizon) {
+      if (HR.checkConflict(Scoreboard, *MI, Cycle)) {
+        LLVM_DEBUG(dbgs() << "Conflict in iteration N=" << Iter << "\n");
         return false;
       }
 
       HR.emitInScoreboard(Scoreboard, MI->getDesc(), MemoryBanks, ObjectBits,
                           MI->operands(), MI->getMF()->getRegInfo(), Cycle);
       Cycle += II;
+      Iter++;
     }
 
     scheduleNode(SU, Actual, Strategy);
@@ -776,62 +791,82 @@ void dumpEarliestChain(const ScheduleInfo &Info, int N) {
   }
   dbgs() << "  --> SU" << N << " @" << Info[N].Cycle << "\n";
 }
+
 } // namespace
 
 bool PostPipeliner::scheduleOtherIterations(PostPipelinerStrategy &Strategy) {
-  // Make sure that all the copies can be placed at II from the previous one.
-  // This looks like overkill, but it accommodates dependences that span
-  // multiple loop edges. Without these, the pattern should repeat after the
-  // first set of copies.
-  for (int L = NInstr; L < NTotalInstrs; L += NInstr) {
-    for (int K = 0; K < NInstr; K++) {
-      const int N = L + K;
-      SUnit &SU = DAG->SUnits[N];
-      NodeInfo &Node = Info[N];
-      const SUnit &ModuloSU = DAG->SUnits[N - NInstr];
-      NodeInfo &ModuloNode = Info[N - NInstr];
+  // Make sure that copies can be placed at II from the previous one.
+  // We only check the second iteration. This may have had earliest
+  // pushed by LCDs from the first iteration. Since the dag doesn't change,
+  // the third iteration behaves the same.
+  for (int K = 0; K < NInstr; K++) {
+    const int N = K + NInstr;
+    SUnit &SU = DAG->SUnits[N];
+    NodeInfo &Node = Info[N];
+    const SUnit &ModuloSU = DAG->SUnits[N - NInstr];
+    NodeInfo &ModuloNode = Info[N - NInstr];
 
-      // Earliest tracks the latencies of the loop carried deps
-      const int Earliest = Node.Earliest;
-      // Insert supplies the modulo condition.
-      const int Insert = ModuloNode.Cycle + II;
+    // Earliest tracks the latencies of the loop carried deps
+    const int Earliest = Node.Earliest;
+    // Insert supplies the modulo condition.
+    const int Insert = ModuloNode.Cycle + II;
 
-      // All iterations following the first one should fit exactly
-      if (Earliest > Insert) {
-        LLVM_DEBUG(dbgs() << "Latency not met for SU" << N << " in cycle "
-                          << Insert << " (Earliest=" << Earliest
-                          << " ModuloNode=SU" << N - NInstr << ")\n";
-                   dumpEarliestChain(Info, N));
-        if (Strategy.mobility(ModuloSU) > 0) {
-          // The modulo Node can be delayed
-          ModuloNode.TweakedEarliest = ModuloNode.Earliest + 1;
-          Strategy.setChanged();
-          LLVM_DEBUG(dbgs() << "  Try to delay SU" << N - NInstr
-                            << " with TweakedEarliest= "
-                            << ModuloNode.TweakedEarliest << "\n");
-          return false;
-        }
-        if (Node.LastEarliestPusher && *Node.LastEarliestPusher < NInstr) {
-          // The modulo Node cannot be delayed.
-          // Instead, prioritise whatever pushed us.
-          NodeInfo &Pusher = Info[*Node.LastEarliestPusher];
-          if (Strategy.mobility(DAG->SUnits[*Node.LastEarliestPusher]) > 0) {
-            ModuloNode.TweakedEarliest = {};
-            Pusher.TweakedLatest = Pusher.Latest - 1;
-            Strategy.setChanged();
-            LLVM_DEBUG(dbgs()
-                       << "  Try to prioritise SU" << *Node.LastEarliestPusher
-                       << " with TweakedLatest= " << Pusher.TweakedLatest
-                       << "\n");
-            return false;
-          }
-        }
+    // All iterations following the first one should fit exactly
+    if (Earliest > Insert) {
+      LLVM_DEBUG(dbgs() << "Latency not met for SU" << N << " in cycle "
+                        << Insert << " (Earliest=" << Earliest
+                        << " ModuloNode=SU" << N - NInstr << ")\n";
+                 dumpEarliestChain(Info, N));
+      if (Strategy.mobility(ModuloSU) > 0) {
+        // The modulo Node can be delayed
+        ModuloNode.TweakedEarliest = ModuloNode.Earliest + 1;
+        Strategy.setChanged();
+        LLVM_DEBUG(dbgs() << "  Try to delay SU" << N - NInstr
+                          << " with TweakedEarliest= "
+                          << ModuloNode.TweakedEarliest << "\n");
         return false;
       }
+      if (Node.LastEarliestPusher && *Node.LastEarliestPusher < NInstr) {
+        // The modulo Node cannot be delayed.
+        // Instead, prioritise whatever pushed us.
+        NodeInfo &Pusher = Info[*Node.LastEarliestPusher];
+        if (Strategy.mobility(DAG->SUnits[*Node.LastEarliestPusher]) > 0) {
+          ModuloNode.TweakedEarliest = {};
+          Pusher.TweakedLatest = Pusher.Latest - 1;
+          Strategy.setChanged();
+          LLVM_DEBUG(dbgs()
+                     << "  Try to prioritise SU" << *Node.LastEarliestPusher
+                     << " with TweakedLatest= " << Pusher.TweakedLatest
+                     << "\n");
+          return false;
+        }
+      }
+      return false;
+    }
 
-      scheduleNode(SU, Insert, Strategy);
+    scheduleNode(SU, Insert, Strategy);
+  }
+
+  // Make a final check on the resources. We bring a pristine scoreboard
+  // to steady state by checking and inserting NStages. Since the steady
+  // state is the busiest, we can shift the scoreboard by II after each stage.
+  ResourceScoreboard<FuncUnitWrapper> Resources;
+  Resources.config(0, II + HR.getPipelineDepth());
+  for (int S = 0; S < NStages; S++) {
+    for (int I = 0; I < NInstr; I++) {
+      SUnit &SU = DAG->SUnits[I];
+      MachineInstr &MI = *SU.getInstr();
+      int ModCycle = Info[I].ModuloCycle;
+      if (HR.checkConflict(Resources, MI, ModCycle)) {
+        return false;
+      }
+      HR.emitInScoreboard(Resources, MI, MI.getDesc(), ModCycle);
+    }
+    for (int I = 0; I < II; I++) {
+      Resources.advance();
     }
   }
+
   return true;
 }
 
@@ -1253,37 +1288,30 @@ bool PostPipeliner::applySolver(const SolverData &Data, SWPSolver &Solver,
 
 bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval,
                              MachineOptimizationRemarkEmitter &More) {
-  NTotalInstrs = TheDAG.SUnits.size();
-  assert(NTotalInstrs % NInstr == 0);
-  NCopies = NTotalInstrs / NInstr;
 
-  auto *BB = TheDAG.getBB();
-  auto DbgLoc = BB->begin()->getDebugLoc();
-
-  if (NCopies == 1) {
-    More.emit([&]() {
-      return MachineOptimizationRemarkMissed("postpipeliner", "schedule",
-                                             DbgLoc, BB)
-             << "Not feasible.";
-    });
-    LLVM_DEBUG(dbgs() << "PostPipeliner: Not feasible\n");
-    return false;
-  }
   II = InitiationInterval;
   DAG = &TheDAG;
 
-  // Let's not skimp on size here. This allows us to insert any instruction
-  // in the unrolled dag.
-  const int Size = NCopies * II + HR.getPipelineDepth();
-  Scoreboard.config(0, Size - 1);
+  // We need to set up a scoreboard that gives us some look-ahead.
+  // The look-ahead is used heuristically, to see conflicts with future
+  // iterations of nodes scheduled earlier.
+  // We will check conflicts in cycle [0, II) and we want to insert the future
+  // iterations that can conflict with it.
+  const int InsertRange = std::max(II, int(HR.getPipelineDepth()));
 
-  Info.init(NInstr, NCopies);
+  ScoreboardSize = InsertRange + HR.getPipelineDepth();
+  Scoreboard.config(0, ScoreboardSize - 1);
+
+  Info.init(NInstr);
 
   LLVM_DEBUG(for (int I = 0; I < NInstr;
                   I++) { dbgs() << I << " " << *DAG->SUnits[I].getInstr(); });
   LLVM_DEBUG(dumpGraph(Info, DAG));
 
   computeLoopCarriedParameters();
+
+  auto *BB = TheDAG.getBB();
+  auto DbgLoc = BB->begin()->getDebugLoc();
   if (II < RecMII) {
     More.emit([&]() {
       return MachineOptimizationRemarkMissed("postpipeliner", "schedule",
@@ -1389,16 +1417,6 @@ bool PostPipeliner::checkStages() {
     MaxStage = std::max(MaxStage, Node.Stage);
   }
   NStages = MaxStage + 1;
-
-  // Now check that we don't exceed the number of copies in the DAG. In that
-  // case we didn't reach steady state, and we may have missed conflicts.
-  // We expect this to be rare.
-  if (NStages > NCopies) {
-    DEBUG_SUMMARY(dbgs() << "PostPipeliner: Unsafe stage count, NCopies="
-                         << NCopies << "\n");
-    return false;
-  }
-
   NPrologueStages = NStages - 1;
   // Check that we have a positive trip count after adjusting
   if (!hasSufficientMinTripCount(NStages) && !peelSideEffectFree()) {
