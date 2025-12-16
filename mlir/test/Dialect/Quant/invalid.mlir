@@ -164,9 +164,9 @@ func.func @qcast_per_axis_invalid_rank(%arg0: tensor<2x3x4xf32>) {
 // -----
 
 !qalias = !quant.uniform<i8:f32, 1.0>
-func.func @scast_invalid_input(%arg0: si32) {
-  // expected-error@+1 {{operand #0 must be scalar or tensor of signless integer or quantized type}}
-  %0 = quant.scast %arg0 : si32 to !qalias
+func.func @scast_invalid_input(%arg0: f32) {
+  // expected-error@+1 {{operand #0 must be scalar or tensor of integer or quantized type}}
+  %0 = quant.scast %arg0 : f32 to !qalias
   return
 }
 
@@ -174,8 +174,8 @@ func.func @scast_invalid_input(%arg0: si32) {
 
 !qalias = !quant.uniform<i8:f32, 1.0>
 func.func @scast_invalid_result(%arg0: !qalias) {
-  // expected-error@+1 {{result #0 must be scalar or tensor of signless integer or quantized type}}
-  %0 = quant.scast %arg0 : !qalias to si32
+  // expected-error@+1 {{result #0 must be scalar or tensor of integer or quantized type}}
+  %0 = quant.scast %arg0 : !qalias to f32
   return
 }
 

@@ -184,17 +184,16 @@ def quant_StorageCastOp : quant_Op<"scast", [
     quant_IntegerAndQuantizedCombination]> {
   let summary = "Storage cast operation";
   let description = [{
-    Convert a value from a quantized type to the corresponding signless integer
-    storage type, or vice versa. This conversion simply involves a
-    reinterpretation of the input bits and does not involve any data
-    manipulation.
+    Convert a value from a quantized type to the corresponding storage type,
+    or vice versa. This conversion simply involves a reinterpretation of the
+    input bits and does not involve any data manipulation.
 
     The following syntactic restrictions must be met:
 
-    - Operand `input` must be a scalar or tensor of a signless integer or
+    - Operand `input` must be a scalar or tensor of a integer or
       `!quant.uniform` type.
 
-    - The result must be a scalar or tensor of a signless integer or
+    - The result must be a scalar or tensor of a integer or
       `!quant.uniform` type.
 
     - If the operand is a scalar or tensor of type integer, the result must be
@@ -205,7 +204,7 @@ def quant_StorageCastOp : quant_Op<"scast", [
       same shape, including matching static and dynamic dimensions.
 
     - The width of the `storageType` parameter of the quantized type of the
-      operand or result must match the width of the signless integer type of
+      operand or result must match the width of the integer type of
       the operand or result.
 
     - If the operand or result uses per-channel quantization, its
@@ -221,7 +220,7 @@ def quant_StorageCastOp : quant_Op<"scast", [
     // Cast a dynamically shaped tensor of quantized values into their storage type
     %result = quant.scast %input : tensor<?x!quant.uniform<i8:f32, 2.0>> to tensor<?xi8>
 
-    // Cast an unranked tensor of signless integers into a quantized type using
+    // Cast an unranked tensor of integers into a quantized type using
     // per-channel quantization
     %result = quant.scast %input : tensor<*xi8> to tensor<*x!quant.uniform<i8:f32:1, {2.0, 3.0}>>
     ```
