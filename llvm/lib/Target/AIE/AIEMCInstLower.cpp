@@ -78,6 +78,16 @@ bool llvm::LowerAIEMachineOperandToMCOperand(const MachineOperand &MO,
                                                const AsmPrinter &AP) {
   switch (MO.getType()) {
   default:
+    errs() << "\nERROR: Unknown machine operand type!";
+    errs() << "\nOperand: ";
+    MO.print(errs());
+    errs() << "\nOperand type: " << MO.getType() << "\n";
+    if (const MachineInstr *MI = MO.getParent()) {
+      errs() << "Instruction: ";
+      MI->print(errs());
+      errs() << "\n";
+    }
+    llvm_unreachable("Unknown machine operand type!");
   case MachineOperand::MO_Register:
     // Ignore all implicit register operands.
     if (MO.isImplicit())
