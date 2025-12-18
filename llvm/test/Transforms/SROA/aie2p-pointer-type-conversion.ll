@@ -21,14 +21,11 @@ target datalayout = "e-m:e-p:20:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-f32:32:32
 define <64 x i8> @test_popx_with_mixed_types(ptr addrspace(5) %input) {
 ; CHECK-LABEL: @test_popx_with_mixed_types(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[P_IN_SROA_0:%.*]] = alloca [3 x i8], align 4
-; CHECK-NEXT:    store ptr addrspace(5) [[INPUT:%.*]], ptr [[P_IN_SROA_0]], align 4
-; CHECK-NEXT:    [[P_IN_SROA_0_0_P_IN_SROA_0_0_PTR1:%.*]] = load ptr addrspace(5), ptr [[P_IN_SROA_0]], align 4
-; CHECK-NEXT:    [[RESULT:%.*]] = call { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } @llvm.aie2p.fifo.ld.popx.p0.p5(ptr addrspace(5) [[P_IN_SROA_0_0_P_IN_SROA_0_0_PTR1]], <32 x i32> zeroinitializer, i32 0, <16 x i32> zeroinitializer, i32 63)
+; CHECK-NEXT:    [[RESULT:%.*]] = call { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } @llvm.aie2p.fifo.ld.popx.p0.p5(ptr addrspace(5) [[P_IN_SROA_0_0_P_IN_SROA_0_0_PTR1:%.*]], <32 x i32> zeroinitializer, i32 0, <16 x i32> zeroinitializer, i32 63)
 ; CHECK-NEXT:    [[UPDATED_PTR_AS0:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[RESULT]], 1
 ; CHECK-NEXT:    [[UPDATED_PTR_AS5:%.*]] = addrspacecast ptr [[UPDATED_PTR_AS0]] to ptr addrspace(5)
-; CHECK-NEXT:    store ptr addrspace(5) [[UPDATED_PTR_AS5]], ptr [[P_IN_SROA_0]], align 4
-; CHECK-NEXT:    [[P_IN_SROA_0_0_P_IN_SROA_0_0_PTR2:%.*]] = load ptr, ptr [[P_IN_SROA_0]], align 4
+; CHECK-NEXT:    [[TMP0:%.*]] = ptrtoint ptr addrspace(5) [[UPDATED_PTR_AS5]] to i20
+; CHECK-NEXT:    [[TMP1:%.*]] = inttoptr i20 [[TMP0]] to ptr
 ; CHECK-NEXT:    [[DATA:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, <16 x i32> } [[RESULT]], 0
 ; CHECK-NEXT:    ret <64 x i8> [[DATA]]
 ;

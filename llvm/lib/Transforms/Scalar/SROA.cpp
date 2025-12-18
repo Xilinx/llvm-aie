@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -4886,8 +4886,13 @@ AllocaInst *SROA::rewritePartition(AllocaInst &AI, AllocaSlices &AS,
         SliceTy = TypePartitionTy;
     }
 
-  if (!SliceTy)
-    SliceTy = ArrayType::get(Type::getInt8Ty(*C), P.size());
+  if (!SliceTy) {
+    // If the original alloca is a pointer type, preserve it
+    if (AI.getAllocatedType()->isPointerTy())
+      SliceTy = AI.getAllocatedType();
+    else
+      SliceTy = ArrayType::get(Type::getInt8Ty(*C), P.size());
+  }
   assert(DL.getTypeAllocSize(SliceTy).getFixedValue() >= P.size());
 
   bool IsIntegerPromotable = isIntegerWideningViable(P, SliceTy, DL);
