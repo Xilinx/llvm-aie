@@ -1953,7 +1953,7 @@ DenseElementsAttr tile(DenseElementsAttr inputValues, ShapedType outputType) {
 struct TosaFoldConstantTile : public TosaFoldConstantBase<tosa::TileOp> {
 
   TosaFoldConstantTile(MLIRContext *ctxt, bool foldSplatOrSingleUseOnly,
-                       int maxSizeToFold)
+                       int64_t maxSizeToFold)
       : TosaFoldConstantBase<tosa::TileOp>(ctxt, foldSplatOrSingleUseOnly),
         maxSizeToFold(maxSizeToFold) {}
 
@@ -1989,7 +1989,7 @@ struct TosaFoldConstantTile : public TosaFoldConstantBase<tosa::TileOp> {
     return success();
   }
 
-  const int maxSizeToFold;
+  const int64_t maxSizeToFold;
 };
 
 /// Getting the axes position of the element which is located

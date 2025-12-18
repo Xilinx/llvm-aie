@@ -39,7 +39,7 @@ def TosaLayerwiseConstantFoldPass : Pass<"tosa-layerwise-constant-fold", "func::
     Option<"enableTileFolding", "enable-tile-folding", "bool",
             /*default=*/"false",
             "Enables folding of tosa.tile operation. May generate bigger constant values.">,
-    Option<"maxTileFoldSize", "max-tile-fold-size", "int",
+    Option<"maxTileFoldSize", "max-tile-fold-size", "std::int64_t",
             /*default=*/"0",
             "Maximum size in bytes of the constant to be generated when folding a tosa.tile operation. A value of 0 means no limit.">,
   ];
