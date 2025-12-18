@@ -8856,13 +8856,13 @@ MemInstrItinData<II_VLDB_4x64_hi, [AvoidPartWordStore, SimpleCycle<QEY_RS_L0_POR
 MemInstrItinData<II_VLDB_4x64_lo, [AvoidPartWordStore, SimpleCycle<QEY_RS_L0_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WB_L0_PORT>], [/*dst*/7, /*src*/1], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_x__normal_fillx__dmx_ldb_fifo_x__core_fillx__mR30_fifo_step_e1__mR30_fifo_step_e7__dmx_ldb_fifo_x__normalx__mPfb__mLdFifo_b__mRF2b
-MemInstrItinData<II_VLDB_FILLX_512, [AvoidPartWordStore, SimpleCycle<L_RM_PORT>, EmptyCycles<5>, SimpleCycle<L_RM_PORT>], [/*ptr_out*/1, /*fifo_reg_out*/7, /*pos_out*/1, /*conf_e1*/1, /*conf_e7*/7, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*lfe*/7, /*lfe*/7], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDB_FILLX_512, [AvoidPartWordStore, EmptyCycles<7>], [/*ptr_out*/1, /*fifo_reg_out*/7, /*pos_out*/1, /*conf_e1*/1, /*conf_e7*/7, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*lfe*/7, /*lfe*/7], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_x__normal_fill__dmx_ldb_fifo_x__core_fill__dmx_ldb_fifo_x__normal__mPfb__mLdFifo_b__mRF2b
 MemInstrItinData<II_VLDB_FILL_512, [AvoidPartWordStore], [/*ptr_out*/1, /*fifo_reg_out*/7, /*pos_out*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_x__normal_popx__dmx_ldb_fifo_x__core_popx__mR30_fifo_step_e1__mR30_fifo_step_e7__dmx_ldb_fifo_x__normalx__mPfb__mLdFifo_b__mRF2b
-MemInstrItinData<II_VLDB_POPX_512, [AvoidPartWordStore, SimpleCycle<L_RM_PORT>, EmptyCycles<5>, SimpleCycle<L_RM_PORT>, SimpleCycle<QEY_WB_L0_PORT>], [/*dst*/8, /*ptr_out*/1, /*fifo_reg_out*/7, /*pos_out*/1, /*conf_e1*/1, /*conf_e7*/7, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*lfe*/7, /*srFifo_uf*/3, /*lfe*/7], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDB_POPX_512, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_L0_PORT>], [/*dst*/8, /*ptr_out*/1, /*fifo_reg_out*/7, /*pos_out*/1, /*conf_e1*/1, /*conf_e7*/7, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*lfe*/7, /*srFifo_uf*/3, /*lfe*/7], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_x__fifo_2d_pop__dmx_ldb_fifo_x__core_pop__dmx_ldb_fifo_x__fifo_2d__mPfb__mLdFifo_b__mRF2b__mDb
 MemInstrItinData<II_VLDB_POP_512_2D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_L0_PORT>], [/*dst*/8, /*ptr_out*/1, /*fifo_reg_out*/7, /*pos_out*/1, /*dc*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
