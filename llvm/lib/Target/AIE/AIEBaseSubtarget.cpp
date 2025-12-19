@@ -459,16 +459,16 @@ public:
       SDep Dep(&FreeSU, SDep::Artificial);
       auto Latency =
           AIE::maxLatency(&MI, *TII, *ItinData, /*IncludeStages=*/true);
-      if (TII->isLock(MI.getOpcode())) {
-        Dep.setLatency(std::max(
-            TII->getCoreResumeCycleAfterLock() -
-                *TII->getFirstMemoryCycle(FixedDepMI->getDesc().SchedClass) + 1,
-            Latency));
-      } else if (TII->isLock(FixedDepMI->getOpcode())) {
+      auto OptFirstMemCycle =
+          TII->getFirstMemoryCycle(FixedDepMI->getDesc().SchedClass);
+      auto OptLastMemCycle = TII->getLastMemoryCycle(MI.getDesc().SchedClass);
+      if (TII->isLock(MI.getOpcode()) && OptFirstMemCycle) {
         Dep.setLatency(
-            std::max(*TII->getLastMemoryCycle(MI.getDesc().SchedClass) -
-                         TII->getCoreStallCycleAfterLock() + 1,
+            std::max(TII->getCoreResumeCycleAfterLock() - *OptFirstMemCycle + 1,
                      Latency));
+      } else if (TII->isLock(FixedDepMI->getOpcode()) && OptLastMemCycle) {
+        Dep.setLatency(std::max(
+            *OptLastMemCycle - TII->getCoreStallCycleAfterLock() + 1, Latency));
       } else {
         Dep.setLatency(Latency);
       }
