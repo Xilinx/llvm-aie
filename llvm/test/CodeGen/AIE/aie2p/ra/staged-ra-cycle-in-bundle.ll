@@ -9,6 +9,8 @@
 ; RUN: llc -mtriple=aie2p -verify-machineinstrs %s -o - | FileCheck %s --check-prefix=FINE-GRAINED
 ; RUN: llc -mtriple=aie2p --aie-staged-ra-fine-grained-alloc=false %s -o - | FileCheck %s --check-prefix=COARSE-GRAINED
 
+; Note: Fine-grained alloc is tested in staged-ra-cycle-in-bundle-no-fine-grained-alloc.ll
+
 ; Function Attrs: nounwind readnone
 define void @heavy_3d_user(i32 %dimsAI.sroa.5.0.copyload.i, i32 %dimsAI.sroa.7.0.copyload.i, i32 %dimsAI.sroa.9.0.copyload.i, i32 %dimsAO.sroa.7.0.copyload.i, i32 %dimsAO.sroa.4.0.copyload.i, i32 %dimsAO.sroa.6.0.copyload.i, i32 %dimsAO.sroa.0.0.copyload.i, i32 %dimsAO.sroa.5.0.copyload.i, i32 %dimsW.sroa.4.0.copyload.i, i32 %dimsW.sroa.6.0.copyload.i, i20 %0, i1 %1, i32 %dimsAI.sroa.11.0.copyload.i) {
 ; FINE-GRAINED-LABEL: heavy_3d_user:
