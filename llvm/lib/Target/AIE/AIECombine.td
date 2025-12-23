@@ -238,6 +238,13 @@ def combine_phi_bitcast_swap : GICombineRule<
          [{ return matchPhiBitcast(*${root}, MRI, Helper, (const AIEBaseInstrInfo &)B.getTII(), Observer, ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
 
+def combine_vsel_to_unmerge_concat : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_AIE_VSEL): $root,
+  [{ return matchVSelToUnmergeConcatOrCopy(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])
+>;
+
 def combine_phi_undef : GICombineRule<
   (defs root:$root, build_fn_matchinfo:$matchinfo),
   (match (wip_match_opcode G_PHI): $root,
@@ -308,7 +315,8 @@ def aie2p_additional_combines : GICombineGroup<[
   combine_widen_fmul,
   combine_vector_shuffle_to_extract_insert_elt_to_broadcast,
   combine_bitcast_unmerge_swap,
-  combine_phi_bitcast_swap
+  combine_phi_bitcast_swap,
+  combine_vsel_to_unmerge_concat
 ]>;
 
 def AIE2PreLegalizerCombiner
