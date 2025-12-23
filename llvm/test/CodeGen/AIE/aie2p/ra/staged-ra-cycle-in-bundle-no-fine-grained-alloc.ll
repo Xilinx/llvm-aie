@@ -5,9 +5,28 @@
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
 ; (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
-; RUN: llc -mtriple=aie2p --aie-staged-ra-fine-grained-alloc=false -verify-machineinstrs  --stop-before=aie-superreg-rewrite %s -o - | FileCheck %s
+; RUN: llc -mtriple=aie2p --aie-staged-ra-fine-grained-alloc=false -verify-machineinstrs --stop-before=prologepilog %s -o - | FileCheck %s
 
 ; Disabling the Machine Verifier allows this unit-test to run to the end.
+; The verifier complains that we spill a SubRegister that is dead.
+; In our specific case we do not care about the Value in the Subregister and thus the faulty behaviour is acceptable.
+
+; Flow:
+; Greedy requests to split a 3D register.
+; In bb.2 the last 3D padd creates a dead value (sub_hi_dim_then_sub_dim_count).
+; This value is never used again (bb.0 and bb.5 define the sublane).
+
+; Control Flow Overview:
+; bb2 -> bb.4 -> bb.5 -> bb.6
+;  ^               |
+;  |               v       v ---+
+;  |      bb.0 -> bb.1 -> bb.3 -+
+;  |                       |
+;  +-----------------------+
+
+; InlineSpilling can only spill full registers.
+; Thus we spill the full register - even the dead subregister.
+; Machine Verifier correctly complains about this.
 
 ; Function Attrs: nounwind readnone
 define void @heavy_3d_user(i32 %dimsAI.sroa.5.0.copyload.i, i32 %dimsAI.sroa.7.0.copyload.i, i32 %dimsAI.sroa.9.0.copyload.i, i32 %dimsAO.sroa.7.0.copyload.i, i32 %dimsAO.sroa.4.0.copyload.i, i32 %dimsAO.sroa.6.0.copyload.i, i32 %dimsAO.sroa.0.0.copyload.i, i32 %dimsAO.sroa.5.0.copyload.i, i32 %dimsW.sroa.4.0.copyload.i, i32 %dimsW.sroa.6.0.copyload.i, i20 %0, i1 %1, i32 %dimsAI.sroa.11.0.copyload.i) {
@@ -16,235 +35,164 @@ define void @heavy_3d_user(i32 %dimsAI.sroa.5.0.copyload.i, i32 %dimsAI.sroa.7.0
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PseudoFI:%[0-9]+]]:ep_as_32bit = PseudoFI %fixed-stack.3, implicit $sp
-  ; CHECK-NEXT:   undef [[LDA_dms_lda_pstm_nrm_imm:%[0-9]+]].sub_dim_stride:eds, [[PseudoFI:%[0-9]+]]:ep_as_32bit = LDA_dms_lda_pstm_nrm_imm [[PseudoFI]], -4 :: (invariant load (s20) from %fixed-stack.3, align 4)
-  ; CHECK-NEXT:   [[LDA_dms_lda_pstm_nrm_imm:%[0-9]+]].sub_hi_dim_then_sub_dim_stride:eds, [[PseudoFI:%[0-9]+]]:ep_as_32bit = LDA_dms_lda_pstm_nrm_imm [[PseudoFI]], -4 :: (invariant load (s20) from %fixed-stack.2, align 8)
-  ; CHECK-NEXT:   undef [[COPY:%[0-9]+]].sub_dim_stride:eds = COPY [[LDA_dms_lda_pstm_nrm_imm]].sub_dim_stride {
-  ; CHECK-NEXT:     internal [[COPY]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[LDA_dms_lda_pstm_nrm_imm]].sub_hi_dim_then_sub_dim_stride
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   undef [[COPY1:%[0-9]+]].sub_dim_stride:eds = COPY [[COPY]].sub_dim_stride {
-  ; CHECK-NEXT:     internal [[COPY1]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[COPY]].sub_hi_dim_then_sub_dim_stride
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   ST_DS_SPILL [[COPY1]], %stack.4, implicit $sp :: (store (s256) into %stack.4, align 4)
-  ; CHECK-NEXT:   undef [[LDA_dms_lda_idx_imm:%[0-9]+]].sub_mod:eds = LDA_dms_lda_idx_imm [[PseudoFI]], -4 :: (invariant load (s20) from %fixed-stack.0, align 16)
-  ; CHECK-NEXT:   ST_DS_SPILL [[LDA_dms_lda_idx_imm]], %stack.5, implicit $sp :: (store (s256) into %stack.5, align 4)
-  ; CHECK-NEXT:   [[LDA_dms_lda_idx_imm1:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[PseudoFI]], 0 :: (invariant load (s32) from %fixed-stack.1)
-  ; CHECK-NEXT:   undef [[MOV_PD_imm11_pseudo:%[0-9]+]].sub_mod:eds = MOV_PD_imm11_pseudo 0
-  ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]].sub_hi_dim_then_sub_dim_stride:eds = MOV_PD_imm11_pseudo 1
-  ; CHECK-NEXT:   undef [[COPY2:%[0-9]+]].sub_mod:eds = COPY [[MOV_PD_imm11_pseudo]].sub_mod {
-  ; CHECK-NEXT:     internal [[COPY2]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[MOV_PD_imm11_pseudo]].sub_hi_dim_then_sub_dim_stride
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   undef [[COPY3:%[0-9]+]].sub_mod:eds = COPY [[COPY2]].sub_mod {
-  ; CHECK-NEXT:     internal [[COPY3]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[COPY2]].sub_hi_dim_then_sub_dim_stride
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   ST_DS_SPILL [[COPY3]], %stack.0, implicit $sp :: (store (s256) into %stack.0, align 4)
-  ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo1:%[0-9]+]]:ep = MOV_PD_imm11_pseudo 0
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:ep = COPY $p0
-  ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:erf2 = MOV_RLC_imm11_pseudo 0
+  ; CHECK-NEXT:   renamable $p1 = PseudoFI %fixed-stack.3, implicit $sp
+  ; CHECK-NEXT:   renamable $dj0, renamable $p1 = LDA_dms_lda_pstm_nrm_imm killed renamable $p1, -4 :: (invariant load (s20) from %fixed-stack.3, align 4)
+  ; CHECK-NEXT:   renamable $dj4, renamable $p1 = LDA_dms_lda_pstm_nrm_imm killed renamable $p1, -4 :: (invariant load (s20) from %fixed-stack.2, align 8)
+  ; CHECK-NEXT:   ST_DS_SPILL renamable $d0_3d, %stack.1, implicit $sp :: (store (s256) into %stack.1, align 4)
+  ; CHECK-NEXT:   renamable $m0 = LDA_dms_lda_idx_imm renamable $p1, -4 :: (invariant load (s20) from %fixed-stack.0, align 16)
+  ; CHECK-NEXT:   ST_DS_SPILL renamable $d0_3d, %stack.2, implicit $sp :: (store (s256) into %stack.2, align 4)
+  ; CHECK-NEXT:   renamable $r8 = LDA_dms_lda_idx_imm killed renamable $p1, 0 :: (invariant load (s32) from %fixed-stack.1)
+  ; CHECK-NEXT:   renamable $m0 = MOV_PD_imm11_pseudo 0
+  ; CHECK-NEXT:   renamable $dj4 = MOV_PD_imm11_pseudo 1
+  ; CHECK-NEXT:   ST_DS_SPILL renamable $d0_3d, %stack.0, implicit $sp :: (store (s256) into %stack.0, align 4)
+  ; CHECK-NEXT:   renamable $p3 = MOV_PD_imm11_pseudo 0
+  ; CHECK-NEXT:   renamable $p6 = COPY $p0
+  ; CHECK-NEXT:   renamable $r16 = MOV_RLC_imm11_pseudo 0
   ; CHECK-NEXT:   $p0 = MOV_PD_imm11_pseudo 0
-  ; CHECK-NEXT:   undef [[VBCST_32_:%[0-9]+]].sub_512_lo:vec1024 = VBCST_32 [[MOV_RLC_imm11_pseudo]]
+  ; CHECK-NEXT:   renamable $x0 = VBCST_32 killed renamable $r16
   ; CHECK-NEXT:   $p1 = MOV_PD_imm11_pseudo 0
-  ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:er = COPY $r0
-  ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:er = COPY $r1
-  ; CHECK-NEXT:   [[COPY7:%[0-9]+]]:er = COPY $r2
-  ; CHECK-NEXT:   [[COPY8:%[0-9]+]]:er = COPY $r3
-  ; CHECK-NEXT:   [[COPY9:%[0-9]+]]:er = COPY $r4
+  ; CHECK-NEXT:   ST_R_SPILL $r0, %stack.3, implicit $sp :: (store (s32) into %stack.3)
+  ; CHECK-NEXT:   renamable $r9 = COPY $r1
+  ; CHECK-NEXT:   renamable $r10 = COPY $r2
+  ; CHECK-NEXT:   renamable $r11 = COPY $r3
+  ; CHECK-NEXT:   renamable $r12 = COPY $r4
   ; CHECK-NEXT:   $p2 = MOV_PD_imm11_pseudo 0
-  ; CHECK-NEXT:   [[COPY10:%[0-9]+]]:er = COPY $r5
-  ; CHECK-NEXT:   [[COPY11:%[0-9]+]]:er = COPY $r6
-  ; CHECK-NEXT:   [[COPY12:%[0-9]+]]:er = COPY $r7
-  ; CHECK-NEXT:   [[VBCST_32_:%[0-9]+]].sub_512_hi:vec1024 = COPY [[VBCST_32_]].sub_512_lo
+  ; CHECK-NEXT:   renamable $r13 = COPY $r5
+  ; CHECK-NEXT:   renamable $r14 = COPY $r6
+  ; CHECK-NEXT:   renamable $r15 = COPY $r7
+  ; CHECK-NEXT:   renamable $x1 = COPY renamable $x0
+  ; CHECK-NEXT:   VST_Y_SPILL killed renamable $y0, %stack.5, implicit $sp :: (store (s1024) into %stack.5, align 64)
   ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
-  ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo2:%[0-9]+]]:eps = MOV_PD_imm11_pseudo 0
-  ; CHECK-NEXT:   PseudoJL_IND [[MOV_PD_imm11_pseudo1]], csr_aie2p, implicit-def $lr, implicit $p0, implicit killed $p1, implicit killed $p2
-  ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 1
-  ; CHECK-NEXT:   [[LDA_DS_SPILL:%[0-9]+]]:eds = LDA_DS_SPILL %stack.5, implicit $sp :: (load (s256) from %stack.5, align 4)
-  ; CHECK-NEXT:   undef [[COPY13:%[0-9]+]].sub_mod:eds = COPY [[LDA_DS_SPILL]].sub_mod
-  ; CHECK-NEXT:   [[COPY13:%[0-9]+]].sub_dim_stride:eds = COPY [[COPY5]]
-  ; CHECK-NEXT:   [[COPY13:%[0-9]+]].sub_hi_dim_then_sub_dim_size:eds = COPY [[COPY6]]
-  ; CHECK-NEXT:   [[COPY13:%[0-9]+]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[COPY7]]
-  ; CHECK-NEXT:   undef [[COPY14:%[0-9]+]].sub_mod:eds = COPY [[COPY8]]
-  ; CHECK-NEXT:   [[COPY14:%[0-9]+]].sub_dim_stride:eds = COPY [[COPY9]]
-  ; CHECK-NEXT:   [[COPY14:%[0-9]+]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[COPY10]]
-  ; CHECK-NEXT:   [[COPY14:%[0-9]+]].sub_dim_size:eds = COPY [[COPY11]]
-  ; CHECK-NEXT:   [[COPY14:%[0-9]+]].sub_hi_dim_then_sub_dim_size:eds = COPY [[COPY12]]
-  ; CHECK-NEXT:   [[COPY13:%[0-9]+]].sub_dim_count:eds = MOV_PD_imm11_pseudo 0
-  ; CHECK-NEXT:   [[LDA_DS_SPILL1:%[0-9]+]]:eds = LDA_DS_SPILL %stack.0, implicit $sp :: (load (s256) from %stack.0, align 4)
-  ; CHECK-NEXT:   undef [[COPY15:%[0-9]+]].sub_mod:eds = COPY [[LDA_DS_SPILL1]].sub_mod {
-  ; CHECK-NEXT:     internal [[COPY15]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[LDA_DS_SPILL1]].sub_hi_dim_then_sub_dim_stride
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   undef [[COPY16:%[0-9]+]].sub_mod:eds = COPY [[COPY15]].sub_mod {
-  ; CHECK-NEXT:     internal [[COPY16]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[COPY15]].sub_hi_dim_then_sub_dim_stride
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   [[COPY13:%[0-9]+]].sub_dim_size:eds = COPY [[COPY16]].sub_mod
-  ; CHECK-NEXT:   undef [[COPY17:%[0-9]+]].sub_lo_dim:eds = COPY [[COPY13]].sub_lo_dim {
-  ; CHECK-NEXT:     internal [[COPY17]].sub_hi_dim_then_sub_dim_size:eds = COPY [[COPY13]].sub_hi_dim_then_sub_dim_size
-  ; CHECK-NEXT:     internal [[COPY17]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[COPY13]].sub_hi_dim_then_sub_dim_stride
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   undef [[COPY18:%[0-9]+]].sub_mod:eds = COPY [[COPY16]].sub_hi_dim_then_sub_dim_stride
-  ; CHECK-NEXT:   [[COPY18:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = COPY [[COPY16]].sub_mod
-  ; CHECK-NEXT:   undef [[COPY19:%[0-9]+]].sub_dim_count:eds = COPY [[COPY16]].sub_mod
-  ; CHECK-NEXT:   [[COPY14:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = COPY [[COPY16]].sub_mod
-  ; CHECK-NEXT:   [[COPY14:%[0-9]+]].sub_dim_count:eds = COPY [[COPY16]].sub_mod
-  ; CHECK-NEXT:   undef [[COPY20:%[0-9]+]].sub_lo_dim:eds = COPY [[COPY14]].sub_lo_dim {
-  ; CHECK-NEXT:     internal [[COPY20]].sub_hi_dim_then_sub_dim_count:eds = COPY [[COPY14]].sub_hi_dim_then_sub_dim_count
-  ; CHECK-NEXT:     internal [[COPY20]].sub_hi_dim_then_sub_dim_size:eds = COPY [[COPY14]].sub_hi_dim_then_sub_dim_size
-  ; CHECK-NEXT:     internal [[COPY20]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[COPY14]].sub_hi_dim_then_sub_dim_stride
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   ST_DS_SPILL [[COPY20]], %stack.1, implicit $sp :: (store (s256) into %stack.1, align 4)
-  ; CHECK-NEXT:   [[LDA_DS_SPILL2:%[0-9]+]]:eds = LDA_DS_SPILL %stack.4, implicit $sp :: (load (s256) from %stack.4, align 4)
-  ; CHECK-NEXT:   undef [[COPY21:%[0-9]+]].sub_dim_stride:eds = COPY [[LDA_DS_SPILL2]].sub_dim_stride {
-  ; CHECK-NEXT:     internal [[COPY21]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[LDA_DS_SPILL2]].sub_hi_dim_then_sub_dim_stride
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   undef [[COPY22:%[0-9]+]].sub_dim_stride:eds = COPY [[COPY21]].sub_dim_stride {
-  ; CHECK-NEXT:     internal [[COPY22]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[COPY21]].sub_hi_dim_then_sub_dim_stride
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   [[COPY22:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = COPY [[COPY16]].sub_hi_dim_then_sub_dim_stride
-  ; CHECK-NEXT:   [[COPY22:%[0-9]+]].sub_dim_count:eds = COPY [[COPY16]].sub_mod
-  ; CHECK-NEXT:   undef [[COPY23:%[0-9]+]].sub_mod:eds = COPY [[COPY16]].sub_mod {
-  ; CHECK-NEXT:     internal [[COPY23]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[COPY16]].sub_hi_dim_then_sub_dim_stride
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   undef [[COPY24:%[0-9]+]].sub_dim_count:eds = COPY [[COPY22]].sub_dim_count {
-  ; CHECK-NEXT:     internal [[COPY24]].sub_dim_stride:eds = COPY [[COPY22]].sub_dim_stride
-  ; CHECK-NEXT:     internal [[COPY24]].sub_hi_dim_then_sub_dim_count:eds = COPY [[COPY22]].sub_hi_dim_then_sub_dim_count
-  ; CHECK-NEXT:     internal [[COPY24]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[COPY22]].sub_hi_dim_then_sub_dim_stride
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   ST_DS_SPILL [[COPY24]], %stack.4, implicit $sp :: (store (s256) into %stack.4, align 4)
-  ; CHECK-NEXT:   undef [[COPY25:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = COPY [[COPY23]].sub_mod
-  ; CHECK-NEXT:   ST_DS_SPILL [[COPY25]], %stack.3, implicit $sp :: (store (s256) into %stack.3, align 4)
-  ; CHECK-NEXT:   [[COPY23:%[0-9]+]].sub_dim_count:eds = COPY [[COPY23]].sub_mod
-  ; CHECK-NEXT:   undef [[COPY26:%[0-9]+]].sub_dim_count:eds = COPY [[COPY23]].sub_dim_count {
-  ; CHECK-NEXT:     internal [[COPY26]].sub_mod:eds = COPY [[COPY23]].sub_mod
-  ; CHECK-NEXT:     internal [[COPY26]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[COPY23]].sub_hi_dim_then_sub_dim_stride
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   ST_DS_SPILL [[COPY26]], %stack.0, implicit $sp :: (store (s256) into %stack.0, align 4)
+  ; CHECK-NEXT:   PseudoJL_IND killed renamable $p3, csr_aie2p, implicit-def $lr, implicit $p0, implicit $p1, implicit $p2
+  ; CHECK-NEXT:   renamable $y1 = VLDA_Y_SPILL %stack.5, implicit $sp :: (load (s1024) from %stack.5, align 64)
+  ; CHECK-NEXT:   renamable $r3 = MOV_RLC_imm11_pseudo 0
+  ; CHECK-NEXT:   renamable $r0 = MOV_RLC_imm11_pseudo 1
+  ; CHECK-NEXT:   renamable $d3_3d = LDA_DS_SPILL %stack.2, implicit $sp :: (load (s256) from %stack.2, align 4)
+  ; CHECK-NEXT:   renamable $dj3 = LDA_R_SPILL %stack.3, implicit $sp :: (load (s32) from %stack.3)
+  ; CHECK-NEXT:   renamable $dn7 = COPY killed renamable $r9
+  ; CHECK-NEXT:   renamable $dj7 = COPY killed renamable $r10
+  ; CHECK-NEXT:   renamable $m0 = COPY killed renamable $r11
+  ; CHECK-NEXT:   renamable $dj0 = COPY killed renamable $r12
+  ; CHECK-NEXT:   renamable $dj4 = COPY killed renamable $r13
+  ; CHECK-NEXT:   renamable $dn0 = COPY killed renamable $r14
+  ; CHECK-NEXT:   renamable $dn4 = COPY killed renamable $r15
+  ; CHECK-NEXT:   renamable $dc3 = MOV_PD_imm11_pseudo 0
+  ; CHECK-NEXT:   renamable $d1_3d = LDA_DS_SPILL %stack.0, implicit $sp :: (load (s256) from %stack.0, align 4)
+  ; CHECK-NEXT:   renamable $m2 = COPY renamable $m1
+  ; CHECK-NEXT:   internal renamable $dj6 = COPY renamable $dj5
+  ; CHECK-NEXT:   renamable $dn3 = COPY $m1
+  ; CHECK-NEXT:   renamable $m1 = COPY $dj5
+  ; CHECK-NEXT:   renamable $dc5 = COPY renamable $m2
+  ; CHECK-NEXT:   renamable $dc1 = COPY renamable $m2
+  ; CHECK-NEXT:   renamable $dc4 = COPY renamable $m2
+  ; CHECK-NEXT:   renamable $dc0 = COPY renamable $m2
+  ; CHECK-NEXT:   ST_DS_SPILL renamable $d0_3d, %stack.2, implicit $sp :: (store (s256) into %stack.2, align 4)
+  ; CHECK-NEXT:   renamable $d0_3d = LDA_DS_SPILL %stack.1, implicit $sp :: (load (s256) from %stack.1, align 4)
+  ; CHECK-NEXT:   renamable $dc4 = COPY $dj5
+  ; CHECK-NEXT:   renamable $dc0 = COPY renamable $m2
+  ; CHECK-NEXT:   ST_DS_SPILL renamable $d0_3d, %stack.1, implicit $sp :: (store (s256) into %stack.1, align 4)
+  ; CHECK-NEXT:   renamable $dc6 = COPY renamable $m2
+  ; CHECK-NEXT:   ST_DS_SPILL renamable $d2_3d, %stack.3, implicit $sp :: (store (s256) into %stack.3, align 4)
+  ; CHECK-NEXT:   renamable $dc0 = COPY $m2
+  ; CHECK-NEXT:   renamable $m0 = COPY renamable $m2
+  ; CHECK-NEXT:   renamable $dj4 = COPY $dj5
+  ; CHECK-NEXT:   ST_DS_SPILL renamable $d0_3d, %stack.0, implicit $sp :: (store (s256) into %stack.0, align 4)
   ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
-  ; CHECK-NEXT:   [[COPY27:%[0-9]+]]:eldfiforeg = COPY [[VBCST_32_]]
-  ; CHECK-NEXT:   [[AND:%[0-9]+]]:er = AND [[LDA_dms_lda_idx_imm1]], [[MOV_RLC_imm11_pseudo1]]
+  ; CHECK-NEXT:   renamable $lf0 = COPY renamable $y1
+  ; CHECK-NEXT:   renamable $r1 = AND renamable $r8, renamable $r0
+  ; CHECK-NEXT:   renamable $dc7 = COPY renamable $dc3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1.for.body.i:
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
+  ; CHECK-NEXT:   liveins: $dc5, $lf0, $m1, $p6, $r0, $r1, $r3, $r8, $y1:0x0000000000000033, $d1_3d:0x0000400000200200, $d3_3d:0x0001800000200E00, $dc7
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY18:%[0-9]+]].sub_dim_stride:eds = COPY [[COPY4]]
-  ; CHECK-NEXT:   undef [[COPY28:%[0-9]+]].sub_lo_dim:eds = COPY [[COPY17]].sub_lo_dim {
-  ; CHECK-NEXT:     internal [[COPY28]].sub_hi_dim_then_sub_dim_size:eds = COPY [[COPY17]].sub_hi_dim_then_sub_dim_size
-  ; CHECK-NEXT:     internal [[COPY28]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[COPY17]].sub_hi_dim_then_sub_dim_stride
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   [[COPY18:%[0-9]+]].sub_dim_size:eds = COPY [[COPY28]].sub_dim_size
-  ; CHECK-NEXT:   [[COPY18:%[0-9]+]].sub_dim_count:eds = COPY [[COPY19]].sub_dim_count
-  ; CHECK-NEXT:   [[COPY18:%[0-9]+]].sub_hi_dim_then_sub_dim_size:eds = COPY [[COPY28]].sub_dim_size
-  ; CHECK-NEXT:   [[COPY18:%[0-9]+]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[COPY18]].sub_dim_stride
-  ; CHECK-NEXT:   undef [[COPY29:%[0-9]+]].sub_mod:eds = COPY [[COPY18]].sub_mod {
-  ; CHECK-NEXT:     internal [[COPY29]].sub_hi_dim_then_sub_dim_count:eds = COPY [[COPY18]].sub_hi_dim_then_sub_dim_count
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   ST_DS_SPILL [[COPY29]], %stack.2, implicit $sp :: (store (s256) into %stack.2, align 4)
-  ; CHECK-NEXT:   [[COPY30:%[0-9]+]]:eds = COPY [[COPY18]]
-  ; CHECK-NEXT:   undef [[COPY31:%[0-9]+]].sub_ptr:epsrfldf = COPY [[MOV_PD_imm11_pseudo2]]
-  ; CHECK-NEXT:   [[COPY31:%[0-9]+]].sub_fifo:epsrfldf = COPY [[COPY27]]
-  ; CHECK-NEXT:   [[COPY31:%[0-9]+]].sub_avail:epsrfldf = COPY [[MOV_RLC_imm11_pseudo]]
-  ; CHECK-NEXT:   dead [[VLD_POP_576_3D_pseudo_split:%[0-9]+]]:vec576, dead [[COPY31:%[0-9]+]].sub_ptr:epsrfldf, dead [[COPY31:%[0-9]+]].sub_fifo:epsrfldf, dead [[COPY31:%[0-9]+]].sub_avail:epsrfldf, dead [[COPY30:%[0-9]+]].sub_dim_count:eds, dead [[COPY30:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = VLD_POP_576_3D_pseudo_split [[COPY31]].sub_ptr, [[COPY31]].sub_fifo, [[COPY31]].sub_avail, [[COPY30]].sub_mod, [[COPY30]].sub_dim_size, [[COPY30]].sub_dim_stride, [[COPY30]].sub_dim_count, undef [[COPY30]].sub_hi_dim_then_sub_mod, [[COPY30]].sub_hi_dim_then_sub_dim_size, [[COPY30]].sub_hi_dim_then_sub_dim_stride, [[COPY30]].sub_hi_dim_then_sub_dim_count, implicit-def $srfifo_uf :: (load unknown-size from `ptr addrspace(5) null`, align 1, addrspace 5)
-  ; CHECK-NEXT:   [[LDA_DS_SPILL3:%[0-9]+]]:eds = LDA_DS_SPILL %stack.3, implicit $sp :: (load (s256) from %stack.3, align 4)
-  ; CHECK-NEXT:   undef [[COPY32:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = COPY [[LDA_DS_SPILL3]].sub_hi_dim_then_sub_dim_count
-  ; CHECK-NEXT:   [[LDA_DS_SPILL4:%[0-9]+]]:eds = LDA_DS_SPILL %stack.0, implicit $sp :: (load (s256) from %stack.0, align 4)
-  ; CHECK-NEXT:   undef [[COPY33:%[0-9]+]].sub_dim_count:eds = COPY [[LDA_DS_SPILL4]].sub_dim_count {
-  ; CHECK-NEXT:     internal [[COPY33]].sub_mod:eds = COPY [[LDA_DS_SPILL4]].sub_mod
-  ; CHECK-NEXT:     internal [[COPY33]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[LDA_DS_SPILL4]].sub_hi_dim_then_sub_dim_stride
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   [[COPY32:%[0-9]+]].sub_dim_stride:eds = COPY [[COPY33]].sub_mod
-  ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo3:%[0-9]+]]:ep = MOV_PD_imm11_pseudo 0
-  ; CHECK-NEXT:   undef [[COPY34:%[0-9]+]].sub_dim_count:eds = COPY [[COPY33]].sub_dim_count {
-  ; CHECK-NEXT:     internal [[COPY34]].sub_mod:eds = COPY [[COPY33]].sub_mod
-  ; CHECK-NEXT:     internal [[COPY34]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[COPY33]].sub_hi_dim_then_sub_dim_stride
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   ST_DS_SPILL [[COPY34]], %stack.0, implicit $sp :: (store (s256) into %stack.0, align 4)
-  ; CHECK-NEXT:   [[COPY32:%[0-9]+]].sub_mod:eds = COPY [[COPY33]].sub_mod
-  ; CHECK-NEXT:   [[COPY32:%[0-9]+]].sub_dim_size:eds = COPY [[COPY28]].sub_dim_size
-  ; CHECK-NEXT:   [[COPY32:%[0-9]+]].sub_dim_count:eds = COPY [[COPY28]].sub_dim_count
-  ; CHECK-NEXT:   [[COPY32:%[0-9]+]].sub_hi_dim_then_sub_dim_size:eds = COPY [[COPY28]].sub_dim_size
-  ; CHECK-NEXT:   [[COPY32:%[0-9]+]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[COPY32]].sub_dim_stride
-  ; CHECK-NEXT:   dead [[MOV_PD_imm11_pseudo3:%[0-9]+]]:ep, [[COPY32:%[0-9]+]].sub_dim_count:eds, [[COPY32:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = PADD_3D_pseudo_split [[MOV_PD_imm11_pseudo3]], [[COPY32]].sub_mod, [[COPY32]].sub_dim_size, [[COPY32]].sub_dim_stride, [[COPY32]].sub_dim_count, undef [[COPY32]].sub_hi_dim_then_sub_mod, [[COPY32]].sub_hi_dim_then_sub_dim_size, [[COPY32]].sub_hi_dim_then_sub_dim_stride, [[COPY32]].sub_hi_dim_then_sub_dim_count
-  ; CHECK-NEXT:   ST_DS_SPILL [[COPY32]], %stack.3, implicit $sp :: (store (s256) into %stack.3, align 4)
+  ; CHECK-NEXT:   renamable $dj1 = COPY renamable $p6
+  ; CHECK-NEXT:   renamable $dn1 = COPY renamable $dn3
+  ; CHECK-NEXT:   renamable $dn5 = COPY renamable $dn3
+  ; CHECK-NEXT:   renamable $dj5 = COPY $p6
+  ; CHECK-NEXT:   renamable $m2 = COPY renamable $m1
+  ; CHECK-NEXT:   renamable $dc6 = COPY renamable $dc5
+  ; CHECK-NEXT:   ST_DS_SPILL renamable $d2_3d, %stack.4, implicit $sp :: (store (s256) into %stack.4, align 4)
+  ; CHECK-NEXT:   renamable $p1 = MOV_PD_imm11_pseudo 0
+  ; CHECK-NEXT:   renamable $lf1 = COPY renamable $lf0
+  ; CHECK-NEXT:   renamable $r25 = COPY renamable $r3
+  ; CHECK-NEXT:   dead $ex0, dead $p1, dead $lf1, dead $r25, dead $dc1, dead $dc5 = VLD_POP_576_3D_pseudo killed $p1, $lf1, $r25, $d1_3d, implicit-def $srfifo_uf :: (load unknown-size from `ptr addrspace(5) null`, align 1, addrspace 5)
+  ; CHECK-NEXT:   renamable $d1_3d = LDA_DS_SPILL %stack.3, implicit $sp :: (load (s256) from %stack.3, align 4)
+  ; CHECK-NEXT:   renamable $d0_3d = LDA_DS_SPILL %stack.0, implicit $sp :: (load (s256) from %stack.0, align 4)
+  ; CHECK-NEXT:   renamable $dj1 = COPY renamable $m0
+  ; CHECK-NEXT:   renamable $p0 = MOV_PD_imm11_pseudo 0
+  ; CHECK-NEXT:   renamable $dc1 = COPY killed renamable $dc0
+  ; CHECK-NEXT:   renamable $m1 = COPY renamable $m0
+  ; CHECK-NEXT:   renamable $dj5 = COPY renamable $dj4
+  ; CHECK-NEXT:   ST_DS_SPILL renamable $d1_3d, %stack.0, implicit $sp :: (store (s256) into %stack.0, align 4)
+  ; CHECK-NEXT:   renamable $dn1 = COPY renamable $dn3
+  ; CHECK-NEXT:   renamable $dc1 = COPY renamable $dc3
+  ; CHECK-NEXT:   renamable $dn5 = COPY renamable $dn3
+  ; CHECK-NEXT:   renamable $dj5 = COPY $m0
+  ; CHECK-NEXT:   dead $p0, $dc1, $dc5 = PADD_3D_pseudo killed $p0, $d1_3d
+  ; CHECK-NEXT:   renamable $p0 = MOV_PD_imm11_pseudo 0
+  ; CHECK-NEXT:   ST_DS_SPILL renamable $d1_3d, %stack.3, implicit $sp :: (store (s256) into %stack.3, align 4)
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2.for.cond.cleanup124.i:
   ; CHECK-NEXT:   successors: %bb.4(0x40000000), %bb.5(0x40000000)
+  ; CHECK-NEXT:   liveins: $lf0, $p6, $r0, $r1, $r3, $r8, $y1:0x0000000000000033, $d1_3d:0x0000000000000200, $d3_3d:0x0001800000200E00, $dc7
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   undef [[COPY17:%[0-9]+]].sub_lo_dim:eds = COPY [[COPY28]].sub_lo_dim {
-  ; CHECK-NEXT:     internal [[COPY17]].sub_hi_dim_then_sub_dim_size:eds = COPY [[COPY28]].sub_hi_dim_then_sub_dim_size
-  ; CHECK-NEXT:     internal [[COPY17]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[COPY28]].sub_hi_dim_then_sub_dim_stride
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo4:%[0-9]+]]:ep = MOV_PD_imm11_pseudo 0
-  ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo5:%[0-9]+]]:ep = MOV_PD_imm11_pseudo 0
-  ; CHECK-NEXT:   [[LDA_DS_SPILL5:%[0-9]+]]:eds = LDA_DS_SPILL %stack.4, implicit $sp :: (load (s256) from %stack.4, align 4)
-  ; CHECK-NEXT:   undef [[COPY35:%[0-9]+]].sub_dim_count:eds = COPY [[LDA_DS_SPILL5]].sub_dim_count {
-  ; CHECK-NEXT:     internal [[COPY35]].sub_dim_stride:eds = COPY [[LDA_DS_SPILL5]].sub_dim_stride
-  ; CHECK-NEXT:     internal [[COPY35]].sub_hi_dim_then_sub_dim_count:eds = COPY [[LDA_DS_SPILL5]].sub_hi_dim_then_sub_dim_count
-  ; CHECK-NEXT:     internal [[COPY35]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[LDA_DS_SPILL5]].sub_hi_dim_then_sub_dim_stride
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   [[LDA_DS_SPILL6:%[0-9]+]]:eds = LDA_DS_SPILL %stack.0, implicit $sp :: (load (s256) from %stack.0, align 4)
-  ; CHECK-NEXT:   undef [[COPY36:%[0-9]+]].sub_dim_count:eds = COPY [[LDA_DS_SPILL6]].sub_dim_count {
-  ; CHECK-NEXT:     internal [[COPY36]].sub_mod:eds = COPY [[LDA_DS_SPILL6]].sub_mod
-  ; CHECK-NEXT:     internal [[COPY36]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[LDA_DS_SPILL6]].sub_hi_dim_then_sub_dim_stride
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   [[COPY35:%[0-9]+]].sub_dim_size:eds = COPY [[COPY36]].sub_mod
-  ; CHECK-NEXT:   [[COPY35:%[0-9]+]].sub_mod:eds = COPY [[COPY36]].sub_mod
-  ; CHECK-NEXT:   [[COPY35:%[0-9]+]].sub_hi_dim_then_sub_dim_size:eds = COPY [[COPY35]].sub_dim_size
-  ; CHECK-NEXT:   [[LDA_DS_SPILL7:%[0-9]+]]:eds = LDA_DS_SPILL %stack.1, implicit $sp :: (load (s256) from %stack.1, align 4)
-  ; CHECK-NEXT:   dead [[MOV_PD_imm11_pseudo4:%[0-9]+]]:ep, [[LDA_DS_SPILL7:%[0-9]+]].sub_dim_count:eds, [[LDA_DS_SPILL7:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = PADD_3D_pseudo_split [[MOV_PD_imm11_pseudo4]], [[LDA_DS_SPILL7]].sub_mod, [[LDA_DS_SPILL7]].sub_dim_size, [[LDA_DS_SPILL7]].sub_dim_stride, [[LDA_DS_SPILL7]].sub_dim_count, undef [[LDA_DS_SPILL7]].sub_hi_dim_then_sub_mod, [[LDA_DS_SPILL7]].sub_hi_dim_then_sub_dim_size, [[LDA_DS_SPILL7]].sub_hi_dim_then_sub_dim_stride, [[LDA_DS_SPILL7]].sub_hi_dim_then_sub_dim_count
-  ; CHECK-NEXT:   ST_DS_SPILL [[LDA_DS_SPILL7]], %stack.1, implicit $sp :: (store (s256) into %stack.1, align 4)
-  ; CHECK-NEXT:   dead [[MOV_PD_imm11_pseudo5:%[0-9]+]]:ep, [[COPY35:%[0-9]+]].sub_dim_count:eds, [[COPY35:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = PADD_3D_pseudo_split [[MOV_PD_imm11_pseudo5]], [[COPY35]].sub_mod, [[COPY35]].sub_dim_size, [[COPY35]].sub_dim_stride, [[COPY35]].sub_dim_count, undef [[COPY35]].sub_hi_dim_then_sub_mod, [[COPY35]].sub_hi_dim_then_sub_dim_size, [[COPY35]].sub_hi_dim_then_sub_dim_stride, [[COPY35]].sub_hi_dim_then_sub_dim_count
-  ; CHECK-NEXT:   undef [[COPY37:%[0-9]+]].sub_dim_count:eds = COPY [[COPY35]].sub_dim_count {
-  ; CHECK-NEXT:     internal [[COPY37]].sub_dim_stride:eds = COPY [[COPY35]].sub_dim_stride
-  ; CHECK-NEXT:     internal [[COPY37]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[COPY35]].sub_hi_dim_then_sub_dim_stride
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   ST_DS_SPILL [[COPY37]], %stack.4, implicit $sp :: (store (s256) into %stack.4, align 4)
-  ; CHECK-NEXT:   PseudoJNZ [[AND]], %bb.4
+  ; CHECK-NEXT:   renamable $p0 = MOV_PD_imm11_pseudo 0
+  ; CHECK-NEXT:   renamable $p1 = MOV_PD_imm11_pseudo 0
+  ; CHECK-NEXT:   renamable $d0_3d = LDA_DS_SPILL %stack.1, implicit $sp :: (load (s256) from %stack.1, align 4)
+  ; CHECK-NEXT:   renamable $d2_3d = LDA_DS_SPILL %stack.0, implicit $sp :: (load (s256) from %stack.0, align 4)
+  ; CHECK-NEXT:   renamable $dn0 = COPY renamable $m2
+  ; CHECK-NEXT:   renamable $m0 = COPY renamable $m2
+  ; CHECK-NEXT:   renamable $dn4 = COPY $m2
+  ; CHECK-NEXT:   renamable $d2_3d = LDA_DS_SPILL %stack.2, implicit $sp :: (load (s256) from %stack.2, align 4)
+  ; CHECK-NEXT:   dead $p0, $dc2, $dc6 = PADD_3D_pseudo killed $p0, $d2_3d
+  ; CHECK-NEXT:   ST_DS_SPILL killed renamable $d2_3d, %stack.2, implicit $sp :: (store (s256) into %stack.2, align 4)
+  ; CHECK-NEXT:   dead $p1, $dc0, dead $dc4 = PADD_3D_pseudo killed $p1, $d0_3d
+  ; CHECK-NEXT:   ST_DS_SPILL renamable $d0_3d, %stack.1, implicit $sp :: (store (s256) into %stack.1, align 4)
+  ; CHECK-NEXT:   PseudoJNZ renamable $r1, %bb.4
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.5
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3.for.body125.i:
   ; CHECK-NEXT:   successors: %bb.3(0x7c000000), %bb.2(0x04000000)
+  ; CHECK-NEXT:   liveins: $lf0, $p0, $p6, $r0, $r1, $r3, $r8, $y1:0x0000000000000033, $d3_3d:0x0001800000200E00, $dc7
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY28:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = COPY [[COPY28]].sub_dim_count
-  ; CHECK-NEXT:   [[COPY19:%[0-9]+]]:eds = COPY [[COPY28]]
-  ; CHECK-NEXT:   undef [[COPY38:%[0-9]+]].sub_fifo:epsrfldf = COPY [[VBCST_32_]]
-  ; CHECK-NEXT:   [[COPY38:%[0-9]+]].sub_ptr:epsrfldf = COPY [[MOV_PD_imm11_pseudo2]]
-  ; CHECK-NEXT:   [[COPY38:%[0-9]+]].sub_avail:epsrfldf = COPY [[MOV_RLC_imm11_pseudo]]
-  ; CHECK-NEXT:   dead [[VLD_POP_576_3D_pseudo_split1:%[0-9]+]]:vec576, dead [[COPY38:%[0-9]+]].sub_ptr:epsrfldf, dead [[COPY38:%[0-9]+]].sub_fifo:epsrfldf, dead [[COPY38:%[0-9]+]].sub_avail:epsrfldf, [[COPY19:%[0-9]+]].sub_dim_count:eds, [[COPY19:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = VLD_POP_576_3D_pseudo_split [[COPY38]].sub_ptr, [[COPY38]].sub_fifo, [[COPY38]].sub_avail, [[COPY19]].sub_mod, [[COPY19]].sub_dim_size, [[COPY19]].sub_dim_stride, [[COPY19]].sub_dim_count, undef [[COPY19]].sub_hi_dim_then_sub_mod, [[COPY19]].sub_hi_dim_then_sub_dim_size, [[COPY19]].sub_hi_dim_then_sub_dim_stride, [[COPY19]].sub_hi_dim_then_sub_dim_count, implicit-def $srfifo_uf :: (load unknown-size from `ptr addrspace(5) null`, align 1, addrspace 5)
+  ; CHECK-NEXT:   renamable $d1_3d = COPY renamable $d3_3d
+  ; CHECK-NEXT:   renamable $lf1 = COPY renamable $y1
+  ; CHECK-NEXT:   renamable $p1 = COPY renamable $p0
+  ; CHECK-NEXT:   renamable $r25 = COPY renamable $r3
+  ; CHECK-NEXT:   dead $ex4, dead $p1, dead $lf1, dead $r25, $dc1, $dc5 = VLD_POP_576_3D_pseudo killed $p1, $lf1, $r25, $d1_3d, implicit-def $srfifo_uf :: (load unknown-size from `ptr addrspace(5) null`, align 1, addrspace 5)
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.3
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4.if.else.i14:
   ; CHECK-NEXT:   successors: %bb.5(0x80000000)
+  ; CHECK-NEXT:   liveins: $lf0, $p6, $r0, $r1, $r3, $r8, $y1:0x0000000000000033, $d1_3d:0x0000000000000200, $d3_3d:0x0001800000200E00, $dc7
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.5.if.end239.i:
   ; CHECK-NEXT:   successors: %bb.6(0x04000000), %bb.1(0x7c000000)
+  ; CHECK-NEXT:   liveins: $lf0, $p6, $r0, $r1, $r3, $r8, $y1:0x0000000000000033, $d1_3d:0x0000000000000200, $d3_3d:0x0001800000200E00, $dc7
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[MOV_PD_imm11_pseudo6:%[0-9]+]]:ep = MOV_PD_imm11_pseudo 0
-  ; CHECK-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[LDA_dms_lda_idx_imm1]], [[MOV_RLC_imm11_pseudo1]]
-  ; CHECK-NEXT:   [[LDA_DS_SPILL8:%[0-9]+]]:eds = LDA_DS_SPILL %stack.0, implicit $sp :: (load (s256) from %stack.0, align 4)
-  ; CHECK-NEXT:   undef [[COPY39:%[0-9]+]].sub_dim_count:eds = COPY [[LDA_DS_SPILL8]].sub_dim_count {
-  ; CHECK-NEXT:     internal [[COPY39]].sub_mod:eds = COPY [[LDA_DS_SPILL8]].sub_mod
-  ; CHECK-NEXT:     internal [[COPY39]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[LDA_DS_SPILL8]].sub_hi_dim_then_sub_dim_stride
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   [[COPY39:%[0-9]+]].sub_dim_stride:eds = COPY [[COPY39]].sub_mod
-  ; CHECK-NEXT:   [[COPY39:%[0-9]+]].sub_dim_size:eds = COPY [[COPY39]].sub_mod
-  ; CHECK-NEXT:   [[COPY39:%[0-9]+]].sub_hi_dim_then_sub_dim_size:eds = COPY [[COPY39]].sub_mod
-  ; CHECK-NEXT:   [[COPY39:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = COPY [[COPY39]].sub_mod
-  ; CHECK-NEXT:   [[AND1:%[0-9]+]]:er = AND [[XOR]], [[MOV_RLC_imm11_pseudo1]]
-  ; CHECK-NEXT:   dead [[MOV_PD_imm11_pseudo6:%[0-9]+]]:ep, [[COPY39:%[0-9]+]].sub_dim_count:eds, [[COPY39:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = PADD_3D_pseudo_split [[MOV_PD_imm11_pseudo6]], [[COPY39]].sub_mod, [[COPY39]].sub_dim_size, [[COPY39]].sub_dim_stride, [[COPY39]].sub_dim_count, undef [[COPY39]].sub_hi_dim_then_sub_mod, [[COPY39]].sub_hi_dim_then_sub_dim_size, [[COPY39]].sub_hi_dim_then_sub_dim_stride, [[COPY39]].sub_hi_dim_then_sub_dim_count
-  ; CHECK-NEXT:   undef [[COPY40:%[0-9]+]].sub_dim_count:eds = COPY [[COPY39]].sub_dim_count {
-  ; CHECK-NEXT:     internal [[COPY40]].sub_mod:eds = COPY [[COPY39]].sub_mod
-  ; CHECK-NEXT:     internal [[COPY40]].sub_hi_dim_then_sub_dim_stride:eds = COPY [[COPY39]].sub_hi_dim_then_sub_dim_stride
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   ST_DS_SPILL [[COPY40]], %stack.0, implicit $sp :: (store (s256) into %stack.0, align 4)
-  ; CHECK-NEXT:   [[LDA_DS_SPILL9:%[0-9]+]]:eds = LDA_DS_SPILL %stack.4, implicit $sp :: (load (s256) from %stack.4, align 4)
-  ; CHECK-NEXT:   [[LDA_DS_SPILL9:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = COPY [[COPY39]].sub_mod
-  ; CHECK-NEXT:   ST_DS_SPILL [[LDA_DS_SPILL9]], %stack.4, implicit $sp :: (store (s256) into %stack.4, align 4)
-  ; CHECK-NEXT:   [[LDA_DS_SPILL10:%[0-9]+]]:eds = LDA_DS_SPILL %stack.2, implicit $sp :: (load (s256) from %stack.2, align 4)
-  ; CHECK-NEXT:   undef [[COPY18:%[0-9]+]].sub_mod:eds = COPY [[LDA_DS_SPILL10]].sub_mod {
-  ; CHECK-NEXT:     internal [[COPY18]].sub_hi_dim_then_sub_dim_count:eds = COPY [[LDA_DS_SPILL10]].sub_hi_dim_then_sub_dim_count
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   PseudoJNZ [[AND1]], %bb.1
+  ; CHECK-NEXT:   renamable $p0 = MOV_PD_imm11_pseudo 0
+  ; CHECK-NEXT:   renamable $r2 = XOR renamable $r8, renamable $r0
+  ; CHECK-NEXT:   renamable $d2_3d = LDA_DS_SPILL %stack.0, implicit $sp :: (load (s256) from %stack.0, align 4)
+  ; CHECK-NEXT:   renamable $dj2 = COPY renamable $m2
+  ; CHECK-NEXT:   renamable $dn2 = COPY renamable $m2
+  ; CHECK-NEXT:   renamable $dn6 = COPY renamable $m2
+  ; CHECK-NEXT:   renamable $dc6 = COPY renamable $m2
+  ; CHECK-NEXT:   renamable $r2 = AND killed renamable $r2, renamable $r0
+  ; CHECK-NEXT:   dead $p0, $dc2, dead $dc6 = PADD_3D_pseudo killed $p0, $d2_3d
+  ; CHECK-NEXT:   renamable $dc0 = COPY killed renamable $dc2
+  ; CHECK-NEXT:   renamable $m0 = COPY renamable $m2
+  ; CHECK-NEXT:   renamable $dj4 = COPY renamable $dj6
+  ; CHECK-NEXT:   ST_DS_SPILL renamable $d0_3d, %stack.0, implicit $sp :: (store (s256) into %stack.0, align 4)
+  ; CHECK-NEXT:   renamable $d0_3d = LDA_DS_SPILL %stack.1, implicit $sp :: (load (s256) from %stack.1, align 4)
+  ; CHECK-NEXT:   renamable $dc4 = COPY killed renamable $m2
+  ; CHECK-NEXT:   ST_DS_SPILL killed renamable $d0_3d, %stack.1, implicit $sp :: (store (s256) into %stack.1, align 4)
+  ; CHECK-NEXT:   renamable $d2_3d = LDA_DS_SPILL %stack.4, implicit $sp :: (load (s256) from %stack.4, align 4)
+  ; CHECK-NEXT:   renamable $m1 = COPY killed renamable $m2
+  ; CHECK-NEXT:   internal renamable $dc5 = COPY renamable $dc6
+  ; CHECK-NEXT:   PseudoJNZ killed renamable $r2, %bb.1
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.6
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.6.ret.exit:

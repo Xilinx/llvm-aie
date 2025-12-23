@@ -158,6 +158,36 @@ LaneBitmask getLiveLanesAt(SlotIndex Index, Register Reg,
   return LiveLanes;
 }
 
+/// Check if a live interval is effectively empty.
+/// Returns true if:
+/// - The interval has no segments, or
+/// - All segments are confined to a single instruction (e.g. start == end or
+///   go from R to D in the same SlotIndex)
+static bool isLiveIntervalEffectiveEmpty(const LiveInterval &LI) {
+  // Check if the main interval is empty (no segments)
+  if (LI.empty() || LI.begin() == LI.end())
+    return true;
+
+  // Check if all segments have start == end (R to D at same slot)
+  // If any segment has start != end, the interval is not empty
+  for (const LiveInterval::Segment &Seg : LI.segments) {
+    // If the segment stays within the same instruction, treat it as empty
+    // (this covers R->D transitions at the same SlotIndex).
+    if (Seg.start == Seg.end || SlotIndex::isSameInstr(Seg.start, Seg.end))
+      continue;
+
+    if (Seg.start != Seg.end) {
+      LLVM_DEBUG(dbgs() << "  Segment " << Seg << " is not empty\n"
+                        << " start: " << Seg.start << " end: " << Seg.end
+                        << "\n");
+      return false;
+    }
+  }
+
+  // All segments have start == end, so interval is effectively empty
+  return true;
+}
+
 /// Create virtual registers for each subregister index.
 static SmallMapVector<int, Register, 8>
 createSubRegisterVRegs(Register Reg, const SmallSet<int, 8> &SubRegs,
@@ -208,6 +238,68 @@ static void rewriteOperandsToSubRegs(
 
     LLVM_DEBUG(dbgs() << "        to " << *RegOp.getParent());
   }
+}
+
+/// Collect empty subregisters and copy instructions that define them.
+static void collectEffectiveEmptyCopies(
+    SmallMapVector<int, Register, 8> &SubRegToVReg,
+    SmallVector<MachineInstr *, 8> &CopiesToMarkDead, MachineRegisterInfo &MRI,
+    const AIEBaseRegisterInfo &TRI, LiveIntervals &LIS) {
+  for (auto &[SubRegIdx, VReg] : SubRegToVReg) {
+    // Ensure the interval is computed before checking
+    if (!LIS.hasInterval(VReg)) {
+      LIS.createAndComputeVirtRegInterval(VReg);
+    }
+
+    LiveInterval &SubRegLI = LIS.getInterval(VReg);
+
+    // Check if this subregister has an empty live interval
+    if (!isLiveIntervalEffectiveEmpty(SubRegLI)) {
+      LLVM_DEBUG(dbgs() << "  Subregister " << SubRegLI
+                        << " is not empty, skipping\n");
+      continue;
+    }
+
+    LLVM_DEBUG(dbgs() << "  Found empty subregister " << SubRegIdx
+                      << " with VReg " << printReg(VReg, &TRI, 0, &MRI)
+                      << " Range: " << SubRegLI << '\n');
+
+    // Find all copy instructions that define this empty subregister
+    // For COPY instructions, operand 0 is always the destination (def)
+    for (MachineInstr &MI : MRI.reg_nodbg_instructions(VReg)) {
+      if (!MI.isCopy())
+        continue;
+      if (!MI.getOperand(0).isDef())
+        continue;
+      if (MI.getOperand(0).getReg() != VReg)
+        continue;
+
+      LLVM_DEBUG(dbgs() << "    Marking copy for deletion: " << MI << '\n');
+      CopiesToMarkDead.push_back(&MI);
+    }
+  }
+}
+
+/// Mark copy instructions that define empty live intervals as dead.
+static void markCopiesDead(SmallVector<MachineInstr *, 8> &CopiesToDelete) {
+  for (MachineInstr *CopyMI : CopiesToDelete) {
+    assert(CopyMI->isCopy() && "Expected copy instruction");
+
+    LLVM_DEBUG(dbgs() << "  Marking copy as dead: " << *CopyMI << '\n');
+    CopyMI->getOperand(0).setIsDead(true);
+  }
+}
+
+static void markEffectiveEmptyCopiesDead(
+    SmallMapVector<int, Register, 8> &SubRegToVReg, MachineRegisterInfo &MRI,
+    const AIEBaseRegisterInfo &TRI, LiveIntervals &LIS) {
+
+  // Collect copies MI that define empty live intervals
+  SmallVector<MachineInstr *, 8> CopiesToDelete;
+  collectEffectiveEmptyCopies(SubRegToVReg, CopiesToDelete, MRI, TRI, LIS);
+
+  // Mark the copies as dead
+  markCopiesDead(CopiesToDelete);
 }
 
 /// Process non-empty subregisters: split components and assign physical
@@ -279,10 +371,13 @@ void rewriteSuperReg(Register Reg, std::optional<Register> AssignedPhysReg,
   // Step 4: Remove the original register's live interval
   LIS.removeInterval(Reg);
 
-  // Step 5: Process remaining non-empty subregisters
+  // Step 5: Filter out empty subregisters
+  markEffectiveEmptyCopiesDead(SubRegToVReg, MRI, TRI, LIS);
+
+  // Step 6: Process remaining non-empty subregisters
   splitAndAssignSubPhysRegs(SubRegToVReg, AssignedPhysReg, TRI, VRM, LRM, LIS);
 
-  // Step 6: Update debug variables with non-empty subregisters
+  // Step 7: Update debug variables with non-empty subregisters
   auto NewVRegs = SmallVector<Register, 8>(llvm::map_range(
       SubRegToVReg, [&](auto &Mapping) { return Mapping.second; }));
   DebugVars.splitRegister(Reg, NewVRegs, LIS);
