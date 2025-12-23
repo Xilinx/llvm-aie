@@ -339,6 +339,10 @@ bool matchBroadcastExtractToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
                                  const AIEBaseInstrInfo &TII,
                                  BuildFnTy &MatchInfo);
 
+bool matchVSelToUnmergeConcatOrCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                    const AIEBaseInstrInfo &TII,
+                                    BuildFnTy &MatchInfo);
+
 } // namespace llvm
 
 #endif

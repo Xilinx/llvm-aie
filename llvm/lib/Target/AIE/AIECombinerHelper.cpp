@@ -4725,3 +4725,86 @@ bool llvm::matchBroadcastExtractToCopy(MachineInstr &MI,
 
   return true;
 }
+
+/// Match G_AIE_VSEL with constant selection masks that can be optimized.
+/// Handles three cases:
+/// 1. All bits 0 -> COPY src2
+/// 2. All bits 1 -> COPY src1
+/// 3. Half-and-half pattern (e.g., 0xFF00 or 0x00FF) -> UNMERGE + CONCAT
+bool llvm::matchVSelToUnmergeConcatOrCopy(MachineInstr &MI,
+                                          MachineRegisterInfo &MRI,
+                                          const AIEBaseInstrInfo &TII,
+                                          BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TII.getGenericVSelOpcode() && "Expected G_AIE_VSEL");
+
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register Src1Reg = MI.getOperand(1).getReg();
+  const Register Src2Reg = MI.getOperand(2).getReg();
+  const Register SelReg = MI.getOperand(3).getReg();
+
+  const LLT DstTy = MRI.getType(DstReg);
+  if (!DstTy.isVector())
+    return false;
+
+  // Get the selection mask constant
+  auto SelCst = getIConstantVRegValWithLookThrough(SelReg, MRI);
+  if (!SelCst)
+    return false;
+
+  const uint64_t SelMask = SelCst->Value.getZExtValue();
+  const unsigned NumElements = DstTy.getNumElements();
+
+  // Create a mask with all bits set for the number of elements
+  const uint64_t AllOnesMask = (1ULL << NumElements) - 1;
+
+  // Case 1: All bits are 0 -> select all from src2
+  if (SelMask == 0) {
+    MatchInfo = [Src2Reg, DstReg](MachineIRBuilder &B) {
+      B.buildCopy(DstReg, Src2Reg);
+    };
+    return true;
+  }
+
+  // Case 2: All bits are 1 -> select all from src1
+  if (SelMask == AllOnesMask) {
+    MatchInfo = [Src1Reg, DstReg](MachineIRBuilder &B) {
+      B.buildCopy(DstReg, Src1Reg);
+    };
+    return true;
+  }
+
+  // Case 3: Half-and-half pattern
+  // Check if the mask represents selecting lower half from one source
+  // and upper half from another source
+  const unsigned HalfElements = NumElements / 2;
+  const uint64_t LowerHalfMask = (1ULL << HalfElements) - 1;
+  const uint64_t UpperHalfMask = AllOnesMask & ~LowerHalfMask;
+
+  // Check if it's either half-and-half pattern
+  if (SelMask == UpperHalfMask || SelMask == LowerHalfMask) {
+    const bool LowerFromSrc1 = (SelMask == LowerHalfMask);
+
+    MatchInfo = [Src1Reg, Src2Reg, DstReg, DstTy, LowerFromSrc1,
+                 &MRI](MachineIRBuilder &B) {
+      const LLT HalfTy = DstTy.divide(2);
+
+      // Unmerge both sources into halves
+      const Register Src1Lo = MRI.createGenericVirtualRegister(HalfTy);
+      const Register Src1Hi = MRI.createGenericVirtualRegister(HalfTy);
+      B.buildUnmerge({Src1Lo, Src1Hi}, Src1Reg);
+
+      const Register Src2Lo = MRI.createGenericVirtualRegister(HalfTy);
+      const Register Src2Hi = MRI.createGenericVirtualRegister(HalfTy);
+      B.buildUnmerge({Src2Lo, Src2Hi}, Src2Reg);
+
+      // Select appropriate halves based on mask pattern
+      const Register LowerHalf = LowerFromSrc1 ? Src1Lo : Src2Lo;
+      const Register UpperHalf = LowerFromSrc1 ? Src2Hi : Src1Hi;
+
+      B.buildConcatVectors(DstReg, {LowerHalf, UpperHalf});
+    };
+    return true;
+  }
+
+  return false;
+}
