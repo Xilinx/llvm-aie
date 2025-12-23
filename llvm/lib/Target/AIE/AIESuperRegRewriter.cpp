@@ -77,7 +77,8 @@ bool AIESuperRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   LiveRegMatrix &LRM = getAnalysis<LiveRegMatrixWrapperLegacy>().getLRM();
   LiveIntervals &LIS = getAnalysis<LiveIntervalsWrapperPass>().getLIS();
   SlotIndexes &Indexes = getAnalysis<SlotIndexesWrapperPass>().getSI();
-  LiveDebugVariables &DebugVars = getAnalysis<LiveDebugVariablesWrapperLegacy>().getLDV();
+  LiveDebugVariables &DebugVars =
+      getAnalysis<LiveDebugVariablesWrapperLegacy>().getLDV();
   std::map<Register, std::pair<MCRegister, SmallSet<int, 8>>> AssignedPhysRegs;
 
   // Collect already-assigned VRegs that can be split into smaller ones.

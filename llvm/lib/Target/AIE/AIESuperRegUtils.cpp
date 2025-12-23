@@ -158,20 +158,16 @@ LaneBitmask getLiveLanesAt(SlotIndex Index, Register Reg,
   return LiveLanes;
 }
 
-void rewriteSuperReg(Register Reg, std::optional<Register> AssignedPhysReg,
-                     SmallSet<int, 8> &SubRegs, MachineRegisterInfo &MRI,
-                     const AIEBaseRegisterInfo &TRI, VirtRegMap &VRM,
-                     LiveRegMatrix &LRM, LiveIntervals &LIS,
-                     SlotIndexes &Indexes, LiveDebugVariables &DebugVars) {
-  LLVM_DEBUG(dbgs() << "Rewriting " << printReg(Reg, &TRI, 0, &MRI) << '\n');
-  MachineFunction &MF = VRM.getMachineFunction();
-  auto *TII =
-      static_cast<const AIEBaseInstrInfo *>(MF.getSubtarget().getInstrInfo());
-
-  // Collect all the subreg indices to rewrite as independent vregs.
+/// Create virtual registers for each subregister index.
+static SmallMapVector<int, Register, 8>
+createSubRegisterVRegs(Register Reg, const SmallSet<int, 8> &SubRegs,
+                       std::optional<Register> AssignedPhysReg,
+                       MachineRegisterInfo &MRI, const AIEBaseRegisterInfo &TRI,
+                       MachineFunction &MF) {
   SmallMapVector<int, Register, 8> SubRegToVReg;
   const TargetRegisterClass *SuperRC = MRI.getRegClass(Reg);
   assert(!SubRegs.empty());
+
   for (int SubReg : SubRegs) {
     const TargetRegisterClass *SubRC =
         AssignedPhysReg.has_value()
@@ -181,13 +177,14 @@ void rewriteSuperReg(Register Reg, std::optional<Register> AssignedPhysReg,
     SubRegToVReg[SubReg] = MRI.createVirtualRegister(SubRC);
   }
 
-  // Rewrite full copies into multiple copies using subregs
-  for (MachineInstr &MI : make_early_inc_range(MRI.reg_instructions(Reg))) {
-    if (MI.isFullCopy())
-      rewriteFullCopy(MI, LIS, *TII, TRI, VRM, LRM);
-  }
+  return SubRegToVReg;
+}
 
-  LLVM_DEBUG(dbgs() << "  Splitting range " << LIS.getInterval(Reg) << "\n");
+/// Rewrite operands to use the new subregister virtual registers.
+static void rewriteOperandsToSubRegs(
+    Register Reg, SmallMapVector<int, Register, 8> &SubRegToVReg,
+    MachineRegisterInfo &MRI, const AIEBaseRegisterInfo &TRI,
+    const TargetInstrInfo &TII, VirtRegMap &VRM) {
   for (MachineOperand &RegOp : make_early_inc_range(MRI.reg_operands(Reg))) {
     LLVM_DEBUG(dbgs() << printReg(RegOp.getReg(), &TRI, 0, &MRI)
                       << "  Changing " << *RegOp.getParent());
@@ -204,16 +201,22 @@ void rewriteSuperReg(Register Reg, std::optional<Register> AssignedPhysReg,
 
     // Make sure the right reg class is applied, some MIs might use compound
     // classes with both 20 and 32 bits registers.
-    const TargetRegisterClass *OpRC = TII->getRegClass(
+    const TargetRegisterClass *OpRC = TII.getRegClass(
         RegOp.getParent()->getDesc(), RegOp.getParent()->getOperandNo(&RegOp),
         &TRI, VRM.getMachineFunction());
     MRI.constrainRegClass(SubRegToVReg[SubReg], OpRC);
 
     LLVM_DEBUG(dbgs() << "        to " << *RegOp.getParent());
   }
+}
 
-  LIS.removeInterval(Reg);
-
+/// Process non-empty subregisters: split components and assign physical
+/// registers.
+static void
+splitAndAssignSubPhysRegs(SmallMapVector<int, Register, 8> &SubRegToVReg,
+                          std::optional<Register> AssignedPhysReg,
+                          const AIEBaseRegisterInfo &TRI, VirtRegMap &VRM,
+                          LiveRegMatrix &LRM, LiveIntervals &LIS) {
   for (auto &[SubRegIdx, VReg] : SubRegToVReg) {
     LiveInterval &SubRegLI = LIS.getInterval(VReg);
     LLVM_DEBUG(dbgs() << "  Assigning Range: " << SubRegLI << '\n');
@@ -237,8 +240,49 @@ void rewriteSuperReg(Register Reg, std::optional<Register> AssignedPhysReg,
       LLVM_DEBUG(dbgs() << "  Assigned " << *LI << " \n");
     }
   }
+}
 
-  // Announce new VRegs so DBG locations can be updated.
+void rewriteSuperReg(Register Reg, std::optional<Register> AssignedPhysReg,
+                     SmallSet<int, 8> &SubRegs, MachineRegisterInfo &MRI,
+                     const AIEBaseRegisterInfo &TRI, VirtRegMap &VRM,
+                     LiveRegMatrix &LRM, LiveIntervals &LIS,
+                     SlotIndexes &Indexes, LiveDebugVariables &DebugVars) {
+  LLVM_DEBUG({
+    dbgs() << "Rewriting " << printReg(Reg, &TRI, 0, &MRI)
+           << " with sublanes:\n";
+    if (LIS.hasInterval(Reg))
+      LIS.getInterval(Reg).dump();
+    for (int SubRegIdx : SubRegs) {
+      dbgs() << "  Sublane Index: " << SubRegIdx
+             << ", Name: " << TRI.getSubRegIndexName(SubRegIdx)
+             << ", Mask: " << TRI.getSubRegIndexLaneMask(SubRegIdx) << "\n";
+    }
+  });
+  MachineFunction &MF = VRM.getMachineFunction();
+  auto *TII =
+      static_cast<const AIEBaseInstrInfo *>(MF.getSubtarget().getInstrInfo());
+
+  // Step 1: Create virtual registers for each subregister
+  SmallMapVector<int, Register, 8> SubRegToVReg =
+      createSubRegisterVRegs(Reg, SubRegs, AssignedPhysReg, MRI, TRI, MF);
+
+  // Step 2: Rewrite full copies into multiple copies using subregs
+  for (MachineInstr &MI : make_early_inc_range(MRI.reg_instructions(Reg))) {
+    if (MI.isFullCopy())
+      rewriteFullCopy(MI, LIS, *TII, TRI, VRM, LRM);
+  }
+
+  // Step 3: Rewrite operands to use the new subregister virtual registers
+  LLVM_DEBUG(dbgs() << "  Splitting range " << LIS.getInterval(Reg) << "\n");
+  rewriteOperandsToSubRegs(Reg, SubRegToVReg, MRI, TRI, *TII, VRM);
+
+  // Step 4: Remove the original register's live interval
+  LIS.removeInterval(Reg);
+
+  // Step 5: Process remaining non-empty subregisters
+  splitAndAssignSubPhysRegs(SubRegToVReg, AssignedPhysReg, TRI, VRM, LRM, LIS);
+
+  // Step 6: Update debug variables with non-empty subregisters
   auto NewVRegs = SmallVector<Register, 8>(llvm::map_range(
       SubRegToVReg, [&](auto &Mapping) { return Mapping.second; }));
   DebugVars.splitRegister(Reg, NewVRegs, LIS);
