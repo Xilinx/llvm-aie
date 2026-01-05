@@ -562,6 +562,7 @@ namespace {
 
 void dumpGraph(const ScheduleInfo &Info, ScheduleDAGInstrs *DAG) {
   dbgs() << "digraph {\n";
+  const auto *TRI = DAG->MF.getSubtarget().getRegisterInfo();
 
   // Prescan backedge destinations and declare them to have a different shape.
   for (int K = 0; K < Info.NInstr; K++) {
@@ -590,7 +591,23 @@ void dumpGraph(const ScheduleInfo &Info, ScheduleDAGInstrs *DAG) {
       if (S >= Info.NInstr) {
         dbgs() << "_" << S % Info.NInstr;
       }
-      dbgs() << " [ label=\"" << Dep.getSignedLatency() << "\"";
+      dbgs() << " [ label=\"" << Dep.getSignedLatency();
+      switch (Dep.getKind()) {
+      case SDep::Data:
+      case SDep::Output:
+      case SDep::Anti: {
+        const Register Reg = Dep.getReg();
+        if (Reg.isPhysical()) {
+          dbgs() << format(" %s ", TRI->getName(Reg));
+        } else {
+          dbgs() << format(" VR%d ", Register::virtReg2Index(Reg));
+        }
+        break;
+      }
+      case SDep::Order:
+        break;
+      }
+      dbgs() << "\"";
       switch (Dep.getKind()) {
       case SDep::Data:
         dbgs() << " color=red ";
