@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -309,11 +309,10 @@ bool AIE2PRegisterInfo::isTypeLegalForClass(const TargetRegisterClass &RC,
   //  is also applicable for modifiers in compound register classes.
 
   // PTR/MOD registers obviously support pointers
-  if (T == LLT::pointer(0, 20) && RC.getID() == AIE2P::ePRegClassID)
-    return true;
-  if (T == LLT::pointer(0, 20) && RC.getID() == AIE2P::mDmRegClassID)
-    return true;
-  if (T == LLT::pointer(0, 20) && RC.getID() == AIE2P::eSpecial20RegClassID)
+  if (T.isPointer() && T.getSizeInBits() == 20 &&
+      (RC.getID() == AIE2P::ePRegClassID ||
+       RC.getID() == AIE2P::mDmRegClassID ||
+       RC.getID() == AIE2P::eSpecial20RegClassID))
     return true;
 
   // Scalars of 20 bits fit in PTRs
