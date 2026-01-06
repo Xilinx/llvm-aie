@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the LiveRegMatrix analysis pass.
@@ -57,32 +60,6 @@ bool LiveRegMatrixWrapperLegacy::runOnMachineFunction(MachineFunction &MF) {
   return false;
 }
 
-void LiveRegMatrix::init(MachineFunction &MF, LiveIntervals &pLIS,
-                         VirtRegMap &pVRM) {
-  TRI = MF.getSubtarget().getRegisterInfo();
-  LIS = &pLIS;
-  VRM = &pVRM;
-
-  unsigned NumRegUnits = TRI->getNumRegUnits();
-  if (NumRegUnits != Matrix.size())
-    Queries.reset(new LiveIntervalUnion::Query[NumRegUnits]);
-  Matrix.init(*LIUAlloc, NumRegUnits);
-
-  // Make sure no stale queries get reused.
-  invalidateVirtRegs();
-}
-
-void LiveRegMatrixWrapperLegacy::releaseMemory() { LRM.releaseMemory(); }
-
-void LiveRegMatrix::releaseMemory() {
-  for (unsigned i = 0, e = Matrix.size(); i != e; ++i) {
-    Matrix[i].clear();
-    // No need to clear Queries here, since LiveIntervalUnion::Query doesn't
-    // have anything important to clear and LiveRegMatrix's runOnFunction()
-    // does a std::unique_ptr::reset anyways.
-  }
-}
-
 template <typename Callable>
 static bool foreachUnit(const TargetRegisterInfo *TRI,
                         const LiveInterval &VRegInterval, MCRegister PhysReg,
@@ -106,6 +83,50 @@ static bool foreachUnit(const TargetRegisterInfo *TRI,
     }
   }
   return false;
+}
+
+void LiveRegMatrix::init(MachineFunction &MF, LiveIntervals &pLIS,
+                         VirtRegMap &pVRM) {
+  TRI = MF.getSubtarget().getRegisterInfo();
+  LIS = &pLIS;
+  VRM = &pVRM;
+
+  unsigned NumRegUnits = TRI->getNumRegUnits();
+  if (NumRegUnits != Matrix.size())
+    Queries.reset(new LiveIntervalUnion::Query[NumRegUnits]);
+  Matrix.init(*LIUAlloc, NumRegUnits);
+
+  // Make sure no stale queries get reused.
+  invalidateVirtRegs();
+
+  // Populate Matrix from pre-existing VirtRegMap assignments.
+  // This handles MIR loaded with assigned-register fields.
+  const MachineRegisterInfo &MRI = MF.getRegInfo();
+  for (unsigned I = 0, E = MRI.getNumVirtRegs(); I != E; ++I) {
+    Register VReg = Register::index2VirtReg(I);
+    if (VRM->hasPhys(VReg)) {
+      MCRegister PhysReg = VRM->getPhys(VReg);
+      if (LIS->hasInterval(VReg)) {
+        const LiveInterval &VirtReg = LIS->getInterval(VReg);
+        foreachUnit(TRI, VirtReg, PhysReg,
+                    [&](unsigned Unit, const LiveRange &Range) {
+                      Matrix[Unit].unify(VirtReg, Range);
+                      return false;
+                    });
+      }
+    }
+  }
+}
+
+void LiveRegMatrixWrapperLegacy::releaseMemory() { LRM.releaseMemory(); }
+
+void LiveRegMatrix::releaseMemory() {
+  for (unsigned i = 0, e = Matrix.size(); i != e; ++i) {
+    Matrix[i].clear();
+    // No need to clear Queries here, since LiveIntervalUnion::Query doesn't
+    // have anything important to clear and LiveRegMatrix's runOnFunction()
+    // does a std::unique_ptr::reset anyways.
+  }
 }
 
 void LiveRegMatrix::assign(const LiveInterval &VirtReg, MCRegister PhysReg) {

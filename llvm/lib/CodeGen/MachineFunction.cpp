@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // Collect native machine code information for a function.  This allows
@@ -31,6 +34,7 @@
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/MIRVirtRegMap.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/PseudoSourceValueManager.h"
 #include "llvm/CodeGen/TargetFrameLowering.h"
@@ -319,6 +323,13 @@ getOrCreateJumpTableInfo(unsigned EntryKind) {
   JumpTableInfo = new (Allocator)
     MachineJumpTableInfo((MachineJumpTableInfo::JTEntryKind)EntryKind);
   return JumpTableInfo;
+}
+
+/// Get or create MIR-loaded register assignments
+MIRVirtRegMapInfo &MachineFunction::getOrCreateMIRVirtRegMapInfo() {
+  if (!MIRVRegMapInfo)
+    MIRVRegMapInfo = std::make_unique<MIRVirtRegMapInfo>();
+  return *MIRVRegMapInfo;
 }
 
 DenormalMode MachineFunction::getDenormalMode(const fltSemantics &FPType) const {

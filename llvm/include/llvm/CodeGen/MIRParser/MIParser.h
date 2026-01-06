@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file declares the function that parses the machine instructions.
@@ -46,6 +49,10 @@ struct VRegInfo {
   Register VReg;
   Register PreferredReg;
   uint8_t Flags = 0;
+
+  // VirtRegMap fields
+  Register AssignedReg;  ///< Assigned physical register from VirtRegMap
+  int StackSlot = -1;    ///< Stack slot if spilled (-1 = no stack slot)
 };
 
 using Name2RegClassMap = StringMap<const TargetRegisterClass *>;

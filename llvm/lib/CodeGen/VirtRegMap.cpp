@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -33,6 +33,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/MIRVirtRegMap.h"
 #include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/CodeGen/TargetFrameLowering.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
@@ -93,6 +94,29 @@ void VirtRegMap::init(MachineFunction &mf) {
         setRequiredPhys(VReg, PreferredReg);
     }
   }
+}
+
+bool VirtRegMapWrapperLegacy::runOnMachineFunction(MachineFunction &MF) {
+  VRM.init(MF);
+
+  // Check if MIR has pre-loaded register assignments
+  if (MIRVirtRegMapInfo *MIRInfo = MF.getMIRVirtRegMapInfo()) {
+    // Populate VirtRegMap from MIR-loaded assignments
+    MachineRegisterInfo &MRI = MF.getRegInfo();
+    for (unsigned i = 0; i < MRI.getNumVirtRegs(); ++i) {
+      Register VReg = Register::index2VirtReg(i);
+
+      MCRegister PhysReg = MIRInfo->getPhysReg(VReg);
+      int StackSlot = MIRInfo->getStackSlot(VReg);
+
+      if (PhysReg.isValid())
+        VRM.assignVirt2Phys(VReg, PhysReg);
+      else if (StackSlot >= 0)
+        VRM.assignVirt2StackSlot(VReg, StackSlot);
+    }
+  }
+
+  return false;
 }
 
 void VirtRegMap::grow() {

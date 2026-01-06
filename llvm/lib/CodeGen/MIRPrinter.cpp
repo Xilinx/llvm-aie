@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the class that prints out the LLVM IR and machine
@@ -30,6 +33,7 @@
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/TargetFrameLowering.h"
+#include "llvm/CodeGen/VirtRegMap.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
@@ -111,11 +115,11 @@ public:
   MIRPrinter(raw_ostream &OS, const MachineModuleInfo &MMI)
       : OS(OS), MMI(MMI) {}
 
-  void print(const MachineFunction &MF);
+  void print(const MachineFunction &MF, const VirtRegMap *VRM = nullptr);
 
   void convert(yaml::MachineFunction &YamlMF, const MachineFunction &MF,
                const MachineRegisterInfo &RegInfo,
-               const TargetRegisterInfo *TRI);
+               const TargetRegisterInfo *TRI, const VirtRegMap *VRM = nullptr);
   void convert(ModuleSlotTracker &MST, yaml::MachineFrameInfo &YamlMFI,
                const MachineFrameInfo &MFI);
   void convert(yaml::MachineFunction &MF,
@@ -197,7 +201,7 @@ static void printRegMIR(unsigned Reg, yaml::StringValue &Dest,
   OS << printReg(Reg, TRI);
 }
 
-void MIRPrinter::print(const MachineFunction &MF) {
+void MIRPrinter::print(const MachineFunction &MF, const VirtRegMap *VRM) {
   initRegisterMaskIds(MF);
 
   yaml::MachineFunction YamlMF;
@@ -235,7 +239,7 @@ void MIRPrinter::print(const MachineFunction &MF) {
   YamlMF.NoVRegs = MF.getProperties().hasProperty(
       MachineFunctionProperties::Property::NoVRegs);
 
-  convert(YamlMF, MF, MF.getRegInfo(), MF.getSubtarget().getRegisterInfo());
+  convert(YamlMF, MF, MF.getRegInfo(), MF.getSubtarget().getRegisterInfo(), VRM);
   MachineModuleSlotTracker MST(MMI, &MF);
   MST.incorporateFunction(MF.getFunction());
   convert(MST, YamlMF.FrameInfo, MF.getFrameInfo());
@@ -335,7 +339,7 @@ static void printRegFlags(Register Reg,
 void MIRPrinter::convert(yaml::MachineFunction &YamlMF,
                          const MachineFunction &MF,
                          const MachineRegisterInfo &RegInfo,
-                         const TargetRegisterInfo *TRI) {
+                         const TargetRegisterInfo *TRI, const VirtRegMap *VRM) {
   YamlMF.TracksRegLiveness = RegInfo.tracksLiveness();
 
   // Print the virtual register definitions.
@@ -350,6 +354,15 @@ void MIRPrinter::convert(yaml::MachineFunction &YamlMF,
     if (PreferredReg)
       printRegMIR(PreferredReg, VReg.PreferredRegister, TRI);
     printRegFlags(Reg, VReg.RegisterFlags, MF, TRI);
+
+    // Serialize VirtRegMap assignments if available
+    if (VRM && VRM->hasPhys(Reg)) {
+      MCRegister PhysReg = VRM->getPhys(Reg);
+      printRegMIR(PhysReg, VReg.AssignedRegister, TRI);
+    } else if (VRM && VRM->getStackSlot(Reg) != VirtRegMap::NO_STACK_SLOT) {
+      VReg.StackSlot = VRM->getStackSlot(Reg);
+    }
+
     YamlMF.VirtualRegisters.push_back(std::move(VReg));
   }
 
@@ -1058,12 +1071,12 @@ void llvm::printMIR(raw_ostream &OS, const Module &M) {
 }
 
 void llvm::printMIR(raw_ostream &OS, const MachineModuleInfo &MMI,
-                    const MachineFunction &MF) {
+                    const MachineFunction &MF, const VirtRegMap *VRM) {
   // RemoveDIs: as there's no textual form for DbgRecords yet, print debug-info
   // in dbg.value format.
   ScopedDbgInfoFormatSetter FormatSetter(
       const_cast<Function &>(MF.getFunction()), WriteNewDbgInfoFormat);
 
   MIRPrinter Printer(OS, MMI);
-  Printer.print(MF);
+  Printer.print(MF, VRM);
 }

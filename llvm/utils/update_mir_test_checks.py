@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+# affiliates
+
 """Updates FileCheck checks in MIR tests.
 
 This script is a utility to update MIR based tests with new FileCheck
@@ -57,6 +64,10 @@ MIR_FUNC_RE = re.compile(
     r"\n"
     r"^ *name: *(?P<func>[A-Za-z0-9_.-]+)$"
     r".*?"
+    r"(?:^ *registers: *(\[\])? *\n"
+    r"(?P<registers>.*?)\n?"
+    r"^ *[a-z]+:"
+    r".*?)?"
     r"(?:^ *fixedStack: *(\[\])? *\n"
     r"(?P<fixedStack>.*?)\n?"
     r"^ *stack:"
@@ -179,14 +190,17 @@ def find_functions_with_one_bb(lines, verbose=False):
 
 
 class FunctionInfo:
-    def __init__(self, body, fixedStack):
+    def __init__(self, body, fixedStack, registers):
         self.body = body
         self.fixedStack = fixedStack
+        self.registers = registers
 
     def __eq__(self, other):
         if not isinstance(other, FunctionInfo):
             return False
-        return self.body == other.body and self.fixedStack == other.fixedStack
+        return (self.body == other.body and
+                self.fixedStack == other.fixedStack and
+                self.registers == other.registers)
 
 
 def build_function_info_dictionary(
@@ -195,6 +209,7 @@ def build_function_info_dictionary(
     for m in MIR_FUNC_RE.finditer(raw_tool_output):
         func = m.group("func")
         fixedStack = m.group("fixedStack")
+        registers = m.group("registers")
         body = m.group("body")
         if verbose:
             log("Processing function: {}".format(func))
@@ -224,7 +239,7 @@ def build_function_info_dictionary(
         body = "".join(mangled)
 
         for prefix in prefixes:
-            info = FunctionInfo(body, fixedStack)
+            info = FunctionInfo(body, fixedStack, registers)
             if func in func_dict[prefix]:
                 if func_dict[prefix][func] != info:
                     func_dict[prefix][func] = None
@@ -287,6 +302,12 @@ def add_check_lines(
     check = "{:>{}}; {}".format("", indent, prefix)
 
     output_lines.append("{}-LABEL: name: {}".format(check, func_name))
+
+    if args.print_registers and func_info.registers:
+        output_lines.append("{}: registers:".format(check))
+        for reg_line in func_info.registers.splitlines():
+            filecheck_directive = check + "-NEXT"
+            output_lines.append("{}: {}".format(filecheck_directive, reg_line))
 
     if args.print_fixed_stack:
         output_lines.append("{}: fixedStack:".format(check))
@@ -495,6 +516,11 @@ def main():
         "--print-fixed-stack",
         action="store_true",
         help="Add check lines for fixedStack",
+    )
+    parser.add_argument(
+        "--print-registers",
+        action="store_true",
+        help="Add check lines for register assignments",
     )
     parser.add_argument("tests", nargs="+")
     args = common.parse_commandline_args(parser)

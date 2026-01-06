@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the mapping between various MIR data structures and
@@ -191,13 +194,17 @@ struct VirtualRegisterDefinition {
   UnsignedValue ID;
   StringValue Class;
   StringValue PreferredRegister;
+  StringValue AssignedRegister;        // Physical register from VirtRegMap
+  std::optional<int> StackSlot;        // Stack slot if spilled
   std::vector<FlowStringValue> RegisterFlags;
 
   // TODO: Serialize the target specific register hints.
 
   bool operator==(const VirtualRegisterDefinition &Other) const {
     return ID == Other.ID && Class == Other.Class &&
-           PreferredRegister == Other.PreferredRegister;
+           PreferredRegister == Other.PreferredRegister &&
+           AssignedRegister == Other.AssignedRegister &&
+           StackSlot == Other.StackSlot;
   }
 };
 
@@ -207,6 +214,10 @@ template <> struct MappingTraits<VirtualRegisterDefinition> {
     YamlIO.mapRequired("class", Reg.Class);
     YamlIO.mapOptional("preferred-register", Reg.PreferredRegister,
                        StringValue()); // Don't print out when it's empty.
+    YamlIO.mapOptional("assigned-register", Reg.AssignedRegister,
+                       StringValue()); // Don't print out when it's empty.
+    YamlIO.mapOptional("stack-slot", Reg.StackSlot,
+                       std::optional<int>()); // Don't print out when it's empty.
     YamlIO.mapOptional("flags", Reg.RegisterFlags,
                        std::vector<FlowStringValue>());
   }

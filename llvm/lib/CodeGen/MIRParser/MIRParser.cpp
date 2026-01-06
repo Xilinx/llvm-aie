@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the class that parses the optional LLVM IR and machine
@@ -24,7 +27,9 @@
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/MIRVirtRegMap.h"
 #include "llvm/CodeGen/TargetFrameLowering.h"
+#include "llvm/CodeGen/VirtRegMap.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/DiagnosticInfo.h"
@@ -677,7 +682,15 @@ bool MIRParserImpl::parseRegisterInfo(PerFunctionMIParsingState &PFS,
     RegInfo.invalidateLiveness();
 
   SMDiagnostic Error;
+
   // Parse the virtual register information.
+  // The assigned-register and stack-slot fields (if present) are parsed and
+  // stored in both VRegInfo and MIRVirtRegMapInfo for later reconstruction
+  // of VirtRegMap by passes that need register allocation information.
+
+  // Lazily create MIRVirtRegMapInfo when first assignment is encountered
+  MIRVirtRegMapInfo *MIRInfo = nullptr;
+
   for (const auto &VReg : YamlMF.VirtualRegisters) {
     VRegInfo &Info = PFS.getVRegInfo(VReg.ID.Value);
     if (Info.Explicit)
@@ -725,6 +738,29 @@ bool MIRParserImpl::parseRegisterInfo(PerFunctionMIParsingState &PFS,
       Info.Flags |= FlagValue;
     }
     RegInfo.noteNewVirtualRegister(Info.VReg);
+
+    // Parse and store assigned-register and stack-slot fields if present
+    if (!VReg.AssignedRegister.Value.empty()) {
+      Register PhysReg;
+      if (parseNamedRegisterReference(PFS, PhysReg,
+                                     VReg.AssignedRegister.Value, Error))
+        return error(Error, VReg.AssignedRegister.SourceRange);
+      Info.AssignedReg = PhysReg;
+
+      // Lazily create MIRInfo on first assignment
+      if (!MIRInfo)
+        MIRInfo = &MF.getOrCreateMIRVirtRegMapInfo();
+      MIRInfo->setPhysReg(Info.VReg, PhysReg);
+    }
+
+    if (VReg.StackSlot.has_value()) {
+      Info.StackSlot = *VReg.StackSlot;
+
+      // Lazily create MIRInfo on first assignment
+      if (!MIRInfo)
+        MIRInfo = &MF.getOrCreateMIRVirtRegMapInfo();
+      MIRInfo->setStackSlot(Info.VReg, *VReg.StackSlot);
+    }
   }
 
   // Parse the liveins.

@@ -1,0 +1,18 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
+# REQUIRES: x86-registered-target
+## Check that update_mir_test_checks handles --print-registers properly.
+
+## Verify with --print-registers, the proper CHECK lines for registers are
+## generated, and UTC_ARGS is written in the header comment.
+# RUN: cp -f %S/Inputs/print-registers-first.mir %t.mir && %update_mir_test_checks %t.mir --print-registers
+# RUN: diff -u %S/Inputs/print-registers.mir.expected %t.mir
+
+## Check that re-running without --print-registers does not change the
+## CHECK lines, because of UTC_ARGS.
+# RUN: %update_mir_test_checks %t.mir
+# RUN: diff -u %S/Inputs/print-registers.mir.expected %t.mir

@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -239,10 +239,8 @@ public:
   VirtRegMap &getVRM() { return VRM; }
   const VirtRegMap &getVRM() const { return VRM; }
 
-  bool runOnMachineFunction(MachineFunction &MF) override {
-    VRM.init(MF);
-    return false;
-  }
+  bool runOnMachineFunction(MachineFunction &MF) override;
+
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesAll();
