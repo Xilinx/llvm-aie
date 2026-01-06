@@ -34,6 +34,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/TargetFrameLowering.h"
 #include "llvm/CodeGen/VirtRegMap.h"
+#include "llvm/CodeGen/MIRVirtRegMap.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
@@ -361,6 +362,21 @@ void MIRPrinter::convert(yaml::MachineFunction &YamlMF,
       printRegMIR(PhysReg, VReg.AssignedRegister, TRI);
     } else if (VRM && VRM->getStackSlot(Reg) != VirtRegMap::NO_STACK_SLOT) {
       VReg.StackSlot = VRM->getStackSlot(Reg);
+    }
+    else if (!VRM) {
+      // Fallback to MIRVirtRegMapInfo if VRM is not available (no pass is being
+      // run). This preserves round-trip capability for MIR files with register
+      // assignments
+      if (const MIRVirtRegMapInfo *MIRInfo = MF.getMIRVirtRegMapInfo()) {
+        MCRegister PhysReg = MIRInfo->getPhysReg(Reg);
+        if (PhysReg.isValid()) {
+          printRegMIR(PhysReg, VReg.AssignedRegister, TRI);
+        } else {
+          int StackSlot = MIRInfo->getStackSlot(Reg);
+          if (StackSlot >= 0)
+            VReg.StackSlot = StackSlot;
+        }
+      }
     }
 
     YamlMF.VirtualRegisters.push_back(std::move(VReg));
