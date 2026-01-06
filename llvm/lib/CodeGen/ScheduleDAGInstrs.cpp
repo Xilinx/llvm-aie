@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -491,8 +491,8 @@ void ScheduleDAGInstrs::addVRegDefDeps(SUnit *SU, unsigned OperIdx) {
   // are not eliminated sometime during scheduling. The output dependence edge
   // is also useful if output latency exceeds def-use latency.
   LaneBitmask LaneMask = DefLaneMask;
-  for (VReg2SUnit &V2SU : make_range(CurrentVRegDefs.find(Reg),
-                                     CurrentVRegDefs.end())) {
+  for (VReg2SUnitOperIdx &V2SU :
+       make_range(CurrentVRegDefs.find(Reg), CurrentVRegDefs.end())) {
     // Ignore defs for other lanes.
     if ((V2SU.LaneMask & LaneMask).none())
       continue;
@@ -512,17 +512,19 @@ void ScheduleDAGInstrs::addVRegDefDeps(SUnit *SU, unsigned OperIdx) {
 
     // Update current definition. This can get tricky if the def was about a
     // bigger lanemask before. We then have to shrink it and create a new
-    // VReg2SUnit for the non-overlapping part.
+    // VReg2SUnitOperIdx for the non-overlapping part.
     LaneBitmask OverlapMask = V2SU.LaneMask & LaneMask;
     LaneBitmask NonOverlapMask = V2SU.LaneMask & ~LaneMask;
     V2SU.SU = SU;
     V2SU.LaneMask = OverlapMask;
+    V2SU.OperandIndex = OperIdx;
     if (NonOverlapMask.any())
-      CurrentVRegDefs.insert(VReg2SUnit(Reg, NonOverlapMask, DefSU));
+      CurrentVRegDefs.insert(
+          VReg2SUnitOperIdx(Reg, NonOverlapMask, V2SU.OperandIndex, DefSU));
   }
   // If there was no CurrentVRegDefs entry for some lanes yet, create one.
   if (LaneMask.any())
-    CurrentVRegDefs.insert(VReg2SUnit(Reg, LaneMask, SU));
+    CurrentVRegDefs.insert(VReg2SUnitOperIdx(Reg, LaneMask, OperIdx, SU));
 }
 
 /// Adds a register data dependency if the instruction that defines the
@@ -544,8 +546,8 @@ void ScheduleDAGInstrs::addVRegUseDeps(SUnit *SU, unsigned OperIdx) {
   CurrentVRegUses.insert(VReg2SUnitOperIdx(Reg, LaneMask, OperIdx, SU));
 
   // Add antidependences to the following defs of the vreg.
-  for (VReg2SUnit &V2SU : make_range(CurrentVRegDefs.find(Reg),
-                                     CurrentVRegDefs.end())) {
+  for (VReg2SUnitOperIdx &V2SU :
+       make_range(CurrentVRegDefs.find(Reg), CurrentVRegDefs.end())) {
     // Ignore defs for unrelated lanes.
     LaneBitmask PrevDefLaneMask = V2SU.LaneMask;
     if ((PrevDefLaneMask & LaneMask).none())
@@ -554,7 +556,7 @@ void ScheduleDAGInstrs::addVRegUseDeps(SUnit *SU, unsigned OperIdx) {
       continue;
 
     SDep Dep(SU, SDep::Anti, Reg);
-    V2SU.SU->addPred(Dep);
+    adjustAndAddPred(V2SU.SU, Dep, OperIdx, V2SU.OperandIndex, &SchedModel);
   }
 }
 
