@@ -79,12 +79,10 @@ static bool overlap(const MachineOperand &SrcOp, const MachineOperand &DstOp,
                     const TargetRegisterInfo *TRI) {
   Register SrcReg = SrcOp.getReg();
   Register DstReg = DstOp.getReg();
-  for (MCRegAliasIterator Ali(SrcReg, TRI, true); Ali.isValid(); ++Ali) {
-    if (*Ali == DstReg.asMCReg()) {
-      return true;
-    }
-  }
-  return false;
+
+  // Use TRI's regsOverlap which handles both physical and virtual registers,
+  // including subregisters and lane masks
+  return TRI->regsOverlap(SrcReg, DstReg);
 }
 
 /// Check whether Dst depends on Src
