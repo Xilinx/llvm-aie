@@ -835,6 +835,80 @@ bool AIEBaseInstructionSelector::selectVCONV(MachineInstr &I,
   return selectImpl(I, *CoverageInfo);
 }
 
+bool AIEBaseInstructionSelector::selectG_AIE_LOAD_UNPACK(
+    MachineInstr &UNPACKI, MachineRegisterInfo &MRI) {
+  Register LoadResult = (std::next(UNPACKI.uses().begin()))->getReg();
+  MachineInstr *LoadOp = getDefIgnoringCopiesAndBitcasts(LoadResult, MRI);
+  if (!LoadOp)
+    return false;
+
+  // Should we build the instruction at load's position?
+  bool ShouldAdvanceOp = false;
+
+  // Do not try to combine if one of the load's defs is used by another
+  // instruction between the load and the VUNPACK or if there is a store
+  // between the load and the VUNPACK.
+  if (!canDelayMemOp(*LoadOp, UNPACKI, MRI)) {
+    // If we cannot delay the load, we can try to advance the combined
+    // instruction to the load's position.
+    if (canAdvanceOp(*LoadOp, UNPACKI, MRI))
+      ShouldAdvanceOp = true;
+    else
+      return false;
+  }
+
+  if (!canCombineUNPACKLoad(*LoadOp, UNPACKI, MRI))
+    return false;
+
+  std::optional<AddressingModeInfo> AddrModeInfo =
+      getOrDefineAddressingRegister(*LoadOp, MRI);
+  if (!AddrModeInfo)
+    return false;
+
+  Register DstReg = UNPACKI.getOperand(0).getReg();
+  // In this case of G_INTRINSIC operand 1 is target intrinsic
+  // In this case the operand 2 is the source register which is the loaded value
+  Register SignReg = UNPACKI.getOperand(3).getReg();
+
+  auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI);
+  bool ConstantSign = SignVal.has_value();
+  std::optional<LoadStoreOpcodes> LSO = getCombinedOpcodeUNPACKLoad(
+      *LoadOp, UNPACKI, AddrModeInfo->ImmediateOffset,
+      ConstantSign ? SignVal.value().Value == 0x1 : false);
+
+  assert(LSO && "Unexpected VLDB.UNPACK combine failure");
+
+  if (ShouldAdvanceOp)
+    MIB.setInstr(*LoadOp);
+  else
+    MIB.setInstr(UNPACKI);
+
+  setUnpackSizeRegister(MIB, cast<GIntrinsic>(UNPACKI).getIntrinsicID());
+
+  auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
+
+  NewInstr.addDef(DstReg);
+
+  for (auto *Def = std::next(LoadOp->defs().begin());
+       Def != LoadOp->defs().end(); ++Def) {
+    NewInstr.addDef(Def->getReg());
+  }
+
+  addAddressingMode(NewInstr, *AddrModeInfo, LSO->FitsImmediateRange, false,
+                    MRI);
+
+  NewInstr.cloneMemRefs(*LoadOp);
+
+  if (!ConstantSign)
+    setUnsetCtrlRegister(MIB, *NewInstr, MRI, TRI.getUnpackSignCtrlReg(),
+                         SignReg);
+
+  UNPACKI.eraseFromParent();
+  makeDeadMI(*LoadOp, MRI);
+
+  return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
+}
+
 std::optional<AddressingModeInfo>
 AIEBaseInstructionSelector::getOrDefineAddressingRegister(
     MachineInstr &MemI, MachineRegisterInfo &MRI) {

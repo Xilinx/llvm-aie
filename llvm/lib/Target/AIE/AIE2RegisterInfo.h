@@ -103,6 +103,8 @@ struct AIE2RegisterInfo : public AIE2GenRegisterInfo {
   }
   unsigned matchControlRegisterBitwidth(Register CtrlReg,
                                         unsigned SrcConstVal) const override;
+
+  Register getUnpackSignCtrlReg() const override;
 };
 } // namespace llvm
 

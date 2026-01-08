@@ -725,3 +725,7 @@ AIE2PRegisterInfo::matchStatusRegisterBitwidth(Register StatusReg,
     llvm_unreachable("Unknown status register.");
   }
 }
+
+Register AIE2PRegisterInfo::getUnpackSignCtrlReg() const {
+  return AIE2P::unpackSign0;
+}

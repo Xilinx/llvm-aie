@@ -116,6 +116,8 @@ struct AIE2PRegisterInfo : public AIE2PGenRegisterInfo {
                                         unsigned SrcConstVal) const override;
   unsigned matchStatusRegisterBitwidth(Register StatusReg,
                                        unsigned SrcConstVal) const override;
+
+  Register getUnpackSignCtrlReg() const override;
 };
 } // namespace llvm
 

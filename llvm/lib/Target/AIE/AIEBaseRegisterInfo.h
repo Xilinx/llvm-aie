@@ -78,6 +78,11 @@ struct AIEBaseRegisterInfo : public TargetRegisterInfo {
     llvm_unreachable("Target didn't implement isReservedStickyReg!");
   }
 
+  /// Returns the control register used for UNPACK sign control
+  virtual Register getUnpackSignCtrlReg() const {
+    llvm_unreachable("Target didn't implement getUnpackSignCtrlReg!");
+  }
+
   /// Given a register bank and operand type, return the smallest register class
   /// that can hold a value on that bank.
   virtual const TargetRegisterClass &

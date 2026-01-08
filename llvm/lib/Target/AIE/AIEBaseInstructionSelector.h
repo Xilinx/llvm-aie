@@ -224,6 +224,16 @@ protected:
                                     std::optional<unsigned> crUPSModeVal) {
     return false;
   }
+  virtual bool setUnpackSizeRegister(MachineIRBuilder &MIB,
+                                     Intrinsic::ID IntrinsicID) {
+    return false;
+  }
+  virtual bool canCombineUNPACKLoad(MachineInstr &MemOp, MachineInstr &CombOp,
+                                    MachineRegisterInfo &MRI) = 0;
+  virtual std::optional<LoadStoreOpcodes> getCombinedOpcodeUNPACKLoad(
+      const MachineInstr &MemOp, const MachineInstr &CombOp,
+      std::optional<APInt> Immediate, bool IsSigned) = 0;
+  bool selectG_AIE_LOAD_UNPACK(MachineInstr &UNPACKI, MachineRegisterInfo &MRI);
 
 protected:
   MachineIRBuilder MIB;
