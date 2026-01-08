@@ -21,6 +21,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/CodeGen/MIRVirtRegMap.h"
 #include "llvm/CodeGen/MIRYamlMapping.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
@@ -33,11 +34,10 @@
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/TargetFrameLowering.h"
-#include "llvm/CodeGen/VirtRegMap.h"
-#include "llvm/CodeGen/MIRVirtRegMap.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
+#include "llvm/CodeGen/VirtRegMap.h"
 #include "llvm/CodeGenTypes/LowLevelType.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/DebugLoc.h"
@@ -240,7 +240,8 @@ void MIRPrinter::print(const MachineFunction &MF, const VirtRegMap *VRM) {
   YamlMF.NoVRegs = MF.getProperties().hasProperty(
       MachineFunctionProperties::Property::NoVRegs);
 
-  convert(YamlMF, MF, MF.getRegInfo(), MF.getSubtarget().getRegisterInfo(), VRM);
+  convert(YamlMF, MF, MF.getRegInfo(), MF.getSubtarget().getRegisterInfo(),
+          VRM);
   MachineModuleSlotTracker MST(MMI, &MF);
   MST.incorporateFunction(MF.getFunction());
   convert(MST, YamlMF.FrameInfo, MF.getFrameInfo());
@@ -251,8 +252,7 @@ void MIRPrinter::print(const MachineFunction &MF, const VirtRegMap *VRM) {
     const auto &SubSrc = Sub.Src;
     const auto &SubDest = Sub.Dest;
     YamlMF.DebugValueSubstitutions.push_back({SubSrc.first, SubSrc.second,
-                                              SubDest.first,
-                                              SubDest.second,
+                                              SubDest.first, SubDest.second,
                                               Sub.Subreg});
   }
   if (const auto *ConstantPool = MF.getConstantPool())
@@ -281,7 +281,7 @@ void MIRPrinter::print(const MachineFunction &MF, const VirtRegMap *VRM) {
 
   yaml::Output Out(OS);
   if (!SimplifyMIR)
-      Out.setWriteDefaultValues(true);
+    Out.setWriteDefaultValues(true);
   Out << YamlMF;
 }
 
@@ -318,9 +318,8 @@ printStackObjectDbgInfo(const MachineFunction::VariableDbgInfo &DebugVar,
   std::array<std::string *, 3> Outputs{{&Object.DebugVar.Value,
                                         &Object.DebugExpr.Value,
                                         &Object.DebugLoc.Value}};
-  std::array<const Metadata *, 3> Metas{{DebugVar.Var,
-                                        DebugVar.Expr,
-                                        DebugVar.Loc}};
+  std::array<const Metadata *, 3> Metas{
+      {DebugVar.Var, DebugVar.Expr, DebugVar.Loc}};
   for (unsigned i = 0; i < 3; ++i) {
     raw_string_ostream StrOS(*Outputs[i]);
     Metas[i]->printAsOperand(StrOS, MST);
@@ -362,8 +361,7 @@ void MIRPrinter::convert(yaml::MachineFunction &YamlMF,
       printRegMIR(PhysReg, VReg.AssignedRegister, TRI);
     } else if (VRM && VRM->getStackSlot(Reg) != VirtRegMap::NO_STACK_SLOT) {
       VReg.StackSlot = VRM->getStackSlot(Reg);
-    }
-    else if (!VRM) {
+    } else if (!VRM) {
       // Fallback to MIRVirtRegMapInfo if VRM is not available (no pass is being
       // run). This preserves round-trip capability for MIR files with register
       // assignments
@@ -377,6 +375,28 @@ void MIRPrinter::convert(yaml::MachineFunction &YamlMF,
             VReg.StackSlot = StackSlot;
         }
       }
+    }
+
+    // Serialize split-from-reg (Virt2SplitMap)
+    if (VRM) {
+      Register SplitReg = VRM->getPreSplitReg(Reg);
+      if (SplitReg.isValid())
+        printRegMIR(SplitReg, VReg.SplitFromReg, TRI);
+    } else if (const MIRVirtRegMapInfo *MIRInfo = MF.getMIRVirtRegMapInfo()) {
+      Register SplitReg = MIRInfo->getSplitFromReg(Reg);
+      if (SplitReg.isValid())
+        printRegMIR(SplitReg, VReg.SplitFromReg, TRI);
+    }
+
+    // Serialize required-register (Virt2RequiredPhysMap)
+    if (VRM) {
+      MCRegister RequiredPhys = VRM->getRequiredPhys(Reg);
+      if (RequiredPhys.isValid())
+        printRegMIR(RequiredPhys, VReg.RequiredRegister, TRI);
+    } else if (const MIRVirtRegMapInfo *MIRInfo = MF.getMIRVirtRegMapInfo()) {
+      MCRegister RequiredPhys = MIRInfo->getRequiredPhys(Reg);
+      if (RequiredPhys.isValid())
+        printRegMIR(RequiredPhys, VReg.RequiredRegister, TRI);
     }
 
     YamlMF.VirtualRegisters.push_back(std::move(VReg));
@@ -416,8 +436,8 @@ void MIRPrinter::convert(ModuleSlotTracker &MST,
   YamlMFI.MaxAlignment = MFI.getMaxAlign().value();
   YamlMFI.AdjustsStack = MFI.adjustsStack();
   YamlMFI.HasCalls = MFI.hasCalls();
-  YamlMFI.MaxCallFrameSize = MFI.isMaxCallFrameSizeComputed()
-    ? MFI.getMaxCallFrameSize() : ~0u;
+  YamlMFI.MaxCallFrameSize =
+      MFI.isMaxCallFrameSizeComputed() ? MFI.getMaxCallFrameSize() : ~0u;
   YamlMFI.CVBytesOfCalleeSavedRegisters =
       MFI.getCVBytesOfCalleeSavedRegisters();
   YamlMFI.HasOpaqueSPAdjustment = MFI.hasOpaqueSPAdjustment();
@@ -501,13 +521,13 @@ void MIRPrinter::convertStackObjects(yaml::MachineFunction &YMF,
     yaml::MachineStackObject YamlObject;
     YamlObject.ID = ID;
     if (const auto *Alloca = MFI.getObjectAllocation(I))
-      YamlObject.Name.Value = std::string(
-          Alloca->hasName() ? Alloca->getName() : "");
+      YamlObject.Name.Value =
+          std::string(Alloca->hasName() ? Alloca->getName() : "");
     YamlObject.Type = MFI.isSpillSlotObjectIndex(I)
                           ? yaml::MachineStackObject::SpillSlot
-                          : MFI.isVariableSizedObjectIndex(I)
-                                ? yaml::MachineStackObject::VariableSized
-                                : yaml::MachineStackObject::DefaultType;
+                      : MFI.isVariableSizedObjectIndex(I)
+                          ? yaml::MachineStackObject::VariableSized
+                          : yaml::MachineStackObject::DefaultType;
     YamlObject.Offset = MFI.getObjectOffset(I);
     YamlObject.Size = MFI.getObjectSize(I);
     YamlObject.Alignment = MFI.getObjectAlign(I);
@@ -702,9 +722,9 @@ void MIRPrinter::initRegisterMaskIds(const MachineFunction &MF) {
 }
 
 void llvm::guessSuccessors(const MachineBasicBlock &MBB,
-                           SmallVectorImpl<MachineBasicBlock*> &Result,
+                           SmallVectorImpl<MachineBasicBlock *> &Result,
                            bool &IsFallthrough) {
-  SmallPtrSet<MachineBasicBlock*,8> Seen;
+  SmallPtrSet<MachineBasicBlock *, 8> Seen;
 
   for (const MachineInstr &MI : MBB) {
     if (MI.isPHI())
@@ -722,32 +742,32 @@ void llvm::guessSuccessors(const MachineBasicBlock &MBB,
   IsFallthrough = I == MBB.end() || !I->isBarrier();
 }
 
-bool
-MIPrinter::canPredictBranchProbabilities(const MachineBasicBlock &MBB) const {
+bool MIPrinter::canPredictBranchProbabilities(
+    const MachineBasicBlock &MBB) const {
   if (MBB.succ_size() <= 1)
     return true;
   if (!MBB.hasSuccessorProbabilities())
     return true;
 
-  SmallVector<BranchProbability,8> Normalized(MBB.Probs.begin(),
-                                              MBB.Probs.end());
+  SmallVector<BranchProbability, 8> Normalized(MBB.Probs.begin(),
+                                               MBB.Probs.end());
   BranchProbability::normalizeProbabilities(Normalized.begin(),
                                             Normalized.end());
-  SmallVector<BranchProbability,8> Equal(Normalized.size());
+  SmallVector<BranchProbability, 8> Equal(Normalized.size());
   BranchProbability::normalizeProbabilities(Equal.begin(), Equal.end());
 
   return std::equal(Normalized.begin(), Normalized.end(), Equal.begin());
 }
 
 bool MIPrinter::canPredictSuccessors(const MachineBasicBlock &MBB) const {
-  SmallVector<MachineBasicBlock*,8> GuessedSuccs;
+  SmallVector<MachineBasicBlock *, 8> GuessedSuccs;
   bool GuessedFallthrough;
   guessSuccessors(MBB, GuessedSuccs, GuessedFallthrough);
   if (GuessedFallthrough) {
     const MachineFunction &MF = *MBB.getParent();
     MachineFunction::const_iterator NextI = std::next(MBB.getIterator());
     if (NextI != MF.end()) {
-      MachineBasicBlock *Next = const_cast<MachineBasicBlock*>(&*NextI);
+      MachineBasicBlock *Next = const_cast<MachineBasicBlock *>(&*NextI);
       if (!is_contained(GuessedSuccs, Next))
         GuessedSuccs.push_back(Next);
     }
@@ -1000,8 +1020,7 @@ static std::string formatOperandComment(std::string Comment) {
 }
 
 void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
-                      const TargetRegisterInfo *TRI,
-                      const TargetInstrInfo *TII,
+                      const TargetRegisterInfo *TRI, const TargetInstrInfo *TII,
                       bool ShouldPrintRegisterTies, LLT TypeToPrint,
                       bool PrintDef) {
   const MachineOperand &Op = MI.getOperand(OpIdx);
@@ -1039,7 +1058,7 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
     const TargetIntrinsicInfo *TII = MI.getMF()->getTarget().getIntrinsicInfo();
     Op.print(OS, MST, TypeToPrint, OpIdx, PrintDef, /*IsStandalone=*/false,
              ShouldPrintRegisterTies, TiedOperandIdx, TRI, TII);
-      OS << formatOperandComment(MOComment);
+    OS << formatOperandComment(MOComment);
     break;
   }
   case MachineOperand::MO_FrameIndex:

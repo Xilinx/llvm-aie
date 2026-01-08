@@ -26,6 +26,7 @@
 #include "llvm/CodeGen/LiveIntervals.h"
 #include "llvm/CodeGen/LiveRegMatrix.h"
 #include "llvm/CodeGen/LiveStacks.h"
+#include "llvm/CodeGen/MIRVirtRegMap.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -33,7 +34,6 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/MIRVirtRegMap.h"
 #include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/CodeGen/TargetFrameLowering.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
@@ -56,7 +56,7 @@ using namespace llvm;
 #define DEBUG_TYPE "regalloc"
 
 STATISTIC(NumSpillSlots, "Number of spill slots allocated");
-STATISTIC(NumIdCopies,   "Number of identity moves eliminated after rewriting");
+STATISTIC(NumIdCopies, "Number of identity moves eliminated after rewriting");
 
 static cl::opt<bool> RequirePreferredRegs(
     "require-preferred-registers", cl::init(false), cl::Hidden,
@@ -113,6 +113,16 @@ bool VirtRegMapWrapperLegacy::runOnMachineFunction(MachineFunction &MF) {
         VRM.assignVirt2Phys(VReg, PhysReg);
       else if (StackSlot >= 0)
         VRM.assignVirt2StackSlot(VReg, StackSlot);
+
+      // Restore split-from-reg relationships
+      Register SplitReg = MIRInfo->getSplitFromReg(VReg);
+      if (SplitReg.isValid())
+        VRM.setIsSplitFromReg(VReg, SplitReg);
+
+      // Restore required physical register constraints
+      MCRegister RequiredPhys = MIRInfo->getRequiredPhys(VReg);
+      if (RequiredPhys.isValid())
+        VRM.setRequiredPhys(VReg, RequiredPhys);
     }
   }
 
@@ -195,7 +205,7 @@ int VirtRegMap::assignVirt2StackSlot(Register virtReg) {
   assert(virtReg.isVirtual());
   assert(Virt2StackSlotMap[virtReg] == NO_STACK_SLOT &&
          "attempt to assign stack slot to already spilled register");
-  const TargetRegisterClass* RC = MF->getRegInfo().getRegClass(virtReg);
+  const TargetRegisterClass *RC = MF->getRegInfo().getRegClass(virtReg);
   return Virt2StackSlotMap[virtReg] = createSpillSlot(RC);
 }
 
@@ -203,13 +213,12 @@ void VirtRegMap::assignVirt2StackSlot(Register virtReg, int SS) {
   assert(virtReg.isVirtual());
   assert(Virt2StackSlotMap[virtReg] == NO_STACK_SLOT &&
          "attempt to assign stack slot to already spilled register");
-  assert((SS >= 0 ||
-          (SS >= MF->getFrameInfo().getObjectIndexBegin())) &&
+  assert((SS >= 0 || (SS >= MF->getFrameInfo().getObjectIndexBegin())) &&
          "illegal fixed frame index");
   Virt2StackSlotMap[virtReg] = SS;
 }
 
-void VirtRegMap::print(raw_ostream &OS, const Module*) const {
+void VirtRegMap::print(raw_ostream &OS, const Module *) const {
   OS << "********** REGISTER MAP **********\n";
   for (unsigned i = 0, e = MRI->getNumVirtRegs(); i != e; ++i) {
     Register Reg = Register::index2VirtReg(i);
@@ -235,9 +244,7 @@ void VirtRegMap::print(raw_ostream &OS, const Module*) const {
 }
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
-LLVM_DUMP_METHOD void VirtRegMap::dump() const {
-  print(dbgs());
-}
+LLVM_DUMP_METHOD void VirtRegMap::dump() const { print(dbgs()); }
 #endif
 
 AnalysisKey VirtRegMapAnalysis::Key;
@@ -293,18 +300,17 @@ class VirtRegRewriter : public MachineFunctionPass {
 
 public:
   static char ID;
-  VirtRegRewriter(bool ClearVirtRegs_ = true) :
-    MachineFunctionPass(ID),
-    ClearVirtRegs(ClearVirtRegs_) {}
+  VirtRegRewriter(bool ClearVirtRegs_ = true)
+      : MachineFunctionPass(ID), ClearVirtRegs(ClearVirtRegs_) {}
 
   void getAnalysisUsage(AnalysisUsage &AU) const override;
 
-  bool runOnMachineFunction(MachineFunction&) override;
+  bool runOnMachineFunction(MachineFunction &) override;
 
   MachineFunctionProperties getSetProperties() const override {
     if (ClearVirtRegs) {
       return MachineFunctionProperties().set(
-        MachineFunctionProperties::Property::NoVRegs);
+          MachineFunctionProperties::Property::NoVRegs);
     }
 
     return MachineFunctionProperties();
@@ -377,7 +383,8 @@ bool VirtRegRewriter::runOnMachineFunction(MachineFunction &fn) {
     DebugVars->emitDebugValues(VRM);
 
     // All machine operands and other references to virtual registers have been
-    // replaced. Remove the virtual registers and release all the transient data.
+    // replaced. Remove the virtual registers and release all the transient
+    // data.
     VRM->clearAllVirt();
     MRI->clearVirtRegs();
   }
@@ -544,8 +551,9 @@ void VirtRegRewriter::expandCopyBundle(MachineInstr &MI) const {
 
     // Only do this when the complete bundle is made out of COPYs and KILLs.
     MachineBasicBlock &MBB = *MI.getParent();
-    for (MachineBasicBlock::reverse_instr_iterator I =
-         std::next(MI.getReverseIterator()), E = MBB.instr_rend();
+    for (MachineBasicBlock::reverse_instr_iterator
+             I = std::next(MI.getReverseIterator()),
+             E = MBB.instr_rend();
          I != E && I->isBundledWithSucc(); ++I) {
       if (!I->isCopy() && !I->isKill())
         return;
@@ -568,7 +576,7 @@ void VirtRegRewriter::expandCopyBundle(MachineInstr &MI) const {
     // the source registers, try to schedule the instructions to avoid any
     // clobbering.
     for (int E = MIs.size(), PrevE = E; E > 1; PrevE = E) {
-      for (int I = E; I--; )
+      for (int I = E; I--;)
         if (!anyRegsAlias(MIs[I], ArrayRef(MIs).take_front(E), TRI)) {
           if (I + 1 != E)
             std::swap(MIs[I], MIs[E - 1]);

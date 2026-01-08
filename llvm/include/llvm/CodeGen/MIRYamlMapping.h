@@ -194,8 +194,10 @@ struct VirtualRegisterDefinition {
   UnsignedValue ID;
   StringValue Class;
   StringValue PreferredRegister;
-  StringValue AssignedRegister;        // Physical register from VirtRegMap
-  std::optional<int> StackSlot;        // Stack slot if spilled
+  StringValue AssignedRegister; // Physical register from VirtRegMap
+  std::optional<int> StackSlot; // Stack slot if spilled
+  StringValue SplitFromReg;     // Source vreg this was split from
+  StringValue RequiredRegister; // Required physical register constraint
   std::vector<FlowStringValue> RegisterFlags;
 
   // TODO: Serialize the target specific register hints.
@@ -204,7 +206,8 @@ struct VirtualRegisterDefinition {
     return ID == Other.ID && Class == Other.Class &&
            PreferredRegister == Other.PreferredRegister &&
            AssignedRegister == Other.AssignedRegister &&
-           StackSlot == Other.StackSlot;
+           StackSlot == Other.StackSlot && SplitFromReg == Other.SplitFromReg &&
+           RequiredRegister == Other.RequiredRegister;
   }
 };
 
@@ -216,8 +219,13 @@ template <> struct MappingTraits<VirtualRegisterDefinition> {
                        StringValue()); // Don't print out when it's empty.
     YamlIO.mapOptional("assigned-register", Reg.AssignedRegister,
                        StringValue()); // Don't print out when it's empty.
-    YamlIO.mapOptional("stack-slot", Reg.StackSlot,
-                       std::optional<int>()); // Don't print out when it's empty.
+    YamlIO.mapOptional(
+        "stack-slot", Reg.StackSlot,
+        std::optional<int>()); // Don't print out when it's empty.
+    YamlIO.mapOptional("split-from-reg", Reg.SplitFromReg,
+                       StringValue()); // Don't print out when it's empty.
+    YamlIO.mapOptional("required-register", Reg.RequiredRegister,
+                       StringValue()); // Don't print out when it's empty.
     YamlIO.mapOptional("flags", Reg.RegisterFlags,
                        std::vector<FlowStringValue>());
   }
@@ -273,8 +281,7 @@ struct MachineStackObject {
   bool operator==(const MachineStackObject &Other) const {
     return ID == Other.ID && Name == Other.Name && Type == Other.Type &&
            Offset == Other.Offset && Size == Other.Size &&
-           Alignment == Other.Alignment &&
-           StackID == Other.StackID &&
+           Alignment == Other.Alignment && StackID == Other.StackID &&
            CalleeSavedRegister == Other.CalleeSavedRegister &&
            CalleeSavedRestored == Other.CalleeSavedRestored &&
            LocalOffset == Other.LocalOffset && DebugVar == Other.DebugVar &&
@@ -365,12 +372,12 @@ struct FixedMachineStackObject {
   bool operator==(const FixedMachineStackObject &Other) const {
     return ID == Other.ID && Type == Other.Type && Offset == Other.Offset &&
            Size == Other.Size && Alignment == Other.Alignment &&
-           StackID == Other.StackID &&
-           IsImmutable == Other.IsImmutable && IsAliased == Other.IsAliased &&
+           StackID == Other.StackID && IsImmutable == Other.IsImmutable &&
+           IsAliased == Other.IsAliased &&
            CalleeSavedRegister == Other.CalleeSavedRegister &&
            CalleeSavedRestored == Other.CalleeSavedRestored &&
-           DebugVar == Other.DebugVar && DebugExpr == Other.DebugExpr
-           && DebugLoc == Other.DebugLoc;
+           DebugVar == Other.DebugVar && DebugExpr == Other.DebugExpr &&
+           DebugLoc == Other.DebugLoc;
   }
 };
 
@@ -383,8 +390,7 @@ struct ScalarEnumerationTraits<FixedMachineStackObject::ObjectType> {
   }
 };
 
-template <>
-struct ScalarEnumerationTraits<TargetStackID::Value> {
+template <> struct ScalarEnumerationTraits<TargetStackID::Value> {
   static void enumeration(yaml::IO &IO, TargetStackID::Value &ID) {
     IO.enumCase(ID, "default", TargetStackID::Default);
     IO.enumCase(ID, "sgpr-spill", TargetStackID::SGPRSpill);
@@ -411,7 +417,7 @@ template <> struct MappingTraits<FixedMachineStackObject> {
     YamlIO.mapOptional("callee-saved-register", Object.CalleeSavedRegister,
                        StringValue()); // Don't print it out when it's empty.
     YamlIO.mapOptional("callee-saved-restored", Object.CalleeSavedRestored,
-                     true);
+                       true);
     YamlIO.mapOptional("debug-info-variable", Object.DebugVar,
                        StringValue()); // Don't print it out when it's empty.
     YamlIO.mapOptional("debug-info-expression", Object.DebugExpr,
@@ -508,8 +514,8 @@ template <> struct MappingTraits<CallSiteInfo::ArgRegPair> {
 
   static const bool flow = true;
 };
-}
-}
+} // namespace yaml
+} // namespace llvm
 
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::yaml::CallSiteInfo::ArgRegPair)
 
