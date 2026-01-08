@@ -566,3 +566,7 @@ AIE2RegisterInfo::matchControlRegisterBitwidth(Register CtrlReg,
     llvm_unreachable("Unknown control register.");
   }
 }
+
+Register AIE2RegisterInfo::getUnpackSignCtrlReg() const {
+  return AIE2::crUnpackSign;
+}
