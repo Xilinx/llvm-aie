@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -65,7 +65,6 @@ public:
   bool enableWindowScheduler() const override {
     return AIEBaseSubtarget::enableWindowScheduler();
   }
-  bool enablePostRAScheduler() const override { return true; }
   bool enablePostRAMachineScheduler() const override { return true; }
   bool forcePostRAScheduling() const override { return true; }
   bool useAA() const override { return true; }
