@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 /// \file
@@ -315,7 +315,6 @@ bool AIEBaseRegisterBankInfo::requiresGPRRegBank(const MachineInstr &MI,
                                                  const MachineRegisterInfo &MRI,
                                                  unsigned Depth) const {
   switch (MI.getOpcode()) {
-  case TargetOpcode::G_ANYEXT:
   case TargetOpcode::G_SEXT:
   case TargetOpcode::G_ZEXT:
     return true;
