@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -854,73 +854,6 @@ constrainRegClass(MachineRegisterInfo &MRI, const TargetRegisterClass *RC,
   return RC;
 }
 
-Register AIE2PInstrInfo::isLoadFromStackSlot(const MachineInstr &MI,
-                                             int &FrameIndex) const {
-  switch (MI.getOpcode()) {
-  default:
-    return 0;
-  case AIE2P::LDA_R_SPILL:
-  case AIE2P::LDA_dmv_lda_q_spill:
-  case AIE2P::VLDA_128_dmv_lda_w_spill:
-  case AIE2P::VLDA_dmw_lda_w_spill:
-  case AIE2P::VLDA_dmx_lda_bm_spill:
-  case AIE2P::VLDA_dmx_lda_fifohl_spill:
-  case AIE2P::VLDA_dmx_lda_x_spill:
-  case AIE2P::VLDA_DM_SPILL:
-  case AIE2P::VLDA_L_SPILL:
-  case AIE2P::VLDA_Y_SPILL:
-  case AIE2P::VLDA_CM_SPILL:
-  case AIE2P::VLDA_FIFO_SPILL:
-  case AIE2P::VLDA_PLFR_SPILL:
-  case AIE2P::LDA_D_SPILL:
-  case AIE2P::LDA_DS_SPILL:
-  case AIE2P::VLDA_EX_SPILL:
-  case AIE2P::VLDA_E_SPILL:
-    break;
-  }
-
-  if (MI.getOperand(1).isFI()) {
-    FrameIndex = MI.getOperand(1).getIndex();
-    return MI.getOperand(0).getReg();
-  }
-
-  return 0;
-}
-
-Register AIE2PInstrInfo::isStoreToStackSlot(const MachineInstr &MI,
-                                            int &FrameIndex) const {
-  switch (MI.getOpcode()) {
-  default:
-    return 0;
-  case AIE2P::ST_R_SPILL:
-  case AIE2P::ST_dmv_sts_q_spill:
-  case AIE2P::VST_128_dmv_sts_w_spill:
-  case AIE2P::VST_dmw_sts_w_spill:
-  case AIE2P::VST_dmx_sts_bm_spill:
-  case AIE2P::VST_dmx_sts_fifohl_spill:
-  case AIE2P::VST_dmx_sts_x_spill:
-  case AIE2P::ST_D_SPILL:
-  case AIE2P::ST_DS_SPILL:
-  case AIE2P::VST_CM_SPILL:
-  case AIE2P::VST_FIFO_SPILL:
-  case AIE2P::VST_PLFR_SPILL:
-  case AIE2P::VST_DM_SPILL:
-  case AIE2P::VST_L_SPILL:
-  case AIE2P::VST_Y_SPILL:
-  case AIE2P::VST_E_SPILL:
-  case AIE2P::VST_EX_SPILL:
-  case AIE2P::VST_512_COMPOSED_REG_SPILL:
-    break;
-  }
-
-  if (MI.getOperand(1).isFI()) {
-    FrameIndex = MI.getOperand(1).getIndex();
-    return MI.getOperand(0).getReg();
-  }
-
-  return 0;
-}
-
 // Store a register to a stack slot.  Used in eliminating FrameIndex pseudo-ops.
 void AIE2PInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                          MachineBasicBlock::iterator I,
@@ -1186,9 +1119,10 @@ AIE2PInstrInfo::getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
     return {{AIE2P::VST_dmx_sts_x_spill, AIE2P::sub_bfp16_x},
             {AIE2P::VST_E_SPILL, AIE2P::sub_bfp16_e}};
   case AIE2P::VLDA_512_COMPOSED_REG_SPILL:
-    // No expansion needed - this is handled in expandPostRAPseudo() where the
-    // pseudo is directly replaced with native 512-bit load
-    // instructions.
+  case AIE2P::VST_512_COMPOSED_REG_SPILL:
+    // No expansion needed - this is handled in expandPostRAPseudo()
+    // where the pseudo is directly replaced with native 512-bit
+    // load/store instructions.
     return {};
   }
   llvm_unreachable("Un-implemented");
