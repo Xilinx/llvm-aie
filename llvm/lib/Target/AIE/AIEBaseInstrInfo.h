@@ -788,7 +788,16 @@ public:
                          Register SPReg = MCRegister::NoRegister,
                          std::optional<int64_t> OffsetVal = std::nullopt) const;
 
-protected:
+  /// Generic stack slot detection for stack loads.
+  /// Returns the loaded register, or 0 if not a stack slot load.
+  Register isLoadFromStackSlot(const MachineInstr &MI,
+                               int &FrameIndex) const override;
+
+  /// Generic stack slot detection for stack stores.
+  /// Returns the stored register, or 0 if not a stack slot store.
+  Register isStoreToStackSlot(const MachineInstr &MI,
+                              int &FrameIndex) const override;
+
   struct AIEPseudoExpandInfo {
     /// OpCode to expand a PseudoInstruction to. This can be another Pseudo.
     unsigned ExpandedOpCode;
@@ -802,15 +811,6 @@ protected:
     int MemSize = 0;
   };
 
-  struct AIERegOffsetSpillInstrInfo {
-    /// Opcode for spill using register offset.
-    unsigned SpillOpCode;
-    /// Opcode for adjusting the offset register.
-    unsigned AdjustOffsetOpcode;
-    /// Target register class for offset register.
-    const TargetRegisterClass *OffsetRC;
-  };
-
   /// Return information on how to expand a spill (load/store) pseudo
   /// instruction. This returns an empty vector if the instruction does not
   /// need expanding. Otherwise, the size of the vector will match the number
@@ -819,6 +819,16 @@ protected:
   getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
                            MachineInstr &MI) const {
     return {};
+  };
+
+protected:
+  struct AIERegOffsetSpillInstrInfo {
+    /// Opcode for spill using register offset.
+    unsigned SpillOpCode;
+    /// Opcode for adjusting the offset register.
+    unsigned AdjustOffsetOpcode;
+    /// Target register class for offset register.
+    const TargetRegisterClass *OffsetRC;
   };
 
   /// Retrieve information about a register offset instruction derived from an

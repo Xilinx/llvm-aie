@@ -15,6 +15,7 @@
 #include "AIEBaseInstrInfo.h"
 #include "AIE.h"
 #include "AIEBasePipelinerLoopInfo.h"
+#include "AIEBaseRegisterInfo.h"
 #include "AIEBaseSubtarget.h"
 #include "AIEHazardRecognizer.h"
 #include "MCTargetDesc/AIEFormat.h"
@@ -1528,4 +1529,70 @@ bool AIEBaseInstrInfo::areMemAccessesTriviallyDisjoint(
   const int64_t ObjOffsetB = MFI.getObjectOffset(FixedStackB->getFrameIndex());
 
   return CheckOverlapping(ObjOffsetA, ObjOffsetB);
+}
+
+/// Common implementation for isLoadFromStackSlot and isStoreToStackSlot.
+/// \param IsLoad true for load detection, false for store detection.
+/// \returns The register being loaded/stored, or 0 if not a stack access.
+static Register isStackSlotMemoryAccess(const MachineInstr &MI, int &FrameIndex,
+                                        bool IsLoad) {
+  // Quick reject: check memory access type
+  if (IsLoad) {
+    if (!MI.mayLoad() || MI.mayStore())
+      return 0;
+  } else {
+    if (!MI.mayStore() || MI.mayLoad())
+      return 0;
+  }
+
+  const TargetSubtargetInfo &ST = MI.getMF()->getSubtarget();
+  const auto &TRI =
+      *static_cast<const AIEBaseRegisterInfo *>(ST.getRegisterInfo());
+
+  const Register SPReg = TRI.getStackPointerRegister();
+  if (!MI.readsRegister(SPReg, &TRI))
+    return 0;
+
+  if (MI.getNumOperands() < 2)
+    return 0;
+
+  const MachineOperand &RegOp = MI.getOperand(0);
+  if (!RegOp.isReg())
+    return 0;
+  if (IsLoad ? !RegOp.isDef() : !RegOp.isUse())
+    return 0;
+
+  if (!MI.getOperand(1).isFI())
+    return 0;
+
+  unsigned MatchingStackMMOs = 0;
+  for (const auto *MMO : MI.memoperands()) {
+    const bool IsMatching =
+        (IsLoad ? MMO->isLoad() : MMO->isStore()) &&
+        isa_and_nonnull<FixedStackPseudoSourceValue>(MMO->getPseudoValue());
+    if (!IsMatching)
+      continue;
+    ++MatchingStackMMOs;
+  }
+
+  if (!MatchingStackMMOs)
+    return 0;
+
+  assert(MatchingStackMMOs == 1 &&
+         "Expected exactly one fixed-stack MachineMemOperand");
+  assert(MI.hasOneMemOperand() &&
+         "Expected stack spill/reload to have exactly one MachineMemOperand");
+
+  FrameIndex = MI.getOperand(1).getIndex();
+  return RegOp.getReg();
+}
+
+Register AIEBaseInstrInfo::isLoadFromStackSlot(const MachineInstr &MI,
+                                               int &FrameIndex) const {
+  return isStackSlotMemoryAccess(MI, FrameIndex, /*IsLoad=*/true);
+}
+
+Register AIEBaseInstrInfo::isStoreToStackSlot(const MachineInstr &MI,
+                                              int &FrameIndex) const {
+  return isStackSlotMemoryAccess(MI, FrameIndex, /*IsLoad=*/false);
 }
