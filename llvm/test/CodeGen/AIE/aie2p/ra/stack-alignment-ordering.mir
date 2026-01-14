@@ -1,0 +1,108 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# NOTE: This test demonstrates stack object alignment ordering behavior.
+#       Without the orderFrameObjects optimization, interleaved high-alignment
+#       (BM=64-byte) and low-alignment (R=4-byte) stack slots cause padding.
+#
+#
+# RUN: llc -mtriple=aie2p --verify-machineinstrs -run-pass=prologepilog -o - %s | FileCheck %s --check-prefix=BASELINE
+
+
+
+--- |
+  define void @test_stack_alignment_ordering() {
+    ret void
+  }
+  define void @stack_padding_regression() {
+    %ref.tmp = alloca [64 x i8], align 4
+    ret void
+  }
+    define void @stack_padding_regression_multi_filler() {
+    %ref.tmp = alloca [64 x i8], align 4
+    ret void
+  }
+
+...
+---
+name:            test_stack_alignment_ordering
+alignment:       16
+tracksRegLiveness: true
+stack:
+  - { id: 0, type: spill-slot, size: 64, alignment: 64 }
+  - { id: 1, type: spill-slot, size: 4, alignment: 4 }
+  - { id: 2, type: spill-slot, size: 64, alignment: 64 }
+  - { id: 3, type: spill-slot, size: 4, alignment: 4 }
+body:             |
+  bb.0:
+    liveins: $bmll0, $bmll1, $r0, $r1
+
+    ; BASELINE: name: test_stack_alignment_ordering
+    ; BASELINE: stackSize: 256
+    PseudoRET implicit $lr
+
+...
+
+# Stack Layout: [ Callee Save Registers , regular Registers ]
+# Sorting has to account for the padding that may be inserted between callee save and regular stack slots.
+---
+name:            stack_padding_regression
+alignment:       16
+tracksRegLiveness: true
+stack:
+  - { id: 0, name: ref.tmp, type: default, offset: 0, size: 64, alignment: 4, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 3, name: '', type: spill-slot, offset: 0, size: 4, alignment: 4, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 4, name: '', type: spill-slot, offset: 0, size: 64, alignment: 64, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+
+body:             |
+  bb.0:
+    liveins: $lr, $r8, $r9, $r10, $p6, $p7
+
+    ; BASELINE: name: stack_padding_regression
+    ; BASELINE: stackSize: 192
+    $p6 = IMPLICIT_DEF
+    $p7 = IMPLICIT_DEF
+    PseudoRET implicit $lr
+...
+
+# Stack Layout: [ Callee Save Registers , regular Registers ]
+# Sorting has to account for the padding that may be inserted between callee save and regular stack slots.
+# we should move stack 3 and stack 5 before the 64 bit stack slots to maintain stack size.
+---
+name:            stack_padding_regression_multi_filler
+alignment:       16
+tracksRegLiveness: true
+stack:
+  - { id: 0, name: ref.tmp, type: default, offset: 0, size: 64, alignment: 4, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 3, name: '', type: spill-slot, offset: 0, size: 4, alignment: 4, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 4, name: '', type: spill-slot, offset: 0, size: 64, alignment: 64, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 5, name: '', type: spill-slot, offset: 0, size: 4, alignment: 4, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+
+body:             |
+  bb.0:
+    liveins: $lr, $r8, $r9, $r10, $p6, $p7
+
+    ; BASELINE: name: stack_padding_regression_multi_filler
+    ; BASELINE: stackSize: 256
+    $p6 = IMPLICIT_DEF
+    $p7 = IMPLICIT_DEF
+    ; Reload the IMPLICIT_DEF spilled values
+    PseudoRET implicit $lr
+...
