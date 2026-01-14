@@ -170,6 +170,8 @@ bool AIE2PRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
     // Note that LDB path does not support SPILL instructions
 
+  case AIE2P::LDA_dms_lda_spill:
+  case AIE2P::ST_dms_sts_spill:
   case AIE2P::LDA_dmv_lda_q_spill:
   case AIE2P::VLDA_128_dmv_lda_w_spill:
   case AIE2P::VLDA_dmw_lda_w_spill:
