@@ -276,6 +276,12 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   /// Check whether Opc represents a lock instruction
   virtual bool isLock(unsigned Opc) const { return false; }
 
+  /// Check whether MBB contains a lock instruction
+  bool hasLockInstruction(const MachineBasicBlock &MBB) const {
+    return llvm::any_of(
+        MBB, [this](const MachineInstr &MI) { return isLock(MI.getOpcode()); });
+  }
+
   /// Check whether MI is a part-word memory instruction (e.g., byte or
   /// half-word load/store). Part-word stores typically have read-modify-write
   /// behavior and may access memory multiple times and don't respect
