@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -65,6 +65,18 @@ void AIERegMemEventTracker::computeUseDefForward(
         addPerInstructionLastStoreCycle(LastStoreCycle, BundledMI);
       }
 
+      // Track all memory operations (loads and stores) for lock dependencies.
+      // Locks must wait for all preceding memory accesses to complete.
+      if (BundledMI->mayLoadOrStore()) {
+        auto OptLastMemCycle = TII->getLastMemoryCycle(SchedClass);
+        if (OptLastMemCycle) {
+          int MemAccessCycle = Cycle + *OptLastMemCycle - 1;
+          if (InSeparateRegion)
+            MemAccessCycle = MemAccessCycle - TotalCycles;
+          updateLastMemoryAccessCycle(MemAccessCycle);
+        }
+      }
+
       for (unsigned OpNum = 0; OpNum < BundledMI->getNumOperands(); OpNum++) {
         const MachineOperand &MO = BundledMI->getOperand(OpNum);
         if (!MO.isReg())
@@ -119,6 +131,16 @@ AIERegMemEventTracker::getSafeOperandsDistance(const MachineInstr &MI) const {
       const int MemoryDep = getLastStoreCycle() - MIMemoryCycle + 1;
       MaxLatency = std::max(MemoryDep, 0);
     }
+  }
+
+  // Lock instructions stall the core. All preceding memory operations must
+  // complete before the core stalls.
+  if (TII->isLock(MI.getOpcode())) {
+    const int CoreStallCycle = TII->getCoreStallCycleAfterLock();
+    const int MIStallCycle = CoreStallCycle - 1;
+    const int MemDep = getLastMemoryAccessCycle() - MIStallCycle + 1;
+    MaxLatency =
+        std::max(MaxLatency, static_cast<unsigned>(std::max(MemDep, 0)));
   }
 
   for (const MachineOperand &MO : MI.operands()) {
@@ -180,4 +202,8 @@ int AIERegMemEventTracker::getMaxAliasingStoreCycle(
     }
   }
   return MaxAliasingStoreCycle;
+}
+
+void AIERegMemEventTracker::updateLastMemoryAccessCycle(int MemAccessCycle) {
+  LastMemoryAccessCycle = std::max(LastMemoryAccessCycle, MemAccessCycle);
 }
