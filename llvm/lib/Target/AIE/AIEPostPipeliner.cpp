@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 // This file contains a simple post-RA pipeliner. It tries to wrap the linear
@@ -96,6 +96,13 @@ bool PostPipeliner::isPostPipelineCandidate(MachineBasicBlock &LoopBlock) {
   Preheader = AIELoopUtils::getDedicatedFallThroughPreheader(LoopBlock);
   if (!Preheader) {
     LLVM_DEBUG(dbgs() << " PostPipeliner: No fallthrough preheader\n");
+    return false;
+  }
+
+  // 2b. Lock instructions require special scheduling constraints (core
+  // stall/resume cycles) that are not implemented for software pipelined loops.
+  if (TII->hasLockInstruction(LoopBlock)) {
+    LLVM_DEBUG(dbgs() << " PostPipeliner: Loop contains lock instruction\n");
     return false;
   }
 

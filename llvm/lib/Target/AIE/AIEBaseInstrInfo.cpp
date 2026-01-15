@@ -1141,6 +1141,10 @@ AIEBaseInstrInfo::isCopyInstrImpl(const MachineInstr &MI) const {
 
 std::unique_ptr<TargetInstrInfo::PipelinerLoopInfo>
 AIEBaseInstrInfo::analyzeLoopForPipelining(MachineBasicBlock *LoopBB) const {
+  // Lock instructions require special scheduling constraints (core stall/resume
+  // cycles) that are not implemented for software pipelined loops.
+  if (hasLockInstruction(*LoopBB))
+    return nullptr;
   MachineBasicBlock::iterator I = LoopBB->getFirstTerminator();
   return createAIEBasePipelinerLoopInfo(&(*I), *this);
 }
