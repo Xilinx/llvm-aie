@@ -1459,3 +1459,60 @@ bool AIEBaseInstructionSelector::selectVUPS(
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
 }
+
+bool AIEBaseInstructionSelector::selectG_AIE_STORE_SRS(
+    MachineInstr &StoreI, MachineRegisterInfo &MRI) {
+  Register SrsResult = (StoreI.uses().begin())->getReg();
+  MachineInstr *SrsOp = getDefIgnoringCopiesAndBitcasts(SrsResult, MRI);
+
+  assert(SrsOp && "Expected SSA.");
+
+  if (!canCombineSRS(StoreI, *SrsOp, MRI))
+    return false;
+
+  std::optional<AddressingModeInfo> AddrModeInfo =
+      getOrDefineAddressingRegister(StoreI, MRI);
+  if (!AddrModeInfo)
+    return false;
+
+  // Note: Operand 1 is the ID of the intrinsic
+  Register SrcReg = SrsOp->getOperand(2).getReg();
+  Register ShftReg = SrsOp->getOperand(3).getReg();
+  Register SignReg = SrsOp->getOperand(4).getReg();
+
+  auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI);
+  bool ConstantSign = SignVal.has_value();
+  // SignVal = 1 for signed and 0 for unsigned
+  std::optional<LoadStoreOpcodes> LSO =
+      getCombinedOpcodeSRS(StoreI, *SrsOp, AddrModeInfo->ImmediateOffset,
+                           ConstantSign ? SignVal->Value == 0x1 : false);
+
+  assert(LSO && "Unexpected VST.SRS combine failure");
+
+  // Set SRS mode control register if needed
+  MIB.setInstr(StoreI);
+  std::optional<unsigned> SRSMode =
+      getSRSModeForIntrinsic(cast<GIntrinsic>(SrsOp)->getIntrinsicID());
+  if (SRSMode)
+    setCtrlRegister(MIB, TRI.getSRSModeCtrlReg(), *SRSMode);
+
+  auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
+
+  for (auto Def : StoreI.defs())
+    NewInstr.addDef(Def.getReg());
+
+  NewInstr.addUse(SrcReg);
+  NewInstr.addUse(ShftReg);
+
+  addAddressingMode(NewInstr, *AddrModeInfo, LSO->FitsImmediateRange, false,
+                    MRI);
+
+  NewInstr.cloneMemRefs(StoreI);
+
+  if (!ConstantSign)
+    setUnsetCtrlRegister(MIB, *NewInstr, MRI, TRI.getSRSSignCtrlReg(), SignReg);
+
+  makeDeadMI(*SrsOp, MRI);
+  StoreI.eraseFromParent();
+  return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
+}

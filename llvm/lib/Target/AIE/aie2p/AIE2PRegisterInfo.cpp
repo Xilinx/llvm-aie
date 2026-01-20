@@ -737,3 +737,11 @@ Register AIE2PRegisterInfo::getPackSignCtrlReg() const {
 Register AIE2PRegisterInfo::getPackSizeCtrlReg() const {
   return AIE2P::crPackSize;
 }
+
+Register AIE2PRegisterInfo::getSRSSignCtrlReg() const {
+  return AIE2P::srsSign0;
+}
+
+Register AIE2PRegisterInfo::getSRSModeCtrlReg() const {
+  return AIE2P::crSRSMode;
+}
