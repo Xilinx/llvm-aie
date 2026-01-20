@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -4782,9 +4782,9 @@ bool llvm::matchVSelToUnmergeConcatOrCopy(MachineInstr &MI,
 
   // Check if it's either half-and-half pattern
   if (SelMask == UpperHalfMask || SelMask == LowerHalfMask) {
-    const bool LowerFromSrc1 = (SelMask == LowerHalfMask);
+    const bool IsUpperMask = (SelMask == UpperHalfMask);
 
-    MatchInfo = [Src1Reg, Src2Reg, DstReg, DstTy, LowerFromSrc1,
+    MatchInfo = [Src1Reg, Src2Reg, DstReg, DstTy, IsUpperMask,
                  &MRI](MachineIRBuilder &B) {
       const LLT HalfTy = DstTy.divide(2);
 
@@ -4797,9 +4797,10 @@ bool llvm::matchVSelToUnmergeConcatOrCopy(MachineInstr &MI,
       const Register Src2Hi = MRI.createGenericVirtualRegister(HalfTy);
       B.buildUnmerge({Src2Lo, Src2Hi}, Src2Reg);
 
-      // Select appropriate halves based on mask pattern
-      const Register LowerHalf = LowerFromSrc1 ? Src1Lo : Src2Lo;
-      const Register UpperHalf = LowerFromSrc1 ? Src2Hi : Src1Hi;
+      // UpperHalfMask (0xFF00): lo from src1, hi from src2
+      // LowerHalfMask (0x00FF): lo from src2, hi from src1
+      const Register LowerHalf = IsUpperMask ? Src1Lo : Src2Lo;
+      const Register UpperHalf = IsUpperMask ? Src2Hi : Src1Hi;
 
       B.buildConcatVectors(DstReg, {LowerHalf, UpperHalf});
     };
