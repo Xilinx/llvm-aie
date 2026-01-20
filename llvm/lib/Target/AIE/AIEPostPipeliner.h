@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 // This file contains a simple post-RA pipeliner. It tries to wrap the linear
@@ -182,6 +182,15 @@ public:
   // Report a final selection. This marks the start of selecting a new node.
   // fromTop() should be invariant between calls to selected()
   virtual void selected(const SUnit &N) {};
+
+  // Decide a cycle in [Earliest, Latest] to insert MI, based on resource
+  // hazards. Returns the chosen cycle on success, or an empty optional if none
+  // fits. The default implementation uses fromTop() to determine scan
+  // direction.
+  virtual std::optional<int>
+  fitInInterval(MachineInstr &MI, int Earliest, int Latest, int II,
+                const AIEHazardRecognizer &HR,
+                ResourceScoreboard<FuncUnitWrapper> &Scoreboard);
 };
 
 class PipelineScheduleVisitor {
@@ -256,11 +265,6 @@ class PostPipeliner {
   /// stage count against MinIterCount and the number of copies in the DAG.
   /// Returns true if these checks indicate that the schedule can be implmented.
   bool checkStages();
-
-  // return the first Cycle: Earliest <= Cycle < Earliest+NTries where MI fits
-  // in the scoreboard, -1 if it doesn't fit. The insertion point is taken
-  // modulo II.
-  int fit(MachineInstr *MI, int Earliest, int NTries, int II);
 
   /// Provide some look ahead by seeing the effect of the first iteration
   /// on the second iteration. May return false if the II isn't feasible.
