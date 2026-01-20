@@ -92,7 +92,6 @@ public:
   bool selectG_LOAD(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_STORE(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_AIE_LOAD_STORE(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectG_AIE_STORE_SRS(MachineInstr &StoreI, MachineRegisterInfo &MRI);
   bool selectWideG_AIE_LOAD_STORE(MachineInstr &I, LoadStoreOpcodes &LSO,
                                   AddressingModeInfo &AMI,
                                   MachineRegisterInfo &MRI);
@@ -152,9 +151,10 @@ private:
   }
   std::optional<LoadStoreOpcodes>
   getCombinedOpcodeSRS(const MachineInstr &MemOp, const MachineInstr &CombOp,
-                       std::optional<APInt> Immediate, bool IsSigned);
+                       std::optional<APInt> Immediate, bool IsSigned) override;
   bool canCombineSRS(MachineInstr &MemOp, MachineInstr &CombOp,
-                     MachineRegisterInfo &MRI);
+                     MachineRegisterInfo &MRI) override;
+  std::optional<unsigned> getSRSModeForIntrinsic(Intrinsic::ID ID) override;
   bool setUnpackSizeRegister(MachineIRBuilder &MIB,
                              Intrinsic::ID IntrinsicID) override;
   bool canCombineUNPACKLoad(MachineInstr &MemOp, MachineInstr &CombOp,
@@ -2527,83 +2527,25 @@ bool AIE2PInstructionSelector::canCombineSRS(MachineInstr &MemOp,
   return getCombinedOpcodeSRS(MemOp, CombOp, NoImmediate, IsSigned).has_value();
 }
 
-bool AIE2PInstructionSelector::selectG_AIE_STORE_SRS(MachineInstr &StoreI,
-                                                     MachineRegisterInfo &MRI) {
-
-  Register SrsResult = (StoreI.uses().begin())->getReg();
-  MachineInstr *SrsOp = getDefIgnoringCopiesAndBitcasts(SrsResult, MRI);
-
-  assert(SrsOp && "Expected SSA.");
-
-  if (!canCombineSRS(StoreI, *SrsOp, MRI))
-    return false;
-
-  std::optional<AddressingModeInfo> AMI =
-      getOrDefineAddressingRegister(StoreI, MRI);
-  if (!AMI)
-    return false;
-
-  // Note: Operand 1 is the ID of the intrinsic
-  Register SrcReg = SrsOp->getOperand(2).getReg();
-  Register ShftReg = SrsOp->getOperand(3).getReg();
-  Register SignReg = SrsOp->getOperand(4).getReg();
-
-  unsigned MemOpLoadStoreSize = getLoadStoreSize(StoreI);
-  TypeSize SrcRegSize = MRI.getType(SrcReg).getSizeInBits();
-  assert(((MemOpLoadStoreSize == 256 &&
-           (SrcRegSize == 512 || SrcRegSize == 1024)) ||
-          (MemOpLoadStoreSize == 512 &&
-           (SrcRegSize == 1024 || SrcRegSize == 2048))) &&
-         "Unexpected VST.SRS size");
-
-  auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI);
-  bool ConstantSign = SignVal ? true : false;
-  // SignVal = 1 for signed and 0 for unsigned
-  std::optional<LoadStoreOpcodes> LSO =
-      getCombinedOpcodeSRS(StoreI, *SrsOp, AMI->ImmediateOffset,
-                           ConstantSign ? SignVal.value().Value == 0x1 : false);
-
-  assert(LSO && "Unexpected VST.SRS combine failure");
-
+std::optional<unsigned>
+AIE2PInstructionSelector::getSRSModeForIntrinsic(Intrinsic::ID ID) {
   // Selects the mode of the accumulator for SRS instructions
   // 0 – 32-bit accumulator lane
   // 1 – 64-bit accumulator lane
-  MIB.setInstr(StoreI);
-  switch (cast<GIntrinsic>(SrsOp)->getIntrinsicID()) {
+  switch (ID) {
   case Intrinsic::aie2p_I512_v64_acc32_srs:
   case Intrinsic::aie2p_I512_v32_acc32_srs:
   case Intrinsic::aie2p_I256_v16_acc32_srs:
   case Intrinsic::aie2p_I256_v32_acc32_srs:
-    MIB.buildInstr(AIE2P::MOV_scalar_imm11_pseudo, {AIE2P::crSRSMode}, {})
-        .addImm(0);
-    break;
+    return 0;
   case Intrinsic::aie2p_I512_v32_acc64_srs:
   case Intrinsic::aie2p_I512_v16_acc64_srs:
   case Intrinsic::aie2p_I256_v8_acc64_srs:
   case Intrinsic::aie2p_I256_v16_acc64_srs:
-    MIB.buildInstr(AIE2P::MOV_scalar_imm11_pseudo, {AIE2P::crSRSMode}, {})
-        .addImm(1);
-    break;
+    return 1;
+  default:
+    return std::nullopt;
   }
-
-  auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
-
-  for (auto Def : StoreI.defs())
-    NewInstr.addDef(Def.getReg());
-
-  NewInstr.addUse(SrcReg);
-  NewInstr.addUse(ShftReg);
-
-  addAddressingMode(NewInstr, *AMI, LSO->FitsImmediateRange, false, MRI);
-
-  NewInstr.cloneMemRefs(StoreI);
-
-  if (!ConstantSign)
-    setUnsetCtrlRegister(MIB, *NewInstr, MRI, AIE2P::srsSign0, SignReg);
-
-  makeDeadMI(*SrsOp, MRI);
-  StoreI.eraseFromParent();
-  return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
 }
 
 bool AIE2PInstructionSelector::selectVUNPACK(MachineInstr &I,

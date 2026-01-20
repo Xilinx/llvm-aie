@@ -252,6 +252,29 @@ protected:
   virtual bool selectG_AIE_STORE_PACK(MachineInstr &StoreI,
                                       MachineRegisterInfo &MRI);
 
+  /// Shared implementation for G_AIE_STORE_SRS selection.
+  /// Returns true if SRS combine was successful.
+  virtual bool selectG_AIE_STORE_SRS(MachineInstr &StoreI,
+                                     MachineRegisterInfo &MRI);
+
+  /// Check if SRS combine is possible. Override in derived classes.
+  virtual bool canCombineSRS(MachineInstr &MemOp, MachineInstr &CombOp,
+                             MachineRegisterInfo &MRI) {
+    return false;
+  }
+
+  /// Get combined opcode for SRS store. Override in derived classes.
+  virtual std::optional<LoadStoreOpcodes>
+  getCombinedOpcodeSRS(const MachineInstr &MemOp, const MachineInstr &CombOp,
+                       std::optional<APInt> Immediate, bool IsSigned) {
+    return std::nullopt;
+  }
+
+  /// Get SRS mode (0 for 32-bit acc, 1 for 64-bit acc) based on intrinsic.
+  virtual std::optional<unsigned> getSRSModeForIntrinsic(Intrinsic::ID ID) {
+    return std::nullopt;
+  }
+
 protected:
   MachineIRBuilder MIB;
 

@@ -84,7 +84,8 @@ public:
   bool select512BitG_AIE_LOAD_STORE(MachineInstr &I, LoadStoreOpcodes &LSO,
                                     AddressingModeInfo &AMI,
                                     MachineRegisterInfo &MRI);
-  bool selectG_AIE_STORE_SRS(MachineInstr &StoreI, MachineRegisterInfo &MRI);
+  bool selectG_AIE_STORE_SRS(MachineInstr &StoreI,
+                             MachineRegisterInfo &MRI) override;
   bool select512BitG_AIE_STORE_SRS(LoadStoreOpcodes &LSO,
                                    AddressingModeInfo &AMI, Register SrcReg,
                                    Register ShftReg, Register SignReg,
