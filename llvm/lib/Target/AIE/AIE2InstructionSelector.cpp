@@ -90,7 +90,8 @@ public:
                                    Register ShftReg, Register SignReg,
                                    bool ConstantSign, MachineRegisterInfo &MRI);
   bool selectG_AIE_STORE_CONV(MachineInstr &StoreI, MachineRegisterInfo &MRI);
-  bool selectG_AIE_STORE_PACK(MachineInstr &StoreI, MachineRegisterInfo &MRI);
+  bool selectG_AIE_STORE_PACK(MachineInstr &StoreI,
+                              MachineRegisterInfo &MRI) override;
   bool selectStartLoop(MachineInstr &I, MachineRegisterInfo &MRI);
 
   unsigned getSub256LoIdx() const override { return AIE2::sub_256_lo; }
@@ -139,9 +140,9 @@ private:
   bool canCombineSRSUPS(MachineInstr &MemOp, MachineInstr &CombOp);
   std::optional<LoadStoreOpcodes>
   getCombinedOpcodePACK(const MachineInstr &MemOp, const MachineInstr &CombOp,
-                        std::optional<APInt> Immediate, bool IsSigned,
-                        bool Is32Lanes);
-  bool canCombinePACK(MachineInstr &MemOp, MachineInstr &CombOp);
+                        std::optional<APInt> Immediate, bool IsSigned) override;
+  bool canCombinePACK(MachineInstr &MemOp, MachineInstr &CombOp,
+                      MachineRegisterInfo &MRI) override;
   bool canCombineUNPACKLoad(MachineInstr &MemOp, MachineInstr &CombOp,
                             MachineRegisterInfo &MRI) override;
   std::optional<LoadStoreOpcodes> getCombinedOpcodeUNPACKLoad(
@@ -2572,7 +2573,7 @@ LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
 
 std::optional<LoadStoreOpcodes> AIE2InstructionSelector::getCombinedOpcodePACK(
     const MachineInstr &MemOp, const MachineInstr &CombOp,
-    std::optional<APInt> Immediate, bool IsSigned, bool Is32Lanes) {
+    std::optional<APInt> Immediate, bool IsSigned) {
   const bool AlwaysFitsImmediateRange = true;
 
   if (CombOp.getOpcode() != AIE2::G_INTRINSIC_W_SIDE_EFFECTS ||
@@ -2583,6 +2584,10 @@ std::optional<LoadStoreOpcodes> AIE2InstructionSelector::getCombinedOpcodePACK(
     return {};
 
   assert(getLoadStoreSize(MemOp) == 256 && "Unexpected VST.PACK size");
+
+  // Determine lane size from intrinsic type
+  bool Is32Lanes =
+      cast<GIntrinsic>(CombOp).getIntrinsicID() == Intrinsic::aie2_pack_I8_I16;
 
   unsigned ISelOpcode;
   bool FitsImmediateRange = false;
@@ -2723,13 +2728,13 @@ std::optional<LoadStoreOpcodes> AIE2InstructionSelector::getCombinedOpcodePACK(
 }
 
 bool AIE2InstructionSelector::canCombinePACK(MachineInstr &MemOp,
-                                             MachineInstr &CombOp) {
+                                             MachineInstr &CombOp,
+                                             MachineRegisterInfo &MRI) {
 
   std::optional<APInt> NoImmediate = {};
   bool IsSigned = true;
-  bool Is32Lanes = true;
 
-  return getCombinedOpcodePACK(MemOp, CombOp, NoImmediate, IsSigned, Is32Lanes)
+  return getCombinedOpcodePACK(MemOp, CombOp, NoImmediate, IsSigned)
       .has_value();
 }
 
@@ -2741,17 +2746,14 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_PACK(MachineInstr &StoreI,
 
   assert(PackOp && "Expected SSA.");
 
-  if (!canCombinePACK(StoreI, *PackOp) ||
+  if (!canCombinePACK(StoreI, *PackOp, MRI) ||
       StoreI.getParent() != PackOp->getParent() || !MRI.hasOneUse(PackResult))
     return false;
 
-  std::optional<AddressingModeInfo> AMI =
+  std::optional<AddressingModeInfo> AddrModeInfo =
       getOrDefineAddressingRegister(StoreI, MRI);
-  if (!AMI)
+  if (!AddrModeInfo)
     return false;
-
-  bool Is32Lanes =
-      cast<GIntrinsic>(PackOp)->getIntrinsicID() == Intrinsic::aie2_pack_I8_I16;
 
   // Note: Operand 1 is the ID of the intrinsic
   Register SrcReg = PackOp->getOperand(2).getReg();
@@ -2761,12 +2763,12 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_PACK(MachineInstr &StoreI,
   bool ConstantSign = false;
   if (auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI)) {
     // SignVal = 1 for signed and 0 for dynamically signed
-    LSO = getCombinedOpcodePACK(StoreI, *PackOp, AMI->ImmediateOffset,
-                                SignVal.value().Value == 0x1, Is32Lanes);
+    LSO = getCombinedOpcodePACK(StoreI, *PackOp, AddrModeInfo->ImmediateOffset,
+                                SignVal.value().Value == 0x1);
     ConstantSign = true;
   } else {
-    LSO = getCombinedOpcodePACK(StoreI, *PackOp, AMI->ImmediateOffset, false,
-                                Is32Lanes);
+    LSO = getCombinedOpcodePACK(StoreI, *PackOp, AddrModeInfo->ImmediateOffset,
+                                false);
   }
 
   assert(LSO && "Unexpected VST.PACK combine failure");
@@ -2776,7 +2778,8 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_PACK(MachineInstr &StoreI,
   for (auto Def : StoreI.defs())
     NewInstr.addDef(Def.getReg());
 
-  addAddressingMode(NewInstr, *AMI, LSO->FitsImmediateRange, false, MRI);
+  addAddressingMode(NewInstr, *AddrModeInfo, LSO->FitsImmediateRange, false,
+                    MRI);
 
   NewInstr.addUse(SrcReg);
 

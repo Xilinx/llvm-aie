@@ -909,6 +909,75 @@ bool AIEBaseInstructionSelector::selectG_AIE_LOAD_UNPACK(
   return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
 }
 
+bool AIEBaseInstructionSelector::selectG_AIE_STORE_PACK(
+    MachineInstr &StoreI, MachineRegisterInfo &MRI) {
+
+  Register PackResult = (StoreI.uses().begin())->getReg();
+  MachineInstr *PackOp = getDefIgnoringCopiesAndBitcasts(PackResult, MRI);
+
+  if (!canCombinePACK(StoreI, *PackOp, MRI))
+    return false;
+
+  std::optional<AddressingModeInfo> AddrModeInfo =
+      getOrDefineAddressingRegister(StoreI, MRI);
+  if (!AddrModeInfo)
+    return false;
+
+  // Note: Operand 1 is the ID of the intrinsic
+  Register SrcReg = PackOp->getOperand(2).getReg();
+  Register SignReg = PackOp->getOperand(3).getReg();
+
+  unsigned MemOpLoadStoreSize = getLoadStoreSize(StoreI);
+  TypeSize SrcRegSize = MRI.getType(SrcReg).getSizeInBits();
+  assert(((MemOpLoadStoreSize == 256 && SrcRegSize == 512) ||
+          (MemOpLoadStoreSize == 512 && SrcRegSize == 1024)) &&
+         "Unexpected VST.PACK size");
+
+  auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI);
+  bool ConstantSign = SignVal ? true : false;
+  // SignVal = 1 for signed and 0 for dynamically signed
+  std::optional<LoadStoreOpcodes> LSO = getCombinedOpcodePACK(
+      StoreI, *PackOp, AddrModeInfo->ImmediateOffset,
+      ConstantSign ? SignVal.value().Value == 0x1 : false);
+
+  assert(LSO && "Unexpected VST.PACK combine failure");
+
+  // Note: the output size (I8 or I4) is not encoded as part of the instruction,
+  // but it is read from the crPackSize register.
+  auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
+
+  for (auto Def : StoreI.defs())
+    NewInstr.addDef(Def.getReg());
+
+  NewInstr.addUse(SrcReg);
+
+  addAddressingMode(NewInstr, *AddrModeInfo, LSO->FitsImmediateRange, false,
+                    MRI);
+
+  NewInstr.cloneMemRefs(StoreI);
+
+  // Set the crPackSize before NewInstr
+  // Selects the size of the Pack instructions
+  // 0 – Destination is 4 bits
+  // 1 – Destination is 8 bits
+  Register PackSizeReg = TRI.getPackSizeCtrlReg();
+  if (PackSizeReg.isValid()) {
+    const bool Is8Bit =
+        isPackI8Intrinsic(cast<GIntrinsic>(PackOp)->getIntrinsicID());
+    auto Opcode = TII.getMvSclMultiSlotPseudoOpcode();
+    MIB.setInstr(*NewInstr);
+    MIB.buildInstr(Opcode, {PackSizeReg}, {}).addImm((unsigned)Is8Bit);
+  }
+
+  Register PackSignReg = TRI.getPackSignCtrlReg();
+  if (!ConstantSign && PackSignReg.isValid())
+    setUnsetCtrlRegister(MIB, *NewInstr, MRI, PackSignReg, SignReg);
+
+  StoreI.eraseFromParent();
+  makeDeadMI(*PackOp, MRI);
+  return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
+}
+
 std::optional<AddressingModeInfo>
 AIEBaseInstructionSelector::getOrDefineAddressingRegister(
     MachineInstr &MemI, MachineRegisterInfo &MRI) {

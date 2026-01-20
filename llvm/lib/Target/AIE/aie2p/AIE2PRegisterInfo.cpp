@@ -729,3 +729,11 @@ AIE2PRegisterInfo::matchStatusRegisterBitwidth(Register StatusReg,
 Register AIE2PRegisterInfo::getUnpackSignCtrlReg() const {
   return AIE2P::unpackSign0;
 }
+
+Register AIE2PRegisterInfo::getPackSignCtrlReg() const {
+  return AIE2P::packSign0;
+}
+
+Register AIE2PRegisterInfo::getPackSizeCtrlReg() const {
+  return AIE2P::crPackSize;
+}

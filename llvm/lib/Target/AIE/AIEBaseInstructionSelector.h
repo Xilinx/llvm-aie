@@ -235,6 +235,23 @@ protected:
       std::optional<APInt> Immediate, bool IsSigned) = 0;
   bool selectG_AIE_LOAD_UNPACK(MachineInstr &UNPACKI, MachineRegisterInfo &MRI);
 
+  // Virtual methods for PACK combine
+  virtual bool canCombinePACK(MachineInstr &MemOp, MachineInstr &CombOp,
+                              MachineRegisterInfo &MRI) {
+    return false;
+  }
+  virtual std::optional<LoadStoreOpcodes>
+  getCombinedOpcodePACK(const MachineInstr &MemOp, const MachineInstr &CombOp,
+                        std::optional<APInt> Immediate, bool IsSigned) {
+    return {};
+  }
+  /// Returns true if the intrinsic produces 8-bit output (vs 4-bit).
+  virtual bool isPackI8Intrinsic(Intrinsic::ID IntrinsicID) const {
+    llvm_unreachable("Target didn't implement isPackI8Intrinsic!");
+  }
+  virtual bool selectG_AIE_STORE_PACK(MachineInstr &StoreI,
+                                      MachineRegisterInfo &MRI);
+
 protected:
   MachineIRBuilder MIB;
 
