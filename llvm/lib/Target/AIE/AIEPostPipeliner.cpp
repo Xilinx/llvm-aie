@@ -48,6 +48,27 @@ static cl::opt<int> PresetII("aie-postpipeliner-target-ii",
 
 PipelineScheduleVisitor::~PipelineScheduleVisitor() {}
 
+std::optional<int> PostPipelinerStrategy::fitInInterval(
+    MachineInstr &MI, int First, int Last, int II,
+    const AIEHazardRecognizer &HR,
+    ResourceScoreboard<FuncUnitWrapper> &Scoreboard) {
+  assert(First <= Last);
+  const int Step = fromTop() ? 1 : -1;
+  if (Step < 0) {
+    std::swap(First, Last);
+  }
+
+  const int Limit = Last + Step;
+  for (int C = First; C != Limit; C += Step) {
+    const int Mod = C % II;
+    if (!HR.checkConflict(Scoreboard, MI, Mod)) {
+      return C;
+    }
+  }
+
+  return std::nullopt;
+}
+
 class PostPipelineDumper : public PipelineScheduleVisitor {
 public:
   PostPipelineDumper() : PipelineScheduleVisitor() {}
@@ -231,25 +252,6 @@ void PostPipeliner::scheduleNode(SUnit &SU, int Cycle,
   if (Next < int(Info.Nodes.size())) {
     Info[Next].Earliest = std::max(Info[Next].Earliest, Cycle + II);
   }
-}
-
-// Check resources. We only insert at the position modulo II. Since we insert
-// all iterations separately, the resources that wrap around accumulate in the
-// overflow area, causing conflicts when inserting future iterations
-int PostPipeliner::fit(MachineInstr *MI, int First, int Last, int II) {
-  const int Step = First > Last ? -1 : 1;
-  LLVM_DEBUG(dbgs() << "   " << First << ", " << Last << ", " << Step << "\n");
-  for (int C = First; C != Last; C += Step) {
-    int Mod = C % II;
-    LLVM_DEBUG(dbgs() << "   at " << C << " (" << Mod << ")\n");
-    if (!HR.checkConflict(Scoreboard, *MI, Mod)) {
-      LLVM_DEBUG(dbgs() << "    Success\n");
-      return C;
-    }
-  }
-  LLVM_DEBUG(dbgs() << "    Fail\n");
-
-  return -1;
 }
 
 // Account for predecessor that require the same resources by pushing Earliest
@@ -747,20 +749,20 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
   const int PipelineDepth = HR.getPipelineDepth();
   for (int K = 0; K < NInstr; K++) {
     const int N = mostUrgent(Strategy);
-    LLVM_DEBUG(dbgs() << "  Trying " << N << "\n");
     SUnit &SU = DAG->SUnits[N];
-    MachineInstr *MI = SU.getInstr();
+    MachineInstr *const MI = SU.getInstr();
     const int Earliest = Strategy.earliest(SU);
     const int Latest = Strategy.latest(SU);
+    LLVM_DEBUG(
+        dbgs() << format("  Trying %d in [%d, %d]\n", N, Earliest, Latest));
     if (Earliest > Latest) {
-      LLVM_DEBUG(dbgs() << "Latency violation at node " << N << " interval=["
-                        << Earliest << ", " << Latest << "]\n");
+      LLVM_DEBUG(dbgs() << "  Latency violation.\n");
       return false;
     }
 
-    const int Actual = Strategy.fromTop() ? fit(MI, Earliest, Latest + 1, II)
-                                          : fit(MI, Latest, Earliest - 1, II);
-    if (Actual < 0) {
+    auto OptCycle =
+        Strategy.fitInInterval(*MI, Earliest, Latest, II, HR, Scoreboard);
+    if (!OptCycle) {
       LLVM_DEBUG(dbgs() << "Out of resources\n");
 
       // The node might have been given too tight Earliest/Latest attributes.
@@ -769,6 +771,7 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
       Info[N].TweakedLatest = {};
       return false;
     }
+    const int Actual = *OptCycle;
     Strategy.selected(SU);
     const int ModCycle = Actual % II;
     const MemoryBankBits MemoryBanks = HR.getMemoryBanks(MI);
