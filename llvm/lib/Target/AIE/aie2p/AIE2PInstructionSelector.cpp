@@ -92,7 +92,6 @@ public:
   bool selectG_LOAD(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_STORE(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_AIE_LOAD_STORE(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectG_AIE_STORE_PACK(MachineInstr &StoreI, MachineRegisterInfo &MRI);
   bool selectG_AIE_STORE_SRS(MachineInstr &StoreI, MachineRegisterInfo &MRI);
   bool selectWideG_AIE_LOAD_STORE(MachineInstr &I, LoadStoreOpcodes &LSO,
                                   AddressingModeInfo &AMI,
@@ -144,9 +143,13 @@ private:
                      MachineRegisterInfo &MRI);
   std::optional<LoadStoreOpcodes>
   getCombinedOpcodePACK(const MachineInstr &MemOp, const MachineInstr &CombOp,
-                        std::optional<APInt> Immediate, bool IsSigned);
+                        std::optional<APInt> Immediate, bool IsSigned) override;
   bool canCombinePACK(MachineInstr &MemOp, MachineInstr &CombOp,
-                      MachineRegisterInfo &MRI);
+                      MachineRegisterInfo &MRI) override;
+  bool isPackI8Intrinsic(Intrinsic::ID IntrinsicID) const override {
+    return IntrinsicID == Intrinsic::aie2p_pack_I512_I8_I16 ||
+           IntrinsicID == Intrinsic::aie2p_pack_I1024_I8_I16;
+  }
   std::optional<LoadStoreOpcodes>
   getCombinedOpcodeSRS(const MachineInstr &MemOp, const MachineInstr &CombOp,
                        std::optional<APInt> Immediate, bool IsSigned);
@@ -2509,73 +2512,6 @@ bool AIE2PInstructionSelector::canCombinePACK(MachineInstr &MemOp,
 
   return getCombinedOpcodePACK(MemOp, CombOp, NoImmediate, IsSigned)
       .has_value();
-}
-
-bool AIE2PInstructionSelector::selectG_AIE_STORE_PACK(
-    MachineInstr &StoreI, MachineRegisterInfo &MRI) {
-
-  Register PackResult = (StoreI.uses().begin())->getReg();
-  MachineInstr *PackOp = getDefIgnoringCopiesAndBitcasts(PackResult, MRI);
-
-  if (!canCombinePACK(StoreI, *PackOp, MRI))
-    return false;
-
-  std::optional<AddressingModeInfo> AMI =
-      getOrDefineAddressingRegister(StoreI, MRI);
-  if (!AMI)
-    return false;
-
-  // Note: Operand 1 is the ID of the intrinsic
-  Register SrcReg = PackOp->getOperand(2).getReg();
-  Register SignReg = PackOp->getOperand(3).getReg();
-
-  unsigned MemOpLoadStoreSize = getLoadStoreSize(StoreI);
-  TypeSize SrcRegSize = MRI.getType(SrcReg).getSizeInBits();
-  assert(((MemOpLoadStoreSize == 256 && SrcRegSize == 512) ||
-          (MemOpLoadStoreSize == 512 && SrcRegSize == 1024)) &&
-         "Unexpected VST.PACK size");
-
-  auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI);
-  bool ConstantSign = SignVal ? true : false;
-  // SignVal = 1 for signed and 0 for dynamically signed
-  std::optional<LoadStoreOpcodes> LSO = getCombinedOpcodePACK(
-      StoreI, *PackOp, AMI->ImmediateOffset,
-      ConstantSign ? SignVal.value().Value == 0x1 : false);
-
-  assert(LSO && "Unexpected VST.PACK combine failure");
-
-  // Note: the output size (I8 or I4) is not encoded as part of the instruction,
-  // but it is read from the crPackSize register.
-  auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
-
-  for (auto Def : StoreI.defs())
-    NewInstr.addDef(Def.getReg());
-
-  NewInstr.addUse(SrcReg);
-
-  addAddressingMode(NewInstr, *AMI, LSO->FitsImmediateRange, false, MRI);
-
-  NewInstr.cloneMemRefs(StoreI);
-
-  // Set the crPackSize before NewInstr
-  // Selects the size of the Pack instructions
-  // 0 – Destination is 4 bits
-  // 1 – Destination is 8 bits
-  const bool Is8Bit = cast<GIntrinsic>(PackOp)->getIntrinsicID() ==
-                          Intrinsic::aie2p_pack_I512_I8_I16 ||
-                      cast<GIntrinsic>(PackOp)->getIntrinsicID() ==
-                          Intrinsic::aie2p_pack_I1024_I8_I16;
-
-  auto Opcode = TII.getMvSclMultiSlotPseudoOpcode();
-  MIB.setInstr(*NewInstr);
-  MIB.buildInstr(Opcode, {AIE2P::crPackSize}, {}).addImm((unsigned)Is8Bit);
-
-  if (!ConstantSign)
-    setUnsetCtrlRegister(MIB, *NewInstr, MRI, AIE2P::packSign0, SignReg);
-
-  StoreI.eraseFromParent();
-  makeDeadMI(*PackOp, MRI);
-  return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
 }
 
 bool AIE2PInstructionSelector::canCombineSRS(MachineInstr &MemOp,

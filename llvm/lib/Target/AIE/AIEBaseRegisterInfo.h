@@ -83,6 +83,16 @@ struct AIEBaseRegisterInfo : public TargetRegisterInfo {
     llvm_unreachable("Target didn't implement getUnpackSignCtrlReg!");
   }
 
+  /// Returns the control register used for PACK sign control
+  virtual Register getPackSignCtrlReg() const {
+    llvm_unreachable("Target didn't implement getPackSignCtrlReg!");
+  }
+
+  /// Returns the control register used for PACK size control
+  virtual Register getPackSizeCtrlReg() const {
+    llvm_unreachable("Target didn't implement getPackSizeCtrlReg!");
+  }
+
   /// Given a register bank and operand type, return the smallest register class
   /// that can hold a value on that bank.
   virtual const TargetRegisterClass &

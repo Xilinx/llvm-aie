@@ -118,6 +118,8 @@ struct AIE2PRegisterInfo : public AIE2PGenRegisterInfo {
                                        unsigned SrcConstVal) const override;
 
   Register getUnpackSignCtrlReg() const override;
+  Register getPackSignCtrlReg() const override;
+  Register getPackSizeCtrlReg() const override;
 };
 } // namespace llvm
 
