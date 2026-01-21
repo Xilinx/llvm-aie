@@ -3,7 +3,7 @@
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -16,9 +16,9 @@
 #include "mlir/IR/BuiltinTypes.h"
 #include "mlir/IR/PatternMatch.h"
 #include "mlir/IR/TypeUtilities.h"
+#include "mlir/Transforms/InliningUtils.h"
 
 #include "mlir/Dialect/Quant/IR/QuantOpsDialect.cpp.inc"
-
 
 namespace mlir {
 namespace quant {
@@ -124,8 +124,15 @@ LogicalResult verifyQuantizationOp(Operation *op, QuantizedType quantizedType,
   return success();
 }
 
-}  // namespace
+struct QuantInlinerInterface : public DialectInlinerInterface {
+  using DialectInlinerInterface::DialectInlinerInterface;
+  /// All quant dialect ops can be inlined.
+  bool isLegalToInline(Operation *, Region *, bool, IRMapping &) const final {
+    return true;
+  }
+};
 
+} // namespace
 
 //===----------------------------------------------------------------------===//
 // Dialect
@@ -139,8 +146,8 @@ void QuantDialect::initialize() {
 #include "mlir/Dialect/Quant/IR/QuantOps.cpp.inc"
       >();
   detail::addBytecodeInterface(this);
+  addInterfaces<QuantInlinerInterface>();
 }
-
 
 //===----------------------------------------------------------------------===//
 // DequantizeCastOp
@@ -170,7 +177,6 @@ QuantizedType DequantizeCastOp::getQuantizedType() {
   return cast<QuantizedType>(getElementTypeOrSelf(getInput().getType()));
 }
 
-
 //===----------------------------------------------------------------------===//
 // QuantizeCastOp
 //===----------------------------------------------------------------------===//
@@ -199,7 +205,6 @@ FloatType QuantizeCastOp::getFloatType() {
 QuantizedType QuantizeCastOp::getQuantizedType() {
   return cast<QuantizedType>(getElementTypeOrSelf(getResult().getType()));
 }
-
 
 //===----------------------------------------------------------------------===//
 // StorageCastOp
@@ -248,10 +253,8 @@ QuantizedType StorageCastOp::getQuantizedType() {
   return cast<QuantizedType>(resultScalarType);
 }
 
-
 } // namespace quant
 } // namespace mlir
 
 #define GET_OP_CLASSES
 #include "mlir/Dialect/Quant/IR/QuantOps.cpp.inc"
-
