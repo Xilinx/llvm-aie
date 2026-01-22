@@ -1,0 +1,215 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc -mtriple=aie2 -run-pass=greedy,virtregrewriter,stack-slot-coloring %s -o - 2>&1 \
+# RUN:   | FileCheck %s
+
+# =============================================================================
+# StackSlotColoring Test
+# =============================================================================
+#
+# This test demonstrates how StackSlotColoring merges spill slots based on
+# live range analysis. The pass runs after register allocation and merges
+# spill slots whose values don't coexist in time.
+#
+# Test Structure Rationale:
+# -------------------------
+# To test StackSlotColoring, we need to:
+# 1. Force the register allocator to spill virtual registers
+# 2. Ensure spills have specific live range relationships (overlapping vs not)
+# 3. Avoid "ran out of registers" errors during allocation
+#
+# The eD register class has only 8 registers (d0-d7). To force spills while
+# keeping allocation possible:
+# - We use 7 physical registers initially, leaving one free for vreg allocation
+# - After the vreg is allocated, we fill the last register to create pressure
+# - We kill physical registers before the vreg needs to be reloaded
+#
+# This careful orchestration ensures spills happen but the allocator always
+# has at least one register available for spill/reload code.
+#
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Test: Non-overlapping live ranges CAN be merged by StackSlotColoring
+# -----------------------------------------------------------------------------
+# Two virtual registers with non-overlapping live ranges are forced to spill
+# due to register pressure. StackSlotColoring merges their spill slots.
+#
+# Timeline:
+#                        Time -->
+#   %0: [def]========[use]
+#   %1:                    [def]========[use]
+#                          ^
+#                          %0 is dead here, slots can share memory
+#
+# Result: Both spill slots get merged into one (fi#2 -> fi#1)
+
+# CHECK-LABEL: name: non_overlapping_can_merge
+# CHECK: stack:
+# CHECK: - { id: 1, {{.*}}type: spill-slot
+# After coloring, only ONE spill slot
+# CHECK-NOT: - { id: 2, {{.*}}type: spill-slot
+# CHECK: body:
+
+--- |
+  @g = external global i128
+  define void @non_overlapping_can_merge() {
+  entry:
+    %a = alloca i128, align 4
+    unreachable
+  }
+
+  define void @overlapping_cannot_merge() {
+  entry:
+    %a = alloca i128, align 4
+    unreachable
+  }
+...
+---
+name: non_overlapping_can_merge
+tracksRegLiveness: true
+registers:
+  - { id: 0, class: ed }
+  - { id: 1, class: ed }
+stack:
+  - { id: 0, name: a, type: default, size: 16, alignment: 4 }
+body: |
+  bb.0.entry:
+    ; Phase 1: Use 7 of 8 d-registers, leaving d7 free for vreg allocation
+    $d0 = LDA_D_SPILL %stack.0, implicit $sp :: (volatile load (s128) from %ir.a)
+    $d1 = LDA_D_SPILL %stack.0, implicit $sp :: (volatile load (s128) from %ir.a)
+    $d2 = LDA_D_SPILL %stack.0, implicit $sp :: (volatile load (s128) from %ir.a)
+    $d3 = LDA_D_SPILL %stack.0, implicit $sp :: (volatile load (s128) from %ir.a)
+    $d4 = LDA_D_SPILL %stack.0, implicit $sp :: (volatile load (s128) from %ir.a)
+    $d5 = LDA_D_SPILL %stack.0, implicit $sp :: (volatile load (s128) from %ir.a)
+    $d6 = LDA_D_SPILL %stack.0, implicit $sp :: (volatile load (s128) from %ir.a)
+
+    ; Phase 2: Define first vreg - allocator assigns d7 (the only free reg)
+    %0:ed = LDA_D_SPILL %stack.0, implicit $sp :: (volatile load (s128) from %ir.a)
+
+    ; Phase 3: Now use d7 - this creates full pressure, forcing %0 to spill
+    $d7 = LDA_D_SPILL %stack.0, implicit $sp :: (volatile load (s128) from %ir.a)
+
+    ; Phase 4: Use physical regs (keeping them live across %0's spill period)
+    ST_D_SPILL $d0, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL $d1, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL $d2, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL $d3, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL $d4, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL $d5, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL $d6, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ; Kill d7 - this frees a register for reloading %0
+    ST_D_SPILL killed $d7, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+
+    ; Phase 5: Use %0 - allocator can reload into freed d7
+    ; This ENDS %0's live range
+    ST_D_SPILL killed %0, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+
+    ; Phase 6: Define second vreg AFTER %0 is dead - NON-OVERLAPPING
+    %1:ed = LDA_D_SPILL %stack.0, implicit $sp :: (volatile load (s128) from %ir.a)
+
+    ; Phase 7: Create pressure again to force %1 to spill
+    $d7 = LDA_D_SPILL %stack.0, implicit $sp :: (volatile load (s128) from %ir.a)
+
+    ST_D_SPILL $d0, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL $d1, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL $d2, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL $d3, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL $d4, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL $d5, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL $d6, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL killed $d7, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+
+    ; Phase 8: Use %1
+    ST_D_SPILL killed %1, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+
+    ; Cleanup: kill remaining physical regs
+    ST_D_SPILL killed $d0, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL killed $d1, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL killed $d2, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL killed $d3, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL killed $d4, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL killed $d5, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL killed $d6, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+
+    RET implicit $lr
+...
+---
+# -----------------------------------------------------------------------------
+# Test: Overlapping live ranges CANNOT be merged by StackSlotColoring
+# -----------------------------------------------------------------------------
+# Two virtual registers with OVERLAPPING live ranges are forced to spill.
+# StackSlotColoring cannot merge their slots - both values must coexist.
+#
+# Timeline:
+#                        Time -->
+#   %0: [def]==================[use]
+#   %1:      [def]==================[use]
+#            ^                 ^
+#            |                 Both values still needed
+#            Both values must coexist here!
+#
+# Result: Both spill slots must remain separate (fi#1 and fi#2)
+
+# CHECK-LABEL: name: overlapping_cannot_merge  
+# CHECK: stack:
+# Two spill slots must remain
+# CHECK: - { id: 1, {{.*}}type: spill-slot
+# CHECK: - { id: 2, {{.*}}type: spill-slot
+
+name: overlapping_cannot_merge
+tracksRegLiveness: true
+registers:
+  - { id: 0, class: ed }
+  - { id: 1, class: ed }
+stack:
+  - { id: 0, name: a, type: default, size: 16, alignment: 4 }
+body: |
+  bb.0.entry:
+    ; Phase 1: Use 6 of 8 d-registers, leaving 2 free for both vregs
+    $d0 = LDA_D_SPILL %stack.0, implicit $sp :: (volatile load (s128) from %ir.a)
+    $d1 = LDA_D_SPILL %stack.0, implicit $sp :: (volatile load (s128) from %ir.a)
+    $d2 = LDA_D_SPILL %stack.0, implicit $sp :: (volatile load (s128) from %ir.a)
+    $d3 = LDA_D_SPILL %stack.0, implicit $sp :: (volatile load (s128) from %ir.a)
+    $d4 = LDA_D_SPILL %stack.0, implicit $sp :: (volatile load (s128) from %ir.a)
+    $d5 = LDA_D_SPILL %stack.0, implicit $sp :: (volatile load (s128) from %ir.a)
+
+    ; Phase 2: Define BOTH vregs back-to-back - OVERLAPPING live ranges
+    ; %0 gets d6, %1 gets d7
+    %0:ed = LDA_D_SPILL %stack.0, implicit $sp :: (volatile load (s128) from %ir.a)
+    %1:ed = LDA_D_SPILL %stack.0, implicit $sp :: (volatile load (s128) from %ir.a)
+
+    ; Phase 3: Fill remaining regs to force both vregs to spill
+    $d6 = LDA_D_SPILL %stack.0, implicit $sp :: (volatile load (s128) from %ir.a)
+    $d7 = LDA_D_SPILL %stack.0, implicit $sp :: (volatile load (s128) from %ir.a)
+
+    ; Phase 4: Use physical regs
+    ST_D_SPILL $d0, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL $d1, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL $d2, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL $d3, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL $d4, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL $d5, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ; Kill d6, d7 to free registers for reloading %0 and %1
+    ST_D_SPILL killed $d6, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL killed $d7, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+
+    ; Phase 5: Use both vregs - their live ranges OVERLAPPED between Phase 2-5
+    ; StackSlotColoring sees this overlap and keeps slots separate
+    ST_D_SPILL killed %0, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL killed %1, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+
+    ; Cleanup
+    ST_D_SPILL killed $d0, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL killed $d1, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL killed $d2, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL killed $d3, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL killed $d4, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+    ST_D_SPILL killed $d5, %stack.0, implicit $sp :: (volatile store (s128) into %ir.a)
+
+    RET implicit $lr
+...
