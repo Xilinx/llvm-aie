@@ -1,3 +1,6 @@
+# Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+# affiliates
+
 set(LLVM_OPTIONAL_SOURCES ByteCode.cpp)
 
 add_mlir_library(MLIRRewrite
@@ -10,6 +13,7 @@ add_mlir_library(MLIRRewrite
   DEPENDS
   mlir-generic-headers
   MLIRConversionPassIncGen
+  MLIRPDLOpsIncGen
 
   LINK_LIBS PUBLIC
   MLIRIR
