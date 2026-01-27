@@ -821,6 +821,14 @@ public:
     return {};
   };
 
+  /// Return information on how to expand a spill pseudo instruction by opcode.
+  /// This is used for recursive flattening of composite spill hierarchies.
+  /// Returns empty if the opcode is not a pseudo or doesn't need expansion.
+  virtual SmallVector<AIEPseudoExpandInfo, 4>
+  getSpillPseudoExpandInfoByOpcode(unsigned Opcode) const {
+    return {};
+  };
+
 protected:
   struct AIERegOffsetSpillInstrInfo {
     /// Opcode for spill using register offset.

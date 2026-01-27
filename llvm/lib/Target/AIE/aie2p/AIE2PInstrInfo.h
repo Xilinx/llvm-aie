@@ -193,6 +193,8 @@ protected:
   SmallVector<AIEPseudoExpandInfo, 4>
   getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
                            MachineInstr &MI) const override;
+  SmallVector<AIEPseudoExpandInfo, 4>
+  getSpillPseudoExpandInfoByOpcode(unsigned Opcode) const override;
 
   AIERegOffsetSpillInstrInfo
   getRegOffsetSpillInstrInfoFromImmOffset(const unsigned Opcode) const override;

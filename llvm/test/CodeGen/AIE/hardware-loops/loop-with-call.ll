@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 
 ; RUN: llc -O2 -mtriple=aie2 --enable-aie-hardware-loops \
 ; RUN:   --enable-aie-zero-overhead-loops %s -o - | FileCheck %s  --check-prefix=AIE2
@@ -421,16 +421,16 @@ define void @__addsf3_lowered_to_call(ptr %a) {
 ;
 ; AIE2P-LABEL: __addsf3_lowered_to_call:
 ; AIE2P:       // %bb.0: // %entry
-; AIE2P-NEXT:    nopa ; nopb ; paddxm [sp], #320
-; AIE2P-NEXT:    st p6, [sp, #-320] // 4-byte Folded Spill
-; AIE2P-NEXT:    st r9, [sp, #-304] // 4-byte Folded Spill
-; AIE2P-NEXT:    st r10, [sp, #-308] // 4-byte Folded Spill
-; AIE2P-NEXT:    st r11, [sp, #-312]; vmov bmlh0, x1 // 4-byte Folded Spill
-; AIE2P-NEXT:    mova r8, #0; st r8, [sp, #-300]; mov p6, p0 // 4-byte Folded Spill
-; AIE2P-NEXT:    st r12, [sp, #-316]; vinsert.32 x0, x0, #0, r8 // 4-byte Folded Spill
-; AIE2P-NEXT:    st lr, [sp, #-296]; vmov bmll0, x0 // 4-byte Folded Spill
-; AIE2P-NEXT:    vst bmlh0, [sp, #-192]; movxm r10, #16256 // 64-byte Folded Spill
-; AIE2P-NEXT:    mova r12, #60; vst bmll0, [sp, #-256]; movx r11, #16; mov r9, #1 // 64-byte Folded Spill
+; AIE2P-NEXT:    nopa ; nopb ; paddxm [sp], #192
+; AIE2P-NEXT:    st p6, [sp, #-192] // 4-byte Folded Spill
+; AIE2P-NEXT:    st r9, [sp, #-176] // 4-byte Folded Spill
+; AIE2P-NEXT:    st r10, [sp, #-180] // 4-byte Folded Spill
+; AIE2P-NEXT:    st r11, [sp, #-184]; vmov bmlh0, x1 // 4-byte Folded Spill
+; AIE2P-NEXT:    mova r8, #0; st r8, [sp, #-172]; mov p6, p0 // 4-byte Folded Spill
+; AIE2P-NEXT:    st r12, [sp, #-188]; vinsert.32 x0, x0, #0, r8 // 4-byte Folded Spill
+; AIE2P-NEXT:    st lr, [sp, #-168]; vmov bmll0, x0 // 4-byte Folded Spill
+; AIE2P-NEXT:    vst bmlh0, [sp, #-64]; movxm r10, #16256 // 64-byte Folded Spill
+; AIE2P-NEXT:    mova r12, #60; vst bmll0, [sp, #-128]; movx r11, #16; mov r9, #1 // 64-byte Folded Spill
 ; AIE2P-NEXT:  .LBB3_1: // %for.cond1.preheader
 ; AIE2P-NEXT:    // =>This Inner Loop Header: Depth=1
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; jl #__mulsf3; nopv
@@ -439,13 +439,11 @@ define void @__addsf3_lowered_to_call(ptr %a) {
 ; AIE2P-NEXT:    nop // Delay Slot 3
 ; AIE2P-NEXT:    nop // Delay Slot 2
 ; AIE2P-NEXT:    mova r2, #0; lshl r1, r10, r11 // Delay Slot 1
-; AIE2P-NEXT:    vlda bmll1, [sp, #-256]; nopb ; nops ; nopxm ; nopv // 64-byte Folded Reload
-; AIE2P-NEXT:    vlda bmlh1, [sp, #-192] // 64-byte Folded Reload
-; AIE2P-NEXT:    vlda bmhl1, [sp, #-128] // 64-byte Folded Reload
-; AIE2P-NEXT:    vlda bmhh1, [sp, #-64] // 64-byte Folded Reload
+; AIE2P-NEXT:    vlda bmll1, [sp, #-128]; nopb ; nopx // 64-byte Folded Reload
+; AIE2P-NEXT:    vlda bmlh1, [sp, #-64] // 64-byte Folded Reload
+; AIE2P-NEXT:    nop
+; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    vmov bmlh0, x5
-; AIE2P-NEXT:    nop
-; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    vinsert.32 x4, x0, #0, r0; vadd.f dm1, dm0, dm1, r12
 ; AIE2P-NEXT:    vmov bmll0, x4
@@ -458,18 +456,18 @@ define void @__addsf3_lowered_to_call(ptr %a) {
 ; AIE2P-NEXT:    mova r8, #1; vextract.16 r10, x6, #0, vaddsign1 // Delay Slot 1
 ; AIE2P-NEXT:  // %bb.2: // %for.cond.cleanup
 ; AIE2P-NEXT:    nop
-; AIE2P-NEXT:    lda lr, [sp, #-296] // 4-byte Folded Reload
-; AIE2P-NEXT:    lda p6, [sp, #-320] // 4-byte Folded Reload
-; AIE2P-NEXT:    lda r12, [sp, #-316] // 4-byte Folded Reload
-; AIE2P-NEXT:    lda r11, [sp, #-312] // 4-byte Folded Reload
-; AIE2P-NEXT:    lda r10, [sp, #-308] // 4-byte Folded Reload
-; AIE2P-NEXT:    lda r9, [sp, #-304] // 4-byte Folded Reload
-; AIE2P-NEXT:    lda r8, [sp, #-300] // 4-byte Folded Reload
+; AIE2P-NEXT:    lda lr, [sp, #-168] // 4-byte Folded Reload
+; AIE2P-NEXT:    lda p6, [sp, #-192] // 4-byte Folded Reload
+; AIE2P-NEXT:    lda r12, [sp, #-188] // 4-byte Folded Reload
+; AIE2P-NEXT:    lda r11, [sp, #-184] // 4-byte Folded Reload
+; AIE2P-NEXT:    lda r10, [sp, #-180] // 4-byte Folded Reload
+; AIE2P-NEXT:    lda r9, [sp, #-176] // 4-byte Folded Reload
+; AIE2P-NEXT:    lda r8, [sp, #-172] // 4-byte Folded Reload
 ; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    nop // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
 ; AIE2P-NEXT:    nop // Delay Slot 3
-; AIE2P-NEXT:    paddxm [sp], #-320 // Delay Slot 2
+; AIE2P-NEXT:    paddxm [sp], #-192 // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
 entry:
   br label %for.cond1.preheader
