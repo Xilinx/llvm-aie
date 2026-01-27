@@ -3,7 +3,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 
 ; When EXPENSIVE_CHECKS are enabled, the machine verifier appears between each
 ; pass. Ignore it with 'grep -v'.
@@ -229,6 +229,7 @@
 ; AIE-O123-NEXT:      Greedy Register Allocator
 ; AIE-O123-NEXT:      Virtual Register Rewriter
 ; AIE-O123-NEXT:      Stack Slot Coloring
+; AIE-O123-NEXT:      AIE Spill Slot Optimization
 ; AIE-O123-NEXT:      AIE 1D operands to 2D/3D rewriter
 ; AIE-O123-NEXT:      Machine Copy Propagation Pass
 ; AIE-O123-NEXT:      Machine Loop Invariant Code Motion

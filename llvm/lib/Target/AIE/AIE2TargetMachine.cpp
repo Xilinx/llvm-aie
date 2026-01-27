@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -40,6 +40,10 @@ static cl::opt<unsigned> StackAddrSpace(
 static cl::opt<bool> EnableOutlineMemoryGEP(
     "enable-outline-memory-gep", cl::Hidden, cl::init(true),
     cl::desc("Enable Outlining GEPs in Memory Instructions."));
+
+static cl::opt<bool> EnableStackMinimization(
+    "aie-stack-minimize", cl::Hidden, cl::init(true),
+    cl::desc("Enable spill decomposition and stack slot minimization"));
 
 extern cl::opt<bool> EnableAddressChaining;
 extern cl::opt<bool> EnableGlobalPtrModOptimizer;
@@ -192,6 +196,12 @@ bool AIE2PassConfig::addRegAssignAndRewriteOptimized() {
 }
 
 void AIE2PassConfig::addPostRewrite() {
+  if (EnableStackMinimization) {
+    // Decompose composite spills into subreg spills when only some subregs
+    // are live, and minimize stack slot sizes based on actual usage patterns.
+    addPass(createAIESpillSlotOptimization());
+  }
+
   if (getOptLevel() != CodeGenOptLevel::None && EnableSuperRegSplitting) {
     // Rewrite _split instructions which were used to facilitate RA.
     // Now we want the real "target" instructions with encoding and scheduling

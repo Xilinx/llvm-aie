@@ -1030,8 +1030,12 @@ AIE2PInstrInfo::getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
                                          MachineInstr &MI) const {
   if (!MI.isPseudo())
     return {};
+  return getSpillPseudoExpandInfoByOpcode(MI.getOpcode());
+}
 
-  switch (MI.getOpcode()) {
+SmallVector<AIEBaseInstrInfo::AIEPseudoExpandInfo, 4>
+AIE2PInstrInfo::getSpillPseudoExpandInfoByOpcode(unsigned Opcode) const {
+  switch (Opcode) {
   case AIE2P::ST_R_SPILL:
     return {{AIE2P::ST_dms_sts_spill, AIE2P::NoSubRegister, 4}};
   case AIE2P::VST_L_SPILL:
@@ -1124,8 +1128,9 @@ AIE2PInstrInfo::getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
     // where the pseudo is directly replaced with native 512-bit
     // load/store instructions.
     return {};
+  default:
+    return {};
   }
-  llvm_unreachable("Un-implemented");
 }
 
 AIEBaseInstrInfo::AIERegOffsetSpillInstrInfo

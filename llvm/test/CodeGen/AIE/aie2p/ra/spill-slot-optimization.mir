@@ -28,10 +28,10 @@
 # =============================================================================
 
 # RUN: llc -mtriple=aie2p --verify-machineinstrs \
-# RUN:     -run-pass=none -o - %s | FileCheck %s
+# RUN:     -run-pass=aie-spill-slot-opt -o - %s | FileCheck %s
 
 # RUN: llc -mtriple=aie2p --verify-machineinstrs \
-# RUN:     -run-pass=none,prologepilog -o - %s | FileCheck %s --check-prefix=STACK
+# RUN:     -run-pass=aie-spill-slot-opt,prologepilog -o - %s | FileCheck %s --check-prefix=STACK
 
 # =============================================================================
 # Section 1: Liveness-based Decomposition Tests
@@ -50,12 +50,14 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $cml0 = IMPLICIT_DEF
-  ; CHECK-NEXT:   VST_DM_SPILL renamable $dm0, %stack.0, implicit $sp :: (store (s2048) into %stack.0, align 64)
+  ; CHECK-NEXT:   VST_dmx_sts_bm_spill renamable $bmll0, %stack.1, implicit $sp :: (store (s512) into %stack.1)
+  ; CHECK-NEXT:   VST_dmx_sts_bm_spill renamable $bmlh0, %stack.2, implicit $sp :: (store (s512) into %stack.2)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   liveins: $cml0:0x000000000000000C
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   renamable $dm0 = VLDA_DM_SPILL %stack.0, implicit $sp :: (load (s2048) from %stack.0, align 64)
+  ; CHECK-NEXT:   renamable $bmll0 = VLDA_dmx_lda_bm_spill %stack.1, implicit $sp :: (load (s512) from %stack.1)
+  ; CHECK-NEXT:   renamable $bmlh0 = VLDA_dmx_lda_bm_spill %stack.2, implicit $sp :: (load (s512) from %stack.2)
   ; CHECK-NEXT:   $r0 = COPY killed renamable $cml0
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $r0
   ;
@@ -63,18 +65,18 @@ body:             |
   ; STACK: bb.0.entry:
   ; STACK-NEXT:   successors: %bb.1(0x80000000)
   ; STACK-NEXT: {{  $}}
-  ; STACK-NEXT:   frame-setup PADDXM_pstm_sp_imm 256, implicit-def $sp, implicit $sp
+  ; STACK-NEXT:   frame-setup PADDXM_pstm_sp_imm 128, implicit-def $sp, implicit $sp
   ; STACK-NEXT:   $cml0 = IMPLICIT_DEF
-  ; STACK-NEXT:   VST_dmx_sts_bm_spill $bmll0, -256, implicit $sp :: (store (s512) into %stack.0)
-  ; STACK-NEXT:   VST_dmx_sts_bm_spill $bmlh0, -192, implicit $sp :: (store (s512) into %stack.0 + 64)
+  ; STACK-NEXT:   VST_dmx_sts_bm_spill renamable $bmll0, -128, implicit $sp :: (store (s512) into %stack.1)
+  ; STACK-NEXT:   VST_dmx_sts_bm_spill renamable $bmlh0, -64, implicit $sp :: (store (s512) into %stack.2)
   ; STACK-NEXT: {{  $}}
   ; STACK-NEXT: bb.1:
   ; STACK-NEXT:   liveins: $cml0:0x000000000000000C
   ; STACK-NEXT: {{  $}}
-  ; STACK-NEXT:   $bmll0 = VLDA_dmx_lda_bm_spill -256, implicit $sp :: (load (s512) from %stack.0)
-  ; STACK-NEXT:   $bmlh0 = VLDA_dmx_lda_bm_spill -192, implicit $sp :: (load (s512) from %stack.0 + 64)
+  ; STACK-NEXT:   renamable $bmll0 = VLDA_dmx_lda_bm_spill -128, implicit $sp :: (load (s512) from %stack.1)
+  ; STACK-NEXT:   renamable $bmlh0 = VLDA_dmx_lda_bm_spill -64, implicit $sp :: (load (s512) from %stack.2)
   ; STACK-NEXT:   $r0 = COPY killed renamable $cml0
-  ; STACK-NEXT:   frame-destroy PADDXM_pstm_sp_imm -256, implicit-def $sp, implicit $sp
+  ; STACK-NEXT:   frame-destroy PADDXM_pstm_sp_imm -128, implicit-def $sp, implicit $sp
   ; STACK-NEXT:   PseudoRET implicit $lr, implicit $r0
   bb.0.entry:
     successors: %bb.1
@@ -103,12 +105,14 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $cmh0 = IMPLICIT_DEF
-  ; CHECK-NEXT:   VST_DM_SPILL renamable $dm0, %stack.0, implicit $sp :: (store (s2048) into %stack.0, align 64)
+  ; CHECK-NEXT:   VST_dmx_sts_bm_spill renamable $bmhl0, %stack.1, implicit $sp :: (store (s512) into %stack.1)
+  ; CHECK-NEXT:   VST_dmx_sts_bm_spill renamable $bmhh0, %stack.2, implicit $sp :: (store (s512) into %stack.2)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   liveins: $cmh0:0x0000000018000000
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   renamable $dm0 = VLDA_DM_SPILL %stack.0, implicit $sp :: (load (s2048) from %stack.0, align 64)
+  ; CHECK-NEXT:   renamable $bmhl0 = VLDA_dmx_lda_bm_spill %stack.1, implicit $sp :: (load (s512) from %stack.1)
+  ; CHECK-NEXT:   renamable $bmhh0 = VLDA_dmx_lda_bm_spill %stack.2, implicit $sp :: (load (s512) from %stack.2)
   ; CHECK-NEXT:   $r0 = COPY killed renamable $cmh0
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $r0
   ;
@@ -116,18 +120,18 @@ body:             |
   ; STACK: bb.0.entry:
   ; STACK-NEXT:   successors: %bb.1(0x80000000)
   ; STACK-NEXT: {{  $}}
-  ; STACK-NEXT:   frame-setup PADDXM_pstm_sp_imm 256, implicit-def $sp, implicit $sp
+  ; STACK-NEXT:   frame-setup PADDXM_pstm_sp_imm 128, implicit-def $sp, implicit $sp
   ; STACK-NEXT:   $cmh0 = IMPLICIT_DEF
-  ; STACK-NEXT:   VST_dmx_sts_bm_spill $bmhl0, -128, implicit $sp :: (store (s512) into %stack.0 + 128)
-  ; STACK-NEXT:   VST_dmx_sts_bm_spill $bmhh0, -64, implicit $sp :: (store (s512) into %stack.0 + 192)
+  ; STACK-NEXT:   VST_dmx_sts_bm_spill renamable $bmhl0, -128, implicit $sp :: (store (s512) into %stack.1)
+  ; STACK-NEXT:   VST_dmx_sts_bm_spill renamable $bmhh0, -64, implicit $sp :: (store (s512) into %stack.2)
   ; STACK-NEXT: {{  $}}
   ; STACK-NEXT: bb.1:
   ; STACK-NEXT:   liveins: $cmh0:0x0000000018000000
   ; STACK-NEXT: {{  $}}
-  ; STACK-NEXT:   $bmhl0 = VLDA_dmx_lda_bm_spill -128, implicit $sp :: (load (s512) from %stack.0 + 128)
-  ; STACK-NEXT:   $bmhh0 = VLDA_dmx_lda_bm_spill -64, implicit $sp :: (load (s512) from %stack.0 + 192)
+  ; STACK-NEXT:   renamable $bmhl0 = VLDA_dmx_lda_bm_spill -128, implicit $sp :: (load (s512) from %stack.1)
+  ; STACK-NEXT:   renamable $bmhh0 = VLDA_dmx_lda_bm_spill -64, implicit $sp :: (load (s512) from %stack.2)
   ; STACK-NEXT:   $r0 = COPY killed renamable $cmh0
-  ; STACK-NEXT:   frame-destroy PADDXM_pstm_sp_imm -256, implicit-def $sp, implicit $sp
+  ; STACK-NEXT:   frame-destroy PADDXM_pstm_sp_imm -128, implicit-def $sp, implicit $sp
   ; STACK-NEXT:   PseudoRET implicit $lr, implicit $r0
   bb.0.entry:
     successors: %bb.1
@@ -156,12 +160,18 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $dm0 = IMPLICIT_DEF
-  ; CHECK-NEXT:   VST_DM_SPILL renamable $dm0, %stack.0, implicit $sp :: (store (s2048) into %stack.0, align 64)
+  ; CHECK-NEXT:   VST_dmx_sts_bm_spill renamable $bmll0, %stack.1, implicit $sp :: (store (s512) into %stack.1)
+  ; CHECK-NEXT:   VST_dmx_sts_bm_spill renamable $bmlh0, %stack.2, implicit $sp :: (store (s512) into %stack.2)
+  ; CHECK-NEXT:   VST_dmx_sts_bm_spill renamable $bmhl0, %stack.3, implicit $sp :: (store (s512) into %stack.3)
+  ; CHECK-NEXT:   VST_dmx_sts_bm_spill renamable $bmhh0, %stack.4, implicit $sp :: (store (s512) into %stack.4)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   liveins: $dm0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   renamable $dm0 = VLDA_DM_SPILL %stack.0, implicit $sp :: (load (s2048) from %stack.0, align 64)
+  ; CHECK-NEXT:   renamable $bmll0 = VLDA_dmx_lda_bm_spill %stack.1, implicit $sp :: (load (s512) from %stack.1)
+  ; CHECK-NEXT:   renamable $bmlh0 = VLDA_dmx_lda_bm_spill %stack.2, implicit $sp :: (load (s512) from %stack.2)
+  ; CHECK-NEXT:   renamable $bmhl0 = VLDA_dmx_lda_bm_spill %stack.3, implicit $sp :: (load (s512) from %stack.3)
+  ; CHECK-NEXT:   renamable $bmhh0 = VLDA_dmx_lda_bm_spill %stack.4, implicit $sp :: (load (s512) from %stack.4)
   ; CHECK-NEXT:   $r0 = COPY killed renamable $cml0
   ; CHECK-NEXT:   $r1 = COPY killed renamable $cmh0
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $r0, implicit $r1
@@ -172,18 +182,18 @@ body:             |
   ; STACK-NEXT: {{  $}}
   ; STACK-NEXT:   frame-setup PADDXM_pstm_sp_imm 256, implicit-def $sp, implicit $sp
   ; STACK-NEXT:   $dm0 = IMPLICIT_DEF
-  ; STACK-NEXT:   VST_dmx_sts_bm_spill $bmll0, -256, implicit $sp :: (store (s512) into %stack.0)
-  ; STACK-NEXT:   VST_dmx_sts_bm_spill $bmlh0, -192, implicit $sp :: (store (s512) into %stack.0 + 64)
-  ; STACK-NEXT:   VST_dmx_sts_bm_spill $bmhl0, -128, implicit $sp :: (store (s512) into %stack.0 + 128)
-  ; STACK-NEXT:   VST_dmx_sts_bm_spill $bmhh0, -64, implicit $sp :: (store (s512) into %stack.0 + 192)
+  ; STACK-NEXT:   VST_dmx_sts_bm_spill renamable $bmll0, -256, implicit $sp :: (store (s512) into %stack.1)
+  ; STACK-NEXT:   VST_dmx_sts_bm_spill renamable $bmlh0, -192, implicit $sp :: (store (s512) into %stack.2)
+  ; STACK-NEXT:   VST_dmx_sts_bm_spill renamable $bmhl0, -128, implicit $sp :: (store (s512) into %stack.3)
+  ; STACK-NEXT:   VST_dmx_sts_bm_spill renamable $bmhh0, -64, implicit $sp :: (store (s512) into %stack.4)
   ; STACK-NEXT: {{  $}}
   ; STACK-NEXT: bb.1:
   ; STACK-NEXT:   liveins: $dm0
   ; STACK-NEXT: {{  $}}
-  ; STACK-NEXT:   $bmll0 = VLDA_dmx_lda_bm_spill -256, implicit $sp :: (load (s512) from %stack.0)
-  ; STACK-NEXT:   $bmlh0 = VLDA_dmx_lda_bm_spill -192, implicit $sp :: (load (s512) from %stack.0 + 64)
-  ; STACK-NEXT:   $bmhl0 = VLDA_dmx_lda_bm_spill -128, implicit $sp :: (load (s512) from %stack.0 + 128)
-  ; STACK-NEXT:   $bmhh0 = VLDA_dmx_lda_bm_spill -64, implicit $sp :: (load (s512) from %stack.0 + 192)
+  ; STACK-NEXT:   renamable $bmll0 = VLDA_dmx_lda_bm_spill -256, implicit $sp :: (load (s512) from %stack.1)
+  ; STACK-NEXT:   renamable $bmlh0 = VLDA_dmx_lda_bm_spill -192, implicit $sp :: (load (s512) from %stack.2)
+  ; STACK-NEXT:   renamable $bmhl0 = VLDA_dmx_lda_bm_spill -128, implicit $sp :: (load (s512) from %stack.3)
+  ; STACK-NEXT:   renamable $bmhh0 = VLDA_dmx_lda_bm_spill -64, implicit $sp :: (load (s512) from %stack.4)
   ; STACK-NEXT:   $r0 = COPY killed renamable $cml0
   ; STACK-NEXT:   $r1 = COPY killed renamable $cmh0
   ; STACK-NEXT:   frame-destroy PADDXM_pstm_sp_imm -256, implicit-def $sp, implicit $sp
@@ -216,12 +226,12 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $bmll0 = IMPLICIT_DEF
-  ; CHECK-NEXT:   VST_DM_SPILL renamable $dm0, %stack.0, implicit $sp :: (store (s2048) into %stack.0, align 64)
+  ; CHECK-NEXT:   VST_dmx_sts_bm_spill renamable $bmll0, %stack.1, implicit $sp :: (store (s512) into %stack.1)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   liveins: $bmll0:0x0000000000000004
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   renamable $dm0 = VLDA_DM_SPILL %stack.0, implicit $sp :: (load (s2048) from %stack.0, align 64)
+  ; CHECK-NEXT:   renamable $bmll0 = VLDA_dmx_lda_bm_spill %stack.1, implicit $sp :: (load (s512) from %stack.1)
   ; CHECK-NEXT:   $r0 = COPY killed renamable $bmll0
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $r0
   ;
@@ -229,16 +239,16 @@ body:             |
   ; STACK: bb.0.entry:
   ; STACK-NEXT:   successors: %bb.1(0x80000000)
   ; STACK-NEXT: {{  $}}
-  ; STACK-NEXT:   frame-setup PADDXM_pstm_sp_imm 256, implicit-def $sp, implicit $sp
+  ; STACK-NEXT:   frame-setup PADDXM_pstm_sp_imm 64, implicit-def $sp, implicit $sp
   ; STACK-NEXT:   $bmll0 = IMPLICIT_DEF
-  ; STACK-NEXT:   VST_dmx_sts_bm_spill $bmll0, -256, implicit $sp :: (store (s512) into %stack.0)
+  ; STACK-NEXT:   VST_dmx_sts_bm_spill renamable $bmll0, -64, implicit $sp :: (store (s512) into %stack.1)
   ; STACK-NEXT: {{  $}}
   ; STACK-NEXT: bb.1:
   ; STACK-NEXT:   liveins: $bmll0:0x0000000000000004
   ; STACK-NEXT: {{  $}}
-  ; STACK-NEXT:   $bmll0 = VLDA_dmx_lda_bm_spill -256, implicit $sp :: (load (s512) from %stack.0)
+  ; STACK-NEXT:   renamable $bmll0 = VLDA_dmx_lda_bm_spill -64, implicit $sp :: (load (s512) from %stack.1)
   ; STACK-NEXT:   $r0 = COPY killed renamable $bmll0
-  ; STACK-NEXT:   frame-destroy PADDXM_pstm_sp_imm -256, implicit-def $sp, implicit $sp
+  ; STACK-NEXT:   frame-destroy PADDXM_pstm_sp_imm -64, implicit-def $sp, implicit $sp
   ; STACK-NEXT:   PseudoRET implicit $lr, implicit $r0
   bb.0.entry:
     successors: %bb.1
@@ -268,12 +278,14 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $bmll0 = IMPLICIT_DEF
   ; CHECK-NEXT:   $cmh0 = IMPLICIT_DEF
-  ; CHECK-NEXT:   VST_DM_SPILL renamable $dm0, %stack.0, implicit $sp :: (store (s2048) into %stack.0, align 64)
+  ; CHECK-NEXT:   VST_dmx_sts_bm_spill renamable $bmll0, %stack.1, implicit $sp :: (store (s512) into %stack.1)
+  ; CHECK-NEXT:   VST_dmx_sts_bm_spill renamable $bmhl0, %stack.2, implicit $sp :: (store (s512) into %stack.2)
+  ; CHECK-NEXT:   VST_dmx_sts_bm_spill renamable $bmhh0, %stack.3, implicit $sp :: (store (s512) into %stack.3)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   liveins: $bmll0:0x0000000000000004
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   renamable $dm0 = VLDA_DM_SPILL %stack.0, implicit $sp :: (load (s2048) from %stack.0, align 64)
+  ; CHECK-NEXT:   renamable $bmll0 = VLDA_dmx_lda_bm_spill %stack.1, implicit $sp :: (load (s512) from %stack.1)
   ; CHECK-NEXT:   $r0 = COPY killed renamable $bmll0
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $r0
   ;
@@ -281,19 +293,19 @@ body:             |
   ; STACK: bb.0.entry:
   ; STACK-NEXT:   successors: %bb.1(0x80000000)
   ; STACK-NEXT: {{  $}}
-  ; STACK-NEXT:   frame-setup PADDXM_pstm_sp_imm 256, implicit-def $sp, implicit $sp
+  ; STACK-NEXT:   frame-setup PADDXM_pstm_sp_imm 192, implicit-def $sp, implicit $sp
   ; STACK-NEXT:   $bmll0 = IMPLICIT_DEF
   ; STACK-NEXT:   $cmh0 = IMPLICIT_DEF
-  ; STACK-NEXT:   VST_dmx_sts_bm_spill $bmll0, -256, implicit $sp :: (store (s512) into %stack.0)
-  ; STACK-NEXT:   VST_dmx_sts_bm_spill $bmhl0, -128, implicit $sp :: (store (s512) into %stack.0 + 128)
-  ; STACK-NEXT:   VST_dmx_sts_bm_spill $bmhh0, -64, implicit $sp :: (store (s512) into %stack.0 + 192)
+  ; STACK-NEXT:   VST_dmx_sts_bm_spill renamable $bmll0, -192, implicit $sp :: (store (s512) into %stack.1)
+  ; STACK-NEXT:   VST_dmx_sts_bm_spill renamable $bmhl0, -128, implicit $sp :: (store (s512) into %stack.2)
+  ; STACK-NEXT:   VST_dmx_sts_bm_spill renamable $bmhh0, -64, implicit $sp :: (store (s512) into %stack.3)
   ; STACK-NEXT: {{  $}}
   ; STACK-NEXT: bb.1:
   ; STACK-NEXT:   liveins: $bmll0:0x0000000000000004
   ; STACK-NEXT: {{  $}}
-  ; STACK-NEXT:   $bmll0 = VLDA_dmx_lda_bm_spill -256, implicit $sp :: (load (s512) from %stack.0)
+  ; STACK-NEXT:   renamable $bmll0 = VLDA_dmx_lda_bm_spill -192, implicit $sp :: (load (s512) from %stack.1)
   ; STACK-NEXT:   $r0 = COPY killed renamable $bmll0
-  ; STACK-NEXT:   frame-destroy PADDXM_pstm_sp_imm -256, implicit-def $sp, implicit $sp
+  ; STACK-NEXT:   frame-destroy PADDXM_pstm_sp_imm -192, implicit-def $sp, implicit $sp
   ; STACK-NEXT:   PseudoRET implicit $lr, implicit $r0
   bb.0.entry:
     successors: %bb.1
@@ -323,13 +335,15 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $cml0 = IMPLICIT_DEF
-  ; CHECK-NEXT:   VST_DM_SPILL renamable $dm0, %stack.0, implicit $sp :: (store (s2048) into %stack.0, align 64)
+  ; CHECK-NEXT:   VST_dmx_sts_bm_spill renamable $bmll0, %stack.1, implicit $sp :: (store (s512) into %stack.1)
+  ; CHECK-NEXT:   VST_dmx_sts_bm_spill renamable $bmlh0, %stack.2, implicit $sp :: (store (s512) into %stack.2)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
   ; CHECK-NEXT:   liveins: $cml0:0x000000000000000C
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   renamable $dm0 = VLDA_DM_SPILL %stack.0, implicit $sp :: (load (s2048) from %stack.0, align 64)
+  ; CHECK-NEXT:   renamable $bmll0 = VLDA_dmx_lda_bm_spill %stack.1, implicit $sp :: (load (s512) from %stack.1)
+  ; CHECK-NEXT:   renamable $bmlh0 = VLDA_dmx_lda_bm_spill %stack.2, implicit $sp :: (load (s512) from %stack.2)
   ; CHECK-NEXT:   renamable $r0 = COPY killed renamable $cml0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
@@ -337,12 +351,14 @@ body:             |
   ; CHECK-NEXT:   liveins: $r0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $cmh0 = IMPLICIT_DEF
-  ; CHECK-NEXT:   VST_DM_SPILL renamable $dm0, %stack.0, implicit $sp :: (store (s2048) into %stack.0, align 64)
+  ; CHECK-NEXT:   VST_dmx_sts_bm_spill renamable $bmhl0, %stack.3, implicit $sp :: (store (s512) into %stack.3)
+  ; CHECK-NEXT:   VST_dmx_sts_bm_spill renamable $bmhh0, %stack.4, implicit $sp :: (store (s512) into %stack.4)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   liveins: $r0, $cmh0:0x0000000018000000
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   renamable $dm0 = VLDA_DM_SPILL %stack.0, implicit $sp :: (load (s2048) from %stack.0, align 64)
+  ; CHECK-NEXT:   renamable $bmhl0 = VLDA_dmx_lda_bm_spill %stack.3, implicit $sp :: (load (s512) from %stack.3)
+  ; CHECK-NEXT:   renamable $bmhh0 = VLDA_dmx_lda_bm_spill %stack.4, implicit $sp :: (load (s512) from %stack.4)
   ; CHECK-NEXT:   $r1 = COPY killed renamable $cmh0
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $r0, implicit $r1
   ;
@@ -352,15 +368,15 @@ body:             |
   ; STACK-NEXT: {{  $}}
   ; STACK-NEXT:   frame-setup PADDXM_pstm_sp_imm 256, implicit-def $sp, implicit $sp
   ; STACK-NEXT:   $cml0 = IMPLICIT_DEF
-  ; STACK-NEXT:   VST_dmx_sts_bm_spill $bmll0, -256, implicit $sp :: (store (s512) into %stack.0)
-  ; STACK-NEXT:   VST_dmx_sts_bm_spill $bmlh0, -192, implicit $sp :: (store (s512) into %stack.0 + 64)
+  ; STACK-NEXT:   VST_dmx_sts_bm_spill renamable $bmll0, -256, implicit $sp :: (store (s512) into %stack.1)
+  ; STACK-NEXT:   VST_dmx_sts_bm_spill renamable $bmlh0, -192, implicit $sp :: (store (s512) into %stack.2)
   ; STACK-NEXT: {{  $}}
   ; STACK-NEXT: bb.1:
   ; STACK-NEXT:   successors: %bb.2(0x80000000)
   ; STACK-NEXT:   liveins: $cml0:0x000000000000000C
   ; STACK-NEXT: {{  $}}
-  ; STACK-NEXT:   $bmll0 = VLDA_dmx_lda_bm_spill -256, implicit $sp :: (load (s512) from %stack.0)
-  ; STACK-NEXT:   $bmlh0 = VLDA_dmx_lda_bm_spill -192, implicit $sp :: (load (s512) from %stack.0 + 64)
+  ; STACK-NEXT:   renamable $bmll0 = VLDA_dmx_lda_bm_spill -256, implicit $sp :: (load (s512) from %stack.1)
+  ; STACK-NEXT:   renamable $bmlh0 = VLDA_dmx_lda_bm_spill -192, implicit $sp :: (load (s512) from %stack.2)
   ; STACK-NEXT:   renamable $r0 = COPY killed renamable $cml0
   ; STACK-NEXT: {{  $}}
   ; STACK-NEXT: bb.2:
@@ -368,14 +384,14 @@ body:             |
   ; STACK-NEXT:   liveins: $r0
   ; STACK-NEXT: {{  $}}
   ; STACK-NEXT:   $cmh0 = IMPLICIT_DEF
-  ; STACK-NEXT:   VST_dmx_sts_bm_spill $bmhl0, -128, implicit $sp :: (store (s512) into %stack.0 + 128)
-  ; STACK-NEXT:   VST_dmx_sts_bm_spill $bmhh0, -64, implicit $sp :: (store (s512) into %stack.0 + 192)
+  ; STACK-NEXT:   VST_dmx_sts_bm_spill renamable $bmhl0, -128, implicit $sp :: (store (s512) into %stack.3)
+  ; STACK-NEXT:   VST_dmx_sts_bm_spill renamable $bmhh0, -64, implicit $sp :: (store (s512) into %stack.4)
   ; STACK-NEXT: {{  $}}
   ; STACK-NEXT: bb.3:
   ; STACK-NEXT:   liveins: $r0, $cmh0:0x0000000018000000
   ; STACK-NEXT: {{  $}}
-  ; STACK-NEXT:   $bmhl0 = VLDA_dmx_lda_bm_spill -128, implicit $sp :: (load (s512) from %stack.0 + 128)
-  ; STACK-NEXT:   $bmhh0 = VLDA_dmx_lda_bm_spill -64, implicit $sp :: (load (s512) from %stack.0 + 192)
+  ; STACK-NEXT:   renamable $bmhl0 = VLDA_dmx_lda_bm_spill -128, implicit $sp :: (load (s512) from %stack.3)
+  ; STACK-NEXT:   renamable $bmhh0 = VLDA_dmx_lda_bm_spill -64, implicit $sp :: (load (s512) from %stack.4)
   ; STACK-NEXT:   $r1 = COPY killed renamable $cmh0
   ; STACK-NEXT:   frame-destroy PADDXM_pstm_sp_imm -256, implicit-def $sp, implicit $sp
   ; STACK-NEXT:   PseudoRET implicit $lr, implicit $r0, implicit $r1
@@ -457,7 +473,7 @@ body:             |
     ; CHECK-LABEL: name: min_vector_spill_preserve_size
     ; CHECK: liveins: $x8
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: VST_dmx_sts_x_spill renamable $x8, %stack.0, implicit $sp :: (store (s512) into %stack.0)
+    ; CHECK-NEXT: VST_512_COMPOSED_REG_SPILL renamable $x8, %stack.0, implicit $sp :: (store (s512) into %stack.0)
     ; CHECK-NEXT: renamable $x8 = VLDA_512_COMPOSED_REG_SPILL %stack.0, implicit $sp :: (load (s512) from %stack.0)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x8
     ;
@@ -465,11 +481,11 @@ body:             |
     ; STACK: liveins: $x8
     ; STACK-NEXT: {{  $}}
     ; STACK-NEXT: frame-setup PADDXM_pstm_sp_imm 64, implicit-def $sp, implicit $sp
-    ; STACK-NEXT: VST_dmx_sts_x_spill renamable $x8, -64, implicit $sp :: (store (s512) into %stack.0)
+    ; STACK-NEXT: VST_512_COMPOSED_REG_SPILL renamable $x8, -64, implicit $sp :: (store (s512) into %stack.0)
     ; STACK-NEXT: renamable $x8 = VLDA_512_COMPOSED_REG_SPILL -64, implicit $sp :: (load (s512) from %stack.0)
     ; STACK-NEXT: frame-destroy PADDXM_pstm_sp_imm -64, implicit-def $sp, implicit $sp
     ; STACK-NEXT: PseudoRET implicit $lr, implicit $x8
-    VST_dmx_sts_x_spill renamable $x8, %stack.0, implicit $sp :: (store (s512) into %stack.0)
+    VST_512_COMPOSED_REG_SPILL renamable $x8, %stack.0, implicit $sp :: (store (s512) into %stack.0)
     renamable $x8 = VLDA_512_COMPOSED_REG_SPILL %stack.0, implicit $sp :: (load (s512) from %stack.0)
 
     PseudoRET implicit $lr, implicit $x8
@@ -492,28 +508,36 @@ body: |
     ; CHECK-LABEL: name: min_same_offset_zero_share_slot
     ; CHECK: liveins: $l0, $d0
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: VST_L_SPILL killed $l0, %stack.0, implicit $sp :: (store (s64) into %stack.0, align 4)
-    ; CHECK-NEXT: $l0 = VLDA_L_SPILL %stack.0, implicit $sp :: (load (s64) from %stack.0, align 4)
-    ; CHECK-NEXT: ST_D_SPILL killed $d0, %stack.0, implicit $sp :: (store (s128) into %stack.0, align 4)
-    ; CHECK-NEXT: $d0 = LDA_D_SPILL %stack.0, implicit $sp :: (load (s128) from %stack.0, align 4)
+    ; CHECK-NEXT: ST_R_SPILL killed $r0, %stack.1, implicit $sp :: (store (s32) into %stack.1)
+    ; CHECK-NEXT: ST_R_SPILL killed $r1, %stack.2, implicit $sp :: (store (s32) into %stack.2)
+    ; CHECK-NEXT: $r0 = LDA_R_SPILL %stack.1, implicit $sp :: (load (s32) from %stack.1)
+    ; CHECK-NEXT: $r1 = LDA_R_SPILL %stack.2, implicit $sp :: (load (s32) from %stack.2)
+    ; CHECK-NEXT: ST_R_SPILL killed $m0, %stack.1, implicit $sp :: (store (s32) into %stack.1)
+    ; CHECK-NEXT: ST_R_SPILL killed $dn0, %stack.3, implicit $sp :: (store (s32) into %stack.3)
+    ; CHECK-NEXT: ST_R_SPILL killed $dj0, %stack.4, implicit $sp :: (store (s32) into %stack.4)
+    ; CHECK-NEXT: ST_R_SPILL killed $dc0, %stack.5, implicit $sp :: (store (s32) into %stack.5)
+    ; CHECK-NEXT: $m0 = LDA_R_SPILL %stack.1, implicit $sp :: (load (s32) from %stack.1)
+    ; CHECK-NEXT: $dn0 = LDA_R_SPILL %stack.3, implicit $sp :: (load (s32) from %stack.3)
+    ; CHECK-NEXT: $dj0 = LDA_R_SPILL %stack.4, implicit $sp :: (load (s32) from %stack.4)
+    ; CHECK-NEXT: $dc0 = LDA_R_SPILL %stack.5, implicit $sp :: (load (s32) from %stack.5)
     ; CHECK-NEXT: RET implicit $lr, implicit $l0, implicit $d0
     ;
     ; STACK-LABEL: name: min_same_offset_zero_share_slot
     ; STACK: liveins: $l0, $d0
     ; STACK-NEXT: {{  $}}
     ; STACK-NEXT: frame-setup PADDXM_pstm_sp_imm 64, implicit-def $sp, implicit $sp
-    ; STACK-NEXT: ST_dms_sts_spill killed $r0, -64, implicit $sp :: (store (s32) into %stack.0)
-    ; STACK-NEXT: ST_dms_sts_spill killed $r1, -60, implicit $sp :: (store (s32) into %stack.0 + 4)
-    ; STACK-NEXT: $r0 = LDA_dms_lda_spill -64, implicit $sp :: (load (s32) from %stack.0)
-    ; STACK-NEXT: $r1 = LDA_dms_lda_spill -60, implicit $sp :: (load (s32) from %stack.0 + 4)
-    ; STACK-NEXT: ST_dms_sts_spill killed $m0, -64, implicit $sp :: (store (s32) into %stack.0)
-    ; STACK-NEXT: ST_dms_sts_spill killed $dn0, -60, implicit $sp :: (store (s32) into %stack.0 + 4)
-    ; STACK-NEXT: ST_dms_sts_spill killed $dj0, -56, implicit $sp :: (store (s32) into %stack.0 + 8)
-    ; STACK-NEXT: ST_dms_sts_spill killed $dc0, -52, implicit $sp :: (store (s32) into %stack.0 + 12)
-    ; STACK-NEXT: $m0 = LDA_dms_lda_spill -64, implicit $sp :: (load (s32) from %stack.0)
-    ; STACK-NEXT: $dn0 = LDA_dms_lda_spill -60, implicit $sp :: (load (s32) from %stack.0 + 4)
-    ; STACK-NEXT: $dj0 = LDA_dms_lda_spill -56, implicit $sp :: (load (s32) from %stack.0 + 8)
-    ; STACK-NEXT: $dc0 = LDA_dms_lda_spill -52, implicit $sp :: (load (s32) from %stack.0 + 12)
+    ; STACK-NEXT: ST_dms_sts_spill killed $r0, -64, implicit $sp :: (store (s32) into %stack.1)
+    ; STACK-NEXT: ST_dms_sts_spill killed $r1, -60, implicit $sp :: (store (s32) into %stack.2)
+    ; STACK-NEXT: $r0 = LDA_dms_lda_spill -64, implicit $sp :: (load (s32) from %stack.1)
+    ; STACK-NEXT: $r1 = LDA_dms_lda_spill -60, implicit $sp :: (load (s32) from %stack.2)
+    ; STACK-NEXT: ST_dms_sts_spill killed $m0, -64, implicit $sp :: (store (s32) into %stack.1)
+    ; STACK-NEXT: ST_dms_sts_spill killed $dn0, -56, implicit $sp :: (store (s32) into %stack.3)
+    ; STACK-NEXT: ST_dms_sts_spill killed $dj0, -52, implicit $sp :: (store (s32) into %stack.4)
+    ; STACK-NEXT: ST_dms_sts_spill killed $dc0, -48, implicit $sp :: (store (s32) into %stack.5)
+    ; STACK-NEXT: $m0 = LDA_dms_lda_spill -64, implicit $sp :: (load (s32) from %stack.1)
+    ; STACK-NEXT: $dn0 = LDA_dms_lda_spill -56, implicit $sp :: (load (s32) from %stack.3)
+    ; STACK-NEXT: $dj0 = LDA_dms_lda_spill -52, implicit $sp :: (load (s32) from %stack.4)
+    ; STACK-NEXT: $dc0 = LDA_dms_lda_spill -48, implicit $sp :: (load (s32) from %stack.5)
     ; STACK-NEXT: RET implicit $lr, implicit $l0, implicit $d0
     VST_L_SPILL killed $l0, %stack.0, implicit $sp :: (store (s64) into %stack.0, align 4)
     $l0 = VLDA_L_SPILL %stack.0, implicit $sp :: (load (s64) from %stack.0, align 4)

@@ -758,8 +758,12 @@ AIE2InstrInfo::getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
                                         MachineInstr &MI) const {
   if (!MI.isPseudo())
     return {};
+  return getSpillPseudoExpandInfoByOpcode(MI.getOpcode());
+}
 
-  switch (MI.getOpcode()) {
+SmallVector<AIEBaseInstrInfo::AIEPseudoExpandInfo, 4>
+AIE2InstrInfo::getSpillPseudoExpandInfoByOpcode(unsigned Opcode) const {
+  switch (Opcode) {
   case AIE2::VLDA_L_SPILL:
     return {{AIE2::LDA_dms_spill, AIE2::sub_l_even},
             {AIE2::LDA_dms_spill, AIE2::sub_l_odd}};
@@ -827,7 +831,7 @@ AIE2InstrInfo::getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
             {AIE2::ST_dms_spill, AIE2::sub_hi_dim_then_sub_dim_stride},
             {AIE2::ST_dms_spill, AIE2::sub_hi_dim_then_sub_dim_count}};
   default:
-    llvm_unreachable("Un-handled spill opcode.");
+    return {};
   }
 }
 
