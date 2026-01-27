@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -39,6 +39,7 @@
 #include "llvm/MC/MCRegister.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include <list>
 #include <llvm/CodeGen/MachineBasicBlock.h>
 #include <map>
 
@@ -383,41 +384,121 @@ bool AIEWawRegRewriter::reAllocate(OriginalAllocation &Candidates,
 
 void AIEWawRegRewriter::revertAllocation(OriginalAllocation &Candidates,
                                          RegClassSuccess &RegClasses) {
+  LLVM_DEBUG({
+    dbgs() << "=== revertAllocation: Processing " << Candidates.size()
+           << " candidates ===\n";
+    for (const auto &[RC, Success] : RegClasses) {
+      dbgs() << "  RC=" << TRI->getRegClassName(RC)
+             << (Success ? " Succeeded\n" : " Failed\n");
+    }
+  });
 
-  auto Overlaps = [this](MCRegister Reg, const TargetRegisterClass *RC) {
-    return any_of(RC->getRegisters(), [this, Reg](MCRegister RCReg) {
-      return TRI->regsOverlap(Reg, RCReg);
-    });
+  // When a register class fails reallocation, we must revert all candidates
+  // from that class to their original assignments. However, reverting to
+  // originals may conflict with NEW assignments of successfully reallocated
+  // candidates. This creates a cascading effect where those successful
+  // candidates must also revert to make room. We use a fixed-point iteration
+  // to find all candidates that need to revert.
+
+  const unsigned NumRegUnits = TRI->getNumRegUnits();
+
+  // BlockedUnits tracks RegUnits that will be occupied by reverted originals.
+  // Any NEW assignment overlapping these units must also revert.
+  BitVector BlockedUnits(NumRegUnits);
+
+  // ToRevert tracks which virtual registers need to revert to their originals.
+  BitVector ToRevert(MRI->getNumVirtRegs());
+
+  // Helper: Get RegUnits for a physical register as a BitVector.
+  auto GetRegUnits = [&](MCPhysReg Reg) {
+    BitVector Units(NumRegUnits);
+    for (MCRegUnit Unit : TRI->regunits(Reg))
+      Units.set(Unit);
+    return Units;
   };
 
-  // We revert all allocations whose original have an overlap
-  // with a failed register class.
-  // The partial allocation may conflict with the original one in ugly ways,
-  // which means we may not be able to reassign in arbitrary order.
-  // To be safe, reset all allocations first.
-  for (auto [RC, Success] : RegClasses) {
-    LLVM_DEBUG(dbgs() << "RC=" << TRI->getRegClassName(RC)
-                      << (Success ? " Succeeded\n" : " Failed\n"));
-    if (Success) {
-      continue;
-    }
-    for (auto &[MO, Org] : Candidates) {
-      if (Overlaps(Org, RC)) {
-        auto VReg = MO->getReg();
-        if (VRM->hasPhys(VReg)) {
-          unassignReg(VReg);
-        }
-      }
-    }
-    for (auto &[MO, Org] : Candidates) {
-      if (Overlaps(Org, RC)) {
-        auto VReg = MO->getReg();
-        LLVM_DEBUG(dbgs() << "Reverting " << printReg(VReg, TRI) << " to "
-                          << printReg(Org, TRI) << "\n");
-        assignReg(VReg, Org);
-      }
+  // Phase 1: Seed BlockedUnits with originals from failed/unassigned
+  // candidates.
+  // - Failed RC: Must revert because the reallocation didn't succeed.
+  // - No physical assignment: Must use original since no new assignment exists.
+  // Remaining holds successful candidates with valid new assignments to check.
+  LLVM_DEBUG(dbgs() << "Phase 1: Identifying failed/unassigned candidates\n");
+  std::list<std::pair<MachineOperand *, MCRegister>> Remaining;
+  for (const auto &[MO, Org] : Candidates) {
+    const Register VReg = MO->getReg();
+    const bool HasPhys = VRM->hasPhys(VReg);
+
+    if (!HasPhys) {
+      ToRevert.set(VReg.virtRegIndex());
+      BlockedUnits |= GetRegUnits(Org);
+      LLVM_DEBUG(dbgs() << "  " << printReg(VReg, TRI) << " -> must revert to "
+                        << printReg(Org, TRI) << " (no phys)\n");
+    } else {
+      Remaining.emplace_back(const_cast<MachineOperand *>(MO), Org);
+      LLVM_DEBUG(dbgs() << "  " << printReg(VReg, TRI) << " -> remaining (new="
+                        << printReg(VRM->getPhys(VReg), TRI)
+                        << ", orig=" << printReg(Org, TRI) << ")\n");
     }
   }
+  LLVM_DEBUG(dbgs() << "Phase 1 complete: " << ToRevert.count()
+                    << " to revert, " << Remaining.size() << " remaining\n");
+
+  // Phase 2: Fixed-point iteration to find cascading conflicts.
+  // A successful candidate must revert if its NEW assignment overlaps with
+  // BlockedUnits. When it reverts, its original is added to BlockedUnits,
+  // potentially causing more candidates to revert.
+  // Convergence is guaranteed: Remaining shrinks each iteration and
+  // BlockedUnits only grows. Loop exits when no new conflicts are found.
+  LLVM_DEBUG(
+      dbgs() << "Phase 2: Fixed-point iteration for cascading conflicts\n");
+  unsigned Iteration = 0;
+  bool Changed;
+  do {
+    ++Iteration;
+    Changed = false;
+
+    for (auto It = Remaining.begin(); It != Remaining.end();) {
+      const auto &[MO, Org] = *It;
+      const Register VReg = MO->getReg();
+
+      const BitVector NewUnits = GetRegUnits(VRM->getPhys(VReg));
+      if (NewUnits.anyCommon(BlockedUnits)) {
+        // NEW assignment conflicts with a reverted original - must revert.
+        ToRevert.set(VReg.virtRegIndex());
+        BlockedUnits |= GetRegUnits(Org);
+        LLVM_DEBUG(dbgs() << "  Iteration " << Iteration << ": "
+                          << printReg(VReg, TRI) << " conflicts (new="
+                          << printReg(VRM->getPhys(VReg), TRI)
+                          << "), reverting to " << printReg(Org, TRI) << "\n");
+        It = Remaining.erase(It);
+        Changed = true;
+      } else {
+        ++It;
+      }
+    }
+  } while (Changed);
+  LLVM_DEBUG(dbgs() << "Phase 2 complete after " << Iteration << " iterations: "
+                    << ToRevert.count() << " total to revert, "
+                    << Remaining.size() << " unchanged\n");
+
+  // Phase 3: Apply reversions.
+  // First unassign all to avoid conflicts, then reassign to originals.
+  LLVM_DEBUG(dbgs() << "Phase 3: Applying reversions\n");
+  for (const auto &[MO, Org] : Candidates) {
+    const Register VReg = MO->getReg();
+    if (ToRevert.test(VReg.virtRegIndex()) && VRM->hasPhys(VReg))
+      unassignReg(VReg);
+  }
+
+  for (const auto &[MO, Org] : Candidates) {
+    const Register VReg = MO->getReg();
+    if (ToRevert.test(VReg.virtRegIndex())) {
+      LLVM_DEBUG(dbgs() << "  Reverting " << printReg(VReg, TRI) << " to "
+                        << printReg(Org, TRI) << "\n");
+      assignReg(VReg, Org);
+    }
+  }
+  LLVM_DEBUG(dbgs() << "=== revertAllocation complete ===\n");
 }
 
 RoundRobin AIEWawRegRewriter::computeLRURegisters(

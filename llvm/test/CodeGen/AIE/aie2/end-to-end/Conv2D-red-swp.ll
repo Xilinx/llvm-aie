@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -O2 -mtriple=aie2 --enable-pipeliner=1 --enable-aie-hardware-loops=false \
 ; RUN:     --enable-aie-zero-overhead-loops=false %s -o - | FileCheck %s --check-prefix=DCL
 ; RUN: llc -O2 -mtriple=aie2 --enable-pipeliner=1 %s -o - | FileCheck %s --check-prefix=ZOL
@@ -283,59 +283,59 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; DCL-NEXT:    vlda.ups.s32.s16 bml5, s0, [p2], m5
 ; DCL-NEXT:    vldb wl6, [p1], #32
 ; DCL-NEXT:    vldb wh6, [p1], #32
-; DCL-NEXT:    vlda.ups.s32.s16 bmh6, s0, [p2, #32]; vldb wl5, [p0], m6; and r0, r0, r9; mov r1, p0
-; DCL-NEXT:    vlda wl8, [p1], #32; vldb wh5, [p0], m6; add r0, r0, #33
-; DCL-NEXT:    vlda wh8, [p1], #32; vldb wl3, [p0], m6; vshift.align x4, x4, s1, x3, r0
+; DCL-NEXT:    vlda.ups.s32.s16 bmh6, s0, [p2, #32]; vldb wl10, [p0], m6; and r0, r0, r9; mov r1, p0
+; DCL-NEXT:    vlda wl8, [p1], #32; vldb wh10, [p0], m6; add r0, r0, #33
+; DCL-NEXT:    vlda wh8, [p1], #32; vldb wl3, [p0], m6; vshift.align x5, x4, s1, x3, r0
 ; DCL-NEXT:    vlda.ups.s32.s16 bml6, s0, [p2, #0]; vldb.3d wh3, [p0], d0; and r10, r1, r9; vshift.align x2, x2, s1, x7, r0
-; DCL-NEXT:    vldb wl1, [p1], #32; add r0, r10, #33; mov r10, p0
-; DCL-NEXT:    vldb wh1, [p1], #32; add r1, r5, #-1; vshuffle x7, x4, x2, r2
-; DCL-NEXT:    vldb wl10, [p1], #32; add r1, r1, #-1; vshuffle x9, x7, x0, r8
-; DCL-NEXT:    vldb wh10, [p1], #32; and r10, r10, r9
+; DCL-NEXT:    vldb wl9, [p1], #32; add r0, r10, #33; mov r10, p0
+; DCL-NEXT:    vldb wh9, [p1], #32; add r1, r5, #-1; vshuffle x7, x5, x2, r2
+; DCL-NEXT:    vldb wl1, [p1], #32; add r1, r1, #-1; vshuffle x4, x7, x0, r8
+; DCL-NEXT:    vldb wh1, [p1], #32; and r10, r10, r9
 ; DCL-NEXT:  .LBB0_2: // %inner.loop
 ; DCL-NEXT:    // Parent Loop BB0_1 Depth=1
 ; DCL-NEXT:    // => This Inner Loop Header: Depth=2
-; DCL-NEXT:    nopb ; nopa ; nops ; nopx ; vshuffle x9, x4, x2, r3; vmac cm1, cm1, x9, x6, r4
-; DCL-NEXT:    nopa ; nopb ; nopx ; vshift.align x4, x4, s1, x5, r0; vmac cm7, cm7, x9, x8, r4
-; DCL-NEXT:    vldb wl5, [p0], m6; vshift.align x2, x2, s1, x3, r0
-; DCL-NEXT:    vldb wh5, [p0], m6; add r1, r1, #-1; vshuffle x11, x9, x0, r8
+; DCL-NEXT:    nopb ; nopa ; nops ; nopx ; vshuffle x4, x5, x2, r3; vmac cm1, cm1, x4, x6, r4
+; DCL-NEXT:    nopa ; nopb ; nopx ; vshift.align x5, x5, s1, x10, r0; vmac cm7, cm7, x4, x8, r4
+; DCL-NEXT:    vldb wl10, [p0], m6; vshift.align x2, x2, s1, x3, r0
+; DCL-NEXT:    vldb wh10, [p0], m6; add r1, r1, #-1; vshuffle x11, x4, x0, r8
 ; DCL-NEXT:    vlda wl3, [p0], m6; jnz r1, #.LBB0_2; vmac cm0, cm0, x7, x6, r4
-; DCL-NEXT:    vlda.3d wh3, [p0], d0; vshuffle x7, x4, x2, r2; vmac cm4, cm4, x7, x8, r4 // Delay Slot 5
-; DCL-NEXT:    vldb wl1, [p1], #32; vshuffle x9, x7, x0, r8; vmac cm2, cm2, x9, x6, r4 // Delay Slot 4
-; DCL-NEXT:    vldb wh1, [p1], #32; vmov x6, x1; vmac cm5, cm5, x9, x8, r4 // Delay Slot 3
-; DCL-NEXT:    vldb wl10, [p1], #32; add r0, r10, #33; mov r10, p0; vmac cm3, cm3, x11, x6, r4 // Delay Slot 2
-; DCL-NEXT:    vldb wh10, [p1], #32; and r10, r10, r9; vmov x8, x10; vmac cm6, cm6, x11, x8, r4 // Delay Slot 1
+; DCL-NEXT:    vlda.3d wh3, [p0], d0; vshuffle x7, x5, x2, r2; vmac cm4, cm4, x7, x8, r4 // Delay Slot 5
+; DCL-NEXT:    vldb wl9, [p1], #32; vshuffle x4, x7, x0, r8; vmac cm2, cm2, x4, x6, r4 // Delay Slot 4
+; DCL-NEXT:    vldb wh9, [p1], #32; vmov x6, x9; vmac cm5, cm5, x4, x8, r4 // Delay Slot 3
+; DCL-NEXT:    vldb wl1, [p1], #32; add r0, r10, #33; mov r10, p0; vmac cm3, cm3, x11, x6, r4 // Delay Slot 2
+; DCL-NEXT:    vldb wh1, [p1], #32; and r10, r10, r9; vmov x8, x1; vmac cm6, cm6, x11, x8, r4 // Delay Slot 1
 ; DCL-NEXT:  // %bb.3: // in Loop: Header=BB0_1 Depth=1
 ; DCL-NEXT:    vmov x11, x0
-; DCL-NEXT:    vshuffle x0, x4, x2, r3
+; DCL-NEXT:    vshuffle x0, x5, x2, r3
 ; DCL-NEXT:    vshuffle x11, x0, x11, r8
 ; DCL-NEXT:    lda m7, [sp, #-96] // 4-byte Folded Reload
 ; DCL-NEXT:    vlda wl0, [sp, #-64]; vst wl11, [sp, #-160] // 32-byte Folded Reload32-byte Folded Spill
 ; DCL-NEXT:    vlda wl11, [sp, #-160]; vst wh11, [sp, #-128] // 32-byte Folded Reload32-byte Folded Spill
 ; DCL-NEXT:    vlda wh11, [sp, #-128] // 32-byte Folded Reload
-; DCL-NEXT:    vlda wl6, [sp, #-160]; vmac cm0, cm0, x7, x6, r4 // 32-byte Folded Reload
-; DCL-NEXT:    vlda wh6, [sp, #-128]; vmac cm1, cm1, x9, x6, r4 // 32-byte Folded Reload
+; DCL-NEXT:    vlda wl6, [sp, #-160]; vmac cm1, cm1, x4, x6, r4 // 32-byte Folded Reload
+; DCL-NEXT:    vlda wh6, [sp, #-128]; vmac cm8, cm4, x7, x8, r4 // 32-byte Folded Reload
 ; DCL-NEXT:    vlda wh0, [sp, #-32]; vmac cm2, cm2, x0, x6, r4 // 32-byte Folded Reload
 ; DCL-NEXT:    lda dn7, [sp, #-92]; vmac cm5, cm5, x0, x8, r4 // 4-byte Folded Reload
-; DCL-NEXT:    vmac cm8, cm4, x7, x8, r4
-; DCL-NEXT:    lda dj7, [sp, #-88]; vshift.align x4, x4, s1, x5, r0; vmac cm4, cm7, x9, x8, r4 // 4-byte Folded Reload
+; DCL-NEXT:    vmac cm4, cm7, x4, x8, r4
+; DCL-NEXT:    lda dj7, [sp, #-88]; vshift.align x4, x5, s1, x10, r0; vmac cm0, cm0, x7, x6, r4 // 4-byte Folded Reload
 ; DCL-NEXT:    vshift.align x2, x2, s1, x3, r0; vmac cm3, cm3, x11, x6, r4
 ; DCL-NEXT:    st m7, [sp, #-96]; vshuffle x6, x4, x2, r2 // 4-byte Folded Spill
 ; DCL-NEXT:    vmac cm6, cm6, x6, x8, r4
-; DCL-NEXT:    vshuffle x8, x6, x0, r8; vmac cm7, cm0, x6, x1, r4
+; DCL-NEXT:    vshuffle x8, x6, x0, r8; vmac cm7, cm0, x6, x9, r4
 ; DCL-NEXT:    st dn7, [sp, #-92] // 4-byte Folded Spill
-; DCL-NEXT:    vshuffle x3, x4, x2, r3; vmac cm0, cm1, x8, x1, r4
+; DCL-NEXT:    vshuffle x3, x4, x2, r3; vmac cm0, cm1, x8, x9, r4
 ; DCL-NEXT:    st dj7, [sp, #-88] // 4-byte Folded Spill
-; DCL-NEXT:    vshuffle x5, x3, x0, r8; vmac cm1, cm2, x3, x1, r4
+; DCL-NEXT:    vshuffle x5, x3, x0, r8; vmac cm1, cm2, x3, x9, r4
 ; DCL-NEXT:    vst.srs.s16.s32 bmh7, s2, [p3, #32]
-; DCL-NEXT:    vst.srs.s16.s32 bml7, s3, [p3], #64; vmac cm2, cm3, x5, x1, r4
+; DCL-NEXT:    vst.srs.s16.s32 bml7, s3, [p3], #64; vmac cm2, cm3, x5, x9, r4
 ; DCL-NEXT:    vst.srs.s16.s32 bmh0, s3, [p3, #32]
-; DCL-NEXT:    vst.srs.s16.s32 bml0, s3, [p3], m4; vmac cm3, cm8, x6, x10, r4
+; DCL-NEXT:    vst.srs.s16.s32 bml0, s3, [p3], m4; vmac cm3, cm8, x6, x1, r4
 ; DCL-NEXT:    vst.srs.s16.s32 bmh1, s3, [p3, #32]
-; DCL-NEXT:    vst.srs.s16.s32 bml1, s3, [p3], #64; vmac cm8, cm4, x8, x10, r4
+; DCL-NEXT:    vst.srs.s16.s32 bml1, s3, [p3], #64; vmac cm8, cm4, x8, x1, r4
 ; DCL-NEXT:    lda dc7, [sp, #-84]; vst.srs.s16.s32 bmh2, s3, [p3, #32]; mov m1, r25 // 4-byte Folded Reload
-; DCL-NEXT:    vst.srs.s16.s32 bml2, s3, [p3], m1; vmac cm5, cm5, x3, x10, r4
+; DCL-NEXT:    vst.srs.s16.s32 bml2, s3, [p3], m1; vmac cm5, cm5, x3, x1, r4
 ; DCL-NEXT:    vst.srs.s16.s32 bmh3, s3, [p3, #32]
-; DCL-NEXT:    vst.srs.s16.s32 bml3, s3, [p3], #64; vmac cm4, cm6, x5, x10, r4
+; DCL-NEXT:    vst.srs.s16.s32 bml3, s3, [p3], #64; vmac cm4, cm6, x5, x1, r4
 ; DCL-NEXT:    vst.srs.s16.s32 bmh8, s3, [p3, #32]
 ; DCL-NEXT:    vst.srs.s16.s32 bml8, s3, [p3], m4
 ; DCL-NEXT:    vst.srs.s16.s32 bmh5, s3, [p3, #32]; mov r0, dc7
