@@ -5,7 +5,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # Basic test for the WAW register renaming pass with swp-aware policy.
 # We change the allocation order by estimating the cycle in which
@@ -64,19 +64,19 @@ body:             |
   ; CHECK-NEXT:   renamable $dm3 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm2, renamable $x4, renamable $x10, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
   ; CHECK-NEXT:   renamable $x3 = VEXTBCST_128_vec_extract_broadcast_imm renamable $x2, 1
   ; CHECK-NEXT:   renamable $dm4 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm4, renamable $x6, killed renamable $x10, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   renamable $x10 = VSHIFT renamable $x6, renamable $x8, renamable $r0
+  ; CHECK-NEXT:   renamable $x7 = VSHIFT renamable $x6, renamable $x8, renamable $r0
   ; CHECK-NEXT:   renamable $x5 = VSHIFT renamable $x4, renamable $x6, renamable $r3
   ; CHECK-NEXT:   renamable $dm3 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm3, killed renamable $x1, renamable $x3, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   renamable $x1 = VEXTBCST_128_vec_extract_broadcast_imm renamable $x2, 2
-  ; CHECK-NEXT:   renamable $dm1 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm4, killed renamable $x10, killed renamable $x3, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $x9 = VEXTBCST_128_vec_extract_broadcast_imm renamable $x2, 2
+  ; CHECK-NEXT:   renamable $dm1 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm4, killed renamable $x7, killed renamable $x3, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
   ; CHECK-NEXT:   renamable $x10 = VSHIFT renamable $x6, renamable $x8, renamable $r3
   ; CHECK-NEXT:   renamable $x4 = VSHIFT killed renamable $x4, renamable $x6, renamable $r4
-  ; CHECK-NEXT:   renamable $dm0 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm3, killed renamable $x5, renamable $x1, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   renamable $x2 = VEXTBCST_128_vec_extract_broadcast_imm killed renamable $x2, 3
-  ; CHECK-NEXT:   renamable $dm1 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm1, killed renamable $x10, killed renamable $x1, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $dm0 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm3, killed renamable $x5, renamable $x9, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $x11 = VEXTBCST_128_vec_extract_broadcast_imm killed renamable $x2, 3
+  ; CHECK-NEXT:   renamable $dm1 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm1, killed renamable $x10, killed renamable $x9, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
   ; CHECK-NEXT:   renamable $x6 = VSHIFT killed renamable $x6, killed renamable $x8, renamable $r4
-  ; CHECK-NEXT:   renamable $dm2 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm0, killed renamable $x4, renamable $x2, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   renamable $dm4 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm1, killed renamable $x6, killed renamable $x2, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $dm2 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm0, killed renamable $x4, renamable $x11, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $dm4 = VMAC_f_vmac_bf_vmul_bf_core_X_X killed renamable $dm1, killed renamable $x6, killed renamable $x11, renamable $r5, implicit-def dead $srfpflags, implicit $crfpmask
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.3
   ; CHECK-NEXT: {{  $}}
