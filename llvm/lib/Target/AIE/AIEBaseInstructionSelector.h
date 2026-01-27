@@ -275,6 +275,13 @@ protected:
     return std::nullopt;
   }
 
+  // FIFO store selection helpers - common implementation for derived classes
+  bool selectVST_FIFO_Push(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectVST_FIFO_Flush(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectVST_FIFO_Flush1D(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectVST_FIFO_Flush2D(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectVST_FIFO_Flush3D(MachineInstr &I, MachineRegisterInfo &MRI);
+
 protected:
   MachineIRBuilder MIB;
 
