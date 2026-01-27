@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the parsing of machine instructions.
@@ -1912,7 +1915,7 @@ bool MIParser::parseIRConstant(StringRef::iterator Loc, const Constant *&C) {
 
 // See LLT implementation for bit size limits.
 static bool verifyScalarSize(uint64_t Size) {
-  return Size != 0 && isUInt<16>(Size);
+  return Size != 0 && isUInt<32>(Size);
 }
 
 static bool verifyVectorElementCount(uint64_t NumElts) {
