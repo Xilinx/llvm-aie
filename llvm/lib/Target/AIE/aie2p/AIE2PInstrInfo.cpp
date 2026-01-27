@@ -566,6 +566,25 @@ unsigned AIE2PInstrInfo::getOpCode(MachineInstr &I) const {
     return AIE2P::MOV_st_mMStream_tlast_reg;
   case Intrinsic::aie2p_put_ms_nb:
     return AIE2P::MOV_nb_st_mMStream_tlast_reg;
+  // FIFO store intrinsics
+  case Intrinsic::aie2p_fifo_st_push_512_bfp16:
+    return AIE2P::VST_PUSH_512;
+  case Intrinsic::aie2p_fifo_st_flush:
+    return AIE2P::VST_FLUSH_512_normal_flush;
+  case Intrinsic::aie2p_fifo_st_flush_conv:
+    return AIE2P::VST_FLUSH_512_CONV_normal_flush;
+  case Intrinsic::aie2p_fifo_st_flush_1d:
+    return AIE2P::VST_FLUSH_512_fifo_1d_flush;
+  case Intrinsic::aie2p_fifo_st_flush_1d_conv:
+    return AIE2P::VST_FLUSH_512_CONV_fifo_1d_flush;
+  case Intrinsic::aie2p_fifo_st_flush_2d:
+    return AIE2P::VST_FLUSH_512_2D;
+  case Intrinsic::aie2p_fifo_st_flush_2d_conv:
+    return AIE2P::VST_FLUSH_512_CONV_2D;
+  case Intrinsic::aie2p_fifo_st_flush_3d:
+    return AIE2P::VST_FLUSH_512_3D;
+  case Intrinsic::aie2p_fifo_st_flush_3d_conv:
+    return AIE2P::VST_FLUSH_512_CONV_3D;
   default:
     llvm_unreachable("Unexpected Intrinsic ID");
   }

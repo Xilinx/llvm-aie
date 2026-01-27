@@ -1516,3 +1516,113 @@ bool AIEBaseInstructionSelector::selectG_AIE_STORE_SRS(
   StoreI.eraseFromParent();
   return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
 }
+
+// FIFO Store selection helpers - shared implementation for AIE2P and AIE4
+bool AIEBaseInstructionSelector::selectVST_FIFO_Push(MachineInstr &I,
+                                                     MachineRegisterInfo &MRI) {
+  const unsigned Opcode = TII.getOpCode(I);
+  const Register PtrOut = I.getOperand(0).getReg();
+  const Register FifoOut = I.getOperand(1).getReg();
+  const Register AvailOut = I.getOperand(2).getReg();
+  const Register PtrIn = I.getOperand(4).getReg();
+  const Register VecIn = I.getOperand(5).getReg();
+  const Register FifoIn = I.getOperand(6).getReg();
+  const Register AvailIn = I.getOperand(7).getReg();
+
+  auto MI = MIB.buildInstr(Opcode, {FifoOut, PtrOut, AvailOut},
+                           {FifoIn, VecIn, PtrIn, AvailIn});
+  MI.cloneMemRefs(I);
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+}
+
+bool AIEBaseInstructionSelector::selectVST_FIFO_Flush(
+    MachineInstr &I, MachineRegisterInfo &MRI) {
+  const unsigned Opcode = TII.getOpCode(I);
+  const Register PtrOut = I.getOperand(0).getReg();
+  const Register FifoOut = I.getOperand(1).getReg();
+  const Register AvailOut = I.getOperand(2).getReg();
+  const Register PtrIn = I.getOperand(4).getReg();
+  const Register FifoIn = I.getOperand(5).getReg();
+  const Register AvailIn = I.getOperand(6).getReg();
+
+  auto MI = MIB.buildInstr(Opcode, {FifoOut, PtrOut, AvailOut},
+                           {FifoIn, PtrIn, AvailIn});
+  MI.cloneMemRefs(I);
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+}
+
+bool AIEBaseInstructionSelector::selectVST_FIFO_Flush1D(
+    MachineInstr &I, MachineRegisterInfo &MRI) {
+  const unsigned Opcode = TII.getOpCode(I);
+  const Register PtrOut = I.getOperand(0).getReg();
+  const Register FifoOut = I.getOperand(1).getReg();
+  const Register AvailOut = I.getOperand(2).getReg();
+  const Register PtrIn = I.getOperand(4).getReg();
+  const Register FifoIn = I.getOperand(5).getReg();
+  const Register AvailIn = I.getOperand(6).getReg();
+  const Register OffsetReg = I.getOperand(7).getReg();
+
+  auto MI = MIB.buildInstr(Opcode, {FifoOut, PtrOut, AvailOut},
+                           {FifoIn, PtrIn, AvailIn, OffsetReg});
+  MI.cloneMemRefs(I);
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+}
+
+bool AIEBaseInstructionSelector::selectVST_FIFO_Flush2D(
+    MachineInstr &I, MachineRegisterInfo &MRI) {
+  const unsigned Opcode = TII.getOpCode(I);
+  const Register PtrOut = I.getOperand(0).getReg();
+  const Register FifoOut = I.getOperand(1).getReg();
+  const Register AvailOut = I.getOperand(2).getReg();
+  const Register CountOut1Reg = I.getOperand(3).getReg();
+  const Register PtrIn = I.getOperand(5).getReg();
+  const Register FifoIn = I.getOperand(6).getReg();
+  const Register AvailIn = I.getOperand(7).getReg();
+  const Register OffsetReg = I.getOperand(8).getReg();
+  const Register SizeReg = I.getOperand(9).getReg();
+  const Register CountIn1Reg = I.getOperand(10).getReg();
+  const Register IncrReg = I.getOperand(11).getReg();
+
+  const Register DReg =
+      createDRegSequence(OffsetReg, IncrReg, SizeReg, CountIn1Reg, MRI);
+
+  auto MI = MIB.buildInstr(Opcode, {FifoOut, PtrOut, AvailOut, CountOut1Reg},
+                           {FifoIn, PtrIn, AvailIn, DReg});
+  MI.cloneMemRefs(I);
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+}
+
+bool AIEBaseInstructionSelector::selectVST_FIFO_Flush3D(
+    MachineInstr &I, MachineRegisterInfo &MRI) {
+  const unsigned Opcode = TII.getOpCode(I);
+  const Register PtrOut = I.getOperand(0).getReg();
+  const Register FifoOut = I.getOperand(1).getReg();
+  const Register AvailOut = I.getOperand(2).getReg();
+  const Register CountOut1Reg = I.getOperand(3).getReg();
+  const Register CountOut2Reg = I.getOperand(4).getReg();
+  const Register PtrIn = I.getOperand(6).getReg();
+  const Register FifoIn = I.getOperand(7).getReg();
+  const Register AvailIn = I.getOperand(8).getReg();
+  const Register OffsetReg = I.getOperand(9).getReg();
+  const Register Size1Reg = I.getOperand(10).getReg();
+  const Register CountIn1Reg = I.getOperand(11).getReg();
+  const Register Incr1Reg = I.getOperand(12).getReg();
+  const Register Size2Reg = I.getOperand(13).getReg();
+  const Register CountIn2Reg = I.getOperand(14).getReg();
+  const Register Incr2Reg = I.getOperand(15).getReg();
+
+  const Register DSReg =
+      createDSRegSequence(OffsetReg, Incr1Reg, Incr2Reg, Size1Reg, CountIn1Reg,
+                          Size2Reg, CountIn2Reg, MRI);
+
+  auto MI = MIB.buildInstr(
+      Opcode, {FifoOut, PtrOut, AvailOut, CountOut1Reg, CountOut2Reg},
+      {FifoIn, PtrIn, AvailIn, DSReg});
+  MI.cloneMemRefs(I);
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+}
