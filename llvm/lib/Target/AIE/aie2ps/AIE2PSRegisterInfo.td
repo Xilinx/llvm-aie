@@ -1209,13 +1209,13 @@ def spill_eDC_to_eR : AIE2PSScalarRegisterClass<(add eDC, eR)>;
 
 class AIE2PVector1076FifoRegisterClass<dag reglist> :
     AIE2PSRegisterClass<1088, 512, [i32], reglist>;
-def sub_ptr : SubRegIndex<20,  0>;
-def sub_fifo : SubRegIndex<1024, 20>;
-def sub_avail : SubRegIndex<32, 1044>;
+def sub_fifo : SubRegIndex<1024, 0>;
+def sub_avail : SubRegIndex<32, 1024>;
+def sub_ptr : SubRegIndex<20, 1056>;
 
-let SubRegIndices = [sub_ptr, sub_fifo, sub_avail], CoveredBySubRegs = 1 in {
-  def plfr0 : AIE2PS1BitReg<0b0, "plfr0", [p0, lf0, r24]>;
-  def plfr1 : AIE2PS1BitReg<0b1, "plfr1", [p1, lf1, r25]>;
+let SubRegIndices = [sub_fifo, sub_avail, sub_ptr], CoveredBySubRegs = 1 in {
+  def plfr0 : AIE2PS1BitReg<0b0, "plfr0", [lf0, r24, p0]>;
+  def plfr1 : AIE2PS1BitReg<0b1, "plfr1", [lf1, r25, p1]>;
 }
 def ePSRFLdF : AIE2PVector1076FifoRegisterClass<(add plfr0, plfr1)>;
 

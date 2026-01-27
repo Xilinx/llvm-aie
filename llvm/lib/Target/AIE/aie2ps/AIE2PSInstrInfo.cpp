@@ -800,6 +800,67 @@ void AIE2PSInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     return bounceViaRegClass(&AIE2PS::VEC512RegClass);
   } else if (regClassMatches(AIE2PS::FIFO1024RegClass, RC, SrcReg)) {
     return bounceViaRegClass(&AIE2PS::VEC1024RegClass);
+  } else if (regClassMatches(AIE2PS::ePSRFLdFRegClass, RC, SrcReg)) {
+    // For physical registers, resolve sub-register indices to actual registers.
+    // For virtual registers, use sub-register index directly.
+    MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
+    MachineFunction &MF = *MBB.getParent();
+    MachineFrameInfo &MFI = MF.getFrameInfo();
+
+    // Helper to create store MMO with proper offset and size for a sub-register
+    unsigned ByteOffset = 0;
+    auto CreateSubRegStoreMMO = [&](unsigned SubRegIdx) {
+      const unsigned BitsPerByte = 8;
+      unsigned ByteSize =
+          divideCeil(TRI->getSubRegIdxSize(SubRegIdx), BitsPerByte);
+      MachinePointerInfo PtrInfo =
+          MachinePointerInfo::getFixedStack(MF, FI, ByteOffset);
+      ByteOffset += ByteSize;
+      return MF.getMachineMemOperand(PtrInfo, MachineMemOperand::MOStore,
+                                     ByteSize, MFI.getObjectAlign(FI));
+    };
+
+    if (SrcReg.isPhysical()) {
+      // Bounce SrcReg's sub_fifo via COPY to a VEC1024RegClass ...
+      Register TmpReg = MRI.createVirtualRegister(&AIE2PS::VEC1024RegClass);
+      BuildMI(MBB, I, DL, get(AIE2PS::COPY), TmpReg)
+          .addReg(TRI->getSubReg(SrcReg, AIE2PS::sub_fifo),
+                  getKillRegState(IsKill));
+      BuildMI(MBB, I, DL, get(AIE2PS::VST_Y_SPILL))
+          .addReg(TmpReg, getKillRegState(true))
+          .addFrameIndex(FI)
+          .addMemOperand(CreateSubRegStoreMMO(AIE2PS::sub_fifo));
+      // ... and spill SrcReg's sub_ptr and sub_avail using ST_R_SPILL
+      BuildMI(MBB, I, DL, get(AIE2PS::ST_R_SPILL))
+          .addReg(TRI->getSubReg(SrcReg, AIE2PS::sub_avail),
+                  getKillRegState(IsKill))
+          .addFrameIndex(FI)
+          .addMemOperand(CreateSubRegStoreMMO(AIE2PS::sub_avail));
+      BuildMI(MBB, I, DL, get(AIE2PS::ST_R_SPILL))
+          .addReg(TRI->getSubReg(SrcReg, AIE2PS::sub_ptr),
+                  getKillRegState(IsKill))
+          .addFrameIndex(FI)
+          .addMemOperand(CreateSubRegStoreMMO(AIE2PS::sub_ptr));
+    } else {
+      // Bounce SrcReg's sub_fifo via COPY to a VEC1024RegClass ...
+      Register TmpReg = MRI.createVirtualRegister(&AIE2PS::VEC1024RegClass);
+      BuildMI(MBB, I, DL, get(AIE2PS::COPY), TmpReg)
+          .addReg(SrcReg, getKillRegState(IsKill), AIE2PS::sub_fifo);
+      BuildMI(MBB, I, DL, get(AIE2PS::VST_Y_SPILL))
+          .addReg(TmpReg, getKillRegState(true))
+          .addFrameIndex(FI)
+          .addMemOperand(CreateSubRegStoreMMO(AIE2PS::sub_fifo));
+      // ... and spill SrcReg's sub_ptr and sub_avail using ST_R_SPILL
+      BuildMI(MBB, I, DL, get(AIE2PS::ST_R_SPILL))
+          .addReg(SrcReg, getKillRegState(IsKill), AIE2PS::sub_avail)
+          .addFrameIndex(FI)
+          .addMemOperand(CreateSubRegStoreMMO(AIE2PS::sub_avail));
+      BuildMI(MBB, I, DL, get(AIE2PS::ST_R_SPILL))
+          .addReg(SrcReg, getKillRegState(IsKill), AIE2PS::sub_ptr)
+          .addFrameIndex(FI)
+          .addMemOperand(CreateSubRegStoreMMO(AIE2PS::sub_ptr));
+    }
+    return;
   } else if (regClassMatches(AIE2PS::mEsRegClass, RC, SrcReg)) {
     Opcode = AIE2PS::VST_E_SPILL;
   } else if (regClassMatches(AIE2PS::mEEsRegClass, RC, SrcReg)) {
@@ -910,6 +971,64 @@ void AIE2PSInstrInfo::loadRegFromStackSlot(
     return bounceViaRegClass(&AIE2PS::VEC512RegClass);
   } else if (regClassMatches(AIE2PS::FIFO1024RegClass, RC, DstReg)) {
     return bounceViaRegClass(&AIE2PS::VEC1024RegClass);
+  } else if (regClassMatches(AIE2PS::ePSRFLdFRegClass, RC, DstReg)) {
+    // For physical registers, resolve sub-register indices to actual registers.
+    // For virtual registers, use sub-register index directly.
+    MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
+    MachineFunction &MF = *MBB.getParent();
+    MachineFrameInfo &MFI = MF.getFrameInfo();
+
+    // Helper to create load MMO with proper offset and size for a sub-register
+    unsigned ByteOffset = 0;
+    auto CreateSubRegLoadMMO = [&](unsigned SubRegIdx) {
+      const unsigned BitsPerByte = 8;
+      unsigned ByteSize =
+          divideCeil(TRI->getSubRegIdxSize(SubRegIdx), BitsPerByte);
+      MachinePointerInfo PtrInfo =
+          MachinePointerInfo::getFixedStack(MF, FI, ByteOffset);
+      ByteOffset += ByteSize;
+      return MF.getMachineMemOperand(PtrInfo, MachineMemOperand::MOLoad,
+                                     ByteSize, MFI.getObjectAlign(FI));
+    };
+
+    if (DstReg.isPhysical()) {
+      // Bounce DstReg's sub_fifo via COPY from a VEC1024RegClass ...
+      Register TmpReg = MRI.createVirtualRegister(&AIE2PS::VEC1024RegClass);
+      BuildMI(MBB, I, DL, get(AIE2PS::VLDA_Y_SPILL), TmpReg)
+          .addFrameIndex(FI)
+          .addMemOperand(CreateSubRegLoadMMO(AIE2PS::sub_fifo));
+      BuildMI(MBB, I, DL, get(AIE2PS::COPY),
+              TRI->getSubReg(DstReg, AIE2PS::sub_fifo))
+          .addReg(TmpReg, getKillRegState(true));
+      // ... and load DstReg's sub_ptr and sub_avail using LDA_R_SPILL
+      BuildMI(MBB, I, DL, get(AIE2PS::LDA_R_SPILL),
+              TRI->getSubReg(DstReg, AIE2PS::sub_avail))
+          .addFrameIndex(FI)
+          .addMemOperand(CreateSubRegLoadMMO(AIE2PS::sub_avail));
+      BuildMI(MBB, I, DL, get(AIE2PS::LDA_R_SPILL),
+              TRI->getSubReg(DstReg, AIE2PS::sub_ptr))
+          .addFrameIndex(FI)
+          .addMemOperand(CreateSubRegLoadMMO(AIE2PS::sub_ptr));
+    } else {
+      // Bounce DstReg's sub_fifo via COPY from a VEC1024RegClass ...
+      Register TmpReg = MRI.createVirtualRegister(&AIE2PS::VEC1024RegClass);
+      BuildMI(MBB, I, DL, get(AIE2PS::VLDA_Y_SPILL), TmpReg)
+          .addFrameIndex(FI)
+          .addMemOperand(CreateSubRegLoadMMO(AIE2PS::sub_fifo));
+      BuildMI(MBB, I, DL, get(AIE2PS::COPY))
+          .addReg(DstReg, RegState::DefineNoRead, AIE2PS::sub_fifo)
+          .addReg(TmpReg, getKillRegState(true));
+      // ... and load DstReg's sub_ptr and sub_avail using LDA_R_SPILL
+      BuildMI(MBB, I, DL, get(AIE2PS::LDA_R_SPILL))
+          .addReg(DstReg, RegState::DefineNoRead, AIE2PS::sub_avail)
+          .addFrameIndex(FI)
+          .addMemOperand(CreateSubRegLoadMMO(AIE2PS::sub_avail));
+      BuildMI(MBB, I, DL, get(AIE2PS::LDA_R_SPILL))
+          .addReg(DstReg, RegState::DefineNoRead, AIE2PS::sub_ptr)
+          .addFrameIndex(FI)
+          .addMemOperand(CreateSubRegLoadMMO(AIE2PS::sub_ptr));
+    }
+    return;
   } else if (regClassMatches(AIE2PS::mEsRegClass, RC, DstReg)) {
     Opcode = AIE2PS::VLDA_E_SPILL;
   } else if (regClassMatches(AIE2PS::mEEsRegClass, RC, DstReg)) {
