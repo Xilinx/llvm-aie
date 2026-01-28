@@ -55,6 +55,7 @@ public:
   bool selectG_CONCAT_VECTORS(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_AIE_BROADCAST_VECTOR(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVST_FIFO(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectVST_FIFO_CONV(MachineInstr &StoreI, MachineRegisterInfo &MRI);
   unsigned getSub256LoIdx() const override { return AIE2PS::sub_256_lo; }
   unsigned getNoSubRegIdx() const override { return AIE2PS::NoSubRegister; }
   const TargetRegisterClass &getVEC128RegClass() const override {
@@ -4571,6 +4572,58 @@ static unsigned int getStoreFifoOpcode(MachineInstr &I) {
   return AIE2PS::INSTRUCTION_LIST_END;
 }
 
+bool AIE2PSInstructionSelector::selectVST_FIFO_CONV(MachineInstr &StoreI,
+                                                    MachineRegisterInfo &MRI) {
+  // Operand 7 is the first component (Mantissa) of the BFP384 push
+  const Register Mantissa = StoreI.getOperand(7).getReg();
+  MachineInstr *MantissaDef = MRI.getVRegDef(Mantissa);
+
+  if (!MantissaDef)
+    return false;
+
+  auto *VConvOp = dyn_cast<GIntrinsic>(MantissaDef);
+  if (!VConvOp)
+    return false;
+
+  if (VConvOp->getIntrinsicID() != Intrinsic::aie2ps_v64accfloat_to_v64mx6)
+    return false;
+
+  // Verify other components come from the same VCONV and match correct outputs
+  const Register SignBit = StoreI.getOperand(8).getReg();
+  const Register SubTile = StoreI.getOperand(9).getReg();
+  const Register Exponent = StoreI.getOperand(10).getReg();
+
+  if (VConvOp->getOperand(0).getReg() != Mantissa)
+    return false;
+  if (VConvOp->getOperand(1).getReg() != SignBit)
+    return false;
+  if (VConvOp->getOperand(2).getReg() != SubTile)
+    return false;
+  if (VConvOp->getOperand(3).getReg() != Exponent)
+    return false;
+
+  // Source of intrinsic is operand 5 (4 defs + 1 ID + source)
+  const Register SrcReg = VConvOp->getOperand(5).getReg();
+
+  const Register PtrOut = StoreI.getOperand(0).getReg();
+  const Register FifoOut = StoreI.getOperand(1).getReg();
+  const Register AvailOut = StoreI.getOperand(2).getReg();
+
+  const Register PtrIn = StoreI.getOperand(4).getReg();
+  const Register FifoIn = StoreI.getOperand(5).getReg();
+  const Register AvailIn = StoreI.getOperand(6).getReg();
+
+  auto NewInstr = MIB.buildInstr(AIE2PS::VST_PUSH_384_CONV_mx6_fp32,
+                                 {FifoOut, PtrOut, AvailOut},
+                                 {FifoIn, SrcReg, PtrIn, AvailIn});
+  NewInstr.cloneMemRefs(StoreI);
+
+  makeDeadMI(*VConvOp, MRI);
+  StoreI.eraseFromParent();
+
+  return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
+}
+
 bool AIE2PSInstructionSelector::selectVST_FIFO(MachineInstr &I,
                                                MachineRegisterInfo &MRI) {
   const auto IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
@@ -4593,6 +4646,10 @@ bool AIE2PSInstructionSelector::selectVST_FIFO(MachineInstr &I,
     return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
   }
   case Intrinsic::aie2ps_fifo_st_push_BFP384: {
+    // First try to match CONV combine
+    if (selectVST_FIFO_CONV(I, MRI))
+      return true;
+
     const Register PtrIn = I.getOperand(4).getReg();
     const Register FifoIn = I.getOperand(5).getReg();
     const Register AvailIn = I.getOperand(6).getReg();
