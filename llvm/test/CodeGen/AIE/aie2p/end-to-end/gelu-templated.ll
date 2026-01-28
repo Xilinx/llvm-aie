@@ -17,7 +17,7 @@
 define void @gelu_fn(ptr noalias %ifm, ptr noalias %ofm, ptr nonnull align 64 dereferenceable(64) %params) {
 ; CHECK-LABEL: gelu_fn:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], #64; nopb ; nopxm
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], #64; nopxm
 ; CHECK-NEXT:    movxm r0, #16544
 ; CHECK-NEXT:    vbcst.16 x6, r0
 ; CHECK-NEXT:    lda r1, [p2, #0]; movxm r0, #17280
@@ -25,61 +25,57 @@ define void @gelu_fn(ptr noalias %ifm, ptr noalias %ofm, ptr nonnull align 64 de
 ; CHECK-NEXT:    vadd.f dm3, dm1, dm0, r0
 ; CHECK-NEXT:    vconv.fp32.bf16 cml0, x6
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cml2, [p0], #64
-; CHECK-NEXT:    movxm r2, #15821
-; CHECK-NEXT:    mova r2, #255; movx r4, #1; vbcst.16 x4, r2
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], #64; vconv.bf16.fp32 x8, cml3; lshl r2, r1, r4; vbcst.16 x0, r2
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml2, [p0], #64; movxm r2, #15821
+; CHECK-NEXT:    movx r4, #1
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], #64; movx r2, #255; vbcst.16 x4, r2
+; CHECK-NEXT:    vconv.bf16.fp32 x8, cml3; lshl r2, r1, r4; vbcst.16 x0, r2
 ; CHECK-NEXT:    mova r2, #828; mov m0, r2; vadd.f dm3, dm2, dm0, r0
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml2, [p0], #64; vmul.f dm2, x8, x2, r2
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vadd.f dm3, dm1, dm0, r0
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vadd.f dm3, dm2, dm0, r0
 ; CHECK-NEXT:    vconv.bf16.fp32 x10, cml3
 ; CHECK-NEXT:    vconv.bf16.fp32 x8, cml2
-; CHECK-NEXT:    vmul.f dm1, x10, x2, r2
-; CHECK-NEXT:    vconv.bf16.fp32 x1, cml3
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], #64; vmul.f dm4, x8, x4, r2
-; CHECK-NEXT:    vconv.bf16.fp32 x7, cml3; vmul.f dm2, x1, x2, r2
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], #64; vconv.bf16.fp32 x1, cml3; vmul.f dm1, x10, x2, r2
 ; CHECK-NEXT:    nop
+; CHECK-NEXT:    vmul.f dm2, x1, x2, r2
+; CHECK-NEXT:    vconv.bf16.fp32 x7, cml3; vmul.f dm4, x8, x4, r2
+; CHECK-NEXT:    vadd.f dm1, dm1, dm0, r0
 ; CHECK-NEXT:    vmul.f dm3, x7, x2, r2
-; CHECK-NEXT:    vconv.bf16.fp32 x10, cml1; vadd.f dm1, dm1, dm0, r0
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cml2, [p0], #64; vconv.bf16.fp32 x8, cml4; movx r3, #0; vmul.f dm4, x10, x4, r2
-; CHECK-NEXT:    vconv.bf16.fp32 x5, cml2; mov s0, r3
-; CHECK-NEXT:    vfloor.s32.bf16 x1, wl8, s0
-; CHECK-NEXT:    vconv.bf16.fp32 x5, cml3; vmul.f dm4, x5, x4, r2
-; CHECK-NEXT:    vconv.bf16.fp32 x7, cml1; movxm ls, #.LBB0_1; vadd.f dm2, dm2, dm0, r0
-; CHECK-NEXT:    mova r4, #-5; nopb ; vfloor.s32.bf16 x3, wh8, s0; movxm le, #.L_LEnd0; vmul.f dm3, x5, x4, r2
-; CHECK-NEXT:    mova r1, #2; nopb ; vconv.bf16.fp32 x10, cml4; lshl r4, r1, r4; vbcst.16 x6, r3; vmul.f dm4, x7, x2, r2
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], #64; vshuffle x1, x1, x3, r1
-; CHECK-NEXT:    vfloor.s32.bf16 x9, wl10, s0; vmin_ge.16 x3, r16, x1, x0, vaddsign1
-; CHECK-NEXT:    vfloor.s32.bf16 x3, wh10, s0; add.nc lc, r4, #-7
-; CHECK-NEXT:    nopa ; nopb ; vconv.bf16.fp32 x8, cml4; nopx ; vmax_lt.16 x11, r16, x3, x6, vaddsign1; nopv
-; CHECK-NEXT:    padda [p1], m0; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vconv.bf16.fp32 x10, cml1
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml2, [p0], #64
+; CHECK-NEXT:    vconv.bf16.fp32 x5, cml2
+; CHECK-NEXT:    vconv.bf16.fp32 x8, cml4; vmul.f dm4, x10, x4, r2
+; CHECK-NEXT:    vconv.bf16.fp32 x7, cml1; vmul.f dm4, x5, x4, r2
+; CHECK-NEXT:    mova r3, #0; vconv.bf16.fp32 x5, cml3; vadd.f dm2, dm2, dm0, r0
+; CHECK-NEXT:    mov s0, r3; vmul.f dm3, x7, x2, r2
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], #64; nopb ; vfloor.s32.bf16 x1, wl8, s0; movxm ls, #.LBB0_1; vmul.f dm4, x5, x4, r2
+; CHECK-NEXT:    mova r4, #-5; vfloor.s32.bf16 x3, wh8, s0; movxm le, #.L_LEnd0
+; CHECK-NEXT:    vconv.bf16.fp32 x10, cml4; lshl r4, r1, r4; vbcst.16 x6, r3
+; CHECK-NEXT:    mova r1, #2; add.nc lc, r4, #-7
+; CHECK-NEXT:    nopa ; nopb ; vfloor.s32.bf16 x1, wh10, s0; nopx ; vshuffle x3, x1, x3, r1; nopv
+; CHECK-NEXT:    nopa ; nopb ; vconv.bf16.fp32 x9, cml4; nopx ; vmin_ge.16 x3, r16, x3, x0, vaddsign1; nopv
+; CHECK-NEXT:    padda [p1], m0; nopb ; vfloor.s32.bf16 x5, wl10, s0; nopx ; vmax_lt.16 x11, r16, x3, x6, vaddsign1; nopv
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    nopa ; nopb ; vconv.bf16.fp32 x10, cml2; nopxm ; nopv
-; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; vadd.f dm2, dm4, dm0, r0
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], #64; nopb ; vconv.bf16.fp32 x7, cml4; nopx ; vmov cml4, cml1; vmul.f dm4, x10, x2, r2
-; CHECK-NEXT:    nopa ; nopb ; vst x11, [p1], #64; nopx ; vshuffle x1, x9, x3, r1; nopv
-; CHECK-NEXT:    vfloor.s32.bf16 x3, wh8, s0; vmin_ge.16 x5, r16, x1, x0, vaddsign1
-; CHECK-NEXT:    vfloor.s32.bf16 x9, wl8, s0; vmax_lt.16 x11, r16, x5, x6, vaddsign1
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], #64; nopb ; vconv.bf16.fp32 x8, cml2; nopxm ; vadd.f dm2, dm2, dm0, r0
+; CHECK-NEXT:    nopa ; nopb ; vst x11, [p1], #64; nopx ; vmov cml2, cml1; nopv
+; CHECK-NEXT:    nopa ; nopb ; nopx ; vshuffle x10, x5, x1, r1; vfloor.s32.bf16 x1, wh9, s0
+; CHECK-NEXT:    vconv.bf16.fp32 x3, cml3; vmin_ge.16 x7, r16, x10, x0, vaddsign1; vmul.f dm3, x8, x2, r2
+; CHECK-NEXT:    vfloor.s32.bf16 x5, wl9, s0; vmax_lt.16 x11, r16, x7, x6, vaddsign1
 ; CHECK-NEXT:  .L_LEnd0:
-; CHECK-NEXT:    nopa ; nopb ; vconv.bf16.fp32 x8, cml3; nopxm ; vmul.f dm3, x7, x4, r2
+; CHECK-NEXT:    nopa ; nopb ; vconv.bf16.fp32 x9, cml4; nopxm ; vmul.f dm4, x3, x4, r2
 ; CHECK-NEXT:  // %bb.2:
-; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vshuffle x10, x9, x3, r1; nopv
-; CHECK-NEXT:    vmin_ge.16 x10, r16, x10, x0, vaddsign1
-; CHECK-NEXT:    vmax_lt.16 x10, r16, x10, x6, vaddsign1
-; CHECK-NEXT:    vst x11, [p1], #64
+; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vshuffle x10, x5, x1, r1; nopv
+; CHECK-NEXT:    vst x11, [p1], #64; nopx ; vmin_ge.16 x10, r16, x10, x0, vaddsign1
+; CHECK-NEXT:    vfloor.s32.bf16 x8, wh9, s0; vmax_lt.16 x10, r16, x10, x6, vaddsign1
+; CHECK-NEXT:    vfloor.s32.bf16 x10, wl9, s0
 ; CHECK-NEXT:    vst x10, [p1], #64
-; CHECK-NEXT:    vfloor.s32.bf16 x10, wl8, s0
-; CHECK-NEXT:    vfloor.s32.bf16 x8, wh8, s0
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vshuffle x8, x10, x8, r1
 ; CHECK-NEXT:    vmin_ge.16 x8, r16, x8, x0, vaddsign1
 ; CHECK-NEXT:    vmax_lt.16 x8, r16, x8, x6, vaddsign1
-; CHECK-NEXT:    vconv.bf16.fp32 x8, cml3
+; CHECK-NEXT:    vconv.bf16.fp32 x8, cml4
 ; CHECK-NEXT:    vst x8, [p1], #64
 ; CHECK-NEXT:    vfloor.s32.bf16 x10, wl8, s0
 ; CHECK-NEXT:    vfloor.s32.bf16 x8, wh8, s0
@@ -87,7 +83,7 @@ define void @gelu_fn(ptr noalias %ifm, ptr noalias %ofm, ptr nonnull align 64 de
 ; CHECK-NEXT:    vshuffle x8, x10, x8, r1
 ; CHECK-NEXT:    vmin_ge.16 x8, r16, x8, x0, vaddsign1
 ; CHECK-NEXT:    vmax_lt.16 x8, r16, x8, x6, vaddsign1
-; CHECK-NEXT:    vconv.bf16.fp32 x8, cml4
+; CHECK-NEXT:    vconv.bf16.fp32 x8, cml3
 ; CHECK-NEXT:    vst x8, [p1], #64
 ; CHECK-NEXT:    vmul.f dm3, x8, x4, r2
 ; CHECK-NEXT:    nop

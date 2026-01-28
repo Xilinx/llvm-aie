@@ -128,23 +128,23 @@ define void @heavy_3d_user(i32 %dimsAI.sroa.5.0.copyload.i, i32 %dimsAI.sroa.7.0
 ; COARSE-GRAINED-NEXT:    mova m0, #0; st dj4, [sp, #-320]; or r10, r2, r2; mov r11, r3 // 4-byte Folded Spill Delay Slot 3
 ; COARSE-GRAINED-NEXT:    mova p0, #0; st m0, [sp, #-344]; or r12, r4, r4; mov r13, r5 // 4-byte Folded Spill Delay Slot 2
 ; COARSE-GRAINED-NEXT:    mova p1, #0; or r14, r6, r6; mov r15, r7 // Delay Slot 1
-; COARSE-GRAINED-NEXT:    lda m1, [sp, #-344]; nopb ; nopxm // 4-byte Folded Reload
+; COARSE-GRAINED-NEXT:    lda m1, [sp, #-344]; nopxm // 4-byte Folded Reload
 ; COARSE-GRAINED-NEXT:    lda dj5, [sp, #-320] // 4-byte Folded Reload
 ; COARSE-GRAINED-NEXT:    lda m4, [sp, #-296]; mov dn4, r15 // 4-byte Folded Reload
 ; COARSE-GRAINED-NEXT:    st dn4, [sp, #-260]; mov dj0, r12 // 4-byte Folded Spill
 ; COARSE-GRAINED-NEXT:    st dj0, [sp, #-272]; mov dn0, r14 // 4-byte Folded Spill
-; COARSE-GRAINED-NEXT:    mova dc3, #0; st dn0, [sp, #-276]; mov m0, r11 // 4-byte Folded Spill
-; COARSE-GRAINED-NEXT:    lda m3, [sp, #-280]; movs dj4, r13; mov dc7, dc3 // 4-byte Folded Reload
-; COARSE-GRAINED-NEXT:    lda m0, [sp, #-312]; st m0, [sp, #-280] // 4-byte Folded Reload4-byte Folded Spill
-; COARSE-GRAINED-NEXT:    lda dj4, [sp, #-288]; st dj4, [sp, #-256] // 4-byte Folded Reload4-byte Folded Spill
-; COARSE-GRAINED-NEXT:    lda m5, [sp, #-328]; movs dj6, dj5; mov m2, m1 // 4-byte Folded Reload
+; COARSE-GRAINED-NEXT:    lda m3, [sp, #-280]; st dn0, [sp, #-276]; mov m0, r11 // 4-byte Folded Reload4-byte Folded Spill
+; COARSE-GRAINED-NEXT:    lda m0, [sp, #-312]; st m0, [sp, #-280]; mov dj4, r13 // 4-byte Folded Reload4-byte Folded Spill
+; COARSE-GRAINED-NEXT:    lda dj4, [sp, #-288]; st dj4, [sp, #-256]; mov dc3, #0 // 4-byte Folded Reload4-byte Folded Spill
+; COARSE-GRAINED-NEXT:    lda m5, [sp, #-328]; mov dc7, dc3 // 4-byte Folded Reload
+; COARSE-GRAINED-NEXT:    movs dj6, dj5; mov m2, m1
 ; COARSE-GRAINED-NEXT:    lda dn0, [sp, #-308]; movs dn3, m1; mov m1, dj5 // 4-byte Folded Reload
 ; COARSE-GRAINED-NEXT:    lda dj0, [sp, #-304]; st m4, [sp, #-296] // 4-byte Folded Reload4-byte Folded Spill
 ; COARSE-GRAINED-NEXT:    lda dn4, [sp, #-292]; st m4, [sp, #-328] // 4-byte Folded Reload4-byte Folded Spill
-; COARSE-GRAINED-NEXT:    movs dc0, m2; mov dc6, m2
 ; COARSE-GRAINED-NEXT:    st m0, [sp, #-312] // 4-byte Folded Spill
 ; COARSE-GRAINED-NEXT:    st dj4, [sp, #-288] // 4-byte Folded Spill
-; COARSE-GRAINED-NEXT:    movs m0, m2; mov dc4, m2
+; COARSE-GRAINED-NEXT:    movs dc6, m2; mov m0, m2
+; COARSE-GRAINED-NEXT:    movs dc4, m2; mov dc0, m2
 ; COARSE-GRAINED-NEXT:    st dn0, [sp, #-308] // 4-byte Folded Spill
 ; COARSE-GRAINED-NEXT:    st dj0, [sp, #-304] // 4-byte Folded Spill
 ; COARSE-GRAINED-NEXT:    lda dj3, [sp, #-248]; st dn4, [sp, #-292] // 4-byte Folded Reload4-byte Folded Spill
@@ -153,9 +153,9 @@ define void @heavy_3d_user(i32 %dimsAI.sroa.5.0.copyload.i, i32 %dimsAI.sroa.7.0
 ; COARSE-GRAINED-NEXT:    st dn0, [sp, #-340] // 4-byte Folded Spill
 ; COARSE-GRAINED-NEXT:    st dj0, [sp, #-336] // 4-byte Folded Spill
 ; COARSE-GRAINED-NEXT:    st dn4, [sp, #-324] // 4-byte Folded Spill
-; COARSE-GRAINED-NEXT:    st dc4, [sp, #-252] // 4-byte Folded Spill
-; COARSE-GRAINED-NEXT:    vlda x2, [sp, #-128]; movs dj4, dj5; mov dc4, dj5 // 64-byte Folded Reload
-; COARSE-GRAINED-NEXT:    vlda x3, [sp, #-64]; st dc0, [sp, #-268] // 64-byte Folded Reload4-byte Folded Spill
+; COARSE-GRAINED-NEXT:    st dc0, [sp, #-268] // 4-byte Folded Spill
+; COARSE-GRAINED-NEXT:    vlda x2, [sp, #-128]; st dc4, [sp, #-252] // 64-byte Folded Reload4-byte Folded Spill
+; COARSE-GRAINED-NEXT:    vlda x3, [sp, #-64]; movs dj4, dj5; mov dc4, dj5 // 64-byte Folded Reload
 ; COARSE-GRAINED-NEXT:    st dc0, [sp, #-300] // 4-byte Folded Spill
 ; COARSE-GRAINED-NEXT:    st dc6, [sp, #-220] // 4-byte Folded Spill
 ; COARSE-GRAINED-NEXT:    st m0, [sp, #-344] // 4-byte Folded Spill
@@ -177,17 +177,17 @@ define void @heavy_3d_user(i32 %dimsAI.sroa.5.0.copyload.i, i32 %dimsAI.sroa.7.0
 ; COARSE-GRAINED-NEXT:    mova p1, #0; st m2, [sp, #-216]; mov r25, r3 // 4-byte Folded Spill
 ; COARSE-GRAINED-NEXT:    vldb.pop.576.3d ex0, [p1, lf1, r25, d1]; st dc6, [sp, #-188] // 4-byte Folded Spill
 ; COARSE-GRAINED-NEXT:    movs dc1, dc0; mov dj1, m0
-; COARSE-GRAINED-NEXT:    movs m1, m0; mov dj5, dj4
+; COARSE-GRAINED-NEXT:    lda m5, [sp, #-232]; movs m1, m0; mov dj5, dj4 // 4-byte Folded Reload
 ; COARSE-GRAINED-NEXT:    st dn1, [sp, #-340]; vmov lfl1, lfl0 // 4-byte Folded Spill
-; COARSE-GRAINED-NEXT:    lda m5, [sp, #-232]; st dc1, [sp, #-332]; vmov lfh1, lfh0 // 4-byte Folded Reload4-byte Folded Spill
-; COARSE-GRAINED-NEXT:    lda dc5, [sp, #-220]; movs dn1, dn3; mov dc1, dc3 // 4-byte Folded Reload
+; COARSE-GRAINED-NEXT:    lda dc5, [sp, #-220]; st dc1, [sp, #-332]; vmov lfh1, lfh0 // 4-byte Folded Reload4-byte Folded Spill
 ; COARSE-GRAINED-NEXT:    st dn5, [sp, #-324] // 4-byte Folded Spill
-; COARSE-GRAINED-NEXT:    st dj5, [sp, #-320] // 4-byte Folded Spill
-; COARSE-GRAINED-NEXT:    movs dn5, dn3; mov dj5, m0
+; COARSE-GRAINED-NEXT:    movs dn1, dn3; mov dc1, dc3
 ; COARSE-GRAINED-NEXT:    st m1, [sp, #-344] // 4-byte Folded Spill
 ; COARSE-GRAINED-NEXT:    st dj1, [sp, #-336] // 4-byte Folded Spill
 ; COARSE-GRAINED-NEXT:    st m5, [sp, #-328] // 4-byte Folded Spill
+; COARSE-GRAINED-NEXT:    st dj5, [sp, #-320] // 4-byte Folded Spill
 ; COARSE-GRAINED-NEXT:    st dc5, [sp, #-316] // 4-byte Folded Spill
+; COARSE-GRAINED-NEXT:    movs dn5, dn3; mov dj5, m0
 ; COARSE-GRAINED-NEXT:    st m1, [sp, #-248] // 4-byte Folded Spill
 ; COARSE-GRAINED-NEXT:    st dj1, [sp, #-240] // 4-byte Folded Spill
 ; COARSE-GRAINED-NEXT:    st m5, [sp, #-232] // 4-byte Folded Spill

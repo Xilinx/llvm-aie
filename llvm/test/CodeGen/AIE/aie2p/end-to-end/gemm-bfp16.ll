@@ -34,18 +34,18 @@ declare <64 x i32> @llvm.aie2p.BFP576.BFP576.ACC2048.mac.conf(<64 x i8>, <8 x i8
 define dso_local void @gemm_bfp16(ptr %ofm_ptr, ptr %ifm_ptr, ptr %wts_ptr, ptr %param, i20 %0, i20 %1, i20 %2, i20 %3, i20 %4, i20 %5, i20 %6, i20 %7, i20 %idx.ext.i.i.i.i.i.i.i.i.i90.i) {
 ; CHECK-LABEL: gemm_bfp16:
 ; CHECK:       // %bb.0: // %newFuncRoot
-; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r7, p5; nops
+; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r7, p5
 ; CHECK-NEXT:    paddxm [sp], #64
 ; CHECK-NEXT:    st p6, [sp, #-60] // 4-byte Folded Spill
 ; CHECK-NEXT:    mova m0, #-68; mov p6, sp
-; CHECK-NEXT:    padda [p6], m0; mov dc5, #0
-; CHECK-NEXT:    lda dn2, [p6], #-4; movs m2, p4; movxm r0, #16256
+; CHECK-NEXT:    padda [p6], m0; movxm r0, #16256
+; CHECK-NEXT:    lda dn2, [p6], #-4; movs m2, p4; mov dc5, #0
 ; CHECK-NEXT:    lda m0, [p6], #-4; movs dj2, p5; mov r6, p4
-; CHECK-NEXT:    mova dj6, #68; movs p5, p0; vbcst.16 x0, r0
-; CHECK-NEXT:    lda dj0, [p6], #-4; movs dc1, dc5; movx r1, #53; mov dc2, dc5
-; CHECK-NEXT:    lda dj4, [p6], #-4; movs dc3, dc5; movx r2, #60; mov dc4, dc5
-; CHECK-NEXT:    lda dn0, [p6], #-4; movs dc0, dc5; movx r3, #780; mov dj3, r7
-; CHECK-NEXT:    lda m4, [p6, #-4]; st p7, [sp, #-64]; movx r4, #0; vmov x1, x0 // 4-byte Folded Spill
+; CHECK-NEXT:    mova dj6, #68; movs p5, p0; mov dc1, dc5
+; CHECK-NEXT:    lda dj0, [p6], #-4; movs dc2, dc5; movx r1, #53; mov dc3, dc5
+; CHECK-NEXT:    lda dj4, [p6], #-4; st p7, [sp, #-64]; movx r2, #60; vbcst.16 x0, r0 // 4-byte Folded Spill
+; CHECK-NEXT:    lda dn0, [p6], #-4; movs dc4, dc5; movx r3, #780; mov dc0, dc5
+; CHECK-NEXT:    lda m4, [p6, #-4]; movs dj3, r7; movx r4, #0; vmov x1, x0
 ; CHECK-NEXT:    lda dn4, [p6, #0]; movs p6, p1; movx r0, #52; mov dn3, dn2
 ; CHECK-NEXT:  .LBB0_1: // %for.body.i
 ; CHECK-NEXT:    // =>This Loop Header: Depth=1

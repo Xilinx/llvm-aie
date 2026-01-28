@@ -884,9 +884,9 @@ define <16 x i32> @shuffle_concat_extracted_subvectors_undef_at_extractidx(<16 x
 define <16 x i32> @shuffle_concat_extracted_subvectors_nothing_but_exceptions(<16 x i32> %a, <16 x i32> %b) {
 ; CHECK-LABEL: shuffle_concat_extracted_subvectors_nothing_but_exceptions:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    mova r29, #1; nopxm
+; CHECK-NEXT:    nopa ; nopx ; vextract.64 r3:r2, x2, #0, vaddsign1
 ; CHECK-NEXT:    vextract.64 r1:r0, x2, #2, vaddsign1
-; CHECK-NEXT:    vextract.64 r3:r2, x2, #0, vaddsign1
+; CHECK-NEXT:    mova r29, #1
 ; CHECK-NEXT:    vbcst.32 x0, r1
 ; CHECK-NEXT:    vinsert.32 x0, x0, #0, r2
 ; CHECK-NEXT:    vinsert.32 x0, x0, r29, r3
@@ -972,10 +972,10 @@ define <64 x i8> @shuffle_concat_extracted_subvectors_exceptions_not_contiguous_
 ; CHECK-NEXT:    vextract.64 r21:r20, x0, #3, vaddsign1
 ; CHECK-NEXT:    vextract.64 r23:r22, x0, #4, vaddsign1
 ; CHECK-NEXT:    vmov x2, bmll1
-; CHECK-NEXT:    vpush.hi.64 x0, x0, r1:r0
 ; CHECK-NEXT:    vextract.64 r5:r4, x2, #2, vaddsign1
-; CHECK-NEXT:    vextract.64 r3:r2, x2, #1, vaddsign1
 ; CHECK-NEXT:    vextract.64 r7:r6, x2, #3, vaddsign1
+; CHECK-NEXT:    vextract.64 r3:r2, x2, #1, vaddsign1
+; CHECK-NEXT:    vpush.hi.64 x0, x0, r1:r0
 ; CHECK-NEXT:    vpush.hi.64 x0, x0, r3:r2
 ; CHECK-NEXT:    vpush.hi.64 x0, x0, r5:r4
 ; CHECK-NEXT:    vpush.hi.64 x0, x0, r7:r6
