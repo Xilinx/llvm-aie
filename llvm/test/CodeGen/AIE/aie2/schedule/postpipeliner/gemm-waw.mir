@@ -3,7 +3,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc --mtriple=aie2 -O2 --start-before=postmisched %s -o - | FileCheck %s
 
@@ -94,8 +94,8 @@
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vmov bml4, x0
+  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_4: // %for.cond.cleanup
   ; CHECK-NEXT:    nopa ; ret lr
