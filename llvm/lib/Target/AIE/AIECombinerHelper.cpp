@@ -3387,6 +3387,67 @@ bool llvm::matchShuffleBcstToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
   return true;
 }
 
+/// Unified G_SHUFFLE_VECTOR combine dispatcher.
+/// Classifies the shuffle mask once and dispatches to the appropriate builder.
+bool llvm::matchShuffleVector(MachineInstr &MI, MachineRegisterInfo &MRI,
+                              const AIEBaseInstrInfo &TII,
+                              BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR);
+
+  const ShuffleVectorInfo Info = ShuffleVectorInfo::create(MI, MRI);
+
+  // Early exit for non-vector types
+  if (!Info.DstTy.isVector() || !Info.Src1Ty.isVector())
+    return false;
+
+  // Classify the mask pattern once
+  const ShuffleMaskClassificationResult Classification = Info.classifyMask();
+
+  // Dispatch based on pattern
+  switch (Classification.Pat) {
+  case ShuffleMaskPattern::AllUndef:
+    // Let the legalizer handle all-undef shuffles
+    return false;
+
+  case ShuffleMaskPattern::Identity:
+    // Identity pattern: try copy or extract based on size
+    if (Info.Relation == ShuffleVectorInfo::SizeRelation::Same)
+      return matchShuffleToCopy(MI, MRI, MatchInfo);
+    if (Info.Relation == ShuffleVectorInfo::SizeRelation::Shrinking)
+      return matchShuffleToExtractSubvec(MI, MRI, TII, MatchInfo);
+    return false;
+
+  case ShuffleMaskPattern::ExtractContiguous:
+    // Contiguous extraction: extract subvector
+    return matchShuffleToExtractSubvec(MI, MRI, TII, MatchInfo);
+
+  case ShuffleMaskPattern::ScalarBroadcast:
+  case ShuffleMaskPattern::SubvecBroadcast:
+    // Broadcast patterns: scalar element or subvector broadcast
+    return matchShuffleToBroadcast(MI, MRI, TII, MatchInfo);
+
+  case ShuffleMaskPattern::VSelect:
+    // VSelect: select elements from two sources
+    return matchShuffleToVSel(MI, MRI, TII, MatchInfo);
+
+  case ShuffleMaskPattern::IdentityWithExceptions:
+    // Identity with some insertions
+    return matchShuffleToExtractInsertElt(MI, MRI, MatchInfo);
+
+  case ShuffleMaskPattern::ScalarBroadcastWithExceptions:
+    // Broadcast with some insertions
+    return matchShuffleToExtractInsertEltToBroadcast(MI, MRI, MatchInfo);
+
+  case ShuffleMaskPattern::Unknown:
+    // Try fallback patterns
+    if (matchShuffleToConcatExtractedSubvectors(MI, MRI, TII, MatchInfo))
+      return true;
+    return false;
+  }
+
+  llvm_unreachable("Unhandled shuffle mask pattern");
+}
+
 /// Match:
 /// %35:_(s32) = G_CONSTANT i32 0
 /// %38:_(s32) = G_CONSTANT i32 1

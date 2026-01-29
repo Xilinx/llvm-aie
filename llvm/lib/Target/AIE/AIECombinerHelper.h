@@ -194,6 +194,11 @@ bool matchShuffleToBroadcast(MachineInstr &MI, MachineRegisterInfo &MRI,
 /// idiom into G_AIE_VSEL
 bool matchShuffleToVSel(MachineInstr &MI, MachineRegisterInfo &MRI,
                         const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
+
+/// Unified G_SHUFFLE_VECTOR combine dispatcher.
+/// Classifies the shuffle mask once and dispatches to the appropriate builder.
+bool matchShuffleVector(MachineInstr &MI, MachineRegisterInfo &MRI,
+                        const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
 /// \return true if \a MemI can be moved just before \a Dest in order to allow
 /// post-increment combining
 bool canDelayMemOp(MachineInstr &MemI, MachineInstr &Dest,

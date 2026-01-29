@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 include "llvm/Target/GlobalISel/Combine.td"
@@ -161,6 +161,20 @@ def combine_vector_shuffle_to_extract_insert_elt_to_broadcast : GICombineRule<
          [{ return matchShuffleToExtractInsertEltToBroadcast(*${root}, MRI, ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
 
+// Unified shuffle vector combine dispatcher - classifies once and builds
+def combine_shuffle_vector
+    : GICombineRule<(defs root
+                     : $root, build_fn_matchinfo
+                     : $matchinfo),
+                    (match(wip_match_opcode G_SHUFFLE_VECTOR)
+                     : $root, [{
+                         return matchShuffleVector(*${root}, MRI,
+                                                   (const AIEBaseInstrInfo &)
+                                                       B.getTII(),
+                                                   ${matchinfo});
+                       }]),
+                    (apply[{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
+
 def combine_broadcast_shl_to_add : GICombineRule<
   (defs root:$root, build_fn_matchinfo:$matchinfo),
   (match (wip_match_opcode G_SHL): $root,
@@ -314,6 +328,7 @@ def aie2p_additional_combines : GICombineGroup<[
   combine_paired_extracts,
   combine_widen_fmul,
   combine_vector_shuffle_to_extract_insert_elt_to_broadcast,
+  combine_shuffle_vector, 
   combine_bitcast_unmerge_swap,
   combine_phi_bitcast_swap,
   combine_vsel_to_unmerge_concat
