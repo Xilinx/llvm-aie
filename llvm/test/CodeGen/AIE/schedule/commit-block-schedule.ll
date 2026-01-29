@@ -35,11 +35,7 @@ define void @test_commit_block_schedule(i1 %0) {
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:  // %bb.3: // %for.cond.cleanup53
 ; CHECK-NEXT:    // in Loop: Header=BB0_1 Depth=1
-; CHECK-NEXT:    nopx
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    vmac.f dm1, dm2, x0, x0, r1
+; CHECK-NEXT:    nopa ; nopb ; nopxm ; vmac.f dm1, dm2, x0, x0, r1
 ; CHECK-NEXT:    jnz r0, #.LBB0_1
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4

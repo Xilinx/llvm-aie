@@ -42,7 +42,16 @@ public:
   void computeUseDefForward(ArrayRef<AIE::MachineBundle> Bundles,
                             bool InSeparateRegion);
 
-  unsigned getSafeOperandsDistance(const MachineInstr &MI) const;
+  // This function calculates the cycles from the end in which each register
+  // will be first materialized or used, taking into account a specified
+  // sequence of timed bundles in reverse order. InSeparateRegion is utilized
+  // to project the availability cycle to the preceding region.
+  void computeUseDefBackward(ArrayRef<AIE::MachineBundle> Bundles,
+                             bool InSeparateRegion);
+
+  unsigned getSafeOperandsDistanceFromTop(const MachineInstr &MI) const;
+
+  unsigned getSafeOperandsDistanceFromBottom(const MachineInstr &MI) const;
 
 private:
   using fixed_iterator = MachineBasicBlock::iterator;
@@ -50,29 +59,56 @@ private:
   const TargetRegisterInfo *TRI;
   const AIEBaseInstrInfo *TII;
   AAResults *AA;
-  std::map<MCRegister, unsigned> RegisterToCycleDef;
-  std::map<MCRegister, unsigned> RegisterToCycleUse;
-  int LastStoreCycle = 0;
+
+  // Forward tracking data structures (use int for consistency with backward)
+  std::map<MCRegister, int> RegisterToCycleDef;
+  std::map<MCRegister, int> RegisterToCycleUse;
+  int FirstLoadCycle = INT_MIN;
+  int FirstStoreCycle = INT_MIN;
+  int LastStoreCycle = INT_MIN;
+  int LastLoadCycle = INT_MIN;
   std::map<int, std::vector<MachineInstr *>> MemoryCycleToStoreInstrs;
-  int LastMemoryAccessCycle = 0;
+  std::map<int, std::vector<MachineInstr *>> MemoryCycleToLoadInstrs;
 
-  const std::map<MCRegister, unsigned> &getRegToCycleMap(bool IsDef) const;
+  unsigned BotFixedRegionSize = 0;
+  unsigned TopFixedRegionSize = 0;
 
-  std::map<MCRegister, unsigned> &getRegToCycleMap(bool IsDef);
+  const std::map<MCRegister, int> &getRegToCycleMap(bool IsDef) const;
 
-  void updateUseDefMaxCycle(Register Reg, unsigned Latency, bool IsDef);
+  std::map<MCRegister, int> &getRegToCycleMap(bool IsDef);
+
+  int getFirstMemCycle(bool IsStore) const;
+
+  int getLastMemCycle(bool IsStore) const;
+
+  void updateUseDefMaxCycle(Register Reg, int Latency, bool IsDef);
 
   void updateLastStoreCycle(int LastStoreCycle);
 
-  int getLastStoreCycle() const { return LastStoreCycle; }
+  void updateLastLoadCycle(int LastLoadCycle);
 
-  void updateLastMemoryAccessCycle(int MemAccessCycle);
+  void updateFirstMemCycle(int Cycle, bool IsStore);
 
-  int getLastMemoryAccessCycle() const { return LastMemoryAccessCycle; }
+  int getFirstMemoryAccessCycle() const;
 
-  void addPerInstructionLastStoreCycle(int LastStoreCycle, MachineInstr *MI);
+  int getLastMemoryAccessCycle() const;
 
-  int getMaxAliasingStoreCycle(const MachineInstr &MI) const;
+  void addPerInstructionLastMemCycle(int LastMemCycle, MachineInstr *MI);
+
+  void addPerInstructionFirstMemCycle(int FirstMemCycle, MachineInstr *MI);
+
+  int getMaxAliasingMemCycle(const MachineInstr &MI, bool IsStore) const;
+
+  int checkMemoryDependency(int CurrentMax, int MemoryCycle, int MIMemoryCycle,
+                            bool IsBackward) const;
+
+  int checkRegisterDependencies(int CurrentMax, const MachineInstr &MI,
+                                bool IsBackward) const;
+
+  int checkEventLikeInstruction(int CurrentMax, const MachineInstr &MI,
+                                bool IsBackward) const;
+
+  unsigned getBotFixedRegionSize() const { return BotFixedRegionSize; }
 };
 
 } // end namespace llvm

@@ -395,78 +395,60 @@ public:
     }
     DAG->makeMaps();
 
-    // Then, create dependencies between "free" and "fixed" instructions
-    auto IsFreeSU = [Scheduler](const SUnit &SU) {
-      return Scheduler->isFreeSU(SU);
-    };
     ArrayRef<AIE::MachineBundle> BotFixedBundles =
         CurRegion.getBotFixedBundles();
     ArrayRef<AIE::MachineBundle> TopFixedBundles =
         CurRegion.getTopFixedBundles();
 
-    for (SUnit &FreeSU : make_filter_range(DAG->SUnits, IsFreeSU)) {
-      const MachineInstr &MI = *FreeSU.getInstr();
+    // Handle bot-fixed instructions (prologue) with backward tracking
+    // Only handle prologues (preheader blocks), not epilogues here
+    if (!BotFixedBundles.empty() && BS.Kind != BlockType::Epilogue) {
+      AIERegMemEventTracker BackwardRET{ItinData, TRI, TII, AA};
 
-      auto UseOrDefReg = [](const MachineInstr &MI) {
-        return llvm::any_of(
-            MI.operands(), [](const MachineOperand &MO) { return MO.isReg(); });
+      // Track bot-fixed bundles backward (this sets BotFixedRegionSize)
+      BackwardRET.computeUseDefBackward(BotFixedBundles,
+                                        /*InSeparateRegion=*/false);
+
+      // Find the loop successor - must exist if we have bot-fixed bundles in a
+      // prologue
+      MachineBasicBlock *LoopSucc = nullptr;
+      for (MachineBasicBlock *Succ : DAG->getBB()->successors()) {
+        const BlockState &SuccBS =
+            Scheduler->getInterBlock().getBlockState(Succ);
+        if (SuccBS.Kind == BlockType::Loop && SuccBS.isPipelined()) {
+          LoopSucc = Succ;
+          break;
+        }
+      }
+      assert(LoopSucc &&
+             "Bot-fixed bundles present but no pipelined loop successor found");
+
+      const BlockState &LoopBS =
+          Scheduler->getInterBlock().getBlockState(LoopSucc);
+      ArrayRef<AIE::MachineBundle> LoopTimedBundles = LoopBS.getTop().Bundles;
+      BackwardRET.computeUseDefBackward(LoopTimedBundles,
+                                        /*InSeparateRegion=*/true);
+
+      // Create dependencies from free instructions to ExitSU
+      // Side-effect instructions are now handled automatically by
+      // getSafeOperandsDistanceFromEnd()
+      auto IsNonBotFixedSU = [Scheduler](const SUnit &SU) {
+        return !Scheduler->isFixedSU(SU, /*IsTop*/ false);
       };
 
-      if (MI.hasUnmodeledSideEffects() && !MI.mayLoadOrStore() &&
-          !TII->isLock(MI.getOpcode()) && !UseOrDefReg(MI)) {
-        // We are in front of an instruction with side effects, but with no
-        // memory deps and also no data dependency. Such instruction can be
-        // responsible for event signaling, for example. In this case, we should
-        // not interleave this instruction with fixed and already scheduled
-        // instructions. If the instruction does not meet the requirements, it
-        // will be handled by the subsequent code.
-        // This instruction shoud be scheduled before the first bot-fixed
-        // instruction.
-        if (!BotFixedBundles.empty()) {
-          SUnit *FixedDepSU = DAG->getSUnit(&*getBundleStart(
-              BotFixedBundles.front().getInstrs().front()->getIterator()));
-          SDep Dep(&FreeSU, SDep::Artificial);
-          Dep.setLatency(1);
-          FixedDepSU->addPred(Dep, /*Required=*/true);
+      for (SUnit &SU : make_filter_range(DAG->SUnits, IsNonBotFixedSU)) {
+        const MachineInstr &MI = *SU.getInstr();
+        if (const unsigned Latency =
+                BackwardRET.getSafeOperandsDistanceFromBottom(MI)) {
+          LLVM_DEBUG(dbgs()
+                     << "Prologue: SU(" << SU.NodeNum << ") needs latency "
+                     << Latency << " to ExitSU: " << MI);
+          LLVM_DEBUG(dbgs() << "  Adding new edge\n");
+          SDep Dep(&SU, SDep::Artificial);
+          Dep.setLatency(Latency);
+          DAG->ExitSU.addPred(Dep, /*Required=*/true);
         }
-        // This instruction shoud be also scheduled after the first top-fixed
-        // instruction.
-        if (!TopFixedBundles.empty()) {
-          SUnit *FixedDepSU = DAG->getSUnit(&*getBundleStart(
-              TopFixedBundles.back().getInstrs().front()->getIterator()));
-          SDep Dep(FixedDepSU, SDep::Artificial);
-          Dep.setLatency(1);
-          FreeSU.addPred(Dep, /*Required=*/true);
-        }
-        continue;
       }
-
-      MachineInstr *FixedDepMI =
-          AIE::findEarliestRef(MI, BotFixedBundles, BotFixedBundles.size(), AA)
-              .MI;
-      if (!FixedDepMI)
-        continue;
-
-      SUnit *FixedDepSU =
-          DAG->getSUnit(&*getBundleStart(FixedDepMI->getIterator()));
-      assert(FixedDepSU && "Fixed Bundle has no corresponding SU.");
-      SDep Dep(&FreeSU, SDep::Artificial);
-      auto Latency =
-          AIE::maxLatency(&MI, *TII, *ItinData, /*IncludeStages=*/true);
-      if (TII->isLock(MI.getOpcode())) {
-        Dep.setLatency(std::max(
-            TII->getCoreResumeCycleAfterLock() -
-                *TII->getFirstMemoryCycle(FixedDepMI->getDesc().SchedClass) + 1,
-            Latency));
-      } else if (TII->isLock(FixedDepMI->getOpcode())) {
-        Dep.setLatency(
-            std::max(*TII->getLastMemoryCycle(MI.getDesc().SchedClass) -
-                         TII->getCoreStallCycleAfterLock() + 1,
-                     Latency));
-      } else {
-        Dep.setLatency(Latency);
-      }
-      FixedDepSU->addPred(Dep, /*Required=*/true);
     }
 
     // We only need to focus on top-fixed instructions when there is an Epilogue
@@ -504,7 +486,7 @@ public:
     // account the def/use cycle of each operand.
     for (SUnit &SU : make_filter_range(DAG->SUnits, IsNonTopFixedSU)) {
       const MachineInstr &MI = *SU.getInstr();
-      if (const unsigned Latency = RET.getSafeOperandsDistance(MI)) {
+      if (const unsigned Latency = RET.getSafeOperandsDistanceFromTop(MI)) {
         SDep Dep(&DAG->EntrySU, SDep::Artificial);
         Dep.setLatency(Latency);
         SU.addPred(Dep, /*Required=*/true);
