@@ -301,8 +301,6 @@ bool matchShuffleToConcatExtractedSubvectors(MachineInstr &MI,
                                              const AIEBaseInstrInfo &TII,
                                              BuildFnTy &MatchInfo);
 
-bool matchShuffleToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
-                        BuildFnTy &MatchInfo);
 bool matchShuffleBcstToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
                             const TargetInstrInfo &TII, BuildFnTy &MatchInfo);
 

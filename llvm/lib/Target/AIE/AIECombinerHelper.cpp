@@ -2374,6 +2374,21 @@ bool llvm::matchBroadcastElement(MachineInstr &MI, MachineRegisterInfo &MRI,
   return true;
 }
 
+/// Build copy operation for same-size Identity shuffle.
+/// Called from the unified dispatcher - no pattern checking needed.
+static bool buildCopy(const ShuffleVectorInfo &Info, BuildFnTy &MatchInfo) {
+  // Same-size Identity: just copy
+  if (Info.Relation != ShuffleVectorInfo::SizeRelation::Same)
+    return false;
+
+  const Register DstReg = Info.DstReg;
+  const Register Src1Reg = Info.Src1Reg;
+  MatchInfo = [DstReg, Src1Reg](MachineIRBuilder &B) {
+    B.buildCopy(DstReg, Src1Reg);
+  };
+  return true;
+}
+
 /// Build VSelect operation from pre-classified shuffle.
 /// Called from the unified dispatcher - no pattern checking needed.
 static bool buildVSelect(const ShuffleVectorInfo &Info,
@@ -2443,6 +2458,186 @@ buildScalarBroadcast(const ShuffleVectorInfo &Info,
         B.buildExtractVectorElementConstant(ElemTy, Src1Reg, BroadcastIdx);
     buildBroadcastVector(B, MRI, Extr.getReg(0), DstReg);
   };
+  return true;
+}
+
+// Forward declaration for use in buildExtractSubvec
+static bool checkExtractSubvectorPrerequisites(const AIEBaseInstrInfo &TII,
+                                               LLT DstTy, LLT SrcTy);
+
+/// Build extract subvector operation for shrinking Identity/ExtractContiguous.
+/// Called from the unified dispatcher - no pattern checking needed.
+static bool
+buildExtractSubvec(const ShuffleVectorInfo &Info,
+                   const ShuffleMaskClassificationResult &Classification,
+                   MachineRegisterInfo &MRI, const AIEBaseInstrInfo &TII,
+                   BuildFnTy &MatchInfo) {
+  // Only for shrinking shuffles
+  if (Info.Relation != ShuffleVectorInfo::SizeRelation::Shrinking)
+    return false;
+
+  const unsigned NumDstElems = Info.NumDstElems;
+  const unsigned NumSrc1Elems = Info.NumSrc1Elems;
+
+  // Unlikely to select into a subregister copy
+  if (NumSrc1Elems % NumDstElems != 0)
+    return false;
+
+  // Determine subvector index from classification
+  unsigned SubvecExtractIdx = 0;
+  if (Classification.Pat == ShuffleMaskPattern::Identity) {
+    SubvecExtractIdx = 0;
+  } else if (Classification.Pat == ShuffleMaskPattern::ExtractContiguous) {
+    if (Classification.ExtractStart % static_cast<int>(NumDstElems) != 0)
+      return false;
+    SubvecExtractIdx = Classification.ExtractStart / NumDstElems;
+  } else {
+    return false;
+  }
+
+  const unsigned NumSubVectors = NumSrc1Elems / NumDstElems;
+  const unsigned GPRSize = TII.getScalarRegSize();
+  const unsigned ExtractSubvecNativeSrcSize = TII.getBasicVectorBitSize();
+
+  const Register DstReg = Info.DstReg;
+  const Register Src1Reg = Info.Src1Reg;
+  const LLT DstTy = Info.DstTy;
+  const LLT Src1Ty = Info.Src1Ty;
+  const unsigned Src1TySize = Src1Ty.getSizeInBits();
+
+  // Try G_AIE_EXTRACT_SUBVECTOR first
+  if (checkExtractSubvectorPrerequisites(TII, DstTy, Src1Ty)) {
+    const unsigned Opc = TII.getGenericExtractSubvectorOpcode();
+    const unsigned SubIdx = SubvecExtractIdx;
+
+    // Natively supported source vector type
+    if (Src1TySize == ExtractSubvecNativeSrcSize) {
+      MatchInfo = [=](MachineIRBuilder &B) {
+        auto Cst = B.buildConstant(LLT::scalar(GPRSize), SubIdx);
+        B.buildInstr(Opc, {DstReg}, {Src1Reg, Cst});
+      };
+      return true;
+    }
+
+    // Source vectors of a non-native size
+    const unsigned Src1ElmtSize = Src1Ty.getElementType().getSizeInBits();
+    const unsigned Src1Vec512BitLen = ExtractSubvecNativeSrcSize / Src1ElmtSize;
+    const LLT NewSrc1Ty = LLT::fixed_vector(Src1Vec512BitLen, Src1ElmtSize);
+    const Register NewSrcReg = MRI.createGenericVirtualRegister(NewSrc1Ty);
+
+    if (Src1TySize < ExtractSubvecNativeSrcSize) {
+      MatchInfo = [=](MachineIRBuilder &B) {
+        const Register ImplicitDef = B.buildUndef(Src1Ty).getReg(0);
+        SmallVector<Register, 15> ConcatOps = {Src1Reg};
+        unsigned NumImplicitDef = ExtractSubvecNativeSrcSize / Src1TySize - 1;
+        while (NumImplicitDef-- > 0) {
+          ConcatOps.push_back(ImplicitDef);
+        }
+        B.buildConcatVectors({NewSrcReg}, ConcatOps);
+        auto Cst = B.buildConstant(LLT::scalar(GPRSize), SubIdx);
+        B.buildInstr(Opc, {DstReg}, {NewSrcReg, Cst});
+      };
+      return true;
+    }
+
+    // Source vectors with size greater than native source vector size
+    MatchInfo = [=, &MRI](MachineIRBuilder &B) {
+      const unsigned SizeCoefficient = Src1TySize / ExtractSubvecNativeSrcSize;
+      const unsigned NumSubVectorsNativeSize = NumSubVectors / SizeCoefficient;
+      unsigned NewSubIdx = SubIdx % NumSubVectorsNativeSize;
+
+      SmallVector<Register, 4> SubRegs;
+      unsigned NewSrcRegPosition = SubIdx / NumSubVectorsNativeSize;
+      for (unsigned I = 0; I < SizeCoefficient; ++I) {
+        if (I == NewSrcRegPosition)
+          SubRegs.push_back(NewSrcReg);
+        else
+          SubRegs.push_back(MRI.createGenericVirtualRegister(NewSrc1Ty));
+      }
+
+      B.buildUnmerge(SubRegs, Src1Reg);
+      auto Cst = B.buildConstant(LLT::scalar(GPRSize), NewSubIdx);
+      B.buildInstr(Opc, {DstReg}, {NewSrcReg, Cst});
+    };
+    return true;
+  }
+
+  // Fall back to G_UNMERGE_VALUES
+  MatchInfo = [=, &MRI](MachineIRBuilder &B) {
+    buildUnmergeVector(B, MRI, DstReg, Src1Reg, NumSubVectors, SubvecExtractIdx);
+  };
+  return true;
+}
+
+/// Build identity with insertions for IdentityWithExceptions pattern.
+/// Called from the unified dispatcher - no pattern checking needed.
+static bool buildIdentityWithInsertions(
+    const ShuffleVectorInfo &Info,
+    const ShuffleMaskClassificationResult &Classification,
+    MachineRegisterInfo &MRI, const MachineFunction &MF, BuildFnTy &MatchInfo) {
+  // Allow Same or Shrinking shuffles (e.g., 16->8 elements with insertions)
+  if (Info.Relation == ShuffleVectorInfo::SizeRelation::Growing)
+    return false;
+
+  const bool IsShrinking =
+      (Info.Relation == ShuffleVectorInfo::SizeRelation::Shrinking);
+
+  // For shrinking shuffles, require power-of-2 size ratio for clean unmerge
+  if (IsShrinking) {
+    if (Info.NumSrc1Elems % Info.NumDstElems != 0)
+      return false;
+    const unsigned NumSubVectors = Info.NumSrc1Elems / Info.NumDstElems;
+    if (!isPowerOf2_32(NumSubVectors))
+      return false;
+  }
+
+  if (Classification.ExceptionIndices.empty())
+    return false;
+
+  const Register DstReg = Info.DstReg;
+  const Register Src1Reg = Info.Src1Reg;
+  const Register Src2Reg = Info.Src2Reg;
+  const LLT DstTy = Info.DstTy;
+  const unsigned NumSrcElems = Info.NumSrc1Elems;
+  const unsigned NumDstElems = Info.NumDstElems;
+  const LLT ElemTy = Info.Src1Ty.getElementType();
+  const ArrayRef<int> Mask = Info.Mask;
+  const SmallVector<unsigned, 4> Exceptions(Classification.ExceptionIndices);
+  const unsigned NumSubVectors = IsShrinking ? NumSrcElems / NumDstElems : 1;
+
+  MatchInfo = [=, &MRI](MachineIRBuilder &B) {
+    Register InsertSrc;
+
+    if (IsShrinking) {
+      // For shrinking shuffles, first extract the first subvector from Src1
+      InsertSrc = MRI.createGenericVirtualRegister(DstTy);
+      buildUnmergeVector(B, MRI, InsertSrc, Src1Reg, NumSubVectors,
+                         /*SubIdx=*/0);
+    } else {
+      InsertSrc = Src1Reg;
+    }
+
+    Register InsertDst;
+    for (const unsigned ExceptionIdx : Exceptions) {
+      Register VecToExtract =
+          Mask[ExceptionIdx] < static_cast<int>(NumSrcElems) ? Src1Reg : Src2Reg;
+
+      int ExtractIdx = Mask[ExceptionIdx] % NumSrcElems;
+      auto ExtrElt =
+          B.buildExtractVectorElementConstant(ElemTy, VecToExtract, ExtractIdx);
+
+      auto ExceptionIdxReg = B.buildConstant(LLT::scalar(32), ExceptionIdx);
+
+      InsertDst = (ExceptionIdx == Exceptions.back())
+                      ? DstReg
+                      : MRI.createGenericVirtualRegister(DstTy);
+
+      B.buildInsertVectorElement(InsertDst, InsertSrc, ExtrElt,
+                                 ExceptionIdxReg);
+      InsertSrc = InsertDst;
+    }
+  };
+
   return true;
 }
 
@@ -2637,7 +2832,7 @@ static bool matchShuffleToAIEExtractSubvec(
 }
 
 /// The method does some checks and calls matchShuffleToAIEExtractSubvec and
-/// matchShuffleToUnmerge which extract subvectors is possible.
+/// matchShuffleToUnmerge which extract subvectors if possible.
 bool llvm::matchShuffleToExtractSubvec(MachineInstr &MI,
                                        MachineRegisterInfo &MRI,
                                        const AIEBaseInstrInfo &TII,
@@ -2674,7 +2869,7 @@ bool llvm::matchShuffleToExtractSubvec(MachineInstr &MI,
   if (Classification.Pat == ShuffleMaskPattern::Identity) {
     SubvecExtractIdx = 0;
   } else if (Classification.Pat == ShuffleMaskPattern::ExtractContiguous) {
-    if (Classification.ExtractStart % NumDstElems != 0)
+    if (Classification.ExtractStart % static_cast<int>(NumDstElems) != 0)
       return false;
     SubvecExtractIdx = Classification.ExtractStart / NumDstElems;
   } else {
@@ -2791,41 +2986,6 @@ buildSubvecBroadcast(const ShuffleVectorInfo &Info,
   return true;
 }
 
-/// Match something like this:
-///  %1:_(<2 x s32>) = COPY $x0
-///  %2:_(<2 x s32>) = G_IMPLICIT_DEF
-///  %0:_(<16 x s32>) = G_SHUFFLE_VECTOR %1(<16 x s32>), %2(<16 x s32>),
-///  shufflemask(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
-
-/// To convert to:
-///  %0:_(<16 x s32>) = COPY $x0
-bool llvm::matchShuffleToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
-                              BuildFnTy &MatchInfo) {
-  assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR);
-
-  const ShuffleVectorInfo Info = ShuffleVectorInfo::create(MI, MRI);
-
-  if (Info.Relation != ShuffleVectorInfo::SizeRelation::Same)
-    return false;
-
-  if (Info.Mask.size() != Info.NumSrc1Elems)
-    return false;
-
-  if (Info.IsAllUndef)
-    return false;
-
-  const ShuffleMaskClassificationResult Classification = Info.classifyMask();
-  if (Classification.Pat != ShuffleMaskPattern::Identity)
-    return false;
-
-  const Register DstReg = Info.DstReg;
-  const Register Src1Reg = Info.Src1Reg;
-  MatchInfo = [DstReg, Src1Reg](MachineIRBuilder &B) {
-    B.buildCopy(DstReg, Src1Reg);
-  };
-
-  return true;
-}
 
 /// Match something like this:
 ///  %2:_(<16 x s32>) = G_SHUFFLE_VECTOR %0(<16 x s32>), %1(<16 x s32>),
@@ -3319,15 +3479,13 @@ bool llvm::matchShuffleVector(MachineInstr &MI, MachineRegisterInfo &MRI,
 
   case ShuffleMaskPattern::Identity:
     // Identity pattern: try copy or extract based on size
-    if (Info.Relation == ShuffleVectorInfo::SizeRelation::Same)
-      return matchShuffleToCopy(MI, MRI, MatchInfo);
-    if (Info.Relation == ShuffleVectorInfo::SizeRelation::Shrinking)
-      return matchShuffleToExtractSubvec(MI, MRI, TII, MatchInfo);
-    return false;
+    if (buildCopy(Info, MatchInfo))
+      return true;
+    return buildExtractSubvec(Info, Classification, MRI, TII, MatchInfo);
 
   case ShuffleMaskPattern::ExtractContiguous:
     // Contiguous extraction: extract subvector
-    return matchShuffleToExtractSubvec(MI, MRI, TII, MatchInfo);
+    return buildExtractSubvec(Info, Classification, MRI, TII, MatchInfo);
 
   case ShuffleMaskPattern::ScalarBroadcast:
     // Scalar broadcast: broadcast single element
@@ -3343,10 +3501,16 @@ bool llvm::matchShuffleVector(MachineInstr &MI, MachineRegisterInfo &MRI,
 
   case ShuffleMaskPattern::IdentityWithExceptions:
     // Identity with some insertions
+    // Only supported on AIE2P (uses VINSERT instructions)
+    if (!MI.getMF()->getTarget().getTargetTriple().isAIE2P())
+      return false;
     return matchShuffleToExtractInsertElt(MI, MRI, MatchInfo);
 
   case ShuffleMaskPattern::ScalarBroadcastWithExceptions:
     // Broadcast with some insertions
+    // Only supported on AIE2P (uses VINSERT instructions)
+    if (!MI.getMF()->getTarget().getTargetTriple().isAIE2P())
+      return false;
     return matchShuffleToExtractInsertEltToBroadcast(MI, MRI, MatchInfo);
 
   case ShuffleMaskPattern::Unknown:

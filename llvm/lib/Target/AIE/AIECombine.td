@@ -119,12 +119,6 @@ def combine_vector_shuffle_concat_extracted_subvectors : GICombineRule<
          [{ return matchShuffleToConcatExtractedSubvectors(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
 
-def combine_vector_shuffle_to_copy : GICombineRule<
-  (defs root:$root, build_fn_matchinfo:$matchinfo),
-  (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
-         [{ return matchShuffleToCopy(*${root}, MRI, ${matchinfo}); }]),
-  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
-
 def combine_vector_shuffle_to_extract_insert_elt : GICombineRule<
   (defs root:$root, build_fn_matchinfo:$matchinfo),
   (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
@@ -306,7 +300,6 @@ def aie_additional_combines : GICombineGroup<[
 // AIE2P-specific combines.
 // TODO: Move HW-agnostic combines to `aie_additional_combines`.
 def aie2p_additional_combines : GICombineGroup<[
-  combine_vector_shuffle_to_copy,
   combine_vector_shuffle_bcst_to_copy,
   combine_vector_broadcast,
   combine_vector_shuffle_to_extract_insert_elt,
