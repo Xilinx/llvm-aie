@@ -188,14 +188,6 @@ bool matchGlobalValOffset(MachineInstr &MI, MachineRegisterInfo &MRI,
 /// idiom into G_AIE_BROADCAST
 bool matchBroadcastElement(MachineInstr &MI, MachineRegisterInfo &MRI,
                            std::pair<Register, Register> &MatchInfo);
-bool matchShuffleToBroadcast(MachineInstr &MI, MachineRegisterInfo &MRI,
-                             const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
-/// Combine G_SHUFFLE_VECTOR(G_BUILD_VECTOR (VAL, UNDEF, ...), mask<0,0,...>)
-/// idiom into G_AIE_VSEL
-bool matchShuffleToVSel(MachineInstr &MI, MachineRegisterInfo &MRI,
-                        const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
-
-/// Unified G_SHUFFLE_VECTOR combine dispatcher.
 /// Classifies the shuffle mask once and dispatches to the appropriate builder.
 bool matchShuffleVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                         const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);

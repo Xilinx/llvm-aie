@@ -2374,28 +2374,17 @@ bool llvm::matchBroadcastElement(MachineInstr &MI, MachineRegisterInfo &MRI,
   return true;
 }
 
-/// \returns true if it is possible to combine the shuffle vector to VSEL.
-/// E.g.:
-/// From :  %0:_(<16 x s32>) = COPY $x0
-///         %1:_(<16 x s32>) = COPY $x1
-///         %2:_(<16 x s32>) = G_SHUFFLE_VECTOR %X(<16 x s32>), %1(<16 x s32>),
-///         shufflemask(0, 1, 2, 3, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
-///         31)
-/// To :    %3:_(s32) = G_CONSTANT i32 0xFFF0
-///         %4:_(<16 x s32>) = G_AIE_VSEL %0, %1, %3(s32)
-bool llvm::matchShuffleToVSel(MachineInstr &MI, MachineRegisterInfo &MRI,
-                              const AIEBaseInstrInfo &TII,
-                              BuildFnTy &MatchInfo) {
-  assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR);
-
+/// Build VSelect operation from pre-classified shuffle.
+/// Called from the unified dispatcher - no pattern checking needed.
+static bool buildVSelect(const ShuffleVectorInfo &Info,
+                         const ShuffleMaskClassificationResult &Classification,
+                         MachineRegisterInfo &MRI, const AIEBaseInstrInfo &TII,
+                         BuildFnTy &MatchInfo) {
   const unsigned BasicVectorBitSize = TII.getBasicVectorBitSize();
   const unsigned ScalarRegSize = TII.getScalarRegSize();
   const unsigned DoubleScalarRegSize = ScalarRegSize * 2;
 
-  const ShuffleVectorInfo Info = ShuffleVectorInfo::create(MI, MRI);
-  if (!Info.DstTy.isVector() || !Info.Src1Ty.isVector())
-    return false;
-
+  // Target constraints (not pattern constraints)
   if (Info.Src1Ty.getSizeInBits() != BasicVectorBitSize ||
       Info.Src1Ty.getElementType().getSizeInBits() >= DoubleScalarRegSize)
     return false;
@@ -2406,14 +2395,6 @@ bool llvm::matchShuffleToVSel(MachineInstr &MI, MachineRegisterInfo &MRI,
   const unsigned NumSubVectors = Info.NumSrc1Elems / Info.NumDstElems;
   if ((NumSubVectors != 1 && NumSubVectors != 2) ||
       Info.NumSrc1Elems % Info.NumDstElems != 0)
-    return false;
-
-  if (Info.IsAllUndef)
-    return false;
-
-  // Use classify() to detect VSelect pattern with possible shift
-  const ShuffleMaskClassificationResult Classification = Info.classifyMask();
-  if (Classification.Pat != ShuffleMaskPattern::VSelect)
     return false;
 
   const uint64_t DstMask = Classification.VSelectMask;
@@ -2446,27 +2427,12 @@ bool llvm::matchShuffleToVSel(MachineInstr &MI, MachineRegisterInfo &MRI,
   return true;
 }
 
-/// \returns true if it is possible to combine the shuffle vector with a mask
-/// that extracts an element from the first source vector and broadcasts
-/// it. E.g.:
-/// From :  %X:_(<4 x s64>) = COPY $wl0
-///         %1:_(<4 x s64>) = COPY $wl1
-///         %2:_(<8 x s64>) = G_SHUFFLE_VECTOR %X(<4 x s64>), %1(<4 x s64>),
-///         shufflemask(3, 3, 3, 3, 3, 3, 3, 3)
-/// To :    %3:_(s64) = G_EXTRACT_VECTOR_ELT %X, 3
-///         %2:_(<8 x s64>) = G_AIE_BROADCAST_VECTOR %3(s64)
-static bool matchShuffleToVecEltBroadcast(MachineInstr &MI,
-                                          MachineRegisterInfo &MRI,
-                                          const AIEBaseInstrInfo &TII,
-                                          BuildFnTy &MatchInfo) {
-  const ShuffleVectorInfo Info = ShuffleVectorInfo::create(MI, MRI);
-  if (!Info.Src1Ty.isVector())
-    return false;
-
-  const ShuffleMaskClassificationResult Classification = Info.classifyMask();
-  if (Classification.Pat != ShuffleMaskPattern::ScalarBroadcast)
-    return false;
-
+/// Build scalar element broadcast.
+/// Called from the unified dispatcher - no pattern checking needed.
+static bool
+buildScalarBroadcast(const ShuffleVectorInfo &Info,
+                     const ShuffleMaskClassificationResult &Classification,
+                     MachineRegisterInfo &MRI, BuildFnTy &MatchInfo) {
   const int BroadcastIdx = Classification.BroadcastIdx;
   const Register DstReg = Info.DstReg;
   const Register Src1Reg = Info.Src1Reg;
@@ -2739,41 +2705,41 @@ bool llvm::matchShuffleToExtractSubvec(MachineInstr &MI,
 /// %4:_(<16 x s32>) = G_AIE_BROADCAST_VECTOR %3(<4 x s32>)
 /// %5:_(<8 x s32>) = G_AIE_UNPAD_VECTOR %4(<16 x s32>)
 
-// If the subvector cannot be extracted and broadcasted given the target
-// constraints, an Unmerge and Concat are used instead.
-/// Match subvector broadcast: a portion of the source repeated to fill
-/// destination.
-static bool matchShuffleToSubvecBroadcast(MachineInstr &MI,
-                                          MachineRegisterInfo &MRI,
-                                          const AIEBaseInstrInfo &TII,
-                                          BuildFnTy &MatchInfo) {
-  const ShuffleVectorInfo Info = ShuffleVectorInfo::create(MI, MRI);
-  if (!Info.DstTy.isVector() || !Info.Src1Ty.isVector())
-    return false;
-
-  if (Info.NumDstElems != Info.Mask.size())
-    return false;
-
-  // Use classify() to detect SubvecBroadcast pattern
-  const ShuffleMaskClassificationResult Classification = Info.classifyMask();
-  if (Classification.Pat != ShuffleMaskPattern::SubvecBroadcast)
-    return false;
-
+/// Build subvector broadcast operation.
+/// Called from the unified dispatcher - no pattern checking needed.
+/// Handles both whole-vector broadcast (SubvecLen == NumSrc1Elems) and
+/// partial subvector broadcast.
+static bool
+buildSubvecBroadcast(const ShuffleVectorInfo &Info,
+                     const ShuffleMaskClassificationResult &Classification,
+                     MachineRegisterInfo &MRI, const AIEBaseInstrInfo &TII,
+                     BuildFnTy &MatchInfo) {
   const int SplatMaskStart = Classification.SubvecStart;
   const unsigned SplatMaskLen = Classification.SubvecLen;
 
-  // Only match power-of-2 period lengths starting from 2 (matches original
-  // behavior)
+  // Handle whole-vector broadcast (small source vectors)
+  if (SplatMaskStart == 0 && SplatMaskLen == Info.NumSrc1Elems) {
+    const unsigned Src1Size = Info.Src1Ty.getSizeInBits();
+    if (Src1Size == 64 || Src1Size == 32) {
+      const Register DstReg = Info.DstReg;
+      const Register Src1Reg = Info.Src1Reg;
+      MatchInfo = [=, &MRI](MachineIRBuilder &B) {
+        buildBroadcastVector(B, MRI, Src1Reg, DstReg);
+      };
+      return true;
+    }
+  }
+
+  // Target constraints for partial subvector broadcast
+  // Only match power-of-2 period lengths starting from 2
   if (SplatMaskLen < 2 || (SplatMaskLen & (SplatMaskLen - 1)) != 0)
     return false;
 
-  // Start index must be aligned to the subvector length (matches original
-  // behavior)
+  // Start index must be aligned to the subvector length
   if (SplatMaskStart % static_cast<int>(SplatMaskLen) != 0)
     return false;
 
-  // Skip if this is a whole-vector broadcast (handled by
-  // matchShuffleToVecBroadcast)
+  // Skip if this is a whole-vector broadcast (already handled above)
   if (SplatMaskStart == 0 && SplatMaskLen == Info.NumSrc1Elems)
     return false;
 
@@ -2806,90 +2772,23 @@ static bool matchShuffleToSubvecBroadcast(MachineInstr &MI,
   const unsigned NumSubVectors = NumSrcElems / SplatMaskLen;
 
   const unsigned SubVecSize = Src1Ty.getSizeInBits() / NumSubVectors;
-  // FIXME: We don't have unmerge/concat support of 64-bit and smaller.
+  // FIXME: We do not have unmerge/concat support of 64-bit and smaller.
   if (SubVecSize < 128)
     return false;
 
-  // Don't try to unmerge when we have just one subvector.
-  // We can overcome with a copy, but other combiners can do a
-  // better job for this case.
-  if (NumSubVectors > 1 && NumDstElems > SplatMaskLen) {
-    MatchInfo = [=, &MRI](MachineIRBuilder &B) {
-      buildUnmergeVector(B, MRI, ExtractSubvecDstReg, Src1Reg, NumSubVectors,
-                         SubIdx);
-
-      const SmallVector<Register, 2> ConcatOps(NumDstElems / SplatMaskLen,
-                                               ExtractSubvecDstReg);
-      B.buildConcatVectors({DstReg}, ConcatOps);
-    };
-    return true;
-  }
-
-  return false;
-}
-
-/// Match something like this:
-///  %1:_(<2 x s32>) = COPY $l0
-///  %2:_(<2 x s32>) = G_IMPLICIT_DEF
-///  %0:_(<16 x s32>) = G_SHUFFLE_VECTOR %1(<2 x s32>), %2,
-///  shufflemask(0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1)
-
-/// To convert to:
-///  %1:_(<2 x s32>) = COPY $l0
-///  %2:_(<2 x s32>) = G_IMPLICIT_DEF
-///  %0:_(<16 x s32>) = G_AIE_BROADCAST_VECTOR %1(<2 x s32>)
-/// Match whole-vector broadcast: source vector repeated to fill destination.
-static bool matchShuffleToVecBroadcast(MachineInstr &MI,
-                                       MachineRegisterInfo &MRI,
-                                       const AIEBaseInstrInfo &TII,
-                                       BuildFnTy &MatchInfo) {
-  const ShuffleVectorInfo Info = ShuffleVectorInfo::create(MI, MRI);
-  if (!Info.DstTy.isVector() || !Info.Src1Ty.isVector())
+  // Do not try to unmerge when we have just one subvector.
+  if (NumSubVectors <= 1 || NumDstElems <= SplatMaskLen)
     return false;
 
-  // Only handle 32-bit and 64-bit source vectors
-  const unsigned Src1Size = Info.Src1Ty.getSizeInBits();
-  if (Src1Size != 64 && Src1Size != 32)
-    return false;
-
-  // Check for SubvecBroadcast where the entire source is the broadcast unit
-  const ShuffleMaskClassificationResult Classification = Info.classifyMask();
-  if (Classification.Pat != ShuffleMaskPattern::SubvecBroadcast)
-    return false;
-
-  // Must broadcast the entire source vector starting at 0
-  if (Classification.SubvecStart != 0 ||
-      Classification.SubvecLen != Info.NumSrc1Elems)
-    return false;
-
-  const Register DstReg = Info.DstReg;
-  const Register Src1Reg = Info.Src1Reg;
   MatchInfo = [=, &MRI](MachineIRBuilder &B) {
-    buildBroadcastVector(B, MRI, Src1Reg, DstReg);
+    buildUnmergeVector(B, MRI, ExtractSubvecDstReg, Src1Reg, NumSubVectors,
+                       SubIdx);
+
+    const SmallVector<Register, 2> ConcatOps(NumDstElems / SplatMaskLen,
+                                             ExtractSubvecDstReg);
+    B.buildConcatVectors({DstReg}, ConcatOps);
   };
   return true;
-}
-
-// If the subvector cannot be extracted and broadcasted given the target
-// constraints, an Unmerge and Concat are used instead, such as in
-// matchShuffleToSubvecBroadcast.
-bool llvm::matchShuffleToBroadcast(MachineInstr &MI, MachineRegisterInfo &MRI,
-                                   const AIEBaseInstrInfo &TII,
-                                   BuildFnTy &MatchInfo) {
-  assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR);
-
-  ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
-
-  if (MaskMatch::isMaskWithAllUndefs(Mask))
-    return false;
-
-  if (matchShuffleToVecBroadcast(MI, MRI, TII, MatchInfo))
-    return true;
-  if (matchShuffleToVecEltBroadcast(MI, MRI, TII, MatchInfo))
-    return true;
-  if (matchShuffleToSubvecBroadcast(MI, MRI, TII, MatchInfo))
-    return true;
-  return false;
 }
 
 /// Match something like this:
@@ -3135,6 +3034,15 @@ bool llvm::matchShuffleToConcatExtractedSubvectors(MachineInstr &MI,
 
   const ShuffleVectorInfo Info = ShuffleVectorInfo::create(MI, MRI);
   if (!Info.DstTy.isVector() || !Info.Src1Ty.isVector())
+    return false;
+
+  // Skip patterns that should be handled by VSelect
+  const ShuffleMaskClassificationResult Classification = Info.classifyMask();
+  if (Classification.Pat == ShuffleMaskPattern::VSelect)
+    return false;
+  // Skip patterns that should be handled by SubvecBroadcast/ScalarBroadcast
+  if (Classification.Pat == ShuffleMaskPattern::SubvecBroadcast ||
+      Classification.Pat == ShuffleMaskPattern::ScalarBroadcast)
     return false;
 
   const LLT ElemTy = Info.Src1Ty.getElementType();
@@ -3422,13 +3330,16 @@ bool llvm::matchShuffleVector(MachineInstr &MI, MachineRegisterInfo &MRI,
     return matchShuffleToExtractSubvec(MI, MRI, TII, MatchInfo);
 
   case ShuffleMaskPattern::ScalarBroadcast:
+    // Scalar broadcast: broadcast single element
+    return buildScalarBroadcast(Info, Classification, MRI, MatchInfo);
+
   case ShuffleMaskPattern::SubvecBroadcast:
-    // Broadcast patterns: scalar element or subvector broadcast
-    return matchShuffleToBroadcast(MI, MRI, TII, MatchInfo);
+    // Subvector broadcast: broadcast a portion of the vector
+    return buildSubvecBroadcast(Info, Classification, MRI, TII, MatchInfo);
 
   case ShuffleMaskPattern::VSelect:
     // VSelect: select elements from two sources
-    return matchShuffleToVSel(MI, MRI, TII, MatchInfo);
+    return buildVSelect(Info, Classification, MRI, TII, MatchInfo);
 
   case ShuffleMaskPattern::IdentityWithExceptions:
     // Identity with some insertions

@@ -107,18 +107,6 @@ def combine_vector_broadcast : GICombineRule<
          [{ return matchBroadcastElement(*${root}, MRI, ${matchinfo}); }]),
   (apply [{ applySplatVector(*${root}, MRI, B, ${matchinfo}, Observer); }])>;
 
-def combine_vector_shuffle_broadcast : GICombineRule<
-  (defs root:$root, build_fn_matchinfo:$matchinfo),
-  (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
-         [{ return matchShuffleToBroadcast(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
-  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
-
-def combine_vector_shuffle_vsel : GICombineRule<
-  (defs root:$root, build_fn_matchinfo:$matchinfo),
-  (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
-         [{ return matchShuffleToVSel(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
-  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
-
 def combine_vector_shuffle_extract_subvec : GICombineRule<
   (defs root:$root, build_fn_matchinfo:$matchinfo),
   (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
@@ -321,8 +309,6 @@ def aie2p_additional_combines : GICombineGroup<[
   combine_vector_shuffle_to_copy,
   combine_vector_shuffle_bcst_to_copy,
   combine_vector_broadcast,
-  combine_vector_shuffle_vsel,
-  combine_vector_shuffle_broadcast,
   combine_vector_shuffle_to_extract_insert_elt,
   combine_vector_shuffle_concat_extracted_subvectors,
   combine_paired_extracts,
