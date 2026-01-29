@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 #
 # RUN: llc -mtriple aie2p -run-pass=aie2p-prelegalizer-combiner -verify-machineinstrs %s -o - | FileCheck %s
 
@@ -1712,5 +1712,71 @@ body:             |
     %0:_(<16 x s32>) = COPY $x0
     %1:_(<16 x s32>) = COPY $x1
     %2:_(<16 x s32>) = G_SHUFFLE_VECTOR %0:_(<16 x s32>), %1:_, shufflemask(17, 17, 17, 17, 17, 17, 17, 2, 3, 0, 0, 0, 0, 0, 0, 0)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+# Shrinking shuffles (16 -> 8 elements) with single element
+# insertion from Src2.
+
+name: shuffle_vector_shrinking_insert_pos1_not_combined
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    liveins: $x0, $x1
+
+    ; CHECK-LABEL: name: shuffle_vector_shrinking_insert_pos1_not_combined
+    ; CHECK: liveins: $x0, $x1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY $x0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<16 x s32>) = COPY $x1
+    ; CHECK-NEXT: [[SHUF:%[0-9]+]]:_(<8 x s32>) = G_SHUFFLE_VECTOR [[COPY]](<16 x s32>), [[COPY1]], shufflemask(0, 16, undef, undef, 4, 5, 6, 7)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[SHUF]](<8 x s32>)
+    %0:_(<16 x s32>) = COPY $x0
+    %1:_(<16 x s32>) = COPY $x1
+    %2:_(<8 x s32>) = G_SHUFFLE_VECTOR %0(<16 x s32>), %1, shufflemask(0, 16, undef, undef, 4, 5, 6, 7)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name: shuffle_vector_shrinking_insert_pos2_not_combined
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    liveins: $x0, $x1
+
+    ; CHECK-LABEL: name: shuffle_vector_shrinking_insert_pos2_not_combined
+    ; CHECK: liveins: $x0, $x1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY $x0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<16 x s32>) = COPY $x1
+    ; CHECK-NEXT: [[SHUF:%[0-9]+]]:_(<8 x s32>) = G_SHUFFLE_VECTOR [[COPY]](<16 x s32>), [[COPY1]], shufflemask(0, 1, 16, undef, 4, 5, 6, 7)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[SHUF]](<8 x s32>)
+    %0:_(<16 x s32>) = COPY $x0
+    %1:_(<16 x s32>) = COPY $x1
+    %2:_(<8 x s32>) = G_SHUFFLE_VECTOR %0(<16 x s32>), %1, shufflemask(0, 1, 16, undef, 4, 5, 6, 7)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name: shuffle_vector_shrinking_insert_pos3_not_combined
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    liveins: $x0, $x1
+
+    ; CHECK-LABEL: name: shuffle_vector_shrinking_insert_pos3_not_combined
+    ; CHECK: liveins: $x0, $x1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY $x0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<16 x s32>) = COPY $x1
+    ; CHECK-NEXT: [[SHUF:%[0-9]+]]:_(<8 x s32>) = G_SHUFFLE_VECTOR [[COPY]](<16 x s32>), [[COPY1]], shufflemask(0, 1, 2, 16, 4, 5, 6, 7)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[SHUF]](<8 x s32>)
+    %0:_(<16 x s32>) = COPY $x0
+    %1:_(<16 x s32>) = COPY $x1
+    %2:_(<8 x s32>) = G_SHUFFLE_VECTOR %0(<16 x s32>), %1, shufflemask(0, 1, 2, 16, 4, 5, 6, 7)
     PseudoRET implicit $lr, implicit %2
 ...
