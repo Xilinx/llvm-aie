@@ -396,21 +396,26 @@ ShuffleMaskClassificationResult MaskMatch::classify(ArrayRef<int> Mask,
   // Check for contiguous extraction first (before IdentityWithExceptions)
   // because a contiguous extraction from non-zero offset would otherwise
   // be classified as "all exceptions" to identity.
+  // Only classify as ExtractContiguous if extracting from Src1 (Height <
+  // NumSrc1Elems). Extractions from Src2 (Height >= NumSrc1Elems) should be
+  // handled by VSelect.
   if (const auto Height = MaskMatch::getHeight(Mask, 0)) {
-    bool IsContiguous = true;
-    for (unsigned I = 0; I < Mask.size() && IsContiguous; ++I) {
-      const int Expected = static_cast<int>(*Height + I);
-      if (Mask[I] != -1 && Mask[I] != Expected)
-        IsContiguous = false;
-    }
-    if (IsContiguous) {
-      if (*Height == 0) {
-        Result.Pat = ShuffleMaskPattern::Identity;
+    if (*Height < NumSrc1Elems) {
+      bool IsContiguous = true;
+      for (unsigned I = 0; I < Mask.size() && IsContiguous; ++I) {
+        const int Expected = static_cast<int>(*Height + I);
+        if (Mask[I] != -1 && Mask[I] != Expected)
+          IsContiguous = false;
+      }
+      if (IsContiguous) {
+        if (*Height == 0) {
+          Result.Pat = ShuffleMaskPattern::Identity;
+          return Result;
+        }
+        Result.Pat = ShuffleMaskPattern::ExtractContiguous;
+        Result.ExtractStart = *Height;
         return Result;
       }
-      Result.Pat = ShuffleMaskPattern::ExtractContiguous;
-      Result.ExtractStart = *Height;
-      return Result;
     }
   }
 
@@ -450,7 +455,8 @@ ShuffleMaskClassificationResult MaskMatch::classify(ArrayRef<int> Mask,
   }
 
   // Check for subvector broadcast: (H, H+1, ..., H+P-1) repeated
-  // Check this BEFORE IdentityWithExceptions since SubvecBroadcast is more specific
+  // Check this BEFORE IdentityWithExceptions since SubvecBroadcast is more
+  // specific
   for (unsigned Period = 1; Period < Mask.size(); ++Period) {
     if (Mask.size() % Period != 0)
       continue;
@@ -2364,77 +2370,39 @@ bool llvm::matchShuffleToVSel(MachineInstr &MI, MachineRegisterInfo &MRI,
   const unsigned ScalarRegSize = TII.getScalarRegSize();
   const unsigned DoubleScalarRegSize = ScalarRegSize * 2;
 
-  const Register DstReg = MI.getOperand(0).getReg();
-  const Register Src1Reg = MI.getOperand(1).getReg();
-  const Register Src2Reg = MI.getOperand(2).getReg();
-  ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
-
-  const LLT DstTy = MRI.getType(DstReg);
-  const LLT Src1Ty = MRI.getType(Src1Reg);
-  if (!DstTy.isVector() || !Src1Ty.isVector())
+  const ShuffleVectorInfo Info = ShuffleVectorInfo::create(MI, MRI);
+  if (!Info.DstTy.isVector() || !Info.Src1Ty.isVector())
     return false;
 
-  if (Src1Ty.getSizeInBits() != BasicVectorBitSize ||
-      Src1Ty.getElementType().getSizeInBits() >= DoubleScalarRegSize)
+  if (Info.Src1Ty.getSizeInBits() != BasicVectorBitSize ||
+      Info.Src1Ty.getElementType().getSizeInBits() >= DoubleScalarRegSize)
     return false;
 
-  const unsigned NumDstElems = DstTy.getNumElements();
-  assert(NumDstElems == Mask.size());
-  const unsigned NumSrcElems = Src1Ty.getNumElements();
-  if (NumDstElems > NumSrcElems)
+  if (Info.NumDstElems > Info.NumSrc1Elems)
     return false;
-  const unsigned NumSubVectors = NumSrcElems / NumDstElems;
+
+  const unsigned NumSubVectors = Info.NumSrc1Elems / Info.NumDstElems;
   if ((NumSubVectors != 1 && NumSubVectors != 2) ||
-      NumSrcElems % NumDstElems != 0) {
-    return false;
-  }
-
-  // Someone should make undef out of this.
-  if (MaskMatch::isMaskWithAllUndefs(Mask))
+      Info.NumSrc1Elems % Info.NumDstElems != 0)
     return false;
 
-  // Check that the shuffle mask can be converted into VSel condition vector:
-  // Each element can select from the corresponding element from the first or
-  // the second vector.
-  // Hence, the mask value should either be don't care, equal to the index,
-  // or equal to the index + NumSrcElems
-  // This immediately defines the mask vector of the VSEL.
-  uint64_t DstMask = 0;
-  auto MatchVSEL = [&](unsigned Shift) {
-    DstMask = 0;
-    for (unsigned I = 0; I < NumDstElems; I++) {
-      const int Idx = Mask[I];
-      if (Idx == -1) {
-        continue;
-      }
-      const int EffPos = I + Shift;
-      if (Idx == EffPos)
-        continue;
-
-      if (Idx != EffPos + (int)NumSrcElems) {
-        return false;
-      }
-      DstMask |= uint64_t(1) << I;
-    }
-    return true;
-  };
-
-  int SubIdx = 0;
-  // A subvector can be matched with a shift corresponding to the subvector to
-  // extract.
-  auto MatchSubVector = [&]() {
-    for (unsigned Shift = 0; Shift < NumSrcElems; Shift += NumDstElems) {
-      if (MatchVSEL(Shift)) {
-        return true;
-      }
-      SubIdx++;
-    }
+  if (Info.IsAllUndef)
     return false;
-  };
 
-  if (!MatchSubVector()) {
+  // Use classify() to detect VSelect pattern with possible shift
+  const ShuffleMaskClassificationResult Classification = Info.classifyMask();
+  if (Classification.Pat != ShuffleMaskPattern::VSelect)
     return false;
-  }
+
+  const uint64_t DstMask = Classification.VSelectMask;
+  const unsigned SubIdx = Classification.VSelectShift / Info.NumDstElems;
+
+  const Register DstReg = Info.DstReg;
+  const Register Src1Reg = Info.Src1Reg;
+  const Register Src2Reg = Info.Src2Reg;
+  const LLT Src1Ty = Info.Src1Ty;
+  const unsigned NumDstElems = Info.NumDstElems;
+  const unsigned NumSrcElems = Info.NumSrc1Elems;
 
   MatchInfo = [=, &MRI, &TII](MachineIRBuilder &B) {
     const unsigned ScalarSize =
@@ -2751,7 +2719,8 @@ bool llvm::matchShuffleToExtractSubvec(MachineInstr &MI,
 
 // If the subvector cannot be extracted and broadcasted given the target
 // constraints, an Unmerge and Concat are used instead.
-/// Match subvector broadcast: a portion of the source repeated to fill destination.
+/// Match subvector broadcast: a portion of the source repeated to fill
+/// destination.
 static bool matchShuffleToSubvecBroadcast(MachineInstr &MI,
                                           MachineRegisterInfo &MRI,
                                           const AIEBaseInstrInfo &TII,
@@ -2771,15 +2740,18 @@ static bool matchShuffleToSubvecBroadcast(MachineInstr &MI,
   const int SplatMaskStart = Classification.SubvecStart;
   const unsigned SplatMaskLen = Classification.SubvecLen;
 
-  // Only match power-of-2 period lengths starting from 2 (matches original behavior)
+  // Only match power-of-2 period lengths starting from 2 (matches original
+  // behavior)
   if (SplatMaskLen < 2 || (SplatMaskLen & (SplatMaskLen - 1)) != 0)
     return false;
 
-  // Start index must be aligned to the subvector length (matches original behavior)
+  // Start index must be aligned to the subvector length (matches original
+  // behavior)
   if (SplatMaskStart % static_cast<int>(SplatMaskLen) != 0)
     return false;
 
-  // Skip if this is a whole-vector broadcast (handled by matchShuffleToVecBroadcast)
+  // Skip if this is a whole-vector broadcast (handled by
+  // matchShuffleToVecBroadcast)
   if (SplatMaskStart == 0 && SplatMaskLen == Info.NumSrc1Elems)
     return false;
 
