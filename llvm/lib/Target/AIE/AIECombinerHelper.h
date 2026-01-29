@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -42,6 +42,29 @@ struct AIEConcatUnmergeCombineMatchData {
   std::optional<Register> UnmergeSourceReg;
 };
 
+/// Classification of shuffle mask patterns
+enum class ShuffleMaskPattern {
+  AllUndef,               ///< All elements are undef (-1)
+  Identity,               ///< <0, 1, 2, ..., N-1> with possible undefs
+  IdentityWithExceptions, ///< Mostly identity with some non-identity elements
+  ScalarBroadcast,        ///< <K, K, K, ...> - same element everywhere
+  SubvecBroadcast,        ///< <0,1,2,3, 0,1,2,3, ...> - repeated subvector
+  VSelect,                ///< Mask[i] in {i, i+NumSrcElems} for all i
+  ExtractContiguous,      ///< <K, K+1, K+2, ..., K+M-1> - contiguous extract
+  Unknown                 ///< None of the above
+};
+
+/// Detailed result from classifying a shuffle mask
+struct ShuffleMaskClassificationResult {
+  ShuffleMaskPattern Pat = ShuffleMaskPattern::Unknown;
+  SmallVector<unsigned, 4> ExceptionIndices;
+  int BroadcastIdx = -1;
+  unsigned SubvecStart = 0;
+  unsigned SubvecLen = 0;
+  unsigned ExtractStart = 0;
+  uint64_t VSelectMask = 0;
+};
+
 /// The mask is represented by a sawtooth function F with Period, Height and
 /// Amplitude, i.e., F(idx + Period) = F(idx) = Height + idx * Amplitude, where
 /// idx >= 0.
@@ -64,6 +87,11 @@ public:
   static std::optional<FrequentIndexResult>
   getFrequentIndexResult(ArrayRef<int> Mask, unsigned MinFrequency);
 
+  /// Classify a shuffle mask into a known pattern.
+  static ShuffleMaskClassificationResult
+  classify(ArrayRef<int> Mask, unsigned NumSrc1Elems, unsigned NumDstElems,
+           unsigned MaxExceptions = UINT_MAX);
+
   unsigned getMaskValue(unsigned Idx) const {
     unsigned BaseIdx = Period == 0 ? Idx : Idx % Period;
     return Height + BaseIdx * Amplitude;
@@ -74,6 +102,32 @@ protected:
   unsigned Height = 0;
   /// Negative amplitude can be used for reverse mask patterns.
   int Amplitude = 1;
+};
+
+/// Pre-extracted information from a G_SHUFFLE_VECTOR instruction.
+struct ShuffleVectorInfo {
+  Register DstReg;
+  Register Src1Reg;
+  Register Src2Reg;
+  ArrayRef<int> Mask;
+  LLT DstTy;
+  LLT Src1Ty;
+  LLT Src2Ty;
+  unsigned NumDstElems;
+  unsigned NumSrc1Elems;
+  unsigned NumSrc2Elems;
+
+  enum class SizeRelation { Same, Shrinking, Growing };
+  SizeRelation Relation;
+  bool IsAllUndef;
+  bool IsSrc2Undef;
+
+  static ShuffleVectorInfo create(MachineInstr &MI, MachineRegisterInfo &MRI);
+
+  ShuffleMaskClassificationResult
+  classifyMask(unsigned MaxExceptions = UINT_MAX) const {
+    return MaskMatch::classify(Mask, NumSrc1Elems, NumDstElems, MaxExceptions);
+  }
 };
 
 struct AIESingleDiffLaneBuildVectorMatchData {

@@ -376,6 +376,127 @@ MaskMatch::getFrequentIndexResult(const ArrayRef<int> Mask,
   return FrequentIndexResult{FrequentIdx, NonMatchingCount};
 }
 
+ShuffleMaskClassificationResult MaskMatch::classify(ArrayRef<int> Mask,
+                                                    unsigned NumSrc1Elems,
+                                                    unsigned NumDstElems,
+                                                    unsigned MaxExceptions) {
+  ShuffleMaskClassificationResult Result;
+
+  if (isMaskWithAllUndefs(Mask)) {
+    Result.Pat = ShuffleMaskPattern::AllUndef;
+    return Result;
+  }
+
+  if (const auto UniqueIdx = getUniqueIndex(Mask)) {
+    Result.Pat = ShuffleMaskPattern::ScalarBroadcast;
+    Result.BroadcastIdx = *UniqueIdx;
+    return Result;
+  }
+
+  const MaskMatch IdentityMask{0};
+  const ShuffleMaskValidity Validity =
+      IdentityMask.getShuffleMaskValidity(Mask);
+  if (Validity.IsValid || Validity.MaskExceptions.size() <= MaxExceptions) {
+    if (Validity.IsValid && Validity.MaskExceptions.empty()) {
+      Result.Pat = ShuffleMaskPattern::Identity;
+    } else {
+      Result.Pat = ShuffleMaskPattern::IdentityWithExceptions;
+      for (const unsigned Idx : Validity.MaskExceptions)
+        Result.ExceptionIndices.push_back(Idx);
+    }
+    return Result;
+  }
+
+  if (const auto Height = MaskMatch::getHeight(Mask, 0)) {
+    bool IsContiguous = true;
+    for (unsigned I = 0; I < Mask.size() && IsContiguous; ++I) {
+      const int Expected = static_cast<int>(*Height + I);
+      if (Mask[I] != -1 && Mask[I] != Expected)
+        IsContiguous = false;
+    }
+    if (IsContiguous && *Height != 0) {
+      Result.Pat = ShuffleMaskPattern::ExtractContiguous;
+      Result.ExtractStart = *Height;
+      return Result;
+    }
+  }
+
+  if (Mask.size() <= 64) {
+    bool IsVSelect = true;
+    uint64_t SelectMask = 0;
+    for (unsigned I = 0; I < Mask.size() && IsVSelect; ++I) {
+      const int M = Mask[I];
+      if (M == -1)
+        continue;
+      if (M == static_cast<int>(I)) {
+      } else if (M == static_cast<int>(I + NumSrc1Elems)) {
+        SelectMask |= (1ULL << I);
+      } else {
+        IsVSelect = false;
+      }
+    }
+    if (IsVSelect) {
+      Result.Pat = ShuffleMaskPattern::VSelect;
+      Result.VSelectMask = SelectMask;
+      return Result;
+    }
+  }
+
+  for (unsigned Period = 1; Period < Mask.size(); ++Period) {
+    if (Mask.size() % Period != 0)
+      continue;
+    const auto Height = MaskMatch::getHeight(Mask, Period);
+    if (!Height || *Height != 0)
+      continue;
+    bool IsPeriodic = true;
+    for (unsigned I = 0; I < Mask.size() && IsPeriodic; ++I) {
+      if (Mask[I] == -1)
+        continue;
+      const int Expected = static_cast<int>(I % Period);
+      if (Mask[I] != Expected)
+        IsPeriodic = false;
+    }
+    if (IsPeriodic) {
+      Result.Pat = ShuffleMaskPattern::SubvecBroadcast;
+      Result.SubvecStart = 0;
+      Result.SubvecLen = Period;
+      return Result;
+    }
+  }
+
+  Result.Pat = ShuffleMaskPattern::Unknown;
+  return Result;
+}
+
+ShuffleVectorInfo ShuffleVectorInfo::create(MachineInstr &MI,
+                                            MachineRegisterInfo &MRI) {
+  assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR);
+  ShuffleVectorInfo Info;
+  Info.DstReg = MI.getOperand(0).getReg();
+  Info.Src1Reg = MI.getOperand(1).getReg();
+  Info.Src2Reg = MI.getOperand(2).getReg();
+  Info.Mask = MI.getOperand(3).getShuffleMask();
+  Info.DstTy = MRI.getType(Info.DstReg);
+  Info.Src1Ty = MRI.getType(Info.Src1Reg);
+  Info.Src2Ty = MRI.getType(Info.Src2Reg);
+  Info.NumDstElems = Info.DstTy.isVector() ? Info.DstTy.getNumElements() : 1;
+  Info.NumSrc1Elems = Info.Src1Ty.isVector() ? Info.Src1Ty.getNumElements() : 1;
+  Info.NumSrc2Elems = Info.Src2Ty.isVector() ? Info.Src2Ty.getNumElements() : 1;
+  const unsigned DstSize = Info.DstTy.getSizeInBits();
+  const unsigned SrcSize = Info.Src1Ty.getSizeInBits();
+  if (DstSize == SrcSize)
+    Info.Relation = ShuffleVectorInfo::SizeRelation::Same;
+  else if (DstSize < SrcSize)
+    Info.Relation = ShuffleVectorInfo::SizeRelation::Shrinking;
+  else
+    Info.Relation = ShuffleVectorInfo::SizeRelation::Growing;
+  Info.IsAllUndef = MaskMatch::isMaskWithAllUndefs(Info.Mask);
+  const MachineInstr *Src2Def = MRI.getVRegDef(Info.Src2Reg);
+  Info.IsSrc2Undef =
+      Src2Def && Src2Def->getOpcode() == TargetOpcode::G_IMPLICIT_DEF;
+  return Info;
+}
+
 static MachineInstr *findPreIncMatch(MachineInstr &MemI,
                                      MachineRegisterInfo &MRI,
                                      CombinerHelper &Helper,
@@ -2173,13 +2294,16 @@ bool llvm::tryToCombineVectorShiftsByZero(MachineInstr &MI,
 bool llvm::matchBroadcastElement(MachineInstr &MI, MachineRegisterInfo &MRI,
                                  std::pair<Register, Register> &MatchInfo) {
   assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR);
+  const LLT Src1Ty = MRI.getType(MI.getOperand(1).getReg());
+  if (!Src1Ty.isVector())
+    return false;
+
   const auto MaybeSplatIndex = getSplatIndex(MI);
 
   if (!MaybeSplatIndex.has_value())
     return false;
 
-  const unsigned SrcNumElems =
-      MRI.getType(MI.getOperand(1).getReg()).getNumElements();
+  const unsigned SrcNumElems = Src1Ty.getNumElements();
 
   unsigned Idx;
   unsigned AdjustSrcElemIdx = 0;
@@ -2230,6 +2354,9 @@ bool llvm::matchShuffleToVSel(MachineInstr &MI, MachineRegisterInfo &MRI,
 
   const LLT DstTy = MRI.getType(DstReg);
   const LLT Src1Ty = MRI.getType(Src1Reg);
+  if (!DstTy.isVector() || !Src1Ty.isVector())
+    return false;
+
   if (Src1Ty.getSizeInBits() != BasicVectorBitSize ||
       Src1Ty.getElementType().getSizeInBits() >= DoubleScalarRegSize)
     return false;
@@ -2325,6 +2452,10 @@ static bool matchShuffleToVecEltBroadcast(MachineInstr &MI,
                                           MachineRegisterInfo &MRI,
                                           const AIEBaseInstrInfo &TII,
                                           BuildFnTy &MatchInfo) {
+  const LLT SrcTy = MRI.getType(MI.getOperand(1).getReg());
+  if (!SrcTy.isVector())
+    return false;
+
   ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
 
   std::optional<int> UniqOpIdx = MaskMatch::getUniqueIndex(Mask);
@@ -2624,6 +2755,8 @@ static bool matchShuffleToSubvecBroadcast(MachineInstr &MI,
 
   const LLT DstTy = MRI.getType(DstReg);
   const LLT Src1Ty = MRI.getType(Src1Reg);
+  if (!DstTy.isVector() || !Src1Ty.isVector())
+    return false;
 
   const unsigned NumDstElems = DstTy.getNumElements();
   const unsigned NumSrcElems = Src1Ty.getNumElements();
@@ -2727,6 +2860,9 @@ static bool matchShuffleToVecBroadcast(MachineInstr &MI,
 
   const LLT DstTy = MRI.getType(DstReg);
   const LLT Src1Ty = MRI.getType(Src1Reg);
+  if (!DstTy.isVector() || !Src1Ty.isVector())
+    return false;
+
   if (Src1Ty.getSizeInBits() != 64 && Src1Ty.getSizeInBits() != 32) {
     return false;
   }
@@ -2783,28 +2919,26 @@ bool llvm::matchShuffleToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
                               BuildFnTy &MatchInfo) {
   assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR);
 
-  const Register DstReg = MI.getOperand(0).getReg();
-  const Register Src1Reg = MI.getOperand(1).getReg();
-  ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
+  const ShuffleVectorInfo Info = ShuffleVectorInfo::create(MI, MRI);
 
-  const LLT DstTy = MRI.getType(DstReg);
-  const LLT Src1Ty = MRI.getType(Src1Reg);
-  if (DstTy != Src1Ty)
+  if (Info.Relation != ShuffleVectorInfo::SizeRelation::Same)
     return false;
 
-  const unsigned NumSrcElems = Src1Ty.isVector() ? Src1Ty.getNumElements() : 1;
-  if (Mask.size() != NumSrcElems)
+  if (Info.Mask.size() != Info.NumSrc1Elems)
     return false;
 
-  if (MaskMatch::isMaskWithAllUndefs(Mask))
+  if (Info.IsAllUndef)
     return false;
 
-  // Check that the mask is sequential
-  MaskMatch SequentialMask{/*Height*/ 0};
-  if (!SequentialMask.isValidMask(Mask))
+  const ShuffleMaskClassificationResult Classification = Info.classifyMask();
+  if (Classification.Pat != ShuffleMaskPattern::Identity)
     return false;
 
-  MatchInfo = [=](MachineIRBuilder &B) { B.buildCopy(DstReg, Src1Reg); };
+  const Register DstReg = Info.DstReg;
+  const Register Src1Reg = Info.Src1Reg;
+  MatchInfo = [DstReg, Src1Reg](MachineIRBuilder &B) {
+    B.buildCopy(DstReg, Src1Reg);
+  };
 
   return true;
 }
@@ -2933,54 +3067,50 @@ bool llvm::matchShuffleToExtractInsertElt(MachineInstr &MI,
                                           BuildFnTy &MatchInfo) {
   assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR);
 
-  const Register DstReg = MI.getOperand(0).getReg();
-  const Register Src1Reg = MI.getOperand(1).getReg();
-  const Register Src2Reg = MI.getOperand(2).getReg();
-  ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
+  const ShuffleVectorInfo Info = ShuffleVectorInfo::create(MI, MRI);
 
-  const LLT DstTy = MRI.getType(DstReg);
-  const LLT Src1Ty = MRI.getType(Src1Reg);
-  if (DstTy != Src1Ty)
+  if (!Info.Src1Ty.isVector())
     return false;
 
-  const unsigned NumSrcElems = Src1Ty.isVector() ? Src1Ty.getNumElements() : 1;
-  const LLT ElemTy = MRI.getType(Src1Reg).getElementType();
+  if (Info.Relation != ShuffleVectorInfo::SizeRelation::Same)
+    return false;
 
   unsigned MaxNumInsertions;
   if (MI.getMF()->getTarget().getTargetTriple().isAIE2P())
     // The scalarization of G_SHUFFLE_VECTOR in the legalizer is more beneficial
-    // if there are more exceptions than NumSrcElems / 2 as AIE2P's VINSERT
+    // if there are more exceptions than NumSrc1Elems / 2 as AIE2P's VINSERT
     // instructions require a move to a register used for the index unlike
     // VPUSH.
     MaxNumInsertions = (ShuffleMaxNumInsertions != 0) ? ShuffleMaxNumInsertions
-                                                      : NumSrcElems / 2;
+                                                      : Info.NumSrc1Elems / 2;
   else
     llvm_unreachable(
         "MaxNumInsertions unimplemented for target. Does the target's Insert "
         "instruction take immediate indices or does it require a register for "
         "the index?");
 
-  if (Mask.size() != NumSrcElems)
+  if (Info.Mask.size() != Info.NumSrc1Elems)
     return false;
 
-  if (MaskMatch::isMaskWithAllUndefs(Mask))
+  if (Info.IsAllUndef)
     return false;
 
-  // Check that the mask is sequential
-  MaskMatch SequentialMask{/*Height*/ 0};
-  ShuffleMaskValidity SequentialMaskValidity =
-      SequentialMask.getShuffleMaskValidity(Mask);
-  bool IsValid = SequentialMaskValidity.IsValid;
-
-  // This is a Copy pattern and will be handled by matchShuffleToCopy
-  if (IsValid)
+  const ShuffleMaskClassificationResult Classification =
+      Info.classifyMask(MaxNumInsertions);
+  if (Classification.Pat != ShuffleMaskPattern::IdentityWithExceptions)
+    return false;
+  if (Classification.ExceptionIndices.empty() ||
+      Classification.ExceptionIndices.size() >= MaxNumInsertions)
     return false;
 
-  SmallVector<unsigned, 4> Exceptions = SequentialMaskValidity.MaskExceptions;
-  assert(!Exceptions.empty());
-
-  if (Exceptions.size() >= MaxNumInsertions)
-    return false;
+  const Register DstReg = Info.DstReg;
+  const Register Src1Reg = Info.Src1Reg;
+  const Register Src2Reg = Info.Src2Reg;
+  const LLT Src1Ty = Info.Src1Ty;
+  const unsigned NumSrcElems = Info.NumSrc1Elems;
+  const LLT ElemTy = Info.Src1Ty.getElementType();
+  const ArrayRef<int> Mask = Info.Mask;
+  const SmallVector<unsigned, 4> Exceptions(Classification.ExceptionIndices);
 
   MatchInfo = [=, &MRI](MachineIRBuilder &B) {
     Register InsertSrc = Src1Reg;
