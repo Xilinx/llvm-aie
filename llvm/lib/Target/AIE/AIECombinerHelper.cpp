@@ -448,23 +448,18 @@ ShuffleMaskClassificationResult MaskMatch::classify(ArrayRef<int> Mask,
     }
   }
 
+  // Check for subvector broadcast: (H, H+1, ..., H+P-1) repeated
   for (unsigned Period = 1; Period < Mask.size(); ++Period) {
     if (Mask.size() % Period != 0)
       continue;
     const auto Height = MaskMatch::getHeight(Mask, Period);
-    if (!Height || *Height != 0)
+    if (!Height)
       continue;
-    bool IsPeriodic = true;
-    for (unsigned I = 0; I < Mask.size() && IsPeriodic; ++I) {
-      if (Mask[I] == -1)
-        continue;
-      const int Expected = static_cast<int>(I % Period);
-      if (Mask[I] != Expected)
-        IsPeriodic = false;
-    }
-    if (IsPeriodic) {
+    // Use MaskMatch to validate the periodic pattern
+    MaskMatch PeriodicMask{*Height, Period};
+    if (PeriodicMask.isValidMask(Mask)) {
       Result.Pat = ShuffleMaskPattern::SubvecBroadcast;
-      Result.SubvecStart = 0;
+      Result.SubvecStart = *Height;
       Result.SubvecLen = Period;
       return Result;
     }
