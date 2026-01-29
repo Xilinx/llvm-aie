@@ -415,12 +415,14 @@ ShuffleMaskClassificationResult MaskMatch::classify(ArrayRef<int> Mask,
   }
 
   // Check for identity with exceptions (some elements match identity pattern)
+  // Only classify as IdentityWithExceptions if most elements match identity
+  // (i.e., exceptions are less than half the mask size)
   const MaskMatch IdentityMask{0};
   const ShuffleMaskValidity Validity =
       IdentityMask.getShuffleMaskValidity(Mask);
   if (!Validity.MaskExceptions.empty() &&
       Validity.MaskExceptions.size() <= MaxExceptions &&
-      Validity.MaskExceptions.size() < Mask.size()) {
+      Validity.MaskExceptions.size() < Mask.size() / 2) {
     Result.Pat = ShuffleMaskPattern::IdentityWithExceptions;
     for (const unsigned Idx : Validity.MaskExceptions)
       Result.ExceptionIndices.push_back(Idx);
@@ -2854,36 +2856,35 @@ static bool matchShuffleToSubvecBroadcast(MachineInstr &MI,
 ///  %1:_(<2 x s32>) = COPY $l0
 ///  %2:_(<2 x s32>) = G_IMPLICIT_DEF
 ///  %0:_(<16 x s32>) = G_AIE_BROADCAST_VECTOR %1(<2 x s32>)
+/// Match whole-vector broadcast: source vector repeated to fill destination.
 static bool matchShuffleToVecBroadcast(MachineInstr &MI,
                                        MachineRegisterInfo &MRI,
                                        const AIEBaseInstrInfo &TII,
                                        BuildFnTy &MatchInfo) {
-  const Register DstReg = MI.getOperand(0).getReg();
-  const Register Src1Reg = MI.getOperand(1).getReg();
-  ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
-
-  const LLT DstTy = MRI.getType(DstReg);
-  const LLT Src1Ty = MRI.getType(Src1Reg);
-  if (!DstTy.isVector() || !Src1Ty.isVector())
+  const ShuffleVectorInfo Info = ShuffleVectorInfo::create(MI, MRI);
+  if (!Info.DstTy.isVector() || !Info.Src1Ty.isVector())
     return false;
 
-  if (Src1Ty.getSizeInBits() != 64 && Src1Ty.getSizeInBits() != 32)
+  // Only handle 32-bit and 64-bit source vectors
+  const unsigned Src1Size = Info.Src1Ty.getSizeInBits();
+  if (Src1Size != 64 && Src1Size != 32)
     return false;
 
-  const unsigned NumDstElems = DstTy.getNumElements();
-  const unsigned NumSrcElems = Src1Ty.getNumElements();
-  if (NumDstElems != Mask.size())
+  // Check for SubvecBroadcast where the entire source is the broadcast unit
+  const ShuffleMaskClassificationResult Classification = Info.classifyMask();
+  if (Classification.Pat != ShuffleMaskPattern::SubvecBroadcast)
     return false;
 
-  // Check the mask
-  MaskMatch SequentialPeriodicMask{/*Height*/ 0, /*Period*/ NumSrcElems};
-  if (!SequentialPeriodicMask.isValidMask(Mask))
+  // Must broadcast the entire source vector starting at 0
+  if (Classification.SubvecStart != 0 ||
+      Classification.SubvecLen != Info.NumSrc1Elems)
     return false;
 
+  const Register DstReg = Info.DstReg;
+  const Register Src1Reg = Info.Src1Reg;
   MatchInfo = [=, &MRI](MachineIRBuilder &B) {
     buildBroadcastVector(B, MRI, Src1Reg, DstReg);
   };
-
   return true;
 }
 
