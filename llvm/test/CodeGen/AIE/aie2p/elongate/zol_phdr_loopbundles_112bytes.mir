@@ -3,7 +3,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc --mtriple=aie2p --start-before=postmisched %s -o - | FileCheck %s
 
@@ -21,13 +21,8 @@
   ; CHECK-LABEL: zol_elongated_preheader_plus_NumOfLoopBundles_ge112bytes:
   ; CHECK:         .p2align 4
   ; CHECK-NEXT:  // %bb.0: // %entry
-  ; CHECK-NEXT:    vldb x6, [p0], #0
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    add r0, r0, #-1
-  ; CHECK-NEXT:    nopb ; add.nc lc, r0, #-3
+  ; CHECK-NEXT:    nopa ; nopb ; nops ; add r0, r0, #-1; nopm ; nopv
+  ; CHECK-NEXT:    vldb x6, [p0], #0; add.nc lc, r0, #-3
   ; CHECK-NEXT:    vldb x0, [p0], #64; add r0, r0, #-1
   ; CHECK-NEXT:    vldb x2, [p0], #64; movxm ls, #.LBB0_1
   ; CHECK-NEXT:    vldb x1, [p0], #128; movxm le, #.L_LEnd0
@@ -43,9 +38,9 @@
   ; CHECK-NEXT:    vldb x0, [p0], #64; add r0, r0, #-1; vadd.16 x6, x4, x1
   ; CHECK-NEXT:    vldb x2, [p0], #64; vadd.16 x4, x6, x0
   ; CHECK-NEXT:  .L_LEnd0:
-  ; CHECK-NEXT:    vldb x1, [p0], #128
+  ; CHECK-NEXT:    nopa ; vldb x1, [p0], #128; nops ; nopxm ; nopv
   ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
-  ; CHECK-NEXT:    vadd.16 x6, x4, x1
+  ; CHECK-NEXT:    nops ; vadd.16 x6, x4, x1
   ; CHECK-NEXT:    vadd.16 x4, x6, x0
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vadd.16 x6, x4, x1

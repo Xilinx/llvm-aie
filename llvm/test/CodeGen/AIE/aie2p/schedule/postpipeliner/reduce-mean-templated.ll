@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 
 ; This test checks postpipelining for aie2p considering AA analysis
 ; related to virtual unroll, when we have pairs of memory operations
@@ -23,10 +23,10 @@ define void @reduceMeanTemplated(ptr noalias %ifm, ptr addrspace(6) noalias %ofm
 ; CHECK-NEXT:    movs p2, p1; mov dj0, m0
 ; CHECK-NEXT:    movs m1, m0; mov dj4, m0
 ; CHECK-NEXT:    movs dc0, m0; mov dn0, m0
-; CHECK-NEXT:    movs dc4, m0; mov dn4, m0; vclr dm0
+; CHECK-NEXT:    movs dc4, m0; mov dn4, m0
 ; CHECK-NEXT:    vlda bmlh3, [p1, #64]; paddb.3d [p0], d0; movs dn1, m0; mov dc1, m0
 ; CHECK-NEXT:    vlda.2d bmll3, [p1], d1
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    vclr dm0
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vlda bmlh3, [p1, #64]; paddb.3d [p0], d0; movx r0, #0
 ; CHECK-NEXT:    vlda.2d bmll3, [p1], d1; movxm ls, #.LBB0_1; vadd.f dm4, dm3, dm0, r0

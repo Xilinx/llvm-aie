@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -mtriple=aie2p < %s | FileCheck %s
 
 define void @load_store_with_call() {
@@ -13,12 +13,12 @@ define void @load_store_with_call() {
 ; CHECK-NEXT:    nopa ; nopb ; nops ; movxm ls, #.LBB0_1; nopv
 ; CHECK-NEXT:    mova r0, #0; movxm le, #.L_LEnd0
 ; CHECK-NEXT:    mova p5, #0; add.nc lc, r0, #-7
-; CHECK-NEXT:    nopa ; vldb x2, [p5, #0]; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vldb x2, [p5, #0]; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vldb x2, [p5, #0]; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vldb x2, [p5, #0]; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; vldb x2, [p5, #0]; nops ; paddxm [sp], #64; nopv
 ; CHECK-NEXT:    nopa ; vldb x2, [p5, #0]; st lr, [sp, #-64]; nopxm ; nopv // 4-byte Folded Spill
+; CHECK-NEXT:    nopa ; vldb x2, [p5, #0]; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; vldb x2, [p5, #0]; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; vldb x2, [p5, #0]; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; vldb x2, [p5, #0]; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; vldb x2, [p5, #0]; nops ; nopxm ; nopv
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
