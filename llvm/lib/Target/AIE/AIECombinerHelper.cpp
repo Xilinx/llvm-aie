@@ -414,21 +414,6 @@ ShuffleMaskClassificationResult MaskMatch::classify(ArrayRef<int> Mask,
     }
   }
 
-  // Check for identity with exceptions (some elements match identity pattern)
-  // Only classify as IdentityWithExceptions if most elements match identity
-  // (i.e., exceptions are less than half the mask size)
-  const MaskMatch IdentityMask{0};
-  const ShuffleMaskValidity Validity =
-      IdentityMask.getShuffleMaskValidity(Mask);
-  if (!Validity.MaskExceptions.empty() &&
-      Validity.MaskExceptions.size() <= MaxExceptions &&
-      Validity.MaskExceptions.size() < Mask.size() / 2) {
-    Result.Pat = ShuffleMaskPattern::IdentityWithExceptions;
-    for (const unsigned Idx : Validity.MaskExceptions)
-      Result.ExceptionIndices.push_back(Idx);
-    return Result;
-  }
-
   // Check VSelect pattern with possible shift for subvector extraction
   // VSelect: Mask[I] in {I+Shift, I+Shift+NumSrc1Elems} for all I
   if (Mask.size() <= 64) {
@@ -465,6 +450,7 @@ ShuffleMaskClassificationResult MaskMatch::classify(ArrayRef<int> Mask,
   }
 
   // Check for subvector broadcast: (H, H+1, ..., H+P-1) repeated
+  // Check this BEFORE IdentityWithExceptions since SubvecBroadcast is more specific
   for (unsigned Period = 1; Period < Mask.size(); ++Period) {
     if (Mask.size() % Period != 0)
       continue;
@@ -479,6 +465,20 @@ ShuffleMaskClassificationResult MaskMatch::classify(ArrayRef<int> Mask,
       Result.SubvecLen = Period;
       return Result;
     }
+  }
+
+  // Check for identity with exceptions (some elements match identity pattern)
+  // This is checked last as a fallback for patterns that don't match more
+  // specific classifications like SubvecBroadcast
+  const MaskMatch IdentityMask{0};
+  const ShuffleMaskValidity Validity =
+      IdentityMask.getShuffleMaskValidity(Mask);
+  if (!Validity.MaskExceptions.empty() &&
+      Validity.MaskExceptions.size() <= MaxExceptions) {
+    Result.Pat = ShuffleMaskPattern::IdentityWithExceptions;
+    for (const unsigned Idx : Validity.MaskExceptions)
+      Result.ExceptionIndices.push_back(Idx);
+    return Result;
   }
 
   Result.Pat = ShuffleMaskPattern::Unknown;
@@ -2751,61 +2751,49 @@ bool llvm::matchShuffleToExtractSubvec(MachineInstr &MI,
 
 // If the subvector cannot be extracted and broadcasted given the target
 // constraints, an Unmerge and Concat are used instead.
+/// Match subvector broadcast: a portion of the source repeated to fill destination.
 static bool matchShuffleToSubvecBroadcast(MachineInstr &MI,
                                           MachineRegisterInfo &MRI,
                                           const AIEBaseInstrInfo &TII,
                                           BuildFnTy &MatchInfo) {
-  const Register DstReg = MI.getOperand(0).getReg();
-  const Register Src1Reg = MI.getOperand(1).getReg();
-  ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
-
-  const LLT DstTy = MRI.getType(DstReg);
-  const LLT Src1Ty = MRI.getType(Src1Reg);
-  if (!DstTy.isVector() || !Src1Ty.isVector())
+  const ShuffleVectorInfo Info = ShuffleVectorInfo::create(MI, MRI);
+  if (!Info.DstTy.isVector() || !Info.Src1Ty.isVector())
     return false;
 
-  const unsigned NumDstElems = DstTy.getNumElements();
-  const unsigned NumSrcElems = Src1Ty.getNumElements();
-  const unsigned MaskSize = Mask.size();
-
-  if (NumDstElems != MaskSize)
+  if (Info.NumDstElems != Info.Mask.size())
     return false;
 
-  auto CheckSplatMask = [=]() -> std::optional<std::pair<int, unsigned>> {
-    // Find the splat mask pattern, start with length 2 and then power of 2.
-    for (unsigned SplatMaskLen = 2;
-         SplatMaskLen <= NumSrcElems && SplatMaskLen <= MaskSize;
-         SplatMaskLen *= 2) {
-      if (Mask[0] != -1 && Mask[0] % SplatMaskLen != 0)
-        return std::nullopt;
-
-      // Get Height (start value)
-      std::optional<unsigned> Height =
-          MaskMatch::getHeight(Mask, /*Period*/ SplatMaskLen);
-      if (!Height)
-        return std::nullopt;
-
-      // Check the mask
-      MaskMatch SequentialPeriodicMask{/*Height*/ Height.value(),
-                                       /*Period*/ SplatMaskLen};
-      if (SequentialPeriodicMask.isValidMask(Mask))
-        return std::make_pair(Height.value(), SplatMaskLen);
-    }
-    return std::nullopt;
-  };
-
-  auto SplatMaskData = CheckSplatMask();
-  if (!SplatMaskData)
+  // Use classify() to detect SubvecBroadcast pattern
+  const ShuffleMaskClassificationResult Classification = Info.classifyMask();
+  if (Classification.Pat != ShuffleMaskPattern::SubvecBroadcast)
     return false;
 
-  const int SplatMaskStart = SplatMaskData->first;
-  const unsigned SplatMaskLen = SplatMaskData->second;
+  const int SplatMaskStart = Classification.SubvecStart;
+  const unsigned SplatMaskLen = Classification.SubvecLen;
 
-  const LLT ElemTy = Src1Ty.getElementType();
+  // Only match power-of-2 period lengths starting from 2 (matches original behavior)
+  if (SplatMaskLen < 2 || (SplatMaskLen & (SplatMaskLen - 1)) != 0)
+    return false;
+
+  // Start index must be aligned to the subvector length (matches original behavior)
+  if (SplatMaskStart % static_cast<int>(SplatMaskLen) != 0)
+    return false;
+
+  // Skip if this is a whole-vector broadcast (handled by matchShuffleToVecBroadcast)
+  if (SplatMaskStart == 0 && SplatMaskLen == Info.NumSrc1Elems)
+    return false;
+
+  const Register DstReg = Info.DstReg;
+  const Register Src1Reg = Info.Src1Reg;
+  const LLT Src1Ty = Info.Src1Ty;
+  const unsigned NumDstElems = Info.NumDstElems;
+  const unsigned NumSrcElems = Info.NumSrc1Elems;
+
+  const LLT ElemTy = Info.Src1Ty.getElementType();
   const LLT DstSubvecType =
       LLT::fixed_vector(SplatMaskLen, ElemTy.getSizeInBits());
   const unsigned SubIdx = SplatMaskStart / SplatMaskLen;
-  Register ExtractSubvecDstReg =
+  const Register ExtractSubvecDstReg =
       MRI.createGenericVirtualRegister(DstSubvecType);
 
   // Check whether we can extract the subvector
