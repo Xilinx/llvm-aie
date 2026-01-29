@@ -2451,11 +2451,17 @@ buildScalarBroadcast(const ShuffleVectorInfo &Info,
   const int BroadcastIdx = Classification.BroadcastIdx;
   const Register DstReg = Info.DstReg;
   const Register Src1Reg = Info.Src1Reg;
+  const Register Src2Reg = Info.Src2Reg;
+  const unsigned NumSrc1Elems = Info.NumSrc1Elems;
   const LLT ElemTy = Info.Src1Ty.getElementType();
 
+  // Determine which source vector to extract from
+  const bool FromSrc2 = (BroadcastIdx >= static_cast<int>(NumSrc1Elems));
+  const Register SrcReg = FromSrc2 ? Src2Reg : Src1Reg;
+  const int ExtractIdx = FromSrc2 ? BroadcastIdx - NumSrc1Elems : BroadcastIdx;
+
   MatchInfo = [=, &MRI](MachineIRBuilder &B) {
-    auto Extr =
-        B.buildExtractVectorElementConstant(ElemTy, Src1Reg, BroadcastIdx);
+    auto Extr = B.buildExtractVectorElementConstant(ElemTy, SrcReg, ExtractIdx);
     buildBroadcastVector(B, MRI, Extr.getReg(0), DstReg);
   };
   return true;
@@ -3196,15 +3202,6 @@ bool llvm::matchShuffleToConcatExtractedSubvectors(MachineInstr &MI,
   if (!Info.DstTy.isVector() || !Info.Src1Ty.isVector())
     return false;
 
-  // Skip patterns that should be handled by VSelect
-  const ShuffleMaskClassificationResult Classification = Info.classifyMask();
-  if (Classification.Pat == ShuffleMaskPattern::VSelect)
-    return false;
-  // Skip patterns that should be handled by SubvecBroadcast/ScalarBroadcast
-  if (Classification.Pat == ShuffleMaskPattern::SubvecBroadcast ||
-      Classification.Pat == ShuffleMaskPattern::ScalarBroadcast)
-    return false;
-
   const LLT ElemTy = Info.Src1Ty.getElementType();
   const unsigned ElemSize = ElemTy.getSizeInBits();
   const unsigned NumSrc1Elems = Info.Src1Ty.getNumElements();
@@ -3468,8 +3465,55 @@ bool llvm::matchShuffleVector(MachineInstr &MI, MachineRegisterInfo &MRI,
   if (!Info.DstTy.isVector() || !Info.Src1Ty.isVector())
     return false;
 
-  // Classify the mask pattern once
-  const ShuffleMaskClassificationResult Classification = Info.classifyMask();
+  // Check for shuffle of broadcast vectors - can be simplified to copy
+  // This check looks at source instructions, not just the mask pattern
+  if (Info.DstTy == Info.Src1Ty) {
+    MachineInstr *Src1Vec = MRI.getVRegDef(Info.Src1Reg);
+    MachineInstr *Src2Vec = MRI.getVRegDef(Info.Src2Reg);
+    const unsigned BcstOpcode = TII.getGenericBroadcastVectorOpcode();
+    const bool IsSrc1Bcst = (Src1Vec->getOpcode() == BcstOpcode);
+    const bool IsSrc2Bcst = (Src2Vec->getOpcode() == BcstOpcode);
+
+    if (IsSrc1Bcst || IsSrc2Bcst) {
+      const unsigned NumSrcElems = Info.NumSrc1Elems;
+      const int MinSrc1Value = 0;
+      const int MaxSrc1Value = NumSrcElems - 1;
+      const int MinSrc2Value = NumSrcElems;
+      const int MaxSrc2Value = 2 * NumSrcElems - 1;
+
+      const bool IsValidSrc1Mask =
+          IsSrc1Bcst && MaskMatch(0).isMaskWithinRangeOrUndef(
+                            Info.Mask, MinSrc1Value, MaxSrc1Value);
+      const bool IsValidSrc2Mask =
+          IsSrc2Bcst && MaskMatch(0).isMaskWithinRangeOrUndef(
+                            Info.Mask, MinSrc2Value, MaxSrc2Value);
+
+      if (IsValidSrc1Mask) {
+        const Register DstReg = Info.DstReg;
+        const Register SrcReg = Info.Src1Reg;
+        MatchInfo = [=](MachineIRBuilder &B) { B.buildCopy(DstReg, SrcReg); };
+        return true;
+      }
+      if (IsValidSrc2Mask) {
+        const Register DstReg = Info.DstReg;
+        const Register SrcReg = Info.Src2Reg;
+        MatchInfo = [=](MachineIRBuilder &B) { B.buildCopy(DstReg, SrcReg); };
+        return true;
+      }
+    }
+  }
+
+  // Calculate target-specific MaxExceptions for WithExceptions patterns
+  // AIE2P allows up to NumDstElems/2 exceptions for insert-based patterns
+  unsigned MaxExceptions = UINT_MAX;
+  if (MI.getMF()->getTarget().getTargetTriple().isAIE2P()) {
+    MaxExceptions = (ShuffleMaxNumInsertions != 0) ? ShuffleMaxNumInsertions
+                                                   : Info.NumDstElems / 2;
+  }
+
+  // Classify the mask pattern once with target-specific MaxExceptions
+  const ShuffleMaskClassificationResult Classification =
+      Info.classifyMask(MaxExceptions);
 
   // Dispatch based on pattern
   switch (Classification.Pat) {
@@ -3501,10 +3545,16 @@ bool llvm::matchShuffleVector(MachineInstr &MI, MachineRegisterInfo &MRI,
 
   case ShuffleMaskPattern::IdentityWithExceptions:
     // Identity with some insertions
-    // Only supported on AIE2P (uses VINSERT instructions)
+    // Only supported on AIE2P (uses VINSERT/ConcatExtracted patterns)
     if (!MI.getMF()->getTarget().getTargetTriple().isAIE2P())
       return false;
-    return matchShuffleToExtractInsertElt(MI, MRI, MatchInfo);
+    // Try extract-insert pattern first (uses VINSERT instructions)
+    if (matchShuffleToExtractInsertElt(MI, MRI, MatchInfo))
+      return true;
+    // Fall through to try concat-extracted-subvectors pattern
+    if (matchShuffleToConcatExtractedSubvectors(MI, MRI, TII, MatchInfo))
+      return true;
+    return false;
 
   case ShuffleMaskPattern::ScalarBroadcastWithExceptions:
     // Broadcast with some insertions
@@ -3515,8 +3565,11 @@ bool llvm::matchShuffleVector(MachineInstr &MI, MachineRegisterInfo &MRI,
 
   case ShuffleMaskPattern::Unknown:
     // Try fallback patterns
-    if (matchShuffleToConcatExtractedSubvectors(MI, MRI, TII, MatchInfo))
-      return true;
+    // matchShuffleToConcatExtractedSubvectors is only supported on AIE2P
+    if (MI.getMF()->getTarget().getTargetTriple().isAIE2P()) {
+      if (matchShuffleToConcatExtractedSubvectors(MI, MRI, TII, MatchInfo))
+        return true;
+    }
     return false;
   }
 

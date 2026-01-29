@@ -284,7 +284,7 @@ def aie_additional_combines : GICombineGroup<[
   combine_symmetric_build_vector,
   combine_broadcast_shl_to_add,
   combine_xor_msb_broadcast_to_add,
-  combine_vector_shuffle_extract_subvec,
+  combine_shuffle_vector,
   combine_narrow_trunc_s20_const,
   combine_narrow_zext_s20,
   combine_concat_unmerge_phis,
@@ -300,13 +300,9 @@ def aie_additional_combines : GICombineGroup<[
 // AIE2P-specific combines.
 // TODO: Move HW-agnostic combines to `aie_additional_combines`.
 def aie2p_additional_combines : GICombineGroup<[
-  combine_vector_shuffle_bcst_to_copy,
   combine_vector_broadcast,
-  combine_vector_shuffle_to_extract_insert_elt,
-  combine_vector_shuffle_concat_extracted_subvectors,
   combine_paired_extracts,
   combine_widen_fmul,
-  combine_vector_shuffle_to_extract_insert_elt_to_broadcast,
   combine_shuffle_vector, 
   combine_bitcast_unmerge_swap,
   combine_phi_bitcast_swap,
