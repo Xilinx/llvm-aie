@@ -420,6 +420,7 @@ std::optional<int> computeHeight(HCache &Heights, SUnit *Start, SUnit *End) {
 // caching the height to Src.
 
 void PostPipeliner::computeRecMII() {
+  RecMII = 0;
   for (int K = 0; K < NInstr; K++) {
     SUnit &Src = DAG->SUnits[K];
     for (auto &Dep : Src.Succs) {
