@@ -427,24 +427,38 @@ ShuffleMaskClassificationResult MaskMatch::classify(ArrayRef<int> Mask,
     return Result;
   }
 
+  // Check VSelect pattern with possible shift for subvector extraction
+  // VSelect: Mask[I] in {I+Shift, I+Shift+NumSrc1Elems} for all I
   if (Mask.size() <= 64) {
-    bool IsVSelect = true;
-    uint64_t SelectMask = 0;
-    for (unsigned I = 0; I < Mask.size() && IsVSelect; ++I) {
-      const int M = Mask[I];
-      if (M == -1)
-        continue;
-      if (M == static_cast<int>(I)) {
-      } else if (M == static_cast<int>(I + NumSrc1Elems)) {
-        SelectMask |= (1ULL << I);
-      } else {
-        IsVSelect =     false;
+    auto TryVSelect = [&](unsigned Shift) -> bool {
+      uint64_t SelectMask = 0;
+      for (unsigned I = 0; I < Mask.size(); ++I) {
+        const int M = Mask[I];
+        if (M == -1)
+          continue;
+        const int EffPos = static_cast<int>(I + Shift);
+        if (M == EffPos) {
+          // From Src1
+        } else if (M == EffPos + static_cast<int>(NumSrc1Elems)) {
+          // From Src2
+          SelectMask |= (1ULL << I);
+        } else {
+          return false;
+        }
       }
-    }
-    if (IsVSelect) {
       Result.Pat = ShuffleMaskPattern::VSelect;
       Result.VSelectMask = SelectMask;
+      Result.VSelectShift = Shift;
+      return true;
+    };
+
+    // Try shift=0 first (most common), then subvector shifts
+    if (TryVSelect(0))
       return Result;
+    for (unsigned Shift = NumDstElems; Shift < NumSrc1Elems;
+         Shift += NumDstElems) {
+      if (TryVSelect(Shift))
+        return Result;
     }
   }
 

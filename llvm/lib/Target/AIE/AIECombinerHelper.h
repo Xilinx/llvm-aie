@@ -63,6 +63,7 @@ struct ShuffleMaskClassificationResult {
   unsigned SubvecLen = 0;
   unsigned ExtractStart = 0;
   uint64_t VSelectMask = 0;
+  unsigned VSelectShift = 0; ///< Shift for subvector VSelect patterns
 };
 
 /// The mask is represented by a sawtooth function F with Period, Height and
