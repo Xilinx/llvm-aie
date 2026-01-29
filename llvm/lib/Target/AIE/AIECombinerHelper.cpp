@@ -3035,28 +3035,38 @@ bool llvm::matchShuffleToExtractInsertElt(MachineInstr &MI,
   if (!Info.Src1Ty.isVector())
     return false;
 
-  if (Info.Relation != ShuffleVectorInfo::SizeRelation::Same)
+  // Allow Same or Shrinking shuffles (e.g., 16->8 elements with insertions)
+  if (Info.Relation == ShuffleVectorInfo::SizeRelation::Growing)
     return false;
+
+  const bool IsShrinking =
+      (Info.Relation == ShuffleVectorInfo::SizeRelation::Shrinking);
 
   unsigned MaxNumInsertions;
   if (MI.getMF()->getTarget().getTargetTriple().isAIE2P())
     // The scalarization of G_SHUFFLE_VECTOR in the legalizer is more beneficial
-    // if there are more exceptions than NumSrc1Elems / 2 as AIE2P's VINSERT
+    // if there are more exceptions than NumDstElems / 2 as AIE2P's VINSERT
     // instructions require a move to a register used for the index unlike
     // VPUSH.
     MaxNumInsertions = (ShuffleMaxNumInsertions != 0) ? ShuffleMaxNumInsertions
-                                                      : Info.NumSrc1Elems / 2;
+                                                      : Info.NumDstElems / 2;
   else
     llvm_unreachable(
         "MaxNumInsertions unimplemented for target. Does the target's Insert "
         "instruction take immediate indices or does it require a register for "
         "the index?");
 
-  if (Info.Mask.size() != Info.NumSrc1Elems)
-    return false;
-
   if (Info.IsAllUndef)
     return false;
+
+  // For shrinking shuffles, require power-of-2 size ratio for clean unmerge
+  if (IsShrinking) {
+    if (Info.NumSrc1Elems % Info.NumDstElems != 0)
+      return false;
+    const unsigned NumSubVectors = Info.NumSrc1Elems / Info.NumDstElems;
+    if (!isPowerOf2_32(NumSubVectors))
+      return false;
+  }
 
   const ShuffleMaskClassificationResult Classification =
       Info.classifyMask(MaxNumInsertions);
@@ -3069,16 +3079,28 @@ bool llvm::matchShuffleToExtractInsertElt(MachineInstr &MI,
   const Register DstReg = Info.DstReg;
   const Register Src1Reg = Info.Src1Reg;
   const Register Src2Reg = Info.Src2Reg;
+  const LLT DstTy = Info.DstTy;
   const LLT Src1Ty = Info.Src1Ty;
   const unsigned NumSrcElems = Info.NumSrc1Elems;
+  const unsigned NumDstElems = Info.NumDstElems;
   const LLT ElemTy = Info.Src1Ty.getElementType();
   const ArrayRef<int> Mask = Info.Mask;
   const SmallVector<unsigned, 4> Exceptions(Classification.ExceptionIndices);
+  const unsigned NumSubVectors = IsShrinking ? NumSrcElems / NumDstElems : 1;
 
   MatchInfo = [=, &MRI](MachineIRBuilder &B) {
-    Register InsertSrc = Src1Reg;
-    Register InsertDst;
+    Register InsertSrc;
 
+    if (IsShrinking) {
+      // For shrinking shuffles, first extract the first subvector from Src1
+      InsertSrc = MRI.createGenericVirtualRegister(DstTy);
+      buildUnmergeVector(B, MRI, InsertSrc, Src1Reg, NumSubVectors,
+                         /*SubIdx=*/0);
+    } else {
+      InsertSrc = Src1Reg;
+    }
+
+    Register InsertDst;
     for (const unsigned ExceptionIdx : Exceptions) {
       Register VecToExtract =
           Mask[ExceptionIdx] < (int)NumSrcElems ? Src1Reg : Src2Reg;
@@ -3091,7 +3113,7 @@ bool llvm::matchShuffleToExtractInsertElt(MachineInstr &MI,
 
       InsertDst = (ExceptionIdx == Exceptions.back())
                       ? DstReg
-                      : MRI.createGenericVirtualRegister(Src1Ty);
+                      : MRI.createGenericVirtualRegister(DstTy);
 
       B.buildInsertVectorElement(InsertDst, InsertSrc, ExtrElt,
                                  ExceptionIdxReg);
