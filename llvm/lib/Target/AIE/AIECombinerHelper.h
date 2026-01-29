@@ -48,10 +48,11 @@ enum class ShuffleMaskPattern {
   Identity,               ///< <0, 1, 2, ..., N-1> with possible undefs
   IdentityWithExceptions, ///< Mostly identity with some non-identity elements
   ScalarBroadcast,        ///< <K, K, K, ...> - same element everywhere
-  SubvecBroadcast,        ///< <0,1,2,3, 0,1,2,3, ...> - repeated subvector
-  VSelect,                ///< Mask[i] in {i, i+NumSrcElems} for all i
-  ExtractContiguous,      ///< <K, K+1, K+2, ..., K+M-1> - contiguous extract
-  Unknown                 ///< None of the above
+  ScalarBroadcastWithExceptions, ///< Mostly broadcast with some insertions
+  SubvecBroadcast,   ///< <0,1,2,3, 0,1,2,3, ...> - repeated subvector
+  VSelect,           ///< Mask[i] in {i, i+NumSrcElems} for all i
+  ExtractContiguous, ///< <K, K+1, K+2, ..., K+M-1> - contiguous extract
+  Unknown            ///< None of the above
 };
 
 /// Detailed result from classifying a shuffle mask

@@ -455,8 +455,10 @@ ShuffleMaskClassificationResult MaskMatch::classify(ArrayRef<int> Mask,
   }
 
   // Check for subvector broadcast: (H, H+1, ..., H+P-1) repeated
-  // Check this BEFORE IdentityWithExceptions since SubvecBroadcast is more
-  // specific
+  // Only classify as SubvecBroadcast if the start is aligned to the period
+  // length. Misaligned periodic patterns (like <1,2,1,2,...>) fall through
+  // to ScalarBroadcastWithExceptions since matchShuffleToSubvecBroadcast
+  // would reject them anyway due to alignment requirements.
   for (unsigned Period = 1; Period < Mask.size(); ++Period) {
     if (Mask.size() % Period != 0)
       continue;
@@ -466,10 +468,14 @@ ShuffleMaskClassificationResult MaskMatch::classify(ArrayRef<int> Mask,
     // Use MaskMatch to validate the periodic pattern
     MaskMatch PeriodicMask{*Height, Period};
     if (PeriodicMask.isValidMask(Mask)) {
-      Result.Pat = ShuffleMaskPattern::SubvecBroadcast;
-      Result.SubvecStart = *Height;
-      Result.SubvecLen = Period;
-      return Result;
+      // Only classify as SubvecBroadcast if properly aligned
+      if (*Height % Period == 0) {
+        Result.Pat = ShuffleMaskPattern::SubvecBroadcast;
+        Result.SubvecStart = *Height;
+        Result.SubvecLen = Period;
+        return Result;
+      }
+      // Misaligned patterns fall through to other classifications
     }
   }
 
@@ -485,6 +491,22 @@ ShuffleMaskClassificationResult MaskMatch::classify(ArrayRef<int> Mask,
     for (const unsigned Idx : Validity.MaskExceptions)
       Result.ExceptionIndices.push_back(Idx);
     return Result;
+  }
+
+  // Check for scalar broadcast with exceptions (mostly the same element with
+  // some insertions). Uses the same MaxExceptions threshold as identity.
+  if (const auto FreqResult = getFrequentIndexResult(Mask, 0)) {
+    if (FreqResult->NonMatchingCount > 0 &&
+        FreqResult->NonMatchingCount <= MaxExceptions) {
+      const int BroadcastValue = Mask[FreqResult->FrequentIdx];
+      Result.Pat = ShuffleMaskPattern::ScalarBroadcastWithExceptions;
+      Result.BroadcastIdx = BroadcastValue;
+      for (unsigned I = 0; I < Mask.size(); ++I) {
+        if (Mask[I] != -1 && Mask[I] != BroadcastValue)
+          Result.ExceptionIndices.push_back(I);
+      }
+      return Result;
+    }
   }
 
   Result.Pat = ShuffleMaskPattern::Unknown;
@@ -2938,40 +2960,29 @@ bool llvm::matchShuffleToExtractInsertEltToBroadcast(MachineInstr &MI,
   if (Mask.size() != NumSrcElems)
     return false;
 
-  const ShuffleMaskClassificationResult Classification = Info.classifyMask();
-  if (Classification.Pat == ShuffleMaskPattern::AllUndef)
+  // Calculate maximum allowed exceptions based on target.
+  // For AIE2P, we allow up to NumSrcElems/2 exceptions because the legalizer's
+  // scalarization is more beneficial beyond that threshold.
+  unsigned MaxExceptions;
+  if (MI.getMF()->getTarget().getTargetTriple().isAIE2P())
+    MaxExceptions = (ShuffleMaxNumInsertions != 0) ? ShuffleMaxNumInsertions
+                                                   : NumSrcElems / 2;
+  else
+    llvm_unreachable("MaxExceptions unimplemented for target.");
+
+  const ShuffleMaskClassificationResult Classification =
+      Info.classifyMask(MaxExceptions);
+
+  // Must be a broadcast-with-exceptions pattern (not pure broadcast or other).
+  if (Classification.Pat != ShuffleMaskPattern::ScalarBroadcastWithExceptions)
     return false;
 
   const Register DstReg = Info.DstReg;
   const Register Src1Reg = Info.Src1Reg;
   const Register Src2Reg = Info.Src2Reg;
   const LLT Src1Ty = Info.Src1Ty;
-
-  unsigned MinFrequency;
-  if (MI.getMF()->getTarget().getTargetTriple().isAIE2P())
-    // The scalarization of G_SHUFFLE_VECTOR in the legalizer is more beneficial
-    // if there are more exceptions than NumSrcElems / 2 as AIE2P's VINSERT
-    // instrutions require a move to a register used for the index unlike VPUSH.
-    MinFrequency = (ShuffleMaxNumInsertions != 0) ? ShuffleMaxNumInsertions
-                                                  : NumSrcElems / 2;
-  else
-    llvm_unreachable("MinFrequency unimplemented for target.");
-
-  std::optional<FrequentIndexResult> FrequentIdxResult =
-      MaskMatch::getFrequentIndexResult(Mask, MinFrequency);
-
-  if (!FrequentIdxResult)
-    return false;
-
-  unsigned FrequentIdx = FrequentIdxResult->FrequentIdx;
-  unsigned NonMatchingCount = FrequentIdxResult->NonMatchingCount;
-
-  // This is a pure broadcast pattern. Should be handled by
-  // matchShuffleToVecEltBroadcast combine
-  if (NonMatchingCount == 0)
-    return false;
-
-  int BcstValue = Mask[FrequentIdx];
+  const int BcstValue = Classification.BroadcastIdx;
+  const auto &ExceptionIndices = Classification.ExceptionIndices;
 
   MatchInfo = [=, &MRI](MachineIRBuilder &B) {
     Register BroadcastVecReg = MRI.createGenericVirtualRegister(Src1Ty);
@@ -2983,31 +2994,23 @@ bool llvm::matchShuffleToExtractInsertEltToBroadcast(MachineInstr &MI,
     Register InsertSrc = BroadcastVecReg;
     Register InsertDst;
 
-    unsigned InsertionCount = 0;
-    for (unsigned Idx = 0; Idx < Mask.size(); ++Idx) {
+    for (unsigned I = 0; I < ExceptionIndices.size(); ++I) {
+      const unsigned Idx = ExceptionIndices[I];
+      const int MaskVal = Mask[Idx];
 
-      if (Mask[Idx] == BcstValue)
-        continue;
-
-      if (Mask[Idx] == -1)
-        continue;
-
-      Register VecToExtract = Mask[Idx] < (int)NumSrcElems ? Src1Reg : Src2Reg;
-
-      int ExtractIdx = Mask[Idx] % NumSrcElems;
+      Register VecToExtract = MaskVal < (int)NumSrcElems ? Src1Reg : Src2Reg;
+      const int ExtractIdx = MaskVal % NumSrcElems;
       auto ExtrElt = B.buildExtractVectorElementConstant(
           DstElemTy, VecToExtract, ExtractIdx);
 
-      auto NonMatchingIdxReg = B.buildConstant(LLT::scalar(32), Idx);
+      auto IdxReg = B.buildConstant(LLT::scalar(32), Idx);
 
-      InsertDst = (InsertionCount == NonMatchingCount - 1)
+      InsertDst = (I == ExceptionIndices.size() - 1)
                       ? DstReg
                       : MRI.createGenericVirtualRegister(Src1Ty);
 
-      B.buildInsertVectorElement(InsertDst, InsertSrc, ExtrElt,
-                                 NonMatchingIdxReg);
+      B.buildInsertVectorElement(InsertDst, InsertSrc, ExtrElt, IdxReg);
       InsertSrc = InsertDst;
-      InsertionCount++;
     }
   };
 
