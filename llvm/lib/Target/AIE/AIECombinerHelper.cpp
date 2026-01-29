@@ -438,7 +438,7 @@ ShuffleMaskClassificationResult MaskMatch::classify(ArrayRef<int> Mask,
       } else if (M == static_cast<int>(I + NumSrc1Elems)) {
         SelectMask |= (1ULL << I);
       } else {
-        IsVSelect = false;
+        IsVSelect =     false;
       }
     }
     if (IsVSelect) {
