@@ -405,8 +405,10 @@ classifyAsScalarBroadcast(ArrayRef<int> Mask) {
 
 /// Classify as Identity (height=0) or ExtractContiguous (height>0).
 /// Only matches contiguous sequences from Src1.
+/// Includes buildability checks for ExtractContiguous.
 static std::optional<ShuffleMaskClassificationResult>
-classifyAsIdentityOrExtract(ArrayRef<int> Mask, unsigned NumSrc1Elems) {
+classifyAsIdentityOrExtract(ArrayRef<int> Mask, unsigned NumSrc1Elems,
+                            unsigned NumDstElems) {
   const auto Height = MaskMatch::getHeight(Mask, 0);
   if (!Height)
     return std::nullopt;
@@ -420,6 +422,19 @@ classifyAsIdentityOrExtract(ArrayRef<int> Mask, unsigned NumSrc1Elems) {
   for (unsigned I = 0; I < Mask.size(); ++I) {
     const int Expected = static_cast<int>(*Height + I);
     if (Mask[I] != -1 && Mask[I] != Expected)
+      return std::nullopt;
+  }
+
+  // For ExtractContiguous, validate buildability constraints
+  if (*Height != 0) {
+    // Only shrinking shuffles can extract subvectors
+    if (NumDstElems >= NumSrc1Elems)
+      return std::nullopt;
+    // Require divisibility for subvector extraction
+    if (NumSrc1Elems % NumDstElems != 0)
+      return std::nullopt;
+    // ExtractStart must be aligned to NumDstElems
+    if (*Height % NumDstElems != 0)
       return std::nullopt;
   }
 
@@ -514,7 +529,8 @@ classifyAsSubvecBroadcast(ArrayRef<int> Mask) {
 
 /// Classify as IdentityWithExceptions: mostly identity with some insertions.
 static std::optional<ShuffleMaskClassificationResult>
-classifyAsIdentityWithExceptions(ArrayRef<int> Mask, unsigned MaxExceptions) {
+classifyAsIdentityWithExceptions(ArrayRef<int> Mask, unsigned NumSrc1Elems,
+                                 unsigned NumDstElems, unsigned MaxExceptions) {
   const MaskMatch IdentityMask{0};
   const ShuffleMaskValidity Validity =
       IdentityMask.getShuffleMaskValidity(Mask);
@@ -522,6 +538,23 @@ classifyAsIdentityWithExceptions(ArrayRef<int> Mask, unsigned MaxExceptions) {
   if (Validity.MaskExceptions.empty() ||
       Validity.MaskExceptions.size() >= MaxExceptions)
     return std::nullopt;
+
+  // Buildability checks for IdentityWithInsertions pattern
+  const bool IsShrinking = (NumDstElems < NumSrc1Elems);
+  const bool IsGrowing = (NumDstElems > NumSrc1Elems);
+
+  // Only for Same or Shrinking shuffles (not Growing)
+  if (IsGrowing)
+    return std::nullopt;
+
+  // For shrinking shuffles, require power-of-2 size ratio for clean unmerge
+  if (IsShrinking) {
+    if (NumSrc1Elems % NumDstElems != 0)
+      return std::nullopt;
+    const unsigned NumSubVectors = NumSrc1Elems / NumDstElems;
+    if ((NumSubVectors & (NumSubVectors - 1)) != 0) // Not power of 2
+      return std::nullopt;
+  }
 
   ShuffleMaskClassificationResult Result;
   Result.Pat = ShuffleMaskPattern::IdentityWithExceptions;
@@ -572,7 +605,7 @@ ShuffleMaskClassificationResult MaskMatch::classify(ArrayRef<int> Mask,
     return *R;
 
   // Check contiguous patterns before exceptions (avoids misclassification)
-  if (auto R = classifyAsIdentityOrExtract(Mask, NumSrc1Elems))
+  if (auto R = classifyAsIdentityOrExtract(Mask, NumSrc1Elems, NumDstElems))
     return *R;
 
   if (auto R = classifyAsVSelect(Mask, NumSrc1Elems, NumDstElems))
@@ -582,7 +615,8 @@ ShuffleMaskClassificationResult MaskMatch::classify(ArrayRef<int> Mask,
     return *R;
 
   // Fallback patterns with exceptions (less specific)
-  if (auto R = classifyAsIdentityWithExceptions(Mask, MaxExceptions))
+  if (auto R = classifyAsIdentityWithExceptions(Mask, NumSrc1Elems, NumDstElems,
+                                                MaxExceptions))
     return *R;
 
   if (auto R = classifyAsScalarBroadcastWithExceptions(Mask, MaxExceptions))
@@ -2925,30 +2959,6 @@ static void buildBroadcastWithInsertions(
     }
   };
 }
-/// Check if we can build identity-with-insertions pattern.
-/// Precondition: Classification.Pat == IdentityWithExceptions.
-static bool canBuildIdentityWithInsertions(
-    const ShuffleVectorInfo &Info,
-    const ShuffleMaskClassificationResult &Classification) {
-  // Only for Same or Shrinking shuffles
-  if (Info.Relation == ShuffleVectorInfo::SizeRelation::Growing)
-    return false;
-
-  const bool IsShrinking =
-      (Info.Relation == ShuffleVectorInfo::SizeRelation::Shrinking);
-
-  // For shrinking shuffles, require power-of-2 size ratio for clean unmerge
-  if (IsShrinking) {
-    if (Info.NumSrc1Elems % Info.NumDstElems != 0)
-      return false;
-    const unsigned NumSubVectors = Info.NumSrc1Elems / Info.NumDstElems;
-    if (!isPowerOf2_32(NumSubVectors))
-      return false;
-  }
-
-  return !Classification.ExceptionIndices.empty();
-}
-
 /// Build identity with insertions for IdentityWithExceptions pattern.
 /// Precondition: Classification.Pat == IdentityWithExceptions.
 static void buildIdentityWithInsertions(
@@ -3305,18 +3315,12 @@ bool llvm::matchShuffleVector(MachineInstr &MI, MachineRegisterInfo &MRI,
 
   case ShuffleMaskPattern::IdentityWithExceptions:
     // Identity with some insertions
-    // Only supported on AIE2P (uses VINSERT/ConcatExtracted patterns)
+    // Only supported on AIE2P (uses VINSERT instructions)
     if (!MI.getMF()->getTarget().getTargetTriple().isAIE2P())
       return false;
-    // Try extract-insert pattern first (uses VINSERT instructions)
-    if (canBuildIdentityWithInsertions(Info, Classification)) {
-      buildIdentityWithInsertions(Info, Classification, MRI, MatchInfo);
-      return true;
-    }
-    // Fall through to try concat-extracted-subvectors pattern
-    if (matchShuffleToConcatExtractedSubvectors(MI, MRI, TII, MatchInfo))
-      return true;
-    return false;
+    // Classifier already validated buildability - just build
+    buildIdentityWithInsertions(Info, Classification, MRI, MatchInfo);
+    return true;
 
   case ShuffleMaskPattern::ScalarBroadcastWithExceptions:
     // Broadcast with some insertions
