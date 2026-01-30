@@ -3,10 +3,10 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc --mtriple=aie2 -O2 --start-before=postmisched %s \
-# RUN:     --debug-only=postpipeliner-summary -o - 2>&1 | FileCheck %s
+# RUN:     -o - 2>&1 | FileCheck %s
 
 # The goal of this test is to verify that we are respecting WAR dependencies between a pipelined
 # loop and its epilogue. VUNPACK_D16_D8 in the loop is a late reader of its input, so VMOV_mv_w (epilogue)

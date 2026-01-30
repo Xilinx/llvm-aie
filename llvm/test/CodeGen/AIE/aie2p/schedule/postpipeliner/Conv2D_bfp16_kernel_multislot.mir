@@ -3,10 +3,10 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc --mtriple=aie2p --aie-loop-min-tripcount=7 %s \
-# RUN:   --start-before=postmisched --debug-only=postpipeliner-summary --aie-preassign-multi-slot-instr=true -o - | FileCheck %s
+# RUN:   --start-before=postmisched --aie-preassign-multi-slot-instr=true -o - | FileCheck %s
 
 
 --- |
