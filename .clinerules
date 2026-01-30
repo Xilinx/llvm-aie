@@ -1,0 +1,242 @@
+# Cline Rules for llvm-aie Repository
+
+## Personal User Settings
+
+You can include personal Cline rules from your user profile by creating a file at:
+- `~/.config/cline/user.clinerules` (Linux/macOS)
+- `%USERPROFILE%\.config\cline\user.clinerules` (Windows)
+
+**Important:** If this file doesn't exist, it will be silently ignored - no error will occur.
+
+### Codebase Identification
+
+When your personal rules file is loaded, the following environment variable will be available:
+- `CLINE_CODEBASE=llvm-aie`
+
+You can use this in your personal rules to apply codebase-specific customizations. For example:
+
+```markdown
+# My Personal Cline Rules
+
+## General Preferences
+- Always use trailing commas in multi-line arrays and objects
+
+## Codebase-Specific Rules
+When CLINE_CODEBASE=llvm-aie:
+- Pay extra attention to LLVM coding standards
+- Always verify changes with `ninja check-llvm-codegen-aie`
+
+When CLINE_CODEBASE=my-other-project:
+- Use different style preferences
+```
+
+The personal rules file can contain any additional instructions you want to apply across all your projects. These personal rules will be merged with the project-specific rules below. In case of conflicts, the project-specific rules in this `.clinerules` file take precedence.
+
+---
+
+# Project-Specific Rules
+
+The following rules are specific to the llvm-aie repository:
+
+## Copyright Headers
+
+When updating any file in this repository, always:
+1. Add a copyright header if the file doesn't have one
+2. Update the year in existing copyright messages to include the current year (2025)
+
+### Standard Copyright Header Format
+
+For files with AMD copyright:
+```
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+```
+
+For C/C++ files:
+```cpp
+//
+// This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+```
+
+### Examples
+
+- If a file has `(c) Copyright 2023-2024`, update it to `(c) Copyright 2023-2025`
+- If a file has `(c) Copyright 2024`, update it to `(c) Copyright 2024-2025`
+- If a file has no copyright header and you're making substantial changes, add the appropriate header
+
+## Project-Specific Guidelines
+
+- This is an LLVM-based project, so follow LLVM coding standards
+- AIE-specific code is located in `llvm/lib/Target/AIE/` and `llvm/test/CodeGen/AIE/`
+- When modifying test infrastructure, prefer localized changes (e.g., in `lit.local.cfg` files) over global changes when possible
+
+## C++ Class Member Ordering
+
+When defining C++ classes, organize members in the following order to minimize the need for access specifiers:
+1. Private members (data and helper methods) first
+2. Public interface last
+
+This allows the class to start without an explicit access specifier (defaulting to private for classes) and requires only a single `public:` label before the public interface. Avoid using multiple `private:` labels by grouping all private members together at the beginning of the class definition.
+
+Example:
+```cpp
+class MyClass {
+  // Private data members
+  int PrivateData;
+  
+  // Private helper methods
+  void helperMethod();
+
+public:
+  // Public interface
+  MyClass();
+  void publicMethod();
+};
+```
+
+## Const Correctness
+
+Make local variable declarations `const` whenever possible to improve code clarity and prevent accidental modifications:
+
+- Use `const` for variables that are initialized once and never modified
+- Use `const` for references and pointers when the referenced/pointed-to data should not be modified
+- This makes the code's intent clearer and helps catch bugs at compile time
+
+Example:
+```cpp
+// Good - const when possible
+const unsigned NumSlots = getNumSlots();
+const auto &Config = getConfig();
+
+// Avoid - non-const when not needed
+unsigned NumSlots = getNumSlots();  // Will not be modified
+auto &Config = getConfig();         // Will not be modified
+```
+
+## Eliminate Unused Variables
+
+Always eliminate unused variables to keep code clean and avoid compiler warnings:
+
+- Remove any variable declarations that are not used
+- If a variable is only needed for its side effects, use `(void)variable;` to explicitly mark it as intentionally unused
+- Do not leave unused variables in the code, even temporarily
+
+Example:
+```cpp
+// Bad - unused variable
+const unsigned NumSlots = getNumSlots();
+doSomething();  // NumSlots never used
+
+// Good - variable removed
+doSomething();
+
+// Good - explicitly marked as unused (rare cases)
+const bool Success = tryOperation();
+(void)Success;  // Used in assert in debug builds
+assert(Success && "Operation must succeed");
+```
+
+## TableGen Backend Development
+
+When extending TableGen backends (e.g., CodeGenFormat):
+
+### Use ConstTable for Emitting Data Tables
+
+- Prefer `ConstTable` abstraction over raw `raw_ostream` for emitting data tables
+- ConstTable provides utilities for managing table indices, references, and array slices
+- Example:
+  ```cpp
+  ConstTable MyTable("MyType", "MyTableName");
+  MyTable << "value1";
+  MyTable.next();
+  MyTable << "value2";
+  MyTable.next();
+  MyTable.finish();
+  o << MyTable;  // Emit to output stream
+  ```
+
+### Parameterized Implementation Headers
+
+When creating reusable implementations that need to be instantiated for multiple architectures (AIE1, AIE2, AIE2P), use macro-based parameterization:
+
+- Define a macro parameter (e.g., `SLOT_STRUCTURE_NAMESPACE`) that must be set before including the header
+- Use macro concatenation to generate architecture-specific names
+- Include the appropriate generated `.inc` file using the macro
+- Clean up macros at the end of the header
+
+Example pattern:
+```cpp
+#ifndef PARAM_NAMESPACE
+#error "PARAM_NAMESPACE must be defined before including this file"
+#endif
+
+#define CONCAT_IMPL(a, b) a##b
+#define CONCAT(a, b) CONCAT_IMPL(a, b)
+#define GENERATED_INC CONCAT(PARAM_NAMESPACE, GenFormats.inc)
+
+// Include generated tables
+#define GET_SOME_TABLE
+#include GENERATED_INC
+
+// Implementation using generated data
+class CONCAT(PARAM_NAMESPACE, ClassName) {
+  // ...
+};
+
+// Clean up
+#undef GENERATED_INC
+#undef CONCAT
+#undef CONCAT_IMPL
+```
+
+## Build Verification
+
+After making changes to AIE target code, verify the changes by running the AIE CodeGen tests:
+
+```bash
+cd Release && ninja check-llvm-codegen-aie
+```
+
+This ensures that your changes don't break existing functionality and that all AIE-specific code generation tests pass.
+
+## Documentation for Significant Changes
+
+For significant changes or new features, create documentation in `llvm/lib/Target/AIE/docs/`:
+- Use Markdown format (`.md` files) with lines wrapped at 80 columns
+- Name the file descriptively (e.g., `SlotStructureUnification.md`, `NewFeatureName.md`)
+- Include:
+  - Overview and motivation
+  - Key concepts and design decisions
+  - Interface usage examples
+  - Implementation file locations
+  - Test results
+  - Future work considerations
+
+This helps maintain institutional knowledge and aids future developers.
+
+## Git Commit Guidelines
+
+**NEVER add build trees to git commits:**
+- Do not add `Release/`, `Debug/`, or any other build directories
+- Do not add `.cline_storage/` or other IDE-specific directories
+- When committing, explicitly specify only the source files that were modified
+- Use `git add <specific-files>` instead of `git add -A` or `git add .`
+
+**Only make commits when explicitly requested by the user:**
+- Do not automatically commit changes
+- Wait for the user to review and approve changes before committing
+- When the user requests a commit, include the documentation file if one was created
+
+Example of correct commit workflow:
+```bash
+git add llvm/lib/Target/AIE/MyFile.cpp llvm/lib/Target/AIE/MyFile.h
+git add llvm/lib/Target/AIE/docs/MyFeature.md  # If documentation was created
+git commit -m "Description of changes"
+```

@@ -1231,10 +1231,12 @@ SolverData PostPipeliner::createSolverData() {
     const SUnit &SU = DAG->SUnits[N];
     MachineInstr *const MI = SU.getInstr();
     auto SlotKind = TII->getSlotKind(MI->getOpcode());
+    const auto *SlotInfo = TII->getSlotInfo(SlotKind);
+    const uint64_t SlotConflicts = SlotInfo->getConflictSet();
 
     const uint64_t MemoryBanks = HR.getMemoryBanks(MI);
-    const int Id =
-        Data.addInstruction(SlotKind, MemoryBanks, !isSideEffectFree(MI));
+    const int Id = Data.addInstruction(SlotKind, SlotConflicts, MemoryBanks,
+                                       !isSideEffectFree(MI));
     assert(unsigned(Id) == SU.NodeNum);
     for (auto Dep : SU.Preds) {
       const int From = Dep.getSUnit()->NodeNum;

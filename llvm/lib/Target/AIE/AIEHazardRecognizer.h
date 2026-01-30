@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 // This file defines the hazard recognizer for scheduling on AIE.
@@ -59,6 +59,60 @@ const_bundled_instrs(const MachineInstr &MI, bool IncludeRoot = false) {
 }
 
 using ResourceSet = StaticBitSet<TotalNumResources>;
+
+/// Wrapper around SlotBits to provide a SlotOccupancy-like interface.
+/// This is a transitional class to prepare for migrating from SlotBits
+/// to SlotOccupancy. It wraps uint64_t and provides methods that match
+/// the SlotOccupancy API.
+class SlotBitsWrapper {
+  uint64_t Bits;
+
+public:
+  SlotBitsWrapper() : Bits(0) {}
+  explicit SlotBitsWrapper(uint64_t Bits) : Bits(Bits) {}
+
+  /// Check if empty
+  bool isEmpty() const { return Bits == 0; }
+
+  /// Clear all bits
+  void clear() { Bits = 0; }
+
+  /// Block all slots
+  void blockResources() { Bits = ~uint64_t(0); }
+
+  /// Merge with another
+  SlotBitsWrapper &operator|=(const SlotBitsWrapper &Other) {
+    Bits |= Other.Bits;
+    return *this;
+  }
+
+  /// Combine two slot sets
+  SlotBitsWrapper operator|(const SlotBitsWrapper &Other) const {
+    return SlotBitsWrapper(Bits | Other.Bits);
+  }
+
+  /// Check for overlap (used in conflict detection)
+  bool overlaps(const SlotBitsWrapper &Other) const {
+    return (Bits & Other.Bits) != 0;
+  }
+
+  /// Equality comparison
+  bool operator==(const SlotBitsWrapper &Other) const {
+    return Bits == Other.Bits;
+  }
+
+  /// Get the underlying bits (for format interface)
+  uint64_t getBits() const { return Bits; }
+
+  /// Implicit conversion to uint64_t for backward compatibility
+  operator uint64_t() const { return Bits; }
+
+  /// Assignment from uint64_t for backward compatibility
+  SlotBitsWrapper &operator=(uint64_t NewBits) {
+    Bits = NewBits;
+    return *this;
+  }
+};
 
 // To be merged with AIEResourceCycle
 class FuncUnitWrapper {

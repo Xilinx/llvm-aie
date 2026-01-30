@@ -67,6 +67,10 @@ static cl::opt<bool> EnableMultiSlotInstrMaterialization(
     cl::desc("Statically materialize Multi-Slot Pseudo Instructions in "
              "loops."));
 
+static cl::opt<bool>
+    MaterializeAll("aie-materialize-all", cl::Hidden, cl::init(false),
+                   cl::desc("Materialize all Multi-Slot Pseudo Instructions."));
+
 static cl::opt<int> PostPipelinerMaxTryII(
     "aie-postpipeliner-maxtry-ii", cl::init(20),
     cl::desc("[AIE] Maximum II steps to be tried in the post-ra pipeliner"));
@@ -1184,8 +1188,9 @@ void BlockState::initInterBlock(const MachineSchedContext &Context,
 
     // perform static assignment of multi-slot pseudos
     if (EnableMultiSlotInstrMaterialization &&
-        PostSWP->isPostPipelineCandidate(*TheBlock))
-      staticallyMaterializeMultiSlotInstructions(*TheBlock, HR);
+        PostSWP->isPostPipelineCandidate(*TheBlock)) {
+      staticallyMaterializeMultiSlotInstructions(*TheBlock, HR, MaterializeAll);
+    }
   }
 
   // We are called just after the first round of scheduling a block.

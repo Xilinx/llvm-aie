@@ -134,6 +134,11 @@ public:
                                unsigned BitPos);
   static void computeSlotSets(TGTargetSlots &Slots,
                               std::vector<TGInstrLayout> &InstFormats);
+  static void
+  emitSlotStructureTables(raw_ostream &o, CodeGenTarget &Target,
+                          const TGTargetSlots &Slots,
+                          const std::vector<TGInstrLayout> &InstFormats,
+                          const std::vector<TGInstrLayout> &PseudoInstFormats);
 };
 
 /// Main class abstracting a CodeGenInstruction (CGI).

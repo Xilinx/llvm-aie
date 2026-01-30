@@ -63,11 +63,12 @@ Slot &SolverData::addSlot(int N) {
   return It->second;
 }
 
-int SolverData::addInstruction(int SlotNumber, uint64_t MemoryBanks,
-                               bool HasSideEffect) {
+int SolverData::addInstruction(int SlotNumber, uint64_t SlotConflicts,
+                               uint64_t MemoryBanks, bool HasSideEffect) {
   Slot *const Slot = &addSlot(SlotNumber);
   const int Id = Instructions.size();
-  Instructions.emplace_back(Id, Slot, MemoryBanks, HasSideEffect);
+  Instructions.emplace_back(Id, Slot, SlotConflicts, MemoryBanks,
+                            HasSideEffect);
   Slot->Instructions.insert(Id);
   return Id;
 }
@@ -153,6 +154,26 @@ void SWPSolver::latencies(const SolverData &Data) {
 }
 
 void SWPSolver::conflicts(const SolverData &Data) {
+  // Non-trivial Slot Conflicts.
+  // If there's overlap between one instruction's slot bit and another
+  // instruction's conflict bits, report a conflict
+  for (const auto &I : Data.getInstructions()) {
+    const int M = I.Id;
+    const uint64_t ISlotBit = uint64_t(1) << I.TheSlot->SlotNumber;
+    for (const auto &J : Data.getInstructions()) {
+      const int N = J.Id;
+      if (N >= M) {
+        break;
+      }
+      const uint64_t JSlotBit = uint64_t(1) << J.TheSlot->SlotNumber;
+      if ((J.SlotConflicts & ISlotBit) || (I.SlotConflicts & JSlotBit)) {
+        LLVM_DEBUG(dbgs() << "Slot conflict(" << M << ", " << N << ")\n");
+        genConflict(M, N);
+      }
+    }
+  }
+
+  // Memory bank conflicts
   for (const auto &I : Data.getInstructions()) {
     const int M = I.Id;
     if (!I.MemoryBanks) {

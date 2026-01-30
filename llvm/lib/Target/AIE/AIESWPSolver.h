@@ -60,13 +60,15 @@ class Instruction {
 public:
   const int Id;
   const Slot *const TheSlot;
+  const uint64_t SlotConflicts;
   const uint64_t MemoryBanks = 0;
   const bool HasSideEffect = true;
   int Depth = 0;
   int Height = 0;
-  Instruction(int Id, Slot *S, uint64_t MemoryBanks, bool HasSideEffect)
-      : Id(Id), TheSlot(S), MemoryBanks(MemoryBanks),
-        HasSideEffect(HasSideEffect) {}
+  Instruction(int Id, Slot *S, uint64_t SlotConflicts, uint64_t MemoryBanks,
+              bool HasSideEffect)
+      : Id(Id), TheSlot(S), SlotConflicts(SlotConflicts),
+        MemoryBanks(MemoryBanks), HasSideEffect(HasSideEffect) {}
 };
 
 class ProblemSize {
@@ -104,7 +106,8 @@ class SolverData {
 
 public:
   // Add an instruction to the problem. It returns a unique Id
-  int addInstruction(int Slot, uint64_t MemoryBanks, bool HasSideEffect);
+  int addInstruction(int Slot, uint64_t SlotConflicts, uint64_t MemoryBanks,
+                     bool HasSideEffect);
   // Add a latency between two instructions to the problem.
   // Distance represents the iteration distance, i.e. the number of
   // cfg backedges it spans.
