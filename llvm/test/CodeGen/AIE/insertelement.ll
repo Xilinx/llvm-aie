@@ -466,9 +466,9 @@ define <64 x i16> @insert_v64i16_dyn(<64 x i16> %v, i16 %e, i32 %idx) nounwind {
 ; AIE2P-NEXT:    mova r2, #1
 ; AIE2P-NEXT:    lshl r1, r1, r2
 ; AIE2P-NEXT:    padda [p0], #-128
-; AIE2P-NEXT:    mov dj0, r1
 ; AIE2P-NEXT:    vst x7, [p0, #64]
 ; AIE2P-NEXT:    vst x6, [p0, #0]
+; AIE2P-NEXT:    mov dj0, r1
 ; AIE2P-NEXT:    st.s16 r0, [p0, dj0]
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
@@ -546,9 +546,9 @@ define <32 x i32> @insert_v32i32_dyn(<32 x i32> %v, i32 %e, i32 %idx) nounwind {
 ; AIE2P-NEXT:    mova r2, #2
 ; AIE2P-NEXT:    lshl r1, r1, r2
 ; AIE2P-NEXT:    padda [p0], #-128
-; AIE2P-NEXT:    mov dj0, r1
 ; AIE2P-NEXT:    vst x7, [p0, #64]
 ; AIE2P-NEXT:    vst x6, [p0, #0]
+; AIE2P-NEXT:    mov dj0, r1
 ; AIE2P-NEXT:    st r0, [p0, dj0]
 ; AIE2P-NEXT:    vldb x5, [p0, #64]
 ; AIE2P-NEXT:    vldb x4, [p0, #0]

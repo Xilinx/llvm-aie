@@ -83,11 +83,11 @@ define i64 @extract_v16i64_dyn(<16 x i64> inreg %v, i32 %idx) nounwind {
 ; AIE2P-NEXT:    vmov x0, bmlh0
 ; AIE2P-NEXT:    vmov x2, bmll0
 ; AIE2P-NEXT:    lt r27, r2, r0
-; AIE2P-NEXT:    add r16, r27, #-1
+; AIE2P-NEXT:    sel.nez r0, r1, r0, r27
 ; AIE2P-NEXT:    ret lr
-; AIE2P-NEXT:    sel.nez r0, r1, r0, r27 // Delay Slot 5
-; AIE2P-NEXT:    sub r0, r2, r0 // Delay Slot 4
-; AIE2P-NEXT:    vsel.32 x0, x2, x0, r16 // Delay Slot 3
+; AIE2P-NEXT:    add r16, r27, #-1 // Delay Slot 5
+; AIE2P-NEXT:    vsel.32 x0, x2, x0, r16 // Delay Slot 4
+; AIE2P-NEXT:    sub r0, r2, r0 // Delay Slot 3
 ; AIE2P-NEXT:    vextract.64 r1:r0, x0, r0, vaddsign1 // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
   %1 = extractelement <16 x i64> %v, i32 %idx
@@ -127,12 +127,12 @@ define i32 @extract_v64i32_dyn(<64 x i32> inreg %v, i32 %idx) nounwind {
 ; AIE2P-NEXT:    sel.nez r0, r2, r0, r27
 ; AIE2P-NEXT:    lt r27, r1, r2
 ; AIE2P-NEXT:    vsel.32 x0, x6, x0, r16
-; AIE2P-NEXT:    add r18, r27, #-1
 ; AIE2P-NEXT:    sel.nez r0, r3, r0, r27
+; AIE2P-NEXT:    add r18, r27, #-1
 ; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    vsel.32 x0, x2, x0, r17 // Delay Slot 5
-; AIE2P-NEXT:    sub r0, r1, r0 // Delay Slot 4
-; AIE2P-NEXT:    vsel.32 x0, x4, x0, r18 // Delay Slot 3
+; AIE2P-NEXT:    vsel.32 x0, x4, x0, r18 // Delay Slot 4
+; AIE2P-NEXT:    sub r0, r1, r0 // Delay Slot 3
 ; AIE2P-NEXT:    vextract.32 r0, x0, r0, vaddsign1 // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
   %1 = extractelement <64 x i32> %v, i32 %idx
@@ -171,12 +171,12 @@ define i64 @extract_v32i64_dyn(<32 x i64> inreg %v, i32 %idx) nounwind {
 ; AIE2P-NEXT:    sel.nez r0, r1, r0, r27
 ; AIE2P-NEXT:    lt r27, r2, r1
 ; AIE2P-NEXT:    vsel.32 x0, x6, x0, r16
-; AIE2P-NEXT:    add r18, r27, #-1
 ; AIE2P-NEXT:    sel.nez r0, r3, r0, r27
+; AIE2P-NEXT:    add r18, r27, #-1
 ; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    vsel.32 x0, x2, x0, r17 // Delay Slot 5
-; AIE2P-NEXT:    sub r0, r2, r0 // Delay Slot 4
-; AIE2P-NEXT:    vsel.32 x0, x4, x0, r18 // Delay Slot 3
+; AIE2P-NEXT:    vsel.32 x0, x4, x0, r18 // Delay Slot 4
+; AIE2P-NEXT:    sub r0, r2, r0 // Delay Slot 3
 ; AIE2P-NEXT:    vextract.64 r1:r0, x0, r0, vaddsign1 // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
   %1 = extractelement <32 x i64> %v, i32 %idx

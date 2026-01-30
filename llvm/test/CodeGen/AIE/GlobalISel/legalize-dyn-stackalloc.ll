@@ -49,11 +49,11 @@ define void @test_simple_dyn_alloca(i32 noundef %n) {
 ; AIE2P-NEXT:    mova r1, #2; nopb ; nops ; nopxm ; nopv
 ; AIE2P-NEXT:    paddxm [sp], #64
 ; AIE2P-NEXT:    lshl r0, r0, r1
+; AIE2P-NEXT:    st lr, [sp, #-60] // 4-byte Folded Spill
 ; AIE2P-NEXT:    st p7, [sp, #-64] // 4-byte Folded Spill
 ; AIE2P-NEXT:    mov p7, sp
 ; AIE2P-NEXT:    mov p1, sp
 ; AIE2P-NEXT:    mova r1, #-64
-; AIE2P-NEXT:    st lr, [sp, #-60] // 4-byte Folded Spill
 ; AIE2P-NEXT:    add r0, r0, #63
 ; AIE2P-NEXT:    mov p0, p1
 ; AIE2P-NEXT:    jl #extern_call
@@ -148,22 +148,22 @@ define void @test_loop_dyn_alloca(i32 noundef %n) {
 ; AIE2P-LABEL: test_loop_dyn_alloca:
 ; AIE2P:       // %bb.0: // %entry
 ; AIE2P-NEXT:    nopa ; nopb ; paddxm [sp], #64
+; AIE2P-NEXT:    st lr, [sp, #-32] // 4-byte Folded Spill
+; AIE2P-NEXT:    st r8, [sp, #-36] // 4-byte Folded Spill
+; AIE2P-NEXT:    st r9, [sp, #-40] // 4-byte Folded Spill
+; AIE2P-NEXT:    st r10, [sp, #-44] // 4-byte Folded Spill
+; AIE2P-NEXT:    st r11, [sp, #-48] // 4-byte Folded Spill
+; AIE2P-NEXT:    st r12, [sp, #-52] // 4-byte Folded Spill
+; AIE2P-NEXT:    st r13, [sp, #-56] // 4-byte Folded Spill
+; AIE2P-NEXT:    st p6, [sp, #-60] // 4-byte Folded Spill
 ; AIE2P-NEXT:    st p7, [sp, #-64] // 4-byte Folded Spill
 ; AIE2P-NEXT:    mov p7, sp
-; AIE2P-NEXT:    st r8, [sp, #-36] // 4-byte Folded Spill
 ; AIE2P-NEXT:    mova r8, #1
-; AIE2P-NEXT:    st r9, [sp, #-40] // 4-byte Folded Spill
 ; AIE2P-NEXT:    mova r9, #0
-; AIE2P-NEXT:    st r10, [sp, #-44] // 4-byte Folded Spill
 ; AIE2P-NEXT:    mova r10, #10
-; AIE2P-NEXT:    st r11, [sp, #-48] // 4-byte Folded Spill
 ; AIE2P-NEXT:    mova r11, #2
-; AIE2P-NEXT:    st r12, [sp, #-52] // 4-byte Folded Spill
 ; AIE2P-NEXT:    mova r12, #-64
-; AIE2P-NEXT:    st r13, [sp, #-56] // 4-byte Folded Spill
 ; AIE2P-NEXT:    mova r13, #0
-; AIE2P-NEXT:    st lr, [sp, #-32] // 4-byte Folded Spill
-; AIE2P-NEXT:    st p6, [sp, #-60] // 4-byte Folded Spill
 ; AIE2P-NEXT:    padda [p7], #-64
 ; AIE2P-NEXT:  .LBB1_1: // %for.body
 ; AIE2P-NEXT:    // =>This Inner Loop Header: Depth=1
@@ -321,9 +321,9 @@ define  void @test_huge_stack(i32 noundef %n) #0 {
 ; AIE2P-NEXT:    mov p6, p7
 ; AIE2P-NEXT:    padda [p0], m0
 ; AIE2P-NEXT:    mova m0, #-32
+; AIE2P-NEXT:    st r0, [p0, #0]
 ; AIE2P-NEXT:    padda [p3], m0
 ; AIE2P-NEXT:    mova m0, #-24
-; AIE2P-NEXT:    st r0, [p0, #0]
 ; AIE2P-NEXT:    lda r0, [p0, #0]
 ; AIE2P-NEXT:    mov p0, sp
 ; AIE2P-NEXT:    mov r8, p3

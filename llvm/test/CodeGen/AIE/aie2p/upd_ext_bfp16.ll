@@ -59,12 +59,11 @@ entry:
 define dso_local %struct.v64bfp16ebs16 @_Z11test_insert13v64bfp16ebs16ii(%struct.v64bfp16ebs16 %v.coerce, i32 noundef %idx, i32 noundef %exp) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z11test_insert13v64bfp16ebs16ii:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    or r27, r0, r0; mov r3, eh2
 ; CHECK-NEXT:    ret lr; mov r2, el2
-; CHECK-NEXT:    sel.eqz r3, r3, r1, r27 // Delay Slot 5
+; CHECK-NEXT:    or r27, r0, r0; mov r3, eh2 // Delay Slot 5
 ; CHECK-NEXT:    sel.eqz r2, r1, r2, r27; vmov x0, x2 // Delay Slot 4
-; CHECK-NEXT:    mov el0, r2 // Delay Slot 3
-; CHECK-NEXT:    mov eh0, r3 // Delay Slot 2
+; CHECK-NEXT:    sel.eqz r3, r3, r1, r27; mov el0, r2 // Delay Slot 3
+; CHECK-NEXT:    nopx ; mov eh0, r3 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %cmp.i = icmp eq i32 %idx, 0
@@ -147,12 +146,11 @@ entry:
 define dso_local %struct.v64bfp16ebs8 @_Z11test_insert12v64bfp16ebs8ii(%struct.v64bfp16ebs8 %v.coerce, i32 noundef %idx, i32 noundef %exp) local_unnamed_addr #0 {
 ; CHECK-LABEL: _Z11test_insert12v64bfp16ebs8ii:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    or r27, r0, r0; mov r3, eh2
 ; CHECK-NEXT:    ret lr; mov r2, el2
-; CHECK-NEXT:    sel.eqz r3, r3, r1, r27 // Delay Slot 5
+; CHECK-NEXT:    or r27, r0, r0; mov r3, eh2 // Delay Slot 5
 ; CHECK-NEXT:    sel.eqz r2, r1, r2, r27; vmov x0, x2 // Delay Slot 4
-; CHECK-NEXT:    mov el0, r2 // Delay Slot 3
-; CHECK-NEXT:    mov eh0, r3 // Delay Slot 2
+; CHECK-NEXT:    sel.eqz r3, r3, r1, r27; mov el0, r2 // Delay Slot 3
+; CHECK-NEXT:    nopx ; mov eh0, r3 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %cmp.i = icmp eq i32 %idx, 0
