@@ -107,40 +107,10 @@ def combine_vector_broadcast : GICombineRule<
          [{ return matchBroadcastElement(*${root}, MRI, ${matchinfo}); }]),
   (apply [{ applySplatVector(*${root}, MRI, B, ${matchinfo}, Observer); }])>;
 
-def combine_vector_shuffle_extract_subvec : GICombineRule<
-  (defs root:$root, build_fn_matchinfo:$matchinfo),
-  (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
-         [{ return matchShuffleToExtractSubvec(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
-  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
-
-def combine_vector_shuffle_concat_extracted_subvectors : GICombineRule<
-  (defs root:$root, build_fn_matchinfo:$matchinfo),
-  (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
-         [{ return matchShuffleToConcatExtractedSubvectors(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
-  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
-
-def combine_vector_shuffle_to_extract_insert_elt : GICombineRule<
-  (defs root:$root, build_fn_matchinfo:$matchinfo),
-  (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
-         [{ return matchShuffleToExtractInsertElt(*${root}, MRI, ${matchinfo}); }]),
-  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
-
-def combine_vector_shuffle_bcst_to_copy : GICombineRule<
-  (defs root:$root, build_fn_matchinfo:$matchinfo),
-  (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
-         [{ return matchShuffleBcstToCopy(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
-  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
-
 def combine_paired_extracts : GICombineRule<
   (defs root:$root, build_fn_matchinfo:$matchinfo),
   (match (wip_match_opcode G_EXTRACT_VECTOR_ELT): $root,
          [{ return matchPairedExtracts(*${root}, MRI, Helper, (const AIEBaseInstrInfo &)B.getTII(), Observer, ${matchinfo}); }]),
-  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
-
-def combine_vector_shuffle_to_extract_insert_elt_to_broadcast : GICombineRule<
-  (defs root:$root, build_fn_matchinfo:$matchinfo),
-  (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
-         [{ return matchShuffleToExtractInsertEltToBroadcast(*${root}, MRI, ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
 
 // Unified shuffle vector combine dispatcher - classifies once and builds
