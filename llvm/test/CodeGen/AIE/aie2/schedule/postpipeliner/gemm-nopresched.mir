@@ -6,7 +6,7 @@
 # (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc --mtriple=aie2 -O2 --start-before=postmisched %s \
-# RUN:   --debug-only=postpipeliner-summary -o - | FileCheck %s
+# RUN:   -o - | FileCheck %s
 
 
 # derived from gemm_bf16_0

@@ -3,9 +3,9 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 
-# RUN: llc --mtriple=aie2 -O2 --start-before=postmisched %s -o - --debug-only=postpipeliner-summary | FileCheck %s
+# RUN: llc --mtriple=aie2 -O2 --start-before=postmisched %s -o - | FileCheck %s
 
 # Inspired by Round
 # Currently we don't get this post-pipelined, because the RecMII is
