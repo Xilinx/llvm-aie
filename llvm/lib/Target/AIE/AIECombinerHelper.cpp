@@ -520,7 +520,7 @@ classifyAsIdentityWithExceptions(ArrayRef<int> Mask, unsigned MaxExceptions) {
       IdentityMask.getShuffleMaskValidity(Mask);
 
   if (Validity.MaskExceptions.empty() ||
-      Validity.MaskExceptions.size() > MaxExceptions)
+      Validity.MaskExceptions.size() >= MaxExceptions)
     return std::nullopt;
 
   ShuffleMaskClassificationResult Result;
@@ -2748,113 +2748,6 @@ buildExtractSubvector(MachineIRBuilder &B, MachineRegisterInfo &MRI,
 }
 
 /// Match something like this:
-///  %1:_(<16 x s32>) = COPY $x0
-///  %2:_(<16 x s32>) = COPY $x1
-///  %0:_(<8 x s32>) = G_SHUFFLE_VECTOR %1(<16 x s32>), %2(<16 x s32>),
-///  shufflemask(8, 9, 10, 11, 12, 13, 14, 15)
-///  PseudoRET implicit $lr, implicit %0
-
-/// To convert to:
-/// %1:_(<16 x s32>) = COPY $x0
-/// %2:_(<8 x s32>), %3:_(<8 x s32>) = G_UNMERGE_VALUES %1(<16 x s32>)
-/// PseudoRET implicit $lr, implicit %3(<8 x s32>)
-static bool matchShuffleToUnmerge(MachineInstr &MI, MachineRegisterInfo &MRI,
-                                  BuildFnTy &MatchInfo, unsigned SubIdx,
-                                  unsigned NumSubVectors) {
-  const Register DstReg = MI.getOperand(0).getReg();
-  const Register Src1Reg = MI.getOperand(1).getReg();
-
-  // TODO: Select into G_EXTRACT_SUBVECTOR once it is more widely supported
-  MatchInfo = [=, &MRI](MachineIRBuilder &B) {
-    buildUnmergeVector(B, MRI, DstReg, Src1Reg, NumSubVectors, SubIdx);
-  };
-  return true;
-}
-
-/// Match something like this:
-///  %1:_(<16 x s16>) = COPY $wl0
-///  %2:_(<16 x s16>) = COPY $wl1
-///  %0:_(<4 x s16>) = G_SHUFFLE_VECTOR %1(<16 x s16>), %2(<16 x s16>),
-///  shufflemask(4, 5, 6, 7)
-
-/// To convert to:
-/// %1:_(<16 x s16>) = COPY $wl0
-/// %2:_(s32) = G_CONSTANT i32 1
-/// %3:_(<4 x s16>) = G_AIE_EXTRACT_SUBVECTOR %1(<16 x s16>), %2(s32)
-/// NOTE: This combine works ONLY for 32- and 64-bit outputs!
-static bool matchShuffleToAIEExtractSubvec(
-    MachineInstr &MI, MachineRegisterInfo &MRI, const AIEBaseInstrInfo &TII,
-    BuildFnTy &MatchInfo, unsigned SubIdx, unsigned NumSubVectors) {
-  const unsigned GPRSize = TII.getScalarRegSize();
-  const unsigned ExtractSubvecNativeSrcSize = TII.getBasicVectorBitSize();
-
-  const Register DstReg = MI.getOperand(0).getReg();
-  const Register Src1Reg = MI.getOperand(1).getReg();
-
-  const LLT DstTy = MRI.getType(DstReg);
-  const LLT Src1Ty = MRI.getType(Src1Reg);
-  const unsigned Src1TySize = Src1Ty.getSizeInBits();
-
-  if (!checkExtractSubvectorPrerequisites(TII, DstTy, Src1Ty))
-    return false;
-
-  const unsigned Opc = TII.getGenericExtractSubvectorOpcode();
-
-  // Natively supported source vector type
-  if (Src1TySize == ExtractSubvecNativeSrcSize) {
-    MatchInfo = [=](MachineIRBuilder &B) {
-      auto Cst = B.buildConstant(LLT::scalar(GPRSize), SubIdx);
-      B.buildInstr(Opc, {DstReg}, {Src1Reg, Cst});
-    };
-
-    return true;
-  }
-
-  // Source vectors of a non-native size are converted to vectors of the native
-  // size
-  const unsigned Src1ElmtSize = Src1Ty.getElementType().getSizeInBits();
-  const unsigned Src1Vec512BitLen = ExtractSubvecNativeSrcSize / Src1ElmtSize;
-  const LLT NewSrc1Ty = LLT::fixed_vector(Src1Vec512BitLen, Src1ElmtSize);
-  const Register NewSrcReg = MRI.createGenericVirtualRegister(NewSrc1Ty);
-
-  if (Src1TySize < ExtractSubvecNativeSrcSize) {
-    MatchInfo = [=](MachineIRBuilder &B) {
-      const Register ImplicitDef = B.buildUndef(Src1Ty).getReg(0);
-      SmallVector<Register, 15> ConcatOps = {Src1Reg};
-      unsigned NumImplicitDef = ExtractSubvecNativeSrcSize / Src1TySize - 1;
-      while (NumImplicitDef-- > 0) {
-        ConcatOps.push_back(ImplicitDef);
-      }
-      B.buildConcatVectors({NewSrcReg}, ConcatOps);
-      auto Cst = B.buildConstant(LLT::scalar(GPRSize), SubIdx);
-      B.buildInstr(Opc, {DstReg}, {NewSrcReg, Cst});
-    };
-    return true;
-  }
-
-  // Source vectors with the size greater than the native source vector size
-  MatchInfo = [=, &MRI](MachineIRBuilder &B) {
-    const unsigned SizeCoefficient = Src1TySize / ExtractSubvecNativeSrcSize;
-    const unsigned NumSubVectorsNativeSize = NumSubVectors / SizeCoefficient;
-    unsigned NewSubIdx = SubIdx % NumSubVectorsNativeSize;
-
-    SmallVector<Register, 4> SubRegs;
-    unsigned NewSrcRegPosition = SubIdx / NumSubVectorsNativeSize;
-    for (unsigned I = 0; I < SizeCoefficient; ++I) {
-      if (I == NewSrcRegPosition)
-        SubRegs.push_back(NewSrcReg);
-      else
-        SubRegs.push_back(MRI.createGenericVirtualRegister(NewSrc1Ty));
-    }
-
-    B.buildUnmerge(SubRegs, Src1Reg);
-    auto Cst = B.buildConstant(LLT::scalar(GPRSize), NewSubIdx);
-    B.buildInstr(Opc, {DstReg}, {NewSrcReg, Cst});
-  };
-  return true;
-}
-
-/// Match something like this:
 ///  %1:_(<8 x s32>) = COPY $wl0
 ///  %2:_(<8 x s32>) = COPY $wl1
 ///  %0:_(<8 x s32>) = G_SHUFFLE_VECTOR %1(<8 x s32>), %2(<8 x s32>),
@@ -2955,59 +2848,52 @@ buildSubvecBroadcast(const ShuffleVectorInfo &Info,
 
 /// Match something like this:
 ///  %2:_(<16 x s32>) = G_SHUFFLE_VECTOR %0(<16 x s32>), %1(<16 x s32>),
-///  shufflemask(16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-
+///   shufflemask(16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+///
 /// To convert to:
-//  %4:_(s32) = G_CONSTANT i32 0
-//  %5:_(s32) = G_EXTRACT_VECTOR_ELT %0(<16 x s32>), %4(s32)
-//  %3:_(<16 x s32>) = G_AIE_BROADCAST_VECTOR %5(s32)ab
-//  %6:_(s32) = G_EXTRACT_VECTOR_ELT %1(<16 x s32>), %4(s32)
-//  %2:_(<16 x s32>) = G_INSERT_VECTOR_ELT %3, %6(s32), %4(s32)
-static bool matchShuffleToExtractInsertEltToBroadcast(MachineInstr &MI,
-                                                      MachineRegisterInfo &MRI,
-                                                      BuildFnTy &MatchInfo) {
-  assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR);
+///  %4:_(s32) = G_CONSTANT i32 0
+///  %5:_(s32) = G_EXTRACT_VECTOR_ELT %0(<16 x s32>), %4(s32)
+///  %3:_(<16 x s32>) = G_AIE_BROADCAST_VECTOR %5(s32)
+///  %6:_(s32) = G_EXTRACT_VECTOR_ELT %1(<16 x s32>), %4(s32)
+///  %2:_(<16 x s32>) = G_INSERT_VECTOR_ELT %3, %6(s32), %4(s32)
 
-  const ShuffleVectorInfo Info = ShuffleVectorInfo::create(MI, MRI);
+/// Check if we can build broadcast-with-insertions pattern.
+/// Precondition: Classification.Pat == ScalarBroadcastWithExceptions.
+static bool canBuildBroadcastWithInsertions(const ShuffleVectorInfo &Info) {
   if (Info.DstTy != Info.Src1Ty)
     return false;
-
-  if (!Info.DstTy.isVector() || !Info.Src1Ty.isVector())
-    return false;
-
   if (Info.DstTy.getSizeInBits() < 128)
     return false;
+  if (Info.Mask.size() != Info.NumSrc1Elems)
+    return false;
+  return true;
+}
 
-  const unsigned NumSrcElems = Info.Src1Ty.getNumElements();
+/// Build broadcast with insertions for ScalarBroadcastWithExceptions pattern.
+/// Precondition: Classification.Pat == ScalarBroadcastWithExceptions.
+static void buildBroadcastWithInsertions(
+    const ShuffleVectorInfo &Info,
+    const ShuffleMaskClassificationResult &Classification,
+    MachineRegisterInfo &MRI, BuildFnTy &MatchInfo) {
+  assert(Classification.Pat ==
+             ShuffleMaskPattern::ScalarBroadcastWithExceptions &&
+         "buildBroadcastWithInsertions requires ScalarBroadcastWithExceptions");
+  assert(Info.DstTy == Info.Src1Ty && "Dst and Src1 types must match");
+  assert(Info.Mask.size() == Info.NumSrc1Elems &&
+         "Mask size must match NumSrcElems");
+
+  const unsigned NumSrcElems = Info.NumSrc1Elems;
   const LLT DstElemTy = Info.Src1Ty.getElementType();
   const ArrayRef<int> Mask = Info.Mask;
-
-  if (Mask.size() != NumSrcElems)
-    return false;
-
-  // Calculate maximum allowed exceptions based on target.
-  // For AIE2P, we allow up to NumSrcElems/2 exceptions because the legalizer's
-  // scalarization is more beneficial beyond that threshold.
-  unsigned MaxExceptions;
-  if (MI.getMF()->getTarget().getTargetTriple().isAIE2P())
-    MaxExceptions = (ShuffleMaxNumInsertions != 0) ? ShuffleMaxNumInsertions
-                                                   : NumSrcElems / 2;
-  else
-    llvm_unreachable("MaxExceptions unimplemented for target.");
-
-  const ShuffleMaskClassificationResult Classification =
-      Info.classifyMask(MaxExceptions);
-
-  // Must be a broadcast-with-exceptions pattern (not pure broadcast or other).
-  if (Classification.Pat != ShuffleMaskPattern::ScalarBroadcastWithExceptions)
-    return false;
 
   const Register DstReg = Info.DstReg;
   const Register Src1Reg = Info.Src1Reg;
   const Register Src2Reg = Info.Src2Reg;
   const LLT Src1Ty = Info.Src1Ty;
   const int BcstValue = Classification.BroadcastIdx;
-  const auto &ExceptionIndices = Classification.ExceptionIndices;
+  const SmallVector<unsigned, 8> ExceptionIndices(
+      Classification.ExceptionIndices.begin(),
+      Classification.ExceptionIndices.end());
 
   MatchInfo = [=, &MRI](MachineIRBuilder &B) {
     Register BroadcastVecReg = MRI.createGenericVirtualRegister(Src1Ty);
@@ -3038,54 +2924,18 @@ static bool matchShuffleToExtractInsertEltToBroadcast(MachineInstr &MI,
       InsertSrc = InsertDst;
     }
   };
-
-  return true;
 }
-
-/// Match something like this:
-/// %0:_(<32 x s16>) = COPY $x0
-/// %1:_(<32 x s16>) = COPY $x1
-/// %2:_(<32 x s16>) = G_SHUFFLE_VECTOR %0:_(<32 x s16>), %1:_, shufflemask(0,
-/// 1, 2, 3, 4, 5, 6, 7, 32, 9, 10, 11, 12, 13, 14, 15, undef, 17, 18, 19, 20,
-/// 21, 22, 23, undef, 25, 26, 27, 28, 29, 30, 31)
-
-/// To convert to:
-/// %3:_(s32) = G_CONSTANT i32 0
-/// %4:_(<32 x s16>) = G_EXTRACT_VECTOR_ELT %1:_(<32 x s16>), %3:_(s32)
-/// %0:_(<32 x s32>) = G_AIE_INSERT_VECTOR_ELT %0:(<32 x s16>), %4:_(s16), 8
-static bool matchShuffleToExtractInsertElt(MachineInstr &MI,
-                                           MachineRegisterInfo &MRI,
-                                           BuildFnTy &MatchInfo) {
-  assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR);
-
-  const ShuffleVectorInfo Info = ShuffleVectorInfo::create(MI, MRI);
-
-  if (!Info.Src1Ty.isVector())
-    return false;
-
-  // Allow Same or Shrinking shuffles (e.g., 16->8 elements with insertions)
+/// Check if we can build identity-with-insertions pattern.
+/// Precondition: Classification.Pat == IdentityWithExceptions.
+static bool canBuildIdentityWithInsertions(
+    const ShuffleVectorInfo &Info,
+    const ShuffleMaskClassificationResult &Classification) {
+  // Only for Same or Shrinking shuffles
   if (Info.Relation == ShuffleVectorInfo::SizeRelation::Growing)
     return false;
 
   const bool IsShrinking =
       (Info.Relation == ShuffleVectorInfo::SizeRelation::Shrinking);
-
-  unsigned MaxNumInsertions;
-  if (MI.getMF()->getTarget().getTargetTriple().isAIE2P())
-    // The scalarization of G_SHUFFLE_VECTOR in the legalizer is more beneficial
-    // if there are more exceptions than NumDstElems / 2 as AIE2P's VINSERT
-    // instructions require a move to a register used for the index unlike
-    // VPUSH.
-    MaxNumInsertions = (ShuffleMaxNumInsertions != 0) ? ShuffleMaxNumInsertions
-                                                      : Info.NumDstElems / 2;
-  else
-    llvm_unreachable(
-        "MaxNumInsertions unimplemented for target. Does the target's Insert "
-        "instruction take immediate indices or does it require a register for "
-        "the index?");
-
-  if (Info.IsAllUndef)
-    return false;
 
   // For shrinking shuffles, require power-of-2 size ratio for clean unmerge
   if (IsShrinking) {
@@ -3096,24 +2946,34 @@ static bool matchShuffleToExtractInsertElt(MachineInstr &MI,
       return false;
   }
 
-  const ShuffleMaskClassificationResult Classification =
-      Info.classifyMask(MaxNumInsertions);
-  if (Classification.Pat != ShuffleMaskPattern::IdentityWithExceptions)
-    return false;
-  if (Classification.ExceptionIndices.empty() ||
-      Classification.ExceptionIndices.size() >= MaxNumInsertions)
-    return false;
+  return !Classification.ExceptionIndices.empty();
+}
+
+/// Build identity with insertions for IdentityWithExceptions pattern.
+/// Precondition: Classification.Pat == IdentityWithExceptions.
+static void buildIdentityWithInsertions(
+    const ShuffleVectorInfo &Info,
+    const ShuffleMaskClassificationResult &Classification,
+    MachineRegisterInfo &MRI, BuildFnTy &MatchInfo) {
+  assert(Classification.Pat == ShuffleMaskPattern::IdentityWithExceptions &&
+         "buildIdentityWithInsertions requires IdentityWithExceptions pattern");
+  assert(!Classification.ExceptionIndices.empty() &&
+         "Must have exception indices");
+
+  const bool IsShrinking =
+      (Info.Relation == ShuffleVectorInfo::SizeRelation::Shrinking);
 
   const Register DstReg = Info.DstReg;
   const Register Src1Reg = Info.Src1Reg;
   const Register Src2Reg = Info.Src2Reg;
   const LLT DstTy = Info.DstTy;
-  const LLT Src1Ty = Info.Src1Ty;
   const unsigned NumSrcElems = Info.NumSrc1Elems;
   const unsigned NumDstElems = Info.NumDstElems;
   const LLT ElemTy = Info.Src1Ty.getElementType();
   const ArrayRef<int> Mask = Info.Mask;
-  const SmallVector<unsigned, 4> Exceptions(Classification.ExceptionIndices);
+  const SmallVector<unsigned, 8> Exceptions(
+      Classification.ExceptionIndices.begin(),
+      Classification.ExceptionIndices.end());
   const unsigned NumSubVectors = IsShrinking ? NumSrcElems / NumDstElems : 1;
 
   MatchInfo = [=, &MRI](MachineIRBuilder &B) {
@@ -3133,7 +2993,7 @@ static bool matchShuffleToExtractInsertElt(MachineInstr &MI,
       Register VecToExtract =
           Mask[ExceptionIdx] < (int)NumSrcElems ? Src1Reg : Src2Reg;
 
-      int ExtractIdx = Mask[ExceptionIdx] % NumSrcElems;
+      const int ExtractIdx = Mask[ExceptionIdx] % NumSrcElems;
       auto ExtrElt =
           B.buildExtractVectorElementConstant(ElemTy, VecToExtract, ExtractIdx);
 
@@ -3148,8 +3008,6 @@ static bool matchShuffleToExtractInsertElt(MachineInstr &MI,
       InsertSrc = InsertDst;
     }
   };
-
-  return true;
 }
 
 static bool matchShuffleToConcatExtractedSubvectors(MachineInstr &MI,
@@ -3451,8 +3309,10 @@ bool llvm::matchShuffleVector(MachineInstr &MI, MachineRegisterInfo &MRI,
     if (!MI.getMF()->getTarget().getTargetTriple().isAIE2P())
       return false;
     // Try extract-insert pattern first (uses VINSERT instructions)
-    if (matchShuffleToExtractInsertElt(MI, MRI, MatchInfo))
+    if (canBuildIdentityWithInsertions(Info, Classification)) {
+      buildIdentityWithInsertions(Info, Classification, MRI, MatchInfo);
       return true;
+    }
     // Fall through to try concat-extracted-subvectors pattern
     if (matchShuffleToConcatExtractedSubvectors(MI, MRI, TII, MatchInfo))
       return true;
@@ -3463,7 +3323,10 @@ bool llvm::matchShuffleVector(MachineInstr &MI, MachineRegisterInfo &MRI,
     // Only supported on AIE2P (uses VINSERT instructions)
     if (!MI.getMF()->getTarget().getTargetTriple().isAIE2P())
       return false;
-    return matchShuffleToExtractInsertEltToBroadcast(MI, MRI, MatchInfo);
+    if (!canBuildBroadcastWithInsertions(Info))
+      return false;
+    buildBroadcastWithInsertions(Info, Classification, MRI, MatchInfo);
+    return true;
 
   case ShuffleMaskPattern::Unknown:
     // Try fallback patterns
