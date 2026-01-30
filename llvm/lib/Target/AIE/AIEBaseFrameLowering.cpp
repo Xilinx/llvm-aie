@@ -303,6 +303,30 @@ void AIEBaseFrameLowering::emitPrologue(MachineFunction &MF,
   // Determine the correct frame layout
   determineFrameLayout(MF);
 
+#ifndef NDEBUG
+  // Verify the full stack size is aligned to the required stack alignment.
+  assert(isAligned(getStackAlign(), MFI.getStackSize()) &&
+         "Stack size is not properly aligned to stack alignment!");
+
+  // Verify all stack objects have properly aligned SP-relative offsets.
+  // This catches bugs in stack slot ordering that could cause misaligned
+  // accesses at runtime.
+  {
+    const int64_t FinalStackSize = MFI.getStackSize();
+    for (int FI = MFI.getObjectIndexBegin(); FI < MFI.getObjectIndexEnd();
+         ++FI) {
+      if (MFI.isDeadObjectIndex(FI))
+        continue;
+      const int64_t Offset = MFI.getObjectOffset(FI);
+      const Align ObjAlign = MFI.getObjectAlign(FI);
+      // For AIE stack grows up model: SP-relative = Offset - StackSize
+      const int64_t SPRelative = Offset - FinalStackSize;
+      assert(isAligned(ObjAlign, std::abs(SPRelative)) &&
+             "Stack object is not properly aligned relative to SP!");
+    }
+  }
+#endif
+
   // FIXME (note copied from Lanai): This appears to be overallocating.  Needs
   // investigation. Get the number of bytes to allocate from the FrameInfo.
   uint64_t StackSize = MFI.getStackSize();
