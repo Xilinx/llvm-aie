@@ -92,7 +92,7 @@ public:
   /// Classify a shuffle mask into a known pattern.
   static ShuffleMaskClassificationResult
   classify(ArrayRef<int> Mask, unsigned NumSrc1Elems, unsigned NumDstElems,
-           unsigned DstBitSize, bool SrcDstTypesMatch,
+           unsigned Src1BitSize, unsigned DstBitSize, bool SrcDstTypesMatch,
            unsigned MaxExceptions = UINT_MAX);
 
   unsigned getMaskValue(unsigned Idx) const {
@@ -129,10 +129,11 @@ struct ShuffleVectorInfo {
 
   ShuffleMaskClassificationResult
   classifyMask(unsigned MaxExceptions = UINT_MAX) const {
+    const unsigned Src1BitSize = Src1Ty.getSizeInBits();
     const unsigned DstBitSize = DstTy.getSizeInBits();
     const bool SrcDstTypesMatch = (DstTy == Src1Ty);
-    return MaskMatch::classify(Mask, NumSrc1Elems, NumDstElems, DstBitSize,
-                               SrcDstTypesMatch, MaxExceptions);
+    return MaskMatch::classify(Mask, NumSrc1Elems, NumDstElems, Src1BitSize,
+                               DstBitSize, SrcDstTypesMatch, MaxExceptions);
   }
 };
 
