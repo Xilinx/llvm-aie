@@ -2672,7 +2672,7 @@ buildExtractSubvec(const ShuffleVectorInfo &Info,
 
   // Try G_AIE_EXTRACT_SUBVECTOR first
   if (checkExtractSubvectorPrerequisites(TII, DstTy, Src1Ty)) {
-    const unsigned Opc = TII.getGenericExtractSubvectorOpcode();
+    const unsigned Opc = *TII.getGenericExtractSubvectorOpcode();
     const unsigned SubIdx = SubvecExtractIdx;
 
     // Natively supported source vector type
@@ -2738,8 +2738,12 @@ buildExtractSubvec(const ShuffleVectorInfo &Info,
 static bool checkExtractSubvectorPrerequisites(const AIEBaseInstrInfo &TII,
                                                const LLT DstTy,
                                                const LLT SrcTy) {
-  const unsigned ScalarRegSize = TII.getScalarRegSize();
+  // Check if the target implements G_AIE_EXTRACT_SUBVECTOR
+  if (!TII.getGenericExtractSubvectorOpcode())
+    return false;
+
   const unsigned VecRegSize = TII.getBasicVecRegSize();
+  const unsigned ScalarRegSize = TII.getScalarRegSize();
   const unsigned SrcTySize = SrcTy.getSizeInBits();
   const unsigned DstTySize = DstTy.getSizeInBits();
 
@@ -2765,7 +2769,7 @@ buildExtractSubvector(MachineIRBuilder &B, MachineRegisterInfo &MRI,
   const unsigned ScalarRegSize = TII.getScalarRegSize();
   const unsigned BasicVectorBitSize = TII.getBasicVectorBitSize();
 
-  const unsigned Opc = TII.getGenericExtractSubvectorOpcode();
+  const unsigned Opc = *TII.getGenericExtractSubvectorOpcode();
   const LLT SrcTy = MRI.getType(SrcVecReg);
   const LLT DstTy = MRI.getType(DstVecReg);
   const unsigned SrcTySize = SrcTy.getSizeInBits();
@@ -3362,8 +3366,8 @@ bool llvm::matchShuffleVector(MachineInstr &MI, MachineRegisterInfo &MRI,
 
   case ShuffleMaskPattern::Unknown:
     // Try fallback patterns
-    // matchShuffleToConcatExtractedSubvectors is only supported on AIE2P
-    if (MI.getMF()->getTarget().getTargetTriple().isAIE2P()) {
+    // matchShuffleToConcatExtractedSubvectors requires G_AIE_EXTRACT_SUBVECTOR
+    if (TII.getGenericExtractSubvectorOpcode()) {
       if (matchShuffleToConcatExtractedSubvectors(MI, MRI, TII, MatchInfo))
         return true;
     }

@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -62,7 +62,7 @@ public:
   unsigned getGenericVSelOpcode() const override;
   unsigned getGenericVShiftOpcode() const override;
   unsigned getGenericShuffleVectorOpcode() const override;
-  unsigned getGenericExtractSubvectorOpcode() const override;
+  std::optional<unsigned> getGenericExtractSubvectorOpcode() const override;
   unsigned getGenericIntegerComparisonOpcode() const override;
   bool isLock(unsigned Opc) const override;
   std::optional<unsigned> getDoneLatency(unsigned) const override;

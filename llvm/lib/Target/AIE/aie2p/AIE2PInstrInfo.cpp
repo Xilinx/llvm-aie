@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -1962,7 +1962,8 @@ unsigned AIE2PInstrInfo::getGenericShuffleVectorOpcode() const {
   return AIE2P::G_AIE_SHUFFLE_VECTOR;
 }
 
-unsigned AIE2PInstrInfo::getGenericExtractSubvectorOpcode() const {
+std::optional<unsigned>
+AIE2PInstrInfo::getGenericExtractSubvectorOpcode() const {
   return AIE2P::G_AIE_EXTRACT_SUBVECTOR;
 }
 

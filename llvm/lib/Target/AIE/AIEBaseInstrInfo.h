@@ -262,10 +262,9 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual unsigned getGenericShuffleVectorOpcode() const {
     llvm_unreachable("Target didn't implement getGenericShuffleVectorOpcode!");
   }
-  /// Return the opcode to be used for subvector extraction.
-  virtual unsigned getGenericExtractSubvectorOpcode() const {
-    llvm_unreachable(
-        "Target didn't implement getGenericExtractSubvectorOpcode!");
+  /// Return the opcode to be used for subvector extraction, if supported.
+  virtual std::optional<unsigned> getGenericExtractSubvectorOpcode() const {
+    return std::nullopt;
   }
   /// Return the opcode to be used for integer comparison.
   virtual unsigned getGenericIntegerComparisonOpcode() const {
