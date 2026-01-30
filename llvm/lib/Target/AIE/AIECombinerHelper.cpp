@@ -457,6 +457,17 @@ classifyAsVSelect(ArrayRef<int> Mask, unsigned NumSrc1Elems,
   if (Mask.size() > 64)
     return std::nullopt;
 
+  // Buildability checks: reject growing shuffles
+  if (NumDstElems > NumSrc1Elems)
+    return std::nullopt;
+
+  // Require divisibility and limited subvector count (1 or 2)
+  if (NumSrc1Elems % NumDstElems != 0)
+    return std::nullopt;
+  const unsigned NumSubVectors = NumSrc1Elems / NumDstElems;
+  if (NumSubVectors != 1 && NumSubVectors != 2)
+    return std::nullopt;
+
   auto TryShift = [&](unsigned Shift) -> std::optional<uint64_t> {
     uint64_t SelectMask = 0;
     for (unsigned I = 0; I < Mask.size(); ++I) {
@@ -567,7 +578,22 @@ classifyAsIdentityWithExceptions(ArrayRef<int> Mask, unsigned NumSrc1Elems,
 /// insertions.
 static std::optional<ShuffleMaskClassificationResult>
 classifyAsScalarBroadcastWithExceptions(ArrayRef<int> Mask,
+                                        unsigned NumSrc1Elems,
+                                        unsigned DstBitSize,
+                                        bool SrcDstTypesMatch,
                                         unsigned MaxExceptions) {
+  // Buildability check: mask size must match source elements
+  if (Mask.size() != NumSrc1Elems)
+    return std::nullopt;
+
+  // Buildability check: need matching types
+  if (!SrcDstTypesMatch)
+    return std::nullopt;
+
+  // Buildability check: minimum size requirement
+  if (DstBitSize < 128)
+    return std::nullopt;
+
   const auto FreqResult = MaskMatch::getFrequentIndexResult(Mask, 0);
   if (!FreqResult)
     return std::nullopt;
@@ -592,10 +618,10 @@ classifyAsScalarBroadcastWithExceptions(ArrayRef<int> Mask,
 // Main classification entry point
 //===----------------------------------------------------------------------===//
 
-ShuffleMaskClassificationResult MaskMatch::classify(ArrayRef<int> Mask,
-                                                    unsigned NumSrc1Elems,
-                                                    unsigned NumDstElems,
-                                                    unsigned MaxExceptions) {
+ShuffleMaskClassificationResult
+MaskMatch::classify(ArrayRef<int> Mask, unsigned NumSrc1Elems,
+                    unsigned NumDstElems, unsigned DstBitSize,
+                    bool SrcDstTypesMatch, unsigned MaxExceptions) {
   // Order matters: more specific patterns first, fallbacks last
 
   if (auto R = classifyAsAllUndef(Mask))
@@ -619,7 +645,8 @@ ShuffleMaskClassificationResult MaskMatch::classify(ArrayRef<int> Mask,
                                                 MaxExceptions))
     return *R;
 
-  if (auto R = classifyAsScalarBroadcastWithExceptions(Mask, MaxExceptions))
+  if (auto R = classifyAsScalarBroadcastWithExceptions(
+          Mask, NumSrc1Elems, DstBitSize, SrcDstTypesMatch, MaxExceptions))
     return *R;
 
   return ShuffleMaskClassificationResult{ShuffleMaskPattern::Unknown};
@@ -2499,30 +2526,8 @@ static void buildCopy(const ShuffleVectorInfo &Info, BuildFnTy &MatchInfo) {
   };
 }
 
-/// Check target-specific constraints for VSelect.
-static bool canBuildVSelect(const ShuffleVectorInfo &Info,
-                            const AIEBaseInstrInfo &TII) {
-  const unsigned BasicVectorBitSize = TII.getBasicVectorBitSize();
-  const unsigned ScalarRegSize = TII.getScalarRegSize();
-  const unsigned DoubleScalarRegSize = ScalarRegSize * 2;
-
-  if (Info.Src1Ty.getSizeInBits() != BasicVectorBitSize ||
-      Info.Src1Ty.getElementType().getSizeInBits() >= DoubleScalarRegSize)
-    return false;
-
-  if (Info.NumDstElems > Info.NumSrc1Elems)
-    return false;
-
-  const unsigned NumSubVectors = Info.NumSrc1Elems / Info.NumDstElems;
-  if ((NumSubVectors != 1 && NumSubVectors != 2) ||
-      Info.NumSrc1Elems % Info.NumDstElems != 0)
-    return false;
-
-  return true;
-}
-
 /// Build VSelect operation from pre-classified shuffle.
-/// Precondition: Classification.Pat == VSelect and canBuildVSelect() == true.
+/// Precondition: Classification.Pat == VSelect.
 static void buildVSelect(const ShuffleVectorInfo &Info,
                          const ShuffleMaskClassificationResult &Classification,
                          MachineRegisterInfo &MRI, const AIEBaseInstrInfo &TII,
@@ -2890,18 +2895,6 @@ buildSubvecBroadcast(const ShuffleVectorInfo &Info,
 ///  %3:_(<16 x s32>) = G_AIE_BROADCAST_VECTOR %5(s32)
 ///  %6:_(s32) = G_EXTRACT_VECTOR_ELT %1(<16 x s32>), %4(s32)
 ///  %2:_(<16 x s32>) = G_INSERT_VECTOR_ELT %3, %6(s32), %4(s32)
-
-/// Check if we can build broadcast-with-insertions pattern.
-/// Precondition: Classification.Pat == ScalarBroadcastWithExceptions.
-static bool canBuildBroadcastWithInsertions(const ShuffleVectorInfo &Info) {
-  if (Info.DstTy != Info.Src1Ty)
-    return false;
-  if (Info.DstTy.getSizeInBits() < 128)
-    return false;
-  if (Info.Mask.size() != Info.NumSrc1Elems)
-    return false;
-  return true;
-}
 
 /// Build broadcast with insertions for ScalarBroadcastWithExceptions pattern.
 /// Precondition: Classification.Pat == ScalarBroadcastWithExceptions.
@@ -3306,12 +3299,17 @@ bool llvm::matchShuffleVector(MachineInstr &MI, MachineRegisterInfo &MRI,
     // Subvector broadcast: broadcast a portion of the vector
     return buildSubvecBroadcast(Info, Classification, MRI, TII, MatchInfo);
 
-  case ShuffleMaskPattern::VSelect:
+  case ShuffleMaskPattern::VSelect: {
     // VSelect: select elements from two sources
-    if (!canBuildVSelect(Info, TII))
+    // Target-specific checks: vector size and element size constraints
+    const unsigned BasicVectorBitSize = TII.getBasicVectorBitSize();
+    const unsigned DoubleScalarRegSize = TII.getScalarRegSize() * 2;
+    if (Info.Src1Ty.getSizeInBits() != BasicVectorBitSize ||
+        Info.Src1Ty.getElementType().getSizeInBits() >= DoubleScalarRegSize)
       return false;
     buildVSelect(Info, Classification, MRI, TII, MatchInfo);
     return true;
+  }
 
   case ShuffleMaskPattern::IdentityWithExceptions:
     // Identity with some insertions
@@ -3327,8 +3325,7 @@ bool llvm::matchShuffleVector(MachineInstr &MI, MachineRegisterInfo &MRI,
     // Only supported on AIE2P (uses VINSERT instructions)
     if (!MI.getMF()->getTarget().getTargetTriple().isAIE2P())
       return false;
-    if (!canBuildBroadcastWithInsertions(Info))
-      return false;
+    // Classifier already validated buildability - just build
     buildBroadcastWithInsertions(Info, Classification, MRI, MatchInfo);
     return true;
 
