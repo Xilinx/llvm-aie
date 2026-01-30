@@ -3291,13 +3291,11 @@ bool llvm::matchShuffleVector(MachineInstr &MI, MachineRegisterInfo &MRI,
     }
   }
 
-  // Calculate target-specific MaxExceptions for WithExceptions patterns
-  // AIE2P allows up to NumDstElems/2 exceptions for insert-based patterns
-  unsigned MaxExceptions = UINT_MAX;
-  if (MI.getMF()->getTarget().getTargetTriple().isAIE2P()) {
-    MaxExceptions = (ShuffleMaxNumInsertions != 0) ? ShuffleMaxNumInsertions
-                                                   : Info.NumDstElems / 2;
-  }
+  // Calculate MaxExceptions for WithExceptions patterns
+  // Limit to NumDstElems/2 exceptions for insert-based patterns
+  const unsigned MaxExceptions = (ShuffleMaxNumInsertions != 0)
+                                     ? ShuffleMaxNumInsertions
+                                     : Info.NumDstElems / 2;
 
   // Classify the mask pattern once with target-specific MaxExceptions
   const ShuffleMaskClassificationResult Classification =

@@ -73,98 +73,120 @@ return:
 define <16 x i32> @test_insert_vector(<16 x i32> noundef %a, i32 noundef %idx, <8 x i32> noundef %b) {
 ; CHECK-LABEL: test_insert_vector:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; mov r24, r16
+; CHECK-NEXT:    mov r24, r16
 ; CHECK-NEXT:    mov r25, r17
 ; CHECK-NEXT:    mov r26, r18
-; CHECK-NEXT:    jz r0, #.LBB3_2
-; CHECK-NEXT:    mov r27, r19 // Delay Slot 5
-; CHECK-NEXT:    mova r19, #0 // Delay Slot 4
-; CHECK-NEXT:    mova r18, #1 // Delay Slot 3
-; CHECK-NEXT:    mova r17, #2 // Delay Slot 2
-; CHECK-NEXT:    mova r16, #3 // Delay Slot 1
-; CHECK-NEXT:  // %bb.1: // %if.end
-; CHECK-NEXT:    vextract.s32 r3, x4, r16
-; CHECK-NEXT:    mova r16, #4
-; CHECK-NEXT:    mova r29, #8
-; CHECK-NEXT:    vextract.s32 r0, x4, r19
-; CHECK-NEXT:    vextract.s32 r1, x4, r18
-; CHECK-NEXT:    vextract.s32 r2, x4, r17
+; CHECK-NEXT:    mov r27, r19
+; CHECK-NEXT:    mova r19, #0
+; CHECK-NEXT:    mova r18, #1
+; CHECK-NEXT:    mova r17, #2
+; CHECK-NEXT:    mova r16, #3
 ; CHECK-NEXT:    vextract.s32 r4, x4, r16
-; CHECK-NEXT:    mova r16, #5
-; CHECK-NEXT:    vextract.s32 r5, x4, r16
-; CHECK-NEXT:    mova r16, #6
-; CHECK-NEXT:    vinsert.32 x0, x2, r29, r0
-; CHECK-NEXT:    mova r29, #9
-; CHECK-NEXT:    vextract.s32 r6, x4, r16
-; CHECK-NEXT:    mova r16, #7
-; CHECK-NEXT:    vinsert.32 x0, x0, r29, r1
-; CHECK-NEXT:    mova r29, #10
-; CHECK-NEXT:    vinsert.32 x0, x0, r29, r2
-; CHECK-NEXT:    mova r29, #11
-; CHECK-NEXT:    vextract.s32 r7, x4, r16
-; CHECK-NEXT:    vinsert.32 x0, x0, r29, r3
-; CHECK-NEXT:    mova r29, #12
-; CHECK-NEXT:    vinsert.32 x0, x0, r29, r4
-; CHECK-NEXT:    mova r29, #13
-; CHECK-NEXT:    j #.LBB3_3
-; CHECK-NEXT:    vinsert.32 x0, x0, r29, r5 // Delay Slot 5
-; CHECK-NEXT:    mova r29, #14 // Delay Slot 4
-; CHECK-NEXT:    vinsert.32 x0, x0, r29, r6 // Delay Slot 3
-; CHECK-NEXT:    mova r29, #15 // Delay Slot 2
-; CHECK-NEXT:    vinsert.32 x0, x0, r29, r7 // Delay Slot 1
-; CHECK-NEXT:  .LBB3_2: // %if.then
-; CHECK-NEXT:    vextract.s32 r6, x4, r16
-; CHECK-NEXT:    vextract.s32 r7, x2, r16
 ; CHECK-NEXT:    mova r16, #4
-; CHECK-NEXT:    mova r29, #8
-; CHECK-NEXT:    vextract.s32 r0, x4, r19
-; CHECK-NEXT:    vextract.s32 r1, x2, r19
+; CHECK-NEXT:    vextract.s32 r1, x4, r19
 ; CHECK-NEXT:    vextract.s32 r2, x4, r18
-; CHECK-NEXT:    vextract.s32 r3, x2, r18
-; CHECK-NEXT:    vextract.s32 r4, x4, r17
-; CHECK-NEXT:    vextract.s32 r5, x2, r17
-; CHECK-NEXT:    vextract.s32 r8, x4, r16
-; CHECK-NEXT:    vextract.s32 r9, x2, r16
+; CHECK-NEXT:    vextract.s32 r3, x4, r17
+; CHECK-NEXT:    vextract.s32 r5, x4, r16
 ; CHECK-NEXT:    mova r16, #5
-; CHECK-NEXT:    vextract.s32 r10, x4, r16
-; CHECK-NEXT:    vextract.s32 r11, x2, r16
+; CHECK-NEXT:    vextract.s32 r6, x4, r16
 ; CHECK-NEXT:    mova r16, #6
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r0
-; CHECK-NEXT:    vextract.s32 r12, x4, r16
-; CHECK-NEXT:    vextract.s32 r13, x2, r16
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r1
+; CHECK-NEXT:    vextract.s32 r7, x4, r16
 ; CHECK-NEXT:    mova r16, #7
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r2
-; CHECK-NEXT:    vextract.s32 r14, x4, r16
-; CHECK-NEXT:    vextract.s32 r15, x2, r16
+; CHECK-NEXT:    vextract.s32 r8, x4, r16
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r3
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r4
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r5
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r6
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r7
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r8
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r0
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r0
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r0
+; CHECK-NEXT:    jz r0, #.LBB3_2
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r0 // Delay Slot 5
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r0 // Delay Slot 4
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r0 // Delay Slot 3
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r0 // Delay Slot 2
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r0 // Delay Slot 1
+; CHECK-NEXT:  // %bb.1: // %if.end
+; CHECK-NEXT:    mova r16, #3
+; CHECK-NEXT:    vextract.s32 r0, x2, r19
+; CHECK-NEXT:    vextract.s32 r1, x0, r19
+; CHECK-NEXT:    vextract.s32 r2, x2, r18
+; CHECK-NEXT:    vextract.s32 r3, x0, r18
+; CHECK-NEXT:    vextract.s32 r4, x2, r17
+; CHECK-NEXT:    vextract.s32 r5, x0, r17
+; CHECK-NEXT:    vextract.s32 r6, x2, r16
+; CHECK-NEXT:    vextract.s32 r7, x0, r16
+; CHECK-NEXT:    mova r16, #4
+; CHECK-NEXT:    vextract.s32 r8, x2, r16
+; CHECK-NEXT:    vextract.s32 r9, x0, r16
+; CHECK-NEXT:    mova r16, #5
+; CHECK-NEXT:    vextract.s32 r10, x2, r16
+; CHECK-NEXT:    vextract.s32 r11, x0, r16
+; CHECK-NEXT:    mova r16, #6
+; CHECK-NEXT:    vextract.s32 r12, x2, r16
+; CHECK-NEXT:    vextract.s32 r13, x0, r16
+; CHECK-NEXT:    mova r16, #7
+; CHECK-NEXT:    vextract.s32 r14, x2, r16
+; CHECK-NEXT:    vextract.s32 r15, x0, r16
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r0
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r2
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r4
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r6
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r8
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r10
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r12
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r14
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r1
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r3
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r5
+; CHECK-NEXT:    j #.LBB3_3
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r7 // Delay Slot 5
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r9 // Delay Slot 4
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r11 // Delay Slot 3
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r13 // Delay Slot 2
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r15 // Delay Slot 1
+; CHECK-NEXT:  .LBB3_2: // %if.then
+; CHECK-NEXT:    nopb ; mova r16, #3; nops ; nopxm ; nopv
+; CHECK-NEXT:    vextract.s32 r0, x0, r19
+; CHECK-NEXT:    vextract.s32 r1, x2, r19
+; CHECK-NEXT:    vextract.s32 r2, x0, r18
+; CHECK-NEXT:    vextract.s32 r3, x2, r18
+; CHECK-NEXT:    vextract.s32 r4, x0, r17
+; CHECK-NEXT:    vextract.s32 r5, x2, r17
+; CHECK-NEXT:    vextract.s32 r6, x0, r16
+; CHECK-NEXT:    vextract.s32 r7, x2, r16
+; CHECK-NEXT:    mova r16, #4
+; CHECK-NEXT:    vextract.s32 r8, x0, r16
+; CHECK-NEXT:    vextract.s32 r9, x2, r16
+; CHECK-NEXT:    mova r16, #5
+; CHECK-NEXT:    vextract.s32 r10, x0, r16
+; CHECK-NEXT:    vextract.s32 r11, x2, r16
+; CHECK-NEXT:    mova r16, #6
+; CHECK-NEXT:    vextract.s32 r12, x0, r16
+; CHECK-NEXT:    vextract.s32 r13, x2, r16
+; CHECK-NEXT:    mova r16, #7
+; CHECK-NEXT:    vextract.s32 r14, x0, r16
+; CHECK-NEXT:    vextract.s32 r15, x2, r16
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r0
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r0
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r0
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r0
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r0
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r0
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r0
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r0
-; CHECK-NEXT:    vinsert.32 x0, x0, r29, r1
-; CHECK-NEXT:    mova r29, #9
-; CHECK-NEXT:    vinsert.32 x0, x0, r29, r3
-; CHECK-NEXT:    mova r29, #10
-; CHECK-NEXT:    vinsert.32 x0, x0, r29, r5
-; CHECK-NEXT:    mova r29, #11
-; CHECK-NEXT:    vinsert.32 x0, x0, r29, r7
-; CHECK-NEXT:    mova r29, #12
-; CHECK-NEXT:    vinsert.32 x0, x0, r29, r9
-; CHECK-NEXT:    mova r29, #13
-; CHECK-NEXT:    vinsert.32 x0, x0, r29, r11
-; CHECK-NEXT:    mova r29, #14
-; CHECK-NEXT:    vinsert.32 x0, x0, r29, r13
-; CHECK-NEXT:    mova r29, #15
-; CHECK-NEXT:    vinsert.32 x0, x0, r29, r15
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r2
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r4
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r6
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r8
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r10
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r12
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r14
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r1
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r3
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r5
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r7
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r9
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r11
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r13
+; CHECK-NEXT:    vpush.hi.32 x0, x0, r15
 ; CHECK-NEXT:  .LBB3_3: // %cleanup
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
