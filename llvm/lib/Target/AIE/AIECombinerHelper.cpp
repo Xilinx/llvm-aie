@@ -3343,18 +3343,18 @@ bool llvm::matchShuffleVector(MachineInstr &MI, MachineRegisterInfo &MRI,
   }
 
   case ShuffleMaskPattern::IdentityWithExceptions:
-    // Identity with some insertions
-    // Only supported on AIE2P (uses VINSERT instructions)
-    if (!MI.getMF()->getTarget().getTargetTriple().isAIE2P())
+    // Identity with some insertions (uses VINSERT - available on AIE2/AIE2P)
+    if (!MI.getMF()->getTarget().getTargetTriple().isAIE2() &&
+        !MI.getMF()->getTarget().getTargetTriple().isAIE2P())
       return false;
     // Classifier already validated buildability - just build
     buildIdentityWithInsertions(Info, Classification, MRI, MatchInfo);
     return true;
 
   case ShuffleMaskPattern::ScalarBroadcastWithExceptions:
-    // Broadcast with some insertions
-    // Only supported on AIE2P (uses VINSERT instructions)
-    if (!MI.getMF()->getTarget().getTargetTriple().isAIE2P())
+    // Broadcast with some insertions (uses VINSERT - available on AIE2/AIE2P)
+    if (!MI.getMF()->getTarget().getTargetTriple().isAIE2() &&
+        !MI.getMF()->getTarget().getTargetTriple().isAIE2P())
       return false;
     // Classifier already validated buildability - just build
     buildBroadcastWithInsertions(Info, Classification, MRI, MatchInfo);
