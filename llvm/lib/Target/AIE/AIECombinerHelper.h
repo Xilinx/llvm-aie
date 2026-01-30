@@ -292,28 +292,9 @@ void applyOffsetLoadStoreSharePtrAdd(MachineInstr &MI, MachineRegisterInfo &MRI,
                                      MachineIRBuilder &B, Register &PtrAddReg,
                                      GISelChangeObserver &Observer);
 
-bool matchShuffleToExtractSubvec(MachineInstr &MI, MachineRegisterInfo &MRI,
-                                 const AIEBaseInstrInfo &TII,
-                                 BuildFnTy &MatchInfo);
-
-bool matchShuffleToConcatExtractedSubvectors(MachineInstr &MI,
-                                             MachineRegisterInfo &MRI,
-                                             const AIEBaseInstrInfo &TII,
-                                             BuildFnTy &MatchInfo);
-
-bool matchShuffleBcstToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
-                            const TargetInstrInfo &TII, BuildFnTy &MatchInfo);
-
-bool matchShuffleToExtractInsertElt(MachineInstr &MI, MachineRegisterInfo &MRI,
-                                    BuildFnTy &MatchInfo);
-
 bool matchPairedExtracts(MachineInstr &MI, MachineRegisterInfo &MRI,
                          CombinerHelper &Helper, const TargetInstrInfo &TII,
                          GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
-
-bool matchShuffleToExtractInsertEltToBroadcast(MachineInstr &MI,
-                                               MachineRegisterInfo &MRI,
-                                               BuildFnTy &MatchInfo);
 
 bool matchBroadcastToShl(MachineInstr &MI, MachineRegisterInfo &MRI,
                          const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
