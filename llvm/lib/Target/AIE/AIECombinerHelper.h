@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -258,8 +258,9 @@ bool matchShuffleToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
 bool matchShuffleBcstToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
                             const TargetInstrInfo &TII, BuildFnTy &MatchInfo);
 
-bool matchShuffleToExtractInsertElt(MachineInstr &MI, MachineRegisterInfo &MRI,
-                                    BuildFnTy &MatchInfo);
+bool matchMostlySequentialShuffleWithInsertions(MachineInstr &MI,
+                                                MachineRegisterInfo &MRI,
+                                                BuildFnTy &MatchInfo);
 
 bool matchPairedExtracts(MachineInstr &MI, MachineRegisterInfo &MRI,
                          CombinerHelper &Helper, const TargetInstrInfo &TII,

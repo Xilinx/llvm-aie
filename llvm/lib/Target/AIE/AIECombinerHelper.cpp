@@ -2968,20 +2968,32 @@ bool llvm::matchShuffleToExtractInsertEltToBroadcast(MachineInstr &MI,
   return true;
 }
 
-/// Match something like this:
-/// %0:_(<32 x s16>) = COPY $x0
-/// %1:_(<32 x s16>) = COPY $x1
-/// %2:_(<32 x s16>) = G_SHUFFLE_VECTOR %0:_(<32 x s16>), %1:_, shufflemask(0,
-/// 1, 2, 3, 4, 5, 6, 7, 32, 9, 10, 11, 12, 13, 14, 15, undef, 17, 18, 19, 20,
-/// 21, 22, 23, undef, 25, 26, 27, 28, 29, 30, 31)
-
-/// To convert to:
-/// %3:_(s32) = G_CONSTANT i32 0
-/// %4:_(<32 x s16>) = G_EXTRACT_VECTOR_ELT %1:_(<32 x s16>), %3:_(s32)
-/// %0:_(<32 x s32>) = G_AIE_INSERT_VECTOR_ELT %0:(<32 x s16>), %4:_(s16), 8
-bool llvm::matchShuffleToExtractInsertElt(MachineInstr &MI,
-                                          MachineRegisterInfo &MRI,
-                                          BuildFnTy &MatchInfo) {
+/// Match shuffle vectors that are mostly sequential (identity or extract
+/// subvector) with a few element insertions from either source.
+///
+/// Handles two cases:
+/// 1. Same-size shuffles: Dst and Src have the same type, mask is mostly
+///    identity with exceptions inserted from Src1 or Src2.
+/// 2. Shrinking shuffles: Dst is smaller than Src (e.g., 16->8 elements),
+///    mask extracts a prefix subvector with exceptions from Src2.
+///
+/// Same-size example:
+///   %2:_(<32 x s16>) = G_SHUFFLE_VECTOR %0, %1, shufflemask(0, 1, ..., 32,
+///   ...)
+/// Converts to:
+///   %elt = G_EXTRACT_VECTOR_ELT %1, 0
+///   %2 = G_INSERT_VECTOR_ELT %0, %elt, 8
+///
+/// Shrinking example:
+///   %2:_(<8 x s32>) = G_SHUFFLE_VECTOR %0(<16 x s32>), %1,
+///                       shufflemask(0, 16, undef, undef, 4, 5, 6, 7)
+/// Converts to:
+///   %unpad = G_AIE_UNPAD_VECTOR %0(<16 x s32>)
+///   %elt = G_EXTRACT_VECTOR_ELT %1, 0
+///   %2 = G_INSERT_VECTOR_ELT %unpad, %elt, 1
+bool llvm::matchMostlySequentialShuffleWithInsertions(MachineInstr &MI,
+                                                      MachineRegisterInfo &MRI,
+                                                      BuildFnTy &MatchInfo) {
   assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR);
 
   const Register DstReg = MI.getOperand(0).getReg();
@@ -2991,11 +3003,24 @@ bool llvm::matchShuffleToExtractInsertElt(MachineInstr &MI,
 
   const LLT DstTy = MRI.getType(DstReg);
   const LLT Src1Ty = MRI.getType(Src1Reg);
-  if (DstTy != Src1Ty)
+
+  if (!DstTy.isVector() || !Src1Ty.isVector())
     return false;
 
-  const unsigned NumSrcElems = Src1Ty.isVector() ? Src1Ty.getNumElements() : 1;
-  const LLT ElemTy = MRI.getType(Src1Reg).getElementType();
+  const unsigned NumDstElems = DstTy.getNumElements();
+  const unsigned NumSrcElems = Src1Ty.getNumElements();
+
+  // Element types must match
+  if (DstTy.getElementType() != Src1Ty.getElementType())
+    return false;
+
+  // No growing shuffles; shrinking requires divisibility
+  if (NumSrcElems % NumDstElems != 0)
+    return false;
+
+  const bool IsShrinking = NumSrcElems > NumDstElems;
+
+  const LLT ElemTy = Src1Ty.getElementType();
 
   unsigned MaxNumInsertions;
   if (MI.getMF()->getTarget().getTargetTriple().isAIE2P())
@@ -3011,7 +3036,7 @@ bool llvm::matchShuffleToExtractInsertElt(MachineInstr &MI,
         "instruction take immediate indices or does it require a register for "
         "the index?");
 
-  if (Mask.size() != NumSrcElems)
+  if (Mask.size() != NumDstElems)
     return false;
 
   if (MaskMatch::isMaskWithAllUndefs(Mask))
@@ -3034,9 +3059,17 @@ bool llvm::matchShuffleToExtractInsertElt(MachineInstr &MI,
     return false;
 
   MatchInfo = [=, &MRI](MachineIRBuilder &B) {
-    Register InsertSrc = Src1Reg;
-    Register InsertDst;
+    // For shrinking shuffles, first extract the subvector using UNPAD
+    Register InsertSrc;
+    if (IsShrinking) {
+      InsertSrc = MRI.createGenericVirtualRegister(DstTy);
+      const AIEBaseInstrInfo &TII = getAIETII(B);
+      B.buildInstr(TII.getGenericUnpadVectorOpcode(), {InsertSrc}, {Src1Reg});
+    } else {
+      InsertSrc = Src1Reg;
+    }
 
+    Register InsertDst;
     for (const unsigned ExceptionIdx : Exceptions) {
       Register VecToExtract =
           Mask[ExceptionIdx] < (int)NumSrcElems ? Src1Reg : Src2Reg;
@@ -3049,7 +3082,7 @@ bool llvm::matchShuffleToExtractInsertElt(MachineInstr &MI,
 
       InsertDst = (ExceptionIdx == Exceptions.back())
                       ? DstReg
-                      : MRI.createGenericVirtualRegister(Src1Ty);
+                      : MRI.createGenericVirtualRegister(DstTy);
 
       B.buildInsertVectorElement(InsertDst, InsertSrc, ExtrElt,
                                  ExceptionIdxReg);

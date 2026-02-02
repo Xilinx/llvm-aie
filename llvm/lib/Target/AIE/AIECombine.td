@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 include "llvm/Target/GlobalISel/Combine.td"
@@ -137,10 +137,10 @@ def combine_vector_shuffle_to_copy : GICombineRule<
          [{ return matchShuffleToCopy(*${root}, MRI, ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
 
-def combine_vector_shuffle_to_extract_insert_elt : GICombineRule<
+def combine_mostly_sequential_shuffle_with_insertions : GICombineRule<
   (defs root:$root, build_fn_matchinfo:$matchinfo),
   (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
-         [{ return matchShuffleToExtractInsertElt(*${root}, MRI, ${matchinfo}); }]),
+         [{ return matchMostlySequentialShuffleWithInsertions(*${root}, MRI, ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
 
 def combine_vector_shuffle_bcst_to_copy : GICombineRule<
@@ -309,7 +309,7 @@ def aie2p_additional_combines : GICombineGroup<[
   combine_vector_broadcast,
   combine_vector_shuffle_vsel,
   combine_vector_shuffle_broadcast,
-  combine_vector_shuffle_to_extract_insert_elt,
+  combine_mostly_sequential_shuffle_with_insertions,
   combine_vector_shuffle_concat_extracted_subvectors,
   combine_paired_extracts,
   combine_widen_fmul,
