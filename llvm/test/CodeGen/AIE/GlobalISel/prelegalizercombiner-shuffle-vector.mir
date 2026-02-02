@@ -1742,23 +1742,26 @@ body:             |
 ...
 
 ---
-# Shrinking shuffles (16 -> 8 elements) with single element
-# insertion from Src2.
+# Shrinking shuffles (16 -> 8 elements) with single element insertion from Src2
+# are combined to: extract subvec + insert element.
 
-name: shuffle_vector_shrinking_insert_pos1_not_combined
+name: shuffle_vector_shrinking_insert_pos1
 alignment:       16
 tracksRegLiveness: true
 body:             |
   bb.0.entry:
     liveins: $x0, $x1
-
-    ; CHECK-LABEL: name: shuffle_vector_shrinking_insert_pos1_not_combined
+    ; CHECK-LABEL: name: shuffle_vector_shrinking_insert_pos1
     ; CHECK: liveins: $x0, $x1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<16 x s32>) = COPY $x1
-    ; CHECK-NEXT: [[SHUF:%[0-9]+]]:_(<8 x s32>) = G_SHUFFLE_VECTOR [[COPY]](<16 x s32>), [[COPY1]], shufflemask(0, 16, undef, undef, 4, 5, 6, 7)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[SHUF]](<8 x s32>)
+    ; CHECK-NEXT: [[UNPAD:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[COPY]](<16 x s32>)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[EVEC:%[0-9]+]]:_(s32) = G_EXTRACT_VECTOR_ELT [[COPY1]](<16 x s32>), [[C]](s32)
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[IVEC:%[0-9]+]]:_(<8 x s32>) = G_INSERT_VECTOR_ELT [[UNPAD]], [[EVEC]](s32), [[C1]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[IVEC]](<8 x s32>)
     %0:_(<16 x s32>) = COPY $x0
     %1:_(<16 x s32>) = COPY $x1
     %2:_(<8 x s32>) = G_SHUFFLE_VECTOR %0(<16 x s32>), %1, shufflemask(0, 16, undef, undef, 4, 5, 6, 7)
@@ -1766,20 +1769,23 @@ body:             |
 ...
 
 ---
-name: shuffle_vector_shrinking_insert_pos2_not_combined
+name: shuffle_vector_shrinking_insert_pos2
 alignment:       16
 tracksRegLiveness: true
 body:             |
   bb.0.entry:
     liveins: $x0, $x1
-
-    ; CHECK-LABEL: name: shuffle_vector_shrinking_insert_pos2_not_combined
+    ; CHECK-LABEL: name: shuffle_vector_shrinking_insert_pos2
     ; CHECK: liveins: $x0, $x1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<16 x s32>) = COPY $x1
-    ; CHECK-NEXT: [[SHUF:%[0-9]+]]:_(<8 x s32>) = G_SHUFFLE_VECTOR [[COPY]](<16 x s32>), [[COPY1]], shufflemask(0, 1, 16, undef, 4, 5, 6, 7)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[SHUF]](<8 x s32>)
+    ; CHECK-NEXT: [[UNPAD:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[COPY]](<16 x s32>)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[EVEC:%[0-9]+]]:_(s32) = G_EXTRACT_VECTOR_ELT [[COPY1]](<16 x s32>), [[C]](s32)
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; CHECK-NEXT: [[IVEC:%[0-9]+]]:_(<8 x s32>) = G_INSERT_VECTOR_ELT [[UNPAD]], [[EVEC]](s32), [[C1]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[IVEC]](<8 x s32>)
     %0:_(<16 x s32>) = COPY $x0
     %1:_(<16 x s32>) = COPY $x1
     %2:_(<8 x s32>) = G_SHUFFLE_VECTOR %0(<16 x s32>), %1, shufflemask(0, 1, 16, undef, 4, 5, 6, 7)
@@ -1787,20 +1793,23 @@ body:             |
 ...
 
 ---
-name: shuffle_vector_shrinking_insert_pos3_not_combined
+name: shuffle_vector_shrinking_insert_pos3
 alignment:       16
 tracksRegLiveness: true
 body:             |
   bb.0.entry:
     liveins: $x0, $x1
-
-    ; CHECK-LABEL: name: shuffle_vector_shrinking_insert_pos3_not_combined
+    ; CHECK-LABEL: name: shuffle_vector_shrinking_insert_pos3
     ; CHECK: liveins: $x0, $x1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<16 x s32>) = COPY $x1
-    ; CHECK-NEXT: [[SHUF:%[0-9]+]]:_(<8 x s32>) = G_SHUFFLE_VECTOR [[COPY]](<16 x s32>), [[COPY1]], shufflemask(0, 1, 2, 16, 4, 5, 6, 7)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[SHUF]](<8 x s32>)
+    ; CHECK-NEXT: [[UNPAD:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[COPY]](<16 x s32>)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[EVEC:%[0-9]+]]:_(s32) = G_EXTRACT_VECTOR_ELT [[COPY1]](<16 x s32>), [[C]](s32)
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; CHECK-NEXT: [[IVEC:%[0-9]+]]:_(<8 x s32>) = G_INSERT_VECTOR_ELT [[UNPAD]], [[EVEC]](s32), [[C1]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[IVEC]](<8 x s32>)
     %0:_(<16 x s32>) = COPY $x0
     %1:_(<16 x s32>) = COPY $x1
     %2:_(<8 x s32>) = G_SHUFFLE_VECTOR %0(<16 x s32>), %1, shufflemask(0, 1, 2, 16, 4, 5, 6, 7)
