@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -mtriple=aie  --issue-limit=1 -verify-machineinstrs < %s \
 ; RUN:   | FileCheck %s
 
@@ -77,20 +77,20 @@ define void @caller() nounwind {
 ; CHECK-NEXT:  // %bb.0:
 ; CHECK-NEXT:    padda [sp], #32
 ; CHECK-NEXT:    mov.u20 p1, #var
-; CHECK-NEXT:    st.spil p6, [sp, #-28] // 4-byte Folded Spill
-; CHECK-NEXT:    st.spil p7, [sp, #-32] // 4-byte Folded Spill
+; CHECK-NEXT:    st.spil p6, [sp, #-12] // 4-byte Folded Spill
+; CHECK-NEXT:    st.spil p7, [sp, #-8] // 4-byte Folded Spill
 ; CHECK-NEXT:    lda r12, [p1]
 ; CHECK-NEXT:    mov.u20 p0, #(var+4)
 ; CHECK-NEXT:    mov.u20 p6, #(var+8)
 ; CHECK-NEXT:    mov.u20 p7, #(var+12)
-; CHECK-NEXT:    st.spil r4, [sp, #-16] // 4-byte Folded Spill
+; CHECK-NEXT:    st.spil r4, [sp, #-24] // 4-byte Folded Spill
 ; CHECK-NEXT:    st.spil r10, [sp, #-20] // 4-byte Folded Spill
-; CHECK-NEXT:    st.spil r11, [sp, #-24] // 4-byte Folded Spill
+; CHECK-NEXT:    st.spil r11, [sp, #-16] // 4-byte Folded Spill
 ; CHECK-NEXT:    lda r11, [p0]
 ; CHECK-NEXT:    lda r4, [p6]
 ; CHECK-NEXT:    lda r10, [p7]
-; CHECK-NEXT:    st.spil lr, [sp, #-12] // 4-byte Folded Spill
-; CHECK-NEXT:    st.spil r12, [sp, #-8] // 4-byte Folded Spill
+; CHECK-NEXT:    st.spil lr, [sp, #-28] // 4-byte Folded Spill
+; CHECK-NEXT:    st.spil r12, [sp, #-32] // 4-byte Folded Spill
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -105,7 +105,7 @@ define void @caller() nounwind {
 ; CHECK-NEXT:    st r10, [p7]
 ; CHECK-NEXT:    st r4, [p6]
 ; CHECK-NEXT:    st r11, [p0]
-; CHECK-NEXT:    lda.spil r12, [sp, #-8] // 4-byte Folded Reload
+; CHECK-NEXT:    lda.spil r12, [sp, #-32] // 4-byte Folded Reload
 ; CHECK-NEXT:    mov.u20 p0, #var
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -114,12 +114,12 @@ define void @caller() nounwind {
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st r12, [p0]
-; CHECK-NEXT:    ldb lr, [sp, #-12] // 4-byte Folded Reload
-; CHECK-NEXT:    lda.spil p7, [sp, #-32] // 4-byte Folded Reload
-; CHECK-NEXT:    lda.spil p6, [sp, #-28] // 4-byte Folded Reload
-; CHECK-NEXT:    lda.spil r11, [sp, #-24] // 4-byte Folded Reload
+; CHECK-NEXT:    ldb lr, [sp, #-28] // 4-byte Folded Reload
+; CHECK-NEXT:    lda.spil p7, [sp, #-8] // 4-byte Folded Reload
+; CHECK-NEXT:    lda.spil p6, [sp, #-12] // 4-byte Folded Reload
+; CHECK-NEXT:    lda.spil r11, [sp, #-16] // 4-byte Folded Reload
 ; CHECK-NEXT:    lda.spil r10, [sp, #-20] // 4-byte Folded Reload
-; CHECK-NEXT:    lda.spil r4, [sp, #-16] // 4-byte Folded Reload
+; CHECK-NEXT:    lda.spil r4, [sp, #-24] // 4-byte Folded Reload
 ; CHECK-NEXT:    padda [sp], #-32
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop

@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc --issue-limit=1 -mtriple=aie < %s \
 ; RUN:   | FileCheck %s
 
@@ -15,8 +15,8 @@ define i32 @test128() nounwind {
 ; CHECK-NEXT:  // %bb.0:
 ; CHECK-NEXT:    padda [sp], #32
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda vl0, [sp, #-16]
-; CHECK-NEXT:    st.spil lr, [sp, #-32] // 4-byte Folded Spill
+; CHECK-NEXT:    vlda vl0, [sp, #-32]
+; CHECK-NEXT:    st.spil lr, [sp, #-16] // 4-byte Folded Spill
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -29,9 +29,9 @@ define i32 @test128() nounwind {
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:    ldb lr, [sp, #-32] // 4-byte Folded Reload
+; CHECK-NEXT:    ldb lr, [sp, #-16] // 4-byte Folded Reload
 ; CHECK-NEXT:    mov.u20 r0, #0
-; CHECK-NEXT:    vst vl0, [sp, #-16]
+; CHECK-NEXT:    vst vl0, [sp, #-32]
 ; CHECK-NEXT:    padda [sp], #-32
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -58,8 +58,8 @@ define i32 @test256() nounwind {
 ; CHECK-NEXT:  // %bb.0:
 ; CHECK-NEXT:    padda [sp], #64
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda wr0, [sp, #-32]
-; CHECK-NEXT:    st.spil lr, [sp, #-64] // 4-byte Folded Spill
+; CHECK-NEXT:    vlda wr0, [sp, #-64]
+; CHECK-NEXT:    st.spil lr, [sp, #-32] // 4-byte Folded Spill
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -72,9 +72,9 @@ define i32 @test256() nounwind {
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:    ldb lr, [sp, #-64] // 4-byte Folded Reload
+; CHECK-NEXT:    ldb lr, [sp, #-32] // 4-byte Folded Reload
 ; CHECK-NEXT:    mov.u20 r0, #0
-; CHECK-NEXT:    vst wr0, [sp, #-32]
+; CHECK-NEXT:    vst wr0, [sp, #-64]
 ; CHECK-NEXT:    padda [sp], #-64
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop

@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -mtriple=aie2 --issue-limit=8 < %s | FileCheck %s
 
 define i32 @br_i32(i32  %a, i32  %b, i32 %v, i32* nocapture writeonly %c) {
@@ -116,8 +116,8 @@ define i32 @br_diamond_complex_end(i32  %a, i32  %b, i32 %v, i32* nocapture writ
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 3
-; CHECK-NEXT:    st r16, [sp, #-32] // 4-byte Folded Spill Delay Slot 2
-; CHECK-NEXT:    st lr, [sp, #-28]; or r16, r3, r3 // 4-byte Folded Spill Delay Slot 1
+; CHECK-NEXT:    st r16, [sp, #-28] // 4-byte Folded Spill Delay Slot 2
+; CHECK-NEXT:    st lr, [sp, #-32]; or r16, r3, r3 // 4-byte Folded Spill Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.then
 ; CHECK-NEXT:    j #.LBB3_3
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -133,13 +133,13 @@ define i32 @br_diamond_complex_end(i32  %a, i32  %b, i32 %v, i32* nocapture writ
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    mov r0, r16 // Delay Slot 1
 ; CHECK-NEXT:  .LBB3_3: // %if.end
-; CHECK-NEXT:    nopb ; lda lr, [sp, #-28]; nops ; nopxm ; nopv // 4-byte Folded Reload
+; CHECK-NEXT:    nopb ; lda lr, [sp, #-32]; nops ; nopxm ; nopv // 4-byte Folded Reload
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    lda r16, [sp, #-32] // 4-byte Folded Reload
+; CHECK-NEXT:    lda r16, [sp, #-28] // 4-byte Folded Reload
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4

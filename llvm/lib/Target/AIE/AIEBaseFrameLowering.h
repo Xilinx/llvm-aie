@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -56,10 +56,18 @@ public:
                               MachineBasicBlock::iterator MI,
                               MutableArrayRef<CalleeSavedInfo> CSI,
                               const TargetRegisterInfo *TRI) const override;
+
+  bool orderFrameObjectsIncludesCalleeSaves() const override { return true; }
+
   virtual void emitPrologue(MachineFunction &MF,
                             MachineBasicBlock &MBB) const override;
   virtual void emitEpilogue(MachineFunction &MF,
                             MachineBasicBlock &MBB) const override;
+
+  /// Order stack objects by alignment (highest first) to minimize padding.
+  void
+  orderFrameObjects(const MachineFunction &MF,
+                    SmallVectorImpl<int> &ObjectsToAllocate) const override;
 
 protected:
   const AIEBaseSubtarget &STI;
