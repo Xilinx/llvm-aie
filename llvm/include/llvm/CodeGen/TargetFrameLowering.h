@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // Interface to describe the layout of a stack frame on the target machine.
@@ -412,6 +415,21 @@ public:
   orderFrameObjects(const MachineFunction &MF,
                     SmallVectorImpl<int> &objectsToAllocate) const {
   }
+
+  /// Return true if callee-saved register stack slots should be included
+  /// in the objects passed to orderFrameObjects(), allowing the target to
+  /// interleave them with other stack objects.
+  ///
+  /// When this returns true:
+  /// - PrologEpilogInserter will not pre-allocate callee-saved slots
+  /// - Callee-saved frame indices will be included in objectsToAllocate
+  /// - The target's orderFrameObjects() is responsible for placing them
+  ///
+  /// This is useful for targets where callee-saved registers benefit from
+  /// being placed near SP (e.g., for immediate offset encoding constraints).
+  ///
+  /// Default is false to preserve existing behavior for all targets.
+  virtual bool orderFrameObjectsIncludesCalleeSaves() const { return false; }
 
   /// Check whether or not the given \p MBB can be used as a prologue
   /// for the target.

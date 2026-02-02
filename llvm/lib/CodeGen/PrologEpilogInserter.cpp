@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass is responsible for finalizing the functions frame layout, saving
@@ -895,8 +898,10 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &MF) {
 
   Align MaxAlign = MFI.getMaxAlign();
   // First assign frame offsets to stack objects that are used to spill
-  // callee saved registers.
-  if (MaxCSFrameIndex >= MinCSFrameIndex) {
+  // callee saved registers, unless the target wants to include them in
+  // orderFrameObjects() for custom placement.
+  const bool IncludeCSInOrdering = TFI.orderFrameObjectsIncludesCalleeSaves();
+  if (MaxCSFrameIndex >= MinCSFrameIndex && !IncludeCSInOrdering) {
     for (unsigned i = 0; i <= MaxCSFrameIndex - MinCSFrameIndex; ++i) {
       unsigned FrameIndex =
           StackGrowsDown ? MinCSFrameIndex + i : MaxCSFrameIndex - i;
@@ -1046,11 +1051,11 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &MF) {
   SmallVector<int, 8> ObjectsToAllocate;
 
   // Then prepare to assign frame offsets to stack objects that are not used to
-  // spill callee saved registers.
+  // spill callee saved registers (unless IncludeCSInOrdering is set).
   for (unsigned i = 0, e = MFI.getObjectIndexEnd(); i != e; ++i) {
     if (MFI.isObjectPreAllocated(i) && MFI.getUseLocalStackAllocationBlock())
       continue;
-    if (i >= MinCSFrameIndex && i <= MaxCSFrameIndex)
+    if (i >= MinCSFrameIndex && i <= MaxCSFrameIndex && !IncludeCSInOrdering)
       continue;
     if (RS && RS->isScavengingFrameIndex((int)i))
       continue;

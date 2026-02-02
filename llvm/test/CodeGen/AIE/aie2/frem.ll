@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 ;
 ; RUN: llc -O2 -mtriple=aie2 %s -o - | FileCheck %s
 
@@ -14,16 +14,16 @@ define bfloat @test_frem_bfloat(bfloat %a, bfloat %b) {
 ; CHECK-NEXT:    nopa ; jl #fmodf
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4
-; CHECK-NEXT:    mova r0, #16; st lr, [sp, #-28] // 4-byte Folded Spill Delay Slot 3
-; CHECK-NEXT:    st r16, [sp, #-32]; lshl r1, r1, r0 // 4-byte Folded Spill Delay Slot 2
+; CHECK-NEXT:    mova r0, #16; st lr, [sp, #-32] // 4-byte Folded Spill Delay Slot 3
+; CHECK-NEXT:    st r16, [sp, #-28]; lshl r1, r1, r0 // 4-byte Folded Spill Delay Slot 2
 ; CHECK-NEXT:    lshl r2, r2, r0 // Delay Slot 1
-; CHECK-NEXT:    lda lr, [sp, #-28] // 4-byte Folded Reload
+; CHECK-NEXT:    lda lr, [sp, #-32] // 4-byte Folded Reload
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova r16, #0
 ; CHECK-NEXT:    mov r29, r16
-; CHECK-NEXT:    lda r16, [sp, #-32]; vinsert.32 x0, x0, r29, r0 // 4-byte Folded Reload
+; CHECK-NEXT:    lda r16, [sp, #-28]; vinsert.32 x0, x0, r29, r0 // 4-byte Folded Reload
 ; CHECK-NEXT:    ret lr ; vmov bmh0, x0
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vconv.bf16.fp32 wl0, bmh0 // Delay Slot 4

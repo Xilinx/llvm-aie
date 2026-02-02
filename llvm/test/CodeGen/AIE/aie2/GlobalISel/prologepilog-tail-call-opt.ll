@@ -3,7 +3,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -O2 -mtriple=aie2 --stop-after=prologepilog  %s -o - | FileCheck %s
 
 
@@ -161,15 +161,15 @@ define dso_local noundef i32 @_Z12testFunctionv() local_unnamed_addr {
   ; CHECK-NEXT:   liveins: $r16
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   frame-setup PADD_sp_imm_pseudo 32, implicit-def $sp, implicit $sp
-  ; CHECK-NEXT:   ST_dms_spill killed $lr, -28, implicit $sp :: (store (s32) into %stack.0)
-  ; CHECK-NEXT:   ST_dms_spill killed $r16, -32, implicit $sp :: (store (s32) into %stack.1)
+  ; CHECK-NEXT:   ST_dms_spill killed $lr, -32, implicit $sp :: (store (s32) into %stack.0)
+  ; CHECK-NEXT:   ST_dms_spill killed $r16, -28, implicit $sp :: (store (s32) into %stack.1)
   ; CHECK-NEXT:   $r0 = MOV_RLC_imm10_pseudo 4
   ; CHECK-NEXT:   renamable $r16 = MOV_RLC_imm10_pseudo 100
   ; CHECK-NEXT:   PseudoJL @_Znwj, csr_aie2, implicit-def $lr, implicit killed $r0, implicit-def $p0
   ; CHECK-NEXT:   ST_dms_sts_idx_imm killed renamable $r16, renamable $p0, 0 :: (volatile store (s32) into %ir.call)
   ; CHECK-NEXT:   renamable $r1 = LDA_dms_lda_idx_imm killed renamable $p0, 0 :: (volatile load (s32) from %ir.call)
-  ; CHECK-NEXT:   $r16 = LDA_dms_spill -32, implicit $sp :: (load (s32) from %stack.1)
-  ; CHECK-NEXT:   $lr = LDA_dms_spill -28, implicit $sp :: (load (s32) from %stack.0)
+  ; CHECK-NEXT:   $r16 = LDA_dms_spill -28, implicit $sp :: (load (s32) from %stack.1)
+  ; CHECK-NEXT:   $lr = LDA_dms_spill -32, implicit $sp :: (load (s32) from %stack.0)
   ; CHECK-NEXT:   frame-destroy PADD_sp_imm_pseudo -32, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoJ_TCO_jump_imm @_Z7TCOfunci, csr_aie2, implicit $r1
 entry:

@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -mtriple=aie2p --issue-limit=1 < %s | FileCheck %s
 
 target triple = "aie2p"
@@ -15,57 +15,51 @@ target triple = "aie2p"
 define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32> noundef %b, <16 x i8> noundef %c, <16 x i16> noundef %d, <8 x i32> noundef %e, <4 x i64> inreg noundef %f, <8 x i64> inreg noundef %g, <16 x i32> noundef %h) #0 {
 ; CHECK-LABEL: test_load_store_unaligned:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova m0, #-560; nopb ; nopx
+; CHECK-NEXT:    mova m0, #-112; nopb ; nopxm
 ; CHECK-NEXT:    paddxm [sp], #576
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    mov p2, sp
 ; CHECK-NEXT:    mov p5, sp
-; CHECK-NEXT:    st p7, [sp, #-576] // 4-byte Folded Spill
-; CHECK-NEXT:    mov p7, sp
-; CHECK-NEXT:    st p6, [sp, #-572] // 4-byte Folded Spill
+; CHECK-NEXT:    mov p4, sp
+; CHECK-NEXT:    st p6, [sp, #-24] // 4-byte Folded Spill
 ; CHECK-NEXT:    mov p6, sp
-; CHECK-NEXT:    st r9, [sp, #-568] // 4-byte Folded Spill
-; CHECK-NEXT:    padda [p0], m0
-; CHECK-NEXT:    mova m0, #-544
+; CHECK-NEXT:    st r9, [sp, #-28] // 4-byte Folded Spill
+; CHECK-NEXT:    padda [p0], #-128
 ; CHECK-NEXT:    mov r17, p0
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    padda [p0], m0
-; CHECK-NEXT:    mova m0, #-528
+; CHECK-NEXT:    mova m0, #-96
 ; CHECK-NEXT:    mov r16, p0
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    padda [p2], m0
-; CHECK-NEXT:    mova m0, #-480
-; CHECK-NEXT:    padda [p0], m0
-; CHECK-NEXT:    mova m0, #-416
-; CHECK-NEXT:    mov r31, p0
-; CHECK-NEXT:    padda [p5], m0
-; CHECK-NEXT:    mova m0, #-352
-; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    padda [p7], m0
 ; CHECK-NEXT:    mova m0, #-288
 ; CHECK-NEXT:    padda [p0], m0
-; CHECK-NEXT:    mova m0, #-272
+; CHECK-NEXT:    mova m0, #-576
+; CHECK-NEXT:    mov r31, p0
+; CHECK-NEXT:    mov p0, sp
+; CHECK-NEXT:    padda [p5], m0
+; CHECK-NEXT:    mova m0, #-80
+; CHECK-NEXT:    padda [p0], m0
+; CHECK-NEXT:    mova m0, #-48
 ; CHECK-NEXT:    mov r28, p0
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    padda [p0], m0
-; CHECK-NEXT:    mova m0, #-240
+; CHECK-NEXT:    padda [p4], m0
+; CHECK-NEXT:    mova m0, #-224
+; CHECK-NEXT:    padda [p6], m0
+; CHECK-NEXT:    mova m0, #-160
+; CHECK-NEXT:    padda [p0], #-64
 ; CHECK-NEXT:    mov r27, p0
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    padda [p6], m0
-; CHECK-NEXT:    mova m0, #-208
-; CHECK-NEXT:    padda [p0], m0
-; CHECK-NEXT:    mova m0, #-176
+; CHECK-NEXT:    padda [p0], #-192
 ; CHECK-NEXT:    mov r26, p0
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    padda [p0], m0
-; CHECK-NEXT:    mova m0, #-144
 ; CHECK-NEXT:    mov r25, p0
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    padda [p0], m0
-; CHECK-NEXT:    mova m0, #-80
+; CHECK-NEXT:    padda [p0], #-448
 ; CHECK-NEXT:    mov r9, p0
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    padda [p0], m0
+; CHECK-NEXT:    padda [p0], #-384
 ; CHECK-NEXT:    mov r24, p0
 ; CHECK-NEXT:    mov p0, r17
 ; CHECK-NEXT:    st.s16 r0, [p0, #0]
@@ -219,7 +213,8 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    vextract.8 r20, x0, #12, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    st r8, [sp, #-564] // 4-byte Folded Spill
+; CHECK-NEXT:    st p7, [sp, #-20] // 4-byte Folded Spill
+; CHECK-NEXT:    st r8, [sp, #-32] // 4-byte Folded Spill
 ; CHECK-NEXT:    mova dj0, #13
 ; CHECK-NEXT:    st.s8 r21, [p2, dj0]
 ; CHECK-NEXT:    nop
@@ -241,7 +236,7 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vextract.8 r23, x0, #15, vaddsign1
 ; CHECK-NEXT:    mov p3, sp
-; CHECK-NEXT:    padda [p3], #-512
+; CHECK-NEXT:    padda [p3], #-320
 ; CHECK-NEXT:    st.s16 r0, [p3, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -308,8 +303,8 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova dj0, #18
 ; CHECK-NEXT:    st.s16 r17, [p3, dj0]
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    mova dj4, #32
+; CHECK-NEXT:    mova dj5, #36
 ; CHECK-NEXT:    vextract.16 r17, x6, #9, vaddsign1
 ; CHECK-NEXT:    vextract.32 r2, x8, #2, vaddsign1
 ; CHECK-NEXT:    vextract.32 r3, x8, #3, vaddsign1
@@ -318,7 +313,7 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    st r3, [p0, #12]
 ; CHECK-NEXT:    st.s16 r18, [p3, dj0]
 ; CHECK-NEXT:    mov p1, sp
-; CHECK-NEXT:    padda [p1], #-448
+; CHECK-NEXT:    padda [p1], #-256
 ; CHECK-NEXT:    // implicit-def: $bmll0
 ; CHECK-NEXT:    vmov x0, bmll0
 ; CHECK-NEXT:    vextract.16 r18, x6, #10, vaddsign1
@@ -326,8 +321,8 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    mova dj0, #22
 ; CHECK-NEXT:    st r1, [p1, #4]
 ; CHECK-NEXT:    st.s16 r19, [p3, dj0]
-; CHECK-NEXT:    mova dj4, #32
-; CHECK-NEXT:    mova dj5, #36
+; CHECK-NEXT:    mova dj6, #40
+; CHECK-NEXT:    mova dj7, #44
 ; CHECK-NEXT:    vextract.16 r19, x6, #11, vaddsign1
 ; CHECK-NEXT:    vextract.32 r4, x8, #4, vaddsign1
 ; CHECK-NEXT:    vextract.32 r5, x8, #5, vaddsign1
@@ -335,8 +330,8 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    st r4, [p0, #16]
 ; CHECK-NEXT:    st r5, [p0, #20]
 ; CHECK-NEXT:    st.s16 r20, [p3, dj0]
-; CHECK-NEXT:    mova dj6, #40
-; CHECK-NEXT:    mova dj7, #44
+; CHECK-NEXT:    mov p7, sp
+; CHECK-NEXT:    padda [p7], #-512
 ; CHECK-NEXT:    vextract.16 r20, x6, #12, vaddsign1
 ; CHECK-NEXT:    // implicit-def: $bmll0
 ; CHECK-NEXT:    vmov x0, bmll0
@@ -518,8 +513,8 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mov p4, sp
-; CHECK-NEXT:    padda [p4], #-256
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov p0, r30
 ; CHECK-NEXT:    lda r0, [p0, #0]
 ; CHECK-NEXT:    lda.s8 r6, [p2, #6]
@@ -784,7 +779,7 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    st r6, [p0, #0]
 ; CHECK-NEXT:    st r7, [p0, #4]
 ; CHECK-NEXT:    lda r6, [p1, #24]
-; CHECK-NEXT:    lda r8, [sp, #-564] // 4-byte Folded Reload
+; CHECK-NEXT:    lda r8, [sp, #-32] // 4-byte Folded Reload
 ; CHECK-NEXT:    st.s16 r22, [p6, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -800,7 +795,7 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    lda p6, [sp, #-572] // 4-byte Folded Reload
+; CHECK-NEXT:    lda p6, [sp, #-24] // 4-byte Folded Reload
 ; CHECK-NEXT:    lda r5, [p0, #0]
 ; CHECK-NEXT:    lda r7, [p0, #8]
 ; CHECK-NEXT:    mov p0, r25
@@ -822,7 +817,7 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    lda r6, [p5, dj1]
 ; CHECK-NEXT:    lda r7, [p5, dj0]
 ; CHECK-NEXT:    lda r16, [p5], #12
-; CHECK-NEXT:    lda r9, [sp, #-568] // 4-byte Folded Reload
+; CHECK-NEXT:    lda r9, [sp, #-28] // 4-byte Folded Reload
 ; CHECK-NEXT:    lda r17, [p5], #8
 ; CHECK-NEXT:    lda r18, [p5], #8
 ; CHECK-NEXT:    lda r19, [p5], #8
@@ -864,7 +859,7 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    mov p0, r24
 ; CHECK-NEXT:    lda r7, [p7, #28]
 ; CHECK-NEXT:    lda r23, [p7, dj2]
-; CHECK-NEXT:    lda p7, [sp, #-576] // 4-byte Folded Reload
+; CHECK-NEXT:    lda p7, [sp, #-20] // 4-byte Folded Reload
 ; CHECK-NEXT:    paddxm [sp], #-576
 ; CHECK-NEXT:    st r0, [p0], #4
 ; CHECK-NEXT:    st r1, [p0], #4

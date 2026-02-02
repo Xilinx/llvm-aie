@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -mtriple=aie --stop-after=prologepilog < %s | FileCheck %s
 
 declare i32 @external_function(i32)
@@ -92,13 +92,13 @@ define i32 @test_call_fastcc(i32 %a, i32 %b) nounwind {
   ; CHECK-NEXT:   liveins: $r6, $r7, $r10
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   frame-setup PADDA_sp_imm 32, implicit-def $sp, implicit $sp
-  ; CHECK-NEXT:   ST_SPIL_PTR killed $lr, -28, implicit $sp :: (store (s32) into %stack.0)
-  ; CHECK-NEXT:   ST_SPIL_GPR killed $r10, -32, implicit $sp :: (store (s32) into %stack.1)
+  ; CHECK-NEXT:   ST_SPIL_PTR killed $lr, -32, implicit $sp :: (store (s32) into %stack.0)
+  ; CHECK-NEXT:   ST_SPIL_GPR killed $r10, -28, implicit $sp :: (store (s32) into %stack.1)
   ; CHECK-NEXT:   renamable $r10 = COPY $r6
   ; CHECK-NEXT:   JAL @fastcc_function, csr_aie1, implicit-def dead $lr, implicit $r6, implicit $r7, implicit-def $sp, implicit-def dead $r0
   ; CHECK-NEXT:   $r0 = COPY killed renamable $r10
-  ; CHECK-NEXT:   $r10 = LDA_SPIL_GPR -32, implicit $sp :: (load (s32) from %stack.1)
-  ; CHECK-NEXT:   $lr = LR_LOAD -28, implicit-def $r15, implicit $sp :: (load (s32) from %stack.0)
+  ; CHECK-NEXT:   $r10 = LDA_SPIL_GPR -28, implicit $sp :: (load (s32) from %stack.1)
+  ; CHECK-NEXT:   $lr = LR_LOAD -32, implicit-def $r15, implicit $sp :: (load (s32) from %stack.0)
   ; CHECK-NEXT:   frame-destroy PADDA_sp_imm -32, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit killed $r0
   %1 = call fastcc i32 @fastcc_function(i32 %a, i32 %b)
@@ -113,8 +113,8 @@ define i32 @test_call_external_many_args(i32 %a, float %b, <2 x i32> %c) nounwin
   ; CHECK-NEXT:   liveins: $r6, $r7, $r8, $r9, $r10
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   frame-setup PADDA_sp_imm 32, implicit-def $sp, implicit $sp
-  ; CHECK-NEXT:   ST_SPIL_PTR killed $lr, -28, implicit $sp :: (store (s32) into %stack.0)
-  ; CHECK-NEXT:   ST_SPIL_GPR killed $r10, -32, implicit $sp :: (store (s32) into %stack.1)
+  ; CHECK-NEXT:   ST_SPIL_PTR killed $lr, -32, implicit $sp :: (store (s32) into %stack.0)
+  ; CHECK-NEXT:   ST_SPIL_GPR killed $r10, -28, implicit $sp :: (store (s32) into %stack.1)
   ; CHECK-NEXT:   renamable $r10 = COPY $r6
   ; CHECK-NEXT:   renamable $cl1 = COPY $r8, implicit-def $c1
   ; CHECK-NEXT:   renamable $ch1 = COPY $r9, implicit killed $c1, implicit-def $c1
@@ -129,8 +129,8 @@ define i32 @test_call_external_many_args(i32 %a, float %b, <2 x i32> %c) nounwin
   ; CHECK-NEXT:   $r9 = COPY renamable $cl1, implicit killed $c1
   ; CHECK-NEXT:   JAL @external_many_args, csr_aie1, implicit-def dead $lr, implicit $r6, implicit $r7, implicit $r8, implicit $r9, implicit-def $sp, implicit-def dead $r0
   ; CHECK-NEXT:   $r0 = COPY killed renamable $r10
-  ; CHECK-NEXT:   $r10 = LDA_SPIL_GPR -32, implicit $sp :: (load (s32) from %stack.1)
-  ; CHECK-NEXT:   $lr = LR_LOAD -28, implicit-def $r15, implicit $sp :: (load (s32) from %stack.0)
+  ; CHECK-NEXT:   $r10 = LDA_SPIL_GPR -28, implicit $sp :: (load (s32) from %stack.1)
+  ; CHECK-NEXT:   $lr = LR_LOAD -32, implicit-def $r15, implicit $sp :: (load (s32) from %stack.0)
   ; CHECK-NEXT:   frame-destroy PADDA_sp_imm -32, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit killed $r0
   %1 = call i32 @external_many_args(i32 %a, i32 %a, i32 %a, <2 x i32> %c,

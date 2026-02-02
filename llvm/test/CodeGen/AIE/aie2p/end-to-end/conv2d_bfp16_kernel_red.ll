@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -mtriple=aie2p --aie-force-postpipeliner \
 ; RUN:   -aie-preassign-multi-slot-instr=true %s -o - | FileCheck %s
 
@@ -19,7 +19,7 @@ define dso_local void @conv2d_bfp16.for.body90.i(<32 x i32> %fW.sroa.0.1489.i, i
 ; CHECK-LABEL: conv2d_bfp16.for.body90.i:
 ; CHECK:       // %bb.0: // %newFuncRoot
 ; CHECK-NEXT:    nopa ; paddxm [sp], #64
-; CHECK-NEXT:    st p6, [sp, #-60] // 4-byte Folded Spill
+; CHECK-NEXT:    st p6, [sp, #-64] // 4-byte Folded Spill
 ; CHECK-NEXT:    mov p6, sp
 ; CHECK-NEXT:    padda [p6], #-320
 ; CHECK-NEXT:    vlda bmhh4, [p6, #192]
@@ -52,7 +52,7 @@ define dso_local void @conv2d_bfp16.for.body90.i(<32 x i32> %fW.sroa.0.1489.i, i
 ; CHECK-NEXT:    vlda.pop.576 ex5, [p0, lf0, r24]; vldb.fill.512 [p1, lf1, r25]; add r1, r6, #-1
 ; CHECK-NEXT:    lda r2, [p6, #0]; vldb.pop.576 ex9, [p1, lf1, r25]; movxm ls, #.LBB0_1
 ; CHECK-NEXT:    vlda.pop.576 ex3, [p0, lf0, r24, m1]; vldb.pop.576.3d ex7, [p1, lf1, r25, d0]; movxm le, #.L_LEnd0
-; CHECK-NEXT:    vlda.fill.512 [p0, lf0, r24]; vldb.fill.512 [p1, lf1, r25]; st p7, [sp, #-64]; add.nc lc, r1, #-4 // 4-byte Folded Spill
+; CHECK-NEXT:    vlda.fill.512 [p0, lf0, r24]; vldb.fill.512 [p1, lf1, r25]; st p7, [sp, #-60]; add.nc lc, r1, #-4 // 4-byte Folded Spill
 ; CHECK-NEXT:    vlda.pop.576 ex5, [p0, lf0, r24]; vldb.fill.512 [p1, lf1, r25]; nops ; nopxm ; nopv
 ; CHECK-NEXT:    lda p6, [p6, #-4]; vldb.pop.576 ex9, [p1, lf1, r25]; nops ; nopxm ; nopv
 ; CHECK-NEXT:    vlda.pop.576 ex3, [p0, lf0, r24, m1]; vldb.pop.576.3d ex7, [p1, lf1, r25, d0]; nops ; nopx ; vshuffle ex11, ex9, ex7, r4; nopv
@@ -92,8 +92,8 @@ define dso_local void @conv2d_bfp16.for.body90.i(<32 x i32> %fW.sroa.0.1489.i, i
 ; CHECK-NEXT:    vst bmlh1, [p0, #64]
 ; CHECK-NEXT:    vst bmll1, [p0, #0]; mov p0, r2
 ; CHECK-NEXT:    vst bmhh0, [p0, #192]
-; CHECK-NEXT:    lda p7, [sp, #-64]; vst bmhl0, [p0, #128] // 4-byte Folded Reload
-; CHECK-NEXT:    lda p6, [sp, #-60]; vst bmlh0, [p0, #64] // 4-byte Folded Reload
+; CHECK-NEXT:    lda p7, [sp, #-60]; vst bmhl0, [p0, #128] // 4-byte Folded Reload
+; CHECK-NEXT:    lda p6, [sp, #-64]; vst bmlh0, [p0, #64] // 4-byte Folded Reload
 ; CHECK-NEXT:    vst bmll0, [p0, #0]; ret lr
 ; CHECK-NEXT:    vst bmhh4, [p6, #192] // Delay Slot 5
 ; CHECK-NEXT:    vst bmhl4, [p6, #128] // Delay Slot 4

@@ -11,7 +11,24 @@
 #
 # RUN: llc -mtriple=aie2p --verify-machineinstrs -run-pass=prologepilog -o - %s | FileCheck %s --check-prefix=BASELINE
 
-
+# Stack layout (by ID order):
+#   - id: 0, size: 64, alignment: 64 (BM register)
+#   - id: 1, size: 4, alignment: 4   (R register)
+#   - id: 2, size: 64, alignment: 64 (BM register)
+#   - id: 3, size: 4, alignment: 4   (R register)
+#
+# Without orderFrameObjects optimization:
+#   Objects allocated in ID order with padding:
+#   id 0: offset 0 (64 bytes)
+#   id 1: offset 64 (4 bytes) + 60 bytes padding to align next
+#   id 2: offset 128 (64 bytes)
+#   id 3: offset 192 (4 bytes) + 60 bytes padding for stack alignment
+#   Total: 256 bytes (aligned to max align 64)
+#
+# With orderFrameObjects optimization:
+#   Stack objects sorted by alignment, so all 64-byte aligned objects are
+#   allocated together, followed by 4-byte aligned objects.
+#   Total: 64 + 64 + 4 + 4 = 136 bytes (aligned to 192 bytes)
 
 --- |
   define void @test_stack_alignment_ordering() {
@@ -41,7 +58,7 @@ body:             |
     liveins: $bmll0, $bmll1, $r0, $r1
 
     ; BASELINE: name: test_stack_alignment_ordering
-    ; BASELINE: stackSize: 256
+    ; BASELINE: stackSize: 192
     PseudoRET implicit $lr
 
 ...
@@ -76,7 +93,7 @@ body:             |
 
 # Stack Layout: [ Callee Save Registers , regular Registers ]
 # Sorting has to account for the padding that may be inserted between callee save and regular stack slots.
-# we should move stack 3 and stack 5 before the 64 bit stack slots to maintain stack size.
+# We should move stack 3 and stack 5 before the 64 bit stack slots to maintain stack size.
 ---
 name:            stack_padding_regression_multi_filler
 alignment:       16
@@ -100,7 +117,7 @@ body:             |
     liveins: $lr, $r8, $r9, $r10, $p6, $p7
 
     ; BASELINE: name: stack_padding_regression_multi_filler
-    ; BASELINE: stackSize: 256
+    ; BASELINE: stackSize: 192
     $p6 = IMPLICIT_DEF
     $p7 = IMPLICIT_DEF
     ; Reload the IMPLICIT_DEF spilled values
