@@ -39,9 +39,9 @@
 #include "llvm/MC/MCRegister.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include <list>
 #include <llvm/CodeGen/MachineBasicBlock.h>
 #include <map>
+#include <queue>
 
 using namespace llvm;
 
@@ -423,7 +423,7 @@ void AIEWawRegRewriter::revertAllocation(OriginalAllocation &Candidates,
   // - No physical assignment: Must use original since no new assignment exists.
   // Remaining holds successful candidates with valid new assignments to check.
   LLVM_DEBUG(dbgs() << "Phase 1: Identifying failed/unassigned candidates\n");
-  std::list<std::pair<MachineOperand *, MCRegister>> Remaining;
+  std::queue<std::pair<MachineOperand *, MCRegister>> Remaining;
   for (const auto &[MO, Org] : Candidates) {
     const Register VReg = MO->getReg();
     const bool HasPhys = VRM->hasPhys(VReg);
@@ -434,7 +434,7 @@ void AIEWawRegRewriter::revertAllocation(OriginalAllocation &Candidates,
       LLVM_DEBUG(dbgs() << "  " << printReg(VReg, TRI) << " -> must revert to "
                         << printReg(Org, TRI) << " (no phys)\n");
     } else {
-      Remaining.emplace_back(const_cast<MachineOperand *>(MO), Org);
+      Remaining.emplace(const_cast<MachineOperand *>(MO), Org);
       LLVM_DEBUG(dbgs() << "  " << printReg(VReg, TRI) << " -> remaining (new="
                         << printReg(VRM->getPhys(VReg), TRI)
                         << ", orig=" << printReg(Org, TRI) << ")\n");
@@ -451,32 +451,34 @@ void AIEWawRegRewriter::revertAllocation(OriginalAllocation &Candidates,
   // BlockedUnits only grows. Loop exits when no new conflicts are found.
   LLVM_DEBUG(
       dbgs() << "Phase 2: Fixed-point iteration for cascading conflicts\n");
+
   unsigned Iteration = 0;
-  bool Changed;
-  do {
-    ++Iteration;
-    Changed = false;
-
-    for (auto It = Remaining.begin(); It != Remaining.end();) {
-      const auto &[MO, Org] = *It;
-      const Register VReg = MO->getReg();
-
-      const BitVector NewUnits = GetRegUnits(VRM->getPhys(VReg));
-      if (NewUnits.anyCommon(BlockedUnits)) {
-        // NEW assignment conflicts with a reverted original - must revert.
-        ToRevert.set(VReg.virtRegIndex());
-        BlockedUnits |= GetRegUnits(Org);
-        LLVM_DEBUG(dbgs() << "  Iteration " << Iteration << ": "
-                          << printReg(VReg, TRI) << " conflicts (new="
-                          << printReg(VRM->getPhys(VReg), TRI)
-                          << "), reverting to " << printReg(Org, TRI) << "\n");
-        It = Remaining.erase(It);
-        Changed = true;
-      } else {
-        ++It;
-      }
+  unsigned SkipCounter = 0;
+  // If we add VReg to ToRevert and then we reach the same MO again without
+  // adding anything to ToRevert, we converged.
+  while (!Remaining.empty() && SkipCounter <= Remaining.size()) {
+    auto MORegPair = Remaining.front();
+    Remaining.pop();
+    const auto &[MO, Org] = MORegPair;
+    const Register VReg = MO->getReg();
+    const BitVector NewUnits = GetRegUnits(VRM->getPhys(VReg));
+    if (NewUnits.anyCommon(BlockedUnits)) {
+      // NEW assignment conflicts with a reverted original - must revert.
+      ToRevert.set(VReg.virtRegIndex());
+      BlockedUnits |= GetRegUnits(Org);
+      LLVM_DEBUG(dbgs() << "  Iteration " << Iteration << ": "
+                        << printReg(VReg, TRI) << " conflicts (new="
+                        << printReg(VRM->getPhys(VReg), TRI)
+                        << "), reverting to " << printReg(Org, TRI) << "\n");
+      SkipCounter = 0;
+    } else {
+      Remaining.push(MORegPair);
+      SkipCounter++;
     }
-  } while (Changed);
+    Iteration = (SkipCounter == Remaining.size()) ? Iteration + 1 : Iteration;
+    (void)Iteration;
+  }
+
   LLVM_DEBUG(dbgs() << "Phase 2 complete after " << Iteration << " iterations: "
                     << ToRevert.count() << " total to revert, "
                     << Remaining.size() << " unchanged\n");
