@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2 -run-pass=regbankselect -regbankselect-fast %s -verify-machineinstrs -o - | FileCheck %s
 # RUN: llc -mtriple aie2 -run-pass=regbankselect -regbankselect-greedy %s -verify-machineinstrs -o - | FileCheck --check-prefix=GREEDY %s
 # RUN: llc -mtriple aie2p -run-pass=regbankselect -regbankselect-fast %s -verify-machineinstrs -o - | FileCheck %s
@@ -30,13 +30,15 @@ body: |
   bb.0:
     liveins:
     ; CHECK-LABEL: name: test_const_inttoptr
-    ; CHECK: [[C:%[0-9]+]]:ptrregbank(s20) = G_CONSTANT i20 100
-    ; CHECK-NEXT: [[INTTOPTR:%[0-9]+]]:ptrregbank(p0) = G_INTTOPTR [[C]](s20)
+    ; CHECK: [[C:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 100
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ptrregbank(s20) = COPY [[C]](s20)
+    ; CHECK-NEXT: [[INTTOPTR:%[0-9]+]]:ptrregbank(p0) = G_INTTOPTR [[COPY]](s20)
     ; CHECK-NEXT: $p0 = COPY [[INTTOPTR]](p0)
     ;
     ; GREEDY-LABEL: name: test_const_inttoptr
-    ; GREEDY: [[C:%[0-9]+]]:ptrregbank(s20) = G_CONSTANT i20 100
-    ; GREEDY-NEXT: [[INTTOPTR:%[0-9]+]]:ptrregbank(p0) = G_INTTOPTR [[C]](s20)
+    ; GREEDY: [[C:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 100
+    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:ptrregbank(s20) = COPY [[C]](s20)
+    ; GREEDY-NEXT: [[INTTOPTR:%[0-9]+]]:ptrregbank(p0) = G_INTTOPTR [[COPY]](s20)
     ; GREEDY-NEXT: $p0 = COPY [[INTTOPTR]](p0)
     %0:_(s20) = G_CONSTANT i20 100
     %2:_(p0) = G_INTTOPTR %0
@@ -51,19 +53,16 @@ body: |
   bb.0:
     liveins:
     ; CHECK-LABEL: name: test_const_zext
-    ; CHECK: [[C:%[0-9]+]]:gprregbank(s20) = G_CONSTANT i20 100
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:modregbank(s20) = COPY [[C]](s20)
-    ; CHECK-NEXT: [[ZEXT:%[0-9]+]]:gprregbank(s32) = G_ZEXT [[COPY]](s20)
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:modregbank(s20) = COPY [[C]](s20)
-    ; CHECK-NEXT: [[SEXT:%[0-9]+]]:gprregbank(s32) = G_SEXT [[COPY1]](s20)
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:modregbank(s20) = COPY [[C]](s20)
-    ; CHECK-NEXT: [[ANYEXT:%[0-9]+]]:gprregbank(s32) = G_ANYEXT [[COPY2]](s20)
+    ; CHECK: [[C:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 100
+    ; CHECK-NEXT: [[ZEXT:%[0-9]+]]:gprregbank(s32) = G_ZEXT [[C]](s20)
+    ; CHECK-NEXT: [[SEXT:%[0-9]+]]:gprregbank(s32) = G_SEXT [[C]](s20)
+    ; CHECK-NEXT: [[ANYEXT:%[0-9]+]]:gprregbank(s32) = G_ANYEXT [[C]](s20)
     ; CHECK-NEXT: $r0 = COPY [[ZEXT]](s32)
     ; CHECK-NEXT: $r1 = COPY [[SEXT]](s32)
     ; CHECK-NEXT: $r2 = COPY [[ANYEXT]](s32)
     ;
     ; GREEDY-LABEL: name: test_const_zext
-    ; GREEDY: [[C:%[0-9]+]]:gprregbank(s20) = G_CONSTANT i20 100
+    ; GREEDY: [[C:%[0-9]+]]:modregbank(s20) = G_CONSTANT i20 100
     ; GREEDY-NEXT: [[ZEXT:%[0-9]+]]:gprregbank(s32) = G_ZEXT [[C]](s20)
     ; GREEDY-NEXT: [[SEXT:%[0-9]+]]:gprregbank(s32) = G_SEXT [[C]](s20)
     ; GREEDY-NEXT: [[ANYEXT:%[0-9]+]]:gprregbank(s32) = G_ANYEXT [[C]](s20)
