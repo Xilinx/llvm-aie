@@ -100,9 +100,6 @@ using RoundRobin = std::list<MCPhysReg>;
 using OriginalAllocation =
     std::vector<std::pair<const MachineOperand *, Register>>;
 
-// Record success for a whole register class.
-using RegClassSuccess = std::map<const TargetRegisterClass *, bool>;
-
 RewriteMode selectMode(RewriteMode Mode, int LoopClass) {
   if (Mode != RewriteMode::Automatic) {
     return Mode;
@@ -187,10 +184,9 @@ private:
 
   bool renameMBBPhysRegs(const MachineBasicBlock *MBB);
 
-  /// From the regclasses and the function context, compute the registers
-  /// that can be used in the reallocation.
-  RoundRobin computeLRURegisters(
-      const std::map<const TargetRegisterClass *, bool> &RegClasses);
+  /// Compute the LRU list of physical registers available for reallocation,
+  /// derived from the register classes of the candidates.
+  RoundRobin computeLRURegisters(const OriginalAllocation &Candidates);
 
   /// Sort the candidates to mimic interleaving the pipeline stages
   void sortSWPAware(OriginalAllocation &Candidates, MachineBasicBlock &MBB,
@@ -205,15 +201,11 @@ private:
 
   /// Reallocate all virtual registers in Candidates.
   /// Return true if successful for all classes.
-  bool reAllocate(OriginalAllocation &Candidates, RoundRobin &LRURegisters,
-                  RegClassSuccess &RegClasses);
+  bool reAllocate(OriginalAllocation &Candidates, RoundRobin &LRURegisters);
 
-  /// If reallocation fails for a particular register class, we can't trust the
-  /// partial allocation for that class to be correct. Therefore, we have to
-  /// revert all reallocations that are in a register class that overlaps with
-  /// the failed one.
-  void revertAllocation(OriginalAllocation &Candidates,
-                        RegClassSuccess &RegClasses);
+  /// If reallocation fails, revert all reallocations to their original
+  /// assignments.
+  void revertAllocation(OriginalAllocation &Candidates);
 
   /// Get all the defined physical registers that the MachineBasicBlock already
   /// uses. These physical registers should not be used for replacement
@@ -364,41 +356,30 @@ void AIEWawRegRewriter::preAllocate(OriginalAllocation &Candidates,
 }
 
 bool AIEWawRegRewriter::reAllocate(OriginalAllocation &Candidates,
-                                   RoundRobin &Registers,
-                                   RegClassSuccess &RegClasses) {
+                                   RoundRobin &Registers) {
   bool Success = true;
   // This is tracking any used register unit across the entire loop.
   BitVector UsedUnits(TRI->getNumRegUnits());
   for (auto &[MO, Org] : Candidates) {
     auto VReg = MO->getReg();
-    if (!replaceReg(VReg, Registers, UsedUnits)) {
+    if (!replaceReg(VReg, Registers, UsedUnits))
       LLVM_DEBUG(dbgs() << "Renaming " << printReg(VReg, TRI, 0, MRI)
                         << " failed\n");
-      auto *RC = MRI->getRegClass(VReg);
-      Success = false;
-      RegClasses[RC] = false;
-    }
+    Success = false;
   }
   return Success;
 }
 
-void AIEWawRegRewriter::revertAllocation(OriginalAllocation &Candidates,
-                                         RegClassSuccess &RegClasses) {
-  LLVM_DEBUG({
-    dbgs() << "=== revertAllocation: Processing " << Candidates.size()
-           << " candidates ===\n";
-    for (const auto &[RC, Success] : RegClasses) {
-      dbgs() << "  RC=" << TRI->getRegClassName(RC)
-             << (Success ? " Succeeded\n" : " Failed\n");
-    }
-  });
+void AIEWawRegRewriter::revertAllocation(OriginalAllocation &Candidates) {
+  LLVM_DEBUG(dbgs() << "=== revertAllocation: Processing " << Candidates.size()
+                    << " candidates ===\n");
 
-  // When a register class fails reallocation, we must revert all candidates
-  // from that class to their original assignments. However, reverting to
-  // originals may conflict with NEW assignments of successfully reallocated
-  // candidates. This creates a cascading effect where those successful
-  // candidates must also revert to make room. We use a fixed-point iteration
-  // to find all candidates that need to revert.
+  // When reallocation fails, some candidates may not have been assigned a
+  // physical register. We must revert those to their original assignments.
+  // However, reverting to originals may conflict with NEW assignments of
+  // successfully reallocated candidates. This creates a cascading effect
+  // where those successful candidates must also revert to make room. We use
+  // a fixed-point iteration to find all candidates that need to revert.
 
   const unsigned NumRegUnits = TRI->getNumRegUnits();
 
@@ -417,11 +398,10 @@ void AIEWawRegRewriter::revertAllocation(OriginalAllocation &Candidates,
     return Units;
   };
 
-  // Phase 1: Seed BlockedUnits with originals from failed/unassigned
-  // candidates.
-  // - Failed RC: Must revert because the reallocation didn't succeed.
-  // - No physical assignment: Must use original since no new assignment exists.
-  // Remaining holds successful candidates with valid new assignments to check.
+  // Phase 1: Seed BlockedUnits with originals from unassigned candidates.
+  // Candidates without a physical assignment must revert to their originals.
+  // Remaining holds candidates with valid new assignments to check for
+  // conflicts.
   LLVM_DEBUG(dbgs() << "Phase 1: Identifying failed/unassigned candidates\n");
   std::queue<std::pair<MachineOperand *, MCRegister>> Remaining;
   for (const auto &[MO, Org] : Candidates) {
@@ -503,8 +483,8 @@ void AIEWawRegRewriter::revertAllocation(OriginalAllocation &Candidates,
   LLVM_DEBUG(dbgs() << "=== revertAllocation complete ===\n");
 }
 
-RoundRobin AIEWawRegRewriter::computeLRURegisters(
-    const std::map<const TargetRegisterClass *, bool> &RegClasses) {
+RoundRobin
+AIEWawRegRewriter::computeLRURegisters(const OriginalAllocation &Candidates) {
   RoundRobin LRURegisters;
 
   // ExcludedPhysregs makes sure that each register is only added once to the
@@ -516,7 +496,8 @@ RoundRobin AIEWawRegRewriter::computeLRURegisters(
 
   // For each reg class, allocate the candidates in round-robin fashion.
   // If we fail, we fall back to the original allocation
-  for (const auto [RC, Success] : RegClasses) {
+  for (const auto &[MO, Org] : Candidates) {
+    const auto *RC = MRI->getRegClass(MO->getReg());
     LLVM_DEBUG(dbgs() << "Allowed registers in RC=" << TRI->getRegClassName(RC)
                       << ":");
     for (MCPhysReg PhysReg : RC->getRegisters()) {
@@ -649,32 +630,23 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
     }
   }
 
-  // Free physregs of all candidates and register their regclasses
-  // RegClasses is a map that tracks successful reallocation for all
-  // registers in that class. If there's a failure in a register class, all
-  // allocations for register classes that overlap with the failed ones are
-  // reverted
-  std::map<const TargetRegisterClass *, bool> RegClasses;
+  // Free physregs of all candidates
   for (auto &[MO, Org] : Candidates) {
     auto VReg = MO->getReg();
     if (VRM->hasPhys(VReg))
       unassignReg(VReg);
-    auto *RC = MRI->getRegClass(VReg);
-    RegClasses.emplace(RC, true);
   }
-  LLVM_DEBUG(dbgs() << "Renaming " << Candidates.size() << " candidates in "
-                    << RegClasses.size() << " classes\n");
+  LLVM_DEBUG(dbgs() << "Renaming " << Candidates.size() << " candidates\n");
 
   // If requested, unassign MBB's liveins as well to get even more freedom
   if (AggressiveReAlloc) {
     for (unsigned I = 0, E = MRI->getNumVirtRegs(); I != E; ++I) {
       Register Reg = Register::index2VirtReg(I);
-      if (!LIS->hasInterval(Reg) || !RegClasses.count(MRI->getRegClass(Reg)))
+      if (!LIS->hasInterval(Reg))
         continue;
       LiveInterval &LI = LIS->getInterval(Reg);
-      if (LIS->isLiveInToMBB(LI, MBB) && VRM->hasPhys(Reg)) {
+      if (LIS->isLiveInToMBB(LI, MBB) && VRM->hasPhys(Reg))
         unassignReg(Reg);
-      }
     }
   }
 
@@ -684,14 +656,14 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
 
   // Least-Recently-Used list of physical registers for assignments to VRegs.
   // Physical registers that have recently been used are moved to the back.
-  RoundRobin LRURegisters = computeLRURegisters(RegClasses);
+  RoundRobin LRURegisters = computeLRURegisters(Candidates);
 
   // Prime the LRURegisters, so that the allocation is loop-aware.
   if (PreAlloc) {
     preAllocate(Candidates, LRURegisters);
   }
-  if (!reAllocate(Candidates, LRURegisters, RegClasses)) {
-    revertAllocation(Candidates, RegClasses);
+  if (!reAllocate(Candidates, LRURegisters)) {
+    revertAllocation(Candidates);
     return false;
   }
 
