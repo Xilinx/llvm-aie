@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -mtriple=aie2 --issue-limit=1 -verify-machineinstrs -o - < %s \
 ; RUN:   | FileCheck %s
 
@@ -16,12 +16,12 @@ define void @f() {
 ; CHECK-LABEL: f:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #1120; nopa ; nops ; nopxm ; nopv
-; CHECK-NEXT:    movxm m0, #-1115
+; CHECK-NEXT:    mova m0, #-15; nopx
 ; CHECK-NEXT:    jl #f0
 ; CHECK-NEXT:    mov p0, sp // Delay Slot 5
 ; CHECK-NEXT:    mov p1, sp // Delay Slot 4
 ; CHECK-NEXT:    st lr, [sp, #-1120] // 4-byte Folded Spill Delay Slot 3
-; CHECK-NEXT:    padda [p0], #-1116 // Delay Slot 2
+; CHECK-NEXT:    paddb [p0], #-16 // Delay Slot 2
 ; CHECK-NEXT:    paddb [p1], m0 // Delay Slot 1
 ; CHECK-NEXT:    lda lr, [sp, #-1120] // 4-byte Folded Reload
 ; CHECK-NEXT:    nop

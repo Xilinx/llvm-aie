@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -61,6 +61,7 @@ FunctionPass *createAIEOutlineMemoryGEP();
 FunctionPass *createAIESuperRegRewriter();
 FunctionPass *createAIEWawRegRewriter();
 FunctionPass *createAIEUnallocatedSuperRegRewriter();
+FunctionPass *createAIESpillSlotOptimization();
 FunctionPass *createAIEPostSelectOptimize();
 MachineFunctionPass *
 createDeadMachineInstructionElim(bool KeepLifetimeInstructions);
@@ -87,6 +88,8 @@ extern char &AIEWawRegRewriterID;
 void initializeAIEWawRegRewriterPass(PassRegistry &);
 extern char &AIEUnallocatedSuperRegRewriterID;
 void initializeAIEUnallocatedSuperRegRewriterPass(PassRegistry &);
+extern char &AIESpillSlotOptimizationID;
+void initializeAIESpillSlotOptimizationPass(PassRegistry &);
 extern char &AIEOutlineMemoryGEPID;
 void initializeAIEOutlineMemoryGEPPass(PassRegistry &);
 

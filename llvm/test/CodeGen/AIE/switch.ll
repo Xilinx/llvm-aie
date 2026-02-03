@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 
 ; RUN: llc -mtriple=aie2 --issue-limit=1 -verify-machineinstrs -o - < %s \
 ; RUN:   | FileCheck --check-prefix=AIE2 %s
@@ -16,7 +16,7 @@ define  i32 @test(i8 signext %i) noinline nounwind optnone {
 ; AIE2-LABEL: test:
 ; AIE2:       // %bb.0: // %entry
 ; AIE2-NEXT:    paddb [sp], #32; nopx
-; AIE2-NEXT:    st p6, [sp, #-32] // 4-byte Folded Spill
+; AIE2-NEXT:    st p6, [sp, #-28] // 4-byte Folded Spill
 ; AIE2-NEXT:    mov p6, sp
 ; AIE2-NEXT:    paddb [p6], #-24
 ; AIE2-NEXT:    st.s8 r1, [p6, #0]
@@ -41,7 +41,7 @@ define  i32 @test(i8 signext %i) noinline nounwind optnone {
 ; AIE2-NEXT:    nop // Delay Slot 4
 ; AIE2-NEXT:    nop // Delay Slot 3
 ; AIE2-NEXT:    nop // Delay Slot 2
-; AIE2-NEXT:    st lr, [sp, #-28] // 4-byte Folded Spill Delay Slot 1
+; AIE2-NEXT:    st lr, [sp, #-32] // 4-byte Folded Spill Delay Slot 1
 ; AIE2-NEXT:  // %bb.1: // %entry
 ; AIE2-NEXT:    movxm p0, #.LJTI0_0
 ; AIE2-NEXT:    movxm r1, #1048575
@@ -122,13 +122,13 @@ define  i32 @test(i8 signext %i) noinline nounwind optnone {
 ; AIE2-NEXT:    nop // Delay Slot 2
 ; AIE2-NEXT:    nop // Delay Slot 1
 ; AIE2-NEXT:  .LBB0_7: // %sw.epilog
-; AIE2-NEXT:    nopb ; lda lr, [sp, #-28]; nops ; nopxm ; nopv // 4-byte Folded Reload
+; AIE2-NEXT:    nopb ; lda lr, [sp, #-32]; nops ; nopxm ; nopv // 4-byte Folded Reload
 ; AIE2-NEXT:    nop
 ; AIE2-NEXT:    nop
 ; AIE2-NEXT:    nop
 ; AIE2-NEXT:    nop
 ; AIE2-NEXT:    lda.s8 r0, [p6, #0]
-; AIE2-NEXT:    lda p6, [sp, #-32] // 4-byte Folded Reload
+; AIE2-NEXT:    lda p6, [sp, #-28] // 4-byte Folded Reload
 ; AIE2-NEXT:    ret lr
 ; AIE2-NEXT:    nop // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
@@ -140,7 +140,7 @@ define  i32 @test(i8 signext %i) noinline nounwind optnone {
 ; AIE2P:       // %bb.0: // %entry
 ; AIE2P-NEXT:    mova m0, #-56; nopb ; nops ; nopxm ; nopv
 ; AIE2P-NEXT:    paddxm [sp], #64
-; AIE2P-NEXT:    st p6, [sp, #-64] // 4-byte Folded Spill
+; AIE2P-NEXT:    st p6, [sp, #-60] // 4-byte Folded Spill
 ; AIE2P-NEXT:    mov p6, sp
 ; AIE2P-NEXT:    padda [p6], m0
 ; AIE2P-NEXT:    st.s8 r1, [p6, #0]
@@ -164,7 +164,7 @@ define  i32 @test(i8 signext %i) noinline nounwind optnone {
 ; AIE2P-NEXT:    nop // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
 ; AIE2P-NEXT:    nop // Delay Slot 3
-; AIE2P-NEXT:    st lr, [sp, #-60] // 4-byte Folded Spill Delay Slot 2
+; AIE2P-NEXT:    st lr, [sp, #-64] // 4-byte Folded Spill Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
 ; AIE2P-NEXT:  // %bb.1: // %entry
 ; AIE2P-NEXT:    movxm p0, ##.LJTI0_0
@@ -246,13 +246,13 @@ define  i32 @test(i8 signext %i) noinline nounwind optnone {
 ; AIE2P-NEXT:    nop // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
 ; AIE2P-NEXT:  .LBB0_7: // %sw.epilog
-; AIE2P-NEXT:    lda lr, [sp, #-60]; nopb ; nopxm ; nops // 4-byte Folded Reload
+; AIE2P-NEXT:    lda lr, [sp, #-64]; nopb ; nopxm ; nops // 4-byte Folded Reload
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    lda.s8 r0, [p6, #0]
-; AIE2P-NEXT:    lda p6, [sp, #-64] // 4-byte Folded Reload
+; AIE2P-NEXT:    lda p6, [sp, #-60] // 4-byte Folded Reload
 ; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    nop // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4

@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -162,11 +162,6 @@ public:
                    bool KillSrc, bool RenamableDest = false,
                    bool RenamableSrc = false) const override;
 
-  Register isLoadFromStackSlot(const MachineInstr &MI,
-                               int &FrameIndex) const override;
-  Register isStoreToStackSlot(const MachineInstr &MI,
-                              int &FrameIndex) const override;
-
   void storeRegToStackSlot(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MBBI, Register SrcReg,
                            bool IsKill, int FrameIndex,
@@ -198,6 +193,8 @@ protected:
   SmallVector<AIEPseudoExpandInfo, 4>
   getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
                            MachineInstr &MI) const override;
+  SmallVector<AIEPseudoExpandInfo, 4>
+  getSpillPseudoExpandInfoByOpcode(unsigned Opcode) const override;
 
   AIERegOffsetSpillInstrInfo
   getRegOffsetSpillInstrInfoFromImmOffset(const unsigned Opcode) const override;

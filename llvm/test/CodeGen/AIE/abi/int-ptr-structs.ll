@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -mtriple=aie --issue-limit=1 -verify-machineinstrs < %s \
 ; RUN:   | FileCheck %s
 
@@ -17,15 +17,15 @@ define void @call_pass_2S3IP() {
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    padda [sp], #32
 ; CHECK-NEXT:    mov.u20 r12, #6
-; CHECK-NEXT:    st.spil lr, [sp, #-32]
+; CHECK-NEXT:    st.spil lr, [sp, #-24] // 4-byte Folded Spill
 ; CHECK-NEXT:    st.spil r12, [sp, #-4]
 ; CHECK-NEXT:    mov.u20 r12, #7
 ; CHECK-NEXT:    st.spil r12, [sp, #-8]
 ; CHECK-NEXT:    mov r12, sp
 ; CHECK-NEXT:    mov p0, r12
 ; CHECK-NEXT:    mov p1, r12
-; CHECK-NEXT:    padda [p0], #-28
-; CHECK-NEXT:    padda [p1], #-24
+; CHECK-NEXT:    padda [p0], #-32
+; CHECK-NEXT:    padda [p1], #-28
 ; CHECK-NEXT:    mov.u20 r6, #1
 ; CHECK-NEXT:    mov.u20 r7, #2
 ; CHECK-NEXT:    mov.u20 r8, #3
@@ -36,7 +36,7 @@ define void @call_pass_2S3IP() {
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:    ldb lr, [sp, #-32]
+; CHECK-NEXT:    ldb lr, [sp, #-24] // 4-byte Folded Reload
 ; CHECK-NEXT:    padda [sp], #-32
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop

@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -O2 -mtriple=aie2 %s -o - | FileCheck %s --check-prefix=ASM
 
 ; This is a reduced version of the Add2D_0 MLLib benchmark which only contains
@@ -47,14 +47,14 @@ define void @add2d(ptr noalias %params, ptr noalias %ifm1_data, ptr noalias %ifm
 ; ASM-NEXT:    lda dn0, [p0], #-8
 ; ASM-NEXT:    lda dj0, [p0], #12
 ; ASM-NEXT:    lda dn4, [p0], #-8; paddb [sp], #32
-; ASM-NEXT:    lda dj4, [p0], #-36; st p7, [sp, #-32] // 4-byte Folded Spill
+; ASM-NEXT:    lda dj4, [p0], #-36; st p7, [sp, #-28] // 4-byte Folded Spill
 ; ASM-NEXT:    lda r1, [p0, #0]; mov p7, sp
 ; ASM-NEXT:    lda r5, [p0, #-36]; paddb [p7], #-36
 ; ASM-NEXT:    lda p0, [p7], #-4
 ; ASM-NEXT:    lda p0, [p7], #-4
 ; ASM-NEXT:    lda p0, [p7], #-4
 ; ASM-NEXT:    lda p0, [p7], #-4
-; ASM-NEXT:    lda p0, [p7], #-4; st p6, [sp, #-28]; nez r4, r1 // 4-byte Folded Spill
+; ASM-NEXT:    lda p0, [p7], #-4; st p6, [sp, #-32]; nez r4, r1 // 4-byte Folded Spill
 ; ASM-NEXT:    lda p5, [p7], #-4; st r3, [p4, #0]
 ; ASM-NEXT:    lda p6, [p7], #-4; st r4, [p5, #0]
 ; ASM-NEXT:    lda p0, [p7], #-4; st m1, [p0, #0]; add r7, r2, #-1; mov r6, #1
@@ -124,8 +124,8 @@ define void @add2d(ptr noalias %params, ptr noalias %ifm1_data, ptr noalias %ifm
 ; ASM-NEXT:  .LBB0_5: // %for.cond.cleanup.unr-lcssa.split
 ; ASM-NEXT:    st r1, [p7, #0]; nopx
 ; ASM-NEXT:    mov p0, r12
-; ASM-NEXT:    lda p7, [sp, #-32]; st r0, [p0, #0] // 4-byte Folded Reload
-; ASM-NEXT:    lda p6, [sp, #-28]; mov p0, r11 // 4-byte Folded Reload
+; ASM-NEXT:    lda p7, [sp, #-28]; st r0, [p0, #0] // 4-byte Folded Reload
+; ASM-NEXT:    lda p6, [sp, #-32]; mov p0, r11 // 4-byte Folded Reload
 ; ASM-NEXT:    st p3, [p0, #0]; ret lr
 ; ASM-NEXT:    mov p0, r10 // Delay Slot 5
 ; ASM-NEXT:    st p2, [p0, #0] // Delay Slot 4

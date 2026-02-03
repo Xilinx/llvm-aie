@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -mtriple=aie2p --aie-reg-rewrite-mode=latencyaware %s -o - | FileCheck %s
 
 ; Test postSWP capabilities related to gemm_bfp16.
@@ -36,7 +36,7 @@ define dso_local void @gemm_bfp16(ptr %ofm_ptr, ptr %ifm_ptr, ptr %wts_ptr, ptr 
 ; CHECK:       // %bb.0: // %newFuncRoot
 ; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r7, p5; nops
 ; CHECK-NEXT:    paddxm [sp], #64
-; CHECK-NEXT:    st p6, [sp, #-60] // 4-byte Folded Spill
+; CHECK-NEXT:    st p6, [sp, #-64] // 4-byte Folded Spill
 ; CHECK-NEXT:    mova m0, #-68; mov p6, sp
 ; CHECK-NEXT:    padda [p6], m0; mov dc5, #0
 ; CHECK-NEXT:    lda dn2, [p6], #-4; movs m2, p4; movxm r0, #16256
@@ -45,7 +45,7 @@ define dso_local void @gemm_bfp16(ptr %ofm_ptr, ptr %ifm_ptr, ptr %wts_ptr, ptr 
 ; CHECK-NEXT:    lda dj0, [p6], #-4; movs dc1, dc5; movx r1, #53; mov dc2, dc5
 ; CHECK-NEXT:    lda dj4, [p6], #-4; movs dc3, dc5; movx r2, #60; mov dc4, dc5
 ; CHECK-NEXT:    lda dn0, [p6], #-4; movs dc0, dc5; movx r3, #780; mov dj3, r7
-; CHECK-NEXT:    lda m4, [p6, #-4]; st p7, [sp, #-64]; movx r4, #0; vmov x1, x0 // 4-byte Folded Spill
+; CHECK-NEXT:    lda m4, [p6, #-4]; st p7, [sp, #-60]; movx r4, #0; vmov x1, x0 // 4-byte Folded Spill
 ; CHECK-NEXT:    lda dn4, [p6, #0]; movs p6, p1; movx r0, #52; mov dn3, dn2
 ; CHECK-NEXT:  .LBB0_1: // %for.body.i
 ; CHECK-NEXT:    // =>This Loop Header: Depth=1
@@ -188,8 +188,8 @@ define dso_local void @gemm_bfp16(ptr %ofm_ptr, ptr %ifm_ptr, ptr %wts_ptr, ptr 
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    paddb.2d [p0], d3 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.4: // %exit.exitStub
-; CHECK-NEXT:    lda p7, [sp, #-64] // 4-byte Folded Reload
-; CHECK-NEXT:    lda p6, [sp, #-60] // 4-byte Folded Reload
+; CHECK-NEXT:    lda p7, [sp, #-60] // 4-byte Folded Reload
+; CHECK-NEXT:    lda p6, [sp, #-64] // 4-byte Folded Reload
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4

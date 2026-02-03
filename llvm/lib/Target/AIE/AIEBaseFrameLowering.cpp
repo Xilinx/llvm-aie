@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
+#include <cstdint>
 
 #define DEBUG_TYPE "aie-frame-lowering"
 
@@ -302,6 +303,30 @@ void AIEBaseFrameLowering::emitPrologue(MachineFunction &MF,
   // Determine the correct frame layout
   determineFrameLayout(MF);
 
+#ifndef NDEBUG
+  // Verify the full stack size is aligned to the required stack alignment.
+  assert(isAligned(getStackAlign(), MFI.getStackSize()) &&
+         "Stack size is not properly aligned to stack alignment!");
+
+  // Verify all stack objects have properly aligned SP-relative offsets.
+  // This catches bugs in stack slot ordering that could cause misaligned
+  // accesses at runtime.
+  {
+    const int64_t FinalStackSize = MFI.getStackSize();
+    for (int FI = MFI.getObjectIndexBegin(); FI < MFI.getObjectIndexEnd();
+         ++FI) {
+      if (MFI.isDeadObjectIndex(FI))
+        continue;
+      const int64_t Offset = MFI.getObjectOffset(FI);
+      const Align ObjAlign = MFI.getObjectAlign(FI);
+      // For AIE stack grows up model: SP-relative = Offset - StackSize
+      const int64_t SPRelative = Offset - FinalStackSize;
+      assert(isAligned(ObjAlign, std::abs(SPRelative)) &&
+             "Stack object is not properly aligned relative to SP!");
+    }
+  }
+#endif
+
   // FIXME (note copied from Lanai): This appears to be overallocating.  Needs
   // investigation. Get the number of bytes to allocate from the FrameInfo.
   uint64_t StackSize = MFI.getStackSize();
@@ -369,4 +394,55 @@ void AIEBaseFrameLowering::emitEpilogue(MachineFunction &MF,
 
   // Deallocate stack
   adjustSPReg(MBB, MBBI, DL, -StackSize, MachineInstr::FrameDestroy);
+}
+
+/// Order stack objects by alignment descending to minimize padding.
+///
+/// Stack layout on AIE (stack grows downward toward lower addresses):
+///   High addresses (allocated first, farther from SP)
+///   +------------------------+
+///   | High-alignment objects |  <- First in sorted order (alignment
+///   descending)
+///   +------------------------+
+///   | Medium-alignment objs  |
+///   +------------------------+
+///   | Low-alignment objects  |  <- Last in sorted order (closer to SP)
+///   +------------------------+
+///   Low addresses (SP points here)
+///
+/// Objects with smaller alignment end up closer to SP after layout, which is
+/// ideal for callee-saved registers that have limited immediate offset range.
+void AIEBaseFrameLowering::orderFrameObjects(
+    const MachineFunction &MF, SmallVectorImpl<int> &ObjectsToAllocate) const {
+  if (ObjectsToAllocate.empty())
+    return;
+
+  const MachineFrameInfo &MFI = MF.getFrameInfo();
+
+  // Find the first variable-sized object; only sort fixed-size objects before
+  // it.
+  const auto FixedSizeEnd = llvm::find_if(
+      ObjectsToAllocate, [&MFI](int FI) { return MFI.getObjectSize(FI) <= 0; });
+
+  // Sort fixed-size objects in-place by alignment descending, then size
+  // descending, then index.
+  llvm::stable_sort(llvm::make_range(ObjectsToAllocate.begin(), FixedSizeEnd),
+                    [&MFI](int A, int B) {
+                      const Align AlignA = MFI.getObjectAlign(A);
+                      const Align AlignB = MFI.getObjectAlign(B);
+                      if (AlignA != AlignB)
+                        return AlignA > AlignB;
+                      const uint64_t SizeA = MFI.getObjectSize(A);
+                      const uint64_t SizeB = MFI.getObjectSize(B);
+                      if (SizeA != SizeB)
+                        return SizeA > SizeB;
+                      return A < B;
+                    });
+
+  LLVM_DEBUG({
+    dbgs() << "AIE orderFrameObjects: ";
+    for (int FI : ObjectsToAllocate)
+      dbgs() << FI << " ";
+    dbgs() << "\n";
+  });
 }

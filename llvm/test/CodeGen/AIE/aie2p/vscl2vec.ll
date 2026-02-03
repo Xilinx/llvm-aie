@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -mtriple=aie2p -verify-machineinstrs -o - < %s | FileCheck %s
 
 %struct.v64bfp16ebs8 = type <{ <64 x i8>, <8 x i8> }>
@@ -522,17 +522,17 @@ define dso_local noundef <16 x float> @_Z13test_upd_elemDv16_fif(<16 x float> no
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; jl #__floatsisf
 ; CHECK-NEXT:    paddxm [sp], #128 // Delay Slot 5
-; CHECK-NEXT:    st r8, [sp, #-128] // 4-byte Folded Spill Delay Slot 4
-; CHECK-NEXT:    st lr, [sp, #-124] // 4-byte Folded Spill Delay Slot 3
-; CHECK-NEXT:    vst x2, [sp, #-64] // 64-byte Folded Spill Delay Slot 2
+; CHECK-NEXT:    st r8, [sp, #-60] // 4-byte Folded Spill Delay Slot 4
+; CHECK-NEXT:    st lr, [sp, #-64] // 4-byte Folded Spill Delay Slot 3
+; CHECK-NEXT:    vst x2, [sp, #-128] // 64-byte Folded Spill Delay Slot 2
 ; CHECK-NEXT:    mov r8, r0 // Delay Slot 1
-; CHECK-NEXT:    lda lr, [sp, #-124]; nopxm // 4-byte Folded Reload
+; CHECK-NEXT:    lda lr, [sp, #-64]; nopxm // 4-byte Folded Reload
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda x0, [sp, #-64] // 64-byte Folded Reload
+; CHECK-NEXT:    vlda x0, [sp, #-128] // 64-byte Folded Reload
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    lda r8, [sp, #-128] // 4-byte Folded Reload
+; CHECK-NEXT:    lda r8, [sp, #-60] // 4-byte Folded Reload
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mov r29, r8 // Delay Slot 4
@@ -683,10 +683,10 @@ define dso_local noundef <2 x float> @_Z16test_ext_v2floatDv16_fii(<16 x float> 
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; paddxm [sp], #64; nops
 ; CHECK-NEXT:    jl #__floatsisf
-; CHECK-NEXT:    st r8, [sp, #-56] // 4-byte Folded Spill Delay Slot 5
-; CHECK-NEXT:    st r10, [sp, #-60] // 4-byte Folded Spill Delay Slot 4
-; CHECK-NEXT:    st lr, [sp, #-52]; add r0, r2, #1; vextract.32 r1, x0, r2, vaddsign1 // 4-byte Folded Spill Delay Slot 3
-; CHECK-NEXT:    st r11, [sp, #-64]; vextract.32 r8, x0, r0, vaddsign1 // 4-byte Folded Spill Delay Slot 2
+; CHECK-NEXT:    st r8, [sp, #-60] // 4-byte Folded Spill Delay Slot 5
+; CHECK-NEXT:    st r10, [sp, #-56] // 4-byte Folded Spill Delay Slot 4
+; CHECK-NEXT:    st lr, [sp, #-64]; add r0, r2, #1; vextract.32 r1, x0, r2, vaddsign1 // 4-byte Folded Spill Delay Slot 3
+; CHECK-NEXT:    st r11, [sp, #-52]; vextract.32 r8, x0, r0, vaddsign1 // 4-byte Folded Spill Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:    nopa ; nopb ; nops ; jl #__floatsisf; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
@@ -694,13 +694,13 @@ define dso_local noundef <2 x float> @_Z16test_ext_v2floatDv16_fii(<16 x float> 
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    or r10, r0, r0; mov r1, r8 // Delay Slot 1
-; CHECK-NEXT:    lda lr, [sp, #-52]; nopx // 4-byte Folded Reload
+; CHECK-NEXT:    lda lr, [sp, #-64]; nopx // 4-byte Folded Reload
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    lda r10, [sp, #-60] // 4-byte Folded Reload
-; CHECK-NEXT:    lda r8, [sp, #-56] // 4-byte Folded Reload
-; CHECK-NEXT:    lda r11, [sp, #-64] // 4-byte Folded Reload
+; CHECK-NEXT:    lda r10, [sp, #-56] // 4-byte Folded Reload
+; CHECK-NEXT:    lda r8, [sp, #-60] // 4-byte Folded Reload
+; CHECK-NEXT:    lda r11, [sp, #-52] // 4-byte Folded Reload
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -755,10 +755,10 @@ define dso_local noundef <2 x float> @_Z20test_extract_v2floatDv16_fii(<16 x flo
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; paddxm [sp], #64; nops
 ; CHECK-NEXT:    jl #__floatsisf
-; CHECK-NEXT:    st r8, [sp, #-56] // 4-byte Folded Spill Delay Slot 5
-; CHECK-NEXT:    st r10, [sp, #-60] // 4-byte Folded Spill Delay Slot 4
-; CHECK-NEXT:    st lr, [sp, #-52]; add r0, r2, #1; vextract.32 r1, x0, r2, vaddsign1 // 4-byte Folded Spill Delay Slot 3
-; CHECK-NEXT:    st r11, [sp, #-64]; vextract.32 r8, x0, r0, vaddsign1 // 4-byte Folded Spill Delay Slot 2
+; CHECK-NEXT:    st r8, [sp, #-60] // 4-byte Folded Spill Delay Slot 5
+; CHECK-NEXT:    st r10, [sp, #-56] // 4-byte Folded Spill Delay Slot 4
+; CHECK-NEXT:    st lr, [sp, #-64]; add r0, r2, #1; vextract.32 r1, x0, r2, vaddsign1 // 4-byte Folded Spill Delay Slot 3
+; CHECK-NEXT:    st r11, [sp, #-52]; vextract.32 r8, x0, r0, vaddsign1 // 4-byte Folded Spill Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:    nopa ; nopb ; nops ; jl #__floatsisf; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
@@ -766,13 +766,13 @@ define dso_local noundef <2 x float> @_Z20test_extract_v2floatDv16_fii(<16 x flo
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    or r10, r0, r0; mov r1, r8 // Delay Slot 1
-; CHECK-NEXT:    lda lr, [sp, #-52]; nopx // 4-byte Folded Reload
+; CHECK-NEXT:    lda lr, [sp, #-64]; nopx // 4-byte Folded Reload
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    lda r10, [sp, #-60] // 4-byte Folded Reload
-; CHECK-NEXT:    lda r8, [sp, #-56] // 4-byte Folded Reload
-; CHECK-NEXT:    lda r11, [sp, #-64] // 4-byte Folded Reload
+; CHECK-NEXT:    lda r10, [sp, #-56] // 4-byte Folded Reload
+; CHECK-NEXT:    lda r8, [sp, #-60] // 4-byte Folded Reload
+; CHECK-NEXT:    lda r11, [sp, #-52] // 4-byte Folded Reload
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -797,10 +797,10 @@ define dso_local noundef <2 x float> @_Z20test_extract_v2floatDv16_fi(<16 x floa
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; paddxm [sp], #64; nops
 ; CHECK-NEXT:    jl #__floatsisf
-; CHECK-NEXT:    st r8, [sp, #-56] // 4-byte Folded Spill Delay Slot 5
-; CHECK-NEXT:    st r10, [sp, #-60] // 4-byte Folded Spill Delay Slot 4
-; CHECK-NEXT:    st lr, [sp, #-52]; add r0, r2, #1; vextract.32 r1, x0, r2, vaddsign1 // 4-byte Folded Spill Delay Slot 3
-; CHECK-NEXT:    st r11, [sp, #-64]; vextract.32 r8, x0, r0, vaddsign1 // 4-byte Folded Spill Delay Slot 2
+; CHECK-NEXT:    st r8, [sp, #-60] // 4-byte Folded Spill Delay Slot 5
+; CHECK-NEXT:    st r10, [sp, #-56] // 4-byte Folded Spill Delay Slot 4
+; CHECK-NEXT:    st lr, [sp, #-64]; add r0, r2, #1; vextract.32 r1, x0, r2, vaddsign1 // 4-byte Folded Spill Delay Slot 3
+; CHECK-NEXT:    st r11, [sp, #-52]; vextract.32 r8, x0, r0, vaddsign1 // 4-byte Folded Spill Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:    nopa ; nopb ; nops ; jl #__floatsisf; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
@@ -808,13 +808,13 @@ define dso_local noundef <2 x float> @_Z20test_extract_v2floatDv16_fi(<16 x floa
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    or r10, r0, r0; mov r1, r8 // Delay Slot 1
-; CHECK-NEXT:    lda lr, [sp, #-52]; nopx // 4-byte Folded Reload
+; CHECK-NEXT:    lda lr, [sp, #-64]; nopx // 4-byte Folded Reload
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    lda r10, [sp, #-60] // 4-byte Folded Reload
-; CHECK-NEXT:    lda r8, [sp, #-56] // 4-byte Folded Reload
-; CHECK-NEXT:    lda r11, [sp, #-64] // 4-byte Folded Reload
+; CHECK-NEXT:    lda r10, [sp, #-56] // 4-byte Folded Reload
+; CHECK-NEXT:    lda r8, [sp, #-60] // 4-byte Folded Reload
+; CHECK-NEXT:    lda r11, [sp, #-52] // 4-byte Folded Reload
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4

@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -mtriple=aie --stop-after=prologepilog < %s \
 ; RUN:   | FileCheck -check-prefix=FPELIM %s
 ; RUN: llc -mtriple=aie --stop-after=prologepilog -frame-pointer=all < %s \
@@ -18,19 +18,18 @@
 %struct.key_t = type { i32, [1024 x i8] }
 
 define i32 @test() nounwind {
-;
   ; FPELIM-LABEL: name: test
   ; FPELIM: bb.0 (%ir-block.0):
   ; FPELIM-NEXT:   liveins: $r10
   ; FPELIM-NEXT: {{  $}}
   ; FPELIM-NEXT:   $m0 = frame-setup MOV_S12 1056
   ; FPELIM-NEXT:   frame-setup PADDA_sp killed $m0, implicit-def $sp, implicit $sp
-  ; FPELIM-NEXT:   ST_SPIL_PTR killed $lr, -1052, implicit $sp :: (store (s32) into %stack.1)
-  ; FPELIM-NEXT:   ST_SPIL_GPR killed $r10, -1056, implicit $sp :: (store (s32) into %stack.2)
+  ; FPELIM-NEXT:   ST_SPIL_PTR killed $lr, -28, implicit $sp :: (store (s32) into %stack.1)
+  ; FPELIM-NEXT:   ST_SPIL_GPR killed $r10, -24, implicit $sp :: (store (s32) into %stack.2)
   ; FPELIM-NEXT:   renamable $cs0 = MOV_S12 16
   ; FPELIM-NEXT:   $r10 = MV_SPECIAL2R $sp
   ; FPELIM-NEXT:   $p0 = MOV killed $r10
-  ; FPELIM-NEXT:   $m0 = MOV_S12 -1048
+  ; FPELIM-NEXT:   $m0 = MOV_S12 -1056
   ; FPELIM-NEXT:   $p0 = PADDA_nrm $p0, killed $m0
   ; FPELIM-NEXT:   renamable $r10 = MOV_U20 0
   ; FPELIM-NEXT:   ST_idx_GPR renamable $r10, renamable $p0, killed renamable $cs0 :: (store (s32) into %ir.1 + 16)
@@ -40,30 +39,31 @@ define i32 @test() nounwind {
   ; FPELIM-NEXT:   ST_idx_GPR renamable $r10, renamable $p0, killed renamable $cs0 :: (store (s32) into %ir.1 + 8)
   ; FPELIM-NEXT:   renamable $cs0 = MOV_S12 4
   ; FPELIM-NEXT:   ST_idx_GPR renamable $r10, renamable $p0, killed renamable $cs0 :: (store (s32) into %ir.1 + 4)
-  ; FPELIM-NEXT:   ST_SPIL_GPR renamable $r10, -1048, implicit $sp :: (store (s32) into %ir.1)
+  ; FPELIM-NEXT:   ST_SPIL_GPR renamable $r10, -1056, implicit $sp :: (store (s32) into %ir.1)
   ; FPELIM-NEXT:   renamable $p0 = PADDA_nrm_imm killed renamable $p0, 4
   ; FPELIM-NEXT:   JAL @test1, csr_aie1, implicit-def dead $lr, implicit $p0, implicit-def $sp
   ; FPELIM-NEXT:   $r0 = COPY killed renamable $r10
-  ; FPELIM-NEXT:   $r10 = LDA_SPIL_GPR -1056, implicit $sp :: (load (s32) from %stack.2)
-  ; FPELIM-NEXT:   $lr = LR_LOAD -1052, implicit-def $r15, implicit $sp :: (load (s32) from %stack.1)
+  ; FPELIM-NEXT:   $r10 = LDA_SPIL_GPR -24, implicit $sp :: (load (s32) from %stack.2)
+  ; FPELIM-NEXT:   $lr = LR_LOAD -28, implicit-def $r15, implicit $sp :: (load (s32) from %stack.1)
   ; FPELIM-NEXT:   $m0 = frame-destroy MOV_S12 -1056
   ; FPELIM-NEXT:   frame-destroy PADDA_sp killed $m0, implicit-def $sp, implicit $sp
   ; FPELIM-NEXT:   PseudoRET implicit $lr, implicit $r0
+  ;
   ; WITHFP-LABEL: name: test
   ; WITHFP: bb.0 (%ir-block.0):
   ; WITHFP-NEXT:   liveins: $r10
   ; WITHFP-NEXT: {{  $}}
   ; WITHFP-NEXT:   $m0 = frame-setup MOV_S12 1056
   ; WITHFP-NEXT:   frame-setup PADDA_sp killed $m0, implicit-def $sp, implicit $sp
-  ; WITHFP-NEXT:   ST_SPIL_PTR killed $lr, -1052, implicit $sp :: (store (s32) into %stack.1)
-  ; WITHFP-NEXT:   ST_SPIL_GPR killed $r10, -1056, implicit $sp :: (store (s32) into %stack.2)
+  ; WITHFP-NEXT:   ST_SPIL_PTR killed $lr, -28, implicit $sp :: (store (s32) into %stack.1)
+  ; WITHFP-NEXT:   ST_SPIL_GPR killed $r10, -24, implicit $sp :: (store (s32) into %stack.2)
   ; WITHFP-NEXT:   $r10 = frame-setup MV_SPECIAL2R $sp
   ; WITHFP-NEXT:   $p7 = frame-setup MOV killed $r10
   ; WITHFP-NEXT:   $m0 = frame-setup MOV_S12 -1056
   ; WITHFP-NEXT:   $p7 = frame-setup PADDA_nrm $p7, killed $m0
   ; WITHFP-NEXT:   renamable $cs0 = MOV_S12 16
   ; WITHFP-NEXT:   $p0 = MOV $p7
-  ; WITHFP-NEXT:   $m0 = MOV_S12 -1048
+  ; WITHFP-NEXT:   $m0 = MOV_S12 -1056
   ; WITHFP-NEXT:   $p0 = PADDA_nrm $p0, killed $m0
   ; WITHFP-NEXT:   renamable $r10 = MOV_U20 0
   ; WITHFP-NEXT:   ST_idx_GPR renamable $r10, renamable $p0, killed renamable $cs0 :: (store (s32) into %ir.1 + 16)
@@ -73,12 +73,12 @@ define i32 @test() nounwind {
   ; WITHFP-NEXT:   ST_idx_GPR renamable $r10, renamable $p0, killed renamable $cs0 :: (store (s32) into %ir.1 + 8)
   ; WITHFP-NEXT:   renamable $cs0 = MOV_S12 4
   ; WITHFP-NEXT:   ST_idx_GPR renamable $r10, renamable $p0, killed renamable $cs0 :: (store (s32) into %ir.1 + 4)
-  ; WITHFP-NEXT:   ST_SPIL_GPR renamable $r10, -1048, implicit $sp :: (store (s32) into %ir.1)
+  ; WITHFP-NEXT:   ST_SPIL_GPR renamable $r10, -1056, implicit $sp :: (store (s32) into %ir.1)
   ; WITHFP-NEXT:   renamable $p0 = PADDA_nrm_imm killed renamable $p0, 4
   ; WITHFP-NEXT:   JAL @test1, csr_aie1, implicit-def dead $lr, implicit $p0, implicit-def $sp
   ; WITHFP-NEXT:   $r0 = COPY killed renamable $r10
-  ; WITHFP-NEXT:   $r10 = LDA_SPIL_GPR -1056, implicit $sp :: (load (s32) from %stack.2)
-  ; WITHFP-NEXT:   $lr = LR_LOAD -1052, implicit-def $r15, implicit $sp :: (load (s32) from %stack.1)
+  ; WITHFP-NEXT:   $r10 = LDA_SPIL_GPR -24, implicit $sp :: (load (s32) from %stack.2)
+  ; WITHFP-NEXT:   $lr = LR_LOAD -28, implicit-def $r15, implicit $sp :: (load (s32) from %stack.1)
   ; WITHFP-NEXT:   $m0 = frame-destroy MOV_S12 -1056
   ; WITHFP-NEXT:   frame-destroy PADDA_sp killed $m0, implicit-def $sp, implicit $sp
   ; WITHFP-NEXT:   PseudoRET implicit $lr, implicit $r0

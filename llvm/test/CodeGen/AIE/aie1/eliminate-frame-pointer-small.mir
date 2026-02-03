@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple=aie -start-after=finalize-isel -stop-after=prologepilog -verify-machineinstrs -o - %s | FileCheck %s
 
 --- |
@@ -33,15 +33,15 @@ body:             |
   bb.0 (%ir-block.0):
     ; CHECK-LABEL: name: eliminate_frame_pointer
     ; CHECK: frame-setup PADDA_sp_imm 32, implicit-def $sp, implicit $sp
-    ; CHECK-NEXT: ST_SPIL_PTR killed $lr, -32, implicit $sp :: (store (s32) into %stack.1)
+    ; CHECK-NEXT: ST_SPIL_PTR killed $lr, -20, implicit $sp :: (store (s32) into %stack.1)
     ; CHECK-NEXT: $r12 = MV_SPECIAL2R $sp
     ; CHECK-NEXT: $p0 = MOV killed $r12
-    ; CHECK-NEXT: $p0 = PADDA_nrm_imm $p0, -24
+    ; CHECK-NEXT: $p0 = PADDA_nrm_imm $p0, -28
     ; CHECK-NEXT: renamable $p1 = COPY renamable $p0
     ; CHECK-NEXT: renamable $p1 = nuw PADDA_nrm_imm killed renamable $p1, 4
     ; CHECK-NEXT: JAL @test1, csr_aie1, implicit-def dead $lr, implicit $p0, implicit $p1, implicit-def $sp
     ; CHECK-NEXT: renamable $r0 = MOV_U20 0
-    ; CHECK-NEXT: $lr = LR_LOAD -32, implicit-def $r15, implicit $sp :: (load (s32) from %stack.1)
+    ; CHECK-NEXT: $lr = LR_LOAD -20, implicit-def $r15, implicit $sp :: (load (s32) from %stack.1)
     ; CHECK-NEXT: frame-destroy PADDA_sp_imm -32, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
     ADJCALLSTACKUP 0, 0, implicit-def dead $sp, implicit $sp

@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -verify-machineinstrs --march=aie2 -run-pass=prologepilog %s -o - | FileCheck %s
 
 # Note that the "offset" mentionned in the stack objects in irrelevant. It is
@@ -36,8 +36,8 @@ body:             |
   bb.0 (align 16):
     ; CHECK-LABEL: name: test_d
     ; CHECK: frame-setup PADD_sp_imm_pseudo 32, implicit-def $sp, implicit $sp
-    ; CHECK-NEXT: $d2 = LDA_D_SPILL -28, implicit $sp :: (load (s128) from %stack.1, align 4)
-    ; CHECK-NEXT: ST_D_SPILL $d2, -28, implicit $sp :: (store (s128) into %stack.1, align 4)
+    ; CHECK-NEXT: $d2 = LDA_D_SPILL -32, implicit $sp :: (load (s128) from %stack.1, align 4)
+    ; CHECK-NEXT: ST_D_SPILL $d2, -32, implicit $sp :: (store (s128) into %stack.1, align 4)
     $d2 = LDA_D_SPILL %stack.1, implicit $sp :: (load (s128) from %stack.1, align 4)
     ST_D_SPILL $d2, %stack.1, implicit $sp :: (store (s128) into %stack.1, align 4)
 ...
@@ -52,8 +52,8 @@ body:             |
   bb.0 (align 16):
     ; CHECK-LABEL: name: test_ds
     ; CHECK: frame-setup PADD_sp_imm_pseudo 64, implicit-def $sp, implicit $sp
-    ; CHECK-NEXT: $d2_3d = LDA_DS_SPILL -60, implicit $sp
-    ; CHECK-NEXT: ST_DS_SPILL $d2_3d, -60, implicit $sp
+    ; CHECK-NEXT: $d2_3d = LDA_DS_SPILL -64, implicit $sp
+    ; CHECK-NEXT: ST_DS_SPILL $d2_3d, -64, implicit $sp
     $d2_3d = LDA_DS_SPILL %stack.1, implicit $sp
     ST_DS_SPILL $d2_3d, %stack.1, implicit $sp
 ...
@@ -68,8 +68,8 @@ body:             |
   bb.0 (align 16):
     ; CHECK-LABEL: name: test_vec64
     ; CHECK: frame-setup PADD_sp_imm_pseudo 32, implicit-def $sp, implicit $sp
-    ; CHECK-NEXT: $l7 = VLDA_L_SPILL -24, implicit $sp
-    ; CHECK-NEXT: VST_L_SPILL $l7, -24, implicit $sp
+    ; CHECK-NEXT: $l7 = VLDA_L_SPILL -32, implicit $sp
+    ; CHECK-NEXT: VST_L_SPILL $l7, -32, implicit $sp
     $l7 = VLDA_L_SPILL %stack.1, implicit $sp
     VST_L_SPILL $l7, %stack.1, implicit $sp
 ...
@@ -84,8 +84,8 @@ body:             |
   bb.0 (align 16):
     ; CHECK-LABEL: name: test_vec256
     ; CHECK: frame-setup PADD_sp_imm_pseudo 64, implicit-def $sp, implicit $sp
-    ; CHECK-NEXT: $wl1 = VLDA_dmw_lda_w_ag_spill -32, implicit $sp
-    ; CHECK-NEXT: VST_dmw_sts_w_ag_spill $wl1, -32, implicit $sp
+    ; CHECK-NEXT: $wl1 = VLDA_dmw_lda_w_ag_spill -64, implicit $sp
+    ; CHECK-NEXT: VST_dmw_sts_w_ag_spill $wl1, -64, implicit $sp
     $wl1 = VLDA_dmw_lda_w_ag_spill %stack.1, implicit $sp
     VST_dmw_sts_w_ag_spill $wl1, %stack.1, implicit $sp
 ...
@@ -101,8 +101,8 @@ body:             |
 
     ; CHECK-LABEL: name: test_vec512
     ; CHECK: frame-setup PADD_sp_imm_pseudo 96, implicit-def $sp, implicit $sp
-    ; CHECK-NEXT: $x1 = VLDA_X_SPILL -64, implicit $sp
-    ; CHECK-NEXT: VST_X_SPILL $x1, -64, implicit $sp
+    ; CHECK-NEXT: $x1 = VLDA_X_SPILL -96, implicit $sp
+    ; CHECK-NEXT: VST_X_SPILL $x1, -96, implicit $sp
     $x1 = VLDA_X_SPILL %stack.1, implicit $sp
     VST_X_SPILL $x1, %stack.1, implicit $sp
 ...
@@ -117,8 +117,8 @@ body:             |
   bb.0 (align 16):
     ; CHECK-LABEL: name: test_vec1024
     ; CHECK: frame-setup PADD_sp_imm_pseudo 160, implicit-def $sp, implicit $sp
-    ; CHECK-NEXT: $y3 = VLDA_Y_SPILL -128, implicit $sp
-    ; CHECK-NEXT: VST_Y_SPILL $y3, -128, implicit $sp
+    ; CHECK-NEXT: $y3 = VLDA_Y_SPILL -160, implicit $sp
+    ; CHECK-NEXT: VST_Y_SPILL $y3, -160, implicit $sp
     $y3 = VLDA_Y_SPILL %stack.1, implicit $sp
     VST_Y_SPILL $y3, %stack.1, implicit $sp
 ...
@@ -133,8 +133,8 @@ body:             |
   bb.0 (align 16):
     ; CHECK-LABEL: name: test_acc256
     ; CHECK: frame-setup PADD_sp_imm_pseudo 64, implicit-def $sp, implicit $sp
-    ; CHECK-NEXT: $amll1 = VLDA_dmw_lda_am_ag_spill -32, implicit $sp
-    ; CHECK-NEXT: VST_dmw_sts_am_ag_spill $amll1, -32, implicit $sp
+    ; CHECK-NEXT: $amll1 = VLDA_dmw_lda_am_ag_spill -64, implicit $sp
+    ; CHECK-NEXT: VST_dmw_sts_am_ag_spill $amll1, -64, implicit $sp
     $amll1 = VLDA_dmw_lda_am_ag_spill %stack.1, implicit $sp
     VST_dmw_sts_am_ag_spill $amll1, %stack.1, implicit $sp
 ...
@@ -149,8 +149,8 @@ body:             |
   bb.0 (align 16):
     ; CHECK-LABEL: name: test_acc512
     ; CHECK: frame-setup PADD_sp_imm_pseudo 96, implicit-def $sp, implicit $sp
-    ; CHECK-NEXT: $bml1 = VLDA_BM_SPILL -64, implicit $sp
-    ; CHECK-NEXT: VST_BM_SPILL $bml1, -64, implicit $sp
+    ; CHECK-NEXT: $bml1 = VLDA_BM_SPILL -96, implicit $sp
+    ; CHECK-NEXT: VST_BM_SPILL $bml1, -96, implicit $sp
     $bml1 = VLDA_BM_SPILL %stack.1, implicit $sp
     VST_BM_SPILL $bml1, %stack.1, implicit $sp
 ...
@@ -165,8 +165,8 @@ body:             |
   bb.0 (align 16):
     ; CHECK-LABEL: name: test_acc1024
     ; CHECK: frame-setup PADD_sp_imm_pseudo 160, implicit-def $sp, implicit $sp
-    ; CHECK-NEXT: $cm3 = VLDA_CM_SPILL -128, implicit $sp
-    ; CHECK-NEXT: VST_CM_SPILL $cm3, -128, implicit $sp
+    ; CHECK-NEXT: $cm3 = VLDA_CM_SPILL -160, implicit $sp
+    ; CHECK-NEXT: VST_CM_SPILL $cm3, -160, implicit $sp
     $cm3 = VLDA_CM_SPILL %stack.1, implicit $sp
     VST_CM_SPILL $cm3, %stack.1, implicit $sp
 ...
@@ -181,8 +181,8 @@ body:             |
   bb.0 (align 16):
     ; CHECK-LABEL: name: test_vec128
     ; CHECK: frame-setup PADD_sp_imm_pseudo 32, implicit-def $sp, implicit $sp
-    ; CHECK-NEXT: $q1 = LDA_dmv_lda_q_ag_spill -16, implicit $sp
-    ; CHECK-NEXT: ST_dmv_sts_q_ag_spill $q1, -16, implicit $sp
+    ; CHECK-NEXT: $q1 = LDA_dmv_lda_q_ag_spill -32, implicit $sp
+    ; CHECK-NEXT: ST_dmv_sts_q_ag_spill $q1, -32, implicit $sp
     $q1 = LDA_dmv_lda_q_ag_spill %stack.1, implicit $sp
     ST_dmv_sts_q_ag_spill $q1, %stack.1, implicit $sp
 ...

@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -599,62 +599,6 @@ constrainRegClass(MachineRegisterInfo &MRI, const TargetRegisterClass *RC,
   return RC;
 }
 
-Register AIE2InstrInfo::isLoadFromStackSlot(const MachineInstr &MI,
-                                            int &FrameIndex) const {
-  switch (MI.getOpcode()) {
-  default:
-    return 0;
-  case AIE2::LDA_dms_spill:
-  case AIE2::LDA_dmv_lda_q_ag_spill:
-  case AIE2::VLDA_dmw_lda_am_ag_spill:
-  case AIE2::VLDA_dmw_lda_w_ag_spill:
-  case AIE2::VLDA_L_SPILL:
-  case AIE2::VLDA_X_SPILL:
-  case AIE2::VLDA_QX_SPILL:
-  case AIE2::VLDA_Y_SPILL:
-  case AIE2::VLDA_BM_SPILL:
-  case AIE2::VLDA_CM_SPILL:
-  case AIE2::LDA_D_SPILL:
-  case AIE2::LDA_DS_SPILL:
-    break;
-  }
-
-  if (MI.getOperand(1).isFI()) {
-    FrameIndex = MI.getOperand(1).getIndex();
-    return MI.getOperand(0).getReg();
-  }
-
-  return 0;
-}
-
-Register AIE2InstrInfo::isStoreToStackSlot(const MachineInstr &MI,
-                                           int &FrameIndex) const {
-  switch (MI.getOpcode()) {
-  default:
-    return 0;
-  case AIE2::ST_dms_spill:
-  case AIE2::ST_dmv_sts_q_ag_spill:
-  case AIE2::VST_dmw_sts_am_ag_spill:
-  case AIE2::VST_dmw_sts_w_ag_spill:
-  case AIE2::VST_L_SPILL:
-  case AIE2::VST_X_SPILL:
-  case AIE2::VST_QX_SPILL:
-  case AIE2::VST_Y_SPILL:
-  case AIE2::VST_BM_SPILL:
-  case AIE2::VST_CM_SPILL:
-  case AIE2::ST_D_SPILL:
-  case AIE2::ST_DS_SPILL:
-    break;
-  }
-
-  if (MI.getOperand(1).isFI()) {
-    FrameIndex = MI.getOperand(1).getIndex();
-    return MI.getOperand(0).getReg();
-  }
-
-  return 0;
-}
-
 // Store a register to a stack slot.  Used in eliminating FrameIndex pseudo-ops.
 void AIE2InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                         MachineBasicBlock::iterator I,
@@ -814,8 +758,12 @@ AIE2InstrInfo::getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
                                         MachineInstr &MI) const {
   if (!MI.isPseudo())
     return {};
+  return getSpillPseudoExpandInfoByOpcode(MI.getOpcode());
+}
 
-  switch (MI.getOpcode()) {
+SmallVector<AIEBaseInstrInfo::AIEPseudoExpandInfo, 4>
+AIE2InstrInfo::getSpillPseudoExpandInfoByOpcode(unsigned Opcode) const {
+  switch (Opcode) {
   case AIE2::VLDA_L_SPILL:
     return {{AIE2::LDA_dms_spill, AIE2::sub_l_even},
             {AIE2::LDA_dms_spill, AIE2::sub_l_odd}};
@@ -883,7 +831,7 @@ AIE2InstrInfo::getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
             {AIE2::ST_dms_spill, AIE2::sub_hi_dim_then_sub_dim_stride},
             {AIE2::ST_dms_spill, AIE2::sub_hi_dim_then_sub_dim_count}};
   default:
-    llvm_unreachable("Un-handled spill opcode.");
+    return {};
   }
 }
 
