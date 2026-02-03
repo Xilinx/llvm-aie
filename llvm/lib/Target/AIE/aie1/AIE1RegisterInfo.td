@@ -284,9 +284,19 @@ def VEC512 : AIEVector512RegisterClass<(add xa, xb, xc, xd)>;
 def VEC1024 : AIEVector1024RegisterClass<(add ya, yd)>;
 
 class AIEVector384RegisterClass<dag reglist> :
-    AIERegisterClass<384, [v8i48], reglist>;
+    AIEBaseRegisterClass<"AIE", [v8i48], /*alignment*/384, reglist> {
+  dag Regs = reglist;
+  let RegInfos = RegInfoByHwMode<
+      [DefaultMode],
+      [RegInfo</*size*/384, /*spill size*/512, /*spill alignment*/256>]>;
+}
 class AIEVector768RegisterClass<dag reglist> :
-    AIERegisterClass<768, [v16i48], reglist>;
+    AIEBaseRegisterClass<"AIE", [v16i48], /*alignment*/768, reglist> {
+  dag Regs = reglist;
+  let RegInfos = RegInfoByHwMode<
+      [DefaultMode],
+      [RegInfo</*size*/768, /*spill size*/1024, /*spill alignment*/256>]>;
+}
 def AML : AIEVector384RegisterClass<(add (sequence "aml%u", 0, 3))>;
 def AMH : AIEVector384RegisterClass<(add (sequence "amh%u", 0, 3))>;
 def ACC384 : AIEVector384RegisterClass<(add AML, AMH)>;
