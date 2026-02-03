@@ -457,9 +457,9 @@ AIE2PSInstrInfo::getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
 
   switch (MI.getOpcode()) {
   case AIE2PS::ST_R_SPILL:
-    return {{AIE2PS::ST_dms_sts_scalar_spill, AIE2PS::NoSubRegister, 4}};
+    return {{AIE2PS::ST_dms_sts_scalar_spill}};
   case AIE2PS::ST_L_SPILL:
-    return {{AIE2PS::ST_dml_sts_scalar_spill, AIE2PS::NoSubRegister, 8}};
+    return {{AIE2PS::ST_dml_sts_scalar_spill}};
   case AIE2PS::ST_D_SPILL:
     return {{AIE2PS::ST_dms_sts_scalar_spill, AIE2PS::sub_mod},
             {AIE2PS::ST_dms_sts_scalar_spill, AIE2PS::sub_dim_size},
@@ -478,16 +478,16 @@ AIE2PSInstrInfo::getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
         {AIE2PS::ST_dms_sts_scalar_spill,
          AIE2PS::sub_hi_dim_then_sub_dim_count}};
   case AIE2PS::VST_V_SPILL:
-    return {{AIE2PS::VST_128_dmv_sts_w_spill, AIE2PS::NoSubRegister, 16}};
+    return {{AIE2PS::VST_128_dmv_sts_w_spill}};
   case AIE2PS::VST_W_SPILL:
-    return {{AIE2PS::VST_dmw_sts_w_spill, AIE2PS::NoSubRegister, 32}};
+    return {{AIE2PS::VST_dmw_sts_w_spill}};
   case AIE2PS::VST_X_SPILL:
-    return {{AIE2PS::VST_dmx_sts_x_spill, AIE2PS::NoSubRegister, 64}};
+    return {{AIE2PS::VST_dmx_sts_x_spill}};
   case AIE2PS::VST_Y_SPILL:
     return {{AIE2PS::VST_X_SPILL, AIE2PS::sub_512_lo},
             {AIE2PS::VST_X_SPILL, AIE2PS::sub_512_hi}};
   case AIE2PS::VST_BM_SPILL:
-    return {{AIE2PS::VST_dmx_sts_bm_spill, AIE2PS::NoSubRegister, 64}};
+    return {{AIE2PS::VST_dmx_sts_bm_spill}};
   case AIE2PS::VST_CM_SPILL:
     return {{AIE2PS::VST_BM_SPILL, AIE2PS::sub_512_acc_lo},
             {AIE2PS::VST_BM_SPILL, AIE2PS::sub_512_acc_hi}};
@@ -496,9 +496,9 @@ AIE2PSInstrInfo::getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
             {AIE2PS::VST_CM_SPILL, AIE2PS::sub_1024_acc_hi}};
 
   case AIE2PS::LDA_R_SPILL:
-    return {{AIE2PS::LDA_dms_lda_scalar_spill, AIE2PS::NoSubRegister, 4}};
+    return {{AIE2PS::LDA_dms_lda_scalar_spill}};
   case AIE2PS::LDA_L_SPILL:
-    return {{AIE2PS::LDA_dml_lda_scalar_L_spill, AIE2PS::NoSubRegister, 8}};
+    return {{AIE2PS::LDA_dml_lda_scalar_L_spill}};
   case AIE2PS::LDA_D_SPILL:
     return {{AIE2PS::LDA_dms_lda_scalar_spill, AIE2PS::sub_mod},
             {AIE2PS::LDA_dms_lda_scalar_spill, AIE2PS::sub_dim_size},
@@ -517,16 +517,16 @@ AIE2PSInstrInfo::getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
             {AIE2PS::LDA_dms_lda_scalar_spill,
              AIE2PS::sub_hi_dim_then_sub_dim_count}};
   case AIE2PS::VLDA_V_SPILL:
-    return {{AIE2PS::VLDA_128_dmv_lda_w_spill, AIE2PS::NoSubRegister, 16}};
+    return {{AIE2PS::VLDA_128_dmv_lda_w_spill}};
   case AIE2PS::VLDA_W_SPILL:
-    return {{AIE2PS::VLDA_dmw_lda_w_spill, AIE2PS::NoSubRegister, 32}};
+    return {{AIE2PS::VLDA_dmw_lda_w_spill}};
   case AIE2PS::VLDA_X_SPILL:
-    return {{AIE2PS::VLDA_dmx_lda_x_spill, AIE2PS::NoSubRegister, 64}};
+    return {{AIE2PS::VLDA_dmx_lda_x_spill}};
   case AIE2PS::VLDA_Y_SPILL:
     return {{AIE2PS::VLDA_X_SPILL, AIE2PS::sub_512_lo},
             {AIE2PS::VLDA_X_SPILL, AIE2PS::sub_512_hi}};
   case AIE2PS::VLDA_BM_SPILL:
-    return {{AIE2PS::VLDA_dmx_lda_bm_spill, AIE2PS::NoSubRegister, 64}};
+    return {{AIE2PS::VLDA_dmx_lda_bm_spill}};
   case AIE2PS::VLDA_CM_SPILL:
     return {{AIE2PS::VLDA_BM_SPILL, AIE2PS::sub_512_acc_lo},
             {AIE2PS::VLDA_BM_SPILL, AIE2PS::sub_512_acc_hi}};
