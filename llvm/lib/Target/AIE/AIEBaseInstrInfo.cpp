@@ -592,6 +592,7 @@ void AIEBaseInstrInfo::expandSpillPseudo(
 
   const MachineOperand &RegOp = MI.getOperand(0);
   Register Reg = RegOp.getReg();
+  assert(Reg.isPhysical() && "Expected physical register for spill expansion");
   unsigned RegFlags = computeRegStateFlags(RegOp);
   int64_t Offset =
       OffsetVal.has_value() ? *OffsetVal : MI.getOperand(1).getImm();
@@ -612,15 +613,16 @@ void AIEBaseInstrInfo::expandSpillPseudo(
   int64_t MemOffset = Offset;
   SmallVector<MachineInstr *, 4> ExpandedInsts;
   for (AIEPseudoExpandInfo EI : ExpandInfos) {
-    const int BitsInByte = 8;
-
     unsigned MemorySize = 0;
     if (EI.MemSize) {
       MemorySize = EI.MemSize;
     } else {
-      assert(EI.SubRegIndex);
-      MemorySize = divideCeil(TRI.getSubRegIdxSize(EI.SubRegIndex), BitsInByte);
-      MemorySize = alignTo(MemorySize, SubRegOffsetAlign);
+      const TargetRegisterClass *RC = TRI.getMinimalPhysRegClass(Reg);
+      if (EI.SubRegIndex) {
+        RC = TRI.getSubRegisterClass(RC, EI.SubRegIndex);
+        assert(RC && "Missing sub-register class for spill expansion");
+      }
+      MemorySize = TRI.getSpillSize(*RC);
     }
     assert(MemorySize && "Spill instruction uses no memory ?!");
 

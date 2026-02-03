@@ -489,37 +489,28 @@ AIE2PSInstrInfo::getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
 
   switch (MI.getOpcode()) {
   case AIE2PS::ST_R_SPILL:
-    return {{AIE2PS::ST_dms_sts_scalar_spill, AIE2PS::NoSubRegister, 4}};
+    return {{AIE2PS::ST_dms_sts_scalar_spill}};
   case AIE2PS::ST_L_SPILL:
-    return {{AIE2PS::ST_dml_sts_scalar_spill, AIE2PS::NoSubRegister, 8}};
+    return {{AIE2PS::ST_dml_sts_scalar_spill}};
   case AIE2PS::ST_D_SPILL:
     return {{AIE2PS::ST_dms_sts_scalar_spill, AIE2PS::sub_mod},
             {AIE2PS::ST_dms_sts_scalar_spill, AIE2PS::sub_dim_size},
             {AIE2PS::ST_dms_sts_scalar_spill, AIE2PS::sub_dim_stride},
             {AIE2PS::ST_dms_sts_scalar_spill, AIE2PS::sub_dim_count}};
   case AIE2PS::ST_DS_SPILL:
-    return {
-        {AIE2PS::ST_dms_sts_scalar_spill, AIE2PS::sub_mod},
-        {AIE2PS::ST_dms_sts_scalar_spill, AIE2PS::sub_dim_size},
-        {AIE2PS::ST_dms_sts_scalar_spill, AIE2PS::sub_dim_stride},
-        {AIE2PS::ST_dms_sts_scalar_spill, AIE2PS::sub_dim_count},
-        {AIE2PS::ST_dms_sts_scalar_spill, AIE2PS::sub_hi_dim_then_sub_mod},
-        {AIE2PS::ST_dms_sts_scalar_spill, AIE2PS::sub_hi_dim_then_sub_dim_size},
-        {AIE2PS::ST_dms_sts_scalar_spill,
-         AIE2PS::sub_hi_dim_then_sub_dim_stride},
-        {AIE2PS::ST_dms_sts_scalar_spill,
-         AIE2PS::sub_hi_dim_then_sub_dim_count}};
+    return {{AIE2PS::ST_D_SPILL, AIE2PS::sub_lo_dim},
+            {AIE2PS::ST_D_SPILL, AIE2PS::sub_hi_dim}};
   case AIE2PS::VST_V_SPILL:
-    return {{AIE2PS::VST_128_dmv_sts_w_spill, AIE2PS::NoSubRegister, 16}};
+    return {{AIE2PS::VST_128_dmv_sts_w_spill}};
   case AIE2PS::VST_W_SPILL:
-    return {{AIE2PS::VST_dmw_sts_w_spill, AIE2PS::NoSubRegister, 32}};
+    return {{AIE2PS::VST_dmw_sts_w_spill}};
   case AIE2PS::VST_X_SPILL:
-    return {{AIE2PS::VST_dmx_sts_x_spill, AIE2PS::NoSubRegister, 64}};
+    return {{AIE2PS::VST_dmx_sts_x_spill}};
   case AIE2PS::VST_Y_SPILL:
     return {{AIE2PS::VST_X_SPILL, AIE2PS::sub_512_lo},
             {AIE2PS::VST_X_SPILL, AIE2PS::sub_512_hi}};
   case AIE2PS::VST_BM_SPILL:
-    return {{AIE2PS::VST_dmx_sts_bm_spill, AIE2PS::NoSubRegister, 64}};
+    return {{AIE2PS::VST_dmx_sts_bm_spill}};
   case AIE2PS::VST_CM_SPILL:
     return {{AIE2PS::VST_BM_SPILL, AIE2PS::sub_512_acc_lo},
             {AIE2PS::VST_BM_SPILL, AIE2PS::sub_512_acc_hi}};
@@ -527,25 +518,25 @@ AIE2PSInstrInfo::getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
     return {{AIE2PS::VST_CM_SPILL, AIE2PS::sub_1024_acc_lo},
             {AIE2PS::VST_CM_SPILL, AIE2PS::sub_1024_acc_hi}};
   case AIE2PS::VST_E_SPILL:
-    return {{AIE2PS::ST_dms_sts_scalar_spill, AIE2PS::NoSubRegister, 4}};
+    return {{AIE2PS::ST_dms_sts_scalar_spill}};
   case AIE2PS::VST_EE_SPILL:
-    return {{AIE2PS::ST_dml_sts_scalar_spill, AIE2PS::NoSubRegister, 8}};
+    return {{AIE2PS::ST_dml_sts_scalar_spill}};
   case AIE2PS::VST_F_SPILL:
-    return {{AIE2PS::ST_dml_sts_scalar_spill, AIE2PS::NoSubRegister, 8}};
+    return {{AIE2PS::ST_dml_sts_scalar_spill}};
   case AIE2PS::VST_FF_SPILL:
-    return {{AIE2PS::ST_dmv_sts_f_spill, AIE2PS::NoSubRegister, 16}};
+    return {{AIE2PS::ST_dmv_sts_f_spill}};
   case AIE2PS::VST_G_SPILL:
-    return {{AIE2PS::ST_dms_sts_g_spill, AIE2PS::NoSubRegister, 4}};
+    return {{AIE2PS::ST_dms_sts_g_spill}};
   case AIE2PS::VST_GG_SPILL:
-    return {{AIE2PS::ST_dml_sts_scalar_spill, AIE2PS::NoSubRegister, 8}};
+    return {{AIE2PS::ST_dml_sts_scalar_spill}};
   case AIE2PS::VST_EG_SPILL:
-    return {{AIE2PS::ST_dml_sts_scalar_spill, AIE2PS::NoSubRegister, 8}};
+    return {{AIE2PS::ST_dml_sts_scalar_spill}};
   case AIE2PS::VST_EG2_SPILL:
-    return {{AIE2PS::VST_128_dmv_sts_eg_spill, AIE2PS::NoSubRegister, 16}};
+    return {{AIE2PS::VST_128_dmv_sts_eg_spill}};
   case AIE2PS::VST_FEG_SPILL:
-    return {{AIE2PS::VST_128_dmv_sts_feg_spill, AIE2PS::NoSubRegister, 16}};
+    return {{AIE2PS::VST_128_dmv_sts_feg_spill}};
   case AIE2PS::VST_FEG2_SPILL:
-    return {{AIE2PS::VST_dmw_sts_feg2_spill, AIE2PS::NoSubRegister, 32}};
+    return {{AIE2PS::VST_dmw_sts_feg2_spill}};
   case AIE2PS::VST_EW_SPILL: // FIXME: Use VST_EG_SPILL
     return {{AIE2PS::VST_W_SPILL, AIE2PS::sub_bfp_v256},
             {AIE2PS::VST_G_SPILL, AIE2PS::sub_bfp_g32},
@@ -610,37 +601,28 @@ AIE2PSInstrInfo::getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
              AIE2PS::sub_bfp768_hi_then_sub_bfp384_hi_then_sub_few_bfp_e32}};
 
   case AIE2PS::LDA_R_SPILL:
-    return {{AIE2PS::LDA_dms_lda_scalar_spill, AIE2PS::NoSubRegister, 4}};
+    return {{AIE2PS::LDA_dms_lda_scalar_spill}};
   case AIE2PS::LDA_L_SPILL:
-    return {{AIE2PS::LDA_dml_lda_scalar_L_spill, AIE2PS::NoSubRegister, 8}};
+    return {{AIE2PS::LDA_dml_lda_scalar_L_spill}};
   case AIE2PS::LDA_D_SPILL:
     return {{AIE2PS::LDA_dms_lda_scalar_spill, AIE2PS::sub_mod},
             {AIE2PS::LDA_dms_lda_scalar_spill, AIE2PS::sub_dim_size},
             {AIE2PS::LDA_dms_lda_scalar_spill, AIE2PS::sub_dim_stride},
             {AIE2PS::LDA_dms_lda_scalar_spill, AIE2PS::sub_dim_count}};
   case AIE2PS::LDA_DS_SPILL:
-    return {{AIE2PS::LDA_dms_lda_scalar_spill, AIE2PS::sub_mod},
-            {AIE2PS::LDA_dms_lda_scalar_spill, AIE2PS::sub_dim_size},
-            {AIE2PS::LDA_dms_lda_scalar_spill, AIE2PS::sub_dim_stride},
-            {AIE2PS::LDA_dms_lda_scalar_spill, AIE2PS::sub_dim_count},
-            {AIE2PS::LDA_dms_lda_scalar_spill, AIE2PS::sub_hi_dim_then_sub_mod},
-            {AIE2PS::LDA_dms_lda_scalar_spill,
-             AIE2PS::sub_hi_dim_then_sub_dim_size},
-            {AIE2PS::LDA_dms_lda_scalar_spill,
-             AIE2PS::sub_hi_dim_then_sub_dim_stride},
-            {AIE2PS::LDA_dms_lda_scalar_spill,
-             AIE2PS::sub_hi_dim_then_sub_dim_count}};
+    return {{AIE2PS::LDA_D_SPILL, AIE2PS::sub_lo_dim},
+            {AIE2PS::LDA_D_SPILL, AIE2PS::sub_hi_dim}};
   case AIE2PS::VLDA_V_SPILL:
-    return {{AIE2PS::VLDA_128_dmv_lda_w_spill, AIE2PS::NoSubRegister, 16}};
+    return {{AIE2PS::VLDA_128_dmv_lda_w_spill}};
   case AIE2PS::VLDA_W_SPILL:
-    return {{AIE2PS::VLDA_dmw_lda_w_spill, AIE2PS::NoSubRegister, 32}};
+    return {{AIE2PS::VLDA_dmw_lda_w_spill}};
   case AIE2PS::VLDA_X_SPILL:
-    return {{AIE2PS::VLDA_dmx_lda_x_spill, AIE2PS::NoSubRegister, 64}};
+    return {{AIE2PS::VLDA_dmx_lda_x_spill}};
   case AIE2PS::VLDA_Y_SPILL:
     return {{AIE2PS::VLDA_X_SPILL, AIE2PS::sub_512_lo},
             {AIE2PS::VLDA_X_SPILL, AIE2PS::sub_512_hi}};
   case AIE2PS::VLDA_BM_SPILL:
-    return {{AIE2PS::VLDA_dmx_lda_bm_spill, AIE2PS::NoSubRegister, 64}};
+    return {{AIE2PS::VLDA_dmx_lda_bm_spill}};
   case AIE2PS::VLDA_CM_SPILL:
     return {{AIE2PS::VLDA_BM_SPILL, AIE2PS::sub_512_acc_lo},
             {AIE2PS::VLDA_BM_SPILL, AIE2PS::sub_512_acc_hi}};
@@ -648,25 +630,25 @@ AIE2PSInstrInfo::getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
     return {{AIE2PS::VLDA_CM_SPILL, AIE2PS::sub_1024_acc_lo},
             {AIE2PS::VLDA_CM_SPILL, AIE2PS::sub_1024_acc_hi}};
   case AIE2PS::VLDA_E_SPILL:
-    return {{AIE2PS::LDA_dms_lda_scalar_spill, AIE2PS::NoSubRegister, 4}};
+    return {{AIE2PS::LDA_dms_lda_scalar_spill}};
   case AIE2PS::VLDA_EE_SPILL:
-    return {{AIE2PS::LDA_dml_lda2_scalar_EE_spill, AIE2PS::NoSubRegister, 8}};
+    return {{AIE2PS::LDA_dml_lda2_scalar_EE_spill}};
   case AIE2PS::VLDA_F_SPILL:
-    return {{AIE2PS::LDA_dml_lda_scalar_F_spill, AIE2PS::NoSubRegister, 8}};
+    return {{AIE2PS::LDA_dml_lda_scalar_F_spill}};
   case AIE2PS::VLDA_FF_SPILL:
-    return {{AIE2PS::LDA_dmv_lda_f_spill, AIE2PS::NoSubRegister, 16}};
+    return {{AIE2PS::LDA_dmv_lda_f_spill}};
   case AIE2PS::VLDA_G_SPILL:
-    return {{AIE2PS::LDA_dms_lda_g_spill, AIE2PS::NoSubRegister, 4}};
+    return {{AIE2PS::LDA_dms_lda_g_spill}};
   case AIE2PS::VLDA_GG_SPILL:
-    return {{AIE2PS::LDA_dml_lda2_scalar_GG_spill, AIE2PS::NoSubRegister, 8}};
+    return {{AIE2PS::LDA_dml_lda2_scalar_GG_spill}};
   case AIE2PS::VLDA_EG_SPILL:
-    return {{AIE2PS::LDA_dml_lda2_scalar_EG_spill, AIE2PS::NoSubRegister, 8}};
+    return {{AIE2PS::LDA_dml_lda2_scalar_EG_spill}};
   case AIE2PS::VLDA_EG2_SPILL:
-    return {{AIE2PS::LDA_dmv_lda_eg2_spill, AIE2PS::NoSubRegister, 16}};
+    return {{AIE2PS::LDA_dmv_lda_eg2_spill}};
   case AIE2PS::VLDA_FEG_SPILL:
-    return {{AIE2PS::LDA_dmv_lda_feg_spill, AIE2PS::NoSubRegister, 16}};
+    return {{AIE2PS::LDA_dmv_lda_feg_spill}};
   case AIE2PS::VLDA_FEG2_SPILL:
-    return {{AIE2PS::VLDA_dmw_lda_feg2_spill, AIE2PS::NoSubRegister, 32}};
+    return {{AIE2PS::VLDA_dmw_lda_feg2_spill}};
   case AIE2PS::VLDA_EW_SPILL: // FIXME: Use VLDA_EG_SPILL
     return {{AIE2PS::VLDA_W_SPILL, AIE2PS::sub_bfp_v256},
             {AIE2PS::VLDA_G_SPILL, AIE2PS::sub_bfp_g32},

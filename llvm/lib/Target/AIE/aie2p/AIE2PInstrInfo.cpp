@@ -1062,7 +1062,7 @@ SmallVector<AIEBaseInstrInfo::AIEPseudoExpandInfo, 4>
 AIE2PInstrInfo::getSpillPseudoExpandInfoByOpcode(unsigned Opcode) const {
   switch (Opcode) {
   case AIE2P::ST_R_SPILL:
-    return {{AIE2P::ST_dms_sts_spill, AIE2P::NoSubRegister, 4}};
+    return {{AIE2P::ST_dms_sts_spill}};
   case AIE2P::VST_L_SPILL:
     return {{AIE2P::ST_dms_sts_spill, AIE2P::sub_l_even},
             {AIE2P::ST_dms_sts_spill, AIE2P::sub_l_odd}};
@@ -1099,7 +1099,7 @@ AIE2PInstrInfo::getSpillPseudoExpandInfoByOpcode(unsigned Opcode) const {
             {AIE2P::ST_dms_sts_spill, AIE2P::sub_hi_dim_then_sub_dim_count}};
 
   case AIE2P::LDA_R_SPILL:
-    return {{AIE2P::LDA_dms_lda_spill, AIE2P::NoSubRegister, 4}};
+    return {{AIE2P::LDA_dms_lda_spill}};
   case AIE2P::VLDA_L_SPILL:
     return {{AIE2P::LDA_dms_lda_spill, AIE2P::sub_l_even},
             {AIE2P::LDA_dms_lda_spill, AIE2P::sub_l_odd}};

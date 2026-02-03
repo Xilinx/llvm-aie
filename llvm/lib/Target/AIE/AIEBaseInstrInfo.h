@@ -830,12 +830,12 @@ public:
     /// OpCode to expand a PseudoInstruction to. This can be another Pseudo.
     unsigned ExpandedOpCode;
     /// Index of the sub-register to use when splitting the register used
-    /// in the initial instruction.
-    /// This can be NoSubRegister, but then \ref MemSize must be set.
-    unsigned SubRegIndex;
+    /// in the initial instruction. Defaults to NoSubRegister (full register).
+    unsigned SubRegIndex = 0;
     /// Explicit size (in bytes) that this expanded spill instruction will use
-    /// in memory. This is useful when the expansion can't be characterized with
-    /// sub-registers.
+    /// in memory. When not set, the spill size is derived from the register
+    /// class of the (sub-)register. Set this explicitly when the actual memory
+    /// footprint differs from the register's spill size.
     int MemSize = 0;
   };
 
