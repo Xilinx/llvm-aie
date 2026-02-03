@@ -9,6 +9,7 @@
 #include "llvm/ExecutionEngine/Orc/IRTransformLayer.h"
 #include "llvm/ExecutionEngine/Orc/JITLinkRedirectableSymbolManager.h"
 #include "llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h"
+#include "llvm/ExecutionEngine/Orc/MapperJITLinkMemoryManager.h"
 #include "llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h"
 #include "llvm/ExecutionEngine/Orc/ObjectTransformLayer.h"
 #include "llvm/ExecutionEngine/Orc/Shared/ExecutorAddress.h"
@@ -66,10 +67,20 @@ protected:
       consumeError(DLOrErr.takeError());
       GTEST_SKIP();
     }
+
+    auto PageSize = sys::Process::getPageSize();
+    if (!PageSize) {
+      consumeError(PageSize.takeError());
+      GTEST_SKIP();
+    }
+
     ES = std::make_unique<ExecutionSession>(std::move(*EPC));
     JD = &ES->createBareJITDylib("main");
+
     ObjLinkingLayer = std::make_unique<ObjectLinkingLayer>(
-        *ES, std::make_unique<InProcessMemoryManager>(16384));
+        *ES, std::make_unique<MapperJITLinkMemoryManager>(
+                 10 * 1024 * 1024,
+                 std::make_unique<InProcessMemoryMapper>(*PageSize)));
     DL = std::make_unique<DataLayout>(std::move(*DLOrErr));
 
     auto TM = JTMB->createTargetMachine();
