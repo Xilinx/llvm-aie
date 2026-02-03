@@ -1615,9 +1615,7 @@ PassBuilder::buildModuleOptimizationPipeline(OptimizationLevel Level,
     MPM.addPass(CGProfilePass(LTOPhase == ThinOrFullLTOPhase::FullLTOPostLink ||
                               LTOPhase == ThinOrFullLTOPhase::ThinLTOPostLink));
 
-  // TODO: Relative look table converter pass caused an issue when full lto is
-  // enabled. See https://reviews.llvm.org/D94355 for more details.
-  // Until the issue fixed, disable this pass during pre-linking phase.
+  // RelLookupTableConverterPass runs later in LTO post-link pipeline.
   if (!LTOPreLink)
     MPM.addPass(RelLookupTableConverterPass());
 
@@ -2141,6 +2139,8 @@ PassBuilder::buildLTODefaultPipeline(OptimizationLevel Level,
 
   if (PTO.MergeFunctions)
     MPM.addPass(MergeFunctionsPass());
+
+  MPM.addPass(RelLookupTableConverterPass());
 
   if (PTO.CallGraphProfile)
     MPM.addPass(CGProfilePass(/*InLTOPostLink=*/true));
