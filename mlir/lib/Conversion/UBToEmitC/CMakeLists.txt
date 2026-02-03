@@ -1,3 +1,4 @@
+# Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 add_mlir_conversion_library(MLIRUBToEmitC
   UBToEmitC.cpp
 
@@ -13,5 +14,6 @@ add_mlir_conversion_library(MLIRUBToEmitC
   LINK_LIBS PUBLIC
   MLIRLLVMCommonConversion
   MLIREmitCDialect
+  MLIREmitCTransforms
   MLIRUBDialect
   )

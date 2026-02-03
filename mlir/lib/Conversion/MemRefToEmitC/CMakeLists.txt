@@ -1,3 +1,4 @@
+# Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 add_mlir_conversion_library(MLIRMemRefToEmitC
   MemRefToEmitC.cpp
   MemRefToEmitCPass.cpp
@@ -13,6 +14,7 @@ add_mlir_conversion_library(MLIRMemRefToEmitC
 
   LINK_LIBS PUBLIC
   MLIREmitCDialect
+  MLIREmitCTransforms
   MLIRMemRefDialect
   MLIRTransforms
   )

@@ -1,3 +1,4 @@
+# Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 add_mlir_conversion_library(MLIRFuncToEmitC
   FuncToEmitC.cpp
   FuncToEmitCPass.cpp
@@ -10,6 +11,7 @@ add_mlir_conversion_library(MLIRFuncToEmitC
 
   LINK_LIBS PUBLIC
   MLIREmitCDialect
+  MLIREmitCTransforms
   MLIRFuncDialect
   MLIRPass
   MLIRTransformUtils
