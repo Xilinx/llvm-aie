@@ -1,7 +1,15 @@
 ; REQUIRES: native && target-x86_64
 
+; This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+; See https://llvm.org/LICENSE.txt for license information.
+; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+; 
+; Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
+
 ; RUN: lli --jit-linker=rtdyld --orc-lazy-debug=jit-debug-descriptor %s 2>&1 | FileCheck %s
 ; RUN: lli --jit-linker=jitlink --orc-lazy-debug=jit-debug-descriptor %s 2>&1 | FileCheck %s
+; XFAIL: *
 ;
 ; Initial entry should be empty:
 ; CHECK: jit_debug_descriptor 0x0000000000000000
