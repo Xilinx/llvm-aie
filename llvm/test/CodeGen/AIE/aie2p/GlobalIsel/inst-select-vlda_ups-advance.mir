@@ -13,11 +13,6 @@
 #
 # RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
 
-# This test is expected to fail until the canAdvanceOp fallback is enabled
-# in selectG_AIE_LOAD_UPS. Once the feature is implemented, remove this XFAIL
-# and update the CHECK lines to verify combining at load's position.
-# XFAIL: *
-
 ---
 # Positive test case: canDelayMemOp fails due to intervening store,
 # but canAdvanceOp succeeds because the store doesn't define any UPS input.

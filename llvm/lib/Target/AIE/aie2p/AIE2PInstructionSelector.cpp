@@ -585,17 +585,25 @@ bool AIE2PInstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
                                                     MachineRegisterInfo &MRI,
                                                     unsigned crUPSModeVal) {
 
-  // First use is the G_INTRINSIC_W_SIDE_EFFECTS ID
-  Register LoadResult = (std::next(UPSI.uses().begin()))->getReg();
+  // Operand 0 is the def, operand 1 is the intrinsic ID, operand 2 is the
+  // source register (loaded value).
+  Register LoadResult = UPSI.getOperand(2).getReg();
   MachineInstr *LoadOp = getDefIgnoringCopiesAndBitcasts(LoadResult, MRI);
+  MachineInstr *InsertionPoint = &UPSI;
 
   assert(LoadOp && "Expected SSA.");
 
   // Do not try to combine if one of the load's defs is used by another
   // instruction between the load and the VUPS or if there is a store
   // between the load and the VUPS.
-  if (!canDelayMemOp(*LoadOp, UPSI, MRI))
-    return false;
+  if (!canDelayMemOp(*LoadOp, UPSI, MRI)) {
+    // If we cannot delay the load, we can try to advance the combined
+    // instruction to the load's position.
+    if (canAdvanceOp(*LoadOp, UPSI, MRI, /*SideEffectsAreChecked=*/true))
+      InsertionPoint = LoadOp;
+    else
+      return false;
+  }
 
   if (!canCombineUPS(*LoadOp, UPSI, MRI))
     return false;
@@ -633,7 +641,7 @@ bool AIE2PInstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
   // Selects the mode of the accumulator for UPS instructions
   // 0 – 32-bit accumulator lane
   // 1 – 64-bit accumulator lane
-  MIB.setInstr(UPSI);
+  MIB.setInstr(*InsertionPoint);
   setCtrlRegister(MIB, AIE2P::crUPSMode, crUPSModeVal);
 
   auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
@@ -3650,7 +3658,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeUPS(
 bool AIE2PInstructionSelector::canCombineUPS(MachineInstr &LoadOp,
                                              MachineInstr &UPSI,
                                              MachineRegisterInfo &MRI) {
-  Register LoadResult = (std::next(UPSI.uses().begin()))->getReg();
+  Register LoadResult = UPSI.getOperand(2).getReg();
   if (LoadOp.getParent() != UPSI.getParent() || !MRI.hasOneUse(LoadResult)) {
     return false;
   }
