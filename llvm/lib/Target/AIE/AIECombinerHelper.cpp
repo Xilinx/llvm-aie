@@ -466,10 +466,13 @@ bool llvm::canDelayMemOp(MachineInstr &MemI, MachineInstr &Dest,
 /// \return true if \a Dest can be moved just after \a MemI in order to allow
 /// combining
 bool llvm::canAdvanceOp(MachineInstr &MemI, MachineInstr &Dest,
-                        const MachineRegisterInfo &MRI) {
-  assert(Dest.getOpcode() != TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS &&
-         "Cannot advance Dest MI with side effects");
-  assert(!Dest.mayLoadOrStore() && "Cannot advance load/store Dest MI");
+                        const MachineRegisterInfo &MRI,
+                        bool SideEffectsAreChecked) {
+  if (!SideEffectsAreChecked) {
+    assert(Dest.getOpcode() != TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS &&
+           "Cannot advance Dest MI with side effects");
+    assert(!Dest.mayLoadOrStore() && "Cannot advance load/store Dest MI");
+  }
   if (MemI.getParent() != Dest.getParent())
     return false;
   auto MII = std::next(MemI.getIterator());

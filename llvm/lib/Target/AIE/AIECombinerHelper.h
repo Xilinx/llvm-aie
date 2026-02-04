@@ -148,9 +148,20 @@ bool matchShuffleToExtractBroadcast(MachineInstr &MI, MachineRegisterInfo &MRI,
 bool canDelayMemOp(MachineInstr &MemI, MachineInstr &Dest,
                    const MachineRegisterInfo &MRI);
 /// \return true if \a Dest can be moved just after \a MemI in order to allow
-/// combining
+/// combining.
+///
+/// \param SideEffectsAreChecked When false (the default), asserts that \a Dest
+/// is not a G_INTRINSIC_W_SIDE_EFFECTS and does not load/store. This is the
+/// safe default for most combining scenarios.
+///
+/// WARNING: Setting \p SideEffectsAreChecked to true bypasses critical safety
+/// checks. Only use this in specialized combining flows (e.g., VLDA_UPS
+/// combining in instruction selection) where you have verified that moving
+/// \a Dest is safe despite its side effects. In almost all cases, this
+/// parameter should remain false.
 bool canAdvanceOp(MachineInstr &MemI, MachineInstr &Dest,
-                  const MachineRegisterInfo &MRI);
+                  const MachineRegisterInfo &MRI,
+                  bool SideEffectsAreChecked = false);
 /// Find the def instruction for \p Reg, folding away any trivial copies and
 /// bitcasts. May return nullptr if \p Reg is not a generic virtual register.
 MachineInstr *getDefIgnoringCopiesAndBitcasts(Register Reg,
