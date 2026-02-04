@@ -2170,6 +2170,28 @@ bool llvm::tryToCombineVectorShiftsByZero(MachineInstr &MI,
   return true;
 }
 
+/// Match a G_SHUFFLE_VECTOR that splats a single element from a source.
+/// The source can be either a G_BUILD_VECTOR or a scalar (e.g., s32/s64 from
+/// <1 x i32>/<1 x i64> lowered to scalar type).
+///
+/// Patterns matched:
+/// 1. Vector source from G_BUILD_VECTOR:
+///      %src:_(<N x sM>) = G_BUILD_VECTOR %e0, %e1, ..., %eK
+///      %dst:_(<P x sM>) = G_SHUFFLE_VECTOR %src, %undefined, shufflemask(K, K,
+///      ...)
+/// 2. Scalar source (treated as single-element):
+///      %src:_(sM) = ...
+///      %dst:_(<N x sM>) = G_SHUFFLE_VECTOR %src, %undefined, shufflemask(0, 0,
+///      ...)
+///
+/// Returns (DstReg, ElemReg) in MatchInfo for the apply function to create a
+/// broadcast. For scalar sources, ElemReg is the scalar register itself.
+/// For vector sources, ElemReg is extracted from the G_BUILD_VECTOR operands.
+///
+/// \param MI The G_SHUFFLE_VECTOR instruction to match.
+/// \param MRI The MachineRegisterInfo for type and def queries.
+/// \param MatchInfo Output pair of (destination register, element register).
+/// \returns true if the pattern matches and MatchInfo is populated.
 bool llvm::matchBroadcastElement(MachineInstr &MI, MachineRegisterInfo &MRI,
                                  std::pair<Register, Register> &MatchInfo) {
   assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR);
@@ -2341,12 +2363,25 @@ static bool matchShuffleToVecEltBroadcast(MachineInstr &MI,
 
   assert(UniqOpIdx >= 0 && "Couldn't find a unique operand to extract!");
 
-  MatchInfo = [=, &MI, &MRI](MachineIRBuilder &B) {
-    const Register DstReg = MI.getOperand(0).getReg();
-    const Register SrcVecReg = MI.getOperand(1).getReg();
-    const LLT DstElemTy = MRI.getType(SrcVecReg).getElementType();
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register SrcReg = MI.getOperand(1).getReg();
+  const LLT SrcTy = MRI.getType(SrcReg);
+
+  // Handle scalar sources (e.g., from <1 x i64> lowered to s64).
+  // For scalar, only element 0 exists, so broadcast it directly.
+  if (!SrcTy.isVector()) {
+    if (*UniqOpIdx != 0)
+      return false;
+    MatchInfo = [=, &MRI](MachineIRBuilder &B) {
+      buildBroadcastVector(B, MRI, SrcReg, DstReg);
+    };
+    return true;
+  }
+
+  MatchInfo = [=, &MRI, &SrcTy](MachineIRBuilder &B) {
+    const LLT DstElemTy = SrcTy.getElementType();
     auto Extr =
-        B.buildExtractVectorElementConstant(DstElemTy, SrcVecReg, *UniqOpIdx);
+        B.buildExtractVectorElementConstant(DstElemTy, SrcReg, *UniqOpIdx);
     buildBroadcastVector(B, MRI, Extr.getReg(0), DstReg);
   };
   return true;
@@ -2633,6 +2668,10 @@ static bool matchShuffleToSubvecBroadcast(MachineInstr &MI,
   const LLT DstTy = MRI.getType(DstReg);
   const LLT Src1Ty = MRI.getType(Src1Reg);
 
+  // Can't extract a subvector from a scalar source.
+  if (!Src1Ty.isVector() || !DstTy.isVector())
+    return false;
+
   const unsigned NumDstElems = DstTy.getNumElements();
   const unsigned NumSrcElems = Src1Ty.getNumElements();
   const unsigned MaskSize = Mask.size();
@@ -2735,11 +2774,15 @@ static bool matchShuffleToVecBroadcast(MachineInstr &MI,
 
   const LLT DstTy = MRI.getType(DstReg);
   const LLT Src1Ty = MRI.getType(Src1Reg);
-  if (Src1Ty.getSizeInBits() != 64 && Src1Ty.getSizeInBits() != 32) {
+  if (Src1Ty.getSizeInBits() != 64 && Src1Ty.getSizeInBits() != 32)
     return false;
-  }
+  // Destination must be a vector.
+  if (!DstTy.isVector())
+    return false;
   const unsigned NumDstElems = DstTy.getNumElements();
-  const unsigned NumSrcElems = Src1Ty.getNumElements();
+  // Handle scalar sources (e.g., s32/s64 from <1 x i32>/<1 x i64>).
+  // Treat scalar as 1-element for mask matching.
+  const unsigned NumSrcElems = Src1Ty.isVector() ? Src1Ty.getNumElements() : 1;
   if (NumDstElems != Mask.size()) {
     return false;
   }
