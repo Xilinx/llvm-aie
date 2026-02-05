@@ -2040,6 +2040,15 @@ bool llvm::matchConcatUnpadFusion(MachineInstr &MI, MachineRegisterInfo &MRI,
     return false;
 
   const unsigned NumNeededOps = UnpadElements / ConcatOpElements;
+  const unsigned TotalConcatOps = ConcatMI->getNumOperands() - 1; // -1 for def
+
+  // Must discard at least one operand to be beneficial
+  if (NumNeededOps >= TotalConcatOps)
+    return false;
+
+  // Verify CONCAT has only one use (the UNPAD)
+  if (!MRI.hasOneNonDBGUse(UnpadSrc))
+    return false;
 
   // Verify types are legal
   if (!TII.isLegalTypeToUnpad(ConcatDstTy))
@@ -2052,6 +2061,126 @@ bool llvm::matchConcatUnpadFusion(MachineInstr &MI, MachineRegisterInfo &MRI,
       NeededOps.push_back(ConcatMI->getOperand(I + 1).getReg());
     }
     B.buildConcatVectors(UnpadDst, NeededOps);
+  };
+
+  return true;
+}
+
+/// Match G_CONCAT_VECTORS with nested CONCAT or PAD operands that can be
+/// flattened into a single CONCAT.
+/// Transforms:
+///   %a:_(<8 x s32>) = G_CONCAT_VECTORS %x(<4 x s32>), %y(<4 x s32>)
+///   %b:_(<8 x s32>) = G_AIE_PAD_VECTOR_UNDEF %z(<4 x s32>)
+///   %dst:_(<16 x s32>) = G_CONCAT_VECTORS %a(<8 x s32>), %b(<8 x s32>)
+/// Into:
+///   %dst:_(<16 x s32>) = G_CONCAT_VECTORS %x(<4 x s32>), %y(<4 x s32>),
+///                                         %z(<4 x s32>), <undefined>
+bool llvm::matchFlattenNestedConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                    const AIEBaseInstrInfo &TII,
+                                    BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TargetOpcode::G_CONCAT_VECTORS &&
+         "Expected G_CONCAT_VECTORS");
+
+  const Register DstReg = MI.getOperand(0).getReg();
+  const LLT DstTy = MRI.getType(DstReg);
+  const unsigned DstElements = DstTy.getNumElements();
+
+  // Collect flattened operands and track if we found nesting (always with
+  // padding)
+  SmallVector<Register, 8> FlattenedOps;
+  unsigned TotalElements = 0;
+  bool FoundNestingToFlatten = false;
+  // Process each operand of the outer CONCAT
+  for (unsigned I = 1; I < MI.getNumOperands(); ++I) {
+    const Register OpReg = MI.getOperand(I).getReg();
+    MachineInstr *OpMI = MRI.getVRegDef(OpReg);
+    const LLT OpTy = MRI.getType(OpReg);
+    const unsigned OpElements = OpTy.getNumElements();
+
+    if (OpMI->getOpcode() == TargetOpcode::G_CONCAT_VECTORS) {
+      // Nested CONCAT - flatten by extracting all its operands
+      for (unsigned J = 1; J < OpMI->getNumOperands(); ++J) {
+        const Register SubOp = OpMI->getOperand(J).getReg();
+        const LLT SubOpTy = MRI.getType(SubOp);
+
+        FlattenedOps.push_back(SubOp);
+        TotalElements += SubOpTy.getNumElements();
+      }
+    } else if (OpMI->getOpcode() == TII.getGenericPadVectorOpcode()) {
+      // PAD - unwrap to source and mark padding needed
+      // Flat only if we have a pad.
+      FoundNestingToFlatten = true;
+      const Register PadSrc = OpMI->getOperand(1).getReg();
+      const LLT PadSrcTy = MRI.getType(PadSrc);
+      const unsigned PadSrcElements = PadSrcTy.getNumElements();
+
+      FlattenedOps.push_back(PadSrc);
+      TotalElements += PadSrcElements;
+
+      // Calculate padding in terms of sub-vectors
+      // The sub-vector size is the PAD source size
+      const unsigned SubVecElements = PadSrcElements;
+      const unsigned NumSubVecs = OpElements / SubVecElements;
+      const unsigned PaddingSubVecs = NumSubVecs - 1;
+
+      for (unsigned K = 0; K < PaddingSubVecs; ++K) {
+        FlattenedOps.push_back(
+            Register()); // One undefined sub-vector placeholder
+      }
+      TotalElements += PaddingSubVecs * SubVecElements;
+    } else {
+      // Regular operand - keep as-is
+
+      FlattenedOps.push_back(OpReg);
+      TotalElements += OpElements;
+    }
+  }
+
+  // Must have found at least one nested structure to flatten
+  if (!FoundNestingToFlatten)
+    return false;
+
+  // Verify total elements match destination
+  if (TotalElements != DstElements)
+    return false;
+
+  // Verify all valid operands in FlattenedOps have the same type
+  // and ensure we have at least one valid operand
+  LLT SubVecTy;
+  bool FoundValidOp = false;
+  for (const Register Op : FlattenedOps) {
+    if (Op.isValid()) {
+      const LLT OpTy = MRI.getType(Op);
+      if (!FoundValidOp) {
+        SubVecTy = OpTy;
+        FoundValidOp = true;
+      } else if (OpTy != SubVecTy) {
+        // Type mismatch in flattened operands - can't create valid CONCAT
+        return false;
+      }
+    }
+  }
+
+  // Must have at least one valid operand
+  if (!FoundValidOp)
+    return false;
+
+  // Build the transformation lambda
+  // All validation is complete - this lambda is guaranteed to succeed
+  MatchInfo = [=](MachineIRBuilder &B) {
+    SmallVector<Register, 8> FinalOps;
+
+    // Build final operand list, creating undefined for placeholders
+    for (const Register Op : FlattenedOps) {
+      if (!Op.isValid()) {
+        // Create undefined for padding with the same type as other operands
+        FinalOps.push_back(B.buildUndef(SubVecTy).getReg(0));
+      } else {
+        FinalOps.push_back(Op);
+      }
+    }
+
+    B.buildConcatVectors(DstReg, FinalOps);
   };
 
   return true;

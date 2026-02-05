@@ -143,6 +143,13 @@ def combine_concat_unpad_fusion : GICombineRule<
   (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])
 >;
 
+def combine_flatten_nested_concat : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_CONCAT_VECTORS): $root,
+  [{ return matchFlattenNestedConcat(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])
+>;
+
 def combine_vector_broadcast : GICombineRule<
   (defs root:$root, combine_splat_vector_matchdata:$matchinfo),
   (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
@@ -364,7 +371,8 @@ def aie2p_additional_combines : GICombineGroup<[
   combine_vshift_chain_to_zero_pad,
   combine_unpad_unmerge,
   combine_pad_unpad_fusion,
-  combine_concat_unpad_fusion
+  combine_concat_unpad_fusion,
+  combine_flatten_nested_concat
 ]>;
 
 def AIE2PreLegalizerCombiner
