@@ -392,6 +392,12 @@ void applyAlternatingBuildVector(MachineInstr &MI, MachineRegisterInfo &MRI,
 bool matchVShiftChainToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
                             const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
 
+bool matchPadUnpadToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
+                         const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
+
+bool matchUnpadPadToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
+                         const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
+
 } // namespace llvm
 
 #endif
