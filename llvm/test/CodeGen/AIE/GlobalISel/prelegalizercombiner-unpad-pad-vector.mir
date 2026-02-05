@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2 -run-pass=aie2-prelegalizer-combiner %s -verify-machineinstrs -o - \
 # RUN:    | FileCheck %s --check-prefix=COMBINER
 # RUN: llc -mtriple aie2p -run-pass=aie2p-prelegalizer-combiner %s -verify-machineinstrs -o - \
@@ -24,9 +24,7 @@ body:             |
     ; COMBINER: liveins: $wl2
     ; COMBINER-NEXT: {{  $}}
     ; COMBINER-NEXT: [[COPY:%[0-9]+]]:_(<8 x s32>) = COPY $wl2
-    ; COMBINER-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<4 x s32>) = G_AIE_UNPAD_VECTOR [[COPY]](<8 x s32>)
-    ; COMBINER-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<8 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[AIE_UNPAD_VECTOR]](<4 x s32>)
-    ; COMBINER-NEXT: $wl0 = COPY [[AIE_PAD_VECTOR_UNDEF]](<8 x s32>)
+    ; COMBINER-NEXT: $wl0 = COPY [[COPY]](<8 x s32>)
     ; COMBINER-NEXT: PseudoRET implicit $lr, implicit $wl0
     ;
     ; COALESCER-LABEL: name: unpad_256_bits

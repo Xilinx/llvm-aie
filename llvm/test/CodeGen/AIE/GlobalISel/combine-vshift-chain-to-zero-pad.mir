@@ -57,10 +57,8 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<16 x s32>) = COPY $x1
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[COPY]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[AIE_UNPAD_VECTOR]](<8 x s32>)
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 15
-    ; CHECK-NEXT: [[AIE_VSEL:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[AIE_PAD_VECTOR_UNDEF]], [[COPY1]], [[C]](s32)
+    ; CHECK-NEXT: [[AIE_VSEL:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSEL [[COPY]], [[COPY1]], [[C]](s32)
     ; CHECK-NEXT: $x0 = COPY [[AIE_VSEL]](<16 x s32>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
     %0:_(<16 x s32>) = COPY $x0
@@ -163,9 +161,7 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY $x0
     ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[COPY]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[AIE_UNPAD_VECTOR]](<8 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_PAD_VECTOR_UNDEF]](<16 x s32>)
-    ; CHECK-NEXT: $wl0 = COPY [[AIE_UNPAD_VECTOR1]](<8 x s32>)
+    ; CHECK-NEXT: $wl0 = COPY [[AIE_UNPAD_VECTOR]](<8 x s32>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wl0
     %0:_(<16 x s32>) = COPY $x0
     %1:_(s32) = G_CONSTANT i32 16
@@ -223,10 +219,8 @@ body:             |
     ; CHECK: liveins: $x0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY $x0
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[COPY]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[AIE_UNPAD_VECTOR]](<8 x s32>)
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
-    ; CHECK-NEXT: [[EVEC:%[0-9]+]]:_(s32) = G_EXTRACT_VECTOR_ELT [[AIE_PAD_VECTOR_UNDEF]](<16 x s32>), [[C]](s32)
+    ; CHECK-NEXT: [[EVEC:%[0-9]+]]:_(s32) = G_EXTRACT_VECTOR_ELT [[COPY]](<16 x s32>), [[C]](s32)
     ; CHECK-NEXT: $r0 = COPY [[EVEC]](s32)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
     %0:_(<16 x s32>) = COPY $x0

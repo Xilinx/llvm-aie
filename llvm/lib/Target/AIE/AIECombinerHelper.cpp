@@ -1815,6 +1815,94 @@ bool llvm::matchVShiftChainToZeroPad(MachineInstr &MI, MachineRegisterInfo &MRI,
   return true;
 }
 
+/// Match G_AIE_UNPAD_VECTOR fed by G_AIE_PAD_VECTOR_UNDEF and combine to COPY.
+/// Transforms:
+///   %padded:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF %src(<8 x s32>)
+///   %dst:_(<8 x s32>) = G_AIE_UNPAD_VECTOR %padded(<16 x s32>)
+/// Into:
+///   %dst:_(<8 x s32>) = COPY %src(<8 x s32>)
+bool llvm::matchPadUnpadToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
+                               const AIEBaseInstrInfo &TII,
+                               BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TII.getGenericUnpadVectorOpcode() &&
+         "Expected G_AIE_UNPAD_VECTOR");
+
+  // Get the source of the unpad operation
+  Register UnpadDst = MI.getOperand(0).getReg();
+  Register UnpadSrc = MI.getOperand(1).getReg();
+
+  // Check if source is G_AIE_PAD_VECTOR_UNDEF
+  MachineInstr *PadMI = MRI.getVRegDef(UnpadSrc);
+  if (!PadMI || PadMI->getOpcode() != TII.getGenericPadVectorOpcode())
+    return false;
+
+  Register PadSrc = PadMI->getOperand(1).getReg();
+
+  // Type validation: ensure input of PAD matches output of UNPAD
+  LLT PadSrcTy = MRI.getType(PadSrc);
+  LLT UnpadDstTy = MRI.getType(UnpadDst);
+
+  if (PadSrcTy != UnpadDstTy)
+    return false;
+
+  // Verify types are legal for these operations
+  LLT PadDstTy = MRI.getType(PadMI->getOperand(0).getReg());
+  if (!TII.isLegalTypeToPad(PadSrcTy) || !TII.isLegalTypeToUnpad(PadDstTy))
+    return false;
+
+  // Build the lambda that will create the copy
+  MatchInfo = [=](MachineIRBuilder &B) { B.buildCopy(UnpadDst, PadSrc); };
+
+  return true;
+}
+
+/// Match G_AIE_PAD_VECTOR_UNDEF fed by G_AIE_UNPAD_VECTOR and combine to COPY.
+/// Transforms:
+///   %unpadded:_(<4 x s32>) = G_AIE_UNPAD_VECTOR %src(<16 x s32>)
+///   %dst:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF %unpadded(<4 x s32>)
+/// Into:
+///   %dst:_(<16 x s32>) = COPY %src(<16 x s32>)
+bool llvm::matchUnpadPadToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
+                               const AIEBaseInstrInfo &TII,
+                               BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TII.getGenericPadVectorOpcode() &&
+         "Expected G_AIE_PAD_VECTOR_UNDEF");
+
+  // Get the source of the pad operation
+  Register PadDst = MI.getOperand(0).getReg();
+  Register PadSrc = MI.getOperand(1).getReg();
+
+  // Check if source is G_AIE_UNPAD_VECTOR
+  MachineInstr *UnpadMI = MRI.getVRegDef(PadSrc);
+  if (!UnpadMI || UnpadMI->getOpcode() != TII.getGenericUnpadVectorOpcode())
+    return false;
+
+  Register UnpadSrc = UnpadMI->getOperand(1).getReg();
+
+  // Type validation: ensure output of UNPAD matches input of PAD
+  LLT UnpadDstTy = MRI.getType(UnpadMI->getOperand(0).getReg());
+  LLT PadSrcTy = MRI.getType(PadSrc);
+
+  if (UnpadDstTy != PadSrcTy)
+    return false;
+
+  // Verify input of UNPAD matches output of PAD
+  LLT UnpadSrcTy = MRI.getType(UnpadSrc);
+  LLT PadDstTy = MRI.getType(PadDst);
+
+  if (UnpadSrcTy != PadDstTy)
+    return false;
+
+  // Verify types are legal for these operations
+  if (!TII.isLegalTypeToPad(PadSrcTy) || !TII.isLegalTypeToUnpad(UnpadSrcTy))
+    return false;
+
+  // Build the lambda that will create the copy
+  MatchInfo = [=](MachineIRBuilder &B) { B.buildCopy(PadDst, UnpadSrc); };
+
+  return true;
+}
+
 // Match something like:
 // %0:_(s32), %1:_(s32), %2:_(s32), %3:_(s32) = G_UNMERGE_VALUES %10(<4 x s32>)
 // %4:_(s32) = G_IMPLICIT_DEF

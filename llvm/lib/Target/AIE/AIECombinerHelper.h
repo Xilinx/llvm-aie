@@ -359,6 +359,12 @@ std::optional<unsigned> getMaxUsedVectorElement(Register Reg,
                                                 MachineRegisterInfo &MRI,
                                                 const AIEBaseInstrInfo &TII);
 
+bool matchPadUnpadToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
+                         const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
+
+bool matchUnpadPadToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
+                         const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
+
 } // namespace llvm
 
 #endif
