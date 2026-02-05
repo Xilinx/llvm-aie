@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2025-2025 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -O2 -mtriple=aie2p -verify-machineinstrs --issue-limit=1 %s -o - | FileCheck %s
 
 define <8 x i32> @test_shuffle_vector_to_concat_vector_8x32_v4x32(<4 x i32> noundef %a, <4 x i32> noundef %b) {
