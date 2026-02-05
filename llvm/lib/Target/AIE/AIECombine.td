@@ -122,6 +122,20 @@ def combine_vshift_chain_to_copy : GICombineRule<
   (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])
 >;
 
+def combine_pad_unpad_to_copy : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_AIE_UNPAD_VECTOR): $root,
+  [{ return matchPadUnpadToCopy(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])
+>;
+
+def combine_unpad_pad_to_copy : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_AIE_PAD_VECTOR_UNDEF): $root,
+  [{ return matchUnpadPadToCopy(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])
+>;
+
 def combine_vector_broadcast : GICombineRule<
   (defs root:$root, combine_splat_vector_matchdata:$matchinfo),
   (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
@@ -300,6 +314,8 @@ def combine_trunc_load : GICombineRule<
 def aie_additional_combines : GICombineGroup<[
   combine_unpad_vector,
   combine_pad_vector,
+  combine_pad_unpad_to_copy,
+  combine_unpad_pad_to_copy,
   combine_narrow_phi_node_s20,
   combine_globalval_offset,
   combine_extract_vector_elt_and_zsa_ext,
@@ -488,7 +504,9 @@ def AIE2PPostLegalizerCustomCombiner
                                                             combine_offset_load_store_share_ptradd,
                                                             combine_add_vector_elt_undef,
                                                             combine_insert_extract_vector_elt_to_copy,
-                                                            combine_vshift_chain_to_copy
+                                                            combine_vshift_chain_to_copy,
+                                                            combine_pad_unpad_to_copy,
+                                                            combine_unpad_pad_to_copy
                                                              ]> {
 }
 
