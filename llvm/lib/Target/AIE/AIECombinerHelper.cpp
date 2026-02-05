@@ -2178,8 +2178,11 @@ bool llvm::matchBroadcastElement(MachineInstr &MI, MachineRegisterInfo &MRI,
   if (!MaybeSplatIndex.has_value())
     return false;
 
-  const unsigned SrcNumElems =
-      MRI.getType(MI.getOperand(1).getReg()).getNumElements();
+  const LLT SrcTy = MRI.getType(MI.getOperand(1).getReg());
+
+  unsigned SrcNumElems = 1;
+  if (SrcTy.isVector())
+    SrcNumElems = SrcTy.getNumElements();
 
   unsigned Idx;
   unsigned AdjustSrcElemIdx = 0;
@@ -2193,11 +2196,16 @@ bool llvm::matchBroadcastElement(MachineInstr &MI, MachineRegisterInfo &MRI,
   const Register SrcVecReg = MI.getOperand(Idx).getReg();
   MachineInstr *SrcVec = MRI.getUniqueVRegDef(SrcVecReg);
 
+  const Register DstReg = MI.getOperand(0).getReg();
+
+  if (!MRI.getType(SrcVecReg).isVector()) {
+    MatchInfo = std::make_pair(DstReg, SrcVecReg);
+    return true;
+  }
   if (!SrcVec || SrcVec->getOpcode() != TargetOpcode::G_BUILD_VECTOR) {
     return false;
   }
 
-  const Register DstReg = MI.getOperand(0).getReg();
   const unsigned SrcElemIdx = MaybeSplatIndex.value() + 1;
   const Register ElemReg =
       SrcVec->getOperand(SrcElemIdx - AdjustSrcElemIdx).getReg();
