@@ -408,6 +408,10 @@ bool matchPadUnpadFusion(MachineInstr &MI, MachineRegisterInfo &MRI,
 bool matchConcatUnpadFusion(MachineInstr &MI, MachineRegisterInfo &MRI,
                             const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
 
+bool matchFlattenNestedConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
+                              const AIEBaseInstrInfo &TII,
+                              BuildFnTy &MatchInfo);
+
 } // namespace llvm
 
 #endif
