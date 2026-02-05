@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -743,6 +743,25 @@ void AIEPostRASchedStrategy::enterMBB(MachineBasicBlock *MBB) {
   InterBlock.emitInterBlockBottom(BS);
 }
 
+static MachineBasicBlock::iterator
+materializeEmptyBundles(std::vector<MachineBundle> Bundles,
+                        MachineBasicBlock *BB, MachineBasicBlock::iterator It,
+                        const TargetInstrInfo *TII) {
+  for (const AIE::MachineBundle &Bundle : Bundles) {
+    if (Bundle.empty()) {
+      // Empty bundle means 1-cycle stall. Insert NOP before position It.
+      // Note: insertNoop inserts *before* It, so consecutive empty bundles
+      // naturally create sequential NOPs without needing to advance It.
+      TII->insertNoop(*BB, It);
+      continue;
+    }
+    // Advance iterator to the position after this bundle's last
+    // instruction, ready for the next bundle or region.
+    It = getBundleEnd(Bundle.getInstrs().back()->getIterator());
+  }
+  return It;
+}
+
 void AIEPostRASchedStrategy::commitBlockSchedule(MachineBasicBlock *BB) {
   auto &BS = InterBlock.getBlockState(BB);
 
@@ -752,8 +771,8 @@ void AIEPostRASchedStrategy::commitBlockSchedule(MachineBasicBlock *BB) {
          BS.BottomInsert.size() == BS.getBottom().getBotFixedBundles().size());
 
   // Safety margin that is applied to non-pipelined loops.
-  // Note that the swp epilogue and prologue are handled in a different way. See
-  // enterMBB.
+  // Note that the swp epilogue and prologue are handled in a different way.
+  // See enterMBB.
   InterBlock.emitTopSafetyMargin(BS);
 
   if (BS.isPipelined()) {
@@ -762,22 +781,22 @@ void AIEPostRASchedStrategy::commitBlockSchedule(MachineBasicBlock *BB) {
     InterBlock.emitBundles(BS.getRegions().front().Bundles, BB, It,
                            /*Move=*/true, /*EmitNops=*/true);
   } else {
+    // Emit bundles for each region in the block. Regions are stored in the
+    // order they were scheduled (bottom-up), so we must reverse them to emit
+    // NOPs in the correct region.
     MachineBasicBlock::iterator It = BB->begin();
     const TargetInstrInfo *TII = getTII(BB);
-    for (auto &Region : BS.getRegions()) {
+    // Reverse iteration: regions were added bottom-up (last region first),
+    // but must be emitted top-down (first region first) to match MIR order.
+    for (auto &Region : reverse(BS.getRegions())) {
       // Contrary to PRAS, the MachineScheduler does not automatically insert
-      // NOPs. That isn't a problem, since the callbacks to the HazardRecognizer
-      // were a bit flaky (e.g. when to call emitNoop vs advanceCycle).
-      // MachineScheduler just calls advanceCycle, and this is enough for us to
-      // insert NOPs because the sequence of Bundles gives us the full picture.
-      for (const AIE::MachineBundle &Bundle : Region.Bundles) {
-        if (Bundle.empty()) {
-          // Empty bundle means 1-cycle stall.
-          TII->insertNoop(*BB, It);
-          continue;
-        }
-        It = getBundleEnd(Bundle.getInstrs().back()->getIterator());
-      }
+      // NOPs. That isn't a problem, since the callbacks to the
+      // HazardRecognizer were a bit flaky (e.g. when to call emitNoop vs
+      // advanceCycle). MachineScheduler just calls advanceCycle, and this is
+      // enough for us to insert NOPs because the sequence of Bundles gives us
+      // the full picture.
+      It = materializeEmptyBundles(Region.Bundles, BB, It, TII);
+
       AIEHazardRecognizer::applyBundles(Region.Bundles, BS.TheBlock);
     }
   }
