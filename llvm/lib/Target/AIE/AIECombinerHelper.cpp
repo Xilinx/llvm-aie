@@ -1640,6 +1640,181 @@ void llvm::applyUnpadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
   MI.eraseFromParent();
 }
 
+/// Analyze which elements of a vector register are actually used by examining
+/// all uses of the register. Returns the maximum element index accessed.
+/// \param Reg The register to analyze
+/// \param MRI Machine register info
+/// \param TII Target instruction info
+/// \return The maximum element index that is accessed, or std::nullopt if
+///         the usage pattern is too complex to analyze
+std::optional<unsigned>
+llvm::getMaxUsedVectorElement(Register Reg, MachineRegisterInfo &MRI,
+                              const AIEBaseInstrInfo &TII) {
+
+  // Handler for VSEL operations: Check which elements are selected via the mask
+  auto HandleVSel = [&](const MachineInstr &User) -> std::optional<unsigned> {
+    const Register MaskReg = User.getOperand(3).getReg();
+    const auto MaskVal = getIConstantVRegVal(MaskReg, MRI);
+
+    // Can't analyze non-constant mask
+    if (!MaskVal)
+      return std::nullopt;
+
+    const uint64_t Mask = MaskVal->getZExtValue();
+    if (Mask == 0)
+      return 0; // No elements selected
+
+    // Return the highest set bit in the mask
+    return 63 - llvm::countl_zero(Mask);
+  };
+
+  // Handler for UNMERGE operations: Check which outputs are used
+  auto HandleUnmerge =
+      [&](const MachineInstr &User) -> std::optional<unsigned> {
+    const LLT SrcTy = MRI.getType(Reg);
+    const unsigned NumElems = SrcTy.getNumElements();
+    const unsigned NumDefs = User.getNumDefs();
+    const unsigned ElemsPerDef = NumElems / NumDefs;
+
+    unsigned MaxElem = 0;
+    for (unsigned I = 0; I < NumDefs; I++) {
+      if (!MRI.use_empty(User.getOperand(I).getReg())) {
+        MaxElem = std::max(MaxElem, (I + 1) * ElemsPerDef - 1);
+      }
+    }
+    return MaxElem;
+  };
+
+  // Handler for EXTRACT_VECTOR_ELT operations: Direct element access
+  auto HandleExtract =
+      [&](const MachineInstr &User) -> std::optional<unsigned> {
+    const Register IdxReg = User.getOperand(2).getReg();
+    const auto Idx = getIConstantVRegVal(IdxReg, MRI);
+
+    // Can't analyze non-constant index
+    if (!Idx)
+      return std::nullopt;
+
+    return static_cast<unsigned>(Idx->getZExtValue());
+  };
+
+  unsigned MaxElement = 0;
+
+  for (const MachineInstr &User : MRI.use_nodbg_instructions(Reg)) {
+    const unsigned Opcode = User.getOpcode();
+
+    std::optional<unsigned> Result = std::nullopt;
+
+    if (Opcode == TII.getGenericVSelOpcode()) {
+      Result = HandleVSel(User);
+    } else if (Opcode == TargetOpcode::G_UNMERGE_VALUES) {
+      Result = HandleUnmerge(User);
+    } else if (Opcode == TargetOpcode::G_EXTRACT_VECTOR_ELT ||
+               isGenericExtractOpcode(Opcode, TII)) {
+      Result = HandleExtract(User);
+    }
+
+    // If any handler couldn't analyze, bail out
+    if (!Result)
+      return std::nullopt;
+
+    MaxElement = std::max(MaxElement, *Result);
+  }
+
+  return MaxElement;
+}
+
+/// Match a chain of G_AIE_VSHIFT_RIGHT operations that
+/// results in padding with zeros.
+/// Transforms:
+///   %concat = G_CONCAT_VECTORS %src(<8 x s32>), %A(<8 x s32>)
+///   %shift1 = G_AIE_VSHIFT_RIGHT %concat, %B, 16
+///   %shift2 = G_AIE_VSHIFT_RIGHT %C, %shift1, 48
+/// Into:
+///   %zero_broadcast = G_AIE_BROADCAST_VECTOR %zero_scalar
+///   %zero_lo, %zero_hi = G_UNMERGE_VALUES %zero_broadcast
+///   %result = G_CONCAT_VECTORS %src, %zero_hi
+bool llvm::matchVShiftChainToZeroPad(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                     const AIEBaseInstrInfo &TII,
+                                     BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TII.getGenericVShiftOpcode() &&
+         "Expected G_AIE_VSHIFT_RIGHT");
+
+  // Get second operand (should be first VSHIFT)
+  const Register Src2 = MI.getOperand(2).getReg();
+  const MachineInstr *FirstShift = getDefIgnoringCopies(Src2, MRI);
+  if (!FirstShift || FirstShift->getOpcode() != TII.getGenericVShiftOpcode())
+    return false;
+
+  // Get shift amounts
+  const auto Shift1Amt =
+      getIConstantVRegVal(FirstShift->getOperand(3).getReg(), MRI);
+  const auto Shift2Amt = getIConstantVRegVal(MI.getOperand(3).getReg(), MRI);
+
+  if (!Shift1Amt || !Shift2Amt)
+    return false;
+
+  // Get the data source from first VSHIFT
+  const Register DataSrc = FirstShift->getOperand(1).getReg();
+  const Register DstReg = MI.getOperand(0).getReg();
+
+  // Calculate expected shift amounts based on vector sizes
+  const LLT DataSrcTy = MRI.getType(DataSrc);
+  const unsigned SrcSizeInBytes = DataSrcTy.getSizeInBits() / 8;
+
+  // Calculate expected shift amounts:
+  // First shift: adds padding (quarter of source size)
+  const unsigned ExpectedShift1 = SrcSizeInBytes / 4;
+  // Second shift: brings in zeros (1.5x source size)
+  const unsigned ExpectedShift2 = (SrcSizeInBytes + SrcSizeInBytes / 2) / 2;
+
+  // Verify the pattern matches expected shifts
+  if (*Shift1Amt != ExpectedShift1 || *Shift2Amt != ExpectedShift2)
+    return false;
+
+  // Build replacement
+  MatchInfo = [=, &MRI, &TII](MachineIRBuilder &B) {
+    const LLT DstTy = MRI.getType(DstReg);
+    const LLT HalfTy = DstTy.divide(2);
+    const unsigned NumElems = DstTy.getNumElements();
+    const unsigned HalfElems = NumElems / 2;
+
+    // Analyze usage to determine if we need zeros or can use G_IMPLICIT_DEF
+    const auto MaxUsed = getMaxUsedVectorElement(DstReg, MRI, TII);
+
+    Register UpperHalf;
+    if (MaxUsed && *MaxUsed < HalfElems) {
+      // Only lower half is used - can use G_IMPLICIT_DEF for upper half
+      const Register UndefVec = B.buildUndef(DstTy).getReg(0);
+      const Register UndefLower = MRI.createGenericVirtualRegister(HalfTy);
+      const Register UndefUpper = MRI.createGenericVirtualRegister(HalfTy);
+      B.buildUnmerge({UndefLower, UndefUpper}, UndefVec);
+      UpperHalf = UndefUpper;
+    } else {
+      // Upper half might be used - need actual zeros
+      const Register ZeroScalar = B.buildConstant(LLT::scalar(32), 0).getReg(0);
+      const Register ZeroBroadcast = MRI.createGenericVirtualRegister(DstTy);
+      B.buildInstr(TII.getGenericBroadcastVectorOpcode(), {ZeroBroadcast},
+                   {ZeroScalar});
+
+      const Register ZeroLower = MRI.createGenericVirtualRegister(HalfTy);
+      const Register ZeroUpper = MRI.createGenericVirtualRegister(HalfTy);
+      B.buildUnmerge({ZeroLower, ZeroUpper}, ZeroBroadcast);
+      UpperHalf = ZeroUpper;
+    }
+
+    // Extract lower half from DataSrc
+    const Register Dummy = MRI.createGenericVirtualRegister(HalfTy);
+    const Register LowerHalf = MRI.createGenericVirtualRegister(HalfTy);
+    B.buildUnmerge({LowerHalf, Dummy}, DataSrc);
+
+    // CONCAT data with upper half (either G_IMPLICIT_DEF or zeros)
+    B.buildConcatVectors(DstReg, {LowerHalf, UpperHalf});
+  };
+
+  return true;
+}
+
 // Match something like:
 // %0:_(s32), %1:_(s32), %2:_(s32), %3:_(s32) = G_UNMERGE_VALUES %10(<4 x s32>)
 // %4:_(s32) = G_IMPLICIT_DEF

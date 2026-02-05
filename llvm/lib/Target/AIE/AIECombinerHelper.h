@@ -344,6 +344,21 @@ bool matchVSelToUnmergeConcatOrCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
                                     const AIEBaseInstrInfo &TII,
                                     BuildFnTy &MatchInfo);
 
+bool matchVShiftChainToZeroPad(MachineInstr &MI, MachineRegisterInfo &MRI,
+                               const AIEBaseInstrInfo &TII,
+                               BuildFnTy &MatchInfo);
+
+/// Analyze which elements of a vector register are actually used by examining
+/// all uses of the register.
+/// \param Reg The register to analyze
+/// \param MRI Machine register info
+/// \param TII Target instruction info
+/// \return The maximum element index that is accessed, or std::nullopt if
+///         the usage pattern is too complex to analyze
+std::optional<unsigned> getMaxUsedVectorElement(Register Reg,
+                                                MachineRegisterInfo &MRI,
+                                                const AIEBaseInstrInfo &TII);
+
 } // namespace llvm
 
 #endif
