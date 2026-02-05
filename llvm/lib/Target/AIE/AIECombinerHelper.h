@@ -365,6 +365,10 @@ bool matchPadUnpadToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
 bool matchUnpadPadToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
                          const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
 
+bool matchUnpadUnmerge(MachineInstr &MI, MachineRegisterInfo &MRI,
+                       const AIEBaseInstrInfo &TII, CombinerHelper &Helper,
+                       GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
+
 } // namespace llvm
 
 #endif
