@@ -1946,6 +1946,56 @@ bool llvm::matchPadUnpadToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
   return true;
 }
 
+/// Match G_AIE_UNPAD_VECTOR fed by G_AIE_PAD_VECTOR_UNDEF where the types
+/// don't match exactly, allowing fusion into a single G_AIE_PAD_VECTOR_UNDEF.
+/// Transforms:
+///   %padded:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF %src(<4 x s32>)
+///   %dst:_(<8 x s32>) = G_AIE_UNPAD_VECTOR %padded(<16 x s32>)
+/// Into:
+///   %dst:_(<8 x s32>) = G_AIE_PAD_VECTOR_UNDEF %src(<4 x s32>)
+bool llvm::matchPadUnpadFusion(MachineInstr &MI, MachineRegisterInfo &MRI,
+                               const AIEBaseInstrInfo &TII,
+                               BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TII.getGenericUnpadVectorOpcode() &&
+         "Expected G_AIE_UNPAD_VECTOR");
+
+  // Get the source of the unpad operation
+  Register UnpadDst = MI.getOperand(0).getReg();
+  Register UnpadSrc = MI.getOperand(1).getReg();
+
+  // Check if source is G_AIE_PAD_VECTOR_UNDEF
+  MachineInstr *PadMI = MRI.getVRegDef(UnpadSrc);
+  if (!PadMI || PadMI->getOpcode() != TII.getGenericPadVectorOpcode())
+    return false;
+
+  Register PadSrc = PadMI->getOperand(1).getReg();
+
+  // Get the types
+  LLT PadSrcTy = MRI.getType(PadSrc);
+  LLT PadDstTy = MRI.getType(PadMI->getOperand(0).getReg());
+  LLT UnpadDstTy = MRI.getType(UnpadDst);
+
+  // If input and output types match, this should be handled by
+  // matchPadUnpadToCopy which creates a COPY
+  if (PadSrcTy == UnpadDstTy)
+    return false;
+
+  // Verify that we can legally pad from PadSrc to UnpadDst
+  if (!TII.isLegalTypeToPad(PadSrcTy) || !TII.isLegalTypeToUnpad(UnpadDstTy))
+    return false;
+
+  // Verify the intermediate type is also legal
+  if (!TII.isLegalTypeToUnpad(PadDstTy))
+    return false;
+
+  // Build the lambda that will create the fused pad
+  MatchInfo = [=, &TII](MachineIRBuilder &B) {
+    B.buildInstr(TII.getGenericPadVectorOpcode(), {UnpadDst}, {PadSrc});
+  };
+
+  return true;
+}
+
 /// Match G_AIE_PAD_VECTOR_UNDEF fed by G_AIE_UNPAD_VECTOR and combine to COPY.
 /// Transforms:
 ///   %unpadded:_(<4 x s32>) = G_AIE_UNPAD_VECTOR %src(<16 x s32>)

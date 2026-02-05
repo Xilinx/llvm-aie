@@ -129,6 +129,13 @@ def combine_unpad_unmerge : GICombineRule<
   (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])
 >;
 
+def combine_pad_unpad_fusion : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_AIE_UNPAD_VECTOR): $root,
+  [{ return matchPadUnpadFusion(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])
+>;
+
 def combine_vector_broadcast : GICombineRule<
   (defs root:$root, combine_splat_vector_matchdata:$matchinfo),
   (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
@@ -348,7 +355,8 @@ def aie2p_additional_combines : GICombineGroup<[
   combine_phi_bitcast_swap,
   combine_vsel_to_unmerge_concat,
   combine_vshift_chain_to_zero_pad,
-  combine_unpad_unmerge
+  combine_unpad_unmerge,
+  combine_pad_unpad_fusion
 ]>;
 
 def AIE2PreLegalizerCombiner
