@@ -1,3 +1,4 @@
+# Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 add_mlir_conversion_library(MLIRTosaToArith
   TosaToArith.cpp
   TosaToArithPass.cpp
@@ -14,6 +15,7 @@ add_mlir_conversion_library(MLIRTosaToArith
   MLIRIR
   MLIRPass
   MLIRTosaDialect
+  MLIRTosaToLinalg
   MLIRTosaTransforms
   MLIRSupport
   )

@@ -1,3 +1,4 @@
+# Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 add_mlir_conversion_library(MLIRTosaToLinalg
   TosaToLinalg.cpp
   TosaToLinalgNamed.cpp
@@ -14,6 +15,7 @@ add_mlir_conversion_library(MLIRTosaToLinalg
   LINK_LIBS PUBLIC
   MLIRArithDialect
   MLIRDialectUtils
+  MLIRFuncTransforms
   MLIRIR
   MLIRIndexDialect
   MLIRLinalgDialect

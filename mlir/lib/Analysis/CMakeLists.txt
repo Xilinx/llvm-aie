@@ -1,3 +1,4 @@
+# Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 set(LLVM_OPTIONAL_SOURCES
   AliasAnalysis.cpp
   CallGraph.cpp
@@ -53,6 +54,7 @@ add_mlir_library(MLIRAnalysis
   MLIRControlFlowInterfaces
   MLIRDataLayoutInterfaces
   MLIRFunctionInterfaces
+  MLIRInferIntRangeCommon
   MLIRInferIntRangeInterface
   MLIRInferTypeOpInterface
   MLIRLoopLikeInterface
@@ -60,4 +62,3 @@ add_mlir_library(MLIRAnalysis
   MLIRSideEffectInterfaces
   MLIRViewLikeInterface
   )
-
