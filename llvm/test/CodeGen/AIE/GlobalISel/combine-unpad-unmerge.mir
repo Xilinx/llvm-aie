@@ -22,9 +22,8 @@ body:             |
     ; CHECK: liveins: $x0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY $x0
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[COPY]](<16 x s32>)
     ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<8 x s32>), [[UV1:%[0-9]+]]:_(<8 x s32>) = G_UNMERGE_VALUES [[COPY]](<16 x s32>)
-    ; CHECK-NEXT: $wl0 = COPY [[AIE_UNPAD_VECTOR]](<8 x s32>)
+    ; CHECK-NEXT: $wl0 = COPY [[UV]](<8 x s32>)
     ; CHECK-NEXT: $wl1 = COPY [[UV]](<8 x s32>)
     ; CHECK-NEXT: $wl2 = COPY [[UV1]](<8 x s32>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wl0, implicit $wl1, implicit $wl2
@@ -51,10 +50,9 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY $x0
     ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<8 x s32>), [[UV1:%[0-9]+]]:_(<8 x s32>) = G_UNMERGE_VALUES [[COPY]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[COPY]](<16 x s32>)
     ; CHECK-NEXT: $wl0 = COPY [[UV]](<8 x s32>)
     ; CHECK-NEXT: $wl1 = COPY [[UV1]](<8 x s32>)
-    ; CHECK-NEXT: $wl2 = COPY [[AIE_UNPAD_VECTOR]](<8 x s32>)
+    ; CHECK-NEXT: $wl2 = COPY [[UV]](<8 x s32>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wl0, implicit $wl1, implicit $wl2
     %0:_(<16 x s32>) = COPY $x0
     %1:_(<8 x s32>), %2:_(<8 x s32>) = G_UNMERGE_VALUES %0(<16 x s32>)
@@ -101,9 +99,8 @@ body:             |
     ; CHECK: liveins: $x0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY $x0
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<4 x s32>) = G_AIE_UNPAD_VECTOR [[COPY]](<16 x s32>)
     ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<4 x s32>), [[UV1:%[0-9]+]]:_(<4 x s32>), [[UV2:%[0-9]+]]:_(<4 x s32>), [[UV3:%[0-9]+]]:_(<4 x s32>) = G_UNMERGE_VALUES [[COPY]](<16 x s32>)
-    ; CHECK-NEXT: $q0 = COPY [[AIE_UNPAD_VECTOR]](<4 x s32>)
+    ; CHECK-NEXT: $q0 = COPY [[UV]](<4 x s32>)
     ; CHECK-NEXT: $q1 = COPY [[UV]](<4 x s32>)
     ; CHECK-NEXT: $q2 = COPY [[UV1]](<4 x s32>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $q0, implicit $q1, implicit $q2

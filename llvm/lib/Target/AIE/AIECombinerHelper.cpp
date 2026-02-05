@@ -419,6 +419,111 @@ bool isUseOf(const MachineInstr &MI, const MachineInstr &Def) {
   return false;
 }
 
+/// Combines G_AIE_UNPAD_VECTOR and G_UNMERGE_VALUES operating on the same
+/// source by reordering them to enable further optimizations.
+///
+/// Pattern matched:
+///   %src:_(<16 x s32>) = ...
+///   %unpad:_(<4 x s32>) = G_AIE_UNPAD_VECTOR %src
+///   %a:_(<2 x s32>), %b:_(<2 x s32>) = G_UNMERGE_VALUES %src
+///
+/// Transforms to:
+///   %src:_(<16 x s32>) = ...
+///   %new_a:_(<2 x s32>), %new_b:_(<2 x s32>) = G_UNMERGE_VALUES %src
+///   %unpad:_(<4 x s32>) = COPY %new_a
+///   %a:_(<2 x s32>) = COPY %new_a
+///   %b:_(<2 x s32>) = COPY %new_b
+bool llvm::matchUnpadUnmerge(MachineInstr &UnpadMI, MachineRegisterInfo &MRI,
+                             const AIEBaseInstrInfo &TII,
+                             CombinerHelper &Helper,
+                             GISelChangeObserver &Observer,
+                             BuildFnTy &MatchInfo) {
+  assert(UnpadMI.getOpcode() == TII.getGenericUnpadVectorOpcode() &&
+         "Expected G_AIE_UNPAD_VECTOR");
+
+  // 1. Get UNPAD operands and types
+  const Register UnpadDst = UnpadMI.getOperand(0).getReg();
+  const Register UnpadSrc = UnpadMI.getOperand(1).getReg();
+  const LLT UnpadDstTy = MRI.getType(UnpadDst);
+
+  // 2. Find G_UNMERGE_VALUES on same source
+  MachineInstr *UnmergeMI = nullptr;
+  for (MachineInstr &UseMI : MRI.use_nodbg_instructions(UnpadSrc)) {
+    if (UseMI.getOpcode() == TargetOpcode::G_UNMERGE_VALUES) {
+      UnmergeMI = &UseMI;
+      break;
+    }
+  }
+
+  if (!UnmergeMI)
+    return false;
+
+  // 3. Verify type compatibility
+  const unsigned NumUnmergeOutputs = UnmergeMI->getNumDefs();
+  const LLT UnmergeDst0Ty = MRI.getType(UnmergeMI->getOperand(0).getReg());
+
+  // UNPAD output must match first UNMERGE output
+  if (UnpadDstTy != UnmergeDst0Ty)
+    return false;
+
+  // Collect all UNMERGE output registers
+  SmallVector<Register, 4> UnmergeDsts;
+  for (unsigned I = 0; I < NumUnmergeOutputs; ++I) {
+    UnmergeDsts.push_back(UnmergeMI->getOperand(I).getReg());
+  }
+
+  // Case 1: UNPAD dominates UNMERGE
+  const bool UnpadDominates = Helper.dominates(UnpadMI, *UnmergeMI);
+  if (UnpadDominates) {
+    MatchInfo = [&UnpadMI, UnmergeMI, UnpadDst, UnpadSrc, UnmergeDsts,
+                 UnmergeDst0Ty, NumUnmergeOutputs, &MRI,
+                 &Observer](MachineIRBuilder &B) {
+      // Create new UNMERGE at UNPAD location
+      B.setInstr(UnpadMI);
+      SmallVector<Register, 4> NewDsts;
+      for (unsigned I = 0; I < NumUnmergeOutputs; ++I) {
+        NewDsts.push_back(MRI.createGenericVirtualRegister(UnmergeDst0Ty));
+      }
+      B.buildUnmerge(NewDsts, UnpadSrc);
+
+      // Create copy to UNPAD destination
+      B.buildCopy(UnpadDst, NewDsts[0]);
+
+      // Create copies at UNMERGE location for its users
+      B.setInsertPt(*UnmergeMI->getParent(), UnmergeMI->getIterator());
+      for (unsigned I = 0; I < NumUnmergeOutputs; ++I) {
+        B.buildCopy(UnmergeDsts[I], NewDsts[I]);
+      }
+
+      // Erase both original instructions
+      Observer.erasingInstr(*UnmergeMI);
+      UnmergeMI->eraseFromParent();
+      Observer.erasingInstr(UnpadMI);
+      UnpadMI.eraseFromParent();
+    };
+    return true;
+  }
+
+  const bool UnmergeDominates = Helper.dominates(*UnmergeMI, UnpadMI);
+  // Case 2: UNMERGE dominates UNPAD
+  if (UnmergeDominates) {
+    MatchInfo = [&UnpadMI, UnpadDst, UnmergeDsts,
+                 &Observer](MachineIRBuilder &B) {
+      // Simply copy from first UNMERGE result to UNPAD destination
+      B.setInstr(UnpadMI);
+      B.buildCopy(UnpadDst, UnmergeDsts[0]);
+
+      // Erase UNPAD
+      Observer.erasingInstr(UnpadMI);
+      UnpadMI.eraseFromParent();
+    };
+
+    return true;
+  }
+
+  return false;
+}
+
 ///  Check for dead \a InBetweenMI MI and copy-like instructions that can be
 ///  coalesced once \a MemI and \a Dest are combined.
 bool isNonCoalesceableUseOf(const MachineInstr &MemI,
