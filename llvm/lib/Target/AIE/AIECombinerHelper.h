@@ -372,6 +372,9 @@ bool matchUnpadUnmerge(MachineInstr &MI, MachineRegisterInfo &MRI,
 bool matchPadUnpadFusion(MachineInstr &MI, MachineRegisterInfo &MRI,
                          const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
 
+bool matchConcatUnpadFusion(MachineInstr &MI, MachineRegisterInfo &MRI,
+                            const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
+
 } // namespace llvm
 
 #endif
