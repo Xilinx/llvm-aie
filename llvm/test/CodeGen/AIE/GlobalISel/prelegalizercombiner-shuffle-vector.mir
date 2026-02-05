@@ -4,10 +4,36 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 #
 # RUN: llc -mtriple aie2p -run-pass=aie2p-prelegalizer-combiner -verify-machineinstrs %s -o - | FileCheck %s
 
+
+
+---
+name: shuffle_broadcast_scalar
+tracksRegLiveness: true
+body:             |
+  bb.1:
+    liveins: $l0
+    ; CHECK-LABEL: name: shuffle_broadcast_scalar
+    ; CHECK: liveins: $l0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<2 x s32>) = COPY $l0
+    ; CHECK-NEXT: [[AIE_BROADCAST_VECTOR:%[0-9]+]]:_(<8 x s64>) = G_AIE_BROADCAST_VECTOR [[COPY]](<2 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s64>) = G_CONCAT_VECTORS [[AIE_BROADCAST_VECTOR]](<8 x s64>), [[AIE_BROADCAST_VECTOR]](<8 x s64>)
+    ; CHECK-NEXT: [[AIE_BROADCAST_VECTOR1:%[0-9]+]]:_(<8 x s64>) = G_AIE_BROADCAST_VECTOR [[COPY]](<2 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<16 x s64>) = G_CONCAT_VECTORS [[AIE_BROADCAST_VECTOR1]](<8 x s64>), [[AIE_BROADCAST_VECTOR1]](<8 x s64>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<16 x s64>), implicit [[CONCAT_VECTORS1]](<16 x s64>)
+    %1:_(<2 x s32>) = COPY $l0
+    %3:_(s64) = G_IMPLICIT_DEF
+    %2:_(s64) = G_BITCAST %1:_(<2 x s32>)
+    %0:_(<16 x s64>) = G_SHUFFLE_VECTOR %2:_(s64), %3:_, shufflemask(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    %4:_(<16 x s64>) = G_SHUFFLE_VECTOR %3:_(s64), %2:_(s64), shufflemask(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+    PseudoRET implicit $lr, implicit %0, implicit %4
+...
+
+---
 
 ---
 name: shuffle_vector_to_concat_vector1
