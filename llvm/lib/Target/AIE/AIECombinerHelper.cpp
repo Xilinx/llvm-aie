@@ -1965,6 +1965,67 @@ bool llvm::matchPadUnpadFusion(MachineInstr &MI, MachineRegisterInfo &MRI,
   return true;
 }
 
+/// Match G_AIE_UNPAD_VECTOR fed by G_CONCAT_VECTORS where UNPAD discards
+/// upper elements, allowing fusion into a smaller G_CONCAT_VECTORS.
+/// Transforms:
+///   %concat:_(<16 x s32>) = G_CONCAT_VECTORS %a(<4 x s32>), %b(<4 x s32>),
+///                                            %c(<4 x s32>), %d(<4 x s32>)
+///   %dst:_(<8 x s32>) = G_AIE_UNPAD_VECTOR %concat(<16 x s32>)
+/// Into:
+///   %dst:_(<8 x s32>) = G_CONCAT_VECTORS %a(<4 x s32>), %b(<4 x s32>)
+bool llvm::matchConcatUnpadFusion(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                  const AIEBaseInstrInfo &TII,
+                                  BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TII.getGenericUnpadVectorOpcode() &&
+         "Expected G_AIE_UNPAD_VECTOR");
+
+  // Get UNPAD operands
+  const Register UnpadDst = MI.getOperand(0).getReg();
+  const Register UnpadSrc = MI.getOperand(1).getReg();
+
+  // Check if source is G_CONCAT_VECTORS
+  MachineInstr *ConcatMI = MRI.getVRegDef(UnpadSrc);
+  if (!ConcatMI || ConcatMI->getOpcode() != TargetOpcode::G_CONCAT_VECTORS)
+    return false;
+
+  // Get types
+  const LLT UnpadDstTy = MRI.getType(UnpadDst);
+  const LLT ConcatDstTy = MRI.getType(UnpadSrc);
+  const LLT ConcatSrcTy = MRI.getType(ConcatMI->getOperand(1).getReg());
+
+  const unsigned UnpadElements = UnpadDstTy.getNumElements();
+  const unsigned ConcatOpElements = ConcatSrcTy.getNumElements();
+
+  // Verify element counts align
+  // This ensures the UNPAD output size is an exact multiple of each CONCAT
+  // operand size, so we can cleanly extract complete operands.
+  // Example: If UNPAD outputs 8 elements and each CONCAT operand has 4
+  //          elements, then 8 % 4 = 0 (aligned), and we need exactly 2
+  //          operands.
+  // Counter-example: If UNPAD outputs 8 elements but each CONCAT operand has
+  //                  3 elements, then 8 % 3 = 2 (NOT aligned), and we can't
+  //                  cleanly extract 8 elements using 3-element chunks.
+  if (UnpadElements % ConcatOpElements != 0)
+    return false;
+
+  const unsigned NumNeededOps = UnpadElements / ConcatOpElements;
+
+  // Verify types are legal
+  if (!TII.isLegalTypeToUnpad(ConcatDstTy))
+    return false;
+
+  // Build the transformation lambda
+  MatchInfo = [=](MachineIRBuilder &B) {
+    SmallVector<Register, 4> NeededOps;
+    for (unsigned I = 0; I < NumNeededOps; I++) {
+      NeededOps.push_back(ConcatMI->getOperand(I + 1).getReg());
+    }
+    B.buildConcatVectors(UnpadDst, NeededOps);
+  };
+
+  return true;
+}
+
 /// Match G_AIE_PAD_VECTOR_UNDEF fed by G_AIE_UNPAD_VECTOR and combine to COPY.
 /// Transforms:
 ///   %unpadded:_(<4 x s32>) = G_AIE_UNPAD_VECTOR %src(<16 x s32>)

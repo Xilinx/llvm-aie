@@ -20,10 +20,8 @@ body: |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<4 x s32>) = COPY $q0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<4 x s32>) = COPY $q1
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[COPY]](<4 x s32>), [[COPY1]](<4 x s32>), [[DEF]](<4 x s32>), [[DEF]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[CONCAT_VECTORS]](<16 x s32>)
-    ; CHECK-NEXT: $wl0 = COPY [[AIE_UNPAD_VECTOR]](<8 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s32>) = G_CONCAT_VECTORS [[COPY]](<4 x s32>), [[COPY1]](<4 x s32>)
+    ; CHECK-NEXT: $wl0 = COPY [[CONCAT_VECTORS]](<8 x s32>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wl0
     %0:_(<4 x s32>) = COPY $q0
     %1:_(<4 x s32>) = COPY $q1
