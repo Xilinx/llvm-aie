@@ -1,0 +1,374 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VSRS_2x_mv_w_srs_bm_srsSign0
+    $wh3 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmhh0, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wh10 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmhl1, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wl0 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmll1, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wh4 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmhh3, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wh0 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmhh7, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wh6 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmll3, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wl4 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmll2, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wl8 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmhh2, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wl1 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmhl4, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wl7 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmhh1, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wh2 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmlh0, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wl2 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmll6, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wh9 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmlh4, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wl5 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmlh1, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wl9 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmhl0, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wh11 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmll4, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wh5 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmhl6, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wl6 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmlh6, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wl3 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmhl2, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wl10 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmlh2, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wh1 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmll5, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wl11 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmlh5, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wh8 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmll0, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wh7 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmhl5, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wh3 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmlh7, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wh10 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmhh6, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wl0 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmll7, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wh4 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmhl7, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wh0 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmhl3, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wh6 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmhh5, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wl4 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmhh4, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wl8 = VSRS_2x_mv_w_srs_bm_srsSign0 $bmlh3, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+
+    ; VSRS_2x_mv_w_srs_bm_srsSign1
+    $wh11 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmll6, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh2 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmlh1, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh7 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmhh7, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh4 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmhh1, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh6 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmlh6, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh10 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmlh3, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh1 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmll2, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wl3 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmll5, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wl9 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmhh5, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh9 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmlh5, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh0 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmhl5, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wl1 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmlh4, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh3 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmhh4, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wl5 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmhl3, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh8 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmhl7, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh5 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmhl4, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wl10 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmhh0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wl4 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmhh2, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wl11 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmhl2, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wl7 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmll3, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wl8 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmll0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wl0 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmhl1, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wl6 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmll7, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wl2 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmlh0, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh11 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmlh7, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh2 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmll1, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh7 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmhl0, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh4 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmhh3, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh6 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmhh6, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh10 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmhl6, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh1 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmll4, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wl3 = VSRS_2x_mv_w_srs_bm_srsSign1 $bmlh2, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+
+    ; VSRS_2x_mv_x_srs_cm_srsSign0
+    $x11 = VSRS_2x_mv_x_srs_cm_srsSign0 $cmh7, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $x5 = VSRS_2x_mv_x_srs_cm_srsSign0 $cml2, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $x8 = VSRS_2x_mv_x_srs_cm_srsSign0 $cmh1, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $x1 = VSRS_2x_mv_x_srs_cm_srsSign0 $cml7, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $x3 = VSRS_2x_mv_x_srs_cm_srsSign0 $cmh6, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $x6 = VSRS_2x_mv_x_srs_cm_srsSign0 $cml5, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $x4 = VSRS_2x_mv_x_srs_cm_srsSign0 $cmh5, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $x2 = VSRS_2x_mv_x_srs_cm_srsSign0 $cmh0, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $x10 = VSRS_2x_mv_x_srs_cm_srsSign0 $cmh2, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $x0 = VSRS_2x_mv_x_srs_cm_srsSign0 $cml6, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $x7 = VSRS_2x_mv_x_srs_cm_srsSign0 $cmh4, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $x9 = VSRS_2x_mv_x_srs_cm_srsSign0 $cml4, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $x11 = VSRS_2x_mv_x_srs_cm_srsSign0 $cmh3, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $x5 = VSRS_2x_mv_x_srs_cm_srsSign0 $cml0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $x8 = VSRS_2x_mv_x_srs_cm_srsSign0 $cml1, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $x1 = VSRS_2x_mv_x_srs_cm_srsSign0 $cml3, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+
+    ; VSRS_2x_mv_x_srs_cm_srsSign1
+    $x3 = VSRS_2x_mv_x_srs_cm_srsSign1 $cml1, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $x6 = VSRS_2x_mv_x_srs_cm_srsSign1 $cmh4, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $x0 = VSRS_2x_mv_x_srs_cm_srsSign1 $cmh2, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $x5 = VSRS_2x_mv_x_srs_cm_srsSign1 $cmh3, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $x1 = VSRS_2x_mv_x_srs_cm_srsSign1 $cmh5, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $x2 = VSRS_2x_mv_x_srs_cm_srsSign1 $cml2, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $x4 = VSRS_2x_mv_x_srs_cm_srsSign1 $cml6, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $x9 = VSRS_2x_mv_x_srs_cm_srsSign1 $cml7, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $x8 = VSRS_2x_mv_x_srs_cm_srsSign1 $cml5, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $x7 = VSRS_2x_mv_x_srs_cm_srsSign1 $cml3, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $x10 = VSRS_2x_mv_x_srs_cm_srsSign1 $cml0, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $x11 = VSRS_2x_mv_x_srs_cm_srsSign1 $cmh7, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $x3 = VSRS_2x_mv_x_srs_cm_srsSign1 $cmh0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $x6 = VSRS_2x_mv_x_srs_cm_srsSign1 $cmh1, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $x0 = VSRS_2x_mv_x_srs_cm_srsSign1 $cmh6, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $x5 = VSRS_2x_mv_x_srs_cm_srsSign1 $cml4, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+
+    ; VSRS_4x_mv_w_srs_cm_srsSign0
+    $wh5 = VSRS_4x_mv_w_srs_cm_srsSign0 $cmh6, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wl0 = VSRS_4x_mv_w_srs_cm_srsSign0 $cmh4, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wh11 = VSRS_4x_mv_w_srs_cm_srsSign0 $cmh5, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wl11 = VSRS_4x_mv_w_srs_cm_srsSign0 $cml1, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wh4 = VSRS_4x_mv_w_srs_cm_srsSign0 $cml4, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wl9 = VSRS_4x_mv_w_srs_cm_srsSign0 $cmh3, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wh0 = VSRS_4x_mv_w_srs_cm_srsSign0 $cmh0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wl10 = VSRS_4x_mv_w_srs_cm_srsSign0 $cml3, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wl3 = VSRS_4x_mv_w_srs_cm_srsSign0 $cml0, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wh10 = VSRS_4x_mv_w_srs_cm_srsSign0 $cmh1, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wh8 = VSRS_4x_mv_w_srs_cm_srsSign0 $cml7, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wl6 = VSRS_4x_mv_w_srs_cm_srsSign0 $cml2, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wh6 = VSRS_4x_mv_w_srs_cm_srsSign0 $cml5, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wh1 = VSRS_4x_mv_w_srs_cm_srsSign0 $cmh2, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wl4 = VSRS_4x_mv_w_srs_cm_srsSign0 $cml6, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wh2 = VSRS_4x_mv_w_srs_cm_srsSign0 $cmh7, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wl5 = VSRS_4x_mv_w_srs_cm_srsSign0 $cmh6, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wh9 = VSRS_4x_mv_w_srs_cm_srsSign0 $cmh4, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wl7 = VSRS_4x_mv_w_srs_cm_srsSign0 $cmh5, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wl2 = VSRS_4x_mv_w_srs_cm_srsSign0 $cml1, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wl8 = VSRS_4x_mv_w_srs_cm_srsSign0 $cml4, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wh3 = VSRS_4x_mv_w_srs_cm_srsSign0 $cmh3, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wl1 = VSRS_4x_mv_w_srs_cm_srsSign0 $cmh0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $wh7 = VSRS_4x_mv_w_srs_cm_srsSign0 $cml3, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+
+    ; VSRS_4x_mv_w_srs_cm_srsSign1
+    $wl9 = VSRS_4x_mv_w_srs_cm_srsSign1 $cml2, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wl5 = VSRS_4x_mv_w_srs_cm_srsSign1 $cmh0, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wl2 = VSRS_4x_mv_w_srs_cm_srsSign1 $cmh3, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wl7 = VSRS_4x_mv_w_srs_cm_srsSign1 $cmh1, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh9 = VSRS_4x_mv_w_srs_cm_srsSign1 $cmh5, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh0 = VSRS_4x_mv_w_srs_cm_srsSign1 $cml3, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wl8 = VSRS_4x_mv_w_srs_cm_srsSign1 $cml5, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh5 = VSRS_4x_mv_w_srs_cm_srsSign1 $cmh7, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh10 = VSRS_4x_mv_w_srs_cm_srsSign1 $cml1, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh2 = VSRS_4x_mv_w_srs_cm_srsSign1 $cmh6, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wl6 = VSRS_4x_mv_w_srs_cm_srsSign1 $cml6, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wl0 = VSRS_4x_mv_w_srs_cm_srsSign1 $cml7, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh8 = VSRS_4x_mv_w_srs_cm_srsSign1 $cmh4, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh4 = VSRS_4x_mv_w_srs_cm_srsSign1 $cmh2, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wl10 = VSRS_4x_mv_w_srs_cm_srsSign1 $cml4, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh1 = VSRS_4x_mv_w_srs_cm_srsSign1 $cml0, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wl1 = VSRS_4x_mv_w_srs_cm_srsSign1 $cml2, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh7 = VSRS_4x_mv_w_srs_cm_srsSign1 $cmh0, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wl11 = VSRS_4x_mv_w_srs_cm_srsSign1 $cmh3, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh6 = VSRS_4x_mv_w_srs_cm_srsSign1 $cmh1, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh11 = VSRS_4x_mv_w_srs_cm_srsSign1 $cmh5, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wh3 = VSRS_4x_mv_w_srs_cm_srsSign1 $cml3, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wl4 = VSRS_4x_mv_w_srs_cm_srsSign1 $cml5, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $wl3 = VSRS_4x_mv_w_srs_cm_srsSign1 $cmh7, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+
+    ; VSRS_4x_mv_x_srs_dm_srsSign0
+    $x2 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm6, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $x1 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm1, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $x0 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $x9 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm3, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $x3 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm2, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $x4 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm4, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $x8 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm5, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $x11 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm7, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $x5 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm6, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $x6 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm1, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $x7 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm0, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $x10 = VSRS_4x_mv_x_srs_dm_srsSign0 $dm3, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+
+    ; VSRS_4x_mv_x_srs_dm_srsSign1
+    $x5 = VSRS_4x_mv_x_srs_dm_srsSign1 $dm3, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $x4 = VSRS_4x_mv_x_srs_dm_srsSign1 $dm1, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $x9 = VSRS_4x_mv_x_srs_dm_srsSign1 $dm2, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $x2 = VSRS_4x_mv_x_srs_dm_srsSign1 $dm0, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $x7 = VSRS_4x_mv_x_srs_dm_srsSign1 $dm5, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $x0 = VSRS_4x_mv_x_srs_dm_srsSign1 $dm6, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $x11 = VSRS_4x_mv_x_srs_dm_srsSign1 $dm7, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $x8 = VSRS_4x_mv_x_srs_dm_srsSign1 $dm4, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $x1 = VSRS_4x_mv_x_srs_dm_srsSign1 $dm3, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $x3 = VSRS_4x_mv_x_srs_dm_srsSign1 $dm1, $s3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $x10 = VSRS_4x_mv_x_srs_dm_srsSign1 $dm2, $s0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $x6 = VSRS_4x_mv_x_srs_dm_srsSign1 $dm0, $s2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+...
+
+# CHECK: 0: f0 65 d8 11 vsrs.2x wh3, bmhh0, s3, srssign0
+# CHECK: 4: f0 c5 40 15 vsrs.2x wh10, bmhl1, s0, srssign0
+# CHECK: 8: f0 85 08 10 vsrs.2x wl0, bmll1, s1, srssign0
+# CHECK: c: f0 e5 51 12 vsrs.2x wh4, bmhh3, s2, srssign0
+# CHECK: 10: f0 e5 5b 10 vsrs.2x wh0, bmhh7, s3, srssign0
+# CHECK: 14: f0 85 41 13 vsrs.2x wh6, bmll3, s0, srssign0
+# CHECK: 18: f0 05 09 12 vsrs.2x wl4, bmll2, s1, srssign0
+# CHECK: 1c: f0 65 11 14 vsrs.2x wl8, bmhh2, s2, srssign0
+# CHECK: 20: f0 45 9a 10 vsrs.2x wl1, bmhl4, s3, srssign0
+# CHECK: 24: f0 e5 80 13 vsrs.2x wl7, bmhh1, s0, srssign0
+# CHECK: 28: f0 25 48 11 vsrs.2x wh2, bmlh0, s1, srssign0
+# CHECK: 2c: f0 05 13 11 vsrs.2x wl2, bmll6, s2, srssign0
+# CHECK: 30: f0 25 da 14 vsrs.2x wh9, bmlh4, s3, srssign0
+# CHECK: 34: f0 a5 80 12 vsrs.2x wl5, bmlh1, s0, srssign0
+# CHECK: 38: f0 45 88 14 vsrs.2x wl9, bmhl0, s1, srssign0
+# CHECK: 3c: f0 05 d2 15 vsrs.2x wh11, bmll4, s2, srssign0
+# CHECK: 40: f0 45 db 12 vsrs.2x wh5, bmhl6, s3, srssign0
+# CHECK: 44: f0 25 03 13 vsrs.2x wl6, bmlh6, s0, srssign0
+# CHECK: 48: f0 45 89 11 vsrs.2x wl3, bmhl2, s1, srssign0
+# CHECK: 4c: f0 25 11 15 vsrs.2x wl10, bmlh2, s2, srssign0
+# CHECK: 50: f0 85 da 10 vsrs.2x wh1, bmll5, s3, srssign0
+# CHECK: 54: f0 a5 82 15 vsrs.2x wl11, bmlh5, s0, srssign0
+# CHECK: 58: f0 05 48 14 vsrs.2x wh8, bmll0, s1, srssign0
+# CHECK: 5c: f0 c5 d2 13 vsrs.2x wh7, bmhl5, s2, srssign0
+# CHECK: 60: f0 a5 db 11 vsrs.2x wh3, bmlh7, s3, srssign0
+# CHECK: 64: f0 65 43 15 vsrs.2x wh10, bmhh6, s0, srssign0
+# CHECK: 68: f0 85 0b 10 vsrs.2x wl0, bmll7, s1, srssign0
+# CHECK: 6c: f0 c5 53 12 vsrs.2x wh4, bmhl7, s2, srssign0
+# CHECK: 70: f0 c5 59 10 vsrs.2x wh0, bmhl3, s3, srssign0
+# CHECK: 74: f0 e5 42 13 vsrs.2x wh6, bmhh5, s0, srssign0
+# CHECK: 78: f0 65 0a 12 vsrs.2x wl4, bmhh4, s1, srssign0
+# CHECK: 7c: f0 a5 11 14 vsrs.2x wl8, bmlh3, s2, srssign0
+# CHECK: 80: f0 05 c7 15 vsrs.2x wh11, bmll6, s0, srssign1
+# CHECK: 84: f0 a5 5c 11 vsrs.2x wh2, bmlh1, s3, srssign1
+# CHECK: 88: f0 e5 cf 13 vsrs.2x wh7, bmhh7, s1, srssign1
+# CHECK: 8c: f0 e5 54 12 vsrs.2x wh4, bmhh1, s2, srssign1
+# CHECK: 90: f0 25 47 13 vsrs.2x wh6, bmlh6, s0, srssign1
+# CHECK: 94: f0 a5 5d 15 vsrs.2x wh10, bmlh3, s3, srssign1
+# CHECK: 98: f0 05 cd 10 vsrs.2x wh1, bmll2, s1, srssign1
+# CHECK: 9c: f0 85 96 11 vsrs.2x wl3, bmll5, s2, srssign1
+# CHECK: a0: f0 e5 86 14 vsrs.2x wl9, bmhh5, s0, srssign1
+# CHECK: a4: f0 a5 de 14 vsrs.2x wh9, bmlh5, s3, srssign1
+# CHECK: a8: f0 c5 4e 10 vsrs.2x wh0, bmhl5, s1, srssign1
+# CHECK: ac: f0 25 96 10 vsrs.2x wl1, bmlh4, s2, srssign1
+# CHECK: b0: f0 65 c6 11 vsrs.2x wh3, bmhh4, s0, srssign1
+# CHECK: b4: f0 c5 9d 12 vsrs.2x wl5, bmhl3, s3, srssign1
+# CHECK: b8: f0 c5 4f 14 vsrs.2x wh8, bmhl7, s1, srssign1
+# CHECK: bc: f0 45 d6 12 vsrs.2x wh5, bmhl4, s2, srssign1
+# CHECK: c0: f0 65 04 15 vsrs.2x wl10, bmhh0, s0, srssign1
+# CHECK: c4: f0 65 1d 12 vsrs.2x wl4, bmhh2, s3, srssign1
+# CHECK: c8: f0 45 8d 15 vsrs.2x wl11, bmhl2, s1, srssign1
+# CHECK: cc: f0 85 95 13 vsrs.2x wl7, bmll3, s2, srssign1
+# CHECK: d0: f0 05 04 14 vsrs.2x wl8, bmll0, s0, srssign1
+# CHECK: d4: f0 c5 1c 10 vsrs.2x wl0, bmhl1, s3, srssign1
+# CHECK: d8: f0 85 0f 13 vsrs.2x wl6, bmll7, s1, srssign1
+# CHECK: dc: f0 25 14 11 vsrs.2x wl2, bmlh0, s2, srssign1
+# CHECK: e0: f0 a5 c7 15 vsrs.2x wh11, bmlh7, s0, srssign1
+# CHECK: e4: f0 85 5c 11 vsrs.2x wh2, bmll1, s3, srssign1
+# CHECK: e8: f0 45 cc 13 vsrs.2x wh7, bmhl0, s1, srssign1
+# CHECK: ec: f0 e5 55 12 vsrs.2x wh4, bmhh3, s2, srssign1
+# CHECK: f0: f0 65 47 13 vsrs.2x wh6, bmhh6, s0, srssign1
+# CHECK: f4: f0 45 5f 15 vsrs.2x wh10, bmhl6, s3, srssign1
+# CHECK: f8: f0 05 ce 10 vsrs.2x wh1, bmll4, s1, srssign1
+# CHECK: fc: f0 25 95 11 vsrs.2x wl3, bmlh2, s2, srssign1
+# CHECK: 100: f0 e5 ab 15 vsrs.2x x11, cmh7, s1, srssign0
+# CHECK: 104: f0 25 a1 12 vsrs.2x x5, cml2, s0, srssign0
+# CHECK: 108: f0 e5 38 14 vsrs.2x x8, cmh1, s3, srssign0
+# CHECK: 10c: f0 a5 b3 10 vsrs.2x x1, cml7, s2, srssign0
+# CHECK: 110: f0 65 ab 11 vsrs.2x x3, cmh6, s1, srssign0
+# CHECK: 114: f0 a5 22 13 vsrs.2x x6, cml5, s0, srssign0
+# CHECK: 118: f0 e5 3a 12 vsrs.2x x4, cmh5, s3, srssign0
+# CHECK: 11c: f0 65 30 11 vsrs.2x x2, cmh0, s2, srssign0
+# CHECK: 120: f0 65 29 15 vsrs.2x x10, cmh2, s1, srssign0
+# CHECK: 124: f0 25 23 10 vsrs.2x x0, cml6, s0, srssign0
+# CHECK: 128: f0 65 ba 13 vsrs.2x x7, cmh4, s3, srssign0
+# CHECK: 12c: f0 25 b2 14 vsrs.2x x9, cml4, s2, srssign0
+# CHECK: 130: f0 e5 a9 15 vsrs.2x x11, cmh3, s1, srssign0
+# CHECK: 134: f0 25 a0 12 vsrs.2x x5, cml0, s0, srssign0
+# CHECK: 138: f0 a5 38 14 vsrs.2x x8, cml1, s3, srssign0
+# CHECK: 13c: f0 a5 b1 10 vsrs.2x x1, cml3, s2, srssign0
+# CHECK: 140: f0 a5 a4 11 vsrs.2x x3, cml1, s0, srssign1
+# CHECK: 144: f0 65 2e 13 vsrs.2x x6, cmh4, s1, srssign1
+# CHECK: 148: f0 65 35 10 vsrs.2x x0, cmh2, s2, srssign1
+# CHECK: 14c: f0 e5 bd 12 vsrs.2x x5, cmh3, s3, srssign1
+# CHECK: 150: f0 e5 a6 10 vsrs.2x x1, cmh5, s0, srssign1
+# CHECK: 154: f0 25 2d 11 vsrs.2x x2, cml2, s1, srssign1
+# CHECK: 158: f0 25 37 12 vsrs.2x x4, cml6, s2, srssign1
+# CHECK: 15c: f0 a5 bf 14 vsrs.2x x9, cml7, s3, srssign1
+# CHECK: 160: f0 a5 26 14 vsrs.2x x8, cml5, s0, srssign1
+# CHECK: 164: f0 a5 ad 13 vsrs.2x x7, cml3, s1, srssign1
+# CHECK: 168: f0 25 34 15 vsrs.2x x10, cml0, s2, srssign1
+# CHECK: 16c: f0 e5 bf 15 vsrs.2x x11, cmh7, s3, srssign1
+# CHECK: 170: f0 65 a4 11 vsrs.2x x3, cmh0, s0, srssign1
+# CHECK: 174: f0 e5 2c 13 vsrs.2x x6, cmh1, s1, srssign1
+# CHECK: 178: f0 65 37 10 vsrs.2x x0, cmh6, s2, srssign1
+# CHECK: 17c: f0 25 be 12 vsrs.2x x5, cml4, s3, srssign1
+# CHECK: 180: f0 45 eb 12 vsrs.4x wh5, cmh6, s1, srssign0
+# CHECK: 184: f0 45 32 10 vsrs.4x wl0, cmh4, s2, srssign0
+# CHECK: 188: f0 c5 e2 15 vsrs.4x wh11, cmh5, s0, srssign0
+# CHECK: 18c: f0 85 b8 15 vsrs.4x wl11, cml1, s3, srssign0
+# CHECK: 190: f0 05 6a 12 vsrs.4x wh4, cml4, s1, srssign0
+# CHECK: 194: f0 c5 b1 14 vsrs.4x wl9, cmh3, s2, srssign0
+# CHECK: 198: f0 45 60 10 vsrs.4x wh0, cmh0, s0, srssign0
+# CHECK: 19c: f0 85 39 15 vsrs.4x wl10, cml3, s3, srssign0
+# CHECK: 1a0: f0 05 a8 11 vsrs.4x wl3, cml0, s1, srssign0
+# CHECK: 1a4: f0 c5 70 15 vsrs.4x wh10, cmh1, s2, srssign0
+# CHECK: 1a8: f0 85 63 14 vsrs.4x wh8, cml7, s0, srssign0
+# CHECK: 1ac: f0 05 39 13 vsrs.4x wl6, cml2, s3, srssign0
+# CHECK: 1b0: f0 85 6a 13 vsrs.4x wh6, cml5, s1, srssign0
+# CHECK: 1b4: f0 45 f1 10 vsrs.4x wh1, cmh2, s2, srssign0
+# CHECK: 1b8: f0 05 23 12 vsrs.4x wl4, cml6, s0, srssign0
+# CHECK: 1bc: f0 c5 7b 11 vsrs.4x wh2, cmh7, s3, srssign0
+# CHECK: 1c0: f0 45 ab 12 vsrs.4x wl5, cmh6, s1, srssign0
+# CHECK: 1c4: f0 45 f2 14 vsrs.4x wh9, cmh4, s2, srssign0
+# CHECK: 1c8: f0 c5 a2 13 vsrs.4x wl7, cmh5, s0, srssign0
+# CHECK: 1cc: f0 85 38 11 vsrs.4x wl2, cml1, s3, srssign0
+# CHECK: 1d0: f0 05 2a 14 vsrs.4x wl8, cml4, s1, srssign0
+# CHECK: 1d4: f0 c5 f1 11 vsrs.4x wh3, cmh3, s2, srssign0
+# CHECK: 1d8: f0 45 a0 10 vsrs.4x wl1, cmh0, s0, srssign0
+# CHECK: 1dc: f0 85 f9 13 vsrs.4x wh7, cml3, s3, srssign0
+# CHECK: 1e0: f0 05 ad 14 vsrs.4x wl9, cml2, s1, srssign1
+# CHECK: 1e4: f0 45 bc 12 vsrs.4x wl5, cmh0, s3, srssign1
+# CHECK: 1e8: f0 c5 35 11 vsrs.4x wl2, cmh3, s2, srssign1
+# CHECK: 1ec: f0 c5 a4 13 vsrs.4x wl7, cmh1, s0, srssign1
+# CHECK: 1f0: f0 c5 ee 14 vsrs.4x wh9, cmh5, s1, srssign1
+# CHECK: 1f4: f0 85 7d 10 vsrs.4x wh0, cml3, s3, srssign1
+# CHECK: 1f8: f0 85 36 14 vsrs.4x wl8, cml5, s2, srssign1
+# CHECK: 1fc: f0 c5 e7 12 vsrs.4x wh5, cmh7, s0, srssign1
+# CHECK: 200: f0 85 6c 15 vsrs.4x wh10, cml1, s1, srssign1
+# CHECK: 204: f0 45 7f 11 vsrs.4x wh2, cmh6, s3, srssign1
+# CHECK: 208: f0 05 37 13 vsrs.4x wl6, cml6, s2, srssign1
+# CHECK: 20c: f0 85 27 10 vsrs.4x wl0, cml7, s0, srssign1
+# CHECK: 210: f0 45 6e 14 vsrs.4x wh8, cmh4, s1, srssign1
+# CHECK: 214: f0 45 7d 12 vsrs.4x wh4, cmh2, s3, srssign1
+# CHECK: 218: f0 05 36 15 vsrs.4x wl10, cml4, s2, srssign1
+# CHECK: 21c: f0 05 e4 10 vsrs.4x wh1, cml0, s0, srssign1
+# CHECK: 220: f0 05 ad 10 vsrs.4x wl1, cml2, s1, srssign1
+# CHECK: 224: f0 45 fc 13 vsrs.4x wh7, cmh0, s3, srssign1
+# CHECK: 228: f0 c5 b5 15 vsrs.4x wl11, cmh3, s2, srssign1
+# CHECK: 22c: f0 c5 64 13 vsrs.4x wh6, cmh1, s0, srssign1
+# CHECK: 230: f0 c5 ee 15 vsrs.4x wh11, cmh5, s1, srssign1
+# CHECK: 234: f0 85 fd 11 vsrs.4x wh3, cml3, s3, srssign1
+# CHECK: 238: f0 85 36 12 vsrs.4x wl4, cml5, s2, srssign1
+# CHECK: 23c: f0 c5 a7 11 vsrs.4x wl3, cmh7, s0, srssign1
+# CHECK: 240: f0 25 63 11 vsrs.4x x2, dm6, s0, srssign0
+# CHECK: 244: f0 a5 f8 10 vsrs.4x x1, dm1, s3, srssign0
+# CHECK: 248: f0 25 68 10 vsrs.4x x0, dm0, s1, srssign0
+# CHECK: 24c: f0 a5 f1 14 vsrs.4x x9, dm3, s2, srssign0
+# CHECK: 250: f0 25 e1 11 vsrs.4x x3, dm2, s0, srssign0
+# CHECK: 254: f0 25 7a 12 vsrs.4x x4, dm4, s3, srssign0
+# CHECK: 258: f0 a5 6a 14 vsrs.4x x8, dm5, s1, srssign0
+# CHECK: 25c: f0 a5 f3 15 vsrs.4x x11, dm7, s2, srssign0
+# CHECK: 260: f0 25 e3 12 vsrs.4x x5, dm6, s0, srssign0
+# CHECK: 264: f0 a5 78 13 vsrs.4x x6, dm1, s3, srssign0
+# CHECK: 268: f0 25 e8 13 vsrs.4x x7, dm0, s1, srssign0
+# CHECK: 26c: f0 a5 71 15 vsrs.4x x10, dm3, s2, srssign0
+# CHECK: 270: f0 a5 ed 12 vsrs.4x x5, dm3, s1, srssign1
+# CHECK: 274: f0 a5 7c 12 vsrs.4x x4, dm1, s3, srssign1
+# CHECK: 278: f0 25 e5 14 vsrs.4x x9, dm2, s0, srssign1
+# CHECK: 27c: f0 25 74 11 vsrs.4x x2, dm0, s2, srssign1
+# CHECK: 280: f0 a5 ee 13 vsrs.4x x7, dm5, s1, srssign1
+# CHECK: 284: f0 25 7f 10 vsrs.4x x0, dm6, s3, srssign1
+# CHECK: 288: f0 a5 e7 15 vsrs.4x x11, dm7, s0, srssign1
+# CHECK: 28c: f0 25 76 14 vsrs.4x x8, dm4, s2, srssign1
+# CHECK: 290: f0 a5 ed 10 vsrs.4x x1, dm3, s1, srssign1
+# CHECK: 294: f0 a5 fc 11 vsrs.4x x3, dm1, s3, srssign1
+# CHECK: 298: f0 25 65 15 vsrs.4x x10, dm2, s0, srssign1
+# CHECK: 29c: f0 25 74 13 vsrs.4x x6, dm0, s2, srssign1

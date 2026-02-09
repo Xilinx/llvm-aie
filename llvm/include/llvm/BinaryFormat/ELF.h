@@ -496,7 +496,8 @@ enum : unsigned {
   EF_AIE_AIE1 = 0x00000001,    // AMD-Xilinx AIEngine
   EF_AIE_AIE2 = 0x00000002,    // AMD-Xilinx AIE-ML
   EF_AIE_AIE2P = 0x00000003,   // AMD-Xilinx AIE-ML P
-  EF_AIE_AIEMASK = 0x00000003, // AIE Arch Selection Mask
+  EF_AIE_AIE2PS = 0x00000004,  // AMD-Xilinx AIE-ML PS
+  EF_AIE_AIEMASK = 0x00000007, // AIE Arch Selection Mask
 };
 
 // ELF Relocation types for AIE

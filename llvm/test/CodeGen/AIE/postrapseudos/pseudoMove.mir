@@ -4,9 +4,10 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -verify-machineinstrs -mtriple=aie2 -run-pass=postrapseudos %s -o - | FileCheck %s --check-prefix=AIE2
 # RUN: llc -verify-machineinstrs -mtriple=aie2p -run-pass=postrapseudos %s -o - | FileCheck %s --check-prefix=AIE2P
+# RUN: llc -verify-machineinstrs -mtriple=aie2ps -run-pass=postrapseudos %s -o - | FileCheck %s --check-prefix=AIE2P
 
 ---
 name:            pseudoMov_GPR

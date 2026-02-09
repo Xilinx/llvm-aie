@@ -8,6 +8,7 @@
 # RUN: llc -mtriple aie -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE1 %s
 # RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2 %s
 # RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2P %s
+# RUN: llc -mtriple aie2ps -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2PS %s
 
 ---
 name: sext_inreg_s32_8
@@ -37,6 +38,13 @@ body: |
     ; AIE2P-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
     ; AIE2P-NEXT: [[EXTEND_s8_:%[0-9]+]]:er = EXTEND_s8 [[COPY]]
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[EXTEND_s8_]]
+    ;
+    ; AIE2PS-LABEL: name: sext_inreg_s32_8
+    ; AIE2PS: liveins: $r6
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[EXTEND_s8_:%[0-9]+]]:mlockid_reg = EXTEND_s8 [[COPY]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[EXTEND_s8_]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = G_SEXT_INREG %0, 8
     PseudoRET implicit $lr, implicit %1
@@ -70,6 +78,13 @@ body: |
     ; AIE2P-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
     ; AIE2P-NEXT: [[EXTEND_s16_:%[0-9]+]]:er = EXTEND_s16 [[COPY]]
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[EXTEND_s16_]]
+    ;
+    ; AIE2PS-LABEL: name: sext_inreg_s32_16
+    ; AIE2PS: liveins: $r6
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[EXTEND_s16_:%[0-9]+]]:mlockid_reg = EXTEND_s16 [[COPY]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[EXTEND_s16_]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = G_SEXT_INREG %0, 16
     PseudoRET implicit $lr, implicit %1

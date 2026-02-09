@@ -1,0 +1,88 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; SUB
+    $r9 = SUB $r5, $r28, implicit-def $srcarry
+    $r17 = SUB $r2, $r2, implicit-def $srcarry
+    $r10 = SUB $r12, $r5, implicit-def $srcarry
+    $r15 = SUB $r1, $r3, implicit-def $srcarry
+    $r24 = SUB $r23, $r30, implicit-def $srcarry
+    $r27 = SUB $r17, $r25, implicit-def $srcarry
+    $r4 = SUB $r14, $r6, implicit-def $srcarry
+    $r7 = SUB $r4, $r20, implicit-def $srcarry
+    $r6 = SUB $r10, $r24, implicit-def $srcarry
+    $r16 = SUB $r26, $r4, implicit-def $srcarry
+    $r23 = SUB $r28, $r0, implicit-def $srcarry
+    $r22 = SUB $r29, $r1, implicit-def $srcarry
+    $r18 = SUB $r20, $r23, implicit-def $srcarry
+    $r30 = SUB $r9, $r11, implicit-def $srcarry
+    $r13 = SUB $r3, $r10, implicit-def $srcarry
+    $r8 = SUB $r19, $r7, implicit-def $srcarry
+    $r3 = SUB $r25, $r8, implicit-def $srcarry
+    $r21 = SUB $r0, $r16, implicit-def $srcarry
+    $r29 = SUB $r21, $r26, implicit-def $srcarry
+    $r12 = SUB $r15, $r29, implicit-def $srcarry
+    $r19 = SUB $r30, $r21, implicit-def $srcarry
+    $r28 = SUB $r13, $r31, implicit-def $srcarry
+    $r0 = SUB $r8, $r13, implicit-def $srcarry
+    $r25 = SUB $r16, $r9, implicit-def $srcarry
+    $r1 = SUB $r31, $r17, implicit-def $srcarry
+    $r20 = SUB $r24, $r22, implicit-def $srcarry
+    $r31 = SUB $r6, $r14, implicit-def $srcarry
+    $r11 = SUB $r22, $r15, implicit-def $srcarry
+    $r5 = SUB $r27, $r19, implicit-def $srcarry
+    $r26 = SUB $r18, $r12, implicit-def $srcarry
+    $r14 = SUB $r7, $r18, implicit-def $srcarry
+    $r2 = SUB $r11, $r27, implicit-def $srcarry
+...
+
+# CHECK: 0: b0 c1 53 21 sub r9, r5, r28
+# CHECK: 4: b0 21 a2 20 sub r17, r2, r2
+# CHECK: 8: b0 51 14 23 sub r10, r12, r5
+# CHECK: c: b0 31 5e 20 sub r15, r1, r3
+# CHECK: 10: b0 e1 f1 25 sub r24, r23, r30
+# CHECK: 14: b0 91 77 24 sub r27, r17, r25
+# CHECK: 18: b0 61 88 23 sub r4, r14, r6
+# CHECK: 1c: b0 41 0f 21 sub r7, r4, r20
+# CHECK: 20: b0 81 8d 22 sub r6, r10, r24
+# CHECK: 24: b0 41 a0 26 sub r16, r26, r4
+# CHECK: 28: b0 01 2e 27 sub r23, r28, r0
+# CHECK: 2c: b0 11 6c 27 sub r22, r29, r1
+# CHECK: 30: b0 71 25 25 sub r18, r20, r23
+# CHECK: 34: b0 b1 7c 22 sub r30, r9, r11
+# CHECK: 38: b0 a1 da 20 sub r13, r3, r10
+# CHECK: 3c: b0 71 d0 24 sub r8, r19, r7
+# CHECK: 40: b0 81 46 26 sub r3, r25, r8
+# CHECK: 44: b0 01 2b 20 sub r21, r0, r16
+# CHECK: 48: b0 a1 7b 25 sub r29, r21, r26
+# CHECK: 4c: b0 d1 d9 23 sub r12, r15, r29
+# CHECK: 50: b0 51 a7 27 sub r19, r30, r21
+# CHECK: 54: b0 f1 79 23 sub r28, r13, r31
+# CHECK: 58: b0 d1 00 22 sub r0, r8, r13
+# CHECK: 5c: b0 91 32 24 sub r25, r16, r9
+# CHECK: 60: b0 11 c3 27 sub r1, r31, r17
+# CHECK: 64: b0 61 29 26 sub r20, r24, r22
+# CHECK: 68: b0 e1 be 21 sub r31, r6, r14
+# CHECK: 6c: b0 f1 96 25 sub r11, r22, r15
+# CHECK: 70: b0 31 cb 26 sub r5, r27, r19
+# CHECK: 74: b0 c1 b4 24 sub r26, r18, r12
+# CHECK: 78: b0 21 dd 21 sub r14, r7, r18
+# CHECK: 7c: b0 b1 c5 22 sub r2, r11, r27

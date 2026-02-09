@@ -462,3 +462,25 @@ def AIE2PPostLegalizerCustomCombiner
     : GICombiner<"AIE2PPostLegalizerCustomCombinerImpl",
                  [aie_postlegalizer_custom_shared_combines, aie2p_postlegalizer_custom_combines]> {
 }
+
+def AIE2PSPreLegalizerCombiner
+    : GICombiner<"AIE2PSPreLegalizerCombinerImpl",
+                      [aie_generic_combines, aie_additional_combines, aie2p_additional_combines]> {
+  let CombineAllMethodName = "tryCombineAllImpl";
+}
+
+def AIE2PSPostLegalizerGenericCombiner
+    : GICombiner<"AIE2PSPostLegalizerGenericCombinerImpl", [aie_generic_combines]> {
+}
+
+def AIE2PSPostLegalizerCustomCombiner
+    : GICombiner<"AIE2PSPostLegalizerCustomCombinerImpl", [
+                                                            combine_extract_vector_assert_combine,
+                                                            combine_global_load_store_increment,
+                                                            combine_load_store_increment,
+                                                            ptr_add_immed_chain,
+                                                            combine_offset_load_store_ptradd,
+                                                            combine_offset_load_store_share_ptradd,
+                                                            combine_add_vector_elt_undef,
+                                                             ]> {
+}

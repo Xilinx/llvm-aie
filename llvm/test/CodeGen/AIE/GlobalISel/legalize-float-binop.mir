@@ -4,10 +4,11 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE1 %s
 # RUN: llc -mtriple aie2 -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2 %s
 # RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2P %s
+# RUN: llc -mtriple aie2ps -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2PS %s
 
 ---
 name:            fmul_float
@@ -56,6 +57,20 @@ body:             |
     ; AIE2P-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
     ; AIE2P-NEXT: $r0 = COPY [[COPY2]](s32)
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit $r0
+    ;
+    ; AIE2PS-LABEL: name: fmul_float
+    ; AIE2PS: liveins: $r6, $r7
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2PS-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    ; AIE2PS-NEXT: $r1 = COPY [[COPY]](s32)
+    ; AIE2PS-NEXT: $r2 = COPY [[COPY1]](s32)
+    ; AIE2PS-NEXT: PseudoJL &__mulsf3, csr_aie2ps, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
+    ; AIE2PS-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    ; AIE2PS-NEXT: $r0 = COPY [[COPY2]](s32)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:_(s32) = COPY $r6
     %2:_(s32) = COPY $r7
     %0:_(s32) = G_FMUL %1, %2
@@ -127,6 +142,26 @@ body:             |
     ; AIE2P-NEXT: $r0 = COPY [[COPY4]](s32)
     ; AIE2P-NEXT: $r1 = COPY [[COPY5]](s32)
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit $r0, implicit $r1
+    ;
+    ; AIE2PS-LABEL: name: fmul_double
+    ; AIE2PS: liveins: $r6, $r7, $r8, $r9
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r8
+    ; AIE2PS-NEXT: [[COPY3:%[0-9]+]]:_(s32) = COPY $r9
+    ; AIE2PS-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    ; AIE2PS-NEXT: $r2 = COPY [[COPY]](s32)
+    ; AIE2PS-NEXT: $r3 = COPY [[COPY1]](s32)
+    ; AIE2PS-NEXT: $r4 = COPY [[COPY2]](s32)
+    ; AIE2PS-NEXT: $r5 = COPY [[COPY3]](s32)
+    ; AIE2PS-NEXT: PseudoJL &__muldf3, csr_aie2ps, implicit-def $lr, implicit $r2, implicit $r3, implicit $r4, implicit $r5, implicit-def $r0, implicit-def $r1
+    ; AIE2PS-NEXT: [[COPY4:%[0-9]+]]:_(s32) = COPY $r0
+    ; AIE2PS-NEXT: [[COPY5:%[0-9]+]]:_(s32) = COPY $r1
+    ; AIE2PS-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    ; AIE2PS-NEXT: $r0 = COPY [[COPY4]](s32)
+    ; AIE2PS-NEXT: $r1 = COPY [[COPY5]](s32)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $r0, implicit $r1
     %3:_(s32) = COPY $r6
     %4:_(s32) = COPY $r7
     %1:_(s64) = G_MERGE_VALUES %3(s32), %4(s32)
@@ -187,6 +222,20 @@ body:             |
     ; AIE2P-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
     ; AIE2P-NEXT: $r0 = COPY [[COPY2]](s32)
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit $r0
+    ;
+    ; AIE2PS-LABEL: name: fdiv_float
+    ; AIE2PS: liveins: $r6, $r7
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2PS-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    ; AIE2PS-NEXT: $r1 = COPY [[COPY]](s32)
+    ; AIE2PS-NEXT: $r2 = COPY [[COPY1]](s32)
+    ; AIE2PS-NEXT: PseudoJL &__divsf3, csr_aie2ps, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
+    ; AIE2PS-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    ; AIE2PS-NEXT: $r0 = COPY [[COPY2]](s32)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:_(s32) = COPY $r6
     %2:_(s32) = COPY $r7
     %0:_(s32) = G_FDIV %1, %2
@@ -258,6 +307,26 @@ body:             |
     ; AIE2P-NEXT: $r0 = COPY [[COPY4]](s32)
     ; AIE2P-NEXT: $r1 = COPY [[COPY5]](s32)
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit $r0, implicit $r1
+    ;
+    ; AIE2PS-LABEL: name: fdiv_double
+    ; AIE2PS: liveins: $r6, $r7, $r8, $r9
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r8
+    ; AIE2PS-NEXT: [[COPY3:%[0-9]+]]:_(s32) = COPY $r9
+    ; AIE2PS-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    ; AIE2PS-NEXT: $r2 = COPY [[COPY]](s32)
+    ; AIE2PS-NEXT: $r3 = COPY [[COPY1]](s32)
+    ; AIE2PS-NEXT: $r4 = COPY [[COPY2]](s32)
+    ; AIE2PS-NEXT: $r5 = COPY [[COPY3]](s32)
+    ; AIE2PS-NEXT: PseudoJL &__divdf3, csr_aie2ps, implicit-def $lr, implicit $r2, implicit $r3, implicit $r4, implicit $r5, implicit-def $r0, implicit-def $r1
+    ; AIE2PS-NEXT: [[COPY4:%[0-9]+]]:_(s32) = COPY $r0
+    ; AIE2PS-NEXT: [[COPY5:%[0-9]+]]:_(s32) = COPY $r1
+    ; AIE2PS-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    ; AIE2PS-NEXT: $r0 = COPY [[COPY4]](s32)
+    ; AIE2PS-NEXT: $r1 = COPY [[COPY5]](s32)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $r0, implicit $r1
     %3:_(s32) = COPY $r6
     %4:_(s32) = COPY $r7
     %1:_(s64) = G_MERGE_VALUES %3(s32), %4(s32)
@@ -328,6 +397,30 @@ body:             |
     ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<16 x s32>), [[C]](s32)
     ; AIE2P-NEXT: $r0 = COPY [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s32)
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit $r0
+    ;
+    ; AIE2PS-LABEL: name: fadd_float
+    ; AIE2PS: liveins: $r6, $r7
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2PS-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; AIE2PS-NEXT: [[DEF:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[AIE_INSERT_VECTOR_ELT:%[0-9]+]]:_(<16 x s32>) = G_AIE_INSERT_VECTOR_ELT [[DEF]], [[COPY]](s32), [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_INSERT_VECTOR_ELT1:%[0-9]+]]:_(<16 x s32>) = G_AIE_INSERT_VECTOR_ELT [[DEF]], [[COPY1]](s32), [[C]](s32)
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:_(<16 x s32>) = COPY [[DEF]](<16 x s32>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[AIE_INSERT_VECTOR_ELT]](<16 x s32>), [[COPY2]](<16 x s32>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[COPY2]](<16 x s32>), [[COPY2]](<16 x s32>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<64 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<32 x s32>), [[CONCAT_VECTORS1]](<32 x s32>)
+    ; AIE2PS-NEXT: [[COPY3:%[0-9]+]]:_(<16 x s32>) = COPY [[DEF]](<16 x s32>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[AIE_INSERT_VECTOR_ELT1]](<16 x s32>), [[COPY3]](<16 x s32>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS4:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[COPY3]](<16 x s32>), [[COPY3]](<16 x s32>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS5:%[0-9]+]]:_(<64 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS3]](<32 x s32>), [[CONCAT_VECTORS4]](<32 x s32>)
+    ; AIE2PS-NEXT: [[FADD:%[0-9]+]]:_(<64 x s32>) = G_FADD [[CONCAT_VECTORS2]], [[CONCAT_VECTORS5]]
+    ; AIE2PS-NEXT: [[UV:%[0-9]+]]:_(<32 x s32>), [[UV1:%[0-9]+]]:_(<32 x s32>) = G_UNMERGE_VALUES [[FADD]](<64 x s32>)
+    ; AIE2PS-NEXT: [[UV2:%[0-9]+]]:_(<16 x s32>), [[UV3:%[0-9]+]]:_(<16 x s32>) = G_UNMERGE_VALUES [[UV]](<32 x s32>)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<16 x s32>), [[C]](s32)
+    ; AIE2PS-NEXT: $r0 = COPY [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s32)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:_(s32) = COPY $r6
     %2:_(s32) = COPY $r7
     %0:_(s32) = G_FADD %1, %2
@@ -399,6 +492,26 @@ body:             |
     ; AIE2P-NEXT: $r0 = COPY [[COPY4]](s32)
     ; AIE2P-NEXT: $r1 = COPY [[COPY5]](s32)
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit $r0, implicit $r1
+    ;
+    ; AIE2PS-LABEL: name: fadd_double
+    ; AIE2PS: liveins: $r6, $r7, $r8, $r9
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r8
+    ; AIE2PS-NEXT: [[COPY3:%[0-9]+]]:_(s32) = COPY $r9
+    ; AIE2PS-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    ; AIE2PS-NEXT: $r2 = COPY [[COPY]](s32)
+    ; AIE2PS-NEXT: $r3 = COPY [[COPY1]](s32)
+    ; AIE2PS-NEXT: $r4 = COPY [[COPY2]](s32)
+    ; AIE2PS-NEXT: $r5 = COPY [[COPY3]](s32)
+    ; AIE2PS-NEXT: PseudoJL &__adddf3, csr_aie2ps, implicit-def $lr, implicit $r2, implicit $r3, implicit $r4, implicit $r5, implicit-def $r0, implicit-def $r1
+    ; AIE2PS-NEXT: [[COPY4:%[0-9]+]]:_(s32) = COPY $r0
+    ; AIE2PS-NEXT: [[COPY5:%[0-9]+]]:_(s32) = COPY $r1
+    ; AIE2PS-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    ; AIE2PS-NEXT: $r0 = COPY [[COPY4]](s32)
+    ; AIE2PS-NEXT: $r1 = COPY [[COPY5]](s32)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $r0, implicit $r1
     %3:_(s32) = COPY $r6
     %4:_(s32) = COPY $r7
     %1:_(s64) = G_MERGE_VALUES %3(s32), %4(s32)
@@ -469,6 +582,30 @@ body:             |
     ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<16 x s32>), [[C]](s32)
     ; AIE2P-NEXT: $r0 = COPY [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s32)
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit $r0
+    ;
+    ; AIE2PS-LABEL: name: fsub_float
+    ; AIE2PS: liveins: $r6, $r7
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2PS-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; AIE2PS-NEXT: [[DEF:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[AIE_INSERT_VECTOR_ELT:%[0-9]+]]:_(<16 x s32>) = G_AIE_INSERT_VECTOR_ELT [[DEF]], [[COPY]](s32), [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_INSERT_VECTOR_ELT1:%[0-9]+]]:_(<16 x s32>) = G_AIE_INSERT_VECTOR_ELT [[DEF]], [[COPY1]](s32), [[C]](s32)
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:_(<16 x s32>) = COPY [[DEF]](<16 x s32>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[AIE_INSERT_VECTOR_ELT]](<16 x s32>), [[COPY2]](<16 x s32>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[COPY2]](<16 x s32>), [[COPY2]](<16 x s32>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<64 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS]](<32 x s32>), [[CONCAT_VECTORS1]](<32 x s32>)
+    ; AIE2PS-NEXT: [[COPY3:%[0-9]+]]:_(<16 x s32>) = COPY [[DEF]](<16 x s32>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[AIE_INSERT_VECTOR_ELT1]](<16 x s32>), [[COPY3]](<16 x s32>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS4:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[COPY3]](<16 x s32>), [[COPY3]](<16 x s32>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS5:%[0-9]+]]:_(<64 x s32>) = G_CONCAT_VECTORS [[CONCAT_VECTORS3]](<32 x s32>), [[CONCAT_VECTORS4]](<32 x s32>)
+    ; AIE2PS-NEXT: [[FSUB:%[0-9]+]]:_(<64 x s32>) = G_FSUB [[CONCAT_VECTORS2]], [[CONCAT_VECTORS5]]
+    ; AIE2PS-NEXT: [[UV:%[0-9]+]]:_(<32 x s32>), [[UV1:%[0-9]+]]:_(<32 x s32>) = G_UNMERGE_VALUES [[FSUB]](<64 x s32>)
+    ; AIE2PS-NEXT: [[UV2:%[0-9]+]]:_(<16 x s32>), [[UV3:%[0-9]+]]:_(<16 x s32>) = G_UNMERGE_VALUES [[UV]](<32 x s32>)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<16 x s32>), [[C]](s32)
+    ; AIE2PS-NEXT: $r0 = COPY [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s32)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:_(s32) = COPY $r6
     %2:_(s32) = COPY $r7
     %0:_(s32) = G_FSUB %1, %2
@@ -540,6 +677,26 @@ body:             |
     ; AIE2P-NEXT: $r0 = COPY [[COPY4]](s32)
     ; AIE2P-NEXT: $r1 = COPY [[COPY5]](s32)
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit $r0, implicit $r1
+    ;
+    ; AIE2PS-LABEL: name: fsub_double
+    ; AIE2PS: liveins: $r6, $r7, $r8, $r9
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r8
+    ; AIE2PS-NEXT: [[COPY3:%[0-9]+]]:_(s32) = COPY $r9
+    ; AIE2PS-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    ; AIE2PS-NEXT: $r2 = COPY [[COPY]](s32)
+    ; AIE2PS-NEXT: $r3 = COPY [[COPY1]](s32)
+    ; AIE2PS-NEXT: $r4 = COPY [[COPY2]](s32)
+    ; AIE2PS-NEXT: $r5 = COPY [[COPY3]](s32)
+    ; AIE2PS-NEXT: PseudoJL &__subdf3, csr_aie2ps, implicit-def $lr, implicit $r2, implicit $r3, implicit $r4, implicit $r5, implicit-def $r0, implicit-def $r1
+    ; AIE2PS-NEXT: [[COPY4:%[0-9]+]]:_(s32) = COPY $r0
+    ; AIE2PS-NEXT: [[COPY5:%[0-9]+]]:_(s32) = COPY $r1
+    ; AIE2PS-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    ; AIE2PS-NEXT: $r0 = COPY [[COPY4]](s32)
+    ; AIE2PS-NEXT: $r1 = COPY [[COPY5]](s32)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $r0, implicit $r1
     %3:_(s32) = COPY $r6
     %4:_(s32) = COPY $r7
     %1:_(s64) = G_MERGE_VALUES %3(s32), %4(s32)
@@ -600,6 +757,20 @@ body:             |
     ; AIE2P-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
     ; AIE2P-NEXT: $r0 = COPY [[COPY2]](s32)
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit $r0
+    ;
+    ; AIE2PS-LABEL: name: frem_float
+    ; AIE2PS: liveins: $r6, $r7
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2PS-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    ; AIE2PS-NEXT: $r1 = COPY [[COPY]](s32)
+    ; AIE2PS-NEXT: $r2 = COPY [[COPY1]](s32)
+    ; AIE2PS-NEXT: PseudoJL &fmodf, csr_aie2ps, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
+    ; AIE2PS-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    ; AIE2PS-NEXT: $r0 = COPY [[COPY2]](s32)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:_(s32) = COPY $r6
     %2:_(s32) = COPY $r7
     %0:_(s32) = G_FREM %1, %2
@@ -671,6 +842,26 @@ body:             |
     ; AIE2P-NEXT: $r0 = COPY [[COPY4]](s32)
     ; AIE2P-NEXT: $r1 = COPY [[COPY5]](s32)
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit $r0, implicit $r1
+    ;
+    ; AIE2PS-LABEL: name: frem_double
+    ; AIE2PS: liveins: $r6, $r7, $r8, $r9
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r8
+    ; AIE2PS-NEXT: [[COPY3:%[0-9]+]]:_(s32) = COPY $r9
+    ; AIE2PS-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    ; AIE2PS-NEXT: $r2 = COPY [[COPY]](s32)
+    ; AIE2PS-NEXT: $r3 = COPY [[COPY1]](s32)
+    ; AIE2PS-NEXT: $r4 = COPY [[COPY2]](s32)
+    ; AIE2PS-NEXT: $r5 = COPY [[COPY3]](s32)
+    ; AIE2PS-NEXT: PseudoJL &fmod, csr_aie2ps, implicit-def $lr, implicit $r2, implicit $r3, implicit $r4, implicit $r5, implicit-def $r0, implicit-def $r1
+    ; AIE2PS-NEXT: [[COPY4:%[0-9]+]]:_(s32) = COPY $r0
+    ; AIE2PS-NEXT: [[COPY5:%[0-9]+]]:_(s32) = COPY $r1
+    ; AIE2PS-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    ; AIE2PS-NEXT: $r0 = COPY [[COPY4]](s32)
+    ; AIE2PS-NEXT: $r1 = COPY [[COPY5]](s32)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $r0, implicit $r1
     %3:_(s32) = COPY $r6
     %4:_(s32) = COPY $r7
     %1:_(s64) = G_MERGE_VALUES %3(s32), %4(s32)

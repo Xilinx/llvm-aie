@@ -4,12 +4,14 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 
 ; RUN: llc -O2 -mtriple=aie2 --issue-limit=1 --enable-aie-zero-overhead-loops=false \
 ; RUN:    --aie-force-hl-gen=true %s -o - | FileCheck %s --check-prefix=AIE2
 ; RUN: llc -O2 -mtriple=aie2p --issue-limit=1 --enable-aie-zero-overhead-loops=false \
 ; RUN:    --aie-force-hl-gen=true %s -o - | FileCheck %s --check-prefix=AIE2P
+; RUN: llc -O2 -mtriple=aie2ps --issue-limit=1 --enable-aie-zero-overhead-loops=false \
+; RUN:    --aie-force-hl-gen=true %s -o - | FileCheck %s --check-prefix=AIE2PS
 
 define void @simple(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef %size) {
 ; AIE2-LABEL: simple:
@@ -67,6 +69,34 @@ define void @simple(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; AIE2P-NEXT:    nop // Delay Slot 3
 ; AIE2P-NEXT:    nop // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
+;
+; AIE2PS-LABEL: simple:
+; AIE2PS:       // %bb.0: // %for.body.lr.ph
+; AIE2PS-NEXT:    mova r4, #0; nopb ; nopxm ; nops
+; AIE2PS-NEXT:    addm.nc r1, r0, #-1
+; AIE2PS-NEXT:    mova r0, #2
+; AIE2PS-NEXT:    movxm p2, #.LBB0_1
+; AIE2PS-NEXT:    lda r2, [p0, #0]
+; AIE2PS-NEXT:  .LBB0_1: // %for.body
+; AIE2PS-NEXT:    // =>This Inner Loop Header: Depth=1
+; AIE2PS-NEXT:    nopa ; nopb ; nops ; lshl r6, r4, r0; nopm ; nopv
+; AIE2PS-NEXT:    nopx ; mov dj0, r6
+; AIE2PS-NEXT:    lda r6, [p1, dj0]
+; AIE2PS-NEXT:    nop
+; AIE2PS-NEXT:    nop
+; AIE2PS-NEXT:    jnzd r1, r1, p2
+; AIE2PS-NEXT:    nop // Delay Slot 5
+; AIE2PS-NEXT:    nop // Delay Slot 4
+; AIE2PS-NEXT:    add r4, r4, #1 // Delay Slot 3
+; AIE2PS-NEXT:    add r2, r2, r6 // Delay Slot 2
+; AIE2PS-NEXT:    st r2, [p0, #0] // Delay Slot 1
+; AIE2PS-NEXT:  // %bb.2: // %for.cond.cleanup
+; AIE2PS-NEXT:    ret lr
+; AIE2PS-NEXT:    nop // Delay Slot 5
+; AIE2PS-NEXT:    nop // Delay Slot 4
+; AIE2PS-NEXT:    nop // Delay Slot 3
+; AIE2PS-NEXT:    nop // Delay Slot 2
+; AIE2PS-NEXT:    nop // Delay Slot 1
 for.body.lr.ph:
   %out.promoted = load i32, ptr %out, align 4
   br label %for.body

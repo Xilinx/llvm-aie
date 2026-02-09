@@ -44,6 +44,9 @@ AIETargetELFStreamer::AIETargetELFStreamer(MCStreamer &S,
   case Triple::aie2p:
     EFlags = ELF::EF_AIE_AIE2P;
     break;
+  case Triple::aie2ps:
+    EFlags = ELF::EF_AIE_AIE2PS;
+    break;
   default:
     llvm_unreachable("unknown aie triple");
   }

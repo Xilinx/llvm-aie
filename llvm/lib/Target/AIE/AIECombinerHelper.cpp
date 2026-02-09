@@ -2902,7 +2902,8 @@ bool llvm::matchShuffleToExtractInsertEltToBroadcast(MachineInstr &MI,
     return false;
 
   unsigned MinFrequency;
-  if (MI.getMF()->getTarget().getTargetTriple().isAIE2P())
+  const Triple &T = MI.getMF()->getTarget().getTargetTriple();
+  if (T.isAIE2P() || T.isAIE2PS())
     // The scalarization of G_SHUFFLE_VECTOR in the legalizer is more beneficial
     // if there are more exceptions than NumSrcElems / 2 as AIE2P's VINSERT
     // instrutions require a move to a register used for the index unlike VPUSH.
@@ -3023,7 +3024,8 @@ bool llvm::matchMostlySequentialShuffleWithInsertions(MachineInstr &MI,
   const LLT ElemTy = Src1Ty.getElementType();
 
   unsigned MaxNumInsertions;
-  if (MI.getMF()->getTarget().getTargetTriple().isAIE2P())
+  const Triple &T = MI.getMF()->getTarget().getTargetTriple();
+  if (T.isAIE2P() || T.isAIE2PS())
     // The scalarization of G_SHUFFLE_VECTOR in the legalizer is more beneficial
     // if there are more exceptions than NumSrcElems / 2 as AIE2P's VINSERT
     // instructions require a move to a register used for the index unlike

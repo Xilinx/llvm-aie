@@ -1,0 +1,88 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; XOR
+    $r12 = XOR $r5, $r17
+    $r10 = XOR $r7, $r0
+    $r20 = XOR $r8, $r7
+    $r19 = XOR $r24, $r27
+    $r26 = XOR $r27, $r20
+    $r15 = XOR $r11, $r2
+    $r30 = XOR $r3, $r22
+    $r29 = XOR $r16, $r30
+    $r31 = XOR $r23, $r6
+    $r24 = XOR $r10, $r10
+    $r7 = XOR $r12, $r5
+    $r23 = XOR $r21, $r28
+    $r25 = XOR $r28, $r29
+    $r0 = XOR $r15, $r18
+    $r9 = XOR $r14, $r31
+    $r21 = XOR $r4, $r13
+    $r11 = XOR $r18, $r24
+    $r3 = XOR $r0, $r19
+    $r8 = XOR $r26, $r14
+    $r16 = XOR $r6, $r15
+    $r1 = XOR $r30, $r9
+    $r18 = XOR $r20, $r25
+    $r13 = XOR $r2, $r26
+    $r5 = XOR $r9, $r4
+    $r14 = XOR $r25, $r21
+    $r6 = XOR $r19, $r16
+    $r2 = XOR $r29, $r3
+    $r17 = XOR $r17, $r12
+    $r4 = XOR $r22, $r11
+    $r27 = XOR $r13, $r8
+    $r28 = XOR $r31, $r1
+    $r22 = XOR $r1, $r23
+...
+
+# CHECK: 0: b0 16 59 21 xor r12, r5, r17
+# CHECK: 4: b0 06 d4 21 xor r10, r7, r0
+# CHECK: 8: b0 76 28 22 xor r20, r8, r7
+# CHECK: c: b0 b6 27 26 xor r19, r24, r27
+# CHECK: 10: b0 46 f5 26 xor r26, r27, r20
+# CHECK: 14: b0 26 de 22 xor r15, r11, r2
+# CHECK: 18: b0 66 fd 20 xor r30, r3, r22
+# CHECK: 1c: b0 e6 3b 24 xor r29, r16, r30
+# CHECK: 20: b0 66 fe 25 xor r31, r23, r6
+# CHECK: 24: b0 a6 b0 22 xor r24, r10, r10
+# CHECK: 28: b0 56 0e 23 xor r7, r12, r5
+# CHECK: 2c: b0 c6 6f 25 xor r23, r21, r28
+# CHECK: 30: b0 d6 33 27 xor r25, r28, r29
+# CHECK: 34: b0 26 c1 23 xor r0, r15, r18
+# CHECK: 38: b0 f6 93 23 xor r9, r14, r31
+# CHECK: 3c: b0 d6 2a 21 xor r21, r4, r13
+# CHECK: 40: b0 86 97 24 xor r11, r18, r24
+# CHECK: 44: b0 36 07 20 xor r3, r0, r19
+# CHECK: 48: b0 e6 90 26 xor r8, r26, r14
+# CHECK: 4c: b0 f6 a0 21 xor r16, r6, r15
+# CHECK: 50: b0 96 82 27 xor r1, r30, r9
+# CHECK: 54: b0 96 25 25 xor r18, r20, r25
+# CHECK: 58: b0 a6 9b 20 xor r13, r2, r26
+# CHECK: 5c: b0 46 4a 22 xor r5, r9, r4
+# CHECK: 60: b0 56 5d 26 xor r14, r25, r21
+# CHECK: 64: b0 06 cd 24 xor r6, r19, r16
+# CHECK: 68: b0 36 44 27 xor r2, r29, r3
+# CHECK: 6c: b0 c6 62 24 xor r17, r17, r12
+# CHECK: 70: b0 b6 88 25 xor r4, r22, r11
+# CHECK: 74: b0 86 76 23 xor r27, r13, r8
+# CHECK: 78: b0 16 f8 27 xor r28, r31, r1
+# CHECK: 7c: b0 76 6d 20 xor r22, r1, r23

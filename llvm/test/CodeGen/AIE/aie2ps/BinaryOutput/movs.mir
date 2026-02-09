@@ -1,0 +1,168 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; MOVS
+    $dc0 = MOVS $r6
+    $p4 = MOVS $m5
+    $dj4 = MOVS $dn1
+    $dc7 = MOVS $r2
+    $m5 = MOVS $dn5
+    $dj5 = MOVS $r24
+    $dc6 = MOVS $p0
+    $dc4 = MOVS $dj7
+    $dj3 = MOVS $r30
+    $dn4 = MOVS $r29
+    $dn7 = MOVS $m7
+    $m6 = MOVS $r22
+    $p1 = MOVS $dj2
+    $m3 = MOVS $r1
+    $dn3 = MOVS $r11
+    $dc2 = MOVS $dj5
+    $dc1 = MOVS $r28
+    $dj2 = MOVS $r26
+    $m4 = MOVS $m1
+    $p6 = MOVS $dj3
+    $m0 = MOVS $dj1
+    $dj7 = MOVS $r3
+    $m2 = MOVS $p3
+    $dj6 = MOVS $dj0
+    $p3 = MOVS $dc4
+    $p0 = MOVS $r5
+    $p5 = MOVS $r23
+    $p2 = MOVS $r16
+    $m1 = MOVS $p4
+    $dc3 = MOVS $dn3
+    $dn5 = MOVS $dc1
+    $dj0 = MOVS $dn6
+    $dn6 = MOVS $r7
+    $dn0 = MOVS $dc3
+    $p7 = MOVS $r31
+    $dj1 = MOVS $r4
+    $m7 = MOVS $r20
+    $dn2 = MOVS $p2
+    $dn1 = MOVS $m2
+    $dc5 = MOVS $r13
+    $dc0 = MOVS $r9
+    $p4 = MOVS $r21
+    $dj4 = MOVS $dc2
+    $dc7 = MOVS $p5
+    $m5 = MOVS $r8
+    $dj5 = MOVS $r27
+    $dc6 = MOVS $m6
+    $dc4 = MOVS $dc6
+    $dj3 = MOVS $m4
+    $dn4 = MOVS $r10
+    $dn7 = MOVS $dn4
+    $m6 = MOVS $p6
+    $p1 = MOVS $r14
+    $m3 = MOVS $r15
+    $dn3 = MOVS $r25
+    $dc2 = MOVS $dn0
+    $dc1 = MOVS $r12
+    $dj2 = MOVS $dn7
+    $m4 = MOVS $p7
+    $p6 = MOVS $r19
+    $m0 = MOVS $m0
+    $dj7 = MOVS $dc5
+    $m2 = MOVS $dn2
+    $dj6 = MOVS $dj6
+    $p3 = MOVS $dc0
+    $p0 = MOVS $p1
+    $p5 = MOVS $dc7
+    $p2 = MOVS $m3
+    $m1 = MOVS $dj4
+    $dc3 = MOVS $r0
+    $dn5 = MOVS $r17
+    $dj0 = MOVS $r18
+...
+
+# CHECK: 0: b0 c1 00 10 movs dc0, r6
+# CHECK: 4: b0 e9 82 14 movs p4, m5
+# CHECK: 8: b0 c9 20 14 movs dj4, dn1
+# CHECK: c: b0 41 00 17 movs dc7, r2
+# CHECK: 10: b0 c9 62 15 movs m5, dn5
+# CHECK: 14: b0 01 23 15 movs dj5, r24
+# CHECK: 18: b0 11 00 16 movs dc6, p0
+# CHECK: 1c: b0 a9 03 14 movs dc4, dj7
+# CHECK: 20: b0 c1 23 13 movs dj3, r30
+# CHECK: 24: b0 a1 43 14 movs dn4, r29
+# CHECK: 28: b0 e9 43 17 movs dn7, m7
+# CHECK: 2c: b0 c1 62 16 movs m6, r22
+# CHECK: 30: b0 29 81 11 movs p1, dj2
+# CHECK: 34: b0 21 60 13 movs m3, r1
+# CHECK: 38: b0 61 41 13 movs dn3, r11
+# CHECK: 3c: b0 a9 02 12 movs dc2, dj5
+# CHECK: 40: b0 81 03 11 movs dc1, r28
+# CHECK: 44: b0 41 23 12 movs dj2, r26
+# CHECK: 48: b0 e9 60 14 movs m4, m1
+# CHECK: 4c: b0 a9 81 16 movs p6, dj3
+# CHECK: 50: b0 a9 60 10 movs m0, dj1
+# CHECK: 54: b0 61 20 17 movs dj7, r3
+# CHECK: 58: b0 91 61 12 movs m2, p3
+# CHECK: 5c: b0 29 20 16 movs dj6, dj0
+# CHECK: 60: b0 09 82 13 movs p3, dc4
+# CHECK: 64: b0 a1 80 10 movs p0, r5
+# CHECK: 68: b0 e1 82 15 movs p5, r23
+# CHECK: 6c: b0 01 82 12 movs p2, r16
+# CHECK: 70: b0 11 62 11 movs m1, p4
+# CHECK: 74: b0 c9 01 13 movs dc3, dn3
+# CHECK: 78: b0 89 40 15 movs dn5, dc1
+# CHECK: 7c: b0 49 23 10 movs dj0, dn6
+# CHECK: 80: b0 e1 40 16 movs dn6, r7
+# CHECK: 84: b0 89 41 10 movs dn0, dc3
+# CHECK: 88: b0 e1 83 17 movs p7, r31
+# CHECK: 8c: b0 81 20 11 movs dj1, r4
+# CHECK: 90: b0 81 62 17 movs m7, r20
+# CHECK: 94: b0 11 41 12 movs dn2, p2
+# CHECK: 98: b0 69 41 11 movs dn1, m2
+# CHECK: 9c: b0 a1 01 15 movs dc5, r13
+# CHECK: a0: b0 21 01 10 movs dc0, r9
+# CHECK: a4: b0 a1 82 14 movs p4, r21
+# CHECK: a8: b0 09 21 14 movs dj4, dc2
+# CHECK: ac: b0 91 02 17 movs dc7, p5
+# CHECK: b0: b0 01 61 15 movs m5, r8
+# CHECK: b4: b0 61 23 15 movs dj5, r27
+# CHECK: b8: b0 69 03 16 movs dc6, m6
+# CHECK: bc: b0 09 03 14 movs dc4, dc6
+# CHECK: c0: b0 69 22 13 movs dj3, m4
+# CHECK: c4: b0 41 41 14 movs dn4, r10
+# CHECK: c8: b0 49 42 17 movs dn7, dn4
+# CHECK: cc: b0 11 63 16 movs m6, p6
+# CHECK: d0: b0 c1 81 11 movs p1, r14
+# CHECK: d4: b0 e1 61 13 movs m3, r15
+# CHECK: d8: b0 21 43 13 movs dn3, r25
+# CHECK: dc: b0 49 00 12 movs dc2, dn0
+# CHECK: e0: b0 81 01 11 movs dc1, r12
+# CHECK: e4: b0 c9 23 12 movs dj2, dn7
+# CHECK: e8: b0 91 63 14 movs m4, p7
+# CHECK: ec: b0 61 82 16 movs p6, r19
+# CHECK: f0: b0 69 60 10 movs m0, m0
+# CHECK: f4: b0 89 22 17 movs dj7, dc5
+# CHECK: f8: b0 49 61 12 movs m2, dn2
+# CHECK: fc: b0 29 23 16 movs dj6, dj6
+# CHECK: 100: b0 09 80 13 movs p3, dc0
+# CHECK: 104: b0 91 80 10 movs p0, p1
+# CHECK: 108: b0 89 83 15 movs p5, dc7
+# CHECK: 10c: b0 e9 81 12 movs p2, m3
+# CHECK: 110: b0 29 62 11 movs m1, dj4
+# CHECK: 114: b0 01 00 13 movs dc3, r0
+# CHECK: 118: b0 21 42 15 movs dn5, r17
+# CHECK: 11c: b0 41 22 10 movs dj0, r18

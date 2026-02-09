@@ -7,6 +7,7 @@
 # (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2 -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s -check-prefixes=CHECK,AIE2
 # RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s -check-prefixes=CHECK,AIE2P
+# RUN: llc -mtriple aie2ps -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s -check-prefixes=CHECK,AIE2P
 
 ---
 name:            test_v32int8

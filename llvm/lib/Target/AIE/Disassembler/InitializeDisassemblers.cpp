@@ -26,6 +26,10 @@ MCDisassembler *createAIE2PDisassembler(const Target &T,
                                         const MCSubtargetInfo &STI,
                                         MCContext &Ctx);
 
+MCDisassembler *createAIE2PSDisassembler(const Target &T,
+                                         const MCSubtargetInfo &STI,
+                                         MCContext &Ctx);
+
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIEDisassembler() {
   // Register the disassembler for each target.
   TargetRegistry::RegisterMCDisassembler(getTheAIETarget(),
@@ -34,4 +38,6 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIEDisassembler() {
                                          createAIE2Disassembler);
   TargetRegistry::RegisterMCDisassembler(getTheAIE2PTarget(),
                                          createAIE2PDisassembler);
+  TargetRegistry::RegisterMCDisassembler(getTheAIE2PSTarget(),
+                                         createAIE2PSDisassembler);
 }

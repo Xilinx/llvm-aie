@@ -1,0 +1,170 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; MOVA
+    $p5 = MOVA 0
+    $r28 = MOVA 1
+    $p6 = MOVA 1023
+    $dc1 = MOVA -1024
+    $dc3 = MOVA 0
+    $dc2 = MOVA 1
+    $dc4 = MOVA 1023
+    $dn3 = MOVA -1024
+    $p4 = MOVA 0
+    $m4 = MOVA 1
+    $r23 = MOVA 1023
+    $r24 = MOVA -1024
+    $dn7 = MOVA 0
+    $dj6 = MOVA 1
+    $r14 = MOVA 1023
+    $m3 = MOVA -1024
+    $r18 = MOVA 0
+    $r13 = MOVA 1
+    $m7 = MOVA 1023
+    $r20 = MOVA -1024
+    $r9 = MOVA 0
+    $r8 = MOVA 1
+    $r25 = MOVA 1023
+    $dn1 = MOVA -1024
+    $m1 = MOVA 0
+    $p3 = MOVA 1
+    $r26 = MOVA 1023
+    $m0 = MOVA -1024
+    $r0 = MOVA 0
+    $dj3 = MOVA 1
+    $dc0 = MOVA 1023
+    $dc5 = MOVA -1024
+    $r19 = MOVA 0
+    $dj2 = MOVA 1
+    $r16 = MOVA 1023
+    $dj0 = MOVA -1024
+    $dj4 = MOVA 0
+    $r6 = MOVA 1
+    $dc6 = MOVA 1023
+    $dn5 = MOVA -1024
+    $dn0 = MOVA 0
+    $p2 = MOVA 1
+    $r4 = MOVA 1023
+    $r29 = MOVA -1024
+    $r1 = MOVA 0
+    $dj7 = MOVA 1
+    $p0 = MOVA 1023
+    $r27 = MOVA -1024
+    $r21 = MOVA 0
+    $dn6 = MOVA 1
+    $dj5 = MOVA 1023
+    $dn4 = MOVA -1024
+    $dj1 = MOVA 0
+    $r3 = MOVA 1
+    $r17 = MOVA 1023
+    $dn2 = MOVA -1024
+    $r5 = MOVA 0
+    $r12 = MOVA 1
+    $r2 = MOVA 1023
+    $p1 = MOVA -1024
+    $r10 = MOVA 0
+    $r31 = MOVA 1
+    $r11 = MOVA 1023
+    $r30 = MOVA -1024
+    $p7 = MOVA 0
+    $m5 = MOVA 1
+    $r7 = MOVA 1023
+    $dc7 = MOVA -1024
+    $r15 = MOVA 0
+    $m6 = MOVA 1
+    $m2 = MOVA 1023
+    $r22 = MOVA -1024
+    $lc = MOVA 0
+...
+
+# CHECK: 0: 30 d0 05 00 mova p5, #0
+# CHECK: 4: 30 04 07 00 mova r28, #1
+# CHECK: 8: 30 dc fe 07 mova p6, #1023
+# CHECK: c: 30 e0 01 08 mova dc1, #-1024
+# CHECK: 10: 30 e0 03 00 mova dc3, #0
+# CHECK: 14: 30 e4 02 00 mova dc2, #1
+# CHECK: 18: 30 ec fc 07 mova dc4, #1023
+# CHECK: 1c: 30 60 03 08 mova dn3, #-1024
+# CHECK: 20: 30 d0 04 00 mova p4, #0
+# CHECK: 24: 30 24 04 00 mova m4, #1
+# CHECK: 28: 30 cc fd 07 mova r23, #1023
+# CHECK: 2c: 30 00 06 08 mova r24, #-1024
+# CHECK: 30: 30 60 07 00 mova dn7, #0
+# CHECK: 34: 30 a4 06 00 mova dj6, #1
+# CHECK: 38: 30 8c fb 07 mova r14, #1023
+# CHECK: 3c: 30 20 03 08 mova m3, #-1024
+# CHECK: 40: 30 80 04 00 mova r18, #0
+# CHECK: 44: 30 44 03 00 mova r13, #1
+# CHECK: 48: 30 2c ff 07 mova m7, #1023
+# CHECK: 4c: 30 00 05 08 mova r20, #-1024
+# CHECK: 50: 30 40 02 00 mova r9, #0
+# CHECK: 54: 30 04 02 00 mova r8, #1
+# CHECK: 58: 30 4c fe 07 mova r25, #1023
+# CHECK: 5c: 30 60 01 08 mova dn1, #-1024
+# CHECK: 60: 30 20 01 00 mova m1, #0
+# CHECK: 64: 30 d4 03 00 mova p3, #1
+# CHECK: 68: 30 8c fe 07 mova r26, #1023
+# CHECK: 6c: 30 20 00 08 mova m0, #-1024
+# CHECK: 70: 30 00 00 00 mova r0, #0
+# CHECK: 74: 30 a4 03 00 mova dj3, #1
+# CHECK: 78: 30 ec f8 07 mova dc0, #1023
+# CHECK: 7c: 30 e0 05 08 mova dc5, #-1024
+# CHECK: 80: 30 c0 04 00 mova r19, #0
+# CHECK: 84: 30 a4 02 00 mova dj2, #1
+# CHECK: 88: 30 0c fc 07 mova r16, #1023
+# CHECK: 8c: 30 a0 00 08 mova dj0, #-1024
+# CHECK: 90: 30 a0 04 00 mova dj4, #0
+# CHECK: 94: 30 84 01 00 mova r6, #1
+# CHECK: 98: 30 ec fe 07 mova dc6, #1023
+# CHECK: 9c: 30 60 05 08 mova dn5, #-1024
+# CHECK: a0: 30 60 00 00 mova dn0, #0
+# CHECK: a4: 30 d4 02 00 mova p2, #1
+# CHECK: a8: 30 0c f9 07 mova r4, #1023
+# CHECK: ac: 30 40 07 08 mova r29, #-1024
+# CHECK: b0: 30 40 00 00 mova r1, #0
+# CHECK: b4: 30 a4 07 00 mova dj7, #1
+# CHECK: b8: 30 dc f8 07 mova p0, #1023
+# CHECK: bc: 30 c0 06 08 mova r27, #-1024
+# CHECK: c0: 30 40 05 00 mova r21, #0
+# CHECK: c4: 30 64 06 00 mova dn6, #1
+# CHECK: c8: 30 ac fd 07 mova dj5, #1023
+# CHECK: cc: 30 60 04 08 mova dn4, #-1024
+# CHECK: d0: 30 a0 01 00 mova dj1, #0
+# CHECK: d4: 30 c4 00 00 mova r3, #1
+# CHECK: d8: 30 4c fc 07 mova r17, #1023
+# CHECK: dc: 30 60 02 08 mova dn2, #-1024
+# CHECK: e0: 30 40 01 00 mova r5, #0
+# CHECK: e4: 30 04 03 00 mova r12, #1
+# CHECK: e8: 30 8c f8 07 mova r2, #1023
+# CHECK: ec: 30 d0 01 08 mova p1, #-1024
+# CHECK: f0: 30 80 02 00 mova r10, #0
+# CHECK: f4: 30 c4 07 00 mova r31, #1
+# CHECK: f8: 30 cc fa 07 mova r11, #1023
+# CHECK: fc: 30 80 07 08 mova r30, #-1024
+# CHECK: 100: 30 d0 07 00 mova p7, #0
+# CHECK: 104: 30 24 05 00 mova m5, #1
+# CHECK: 108: 30 cc f9 07 mova r7, #1023
+# CHECK: 10c: 30 e0 07 08 mova dc7, #-1024
+# CHECK: 110: 30 c0 03 00 mova r15, #0
+# CHECK: 114: 30 24 06 00 mova m6, #1
+# CHECK: 118: 30 2c fa 07 mova m2, #1023
+# CHECK: 11c: 30 80 05 08 mova r22, #-1024
+# CHECK: 120: 30 50 01 00 mova lc, #0

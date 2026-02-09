@@ -8,6 +8,7 @@
 # RUN: llc -mtriple aie -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE %s
 # RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefixes=AIE2 %s
 # RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefixes=AIE2P %s
+# RUN: llc -mtriple aie2ps -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefixes=AIE2PS %s
 
 ---
 name: and_s32
@@ -40,6 +41,14 @@ body: |
     ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
     ; AIE2P-NEXT: [[AND:%[0-9]+]]:er = AND [[COPY]], [[COPY1]]
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[AND]]
+    ;
+    ; AIE2PS-LABEL: name: and_s32
+    ; AIE2PS: liveins: $r6, $r7
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
+    ; AIE2PS-NEXT: [[AND:%[0-9]+]]:mlockid_reg = AND [[COPY]], [[COPY1]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[AND]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = G_AND %0, %1
@@ -74,6 +83,13 @@ body: |
     ; AIE2P-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
     ; AIE2P-NEXT: [[EXTEND_u8_:%[0-9]+]]:er = EXTEND_u8 [[COPY]]
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[EXTEND_u8_]]
+    ;
+    ; AIE2PS-LABEL: name: and_mask_255_to_zext8
+    ; AIE2PS: liveins: $r6
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[EXTEND_u8_:%[0-9]+]]:mlockid_reg = EXTEND_u8 [[COPY]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[EXTEND_u8_]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = G_CONSTANT i32 255
     %2:gprregbank(s32) = G_AND %0, %1
@@ -108,6 +124,13 @@ body: |
     ; AIE2P-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
     ; AIE2P-NEXT: [[EXTEND_u16_:%[0-9]+]]:er = EXTEND_u16 [[COPY]]
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[EXTEND_u16_]]
+    ;
+    ; AIE2PS-LABEL: name: and_mask_65535_to_zext16
+    ; AIE2PS: liveins: $r6
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[EXTEND_u16_:%[0-9]+]]:mlockid_reg = EXTEND_u16 [[COPY]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[EXTEND_u16_]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = G_CONSTANT i32 65535
     %2:gprregbank(s32) = G_AND %0, %1

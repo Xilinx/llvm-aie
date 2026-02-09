@@ -4,9 +4,11 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2 -run-pass=aie2-prelegalizer-combiner %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2
 # RUN: llc -mtriple aie2p -run-pass=aie2p-prelegalizer-combiner %s -verify-machineinstrs -o - | FileCheck %s  --check-prefix=AIE2P
+# RUN: llc -mtriple aie2ps -run-pass=aie2ps-prelegalizer-combiner  %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2PS
+
 --- |
   @data = dso_local local_unnamed_addr global [2 x i32] [i32 10, i32 20], align 4
 
@@ -32,6 +34,12 @@ body:             |
     ; AIE2P-NEXT: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[GV]](p0) :: (dereferenceable load (s32) from `ptr getelementptr inbounds ([2 x i32], ptr @data, i20 0, i20 1)`)
     ; AIE2P-NEXT: $r0 = COPY [[LOAD]](s32)
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit $r0
+    ;
+    ; AIE2PS-LABEL: name: _Z7getDatav
+    ; AIE2PS: [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE target-flags(aie2ps-global) @data + 4
+    ; AIE2PS-NEXT: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[GV]](p0) :: (dereferenceable load (s32) from `ptr getelementptr inbounds ([2 x i32], ptr @data, i20 0, i20 1)`)
+    ; AIE2PS-NEXT: $r0 = COPY [[LOAD]](s32)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $r0
     %2:_(p0) = G_GLOBAL_VALUE @data
     %3:_(s20) = G_CONSTANT i20 4
     %1:_(p0) = G_PTR_ADD %2, %3(s20)

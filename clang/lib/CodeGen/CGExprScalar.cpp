@@ -45,6 +45,7 @@
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
+#include "llvm/IR/IntrinsicsAIE2PS.h"
 #include "llvm/IR/IntrinsicsPowerPC.h"
 #include "llvm/IR/MatrixBuilder.h"
 #include "llvm/IR/Module.h"
@@ -4231,11 +4232,16 @@ static Value* tryEmitFMulAdd(const BinOpInfo &op,
 }
 
 namespace {
-enum AIEOperationControl { I32 = 0x0, I64 = 0x2, FP32 = 0x1C };
+enum AIEOperationControl {
+  I32 = 0x0,
+  I64 = 0x2,
+  FP32 = 0x1C,
+  ACC_FLOAT = 0x3C
+};
 } // namespace
 
 static std::optional<std::pair<int, int>>
-getAIEIntrinsicForOp(const BinOpInfo &op, const CodeGenFunction &CGF) {
+getAIE2IntrinsicForOp(const BinOpInfo &op, const CodeGenFunction &CGF) {
   assert(op.Ty->isVectorType() && "Expected a vector type");
   QualType ElemTy = op.Ty->castAs<VectorType>()->getElementType();
   assert(ElemTy->isAIEAccumulatorType() && "Expected an AIE accumulator type");
@@ -4279,14 +4285,85 @@ getAIEIntrinsicForOp(const BinOpInfo &op, const CodeGenFunction &CGF) {
   return std::nullopt;
 }
 
-static Value *handleAIEAccumulatorBinOp(const BinOpInfo &op,
-                                        CodeGenFunction &CGF,
-                                        CGBuilderTy &Builder) {
+static std::optional<std::pair<int, int>>
+getAIE2PSIntrinsicForOp(const BinOpInfo &op, const CodeGenFunction &CGF) {
+  assert(op.Ty->isVectorType() && "Expected a vector type");
+  QualType ElemTy = op.Ty->castAs<VectorType>()->getElementType();
+  assert(ElemTy->isAIEAccumulatorType() && "Expected an AIE accumulator type");
+
+  uint64_t Size = CGF.getContext().getTypeSize(op.Ty);
+
+  if (Size == 2048) {
+    switch (op.Opcode) {
+    case clang::BinaryOperator::Opcode::BO_Add:
+    case clang::BinaryOperator::Opcode::BO_AddAssign: {
+      if (ElemTy->isSpecificBuiltinType(BuiltinType::ACCFLOAT)) {
+        return {{llvm::Intrinsic::aie2ps_ACC2048_accfloat_add_conf,
+                 AIEOperationControl::ACC_FLOAT}};
+      }
+    } break;
+    case clang::BinaryOperator::Opcode::BO_Sub:
+    case clang::BinaryOperator::Opcode::BO_SubAssign: {
+      if (ElemTy->isSpecificBuiltinType(BuiltinType::ACCFLOAT)) {
+        return {{llvm::Intrinsic::aie2ps_ACC2048_accfloat_sub_conf,
+                 AIEOperationControl::ACC_FLOAT}};
+      }
+    } break;
+    default:
+      break;
+    }
+  } else if (Size == 1024) {
+    switch (op.Opcode) {
+    case clang::BinaryOperator::Opcode::BO_Add:
+    case clang::BinaryOperator::Opcode::BO_AddAssign: {
+      if (ElemTy->isSpecificBuiltinType(BuiltinType::ACCFLOAT)) {
+        return {{llvm::Intrinsic::aie2ps_ACC1024_accfloat_add_conf,
+                 AIEOperationControl::ACC_FLOAT}};
+      }
+    } break;
+    case clang::BinaryOperator::Opcode::BO_Sub:
+    case clang::BinaryOperator::Opcode::BO_SubAssign: {
+      if (ElemTy->isSpecificBuiltinType(BuiltinType::ACCFLOAT)) {
+        return {{llvm::Intrinsic::aie2ps_ACC1024_accfloat_sub_conf,
+                 AIEOperationControl::ACC_FLOAT}};
+      }
+
+    } break;
+    default:
+      break;
+    }
+  } else if (Size == 512) {
+    switch (op.Opcode) {
+    case clang::BinaryOperator::Opcode::BO_Add:
+    case clang::BinaryOperator::Opcode::BO_AddAssign: {
+      if (ElemTy->isSpecificBuiltinType(BuiltinType::ACCFLOAT)) {
+        return {{llvm::Intrinsic::aie2ps_ACC1024_accfloat_add_conf,
+                 AIEOperationControl::ACC_FLOAT}};
+      }
+    } break;
+    case clang::BinaryOperator::Opcode::BO_Sub:
+    case clang::BinaryOperator::Opcode::BO_SubAssign: {
+      if (ElemTy->isSpecificBuiltinType(BuiltinType::ACCFLOAT)) {
+        return {{llvm::Intrinsic::aie2ps_ACC1024_accfloat_sub_conf,
+                 AIEOperationControl::ACC_FLOAT}};
+      }
+    } break;
+    default:
+      break;
+    }
+  }
+
+  return std::nullopt;
+}
+
+static Value *handleAIE2AccumulatorBinOp(const BinOpInfo &op,
+                                         CodeGenFunction &CGF,
+                                         CGBuilderTy &Builder) {
   if (op.Ty->isVectorType()) {
     QualType ElemTy = op.Ty->castAs<VectorType>()->getElementType();
     if (ElemTy->isAIEAccumulatorType()) {
       // Get the intrinsic and register configuration for the given operator
-      auto IntrinsicCfg = getAIEIntrinsicForOp(op, CGF);
+      auto IntrinsicCfg = getAIE2IntrinsicForOp(op, CGF);
       if (IntrinsicCfg) {
         llvm::Function *F = CGF.CGM.getIntrinsic(IntrinsicCfg->first);
         auto *LHSTmp = Builder.CreateBitCast(op.LHS, F->getReturnType());
@@ -4299,6 +4376,67 @@ static Value *handleAIEAccumulatorBinOp(const BinOpInfo &op,
     }
   }
   return nullptr;
+}
+
+static Value *handleAIE2PSAccumulatorBinOp(const BinOpInfo &op,
+                                           CodeGenFunction &CGF,
+                                           CGBuilderTy &Builder) {
+  if (op.Ty->isVectorType()) {
+    QualType ElemTy = op.Ty->castAs<VectorType>()->getElementType();
+    if (ElemTy->isAIEAccumulatorType()) {
+      // Get the intrinsic and register configuration for the given operator
+      auto IntrinsicCfg = getAIE2PSIntrinsicForOp(op, CGF);
+      if (IntrinsicCfg) {
+        llvm::Function *F = CGF.CGM.getIntrinsic(IntrinsicCfg->first);
+        auto *LHSTmp = op.LHS;
+        auto *RHSTmp = op.RHS;
+        Value *ConfigParam = Builder.getInt32(IntrinsicCfg->second);
+        // For 512-bit accumulators, we need to extend to 1024-bit
+        auto Size = CGF.getContext().getTypeSize(op.Ty);
+        if (Size == 512) {
+          // Create a shufflevector operation with return value type <32 x
+          // float> and fill first 16 elements with LHS value and last 16
+          // elements with poison values
+          LHSTmp = Builder.CreateShuffleVector(
+              LHSTmp,
+              llvm::ArrayRef<int>({0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10,
+                                   11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1,
+                                   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}));
+          RHSTmp = Builder.CreateShuffleVector(
+              RHSTmp,
+              llvm::ArrayRef<int>({0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10,
+                                   11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1,
+                                   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}));
+        }
+        Value *RetVal = Builder.CreateCall(F, {LHSTmp, RHSTmp, ConfigParam});
+        // For 512-bit accumulators, create a shufflevector operation to
+        // truncate return value from <32 x float> to <16 x float>.
+        if (Size == 512) {
+          RetVal = Builder.CreateShuffleVector(
+              RetVal, llvm::ArrayRef<int>({0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+                                           12, 13, 14, 15}));
+        }
+        return RetVal;
+      }
+
+      CGF.ErrorUnsupported(op.E, "operator for accumulator type");
+    }
+  }
+  return nullptr;
+}
+
+static Value *handleAIEAccumulatorBinOp(const BinOpInfo &op,
+                                        CodeGenFunction &CGF,
+                                        CGBuilderTy &Builder) {
+  llvm::Triple Triple = CGF.getContext().getTargetInfo().getTriple();
+  switch (Triple.getArch()) {
+  default:
+    return nullptr;
+  case llvm::Triple::ArchType::aie2:
+    return handleAIE2AccumulatorBinOp(op, CGF, Builder);
+  case llvm::Triple::ArchType::aie2ps:
+    return handleAIE2PSAccumulatorBinOp(op, CGF, Builder);
+  }
 }
 
 Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &op) {

@@ -5,11 +5,12 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 // RUN: %clang -O2 %s --target=aie2 -nostdlibinc -S -emit-llvm -o - | FileCheck %s -check-prefix=CHECK-AIEV2
 // RUN: %clang -O2 %s --target=aie2p -nostdlibinc -S -emit-llvm -o - | FileCheck %s -check-prefix=CHECK-AIE2P
+// RUN: %clang -O2 %s --target=aie2ps -nostdlibinc -S -emit-llvm -o - | FileCheck %s -check-prefix=CHECK-AIE2PS
 
 // CHECK-AIEV2-LABEL: @_Z16test_set_satmodej(
 // CHECK-AIEV2-NEXT:  entry:
@@ -20,6 +21,11 @@
 // CHECK-AIE2P-NEXT:  entry:
 // CHECK-AIE2P-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 [[VAL:%.*]])
 // CHECK-AIE2P-NEXT:    ret void
+//
+// CHECK-AIE2PS-LABEL: @_Z16test_set_satmodej(
+// CHECK-AIE2PS-NEXT:  entry:
+// CHECK-AIE2PS-NEXT:    tail call void @llvm.aie2ps.set.ctrl.reg(i32 0, i32 [[VAL:%.*]])
+// CHECK-AIE2PS-NEXT:    ret void
 //
 void test_set_satmode (unsigned int val) {
   return set_satmode(val);
@@ -35,6 +41,11 @@ void test_set_satmode (unsigned int val) {
 // CHECK-AIE2P-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 1)
 // CHECK-AIE2P-NEXT:    ret void
 //
+// CHECK-AIE2PS-LABEL: @_Z12test_set_satv(
+// CHECK-AIE2PS-NEXT:  entry:
+// CHECK-AIE2PS-NEXT:    tail call void @llvm.aie2ps.set.ctrl.reg(i32 0, i32 1)
+// CHECK-AIE2PS-NEXT:    ret void
+//
 void test_set_sat () {
   return set_sat();
 }
@@ -48,6 +59,11 @@ void test_set_sat () {
 // CHECK-AIE2P-NEXT:  entry:
 // CHECK-AIE2P-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 3)
 // CHECK-AIE2P-NEXT:    ret void
+//
+// CHECK-AIE2PS-LABEL: @_Z15test_set_symsatv(
+// CHECK-AIE2PS-NEXT:  entry:
+// CHECK-AIE2PS-NEXT:    tail call void @llvm.aie2ps.set.ctrl.reg(i32 0, i32 3)
+// CHECK-AIE2PS-NEXT:    ret void
 //
 void test_set_symsat () {
   return set_symsat();
@@ -63,6 +79,11 @@ void test_set_symsat () {
 // CHECK-AIE2P-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 0, i32 0)
 // CHECK-AIE2P-NEXT:    ret void
 //
+// CHECK-AIE2PS-LABEL: @_Z12test_clr_satv(
+// CHECK-AIE2PS-NEXT:  entry:
+// CHECK-AIE2PS-NEXT:    tail call void @llvm.aie2ps.set.ctrl.reg(i32 0, i32 0)
+// CHECK-AIE2PS-NEXT:    ret void
+//
 void test_clr_sat () {
   return clr_sat();
 }
@@ -76,6 +97,11 @@ void test_clr_sat () {
 // CHECK-AIE2P-NEXT:  entry:
 // CHECK-AIE2P-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[VAL:%.*]])
 // CHECK-AIE2P-NEXT:    ret void
+//
+// CHECK-AIE2PS-LABEL: @_Z12test_set_rndj(
+// CHECK-AIE2PS-NEXT:  entry:
+// CHECK-AIE2PS-NEXT:    tail call void @llvm.aie2ps.set.ctrl.reg(i32 1, i32 [[VAL:%.*]])
+// CHECK-AIE2PS-NEXT:    ret void
 //
 void test_set_rnd (unsigned int val) {
   return set_rnd(val);
@@ -91,6 +117,11 @@ void test_set_rnd (unsigned int val) {
 // CHECK-AIE2P-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 2, i32 [[VAL:%.*]])
 // CHECK-AIE2P-NEXT:    ret void
 //
+// CHECK-AIE2PS-LABEL: @_Z22test_set_fpmulmac_maskj(
+// CHECK-AIE2PS-NEXT:  entry:
+// CHECK-AIE2PS-NEXT:    tail call void @llvm.aie2ps.set.ctrl.reg(i32 2, i32 [[VAL:%.*]])
+// CHECK-AIE2PS-NEXT:    ret void
+//
 void test_set_fpmulmac_mask (unsigned int val) {
   return set_fpmulmac_mask(val);
 }
@@ -104,6 +135,11 @@ void test_set_fpmulmac_mask (unsigned int val) {
 // CHECK-AIE2P-NEXT:  entry:
 // CHECK-AIE2P-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 3, i32 [[VAL:%.*]])
 // CHECK-AIE2P-NEXT:    ret void
+//
+// CHECK-AIE2PS-LABEL: @_Z20test_set_fp2int_maskj(
+// CHECK-AIE2PS-NEXT:  entry:
+// CHECK-AIE2PS-NEXT:    tail call void @llvm.aie2ps.set.ctrl.reg(i32 9, i32 [[VAL:%.*]])
+// CHECK-AIE2PS-NEXT:    ret void
 //
 void test_set_fp2int_mask (unsigned int val) {
   return set_fp2int_mask(val);
@@ -119,6 +155,11 @@ void test_set_fp2int_mask (unsigned int val) {
 // CHECK-AIE2P-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 4, i32 [[VAL:%.*]])
 // CHECK-AIE2P-NEXT:    ret void
 //
+// CHECK-AIE2PS-LABEL: @_Z19test_set_fp2bf_maskj(
+// CHECK-AIE2PS-NEXT:  entry:
+// CHECK-AIE2PS-NEXT:    tail call void @llvm.aie2ps.set.ctrl.reg(i32 10, i32 [[VAL:%.*]])
+// CHECK-AIE2PS-NEXT:    ret void
+//
 void test_set_fp2bf_mask (unsigned int val) {
   return set_fp2bf_mask(val);
 }
@@ -133,6 +174,11 @@ void test_set_fp2bf_mask (unsigned int val) {
 // CHECK-AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 0)
 // CHECK-AIE2P-NEXT:    ret i32 [[TMP0]]
 //
+// CHECK-AIE2PS-LABEL: @_Z16test_get_satmodev(
+// CHECK-AIE2PS-NEXT:  entry:
+// CHECK-AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.get.ctrl.reg(i32 0)
+// CHECK-AIE2PS-NEXT:    ret i32 [[TMP0]]
+//
 unsigned int test_get_satmode() { return get_satmode(); }
 
 // CHECK-AIEV2-LABEL: @_Z12test_get_satv(
@@ -144,6 +190,11 @@ unsigned int test_get_satmode() { return get_satmode(); }
 // CHECK-AIE2P-NEXT:  entry:
 // CHECK-AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 0)
 // CHECK-AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// CHECK-AIE2PS-LABEL: @_Z12test_get_satv(
+// CHECK-AIE2PS-NEXT:  entry:
+// CHECK-AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.get.ctrl.reg(i32 0)
+// CHECK-AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_get_sat() { return get_sat(); }
 
@@ -157,6 +208,11 @@ unsigned int test_get_sat() { return get_sat(); }
 // CHECK-AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
 // CHECK-AIE2P-NEXT:    ret i32 [[TMP0]]
 //
+// CHECK-AIE2PS-LABEL: @_Z12test_get_rndv(
+// CHECK-AIE2PS-NEXT:  entry:
+// CHECK-AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.get.ctrl.reg(i32 1)
+// CHECK-AIE2PS-NEXT:    ret i32 [[TMP0]]
+//
 unsigned int test_get_rnd() { return get_rnd(); }
 
 // CHECK-AIEV2-LABEL: @_Z22test_get_fpmulmac_maskv(
@@ -168,6 +224,11 @@ unsigned int test_get_rnd() { return get_rnd(); }
 // CHECK-AIE2P-NEXT:  entry:
 // CHECK-AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 2)
 // CHECK-AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// CHECK-AIE2PS-LABEL: @_Z22test_get_fpmulmac_maskv(
+// CHECK-AIE2PS-NEXT:  entry:
+// CHECK-AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.get.ctrl.reg(i32 2)
+// CHECK-AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_get_fpmulmac_mask() {
   return get_fpmulmac_mask();
@@ -183,6 +244,11 @@ unsigned int test_get_fpmulmac_mask() {
 // CHECK-AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 3)
 // CHECK-AIE2P-NEXT:    ret i32 [[TMP0]]
 //
+// CHECK-AIE2PS-LABEL: @_Z20test_get_fp2int_maskv(
+// CHECK-AIE2PS-NEXT:  entry:
+// CHECK-AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.get.ctrl.reg(i32 9)
+// CHECK-AIE2PS-NEXT:    ret i32 [[TMP0]]
+//
 unsigned int test_get_fp2int_mask() {
   return get_fp2int_mask();
 }
@@ -196,6 +262,11 @@ unsigned int test_get_fp2int_mask() {
 // CHECK-AIE2P-NEXT:  entry:
 // CHECK-AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 4)
 // CHECK-AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// CHECK-AIE2PS-LABEL: @_Z19test_get_fp2bf_maskv(
+// CHECK-AIE2PS-NEXT:  entry:
+// CHECK-AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.get.ctrl.reg(i32 10)
+// CHECK-AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_get_fp2bf_mask() {
   return get_fp2bf_mask();

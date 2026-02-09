@@ -4,9 +4,10 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=CHECK --check-prefix=AIE2
-# RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=CHECK --check-prefix=AIE2P
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefixes CHECK,AIE2
+# RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefixes CHECK,AIE2P
+# RUN: llc -mtriple aie2ps -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefixes CHECK,AIE2PS
 
 ---
 name: ptr_add
@@ -33,6 +34,16 @@ body: |
     ; AIE2P-NEXT: [[COPY2:%[0-9]+]]:er = COPY [[COPY]]
     ; AIE2P-NEXT: [[ADD_alu_r_rr:%[0-9]+]]:er = ADD_alu_r_rr [[COPY2]], [[COPY1]], implicit-def $srcarry
     ; AIE2P-NEXT: $p0 = COPY [[ADD_alu_r_rr]]
+    ;
+    ; AIE2PS-LABEL: name: ptr_add
+    ; AIE2PS: liveins: $p0, $r6
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r6
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:mlockid_reg = COPY [[COPY1]]
+    ; AIE2PS-NEXT: [[COPY3:%[0-9]+]]:mlockid_reg = COPY [[COPY]]
+    ; AIE2PS-NEXT: [[ADD_alu_r_rr:%[0-9]+]]:mlockid_reg = ADD_alu_r_rr [[COPY3]], [[COPY2]], implicit-def $srcarry
+    ; AIE2PS-NEXT: $p0 = COPY [[ADD_alu_r_rr]]
     %0:ptrregbank(p0) = COPY $p0
     %1:gprregbank(s32) = COPY $r6
     %2:gprregbank(s20) = G_TRUNC %1
@@ -116,6 +127,30 @@ body: |
     ; AIE2P-NEXT: $p0 = COPY [[PADD_mod_pseudo4]]
     ; AIE2P-NEXT: $p0 = COPY [[PADD_imm_pseudo]]
     ; AIE2P-NEXT: $p0 = COPY [[PADD_imm_pseudo1]]
+    ;
+    ; AIE2PS-LABEL: name: ptr_add_s20_on_ptr_valid_imm
+    ; AIE2PS: liveins: $p0
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2PS-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo 1020
+    ; AIE2PS-NEXT: [[MOVXM_lng_cg:%[0-9]+]]:em_as_32bit = MOVXM_lng_cg -2048
+    ; AIE2PS-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:em = MOV_PD_imm11_pseudo -1024
+    ; AIE2PS-NEXT: [[MOVXM_lng_cg1:%[0-9]+]]:em_as_32bit = MOVXM_lng_cg -2052
+    ; AIE2PS-NEXT: [[MOVXM_lng_cg2:%[0-9]+]]:em_as_32bit = MOVXM_lng_cg 2048
+    ; AIE2PS-NEXT: [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[MOV_PD_imm11_pseudo]]
+    ; AIE2PS-NEXT: [[PADD_mod_pseudo1:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[MOVXM_lng_cg]]
+    ; AIE2PS-NEXT: [[PADD_mod_pseudo2:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[MOV_PD_imm11_pseudo1]]
+    ; AIE2PS-NEXT: [[PADD_mod_pseudo3:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[MOVXM_lng_cg1]]
+    ; AIE2PS-NEXT: [[PADD_mod_pseudo4:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[MOVXM_lng_cg2]]
+    ; AIE2PS-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], -512
+    ; AIE2PS-NEXT: [[PADD_imm_pseudo1:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 448
+    ; AIE2PS-NEXT: $p0 = COPY [[PADD_mod_pseudo]]
+    ; AIE2PS-NEXT: $p0 = COPY [[PADD_mod_pseudo1]]
+    ; AIE2PS-NEXT: $p0 = COPY [[PADD_mod_pseudo2]]
+    ; AIE2PS-NEXT: $p0 = COPY [[PADD_mod_pseudo3]]
+    ; AIE2PS-NEXT: $p0 = COPY [[PADD_mod_pseudo4]]
+    ; AIE2PS-NEXT: $p0 = COPY [[PADD_imm_pseudo]]
+    ; AIE2PS-NEXT: $p0 = COPY [[PADD_imm_pseudo1]]
     %0:ptrregbank(p0) = COPY $p0
     %1:modregbank(s20) = G_CONSTANT i20 1020
     %2:modregbank(s20) = G_CONSTANT i20 -2048
@@ -163,6 +198,14 @@ body: |
     ; AIE2P-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo 93
     ; AIE2P-NEXT: [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[MOV_PD_imm11_pseudo]]
     ; AIE2P-NEXT: $p0 = COPY [[PADD_mod_pseudo]]
+    ;
+    ; AIE2PS-LABEL: name: ptr_add_s20_on_ptr_invalid_imm
+    ; AIE2PS: liveins: $p0, $p1
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2PS-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo 93
+    ; AIE2PS-NEXT: [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[MOV_PD_imm11_pseudo]]
+    ; AIE2PS-NEXT: $p0 = COPY [[PADD_mod_pseudo]]
     %0:ptrregbank(p0) = COPY $p0
     %1:modregbank(s20) = G_CONSTANT i20 93
     %2:ptrregbank(p0) = G_PTR_ADD %0, %1

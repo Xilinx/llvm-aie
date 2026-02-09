@@ -1,0 +1,88 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; MAXU
+    $r22 = MAXU $r20, $r1
+    $r17 = MAXU $r11, $r2
+    $r11 = MAXU $r29, $r0
+    $r28 = MAXU $r15, $r7
+    $r29 = MAXU $r9, $r3
+    $r1 = MAXU $r22, $r5
+    $r5 = MAXU $r6, $r6
+    $r15 = MAXU $r12, $r4
+    $r27 = MAXU $r3, $r1
+    $r31 = MAXU $r27, $r2
+    $r20 = MAXU $r7, $r0
+    $r10 = MAXU $r10, $r7
+    $r18 = MAXU $r21, $r3
+    $r3 = MAXU $r13, $r5
+    $r16 = MAXU $r4, $r6
+    $r30 = MAXU $r18, $r4
+    $r21 = MAXU $r17, $r1
+    $r19 = MAXU $r8, $r2
+    $r12 = MAXU $r28, $r0
+    $r13 = MAXU $r2, $r7
+    $r14 = MAXU $r19, $r3
+    $r26 = MAXU $r31, $r5
+    $r4 = MAXU $r0, $r6
+    $r24 = MAXU $r5, $r4
+    $r6 = MAXU $r16, $r1
+    $r2 = MAXU $r23, $r2
+    $r0 = MAXU $r25, $r0
+    $r9 = MAXU $r24, $r7
+    $r23 = MAXU $r30, $r3
+    $r25 = MAXU $r26, $r5
+    $r8 = MAXU $r1, $r6
+    $r7 = MAXU $r14, $r4
+...
+
+# CHECK: 0: 30 5c 2c 25 maxu r22, r20, r1
+# CHECK: 4: 30 9c e2 22 maxu r17, r11, r2
+# CHECK: 8: 30 1c 56 27 maxu r11, r29, r0
+# CHECK: c: 30 dc f9 23 maxu r28, r15, r7
+# CHECK: 10: 30 dc 7a 22 maxu r29, r9, r3
+# CHECK: 14: 30 5c 83 25 maxu r1, r22, r5
+# CHECK: 18: 30 9c 8b 21 maxu r5, r6, r6
+# CHECK: 1c: 30 1c 1f 23 maxu r15, r12, r4
+# CHECK: 20: 30 5c f6 20 maxu r27, r3, r1
+# CHECK: 24: 30 9c fe 26 maxu r31, r27, r2
+# CHECK: 28: 30 1c e8 21 maxu r20, r7, r0
+# CHECK: 2c: 30 dc 95 22 maxu r10, r10, r7
+# CHECK: 30: 30 dc 64 25 maxu r18, r21, r3
+# CHECK: 34: 30 5c 47 23 maxu r3, r13, r5
+# CHECK: 38: 30 9c 21 21 maxu r16, r4, r6
+# CHECK: 3c: 30 1c bd 24 maxu r30, r18, r4
+# CHECK: 40: 30 5c 6a 24 maxu r21, r17, r1
+# CHECK: 44: 30 9c 26 22 maxu r19, r8, r2
+# CHECK: 48: 30 1c 18 27 maxu r12, r28, r0
+# CHECK: 4c: 30 dc 9b 20 maxu r13, r2, r7
+# CHECK: 50: 30 dc dc 24 maxu r14, r19, r3
+# CHECK: 54: 30 5c f5 27 maxu r26, r31, r5
+# CHECK: 58: 30 9c 09 20 maxu r4, r0, r6
+# CHECK: 5c: 30 1c 71 21 maxu r24, r5, r4
+# CHECK: 60: 30 5c 0c 24 maxu r6, r16, r1
+# CHECK: 64: 30 9c c4 25 maxu r2, r23, r2
+# CHECK: 68: 30 1c 40 26 maxu r0, r25, r0
+# CHECK: 6c: 30 dc 13 26 maxu r9, r24, r7
+# CHECK: 70: 30 dc ae 27 maxu r23, r30, r3
+# CHECK: 74: 30 5c b3 26 maxu r25, r26, r5
+# CHECK: 78: 30 9c 51 20 maxu r8, r1, r6
+# CHECK: 7c: 30 1c 8f 23 maxu r7, r14, r4

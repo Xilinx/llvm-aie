@@ -57,6 +57,7 @@ public:
     aie,            // AIE: Xilinx AIEngine
     aie2,           // AIE: Xilinx AIMLEngine
     aie2p,          // AIE: Xilinx AIMLEngine+
+    aie2ps,         // AIE: Xilinx AIMLEngineps
     arc,            // ARC: Synopsys ARC
     avr,            // AVR: Atmel AVR microcontroller
     bpfel,          // eBPF or extended BPF or 64-bit BPF (little endian)
@@ -910,8 +911,11 @@ public:
   /// Tests whether the target is AIE2P.
   bool isAIE2P() const { return getArch() == Triple::aie2p; }
 
+  /// Tests whether the target is AIE2PS.
+  bool isAIE2PS() const { return getArch() == Triple::aie2ps; }
+
   /// Tests whether the target is AIE.
-  bool isAIE() const { return isAIE1() || isAIE2() || isAIE2P(); }
+  bool isAIE() const { return isAIE1() || isAIE2() || isAIE2P() || isAIE2PS(); }
 
   /// Tests whether the target is Thumb (little and big endian).
   bool isThumb() const {

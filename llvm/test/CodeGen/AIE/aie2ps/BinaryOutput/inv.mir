@@ -1,0 +1,286 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# TODO: llc %llcflags --filetype=asm -o %t2
+# TODO: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# TODO: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; INV_nlf_inv
+    $r29 = INV_nlf_inv $r31, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r4 = INV_nlf_inv $r30, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r24 = INV_nlf_inv $r29, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r21 = INV_nlf_inv $r23, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r30 = INV_nlf_inv $r6, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r5 = INV_nlf_inv $r12, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r31 = INV_nlf_inv $r9, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r14 = INV_nlf_inv $r0, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r1 = INV_nlf_inv $r27, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r26 = INV_nlf_inv $r1, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r8 = INV_nlf_inv $r4, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r7 = INV_nlf_inv $r7, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r6 = INV_nlf_inv $r14, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r23 = INV_nlf_inv $r3, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r19 = INV_nlf_inv $r13, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r12 = INV_nlf_inv $r19, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r10 = INV_nlf_inv $r5, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r22 = INV_nlf_inv $r2, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r15 = INV_nlf_inv $r21, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r18 = INV_nlf_inv $r18, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r28 = INV_nlf_inv $r24, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r0 = INV_nlf_inv $r10, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r25 = INV_nlf_inv $r16, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r13 = INV_nlf_inv $r28, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r17 = INV_nlf_inv $r20, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r27 = INV_nlf_inv $r8, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r11 = INV_nlf_inv $r26, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r2 = INV_nlf_inv $r15, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r16 = INV_nlf_inv $r11, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r3 = INV_nlf_inv $r17, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r20 = INV_nlf_inv $r22, implicit-def $srfpnlf, implicit $crfpnlfmask
+    $r9 = INV_nlf_inv $r25, implicit-def $srfpnlf, implicit $crfpnlfmask
+
+    ; INV_nlf_inv_mOptConvDel_mS3
+    $r16 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r22, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r28 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r2, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r17 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r27, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r24 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r30, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r13 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r12, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r10 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r6, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r23 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r4, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r29 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r1, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r0 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r14, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r11 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r28, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r12 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r24, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r25 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r20, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r22 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r13, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r15 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r17, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r6 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r0, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r18 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r9, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r31 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r31, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r2 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r21, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r5 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r5, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r9 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r25, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r14 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r23, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r19 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r16, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r20 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r10, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r8 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r3, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r3 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r29, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r7 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r15, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r1 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r8, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r21 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r19, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r30 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r18, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r4 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r11, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r26 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r7, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+    $r27 = INV_nlf_inv_mOptConvDel_mS3 $s3, $r26, implicit-def $srfpcnvfl2fx, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpnlfmask
+
+    ; INV_nlf_inv_mOptConvDel_mS3_mOptConv
+    $r10 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r23, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r7 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r10, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r6 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r22, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r4 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r21, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r24 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r6, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r17 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r4, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r18 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r26, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r12 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r0, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r23 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r28, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r11 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r18, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r13 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r29, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r14 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r31, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r19 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r9, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r15 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r15, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r9 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r20, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r29 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r7, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r3 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r13, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r21 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r3, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r27 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r30, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r8 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r17, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r28 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r19, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r25 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r16, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r22 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r8, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r5 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r25, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r30 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r12, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r16 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r24, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r20 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r27, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r1 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r2, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r26 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r1, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r0 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r11, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r31 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r5, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r2 = INV_nlf_inv_mOptConvDel_mS3_mOptConv $s3, $r14, $s2, implicit-def $srfpcnvfl2fx, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfl2fxmask, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+
+    ; INV_nlf_inv_mOptConv
+    $r18 = INV_nlf_inv_mOptConv $r23, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r8 = INV_nlf_inv_mOptConv $r31, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r19 = INV_nlf_inv_mOptConv $r8, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r14 = INV_nlf_inv_mOptConv $r0, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r28 = INV_nlf_inv_mOptConv $r10, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r23 = INV_nlf_inv_mOptConv $r13, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r27 = INV_nlf_inv_mOptConv $r18, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r17 = INV_nlf_inv_mOptConv $r21, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r2 = INV_nlf_inv_mOptConv $r2, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r26 = INV_nlf_inv_mOptConv $r15, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r5 = INV_nlf_inv_mOptConv $r14, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r25 = INV_nlf_inv_mOptConv $r27, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r6 = INV_nlf_inv_mOptConv $r4, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r30 = INV_nlf_inv_mOptConv $r24, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r13 = INV_nlf_inv_mOptConv $r20, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r24 = INV_nlf_inv_mOptConv $r3, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r7 = INV_nlf_inv_mOptConv $r12, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r10 = INV_nlf_inv_mOptConv $r6, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r0 = INV_nlf_inv_mOptConv $r19, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r22 = INV_nlf_inv_mOptConv $r28, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r3 = INV_nlf_inv_mOptConv $r17, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r11 = INV_nlf_inv_mOptConv $r30, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r31 = INV_nlf_inv_mOptConv $r7, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r4 = INV_nlf_inv_mOptConv $r25, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r29 = INV_nlf_inv_mOptConv $r26, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r12 = INV_nlf_inv_mOptConv $r5, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r21 = INV_nlf_inv_mOptConv $r1, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r15 = INV_nlf_inv_mOptConv $r9, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r1 = INV_nlf_inv_mOptConv $r22, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r20 = INV_nlf_inv_mOptConv $r29, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r16 = INV_nlf_inv_mOptConv $r11, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+    $r9 = INV_nlf_inv_mOptConv $r16, $s2, implicit-def $srfpcnvfx2fl, implicit-def $srfpnlf, implicit $crfpcnvfx2flmask, implicit $crfpnlfmask
+...
+
+# CHECK: 0: 30 04 fb 27 inv r29, r31
+# CHECK: 4: 30 04 89 27 inv r4, r30
+# CHECK: 8: 30 04 71 27 inv r24, r29
+# CHECK: c: 30 04 eb 25 inv r21, r23
+# CHECK: 10: 30 04 bd 21 inv r30, r6
+# CHECK: 14: 30 04 0b 23 inv r5, r12
+# CHECK: 18: 30 04 7f 22 inv r31, r9
+# CHECK: 1c: 30 04 1d 20 inv r14, r0
+# CHECK: 20: 30 04 c3 26 inv r1, r27
+# CHECK: 24: 30 04 75 20 inv r26, r1
+# CHECK: 28: 30 04 11 21 inv r8, r4
+# CHECK: 2c: 30 04 cf 21 inv r7, r7
+# CHECK: 30: 30 04 8d 23 inv r6, r14
+# CHECK: 34: 30 04 ef 20 inv r23, r3
+# CHECK: 38: 30 04 67 23 inv r19, r13
+# CHECK: 3c: 30 04 d9 24 inv r12, r19
+# CHECK: 40: 30 04 55 21 inv r10, r5
+# CHECK: 44: 30 04 ad 20 inv r22, r2
+# CHECK: 48: 30 04 5f 25 inv r15, r21
+# CHECK: 4c: 30 04 a5 24 inv r18, r18
+# CHECK: 50: 30 04 39 26 inv r28, r24
+# CHECK: 54: 30 04 81 22 inv r0, r10
+# CHECK: 58: 30 04 33 24 inv r25, r16
+# CHECK: 5c: 30 04 1b 27 inv r13, r28
+# CHECK: 60: 30 04 23 25 inv r17, r20
+# CHECK: 64: 30 04 37 22 inv r27, r8
+# CHECK: 68: 30 04 97 26 inv r11, r26
+# CHECK: 6c: 30 04 c5 23 inv r2, r15
+# CHECK: 70: 30 04 e1 22 inv r16, r11
+# CHECK: 74: 30 04 47 24 inv r3, r17
+# CHECK: 78: 30 04 a9 25 inv r20, r22
+# CHECK: 7c: 30 04 53 26 inv r9, r25
+# CHECK: 80: 30 44 a1 25 inv r16.flt2fx, s3, r22
+# CHECK: 84: 30 44 b9 20 inv r28.flt2fx, s3, r2
+# CHECK: 88: 30 44 e3 26 inv r17.flt2fx, s3, r27
+# CHECK: 8c: 30 44 b1 27 inv r24.flt2fx, s3, r30
+# CHECK: 90: 30 44 1b 23 inv r13.flt2fx, s3, r12
+# CHECK: 94: 30 44 95 21 inv r10.flt2fx, s3, r6
+# CHECK: 98: 30 44 2f 21 inv r23.flt2fx, s3, r4
+# CHECK: 9c: 30 44 7b 20 inv r29.flt2fx, s3, r1
+# CHECK: a0: 30 44 81 23 inv r0.flt2fx, s3, r14
+# CHECK: a4: 30 44 17 27 inv r11.flt2fx, s3, r28
+# CHECK: a8: 30 44 19 26 inv r12.flt2fx, s3, r24
+# CHECK: ac: 30 44 33 25 inv r25.flt2fx, s3, r20
+# CHECK: b0: 30 44 6d 23 inv r22.flt2fx, s3, r13
+# CHECK: b4: 30 44 5f 24 inv r15.flt2fx, s3, r17
+# CHECK: b8: 30 44 0d 20 inv r6.flt2fx, s3, r0
+# CHECK: bc: 30 44 65 22 inv r18.flt2fx, s3, r9
+# CHECK: c0: 30 44 ff 27 inv r31.flt2fx, s3, r31
+# CHECK: c4: 30 44 45 25 inv r2.flt2fx, s3, r21
+# CHECK: c8: 30 44 4b 21 inv r5.flt2fx, s3, r5
+# CHECK: cc: 30 44 53 26 inv r9.flt2fx, s3, r25
+# CHECK: d0: 30 44 dd 25 inv r14.flt2fx, s3, r23
+# CHECK: d4: 30 44 27 24 inv r19.flt2fx, s3, r16
+# CHECK: d8: 30 44 a9 22 inv r20.flt2fx, s3, r10
+# CHECK: dc: 30 44 d1 20 inv r8.flt2fx, s3, r3
+# CHECK: e0: 30 44 47 27 inv r3.flt2fx, s3, r29
+# CHECK: e4: 30 44 cf 23 inv r7.flt2fx, s3, r15
+# CHECK: e8: 30 44 03 22 inv r1.flt2fx, s3, r8
+# CHECK: ec: 30 44 eb 24 inv r21.flt2fx, s3, r19
+# CHECK: f0: 30 44 bd 24 inv r30.flt2fx, s3, r18
+# CHECK: f4: 30 44 c9 22 inv r4.flt2fx, s3, r11
+# CHECK: f8: 30 44 f5 21 inv r26.flt2fx, s3, r7
+# CHECK: fc: 30 44 b7 26 inv r27.flt2fx, s3, r26
+# CHECK: 100: 30 64 d5 25 inv r10.flt2fx, s3, r23.fx2flt, s2
+# CHECK: 104: 30 64 8f 22 inv r7.flt2fx, s3, r10.fx2flt, s2
+# CHECK: 108: 30 64 8d 25 inv r6.flt2fx, s3, r22.fx2flt, s2
+# CHECK: 10c: 30 64 49 25 inv r4.flt2fx, s3, r21.fx2flt, s2
+# CHECK: 110: 30 64 b1 21 inv r24.flt2fx, s3, r6.fx2flt, s2
+# CHECK: 114: 30 64 23 21 inv r17.flt2fx, s3, r4.fx2flt, s2
+# CHECK: 118: 30 64 a5 26 inv r18.flt2fx, s3, r26.fx2flt, s2
+# CHECK: 11c: 30 64 19 20 inv r12.flt2fx, s3, r0.fx2flt, s2
+# CHECK: 120: 30 64 2f 27 inv r23.flt2fx, s3, r28.fx2flt, s2
+# CHECK: 124: 30 64 97 24 inv r11.flt2fx, s3, r18.fx2flt, s2
+# CHECK: 128: 30 64 5b 27 inv r13.flt2fx, s3, r29.fx2flt, s2
+# CHECK: 12c: 30 64 dd 27 inv r14.flt2fx, s3, r31.fx2flt, s2
+# CHECK: 130: 30 64 67 22 inv r19.flt2fx, s3, r9.fx2flt, s2
+# CHECK: 134: 30 64 df 23 inv r15.flt2fx, s3, r15.fx2flt, s2
+# CHECK: 138: 30 64 13 25 inv r9.flt2fx, s3, r20.fx2flt, s2
+# CHECK: 13c: 30 64 fb 21 inv r29.flt2fx, s3, r7.fx2flt, s2
+# CHECK: 140: 30 64 47 23 inv r3.flt2fx, s3, r13.fx2flt, s2
+# CHECK: 144: 30 64 eb 20 inv r21.flt2fx, s3, r3.fx2flt, s2
+# CHECK: 148: 30 64 b7 27 inv r27.flt2fx, s3, r30.fx2flt, s2
+# CHECK: 14c: 30 64 51 24 inv r8.flt2fx, s3, r17.fx2flt, s2
+# CHECK: 150: 30 64 f9 24 inv r28.flt2fx, s3, r19.fx2flt, s2
+# CHECK: 154: 30 64 33 24 inv r25.flt2fx, s3, r16.fx2flt, s2
+# CHECK: 158: 30 64 2d 22 inv r22.flt2fx, s3, r8.fx2flt, s2
+# CHECK: 15c: 30 64 4b 26 inv r5.flt2fx, s3, r25.fx2flt, s2
+# CHECK: 160: 30 64 3d 23 inv r30.flt2fx, s3, r12.fx2flt, s2
+# CHECK: 164: 30 64 21 26 inv r16.flt2fx, s3, r24.fx2flt, s2
+# CHECK: 168: 30 64 e9 26 inv r20.flt2fx, s3, r27.fx2flt, s2
+# CHECK: 16c: 30 64 83 20 inv r1.flt2fx, s3, r2.fx2flt, s2
+# CHECK: 170: 30 64 75 20 inv r26.flt2fx, s3, r1.fx2flt, s2
+# CHECK: 174: 30 64 c1 22 inv r0.flt2fx, s3, r11.fx2flt, s2
+# CHECK: 178: 30 64 7f 21 inv r31.flt2fx, s3, r5.fx2flt, s2
+# CHECK: 17c: 30 64 85 23 inv r2.flt2fx, s3, r14.fx2flt, s2
+# CHECK: 180: 30 24 e5 25 inv r18, r23.fx2flt, s2
+# CHECK: 184: 30 24 d1 27 inv r8, r31.fx2flt, s2
+# CHECK: 188: 30 24 27 22 inv r19, r8.fx2flt, s2
+# CHECK: 18c: 30 24 1d 20 inv r14, r0.fx2flt, s2
+# CHECK: 190: 30 24 b9 22 inv r28, r10.fx2flt, s2
+# CHECK: 194: 30 24 6f 23 inv r23, r13.fx2flt, s2
+# CHECK: 198: 30 24 b7 24 inv r27, r18.fx2flt, s2
+# CHECK: 19c: 30 24 63 25 inv r17, r21.fx2flt, s2
+# CHECK: 1a0: 30 24 85 20 inv r2, r2.fx2flt, s2
+# CHECK: 1a4: 30 24 f5 23 inv r26, r15.fx2flt, s2
+# CHECK: 1a8: 30 24 8b 23 inv r5, r14.fx2flt, s2
+# CHECK: 1ac: 30 24 f3 26 inv r25, r27.fx2flt, s2
+# CHECK: 1b0: 30 24 0d 21 inv r6, r4.fx2flt, s2
+# CHECK: 1b4: 30 24 3d 26 inv r30, r24.fx2flt, s2
+# CHECK: 1b8: 30 24 1b 25 inv r13, r20.fx2flt, s2
+# CHECK: 1bc: 30 24 f1 20 inv r24, r3.fx2flt, s2
+# CHECK: 1c0: 30 24 0f 23 inv r7, r12.fx2flt, s2
+# CHECK: 1c4: 30 24 95 21 inv r10, r6.fx2flt, s2
+# CHECK: 1c8: 30 24 c1 24 inv r0, r19.fx2flt, s2
+# CHECK: 1cc: 30 24 2d 27 inv r22, r28.fx2flt, s2
+# CHECK: 1d0: 30 24 47 24 inv r3, r17.fx2flt, s2
+# CHECK: 1d4: 30 24 97 27 inv r11, r30.fx2flt, s2
+# CHECK: 1d8: 30 24 ff 21 inv r31, r7.fx2flt, s2
+# CHECK: 1dc: 30 24 49 26 inv r4, r25.fx2flt, s2
+# CHECK: 1e0: 30 24 bb 26 inv r29, r26.fx2flt, s2
+# CHECK: 1e4: 30 24 59 21 inv r12, r5.fx2flt, s2
+# CHECK: 1e8: 30 24 6b 20 inv r21, r1.fx2flt, s2
+# CHECK: 1ec: 30 24 5f 22 inv r15, r9.fx2flt, s2
+# CHECK: 1f0: 30 24 83 25 inv r1, r22.fx2flt, s2
+# CHECK: 1f4: 30 24 69 27 inv r20, r29.fx2flt, s2
+# CHECK: 1f8: 30 24 e1 22 inv r16, r11.fx2flt, s2
+# CHECK: 1fc: 30 24 13 24 inv r9, r16.fx2flt, s2

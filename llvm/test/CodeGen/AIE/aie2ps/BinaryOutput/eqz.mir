@@ -1,0 +1,88 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; EQZ
+    $r15 = EQZ $r6
+    $r26 = EQZ $r13
+    $r4 = EQZ $r21
+    $r2 = EQZ $r30
+    $r19 = EQZ $r8
+    $r16 = EQZ $r31
+    $r31 = EQZ $r5
+    $r13 = EQZ $r3
+    $r5 = EQZ $r11
+    $r22 = EQZ $r24
+    $r3 = EQZ $r2
+    $r8 = EQZ $r9
+    $r24 = EQZ $r0
+    $r14 = EQZ $r26
+    $r20 = EQZ $r1
+    $r0 = EQZ $r16
+    $r27 = EQZ $r12
+    $r30 = EQZ $r17
+    $r29 = EQZ $r15
+    $r17 = EQZ $r10
+    $r25 = EQZ $r18
+    $r6 = EQZ $r20
+    $r1 = EQZ $r4
+    $r12 = EQZ $r23
+    $r18 = EQZ $r19
+    $r28 = EQZ $r7
+    $r10 = EQZ $r25
+    $r11 = EQZ $r28
+    $r21 = EQZ $r22
+    $r7 = EQZ $r29
+    $r9 = EQZ $r14
+    $r23 = EQZ $r27
+...
+
+# CHECK: 0: 30 d0 9e 21 eqz r15, r6
+# CHECK: 4: 30 d0 74 23 eqz r26, r13
+# CHECK: 8: 30 d0 48 25 eqz r4, r21
+# CHECK: c: 30 d0 84 27 eqz r2, r30
+# CHECK: 10: 30 d0 26 22 eqz r19, r8
+# CHECK: 14: 30 d0 e0 27 eqz r16, r31
+# CHECK: 18: 30 d0 7e 21 eqz r31, r5
+# CHECK: 1c: 30 d0 da 20 eqz r13, r3
+# CHECK: 20: 30 d0 ca 22 eqz r5, r11
+# CHECK: 24: 30 d0 2c 26 eqz r22, r24
+# CHECK: 28: 30 d0 86 20 eqz r3, r2
+# CHECK: 2c: 30 d0 50 22 eqz r8, r9
+# CHECK: 30: 30 d0 30 20 eqz r24, r0
+# CHECK: 34: 30 d0 9c 26 eqz r14, r26
+# CHECK: 38: 30 d0 68 20 eqz r20, r1
+# CHECK: 3c: 30 d0 00 24 eqz r0, r16
+# CHECK: 40: 30 d0 36 23 eqz r27, r12
+# CHECK: 44: 30 d0 7c 24 eqz r30, r17
+# CHECK: 48: 30 d0 fa 23 eqz r29, r15
+# CHECK: 4c: 30 d0 a2 22 eqz r17, r10
+# CHECK: 50: 30 d0 b2 24 eqz r25, r18
+# CHECK: 54: 30 d0 0c 25 eqz r6, r20
+# CHECK: 58: 30 d0 02 21 eqz r1, r4
+# CHECK: 5c: 30 d0 d8 25 eqz r12, r23
+# CHECK: 60: 30 d0 e4 24 eqz r18, r19
+# CHECK: 64: 30 d0 f8 21 eqz r28, r7
+# CHECK: 68: 30 d0 54 26 eqz r10, r25
+# CHECK: 6c: 30 d0 16 27 eqz r11, r28
+# CHECK: 70: 30 d0 aa 25 eqz r21, r22
+# CHECK: 74: 30 d0 4e 27 eqz r7, r29
+# CHECK: 78: 30 d0 92 23 eqz r9, r14
+# CHECK: 7c: 30 d0 ee 26 eqz r23, r27

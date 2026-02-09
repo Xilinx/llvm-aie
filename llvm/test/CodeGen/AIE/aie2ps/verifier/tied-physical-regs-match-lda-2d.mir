@@ -1,0 +1,53 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -mtriple=aie2ps -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+
+---
+name:      tied_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    $l0, $p2, $dc1 = LDA_2D_dml_lda_scalar_L $p2, $d1
+    $r4, $p3, $dc2 = LDA_2D_dms_lda_scalar $p3, $d2
+    $r4, $p4, $dc3 = LDA_2D_s16 $p4, $d3
+    $r4, $p5, $dc4 = LDA_2D_s8 $p5, $d4
+    $r4, $p6, $dc5 = LDA_2D_u16 $p6, $d5
+    $r4, $p7, $dc6 = LDA_2D_u8 $p7, $d6
+    $r0, $p0, $dc7 = LDA_TM_2D $p0, $d7
+...
+
+---
+name:      virtual_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    %0:ep = COPY $p0
+    %10:ed = COPY $d0
+    $l0, %20:ep, %21:edc = LDA_2D_dml_lda_scalar_L %0, %10
+    $r4, %30:ep, %31:edc = LDA_2D_dms_lda_scalar %0, %10
+    $r4, %40:ep, %41:edc = LDA_2D_s16 %0, %10
+    $r4, %50:ep, %51:edc = LDA_2D_s8 %0, %10
+    $r4, %60:ep, %61:edc = LDA_2D_u16 %0, %10
+    $r4, %70:ep, %71:edc = LDA_2D_u8 %0, %10
+    $r0, %80:ep, %81:edc = LDA_TM_2D %0, %10
+...
+
+---
+name:      tied_nok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-COUNT-7: Bad machine code: Tied physical registers must match
+    $l0, $p2, $dc7 = LDA_2D_dml_lda_scalar_L $p2, $d1
+    $r4, $p3, $dc0 = LDA_2D_dms_lda_scalar $p3, $d2
+    $r4, $p4, $dc1 = LDA_2D_s16 $p4, $d3
+    $r4, $p5, $dc2 = LDA_2D_s8 $p5, $d4
+    $r4, $p6, $dc3 = LDA_2D_u16 $p6, $d5
+    $r4, $p7, $dc4 = LDA_2D_u8 $p7, $d6
+    $r0, $p0, $dc5 = LDA_TM_2D $p0, $d7
+...

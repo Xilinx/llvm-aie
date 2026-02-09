@@ -1,0 +1,88 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CLZ
+    $r16 = CLZ $r3
+    $r26 = CLZ $r19
+    $r4 = CLZ $r15
+    $r20 = CLZ $r30
+    $r15 = CLZ $r2
+    $r9 = CLZ $r21
+    $r5 = CLZ $r26
+    $r11 = CLZ $r14
+    $r24 = CLZ $r24
+    $r6 = CLZ $r18
+    $r12 = CLZ $r11
+    $r2 = CLZ $r31
+    $r13 = CLZ $r13
+    $r14 = CLZ $r25
+    $r3 = CLZ $r29
+    $r18 = CLZ $r1
+    $r10 = CLZ $r0
+    $r0 = CLZ $r23
+    $r17 = CLZ $r10
+    $r7 = CLZ $r8
+    $r27 = CLZ $r9
+    $r29 = CLZ $r16
+    $r1 = CLZ $r22
+    $r21 = CLZ $r27
+    $r22 = CLZ $r28
+    $r30 = CLZ $r7
+    $r19 = CLZ $r6
+    $r8 = CLZ $r4
+    $r28 = CLZ $r20
+    $r23 = CLZ $r5
+    $r25 = CLZ $r17
+    $r31 = CLZ $r12
+...
+
+# CHECK: 0: 30 30 e0 20 clz r16, r3
+# CHECK: 4: 30 30 f4 24 clz r26, r19
+# CHECK: 8: 30 30 c8 23 clz r4, r15
+# CHECK: c: 30 30 a8 27 clz r20, r30
+# CHECK: 10: 30 30 9e 20 clz r15, r2
+# CHECK: 14: 30 30 52 25 clz r9, r21
+# CHECK: 18: 30 30 8a 26 clz r5, r26
+# CHECK: 1c: 30 30 96 23 clz r11, r14
+# CHECK: 20: 30 30 30 26 clz r24, r24
+# CHECK: 24: 30 30 8c 24 clz r6, r18
+# CHECK: 28: 30 30 d8 22 clz r12, r11
+# CHECK: 2c: 30 30 c4 27 clz r2, r31
+# CHECK: 30: 30 30 5a 23 clz r13, r13
+# CHECK: 34: 30 30 5c 26 clz r14, r25
+# CHECK: 38: 30 30 46 27 clz r3, r29
+# CHECK: 3c: 30 30 64 20 clz r18, r1
+# CHECK: 40: 30 30 14 20 clz r10, r0
+# CHECK: 44: 30 30 c0 25 clz r0, r23
+# CHECK: 48: 30 30 a2 22 clz r17, r10
+# CHECK: 4c: 30 30 0e 22 clz r7, r8
+# CHECK: 50: 30 30 76 22 clz r27, r9
+# CHECK: 54: 30 30 3a 24 clz r29, r16
+# CHECK: 58: 30 30 82 25 clz r1, r22
+# CHECK: 5c: 30 30 ea 26 clz r21, r27
+# CHECK: 60: 30 30 2c 27 clz r22, r28
+# CHECK: 64: 30 30 fc 21 clz r30, r7
+# CHECK: 68: 30 30 a6 21 clz r19, r6
+# CHECK: 6c: 30 30 10 21 clz r8, r4
+# CHECK: 70: 30 30 38 25 clz r28, r20
+# CHECK: 74: 30 30 6e 21 clz r23, r5
+# CHECK: 78: 30 30 72 24 clz r25, r17
+# CHECK: 7c: 30 30 3e 23 clz r31, r12

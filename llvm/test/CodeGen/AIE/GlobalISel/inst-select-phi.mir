@@ -4,9 +4,10 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2
-# RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2P
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s 
+# RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s 
+# RUN: llc -mtriple aie2ps -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
 
 ---
 name: phi_s32
@@ -15,45 +16,25 @@ regBankSelected: true
 tracksRegLiveness: true
 
 body: |
-  ; AIE2-LABEL: name: phi_s32
-  ; AIE2: bb.0:
-  ; AIE2-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
-  ; AIE2-NEXT:   liveins: $r6, $r7, $r8
-  ; AIE2-NEXT: {{  $}}
-  ; AIE2-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
-  ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
-  ; AIE2-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r8
-  ; AIE2-NEXT:   PseudoJZ [[COPY2]], %bb.1
-  ; AIE2-NEXT:   PseudoJ_jump_imm %bb.2
-  ; AIE2-NEXT: {{  $}}
-  ; AIE2-NEXT: bb.1:
-  ; AIE2-NEXT:   successors: %bb.2(0x80000000)
-  ; AIE2-NEXT: {{  $}}
-  ; AIE2-NEXT:   PseudoJ_jump_imm %bb.2
-  ; AIE2-NEXT: {{  $}}
-  ; AIE2-NEXT: bb.2:
-  ; AIE2-NEXT:   [[PHI:%[0-9]+]]:er = PHI [[COPY]], %bb.0, [[COPY1]], %bb.1
-  ; AIE2-NEXT:   $r0 = COPY [[PHI]]
-  ;
-  ; AIE2P-LABEL: name: phi_s32
-  ; AIE2P: bb.0:
-  ; AIE2P-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
-  ; AIE2P-NEXT:   liveins: $r6, $r7, $r8
-  ; AIE2P-NEXT: {{  $}}
-  ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
-  ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
-  ; AIE2P-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r8
-  ; AIE2P-NEXT:   PseudoJZ [[COPY2]], %bb.1
-  ; AIE2P-NEXT:   PseudoJ_jump_imm %bb.2
-  ; AIE2P-NEXT: {{  $}}
-  ; AIE2P-NEXT: bb.1:
-  ; AIE2P-NEXT:   successors: %bb.2(0x80000000)
-  ; AIE2P-NEXT: {{  $}}
-  ; AIE2P-NEXT:   PseudoJ_jump_imm %bb.2
-  ; AIE2P-NEXT: {{  $}}
-  ; AIE2P-NEXT: bb.2:
-  ; AIE2P-NEXT:   [[PHI:%[0-9]+]]:er = PHI [[COPY]], %bb.0, [[COPY1]], %bb.1
-  ; AIE2P-NEXT:   $r0 = COPY [[PHI]]
+  ; CHECK-LABEL: name: phi_s32
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; CHECK-NEXT:   liveins: $r6, $r7, $r8
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
+  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r7
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r8
+  ; CHECK-NEXT:   PseudoJZ [[COPY2]], %bb.1
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:er = PHI [[COPY]], %bb.0, [[COPY1]], %bb.1
+  ; CHECK-NEXT:   $r0 = COPY [[PHI]]
   bb.0:
     successors: %bb.1, %bb.2
     liveins: $r6, $r7, $r8
@@ -83,45 +64,25 @@ regBankSelected: true
 tracksRegLiveness: true
 
 body: |
-  ; AIE2-LABEL: name: phi_p0
-  ; AIE2: bb.0:
-  ; AIE2-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
-  ; AIE2-NEXT:   liveins: $p0, $p1, $r6
-  ; AIE2-NEXT: {{  $}}
-  ; AIE2-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
-  ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p1
-  ; AIE2-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r6
-  ; AIE2-NEXT:   PseudoJZ [[COPY2]], %bb.1
-  ; AIE2-NEXT:   PseudoJ_jump_imm %bb.2
-  ; AIE2-NEXT: {{  $}}
-  ; AIE2-NEXT: bb.1:
-  ; AIE2-NEXT:   successors: %bb.2(0x80000000)
-  ; AIE2-NEXT: {{  $}}
-  ; AIE2-NEXT:   PseudoJ_jump_imm %bb.2
-  ; AIE2-NEXT: {{  $}}
-  ; AIE2-NEXT: bb.2:
-  ; AIE2-NEXT:   [[PHI:%[0-9]+]]:ep = PHI [[COPY]], %bb.0, [[COPY1]], %bb.1
-  ; AIE2-NEXT:   $p0 = COPY [[PHI]]
-  ;
-  ; AIE2P-LABEL: name: phi_p0
-  ; AIE2P: bb.0:
-  ; AIE2P-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
-  ; AIE2P-NEXT:   liveins: $p0, $p1, $r6
-  ; AIE2P-NEXT: {{  $}}
-  ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
-  ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p1
-  ; AIE2P-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r6
-  ; AIE2P-NEXT:   PseudoJZ [[COPY2]], %bb.1
-  ; AIE2P-NEXT:   PseudoJ_jump_imm %bb.2
-  ; AIE2P-NEXT: {{  $}}
-  ; AIE2P-NEXT: bb.1:
-  ; AIE2P-NEXT:   successors: %bb.2(0x80000000)
-  ; AIE2P-NEXT: {{  $}}
-  ; AIE2P-NEXT:   PseudoJ_jump_imm %bb.2
-  ; AIE2P-NEXT: {{  $}}
-  ; AIE2P-NEXT: bb.2:
-  ; AIE2P-NEXT:   [[PHI:%[0-9]+]]:ep = PHI [[COPY]], %bb.0, [[COPY1]], %bb.1
-  ; AIE2P-NEXT:   $p0 = COPY [[PHI]]
+  ; CHECK-LABEL: name: phi_p0
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1, $r6
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
+  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p1
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r6
+  ; CHECK-NEXT:   PseudoJZ [[COPY2]], %bb.1
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:ep = PHI [[COPY]], %bb.0, [[COPY1]], %bb.1
+  ; CHECK-NEXT:   $p0 = COPY [[PHI]]
   bb.0:
     successors: %bb.1, %bb.2
     liveins: $p0, $p1, $r6
@@ -152,45 +113,25 @@ regBankSelected: true
 tracksRegLiveness: true
 
 body: |
-  ; AIE2-LABEL: name: phi_s20
-  ; AIE2: bb.0:
-  ; AIE2-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
-  ; AIE2-NEXT:   liveins: $dj0, $m1, $r8
-  ; AIE2-NEXT: {{  $}}
-  ; AIE2-NEXT:   [[COPY:%[0-9]+]]:mdm = COPY $dj0
-  ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:mdm = COPY $m1
-  ; AIE2-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r8
-  ; AIE2-NEXT:   PseudoJZ [[COPY2]], %bb.1
-  ; AIE2-NEXT:   PseudoJ_jump_imm %bb.2
-  ; AIE2-NEXT: {{  $}}
-  ; AIE2-NEXT: bb.1:
-  ; AIE2-NEXT:   successors: %bb.2(0x80000000)
-  ; AIE2-NEXT: {{  $}}
-  ; AIE2-NEXT:   PseudoJ_jump_imm %bb.2
-  ; AIE2-NEXT: {{  $}}
-  ; AIE2-NEXT: bb.2:
-  ; AIE2-NEXT:   [[PHI:%[0-9]+]]:mdm = PHI [[COPY]], %bb.0, [[COPY1]], %bb.1
-  ; AIE2-NEXT:   $m2 = COPY [[PHI]]
-  ;
-  ; AIE2P-LABEL: name: phi_s20
-  ; AIE2P: bb.0:
-  ; AIE2P-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
-  ; AIE2P-NEXT:   liveins: $dj0, $m1, $r8
-  ; AIE2P-NEXT: {{  $}}
-  ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:mdm = COPY $dj0
-  ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:mdm = COPY $m1
-  ; AIE2P-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r8
-  ; AIE2P-NEXT:   PseudoJZ [[COPY2]], %bb.1
-  ; AIE2P-NEXT:   PseudoJ_jump_imm %bb.2
-  ; AIE2P-NEXT: {{  $}}
-  ; AIE2P-NEXT: bb.1:
-  ; AIE2P-NEXT:   successors: %bb.2(0x80000000)
-  ; AIE2P-NEXT: {{  $}}
-  ; AIE2P-NEXT:   PseudoJ_jump_imm %bb.2
-  ; AIE2P-NEXT: {{  $}}
-  ; AIE2P-NEXT: bb.2:
-  ; AIE2P-NEXT:   [[PHI:%[0-9]+]]:mdm = PHI [[COPY]], %bb.0, [[COPY1]], %bb.1
-  ; AIE2P-NEXT:   $m2 = COPY [[PHI]]
+  ; CHECK-LABEL: name: phi_s20
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; CHECK-NEXT:   liveins: $dj0, $m1, $r8
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:mdm = COPY $dj0
+  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:mdm = COPY $m1
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r8
+  ; CHECK-NEXT:   PseudoJZ [[COPY2]], %bb.1
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:mdm = PHI [[COPY]], %bb.0, [[COPY1]], %bb.1
+  ; CHECK-NEXT:   $m2 = COPY [[PHI]]
   bb.0:
     successors: %bb.1, %bb.2
     liveins: $dj0, $m1, $r8
@@ -220,45 +161,25 @@ regBankSelected: true
 tracksRegLiveness: true
 
 body: |
-  ; AIE2-LABEL: name: phi_s20_gpr
-  ; AIE2: bb.0:
-  ; AIE2-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
-  ; AIE2-NEXT:   liveins: $dj0, $m1, $r8
-  ; AIE2-NEXT: {{  $}}
-  ; AIE2-NEXT:   [[COPY:%[0-9]+]]:er = COPY $dj0
-  ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:mdm = COPY $m1
-  ; AIE2-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r8
-  ; AIE2-NEXT:   PseudoJZ [[COPY2]], %bb.1
-  ; AIE2-NEXT:   PseudoJ_jump_imm %bb.2
-  ; AIE2-NEXT: {{  $}}
-  ; AIE2-NEXT: bb.1:
-  ; AIE2-NEXT:   successors: %bb.2(0x80000000)
-  ; AIE2-NEXT: {{  $}}
-  ; AIE2-NEXT:   PseudoJ_jump_imm %bb.2
-  ; AIE2-NEXT: {{  $}}
-  ; AIE2-NEXT: bb.2:
-  ; AIE2-NEXT:   [[PHI:%[0-9]+]]:mdm = PHI [[COPY]], %bb.0, [[COPY1]], %bb.1
-  ; AIE2-NEXT:   $m2 = COPY [[PHI]]
-  ;
-  ; AIE2P-LABEL: name: phi_s20_gpr
-  ; AIE2P: bb.0:
-  ; AIE2P-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
-  ; AIE2P-NEXT:   liveins: $dj0, $m1, $r8
-  ; AIE2P-NEXT: {{  $}}
-  ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:er = COPY $dj0
-  ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:mdm = COPY $m1
-  ; AIE2P-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r8
-  ; AIE2P-NEXT:   PseudoJZ [[COPY2]], %bb.1
-  ; AIE2P-NEXT:   PseudoJ_jump_imm %bb.2
-  ; AIE2P-NEXT: {{  $}}
-  ; AIE2P-NEXT: bb.1:
-  ; AIE2P-NEXT:   successors: %bb.2(0x80000000)
-  ; AIE2P-NEXT: {{  $}}
-  ; AIE2P-NEXT:   PseudoJ_jump_imm %bb.2
-  ; AIE2P-NEXT: {{  $}}
-  ; AIE2P-NEXT: bb.2:
-  ; AIE2P-NEXT:   [[PHI:%[0-9]+]]:mdm = PHI [[COPY]], %bb.0, [[COPY1]], %bb.1
-  ; AIE2P-NEXT:   $m2 = COPY [[PHI]]
+  ; CHECK-LABEL: name: phi_s20_gpr
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; CHECK-NEXT:   liveins: $dj0, $m1, $r8
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $dj0
+  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:mdm = COPY $m1
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r8
+  ; CHECK-NEXT:   PseudoJZ [[COPY2]], %bb.1
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:mdm = PHI [[COPY]], %bb.0, [[COPY1]], %bb.1
+  ; CHECK-NEXT:   $m2 = COPY [[PHI]]
   bb.0:
     successors: %bb.1, %bb.2
     liveins: $dj0, $m1, $r8

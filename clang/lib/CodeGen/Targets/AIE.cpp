@@ -32,7 +32,9 @@ public:
   bool isAccumulatorType(const VectorType *VT) const {
     const BuiltinType *BT = VT->getElementType()->getAs<BuiltinType>();
     llvm::Triple Triple = getTarget().getTriple();
-    if (Triple.getArch() == llvm::Triple::aie2p && BT &&
+    if ((Triple.getArch() == llvm::Triple::aie2p ||
+         Triple.getArch() == llvm::Triple::aie2ps) &&
+        BT &&
         (BT->getKind() == BuiltinType::ACC32 ||
          BT->getKind() == BuiltinType::ACCFLOAT ||
          BT->getKind() == BuiltinType::ACC64))

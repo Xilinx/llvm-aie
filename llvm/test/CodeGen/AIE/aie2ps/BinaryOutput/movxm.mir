@@ -1,0 +1,222 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; MOVXM_lng_cg
+    $p4 = MOVXM_lng_cg 0
+    $dj7 = MOVXM_lng_cg 1
+    $dc5 = MOVXM_lng_cg 2147483647
+    $dc0 = MOVXM_lng_cg -2147483648
+    $r24 = MOVXM_lng_cg 0
+    $m4 = MOVXM_lng_cg 1
+    $r31 = MOVXM_lng_cg 2147483647
+    $r10 = MOVXM_lng_cg -2147483648
+    $m7 = MOVXM_lng_cg 0
+    $m0 = MOVXM_lng_cg 1
+    $dj1 = MOVXM_lng_cg 2147483647
+    $p2 = MOVXM_lng_cg -2147483648
+    $unpacksign0 = MOVXM_lng_cg 0
+    $packsign0 = MOVXM_lng_cg 1
+    $r16 = MOVXM_lng_cg 2147483647
+    $lc = MOVXM_lng_cg -2147483648
+    $packsign1 = MOVXM_lng_cg 0
+    $r8 = MOVXM_lng_cg 1
+    $m2 = MOVXM_lng_cg 2147483647
+    $s2 = MOVXM_lng_cg -2147483648
+    $r26 = MOVXM_lng_cg 0
+    $dn5 = MOVXM_lng_cg 1
+    $p0 = MOVXM_lng_cg 2147483647
+    $m6 = MOVXM_lng_cg -2147483648
+    $p6 = MOVXM_lng_cg 0
+    $r29 = MOVXM_lng_cg 1
+    $dj2 = MOVXM_lng_cg 2147483647
+    $upssign1 = MOVXM_lng_cg -2147483648
+    $dn1 = MOVXM_lng_cg 0
+    $dn4 = MOVXM_lng_cg 1
+    $r11 = MOVXM_lng_cg 2147483647
+    $dc2 = MOVXM_lng_cg -2147483648
+    $dj6 = MOVXM_lng_cg 0
+    $dn7 = MOVXM_lng_cg 1
+    $s0 = MOVXM_lng_cg 2147483647
+    $r7 = MOVXM_lng_cg -2147483648
+    $dc1 = MOVXM_lng_cg 0
+    $lr = MOVXM_lng_cg 1
+    $dc6 = MOVXM_lng_cg 2147483647
+    $r15 = MOVXM_lng_cg -2147483648
+    $r18 = MOVXM_lng_cg 0
+    $s3 = MOVXM_lng_cg 1
+    $p3 = MOVXM_lng_cg 2147483647
+    $p1 = MOVXM_lng_cg -2147483648
+    $m5 = MOVXM_lng_cg 0
+    $dc4 = MOVXM_lng_cg 1
+    $dn3 = MOVXM_lng_cg 2147483647
+    $dc7 = MOVXM_lng_cg -2147483648
+    $dj0 = MOVXM_lng_cg 0
+    $r9 = MOVXM_lng_cg 1
+    $dj4 = MOVXM_lng_cg 2147483647
+    $dj5 = MOVXM_lng_cg -2147483648
+    $m3 = MOVXM_lng_cg 0
+    $r23 = MOVXM_lng_cg 1
+    $m1 = MOVXM_lng_cg 2147483647
+    $r6 = MOVXM_lng_cg -2147483648
+    $dn0 = MOVXM_lng_cg 0
+    $r14 = MOVXM_lng_cg 1
+    $r5 = MOVXM_lng_cg 2147483647
+    $vaddsign0 = MOVXM_lng_cg -2147483648
+    $r27 = MOVXM_lng_cg 0
+    $p7 = MOVXM_lng_cg 1
+    $s1 = MOVXM_lng_cg 2147483647
+    $srssign1 = MOVXM_lng_cg -2147483648
+    $r4 = MOVXM_lng_cg 0
+    $r21 = MOVXM_lng_cg 1
+    $r0 = MOVXM_lng_cg 2147483647
+    $r22 = MOVXM_lng_cg -2147483648
+    $r3 = MOVXM_lng_cg 0
+    $r17 = MOVXM_lng_cg 1
+    $r28 = MOVXM_lng_cg 2147483647
+    $r30 = MOVXM_lng_cg -2147483648
+    $p5 = MOVXM_lng_cg 0
+    $r20 = MOVXM_lng_cg 1
+    $vaddsign1 = MOVXM_lng_cg 2147483647
+    $r19 = MOVXM_lng_cg -2147483648
+    $srssign0 = MOVXM_lng_cg 0
+    $r25 = MOVXM_lng_cg 1
+    $upssign0 = MOVXM_lng_cg 2147483647
+    $dn2 = MOVXM_lng_cg -2147483648
+    $sp = MOVXM_lng_cg 0
+    $r13 = MOVXM_lng_cg 1
+    $r12 = MOVXM_lng_cg 2147483647
+    $dn6 = MOVXM_lng_cg -2147483648
+    $unpacksign1 = MOVXM_lng_cg 0
+    $r2 = MOVXM_lng_cg 1
+    $dc3 = MOVXM_lng_cg 2147483647
+    $dj3 = MOVXM_lng_cg -2147483648
+    $r1 = MOVXM_lng_cg 0
+
+    ; MOVXM_lng_cg_le_abs
+    MOVXM_lng_cg_le_abs 1048574, implicit-def $le
+    MOVXM_lng_cg_le_abs 1, implicit-def $le
+    MOVXM_lng_cg_le_abs 0, implicit-def $le
+    MOVXM_lng_cg_le_abs 1048575, implicit-def $le
+
+    ; MOVXM_lng_cg_ls_abs
+    MOVXM_lng_cg_ls_abs 1048575, implicit-def $ls
+    MOVXM_lng_cg_ls_abs 1048574, implicit-def $ls
+    MOVXM_lng_cg_ls_abs 0, implicit-def $ls
+    MOVXM_lng_cg_ls_abs 1, implicit-def $ls
+...
+
+# CHECK: 0: 46 00 c0 08 00 00 movxm p4, #0
+# CHECK: 6: 46 02 00 0f 00 00 movxm dj7, #1
+# CHECK: c: 46 fe 9f fb ff 7f movxm dc5, #2147483647
+# CHECK: 12: 46 00 80 01 00 80 movxm dc0, #-2147483648
+# CHECK: 18: 46 00 20 0c 00 00 movxm r24, #0
+# CHECK: 1e: 46 02 00 08 00 00 movxm m4, #1
+# CHECK: 24: 46 fe bf ff ff 7f movxm r31, #2147483647
+# CHECK: 2a: 46 00 20 05 00 80 movxm r10, #-2147483648
+# CHECK: 30: 46 00 00 0e 00 00 movxm m7, #0
+# CHECK: 36: 46 02 00 00 00 00 movxm m0, #1
+# CHECK: 3c: 46 fe 1f f3 ff 7f movxm dj1, #2147483647
+# CHECK: 42: 46 00 c0 04 00 80 movxm p2, #-2147483648
+# CHECK: 48: 46 00 40 03 00 00 movxm unpacksign0, #0
+# CHECK: 4e: 46 02 40 00 00 00 movxm packsign0, #1
+# CHECK: 54: 46 fe 3f f8 ff 7f movxm r16, #2147483647
+# CHECK: 5a: 46 00 c0 03 00 80 movxm lc, #-2147483648
+# CHECK: 60: 46 00 40 08 00 00 movxm packsign1, #0
+# CHECK: 66: 46 02 20 04 00 00 movxm r8, #1
+# CHECK: 6c: 46 fe 1f f4 ff 7f movxm m2, #2147483647
+# CHECK: 72: 46 00 c0 09 00 80 movxm s2, #-2147483648
+# CHECK: 78: 46 00 20 0d 00 00 movxm r26, #0
+# CHECK: 7e: 46 02 80 0a 00 00 movxm dn5, #1
+# CHECK: 84: 46 fe df f0 ff 7f movxm p0, #2147483647
+# CHECK: 8a: 46 00 00 0c 00 80 movxm m6, #-2147483648
+# CHECK: 90: 46 00 c0 0c 00 00 movxm p6, #0
+# CHECK: 96: 46 02 a0 0e 00 00 movxm r29, #1
+# CHECK: 9c: 46 fe 1f f5 ff 7f movxm dj2, #2147483647
+# CHECK: a2: 46 00 40 0a 00 80 movxm upssign1, #-2147483648
+# CHECK: a8: 46 00 80 02 00 00 movxm dn1, #0
+# CHECK: ae: 46 02 80 08 00 00 movxm dn4, #1
+# CHECK: b4: 46 fe bf f5 ff 7f movxm r11, #2147483647
+# CHECK: ba: 46 00 80 05 00 80 movxm dc2, #-2147483648
+# CHECK: c0: 46 00 00 0d 00 00 movxm dj6, #0
+# CHECK: c6: 46 02 80 0e 00 00 movxm dn7, #1
+# CHECK: cc: 46 fe df f1 ff 7f movxm s0, #2147483647
+# CHECK: d2: 46 00 a0 03 00 80 movxm r7, #-2147483648
+# CHECK: d8: 46 00 80 03 00 00 movxm dc1, #0
+# CHECK: de: 46 02 c0 07 00 00 movxm lr, #1
+# CHECK: e4: 46 fe 9f fd ff 7f movxm dc6, #2147483647
+# CHECK: ea: 46 00 a0 07 00 80 movxm r15, #-2147483648
+# CHECK: f0: 46 00 20 09 00 00 movxm r18, #0
+# CHECK: f6: 46 02 c0 0d 00 00 movxm s3, #1
+# CHECK: fc: 46 fe df f6 ff 7f movxm p3, #2147483647
+# CHECK: 102: 46 00 c0 02 00 80 movxm p1, #-2147483648
+# CHECK: 108: 46 00 00 0a 00 00 movxm m5, #0
+# CHECK: 10e: 46 02 80 09 00 00 movxm dc4, #1
+# CHECK: 114: 46 fe 9f f6 ff 7f movxm dn3, #2147483647
+# CHECK: 11a: 46 00 80 0f 00 80 movxm dc7, #-2147483648
+# CHECK: 120: 46 00 00 01 00 00 movxm dj0, #0
+# CHECK: 126: 46 02 a0 04 00 00 movxm r9, #1
+# CHECK: 12c: 46 fe 1f f9 ff 7f movxm dj4, #2147483647
+# CHECK: 132: 46 00 00 0b 00 80 movxm dj5, #-2147483648
+# CHECK: 138: 46 00 00 06 00 00 movxm m3, #0
+# CHECK: 13e: 46 02 a0 0b 00 00 movxm r23, #1
+# CHECK: 144: 46 fe 1f f2 ff 7f movxm m1, #2147483647
+# CHECK: 14a: 46 00 20 03 00 80 movxm r6, #-2147483648
+# CHECK: 150: 46 00 80 00 00 00 movxm dn0, #0
+# CHECK: 156: 46 02 20 07 00 00 movxm r14, #1
+# CHECK: 15c: 46 fe bf f2 ff 7f movxm r5, #2147483647
+# CHECK: 162: 46 00 40 04 00 80 movxm vaddsign0, #-2147483648
+# CHECK: 168: 46 00 a0 0d 00 00 movxm r27, #0
+# CHECK: 16e: 46 02 c0 0e 00 00 movxm p7, #1
+# CHECK: 174: 46 fe df f5 ff 7f movxm s1, #2147483647
+# CHECK: 17a: 46 00 40 09 00 80 movxm srssign1, #-2147483648
+# CHECK: 180: 46 00 20 02 00 00 movxm r4, #0
+# CHECK: 186: 46 02 a0 0a 00 00 movxm r21, #1
+# CHECK: 18c: 46 fe 3f f0 ff 7f movxm r0, #2147483647
+# CHECK: 192: 46 00 20 0b 00 80 movxm r22, #-2147483648
+# CHECK: 198: 46 00 a0 01 00 00 movxm r3, #0
+# CHECK: 19e: 46 02 a0 08 00 00 movxm r17, #1
+# CHECK: 1a4: 46 fe 3f fe ff 7f movxm r28, #2147483647
+# CHECK: 1aa: 46 00 20 0f 00 80 movxm r30, #-2147483648
+# CHECK: 1b0: 46 00 c0 0a 00 00 movxm p5, #0
+# CHECK: 1b6: 46 02 20 0a 00 00 movxm r20, #1
+# CHECK: 1bc: 46 fe 5f fc ff 7f movxm vaddsign1, #2147483647
+# CHECK: 1c2: 46 00 a0 09 00 80 movxm r19, #-2147483648
+# CHECK: 1c8: 46 00 40 01 00 00 movxm srssign0, #0
+# CHECK: 1ce: 46 02 a0 0c 00 00 movxm r25, #1
+# CHECK: 1d4: 46 fe 5f f2 ff 7f movxm upssign0, #2147483647
+# CHECK: 1da: 46 00 80 04 00 80 movxm dn2, #-2147483648
+# CHECK: 1e0: 46 00 c0 0b 00 00 movxm sp, #0
+# CHECK: 1e6: 46 02 a0 06 00 00 movxm r13, #1
+# CHECK: 1ec: 46 fe 3f f6 ff 7f movxm r12, #2147483647
+# CHECK: 1f2: 46 00 80 0c 00 80 movxm dn6, #-2147483648
+# CHECK: 1f8: 46 00 40 0b 00 00 movxm unpacksign1, #0
+# CHECK: 1fe: 46 02 20 01 00 00 movxm r2, #1
+# CHECK: 204: 46 fe 9f f7 ff 7f movxm dc3, #2147483647
+# CHECK: 20a: 46 00 00 07 00 80 movxm dj3, #-2147483648
+# CHECK: 210: 46 00 a0 00 00 00 movxm r1, #0
+# CHECK: 216: 46 03 00 ff ff 07 movxm le, #1048574
+# CHECK: 21c: 46 03 80 00 00 00 movxm le, #1
+# CHECK: 222: 46 03 00 00 00 00 movxm le, #0
+# CHECK: 228: 46 03 80 ff ff 07 movxm le, #1048575
+# CHECK: 22e: 46 01 80 ff ff 07 movxm ls, #1048575
+# CHECK: 234: 46 01 00 ff ff 07 movxm ls, #1048574
+# CHECK: 23a: 46 01 00 00 00 00 movxm ls, #0
+# CHECK: 240: 46 01 80 00 00 00 movxm ls, #1

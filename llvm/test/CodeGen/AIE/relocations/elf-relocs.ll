@@ -10,12 +10,15 @@
 ; RUN:   llvm-readobj -r - | FileCheck %s --check-prefixes=AIE,AIE2
 ; RUN: llc -mtriple=aie2p %s --filetype=obj -o - | \
 ; RUN:   llvm-readobj -r - | FileCheck %s --check-prefixes=AIE,AIE2P
+; RUN: llc -mtriple=aie2ps %s --filetype=obj -o - | \
+; RUN:   llvm-readobj -r - | FileCheck %s --check-prefixes=AIE,AIE2PS
 
 ; AIE:  Relocations [
 ; AIE:    Section (4) .rela.data.align.4 {
 ; AIE1:     0x0 R_AIE_72 x 0x0
 ; AIE2:     0x0 R_AIE_50 x 0x0
 ; AIE2P:    0x0 R_AIE_62 x 0x0
+; AIE2PS:   0x0 R_AIE_135 x 0x0
 ; AIE:    }
 ; AIE:  ]
 

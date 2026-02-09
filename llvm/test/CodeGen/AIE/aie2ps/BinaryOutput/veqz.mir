@@ -1,0 +1,124 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VEQZ_16
+    $r23 = VEQZ_16 $x11, implicit $crbf8conf, implicit $crfp8conf
+    $r31 = VEQZ_16 $x1, implicit $crbf8conf, implicit $crfp8conf
+    $r25 = VEQZ_16 $x0, implicit $crbf8conf, implicit $crfp8conf
+    $r24 = VEQZ_16 $x9, implicit $crbf8conf, implicit $crfp8conf
+    $r27 = VEQZ_16 $x4, implicit $crbf8conf, implicit $crfp8conf
+    $r19 = VEQZ_16 $x5, implicit $crbf8conf, implicit $crfp8conf
+    $r22 = VEQZ_16 $x6, implicit $crbf8conf, implicit $crfp8conf
+    $r21 = VEQZ_16 $x10, implicit $crbf8conf, implicit $crfp8conf
+    $r17 = VEQZ_16 $x3, implicit $crbf8conf, implicit $crfp8conf
+    $r16 = VEQZ_16 $x8, implicit $crbf8conf, implicit $crfp8conf
+    $r28 = VEQZ_16 $x2, implicit $crbf8conf, implicit $crfp8conf
+    $r26 = VEQZ_16 $x7, implicit $crbf8conf, implicit $crfp8conf
+    $r29 = VEQZ_16 $x11, implicit $crbf8conf, implicit $crfp8conf
+    $r30 = VEQZ_16 $x1, implicit $crbf8conf, implicit $crfp8conf
+    $r20 = VEQZ_16 $x0, implicit $crbf8conf, implicit $crfp8conf
+    $r18 = VEQZ_16 $x9, implicit $crbf8conf, implicit $crfp8conf
+
+    ; VEQZ_32
+    $r24 = VEQZ_32 $x11, implicit $crbf8conf, implicit $crfp8conf
+    $r27 = VEQZ_32 $x6, implicit $crbf8conf, implicit $crfp8conf
+    $r20 = VEQZ_32 $x10, implicit $crbf8conf, implicit $crfp8conf
+    $r31 = VEQZ_32 $x2, implicit $crbf8conf, implicit $crfp8conf
+    $r19 = VEQZ_32 $x4, implicit $crbf8conf, implicit $crfp8conf
+    $r18 = VEQZ_32 $x8, implicit $crbf8conf, implicit $crfp8conf
+    $r30 = VEQZ_32 $x0, implicit $crbf8conf, implicit $crfp8conf
+    $r28 = VEQZ_32 $x1, implicit $crbf8conf, implicit $crfp8conf
+    $r16 = VEQZ_32 $x3, implicit $crbf8conf, implicit $crfp8conf
+    $r25 = VEQZ_32 $x7, implicit $crbf8conf, implicit $crfp8conf
+    $r26 = VEQZ_32 $x9, implicit $crbf8conf, implicit $crfp8conf
+    $r17 = VEQZ_32 $x5, implicit $crbf8conf, implicit $crfp8conf
+    $r21 = VEQZ_32 $x11, implicit $crbf8conf, implicit $crfp8conf
+    $r22 = VEQZ_32 $x6, implicit $crbf8conf, implicit $crfp8conf
+    $r29 = VEQZ_32 $x10, implicit $crbf8conf, implicit $crfp8conf
+    $r23 = VEQZ_32 $x2, implicit $crbf8conf, implicit $crfp8conf
+
+    ; VEQZ_8
+    $l11 = VEQZ_8 $x4, implicit $crbf8conf, implicit $crfp8conf
+    $l13 = VEQZ_8 $x5, implicit $crbf8conf, implicit $crfp8conf
+    $l5 = VEQZ_8 $x3, implicit $crbf8conf, implicit $crfp8conf
+    $l4 = VEQZ_8 $x10, implicit $crbf8conf, implicit $crfp8conf
+    $l14 = VEQZ_8 $x1, implicit $crbf8conf, implicit $crfp8conf
+    $l7 = VEQZ_8 $x7, implicit $crbf8conf, implicit $crfp8conf
+    $l8 = VEQZ_8 $x0, implicit $crbf8conf, implicit $crfp8conf
+    $l0 = VEQZ_8 $x2, implicit $crbf8conf, implicit $crfp8conf
+    $l9 = VEQZ_8 $x6, implicit $crbf8conf, implicit $crfp8conf
+    $l2 = VEQZ_8 $x9, implicit $crbf8conf, implicit $crfp8conf
+    $l10 = VEQZ_8 $x8, implicit $crbf8conf, implicit $crfp8conf
+    $l15 = VEQZ_8 $x11, implicit $crbf8conf, implicit $crfp8conf
+    $l12 = VEQZ_8 $x4, implicit $crbf8conf, implicit $crfp8conf
+    $l1 = VEQZ_8 $x5, implicit $crbf8conf, implicit $crfp8conf
+    $l3 = VEQZ_8 $x3, implicit $crbf8conf, implicit $crfp8conf
+    $l6 = VEQZ_8 $x10, implicit $crbf8conf, implicit $crfp8conf
+...
+
+# CHECK: 0: f0 ab b7 37 veqz.16 r23, x11
+# CHECK: 4: f0 ab 17 3f veqz.16 r31, x1
+# CHECK: 8: f0 ab 07 39 veqz.16 r25, x0
+# CHECK: c: f0 ab 97 38 veqz.16 r24, x9
+# CHECK: 10: f0 ab 47 3b veqz.16 r27, x4
+# CHECK: 14: f0 ab 57 33 veqz.16 r19, x5
+# CHECK: 18: f0 ab 67 36 veqz.16 r22, x6
+# CHECK: 1c: f0 ab a7 35 veqz.16 r21, x10
+# CHECK: 20: f0 ab 37 31 veqz.16 r17, x3
+# CHECK: 24: f0 ab 87 30 veqz.16 r16, x8
+# CHECK: 28: f0 ab 27 3c veqz.16 r28, x2
+# CHECK: 2c: f0 ab 77 3a veqz.16 r26, x7
+# CHECK: 30: f0 ab b7 3d veqz.16 r29, x11
+# CHECK: 34: f0 ab 17 3e veqz.16 r30, x1
+# CHECK: 38: f0 ab 07 34 veqz.16 r20, x0
+# CHECK: 3c: f0 ab 97 32 veqz.16 r18, x9
+# CHECK: 40: f0 ab bb 38 veqz.32 r24, x11
+# CHECK: 44: f0 ab 6b 3b veqz.32 r27, x6
+# CHECK: 48: f0 ab ab 34 veqz.32 r20, x10
+# CHECK: 4c: f0 ab 2b 3f veqz.32 r31, x2
+# CHECK: 50: f0 ab 4b 33 veqz.32 r19, x4
+# CHECK: 54: f0 ab 8b 32 veqz.32 r18, x8
+# CHECK: 58: f0 ab 0b 3e veqz.32 r30, x0
+# CHECK: 5c: f0 ab 1b 3c veqz.32 r28, x1
+# CHECK: 60: f0 ab 3b 30 veqz.32 r16, x3
+# CHECK: 64: f0 ab 7b 39 veqz.32 r25, x7
+# CHECK: 68: f0 ab 9b 3a veqz.32 r26, x9
+# CHECK: 6c: f0 ab 5b 31 veqz.32 r17, x5
+# CHECK: 70: f0 ab bb 35 veqz.32 r21, x11
+# CHECK: 74: f0 ab 6b 36 veqz.32 r22, x6
+# CHECK: 78: f0 ab ab 3d veqz.32 r29, x10
+# CHECK: 7c: f0 ab 2b 37 veqz.32 r23, x2
+# CHECK: 80: f0 ab 43 3b veqz.8 r23:r22, x4
+# CHECK: 84: f0 ab 53 3d veqz.8 r27:r26, x5
+# CHECK: 88: f0 ab 33 35 veqz.8 r11:r10, x3
+# CHECK: 8c: f0 ab a3 34 veqz.8 r9:r8, x10
+# CHECK: 90: f0 ab 13 3e veqz.8 r29:r28, x1
+# CHECK: 94: f0 ab 73 37 veqz.8 r15:r14, x7
+# CHECK: 98: f0 ab 03 38 veqz.8 r17:r16, x0
+# CHECK: 9c: f0 ab 23 30 veqz.8 r1:r0, x2
+# CHECK: a0: f0 ab 63 39 veqz.8 r19:r18, x6
+# CHECK: a4: f0 ab 93 32 veqz.8 r5:r4, x9
+# CHECK: a8: f0 ab 83 3a veqz.8 r21:r20, x8
+# CHECK: ac: f0 ab b3 3f veqz.8 r31:r30, x11
+# CHECK: b0: f0 ab 43 3c veqz.8 r25:r24, x4
+# CHECK: b4: f0 ab 53 31 veqz.8 r3:r2, x5
+# CHECK: b8: f0 ab 33 33 veqz.8 r7:r6, x3
+# CHECK: bc: f0 ab a3 36 veqz.8 r13:r12, x10

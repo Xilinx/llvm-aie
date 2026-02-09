@@ -4,8 +4,9 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2p -run-pass=regbankselect -regbankselect-fast %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2ps -run-pass=regbankselect -regbankselect-fast %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2PS
 
 ---
 name:            test_acc512_8x64
@@ -22,6 +23,17 @@ body:             |
     ; CHECK-NEXT: [[AIE_ZEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:gprregbank(s64) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT [[COPY]](<8 x s64>), [[C]](s32)
     ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:gprregbank(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<8 x s64>), [[C]](s32)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_ZEXT_EXTRACT_VECTOR_ELT]](s64), implicit [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
+    ;
+    ; AIE2PS-LABEL: name: test_acc512_8x64
+    ; AIE2PS: liveins: $bmll0
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:accregbank(<8 x s64>) = COPY $bmll0
+    ; AIE2PS-NEXT: [[C:%[0-9]+]]:gprregbank(s32) = G_CONSTANT i32 1
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:vregbank(<8 x s64>) = COPY [[COPY]](<8 x s64>)
+    ; AIE2PS-NEXT: [[AIE_ZEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:gprregbank(s64) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT [[COPY1]](<8 x s64>), [[C]](s32)
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:vregbank(<8 x s64>) = COPY [[COPY]](<8 x s64>)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:gprregbank(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY2]](<8 x s64>), [[C]](s32)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[AIE_ZEXT_EXTRACT_VECTOR_ELT]](s64), implicit [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
     %0:_(<8 x s64>) = COPY $bmll0
     %1:_(s32) = G_CONSTANT i32 1
     %3:_(s64) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT %0(<8 x s64>), %1(s32)

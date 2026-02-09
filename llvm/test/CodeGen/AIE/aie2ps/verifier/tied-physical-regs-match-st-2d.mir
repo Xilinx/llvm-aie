@@ -1,0 +1,53 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -mtriple=aie2ps -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+
+---
+name:      tied_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    $p2, $dc1 = ST_2D_dml_sts_scalar $l0, $p2, $d1
+    $p3, $dc2 = ST_2D_dms_sts_scalar $r4, $p3, $d2
+    $p4, $dc3 = ST_2D_s16 $r4, $p4, $d3, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5, $dc4 = ST_2D_s8 $r4, $p5, $d4, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6, $dc5 = ST_TM_2D $r0, $p6, $d5
+    $p7, $dc6 = ST_2D_dms_sts_g $gl0, $p7, $d6
+    $p0, $dc7 = ST_2D_dmv_sts_f $f0, $p0, $d7
+...
+
+---
+name:      virtual_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    %0:ep = COPY $p0
+    %10:ed = COPY $d0
+    %20:ep, %21:edc = ST_2D_dml_sts_scalar $l0, %0, %10
+    %30:ep, %31:edc = ST_2D_dms_sts_scalar $r4, %0, %10
+    %40:ep, %41:edc = ST_2D_s16 $r4, %0, %10, implicit-def $pe2_ads, implicit $pe2_ads
+    %50:ep, %51:edc = ST_2D_s8 $r4, %0, %10, implicit-def $pe2_ads, implicit $pe2_ads
+    %60:ep, %61:edc = ST_TM_2D $r0, %0, %10
+    %70:ep, %71:edc = ST_2D_dms_sts_g $gl0, %0, %10
+    %80:ep, %81:edc = ST_2D_dmv_sts_f $f0, %0, %10
+...
+
+---
+name:      tied_nok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-COUNT-7: Bad machine code: Tied physical registers must match
+    $p2, $dc7 = ST_2D_dml_sts_scalar $l0, $p2, $d1
+    $p3, $dc0 = ST_2D_dms_sts_scalar $r4, $p3, $d2
+    $p4, $dc1 = ST_2D_s16 $r4, $p4, $d3, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5, $dc2 = ST_2D_s8 $r4, $p5, $d4, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6, $dc3 = ST_TM_2D $r0, $p6, $d5
+    $p7, $dc4 = ST_2D_dms_sts_g $gl0, $p7, $d6
+    $p0, $dc5 = ST_2D_dmv_sts_f $f0, $p0, $d7
+...

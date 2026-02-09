@@ -1,0 +1,88 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# TODO: llc %llcflags --filetype=asm -o %t2
+# TODO: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# TODO: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; JNZ
+    JNZ $r17, 0
+    JNZ $r21, 1
+    JNZ $r23, 1048575
+    JNZ $r18, 1048574
+    JNZ $r8, 0
+    JNZ $r30, 1
+    JNZ $r28, 1048575
+    JNZ $r26, 1048574
+    JNZ $r27, 0
+    JNZ $r19, 1
+    JNZ $r10, 1048575
+    JNZ $r12, 1048574
+    JNZ $r5, 0
+    JNZ $r7, 1
+    JNZ $r11, 1048575
+    JNZ $r14, 1048574
+    JNZ $r3, 0
+    JNZ $r6, 1
+    JNZ $r9, 1048575
+    JNZ $r29, 1048574
+    JNZ $r22, 0
+    JNZ $r13, 1
+    JNZ $r24, 1048575
+    JNZ $r1, 1048574
+    JNZ $r2, 0
+    JNZ $r25, 1
+    JNZ $r16, 1048575
+    JNZ $r20, 1048574
+    JNZ $r0, 0
+    JNZ $r4, 1
+    JNZ $r15, 1048575
+    JNZ $r31, 1048574
+...
+
+# CHECK: 0: 86 01 40 00 00 88 jnz r17, #0
+# CHECK: 6: 86 01 c0 00 00 a8 jnz r21, #1
+# CHECK: c: 86 01 c0 ff ff bf jnz r23, #1048575
+# CHECK: 12: 86 01 40 ff ff 97 jnz r18, #1048574
+# CHECK: 18: 86 01 40 00 00 40 jnz r8, #0
+# CHECK: 1e: 86 01 c0 00 00 f0 jnz r30, #1
+# CHECK: 24: 86 01 c0 ff ff e7 jnz r28, #1048575
+# CHECK: 2a: 86 01 40 ff ff d7 jnz r26, #1048574
+# CHECK: 30: 86 01 40 00 00 d8 jnz r27, #0
+# CHECK: 36: 86 01 c0 00 00 98 jnz r19, #1
+# CHECK: 3c: 86 01 c0 ff ff 57 jnz r10, #1048575
+# CHECK: 42: 86 01 40 ff ff 67 jnz r12, #1048574
+# CHECK: 48: 86 01 40 00 00 28 jnz r5, #0
+# CHECK: 4e: 86 01 c0 00 00 38 jnz r7, #1
+# CHECK: 54: 86 01 c0 ff ff 5f jnz r11, #1048575
+# CHECK: 5a: 86 01 40 ff ff 77 jnz r14, #1048574
+# CHECK: 60: 86 01 40 00 00 18 jnz r3, #0
+# CHECK: 66: 86 01 c0 00 00 30 jnz r6, #1
+# CHECK: 6c: 86 01 c0 ff ff 4f jnz r9, #1048575
+# CHECK: 72: 86 01 40 ff ff ef jnz r29, #1048574
+# CHECK: 78: 86 01 40 00 00 b0 jnz r22, #0
+# CHECK: 7e: 86 01 c0 00 00 68 jnz r13, #1
+# CHECK: 84: 86 01 c0 ff ff c7 jnz r24, #1048575
+# CHECK: 8a: 86 01 40 ff ff 0f jnz r1, #1048574
+# CHECK: 90: 86 01 40 00 00 10 jnz r2, #0
+# CHECK: 96: 86 01 c0 00 00 c8 jnz r25, #1
+# CHECK: 9c: 86 01 c0 ff ff 87 jnz r16, #1048575
+# CHECK: a2: 86 01 40 ff ff a7 jnz r20, #1048574
+# CHECK: a8: 86 01 40 00 00 00 jnz r0, #0
+# CHECK: ae: 86 01 c0 00 00 20 jnz r4, #1
+# CHECK: b4: 86 01 c0 ff ff 7f jnz r15, #1048575
+# CHECK: ba: 86 01 40 ff ff ff jnz r31, #1048574

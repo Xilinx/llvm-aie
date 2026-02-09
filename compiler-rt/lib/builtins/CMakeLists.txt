@@ -487,6 +487,14 @@ set(aie2p_SOURCES
   aie2p/umodsi3.c
 )
 
+set(aie2ps_SOURCES
+  ${aie2_GENERIC_SOURCES}
+  aie2ps/divsi3.c
+  aie2ps/modsi3.c
+  aie2ps/udivsi3.c
+  aie2ps/umodsi3.c
+)
+
 # builtin support for Targets that have Arm state or have Thumb2
 set(arm_or_thumb2_base_SOURCES
   arm/fp_mode.c

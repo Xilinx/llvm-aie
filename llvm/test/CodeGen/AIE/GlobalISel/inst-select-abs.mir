@@ -4,8 +4,11 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2
+# RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2P
+# RUN: llc -mtriple aie2ps -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2PS
 
 ---
 name: abs_s32
@@ -18,6 +21,21 @@ body: |
     ; CHECK: [[COPY:%[0-9]+]]:gpr = COPY $r6
     ; CHECK-NEXT: [[ABS:%[0-9]+]]:gpr = ABS [[COPY]]
     ; CHECK-NEXT: $r0 = COPY [[ABS]]
+    ;
+    ; AIE2-LABEL: name: abs_s32
+    ; AIE2: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2-NEXT: [[ABS:%[0-9]+]]:er = ABS [[COPY]], implicit-def dead $srcarry
+    ; AIE2-NEXT: $r0 = COPY [[ABS]]
+    ;
+    ; AIE2P-LABEL: name: abs_s32
+    ; AIE2P: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2P-NEXT: [[ABS:%[0-9]+]]:er = ABS [[COPY]], implicit-def dead $srcarry
+    ; AIE2P-NEXT: $r0 = COPY [[ABS]]
+    ;
+    ; AIE2PS-LABEL: name: abs_s32
+    ; AIE2PS: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[ABS:%[0-9]+]]:mlockid_reg = ABS [[COPY]], implicit-def dead $srcarry
+    ; AIE2PS-NEXT: $r0 = COPY [[ABS]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = G_ABS %0
     $r0 = COPY %1

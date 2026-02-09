@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -46,6 +46,7 @@ private:
   void relocateAIE1(uint8_t *Loc, const Relocation &rel, uint64_t Val) const;
   void relocateAIE2(uint8_t *Loc, const Relocation &rel, uint64_t Val) const;
   void relocateAIE2P(uint8_t *Loc, const Relocation &rel, uint64_t Val) const;
+  void relocateAIE2PS(uint8_t *Loc, const Relocation &rel, uint64_t Val) const;
 };
 
 } // end anonymous namespace
@@ -429,8 +430,49 @@ void AIE::relocateAIE2P(uint8_t *Loc, const Relocation &rel,
   }
 }
 
+void AIE::relocateAIE2PS(uint8_t *Loc, const Relocation &rel,
+                         uint64_t Val) const {
+  if (errorHandler().verbose)
+    lld::outs() << "Relocation expr=" << rel.expr << " " << rel.type << "@"
+                << getErrorLoc(ctx, Loc) << "\n";
+
+  // Relocation applied to debug_info
+  if (rel.expr == R_NONE) {
+    checkUInt(ctx, Loc, Val, 20, rel);
+    patch4bytes(Loc, Val, 19, 0, 12);
+    return;
+  }
+
+  switch (rel.type) {
+    // Most relocations are implemented in a file which is
+    // automatically generated from the processor description.
+#include "AIE2PS_rela.inc"
+  // 135 : (symbol_addr_AR  + addend )  :  addr [19..0]@0 in w8[4]
+  // 137 : (symbol_addr_AR  + addend )  :  addr [19..0]@0 in tm_byte[4]
+  // with default addend 0
+  case 135:
+  case 137:
+    checkUInt(ctx, Loc, Val, 20, rel);
+    patch4bytes(Loc, Val, 19, 0, 12);
+    return;
+  // 136 : (symbol_addr_AR  + addend )  :  w32 [31..0]@0 in w8[4]
+  // 138 : (symbol_addr_AR  + addend )  :  w32 [31..0]@0 in tm_byte[4]
+  // with default addend 0
+  case 136:
+  case 138:
+    checkUInt(ctx, Loc, Val, 32, rel);
+    patch4bytes(Loc, Val, 31, 0, 0);
+    return;
+  default:
+    error(getErrorLoc(ctx, Loc) +
+          "unimplemented relocation: " + toStr(ctx, rel.type));
+    return;
+  }
+}
+
 void AIE::relocate(uint8_t *Loc, const Relocation &rel, uint64_t Val) const {
-  unsigned Arch = calcEFlags() & 0x3;
+  unsigned Arch = calcEFlags() & 0x7;
+
   switch (Arch) {
   case 0:
     // Backward compatible with not setting arch flags.
@@ -442,6 +484,9 @@ void AIE::relocate(uint8_t *Loc, const Relocation &rel, uint64_t Val) const {
     break;
   case 3:
     relocateAIE2P(Loc, rel, Val);
+    break;
+  case 4:
+    relocateAIE2PS(Loc, rel, Val);
     break;
   default:
     llvm_unreachable("Unknown AIE version in EFLAGS");

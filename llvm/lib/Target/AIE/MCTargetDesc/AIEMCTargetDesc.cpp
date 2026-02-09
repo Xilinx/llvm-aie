@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -21,9 +21,12 @@
 #include "AIETargetELFStreamer.h"
 #include "InstPrinter/AIE2InstPrinter.h"
 #include "InstPrinter/AIE2PInstPrinter.h"
+#include "InstPrinter/AIE2PSInstPrinter.h"
 #include "InstPrinter/AIEInstPrinter.h"
 #include "aie2p/AIE2PAsmBackend.h"
 #include "aie2p/AIE2PMCTargetDesc.h"
+#include "aie2ps/AIE2PSAsmBackend.h"
+#include "aie2ps/AIE2PSMCTargetDesc.h"
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -50,6 +53,11 @@ using namespace llvm;
 #define NoSchedModel NoSchedModelAIE2P
 #define GET_SUBTARGETINFO_MC_DESC
 #include "AIE2PGenSubtargetInfo.inc"
+#undef NoSchedModel
+
+#define NoSchedModel NoSchedModelAIE2PS
+#define GET_SUBTARGETINFO_MC_DESC
+#include "AIE2PSGenSubtargetInfo.inc"
 #undef NoSchedModel
 
 #define GET_REGINFO_MC_DESC
@@ -79,6 +87,8 @@ static MCRegisterInfo *createAIEMCRegisterInfo(const Triple &TT) {
     return createAIE2MCRegisterInfo(TT);
   case Triple::aie2p:
     return createAIE2PMCRegisterInfo(TT);
+  case Triple::aie2ps:
+    return createAIE2PSMCRegisterInfo(TT);
   default:
     llvm_unreachable("Unknown AIE target");
   }
@@ -92,6 +102,8 @@ static MCSubtargetInfo *createAIEMCSubtargetInfo(const Triple &TT,
     return createAIE2MCSubtargetInfoImpl(TT, CPU, CPU, FS);
   else if (TT.getArch() == Triple::aie2p)
     return createAIE2PMCSubtargetInfoImpl(TT, CPU, CPU, FS);
+  else if (TT.getArch() == Triple::aie2ps)
+    return createAIE2PSMCSubtargetInfoImpl(TT, CPU, CPU, FS);
   return createAIEMCSubtargetInfoImpl(TT, CPU, CPU, FS);
 }
 
@@ -116,6 +128,8 @@ static MCInstPrinter *createAIEMCInstPrinter(const Triple &TT,
     return new AIE2InstPrinter(MAI, MII, MRI);
   else if (TT.getArch() == Triple::aie2p)
     return new AIE2PInstPrinter(MAI, MII, MRI);
+  else if (TT.getArch() == Triple::aie2ps)
+    return new AIE2PSInstPrinter(MAI, MII, MRI);
   return new AIEInstPrinter(MAI, MII, MRI);
 }
 
@@ -143,6 +157,8 @@ static MCAsmBackend *createAIEAsmBackend(const Target &T,
     return new AIE2AsmBackend(STI, OSABI, Options);
   case Triple::aie2p:
     return new AIE2PAsmBackend(STI, OSABI, Options);
+  case Triple::aie2ps:
+    return new AIE2PSAsmBackend(STI, OSABI, Options);
   default:
     llvm_unreachable("Unsupported AIE target");
   }
@@ -150,8 +166,8 @@ static MCAsmBackend *createAIEAsmBackend(const Target &T,
 
 // Force static initialization.
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETargetMC() {
-  for (Target *T :
-       {&getTheAIETarget(), &getTheAIE2Target(), &getTheAIE2PTarget()}) {
+  for (Target *T : {&getTheAIETarget(), &getTheAIE2Target(),
+                    &getTheAIE2PTarget(), &getTheAIE2PSTarget()}) {
     // Register the MC asm info.
     RegisterMCAsmInfoFn X(*T, createAIEMCAsmInfo);
 
@@ -177,6 +193,8 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETargetMC() {
                                       createAIE2MCInstrInfo);
   TargetRegistry::RegisterMCInstrInfo(getTheAIE2PTarget(),
                                       createAIE2PMCInstrInfo);
+  TargetRegistry::RegisterMCInstrInfo(getTheAIE2PSTarget(),
+                                      createAIE2PSMCInstrInfo);
 
   TargetRegistry::RegisterMCCodeEmitter(getTheAIETarget(),
                                         createAIEMCCodeEmitter);
@@ -184,4 +202,6 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETargetMC() {
                                         createAIE2MCCodeEmitter);
   TargetRegistry::RegisterMCCodeEmitter(getTheAIE2PTarget(),
                                         createAIE2PMCCodeEmitter);
+  TargetRegistry::RegisterMCCodeEmitter(getTheAIE2PSTarget(),
+                                        createAIE2PSMCCodeEmitter);
 }

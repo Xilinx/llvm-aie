@@ -1,0 +1,286 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VSHUFFLE_vec_shuffle_bm
+    $bmhl0 = VSHUFFLE_vec_shuffle_bm $x3, $x8, $r25
+    $bmll3 = VSHUFFLE_vec_shuffle_bm $x7, $x6, $r28
+    $bmll2 = VSHUFFLE_vec_shuffle_bm $x2, $x3, $r27
+    $bmhl2 = VSHUFFLE_vec_shuffle_bm $x10, $x1, $r22
+    $bmhl3 = VSHUFFLE_vec_shuffle_bm $x8, $x11, $r20
+    $bmhh3 = VSHUFFLE_vec_shuffle_bm $x9, $x4, $r16
+    $bmll1 = VSHUFFLE_vec_shuffle_bm $x1, $x9, $r29
+    $bmhl1 = VSHUFFLE_vec_shuffle_bm $x6, $x5, $r26
+    $bmhh1 = VSHUFFLE_vec_shuffle_bm $x11, $x10, $r11
+    $bmlh2 = VSHUFFLE_vec_shuffle_bm $x0, $x2, $r7
+    $bmhh0 = VSHUFFLE_vec_shuffle_bm $x4, $x7, $r3
+    $bmlh3 = VSHUFFLE_vec_shuffle_bm $x5, $x0, $r0
+    $bmll0 = VSHUFFLE_vec_shuffle_bm $x3, $x8, $r6
+    $bmhh2 = VSHUFFLE_vec_shuffle_bm $x7, $x6, $r9
+    $bmlh0 = VSHUFFLE_vec_shuffle_bm $x2, $x3, $r1
+    $bmlh1 = VSHUFFLE_vec_shuffle_bm $x10, $x1, $r4
+    $bmhl0 = VSHUFFLE_vec_shuffle_bm $x8, $x11, $r2
+    $bmll3 = VSHUFFLE_vec_shuffle_bm $x9, $x4, $r12
+    $bmll2 = VSHUFFLE_vec_shuffle_bm $x1, $x9, $r15
+    $bmhl2 = VSHUFFLE_vec_shuffle_bm $x6, $x5, $r24
+    $bmhl3 = VSHUFFLE_vec_shuffle_bm $x11, $x10, $r14
+    $bmhh3 = VSHUFFLE_vec_shuffle_bm $x0, $x2, $r21
+    $bmll1 = VSHUFFLE_vec_shuffle_bm $x4, $x7, $r5
+    $bmhl1 = VSHUFFLE_vec_shuffle_bm $x5, $x0, $r30
+    $bmhh1 = VSHUFFLE_vec_shuffle_bm $x3, $x8, $r8
+    $bmlh2 = VSHUFFLE_vec_shuffle_bm $x7, $x6, $r13
+    $bmhh0 = VSHUFFLE_vec_shuffle_bm $x2, $x3, $r17
+    $bmlh3 = VSHUFFLE_vec_shuffle_bm $x10, $x1, $r18
+    $bmll0 = VSHUFFLE_vec_shuffle_bm $x8, $x11, $r31
+    $bmhh2 = VSHUFFLE_vec_shuffle_bm $x9, $x4, $r19
+    $bmlh0 = VSHUFFLE_vec_shuffle_bm $x1, $x9, $r10
+    $bmlh1 = VSHUFFLE_vec_shuffle_bm $x6, $x5, $r23
+
+    ; VSHUFFLE_vec_shuffle_egx
+    $ex9 = VSHUFFLE_vec_shuffle_egx $ex8, $ex4, $r27
+    $ex10 = VSHUFFLE_vec_shuffle_egx $ex7, $ex10, $r4
+    $ex8 = VSHUFFLE_vec_shuffle_egx $ex6, $ex3, $r28
+    $ex7 = VSHUFFLE_vec_shuffle_egx $ex2, $ex0, $r10
+    $ex3 = VSHUFFLE_vec_shuffle_egx $ex3, $ex9, $r0
+    $ex11 = VSHUFFLE_vec_shuffle_egx $ex5, $ex1, $r3
+    $ex4 = VSHUFFLE_vec_shuffle_egx $ex10, $ex2, $r14
+    $ex1 = VSHUFFLE_vec_shuffle_egx $ex9, $ex8, $r25
+    $ex2 = VSHUFFLE_vec_shuffle_egx $ex0, $ex5, $r18
+    $ex5 = VSHUFFLE_vec_shuffle_egx $ex1, $ex7, $r7
+    $ex0 = VSHUFFLE_vec_shuffle_egx $ex4, $ex6, $r19
+    $ex6 = VSHUFFLE_vec_shuffle_egx $ex11, $ex11, $r20
+    $ex9 = VSHUFFLE_vec_shuffle_egx $ex8, $ex4, $r9
+    $ex10 = VSHUFFLE_vec_shuffle_egx $ex7, $ex10, $r11
+    $ex8 = VSHUFFLE_vec_shuffle_egx $ex6, $ex3, $r16
+    $ex7 = VSHUFFLE_vec_shuffle_egx $ex2, $ex0, $r26
+    $ex3 = VSHUFFLE_vec_shuffle_egx $ex3, $ex9, $r6
+    $ex11 = VSHUFFLE_vec_shuffle_egx $ex5, $ex1, $r31
+    $ex4 = VSHUFFLE_vec_shuffle_egx $ex10, $ex2, $r12
+    $ex1 = VSHUFFLE_vec_shuffle_egx $ex9, $ex8, $r29
+    $ex2 = VSHUFFLE_vec_shuffle_egx $ex0, $ex5, $r15
+    $ex5 = VSHUFFLE_vec_shuffle_egx $ex1, $ex7, $r24
+    $ex0 = VSHUFFLE_vec_shuffle_egx $ex4, $ex6, $r1
+    $ex6 = VSHUFFLE_vec_shuffle_egx $ex11, $ex11, $r13
+    $ex9 = VSHUFFLE_vec_shuffle_egx $ex8, $ex4, $r21
+    $ex10 = VSHUFFLE_vec_shuffle_egx $ex7, $ex10, $r23
+    $ex8 = VSHUFFLE_vec_shuffle_egx $ex6, $ex3, $r30
+    $ex7 = VSHUFFLE_vec_shuffle_egx $ex2, $ex0, $r8
+    $ex3 = VSHUFFLE_vec_shuffle_egx $ex3, $ex9, $r5
+    $ex11 = VSHUFFLE_vec_shuffle_egx $ex5, $ex1, $r2
+    $ex4 = VSHUFFLE_vec_shuffle_egx $ex10, $ex2, $r22
+    $ex1 = VSHUFFLE_vec_shuffle_egx $ex9, $ex8, $r17
+
+    ; VSHUFFLE_vec_shuffle_fex
+    $fex3 = VSHUFFLE_vec_shuffle_fex $fex6, $fex10, $r4
+    $fex11 = VSHUFFLE_vec_shuffle_fex $fex1, $fex5, $r0
+    $fex4 = VSHUFFLE_vec_shuffle_fex $fex0, $fex6, $r1
+    $fex7 = VSHUFFLE_vec_shuffle_fex $fex11, $fex4, $r16
+    $fex1 = VSHUFFLE_vec_shuffle_fex $fex2, $fex0, $r29
+    $fex0 = VSHUFFLE_vec_shuffle_fex $fex8, $fex8, $r7
+    $fex5 = VSHUFFLE_vec_shuffle_fex $fex3, $fex9, $r10
+    $fex2 = VSHUFFLE_vec_shuffle_fex $fex5, $fex3, $r24
+    $fex6 = VSHUFFLE_vec_shuffle_fex $fex10, $fex1, $r25
+    $fex8 = VSHUFFLE_vec_shuffle_fex $fex7, $fex7, $r12
+    $fex10 = VSHUFFLE_vec_shuffle_fex $fex9, $fex11, $r19
+    $fex9 = VSHUFFLE_vec_shuffle_fex $fex4, $fex2, $r23
+    $fex3 = VSHUFFLE_vec_shuffle_fex $fex6, $fex10, $r8
+    $fex11 = VSHUFFLE_vec_shuffle_fex $fex1, $fex5, $r28
+    $fex4 = VSHUFFLE_vec_shuffle_fex $fex0, $fex6, $r3
+    $fex7 = VSHUFFLE_vec_shuffle_fex $fex11, $fex4, $r21
+    $fex1 = VSHUFFLE_vec_shuffle_fex $fex2, $fex0, $r30
+    $fex0 = VSHUFFLE_vec_shuffle_fex $fex8, $fex8, $r6
+    $fex5 = VSHUFFLE_vec_shuffle_fex $fex3, $fex9, $r22
+    $fex2 = VSHUFFLE_vec_shuffle_fex $fex5, $fex3, $r5
+    $fex6 = VSHUFFLE_vec_shuffle_fex $fex10, $fex1, $r15
+    $fex8 = VSHUFFLE_vec_shuffle_fex $fex7, $fex7, $r13
+    $fex10 = VSHUFFLE_vec_shuffle_fex $fex9, $fex11, $r17
+    $fex9 = VSHUFFLE_vec_shuffle_fex $fex4, $fex2, $r31
+    $fex3 = VSHUFFLE_vec_shuffle_fex $fex6, $fex10, $r26
+    $fex11 = VSHUFFLE_vec_shuffle_fex $fex1, $fex5, $r14
+    $fex4 = VSHUFFLE_vec_shuffle_fex $fex0, $fex6, $r11
+    $fex7 = VSHUFFLE_vec_shuffle_fex $fex11, $fex4, $r20
+    $fex1 = VSHUFFLE_vec_shuffle_fex $fex2, $fex0, $r18
+    $fex0 = VSHUFFLE_vec_shuffle_fex $fex8, $fex8, $r9
+    $fex5 = VSHUFFLE_vec_shuffle_fex $fex3, $fex9, $r2
+    $fex2 = VSHUFFLE_vec_shuffle_fex $fex5, $fex3, $r27
+
+    ; VSHUFFLE_vec_shuffle_x
+    $x7 = VSHUFFLE_vec_shuffle_x $x4, $x0, $r21
+    $x5 = VSHUFFLE_vec_shuffle_x $x0, $x6, $r12
+    $x2 = VSHUFFLE_vec_shuffle_x $x3, $x7, $r28
+    $x9 = VSHUFFLE_vec_shuffle_x $x11, $x3, $r5
+    $x10 = VSHUFFLE_vec_shuffle_x $x8, $x1, $r16
+    $x6 = VSHUFFLE_vec_shuffle_x $x5, $x11, $r24
+    $x4 = VSHUFFLE_vec_shuffle_x $x1, $x5, $r3
+    $x0 = VSHUFFLE_vec_shuffle_x $x6, $x4, $r17
+    $x3 = VSHUFFLE_vec_shuffle_x $x7, $x8, $r23
+    $x11 = VSHUFFLE_vec_shuffle_x $x9, $x2, $r26
+    $x1 = VSHUFFLE_vec_shuffle_x $x10, $x10, $r9
+    $x8 = VSHUFFLE_vec_shuffle_x $x2, $x9, $r29
+    $x7 = VSHUFFLE_vec_shuffle_x $x4, $x0, $r15
+    $x5 = VSHUFFLE_vec_shuffle_x $x0, $x6, $r30
+    $x2 = VSHUFFLE_vec_shuffle_x $x3, $x7, $r7
+    $x9 = VSHUFFLE_vec_shuffle_x $x11, $x3, $r14
+    $x10 = VSHUFFLE_vec_shuffle_x $x8, $x1, $r11
+    $x6 = VSHUFFLE_vec_shuffle_x $x5, $x11, $r27
+    $x4 = VSHUFFLE_vec_shuffle_x $x1, $x5, $r22
+    $x0 = VSHUFFLE_vec_shuffle_x $x6, $x4, $r19
+    $x3 = VSHUFFLE_vec_shuffle_x $x7, $x8, $r25
+    $x11 = VSHUFFLE_vec_shuffle_x $x9, $x2, $r10
+    $x1 = VSHUFFLE_vec_shuffle_x $x10, $x10, $r8
+    $x8 = VSHUFFLE_vec_shuffle_x $x2, $x9, $r0
+    $x7 = VSHUFFLE_vec_shuffle_x $x4, $x0, $r20
+    $x5 = VSHUFFLE_vec_shuffle_x $x0, $x6, $r4
+    $x2 = VSHUFFLE_vec_shuffle_x $x3, $x7, $r6
+    $x9 = VSHUFFLE_vec_shuffle_x $x11, $x3, $r1
+    $x10 = VSHUFFLE_vec_shuffle_x $x8, $x1, $r31
+    $x6 = VSHUFFLE_vec_shuffle_x $x5, $x11, $r13
+    $x4 = VSHUFFLE_vec_shuffle_x $x1, $x5, $r18
+    $x0 = VSHUFFLE_vec_shuffle_x $x6, $x4, $r2
+...
+
+# CHECK: 0: b0 cb 38 32 vshuffle bmhl0, x3, x8, r25
+# CHECK: 4: b0 e3 76 3c vshuffle bmll3, x7, x6, r28
+# CHECK: 8: b0 db 23 38 vshuffle bmll2, x2, x3, r27
+# CHECK: c: b0 b3 a1 3a vshuffle bmhl2, x10, x1, r22
+# CHECK: 10: b0 a3 8b 3e vshuffle bmhl3, x8, x11, r20
+# CHECK: 14: b0 83 94 3f vshuffle bmhh3, x9, x4, r16
+# CHECK: 18: b0 eb 19 34 vshuffle bmll1, x1, x9, r29
+# CHECK: 1c: b0 d3 65 36 vshuffle bmhl1, x6, x5, r26
+# CHECK: 20: b0 5b ba 37 vshuffle bmhh1, x11, x10, r11
+# CHECK: 24: b0 3b 02 39 vshuffle bmlh2, x0, x2, r7
+# CHECK: 28: b0 1b 47 33 vshuffle bmhh0, x4, x7, r3
+# CHECK: 2c: b0 03 50 3d vshuffle bmlh3, x5, x0, r0
+# CHECK: 30: b0 33 38 30 vshuffle bmll0, x3, x8, r6
+# CHECK: 34: b0 4b 76 3b vshuffle bmhh2, x7, x6, r9
+# CHECK: 38: b0 0b 23 31 vshuffle bmlh0, x2, x3, r1
+# CHECK: 3c: b0 23 a1 35 vshuffle bmlh1, x10, x1, r4
+# CHECK: 40: b0 13 8b 32 vshuffle bmhl0, x8, x11, r2
+# CHECK: 44: b0 63 94 3c vshuffle bmll3, x9, x4, r12
+# CHECK: 48: b0 7b 19 38 vshuffle bmll2, x1, x9, r15
+# CHECK: 4c: b0 c3 65 3a vshuffle bmhl2, x6, x5, r24
+# CHECK: 50: b0 73 ba 3e vshuffle bmhl3, x11, x10, r14
+# CHECK: 54: b0 ab 02 3f vshuffle bmhh3, x0, x2, r21
+# CHECK: 58: b0 2b 47 34 vshuffle bmll1, x4, x7, r5
+# CHECK: 5c: b0 f3 50 36 vshuffle bmhl1, x5, x0, r30
+# CHECK: 60: b0 43 38 37 vshuffle bmhh1, x3, x8, r8
+# CHECK: 64: b0 6b 76 39 vshuffle bmlh2, x7, x6, r13
+# CHECK: 68: b0 8b 23 33 vshuffle bmhh0, x2, x3, r17
+# CHECK: 6c: b0 93 a1 3d vshuffle bmlh3, x10, x1, r18
+# CHECK: 70: b0 fb 8b 30 vshuffle bmll0, x8, x11, r31
+# CHECK: 74: b0 9b 94 3b vshuffle bmhh2, x9, x4, r19
+# CHECK: 78: b0 53 19 31 vshuffle bmlh0, x1, x9, r10
+# CHECK: 7c: b0 bb 65 35 vshuffle bmlh1, x6, x5, r23
+# CHECK: 80: b0 df 84 39 vshuffle ex9, ex8, ex4, r27
+# CHECK: 84: b0 27 7a 3a vshuffle ex10, ex7, ex10, r4
+# CHECK: 88: b0 e7 63 38 vshuffle ex8, ex6, ex3, r28
+# CHECK: 8c: b0 57 20 37 vshuffle ex7, ex2, ex0, r10
+# CHECK: 90: b0 07 39 33 vshuffle ex3, ex3, ex9, r0
+# CHECK: 94: b0 1f 51 3b vshuffle ex11, ex5, ex1, r3
+# CHECK: 98: b0 77 a2 34 vshuffle ex4, ex10, ex2, r14
+# CHECK: 9c: b0 cf 98 31 vshuffle ex1, ex9, ex8, r25
+# CHECK: a0: b0 97 05 32 vshuffle ex2, ex0, ex5, r18
+# CHECK: a4: b0 3f 17 35 vshuffle ex5, ex1, ex7, r7
+# CHECK: a8: b0 9f 46 30 vshuffle ex0, ex4, ex6, r19
+# CHECK: ac: b0 a7 bb 36 vshuffle ex6, ex11, ex11, r20
+# CHECK: b0: b0 4f 84 39 vshuffle ex9, ex8, ex4, r9
+# CHECK: b4: b0 5f 7a 3a vshuffle ex10, ex7, ex10, r11
+# CHECK: b8: b0 87 63 38 vshuffle ex8, ex6, ex3, r16
+# CHECK: bc: b0 d7 20 37 vshuffle ex7, ex2, ex0, r26
+# CHECK: c0: b0 37 39 33 vshuffle ex3, ex3, ex9, r6
+# CHECK: c4: b0 ff 51 3b vshuffle ex11, ex5, ex1, r31
+# CHECK: c8: b0 67 a2 34 vshuffle ex4, ex10, ex2, r12
+# CHECK: cc: b0 ef 98 31 vshuffle ex1, ex9, ex8, r29
+# CHECK: d0: b0 7f 05 32 vshuffle ex2, ex0, ex5, r15
+# CHECK: d4: b0 c7 17 35 vshuffle ex5, ex1, ex7, r24
+# CHECK: d8: b0 0f 46 30 vshuffle ex0, ex4, ex6, r1
+# CHECK: dc: b0 6f bb 36 vshuffle ex6, ex11, ex11, r13
+# CHECK: e0: b0 af 84 39 vshuffle ex9, ex8, ex4, r21
+# CHECK: e4: b0 bf 7a 3a vshuffle ex10, ex7, ex10, r23
+# CHECK: e8: b0 f7 63 38 vshuffle ex8, ex6, ex3, r30
+# CHECK: ec: b0 47 20 37 vshuffle ex7, ex2, ex0, r8
+# CHECK: f0: b0 2f 39 33 vshuffle ex3, ex3, ex9, r5
+# CHECK: f4: b0 17 51 3b vshuffle ex11, ex5, ex1, r2
+# CHECK: f8: b0 b7 a2 34 vshuffle ex4, ex10, ex2, r22
+# CHECK: fc: b0 8f 98 31 vshuffle ex1, ex9, ex8, r17
+# CHECK: 100: f0 20 6a 33 vshuffle fex3, fex6, fex10, r4
+# CHECK: 104: f0 00 15 3b vshuffle fex11, fex1, fex5, r0
+# CHECK: 108: f0 08 06 34 vshuffle fex4, fex0, fex6, r1
+# CHECK: 10c: f0 80 b4 37 vshuffle fex7, fex11, fex4, r16
+# CHECK: 110: f0 e8 20 31 vshuffle fex1, fex2, fex0, r29
+# CHECK: 114: f0 38 88 30 vshuffle fex0, fex8, fex8, r7
+# CHECK: 118: f0 50 39 35 vshuffle fex5, fex3, fex9, r10
+# CHECK: 11c: f0 c0 53 32 vshuffle fex2, fex5, fex3, r24
+# CHECK: 120: f0 c8 a1 36 vshuffle fex6, fex10, fex1, r25
+# CHECK: 124: f0 60 77 38 vshuffle fex8, fex7, fex7, r12
+# CHECK: 128: f0 98 9b 3a vshuffle fex10, fex9, fex11, r19
+# CHECK: 12c: f0 b8 42 39 vshuffle fex9, fex4, fex2, r23
+# CHECK: 130: f0 40 6a 33 vshuffle fex3, fex6, fex10, r8
+# CHECK: 134: f0 e0 15 3b vshuffle fex11, fex1, fex5, r28
+# CHECK: 138: f0 18 06 34 vshuffle fex4, fex0, fex6, r3
+# CHECK: 13c: f0 a8 b4 37 vshuffle fex7, fex11, fex4, r21
+# CHECK: 140: f0 f0 20 31 vshuffle fex1, fex2, fex0, r30
+# CHECK: 144: f0 30 88 30 vshuffle fex0, fex8, fex8, r6
+# CHECK: 148: f0 b0 39 35 vshuffle fex5, fex3, fex9, r22
+# CHECK: 14c: f0 28 53 32 vshuffle fex2, fex5, fex3, r5
+# CHECK: 150: f0 78 a1 36 vshuffle fex6, fex10, fex1, r15
+# CHECK: 154: f0 68 77 38 vshuffle fex8, fex7, fex7, r13
+# CHECK: 158: f0 88 9b 3a vshuffle fex10, fex9, fex11, r17
+# CHECK: 15c: f0 f8 42 39 vshuffle fex9, fex4, fex2, r31
+# CHECK: 160: f0 d0 6a 33 vshuffle fex3, fex6, fex10, r26
+# CHECK: 164: f0 70 15 3b vshuffle fex11, fex1, fex5, r14
+# CHECK: 168: f0 58 06 34 vshuffle fex4, fex0, fex6, r11
+# CHECK: 16c: f0 a0 b4 37 vshuffle fex7, fex11, fex4, r20
+# CHECK: 170: f0 90 20 31 vshuffle fex1, fex2, fex0, r18
+# CHECK: 174: f0 48 88 30 vshuffle fex0, fex8, fex8, r9
+# CHECK: 178: f0 10 39 35 vshuffle fex5, fex3, fex9, r2
+# CHECK: 17c: f0 d8 53 32 vshuffle fex2, fex5, fex3, r27
+# CHECK: 180: f0 ac 40 37 vshuffle x7, x4, x0, r21
+# CHECK: 184: f0 64 06 35 vshuffle x5, x0, x6, r12
+# CHECK: 188: f0 e4 37 32 vshuffle x2, x3, x7, r28
+# CHECK: 18c: f0 2c b3 39 vshuffle x9, x11, x3, r5
+# CHECK: 190: f0 84 81 3a vshuffle x10, x8, x1, r16
+# CHECK: 194: f0 c4 5b 36 vshuffle x6, x5, x11, r24
+# CHECK: 198: f0 1c 15 34 vshuffle x4, x1, x5, r3
+# CHECK: 19c: f0 8c 64 30 vshuffle x0, x6, x4, r17
+# CHECK: 1a0: f0 bc 78 33 vshuffle x3, x7, x8, r23
+# CHECK: 1a4: f0 d4 92 3b vshuffle x11, x9, x2, r26
+# CHECK: 1a8: f0 4c aa 31 vshuffle x1, x10, x10, r9
+# CHECK: 1ac: f0 ec 29 38 vshuffle x8, x2, x9, r29
+# CHECK: 1b0: f0 7c 40 37 vshuffle x7, x4, x0, r15
+# CHECK: 1b4: f0 f4 06 35 vshuffle x5, x0, x6, r30
+# CHECK: 1b8: f0 3c 37 32 vshuffle x2, x3, x7, r7
+# CHECK: 1bc: f0 74 b3 39 vshuffle x9, x11, x3, r14
+# CHECK: 1c0: f0 5c 81 3a vshuffle x10, x8, x1, r11
+# CHECK: 1c4: f0 dc 5b 36 vshuffle x6, x5, x11, r27
+# CHECK: 1c8: f0 b4 15 34 vshuffle x4, x1, x5, r22
+# CHECK: 1cc: f0 9c 64 30 vshuffle x0, x6, x4, r19
+# CHECK: 1d0: f0 cc 78 33 vshuffle x3, x7, x8, r25
+# CHECK: 1d4: f0 54 92 3b vshuffle x11, x9, x2, r10
+# CHECK: 1d8: f0 44 aa 31 vshuffle x1, x10, x10, r8
+# CHECK: 1dc: f0 04 29 38 vshuffle x8, x2, x9, r0
+# CHECK: 1e0: f0 a4 40 37 vshuffle x7, x4, x0, r20
+# CHECK: 1e4: f0 24 06 35 vshuffle x5, x0, x6, r4
+# CHECK: 1e8: f0 34 37 32 vshuffle x2, x3, x7, r6
+# CHECK: 1ec: f0 0c b3 39 vshuffle x9, x11, x3, r1
+# CHECK: 1f0: f0 fc 81 3a vshuffle x10, x8, x1, r31
+# CHECK: 1f4: f0 6c 5b 36 vshuffle x6, x5, x11, r13
+# CHECK: 1f8: f0 94 15 34 vshuffle x4, x1, x5, r18
+# CHECK: 1fc: f0 14 64 30 vshuffle x0, x6, x4, r2

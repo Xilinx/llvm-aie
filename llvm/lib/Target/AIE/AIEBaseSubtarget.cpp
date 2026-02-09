@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -22,6 +22,7 @@
 #include "Utils/AIELoopUtils.h"
 #include "aie1/AIE1Subtarget.h"
 #include "aie2p/AIE2PSubtarget.h"
+#include "aie2ps/AIE2PSSubtarget.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
@@ -170,6 +171,9 @@ const AIEBaseSubtarget &AIEBaseSubtarget::get(const MachineFunction &MF) {
   if (MF.getTarget().getTargetTriple().isAIE2P())
     return static_cast<const AIEBaseSubtarget &>(
         MF.getSubtarget<AIE2PSubtarget>());
+  if (MF.getTarget().getTargetTriple().isAIE2PS())
+    return static_cast<const AIEBaseSubtarget &>(
+        MF.getSubtarget<AIE2PSSubtarget>());
   llvm_unreachable("Unknown subtarget");
 }
 

@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -541,5 +541,7 @@ BUILTIN(__builtin_aiev2_sparse_peek_16_bfloat_set_lo, "vV32y&LLLi&i*", "nc")
 BUILTIN(__builtin_aiev2_sparse_peek_16_bfloat_insert_hi, "vV32y&LLLi&V32y&LLLi&i*", "nc")
 // aie2p
 #include "BuiltinsAIE2P.def"
+// aie2ps
+#include "BuiltinsAIE2PS.def"
 
 #undef BUILTIN

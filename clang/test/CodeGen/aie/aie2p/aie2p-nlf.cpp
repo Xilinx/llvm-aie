@@ -11,35 +11,8 @@
 
 // RUN: %clang %s --target=aie2p -O2 -nostdlibinc -S -emit-llvm -o - | FileCheck %s
 
-// CHECK-LABEL: define dso_local noundef float @_Z11test__sqrtff(
-// CHECK-SAME: float noundef [[A:%.*]]) local_unnamed_addr #[[ATTR0:[0-9]+]] {
-// CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef float @llvm.aie2p.sqrtf(float [[A]])
-// CHECK-NEXT:    ret float [[TMP0]]
-//
-float test__sqrtf(float a) {
-  return _sqrtf(a);
-}
-// CHECK-LABEL: define dso_local noundef float @_Z8test_invf(
-// CHECK-SAME: float noundef [[A:%.*]]) local_unnamed_addr #[[ATTR0]] {
-// CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef float @llvm.aie2p.inv(float [[A]])
-// CHECK-NEXT:    ret float [[TMP0]]
-//
-float test_inv(float a) {
-  return inv(a);
-}
-// CHECK-LABEL: define dso_local noundef float @_Z12test_invsqrtf(
-// CHECK-SAME: float noundef [[A:%.*]]) local_unnamed_addr #[[ATTR0]] {
-// CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef float @llvm.aie2p.invsqrt(float [[A]])
-// CHECK-NEXT:    ret float [[TMP0]]
-//
-float test_invsqrt(float a) {
-  return invsqrt(a);
-}
 // CHECK-LABEL: define dso_local noundef <32 x bfloat> @_Z9test_exp2Dv32_u10__accfloat(
-// CHECK-SAME: <32 x float> inreg noundef [[A:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-SAME: <32 x float> inreg noundef [[A:%.*]]) local_unnamed_addr #[[ATTR0:[0-9]+]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = shufflevector <32 x float> [[A]], <32 x float> poison, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <16 x bfloat> @llvm.aie2p.exp2(<16 x float> [[TMP0]])
@@ -54,6 +27,7 @@ float test_invsqrt(float a) {
 v32bfloat16 test_exp2(v32accfloat a) {
   return exp2(a);
 }
+//
 // CHECK-LABEL: define dso_local noundef <16 x bfloat> @_Z9test_exp2Dv16_u10__accfloat(
 // CHECK-SAME: <16 x float> inreg noundef [[A:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:

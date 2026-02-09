@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -73,6 +73,9 @@ AIEToolChain::getIntrinsicsHeaderPath(llvm::Triple::ArchType &Arch) const {
   case llvm::Triple::aie2p:
     IncPath = GetFilePath("aie2pintrin.h");
     break;
+  case llvm::Triple::aie2ps:
+    IncPath = GetFilePath("aie2psintrin.h");
+    break;
   default:
     break;
   }
@@ -97,6 +100,8 @@ void AIEToolChain::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
     CC1Args.push_back("-D__AIEARCH__=20");
   else if (arch == llvm::Triple::aie2p)
     CC1Args.push_back("-D__AIEARCH__=21");
+  else if (arch == llvm::Triple::aie2ps)
+    CC1Args.push_back("-D__AIEARCH__=22");
 
   // Don't pull in system headers from /usr/include or /usr/local/include.
   // All of the basic headers that we need come from the compiler.

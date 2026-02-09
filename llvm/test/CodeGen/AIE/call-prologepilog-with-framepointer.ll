@@ -7,6 +7,7 @@
 ; (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc --march=aie2 --stop-after=prologepilog -frame-pointer=all %s -o -| FileCheck %s --check-prefix=AIE2
 ; RUN: llc --march=aie2p --stop-after=prologepilog -frame-pointer=all %s -o -| FileCheck %s --check-prefix=AIE2P
+; RUN: llc --march=aie2ps --stop-after=prologepilog -frame-pointer=all %s -o -| FileCheck %s --check-prefix=AIE2PS
 
 declare i32 @external_function(i32)
 
@@ -40,6 +41,21 @@ define i32 @test_call_external(i32 %a) nounwind {
   ; AIE2P-NEXT:   $lr = LDA_dms_lda_spill -64, implicit $sp :: (load (s32) from %stack.0)
   ; AIE2P-NEXT:   frame-destroy PADDXM_pstm_sp_imm -64, implicit-def $sp, implicit $sp
   ; AIE2P-NEXT:   PseudoRET implicit $lr, implicit $r0
+  ;
+  ; AIE2PS-LABEL: name: test_call_external
+  ; AIE2PS: bb.0 (%ir-block.0):
+  ; AIE2PS-NEXT:   liveins: $r1
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   frame-setup PADDXM_pstm_sp_imm 64, implicit-def $sp, implicit $sp
+  ; AIE2PS-NEXT:   ST_dms_sts_scalar_spill killed $lr, -64, implicit $sp :: (store (s32) into %stack.0)
+  ; AIE2PS-NEXT:   ST_dms_sts_scalar_spill killed $p7, -60, implicit $sp :: (store (s32) into %stack.1)
+  ; AIE2PS-NEXT:   $p7 = frame-setup MOV_alu_mv_mv_mv_scl $sp
+  ; AIE2PS-NEXT:   $p7 = frame-setup PADD_imm_pseudo $p7, -64
+  ; AIE2PS-NEXT:   PseudoJL @external_function, csr_aie2ps, implicit-def $lr, implicit $r1, implicit-def $r0
+  ; AIE2PS-NEXT:   $p7 = LDA_dms_lda_scalar_spill -60, implicit $sp :: (load (s32) from %stack.1)
+  ; AIE2PS-NEXT:   $lr = LDA_dms_lda_scalar_spill -64, implicit $sp :: (load (s32) from %stack.0)
+  ; AIE2PS-NEXT:   frame-destroy PADDXM_pstm_sp_imm -64, implicit-def $sp, implicit $sp
+  ; AIE2PS-NEXT:   PseudoRET implicit $lr, implicit $r0
   %1 = call i32 @external_function(i32 %a)
   ret i32 %1
 }
@@ -76,6 +92,21 @@ define i32 @test_call_dso_local(i32 %a) nounwind {
   ; AIE2P-NEXT:   $lr = LDA_dms_lda_spill -64, implicit $sp :: (load (s32) from %stack.0)
   ; AIE2P-NEXT:   frame-destroy PADDXM_pstm_sp_imm -64, implicit-def $sp, implicit $sp
   ; AIE2P-NEXT:   PseudoRET implicit $lr, implicit $r0
+  ;
+  ; AIE2PS-LABEL: name: test_call_dso_local
+  ; AIE2PS: bb.0 (%ir-block.0):
+  ; AIE2PS-NEXT:   liveins: $r1
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   frame-setup PADDXM_pstm_sp_imm 64, implicit-def $sp, implicit $sp
+  ; AIE2PS-NEXT:   ST_dms_sts_scalar_spill killed $lr, -64, implicit $sp :: (store (s32) into %stack.0)
+  ; AIE2PS-NEXT:   ST_dms_sts_scalar_spill killed $p7, -60, implicit $sp :: (store (s32) into %stack.1)
+  ; AIE2PS-NEXT:   $p7 = frame-setup MOV_alu_mv_mv_mv_scl $sp
+  ; AIE2PS-NEXT:   $p7 = frame-setup PADD_imm_pseudo $p7, -64
+  ; AIE2PS-NEXT:   PseudoJL @dso_local_function, csr_aie2ps, implicit-def $lr, implicit $r1, implicit-def $r0
+  ; AIE2PS-NEXT:   $p7 = LDA_dms_lda_scalar_spill -60, implicit $sp :: (load (s32) from %stack.1)
+  ; AIE2PS-NEXT:   $lr = LDA_dms_lda_scalar_spill -64, implicit $sp :: (load (s32) from %stack.0)
+  ; AIE2PS-NEXT:   frame-destroy PADDXM_pstm_sp_imm -64, implicit-def $sp, implicit $sp
+  ; AIE2PS-NEXT:   PseudoRET implicit $lr, implicit $r0
   %1 = call i32 @dso_local_function(i32 %a)
   ret i32 %1
 }
@@ -106,6 +137,19 @@ define i32 @defined_function(i32 %a) nounwind {
   ; AIE2P-NEXT:   $p7 = LDA_dms_lda_spill -64, implicit $sp :: (load (s32) from %stack.0)
   ; AIE2P-NEXT:   frame-destroy PADDXM_pstm_sp_imm -64, implicit-def $sp, implicit $sp
   ; AIE2P-NEXT:   PseudoRET implicit $lr, implicit $r0
+  ;
+  ; AIE2PS-LABEL: name: defined_function
+  ; AIE2PS: bb.0 (%ir-block.0):
+  ; AIE2PS-NEXT:   liveins: $r1
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   frame-setup PADDXM_pstm_sp_imm 64, implicit-def $sp, implicit $sp
+  ; AIE2PS-NEXT:   ST_dms_sts_scalar_spill killed $p7, -64, implicit $sp :: (store (s32) into %stack.0)
+  ; AIE2PS-NEXT:   $p7 = frame-setup MOV_alu_mv_mv_mv_scl $sp
+  ; AIE2PS-NEXT:   $p7 = frame-setup PADD_imm_pseudo $p7, -64
+  ; AIE2PS-NEXT:   renamable $r0 = ADD_add_r_ri killed renamable $r1, 1, implicit-def dead $srcarry
+  ; AIE2PS-NEXT:   $p7 = LDA_dms_lda_scalar_spill -64, implicit $sp :: (load (s32) from %stack.0)
+  ; AIE2PS-NEXT:   frame-destroy PADDXM_pstm_sp_imm -64, implicit-def $sp, implicit $sp
+  ; AIE2PS-NEXT:   PseudoRET implicit $lr, implicit $r0
   %1 = add i32 %a, 1
   ret i32 %1
 }
@@ -140,6 +184,21 @@ define i32 @test_call_defined(i32 %a) nounwind {
   ; AIE2P-NEXT:   $lr = LDA_dms_lda_spill -64, implicit $sp :: (load (s32) from %stack.0)
   ; AIE2P-NEXT:   frame-destroy PADDXM_pstm_sp_imm -64, implicit-def $sp, implicit $sp
   ; AIE2P-NEXT:   PseudoRET implicit $lr, implicit $r0
+  ;
+  ; AIE2PS-LABEL: name: test_call_defined
+  ; AIE2PS: bb.0 (%ir-block.0):
+  ; AIE2PS-NEXT:   liveins: $r1
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   frame-setup PADDXM_pstm_sp_imm 64, implicit-def $sp, implicit $sp
+  ; AIE2PS-NEXT:   ST_dms_sts_scalar_spill killed $lr, -64, implicit $sp :: (store (s32) into %stack.0)
+  ; AIE2PS-NEXT:   ST_dms_sts_scalar_spill killed $p7, -60, implicit $sp :: (store (s32) into %stack.1)
+  ; AIE2PS-NEXT:   $p7 = frame-setup MOV_alu_mv_mv_mv_scl $sp
+  ; AIE2PS-NEXT:   $p7 = frame-setup PADD_imm_pseudo $p7, -64
+  ; AIE2PS-NEXT:   PseudoJL @defined_function, csr_aie2ps, implicit-def $lr, implicit $r1, implicit-def $r0
+  ; AIE2PS-NEXT:   $p7 = LDA_dms_lda_scalar_spill -60, implicit $sp :: (load (s32) from %stack.1)
+  ; AIE2PS-NEXT:   $lr = LDA_dms_lda_scalar_spill -64, implicit $sp :: (load (s32) from %stack.0)
+  ; AIE2PS-NEXT:   frame-destroy PADDXM_pstm_sp_imm -64, implicit-def $sp, implicit $sp
+  ; AIE2PS-NEXT:   PseudoRET implicit $lr, implicit $r0
   %1 = call i32 @defined_function(i32 %a)
   ret i32 %1
 }
@@ -172,6 +231,19 @@ define fastcc i32 @fastcc_function(i32 %a, i32 %b) nounwind {
   ; AIE2P-NEXT:   $p7 = LDA_dms_lda_spill -64, implicit $sp :: (load (s32) from %stack.0)
   ; AIE2P-NEXT:   frame-destroy PADDXM_pstm_sp_imm -64, implicit-def $sp, implicit $sp
   ; AIE2P-NEXT:   PseudoRET implicit $lr, implicit $r0
+  ;
+  ; AIE2PS-LABEL: name: fastcc_function
+  ; AIE2PS: bb.0 (%ir-block.0):
+  ; AIE2PS-NEXT:   liveins: $r1, $r2
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   frame-setup PADDXM_pstm_sp_imm 64, implicit-def $sp, implicit $sp
+  ; AIE2PS-NEXT:   ST_dms_sts_scalar_spill killed $p7, -64, implicit $sp :: (store (s32) into %stack.0)
+  ; AIE2PS-NEXT:   $p7 = frame-setup MOV_alu_mv_mv_mv_scl $sp
+  ; AIE2PS-NEXT:   $p7 = frame-setup PADD_imm_pseudo $p7, -64
+  ; AIE2PS-NEXT:   renamable $r0 = ADD_alu_r_rr killed renamable $r1, killed renamable $r2, implicit-def dead $srcarry
+  ; AIE2PS-NEXT:   $p7 = LDA_dms_lda_scalar_spill -64, implicit $sp :: (load (s32) from %stack.0)
+  ; AIE2PS-NEXT:   frame-destroy PADDXM_pstm_sp_imm -64, implicit-def $sp, implicit $sp
+  ; AIE2PS-NEXT:   PseudoRET implicit $lr, implicit $r0
  %1 = add i32 %a, %b
  ret i32 %1
 }
@@ -214,6 +286,25 @@ define i32 @test_call_fastcc(i32 %a, i32 %b) nounwind {
   ; AIE2P-NEXT:   $lr = LDA_dms_lda_spill -64, implicit $sp :: (load (s32) from %stack.0)
   ; AIE2P-NEXT:   frame-destroy PADDXM_pstm_sp_imm -64, implicit-def $sp, implicit $sp
   ; AIE2P-NEXT:   PseudoRET implicit $lr, implicit killed $r0
+  ;
+  ; AIE2PS-LABEL: name: test_call_fastcc
+  ; AIE2PS: bb.0 (%ir-block.0):
+  ; AIE2PS-NEXT:   liveins: $r1, $r2, $r9
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   frame-setup PADDXM_pstm_sp_imm 64, implicit-def $sp, implicit $sp
+  ; AIE2PS-NEXT:   ST_dms_sts_scalar_spill killed $lr, -64, implicit $sp :: (store (s32) into %stack.0)
+  ; AIE2PS-NEXT:   ST_dms_sts_scalar_spill killed $r9, -60, implicit $sp :: (store (s32) into %stack.1)
+  ; AIE2PS-NEXT:   ST_dms_sts_scalar_spill killed $p7, -56, implicit $sp :: (store (s32) into %stack.2)
+  ; AIE2PS-NEXT:   $p7 = frame-setup MOV_alu_mv_mv_mv_scl $sp
+  ; AIE2PS-NEXT:   $p7 = frame-setup PADD_imm_pseudo $p7, -64
+  ; AIE2PS-NEXT:   renamable $r9 = COPY $r1
+  ; AIE2PS-NEXT:   PseudoJL @fastcc_function, csr_aie2ps, implicit-def $lr, implicit $r1, implicit $r2, implicit-def dead $r0
+  ; AIE2PS-NEXT:   $r0 = COPY killed renamable $r9
+  ; AIE2PS-NEXT:   $p7 = LDA_dms_lda_scalar_spill -56, implicit $sp :: (load (s32) from %stack.2)
+  ; AIE2PS-NEXT:   $r9 = LDA_dms_lda_scalar_spill -60, implicit $sp :: (load (s32) from %stack.1)
+  ; AIE2PS-NEXT:   $lr = LDA_dms_lda_scalar_spill -64, implicit $sp :: (load (s32) from %stack.0)
+  ; AIE2PS-NEXT:   frame-destroy PADDXM_pstm_sp_imm -64, implicit-def $sp, implicit $sp
+  ; AIE2PS-NEXT:   PseudoRET implicit $lr, implicit killed $r0
   %1 = call fastcc i32 @fastcc_function(i32 %a, i32 %b)
   ret i32 %a
 }

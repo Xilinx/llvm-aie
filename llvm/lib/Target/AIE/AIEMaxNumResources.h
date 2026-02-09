@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -22,8 +22,11 @@
 #define GET_NUM_RESOURCES
 #include "AIE2PGenSubtargetInfo.inc"
 
+#define GET_NUM_RESOURCES
+#include "AIE2PSGenSubtargetInfo.inc"
+
 constexpr const int TotalNumResources =
-    std::max({AIE2PItineraries::NumResources, AIE2Itineraries::NumResources,
-              AIEItineraries::NumResources});
+    std::max({AIE2PSItineraries::NumResources, AIE2PItineraries::NumResources,
+              AIE2Itineraries::NumResources, AIEItineraries::NumResources});
 
 #endif // LLVM_LIB_TARGET_AIE_AIEMAXNUMRESOURCES_H

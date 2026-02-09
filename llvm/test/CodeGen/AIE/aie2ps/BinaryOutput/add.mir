@@ -1,0 +1,240 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; ADD_NC_add_lc_ri
+    $lc = ADD_NC_add_lc_ri $r5, 0, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r23, 1, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r17, 63, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r8, -64, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r12, 0, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r14, 1, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r26, 63, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r31, -64, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r30, 0, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r7, 1, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r18, 63, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r6, -64, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r27, 0, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r16, 1, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r15, 63, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r9, -64, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r3, 0, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r21, 1, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r2, 63, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r11, -64, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r28, 0, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r0, 1, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r29, 63, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r25, -64, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r4, 0, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r22, 1, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r10, 63, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r1, -64, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r20, 0, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r19, 1, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r13, 63, implicit-def $lc, implicit-def $lci
+    $lc = ADD_NC_add_lc_ri $r24, -64, implicit-def $lc, implicit-def $lci
+
+    ; ADD_NC_alu_cg_or_alu_cg_le_rel
+    ADD_NC_alu_cg_or_alu_cg_le_rel 0, implicit-def $le, implicit $pc
+    ADD_NC_alu_cg_or_alu_cg_le_rel 2047, implicit-def $le, implicit $pc
+    ADD_NC_alu_cg_or_alu_cg_le_rel 2046, implicit-def $le, implicit $pc
+    ADD_NC_alu_cg_or_alu_cg_le_rel 1, implicit-def $le, implicit $pc
+
+    ; ADD_NC_alu_cg_or_alu_cg_ls_rel
+    ADD_NC_alu_cg_or_alu_cg_ls_rel 1, implicit-def $ls, implicit $pc
+    ADD_NC_alu_cg_or_alu_cg_ls_rel 0, implicit-def $ls, implicit $pc
+    ADD_NC_alu_cg_or_alu_cg_ls_rel 2046, implicit-def $ls, implicit $pc
+    ADD_NC_alu_cg_or_alu_cg_ls_rel 2047, implicit-def $ls, implicit $pc
+
+    ; ADD_add_r_ri
+    $r9 = ADD_add_r_ri $r9, -64, implicit-def $srcarry
+    $r11 = ADD_add_r_ri $r20, 63, implicit-def $srcarry
+    $r26 = ADD_add_r_ri $r17, 1, implicit-def $srcarry
+    $r17 = ADD_add_r_ri $r22, 0, implicit-def $srcarry
+    $r19 = ADD_add_r_ri $r7, -64, implicit-def $srcarry
+    $r27 = ADD_add_r_ri $r2, 63, implicit-def $srcarry
+    $r2 = ADD_add_r_ri $r4, 1, implicit-def $srcarry
+    $r25 = ADD_add_r_ri $r19, 0, implicit-def $srcarry
+    $r28 = ADD_add_r_ri $r28, -64, implicit-def $srcarry
+    $r1 = ADD_add_r_ri $r11, 63, implicit-def $srcarry
+    $r30 = ADD_add_r_ri $r5, 1, implicit-def $srcarry
+    $r8 = ADD_add_r_ri $r15, 0, implicit-def $srcarry
+    $r10 = ADD_add_r_ri $r25, -64, implicit-def $srcarry
+    $r6 = ADD_add_r_ri $r18, 63, implicit-def $srcarry
+    $r31 = ADD_add_r_ri $r12, 1, implicit-def $srcarry
+    $r16 = ADD_add_r_ri $r13, 0, implicit-def $srcarry
+    $r12 = ADD_add_r_ri $r26, -64, implicit-def $srcarry
+    $r7 = ADD_add_r_ri $r8, 63, implicit-def $srcarry
+    $r21 = ADD_add_r_ri $r1, 1, implicit-def $srcarry
+    $r4 = ADD_add_r_ri $r6, 0, implicit-def $srcarry
+    $r14 = ADD_add_r_ri $r27, -64, implicit-def $srcarry
+    $r0 = ADD_add_r_ri $r10, 63, implicit-def $srcarry
+    $r5 = ADD_add_r_ri $r16, 1, implicit-def $srcarry
+    $r23 = ADD_add_r_ri $r21, 0, implicit-def $srcarry
+    $r22 = ADD_add_r_ri $r14, -64, implicit-def $srcarry
+    $r29 = ADD_add_r_ri $r29, 63, implicit-def $srcarry
+    $r15 = ADD_add_r_ri $r30, 1, implicit-def $srcarry
+    $r3 = ADD_add_r_ri $r0, 0, implicit-def $srcarry
+    $r20 = ADD_add_r_ri $r23, -64, implicit-def $srcarry
+    $r24 = ADD_add_r_ri $r3, 63, implicit-def $srcarry
+    $r13 = ADD_add_r_ri $r24, 1, implicit-def $srcarry
+    $r18 = ADD_add_r_ri $r31, 0, implicit-def $srcarry
+
+    ; ADD_alu_r_rr
+    $r30 = ADD_alu_r_rr $r23, $r6, implicit-def $srcarry
+    $r7 = ADD_alu_r_rr $r5, $r29, implicit-def $srcarry
+    $r5 = ADD_alu_r_rr $r19, $r17, implicit-def $srcarry
+    $r21 = ADD_alu_r_rr $r15, $r15, implicit-def $srcarry
+    $r17 = ADD_alu_r_rr $r3, $r13, implicit-def $srcarry
+    $r3 = ADD_alu_r_rr $r11, $r31, implicit-def $srcarry
+    $r15 = ADD_alu_r_rr $r6, $r0, implicit-def $srcarry
+    $r26 = ADD_alu_r_rr $r8, $r21, implicit-def $srcarry
+    $r19 = ADD_alu_r_rr $r27, $r1, implicit-def $srcarry
+    $r2 = ADD_alu_r_rr $r20, $r18, implicit-def $srcarry
+    $r0 = ADD_alu_r_rr $r18, $r30, implicit-def $srcarry
+    $r11 = ADD_alu_r_rr $r17, $r27, implicit-def $srcarry
+    $r14 = ADD_alu_r_rr $r10, $r14, implicit-def $srcarry
+    $r9 = ADD_alu_r_rr $r2, $r24, implicit-def $srcarry
+    $r29 = ADD_alu_r_rr $r12, $r19, implicit-def $srcarry
+    $r25 = ADD_alu_r_rr $r25, $r16, implicit-def $srcarry
+    $r28 = ADD_alu_r_rr $r0, $r11, implicit-def $srcarry
+    $r24 = ADD_alu_r_rr $r26, $r7, implicit-def $srcarry
+    $r16 = ADD_alu_r_rr $r13, $r23, implicit-def $srcarry
+    $r4 = ADD_alu_r_rr $r31, $r26, implicit-def $srcarry
+    $r27 = ADD_alu_r_rr $r7, $r28, implicit-def $srcarry
+    $r18 = ADD_alu_r_rr $r1, $r25, implicit-def $srcarry
+    $r8 = ADD_alu_r_rr $r22, $r2, implicit-def $srcarry
+    $r20 = ADD_alu_r_rr $r30, $r20, implicit-def $srcarry
+    $r1 = ADD_alu_r_rr $r16, $r8, implicit-def $srcarry
+    $r23 = ADD_alu_r_rr $r24, $r12, implicit-def $srcarry
+    $r22 = ADD_alu_r_rr $r9, $r10, implicit-def $srcarry
+    $r31 = ADD_alu_r_rr $r29, $r5, implicit-def $srcarry
+    $r12 = ADD_alu_r_rr $r14, $r9, implicit-def $srcarry
+    $r13 = ADD_alu_r_rr $r21, $r4, implicit-def $srcarry
+    $r10 = ADD_alu_r_rr $r4, $r3, implicit-def $srcarry
+    $r6 = ADD_alu_r_rr $r28, $r22, implicit-def $srcarry
+...
+
+# CHECK: 0: 30 01 47 21 add.nc lc, r5, #0
+# CHECK: 4: 30 05 c7 25 add.nc lc, r23, #1
+# CHECK: 8: 30 fd 47 24 add.nc lc, r17, #63
+# CHECK: c: 30 01 0f 22 add.nc lc, r8, #-64
+# CHECK: 10: 30 01 07 23 add.nc lc, r12, #0
+# CHECK: 14: 30 05 87 23 add.nc lc, r14, #1
+# CHECK: 18: 30 fd 87 26 add.nc lc, r26, #63
+# CHECK: 1c: 30 01 cf 27 add.nc lc, r31, #-64
+# CHECK: 20: 30 01 87 27 add.nc lc, r30, #0
+# CHECK: 24: 30 05 c7 21 add.nc lc, r7, #1
+# CHECK: 28: 30 fd 87 24 add.nc lc, r18, #63
+# CHECK: 2c: 30 01 8f 21 add.nc lc, r6, #-64
+# CHECK: 30: 30 01 c7 26 add.nc lc, r27, #0
+# CHECK: 34: 30 05 07 24 add.nc lc, r16, #1
+# CHECK: 38: 30 fd c7 23 add.nc lc, r15, #63
+# CHECK: 3c: 30 01 4f 22 add.nc lc, r9, #-64
+# CHECK: 40: 30 01 c7 20 add.nc lc, r3, #0
+# CHECK: 44: 30 05 47 25 add.nc lc, r21, #1
+# CHECK: 48: 30 fd 87 20 add.nc lc, r2, #63
+# CHECK: 4c: 30 01 cf 22 add.nc lc, r11, #-64
+# CHECK: 50: 30 01 07 27 add.nc lc, r28, #0
+# CHECK: 54: 30 05 07 20 add.nc lc, r0, #1
+# CHECK: 58: 30 fd 47 27 add.nc lc, r29, #63
+# CHECK: 5c: 30 01 4f 26 add.nc lc, r25, #-64
+# CHECK: 60: 30 01 07 21 add.nc lc, r4, #0
+# CHECK: 64: 30 05 87 25 add.nc lc, r22, #1
+# CHECK: 68: 30 fd 87 22 add.nc lc, r10, #63
+# CHECK: 6c: 30 01 4f 20 add.nc lc, r1, #-64
+# CHECK: 70: 30 01 07 25 add.nc lc, r20, #0
+# CHECK: 74: 30 05 c7 24 add.nc lc, r19, #1
+# CHECK: 78: 30 fd 47 23 add.nc lc, r13, #63
+# CHECK: 7c: 30 01 0f 26 add.nc lc, r24, #-64
+# CHECK: 80: 30 01 03 20 add.nc le, pc, #0
+# CHECK: 84: 30 fd c3 27 add.nc le, pc, #2047
+# CHECK: 88: 30 f9 c3 27 add.nc le, pc, #2046
+# CHECK: 8c: 30 05 03 20 add.nc le, pc, #1
+# CHECK: 90: 30 05 0b 20 add.nc ls, pc, #1
+# CHECK: 94: 30 01 0b 20 add.nc ls, pc, #0
+# CHECK: 98: 30 f9 cb 27 add.nc ls, pc, #2046
+# CHECK: 9c: 30 fd cb 27 add.nc ls, pc, #2047
+# CHECK: a0: 30 03 53 22 add r9, r9, #-64
+# CHECK: a4: 30 ff 16 25 add r11, r20, #63
+# CHECK: a8: 30 07 74 24 add r26, r17, #1
+# CHECK: ac: 30 03 a2 25 add r17, r22, #0
+# CHECK: b0: 30 03 e7 21 add r19, r7, #-64
+# CHECK: b4: 30 ff b6 20 add r27, r2, #63
+# CHECK: b8: 30 07 04 21 add r2, r4, #1
+# CHECK: bc: 30 03 f2 24 add r25, r19, #0
+# CHECK: c0: 30 03 39 27 add r28, r28, #-64
+# CHECK: c4: 30 ff c2 22 add r1, r11, #63
+# CHECK: c8: 30 07 7c 21 add r30, r5, #1
+# CHECK: cc: 30 03 d0 23 add r8, r15, #0
+# CHECK: d0: 30 03 55 26 add r10, r25, #-64
+# CHECK: d4: 30 ff 8c 24 add r6, r18, #63
+# CHECK: d8: 30 07 3e 23 add r31, r12, #1
+# CHECK: dc: 30 03 60 23 add r16, r13, #0
+# CHECK: e0: 30 03 99 26 add r12, r26, #-64
+# CHECK: e4: 30 ff 0e 22 add r7, r8, #63
+# CHECK: e8: 30 07 6a 20 add r21, r1, #1
+# CHECK: ec: 30 03 88 21 add r4, r6, #0
+# CHECK: f0: 30 03 dd 26 add r14, r27, #-64
+# CHECK: f4: 30 ff 80 22 add r0, r10, #63
+# CHECK: f8: 30 07 0a 24 add r5, r16, #1
+# CHECK: fc: 30 03 6e 25 add r23, r21, #0
+# CHECK: 100: 30 03 ad 23 add r22, r14, #-64
+# CHECK: 104: 30 ff 7a 27 add r29, r29, #63
+# CHECK: 108: 30 07 9e 27 add r15, r30, #1
+# CHECK: 10c: 30 03 06 20 add r3, r0, #0
+# CHECK: 110: 30 03 e9 25 add r20, r23, #-64
+# CHECK: 114: 30 ff f0 20 add r24, r3, #63
+# CHECK: 118: 30 07 1a 26 add r13, r24, #1
+# CHECK: 11c: 30 03 e4 27 add r18, r31, #0
+# CHECK: 120: b0 60 fc 25 add r30, r23, r6
+# CHECK: 124: b0 d0 4f 21 add r7, r5, r29
+# CHECK: 128: b0 10 cb 24 add r5, r19, r17
+# CHECK: 12c: b0 f0 ea 23 add r21, r15, r15
+# CHECK: 130: b0 d0 e2 20 add r17, r3, r13
+# CHECK: 134: b0 f0 c7 22 add r3, r11, r31
+# CHECK: 138: b0 00 9e 21 add r15, r6, r0
+# CHECK: 13c: b0 50 35 22 add r26, r8, r21
+# CHECK: 140: b0 10 e6 26 add r19, r27, r1
+# CHECK: 144: b0 20 05 25 add r2, r20, r18
+# CHECK: 148: b0 e0 81 24 add r0, r18, r30
+# CHECK: 14c: b0 b0 57 24 add r11, r17, r27
+# CHECK: 150: b0 e0 9c 22 add r14, r10, r14
+# CHECK: 154: b0 80 93 20 add r9, r2, r24
+# CHECK: 158: b0 30 3b 23 add r29, r12, r19
+# CHECK: 15c: b0 00 73 26 add r25, r25, r16
+# CHECK: 160: b0 b0 38 20 add r28, r0, r11
+# CHECK: 164: b0 70 b0 26 add r24, r26, r7
+# CHECK: 168: b0 70 61 23 add r16, r13, r23
+# CHECK: 16c: b0 a0 c9 27 add r4, r31, r26
+# CHECK: 170: b0 c0 f7 21 add r27, r7, r28
+# CHECK: 174: b0 90 65 20 add r18, r1, r25
+# CHECK: 178: b0 20 90 25 add r8, r22, r2
+# CHECK: 17c: b0 40 a9 27 add r20, r30, r20
+# CHECK: 180: b0 80 02 24 add r1, r16, r8
+# CHECK: 184: b0 c0 2e 26 add r23, r24, r12
+# CHECK: 188: b0 a0 6c 22 add r22, r9, r10
+# CHECK: 18c: b0 50 7e 27 add r31, r29, r5
+# CHECK: 190: b0 90 98 23 add r12, r14, r9
+# CHECK: 194: b0 40 5a 25 add r13, r21, r4
+# CHECK: 198: b0 30 14 21 add r10, r4, r3
+# CHECK: 19c: b0 60 0d 27 add r6, r28, r22

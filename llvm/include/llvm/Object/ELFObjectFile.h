@@ -1383,6 +1383,8 @@ template <class ELFT> Triple::ArchType ELFObjectFile<ELFT>::getArch() const {
       return Triple::aie2;
     case ELF::EF_AIE_AIE2P:
       return Triple::aie2p;
+    case ELF::EF_AIE_AIE2PS:
+      return Triple::aie2ps;
     default:
       return Triple::UnknownArch;
     }

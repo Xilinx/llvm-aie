@@ -1642,6 +1642,7 @@ static uint16_t getBitcodeMachineKind(Ctx &ctx, StringRef path,
   case Triple::aie:
   case Triple::aie2:
   case Triple::aie2p:
+  case Triple::aie2ps:
     return EM_AIE;
   case Triple::amdgcn:
   case Triple::r600:

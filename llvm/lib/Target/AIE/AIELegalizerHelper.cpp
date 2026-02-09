@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 /// \file
@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
 #include "llvm/IR/IntrinsicsAIE2P.h"
+#include "llvm/IR/IntrinsicsAIE2PS.h"
 #include "llvm/IR/RuntimeLibcalls.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <cassert>
@@ -174,6 +175,8 @@ static unsigned getVShiftIntrID(const AIEBaseSubtarget &ST) {
     return Intrinsic::aie2_vshift_I512_I512;
   if (ST.isAIE2P())
     return Intrinsic::aie2p_vshift_I512_I512;
+  if (ST.isAIE2PS())
+    return Intrinsic::aie2ps_vshift_I512_I512;
   llvm_unreachable("Called with unknown target triple!");
 }
 
@@ -188,7 +191,7 @@ bool AIELegalizerHelper::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
   unsigned DstVecSize = DstVecTy.getSizeInBits();
   const LLT DstVecEltTy = DstVecTy.getElementType();
   const unsigned EltSize = DstVecEltTy.getScalarSizeInBits();
-  if (!ST.isAIE2P()) {
+  if (!(ST.isAIE2P() || ST.isAIE2PS())) {
     assert(EltSize != 64 && "Not expected 64-bit elmt type vector!");
   }
 
@@ -372,8 +375,8 @@ bool AIELegalizerHelper::legalizeG_UNMERGE_VALUES(LegalizerHelper &Helper,
   const LLT FirstTy = MRI.getType(FirstReg);
   const LLT LastTy = MRI.getType(LastReg);
 
-  if (ST.isAIE2P() && FirstTy.isVector() && FirstTy.getSizeInBits() == 128 &&
-      LastTy.getSizeInBits() == 256)
+  if ((ST.isAIE2P() || ST.isAIE2PS()) && FirstTy.isVector() &&
+      FirstTy.getSizeInBits() == 128 && LastTy.getSizeInBits() == 256)
     return legalizeG_UNMERGE_VALUES_128bit(Helper, MI);
 
   assert(LastTy.isVector() &&
@@ -753,7 +756,7 @@ bool AIELegalizerHelper::legalizeG_EXTRACT_VECTOR_ELT(LegalizerHelper &Helper,
   }
   case 256:
     if (SrcVecEltTy.getSizeInBits() == 128) {
-      assert(ST.isAIE2P() &&
+      assert((ST.isAIE2P() || ST.isAIE2PS()) &&
              "G_EXTRACT_VECTOR_ELT of s128 not supported for the target");
       /// We can use vshuffle + pad/unpad instruction to select extract s128
       /// from <2 x s128>
@@ -775,6 +778,8 @@ bool AIELegalizerHelper::legalizeG_EXTRACT_VECTOR_ELT(LegalizerHelper &Helper,
       auto GetShuffleModes = [&]() {
         if (ST.isAIE2P())
           return std::make_pair(/*Lo*/ 8, /*Hi*/ 9);
+        if (ST.isAIE2PS())
+          return std::make_pair(/*Lo*/ 20, /*Hi*/ 21);
         llvm_unreachable("vshuffle mode value needed for target.");
       };
       const auto [ModeLoValue, ModeHiValue] = GetShuffleModes();
@@ -820,7 +825,7 @@ bool AIELegalizerHelper::legalizeG_EXTRACT_VECTOR_ELT(LegalizerHelper &Helper,
     const LLT S8 = LLT::scalar(8);
     const LLT S16 = LLT::scalar(16);
     const LLT S64 = LLT::scalar(64);
-    if (!ST.isAIE2P()) {
+    if (!(ST.isAIE2P() || ST.isAIE2PS())) {
       assert(SrcVecSize != 2048 && "Not expected 2048 vector type!");
       assert(SrcVecEltTy != S64 && "Not expected 64-bit elmt type vector!");
     }
@@ -1161,6 +1166,27 @@ static unsigned getAIE2PFCmpIntrID(CmpInst::Predicate Predicate,
   }
 }
 
+static unsigned getAIE2PSFCmpIntrID(CmpInst::Predicate Predicate,
+                                    bool &SwapOperands, bool &PromoteToFP32) {
+  switch (Predicate) {
+  default:
+    PromoteToFP32 = true;
+    return 0;
+  case CmpInst::FCMP_OGE:
+  case CmpInst::FCMP_OEQ:
+    return Intrinsic::aie2ps_vgebfloat16;
+  case CmpInst::FCMP_OLT:
+  case CmpInst::FCMP_ONE:
+    return Intrinsic::aie2ps_vltbfloat16;
+  case CmpInst::FCMP_OGT:
+    SwapOperands = true;
+    return Intrinsic::aie2ps_vltbfloat16;
+  case CmpInst::FCMP_OLE:
+    SwapOperands = true;
+    return Intrinsic::aie2ps_vgebfloat16;
+  }
+}
+
 /// @brief Get the AIE intrinsic corresponding to the fcmp predicate.
 static unsigned getFCmpIntrID(const AIEBaseSubtarget &ST,
                               CmpInst::Predicate Predicate, bool &SwapOperands,
@@ -1169,6 +1195,8 @@ static unsigned getFCmpIntrID(const AIEBaseSubtarget &ST,
     return getAIE2FCmpIntrID(Predicate, SwapOperands, PromoteToFP32);
   if (ST.isAIE2P())
     return getAIE2PFCmpIntrID(Predicate, SwapOperands, PromoteToFP32);
+  if (ST.isAIE2PS())
+    return getAIE2PSFCmpIntrID(Predicate, SwapOperands, PromoteToFP32);
 
   llvm_unreachable("Called with unknown target triple!");
 }
@@ -1288,6 +1316,13 @@ static unsigned getFpTrunc32ToBF16IntrID(const AIEBaseSubtarget &ST,
       return Intrinsic::aie2p_v32accfloat_to_v32bf16;
     llvm_unreachable("Unsupported InputRegSize for AIE2P!");
   }
+  if (ST.isAIE2PS()) {
+    if (InputRegSize == 512)
+      return Intrinsic::aie2ps_v16accfloat_to_v16bf16;
+    if (InputRegSize == 1024)
+      return Intrinsic::aie2ps_v32accfloat_to_v32bf16;
+    llvm_unreachable("Unsupported InputRegSize for AIE2PS!");
+  }
 
   llvm_unreachable("Called with unknown target triple!");
 }
@@ -1399,7 +1434,8 @@ bool AIELegalizerHelper::legalizeG_FABS(LegalizerHelper &Helper,
 
 bool AIELegalizerHelper::legalizeG_FMUL(LegalizerHelper &Helper,
                                         MachineInstr &MI) const {
-  assert(ST.isAIE2P() && "Custom legalization supported for AIE2P only");
+  assert((ST.isAIE2P() || ST.isAIE2PS()) &&
+         "Custom legalization supported for AIE2P and AIE2PS only");
 
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
   MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
@@ -1468,7 +1504,7 @@ bool AIELegalizerHelper::legalizeG_FADD_G_FSUB(LegalizerHelper &Helper,
           .buildInstr(InsertEltOpc, {InsertVecLLT}, {UndefVec, SrcRHS, IdxReg})
           .getReg(0);
 
-  if (ST.isAIE2P()) {
+  if (ST.isAIE2P() || ST.isAIE2PS()) {
     SrcLHS = emitPadUndefVector(MRI, MIRBuilder, V64FP32, SrcLHS);
     SrcRHS = emitPadUndefVector(MRI, MIRBuilder, V64FP32, SrcRHS);
   }
@@ -1482,7 +1518,7 @@ bool AIELegalizerHelper::legalizeG_FADD_G_FSUB(LegalizerHelper &Helper,
     if (MRI.getType(Res) != V16S32) {
       Res = MIRBuilder.buildBitcast(V16S32, Res).getReg(0);
     }
-  } else if (ST.isAIE2P()) {
+  } else if (ST.isAIE2P() || ST.isAIE2PS()) {
     Res = MIRBuilder.buildUnmerge(V16S32, Res).getReg(0);
   }
 
@@ -1660,7 +1696,7 @@ bool AIELegalizerHelper::legalizeG_CONCAT_VECTORS(LegalizerHelper &Helper,
 
   // Handle the special case of concatenating two 128-bit vectors into 256-bit
   // for AIE2P (128-bit vectors are not sub-registers of 256-bit vectors)
-  if (ST.isAIE2P() && DstTy.getSizeInBits() == 256 &&
+  if ((ST.isAIE2P() || ST.isAIE2PS()) && DstTy.getSizeInBits() == 256 &&
       SrcTy.getSizeInBits() == 128 && MI.getNumOperands() == 3) {
     return legalizeG_CONCAT_VECTORS_128bit(Helper, MI);
   }

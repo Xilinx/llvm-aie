@@ -4,11 +4,12 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2 -run-pass=aie2-prelegalizer-combiner -verify-machineinstrs %s -o - | FileCheck --check-prefix=AIE2-FOLD %s
 # RUN: llc -mtriple aie2p -run-pass=aie2p-prelegalizer-combiner -verify-machineinstrs %s -o - | FileCheck --check-prefix=AIE2P-FOLD %s
 # RUN: llc -mtriple aie2p -run-pass=aie2p-prelegalizer-combiner \
 # RUN:      -aie-try-fold-loads=false -verify-machineinstrs %s -o - | FileCheck --check-prefix=AIE2P-NOFOLD %s
+# RUN: llc -mtriple aie2ps -run-pass=aie2ps-prelegalizer-combiner -verify-machineinstrs %s -o - | FileCheck --check-prefix=AIE2P-FOLD %s
 --- |
   @constinit1 = local_unnamed_addr constant [16 x i32] [i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 1053459, i32 0, i32 320012288, i32 4883, i32 0, i32 0, i32 993394688, i32 0], align 4
 

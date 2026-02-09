@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -4834,6 +4834,8 @@ public:
                                    llvm::Triple::ArchType Arch);
   llvm::Value *EmitAIE2PBuiltinExpr(unsigned BuiltinID, const CallExpr *E,
                                     llvm::Triple::ArchType Arch);
+  llvm::Value *EmitAIE2PSBuiltinExpr(unsigned BuiltinID, const CallExpr *E,
+                                     llvm::Triple::ArchType Arch);
 
   llvm::Value *EmitRISCVCpuSupports(const CallExpr *E);
   llvm::Value *EmitRISCVCpuSupports(ArrayRef<StringRef> FeaturesStrs);

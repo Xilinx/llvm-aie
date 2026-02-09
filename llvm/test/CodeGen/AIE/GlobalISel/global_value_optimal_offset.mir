@@ -4,10 +4,10 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2 -run-pass=aie2-prelegalizer-combiner -aie2prelegalizercombiner-only-enable-rule="combine_globalval_offset" %s -verify-machineinstrs -o - | FileCheck -DVER=2 %s --check-prefix=AIE2
 # RUN: llc -mtriple aie2p -run-pass=aie2p-prelegalizer-combiner -aie2pprelegalizercombiner-only-enable-rule="combine_globalval_offset" %s -verify-machineinstrs -o - | FileCheck -DVER=2p %s --check-prefix=AIE2P
-
+# RUN: llc -mtriple aie2ps -run-pass=aie2ps-prelegalizer-combiner -aie2psprelegalizercombiner-only-enable-rule="combine_globalval_offset" %s -verify-machineinstrs -o - | FileCheck -DVER=2ps %s --check-prefix=AIE2PS
 --- |
 
   %struct.anon = type { i32, i32, i8, i32, i32, i8, i32, i32, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i32, i32, i32, i32, i8, i32, i32, i8, i32, i8, i8, i8, i8 }
@@ -165,6 +165,60 @@ body:             |
     ; AIE2P-NEXT: [[ADD8:%[0-9]+]]:_(s32) = nsw G_ADD [[ADD7]], [[LOAD9]]
     ; AIE2P-NEXT: $r0 = COPY [[ADD8]](s32)
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit $r0
+    ;
+    ; AIE2PS-LABEL: name: global_value_opt_offset
+    ; AIE2PS: liveins: $r1
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r1
+    ; AIE2PS-NEXT: [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE target-flags(aie2ps-global) @X + 20
+    ; AIE2PS-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 -20
+    ; AIE2PS-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[GV]], [[C]](s20)
+    ; AIE2PS-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
+    ; AIE2PS-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD]], [[C1]](s20)
+    ; AIE2PS-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 20
+    ; AIE2PS-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD]], [[C2]](s20)
+    ; AIE2PS-NEXT: [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
+    ; AIE2PS-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD]], [[C3]](s20)
+    ; AIE2PS-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
+    ; AIE2PS-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD]], [[C4]](s20)
+    ; AIE2PS-NEXT: [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 91
+    ; AIE2PS-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD]], [[C5]](s20)
+    ; AIE2PS-NEXT: [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 80
+    ; AIE2PS-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD]], [[C6]](s20)
+    ; AIE2PS-NEXT: [[C7:%[0-9]+]]:_(s20) = G_CONSTANT i20 52
+    ; AIE2PS-NEXT: [[PTR_ADD7:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD]], [[C7]](s20)
+    ; AIE2PS-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
+    ; AIE2PS-NEXT: [[PTR_ADD8:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD]], [[C8]](s20)
+    ; AIE2PS-NEXT: [[C9:%[0-9]+]]:_(s20) = G_CONSTANT i20 56
+    ; AIE2PS-NEXT: [[PTR_ADD9:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD]], [[C9]](s20)
+    ; AIE2PS-NEXT: [[FRAME_INDEX:%[0-9]+]]:_(p0) = G_FRAME_INDEX %stack.0.x.addr
+    ; AIE2PS-NEXT: G_STORE [[COPY]](s32), [[FRAME_INDEX]](p0) :: (store (s32) into %ir.x.addr)
+    ; AIE2PS-NEXT: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD]](p0) :: (dereferenceable load (s32) from @X)
+    ; AIE2PS-NEXT: [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD1]](p0) :: (dereferenceable load (s32) from `ptr getelementptr inbounds (%struct.anon, ptr @X, i32 0, i32 1)`)
+    ; AIE2PS-NEXT: [[ADD:%[0-9]+]]:_(s32) = nsw G_ADD [[LOAD]], [[LOAD1]]
+    ; AIE2PS-NEXT: [[LOAD2:%[0-9]+]]:_(s8) = G_LOAD [[PTR_ADD2]](p0) :: (dereferenceable load (s8) from `ptr getelementptr inbounds (%struct.anon, ptr @X, i32 0, i32 5)`, align 4)
+    ; AIE2PS-NEXT: [[SEXT:%[0-9]+]]:_(s32) = G_SEXT [[LOAD2]](s8)
+    ; AIE2PS-NEXT: [[ADD1:%[0-9]+]]:_(s32) = nsw G_ADD [[ADD]], [[SEXT]]
+    ; AIE2PS-NEXT: [[LOAD3:%[0-9]+]]:_(s8) = G_LOAD [[PTR_ADD3]](p0) :: (dereferenceable load (s8) from `ptr getelementptr inbounds (%struct.anon, ptr @X, i32 0, i32 8)`, align 4)
+    ; AIE2PS-NEXT: [[SEXT1:%[0-9]+]]:_(s32) = G_SEXT [[LOAD3]](s8)
+    ; AIE2PS-NEXT: [[ADD2:%[0-9]+]]:_(s32) = nsw G_ADD [[ADD1]], [[SEXT1]]
+    ; AIE2PS-NEXT: [[LOAD4:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD4]](p0) :: (dereferenceable load (s32) from `ptr getelementptr inbounds (%struct.anon, ptr @X, i32 0, i32 6)`)
+    ; AIE2PS-NEXT: [[ADD3:%[0-9]+]]:_(s32) = nsw G_ADD [[ADD2]], [[LOAD4]]
+    ; AIE2PS-NEXT: [[LOAD5:%[0-9]+]]:_(s8) = G_LOAD [[PTR_ADD5]](p0) :: (dereferenceable load (s8) from `ptr getelementptr inbounds (%struct.anon, ptr @X, i32 0, i32 38)`)
+    ; AIE2PS-NEXT: [[SEXT2:%[0-9]+]]:_(s32) = G_SEXT [[LOAD5]](s8)
+    ; AIE2PS-NEXT: [[ADD4:%[0-9]+]]:_(s32) = nsw G_ADD [[ADD3]], [[SEXT2]]
+    ; AIE2PS-NEXT: [[LOAD6:%[0-9]+]]:_(s8) = G_LOAD [[PTR_ADD6]](p0) :: (dereferenceable load (s8) from `ptr getelementptr inbounds (%struct.anon, ptr @X, i32 0, i32 33)`, align 4)
+    ; AIE2PS-NEXT: [[SEXT3:%[0-9]+]]:_(s32) = G_SEXT [[LOAD6]](s8)
+    ; AIE2PS-NEXT: [[ADD5:%[0-9]+]]:_(s32) = nsw G_ADD [[ADD4]], [[SEXT3]]
+    ; AIE2PS-NEXT: [[LOAD7:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD7]](p0) :: (dereferenceable load (s32) from `ptr getelementptr inbounds (%struct.anon, ptr @X, i32 0, i32 26)`)
+    ; AIE2PS-NEXT: [[ADD6:%[0-9]+]]:_(s32) = nsw G_ADD [[ADD5]], [[LOAD7]]
+    ; AIE2PS-NEXT: [[LOAD8:%[0-9]+]]:_(s8) = G_LOAD [[PTR_ADD8]](p0) :: (dereferenceable load (s8) from `ptr getelementptr inbounds (%struct.anon, ptr @X, i32 0, i32 16)`, align 4)
+    ; AIE2PS-NEXT: [[SEXT4:%[0-9]+]]:_(s32) = G_SEXT [[LOAD8]](s8)
+    ; AIE2PS-NEXT: [[ADD7:%[0-9]+]]:_(s32) = nsw G_ADD [[ADD6]], [[SEXT4]]
+    ; AIE2PS-NEXT: [[LOAD9:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD9]](p0) :: (dereferenceable load (s32) from `ptr getelementptr inbounds (%struct.anon, ptr @X, i32 0, i32 27)`)
+    ; AIE2PS-NEXT: [[ADD8:%[0-9]+]]:_(s32) = nsw G_ADD [[ADD7]], [[LOAD9]]
+    ; AIE2PS-NEXT: $r0 = COPY [[ADD8]](s32)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:_(s32) = COPY $r1
     %4:_(p0) = G_GLOBAL_VALUE @X
     %7:_(s20) = G_CONSTANT i20 4

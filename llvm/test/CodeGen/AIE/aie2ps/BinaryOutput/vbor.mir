@@ -1,0 +1,48 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VBOR
+    $x0 = VBOR $x7, $x4, implicit $crbf8conf, implicit $crfp8conf
+    $x2 = VBOR $x0, $x6, implicit $crbf8conf, implicit $crfp8conf
+    $x1 = VBOR $x1, $x3, implicit $crbf8conf, implicit $crfp8conf
+    $x5 = VBOR $x4, $x7, implicit $crbf8conf, implicit $crfp8conf
+    $x4 = VBOR $x6, $x10, implicit $crbf8conf, implicit $crfp8conf
+    $x11 = VBOR $x10, $x2, implicit $crbf8conf, implicit $crfp8conf
+    $x7 = VBOR $x9, $x9, implicit $crbf8conf, implicit $crfp8conf
+    $x6 = VBOR $x2, $x5, implicit $crbf8conf, implicit $crfp8conf
+    $x10 = VBOR $x3, $x1, implicit $crbf8conf, implicit $crfp8conf
+    $x8 = VBOR $x11, $x8, implicit $crbf8conf, implicit $crfp8conf
+    $x9 = VBOR $x5, $x0, implicit $crbf8conf, implicit $crfp8conf
+    $x3 = VBOR $x8, $x11, implicit $crbf8conf, implicit $crfp8conf
+...
+
+# CHECK: 0: f0 d1 74 30 vbor x0, x7, x4
+# CHECK: 4: f0 d1 06 32 vbor x2, x0, x6
+# CHECK: 8: f0 d1 13 31 vbor x1, x1, x3
+# CHECK: c: f0 d1 47 35 vbor x5, x4, x7
+# CHECK: 10: f0 d1 6a 34 vbor x4, x6, x10
+# CHECK: 14: f0 d1 a2 3b vbor x11, x10, x2
+# CHECK: 18: f0 d1 99 37 vbor x7, x9, x9
+# CHECK: 1c: f0 d1 25 36 vbor x6, x2, x5
+# CHECK: 20: f0 d1 31 3a vbor x10, x3, x1
+# CHECK: 24: f0 d1 b8 38 vbor x8, x11, x8
+# CHECK: 28: f0 d1 50 39 vbor x9, x5, x0
+# CHECK: 2c: f0 d1 8b 33 vbor x3, x8, x11

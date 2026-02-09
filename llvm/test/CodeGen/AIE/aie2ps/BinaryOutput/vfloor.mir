@@ -1,0 +1,72 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VFLOOR_s32_bf16
+    $x5 = VFLOOR_s32_bf16 $wl6, $s1, implicit-def $srf2iflags, implicit $crf2imask
+    $x1 = VFLOOR_s32_bf16 $wl3, $s3, implicit-def $srf2iflags, implicit $crf2imask
+    $x11 = VFLOOR_s32_bf16 $wl4, $s2, implicit-def $srf2iflags, implicit $crf2imask
+    $x0 = VFLOOR_s32_bf16 $wl0, $s0, implicit-def $srf2iflags, implicit $crf2imask
+    $x10 = VFLOOR_s32_bf16 $wl5, $s1, implicit-def $srf2iflags, implicit $crf2imask
+    $x2 = VFLOOR_s32_bf16 $wh9, $s3, implicit-def $srf2iflags, implicit $crf2imask
+    $x6 = VFLOOR_s32_bf16 $wh6, $s2, implicit-def $srf2iflags, implicit $crf2imask
+    $x7 = VFLOOR_s32_bf16 $wl7, $s0, implicit-def $srf2iflags, implicit $crf2imask
+    $x9 = VFLOOR_s32_bf16 $wh3, $s1, implicit-def $srf2iflags, implicit $crf2imask
+    $x8 = VFLOOR_s32_bf16 $wl10, $s3, implicit-def $srf2iflags, implicit $crf2imask
+    $x3 = VFLOOR_s32_bf16 $wh4, $s2, implicit-def $srf2iflags, implicit $crf2imask
+    $x4 = VFLOOR_s32_bf16 $wl8, $s0, implicit-def $srf2iflags, implicit $crf2imask
+    $x5 = VFLOOR_s32_bf16 $wh5, $s1, implicit-def $srf2iflags, implicit $crf2imask
+    $x1 = VFLOOR_s32_bf16 $wh0, $s3, implicit-def $srf2iflags, implicit $crf2imask
+    $x11 = VFLOOR_s32_bf16 $wh1, $s2, implicit-def $srf2iflags, implicit $crf2imask
+    $x0 = VFLOOR_s32_bf16 $wl2, $s0, implicit-def $srf2iflags, implicit $crf2imask
+    $x10 = VFLOOR_s32_bf16 $wl9, $s1, implicit-def $srf2iflags, implicit $crf2imask
+    $x2 = VFLOOR_s32_bf16 $wh10, $s3, implicit-def $srf2iflags, implicit $crf2imask
+    $x6 = VFLOOR_s32_bf16 $wl11, $s2, implicit-def $srf2iflags, implicit $crf2imask
+    $x7 = VFLOOR_s32_bf16 $wl1, $s0, implicit-def $srf2iflags, implicit $crf2imask
+    $x9 = VFLOOR_s32_bf16 $wh8, $s1, implicit-def $srf2iflags, implicit $crf2imask
+    $x8 = VFLOOR_s32_bf16 $wh7, $s3, implicit-def $srf2iflags, implicit $crf2imask
+    $x3 = VFLOOR_s32_bf16 $wh11, $s2, implicit-def $srf2iflags, implicit $crf2imask
+    $x4 = VFLOOR_s32_bf16 $wh2, $s0, implicit-def $srf2iflags, implicit $crf2imask
+...
+
+# CHECK: 0: f0 95 a9 12 vfloor.s32.bf16 x5, wl6, s1
+# CHECK: 4: f0 d5 b8 10 vfloor.s32.bf16 x1, wl3, s3
+# CHECK: 8: f0 15 b1 15 vfloor.s32.bf16 x11, wl4, s2
+# CHECK: c: f0 15 20 10 vfloor.s32.bf16 x0, wl0, s0
+# CHECK: 10: f0 55 29 15 vfloor.s32.bf16 x10, wl5, s1
+# CHECK: 14: f0 75 3a 11 vfloor.s32.bf16 x2, wh9, s3
+# CHECK: 18: f0 b5 31 13 vfloor.s32.bf16 x6, wh6, s2
+# CHECK: 1c: f0 d5 a1 13 vfloor.s32.bf16 x7, wl7, s0
+# CHECK: 20: f0 f5 a8 14 vfloor.s32.bf16 x9, wh3, s1
+# CHECK: 24: f0 95 3a 14 vfloor.s32.bf16 x8, wl10, s3
+# CHECK: 28: f0 35 b1 11 vfloor.s32.bf16 x3, wh4, s2
+# CHECK: 2c: f0 15 22 12 vfloor.s32.bf16 x4, wl8, s0
+# CHECK: 30: f0 75 a9 12 vfloor.s32.bf16 x5, wh5, s1
+# CHECK: 34: f0 35 b8 10 vfloor.s32.bf16 x1, wh0, s3
+# CHECK: 38: f0 75 b0 15 vfloor.s32.bf16 x11, wh1, s2
+# CHECK: 3c: f0 95 20 10 vfloor.s32.bf16 x0, wl2, s0
+# CHECK: 40: f0 55 2a 15 vfloor.s32.bf16 x10, wl9, s1
+# CHECK: 44: f0 b5 3a 11 vfloor.s32.bf16 x2, wh10, s3
+# CHECK: 48: f0 d5 32 13 vfloor.s32.bf16 x6, wl11, s2
+# CHECK: 4c: f0 55 a0 13 vfloor.s32.bf16 x7, wl1, s0
+# CHECK: 50: f0 35 aa 14 vfloor.s32.bf16 x9, wh8, s1
+# CHECK: 54: f0 f5 39 14 vfloor.s32.bf16 x8, wh7, s3
+# CHECK: 58: f0 f5 b2 11 vfloor.s32.bf16 x3, wh11, s2
+# CHECK: 5c: f0 b5 20 12 vfloor.s32.bf16 x4, wh2, s0

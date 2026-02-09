@@ -1,0 +1,490 @@
+//==- BuiltinsAIE2PS.def - AIE Builtin function database ----*- C++ -*-==//
+//
+// This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+//
+//===----------------------------------------------------------------------===//
+//
+// This file defines the AIE-specific builtin function database.  Users of
+// this file must define the BUILTIN macro to make use of this information.
+//
+//===----------------------------------------------------------------------===//
+
+// The format of this database matches clang/Basic/Builtins.def.
+// In addition to the default type specifiers (second argument to the macro),
+// we support the following identifiers on AIE:
+//  n -> acc32
+//  LLn -> acc64
+//  g -> accfloat
+//  x -> half (_Float16)
+//  y -> half (__bf16)
+
+BUILTIN(__builtin_aie2ps_event, "vi", "nc")
+
+//scl2vec::shift-shiftx-shift_bytes
+BUILTIN(__builtin_aie2ps_vshift_I512_I512, "V16iV16iV16iii", "nc")
+BUILTIN(__builtin_aie2ps_vshift_bf512_bf512, "V32yV32yV32yii", "nc")
+//scl2vec::insert
+BUILTIN(__builtin_aie2ps_vinsert_bf32_bf512,"V32yV32yiV2y", "nc")
+BUILTIN(__builtin_aie2ps_vinsert_bf64_bf512,"V32yV32yiV4y", "nc")
+//scl2vec::broadcast:broadcast_zero:broadcast_one
+BUILTIN(__builtin_aie2ps_vbroadcast_bf32_bf512, "V32yV2y", "nc")
+BUILTIN(__builtin_aie2ps_vbroadcast_bf64_bf512, "V32yV4y", "nc")
+//scl2vec::broadcast_elem
+BUILTIN(__builtin_aie2ps_vextract_broadcast128_I512, "V16iV16ii", "nc")
+//scl2vec::vshuffle
+BUILTIN(__builtin_aie2ps_vshuffle,"V16iV16iV16iUi", "nc")
+BUILTIN(__builtin_aie2ps_vshuffle_BFP640_BFP640_BFP640, "vV16iV2iV2iV16iV2iV2iiV16i&V2i&V2i&", "nc")
+BUILTIN(__builtin_aie2ps_vshuffle_BFP768_BFP768_BFP768, "vV8iV8iV2iV2iiiiiV8iV8iV2iV2iiiiiiV8i&V8i&V2i&V2i&i&i&i&i&", "nc")
+//scl2vec::vbcstshfl
+BUILTIN(__builtin_aie2ps_vbcst_shuffle8,"V16iiUi", "nc")
+BUILTIN(__builtin_aie2ps_vbcst_shuffle16,"V16iiUi", "nc")
+BUILTIN(__builtin_aie2ps_vbcst_shuffle32,"V16iiUi", "nc")
+BUILTIN(__builtin_aie2ps_vbcst_shuffle64,"V16iV2iUi", "nc")
+
+// Get Core ID
+BUILTIN(__builtin_aie2ps_get_coreid, "i", "nc")
+//bitcounting
+BUILTIN(__builtin_aie2ps_clb, "UiUi", "nc")
+//semaphores
+BUILTIN(__builtin_aie2ps_acquire, "vUiUi", "nc")
+BUILTIN(__builtin_aie2ps_acquire_cond, "vUiUii", "nc")
+BUILTIN(__builtin_aie2ps_release, "vUii", "nc")
+BUILTIN(__builtin_aie2ps_release_cond, "vUiii", "nc")
+BUILTIN(__builtin_aie2ps_done, "v", "n")
+// Scheduling barrier
+BUILTIN(__builtin_aie2ps_sched_barrier, "v", "n")
+// Read/Write for Tile Memory Map
+BUILTIN(__builtin_aie2ps_read_tm, "iv*", "nc")
+BUILTIN(__builtin_aie2ps_write_tm, "viv*", "nc")
+
+// flt2fix and fix2flt
+BUILTIN(__builtin_aie2ps_fx2flt, "fii", "nc")
+BUILTIN(__builtin_aie2ps_flt2fx, "ifi", "nc")
+// non-linear fp ops
+BUILTIN(__builtin_aie2ps_sqrtf, "ff", "nc")
+BUILTIN(__builtin_aie2ps_inv, "ff", "nc")
+BUILTIN(__builtin_aie2ps_invsqrt, "ff", "nc")
+BUILTIN(__builtin_aie2ps_exp2, "V16yV16g", "nc")
+BUILTIN(__builtin_aie2ps_exp2_bf20, "V16gV16g", "nc")
+BUILTIN(__builtin_aie2ps_tanh, "V16yV16g", "nc")
+
+//division/mod
+BUILTIN(__builtin_aie2ps_divstep, "vUi&Ui&Ui", "nc")
+
+// Mode Settings
+// Set Control Registers
+BUILTIN(__builtin_aie2ps_set_ctrl_reg, "vUiCUi", "nc")
+// Get Control Registers
+BUILTIN(__builtin_aie2ps_get_ctrl_reg, "UiUi", "nc")
+// Set Status Registers
+BUILTIN(__builtin_aie2ps_set_status_reg, "vUiCUi", "nc")
+// Get Status Registers
+BUILTIN(__builtin_aie2ps_get_status_reg, "UiUi", "nc")
+
+//ups
+BUILTIN(__builtin_aie2ps_acc32_v16_I256_ups, "V16nV16sii", "nc")
+BUILTIN(__builtin_aie2ps_acc32_v32_I256_ups, "V32nV32cii", "nc")
+BUILTIN(__builtin_aie2ps_acc32_v32_I512_ups, "V32nV32sii", "nc")
+BUILTIN(__builtin_aie2ps_acc64_v16_I256_ups, "V16LLnV16sii", "nc")
+BUILTIN(__builtin_aie2ps_acc64_v16_I512_ups, "V16LLnV16iii", "nc")
+BUILTIN(__builtin_aie2ps_acc64_v8_I256_ups,  "V8LLnV8iii", "nc")
+BUILTIN(__builtin_aie2ps_acc32_v64_I512_ups, "V64nV64cii", "nc")
+BUILTIN(__builtin_aie2ps_acc64_v32_I512_ups,  "V32LLnV32sii", "nc")
+// v16bfloat16 to v16accfloat to and vice-versa
+BUILTIN(__builtin_aie2ps_v16accfloat_to_v16bf16, "V16yV16g", "nc")
+BUILTIN(__builtin_aie2ps_v16bf16_to_v16accfloat, "V16gV16y", "nc")
+BUILTIN(__builtin_aie2ps_v32accfloat_to_v32bf16, "V32yV32g", "nc")
+BUILTIN(__builtin_aie2ps_v32bf16_to_v32accfloat, "V32gV32y", "nc")
+// v16float16 to v16accfloat and vice-versa
+BUILTIN(__builtin_aie2ps_v16accfloat_to_v16float16, "V16xV16g", "nc")
+BUILTIN(__builtin_aie2ps_v16float16_to_v16accfloat, "V16gV16x", "nc")
+BUILTIN(__builtin_aie2ps_v32accfloat_to_v32float16, "V32xV32g", "nc")
+BUILTIN(__builtin_aie2ps_v32float16_to_v32accfloat, "V32gV32x", "nc")
+
+//srs
+BUILTIN(__builtin_aie2ps_I256_v16_acc32_srs, "V16sV16nii", "nc")
+BUILTIN(__builtin_aie2ps_I256_v16_acc64_srs, "V16sV16LLnii", "nc")
+BUILTIN(__builtin_aie2ps_I256_v32_acc32_srs, "V32cV32nii", "nc")
+BUILTIN(__builtin_aie2ps_I256_v8_acc64_srs, "V8iV8LLnii", "nc")
+BUILTIN(__builtin_aie2ps_I512_v16_acc64_srs, "V16iV16LLnii", "nc")
+BUILTIN(__builtin_aie2ps_I512_v32_acc32_srs, "V32sV32nii", "nc")
+BUILTIN(__builtin_aie2ps_I512_v32_acc64_srs, "V32sV32LLnii", "nc")
+BUILTIN(__builtin_aie2ps_I512_v64_acc32_srs, "V64cV64nii", "nc")
+
+// v32accfloat to v32float8 and v32bfloat8,
+BUILTIN(__builtin_aie2ps_v32accfloat_to_v32float8, "V32cV32gi", "nc")
+BUILTIN(__builtin_aie2ps_v32accfloat_to_v32bfloat8, "V32cV32gi", "nc")
+// v64accfloat to v64mx types
+BUILTIN(__builtin_aie2ps_v64accfloat_to_v64mx4, "vV64gV8i&V2i&i&i&", "nc")
+BUILTIN(__builtin_aie2ps_v64accfloat_to_v64mx6, "vV64gV8i&V2i&i&i&", "nc")
+BUILTIN(__builtin_aie2ps_v64accfloat_to_v64mx9, "vV64gV16i&V2i&V2i&", "nc")
+
+//mul-mac
+BUILTIN(__builtin_aie2ps_ACC2048_accfloat_add_conf,"V64gV64gV64gi", "nc")
+BUILTIN(__builtin_aie2ps_ACC2048_accfloat_neg_conf, "V64gV64gi", "nc")
+BUILTIN(__builtin_aie2ps_ACC2048_accfloat_sub_conf, "V64gV64gV64gi", "nc")
+BUILTIN(__builtin_aie2ps_ACC1024_accfloat_add_conf, "V32gV32gV32gi", "nc")
+BUILTIN(__builtin_aie2ps_ACC1024_accfloat_neg_conf, "V32gV32gi", "nc")
+BUILTIN(__builtin_aie2ps_ACC1024_accfloat_sub_conf, "V32gV32gV32gi", "nc")
+BUILTIN(__builtin_aie2ps_ACC2048_add_conf,"V32LLnV32LLnV32LLni", "nc")
+BUILTIN(__builtin_aie2ps_ACC2048_neg_conf, "V32LLnV32LLni", "nc")
+BUILTIN(__builtin_aie2ps_ACC2048_sub_conf, "V32LLnV32LLnV32LLni", "nc")
+BUILTIN(__builtin_aie2ps_ACC1024_add_conf, "V16LLnV16LLnV16LLni", "nc")
+BUILTIN(__builtin_aie2ps_ACC1024_neg_conf, "V16LLnV16LLni", "nc")
+BUILTIN(__builtin_aie2ps_ACC1024_sub_conf, "V16LLnV16LLnV16LLni", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I1024_bf16_ACC2048_bf_addmac_conf, "V64gV64yyV64gV64gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I1024_bf16_ACC2048_bf_addmsc_conf, "V64gV64yyV64gV64gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I1024_bf16_ACC2048_bf_mac_conf, "V64gV64yyV64gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I1024_bf16_ACC2048_bf_msc_conf, "V64gV64yyV64gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I1024_bf16_ACC2048_bf_mul_conf, "V64gV64yyi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I1024_bf16_ACC2048_bf_negmul_conf, "V64gV64yyi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I1024_bf16_I1024_ACC2048_bf_addmac_conf, "V64gV64yV64yV64gV64gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I1024_bf16_I1024_ACC2048_bf_addmsc_conf, "V64gV64yV64yV64gV64gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I1024_bf16_I1024_ACC2048_bf_mac_conf, "V64gV64yV64yV64gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I1024_bf16_I1024_ACC2048_bf_msc_conf, "V64gV64yV64yV64gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I1024_bf16_I1024_ACC2048_bf_mul_conf, "V64gV64yV64yi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I1024_bf16_I1024_ACC2048_bf_negmul_conf, "V64gV64yV64yi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I1024_fp16_ACC2048_bf_addmac_conf, "V64gV64yxV64gV64gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I1024_fp16_ACC2048_bf_addmsc_conf, "V64gV64yxV64gV64gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I1024_fp16_ACC2048_bf_mac_conf, "V64gV64yxV64gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I1024_fp16_ACC2048_bf_msc_conf, "V64gV64yxV64gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I1024_fp16_ACC2048_bf_mul_conf, "V64gV64yxi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I1024_fp16_ACC2048_bf_negmul_conf, "V64gV64yxi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I1024_fp16_I1024_ACC2048_bf_addmac_conf, "V64gV64yV64xV64gV64gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I1024_fp16_I1024_ACC2048_bf_addmsc_conf, "V64gV64yV64xV64gV64gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I1024_fp16_I1024_ACC2048_bf_mac_conf, "V64gV64yV64xV64gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I1024_fp16_I1024_ACC2048_bf_msc_conf, "V64gV64yV64xV64gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I1024_fp16_I1024_ACC2048_bf_mul_conf, "V64gV64yV64xi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I1024_fp16_I1024_ACC2048_bf_negmul_conf, "V64gV64yV64xi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_bf16_ACC1024_bf_addmac_conf, "V32gV32yyV32gV32gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_bf16_ACC1024_bf_addmsc_conf, "V32gV32yyV32gV32gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_bf16_ACC1024_bf_mac_conf, "V32gV32yyV32gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_bf16_ACC1024_bf_msc_conf, "V32gV32yyV32gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_bf16_ACC1024_bf_mul_conf, "V32gV32yyi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_bf16_ACC1024_bf_negmul_conf, "V32gV32yyi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_bf16_I1024_ACC1024_bf_addmac_conf, "V32gV32yV64yV32gV32gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_bf16_I1024_ACC1024_bf_addmsc_conf, "V32gV32yV64yV32gV32gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_bf16_I1024_ACC1024_bf_mac_conf, "V32gV32yV64yV32gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_bf16_I1024_ACC1024_bf_msc_conf, "V32gV32yV64yV32gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_bf16_I1024_ACC1024_bf_mul_conf, "V32gV32yV64yi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_bf16_I1024_ACC1024_bf_negmul_conf, "V32gV32yV64yi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_bf16_I512_ACC1024_bf_addmac_conf, "V32gV32yV32yV32gV32gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_bf16_I512_ACC1024_bf_addmsc_conf, "V32gV32yV32yV32gV32gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_bf16_I512_ACC1024_bf_mac_conf, "V32gV32yV32yV32gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_bf16_I512_ACC1024_bf_msc_conf, "V32gV32yV32yV32gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_bf16_I512_ACC1024_bf_mul_conf, "V32gV32yV32yi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_bf16_I512_ACC1024_bf_negmul_conf, "V32gV32yV32yi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_fp16_ACC1024_bf_addmac_conf, "V32gV32yxV32gV32gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_fp16_ACC1024_bf_addmsc_conf, "V32gV32yxV32gV32gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_fp16_ACC1024_bf_mac_conf, "V32gV32yxV32gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_fp16_ACC1024_bf_msc_conf, "V32gV32yxV32gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_fp16_ACC1024_bf_mul_conf, "V32gV32yxi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_fp16_ACC1024_bf_negmul_conf, "V32gV32yxi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_fp16_I1024_ACC1024_bf_addmac_conf, "V32gV32yV64xV32gV32gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_fp16_I1024_ACC1024_bf_addmsc_conf, "V32gV32yV64xV32gV32gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_fp16_I1024_ACC1024_bf_mac_conf, "V32gV32yV64xV32gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_fp16_I1024_ACC1024_bf_msc_conf, "V32gV32yV64xV32gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_fp16_I1024_ACC1024_bf_mul_conf, "V32gV32yV64xi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_fp16_I1024_ACC1024_bf_negmul_conf, "V32gV32yV64xi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_fp16_I512_ACC1024_bf_addmac_conf, "V32gV32yV32xV32gV32gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_fp16_I512_ACC1024_bf_addmsc_conf, "V32gV32yV32xV32gV32gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_fp16_I512_ACC1024_bf_mac_conf, "V32gV32yV32xV32gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_fp16_I512_ACC1024_bf_msc_conf, "V32gV32yV32xV32gi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_fp16_I512_ACC1024_bf_mul_conf, "V32gV32yV32xi", "nc")
+BUILTIN(__builtin_aie2ps_bf16_I512_fp16_I512_ACC1024_bf_negmul_conf, "V32gV32yV32xi", "nc")
+// v64mx9  640, v256mx9 BFP2560, v128mx4 BFP768, v128mx6 BFP768, v256mx4 BFP1536, v256mx6 BFP1536
+
+BUILTIN(__builtin_aie2ps_BFP640_BFP2560_ACC2048_bf_addmac_conf, "V64gV16iV2iV2iV16iV16iV16iV16iV2iV2iV2iV2iV2iV2iV2iV2iV64gV64gi", "nc")
+BUILTIN(__builtin_aie2ps_BFP640_BFP2560_ACC2048_bf_addmsc_conf, "V64gV16iV2iV2iV16iV16iV16iV16iV2iV2iV2iV2iV2iV2iV2iV2iV64gV64gi", "nc")
+BUILTIN(__builtin_aie2ps_BFP640_BFP2560_ACC2048_bf_mac_conf, "V64gV16iV2iV2iV16iV16iV16iV16iV2iV2iV2iV2iV2iV2iV2iV2iV64gi", "nc")
+BUILTIN(__builtin_aie2ps_BFP640_BFP2560_ACC2048_bf_msc_conf, "V64gV16iV2iV2iV16iV16iV16iV16iV2iV2iV2iV2iV2iV2iV2iV2iV64gi", "nc")
+BUILTIN(__builtin_aie2ps_BFP640_BFP2560_ACC2048_bf_mul_conf, "V64gV16iV2iV2iV16iV16iV16iV16iV2iV2iV2iV2iV2iV2iV2iV2ii", "nc")
+BUILTIN(__builtin_aie2ps_BFP640_BFP2560_ACC2048_bf_negmul_conf, "V64gV16iV2iV2iV16iV16iV16iV16iV2iV2iV2iV2iV2iV2iV2iV2ii", "nc")
+BUILTIN(__builtin_aie2ps_BFP768_BFP1536_ACC2048_bf_addmac_conf, "V64gV8iV8iV2iV2iiiiiV8iV8iV8iV8iV2iV2iV2iV2iiiiiiiiiV64gV64gi", "nc")
+BUILTIN(__builtin_aie2ps_BFP768_BFP1536_ACC2048_bf_addmsc_conf, "V64gV8iV8iV2iV2iiiiiV8iV8iV8iV8iV2iV2iV2iV2iiiiiiiiiV64gV64gi", "nc")
+BUILTIN(__builtin_aie2ps_BFP768_BFP1536_ACC2048_bf_mac_conf, "V64gV8iV8iV2iV2iiiiiV8iV8iV8iV8iV2iV2iV2iV2iiiiiiiiiV64gi", "nc")
+BUILTIN(__builtin_aie2ps_BFP768_BFP1536_ACC2048_bf_msc_conf, "V64gV8iV8iV2iV2iiiiiV8iV8iV8iV8iV2iV2iV2iV2iiiiiiiiiV64gi", "nc")
+BUILTIN(__builtin_aie2ps_BFP768_BFP1536_ACC2048_bf_mul_conf, "V64gV8iV8iV2iV2iiiiiV8iV8iV8iV8iV2iV2iV2iV2iiiiiiiiii", "nc")
+BUILTIN(__builtin_aie2ps_BFP768_BFP1536_ACC2048_bf_negmul_conf, "V64gV8iV8iV2iV2iiiiiV8iV8iV8iV8iV2iV2iV2iV2iiiiiiiiii", "nc")
+BUILTIN(__builtin_aie2ps_clr_ACC1024l_conf, "V32n", "nc")
+BUILTIN(__builtin_aie2ps_clr_ACC2048_conf, "V32LLn", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I1024_bf16_ACC2048_bf_addmac_conf, "V64gV64xyV64gV64gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I1024_bf16_ACC2048_bf_addmsc_conf, "V64gV64xyV64gV64gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I1024_bf16_ACC2048_bf_mac_conf, "V64gV64xyV64gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I1024_bf16_ACC2048_bf_msc_conf, "V64gV64xyV64gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I1024_bf16_ACC2048_bf_mul_conf, "V64gV64xyi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I1024_bf16_ACC2048_bf_negmul_conf, "V64gV64xyi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I1024_bf16_I1024_ACC2048_bf_addmac_conf, "V64gV64xV64yV64gV64gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I1024_bf16_I1024_ACC2048_bf_addmsc_conf, "V64gV64xV64yV64gV64gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I1024_bf16_I1024_ACC2048_bf_mac_conf, "V64gV64xV64yV64gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I1024_bf16_I1024_ACC2048_bf_msc_conf, "V64gV64xV64yV64gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I1024_bf16_I1024_ACC2048_bf_mul_conf, "V64gV64xV64yi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I1024_bf16_I1024_ACC2048_bf_negmul_conf, "V64gV64xV64yi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I1024_fp16_ACC2048_bf_addmac_conf, "V64gV64xxV64gV64gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I1024_fp16_ACC2048_bf_addmsc_conf, "V64gV64xxV64gV64gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I1024_fp16_ACC2048_bf_mac_conf, "V64gV64xxV64gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I1024_fp16_ACC2048_bf_msc_conf, "V64gV64xxV64gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I1024_fp16_ACC2048_bf_mul_conf, "V64gV64xxi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I1024_fp16_ACC2048_bf_negmul_conf, "V64gV64xxi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I1024_fp16_I1024_ACC2048_bf_addmac_conf, "V64gV64xV64xV64gV64gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I1024_fp16_I1024_ACC2048_bf_addmsc_conf, "V64gV64xV64xV64gV64gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I1024_fp16_I1024_ACC2048_bf_mac_conf, "V64gV64xV64xV64gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I1024_fp16_I1024_ACC2048_bf_msc_conf, "V64gV64xV64xV64gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I1024_fp16_I1024_ACC2048_bf_mul_conf, "V64gV64xV64xi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I1024_fp16_I1024_ACC2048_bf_negmul_conf, "V64gV64xV64xi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_bf16_ACC1024_bf_addmac_conf, "V32gV32xyV32gV32gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_bf16_ACC1024_bf_addmsc_conf, "V32gV32xyV32gV32gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_bf16_ACC1024_bf_mac_conf, "V32gV32xyV32gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_bf16_ACC1024_bf_msc_conf, "V32gV32xyV32gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_bf16_ACC1024_bf_mul_conf, "V32gV32xyi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_bf16_ACC1024_bf_negmul_conf, "V32gV32xyi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_bf16_I1024_ACC1024_bf_addmac_conf, "V32gV32xV64yV32gV32gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_bf16_I1024_ACC1024_bf_addmsc_conf, "V32gV32xV64yV32gV32gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_bf16_I1024_ACC1024_bf_mac_conf, "V32gV32xV64yV32gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_bf16_I1024_ACC1024_bf_msc_conf, "V32gV32xV64yV32gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_bf16_I1024_ACC1024_bf_mul_conf, "V32gV32xV64yi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_bf16_I1024_ACC1024_bf_negmul_conf, "V32gV32xV64yi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_bf16_I512_ACC1024_bf_addmac_conf, "V32gV32yV32xV32gV32gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_bf16_I512_ACC1024_bf_addmsc_conf, "V32gV32yV32xV32gV32gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_bf16_I512_ACC1024_bf_mac_conf, "V32gV32yV32xV32gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_bf16_I512_ACC1024_bf_msc_conf, "V32gV32yV32xV32gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_bf16_I512_ACC1024_bf_mul_conf, "V32gV32yV32xi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_bf16_I512_ACC1024_bf_negmul_conf, "V32gV32yV32xi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_fp16_ACC1024_bf_addmac_conf, "V32gV32xxV32gV32gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_fp16_ACC1024_bf_addmsc_conf, "V32gV32xxV32gV32gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_fp16_ACC1024_bf_mac_conf, "V32gV32xxV32gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_fp16_ACC1024_bf_msc_conf, "V32gV32xxV32gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_fp16_ACC1024_bf_mul_conf, "V32gV32xxi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_fp16_ACC1024_bf_negmul_conf, "V32gV32xxi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_fp16_I1024_ACC1024_bf_addmac_conf, "V32gV32xV64xV32gV32gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_fp16_I1024_ACC1024_bf_addmsc_conf, "V32gV32xV64xV32gV32gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_fp16_I1024_ACC1024_bf_mac_conf, "V32gV32xV64xV32gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_fp16_I1024_ACC1024_bf_msc_conf, "V32gV32xV64xV32gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_fp16_I1024_ACC1024_bf_mul_conf, "V32gV32xV64xi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_fp16_I1024_ACC1024_bf_negmul_conf, "V32gV32xV64xi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_fp16_I512_ACC1024_bf_addmac_conf, "V32gV32xV32xV32gV32gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_fp16_I512_ACC1024_bf_addmsc_conf, "V32gV32xV32xV32gV32gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_fp16_I512_ACC1024_bf_mac_conf, "V32gV32xV32xV32gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_fp16_I512_ACC1024_bf_msc_conf, "V32gV32xV32xV32gi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_fp16_I512_ACC1024_bf_mul_conf, "V32gV32xV32xi", "nc")
+BUILTIN(__builtin_aie2ps_fp16_I512_fp16_I512_ACC1024_bf_negmul_conf, "V32gV32xV32xi", "nc")
+BUILTIN(__builtin_aie2ps_fp8_I512_fp8_I512_ACC2048_bf_addmac_conf, "V64gV64UcV64UcV64gV64gi", "nc")
+BUILTIN(__builtin_aie2ps_fp8_I512_fp8_I512_ACC2048_bf_addmsc_conf, "V64gV64UcV64UcV64gV64gi", "nc")
+BUILTIN(__builtin_aie2ps_fp8_I512_fp8_I512_ACC2048_bf_mac_conf, "V64gV64UcV64UcV64gi", "nc")
+BUILTIN(__builtin_aie2ps_fp8_I512_fp8_I512_ACC2048_bf_msc_conf, "V64gV64UcV64UcV64gi", "nc")
+BUILTIN(__builtin_aie2ps_fp8_I512_fp8_I512_ACC2048_bf_mul_conf, "V64gV64UcV64Uci", "nc")
+BUILTIN(__builtin_aie2ps_fp8_I512_fp8_I512_ACC2048_bf_negmul_conf, "V64gV64UcV64Uci", "nc")
+BUILTIN(__builtin_aie2ps_I1024_I1024_ACC2048_addmac_conf, "V64nV64sV64sV64nV64ni", "nc")
+BUILTIN(__builtin_aie2ps_I1024_I1024_ACC2048_addmsc_conf, "V64nV64sV64sV64nV64ni", "nc")
+BUILTIN(__builtin_aie2ps_I1024_I1024_ACC2048_mac_conf, "V64nV64sV64sV64ni", "nc")
+BUILTIN(__builtin_aie2ps_I1024_I1024_ACC2048_msc_conf, "V64nV64sV64sV64ni", "nc")
+BUILTIN(__builtin_aie2ps_I1024_I1024_ACC2048_mul_conf, "V64nV64sV64si", "nc")
+BUILTIN(__builtin_aie2ps_I1024_I1024_ACC2048_negmul_conf, "V64nV64sV64si", "nc")
+BUILTIN(__builtin_aie2ps_I1024_I512_ACC2048_addmac_conf, "V32LLnV64sV32sV32LLnV32LLni", "nc")
+BUILTIN(__builtin_aie2ps_I1024_I512_ACC2048_addmsc_conf, "V32LLnV64sV32sV32LLnV32LLni", "nc")
+BUILTIN(__builtin_aie2ps_I1024_I512_ACC2048_mac_conf, "V32LLnV64sV32sV32LLni", "nc")
+BUILTIN(__builtin_aie2ps_I1024_I512_ACC2048_msc_conf, "V32LLnV64sV32sV32LLni", "nc")
+BUILTIN(__builtin_aie2ps_I1024_I512_ACC2048_mul_conf, "V32LLnV64sV32si", "nc")
+BUILTIN(__builtin_aie2ps_I1024_I512_ACC2048_negmul_conf, "V32LLnV64sV32si", "nc")
+BUILTIN(__builtin_aie2ps_I1024_short_ACC2048_addmac_conf, "V64nV64siV64nV64ni", "nc")
+BUILTIN(__builtin_aie2ps_I1024_short_ACC2048_addmsc_conf, "V64nV64siV64nV64ni", "nc")
+BUILTIN(__builtin_aie2ps_I1024_short_ACC2048_mac_conf, "V64nV64siV64ni", "nc")
+BUILTIN(__builtin_aie2ps_I1024_short_ACC2048_msc_conf, "V64nV64siV64ni", "nc")
+BUILTIN(__builtin_aie2ps_I1024_short_ACC2048_mul_conf, "V64nV64sii", "nc")
+BUILTIN(__builtin_aie2ps_I1024_short_ACC2048_negmul_conf, "V64nV64sii", "nc")
+BUILTIN(__builtin_aie2ps_I512_char_ACC2048_addmac_conf, "V64nV64ciV64nV64ni", "nc")
+BUILTIN(__builtin_aie2ps_I512_char_ACC2048_addmsc_conf, "V64nV64ciV64nV64ni", "nc")
+BUILTIN(__builtin_aie2ps_I512_char_ACC2048_mac_conf, "V64nV64ciV64ni", "nc")
+BUILTIN(__builtin_aie2ps_I512_char_ACC2048_msc_conf, "V64nV64ciV64ni", "nc")
+BUILTIN(__builtin_aie2ps_I512_char_ACC2048_mul_conf, "V64nV64cii", "nc")
+BUILTIN(__builtin_aie2ps_I512_char_ACC2048_negmul_conf, "V64nV64cii", "nc")
+BUILTIN(__builtin_aie2ps_I512_I1024_ACC2048_addmac_conf, "V64nV64cV128cV64nV64ni", "nc")
+BUILTIN(__builtin_aie2ps_I512_I1024_ACC2048_addmsc_conf, "V64nV64cV128cV64nV64ni", "nc")
+BUILTIN(__builtin_aie2ps_I512_I1024_ACC2048_mac_conf, "V64nV64cV128cV64ni", "nc")
+BUILTIN(__builtin_aie2ps_I512_I1024_ACC2048_msc_conf, "V64nV64cV128cV64ni", "nc")
+BUILTIN(__builtin_aie2ps_I512_I1024_ACC2048_mul_conf, "V64nV64cV128ci", "nc")
+BUILTIN(__builtin_aie2ps_I512_I1024_ACC2048_negmul_conf, "V64nV64cV128ci", "nc")
+BUILTIN(__builtin_aie2ps_I512_I512_ACC1024_addmac_conf, "V32nV32sV32sV32nV32ni", "nc")
+BUILTIN(__builtin_aie2ps_I512_I512_ACC1024_addmsc_conf, "V32nV32sV32sV32nV32ni", "nc")
+BUILTIN(__builtin_aie2ps_I512_I512_ACC1024_mac_conf, "V32nV32sV32sV32ni", "nc")
+BUILTIN(__builtin_aie2ps_I512_I512_ACC1024_msc_conf, "V32nV32sV32sV32ni", "nc")
+BUILTIN(__builtin_aie2ps_I512_I512_ACC1024_mul_conf, "V32nV32sV32si", "nc")
+BUILTIN(__builtin_aie2ps_I512_I512_ACC1024_negmul_conf, "V32nV32sV32si", "nc")
+BUILTIN(__builtin_aie2ps_I512_I512_ACC2048_addmac_conf, "V32LLnV16iV32sV32LLnV32LLni", "nc")
+BUILTIN(__builtin_aie2ps_I512_I512_ACC2048_addmsc_conf, "V32LLnV16iV32sV32LLnV32LLni", "nc")
+BUILTIN(__builtin_aie2ps_I512_I512_ACC2048_mac_conf,"V32LLnV16iV32sV32LLni", "nc")
+BUILTIN(__builtin_aie2ps_I512_I512_ACC2048_msc_conf, "V32LLnV16iV32sV32LLni", "nc")
+BUILTIN(__builtin_aie2ps_I512_I512_ACC2048_mul_conf,"V32LLnV64cV64ci", "nc")
+BUILTIN(__builtin_aie2ps_I512_I512_ACC2048_negmul_conf,"V32LLnV16iV32si", "nc")
+BUILTIN(__builtin_aie2ps_I512_short_ACC2048_addmac_conf, "V32LLnV32siV32LLnV32LLni", "nc")
+BUILTIN(__builtin_aie2ps_I512_short_ACC2048_addmsc_conf, "V32LLnV32siV32LLnV32LLni", "nc")
+BUILTIN(__builtin_aie2ps_I512_short_ACC2048_mac_conf, "V32LLnV32siV32LLni", "nc")
+BUILTIN(__builtin_aie2ps_I512_short_ACC2048_msc_conf, "V32LLnV32siV32LLni", "nc")
+BUILTIN(__builtin_aie2ps_I512_short_ACC2048_mul_conf, "V32LLnV32sii", "nc")
+BUILTIN(__builtin_aie2ps_I512_short_ACC2048_negmul_conf, "V32LLnV32sii", "nc")
+// vabs_gtz
+BUILTIN(__builtin_aie2ps_vabs_gtz8, "V64cV64ciUWi&", "nc")
+BUILTIN(__builtin_aie2ps_vabs_gtz16, "V32sV32siUi&", "nc")
+BUILTIN(__builtin_aie2ps_vabs_gtz32, "V16iV16iiUi&", "nc")
+
+// vaddsub
+BUILTIN(__builtin_aie2ps_vaddsub8, "V64cV64cV64cV2i", "nc")
+BUILTIN(__builtin_aie2ps_vaddsub16, "V32sV32sV32sUi", "nc")
+BUILTIN(__builtin_aie2ps_vaddsub32, "V16iV16iV16iUi", "nc")
+
+// vbneg_ltz
+BUILTIN(__builtin_aie2ps_vbneg_ltz8, "V64cV64cUWi&", "nc")
+BUILTIN(__builtin_aie2ps_vbneg_ltz16, "V32sV32sUi&", "nc")
+BUILTIN(__builtin_aie2ps_vbneg_ltz32, "V16iV16iUi&", "nc")
+
+// veqz
+BUILTIN(__builtin_aie2ps_veqz8, "V2iV64c", "nc")
+BUILTIN(__builtin_aie2ps_veqz16, "UiV32s", "nc")
+BUILTIN(__builtin_aie2ps_veqz32, "UiV16i", "nc")
+
+// vge
+BUILTIN(__builtin_aie2ps_vge8, "V2iV64cV64ci", "nc")
+BUILTIN(__builtin_aie2ps_vgefloat8, "V2iV64cV64c", "nc")
+BUILTIN(__builtin_aie2ps_vgebfloat8, "V2iV64cV64c", "nc")
+BUILTIN(__builtin_aie2ps_vge16, "UiV32sV32si", "nc")
+BUILTIN(__builtin_aie2ps_vge32, "UiV16iV16ii", "nc")
+BUILTIN(__builtin_aie2ps_vgebfloat16, "UiV32yV32y", "nc")
+BUILTIN(__builtin_aie2ps_vgefloat16, "UiV32xV32x", "nc")
+
+// vlt
+BUILTIN(__builtin_aie2ps_vlt8, "V2iV64cV64ci", "nc")
+BUILTIN(__builtin_aie2ps_vltfloat8, "V2iV64cV64c", "nc")
+BUILTIN(__builtin_aie2ps_vltbfloat8, "V2iV64cV64c", "nc")
+BUILTIN(__builtin_aie2ps_vlt16, "UiV32sV32si", "nc")
+BUILTIN(__builtin_aie2ps_vlt32, "UiV16iV16ii", "nc")
+BUILTIN(__builtin_aie2ps_vltfloat16, "UiV32xV32x", "nc")
+BUILTIN(__builtin_aie2ps_vltbfloat16, "UiV32yV32y", "nc")
+
+// vmaxdiff_lt
+BUILTIN(__builtin_aie2ps_vmaxdiff_lt8, "V64cV64cV64ciUWi&", "nc")
+BUILTIN(__builtin_aie2ps_vmaxdiff_lt16, "V32sV32sV32siUi&", "nc")
+BUILTIN(__builtin_aie2ps_vmaxdiff_lt32, "V16iV16iV16iiUi&", "nc")
+
+// vmax_lt
+BUILTIN(__builtin_aie2ps_vmax_lt8, "V64cV64cV64ciUWi&", "nc")
+BUILTIN(__builtin_aie2ps_vmax_ltfloat8, "V64cV64cV64cUWi&", "nc")
+BUILTIN(__builtin_aie2ps_vmax_ltbfloat8, "V64cV64cV64cUWi&", "nc")
+BUILTIN(__builtin_aie2ps_vmax_lt16, "V32sV32sV32siUi&", "nc")
+BUILTIN(__builtin_aie2ps_vmax_lt32, "V16iV16iV16iiUi&", "nc")
+BUILTIN(__builtin_aie2ps_vmax_ltfloat16, "V32xV32xV32xUi&", "nc")
+BUILTIN(__builtin_aie2ps_vmax_ltbfloat16, "V32yV32yV32yUi&", "nc")
+
+// vmin_ge
+BUILTIN(__builtin_aie2ps_vmin_ge8, "V64cV64cV64ciUWi&", "nc")
+BUILTIN(__builtin_aie2ps_vmin_gefloat8, "V64cV64cV64cUWi&", "nc")
+BUILTIN(__builtin_aie2ps_vmin_gebfloat8, "V64cV64cV64cUWi&", "nc")
+BUILTIN(__builtin_aie2ps_vmin_ge16, "V32sV32sV32siUi&", "nc")
+BUILTIN(__builtin_aie2ps_vmin_ge32, "V16iV16iV16iiUi&", "nc")
+BUILTIN(__builtin_aie2ps_vmin_gefloat16, "V32xV32xV32xUi&", "nc")
+BUILTIN(__builtin_aie2ps_vmin_gebfloat16, "V32yV32yV32yUi&", "nc")
+
+// vneg_gtz
+BUILTIN(__builtin_aie2ps_vneg_gtz8, "V64cV64cUWi&", "nc")
+BUILTIN(__builtin_aie2ps_vneg_gtz16, "V32sV32sUi&", "nc")
+BUILTIN(__builtin_aie2ps_vneg_gtz32, "V16iV16iUi&", "nc")
+
+// vsel
+BUILTIN(__builtin_aie2ps_vsel8, "V64cV64cV64cV2i", "nc")
+BUILTIN(__builtin_aie2ps_vsel16, "V32sV32sV32sUi", "nc")
+BUILTIN(__builtin_aie2ps_vsel32, "V16iV16iV16iUi", "nc")
+
+// vsub_ge
+BUILTIN(__builtin_aie2ps_vsub_ge8, "V64cV64cV64ciUWi&", "nc")
+BUILTIN(__builtin_aie2ps_vsub_ge16, "V32sV32sV32siUi&", "nc")
+BUILTIN(__builtin_aie2ps_vsub_ge32, "V16iV16iV16iiUi&", "nc")
+
+// vsub_lt
+BUILTIN(__builtin_aie2ps_vsub_lt8, "V64cV64cV64ciUWi&", "nc")
+BUILTIN(__builtin_aie2ps_vsub_lt16, "V32sV32sV32siUi&", "nc")
+BUILTIN(__builtin_aie2ps_vsub_lt32, "V16iV16iV16iiUi&", "nc")
+
+// vector bfloat16 to vector int
+BUILTIN(__builtin_aie2ps_v16bf16_to_v16i32, "V16iV16yi", "nc")
+
+// Streams
+// Cascade stream read
+BUILTIN(__builtin_aie2ps_scd_read_vec, "V16ii", "nc")
+BUILTIN(__builtin_aie2ps_scd_read_acc32, "V16ni", "nc")
+BUILTIN(__builtin_aie2ps_scd_expand_lo, "V32ni", "nc")
+BUILTIN(__builtin_aie2ps_scd_expand_hi, "V32ni", "nc")
+
+// Cascade stream write
+BUILTIN(__builtin_aie2ps_mcd_write_vec, "vV16ii", "nc")
+BUILTIN(__builtin_aie2ps_mcd_write_acc32, "vV16ni", "nc")
+
+// Scalar stream read
+BUILTIN(__builtin_aie2ps_get_ss, "ii&", "nc")
+BUILTIN(__builtin_aie2ps_get_ss_nb, "ii&", "nc")
+
+// Scalar stream write
+BUILTIN(__builtin_aie2ps_put_ms, "vii", "nc")
+BUILTIN(__builtin_aie2ps_put_ms_nb, "viii&", "nc")
+
+//Read data into selected accumulator lanes from cascade stream.
+BUILTIN(__builtin_aie2ps_scd_ACC2048, "V64nii", "nc")
+BUILTIN(__builtin_aie2ps_scd_expand_ACC1024, "V32nii", "nc")
+BUILTIN(__builtin_aie2ps_scd_expand_ACC2048, "V64nii", "nc")
+BUILTIN(__builtin_aie2ps_scd_expand_ACC1024_incr, "V32niv*i&", "nc")
+BUILTIN(__builtin_aie2ps_scd_expand_ACC2048_incr, "V64niv*i&", "nc")
+
+//addr
+BUILTIN(__builtin_aie2ps_add_2d, "v*v*iiii&", "nc")
+BUILTIN(__builtin_aie2ps_add_3d, "v*v*iiiii&ii&", "nc")
+
+BUILTIN(__builtin_aie2ps_load_4x16_lo, "V8iV8i", "nc")
+BUILTIN(__builtin_aie2ps_load_4x16_hi, "V8iV8i", "nc")
+BUILTIN(__builtin_aie2ps_load_4x32_lo, "V8iV8i", "nc")
+BUILTIN(__builtin_aie2ps_load_4x32_hi, "V8iV8i", "nc")
+BUILTIN(__builtin_aie2ps_load_4x64_lo, "V8iV8i", "nc")
+BUILTIN(__builtin_aie2ps_load_4x64_hi, "V8iV8i", "nc")
+
+// Pack-Unpack
+BUILTIN(__builtin_aie2ps_pack_I512_I8_I16, "V32cV32si", "nc")
+BUILTIN(__builtin_aie2ps_pack_I512_I4_I8, "V32cV64ci", "nc")
+BUILTIN(__builtin_aie2ps_unpack_I512_I16_I8, "V32sV32ci", "nc")
+BUILTIN(__builtin_aie2ps_unpack_I512_I8_I4, "V64cV32ci", "nc")
+BUILTIN(__builtin_aie2ps_pack_I1024_I8_I16, "V64cV64si", "nc")
+BUILTIN(__builtin_aie2ps_pack_I1024_I4_I8, "V64cV128ci", "nc")
+BUILTIN(__builtin_aie2ps_unpack_I1024_I16_I8, "V64sV64ci", "nc")
+BUILTIN(__builtin_aie2ps_unpack_I1024_I8_I4, "V128cV64ci", "nc")
+
+// Unaligned and bfp16 loads
+BUILTIN(__builtin_aie2ps_fifo_ld_fill,                 "vv*&V32i&i&", "t")
+BUILTIN(__builtin_aie2ps_fifo_ld_pop_512_unaligned,    "V64cv*&V32i&i&", "t")
+BUILTIN(__builtin_aie2ps_fifo_ld_pop_BFP640,        "vv*&V32i&i&V16i&V2i&V2i&", "t")
+BUILTIN(__builtin_aie2ps_fifo_ld_pop_BFP768,        "vv*&V32i&i&V8i&V8i&V2i&V2i&i&i&i&i&", "t")
+BUILTIN(__builtin_aie2ps_fifo_ld_pop_1d_512_unaligned, "V64cv*&V32i&i&i", "t")
+BUILTIN(__builtin_aie2ps_fifo_ld_pop_1d_BFP640,     "vv*&V32i&i&iV16i&V2i&V2i&", "t")
+BUILTIN(__builtin_aie2ps_fifo_ld_pop_1d_BFP768,     "vv*&V32i&i&iV8i&V8i&V2i&V2i&i&i&i&i&", "t")
+BUILTIN(__builtin_aie2ps_fifo_ld_pop_2d_512_unaligned, "V64cv*&V32i&i&iii&i", "t")
+BUILTIN(__builtin_aie2ps_fifo_ld_pop_2d_BFP640,     "vv*&V32i&i&iii&iV16i&V2i&V2i&", "t")
+BUILTIN(__builtin_aie2ps_fifo_ld_pop_2d_BFP768,     "vv*&V32i&i&iii&iV8i&V8i&V2i&V2i&i&i&i&i&", "t")
+BUILTIN(__builtin_aie2ps_fifo_ld_pop_3d_512_unaligned, "V64cv*&V32i&i&iii&iii&i", "t")
+BUILTIN(__builtin_aie2ps_fifo_ld_pop_3d_BFP640,     "vv*&V32i&i&iii&iii&iV16i&V2i&V2i&", "t")
+BUILTIN(__builtin_aie2ps_fifo_ld_pop_3d_BFP768,     "vv*&V32i&i&iii&iii&iV8i&V8i&V2i&V2i&i&i&i&i&", "t")
+// Unaligned and bfp16 loads with extra storage
+BUILTIN(__builtin_aie2ps_fifo_ld_fillx, "vv*&V32i&i&V16i&i", "t")
+BUILTIN(__builtin_aie2ps_fifo_ld_popx, "V64cv*&V32i&i&V16i&i", "t")
+
+// Unaligned and bfp16 stores
+BUILTIN(__builtin_aie2ps_fifo_st_push_512,     "vv*&V16iV32i&i&", "t")
+BUILTIN(__builtin_aie2ps_fifo_st_push_BFP384,     "vv*&V32i&i&V8iV2iii", "t")
+BUILTIN(__builtin_aie2ps_fifo_st_push_BFP640,     "vv*&V32i&i&V16iV2iV2i", "t")
+BUILTIN(__builtin_aie2ps_fifo_st_push_BFP768,     "vv*&V32i&i&V8iV8iV2iV2iiiii", "t")
+BUILTIN(__builtin_aie2ps_fifo_st_flush,              "vv*&V32i&i&", "t")
+BUILTIN(__builtin_aie2ps_fifo_st_flush_1d_byte,      "vv*&V32i&i&i", "t")
+BUILTIN(__builtin_aie2ps_fifo_st_flush_2d_byte,      "vv*&V32i&i&iii&i", "t")
+BUILTIN(__builtin_aie2ps_fifo_st_flush_3d_byte,      "vv*&V32i&i&iii&iii&i", "t")
+BUILTIN(__builtin_aie2ps_fifo_st_flush_conv,         "vv*&V32i&i&", "t")
+BUILTIN(__builtin_aie2ps_fifo_st_flush_conv_1d_byte, "vv*&V32i&i&i", "t")
+BUILTIN(__builtin_aie2ps_fifo_st_flush_conv_2d_byte, "vv*&V32i&i&iii&i", "t")
+BUILTIN(__builtin_aie2ps_fifo_st_flush_conv_3d_byte, "vv*&V32i&i&iii&iii&i", "t")

@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 /// \file
@@ -23,6 +23,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
 #include "llvm/IR/IntrinsicsAIE2P.h"
+#include "llvm/IR/IntrinsicsAIE2PS.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -79,6 +80,8 @@ static bool isAIEPtrAddIntrinsic(Intrinsic::ID ID, unsigned &InPtrIdx) {
   case Intrinsic::aie2_add_3d:
   case Intrinsic::aie2p_add_2d:
   case Intrinsic::aie2p_add_3d:
+  case Intrinsic::aie2ps_add_2d:
+  case Intrinsic::aie2ps_add_3d:
     // FIXME: with 2d/3d addressig mode with fifo vectore store/load (vst/vld),
     // we currently can't determine what memory location we will change, which
     // may cause issues when non-fifo 2d/3d vst/vld are combined with fifo
@@ -97,13 +100,12 @@ static bool isAIEPtrAddIntrinsic(Intrinsic::ID ID, unsigned &InPtrIdx) {
 static SmallVector<unsigned, 5> getAddIntrinsicOps(Intrinsic::ID ID) {
   switch (ID) {
   case Intrinsic::aie2_add_2d:
+  case Intrinsic::aie2p_add_2d:
+  case Intrinsic::aie2ps_add_2d:
     return {1, 2, 3 /*,count*/};
   case Intrinsic::aie2_add_3d:
-    return {1, 2, 3, 4, /*,count1*/ 6,
-            /*,count2*/};
-  case Intrinsic::aie2p_add_2d:
-    return {1, 2, 3 /*,count*/};
   case Intrinsic::aie2p_add_3d:
+  case Intrinsic::aie2ps_add_3d:
     return {1, 2, 3, 4, /*,count1*/ 6,
             /*,count2*/};
   default:
@@ -117,12 +119,12 @@ static SmallVector<unsigned, 5> getAddIntrinsicOps(Intrinsic::ID ID) {
 static SmallVector<unsigned, 5> getAddIntrinsicCounterOps(Intrinsic::ID ID) {
   switch (ID) {
   case Intrinsic::aie2_add_2d:
+  case Intrinsic::aie2p_add_2d:
+  case Intrinsic::aie2ps_add_2d:
     return {4};
   case Intrinsic::aie2_add_3d:
-    return {5, 7};
-  case Intrinsic::aie2p_add_2d:
-    return {4};
   case Intrinsic::aie2p_add_3d:
+  case Intrinsic::aie2ps_add_3d:
     return {5, 7};
   default:
     llvm_unreachable("Unknown intrinsic");
