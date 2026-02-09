@@ -1,0 +1,174 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VPACK_mv_pack_w_packSign0
+    $wh7 = VPACK_mv_pack_w_packSign0 $x10, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $wl4 = VPACK_mv_pack_w_packSign0 $x2, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $wh4 = VPACK_mv_pack_w_packSign0 $x8, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $wl10 = VPACK_mv_pack_w_packSign0 $x9, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $wl9 = VPACK_mv_pack_w_packSign0 $x3, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $wl8 = VPACK_mv_pack_w_packSign0 $x5, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $wl11 = VPACK_mv_pack_w_packSign0 $x1, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $wh9 = VPACK_mv_pack_w_packSign0 $x11, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $wl3 = VPACK_mv_pack_w_packSign0 $x0, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $wh2 = VPACK_mv_pack_w_packSign0 $x7, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $wh0 = VPACK_mv_pack_w_packSign0 $x4, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $wh6 = VPACK_mv_pack_w_packSign0 $x6, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $wh11 = VPACK_mv_pack_w_packSign0 $x10, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $wl2 = VPACK_mv_pack_w_packSign0 $x2, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $wl5 = VPACK_mv_pack_w_packSign0 $x8, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $wh5 = VPACK_mv_pack_w_packSign0 $x9, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $wh8 = VPACK_mv_pack_w_packSign0 $x3, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $wl0 = VPACK_mv_pack_w_packSign0 $x5, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $wl1 = VPACK_mv_pack_w_packSign0 $x1, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $wh10 = VPACK_mv_pack_w_packSign0 $x11, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $wh3 = VPACK_mv_pack_w_packSign0 $x0, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $wl6 = VPACK_mv_pack_w_packSign0 $x7, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $wl7 = VPACK_mv_pack_w_packSign0 $x4, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $wh1 = VPACK_mv_pack_w_packSign0 $x6, implicit $crpacksize, implicit $crsat, implicit $packsign0
+
+    ; VPACK_mv_pack_w_packSign1
+    $wl7 = VPACK_mv_pack_w_packSign1 $x8, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $wl5 = VPACK_mv_pack_w_packSign1 $x9, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $wl3 = VPACK_mv_pack_w_packSign1 $x11, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $wl9 = VPACK_mv_pack_w_packSign1 $x3, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $wl4 = VPACK_mv_pack_w_packSign1 $x1, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $wh1 = VPACK_mv_pack_w_packSign1 $x7, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $wh5 = VPACK_mv_pack_w_packSign1 $x0, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $wh2 = VPACK_mv_pack_w_packSign1 $x10, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $wh7 = VPACK_mv_pack_w_packSign1 $x6, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $wh0 = VPACK_mv_pack_w_packSign1 $x5, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $wl6 = VPACK_mv_pack_w_packSign1 $x2, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $wl0 = VPACK_mv_pack_w_packSign1 $x4, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $wh3 = VPACK_mv_pack_w_packSign1 $x8, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $wl8 = VPACK_mv_pack_w_packSign1 $x9, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $wh9 = VPACK_mv_pack_w_packSign1 $x11, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $wl1 = VPACK_mv_pack_w_packSign1 $x3, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $wl10 = VPACK_mv_pack_w_packSign1 $x1, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $wh8 = VPACK_mv_pack_w_packSign1 $x7, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $wh11 = VPACK_mv_pack_w_packSign1 $x0, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $wh10 = VPACK_mv_pack_w_packSign1 $x10, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $wl11 = VPACK_mv_pack_w_packSign1 $x6, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $wh4 = VPACK_mv_pack_w_packSign1 $x5, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $wh6 = VPACK_mv_pack_w_packSign1 $x2, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $wl2 = VPACK_mv_pack_w_packSign1 $x4, implicit $crpacksize, implicit $crsat, implicit $packsign1
+
+    ; VPACK_mv_pack_x_packSign0
+    $x9 = VPACK_mv_pack_x_packSign0 $y4, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $x5 = VPACK_mv_pack_x_packSign0 $y0, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $x1 = VPACK_mv_pack_x_packSign0 $y3, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $x0 = VPACK_mv_pack_x_packSign0 $y2, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $x2 = VPACK_mv_pack_x_packSign0 $y5, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $x11 = VPACK_mv_pack_x_packSign0 $y1, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $x6 = VPACK_mv_pack_x_packSign0 $y4, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $x10 = VPACK_mv_pack_x_packSign0 $y0, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $x3 = VPACK_mv_pack_x_packSign0 $y3, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $x7 = VPACK_mv_pack_x_packSign0 $y2, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $x4 = VPACK_mv_pack_x_packSign0 $y5, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $x8 = VPACK_mv_pack_x_packSign0 $y1, implicit $crpacksize, implicit $crsat, implicit $packsign0
+
+    ; VPACK_mv_pack_x_packSign1
+    $x2 = VPACK_mv_pack_x_packSign1 $y0, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $x5 = VPACK_mv_pack_x_packSign1 $y5, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $x11 = VPACK_mv_pack_x_packSign1 $y2, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $x1 = VPACK_mv_pack_x_packSign1 $y4, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $x0 = VPACK_mv_pack_x_packSign1 $y1, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $x8 = VPACK_mv_pack_x_packSign1 $y3, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $x10 = VPACK_mv_pack_x_packSign1 $y0, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $x4 = VPACK_mv_pack_x_packSign1 $y5, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $x3 = VPACK_mv_pack_x_packSign1 $y2, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $x9 = VPACK_mv_pack_x_packSign1 $y4, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $x7 = VPACK_mv_pack_x_packSign1 $y1, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $x6 = VPACK_mv_pack_x_packSign1 $y3, implicit $crpacksize, implicit $crsat, implicit $packsign1
+...
+
+# CHECK: 0: f0 95 da 13 vpack wh7, x10, packsign0
+# CHECK: 4: f0 95 18 12 vpack wl4, x2, packsign0
+# CHECK: 8: f0 15 5a 12 vpack wh4, x8, packsign0
+# CHECK: c: f0 55 1a 15 vpack wl10, x9, packsign0
+# CHECK: 10: f0 d5 98 14 vpack wl9, x3, packsign0
+# CHECK: 14: f0 55 19 14 vpack wl8, x5, packsign0
+# CHECK: 18: f0 55 98 15 vpack wl11, x1, packsign0
+# CHECK: 1c: f0 d5 da 14 vpack wh9, x11, packsign0
+# CHECK: 20: f0 15 98 11 vpack wl3, x0, packsign0
+# CHECK: 24: f0 d5 59 11 vpack wh2, x7, packsign0
+# CHECK: 28: f0 15 59 10 vpack wh0, x4, packsign0
+# CHECK: 2c: f0 95 59 13 vpack wh6, x6, packsign0
+# CHECK: 30: f0 95 da 15 vpack wh11, x10, packsign0
+# CHECK: 34: f0 95 18 11 vpack wl2, x2, packsign0
+# CHECK: 38: f0 15 9a 12 vpack wl5, x8, packsign0
+# CHECK: 3c: f0 55 da 12 vpack wh5, x9, packsign0
+# CHECK: 40: f0 d5 58 14 vpack wh8, x3, packsign0
+# CHECK: 44: f0 55 19 10 vpack wl0, x5, packsign0
+# CHECK: 48: f0 55 98 10 vpack wl1, x1, packsign0
+# CHECK: 4c: f0 d5 5a 15 vpack wh10, x11, packsign0
+# CHECK: 50: f0 15 d8 11 vpack wh3, x0, packsign0
+# CHECK: 54: f0 d5 19 13 vpack wl6, x7, packsign0
+# CHECK: 58: f0 15 99 13 vpack wl7, x4, packsign0
+# CHECK: 5c: f0 95 d9 10 vpack wh1, x6, packsign0
+# CHECK: 60: f0 35 9a 13 vpack wl7, x8, packsign1
+# CHECK: 64: f0 75 9a 12 vpack wl5, x9, packsign1
+# CHECK: 68: f0 f5 9a 11 vpack wl3, x11, packsign1
+# CHECK: 6c: f0 f5 98 14 vpack wl9, x3, packsign1
+# CHECK: 70: f0 75 18 12 vpack wl4, x1, packsign1
+# CHECK: 74: f0 f5 d9 10 vpack wh1, x7, packsign1
+# CHECK: 78: f0 35 d8 12 vpack wh5, x0, packsign1
+# CHECK: 7c: f0 b5 5a 11 vpack wh2, x10, packsign1
+# CHECK: 80: f0 b5 d9 13 vpack wh7, x6, packsign1
+# CHECK: 84: f0 75 59 10 vpack wh0, x5, packsign1
+# CHECK: 88: f0 b5 18 13 vpack wl6, x2, packsign1
+# CHECK: 8c: f0 35 19 10 vpack wl0, x4, packsign1
+# CHECK: 90: f0 35 da 11 vpack wh3, x8, packsign1
+# CHECK: 94: f0 75 1a 14 vpack wl8, x9, packsign1
+# CHECK: 98: f0 f5 da 14 vpack wh9, x11, packsign1
+# CHECK: 9c: f0 f5 98 10 vpack wl1, x3, packsign1
+# CHECK: a0: f0 75 18 15 vpack wl10, x1, packsign1
+# CHECK: a4: f0 f5 59 14 vpack wh8, x7, packsign1
+# CHECK: a8: f0 35 d8 15 vpack wh11, x0, packsign1
+# CHECK: ac: f0 b5 5a 15 vpack wh10, x10, packsign1
+# CHECK: b0: f0 b5 99 15 vpack wl11, x6, packsign1
+# CHECK: b4: f0 75 59 12 vpack wh4, x5, packsign1
+# CHECK: b8: f0 b5 58 13 vpack wh6, x2, packsign1
+# CHECK: bc: f0 35 19 11 vpack wl2, x4, packsign1
+# CHECK: c0: f0 15 9e 14 vpack x9, y4, packsign0
+# CHECK: c4: f0 15 9c 12 vpack x5, y0, packsign0
+# CHECK: c8: f0 95 9d 10 vpack x1, y3, packsign0
+# CHECK: cc: f0 15 1d 10 vpack x0, y2, packsign0
+# CHECK: d0: f0 95 1e 11 vpack x2, y5, packsign0
+# CHECK: d4: f0 95 9c 15 vpack x11, y1, packsign0
+# CHECK: d8: f0 15 1e 13 vpack x6, y4, packsign0
+# CHECK: dc: f0 15 1c 15 vpack x10, y0, packsign0
+# CHECK: e0: f0 95 9d 11 vpack x3, y3, packsign0
+# CHECK: e4: f0 15 9d 13 vpack x7, y2, packsign0
+# CHECK: e8: f0 95 1e 12 vpack x4, y5, packsign0
+# CHECK: ec: f0 95 1c 14 vpack x8, y1, packsign0
+# CHECK: f0: f0 35 1c 11 vpack x2, y0, packsign1
+# CHECK: f4: f0 b5 9e 12 vpack x5, y5, packsign1
+# CHECK: f8: f0 35 9d 15 vpack x11, y2, packsign1
+# CHECK: fc: f0 35 9e 10 vpack x1, y4, packsign1
+# CHECK: 100: f0 b5 1c 10 vpack x0, y1, packsign1
+# CHECK: 104: f0 b5 1d 14 vpack x8, y3, packsign1
+# CHECK: 108: f0 35 1c 15 vpack x10, y0, packsign1
+# CHECK: 10c: f0 b5 1e 12 vpack x4, y5, packsign1
+# CHECK: 110: f0 35 9d 11 vpack x3, y2, packsign1
+# CHECK: 114: f0 35 9e 14 vpack x9, y4, packsign1
+# CHECK: 118: f0 b5 9c 13 vpack x7, y1, packsign1
+# CHECK: 11c: f0 b5 1d 13 vpack x6, y3, packsign1

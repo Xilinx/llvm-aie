@@ -4,12 +4,14 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 
 ; RUN: llc -O2 -mtriple=aie2 --issue-limit=1 --enable-aie-zero-overhead-loops=false \
 ; RUN:    --aie-force-hl-gen=true %s -o - | FileCheck %s --check-prefix=AIE2
 ; RUN: llc -O2 -mtriple=aie2p --issue-limit=1 --enable-aie-zero-overhead-loops=false \
 ; RUN:    --aie-force-hl-gen=true %s -o - | FileCheck %s --check-prefix=AIE2P
+; RUN: llc -O2 -mtriple=aie2ps --issue-limit=1 --enable-aie-zero-overhead-loops=false \
+; RUN:    --aie-force-hl-gen=true %s -o - | FileCheck %s --check-prefix=AIE2PS
 
 ; Check that we recognize the two level nested loops as hardware loop candidates.
 ; In the LLVM IR input, the loop guards have been removed to allow for a simpler
@@ -115,6 +117,55 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; AIE2P-NEXT:    nop // Delay Slot 3
 ; AIE2P-NEXT:    nop // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
+;
+; AIE2PS-LABEL: nested:
+; AIE2PS:       // %bb.0: // %for.cond3.preheader.lr.ph
+; AIE2PS-NEXT:    mova r4, #0; nopb ; nops ; nopxm ; nopv
+; AIE2PS-NEXT:    mova r6, #2; nopx
+; AIE2PS-NEXT:    movxm p2, #.LBB0_2
+; AIE2PS-NEXT:    lda r2, [p0, #0]
+; AIE2PS-NEXT:  .LBB0_1: // %for.cond3.preheader
+; AIE2PS-NEXT:    // =>This Loop Header: Depth=1
+; AIE2PS-NEXT:    // Child Loop BB0_2 Depth 2
+; AIE2PS-NEXT:    nopa ; lshl r16, r4, r6; nopm
+; AIE2PS-NEXT:    mov dj0, r16
+; AIE2PS-NEXT:    lda p3, [p1, dj0]
+; AIE2PS-NEXT:    nop
+; AIE2PS-NEXT:    nop
+; AIE2PS-NEXT:    nop
+; AIE2PS-NEXT:    addm.nc r3, r1, #-1
+; AIE2PS-NEXT:    mova r16, #0
+; AIE2PS-NEXT:  .LBB0_2: // %for.body6
+; AIE2PS-NEXT:    // Parent Loop BB0_1 Depth=1
+; AIE2PS-NEXT:    // => This Inner Loop Header: Depth=2
+; AIE2PS-NEXT:    nopa ; lshl r18, r16, r6; nopm
+; AIE2PS-NEXT:    mov dj0, r18
+; AIE2PS-NEXT:    lda r18, [p3, dj0]
+; AIE2PS-NEXT:    nop
+; AIE2PS-NEXT:    nop
+; AIE2PS-NEXT:    jnzd r3, r3, p2
+; AIE2PS-NEXT:    nop // Delay Slot 5
+; AIE2PS-NEXT:    nop // Delay Slot 4
+; AIE2PS-NEXT:    add r16, r16, #1 // Delay Slot 3
+; AIE2PS-NEXT:    add r2, r2, r18 // Delay Slot 2
+; AIE2PS-NEXT:    st r2, [p0, #0] // Delay Slot 1
+; AIE2PS-NEXT:  // %bb.3: // %for.cond3.for.cond.cleanup5_crit_edge
+; AIE2PS-NEXT:    // in Loop: Header=BB0_1 Depth=1
+; AIE2PS-NEXT:    add r4, r4, #1
+; AIE2PS-NEXT:    eq r16, r0, r4
+; AIE2PS-NEXT:    jz r16, #.LBB0_1
+; AIE2PS-NEXT:    nop // Delay Slot 5
+; AIE2PS-NEXT:    nop // Delay Slot 4
+; AIE2PS-NEXT:    nop // Delay Slot 3
+; AIE2PS-NEXT:    nop // Delay Slot 2
+; AIE2PS-NEXT:    nop // Delay Slot 1
+; AIE2PS-NEXT:  // %bb.4: // %for.cond.cleanup
+; AIE2PS-NEXT:    ret lr
+; AIE2PS-NEXT:    nop // Delay Slot 5
+; AIE2PS-NEXT:    nop // Delay Slot 4
+; AIE2PS-NEXT:    nop // Delay Slot 3
+; AIE2PS-NEXT:    nop // Delay Slot 2
+; AIE2PS-NEXT:    nop // Delay Slot 1
 for.cond3.preheader.lr.ph:
   %out.promoted22 = load i32, ptr %out, align 4
   br label %for.cond3.preheader

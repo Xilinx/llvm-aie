@@ -4,9 +4,10 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2 -run-pass=aie2-postlegalizer-generic-combiner -run-pass=aie-cluster-base-address -run-pass=aie2-postlegalizer-custom-combiner %s -verify-machineinstrs -o - | FileCheck %s
 # RUN: llc -mtriple aie2p -run-pass=aie2p-postlegalizer-generic-combiner -run-pass=aie-cluster-base-address -run-pass=aie2p-postlegalizer-custom-combiner %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2ps -run-pass=aie2ps-postlegalizer-generic-combiner -run-pass=aie-cluster-base-address -run-pass=aie2ps-postlegalizer-custom-combiner %s -verify-machineinstrs -o - | FileCheck %s
 
 ---
 name:            loads_stores_with_multiple_base_ptrs_single_bb_postinc_combine

@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -154,10 +154,12 @@ void LLVMInitializeAIE1AsmParser() {
 
 void LLVMInitializeAIE2AsmParser();
 void LLVMInitializeAIE2PAsmParser();
+void LLVMInitializeAIE2PSAsmParser();
 
 // Register hook for all the AIE AsmParsers
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIEAsmParser() {
   LLVMInitializeAIE1AsmParser();
   LLVMInitializeAIE2AsmParser();
   LLVMInitializeAIE2PAsmParser();
+  LLVMInitializeAIE2PSAsmParser();
 }

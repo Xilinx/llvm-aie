@@ -3,7 +3,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 set(LLVM_TARGET_DEFINITIONS Attributes.td)
 tablegen(LLVM Attributes.inc -gen-attrs)
 
@@ -14,6 +14,7 @@ tablegen(LLVM IntrinsicsAArch64.h -gen-intrinsic-enums -intrinsic-prefix=aarch64
 tablegen(LLVM IntrinsicsAIE.h -gen-intrinsic-enums -intrinsic-prefix=aie)
 tablegen(LLVM IntrinsicsAIE2.h -gen-intrinsic-enums -intrinsic-prefix=aie2)
 tablegen(LLVM IntrinsicsAIE2P.h -gen-intrinsic-enums -intrinsic-prefix=aie2p)
+tablegen(LLVM IntrinsicsAIE2PS.h -gen-intrinsic-enums -intrinsic-prefix=aie2ps)
 tablegen(LLVM IntrinsicsAMDGPU.h -gen-intrinsic-enums -intrinsic-prefix=amdgcn)
 tablegen(LLVM IntrinsicsARM.h -gen-intrinsic-enums -intrinsic-prefix=arm)
 tablegen(LLVM IntrinsicsBPF.h -gen-intrinsic-enums -intrinsic-prefix=bpf)

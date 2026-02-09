@@ -5,11 +5,12 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 // RUN: %clang -O2 %s --target=aie2 -nostdlibinc -S -emit-llvm -o - | FileCheck %s --check-prefix=AIE2
 // RUN: %clang -O2 %s --target=aie2p -nostdlibinc -S -emit-llvm -o - | FileCheck %s --check-prefix=AIE2P
+// RUN: %clang -O2 %s --target=aie2ps -nostdlibinc -S -emit-llvm -o - | FileCheck %s --check-prefix=AIE2PS
 
 // AIE2-LABEL: @_Z12band_v32bf16Dv32_8bfloat16S0_(
 // AIE2-NEXT:  entry:
@@ -26,6 +27,14 @@
 // AIE2P-NEXT:    [[AND_I:%.*]] = and <16 x i32> [[TMP1]], [[TMP0]]
 // AIE2P-NEXT:    [[TMP2:%.*]] = bitcast <16 x i32> [[AND_I]] to <32 x bfloat>
 // AIE2P-NEXT:    ret <32 x bfloat> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z12band_v32bf16Dv32_8bfloat16S0_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast <32 x bfloat> [[A:%.*]] to <16 x i32>
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <32 x bfloat> [[B:%.*]] to <16 x i32>
+// AIE2PS-NEXT:    [[AND_I:%.*]] = and <16 x i32> [[TMP1]], [[TMP0]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = bitcast <16 x i32> [[AND_I]] to <32 x bfloat>
+// AIE2PS-NEXT:    ret <32 x bfloat> [[TMP2]]
 //
 v32bfloat16 band_v32bf16(v32bfloat16 a, v32bfloat16 b) {
   return band(a, b);
@@ -45,6 +54,14 @@ v32bfloat16 band_v32bf16(v32bfloat16 a, v32bfloat16 b) {
 // AIE2P-NEXT:    [[OR_I:%.*]] = or <16 x i32> [[TMP1]], [[TMP0]]
 // AIE2P-NEXT:    [[TMP2:%.*]] = bitcast <16 x i32> [[OR_I]] to <32 x bfloat>
 // AIE2P-NEXT:    ret <32 x bfloat> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z11bor_v32bf16Dv32_8bfloat16S0_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast <32 x bfloat> [[A:%.*]] to <16 x i32>
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <32 x bfloat> [[B:%.*]] to <16 x i32>
+// AIE2PS-NEXT:    [[OR_I:%.*]] = or <16 x i32> [[TMP1]], [[TMP0]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = bitcast <16 x i32> [[OR_I]] to <32 x bfloat>
+// AIE2PS-NEXT:    ret <32 x bfloat> [[TMP2]]
 //
 v32bfloat16 bor_v32bf16(v32bfloat16 a, v32bfloat16 b) {
   return bor(a, b);
@@ -81,6 +98,24 @@ v32bfloat16 bor_v32bf16(v32bfloat16 a, v32bfloat16 b) {
 // AIE2P-NEXT:    [[TMP10:%.*]] = bitcast <16 x i32> [[OR_I_I]] to <32 x bfloat>
 // AIE2P-NEXT:    ret <32 x bfloat> [[TMP10]]
 //
+// AIE2PS-LABEL: @_Z12bxor_v32bf16Dv32_8bfloat16S0_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast <32 x bfloat> [[B:%.*]] to <32 x i16>
+// AIE2PS-NEXT:    [[TMP1:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vbneg.ltz16(<32 x i16> [[TMP0]])
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP1]], 0
+// AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast <32 x bfloat> [[A:%.*]] to <16 x i32>
+// AIE2PS-NEXT:    [[TMP4:%.*]] = bitcast <32 x i16> [[TMP2]] to <16 x i32>
+// AIE2PS-NEXT:    [[AND_I_I:%.*]] = and <16 x i32> [[TMP4]], [[TMP3]]
+// AIE2PS-NEXT:    [[TMP5:%.*]] = bitcast <32 x bfloat> [[A]] to <32 x i16>
+// AIE2PS-NEXT:    [[TMP6:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vbneg.ltz16(<32 x i16> [[TMP5]])
+// AIE2PS-NEXT:    [[TMP7:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP6]], 0
+// AIE2PS-NEXT:    [[TMP8:%.*]] = bitcast <32 x i16> [[TMP7]] to <16 x i32>
+// AIE2PS-NEXT:    [[TMP9:%.*]] = bitcast <32 x bfloat> [[B]] to <16 x i32>
+// AIE2PS-NEXT:    [[AND_I7_I:%.*]] = and <16 x i32> [[TMP8]], [[TMP9]]
+// AIE2PS-NEXT:    [[OR_I_I:%.*]] = or <16 x i32> [[AND_I7_I]], [[AND_I_I]]
+// AIE2PS-NEXT:    [[TMP10:%.*]] = bitcast <16 x i32> [[OR_I_I]] to <32 x bfloat>
+// AIE2PS-NEXT:    ret <32 x bfloat> [[TMP10]]
+//
 v32bfloat16 bxor_v32bf16(v32bfloat16 a, v32bfloat16 b) {
   return bxor(a, b);
 }
@@ -100,6 +135,14 @@ v32bfloat16 bxor_v32bf16(v32bfloat16 a, v32bfloat16 b) {
 // AIE2P-NEXT:    [[TMP3:%.*]] = bitcast <32 x i16> [[TMP2]] to <32 x bfloat>
 // AIE2P-NEXT:    ret <32 x bfloat> [[TMP3]]
 //
+// AIE2PS-LABEL: @_Z12bneg_v32bf16Dv32_8bfloat16(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast <32 x bfloat> [[A:%.*]] to <32 x i16>
+// AIE2PS-NEXT:    [[TMP1:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vbneg.ltz16(<32 x i16> [[TMP0]])
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP1]], 0
+// AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast <32 x i16> [[TMP2]] to <32 x bfloat>
+// AIE2PS-NEXT:    ret <32 x bfloat> [[TMP3]]
+//
 v32bfloat16 bneg_v32bf16(v32bfloat16 a) {
   return bneg(a);
 }
@@ -117,6 +160,13 @@ v32bfloat16 bneg_v32bf16(v32bfloat16 a) {
 // AIE2P-NEXT:    [[AND_I_I:%.*]] = and <16 x i32> [[TMP0]], splat (i32 2147450879)
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <16 x i32> [[AND_I_I]] to <32 x bfloat>
 // AIE2P-NEXT:    ret <32 x bfloat> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z11abs_v32bf16Dv32_8bfloat16(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast <32 x bfloat> [[A:%.*]] to <16 x i32>
+// AIE2PS-NEXT:    [[AND_I_I:%.*]] = and <16 x i32> [[TMP0]], splat (i32 2147450879)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <16 x i32> [[AND_I_I]] to <32 x bfloat>
+// AIE2PS-NEXT:    ret <32 x bfloat> [[TMP1]]
 //
 v32bfloat16 abs_v32bf16(v32bfloat16 a) {
   return abs(a);
@@ -137,6 +187,14 @@ v32bfloat16 abs_v32bf16(v32bfloat16 a) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x bfloat>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x bfloat> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z14max_lt_v32bf16Dv32_8bfloat16S0_Rj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x bfloat>, i32 } @llvm.aie2ps.vmax.ltbfloat16(<32 x bfloat> [[A:%.*]], <32 x bfloat> [[B:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x bfloat>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x bfloat>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x bfloat> [[TMP2]]
+//
 v32bfloat16 max_lt_v32bf16(v32bfloat16 a, v32bfloat16 b, unsigned int &cmp) {
   return max_lt(a, b, cmp);
 }
@@ -151,6 +209,12 @@ v32bfloat16 max_lt_v32bf16(v32bfloat16 a, v32bfloat16 b, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <32 x bfloat>, i32 } @llvm.aie2p.vmax.ltbf16(<32 x bfloat> [[A:%.*]], <32 x bfloat> [[B:%.*]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x bfloat>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x bfloat> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z11max_v32bf16Dv32_8bfloat16S0_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x bfloat>, i32 } @llvm.aie2ps.vmax.ltbfloat16(<32 x bfloat> [[A:%.*]], <32 x bfloat> [[B:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x bfloat>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x bfloat> [[TMP1]]
 //
 v32bfloat16 max_v32bf16(v32bfloat16 a, v32bfloat16 b) {
   return max(a, b);
@@ -171,6 +235,14 @@ v32bfloat16 max_v32bf16(v32bfloat16 a, v32bfloat16 b) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x bfloat>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x bfloat> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z14min_ge_v32bf16Dv32_8bfloat16S0_Rj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x bfloat>, i32 } @llvm.aie2ps.vmin.gebfloat16(<32 x bfloat> [[A:%.*]], <32 x bfloat> [[B:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x bfloat>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x bfloat>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x bfloat> [[TMP2]]
+//
 v32bfloat16 min_ge_v32bf16(v32bfloat16 a, v32bfloat16 b, unsigned int &cmp) {
   return min_ge(a, b, cmp);
 }
@@ -186,6 +258,12 @@ v32bfloat16 min_ge_v32bf16(v32bfloat16 a, v32bfloat16 b, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x bfloat>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x bfloat> [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z11min_v32bf16Dv32_8bfloat16S0_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x bfloat>, i32 } @llvm.aie2ps.vmin.gebfloat16(<32 x bfloat> [[A:%.*]], <32 x bfloat> [[B:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x bfloat>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x bfloat> [[TMP1]]
+//
 v32bfloat16 min_v32bf16(v32bfloat16 a, v32bfloat16 b) {
   return min(a, b);
 }
@@ -198,6 +276,11 @@ v32bfloat16 min_v32bf16(v32bfloat16 a, v32bfloat16 b) {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2p.v16bf16.to.v16i32(<16 x bfloat> [[A:%.*]], i32 [[SHFT:%.*]])
 // AIE2P-NEXT:    ret <16 x i32> [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z20test_bfloat16_to_intDv16_8bfloat16i(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2ps.v16bf16.to.v16i32(<16 x bfloat> [[A:%.*]], i32 [[SHFT:%.*]])
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP0]]
 //
 v16int32 test_bfloat16_to_int(v16bfloat16 a, int shft) {
   return bfloat16_to_int(a, shft);

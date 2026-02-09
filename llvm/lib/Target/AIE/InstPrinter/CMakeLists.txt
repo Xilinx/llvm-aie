@@ -9,6 +9,7 @@ add_llvm_component_library(LLVMAIEAsmPrinter
   AIEInstPrinter.cpp
   AIE2InstPrinter.cpp
   AIE2PInstPrinter.cpp
+  AIE2PSInstPrinter.cpp
 
   LINK_COMPONENTS
   MC

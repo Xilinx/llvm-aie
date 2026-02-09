@@ -1,0 +1,48 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -mtriple=aie2ps -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+
+---
+name:      tied_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    $sf, $p2, $r26, $dc0 = VST_FLUSH_2D $sf, $p2, $r26, $d0, implicit-def $srfifo_of
+    $sf, $p2, $r26, $dc1 = VST_FLUSH_d_2D $sf, $p2, $r26, $d1, implicit-def $srfifo_of
+    $sf, $p2, $r26, $dc0, $dc4 = VST_FLUSH_3D $sf, $p2, $r26, $d0_3d, implicit-def $srfifo_of
+    $sf, $p2, $r26, $dc1, $dc5 = VST_FLUSH_d_3D $sf, $p2, $r26, $d1_3d, implicit-def $srfifo_of
+...
+
+---
+name:      virtual_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    %0:mpfs = COPY $p2
+    %1:mstfifo = COPY $sf
+    %2:mr26_fifo_st = COPY $r26
+    %3:ed = COPY $d0
+    %10:mstfifo, %11:mpfs, %12:mr26_fifo_st, %13:edc = VST_FLUSH_2D %1, %0, %2, %3, implicit-def $srfifo_of
+    %20:mstfifo, %21:mpfs, %22:mr26_fifo_st, %23:edc = VST_FLUSH_d_2D %1, %0, %2, %3, implicit-def $srfifo_of
+    
+    %30:eds = COPY $d0_3d
+    %40:mstfifo, %41:mpfs, %42:mr26_fifo_st, %43:edcl, %44:edch = VST_FLUSH_3D %1, %0, %2, %30, implicit-def $srfifo_of
+    %50:mstfifo, %51:mpfs, %52:mr26_fifo_st, %53:edcl, %54:edch = VST_FLUSH_d_3D %1, %0, %2, %30, implicit-def $srfifo_of
+...
+
+---
+name:      tied_nok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-COUNT-4: Bad machine code: Tied physical registers must match
+    $sf, $p2, $r26, $dc7 = VST_FLUSH_2D $sf, $p2, $r26, $d0, implicit-def $srfifo_of
+    $sf, $p2, $r26, $dc0 = VST_FLUSH_d_2D $sf, $p2, $r26, $d1, implicit-def $srfifo_of
+    $sf, $p2, $r26, $dc0, $dc7 = VST_FLUSH_3D $sf, $p2, $r26, $d0_3d, implicit-def $srfifo_of
+    $sf, $p2, $r26, $dc1, $dc0 = VST_FLUSH_d_3D $sf, $p2, $r26, $d1_3d, implicit-def $srfifo_of
+...

@@ -8,6 +8,7 @@
 #
 # RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2
 # RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2P
+# RUN: llc -mtriple aie2ps -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2PS
 
 ---
 name:            vpush_int32_512
@@ -30,6 +31,12 @@ body:             |
     ; AIE2P-NEXT: [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
     ; AIE2P-NEXT: [[VPUSH_hi_32_:%[0-9]+]]:vec512 = VPUSH_hi_32 [[DEF]], [[MOV_RLC_imm11_pseudo]]
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VPUSH_hi_32_]]
+    ;
+    ; AIE2PS-LABEL: name: vpush_int32_512
+    ; AIE2PS: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 12
+    ; AIE2PS-NEXT: [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[VPUSH_hi_32_:%[0-9]+]]:vec512 = VPUSH_hi_32 [[DEF]], [[MOV_RLC_imm11_pseudo]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[VPUSH_hi_32_]]
     %0:gprregbank(s32) = G_CONSTANT i32 12
     %1:vregbank(<16 x s32>) = G_IMPLICIT_DEF
     %2:vregbank(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI %1, %0(s32)
@@ -56,6 +63,12 @@ body:             |
     ; AIE2P-NEXT: [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
     ; AIE2P-NEXT: [[VPUSH_hi_16_:%[0-9]+]]:vec512 = VPUSH_hi_16 [[DEF]], [[MOV_RLC_imm11_pseudo]]
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VPUSH_hi_16_]]
+    ;
+    ; AIE2PS-LABEL: name: vpush_int16_512
+    ; AIE2PS: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 12
+    ; AIE2PS-NEXT: [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[VPUSH_hi_16_:%[0-9]+]]:vec512 = VPUSH_hi_16 [[DEF]], [[MOV_RLC_imm11_pseudo]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[VPUSH_hi_16_]]
     %0:gprregbank(s32) = G_CONSTANT i32 12
     %1:vregbank(<32 x s16>) = G_IMPLICIT_DEF
     %2:vregbank(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_HI %1, %0(s32)
@@ -82,6 +95,12 @@ body:             |
     ; AIE2P-NEXT: [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
     ; AIE2P-NEXT: [[VPUSH_hi_8_:%[0-9]+]]:vec512 = VPUSH_hi_8 [[DEF]], [[MOV_RLC_imm11_pseudo]]
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VPUSH_hi_8_]]
+    ;
+    ; AIE2PS-LABEL: name: vpush_int8_512
+    ; AIE2PS: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 12
+    ; AIE2PS-NEXT: [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[VPUSH_hi_8_:%[0-9]+]]:vec512 = VPUSH_hi_8 [[DEF]], [[MOV_RLC_imm11_pseudo]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[VPUSH_hi_8_]]
     %0:gprregbank(s32) = G_CONSTANT i32 12
     %1:vregbank(<64 x s8>) = G_IMPLICIT_DEF
     %2:vregbank(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_HI %1, %0(s32)
@@ -108,6 +127,12 @@ body:             |
     ; AIE2P-NEXT: [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
     ; AIE2P-NEXT: [[VPUSH_hi_32_:%[0-9]+]]:vec512 = VPUSH_hi_32 [[DEF]], [[MOV_RLC_imm11_pseudo]]
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VPUSH_hi_32_]]
+    ;
+    ; AIE2PS-LABEL: name: vpush_int32_256
+    ; AIE2PS: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 0
+    ; AIE2PS-NEXT: [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[VPUSH_hi_32_:%[0-9]+]]:vec512 = VPUSH_hi_32 [[DEF]], [[MOV_RLC_imm11_pseudo]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[VPUSH_hi_32_]]
     %0:gprregbank(s32) = G_CONSTANT i32 0
     %1:vregbank(<16 x s32>) = G_IMPLICIT_DEF
     %2:vregbank(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI %1, %0(s32)

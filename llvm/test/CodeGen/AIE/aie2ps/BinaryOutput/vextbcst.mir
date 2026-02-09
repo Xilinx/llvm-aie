@@ -1,0 +1,482 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VEXTBCST_128_vec_extract_broadcast_imm
+    $x7 = VEXTBCST_128_vec_extract_broadcast_imm $x9, 1
+    $x1 = VEXTBCST_128_vec_extract_broadcast_imm $x11, 0
+    $x9 = VEXTBCST_128_vec_extract_broadcast_imm $x8, 62
+    $x8 = VEXTBCST_128_vec_extract_broadcast_imm $x4, 63
+    $x3 = VEXTBCST_128_vec_extract_broadcast_imm $x6, 1
+    $x2 = VEXTBCST_128_vec_extract_broadcast_imm $x7, 0
+    $x10 = VEXTBCST_128_vec_extract_broadcast_imm $x2, 62
+    $x5 = VEXTBCST_128_vec_extract_broadcast_imm $x10, 63
+    $x11 = VEXTBCST_128_vec_extract_broadcast_imm $x1, 1
+    $x6 = VEXTBCST_128_vec_extract_broadcast_imm $x5, 0
+    $x4 = VEXTBCST_128_vec_extract_broadcast_imm $x3, 62
+    $x0 = VEXTBCST_128_vec_extract_broadcast_imm $x0, 63
+
+    ; VEXTBCST_128_vec_extract_broadcast_r
+    $x6 = VEXTBCST_128_vec_extract_broadcast_r $x4, $r18
+    $x7 = VEXTBCST_128_vec_extract_broadcast_r $x2, $r13
+    $x9 = VEXTBCST_128_vec_extract_broadcast_r $x7, $r27
+    $x10 = VEXTBCST_128_vec_extract_broadcast_r $x3, $r29
+    $x4 = VEXTBCST_128_vec_extract_broadcast_r $x9, $r9
+    $x5 = VEXTBCST_128_vec_extract_broadcast_r $x1, $r2
+    $x1 = VEXTBCST_128_vec_extract_broadcast_r $x5, $r14
+    $x0 = VEXTBCST_128_vec_extract_broadcast_r $x10, $r10
+    $x11 = VEXTBCST_128_vec_extract_broadcast_r $x11, $r17
+    $x8 = VEXTBCST_128_vec_extract_broadcast_r $x8, $r8
+    $x2 = VEXTBCST_128_vec_extract_broadcast_r $x0, $r28
+    $x3 = VEXTBCST_128_vec_extract_broadcast_r $x6, $r12
+    $x6 = VEXTBCST_128_vec_extract_broadcast_r $x4, $r24
+    $x7 = VEXTBCST_128_vec_extract_broadcast_r $x2, $r3
+    $x9 = VEXTBCST_128_vec_extract_broadcast_r $x7, $r22
+    $x10 = VEXTBCST_128_vec_extract_broadcast_r $x3, $r7
+    $x4 = VEXTBCST_128_vec_extract_broadcast_r $x9, $r30
+    $x5 = VEXTBCST_128_vec_extract_broadcast_r $x1, $r4
+    $x1 = VEXTBCST_128_vec_extract_broadcast_r $x5, $r23
+    $x0 = VEXTBCST_128_vec_extract_broadcast_r $x10, $r5
+    $x11 = VEXTBCST_128_vec_extract_broadcast_r $x11, $r1
+    $x8 = VEXTBCST_128_vec_extract_broadcast_r $x8, $r20
+    $x2 = VEXTBCST_128_vec_extract_broadcast_r $x0, $r25
+    $x3 = VEXTBCST_128_vec_extract_broadcast_r $x6, $r31
+    $x6 = VEXTBCST_128_vec_extract_broadcast_r $x4, $r11
+    $x7 = VEXTBCST_128_vec_extract_broadcast_r $x2, $r21
+    $x9 = VEXTBCST_128_vec_extract_broadcast_r $x7, $r0
+    $x10 = VEXTBCST_128_vec_extract_broadcast_r $x3, $r19
+    $x4 = VEXTBCST_128_vec_extract_broadcast_r $x9, $r6
+    $x5 = VEXTBCST_128_vec_extract_broadcast_r $x1, $r16
+    $x1 = VEXTBCST_128_vec_extract_broadcast_r $x5, $r26
+    $x0 = VEXTBCST_128_vec_extract_broadcast_r $x10, $r15
+
+    ; VEXTBCST_16_vec_extract_broadcast_imm
+    $x10 = VEXTBCST_16_vec_extract_broadcast_imm $x3, 1
+    $x5 = VEXTBCST_16_vec_extract_broadcast_imm $x2, 0
+    $x8 = VEXTBCST_16_vec_extract_broadcast_imm $x8, 62
+    $x4 = VEXTBCST_16_vec_extract_broadcast_imm $x4, 63
+    $x1 = VEXTBCST_16_vec_extract_broadcast_imm $x0, 1
+    $x2 = VEXTBCST_16_vec_extract_broadcast_imm $x10, 0
+    $x11 = VEXTBCST_16_vec_extract_broadcast_imm $x7, 62
+    $x7 = VEXTBCST_16_vec_extract_broadcast_imm $x5, 63
+    $x9 = VEXTBCST_16_vec_extract_broadcast_imm $x6, 1
+    $x6 = VEXTBCST_16_vec_extract_broadcast_imm $x1, 0
+    $x0 = VEXTBCST_16_vec_extract_broadcast_imm $x9, 62
+    $x3 = VEXTBCST_16_vec_extract_broadcast_imm $x11, 63
+
+    ; VEXTBCST_16_vec_extract_broadcast_r
+    $x10 = VEXTBCST_16_vec_extract_broadcast_r $x10, $r29
+    $x5 = VEXTBCST_16_vec_extract_broadcast_r $x1, $r1
+    $x1 = VEXTBCST_16_vec_extract_broadcast_r $x8, $r16
+    $x4 = VEXTBCST_16_vec_extract_broadcast_r $x11, $r7
+    $x6 = VEXTBCST_16_vec_extract_broadcast_r $x4, $r19
+    $x8 = VEXTBCST_16_vec_extract_broadcast_r $x5, $r14
+    $x3 = VEXTBCST_16_vec_extract_broadcast_r $x9, $r17
+    $x9 = VEXTBCST_16_vec_extract_broadcast_r $x7, $r10
+    $x7 = VEXTBCST_16_vec_extract_broadcast_r $x2, $r26
+    $x0 = VEXTBCST_16_vec_extract_broadcast_r $x0, $r8
+    $x11 = VEXTBCST_16_vec_extract_broadcast_r $x6, $r22
+    $x2 = VEXTBCST_16_vec_extract_broadcast_r $x3, $r24
+    $x10 = VEXTBCST_16_vec_extract_broadcast_r $x10, $r5
+    $x5 = VEXTBCST_16_vec_extract_broadcast_r $x1, $r9
+    $x1 = VEXTBCST_16_vec_extract_broadcast_r $x8, $r28
+    $x4 = VEXTBCST_16_vec_extract_broadcast_r $x11, $r15
+    $x6 = VEXTBCST_16_vec_extract_broadcast_r $x4, $r25
+    $x8 = VEXTBCST_16_vec_extract_broadcast_r $x5, $r2
+    $x3 = VEXTBCST_16_vec_extract_broadcast_r $x9, $r30
+    $x9 = VEXTBCST_16_vec_extract_broadcast_r $x7, $r20
+    $x7 = VEXTBCST_16_vec_extract_broadcast_r $x2, $r21
+    $x0 = VEXTBCST_16_vec_extract_broadcast_r $x0, $r27
+    $x11 = VEXTBCST_16_vec_extract_broadcast_r $x6, $r13
+    $x2 = VEXTBCST_16_vec_extract_broadcast_r $x3, $r0
+    $x10 = VEXTBCST_16_vec_extract_broadcast_r $x10, $r23
+    $x5 = VEXTBCST_16_vec_extract_broadcast_r $x1, $r4
+    $x1 = VEXTBCST_16_vec_extract_broadcast_r $x8, $r11
+    $x4 = VEXTBCST_16_vec_extract_broadcast_r $x11, $r18
+    $x6 = VEXTBCST_16_vec_extract_broadcast_r $x4, $r12
+    $x8 = VEXTBCST_16_vec_extract_broadcast_r $x5, $r3
+    $x3 = VEXTBCST_16_vec_extract_broadcast_r $x9, $r6
+    $x9 = VEXTBCST_16_vec_extract_broadcast_r $x7, $r31
+
+    ; VEXTBCST_32_vec_extract_broadcast_imm
+    $x6 = VEXTBCST_32_vec_extract_broadcast_imm $x1, 0
+    $x10 = VEXTBCST_32_vec_extract_broadcast_imm $x6, 63
+    $x2 = VEXTBCST_32_vec_extract_broadcast_imm $x4, 1
+    $x5 = VEXTBCST_32_vec_extract_broadcast_imm $x2, 62
+    $x1 = VEXTBCST_32_vec_extract_broadcast_imm $x5, 0
+    $x8 = VEXTBCST_32_vec_extract_broadcast_imm $x11, 63
+    $x0 = VEXTBCST_32_vec_extract_broadcast_imm $x10, 1
+    $x3 = VEXTBCST_32_vec_extract_broadcast_imm $x0, 62
+    $x9 = VEXTBCST_32_vec_extract_broadcast_imm $x9, 0
+    $x4 = VEXTBCST_32_vec_extract_broadcast_imm $x7, 63
+    $x11 = VEXTBCST_32_vec_extract_broadcast_imm $x8, 1
+    $x7 = VEXTBCST_32_vec_extract_broadcast_imm $x3, 62
+
+    ; VEXTBCST_32_vec_extract_broadcast_r
+    $x2 = VEXTBCST_32_vec_extract_broadcast_r $x8, $r8
+    $x0 = VEXTBCST_32_vec_extract_broadcast_r $x1, $r20
+    $x10 = VEXTBCST_32_vec_extract_broadcast_r $x11, $r6
+    $x6 = VEXTBCST_32_vec_extract_broadcast_r $x4, $r10
+    $x11 = VEXTBCST_32_vec_extract_broadcast_r $x9, $r7
+    $x4 = VEXTBCST_32_vec_extract_broadcast_r $x3, $r3
+    $x5 = VEXTBCST_32_vec_extract_broadcast_r $x6, $r2
+    $x7 = VEXTBCST_32_vec_extract_broadcast_r $x2, $r24
+    $x8 = VEXTBCST_32_vec_extract_broadcast_r $x5, $r29
+    $x9 = VEXTBCST_32_vec_extract_broadcast_r $x10, $r25
+    $x1 = VEXTBCST_32_vec_extract_broadcast_r $x0, $r11
+    $x3 = VEXTBCST_32_vec_extract_broadcast_r $x7, $r27
+    $x2 = VEXTBCST_32_vec_extract_broadcast_r $x8, $r16
+    $x0 = VEXTBCST_32_vec_extract_broadcast_r $x1, $r17
+    $x10 = VEXTBCST_32_vec_extract_broadcast_r $x11, $r4
+    $x6 = VEXTBCST_32_vec_extract_broadcast_r $x4, $r21
+    $x11 = VEXTBCST_32_vec_extract_broadcast_r $x9, $r31
+    $x4 = VEXTBCST_32_vec_extract_broadcast_r $x3, $r22
+    $x5 = VEXTBCST_32_vec_extract_broadcast_r $x6, $r1
+    $x7 = VEXTBCST_32_vec_extract_broadcast_r $x2, $r26
+    $x8 = VEXTBCST_32_vec_extract_broadcast_r $x5, $r28
+    $x9 = VEXTBCST_32_vec_extract_broadcast_r $x10, $r30
+    $x1 = VEXTBCST_32_vec_extract_broadcast_r $x0, $r12
+    $x3 = VEXTBCST_32_vec_extract_broadcast_r $x7, $r14
+    $x2 = VEXTBCST_32_vec_extract_broadcast_r $x8, $r23
+    $x0 = VEXTBCST_32_vec_extract_broadcast_r $x1, $r13
+    $x10 = VEXTBCST_32_vec_extract_broadcast_r $x11, $r18
+    $x6 = VEXTBCST_32_vec_extract_broadcast_r $x4, $r5
+    $x11 = VEXTBCST_32_vec_extract_broadcast_r $x9, $r9
+    $x4 = VEXTBCST_32_vec_extract_broadcast_r $x3, $r0
+    $x5 = VEXTBCST_32_vec_extract_broadcast_r $x6, $r19
+    $x7 = VEXTBCST_32_vec_extract_broadcast_r $x2, $r15
+
+    ; VEXTBCST_64_vec_extract_broadcast_imm
+    $x6 = VEXTBCST_64_vec_extract_broadcast_imm $x5, 63
+    $x9 = VEXTBCST_64_vec_extract_broadcast_imm $x7, 0
+    $x4 = VEXTBCST_64_vec_extract_broadcast_imm $x1, 62
+    $x10 = VEXTBCST_64_vec_extract_broadcast_imm $x8, 1
+    $x11 = VEXTBCST_64_vec_extract_broadcast_imm $x11, 63
+    $x8 = VEXTBCST_64_vec_extract_broadcast_imm $x6, 0
+    $x5 = VEXTBCST_64_vec_extract_broadcast_imm $x3, 62
+    $x2 = VEXTBCST_64_vec_extract_broadcast_imm $x2, 1
+    $x7 = VEXTBCST_64_vec_extract_broadcast_imm $x0, 63
+    $x0 = VEXTBCST_64_vec_extract_broadcast_imm $x4, 0
+    $x3 = VEXTBCST_64_vec_extract_broadcast_imm $x9, 62
+    $x1 = VEXTBCST_64_vec_extract_broadcast_imm $x10, 1
+
+    ; VEXTBCST_64_vec_extract_broadcast_r
+    $x2 = VEXTBCST_64_vec_extract_broadcast_r $x11, $r11
+    $x10 = VEXTBCST_64_vec_extract_broadcast_r $x2, $r4
+    $x5 = VEXTBCST_64_vec_extract_broadcast_r $x10, $r16
+    $x4 = VEXTBCST_64_vec_extract_broadcast_r $x1, $r22
+    $x0 = VEXTBCST_64_vec_extract_broadcast_r $x7, $r23
+    $x11 = VEXTBCST_64_vec_extract_broadcast_r $x9, $r18
+    $x6 = VEXTBCST_64_vec_extract_broadcast_r $x0, $r5
+    $x1 = VEXTBCST_64_vec_extract_broadcast_r $x6, $r21
+    $x7 = VEXTBCST_64_vec_extract_broadcast_r $x5, $r19
+    $x8 = VEXTBCST_64_vec_extract_broadcast_r $x8, $r28
+    $x3 = VEXTBCST_64_vec_extract_broadcast_r $x3, $r7
+    $x9 = VEXTBCST_64_vec_extract_broadcast_r $x4, $r3
+    $x2 = VEXTBCST_64_vec_extract_broadcast_r $x11, $r9
+    $x10 = VEXTBCST_64_vec_extract_broadcast_r $x2, $r10
+    $x5 = VEXTBCST_64_vec_extract_broadcast_r $x10, $r0
+    $x4 = VEXTBCST_64_vec_extract_broadcast_r $x1, $r30
+    $x0 = VEXTBCST_64_vec_extract_broadcast_r $x7, $r13
+    $x11 = VEXTBCST_64_vec_extract_broadcast_r $x9, $r8
+    $x6 = VEXTBCST_64_vec_extract_broadcast_r $x0, $r14
+    $x1 = VEXTBCST_64_vec_extract_broadcast_r $x6, $r24
+    $x7 = VEXTBCST_64_vec_extract_broadcast_r $x5, $r31
+    $x8 = VEXTBCST_64_vec_extract_broadcast_r $x8, $r12
+    $x3 = VEXTBCST_64_vec_extract_broadcast_r $x3, $r17
+    $x9 = VEXTBCST_64_vec_extract_broadcast_r $x4, $r2
+    $x2 = VEXTBCST_64_vec_extract_broadcast_r $x11, $r6
+    $x10 = VEXTBCST_64_vec_extract_broadcast_r $x2, $r15
+    $x5 = VEXTBCST_64_vec_extract_broadcast_r $x10, $r26
+    $x4 = VEXTBCST_64_vec_extract_broadcast_r $x1, $r25
+    $x0 = VEXTBCST_64_vec_extract_broadcast_r $x7, $r29
+    $x11 = VEXTBCST_64_vec_extract_broadcast_r $x9, $r20
+    $x6 = VEXTBCST_64_vec_extract_broadcast_r $x0, $r27
+    $x1 = VEXTBCST_64_vec_extract_broadcast_r $x6, $r1
+
+    ; VEXTBCST_8_vec_extract_broadcast_imm
+    $x3 = VEXTBCST_8_vec_extract_broadcast_imm $x7, 62
+    $x2 = VEXTBCST_8_vec_extract_broadcast_imm $x5, 0
+    $x11 = VEXTBCST_8_vec_extract_broadcast_imm $x8, 63
+    $x7 = VEXTBCST_8_vec_extract_broadcast_imm $x1, 1
+    $x6 = VEXTBCST_8_vec_extract_broadcast_imm $x2, 62
+    $x10 = VEXTBCST_8_vec_extract_broadcast_imm $x10, 0
+    $x1 = VEXTBCST_8_vec_extract_broadcast_imm $x3, 63
+    $x4 = VEXTBCST_8_vec_extract_broadcast_imm $x11, 1
+    $x8 = VEXTBCST_8_vec_extract_broadcast_imm $x0, 62
+    $x5 = VEXTBCST_8_vec_extract_broadcast_imm $x6, 0
+    $x9 = VEXTBCST_8_vec_extract_broadcast_imm $x9, 63
+    $x0 = VEXTBCST_8_vec_extract_broadcast_imm $x4, 1
+
+    ; VEXTBCST_8_vec_extract_broadcast_r
+    $x3 = VEXTBCST_8_vec_extract_broadcast_r $x10, $r9
+    $x1 = VEXTBCST_8_vec_extract_broadcast_r $x4, $r24
+    $x7 = VEXTBCST_8_vec_extract_broadcast_r $x7, $r21
+    $x11 = VEXTBCST_8_vec_extract_broadcast_r $x1, $r7
+    $x0 = VEXTBCST_8_vec_extract_broadcast_r $x9, $r26
+    $x9 = VEXTBCST_8_vec_extract_broadcast_r $x5, $r27
+    $x10 = VEXTBCST_8_vec_extract_broadcast_r $x3, $r14
+    $x2 = VEXTBCST_8_vec_extract_broadcast_r $x2, $r8
+    $x8 = VEXTBCST_8_vec_extract_broadcast_r $x0, $r15
+    $x4 = VEXTBCST_8_vec_extract_broadcast_r $x6, $r4
+    $x6 = VEXTBCST_8_vec_extract_broadcast_r $x8, $r31
+    $x5 = VEXTBCST_8_vec_extract_broadcast_r $x11, $r5
+    $x3 = VEXTBCST_8_vec_extract_broadcast_r $x10, $r10
+    $x1 = VEXTBCST_8_vec_extract_broadcast_r $x4, $r0
+    $x7 = VEXTBCST_8_vec_extract_broadcast_r $x7, $r13
+    $x11 = VEXTBCST_8_vec_extract_broadcast_r $x1, $r16
+    $x0 = VEXTBCST_8_vec_extract_broadcast_r $x9, $r1
+    $x9 = VEXTBCST_8_vec_extract_broadcast_r $x5, $r11
+    $x10 = VEXTBCST_8_vec_extract_broadcast_r $x3, $r6
+    $x2 = VEXTBCST_8_vec_extract_broadcast_r $x2, $r20
+    $x8 = VEXTBCST_8_vec_extract_broadcast_r $x0, $r12
+    $x4 = VEXTBCST_8_vec_extract_broadcast_r $x6, $r23
+    $x6 = VEXTBCST_8_vec_extract_broadcast_r $x8, $r25
+    $x5 = VEXTBCST_8_vec_extract_broadcast_r $x11, $r19
+    $x3 = VEXTBCST_8_vec_extract_broadcast_r $x10, $r29
+    $x1 = VEXTBCST_8_vec_extract_broadcast_r $x4, $r3
+    $x7 = VEXTBCST_8_vec_extract_broadcast_r $x7, $r2
+    $x11 = VEXTBCST_8_vec_extract_broadcast_r $x1, $r17
+    $x0 = VEXTBCST_8_vec_extract_broadcast_r $x9, $r28
+    $x9 = VEXTBCST_8_vec_extract_broadcast_r $x5, $r18
+    $x10 = VEXTBCST_8_vec_extract_broadcast_r $x3, $r22
+    $x2 = VEXTBCST_8_vec_extract_broadcast_r $x2, $r30
+...
+
+# CHECK: 0: b0 0e 98 37 vextbcst.128 x7, x9, #1
+# CHECK: 4: b0 06 b8 31 vextbcst.128 x1, x11, #0
+# CHECK: 8: b0 f6 89 39 vextbcst.128 x9, x8, #62
+# CHECK: c: b0 fe 49 38 vextbcst.128 x8, x4, #63
+# CHECK: 10: b0 0e 68 33 vextbcst.128 x3, x6, #1
+# CHECK: 14: b0 06 78 32 vextbcst.128 x2, x7, #0
+# CHECK: 18: b0 f6 29 3a vextbcst.128 x10, x2, #62
+# CHECK: 1c: b0 fe a9 35 vextbcst.128 x5, x10, #63
+# CHECK: 20: b0 0e 18 3b vextbcst.128 x11, x1, #1
+# CHECK: 24: b0 06 58 36 vextbcst.128 x6, x5, #0
+# CHECK: 28: b0 f6 39 34 vextbcst.128 x4, x3, #62
+# CHECK: 2c: b0 fe 09 30 vextbcst.128 x0, x0, #63
+# CHECK: 30: f0 2a 49 36 vextbcst.128 x6, x4, r18
+# CHECK: 34: f0 da 28 37 vextbcst.128 x7, x2, r13
+# CHECK: 38: f0 ba 79 39 vextbcst.128 x9, x7, r27
+# CHECK: 3c: f0 da 39 3a vextbcst.128 x10, x3, r29
+# CHECK: 40: f0 9a 98 34 vextbcst.128 x4, x9, r9
+# CHECK: 44: f0 2a 18 35 vextbcst.128 x5, x1, r2
+# CHECK: 48: f0 ea 58 31 vextbcst.128 x1, x5, r14
+# CHECK: 4c: f0 aa a8 30 vextbcst.128 x0, x10, r10
+# CHECK: 50: f0 1a b9 3b vextbcst.128 x11, x11, r17
+# CHECK: 54: f0 8a 88 38 vextbcst.128 x8, x8, r8
+# CHECK: 58: f0 ca 09 32 vextbcst.128 x2, x0, r28
+# CHECK: 5c: f0 ca 68 33 vextbcst.128 x3, x6, r12
+# CHECK: 60: f0 8a 49 36 vextbcst.128 x6, x4, r24
+# CHECK: 64: f0 3a 28 37 vextbcst.128 x7, x2, r3
+# CHECK: 68: f0 6a 79 39 vextbcst.128 x9, x7, r22
+# CHECK: 6c: f0 7a 38 3a vextbcst.128 x10, x3, r7
+# CHECK: 70: f0 ea 99 34 vextbcst.128 x4, x9, r30
+# CHECK: 74: f0 4a 18 35 vextbcst.128 x5, x1, r4
+# CHECK: 78: f0 7a 59 31 vextbcst.128 x1, x5, r23
+# CHECK: 7c: f0 5a a8 30 vextbcst.128 x0, x10, r5
+# CHECK: 80: f0 1a b8 3b vextbcst.128 x11, x11, r1
+# CHECK: 84: f0 4a 89 38 vextbcst.128 x8, x8, r20
+# CHECK: 88: f0 9a 09 32 vextbcst.128 x2, x0, r25
+# CHECK: 8c: f0 fa 69 33 vextbcst.128 x3, x6, r31
+# CHECK: 90: f0 ba 48 36 vextbcst.128 x6, x4, r11
+# CHECK: 94: f0 5a 29 37 vextbcst.128 x7, x2, r21
+# CHECK: 98: f0 0a 78 39 vextbcst.128 x9, x7, r0
+# CHECK: 9c: f0 3a 39 3a vextbcst.128 x10, x3, r19
+# CHECK: a0: f0 6a 98 34 vextbcst.128 x4, x9, r6
+# CHECK: a4: f0 0a 19 35 vextbcst.128 x5, x1, r16
+# CHECK: a8: f0 aa 59 31 vextbcst.128 x1, x5, r26
+# CHECK: ac: f0 fa a8 30 vextbcst.128 x0, x10, r15
+# CHECK: b0: b0 0e 32 3a vextbcst.16 x10, x3, #1
+# CHECK: b4: b0 06 22 35 vextbcst.16 x5, x2, #0
+# CHECK: b8: b0 f6 83 38 vextbcst.16 x8, x8, #62
+# CHECK: bc: b0 fe 43 34 vextbcst.16 x4, x4, #63
+# CHECK: c0: b0 0e 02 31 vextbcst.16 x1, x0, #1
+# CHECK: c4: b0 06 a2 32 vextbcst.16 x2, x10, #0
+# CHECK: c8: b0 f6 73 3b vextbcst.16 x11, x7, #62
+# CHECK: cc: b0 fe 53 37 vextbcst.16 x7, x5, #63
+# CHECK: d0: b0 0e 62 39 vextbcst.16 x9, x6, #1
+# CHECK: d4: b0 06 12 36 vextbcst.16 x6, x1, #0
+# CHECK: d8: b0 f6 93 30 vextbcst.16 x0, x9, #62
+# CHECK: dc: b0 fe b3 33 vextbcst.16 x3, x11, #63
+# CHECK: e0: f0 da a3 3a vextbcst.16 x10, x10, r29
+# CHECK: e4: f0 1a 12 35 vextbcst.16 x5, x1, r1
+# CHECK: e8: f0 0a 83 31 vextbcst.16 x1, x8, r16
+# CHECK: ec: f0 7a b2 34 vextbcst.16 x4, x11, r7
+# CHECK: f0: f0 3a 43 36 vextbcst.16 x6, x4, r19
+# CHECK: f4: f0 ea 52 38 vextbcst.16 x8, x5, r14
+# CHECK: f8: f0 1a 93 33 vextbcst.16 x3, x9, r17
+# CHECK: fc: f0 aa 72 39 vextbcst.16 x9, x7, r10
+# CHECK: 100: f0 aa 23 37 vextbcst.16 x7, x2, r26
+# CHECK: 104: f0 8a 02 30 vextbcst.16 x0, x0, r8
+# CHECK: 108: f0 6a 63 3b vextbcst.16 x11, x6, r22
+# CHECK: 10c: f0 8a 33 32 vextbcst.16 x2, x3, r24
+# CHECK: 110: f0 5a a2 3a vextbcst.16 x10, x10, r5
+# CHECK: 114: f0 9a 12 35 vextbcst.16 x5, x1, r9
+# CHECK: 118: f0 ca 83 31 vextbcst.16 x1, x8, r28
+# CHECK: 11c: f0 fa b2 34 vextbcst.16 x4, x11, r15
+# CHECK: 120: f0 9a 43 36 vextbcst.16 x6, x4, r25
+# CHECK: 124: f0 2a 52 38 vextbcst.16 x8, x5, r2
+# CHECK: 128: f0 ea 93 33 vextbcst.16 x3, x9, r30
+# CHECK: 12c: f0 4a 73 39 vextbcst.16 x9, x7, r20
+# CHECK: 130: f0 5a 23 37 vextbcst.16 x7, x2, r21
+# CHECK: 134: f0 ba 03 30 vextbcst.16 x0, x0, r27
+# CHECK: 138: f0 da 62 3b vextbcst.16 x11, x6, r13
+# CHECK: 13c: f0 0a 32 32 vextbcst.16 x2, x3, r0
+# CHECK: 140: f0 7a a3 3a vextbcst.16 x10, x10, r23
+# CHECK: 144: f0 4a 12 35 vextbcst.16 x5, x1, r4
+# CHECK: 148: f0 ba 82 31 vextbcst.16 x1, x8, r11
+# CHECK: 14c: f0 2a b3 34 vextbcst.16 x4, x11, r18
+# CHECK: 150: f0 ca 42 36 vextbcst.16 x6, x4, r12
+# CHECK: 154: f0 3a 52 38 vextbcst.16 x8, x5, r3
+# CHECK: 158: f0 6a 92 33 vextbcst.16 x3, x9, r6
+# CHECK: 15c: f0 fa 73 39 vextbcst.16 x9, x7, r31
+# CHECK: 160: b0 06 14 36 vextbcst.32 x6, x1, #0
+# CHECK: 164: b0 fe 65 3a vextbcst.32 x10, x6, #63
+# CHECK: 168: b0 0e 44 32 vextbcst.32 x2, x4, #1
+# CHECK: 16c: b0 f6 25 35 vextbcst.32 x5, x2, #62
+# CHECK: 170: b0 06 54 31 vextbcst.32 x1, x5, #0
+# CHECK: 174: b0 fe b5 38 vextbcst.32 x8, x11, #63
+# CHECK: 178: b0 0e a4 30 vextbcst.32 x0, x10, #1
+# CHECK: 17c: b0 f6 05 33 vextbcst.32 x3, x0, #62
+# CHECK: 180: b0 06 94 39 vextbcst.32 x9, x9, #0
+# CHECK: 184: b0 fe 75 34 vextbcst.32 x4, x7, #63
+# CHECK: 188: b0 0e 84 3b vextbcst.32 x11, x8, #1
+# CHECK: 18c: b0 f6 35 37 vextbcst.32 x7, x3, #62
+# CHECK: 190: f0 8a 84 32 vextbcst.32 x2, x8, r8
+# CHECK: 194: f0 4a 15 30 vextbcst.32 x0, x1, r20
+# CHECK: 198: f0 6a b4 3a vextbcst.32 x10, x11, r6
+# CHECK: 19c: f0 aa 44 36 vextbcst.32 x6, x4, r10
+# CHECK: 1a0: f0 7a 94 3b vextbcst.32 x11, x9, r7
+# CHECK: 1a4: f0 3a 34 34 vextbcst.32 x4, x3, r3
+# CHECK: 1a8: f0 2a 64 35 vextbcst.32 x5, x6, r2
+# CHECK: 1ac: f0 8a 25 37 vextbcst.32 x7, x2, r24
+# CHECK: 1b0: f0 da 55 38 vextbcst.32 x8, x5, r29
+# CHECK: 1b4: f0 9a a5 39 vextbcst.32 x9, x10, r25
+# CHECK: 1b8: f0 ba 04 31 vextbcst.32 x1, x0, r11
+# CHECK: 1bc: f0 ba 75 33 vextbcst.32 x3, x7, r27
+# CHECK: 1c0: f0 0a 85 32 vextbcst.32 x2, x8, r16
+# CHECK: 1c4: f0 1a 15 30 vextbcst.32 x0, x1, r17
+# CHECK: 1c8: f0 4a b4 3a vextbcst.32 x10, x11, r4
+# CHECK: 1cc: f0 5a 45 36 vextbcst.32 x6, x4, r21
+# CHECK: 1d0: f0 fa 95 3b vextbcst.32 x11, x9, r31
+# CHECK: 1d4: f0 6a 35 34 vextbcst.32 x4, x3, r22
+# CHECK: 1d8: f0 1a 64 35 vextbcst.32 x5, x6, r1
+# CHECK: 1dc: f0 aa 25 37 vextbcst.32 x7, x2, r26
+# CHECK: 1e0: f0 ca 55 38 vextbcst.32 x8, x5, r28
+# CHECK: 1e4: f0 ea a5 39 vextbcst.32 x9, x10, r30
+# CHECK: 1e8: f0 ca 04 31 vextbcst.32 x1, x0, r12
+# CHECK: 1ec: f0 ea 74 33 vextbcst.32 x3, x7, r14
+# CHECK: 1f0: f0 7a 85 32 vextbcst.32 x2, x8, r23
+# CHECK: 1f4: f0 da 14 30 vextbcst.32 x0, x1, r13
+# CHECK: 1f8: f0 2a b5 3a vextbcst.32 x10, x11, r18
+# CHECK: 1fc: f0 5a 44 36 vextbcst.32 x6, x4, r5
+# CHECK: 200: f0 9a 94 3b vextbcst.32 x11, x9, r9
+# CHECK: 204: f0 0a 34 34 vextbcst.32 x4, x3, r0
+# CHECK: 208: f0 3a 65 35 vextbcst.32 x5, x6, r19
+# CHECK: 20c: f0 fa 24 37 vextbcst.32 x7, x2, r15
+# CHECK: 210: b0 fe 57 36 vextbcst.64 x6, x5, #63
+# CHECK: 214: b0 06 76 39 vextbcst.64 x9, x7, #0
+# CHECK: 218: b0 f6 17 34 vextbcst.64 x4, x1, #62
+# CHECK: 21c: b0 0e 86 3a vextbcst.64 x10, x8, #1
+# CHECK: 220: b0 fe b7 3b vextbcst.64 x11, x11, #63
+# CHECK: 224: b0 06 66 38 vextbcst.64 x8, x6, #0
+# CHECK: 228: b0 f6 37 35 vextbcst.64 x5, x3, #62
+# CHECK: 22c: b0 0e 26 32 vextbcst.64 x2, x2, #1
+# CHECK: 230: b0 fe 07 37 vextbcst.64 x7, x0, #63
+# CHECK: 234: b0 06 46 30 vextbcst.64 x0, x4, #0
+# CHECK: 238: b0 f6 97 33 vextbcst.64 x3, x9, #62
+# CHECK: 23c: b0 0e a6 31 vextbcst.64 x1, x10, #1
+# CHECK: 240: f0 ba b6 32 vextbcst.64 x2, x11, r11
+# CHECK: 244: f0 4a 26 3a vextbcst.64 x10, x2, r4
+# CHECK: 248: f0 0a a7 35 vextbcst.64 x5, x10, r16
+# CHECK: 24c: f0 6a 17 34 vextbcst.64 x4, x1, r22
+# CHECK: 250: f0 7a 77 30 vextbcst.64 x0, x7, r23
+# CHECK: 254: f0 2a 97 3b vextbcst.64 x11, x9, r18
+# CHECK: 258: f0 5a 06 36 vextbcst.64 x6, x0, r5
+# CHECK: 25c: f0 5a 67 31 vextbcst.64 x1, x6, r21
+# CHECK: 260: f0 3a 57 37 vextbcst.64 x7, x5, r19
+# CHECK: 264: f0 ca 87 38 vextbcst.64 x8, x8, r28
+# CHECK: 268: f0 7a 36 33 vextbcst.64 x3, x3, r7
+# CHECK: 26c: f0 3a 46 39 vextbcst.64 x9, x4, r3
+# CHECK: 270: f0 9a b6 32 vextbcst.64 x2, x11, r9
+# CHECK: 274: f0 aa 26 3a vextbcst.64 x10, x2, r10
+# CHECK: 278: f0 0a a6 35 vextbcst.64 x5, x10, r0
+# CHECK: 27c: f0 ea 17 34 vextbcst.64 x4, x1, r30
+# CHECK: 280: f0 da 76 30 vextbcst.64 x0, x7, r13
+# CHECK: 284: f0 8a 96 3b vextbcst.64 x11, x9, r8
+# CHECK: 288: f0 ea 06 36 vextbcst.64 x6, x0, r14
+# CHECK: 28c: f0 8a 67 31 vextbcst.64 x1, x6, r24
+# CHECK: 290: f0 fa 57 37 vextbcst.64 x7, x5, r31
+# CHECK: 294: f0 ca 86 38 vextbcst.64 x8, x8, r12
+# CHECK: 298: f0 1a 37 33 vextbcst.64 x3, x3, r17
+# CHECK: 29c: f0 2a 46 39 vextbcst.64 x9, x4, r2
+# CHECK: 2a0: f0 6a b6 32 vextbcst.64 x2, x11, r6
+# CHECK: 2a4: f0 fa 26 3a vextbcst.64 x10, x2, r15
+# CHECK: 2a8: f0 aa a7 35 vextbcst.64 x5, x10, r26
+# CHECK: 2ac: f0 9a 17 34 vextbcst.64 x4, x1, r25
+# CHECK: 2b0: f0 da 77 30 vextbcst.64 x0, x7, r29
+# CHECK: 2b4: f0 4a 97 3b vextbcst.64 x11, x9, r20
+# CHECK: 2b8: f0 ba 07 36 vextbcst.64 x6, x0, r27
+# CHECK: 2bc: f0 1a 66 31 vextbcst.64 x1, x6, r1
+# CHECK: 2c0: b0 f6 71 33 vextbcst.8 x3, x7, #62
+# CHECK: 2c4: b0 06 50 32 vextbcst.8 x2, x5, #0
+# CHECK: 2c8: b0 fe 81 3b vextbcst.8 x11, x8, #63
+# CHECK: 2cc: b0 0e 10 37 vextbcst.8 x7, x1, #1
+# CHECK: 2d0: b0 f6 21 36 vextbcst.8 x6, x2, #62
+# CHECK: 2d4: b0 06 a0 3a vextbcst.8 x10, x10, #0
+# CHECK: 2d8: b0 fe 31 31 vextbcst.8 x1, x3, #63
+# CHECK: 2dc: b0 0e b0 34 vextbcst.8 x4, x11, #1
+# CHECK: 2e0: b0 f6 01 38 vextbcst.8 x8, x0, #62
+# CHECK: 2e4: b0 06 60 35 vextbcst.8 x5, x6, #0
+# CHECK: 2e8: b0 fe 91 39 vextbcst.8 x9, x9, #63
+# CHECK: 2ec: b0 0e 40 30 vextbcst.8 x0, x4, #1
+# CHECK: 2f0: f0 9a a0 33 vextbcst.8 x3, x10, r9
+# CHECK: 2f4: f0 8a 41 31 vextbcst.8 x1, x4, r24
+# CHECK: 2f8: f0 5a 71 37 vextbcst.8 x7, x7, r21
+# CHECK: 2fc: f0 7a 10 3b vextbcst.8 x11, x1, r7
+# CHECK: 300: f0 aa 91 30 vextbcst.8 x0, x9, r26
+# CHECK: 304: f0 ba 51 39 vextbcst.8 x9, x5, r27
+# CHECK: 308: f0 ea 30 3a vextbcst.8 x10, x3, r14
+# CHECK: 30c: f0 8a 20 32 vextbcst.8 x2, x2, r8
+# CHECK: 310: f0 fa 00 38 vextbcst.8 x8, x0, r15
+# CHECK: 314: f0 4a 60 34 vextbcst.8 x4, x6, r4
+# CHECK: 318: f0 fa 81 36 vextbcst.8 x6, x8, r31
+# CHECK: 31c: f0 5a b0 35 vextbcst.8 x5, x11, r5
+# CHECK: 320: f0 aa a0 33 vextbcst.8 x3, x10, r10
+# CHECK: 324: f0 0a 40 31 vextbcst.8 x1, x4, r0
+# CHECK: 328: f0 da 70 37 vextbcst.8 x7, x7, r13
+# CHECK: 32c: f0 0a 11 3b vextbcst.8 x11, x1, r16
+# CHECK: 330: f0 1a 90 30 vextbcst.8 x0, x9, r1
+# CHECK: 334: f0 ba 50 39 vextbcst.8 x9, x5, r11
+# CHECK: 338: f0 6a 30 3a vextbcst.8 x10, x3, r6
+# CHECK: 33c: f0 4a 21 32 vextbcst.8 x2, x2, r20
+# CHECK: 340: f0 ca 00 38 vextbcst.8 x8, x0, r12
+# CHECK: 344: f0 7a 61 34 vextbcst.8 x4, x6, r23
+# CHECK: 348: f0 9a 81 36 vextbcst.8 x6, x8, r25
+# CHECK: 34c: f0 3a b1 35 vextbcst.8 x5, x11, r19
+# CHECK: 350: f0 da a1 33 vextbcst.8 x3, x10, r29
+# CHECK: 354: f0 3a 40 31 vextbcst.8 x1, x4, r3
+# CHECK: 358: f0 2a 70 37 vextbcst.8 x7, x7, r2
+# CHECK: 35c: f0 1a 11 3b vextbcst.8 x11, x1, r17
+# CHECK: 360: f0 ca 91 30 vextbcst.8 x0, x9, r28
+# CHECK: 364: f0 2a 51 39 vextbcst.8 x9, x5, r18
+# CHECK: 368: f0 6a 31 3a vextbcst.8 x10, x3, r22
+# CHECK: 36c: f0 ea 21 32 vextbcst.8 x2, x2, r30

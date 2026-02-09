@@ -1,0 +1,88 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; LT
+    $r29 = LT $r11, $r10
+    $r9 = LT $r5, $r4
+    $r22 = LT $r30, $r11
+    $r12 = LT $r1, $r29
+    $r19 = LT $r16, $r1
+    $r6 = LT $r17, $r8
+    $r8 = LT $r24, $r27
+    $r20 = LT $r3, $r14
+    $r27 = LT $r15, $r6
+    $r26 = LT $r27, $r19
+    $r24 = LT $r4, $r3
+    $r17 = LT $r19, $r30
+    $r16 = LT $r6, $r31
+    $r4 = LT $r10, $r20
+    $r31 = LT $r12, $r18
+    $r25 = LT $r26, $r12
+    $r0 = LT $r14, $r0
+    $r15 = LT $r31, $r24
+    $r5 = LT $r22, $r28
+    $r2 = LT $r18, $r7
+    $r1 = LT $r13, $r2
+    $r30 = LT $r23, $r25
+    $r28 = LT $r29, $r26
+    $r21 = LT $r0, $r16
+    $r3 = LT $r28, $r15
+    $r13 = LT $r20, $r22
+    $r23 = LT $r9, $r9
+    $r10 = LT $r21, $r17
+    $r14 = LT $r2, $r13
+    $r18 = LT $r8, $r5
+    $r7 = LT $r25, $r23
+    $r11 = LT $r7, $r21
+...
+
+# CHECK: 0: b0 aa fa 22 lt r29, r11, r10
+# CHECK: 4: b0 4a 52 21 lt r9, r5, r4
+# CHECK: 8: b0 ba ac 27 lt r22, r30, r11
+# CHECK: c: b0 da 59 20 lt r12, r1, r29
+# CHECK: 10: b0 1a 26 24 lt r19, r16, r1
+# CHECK: 14: b0 8a 4c 24 lt r6, r17, r8
+# CHECK: 18: b0 ba 11 26 lt r8, r24, r27
+# CHECK: 1c: b0 ea e8 20 lt r20, r3, r14
+# CHECK: 20: b0 6a f6 23 lt r27, r15, r6
+# CHECK: 24: b0 3a f5 26 lt r26, r27, r19
+# CHECK: 28: b0 3a 30 21 lt r24, r4, r3
+# CHECK: 2c: b0 ea e3 24 lt r17, r19, r30
+# CHECK: 30: b0 fa a1 21 lt r16, r6, r31
+# CHECK: 34: b0 4a 89 22 lt r4, r10, r20
+# CHECK: 38: b0 2a 3f 23 lt r31, r12, r18
+# CHECK: 3c: b0 ca b2 26 lt r25, r26, r12
+# CHECK: 40: b0 0a 80 23 lt r0, r14, r0
+# CHECK: 44: b0 8a df 27 lt r15, r31, r24
+# CHECK: 48: b0 ca 8b 25 lt r5, r22, r28
+# CHECK: 4c: b0 7a 84 24 lt r2, r18, r7
+# CHECK: 50: b0 2a 42 23 lt r1, r13, r2
+# CHECK: 54: b0 9a fd 25 lt r30, r23, r25
+# CHECK: 58: b0 aa 79 27 lt r28, r29, r26
+# CHECK: 5c: b0 0a 2b 20 lt r21, r0, r16
+# CHECK: 60: b0 fa 06 27 lt r3, r28, r15
+# CHECK: 64: b0 6a 1b 25 lt r13, r20, r22
+# CHECK: 68: b0 9a 6e 22 lt r23, r9, r9
+# CHECK: 6c: b0 1a 55 25 lt r10, r21, r17
+# CHECK: 70: b0 da 9c 20 lt r14, r2, r13
+# CHECK: 74: b0 5a 24 22 lt r18, r8, r5
+# CHECK: 78: b0 7a 4f 26 lt r7, r25, r23
+# CHECK: 7c: b0 5a d7 21 lt r11, r7, r21

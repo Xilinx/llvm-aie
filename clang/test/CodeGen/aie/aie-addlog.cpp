@@ -5,11 +5,12 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 // RUN: %clang -O2 %s --target=aie2 -nostdlibinc -S -emit-llvm -o - | FileCheck %s -check-prefix=AIE2
 // RUN: %clang -O2 %s --target=aie2p -nostdlibinc -S -emit-llvm -o - | FileCheck %s -check-prefix=AIE2P
+// RUN: %clang -O2 %s --target=aie2ps -nostdlibinc -S -emit-llvm -o - | FileCheck %s -check-prefix=AIE2PS
 
 // CHECK-LABEL: @_Z11test_selectbcc(
 // CHECK-NEXT:  entry:
@@ -24,7 +25,6 @@
 // CHECK-AIE2P-NEXT:  entry:
 // CHECK-AIE2P-NEXT:    [[COND_I:%.*]] = select i1 [[SEL:%.*]], i8 [[A:%.*]], i8 [[B:%.*]]
 // CHECK-AIE2P-NEXT:    ret i8 [[COND_I]]
-//
 // AIE2-LABEL: @_Z11test_selectbcc(
 // AIE2-NEXT:  entry:
 // AIE2-NEXT:    [[COND_I:%.*]] = select i1 [[SEL:%.*]], i8 [[A:%.*]], i8 [[B:%.*]]
@@ -34,6 +34,11 @@
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[COND_I:%.*]] = select i1 [[SEL:%.*]], i8 [[A:%.*]], i8 [[B:%.*]]
 // AIE2P-NEXT:    ret i8 [[COND_I]]
+//
+// AIE2PS-LABEL: @_Z11test_selectbcc(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[COND_I:%.*]] = select i1 [[SEL:%.*]], i8 [[A:%.*]], i8 [[B:%.*]]
+// AIE2PS-NEXT:    ret i8 [[COND_I]]
 //
 char test_select(bool sel, char a, char b) {
     return select(sel, a, b);
@@ -62,6 +67,11 @@ char test_select(bool sel, char a, char b) {
 // AIE2P-NEXT:    [[COND_I:%.*]] = select i1 [[SEL:%.*]], i8 [[A:%.*]], i8 [[B:%.*]]
 // AIE2P-NEXT:    ret i8 [[COND_I]]
 //
+// AIE2PS-LABEL: @_Z11test_selectbhh(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[COND_I:%.*]] = select i1 [[SEL:%.*]], i8 [[A:%.*]], i8 [[B:%.*]]
+// AIE2PS-NEXT:    ret i8 [[COND_I]]
+//
 unsigned char test_select(bool sel, unsigned char a, unsigned char b) {
     return select(sel, a, b);
 }
@@ -88,6 +98,11 @@ unsigned char test_select(bool sel, unsigned char a, unsigned char b) {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[COND_I:%.*]] = select i1 [[SEL:%.*]], i16 [[A:%.*]], i16 [[B:%.*]]
 // AIE2P-NEXT:    ret i16 [[COND_I]]
+//
+// AIE2PS-LABEL: @_Z11test_selectbss(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[COND_I:%.*]] = select i1 [[SEL:%.*]], i16 [[A:%.*]], i16 [[B:%.*]]
+// AIE2PS-NEXT:    ret i16 [[COND_I]]
 //
 short test_select(bool sel, signed short a, signed short b) {
     return select(sel, a, b);
@@ -116,6 +131,11 @@ short test_select(bool sel, signed short a, signed short b) {
 // AIE2P-NEXT:    [[COND_I:%.*]] = select i1 [[SEL:%.*]], i16 [[A:%.*]], i16 [[B:%.*]]
 // AIE2P-NEXT:    ret i16 [[COND_I]]
 //
+// AIE2PS-LABEL: @_Z11test_selectbtt(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[COND_I:%.*]] = select i1 [[SEL:%.*]], i16 [[A:%.*]], i16 [[B:%.*]]
+// AIE2PS-NEXT:    ret i16 [[COND_I]]
+//
 unsigned short test_select(bool sel, unsigned short a, unsigned short b) {
     return select(sel, a, b);
 }
@@ -142,6 +162,11 @@ unsigned short test_select(bool sel, unsigned short a, unsigned short b) {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[COND_I:%.*]] = select i1 [[SEL:%.*]], i32 [[A:%.*]], i32 [[B:%.*]]
 // AIE2P-NEXT:    ret i32 [[COND_I]]
+//
+// AIE2PS-LABEL: @_Z11test_selectbii(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[COND_I:%.*]] = select i1 [[SEL:%.*]], i32 [[A:%.*]], i32 [[B:%.*]]
+// AIE2PS-NEXT:    ret i32 [[COND_I]]
 //
 int test_select(bool sel, int a, int b) {
     return select(sel, a, b);
@@ -170,6 +195,11 @@ int test_select(bool sel, int a, int b) {
 // AIE2P-NEXT:    [[COND_I:%.*]] = select i1 [[SEL:%.*]], i32 [[A:%.*]], i32 [[B:%.*]]
 // AIE2P-NEXT:    ret i32 [[COND_I]]
 //
+// AIE2PS-LABEL: @_Z11test_selectbjj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[COND_I:%.*]] = select i1 [[SEL:%.*]], i32 [[A:%.*]], i32 [[B:%.*]]
+// AIE2PS-NEXT:    ret i32 [[COND_I]]
+//
 unsigned int test_select(bool sel, unsigned int a, unsigned int b) {
     return select(sel, a, b);
 }
@@ -196,6 +226,11 @@ unsigned int test_select(bool sel, unsigned int a, unsigned int b) {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[COND_I:%.*]] = select i1 [[SEL:%.*]], i32 [[A:%.*]], i32 [[B:%.*]]
 // AIE2P-NEXT:    ret i32 [[COND_I]]
+//
+// AIE2PS-LABEL: @_Z11test_selectbll(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[COND_I:%.*]] = select i1 [[SEL:%.*]], i32 [[A:%.*]], i32 [[B:%.*]]
+// AIE2PS-NEXT:    ret i32 [[COND_I]]
 //
 long test_select(bool sel, long a, long b) {
     return select(sel, a, b);
@@ -224,6 +259,11 @@ long test_select(bool sel, long a, long b) {
 // AIE2P-NEXT:    [[COND_I:%.*]] = select i1 [[SEL:%.*]], i32 [[A:%.*]], i32 [[B:%.*]]
 // AIE2P-NEXT:    ret i32 [[COND_I]]
 //
+// AIE2PS-LABEL: @_Z11test_selectbmm(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[COND_I:%.*]] = select i1 [[SEL:%.*]], i32 [[A:%.*]], i32 [[B:%.*]]
+// AIE2PS-NEXT:    ret i32 [[COND_I]]
+//
 unsigned long test_select(bool sel, unsigned long a, unsigned long b) {
     return select(sel, a, b);
 }
@@ -250,6 +290,11 @@ unsigned long test_select(bool sel, unsigned long a, unsigned long b) {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[COND_I:%.*]] = select i1 [[SEL:%.*]], ptr [[A:%.*]], ptr [[B:%.*]]
 // AIE2P-NEXT:    ret ptr [[COND_I]]
+//
+// AIE2PS-LABEL: @_Z11test_selectbPvS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[COND_I:%.*]] = select i1 [[SEL:%.*]], ptr [[A:%.*]], ptr [[B:%.*]]
+// AIE2PS-NEXT:    ret ptr [[COND_I]]
 //
 void* test_select(bool sel, void *a, void *b) {
     return select(sel, a, b);

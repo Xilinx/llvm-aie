@@ -1,0 +1,56 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -mtriple=aie2ps -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+
+---
+name:      tied_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    $wh0, $p0, $dc0, $dc4 = VLDB_3D_128 $p0, $d0_3d
+    $wh0, $p1, $dc1, $dc5 = VLDB_3D_dmw_ldb $p1, $d1_3d
+    $x0, $p2, $dc2, $dc6 = VLDB_3D_dmx_ldb_x $p2, $d2_3d
+    $x0, $p1, $dc1, $dc5 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0 $p1, $d1_3d, implicit $crunpacksize, implicit $unpacksign0
+    $x0, $p2, $dc2, $dc6 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 $p2, $d2_3d, implicit $crunpacksize, implicit $unpacksign1
+    $y0, $p3, $dc3, $dc7 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign0 $p3, $d3_3d, implicit $crunpacksize, implicit $unpacksign0
+    $y0, $p0, $dc0, $dc4 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1 $p0, $d0_3d, implicit $crunpacksize, implicit $unpacksign1
+
+...
+
+---
+name:      virtual_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    %0:ep = COPY $p0
+    %10:eds = COPY $d0_3d
+    $wh0, %20:ep, %21:edcl, %22:edch = VLDB_3D_128 %0, %10
+    $wh0, %25:ep, %26:edcl, %27:edch = VLDB_3D_dmw_ldb %0, %10
+    $x0, %30:ep, %31:edcl, %32:edch = VLDB_3D_dmx_ldb_x %0, %10
+    $x0, %70:ep, %71:edcl, %72:edch = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0 %0, %10, implicit $crunpacksize, implicit $unpacksign0
+    $y0, %75:ep, %76:edcl, %77:edch = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign0 %0, %10, implicit $crunpacksize, implicit $unpacksign0
+    ; Missing basic variants
+    $x0, %93:ep, %94:edcl, %95:edch = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 %0, %10, implicit $crunpacksize, implicit $unpacksign1
+    $y0, %96:ep, %97:edcl, %98:edch = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1 %0, %10, implicit $crunpacksize, implicit $unpacksign1
+...
+
+---
+name:      tied_nok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-COUNT-7: Bad machine code: Tied physical registers must match
+    $wh0, $p0, $dc3, $dc5 = VLDB_3D_128 $p0, $d0_3d
+    $wh0, $p1, $dc0, $dc4 = VLDB_3D_dmw_ldb $p1, $d1_3d
+    $x0, $p2, $dc1, $dc5 = VLDB_3D_dmx_ldb_x $p2, $d2_3d
+    $x0, $p1, $dc0, $dc4 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0 $p1, $d1_3d, implicit $crunpacksize, implicit $unpacksign0
+    $y0, $p3, $dc1, $dc5 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign0 $p3, $d3_3d, implicit $crunpacksize, implicit $unpacksign0
+    $x0, $p3, $dc1, $dc6 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 $p3, $d3_3d, implicit $crunpacksize, implicit $unpacksign1
+    $y0, $p0, $dc0, $dc5 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1 $p0, $d0_3d, implicit $crunpacksize, implicit $unpacksign1
+
+...

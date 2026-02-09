@@ -4,12 +4,17 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc --mtriple=aie2p -verify-machineinstrs \
 # RUN:  --start-before=aie2p-postlegalizer-generic-combiner \
 # RUN:  --stop-after=aie2p-postlegalizer-custom-combiner -o - %s \
 # RUN:   | FileCheck %s
+# RUN: llc --mtriple=aie2ps -verify-machineinstrs \
+# RUN:  --start-before=aie2ps-postlegalizer-generic-combiner \
+# RUN:  --stop-after=aie2ps-postlegalizer-custom-combiner -o - %s \
+# RUN:   | FileCheck %s
+
 
 # Eliminate unnecessary G_PTR_ADD chains
 

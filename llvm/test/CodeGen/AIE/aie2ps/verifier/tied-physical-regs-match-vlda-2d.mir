@@ -1,0 +1,82 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -mtriple=aie2ps -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+
+---
+name:      tied_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    $wl0, $p1, $dc0 = VLDA_2D_128 $p1, $d0
+    $x0, $p2, $dc1 = VLDA_2D_dmx_lda_x $p2, $d1
+    $feg0, $p4, $dc3 = VLDA_2D_dmw_lda_feg2 $p4, $d3
+    $wl0, $p5, $dc4 = VLDA_2D_dmw_lda_w $p5, $d4
+    $cml0, $p7, $dc6 = VLDA_2D_CONV_fp32_bf16_dmx_lda_ups_f16 $p7, $d6
+    $bmll0, $p0, $dc7 = VLDA_2D_CONV_fp32_bf16_dmw_lda_ups_bf16 $p0, $d7
+    $cml0, $p1, $dc0 = VLDA_2D_CONV_fp32_fp16 $p1, $d0
+    $cml0, $p2, $dc1 = VLDA_2D_CONV_fp32_bf16_dmx_lda_ups_f16 $p2, $d1
+    $bmll0, $p4, $dc3 = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s0, $p4, $d3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmll0, $p5, $dc4 = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign1 $s0, $p5, $d4, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml0, $p6, $dc5 = VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign0 $s0, $p6, $d5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml0, $p7, $dc6 = VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign1 $s0, $p7, $d6, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml0, $p2, $dc1 = VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign0 $s0, $p2, $d1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml0, $p3, $dc2 = VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign1 $s0, $p3, $d2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $dm0, $p4, $dc3 = VLDA_2D_UPS_4x_dmx_lda_ups_x2d_upsSign0 $s0, $p4, $d3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $dm0, $p5, $dc4 = VLDA_2D_UPS_4x_dmx_lda_ups_x2d_upsSign1 $s0, $p5, $d4, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+...
+
+---
+name:      virtual_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    %0:ep = COPY $p0
+    %10:ed = COPY $d0
+    $wl0, %20:ep, %21:edc = VLDA_2D_128 %0, %10
+    $x0, %30:ep, %31:edc = VLDA_2D_dmx_lda_x %0, %10
+    $feg0, %50:ep, %51:edc = VLDA_2D_dmw_lda_feg2 %0, %10
+    $wl0, %60:ep, %61:edc = VLDA_2D_dmw_lda_w %0, %10
+    $cml0, %80:ep, %81:edc = VLDA_2D_CONV_fp32_bf16_dmx_lda_ups_f16 %0, %10
+    $bmll0, %85:ep, %86:edc = VLDA_2D_CONV_fp32_bf16_dmw_lda_ups_bf16 %0, %10
+    $cml0, %90:ep, %91:edc = VLDA_2D_CONV_fp32_fp16 %0, %10
+    $cml0, %95:ep, %96:edc = VLDA_2D_CONV_fp32_bf16_dmx_lda_ups_f16 %0, %10
+    $bmll0, %110:ep, %111:edc = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s0, %0, %10, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmll0, %115:ep, %116:edc = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign1 $s0, %0, %10, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml0, %120:ep, %121:edc = VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign0 $s0, %0, %10, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml0, %125:ep, %126:edc = VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign1 $s0, %0, %10, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml0, %140:ep, %141:edc = VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign0 $s0, %0, %10, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml0, %145:ep, %146:edc = VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign1 $s0, %0, %10, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $dm0, %150:ep, %151:edc = VLDA_2D_UPS_4x_dmx_lda_ups_x2d_upsSign0 $s0, %0, %10, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $dm0, %155:ep, %156:edc = VLDA_2D_UPS_4x_dmx_lda_ups_x2d_upsSign1 $s0, %0, %10, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+
+...
+
+---
+name:      tied_nok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-COUNT-16: Bad machine code: Tied physical registers must match
+    $wl0, $p1, $dc7 = VLDA_2D_128 $p1, $d0
+    $x0, $p2, $dc0 = VLDA_2D_dmx_lda_x $p2, $d1
+    $feg0, $p4, $dc2 = VLDA_2D_dmw_lda_feg2 $p4, $d3
+    $wl0, $p5, $dc3 = VLDA_2D_dmw_lda_w $p5, $d4
+    $cml0, $p7, $dc5 = VLDA_2D_CONV_fp32_bf16_dmx_lda_ups_f16 $p7, $d6
+    $bmll0, $p0, $dc6 = VLDA_2D_CONV_fp32_bf16_dmw_lda_ups_bf16 $p0, $d7
+    $cml0, $p1, $dc7 = VLDA_2D_CONV_fp32_fp16 $p1, $d0
+    $cml0, $p2, $dc0 = VLDA_2D_CONV_fp32_bf16_dmx_lda_ups_f16 $p2, $d1
+    $bmll0, $p4, $dc2 = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s0, $p4, $d3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmll0, $p5, $dc3 = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign1 $s0, $p5, $d4, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml0, $p6, $dc4 = VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign0 $s0, $p6, $d5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml0, $p7, $dc5 = VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign1 $s0, $p7, $d6, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml0, $p2, $dc0 = VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign0 $s0, $p2, $d1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml0, $p3, $dc1 = VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign1 $s0, $p3, $d2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $dm0, $p4, $dc2 = VLDA_2D_UPS_4x_dmx_lda_ups_x2d_upsSign0 $s0, $p4, $d3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $dm0, $p5, $dc3 = VLDA_2D_UPS_4x_dmx_lda_ups_x2d_upsSign1 $s0, $p5, $d4, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+
+...

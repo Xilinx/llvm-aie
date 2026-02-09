@@ -23,6 +23,7 @@
 #include "TargetInfo/AIETargetInfo.h"
 #include "aie1/AIE1TargetMachine.h"
 #include "aie2p/AIE2PTargetMachine.h"
+#include "aie2ps/AIE2PSTargetMachine.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/CSEConfigBase.h"
 #include "llvm/CodeGen/CodeGenTargetMachineImpl.h"
@@ -140,6 +141,7 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETarget() {
   RegisterTargetMachine<AIETargetMachine> X(getTheAIETarget());
   RegisterTargetMachine<AIE2TargetMachine> Y(getTheAIE2Target());
   RegisterTargetMachine<AIE2PTargetMachine> A(getTheAIE2PTarget());
+  RegisterTargetMachine<AIE2PSTargetMachine> B(getTheAIE2PSTarget());
   //  auto PR = PassRegistry::getPassRegistry();
   //  initializeAIEExpandPseudoPass(*PR);
   auto *PR = PassRegistry::getPassRegistry();
@@ -150,10 +152,13 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETarget() {
   initializeAIEPtrModOptimizerPass(*PR);
   initializeAIE2PreLegalizerCombinerPass(*PR);
   initializeAIE2PPreLegalizerCombinerPass(*PR);
+  initializeAIE2PSPreLegalizerCombinerPass(*PR);
   initializeAIE2PostLegalizerGenericCombinerPass(*PR);
   initializeAIE2PPostLegalizerGenericCombinerPass(*PR);
+  initializeAIE2PSPostLegalizerGenericCombinerPass(*PR);
   initializeAIE2PostLegalizerCustomCombinerPass(*PR);
   initializeAIE2PPostLegalizerCustomCombinerPass(*PR);
+  initializeAIE2PSPostLegalizerCustomCombinerPass(*PR);
   initializeAIEPostSelectOptimizePass(*PR);
   initializeAIEPseudoBranchExpansionPass(*PR);
   initializeAIESubRegConstrainerPass(*PR);

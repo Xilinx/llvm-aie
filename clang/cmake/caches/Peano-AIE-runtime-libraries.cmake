@@ -19,7 +19,7 @@ set(LLVM_FORCE_BUILD_RUNTIME "libc" CACHE STRING "")
 # deposits libc, libm, crt into lib/aie2-none-unknown-elf instead of lib/
 set(LLVM_ENABLE_PER_TARGET_RUNTIME_DIR ON CACHE BOOL "")
 
-set(LLVM_BUILTIN_TARGETS "aie-none-unknown-elf;aie2-none-unknown-elf;aie2p-none-unknown-elf" CACHE STRING "")
+set(LLVM_BUILTIN_TARGETS "aie-none-unknown-elf;aie2-none-unknown-elf;aie2p-none-unknown-elf;aie2ps-none-unknown-elf" CACHE STRING "")
 set(LLVM_RUNTIME_TARGETS "${LLVM_BUILTIN_TARGETS}" CACHE STRING "")
 
 foreach(target ${LLVM_BUILTIN_TARGETS})

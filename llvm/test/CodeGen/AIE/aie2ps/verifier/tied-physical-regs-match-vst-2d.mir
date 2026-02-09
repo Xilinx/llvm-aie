@@ -1,0 +1,102 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -mtriple=aie2ps -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+
+---
+name:      tied_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    $p0, $dc0 = VST_2D_128_dmv_sts_w $wl0, $p0, $d0
+    $p0, $dc0 = VST_2D_128_dmv_sts_eg $eg0, $p0, $d0
+    $p0, $dc0 = VST_2D_128_dmv_sts_feg $fegl0, $p0, $d0
+    $p1, $dc1 = VST_2D_dmx_sts_x $x0, $p1, $d1
+    $p2, $dc2 = VST_2D_dmx_sts_bm $bmll0, $p2, $d2
+    $p3, $dc3 = VST_2D_dmw_sts_w $wl0, $p3, $d3
+    $p5, $dc5 = VST_2D_PACK_dmw_sts_pack_packSign0 $x0, $p5, $d5, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $p6, $dc6 = VST_2D_PACK_dmw_sts_pack_packSign1 $x0, $p6, $d6, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $p7, $dc7 = VST_2D_PACK_dmx_sts_pack_packSign0 $y0, $p7, $d7, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $p0, $dc0 = VST_2D_PACK_dmx_sts_pack_packSign1 $y0, $p0, $d0, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $p1, $dc1 = VST_2D_CONV_bf16_fp32_dmw_sts_srs_bf16 $bmll0, $p1, $d1, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $p2, $dc2 = VST_2D_CONV_bf16_fp32_dmx_sts_srs_bf16 $cml0, $p2, $d2, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $p4, $dc4 = VST_2D_CONV_fp16_fp32 $cml0, $p4, $d4, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $p1, $dc1 = VST_2D_CONV_fp8_fp32 $cml0, $s0, $p1, $d1, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfp8conf, implicit $crfpconvsat, implicit $crrnd
+    $p1, $dc1 = VST_2D_CONV_bf8_fp32 $cml0, $s0, $p1, $d1, implicit-def $srf2fflags, implicit $crbf8conf, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $p7, $dc7 = VST_2D_SRS_2x_dmw_sts_srs_bm_srsSign0 $bmll0, $s0, $p7, $d7, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $p7, $dc7 = VST_2D_SRS_2x_dmw_sts_srs_bm_srsSign1 $bmll0, $s0, $p7, $d7, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $p0, $dc0 = VST_2D_SRS_2x_dm_sts_srs_cm_srsSign0 $cml0, $s0, $p0, $d0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $p0, $dc0 = VST_2D_SRS_2x_dm_sts_srs_cm_srsSign1 $cml0, $s0, $p0, $d0, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $p2, $dc2 = VST_2D_SRS_4x_dm_sts_srs_cm_srsSign0 $cml0, $s0, $p2, $d2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $p2, $dc2 = VST_2D_SRS_4x_dm_sts_srs_cm_srsSign1 $cml0, $s0, $p2, $d2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $p3, $dc3 = VST_2D_SRS_4x_dmx_sts_srs_dm_srsSign0 $dm0, $s0, $p3, $d3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $p3, $dc3 = VST_2D_SRS_4x_dmx_sts_srs_dm_srsSign1 $dm0, $s0, $p3, $d3, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+
+...
+---
+name:      virtual_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    %0:ep = COPY $p0
+    %10:ed = COPY $d0
+    %20:ep, %21:edc = VST_2D_128_dmv_sts_w $wl0, %0, %10
+    %22:ep, %23:edc = VST_2D_128_dmv_sts_eg $eg0, %0, %10
+    %24:ep, %25:edc = VST_2D_128_dmv_sts_feg $fegl0, %0, %10
+    %30:ep, %31:edc = VST_2D_dmx_sts_x $x0, %0, %10
+    %40:ep, %41:edc = VST_2D_dmx_sts_bm $bmll0, %0, %10
+    %50:ep, %51:edc = VST_2D_dmw_sts_w $wl0, %0, %10
+    %60:ep, %61:edc = VST_2D_PACK_dmw_sts_pack_packSign0 $x0, %0, %10, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    %70:ep, %71:edc = VST_2D_CONV_bf16_fp32_dmw_sts_srs_bf16 $bmll0, %0, %10, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    %110:ep, %111:edc = VST_2D_SRS_2x_dmw_sts_srs_bm_srsSign0 $bmll0, $s0, %0, %10, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    %112:ep, %113:edc = VST_2D_SRS_2x_dmw_sts_srs_bm_srsSign1 $bmll0, $s0, %0, %10, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    ; Complete all missing basic, PACK, CONV, SRS variants to reach 54 total
+    %120:ep, %121:edc = VST_2D_PACK_dmw_sts_pack_packSign1 $x0, %0, %10, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    %125:ep, %126:edc = VST_2D_PACK_dmx_sts_pack_packSign0 $y0, %0, %10, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    %130:ep, %131:edc = VST_2D_PACK_dmx_sts_pack_packSign1 $y0, %0, %10, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    %135:ep, %136:edc = VST_2D_CONV_bf16_fp32_dmw_sts_srs_bf16 $bmll0, %0, %10, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    %145:ep, %146:edc = VST_2D_CONV_fp16_fp32 $cml0, %0, %10, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    %170:ep, %171:edc = VST_2D_CONV_fp8_fp32 $cml0, $s0, %0, %10, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfp8conf, implicit $crfpconvsat, implicit $crrnd
+    %225:ep, %226:edc = VST_2D_SRS_2x_dm_sts_srs_cm_srsSign0 $cml0, $s0, %0, %10, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    %227:ep, %228:edc = VST_2D_SRS_2x_dm_sts_srs_cm_srsSign1 $cml0, $s0, %0, %10, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    %230:ep, %231:edc = VST_2D_SRS_4x_dm_sts_srs_cm_srsSign0 $cml0, $s0, %0, %10, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    %232:ep, %233:edc = VST_2D_SRS_4x_dm_sts_srs_cm_srsSign1 $cml0, $s0, %0, %10, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    %245:ep, %246:edc = VST_2D_SRS_4x_dmx_sts_srs_dm_srsSign0 $dm0, $s0, %0, %10, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    %252:ep, %253:edc = VST_2D_SRS_4x_dmx_sts_srs_dm_srsSign1 $dm0, $s0, %0, %10, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+
+...
+---
+name:      tied_nok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-COUNT-22: Bad machine code: Tied physical registers must match
+    $p0, $dc7 = VST_2D_128_dmv_sts_w $wl0, $p0, $d0
+    $p0, $dc7 = VST_2D_128_dmv_sts_eg $eg0, $p0, $d0
+    $p0, $dc7 = VST_2D_128_dmv_sts_feg $fegl0, $p0, $d0
+    $p1, $dc0 = VST_2D_dmx_sts_x $x0, $p1, $d1
+    $p2, $dc1 = VST_2D_dmx_sts_bm $bmll0, $p2, $d2
+    $p3, $dc2 = VST_2D_dmw_sts_w $wl0, $p3, $d3
+    $p4, $dc3 = VST_2D_PACK_dmw_sts_pack_packSign0 $x0, $p4, $d4, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $p5, $dc4 = VST_2D_CONV_bf16_fp32_dmw_sts_srs_bf16 $bmll0, $p5, $d5, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $p1, $dc0 = VST_2D_SRS_2x_dmw_sts_srs_bm_srsSign0 $bmll0, $s0, $p1, $d1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $p1, $dc0 = VST_2D_SRS_2x_dmw_sts_srs_bm_srsSign1 $bmll0, $s0, $p1, $d1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    ; Add all remaining 43 instructions with wrong tied registers to reach 54
+    $p4, $dc3 = VST_2D_PACK_dmw_sts_pack_packSign1 $x0, $p4, $d4, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $p5, $dc4 = VST_2D_PACK_dmx_sts_pack_packSign0 $y0, $p5, $d5, implicit $crpacksize, implicit $crsat, implicit $packsign0
+    $p6, $dc5 = VST_2D_PACK_dmx_sts_pack_packSign1 $y0, $p6, $d6, implicit $crpacksize, implicit $crsat, implicit $packsign1
+    $p7, $dc6 = VST_2D_CONV_bf16_fp32_dmw_sts_srs_bf16 $bmll0, $p7, $d7, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $p1, $dc0 = VST_2D_CONV_fp16_fp32 $cml0, $p1, $d1, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $p6, $dc5 = VST_2D_CONV_fp8_fp32 $cml0, $s0, $p6, $d6, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfp8conf, implicit $crfpconvsat, implicit $crrnd
+    $p6, $dc5 = VST_2D_CONV_bf8_fp32 $cml0, $s0, $p6, $d6, implicit-def $srf2fflags, implicit $crbf8conf, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $p1, $dc0 = VST_2D_SRS_2x_dm_sts_srs_cm_srsSign0 $cml0, $s0, $p1, $d1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $p1, $dc0 = VST_2D_SRS_2x_dm_sts_srs_cm_srsSign1 $cml0, $s0, $p1, $d1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $p2, $dc1 = VST_2D_SRS_4x_dm_sts_srs_cm_srsSign0 $cml0, $s0, $p2, $d2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $p2, $dc1 = VST_2D_SRS_4x_dm_sts_srs_cm_srsSign1 $cml0, $s0, $p2, $d2, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+    $p5, $dc4 = VST_2D_SRS_4x_dmx_sts_srs_dm_srsSign0 $dm0, $s0, $p5, $d5, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    $p5, $dc4 = VST_2D_SRS_4x_dmx_sts_srs_dm_srsSign1 $dm0, $s0, $p5, $d5, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign1
+...

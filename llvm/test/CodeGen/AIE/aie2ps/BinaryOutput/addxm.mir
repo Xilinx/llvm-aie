@@ -1,0 +1,42 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; ADDXM_NC_lng_cg_le_rel
+    ADDXM_NC_lng_cg_le_rel 1, implicit-def $le, implicit $pc
+    ADDXM_NC_lng_cg_le_rel 0, implicit-def $le, implicit $pc
+    ADDXM_NC_lng_cg_le_rel 1048575, implicit-def $le, implicit $pc
+    ADDXM_NC_lng_cg_le_rel 1048574, implicit-def $le, implicit $pc
+
+    ; ADDXM_NC_lng_cg_ls_rel
+    ADDXM_NC_lng_cg_ls_rel 1048575, implicit-def $ls, implicit $pc
+    ADDXM_NC_lng_cg_ls_rel 1, implicit-def $ls, implicit $pc
+    ADDXM_NC_lng_cg_ls_rel 1048574, implicit-def $ls, implicit $pc
+    ADDXM_NC_lng_cg_ls_rel 0, implicit-def $ls, implicit $pc
+...
+
+# CHECK: 0: 46 07 80 00 00 00 addxm.nc le, pc, #1
+# CHECK: 6: 46 07 00 00 00 00 addxm.nc le, pc, #0
+# CHECK: c: 46 07 80 ff ff 07 addxm.nc le, pc, #1048575
+# CHECK: 12: 46 07 00 ff ff 07 addxm.nc le, pc, #1048574
+# CHECK: 18: 46 05 80 ff ff 07 addxm.nc ls, pc, #1048575
+# CHECK: 1e: 46 05 80 00 00 00 addxm.nc ls, pc, #1
+# CHECK: 24: 46 05 00 ff ff 07 addxm.nc ls, pc, #1048574
+# CHECK: 2a: 46 05 00 00 00 00 addxm.nc ls, pc, #0

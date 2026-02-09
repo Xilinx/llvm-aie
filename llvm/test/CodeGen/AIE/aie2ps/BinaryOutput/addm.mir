@@ -1,0 +1,402 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; ADDM_NC_mv_add_ri
+    $dn5 = ADDM_NC_mv_add_ri $r31, 1
+    $r12 = ADDM_NC_mv_add_ri $r19, -128
+    $r21 = ADDM_NC_mv_add_ri $r3, 0
+    $r5 = ADDM_NC_mv_add_ri $r21, 127
+    $r30 = ADDM_NC_mv_add_ri $r1, 1
+    $r6 = ADDM_NC_mv_add_ri $r0, -128
+    $dc3 = ADDM_NC_mv_add_ri $r25, 0
+    $upssign1 = ADDM_NC_mv_add_ri $r2, 127
+    $dc1 = ADDM_NC_mv_add_ri $r28, 1
+    $packsign0 = ADDM_NC_mv_add_ri $r5, -128
+    $s3 = ADDM_NC_mv_add_ri $r26, 0
+    $m7 = ADDM_NC_mv_add_ri $r14, 127
+    $dj2 = ADDM_NC_mv_add_ri $r27, 1
+    $r0 = ADDM_NC_mv_add_ri $r22, -128
+    $lc = ADDM_NC_mv_add_ri $r4, 0
+    $dj5 = ADDM_NC_mv_add_ri $r23, 127
+    $r28 = ADDM_NC_mv_add_ri $r13, 1
+    $srssign1 = ADDM_NC_mv_add_ri $r20, -128
+    $p3 = ADDM_NC_mv_add_ri $r11, 0
+    $r14 = ADDM_NC_mv_add_ri $r30, 127
+    $unpacksign0 = ADDM_NC_mv_add_ri $r12, 1
+    $r3 = ADDM_NC_mv_add_ri $r17, -128
+    $dn4 = ADDM_NC_mv_add_ri $r6, 0
+    $m5 = ADDM_NC_mv_add_ri $r18, 127
+    $dn0 = ADDM_NC_mv_add_ri $r7, 1
+    $dn1 = ADDM_NC_mv_add_ri $r8, -128
+    $r4 = ADDM_NC_mv_add_ri $r16, 0
+    $s1 = ADDM_NC_mv_add_ri $r15, 127
+    $r20 = ADDM_NC_mv_add_ri $r9, 1
+    $p1 = ADDM_NC_mv_add_ri $r10, -128
+    $dj4 = ADDM_NC_mv_add_ri $r24, 0
+    $r31 = ADDM_NC_mv_add_ri $r29, 127
+    $dn7 = ADDM_NC_mv_add_ri $r31, 1
+    $r2 = ADDM_NC_mv_add_ri $r19, -128
+    $dn2 = ADDM_NC_mv_add_ri $r3, 0
+    $p6 = ADDM_NC_mv_add_ri $r21, 127
+    $m6 = ADDM_NC_mv_add_ri $r1, 1
+    $dn6 = ADDM_NC_mv_add_ri $r0, -128
+    $r18 = ADDM_NC_mv_add_ri $r25, 0
+    $r16 = ADDM_NC_mv_add_ri $r2, 127
+    $dc6 = ADDM_NC_mv_add_ri $r28, 1
+    $packsign1 = ADDM_NC_mv_add_ri $r5, -128
+    $r17 = ADDM_NC_mv_add_ri $r26, 0
+    $m4 = ADDM_NC_mv_add_ri $r14, 127
+    $vaddsign0 = ADDM_NC_mv_add_ri $r27, 1
+    $dn3 = ADDM_NC_mv_add_ri $r22, -128
+    $lr = ADDM_NC_mv_add_ri $r4, 0
+    $dc7 = ADDM_NC_mv_add_ri $r23, 127
+    $r9 = ADDM_NC_mv_add_ri $r13, 1
+    $dj1 = ADDM_NC_mv_add_ri $r20, -128
+    $m0 = ADDM_NC_mv_add_ri $r11, 0
+    $s2 = ADDM_NC_mv_add_ri $r30, 127
+    $srssign0 = ADDM_NC_mv_add_ri $r12, 1
+    $r27 = ADDM_NC_mv_add_ri $r17, -128
+    $p4 = ADDM_NC_mv_add_ri $r6, 0
+    $r15 = ADDM_NC_mv_add_ri $r18, 127
+    $dc0 = ADDM_NC_mv_add_ri $r7, 1
+    $r25 = ADDM_NC_mv_add_ri $r8, -128
+    $r24 = ADDM_NC_mv_add_ri $r16, 0
+    $upssign0 = ADDM_NC_mv_add_ri $r15, 127
+    $m1 = ADDM_NC_mv_add_ri $r9, 1
+    $dc4 = ADDM_NC_mv_add_ri $r10, -128
+    $r13 = ADDM_NC_mv_add_ri $r24, 0
+    $dj6 = ADDM_NC_mv_add_ri $r29, 127
+    $dj3 = ADDM_NC_mv_add_ri $r31, 1
+    $p5 = ADDM_NC_mv_add_ri $r19, -128
+    $p7 = ADDM_NC_mv_add_ri $r3, 0
+    $r10 = ADDM_NC_mv_add_ri $r21, 127
+    $r29 = ADDM_NC_mv_add_ri $r1, 1
+    $vaddsign1 = ADDM_NC_mv_add_ri $r0, -128
+    $unpacksign1 = ADDM_NC_mv_add_ri $r25, 0
+    $r26 = ADDM_NC_mv_add_ri $r2, 127
+    $m2 = ADDM_NC_mv_add_ri $r28, 1
+    $r11 = ADDM_NC_mv_add_ri $r5, -128
+    $r1 = ADDM_NC_mv_add_ri $r26, 0
+    $r23 = ADDM_NC_mv_add_ri $r14, 127
+    $s0 = ADDM_NC_mv_add_ri $r27, 1
+    $dj0 = ADDM_NC_mv_add_ri $r22, -128
+    $dj7 = ADDM_NC_mv_add_ri $r4, 0
+    $p0 = ADDM_NC_mv_add_ri $r23, 127
+    $p2 = ADDM_NC_mv_add_ri $r13, 1
+    $dc5 = ADDM_NC_mv_add_ri $r20, -128
+    $r19 = ADDM_NC_mv_add_ri $r11, 0
+    $sp = ADDM_NC_mv_add_ri $r30, 127
+    $dc2 = ADDM_NC_mv_add_ri $r12, 1
+    $m3 = ADDM_NC_mv_add_ri $r17, -128
+    $r22 = ADDM_NC_mv_add_ri $r6, 0
+    $r7 = ADDM_NC_mv_add_ri $r18, 127
+    $r8 = ADDM_NC_mv_add_ri $r7, 1
+
+    ; ADDM_NC_mv_add_rr
+    $dc0 = ADDM_NC_mv_add_rr $r25, $r17
+    $dc7 = ADDM_NC_mv_add_rr $r13, $r30
+    $r31 = ADDM_NC_mv_add_rr $r10, $r31
+    $r23 = ADDM_NC_mv_add_rr $r8, $r20
+    $r1 = ADDM_NC_mv_add_rr $r18, $r26
+    $r29 = ADDM_NC_mv_add_rr $r2, $r27
+    $r10 = ADDM_NC_mv_add_rr $r21, $r6
+    $dc6 = ADDM_NC_mv_add_rr $r11, $r13
+    $r16 = ADDM_NC_mv_add_rr $r15, $r1
+    $dn2 = ADDM_NC_mv_add_rr $r14, $r18
+    $m1 = ADDM_NC_mv_add_rr $r31, $r22
+    $dj1 = ADDM_NC_mv_add_rr $r26, $r16
+    $dn3 = ADDM_NC_mv_add_rr $r24, $r5
+    $srssign0 = ADDM_NC_mv_add_rr $r6, $r28
+    $r2 = ADDM_NC_mv_add_rr $r0, $r7
+    $s0 = ADDM_NC_mv_add_rr $r9, $r8
+    $dj2 = ADDM_NC_mv_add_rr $r16, $r19
+    $m5 = ADDM_NC_mv_add_rr $r7, $r4
+    $dj5 = ADDM_NC_mv_add_rr $r28, $r2
+    $p0 = ADDM_NC_mv_add_rr $r27, $r25
+    $dc5 = ADDM_NC_mv_add_rr $r1, $r12
+    $upssign1 = ADDM_NC_mv_add_rr $r5, $r29
+    $lr = ADDM_NC_mv_add_rr $r17, $r23
+    $dc3 = ADDM_NC_mv_add_rr $r12, $r3
+    $r12 = ADDM_NC_mv_add_rr $r22, $r14
+    $r11 = ADDM_NC_mv_add_rr $r20, $r15
+    $r0 = ADDM_NC_mv_add_rr $r19, $r21
+    $dj7 = ADDM_NC_mv_add_rr $r4, $r9
+    $r28 = ADDM_NC_mv_add_rr $r30, $r0
+    $r26 = ADDM_NC_mv_add_rr $r3, $r24
+    $unpacksign0 = ADDM_NC_mv_add_rr $r23, $r10
+    $r17 = ADDM_NC_mv_add_rr $r29, $r11
+    $dj0 = ADDM_NC_mv_add_rr $r25, $r17
+    $r19 = ADDM_NC_mv_add_rr $r13, $r30
+    $m2 = ADDM_NC_mv_add_rr $r10, $r31
+    $r6 = ADDM_NC_mv_add_rr $r8, $r20
+    $m7 = ADDM_NC_mv_add_rr $r18, $r26
+    $r14 = ADDM_NC_mv_add_rr $r2, $r27
+    $r30 = ADDM_NC_mv_add_rr $r21, $r6
+    $p6 = ADDM_NC_mv_add_rr $r11, $r13
+    $r9 = ADDM_NC_mv_add_rr $r15, $r1
+    $upssign0 = ADDM_NC_mv_add_rr $r14, $r18
+    $r24 = ADDM_NC_mv_add_rr $r31, $r22
+    $dj4 = ADDM_NC_mv_add_rr $r26, $r16
+    $r5 = ADDM_NC_mv_add_rr $r24, $r5
+    $s1 = ADDM_NC_mv_add_rr $r6, $r28
+    $srssign1 = ADDM_NC_mv_add_rr $r0, $r7
+    $r22 = ADDM_NC_mv_add_rr $r9, $r8
+    $r13 = ADDM_NC_mv_add_rr $r16, $r19
+    $p2 = ADDM_NC_mv_add_rr $r7, $r4
+    $dj6 = ADDM_NC_mv_add_rr $r28, $r2
+    $p1 = ADDM_NC_mv_add_rr $r27, $r25
+    $m0 = ADDM_NC_mv_add_rr $r1, $r12
+    $dn7 = ADDM_NC_mv_add_rr $r5, $r29
+    $r3 = ADDM_NC_mv_add_rr $r17, $r23
+    $dj3 = ADDM_NC_mv_add_rr $r12, $r3
+    $r8 = ADDM_NC_mv_add_rr $r22, $r14
+    $r7 = ADDM_NC_mv_add_rr $r20, $r15
+    $dc4 = ADDM_NC_mv_add_rr $r19, $r21
+    $packsign1 = ADDM_NC_mv_add_rr $r4, $r9
+    $dn6 = ADDM_NC_mv_add_rr $r30, $r0
+    $p4 = ADDM_NC_mv_add_rr $r3, $r24
+    $m6 = ADDM_NC_mv_add_rr $r23, $r10
+    $r20 = ADDM_NC_mv_add_rr $r29, $r11
+    $dn4 = ADDM_NC_mv_add_rr $r25, $r17
+    $r27 = ADDM_NC_mv_add_rr $r13, $r30
+    $dc2 = ADDM_NC_mv_add_rr $r10, $r31
+    $vaddsign0 = ADDM_NC_mv_add_rr $r8, $r20
+    $p5 = ADDM_NC_mv_add_rr $r18, $r26
+    $p3 = ADDM_NC_mv_add_rr $r2, $r27
+    $s2 = ADDM_NC_mv_add_rr $r21, $r6
+    $dc1 = ADDM_NC_mv_add_rr $r11, $r13
+    $dn5 = ADDM_NC_mv_add_rr $r15, $r1
+    $lc = ADDM_NC_mv_add_rr $r14, $r18
+    $packsign0 = ADDM_NC_mv_add_rr $r31, $r22
+    $sp = ADDM_NC_mv_add_rr $r26, $r16
+    $r18 = ADDM_NC_mv_add_rr $r24, $r5
+    $vaddsign1 = ADDM_NC_mv_add_rr $r6, $r28
+    $unpacksign1 = ADDM_NC_mv_add_rr $r0, $r7
+    $r25 = ADDM_NC_mv_add_rr $r9, $r8
+    $dn0 = ADDM_NC_mv_add_rr $r16, $r19
+    $r21 = ADDM_NC_mv_add_rr $r7, $r4
+    $s3 = ADDM_NC_mv_add_rr $r28, $r2
+    $r15 = ADDM_NC_mv_add_rr $r27, $r25
+    $m4 = ADDM_NC_mv_add_rr $r1, $r12
+    $m3 = ADDM_NC_mv_add_rr $r5, $r29
+    $r4 = ADDM_NC_mv_add_rr $r17, $r23
+    $p7 = ADDM_NC_mv_add_rr $r12, $r3
+    $dn1 = ADDM_NC_mv_add_rr $r22, $r14
+
+    ; ADDM_NC_mv_cg_or_mv_cg_le_rel
+    ADDM_NC_mv_cg_or_mv_cg_le_rel 2046, implicit-def $le, implicit $pc
+    ADDM_NC_mv_cg_or_mv_cg_le_rel 1, implicit-def $le, implicit $pc
+    ADDM_NC_mv_cg_or_mv_cg_le_rel 0, implicit-def $le, implicit $pc
+    ADDM_NC_mv_cg_or_mv_cg_le_rel 2047, implicit-def $le, implicit $pc
+
+    ; ADDM_NC_mv_cg_or_mv_cg_ls_rel
+    ADDM_NC_mv_cg_or_mv_cg_ls_rel 0, implicit-def $ls, implicit $pc
+    ADDM_NC_mv_cg_or_mv_cg_ls_rel 2046, implicit-def $ls, implicit $pc
+    ADDM_NC_mv_cg_or_mv_cg_ls_rel 2047, implicit-def $ls, implicit $pc
+    ADDM_NC_mv_cg_or_mv_cg_ls_rel 1, implicit-def $ls, implicit $pc
+...
+
+# CHECK: 0: 30 01 9f 3a addm.nc dn5, r31, #1
+# CHECK: 4: 30 80 33 36 addm.nc r12, r19, #-128
+# CHECK: 8: 30 00 a3 3a addm.nc r21, r3, #0
+# CHECK: c: 30 7f b5 32 addm.nc r5, r21, #127
+# CHECK: 10: 30 01 21 3f addm.nc r30, r1, #1
+# CHECK: 14: 30 80 20 33 addm.nc r6, r0, #-128
+# CHECK: 18: 30 00 99 37 addm.nc dc3, r25, #0
+# CHECK: 1c: 30 7f 42 3a addm.nc upssign1, r2, #127
+# CHECK: 20: 30 01 9c 33 addm.nc dc1, r28, #1
+# CHECK: 24: 30 80 45 30 addm.nc packsign0, r5, #-128
+# CHECK: 28: 30 00 da 3d addm.nc s3, r26, #0
+# CHECK: 2c: 30 7f 0e 3e addm.nc m7, r14, #127
+# CHECK: 30: 30 01 1b 35 addm.nc dj2, r27, #1
+# CHECK: 34: 30 80 36 30 addm.nc r0, r22, #-128
+# CHECK: 38: 30 00 c4 33 addm.nc lc, r4, #0
+# CHECK: 3c: 30 7f 17 3b addm.nc dj5, r23, #127
+# CHECK: 40: 30 01 2d 3e addm.nc r28, r13, #1
+# CHECK: 44: 30 80 54 39 addm.nc srssign1, r20, #-128
+# CHECK: 48: 30 00 cb 36 addm.nc p3, r11, #0
+# CHECK: 4c: 30 7f 3e 37 addm.nc r14, r30, #127
+# CHECK: 50: 30 01 4c 33 addm.nc unpacksign0, r12, #1
+# CHECK: 54: 30 80 b1 31 addm.nc r3, r17, #-128
+# CHECK: 58: 30 00 86 38 addm.nc dn4, r6, #0
+# CHECK: 5c: 30 7f 12 3a addm.nc m5, r18, #127
+# CHECK: 60: 30 01 87 30 addm.nc dn0, r7, #1
+# CHECK: 64: 30 80 88 32 addm.nc dn1, r8, #-128
+# CHECK: 68: 30 00 30 32 addm.nc r4, r16, #0
+# CHECK: 6c: 30 7f cf 35 addm.nc s1, r15, #127
+# CHECK: 70: 30 01 29 3a addm.nc r20, r9, #1
+# CHECK: 74: 30 80 ca 32 addm.nc p1, r10, #-128
+# CHECK: 78: 30 00 18 39 addm.nc dj4, r24, #0
+# CHECK: 7c: 30 7f bd 3f addm.nc r31, r29, #127
+# CHECK: 80: 30 01 9f 3e addm.nc dn7, r31, #1
+# CHECK: 84: 30 80 33 31 addm.nc r2, r19, #-128
+# CHECK: 88: 30 00 83 34 addm.nc dn2, r3, #0
+# CHECK: 8c: 30 7f d5 3c addm.nc p6, r21, #127
+# CHECK: 90: 30 01 01 3c addm.nc m6, r1, #1
+# CHECK: 94: 30 80 80 3c addm.nc dn6, r0, #-128
+# CHECK: 98: 30 00 39 39 addm.nc r18, r25, #0
+# CHECK: 9c: 30 7f 22 38 addm.nc r16, r2, #127
+# CHECK: a0: 30 01 9c 3d addm.nc dc6, r28, #1
+# CHECK: a4: 30 80 45 38 addm.nc packsign1, r5, #-128
+# CHECK: a8: 30 00 ba 38 addm.nc r17, r26, #0
+# CHECK: ac: 30 7f 0e 38 addm.nc m4, r14, #127
+# CHECK: b0: 30 01 5b 34 addm.nc vaddsign0, r27, #1
+# CHECK: b4: 30 80 96 36 addm.nc dn3, r22, #-128
+# CHECK: b8: 30 00 c4 37 addm.nc lr, r4, #0
+# CHECK: bc: 30 7f 97 3f addm.nc dc7, r23, #127
+# CHECK: c0: 30 01 ad 34 addm.nc r9, r13, #1
+# CHECK: c4: 30 80 14 33 addm.nc dj1, r20, #-128
+# CHECK: c8: 30 00 0b 30 addm.nc m0, r11, #0
+# CHECK: cc: 30 7f de 39 addm.nc s2, r30, #127
+# CHECK: d0: 30 01 4c 31 addm.nc srssign0, r12, #1
+# CHECK: d4: 30 80 b1 3d addm.nc r27, r17, #-128
+# CHECK: d8: 30 00 c6 38 addm.nc p4, r6, #0
+# CHECK: dc: 30 7f b2 37 addm.nc r15, r18, #127
+# CHECK: e0: 30 01 87 31 addm.nc dc0, r7, #1
+# CHECK: e4: 30 80 a8 3c addm.nc r25, r8, #-128
+# CHECK: e8: 30 00 30 3c addm.nc r24, r16, #0
+# CHECK: ec: 30 7f 4f 32 addm.nc upssign0, r15, #127
+# CHECK: f0: 30 01 09 32 addm.nc m1, r9, #1
+# CHECK: f4: 30 80 8a 39 addm.nc dc4, r10, #-128
+# CHECK: f8: 30 00 b8 36 addm.nc r13, r24, #0
+# CHECK: fc: 30 7f 1d 3d addm.nc dj6, r29, #127
+# CHECK: 100: 30 01 1f 37 addm.nc dj3, r31, #1
+# CHECK: 104: 30 80 d3 3a addm.nc p5, r19, #-128
+# CHECK: 108: 30 00 c3 3e addm.nc p7, r3, #0
+# CHECK: 10c: 30 7f 35 35 addm.nc r10, r21, #127
+# CHECK: 110: 30 01 a1 3e addm.nc r29, r1, #1
+# CHECK: 114: 30 80 40 3c addm.nc vaddsign1, r0, #-128
+# CHECK: 118: 30 00 59 3b addm.nc unpacksign1, r25, #0
+# CHECK: 11c: 30 7f 22 3d addm.nc r26, r2, #127
+# CHECK: 120: 30 01 1c 34 addm.nc m2, r28, #1
+# CHECK: 124: 30 80 a5 35 addm.nc r11, r5, #-128
+# CHECK: 128: 30 00 ba 30 addm.nc r1, r26, #0
+# CHECK: 12c: 30 7f ae 3b addm.nc r23, r14, #127
+# CHECK: 130: 30 01 db 31 addm.nc s0, r27, #1
+# CHECK: 134: 30 80 16 31 addm.nc dj0, r22, #-128
+# CHECK: 138: 30 00 04 3f addm.nc dj7, r4, #0
+# CHECK: 13c: 30 7f d7 30 addm.nc p0, r23, #127
+# CHECK: 140: 30 01 cd 34 addm.nc p2, r13, #1
+# CHECK: 144: 30 80 94 3b addm.nc dc5, r20, #-128
+# CHECK: 148: 30 00 ab 39 addm.nc r19, r11, #0
+# CHECK: 14c: 30 7f de 3b addm.nc sp, r30, #127
+# CHECK: 150: 30 01 8c 35 addm.nc dc2, r12, #1
+# CHECK: 154: 30 80 11 36 addm.nc m3, r17, #-128
+# CHECK: 158: 30 00 26 3b addm.nc r22, r6, #0
+# CHECK: 15c: 30 7f b2 33 addm.nc r7, r18, #127
+# CHECK: 160: 30 01 27 34 addm.nc r8, r7, #1
+# CHECK: 164: b0 8a 99 31 addm.nc dc0, r25, r17
+# CHECK: 168: b0 f2 8d 3f addm.nc dc7, r13, r30
+# CHECK: 16c: b0 fa aa 3f addm.nc r31, r10, r31
+# CHECK: 170: b0 a2 a8 3b addm.nc r23, r8, r20
+# CHECK: 174: b0 d2 b2 30 addm.nc r1, r18, r26
+# CHECK: 178: b0 da a2 3e addm.nc r29, r2, r27
+# CHECK: 17c: b0 32 35 35 addm.nc r10, r21, r6
+# CHECK: 180: b0 6a 8b 3d addm.nc dc6, r11, r13
+# CHECK: 184: b0 0a 2f 38 addm.nc r16, r15, r1
+# CHECK: 188: b0 92 8e 34 addm.nc dn2, r14, r18
+# CHECK: 18c: b0 b2 1f 32 addm.nc m1, r31, r22
+# CHECK: 190: b0 82 1a 33 addm.nc dj1, r26, r16
+# CHECK: 194: b0 2a 98 36 addm.nc dn3, r24, r5
+# CHECK: 198: b0 e2 46 31 addm.nc srssign0, r6, r28
+# CHECK: 19c: b0 3a 20 31 addm.nc r2, r0, r7
+# CHECK: 1a0: b0 42 c9 31 addm.nc s0, r9, r8
+# CHECK: 1a4: b0 9a 10 35 addm.nc dj2, r16, r19
+# CHECK: 1a8: b0 22 07 3a addm.nc m5, r7, r4
+# CHECK: 1ac: b0 12 1c 3b addm.nc dj5, r28, r2
+# CHECK: 1b0: b0 ca db 30 addm.nc p0, r27, r25
+# CHECK: 1b4: b0 62 81 3b addm.nc dc5, r1, r12
+# CHECK: 1b8: b0 ea 45 3a addm.nc upssign1, r5, r29
+# CHECK: 1bc: b0 ba d1 37 addm.nc lr, r17, r23
+# CHECK: 1c0: b0 1a 8c 37 addm.nc dc3, r12, r3
+# CHECK: 1c4: b0 72 36 36 addm.nc r12, r22, r14
+# CHECK: 1c8: b0 7a b4 35 addm.nc r11, r20, r15
+# CHECK: 1cc: b0 aa 33 30 addm.nc r0, r19, r21
+# CHECK: 1d0: b0 4a 04 3f addm.nc dj7, r4, r9
+# CHECK: 1d4: b0 02 3e 3e addm.nc r28, r30, r0
+# CHECK: 1d8: b0 c2 23 3d addm.nc r26, r3, r24
+# CHECK: 1dc: b0 52 57 33 addm.nc unpacksign0, r23, r10
+# CHECK: 1e0: b0 5a bd 38 addm.nc r17, r29, r11
+# CHECK: 1e4: b0 8a 19 31 addm.nc dj0, r25, r17
+# CHECK: 1e8: b0 f2 ad 39 addm.nc r19, r13, r30
+# CHECK: 1ec: b0 fa 0a 34 addm.nc m2, r10, r31
+# CHECK: 1f0: b0 a2 28 33 addm.nc r6, r8, r20
+# CHECK: 1f4: b0 d2 12 3e addm.nc m7, r18, r26
+# CHECK: 1f8: b0 da 22 37 addm.nc r14, r2, r27
+# CHECK: 1fc: b0 32 35 3f addm.nc r30, r21, r6
+# CHECK: 200: b0 6a cb 3c addm.nc p6, r11, r13
+# CHECK: 204: b0 0a af 34 addm.nc r9, r15, r1
+# CHECK: 208: b0 92 4e 32 addm.nc upssign0, r14, r18
+# CHECK: 20c: b0 b2 3f 3c addm.nc r24, r31, r22
+# CHECK: 210: b0 82 1a 39 addm.nc dj4, r26, r16
+# CHECK: 214: b0 2a b8 32 addm.nc r5, r24, r5
+# CHECK: 218: b0 e2 c6 35 addm.nc s1, r6, r28
+# CHECK: 21c: b0 3a 40 39 addm.nc srssign1, r0, r7
+# CHECK: 220: b0 42 29 3b addm.nc r22, r9, r8
+# CHECK: 224: b0 9a b0 36 addm.nc r13, r16, r19
+# CHECK: 228: b0 22 c7 34 addm.nc p2, r7, r4
+# CHECK: 22c: b0 12 1c 3d addm.nc dj6, r28, r2
+# CHECK: 230: b0 ca db 32 addm.nc p1, r27, r25
+# CHECK: 234: b0 62 01 30 addm.nc m0, r1, r12
+# CHECK: 238: b0 ea 85 3e addm.nc dn7, r5, r29
+# CHECK: 23c: b0 ba b1 31 addm.nc r3, r17, r23
+# CHECK: 240: b0 1a 0c 37 addm.nc dj3, r12, r3
+# CHECK: 244: b0 72 36 34 addm.nc r8, r22, r14
+# CHECK: 248: b0 7a b4 33 addm.nc r7, r20, r15
+# CHECK: 24c: b0 aa 93 39 addm.nc dc4, r19, r21
+# CHECK: 250: b0 4a 44 38 addm.nc packsign1, r4, r9
+# CHECK: 254: b0 02 9e 3c addm.nc dn6, r30, r0
+# CHECK: 258: b0 c2 c3 38 addm.nc p4, r3, r24
+# CHECK: 25c: b0 52 17 3c addm.nc m6, r23, r10
+# CHECK: 260: b0 5a 3d 3a addm.nc r20, r29, r11
+# CHECK: 264: b0 8a 99 38 addm.nc dn4, r25, r17
+# CHECK: 268: b0 f2 ad 3d addm.nc r27, r13, r30
+# CHECK: 26c: b0 fa 8a 35 addm.nc dc2, r10, r31
+# CHECK: 270: b0 a2 48 34 addm.nc vaddsign0, r8, r20
+# CHECK: 274: b0 d2 d2 3a addm.nc p5, r18, r26
+# CHECK: 278: b0 da c2 36 addm.nc p3, r2, r27
+# CHECK: 27c: b0 32 d5 39 addm.nc s2, r21, r6
+# CHECK: 280: b0 6a 8b 33 addm.nc dc1, r11, r13
+# CHECK: 284: b0 0a 8f 3a addm.nc dn5, r15, r1
+# CHECK: 288: b0 92 ce 33 addm.nc lc, r14, r18
+# CHECK: 28c: b0 b2 5f 30 addm.nc packsign0, r31, r22
+# CHECK: 290: b0 82 da 3b addm.nc sp, r26, r16
+# CHECK: 294: b0 2a 38 39 addm.nc r18, r24, r5
+# CHECK: 298: b0 e2 46 3c addm.nc vaddsign1, r6, r28
+# CHECK: 29c: b0 3a 40 3b addm.nc unpacksign1, r0, r7
+# CHECK: 2a0: b0 42 a9 3c addm.nc r25, r9, r8
+# CHECK: 2a4: b0 9a 90 30 addm.nc dn0, r16, r19
+# CHECK: 2a8: b0 22 a7 3a addm.nc r21, r7, r4
+# CHECK: 2ac: b0 12 dc 3d addm.nc s3, r28, r2
+# CHECK: 2b0: b0 ca bb 37 addm.nc r15, r27, r25
+# CHECK: 2b4: b0 62 01 38 addm.nc m4, r1, r12
+# CHECK: 2b8: b0 ea 05 36 addm.nc m3, r5, r29
+# CHECK: 2bc: b0 ba 31 32 addm.nc r4, r17, r23
+# CHECK: 2c0: b0 1a cc 3e addm.nc p7, r12, r3
+# CHECK: 2c4: b0 72 96 32 addm.nc dn1, r22, r14
+# CHECK: 2c8: 70 bd df 3f addm.nc le, pc, #2046
+# CHECK: 2cc: 70 41 c0 3f addm.nc le, pc, #1
+# CHECK: 2d0: 70 01 c0 3f addm.nc le, pc, #0
+# CHECK: 2d4: 70 fd df 3f addm.nc le, pc, #2047
+# CHECK: 2d8: 70 01 e0 3f addm.nc ls, pc, #0
+# CHECK: 2dc: 70 bd ff 3f addm.nc ls, pc, #2046
+# CHECK: 2e0: 70 fd ff 3f addm.nc ls, pc, #2047
+# CHECK: 2e4: 70 41 e0 3f addm.nc ls, pc, #1

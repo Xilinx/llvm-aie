@@ -1,0 +1,47 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -mtriple=aie2ps -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+
+---
+name:      tied_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    $p0, $dc0, $dc4 = ST_3D_dml_sts_scalar $l0, $p0, $d0_3d
+    $p1, $dc1, $dc5 = ST_3D_dms_sts_scalar $r4, $p1, $d1_3d
+    $p2, $dc2, $dc6 = ST_3D_s16 $r4, $p2, $d2_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3, $dc3, $dc7 = ST_3D_s8 $r4, $p3, $d3_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0, $dc0, $dc4 = ST_TM_3D $r0, $p0, $d0_3d
+...
+
+---
+name:      virtual_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    %0:ep = COPY $p0
+    %10:eds = COPY $d0_3d
+    %20:ep, %21:edcl, %22:edch = ST_3D_dml_sts_scalar $l0, %0, %10
+    %30:ep, %31:edcl, %32:edch = ST_3D_dms_sts_scalar $r4, %0, %10
+    %40:ep, %41:edcl, %42:edch = ST_3D_s16 $r4, %0, %10, implicit-def $pe2_ads, implicit $pe2_ads
+    %50:ep, %51:edcl, %52:edch = ST_3D_s8 $r4, %0, %10, implicit-def $pe2_ads, implicit $pe2_ads
+    %60:ep, %61:edcl, %62:edch = ST_TM_3D $r0, %0, %10
+...
+
+---
+name:      tied_nok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-COUNT-5: Bad machine code: Tied physical registers must match
+    $p0, $dc7, $dc3 = ST_3D_dml_sts_scalar $l0, $p0, $d0_3d
+    $p1, $dc0, $dc4 = ST_3D_dms_sts_scalar $r4, $p1, $d1_3d
+    $p2, $dc1, $dc5 = ST_3D_s16 $r4, $p2, $d2_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3, $dc2, $dc6 = ST_3D_s8 $r4, $p3, $d3_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0, $dc3, $dc7 = ST_TM_3D $r0, $p0, $d0_3d
+...

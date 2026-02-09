@@ -1,0 +1,48 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VBAND
+    $x4 = VBAND $x9, $x1, implicit $crbf8conf, implicit $crfp8conf
+    $x9 = VBAND $x0, $x5, implicit $crbf8conf, implicit $crfp8conf
+    $x0 = VBAND $x8, $x10, implicit $crbf8conf, implicit $crfp8conf
+    $x10 = VBAND $x3, $x7, implicit $crbf8conf, implicit $crfp8conf
+    $x1 = VBAND $x2, $x3, implicit $crbf8conf, implicit $crfp8conf
+    $x6 = VBAND $x4, $x11, implicit $crbf8conf, implicit $crfp8conf
+    $x7 = VBAND $x6, $x2, implicit $crbf8conf, implicit $crfp8conf
+    $x2 = VBAND $x11, $x4, implicit $crbf8conf, implicit $crfp8conf
+    $x5 = VBAND $x1, $x6, implicit $crbf8conf, implicit $crfp8conf
+    $x8 = VBAND $x7, $x8, implicit $crbf8conf, implicit $crfp8conf
+    $x3 = VBAND $x5, $x9, implicit $crbf8conf, implicit $crfp8conf
+    $x11 = VBAND $x10, $x0, implicit $crbf8conf, implicit $crfp8conf
+...
+
+# CHECK: 0: f0 51 91 34 vband x4, x9, x1
+# CHECK: 4: f0 51 05 39 vband x9, x0, x5
+# CHECK: 8: f0 51 8a 30 vband x0, x8, x10
+# CHECK: c: f0 51 37 3a vband x10, x3, x7
+# CHECK: 10: f0 51 23 31 vband x1, x2, x3
+# CHECK: 14: f0 51 4b 36 vband x6, x4, x11
+# CHECK: 18: f0 51 62 37 vband x7, x6, x2
+# CHECK: 1c: f0 51 b4 32 vband x2, x11, x4
+# CHECK: 20: f0 51 16 35 vband x5, x1, x6
+# CHECK: 24: f0 51 78 38 vband x8, x7, x8
+# CHECK: 28: f0 51 59 33 vband x3, x5, x9
+# CHECK: 2c: f0 51 a0 3b vband x11, x10, x0

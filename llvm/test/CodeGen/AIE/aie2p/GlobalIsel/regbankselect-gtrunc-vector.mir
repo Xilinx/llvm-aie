@@ -4,20 +4,27 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie2p -run-pass=regbankselect -regbankselect-fast %s -verify-machineinstrs -o - | FileCheck %s
-# RUN: llc -mtriple aie2p -run-pass=regbankselect -regbankselect-greedy %s -verify-machineinstrs -o - | FileCheck %s
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -mtriple aie2p -run-pass=regbankselect -regbankselect-fast %s -verify-machineinstrs -o - | FileCheck %s --check-prefixes=CHECK,AIE2P
+# RUN: llc -mtriple aie2p -run-pass=regbankselect -regbankselect-greedy %s -verify-machineinstrs -o - | FileCheck %s --check-prefixes=CHECK,AIE2P
+# RUN: llc -mtriple aie2ps -run-pass=regbankselect -regbankselect-fast %s -verify-machineinstrs -o - | FileCheck %s --check-prefixes=CHECK,AIE2PS
 
 ---
 name:            v16s32Acc_trunc_v16s64_1024
 legalized:       true
 body:             |
   bb.0.entry:
-    ; CHECK-LABEL: name: v16s32Acc_trunc_v16s64_1024
-    ; CHECK: [[DEF:%[0-9]+]]:accregbank(<16 x s64>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:vregbank(<16 x s32>) = G_TRUNC [[DEF]](<16 x s64>)
-    ; CHECK-NEXT: $bmll0 = COPY [[TRUNC]](<16 x s32>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $bmll0
+    ; AIE2P-LABEL: name: v16s32Acc_trunc_v16s64_1024
+    ; AIE2P: [[DEF:%[0-9]+]]:accregbank(<16 x s64>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[TRUNC:%[0-9]+]]:vregbank(<16 x s32>) = G_TRUNC [[DEF]](<16 x s64>)
+    ; AIE2P-NEXT: $bmll0 = COPY [[TRUNC]](<16 x s32>)
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit $bmll0
+    ;
+    ; AIE2PS-LABEL: name: v16s32Acc_trunc_v16s64_1024
+    ; AIE2PS: [[DEF:%[0-9]+]]:vregbank(<16 x s64>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[TRUNC:%[0-9]+]]:vregbank(<16 x s32>) = G_TRUNC [[DEF]](<16 x s64>)
+    ; AIE2PS-NEXT: $bmll0 = COPY [[TRUNC]](<16 x s32>)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $bmll0
     %1:_(<16 x s64>) = G_IMPLICIT_DEF
     %0:_(<16 x s32>) = G_TRUNC %1(<16 x s64>)
     $bmll0 = COPY %0(<16 x s32>)
@@ -59,11 +66,17 @@ name:            v16s32Vec_trunc_v16s64_1024
 legalized:       true
 body:             |
   bb.0.entry:
-    ; CHECK-LABEL: name: v16s32Vec_trunc_v16s64_1024
-    ; CHECK: [[DEF:%[0-9]+]]:accregbank(<16 x s64>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:vregbank(<16 x s32>) = G_TRUNC [[DEF]](<16 x s64>)
-    ; CHECK-NEXT: $x0 = COPY [[TRUNC]](<16 x s32>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
+    ; AIE2P-LABEL: name: v16s32Vec_trunc_v16s64_1024
+    ; AIE2P: [[DEF:%[0-9]+]]:accregbank(<16 x s64>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[TRUNC:%[0-9]+]]:vregbank(<16 x s32>) = G_TRUNC [[DEF]](<16 x s64>)
+    ; AIE2P-NEXT: $x0 = COPY [[TRUNC]](<16 x s32>)
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit $x0
+    ;
+    ; AIE2PS-LABEL: name: v16s32Vec_trunc_v16s64_1024
+    ; AIE2PS: [[DEF:%[0-9]+]]:vregbank(<16 x s64>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[TRUNC:%[0-9]+]]:vregbank(<16 x s32>) = G_TRUNC [[DEF]](<16 x s64>)
+    ; AIE2PS-NEXT: $x0 = COPY [[TRUNC]](<16 x s32>)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $x0
     %1:_(<16 x s64>) = G_IMPLICIT_DEF
     %0:_(<16 x s32>) = G_TRUNC %1(<16 x s64>)
     $x0 = COPY %0(<16 x s32>)

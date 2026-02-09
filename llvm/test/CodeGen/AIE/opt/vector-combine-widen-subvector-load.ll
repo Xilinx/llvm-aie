@@ -4,10 +4,11 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 ;
 ; RUN: opt -mtriple=aie2 -passes=vector-combine -S < %s | FileCheck %s --check-prefixes=CHECK
 ; RUN: opt -mtriple=aie2p -passes=vector-combine -S < %s | FileCheck %s --check-prefixes=CHECK
+; RUN: opt -mtriple=aie2ps -passes=vector-combine -S < %s | FileCheck %s --check-prefixes=CHECK
 
 ; Test the widenSubvectorLoad transformation
 ; This is what actually creates vector loads in real compilation!

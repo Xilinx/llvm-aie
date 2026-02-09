@@ -1,0 +1,88 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; OR
+    $r29 = OR $r11, $r6
+    $r18 = OR $r17, $r1
+    $r16 = OR $r21, $r4
+    $r3 = OR $r19, $r24
+    $r22 = OR $r1, $r22
+    $r15 = OR $r27, $r29
+    $r25 = OR $r20, $r14
+    $r2 = OR $r9, $r0
+    $r9 = OR $r15, $r23
+    $r21 = OR $r26, $r25
+    $r23 = OR $r8, $r21
+    $r20 = OR $r13, $r31
+    $r11 = OR $r3, $r10
+    $r1 = OR $r4, $r7
+    $r7 = OR $r2, $r9
+    $r31 = OR $r0, $r13
+    $r13 = OR $r24, $r15
+    $r24 = OR $r31, $r11
+    $r0 = OR $r16, $r17
+    $r28 = OR $r29, $r8
+    $r30 = OR $r14, $r18
+    $r14 = OR $r10, $r12
+    $r26 = OR $r30, $r3
+    $r27 = OR $r5, $r2
+    $r6 = OR $r23, $r19
+    $r5 = OR $r12, $r27
+    $r8 = OR $r7, $r20
+    $r17 = OR $r6, $r16
+    $r19 = OR $r22, $r26
+    $r10 = OR $r28, $r30
+    $r4 = OR $r25, $r5
+    $r12 = OR $r18, $r28
+...
+
+# CHECK: 0: b0 65 fa 22 or r29, r11, r6
+# CHECK: 4: b0 15 64 24 or r18, r17, r1
+# CHECK: 8: b0 45 60 25 or r16, r21, r4
+# CHECK: c: b0 85 c7 24 or r3, r19, r24
+# CHECK: 10: b0 65 6d 20 or r22, r1, r22
+# CHECK: 14: b0 d5 df 26 or r15, r27, r29
+# CHECK: 18: b0 e5 32 25 or r25, r20, r14
+# CHECK: 1c: b0 05 44 22 or r2, r9, r0
+# CHECK: 20: b0 75 d3 23 or r9, r15, r23
+# CHECK: 24: b0 95 ab 26 or r21, r26, r25
+# CHECK: 28: b0 55 2f 22 or r23, r8, r21
+# CHECK: 2c: b0 f5 69 23 or r20, r13, r31
+# CHECK: 30: b0 a5 d6 20 or r11, r3, r10
+# CHECK: 34: b0 75 02 21 or r1, r4, r7
+# CHECK: 38: b0 95 8e 20 or r7, r2, r9
+# CHECK: 3c: b0 d5 3e 20 or r31, r0, r13
+# CHECK: 40: b0 f5 1a 26 or r13, r24, r15
+# CHECK: 44: b0 b5 f0 27 or r24, r31, r11
+# CHECK: 48: b0 15 01 24 or r0, r16, r17
+# CHECK: 4c: b0 85 78 27 or r28, r29, r8
+# CHECK: 50: b0 25 bd 23 or r30, r14, r18
+# CHECK: 54: b0 c5 9c 22 or r14, r10, r12
+# CHECK: 58: b0 35 b4 27 or r26, r30, r3
+# CHECK: 5c: b0 25 76 21 or r27, r5, r2
+# CHECK: 60: b0 35 cd 25 or r6, r23, r19
+# CHECK: 64: b0 b5 0b 23 or r5, r12, r27
+# CHECK: 68: b0 45 d1 21 or r8, r7, r20
+# CHECK: 6c: b0 05 a3 21 or r17, r6, r16
+# CHECK: 70: b0 a5 a7 25 or r19, r22, r26
+# CHECK: 74: b0 e5 15 27 or r10, r28, r30
+# CHECK: 78: b0 55 48 26 or r4, r25, r5
+# CHECK: 7c: b0 c5 99 24 or r12, r18, r28

@@ -4,10 +4,11 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 #
 # RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=CHECK --check-prefix=AIE2
 # RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=CHECK --check-prefix=AIE2P
+# RUN: llc -mtriple aie2ps -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=CHECK --check-prefix=AIE2PS
 
 ---
 name:            vconcat_1024_32
@@ -38,11 +39,24 @@ stack:
   - { id: 0, name: "", size: 128, alignment: 32 }
 body:             |
   bb.0.entry:
-    ; CHECK-LABEL: name: vconcat_512_32
-    ; CHECK: [[DEF:%[0-9]+]]:ewl = IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:ewh = IMPLICIT_DEF
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[DEF]], %subreg.sub_256_lo, [[DEF1]], %subreg.sub_256_hi
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
+    ; AIE2-LABEL: name: vconcat_512_32
+    ; AIE2: [[DEF:%[0-9]+]]:ewl = IMPLICIT_DEF
+    ; AIE2-NEXT: [[DEF1:%[0-9]+]]:ewh = IMPLICIT_DEF
+    ; AIE2-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[DEF]], %subreg.sub_256_lo, [[DEF1]], %subreg.sub_256_hi
+    ; AIE2-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
+    ;
+    ; AIE2P-LABEL: name: vconcat_512_32
+    ; AIE2P: [[DEF:%[0-9]+]]:ewl = IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF1:%[0-9]+]]:ewh = IMPLICIT_DEF
+    ; AIE2P-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[DEF]], %subreg.sub_256_lo, [[DEF1]], %subreg.sub_256_hi
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
+    ;
+    ; AIE2PS-LABEL: name: vconcat_512_32
+    ; AIE2PS: [[DEF:%[0-9]+]]:mwla = IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF1:%[0-9]+]]:mwha = IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[DEF]], %subreg.sub_256_lo, [[DEF1]], %subreg.sub_256_hi
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
+    ;
     %0:vregbank(<8 x s32>) = G_IMPLICIT_DEF
     %1:vregbank(<8 x s32>) = G_IMPLICIT_DEF
     %2:vregbank(<16 x s32>) = G_CONCAT_VECTORS %0(<8 x s32>), %1(<8 x s32>)
@@ -58,11 +72,24 @@ stack:
   - { id: 0, name: "", size: 128, alignment: 32 }
 body:             |
   bb.0.entry:
-    ; CHECK-LABEL: name: vconcat_512_16
-    ; CHECK: [[DEF:%[0-9]+]]:ewl = IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:ewh = IMPLICIT_DEF
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[DEF]], %subreg.sub_256_lo, [[DEF1]], %subreg.sub_256_hi
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
+    ; AIE2-LABEL: name: vconcat_512_16
+    ; AIE2: [[DEF:%[0-9]+]]:ewl = IMPLICIT_DEF
+    ; AIE2-NEXT: [[DEF1:%[0-9]+]]:ewh = IMPLICIT_DEF
+    ; AIE2-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[DEF]], %subreg.sub_256_lo, [[DEF1]], %subreg.sub_256_hi
+    ; AIE2-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
+    ;
+    ; AIE2P-LABEL: name: vconcat_512_16
+    ; AIE2P: [[DEF:%[0-9]+]]:ewl = IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF1:%[0-9]+]]:ewh = IMPLICIT_DEF
+    ; AIE2P-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[DEF]], %subreg.sub_256_lo, [[DEF1]], %subreg.sub_256_hi
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
+    ;
+    ; AIE2PS-LABEL: name: vconcat_512_16
+    ; AIE2PS: [[DEF:%[0-9]+]]:mwla = IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF1:%[0-9]+]]:mwha = IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[DEF]], %subreg.sub_256_lo, [[DEF1]], %subreg.sub_256_hi
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
+    ;
     %0:vregbank(<16 x s16>) = G_IMPLICIT_DEF
     %1:vregbank(<16 x s16>) = G_IMPLICIT_DEF
     %2:vregbank(<32 x s16>) = G_CONCAT_VECTORS %0(<16 x s16>), %1(<16 x s16>)
@@ -98,11 +125,24 @@ stack:
   - { id: 0, name: "", size: 128, alignment: 32 }
 body:             |
   bb.0.entry:
-    ; CHECK-LABEL: name: vconcat_512_8
-    ; CHECK: [[DEF:%[0-9]+]]:ewl = IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:ewh = IMPLICIT_DEF
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[DEF]], %subreg.sub_256_lo, [[DEF1]], %subreg.sub_256_hi
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
+    ; AIE2-LABEL: name: vconcat_512_8
+    ; AIE2: [[DEF:%[0-9]+]]:ewl = IMPLICIT_DEF
+    ; AIE2-NEXT: [[DEF1:%[0-9]+]]:ewh = IMPLICIT_DEF
+    ; AIE2-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[DEF]], %subreg.sub_256_lo, [[DEF1]], %subreg.sub_256_hi
+    ; AIE2-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
+    ;
+    ; AIE2P-LABEL: name: vconcat_512_8
+    ; AIE2P: [[DEF:%[0-9]+]]:ewl = IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF1:%[0-9]+]]:ewh = IMPLICIT_DEF
+    ; AIE2P-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[DEF]], %subreg.sub_256_lo, [[DEF1]], %subreg.sub_256_hi
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
+    ;
+    ; AIE2PS-LABEL: name: vconcat_512_8
+    ; AIE2PS: [[DEF:%[0-9]+]]:mwla = IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF1:%[0-9]+]]:mwha = IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[DEF]], %subreg.sub_256_lo, [[DEF1]], %subreg.sub_256_hi
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
+    ;
     %0:vregbank(<32 x s8>) = G_IMPLICIT_DEF
     %1:vregbank(<32 x s8>) = G_IMPLICIT_DEF
     %2:vregbank(<64 x s8>) = G_CONCAT_VECTORS %0(<32 x s8>), %1(<32 x s8>)
@@ -147,6 +187,12 @@ body:             |
     ; AIE2P-NEXT: [[DEF1:%[0-9]+]]:mwbfsrs = IMPLICIT_DEF
     ; AIE2P-NEXT: [[REG_SEQUENCE:%[0-9]+]]:acc1024 = REG_SEQUENCE [[DEF]], %subreg.sub_512_acc_lo, [[DEF1]], %subreg.sub_512_acc_hi
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
+    ;
+    ; AIE2PS-LABEL: name: vconcat_1024_acc64
+    ; AIE2PS: [[DEF:%[0-9]+]]:mmvbmsrc = IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[DEF1:%[0-9]+]]:mmvbmsrc = IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[REG_SEQUENCE:%[0-9]+]]:acc1024 = REG_SEQUENCE [[DEF]], %subreg.sub_512_acc_lo, [[DEF1]], %subreg.sub_512_acc_hi
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
     %0:accregbank(<8 x s64>) = G_IMPLICIT_DEF
     %1:accregbank(<8 x s64>) = G_IMPLICIT_DEF
     %2:accregbank(<16 x s64>) = G_CONCAT_VECTORS %0(<8 x s64>), %1(<8 x s64>)

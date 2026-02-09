@@ -8,6 +8,7 @@
 # RUN: llc -mtriple aie -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE1 %s
 # RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2 %s
 # RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2P %s
+# RUN: llc -mtriple aie2ps -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2PS %s
 
 ---
 name: mul_s32
@@ -40,6 +41,14 @@ body: |
     ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
     ; AIE2P-NEXT: [[MUL:%[0-9]+]]:er = MUL [[COPY]], [[COPY1]]
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[MUL]]
+    ;
+    ; AIE2PS-LABEL: name: mul_s32
+    ; AIE2PS: liveins: $r6, $r7
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
+    ; AIE2PS-NEXT: [[MUL:%[0-9]+]]:mlockid_reg = MUL [[COPY]], [[COPY1]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[MUL]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = G_MUL %0, %1

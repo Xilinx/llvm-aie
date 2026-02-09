@@ -6,6 +6,9 @@
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2
+# RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2P
+# RUN: llc -mtriple aie2ps -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2PS
 
 ---
 name: shl_s32
@@ -16,10 +19,36 @@ body: |
   bb.0:
     liveins: $r6, $r7
     ; CHECK-LABEL: name: shl_s32
-    ; CHECK: [[COPY:%[0-9]+]]:gpr = COPY $r6
+    ; CHECK: liveins: $r6, $r7
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:gpr = COPY $r6
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:gpr = COPY $r7
     ; CHECK-NEXT: [[LSHL:%[0-9]+]]:gpr = LSHL [[COPY]], [[COPY1]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[LSHL]]
+    ;
+    ; AIE2-LABEL: name: shl_s32
+    ; AIE2: liveins: $r6, $r7
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
+    ; AIE2-NEXT: [[LSHL:%[0-9]+]]:er = LSHL [[COPY]], [[COPY1]]
+    ; AIE2-NEXT: PseudoRET implicit $lr, implicit [[LSHL]]
+    ;
+    ; AIE2P-LABEL: name: shl_s32
+    ; AIE2P: liveins: $r6, $r7
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
+    ; AIE2P-NEXT: [[LSHL:%[0-9]+]]:er = LSHL [[COPY]], [[COPY1]]
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[LSHL]]
+    ;
+    ; AIE2PS-LABEL: name: shl_s32
+    ; AIE2PS: liveins: $r6, $r7
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
+    ; AIE2PS-NEXT: [[LSHL:%[0-9]+]]:mlockid_reg = LSHL [[COPY]], [[COPY1]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[LSHL]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = G_SHL %0, %1

@@ -4,9 +4,10 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 #
 # RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2P
+# RUN: llc -mtriple aie2ps -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2PS
 
 ---
 name:            vshuffle_v64i8
@@ -19,6 +20,12 @@ body:             |
     ; AIE2P-NEXT: [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
     ; AIE2P-NEXT: [[VSHUFFLE_vec_shuffle_x:%[0-9]+]]:vec512 = VSHUFFLE_vec_shuffle_x [[DEF]], [[DEF]], [[MOV_RLC_imm11_pseudo]]
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VSHUFFLE_vec_shuffle_x]]
+    ;
+    ; AIE2PS-LABEL: name: vshuffle_v64i8
+    ; AIE2PS: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 12
+    ; AIE2PS-NEXT: [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[VSHUFFLE_vec_shuffle_x:%[0-9]+]]:vec512 = VSHUFFLE_vec_shuffle_x [[DEF]], [[DEF]], [[MOV_RLC_imm11_pseudo]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[VSHUFFLE_vec_shuffle_x]]
     %0:gprregbank(s32) = G_CONSTANT i32 12
     %1:vregbank(<64 x s8>) = G_IMPLICIT_DEF
     %2:vregbank(<64 x s8>) = G_AIE_SHUFFLE_VECTOR %1, %1, %0(s32)
@@ -35,6 +42,12 @@ body:             |
     ; AIE2P-NEXT: [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
     ; AIE2P-NEXT: [[VSHUFFLE_vec_shuffle_x:%[0-9]+]]:vec512 = VSHUFFLE_vec_shuffle_x [[DEF]], [[DEF]], [[MOV_RLC_imm11_pseudo]]
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VSHUFFLE_vec_shuffle_x]]
+    ;
+    ; AIE2PS-LABEL: name: vshuffle_v32i16
+    ; AIE2PS: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 12
+    ; AIE2PS-NEXT: [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[VSHUFFLE_vec_shuffle_x:%[0-9]+]]:vec512 = VSHUFFLE_vec_shuffle_x [[DEF]], [[DEF]], [[MOV_RLC_imm11_pseudo]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[VSHUFFLE_vec_shuffle_x]]
     %0:gprregbank(s32) = G_CONSTANT i32 12
     %1:vregbank(<32 x s16>) = G_IMPLICIT_DEF
     %2:vregbank(<32 x s16>) = G_AIE_SHUFFLE_VECTOR %1, %1, %0(s32)
@@ -51,6 +64,12 @@ body:             |
     ; AIE2P-NEXT: [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
     ; AIE2P-NEXT: [[VSHUFFLE_vec_shuffle_x:%[0-9]+]]:vec512 = VSHUFFLE_vec_shuffle_x [[DEF]], [[DEF]], [[MOV_RLC_imm11_pseudo]]
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VSHUFFLE_vec_shuffle_x]]
+    ;
+    ; AIE2PS-LABEL: name: vshuffle_v16i32
+    ; AIE2PS: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 12
+    ; AIE2PS-NEXT: [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[VSHUFFLE_vec_shuffle_x:%[0-9]+]]:vec512 = VSHUFFLE_vec_shuffle_x [[DEF]], [[DEF]], [[MOV_RLC_imm11_pseudo]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[VSHUFFLE_vec_shuffle_x]]
     %0:gprregbank(s32) = G_CONSTANT i32 12
     %1:vregbank(<16 x s32>) = G_IMPLICIT_DEF
     %2:vregbank(<16 x s32>) = G_AIE_SHUFFLE_VECTOR %1, %1, %0(s32)
@@ -67,6 +86,12 @@ body:             |
     ; AIE2P-NEXT: [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
     ; AIE2P-NEXT: [[VSHUFFLE_vec_shuffle_x:%[0-9]+]]:vec512 = VSHUFFLE_vec_shuffle_x [[DEF]], [[DEF]], [[MOV_RLC_imm11_pseudo]]
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[VSHUFFLE_vec_shuffle_x]]
+    ;
+    ; AIE2PS-LABEL: name: vshuffle_v8i64
+    ; AIE2PS: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 12
+    ; AIE2PS-NEXT: [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[VSHUFFLE_vec_shuffle_x:%[0-9]+]]:vec512 = VSHUFFLE_vec_shuffle_x [[DEF]], [[DEF]], [[MOV_RLC_imm11_pseudo]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[VSHUFFLE_vec_shuffle_x]]
     %0:gprregbank(s32) = G_CONSTANT i32 12
     %1:vregbank(<8 x s64>) = G_IMPLICIT_DEF
     %2:vregbank(<8 x s64>) = G_AIE_SHUFFLE_VECTOR %1, %1, %0(s32)

@@ -1,0 +1,50 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# TODO: llc %llcflags --filetype=asm -o %t2
+# TODO: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# TODO: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; JL_alumv_or
+    JL_alumv_or $p2, implicit-def $lr
+    JL_alumv_or $p3, implicit-def $lr
+    JL_alumv_or $p0, implicit-def $lr
+    JL_alumv_or $p5, implicit-def $lr
+    JL_alumv_or $p6, implicit-def $lr
+    JL_alumv_or $p4, implicit-def $lr
+    JL_alumv_or $p7, implicit-def $lr
+    JL_alumv_or $p1, implicit-def $lr
+
+    ; JL_lng
+    JL_lng 1048575, implicit-def $lr
+    JL_lng 1048574, implicit-def $lr
+    JL_lng 0, implicit-def $lr
+    JL_lng 1, implicit-def $lr
+...
+
+# CHECK: 0: 30 80 88 20 jl p2
+# CHECK: 4: 30 c0 88 20 jl p3
+# CHECK: 8: 30 00 88 20 jl p0
+# CHECK: c: 30 40 89 20 jl p5
+# CHECK: 10: 30 80 89 20 jl p6
+# CHECK: 14: 30 00 89 20 jl p4
+# CHECK: 18: 30 c0 89 20 jl p7
+# CHECK: 1c: 30 40 88 20 jl p1
+# CHECK: 20: 06 01 80 ff ff 07 jl #1048575
+# CHECK: 26: 06 01 00 ff ff 07 jl #1048574
+# CHECK: 2c: 06 01 00 00 00 00 jl #0
+# CHECK: 32: 06 01 80 00 00 00 jl #1

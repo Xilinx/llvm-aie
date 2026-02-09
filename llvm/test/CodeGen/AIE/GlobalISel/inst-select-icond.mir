@@ -7,6 +7,7 @@
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc --mtriple=aie2 --run-pass=instruction-select %s -o -  | FileCheck --check-prefix=AIE2 %s
 # RUN: llc --mtriple=aie2p --run-pass=instruction-select %s -o -  | FileCheck  --check-prefix=AIE2P %s
+# RUN: llc --mtriple=aie2ps --run-pass=instruction-select %s -o -  | FileCheck  --check-prefix=AIE2PS %s
 
 ---
 name:            shouldMatch
@@ -57,6 +58,27 @@ body:             |
   ; AIE2P-NEXT:   [[SEL_EQZ:%[0-9]+]]:er = SEL_EQZ [[MOV_RLC_imm11_pseudo]], [[MOV_RLC_imm11_pseudo1]], [[COPY]]
   ; AIE2P-NEXT:   [[SEL_NEZ:%[0-9]+]]:er = SEL_NEZ [[MOV_RLC_imm11_pseudo1]], [[MOV_RLC_imm11_pseudo]], [[COPY]]
   ; AIE2P-NEXT:   PseudoRET implicit $lr, implicit [[SEL_EQZ]], implicit [[SEL_NEZ]]
+  ;
+  ; AIE2PS-LABEL: name: shouldMatch
+  ; AIE2PS: bb.0.entry:
+  ; AIE2PS-NEXT:   successors: %bb.2(0x40000000), %bb.1(0x40000000)
+  ; AIE2PS-NEXT:   liveins: $r0, $r1
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:mr27_select = COPY $r0
+  ; AIE2PS-NEXT:   [[COPY1:%[0-9]+]]:er = COPY $r1
+  ; AIE2PS-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 2
+  ; AIE2PS-NEXT:   [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 3
+  ; AIE2PS-NEXT:   PseudoJZ [[COPY]], %bb.2
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.1:
+  ; AIE2PS-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   PseudoJNZ [[COPY1]], %bb.2
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.2:
+  ; AIE2PS-NEXT:   [[SEL_EQZ:%[0-9]+]]:mlockid_reg = SEL_EQZ [[MOV_RLC_imm11_pseudo]], [[MOV_RLC_imm11_pseudo1]], [[COPY]]
+  ; AIE2PS-NEXT:   [[SEL_NEZ:%[0-9]+]]:mlockid_reg = SEL_NEZ [[MOV_RLC_imm11_pseudo1]], [[MOV_RLC_imm11_pseudo]], [[COPY]]
+  ; AIE2PS-NEXT:   PseudoRET implicit $lr, implicit [[SEL_EQZ]], implicit [[SEL_NEZ]]
   bb.1.entry:
     liveins: $r0, $r1
 
@@ -138,6 +160,32 @@ body:             |
   ; AIE2P-NEXT:   [[NE1:%[0-9]+]]:mr27_select = NE [[COPY]], [[MOV_RLC_imm11_pseudo]]
   ; AIE2P-NEXT:   [[SEL_NEZ1:%[0-9]+]]:er = SEL_NEZ [[MOV_RLC_imm11_pseudo2]], [[MOV_RLC_imm11_pseudo1]], [[NE1]]
   ; AIE2P-NEXT:   PseudoRET implicit $lr, implicit [[SEL_NEZ]], implicit [[SEL_NEZ1]]
+  ;
+  ; AIE2PS-LABEL: name: shouldNotMatch
+  ; AIE2PS: bb.0.entry:
+  ; AIE2PS-NEXT:   successors: %bb.2(0x40000000), %bb.1(0x40000000)
+  ; AIE2PS-NEXT:   liveins: $r0, $r1
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:mlockid_reg = COPY $r0
+  ; AIE2PS-NEXT:   [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r1
+  ; AIE2PS-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 1
+  ; AIE2PS-NEXT:   [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 2
+  ; AIE2PS-NEXT:   [[MOV_RLC_imm11_pseudo2:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 3
+  ; AIE2PS-NEXT:   [[EQ:%[0-9]+]]:mlockid_reg = EQ [[COPY]], [[MOV_RLC_imm11_pseudo]]
+  ; AIE2PS-NEXT:   PseudoJNZ [[EQ]], %bb.2
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.1:
+  ; AIE2PS-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   [[NE:%[0-9]+]]:mlockid_reg = NE [[COPY1]], [[MOV_RLC_imm11_pseudo]]
+  ; AIE2PS-NEXT:   PseudoJNZ [[NE]], %bb.2
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.2:
+  ; AIE2PS-NEXT:   [[EQ1:%[0-9]+]]:mr27_select = EQ [[COPY]], [[MOV_RLC_imm11_pseudo]]
+  ; AIE2PS-NEXT:   [[SEL_NEZ:%[0-9]+]]:mlockid_reg = SEL_NEZ [[MOV_RLC_imm11_pseudo1]], [[MOV_RLC_imm11_pseudo2]], [[EQ1]]
+  ; AIE2PS-NEXT:   [[NE1:%[0-9]+]]:mr27_select = NE [[COPY]], [[MOV_RLC_imm11_pseudo]]
+  ; AIE2PS-NEXT:   [[SEL_NEZ1:%[0-9]+]]:mlockid_reg = SEL_NEZ [[MOV_RLC_imm11_pseudo2]], [[MOV_RLC_imm11_pseudo1]], [[NE1]]
+  ; AIE2PS-NEXT:   PseudoRET implicit $lr, implicit [[SEL_NEZ]], implicit [[SEL_NEZ1]]
   bb.1.entry:
     liveins: $r0, $r1
 

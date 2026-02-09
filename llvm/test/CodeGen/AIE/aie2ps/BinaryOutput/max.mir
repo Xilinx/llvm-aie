@@ -1,0 +1,88 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; MAX
+    $r31 = MAX $r16, $r7
+    $r26 = MAX $r31, $r2
+    $r13 = MAX $r10, $r5
+    $r5 = MAX $r24, $r4
+    $r25 = MAX $r30, $r0
+    $r17 = MAX $r20, $r1
+    $r0 = MAX $r4, $r6
+    $r16 = MAX $r22, $r3
+    $r30 = MAX $r15, $r7
+    $r8 = MAX $r2, $r2
+    $r27 = MAX $r29, $r5
+    $r10 = MAX $r6, $r4
+    $r11 = MAX $r11, $r0
+    $r22 = MAX $r19, $r1
+    $r14 = MAX $r9, $r6
+    $r3 = MAX $r27, $r3
+    $r24 = MAX $r14, $r7
+    $r1 = MAX $r7, $r2
+    $r21 = MAX $r1, $r5
+    $r9 = MAX $r25, $r4
+    $r29 = MAX $r13, $r0
+    $r12 = MAX $r12, $r1
+    $r20 = MAX $r17, $r6
+    $r7 = MAX $r23, $r3
+    $r15 = MAX $r26, $r7
+    $r18 = MAX $r8, $r2
+    $r19 = MAX $r21, $r5
+    $r2 = MAX $r28, $r4
+    $r28 = MAX $r0, $r0
+    $r4 = MAX $r18, $r1
+    $r6 = MAX $r3, $r6
+    $r23 = MAX $r5, $r3
+...
+
+# CHECK: 0: 30 cc 3f 24 max r31, r16, r7
+# CHECK: 4: 30 8c f4 27 max r26, r31, r2
+# CHECK: 8: 30 4c 9b 22 max r13, r10, r5
+# CHECK: c: 30 0c 0b 26 max r5, r24, r4
+# CHECK: 10: 30 0c b2 27 max r25, r30, r0
+# CHECK: 14: 30 4c 22 25 max r17, r20, r1
+# CHECK: 18: 30 8c 01 21 max r0, r4, r6
+# CHECK: 1c: 30 cc a0 25 max r16, r22, r3
+# CHECK: 20: 30 cc fd 23 max r30, r15, r7
+# CHECK: 24: 30 8c 90 20 max r8, r2, r2
+# CHECK: 28: 30 4c 77 27 max r27, r29, r5
+# CHECK: 2c: 30 0c 95 21 max r10, r6, r4
+# CHECK: 30: 30 0c d6 22 max r11, r11, r0
+# CHECK: 34: 30 4c ec 24 max r22, r19, r1
+# CHECK: 38: 30 8c 5d 22 max r14, r9, r6
+# CHECK: 3c: 30 cc c6 26 max r3, r27, r3
+# CHECK: 40: 30 cc b1 23 max r24, r14, r7
+# CHECK: 44: 30 8c c2 21 max r1, r7, r2
+# CHECK: 48: 30 4c 6b 20 max r21, r1, r5
+# CHECK: 4c: 30 0c 53 26 max r9, r25, r4
+# CHECK: 50: 30 0c 7a 23 max r29, r13, r0
+# CHECK: 54: 30 4c 18 23 max r12, r12, r1
+# CHECK: 58: 30 8c 69 24 max r20, r17, r6
+# CHECK: 5c: 30 cc ce 25 max r7, r23, r3
+# CHECK: 60: 30 cc 9f 26 max r15, r26, r7
+# CHECK: 64: 30 8c 24 22 max r18, r8, r2
+# CHECK: 68: 30 4c 67 25 max r19, r21, r5
+# CHECK: 6c: 30 0c 05 27 max r2, r28, r4
+# CHECK: 70: 30 0c 38 20 max r28, r0, r0
+# CHECK: 74: 30 4c 88 24 max r4, r18, r1
+# CHECK: 78: 30 8c cd 20 max r6, r3, r6
+# CHECK: 7c: 30 cc 6e 21 max r23, r5, r3

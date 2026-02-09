@@ -1,0 +1,54 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -mtriple=aie2ps -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+
+---
+name:      tied_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    $wh0, $p0, $dc0 = VLDB_2D_128 $p0, $d0
+    $x1, $p1, $dc1 = VLDB_2D_dmx_ldb_x $p1, $d1
+    $wh0, $p3, $dc3 = VLDB_2D_dmw_ldb $p3, $d3
+    $x0, $p1, $dc1 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0 $p1, $d1, implicit $crunpacksize, implicit $unpacksign0
+    $x0, $p2, $dc2 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1 $p2, $d2, implicit $crunpacksize, implicit $unpacksign1
+    $y0, $p3, $dc3 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign0 $p3, $d3, implicit $crunpacksize, implicit $unpacksign0
+    $y0, $p4, $dc4 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign1 $p4, $d4, implicit $crunpacksize, implicit $unpacksign1
+...
+
+---
+name:      virtual_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    %0:ep = COPY $p0
+    %10:ed = COPY $d0
+    $wh0, %20:ep, %21:edc = VLDB_2D_128 %0, %10
+    $x1, %30:ep, %31:edc = VLDB_2D_dmx_ldb_x %0, %10
+    $wh0, %50:ep, %51:edc = VLDB_2D_dmw_ldb %0, %10
+    $x0, %80:ep, %81:edc = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0 %0, %10, implicit $crunpacksize, implicit $unpacksign0
+    $y0, %85:ep, %86:edc = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign0 %0, %10, implicit $crunpacksize, implicit $unpacksign0
+    $x0, %120:ep, %121:edc = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1 %0, %10, implicit $crunpacksize, implicit $unpacksign1
+    $y0, %125:ep, %126:edc = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign1 %0, %10, implicit $crunpacksize, implicit $unpacksign1
+...
+
+---
+name:      tied_nok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-COUNT-7: Bad machine code: Tied physical registers must match
+    $wh0, $p0, $dc7 = VLDB_2D_128 $p0, $d0
+    $x1, $p1, $dc0 = VLDB_2D_dmx_ldb_x $p1, $d1
+    $wh0, $p3, $dc2 = VLDB_2D_dmw_ldb $p3, $d3
+    $x0, $p1, $dc0 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0 $p1, $d1, implicit $crunpacksize, implicit $unpacksign0
+    $y0, $p3, $dc1 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign0 $p3, $d3, implicit $crunpacksize, implicit $unpacksign0
+    $x0, $p0, $dc7 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1 $p0, $d0, implicit $crunpacksize, implicit $unpacksign1
+    $y0, $p1, $dc0 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign1 $p1, $d1, implicit $crunpacksize, implicit $unpacksign1
+
+...

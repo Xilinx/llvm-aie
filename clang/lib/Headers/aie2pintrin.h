@@ -29,6 +29,7 @@
 #include "aiebase_typedefs.h"
 #ifdef __cplusplus
 #include "aie2p/aie2p_defines.h"
+#include "aiebase_resources.h"
 // clang-format off
 #include "aie2p/aie2p_addlog.h"
 #include "aie2p/aie2p_locks.h"

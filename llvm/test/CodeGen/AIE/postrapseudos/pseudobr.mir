@@ -4,9 +4,10 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -verify-machineinstrs --march=aie2 -run-pass=aie-pseudobranches %s -o - | FileCheck --check-prefix=AIE2 %s
-# RUN: llc -verify-machineinstrs --march=aie2p -run-pass=aie-pseudobranches %s -o - | FileCheck --check-prefix=AIE2P %s
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -verify-machineinstrs -mtriple=aie2 -run-pass=aie-pseudobranches %s -o - | FileCheck --check-prefix=AIE2 %s
+# RUN: llc -verify-machineinstrs -mtriple=aie2p -run-pass=aie-pseudobranches %s -o - | FileCheck --check-prefix=AIE2P %s
+# RUN: llc -verify-machineinstrs -mtriple=aie2ps -run-pass=aie-pseudobranches %s -o - | FileCheck --check-prefix=AIE2PS %s
 
 ---
 name:            test_jnz
@@ -29,6 +30,15 @@ body:             |
   ; AIE2P-NEXT:   DelayedSchedBarrier
   ; AIE2P-NEXT: {{  $}}
   ; AIE2P-NEXT: bb.1 (align 16):
+  ;
+  ; AIE2PS-LABEL: name: test_jnz
+  ; AIE2PS: bb.0 (align 16):
+  ; AIE2PS-NEXT:   successors: %bb.1(0x80000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   JNZ $r6, %bb.1
+  ; AIE2PS-NEXT:   DelayedSchedBarrier
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.1 (align 16):
   bb.0 (align 16):
     PseudoJNZ $r6, %bb.1
   bb.1 (align 16):
@@ -55,6 +65,15 @@ body:             |
   ; AIE2P-NEXT:   DelayedSchedBarrier
   ; AIE2P-NEXT: {{  $}}
   ; AIE2P-NEXT: bb.1 (align 16):
+  ;
+  ; AIE2PS-LABEL: name: test_jz
+  ; AIE2PS: bb.0 (align 16):
+  ; AIE2PS-NEXT:   successors: %bb.1(0x80000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   JZ $r6, %bb.1
+  ; AIE2PS-NEXT:   DelayedSchedBarrier
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.1 (align 16):
   bb.0 (align 16):
     PseudoJZ $r6, %bb.1
   bb.1 (align 16):
@@ -72,6 +91,10 @@ body:             |
     ; AIE2P-LABEL: name: test_jnzd
     ; AIE2P: $r6 = JNZD $r6, $p2, implicit-def $srcarry
     ; AIE2P-NEXT: DelayedSchedBarrier
+    ;
+    ; AIE2PS-LABEL: name: test_jnzd
+    ; AIE2PS: $r6 = JNZD $r6, $p2, implicit-def $srcarry
+    ; AIE2PS-NEXT: DelayedSchedBarrier
     $r6 = PseudoJNZD $r6, $p2, implicit-def $srcarry
 ...
 
@@ -96,6 +119,15 @@ body:             |
   ; AIE2P-NEXT:   DelayedSchedBarrier
   ; AIE2P-NEXT: {{  $}}
   ; AIE2P-NEXT: bb.1 (align 16):
+  ;
+  ; AIE2PS-LABEL: name: test_j_imm
+  ; AIE2PS: bb.0 (align 16):
+  ; AIE2PS-NEXT:   successors: %bb.1(0x80000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   J_lng %bb.1
+  ; AIE2PS-NEXT:   DelayedSchedBarrier
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.1 (align 16):
   bb.0 (align 16):
     PseudoJ_jump_imm %bb.1
   bb.1 (align 16):
@@ -113,6 +145,10 @@ body:             |
     ; AIE2P-LABEL: name: test_j_ind
     ; AIE2P: J_alumv_or $p2
     ; AIE2P-NEXT: DelayedSchedBarrier
+    ;
+    ; AIE2PS-LABEL: name: test_j_ind
+    ; AIE2PS: J_alumv_or $p2
+    ; AIE2PS-NEXT: DelayedSchedBarrier
     PseudoJ_jump_ind $p2
 ...
 
@@ -128,6 +164,10 @@ body:             |
     ; AIE2P-LABEL: name: test_ret
     ; AIE2P: RET implicit $lr
     ; AIE2P-NEXT: DelayedSchedBarrier implicit $r0, implicit $r1
+    ;
+    ; AIE2PS-LABEL: name: test_ret
+    ; AIE2PS: RET implicit $lr
+    ; AIE2PS-NEXT: DelayedSchedBarrier implicit $r0, implicit $r1
     PseudoRET implicit $lr, implicit $r0, implicit $r1
 ...
 
@@ -147,6 +187,12 @@ body:             |
     ; AIE2P-NEXT: DelayedSchedBarrier implicit $r0, implicit $r1
     ; AIE2P-NEXT: JL_alumv_or $p2, implicit-def $lr
     ; AIE2P-NEXT: DelayedSchedBarrier implicit-def dead $r0, implicit $r2, implicit $r3
+    ;
+    ; AIE2PS-LABEL: name: test_jl
+    ; AIE2PS: JL_lng 128, implicit-def $lr
+    ; AIE2PS-NEXT: DelayedSchedBarrier implicit $r0, implicit $r1
+    ; AIE2PS-NEXT: JL_alumv_or $p2, implicit-def $lr
+    ; AIE2PS-NEXT: DelayedSchedBarrier implicit-def dead $r0, implicit $r2, implicit $r3
     PseudoJL 128, implicit-def $lr, implicit $r0, implicit $r1
     PseudoJL_IND $p2, implicit-def $lr, implicit-def dead $r0, implicit $r2, implicit $r3
 ...
@@ -186,6 +232,22 @@ body:             |
   ; AIE2P-NEXT:   successors: %bb.2(0x80000000)
   ; AIE2P-NEXT: {{  $}}
   ; AIE2P-NEXT: bb.2 (align 16):
+  ;
+  ; AIE2PS-LABEL: name: test_multi
+  ; AIE2PS: bb.0 (align 16):
+  ; AIE2PS-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   JL_alumv_or $p2, implicit-def $lr
+  ; AIE2PS-NEXT:   DelayedSchedBarrier implicit $r2, implicit $r3
+  ; AIE2PS-NEXT:   JZ $r6, %bb.1
+  ; AIE2PS-NEXT:   DelayedSchedBarrier
+  ; AIE2PS-NEXT:   JNZ $r6, %bb.2
+  ; AIE2PS-NEXT:   DelayedSchedBarrier
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.1 (align 16):
+  ; AIE2PS-NEXT:   successors: %bb.2(0x80000000)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.2 (align 16):
   bb.0 (align 16):
     PseudoJL_IND $p2, implicit-def $lr, implicit $r2, implicit $r3
     PseudoJZ $r6, %bb.1

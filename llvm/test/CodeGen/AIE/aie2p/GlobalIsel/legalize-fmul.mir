@@ -3,9 +3,10 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 
-# RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s -DVER=aie2p
+# RUN: llc -mtriple aie2ps -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s -DVER=aie2ps
 
 ---
 name: test_fmul_s16
@@ -89,7 +90,7 @@ body: |
     ; CHECK-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: $r1 = COPY [[COPY]](s32)
     ; CHECK-NEXT: $r2 = COPY [[COPY1]](s32)
-    ; CHECK-NEXT: PseudoJL &__mulsf3, csr_aie2p, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
+    ; CHECK-NEXT: PseudoJL &__mulsf3, csr_[[VER]], implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
     ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: $r0 = COPY [[COPY2]](s32)
@@ -118,7 +119,7 @@ body: |
     ; CHECK-NEXT: $r3 = COPY [[UV1]](s32)
     ; CHECK-NEXT: $r4 = COPY [[UV2]](s32)
     ; CHECK-NEXT: $r5 = COPY [[UV3]](s32)
-    ; CHECK-NEXT: PseudoJL &__muldf3, csr_aie2p, implicit-def $lr, implicit $r2, implicit $r3, implicit $r4, implicit $r5, implicit-def $r0, implicit-def $r1
+    ; CHECK-NEXT: PseudoJL &__muldf3, csr_[[VER]], implicit-def $lr, implicit $r2, implicit $r3, implicit $r4, implicit $r5, implicit-def $r0, implicit-def $r1
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:_(s32) = COPY $r1
     ; CHECK-NEXT: [[MV:%[0-9]+]]:_(s64) = G_MERGE_VALUES [[COPY2]](s32), [[COPY3]](s32)

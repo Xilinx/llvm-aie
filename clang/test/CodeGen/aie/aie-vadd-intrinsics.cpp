@@ -5,11 +5,13 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
-// RUN: %clang -O2 %s --target=aie2 -nostdlibinc -S -emit-llvm -o - | FileCheck %s -check-prefix=CHECK-COMMON -check-prefix=AIE2
-// RUN: %clang -O2 %s --target=aie2p -nostdlibinc -S -emit-llvm -o - | FileCheck %s -check-prefix=CHECK-COMMON -check-prefix=AIE2P
+// RUN: %clang -O2 %s --target=aie2 -nostdlibinc -S -emit-llvm -o - | FileCheck %s -check-prefixes=CHECK-COMMON,AIE2
+// RUN: %clang -O2 %s --target=aie2p -nostdlibinc -S -emit-llvm -o - | FileCheck %s -check-prefixes=CHECK-COMMON,AIE2P
+// RUN: %clang -O2 %s --target=aie2ps -nostdlibinc -S -emit-llvm -o - | FileCheck %s -check-prefixes=CHECK-COMMON,AIE2PS
+
 
 // CHECK-COMMON-LABEL: @_Z17test_add_v64uint8Dv64_hS_(
 // CHECK-COMMON-NEXT:  entry:
@@ -37,6 +39,12 @@ v64uint8 test_sub_v64uint8(v64uint8 a, v64uint8 b) { return sub(a, b); }
 // AIE2P-NEXT:    [[TMP1:%.*]] = tail call noundef <64 x i8> @llvm.aie2p.vaddsub8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], <2 x i32> [[TMP0]])
 // AIE2P-NEXT:    ret <64 x i8> [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z20test_addsub_v64uint8Dv64_hS_y(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast i64 [[AS:%.*]] to <2 x i32>
+// AIE2PS-NEXT:    [[TMP1:%.*]] = tail call noundef <64 x i8> @llvm.aie2ps.vaddsub8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], <2 x i32> [[TMP0]])
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP1]]
+//
 v64uint8 test_addsub_v64uint8(v64uint8 a, v64uint8 b, unsigned long long as) {
   return addsub(a, b, as);
 }
@@ -57,6 +65,14 @@ v64uint8 test_addsub_v64uint8(v64uint8 a, v64uint8 b, unsigned long long as) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z21test_neg_gtz_v64uint8Dv64_hRy(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vneg.gtz8(<64 x i8> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
+//
 v64uint8 test_neg_gtz_v64uint8(v64uint8 a, unsigned long long &cmp) {
   return neg_gtz(a, cmp);
 }
@@ -72,6 +88,12 @@ v64uint8 test_neg_gtz_v64uint8(v64uint8 a, unsigned long long &cmp) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2p.vneg.gtz8(<64 x i8> [[A:%.*]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z17test_neg_v64uint8Dv64_h(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vneg.gtz8(<64 x i8> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP1]]
 //
 v64uint8 test_neg_v64uint8(v64uint8 a) { return neg(a); }
 
@@ -90,6 +112,14 @@ v64uint8 test_neg_v64uint8(v64uint8 a) { return neg(a); }
 // AIE2P-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z20test_sub_lt_v64uint8Dv64_hS_Ry(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vsub.lt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
 //
 v64uint8 test_sub_lt_v64uint8(v64uint8 a, v64uint8 b, unsigned long long &cmp) {
   return sub_lt(a, b, cmp);
@@ -113,6 +143,15 @@ v64uint8 test_sub_lt_v64uint8(v64uint8 a, v64uint8 b, unsigned long long &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z20test_sub_lt_v64uint8Dv64_hS_bRy(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vsub.lt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
+//
 v64uint8 test_sub_lt_v64uint8(v64uint8 a, v64uint8 b, bool sgn,
                               unsigned long long &cmp) {
   return sub_lt(a, b, sgn, cmp);
@@ -133,6 +172,14 @@ v64uint8 test_sub_lt_v64uint8(v64uint8 a, v64uint8 b, bool sgn,
 // AIE2P-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z20test_sub_ge_v64uint8Dv64_hS_Ry(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vsub.ge8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
 //
 v64uint8 test_sub_ge_v64uint8(v64uint8 a, v64uint8 b, unsigned long long &cmp) {
   return sub_ge(a, b, cmp);
@@ -156,6 +203,15 @@ v64uint8 test_sub_ge_v64uint8(v64uint8 a, v64uint8 b, unsigned long long &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z20test_sub_ge_v64uint8Dv64_hS_bRy(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vsub.ge8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
+//
 v64uint8 test_sub_ge_v64uint8(v64uint8 a, v64uint8 b, bool sgn,
                               unsigned long long &cmp) {
   return sub_ge(a, b, sgn, cmp);
@@ -176,6 +232,14 @@ v64uint8 test_sub_ge_v64uint8(v64uint8 a, v64uint8 b, bool sgn,
 // AIE2P-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z24test_maxdiff_lt_v64uint8Dv64_hS_Ry(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vmaxdiff.lt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
 //
 v64uint8 test_maxdiff_lt_v64uint8(v64uint8 a, v64uint8 b,
                                   unsigned long long &cmp) {
@@ -200,11 +264,21 @@ v64uint8 test_maxdiff_lt_v64uint8(v64uint8 a, v64uint8 b,
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z24test_maxdiff_lt_v64uint8Dv64_hS_bRy(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vmaxdiff.lt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
+//
 v64uint8 test_maxdiff_lt_v64uint8(v64uint8 a, v64uint8 b, bool sgn,
                                   unsigned long long &cmp) {
   return maxdiff_lt(a, b, sgn, cmp);
 }
 
+//
 // AIE2-LABEL: @_Z21test_maxdiff_v64uint8Dv64_hS_(
 // AIE2-NEXT:  entry:
 // AIE2-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2.vmaxdiff.lt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 0)
@@ -216,6 +290,12 @@ v64uint8 test_maxdiff_lt_v64uint8(v64uint8 a, v64uint8 b, bool sgn,
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2p.vmaxdiff.lt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 0)
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z21test_maxdiff_v64uint8Dv64_hS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vmaxdiff.lt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP1]]
 //
 v64uint8 test_maxdiff_v64uint8(v64uint8 a, v64uint8 b) { return maxdiff(a, b); }
 
@@ -232,6 +312,13 @@ v64uint8 test_maxdiff_v64uint8(v64uint8 a, v64uint8 b) { return maxdiff(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2p.vmaxdiff.lt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 [[CONV_I_I]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z21test_maxdiff_v64uint8Dv64_hS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vmaxdiff.lt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP1]]
 //
 v64uint8 test_maxdiff_v64uint8(v64uint8 a, v64uint8 b, bool sgn) {
   return maxdiff(a, b, sgn);
@@ -252,6 +339,14 @@ v64uint8 test_maxdiff_v64uint8(v64uint8 a, v64uint8 b, bool sgn) {
 // AIE2P-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z20test_min_ge_v64uint8Dv64_hS_Ry(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vmin.ge8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
 //
 v64uint8 test_min_ge_v64uint8(v64uint8 a, v64uint8 b, unsigned long long &cmp) {
   return min_ge(a, b, cmp);
@@ -275,6 +370,15 @@ v64uint8 test_min_ge_v64uint8(v64uint8 a, v64uint8 b, unsigned long long &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z20test_min_ge_v64uint8Dv64_hS_bRy(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vmin.ge8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
+//
 v64uint8 test_min_ge_v64uint8(v64uint8 a, v64uint8 b, bool sgn,
                               unsigned long long &cmp) {
   return min_ge(a, b, sgn, cmp);
@@ -292,6 +396,12 @@ v64uint8 test_min_ge_v64uint8(v64uint8 a, v64uint8 b, bool sgn,
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z17test_min_v64uint8Dv64_hS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vmin.ge8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP1]]
+//
 v64uint8 test_min_v64uint8(v64uint8 a, v64uint8 b) { return min(a, b); }
 
 // AIE2-LABEL: @_Z17test_min_v64uint8Dv64_hS_b(
@@ -307,6 +417,13 @@ v64uint8 test_min_v64uint8(v64uint8 a, v64uint8 b) { return min(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2p.vmin.ge8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 [[CONV_I_I]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z17test_min_v64uint8Dv64_hS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vmin.ge8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP1]]
 //
 v64uint8 test_min_v64uint8(v64uint8 a, v64uint8 b, bool sgn) {
   return min(a, b, sgn);
@@ -327,6 +444,14 @@ v64uint8 test_min_v64uint8(v64uint8 a, v64uint8 b, bool sgn) {
 // AIE2P-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z20test_max_lt_v64uint8Dv64_hS_Ry(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vmax.lt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
 //
 v64uint8 test_max_lt_v64uint8(v64uint8 a, v64uint8 b, unsigned long long &cmp) {
   return max_lt(a, b, cmp);
@@ -350,6 +475,15 @@ v64uint8 test_max_lt_v64uint8(v64uint8 a, v64uint8 b, unsigned long long &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z20test_max_lt_v64uint8Dv64_hS_bRy(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vmax.lt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
+//
 v64uint8 test_max_lt_v64uint8(v64uint8 a, v64uint8 b, bool sgn,
                               unsigned long long &cmp) {
   return max_lt(a, b, sgn, cmp);
@@ -367,6 +501,12 @@ v64uint8 test_max_lt_v64uint8(v64uint8 a, v64uint8 b, bool sgn,
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z17test_max_v64uint8Dv64_hS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vmax.lt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP1]]
+//
 v64uint8 test_max_v64uint8(v64uint8 a, v64uint8 b) { return max(a, b); }
 
 // AIE2-LABEL: @_Z17test_max_v64uint8Dv64_hS_b(
@@ -382,6 +522,13 @@ v64uint8 test_max_v64uint8(v64uint8 a, v64uint8 b) { return max(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2p.vmax.lt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 [[CONV_I_I]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z17test_max_v64uint8Dv64_hS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vmax.lt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP1]]
 //
 v64uint8 test_max_v64uint8(v64uint8 a, v64uint8 b, bool sgn) {
   return max(a, b, sgn);
@@ -415,6 +562,13 @@ v64uint8 test_bor_v64uint8(v64uint8 a, v64uint8 b) { return bor(a, b); }
 // AIE2P-NEXT:    store i64 0, ptr [[CMP:%.*]], align 4, !tbaa [[TBAA2:![0-9]+]]
 // AIE2P-NEXT:    ret <64 x i8> [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z22test_bneg_ltz_v64uint8Dv64_hRy(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vbneg.ltz8(<64 x i8> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    store i64 0, ptr [[CMP:%.*]], align 4, !tbaa [[TBAA2:![0-9]+]]
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP1]]
+//
 v64uint8 test_bneg_ltz_v64uint8(v64uint8 a, unsigned long long &cmp) {
   return bneg_ltz(a, cmp);
 }
@@ -445,6 +599,19 @@ v64uint8 test_bneg_ltz_v64uint8(v64uint8 a, unsigned long long &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z22test_bneg_ltz_v64uint8Dv64_hbRy(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vbneg.ltz8(<64 x i8> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    br i1 [[SGN:%.*]], label [[_ZL8BNEG_LTZDV64_HBRY_EXIT:%.*]], label [[IF_THEN_I:%.*]]
+// AIE2PS:       if.then.i:
+// AIE2PS-NEXT:    store i64 0, ptr [[CMP]], align 4, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    br label [[_ZL8BNEG_LTZDV64_HBRY_EXIT]]
+// AIE2PS:       _ZL8bneg_ltzDv64_hbRy.exit:
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
+//
 v64uint8 test_bneg_ltz_v64uint8(v64uint8 a, bool sgn, unsigned long long &cmp) {
   return bneg_ltz(a, sgn, cmp);
 }
@@ -460,6 +627,12 @@ v64uint8 test_bneg_ltz_v64uint8(v64uint8 a, bool sgn, unsigned long long &cmp) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2p.vbneg.ltz8(<64 x i8> [[A:%.*]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z18test_bneg_v64uint8Dv64_h(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vbneg.ltz8(<64 x i8> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP1]]
 //
 v64uint8 test_bneg_v64uint8(v64uint8 a) { return bneg(a); }
 
@@ -485,6 +658,17 @@ v64uint8 test_bneg_v64uint8(v64uint8 a) { return bneg(a); }
 // AIE2P-NEXT:    [[OR_I_I:%.*]] = or <64 x i8> [[AND_I7_I]], [[AND_I_I]]
 // AIE2P-NEXT:    ret <64 x i8> [[OR_I_I]]
 //
+// AIE2PS-LABEL: @_Z18test_bxor_v64uint8Dv64_hS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vbneg.ltz8(<64 x i8> [[B:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    [[AND_I_I:%.*]] = and <64 x i8> [[TMP1]], [[A:%.*]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vbneg.ltz8(<64 x i8> [[A]])
+// AIE2PS-NEXT:    [[TMP3:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP2]], 0
+// AIE2PS-NEXT:    [[AND_I7_I:%.*]] = and <64 x i8> [[TMP3]], [[B]]
+// AIE2PS-NEXT:    [[OR_I_I:%.*]] = or <64 x i8> [[AND_I7_I]], [[AND_I_I]]
+// AIE2PS-NEXT:    ret <64 x i8> [[OR_I_I]]
+//
 v64uint8 test_bxor_v64uint8(v64uint8 a, v64uint8 b) { return bxor(a, b); }
 
 // AIE2-LABEL: @_Z21test_abs_gtz_v64uint8Dv64_hRy(
@@ -503,10 +687,19 @@ v64uint8 test_bxor_v64uint8(v64uint8 a, v64uint8 b) { return bxor(a, b); }
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z21test_abs_gtz_v64uint8Dv64_hRy(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vabs.gtz8(<64 x i8> [[A:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
+//
 v64uint8 test_abs_gtz_v64uint8(v64uint8 a, unsigned long long &cmp) {
   return abs_gtz(a, cmp);
 }
 
+//
 // AIE2-LABEL: @_Z21test_abs_gtz_v64uint8Dv64_hbRy(
 // AIE2-NEXT:  entry:
 // AIE2-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
@@ -525,10 +718,20 @@ v64uint8 test_abs_gtz_v64uint8(v64uint8 a, unsigned long long &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z21test_abs_gtz_v64uint8Dv64_hbRy(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vabs.gtz8(<64 x i8> [[A:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
+//
 v64uint8 test_abs_gtz_v64uint8(v64uint8 a, bool sgn, unsigned long long &cmp) {
   return abs_gtz(a, sgn, cmp);
 }
 
+//
 // CHECK-COMMON-LABEL: @_Z17test_abs_v64uint8Dv64_h(
 // CHECK-COMMON-NEXT:  entry:
 // CHECK-COMMON-NEXT:    ret <64 x i8> [[A:%.*]]
@@ -549,6 +752,13 @@ v64uint8 test_abs_v64uint8(v64uint8 a) { return abs(a); }
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z17test_abs_v64uint8Dv64_hb(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vabs.gtz8(<64 x i8> [[A:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP1]]
+//
 v64uint8 test_abs_v64uint8(v64uint8 a, bool sgn) { return abs(a, sgn); }
 
 // AIE2-LABEL: @_Z16test_lt_v64uint8Dv64_hS_(
@@ -562,6 +772,12 @@ v64uint8 test_abs_v64uint8(v64uint8 a, bool sgn) { return abs(a, sgn); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2p.vlt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 0)
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
 // AIE2P-NEXT:    ret i64 [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z16test_lt_v64uint8Dv64_hS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2ps.vlt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
+// AIE2PS-NEXT:    ret i64 [[TMP1]]
 //
 unsigned long long test_lt_v64uint8(v64uint8 a, v64uint8 b) { return lt(a, b); }
 
@@ -577,6 +793,12 @@ unsigned long long test_lt_v64uint8(v64uint8 a, v64uint8 b) { return lt(a, b); }
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
 // AIE2P-NEXT:    ret i64 [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z16test_ge_v64uint8Dv64_hS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2ps.vge8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
+// AIE2PS-NEXT:    ret i64 [[TMP1]]
+//
 unsigned long long test_ge_v64uint8(v64uint8 a, v64uint8 b) { return ge(a, b); }
 
 // AIE2-LABEL: @_Z16test_le_v64uint8Dv64_hS_(
@@ -591,6 +813,12 @@ unsigned long long test_ge_v64uint8(v64uint8 a, v64uint8 b) { return ge(a, b); }
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
 // AIE2P-NEXT:    ret i64 [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z16test_le_v64uint8Dv64_hS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2ps.vge8(<64 x i8> [[B:%.*]], <64 x i8> [[A:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
+// AIE2PS-NEXT:    ret i64 [[TMP1]]
+//
 unsigned long long test_le_v64uint8(v64uint8 a, v64uint8 b) { return le(a, b); }
 
 // AIE2-LABEL: @_Z16test_gt_v64uint8Dv64_hS_(
@@ -604,6 +832,12 @@ unsigned long long test_le_v64uint8(v64uint8 a, v64uint8 b) { return le(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2p.vlt8(<64 x i8> [[B:%.*]], <64 x i8> [[A:%.*]], i32 0)
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
 // AIE2P-NEXT:    ret i64 [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z16test_gt_v64uint8Dv64_hS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2ps.vlt8(<64 x i8> [[B:%.*]], <64 x i8> [[A:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
+// AIE2PS-NEXT:    ret i64 [[TMP1]]
 //
 unsigned long long test_gt_v64uint8(v64uint8 a, v64uint8 b) { return gt(a, b); }
 
@@ -620,6 +854,13 @@ unsigned long long test_gt_v64uint8(v64uint8 a, v64uint8 b) { return gt(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2p.vlt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 [[CONV_I]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
 // AIE2P-NEXT:    ret i64 [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z16test_lt_v64uint8Dv64_hS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2ps.vlt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
+// AIE2PS-NEXT:    ret i64 [[TMP1]]
 //
 unsigned long long test_lt_v64uint8(v64uint8 a, v64uint8 b, bool sgn) {
   return lt(a, b, sgn);
@@ -639,6 +880,13 @@ unsigned long long test_lt_v64uint8(v64uint8 a, v64uint8 b, bool sgn) {
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
 // AIE2P-NEXT:    ret i64 [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z16test_ge_v64uint8Dv64_hS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2ps.vge8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
+// AIE2PS-NEXT:    ret i64 [[TMP1]]
+//
 unsigned long long test_ge_v64uint8(v64uint8 a, v64uint8 b, bool sgn) {
   return ge(a, b, sgn);
 }
@@ -657,6 +905,13 @@ unsigned long long test_ge_v64uint8(v64uint8 a, v64uint8 b, bool sgn) {
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
 // AIE2P-NEXT:    ret i64 [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z16test_le_v64uint8Dv64_hS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2ps.vge8(<64 x i8> [[B:%.*]], <64 x i8> [[A:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
+// AIE2PS-NEXT:    ret i64 [[TMP1]]
+//
 unsigned long long test_le_v64uint8(v64uint8 a, v64uint8 b, bool sgn) {
   return le(a, b, sgn);
 }
@@ -674,6 +929,13 @@ unsigned long long test_le_v64uint8(v64uint8 a, v64uint8 b, bool sgn) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2p.vlt8(<64 x i8> [[B:%.*]], <64 x i8> [[A:%.*]], i32 [[CONV_I_I]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
 // AIE2P-NEXT:    ret i64 [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z16test_gt_v64uint8Dv64_hS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2ps.vlt8(<64 x i8> [[B:%.*]], <64 x i8> [[A:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
+// AIE2PS-NEXT:    ret i64 [[TMP1]]
 //
 unsigned long long test_gt_v64uint8(v64uint8 a, v64uint8 b, bool sgn) {
   return gt(a, b, sgn);
@@ -701,6 +963,14 @@ unsigned long long test_ltz_v64uint8(v64uint8 a) { return ltz(a); }
 // AIE2P-NEXT:    [[SPEC_SELECT_I:%.*]] = select i1 [[SGN:%.*]], i64 [[TMP2]], i64 0
 // AIE2P-NEXT:    ret i64 [[SPEC_SELECT_I]]
 //
+// AIE2PS-LABEL: @_Z17test_ltz_v64uint8Dv64_hb(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vbneg.ltz8(<64 x i8> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    [[TMP2:%.*]] = bitcast <2 x i32> [[TMP1]] to i64
+// AIE2PS-NEXT:    [[SPEC_SELECT_I:%.*]] = select i1 [[SGN:%.*]], i64 [[TMP2]], i64 0
+// AIE2PS-NEXT:    ret i64 [[SPEC_SELECT_I]]
+//
 unsigned long long test_ltz_v64uint8(v64uint8 a, bool sgn) {
   return ltz(a, sgn);
 }
@@ -718,6 +988,13 @@ unsigned long long test_ltz_v64uint8(v64uint8 a, bool sgn) {
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
 // AIE2P-NEXT:    [[TMP2:%.*]] = bitcast <2 x i32> [[TMP1]] to i64
 // AIE2P-NEXT:    ret i64 [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z17test_gtz_v64uint8Dv64_h(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vabs.gtz8(<64 x i8> [[A:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    [[TMP2:%.*]] = bitcast <2 x i32> [[TMP1]] to i64
+// AIE2PS-NEXT:    ret i64 [[TMP2]]
 //
 unsigned long long test_gtz_v64uint8(v64uint8 a) { return gtz(a); }
 
@@ -737,6 +1014,14 @@ unsigned long long test_gtz_v64uint8(v64uint8 a) { return gtz(a); }
 // AIE2P-NEXT:    [[TMP2:%.*]] = bitcast <2 x i32> [[TMP1]] to i64
 // AIE2P-NEXT:    ret i64 [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z17test_gtz_v64uint8Dv64_hb(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vabs.gtz8(<64 x i8> [[A:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    [[TMP2:%.*]] = bitcast <2 x i32> [[TMP1]] to i64
+// AIE2PS-NEXT:    ret i64 [[TMP2]]
+//
 unsigned long long test_gtz_v64uint8(v64uint8 a, bool sgn) {
   return gtz(a, sgn);
 }
@@ -753,6 +1038,12 @@ unsigned long long test_gtz_v64uint8(v64uint8 a, bool sgn) {
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
 // AIE2P-NEXT:    ret i64 [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z17test_eqz_v64uint8Dv64_h(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2ps.veqz8(<64 x i8> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
+// AIE2PS-NEXT:    ret i64 [[TMP1]]
+//
 unsigned long long test_eqz_v64uint8(v64uint8 a) { return eqz(a); }
 
 // AIE2-LABEL: @_Z16test_eq_v64uint8Dv64_hS_(
@@ -768,6 +1059,13 @@ unsigned long long test_eqz_v64uint8(v64uint8 a) { return eqz(a); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2p.veqz8(<64 x i8> [[SUB_I_I]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
 // AIE2P-NEXT:    ret i64 [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z16test_eq_v64uint8Dv64_hS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[SUB_I_I:%.*]] = sub <64 x i8> [[A:%.*]], [[B:%.*]]
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2ps.veqz8(<64 x i8> [[SUB_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
+// AIE2PS-NEXT:    ret i64 [[TMP1]]
 //
 unsigned long long test_eq_v64uint8(v64uint8 a, v64uint8 b) { return eq(a, b); }
 
@@ -787,6 +1085,14 @@ unsigned long long test_eq_v64uint8(v64uint8 a, v64uint8 b) { return eq(a, b); }
 // AIE2P-NEXT:    [[NOT_I:%.*]] = xor i64 [[TMP1]], -1
 // AIE2P-NEXT:    ret i64 [[NOT_I]]
 //
+// AIE2PS-LABEL: @_Z16test_ne_v64uint8Dv64_hS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[SUB_I_I_I:%.*]] = sub <64 x i8> [[A:%.*]], [[B:%.*]]
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2ps.veqz8(<64 x i8> [[SUB_I_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
+// AIE2PS-NEXT:    [[XOR_I:%.*]] = xor i64 [[TMP1]], -1
+// AIE2PS-NEXT:    ret i64 [[XOR_I]]
+//
 unsigned long long test_ne_v64uint8(v64uint8 a, v64uint8 b) { return ne(a, b); }
 
 // AIE2-LABEL: @_Z17test_sel_v64uint8Dv64_hS_y(
@@ -800,6 +1106,12 @@ unsigned long long test_ne_v64uint8(v64uint8 a, v64uint8 b) { return ne(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast i64 [[S:%.*]] to <2 x i32>
 // AIE2P-NEXT:    [[TMP1:%.*]] = tail call noundef <64 x i8> @llvm.aie2p.vsel8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], <2 x i32> [[TMP0]])
 // AIE2P-NEXT:    ret <64 x i8> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z17test_sel_v64uint8Dv64_hS_y(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast i64 [[S:%.*]] to <2 x i32>
+// AIE2PS-NEXT:    [[TMP1:%.*]] = tail call noundef <64 x i8> @llvm.aie2ps.vsel8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], <2 x i32> [[TMP0]])
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP1]]
 //
 v64uint8 test_sel_v64uint8(v64uint8 a, v64uint8 b, unsigned long long s) {
   return sel(a, b, s);
@@ -831,6 +1143,12 @@ v64int8 test_sub_v64int8(v64int8 a, v64int8 b) { return sub(a, b); }
 // AIE2P-NEXT:    [[TMP1:%.*]] = tail call noundef <64 x i8> @llvm.aie2p.vaddsub8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], <2 x i32> [[TMP0]])
 // AIE2P-NEXT:    ret <64 x i8> [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z19test_addsub_v64int8Dv64_aS_y(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast i64 [[AS:%.*]] to <2 x i32>
+// AIE2PS-NEXT:    [[TMP1:%.*]] = tail call noundef <64 x i8> @llvm.aie2ps.vaddsub8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], <2 x i32> [[TMP0]])
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP1]]
+//
 v64int8 test_addsub_v64int8(v64int8 a, v64int8 b, unsigned long long as) {
   return addsub(a, b, as);
 }
@@ -851,6 +1169,14 @@ v64int8 test_addsub_v64int8(v64int8 a, v64int8 b, unsigned long long as) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z20test_neg_gtz_v64int8Dv64_aRy(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vneg.gtz8(<64 x i8> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
+//
 v64int8 test_neg_gtz_v64int8(v64int8 a, unsigned long long &cmp) {
   return neg_gtz(a, cmp);
 }
@@ -866,6 +1192,12 @@ v64int8 test_neg_gtz_v64int8(v64int8 a, unsigned long long &cmp) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2p.vneg.gtz8(<64 x i8> [[A:%.*]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z16test_neg_v64int8Dv64_a(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vneg.gtz8(<64 x i8> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP1]]
 //
 v64int8 test_neg_v64int8(v64int8 a) { return neg(a); }
 
@@ -884,6 +1216,14 @@ v64int8 test_neg_v64int8(v64int8 a) { return neg(a); }
 // AIE2P-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z19test_sub_lt_v64int8Dv64_aS_Ry(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vsub.lt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
 //
 v64int8 test_sub_lt_v64int8(v64int8 a, v64int8 b, unsigned long long &cmp) {
   return sub_lt(a, b, cmp);
@@ -907,6 +1247,15 @@ v64int8 test_sub_lt_v64int8(v64int8 a, v64int8 b, unsigned long long &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z19test_sub_lt_v64int8Dv64_aS_bRy(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vsub.lt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
+//
 v64int8 test_sub_lt_v64int8(v64int8 a, v64int8 b, bool sgn,
                             unsigned long long &cmp) {
   return sub_lt(a, b, sgn, cmp);
@@ -927,6 +1276,14 @@ v64int8 test_sub_lt_v64int8(v64int8 a, v64int8 b, bool sgn,
 // AIE2P-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z19test_sub_ge_v64int8Dv64_aS_Ry(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vsub.ge8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
 //
 v64int8 test_sub_ge_v64int8(v64int8 a, v64int8 b, unsigned long long &cmp) {
   return sub_ge(a, b, cmp);
@@ -950,6 +1307,15 @@ v64int8 test_sub_ge_v64int8(v64int8 a, v64int8 b, unsigned long long &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z19test_sub_ge_v64int8Dv64_aS_bRy(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vsub.ge8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
+//
 v64int8 test_sub_ge_v64int8(v64int8 a, v64int8 b, bool sgn,
                             unsigned long long &cmp) {
   return sub_ge(a, b, sgn, cmp);
@@ -970,6 +1336,14 @@ v64int8 test_sub_ge_v64int8(v64int8 a, v64int8 b, bool sgn,
 // AIE2P-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z23test_maxdiff_lt_v64int8Dv64_aS_Ry(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vmaxdiff.lt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
 //
 v64int8 test_maxdiff_lt_v64int8(v64int8 a, v64int8 b, unsigned long long &cmp) {
   return maxdiff_lt(a, b, cmp);
@@ -993,6 +1367,15 @@ v64int8 test_maxdiff_lt_v64int8(v64int8 a, v64int8 b, unsigned long long &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z23test_maxdiff_lt_v64int8Dv64_aS_bRy(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vmaxdiff.lt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
+//
 v64int8 test_maxdiff_lt_v64int8(v64int8 a, v64int8 b, bool sgn,
                                 unsigned long long &cmp) {
   return maxdiff_lt(a, b, sgn, cmp);
@@ -1010,6 +1393,12 @@ v64int8 test_maxdiff_lt_v64int8(v64int8 a, v64int8 b, bool sgn,
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z20test_maxdiff_v64int8Dv64_aS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vmaxdiff.lt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP1]]
+//
 v64int8 test_maxdiff_v64int8(v64int8 a, v64int8 b) { return maxdiff(a, b); }
 
 // AIE2-LABEL: @_Z20test_maxdiff_v64int8Dv64_aS_b(
@@ -1025,6 +1414,13 @@ v64int8 test_maxdiff_v64int8(v64int8 a, v64int8 b) { return maxdiff(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2p.vmaxdiff.lt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 [[CONV_I_I]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z20test_maxdiff_v64int8Dv64_aS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vmaxdiff.lt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP1]]
 //
 v64int8 test_maxdiff_v64int8(v64int8 a, v64int8 b, bool sgn) {
   return maxdiff(a, b, sgn);
@@ -1045,6 +1441,14 @@ v64int8 test_maxdiff_v64int8(v64int8 a, v64int8 b, bool sgn) {
 // AIE2P-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z19test_min_ge_v64int8Dv64_aS_Ry(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vmin.ge8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
 //
 v64int8 test_min_ge_v64int8(v64int8 a, v64int8 b, unsigned long long &cmp) {
   return min_ge(a, b, cmp);
@@ -1068,6 +1472,15 @@ v64int8 test_min_ge_v64int8(v64int8 a, v64int8 b, unsigned long long &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z19test_min_ge_v64int8Dv64_aS_bRy(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vmin.ge8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
+//
 v64int8 test_min_ge_v64int8(v64int8 a, v64int8 b, bool sgn,
                             unsigned long long &cmp) {
   return min_ge(a, b, sgn, cmp);
@@ -1085,6 +1498,12 @@ v64int8 test_min_ge_v64int8(v64int8 a, v64int8 b, bool sgn,
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z16test_min_v64int8Dv64_aS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vmin.ge8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP1]]
+//
 v64int8 test_min_v64int8(v64int8 a, v64int8 b) { return min(a, b); }
 
 // AIE2-LABEL: @_Z16test_min_v64int8Dv64_aS_b(
@@ -1100,6 +1519,13 @@ v64int8 test_min_v64int8(v64int8 a, v64int8 b) { return min(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2p.vmin.ge8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 [[CONV_I_I]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z16test_min_v64int8Dv64_aS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vmin.ge8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP1]]
 //
 v64int8 test_min_v64int8(v64int8 a, v64int8 b, bool sgn) {
   return min(a, b, sgn);
@@ -1120,6 +1546,14 @@ v64int8 test_min_v64int8(v64int8 a, v64int8 b, bool sgn) {
 // AIE2P-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z19test_max_lt_v64int8Dv64_aS_Ry(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vmax.lt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
 //
 v64int8 test_max_lt_v64int8(v64int8 a, v64int8 b, unsigned long long &cmp) {
   return max_lt(a, b, cmp);
@@ -1143,6 +1577,15 @@ v64int8 test_max_lt_v64int8(v64int8 a, v64int8 b, unsigned long long &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z19test_max_lt_v64int8Dv64_aS_bRy(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vmax.lt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
+//
 v64int8 test_max_lt_v64int8(v64int8 a, v64int8 b, bool sgn,
                             unsigned long long &cmp) {
   return max_lt(a, b, sgn, cmp);
@@ -1160,6 +1603,12 @@ v64int8 test_max_lt_v64int8(v64int8 a, v64int8 b, bool sgn,
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z16test_max_v64int8Dv64_aS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vmax.lt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP1]]
+//
 v64int8 test_max_v64int8(v64int8 a, v64int8 b) { return max(a, b); }
 
 // AIE2-LABEL: @_Z16test_max_v64int8Dv64_aS_b(
@@ -1175,6 +1624,13 @@ v64int8 test_max_v64int8(v64int8 a, v64int8 b) { return max(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2p.vmax.lt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 [[CONV_I_I]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z16test_max_v64int8Dv64_aS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vmax.lt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP1]]
 //
 v64int8 test_max_v64int8(v64int8 a, v64int8 b, bool sgn) {
   return max(a, b, sgn);
@@ -1210,6 +1666,14 @@ v64int8 test_bor_v64int8(v64int8 a, v64int8 b) { return bor(a, b); }
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z21test_bneg_ltz_v64int8Dv64_aRy(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vbneg.ltz8(<64 x i8> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
+//
 v64int8 test_bneg_ltz_v64int8(v64int8 a, unsigned long long &cmp) {
   return bneg_ltz(a, cmp);
 }
@@ -1240,6 +1704,19 @@ v64int8 test_bneg_ltz_v64int8(v64int8 a, unsigned long long &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z21test_bneg_ltz_v64int8Dv64_abRy(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vbneg.ltz8(<64 x i8> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    br i1 [[SGN:%.*]], label [[_ZL8BNEG_LTZDV64_ABRY_EXIT:%.*]], label [[IF_THEN_I:%.*]]
+// AIE2PS:       if.then.i:
+// AIE2PS-NEXT:    store i64 0, ptr [[CMP]], align 4, !tbaa [[TBAA2]]
+// AIE2PS-NEXT:    br label [[_ZL8BNEG_LTZDV64_ABRY_EXIT]]
+// AIE2PS:       _ZL8bneg_ltzDv64_abRy.exit:
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
+//
 v64int8 test_bneg_ltz_v64int8(v64int8 a, bool sgn, unsigned long long &cmp) {
   return bneg_ltz(a, sgn, cmp);
 }
@@ -1255,6 +1732,12 @@ v64int8 test_bneg_ltz_v64int8(v64int8 a, bool sgn, unsigned long long &cmp) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2p.vbneg.ltz8(<64 x i8> [[A:%.*]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z17test_bneg_v64int8Dv64_a(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vbneg.ltz8(<64 x i8> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP1]]
 //
 v64int8 test_bneg_v64int8(v64int8 a) { return bneg(a); }
 
@@ -1280,6 +1763,17 @@ v64int8 test_bneg_v64int8(v64int8 a) { return bneg(a); }
 // AIE2P-NEXT:    [[OR_I_I:%.*]] = or <64 x i8> [[AND_I7_I]], [[AND_I_I]]
 // AIE2P-NEXT:    ret <64 x i8> [[OR_I_I]]
 //
+// AIE2PS-LABEL: @_Z17test_bxor_v64int8Dv64_aS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vbneg.ltz8(<64 x i8> [[B:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    [[AND_I_I:%.*]] = and <64 x i8> [[TMP1]], [[A:%.*]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vbneg.ltz8(<64 x i8> [[A]])
+// AIE2PS-NEXT:    [[TMP3:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP2]], 0
+// AIE2PS-NEXT:    [[AND_I7_I:%.*]] = and <64 x i8> [[TMP3]], [[B]]
+// AIE2PS-NEXT:    [[OR_I_I:%.*]] = or <64 x i8> [[AND_I7_I]], [[AND_I_I]]
+// AIE2PS-NEXT:    ret <64 x i8> [[OR_I_I]]
+//
 v64int8 test_bxor_v64int8(v64int8 a, v64int8 b) { return bxor(a, b); }
 
 // AIE2-LABEL: @_Z20test_abs_gtz_v64int8Dv64_aRy(
@@ -1297,6 +1791,14 @@ v64int8 test_bxor_v64int8(v64int8 a, v64int8 b) { return bxor(a, b); }
 // AIE2P-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z20test_abs_gtz_v64int8Dv64_aRy(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vabs.gtz8(<64 x i8> [[A:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
 //
 v64int8 test_abs_gtz_v64int8(v64int8 a, unsigned long long &cmp) {
   return abs_gtz(a, cmp);
@@ -1320,6 +1822,15 @@ v64int8 test_abs_gtz_v64int8(v64int8 a, unsigned long long &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z20test_abs_gtz_v64int8Dv64_abRy(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vabs.gtz8(<64 x i8> [[A:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    store <2 x i32> [[TMP1]], ptr [[CMP:%.*]], align 8
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
+//
 v64int8 test_abs_gtz_v64int8(v64int8 a, bool sgn, unsigned long long &cmp) {
   return abs_gtz(a, sgn, cmp);
 }
@@ -1335,6 +1846,12 @@ v64int8 test_abs_gtz_v64int8(v64int8 a, bool sgn, unsigned long long &cmp) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2p.vabs.gtz8(<64 x i8> [[A:%.*]], i32 1)
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z16test_abs_v64int8Dv64_a(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vabs.gtz8(<64 x i8> [[A:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP1]]
 //
 v64int8 test_abs_v64int8(v64int8 a) { return abs(a); }
 
@@ -1352,6 +1869,13 @@ v64int8 test_abs_v64int8(v64int8 a) { return abs(a); }
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
 // AIE2P-NEXT:    ret <64 x i8> [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z16test_abs_v64int8Dv64_ab(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vabs.gtz8(<64 x i8> [[A:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP1]]
+//
 v64int8 test_abs_v64int8(v64int8 a, bool sgn) { return abs(a, sgn); }
 
 // AIE2-LABEL: @_Z15test_lt_v64int8Dv64_aS_(
@@ -1365,6 +1889,12 @@ v64int8 test_abs_v64int8(v64int8 a, bool sgn) { return abs(a, sgn); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2p.vlt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 1)
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
 // AIE2P-NEXT:    ret i64 [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z15test_lt_v64int8Dv64_aS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2ps.vlt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
+// AIE2PS-NEXT:    ret i64 [[TMP1]]
 //
 unsigned long long test_lt_v64int8(v64int8 a, v64int8 b) { return lt(a, b); }
 
@@ -1380,6 +1910,12 @@ unsigned long long test_lt_v64int8(v64int8 a, v64int8 b) { return lt(a, b); }
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
 // AIE2P-NEXT:    ret i64 [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z15test_ge_v64int8Dv64_aS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2ps.vge8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
+// AIE2PS-NEXT:    ret i64 [[TMP1]]
+//
 unsigned long long test_ge_v64int8(v64int8 a, v64int8 b) { return ge(a, b); }
 
 // AIE2-LABEL: @_Z15test_le_v64int8Dv64_aS_(
@@ -1394,6 +1930,12 @@ unsigned long long test_ge_v64int8(v64int8 a, v64int8 b) { return ge(a, b); }
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
 // AIE2P-NEXT:    ret i64 [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z15test_le_v64int8Dv64_aS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2ps.vge8(<64 x i8> [[B:%.*]], <64 x i8> [[A:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
+// AIE2PS-NEXT:    ret i64 [[TMP1]]
+//
 unsigned long long test_le_v64int8(v64int8 a, v64int8 b) { return le(a, b); }
 
 // AIE2-LABEL: @_Z15test_gt_v64int8Dv64_aS_(
@@ -1407,6 +1949,12 @@ unsigned long long test_le_v64int8(v64int8 a, v64int8 b) { return le(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2p.vlt8(<64 x i8> [[B:%.*]], <64 x i8> [[A:%.*]], i32 1)
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
 // AIE2P-NEXT:    ret i64 [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z15test_gt_v64int8Dv64_aS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2ps.vlt8(<64 x i8> [[B:%.*]], <64 x i8> [[A:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
+// AIE2PS-NEXT:    ret i64 [[TMP1]]
 //
 unsigned long long test_gt_v64int8(v64int8 a, v64int8 b) { return gt(a, b); }
 
@@ -1423,6 +1971,13 @@ unsigned long long test_gt_v64int8(v64int8 a, v64int8 b) { return gt(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2p.vlt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 [[CONV_I]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
 // AIE2P-NEXT:    ret i64 [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z15test_lt_v64int8Dv64_aS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2ps.vlt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
+// AIE2PS-NEXT:    ret i64 [[TMP1]]
 //
 unsigned long long test_lt_v64int8(v64int8 a, v64int8 b, bool sgn) {
   return lt(a, b, sgn);
@@ -1442,6 +1997,13 @@ unsigned long long test_lt_v64int8(v64int8 a, v64int8 b, bool sgn) {
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
 // AIE2P-NEXT:    ret i64 [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z15test_ge_v64int8Dv64_aS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2ps.vge8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
+// AIE2PS-NEXT:    ret i64 [[TMP1]]
+//
 unsigned long long test_ge_v64int8(v64int8 a, v64int8 b, bool sgn) {
   return ge(a, b, sgn);
 }
@@ -1459,6 +2021,13 @@ unsigned long long test_ge_v64int8(v64int8 a, v64int8 b, bool sgn) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2p.vge8(<64 x i8> [[B:%.*]], <64 x i8> [[A:%.*]], i32 [[CONV_I_I]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
 // AIE2P-NEXT:    ret i64 [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z15test_le_v64int8Dv64_aS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2ps.vge8(<64 x i8> [[B:%.*]], <64 x i8> [[A:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
+// AIE2PS-NEXT:    ret i64 [[TMP1]]
 //
 unsigned long long test_le_v64int8(v64int8 a, v64int8 b, bool sgn) {
   return le(a, b, sgn);
@@ -1478,6 +2047,13 @@ unsigned long long test_le_v64int8(v64int8 a, v64int8 b, bool sgn) {
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
 // AIE2P-NEXT:    ret i64 [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z15test_gt_v64int8Dv64_aS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2ps.vlt8(<64 x i8> [[B:%.*]], <64 x i8> [[A:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
+// AIE2PS-NEXT:    ret i64 [[TMP1]]
+//
 unsigned long long test_gt_v64int8(v64int8 a, v64int8 b, bool sgn) {
   return gt(a, b, sgn);
 }
@@ -1495,6 +2071,13 @@ unsigned long long test_gt_v64int8(v64int8 a, v64int8 b, bool sgn) {
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
 // AIE2P-NEXT:    [[TMP2:%.*]] = bitcast <2 x i32> [[TMP1]] to i64
 // AIE2P-NEXT:    ret i64 [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z16test_ltz_v64int8Dv64_a(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vbneg.ltz8(<64 x i8> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    [[TMP2:%.*]] = bitcast <2 x i32> [[TMP1]] to i64
+// AIE2PS-NEXT:    ret i64 [[TMP2]]
 //
 unsigned long long test_ltz_v64int8(v64int8 a) { return ltz(a); }
 
@@ -1514,6 +2097,14 @@ unsigned long long test_ltz_v64int8(v64int8 a) { return ltz(a); }
 // AIE2P-NEXT:    [[SPEC_SELECT_I:%.*]] = select i1 [[SGN:%.*]], i64 [[TMP2]], i64 0
 // AIE2P-NEXT:    ret i64 [[SPEC_SELECT_I]]
 //
+// AIE2PS-LABEL: @_Z16test_ltz_v64int8Dv64_ab(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vbneg.ltz8(<64 x i8> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    [[TMP2:%.*]] = bitcast <2 x i32> [[TMP1]] to i64
+// AIE2PS-NEXT:    [[SPEC_SELECT_I:%.*]] = select i1 [[SGN:%.*]], i64 [[TMP2]], i64 0
+// AIE2PS-NEXT:    ret i64 [[SPEC_SELECT_I]]
+//
 unsigned long long test_ltz_v64int8(v64int8 a, bool sgn) { return ltz(a, sgn); }
 
 // AIE2-LABEL: @_Z16test_gtz_v64int8Dv64_a(
@@ -1529,6 +2120,13 @@ unsigned long long test_ltz_v64int8(v64int8 a, bool sgn) { return ltz(a, sgn); }
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
 // AIE2P-NEXT:    [[TMP2:%.*]] = bitcast <2 x i32> [[TMP1]] to i64
 // AIE2P-NEXT:    ret i64 [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z16test_gtz_v64int8Dv64_a(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vabs.gtz8(<64 x i8> [[A:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    [[TMP2:%.*]] = bitcast <2 x i32> [[TMP1]] to i64
+// AIE2PS-NEXT:    ret i64 [[TMP2]]
 //
 unsigned long long test_gtz_v64int8(v64int8 a) { return gtz(a); }
 
@@ -1548,6 +2146,14 @@ unsigned long long test_gtz_v64int8(v64int8 a) { return gtz(a); }
 // AIE2P-NEXT:    [[TMP2:%.*]] = bitcast <2 x i32> [[TMP1]] to i64
 // AIE2P-NEXT:    ret i64 [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z16test_gtz_v64int8Dv64_ab(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2ps.vabs.gtz8(<64 x i8> [[A:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <2 x i32> } [[TMP0]], 1
+// AIE2PS-NEXT:    [[TMP2:%.*]] = bitcast <2 x i32> [[TMP1]] to i64
+// AIE2PS-NEXT:    ret i64 [[TMP2]]
+//
 unsigned long long test_gtz_v64int8(v64int8 a, bool sgn) { return gtz(a, sgn); }
 
 // AIE2-LABEL: @_Z16test_eqz_v64int8Dv64_a(
@@ -1561,6 +2167,12 @@ unsigned long long test_gtz_v64int8(v64int8 a, bool sgn) { return gtz(a, sgn); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2p.veqz8(<64 x i8> [[A:%.*]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
 // AIE2P-NEXT:    ret i64 [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z16test_eqz_v64int8Dv64_a(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2ps.veqz8(<64 x i8> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
+// AIE2PS-NEXT:    ret i64 [[TMP1]]
 //
 unsigned long long test_eqz_v64int8(v64int8 a) { return eqz(a); }
 
@@ -1577,6 +2189,13 @@ unsigned long long test_eqz_v64int8(v64int8 a) { return eqz(a); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2p.veqz8(<64 x i8> [[SUB_I_I]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
 // AIE2P-NEXT:    ret i64 [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z15test_eq_v64int8Dv64_aS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[SUB_I_I:%.*]] = sub <64 x i8> [[A:%.*]], [[B:%.*]]
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2ps.veqz8(<64 x i8> [[SUB_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
+// AIE2PS-NEXT:    ret i64 [[TMP1]]
 //
 unsigned long long test_eq_v64int8(v64int8 a, v64int8 b) { return eq(a, b); }
 
@@ -1596,6 +2215,14 @@ unsigned long long test_eq_v64int8(v64int8 a, v64int8 b) { return eq(a, b); }
 // AIE2P-NEXT:    [[NOT_I:%.*]] = xor i64 [[TMP1]], -1
 // AIE2P-NEXT:    ret i64 [[NOT_I]]
 //
+// AIE2PS-LABEL: @_Z15test_ne_v64int8Dv64_aS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[SUB_I_I_I:%.*]] = sub <64 x i8> [[A:%.*]], [[B:%.*]]
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2ps.veqz8(<64 x i8> [[SUB_I_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <2 x i32> [[TMP0]] to i64
+// AIE2PS-NEXT:    [[XOR_I:%.*]] = xor i64 [[TMP1]], -1
+// AIE2PS-NEXT:    ret i64 [[XOR_I]]
+//
 unsigned long long test_ne_v64int8(v64int8 a, v64int8 b) { return ne(a, b); }
 
 // AIE2-LABEL: @_Z16test_sel_v64int8Dv64_aS_y(
@@ -1609,6 +2236,12 @@ unsigned long long test_ne_v64int8(v64int8 a, v64int8 b) { return ne(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast i64 [[S:%.*]] to <2 x i32>
 // AIE2P-NEXT:    [[TMP1:%.*]] = tail call noundef <64 x i8> @llvm.aie2p.vsel8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], <2 x i32> [[TMP0]])
 // AIE2P-NEXT:    ret <64 x i8> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z16test_sel_v64int8Dv64_aS_y(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast i64 [[S:%.*]] to <2 x i32>
+// AIE2PS-NEXT:    [[TMP1:%.*]] = tail call noundef <64 x i8> @llvm.aie2ps.vsel8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], <2 x i32> [[TMP0]])
+// AIE2PS-NEXT:    ret <64 x i8> [[TMP1]]
 //
 v64int8 test_sel_v64int8(v64int8 a, v64int8 b, unsigned long long s) {
   return sel(a, b, s);
@@ -1638,6 +2271,11 @@ v32uint16 test_sub_v32uint16(v32uint16 a, v32uint16 b) { return sub(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i16> @llvm.aie2p.vaddsub16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[AS:%.*]])
 // AIE2P-NEXT:    ret <32 x i16> [[TMP0]]
 //
+// AIE2PS-LABEL: @_Z21test_addsub_v32uint16Dv32_tS_j(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i16> @llvm.aie2ps.vaddsub16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[AS:%.*]])
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP0]]
+//
 v32uint16 test_addsub_v32uint16(v32uint16 a, v32uint16 b, unsigned int as) {
   return addsub(a, b, as);
 }
@@ -1658,6 +2296,14 @@ v32uint16 test_addsub_v32uint16(v32uint16 a, v32uint16 b, unsigned int as) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z22test_neg_gtz_v32uint16Dv32_tRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vneg.gtz16(<32 x i16> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
+//
 v32uint16 test_neg_gtz_v32uint16(v32uint16 a, unsigned int &cmp) {
   return neg_gtz(a, cmp);
 }
@@ -1673,6 +2319,12 @@ v32uint16 test_neg_gtz_v32uint16(v32uint16 a, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2p.vneg.gtz16(<32 x i16> [[A:%.*]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z18test_neg_v32uint16Dv32_t(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vneg.gtz16(<32 x i16> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP1]]
 //
 v32uint16 test_neg_v32uint16(v32uint16 a) { return neg(a); }
 
@@ -1691,6 +2343,14 @@ v32uint16 test_neg_v32uint16(v32uint16 a) { return neg(a); }
 // AIE2P-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z21test_sub_lt_v32uint16Dv32_tS_Rj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vsub.lt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
 //
 v32uint16 test_sub_lt_v32uint16(v32uint16 a, v32uint16 b, unsigned int &cmp) {
   return sub_lt(a, b, cmp);
@@ -1714,6 +2374,15 @@ v32uint16 test_sub_lt_v32uint16(v32uint16 a, v32uint16 b, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z21test_sub_lt_v32uint16Dv32_tS_bRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vsub.lt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
+//
 v32uint16 test_sub_lt_v32uint16(v32uint16 a, v32uint16 b, bool sgn,
                                 unsigned int &cmp) {
   return sub_lt(a, b, sgn, cmp);
@@ -1734,6 +2403,14 @@ v32uint16 test_sub_lt_v32uint16(v32uint16 a, v32uint16 b, bool sgn,
 // AIE2P-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z21test_sub_ge_v32uint16Dv32_tS_Rj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vsub.ge16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
 //
 v32uint16 test_sub_ge_v32uint16(v32uint16 a, v32uint16 b, unsigned int &cmp) {
   return sub_ge(a, b, cmp);
@@ -1757,6 +2434,15 @@ v32uint16 test_sub_ge_v32uint16(v32uint16 a, v32uint16 b, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z21test_sub_ge_v32uint16Dv32_tS_bRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vsub.ge16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
+//
 v32uint16 test_sub_ge_v32uint16(v32uint16 a, v32uint16 b, bool sgn,
                                 unsigned int &cmp) {
   return sub_ge(a, b, sgn, cmp);
@@ -1777,6 +2463,14 @@ v32uint16 test_sub_ge_v32uint16(v32uint16 a, v32uint16 b, bool sgn,
 // AIE2P-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z25test_maxdiff_lt_v32uint16Dv32_tS_Rj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vmaxdiff.lt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
 //
 v32uint16 test_maxdiff_lt_v32uint16(v32uint16 a, v32uint16 b,
                                     unsigned int &cmp) {
@@ -1801,6 +2495,15 @@ v32uint16 test_maxdiff_lt_v32uint16(v32uint16 a, v32uint16 b,
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z25test_maxdiff_lt_v32uint16Dv32_tS_bRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vmaxdiff.lt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
+//
 v32uint16 test_maxdiff_lt_v32uint16(v32uint16 a, v32uint16 b, bool sgn,
                                     unsigned int &cmp) {
   return maxdiff_lt(a, b, sgn, cmp);
@@ -1817,6 +2520,12 @@ v32uint16 test_maxdiff_lt_v32uint16(v32uint16 a, v32uint16 b, bool sgn,
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2p.vmaxdiff.lt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 0)
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z22test_maxdiff_v32uint16Dv32_tS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vmaxdiff.lt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP1]]
 //
 v32uint16 test_maxdiff_v32uint16(v32uint16 a, v32uint16 b) {
   return maxdiff(a, b);
@@ -1835,6 +2544,13 @@ v32uint16 test_maxdiff_v32uint16(v32uint16 a, v32uint16 b) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2p.vmaxdiff.lt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I_I]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z22test_maxdiff_v32uint16Dv32_tS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vmaxdiff.lt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP1]]
 //
 v32uint16 test_maxdiff_v32uint16(v32uint16 a, v32uint16 b, bool sgn) {
   return maxdiff(a, b, sgn);
@@ -1855,6 +2571,14 @@ v32uint16 test_maxdiff_v32uint16(v32uint16 a, v32uint16 b, bool sgn) {
 // AIE2P-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z21test_min_ge_v32uint16Dv32_tS_Rj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vmin.ge16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
 //
 v32uint16 test_min_ge_v32uint16(v32uint16 a, v32uint16 b, unsigned int &cmp) {
   return min_ge(a, b, cmp);
@@ -1878,6 +2602,15 @@ v32uint16 test_min_ge_v32uint16(v32uint16 a, v32uint16 b, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z21test_min_ge_v32uint16Dv32_tS_bRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vmin.ge16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
+//
 v32uint16 test_min_ge_v32uint16(v32uint16 a, v32uint16 b, bool sgn,
                                 unsigned int &cmp) {
   return min_ge(a, b, sgn, cmp);
@@ -1895,6 +2628,12 @@ v32uint16 test_min_ge_v32uint16(v32uint16 a, v32uint16 b, bool sgn,
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z18test_min_v32uint16Dv32_tS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vmin.ge16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP1]]
+//
 v32uint16 test_min_v32uint16(v32uint16 a, v32uint16 b) { return min(a, b); }
 
 // AIE2-LABEL: @_Z18test_min_v32uint16Dv32_tS_b(
@@ -1910,6 +2649,13 @@ v32uint16 test_min_v32uint16(v32uint16 a, v32uint16 b) { return min(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2p.vmin.ge16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I_I]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z18test_min_v32uint16Dv32_tS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vmin.ge16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP1]]
 //
 v32uint16 test_min_v32uint16(v32uint16 a, v32uint16 b, bool sgn) {
   return min(a, b, sgn);
@@ -1930,6 +2676,14 @@ v32uint16 test_min_v32uint16(v32uint16 a, v32uint16 b, bool sgn) {
 // AIE2P-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z21test_max_lt_v32uint16Dv32_tS_Rj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vmax.lt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
 //
 v32uint16 test_max_lt_v32uint16(v32uint16 a, v32uint16 b, unsigned int &cmp) {
   return max_lt(a, b, cmp);
@@ -1953,6 +2707,15 @@ v32uint16 test_max_lt_v32uint16(v32uint16 a, v32uint16 b, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z21test_max_lt_v32uint16Dv32_tS_bRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vmax.lt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
+//
 v32uint16 test_max_lt_v32uint16(v32uint16 a, v32uint16 b, bool sgn,
                                 unsigned int &cmp) {
   return max_lt(a, b, sgn, cmp);
@@ -1970,6 +2733,12 @@ v32uint16 test_max_lt_v32uint16(v32uint16 a, v32uint16 b, bool sgn,
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z18test_max_v32uint16Dv32_tS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vmax.lt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP1]]
+//
 v32uint16 test_max_v32uint16(v32uint16 a, v32uint16 b) { return max(a, b); }
 
 // AIE2-LABEL: @_Z18test_max_v32uint16Dv32_tS_b(
@@ -1985,6 +2754,13 @@ v32uint16 test_max_v32uint16(v32uint16 a, v32uint16 b) { return max(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2p.vmax.lt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I_I]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z18test_max_v32uint16Dv32_tS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vmax.lt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP1]]
 //
 v32uint16 test_max_v32uint16(v32uint16 a, v32uint16 b, bool sgn) {
   return max(a, b, sgn);
@@ -2018,6 +2794,13 @@ v32uint16 test_bor_v32uint16(v32uint16 a, v32uint16 b) { return bor(a, b); }
 // AIE2P-NEXT:    store i32 0, ptr [[CMP:%.*]], align 4, !tbaa [[TBAA6:![0-9]+]]
 // AIE2P-NEXT:    ret <32 x i16> [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z23test_bneg_ltz_v32uint16Dv32_tRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vbneg.ltz16(<32 x i16> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    store i32 0, ptr [[CMP:%.*]], align 4, !tbaa [[TBAA6:![0-9]+]]
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP1]]
+//
 v32uint16 test_bneg_ltz_v32uint16(v32uint16 a, unsigned int &cmp) {
   return bneg_ltz(a, cmp);
 }
@@ -2040,6 +2823,15 @@ v32uint16 test_bneg_ltz_v32uint16(v32uint16 a, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z23test_bneg_ltz_v32uint16Dv32_tbRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vbneg.ltz16(<32 x i16> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    [[SPEC_SELECT_I:%.*]] = select i1 [[SGN:%.*]], i32 [[TMP1]], i32 0
+// AIE2PS-NEXT:    store i32 [[SPEC_SELECT_I]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
+//
 v32uint16 test_bneg_ltz_v32uint16(v32uint16 a, bool sgn, unsigned int &cmp) {
   return bneg_ltz(a, sgn, cmp);
 }
@@ -2055,6 +2847,12 @@ v32uint16 test_bneg_ltz_v32uint16(v32uint16 a, bool sgn, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2p.vbneg.ltz16(<32 x i16> [[A:%.*]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z19test_bneg_v32uint16Dv32_t(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vbneg.ltz16(<32 x i16> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP1]]
 //
 v32uint16 test_bneg_v32uint16(v32uint16 a) { return bneg(a); }
 
@@ -2080,6 +2878,17 @@ v32uint16 test_bneg_v32uint16(v32uint16 a) { return bneg(a); }
 // AIE2P-NEXT:    [[OR_I_I:%.*]] = or <32 x i16> [[AND_I7_I]], [[AND_I_I]]
 // AIE2P-NEXT:    ret <32 x i16> [[OR_I_I]]
 //
+// AIE2PS-LABEL: @_Z19test_bxor_v32uint16Dv32_tS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vbneg.ltz16(<32 x i16> [[B:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    [[AND_I_I:%.*]] = and <32 x i16> [[TMP1]], [[A:%.*]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vbneg.ltz16(<32 x i16> [[A]])
+// AIE2PS-NEXT:    [[TMP3:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP2]], 0
+// AIE2PS-NEXT:    [[AND_I7_I:%.*]] = and <32 x i16> [[TMP3]], [[B]]
+// AIE2PS-NEXT:    [[OR_I_I:%.*]] = or <32 x i16> [[AND_I7_I]], [[AND_I_I]]
+// AIE2PS-NEXT:    ret <32 x i16> [[OR_I_I]]
+//
 v32uint16 test_bxor_v32uint16(v32uint16 a, v32uint16 b) { return bxor(a, b); }
 
 // AIE2-LABEL: @_Z22test_abs_gtz_v32uint16Dv32_tRj(
@@ -2097,6 +2906,14 @@ v32uint16 test_bxor_v32uint16(v32uint16 a, v32uint16 b) { return bxor(a, b); }
 // AIE2P-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z22test_abs_gtz_v32uint16Dv32_tRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vabs.gtz16(<32 x i16> [[A:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
 //
 v32uint16 test_abs_gtz_v32uint16(v32uint16 a, unsigned int &cmp) {
   return abs_gtz(a, cmp);
@@ -2119,6 +2936,15 @@ v32uint16 test_abs_gtz_v32uint16(v32uint16 a, unsigned int &cmp) {
 // AIE2P-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z22test_abs_gtz_v32uint16Dv32_tbRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vabs.gtz16(<32 x i16> [[A:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
 //
 v32uint16 test_abs_gtz_v32uint16(v32uint16 a, bool sgn, unsigned int &cmp) {
   return abs_gtz(a, sgn, cmp);
@@ -2144,6 +2970,13 @@ v32uint16 test_abs_v32uint16(v32uint16 a) { return abs(a); }
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z18test_abs_v32uint16Dv32_tb(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vabs.gtz16(<32 x i16> [[A:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP1]]
+//
 v32uint16 test_abs_v32uint16(v32uint16 a, bool sgn) { return abs(a, sgn); }
 
 // AIE2-LABEL: @_Z17test_lt_v32uint16Dv32_tS_(
@@ -2155,6 +2988,11 @@ v32uint16 test_abs_v32uint16(v32uint16 a, bool sgn) { return abs(a, sgn); }
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vlt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 0)
 // AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z17test_lt_v32uint16Dv32_tS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vlt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_lt_v32uint16(v32uint16 a, v32uint16 b) { return lt(a, b); }
 
@@ -2168,6 +3006,11 @@ unsigned int test_lt_v32uint16(v32uint16 a, v32uint16 b) { return lt(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vge16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 0)
 // AIE2P-NEXT:    ret i32 [[TMP0]]
 //
+// AIE2PS-LABEL: @_Z17test_ge_v32uint16Dv32_tS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vge16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
+//
 unsigned int test_ge_v32uint16(v32uint16 a, v32uint16 b) { return ge(a, b); }
 
 // AIE2-LABEL: @_Z17test_le_v32uint16Dv32_tS_(
@@ -2180,6 +3023,11 @@ unsigned int test_ge_v32uint16(v32uint16 a, v32uint16 b) { return ge(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vge16(<32 x i16> [[B:%.*]], <32 x i16> [[A:%.*]], i32 0)
 // AIE2P-NEXT:    ret i32 [[TMP0]]
 //
+// AIE2PS-LABEL: @_Z17test_le_v32uint16Dv32_tS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vge16(<32 x i16> [[B:%.*]], <32 x i16> [[A:%.*]], i32 0)
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
+//
 unsigned int test_le_v32uint16(v32uint16 a, v32uint16 b) { return le(a, b); }
 
 // AIE2-LABEL: @_Z17test_gt_v32uint16Dv32_tS_(
@@ -2191,6 +3039,11 @@ unsigned int test_le_v32uint16(v32uint16 a, v32uint16 b) { return le(a, b); }
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vlt16(<32 x i16> [[B:%.*]], <32 x i16> [[A:%.*]], i32 0)
 // AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z17test_gt_v32uint16Dv32_tS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vlt16(<32 x i16> [[B:%.*]], <32 x i16> [[A:%.*]], i32 0)
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_gt_v32uint16(v32uint16 a, v32uint16 b) { return gt(a, b); }
 
@@ -2205,6 +3058,12 @@ unsigned int test_gt_v32uint16(v32uint16 a, v32uint16 b) { return gt(a, b); }
 // AIE2P-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vlt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z17test_lt_v32uint16Dv32_tS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vlt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_lt_v32uint16(v32uint16 a, v32uint16 b, bool sgn) {
   return lt(a, b, sgn);
@@ -2222,6 +3081,12 @@ unsigned int test_lt_v32uint16(v32uint16 a, v32uint16 b, bool sgn) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vge16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
 //
+// AIE2PS-LABEL: @_Z17test_ge_v32uint16Dv32_tS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vge16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
+//
 unsigned int test_ge_v32uint16(v32uint16 a, v32uint16 b, bool sgn) {
   return ge(a, b, sgn);
 }
@@ -2238,6 +3103,12 @@ unsigned int test_ge_v32uint16(v32uint16 a, v32uint16 b, bool sgn) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vge16(<32 x i16> [[B:%.*]], <32 x i16> [[A:%.*]], i32 [[CONV_I_I]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
 //
+// AIE2PS-LABEL: @_Z17test_le_v32uint16Dv32_tS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vge16(<32 x i16> [[B:%.*]], <32 x i16> [[A:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
+//
 unsigned int test_le_v32uint16(v32uint16 a, v32uint16 b, bool sgn) {
   return le(a, b, sgn);
 }
@@ -2253,6 +3124,12 @@ unsigned int test_le_v32uint16(v32uint16 a, v32uint16 b, bool sgn) {
 // AIE2P-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vlt16(<32 x i16> [[B:%.*]], <32 x i16> [[A:%.*]], i32 [[CONV_I_I]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z17test_gt_v32uint16Dv32_tS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vlt16(<32 x i16> [[B:%.*]], <32 x i16> [[A:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_gt_v32uint16(v32uint16 a, v32uint16 b, bool sgn) {
   return gt(a, b, sgn);
@@ -2278,6 +3155,13 @@ unsigned int test_ltz_v32uint16(v32uint16 a) { return ltz(a); }
 // AIE2P-NEXT:    [[SPEC_SELECT_I_I:%.*]] = select i1 [[SGN:%.*]], i32 [[TMP1]], i32 0
 // AIE2P-NEXT:    ret i32 [[SPEC_SELECT_I_I]]
 //
+// AIE2PS-LABEL: @_Z18test_ltz_v32uint16Dv32_tb(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vbneg.ltz16(<32 x i16> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    [[SPEC_SELECT_I_I:%.*]] = select i1 [[SGN:%.*]], i32 [[TMP1]], i32 0
+// AIE2PS-NEXT:    ret i32 [[SPEC_SELECT_I_I]]
+//
 unsigned int test_ltz_v32uint16(v32uint16 a, bool sgn) { return ltz(a, sgn); }
 
 // AIE2-LABEL: @_Z18test_gtz_v32uint16Dv32_t(
@@ -2291,6 +3175,12 @@ unsigned int test_ltz_v32uint16(v32uint16 a, bool sgn) { return ltz(a, sgn); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2p.vabs.gtz16(<32 x i16> [[A:%.*]], i32 0)
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
 // AIE2P-NEXT:    ret i32 [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z18test_gtz_v32uint16Dv32_t(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vabs.gtz16(<32 x i16> [[A:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    ret i32 [[TMP1]]
 //
 unsigned int test_gtz_v32uint16(v32uint16 a) { return gtz(a); }
 
@@ -2308,6 +3198,13 @@ unsigned int test_gtz_v32uint16(v32uint16 a) { return gtz(a); }
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
 // AIE2P-NEXT:    ret i32 [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z18test_gtz_v32uint16Dv32_tb(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vabs.gtz16(<32 x i16> [[A:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    ret i32 [[TMP1]]
+//
 unsigned int test_gtz_v32uint16(v32uint16 a, bool sgn) { return gtz(a, sgn); }
 
 // AIE2-LABEL: @_Z18test_eqz_v32uint16Dv32_t(
@@ -2319,6 +3216,11 @@ unsigned int test_gtz_v32uint16(v32uint16 a, bool sgn) { return gtz(a, sgn); }
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.veqz16(<32 x i16> [[A:%.*]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z18test_eqz_v32uint16Dv32_t(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.veqz16(<32 x i16> [[A:%.*]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_eqz_v32uint16(v32uint16 a) { return eqz(a); }
 
@@ -2333,6 +3235,12 @@ unsigned int test_eqz_v32uint16(v32uint16 a) { return eqz(a); }
 // AIE2P-NEXT:    [[SUB_I_I:%.*]] = sub <32 x i16> [[A:%.*]], [[B:%.*]]
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.veqz16(<32 x i16> [[SUB_I_I]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z17test_eq_v32uint16Dv32_tS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[SUB_I_I:%.*]] = sub <32 x i16> [[A:%.*]], [[B:%.*]]
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.veqz16(<32 x i16> [[SUB_I_I]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_eq_v32uint16(v32uint16 a, v32uint16 b) { return eq(a, b); }
 
@@ -2350,6 +3258,13 @@ unsigned int test_eq_v32uint16(v32uint16 a, v32uint16 b) { return eq(a, b); }
 // AIE2P-NEXT:    [[NOT_I:%.*]] = xor i32 [[TMP0]], -1
 // AIE2P-NEXT:    ret i32 [[NOT_I]]
 //
+// AIE2PS-LABEL: @_Z17test_ne_v32uint16Dv32_tS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[SUB_I_I_I:%.*]] = sub <32 x i16> [[A:%.*]], [[B:%.*]]
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.veqz16(<32 x i16> [[SUB_I_I_I]])
+// AIE2PS-NEXT:    [[XOR_I:%.*]] = xor i32 [[TMP0]], -1
+// AIE2PS-NEXT:    ret i32 [[XOR_I]]
+//
 unsigned int test_ne_v32uint16(v32uint16 a, v32uint16 b) { return ne(a, b); }
 
 // AIE2-LABEL: @_Z18test_sel_v32uint16Dv32_tS_j(
@@ -2361,6 +3276,11 @@ unsigned int test_ne_v32uint16(v32uint16 a, v32uint16 b) { return ne(a, b); }
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i16> @llvm.aie2p.vsel16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[S:%.*]])
 // AIE2P-NEXT:    ret <32 x i16> [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z18test_sel_v32uint16Dv32_tS_j(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i16> @llvm.aie2ps.vsel16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[S:%.*]])
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP0]]
 //
 v32uint16 test_sel_v32uint16(v32uint16 a, v32uint16 b, unsigned int s) {
   return sel(a, b, s);
@@ -2390,6 +3310,11 @@ v32int16 test_sub_v32int16(v32int16 a, v32int16 b) { return sub(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i16> @llvm.aie2p.vaddsub16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[AS:%.*]])
 // AIE2P-NEXT:    ret <32 x i16> [[TMP0]]
 //
+// AIE2PS-LABEL: @_Z20test_addsub_v32int16Dv32_sS_j(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i16> @llvm.aie2ps.vaddsub16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[AS:%.*]])
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP0]]
+//
 v32int16 test_addsub_v32int16(v32int16 a, v32int16 b, unsigned int as) {
   return addsub(a, b, as);
 }
@@ -2410,6 +3335,14 @@ v32int16 test_addsub_v32int16(v32int16 a, v32int16 b, unsigned int as) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z21test_neg_gtz_v32int16Dv32_sRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vneg.gtz16(<32 x i16> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
+//
 v32int16 test_neg_gtz_v32int16(v32int16 a, unsigned int &cmp) {
   return neg_gtz(a, cmp);
 }
@@ -2425,6 +3358,12 @@ v32int16 test_neg_gtz_v32int16(v32int16 a, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2p.vneg.gtz16(<32 x i16> [[A:%.*]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z17test_neg_v32int16Dv32_s(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vneg.gtz16(<32 x i16> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP1]]
 //
 v32int16 test_neg_v32int16(v32int16 a) { return neg(a); }
 
@@ -2443,6 +3382,14 @@ v32int16 test_neg_v32int16(v32int16 a) { return neg(a); }
 // AIE2P-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z20test_sub_lt_v32int16Dv32_sS_Rj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vsub.lt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
 //
 v32int16 test_sub_lt_v32int16(v32int16 a, v32int16 b, unsigned int &cmp) {
   return sub_lt(a, b, cmp);
@@ -2466,6 +3413,15 @@ v32int16 test_sub_lt_v32int16(v32int16 a, v32int16 b, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z20test_sub_lt_v32int16Dv32_sS_bRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vsub.lt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
+//
 v32int16 test_sub_lt_v32int16(v32int16 a, v32int16 b, bool sgn,
                               unsigned int &cmp) {
   return sub_lt(a, b, sgn, cmp);
@@ -2486,6 +3442,14 @@ v32int16 test_sub_lt_v32int16(v32int16 a, v32int16 b, bool sgn,
 // AIE2P-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z20test_sub_ge_v32int16Dv32_sS_Rj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vsub.ge16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
 //
 v32int16 test_sub_ge_v32int16(v32int16 a, v32int16 b, unsigned int &cmp) {
   return sub_ge(a, b, cmp);
@@ -2509,6 +3473,15 @@ v32int16 test_sub_ge_v32int16(v32int16 a, v32int16 b, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z20test_sub_ge_v32int16Dv32_sS_bRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vsub.ge16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
+//
 v32int16 test_sub_ge_v32int16(v32int16 a, v32int16 b, bool sgn,
                               unsigned int &cmp) {
   return sub_ge(a, b, sgn, cmp);
@@ -2529,6 +3502,14 @@ v32int16 test_sub_ge_v32int16(v32int16 a, v32int16 b, bool sgn,
 // AIE2P-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z24test_maxdiff_lt_v32int16Dv32_sS_Rj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vmaxdiff.lt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
 //
 v32int16 test_maxdiff_lt_v32int16(v32int16 a, v32int16 b, unsigned int &cmp) {
   return maxdiff_lt(a, b, cmp);
@@ -2552,6 +3533,15 @@ v32int16 test_maxdiff_lt_v32int16(v32int16 a, v32int16 b, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z24test_maxdiff_lt_v32int16Dv32_sS_bRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vmaxdiff.lt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
+//
 v32int16 test_maxdiff_lt_v32int16(v32int16 a, v32int16 b, bool sgn,
                                   unsigned int &cmp) {
   return maxdiff_lt(a, b, sgn, cmp);
@@ -2569,6 +3559,12 @@ v32int16 test_maxdiff_lt_v32int16(v32int16 a, v32int16 b, bool sgn,
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z21test_maxdiff_v32int16Dv32_sS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vmaxdiff.lt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP1]]
+//
 v32int16 test_maxdiff_v32int16(v32int16 a, v32int16 b) { return maxdiff(a, b); }
 
 // AIE2-LABEL: @_Z21test_maxdiff_v32int16Dv32_sS_b(
@@ -2584,6 +3580,13 @@ v32int16 test_maxdiff_v32int16(v32int16 a, v32int16 b) { return maxdiff(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2p.vmaxdiff.lt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I_I]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z21test_maxdiff_v32int16Dv32_sS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vmaxdiff.lt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP1]]
 //
 v32int16 test_maxdiff_v32int16(v32int16 a, v32int16 b, bool sgn) {
   return maxdiff(a, b, sgn);
@@ -2604,6 +3607,14 @@ v32int16 test_maxdiff_v32int16(v32int16 a, v32int16 b, bool sgn) {
 // AIE2P-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z20test_min_ge_v32int16Dv32_sS_Rj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vmin.ge16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
 //
 v32int16 test_min_ge_v32int16(v32int16 a, v32int16 b, unsigned int &cmp) {
   return min_ge(a, b, cmp);
@@ -2627,6 +3638,15 @@ v32int16 test_min_ge_v32int16(v32int16 a, v32int16 b, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z20test_min_ge_v32int16Dv32_sS_bRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vmin.ge16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
+//
 v32int16 test_min_ge_v32int16(v32int16 a, v32int16 b, bool sgn,
                               unsigned int &cmp) {
   return min_ge(a, b, sgn, cmp);
@@ -2644,6 +3664,12 @@ v32int16 test_min_ge_v32int16(v32int16 a, v32int16 b, bool sgn,
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z17test_min_v32int16Dv32_sS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vmin.ge16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP1]]
+//
 v32int16 test_min_v32int16(v32int16 a, v32int16 b) { return min(a, b); }
 
 // AIE2-LABEL: @_Z17test_min_v32int16Dv32_sS_b(
@@ -2659,6 +3685,13 @@ v32int16 test_min_v32int16(v32int16 a, v32int16 b) { return min(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2p.vmin.ge16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I_I]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z17test_min_v32int16Dv32_sS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vmin.ge16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP1]]
 //
 v32int16 test_min_v32int16(v32int16 a, v32int16 b, bool sgn) {
   return min(a, b, sgn);
@@ -2679,6 +3712,14 @@ v32int16 test_min_v32int16(v32int16 a, v32int16 b, bool sgn) {
 // AIE2P-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z20test_max_lt_v32int16Dv32_sS_Rj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vmax.lt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
 //
 v32int16 test_max_lt_v32int16(v32int16 a, v32int16 b, unsigned int &cmp) {
   return max_lt(a, b, cmp);
@@ -2702,6 +3743,15 @@ v32int16 test_max_lt_v32int16(v32int16 a, v32int16 b, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z20test_max_lt_v32int16Dv32_sS_bRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vmax.lt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
+//
 v32int16 test_max_lt_v32int16(v32int16 a, v32int16 b, bool sgn,
                               unsigned int &cmp) {
   return max_lt(a, b, sgn, cmp);
@@ -2719,6 +3769,12 @@ v32int16 test_max_lt_v32int16(v32int16 a, v32int16 b, bool sgn,
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z17test_max_v32int16Dv32_sS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vmax.lt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP1]]
+//
 v32int16 test_max_v32int16(v32int16 a, v32int16 b) { return max(a, b); }
 
 // AIE2-LABEL: @_Z17test_max_v32int16Dv32_sS_b(
@@ -2734,6 +3790,13 @@ v32int16 test_max_v32int16(v32int16 a, v32int16 b) { return max(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2p.vmax.lt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I_I]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z17test_max_v32int16Dv32_sS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vmax.lt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP1]]
 //
 v32int16 test_max_v32int16(v32int16 a, v32int16 b, bool sgn) {
   return max(a, b, sgn);
@@ -2769,6 +3832,14 @@ v32int16 test_bor_v32int16(v32int16 a, v32int16 b) { return bor(a, b); }
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z22test_bneg_ltz_v32int16Dv32_sRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vbneg.ltz16(<32 x i16> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
+//
 v32int16 test_bneg_ltz_v32int16(v32int16 a, unsigned int &cmp) {
   return bneg_ltz(a, cmp);
 }
@@ -2791,6 +3862,15 @@ v32int16 test_bneg_ltz_v32int16(v32int16 a, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z22test_bneg_ltz_v32int16Dv32_sbRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vbneg.ltz16(<32 x i16> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    [[SPEC_SELECT_I:%.*]] = select i1 [[SGN:%.*]], i32 [[TMP1]], i32 0
+// AIE2PS-NEXT:    store i32 [[SPEC_SELECT_I]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
+//
 v32int16 test_bneg_ltz_v32int16(v32int16 a, bool sgn, unsigned int &cmp) {
   return bneg_ltz(a, sgn, cmp);
 }
@@ -2806,6 +3886,12 @@ v32int16 test_bneg_ltz_v32int16(v32int16 a, bool sgn, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2p.vbneg.ltz16(<32 x i16> [[A:%.*]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z18test_bneg_v32int16Dv32_s(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vbneg.ltz16(<32 x i16> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP1]]
 //
 v32int16 test_bneg_v32int16(v32int16 a) { return bneg(a); }
 
@@ -2831,6 +3917,17 @@ v32int16 test_bneg_v32int16(v32int16 a) { return bneg(a); }
 // AIE2P-NEXT:    [[OR_I_I:%.*]] = or <32 x i16> [[AND_I7_I]], [[AND_I_I]]
 // AIE2P-NEXT:    ret <32 x i16> [[OR_I_I]]
 //
+// AIE2PS-LABEL: @_Z18test_bxor_v32int16Dv32_sS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vbneg.ltz16(<32 x i16> [[B:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    [[AND_I_I:%.*]] = and <32 x i16> [[TMP1]], [[A:%.*]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vbneg.ltz16(<32 x i16> [[A]])
+// AIE2PS-NEXT:    [[TMP3:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP2]], 0
+// AIE2PS-NEXT:    [[AND_I7_I:%.*]] = and <32 x i16> [[TMP3]], [[B]]
+// AIE2PS-NEXT:    [[OR_I_I:%.*]] = or <32 x i16> [[AND_I7_I]], [[AND_I_I]]
+// AIE2PS-NEXT:    ret <32 x i16> [[OR_I_I]]
+//
 v32int16 test_bxor_v32int16(v32int16 a, v32int16 b) { return bxor(a, b); }
 
 // AIE2-LABEL: @_Z21test_abs_gtz_v32int16Dv32_sRj(
@@ -2848,6 +3945,14 @@ v32int16 test_bxor_v32int16(v32int16 a, v32int16 b) { return bxor(a, b); }
 // AIE2P-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z21test_abs_gtz_v32int16Dv32_sRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vabs.gtz16(<32 x i16> [[A:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
 //
 v32int16 test_abs_gtz_v32int16(v32int16 a, unsigned int &cmp) {
   return abs_gtz(a, cmp);
@@ -2871,6 +3976,15 @@ v32int16 test_abs_gtz_v32int16(v32int16 a, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z21test_abs_gtz_v32int16Dv32_sbRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vabs.gtz16(<32 x i16> [[A:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP2]]
+//
 v32int16 test_abs_gtz_v32int16(v32int16 a, bool sgn, unsigned int &cmp) {
   return abs_gtz(a, sgn, cmp);
 }
@@ -2886,6 +4000,12 @@ v32int16 test_abs_gtz_v32int16(v32int16 a, bool sgn, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2p.vabs.gtz16(<32 x i16> [[A:%.*]], i32 1)
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z17test_abs_v32int16Dv32_s(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vabs.gtz16(<32 x i16> [[A:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP1]]
 //
 v32int16 test_abs_v32int16(v32int16 a) { return abs(a); }
 
@@ -2903,6 +4023,13 @@ v32int16 test_abs_v32int16(v32int16 a) { return abs(a); }
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <32 x i16> [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z17test_abs_v32int16Dv32_sb(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vabs.gtz16(<32 x i16> [[A:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP1]]
+//
 v32int16 test_abs_v32int16(v32int16 a, bool sgn) { return abs(a, sgn); }
 
 // AIE2-LABEL: @_Z16test_lt_v32int16Dv32_sS_(
@@ -2914,6 +4041,11 @@ v32int16 test_abs_v32int16(v32int16 a, bool sgn) { return abs(a, sgn); }
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vlt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 1)
 // AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z16test_lt_v32int16Dv32_sS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vlt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_lt_v32int16(v32int16 a, v32int16 b) { return lt(a, b); }
 
@@ -2927,6 +4059,11 @@ unsigned int test_lt_v32int16(v32int16 a, v32int16 b) { return lt(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vge16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 1)
 // AIE2P-NEXT:    ret i32 [[TMP0]]
 //
+// AIE2PS-LABEL: @_Z16test_ge_v32int16Dv32_sS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vge16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
+//
 unsigned int test_ge_v32int16(v32int16 a, v32int16 b) { return ge(a, b); }
 
 // AIE2-LABEL: @_Z16test_le_v32int16Dv32_sS_(
@@ -2939,6 +4076,11 @@ unsigned int test_ge_v32int16(v32int16 a, v32int16 b) { return ge(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vge16(<32 x i16> [[B:%.*]], <32 x i16> [[A:%.*]], i32 1)
 // AIE2P-NEXT:    ret i32 [[TMP0]]
 //
+// AIE2PS-LABEL: @_Z16test_le_v32int16Dv32_sS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vge16(<32 x i16> [[B:%.*]], <32 x i16> [[A:%.*]], i32 1)
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
+//
 unsigned int test_le_v32int16(v32int16 a, v32int16 b) { return le(a, b); }
 
 // AIE2-LABEL: @_Z16test_gt_v32int16Dv32_sS_(
@@ -2950,6 +4092,11 @@ unsigned int test_le_v32int16(v32int16 a, v32int16 b) { return le(a, b); }
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vlt16(<32 x i16> [[B:%.*]], <32 x i16> [[A:%.*]], i32 1)
 // AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z16test_gt_v32int16Dv32_sS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vlt16(<32 x i16> [[B:%.*]], <32 x i16> [[A:%.*]], i32 1)
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_gt_v32int16(v32int16 a, v32int16 b) { return gt(a, b); }
 
@@ -2964,6 +4111,12 @@ unsigned int test_gt_v32int16(v32int16 a, v32int16 b) { return gt(a, b); }
 // AIE2P-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vlt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z16test_lt_v32int16Dv32_sS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vlt16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_lt_v32int16(v32int16 a, v32int16 b, bool sgn) {
   return lt(a, b, sgn);
@@ -2981,6 +4134,12 @@ unsigned int test_lt_v32int16(v32int16 a, v32int16 b, bool sgn) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vge16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
 //
+// AIE2PS-LABEL: @_Z16test_ge_v32int16Dv32_sS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vge16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
+//
 unsigned int test_ge_v32int16(v32int16 a, v32int16 b, bool sgn) {
   return ge(a, b, sgn);
 }
@@ -2996,6 +4155,12 @@ unsigned int test_ge_v32int16(v32int16 a, v32int16 b, bool sgn) {
 // AIE2P-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vge16(<32 x i16> [[B:%.*]], <32 x i16> [[A:%.*]], i32 [[CONV_I_I]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z16test_le_v32int16Dv32_sS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vge16(<32 x i16> [[B:%.*]], <32 x i16> [[A:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_le_v32int16(v32int16 a, v32int16 b, bool sgn) {
   return le(a, b, sgn);
@@ -3013,6 +4178,12 @@ unsigned int test_le_v32int16(v32int16 a, v32int16 b, bool sgn) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vlt16(<32 x i16> [[B:%.*]], <32 x i16> [[A:%.*]], i32 [[CONV_I_I]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
 //
+// AIE2PS-LABEL: @_Z16test_gt_v32int16Dv32_sS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vlt16(<32 x i16> [[B:%.*]], <32 x i16> [[A:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
+//
 unsigned int test_gt_v32int16(v32int16 a, v32int16 b, bool sgn) {
   return gt(a, b, sgn);
 }
@@ -3028,6 +4199,12 @@ unsigned int test_gt_v32int16(v32int16 a, v32int16 b, bool sgn) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2p.vbneg.ltz16(<32 x i16> [[A:%.*]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
 // AIE2P-NEXT:    ret i32 [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z17test_ltz_v32int16Dv32_s(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vbneg.ltz16(<32 x i16> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    ret i32 [[TMP1]]
 //
 unsigned int test_ltz_v32int16(v32int16 a) { return ltz(a); }
 
@@ -3045,6 +4222,13 @@ unsigned int test_ltz_v32int16(v32int16 a) { return ltz(a); }
 // AIE2P-NEXT:    [[SPEC_SELECT_I_I:%.*]] = select i1 [[SGN:%.*]], i32 [[TMP1]], i32 0
 // AIE2P-NEXT:    ret i32 [[SPEC_SELECT_I_I]]
 //
+// AIE2PS-LABEL: @_Z17test_ltz_v32int16Dv32_sb(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vbneg.ltz16(<32 x i16> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    [[SPEC_SELECT_I_I:%.*]] = select i1 [[SGN:%.*]], i32 [[TMP1]], i32 0
+// AIE2PS-NEXT:    ret i32 [[SPEC_SELECT_I_I]]
+//
 unsigned int test_ltz_v32int16(v32int16 a, bool sgn) { return ltz(a, sgn); }
 
 // AIE2-LABEL: @_Z17test_gtz_v32int16Dv32_s(
@@ -3058,6 +4242,12 @@ unsigned int test_ltz_v32int16(v32int16 a, bool sgn) { return ltz(a, sgn); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2p.vabs.gtz16(<32 x i16> [[A:%.*]], i32 1)
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
 // AIE2P-NEXT:    ret i32 [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z17test_gtz_v32int16Dv32_s(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vabs.gtz16(<32 x i16> [[A:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    ret i32 [[TMP1]]
 //
 unsigned int test_gtz_v32int16(v32int16 a) { return gtz(a); }
 
@@ -3075,6 +4265,13 @@ unsigned int test_gtz_v32int16(v32int16 a) { return gtz(a); }
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
 // AIE2P-NEXT:    ret i32 [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z17test_gtz_v32int16Dv32_sb(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <32 x i16>, i32 } @llvm.aie2ps.vabs.gtz16(<32 x i16> [[A:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x i16>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    ret i32 [[TMP1]]
+//
 unsigned int test_gtz_v32int16(v32int16 a, bool sgn) { return gtz(a, sgn); }
 
 // AIE2-LABEL: @_Z17test_eqz_v32int16Dv32_s(
@@ -3086,6 +4283,11 @@ unsigned int test_gtz_v32int16(v32int16 a, bool sgn) { return gtz(a, sgn); }
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.veqz16(<32 x i16> [[A:%.*]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z17test_eqz_v32int16Dv32_s(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.veqz16(<32 x i16> [[A:%.*]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_eqz_v32int16(v32int16 a) { return eqz(a); }
 
@@ -3100,6 +4302,12 @@ unsigned int test_eqz_v32int16(v32int16 a) { return eqz(a); }
 // AIE2P-NEXT:    [[SUB_I_I:%.*]] = sub <32 x i16> [[A:%.*]], [[B:%.*]]
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.veqz16(<32 x i16> [[SUB_I_I]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z16test_eq_v32int16Dv32_sS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[SUB_I_I:%.*]] = sub <32 x i16> [[A:%.*]], [[B:%.*]]
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.veqz16(<32 x i16> [[SUB_I_I]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_eq_v32int16(v32int16 a, v32int16 b) { return eq(a, b); }
 
@@ -3117,6 +4325,13 @@ unsigned int test_eq_v32int16(v32int16 a, v32int16 b) { return eq(a, b); }
 // AIE2P-NEXT:    [[NOT_I:%.*]] = xor i32 [[TMP0]], -1
 // AIE2P-NEXT:    ret i32 [[NOT_I]]
 //
+// AIE2PS-LABEL: @_Z16test_ne_v32int16Dv32_sS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[SUB_I_I_I:%.*]] = sub <32 x i16> [[A:%.*]], [[B:%.*]]
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.veqz16(<32 x i16> [[SUB_I_I_I]])
+// AIE2PS-NEXT:    [[XOR_I:%.*]] = xor i32 [[TMP0]], -1
+// AIE2PS-NEXT:    ret i32 [[XOR_I]]
+//
 unsigned int test_ne_v32int16(v32int16 a, v32int16 b) { return ne(a, b); }
 
 // AIE2-LABEL: @_Z17test_sel_v32int16Dv32_sS_j(
@@ -3128,6 +4343,11 @@ unsigned int test_ne_v32int16(v32int16 a, v32int16 b) { return ne(a, b); }
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i16> @llvm.aie2p.vsel16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[S:%.*]])
 // AIE2P-NEXT:    ret <32 x i16> [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z17test_sel_v32int16Dv32_sS_j(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i16> @llvm.aie2ps.vsel16(<32 x i16> [[A:%.*]], <32 x i16> [[B:%.*]], i32 [[S:%.*]])
+// AIE2PS-NEXT:    ret <32 x i16> [[TMP0]]
 //
 v32int16 test_sel_v32int16(v32int16 a, v32int16 b, unsigned int s) {
   return sel(a, b, s);
@@ -3157,6 +4377,11 @@ v16uint32 test_sub_v16uint32(v16uint32 a, v16uint32 b) { return sub(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2p.vaddsub32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[AS:%.*]])
 // AIE2P-NEXT:    ret <16 x i32> [[TMP0]]
 //
+// AIE2PS-LABEL: @_Z21test_addsub_v16uint32Dv16_jS_j(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2ps.vaddsub32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[AS:%.*]])
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP0]]
+//
 v16uint32 test_addsub_v16uint32(v16uint32 a, v16uint32 b, unsigned int as) {
   return addsub(a, b, as);
 }
@@ -3177,6 +4402,14 @@ v16uint32 test_addsub_v16uint32(v16uint32 a, v16uint32 b, unsigned int as) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z22test_neg_gtz_v16uint32Dv16_jRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vneg.gtz32(<16 x i32> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
+//
 v16uint32 test_neg_gtz_v16uint32(v16uint32 a, unsigned int &cmp) {
   return neg_gtz(a, cmp);
 }
@@ -3192,6 +4425,12 @@ v16uint32 test_neg_gtz_v16uint32(v16uint32 a, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2p.vneg.gtz32(<16 x i32> [[A:%.*]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z18test_neg_v16uint32Dv16_j(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vneg.gtz32(<16 x i32> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP1]]
 //
 v16uint32 test_neg_v16uint32(v16uint32 a) { return neg(a); }
 
@@ -3210,6 +4449,14 @@ v16uint32 test_neg_v16uint32(v16uint32 a) { return neg(a); }
 // AIE2P-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z21test_sub_lt_v16uint32Dv16_jS_Rj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vsub.lt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
 //
 v16uint32 test_sub_lt_v16uint32(v16uint32 a, v16uint32 b, unsigned int &cmp) {
   return sub_lt(a, b, cmp);
@@ -3233,6 +4480,15 @@ v16uint32 test_sub_lt_v16uint32(v16uint32 a, v16uint32 b, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z21test_sub_lt_v16uint32Dv16_jS_bRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vsub.lt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
+//
 v16uint32 test_sub_lt_v16uint32(v16uint32 a, v16uint32 b, bool sgn,
                                 unsigned int &cmp) {
   return sub_lt(a, b, sgn, cmp);
@@ -3253,6 +4509,14 @@ v16uint32 test_sub_lt_v16uint32(v16uint32 a, v16uint32 b, bool sgn,
 // AIE2P-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z21test_sub_ge_v16uint32Dv16_jS_Rj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vsub.ge32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
 //
 v16uint32 test_sub_ge_v16uint32(v16uint32 a, v16uint32 b, unsigned int &cmp) {
   return sub_ge(a, b, cmp);
@@ -3276,6 +4540,15 @@ v16uint32 test_sub_ge_v16uint32(v16uint32 a, v16uint32 b, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z21test_sub_ge_v16uint32Dv16_jS_bRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vsub.ge32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
+//
 v16uint32 test_sub_ge_v16uint32(v16uint32 a, v16uint32 b, bool sgn,
                                 unsigned int &cmp) {
   return sub_ge(a, b, sgn, cmp);
@@ -3296,6 +4569,14 @@ v16uint32 test_sub_ge_v16uint32(v16uint32 a, v16uint32 b, bool sgn,
 // AIE2P-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z25test_maxdiff_lt_v16uint32Dv16_jS_Rj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vmaxdiff.lt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
 //
 v16uint32 test_maxdiff_lt_v16uint32(v16uint32 a, v16uint32 b,
                                     unsigned int &cmp) {
@@ -3320,6 +4601,15 @@ v16uint32 test_maxdiff_lt_v16uint32(v16uint32 a, v16uint32 b,
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z25test_maxdiff_lt_v16uint32Dv16_jS_bRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vmaxdiff.lt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
+//
 v16uint32 test_maxdiff_lt_v16uint32(v16uint32 a, v16uint32 b, bool sgn,
                                     unsigned int &cmp) {
   return maxdiff_lt(a, b, sgn, cmp);
@@ -3336,6 +4626,12 @@ v16uint32 test_maxdiff_lt_v16uint32(v16uint32 a, v16uint32 b, bool sgn,
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2p.vmaxdiff.lt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 0)
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z22test_maxdiff_v16uint32Dv16_jS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vmaxdiff.lt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP1]]
 //
 v16uint32 test_maxdiff_v16uint32(v16uint32 a, v16uint32 b) {
   return maxdiff(a, b);
@@ -3354,6 +4650,13 @@ v16uint32 test_maxdiff_v16uint32(v16uint32 a, v16uint32 b) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2p.vmaxdiff.lt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I_I]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z22test_maxdiff_v16uint32Dv16_jS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vmaxdiff.lt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP1]]
 //
 v16uint32 test_maxdiff_v16uint32(v16uint32 a, v16uint32 b, bool sgn) {
   return maxdiff(a, b, sgn);
@@ -3374,6 +4677,14 @@ v16uint32 test_maxdiff_v16uint32(v16uint32 a, v16uint32 b, bool sgn) {
 // AIE2P-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z21test_min_ge_v16uint32Dv16_jS_Rj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vmin.ge32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
 //
 v16uint32 test_min_ge_v16uint32(v16uint32 a, v16uint32 b, unsigned int &cmp) {
   return min_ge(a, b, cmp);
@@ -3397,6 +4708,15 @@ v16uint32 test_min_ge_v16uint32(v16uint32 a, v16uint32 b, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z21test_min_ge_v16uint32Dv16_jS_bRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vmin.ge32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
+//
 v16uint32 test_min_ge_v16uint32(v16uint32 a, v16uint32 b, bool sgn,
                                 unsigned int &cmp) {
   return min_ge(a, b, sgn, cmp);
@@ -3414,6 +4734,12 @@ v16uint32 test_min_ge_v16uint32(v16uint32 a, v16uint32 b, bool sgn,
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z18test_min_v16uint32Dv16_jS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vmin.ge32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP1]]
+//
 v16uint32 test_min_v16uint32(v16uint32 a, v16uint32 b) { return min(a, b); }
 
 // AIE2-LABEL: @_Z18test_min_v16uint32Dv16_jS_b(
@@ -3429,6 +4755,13 @@ v16uint32 test_min_v16uint32(v16uint32 a, v16uint32 b) { return min(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2p.vmin.ge32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I_I]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z18test_min_v16uint32Dv16_jS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vmin.ge32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP1]]
 //
 v16uint32 test_min_v16uint32(v16uint32 a, v16uint32 b, bool sgn) {
   return min(a, b, sgn);
@@ -3449,6 +4782,14 @@ v16uint32 test_min_v16uint32(v16uint32 a, v16uint32 b, bool sgn) {
 // AIE2P-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z21test_max_lt_v16uint32Dv16_jS_Rj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vmax.lt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
 //
 v16uint32 test_max_lt_v16uint32(v16uint32 a, v16uint32 b, unsigned int &cmp) {
   return max_lt(a, b, cmp);
@@ -3472,6 +4813,15 @@ v16uint32 test_max_lt_v16uint32(v16uint32 a, v16uint32 b, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z21test_max_lt_v16uint32Dv16_jS_bRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vmax.lt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
+//
 v16uint32 test_max_lt_v16uint32(v16uint32 a, v16uint32 b, bool sgn,
                                 unsigned int &cmp) {
   return max_lt(a, b, sgn, cmp);
@@ -3489,6 +4839,12 @@ v16uint32 test_max_lt_v16uint32(v16uint32 a, v16uint32 b, bool sgn,
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z18test_max_v16uint32Dv16_jS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vmax.lt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP1]]
+//
 v16uint32 test_max_v16uint32(v16uint32 a, v16uint32 b) { return max(a, b); }
 
 // AIE2-LABEL: @_Z18test_max_v16uint32Dv16_jS_b(
@@ -3504,6 +4860,13 @@ v16uint32 test_max_v16uint32(v16uint32 a, v16uint32 b) { return max(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2p.vmax.lt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I_I]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z18test_max_v16uint32Dv16_jS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vmax.lt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP1]]
 //
 v16uint32 test_max_v16uint32(v16uint32 a, v16uint32 b, bool sgn) {
   return max(a, b, sgn);
@@ -3537,6 +4900,13 @@ v16uint32 test_bor_v16uint32(v16uint32 a, v16uint32 b) { return bor(a, b); }
 // AIE2P-NEXT:    store i32 0, ptr [[CMP:%.*]], align 4, !tbaa [[TBAA6]]
 // AIE2P-NEXT:    ret <16 x i32> [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z23test_bneg_ltz_v16uint32Dv16_jRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vbneg.ltz32(<16 x i32> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    store i32 0, ptr [[CMP:%.*]], align 4, !tbaa [[TBAA6]]
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP1]]
+//
 v16uint32 test_bneg_ltz_v16uint32(v16uint32 a, unsigned int &cmp) {
   return bneg_ltz(a, cmp);
 }
@@ -3559,6 +4929,15 @@ v16uint32 test_bneg_ltz_v16uint32(v16uint32 a, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z23test_bneg_ltz_v16uint32Dv16_jbRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vbneg.ltz32(<16 x i32> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    [[SPEC_SELECT_I:%.*]] = select i1 [[SGN:%.*]], i32 [[TMP1]], i32 0
+// AIE2PS-NEXT:    store i32 [[SPEC_SELECT_I]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
+//
 v16uint32 test_bneg_ltz_v16uint32(v16uint32 a, bool sgn, unsigned int &cmp) {
   return bneg_ltz(a, sgn, cmp);
 }
@@ -3574,6 +4953,12 @@ v16uint32 test_bneg_ltz_v16uint32(v16uint32 a, bool sgn, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2p.vbneg.ltz32(<16 x i32> [[A:%.*]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z19test_bneg_v16uint32Dv16_j(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vbneg.ltz32(<16 x i32> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP1]]
 //
 v16uint32 test_bneg_v16uint32(v16uint32 a) { return bneg(a); }
 
@@ -3599,6 +4984,17 @@ v16uint32 test_bneg_v16uint32(v16uint32 a) { return bneg(a); }
 // AIE2P-NEXT:    [[OR_I_I:%.*]] = or <16 x i32> [[AND_I7_I]], [[AND_I_I]]
 // AIE2P-NEXT:    ret <16 x i32> [[OR_I_I]]
 //
+// AIE2PS-LABEL: @_Z19test_bxor_v16uint32Dv16_jS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vbneg.ltz32(<16 x i32> [[B:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    [[AND_I_I:%.*]] = and <16 x i32> [[TMP1]], [[A:%.*]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vbneg.ltz32(<16 x i32> [[A]])
+// AIE2PS-NEXT:    [[TMP3:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP2]], 0
+// AIE2PS-NEXT:    [[AND_I7_I:%.*]] = and <16 x i32> [[TMP3]], [[B]]
+// AIE2PS-NEXT:    [[OR_I_I:%.*]] = or <16 x i32> [[AND_I7_I]], [[AND_I_I]]
+// AIE2PS-NEXT:    ret <16 x i32> [[OR_I_I]]
+//
 v16uint32 test_bxor_v16uint32(v16uint32 a, v16uint32 b) { return bxor(a, b); }
 
 // AIE2-LABEL: @_Z22test_abs_gtz_v16uint32Dv16_jRj(
@@ -3616,6 +5012,14 @@ v16uint32 test_bxor_v16uint32(v16uint32 a, v16uint32 b) { return bxor(a, b); }
 // AIE2P-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z22test_abs_gtz_v16uint32Dv16_jRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vabs.gtz32(<16 x i32> [[A:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
 //
 v16uint32 test_abs_gtz_v16uint32(v16uint32 a, unsigned int &cmp) {
   return abs_gtz(a, cmp);
@@ -3638,6 +5042,15 @@ v16uint32 test_abs_gtz_v16uint32(v16uint32 a, unsigned int &cmp) {
 // AIE2P-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z22test_abs_gtz_v16uint32Dv16_jbRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vabs.gtz32(<16 x i32> [[A:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
 //
 v16uint32 test_abs_gtz_v16uint32(v16uint32 a, bool sgn, unsigned int &cmp) {
   return abs_gtz(a, sgn, cmp);
@@ -3663,6 +5076,13 @@ v16uint32 test_abs_v16uint32(v16uint32 a) { return abs(a); }
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z18test_abs_v16uint32Dv16_jb(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vabs.gtz32(<16 x i32> [[A:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP1]]
+//
 v16uint32 test_abs_v16uint32(v16uint32 a, bool sgn) { return abs(a, sgn); }
 
 // AIE2-LABEL: @_Z17test_lt_v16uint32Dv16_jS_(
@@ -3674,6 +5094,11 @@ v16uint32 test_abs_v16uint32(v16uint32 a, bool sgn) { return abs(a, sgn); }
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vlt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 0)
 // AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z17test_lt_v16uint32Dv16_jS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vlt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_lt_v16uint32(v16uint32 a, v16uint32 b) { return lt(a, b); }
 
@@ -3687,6 +5112,11 @@ unsigned int test_lt_v16uint32(v16uint32 a, v16uint32 b) { return lt(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vge32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 0)
 // AIE2P-NEXT:    ret i32 [[TMP0]]
 //
+// AIE2PS-LABEL: @_Z17test_ge_v16uint32Dv16_jS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vge32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 0)
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
+//
 unsigned int test_ge_v16uint32(v16uint32 a, v16uint32 b) { return ge(a, b); }
 
 // AIE2-LABEL: @_Z17test_le_v16uint32Dv16_jS_(
@@ -3699,6 +5129,11 @@ unsigned int test_ge_v16uint32(v16uint32 a, v16uint32 b) { return ge(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vge32(<16 x i32> [[B:%.*]], <16 x i32> [[A:%.*]], i32 0)
 // AIE2P-NEXT:    ret i32 [[TMP0]]
 //
+// AIE2PS-LABEL: @_Z17test_le_v16uint32Dv16_jS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vge32(<16 x i32> [[B:%.*]], <16 x i32> [[A:%.*]], i32 0)
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
+//
 unsigned int test_le_v16uint32(v16uint32 a, v16uint32 b) { return le(a, b); }
 
 // AIE2-LABEL: @_Z17test_gt_v16uint32Dv16_jS_(
@@ -3710,6 +5145,11 @@ unsigned int test_le_v16uint32(v16uint32 a, v16uint32 b) { return le(a, b); }
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vlt32(<16 x i32> [[B:%.*]], <16 x i32> [[A:%.*]], i32 0)
 // AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z17test_gt_v16uint32Dv16_jS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vlt32(<16 x i32> [[B:%.*]], <16 x i32> [[A:%.*]], i32 0)
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_gt_v16uint32(v16uint32 a, v16uint32 b) { return gt(a, b); }
 
@@ -3724,6 +5164,12 @@ unsigned int test_gt_v16uint32(v16uint32 a, v16uint32 b) { return gt(a, b); }
 // AIE2P-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vlt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z17test_lt_v16uint32Dv16_jS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vlt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_lt_v16uint32(v16uint32 a, v16uint32 b, bool sgn) {
   return lt(a, b, sgn);
@@ -3741,6 +5187,12 @@ unsigned int test_lt_v16uint32(v16uint32 a, v16uint32 b, bool sgn) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vge32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
 //
+// AIE2PS-LABEL: @_Z17test_ge_v16uint32Dv16_jS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vge32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
+//
 unsigned int test_ge_v16uint32(v16uint32 a, v16uint32 b, bool sgn) {
   return ge(a, b, sgn);
 }
@@ -3757,6 +5209,12 @@ unsigned int test_ge_v16uint32(v16uint32 a, v16uint32 b, bool sgn) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vge32(<16 x i32> [[B:%.*]], <16 x i32> [[A:%.*]], i32 [[CONV_I_I]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
 //
+// AIE2PS-LABEL: @_Z17test_le_v16uint32Dv16_jS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vge32(<16 x i32> [[B:%.*]], <16 x i32> [[A:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
+//
 unsigned int test_le_v16uint32(v16uint32 a, v16uint32 b, bool sgn) {
   return le(a, b, sgn);
 }
@@ -3772,6 +5230,12 @@ unsigned int test_le_v16uint32(v16uint32 a, v16uint32 b, bool sgn) {
 // AIE2P-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vlt32(<16 x i32> [[B:%.*]], <16 x i32> [[A:%.*]], i32 [[CONV_I_I]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z17test_gt_v16uint32Dv16_jS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vlt32(<16 x i32> [[B:%.*]], <16 x i32> [[A:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_gt_v16uint32(v16uint32 a, v16uint32 b, bool sgn) {
   return gt(a, b, sgn);
@@ -3797,6 +5261,13 @@ unsigned int test_ltz_v16uint32(v16uint32 a) { return ltz(a); }
 // AIE2P-NEXT:    [[SPEC_SELECT_I_I:%.*]] = select i1 [[SGN:%.*]], i32 [[TMP1]], i32 0
 // AIE2P-NEXT:    ret i32 [[SPEC_SELECT_I_I]]
 //
+// AIE2PS-LABEL: @_Z18test_ltz_v16uint32Dv16_jb(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vbneg.ltz32(<16 x i32> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    [[SPEC_SELECT_I_I:%.*]] = select i1 [[SGN:%.*]], i32 [[TMP1]], i32 0
+// AIE2PS-NEXT:    ret i32 [[SPEC_SELECT_I_I]]
+//
 unsigned int test_ltz_v16uint32(v16uint32 a, bool sgn) { return ltz(a, sgn); }
 
 // AIE2-LABEL: @_Z18test_gtz_v16uint32Dv16_j(
@@ -3810,6 +5281,12 @@ unsigned int test_ltz_v16uint32(v16uint32 a, bool sgn) { return ltz(a, sgn); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2p.vabs.gtz32(<16 x i32> [[A:%.*]], i32 0)
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
 // AIE2P-NEXT:    ret i32 [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z18test_gtz_v16uint32Dv16_j(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vabs.gtz32(<16 x i32> [[A:%.*]], i32 0)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    ret i32 [[TMP1]]
 //
 unsigned int test_gtz_v16uint32(v16uint32 a) { return gtz(a); }
 
@@ -3827,6 +5304,13 @@ unsigned int test_gtz_v16uint32(v16uint32 a) { return gtz(a); }
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
 // AIE2P-NEXT:    ret i32 [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z18test_gtz_v16uint32Dv16_jb(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vabs.gtz32(<16 x i32> [[A:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    ret i32 [[TMP1]]
+//
 unsigned int test_gtz_v16uint32(v16uint32 a, bool sgn) { return gtz(a, sgn); }
 
 // AIE2-LABEL: @_Z18test_eqz_v16uint32Dv16_j(
@@ -3838,6 +5322,11 @@ unsigned int test_gtz_v16uint32(v16uint32 a, bool sgn) { return gtz(a, sgn); }
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.veqz32(<16 x i32> [[A:%.*]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z18test_eqz_v16uint32Dv16_j(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.veqz32(<16 x i32> [[A:%.*]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_eqz_v16uint32(v16uint32 a) { return eqz(a); }
 
@@ -3852,6 +5341,12 @@ unsigned int test_eqz_v16uint32(v16uint32 a) { return eqz(a); }
 // AIE2P-NEXT:    [[SUB_I_I:%.*]] = sub <16 x i32> [[A:%.*]], [[B:%.*]]
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.veqz32(<16 x i32> [[SUB_I_I]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z17test_eq_v16uint32Dv16_jS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[SUB_I_I:%.*]] = sub <16 x i32> [[A:%.*]], [[B:%.*]]
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.veqz32(<16 x i32> [[SUB_I_I]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_eq_v16uint32(v16uint32 a, v16uint32 b) { return eq(a, b); }
 
@@ -3869,6 +5364,13 @@ unsigned int test_eq_v16uint32(v16uint32 a, v16uint32 b) { return eq(a, b); }
 // AIE2P-NEXT:    [[NOT_I:%.*]] = xor i32 [[TMP0]], -1
 // AIE2P-NEXT:    ret i32 [[NOT_I]]
 //
+// AIE2PS-LABEL: @_Z17test_ne_v16uint32Dv16_jS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[SUB_I_I_I:%.*]] = sub <16 x i32> [[A:%.*]], [[B:%.*]]
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.veqz32(<16 x i32> [[SUB_I_I_I]])
+// AIE2PS-NEXT:    [[XOR_I:%.*]] = xor i32 [[TMP0]], 65535
+// AIE2PS-NEXT:    ret i32 [[XOR_I]]
+//
 unsigned int test_ne_v16uint32(v16uint32 a, v16uint32 b) { return ne(a, b); }
 
 // AIE2-LABEL: @_Z18test_sel_v16uint32Dv16_jS_j(
@@ -3880,6 +5382,11 @@ unsigned int test_ne_v16uint32(v16uint32 a, v16uint32 b) { return ne(a, b); }
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2p.vsel32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[S:%.*]])
 // AIE2P-NEXT:    ret <16 x i32> [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z18test_sel_v16uint32Dv16_jS_j(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2ps.vsel32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[S:%.*]])
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP0]]
 //
 v16uint32 test_sel_v16uint32(v16uint32 a, v16uint32 b, unsigned int s) {
   return sel(a, b, s);
@@ -3909,6 +5416,11 @@ v16int32 test_sub_v16int32(v16int32 a, v16int32 b) { return sub(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2p.vaddsub32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[AS:%.*]])
 // AIE2P-NEXT:    ret <16 x i32> [[TMP0]]
 //
+// AIE2PS-LABEL: @_Z20test_addsub_v16int32Dv16_iS_j(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2ps.vaddsub32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[AS:%.*]])
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP0]]
+//
 v16int32 test_addsub_v16int32(v16int32 a, v16int32 b, unsigned int as) {
   return addsub(a, b, as);
 }
@@ -3929,6 +5441,14 @@ v16int32 test_addsub_v16int32(v16int32 a, v16int32 b, unsigned int as) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z21test_neg_gtz_v16int32Dv16_iRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vneg.gtz32(<16 x i32> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
+//
 v16int32 test_neg_gtz_v16int32(v16int32 a, unsigned int &cmp) {
   return neg_gtz(a, cmp);
 }
@@ -3944,6 +5464,12 @@ v16int32 test_neg_gtz_v16int32(v16int32 a, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2p.vneg.gtz32(<16 x i32> [[A:%.*]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z17test_neg_v16int32Dv16_i(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vneg.gtz32(<16 x i32> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP1]]
 //
 v16int32 test_neg_v16int32(v16int32 a) { return neg(a); }
 
@@ -3962,6 +5488,14 @@ v16int32 test_neg_v16int32(v16int32 a) { return neg(a); }
 // AIE2P-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z20test_sub_lt_v16int32Dv16_iS_Rj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vsub.lt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
 //
 v16int32 test_sub_lt_v16int32(v16int32 a, v16int32 b, unsigned int &cmp) {
   return sub_lt(a, b, cmp);
@@ -3985,6 +5519,15 @@ v16int32 test_sub_lt_v16int32(v16int32 a, v16int32 b, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z20test_sub_lt_v16int32Dv16_iS_bRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vsub.lt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
+//
 v16int32 test_sub_lt_v16int32(v16int32 a, v16int32 b, bool sgn,
                               unsigned int &cmp) {
   return sub_lt(a, b, sgn, cmp);
@@ -4005,6 +5548,14 @@ v16int32 test_sub_lt_v16int32(v16int32 a, v16int32 b, bool sgn,
 // AIE2P-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z20test_sub_ge_v16int32Dv16_iS_Rj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vsub.ge32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
 //
 v16int32 test_sub_ge_v16int32(v16int32 a, v16int32 b, unsigned int &cmp) {
   return sub_ge(a, b, cmp);
@@ -4028,6 +5579,15 @@ v16int32 test_sub_ge_v16int32(v16int32 a, v16int32 b, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z20test_sub_ge_v16int32Dv16_iS_bRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vsub.ge32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
+//
 v16int32 test_sub_ge_v16int32(v16int32 a, v16int32 b, bool sgn,
                               unsigned int &cmp) {
   return sub_ge(a, b, sgn, cmp);
@@ -4048,6 +5608,14 @@ v16int32 test_sub_ge_v16int32(v16int32 a, v16int32 b, bool sgn,
 // AIE2P-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z24test_maxdiff_lt_v16int32Dv16_iS_Rj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vmaxdiff.lt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
 //
 v16int32 test_maxdiff_lt_v16int32(v16int32 a, v16int32 b, unsigned int &cmp) {
   return maxdiff_lt(a, b, cmp);
@@ -4071,6 +5639,15 @@ v16int32 test_maxdiff_lt_v16int32(v16int32 a, v16int32 b, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z24test_maxdiff_lt_v16int32Dv16_iS_bRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vmaxdiff.lt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
+//
 v16int32 test_maxdiff_lt_v16int32(v16int32 a, v16int32 b, bool sgn,
                                   unsigned int &cmp) {
   return maxdiff_lt(a, b, sgn, cmp);
@@ -4088,6 +5665,12 @@ v16int32 test_maxdiff_lt_v16int32(v16int32 a, v16int32 b, bool sgn,
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z21test_maxdiff_v16int32Dv16_iS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vmaxdiff.lt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP1]]
+//
 v16int32 test_maxdiff_v16int32(v16int32 a, v16int32 b) { return maxdiff(a, b); }
 
 // AIE2-LABEL: @_Z21test_maxdiff_v16int32Dv16_iS_b(
@@ -4103,6 +5686,13 @@ v16int32 test_maxdiff_v16int32(v16int32 a, v16int32 b) { return maxdiff(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2p.vmaxdiff.lt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I_I]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z21test_maxdiff_v16int32Dv16_iS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vmaxdiff.lt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP1]]
 //
 v16int32 test_maxdiff_v16int32(v16int32 a, v16int32 b, bool sgn) {
   return maxdiff(a, b, sgn);
@@ -4123,6 +5713,14 @@ v16int32 test_maxdiff_v16int32(v16int32 a, v16int32 b, bool sgn) {
 // AIE2P-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z20test_min_ge_v16int32Dv16_iS_Rj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vmin.ge32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
 //
 v16int32 test_min_ge_v16int32(v16int32 a, v16int32 b, unsigned int &cmp) {
   return min_ge(a, b, cmp);
@@ -4146,6 +5744,15 @@ v16int32 test_min_ge_v16int32(v16int32 a, v16int32 b, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z20test_min_ge_v16int32Dv16_iS_bRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vmin.ge32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
+//
 v16int32 test_min_ge_v16int32(v16int32 a, v16int32 b, bool sgn,
                               unsigned int &cmp) {
   return min_ge(a, b, sgn, cmp);
@@ -4163,6 +5770,12 @@ v16int32 test_min_ge_v16int32(v16int32 a, v16int32 b, bool sgn,
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z17test_min_v16int32Dv16_iS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vmin.ge32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP1]]
+//
 v16int32 test_min_v16int32(v16int32 a, v16int32 b) { return min(a, b); }
 
 // AIE2-LABEL: @_Z17test_min_v16int32Dv16_iS_b(
@@ -4178,6 +5791,13 @@ v16int32 test_min_v16int32(v16int32 a, v16int32 b) { return min(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2p.vmin.ge32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I_I]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z17test_min_v16int32Dv16_iS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vmin.ge32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP1]]
 //
 v16int32 test_min_v16int32(v16int32 a, v16int32 b, bool sgn) {
   return min(a, b, sgn);
@@ -4198,6 +5818,14 @@ v16int32 test_min_v16int32(v16int32 a, v16int32 b, bool sgn) {
 // AIE2P-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z20test_max_lt_v16int32Dv16_iS_Rj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vmax.lt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
 //
 v16int32 test_max_lt_v16int32(v16int32 a, v16int32 b, unsigned int &cmp) {
   return max_lt(a, b, cmp);
@@ -4221,6 +5849,15 @@ v16int32 test_max_lt_v16int32(v16int32 a, v16int32 b, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z20test_max_lt_v16int32Dv16_iS_bRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vmax.lt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
+//
 v16int32 test_max_lt_v16int32(v16int32 a, v16int32 b, bool sgn,
                               unsigned int &cmp) {
   return max_lt(a, b, sgn, cmp);
@@ -4238,6 +5875,12 @@ v16int32 test_max_lt_v16int32(v16int32 a, v16int32 b, bool sgn,
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z17test_max_v16int32Dv16_iS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vmax.lt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP1]]
+//
 v16int32 test_max_v16int32(v16int32 a, v16int32 b) { return max(a, b); }
 
 // AIE2-LABEL: @_Z17test_max_v16int32Dv16_iS_b(
@@ -4253,6 +5896,13 @@ v16int32 test_max_v16int32(v16int32 a, v16int32 b) { return max(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2p.vmax.lt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I_I]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z17test_max_v16int32Dv16_iS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vmax.lt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP1]]
 //
 v16int32 test_max_v16int32(v16int32 a, v16int32 b, bool sgn) {
   return max(a, b, sgn);
@@ -4288,6 +5938,14 @@ v16int32 test_bor_v16int32(v16int32 a, v16int32 b) { return bor(a, b); }
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z22test_bneg_ltz_v16int32Dv16_iRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vbneg.ltz32(<16 x i32> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
+//
 v16int32 test_bneg_ltz_v16int32(v16int32 a, unsigned int &cmp) {
   return bneg_ltz(a, cmp);
 }
@@ -4310,6 +5968,15 @@ v16int32 test_bneg_ltz_v16int32(v16int32 a, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z22test_bneg_ltz_v16int32Dv16_ibRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vbneg.ltz32(<16 x i32> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    [[SPEC_SELECT_I:%.*]] = select i1 [[SGN:%.*]], i32 [[TMP1]], i32 0
+// AIE2PS-NEXT:    store i32 [[SPEC_SELECT_I]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
+//
 v16int32 test_bneg_ltz_v16int32(v16int32 a, bool sgn, unsigned int &cmp) {
   return bneg_ltz(a, sgn, cmp);
 }
@@ -4325,6 +5992,12 @@ v16int32 test_bneg_ltz_v16int32(v16int32 a, bool sgn, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2p.vbneg.ltz32(<16 x i32> [[A:%.*]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z18test_bneg_v16int32Dv16_i(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vbneg.ltz32(<16 x i32> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP1]]
 //
 v16int32 test_bneg_v16int32(v16int32 a) { return bneg(a); }
 
@@ -4350,6 +6023,17 @@ v16int32 test_bneg_v16int32(v16int32 a) { return bneg(a); }
 // AIE2P-NEXT:    [[OR_I_I:%.*]] = or <16 x i32> [[AND_I7_I]], [[AND_I_I]]
 // AIE2P-NEXT:    ret <16 x i32> [[OR_I_I]]
 //
+// AIE2PS-LABEL: @_Z18test_bxor_v16int32Dv16_iS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vbneg.ltz32(<16 x i32> [[B:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    [[AND_I_I:%.*]] = and <16 x i32> [[TMP1]], [[A:%.*]]
+// AIE2PS-NEXT:    [[TMP2:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vbneg.ltz32(<16 x i32> [[A]])
+// AIE2PS-NEXT:    [[TMP3:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP2]], 0
+// AIE2PS-NEXT:    [[AND_I7_I:%.*]] = and <16 x i32> [[TMP3]], [[B]]
+// AIE2PS-NEXT:    [[OR_I_I:%.*]] = or <16 x i32> [[AND_I7_I]], [[AND_I_I]]
+// AIE2PS-NEXT:    ret <16 x i32> [[OR_I_I]]
+//
 v16int32 test_bxor_v16int32(v16int32 a, v16int32 b) { return bxor(a, b); }
 
 // AIE2-LABEL: @_Z21test_abs_gtz_v16int32Dv16_iRj(
@@ -4367,6 +6051,14 @@ v16int32 test_bxor_v16int32(v16int32 a, v16int32 b) { return bxor(a, b); }
 // AIE2P-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
+//
+// AIE2PS-LABEL: @_Z21test_abs_gtz_v16int32Dv16_iRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vabs.gtz32(<16 x i32> [[A:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
 //
 v16int32 test_abs_gtz_v16int32(v16int32 a, unsigned int &cmp) {
   return abs_gtz(a, cmp);
@@ -4390,6 +6082,15 @@ v16int32 test_abs_gtz_v16int32(v16int32 a, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP2]]
 //
+// AIE2PS-LABEL: @_Z21test_abs_gtz_v16int32Dv16_ibRj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vabs.gtz32(<16 x i32> [[A:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    store i32 [[TMP1]], ptr [[CMP:%.*]], align 4
+// AIE2PS-NEXT:    [[TMP2:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP2]]
+//
 v16int32 test_abs_gtz_v16int32(v16int32 a, bool sgn, unsigned int &cmp) {
   return abs_gtz(a, sgn, cmp);
 }
@@ -4405,6 +6106,12 @@ v16int32 test_abs_gtz_v16int32(v16int32 a, bool sgn, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2p.vabs.gtz32(<16 x i32> [[A:%.*]], i32 1)
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z17test_abs_v16int32Dv16_i(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vabs.gtz32(<16 x i32> [[A:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP1]]
 //
 v16int32 test_abs_v16int32(v16int32 a) { return abs(a); }
 
@@ -4422,6 +6129,13 @@ v16int32 test_abs_v16int32(v16int32 a) { return abs(a); }
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
 // AIE2P-NEXT:    ret <16 x i32> [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z17test_abs_v16int32Dv16_ib(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vabs.gtz32(<16 x i32> [[A:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 0
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP1]]
+//
 v16int32 test_abs_v16int32(v16int32 a, bool sgn) { return abs(a, sgn); }
 
 // AIE2-LABEL: @_Z16test_lt_v16int32Dv16_iS_(
@@ -4433,6 +6147,11 @@ v16int32 test_abs_v16int32(v16int32 a, bool sgn) { return abs(a, sgn); }
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vlt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 1)
 // AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z16test_lt_v16int32Dv16_iS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vlt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_lt_v16int32(v16int32 a, v16int32 b) { return lt(a, b); }
 
@@ -4446,6 +6165,11 @@ unsigned int test_lt_v16int32(v16int32 a, v16int32 b) { return lt(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vge32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 1)
 // AIE2P-NEXT:    ret i32 [[TMP0]]
 //
+// AIE2PS-LABEL: @_Z16test_ge_v16int32Dv16_iS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vge32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 1)
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
+//
 unsigned int test_ge_v16int32(v16int32 a, v16int32 b) { return ge(a, b); }
 
 // AIE2-LABEL: @_Z16test_le_v16int32Dv16_iS_(
@@ -4458,6 +6182,11 @@ unsigned int test_ge_v16int32(v16int32 a, v16int32 b) { return ge(a, b); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vge32(<16 x i32> [[B:%.*]], <16 x i32> [[A:%.*]], i32 1)
 // AIE2P-NEXT:    ret i32 [[TMP0]]
 //
+// AIE2PS-LABEL: @_Z16test_le_v16int32Dv16_iS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vge32(<16 x i32> [[B:%.*]], <16 x i32> [[A:%.*]], i32 1)
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
+//
 unsigned int test_le_v16int32(v16int32 a, v16int32 b) { return le(a, b); }
 
 // AIE2-LABEL: @_Z16test_gt_v16int32Dv16_iS_(
@@ -4469,6 +6198,11 @@ unsigned int test_le_v16int32(v16int32 a, v16int32 b) { return le(a, b); }
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vlt32(<16 x i32> [[B:%.*]], <16 x i32> [[A:%.*]], i32 1)
 // AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z16test_gt_v16int32Dv16_iS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vlt32(<16 x i32> [[B:%.*]], <16 x i32> [[A:%.*]], i32 1)
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_gt_v16int32(v16int32 a, v16int32 b) { return gt(a, b); }
 
@@ -4483,6 +6217,12 @@ unsigned int test_gt_v16int32(v16int32 a, v16int32 b) { return gt(a, b); }
 // AIE2P-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vlt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z16test_lt_v16int32Dv16_iS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vlt32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_lt_v16int32(v16int32 a, v16int32 b, bool sgn) {
   return lt(a, b, sgn);
@@ -4500,6 +6240,12 @@ unsigned int test_lt_v16int32(v16int32 a, v16int32 b, bool sgn) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vge32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
 //
+// AIE2PS-LABEL: @_Z16test_ge_v16int32Dv16_iS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vge32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[CONV_I]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
+//
 unsigned int test_ge_v16int32(v16int32 a, v16int32 b, bool sgn) {
   return ge(a, b, sgn);
 }
@@ -4515,6 +6261,12 @@ unsigned int test_ge_v16int32(v16int32 a, v16int32 b, bool sgn) {
 // AIE2P-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vge32(<16 x i32> [[B:%.*]], <16 x i32> [[A:%.*]], i32 [[CONV_I_I]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z16test_le_v16int32Dv16_iS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vge32(<16 x i32> [[B:%.*]], <16 x i32> [[A:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_le_v16int32(v16int32 a, v16int32 b, bool sgn) {
   return le(a, b, sgn);
@@ -4532,6 +6284,12 @@ unsigned int test_le_v16int32(v16int32 a, v16int32 b, bool sgn) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vlt32(<16 x i32> [[B:%.*]], <16 x i32> [[A:%.*]], i32 [[CONV_I_I]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
 //
+// AIE2PS-LABEL: @_Z16test_gt_v16int32Dv16_iS_b(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vlt32(<16 x i32> [[B:%.*]], <16 x i32> [[A:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
+//
 unsigned int test_gt_v16int32(v16int32 a, v16int32 b, bool sgn) {
   return gt(a, b, sgn);
 }
@@ -4547,6 +6305,12 @@ unsigned int test_gt_v16int32(v16int32 a, v16int32 b, bool sgn) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2p.vbneg.ltz32(<16 x i32> [[A:%.*]])
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
 // AIE2P-NEXT:    ret i32 [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z17test_ltz_v16int32Dv16_i(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vbneg.ltz32(<16 x i32> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    ret i32 [[TMP1]]
 //
 unsigned int test_ltz_v16int32(v16int32 a) { return ltz(a); }
 
@@ -4564,6 +6328,13 @@ unsigned int test_ltz_v16int32(v16int32 a) { return ltz(a); }
 // AIE2P-NEXT:    [[SPEC_SELECT_I_I:%.*]] = select i1 [[SGN:%.*]], i32 [[TMP1]], i32 0
 // AIE2P-NEXT:    ret i32 [[SPEC_SELECT_I_I]]
 //
+// AIE2PS-LABEL: @_Z17test_ltz_v16int32Dv16_ib(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vbneg.ltz32(<16 x i32> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    [[SPEC_SELECT_I_I:%.*]] = select i1 [[SGN:%.*]], i32 [[TMP1]], i32 0
+// AIE2PS-NEXT:    ret i32 [[SPEC_SELECT_I_I]]
+//
 unsigned int test_ltz_v16int32(v16int32 a, bool sgn) { return ltz(a, sgn); }
 
 // AIE2-LABEL: @_Z17test_gtz_v16int32Dv16_i(
@@ -4577,6 +6348,12 @@ unsigned int test_ltz_v16int32(v16int32 a, bool sgn) { return ltz(a, sgn); }
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2p.vabs.gtz32(<16 x i32> [[A:%.*]], i32 1)
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
 // AIE2P-NEXT:    ret i32 [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z17test_gtz_v16int32Dv16_i(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vabs.gtz32(<16 x i32> [[A:%.*]], i32 1)
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    ret i32 [[TMP1]]
 //
 unsigned int test_gtz_v16int32(v16int32 a) { return gtz(a); }
 
@@ -4594,6 +6371,13 @@ unsigned int test_gtz_v16int32(v16int32 a) { return gtz(a); }
 // AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
 // AIE2P-NEXT:    ret i32 [[TMP1]]
 //
+// AIE2PS-LABEL: @_Z17test_gtz_v16int32Dv16_ib(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[CONV_I_I:%.*]] = zext i1 [[SGN:%.*]] to i32
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call { <16 x i32>, i32 } @llvm.aie2ps.vabs.gtz32(<16 x i32> [[A:%.*]], i32 [[CONV_I_I]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue { <16 x i32>, i32 } [[TMP0]], 1
+// AIE2PS-NEXT:    ret i32 [[TMP1]]
+//
 unsigned int test_gtz_v16int32(v16int32 a, bool sgn) { return gtz(a, sgn); }
 
 // AIE2-LABEL: @_Z17test_eqz_v16int32Dv16_i(
@@ -4605,6 +6389,11 @@ unsigned int test_gtz_v16int32(v16int32 a, bool sgn) { return gtz(a, sgn); }
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.veqz32(<16 x i32> [[A:%.*]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z17test_eqz_v16int32Dv16_i(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.veqz32(<16 x i32> [[A:%.*]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_eqz_v16int32(v16int32 a) { return eqz(a); }
 
@@ -4619,6 +6408,12 @@ unsigned int test_eqz_v16int32(v16int32 a) { return eqz(a); }
 // AIE2P-NEXT:    [[SUB_I_I:%.*]] = sub <16 x i32> [[A:%.*]], [[B:%.*]]
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.veqz32(<16 x i32> [[SUB_I_I]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z16test_eq_v16int32Dv16_iS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[SUB_I_I:%.*]] = sub <16 x i32> [[A:%.*]], [[B:%.*]]
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.veqz32(<16 x i32> [[SUB_I_I]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_eq_v16int32(v16int32 a, v16int32 b) { return eq(a, b); }
 
@@ -4636,6 +6431,13 @@ unsigned int test_eq_v16int32(v16int32 a, v16int32 b) { return eq(a, b); }
 // AIE2P-NEXT:    [[NOT_I:%.*]] = xor i32 [[TMP0]], -1
 // AIE2P-NEXT:    ret i32 [[NOT_I]]
 //
+// AIE2PS-LABEL: @_Z16test_ne_v16int32Dv16_iS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[SUB_I_I_I:%.*]] = sub <16 x i32> [[A:%.*]], [[B:%.*]]
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.veqz32(<16 x i32> [[SUB_I_I_I]])
+// AIE2PS-NEXT:    [[XOR_I:%.*]] = xor i32 [[TMP0]], 65535
+// AIE2PS-NEXT:    ret i32 [[XOR_I]]
+//
 unsigned int test_ne_v16int32(v16int32 a, v16int32 b) { return ne(a, b); }
 
 // AIE2-LABEL: @_Z17test_sel_v16int32Dv16_iS_j(
@@ -4647,6 +6449,11 @@ unsigned int test_ne_v16int32(v16int32 a, v16int32 b) { return ne(a, b); }
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2p.vsel32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[S:%.*]])
 // AIE2P-NEXT:    ret <16 x i32> [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z17test_sel_v16int32Dv16_iS_j(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2ps.vsel32(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[S:%.*]])
+// AIE2PS-NEXT:    ret <16 x i32> [[TMP0]]
 //
 v16int32 test_sel_v16int32(v16int32 a, v16int32 b, unsigned int s) {
   return sel(a, b, s);
@@ -4668,6 +6475,14 @@ v16int32 test_sel_v16int32(v16int32 a, v16int32 b, unsigned int s) {
 // AIE2P-NEXT:    [[TMP3:%.*]] = bitcast <32 x i16> [[TMP2]] to <32 x bfloat>
 // AIE2P-NEXT:    ret <32 x bfloat> [[TMP3]]
 //
+// AIE2PS-LABEL: @_Z20test_sel_v32bfloat16Dv32_8bfloat16S0_j(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast <32 x bfloat> [[A:%.*]] to <32 x i16>
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <32 x bfloat> [[B:%.*]] to <32 x i16>
+// AIE2PS-NEXT:    [[TMP2:%.*]] = tail call <32 x i16> @llvm.aie2ps.vsel16(<32 x i16> [[TMP0]], <32 x i16> [[TMP1]], i32 [[S:%.*]])
+// AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast <32 x i16> [[TMP2]] to <32 x bfloat>
+// AIE2PS-NEXT:    ret <32 x bfloat> [[TMP3]]
+//
 v32bfloat16 test_sel_v32bfloat16(v32bfloat16 a, v32bfloat16 b, unsigned int s) {
   return sel(a, b, s);
 }
@@ -4688,6 +6503,14 @@ v32bfloat16 test_sel_v32bfloat16(v32bfloat16 a, v32bfloat16 b, unsigned int s) {
 // AIE2P-NEXT:    [[TMP3:%.*]] = bitcast <16 x i32> [[TMP2]] to <16 x float>
 // AIE2P-NEXT:    ret <16 x float> [[TMP3]]
 //
+// AIE2PS-LABEL: @_Z17test_sel_v16floatDv16_fS_j(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[A:%.*]] to <16 x i32>
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <16 x float> [[B:%.*]] to <16 x i32>
+// AIE2PS-NEXT:    [[TMP2:%.*]] = tail call <16 x i32> @llvm.aie2ps.vsel32(<16 x i32> [[TMP0]], <16 x i32> [[TMP1]], i32 [[S:%.*]])
+// AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast <16 x i32> [[TMP2]] to <16 x float>
+// AIE2PS-NEXT:    ret <16 x float> [[TMP3]]
+//
 v16float test_sel_v16float(v16float a, v16float b, unsigned int s) {
   return sel(a, b, s);
 }
@@ -4701,6 +6524,11 @@ v16float test_sel_v16float(v16float a, v16float b, unsigned int s) {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vltbf16(<32 x bfloat> [[A:%.*]], <32 x bfloat> [[B:%.*]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z19test_lt_v32bfloat16Dv32_8bfloat16S0_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vltbfloat16(<32 x bfloat> [[A:%.*]], <32 x bfloat> [[B:%.*]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_lt_v32bfloat16(v32bfloat16 a, v32bfloat16 b) {
   return lt(a, b);
@@ -4716,6 +6544,11 @@ unsigned int test_lt_v32bfloat16(v32bfloat16 a, v32bfloat16 b) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vgebf16(<32 x bfloat> [[A:%.*]], <32 x bfloat> [[B:%.*]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
 //
+// AIE2PS-LABEL: @_Z19test_ge_v32bfloat16Dv32_8bfloat16S0_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vgebfloat16(<32 x bfloat> [[A:%.*]], <32 x bfloat> [[B:%.*]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
+//
 unsigned int test_ge_v32bfloat16(v32bfloat16 a, v32bfloat16 b) {
   return ge(a, b);
 }
@@ -4730,6 +6563,11 @@ unsigned int test_ge_v32bfloat16(v32bfloat16 a, v32bfloat16 b) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vgebf16(<32 x bfloat> [[B:%.*]], <32 x bfloat> [[A:%.*]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
 //
+// AIE2PS-LABEL: @_Z19test_le_v32bfloat16Dv32_8bfloat16S0_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vgebfloat16(<32 x bfloat> [[B:%.*]], <32 x bfloat> [[A:%.*]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
+//
 unsigned int test_le_v32bfloat16(v32bfloat16 a, v32bfloat16 b) {
   return le(a, b);
 }
@@ -4743,6 +6581,11 @@ unsigned int test_le_v32bfloat16(v32bfloat16 a, v32bfloat16 b) {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vltbf16(<32 x bfloat> [[B:%.*]], <32 x bfloat> [[A:%.*]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z19test_gt_v32bfloat16Dv32_8bfloat16S0_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vltbfloat16(<32 x bfloat> [[B:%.*]], <32 x bfloat> [[A:%.*]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
 //
 unsigned int test_gt_v32bfloat16(v32bfloat16 a, v32bfloat16 b) {
   return gt(a, b);
@@ -4760,6 +6603,11 @@ unsigned int test_gt_v32bfloat16(v32bfloat16 a, v32bfloat16 b) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vltbf16(<32 x bfloat> [[A:%.*]], <32 x bfloat> splat (bfloat 0xR8000))
 // AIE2P-NEXT:    ret i32 [[TMP0]]
 //
+// AIE2PS-LABEL: @_Z20test_ltz_v32bfloat16Dv32_8bfloat16(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vltbfloat16(<32 x bfloat> [[A:%.*]], <32 x bfloat> splat (bfloat 0xR8000))
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
+//
 unsigned int test_ltz_v32bfloat16(v32bfloat16 a) {
   return ltz(a);
 }
@@ -4776,6 +6624,11 @@ unsigned int test_ltz_v32bfloat16(v32bfloat16 a) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.vltbf16(<32 x bfloat> zeroinitializer, <32 x bfloat> [[A:%.*]])
 // AIE2P-NEXT:    ret i32 [[TMP0]]
 //
+// AIE2PS-LABEL: @_Z20test_gtz_v32bfloat16Dv32_8bfloat16(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vltbfloat16(<32 x bfloat> zeroinitializer, <32 x bfloat> [[A:%.*]])
+// AIE2PS-NEXT:    ret i32 [[TMP0]]
+//
 unsigned int test_gtz_v32bfloat16(v32bfloat16 a) {
   return gtz(a);
 }
@@ -4791,6 +6644,13 @@ unsigned int test_gtz_v32bfloat16(v32bfloat16 a) {
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <32 x bfloat> [[A:%.*]] to <32 x i16>
 // AIE2P-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2p.veqz16(<32 x i16> [[TMP0]])
 // AIE2P-NEXT:    ret i32 [[TMP1]]
+//
+// AIE2PS-LABEL: @_Z20test_eqz_v32bfloat16Dv32_8bfloat16(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call <32 x bfloat> @llvm.fabs.v32bf16(<32 x bfloat> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <32 x bfloat> [[TMP0]] to <32 x i16>
+// AIE2PS-NEXT:    [[TMP2:%.*]] = tail call noundef i32 @llvm.aie2ps.veqz16(<32 x i16> [[TMP1]])
+// AIE2PS-NEXT:    ret i32 [[TMP2]]
 //
 unsigned int test_eqz_v32bfloat16(v32bfloat16 a) {
   return eqz(a);
@@ -4810,6 +6670,13 @@ unsigned int test_eqz_v32bfloat16(v32bfloat16 a) {
 // AIE2P-NEXT:    [[AND_I:%.*]] = and i32 [[TMP1]], [[TMP0]]
 // AIE2P-NEXT:    ret i32 [[AND_I]]
 //
+// AIE2PS-LABEL: @_Z19test_eq_v32bfloat16Dv32_8bfloat16S0_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vgebfloat16(<32 x bfloat> [[B:%.*]], <32 x bfloat> [[A:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2ps.vgebfloat16(<32 x bfloat> [[A]], <32 x bfloat> [[B]])
+// AIE2PS-NEXT:    [[AND_I:%.*]] = and i32 [[TMP1]], [[TMP0]]
+// AIE2PS-NEXT:    ret i32 [[AND_I]]
+//
 unsigned int test_eq_v32bfloat16(v32bfloat16 a, v32bfloat16 b) {
   return eq(a, b);
 }
@@ -4827,6 +6694,13 @@ unsigned int test_eq_v32bfloat16(v32bfloat16 a, v32bfloat16 b) {
 // AIE2P-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2p.vltbf16(<32 x bfloat> [[B]], <32 x bfloat> [[A]])
 // AIE2P-NEXT:    [[OR_I:%.*]] = or i32 [[TMP1]], [[TMP0]]
 // AIE2P-NEXT:    ret i32 [[OR_I]]
+//
+// AIE2PS-LABEL: @_Z19test_ne_v32bfloat16Dv32_8bfloat16S0_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2ps.vltbfloat16(<32 x bfloat> [[A:%.*]], <32 x bfloat> [[B:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2ps.vltbfloat16(<32 x bfloat> [[B]], <32 x bfloat> [[A]])
+// AIE2PS-NEXT:    [[OR_I:%.*]] = or i32 [[TMP1]], [[TMP0]]
+// AIE2PS-NEXT:    ret i32 [[OR_I]]
 //
 unsigned int test_ne_v32bfloat16(v32bfloat16 a, v32bfloat16 b) {
   return ne(a, b);
@@ -4862,6 +6736,26 @@ unsigned int test_ne_v32bfloat16(v32bfloat16 a, v32bfloat16 b) {
 // AIE2P-NEXT:    [[TMP9:%.*]] = bitcast <16 x i32> [[SHUFFLE1_I_I_I]] to <32 x bfloat>
 // AIE2P-NEXT:    [[TMP10:%.*]] = tail call noundef i32 @llvm.aie2p.vltbf16(<32 x bfloat> [[TMP9]], <32 x bfloat> zeroinitializer)
 // AIE2P-NEXT:    ret i32 [[TMP10]]
+//
+// AIE2PS-LABEL: @_Z7test_ltDv16_fS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[V1:%.*]] to <8 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I_I_I:%.*]] = shufflevector <8 x i64> [[TMP0]], <8 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <32 x i64> [[SHUFFLE1_I_I_I_I]] to <64 x float>
+// AIE2PS-NEXT:    [[TMP2:%.*]] = bitcast <16 x float> [[V2:%.*]] to <8 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I4_I_I:%.*]] = shufflevector <8 x i64> [[TMP2]], <8 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast <32 x i64> [[SHUFFLE1_I_I4_I_I]] to <64 x float>
+// AIE2PS-NEXT:    [[TMP4:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.ACC2048.accfloat.sub.conf(<64 x float> [[TMP1]], <64 x float> [[TMP3]], i32 60)
+// AIE2PS-NEXT:    [[TMP5:%.*]] = bitcast <64 x float> [[TMP4]] to <32 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE_I_I_I_I:%.*]] = shufflevector <32 x i64> [[TMP5]], <32 x i64> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+// AIE2PS-NEXT:    [[TMP6:%.*]] = bitcast <8 x i64> [[SHUFFLE_I_I_I_I]] to <16 x float>
+// AIE2PS-NEXT:    [[TMP7:%.*]] = tail call noundef <16 x bfloat> @llvm.aie2ps.v16accfloat.to.v16bf16(<16 x float> [[TMP6]])
+// AIE2PS-NEXT:    [[TMP8:%.*]] = bitcast <16 x bfloat> [[TMP7]] to <8 x i32>
+// AIE2PS-NEXT:    [[SHUFFLE_I_I_I:%.*]] = shufflevector <8 x i32> [[TMP8]], <8 x i32> poison, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I_I:%.*]] = shufflevector <16 x i32> [[SHUFFLE_I_I_I]], <16 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+// AIE2PS-NEXT:    [[TMP9:%.*]] = bitcast <16 x i32> [[SHUFFLE1_I_I_I]] to <32 x bfloat>
+// AIE2PS-NEXT:    [[TMP10:%.*]] = tail call noundef i32 @llvm.aie2ps.vltbfloat16(<32 x bfloat> [[TMP9]], <32 x bfloat> zeroinitializer)
+// AIE2PS-NEXT:    ret i32 [[TMP10]]
 //
 unsigned int test_lt(v16float v1, v16float v2) {
   return lt(v1, v2);
@@ -4908,6 +6802,31 @@ unsigned int test_lt(v16float v1, v16float v2) {
 // AIE2P-NEXT:    [[TMP14:%.*]] = bitcast <16 x i32> [[TMP13]] to <16 x float>
 // AIE2P-NEXT:    ret <16 x float> [[TMP14]]
 //
+// AIE2PS-LABEL: @_Z11test_max_ltDv16_fS_Rj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[V1:%.*]] to <8 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I_I_I_I:%.*]] = shufflevector <8 x i64> [[TMP0]], <8 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <32 x i64> [[SHUFFLE1_I_I_I_I_I]] to <64 x float>
+// AIE2PS-NEXT:    [[TMP2:%.*]] = bitcast <16 x float> [[V2:%.*]] to <8 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I4_I_I_I:%.*]] = shufflevector <8 x i64> [[TMP2]], <8 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast <32 x i64> [[SHUFFLE1_I_I4_I_I_I]] to <64 x float>
+// AIE2PS-NEXT:    [[TMP4:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.ACC2048.accfloat.sub.conf(<64 x float> [[TMP1]], <64 x float> [[TMP3]], i32 60)
+// AIE2PS-NEXT:    [[TMP5:%.*]] = bitcast <64 x float> [[TMP4]] to <32 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE_I_I_I_I_I:%.*]] = shufflevector <32 x i64> [[TMP5]], <32 x i64> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+// AIE2PS-NEXT:    [[TMP6:%.*]] = bitcast <8 x i64> [[SHUFFLE_I_I_I_I_I]] to <16 x float>
+// AIE2PS-NEXT:    [[TMP7:%.*]] = tail call noundef <16 x bfloat> @llvm.aie2ps.v16accfloat.to.v16bf16(<16 x float> [[TMP6]])
+// AIE2PS-NEXT:    [[TMP8:%.*]] = bitcast <16 x bfloat> [[TMP7]] to <8 x i32>
+// AIE2PS-NEXT:    [[SHUFFLE_I_I_I_I:%.*]] = shufflevector <8 x i32> [[TMP8]], <8 x i32> poison, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I_I_I:%.*]] = shufflevector <16 x i32> [[SHUFFLE_I_I_I_I]], <16 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+// AIE2PS-NEXT:    [[TMP9:%.*]] = bitcast <16 x i32> [[SHUFFLE1_I_I_I_I]] to <32 x bfloat>
+// AIE2PS-NEXT:    [[TMP10:%.*]] = tail call noundef i32 @llvm.aie2ps.vltbfloat16(<32 x bfloat> [[TMP9]], <32 x bfloat> zeroinitializer)
+// AIE2PS-NEXT:    store i32 [[TMP10]], ptr [[CMP:%.*]], align 4, !tbaa [[TBAA6]]
+// AIE2PS-NEXT:    [[TMP11:%.*]] = bitcast <16 x float> [[V1]] to <16 x i32>
+// AIE2PS-NEXT:    [[TMP12:%.*]] = bitcast <16 x float> [[V2]] to <16 x i32>
+// AIE2PS-NEXT:    [[TMP13:%.*]] = tail call <16 x i32> @llvm.aie2ps.vsel32(<16 x i32> [[TMP11]], <16 x i32> [[TMP12]], i32 [[TMP10]])
+// AIE2PS-NEXT:    [[TMP14:%.*]] = bitcast <16 x i32> [[TMP13]] to <16 x float>
+// AIE2PS-NEXT:    ret <16 x float> [[TMP14]]
+//
 v16float test_max_lt(v16float v1, v16float v2, unsigned int &cmp) {
   return max_lt(v1, v2, cmp);
 }
@@ -4951,6 +6870,30 @@ v16float test_max_lt(v16float v1, v16float v2, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP14:%.*]] = bitcast <16 x i32> [[TMP13]] to <16 x float>
 // AIE2P-NEXT:    ret <16 x float> [[TMP14]]
 //
+// AIE2PS-LABEL: @_Z8test_maxDv16_fS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[V1:%.*]] to <8 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I_I_I_I:%.*]] = shufflevector <8 x i64> [[TMP0]], <8 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <32 x i64> [[SHUFFLE1_I_I_I_I_I]] to <64 x float>
+// AIE2PS-NEXT:    [[TMP2:%.*]] = bitcast <16 x float> [[V2:%.*]] to <8 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I4_I_I_I:%.*]] = shufflevector <8 x i64> [[TMP2]], <8 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast <32 x i64> [[SHUFFLE1_I_I4_I_I_I]] to <64 x float>
+// AIE2PS-NEXT:    [[TMP4:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.ACC2048.accfloat.sub.conf(<64 x float> [[TMP1]], <64 x float> [[TMP3]], i32 60)
+// AIE2PS-NEXT:    [[TMP5:%.*]] = bitcast <64 x float> [[TMP4]] to <32 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE_I_I_I_I_I:%.*]] = shufflevector <32 x i64> [[TMP5]], <32 x i64> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+// AIE2PS-NEXT:    [[TMP6:%.*]] = bitcast <8 x i64> [[SHUFFLE_I_I_I_I_I]] to <16 x float>
+// AIE2PS-NEXT:    [[TMP7:%.*]] = tail call noundef <16 x bfloat> @llvm.aie2ps.v16accfloat.to.v16bf16(<16 x float> [[TMP6]])
+// AIE2PS-NEXT:    [[TMP8:%.*]] = bitcast <16 x bfloat> [[TMP7]] to <8 x i32>
+// AIE2PS-NEXT:    [[SHUFFLE_I_I_I_I:%.*]] = shufflevector <8 x i32> [[TMP8]], <8 x i32> poison, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I_I_I:%.*]] = shufflevector <16 x i32> [[SHUFFLE_I_I_I_I]], <16 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+// AIE2PS-NEXT:    [[TMP9:%.*]] = bitcast <16 x i32> [[SHUFFLE1_I_I_I_I]] to <32 x bfloat>
+// AIE2PS-NEXT:    [[TMP10:%.*]] = tail call noundef i32 @llvm.aie2ps.vltbfloat16(<32 x bfloat> [[TMP9]], <32 x bfloat> zeroinitializer)
+// AIE2PS-NEXT:    [[TMP11:%.*]] = bitcast <16 x float> [[V1]] to <16 x i32>
+// AIE2PS-NEXT:    [[TMP12:%.*]] = bitcast <16 x float> [[V2]] to <16 x i32>
+// AIE2PS-NEXT:    [[TMP13:%.*]] = tail call <16 x i32> @llvm.aie2ps.vsel32(<16 x i32> [[TMP11]], <16 x i32> [[TMP12]], i32 [[TMP10]])
+// AIE2PS-NEXT:    [[TMP14:%.*]] = bitcast <16 x i32> [[TMP13]] to <16 x float>
+// AIE2PS-NEXT:    ret <16 x float> [[TMP14]]
+//
 v16float test_max(v16float v1, v16float v2) {
   return max(v1, v2);
 }
@@ -4987,6 +6930,27 @@ v16float test_max(v16float v1, v16float v2) {
 // AIE2P-NEXT:    [[TMP10:%.*]] = tail call noundef i32 @llvm.aie2p.vgebf16(<32 x bfloat> [[TMP9]], <32 x bfloat> zeroinitializer)
 // AIE2P-NEXT:    [[AND_I:%.*]] = and i32 [[TMP10]], 65535
 // AIE2P-NEXT:    ret i32 [[AND_I]]
+//
+// AIE2PS-LABEL: @_Z7test_geDv16_fS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[V1:%.*]] to <8 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I_I_I:%.*]] = shufflevector <8 x i64> [[TMP0]], <8 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <32 x i64> [[SHUFFLE1_I_I_I_I]] to <64 x float>
+// AIE2PS-NEXT:    [[TMP2:%.*]] = bitcast <16 x float> [[V2:%.*]] to <8 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I4_I_I:%.*]] = shufflevector <8 x i64> [[TMP2]], <8 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast <32 x i64> [[SHUFFLE1_I_I4_I_I]] to <64 x float>
+// AIE2PS-NEXT:    [[TMP4:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.ACC2048.accfloat.sub.conf(<64 x float> [[TMP1]], <64 x float> [[TMP3]], i32 60)
+// AIE2PS-NEXT:    [[TMP5:%.*]] = bitcast <64 x float> [[TMP4]] to <32 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE_I_I_I_I:%.*]] = shufflevector <32 x i64> [[TMP5]], <32 x i64> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+// AIE2PS-NEXT:    [[TMP6:%.*]] = bitcast <8 x i64> [[SHUFFLE_I_I_I_I]] to <16 x float>
+// AIE2PS-NEXT:    [[TMP7:%.*]] = tail call noundef <16 x bfloat> @llvm.aie2ps.v16accfloat.to.v16bf16(<16 x float> [[TMP6]])
+// AIE2PS-NEXT:    [[TMP8:%.*]] = bitcast <16 x bfloat> [[TMP7]] to <8 x i32>
+// AIE2PS-NEXT:    [[SHUFFLE_I_I_I:%.*]] = shufflevector <8 x i32> [[TMP8]], <8 x i32> poison, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I_I:%.*]] = shufflevector <16 x i32> [[SHUFFLE_I_I_I]], <16 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+// AIE2PS-NEXT:    [[TMP9:%.*]] = bitcast <16 x i32> [[SHUFFLE1_I_I_I]] to <32 x bfloat>
+// AIE2PS-NEXT:    [[TMP10:%.*]] = tail call noundef i32 @llvm.aie2ps.vgebfloat16(<32 x bfloat> [[TMP9]], <32 x bfloat> zeroinitializer)
+// AIE2PS-NEXT:    [[AND_I:%.*]] = and i32 [[TMP10]], 65535
+// AIE2PS-NEXT:    ret i32 [[AND_I]]
 //
 unsigned int test_ge(v16float v1, v16float v2) {
   return ge(v1, v2);
@@ -5035,6 +6999,32 @@ unsigned int test_ge(v16float v1, v16float v2) {
 // AIE2P-NEXT:    [[TMP14:%.*]] = bitcast <16 x i32> [[TMP13]] to <16 x float>
 // AIE2P-NEXT:    ret <16 x float> [[TMP14]]
 //
+// AIE2PS-LABEL: @_Z11test_min_geDv16_fS_Rj(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[V1:%.*]] to <8 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I_I_I_I:%.*]] = shufflevector <8 x i64> [[TMP0]], <8 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <32 x i64> [[SHUFFLE1_I_I_I_I_I]] to <64 x float>
+// AIE2PS-NEXT:    [[TMP2:%.*]] = bitcast <16 x float> [[V2:%.*]] to <8 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I4_I_I_I:%.*]] = shufflevector <8 x i64> [[TMP2]], <8 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast <32 x i64> [[SHUFFLE1_I_I4_I_I_I]] to <64 x float>
+// AIE2PS-NEXT:    [[TMP4:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.ACC2048.accfloat.sub.conf(<64 x float> [[TMP1]], <64 x float> [[TMP3]], i32 60)
+// AIE2PS-NEXT:    [[TMP5:%.*]] = bitcast <64 x float> [[TMP4]] to <32 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE_I_I_I_I_I:%.*]] = shufflevector <32 x i64> [[TMP5]], <32 x i64> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+// AIE2PS-NEXT:    [[TMP6:%.*]] = bitcast <8 x i64> [[SHUFFLE_I_I_I_I_I]] to <16 x float>
+// AIE2PS-NEXT:    [[TMP7:%.*]] = tail call noundef <16 x bfloat> @llvm.aie2ps.v16accfloat.to.v16bf16(<16 x float> [[TMP6]])
+// AIE2PS-NEXT:    [[TMP8:%.*]] = bitcast <16 x bfloat> [[TMP7]] to <8 x i32>
+// AIE2PS-NEXT:    [[SHUFFLE_I_I_I_I:%.*]] = shufflevector <8 x i32> [[TMP8]], <8 x i32> poison, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I_I_I:%.*]] = shufflevector <16 x i32> [[SHUFFLE_I_I_I_I]], <16 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+// AIE2PS-NEXT:    [[TMP9:%.*]] = bitcast <16 x i32> [[SHUFFLE1_I_I_I_I]] to <32 x bfloat>
+// AIE2PS-NEXT:    [[TMP10:%.*]] = tail call noundef i32 @llvm.aie2ps.vgebfloat16(<32 x bfloat> [[TMP9]], <32 x bfloat> zeroinitializer)
+// AIE2PS-NEXT:    [[AND_I_I:%.*]] = and i32 [[TMP10]], 65535
+// AIE2PS-NEXT:    store i32 [[AND_I_I]], ptr [[CMP:%.*]], align 4, !tbaa [[TBAA6]]
+// AIE2PS-NEXT:    [[TMP11:%.*]] = bitcast <16 x float> [[V1]] to <16 x i32>
+// AIE2PS-NEXT:    [[TMP12:%.*]] = bitcast <16 x float> [[V2]] to <16 x i32>
+// AIE2PS-NEXT:    [[TMP13:%.*]] = tail call <16 x i32> @llvm.aie2ps.vsel32(<16 x i32> [[TMP11]], <16 x i32> [[TMP12]], i32 [[AND_I_I]])
+// AIE2PS-NEXT:    [[TMP14:%.*]] = bitcast <16 x i32> [[TMP13]] to <16 x float>
+// AIE2PS-NEXT:    ret <16 x float> [[TMP14]]
+//
 v16float test_min_ge(v16float v1, v16float v2, unsigned int &cmp) {
   return min_ge(v1, v2, cmp);
 }
@@ -5079,6 +7069,31 @@ v16float test_min_ge(v16float v1, v16float v2, unsigned int &cmp) {
 // AIE2P-NEXT:    [[TMP14:%.*]] = bitcast <16 x i32> [[TMP13]] to <16 x float>
 // AIE2P-NEXT:    ret <16 x float> [[TMP14]]
 //
+// AIE2PS-LABEL: @_Z8test_minDv16_fS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[V1:%.*]] to <8 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I_I_I_I:%.*]] = shufflevector <8 x i64> [[TMP0]], <8 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <32 x i64> [[SHUFFLE1_I_I_I_I_I]] to <64 x float>
+// AIE2PS-NEXT:    [[TMP2:%.*]] = bitcast <16 x float> [[V2:%.*]] to <8 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I4_I_I_I:%.*]] = shufflevector <8 x i64> [[TMP2]], <8 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast <32 x i64> [[SHUFFLE1_I_I4_I_I_I]] to <64 x float>
+// AIE2PS-NEXT:    [[TMP4:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.ACC2048.accfloat.sub.conf(<64 x float> [[TMP1]], <64 x float> [[TMP3]], i32 60)
+// AIE2PS-NEXT:    [[TMP5:%.*]] = bitcast <64 x float> [[TMP4]] to <32 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE_I_I_I_I_I:%.*]] = shufflevector <32 x i64> [[TMP5]], <32 x i64> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+// AIE2PS-NEXT:    [[TMP6:%.*]] = bitcast <8 x i64> [[SHUFFLE_I_I_I_I_I]] to <16 x float>
+// AIE2PS-NEXT:    [[TMP7:%.*]] = tail call noundef <16 x bfloat> @llvm.aie2ps.v16accfloat.to.v16bf16(<16 x float> [[TMP6]])
+// AIE2PS-NEXT:    [[TMP8:%.*]] = bitcast <16 x bfloat> [[TMP7]] to <8 x i32>
+// AIE2PS-NEXT:    [[SHUFFLE_I_I_I_I:%.*]] = shufflevector <8 x i32> [[TMP8]], <8 x i32> poison, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I_I_I:%.*]] = shufflevector <16 x i32> [[SHUFFLE_I_I_I_I]], <16 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+// AIE2PS-NEXT:    [[TMP9:%.*]] = bitcast <16 x i32> [[SHUFFLE1_I_I_I_I]] to <32 x bfloat>
+// AIE2PS-NEXT:    [[TMP10:%.*]] = tail call noundef i32 @llvm.aie2ps.vgebfloat16(<32 x bfloat> [[TMP9]], <32 x bfloat> zeroinitializer)
+// AIE2PS-NEXT:    [[AND_I_I:%.*]] = and i32 [[TMP10]], 65535
+// AIE2PS-NEXT:    [[TMP11:%.*]] = bitcast <16 x float> [[V1]] to <16 x i32>
+// AIE2PS-NEXT:    [[TMP12:%.*]] = bitcast <16 x float> [[V2]] to <16 x i32>
+// AIE2PS-NEXT:    [[TMP13:%.*]] = tail call <16 x i32> @llvm.aie2ps.vsel32(<16 x i32> [[TMP11]], <16 x i32> [[TMP12]], i32 [[AND_I_I]])
+// AIE2PS-NEXT:    [[TMP14:%.*]] = bitcast <16 x i32> [[TMP13]] to <16 x float>
+// AIE2PS-NEXT:    ret <16 x float> [[TMP14]]
+//
 v16float test_min(v16float v1, v16float v2) {
   return min(v1,v2);
 }
@@ -5114,6 +7129,26 @@ v16float test_min(v16float v1, v16float v2) {
 // AIE2P-NEXT:    [[TMP10:%.*]] = tail call noundef i32 @llvm.aie2p.vltbf16(<32 x bfloat> zeroinitializer, <32 x bfloat> [[TMP9]])
 // AIE2P-NEXT:    ret i32 [[TMP10]]
 //
+// AIE2PS-LABEL: @_Z7test_gtDv16_fS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[V1:%.*]] to <8 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I_I_I:%.*]] = shufflevector <8 x i64> [[TMP0]], <8 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <32 x i64> [[SHUFFLE1_I_I_I_I]] to <64 x float>
+// AIE2PS-NEXT:    [[TMP2:%.*]] = bitcast <16 x float> [[V2:%.*]] to <8 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I4_I_I:%.*]] = shufflevector <8 x i64> [[TMP2]], <8 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast <32 x i64> [[SHUFFLE1_I_I4_I_I]] to <64 x float>
+// AIE2PS-NEXT:    [[TMP4:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.ACC2048.accfloat.sub.conf(<64 x float> [[TMP1]], <64 x float> [[TMP3]], i32 60)
+// AIE2PS-NEXT:    [[TMP5:%.*]] = bitcast <64 x float> [[TMP4]] to <32 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE_I_I_I_I:%.*]] = shufflevector <32 x i64> [[TMP5]], <32 x i64> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+// AIE2PS-NEXT:    [[TMP6:%.*]] = bitcast <8 x i64> [[SHUFFLE_I_I_I_I]] to <16 x float>
+// AIE2PS-NEXT:    [[TMP7:%.*]] = tail call noundef <16 x bfloat> @llvm.aie2ps.v16accfloat.to.v16bf16(<16 x float> [[TMP6]])
+// AIE2PS-NEXT:    [[TMP8:%.*]] = bitcast <16 x bfloat> [[TMP7]] to <8 x i32>
+// AIE2PS-NEXT:    [[SHUFFLE_I_I_I:%.*]] = shufflevector <8 x i32> [[TMP8]], <8 x i32> poison, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I_I:%.*]] = shufflevector <16 x i32> [[SHUFFLE_I_I_I]], <16 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+// AIE2PS-NEXT:    [[TMP9:%.*]] = bitcast <16 x i32> [[SHUFFLE1_I_I_I]] to <32 x bfloat>
+// AIE2PS-NEXT:    [[TMP10:%.*]] = tail call noundef i32 @llvm.aie2ps.vltbfloat16(<32 x bfloat> zeroinitializer, <32 x bfloat> [[TMP9]])
+// AIE2PS-NEXT:    ret i32 [[TMP10]]
+//
 unsigned int test_gt(v16float v1, v16float v2) {
   return gt(v1, v2);
 }
@@ -5130,6 +7165,11 @@ unsigned int test_gt(v16float v1, v16float v2) {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x float> @llvm.fabs.v16f32(<16 x float> [[V1:%.*]])
 // AIE2P-NEXT:    ret <16 x float> [[TMP0]]
+//
+// AIE2PS-LABEL: @_Z8test_absDv16_f(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x float> @llvm.fabs.v16f32(<16 x float> [[V1:%.*]])
+// AIE2PS-NEXT:    ret <16 x float> [[TMP0]]
 //
 v16float test_abs(v16float v1) { return abs(v1); }
 
@@ -5176,6 +7216,32 @@ v16float test_abs(v16float v1) { return abs(v1); }
 // AIE2P-NEXT:    [[TMP15:%.*]] = tail call noundef <16 x i32> @llvm.aie2p.vsel32(<16 x i32> [[TMP14]], <16 x i32> [[TMP0]], i32 [[TMP13]])
 // AIE2P-NEXT:    [[TMP16:%.*]] = bitcast <16 x i32> [[TMP15]] to <16 x float>
 // AIE2P-NEXT:    ret <16 x float> [[TMP16]]
+//
+// AIE2PS-LABEL: @_Z12test_min_absDv16_fS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x float> @llvm.fabs.v16f32(<16 x float> [[V2:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <16 x float> [[V1:%.*]] to <8 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I_I_I_I:%.*]] = shufflevector <8 x i64> [[TMP1]], <8 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[TMP2:%.*]] = bitcast <32 x i64> [[SHUFFLE1_I_I_I_I_I]] to <64 x float>
+// AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast <16 x float> [[TMP0]] to <8 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I4_I_I_I:%.*]] = shufflevector <8 x i64> [[TMP3]], <8 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[TMP4:%.*]] = bitcast <32 x i64> [[SHUFFLE1_I_I4_I_I_I]] to <64 x float>
+// AIE2PS-NEXT:    [[TMP5:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.ACC2048.accfloat.sub.conf(<64 x float> [[TMP2]], <64 x float> [[TMP4]], i32 60)
+// AIE2PS-NEXT:    [[TMP6:%.*]] = bitcast <64 x float> [[TMP5]] to <32 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE_I_I_I_I_I:%.*]] = shufflevector <32 x i64> [[TMP6]], <32 x i64> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+// AIE2PS-NEXT:    [[TMP7:%.*]] = bitcast <8 x i64> [[SHUFFLE_I_I_I_I_I]] to <16 x float>
+// AIE2PS-NEXT:    [[TMP8:%.*]] = tail call noundef <16 x bfloat> @llvm.aie2ps.v16accfloat.to.v16bf16(<16 x float> [[TMP7]])
+// AIE2PS-NEXT:    [[TMP9:%.*]] = bitcast <16 x bfloat> [[TMP8]] to <8 x i32>
+// AIE2PS-NEXT:    [[SHUFFLE_I_I_I_I:%.*]] = shufflevector <8 x i32> [[TMP9]], <8 x i32> poison, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I_I_I:%.*]] = shufflevector <16 x i32> [[SHUFFLE_I_I_I_I]], <16 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+// AIE2PS-NEXT:    [[TMP10:%.*]] = bitcast <16 x i32> [[SHUFFLE1_I_I_I_I]] to <32 x bfloat>
+// AIE2PS-NEXT:    [[TMP11:%.*]] = tail call noundef i32 @llvm.aie2ps.vgebfloat16(<32 x bfloat> [[TMP10]], <32 x bfloat> zeroinitializer)
+// AIE2PS-NEXT:    [[AND_I_I:%.*]] = and i32 [[TMP11]], 65535
+// AIE2PS-NEXT:    [[TMP12:%.*]] = bitcast <16 x float> [[V1]] to <16 x i32>
+// AIE2PS-NEXT:    [[TMP13:%.*]] = bitcast <16 x float> [[V2]] to <16 x i32>
+// AIE2PS-NEXT:    [[TMP14:%.*]] = tail call noundef <16 x i32> @llvm.aie2ps.vsel32(<16 x i32> [[TMP12]], <16 x i32> [[TMP13]], i32 [[AND_I_I]])
+// AIE2PS-NEXT:    [[TMP15:%.*]] = bitcast <16 x i32> [[TMP14]] to <16 x float>
+// AIE2PS-NEXT:    ret <16 x float> [[TMP15]]
 //
 v16float test_min_abs(v16float v1, v16float v2) {
   return min_abs(v1, v2);
@@ -5224,6 +7290,31 @@ v16float test_min_abs(v16float v1, v16float v2) {
 // AIE2P-NEXT:    [[TMP16:%.*]] = bitcast <16 x i32> [[TMP15]] to <16 x float>
 // AIE2P-NEXT:    ret <16 x float> [[TMP16]]
 //
+// AIE2PS-LABEL: @_Z12test_max_absDv16_fS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x float> @llvm.fabs.v16f32(<16 x float> [[V2:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <16 x float> [[V1:%.*]] to <8 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I_I_I_I:%.*]] = shufflevector <8 x i64> [[TMP1]], <8 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[TMP2:%.*]] = bitcast <32 x i64> [[SHUFFLE1_I_I_I_I_I]] to <64 x float>
+// AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast <16 x float> [[TMP0]] to <8 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I4_I_I_I:%.*]] = shufflevector <8 x i64> [[TMP3]], <8 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[TMP4:%.*]] = bitcast <32 x i64> [[SHUFFLE1_I_I4_I_I_I]] to <64 x float>
+// AIE2PS-NEXT:    [[TMP5:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.ACC2048.accfloat.sub.conf(<64 x float> [[TMP2]], <64 x float> [[TMP4]], i32 60)
+// AIE2PS-NEXT:    [[TMP6:%.*]] = bitcast <64 x float> [[TMP5]] to <32 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE_I_I_I_I_I:%.*]] = shufflevector <32 x i64> [[TMP6]], <32 x i64> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+// AIE2PS-NEXT:    [[TMP7:%.*]] = bitcast <8 x i64> [[SHUFFLE_I_I_I_I_I]] to <16 x float>
+// AIE2PS-NEXT:    [[TMP8:%.*]] = tail call noundef <16 x bfloat> @llvm.aie2ps.v16accfloat.to.v16bf16(<16 x float> [[TMP7]])
+// AIE2PS-NEXT:    [[TMP9:%.*]] = bitcast <16 x bfloat> [[TMP8]] to <8 x i32>
+// AIE2PS-NEXT:    [[SHUFFLE_I_I_I_I:%.*]] = shufflevector <8 x i32> [[TMP9]], <8 x i32> poison, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I_I_I:%.*]] = shufflevector <16 x i32> [[SHUFFLE_I_I_I_I]], <16 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+// AIE2PS-NEXT:    [[TMP10:%.*]] = bitcast <16 x i32> [[SHUFFLE1_I_I_I_I]] to <32 x bfloat>
+// AIE2PS-NEXT:    [[TMP11:%.*]] = tail call noundef i32 @llvm.aie2ps.vltbfloat16(<32 x bfloat> [[TMP10]], <32 x bfloat> zeroinitializer)
+// AIE2PS-NEXT:    [[TMP12:%.*]] = bitcast <16 x float> [[V1]] to <16 x i32>
+// AIE2PS-NEXT:    [[TMP13:%.*]] = bitcast <16 x float> [[V2]] to <16 x i32>
+// AIE2PS-NEXT:    [[TMP14:%.*]] = tail call noundef <16 x i32> @llvm.aie2ps.vsel32(<16 x i32> [[TMP12]], <16 x i32> [[TMP13]], i32 [[TMP11]])
+// AIE2PS-NEXT:    [[TMP15:%.*]] = bitcast <16 x i32> [[TMP14]] to <16 x float>
+// AIE2PS-NEXT:    ret <16 x float> [[TMP15]]
+//
 v16float test_max_abs(v16float v1, v16float v2) {
   return max_abs(v1, v2);
 }
@@ -5267,6 +7358,28 @@ v16float test_max_abs(v16float v1, v16float v2) {
 // AIE2P-NEXT:    [[AND_I:%.*]] = and i32 [[TMP13]], 65535
 // AIE2P-NEXT:    ret i32 [[AND_I]]
 //
+// AIE2PS-LABEL: @_Z11test_ge_absDv16_fS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x float> @llvm.fabs.v16f32(<16 x float> [[V2:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <16 x float> [[V1:%.*]] to <8 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I_I_I:%.*]] = shufflevector <8 x i64> [[TMP1]], <8 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[TMP2:%.*]] = bitcast <32 x i64> [[SHUFFLE1_I_I_I_I]] to <64 x float>
+// AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast <16 x float> [[TMP0]] to <8 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I4_I_I:%.*]] = shufflevector <8 x i64> [[TMP3]], <8 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[TMP4:%.*]] = bitcast <32 x i64> [[SHUFFLE1_I_I4_I_I]] to <64 x float>
+// AIE2PS-NEXT:    [[TMP5:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.ACC2048.accfloat.sub.conf(<64 x float> [[TMP2]], <64 x float> [[TMP4]], i32 60)
+// AIE2PS-NEXT:    [[TMP6:%.*]] = bitcast <64 x float> [[TMP5]] to <32 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE_I_I_I_I:%.*]] = shufflevector <32 x i64> [[TMP6]], <32 x i64> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+// AIE2PS-NEXT:    [[TMP7:%.*]] = bitcast <8 x i64> [[SHUFFLE_I_I_I_I]] to <16 x float>
+// AIE2PS-NEXT:    [[TMP8:%.*]] = tail call noundef <16 x bfloat> @llvm.aie2ps.v16accfloat.to.v16bf16(<16 x float> [[TMP7]])
+// AIE2PS-NEXT:    [[TMP9:%.*]] = bitcast <16 x bfloat> [[TMP8]] to <8 x i32>
+// AIE2PS-NEXT:    [[SHUFFLE_I_I_I:%.*]] = shufflevector <8 x i32> [[TMP9]], <8 x i32> poison, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I_I:%.*]] = shufflevector <16 x i32> [[SHUFFLE_I_I_I]], <16 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+// AIE2PS-NEXT:    [[TMP10:%.*]] = bitcast <16 x i32> [[SHUFFLE1_I_I_I]] to <32 x bfloat>
+// AIE2PS-NEXT:    [[TMP11:%.*]] = tail call noundef i32 @llvm.aie2ps.vgebfloat16(<32 x bfloat> [[TMP10]], <32 x bfloat> zeroinitializer)
+// AIE2PS-NEXT:    [[AND_I:%.*]] = and i32 [[TMP11]], 65535
+// AIE2PS-NEXT:    ret i32 [[AND_I]]
+//
 unsigned int test_ge_abs(v16float v1, v16float v2) {
   return ge_abs(v1, v2);
 }
@@ -5307,6 +7420,27 @@ unsigned int test_ge_abs(v16float v1, v16float v2) {
 // AIE2P-NEXT:    [[TMP12:%.*]] = bitcast <16 x i32> [[SHUFFLE1_I_I_I]] to <32 x bfloat>
 // AIE2P-NEXT:    [[TMP13:%.*]] = tail call noundef i32 @llvm.aie2p.vltbf16(<32 x bfloat> [[TMP12]], <32 x bfloat> zeroinitializer)
 // AIE2P-NEXT:    ret i32 [[TMP13]]
+//
+// AIE2PS-LABEL: @_Z11test_lt_absDv16_fS_(
+// AIE2PS-NEXT:  entry:
+// AIE2PS-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x float> @llvm.fabs.v16f32(<16 x float> [[V2:%.*]])
+// AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <16 x float> [[V1:%.*]] to <8 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I_I_I:%.*]] = shufflevector <8 x i64> [[TMP1]], <8 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[TMP2:%.*]] = bitcast <32 x i64> [[SHUFFLE1_I_I_I_I]] to <64 x float>
+// AIE2PS-NEXT:    [[TMP3:%.*]] = bitcast <16 x float> [[TMP0]] to <8 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I4_I_I:%.*]] = shufflevector <8 x i64> [[TMP3]], <8 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[TMP4:%.*]] = bitcast <32 x i64> [[SHUFFLE1_I_I4_I_I]] to <64 x float>
+// AIE2PS-NEXT:    [[TMP5:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.ACC2048.accfloat.sub.conf(<64 x float> [[TMP2]], <64 x float> [[TMP4]], i32 60)
+// AIE2PS-NEXT:    [[TMP6:%.*]] = bitcast <64 x float> [[TMP5]] to <32 x i64>
+// AIE2PS-NEXT:    [[SHUFFLE_I_I_I_I:%.*]] = shufflevector <32 x i64> [[TMP6]], <32 x i64> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+// AIE2PS-NEXT:    [[TMP7:%.*]] = bitcast <8 x i64> [[SHUFFLE_I_I_I_I]] to <16 x float>
+// AIE2PS-NEXT:    [[TMP8:%.*]] = tail call noundef <16 x bfloat> @llvm.aie2ps.v16accfloat.to.v16bf16(<16 x float> [[TMP7]])
+// AIE2PS-NEXT:    [[TMP9:%.*]] = bitcast <16 x bfloat> [[TMP8]] to <8 x i32>
+// AIE2PS-NEXT:    [[SHUFFLE_I_I_I:%.*]] = shufflevector <8 x i32> [[TMP9]], <8 x i32> poison, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// AIE2PS-NEXT:    [[SHUFFLE1_I_I_I:%.*]] = shufflevector <16 x i32> [[SHUFFLE_I_I_I]], <16 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+// AIE2PS-NEXT:    [[TMP10:%.*]] = bitcast <16 x i32> [[SHUFFLE1_I_I_I]] to <32 x bfloat>
+// AIE2PS-NEXT:    [[TMP11:%.*]] = tail call noundef i32 @llvm.aie2ps.vltbfloat16(<32 x bfloat> [[TMP10]], <32 x bfloat> zeroinitializer)
+// AIE2PS-NEXT:    ret i32 [[TMP11]]
 //
 unsigned int test_lt_abs(v16float v1, v16float v2) {
   return lt_abs(v1, v2);

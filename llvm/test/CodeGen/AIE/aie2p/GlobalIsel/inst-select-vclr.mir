@@ -6,6 +6,7 @@
 #
 # (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2ps -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s -check-prefix=AIE2PS
 
 ---
 name:            test_broadcast_zero_to_v64accfloat
@@ -16,6 +17,10 @@ body:             |
     ; CHECK-LABEL: name: test_broadcast_zero_to_v64accfloat
     ; CHECK: [[VCLR:%[0-9]+]]:acc2048 = VCLR
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VCLR]]
+    ;
+    ; AIE2PS-LABEL: name: test_broadcast_zero_to_v64accfloat
+    ; AIE2PS: [[VCLR_vclr:%[0-9]+]]:acc2048 = VCLR_vclr
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[VCLR_vclr]]
     %1:gprregbank(s32) = G_CONSTANT i32 0
     %0:accregbank(<64 x s32>) = G_AIE_BROADCAST_VECTOR %1(s32)
     PseudoRET implicit $lr, implicit %0
@@ -30,6 +35,10 @@ body:             |
     ; CHECK-LABEL: name: test_broadcast_const_v2i32_to_v64accfloat
     ; CHECK: [[VCLR:%[0-9]+]]:acc2048 = VCLR
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VCLR]]
+    ;
+    ; AIE2PS-LABEL: name: test_broadcast_const_v2i32_to_v64accfloat
+    ; AIE2PS: [[VCLR_vclr:%[0-9]+]]:acc2048 = VCLR_vclr
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[VCLR_vclr]]
     %3:gprregbank(s32) = G_CONSTANT i32 0
     %0:gprregbank(s64) = G_MERGE_VALUES %3(s32), %3(s32)
     %2:gprregbank(<2 x s32>) = G_BITCAST %0(s64)

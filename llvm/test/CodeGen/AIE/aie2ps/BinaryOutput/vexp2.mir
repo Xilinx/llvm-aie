@@ -1,0 +1,154 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VEXP2_bf16
+    $wl9 = VEXP2_bf16 $bmhl5
+    $wh2 = VEXP2_bf16 $bmhl7
+    $wl11 = VEXP2_bf16 $bmlh7
+    $wl8 = VEXP2_bf16 $bmhl3
+    $wl2 = VEXP2_bf16 $bmll4
+    $wh1 = VEXP2_bf16 $bmlh0
+    $wl0 = VEXP2_bf16 $bmll1
+    $wh5 = VEXP2_bf16 $bmlh1
+    $wl3 = VEXP2_bf16 $bmlh6
+    $wh0 = VEXP2_bf16 $bmlh4
+    $wh11 = VEXP2_bf16 $bmlh3
+    $wl4 = VEXP2_bf16 $bmhh3
+    $wh3 = VEXP2_bf16 $bmll5
+    $wh6 = VEXP2_bf16 $bmll0
+    $wl1 = VEXP2_bf16 $bmhl6
+    $wh4 = VEXP2_bf16 $bmhh1
+    $wh7 = VEXP2_bf16 $bmhl2
+    $wl5 = VEXP2_bf16 $bmhh5
+    $wh10 = VEXP2_bf16 $bmlh2
+    $wl10 = VEXP2_bf16 $bmll7
+    $wh8 = VEXP2_bf16 $bmhl1
+    $wl6 = VEXP2_bf16 $bmll2
+    $wl7 = VEXP2_bf16 $bmll3
+    $wh9 = VEXP2_bf16 $bmhh4
+    $wl9 = VEXP2_bf16 $bmhh7
+    $wh2 = VEXP2_bf16 $bmll6
+    $wl11 = VEXP2_bf16 $bmhl4
+    $wl8 = VEXP2_bf16 $bmhh6
+    $wl2 = VEXP2_bf16 $bmlh5
+    $wh1 = VEXP2_bf16 $bmhh0
+    $wl0 = VEXP2_bf16 $bmhh2
+    $wh5 = VEXP2_bf16 $bmhl0
+
+    ; VEXP2_fp32
+    $bmlh5 = VEXP2_fp32 $bmll6
+    $bmll6 = VEXP2_fp32 $bmhl3
+    $bmlh4 = VEXP2_fp32 $bmlh6
+    $bmhh5 = VEXP2_fp32 $bmhh5
+    $bmhl1 = VEXP2_fp32 $bmhh6
+    $bmhh4 = VEXP2_fp32 $bmhh2
+    $bmhl3 = VEXP2_fp32 $bmlh5
+    $bmlh2 = VEXP2_fp32 $bmlh7
+    $bmlh1 = VEXP2_fp32 $bmll7
+    $bmll7 = VEXP2_fp32 $bmlh0
+    $bmhl7 = VEXP2_fp32 $bmlh3
+    $bmhh2 = VEXP2_fp32 $bmll0
+    $bmhl5 = VEXP2_fp32 $bmll1
+    $bmhh7 = VEXP2_fp32 $bmhl4
+    $bmhl4 = VEXP2_fp32 $bmhl2
+    $bmlh7 = VEXP2_fp32 $bmlh4
+    $bmhl6 = VEXP2_fp32 $bmhl6
+    $bmll2 = VEXP2_fp32 $bmhh4
+    $bmhl0 = VEXP2_fp32 $bmhh7
+    $bmhh3 = VEXP2_fp32 $bmll5
+    $bmll3 = VEXP2_fp32 $bmhh0
+    $bmll0 = VEXP2_fp32 $bmhh1
+    $bmhh1 = VEXP2_fp32 $bmll2
+    $bmhh6 = VEXP2_fp32 $bmll4
+    $bmll4 = VEXP2_fp32 $bmll3
+    $bmll5 = VEXP2_fp32 $bmlh2
+    $bmhh0 = VEXP2_fp32 $bmhl7
+    $bmlh0 = VEXP2_fp32 $bmhl1
+    $bmll1 = VEXP2_fp32 $bmhl5
+    $bmlh3 = VEXP2_fp32 $bmhh3
+    $bmlh6 = VEXP2_fp32 $bmlh1
+    $bmhl2 = VEXP2_fp32 $bmhl0
+...
+
+# CHECK: 0: f0 eb 58 39 vexp2.bf16 wl9, bmhl5
+# CHECK: 4: f0 eb f8 32 vexp2.bf16 wh2, bmhl7
+# CHECK: 8: f0 eb 74 3b vexp2.bf16 wl11, bmlh7
+# CHECK: c: f0 eb 38 38 vexp2.bf16 wl8, bmhl3
+# CHECK: 10: f0 eb 40 32 vexp2.bf16 wl2, bmll4
+# CHECK: 14: f0 eb 84 31 vexp2.bf16 wh1, bmlh0
+# CHECK: 18: f0 eb 10 30 vexp2.bf16 wl0, bmll1
+# CHECK: 1c: f0 eb 94 35 vexp2.bf16 wh5, bmlh1
+# CHECK: 20: f0 eb 64 33 vexp2.bf16 wl3, bmlh6
+# CHECK: 24: f0 eb c4 30 vexp2.bf16 wh0, bmlh4
+# CHECK: 28: f0 eb b4 3b vexp2.bf16 wh11, bmlh3
+# CHECK: 2c: f0 eb 3c 34 vexp2.bf16 wl4, bmhh3
+# CHECK: 30: f0 eb d0 33 vexp2.bf16 wh3, bmll5
+# CHECK: 34: f0 eb 80 36 vexp2.bf16 wh6, bmll0
+# CHECK: 38: f0 eb 68 31 vexp2.bf16 wl1, bmhl6
+# CHECK: 3c: f0 eb 9c 34 vexp2.bf16 wh4, bmhh1
+# CHECK: 40: f0 eb a8 37 vexp2.bf16 wh7, bmhl2
+# CHECK: 44: f0 eb 5c 35 vexp2.bf16 wl5, bmhh5
+# CHECK: 48: f0 eb a4 3a vexp2.bf16 wh10, bmlh2
+# CHECK: 4c: f0 eb 70 3a vexp2.bf16 wl10, bmll7
+# CHECK: 50: f0 eb 98 38 vexp2.bf16 wh8, bmhl1
+# CHECK: 54: f0 eb 20 36 vexp2.bf16 wl6, bmll2
+# CHECK: 58: f0 eb 30 37 vexp2.bf16 wl7, bmll3
+# CHECK: 5c: f0 eb cc 39 vexp2.bf16 wh9, bmhh4
+# CHECK: 60: f0 eb 7c 39 vexp2.bf16 wl9, bmhh7
+# CHECK: 64: f0 eb e0 32 vexp2.bf16 wh2, bmll6
+# CHECK: 68: f0 eb 48 3b vexp2.bf16 wl11, bmhl4
+# CHECK: 6c: f0 eb 6c 38 vexp2.bf16 wl8, bmhh6
+# CHECK: 70: f0 eb 54 32 vexp2.bf16 wl2, bmlh5
+# CHECK: 74: f0 eb 8c 31 vexp2.bf16 wh1, bmhh0
+# CHECK: 78: f0 eb 2c 30 vexp2.bf16 wl0, bmhh2
+# CHECK: 7c: f0 eb 88 35 vexp2.bf16 wh5, bmhl0
+# CHECK: 80: f0 eb e2 3a vexp2.fp32 bmlh5, bmll6
+# CHECK: 84: f0 eb 3a 3c vexp2.fp32 bmll6, bmhl3
+# CHECK: 88: f0 eb e6 38 vexp2.fp32 bmlh4, bmlh6
+# CHECK: 8c: f0 eb de 3b vexp2.fp32 bmhh5, bmhh5
+# CHECK: 90: f0 eb 6e 33 vexp2.fp32 bmhl1, bmhh6
+# CHECK: 94: f0 eb ae 39 vexp2.fp32 bmhh4, bmhh2
+# CHECK: 98: f0 eb 56 37 vexp2.fp32 bmhl3, bmlh5
+# CHECK: 9c: f0 eb f6 34 vexp2.fp32 bmlh2, bmlh7
+# CHECK: a0: f0 eb f2 32 vexp2.fp32 bmlh1, bmll7
+# CHECK: a4: f0 eb 06 3e vexp2.fp32 bmll7, bmlh0
+# CHECK: a8: f0 eb 36 3f vexp2.fp32 bmhl7, bmlh3
+# CHECK: ac: f0 eb 82 35 vexp2.fp32 bmhh2, bmll0
+# CHECK: b0: f0 eb 12 3b vexp2.fp32 bmhl5, bmll1
+# CHECK: b4: f0 eb ca 3f vexp2.fp32 bmhh7, bmhl4
+# CHECK: b8: f0 eb 2a 39 vexp2.fp32 bmhl4, bmhl2
+# CHECK: bc: f0 eb c6 3e vexp2.fp32 bmlh7, bmlh4
+# CHECK: c0: f0 eb 6a 3d vexp2.fp32 bmhl6, bmhl6
+# CHECK: c4: f0 eb 4e 34 vexp2.fp32 bmll2, bmhh4
+# CHECK: c8: f0 eb 7e 31 vexp2.fp32 bmhl0, bmhh7
+# CHECK: cc: f0 eb d2 37 vexp2.fp32 bmhh3, bmll5
+# CHECK: d0: f0 eb 0e 36 vexp2.fp32 bmll3, bmhh0
+# CHECK: d4: f0 eb 1e 30 vexp2.fp32 bmll0, bmhh1
+# CHECK: d8: f0 eb a2 33 vexp2.fp32 bmhh1, bmll2
+# CHECK: dc: f0 eb c2 3d vexp2.fp32 bmhh6, bmll4
+# CHECK: e0: f0 eb 32 38 vexp2.fp32 bmll4, bmll3
+# CHECK: e4: f0 eb 26 3a vexp2.fp32 bmll5, bmlh2
+# CHECK: e8: f0 eb fa 31 vexp2.fp32 bmhh0, bmhl7
+# CHECK: ec: f0 eb 9a 30 vexp2.fp32 bmlh0, bmhl1
+# CHECK: f0: f0 eb 5a 32 vexp2.fp32 bmll1, bmhl5
+# CHECK: f4: f0 eb be 36 vexp2.fp32 bmlh3, bmhh3
+# CHECK: f8: f0 eb 96 3c vexp2.fp32 bmlh6, bmlh1
+# CHECK: fc: f0 eb 0a 35 vexp2.fp32 bmhl2, bmhl0

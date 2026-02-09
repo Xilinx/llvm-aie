@@ -7,6 +7,7 @@
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
 # RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2ps -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2PS
 
 ---
 name:            512bit_splat_vector_8bit_elt
@@ -23,6 +24,14 @@ body:             |
     ; CHECK-NEXT: [[VBCST_8_:%[0-9]+]]:vec512 = VBCST_8 [[COPY]]
     ; CHECK-NEXT: $x0 = COPY [[VBCST_8_]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
+    ;
+    ; AIE2PS-LABEL: name: 512bit_splat_vector_8bit_elt
+    ; AIE2PS: liveins: $r0
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r0
+    ; AIE2PS-NEXT: [[VBCST_8_:%[0-9]+]]:vec512 = VBCST_8 [[COPY]]
+    ; AIE2PS-NEXT: $x0 = COPY [[VBCST_8_]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $x0
     %0:gprregbank(s32) = COPY $r0
     %1:vregbank(<64 x s8>) = G_AIE_BROADCAST_VECTOR %0:gprregbank(s32)
     $x0 = COPY %1:vregbank(<64 x s8>)
@@ -44,6 +53,14 @@ body:             |
     ; CHECK-NEXT: [[VBCST_16_:%[0-9]+]]:vec512 = VBCST_16 [[COPY]]
     ; CHECK-NEXT: $x0 = COPY [[VBCST_16_]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
+    ;
+    ; AIE2PS-LABEL: name: 512bit_splat_vector_16bit_elt
+    ; AIE2PS: liveins: $r0
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r0
+    ; AIE2PS-NEXT: [[VBCST_16_:%[0-9]+]]:vec512 = VBCST_16 [[COPY]]
+    ; AIE2PS-NEXT: $x0 = COPY [[VBCST_16_]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $x0
     %0:gprregbank(s32) = COPY $r0
     %1:vregbank(<32 x s16>) = G_AIE_BROADCAST_VECTOR %0:gprregbank(s32)
     $x0 = COPY %1:vregbank(<32 x s16>)
@@ -65,6 +82,14 @@ body:             |
     ; CHECK-NEXT: [[VBCST_32_:%[0-9]+]]:vec512 = VBCST_32 [[COPY]]
     ; CHECK-NEXT: $x0 = COPY [[VBCST_32_]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
+    ;
+    ; AIE2PS-LABEL: name: 512bit_splat_vector_32bit_elt
+    ; AIE2PS: liveins: $r0
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r0
+    ; AIE2PS-NEXT: [[VBCST_32_:%[0-9]+]]:vec512 = VBCST_32 [[COPY]]
+    ; AIE2PS-NEXT: $x0 = COPY [[VBCST_32_]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $x0
     %0:gprregbank(s32) = COPY $r0
     %1:vregbank(<16 x s32>) = G_AIE_BROADCAST_VECTOR %0:gprregbank(s32)
     $x0 = COPY %1:vregbank(<16 x s32>)

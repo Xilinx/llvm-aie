@@ -89,7 +89,7 @@ inline int as_int(cuint16_t v) { return *(int *)&v; }
 
 #include <stdint.h>
 // type alignment in bytes
-#if __AIEARCH__ == 21
+#if __AIEARCH__ == 21 || __AIEARCH__ == 22
 #define __MIN_ALIGNMENT_16 16
 #define __MIN_ALIGNMENT_32 32
 #define __MIN_ALIGNMENT_64 64
@@ -230,7 +230,7 @@ typedef __acc48 v8acc80 __attribute__((__vector_size__(96)));
 /*64-bit type is handled as v2int32 */
 typedef int32_t v2int32 __attribute__((__vector_size__(8)));
 
-#if (__AIEARCH__ == 20) || (__AIEARCH__ == 21)
+#if (__AIEARCH__ == 20) || (__AIEARCH__ == 21) || (__AIEARCH__ == 22)
 typedef int32_t addr_t;
 /* bfloat16 type */
 typedef __bf16 bfloat16;
@@ -430,9 +430,9 @@ struct v64bfloat16_sparse_compress {
   int x;
 };
 
-#endif //(__AIEARCH__ == 20) || (__AIEARCH__ == 21)
+#endif //(__AIEARCH__ == 20) || (__AIEARCH__ == 21) || (__AIEARCH__ == 22)
 
-#if __AIEARCH__ == 21
+#if (__AIEARCH__ == 21) || (__AIEARCH__ == 22)
 typedef float v2float __attribute__((__vector_size__(8)));
 typedef acc32 v64acc32 __attribute__((__vector_size__(256)))
 __attribute__((aligned(__MIN_ALIGNMENT_256)));
@@ -443,6 +443,50 @@ __attribute__((aligned(__MIN_ALIGNMENT_256)));
 typedef int32_t v64int32 __attribute__((__vector_size__(256)))
 __attribute__((aligned(__MIN_ALIGNMENT_256)));
 
+/*
+Unaligned vector types are defined as an empty struct.
+These types are used to overload the unaligned load intrinsics and
+represent pointers to the memory location where the unaligned vector is
+to be loaded from (e.g. v256bfp16ebs16_sparse_unaligned *& is used instead of
+v256bfp16ebs16_sparse_unaligned).
+*/
+struct v512uint4_sparse_unaligned {};
+struct v256uint4_sparse_unaligned {};
+struct v256uint8_sparse_unaligned {};
+struct v128uint8_sparse_unaligned {};
+struct v128uint16_sparse_unaligned {};
+struct v64uint16_sparse_unaligned {};
+struct v512int4_sparse_unaligned {};
+struct v256int4_sparse_unaligned {};
+struct v256int8_sparse_unaligned {};
+struct v128int8_sparse_unaligned {};
+struct v128int16_sparse_unaligned {};
+struct v64int16_sparse_unaligned {};
+struct v256bfp16ebs16_sparse_unaligned {};
+struct v256bfp16ebs8_sparse_unaligned {};
+struct v128bfp16ebs16_sparse_unaligned {};
+struct v128bfp16ebs8_sparse_unaligned {};
+struct v128bfp16ebs16_unaligned {};
+struct v128bfp16ebs8_unaligned {};
+struct v64bfp16ebs16_unaligned {};
+struct v64bfp16ebs8_unaligned {};
+struct v64mx9_unaligned {};
+struct v128mx6_unaligned {};
+struct v64mx6_unaligned {};
+struct v128mx4_unaligned {};
+struct v64mx4_unaligned {};
+struct v256mx6_unaligned {};
+struct v256mx4_unaligned {};
+
+typedef v32int32 sparse_fifo_t;
+struct fifo_state_t {
+  sparse_fifo_t fifo;
+  int pos;
+  v16int32 extra;
+} __attribute__((return_in_regs));
+#endif // (__AIEARCH__ == 21) || (__AIEARCH__ == 22)
+
+#if (__AIEARCH__ == 21)
 /* Block floating-point(bpf16) */
 // v64bfp16ebs16: The data is four blocks in bfp16ebs16 format and is written to
 // an EX register. The mantissas of the four blocks are written to the X part of
@@ -475,41 +519,285 @@ struct v128bfp16ebs8 {
 } __attribute__((packed)) __attribute__((return_in_regs))
 __attribute__((aligned(8)));
 
+#endif // __AIEARCH__ == 21
+
+#if __AIEARCH__ == 22
+
+/*  fp16 type */
+typedef _Float16 fp16;
+
+typedef fp16 float16;
+
+/* fp8 type */
+typedef struct float8 {
+  unsigned _BitInt(8) data;
+} fp8;
+
+/* bf8 type */
+typedef struct bfloat8 {
+  unsigned _BitInt(8) data;
+} bf8;
+
+/* Vector data types using 8-bit floating point (fp8) */
+struct v2float8 {
+  v2int8 data;
+};
+
+struct v4float8 {
+  int32_t data;
+};
+
+struct v8float8 {
+  v8int8 data;
+};
+
+struct v16float8 {
+  v16int8 data;
+};
+
+struct v32float8 {
+  v32int8 data;
+};
+
+struct v64float8 {
+  v64int8 data;
+};
+
+struct v128float8 {
+  v128int8 data;
+};
+
+struct v256float8 {
+  v64acc32 data;
+};
+
+/* Vector data types using 8-bit brain floating point (bfp8) */
+struct v2bfloat8 {
+  v2int8 data;
+};
+
+struct v4bfloat8 {
+  int32_t data;
+};
+
+struct v8bfloat8 {
+  v8int8 data;
+};
+
+struct v16bfloat8 {
+  v16int8 data;
+};
+
+struct v32bfloat8 {
+  v32int8 data;
+};
+
+struct v64bfloat8 {
+  v64int8 data;
+};
+
+struct v128bfloat8 {
+  v128int8 data;
+};
+
+struct v256bfloat8 {
+  v64acc32 data;
+};
+
+/* Vector data types using 16-bit floating point (fp16) */
+typedef float16 v2float16 __attribute__((__vector_size__(4)));
+typedef float16 v4float16 __attribute__((__vector_size__(8)));
+typedef float16 v8float16 __attribute__((__vector_size__(16)));
+typedef float16 v16float16 __attribute__((__vector_size__(32)))
+__attribute__((aligned(__MIN_ALIGNMENT_32)));
+typedef float16 v32float16 __attribute__((__vector_size__(64)))
+__attribute__((aligned(__MIN_ALIGNMENT_64)));
+typedef float16 v64float16 __attribute__((__vector_size__(128)))
+__attribute__((aligned(__MIN_ALIGNMENT_128)));
+typedef float16 v128float16 __attribute__((__vector_size__(256)))
+__attribute__((aligned(__MIN_ALIGNMENT_256)));
+
 /*
-Unaligned vector types are defined as an empty struct.
-These types are used to overload the unaligned load intrinsics and
-represent pointers to the memory location where the unaligned vector is
-to be loaded from (e.g. v256bfp16ebs16_sparse_unaligned *& is used instead of
-v256bfp16ebs16_sparse_unaligned).
+Block floating point(BFP)
+
+In addition to new bfp11 and bfp13 types, there are other basic difference
+for block floating point types in aie2ps. No more ebs8(exponent block
+sharing), only ebs16 is supported In addition to the mantissas and exponents,
+every two mantissas share a sub-tile shift bit, which will be used to
+decrease the shared exponent by one for the pair of mantissas. New G register
+is introduced.
 */
-struct v512uint4_sparse_unaligned {};
-struct v256uint4_sparse_unaligned {};
-struct v256uint8_sparse_unaligned {};
-struct v128uint8_sparse_unaligned {};
-struct v128uint16_sparse_unaligned {};
-struct v64uint16_sparse_unaligned {};
-struct v512int4_sparse_unaligned {};
-struct v256int4_sparse_unaligned {};
-struct v256int8_sparse_unaligned {};
-struct v128int8_sparse_unaligned {};
-struct v128int16_sparse_unaligned {};
-struct v64int16_sparse_unaligned {};
-struct v256bfp16ebs16_sparse_unaligned {};
-struct v256bfp16ebs8_sparse_unaligned {};
-struct v128bfp16ebs16_sparse_unaligned {};
-struct v128bfp16ebs8_sparse_unaligned {};
-struct v128bfp16ebs16_unaligned {};
-struct v128bfp16ebs8_unaligned {};
-struct v64bfp16ebs16_unaligned {};
-struct v64bfp16ebs8_unaligned {};
 
-typedef v32int32 sparse_fifo_t;
-struct fifo_state_t {
-  sparse_fifo_t fifo;
-  int pos;
-  v16int32 extra;
-} __attribute__((return_in_regs));
+/*
+BFP16(aka mx9)
+v64mx9:
+4 blocks of 16 8-bit mantissas, 1 8-bitshared exponent along with 64-bit
+sub-tile shift bits.
 
-#endif
+* 4 X 16  X 8 --> X
+* 4 X  1  X 8 --> E(64-bit, replicate 32-bits)
+* 64(with zero padding) --> G
+*/
+
+// 320 bit
+struct v32mx9 {
+  v8int32 mantissa;
+  int32_t tileShift;
+  int32_t exponent;
+} __attribute__((packed)) __attribute__((return_in_regs))
+__attribute__((aligned(8)));
+
+// 640 bit
+struct v64mx9 {
+  v16int32 mantissa;
+  v2int32 tileShift;
+  v2int32 exponent;
+} __attribute__((packed)) __attribute__((return_in_regs))
+__attribute__((aligned(8)));
+
+// 1280 bit
+struct v128mx9 {
+  v16int32 mantissaX0;
+  v16int32 mantissaX1;
+  v2int32 tileShiftG0;
+  v2int32 tileShiftG1;
+  v2int32 exponentE0;
+  v2int32 exponentE1;
+} __attribute__((packed)) __attribute__((return_in_regs))
+__attribute__((aligned(8)));
+
+// 2560 bit
+struct v256mx9 {
+  v16int32 mantissaX0;
+  v16int32 mantissaX1;
+  v16int32 mantissaX2;
+  v16int32 mantissaX3;
+  v2int32 tileShiftG0;
+  v2int32 tileShiftG1;
+  v2int32 tileShiftG2;
+  v2int32 tileShiftG3;
+  v2int32 exponentE0;
+  v2int32 exponentE1;
+  v2int32 exponentE2;
+  v2int32 exponentE3;
+} __attribute__((packed)) __attribute__((return_in_regs))
+__attribute__((aligned(8)));
+
+/*
+BFP13(aka mx6)
+v128mx6:
+8 blocks of 16 4-bit mantissas(LSB), 16 1-bit mantissa(sign bit, MSB), 1
+8-bit shared exponent along with 64-bit sub-tile shift bits.
+
+* 8 X 16 X 4 --> X
+* 8 X 16 X 1 --> F
+* 8 X  1 X 8 --> E
+* 64-bit     --> G
+*/
+
+// 384 bit
+struct v64mx6 {
+  v8int32 mantissa;
+  v2int32 sign;
+  int32 tileShift;
+  int32 exponent;
+} __attribute__((packed)) __attribute__((return_in_regs))
+__attribute__((aligned(8)));
+
+// 768 bit
+struct v128mx6 {
+  v8int32 mantissaX0;
+  v8int32 mantissaX1;
+  v2int32 signF0;
+  v2int32 signF1;
+  int32 tileShiftG0;
+  int32 tileShiftG1;
+  int32 exponentE0;
+  int32 exponentE1;
+} __attribute__((packed)) __attribute__((return_in_regs))
+__attribute__((aligned(8)));
+
+// 1536 bit
+struct v256mx6 {
+  v8int32 mantissaX0;
+  v8int32 mantissaX1;
+  v8int32 mantissaX2;
+  v8int32 mantissaX3;
+  v2int32 signF0;
+  v2int32 signF1;
+  v2int32 signF2;
+  v2int32 signF3;
+  int32 tileShiftG0;
+  int32 tileShiftG1;
+  int32 tileShiftG2;
+  int32 tileShiftG3;
+  int32 exponentE0;
+  int32 exponentE1;
+  int32 exponentE2;
+  int32 exponentE3;
+} __attribute__((packed)) __attribute__((return_in_regs))
+__attribute__((aligned(8)));
+
+/*
+BFP11(aka mx4)
+bfp11 is emulated using bfp13.  bfp11 has 3 mantissa bits, so zeroing the 2
+msb bits of bfp13 to make it bfp11.
+*/
+
+// 384 bit
+struct v64mx4 {
+  v8int32 mantissa;
+  v2int32 sign;
+  int32 tileShift;
+  int32 exponent;
+} __attribute__((packed)) __attribute__((return_in_regs))
+__attribute__((aligned(8)));
+
+// 768 bit
+struct v128mx4 {
+  v8int32 mantissaX0;
+  v8int32 mantissaX1;
+  v2int32 signF0;
+  v2int32 signF1;
+  int32 tileShiftG0;
+  int32 tileShiftG1;
+  int32 exponentE0;
+  int32 exponentE1;
+} __attribute__((packed)) __attribute__((return_in_regs))
+__attribute__((aligned(8)));
+
+// 1536 bit
+struct v256mx4 {
+  v8int32 mantissaX0;
+  v8int32 mantissaX1;
+  v8int32 mantissaX2;
+  v8int32 mantissaX3;
+  v2int32 signF0;
+  v2int32 signF1;
+  v2int32 signF2;
+  v2int32 signF3;
+  int32 tileShiftG0;
+  int32 tileShiftG1;
+  int32 tileShiftG2;
+  int32 tileShiftG3;
+  int32 exponentE0;
+  int32 exponentE1;
+  int32 exponentE2;
+  int32 exponentE3;
+} __attribute__((packed)) __attribute__((return_in_regs))
+__attribute__((aligned(8)));
+
+typedef struct v32mx9 v32bfp16p;
+typedef struct v64mx9 v64bfp16p;
+typedef struct v128mx9 v128bfp16p;
+typedef struct v256mx9 v256bfp16p;
+typedef struct v64mx6 v64bfp13p;
+typedef struct v128mx6 v128bfp13p;
+typedef struct v256mx6 v256bfp13p;
+typedef struct v64mx4 v64bfp11p;
+typedef struct v128mx4 v128bfp11p;
+typedef struct v256mx4 v256bfp11p;
+
+#endif //__AIEARCH__ == 22
 
 #endif /*  __AIEBASE_TYPEDEFS_H */

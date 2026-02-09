@@ -1,0 +1,88 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; MINU
+    $r25 = MINU $r27, $r2
+    $r15 = MINU $r29, $r3
+    $r19 = MINU $r9, $r1
+    $r12 = MINU $r11, $r4
+    $r1 = MINU $r6, $r0
+    $r24 = MINU $r26, $r5
+    $r10 = MINU $r17, $r7
+    $r23 = MINU $r4, $r6
+    $r17 = MINU $r31, $r2
+    $r26 = MINU $r22, $r3
+    $r21 = MINU $r15, $r1
+    $r6 = MINU $r10, $r4
+    $r29 = MINU $r0, $r0
+    $r30 = MINU $r13, $r5
+    $r8 = MINU $r8, $r7
+    $r18 = MINU $r24, $r6
+    $r31 = MINU $r16, $r2
+    $r20 = MINU $r5, $r3
+    $r13 = MINU $r7, $r1
+    $r3 = MINU $r3, $r4
+    $r7 = MINU $r21, $r0
+    $r11 = MINU $r14, $r5
+    $r14 = MINU $r20, $r7
+    $r5 = MINU $r23, $r6
+    $r28 = MINU $r2, $r2
+    $r0 = MINU $r25, $r3
+    $r27 = MINU $r30, $r1
+    $r2 = MINU $r19, $r4
+    $r16 = MINU $r18, $r0
+    $r9 = MINU $r1, $r5
+    $r4 = MINU $r12, $r7
+    $r22 = MINU $r28, $r6
+...
+
+# CHECK: 0: 30 bc f2 26 minu r25, r27, r2
+# CHECK: 4: 30 fc 5e 27 minu r15, r29, r3
+# CHECK: 8: 30 7c 66 22 minu r19, r9, r1
+# CHECK: c: 30 3c d9 22 minu r12, r11, r4
+# CHECK: 10: 30 3c 82 21 minu r1, r6, r0
+# CHECK: 14: 30 7c b1 26 minu r24, r26, r5
+# CHECK: 18: 30 fc 55 24 minu r10, r17, r7
+# CHECK: 1c: 30 bc 2f 21 minu r23, r4, r6
+# CHECK: 20: 30 bc e2 27 minu r17, r31, r2
+# CHECK: 24: 30 fc b4 25 minu r26, r22, r3
+# CHECK: 28: 30 7c ea 23 minu r21, r15, r1
+# CHECK: 2c: 30 3c 8d 22 minu r6, r10, r4
+# CHECK: 30: 30 3c 3a 20 minu r29, r0, r0
+# CHECK: 34: 30 7c 7d 23 minu r30, r13, r5
+# CHECK: 38: 30 fc 11 22 minu r8, r8, r7
+# CHECK: 3c: 30 bc 25 26 minu r18, r24, r6
+# CHECK: 40: 30 bc 3e 24 minu r31, r16, r2
+# CHECK: 44: 30 fc 68 21 minu r20, r5, r3
+# CHECK: 48: 30 7c da 21 minu r13, r7, r1
+# CHECK: 4c: 30 3c c7 20 minu r3, r3, r4
+# CHECK: 50: 30 3c 4e 25 minu r7, r21, r0
+# CHECK: 54: 30 7c 97 23 minu r11, r14, r5
+# CHECK: 58: 30 fc 1d 25 minu r14, r20, r7
+# CHECK: 5c: 30 bc cb 25 minu r5, r23, r6
+# CHECK: 60: 30 bc b8 20 minu r28, r2, r2
+# CHECK: 64: 30 fc 40 26 minu r0, r25, r3
+# CHECK: 68: 30 7c b6 27 minu r27, r30, r1
+# CHECK: 6c: 30 3c c5 24 minu r2, r19, r4
+# CHECK: 70: 30 3c a0 24 minu r16, r18, r0
+# CHECK: 74: 30 7c 53 20 minu r9, r1, r5
+# CHECK: 78: 30 fc 09 23 minu r4, r12, r7
+# CHECK: 7c: 30 bc 2d 27 minu r22, r28, r6

@@ -8,6 +8,7 @@
 # RUN: llc -mtriple aie -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE1 %s
 # RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2 %s
 # RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2P %s
+# RUN: llc -mtriple aie2ps -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2PS %s
 
 ---
 name: add_s32
@@ -40,6 +41,14 @@ body: |
     ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
     ; AIE2P-NEXT: [[ADD_alu_r_rr:%[0-9]+]]:er = ADD_alu_r_rr [[COPY]], [[COPY1]], implicit-def dead $srcarry
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[ADD_alu_r_rr]]
+    ;
+    ; AIE2PS-LABEL: name: add_s32
+    ; AIE2PS: liveins: $r6, $r7
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
+    ; AIE2PS-NEXT: [[ADD_alu_r_rr:%[0-9]+]]:mlockid_reg = ADD_alu_r_rr [[COPY]], [[COPY1]], implicit-def dead $srcarry
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[ADD_alu_r_rr]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = G_ADD %0, %1
@@ -74,6 +83,13 @@ body: |
     ; AIE2P-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
     ; AIE2P-NEXT: [[ADD_add_r_ri:%[0-9]+]]:er = ADD_add_r_ri [[COPY]], 63, implicit-def dead $srcarry
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[ADD_add_r_ri]]
+    ;
+    ; AIE2PS-LABEL: name: add_s32_const_umax
+    ; AIE2PS: liveins: $r6
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[ADD_add_r_ri:%[0-9]+]]:mlockid_reg = ADD_add_r_ri [[COPY]], 63, implicit-def dead $srcarry
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[ADD_add_r_ri]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = G_CONSTANT i32 63
     %2:gprregbank(s32) = G_ADD %0, %1
@@ -108,6 +124,13 @@ body: |
     ; AIE2P-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
     ; AIE2P-NEXT: [[ADD_add_r_ri:%[0-9]+]]:er = ADD_add_r_ri [[COPY]], -64, implicit-def dead $srcarry
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[ADD_add_r_ri]]
+    ;
+    ; AIE2PS-LABEL: name: add_s32_const_smax
+    ; AIE2PS: liveins: $r6
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[ADD_add_r_ri:%[0-9]+]]:mlockid_reg = ADD_add_r_ri [[COPY]], -64, implicit-def dead $srcarry
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[ADD_add_r_ri]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = G_CONSTANT i32 -64
     %2:gprregbank(s32) = G_ADD %0, %1
@@ -145,6 +168,14 @@ body: |
     ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 64
     ; AIE2P-NEXT: [[ADD_alu_r_rr:%[0-9]+]]:er = ADD_alu_r_rr [[COPY]], [[MOV_RLC_imm11_pseudo]], implicit-def dead $srcarry
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[ADD_alu_r_rr]]
+    ;
+    ; AIE2PS-LABEL: name: add_s32_const_umax_plus_1
+    ; AIE2PS: liveins: $r6
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 64
+    ; AIE2PS-NEXT: [[ADD_alu_r_rr:%[0-9]+]]:mlockid_reg = ADD_alu_r_rr [[COPY]], [[MOV_RLC_imm11_pseudo]], implicit-def dead $srcarry
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[ADD_alu_r_rr]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = G_CONSTANT i32 64
     %2:gprregbank(s32) = G_ADD %0, %1
@@ -182,6 +213,14 @@ body: |
     ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo -65
     ; AIE2P-NEXT: [[ADD_alu_r_rr:%[0-9]+]]:er = ADD_alu_r_rr [[COPY]], [[MOV_RLC_imm11_pseudo]], implicit-def dead $srcarry
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[ADD_alu_r_rr]]
+    ;
+    ; AIE2PS-LABEL: name: add_s32_const_smax_minus_one
+    ; AIE2PS: liveins: $r6
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo -65
+    ; AIE2PS-NEXT: [[ADD_alu_r_rr:%[0-9]+]]:mlockid_reg = ADD_alu_r_rr [[COPY]], [[MOV_RLC_imm11_pseudo]], implicit-def dead $srcarry
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[ADD_alu_r_rr]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = G_CONSTANT i32 -65
     %2:gprregbank(s32) = G_ADD %0, %1

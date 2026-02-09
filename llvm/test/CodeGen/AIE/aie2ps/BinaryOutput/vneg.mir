@@ -1,0 +1,208 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VNEG_GTZ_16
+    $x3, $r16 = VNEG_GTZ_16 $x6, implicit $crbf8conf, implicit $crfp8conf
+    $x9, $r16 = VNEG_GTZ_16 $x8, implicit $crbf8conf, implicit $crfp8conf
+    $x5, $r16 = VNEG_GTZ_16 $x9, implicit $crbf8conf, implicit $crfp8conf
+    $x1, $r16 = VNEG_GTZ_16 $x4, implicit $crbf8conf, implicit $crfp8conf
+    $x0, $r16 = VNEG_GTZ_16 $x2, implicit $crbf8conf, implicit $crfp8conf
+    $x6, $r16 = VNEG_GTZ_16 $x0, implicit $crbf8conf, implicit $crfp8conf
+    $x8, $r16 = VNEG_GTZ_16 $x3, implicit $crbf8conf, implicit $crfp8conf
+    $x11, $r16 = VNEG_GTZ_16 $x11, implicit $crbf8conf, implicit $crfp8conf
+    $x7, $r16 = VNEG_GTZ_16 $x5, implicit $crbf8conf, implicit $crfp8conf
+    $x4, $r16 = VNEG_GTZ_16 $x10, implicit $crbf8conf, implicit $crfp8conf
+    $x2, $r16 = VNEG_GTZ_16 $x7, implicit $crbf8conf, implicit $crfp8conf
+    $x10, $r16 = VNEG_GTZ_16 $x1, implicit $crbf8conf, implicit $crfp8conf
+
+    ; VNEG_GTZ_32
+    $x1, $r16 = VNEG_GTZ_32 $x6, implicit $crbf8conf, implicit $crfp8conf
+    $x2, $r16 = VNEG_GTZ_32 $x2, implicit $crbf8conf, implicit $crfp8conf
+    $x7, $r16 = VNEG_GTZ_32 $x1, implicit $crbf8conf, implicit $crfp8conf
+    $x4, $r16 = VNEG_GTZ_32 $x11, implicit $crbf8conf, implicit $crfp8conf
+    $x9, $r16 = VNEG_GTZ_32 $x4, implicit $crbf8conf, implicit $crfp8conf
+    $x5, $r16 = VNEG_GTZ_32 $x9, implicit $crbf8conf, implicit $crfp8conf
+    $x6, $r16 = VNEG_GTZ_32 $x8, implicit $crbf8conf, implicit $crfp8conf
+    $x10, $r16 = VNEG_GTZ_32 $x0, implicit $crbf8conf, implicit $crfp8conf
+    $x0, $r16 = VNEG_GTZ_32 $x7, implicit $crbf8conf, implicit $crfp8conf
+    $x8, $r16 = VNEG_GTZ_32 $x5, implicit $crbf8conf, implicit $crfp8conf
+    $x11, $r16 = VNEG_GTZ_32 $x10, implicit $crbf8conf, implicit $crfp8conf
+    $x3, $r16 = VNEG_GTZ_32 $x3, implicit $crbf8conf, implicit $crfp8conf
+
+    ; VNEG_GTZ_8
+    $x8, $l8 = VNEG_GTZ_8 $x1, implicit $crbf8conf, implicit $crfp8conf
+    $x4, $l8 = VNEG_GTZ_8 $x4, implicit $crbf8conf, implicit $crfp8conf
+    $x11, $l8 = VNEG_GTZ_8 $x9, implicit $crbf8conf, implicit $crfp8conf
+    $x0, $l8 = VNEG_GTZ_8 $x5, implicit $crbf8conf, implicit $crfp8conf
+    $x7, $l8 = VNEG_GTZ_8 $x3, implicit $crbf8conf, implicit $crfp8conf
+    $x5, $l8 = VNEG_GTZ_8 $x0, implicit $crbf8conf, implicit $crfp8conf
+    $x2, $l8 = VNEG_GTZ_8 $x6, implicit $crbf8conf, implicit $crfp8conf
+    $x9, $l8 = VNEG_GTZ_8 $x11, implicit $crbf8conf, implicit $crfp8conf
+    $x3, $l8 = VNEG_GTZ_8 $x8, implicit $crbf8conf, implicit $crfp8conf
+    $x6, $l8 = VNEG_GTZ_8 $x7, implicit $crbf8conf, implicit $crfp8conf
+    $x1, $l8 = VNEG_GTZ_8 $x2, implicit $crbf8conf, implicit $crfp8conf
+    $x10, $l8 = VNEG_GTZ_8 $x10, implicit $crbf8conf, implicit $crfp8conf
+
+    ; VNEG_vneg
+    $dm6 = VNEG_vneg $dm4, $r13
+    $dm2 = VNEG_vneg $dm7, $r8
+    $dm4 = VNEG_vneg $dm0, $r10
+    $dm0 = VNEG_vneg $dm5, $r11
+    $dm3 = VNEG_vneg $dm1, $r9
+    $dm1 = VNEG_vneg $dm2, $r15
+    $dm5 = VNEG_vneg $dm3, $r12
+    $dm7 = VNEG_vneg $dm6, $r14
+
+    ; VNEG_vneg_half
+    $cml1 = VNEG_vneg_half $cml1, $r9
+    $cml2 = VNEG_vneg_half $cml6, $r13
+    $cml7 = VNEG_vneg_half $cml4, $r10
+    $cml6 = VNEG_vneg_half $cml3, $r15
+    $cml3 = VNEG_vneg_half $cml7, $r12
+    $cml5 = VNEG_vneg_half $cml2, $r11
+    $cml0 = VNEG_vneg_half $cml5, $r8
+    $cml4 = VNEG_vneg_half $cml0, $r14
+
+    ; VNEG_f_vneg_fp
+    $dm7 = VNEG_f_vneg_fp $dm1, $r12, implicit-def $srfpflags, implicit $crfpmask
+    $dm5 = VNEG_f_vneg_fp $dm0, $r14, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VNEG_f_vneg_fp $dm7, $r11, implicit-def $srfpflags, implicit $crfpmask
+    $dm1 = VNEG_f_vneg_fp $dm4, $r10, implicit-def $srfpflags, implicit $crfpmask
+    $dm6 = VNEG_f_vneg_fp $dm2, $r8, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VNEG_f_vneg_fp $dm3, $r13, implicit-def $srfpflags, implicit $crfpmask
+    $dm4 = VNEG_f_vneg_fp $dm6, $r9, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VNEG_f_vneg_fp $dm5, $r15, implicit-def $srfpflags, implicit $crfpmask
+
+    ; VNEG_f_vneg_half_fp
+    $cml2 = VNEG_f_vneg_half_fp $cml3, $r11, implicit-def $srfpflags, implicit $crfpmask
+    $cml6 = VNEG_f_vneg_half_fp $cml5, $r9, implicit-def $srfpflags, implicit $crfpmask
+    $cml4 = VNEG_f_vneg_half_fp $cml0, $r10, implicit-def $srfpflags, implicit $crfpmask
+    $cml7 = VNEG_f_vneg_half_fp $cml1, $r15, implicit-def $srfpflags, implicit $crfpmask
+    $cml3 = VNEG_f_vneg_half_fp $cml6, $r14, implicit-def $srfpflags, implicit $crfpmask
+    $cml1 = VNEG_f_vneg_half_fp $cml4, $r13, implicit-def $srfpflags, implicit $crfpmask
+    $cml5 = VNEG_f_vneg_half_fp $cml7, $r8, implicit-def $srfpflags, implicit $crfpmask
+    $cml0 = VNEG_f_vneg_half_fp $cml2, $r12, implicit-def $srfpflags, implicit $crfpmask
+
+    ; VNEG_mx6_vneg_fp_bfp13
+    $dm1 = VNEG_mx6_vneg_fp_bfp13 $dm0, $r12, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VNEG_mx6_vneg_fp_bfp13 $dm6, $r13, implicit-def $srfpflags, implicit $crfpmask
+    $dm4 = VNEG_mx6_vneg_fp_bfp13 $dm4, $r11, implicit-def $srfpflags, implicit $crfpmask
+    $dm6 = VNEG_mx6_vneg_fp_bfp13 $dm3, $r10, implicit-def $srfpflags, implicit $crfpmask
+    $dm5 = VNEG_mx6_vneg_fp_bfp13 $dm7, $r14, implicit-def $srfpflags, implicit $crfpmask
+    $dm7 = VNEG_mx6_vneg_fp_bfp13 $dm5, $r8, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VNEG_mx6_vneg_fp_bfp13 $dm1, $r15, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VNEG_mx6_vneg_fp_bfp13 $dm2, $r9, implicit-def $srfpflags, implicit $crfpmask
+
+    ; VNEG_mx6_vneg_half_fp_bfp13
+    $cml4 = VNEG_mx6_vneg_half_fp_bfp13 $cml3, $r11, implicit-def $srfpflags, implicit $crfpmask
+    $cml3 = VNEG_mx6_vneg_half_fp_bfp13 $cml0, $r15, implicit-def $srfpflags, implicit $crfpmask
+    $cml7 = VNEG_mx6_vneg_half_fp_bfp13 $cml6, $r8, implicit-def $srfpflags, implicit $crfpmask
+    $cml0 = VNEG_mx6_vneg_half_fp_bfp13 $cml4, $r13, implicit-def $srfpflags, implicit $crfpmask
+    $cml5 = VNEG_mx6_vneg_half_fp_bfp13 $cml1, $r14, implicit-def $srfpflags, implicit $crfpmask
+    $cml2 = VNEG_mx6_vneg_half_fp_bfp13 $cml2, $r12, implicit-def $srfpflags, implicit $crfpmask
+    $cml6 = VNEG_mx6_vneg_half_fp_bfp13 $cml5, $r9, implicit-def $srfpflags, implicit $crfpmask
+    $cml1 = VNEG_mx6_vneg_half_fp_bfp13 $cml7, $r10, implicit-def $srfpflags, implicit $crfpmask
+...
+
+# CHECK: 0: f0 6b 66 33 vneg_gtz.16 x3, r16, x6
+# CHECK: 4: f0 6b 86 39 vneg_gtz.16 x9, r16, x8
+# CHECK: 8: f0 6b 96 35 vneg_gtz.16 x5, r16, x9
+# CHECK: c: f0 6b 46 31 vneg_gtz.16 x1, r16, x4
+# CHECK: 10: f0 6b 26 30 vneg_gtz.16 x0, r16, x2
+# CHECK: 14: f0 6b 06 36 vneg_gtz.16 x6, r16, x0
+# CHECK: 18: f0 6b 36 38 vneg_gtz.16 x8, r16, x3
+# CHECK: 1c: f0 6b b6 3b vneg_gtz.16 x11, r16, x11
+# CHECK: 20: f0 6b 56 37 vneg_gtz.16 x7, r16, x5
+# CHECK: 24: f0 6b a6 34 vneg_gtz.16 x4, r16, x10
+# CHECK: 28: f0 6b 76 32 vneg_gtz.16 x2, r16, x7
+# CHECK: 2c: f0 6b 16 3a vneg_gtz.16 x10, r16, x1
+# CHECK: 30: f0 6b 62 31 vneg_gtz.32 x1, r16, x6
+# CHECK: 34: f0 6b 22 32 vneg_gtz.32 x2, r16, x2
+# CHECK: 38: f0 6b 12 37 vneg_gtz.32 x7, r16, x1
+# CHECK: 3c: f0 6b b2 34 vneg_gtz.32 x4, r16, x11
+# CHECK: 40: f0 6b 42 39 vneg_gtz.32 x9, r16, x4
+# CHECK: 44: f0 6b 92 35 vneg_gtz.32 x5, r16, x9
+# CHECK: 48: f0 6b 82 36 vneg_gtz.32 x6, r16, x8
+# CHECK: 4c: f0 6b 02 3a vneg_gtz.32 x10, r16, x0
+# CHECK: 50: f0 6b 72 30 vneg_gtz.32 x0, r16, x7
+# CHECK: 54: f0 6b 52 38 vneg_gtz.32 x8, r16, x5
+# CHECK: 58: f0 6b a2 3b vneg_gtz.32 x11, r16, x10
+# CHECK: 5c: f0 6b 32 33 vneg_gtz.32 x3, r16, x3
+# CHECK: 60: f0 6b 1a 38 vneg_gtz.8 x8, r17:r16, x1
+# CHECK: 64: f0 6b 4a 34 vneg_gtz.8 x4, r17:r16, x4
+# CHECK: 68: f0 6b 9a 3b vneg_gtz.8 x11, r17:r16, x9
+# CHECK: 6c: f0 6b 5a 30 vneg_gtz.8 x0, r17:r16, x5
+# CHECK: 70: f0 6b 3a 37 vneg_gtz.8 x7, r17:r16, x3
+# CHECK: 74: f0 6b 0a 35 vneg_gtz.8 x5, r17:r16, x0
+# CHECK: 78: f0 6b 6a 32 vneg_gtz.8 x2, r17:r16, x6
+# CHECK: 7c: f0 6b ba 39 vneg_gtz.8 x9, r17:r16, x11
+# CHECK: 80: f0 6b 8a 33 vneg_gtz.8 x3, r17:r16, x8
+# CHECK: 84: f0 6b 7a 36 vneg_gtz.8 x6, r17:r16, x7
+# CHECK: 88: f0 6b 2a 31 vneg_gtz.8 x1, r17:r16, x2
+# CHECK: 8c: f0 6b aa 3a vneg_gtz.8 x10, r17:r16, x10
+# CHECK: 90: 90 25 04 b8 vneg dm6, dm4, r13
+# CHECK: 94: 90 3d 04 08 vneg dm2, dm7, r8
+# CHECK: 98: 90 05 04 50 vneg dm4, dm0, r10
+# CHECK: 9c: 90 2d 04 60 vneg dm0, dm5, r11
+# CHECK: a0: 90 0d 04 2c vneg dm3, dm1, r9
+# CHECK: a4: 90 15 04 e4 vneg dm1, dm2, r15
+# CHECK: a8: 90 1d 04 94 vneg dm5, dm3, r12
+# CHECK: ac: 90 35 04 dc vneg dm7, dm6, r14
+# CHECK: b0: 90 0d 0c 24 vneg cml1, cml1, r9
+# CHECK: b4: 90 35 0c a8 vneg cml2, cml6, r13
+# CHECK: b8: 90 25 0c 5c vneg cml7, cml4, r10
+# CHECK: bc: 90 1d 0c f8 vneg cml6, cml3, r15
+# CHECK: c0: 90 3d 0c 8c vneg cml3, cml7, r12
+# CHECK: c4: 90 15 0c 74 vneg cml5, cml2, r11
+# CHECK: c8: 90 2d 0c 00 vneg cml0, cml5, r8
+# CHECK: cc: 90 05 0c d0 vneg cml4, cml0, r14
+# CHECK: d0: 90 0d 14 9c vneg.f dm7, dm1, r12
+# CHECK: d4: 90 05 14 d4 vneg.f dm5, dm0, r14
+# CHECK: d8: 90 3d 14 68 vneg.f dm2, dm7, r11
+# CHECK: dc: 90 25 14 44 vneg.f dm1, dm4, r10
+# CHECK: e0: 90 15 14 18 vneg.f dm6, dm2, r8
+# CHECK: e4: 90 1d 14 ac vneg.f dm3, dm3, r13
+# CHECK: e8: 90 35 14 30 vneg.f dm4, dm6, r9
+# CHECK: ec: 90 2d 14 e0 vneg.f dm0, dm5, r15
+# CHECK: f0: 90 1d 1c 68 vneg.f cml2, cml3, r11
+# CHECK: f4: 90 2d 1c 38 vneg.f cml6, cml5, r9
+# CHECK: f8: 90 05 1c 50 vneg.f cml4, cml0, r10
+# CHECK: fc: 90 0d 1c fc vneg.f cml7, cml1, r15
+# CHECK: 100: 90 35 1c cc vneg.f cml3, cml6, r14
+# CHECK: 104: 90 25 1c a4 vneg.f cml1, cml4, r13
+# CHECK: 108: 90 3d 1c 14 vneg.f cml5, cml7, r8
+# CHECK: 10c: 90 15 1c 80 vneg.f cml0, cml2, r12
+# CHECK: 110: 90 05 24 84 vneg.mx6 dm1, dm0, r12
+# CHECK: 114: 90 35 24 a0 vneg.mx6 dm0, dm6, r13
+# CHECK: 118: 90 25 24 70 vneg.mx6 dm4, dm4, r11
+# CHECK: 11c: 90 1d 24 58 vneg.mx6 dm6, dm3, r10
+# CHECK: 120: 90 3d 24 d4 vneg.mx6 dm5, dm7, r14
+# CHECK: 124: 90 2d 24 1c vneg.mx6 dm7, dm5, r8
+# CHECK: 128: 90 0d 24 e8 vneg.mx6 dm2, dm1, r15
+# CHECK: 12c: 90 15 24 2c vneg.mx6 dm3, dm2, r9
+# CHECK: 130: 90 1d 2c 70 vneg.mx6 cml4, cml3, r11
+# CHECK: 134: 90 05 2c ec vneg.mx6 cml3, cml0, r15
+# CHECK: 138: 90 35 2c 1c vneg.mx6 cml7, cml6, r8
+# CHECK: 13c: 90 25 2c a0 vneg.mx6 cml0, cml4, r13
+# CHECK: 140: 90 0d 2c d4 vneg.mx6 cml5, cml1, r14
+# CHECK: 144: 90 15 2c 88 vneg.mx6 cml2, cml2, r12
+# CHECK: 148: 90 2d 2c 38 vneg.mx6 cml6, cml5, r9
+# CHECK: 14c: 90 3d 2c 44 vneg.mx6 cml1, cml7, r10

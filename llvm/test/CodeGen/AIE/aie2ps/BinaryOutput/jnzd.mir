@@ -1,0 +1,88 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# TODO: llc %llcflags --filetype=asm -o %t2
+# TODO: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# TODO: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; JNZD
+    $r2 = JNZD $r6, $p6, implicit-def $srcarry
+    $r9 = JNZD $r21, $p0, implicit-def $srcarry
+    $r0 = JNZD $r25, $p7, implicit-def $srcarry
+    $r17 = JNZD $r22, $p1, implicit-def $srcarry
+    $r24 = JNZD $r29, $p3, implicit-def $srcarry
+    $r26 = JNZD $r1, $p2, implicit-def $srcarry
+    $r20 = JNZD $r4, $p5, implicit-def $srcarry
+    $r5 = JNZD $r14, $p4, implicit-def $srcarry
+    $r4 = JNZD $r27, $p6, implicit-def $srcarry
+    $r13 = JNZD $r26, $p0, implicit-def $srcarry
+    $r19 = JNZD $r20, $p7, implicit-def $srcarry
+    $r23 = JNZD $r13, $p1, implicit-def $srcarry
+    $r25 = JNZD $r11, $p3, implicit-def $srcarry
+    $r18 = JNZD $r15, $p2, implicit-def $srcarry
+    $r22 = JNZD $r23, $p5, implicit-def $srcarry
+    $r30 = JNZD $r24, $p4, implicit-def $srcarry
+    $r1 = JNZD $r0, $p6, implicit-def $srcarry
+    $r31 = JNZD $r16, $p0, implicit-def $srcarry
+    $r3 = JNZD $r10, $p7, implicit-def $srcarry
+    $r14 = JNZD $r31, $p1, implicit-def $srcarry
+    $r16 = JNZD $r17, $p3, implicit-def $srcarry
+    $r8 = JNZD $r2, $p2, implicit-def $srcarry
+    $r10 = JNZD $r3, $p5, implicit-def $srcarry
+    $r27 = JNZD $r28, $p4, implicit-def $srcarry
+    $r15 = JNZD $r9, $p6, implicit-def $srcarry
+    $r11 = JNZD $r30, $p0, implicit-def $srcarry
+    $r21 = JNZD $r8, $p7, implicit-def $srcarry
+    $r7 = JNZD $r12, $p1, implicit-def $srcarry
+    $r28 = JNZD $r19, $p3, implicit-def $srcarry
+    $r12 = JNZD $r7, $p2, implicit-def $srcarry
+    $r6 = JNZD $r5, $p5, implicit-def $srcarry
+    $r29 = JNZD $r18, $p4, implicit-def $srcarry
+...
+
+# CHECK: 0: 30 a0 85 21 jnzd r2, r6, p6
+# CHECK: 4: 30 20 52 25 jnzd r9, r21, p0
+# CHECK: 8: 30 e0 41 26 jnzd r0, r25, p7
+# CHECK: c: 30 60 a2 25 jnzd r17, r22, p1
+# CHECK: 10: 30 e0 70 27 jnzd r24, r29, p3
+# CHECK: 14: 30 a0 74 20 jnzd r26, r1, p2
+# CHECK: 18: 30 60 29 21 jnzd r20, r4, p5
+# CHECK: 1c: 30 20 8b 23 jnzd r5, r14, p4
+# CHECK: 20: 30 a0 c9 26 jnzd r4, r27, p6
+# CHECK: 24: 30 20 9a 26 jnzd r13, r26, p0
+# CHECK: 28: 30 e0 27 25 jnzd r19, r20, p7
+# CHECK: 2c: 30 60 6e 23 jnzd r23, r13, p1
+# CHECK: 30: 30 e0 f2 22 jnzd r25, r11, p3
+# CHECK: 34: 30 a0 e4 23 jnzd r18, r15, p2
+# CHECK: 38: 30 60 ed 25 jnzd r22, r23, p5
+# CHECK: 3c: 30 20 3d 26 jnzd r30, r24, p4
+# CHECK: 40: 30 a0 03 20 jnzd r1, r0, p6
+# CHECK: 44: 30 20 3e 24 jnzd r31, r16, p0
+# CHECK: 48: 30 e0 87 22 jnzd r3, r10, p7
+# CHECK: 4c: 30 60 dc 27 jnzd r14, r31, p1
+# CHECK: 50: 30 e0 60 24 jnzd r16, r17, p3
+# CHECK: 54: 30 a0 90 20 jnzd r8, r2, p2
+# CHECK: 58: 30 60 d5 20 jnzd r10, r3, p5
+# CHECK: 5c: 30 20 37 27 jnzd r27, r28, p4
+# CHECK: 60: 30 a0 5f 22 jnzd r15, r9, p6
+# CHECK: 64: 30 20 96 27 jnzd r11, r30, p0
+# CHECK: 68: 30 e0 2b 22 jnzd r21, r8, p7
+# CHECK: 6c: 30 60 0e 23 jnzd r7, r12, p1
+# CHECK: 70: 30 e0 f8 24 jnzd r28, r19, p3
+# CHECK: 74: 30 a0 d8 21 jnzd r12, r7, p2
+# CHECK: 78: 30 60 4d 21 jnzd r6, r5, p5
+# CHECK: 7c: 30 20 bb 24 jnzd r29, r18, p4

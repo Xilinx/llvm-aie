@@ -1,0 +1,88 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; LTU
+    $r0 = LTU $r19, $r21
+    $r25 = LTU $r23, $r13
+    $r7 = LTU $r5, $r23
+    $r13 = LTU $r17, $r27
+    $r20 = LTU $r20, $r31
+    $r14 = LTU $r22, $r6
+    $r17 = LTU $r6, $r20
+    $r19 = LTU $r4, $r9
+    $r22 = LTU $r25, $r5
+    $r1 = LTU $r21, $r26
+    $r6 = LTU $r8, $r16
+    $r23 = LTU $r7, $r14
+    $r4 = LTU $r28, $r3
+    $r30 = LTU $r2, $r22
+    $r5 = LTU $r24, $r24
+    $r24 = LTU $r0, $r0
+    $r15 = LTU $r18, $r10
+    $r10 = LTU $r26, $r2
+    $r8 = LTU $r13, $r12
+    $r18 = LTU $r31, $r7
+    $r29 = LTU $r11, $r18
+    $r9 = LTU $r16, $r19
+    $r12 = LTU $r27, $r28
+    $r28 = LTU $r12, $r8
+    $r31 = LTU $r15, $r25
+    $r21 = LTU $r29, $r1
+    $r3 = LTU $r3, $r17
+    $r11 = LTU $r14, $r15
+    $r2 = LTU $r1, $r29
+    $r16 = LTU $r10, $r4
+    $r27 = LTU $r30, $r30
+    $r26 = LTU $r9, $r11
+...
+
+# CHECK: 0: b0 5c c1 24 ltu r0, r19, r21
+# CHECK: 4: b0 dc f2 25 ltu r25, r23, r13
+# CHECK: 8: b0 7c 4f 21 ltu r7, r5, r23
+# CHECK: c: b0 bc 5b 24 ltu r13, r17, r27
+# CHECK: 10: b0 fc 29 25 ltu r20, r20, r31
+# CHECK: 14: b0 6c 9c 25 ltu r14, r22, r6
+# CHECK: 18: b0 4c a3 21 ltu r17, r6, r20
+# CHECK: 1c: b0 9c 26 21 ltu r19, r4, r9
+# CHECK: 20: b0 5c 6c 26 ltu r22, r25, r5
+# CHECK: 24: b0 ac 43 25 ltu r1, r21, r26
+# CHECK: 28: b0 0c 0d 22 ltu r6, r8, r16
+# CHECK: 2c: b0 ec ee 21 ltu r23, r7, r14
+# CHECK: 30: b0 3c 08 27 ltu r4, r28, r3
+# CHECK: 34: b0 6c bd 20 ltu r30, r2, r22
+# CHECK: 38: b0 8c 0b 26 ltu r5, r24, r24
+# CHECK: 3c: b0 0c 30 20 ltu r24, r0, r0
+# CHECK: 40: b0 ac 9e 24 ltu r15, r18, r10
+# CHECK: 44: b0 2c 94 26 ltu r10, r26, r2
+# CHECK: 48: b0 cc 50 23 ltu r8, r13, r12
+# CHECK: 4c: b0 7c e4 27 ltu r18, r31, r7
+# CHECK: 50: b0 2c fb 22 ltu r29, r11, r18
+# CHECK: 54: b0 3c 13 24 ltu r9, r16, r19
+# CHECK: 58: b0 cc d9 26 ltu r12, r27, r28
+# CHECK: 5c: b0 8c 38 23 ltu r28, r12, r8
+# CHECK: 60: b0 9c ff 23 ltu r31, r15, r25
+# CHECK: 64: b0 1c 6a 27 ltu r21, r29, r1
+# CHECK: 68: b0 1c c7 20 ltu r3, r3, r17
+# CHECK: 6c: b0 fc 96 23 ltu r11, r14, r15
+# CHECK: 70: b0 dc 45 20 ltu r2, r1, r29
+# CHECK: 74: b0 4c a0 22 ltu r16, r10, r4
+# CHECK: 78: b0 ec b7 27 ltu r27, r30, r30
+# CHECK: 7c: b0 bc 74 22 ltu r26, r9, r11
