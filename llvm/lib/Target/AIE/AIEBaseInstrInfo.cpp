@@ -1329,8 +1329,12 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
       if (DelaySlot > 0)
         llvm_unreachable("Cannot have HWLoopEnd in branch delay slot!\n");
       // The previous instruction is the last bundle of the hardware loop
-      // and should be aligned.
-      AlignCandidates.emplace_back(std::prev(MI));
+      // and should be aligned. We should skip meta instructions.
+      auto PrevNonMetaMI = std::prev(MI);
+      while (PrevNonMetaMI->isMetaInstruction())
+        PrevNonMetaMI = std::prev(PrevNonMetaMI);
+
+      AlignCandidates.emplace_back(PrevNonMetaMI);
     } else if (!MI->isMetaInstruction()) {
       // Single instruction, there should not be any
       // after Bundle Finalization Pass.
