@@ -236,6 +236,9 @@ void applyUnmergeConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
                         std::pair<MachineInstr *, unsigned> &MatchInfo,
                         GISelChangeObserver &Observer);
 
+bool matchCSEVectorOp(MachineInstr &MI, MachineRegisterInfo &MRI,
+                      CombinerHelper &Helper, Register &MatchInfo);
+
 bool matchUpdToConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
                       const AIEBaseInstrInfo &TII,
                       std::map<unsigned, Register> &IndexRegMap);
