@@ -4841,18 +4841,18 @@ bool llvm::matchVSelToUnmergeConcatOrCopy(MachineInstr &MI,
   // Create a mask with all bits set for the number of elements
   const uint64_t AllOnesMask = (1ULL << NumElements) - 1;
 
-  // Case 1: All bits are 0 -> select all from src2
+  // Case 1: All bits are 0 -> select all from src1
   if (SelMask == 0) {
-    MatchInfo = [Src2Reg, DstReg](MachineIRBuilder &B) {
-      B.buildCopy(DstReg, Src2Reg);
+    MatchInfo = [Src1Reg, DstReg](MachineIRBuilder &B) {
+      B.buildCopy(DstReg, Src1Reg);
     };
     return true;
   }
 
-  // Case 2: All bits are 1 -> select all from src1
+  // Case 2: All bits are 1 -> select all from src2
   if (SelMask == AllOnesMask) {
-    MatchInfo = [Src1Reg, DstReg](MachineIRBuilder &B) {
-      B.buildCopy(DstReg, Src1Reg);
+    MatchInfo = [Src2Reg, DstReg](MachineIRBuilder &B) {
+      B.buildCopy(DstReg, Src2Reg);
     };
     return true;
   }
