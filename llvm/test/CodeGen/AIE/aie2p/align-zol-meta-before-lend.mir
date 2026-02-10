@@ -112,13 +112,17 @@ body:             |
   ; CHECK-NEXT:   BUNDLE implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $p1, implicit killed $lf1, implicit killed $r25 {
   ; CHECK-NEXT:     $p0, $lf0, $r24 = VLDA_FILL_512 killed $p0, killed $lf0, killed $r24 :: (load (<32 x s16>), addrspace 5)
   ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPX
+  ; CHECK-NEXT:     NOPXM
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $p1, implicit killed $lf1, implicit killed $r25 {
   ; CHECK-NEXT:     $p0, $lf0, $r24 = VLDA_FILL_512 killed $p0, killed $lf0, killed $r24 :: (load (<32 x s16>), addrspace 5)
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $p1, implicit-def $lf1, implicit-def $lfl1, implicit-def $lfh1, implicit-def $r25, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $p1, implicit killed $lf1, implicit killed $r25 {
   ; CHECK-NEXT:     $p0, $lf0, $r24 = VLDA_FILL_512 killed $p0, killed $lf0, killed $r24 :: (load (<32 x s16>), addrspace 11)
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   dead renamable $wh1 = IMPLICIT_DEF
   ; CHECK-NEXT:   dead renamable $wl1 = IMPLICIT_DEF
