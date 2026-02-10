@@ -501,6 +501,18 @@ def combine_offset_load_store_share_ptradd : GICombineRule<
   (apply [{ applyOffsetLoadStoreSharePtrAdd(*${root}, MRI, B, ${matchinfo}, Observer); }])
 >;
 
+def combine_cse_vector_ops_matchdata: GIDefMatchData<"Register">;
+def combine_cse_vector_ops : GICombineRule<
+  (defs root:$root, combine_cse_vector_ops_matchdata:$matchinfo),
+  (match (wip_match_opcode G_CONCAT_VECTORS):$root,
+         [{ return matchCSEVectorOp(*${root}, MRI, Helper, ${matchinfo}); }]),
+  (apply [{ 
+    B.setInstrAndDebugLoc(*${root});
+    B.buildCopy(${root}->getOperand(0).getReg(), ${matchinfo});
+    Observer.erasingInstr(*${root});
+    ${root}->eraseFromParent();
+  }])
+>;
 
 def combine_global_load_store_increment : GICombineRule <
   (defs root:$root),
@@ -554,7 +566,8 @@ def AIE2PPostLegalizerCustomCombiner
                                                             combine_insert_extract_vector_elt_to_copy,
                                                             combine_vshift_chain_to_copy,
                                                             combine_pad_unpad_to_copy,
-                                                            combine_unpad_pad_to_copy
+                                                            combine_unpad_pad_to_copy,
+                                                            combine_cse_vector_ops
                                                              ]> {
 }
 

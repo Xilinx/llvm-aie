@@ -2461,6 +2461,93 @@ void llvm::applyUnmergeConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
   MI.eraseFromParent();
 }
 
+/// Check if two machine instructions are equivalent for CSE purposes.
+/// Instructions are considered equivalent if they have:
+/// - The same opcode
+/// - The same number of operands
+/// - Matching input operands (starting from operand 1, skipping the def)
+/// \param MI1 First instruction to compare
+/// \param MI2 Second instruction to compare
+/// \return true if instructions are equivalent
+static bool isEquivalentMI(const MachineInstr &MI1, const MachineInstr &MI2) {
+  // Must be the same opcode
+  if (MI1.getOpcode() != MI2.getOpcode())
+    return false;
+
+  // Must have the same number of operands
+  const unsigned NumOps = MI1.getNumOperands();
+  if (MI2.getNumOperands() != NumOps)
+    return false;
+
+  // Check if all input operands match (starting from operand 1)
+  for (unsigned I = 1; I < NumOps; ++I) {
+    if (MI1.getOperand(I).getReg() != MI2.getOperand(I).getReg())
+      return false;
+  }
+
+  return true;
+}
+
+/// Match duplicate vector operations with identical operands for CSE
+/// optimization.
+///
+/// Currently handles: G_CONCAT_VECTORS
+///
+/// This combiner can be extended to other pure vector operations after proper
+/// testing, such as:
+/// - G_AIE_UNPAD_VECTOR: Extracts lower elements from a padded vector
+/// - G_AIE_PAD_VECTOR_UNDEF: Pads a vector with undefined upper elements
+///
+/// The implementation is already general enough to support these operations.
+/// To extend, simply add the desired opcodes to the wip_match_opcode list in
+/// the combine_cse_vector_ops rule in AIECombine.td.
+///
+/// Algorithm:
+/// Uses MRI to efficiently find potential duplicates by checking all users of
+/// the first input operand. For each candidate with matching opcode and operand
+/// count, verifies all operands match exactly. If a dominating duplicate is
+/// found, replaces the current operation with a copy from the earlier result.
+///
+/// \param MI The instruction to check for duplication
+/// \param MRI Machine register info for querying definitions and uses
+/// \param Helper Combiner helper for dominance checks
+/// \param MatchInfo Output parameter - register to copy from if match found
+/// \return true if a dominating duplicate was found
+bool llvm::matchCSEVectorOp(MachineInstr &MI, MachineRegisterInfo &MRI,
+                            CombinerHelper &Helper, Register &MatchInfo) {
+
+  // The tablegen rule filters to only the supported opcodes:
+  // G_CONCAT_VECTORS.
+  // We don't need to assert here since the match pattern guarantees this
+
+  const unsigned NumOps = MI.getNumOperands();
+  if (NumOps < 2)
+    return false;
+
+  // Get the first input operand (operand 1 for all these operations)
+  const Register FirstInput = MI.getOperand(1).getReg();
+
+  // Check all users of the first input register to find potential duplicates
+  for (MachineInstr &UserMI : MRI.use_nodbg_instructions(FirstInput)) {
+    // Skip the current instruction itself
+    if (&UserMI == &MI)
+      continue;
+
+    // Check if instructions are equivalent
+    if (!isEquivalentMI(MI, UserMI))
+      continue;
+
+    // Check dominance: UserMI must dominate MI for safe CSE
+    if (Helper.dominates(UserMI, MI)) {
+      // Found a dominating duplicate - return its result register
+      MatchInfo = UserMI.getOperand(0).getReg();
+      return true;
+    }
+  }
+
+  return false;
+}
+
 /// This function tracks chain of vector updates using .upd vector intrinsic.
 static std::map<unsigned, Register>
 trackVectorUpdateChain(MachineInstr &MI, MachineRegisterInfo &MRI,
