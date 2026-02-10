@@ -16,8 +16,8 @@ body: |
     ; CHECK-LABEL: name: vsel_all_zeros_to_copy
     ; CHECK: liveins: $x0, $x1
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: %src2:_(<16 x s32>) = COPY $x1
-    ; CHECK-NEXT: $x0 = COPY %src2(<16 x s32>)
+    ; CHECK-NEXT: %src1:_(<16 x s32>) = COPY $x0
+    ; CHECK-NEXT: $x0 = COPY %src1(<16 x s32>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
     %src1:_(<16 x s32>) = COPY $x0
     %src2:_(<16 x s32>) = COPY $x1
@@ -36,8 +36,8 @@ body: |
     ; CHECK-LABEL: name: vsel_all_ones_to_copy
     ; CHECK: liveins: $x0, $x1
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: %src1:_(<16 x s32>) = COPY $x0
-    ; CHECK-NEXT: $x0 = COPY %src1(<16 x s32>)
+    ; CHECK-NEXT: %src2:_(<16 x s32>) = COPY $x1
+    ; CHECK-NEXT: $x0 = COPY %src2(<16 x s32>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
     %src1:_(<16 x s32>) = COPY $x0
     %src2:_(<16 x s32>) = COPY $x1
@@ -104,8 +104,8 @@ body: |
     ; CHECK-LABEL: name: vsel_8_elements_all_zeros
     ; CHECK: liveins: $wl0, $wl1
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: %src2:_(<8 x s32>) = COPY $wl1
-    ; CHECK-NEXT: $wl0 = COPY %src2(<8 x s32>)
+    ; CHECK-NEXT: %src1:_(<8 x s32>) = COPY $wl0
+    ; CHECK-NEXT: $wl0 = COPY %src1(<8 x s32>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wl0
     %src1:_(<8 x s32>) = COPY $wl0
     %src2:_(<8 x s32>) = COPY $wl1
@@ -124,8 +124,8 @@ body: |
     ; CHECK-LABEL: name: vsel_8_elements_all_ones
     ; CHECK: liveins: $wl0, $wl1
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: %src1:_(<8 x s32>) = COPY $wl0
-    ; CHECK-NEXT: $wl0 = COPY %src1(<8 x s32>)
+    ; CHECK-NEXT: %src2:_(<8 x s32>) = COPY $wl1
+    ; CHECK-NEXT: $wl0 = COPY %src2(<8 x s32>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wl0
     %src1:_(<8 x s32>) = COPY $wl0
     %src2:_(<8 x s32>) = COPY $wl1
@@ -192,8 +192,8 @@ body: |
     ; CHECK-LABEL: name: vsel_32_elements_all_zeros
     ; CHECK: liveins: $x0, $x1
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: %src2:_(<32 x s16>) = COPY $x1
-    ; CHECK-NEXT: $x0 = COPY %src2(<32 x s16>)
+    ; CHECK-NEXT: %src1:_(<32 x s16>) = COPY $x0
+    ; CHECK-NEXT: $x0 = COPY %src1(<32 x s16>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
     %src1:_(<32 x s16>) = COPY $x0
     %src2:_(<32 x s16>) = COPY $x1
