@@ -6,8 +6,8 @@
 
 # RUN: llc -mtriple aie2 -start-after=aie-machine-alignment \
 # RUN:   %s -verify-machineinstrs -o - | FileCheck %s
-# CHECK:         lda	r1, [p0], #4;		nopx
 # CHECK: .AnyLabelDefinedHere:
+# CHECK:         lda	r1, [p0], #4;		nopx
 # CHECK:         // implicit-def: $wh1
 
 # Check that asmprinter emits the last-bundle label from PseudoLoopEnd
