@@ -427,7 +427,7 @@ define void @__addsf3_lowered_to_call(ptr %a) {
 ; AIE2P-NEXT:    st r10, [sp, #-52] // 4-byte Folded Spill
 ; AIE2P-NEXT:    st r11, [sp, #-48]; vmov bmlh0, x1 // 4-byte Folded Spill
 ; AIE2P-NEXT:    mova r8, #0; st r8, [sp, #-60]; mov p6, p0 // 4-byte Folded Spill
-; AIE2P-NEXT:    st r12, [sp, #-44]; vinsert.32 x0, x0, #0, r8 // 4-byte Folded Spill
+; AIE2P-NEXT:    st r12, [sp, #-44]; vinsert.32 x0, x1, #0, r8 // 4-byte Folded Spill
 ; AIE2P-NEXT:    st lr, [sp, #-64]; vmov bmll0, x0 // 4-byte Folded Spill
 ; AIE2P-NEXT:    vst bmlh0, [sp, #-128]; movxm r10, #16256 // 64-byte Folded Spill
 ; AIE2P-NEXT:    mova r12, #60; vst bmll0, [sp, #-192]; movx r11, #16; mov r9, #1 // 64-byte Folded Spill
@@ -445,7 +445,7 @@ define void @__addsf3_lowered_to_call(ptr %a) {
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    vmov bmlh0, x5
 ; AIE2P-NEXT:    nop
-; AIE2P-NEXT:    vinsert.32 x4, x0, #0, r0; vadd.f dm1, dm0, dm1, r12
+; AIE2P-NEXT:    vinsert.32 x4, x1, #0, r0; vadd.f dm1, dm0, dm1, r12
 ; AIE2P-NEXT:    vmov bmll0, x4
 ; AIE2P-NEXT:    xor r0, r8, r9
 ; AIE2P-NEXT:    st.s16 r10, [p6, #0]; jnz r0, #.LBB3_1

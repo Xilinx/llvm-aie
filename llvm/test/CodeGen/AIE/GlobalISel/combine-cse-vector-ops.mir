@@ -28,9 +28,9 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<16 x s32>) = COPY $x1
     ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[COPY]](<16 x s32>), [[COPY1]](<16 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[COPY]](<16 x s32>), [[COPY1]](<16 x s32>)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(<32 x s32>) = COPY [[CONCAT_VECTORS]](<32 x s32>)
     ; CHECK-NEXT: $y0 = COPY [[CONCAT_VECTORS]](<32 x s32>)
-    ; CHECK-NEXT: $y1 = COPY [[CONCAT_VECTORS1]](<32 x s32>)
+    ; CHECK-NEXT: $y1 = COPY [[COPY2]](<32 x s32>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $y0, implicit $y1
     %0:_(<16 x s32>) = COPY $x0
     %1:_(<16 x s32>) = COPY $x1
@@ -60,9 +60,9 @@ body:             |
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<16 x s32>) = COPY $x1
     ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[COPY]](<16 x s32>), [[COPY1]](<16 x s32>)
     ; CHECK-NEXT: [[FADD:%[0-9]+]]:_(<32 x s32>) = G_FADD [[CONCAT_VECTORS]], [[CONCAT_VECTORS]]
-    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[COPY]](<16 x s32>), [[COPY1]](<16 x s32>)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(<32 x s32>) = COPY [[CONCAT_VECTORS]](<32 x s32>)
     ; CHECK-NEXT: $y0 = COPY [[FADD]](<32 x s32>)
-    ; CHECK-NEXT: $y1 = COPY [[CONCAT_VECTORS1]](<32 x s32>)
+    ; CHECK-NEXT: $y1 = COPY [[COPY2]](<32 x s32>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $y0, implicit $y1
     %0:_(<16 x s32>) = COPY $x0
     %1:_(<16 x s32>) = COPY $x1
@@ -93,11 +93,11 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<16 x s32>) = COPY $x1
     ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[COPY]](<16 x s32>), [[COPY1]](<16 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[COPY]](<16 x s32>), [[COPY1]](<16 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[COPY]](<16 x s32>), [[COPY1]](<16 x s32>)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(<32 x s32>) = COPY [[CONCAT_VECTORS]](<32 x s32>)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:_(<32 x s32>) = COPY [[CONCAT_VECTORS]](<32 x s32>)
     ; CHECK-NEXT: $y0 = COPY [[CONCAT_VECTORS]](<32 x s32>)
-    ; CHECK-NEXT: $y1 = COPY [[CONCAT_VECTORS1]](<32 x s32>)
-    ; CHECK-NEXT: $y2 = COPY [[CONCAT_VECTORS2]](<32 x s32>)
+    ; CHECK-NEXT: $y1 = COPY [[COPY2]](<32 x s32>)
+    ; CHECK-NEXT: $y2 = COPY [[COPY3]](<32 x s32>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $y0, implicit $y1, implicit $y2
     %0:_(<16 x s32>) = COPY $x0
     %1:_(<16 x s32>) = COPY $x1

@@ -2495,6 +2495,83 @@ void llvm::applyUnmergeConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
   MI.eraseFromParent();
 }
 
+/// Match duplicate vector operations with identical operands for CSE
+/// optimization.
+///
+/// Currently handles: G_CONCAT_VECTORS
+///
+/// This combiner can be extended to other pure vector operations after proper
+/// testing, such as:
+/// - G_AIE_UNPAD_VECTOR: Extracts lower elements from a padded vector
+/// - G_AIE_PAD_VECTOR_UNDEF: Pads a vector with undefined upper elements
+///
+/// The implementation is already general enough to support these operations.
+/// To extend, simply add the desired opcodes to the wip_match_opcode list in
+/// the combine_cse_vector_ops rule in AIECombine.td.
+///
+/// Algorithm:
+/// Uses MRI to efficiently find potential duplicates by checking all users of
+/// the first input operand. For each candidate with matching opcode and operand
+/// count, verifies all operands match exactly. If a dominating duplicate is
+/// found, replaces the current operation with a copy from the earlier result.
+///
+/// \param MI The instruction to check for duplication
+/// \param MRI Machine register info for querying definitions and uses
+/// \param Helper Combiner helper for dominance checks
+/// \param MatchInfo Output parameter - register to copy from if match found
+/// \return true if a dominating duplicate was found
+bool llvm::matchCSEVectorOp(MachineInstr &MI, MachineRegisterInfo &MRI,
+                            CombinerHelper &Helper, Register &MatchInfo) {
+  const unsigned Opcode = MI.getOpcode();
+
+  // The tablegen rule filters to only the supported opcodes:
+  // G_CONCAT_VECTORS.
+  // We don't need to assert here since the match pattern guarantees this
+
+  const unsigned NumOps = MI.getNumOperands();
+  if (NumOps < 2)
+    return false;
+
+  // Get the first input operand (operand 1 for all these operations)
+  const Register FirstInput = MI.getOperand(1).getReg();
+
+  // Check all users of the first input register to find potential duplicates
+  for (MachineInstr &UserMI : MRI.use_nodbg_instructions(FirstInput)) {
+    // Must be the same opcode
+    if (UserMI.getOpcode() != Opcode)
+      continue;
+
+    // Skip the current instruction itself
+    if (&UserMI == &MI)
+      continue;
+
+    // Check if operand count matches
+    if (UserMI.getNumOperands() != NumOps)
+      continue;
+
+    // Check if all input operands match (starting from operand 1)
+    bool AllMatch = true;
+    for (unsigned i = 1; i < NumOps; ++i) {
+      if (UserMI.getOperand(i).getReg() != MI.getOperand(i).getReg()) {
+        AllMatch = false;
+        break;
+      }
+    }
+
+    if (!AllMatch)
+      continue;
+
+    // Check dominance: UserMI must dominate MI for safe CSE
+    if (Helper.dominates(UserMI, MI)) {
+      // Found a dominating duplicate - return its result register
+      MatchInfo = UserMI.getOperand(0).getReg();
+      return true;
+    }
+  }
+
+  return false;
+}
+
 /// This function tracks chain of vector updates using .upd vector intrinsic.
 static std::map<unsigned, Register>
 trackVectorUpdateChain(MachineInstr &MI, MachineRegisterInfo &MRI,

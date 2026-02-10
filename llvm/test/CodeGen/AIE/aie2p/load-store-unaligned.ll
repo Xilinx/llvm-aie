@@ -15,53 +15,10 @@ target triple = "aie2p"
 define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32> noundef %b, <16 x i8> noundef %c, <16 x i16> noundef %d, <8 x i32> noundef %e, <4 x i64> inreg noundef %f, <8 x i64> inreg noundef %g, <16 x i32> noundef %h) #0 {
 ; CHECK-LABEL: test_load_store_unaligned:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova m0, #-112; nopb ; nopx
-; CHECK-NEXT:    paddxm [sp], #576
+; CHECK-NEXT:    nopa ; nopb ; paddxm [sp], #576
+; CHECK-NEXT:    st p7, [sp, #-20] // 4-byte Folded Spill
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    mov p2, sp
-; CHECK-NEXT:    mov p5, sp
-; CHECK-NEXT:    mov p4, sp
-; CHECK-NEXT:    st p6, [sp, #-24] // 4-byte Folded Spill
-; CHECK-NEXT:    mov p6, sp
-; CHECK-NEXT:    st r9, [sp, #-28] // 4-byte Folded Spill
 ; CHECK-NEXT:    padda [p0], #-128
-; CHECK-NEXT:    mov r17, p0
-; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    padda [p0], m0
-; CHECK-NEXT:    mova m0, #-96
-; CHECK-NEXT:    mov r16, p0
-; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    padda [p2], m0
-; CHECK-NEXT:    mova m0, #-288
-; CHECK-NEXT:    padda [p0], m0
-; CHECK-NEXT:    mova m0, #-576
-; CHECK-NEXT:    mov r31, p0
-; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    padda [p5], m0
-; CHECK-NEXT:    mova m0, #-80
-; CHECK-NEXT:    padda [p0], m0
-; CHECK-NEXT:    mova m0, #-48
-; CHECK-NEXT:    mov r28, p0
-; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    padda [p4], m0
-; CHECK-NEXT:    mova m0, #-224
-; CHECK-NEXT:    padda [p6], m0
-; CHECK-NEXT:    mova m0, #-160
-; CHECK-NEXT:    padda [p0], #-64
-; CHECK-NEXT:    mov r27, p0
-; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    padda [p0], #-192
-; CHECK-NEXT:    mov r26, p0
-; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    padda [p0], m0
-; CHECK-NEXT:    mov r25, p0
-; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    padda [p0], #-448
-; CHECK-NEXT:    mov r9, p0
-; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    padda [p0], #-384
-; CHECK-NEXT:    mov r24, p0
-; CHECK-NEXT:    mov p0, r17
 ; CHECK-NEXT:    st.s16 r0, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -99,138 +56,139 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st.s16 r5, [p0, #10]
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    mova m0, #-112
 ; CHECK-NEXT:    vextract.16 r5, x0, #5, vaddsign1
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    st.s16 r6, [p0, #12]
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vextract.16 r6, x0, #6, vaddsign1
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    st.s16 r7, [p0, #14]
-; CHECK-NEXT:    vextract.16 r7, x0, #7, vaddsign1
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    mov r29, p0
+; CHECK-NEXT:    mov p1, sp
+; CHECK-NEXT:    mov p7, sp
+; CHECK-NEXT:    st.s16 r6, [p0, #12]
+; CHECK-NEXT:    padda [p1], m0
+; CHECK-NEXT:    padda [p7], #-384
+; CHECK-NEXT:    mov r16, p1
+; CHECK-NEXT:    mov r24, p7
 ; CHECK-NEXT:    vextract.32 r0, x2, #0, vaddsign1
+; CHECK-NEXT:    mov p7, r16
+; CHECK-NEXT:    st r0, [p7, #0]
+; CHECK-NEXT:    st.s16 r7, [p0, #14]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    vextract.16 r7, x0, #7, vaddsign1
+; CHECK-NEXT:    mova m0, #-96
+; CHECK-NEXT:    mov p1, sp
 ; CHECK-NEXT:    vextract.32 r1, x2, #1, vaddsign1
-; CHECK-NEXT:    mov p0, r16
-; CHECK-NEXT:    st r1, [p0, #4]
-; CHECK-NEXT:    st r0, [p0, #0]
-; CHECK-NEXT:    st.s8 r0, [p2, #0]
+; CHECK-NEXT:    padda [p1], m0
+; CHECK-NEXT:    st r1, [p7, #4]
+; CHECK-NEXT:    st.s8 r0, [p1, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vextract.8 r0, x4, #0, vaddsign1
 ; CHECK-NEXT:    vextract.32 r2, x2, #2, vaddsign1
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    st r2, [p0, #8]
-; CHECK-NEXT:    st.s8 r1, [p2, #1]
+; CHECK-NEXT:    st r2, [p7, #8]
+; CHECK-NEXT:    st.s8 r1, [p1, #1]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vextract.8 r1, x4, #1, vaddsign1
 ; CHECK-NEXT:    vextract.32 r3, x2, #3, vaddsign1
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    st r3, [p0, #12]
-; CHECK-NEXT:    st.s8 r2, [p2, #2]
+; CHECK-NEXT:    st r3, [p7, #12]
+; CHECK-NEXT:    st.s8 r2, [p1, #2]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vextract.8 r2, x4, #2, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    st.s8 r3, [p2, #3]
+; CHECK-NEXT:    st.s8 r3, [p1, #3]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vextract.8 r3, x4, #3, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    st.s8 r4, [p2, #4]
+; CHECK-NEXT:    st.s8 r4, [p1, #4]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vextract.8 r4, x4, #4, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    st.s8 r5, [p2, #5]
+; CHECK-NEXT:    st.s8 r5, [p1, #5]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vextract.8 r5, x4, #5, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    st.s8 r6, [p2, #6]
+; CHECK-NEXT:    st.s8 r6, [p1, #6]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vextract.8 r6, x4, #6, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    st.s8 r7, [p2, #7]
+; CHECK-NEXT:    st.s8 r7, [p1, #7]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vextract.8 r7, x4, #7, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova dj0, #8
-; CHECK-NEXT:    st.s8 r16, [p2, dj0]
+; CHECK-NEXT:    st.s8 r16, [p1, dj0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vextract.8 r16, x4, #8, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova dj0, #9
-; CHECK-NEXT:    st.s8 r17, [p2, dj0]
+; CHECK-NEXT:    st.s8 r17, [p1, dj0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vextract.8 r17, x4, #9, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova dj2, #10
-; CHECK-NEXT:    st.s8 r18, [p2, dj2]
+; CHECK-NEXT:    st.s8 r18, [p1, dj2]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vextract.8 r18, x4, #10, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova dj0, #11
-; CHECK-NEXT:    st.s8 r19, [p2, dj0]
+; CHECK-NEXT:    st.s8 r19, [p1, dj0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vextract.8 r19, x4, #11, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova dj1, #12
-; CHECK-NEXT:    st.s8 r20, [p2, dj1]
+; CHECK-NEXT:    st.s8 r20, [p1, dj1]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vextract.8 r20, x4, #12, vaddsign1
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    st p7, [sp, #-20] // 4-byte Folded Spill
-; CHECK-NEXT:    st r8, [sp, #-32] // 4-byte Folded Spill
 ; CHECK-NEXT:    mova dj0, #13
-; CHECK-NEXT:    st.s8 r21, [p2, dj0]
+; CHECK-NEXT:    st.s8 r21, [p1, dj0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vextract.8 r21, x4, #13, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova dj3, #14
-; CHECK-NEXT:    st.s8 r22, [p2, dj3]
+; CHECK-NEXT:    st.s8 r22, [p1, dj3]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vextract.8 r22, x4, #14, vaddsign1
 ; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    st r8, [sp, #-32] // 4-byte Folded Spill
+; CHECK-NEXT:    st r9, [sp, #-28] // 4-byte Folded Spill
+; CHECK-NEXT:    st p6, [sp, #-24] // 4-byte Folded Spill
 ; CHECK-NEXT:    mova dj0, #15
-; CHECK-NEXT:    st.s8 r23, [p2, dj0]
+; CHECK-NEXT:    st.s8 r23, [p1, dj0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -271,207 +229,210 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vextract.16 r4, x6, #4, vaddsign1
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    mova dj7, #36
 ; CHECK-NEXT:    st.s16 r5, [p3, #10]
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    mova dj4, #48
+; CHECK-NEXT:    mova dj5, #52
+; CHECK-NEXT:    mova dj6, #56
 ; CHECK-NEXT:    vextract.16 r5, x6, #5, vaddsign1
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    mov p2, sp
+; CHECK-NEXT:    mova m0, #-288
 ; CHECK-NEXT:    st.s16 r6, [p3, #12]
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    mov r30, p0
+; CHECK-NEXT:    padda [p2], m0
+; CHECK-NEXT:    mov r9, p7
+; CHECK-NEXT:    mov r8, p2
 ; CHECK-NEXT:    vextract.16 r6, x6, #6, vaddsign1
 ; CHECK-NEXT:    vextract.32 r0, x8, #0, vaddsign1
-; CHECK-NEXT:    mov p0, r31
-; CHECK-NEXT:    st r0, [p0, #0]
+; CHECK-NEXT:    mov p7, r8
+; CHECK-NEXT:    st r0, [p7, #0]
 ; CHECK-NEXT:    st.s16 r7, [p3, #14]
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    // implicit-def: $bmll0
+; CHECK-NEXT:    vmov x0, bmll0
+; CHECK-NEXT:    mov p4, sp
+; CHECK-NEXT:    mov r30, p0
 ; CHECK-NEXT:    vextract.16 r7, x6, #7, vaddsign1
 ; CHECK-NEXT:    vextract.32 r1, x8, #1, vaddsign1
 ; CHECK-NEXT:    mova dj0, #16
-; CHECK-NEXT:    st r1, [p0, #4]
+; CHECK-NEXT:    st r1, [p7, #4]
 ; CHECK-NEXT:    st.s16 r16, [p3, dj0]
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    mova m0, #-576
+; CHECK-NEXT:    mov p2, sp
+; CHECK-NEXT:    padda [p4], m0
 ; CHECK-NEXT:    vextract.16 r16, x6, #8, vaddsign1
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    mova m0, #-80
 ; CHECK-NEXT:    mova dj0, #18
 ; CHECK-NEXT:    st.s16 r17, [p3, dj0]
-; CHECK-NEXT:    mova dj4, #32
-; CHECK-NEXT:    mova dj5, #36
+; CHECK-NEXT:    padda [p2], #-256
+; CHECK-NEXT:    mov r31, p2
 ; CHECK-NEXT:    vextract.16 r17, x6, #9, vaddsign1
 ; CHECK-NEXT:    vextract.32 r2, x8, #2, vaddsign1
 ; CHECK-NEXT:    vextract.32 r3, x8, #3, vaddsign1
 ; CHECK-NEXT:    mova dj0, #20
-; CHECK-NEXT:    st r2, [p0, #8]
-; CHECK-NEXT:    st r3, [p0, #12]
+; CHECK-NEXT:    st r2, [p7, #8]
+; CHECK-NEXT:    st r3, [p7, #12]
 ; CHECK-NEXT:    st.s16 r18, [p3, dj0]
-; CHECK-NEXT:    // implicit-def: $bmll0
-; CHECK-NEXT:    vmov x0, bmll0
-; CHECK-NEXT:    mov p1, sp
-; CHECK-NEXT:    padda [p1], #-256
+; CHECK-NEXT:    mov p2, sp
+; CHECK-NEXT:    padda [p2], #-512
+; CHECK-NEXT:    mov r27, p2
 ; CHECK-NEXT:    vextract.16 r18, x6, #10, vaddsign1
-; CHECK-NEXT:    vextract.64 r1:r0, x0, #0, vaddsign1
+; CHECK-NEXT:    mov p2, sp
 ; CHECK-NEXT:    mova dj0, #22
-; CHECK-NEXT:    st r1, [p1, #4]
 ; CHECK-NEXT:    st.s16 r19, [p3, dj0]
-; CHECK-NEXT:    mova dj6, #40
-; CHECK-NEXT:    mova dj7, #44
+; CHECK-NEXT:    padda [p2], m0
+; CHECK-NEXT:    mov r29, p2
 ; CHECK-NEXT:    vextract.16 r19, x6, #11, vaddsign1
 ; CHECK-NEXT:    vextract.32 r4, x8, #4, vaddsign1
 ; CHECK-NEXT:    vextract.32 r5, x8, #5, vaddsign1
 ; CHECK-NEXT:    mova dj0, #24
-; CHECK-NEXT:    st r4, [p0, #16]
-; CHECK-NEXT:    st r5, [p0, #20]
+; CHECK-NEXT:    st r4, [p7, #16]
+; CHECK-NEXT:    st r5, [p7, #20]
 ; CHECK-NEXT:    st.s16 r20, [p3, dj0]
-; CHECK-NEXT:    mov p7, sp
-; CHECK-NEXT:    padda [p7], #-512
+; CHECK-NEXT:    mov r8, p7
+; CHECK-NEXT:    mova dj2, #40
+; CHECK-NEXT:    mova dj1, #36
 ; CHECK-NEXT:    vextract.16 r20, x6, #12, vaddsign1
-; CHECK-NEXT:    // implicit-def: $bmll0
-; CHECK-NEXT:    vmov x0, bmll0
-; CHECK-NEXT:    vextract.64 r3:r2, x0, #1, vaddsign1
+; CHECK-NEXT:    mova dj3, #44
 ; CHECK-NEXT:    mova dj0, #26
-; CHECK-NEXT:    st r2, [p1, #8]
-; CHECK-NEXT:    st r3, [p1, #12]
 ; CHECK-NEXT:    st.s16 r21, [p3, dj0]
-; CHECK-NEXT:    mov r31, p0
-; CHECK-NEXT:    mova dj2, #60
 ; CHECK-NEXT:    vextract.16 r21, x6, #13, vaddsign1
+; CHECK-NEXT:    vextract.16 r22, x6, #14, vaddsign1
+; CHECK-NEXT:    vextract.16 r23, x6, #15, vaddsign1
 ; CHECK-NEXT:    vextract.32 r6, x8, #6, vaddsign1
 ; CHECK-NEXT:    vextract.32 r7, x8, #7, vaddsign1
 ; CHECK-NEXT:    mova dj0, #28
-; CHECK-NEXT:    st r6, [p0, #24]
-; CHECK-NEXT:    st r7, [p0, #28]
+; CHECK-NEXT:    st r6, [p7, #24]
+; CHECK-NEXT:    st r7, [p7, #28]
 ; CHECK-NEXT:    st.s16 r22, [p3, dj0]
-; CHECK-NEXT:    mova dj1, #48
-; CHECK-NEXT:    mova dj3, #52
-; CHECK-NEXT:    vextract.16 r22, x6, #14, vaddsign1
+; CHECK-NEXT:    vextract.64 r1:r0, x0, #0, vaddsign1
+; CHECK-NEXT:    // implicit-def: $bmll0
+; CHECK-NEXT:    vmov x0, bmll0
+; CHECK-NEXT:    vextract.64 r3:r2, x0, #1, vaddsign1
 ; CHECK-NEXT:    // implicit-def: $bmll0
 ; CHECK-NEXT:    vmov x0, bmll0
 ; CHECK-NEXT:    vextract.64 r5:r4, x0, #2, vaddsign1
 ; CHECK-NEXT:    mova dj0, #30
-; CHECK-NEXT:    st r4, [p1, #16]
-; CHECK-NEXT:    st r5, [p1, #20]
 ; CHECK-NEXT:    st.s16 r23, [p3, dj0]
-; CHECK-NEXT:    vextract.16 r23, x6, #15, vaddsign1
 ; CHECK-NEXT:    // implicit-def: $bmll0
 ; CHECK-NEXT:    vmov x0, bmll0
-; CHECK-NEXT:    mov p0, p1
+; CHECK-NEXT:    mov p7, r31
 ; CHECK-NEXT:    vextract.64 r7:r6, x0, #3, vaddsign1
 ; CHECK-NEXT:    vmov x0, bmll1
-; CHECK-NEXT:    mova dj0, #36
-; CHECK-NEXT:    st r0, [p0], #12
+; CHECK-NEXT:    mov p0, p7
+; CHECK-NEXT:    mova dj0, #32
+; CHECK-NEXT:    st r1, [p7, #4]
+; CHECK-NEXT:    st r2, [p7, #8]
+; CHECK-NEXT:    st r3, [p7, #12]
+; CHECK-NEXT:    st r4, [p7, #16]
+; CHECK-NEXT:    st r5, [p7, #20]
 ; CHECK-NEXT:    vextract.64 r5:r4, x0, #0, vaddsign1
 ; CHECK-NEXT:    vmov x0, bmll1
-; CHECK-NEXT:    mov r8, p0
-; CHECK-NEXT:    mov p0, r29
-; CHECK-NEXT:    st r6, [p1, #24]
-; CHECK-NEXT:    st r7, [p1, #28]
+; CHECK-NEXT:    st r0, [p0], #12
+; CHECK-NEXT:    st r6, [p7, #24]
+; CHECK-NEXT:    st r7, [p7, #28]
 ; CHECK-NEXT:    vextract.64 r7:r6, x0, #1, vaddsign1
 ; CHECK-NEXT:    vmov x0, bmll1
+; CHECK-NEXT:    mov r31, p0
+; CHECK-NEXT:    mov p0, r27
 ; CHECK-NEXT:    vextract.64 r17:r16, x0, #2, vaddsign1
 ; CHECK-NEXT:    vmov x0, bmll1
-; CHECK-NEXT:    st r4, [p5, #0]
-; CHECK-NEXT:    st r5, [p5, #4]
+; CHECK-NEXT:    st r4, [p4, #0]
 ; CHECK-NEXT:    vextract.32 r4, x10, #4, vaddsign1
 ; CHECK-NEXT:    vextract.32 r5, x10, #5, vaddsign1
+; CHECK-NEXT:    st r5, [p4, #4]
+; CHECK-NEXT:    mov r27, p0
 ; CHECK-NEXT:    vextract.64 r19:r18, x0, #3, vaddsign1
 ; CHECK-NEXT:    vmov x0, bmll1
-; CHECK-NEXT:    st r6, [p5, #8]
-; CHECK-NEXT:    st r7, [p5, #12]
+; CHECK-NEXT:    st r6, [p4, #8]
+; CHECK-NEXT:    st r7, [p4, #12]
 ; CHECK-NEXT:    vextract.32 r6, x10, #6, vaddsign1
 ; CHECK-NEXT:    vextract.32 r7, x10, #7, vaddsign1
 ; CHECK-NEXT:    vextract.64 r21:r20, x0, #4, vaddsign1
 ; CHECK-NEXT:    vmov x0, bmll1
-; CHECK-NEXT:    st r16, [p5, #16]
-; CHECK-NEXT:    st r17, [p5, #20]
+; CHECK-NEXT:    st r16, [p4, #16]
+; CHECK-NEXT:    st r17, [p4, #20]
 ; CHECK-NEXT:    vextract.32 r16, x10, #8, vaddsign1
 ; CHECK-NEXT:    vextract.32 r17, x10, #9, vaddsign1
-; CHECK-NEXT:    st r4, [p7, #16]
-; CHECK-NEXT:    st r5, [p7, #20]
-; CHECK-NEXT:    lda.s16 r4, [p0, #8]
-; CHECK-NEXT:    lda.s16 r5, [p0, #10]
+; CHECK-NEXT:    st r4, [p0, #16]
+; CHECK-NEXT:    st r5, [p0, #20]
 ; CHECK-NEXT:    vextract.64 r23:r22, x0, #5, vaddsign1
 ; CHECK-NEXT:    vmov x0, bmll1
-; CHECK-NEXT:    st r18, [p5, #24]
-; CHECK-NEXT:    st r19, [p5, #28]
+; CHECK-NEXT:    st r18, [p4, #24]
+; CHECK-NEXT:    st r19, [p4, #28]
 ; CHECK-NEXT:    vextract.32 r18, x10, #10, vaddsign1
 ; CHECK-NEXT:    vextract.32 r19, x10, #11, vaddsign1
-; CHECK-NEXT:    st r6, [p7, #24]
-; CHECK-NEXT:    st r7, [p7, #28]
-; CHECK-NEXT:    lda.s16 r6, [p0, #12]
-; CHECK-NEXT:    lda.s16 r7, [p0, #14]
-; CHECK-NEXT:    st r21, [p5, dj0]
-; CHECK-NEXT:    mova dj0, #56
-; CHECK-NEXT:    st r17, [p7, dj5]
-; CHECK-NEXT:    mova dj5, #8
+; CHECK-NEXT:    st r6, [p0, #24]
+; CHECK-NEXT:    st r7, [p0, #28]
+; CHECK-NEXT:    st r21, [p4, dj1]
+; CHECK-NEXT:    mova dj1, #60
+; CHECK-NEXT:    st r17, [p0, dj7]
+; CHECK-NEXT:    mova dj7, #8
 ; CHECK-NEXT:    vextract.64 r3:r2, x0, #6, vaddsign1
 ; CHECK-NEXT:    vmov x0, bmll1
-; CHECK-NEXT:    st r20, [p5, dj4]
+; CHECK-NEXT:    st r20, [p4, dj0]
 ; CHECK-NEXT:    vextract.32 r20, x10, #12, vaddsign1
 ; CHECK-NEXT:    vextract.32 r21, x10, #13, vaddsign1
-; CHECK-NEXT:    st r16, [p7, dj4]
-; CHECK-NEXT:    lda.s8 r16, [p2, dj5]
-; CHECK-NEXT:    mova dj5, #9
+; CHECK-NEXT:    st r16, [p0, dj0]
+; CHECK-NEXT:    lda.s8 r16, [p1, dj7]
+; CHECK-NEXT:    mova dj7, #9
 ; CHECK-NEXT:    vextract.64 r1:r0, x0, #7, vaddsign1
-; CHECK-NEXT:    st r22, [p5, dj6]
-; CHECK-NEXT:    st r23, [p5, dj7]
+; CHECK-NEXT:    st r22, [p4, dj2]
+; CHECK-NEXT:    st r23, [p4, dj3]
 ; CHECK-NEXT:    vextract.32 r22, x10, #14, vaddsign1
 ; CHECK-NEXT:    vextract.32 r23, x10, #15, vaddsign1
-; CHECK-NEXT:    st r18, [p7, dj6]
-; CHECK-NEXT:    st r19, [p7, dj7]
-; CHECK-NEXT:    lda.s8 r17, [p2, dj5]
-; CHECK-NEXT:    mova dj5, #10
-; CHECK-NEXT:    st r2, [p5, dj1]
-; CHECK-NEXT:    st r3, [p5, dj3]
+; CHECK-NEXT:    st r18, [p0, dj2]
+; CHECK-NEXT:    st r19, [p0, dj3]
+; CHECK-NEXT:    lda.s8 r17, [p1, dj7]
+; CHECK-NEXT:    mova dj7, #10
+; CHECK-NEXT:    st r2, [p4, dj4]
+; CHECK-NEXT:    st r3, [p4, dj5]
 ; CHECK-NEXT:    vextract.32 r2, x10, #2, vaddsign1
 ; CHECK-NEXT:    vextract.32 r3, x10, #3, vaddsign1
-; CHECK-NEXT:    st r20, [p7, dj1]
-; CHECK-NEXT:    st r21, [p7, dj3]
-; CHECK-NEXT:    lda.s8 r18, [p2, dj5]
-; CHECK-NEXT:    mova dj5, #11
-; CHECK-NEXT:    st r0, [p5, dj0]
-; CHECK-NEXT:    st r1, [p5, dj2]
+; CHECK-NEXT:    st r20, [p0, dj4]
+; CHECK-NEXT:    st r21, [p0, dj5]
+; CHECK-NEXT:    lda.s8 r18, [p1, dj7]
+; CHECK-NEXT:    mova dj7, #11
+; CHECK-NEXT:    st r0, [p4, dj6]
+; CHECK-NEXT:    st r1, [p4, dj1]
 ; CHECK-NEXT:    vextract.32 r0, x10, #0, vaddsign1
 ; CHECK-NEXT:    vextract.32 r1, x10, #1, vaddsign1
-; CHECK-NEXT:    st r22, [p7, dj0]
-; CHECK-NEXT:    st r23, [p7, dj2]
-; CHECK-NEXT:    lda.s8 r19, [p2, dj5]
-; CHECK-NEXT:    mova dj5, #12
-; CHECK-NEXT:    st r2, [p7, #8]
-; CHECK-NEXT:    st r3, [p7, #12]
-; CHECK-NEXT:    lda.s16 r2, [p0, #4]
-; CHECK-NEXT:    lda.s16 r3, [p0, #6]
-; CHECK-NEXT:    st r0, [p7, #0]
-; CHECK-NEXT:    st r1, [p7, #4]
+; CHECK-NEXT:    st r22, [p0, dj6]
+; CHECK-NEXT:    st r23, [p0, dj1]
+; CHECK-NEXT:    lda.s8 r19, [p1, dj7]
+; CHECK-NEXT:    mova dj7, #12
+; CHECK-NEXT:    st r2, [p0, #8]
+; CHECK-NEXT:    st r3, [p0, #12]
+; CHECK-NEXT:    st r0, [p0, #0]
+; CHECK-NEXT:    st r1, [p0, #4]
+; CHECK-NEXT:    mov p0, r30
+; CHECK-NEXT:    lda.s8 r20, [p1, dj7]
+; CHECK-NEXT:    mova dj7, #13
 ; CHECK-NEXT:    lda.s16 r0, [p0, #0]
 ; CHECK-NEXT:    lda.s16 r1, [p0, #2]
-; CHECK-NEXT:    mov p0, r28
-; CHECK-NEXT:    lda.s8 r20, [p2, dj5]
-; CHECK-NEXT:    mova dj5, #13
-; CHECK-NEXT:    lda.s8 r21, [p2, dj5]
+; CHECK-NEXT:    lda.s16 r2, [p0, #4]
+; CHECK-NEXT:    lda.s16 r3, [p0, #6]
+; CHECK-NEXT:    lda.s16 r4, [p0, #8]
+; CHECK-NEXT:    lda.s16 r5, [p0, #10]
+; CHECK-NEXT:    lda.s16 r6, [p0, #12]
+; CHECK-NEXT:    lda.s16 r7, [p0, #14]
+; CHECK-NEXT:    mov p0, r29
+; CHECK-NEXT:    lda.s8 r21, [p1, dj7]
+; CHECK-NEXT:    mova dj7, #14
+; CHECK-NEXT:    lda.s8 r22, [p1, dj7]
 ; CHECK-NEXT:    st.s16 r0, [p0], #2
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova dj5, #14
-; CHECK-NEXT:    lda.s8 r22, [p2, dj5]
+; CHECK-NEXT:    mova dj7, #15
+; CHECK-NEXT:    lda.s8 r23, [p1, dj7]
 ; CHECK-NEXT:    st.s16 r1, [p0], #2
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova dj5, #15
-; CHECK-NEXT:    lda.s8 r23, [p2, dj5]
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st.s16 r2, [p0], #2
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -493,7 +454,7 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    lda.s8 r4, [p2, #4]
+; CHECK-NEXT:    lda.s8 r4, [p1, #4]
 ; CHECK-NEXT:    st.s16 r5, [p0], #2
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -501,33 +462,34 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    lda.s8 r5, [p2, #5]
+; CHECK-NEXT:    lda.s8 r5, [p1, #5]
 ; CHECK-NEXT:    st.s16 r6, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    mova m0, #-48
+; CHECK-NEXT:    lda.s8 r6, [p1, #6]
 ; CHECK-NEXT:    st.s16 r7, [p0, #2]
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    mov p0, r30
+; CHECK-NEXT:    mov p2, sp
+; CHECK-NEXT:    padda [p2], #-64
+; CHECK-NEXT:    mov r28, p2
+; CHECK-NEXT:    mov p2, sp
+; CHECK-NEXT:    padda [p2], m0
+; CHECK-NEXT:    mov p0, r9
 ; CHECK-NEXT:    lda r0, [p0, #0]
-; CHECK-NEXT:    lda.s8 r6, [p2, #6]
+; CHECK-NEXT:    lda.s8 r7, [p1, #7]
 ; CHECK-NEXT:    lda r1, [p0, #4]
-; CHECK-NEXT:    lda.s8 r7, [p2, #7]
+; CHECK-NEXT:    lda r9, [sp, #-28] // 4-byte Folded Reload
 ; CHECK-NEXT:    lda r2, [p0, #8]
 ; CHECK-NEXT:    lda r3, [p0, #12]
-; CHECK-NEXT:    mov p0, r27
+; CHECK-NEXT:    mov p0, r28
 ; CHECK-NEXT:    st r0, [p0], #4
-; CHECK-NEXT:    lda.s8 r0, [p2, #0]
+; CHECK-NEXT:    lda.s8 r0, [p1, #0]
 ; CHECK-NEXT:    st r1, [p0], #4
-; CHECK-NEXT:    lda.s8 r1, [p2, #1]
-; CHECK-NEXT:    st.s8 r0, [p4], #1
+; CHECK-NEXT:    lda.s8 r1, [p1, #1]
+; CHECK-NEXT:    st.s8 r0, [p2], #1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -537,9 +499,9 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    lda.s16 r0, [p3, #0]
 ; CHECK-NEXT:    st r2, [p0, #0]
 ; CHECK-NEXT:    st r3, [p0, #4]
-; CHECK-NEXT:    lda.s8 r2, [p2, #2]
-; CHECK-NEXT:    lda.s8 r3, [p2, #3]
-; CHECK-NEXT:    st.s8 r1, [p4], #1
+; CHECK-NEXT:    lda.s8 r2, [p1, #2]
+; CHECK-NEXT:    lda.s8 r3, [p1, #3]
+; CHECK-NEXT:    st.s8 r1, [p2], #1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -547,15 +509,16 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    lda.s16 r1, [p3, #2]
-; CHECK-NEXT:    st.s8 r2, [p4], #1
+; CHECK-NEXT:    lda r8, [sp, #-32] // 4-byte Folded Reload
+; CHECK-NEXT:    st.s8 r2, [p2], #1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    mov p0, r8
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    lda.s16 r2, [p3, #4]
-; CHECK-NEXT:    st.s8 r3, [p4], #1
+; CHECK-NEXT:    st.s8 r3, [p2], #1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -563,127 +526,131 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    lda.s16 r3, [p3, #6]
-; CHECK-NEXT:    st.s8 r4, [p4], #1
+; CHECK-NEXT:    st.s8 r4, [p2], #1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
+; CHECK-NEXT:    st.s8 r5, [p2], #1
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    st.s8 r6, [p2], #1
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    st.s8 r7, [p2], #1
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    st.s8 r16, [p2], #1
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    st.s8 r17, [p2], #1
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    mova dj7, #16
 ; CHECK-NEXT:    lda.s16 r4, [p3, #8]
-; CHECK-NEXT:    st.s8 r5, [p4], #1
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    lda.s16 r5, [p3, #10]
-; CHECK-NEXT:    st.s8 r6, [p4], #1
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    lda.s16 r6, [p3, #12]
-; CHECK-NEXT:    st.s8 r7, [p4], #1
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    lda.s16 r7, [p3, #14]
-; CHECK-NEXT:    st.s8 r16, [p4], #1
+; CHECK-NEXT:    lda.s16 r16, [p3, dj7]
+; CHECK-NEXT:    mova dj7, #18
+; CHECK-NEXT:    lda.s16 r17, [p3, dj7]
+; CHECK-NEXT:    st.s8 r18, [p2], #1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova dj5, #16
-; CHECK-NEXT:    lda.s16 r16, [p3, dj5]
-; CHECK-NEXT:    st.s8 r17, [p4], #1
+; CHECK-NEXT:    mova dj7, #20
+; CHECK-NEXT:    lda.s16 r18, [p3, dj7]
+; CHECK-NEXT:    st.s8 r19, [p2], #1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova dj5, #18
-; CHECK-NEXT:    lda.s16 r17, [p3, dj5]
-; CHECK-NEXT:    st.s8 r18, [p4], #1
+; CHECK-NEXT:    mova dj7, #22
+; CHECK-NEXT:    lda.s16 r19, [p3, dj7]
+; CHECK-NEXT:    st.s8 r20, [p2], #1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova dj5, #20
-; CHECK-NEXT:    lda.s16 r18, [p3, dj5]
-; CHECK-NEXT:    st.s8 r19, [p4], #1
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    st.s8 r21, [p2], #1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova dj5, #22
-; CHECK-NEXT:    lda.s16 r19, [p3, dj5]
-; CHECK-NEXT:    st.s8 r20, [p4], #1
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    st.s8 r22, [p2, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova dj5, #24
-; CHECK-NEXT:    lda.s16 r20, [p3, dj5]
-; CHECK-NEXT:    st.s8 r21, [p4], #1
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    st.s8 r23, [p2, #1]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    mov p5, sp
+; CHECK-NEXT:    mova m0, #-224
+; CHECK-NEXT:    padda [p5], m0
+; CHECK-NEXT:    st.s16 r0, [p5], #2
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova dj5, #26
-; CHECK-NEXT:    lda.s16 r21, [p3, dj5]
-; CHECK-NEXT:    st.s8 r22, [p4, #0]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    st.s16 r1, [p5], #2
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova dj5, #28
-; CHECK-NEXT:    lda.s16 r22, [p3, dj5]
-; CHECK-NEXT:    st.s8 r23, [p4, #1]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    st.s16 r2, [p5], #2
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova dj5, #30
-; CHECK-NEXT:    lda.s16 r23, [p3, dj5]
-; CHECK-NEXT:    st.s16 r0, [p6], #2
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    mov p0, r31
+; CHECK-NEXT:    mova dj7, #24
+; CHECK-NEXT:    lda.s16 r20, [p3, dj7]
+; CHECK-NEXT:    mova dj7, #26
+; CHECK-NEXT:    lda.s16 r21, [p3, dj7]
+; CHECK-NEXT:    mova dj7, #28
+; CHECK-NEXT:    lda.s16 r22, [p3, dj7]
+; CHECK-NEXT:    mova dj7, #30
+; CHECK-NEXT:    lda.s16 r23, [p3, dj7]
 ; CHECK-NEXT:    lda r0, [p0, #0]
-; CHECK-NEXT:    st.s16 r1, [p6], #2
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    lda r1, [p0, #4]
-; CHECK-NEXT:    st.s16 r2, [p6], #2
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    lda r2, [p0, #8]
-; CHECK-NEXT:    st.s16 r3, [p6], #2
+; CHECK-NEXT:    st.s16 r3, [p5], #2
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -691,7 +658,7 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    lda r3, [p0, #12]
-; CHECK-NEXT:    st.s16 r4, [p6], #2
+; CHECK-NEXT:    st.s16 r4, [p5], #2
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -699,7 +666,7 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    lda r4, [p0, #16]
-; CHECK-NEXT:    st.s16 r5, [p6], #2
+; CHECK-NEXT:    st.s16 r5, [p5], #2
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -707,7 +674,7 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    lda r5, [p0, #20]
-; CHECK-NEXT:    st.s16 r6, [p6], #2
+; CHECK-NEXT:    st.s16 r6, [p5], #2
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -715,18 +682,18 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    lda r6, [p0, #24]
-; CHECK-NEXT:    st.s16 r7, [p6], #2
+; CHECK-NEXT:    st.s16 r7, [p5], #2
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    mov p6, sp
+; CHECK-NEXT:    padda [p6], #-192
+; CHECK-NEXT:    mov r26, p6
 ; CHECK-NEXT:    lda r7, [p0, #28]
 ; CHECK-NEXT:    mov p0, r26
 ; CHECK-NEXT:    st r0, [p0], #4
-; CHECK-NEXT:    lda r0, [p1, #0]
-; CHECK-NEXT:    st.s16 r16, [p6], #2
+; CHECK-NEXT:    lda r0, [p7, #0]
+; CHECK-NEXT:    st.s16 r16, [p5], #2
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -734,8 +701,8 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st r1, [p0], #4
-; CHECK-NEXT:    lda r1, [p1, #4]
-; CHECK-NEXT:    st.s16 r17, [p6], #2
+; CHECK-NEXT:    lda r1, [p7, #4]
+; CHECK-NEXT:    st.s16 r17, [p5], #2
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -743,8 +710,8 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st r2, [p0], #4
-; CHECK-NEXT:    lda r2, [p1, #8]
-; CHECK-NEXT:    st.s16 r18, [p6], #2
+; CHECK-NEXT:    lda r2, [p7, #8]
+; CHECK-NEXT:    st.s16 r18, [p5], #2
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -752,7 +719,7 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st r3, [p0], #4
-; CHECK-NEXT:    st.s16 r19, [p6], #2
+; CHECK-NEXT:    st.s16 r19, [p5], #2
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -760,8 +727,8 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st r4, [p0], #4
-; CHECK-NEXT:    lda r4, [p1, #16]
-; CHECK-NEXT:    st.s16 r20, [p6], #2
+; CHECK-NEXT:    lda r4, [p7, #16]
+; CHECK-NEXT:    st.s16 r20, [p5], #2
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -769,7 +736,7 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st r5, [p0], #4
-; CHECK-NEXT:    st.s16 r21, [p6], #2
+; CHECK-NEXT:    st.s16 r21, [p5], #2
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -778,88 +745,86 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    st r6, [p0, #0]
 ; CHECK-NEXT:    st r7, [p0, #4]
-; CHECK-NEXT:    lda r6, [p1, #24]
-; CHECK-NEXT:    lda r8, [sp, #-32] // 4-byte Folded Reload
-; CHECK-NEXT:    st.s16 r22, [p6, #0]
+; CHECK-NEXT:    lda r6, [p7, #24]
+; CHECK-NEXT:    lda p7, [sp, #-20] // 4-byte Folded Reload
+; CHECK-NEXT:    st.s16 r22, [p5, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mov p0, r8
 ; CHECK-NEXT:    nop
+; CHECK-NEXT:    mov p0, r31
 ; CHECK-NEXT:    lda r3, [p0], #8
-; CHECK-NEXT:    st.s16 r23, [p6, #2]
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    lda p6, [sp, #-24] // 4-byte Folded Reload
+; CHECK-NEXT:    st.s16 r23, [p5, #2]
+; CHECK-NEXT:    mov p6, sp
+; CHECK-NEXT:    mova m0, #-160
+; CHECK-NEXT:    padda [p6], m0
+; CHECK-NEXT:    mov r25, p6
+; CHECK-NEXT:    mov p6, sp
+; CHECK-NEXT:    padda [p6], #-448
 ; CHECK-NEXT:    lda r5, [p0, #0]
 ; CHECK-NEXT:    lda r7, [p0, #8]
 ; CHECK-NEXT:    mov p0, r25
 ; CHECK-NEXT:    st r0, [p0], #4
-; CHECK-NEXT:    lda r0, [p5, #4]
+; CHECK-NEXT:    lda r0, [p4, #4]
 ; CHECK-NEXT:    st r1, [p0], #4
-; CHECK-NEXT:    lda r1, [p5, #8]
+; CHECK-NEXT:    lda r1, [p4, #8]
 ; CHECK-NEXT:    st r2, [p0], #4
-; CHECK-NEXT:    lda r2, [p5, #16]
+; CHECK-NEXT:    lda r2, [p4, #16]
 ; CHECK-NEXT:    st r3, [p0], #4
-; CHECK-NEXT:    lda r3, [p5, #24]
+; CHECK-NEXT:    lda r3, [p4, #24]
 ; CHECK-NEXT:    st r4, [p0], #4
-; CHECK-NEXT:    lda r4, [p5, dj4]
+; CHECK-NEXT:    lda r4, [p4, dj0]
 ; CHECK-NEXT:    st r5, [p0], #4
-; CHECK-NEXT:    lda r5, [p5, dj6]
+; CHECK-NEXT:    lda r5, [p4, dj2]
 ; CHECK-NEXT:    st r6, [p0, #0]
 ; CHECK-NEXT:    st r7, [p0, #4]
-; CHECK-NEXT:    mov p0, r9
-; CHECK-NEXT:    lda r6, [p5, dj1]
-; CHECK-NEXT:    lda r7, [p5, dj0]
-; CHECK-NEXT:    lda r16, [p5], #12
-; CHECK-NEXT:    lda r9, [sp, #-28] // 4-byte Folded Reload
-; CHECK-NEXT:    lda r17, [p5], #8
-; CHECK-NEXT:    lda r18, [p5], #8
-; CHECK-NEXT:    lda r19, [p5], #8
-; CHECK-NEXT:    lda r20, [p5], #8
-; CHECK-NEXT:    lda r21, [p5], #8
-; CHECK-NEXT:    lda r22, [p5, #0]
-; CHECK-NEXT:    lda r23, [p5, #8]
-; CHECK-NEXT:    st r16, [p0], #4
-; CHECK-NEXT:    lda r16, [p7, dj4]
-; CHECK-NEXT:    mova dj4, #36
-; CHECK-NEXT:    st r0, [p0], #4
-; CHECK-NEXT:    lda r0, [p7, #0]
-; CHECK-NEXT:    st r1, [p0], #4
-; CHECK-NEXT:    lda r1, [p7, #4]
-; CHECK-NEXT:    st r17, [p0], #4
-; CHECK-NEXT:    lda r17, [p7, dj4]
-; CHECK-NEXT:    st r2, [p0], #4
-; CHECK-NEXT:    lda r2, [p7, #8]
-; CHECK-NEXT:    st r18, [p0], #4
-; CHECK-NEXT:    lda r18, [p7, dj6]
-; CHECK-NEXT:    st r3, [p0], #4
-; CHECK-NEXT:    lda r3, [p7, #12]
-; CHECK-NEXT:    st r19, [p0], #4
-; CHECK-NEXT:    lda r19, [p7, dj7]
-; CHECK-NEXT:    st r4, [p0], #4
-; CHECK-NEXT:    lda r4, [p7, #16]
-; CHECK-NEXT:    st r20, [p0], #4
-; CHECK-NEXT:    lda r20, [p7, dj1]
-; CHECK-NEXT:    st r5, [p0], #4
-; CHECK-NEXT:    lda r5, [p7, #20]
-; CHECK-NEXT:    st r21, [p0], #4
-; CHECK-NEXT:    lda r21, [p7, dj3]
-; CHECK-NEXT:    st r6, [p0], #4
-; CHECK-NEXT:    lda r6, [p7, #24]
-; CHECK-NEXT:    st r22, [p0], #4
-; CHECK-NEXT:    lda r22, [p7, dj0]
-; CHECK-NEXT:    st r7, [p0, #0]
-; CHECK-NEXT:    st r23, [p0, #4]
+; CHECK-NEXT:    mov p0, r27
+; CHECK-NEXT:    lda r6, [p4, dj4]
+; CHECK-NEXT:    lda r7, [p4, dj6]
+; CHECK-NEXT:    lda r16, [p4], #12
+; CHECK-NEXT:    lda r17, [p4], #8
+; CHECK-NEXT:    lda r18, [p4], #8
+; CHECK-NEXT:    lda r19, [p4], #8
+; CHECK-NEXT:    lda r20, [p4], #8
+; CHECK-NEXT:    lda r21, [p4], #8
+; CHECK-NEXT:    lda r22, [p4, #0]
+; CHECK-NEXT:    lda r23, [p4, #8]
+; CHECK-NEXT:    st r16, [p6], #4
+; CHECK-NEXT:    lda r16, [p0, dj0]
+; CHECK-NEXT:    mova dj0, #36
+; CHECK-NEXT:    st r0, [p6], #4
+; CHECK-NEXT:    lda r0, [p0, #0]
+; CHECK-NEXT:    st r1, [p6], #4
+; CHECK-NEXT:    lda r1, [p0, #4]
+; CHECK-NEXT:    st r17, [p6], #4
+; CHECK-NEXT:    lda r17, [p0, dj0]
+; CHECK-NEXT:    st r2, [p6], #4
+; CHECK-NEXT:    lda r2, [p0, #8]
+; CHECK-NEXT:    st r18, [p6], #4
+; CHECK-NEXT:    lda r18, [p0, dj2]
+; CHECK-NEXT:    st r3, [p6], #4
+; CHECK-NEXT:    lda r3, [p0, #12]
+; CHECK-NEXT:    st r19, [p6], #4
+; CHECK-NEXT:    lda r19, [p0, dj3]
+; CHECK-NEXT:    st r4, [p6], #4
+; CHECK-NEXT:    lda r4, [p0, #16]
+; CHECK-NEXT:    st r20, [p6], #4
+; CHECK-NEXT:    lda r20, [p0, dj4]
+; CHECK-NEXT:    st r5, [p6], #4
+; CHECK-NEXT:    lda r5, [p0, #20]
+; CHECK-NEXT:    st r21, [p6], #4
+; CHECK-NEXT:    lda r21, [p0, dj5]
+; CHECK-NEXT:    st r6, [p6], #4
+; CHECK-NEXT:    lda r6, [p0, #24]
+; CHECK-NEXT:    st r22, [p6], #4
+; CHECK-NEXT:    lda r22, [p0, dj6]
+; CHECK-NEXT:    st r7, [p6, #0]
+; CHECK-NEXT:    st r23, [p6, #4]
+; CHECK-NEXT:    lda r7, [p0, #28]
+; CHECK-NEXT:    lda r23, [p0, dj1]
 ; CHECK-NEXT:    mov p0, r24
-; CHECK-NEXT:    lda r7, [p7, #28]
-; CHECK-NEXT:    lda r23, [p7, dj2]
-; CHECK-NEXT:    lda p7, [sp, #-20] // 4-byte Folded Reload
+; CHECK-NEXT:    lda p6, [sp, #-24] // 4-byte Folded Reload
 ; CHECK-NEXT:    paddxm [sp], #-576
 ; CHECK-NEXT:    st r0, [p0], #4
 ; CHECK-NEXT:    st r1, [p0], #4
