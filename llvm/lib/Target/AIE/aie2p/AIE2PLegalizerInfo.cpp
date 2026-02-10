@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 /// \file
@@ -502,7 +502,8 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
           {AccV16S64, P0, AccV16S64, 512},
           {AccV64S32, P0, AccV64S32, 512},
           {AccV32S64, P0, AccV32S64, 512},
-          {S128, P0, S128, 16},
+          {S128, P0, S128, 128},
+          {S256, P0, S256, 256},
       })
       // Legalize <2 x s1024>
       .bitcastIf(
