@@ -1965,6 +1965,83 @@ bool llvm::matchPadUnpadFusion(MachineInstr &MI, MachineRegisterInfo &MRI,
   return true;
 }
 
+/// Match G_AIE_PAD_VECTOR_UNDEF fed by another G_AIE_PAD_VECTOR_UNDEF.
+/// Transforms:
+///   %intermediate:_(<8 x s32>) = G_AIE_PAD_VECTOR_UNDEF %src(<4 x s32>)
+///   %dst:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF %intermediate(<8 x s32>)
+/// Into:
+///   %dst:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF %src(<4 x s32>)
+bool llvm::matchPadPadFusion(MachineInstr &MI, MachineRegisterInfo &MRI,
+                             const AIEBaseInstrInfo &TII,
+                             BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TII.getGenericPadVectorOpcode() &&
+         "Expected G_AIE_PAD_VECTOR_UNDEF");
+
+  const Register OuterDst = MI.getOperand(0).getReg();
+  const Register OuterSrc = MI.getOperand(1).getReg();
+
+  // Check if source is also G_AIE_PAD_VECTOR_UNDEF
+  MachineInstr *InnerPadMI = MRI.getVRegDef(OuterSrc);
+  if (!InnerPadMI || InnerPadMI->getOpcode() != TII.getGenericPadVectorOpcode())
+    return false;
+
+  const Register InnerSrc = InnerPadMI->getOperand(1).getReg();
+
+  // Get types
+  const LLT InnerSrcTy = MRI.getType(InnerSrc);
+  const LLT OuterDstTy = MRI.getType(OuterDst);
+
+  // Verify we can legally pad directly from inner source to outer destination
+  if (!TII.isLegalTypeToPad(InnerSrcTy) || !TII.isLegalTypeToUnpad(OuterDstTy))
+    return false;
+
+  // Build the fused PAD
+  MatchInfo = [=, &TII](MachineIRBuilder &B) {
+    B.buildInstr(TII.getGenericPadVectorOpcode(), {OuterDst}, {InnerSrc});
+  };
+
+  return true;
+}
+
+/// Match G_AIE_UNPAD_VECTOR fed by another G_AIE_UNPAD_VECTOR.
+/// Transforms:
+///   %intermediate:_(<8 x s32>) = G_AIE_UNPAD_VECTOR %src(<16 x s32>)
+///   %dst:_(<4 x s32>) = G_AIE_UNPAD_VECTOR %intermediate(<8 x s32>)
+/// Into:
+///   %dst:_(<4 x s32>) = G_AIE_UNPAD_VECTOR %src(<16 x s32>)
+bool llvm::matchUnpadUnpadFusion(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                 const AIEBaseInstrInfo &TII,
+                                 BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TII.getGenericUnpadVectorOpcode() &&
+         "Expected G_AIE_UNPAD_VECTOR");
+
+  const Register OuterDst = MI.getOperand(0).getReg();
+  const Register OuterSrc = MI.getOperand(1).getReg();
+
+  // Check if source is also G_AIE_UNPAD_VECTOR
+  MachineInstr *InnerUnpadMI = MRI.getVRegDef(OuterSrc);
+  if (!InnerUnpadMI ||
+      InnerUnpadMI->getOpcode() != TII.getGenericUnpadVectorOpcode())
+    return false;
+
+  const Register InnerSrc = InnerUnpadMI->getOperand(1).getReg();
+
+  // Get types
+  const LLT InnerSrcTy = MRI.getType(InnerSrc);
+  const LLT OuterDstTy = MRI.getType(OuterDst);
+
+  // Verify we can legally unpad directly from inner source to outer destination
+  if (!TII.isLegalTypeToUnpad(InnerSrcTy) || !TII.isLegalTypeToPad(OuterDstTy))
+    return false;
+
+  // Build the fused UNPAD
+  MatchInfo = [=, &TII](MachineIRBuilder &B) {
+    B.buildInstr(TII.getGenericUnpadVectorOpcode(), {OuterDst}, {InnerSrc});
+  };
+
+  return true;
+}
+
 /// Match G_AIE_UNPAD_VECTOR fed by G_CONCAT_VECTORS where UNPAD discards
 /// upper elements, allowing fusion into a smaller G_CONCAT_VECTORS.
 /// Transforms:
