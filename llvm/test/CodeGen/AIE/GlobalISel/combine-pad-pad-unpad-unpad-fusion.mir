@@ -20,9 +20,8 @@ body: |
     ; CHECK: liveins: $q0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<4 x s32>) = COPY $q0
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<8 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[COPY]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[AIE_PAD_VECTOR_UNDEF]](<8 x s32>)
-    ; CHECK-NEXT: $x0 = COPY [[AIE_PAD_VECTOR_UNDEF1]](<16 x s32>)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[COPY]](<4 x s32>)
+    ; CHECK-NEXT: $x0 = COPY [[AIE_PAD_VECTOR_UNDEF]](<16 x s32>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
     %0:_(<4 x s32>) = COPY $q0
     %1:_(<8 x s32>) = G_AIE_PAD_VECTOR_UNDEF %0(<4 x s32>)
@@ -43,9 +42,8 @@ body: |
     ; CHECK: liveins: $x0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY $x0
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[COPY]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<4 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_UNPAD_VECTOR]](<8 x s32>)
-    ; CHECK-NEXT: $q0 = COPY [[AIE_UNPAD_VECTOR1]](<4 x s32>)
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<4 x s32>) = G_AIE_UNPAD_VECTOR [[COPY]](<16 x s32>)
+    ; CHECK-NEXT: $q0 = COPY [[AIE_UNPAD_VECTOR]](<4 x s32>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $q0
     %0:_(<16 x s32>) = COPY $x0
     %1:_(<8 x s32>) = G_AIE_UNPAD_VECTOR %0(<16 x s32>)

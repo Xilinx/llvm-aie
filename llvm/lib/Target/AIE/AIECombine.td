@@ -150,6 +150,20 @@ def combine_pad_unpad_fusion : GICombineRule<
   (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])
 >;
 
+def combine_pad_pad_fusion : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_AIE_PAD_VECTOR_UNDEF): $root,
+  [{ return matchPadPadFusion(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])
+>;
+
+def combine_unpad_unpad_fusion : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_AIE_UNPAD_VECTOR): $root,
+  [{ return matchUnpadUnpadFusion(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])
+>;
+
 def combine_concat_unpad_fusion : GICombineRule<
   (defs root:$root, build_fn_matchinfo:$matchinfo),
   (match (wip_match_opcode G_AIE_UNPAD_VECTOR): $root,
@@ -344,6 +358,8 @@ def aie_additional_combines : GICombineGroup<[
   combine_pad_vector,
   combine_pad_unpad_to_copy,
   combine_unpad_pad_to_copy,
+  combine_pad_pad_fusion,
+  combine_unpad_unpad_fusion,
   combine_narrow_phi_node_s20,
   combine_globalval_offset,
   combine_extract_vector_elt_and_zsa_ext,
