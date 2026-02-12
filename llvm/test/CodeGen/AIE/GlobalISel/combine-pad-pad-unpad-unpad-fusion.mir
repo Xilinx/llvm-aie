@@ -20,9 +20,8 @@ body: |
     ; CHECK: liveins: $q0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<4 x s32>) = COPY $q0
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<8 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[COPY]](<4 x s32>)
-    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF1:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[AIE_PAD_VECTOR_UNDEF]](<8 x s32>)
-    ; CHECK-NEXT: $x0 = COPY [[AIE_PAD_VECTOR_UNDEF1]](<16 x s32>)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[COPY]](<4 x s32>)
+    ; CHECK-NEXT: $x0 = COPY [[AIE_PAD_VECTOR_UNDEF]](<16 x s32>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
     %0:_(<4 x s32>) = COPY $q0
     %1:_(<8 x s32>) = G_AIE_PAD_VECTOR_UNDEF %0(<4 x s32>)
