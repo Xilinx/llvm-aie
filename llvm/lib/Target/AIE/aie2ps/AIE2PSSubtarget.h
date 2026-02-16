@@ -85,6 +85,11 @@ public:
         AIEBaseSubtarget::getPostRAMutationsImpl(getTargetTriple(), nullptr);
   }
 
+  void getSMSMutations(std::vector<std::unique_ptr<ScheduleDAGMutation>>
+                           &Mutations) const override {
+    Mutations = AIEBaseSubtarget::getSMSMutationsImpl(getTargetTriple());
+  }
+
   // Finer-grained live ranges, giving more accurate use-def chains.
   bool enableSubRegLiveness() const override { return true; }
 
