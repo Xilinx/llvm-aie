@@ -9,8 +9,6 @@
 # RUN:     --start-before=postmisched \
 # RUN:     -o - | FileCheck %s
 
-# XFAIL: *
-
 # This is a simple example of a speculative stage. The first stage gets a load,
 # which is side-effect free. It can run in NS=4 * II=3
 # We have two identical copies, one with MinIterCount=4, which should

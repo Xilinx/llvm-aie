@@ -105,6 +105,11 @@ public:
 };
 
 class ScheduleInfo {
+private:
+  /// Pending rotation to be applied after validation succeeds.
+  /// Set by peelSideEffectFree(), applied in scheduleWithStrategy().
+  int PendingRotation = 0;
+
 public:
   std::vector<NodeInfo> Nodes;
   int NInstr;
@@ -117,6 +122,7 @@ public:
     Nodes.clear();
     Nodes.resize(2 * NInstr);
     Length = 0;
+    PendingRotation = 0;
   }
   NodeInfo &operator[](int N) { return Nodes[N]; }
   const NodeInfo &operator[](int N) const { return Nodes[N]; }
@@ -129,11 +135,18 @@ public:
     Node.Scheduled = true;
     Length = std::max(Length, Node.Cycle + 1);
   }
-  // Insert empty cycles at the start, shifting all cycles.
+  // Set the pending rotation. The actual rotation will be applied after
+  // scheduleOtherIterations() succeeds, to ensure validation uses consistent
+  // pre-rotation cycle values.
   // \param Rotation The number of cycles to insert
+  void setRotation(int Rotation) { PendingRotation = Rotation; }
+  // Apply the pending rotation by inserting empty cycles at the start,
+  // shifting all cycles.
   // \param II The initiation interval used to update
   //           Stage and ModuloCycle of each node.
-  void rotate(int Rotation, int II);
+  void applyRotation(int II);
+  // Reset the pending rotation.
+  void resetRotation() { PendingRotation = 0; }
 };
 
 class PostPipelinerStrategy {
