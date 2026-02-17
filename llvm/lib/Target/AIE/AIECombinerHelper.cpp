@@ -2378,7 +2378,7 @@ static bool matchShuffleToVecEltBroadcast(MachineInstr &MI,
     return true;
   }
 
-  MatchInfo = [=, &MRI, &SrcTy](MachineIRBuilder &B) {
+  MatchInfo = [=, &MRI](MachineIRBuilder &B) {
     const LLT DstElemTy = SrcTy.getElementType();
     auto Extr =
         B.buildExtractVectorElementConstant(DstElemTy, SrcReg, *UniqOpIdx);
