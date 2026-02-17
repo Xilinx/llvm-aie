@@ -926,9 +926,17 @@ bool PostPipeliner::scheduleWithStrategy(PostPipelinerStrategy &S) {
   }
   DEBUG_SUMMARY(dbgs() << "   First iteration successful\n");
   if (!scheduleOtherIterations(S)) {
+    Info.resetRotation();
     return false;
   }
   DEBUG_SUMMARY(dbgs() << "   Other iterations successful\n");
+
+  // Apply pending rotation from peelSideEffectFree() now that validation
+  // has succeeded. This rotates the schedule to the SEF form, prefixing it
+  // with empty cycles so that the first stage only contains SEF instructions.
+  Info.applyRotation(II);
+  Info.resetRotation();
+
   return true;
 }
 
@@ -1444,11 +1452,11 @@ bool PostPipeliner::peelSideEffectFree() {
   if (Info.Length - NSEF <= OneStageFewer * II) {
     DEBUG_SUMMARY(dbgs() << "Can peel SEF stage. " << Info.Length << " - "
                          << NSEF << " <= " << NStages << " * " << II << "\n");
-    // Rotate the schedule to the SEF form. We prefix the schedule with
-    // empty cycles, so that the first stage only contains SEF instructions.
-    // This shifts modulo cycles and stages of all nodes.
+    // Store the pending rotation. The actual rotation will be applied after
+    // scheduleOtherIterations() succeeds, to ensure validation uses consistent
+    // pre-rotation cycle values.
     const int Rotation = II - NSEF;
-    Info.rotate(Rotation, II);
+    Info.setRotation(Rotation);
     NStages--;
     return true;
   }
@@ -1569,9 +1577,12 @@ void NodeInfo::update(int II) {
   Stage = Cycle / II;
 }
 
-void ScheduleInfo::rotate(int Rotation, int II) {
+void ScheduleInfo::applyRotation(int II) {
+  if (PendingRotation == 0)
+    return;
+
   for (int N = 0; N < NInstr; N++) {
-    Nodes[N].Cycle = Nodes[N].Cycle + Rotation;
+    Nodes[N].Cycle = Nodes[N].Cycle + PendingRotation;
     Nodes[N].update(II);
 
     commitCycle(N);
