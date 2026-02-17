@@ -820,6 +820,20 @@ void dumpEarliestChain(const ScheduleInfo &Info, int N) {
   dbgs() << "  --> SU" << N << " @" << Info[N].Cycle << "\n";
 }
 
+#ifndef NDEBUG
+/// Recompute Earliest from direct predecessors only.
+int computeEarliestFromPreds(const SUnit &SU, const ScheduleInfo &Info) {
+  int Earliest = 0;
+  for (const SDep &Dep : SU.Preds) {
+    const SUnit *Pred = Dep.getSUnit();
+    if (Pred->isBoundaryNode())
+      continue;
+    const NodeInfo &PredNode = Info[Pred->NodeNum];
+    Earliest = std::max(Earliest, PredNode.Cycle + Dep.getSignedLatency());
+  }
+  return Earliest;
+}
+#endif
 } // namespace
 
 bool PostPipeliner::scheduleOtherIterations(PostPipelinerStrategy &Strategy) {
@@ -833,6 +847,13 @@ bool PostPipeliner::scheduleOtherIterations(PostPipelinerStrategy &Strategy) {
     NodeInfo &Node = Info[N];
     const SUnit &ModuloSU = DAG->SUnits[N - NInstr];
     NodeInfo &ModuloNode = Info[N - NInstr];
+
+#ifndef NDEBUG
+    // Assert that Earliest is still consistent with scheduled predecessors.
+    const int RecomputedEarliest = computeEarliestFromPreds(SU, Info);
+    assert(Node.Earliest >= RecomputedEarliest &&
+           "Earliest is stale: predecessor pushes a later cycle");
+#endif
 
     // Earliest tracks the latencies of the loop carried deps
     const int Earliest = Node.Earliest;
