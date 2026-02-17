@@ -373,13 +373,7 @@ Type QuantDialect::parseType(DialectAsmParser &parser) const {
 
 static void printStorageType(QuantizedType type, DialectAsmPrinter &out) {
   // storage type
-  unsigned storageWidth = type.getStorageTypeIntegralWidth();
-  bool isSigned = type.isSigned();
-  if (isSigned) {
-    out << "i" << storageWidth;
-  } else {
-    out << "u" << storageWidth;
-  }
+  out.printType(type.getStorageType());
 
   // storageTypeMin and storageTypeMax if not default.
   if (type.hasStorageTypeBounds()) {
