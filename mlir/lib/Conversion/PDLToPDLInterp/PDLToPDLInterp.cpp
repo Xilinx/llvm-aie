@@ -634,8 +634,11 @@ void PatternLowering::generate(SuccessNode *successNode, Block *&currentBlock) {
 SymbolRefAttr PatternLowering::generateRewriter(
     pdl::PatternOp pattern, SmallVectorImpl<Position *> &usedMatchValues) {
   builder.setInsertionPointToEnd(rewriterModule.getBody());
+  StringRef rewriterName = "pdl_generated_rewriter";
+  if (auto symName = pattern.getSymName())
+    rewriterName = symName.value();
   auto rewriterFunc = builder.create<pdl_interp::FuncOp>(
-      pattern.getLoc(), "pdl_generated_rewriter",
+      pattern.getLoc(), rewriterName,
       builder.getFunctionType(std::nullopt, std::nullopt));
   rewriterSymbolTable.insert(rewriterFunc);
 
