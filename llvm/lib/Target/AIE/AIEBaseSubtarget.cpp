@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -51,6 +51,10 @@ static cl::opt<bool> EnablePipelinerSchedPropagateIncomingLatencies(
 static cl::opt<bool> EnableWAWStickyRegisters(
     "aie-pipeliner-waw-sticky-registers", cl::Hidden, cl::init(true),
     cl::desc("Apply sticky registers WAW dependency removal"));
+
+static cl::opt<bool> EnableRemoveRedundantMemDeps(
+    "aie-pipeliner-remove-redundant-mem-deps", cl::Hidden, cl::init(true),
+    cl::desc("Remove memory dependencies when data dependencies exist"));
 
 static cl::opt<bool> EnableAAInEmitFixedSUnits(
     "aie-enable-aa-emit-fixed-sunits", cl::Hidden, cl::init(true),
@@ -886,6 +890,112 @@ class WAWStickyRegistersEdges : public ScheduleDAGMutation {
   }
 };
 
+/// Remove memory dependencies that are redundant due to existing data/anti
+/// dependency paths. Uses Floyd-Warshall algorithm to compute transitive
+/// closure of data and anti-dependencies, then removes memory dependencies
+/// where a data/anti path already enforces the ordering. Memory barriers are
+/// always preserved.
+class RemoveRedundantMemoryDeps : public ScheduleDAGMutation {
+  void apply(ScheduleDAGInstrs *DAG) override {
+    const unsigned NumSUnits = DAG->SUnits.size();
+    if (NumSUnits == 0)
+      return;
+
+    // Step 1: Compute reachability matrix
+    std::vector<BitVector> Reachable = computeReachability(DAG);
+
+    // Step 2: Remove redundant memory dependencies
+    removeRedundantDeps(DAG, Reachable);
+  }
+
+private:
+  /// Compute transitive closure of data-dependencies using
+  /// Floyd-Warshall. Returns a reachability matrix where Reachable[i][j] =
+  /// true if there's a data path from SUnit i to SUnit j.
+  std::vector<BitVector> computeReachability(ScheduleDAGInstrs *DAG) {
+    const unsigned NumSUnits = DAG->SUnits.size();
+    std::vector<BitVector> Reachable(NumSUnits, BitVector(NumSUnits, false));
+
+    // Initialize: direct data edges
+    for (unsigned I = 0; I < NumSUnits; ++I) {
+      const SUnit &SU = DAG->SUnits[I];
+      for (const SDep &Succ : SU.Succs) {
+        // Include Data (RAW) and not Anti (WAR) dependencies (we may reverse
+        // loads and stores because of negative latencies)
+        if (Succ.getKind() == SDep::Data) {
+          SUnit *SuccSU = Succ.getSUnit();
+          // Skip boundary nodes (EntrySU, ExitSU) - they're not in SUnits array
+          if (!SuccSU->isBoundaryNode()) {
+            unsigned SuccIdx = SuccSU->NodeNum;
+            Reachable[I].set(SuccIdx);
+          }
+        }
+      }
+    }
+
+    // Floyd-Warshall: compute transitive closure
+    for (unsigned K = 0; K < NumSUnits; ++K) {
+      for (unsigned I = 0; I < NumSUnits; ++I) {
+        if (!Reachable[I].test(K))
+          continue;
+
+        // If I->k and K->J exist, then I->J exists
+        Reachable[I] |= Reachable[K];
+      }
+    }
+
+    LLVM_DEBUG(dbgs() << "Computed reachability matrix for " << NumSUnits
+                      << " SUnits\n");
+
+    return Reachable;
+  }
+
+  /// Remove memory dependencies that are redundant due to existing data/anti
+  /// paths. Preserves memory barriers.
+  void removeRedundantDeps(ScheduleDAGInstrs *DAG,
+                           const std::vector<BitVector> &Reachable) {
+    unsigned RemovedCount = 0;
+
+    for (SUnit &SU : DAG->SUnits) {
+      SmallVector<SDep, 4> ToRemove;
+
+      for (const SDep &PredEdge : SU.Preds) {
+        // Only consider memory dependencies (not barriers)
+        if (!PredEdge.isNormalMemoryOrBarrier())
+          continue;
+
+        // PRESERVE memory barriers - they must not be removed
+        if (PredEdge.isBarrier()) {
+          LLVM_DEBUG(dbgs() << "Preserving barrier edge: SU("
+                            << PredEdge.getSUnit()->NodeNum << ") -> SU("
+                            << SU.NodeNum << ")\n");
+          continue;
+        }
+
+        SUnit *PredSU = PredEdge.getSUnit();
+        unsigned PredIdx = PredSU->NodeNum;
+        unsigned SuccIdx = SU.NodeNum;
+
+        // Check if there's a data dependency path
+        if (Reachable[PredIdx].test(SuccIdx)) {
+          ToRemove.push_back(PredEdge);
+          LLVM_DEBUG(dbgs() << "Removing redundant memory edge: SU(" << PredIdx
+                            << ") -> SU(" << SuccIdx << ")\n");
+          ++RemovedCount;
+        }
+      }
+
+      // Remove the redundant edges
+      for (const SDep &Dep : ToRemove) {
+        SU.removePred(Dep);
+      }
+    }
+
+    LLVM_DEBUG(dbgs() << "RemoveRedundantMemoryDeps: removed " << RemovedCount
+                      << " redundant memory edges\n");
+  }
+};
+
 } // namespace
 
 std::vector<std::unique_ptr<ScheduleDAGMutation>>
@@ -895,6 +1005,8 @@ AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT, AAResults *AA) {
   if (!TT.isAIE1()) {
     if (EnableWAWStickyRegisters)
       Mutations.emplace_back(std::make_unique<WAWStickyRegistersEdges>());
+    if (EnableRemoveRedundantMemDeps)
+      Mutations.emplace_back(std::make_unique<RemoveRedundantMemoryDeps>());
     Mutations.emplace_back(std::make_unique<RegionEndEdges>());
     Mutations.emplace_back(std::make_unique<MemoryEdges>(true));
     Mutations.emplace_back(std::make_unique<MachineSchedWAWEdges>());
@@ -935,6 +1047,8 @@ AIEBaseSubtarget::getSMSMutationsImpl(const Triple &TT) {
     Mutations.emplace_back(std::make_unique<SWPWAWEdges>());
     if (EnableWAWStickyRegisters)
       Mutations.emplace_back(std::make_unique<WAWStickyRegistersEdges>());
+    if (EnableRemoveRedundantMemDeps)
+      Mutations.emplace_back(std::make_unique<RemoveRedundantMemoryDeps>());
     if (EnablePipelinerSchedPropagateIncomingLatencies)
       Mutations.emplace_back(std::make_unique<PropagateIncomingLatencies>());
   }
