@@ -56,6 +56,12 @@ def combine_extract_vector_assert_combine : GICombineRule<
   [{ return matchExtractVecEltAssertBcst(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), Observer, ${matchinfo}); }]),
    (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
 
+def combine_extract_broadcast_to_scalar : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_AIE_ZEXT_EXTRACT_VECTOR_ELT, G_AIE_SEXT_EXTRACT_VECTOR_ELT): $root,
+  [{ return matchExtractBroadcastToScalar(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
+
 def combine_symmetric_build_vector : GICombineRule<
   (defs root:$root, build_fn_matchinfo:$matchinfo),
   (match (wip_match_opcode G_BUILD_VECTOR): $root,
@@ -449,6 +455,7 @@ def AIE2PPostLegalizerCustomCombiner
                                                             combine_offset_load_store_ptradd,
                                                             combine_offset_load_store_share_ptradd,
                                                             combine_add_vector_elt_undef,
-                                                            combine_insert_extract_vector_elt_to_copy
+                                                            combine_insert_extract_vector_elt_to_copy,
+                                                            combine_extract_broadcast_to_scalar
                                                              ]> {
 }
