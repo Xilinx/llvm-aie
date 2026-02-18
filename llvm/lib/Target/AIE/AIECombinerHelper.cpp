@@ -4652,6 +4652,64 @@ bool llvm::matchExtractVecEltAssertBcst(MachineInstr &MI,
   return true;
 }
 
+/// G_AIE_BROADCAST_VECTOR %vec, %scalar
+/// G_AIE_[S/Z]EXT_EXTRACT_VECTOR_ELT %dst, %vec, %idx
+/// -> COPY %dst, %scalar (with [s/z]ext if element size < 32)
+bool llvm::matchExtractBroadcastToScalar(MachineInstr &MI,
+                                         MachineRegisterInfo &MRI,
+                                         const AIEBaseInstrInfo &TII,
+                                         BuildFnTy &MatchInfo) {
+  assert(isGenericExtractOpcode(MI.getOpcode(), TII) &&
+         "Expected G_AIE_[S/Z]EXT_EXTRACT_VECTOR_ELT");
+
+  // Get the source vector register
+  const Register SrcVecReg = MI.getOperand(1).getReg();
+  const MachineInstr *SrcMI = MRI.getVRegDef(SrcVecReg);
+  if (!SrcMI)
+    return false;
+
+  // Check if source is G_AIE_BROADCAST_VECTOR
+  if (SrcMI->getOpcode() != TII.getGenericBroadcastVectorOpcode())
+    return false;
+
+  // Get the scalar that was broadcast
+  const Register BroadcastSrcReg = SrcMI->getOperand(1).getReg();
+  const Register DstReg = MI.getOperand(0).getReg();
+
+  // Types must match and 32-bit.
+  const LLT SrcTy = MRI.getType(BroadcastSrcReg);
+  const LLT DstTy = MRI.getType(DstReg);
+  if (SrcTy != DstTy || SrcTy.getScalarSizeInBits() != 32)
+    return false;
+
+  // Get the element size of the vector
+  const LLT VecTy = MRI.getType(SrcVecReg);
+  const unsigned ElemSize = VecTy.getScalarSizeInBits();
+
+  // Determine if this is a sign-extending or zero-extending extract
+  const bool IsSext =
+      MI.getOpcode() == TII.getGenericExtractVectorEltOpcode(/*SignExt=*/true);
+
+  MatchInfo = [DstReg, BroadcastSrcReg, ElemSize, IsSext,
+               DstTy](MachineIRBuilder &B) {
+    if (ElemSize < 32) {
+      if (IsSext) {
+        // Use G_SEXT_INREG for sign extension
+        B.buildSExtInReg(DstReg, BroadcastSrcReg, ElemSize);
+      } else {
+        // Use G_AND with mask for zero extension
+        const uint64_t Mask = (1ULL << ElemSize) - 1;
+        auto MaskReg = B.buildConstant(DstTy, Mask);
+        B.buildAnd(DstReg, BroadcastSrcReg, MaskReg);
+      }
+    } else {
+      B.buildCopy(DstReg, BroadcastSrcReg);
+    }
+  };
+
+  return true;
+}
+
 /// Check if a scalar register contains an MSB-only constant.
 /// This is used to optimize XOR operations with MSB-only constants into ADD.
 /// XOR with MSB toggles the sign bit, which is equivalent to ADD for these
