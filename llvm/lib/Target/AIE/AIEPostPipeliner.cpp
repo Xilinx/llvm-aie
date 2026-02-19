@@ -46,6 +46,15 @@ static cl::opt<int> PresetII("aie-postpipeliner-target-ii",
                              cl::desc("II for which to allow the solver"),
                              cl::init(0), cl::Hidden);
 
+// Debug option. Setting it to one will implement the linear schedule
+// without pipeline parallelism.
+static cl::opt<int>
+    ForcedStageCount("aie-postpipeliner-force-stagecount",
+                     cl::desc("Extract a pipeline with the given stage"
+                              " count. This is only granted if it divides the"
+                              " computed stage count."),
+                     cl::init(0), cl::Hidden);
+
 PipelineScheduleVisitor::~PipelineScheduleVisitor() {}
 
 std::optional<int> PostPipelinerStrategy::fitInInterval(
@@ -1683,14 +1692,14 @@ bool PostPipeliner::checkStages() {
 }
 
 void PostPipeliner::visitPipelineSection(
-    PipelineScheduleVisitor &Visitor, int StageCount,
+    PipelineScheduleVisitor &Visitor, int Repeat,
     std::function<bool(const NodeInfo &Node, int Stage, int M)> Filter) const {
 
-  // This runs StageCount times across the original body instructions and
+  // This runs Repeat times across the original body instructions and
   // calls the bundle emission callbacks according to Filter.
   // It provide the stage and the modulo cycle in that stage
   // (both starting at zero) to the filter
-  for (int Stage = 0; Stage < StageCount; Stage++) {
+  for (int Stage = 0; Stage < Repeat; Stage++) {
     for (int M = 0; M < II; M++) {
       Visitor.startBundle();
       for (int K = 0; K < NInstr; K++) {
@@ -1754,6 +1763,31 @@ void PostPipeliner::updateTripCount() const {
 int PostPipeliner::getFinalMinTripCount() const {
   const int Delta = NStages - 1;
   return MinTripCount - Delta;
+}
+
+void PostPipeliner::materializePipeline(PipelineScheduleVisitor &Visitor) {
+  // A schedule NS=N, II=L is compatible with NS=1, II=N*L.
+  // In general, we can take any divisor of N.
+  // We provide an actual implementation of such less dense
+  // schedules, since it can provide debugging insights.
+  // We avoid the complication of a SEF stage, recognised by the
+  // NPrologueStages vs NStages relation.
+  if (ForcedStageCount && NStages % ForcedStageCount == 0 &&
+      NPrologueStages == NStages - 1) {
+    // Fix the II, recompute ModuloCycle and Stage, fix stagecount and
+    // prologue stages count
+    const int Factor = NStages / ForcedStageCount;
+    II *= Factor;
+    for (int K = 0; K < NInstr; K++) {
+      auto &Node = Info[K];
+      Node.update(II);
+    }
+    NStages = ForcedStageCount;
+    NPrologueStages = NStages - 1;
+  }
+
+  visitPipelineSchedule(Visitor);
+  updateTripCount();
 }
 
 void NodeInfo::reset(bool FullReset) {
