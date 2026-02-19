@@ -368,11 +368,13 @@ public:
   // It will not call the section delimitor methods.
   // \param Filter will decide on calling Visitor.addToBundle().
   void visitPipelineSection(
-      PipelineScheduleVisitor &Visitor, int StageCount,
+      PipelineScheduleVisitor &Visitor, int Repeat,
       std::function<bool(const NodeInfo &Node, int Stage, int M)> Filter) const;
 
   // Modify the tripcount to run StageCount-1 less iterations.
   void updateTripCount() const;
+
+  void materializePipeline(PipelineScheduleVisitor &Visitor);
 
   int getFinalMinTripCount() const;
 
