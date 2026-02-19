@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -39,7 +39,13 @@ using namespace llvm;
 
 namespace {
 
-using RegRewriteInfo = std::vector<std::pair<Register, SmallSet<int, 8>>>;
+struct RegRewriteInfo {
+  // Registers that need bundle expansion (superset - includes rewritable)
+  std::vector<std::pair<Register, SmallSet<int, 8>>> ExpandableRegs;
+
+  // Registers that can be rewritten immediately (subset of ExpandableRegs)
+  std::vector<std::pair<Register, SmallSet<int, 8>>> RewritableRegs;
+};
 
 /// Split large unallocated compound registers into multiple new smaller vregs
 /// Than can be allocated to scalar registers. This pass will handle registers
@@ -75,13 +81,14 @@ public:
 };
 
 /// Identify unallocated virtual registers that can be split into subregisters.
-/// Returns a list of candidate registers with their rewritable subregister
-/// indices, excluding unused registers and those already assigned to physical
-/// registers.
-static RegRewriteInfo getRewriteCandidates(MachineRegisterInfo &MRI,
-                                           const AIEBaseRegisterInfo &TRI,
-                                           VirtRegMap &VRM) {
-  RegRewriteInfo RegistersToRewrite;
+/// Returns both expandable registers (those with copy bundles to expand) and
+/// rewritable registers (subset that can be immediately rewritten).
+/// Excludes unused registers and those already assigned to physical registers.
+static RegRewriteInfo
+getRewriteAndExpandCandidates(MachineRegisterInfo &MRI,
+                              const AIEBaseRegisterInfo &TRI, VirtRegMap &VRM) {
+  RegRewriteInfo Info;
+
   for (unsigned VRegIdx = 0, End = MRI.getNumVirtRegs(); VRegIdx != End;
        ++VRegIdx) {
     const Register Reg = Register::index2VirtReg(VRegIdx);
@@ -93,33 +100,44 @@ static RegRewriteInfo getRewriteCandidates(MachineRegisterInfo &MRI,
     const SmallSet<int, 8> RewritableSubRegs =
         AIESuperRegUtils::getRewritableSubRegs(Reg, MRI, TRI);
 
-    if (RewritableSubRegs.empty())
-      continue;
-
-    LLVM_DEBUG(dbgs() << "Candidate " << printReg(Reg, &TRI, 0, &MRI) << ":"
-                      << printRegClassOrBank(Reg, MRI, &TRI) << '\n');
-
-    RegistersToRewrite.push_back({Reg, RewritableSubRegs});
+    if (!RewritableSubRegs.empty()) {
+      // Register can be rewritten immediately
+      LLVM_DEBUG(dbgs() << "Candidate " << printReg(Reg, &TRI, 0, &MRI) << ":"
+                        << printRegClassOrBank(Reg, MRI, &TRI) << '\n');
+      Info.RewritableRegs.push_back({Reg, RewritableSubRegs});
+      Info.ExpandableRegs.push_back({Reg, RewritableSubRegs});
+    } else if (AIESuperRegUtils::isExpandableRegister(Reg, MRI, TRI)) {
+      // Register is expandable but not immediately rewritable
+      // It needs bundle expansion first
+      auto &SubRegSplit = TRI.getSubRegSplit(MRI.getRegClass(Reg)->getID());
+      SmallSet<int, 8> AllSubRegs(SubRegSplit.begin(), SubRegSplit.end());
+      LLVM_DEBUG(dbgs() << "Expandable (not rewritable) "
+                        << printReg(Reg, &TRI, 0, &MRI) << ":"
+                        << printRegClassOrBank(Reg, MRI, &TRI) << '\n');
+      Info.ExpandableRegs.push_back({Reg, AllSubRegs});
+    }
   }
 
-  LLVM_DEBUG(dbgs() << "Found " << RegistersToRewrite.size()
-                    << " candidate register(s) for rewriting\n");
+  LLVM_DEBUG(dbgs() << "Found " << Info.ExpandableRegs.size()
+                    << " expandable register(s) (" << Info.RewritableRegs.size()
+                    << " immediately rewritable)\n");
 
-  return RegistersToRewrite;
+  return Info;
 }
 
 /// Split candidate registers into independent virtual registers for each
 /// subregister. Each composite register is rewritten using its subregister
 /// indices, with live intervals and debug information updated accordingly.
-void rewriteCandidates(RegRewriteInfo &RegistersToRewrite,
-                       MachineRegisterInfo &MRI, const AIEBaseRegisterInfo &TRI,
-                       VirtRegMap &VRM, LiveRegMatrix &LRM, LiveIntervals &LIS,
-                       SlotIndexes &Indexes, LiveDebugVariables &DebugVars) {
+void rewriteCandidates(
+    const std::vector<std::pair<Register, SmallSet<int, 8>>> &RewritableRegs,
+    MachineRegisterInfo &MRI, const AIEBaseRegisterInfo &TRI, VirtRegMap &VRM,
+    LiveRegMatrix &LRM, LiveIntervals &LIS, SlotIndexes &Indexes,
+    LiveDebugVariables &DebugVars) {
 
-  LLVM_DEBUG(dbgs() << "Rewriting " << RegistersToRewrite.size()
+  LLVM_DEBUG(dbgs() << "Rewriting " << RewritableRegs.size()
                     << " candidate register(s)\n");
 
-  for (auto [VReg, SubRegs] : RegistersToRewrite) {
+  for (auto [VReg, SubRegs] : RewritableRegs) {
     LLVM_DEBUG(dbgs() << "  Rewriting " << printReg(VReg, &TRI, 0, &MRI)
                       << " into " << SubRegs.size() << " subregister(s)\n");
     std::optional<Register> NoPhysReg = {};
@@ -128,16 +146,16 @@ void rewriteCandidates(RegRewriteInfo &RegistersToRewrite,
   }
 }
 
-/// Unbundle COPY/KILL instruction bundles for registers being rewritten.
+/// Unbundle COPY/KILL instruction bundles for expandable registers.
 /// Bundled instructions are separated into individual instructions with updated
 /// slot indexes, and live intervals are repaired for affected registers.
-static void expandCopyBundles(RegRewriteInfo &RegistersToRewrite,
-                              MachineRegisterInfo &MRI, SlotIndexes &Indexes,
-                              LiveIntervals &LIS, VirtRegMap &VRM,
-                              LiveRegMatrix &LRM) {
+static void expandCopyBundles(
+    const std::vector<std::pair<Register, SmallSet<int, 8>>> &ExpandableRegs,
+    MachineRegisterInfo &MRI, SlotIndexes &Indexes, LiveIntervals &LIS,
+    VirtRegMap &VRM, LiveRegMatrix &LRM) {
 
   SmallSet<Register, 8> RegistersToRepair;
-  for (auto [VReg, SubRegs] : RegistersToRewrite) {
+  for (auto [VReg, SubRegs] : ExpandableRegs) {
 
     for (MachineInstr &MI : MRI.def_instructions(VReg)) {
 
@@ -203,25 +221,25 @@ bool AIEUnallocatedSuperRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   auto &TRI =
       *static_cast<const AIEBaseRegisterInfo *>(MRI.getTargetRegisterInfo());
 
-  LLVM_DEBUG(dbgs() << "Identifying rewrite candidates...\n");
-  RegRewriteInfo RegistersToRewrite = getRewriteCandidates(MRI, TRI, VRM);
+  LLVM_DEBUG(dbgs() << "Identifying rewrite and expand candidates...\n");
+  RegRewriteInfo Info = getRewriteAndExpandCandidates(MRI, TRI, VRM);
 
-  if (RegistersToRewrite.empty()) {
+  if (Info.ExpandableRegs.empty()) {
     LLVM_DEBUG(dbgs() << "No candidates found, skipping rewrite\n");
     return false;
   }
 
   LLVM_DEBUG(dbgs() << "Expanding copy bundles...\n");
-  expandCopyBundles(RegistersToRewrite, MRI, Indexes, LIS, VRM, LRM);
+  expandCopyBundles(Info.ExpandableRegs, MRI, Indexes, LIS, VRM, LRM);
 
   LLVM_DEBUG(dbgs() << "Performing register rewrites...\n");
-  rewriteCandidates(RegistersToRewrite, MRI, TRI, VRM, LRM, LIS, Indexes,
+  rewriteCandidates(Info.RewritableRegs, MRI, TRI, VRM, LRM, LIS, Indexes,
                     DebugVars);
 
-  LLVM_DEBUG(dbgs() << "Successfully rewrote " << RegistersToRewrite.size()
+  LLVM_DEBUG(dbgs() << "Successfully rewrote " << Info.RewritableRegs.size()
                     << " register(s)\n");
 
-  return !RegistersToRewrite.empty();
+  return !Info.RewritableRegs.empty();
 }
 
 } // end anonymous namespace

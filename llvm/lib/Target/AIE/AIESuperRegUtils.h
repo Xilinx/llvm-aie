@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -34,6 +34,13 @@ class LiveDebugVariables;
 } // namespace llvm
 
 namespace llvm::AIESuperRegUtils {
+
+/// Checks if a register is expandable (has a subregister split).
+/// This is a lightweight check that only verifies if the register has
+/// potential to be split into subregisters, without analyzing uses.
+/// Returns true if the register is virtual and has a non-trivial SubRegSplit.
+bool isExpandableRegister(Register Reg, const MachineRegisterInfo &MRI,
+                          const AIEBaseRegisterInfo &TRI);
 
 /// Determines if a composite register can be safely decomposed into its
 /// subregisters by analyzing all uses. A register is rewritable if all uses
