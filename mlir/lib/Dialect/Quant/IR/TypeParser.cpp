@@ -47,7 +47,7 @@ static IntegerType parseStorageType(DialectAsmParser &parser, bool &isSigned) {
       return nullptr;
     }
     isSigned = false;
-    type = parser.getBuilder().getIntegerType(storageTypeWidth);
+    type = parser.getBuilder().getIntegerType(storageTypeWidth, false);
   } else {
     return nullptr;
   }
