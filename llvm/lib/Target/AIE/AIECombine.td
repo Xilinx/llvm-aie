@@ -115,6 +115,13 @@ def combine_unpad_vector : GICombineRule<
   (apply [{ applyUnpadVector(*${root}, MRI, B, Observer); }])
 >;
 
+def combine_vshift_chain_to_copy : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_AIE_VSHIFT_RIGHT): $root,
+  [{ return matchVShiftChainToCopy(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])
+>;
+
 def combine_vector_broadcast : GICombineRule<
   (defs root:$root, combine_splat_vector_matchdata:$matchinfo),
   (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
@@ -331,7 +338,8 @@ def aie2p_additional_combines : GICombineGroup<[
   combine_vector_shuffle_to_extract_insert_elt_to_broadcast,
   combine_bitcast_unmerge_swap,
   combine_phi_bitcast_swap,
-  combine_vsel_to_unmerge_concat
+  combine_vsel_to_unmerge_concat,
+  combine_vshift_chain_to_copy
 ]>;
 
 def AIE2PreLegalizerCombiner
@@ -469,8 +477,19 @@ def AIE2PostLegalizerCustomCombiner
 }
 
 def AIE2PPostLegalizerCustomCombiner
-    : GICombiner<"AIE2PPostLegalizerCustomCombinerImpl",
-                 [aie_postlegalizer_custom_shared_combines, aie2p_plus_postlegalizer_custom_combines]> {
+    : GICombiner<"AIE2PPostLegalizerCustomCombinerImpl", [  
+                                                            combine_broadcast_extract_to_copy,
+                                                            combine_extract_vector_assert_combine,
+                                                            combine_extract_broadcast_to_scalar,
+                                                            combine_global_load_store_increment,
+                                                            combine_load_store_increment,
+                                                            ptr_add_immed_chain,
+                                                            combine_offset_load_store_ptradd,
+                                                            combine_offset_load_store_share_ptradd,
+                                                            combine_add_vector_elt_undef,
+                                                            combine_insert_extract_vector_elt_to_copy,
+                                                            combine_vshift_chain_to_copy
+                                                             ]> {
 }
 
 def AIE2PSPreLegalizerCombiner
