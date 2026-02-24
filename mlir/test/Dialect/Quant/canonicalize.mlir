@@ -22,8 +22,8 @@ func.func @dcast_fold(%arg0: tensor<4xf32>) -> tensor<4xf32> {
 // CHECK: return %[[VAL_1]]
 
 !qalias = !quant.uniform<u8:f32, 2.0:128>
-func.func @dcast_no_fold_source(%arg0: tensor<4xi8>) -> tensor<4xf32> {
-  %0 = quant.scast %arg0 : tensor<4xi8> to tensor<4x!qalias>
+func.func @dcast_no_fold_source(%arg0: tensor<4xui8>) -> tensor<4xf32> {
+  %0 = quant.scast %arg0 : tensor<4xui8> to tensor<4x!qalias>
   %1 = quant.dcast %0 : tensor<4x!qalias> to tensor<4xf32>
   return %1 : tensor<4xf32>
 }
@@ -84,8 +84,8 @@ func.func @qcast_no_fold_type(%arg0: tensor<4x!qalias>) -> tensor<4x!qalias1> {
 
 !qalias = !quant.uniform<u8:f32, 2.0:128>
 func.func @scast_fold(%arg0: tensor<4x!qalias>) -> tensor<4x!qalias> {
-  %0 = quant.scast %arg0 : tensor<4x!qalias> to tensor<4xi8>
-  %1 = quant.scast %0 : tensor<4xi8> to tensor<4x!qalias>
+  %0 = quant.scast %arg0 : tensor<4x!qalias> to tensor<4xui8>
+  %1 = quant.scast %0 : tensor<4xui8> to tensor<4x!qalias>
   return %1 : tensor<4x!qalias>
 }
 
@@ -99,10 +99,10 @@ func.func @scast_fold(%arg0: tensor<4x!qalias>) -> tensor<4x!qalias> {
 // CHECK: return %[[SCAST]]
 
 !qalias = !quant.uniform<u8:f32, 2.0:128>
-func.func @scast_no_fold_source(%arg0: tensor<4xf32>) -> tensor<4xi8> {
+func.func @scast_no_fold_source(%arg0: tensor<4xf32>) -> tensor<4xui8> {
   %0 = quant.qcast %arg0 : tensor<4xf32> to tensor<4x!qalias>
-  %1 = quant.scast %0 : tensor<4x!qalias> to tensor<4xi8>
-  return %1 : tensor<4xi8>
+  %1 = quant.scast %0 : tensor<4x!qalias> to tensor<4xui8>
+  return %1 : tensor<4xui8>
 }
 
 // -----
@@ -117,8 +117,8 @@ func.func @scast_no_fold_source(%arg0: tensor<4xf32>) -> tensor<4xi8> {
 !qalias = !quant.uniform<u8:f32, 2.0:128>
 !qalias1 = !quant.uniform<u8:f32, 3.0:128>
 func.func @scast_no_fold_type(%arg0: tensor<4x!qalias>) -> tensor<4x!qalias1> {
-  %0 = quant.scast %arg0 : tensor<4x!qalias> to tensor<4xi8>
-  %1 = quant.scast %0 : tensor<4xi8> to tensor<4x!qalias1>
+  %0 = quant.scast %arg0 : tensor<4x!qalias> to tensor<4xui8>
+  %1 = quant.scast %0 : tensor<4xui8> to tensor<4x!qalias1>
   return %1 : tensor<4x!qalias1>
 }
 
