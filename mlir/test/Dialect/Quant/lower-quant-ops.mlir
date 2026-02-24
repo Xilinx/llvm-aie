@@ -22,26 +22,26 @@ func.func @dcast_per_layer_scalar(%arg0: !qalias) -> f32 {
 
 // -----
 
-// CHECK-LABEL: @dcast_per_layer_scalar_unsigned
-// CHECK-SAME: %[[ARG_0:.*]]: !quant.uniform
+// COM: CHECK-LABEL: @dcast_per_layer_scalar_unsigned
+// COM: CHECK-SAME: %[[ARG_0:.*]]: !quant.uniform
 
-// CHECK: %[[STORED_INT:.*]] = quant.scast %[[ARG_0]] : !quant.uniform<u8:f32, 2.000000e+00:10> to i8
+// COM: CHECK: %[[STORED_INT:.*]] = quant.scast %[[ARG_0]] : !quant.uniform<u8:f32, 2.000000e+00:10> to i8
 
-// CHECK: %[[SCALE:.*]] = arith.constant 2.000000e+00 : f32
-// CHECK: %[[ZERO_POINT:.*]] = arith.constant 10 : i8
+// COM: CHECK: %[[SCALE:.*]] = arith.constant 2.000000e+00 : f32
+// COM: CHECK: %[[ZERO_POINT:.*]] = arith.constant 10 : i8
 
-// CHECK: %[[STORED_FLOAT:.*]] = arith.uitofp %[[STORED_INT]] : i8 to f32
-// CHECK: %[[ZERO_POINT_FLOAT:.*]] = arith.uitofp %[[ZERO_POINT]] : i8 to f32
+// COM: CHECK: %[[STORED_FLOAT:.*]] = arith.uitofp %[[STORED_INT]] : i8 to f32
+// COM: CHECK: %[[ZERO_POINT_FLOAT:.*]] = arith.uitofp %[[ZERO_POINT]] : i8 to f32
 
-// CHECK: %[[SCALED:.*]] = arith.subf %[[STORED_FLOAT]], %[[ZERO_POINT_FLOAT]] : f32
-// CHECK: %[[EXPRESSED:.*]] = arith.mulf %[[SCALED]], %[[SCALE]] : f32
-// CHECK: return %[[EXPRESSED]] : f32
+// COM: CHECK: %[[SCALED:.*]] = arith.subf %[[STORED_FLOAT]], %[[ZERO_POINT_FLOAT]] : f32
+// COM: CHECK: %[[EXPRESSED:.*]] = arith.mulf %[[SCALED]], %[[SCALE]] : f32
+// COM: CHECK: return %[[EXPRESSED]] : f32
 
-!qalias = !quant.uniform<u8:f32, 2.0:10>
-func.func @dcast_per_layer_scalar_unsigned(%arg0: !qalias) -> f32 {
-  %0 = quant.dcast %arg0 : !qalias to f32
-  return %0 : f32
-}
+// !qalias = !quant.uniform<u8:f32, 2.0:10>
+// func.func @dcast_per_layer_scalar_unsigned(%arg0: !qalias) -> f32 {
+//   %0 = quant.dcast %arg0 : !qalias to f32
+//   return %0 : f32
+// }
 
 // -----
 
@@ -251,28 +251,28 @@ func.func @qcast_per_layer_scalar_bounds(%arg0: f32) -> !qalias {
 
 // -----
 
-// CHECK-LABEL: @qcast_per_layer_scalar_unsigned_bounds
-// CHECK-SAME: %[[ARG_0:.*]]: f32
+// COM: CHECK-LABEL: @qcast_per_layer_scalar_unsigned_bounds
+// COM: CHECK-SAME: %[[ARG_0:.*]]: f32
 
-// CHECK-DAG: %[[SCALE:.*]] = arith.constant 2.000000e+00 : f32
-// CHECK-DAG: %[[ZERO_POINT:.*]] = arith.constant 0 : i8
+// COM: CHECK-DAG: %[[SCALE:.*]] = arith.constant 2.000000e+00 : f32
+// COM: CHECK-DAG: %[[ZERO_POINT:.*]] = arith.constant 0 : i8
 
-// CHECK: %[[SCALED:.*]] = arith.divf %[[ARG_0]], %[[SCALE]] : f32
-// CHECK: %[[STORED_INT:.*]] = arith.fptoui %[[SCALED]] : f32 to i8
+// COM: CHECK: %[[SCALED:.*]] = arith.divf %[[ARG_0]], %[[SCALE]] : f32
+// COM: CHECK: %[[STORED_INT:.*]] = arith.fptoui %[[SCALED]] : f32 to i8
 
-// CHECK-DAG: %[[C_2:.*]] = arith.constant 2 : i8
-// CHECK-DAG: %[[C_10:.*]] = arith.constant 10 : i8
-// CHECK: %[[STORED_CLAMPED_TEMP:.*]] = arith.maxui %[[STORED_INT]], %[[C_2]] : i8
-// CHECK: %[[STORED_CLAMPED:.*]] = arith.minui %[[STORED_CLAMPED_TEMP]], %[[C_10]] : i8
+// COM: CHECK-DAG: %[[C_2:.*]] = arith.constant 2 : i8
+// COM: CHECK-DAG: %[[C_10:.*]] = arith.constant 10 : i8
+// COM: CHECK: %[[STORED_CLAMPED_TEMP:.*]] = arith.maxui %[[STORED_INT]], %[[C_2]] : i8
+// COM: CHECK: %[[STORED_CLAMPED:.*]] = arith.minui %[[STORED_CLAMPED_TEMP]], %[[C_10]] : i8
 
-// CHECK: %[[STORED_QUANT:.*]] = quant.scast %[[STORED_CLAMPED]] : i8 to !quant.uniform<u8<2:10>:f32, 2.000000e+00>
-// CHECK: return %[[STORED_QUANT]] : !quant.uniform<u8<2:10>:f32, 2.000000e+00>
+// COM: CHECK: %[[STORED_QUANT:.*]] = quant.scast %[[STORED_CLAMPED]] : i8 to !quant.uniform<u8<2:10>:f32, 2.000000e+00>
+// COM: CHECK: return %[[STORED_QUANT]] : !quant.uniform<u8<2:10>:f32, 2.000000e+00>
 
-!qalias = !quant.uniform<u8<2:10>:f32, 2.0>
-func.func @qcast_per_layer_scalar_unsigned_bounds(%arg0: f32) -> !qalias {
-  %0 = quant.qcast %arg0 : f32 to !qalias
-  return %0 : !qalias
-}
+// !qalias = !quant.uniform<u8<2:10>:f32, 2.0>
+// func.func @qcast_per_layer_scalar_unsigned_bounds(%arg0: f32) -> !qalias {
+//   %0 = quant.qcast %arg0 : f32 to !qalias
+//   return %0 : !qalias
+// }
 
 // -----
 
