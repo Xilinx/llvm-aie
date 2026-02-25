@@ -220,7 +220,6 @@ private:
                           CodeGenCoverage &CoverageInfo) const = 0;
 
 private:
-  const AIEBaseSubtarget &STI;
   const AIEBaseInstrInfo &TII;
   const AIEBaseRegisterInfo &TRI;
   const AIEBaseRegisterBankInfo &RBI;
