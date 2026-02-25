@@ -4,8 +4,8 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie2p -run-pass=instruction-select -verify-machineinstrs %s -verify-machineinstrs -o - | FileCheck %s
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -mtriple aie2p -run-pass=instruction-select -verify-machineinstrs %s -o - | FileCheck %s
 
 ...
 
@@ -34,6 +34,42 @@ body:             |
     %7:vregbank(<32 x s16>) = G_AIE_BROADCAST_VECTOR %5(s32)
     %8:vregbank(<16 x s32>) = G_BITCAST %7(<32 x s16>)
     %9:vregbank(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2p.vshuffle), %8(<16 x s32>), %1(<16 x s32>), %2(s32)
+    %10:vregbank(<32 x s16>) = G_BITCAST %9(<16 x s32>)
+    PseudoRET implicit $lr, implicit %10(<32 x s16>)
+...
+
+# Unlike the tests above where the second vshuffle operand is a direct
+# G_IMPLICIT_DEF, the following tests use a COPY of G_IMPLICIT_DEF through
+# fiforegbank. This cross-bank copy is the pattern produced by the legalizer
+# and prevents ISel from recognizing the operand as undef.
+#
+# 16-bit variant with cross-bank COPY of G_IMPLICIT_DEF.
+---
+name:              vextbcstshfl_16_copy_undef
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $x2, $r0
+    ; CHECK-LABEL: name: vextbcstshfl_16_copy_undef
+    ; CHECK: liveins: $x2, $r0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:fifo512 = IMPLICIT_DEF
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY [[DEF]]
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 28
+    ; CHECK-NEXT: [[VEXTBCST_16_vec_extract_broadcast_imm:%[0-9]+]]:vec512 = VEXTBCST_16_vec_extract_broadcast_imm [[COPY]], 0
+    ; CHECK-NEXT: [[VSHUFFLE_vec_shuffle_x:%[0-9]+]]:vec512 = VSHUFFLE_vec_shuffle_x [[VEXTBCST_16_vec_extract_broadcast_imm]], [[COPY1]], [[MOV_RLC_imm11_pseudo]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VSHUFFLE_vec_shuffle_x]]
+    %0:vregbank(<32 x s16>) = COPY $x2
+    %1:fiforegbank(<16 x s32>) = G_IMPLICIT_DEF
+    %2:vregbank(<16 x s32>) = COPY %1(<16 x s32>)
+    %3:gprregbank(s32) = G_CONSTANT i32 28
+    %4:gprregbank(s32) = G_CONSTANT i32 0
+    %5:gprregbank(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %0(<32 x s16>), %4(s32)
+    %7:vregbank(<32 x s16>) = G_AIE_BROADCAST_VECTOR %5(s32)
+    %8:vregbank(<16 x s32>) = G_BITCAST %7(<32 x s16>)
+    %9:vregbank(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2p.vshuffle), %8(<16 x s32>), %2(<16 x s32>), %3(s32)
     %10:vregbank(<32 x s16>) = G_BITCAST %9(<16 x s32>)
     PseudoRET implicit $lr, implicit %10(<32 x s16>)
 ...
@@ -68,6 +104,40 @@ body:             |
     PseudoRET implicit $lr, implicit %10(<32 x s16>)
 ...
 
+# 32-bit variant with cross-bank COPY of G_IMPLICIT_DEF.
+---
+name:              vextbcstshfl_32_copy_undef
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $x2, $r0
+    ; CHECK-LABEL: name: vextbcstshfl_32_copy_undef
+    ; CHECK: liveins: $x2, $r0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:fifo512 = IMPLICIT_DEF
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY [[DEF]]
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 28
+    ; CHECK-NEXT: [[VEXTRACT_32_vec_extract_imm_vaddSign1_:%[0-9]+]]:er = VEXTRACT_32_vec_extract_imm_vaddSign1 [[COPY]], 0, implicit $vaddsign1
+    ; CHECK-NEXT: [[VBCST_32_:%[0-9]+]]:vec512 = VBCST_32 [[VEXTRACT_32_vec_extract_imm_vaddSign1_]]
+    ; CHECK-NEXT: [[VSHUFFLE_vec_shuffle_x:%[0-9]+]]:vec512 = VSHUFFLE_vec_shuffle_x [[VBCST_32_]], [[COPY1]], [[MOV_RLC_imm11_pseudo]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VSHUFFLE_vec_shuffle_x]]
+    %0:vregbank(<16 x s32>) = COPY $x2
+    %1:fiforegbank(<16 x s32>) = G_IMPLICIT_DEF
+    %2:vregbank(<16 x s32>) = COPY %1(<16 x s32>)
+    %3:gprregbank(s32) = G_CONSTANT i32 28
+    %4:gprregbank(s32) = G_CONSTANT i32 0
+    %5:gprregbank(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %0(<16 x s32>), %4(s32)
+    %6:gprregbank(<2 x s16>) = G_BITCAST %5(s32)
+    %7:vregbank(<32 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2p.vbroadcast32.bf512), %6(<2 x s16>)
+    %8:vregbank(<16 x s32>) = G_BITCAST %7(<32 x s16>)
+    %9:vregbank(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2p.vshuffle), %8(<16 x s32>), %2(<16 x s32>), %3(s32)
+    %10:vregbank(<32 x s16>) = G_BITCAST %9(<16 x s32>)
+    PseudoRET implicit $lr, implicit %10(<32 x s16>)
+...
+
+
 ---
 name:              vextbcstshfl_64
 legalized:       true
@@ -98,6 +168,39 @@ body:             |
     PseudoRET implicit $lr, implicit %10(<32 x s16>)
 ...
 
+# 64-bit variant with cross-bank COPY of G_IMPLICIT_DEF.
+---
+name:              vextbcstshfl_64_copy_undef
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $x2, $r0
+    ; CHECK-LABEL: name: vextbcstshfl_64_copy_undef
+    ; CHECK: liveins: $x2, $r0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:fifo512 = IMPLICIT_DEF
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY [[DEF]]
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 28
+    ; CHECK-NEXT: [[VEXTRACT_64_vec_extract_imm_vaddSign1_:%[0-9]+]]:el = VEXTRACT_64_vec_extract_imm_vaddSign1 [[COPY]], 0, implicit $vaddsign1
+    ; CHECK-NEXT: [[VBCST_64_:%[0-9]+]]:vec512 = VBCST_64 [[VEXTRACT_64_vec_extract_imm_vaddSign1_]]
+    ; CHECK-NEXT: [[VSHUFFLE_vec_shuffle_x:%[0-9]+]]:vec512 = VSHUFFLE_vec_shuffle_x [[VBCST_64_]], [[COPY1]], [[MOV_RLC_imm11_pseudo]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VSHUFFLE_vec_shuffle_x]]
+    %0:vregbank(<16 x s32>) = COPY $x2
+    %1:fiforegbank(<16 x s32>) = G_IMPLICIT_DEF
+    %2:vregbank(<16 x s32>) = COPY %1(<16 x s32>)
+    %3:gprregbank(s32) = G_CONSTANT i32 28
+    %4:gprregbank(s32) = G_CONSTANT i32 0
+    %5:gprregbank(<2 x s32>) = G_AIE_EXTRACT_SUBVECTOR %0(<16 x s32>), %4(s32)
+    %6:gprregbank(<4 x s16>) = G_BITCAST %5(<2 x s32>)
+    %7:vregbank(<32 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2p.vbroadcast64.bf512), %6(<4 x s16>)
+    %8:vregbank(<16 x s32>) = G_BITCAST %7(<32 x s16>)
+    %9:vregbank(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2p.vshuffle), %8(<16 x s32>), %2(<16 x s32>), %3(s32)
+    %10:vregbank(<32 x s16>) = G_BITCAST %9(<16 x s32>)
+    PseudoRET implicit $lr, implicit %10(<32 x s16>)
+...
+
 ---
 name:              vextbcstshfl_128
 legalized:       true
@@ -122,5 +225,36 @@ body:             |
     %5:vregbank(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2p.vextract.broadcast128.I512), %4(<16 x s32>), %3(s32)
     %6:vregbank(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2p.vshuffle), %5(<16 x s32>), %1(<16 x s32>), %2(s32)
     %10:vregbank(<32 x s16>) = G_BITCAST %6(<16 x s32>)
+    PseudoRET implicit $lr, implicit %10(<32 x s16>)
+...
+
+# 128-bit variant with cross-bank COPY of G_IMPLICIT_DEF.
+---
+name:              vextbcstshfl_128_copy_undef
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: vextbcstshfl_128_copy_undef
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:fifo512 = IMPLICIT_DEF
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY [[DEF]]
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 28
+    ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[COPY]], 0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VEXTBCST_128_vec_extract_broadcast_imm:%[0-9]+]]:vec512 = VEXTBCST_128_vec_extract_broadcast_imm [[VLD_x_idx_imm_pseudo]], 0
+    ; CHECK-NEXT: [[VSHUFFLE_vec_shuffle_x:%[0-9]+]]:vec512 = VSHUFFLE_vec_shuffle_x [[VEXTBCST_128_vec_extract_broadcast_imm]], [[COPY1]], [[MOV_RLC_imm11_pseudo]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VSHUFFLE_vec_shuffle_x]]
+    %0:ptrregbank(p0) = COPY $p0
+    %1:fiforegbank(<16 x s32>) = G_IMPLICIT_DEF
+    %2:vregbank(<16 x s32>) = COPY %1(<16 x s32>)
+    %3:gprregbank(s32) = G_CONSTANT i32 28
+    %4:gprregbank(s32) = G_CONSTANT i32 0
+    %5:vregbank(<16 x s32>) = G_LOAD %0(p0) :: (load (<16 x s32>))
+    %6:vregbank(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2p.vextract.broadcast128.I512), %5(<16 x s32>), %4(s32)
+    %7:vregbank(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2p.vshuffle), %6(<16 x s32>), %2(<16 x s32>), %3(s32)
+    %10:vregbank(<32 x s16>) = G_BITCAST %7(<16 x s32>)
     PseudoRET implicit $lr, implicit %10(<32 x s16>)
 ...
