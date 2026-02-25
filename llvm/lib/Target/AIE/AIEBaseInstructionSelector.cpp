@@ -773,8 +773,7 @@ bool AIEBaseInstructionSelector::selectG_AIE_LOAD_CONV(
 
   // We can try to advance the combined
   // instruction to the load's position.
-  // Note: only for AIE2P due to performance reasons.
-  if (STI.isAIE2P() && canAdvanceOp(*LoadOp, CONVI, MRI)) {
+  if (canAdvanceOp(*LoadOp, CONVI, MRI)) {
     ShouldAdvanceOp = true;
   } else if (!canDelayMemOp(*LoadOp, CONVI, MRI)) {
     // Do not try to combine if one of the load's defs is used by another
