@@ -15,6 +15,7 @@
 #include "AIESWPSolver.h"
 #include "AIESlotUtils.h"
 #include "Utils/AIELoopUtils.h"
+#include "Utils/AIEMachineInstrPrint.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Analysis/OptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
@@ -1361,8 +1362,9 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval,
 
   Info.init(NInstr);
 
-  LLVM_DEBUG(for (int I = 0; I < NInstr;
-                  I++) { dbgs() << I << " " << *DAG->SUnits[I].getInstr(); });
+  LLVM_DEBUG(for (int I = 0; I < NInstr; I++) {
+    dbgs() << I << " " << NoDebug(*DAG->SUnits[I].getInstr());
+  });
   LLVM_DEBUG(dumpGraph(Info, DAG));
 
   computeLoopCarriedParameters();
