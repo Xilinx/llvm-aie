@@ -138,6 +138,9 @@
 
 ; AIE-O0123-NEXT:      RegBankSelect
 ; AIE-O0123-NEXT:      Analysis for ComputingKnownBits
+; AIE-O0123-NEXT:      MachineDominator Tree Construction
+; AIE-O0123-NEXT:      Analysis containing CSE Info
+; AIE-O0123-NEXT:      AIE Pre-ISel Combiner
 
 ; AIE-O123-NEXT:      Lazy Branch Probability Analysis
 ; AIE-O123-NEXT:      Lazy Block Frequency Analysis

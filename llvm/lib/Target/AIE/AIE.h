@@ -35,9 +35,9 @@ class RegisterBankInfo;
 class ImmutablePass;
 
 void LowerAIEMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
-                                    const AsmPrinter &AP);
+                                  const AsmPrinter &AP);
 bool LowerAIEMachineOperandToMCOperand(const MachineOperand &MO,
-                                         MCOperand &MCOp, const AsmPrinter &AP);
+                                       MCOperand &MCOp, const AsmPrinter &AP);
 
 FunctionPass *createAIEISelDag(AIETargetMachine &TM);
 FunctionPass *createAIEFinalizeBundle();
@@ -63,6 +63,8 @@ FunctionPass *createAIEWawRegRewriter();
 FunctionPass *createAIEUnallocatedSuperRegRewriter();
 FunctionPass *createAIESpillSlotOptimization();
 FunctionPass *createAIEPostSelectOptimize();
+FunctionPass *createAIEPreISelCombiner();
+void initializeAIEPreISelCombinerPass(PassRegistry &);
 MachineFunctionPass *
 createDeadMachineInstructionElim(bool KeepLifetimeInstructions);
 
@@ -113,6 +115,6 @@ llvm::FunctionPass *createAIERegClassConstrainer();
 extern char &ReservedRegsLICMID;
 void initializeReservedRegsLICMPass(PassRegistry &);
 llvm::FunctionPass *createReservedRegsLICMPass();
-}
+} // namespace llvm
 
 #endif
