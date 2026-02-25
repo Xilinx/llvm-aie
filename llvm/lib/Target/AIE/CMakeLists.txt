@@ -33,6 +33,8 @@ tablegen(LLVM AIE2GenPostLegalizerGIGenericCombiner.inc -gen-global-isel-combine
               -combiners="AIE2PostLegalizerGenericCombiner")
 tablegen(LLVM AIE2GenPostLegalizerGICustomCombiner.inc -gen-global-isel-combiner -gisel-subtarget-class AIEBaseSubtarget
               -combiners="AIE2PostLegalizerCustomCombiner")
+tablegen(LLVM AIEGenPreISelGICombiner.inc -gen-global-isel-combiner -gisel-subtarget-class AIEBaseSubtarget
+              -combiners="AIEPreISelCombiner")
 tablegen(LLVM AIE2GenCallingConv.inc -gen-callingconv)
 tablegen(LLVM AIE2GenDisassemblerTables.inc -gen-disassembler)
 tablegen(LLVM AIE2GenFormats.inc -gen-instr-format)
@@ -123,6 +125,7 @@ add_llvm_target(AIECodeGen
    AIEGlobalCombiner.cpp
    AIEGlobalCombinerPtrMods.cpp
    AIEHazardRecognizer.cpp
+   AIEPreISelCombiner.cpp
    AIEInterBlockScheduling.cpp
    AIEISelDAGToDAG.cpp
    AIELegalizerHelper.cpp

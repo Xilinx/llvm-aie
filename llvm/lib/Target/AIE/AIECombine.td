@@ -478,3 +478,15 @@ def AIE2PSPostLegalizerCustomCombiner
     : GICombiner<"AIE2PSPostLegalizerCustomCombinerImpl",
                  [aie_postlegalizer_custom_shared_combines, aie2p_plus_postlegalizer_custom_combines]> {
 }
+
+def combine_copy_of_implicit_def : GICombineRule<
+  (defs root:$root),
+  (match (wip_match_opcode COPY):$root,
+         [{ return matchCopyOfImplicitDef(*${root}, MRI); }]),
+  (apply [{ applyCopyOfImplicitDef(*${root}, MRI, B, Observer); }])
+>;
+
+def AIEPreISelCombiner
+    : GICombiner<"AIEPreISelCombinerImpl",
+                 [combine_copy_of_implicit_def]> {
+}

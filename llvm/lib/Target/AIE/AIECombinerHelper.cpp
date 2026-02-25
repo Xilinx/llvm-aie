@@ -2125,6 +2125,40 @@ bool llvm::matchOffsetLoadStoreSharePtrAdd(MachineInstr &MI,
   return false;
 }
 
+bool llvm::matchCopyOfImplicitDef(MachineInstr &MI, MachineRegisterInfo &MRI) {
+  assert(MI.isCopy() && "Expected a COPY instruction");
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register SrcReg = MI.getOperand(1).getReg();
+  if (!DstReg.isVirtual() || !SrcReg.isVirtual())
+    return false;
+  const MachineInstr *SrcDef = MRI.getVRegDef(SrcReg);
+  if (!SrcDef || SrcDef->getOpcode() != TargetOpcode::G_IMPLICIT_DEF)
+    return false;
+  return MRI.getType(DstReg) == MRI.getType(SrcReg);
+}
+
+void llvm::applyCopyOfImplicitDef(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                  MachineIRBuilder &B,
+                                  GISelChangeObserver &Observer) {
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register SrcReg = MI.getOperand(1).getReg();
+  const RegisterBank *DstRB = MRI.getRegBankOrNull(DstReg);
+  const RegisterBank *SrcRB = MRI.getRegBankOrNull(SrcReg);
+  if (DstRB == SrcRB) {
+    MRI.replaceRegWith(DstReg, SrcReg);
+  } else {
+    const LLT DstTy = MRI.getType(DstReg);
+    const Register NewReg = MRI.createGenericVirtualRegister(DstTy);
+    if (DstRB)
+      MRI.setRegBank(NewReg, *DstRB);
+    B.setInsertPt(*MI.getParent(), MI.getIterator());
+    B.buildInstr(TargetOpcode::G_IMPLICIT_DEF, {NewReg}, {});
+    MRI.replaceRegWith(DstReg, NewReg);
+  }
+  Observer.erasingInstr(MI);
+  MI.eraseFromParent();
+}
+
 void llvm::applyOffsetLoadStoreSharePtrAdd(MachineInstr &MI,
                                            MachineRegisterInfo &MRI,
                                            MachineIRBuilder &B,

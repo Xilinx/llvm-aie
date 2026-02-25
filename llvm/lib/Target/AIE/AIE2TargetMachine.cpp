@@ -103,6 +103,10 @@ void AIE2PassConfig::addPreRegBankSelect() {
   }
 }
 
+void AIE2PassConfig::addPreGlobalInstructionSelect() {
+  addPass(createAIEPreISelCombiner());
+}
+
 bool AIE2PassConfig::addGlobalInstructionSelect() {
   addPass(new InstructionSelect(getOptLevel()));
   if (getOptLevel() != CodeGenOptLevel::None) {

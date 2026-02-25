@@ -359,6 +359,10 @@ bool matchVSelToUnmergeConcatOrCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
                                     const AIEBaseInstrInfo &TII,
                                     BuildFnTy &MatchInfo);
 
+bool matchCopyOfImplicitDef(MachineInstr &MI, MachineRegisterInfo &MRI);
+void applyCopyOfImplicitDef(MachineInstr &MI, MachineRegisterInfo &MRI,
+                            MachineIRBuilder &B, GISelChangeObserver &Observer);
+
 } // namespace llvm
 
 #endif

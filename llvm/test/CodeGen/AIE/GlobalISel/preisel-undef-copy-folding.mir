@@ -7,8 +7,8 @@
 # (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 
 
-# RUN: llc -mtriple aie2 -run-pass=none -verify-machineinstrs %s -o - | FileCheck %s
-# RUN: llc -mtriple aie2p -run-pass=none -verify-machineinstrs %s -o - | FileCheck %s
+# RUN: llc -mtriple aie2 -run-pass=aie-preisel-combiner -verify-machineinstrs %s -o - | FileCheck %s
+# RUN: llc -mtriple aie2p -run-pass=aie-preisel-combiner -verify-machineinstrs %s -o - | FileCheck %s
 
 
 # Cross bank copy of an undef can be simplified to an implicit def.
@@ -23,10 +23,9 @@ body:             |
     ; CHECK-LABEL: name: undef_copy_acc_to_vec
     ; CHECK: liveins: $x2
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vregbank(<16 x s32>) = COPY $x2
     ; CHECK-NEXT: [[DEF:%[0-9]+]]:accregbank(<16 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vregbank(<16 x s32>) = COPY [[DEF]](<16 x s32>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[DEF]](<16 x s32>), implicit [[COPY1]](<16 x s32>)
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:vregbank(<16 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[DEF]](<16 x s32>), implicit [[DEF1]](<16 x s32>)
     %0:vregbank(<16 x s32>) = COPY $x2
     %1:accregbank(<16 x s32>) = G_IMPLICIT_DEF
     %2:vregbank(<16 x s32>) = COPY %1(<16 x s32>)
@@ -46,8 +45,7 @@ body:             |
 
     ; CHECK-LABEL: name: undef_copy_same_bank
     ; CHECK: [[DEF:%[0-9]+]]:vregbank(<16 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vregbank(<16 x s32>) = COPY [[DEF]](<16 x s32>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[DEF]](<16 x s32>), implicit [[COPY]](<16 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[DEF]](<16 x s32>), implicit [[DEF]](<16 x s32>)
     %0:vregbank(<16 x s32>) = G_IMPLICIT_DEF
     %1:vregbank(<16 x s32>) = COPY %0(<16 x s32>)
     PseudoRET implicit $lr, implicit %0, implicit %1(<16 x s32>)

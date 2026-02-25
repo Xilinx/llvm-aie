@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie2p -run-pass=instruction-select -verify-machineinstrs %s -o - | FileCheck %s
+# RUN: llc -mtriple aie2p -run-pass=aie-preisel-combiner,instruction-select -verify-machineinstrs %s -o - | FileCheck %s
 
 ...
 
@@ -55,12 +55,10 @@ body:             |
     ; CHECK: liveins: $x2, $r0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:fifo512 = IMPLICIT_DEF
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY [[DEF]]
-    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 28
-    ; CHECK-NEXT: [[VEXTBCST_16_vec_extract_broadcast_imm:%[0-9]+]]:vec512 = VEXTBCST_16_vec_extract_broadcast_imm [[COPY]], 0
-    ; CHECK-NEXT: [[VSHUFFLE_vec_shuffle_x:%[0-9]+]]:vec512 = VSHUFFLE_vec_shuffle_x [[VEXTBCST_16_vec_extract_broadcast_imm]], [[COPY1]], [[MOV_RLC_imm11_pseudo]]
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VSHUFFLE_vec_shuffle_x]]
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mr29_insert = MOV_RLC_imm11_pseudo 28
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
+    ; CHECK-NEXT: [[VEXTBCSTSHFL_16_:%[0-9]+]]:vec512 = VEXTBCSTSHFL_16 [[COPY]], [[MOV_RLC_imm11_pseudo1]], [[MOV_RLC_imm11_pseudo]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VEXTBCSTSHFL_16_]]
     %0:vregbank(<32 x s16>) = COPY $x2
     %1:fiforegbank(<16 x s32>) = G_IMPLICIT_DEF
     %2:vregbank(<16 x s32>) = COPY %1(<16 x s32>)
@@ -116,13 +114,10 @@ body:             |
     ; CHECK: liveins: $x2, $r0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:fifo512 = IMPLICIT_DEF
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY [[DEF]]
-    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 28
-    ; CHECK-NEXT: [[VEXTRACT_32_vec_extract_imm_vaddSign1_:%[0-9]+]]:er = VEXTRACT_32_vec_extract_imm_vaddSign1 [[COPY]], 0, implicit $vaddsign1
-    ; CHECK-NEXT: [[VBCST_32_:%[0-9]+]]:vec512 = VBCST_32 [[VEXTRACT_32_vec_extract_imm_vaddSign1_]]
-    ; CHECK-NEXT: [[VSHUFFLE_vec_shuffle_x:%[0-9]+]]:vec512 = VSHUFFLE_vec_shuffle_x [[VBCST_32_]], [[COPY1]], [[MOV_RLC_imm11_pseudo]]
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VSHUFFLE_vec_shuffle_x]]
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mr29_insert = MOV_RLC_imm11_pseudo 28
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
+    ; CHECK-NEXT: [[VEXTBCSTSHFL_32_:%[0-9]+]]:vec512 = VEXTBCSTSHFL_32 [[COPY]], [[MOV_RLC_imm11_pseudo1]], [[MOV_RLC_imm11_pseudo]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VEXTBCSTSHFL_32_]]
     %0:vregbank(<16 x s32>) = COPY $x2
     %1:fiforegbank(<16 x s32>) = G_IMPLICIT_DEF
     %2:vregbank(<16 x s32>) = COPY %1(<16 x s32>)
@@ -180,13 +175,10 @@ body:             |
     ; CHECK: liveins: $x2, $r0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:fifo512 = IMPLICIT_DEF
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY [[DEF]]
-    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 28
-    ; CHECK-NEXT: [[VEXTRACT_64_vec_extract_imm_vaddSign1_:%[0-9]+]]:el = VEXTRACT_64_vec_extract_imm_vaddSign1 [[COPY]], 0, implicit $vaddsign1
-    ; CHECK-NEXT: [[VBCST_64_:%[0-9]+]]:vec512 = VBCST_64 [[VEXTRACT_64_vec_extract_imm_vaddSign1_]]
-    ; CHECK-NEXT: [[VSHUFFLE_vec_shuffle_x:%[0-9]+]]:vec512 = VSHUFFLE_vec_shuffle_x [[VBCST_64_]], [[COPY1]], [[MOV_RLC_imm11_pseudo]]
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VSHUFFLE_vec_shuffle_x]]
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mr29_insert = MOV_RLC_imm11_pseudo 28
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
+    ; CHECK-NEXT: [[VEXTBCSTSHFL_64_:%[0-9]+]]:vec512 = VEXTBCSTSHFL_64 [[COPY]], [[MOV_RLC_imm11_pseudo1]], [[MOV_RLC_imm11_pseudo]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VEXTBCSTSHFL_64_]]
     %0:vregbank(<16 x s32>) = COPY $x2
     %1:fiforegbank(<16 x s32>) = G_IMPLICIT_DEF
     %2:vregbank(<16 x s32>) = COPY %1(<16 x s32>)
@@ -240,13 +232,11 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:fifo512 = IMPLICIT_DEF
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY [[DEF]]
-    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 28
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mr29_insert = MOV_RLC_imm11_pseudo 28
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
     ; CHECK-NEXT: [[VLD_x_idx_imm_pseudo:%[0-9]+]]:vec512 = VLD_x_idx_imm_pseudo [[COPY]], 0 :: (load (<16 x s32>))
-    ; CHECK-NEXT: [[VEXTBCST_128_vec_extract_broadcast_imm:%[0-9]+]]:vec512 = VEXTBCST_128_vec_extract_broadcast_imm [[VLD_x_idx_imm_pseudo]], 0
-    ; CHECK-NEXT: [[VSHUFFLE_vec_shuffle_x:%[0-9]+]]:vec512 = VSHUFFLE_vec_shuffle_x [[VEXTBCST_128_vec_extract_broadcast_imm]], [[COPY1]], [[MOV_RLC_imm11_pseudo]]
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VSHUFFLE_vec_shuffle_x]]
+    ; CHECK-NEXT: [[VEXTBCSTSHFL_128_:%[0-9]+]]:vec512 = VEXTBCSTSHFL_128 [[VLD_x_idx_imm_pseudo]], [[MOV_RLC_imm11_pseudo1]], [[MOV_RLC_imm11_pseudo]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VEXTBCSTSHFL_128_]]
     %0:ptrregbank(p0) = COPY $p0
     %1:fiforegbank(<16 x s32>) = G_IMPLICIT_DEF
     %2:vregbank(<16 x s32>) = COPY %1(<16 x s32>)
