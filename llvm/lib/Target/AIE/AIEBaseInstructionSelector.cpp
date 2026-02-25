@@ -24,7 +24,7 @@ using namespace llvm;
 
 AIEBaseInstructionSelector::AIEBaseInstructionSelector(
     const AIEBaseSubtarget &STI, const AIEBaseRegisterBankInfo &RBI)
-    : InstructionSelector(), STI(STI), TII(*STI.getInstrInfo()),
+    : InstructionSelector(), TII(*STI.getInstrInfo()),
       TRI(*static_cast<const AIEBaseRegisterInfo *>(STI.getRegisterInfo())),
       RBI(RBI) {}
 
