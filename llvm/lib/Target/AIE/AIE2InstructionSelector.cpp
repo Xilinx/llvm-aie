@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 /// \file
@@ -129,8 +129,9 @@ private:
   bool selectImpl(MachineInstr &I,
                   CodeGenCoverage &CoverageInfo) const override;
   std::optional<LoadStoreOpcodes>
-  getCombinedOpcodeCONV(const MachineInstr &MemOp, const MachineInstr &CombOp,
-                        std::optional<APInt> Immediate) final;
+  getCombinedOpcodeCONVStore(const MachineInstr &MemOp,
+                             const MachineInstr &CombOp,
+                             std::optional<APInt> Immediate) final;
   std::optional<LoadStoreOpcodes>
   getCombinedOpcodeCONVLoad(const MachineInstr &MemOp,
                             const MachineInstr &CombOp,
@@ -3120,9 +3121,9 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_SRS(MachineInstr &StoreI,
 }
 
 std::optional<LoadStoreOpcodes>
-AIE2InstructionSelector::getCombinedOpcodeCONV(const MachineInstr &MemOp,
-                                               const MachineInstr &CombOp,
-                                               std::optional<APInt> Immediate) {
+AIE2InstructionSelector::getCombinedOpcodeCONVStore(
+    const MachineInstr &MemOp, const MachineInstr &CombOp,
+    std::optional<APInt> Immediate) {
   const bool AlwaysFitsImmediateRange = true;
   const bool NoImmediate = false;
   if (CombOp.getOpcode() != AIE2::G_INTRINSIC_W_SIDE_EFFECTS ||
@@ -3170,7 +3171,7 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_CONV(MachineInstr &StoreI,
 
   assert(ConvOp && "Expected SSA.");
 
-  if (!canCombineCONV(StoreI, *ConvOp) ||
+  if (!canCombineCONVStore(StoreI, *ConvOp) ||
       StoreI.getParent() != ConvOp->getParent() || !MRI.hasOneUse(ConvResult))
     return false;
 
@@ -3180,7 +3181,7 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_CONV(MachineInstr &StoreI,
     return false;
 
   std::optional<LoadStoreOpcodes> LSO =
-      getCombinedOpcodeCONV(StoreI, *ConvOp, AMI->ImmediateOffset);
+      getCombinedOpcodeCONVStore(StoreI, *ConvOp, AMI->ImmediateOffset);
 
   assert(LSO && "Unexpected VST.CONV combine failure");
 

@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 /// \file
@@ -199,9 +199,10 @@ protected:
   virtual std::optional<AddressingModeInfo>
   getOrDefineAddressingRegister(MachineInstr &MemI, MachineRegisterInfo &MRI);
   virtual std::optional<LoadStoreOpcodes>
-  getCombinedOpcodeCONV(const MachineInstr &MemOp, const MachineInstr &CombOp,
-                        std::optional<APInt> Immediate);
-  bool canCombineCONV(MachineInstr &MemOp, MachineInstr &CombOp);
+  getCombinedOpcodeCONVStore(const MachineInstr &MemOp,
+                             const MachineInstr &CombOp,
+                             std::optional<APInt> Immediate);
+  bool canCombineCONVStore(MachineInstr &MemOp, MachineInstr &CombOp);
   virtual std::optional<LoadStoreOpcodes>
   getCombinedOpcodeCONVLoad(const MachineInstr &MemOp,
                             const MachineInstr &CombOp,
