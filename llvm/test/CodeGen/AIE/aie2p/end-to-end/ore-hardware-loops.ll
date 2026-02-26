@@ -4,9 +4,11 @@
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
 ; (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
+; RUN: llc -mtriple=aie2p --aie-force-postpipeliner %s -o - | FileCheck %s --check-prefix ASM
+
 ; RUN: llc -mtriple=aie2p --aie-force-postpipeliner \
 ; RUN:   -pass-remarks-output=- \
-; RUN:   -pass-remarks-filter='aie-hardware-loops|aie-asm-printer' %s -o - | FileCheck %s
+; RUN:   -pass-remarks-filter='aie-hardware-loops|aie-asm-printer' %s -o /dev/null | FileCheck %s --check-prefix REMARKS
 
 ; This unit-test is based on conv2d_bfp16_convert.ll
 
@@ -15,96 +17,91 @@
 
 ; Function Attrs: mustprogress noinline
 define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noalias %out, ptr nonnull align 64 dereferenceable(64) %params) local_unnamed_addr #0 {
-; CHECK: Pass:            aie-hardware-loops
-; CHECK-NEXT: Name:            analysis
-; CHECK-NEXT: Function:        convert_bf16_to_bfp16
-; CHECK-NEXT: Args:
-; CHECK-NEXT:   - LoopID:          '0'
-; CHECK-NEXT:   - BasicBlock:      for.body
-; CHECK-NEXT:   - Zero-Overhead-Loop:   'true'
-; CHECK-NEXT: ...
-; CHECK-NEXT: --- !Analysis
-; CHECK-NEXT: Pass:            aie-asm-printer
-; CHECK-NEXT: Name:            analysis
-; CHECK-NEXT: Function:        convert_bf16_to_bfp16
-; CHECK-NEXT: Args:
-; CHECK-NEXT:   - BasicBlock:      entry
-; CHECK-NEXT:   - BundleCount:     '20'
-; CHECK-NEXT:   - ByteCount:       '160'
-; CHECK-NEXT: ...
-; CHECK-NEXT: --- !Analysis
-; CHECK-NEXT: Pass:            aie-asm-printer
-; CHECK-NEXT: Name:            analysis
-; CHECK-NEXT: Function:        convert_bf16_to_bfp16
-; CHECK-NEXT: Args:
-; CHECK-NEXT:   - BasicBlock:      for.body
-; CHECK-NEXT:   - BundleCount:     '4'
-; CHECK-NEXT:   - ByteCount:       '64'
-; CHECK-NEXT: ...
-; CHECK-NEXT: --- !Analysis
-; CHECK-NEXT: Pass:            aie-asm-printer
-; CHECK-NEXT: Name:            analysis
-; CHECK-NEXT: Function:        convert_bf16_to_bfp16
-; CHECK-NEXT: Args:
-; CHECK-NEXT:   - BasicBlock:      for.cond.cleanup
-; CHECK-NEXT:   - BundleCount:     '17'
-; CHECK-NEXT:   - ByteCount:       '80'
-; CHECK-NEXT: ...
-; CHECK-NEXT: 	.file	"ore-hardware-loops.ll"
-; CHECK-NEXT: 	.text
-; CHECK-NEXT: 	.weak	convert_bf16_to_bfp16           // -- Begin function convert_bf16_to_bfp16
-; CHECK-NEXT: 	.p2align	4
-; CHECK-NEXT: 	.type	convert_bf16_to_bfp16,@function
-; CHECK-NEXT: convert_bf16_to_bfp16:                  // @convert_bf16_to_bfp16
-; CHECK-NEXT: // %bb.0:                               // %entry
-; CHECK-NEXT: 	lda	 r0, [p2, #0];		nopb	;		nops	;		nopx	;		mov	m0, #4;		nopv
-; CHECK-NEXT: 	padda	 [p2], m0;		nopx
-; CHECK-NEXT: 	lda	 dn0, [p2], #4
-; CHECK-NEXT: 	lda	 m1, [p2, #0]
-; CHECK-NEXT: 	nop
-; CHECK-NEXT: 	nop
-; CHECK-NEXT: 	movx	r24, #0
-; CHECK-NEXT: 	mova	dj0, #0;		mov	r26, r24
-; CHECK-NEXT: 	vldb.fill.512	 [p0, lf0, r24];		mov	dj1, dj0
-; CHECK-NEXT:                                         // kill: def $p0 killed $p0 def $lf0
-; CHECK-NEXT: 	movs	dc1, dj0;		vldb.pop.512	 x6, [p0, lf0, r24];		mov	dn1, dn0
-; CHECK-NEXT: 	vldb.pop.512.2d	 x4, [p0, lf0, r24, d1]
-; CHECK-NEXT: 	nop
-; CHECK-NEXT: 	vldb.fill.512	 [p0, lf0, r24]
-; CHECK-NEXT: 	lda	 m0, [p2, #4];		vldb.pop.512	 x6, [p0, lf0, r24];		movxm	ls, #.LBB0_1
-; CHECK-NEXT: 	vldb.pop.512.2d	 x4, [p0, lf0, r24, d1];		movxm	le, #.L_LEnd0
-; CHECK-NEXT: 	add.nc	lc, r0, #-3
-; CHECK-NEXT: 	nopa	;		vldb.fill.512	 [p0, lf0, r24];		nops	;		nopxm	;		nopv
-; CHECK-NEXT: 	nopa	;		vldb.pop.512	 x6, [p0, lf0, r24];		nops	;		nopx	;		vconv.fp32.bf16	cml1, x6;		nopv
-; CHECK-NEXT: 	nopa	;		vldb.pop.512.2d	 x4, [p0, lf0, r24, d1];		nops	;		nopx	;		vconv.fp32.bf16	cmh1, x4;		nopv
-; CHECK-NEXT: 	nopa	;		nopb	;		movs	dc0, dj0;		nopx	;		mov	p2, p1;		nopv
-; CHECK-NEXT:                                         // implicit-def: $sf
-; CHECK-NEXT: .LBB0_1:                                // %for.body
-; CHECK-NEXT:                                         // =>This Inner Loop Header: Depth=1
-; CHECK-NEXT: 	nopa	;		vldb.fill.512	 [p0, lf0, r24];		vst.push.576.conv.bfp16ebs8.fp32	 dm1, [p2, sf, r26];		nopxm	;		nopv
-; CHECK-NEXT: 	nopa	;		vldb.pop.512	 x6, [p0, lf0, r24];		vst.flush.512.conv	 [p2, sf, r26];		nopx	;		vconv.fp32.bf16	cml1, x6;		nopv
-; CHECK-NEXT: 	nopa	;		vldb.pop.512.2d	 x4, [p0, lf0, r24, d1];		vst.flush.512.conv.2d	 [p2, sf, r26, d0];		nopx	;		vconv.fp32.bf16	cmh1, x4;		nopv
-; CHECK-NEXT: .L_LEnd0:
-; CHECK-NEXT: 	nopa	;		nopb	;		nops	;		nopxm	;		nopv
-; CHECK-NEXT: // %bb.2:                               // %for.cond.cleanup
-; CHECK-NEXT: 	nopa	;		nopb	;		nopxm	;		vst.push.576.conv.bfp16ebs8.fp32	 dm1, [p2, sf, r26]
-; CHECK-NEXT: 	vst.flush.512.conv	 [p2, sf, r26];		vconv.fp32.bf16	cml1, x6
-; CHECK-NEXT: 	vst.flush.512.conv.2d	 [p2, sf, r26, d0];		vconv.fp32.bf16	cmh1, x4
-; CHECK-NEXT: 	nop
-; CHECK-NEXT: 	vst.push.576.conv.bfp16ebs8.fp32	 dm1, [p2, sf, r26]
-; CHECK-NEXT: 	vst.flush.512.conv	 [p2, sf, r26];		vconv.fp32.bf16	cml1, x6
-; CHECK-NEXT: 	vst.flush.512.conv.2d	 [p2, sf, r26, d0];		vconv.fp32.bf16	cmh1, x4
-; CHECK-NEXT: 	nop
-; CHECK-NEXT: 	vst.push.576.conv.bfp16ebs8.fp32	 dm1, [p2, sf, r26]
-; CHECK-NEXT: 	vst.flush.512.conv	 [p2, sf, r26]
-; CHECK-NEXT: 	vst.flush.512.conv.2d	 [p2, sf, r26, d0]
-; CHECK-NEXT: 	ret	lr
-; CHECK-NEXT: 	nop	                                //  Delay Slot 5
-; CHECK-NEXT: 	nop	                                //  Delay Slot 4
-; CHECK-NEXT: 	nop	                                //  Delay Slot 3
-; CHECK-NEXT: 	nop	                                //  Delay Slot 2
-; CHECK-NEXT: 	nop	                                //  Delay Slot 1
-; CHECK-NEXT: .Lfunc_end0:
+; REMARKS: Pass:            aie-hardware-loops
+; REMARKS-NEXT: Name:            analysis
+; REMARKS-NEXT: Function:        convert_bf16_to_bfp16
+; REMARKS-NEXT: Args:
+; REMARKS-NEXT:   - LoopID:          '0'
+; REMARKS-NEXT:   - BasicBlock:      for.body
+; REMARKS-NEXT:   - Zero-Overhead-Loop: 'true'
+; REMARKS-NEXT: ...
+; REMARKS-NEXT: --- !Analysis
+; REMARKS-NEXT: Pass:            aie-asm-printer
+; REMARKS-NEXT: Name:            analysis
+; REMARKS-NEXT: Function:        convert_bf16_to_bfp16
+; REMARKS-NEXT: Args:
+; REMARKS-NEXT:   - BasicBlock:      entry
+; REMARKS-NEXT:   - BundleCount:     '20'
+; REMARKS-NEXT:   - ByteCount:       '160'
+; REMARKS-NEXT: ...
+; REMARKS-NEXT: --- !Analysis
+; REMARKS-NEXT: Pass:            aie-asm-printer
+; REMARKS-NEXT: Name:            analysis
+; REMARKS-NEXT: Function:        convert_bf16_to_bfp16
+; REMARKS-NEXT: Args:
+; REMARKS-NEXT:   - BasicBlock:      for.body
+; REMARKS-NEXT:   - BundleCount:     '4'
+; REMARKS-NEXT:   - ByteCount:       '64'
+; REMARKS-NEXT: ...
+; REMARKS-NEXT: --- !Analysis
+; REMARKS-NEXT: Pass:            aie-asm-printer
+; REMARKS-NEXT: Name:            analysis
+; REMARKS-NEXT: Function:        convert_bf16_to_bfp16
+; REMARKS-NEXT: Args:
+; REMARKS-NEXT:   - BasicBlock:      for.cond.cleanup
+; REMARKS-NEXT:   - BundleCount:     '17'
+; REMARKS-NEXT:   - ByteCount:       '80'
+; REMARKS-NEXT: ...
+;
+; ASM-LABEL: convert_bf16_to_bfp16:
+; ASM:       // %bb.0: // %entry
+; ASM-NEXT:    lda r0, [p2, #0]; nopb ; nops ; nopx ; mov m0, #4; nopv
+; ASM-NEXT:    padda [p2], m0; nopx
+; ASM-NEXT:    lda dn0, [p2], #4
+; ASM-NEXT:    lda m1, [p2, #0]
+; ASM-NEXT:    nop
+; ASM-NEXT:    nop
+; ASM-NEXT:    movx r24, #0
+; ASM-NEXT:    mova dj0, #0; mov r26, r24
+; ASM-NEXT:    vldb.fill.512 [p0, lf0, r24]; mov dj1, dj0
+; ASM-NEXT:    // kill: def $p0 killed $p0 def $lf0
+; ASM-NEXT:    vlda.pop.512 x6, [p0, lf0, r24]; movs dc1, dj0; mov dn1, dn0
+; ASM-NEXT:    vldb.pop.512.2d x4, [p0, lf0, r24, d1]
+; ASM-NEXT:    nop
+; ASM-NEXT:    lda m0, [p2, #4]; vldb.fill.512 [p0, lf0, r24]
+; ASM-NEXT:    vlda.pop.512 x6, [p0, lf0, r24]; movxm ls, #.LBB0_1
+; ASM-NEXT:    vldb.pop.512.2d x4, [p0, lf0, r24, d1]; movxm le, #.L_LEnd0
+; ASM-NEXT:    add.nc lc, r0, #-3
+; ASM-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; nops ; nopxm ; nopv
+; ASM-NEXT:    vlda.pop.512 x6, [p0, lf0, r24]; nopb ; nops ; nopx ; vconv.fp32.bf16 cml1, x6; nopv
+; ASM-NEXT:    nopa ; vldb.pop.512.2d x4, [p0, lf0, r24, d1]; nops ; nopx ; vconv.fp32.bf16 cmh1, x4; nopv
+; ASM-NEXT:    nopa ; nopb ; movs dc0, dj0; nopx ; mov p2, p1; nopv
+; ASM-NEXT:    // implicit-def: $sf
+; ASM-NEXT:  .LBB0_1: // %for.body
+; ASM-NEXT:    // =>This Inner Loop Header: Depth=1
+; ASM-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; vst.push.576.conv.bfp16ebs8.fp32 dm1, [p2, sf, r26]; nopxm ; nopv
+; ASM-NEXT:    vlda.pop.512 x6, [p0, lf0, r24]; nopb ; vst.flush.512.conv [p2, sf, r26]; nopx ; vconv.fp32.bf16 cml1, x6; nopv
+; ASM-NEXT:    nopa ; vldb.pop.512.2d x4, [p0, lf0, r24, d1]; vst.flush.512.conv.2d [p2, sf, r26, d0]; nopx ; vconv.fp32.bf16 cmh1, x4; nopv
+; ASM-NEXT:  .L_LEnd0:
+; ASM-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
+; ASM-NEXT:  // %bb.2: // %for.cond.cleanup
+; ASM-NEXT:    nopa ; nopb ; nopxm ; vst.push.576.conv.bfp16ebs8.fp32 dm1, [p2, sf, r26]
+; ASM-NEXT:    vst.flush.512.conv [p2, sf, r26]; vconv.fp32.bf16 cml1, x6
+; ASM-NEXT:    vst.flush.512.conv.2d [p2, sf, r26, d0]; vconv.fp32.bf16 cmh1, x4
+; ASM-NEXT:    nop
+; ASM-NEXT:    vst.push.576.conv.bfp16ebs8.fp32 dm1, [p2, sf, r26]
+; ASM-NEXT:    vst.flush.512.conv [p2, sf, r26]; vconv.fp32.bf16 cml1, x6
+; ASM-NEXT:    vst.flush.512.conv.2d [p2, sf, r26, d0]; vconv.fp32.bf16 cmh1, x4
+; ASM-NEXT:    nop
+; ASM-NEXT:    vst.push.576.conv.bfp16ebs8.fp32 dm1, [p2, sf, r26]
+; ASM-NEXT:    vst.flush.512.conv [p2, sf, r26]
+; ASM-NEXT:    vst.flush.512.conv.2d [p2, sf, r26, d0]
+; ASM-NEXT:    ret lr
+; ASM-NEXT:    nop // Delay Slot 5
+; ASM-NEXT:    nop // Delay Slot 4
+; ASM-NEXT:    nop // Delay Slot 3
+; ASM-NEXT:    nop // Delay Slot 2
+; ASM-NEXT:    nop // Delay Slot 1
 entry:
   %num = getelementptr inbounds i8, ptr %params, i20 4
   %0 = load i32, ptr %num, align 4, !tbaa !4
