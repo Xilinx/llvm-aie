@@ -10,20 +10,21 @@
 define void @load_store_with_call() {
 ; CHECK-LABEL: load_store_with_call:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; nops ; movxm ls, #.LBB0_1; nopv
-; CHECK-NEXT:    mova r0, #0; movxm le, #.L_LEnd0
+; CHECK-NEXT:    nopa ; movxm ls, #.LBB0_1
+; CHECK-NEXT:    movxm le, #.L_LEnd0
+; CHECK-NEXT:    mova r0, #0; paddxm [sp], #64
 ; CHECK-NEXT:    mova p5, #0; add.nc lc, r0, #-7
-; CHECK-NEXT:    nopa ; vldb x2, [p5, #0]; nops ; paddxm [sp], #64; nopv
-; CHECK-NEXT:    nopa ; vldb x2, [p5, #0]; st lr, [sp, #-64]; nopxm ; nopv // 4-byte Folded Spill
-; CHECK-NEXT:    nopa ; vldb x2, [p5, #0]; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vldb x2, [p5, #0]; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vldb x2, [p5, #0]; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vldb x2, [p5, #0]; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vldb x2, [p5, #0]; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda x2, [p5, #0]; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda x2, [p5, #0]; nopb ; st lr, [sp, #-64]; nopxm ; nopv // 4-byte Folded Spill
+; CHECK-NEXT:    vlda x2, [p5, #0]; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda x2, [p5, #0]; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda x2, [p5, #0]; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda x2, [p5, #0]; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda x2, [p5, #0]; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:  .L_LEnd0:
-; CHECK-NEXT:    nopa ; vldb x2, [p5, #0]; vst x2, [p5, #0]; nopxm ; nopv
+; CHECK-NEXT:    vlda x2, [p5, #0]; nopb ; vst x2, [p5, #0]; nopxm ; nopv
 ; CHECK-NEXT:  // %bb.2: // %exit
 ; CHECK-NEXT:    vst x2, [p5, #0]; nopb ; nopx
 ; CHECK-NEXT:    vst x2, [p5, #0]

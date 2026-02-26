@@ -68,7 +68,7 @@ static cl::opt<bool> EnableMultiSlotInstrMaterialization(
              "loops."));
 
 static cl::opt<bool>
-    MaterializeAll("aie-materialize-all", cl::Hidden, cl::init(false),
+    MaterializeAll("aie-materialize-all", cl::Hidden, cl::init(true),
                    cl::desc("Materialize all Multi-Slot Pseudo Instructions."));
 
 static cl::opt<int> PostPipelinerMaxTryII(
