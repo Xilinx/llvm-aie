@@ -1395,7 +1395,6 @@ static void buildBroadcastVector(MachineIRBuilder &B, MachineRegisterInfo &MRI,
   const LLT SrcTy = MRI.getType(SrcReg);
   const LLT DstVecTy = MRI.getType(DstVecReg);
   const unsigned DstVecSize = DstVecTy.getSizeInBits();
-
   auto IsConstantZeroReg = [&](const Register Reg) {
     auto Cst = getAnyConstantVRegValWithLookThrough(Reg, MRI);
     return Cst && Cst->Value.isZero();
@@ -1415,18 +1414,29 @@ static void buildBroadcastVector(MachineIRBuilder &B, MachineRegisterInfo &MRI,
     B.buildBitcast(Src64BitReg, SrcReg);
     SrcReg = Src64BitReg;
   }
-  // Check if the destination vector size is 512 bits or if the destination
-  // vector size is 2048 bits and the sources are constant zero.
-  if (DstVecSize == 512 || isConstantZero) {
-    // Build the G_AIE_BROADCAST_VECTOR instruction for a 512-bit vector.
+  const bool SupportsNative1024Broadcast = AIETII.supportsNative1024Broadcast();
+  const bool CanBroadcastDirectly =
+      DstVecSize == 512 || isConstantZero ||
+      (DstVecSize == 1024 && SupportsNative1024Broadcast);
+  if (CanBroadcastDirectly) {
+    // Build the G_AIE_BROADCAST_VECTOR instruction directly.
     B.buildInstr(AIETII.getGenericBroadcastVectorOpcode(), {DstVecReg},
                  {SrcReg});
+  } else if (DstVecSize == 2048 && SupportsNative1024Broadcast) {
+    const unsigned DstElmtSize = DstVecTy.getElementType().getSizeInBits();
+    const unsigned DstVec1024BitLen = 1024 / DstElmtSize;
+    Register DstVec1024BitReg = MRI.createGenericVirtualRegister(
+        LLT::fixed_vector(DstVec1024BitLen, DstElmtSize));
+    B.buildInstr(AIETII.getGenericBroadcastVectorOpcode(), {DstVec1024BitReg},
+                 {SrcReg});
+    B.buildConcatVectors({DstVecReg}, {DstVec1024BitReg, DstVec1024BitReg});
   } else {
     const unsigned DstElmtSize = DstVecTy.getElementType().getSizeInBits();
     const unsigned DstVec512BitLen = 512 / DstElmtSize;
 
     // Create a 512-bit generic virtual register for the destination vector
-    // as 256-bit and 1024-bit broadcast support is not available.
+    // as 256-bit broadcast support is not available and 1024-bit may require
+    // concatenation on targets without native support.
     Register DstVec512BitReg = MRI.createGenericVirtualRegister(
         LLT::fixed_vector(DstVec512BitLen, DstElmtSize));
 
@@ -1438,7 +1448,8 @@ static void buildBroadcastVector(MachineIRBuilder &B, MachineRegisterInfo &MRI,
       // Unmerge the 512-bit vector into the 128/256-bit destination vector.
       buildUnmergeVector(B, MRI, DstVecReg, DstVec512BitReg, NumSubVectors, 0);
     } else if (DstVecSize == 1024) {
-      // Concatenate two 512-bit vectors to form a 1024-bit destination vector.
+      // Concatenate two 512-bit vectors to form a 1024-bit destination vector
+      // when native 1024-bit broadcast is unavailable.
       B.buildConcatVectors({DstVecReg}, {DstVec512BitReg, DstVec512BitReg});
     } else if (DstVecSize == 2048) {
       // Concatenate 4 512-bit vectors to form a 2048-bit destination vector.
