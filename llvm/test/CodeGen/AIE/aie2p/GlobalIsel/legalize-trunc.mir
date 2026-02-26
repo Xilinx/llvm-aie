@@ -133,3 +133,57 @@ body:             |
     %0:_(<16 x s8>) = G_TRUNC %1(<16 x s16>)
     PseudoRET implicit $lr, implicit %0
 ...
+---
+name:            v16s8_trunc_v16s32_vec512
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: v16s8_trunc_v16s32_vec512
+    ; CHECK: [[DEF:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(<16 x s8>) = G_TRUNC [[DEF]](<16 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[TRUNC]](<16 x s8>)
+    %1:_(<16 x s32>) = G_IMPLICIT_DEF
+    %0:_(<16 x s8>) = G_TRUNC %1(<16 x s32>)
+    PseudoRET implicit $lr, implicit %0
+...
+---
+name:            v8s16_trunc_v8s64_vec512
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: v8s16_trunc_v8s64_vec512
+    ; CHECK: [[DEF:%[0-9]+]]:_(<8 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(<8 x s16>) = G_TRUNC [[DEF]](<8 x s64>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[TRUNC]](<8 x s16>)
+    %1:_(<8 x s64>) = G_IMPLICIT_DEF
+    %0:_(<8 x s16>) = G_TRUNC %1(<8 x s64>)
+    PseudoRET implicit $lr, implicit %0
+...
+---
+name:            v32s8_trunc_v32s32_vec1024
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: v32s8_trunc_v32s32_vec1024
+    ; CHECK: [[DEF:%[0-9]+]]:_(<32 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<16 x s32>), [[UV1:%[0-9]+]]:_(<16 x s32>) = G_UNMERGE_VALUES [[DEF]](<32 x s32>)
+    ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(<16 x s8>) = G_TRUNC [[UV]](<16 x s32>)
+    ; CHECK-NEXT: [[TRUNC1:%[0-9]+]]:_(<16 x s8>) = G_TRUNC [[UV1]](<16 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s8>) = G_CONCAT_VECTORS [[TRUNC]](<16 x s8>), [[TRUNC1]](<16 x s8>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<32 x s8>)
+    %1:_(<32 x s32>) = G_IMPLICIT_DEF
+    %0:_(<32 x s8>) = G_TRUNC %1(<32 x s32>)
+    PseudoRET implicit $lr, implicit %0
+...
+---
+name:            v16s16_trunc_v16s64_vec1024
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: v16s16_trunc_v16s64_vec1024
+    ; CHECK: [[DEF:%[0-9]+]]:_(<16 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<8 x s64>), [[UV1:%[0-9]+]]:_(<8 x s64>) = G_UNMERGE_VALUES [[DEF]](<16 x s64>)
+    ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(<8 x s16>) = G_TRUNC [[UV]](<8 x s64>)
+    ; CHECK-NEXT: [[TRUNC1:%[0-9]+]]:_(<8 x s16>) = G_TRUNC [[UV1]](<8 x s64>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s16>) = G_CONCAT_VECTORS [[TRUNC]](<8 x s16>), [[TRUNC1]](<8 x s16>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<16 x s16>)
+    %1:_(<16 x s64>) = G_IMPLICIT_DEF
+    %0:_(<16 x s16>) = G_TRUNC %1(<16 x s64>)
+    PseudoRET implicit $lr, implicit %0
+...

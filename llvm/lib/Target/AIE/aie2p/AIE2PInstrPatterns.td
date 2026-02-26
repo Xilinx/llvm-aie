@@ -1542,27 +1542,50 @@ def : Pat<(v8i64 (add_elt_hi_node VEC512:$vec, (i64 eL:$scalar))),
 // The G_TRUNC operation can be efficiently implemented using a VSHUFFLE
 // instruction. Modes 0, 2, and 4 correspond to the deinterleaved operation of
 // 1, 2, and 4 bytes respectively on the concatenated src0 and src1 input
-// vectors of the VSHUFFLE instruction.
-class Trunc1024Pat<ValueType DstTy, ValueType SrcTy, Instruction ShuffleInstOpc, int Mode> :
+// vectors of the VSHUFFLE instruction. Specifically, the VSHUFFLE instruction
+// with mode 0 performs a transpose on a tensor of type 64x2xi8. Other modes
+// used here perform transposes on different types:
+
+// Mode   Input type
+// =====+============+
+// 0    |  64x2xi8   |
+// 2    |  32x2xi16  |
+// 4    |  16x2xi32  |
+// 28   |  8x4xi16   |
+// 36   |  16x4xi8   |
+// =====+============+
+
+class Trunc1024To512Pat<ValueType DstTy, ValueType SrcTy, Instruction ShuffleInstOpc, int Mode> :
   Pat<(DstTy (trunc SrcTy:$s1)),
     (ShuffleInstOpc
       (EXTRACT_SUBREG VEC1024:$s1, sub_512_lo ),
       (EXTRACT_SUBREG VEC1024:$s1, sub_512_hi ),
       (MOV_RLC_imm11_pseudo (i32 Mode)))>;
 
-def : Trunc1024Pat<v16i32, v16i64, VSHUFFLE_vec_shuffle_x, 4>;
-def : Trunc1024Pat<v16i32, v16i64, VSHUFFLE_vec_shuffle_bm, 4>;
-def : Trunc1024Pat<v32i16, v32i32, VSHUFFLE_vec_shuffle_x, 2>;
-def : Trunc1024Pat<v64i8, v64i16, VSHUFFLE_vec_shuffle_x, 0>;
+def : Trunc1024To512Pat<v16i32, v16i64, VSHUFFLE_vec_shuffle_x, 4>;
+def : Trunc1024To512Pat<v16i32, v16i64, VSHUFFLE_vec_shuffle_bm, 4>;
+def : Trunc1024To512Pat<v32i16, v32i32, VSHUFFLE_vec_shuffle_x, 2>;
+def : Trunc1024To512Pat<v64i8, v64i16, VSHUFFLE_vec_shuffle_x, 0>;
 
-class Trunc512Pat<ValueType DstTy, ValueType SrcTy, int Mode> :
+class Trunc512To256Pat<ValueType DstTy, ValueType SrcTy, int Mode> :
   Pat<(DstTy (trunc SrcTy:$s1)),
     (EXTRACT_SUBREG
       (VSHUFFLE_vec_shuffle_x VEC512:$s1, VEC512:$s1, (MOV_RLC_imm11_pseudo (i32 Mode))), 
       sub_256_lo)>;
-def : Trunc512Pat<v8i32, v8i64, 4>;
-def : Trunc512Pat<v16i16, v16i32, 2>;
-def : Trunc512Pat<v32i8, v32i16, 0>;
+def : Trunc512To256Pat<v8i32, v8i64, 4>;
+def : Trunc512To256Pat<v16i16, v16i32, 2>;
+def : Trunc512To256Pat<v32i8, v32i16, 0>;
+
+class Trunc512To128Pat<ValueType DstTy, ValueType SrcTy, int Mode> :
+  Pat<(DstTy (trunc SrcTy:$s1)),
+    (VMOV_alu_mv_mv_w_to_q
+      (EXTRACT_SUBREG
+        (VSHUFFLE_vec_shuffle_x VEC512:$s1, VEC512:$s1,
+          (MOV_RLC_imm11_pseudo (i32 Mode))),
+        sub_256_lo)
+    )>;
+def : Trunc512To128Pat<v16i8, v16i32, 36>;
+def : Trunc512To128Pat<v8i16, v8i64, 28>;
 
 class EventPat<AIE2PInst Inst, dag Imm> :
   Pat<(int_aie2p_event Imm), (Inst)>;

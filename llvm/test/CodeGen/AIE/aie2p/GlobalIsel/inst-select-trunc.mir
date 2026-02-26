@@ -184,4 +184,37 @@ body:             |
     %0:vregbank(<32 x s8>) = G_TRUNC %1(<32 x s16>)
     PseudoRET implicit $lr, implicit %0
 ...
-
+---
+name:            v16s8_trunc_v16s32_vec512
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: v16s8_trunc_v16s32_vec512
+    ; CHECK: [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 36
+    ; CHECK-NEXT: [[VSHUFFLE_vec_shuffle_x:%[0-9]+]]:mshflxdst = VSHUFFLE_vec_shuffle_x [[DEF]], [[DEF]], [[MOV_RLC_imm11_pseudo]]
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ewl = COPY [[VSHUFFLE_vec_shuffle_x]].sub_256_lo
+    ; CHECK-NEXT: [[VMOV_alu_mv_mv_w_to_q:%[0-9]+]]:vec128 = VMOV_alu_mv_mv_w_to_q [[COPY]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VMOV_alu_mv_mv_w_to_q]]
+    %1:vregbank(<16 x s32>) = G_IMPLICIT_DEF
+    %0:vregbank(<16 x s8>) = G_TRUNC %1(<16 x s32>)
+    PseudoRET implicit $lr, implicit %0
+...
+---
+name:            v8s16_trunc_v8s64_vec512
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: v8s16_trunc_v8s64_vec512
+    ; CHECK: [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 28
+    ; CHECK-NEXT: [[VSHUFFLE_vec_shuffle_x:%[0-9]+]]:mshflxdst = VSHUFFLE_vec_shuffle_x [[DEF]], [[DEF]], [[MOV_RLC_imm11_pseudo]]
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ewl = COPY [[VSHUFFLE_vec_shuffle_x]].sub_256_lo
+    ; CHECK-NEXT: [[VMOV_alu_mv_mv_w_to_q:%[0-9]+]]:vec128 = VMOV_alu_mv_mv_w_to_q [[COPY]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VMOV_alu_mv_mv_w_to_q]]
+    %1:vregbank(<8 x s64>) = G_IMPLICIT_DEF
+    %0:vregbank(<8 x s16>) = G_TRUNC %1(<8 x s64>)
+    PseudoRET implicit $lr, implicit %0
+...
