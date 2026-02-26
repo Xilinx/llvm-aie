@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 
 ; This test checks postpipelining for aie2p end-to-end:
 ; loop rotation, hwloop generation, legalization, codeselection, hwloop lowering,
@@ -19,18 +19,18 @@ define <32 x i16> @zol(i32 %n, ptr %p) {
 ; CHECK-NEXT:    add.nc lc, r0, #-7
 ; CHECK-NEXT:    movxm ls, #.LBB0_1
 ; CHECK-NEXT:    movxm le, #.L_LEnd0
-; CHECK-NEXT:    nopa ; vldb x4, [p0], #64; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vldb x4, [p0], #64; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vldb x4, [p0], #64; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vldb x4, [p0], #64; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vldb x4, [p0], #64; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vldb x4, [p0], #64; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vldb x4, [p0], #64; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda x4, [p0], #64; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda x4, [p0], #64; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda x4, [p0], #64; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda x4, [p0], #64; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda x4, [p0], #64; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda x4, [p0], #64; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda x4, [p0], #64; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    // implicit-def: $x6
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:  .L_LEnd0:
-; CHECK-NEXT:    nopa ; vldb x4, [p0], #64; nops ; nopx ; vadd.16 x6, x4, x6; nopv
+; CHECK-NEXT:    vlda x4, [p0], #64; nopb ; nops ; nopx ; vadd.16 x6, x4, x6; nopv
 ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
 ; CHECK-NEXT:    vadd.16 x6, x4, x6
 ; CHECK-NEXT:    vadd.16 x6, x4, x6

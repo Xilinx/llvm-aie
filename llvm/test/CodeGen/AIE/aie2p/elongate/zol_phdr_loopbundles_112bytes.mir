@@ -23,22 +23,22 @@
   ; CHECK-NEXT:  // %bb.0: // %entry
   ; CHECK-NEXT:    nopa ; nopb ; nops ; add r0, r0, #-1; nopm ; nopv
   ; CHECK-NEXT:    vldb x6, [p0], #0; add.nc lc, r0, #-3
-  ; CHECK-NEXT:    vldb x0, [p0], #64; add r0, r0, #-1
+  ; CHECK-NEXT:    vlda x0, [p0], #64; add r0, r0, #-1
   ; CHECK-NEXT:    vldb x2, [p0], #64; movxm ls, #.LBB0_1
-  ; CHECK-NEXT:    vldb x1, [p0], #128; movxm le, #.L_LEnd0
-  ; CHECK-NEXT:    nopa ; vldb x0, [p0], #64; nops ; add r0, r0, #-1; nopm ; nopv
+  ; CHECK-NEXT:    vlda x1, [p0], #128; movxm le, #.L_LEnd0
+  ; CHECK-NEXT:    vlda x0, [p0], #64; nopb ; nops ; add r0, r0, #-1; nopm ; nopv
   ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopa ; vldb x1, [p0], #128; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopa ; vldb x0, [p0], #64; nops ; add r0, r0, #-1; nopm ; nopv
+  ; CHECK-NEXT:    vlda x1, [p0], #128; nopb ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vlda x0, [p0], #64; nopb ; nops ; add r0, r0, #-1; nopm ; nopv
   ; CHECK-NEXT:    nopa ; vldb x2, [p0], #64; nops ; nopx ; vadd.16 x4, x6, x0; nopv
-  ; CHECK-NEXT:    nopa ; vldb x1, [p0], #128; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vlda x1, [p0], #128; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_1: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-  ; CHECK-NEXT:    vldb x0, [p0], #64; add r0, r0, #-1; vadd.16 x6, x4, x1
+  ; CHECK-NEXT:    vlda x0, [p0], #64; add r0, r0, #-1; vadd.16 x6, x4, x1
   ; CHECK-NEXT:    vldb x2, [p0], #64; vadd.16 x4, x6, x0
   ; CHECK-NEXT:  .L_LEnd0:
-  ; CHECK-NEXT:    nopa ; vldb x1, [p0], #128; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vlda x1, [p0], #128; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
   ; CHECK-NEXT:    nops ; vadd.16 x6, x4, x1
   ; CHECK-NEXT:    vadd.16 x4, x6, x0

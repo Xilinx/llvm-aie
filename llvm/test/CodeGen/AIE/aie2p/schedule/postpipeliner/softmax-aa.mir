@@ -33,15 +33,15 @@
   ; CHECK-NEXT:  .LBB0_2: // %for.cond2.preheader
   ; CHECK-NEXT:    // =>This Loop Header: Depth=1
   ; CHECK-NEXT:    // Child Loop BB0_3 Depth 2
-  ; CHECK-NEXT:    nopa ; vldb wl2, [p1], #32; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vlda wl2, [p1], #32; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopx
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    vldb wl2, [p1], #32
+  ; CHECK-NEXT:    vlda wl2, [p1], #32
   ; CHECK-NEXT:    add.nc lc, r1, #-3
   ; CHECK-NEXT:    movxm ls, #.LBB0_3
   ; CHECK-NEXT:    movxm le, #.L_LEnd0; vmul.f dm0, x2, x0, r2
-  ; CHECK-NEXT:    nopa ; vldb wl2, [p1], #32; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vlda wl2, [p1], #32; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; vmul.f dm0, x2, x0, r2
@@ -49,7 +49,7 @@
   ; CHECK-NEXT:  .LBB0_3: // %for.body5
   ; CHECK-NEXT:    // Parent Loop BB0_2 Depth=1
   ; CHECK-NEXT:    // => This Inner Loop Header: Depth=2
-  ; CHECK-NEXT:    nopa ; vldb wl2, [p1], #32; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vlda wl2, [p1], #32; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; vst.conv.bf16.fp32 bmll0, [p0], #32; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:  .L_LEnd0:
@@ -142,15 +142,15 @@
   ; CHECK-NEXT:    // =>This Loop Header: Depth=1
   ; CHECK-NEXT:    // Child Loop BB1_3 Depth 2
   ; CHECK-NEXT:    padda [p1], m0; nopb ; nopxm ; nops
-  ; CHECK-NEXT:    vldb wl2, [p1], #32
+  ; CHECK-NEXT:    vlda wl2, [p1], #32
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    vldb wl2, [p1], #32
+  ; CHECK-NEXT:    vlda wl2, [p1], #32
   ; CHECK-NEXT:    add.nc lc, r1, #-3
   ; CHECK-NEXT:    movxm ls, #.LBB1_3
   ; CHECK-NEXT:    movxm le, #.L_LEnd1; vmul.f dm0, x2, x0, r2
-  ; CHECK-NEXT:    nopa ; vldb wl2, [p1], #32; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vlda wl2, [p1], #32; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    padda [p0], m0; nopb ; nops ; nopxm ; vmul.f dm0, x2, x0, r2
@@ -158,7 +158,7 @@
   ; CHECK-NEXT:  .LBB1_3: // %for.body5
   ; CHECK-NEXT:    // Parent Loop BB1_2 Depth=1
   ; CHECK-NEXT:    // => This Inner Loop Header: Depth=2
-  ; CHECK-NEXT:    nopa ; vldb wl2, [p1], #32; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vlda wl2, [p1], #32; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; vst.conv.bf16.fp32 bmll0, [p0], #32; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:  .L_LEnd1:
@@ -259,7 +259,7 @@
   ; CHECK-NEXT:  .LBB2_3: // %for.body5
   ; CHECK-NEXT:    // Parent Loop BB2_2 Depth=1
   ; CHECK-NEXT:    // => This Inner Loop Header: Depth=2
-  ; CHECK-NEXT:    nopa ; vldb wl2, [p1], #32; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vlda wl2, [p1], #32; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
@@ -360,7 +360,7 @@
   ; CHECK-NEXT:  .LBB3_3: // %for.body5
   ; CHECK-NEXT:    // Parent Loop BB3_2 Depth=1
   ; CHECK-NEXT:    // => This Inner Loop Header: Depth=2
-  ; CHECK-NEXT:    nopa ; vldb wl2, [p1], #32; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vlda wl2, [p1], #32; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
