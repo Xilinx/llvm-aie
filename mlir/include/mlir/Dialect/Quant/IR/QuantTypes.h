@@ -3,7 +3,7 @@
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -263,6 +263,8 @@ public:
 
   static std::optional<BlockMode> parseBlockMode(StringRef name);
   static StringRef getBlockModeName(BlockMode blockMode);
+  /// An empty alias means no alias should be emitted.
+  static StringRef getBlockModeAlias(BlockMode blockMode);
 
   static BlockFloatQuantizedType get(MLIRContext *ctx, BlockMode blockMode,
                                      int32_t axis);

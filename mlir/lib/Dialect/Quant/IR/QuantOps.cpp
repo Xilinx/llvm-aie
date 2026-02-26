@@ -23,6 +23,10 @@
 namespace mlir {
 namespace quant {
 
+namespace detail {
+void addAsmInterface(QuantDialect *dialect);
+} // namespace detail
+
 namespace {
 
 // Verify the integrity of per-axis quantization information, if present.
@@ -245,6 +249,7 @@ void QuantDialect::initialize() {
       >();
   detail::addBytecodeInterface(this);
   addInterfaces<QuantInlinerInterface>();
+  detail::addAsmInterface(this);
 }
 
 //===----------------------------------------------------------------------===//

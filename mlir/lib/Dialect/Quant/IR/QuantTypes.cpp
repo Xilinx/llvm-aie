@@ -3,7 +3,7 @@
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -38,6 +38,8 @@ double getMaxScale(Type expressedType) {
 
 struct BlockFloatQuantizedTypeConfig {
   StringRef mode;
+  // If empty, no type alias should be emitted for this mode.
+  StringRef alias;
   unsigned singleElementBitWidth;
   unsigned averageBitsPerElement;
   unsigned blockSize;
@@ -48,12 +50,12 @@ getBlockFloatQuantizedTypeConfig(BlockFloatQuantizedType::BlockMode blockMode) {
   switch (blockMode) {
   case BlockFloatQuantizedType::BlockMode::BFP16: {
     static constexpr BlockFloatQuantizedTypeConfig config = {
-        StringLiteral("BFP16"), 16, 9, 8};
+        StringLiteral("BFP16"), StringLiteral("bfp16"), 16, 9, 8};
     return config;
   }
   case BlockFloatQuantizedType::BlockMode::MX6: {
     static constexpr BlockFloatQuantizedTypeConfig config = {
-        StringLiteral("MX6"), 13, 6, 16};
+        StringLiteral("MX6"), StringLiteral("mx6"), 13, 6, 16};
     return config;
   }
   }
@@ -461,6 +463,10 @@ BlockFloatQuantizedType::parseBlockMode(StringRef name) {
 
 StringRef BlockFloatQuantizedType::getBlockModeName(BlockMode blockMode) {
   return getBlockFloatQuantizedTypeConfig(blockMode).mode;
+}
+
+StringRef BlockFloatQuantizedType::getBlockModeAlias(BlockMode blockMode) {
+  return getBlockFloatQuantizedTypeConfig(blockMode).alias;
 }
 
 UniformQuantizedPerAxisType UniformQuantizedPerAxisType::get(
