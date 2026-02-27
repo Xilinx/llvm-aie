@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -34,13 +34,13 @@ void SlotStatistics::addInstruction(MachineInstr &MI,
     SlotCounts Term;
     const int Scale = SlotStatistics::Unit / Alternatives->size();
     for (unsigned AltOpcode : *Alternatives) {
-      Term += Scale * getSlotCounts(AltOpcode, TII);
+      Term += Scale * getConflictCounts(AltOpcode, TII);
     }
     MSPSlotCounts.emplace(&MI, Term);
     Free += Term;
   } else {
     const int Scale = SlotStatistics::Unit;
-    const SlotCounts Term = Scale * getSlotCounts(Opcode, TII);
+    const SlotCounts Term = Scale * getConflictCounts(Opcode, TII);
     Fixed += Term;
   }
 }

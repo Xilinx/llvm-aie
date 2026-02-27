@@ -38,12 +38,12 @@
   ; CHECK-NEXT:    vldb wh1, [p0, #32]
   ; CHECK-NEXT:    vldb wl1, [p0], m4
   ; CHECK-NEXT:    vldb wh3, [p0, #32]; add.nc lc, r0, #-1
-  ; CHECK-NEXT:    vlda.3d wl3, [p0], d1; movxm ls, #.LBB0_2
+  ; CHECK-NEXT:    vldb.3d wl3, [p0], d1; movxm ls, #.LBB0_2
   ; CHECK-NEXT:    vshift.align x0, x0, s0, x8, r3
   ; CHECK-NEXT:    movxm le, #.L_LEnd0
   ; CHECK-NEXT:    vshift.align x2, x2, s0, x10, r3
   ; CHECK-NEXT:    vshuffle x5, x0, x2, r25
-  ; CHECK-NEXT:    vldb wh5, [p5, #32]; vshuffle x8, x0, x2, r9
+  ; CHECK-NEXT:    vlda wh5, [p5, #32]; vshuffle x8, x0, x2, r9
   ; CHECK-NEXT:    vlda wl5, [p5], #256; vshift.align x4, x4, s0, x1, r3
   ; CHECK-NEXT:    vshift.align x6, x6, s0, x3, r3; vmac.f bmh1, bmh1, x8, x9, r29
   ; CHECK-NEXT:    .p2align 4
@@ -62,12 +62,12 @@
   ; CHECK-NEXT:    vldb wh1, [p0, #32]; vmac.f bmh8, bmh8, x10, x11, r29
   ; CHECK-NEXT:    vldb wl1, [p0], m4; vmac.f bmh7, bmh7, x8, x5, r29
   ; CHECK-NEXT:    vldb wh3, [p0, #32]; vmac.f bmh5, bmh5, x1, x5, r29
-  ; CHECK-NEXT:    vlda.3d wl3, [p0], d1; vmac.f bml2, bml2, x3, x5, r29
+  ; CHECK-NEXT:    vldb.3d wl3, [p0], d1; vmac.f bml2, bml2, x3, x5, r29
   ; CHECK-NEXT:    vshift.align x0, x0, s0, x8, r3; vmac.f bml0, bml0, x10, x5, r29
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vshift.align x2, x2, s0, x10, r3
   ; CHECK-NEXT:    vshuffle x5, x0, x2, r25
-  ; CHECK-NEXT:    vldb wh5, [p5, #32]; vshuffle x8, x0, x2, r9
+  ; CHECK-NEXT:    vlda wh5, [p5, #32]; vshuffle x8, x0, x2, r9
   ; CHECK-NEXT:    vlda wl5, [p5], #256; vshift.align x4, x4, s0, x1, r3
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vshift.align x6, x6, s0, x3, r3; vmac.f bmh1, bmh1, x8, x9, r29
