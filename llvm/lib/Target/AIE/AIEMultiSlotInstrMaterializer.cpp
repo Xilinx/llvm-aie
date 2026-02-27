@@ -16,6 +16,7 @@
 #include "AIEMultiSlotInstrMaterializer.h"
 #include "AIEHazardRecognizer.h"
 #include "AIESlotStatistics.h"
+#include "AIESlotUtils.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -198,52 +199,48 @@ namespace {
 void materializeMSP(MachineInstr *MSP, SlotStatistics &Statistics,
                     const AIEBaseInstrInfo *TII) {
 
-  SlotCounts Counts = Statistics.MSPSlotCounts[MSP];
+  const SlotCounts Counts = Statistics.MSPSlotCounts[MSP];
+  const AIEBaseMCFormats *Formats = TII->getFormatInterface();
+  const auto *Alternatives = Formats->getAlternateInstsOpcode(MSP->getOpcode());
+  assert(Alternatives && !Alternatives->empty());
 
-  // 0. If we can't materialize in a given slot, we are worse
-  // 1. If Fixed is smaller than an alternative, we won't be increasing the
-  //    slot requirements
-  // 2. If Free is smaller than an alternative, we lower the probability that
-  //    we force another MSP past the current maximum.
-  auto Better = [&Statistics, &Counts](int A, int B) {
-    if (!Counts.at(A)) {
-      return false;
-    }
-    if (!Counts.at(B)) {
-      return true;
-    }
-    if (Statistics.Fixed.at(A) == Statistics.Fixed.at(B)) {
+  auto SlotOf = [Formats](unsigned Opc) {
+    return static_cast<int>(Formats->getSlotKind(Opc));
+  };
+
+  // Compare conflict-aware slot pressure: prefer the slot whose primary
+  // index has lower Fixed utilization, breaking ties by lower Free.
+  // Fixed and Free already use conflict sets, so they reflect cross-slot
+  // interference (e.g. Lng blocking Alu and Mv).
+  auto Better = [&Statistics](int A, int B) {
+    if (Statistics.Fixed.at(A) == Statistics.Fixed.at(B))
       return Statistics.Free.at(A) < Statistics.Free.at(B);
-    }
     return Statistics.Fixed.at(A) < Statistics.Fixed.at(B);
   };
-  int BestSlot = 0;
-  for (int S = 1; S < Counts.size(); S++) {
+
+  // Iterate only over the primary slots of the MSP's alternatives.
+  // With conflict-set-based statistics, secondary (conflict) indices
+  // would also appear non-zero in Counts, but they are not valid
+  // materialization targets.
+  unsigned BestOpcode = Alternatives->front();
+  int BestSlot = SlotOf(BestOpcode);
+  for (const unsigned AltOpcode : *Alternatives) {
+    const int S = SlotOf(AltOpcode);
     if (Better(S, BestSlot)) {
       BestSlot = S;
+      BestOpcode = AltOpcode;
     }
   }
-  // We should always find an alternative, even if it's not perfect.
-  assert(Counts.at(BestSlot));
-  // Reverse lookup of the alternative that matches BestSlot.
-  auto FindOpcode = [TII, Opcode = MSP->getOpcode()](int BestSlot) {
-    const AIEBaseMCFormats *Formats = TII->getFormatInterface();
-    auto *Alternatives = Formats->getAlternateInstsOpcode(Opcode);
-    for (auto Opcode : *Alternatives) {
-      if (Formats->getSlotKind(Opcode) == MCSlotKind(BestSlot)) {
-        return Opcode;
-      }
-    }
-    llvm_unreachable("BestSlot alternative not found");
-  };
 
   LLVM_DEBUG(dbgs() << "Materializing " << *MSP);
 
-  // Materialize MSP
-  MSP->setDesc(TII->get(FindOpcode(BestSlot)));
-  // Update statistics
-  Statistics.Fixed[BestSlot] += SlotStatistics::Unit;
+  MSP->setDesc(TII->get(BestOpcode));
+
+  // Update statistics: add conflict-set counts for the materialized opcode,
+  // and remove the MSP's Free contribution.
+  Statistics.Fixed += SlotStatistics::Unit * getConflictCounts(BestOpcode, TII);
   Statistics.Free -= Counts;
+
   LLVM_DEBUG(dbgs() << "           to " << *MSP);
   LLVM_DEBUG(dbgs() << "New Fixed:\n" << Statistics.Fixed << "\n");
 }

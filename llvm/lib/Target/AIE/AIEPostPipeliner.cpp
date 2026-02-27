@@ -191,7 +191,10 @@ bool isSideEffectFree(MachineInstr *MI) {
 } // namespace
 
 int PostPipeliner::getResMII(MachineBasicBlock &LoopBlock) {
-  // Add up all slot requirements and return the maximum slot count
+  // Add up per-slot instruction counts using primary slot sets.
+  // Conflict sets are not used here because multi-slot instructions
+  // (e.g. XM) accumulate conflicts from all constituent slots (X + M),
+  // causing them to dominate the maximum and over-estimate ResMII.
   SlotCounts Counts;
   for (auto &MI : LoopBlock) {
     Counts += getSlotCounts(MI.getOpcode(), TII);
@@ -457,7 +460,7 @@ bool PostPipeliner::computeLoopCarriedParameters() {
   // Initialize slot counts.
   for (int K = 0; K < NInstr; K++) {
     auto *MI = DAG->SUnits[K].getInstr();
-    Info[K].Slots = getSlotCounts(MI->getOpcode(), TII);
+    Info[K].Slots = getConflictCounts(MI->getOpcode(), TII);
   }
 
   // Forward properties like Earliest and Ancestors.
