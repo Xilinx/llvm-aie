@@ -1,0 +1,70 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc --mtriple=aie2p -O2 --start-before=postmisched \
+# RUN:   --aie-loop-min-tripcount=10 %s -o - | FileCheck %s
+
+# Test that MOV_RLC_imm11_pseudo is NOT materialized to MOVA (lda_slot)
+# when scalar LDA loads are present in the same loop. Both MOVA and LDA
+# use the lda_slot and cannot coexist in the same VLIW cycle.
+#
+# With conflict-set-aware materialization, the MOV pseudos should be
+# assigned to MOVX_alu_cg (alu_slot) instead, allowing them to share
+# VLIW bundles with the LDA instructions.
+
+# CHECK-LABEL: mov_load_conflict:
+# CHECK:       .LBB0_2:
+# The MOV immediates must materialize as movx (alu_slot), not mova (lda_slot),
+# so they can coexist with lda instructions in the same VLIW bundle.
+# CHECK-NOT:   mova{{.*}}#
+# CHECK:       .L_LEnd0:
+
+--- |
+  define dso_local void @mov_load_conflict(ptr addrspace(5) %p, i32 %n) {
+  entry:
+    ret void
+  }
+...
+---
+name:            mov_load_conflict
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry (align 16):
+    successors: %bb.1(0x50000000), %bb.3(0x30000000)
+    liveins: $p0, $r0
+
+    $r1 = MOVA 0
+    $r1 = GE $r1, $r0
+    JNZ $r1, %bb.3
+    DelayedSchedBarrier
+
+  bb.1:
+    successors: %bb.2(0x80000000)
+    liveins: $p0, $r0
+
+    $lc = ADD_NC_mv_add_ri $r0, 0
+    $ls = MOVXM %bb.2
+    $le = MOVXM <mcsymbol .L_LEnd0>
+
+  bb.2 (align 16):
+    successors: %bb.2(0x7c000000), %bb.3(0x04000000)
+    liveins: $p0, $r0, $r2, $r3, $r4, $r5, $r6, $r7
+
+    renamable $r2, renamable $p0 = LDA_dms_lda_pstm_nrm_imm killed renamable $p0, 4 :: (load (s32) from %ir.p, addrspace 5)
+    renamable $r3, renamable $p0 = LDA_dms_lda_pstm_nrm_imm killed renamable $p0, 4 :: (load (s32) from %ir.p, addrspace 5)
+    renamable $r4, renamable $p0 = LDA_dms_lda_pstm_nrm_imm killed renamable $p0, 4 :: (load (s32) from %ir.p, addrspace 5)
+    renamable $r5, renamable $p0 = LDA_dms_lda_pstm_nrm_imm killed renamable $p0, 4 :: (load (s32) from %ir.p, addrspace 5)
+    renamable $r6 = MOV_RLC_imm11_pseudo 10
+    renamable $r7 = MOV_RLC_imm11_pseudo 20
+    renamable $r2 = ADD_alu_r_rr renamable $r2, killed renamable $r6, implicit-def $srcarry
+    renamable $r3 = ADD_alu_r_rr renamable $r3, killed renamable $r7, implicit-def $srcarry
+    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+
+  bb.3 (align 16):
+    RET implicit $lr
+    DelayedSchedBarrier
+...
