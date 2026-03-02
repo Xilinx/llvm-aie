@@ -196,6 +196,50 @@ bool assignSlots(SlotMapping &SlotToBanks, const MachineBasicBlock &MBB,
 }
 
 namespace {
+
+/// Apply round-robin slot assignment to instructions selected by
+/// isRoundRobinSlotCandidate, ensuring consecutive candidates land on
+/// different slots.
+///
+/// \return true if at least two candidates were assigned to different slots.
+bool applyRoundRobinSlotAssignment(MachineBasicBlock &MBB,
+                                   const AIEBaseInstrInfo *TII) {
+  const AIEBaseMCFormats *Formats = TII->getFormatInterface();
+  SmallVector<MachineInstr *, 4> Candidates;
+  for (auto &MI : MBB) {
+    if (TII->isRoundRobinSlotCandidate(MI))
+      Candidates.push_back(&MI);
+  }
+
+  if (Candidates.size() < 2)
+    return false;
+
+  LLVM_DEBUG(dbgs() << "Applying round-robin slot assignment to "
+                    << Candidates.size() << " candidates\n");
+
+  MCSlotKind LastSlot;
+  for (auto *MI : Candidates) {
+    const auto *Alts = Formats->getAlternateInstsOpcode(MI->getOpcode());
+    assert(Alts && Alts->size() >= 2 &&
+           "Round-robin candidates must have at least two alternatives");
+    unsigned ChosenOpc = Alts->front();
+    for (const unsigned AltOpc : *Alts) {
+      const MCSlotKind AltSlot = Formats->getSlotKind(AltOpc);
+      const bool IsDifferentSlot = AltSlot != LastSlot;
+      if (IsDifferentSlot) {
+        ChosenOpc = AltOpc;
+        break;
+      }
+    }
+    LastSlot = Formats->getSlotKind(ChosenOpc);
+    LLVM_DEBUG(dbgs() << "Materializing: " << *MI);
+    MI->setDesc(TII->get(ChosenOpc));
+    LLVM_DEBUG(dbgs() << "          to: " << *MI);
+  }
+
+  return true;
+}
+
 void materializeMSP(MachineInstr *MSP, SlotStatistics &Statistics,
                     const AIEBaseInstrInfo *TII) {
 
@@ -319,6 +363,9 @@ void staticallyMaterializeMultiSlotInstructions(MachineBasicBlock &MBB,
     LLVM_DEBUG(
         dbgs()
         << "Could not find slot assignments, skipping bank materialization\n");
+    // Apply round-robin slot assignment to eligible pseudos. Remaining
+    // multi-slot pseudos are left for the pipeliner or MaterializePipeline.
+    applyRoundRobinSlotAssignment(MBB, TII);
   }
 
   if (MaterializeAll) {

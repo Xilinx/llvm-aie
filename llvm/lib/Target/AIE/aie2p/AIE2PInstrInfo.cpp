@@ -307,6 +307,13 @@ bool AIE2PInstrInfo::isFifoStoreConvOpcode(unsigned Opcode) const {
           (Opcode == AIE2P::VST_PUSH_576_CONV_bfp16ebs8_fp32));
 }
 
+int AIE2PInstrInfo::isRoundRobinSlotCandidate(MachineInstr &MI) const {
+  const unsigned Opc = MI.getOpcode();
+  if (Opc == AIE2P::VLD_FILL_512_pseudo)
+    return 1;
+  return 0;
+}
+
 std::optional<unsigned>
 AIE2PInstrInfo::getStoreFlushConvOpcode(unsigned StoreFlushOpcode) const {
   switch (StoreFlushOpcode) {
