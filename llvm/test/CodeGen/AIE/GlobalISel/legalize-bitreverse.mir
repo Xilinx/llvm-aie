@@ -13,34 +13,92 @@ body:             |
   bb.1.entry:
     ; CHECK-LABEL: name: test_bitreverse_s10
     ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
-    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 240
-    ; CHECK-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[C]], [[C2]]
-    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 1023
-    ; CHECK-NEXT: [[AND1:%[0-9]+]]:_(s32) = G_AND [[AND]], [[C3]]
-    ; CHECK-NEXT: [[LSHR:%[0-9]+]]:_(s32) = G_LSHR [[AND1]], [[C1]](s32)
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 24
     ; CHECK-NEXT: [[SHL:%[0-9]+]]:_(s32) = G_SHL [[C]], [[C1]](s32)
-    ; CHECK-NEXT: [[AND2:%[0-9]+]]:_(s32) = G_AND [[SHL]], [[C2]]
-    ; CHECK-NEXT: [[OR:%[0-9]+]]:_(s32) = G_OR [[LSHR]], [[AND2]]
-    ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
-    ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 204
-    ; CHECK-NEXT: [[AND3:%[0-9]+]]:_(s32) = G_AND [[OR]], [[C5]]
-    ; CHECK-NEXT: [[AND4:%[0-9]+]]:_(s32) = G_AND [[AND3]], [[C3]]
-    ; CHECK-NEXT: [[LSHR1:%[0-9]+]]:_(s32) = G_LSHR [[AND4]], [[C4]](s32)
-    ; CHECK-NEXT: [[SHL1:%[0-9]+]]:_(s32) = G_SHL [[OR]], [[C4]](s32)
-    ; CHECK-NEXT: [[AND5:%[0-9]+]]:_(s32) = G_AND [[SHL1]], [[C5]]
-    ; CHECK-NEXT: [[OR1:%[0-9]+]]:_(s32) = G_OR [[LSHR1]], [[AND5]]
-    ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 682
-    ; CHECK-NEXT: [[AND6:%[0-9]+]]:_(s32) = G_AND [[OR1]], [[C7]]
-    ; CHECK-NEXT: [[AND7:%[0-9]+]]:_(s32) = G_AND [[AND6]], [[C3]]
-    ; CHECK-NEXT: [[LSHR2:%[0-9]+]]:_(s32) = G_LSHR [[AND7]], [[C6]](s32)
-    ; CHECK-NEXT: [[SHL2:%[0-9]+]]:_(s32) = G_SHL [[OR1]], [[C6]](s32)
-    ; CHECK-NEXT: [[AND8:%[0-9]+]]:_(s32) = G_AND [[SHL2]], [[C7]]
-    ; CHECK-NEXT: [[OR2:%[0-9]+]]:_(s32) = G_OR [[LSHR2]], [[AND8]]
-    ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(s10) = G_TRUNC [[OR2]](s32)
+    ; CHECK-NEXT: [[LSHR:%[0-9]+]]:_(s32) = G_LSHR [[C]], [[C1]](s32)
+    ; CHECK-NEXT: [[OR:%[0-9]+]]:_(s32) = G_OR [[LSHR]], [[SHL]]
+    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 65280
+    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 8
+    ; CHECK-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[C]], [[C2]]
+    ; CHECK-NEXT: [[SHL1:%[0-9]+]]:_(s32) = G_SHL [[AND]], [[C3]](s32)
+    ; CHECK-NEXT: [[OR1:%[0-9]+]]:_(s32) = G_OR [[OR]], [[SHL1]]
+    ; CHECK-NEXT: [[LSHR1:%[0-9]+]]:_(s32) = G_LSHR [[C]], [[C3]](s32)
+    ; CHECK-NEXT: [[AND1:%[0-9]+]]:_(s32) = G_AND [[LSHR1]], [[C2]]
+    ; CHECK-NEXT: [[OR2:%[0-9]+]]:_(s32) = G_OR [[OR1]], [[AND1]]
+    ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
+    ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 -252645136
+    ; CHECK-NEXT: [[AND2:%[0-9]+]]:_(s32) = G_AND [[OR2]], [[C5]]
+    ; CHECK-NEXT: [[LSHR2:%[0-9]+]]:_(s32) = G_LSHR [[AND2]], [[C4]](s32)
+    ; CHECK-NEXT: [[SHL2:%[0-9]+]]:_(s32) = G_SHL [[OR2]], [[C4]](s32)
+    ; CHECK-NEXT: [[AND3:%[0-9]+]]:_(s32) = G_AND [[SHL2]], [[C5]]
+    ; CHECK-NEXT: [[OR3:%[0-9]+]]:_(s32) = G_OR [[LSHR2]], [[AND3]]
+    ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; CHECK-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 -858993460
+    ; CHECK-NEXT: [[AND4:%[0-9]+]]:_(s32) = G_AND [[OR3]], [[C7]]
+    ; CHECK-NEXT: [[LSHR3:%[0-9]+]]:_(s32) = G_LSHR [[AND4]], [[C6]](s32)
+    ; CHECK-NEXT: [[SHL3:%[0-9]+]]:_(s32) = G_SHL [[OR3]], [[C6]](s32)
+    ; CHECK-NEXT: [[AND5:%[0-9]+]]:_(s32) = G_AND [[SHL3]], [[C7]]
+    ; CHECK-NEXT: [[OR4:%[0-9]+]]:_(s32) = G_OR [[LSHR3]], [[AND5]]
+    ; CHECK-NEXT: [[C8:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[C9:%[0-9]+]]:_(s32) = G_CONSTANT i32 -1431655766
+    ; CHECK-NEXT: [[AND6:%[0-9]+]]:_(s32) = G_AND [[OR4]], [[C9]]
+    ; CHECK-NEXT: [[LSHR4:%[0-9]+]]:_(s32) = G_LSHR [[AND6]], [[C8]](s32)
+    ; CHECK-NEXT: [[SHL4:%[0-9]+]]:_(s32) = G_SHL [[OR4]], [[C8]](s32)
+    ; CHECK-NEXT: [[AND7:%[0-9]+]]:_(s32) = G_AND [[SHL4]], [[C9]]
+    ; CHECK-NEXT: [[OR5:%[0-9]+]]:_(s32) = G_OR [[LSHR4]], [[AND7]]
+    ; CHECK-NEXT: [[C10:%[0-9]+]]:_(s32) = G_CONSTANT i32 22
+    ; CHECK-NEXT: [[LSHR5:%[0-9]+]]:_(s32) = G_LSHR [[OR5]], [[C10]](s32)
+    ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(s10) = G_TRUNC [[LSHR5]](s32)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[TRUNC]](s10)
     %0:_(s10) = G_CONSTANT i10 0
+    %1:_(s10) = G_BITREVERSE %0
+    PseudoRET implicit $lr, implicit %1
+...
+
+---
+name: test_bitreverse_s10_mac_conf
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: test_bitreverse_s10_mac_conf
+    ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 67
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 24
+    ; CHECK-NEXT: [[SHL:%[0-9]+]]:_(s32) = G_SHL [[C]], [[C1]](s32)
+    ; CHECK-NEXT: [[LSHR:%[0-9]+]]:_(s32) = G_LSHR [[C]], [[C1]](s32)
+    ; CHECK-NEXT: [[OR:%[0-9]+]]:_(s32) = G_OR [[LSHR]], [[SHL]]
+    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 65280
+    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 8
+    ; CHECK-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[C]], [[C2]]
+    ; CHECK-NEXT: [[SHL1:%[0-9]+]]:_(s32) = G_SHL [[AND]], [[C3]](s32)
+    ; CHECK-NEXT: [[OR1:%[0-9]+]]:_(s32) = G_OR [[OR]], [[SHL1]]
+    ; CHECK-NEXT: [[LSHR1:%[0-9]+]]:_(s32) = G_LSHR [[C]], [[C3]](s32)
+    ; CHECK-NEXT: [[AND1:%[0-9]+]]:_(s32) = G_AND [[LSHR1]], [[C2]]
+    ; CHECK-NEXT: [[OR2:%[0-9]+]]:_(s32) = G_OR [[OR1]], [[AND1]]
+    ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
+    ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 -252645136
+    ; CHECK-NEXT: [[AND2:%[0-9]+]]:_(s32) = G_AND [[OR2]], [[C5]]
+    ; CHECK-NEXT: [[LSHR2:%[0-9]+]]:_(s32) = G_LSHR [[AND2]], [[C4]](s32)
+    ; CHECK-NEXT: [[SHL2:%[0-9]+]]:_(s32) = G_SHL [[OR2]], [[C4]](s32)
+    ; CHECK-NEXT: [[AND3:%[0-9]+]]:_(s32) = G_AND [[SHL2]], [[C5]]
+    ; CHECK-NEXT: [[OR3:%[0-9]+]]:_(s32) = G_OR [[LSHR2]], [[AND3]]
+    ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; CHECK-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 -858993460
+    ; CHECK-NEXT: [[AND4:%[0-9]+]]:_(s32) = G_AND [[OR3]], [[C7]]
+    ; CHECK-NEXT: [[LSHR3:%[0-9]+]]:_(s32) = G_LSHR [[AND4]], [[C6]](s32)
+    ; CHECK-NEXT: [[SHL3:%[0-9]+]]:_(s32) = G_SHL [[OR3]], [[C6]](s32)
+    ; CHECK-NEXT: [[AND5:%[0-9]+]]:_(s32) = G_AND [[SHL3]], [[C7]]
+    ; CHECK-NEXT: [[OR4:%[0-9]+]]:_(s32) = G_OR [[LSHR3]], [[AND5]]
+    ; CHECK-NEXT: [[C8:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[C9:%[0-9]+]]:_(s32) = G_CONSTANT i32 -1431655766
+    ; CHECK-NEXT: [[AND6:%[0-9]+]]:_(s32) = G_AND [[OR4]], [[C9]]
+    ; CHECK-NEXT: [[LSHR4:%[0-9]+]]:_(s32) = G_LSHR [[AND6]], [[C8]](s32)
+    ; CHECK-NEXT: [[SHL4:%[0-9]+]]:_(s32) = G_SHL [[OR4]], [[C8]](s32)
+    ; CHECK-NEXT: [[AND7:%[0-9]+]]:_(s32) = G_AND [[SHL4]], [[C9]]
+    ; CHECK-NEXT: [[OR5:%[0-9]+]]:_(s32) = G_OR [[LSHR4]], [[AND7]]
+    ; CHECK-NEXT: [[C10:%[0-9]+]]:_(s32) = G_CONSTANT i32 22
+    ; CHECK-NEXT: [[LSHR5:%[0-9]+]]:_(s32) = G_LSHR [[OR5]], [[C10]](s32)
+    ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(s10) = G_TRUNC [[LSHR5]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[TRUNC]](s10)
+    %0:_(s10) = G_CONSTANT i10 67
     %1:_(s10) = G_BITREVERSE %0
     PseudoRET implicit $lr, implicit %1
 ...
@@ -75,5 +133,75 @@ body:             |
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[OR2]](s32)
     %0:_(s32) = G_CONSTANT i32 0
     %1:_(s32) = G_BITREVERSE %0
+    PseudoRET implicit $lr, implicit %1
+...
+
+---
+name: test_bitreverse_s64
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: test_bitreverse_s64
+    ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 24
+    ; CHECK-NEXT: [[SHL:%[0-9]+]]:_(s32) = G_SHL [[C]], [[C1]](s32)
+    ; CHECK-NEXT: [[LSHR:%[0-9]+]]:_(s32) = G_LSHR [[C]], [[C1]](s32)
+    ; CHECK-NEXT: [[OR:%[0-9]+]]:_(s32) = G_OR [[LSHR]], [[SHL]]
+    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 65280
+    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 8
+    ; CHECK-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[C]], [[C2]]
+    ; CHECK-NEXT: [[SHL1:%[0-9]+]]:_(s32) = G_SHL [[AND]], [[C3]](s32)
+    ; CHECK-NEXT: [[OR1:%[0-9]+]]:_(s32) = G_OR [[OR]], [[SHL1]]
+    ; CHECK-NEXT: [[LSHR1:%[0-9]+]]:_(s32) = G_LSHR [[C]], [[C3]](s32)
+    ; CHECK-NEXT: [[AND1:%[0-9]+]]:_(s32) = G_AND [[LSHR1]], [[C2]]
+    ; CHECK-NEXT: [[OR2:%[0-9]+]]:_(s32) = G_OR [[OR1]], [[AND1]]
+    ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
+    ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 -252645136
+    ; CHECK-NEXT: [[AND2:%[0-9]+]]:_(s32) = G_AND [[OR2]], [[C5]]
+    ; CHECK-NEXT: [[LSHR2:%[0-9]+]]:_(s32) = G_LSHR [[AND2]], [[C4]](s32)
+    ; CHECK-NEXT: [[SHL2:%[0-9]+]]:_(s32) = G_SHL [[OR2]], [[C4]](s32)
+    ; CHECK-NEXT: [[AND3:%[0-9]+]]:_(s32) = G_AND [[SHL2]], [[C5]]
+    ; CHECK-NEXT: [[OR3:%[0-9]+]]:_(s32) = G_OR [[LSHR2]], [[AND3]]
+    ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; CHECK-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 -858993460
+    ; CHECK-NEXT: [[AND4:%[0-9]+]]:_(s32) = G_AND [[OR3]], [[C7]]
+    ; CHECK-NEXT: [[LSHR3:%[0-9]+]]:_(s32) = G_LSHR [[AND4]], [[C6]](s32)
+    ; CHECK-NEXT: [[SHL3:%[0-9]+]]:_(s32) = G_SHL [[OR3]], [[C6]](s32)
+    ; CHECK-NEXT: [[AND5:%[0-9]+]]:_(s32) = G_AND [[SHL3]], [[C7]]
+    ; CHECK-NEXT: [[OR4:%[0-9]+]]:_(s32) = G_OR [[LSHR3]], [[AND5]]
+    ; CHECK-NEXT: [[C8:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[C9:%[0-9]+]]:_(s32) = G_CONSTANT i32 -1431655766
+    ; CHECK-NEXT: [[AND6:%[0-9]+]]:_(s32) = G_AND [[OR4]], [[C9]]
+    ; CHECK-NEXT: [[LSHR4:%[0-9]+]]:_(s32) = G_LSHR [[AND6]], [[C8]](s32)
+    ; CHECK-NEXT: [[SHL4:%[0-9]+]]:_(s32) = G_SHL [[OR4]], [[C8]](s32)
+    ; CHECK-NEXT: [[AND7:%[0-9]+]]:_(s32) = G_AND [[SHL4]], [[C9]]
+    ; CHECK-NEXT: [[OR5:%[0-9]+]]:_(s32) = G_OR [[LSHR4]], [[AND7]]
+    ; CHECK-NEXT: [[SHL5:%[0-9]+]]:_(s32) = G_SHL [[C]], [[C1]](s32)
+    ; CHECK-NEXT: [[LSHR5:%[0-9]+]]:_(s32) = G_LSHR [[C]], [[C1]](s32)
+    ; CHECK-NEXT: [[OR6:%[0-9]+]]:_(s32) = G_OR [[LSHR5]], [[SHL5]]
+    ; CHECK-NEXT: [[AND8:%[0-9]+]]:_(s32) = G_AND [[C]], [[C2]]
+    ; CHECK-NEXT: [[SHL6:%[0-9]+]]:_(s32) = G_SHL [[AND8]], [[C3]](s32)
+    ; CHECK-NEXT: [[OR7:%[0-9]+]]:_(s32) = G_OR [[OR6]], [[SHL6]]
+    ; CHECK-NEXT: [[LSHR6:%[0-9]+]]:_(s32) = G_LSHR [[C]], [[C3]](s32)
+    ; CHECK-NEXT: [[AND9:%[0-9]+]]:_(s32) = G_AND [[LSHR6]], [[C2]]
+    ; CHECK-NEXT: [[OR8:%[0-9]+]]:_(s32) = G_OR [[OR7]], [[AND9]]
+    ; CHECK-NEXT: [[AND10:%[0-9]+]]:_(s32) = G_AND [[OR8]], [[C5]]
+    ; CHECK-NEXT: [[LSHR7:%[0-9]+]]:_(s32) = G_LSHR [[AND10]], [[C4]](s32)
+    ; CHECK-NEXT: [[SHL7:%[0-9]+]]:_(s32) = G_SHL [[OR8]], [[C4]](s32)
+    ; CHECK-NEXT: [[AND11:%[0-9]+]]:_(s32) = G_AND [[SHL7]], [[C5]]
+    ; CHECK-NEXT: [[OR9:%[0-9]+]]:_(s32) = G_OR [[LSHR7]], [[AND11]]
+    ; CHECK-NEXT: [[AND12:%[0-9]+]]:_(s32) = G_AND [[OR9]], [[C7]]
+    ; CHECK-NEXT: [[LSHR8:%[0-9]+]]:_(s32) = G_LSHR [[AND12]], [[C6]](s32)
+    ; CHECK-NEXT: [[SHL8:%[0-9]+]]:_(s32) = G_SHL [[OR9]], [[C6]](s32)
+    ; CHECK-NEXT: [[AND13:%[0-9]+]]:_(s32) = G_AND [[SHL8]], [[C7]]
+    ; CHECK-NEXT: [[OR10:%[0-9]+]]:_(s32) = G_OR [[LSHR8]], [[AND13]]
+    ; CHECK-NEXT: [[AND14:%[0-9]+]]:_(s32) = G_AND [[OR10]], [[C9]]
+    ; CHECK-NEXT: [[LSHR9:%[0-9]+]]:_(s32) = G_LSHR [[AND14]], [[C8]](s32)
+    ; CHECK-NEXT: [[SHL9:%[0-9]+]]:_(s32) = G_SHL [[OR10]], [[C8]](s32)
+    ; CHECK-NEXT: [[AND15:%[0-9]+]]:_(s32) = G_AND [[SHL9]], [[C9]]
+    ; CHECK-NEXT: [[OR11:%[0-9]+]]:_(s32) = G_OR [[LSHR9]], [[AND15]]
+    ; CHECK-NEXT: [[MV:%[0-9]+]]:_(s64) = G_MERGE_VALUES [[OR5]](s32), [[OR11]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[MV]](s64)
+    %0:_(s64) = G_CONSTANT i64 0
+    %1:_(s64) = G_BITREVERSE %0
     PseudoRET implicit $lr, implicit %1
 ...
