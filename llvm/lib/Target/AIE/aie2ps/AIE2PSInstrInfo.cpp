@@ -816,6 +816,13 @@ AIE2PSInstrInfo::getDoneLatency(const unsigned Opc) const {
   return (Opc == AIE2PS::DONE) ? std::optional<unsigned>(6) : std::nullopt;
 }
 
+int AIE2PSInstrInfo::isRoundRobinSlotCandidate(MachineInstr &MI) const {
+  const unsigned Opc = MI.getOpcode();
+  if (Opc == AIE2PS::VLD_FILL_512_pseudo)
+    return 1;
+  return 0;
+}
+
 unsigned AIE2PSInstrInfo::getCallOpcode(const MachineFunction &CallerF,
                                         bool IsIndirect,
                                         bool IsTailCall) const {

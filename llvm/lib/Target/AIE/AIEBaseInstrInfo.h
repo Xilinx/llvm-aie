@@ -179,6 +179,11 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   /// \return wether \p MI is a multi-slot pseudo instruction
   bool isMultiSlotPseudo(const MachineInstr &MI) const;
 
+  /// \return round robin candidate of \p MI .
+  virtual int isRoundRobinSlotCandidate(MachineInstr &MI) const {
+    return false;
+  }
+
   /// Return the opcode for smallest nop
   virtual unsigned getNopOpcode() const {
     llvm_unreachable("Target didn't implement getNopOpcode");

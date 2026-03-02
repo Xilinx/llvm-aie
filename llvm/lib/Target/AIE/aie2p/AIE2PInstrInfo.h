@@ -92,6 +92,8 @@ public:
   bool isGenericOffsetMemOpcode(unsigned Opcode) const override;
   bool isFifoStoreConvOpcode(unsigned Opcode) const override;
 
+  int isRoundRobinSlotCandidate(MachineInstr &MI) const override;
+
   bool verifyGenericInstruction(const MachineInstr &MI,
                                 StringRef &ErrInfo) const override;
   bool verifyMemOperand(const MachineInstr &MI,
