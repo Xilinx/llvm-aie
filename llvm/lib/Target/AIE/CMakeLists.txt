@@ -72,6 +72,30 @@ tablegen(LLVM AIE2PGenPostLegalizerGICustomCombiner.inc -gen-global-isel-combine
 tablegen(LLVM AIE2PGenAsmMatcher.inc -gen-asm-matcher)
 tablegen(LLVM AIE2PGenVarInstructionItin.inc -gen-aie-alternate-itinerary-emitter)
 
+# aie2ps 
+set(LLVM_TARGET_DEFINITIONS AIE2PS.td)
+tablegen(LLVM AIE2PSGenInstrInfo.inc -gen-instr-info -base-instrinfo-class AIEBaseInstrInfo)
+tablegen(LLVM AIE2PSGenRegisterInfo.inc -gen-register-info -base-registerinfo-class AIEBaseRegisterInfo)
+tablegen(LLVM AIE2PSGenRegisterBank.inc -gen-register-bank -base-register-bank-class AIEBaseRegisterBankInfo)
+tablegen(LLVM AIE2PSGenCallingConv.inc -gen-callingconv)
+tablegen(LLVM AIE2PSGenGlobalISel.inc -gen-global-isel --warn-on-skipped-patterns)
+tablegen(LLVM AIE2PSGenSubtargetInfo.inc -gen-subtarget)
+tablegen(LLVM AIE2PSGenMemoryCycles.inc -gen-aie-memory-cycles)
+tablegen(LLVM AIE2PSGenPreSchedLowering.inc -gen-aie-presched-lowering)
+tablegen(LLVM AIE2PSGenSplitInstrTables.inc -gen-aie-split-instr-tables)
+tablegen(LLVM AIE2PSGenFormats.inc -gen-instr-format)
+tablegen(LLVM AIE2PSGenMCCodeEmitter.inc -gen-emitter)
+tablegen(LLVM AIE2PSGenAsmWriter.inc -gen-asm-writer)
+tablegen(LLVM AIE2PSGenVarInstructionItin.inc -gen-aie-alternate-itinerary-emitter)
+tablegen(LLVM AIE2PSGenDisassemblerTables.inc -gen-disassembler)
+tablegen(LLVM AIE2PSGenPreLegalizerGICombiner.inc -gen-global-isel-combiner
+              -combiners="AIE2PSPreLegalizerCombiner")
+tablegen(LLVM AIE2PSGenPostLegalizerGIGenericCombiner.inc -gen-global-isel-combiner
+              -combiners="AIE2PSPostLegalizerGenericCombiner")
+tablegen(LLVM AIE2PSGenPostLegalizerGICustomCombiner.inc -gen-global-isel-combiner
+              -combiners="AIE2PSPostLegalizerCustomCombiner")
+tablegen(LLVM AIE2PSGenAsmMatcher.inc -gen-asm-matcher)
+
 add_public_tablegen_target(AIECommonTableGen)
 
 add_llvm_target(AIECodeGen
@@ -175,6 +199,21 @@ add_llvm_target(AIECodeGen
    aie2p/AIE2PPostLegalizerCustomCombiner.cpp
    aie2p/AIE2PPostLegalizerGenericCombiner.cpp
    aie2p/AIE2PPreLegalizerCombiner.cpp
+   # aie2ps
+   aie2ps/AIE2PSSubtarget.cpp
+   aie2ps/AIE2PSTargetMachine.cpp
+   aie2ps/AIE2PSTargetTransformInfo.cpp
+   aie2ps/AIE2PSRegisterInfo.cpp
+   aie2ps/AIE2PSLegalizerInfo.cpp
+   aie2ps/AIE2PSInstrInfo.cpp
+   aie2ps/AIE2PSFrameLowering.cpp
+   aie2ps/AIE2PSRegisterBankInfo.cpp
+   aie2ps/AIE2PSISelLowering.cpp
+   aie2ps/AIE2PSInstructionSelector.cpp
+   aie2ps/AIE2PSPostLegalizerCustomCombiner.cpp
+   aie2ps/AIE2PSPostLegalizerGenericCombiner.cpp
+   aie2ps/AIE2PSPreLegalizerCombiner.cpp
+   aie2ps/AIE2PSConvertFP16Operation.cpp
 
    LINK_COMPONENTS
    Analysis

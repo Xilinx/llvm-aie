@@ -7,6 +7,7 @@
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE %s
 # RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2P %s
+# RUN: llc -mtriple aie2ps -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2PS %s
 
 ---
 name: xor_s32
@@ -31,6 +32,14 @@ body: |
     ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
     ; AIE2P-NEXT: [[XOR:%[0-9]+]]:er = XOR [[COPY]], [[COPY1]]
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[XOR]]
+    ;
+    ; AIE2PS-LABEL: name: xor_s32
+    ; AIE2PS: liveins: $r6, $r7
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
+    ; AIE2PS-NEXT: [[XOR:%[0-9]+]]:mlockid_reg = XOR [[COPY]], [[COPY1]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[XOR]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = G_XOR %0, %1

@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -16,6 +16,17 @@
 //===----------------------------------------------------------------------===//
 // AIEngine specific DAG Nodes.
 //===----------------------------------------------------------------------===//
+
+// An operand for target addresses. A simple imm20 cannot be used as it isn't
+// compatible with the `bb` SDNode, which prevents writing patterns.
+def cpmaddr : Operand<OtherVT> {
+  let MCOperandPredicate = [{
+    int64_t Imm;
+    if (MCOp.evaluateAsConstantImm(Imm))
+      return isUInt<20>(Imm);
+    return MCOp.isBareSymbolRef();
+  }];
+}
 
 // Note: decode*Operand functions are implemented in AIEDisassembler.
 // Node: getSImmOpValue* functions are implemented in AIEMCCodeEmitter.

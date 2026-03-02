@@ -1,0 +1,124 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VADDSUB_16
+    $x3 = VADDSUB_16 $x2, $x7, $r26, implicit $crbf8conf, implicit $crfp8conf
+    $x0 = VADDSUB_16 $x3, $x1, $r25, implicit $crbf8conf, implicit $crfp8conf
+    $x8 = VADDSUB_16 $x7, $x2, $r19, implicit $crbf8conf, implicit $crfp8conf
+    $x4 = VADDSUB_16 $x1, $x10, $r18, implicit $crbf8conf, implicit $crfp8conf
+    $x5 = VADDSUB_16 $x6, $x6, $r22, implicit $crbf8conf, implicit $crfp8conf
+    $x6 = VADDSUB_16 $x4, $x9, $r29, implicit $crbf8conf, implicit $crfp8conf
+    $x10 = VADDSUB_16 $x9, $x11, $r16, implicit $crbf8conf, implicit $crfp8conf
+    $x11 = VADDSUB_16 $x8, $x0, $r24, implicit $crbf8conf, implicit $crfp8conf
+    $x9 = VADDSUB_16 $x0, $x4, $r21, implicit $crbf8conf, implicit $crfp8conf
+    $x1 = VADDSUB_16 $x11, $x3, $r30, implicit $crbf8conf, implicit $crfp8conf
+    $x2 = VADDSUB_16 $x10, $x8, $r28, implicit $crbf8conf, implicit $crfp8conf
+    $x7 = VADDSUB_16 $x5, $x5, $r27, implicit $crbf8conf, implicit $crfp8conf
+    $x3 = VADDSUB_16 $x2, $x7, $r17, implicit $crbf8conf, implicit $crfp8conf
+    $x0 = VADDSUB_16 $x3, $x1, $r23, implicit $crbf8conf, implicit $crfp8conf
+    $x8 = VADDSUB_16 $x7, $x2, $r20, implicit $crbf8conf, implicit $crfp8conf
+    $x4 = VADDSUB_16 $x1, $x10, $r31, implicit $crbf8conf, implicit $crfp8conf
+
+    ; VADDSUB_32
+    $x7 = VADDSUB_32 $x9, $x10, $r21, implicit $crbf8conf, implicit $crfp8conf
+    $x1 = VADDSUB_32 $x1, $x6, $r23, implicit $crbf8conf, implicit $crfp8conf
+    $x10 = VADDSUB_32 $x11, $x1, $r30, implicit $crbf8conf, implicit $crfp8conf
+    $x5 = VADDSUB_32 $x3, $x0, $r29, implicit $crbf8conf, implicit $crfp8conf
+    $x3 = VADDSUB_32 $x10, $x8, $r19, implicit $crbf8conf, implicit $crfp8conf
+    $x9 = VADDSUB_32 $x4, $x2, $r16, implicit $crbf8conf, implicit $crfp8conf
+    $x6 = VADDSUB_32 $x7, $x11, $r28, implicit $crbf8conf, implicit $crfp8conf
+    $x2 = VADDSUB_32 $x5, $x3, $r31, implicit $crbf8conf, implicit $crfp8conf
+    $x11 = VADDSUB_32 $x8, $x7, $r18, implicit $crbf8conf, implicit $crfp8conf
+    $x8 = VADDSUB_32 $x0, $x9, $r25, implicit $crbf8conf, implicit $crfp8conf
+    $x4 = VADDSUB_32 $x2, $x5, $r24, implicit $crbf8conf, implicit $crfp8conf
+    $x0 = VADDSUB_32 $x6, $x4, $r26, implicit $crbf8conf, implicit $crfp8conf
+    $x7 = VADDSUB_32 $x9, $x10, $r22, implicit $crbf8conf, implicit $crfp8conf
+    $x1 = VADDSUB_32 $x1, $x6, $r17, implicit $crbf8conf, implicit $crfp8conf
+    $x10 = VADDSUB_32 $x11, $x1, $r20, implicit $crbf8conf, implicit $crfp8conf
+    $x5 = VADDSUB_32 $x3, $x0, $r27, implicit $crbf8conf, implicit $crfp8conf
+
+    ; VADDSUB_8
+    $x6 = VADDSUB_8 $x5, $x8, $l1, implicit $crbf8conf, implicit $crfp8conf
+    $x9 = VADDSUB_8 $x7, $x10, $l5, implicit $crbf8conf, implicit $crfp8conf
+    $x11 = VADDSUB_8 $x9, $x5, $l7, implicit $crbf8conf, implicit $crfp8conf
+    $x7 = VADDSUB_8 $x2, $x0, $l0, implicit $crbf8conf, implicit $crfp8conf
+    $x2 = VADDSUB_8 $x1, $x1, $l11, implicit $crbf8conf, implicit $crfp8conf
+    $x10 = VADDSUB_8 $x8, $x3, $l8, implicit $crbf8conf, implicit $crfp8conf
+    $x0 = VADDSUB_8 $x10, $x7, $l14, implicit $crbf8conf, implicit $crfp8conf
+    $x1 = VADDSUB_8 $x4, $x2, $l12, implicit $crbf8conf, implicit $crfp8conf
+    $x8 = VADDSUB_8 $x3, $x4, $l13, implicit $crbf8conf, implicit $crfp8conf
+    $x4 = VADDSUB_8 $x0, $x6, $l4, implicit $crbf8conf, implicit $crfp8conf
+    $x3 = VADDSUB_8 $x11, $x9, $l6, implicit $crbf8conf, implicit $crfp8conf
+    $x5 = VADDSUB_8 $x6, $x11, $l2, implicit $crbf8conf, implicit $crfp8conf
+    $x6 = VADDSUB_8 $x5, $x8, $l9, implicit $crbf8conf, implicit $crfp8conf
+    $x9 = VADDSUB_8 $x7, $x10, $l15, implicit $crbf8conf, implicit $crfp8conf
+    $x11 = VADDSUB_8 $x9, $x5, $l3, implicit $crbf8conf, implicit $crfp8conf
+    $x7 = VADDSUB_8 $x2, $x0, $l10, implicit $crbf8conf, implicit $crfp8conf
+...
+
+# CHECK: 0: 70 a6 27 33 vaddsub.16 x3, x2, x7, r26
+# CHECK: 4: 70 96 31 30 vaddsub.16 x0, x3, x1, r25
+# CHECK: 8: 70 36 72 38 vaddsub.16 x8, x7, x2, r19
+# CHECK: c: 70 26 1a 34 vaddsub.16 x4, x1, x10, r18
+# CHECK: 10: 70 66 66 35 vaddsub.16 x5, x6, x6, r22
+# CHECK: 14: 70 d6 49 36 vaddsub.16 x6, x4, x9, r29
+# CHECK: 18: 70 06 9b 3a vaddsub.16 x10, x9, x11, r16
+# CHECK: 1c: 70 86 80 3b vaddsub.16 x11, x8, x0, r24
+# CHECK: 20: 70 56 04 39 vaddsub.16 x9, x0, x4, r21
+# CHECK: 24: 70 e6 b3 31 vaddsub.16 x1, x11, x3, r30
+# CHECK: 28: 70 c6 a8 32 vaddsub.16 x2, x10, x8, r28
+# CHECK: 2c: 70 b6 55 37 vaddsub.16 x7, x5, x5, r27
+# CHECK: 30: 70 16 27 33 vaddsub.16 x3, x2, x7, r17
+# CHECK: 34: 70 76 31 30 vaddsub.16 x0, x3, x1, r23
+# CHECK: 38: 70 46 72 38 vaddsub.16 x8, x7, x2, r20
+# CHECK: 3c: 70 f6 1a 34 vaddsub.16 x4, x1, x10, r31
+# CHECK: 40: 70 52 9a 37 vaddsub.32 x7, x9, x10, r21
+# CHECK: 44: 70 72 16 31 vaddsub.32 x1, x1, x6, r23
+# CHECK: 48: 70 e2 b1 3a vaddsub.32 x10, x11, x1, r30
+# CHECK: 4c: 70 d2 30 35 vaddsub.32 x5, x3, x0, r29
+# CHECK: 50: 70 32 a8 33 vaddsub.32 x3, x10, x8, r19
+# CHECK: 54: 70 02 42 39 vaddsub.32 x9, x4, x2, r16
+# CHECK: 58: 70 c2 7b 36 vaddsub.32 x6, x7, x11, r28
+# CHECK: 5c: 70 f2 53 32 vaddsub.32 x2, x5, x3, r31
+# CHECK: 60: 70 22 87 3b vaddsub.32 x11, x8, x7, r18
+# CHECK: 64: 70 92 09 38 vaddsub.32 x8, x0, x9, r25
+# CHECK: 68: 70 82 25 34 vaddsub.32 x4, x2, x5, r24
+# CHECK: 6c: 70 a2 64 30 vaddsub.32 x0, x6, x4, r26
+# CHECK: 70: 70 62 9a 37 vaddsub.32 x7, x9, x10, r22
+# CHECK: 74: 70 12 16 31 vaddsub.32 x1, x1, x6, r17
+# CHECK: 78: 70 42 b1 3a vaddsub.32 x10, x11, x1, r20
+# CHECK: 7c: 70 b2 30 35 vaddsub.32 x5, x3, x0, r27
+# CHECK: 80: 70 1a 58 36 vaddsub.8 x6, x5, x8, r3:r2
+# CHECK: 84: 70 5a 7a 39 vaddsub.8 x9, x7, x10, r11:r10
+# CHECK: 88: 70 7a 95 3b vaddsub.8 x11, x9, x5, r15:r14
+# CHECK: 8c: 70 0a 20 37 vaddsub.8 x7, x2, x0, r1:r0
+# CHECK: 90: 70 ba 11 32 vaddsub.8 x2, x1, x1, r23:r22
+# CHECK: 94: 70 8a 83 3a vaddsub.8 x10, x8, x3, r17:r16
+# CHECK: 98: 70 ea a7 30 vaddsub.8 x0, x10, x7, r29:r28
+# CHECK: 9c: 70 ca 42 31 vaddsub.8 x1, x4, x2, r25:r24
+# CHECK: a0: 70 da 34 38 vaddsub.8 x8, x3, x4, r27:r26
+# CHECK: a4: 70 4a 06 34 vaddsub.8 x4, x0, x6, r9:r8
+# CHECK: a8: 70 6a b9 33 vaddsub.8 x3, x11, x9, r13:r12
+# CHECK: ac: 70 2a 6b 35 vaddsub.8 x5, x6, x11, r5:r4
+# CHECK: b0: 70 9a 58 36 vaddsub.8 x6, x5, x8, r19:r18
+# CHECK: b4: 70 fa 7a 39 vaddsub.8 x9, x7, x10, r31:r30
+# CHECK: b8: 70 3a 95 3b vaddsub.8 x11, x9, x5, r7:r6
+# CHECK: bc: 70 aa 20 37 vaddsub.8 x7, x2, x0, r21:r20

@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //===----------------------------------------------------------------------===//
 //
 // This file defines all of the AIE2P-specific intrinsics.
@@ -594,16 +594,20 @@ def int_aie2p_get_ss_nb : AIE2P_get_ss;
 
 // Scalar stream write with tlast
 class AIE2P_put_ms : DefaultAttrsIntrinsic<[], [llvm_i32_ty, llvm_i32_ty], [IntrHasSideEffects, IntrNoMem]>;
+class AIE2P_put_ms_nb : DefaultAttrsIntrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty], [IntrHasSideEffects, IntrNoMem]>;
+// Read data into accumulator lane
 def int_aie2p_put_ms : ClangBuiltin<"__builtin_aie2p_put_ms">, AIE2P_put_ms;
-def int_aie2p_put_ms_nb : DefaultAttrsIntrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty], [IntrHasSideEffects, IntrNoMem]>;
+def int_aie2p_put_ms_nb : AIE2P_put_ms_nb;
 // Read data into accumulator lane
 class AIE2PV64ACC32I32I32 : DefaultAttrsIntrinsic<[llvm_v64i32_ty], [llvm_i32_ty, llvm_i32_ty], [IntrHasSideEffects, IntrNoMem]>;
 class AIE2PV32ACC32I32I32 : DefaultAttrsIntrinsic<[llvm_v32i32_ty], [llvm_i32_ty, llvm_i32_ty], [IntrHasSideEffects, IntrNoMem]>;
+class AIE2PV16ACC64I32I32 : DefaultAttrsIntrinsic<[llvm_v16i64_ty, llvm_i32_ty], [llvm_i32_ty, llvm_ptr_ty], [IntrHasSideEffects, IntrNoMem]>;
+class AIE2PV32ACC64I32I32 : DefaultAttrsIntrinsic<[llvm_v32i64_ty, llvm_i32_ty], [llvm_i32_ty, llvm_ptr_ty], [IntrHasSideEffects, IntrNoMem]>;
 def int_aie2p_scd_expand_ACC1024 : ClangBuiltin<"__builtin_aie2p_scd_expand_ACC1024">, AIE2PV32ACC32I32I32;
 def int_aie2p_scd_ACC2048 : ClangBuiltin<"__builtin_aie2p_scd_ACC2048">, AIE2PV64ACC32I32I32;
 def int_aie2p_scd_expand_ACC2048 : ClangBuiltin<"__builtin_aie2p_scd_expand_ACC2048">, AIE2PV64ACC32I32I32;
-def int_aie2p_scd_expand_ACC1024_incr: DefaultAttrsIntrinsic<[llvm_v16i64_ty, llvm_i32_ty], [llvm_i32_ty, llvm_ptr_ty], [IntrHasSideEffects, IntrNoMem]>;
-def int_aie2p_scd_expand_ACC2048_incr: DefaultAttrsIntrinsic<[llvm_v32i64_ty, llvm_i32_ty], [llvm_i32_ty, llvm_ptr_ty], [IntrHasSideEffects, IntrNoMem]>;
+def int_aie2p_scd_expand_ACC1024_incr: AIE2PV16ACC64I32I32;
+def int_aie2p_scd_expand_ACC2048_incr: AIE2PV32ACC64I32I32;
 
 // Read/Write for Tile Memory Map
 def int_aie2p_read_tm : ClangBuiltin<"__builtin_aie2p_read_tm">, AIE2PReadTM;

@@ -1,0 +1,4410 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# TODO: llc %llcflags --filetype=asm -o %t2
+# TODO: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# TODO: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; MOV_CPH_mMStream_tlast_imm
+    MOV_CPH_mMStream_tlast_imm $m1, 2, 2, $r27, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m5, 3, 0, $r3, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m3, 1, 1, $r9, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m2, 0, 3, $r23, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m4, 2, 2, $r19, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m0, 3, 0, $r16, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m7, 1, 1, $r30, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m6, 0, 3, $r8, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m1, 2, 2, $r22, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m5, 3, 0, $r7, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m3, 1, 1, $r11, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m2, 0, 3, $r14, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m4, 2, 2, $r24, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m0, 3, 0, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m7, 1, 1, $r21, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m6, 0, 3, $r17, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m1, 2, 2, $r0, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m5, 3, 0, $r25, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m3, 1, 1, $r6, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m2, 0, 3, $r4, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m4, 2, 2, $r26, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m0, 3, 0, $r18, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m7, 1, 1, $r2, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m6, 0, 3, $r31, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m1, 2, 2, $r10, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m5, 3, 0, $r1, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m3, 1, 1, $r20, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m2, 0, 3, $r29, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m4, 2, 2, $r5, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m0, 3, 0, $r13, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m7, 1, 1, $r12, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_imm $m6, 0, 3, $r15, implicit-def $srms0
+
+    ; MOV_CPH_mMStream_tlast_reg
+    MOV_CPH_mMStream_tlast_reg $m1, 1, 0, $r30, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m2, 0, 2, $r0, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m5, 2, 1, $r25, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m6, 3, 3, $r9, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m4, 1, 0, $r24, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m7, 0, 2, $r26, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m0, 2, 1, $r27, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m3, 3, 3, $r21, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m1, 1, 0, $r8, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m2, 0, 2, $r3, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m5, 2, 1, $r20, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m6, 3, 3, $r1, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m4, 1, 0, $r19, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m7, 0, 2, $r16, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m0, 2, 1, $r4, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m3, 3, 3, $r11, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m1, 1, 0, $r18, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m2, 0, 2, $r17, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m5, 2, 1, $r23, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m6, 3, 3, $r13, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m4, 1, 0, $r29, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m7, 0, 2, $r31, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m0, 2, 1, $r12, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m3, 3, 3, $r6, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m1, 1, 0, $r15, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m2, 0, 2, $r5, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m5, 2, 1, $r14, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m6, 3, 3, $r2, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m4, 1, 0, $r28, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m7, 0, 2, $r7, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m0, 2, 1, $r22, $r28, implicit-def $srms0
+    MOV_CPH_mMStream_tlast_reg $m3, 3, 3, $r10, $r28, implicit-def $srms0
+
+    ; MOV_CPH_nb_mMStream_tlast_imm
+    MOV_CPH_nb_mMStream_tlast_imm $m6, 0, 2, $r27, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m7, 3, 0, $r5, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m5, 1, 3, $r20, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m1, 2, 1, $r13, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m3, 0, 2, $r1, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m0, 3, 0, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m2, 1, 3, $r23, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m4, 2, 1, $r6, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m6, 0, 2, $r22, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m7, 3, 0, $r2, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m5, 1, 3, $r7, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m1, 2, 1, $r21, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m3, 0, 2, $r17, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m0, 3, 0, $r14, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m2, 1, 3, $r8, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m4, 2, 1, $r15, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m6, 0, 2, $r18, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m7, 3, 0, $r3, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m5, 1, 3, $r4, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m1, 2, 1, $r31, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m3, 0, 2, $r10, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m0, 3, 0, $r12, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m2, 1, 3, $r24, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m4, 2, 1, $r26, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m6, 0, 2, $r9, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m7, 3, 0, $r19, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m5, 1, 3, $r30, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m1, 2, 1, $r25, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m3, 0, 2, $r16, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m0, 3, 0, $r29, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m2, 1, 3, $r11, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_imm $m4, 2, 1, $r0, implicit-def $srms0
+
+    ; MOV_CPH_nb_mMStream_tlast_reg
+    MOV_CPH_nb_mMStream_tlast_reg $m6, 3, 1, $r22, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m2, 0, 0, $r15, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m1, 1, 3, $r24, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m4, 2, 2, $r7, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m7, 3, 1, $r3, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m0, 0, 0, $r0, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m5, 1, 3, $r25, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m3, 2, 2, $r20, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m6, 3, 1, $r11, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m2, 0, 0, $r18, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m1, 1, 3, $r16, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m4, 2, 2, $r1, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m7, 3, 1, $r30, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m0, 0, 0, $r12, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m5, 1, 3, $r29, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m3, 2, 2, $r6, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m6, 3, 1, $r2, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m2, 0, 0, $r21, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m1, 1, 3, $r4, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m4, 2, 2, $r10, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m7, 3, 1, $r17, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m0, 0, 0, $r23, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m5, 1, 3, $r5, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m3, 2, 2, $r31, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m6, 3, 1, $r8, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m2, 0, 0, $r13, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m1, 1, 3, $r28, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m4, 2, 2, $r27, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m7, 3, 1, $r14, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m0, 0, 0, $r26, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m5, 1, 3, $r9, $r28, implicit-def $srms0
+    MOV_CPH_nb_mMStream_tlast_reg $m3, 2, 2, $r19, $r28, implicit-def $srms0
+
+    ; MOV_CPH_nb_tlast
+    MOV_CPH_nb_tlast $m7, 3, 0, $r15, implicit-def $srms0
+    MOV_CPH_nb_tlast $m3, 1, 3, $r7, implicit-def $srms0
+    MOV_CPH_nb_tlast $m0, 0, 2, $r0, implicit-def $srms0
+    MOV_CPH_nb_tlast $m1, 2, 1, $r1, implicit-def $srms0
+    MOV_CPH_nb_tlast $m2, 3, 0, $r13, implicit-def $srms0
+    MOV_CPH_nb_tlast $m4, 1, 3, $r16, implicit-def $srms0
+    MOV_CPH_nb_tlast $m6, 0, 2, $r22, implicit-def $srms0
+    MOV_CPH_nb_tlast $m5, 2, 1, $r2, implicit-def $srms0
+    MOV_CPH_nb_tlast $m7, 3, 0, $r21, implicit-def $srms0
+    MOV_CPH_nb_tlast $m3, 1, 3, $r23, implicit-def $srms0
+    MOV_CPH_nb_tlast $m0, 0, 2, $r31, implicit-def $srms0
+    MOV_CPH_nb_tlast $m1, 2, 1, $r20, implicit-def $srms0
+    MOV_CPH_nb_tlast $m2, 3, 0, $r24, implicit-def $srms0
+    MOV_CPH_nb_tlast $m4, 1, 3, $r9, implicit-def $srms0
+    MOV_CPH_nb_tlast $m6, 0, 2, $r11, implicit-def $srms0
+    MOV_CPH_nb_tlast $m5, 2, 1, $r27, implicit-def $srms0
+    MOV_CPH_nb_tlast $m7, 3, 0, $r6, implicit-def $srms0
+    MOV_CPH_nb_tlast $m3, 1, 3, $r30, implicit-def $srms0
+    MOV_CPH_nb_tlast $m0, 0, 2, $r5, implicit-def $srms0
+    MOV_CPH_nb_tlast $m1, 2, 1, $r29, implicit-def $srms0
+    MOV_CPH_nb_tlast $m2, 3, 0, $r28, implicit-def $srms0
+    MOV_CPH_nb_tlast $m4, 1, 3, $r3, implicit-def $srms0
+    MOV_CPH_nb_tlast $m6, 0, 2, $r4, implicit-def $srms0
+    MOV_CPH_nb_tlast $m5, 2, 1, $r17, implicit-def $srms0
+    MOV_CPH_nb_tlast $m7, 3, 0, $r26, implicit-def $srms0
+    MOV_CPH_nb_tlast $m3, 1, 3, $r18, implicit-def $srms0
+    MOV_CPH_nb_tlast $m0, 0, 2, $r19, implicit-def $srms0
+    MOV_CPH_nb_tlast $m1, 2, 1, $r8, implicit-def $srms0
+    MOV_CPH_nb_tlast $m2, 3, 0, $r12, implicit-def $srms0
+    MOV_CPH_nb_tlast $m4, 1, 3, $r14, implicit-def $srms0
+    MOV_CPH_nb_tlast $m6, 0, 2, $r10, implicit-def $srms0
+    MOV_CPH_nb_tlast $m5, 2, 1, $r25, implicit-def $srms0
+
+    ; MOV_CPH_tlast
+    MOV_CPH_tlast $m4, 1, 2, $r15, implicit-def $srms0
+    MOV_CPH_tlast $m6, 0, 3, $r0, implicit-def $srms0
+    MOV_CPH_tlast $m0, 3, 1, $r18, implicit-def $srms0
+    MOV_CPH_tlast $m3, 2, 0, $r5, implicit-def $srms0
+    MOV_CPH_tlast $m1, 1, 2, $r26, implicit-def $srms0
+    MOV_CPH_tlast $m2, 0, 3, $r12, implicit-def $srms0
+    MOV_CPH_tlast $m7, 3, 1, $r29, implicit-def $srms0
+    MOV_CPH_tlast $m5, 2, 0, $r30, implicit-def $srms0
+    MOV_CPH_tlast $m4, 1, 2, $r20, implicit-def $srms0
+    MOV_CPH_tlast $m6, 0, 3, $r25, implicit-def $srms0
+    MOV_CPH_tlast $m0, 3, 1, $r2, implicit-def $srms0
+    MOV_CPH_tlast $m3, 2, 0, $r3, implicit-def $srms0
+    MOV_CPH_tlast $m1, 1, 2, $r1, implicit-def $srms0
+    MOV_CPH_tlast $m2, 0, 3, $r17, implicit-def $srms0
+    MOV_CPH_tlast $m7, 3, 1, $r11, implicit-def $srms0
+    MOV_CPH_tlast $m5, 2, 0, $r23, implicit-def $srms0
+    MOV_CPH_tlast $m4, 1, 2, $r4, implicit-def $srms0
+    MOV_CPH_tlast $m6, 0, 3, $r10, implicit-def $srms0
+    MOV_CPH_tlast $m0, 3, 1, $r7, implicit-def $srms0
+    MOV_CPH_tlast $m3, 2, 0, $r22, implicit-def $srms0
+    MOV_CPH_tlast $m1, 1, 2, $r13, implicit-def $srms0
+    MOV_CPH_tlast $m2, 0, 3, $r9, implicit-def $srms0
+    MOV_CPH_tlast $m7, 3, 1, $r8, implicit-def $srms0
+    MOV_CPH_tlast $m5, 2, 0, $r24, implicit-def $srms0
+    MOV_CPH_tlast $m4, 1, 2, $r21, implicit-def $srms0
+    MOV_CPH_tlast $m6, 0, 3, $r14, implicit-def $srms0
+    MOV_CPH_tlast $m0, 3, 1, $r19, implicit-def $srms0
+    MOV_CPH_tlast $m3, 2, 0, $r27, implicit-def $srms0
+    MOV_CPH_tlast $m1, 1, 2, $r31, implicit-def $srms0
+    MOV_CPH_tlast $m2, 0, 3, $r6, implicit-def $srms0
+    MOV_CPH_tlast $m7, 3, 1, $r28, implicit-def $srms0
+    MOV_CPH_tlast $m5, 2, 0, $r16, implicit-def $srms0
+
+    ; MOV_PH_mMStream_tlast_imm
+    MOV_PH_mMStream_tlast_imm $r19, 0, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r17, 1, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r8, 6, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r5, 7, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r4, 0, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r30, 1, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r29, 6, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r27, 7, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r1, 0, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r16, 1, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r28, 6, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r0, 7, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r26, 0, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r22, 1, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r13, 6, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r24, 7, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r15, 0, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r14, 1, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r18, 6, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r6, 7, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r2, 0, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r10, 1, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r7, 6, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r20, 7, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r9, 0, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r21, 1, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r25, 6, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r3, 7, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r23, 0, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r11, 1, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r31, 6, implicit-def $srms0
+    MOV_PH_mMStream_tlast_imm $r12, 7, implicit-def $srms0
+
+    ; MOV_PH_mMStream_tlast_reg
+    MOV_PH_mMStream_tlast_reg $r13, 7, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r30, 6, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r7, 0, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r3, 1, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r4, 7, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r6, 6, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r28, 0, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r29, 1, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r22, 7, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r5, 6, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r20, 0, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r21, 1, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r25, 7, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r17, 6, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r2, 0, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r26, 1, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r27, 7, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r10, 6, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r14, 0, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r0, 1, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r19, 7, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r9, 6, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r18, 0, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r8, 1, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r12, 7, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r24, 6, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r15, 0, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r16, 1, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r23, 7, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r1, 6, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r11, 0, $r28, implicit-def $srms0
+    MOV_PH_mMStream_tlast_reg $r31, 1, $r28, implicit-def $srms0
+
+    ; MOV_PH_nb_mMStream_tlast_imm
+    MOV_PH_nb_mMStream_tlast_imm $r10, 7, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r17, 6, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r18, 1, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r24, 0, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r27, 7, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r30, 6, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r25, 1, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r0, 0, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r31, 7, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r8, 6, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r3, 1, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r26, 0, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r19, 7, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r1, 6, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r4, 1, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r20, 0, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r13, 7, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r11, 6, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r14, 1, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r15, 0, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r22, 7, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r9, 6, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r5, 1, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r12, 0, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r6, 7, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r29, 6, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r23, 1, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r21, 0, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r7, 7, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r16, 6, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r2, 1, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_imm $r28, 0, implicit-def $srms0
+
+    ; MOV_PH_nb_mMStream_tlast_reg
+    MOV_PH_nb_mMStream_tlast_reg $r25, 1, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r21, 6, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r30, 0, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r23, 7, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r6, 1, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r24, 6, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r14, 0, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r28, 7, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r16, 1, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r26, 6, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r17, 0, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r9, 7, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r5, 1, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r3, 6, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r4, 0, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r19, 7, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r10, 1, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r2, 6, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r22, 0, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r12, 7, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r15, 1, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r0, 6, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r8, 0, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r18, 7, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r31, 1, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r27, 6, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r11, 0, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r20, 7, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r7, 1, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r29, 6, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r13, 0, $r28, implicit-def $srms0
+    MOV_PH_nb_mMStream_tlast_reg $r1, 7, $r28, implicit-def $srms0
+
+    ; MOV_PH_nb_tlast
+    MOV_PH_nb_tlast $r18, 0, implicit-def $srms0
+    MOV_PH_nb_tlast $r3, 6, implicit-def $srms0
+    MOV_PH_nb_tlast $r27, 7, implicit-def $srms0
+    MOV_PH_nb_tlast $r8, 1, implicit-def $srms0
+    MOV_PH_nb_tlast $r31, 0, implicit-def $srms0
+    MOV_PH_nb_tlast $r19, 6, implicit-def $srms0
+    MOV_PH_nb_tlast $r4, 7, implicit-def $srms0
+    MOV_PH_nb_tlast $r14, 1, implicit-def $srms0
+    MOV_PH_nb_tlast $r25, 0, implicit-def $srms0
+    MOV_PH_nb_tlast $r9, 6, implicit-def $srms0
+    MOV_PH_nb_tlast $r20, 7, implicit-def $srms0
+    MOV_PH_nb_tlast $r17, 1, implicit-def $srms0
+    MOV_PH_nb_tlast $r15, 0, implicit-def $srms0
+    MOV_PH_nb_tlast $r28, 6, implicit-def $srms0
+    MOV_PH_nb_tlast $r24, 7, implicit-def $srms0
+    MOV_PH_nb_tlast $r10, 1, implicit-def $srms0
+    MOV_PH_nb_tlast $r26, 0, implicit-def $srms0
+    MOV_PH_nb_tlast $r12, 6, implicit-def $srms0
+    MOV_PH_nb_tlast $r23, 7, implicit-def $srms0
+    MOV_PH_nb_tlast $r7, 1, implicit-def $srms0
+    MOV_PH_nb_tlast $r11, 0, implicit-def $srms0
+    MOV_PH_nb_tlast $r22, 6, implicit-def $srms0
+    MOV_PH_nb_tlast $r21, 7, implicit-def $srms0
+    MOV_PH_nb_tlast $r30, 1, implicit-def $srms0
+    MOV_PH_nb_tlast $r29, 0, implicit-def $srms0
+    MOV_PH_nb_tlast $r16, 6, implicit-def $srms0
+    MOV_PH_nb_tlast $r6, 7, implicit-def $srms0
+    MOV_PH_nb_tlast $r13, 1, implicit-def $srms0
+    MOV_PH_nb_tlast $r5, 0, implicit-def $srms0
+    MOV_PH_nb_tlast $r0, 6, implicit-def $srms0
+    MOV_PH_nb_tlast $r2, 7, implicit-def $srms0
+    MOV_PH_nb_tlast $r1, 1, implicit-def $srms0
+
+    ; MOV_PH_tlast
+    MOV_PH_tlast $r29, 6, implicit-def $srms0
+    MOV_PH_tlast $r4, 0, implicit-def $srms0
+    MOV_PH_tlast $r16, 1, implicit-def $srms0
+    MOV_PH_tlast $r31, 7, implicit-def $srms0
+    MOV_PH_tlast $r7, 6, implicit-def $srms0
+    MOV_PH_tlast $r9, 0, implicit-def $srms0
+    MOV_PH_tlast $r28, 1, implicit-def $srms0
+    MOV_PH_tlast $r3, 7, implicit-def $srms0
+    MOV_PH_tlast $r10, 6, implicit-def $srms0
+    MOV_PH_tlast $r18, 0, implicit-def $srms0
+    MOV_PH_tlast $r20, 1, implicit-def $srms0
+    MOV_PH_tlast $r8, 7, implicit-def $srms0
+    MOV_PH_tlast $r13, 6, implicit-def $srms0
+    MOV_PH_tlast $r19, 0, implicit-def $srms0
+    MOV_PH_tlast $r6, 1, implicit-def $srms0
+    MOV_PH_tlast $r1, 7, implicit-def $srms0
+    MOV_PH_tlast $r27, 6, implicit-def $srms0
+    MOV_PH_tlast $r2, 0, implicit-def $srms0
+    MOV_PH_tlast $r17, 1, implicit-def $srms0
+    MOV_PH_tlast $r23, 7, implicit-def $srms0
+    MOV_PH_tlast $r14, 6, implicit-def $srms0
+    MOV_PH_tlast $r0, 0, implicit-def $srms0
+    MOV_PH_tlast $r15, 1, implicit-def $srms0
+    MOV_PH_tlast $r22, 7, implicit-def $srms0
+    MOV_PH_tlast $r24, 6, implicit-def $srms0
+    MOV_PH_tlast $r30, 0, implicit-def $srms0
+    MOV_PH_tlast $r11, 1, implicit-def $srms0
+    MOV_PH_tlast $r26, 7, implicit-def $srms0
+    MOV_PH_tlast $r25, 6, implicit-def $srms0
+    MOV_PH_tlast $r21, 0, implicit-def $srms0
+    MOV_PH_tlast $r12, 1, implicit-def $srms0
+    MOV_PH_tlast $r5, 7, implicit-def $srms0
+
+    ; MOV_alu_mv_alu_flt2fx
+    $r25 = MOV_alu_mv_alu_flt2fx $r18, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r28 = MOV_alu_mv_alu_flt2fx $r10, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r19 = MOV_alu_mv_alu_flt2fx $r17, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r18 = MOV_alu_mv_alu_flt2fx $r15, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r23 = MOV_alu_mv_alu_flt2fx $r14, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r21 = MOV_alu_mv_alu_flt2fx $r6, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r30 = MOV_alu_mv_alu_flt2fx $r11, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r29 = MOV_alu_mv_alu_flt2fx $r13, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r1 = MOV_alu_mv_alu_flt2fx $r22, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r17 = MOV_alu_mv_alu_flt2fx $r28, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r3 = MOV_alu_mv_alu_flt2fx $r7, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r6 = MOV_alu_mv_alu_flt2fx $r31, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r5 = MOV_alu_mv_alu_flt2fx $r12, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r26 = MOV_alu_mv_alu_flt2fx $r29, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r13 = MOV_alu_mv_alu_flt2fx $r3, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r11 = MOV_alu_mv_alu_flt2fx $r9, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r22 = MOV_alu_mv_alu_flt2fx $r0, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r7 = MOV_alu_mv_alu_flt2fx $r19, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r27 = MOV_alu_mv_alu_flt2fx $r4, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r15 = MOV_alu_mv_alu_flt2fx $r23, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r4 = MOV_alu_mv_alu_flt2fx $r26, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r0 = MOV_alu_mv_alu_flt2fx $r16, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r24 = MOV_alu_mv_alu_flt2fx $r24, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r20 = MOV_alu_mv_alu_flt2fx $r1, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r8 = MOV_alu_mv_alu_flt2fx $r2, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r14 = MOV_alu_mv_alu_flt2fx $r27, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r2 = MOV_alu_mv_alu_flt2fx $r25, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r10 = MOV_alu_mv_alu_flt2fx $r8, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r9 = MOV_alu_mv_alu_flt2fx $r21, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r12 = MOV_alu_mv_alu_flt2fx $r30, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r16 = MOV_alu_mv_alu_flt2fx $r5, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+    $r31 = MOV_alu_mv_alu_flt2fx $r20, $s3, implicit-def $srfpcnvfl2fx, implicit $crfpcnvfl2fxmask
+
+    ; MOV_alu_mv_alu_fx2flt
+    $r2 = MOV_alu_mv_alu_fx2flt $r17, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r28 = MOV_alu_mv_alu_fx2flt $r28, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r11 = MOV_alu_mv_alu_fx2flt $r13, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r31 = MOV_alu_mv_alu_fx2flt $r16, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r8 = MOV_alu_mv_alu_fx2flt $r25, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r29 = MOV_alu_mv_alu_fx2flt $r12, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r16 = MOV_alu_mv_alu_fx2flt $r9, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r3 = MOV_alu_mv_alu_fx2flt $r5, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r21 = MOV_alu_mv_alu_fx2flt $r11, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r18 = MOV_alu_mv_alu_fx2flt $r1, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r17 = MOV_alu_mv_alu_fx2flt $r2, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r15 = MOV_alu_mv_alu_fx2flt $r24, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r26 = MOV_alu_mv_alu_fx2flt $r7, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r14 = MOV_alu_mv_alu_fx2flt $r3, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r23 = MOV_alu_mv_alu_fx2flt $r26, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r20 = MOV_alu_mv_alu_fx2flt $r23, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r24 = MOV_alu_mv_alu_fx2flt $r20, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r4 = MOV_alu_mv_alu_fx2flt $r0, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r12 = MOV_alu_mv_alu_fx2flt $r8, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r6 = MOV_alu_mv_alu_fx2flt $r21, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r5 = MOV_alu_mv_alu_fx2flt $r10, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r22 = MOV_alu_mv_alu_fx2flt $r29, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r25 = MOV_alu_mv_alu_fx2flt $r14, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r10 = MOV_alu_mv_alu_fx2flt $r30, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r13 = MOV_alu_mv_alu_fx2flt $r19, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r30 = MOV_alu_mv_alu_fx2flt $r18, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r7 = MOV_alu_mv_alu_fx2flt $r31, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r27 = MOV_alu_mv_alu_fx2flt $r4, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r0 = MOV_alu_mv_alu_fx2flt $r22, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r19 = MOV_alu_mv_alu_fx2flt $r27, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r1 = MOV_alu_mv_alu_fx2flt $r6, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+    $r9 = MOV_alu_mv_alu_fx2flt $r15, $s2, implicit-def $srfpcnvfx2fl, implicit $crfpcnvfx2flmask
+
+    ; MOV_alu_mv_mv_mv_cg_or
+    $r31 = MOV_alu_mv_mv_mv_cg_or 1
+    $r12 = MOV_alu_mv_mv_mv_cg_or 0
+    $r29 = MOV_alu_mv_mv_mv_cg_or 1023
+    $dn0 = MOV_alu_mv_mv_mv_cg_or -1024
+    $m2 = MOV_alu_mv_mv_mv_cg_or 1
+    $lc = MOV_alu_mv_mv_mv_cg_or 0
+    $vaddsign1 = MOV_alu_mv_mv_mv_cg_or 1023
+    $r1 = MOV_alu_mv_mv_mv_cg_or -1024
+    $r20 = MOV_alu_mv_mv_mv_cg_or 1
+    $m7 = MOV_alu_mv_mv_mv_cg_or 0
+    $r3 = MOV_alu_mv_mv_mv_cg_or 1023
+    $dc2 = MOV_alu_mv_mv_mv_cg_or -1024
+    $r6 = MOV_alu_mv_mv_mv_cg_or 1
+    $r23 = MOV_alu_mv_mv_mv_cg_or 0
+    $vaddsign0 = MOV_alu_mv_mv_mv_cg_or 1023
+    $p2 = MOV_alu_mv_mv_mv_cg_or -1024
+    $r14 = MOV_alu_mv_mv_mv_cg_or 1
+    $r16 = MOV_alu_mv_mv_mv_cg_or 0
+    $r13 = MOV_alu_mv_mv_mv_cg_or 1023
+    $dc6 = MOV_alu_mv_mv_mv_cg_or -1024
+    $r17 = MOV_alu_mv_mv_mv_cg_or 1
+    $dj2 = MOV_alu_mv_mv_mv_cg_or 0
+    $dj3 = MOV_alu_mv_mv_mv_cg_or 1023
+    $dc4 = MOV_alu_mv_mv_mv_cg_or -1024
+    $r18 = MOV_alu_mv_mv_mv_cg_or 1
+    $r25 = MOV_alu_mv_mv_mv_cg_or 0
+    $p4 = MOV_alu_mv_mv_mv_cg_or 1023
+    $unpacksign0 = MOV_alu_mv_mv_mv_cg_or -1024
+    $m1 = MOV_alu_mv_mv_mv_cg_or 1
+    $r19 = MOV_alu_mv_mv_mv_cg_or 0
+    $dc7 = MOV_alu_mv_mv_mv_cg_or 1023
+    $r26 = MOV_alu_mv_mv_mv_cg_or -1024
+    $p5 = MOV_alu_mv_mv_mv_cg_or 1
+    $dn5 = MOV_alu_mv_mv_mv_cg_or 0
+    $dc3 = MOV_alu_mv_mv_mv_cg_or 1023
+    $r24 = MOV_alu_mv_mv_mv_cg_or -1024
+    $dn2 = MOV_alu_mv_mv_mv_cg_or 1
+    $sp = MOV_alu_mv_mv_mv_cg_or 0
+    $p3 = MOV_alu_mv_mv_mv_cg_or 1023
+    $m0 = MOV_alu_mv_mv_mv_cg_or -1024
+    $dj1 = MOV_alu_mv_mv_mv_cg_or 1
+    $r10 = MOV_alu_mv_mv_mv_cg_or 0
+    $r22 = MOV_alu_mv_mv_mv_cg_or 1023
+    $r27 = MOV_alu_mv_mv_mv_cg_or -1024
+    $r30 = MOV_alu_mv_mv_mv_cg_or 1
+    $lr = MOV_alu_mv_mv_mv_cg_or 0
+    $p6 = MOV_alu_mv_mv_mv_cg_or 1023
+    $dn4 = MOV_alu_mv_mv_mv_cg_or -1024
+    $packsign0 = MOV_alu_mv_mv_mv_cg_or 1
+    $unpacksign1 = MOV_alu_mv_mv_mv_cg_or 0
+    $upssign1 = MOV_alu_mv_mv_mv_cg_or 1023
+    $r21 = MOV_alu_mv_mv_mv_cg_or -1024
+    $p1 = MOV_alu_mv_mv_mv_cg_or 1
+    $p0 = MOV_alu_mv_mv_mv_cg_or 0
+    $dj4 = MOV_alu_mv_mv_mv_cg_or 1023
+    $r9 = MOV_alu_mv_mv_mv_cg_or -1024
+    $packsign1 = MOV_alu_mv_mv_mv_cg_or 1
+    $p7 = MOV_alu_mv_mv_mv_cg_or 0
+    $r11 = MOV_alu_mv_mv_mv_cg_or 1023
+    $r5 = MOV_alu_mv_mv_mv_cg_or -1024
+    $s1 = MOV_alu_mv_mv_mv_cg_or 1
+    $dj6 = MOV_alu_mv_mv_mv_cg_or 0
+    $dj0 = MOV_alu_mv_mv_mv_cg_or 1023
+    $dc1 = MOV_alu_mv_mv_mv_cg_or -1024
+    $s3 = MOV_alu_mv_mv_mv_cg_or 1
+    $s2 = MOV_alu_mv_mv_mv_cg_or 0
+    $upssign0 = MOV_alu_mv_mv_mv_cg_or 1023
+    $r4 = MOV_alu_mv_mv_mv_cg_or -1024
+    $r15 = MOV_alu_mv_mv_mv_cg_or 1
+    $dc5 = MOV_alu_mv_mv_mv_cg_or 0
+    $dn6 = MOV_alu_mv_mv_mv_cg_or 1023
+    $r0 = MOV_alu_mv_mv_mv_cg_or -1024
+    $dj5 = MOV_alu_mv_mv_mv_cg_or 1
+    $r7 = MOV_alu_mv_mv_mv_cg_or 0
+    $dc0 = MOV_alu_mv_mv_mv_cg_or 1023
+    $m5 = MOV_alu_mv_mv_mv_cg_or -1024
+    $r2 = MOV_alu_mv_mv_mv_cg_or 1
+    $s0 = MOV_alu_mv_mv_mv_cg_or 0
+    $m6 = MOV_alu_mv_mv_mv_cg_or 1023
+    $srssign1 = MOV_alu_mv_mv_mv_cg_or -1024
+    $m3 = MOV_alu_mv_mv_mv_cg_or 1
+    $dn7 = MOV_alu_mv_mv_mv_cg_or 0
+    $dn1 = MOV_alu_mv_mv_mv_cg_or 1023
+    $srssign0 = MOV_alu_mv_mv_mv_cg_or -1024
+    $dn3 = MOV_alu_mv_mv_mv_cg_or 1
+    $r28 = MOV_alu_mv_mv_mv_cg_or 0
+    $r8 = MOV_alu_mv_mv_mv_cg_or 1023
+    $dj7 = MOV_alu_mv_mv_mv_cg_or -1024
+    $m4 = MOV_alu_mv_mv_mv_cg_or 1
+
+    ; MOV_alu_mv_mv_mv_cntr2l
+    $l12 = MOV_alu_mv_mv_mv_cntr2l
+    $l15 = MOV_alu_mv_mv_mv_cntr2l
+    $l13 = MOV_alu_mv_mv_mv_cntr2l
+    $l5 = MOV_alu_mv_mv_mv_cntr2l
+    $l8 = MOV_alu_mv_mv_mv_cntr2l
+    $l14 = MOV_alu_mv_mv_mv_cntr2l
+    $l4 = MOV_alu_mv_mv_mv_cntr2l
+    $l6 = MOV_alu_mv_mv_mv_cntr2l
+    $l2 = MOV_alu_mv_mv_mv_cntr2l
+    $l0 = MOV_alu_mv_mv_mv_cntr2l
+    $l9 = MOV_alu_mv_mv_mv_cntr2l
+    $l3 = MOV_alu_mv_mv_mv_cntr2l
+    $l7 = MOV_alu_mv_mv_mv_cntr2l
+    $l10 = MOV_alu_mv_mv_mv_cntr2l
+    $l1 = MOV_alu_mv_mv_mv_cntr2l
+    $l11 = MOV_alu_mv_mv_mv_cntr2l
+
+    ; MOV_alu_mv_mv_mv_e_mv_eh_to_eh
+    $eh4 = MOV_alu_mv_mv_mv_e_mv_eh_to_eh $eh6
+    $eh8 = MOV_alu_mv_mv_mv_e_mv_eh_to_eh $eh2
+    $eh5 = MOV_alu_mv_mv_mv_e_mv_eh_to_eh $eh9
+    $eh11 = MOV_alu_mv_mv_mv_e_mv_eh_to_eh $eh7
+    $eh9 = MOV_alu_mv_mv_mv_e_mv_eh_to_eh $eh8
+    $eh10 = MOV_alu_mv_mv_mv_e_mv_eh_to_eh $eh1
+    $eh3 = MOV_alu_mv_mv_mv_e_mv_eh_to_eh $eh10
+    $eh6 = MOV_alu_mv_mv_mv_e_mv_eh_to_eh $eh5
+    $eh2 = MOV_alu_mv_mv_mv_e_mv_eh_to_eh $eh11
+    $eh7 = MOV_alu_mv_mv_mv_e_mv_eh_to_eh $eh3
+    $eh1 = MOV_alu_mv_mv_mv_e_mv_eh_to_eh $eh4
+    $eh0 = MOV_alu_mv_mv_mv_e_mv_eh_to_eh $eh0
+
+    ; MOV_alu_mv_mv_mv_e_mv_eh_to_el
+    $el8 = MOV_alu_mv_mv_mv_e_mv_eh_to_el $eh3
+    $el7 = MOV_alu_mv_mv_mv_e_mv_eh_to_el $eh0
+    $el10 = MOV_alu_mv_mv_mv_e_mv_eh_to_el $eh7
+    $el9 = MOV_alu_mv_mv_mv_e_mv_eh_to_el $eh5
+    $el4 = MOV_alu_mv_mv_mv_e_mv_eh_to_el $eh10
+    $el1 = MOV_alu_mv_mv_mv_e_mv_eh_to_el $eh4
+    $el5 = MOV_alu_mv_mv_mv_e_mv_eh_to_el $eh1
+    $el11 = MOV_alu_mv_mv_mv_e_mv_eh_to_el $eh6
+    $el3 = MOV_alu_mv_mv_mv_e_mv_eh_to_el $eh2
+    $el2 = MOV_alu_mv_mv_mv_e_mv_eh_to_el $eh9
+    $el0 = MOV_alu_mv_mv_mv_e_mv_eh_to_el $eh8
+    $el6 = MOV_alu_mv_mv_mv_e_mv_eh_to_el $eh11
+
+    ; MOV_alu_mv_mv_mv_e_mv_eh_to_r
+    $r5 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh8
+    $r11 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh5
+    $r17 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh3
+    $r24 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh4
+    $r10 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh11
+    $r29 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh10
+    $r25 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh9
+    $r0 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh7
+    $r31 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh0
+    $r30 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh2
+    $r27 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh1
+    $r9 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh6
+    $r26 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh8
+    $r8 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh5
+    $r12 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh3
+    $r3 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh4
+    $r16 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh11
+    $r19 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh10
+    $r28 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh9
+    $r4 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh7
+    $r2 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh0
+    $r20 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh2
+    $r1 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh1
+    $r14 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh6
+    $r23 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh8
+    $r7 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh5
+    $r18 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh3
+    $r15 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh4
+    $r6 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh11
+    $r13 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh10
+    $r22 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh9
+    $r21 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh7
+
+    ; MOV_alu_mv_mv_mv_e_mv_el_to_eh
+    $eh8 = MOV_alu_mv_mv_mv_e_mv_el_to_eh $el3
+    $eh5 = MOV_alu_mv_mv_mv_e_mv_el_to_eh $el10
+    $eh4 = MOV_alu_mv_mv_mv_e_mv_el_to_eh $el6
+    $eh6 = MOV_alu_mv_mv_mv_e_mv_el_to_eh $el7
+    $eh7 = MOV_alu_mv_mv_mv_e_mv_el_to_eh $el4
+    $eh2 = MOV_alu_mv_mv_mv_e_mv_el_to_eh $el0
+    $eh3 = MOV_alu_mv_mv_mv_e_mv_el_to_eh $el5
+    $eh9 = MOV_alu_mv_mv_mv_e_mv_el_to_eh $el1
+    $eh0 = MOV_alu_mv_mv_mv_e_mv_el_to_eh $el8
+    $eh11 = MOV_alu_mv_mv_mv_e_mv_el_to_eh $el9
+    $eh10 = MOV_alu_mv_mv_mv_e_mv_el_to_eh $el11
+    $eh1 = MOV_alu_mv_mv_mv_e_mv_el_to_eh $el2
+
+    ; MOV_alu_mv_mv_mv_e_mv_el_to_el
+    $el6 = MOV_alu_mv_mv_mv_e_mv_el_to_el $el6
+    $el1 = MOV_alu_mv_mv_mv_e_mv_el_to_el $el5
+    $el8 = MOV_alu_mv_mv_mv_e_mv_el_to_el $el10
+    $el7 = MOV_alu_mv_mv_mv_e_mv_el_to_el $el7
+    $el3 = MOV_alu_mv_mv_mv_e_mv_el_to_el $el11
+    $el11 = MOV_alu_mv_mv_mv_e_mv_el_to_el $el8
+    $el5 = MOV_alu_mv_mv_mv_e_mv_el_to_el $el3
+    $el0 = MOV_alu_mv_mv_mv_e_mv_el_to_el $el4
+    $el10 = MOV_alu_mv_mv_mv_e_mv_el_to_el $el2
+    $el2 = MOV_alu_mv_mv_mv_e_mv_el_to_el $el1
+    $el9 = MOV_alu_mv_mv_mv_e_mv_el_to_el $el9
+    $el4 = MOV_alu_mv_mv_mv_e_mv_el_to_el $el0
+
+    ; MOV_alu_mv_mv_mv_e_mv_el_to_r
+    $r4 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el6
+    $r16 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el1
+    $r9 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el10
+    $r31 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el3
+    $r7 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el9
+    $r14 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el8
+    $r5 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el11
+    $r25 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el0
+    $r18 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el5
+    $r15 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el4
+    $r1 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el2
+    $r12 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el7
+    $r3 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el6
+    $r30 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el1
+    $r19 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el10
+    $r10 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el3
+    $r8 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el9
+    $r27 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el8
+    $r29 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el11
+    $r23 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el0
+    $r24 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el5
+    $r17 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el4
+    $r0 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el2
+    $r6 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el7
+    $r13 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el6
+    $r2 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el1
+    $r26 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el10
+    $r20 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el3
+    $r21 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el9
+    $r28 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el8
+    $r11 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el11
+    $r22 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el0
+
+    ; MOV_alu_mv_mv_mv_e_mv_r_to_eh
+    $eh11 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r27
+    $eh7 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r24
+    $eh6 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r13
+    $eh8 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r22
+    $eh1 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r8
+    $eh2 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r4
+    $eh9 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r31
+    $eh4 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r15
+    $eh3 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r14
+    $eh10 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r3
+    $eh0 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r5
+    $eh5 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r28
+    $eh11 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r17
+    $eh7 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r20
+    $eh6 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r21
+    $eh8 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r2
+    $eh1 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r26
+    $eh2 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r1
+    $eh9 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r0
+    $eh4 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r9
+    $eh3 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r29
+    $eh10 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r12
+    $eh0 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r18
+    $eh5 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r23
+    $eh11 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r10
+    $eh7 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r7
+    $eh6 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r19
+    $eh8 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r25
+    $eh1 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r6
+    $eh2 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r11
+    $eh9 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r30
+    $eh4 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r16
+
+    ; MOV_alu_mv_mv_mv_e_mv_r_to_el
+    $el1 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r21
+    $el3 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r27
+    $el6 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r31
+    $el9 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r24
+    $el2 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r19
+    $el5 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r14
+    $el0 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r26
+    $el10 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r16
+    $el4 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r12
+    $el8 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r1
+    $el11 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r0
+    $el7 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r22
+    $el1 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r7
+    $el3 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r10
+    $el6 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r8
+    $el9 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r13
+    $el2 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r5
+    $el5 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r17
+    $el0 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r20
+    $el10 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r11
+    $el4 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r25
+    $el8 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r23
+    $el11 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r30
+    $el7 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r29
+    $el1 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r15
+    $el3 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r28
+    $el6 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r4
+    $el9 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r9
+    $el2 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r3
+    $el5 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r6
+    $el0 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r18
+    $el10 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r2
+
+    ; MOV_alu_mv_mv_mv_g_mv_gh_to_gh
+    $gh7 = MOV_alu_mv_mv_mv_g_mv_gh_to_gh $gh0
+    $gh1 = MOV_alu_mv_mv_mv_g_mv_gh_to_gh $gh10
+    $gh8 = MOV_alu_mv_mv_mv_g_mv_gh_to_gh $gh5
+    $gh5 = MOV_alu_mv_mv_mv_g_mv_gh_to_gh $gh4
+    $gh11 = MOV_alu_mv_mv_mv_g_mv_gh_to_gh $gh3
+    $gh6 = MOV_alu_mv_mv_mv_g_mv_gh_to_gh $gh8
+    $gh4 = MOV_alu_mv_mv_mv_g_mv_gh_to_gh $gh9
+    $gh0 = MOV_alu_mv_mv_mv_g_mv_gh_to_gh $gh2
+    $gh2 = MOV_alu_mv_mv_mv_g_mv_gh_to_gh $gh1
+    $gh3 = MOV_alu_mv_mv_mv_g_mv_gh_to_gh $gh7
+    $gh10 = MOV_alu_mv_mv_mv_g_mv_gh_to_gh $gh6
+    $gh9 = MOV_alu_mv_mv_mv_g_mv_gh_to_gh $gh11
+
+    ; MOV_alu_mv_mv_mv_g_mv_gh_to_gl
+    $gl0 = MOV_alu_mv_mv_mv_g_mv_gh_to_gl $gh9
+    $gl5 = MOV_alu_mv_mv_mv_g_mv_gh_to_gl $gh11
+    $gl2 = MOV_alu_mv_mv_mv_g_mv_gh_to_gl $gh4
+    $gl10 = MOV_alu_mv_mv_mv_g_mv_gh_to_gl $gh0
+    $gl9 = MOV_alu_mv_mv_mv_g_mv_gh_to_gl $gh6
+    $gl11 = MOV_alu_mv_mv_mv_g_mv_gh_to_gl $gh2
+    $gl3 = MOV_alu_mv_mv_mv_g_mv_gh_to_gl $gh3
+    $gl8 = MOV_alu_mv_mv_mv_g_mv_gh_to_gl $gh1
+    $gl7 = MOV_alu_mv_mv_mv_g_mv_gh_to_gl $gh10
+    $gl4 = MOV_alu_mv_mv_mv_g_mv_gh_to_gl $gh8
+    $gl1 = MOV_alu_mv_mv_mv_g_mv_gh_to_gl $gh5
+    $gl6 = MOV_alu_mv_mv_mv_g_mv_gh_to_gl $gh7
+
+    ; MOV_alu_mv_mv_mv_g_mv_gh_to_r
+    $r11 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh8
+    $r1 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh0
+    $r2 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh7
+    $r31 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh6
+    $r25 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh3
+    $r22 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh2
+    $r12 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh11
+    $r16 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh4
+    $r15 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh1
+    $r9 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh5
+    $r30 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh10
+    $r4 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh9
+    $r17 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh8
+    $r24 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh0
+    $r10 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh7
+    $r3 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh6
+    $r21 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh3
+    $r28 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh2
+    $r27 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh11
+    $r19 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh4
+    $r8 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh1
+    $r14 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh5
+    $r18 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh10
+    $r13 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh9
+    $r6 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh8
+    $r0 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh0
+    $r26 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh7
+    $r5 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh6
+    $r20 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh3
+    $r7 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh2
+    $r29 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh11
+    $r23 = MOV_alu_mv_mv_mv_g_mv_gh_to_r $gh4
+
+    ; MOV_alu_mv_mv_mv_g_mv_gl_to_gh
+    $gh3 = MOV_alu_mv_mv_mv_g_mv_gl_to_gh $gl1
+    $gh0 = MOV_alu_mv_mv_mv_g_mv_gl_to_gh $gl2
+    $gh9 = MOV_alu_mv_mv_mv_g_mv_gl_to_gh $gl9
+    $gh7 = MOV_alu_mv_mv_mv_g_mv_gl_to_gh $gl0
+    $gh10 = MOV_alu_mv_mv_mv_g_mv_gl_to_gh $gl3
+    $gh11 = MOV_alu_mv_mv_mv_g_mv_gl_to_gh $gl5
+    $gh6 = MOV_alu_mv_mv_mv_g_mv_gl_to_gh $gl8
+    $gh1 = MOV_alu_mv_mv_mv_g_mv_gl_to_gh $gl7
+    $gh2 = MOV_alu_mv_mv_mv_g_mv_gl_to_gh $gl6
+    $gh8 = MOV_alu_mv_mv_mv_g_mv_gl_to_gh $gl4
+    $gh4 = MOV_alu_mv_mv_mv_g_mv_gl_to_gh $gl10
+    $gh5 = MOV_alu_mv_mv_mv_g_mv_gl_to_gh $gl11
+
+    ; MOV_alu_mv_mv_mv_g_mv_gl_to_gl
+    $gl10 = MOV_alu_mv_mv_mv_g_mv_gl_to_gl $gl3
+    $gl5 = MOV_alu_mv_mv_mv_g_mv_gl_to_gl $gl7
+    $gl8 = MOV_alu_mv_mv_mv_g_mv_gl_to_gl $gl5
+    $gl2 = MOV_alu_mv_mv_mv_g_mv_gl_to_gl $gl8
+    $gl11 = MOV_alu_mv_mv_mv_g_mv_gl_to_gl $gl11
+    $gl9 = MOV_alu_mv_mv_mv_g_mv_gl_to_gl $gl0
+    $gl6 = MOV_alu_mv_mv_mv_g_mv_gl_to_gl $gl1
+    $gl4 = MOV_alu_mv_mv_mv_g_mv_gl_to_gl $gl4
+    $gl3 = MOV_alu_mv_mv_mv_g_mv_gl_to_gl $gl2
+    $gl7 = MOV_alu_mv_mv_mv_g_mv_gl_to_gl $gl6
+    $gl1 = MOV_alu_mv_mv_mv_g_mv_gl_to_gl $gl9
+    $gl0 = MOV_alu_mv_mv_mv_g_mv_gl_to_gl $gl10
+
+    ; MOV_alu_mv_mv_mv_g_mv_gl_to_r
+    $r11 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl7
+    $r8 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl11
+    $r29 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl6
+    $r5 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl2
+    $r0 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl3
+    $r20 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl9
+    $r7 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl0
+    $r12 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl10
+    $r22 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl4
+    $r24 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl1
+    $r17 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl5
+    $r25 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl8
+    $r31 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl7
+    $r2 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl11
+    $r18 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl6
+    $r3 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl2
+    $r1 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl3
+    $r13 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl9
+    $r30 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl0
+    $r4 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl10
+    $r10 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl4
+    $r14 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl1
+    $r27 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl5
+    $r9 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl8
+    $r23 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl7
+    $r6 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl11
+    $r28 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl6
+    $r19 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl2
+    $r21 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl3
+    $r15 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl9
+    $r16 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl0
+    $r26 = MOV_alu_mv_mv_mv_g_mv_gl_to_r $gl10
+
+    ; MOV_alu_mv_mv_mv_g_mv_r_to_gh
+    $gh3 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r20
+    $gh10 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r25
+    $gh2 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r12
+    $gh7 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r22
+    $gh4 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r19
+    $gh11 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r30
+    $gh9 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r26
+    $gh5 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r28
+    $gh0 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r10
+    $gh6 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r2
+    $gh1 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r17
+    $gh8 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r9
+    $gh3 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r14
+    $gh10 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r27
+    $gh2 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r21
+    $gh7 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r31
+    $gh4 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r24
+    $gh11 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r6
+    $gh9 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r7
+    $gh5 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r4
+    $gh0 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r8
+    $gh6 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r5
+    $gh1 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r23
+    $gh8 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r18
+    $gh3 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r0
+    $gh10 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r15
+    $gh2 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r11
+    $gh7 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r16
+    $gh4 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r3
+    $gh11 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r13
+    $gh9 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r29
+    $gh5 = MOV_alu_mv_mv_mv_g_mv_r_to_gh $r1
+
+    ; MOV_alu_mv_mv_mv_g_mv_r_to_gl
+    $gl5 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r9
+    $gl2 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r5
+    $gl4 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r2
+    $gl7 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r18
+    $gl11 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r16
+    $gl6 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r10
+    $gl3 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r13
+    $gl1 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r4
+    $gl10 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r31
+    $gl8 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r28
+    $gl0 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r24
+    $gl9 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r11
+    $gl5 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r15
+    $gl2 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r23
+    $gl4 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r1
+    $gl7 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r17
+    $gl11 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r6
+    $gl6 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r30
+    $gl3 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r12
+    $gl1 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r8
+    $gl10 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r19
+    $gl8 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r25
+    $gl0 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r27
+    $gl9 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r7
+    $gl5 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r29
+    $gl2 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r14
+    $gl4 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r20
+    $gl7 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r21
+    $gl11 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r26
+    $gl6 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r0
+    $gl3 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r22
+    $gl1 = MOV_alu_mv_mv_mv_g_mv_r_to_gl $r3
+
+    ; MOV_alu_mv_mv_mv_r_sc
+    $r9 = MOV_alu_mv_mv_mv_r_sc $crf2fmask
+    $r22 = MOV_alu_mv_mv_mv_r_sc $srsrs_of
+    $r20 = MOV_alu_mv_mv_mv_r_sc $crfpconvsat
+    $r30 = MOV_alu_mv_mv_mv_r_sc $srms0
+    $r16 = MOV_alu_mv_mv_mv_r_sc $crfpmask
+    $r28 = MOV_alu_mv_mv_mv_r_sc $srfpcnvfl2fx
+    $r0 = MOV_alu_mv_mv_mv_r_sc $srfpcnvfx2fl
+    $r17 = MOV_alu_mv_mv_mv_r_sc $srf2iflags
+    $r21 = MOV_alu_mv_mv_mv_r_sc $crbf8conf
+    $r31 = MOV_alu_mv_mv_mv_r_sc $crsat
+    $r11 = MOV_alu_mv_mv_mv_r_sc $crmcden
+    $r18 = MOV_alu_mv_mv_mv_r_sc $srss0
+    $r4 = MOV_alu_mv_mv_mv_r_sc $crfp8conf
+    $r14 = MOV_alu_mv_mv_mv_r_sc $crscden
+    $r25 = MOV_alu_mv_mv_mv_r_sc $crfpcnvfx2flmask
+    $r10 = MOV_alu_mv_mv_mv_r_sc $crf2imask
+    $r7 = MOV_alu_mv_mv_mv_r_sc $crf2bmask
+    $r3 = MOV_alu_mv_mv_mv_r_sc $srfpflags
+    $r27 = MOV_alu_mv_mv_mv_r_sc $srfifo_uf
+    $r5 = MOV_alu_mv_mv_mv_r_sc $srf2fflags
+    $r13 = MOV_alu_mv_mv_mv_r_sc $srcarry
+    $r29 = MOV_alu_mv_mv_mv_r_sc $srfifo_of
+    $r2 = MOV_alu_mv_mv_mv_r_sc $crrnd
+    $r8 = MOV_alu_mv_mv_mv_r_sc $crunpacksize
+    $r24 = MOV_alu_mv_mv_mv_r_sc $crupsmode
+    $r15 = MOV_alu_mv_mv_mv_r_sc $crsrsmode
+    $r6 = MOV_alu_mv_mv_mv_r_sc $crfpcnvfl2fxmask
+    $r26 = MOV_alu_mv_mv_mv_r_sc $srups_of
+    $r12 = MOV_alu_mv_mv_mv_r_sc $srsparse_of
+    $r19 = MOV_alu_mv_mv_mv_r_sc $srf2bflags
+    $r23 = MOV_alu_mv_mv_mv_r_sc $crfpnlfmask
+    $r1 = MOV_alu_mv_mv_mv_r_sc $crpacksize
+    $r9 = MOV_alu_mv_mv_mv_r_sc $srfpnlf
+
+    ; MOV_alu_mv_mv_mv_sc_cg
+    $srfifo_uf = MOV_alu_mv_mv_mv_sc_cg 0
+    $crmcden = MOV_alu_mv_mv_mv_sc_cg 1
+    $srsparse_of = MOV_alu_mv_mv_mv_sc_cg 127
+    $crfp8conf = MOV_alu_mv_mv_mv_sc_cg -128
+    $crf2fmask = MOV_alu_mv_mv_mv_sc_cg 0
+    $srf2fflags = MOV_alu_mv_mv_mv_sc_cg 1
+    $crupsmode = MOV_alu_mv_mv_mv_sc_cg 127
+    $srups_of = MOV_alu_mv_mv_mv_sc_cg -128
+    $srf2bflags = MOV_alu_mv_mv_mv_sc_cg 0
+    $crunpacksize = MOV_alu_mv_mv_mv_sc_cg 1
+    $srss0 = MOV_alu_mv_mv_mv_sc_cg 127
+    $crfpcnvfx2flmask = MOV_alu_mv_mv_mv_sc_cg -128
+    $srms0 = MOV_alu_mv_mv_mv_sc_cg 0
+    $srcarry = MOV_alu_mv_mv_mv_sc_cg 1
+    $crfpconvsat = MOV_alu_mv_mv_mv_sc_cg 127
+    $srsrs_of = MOV_alu_mv_mv_mv_sc_cg -128
+    $srfpcnvfx2fl = MOV_alu_mv_mv_mv_sc_cg 0
+    $crrnd = MOV_alu_mv_mv_mv_sc_cg 1
+    $crsrsmode = MOV_alu_mv_mv_mv_sc_cg 127
+    $crbf8conf = MOV_alu_mv_mv_mv_sc_cg -128
+    $crf2bmask = MOV_alu_mv_mv_mv_sc_cg 0
+    $crfpnlfmask = MOV_alu_mv_mv_mv_sc_cg 1
+    $crsat = MOV_alu_mv_mv_mv_sc_cg 127
+    $srfpflags = MOV_alu_mv_mv_mv_sc_cg -128
+    $crfpmask = MOV_alu_mv_mv_mv_sc_cg 0
+    $srf2iflags = MOV_alu_mv_mv_mv_sc_cg 1
+    $crpacksize = MOV_alu_mv_mv_mv_sc_cg 127
+    $crf2imask = MOV_alu_mv_mv_mv_sc_cg -128
+    $crfpcnvfl2fxmask = MOV_alu_mv_mv_mv_sc_cg 0
+    $srfpcnvfl2fx = MOV_alu_mv_mv_mv_sc_cg 1
+    $srfifo_of = MOV_alu_mv_mv_mv_sc_cg 127
+    $crscden = MOV_alu_mv_mv_mv_sc_cg -128
+    $srfpnlf = MOV_alu_mv_mv_mv_sc_cg 0
+
+    ; MOV_alu_mv_mv_mv_sc_r
+    $crf2bmask = MOV_alu_mv_mv_mv_sc_r $r27
+    $srfpcnvfx2fl = MOV_alu_mv_mv_mv_sc_r $r19
+    $srups_of = MOV_alu_mv_mv_mv_sc_r $r10
+    $srfifo_of = MOV_alu_mv_mv_mv_sc_r $r15
+    $crscden = MOV_alu_mv_mv_mv_sc_r $r7
+    $crfpcnvfl2fxmask = MOV_alu_mv_mv_mv_sc_r $r18
+    $srf2iflags = MOV_alu_mv_mv_mv_sc_r $r6
+    $crfpmask = MOV_alu_mv_mv_mv_sc_r $r23
+    $srf2fflags = MOV_alu_mv_mv_mv_sc_r $r26
+    $crrnd = MOV_alu_mv_mv_mv_sc_r $r29
+    $srfpflags = MOV_alu_mv_mv_mv_sc_r $r2
+    $srss0 = MOV_alu_mv_mv_mv_sc_r $r14
+    $srsrs_of = MOV_alu_mv_mv_mv_sc_r $r9
+    $srf2bflags = MOV_alu_mv_mv_mv_sc_r $r4
+    $crsat = MOV_alu_mv_mv_mv_sc_r $r25
+    $crmcden = MOV_alu_mv_mv_mv_sc_r $r31
+    $crf2imask = MOV_alu_mv_mv_mv_sc_r $r12
+    $srcarry = MOV_alu_mv_mv_mv_sc_r $r20
+    $crfpconvsat = MOV_alu_mv_mv_mv_sc_r $r24
+    $crfpcnvfx2flmask = MOV_alu_mv_mv_mv_sc_r $r28
+    $crsrsmode = MOV_alu_mv_mv_mv_sc_r $r30
+    $crupsmode = MOV_alu_mv_mv_mv_sc_r $r5
+    $crfp8conf = MOV_alu_mv_mv_mv_sc_r $r16
+    $srms0 = MOV_alu_mv_mv_mv_sc_r $r0
+    $srfpnlf = MOV_alu_mv_mv_mv_sc_r $r21
+    $crfpnlfmask = MOV_alu_mv_mv_mv_sc_r $r8
+    $srfpcnvfl2fx = MOV_alu_mv_mv_mv_sc_r $r3
+    $crpacksize = MOV_alu_mv_mv_mv_sc_r $r17
+    $crf2fmask = MOV_alu_mv_mv_mv_sc_r $r13
+    $crunpacksize = MOV_alu_mv_mv_mv_sc_r $r22
+    $crbf8conf = MOV_alu_mv_mv_mv_sc_r $r11
+    $srsparse_of = MOV_alu_mv_mv_mv_sc_r $r1
+    $srfifo_uf = MOV_alu_mv_mv_mv_sc_r $r27
+
+    ; MOV_alu_mv_mv_mv_scl
+    $p4 = MOV_alu_mv_mv_mv_scl $s3
+    $m0 = MOV_alu_mv_mv_mv_scl $r12
+    $m1 = MOV_alu_mv_mv_mv_scl $ls
+    $m7 = MOV_alu_mv_mv_mv_scl $upssign0
+    $p2 = MOV_alu_mv_mv_mv_scl $unpacksign0
+    $r29 = MOV_alu_mv_mv_mv_scl $r10
+    $dc6 = MOV_alu_mv_mv_mv_scl $m4
+    $srssign1 = MOV_alu_mv_mv_mv_scl $dc3
+    $r21 = MOV_alu_mv_mv_mv_scl $r25
+    $packsign1 = MOV_alu_mv_mv_mv_scl $dj0
+    $dc5 = MOV_alu_mv_mv_mv_scl $lr
+    $dc4 = MOV_alu_mv_mv_mv_scl $r15
+    $p6 = MOV_alu_mv_mv_mv_scl $upssign1
+    $r5 = MOV_alu_mv_mv_mv_scl $r9
+    $lc = MOV_alu_mv_mv_mv_scl $dj2
+    $r28 = MOV_alu_mv_mv_mv_scl $m1
+    $m6 = MOV_alu_mv_mv_mv_scl $m3
+    $dj6 = MOV_alu_mv_mv_mv_scl $dc0
+    $dn6 = MOV_alu_mv_mv_mv_scl $dc4
+    $unpacksign1 = MOV_alu_mv_mv_mv_scl $r4
+    $dj1 = MOV_alu_mv_mv_mv_scl $r11
+    $s2 = MOV_alu_mv_mv_mv_scl $r21
+    $upssign1 = MOV_alu_mv_mv_mv_scl $r17
+    $r17 = MOV_alu_mv_mv_mv_scl $dj5
+    $m5 = MOV_alu_mv_mv_mv_scl $vaddsign0
+    $r11 = MOV_alu_mv_mv_mv_scl $dj3
+    $r9 = MOV_alu_mv_mv_mv_scl $dc2
+    $unpacksign0 = MOV_alu_mv_mv_mv_scl $r26
+    $p1 = MOV_alu_mv_mv_mv_scl $p1
+    $dc3 = MOV_alu_mv_mv_mv_scl $dn2
+    $r15 = MOV_alu_mv_mv_mv_scl $r30
+    $dn1 = MOV_alu_mv_mv_mv_scl $r8
+    $r23 = MOV_alu_mv_mv_mv_scl $p7
+    $s3 = MOV_alu_mv_mv_mv_scl $packsign0
+    $vaddsign1 = MOV_alu_mv_mv_mv_scl $srssign0
+    $dj4 = MOV_alu_mv_mv_mv_scl $lc
+    $r3 = MOV_alu_mv_mv_mv_scl $dc6
+    $r16 = MOV_alu_mv_mv_mv_scl $r16
+    $r24 = MOV_alu_mv_mv_mv_scl $r13
+    $dn3 = MOV_alu_mv_mv_mv_scl $r22
+    $p0 = MOV_alu_mv_mv_mv_scl $r20
+    $r30 = MOV_alu_mv_mv_mv_scl $r14
+    $m4 = MOV_alu_mv_mv_mv_scl $srssign1
+    $r31 = MOV_alu_mv_mv_mv_scl $dn0
+    $r13 = MOV_alu_mv_mv_mv_scl $r5
+    $r2 = MOV_alu_mv_mv_mv_scl $dn3
+    $r4 = MOV_alu_mv_mv_mv_scl $r23
+    $s0 = MOV_alu_mv_mv_mv_scl $m0
+    $p7 = MOV_alu_mv_mv_mv_scl $r3
+    $dn0 = MOV_alu_mv_mv_mv_scl $m5
+    $dj7 = MOV_alu_mv_mv_mv_scl $p0
+    $vaddsign0 = MOV_alu_mv_mv_mv_scl $p4
+    $r18 = MOV_alu_mv_mv_mv_scl $p2
+    $s1 = MOV_alu_mv_mv_mv_scl $packsign1
+    $r7 = MOV_alu_mv_mv_mv_scl $dc1
+    $dn5 = MOV_alu_mv_mv_mv_scl $sp
+    $r27 = MOV_alu_mv_mv_mv_scl $r29
+    $packsign0 = MOV_alu_mv_mv_mv_scl $r27
+    $p5 = MOV_alu_mv_mv_mv_scl $m7
+    $dn7 = MOV_alu_mv_mv_mv_scl $vaddsign1
+    $dj2 = MOV_alu_mv_mv_mv_scl $r28
+    $r20 = MOV_alu_mv_mv_mv_scl $m2
+    $m3 = MOV_alu_mv_mv_mv_scl $dj7
+    $r25 = MOV_alu_mv_mv_mv_scl $r0
+    $dj5 = MOV_alu_mv_mv_mv_scl $dn1
+    $srssign0 = MOV_alu_mv_mv_mv_scl $le
+    $r1 = MOV_alu_mv_mv_mv_scl $r6
+    $p3 = MOV_alu_mv_mv_mv_scl $s1
+    $sp = MOV_alu_mv_mv_mv_scl $dc5
+    $dc0 = MOV_alu_mv_mv_mv_scl $dn6
+    $r10 = MOV_alu_mv_mv_mv_scl $r1
+    $m2 = MOV_alu_mv_mv_mv_scl $r7
+    $upssign0 = MOV_alu_mv_mv_mv_scl $r19
+    $r14 = MOV_alu_mv_mv_mv_scl $core_id
+    $r0 = MOV_alu_mv_mv_mv_scl $dc7
+    $r6 = MOV_alu_mv_mv_mv_scl $p3
+    $r19 = MOV_alu_mv_mv_mv_scl $dj4
+    $r8 = MOV_alu_mv_mv_mv_scl $r2
+    $r12 = MOV_alu_mv_mv_mv_scl $r31
+    $dj3 = MOV_alu_mv_mv_mv_scl $r24
+    $dc7 = MOV_alu_mv_mv_mv_scl $m6
+    $dn2 = MOV_alu_mv_mv_mv_scl $p5
+    $r26 = MOV_alu_mv_mv_mv_scl $dn7
+    $lr = MOV_alu_mv_mv_mv_scl $s2
+    $dc2 = MOV_alu_mv_mv_mv_scl $dj6
+    $dn4 = MOV_alu_mv_mv_mv_scl $dj1
+    $dj0 = MOV_alu_mv_mv_mv_scl $dn5
+    $dc1 = MOV_alu_mv_mv_mv_scl $p6
+    $r22 = MOV_alu_mv_mv_mv_scl $unpacksign1
+    $p4 = MOV_alu_mv_mv_mv_scl $dn4
+    $m0 = MOV_alu_mv_mv_mv_scl $r18
+    $m1 = MOV_alu_mv_mv_mv_scl $s0
+
+    ; MOV_lda
+    $r27 = MOV_lda implicit-def $srss0
+    $r24 = MOV_lda implicit-def $srss0
+    $r31 = MOV_lda implicit-def $srss0
+    $r7 = MOV_lda implicit-def $srss0
+    $r12 = MOV_lda implicit-def $srss0
+    $r22 = MOV_lda implicit-def $srss0
+    $r8 = MOV_lda implicit-def $srss0
+    $r2 = MOV_lda implicit-def $srss0
+    $r17 = MOV_lda implicit-def $srss0
+    $r16 = MOV_lda implicit-def $srss0
+    $r4 = MOV_lda implicit-def $srss0
+    $r9 = MOV_lda implicit-def $srss0
+    $r18 = MOV_lda implicit-def $srss0
+    $r5 = MOV_lda implicit-def $srss0
+    $r25 = MOV_lda implicit-def $srss0
+    $r28 = MOV_lda implicit-def $srss0
+    $r29 = MOV_lda implicit-def $srss0
+    $r6 = MOV_lda implicit-def $srss0
+    $r1 = MOV_lda implicit-def $srss0
+    $r0 = MOV_lda implicit-def $srss0
+    $r19 = MOV_lda implicit-def $srss0
+    $r10 = MOV_lda implicit-def $srss0
+    $r20 = MOV_lda implicit-def $srss0
+    $r3 = MOV_lda implicit-def $srss0
+    $r23 = MOV_lda implicit-def $srss0
+    $r11 = MOV_lda implicit-def $srss0
+    $r14 = MOV_lda implicit-def $srss0
+    $r21 = MOV_lda implicit-def $srss0
+    $r15 = MOV_lda implicit-def $srss0
+    $r13 = MOV_lda implicit-def $srss0
+    $r26 = MOV_lda implicit-def $srss0
+    $r30 = MOV_lda implicit-def $srss0
+
+    ; MOV_st_mMStream_tlast_imm
+    MOV_st_mMStream_tlast_imm $dc3, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r26, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $dc6, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $dn7, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r7, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $dj4, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $p5, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r27, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $dn5, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r20, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $dc1, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r8, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $m7, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $dc4, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r23, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r24, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r16, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r17, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $dn2, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $dn0, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r18, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $p3, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $dj0, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $m6, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $dj6, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r5, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $dj7, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $dn1, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $m4, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $dc5, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r6, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r22, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $p0, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r25, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $m0, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $dn4, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r31, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $dc0, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r2, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $p7, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r13, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $dn3, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r0, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $m2, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $dn6, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $dc2, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r30, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $dj3, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $p6, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $p2, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r29, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $dc7, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $dj1, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $p4, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r4, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $dj2, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $m3, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r15, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r9, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $p1, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r12, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r21, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r10, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $m1, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r11, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r1, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $dj5, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r14, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r3, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $r19, implicit-def $srms0
+    MOV_st_mMStream_tlast_imm $m5, implicit-def $srms0
+
+    ; MOV_st_mMStream_tlast_reg
+    MOV_st_mMStream_tlast_reg $r13, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $dc2, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $dj4, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $dj2, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r1, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r27, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $dj3, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $dn0, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $p1, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r16, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r9, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r26, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $dc5, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r21, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $p0, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r17, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r30, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $dc7, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $dn1, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $m4, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $m0, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r29, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r8, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $dc0, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r10, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $p6, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r18, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $dc6, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r5, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $dj0, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $dn3, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $m6, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $dn4, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r7, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r0, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $m5, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r22, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $m3, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r20, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r6, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r25, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $dn5, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $dc3, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r12, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $dj5, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $m2, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $p4, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $dn6, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r19, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $dj7, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $dj6, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r15, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $p3, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r28, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $m1, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $dc4, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r31, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $p7, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r4, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r2, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $dn7, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r11, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $p5, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $p2, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r3, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r23, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $dj1, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r24, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $r14, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $m7, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $dc1, $r28, implicit-def $srms0
+    MOV_st_mMStream_tlast_reg $dn2, $r28, implicit-def $srms0
+
+    ; MOV_d1
+    $r2 = MOV_d1 $r12
+    $r3 = MOV_d1 $p7
+    $r16 = MOV_d1 $dc6
+    $r25 = MOV_d1 $srssign1
+    $r27 = MOV_d1 $dj0
+    $r23 = MOV_d1 $p5
+    $r13 = MOV_d1 $upssign1
+    $r1 = MOV_d1 $r27
+    $r31 = MOV_d1 $packsign1
+    $r21 = MOV_d1 $vaddsign0
+    $r8 = MOV_d1 $dj2
+    $r9 = MOV_d1 $unpacksign0
+    $r29 = MOV_d1 $dn5
+    $r10 = MOV_d1 $p4
+    $r17 = MOV_d1 $dn1
+    $r11 = MOV_d1 $r16
+    $r0 = MOV_d1 $r3
+    $r24 = MOV_d1 $unpacksign1
+    $r28 = MOV_d1 $dj3
+    $r15 = MOV_d1 $m0
+    $r30 = MOV_d1 $dc3
+    $r4 = MOV_d1 $dc0
+    $r12 = MOV_d1 $srssign0
+    $r5 = MOV_d1 $p6
+    $r18 = MOV_d1 $dc4
+    $r20 = MOV_d1 $dn0
+    $r22 = MOV_d1 $packsign0
+    $r26 = MOV_d1 $r25
+    $r7 = MOV_d1 $r0
+    $r14 = MOV_d1 $r22
+    $r6 = MOV_d1 $r7
+    $r19 = MOV_d1 $m6
+    $r2 = MOV_d1 $dj1
+    $r3 = MOV_d1 $r20
+    $r16 = MOV_d1 $lc
+    $r25 = MOV_d1 $s0
+    $r27 = MOV_d1 $r28
+    $r23 = MOV_d1 $r13
+    $r13 = MOV_d1 $dn3
+    $r1 = MOV_d1 $s1
+    $r31 = MOV_d1 $r5
+    $r21 = MOV_d1 $m4
+    $r8 = MOV_d1 $r29
+    $r9 = MOV_d1 $r17
+    $r29 = MOV_d1 $m5
+    $r10 = MOV_d1 $dj4
+    $r17 = MOV_d1 $r26
+    $r11 = MOV_d1 $m3
+    $r0 = MOV_d1 $r4
+    $r24 = MOV_d1 $dc1
+    $r28 = MOV_d1 $dc2
+    $r15 = MOV_d1 $dn2
+    $r30 = MOV_d1 $s2
+    $r4 = MOV_d1 $p0
+    $r12 = MOV_d1 $r6
+    $r5 = MOV_d1 $r2
+    $r18 = MOV_d1 $r14
+    $r20 = MOV_d1 $m1
+    $r22 = MOV_d1 $r11
+    $r26 = MOV_d1 $dj5
+    $r7 = MOV_d1 $r19
+    $r14 = MOV_d1 $upssign0
+    $r6 = MOV_d1 $r30
+    $r19 = MOV_d1 $r9
+    $r2 = MOV_d1 $r18
+    $r3 = MOV_d1 $s3
+    $r16 = MOV_d1 $dn6
+    $r25 = MOV_d1 $r8
+    $r27 = MOV_d1 $p3
+    $r23 = MOV_d1 $r24
+    $r13 = MOV_d1 $sp
+    $r1 = MOV_d1 $dn7
+    $r31 = MOV_d1 $le
+    $r21 = MOV_d1 $ls
+    $r8 = MOV_d1 $dc7
+    $r9 = MOV_d1 $dc5
+    $r29 = MOV_d1 $r1
+    $r10 = MOV_d1 $lr
+    $r17 = MOV_d1 $dj6
+    $r11 = MOV_d1 $r10
+    $r0 = MOV_d1 $dj7
+    $r24 = MOV_d1 $r23
+    $r28 = MOV_d1 $r31
+    $r15 = MOV_d1 $vaddsign1
+    $r30 = MOV_d1 $dn4
+    $r4 = MOV_d1 $m7
+    $r12 = MOV_d1 $core_id
+    $r5 = MOV_d1 $r15
+    $r18 = MOV_d1 $m2
+    $r20 = MOV_d1 $p2
+    $r22 = MOV_d1 $r21
+    $r26 = MOV_d1 $p1
+
+    ; MOV_d2
+    $r26 = MOV_d2 $r16
+    $r24 = MOV_d2 $unpacksign0
+    $r4 = MOV_d2 $packsign1
+    $r10 = MOV_d2 $dj0
+    $r3 = MOV_d2 $ls
+    $r7 = MOV_d2 $dj3
+    $r5 = MOV_d2 $dj6
+    $r21 = MOV_d2 $dj7
+    $r12 = MOV_d2 $r24
+    $r2 = MOV_d2 $lr
+    $r29 = MOV_d2 $dn7
+    $r6 = MOV_d2 $p4
+    $r13 = MOV_d2 $lc
+    $r28 = MOV_d2 $sp
+    $r11 = MOV_d2 $dj5
+    $r20 = MOV_d2 $r17
+    $r8 = MOV_d2 $m0
+    $r1 = MOV_d2 $r25
+    $r23 = MOV_d2 $packsign0
+    $r16 = MOV_d2 $r4
+    $r31 = MOV_d2 $r11
+    $r17 = MOV_d2 $dc6
+    $r19 = MOV_d2 $m2
+    $r18 = MOV_d2 $p2
+    $r25 = MOV_d2 $r2
+    $r30 = MOV_d2 $s2
+    $r14 = MOV_d2 $r30
+    $r27 = MOV_d2 $dc7
+    $r22 = MOV_d2 $dj4
+    $r15 = MOV_d2 $m7
+    $r0 = MOV_d2 $dn0
+    $r9 = MOV_d2 $vaddsign0
+    $r26 = MOV_d2 $r14
+    $r24 = MOV_d2 $r21
+    $r4 = MOV_d2 $r28
+    $r10 = MOV_d2 $m6
+    $r3 = MOV_d2 $r23
+    $r7 = MOV_d2 $upssign0
+    $r5 = MOV_d2 $r29
+    $r21 = MOV_d2 $dc3
+    $r12 = MOV_d2 $m1
+    $r2 = MOV_d2 $core_id
+    $r29 = MOV_d2 $r1
+    $r6 = MOV_d2 $vaddsign1
+    $r13 = MOV_d2 $r12
+    $r28 = MOV_d2 $r5
+    $r11 = MOV_d2 $dj1
+    $r20 = MOV_d2 $r9
+    $r8 = MOV_d2 $r26
+    $r1 = MOV_d2 $r31
+    $r23 = MOV_d2 $p6
+    $r16 = MOV_d2 $r15
+    $r31 = MOV_d2 $upssign1
+    $r17 = MOV_d2 $p3
+    $r19 = MOV_d2 $m5
+    $r18 = MOV_d2 $dc2
+    $r25 = MOV_d2 $srssign0
+    $r30 = MOV_d2 $r20
+    $r14 = MOV_d2 $r27
+    $r27 = MOV_d2 $r0
+    $r22 = MOV_d2 $p0
+    $r15 = MOV_d2 $r10
+    $r0 = MOV_d2 $p5
+    $r9 = MOV_d2 $r13
+    $r26 = MOV_d2 $m3
+    $r24 = MOV_d2 $dc4
+    $r4 = MOV_d2 $dn6
+    $r10 = MOV_d2 $r3
+    $r3 = MOV_d2 $s1
+    $r7 = MOV_d2 $r22
+    $r5 = MOV_d2 $r6
+    $r21 = MOV_d2 $dc5
+    $r12 = MOV_d2 $dc1
+    $r2 = MOV_d2 $le
+    $r29 = MOV_d2 $dc0
+    $r6 = MOV_d2 $s0
+    $r13 = MOV_d2 $r19
+    $r28 = MOV_d2 $m4
+    $r11 = MOV_d2 $p1
+    $r20 = MOV_d2 $r7
+    $r8 = MOV_d2 $dn2
+    $r1 = MOV_d2 $p7
+    $r23 = MOV_d2 $dn5
+    $r16 = MOV_d2 $r8
+    $r31 = MOV_d2 $dn1
+    $r17 = MOV_d2 $srssign1
+    $r19 = MOV_d2 $unpacksign1
+    $r18 = MOV_d2 $r18
+    $r25 = MOV_d2 $dn3
+    $r30 = MOV_d2 $s3
+    $r14 = MOV_d2 $dj2
+    $r27 = MOV_d2 $dn4
+
+    ; MOV_d3
+    $r25 = MOV_d3 $dn5
+    $r22 = MOV_d3 $dc2
+    $r28 = MOV_d3 $r21
+    $r5 = MOV_d3 $r10
+    $r15 = MOV_d3 $dj4
+    $r6 = MOV_d3 $r16
+    $r26 = MOV_d3 $r17
+    $r7 = MOV_d3 $r31
+    $r0 = MOV_d3 $r6
+    $r23 = MOV_d3 $packsign1
+    $r24 = MOV_d3 $r7
+    $r30 = MOV_d3 $r25
+    $r9 = MOV_d3 $dj1
+    $r1 = MOV_d3 $dj7
+    $r31 = MOV_d3 $upssign1
+    $r16 = MOV_d3 $p4
+    $r29 = MOV_d3 $lc
+    $r11 = MOV_d3 $m1
+    $r21 = MOV_d3 $r14
+    $r19 = MOV_d3 $m5
+    $r4 = MOV_d3 $s3
+    $r10 = MOV_d3 $le
+    $r2 = MOV_d3 $p3
+    $r13 = MOV_d3 $m4
+    $r18 = MOV_d3 $r30
+    $r14 = MOV_d3 $r1
+    $r17 = MOV_d3 $dc3
+    $r27 = MOV_d3 $dn4
+    $r20 = MOV_d3 $r0
+    $r3 = MOV_d3 $vaddsign0
+    $r8 = MOV_d3 $r9
+    $r12 = MOV_d3 $dc0
+    $r25 = MOV_d3 $s2
+    $r22 = MOV_d3 $vaddsign1
+    $r28 = MOV_d3 $r20
+    $r5 = MOV_d3 $dj5
+    $r15 = MOV_d3 $unpacksign1
+    $r6 = MOV_d3 $m6
+    $r26 = MOV_d3 $p6
+    $r7 = MOV_d3 $dj6
+    $r0 = MOV_d3 $dn2
+    $r23 = MOV_d3 $dn1
+    $r24 = MOV_d3 $s1
+    $r30 = MOV_d3 $dj2
+    $r9 = MOV_d3 $r19
+    $r1 = MOV_d3 $r18
+    $r31 = MOV_d3 $srssign0
+    $r16 = MOV_d3 $r5
+    $r29 = MOV_d3 $s0
+    $r11 = MOV_d3 $p2
+    $r21 = MOV_d3 $p1
+    $r19 = MOV_d3 $ls
+    $r4 = MOV_d3 $dc6
+    $r10 = MOV_d3 $m2
+    $r2 = MOV_d3 $p0
+    $r13 = MOV_d3 $m3
+    $r18 = MOV_d3 $m7
+    $r14 = MOV_d3 $r12
+    $r17 = MOV_d3 $dn0
+    $r27 = MOV_d3 $r11
+    $r20 = MOV_d3 $r4
+    $r3 = MOV_d3 $lr
+    $r8 = MOV_d3 $r3
+    $r12 = MOV_d3 $r27
+    $r25 = MOV_d3 $dc5
+    $r22 = MOV_d3 $unpacksign0
+    $r28 = MOV_d3 $dn3
+    $r5 = MOV_d3 $r26
+    $r15 = MOV_d3 $p7
+    $r6 = MOV_d3 $r22
+    $r26 = MOV_d3 $r23
+    $r7 = MOV_d3 $sp
+    $r0 = MOV_d3 $dc1
+    $r23 = MOV_d3 $r2
+    $r24 = MOV_d3 $dc4
+    $r30 = MOV_d3 $dn6
+    $r9 = MOV_d3 $r8
+    $r1 = MOV_d3 $m0
+    $r31 = MOV_d3 $dj0
+    $r16 = MOV_d3 $r29
+    $r29 = MOV_d3 $core_id
+    $r11 = MOV_d3 $dn7
+    $r21 = MOV_d3 $r15
+    $r19 = MOV_d3 $p5
+    $r4 = MOV_d3 $r28
+    $r10 = MOV_d3 $packsign0
+    $r2 = MOV_d3 $dc7
+    $r13 = MOV_d3 $srssign1
+    $r18 = MOV_d3 $dj3
+    $r14 = MOV_d3 $r13
+    $r17 = MOV_d3 $r24
+    $r27 = MOV_d3 $upssign0
+
+    ; MOV_d4
+    $r30 = MOV_d4 $r4
+    $r24 = MOV_d4 $dj3
+    $r5 = MOV_d4 $r10
+    $r17 = MOV_d4 $m4
+    $r3 = MOV_d4 $p6
+    $r12 = MOV_d4 $m0
+    $r0 = MOV_d4 $r12
+    $r27 = MOV_d4 $r18
+    $r7 = MOV_d4 $dj7
+    $r18 = MOV_d4 $dc6
+    $r2 = MOV_d4 $r11
+    $r23 = MOV_d4 $r25
+    $r28 = MOV_d4 $m3
+    $r14 = MOV_d4 $core_id
+    $r31 = MOV_d4 $lc
+    $r25 = MOV_d4 $r20
+    $r4 = MOV_d4 $r30
+    $r19 = MOV_d4 $dn2
+    $r21 = MOV_d4 $r26
+    $r16 = MOV_d4 $r9
+    $r22 = MOV_d4 $ls
+    $r13 = MOV_d4 $r24
+    $r8 = MOV_d4 $dc4
+    $r10 = MOV_d4 $r19
+    $r1 = MOV_d4 $dn1
+    $r20 = MOV_d4 $r17
+    $r9 = MOV_d4 $p2
+    $r26 = MOV_d4 $r22
+    $r15 = MOV_d4 $s2
+    $r11 = MOV_d4 $p7
+    $r29 = MOV_d4 $dj0
+    $r6 = MOV_d4 $dc3
+    $r30 = MOV_d4 $dj5
+    $r24 = MOV_d4 $r6
+    $r5 = MOV_d4 $m2
+    $r17 = MOV_d4 $r31
+    $r3 = MOV_d4 $s1
+    $r12 = MOV_d4 $r28
+    $r0 = MOV_d4 $dn5
+    $r27 = MOV_d4 $vaddsign0
+    $r7 = MOV_d4 $p0
+    $r18 = MOV_d4 $dc1
+    $r2 = MOV_d4 $dn7
+    $r23 = MOV_d4 $dn6
+    $r28 = MOV_d4 $packsign1
+    $r14 = MOV_d4 $r0
+    $r31 = MOV_d4 $r27
+    $r25 = MOV_d4 $r8
+    $r4 = MOV_d4 $r21
+    $r19 = MOV_d4 $m1
+    $r21 = MOV_d4 $r13
+    $r16 = MOV_d4 $s3
+    $r22 = MOV_d4 $dj2
+    $r13 = MOV_d4 $upssign1
+    $r8 = MOV_d4 $r23
+    $r10 = MOV_d4 $m6
+    $r1 = MOV_d4 $lr
+    $r20 = MOV_d4 $r3
+    $r9 = MOV_d4 $p1
+    $r26 = MOV_d4 $le
+    $r15 = MOV_d4 $r14
+    $r11 = MOV_d4 $dc0
+    $r29 = MOV_d4 $m7
+    $r6 = MOV_d4 $r5
+    $r30 = MOV_d4 $s0
+    $r24 = MOV_d4 $dn0
+    $r5 = MOV_d4 $sp
+    $r17 = MOV_d4 $r29
+    $r3 = MOV_d4 $dc7
+    $r12 = MOV_d4 $packsign0
+    $r0 = MOV_d4 $srssign1
+    $r27 = MOV_d4 $dj1
+    $r7 = MOV_d4 $dj4
+    $r18 = MOV_d4 $vaddsign1
+    $r2 = MOV_d4 $upssign0
+    $r23 = MOV_d4 $dn3
+    $r28 = MOV_d4 $unpacksign0
+    $r14 = MOV_d4 $r2
+    $r31 = MOV_d4 $dn4
+    $r25 = MOV_d4 $p4
+    $r4 = MOV_d4 $unpacksign1
+    $r19 = MOV_d4 $m5
+    $r21 = MOV_d4 $dj6
+    $r16 = MOV_d4 $p5
+    $r22 = MOV_d4 $r15
+    $r13 = MOV_d4 $r7
+    $r8 = MOV_d4 $srssign0
+    $r10 = MOV_d4 $r1
+    $r1 = MOV_d4 $p3
+    $r20 = MOV_d4 $dc5
+    $r9 = MOV_d4 $r16
+    $r26 = MOV_d4 $dc2
+
+    ; MOV_d5
+    $r21 = MOV_d5 $dj0
+    $r7 = MOV_d5 $dc5
+    $r17 = MOV_d5 $dc1
+    $r3 = MOV_d5 $s2
+    $r20 = MOV_d5 $r26
+    $r9 = MOV_d5 $m4
+    $r14 = MOV_d5 $r17
+    $r10 = MOV_d5 $sp
+    $r28 = MOV_d5 $dj1
+    $r15 = MOV_d5 $dc2
+    $r8 = MOV_d5 $r10
+    $r18 = MOV_d5 $m6
+    $r2 = MOV_d5 $p3
+    $r1 = MOV_d5 $r19
+    $r26 = MOV_d5 $r15
+    $r0 = MOV_d5 $r3
+    $r22 = MOV_d5 $dc7
+    $r23 = MOV_d5 $p5
+    $r5 = MOV_d5 $s3
+    $r24 = MOV_d5 $packsign0
+    $r25 = MOV_d5 $r30
+    $r30 = MOV_d5 $r23
+    $r11 = MOV_d5 $dc0
+    $r13 = MOV_d5 $packsign1
+    $r27 = MOV_d5 $m3
+    $r19 = MOV_d5 $upssign0
+    $r29 = MOV_d5 $dj7
+    $r4 = MOV_d5 $ls
+    $r16 = MOV_d5 $r12
+    $r6 = MOV_d5 $core_id
+    $r12 = MOV_d5 $unpacksign0
+    $r31 = MOV_d5 $r4
+    $r21 = MOV_d5 $s1
+    $r7 = MOV_d5 $r5
+    $r17 = MOV_d5 $m0
+    $r3 = MOV_d5 $dj4
+    $r20 = MOV_d5 $p2
+    $r9 = MOV_d5 $p6
+    $r14 = MOV_d5 $dn4
+    $r10 = MOV_d5 $dn2
+    $r28 = MOV_d5 $s0
+    $r15 = MOV_d5 $vaddsign0
+    $r8 = MOV_d5 $dj5
+    $r18 = MOV_d5 $dc6
+    $r2 = MOV_d5 $unpacksign1
+    $r1 = MOV_d5 $upssign1
+    $r26 = MOV_d5 $r2
+    $r0 = MOV_d5 $r8
+    $r22 = MOV_d5 $srssign1
+    $r23 = MOV_d5 $dc4
+    $r5 = MOV_d5 $dc3
+    $r24 = MOV_d5 $dj6
+    $r25 = MOV_d5 $r28
+    $r30 = MOV_d5 $r31
+    $r11 = MOV_d5 $r24
+    $r13 = MOV_d5 $r18
+    $r27 = MOV_d5 $dn1
+    $r19 = MOV_d5 $r14
+    $r29 = MOV_d5 $p7
+    $r4 = MOV_d5 $vaddsign1
+    $r16 = MOV_d5 $dn3
+    $r6 = MOV_d5 $r27
+    $r12 = MOV_d5 $le
+    $r31 = MOV_d5 $p1
+    $r21 = MOV_d5 $r13
+    $r7 = MOV_d5 $r7
+    $r17 = MOV_d5 $r25
+    $r3 = MOV_d5 $m7
+    $r20 = MOV_d5 $r11
+    $r9 = MOV_d5 $r29
+    $r14 = MOV_d5 $r1
+    $r10 = MOV_d5 $r6
+    $r28 = MOV_d5 $m2
+    $r15 = MOV_d5 $lc
+    $r8 = MOV_d5 $r16
+    $r18 = MOV_d5 $dn0
+    $r2 = MOV_d5 $p4
+    $r1 = MOV_d5 $dn5
+    $r26 = MOV_d5 $p0
+    $r0 = MOV_d5 $lr
+    $r22 = MOV_d5 $r0
+    $r23 = MOV_d5 $r22
+    $r5 = MOV_d5 $r20
+    $r24 = MOV_d5 $dj2
+    $r25 = MOV_d5 $m5
+    $r30 = MOV_d5 $r9
+    $r11 = MOV_d5 $srssign0
+    $r13 = MOV_d5 $dn6
+    $r27 = MOV_d5 $m1
+    $r19 = MOV_d5 $dj3
+    $r29 = MOV_d5 $r21
+    $r4 = MOV_d5 $dn7
+
+    ; MOV_d6
+    $r12 = MOV_d6 $dn4
+    $r13 = MOV_d6 $r23
+    $r21 = MOV_d6 $r3
+    $r23 = MOV_d6 $ls
+    $r19 = MOV_d6 $r22
+    $r24 = MOV_d6 $r5
+    $r29 = MOV_d6 $r8
+    $r30 = MOV_d6 $r15
+    $r17 = MOV_d6 $upssign0
+    $r2 = MOV_d6 $dn6
+    $r31 = MOV_d6 $r7
+    $r22 = MOV_d6 $p4
+    $r4 = MOV_d6 $dc5
+    $r27 = MOV_d6 $r29
+    $r15 = MOV_d6 $r17
+    $r3 = MOV_d6 $le
+    $r18 = MOV_d6 $s3
+    $r26 = MOV_d6 $r20
+    $r9 = MOV_d6 $dn0
+    $r7 = MOV_d6 $core_id
+    $r20 = MOV_d6 $r24
+    $r10 = MOV_d6 $m7
+    $r11 = MOV_d6 $sp
+    $r16 = MOV_d6 $r14
+    $r5 = MOV_d6 $dc3
+    $r25 = MOV_d6 $dj0
+    $r14 = MOV_d6 $dn1
+    $r1 = MOV_d6 $r0
+    $r0 = MOV_d6 $p7
+    $r8 = MOV_d6 $m6
+    $r28 = MOV_d6 $r16
+    $r6 = MOV_d6 $r13
+    $r12 = MOV_d6 $dj3
+    $r13 = MOV_d6 $p2
+    $r21 = MOV_d6 $srssign1
+    $r23 = MOV_d6 $dc4
+    $r19 = MOV_d6 $r10
+    $r24 = MOV_d6 $r9
+    $r29 = MOV_d6 $p5
+    $r30 = MOV_d6 $unpacksign1
+    $r17 = MOV_d6 $r28
+    $r2 = MOV_d6 $dj6
+    $r31 = MOV_d6 $p3
+    $r22 = MOV_d6 $m5
+    $r4 = MOV_d6 $dj4
+    $r27 = MOV_d6 $dc0
+    $r15 = MOV_d6 $m0
+    $r3 = MOV_d6 $r25
+    $r18 = MOV_d6 $r11
+    $r26 = MOV_d6 $lr
+    $r9 = MOV_d6 $lc
+    $r7 = MOV_d6 $r27
+    $r20 = MOV_d6 $r12
+    $r10 = MOV_d6 $dn3
+    $r11 = MOV_d6 $dc6
+    $r16 = MOV_d6 $vaddsign1
+    $r5 = MOV_d6 $r31
+    $r25 = MOV_d6 $packsign0
+    $r14 = MOV_d6 $p1
+    $r1 = MOV_d6 $r30
+    $r0 = MOV_d6 $m3
+    $r8 = MOV_d6 $vaddsign0
+    $r28 = MOV_d6 $dj1
+    $r6 = MOV_d6 $upssign1
+    $r12 = MOV_d6 $r6
+    $r13 = MOV_d6 $r26
+    $r21 = MOV_d6 $unpacksign0
+    $r23 = MOV_d6 $srssign0
+    $r19 = MOV_d6 $m2
+    $r24 = MOV_d6 $r19
+    $r29 = MOV_d6 $m1
+    $r30 = MOV_d6 $dn5
+    $r17 = MOV_d6 $s2
+    $r2 = MOV_d6 $dj7
+    $r31 = MOV_d6 $dn2
+    $r22 = MOV_d6 $s0
+    $r4 = MOV_d6 $dc1
+    $r27 = MOV_d6 $s1
+    $r15 = MOV_d6 $dj5
+    $r3 = MOV_d6 $packsign1
+    $r18 = MOV_d6 $p0
+    $r26 = MOV_d6 $dc7
+    $r9 = MOV_d6 $dn7
+    $r7 = MOV_d6 $dc2
+    $r20 = MOV_d6 $r2
+    $r10 = MOV_d6 $r21
+    $r11 = MOV_d6 $p6
+    $r16 = MOV_d6 $r4
+    $r5 = MOV_d6 $r18
+    $r25 = MOV_d6 $r1
+    $r14 = MOV_d6 $m4
+    $r1 = MOV_d6 $dj2
+
+    ; MOV_nb_lda
+    $r5 = MOV_nb_lda implicit-def $srss0
+    $r4 = MOV_nb_lda implicit-def $srss0
+    $r9 = MOV_nb_lda implicit-def $srss0
+    $r24 = MOV_nb_lda implicit-def $srss0
+    $r19 = MOV_nb_lda implicit-def $srss0
+    $r16 = MOV_nb_lda implicit-def $srss0
+    $r27 = MOV_nb_lda implicit-def $srss0
+    $r17 = MOV_nb_lda implicit-def $srss0
+    $r11 = MOV_nb_lda implicit-def $srss0
+    $r7 = MOV_nb_lda implicit-def $srss0
+    $r21 = MOV_nb_lda implicit-def $srss0
+    $r28 = MOV_nb_lda implicit-def $srss0
+    $r13 = MOV_nb_lda implicit-def $srss0
+    $r8 = MOV_nb_lda implicit-def $srss0
+    $r15 = MOV_nb_lda implicit-def $srss0
+    $r3 = MOV_nb_lda implicit-def $srss0
+    $r20 = MOV_nb_lda implicit-def $srss0
+    $r25 = MOV_nb_lda implicit-def $srss0
+    $r18 = MOV_nb_lda implicit-def $srss0
+    $r22 = MOV_nb_lda implicit-def $srss0
+    $r29 = MOV_nb_lda implicit-def $srss0
+    $r26 = MOV_nb_lda implicit-def $srss0
+    $r1 = MOV_nb_lda implicit-def $srss0
+    $r2 = MOV_nb_lda implicit-def $srss0
+    $r6 = MOV_nb_lda implicit-def $srss0
+    $r23 = MOV_nb_lda implicit-def $srss0
+    $r10 = MOV_nb_lda implicit-def $srss0
+    $r0 = MOV_nb_lda implicit-def $srss0
+    $r31 = MOV_nb_lda implicit-def $srss0
+    $r12 = MOV_nb_lda implicit-def $srss0
+    $r14 = MOV_nb_lda implicit-def $srss0
+    $r30 = MOV_nb_lda implicit-def $srss0
+
+    ; MOV_nb_st_mMStream_tlast_imm
+    MOV_nb_st_mMStream_tlast_imm $dj3, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $dj7, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $dc3, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r3, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $m3, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $dn3, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $dc0, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r29, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r15, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $dn2, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $dc7, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $p6, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r11, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r17, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $m2, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $p0, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r2, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $dn1, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $dc2, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $m6, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r4, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r23, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r8, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $dj2, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $p1, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $dc4, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $m1, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r12, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $m5, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $dj0, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r22, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r9, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $p2, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r16, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $dn0, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $m0, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $p5, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $m4, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r0, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r18, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r1, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r30, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $p3, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r19, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r31, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $dn7, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $dc6, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $dn6, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r5, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r27, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $dn4, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $dj1, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $dj6, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r21, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $dn5, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r13, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r20, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r14, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $p7, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r10, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r26, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r25, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $dj4, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r24, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $m7, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $dc5, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $dc1, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $p4, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r6, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $dj5, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_imm $r7, implicit-def $srms0
+
+    ; MOV_nb_st_mMStream_tlast_reg
+    MOV_nb_st_mMStream_tlast_reg $r23, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r5, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r30, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $dc2, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r28, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r0, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $m0, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $p4, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $dn0, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $m6, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $m1, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r8, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r25, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $dn3, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r4, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $p1, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r26, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $dj0, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $p3, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $m4, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $p7, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $dc7, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r12, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $dn6, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $dj6, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $dj4, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r18, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $dn4, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r21, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r19, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r29, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $dj1, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r17, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $dn2, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r24, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $dc3, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r2, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $dj7, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r1, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $dc5, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $m7, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $m2, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $dc1, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $p6, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r27, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $dn1, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r13, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $dn7, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r7, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r10, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $p5, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r9, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r6, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $dc6, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $dn5, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $dj2, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r14, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r22, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $p0, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r15, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $p2, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r20, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r16, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $m3, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $dc4, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $dj5, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $dj3, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r31, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $dc0, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r3, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $m5, $r28, implicit-def $srms0
+    MOV_nb_st_mMStream_tlast_reg $r11, $r28, implicit-def $srms0
+
+    ; MOV_nb_tlast
+    MOV_nb_tlast $r1, implicit-def $srms0
+    MOV_nb_tlast $r9, implicit-def $srms0
+    MOV_nb_tlast $p1, implicit-def $srms0
+    MOV_nb_tlast $r6, implicit-def $srms0
+    MOV_nb_tlast $r10, implicit-def $srms0
+    MOV_nb_tlast $p2, implicit-def $srms0
+    MOV_nb_tlast $r31, implicit-def $srms0
+    MOV_nb_tlast $r25, implicit-def $srms0
+    MOV_nb_tlast $r12, implicit-def $srms0
+    MOV_nb_tlast $dc6, implicit-def $srms0
+    MOV_nb_tlast $m6, implicit-def $srms0
+    MOV_nb_tlast $r0, implicit-def $srms0
+    MOV_nb_tlast $p4, implicit-def $srms0
+    MOV_nb_tlast $r11, implicit-def $srms0
+    MOV_nb_tlast $r19, implicit-def $srms0
+    MOV_nb_tlast $dj7, implicit-def $srms0
+    MOV_nb_tlast $m0, implicit-def $srms0
+    MOV_nb_tlast $m1, implicit-def $srms0
+    MOV_nb_tlast $dj3, implicit-def $srms0
+    MOV_nb_tlast $r15, implicit-def $srms0
+    MOV_nb_tlast $dj4, implicit-def $srms0
+    MOV_nb_tlast $r27, implicit-def $srms0
+    MOV_nb_tlast $dc3, implicit-def $srms0
+    MOV_nb_tlast $r30, implicit-def $srms0
+    MOV_nb_tlast $m4, implicit-def $srms0
+    MOV_nb_tlast $r5, implicit-def $srms0
+    MOV_nb_tlast $dc4, implicit-def $srms0
+    MOV_nb_tlast $dc2, implicit-def $srms0
+    MOV_nb_tlast $dj1, implicit-def $srms0
+    MOV_nb_tlast $dn3, implicit-def $srms0
+    MOV_nb_tlast $r28, implicit-def $srms0
+    MOV_nb_tlast $dj2, implicit-def $srms0
+    MOV_nb_tlast $r3, implicit-def $srms0
+    MOV_nb_tlast $r13, implicit-def $srms0
+    MOV_nb_tlast $dn5, implicit-def $srms0
+    MOV_nb_tlast $dc5, implicit-def $srms0
+    MOV_nb_tlast $r22, implicit-def $srms0
+    MOV_nb_tlast $r21, implicit-def $srms0
+    MOV_nb_tlast $m7, implicit-def $srms0
+    MOV_nb_tlast $r7, implicit-def $srms0
+    MOV_nb_tlast $m2, implicit-def $srms0
+    MOV_nb_tlast $m5, implicit-def $srms0
+    MOV_nb_tlast $dj0, implicit-def $srms0
+    MOV_nb_tlast $dc1, implicit-def $srms0
+    MOV_nb_tlast $dn0, implicit-def $srms0
+    MOV_nb_tlast $dj6, implicit-def $srms0
+    MOV_nb_tlast $dn7, implicit-def $srms0
+    MOV_nb_tlast $r2, implicit-def $srms0
+    MOV_nb_tlast $r24, implicit-def $srms0
+    MOV_nb_tlast $dn4, implicit-def $srms0
+    MOV_nb_tlast $r14, implicit-def $srms0
+    MOV_nb_tlast $dj5, implicit-def $srms0
+    MOV_nb_tlast $dc7, implicit-def $srms0
+    MOV_nb_tlast $p0, implicit-def $srms0
+    MOV_nb_tlast $r4, implicit-def $srms0
+    MOV_nb_tlast $p3, implicit-def $srms0
+    MOV_nb_tlast $r29, implicit-def $srms0
+    MOV_nb_tlast $r26, implicit-def $srms0
+    MOV_nb_tlast $r18, implicit-def $srms0
+    MOV_nb_tlast $dn6, implicit-def $srms0
+    MOV_nb_tlast $dc0, implicit-def $srms0
+    MOV_nb_tlast $p5, implicit-def $srms0
+    MOV_nb_tlast $r16, implicit-def $srms0
+    MOV_nb_tlast $m3, implicit-def $srms0
+    MOV_nb_tlast $dn1, implicit-def $srms0
+    MOV_nb_tlast $dn2, implicit-def $srms0
+    MOV_nb_tlast $p7, implicit-def $srms0
+    MOV_nb_tlast $r8, implicit-def $srms0
+    MOV_nb_tlast $p6, implicit-def $srms0
+    MOV_nb_tlast $r17, implicit-def $srms0
+    MOV_nb_tlast $r23, implicit-def $srms0
+    MOV_nb_tlast $r20, implicit-def $srms0
+
+    ; MOV_tlast
+    MOV_tlast $r2, implicit-def $srms0
+    MOV_tlast $r12, implicit-def $srms0
+    MOV_tlast $r14, implicit-def $srms0
+    MOV_tlast $r25, implicit-def $srms0
+    MOV_tlast $r26, implicit-def $srms0
+    MOV_tlast $r28, implicit-def $srms0
+    MOV_tlast $r23, implicit-def $srms0
+    MOV_tlast $p1, implicit-def $srms0
+    MOV_tlast $m1, implicit-def $srms0
+    MOV_tlast $dj3, implicit-def $srms0
+    MOV_tlast $r24, implicit-def $srms0
+    MOV_tlast $r22, implicit-def $srms0
+    MOV_tlast $dc0, implicit-def $srms0
+    MOV_tlast $dc5, implicit-def $srms0
+    MOV_tlast $dc6, implicit-def $srms0
+    MOV_tlast $m4, implicit-def $srms0
+    MOV_tlast $p6, implicit-def $srms0
+    MOV_tlast $m6, implicit-def $srms0
+    MOV_tlast $dj7, implicit-def $srms0
+    MOV_tlast $dn0, implicit-def $srms0
+    MOV_tlast $r1, implicit-def $srms0
+    MOV_tlast $r19, implicit-def $srms0
+    MOV_tlast $dj4, implicit-def $srms0
+    MOV_tlast $dc4, implicit-def $srms0
+    MOV_tlast $dn7, implicit-def $srms0
+    MOV_tlast $r10, implicit-def $srms0
+    MOV_tlast $dn1, implicit-def $srms0
+    MOV_tlast $r30, implicit-def $srms0
+    MOV_tlast $dc1, implicit-def $srms0
+    MOV_tlast $r9, implicit-def $srms0
+    MOV_tlast $dj0, implicit-def $srms0
+    MOV_tlast $p4, implicit-def $srms0
+    MOV_tlast $r0, implicit-def $srms0
+    MOV_tlast $r27, implicit-def $srms0
+    MOV_tlast $r11, implicit-def $srms0
+    MOV_tlast $r31, implicit-def $srms0
+    MOV_tlast $dc7, implicit-def $srms0
+    MOV_tlast $dn2, implicit-def $srms0
+    MOV_tlast $p2, implicit-def $srms0
+    MOV_tlast $p7, implicit-def $srms0
+    MOV_tlast $dj1, implicit-def $srms0
+    MOV_tlast $m5, implicit-def $srms0
+    MOV_tlast $r20, implicit-def $srms0
+    MOV_tlast $r13, implicit-def $srms0
+    MOV_tlast $dc3, implicit-def $srms0
+    MOV_tlast $m3, implicit-def $srms0
+    MOV_tlast $r8, implicit-def $srms0
+    MOV_tlast $p0, implicit-def $srms0
+    MOV_tlast $r16, implicit-def $srms0
+    MOV_tlast $dj2, implicit-def $srms0
+    MOV_tlast $dj6, implicit-def $srms0
+    MOV_tlast $dc2, implicit-def $srms0
+    MOV_tlast $p3, implicit-def $srms0
+    MOV_tlast $r4, implicit-def $srms0
+    MOV_tlast $r15, implicit-def $srms0
+    MOV_tlast $dn6, implicit-def $srms0
+    MOV_tlast $r18, implicit-def $srms0
+    MOV_tlast $r21, implicit-def $srms0
+    MOV_tlast $r7, implicit-def $srms0
+    MOV_tlast $r6, implicit-def $srms0
+    MOV_tlast $dn4, implicit-def $srms0
+    MOV_tlast $m7, implicit-def $srms0
+    MOV_tlast $p5, implicit-def $srms0
+    MOV_tlast $m0, implicit-def $srms0
+    MOV_tlast $dj5, implicit-def $srms0
+    MOV_tlast $r5, implicit-def $srms0
+    MOV_tlast $r17, implicit-def $srms0
+    MOV_tlast $r3, implicit-def $srms0
+    MOV_tlast $r29, implicit-def $srms0
+    MOV_tlast $dn3, implicit-def $srms0
+    MOV_tlast $dn5, implicit-def $srms0
+    MOV_tlast $m2, implicit-def $srms0
+...
+
+# CHECK: 0: b0 75 47 10 mov.cph ms, m1, #2, #2, r27
+# CHECK: 4: b0 7d 14 10 mov.cph ms, m5, #3, #0, r3
+# CHECK: 8: b0 2d 2d 10 mov.cph ms, m3, #1, #1, r9
+# CHECK: c: b0 e5 6a 10 mov.cph ms, m2, #0, #3, r23
+# CHECK: 10: b0 75 52 10 mov.cph ms, m4, #2, #2, r19
+# CHECK: 14: b0 1d 02 10 mov.cph ms, m0, #3, #0, r16
+# CHECK: 18: b0 cd 3f 10 mov.cph ms, m7, #1, #1, r30
+# CHECK: 1c: b0 05 79 10 mov.cph ms, m6, #0, #3, r8
+# CHECK: 20: b0 d5 46 10 mov.cph ms, m1, #2, #2, r22
+# CHECK: 24: b0 fd 14 10 mov.cph ms, m5, #3, #0, r7
+# CHECK: 28: b0 6d 2d 10 mov.cph ms, m3, #1, #1, r11
+# CHECK: 2c: b0 c5 69 10 mov.cph ms, m2, #0, #3, r14
+# CHECK: 30: b0 15 53 10 mov.cph ms, m4, #2, #2, r24
+# CHECK: 34: b0 9d 03 10 mov.cph ms, m0, #3, #0, r28
+# CHECK: 38: b0 ad 3e 10 mov.cph ms, m7, #1, #1, r21
+# CHECK: 3c: b0 25 7a 10 mov.cph ms, m6, #0, #3, r17
+# CHECK: 40: b0 15 44 10 mov.cph ms, m1, #2, #2, r0
+# CHECK: 44: b0 3d 17 10 mov.cph ms, m5, #3, #0, r25
+# CHECK: 48: b0 cd 2c 10 mov.cph ms, m3, #1, #1, r6
+# CHECK: 4c: b0 85 68 10 mov.cph ms, m2, #0, #3, r4
+# CHECK: 50: b0 55 53 10 mov.cph ms, m4, #2, #2, r26
+# CHECK: 54: b0 5d 02 10 mov.cph ms, m0, #3, #0, r18
+# CHECK: 58: b0 4d 3c 10 mov.cph ms, m7, #1, #1, r2
+# CHECK: 5c: b0 e5 7b 10 mov.cph ms, m6, #0, #3, r31
+# CHECK: 60: b0 55 45 10 mov.cph ms, m1, #2, #2, r10
+# CHECK: 64: b0 3d 14 10 mov.cph ms, m5, #3, #0, r1
+# CHECK: 68: b0 8d 2e 10 mov.cph ms, m3, #1, #1, r20
+# CHECK: 6c: b0 a5 6b 10 mov.cph ms, m2, #0, #3, r29
+# CHECK: 70: b0 b5 50 10 mov.cph ms, m4, #2, #2, r5
+# CHECK: 74: b0 bd 01 10 mov.cph ms, m0, #3, #0, r13
+# CHECK: 78: b0 8d 3d 10 mov.cph ms, m7, #1, #1, r12
+# CHECK: 7c: b0 e5 79 10 mov.cph ms, m6, #0, #3, r15
+# CHECK: 80: b0 cd 07 12 mov.cph ms, m1, #1, #0, r30, r28
+# CHECK: 84: b0 05 48 12 mov.cph ms, m2, #0, #2, r0, r28
+# CHECK: 88: b0 35 37 12 mov.cph ms, m5, #2, #1, r25, r28
+# CHECK: 8c: b0 3d 79 12 mov.cph ms, m6, #3, #3, r9, r28
+# CHECK: 90: b0 0d 13 12 mov.cph ms, m4, #1, #0, r24, r28
+# CHECK: 94: b0 45 5f 12 mov.cph ms, m7, #0, #2, r26, r28
+# CHECK: 98: b0 75 23 12 mov.cph ms, m0, #2, #1, r27, r28
+# CHECK: 9c: b0 bd 6e 12 mov.cph ms, m3, #3, #3, r21, r28
+# CHECK: a0: b0 0d 05 12 mov.cph ms, m1, #1, #0, r8, r28
+# CHECK: a4: b0 65 48 12 mov.cph ms, m2, #0, #2, r3, r28
+# CHECK: a8: b0 95 36 12 mov.cph ms, m5, #2, #1, r20, r28
+# CHECK: ac: b0 3d 78 12 mov.cph ms, m6, #3, #3, r1, r28
+# CHECK: b0: b0 6d 12 12 mov.cph ms, m4, #1, #0, r19, r28
+# CHECK: b4: b0 05 5e 12 mov.cph ms, m7, #0, #2, r16, r28
+# CHECK: b8: b0 95 20 12 mov.cph ms, m0, #2, #1, r4, r28
+# CHECK: bc: b0 7d 6d 12 mov.cph ms, m3, #3, #3, r11, r28
+# CHECK: c0: b0 4d 06 12 mov.cph ms, m1, #1, #0, r18, r28
+# CHECK: c4: b0 25 4a 12 mov.cph ms, m2, #0, #2, r17, r28
+# CHECK: c8: b0 f5 36 12 mov.cph ms, m5, #2, #1, r23, r28
+# CHECK: cc: b0 bd 79 12 mov.cph ms, m6, #3, #3, r13, r28
+# CHECK: d0: b0 ad 13 12 mov.cph ms, m4, #1, #0, r29, r28
+# CHECK: d4: b0 e5 5f 12 mov.cph ms, m7, #0, #2, r31, r28
+# CHECK: d8: b0 95 21 12 mov.cph ms, m0, #2, #1, r12, r28
+# CHECK: dc: b0 dd 6c 12 mov.cph ms, m3, #3, #3, r6, r28
+# CHECK: e0: b0 ed 05 12 mov.cph ms, m1, #1, #0, r15, r28
+# CHECK: e4: b0 a5 48 12 mov.cph ms, m2, #0, #2, r5, r28
+# CHECK: e8: b0 d5 35 12 mov.cph ms, m5, #2, #1, r14, r28
+# CHECK: ec: b0 5d 78 12 mov.cph ms, m6, #3, #3, r2, r28
+# CHECK: f0: b0 8d 13 12 mov.cph ms, m4, #1, #0, r28, r28
+# CHECK: f4: b0 e5 5c 12 mov.cph ms, m7, #0, #2, r7, r28
+# CHECK: f8: b0 d5 22 12 mov.cph ms, m0, #2, #1, r22, r28
+# CHECK: fc: b0 5d 6d 12 mov.cph ms, m3, #3, #3, r10, r28
+# CHECK: 100: b0 65 5b 14 mov.cph.nb ms, m6, #0, #2, r27
+# CHECK: 104: b0 bd 1c 14 mov.cph.nb ms, m7, #3, #0, r5
+# CHECK: 108: b0 8d 76 14 mov.cph.nb ms, m5, #1, #3, r20
+# CHECK: 10c: b0 b5 25 14 mov.cph.nb ms, m1, #2, #1, r13
+# CHECK: 110: b0 25 4c 14 mov.cph.nb ms, m3, #0, #2, r1
+# CHECK: 114: b0 9d 03 14 mov.cph.nb ms, m0, #3, #0, r28
+# CHECK: 118: b0 ed 6a 14 mov.cph.nb ms, m2, #1, #3, r23
+# CHECK: 11c: b0 d5 30 14 mov.cph.nb ms, m4, #2, #1, r6
+# CHECK: 120: b0 c5 5a 14 mov.cph.nb ms, m6, #0, #2, r22
+# CHECK: 124: b0 5d 1c 14 mov.cph.nb ms, m7, #3, #0, r2
+# CHECK: 128: b0 ed 74 14 mov.cph.nb ms, m5, #1, #3, r7
+# CHECK: 12c: b0 b5 26 14 mov.cph.nb ms, m1, #2, #1, r21
+# CHECK: 130: b0 25 4e 14 mov.cph.nb ms, m3, #0, #2, r17
+# CHECK: 134: b0 dd 01 14 mov.cph.nb ms, m0, #3, #0, r14
+# CHECK: 138: b0 0d 69 14 mov.cph.nb ms, m2, #1, #3, r8
+# CHECK: 13c: b0 f5 31 14 mov.cph.nb ms, m4, #2, #1, r15
+# CHECK: 140: b0 45 5a 14 mov.cph.nb ms, m6, #0, #2, r18
+# CHECK: 144: b0 7d 1c 14 mov.cph.nb ms, m7, #3, #0, r3
+# CHECK: 148: b0 8d 74 14 mov.cph.nb ms, m5, #1, #3, r4
+# CHECK: 14c: b0 f5 27 14 mov.cph.nb ms, m1, #2, #1, r31
+# CHECK: 150: b0 45 4d 14 mov.cph.nb ms, m3, #0, #2, r10
+# CHECK: 154: b0 9d 01 14 mov.cph.nb ms, m0, #3, #0, r12
+# CHECK: 158: b0 0d 6b 14 mov.cph.nb ms, m2, #1, #3, r24
+# CHECK: 15c: b0 55 33 14 mov.cph.nb ms, m4, #2, #1, r26
+# CHECK: 160: b0 25 59 14 mov.cph.nb ms, m6, #0, #2, r9
+# CHECK: 164: b0 7d 1e 14 mov.cph.nb ms, m7, #3, #0, r19
+# CHECK: 168: b0 cd 77 14 mov.cph.nb ms, m5, #1, #3, r30
+# CHECK: 16c: b0 35 27 14 mov.cph.nb ms, m1, #2, #1, r25
+# CHECK: 170: b0 05 4e 14 mov.cph.nb ms, m3, #0, #2, r16
+# CHECK: 174: b0 bd 03 14 mov.cph.nb ms, m0, #3, #0, r29
+# CHECK: 178: b0 6d 69 14 mov.cph.nb ms, m2, #1, #3, r11
+# CHECK: 17c: b0 15 30 14 mov.cph.nb ms, m4, #2, #1, r0
+# CHECK: 180: b0 dd 3a 16 mov.cph.nb ms, m6, #3, #1, r22, r28
+# CHECK: 184: b0 e5 09 16 mov.cph.nb ms, m2, #0, #0, r15, r28
+# CHECK: 188: b0 0d 67 16 mov.cph.nb ms, m1, #1, #3, r24, r28
+# CHECK: 18c: b0 f5 50 16 mov.cph.nb ms, m4, #2, #2, r7, r28
+# CHECK: 190: b0 7d 3c 16 mov.cph.nb ms, m7, #3, #1, r3, r28
+# CHECK: 194: b0 05 00 16 mov.cph.nb ms, m0, #0, #0, r0, r28
+# CHECK: 198: b0 2d 77 16 mov.cph.nb ms, m5, #1, #3, r25, r28
+# CHECK: 19c: b0 95 4e 16 mov.cph.nb ms, m3, #2, #2, r20, r28
+# CHECK: 1a0: b0 7d 39 16 mov.cph.nb ms, m6, #3, #1, r11, r28
+# CHECK: 1a4: b0 45 0a 16 mov.cph.nb ms, m2, #0, #0, r18, r28
+# CHECK: 1a8: b0 0d 66 16 mov.cph.nb ms, m1, #1, #3, r16, r28
+# CHECK: 1ac: b0 35 50 16 mov.cph.nb ms, m4, #2, #2, r1, r28
+# CHECK: 1b0: b0 dd 3f 16 mov.cph.nb ms, m7, #3, #1, r30, r28
+# CHECK: 1b4: b0 85 01 16 mov.cph.nb ms, m0, #0, #0, r12, r28
+# CHECK: 1b8: b0 ad 77 16 mov.cph.nb ms, m5, #1, #3, r29, r28
+# CHECK: 1bc: b0 d5 4c 16 mov.cph.nb ms, m3, #2, #2, r6, r28
+# CHECK: 1c0: b0 5d 38 16 mov.cph.nb ms, m6, #3, #1, r2, r28
+# CHECK: 1c4: b0 a5 0a 16 mov.cph.nb ms, m2, #0, #0, r21, r28
+# CHECK: 1c8: b0 8d 64 16 mov.cph.nb ms, m1, #1, #3, r4, r28
+# CHECK: 1cc: b0 55 51 16 mov.cph.nb ms, m4, #2, #2, r10, r28
+# CHECK: 1d0: b0 3d 3e 16 mov.cph.nb ms, m7, #3, #1, r17, r28
+# CHECK: 1d4: b0 e5 02 16 mov.cph.nb ms, m0, #0, #0, r23, r28
+# CHECK: 1d8: b0 ad 74 16 mov.cph.nb ms, m5, #1, #3, r5, r28
+# CHECK: 1dc: b0 f5 4f 16 mov.cph.nb ms, m3, #2, #2, r31, r28
+# CHECK: 1e0: b0 1d 39 16 mov.cph.nb ms, m6, #3, #1, r8, r28
+# CHECK: 1e4: b0 a5 09 16 mov.cph.nb ms, m2, #0, #0, r13, r28
+# CHECK: 1e8: b0 8d 67 16 mov.cph.nb ms, m1, #1, #3, r28, r28
+# CHECK: 1ec: b0 75 53 16 mov.cph.nb ms, m4, #2, #2, r27, r28
+# CHECK: 1f0: b0 dd 3d 16 mov.cph.nb ms, m7, #3, #1, r14, r28
+# CHECK: 1f4: b0 45 03 16 mov.cph.nb ms, m0, #0, #0, r26, r28
+# CHECK: 1f8: b0 2d 75 16 mov.cph.nb ms, m5, #1, #3, r9, r28
+# CHECK: 1fc: b0 75 4e 16 mov.cph.nb ms, m3, #2, #2, r19, r28
+# CHECK: 200: b0 fd 1d 15 mov.cph.nb.tlast ms, m7, #3, #0, r15
+# CHECK: 204: b0 ed 6c 15 mov.cph.nb.tlast ms, m3, #1, #3, r7
+# CHECK: 208: b0 05 40 15 mov.cph.nb.tlast ms, m0, #0, #2, r0
+# CHECK: 20c: b0 35 24 15 mov.cph.nb.tlast ms, m1, #2, #1, r1
+# CHECK: 210: b0 bd 09 15 mov.cph.nb.tlast ms, m2, #3, #0, r13
+# CHECK: 214: b0 0d 72 15 mov.cph.nb.tlast ms, m4, #1, #3, r16
+# CHECK: 218: b0 c5 5a 15 mov.cph.nb.tlast ms, m6, #0, #2, r22
+# CHECK: 21c: b0 55 34 15 mov.cph.nb.tlast ms, m5, #2, #1, r2
+# CHECK: 220: b0 bd 1e 15 mov.cph.nb.tlast ms, m7, #3, #0, r21
+# CHECK: 224: b0 ed 6e 15 mov.cph.nb.tlast ms, m3, #1, #3, r23
+# CHECK: 228: b0 e5 43 15 mov.cph.nb.tlast ms, m0, #0, #2, r31
+# CHECK: 22c: b0 95 26 15 mov.cph.nb.tlast ms, m1, #2, #1, r20
+# CHECK: 230: b0 1d 0b 15 mov.cph.nb.tlast ms, m2, #3, #0, r24
+# CHECK: 234: b0 2d 71 15 mov.cph.nb.tlast ms, m4, #1, #3, r9
+# CHECK: 238: b0 65 59 15 mov.cph.nb.tlast ms, m6, #0, #2, r11
+# CHECK: 23c: b0 75 37 15 mov.cph.nb.tlast ms, m5, #2, #1, r27
+# CHECK: 240: b0 dd 1c 15 mov.cph.nb.tlast ms, m7, #3, #0, r6
+# CHECK: 244: b0 cd 6f 15 mov.cph.nb.tlast ms, m3, #1, #3, r30
+# CHECK: 248: b0 a5 40 15 mov.cph.nb.tlast ms, m0, #0, #2, r5
+# CHECK: 24c: b0 b5 27 15 mov.cph.nb.tlast ms, m1, #2, #1, r29
+# CHECK: 250: b0 9d 0b 15 mov.cph.nb.tlast ms, m2, #3, #0, r28
+# CHECK: 254: b0 6d 70 15 mov.cph.nb.tlast ms, m4, #1, #3, r3
+# CHECK: 258: b0 85 58 15 mov.cph.nb.tlast ms, m6, #0, #2, r4
+# CHECK: 25c: b0 35 36 15 mov.cph.nb.tlast ms, m5, #2, #1, r17
+# CHECK: 260: b0 5d 1f 15 mov.cph.nb.tlast ms, m7, #3, #0, r26
+# CHECK: 264: b0 4d 6e 15 mov.cph.nb.tlast ms, m3, #1, #3, r18
+# CHECK: 268: b0 65 42 15 mov.cph.nb.tlast ms, m0, #0, #2, r19
+# CHECK: 26c: b0 15 25 15 mov.cph.nb.tlast ms, m1, #2, #1, r8
+# CHECK: 270: b0 9d 09 15 mov.cph.nb.tlast ms, m2, #3, #0, r12
+# CHECK: 274: b0 cd 71 15 mov.cph.nb.tlast ms, m4, #1, #3, r14
+# CHECK: 278: b0 45 59 15 mov.cph.nb.tlast ms, m6, #0, #2, r10
+# CHECK: 27c: b0 35 37 15 mov.cph.nb.tlast ms, m5, #2, #1, r25
+# CHECK: 280: b0 ed 51 11 mov.cph.tlast ms, m4, #1, #2, r15
+# CHECK: 284: b0 05 78 11 mov.cph.tlast ms, m6, #0, #3, r0
+# CHECK: 288: b0 5d 22 11 mov.cph.tlast ms, m0, #3, #1, r18
+# CHECK: 28c: b0 b5 0c 11 mov.cph.tlast ms, m3, #2, #0, r5
+# CHECK: 290: b0 4d 47 11 mov.cph.tlast ms, m1, #1, #2, r26
+# CHECK: 294: b0 85 69 11 mov.cph.tlast ms, m2, #0, #3, r12
+# CHECK: 298: b0 bd 3f 11 mov.cph.tlast ms, m7, #3, #1, r29
+# CHECK: 29c: b0 d5 17 11 mov.cph.tlast ms, m5, #2, #0, r30
+# CHECK: 2a0: b0 8d 52 11 mov.cph.tlast ms, m4, #1, #2, r20
+# CHECK: 2a4: b0 25 7b 11 mov.cph.tlast ms, m6, #0, #3, r25
+# CHECK: 2a8: b0 5d 20 11 mov.cph.tlast ms, m0, #3, #1, r2
+# CHECK: 2ac: b0 75 0c 11 mov.cph.tlast ms, m3, #2, #0, r3
+# CHECK: 2b0: b0 2d 44 11 mov.cph.tlast ms, m1, #1, #2, r1
+# CHECK: 2b4: b0 25 6a 11 mov.cph.tlast ms, m2, #0, #3, r17
+# CHECK: 2b8: b0 7d 3d 11 mov.cph.tlast ms, m7, #3, #1, r11
+# CHECK: 2bc: b0 f5 16 11 mov.cph.tlast ms, m5, #2, #0, r23
+# CHECK: 2c0: b0 8d 50 11 mov.cph.tlast ms, m4, #1, #2, r4
+# CHECK: 2c4: b0 45 79 11 mov.cph.tlast ms, m6, #0, #3, r10
+# CHECK: 2c8: b0 fd 20 11 mov.cph.tlast ms, m0, #3, #1, r7
+# CHECK: 2cc: b0 d5 0e 11 mov.cph.tlast ms, m3, #2, #0, r22
+# CHECK: 2d0: b0 ad 45 11 mov.cph.tlast ms, m1, #1, #2, r13
+# CHECK: 2d4: b0 25 69 11 mov.cph.tlast ms, m2, #0, #3, r9
+# CHECK: 2d8: b0 1d 3d 11 mov.cph.tlast ms, m7, #3, #1, r8
+# CHECK: 2dc: b0 15 17 11 mov.cph.tlast ms, m5, #2, #0, r24
+# CHECK: 2e0: b0 ad 52 11 mov.cph.tlast ms, m4, #1, #2, r21
+# CHECK: 2e4: b0 c5 79 11 mov.cph.tlast ms, m6, #0, #3, r14
+# CHECK: 2e8: b0 7d 22 11 mov.cph.tlast ms, m0, #3, #1, r19
+# CHECK: 2ec: b0 75 0f 11 mov.cph.tlast ms, m3, #2, #0, r27
+# CHECK: 2f0: b0 ed 47 11 mov.cph.tlast ms, m1, #1, #2, r31
+# CHECK: 2f4: b0 c5 68 11 mov.cph.tlast ms, m2, #0, #3, r6
+# CHECK: 2f8: b0 9d 3f 11 mov.cph.tlast ms, m7, #3, #1, r28
+# CHECK: 2fc: b0 15 16 11 mov.cph.tlast ms, m5, #2, #0, r16
+# CHECK: 300: b0 65 82 10 mov.ph ms, r19, #0
+# CHECK: 304: b0 25 86 10 mov.ph ms, r17, #1
+# CHECK: 308: b0 05 99 10 mov.ph ms, r8, #6
+# CHECK: 30c: b0 a5 9c 10 mov.ph ms, r5, #7
+# CHECK: 310: b0 85 80 10 mov.ph ms, r4, #0
+# CHECK: 314: b0 c5 87 10 mov.ph ms, r30, #1
+# CHECK: 318: b0 a5 9b 10 mov.ph ms, r29, #6
+# CHECK: 31c: b0 65 9f 10 mov.ph ms, r27, #7
+# CHECK: 320: b0 25 80 10 mov.ph ms, r1, #0
+# CHECK: 324: b0 05 86 10 mov.ph ms, r16, #1
+# CHECK: 328: b0 85 9b 10 mov.ph ms, r28, #6
+# CHECK: 32c: b0 05 9c 10 mov.ph ms, r0, #7
+# CHECK: 330: b0 45 83 10 mov.ph ms, r26, #0
+# CHECK: 334: b0 c5 86 10 mov.ph ms, r22, #1
+# CHECK: 338: b0 a5 99 10 mov.ph ms, r13, #6
+# CHECK: 33c: b0 05 9f 10 mov.ph ms, r24, #7
+# CHECK: 340: b0 e5 81 10 mov.ph ms, r15, #0
+# CHECK: 344: b0 c5 85 10 mov.ph ms, r14, #1
+# CHECK: 348: b0 45 9a 10 mov.ph ms, r18, #6
+# CHECK: 34c: b0 c5 9c 10 mov.ph ms, r6, #7
+# CHECK: 350: b0 45 80 10 mov.ph ms, r2, #0
+# CHECK: 354: b0 45 85 10 mov.ph ms, r10, #1
+# CHECK: 358: b0 e5 98 10 mov.ph ms, r7, #6
+# CHECK: 35c: b0 85 9e 10 mov.ph ms, r20, #7
+# CHECK: 360: b0 25 81 10 mov.ph ms, r9, #0
+# CHECK: 364: b0 a5 86 10 mov.ph ms, r21, #1
+# CHECK: 368: b0 25 9b 10 mov.ph ms, r25, #6
+# CHECK: 36c: b0 65 9c 10 mov.ph ms, r3, #7
+# CHECK: 370: b0 e5 82 10 mov.ph ms, r23, #0
+# CHECK: 374: b0 65 85 10 mov.ph ms, r11, #1
+# CHECK: 378: b0 e5 9b 10 mov.ph ms, r31, #6
+# CHECK: 37c: b0 85 9d 10 mov.ph ms, r12, #7
+# CHECK: 380: b0 a5 9d 12 mov.ph ms, r13, #7, r28
+# CHECK: 384: b0 c5 9b 12 mov.ph ms, r30, #6, r28
+# CHECK: 388: b0 e5 80 12 mov.ph ms, r7, #0, r28
+# CHECK: 38c: b0 65 84 12 mov.ph ms, r3, #1, r28
+# CHECK: 390: b0 85 9c 12 mov.ph ms, r4, #7, r28
+# CHECK: 394: b0 c5 98 12 mov.ph ms, r6, #6, r28
+# CHECK: 398: b0 85 83 12 mov.ph ms, r28, #0, r28
+# CHECK: 39c: b0 a5 87 12 mov.ph ms, r29, #1, r28
+# CHECK: 3a0: b0 c5 9e 12 mov.ph ms, r22, #7, r28
+# CHECK: 3a4: b0 a5 98 12 mov.ph ms, r5, #6, r28
+# CHECK: 3a8: b0 85 82 12 mov.ph ms, r20, #0, r28
+# CHECK: 3ac: b0 a5 86 12 mov.ph ms, r21, #1, r28
+# CHECK: 3b0: b0 25 9f 12 mov.ph ms, r25, #7, r28
+# CHECK: 3b4: b0 25 9a 12 mov.ph ms, r17, #6, r28
+# CHECK: 3b8: b0 45 80 12 mov.ph ms, r2, #0, r28
+# CHECK: 3bc: b0 45 87 12 mov.ph ms, r26, #1, r28
+# CHECK: 3c0: b0 65 9f 12 mov.ph ms, r27, #7, r28
+# CHECK: 3c4: b0 45 99 12 mov.ph ms, r10, #6, r28
+# CHECK: 3c8: b0 c5 81 12 mov.ph ms, r14, #0, r28
+# CHECK: 3cc: b0 05 84 12 mov.ph ms, r0, #1, r28
+# CHECK: 3d0: b0 65 9e 12 mov.ph ms, r19, #7, r28
+# CHECK: 3d4: b0 25 99 12 mov.ph ms, r9, #6, r28
+# CHECK: 3d8: b0 45 82 12 mov.ph ms, r18, #0, r28
+# CHECK: 3dc: b0 05 85 12 mov.ph ms, r8, #1, r28
+# CHECK: 3e0: b0 85 9d 12 mov.ph ms, r12, #7, r28
+# CHECK: 3e4: b0 05 9b 12 mov.ph ms, r24, #6, r28
+# CHECK: 3e8: b0 e5 81 12 mov.ph ms, r15, #0, r28
+# CHECK: 3ec: b0 05 86 12 mov.ph ms, r16, #1, r28
+# CHECK: 3f0: b0 e5 9e 12 mov.ph ms, r23, #7, r28
+# CHECK: 3f4: b0 25 98 12 mov.ph ms, r1, #6, r28
+# CHECK: 3f8: b0 65 81 12 mov.ph ms, r11, #0, r28
+# CHECK: 3fc: b0 e5 87 12 mov.ph ms, r31, #1, r28
+# CHECK: 400: b0 45 9d 14 mov.ph.nb ms, r10, #7
+# CHECK: 404: b0 25 9a 14 mov.ph.nb ms, r17, #6
+# CHECK: 408: b0 45 86 14 mov.ph.nb ms, r18, #1
+# CHECK: 40c: b0 05 83 14 mov.ph.nb ms, r24, #0
+# CHECK: 410: b0 65 9f 14 mov.ph.nb ms, r27, #7
+# CHECK: 414: b0 c5 9b 14 mov.ph.nb ms, r30, #6
+# CHECK: 418: b0 25 87 14 mov.ph.nb ms, r25, #1
+# CHECK: 41c: b0 05 80 14 mov.ph.nb ms, r0, #0
+# CHECK: 420: b0 e5 9f 14 mov.ph.nb ms, r31, #7
+# CHECK: 424: b0 05 99 14 mov.ph.nb ms, r8, #6
+# CHECK: 428: b0 65 84 14 mov.ph.nb ms, r3, #1
+# CHECK: 42c: b0 45 83 14 mov.ph.nb ms, r26, #0
+# CHECK: 430: b0 65 9e 14 mov.ph.nb ms, r19, #7
+# CHECK: 434: b0 25 98 14 mov.ph.nb ms, r1, #6
+# CHECK: 438: b0 85 84 14 mov.ph.nb ms, r4, #1
+# CHECK: 43c: b0 85 82 14 mov.ph.nb ms, r20, #0
+# CHECK: 440: b0 a5 9d 14 mov.ph.nb ms, r13, #7
+# CHECK: 444: b0 65 99 14 mov.ph.nb ms, r11, #6
+# CHECK: 448: b0 c5 85 14 mov.ph.nb ms, r14, #1
+# CHECK: 44c: b0 e5 81 14 mov.ph.nb ms, r15, #0
+# CHECK: 450: b0 c5 9e 14 mov.ph.nb ms, r22, #7
+# CHECK: 454: b0 25 99 14 mov.ph.nb ms, r9, #6
+# CHECK: 458: b0 a5 84 14 mov.ph.nb ms, r5, #1
+# CHECK: 45c: b0 85 81 14 mov.ph.nb ms, r12, #0
+# CHECK: 460: b0 c5 9c 14 mov.ph.nb ms, r6, #7
+# CHECK: 464: b0 a5 9b 14 mov.ph.nb ms, r29, #6
+# CHECK: 468: b0 e5 86 14 mov.ph.nb ms, r23, #1
+# CHECK: 46c: b0 a5 82 14 mov.ph.nb ms, r21, #0
+# CHECK: 470: b0 e5 9c 14 mov.ph.nb ms, r7, #7
+# CHECK: 474: b0 05 9a 14 mov.ph.nb ms, r16, #6
+# CHECK: 478: b0 45 84 14 mov.ph.nb ms, r2, #1
+# CHECK: 47c: b0 85 83 14 mov.ph.nb ms, r28, #0
+# CHECK: 480: b0 25 87 16 mov.ph.nb ms, r25, #1, r28
+# CHECK: 484: b0 a5 9a 16 mov.ph.nb ms, r21, #6, r28
+# CHECK: 488: b0 c5 83 16 mov.ph.nb ms, r30, #0, r28
+# CHECK: 48c: b0 e5 9e 16 mov.ph.nb ms, r23, #7, r28
+# CHECK: 490: b0 c5 84 16 mov.ph.nb ms, r6, #1, r28
+# CHECK: 494: b0 05 9b 16 mov.ph.nb ms, r24, #6, r28
+# CHECK: 498: b0 c5 81 16 mov.ph.nb ms, r14, #0, r28
+# CHECK: 49c: b0 85 9f 16 mov.ph.nb ms, r28, #7, r28
+# CHECK: 4a0: b0 05 86 16 mov.ph.nb ms, r16, #1, r28
+# CHECK: 4a4: b0 45 9b 16 mov.ph.nb ms, r26, #6, r28
+# CHECK: 4a8: b0 25 82 16 mov.ph.nb ms, r17, #0, r28
+# CHECK: 4ac: b0 25 9d 16 mov.ph.nb ms, r9, #7, r28
+# CHECK: 4b0: b0 a5 84 16 mov.ph.nb ms, r5, #1, r28
+# CHECK: 4b4: b0 65 98 16 mov.ph.nb ms, r3, #6, r28
+# CHECK: 4b8: b0 85 80 16 mov.ph.nb ms, r4, #0, r28
+# CHECK: 4bc: b0 65 9e 16 mov.ph.nb ms, r19, #7, r28
+# CHECK: 4c0: b0 45 85 16 mov.ph.nb ms, r10, #1, r28
+# CHECK: 4c4: b0 45 98 16 mov.ph.nb ms, r2, #6, r28
+# CHECK: 4c8: b0 c5 82 16 mov.ph.nb ms, r22, #0, r28
+# CHECK: 4cc: b0 85 9d 16 mov.ph.nb ms, r12, #7, r28
+# CHECK: 4d0: b0 e5 85 16 mov.ph.nb ms, r15, #1, r28
+# CHECK: 4d4: b0 05 98 16 mov.ph.nb ms, r0, #6, r28
+# CHECK: 4d8: b0 05 81 16 mov.ph.nb ms, r8, #0, r28
+# CHECK: 4dc: b0 45 9e 16 mov.ph.nb ms, r18, #7, r28
+# CHECK: 4e0: b0 e5 87 16 mov.ph.nb ms, r31, #1, r28
+# CHECK: 4e4: b0 65 9b 16 mov.ph.nb ms, r27, #6, r28
+# CHECK: 4e8: b0 65 81 16 mov.ph.nb ms, r11, #0, r28
+# CHECK: 4ec: b0 85 9e 16 mov.ph.nb ms, r20, #7, r28
+# CHECK: 4f0: b0 e5 84 16 mov.ph.nb ms, r7, #1, r28
+# CHECK: 4f4: b0 a5 9b 16 mov.ph.nb ms, r29, #6, r28
+# CHECK: 4f8: b0 a5 81 16 mov.ph.nb ms, r13, #0, r28
+# CHECK: 4fc: b0 25 9c 16 mov.ph.nb ms, r1, #7, r28
+# CHECK: 500: b0 45 82 15 mov.ph.nb.tlast ms, r18, #0
+# CHECK: 504: b0 65 98 15 mov.ph.nb.tlast ms, r3, #6
+# CHECK: 508: b0 65 9f 15 mov.ph.nb.tlast ms, r27, #7
+# CHECK: 50c: b0 05 85 15 mov.ph.nb.tlast ms, r8, #1
+# CHECK: 510: b0 e5 83 15 mov.ph.nb.tlast ms, r31, #0
+# CHECK: 514: b0 65 9a 15 mov.ph.nb.tlast ms, r19, #6
+# CHECK: 518: b0 85 9c 15 mov.ph.nb.tlast ms, r4, #7
+# CHECK: 51c: b0 c5 85 15 mov.ph.nb.tlast ms, r14, #1
+# CHECK: 520: b0 25 83 15 mov.ph.nb.tlast ms, r25, #0
+# CHECK: 524: b0 25 99 15 mov.ph.nb.tlast ms, r9, #6
+# CHECK: 528: b0 85 9e 15 mov.ph.nb.tlast ms, r20, #7
+# CHECK: 52c: b0 25 86 15 mov.ph.nb.tlast ms, r17, #1
+# CHECK: 530: b0 e5 81 15 mov.ph.nb.tlast ms, r15, #0
+# CHECK: 534: b0 85 9b 15 mov.ph.nb.tlast ms, r28, #6
+# CHECK: 538: b0 05 9f 15 mov.ph.nb.tlast ms, r24, #7
+# CHECK: 53c: b0 45 85 15 mov.ph.nb.tlast ms, r10, #1
+# CHECK: 540: b0 45 83 15 mov.ph.nb.tlast ms, r26, #0
+# CHECK: 544: b0 85 99 15 mov.ph.nb.tlast ms, r12, #6
+# CHECK: 548: b0 e5 9e 15 mov.ph.nb.tlast ms, r23, #7
+# CHECK: 54c: b0 e5 84 15 mov.ph.nb.tlast ms, r7, #1
+# CHECK: 550: b0 65 81 15 mov.ph.nb.tlast ms, r11, #0
+# CHECK: 554: b0 c5 9a 15 mov.ph.nb.tlast ms, r22, #6
+# CHECK: 558: b0 a5 9e 15 mov.ph.nb.tlast ms, r21, #7
+# CHECK: 55c: b0 c5 87 15 mov.ph.nb.tlast ms, r30, #1
+# CHECK: 560: b0 a5 83 15 mov.ph.nb.tlast ms, r29, #0
+# CHECK: 564: b0 05 9a 15 mov.ph.nb.tlast ms, r16, #6
+# CHECK: 568: b0 c5 9c 15 mov.ph.nb.tlast ms, r6, #7
+# CHECK: 56c: b0 a5 85 15 mov.ph.nb.tlast ms, r13, #1
+# CHECK: 570: b0 a5 80 15 mov.ph.nb.tlast ms, r5, #0
+# CHECK: 574: b0 05 98 15 mov.ph.nb.tlast ms, r0, #6
+# CHECK: 578: b0 45 9c 15 mov.ph.nb.tlast ms, r2, #7
+# CHECK: 57c: b0 25 84 15 mov.ph.nb.tlast ms, r1, #1
+# CHECK: 580: b0 a5 9b 11 mov.ph.tlast ms, r29, #6
+# CHECK: 584: b0 85 80 11 mov.ph.tlast ms, r4, #0
+# CHECK: 588: b0 05 86 11 mov.ph.tlast ms, r16, #1
+# CHECK: 58c: b0 e5 9f 11 mov.ph.tlast ms, r31, #7
+# CHECK: 590: b0 e5 98 11 mov.ph.tlast ms, r7, #6
+# CHECK: 594: b0 25 81 11 mov.ph.tlast ms, r9, #0
+# CHECK: 598: b0 85 87 11 mov.ph.tlast ms, r28, #1
+# CHECK: 59c: b0 65 9c 11 mov.ph.tlast ms, r3, #7
+# CHECK: 5a0: b0 45 99 11 mov.ph.tlast ms, r10, #6
+# CHECK: 5a4: b0 45 82 11 mov.ph.tlast ms, r18, #0
+# CHECK: 5a8: b0 85 86 11 mov.ph.tlast ms, r20, #1
+# CHECK: 5ac: b0 05 9d 11 mov.ph.tlast ms, r8, #7
+# CHECK: 5b0: b0 a5 99 11 mov.ph.tlast ms, r13, #6
+# CHECK: 5b4: b0 65 82 11 mov.ph.tlast ms, r19, #0
+# CHECK: 5b8: b0 c5 84 11 mov.ph.tlast ms, r6, #1
+# CHECK: 5bc: b0 25 9c 11 mov.ph.tlast ms, r1, #7
+# CHECK: 5c0: b0 65 9b 11 mov.ph.tlast ms, r27, #6
+# CHECK: 5c4: b0 45 80 11 mov.ph.tlast ms, r2, #0
+# CHECK: 5c8: b0 25 86 11 mov.ph.tlast ms, r17, #1
+# CHECK: 5cc: b0 e5 9e 11 mov.ph.tlast ms, r23, #7
+# CHECK: 5d0: b0 c5 99 11 mov.ph.tlast ms, r14, #6
+# CHECK: 5d4: b0 05 80 11 mov.ph.tlast ms, r0, #0
+# CHECK: 5d8: b0 e5 85 11 mov.ph.tlast ms, r15, #1
+# CHECK: 5dc: b0 c5 9e 11 mov.ph.tlast ms, r22, #7
+# CHECK: 5e0: b0 05 9b 11 mov.ph.tlast ms, r24, #6
+# CHECK: 5e4: b0 c5 83 11 mov.ph.tlast ms, r30, #0
+# CHECK: 5e8: b0 65 85 11 mov.ph.tlast ms, r11, #1
+# CHECK: 5ec: b0 45 9f 11 mov.ph.tlast ms, r26, #7
+# CHECK: 5f0: b0 25 9b 11 mov.ph.tlast ms, r25, #6
+# CHECK: 5f4: b0 a5 82 11 mov.ph.tlast ms, r21, #0
+# CHECK: 5f8: b0 85 85 11 mov.ph.tlast ms, r12, #1
+# CHECK: 5fc: b0 a5 9c 11 mov.ph.tlast ms, r5, #7
+# CHECK: 600: 30 14 b2 24 mov r25, r18.flt2fx, s3
+# CHECK: 604: 30 14 b8 22 mov r28, r10.flt2fx, s3
+# CHECK: 608: 30 14 66 24 mov r19, r17.flt2fx, s3
+# CHECK: 60c: 30 14 e4 23 mov r18, r15.flt2fx, s3
+# CHECK: 610: 30 14 ae 23 mov r23, r14.flt2fx, s3
+# CHECK: 614: 30 14 aa 21 mov r21, r6.flt2fx, s3
+# CHECK: 618: 30 14 fc 22 mov r30, r11.flt2fx, s3
+# CHECK: 61c: 30 14 7a 23 mov r29, r13.flt2fx, s3
+# CHECK: 620: 30 14 82 25 mov r1, r22.flt2fx, s3
+# CHECK: 624: 30 14 22 27 mov r17, r28.flt2fx, s3
+# CHECK: 628: 30 14 c6 21 mov r3, r7.flt2fx, s3
+# CHECK: 62c: 30 14 cc 27 mov r6, r31.flt2fx, s3
+# CHECK: 630: 30 14 0a 23 mov r5, r12.flt2fx, s3
+# CHECK: 634: 30 14 74 27 mov r26, r29.flt2fx, s3
+# CHECK: 638: 30 14 da 20 mov r13, r3.flt2fx, s3
+# CHECK: 63c: 30 14 56 22 mov r11, r9.flt2fx, s3
+# CHECK: 640: 30 14 2c 20 mov r22, r0.flt2fx, s3
+# CHECK: 644: 30 14 ce 24 mov r7, r19.flt2fx, s3
+# CHECK: 648: 30 14 36 21 mov r27, r4.flt2fx, s3
+# CHECK: 64c: 30 14 de 25 mov r15, r23.flt2fx, s3
+# CHECK: 650: 30 14 88 26 mov r4, r26.flt2fx, s3
+# CHECK: 654: 30 14 00 24 mov r0, r16.flt2fx, s3
+# CHECK: 658: 30 14 30 26 mov r24, r24.flt2fx, s3
+# CHECK: 65c: 30 14 68 20 mov r20, r1.flt2fx, s3
+# CHECK: 660: 30 14 90 20 mov r8, r2.flt2fx, s3
+# CHECK: 664: 30 14 dc 26 mov r14, r27.flt2fx, s3
+# CHECK: 668: 30 14 44 26 mov r2, r25.flt2fx, s3
+# CHECK: 66c: 30 14 14 22 mov r10, r8.flt2fx, s3
+# CHECK: 670: 30 14 52 25 mov r9, r21.flt2fx, s3
+# CHECK: 674: 30 14 98 27 mov r12, r30.flt2fx, s3
+# CHECK: 678: 30 14 60 21 mov r16, r5.flt2fx, s3
+# CHECK: 67c: 30 14 3e 25 mov r31, r20.flt2fx, s3
+# CHECK: 680: 30 34 44 24 mov r2, r17.fx2flt, s2
+# CHECK: 684: 30 34 38 27 mov r28, r28.fx2flt, s2
+# CHECK: 688: 30 34 56 23 mov r11, r13.fx2flt, s2
+# CHECK: 68c: 30 34 3e 24 mov r31, r16.fx2flt, s2
+# CHECK: 690: 30 34 50 26 mov r8, r25.fx2flt, s2
+# CHECK: 694: 30 34 3a 23 mov r29, r12.fx2flt, s2
+# CHECK: 698: 30 34 60 22 mov r16, r9.fx2flt, s2
+# CHECK: 69c: 30 34 46 21 mov r3, r5.fx2flt, s2
+# CHECK: 6a0: 30 34 ea 22 mov r21, r11.fx2flt, s2
+# CHECK: 6a4: 30 34 64 20 mov r18, r1.fx2flt, s2
+# CHECK: 6a8: 30 34 a2 20 mov r17, r2.fx2flt, s2
+# CHECK: 6ac: 30 34 1e 26 mov r15, r24.fx2flt, s2
+# CHECK: 6b0: 30 34 f4 21 mov r26, r7.fx2flt, s2
+# CHECK: 6b4: 30 34 dc 20 mov r14, r3.fx2flt, s2
+# CHECK: 6b8: 30 34 ae 26 mov r23, r26.fx2flt, s2
+# CHECK: 6bc: 30 34 e8 25 mov r20, r23.fx2flt, s2
+# CHECK: 6c0: 30 34 30 25 mov r24, r20.fx2flt, s2
+# CHECK: 6c4: 30 34 08 20 mov r4, r0.fx2flt, s2
+# CHECK: 6c8: 30 34 18 22 mov r12, r8.fx2flt, s2
+# CHECK: 6cc: 30 34 4c 25 mov r6, r21.fx2flt, s2
+# CHECK: 6d0: 30 34 8a 22 mov r5, r10.fx2flt, s2
+# CHECK: 6d4: 30 34 6c 27 mov r22, r29.fx2flt, s2
+# CHECK: 6d8: 30 34 b2 23 mov r25, r14.fx2flt, s2
+# CHECK: 6dc: 30 34 94 27 mov r10, r30.fx2flt, s2
+# CHECK: 6e0: 30 34 da 24 mov r13, r19.fx2flt, s2
+# CHECK: 6e4: 30 34 bc 24 mov r30, r18.fx2flt, s2
+# CHECK: 6e8: 30 34 ce 27 mov r7, r31.fx2flt, s2
+# CHECK: 6ec: 30 34 36 21 mov r27, r4.fx2flt, s2
+# CHECK: 6f0: 30 34 80 25 mov r0, r22.fx2flt, s2
+# CHECK: 6f4: 30 34 e6 26 mov r19, r27.fx2flt, s2
+# CHECK: 6f8: 30 34 82 21 mov r1, r6.fx2flt, s2
+# CHECK: 6fc: 30 34 d2 23 mov r9, r15.fx2flt, s2
+# CHECK: 700: 70 41 a0 3f mov r31, #1
+# CHECK: 704: 70 01 20 36 mov r12, #0
+# CHECK: 708: 70 dd bf 3e mov r29, #1023
+# CHECK: 70c: 70 21 80 30 mov dn0, #-1024
+# CHECK: 710: 70 41 00 34 mov m2, #1
+# CHECK: 714: 70 01 c0 33 mov lc, #0
+# CHECK: 718: 70 dd 5f 3c mov vaddsign1, #1023
+# CHECK: 71c: 70 21 a0 30 mov r1, #-1024
+# CHECK: 720: 70 41 20 3a mov r20, #1
+# CHECK: 724: 70 01 00 3e mov m7, #0
+# CHECK: 728: 70 dd bf 31 mov r3, #1023
+# CHECK: 72c: 70 21 80 35 mov dc2, #-1024
+# CHECK: 730: 70 41 20 33 mov r6, #1
+# CHECK: 734: 70 01 a0 3b mov r23, #0
+# CHECK: 738: 70 dd 5f 34 mov vaddsign0, #1023
+# CHECK: 73c: 70 21 c0 34 mov p2, #-1024
+# CHECK: 740: 70 41 20 37 mov r14, #1
+# CHECK: 744: 70 01 20 38 mov r16, #0
+# CHECK: 748: 70 dd bf 36 mov r13, #1023
+# CHECK: 74c: 70 21 80 3d mov dc6, #-1024
+# CHECK: 750: 70 41 a0 38 mov r17, #1
+# CHECK: 754: 70 01 00 35 mov dj2, #0
+# CHECK: 758: 70 dd 1f 37 mov dj3, #1023
+# CHECK: 75c: 70 21 80 39 mov dc4, #-1024
+# CHECK: 760: 70 41 20 39 mov r18, #1
+# CHECK: 764: 70 01 a0 3c mov r25, #0
+# CHECK: 768: 70 dd df 38 mov p4, #1023
+# CHECK: 76c: 70 21 40 33 mov unpacksign0, #-1024
+# CHECK: 770: 70 41 00 32 mov m1, #1
+# CHECK: 774: 70 01 a0 39 mov r19, #0
+# CHECK: 778: 70 dd 9f 3f mov dc7, #1023
+# CHECK: 77c: 70 21 20 3d mov r26, #-1024
+# CHECK: 780: 70 41 c0 3a mov p5, #1
+# CHECK: 784: 70 01 80 3a mov dn5, #0
+# CHECK: 788: 70 dd 9f 37 mov dc3, #1023
+# CHECK: 78c: 70 21 20 3c mov r24, #-1024
+# CHECK: 790: 70 41 80 34 mov dn2, #1
+# CHECK: 794: 70 01 c0 3b mov sp, #0
+# CHECK: 798: 70 dd df 36 mov p3, #1023
+# CHECK: 79c: 70 21 00 30 mov m0, #-1024
+# CHECK: 7a0: 70 41 00 33 mov dj1, #1
+# CHECK: 7a4: 70 01 20 35 mov r10, #0
+# CHECK: 7a8: 70 dd 3f 3b mov r22, #1023
+# CHECK: 7ac: 70 21 a0 3d mov r27, #-1024
+# CHECK: 7b0: 70 41 20 3f mov r30, #1
+# CHECK: 7b4: 70 01 c0 37 mov lr, #0
+# CHECK: 7b8: 70 dd df 3c mov p6, #1023
+# CHECK: 7bc: 70 21 80 38 mov dn4, #-1024
+# CHECK: 7c0: 70 41 40 30 mov packsign0, #1
+# CHECK: 7c4: 70 01 40 3b mov unpacksign1, #0
+# CHECK: 7c8: 70 dd 5f 3a mov upssign1, #1023
+# CHECK: 7cc: 70 21 a0 3a mov r21, #-1024
+# CHECK: 7d0: 70 41 c0 32 mov p1, #1
+# CHECK: 7d4: 70 01 c0 30 mov p0, #0
+# CHECK: 7d8: 70 dd 1f 39 mov dj4, #1023
+# CHECK: 7dc: 70 21 a0 34 mov r9, #-1024
+# CHECK: 7e0: 70 41 40 38 mov packsign1, #1
+# CHECK: 7e4: 70 01 c0 3e mov p7, #0
+# CHECK: 7e8: 70 dd bf 35 mov r11, #1023
+# CHECK: 7ec: 70 21 a0 32 mov r5, #-1024
+# CHECK: 7f0: 70 41 c0 35 mov s1, #1
+# CHECK: 7f4: 70 01 00 3d mov dj6, #0
+# CHECK: 7f8: 70 dd 1f 31 mov dj0, #1023
+# CHECK: 7fc: 70 21 80 33 mov dc1, #-1024
+# CHECK: 800: 70 41 c0 3d mov s3, #1
+# CHECK: 804: 70 01 c0 39 mov s2, #0
+# CHECK: 808: 70 dd 5f 32 mov upssign0, #1023
+# CHECK: 80c: 70 21 20 32 mov r4, #-1024
+# CHECK: 810: 70 41 a0 37 mov r15, #1
+# CHECK: 814: 70 01 80 3b mov dc5, #0
+# CHECK: 818: 70 dd 9f 3c mov dn6, #1023
+# CHECK: 81c: 70 21 20 30 mov r0, #-1024
+# CHECK: 820: 70 41 00 3b mov dj5, #1
+# CHECK: 824: 70 01 a0 33 mov r7, #0
+# CHECK: 828: 70 dd 9f 31 mov dc0, #1023
+# CHECK: 82c: 70 21 00 3a mov m5, #-1024
+# CHECK: 830: 70 41 20 31 mov r2, #1
+# CHECK: 834: 70 01 c0 31 mov s0, #0
+# CHECK: 838: 70 dd 1f 3c mov m6, #1023
+# CHECK: 83c: 70 21 40 39 mov srssign1, #-1024
+# CHECK: 840: 70 41 00 36 mov m3, #1
+# CHECK: 844: 70 01 80 3e mov dn7, #0
+# CHECK: 848: 70 dd 9f 32 mov dn1, #1023
+# CHECK: 84c: 70 21 40 31 mov srssign0, #-1024
+# CHECK: 850: 70 41 80 36 mov dn3, #1
+# CHECK: 854: 70 01 20 3e mov r28, #0
+# CHECK: 858: 70 dd 3f 34 mov r8, #1023
+# CHECK: 85c: 70 21 00 3f mov dj7, #-1024
+# CHECK: 860: 70 41 00 38 mov m4, #1
+# CHECK: 864: f0 1b 06 3c mov r25:r24, cntr
+# CHECK: 868: f0 1b 06 3f mov r31:r30, cntr
+# CHECK: 86c: f0 1b 06 3d mov r27:r26, cntr
+# CHECK: 870: f0 1b 06 35 mov r11:r10, cntr
+# CHECK: 874: f0 1b 06 38 mov r17:r16, cntr
+# CHECK: 878: f0 1b 06 3e mov r29:r28, cntr
+# CHECK: 87c: f0 1b 06 34 mov r9:r8, cntr
+# CHECK: 880: f0 1b 06 36 mov r13:r12, cntr
+# CHECK: 884: f0 1b 06 32 mov r5:r4, cntr
+# CHECK: 888: f0 1b 06 30 mov r1:r0, cntr
+# CHECK: 88c: f0 1b 06 39 mov r19:r18, cntr
+# CHECK: 890: f0 1b 06 33 mov r7:r6, cntr
+# CHECK: 894: f0 1b 06 37 mov r15:r14, cntr
+# CHECK: 898: f0 1b 06 3a mov r21:r20, cntr
+# CHECK: 89c: f0 1b 06 31 mov r3:r2, cntr
+# CHECK: 8a0: f0 1b 06 3b mov r23:r22, cntr
+# CHECK: 8a4: f0 33 9a 34 mov eh4, eh6
+# CHECK: 8a8: f0 33 8a 38 mov eh8, eh2
+# CHECK: 8ac: f0 33 a6 35 mov eh5, eh9
+# CHECK: 8b0: f0 33 9e 3b mov eh11, eh7
+# CHECK: 8b4: f0 33 a2 39 mov eh9, eh8
+# CHECK: 8b8: f0 33 86 3a mov eh10, eh1
+# CHECK: 8bc: f0 33 aa 33 mov eh3, eh10
+# CHECK: 8c0: f0 33 96 36 mov eh6, eh5
+# CHECK: 8c4: f0 33 ae 32 mov eh2, eh11
+# CHECK: 8c8: f0 33 8e 37 mov eh7, eh3
+# CHECK: 8cc: f0 33 92 31 mov eh1, eh4
+# CHECK: 8d0: f0 33 82 30 mov eh0, eh0
+# CHECK: 8d4: f0 33 0e 38 mov el8, eh3
+# CHECK: 8d8: f0 33 02 37 mov el7, eh0
+# CHECK: 8dc: f0 33 1e 3a mov el10, eh7
+# CHECK: 8e0: f0 33 16 39 mov el9, eh5
+# CHECK: 8e4: f0 33 2a 34 mov el4, eh10
+# CHECK: 8e8: f0 33 12 31 mov el1, eh4
+# CHECK: 8ec: f0 33 06 35 mov el5, eh1
+# CHECK: 8f0: f0 33 1a 3b mov el11, eh6
+# CHECK: 8f4: f0 33 0a 33 mov el3, eh2
+# CHECK: 8f8: f0 33 26 32 mov el2, eh9
+# CHECK: 8fc: f0 33 22 30 mov el0, eh8
+# CHECK: 900: f0 33 2e 36 mov el6, eh11
+# CHECK: 904: f0 33 e2 32 mov r5, eh8
+# CHECK: 908: f0 33 d6 35 mov r11, eh5
+# CHECK: 90c: f0 33 ce 38 mov r17, eh3
+# CHECK: 910: f0 33 52 3c mov r24, eh4
+# CHECK: 914: f0 33 6e 35 mov r10, eh11
+# CHECK: 918: f0 33 ea 3e mov r29, eh10
+# CHECK: 91c: f0 33 e6 3c mov r25, eh9
+# CHECK: 920: f0 33 5e 30 mov r0, eh7
+# CHECK: 924: f0 33 c2 3f mov r31, eh0
+# CHECK: 928: f0 33 4a 3f mov r30, eh2
+# CHECK: 92c: f0 33 c6 3d mov r27, eh1
+# CHECK: 930: f0 33 da 34 mov r9, eh6
+# CHECK: 934: f0 33 62 3d mov r26, eh8
+# CHECK: 938: f0 33 56 34 mov r8, eh5
+# CHECK: 93c: f0 33 4e 36 mov r12, eh3
+# CHECK: 940: f0 33 d2 31 mov r3, eh4
+# CHECK: 944: f0 33 6e 38 mov r16, eh11
+# CHECK: 948: f0 33 ea 39 mov r19, eh10
+# CHECK: 94c: f0 33 66 3e mov r28, eh9
+# CHECK: 950: f0 33 5e 32 mov r4, eh7
+# CHECK: 954: f0 33 42 31 mov r2, eh0
+# CHECK: 958: f0 33 4a 3a mov r20, eh2
+# CHECK: 95c: f0 33 c6 30 mov r1, eh1
+# CHECK: 960: f0 33 5a 37 mov r14, eh6
+# CHECK: 964: f0 33 e2 3b mov r23, eh8
+# CHECK: 968: f0 33 d6 33 mov r7, eh5
+# CHECK: 96c: f0 33 4e 39 mov r18, eh3
+# CHECK: 970: f0 33 d2 37 mov r15, eh4
+# CHECK: 974: f0 33 6e 33 mov r6, eh11
+# CHECK: 978: f0 33 ea 36 mov r13, eh10
+# CHECK: 97c: f0 33 66 3b mov r22, eh9
+# CHECK: 980: f0 33 de 3a mov r21, eh7
+# CHECK: 984: f0 33 8c 38 mov eh8, el3
+# CHECK: 988: f0 33 a8 35 mov eh5, el10
+# CHECK: 98c: f0 33 98 34 mov eh4, el6
+# CHECK: 990: f0 33 9c 36 mov eh6, el7
+# CHECK: 994: f0 33 90 37 mov eh7, el4
+# CHECK: 998: f0 33 80 32 mov eh2, el0
+# CHECK: 99c: f0 33 94 33 mov eh3, el5
+# CHECK: 9a0: f0 33 84 39 mov eh9, el1
+# CHECK: 9a4: f0 33 a0 30 mov eh0, el8
+# CHECK: 9a8: f0 33 a4 3b mov eh11, el9
+# CHECK: 9ac: f0 33 ac 3a mov eh10, el11
+# CHECK: 9b0: f0 33 88 31 mov eh1, el2
+# CHECK: 9b4: f0 33 18 36 mov el6, el6
+# CHECK: 9b8: f0 33 14 31 mov el1, el5
+# CHECK: 9bc: f0 33 28 38 mov el8, el10
+# CHECK: 9c0: f0 33 1c 37 mov el7, el7
+# CHECK: 9c4: f0 33 2c 33 mov el3, el11
+# CHECK: 9c8: f0 33 20 3b mov el11, el8
+# CHECK: 9cc: f0 33 0c 35 mov el5, el3
+# CHECK: 9d0: f0 33 10 30 mov el0, el4
+# CHECK: 9d4: f0 33 08 3a mov el10, el2
+# CHECK: 9d8: f0 33 04 32 mov el2, el1
+# CHECK: 9dc: f0 33 24 39 mov el9, el9
+# CHECK: 9e0: f0 33 00 34 mov el4, el0
+# CHECK: 9e4: f0 33 58 32 mov r4, el6
+# CHECK: 9e8: f0 33 44 38 mov r16, el1
+# CHECK: 9ec: f0 33 e8 34 mov r9, el10
+# CHECK: 9f0: f0 33 cc 3f mov r31, el3
+# CHECK: 9f4: f0 33 e4 33 mov r7, el9
+# CHECK: 9f8: f0 33 60 37 mov r14, el8
+# CHECK: 9fc: f0 33 ec 32 mov r5, el11
+# CHECK: a00: f0 33 c0 3c mov r25, el0
+# CHECK: a04: f0 33 54 39 mov r18, el5
+# CHECK: a08: f0 33 d0 37 mov r15, el4
+# CHECK: a0c: f0 33 c8 30 mov r1, el2
+# CHECK: a10: f0 33 5c 36 mov r12, el7
+# CHECK: a14: f0 33 d8 31 mov r3, el6
+# CHECK: a18: f0 33 44 3f mov r30, el1
+# CHECK: a1c: f0 33 e8 39 mov r19, el10
+# CHECK: a20: f0 33 4c 35 mov r10, el3
+# CHECK: a24: f0 33 64 34 mov r8, el9
+# CHECK: a28: f0 33 e0 3d mov r27, el8
+# CHECK: a2c: f0 33 ec 3e mov r29, el11
+# CHECK: a30: f0 33 c0 3b mov r23, el0
+# CHECK: a34: f0 33 54 3c mov r24, el5
+# CHECK: a38: f0 33 d0 38 mov r17, el4
+# CHECK: a3c: f0 33 48 30 mov r0, el2
+# CHECK: a40: f0 33 5c 33 mov r6, el7
+# CHECK: a44: f0 33 d8 36 mov r13, el6
+# CHECK: a48: f0 33 44 31 mov r2, el1
+# CHECK: a4c: f0 33 68 3d mov r26, el10
+# CHECK: a50: f0 33 4c 3a mov r20, el3
+# CHECK: a54: f0 33 e4 3a mov r21, el9
+# CHECK: a58: f0 33 60 3e mov r28, el8
+# CHECK: a5c: f0 33 ec 35 mov r11, el11
+# CHECK: a60: f0 33 40 3b mov r22, el0
+# CHECK: a64: f0 33 b7 3b mov eh11, r27
+# CHECK: a68: f0 33 b1 37 mov eh7, r24
+# CHECK: a6c: f0 33 9b 36 mov eh6, r13
+# CHECK: a70: f0 33 ad 38 mov eh8, r22
+# CHECK: a74: f0 33 91 31 mov eh1, r8
+# CHECK: a78: f0 33 89 32 mov eh2, r4
+# CHECK: a7c: f0 33 bf 39 mov eh9, r31
+# CHECK: a80: f0 33 9f 34 mov eh4, r15
+# CHECK: a84: f0 33 9d 33 mov eh3, r14
+# CHECK: a88: f0 33 87 3a mov eh10, r3
+# CHECK: a8c: f0 33 8b 30 mov eh0, r5
+# CHECK: a90: f0 33 b9 35 mov eh5, r28
+# CHECK: a94: f0 33 a3 3b mov eh11, r17
+# CHECK: a98: f0 33 a9 37 mov eh7, r20
+# CHECK: a9c: f0 33 ab 36 mov eh6, r21
+# CHECK: aa0: f0 33 85 38 mov eh8, r2
+# CHECK: aa4: f0 33 b5 31 mov eh1, r26
+# CHECK: aa8: f0 33 83 32 mov eh2, r1
+# CHECK: aac: f0 33 81 39 mov eh9, r0
+# CHECK: ab0: f0 33 93 34 mov eh4, r9
+# CHECK: ab4: f0 33 bb 33 mov eh3, r29
+# CHECK: ab8: f0 33 99 3a mov eh10, r12
+# CHECK: abc: f0 33 a5 30 mov eh0, r18
+# CHECK: ac0: f0 33 af 35 mov eh5, r23
+# CHECK: ac4: f0 33 95 3b mov eh11, r10
+# CHECK: ac8: f0 33 8f 37 mov eh7, r7
+# CHECK: acc: f0 33 a7 36 mov eh6, r19
+# CHECK: ad0: f0 33 b3 38 mov eh8, r25
+# CHECK: ad4: f0 33 8d 31 mov eh1, r6
+# CHECK: ad8: f0 33 97 32 mov eh2, r11
+# CHECK: adc: f0 33 bd 39 mov eh9, r30
+# CHECK: ae0: f0 33 a1 34 mov eh4, r16
+# CHECK: ae4: f0 33 2b 31 mov el1, r21
+# CHECK: ae8: f0 33 37 33 mov el3, r27
+# CHECK: aec: f0 33 3f 36 mov el6, r31
+# CHECK: af0: f0 33 31 39 mov el9, r24
+# CHECK: af4: f0 33 27 32 mov el2, r19
+# CHECK: af8: f0 33 1d 35 mov el5, r14
+# CHECK: afc: f0 33 35 30 mov el0, r26
+# CHECK: b00: f0 33 21 3a mov el10, r16
+# CHECK: b04: f0 33 19 34 mov el4, r12
+# CHECK: b08: f0 33 03 38 mov el8, r1
+# CHECK: b0c: f0 33 01 3b mov el11, r0
+# CHECK: b10: f0 33 2d 37 mov el7, r22
+# CHECK: b14: f0 33 0f 31 mov el1, r7
+# CHECK: b18: f0 33 15 33 mov el3, r10
+# CHECK: b1c: f0 33 11 36 mov el6, r8
+# CHECK: b20: f0 33 1b 39 mov el9, r13
+# CHECK: b24: f0 33 0b 32 mov el2, r5
+# CHECK: b28: f0 33 23 35 mov el5, r17
+# CHECK: b2c: f0 33 29 30 mov el0, r20
+# CHECK: b30: f0 33 17 3a mov el10, r11
+# CHECK: b34: f0 33 33 34 mov el4, r25
+# CHECK: b38: f0 33 2f 38 mov el8, r23
+# CHECK: b3c: f0 33 3d 3b mov el11, r30
+# CHECK: b40: f0 33 3b 37 mov el7, r29
+# CHECK: b44: f0 33 1f 31 mov el1, r15
+# CHECK: b48: f0 33 39 33 mov el3, r28
+# CHECK: b4c: f0 33 09 36 mov el6, r4
+# CHECK: b50: f0 33 13 39 mov el9, r9
+# CHECK: b54: f0 33 07 32 mov el2, r3
+# CHECK: b58: f0 33 0d 35 mov el5, r6
+# CHECK: b5c: f0 33 25 30 mov el0, r18
+# CHECK: b60: f0 33 05 3a mov el10, r2
+# CHECK: b64: f0 73 82 37 mov gh7, gh0
+# CHECK: b68: f0 73 aa 31 mov gh1, gh10
+# CHECK: b6c: f0 73 96 38 mov gh8, gh5
+# CHECK: b70: f0 73 92 35 mov gh5, gh4
+# CHECK: b74: f0 73 8e 3b mov gh11, gh3
+# CHECK: b78: f0 73 a2 36 mov gh6, gh8
+# CHECK: b7c: f0 73 a6 34 mov gh4, gh9
+# CHECK: b80: f0 73 8a 30 mov gh0, gh2
+# CHECK: b84: f0 73 86 32 mov gh2, gh1
+# CHECK: b88: f0 73 9e 33 mov gh3, gh7
+# CHECK: b8c: f0 73 9a 3a mov gh10, gh6
+# CHECK: b90: f0 73 ae 39 mov gh9, gh11
+# CHECK: b94: f0 73 26 30 mov gl0, gh9
+# CHECK: b98: f0 73 2e 35 mov gl5, gh11
+# CHECK: b9c: f0 73 12 32 mov gl2, gh4
+# CHECK: ba0: f0 73 02 3a mov gl10, gh0
+# CHECK: ba4: f0 73 1a 39 mov gl9, gh6
+# CHECK: ba8: f0 73 0a 3b mov gl11, gh2
+# CHECK: bac: f0 73 0e 33 mov gl3, gh3
+# CHECK: bb0: f0 73 06 38 mov gl8, gh1
+# CHECK: bb4: f0 73 2a 37 mov gl7, gh10
+# CHECK: bb8: f0 73 22 34 mov gl4, gh8
+# CHECK: bbc: f0 73 16 31 mov gl1, gh5
+# CHECK: bc0: f0 73 1e 36 mov gl6, gh7
+# CHECK: bc4: f0 73 e2 35 mov r11, gh8
+# CHECK: bc8: f0 73 c2 30 mov r1, gh0
+# CHECK: bcc: f0 73 5e 31 mov r2, gh7
+# CHECK: bd0: f0 73 da 3f mov r31, gh6
+# CHECK: bd4: f0 73 ce 3c mov r25, gh3
+# CHECK: bd8: f0 73 4a 3b mov r22, gh2
+# CHECK: bdc: f0 73 6e 36 mov r12, gh11
+# CHECK: be0: f0 73 52 38 mov r16, gh4
+# CHECK: be4: f0 73 c6 37 mov r15, gh1
+# CHECK: be8: f0 73 d6 34 mov r9, gh5
+# CHECK: bec: f0 73 6a 3f mov r30, gh10
+# CHECK: bf0: f0 73 66 32 mov r4, gh9
+# CHECK: bf4: f0 73 e2 38 mov r17, gh8
+# CHECK: bf8: f0 73 42 3c mov r24, gh0
+# CHECK: bfc: f0 73 5e 35 mov r10, gh7
+# CHECK: c00: f0 73 da 31 mov r3, gh6
+# CHECK: c04: f0 73 ce 3a mov r21, gh3
+# CHECK: c08: f0 73 4a 3e mov r28, gh2
+# CHECK: c0c: f0 73 ee 3d mov r27, gh11
+# CHECK: c10: f0 73 d2 39 mov r19, gh4
+# CHECK: c14: f0 73 46 34 mov r8, gh1
+# CHECK: c18: f0 73 56 37 mov r14, gh5
+# CHECK: c1c: f0 73 6a 39 mov r18, gh10
+# CHECK: c20: f0 73 e6 36 mov r13, gh9
+# CHECK: c24: f0 73 62 33 mov r6, gh8
+# CHECK: c28: f0 73 42 30 mov r0, gh0
+# CHECK: c2c: f0 73 5e 3d mov r26, gh7
+# CHECK: c30: f0 73 da 32 mov r5, gh6
+# CHECK: c34: f0 73 4e 3a mov r20, gh3
+# CHECK: c38: f0 73 ca 33 mov r7, gh2
+# CHECK: c3c: f0 73 ee 3e mov r29, gh11
+# CHECK: c40: f0 73 d2 3b mov r23, gh4
+# CHECK: c44: f0 73 84 33 mov gh3, gl1
+# CHECK: c48: f0 73 88 30 mov gh0, gl2
+# CHECK: c4c: f0 73 a4 39 mov gh9, gl9
+# CHECK: c50: f0 73 80 37 mov gh7, gl0
+# CHECK: c54: f0 73 8c 3a mov gh10, gl3
+# CHECK: c58: f0 73 94 3b mov gh11, gl5
+# CHECK: c5c: f0 73 a0 36 mov gh6, gl8
+# CHECK: c60: f0 73 9c 31 mov gh1, gl7
+# CHECK: c64: f0 73 98 32 mov gh2, gl6
+# CHECK: c68: f0 73 90 38 mov gh8, gl4
+# CHECK: c6c: f0 73 a8 34 mov gh4, gl10
+# CHECK: c70: f0 73 ac 35 mov gh5, gl11
+# CHECK: c74: f0 73 0c 3a mov gl10, gl3
+# CHECK: c78: f0 73 1c 35 mov gl5, gl7
+# CHECK: c7c: f0 73 14 38 mov gl8, gl5
+# CHECK: c80: f0 73 20 32 mov gl2, gl8
+# CHECK: c84: f0 73 2c 3b mov gl11, gl11
+# CHECK: c88: f0 73 00 39 mov gl9, gl0
+# CHECK: c8c: f0 73 04 36 mov gl6, gl1
+# CHECK: c90: f0 73 10 34 mov gl4, gl4
+# CHECK: c94: f0 73 08 33 mov gl3, gl2
+# CHECK: c98: f0 73 18 37 mov gl7, gl6
+# CHECK: c9c: f0 73 24 31 mov gl1, gl9
+# CHECK: ca0: f0 73 28 30 mov gl0, gl10
+# CHECK: ca4: f0 73 dc 35 mov r11, gl7
+# CHECK: ca8: f0 73 6c 34 mov r8, gl11
+# CHECK: cac: f0 73 d8 3e mov r29, gl6
+# CHECK: cb0: f0 73 c8 32 mov r5, gl2
+# CHECK: cb4: f0 73 4c 30 mov r0, gl3
+# CHECK: cb8: f0 73 64 3a mov r20, gl9
+# CHECK: cbc: f0 73 c0 33 mov r7, gl0
+# CHECK: cc0: f0 73 68 36 mov r12, gl10
+# CHECK: cc4: f0 73 50 3b mov r22, gl4
+# CHECK: cc8: f0 73 44 3c mov r24, gl1
+# CHECK: ccc: f0 73 d4 38 mov r17, gl5
+# CHECK: cd0: f0 73 e0 3c mov r25, gl8
+# CHECK: cd4: f0 73 dc 3f mov r31, gl7
+# CHECK: cd8: f0 73 6c 31 mov r2, gl11
+# CHECK: cdc: f0 73 58 39 mov r18, gl6
+# CHECK: ce0: f0 73 c8 31 mov r3, gl2
+# CHECK: ce4: f0 73 cc 30 mov r1, gl3
+# CHECK: ce8: f0 73 e4 36 mov r13, gl9
+# CHECK: cec: f0 73 40 3f mov r30, gl0
+# CHECK: cf0: f0 73 68 32 mov r4, gl10
+# CHECK: cf4: f0 73 50 35 mov r10, gl4
+# CHECK: cf8: f0 73 44 37 mov r14, gl1
+# CHECK: cfc: f0 73 d4 3d mov r27, gl5
+# CHECK: d00: f0 73 e0 34 mov r9, gl8
+# CHECK: d04: f0 73 dc 3b mov r23, gl7
+# CHECK: d08: f0 73 6c 33 mov r6, gl11
+# CHECK: d0c: f0 73 58 3e mov r28, gl6
+# CHECK: d10: f0 73 c8 39 mov r19, gl2
+# CHECK: d14: f0 73 cc 3a mov r21, gl3
+# CHECK: d18: f0 73 e4 37 mov r15, gl9
+# CHECK: d1c: f0 73 40 38 mov r16, gl0
+# CHECK: d20: f0 73 68 3d mov r26, gl10
+# CHECK: d24: f0 73 a9 33 mov gh3, r20
+# CHECK: d28: f0 73 b3 3a mov gh10, r25
+# CHECK: d2c: f0 73 99 32 mov gh2, r12
+# CHECK: d30: f0 73 ad 37 mov gh7, r22
+# CHECK: d34: f0 73 a7 34 mov gh4, r19
+# CHECK: d38: f0 73 bd 3b mov gh11, r30
+# CHECK: d3c: f0 73 b5 39 mov gh9, r26
+# CHECK: d40: f0 73 b9 35 mov gh5, r28
+# CHECK: d44: f0 73 95 30 mov gh0, r10
+# CHECK: d48: f0 73 85 36 mov gh6, r2
+# CHECK: d4c: f0 73 a3 31 mov gh1, r17
+# CHECK: d50: f0 73 93 38 mov gh8, r9
+# CHECK: d54: f0 73 9d 33 mov gh3, r14
+# CHECK: d58: f0 73 b7 3a mov gh10, r27
+# CHECK: d5c: f0 73 ab 32 mov gh2, r21
+# CHECK: d60: f0 73 bf 37 mov gh7, r31
+# CHECK: d64: f0 73 b1 34 mov gh4, r24
+# CHECK: d68: f0 73 8d 3b mov gh11, r6
+# CHECK: d6c: f0 73 8f 39 mov gh9, r7
+# CHECK: d70: f0 73 89 35 mov gh5, r4
+# CHECK: d74: f0 73 91 30 mov gh0, r8
+# CHECK: d78: f0 73 8b 36 mov gh6, r5
+# CHECK: d7c: f0 73 af 31 mov gh1, r23
+# CHECK: d80: f0 73 a5 38 mov gh8, r18
+# CHECK: d84: f0 73 81 33 mov gh3, r0
+# CHECK: d88: f0 73 9f 3a mov gh10, r15
+# CHECK: d8c: f0 73 97 32 mov gh2, r11
+# CHECK: d90: f0 73 a1 37 mov gh7, r16
+# CHECK: d94: f0 73 87 34 mov gh4, r3
+# CHECK: d98: f0 73 9b 3b mov gh11, r13
+# CHECK: d9c: f0 73 bb 39 mov gh9, r29
+# CHECK: da0: f0 73 83 35 mov gh5, r1
+# CHECK: da4: f0 73 13 35 mov gl5, r9
+# CHECK: da8: f0 73 0b 32 mov gl2, r5
+# CHECK: dac: f0 73 05 34 mov gl4, r2
+# CHECK: db0: f0 73 25 37 mov gl7, r18
+# CHECK: db4: f0 73 21 3b mov gl11, r16
+# CHECK: db8: f0 73 15 36 mov gl6, r10
+# CHECK: dbc: f0 73 1b 33 mov gl3, r13
+# CHECK: dc0: f0 73 09 31 mov gl1, r4
+# CHECK: dc4: f0 73 3f 3a mov gl10, r31
+# CHECK: dc8: f0 73 39 38 mov gl8, r28
+# CHECK: dcc: f0 73 31 30 mov gl0, r24
+# CHECK: dd0: f0 73 17 39 mov gl9, r11
+# CHECK: dd4: f0 73 1f 35 mov gl5, r15
+# CHECK: dd8: f0 73 2f 32 mov gl2, r23
+# CHECK: ddc: f0 73 03 34 mov gl4, r1
+# CHECK: de0: f0 73 23 37 mov gl7, r17
+# CHECK: de4: f0 73 0d 3b mov gl11, r6
+# CHECK: de8: f0 73 3d 36 mov gl6, r30
+# CHECK: dec: f0 73 19 33 mov gl3, r12
+# CHECK: df0: f0 73 11 31 mov gl1, r8
+# CHECK: df4: f0 73 27 3a mov gl10, r19
+# CHECK: df8: f0 73 33 38 mov gl8, r25
+# CHECK: dfc: f0 73 37 30 mov gl0, r27
+# CHECK: e00: f0 73 0f 39 mov gl9, r7
+# CHECK: e04: f0 73 3b 35 mov gl5, r29
+# CHECK: e08: f0 73 1d 32 mov gl2, r14
+# CHECK: e0c: f0 73 29 34 mov gl4, r20
+# CHECK: e10: f0 73 2b 37 mov gl7, r21
+# CHECK: e14: f0 73 35 3b mov gl11, r26
+# CHECK: e18: f0 73 01 36 mov gl6, r0
+# CHECK: e1c: f0 73 2d 33 mov gl3, r22
+# CHECK: e20: f0 73 07 31 mov gl1, r3
+# CHECK: e24: f0 8b 88 34 mov r9, crf2fmask
+# CHECK: e28: f0 8b 5a 3b mov r22, srsrs_of
+# CHECK: e2c: f0 8b 1c 3a mov r20, crfpconvsat
+# CHECK: e30: f0 8b 52 3f mov r30, srms0
+# CHECK: e34: f0 8b 20 38 mov r16, crfpmask
+# CHECK: e38: f0 8b 22 3e mov r28, srfpcnvfl2fx
+# CHECK: e3c: f0 8b 2a 30 mov r0, srfpcnvfx2fl
+# CHECK: e40: f0 8b 9a 38 mov r17, srf2iflags
+# CHECK: e44: f0 8b 80 3a mov r21, crbf8conf
+# CHECK: e48: f0 8b bc 3f mov r31, crsat
+# CHECK: e4c: f0 8b a8 35 mov r11, crmcden
+# CHECK: e50: f0 8b 62 39 mov r18, srss0
+# CHECK: e54: f0 8b 10 32 mov r4, crfp8conf
+# CHECK: e58: f0 8b 34 37 mov r14, crscden
+# CHECK: e5c: f0 8b 98 3c mov r25, crfpcnvfx2flmask
+# CHECK: e60: f0 8b 0c 35 mov r10, crf2imask
+# CHECK: e64: f0 8b 84 33 mov r7, crf2bmask
+# CHECK: e68: f0 8b b2 31 mov r3, srfpflags
+# CHECK: e6c: f0 8b ca 3d mov r27, srfifo_uf
+# CHECK: e70: f0 8b 92 32 mov r5, srf2fflags
+# CHECK: e74: f0 8b 82 36 mov r13, srcarry
+# CHECK: e78: f0 8b c2 3e mov r29, srfifo_of
+# CHECK: e7c: f0 8b 30 31 mov r2, crrnd
+# CHECK: e80: f0 8b 44 34 mov r8, crunpacksize
+# CHECK: e84: f0 8b 40 3c mov r24, crupsmode
+# CHECK: e88: f0 8b b8 37 mov r15, crsrsmode
+# CHECK: e8c: f0 8b 14 33 mov r6, crfpcnvfl2fxmask
+# CHECK: e90: f0 8b 72 3d mov r26, srups_of
+# CHECK: e94: f0 8b 6a 36 mov r12, srsparse_of
+# CHECK: e98: f0 8b 8a 39 mov r19, srf2bflags
+# CHECK: e9c: f0 8b a4 3b mov r23, crfpnlfmask
+# CHECK: ea0: f0 8b ac 30 mov r1, crpacksize
+# CHECK: ea4: f0 8b ba 34 mov r9, srfpnlf
+# CHECK: ea8: f0 05 40 39 mov srfifo_uf, #0
+# CHECK: eac: f0 45 00 35 mov crmcden, #1
+# CHECK: eb0: f0 c5 5f 3d mov srsparse_of, #127
+# CHECK: eb4: f0 05 20 32 mov crfp8conf, #-128
+# CHECK: eb8: f0 05 00 31 mov crf2fmask, #0
+# CHECK: ebc: f0 45 40 32 mov srf2fflags, #1
+# CHECK: ec0: f0 c5 1f 38 mov crupsmode, #127
+# CHECK: ec4: f0 05 60 3e mov srups_of, #-128
+# CHECK: ec8: f0 05 40 31 mov srf2bflags, #0
+# CHECK: ecc: f0 45 80 38 mov crunpacksize, #1
+# CHECK: ed0: f0 c5 5f 3c mov srss0, #127
+# CHECK: ed4: f0 05 20 33 mov crfpcnvfx2flmask, #-128
+# CHECK: ed8: f0 05 40 3a mov srms0, #0
+# CHECK: edc: f0 45 40 30 mov srcarry, #1
+# CHECK: ee0: f0 c5 9f 33 mov crfpconvsat, #127
+# CHECK: ee4: f0 05 60 3b mov srsrs_of, #-128
+# CHECK: ee8: f0 05 40 35 mov srfpcnvfx2fl, #0
+# CHECK: eec: f0 45 00 36 mov crrnd, #1
+# CHECK: ef0: f0 c5 1f 37 mov crsrsmode, #127
+# CHECK: ef4: f0 05 20 30 mov crbf8conf, #-128
+# CHECK: ef8: f0 05 80 30 mov crf2bmask, #0
+# CHECK: efc: f0 45 80 34 mov crfpnlfmask, #1
+# CHECK: f00: f0 c5 9f 37 mov crsat, #127
+# CHECK: f04: f0 05 60 36 mov srfpflags, #-128
+# CHECK: f08: f0 05 00 34 mov crfpmask, #0
+# CHECK: f0c: f0 45 40 33 mov srf2iflags, #1
+# CHECK: f10: f0 c5 9f 35 mov crpacksize, #127
+# CHECK: f14: f0 05 a0 31 mov crf2imask, #-128
+# CHECK: f18: f0 05 80 32 mov crfpcnvfl2fxmask, #0
+# CHECK: f1c: f0 45 40 34 mov srfpcnvfl2fx, #1
+# CHECK: f20: f0 c5 5f 38 mov srfifo_of, #127
+# CHECK: f24: f0 05 a0 36 mov crscden, #-128
+# CHECK: f28: f0 05 40 37 mov srfpnlf, #0
+# CHECK: f2c: f0 b3 9b 30 mov crf2bmask, r27
+# CHECK: f30: f0 b3 53 35 mov srfpcnvfx2fl, r19
+# CHECK: f34: f0 b3 4a 3e mov srups_of, r10
+# CHECK: f38: f0 b3 4f 38 mov srfifo_of, r15
+# CHECK: f3c: f0 b3 87 36 mov crscden, r7
+# CHECK: f40: f0 b3 92 32 mov crfpcnvfl2fxmask, r18
+# CHECK: f44: f0 b3 46 33 mov srf2iflags, r6
+# CHECK: f48: f0 b3 17 34 mov crfpmask, r23
+# CHECK: f4c: f0 b3 5a 32 mov srf2fflags, r26
+# CHECK: f50: f0 b3 1d 36 mov crrnd, r29
+# CHECK: f54: f0 b3 42 36 mov srfpflags, r2
+# CHECK: f58: f0 b3 4e 3c mov srss0, r14
+# CHECK: f5c: f0 b3 49 3b mov srsrs_of, r9
+# CHECK: f60: f0 b3 44 31 mov srf2bflags, r4
+# CHECK: f64: f0 b3 99 37 mov crsat, r25
+# CHECK: f68: f0 b3 1f 35 mov crmcden, r31
+# CHECK: f6c: f0 b3 8c 31 mov crf2imask, r12
+# CHECK: f70: f0 b3 54 30 mov srcarry, r20
+# CHECK: f74: f0 b3 98 33 mov crfpconvsat, r24
+# CHECK: f78: f0 b3 1c 33 mov crfpcnvfx2flmask, r28
+# CHECK: f7c: f0 b3 1e 37 mov crsrsmode, r30
+# CHECK: f80: f0 b3 05 38 mov crupsmode, r5
+# CHECK: f84: f0 b3 10 32 mov crfp8conf, r16
+# CHECK: f88: f0 b3 40 3a mov srms0, r0
+# CHECK: f8c: f0 b3 55 37 mov srfpnlf, r21
+# CHECK: f90: f0 b3 88 34 mov crfpnlfmask, r8
+# CHECK: f94: f0 b3 43 34 mov srfpcnvfl2fx, r3
+# CHECK: f98: f0 b3 91 35 mov crpacksize, r17
+# CHECK: f9c: f0 b3 0d 31 mov crf2fmask, r13
+# CHECK: fa0: f0 b3 96 38 mov crunpacksize, r22
+# CHECK: fa4: f0 b3 0b 30 mov crbf8conf, r11
+# CHECK: fa8: f0 b3 41 3d mov srsparse_of, r1
+# CHECK: fac: f0 b3 5b 39 mov srfifo_uf, r27
+# CHECK: fb0: f0 a5 db 38 mov p4, s3
+# CHECK: fb4: f0 65 0c 30 mov m0, r12
+# CHECK: fb8: f0 e5 00 32 mov m1, ls
+# CHECK: fbc: f0 a5 04 3e mov m7, upssign0
+# CHECK: fc0: f0 a5 c6 34 mov p2, unpacksign0
+# CHECK: fc4: f0 65 aa 3e mov r29, r10
+# CHECK: fc8: f0 25 90 3d mov dc6, m4
+# CHECK: fcc: f0 25 4f 39 mov srssign1, dc3
+# CHECK: fd0: f0 65 b9 3a mov r21, r25
+# CHECK: fd4: f0 25 42 38 mov packsign1, dj0
+# CHECK: fd8: f0 a5 9f 3b mov dc5, lr
+# CHECK: fdc: f0 65 8f 39 mov dc4, r15
+# CHECK: fe0: f0 a5 d4 3c mov p6, upssign1
+# CHECK: fe4: f0 65 a9 32 mov r5, r9
+# CHECK: fe8: f0 25 ca 33 mov lc, dj2
+# CHECK: fec: f0 25 24 3e mov r28, m1
+# CHECK: ff0: f0 25 0c 3c mov m6, m3
+# CHECK: ff4: f0 25 03 3d mov dj6, dc0
+# CHECK: ff8: f0 25 93 3c mov dn6, dc4
+# CHECK: ffc: f0 65 44 3b mov unpacksign1, r4
+# CHECK: 1000: f0 65 0b 33 mov dj1, r11
+# CHECK: 1004: f0 65 d5 39 mov s2, r21
+# CHECK: 1008: f0 65 51 3a mov upssign1, r17
+# CHECK: 100c: f0 25 b6 38 mov r17, dj5
+# CHECK: 1010: f0 a5 08 3a mov m5, vaddsign0
+# CHECK: 1014: f0 25 ae 35 mov r11, dj3
+# CHECK: 1018: f0 25 ab 34 mov r9, dc2
+# CHECK: 101c: f0 65 5a 33 mov unpacksign0, r26
+# CHECK: 1020: f0 a5 c5 32 mov p1, p1
+# CHECK: 1024: f0 25 89 37 mov dc3, dn2
+# CHECK: 1028: f0 65 be 37 mov r15, r30
+# CHECK: 102c: f0 65 88 32 mov dn1, r8
+# CHECK: 1030: f0 a5 bd 3b mov r23, p7
+# CHECK: 1034: f0 a5 c0 3d mov s3, packsign0
+# CHECK: 1038: f0 a5 42 3c mov vaddsign1, srssign0
+# CHECK: 103c: f0 a5 0f 39 mov dj4, lc
+# CHECK: 1040: f0 25 bb 31 mov r3, dc6
+# CHECK: 1044: f0 65 30 38 mov r16, r16
+# CHECK: 1048: f0 65 2d 3c mov r24, r13
+# CHECK: 104c: f0 65 96 36 mov dn3, r22
+# CHECK: 1050: f0 65 d4 30 mov p0, r20
+# CHECK: 1054: f0 65 2e 3f mov r30, r14
+# CHECK: 1058: f0 a5 12 38 mov m4, srssign1
+# CHECK: 105c: f0 25 a1 3f mov r31, dn0
+# CHECK: 1060: f0 65 a5 36 mov r13, r5
+# CHECK: 1064: f0 25 2d 31 mov r2, dn3
+# CHECK: 1068: f0 65 37 32 mov r4, r23
+# CHECK: 106c: f0 25 c0 31 mov s0, m0
+# CHECK: 1070: f0 65 c3 3e mov p7, r3
+# CHECK: 1074: f0 25 94 30 mov dn0, m5
+# CHECK: 1078: f0 a5 01 3f mov dj7, p0
+# CHECK: 107c: f0 a5 51 34 mov vaddsign0, p4
+# CHECK: 1080: f0 a5 29 39 mov r18, p2
+# CHECK: 1084: f0 a5 d0 35 mov s1, packsign1
+# CHECK: 1088: f0 25 a7 33 mov r7, dc1
+# CHECK: 108c: f0 e5 88 3a mov dn5, sp
+# CHECK: 1090: f0 65 bd 3d mov r27, r29
+# CHECK: 1094: f0 65 5b 30 mov packsign0, r27
+# CHECK: 1098: f0 25 dc 3a mov p5, m7
+# CHECK: 109c: f0 a5 98 3e mov dn7, vaddsign1
+# CHECK: 10a0: f0 65 1c 35 mov dj2, r28
+# CHECK: 10a4: f0 25 28 3a mov r20, m2
+# CHECK: 10a8: f0 25 1e 36 mov m3, dj7
+# CHECK: 10ac: f0 65 a0 3c mov r25, r0
+# CHECK: 10b0: f0 25 05 3b mov dj5, dn1
+# CHECK: 10b4: f0 a5 57 31 mov srssign0, le
+# CHECK: 10b8: f0 65 a6 30 mov r1, r6
+# CHECK: 10bc: f0 a5 cb 36 mov p3, s1
+# CHECK: 10c0: f0 25 d7 3b mov sp, dc5
+# CHECK: 10c4: f0 25 99 31 mov dc0, dn6
+# CHECK: 10c8: f0 65 21 35 mov r10, r1
+# CHECK: 10cc: f0 65 07 34 mov m2, r7
+# CHECK: 10d0: f0 65 53 32 mov upssign0, r19
+# CHECK: 10d4: f0 a5 27 37 mov r14, core_id
+# CHECK: 10d8: f0 25 3f 30 mov r0, dc7
+# CHECK: 10dc: f0 a5 2d 33 mov r6, p3
+# CHECK: 10e0: f0 25 b2 39 mov r19, dj4
+# CHECK: 10e4: f0 65 22 34 mov r8, r2
+# CHECK: 10e8: f0 65 3f 36 mov r12, r31
+# CHECK: 10ec: f0 65 18 37 mov dj3, r24
+# CHECK: 10f0: f0 25 98 3f mov dc7, m6
+# CHECK: 10f4: f0 a5 95 34 mov dn2, p5
+# CHECK: 10f8: f0 25 3d 3d mov r26, dn7
+# CHECK: 10fc: f0 a5 d3 37 mov lr, s2
+# CHECK: 1100: f0 25 9a 35 mov dc2, dj6
+# CHECK: 1104: f0 25 86 38 mov dn4, dj1
+# CHECK: 1108: f0 25 15 31 mov dj0, dn5
+# CHECK: 110c: f0 a5 99 33 mov dc1, p6
+# CHECK: 1110: f0 a5 36 3b mov r22, unpacksign1
+# CHECK: 1114: f0 25 d1 38 mov p4, dn4
+# CHECK: 1118: f0 65 12 30 mov m0, r18
+# CHECK: 111c: f0 a5 03 32 mov m1, s0
+# CHECK: 1120: 30 fe 06 00 mov r27, ss
+# CHECK: 1124: 30 3e 06 00 mov r24, ss
+# CHECK: 1128: 30 fe 07 00 mov r31, ss
+# CHECK: 112c: 30 fe 01 00 mov r7, ss
+# CHECK: 1130: 30 3e 03 00 mov r12, ss
+# CHECK: 1134: 30 be 05 00 mov r22, ss
+# CHECK: 1138: 30 3e 02 00 mov r8, ss
+# CHECK: 113c: 30 be 00 00 mov r2, ss
+# CHECK: 1140: 30 7e 04 00 mov r17, ss
+# CHECK: 1144: 30 3e 04 00 mov r16, ss
+# CHECK: 1148: 30 3e 01 00 mov r4, ss
+# CHECK: 114c: 30 7e 02 00 mov r9, ss
+# CHECK: 1150: 30 be 04 00 mov r18, ss
+# CHECK: 1154: 30 7e 01 00 mov r5, ss
+# CHECK: 1158: 30 7e 06 00 mov r25, ss
+# CHECK: 115c: 30 3e 07 00 mov r28, ss
+# CHECK: 1160: 30 7e 07 00 mov r29, ss
+# CHECK: 1164: 30 be 01 00 mov r6, ss
+# CHECK: 1168: 30 7e 00 00 mov r1, ss
+# CHECK: 116c: 30 3e 00 00 mov r0, ss
+# CHECK: 1170: 30 fe 04 00 mov r19, ss
+# CHECK: 1174: 30 be 02 00 mov r10, ss
+# CHECK: 1178: 30 3e 05 00 mov r20, ss
+# CHECK: 117c: 30 fe 00 00 mov r3, ss
+# CHECK: 1180: 30 fe 05 00 mov r23, ss
+# CHECK: 1184: 30 fe 02 00 mov r11, ss
+# CHECK: 1188: 30 be 03 00 mov r14, ss
+# CHECK: 118c: 30 7e 05 00 mov r21, ss
+# CHECK: 1190: 30 fe 03 00 mov r15, ss
+# CHECK: 1194: 30 7e 03 00 mov r13, ss
+# CHECK: 1198: 30 be 06 00 mov r26, ss
+# CHECK: 119c: 30 be 07 00 mov r30, ss
+# CHECK: 11a0: b0 f5 a1 10 mov ms, dc3
+# CHECK: 11a4: b0 45 a3 10 mov ms, r26
+# CHECK: 11a8: b0 75 a3 10 mov ms, dc6
+# CHECK: 11ac: b0 b5 a3 10 mov ms, dn7
+# CHECK: 11b0: b0 e5 a0 10 mov ms, r7
+# CHECK: 11b4: b0 55 a2 10 mov ms, dj4
+# CHECK: 11b8: b0 ed a2 10 mov ms, p5
+# CHECK: 11bc: b0 65 a3 10 mov ms, r27
+# CHECK: 11c0: b0 b5 a2 10 mov ms, dn5
+# CHECK: 11c4: b0 85 a2 10 mov ms, r20
+# CHECK: 11c8: b0 f5 a0 10 mov ms, dc1
+# CHECK: 11cc: b0 05 a1 10 mov ms, r8
+# CHECK: 11d0: b0 95 a3 10 mov ms, m7
+# CHECK: 11d4: b0 75 a2 10 mov ms, dc4
+# CHECK: 11d8: b0 e5 a2 10 mov ms, r23
+# CHECK: 11dc: b0 05 a3 10 mov ms, r24
+# CHECK: 11e0: b0 05 a2 10 mov ms, r16
+# CHECK: 11e4: b0 25 a2 10 mov ms, r17
+# CHECK: 11e8: b0 35 a1 10 mov ms, dn2
+# CHECK: 11ec: b0 35 a0 10 mov ms, dn0
+# CHECK: 11f0: b0 45 a2 10 mov ms, r18
+# CHECK: 11f4: b0 ed a1 10 mov ms, p3
+# CHECK: 11f8: b0 55 a0 10 mov ms, dj0
+# CHECK: 11fc: b0 15 a3 10 mov ms, m6
+# CHECK: 1200: b0 55 a3 10 mov ms, dj6
+# CHECK: 1204: b0 a5 a0 10 mov ms, r5
+# CHECK: 1208: b0 d5 a3 10 mov ms, dj7
+# CHECK: 120c: b0 b5 a0 10 mov ms, dn1
+# CHECK: 1210: b0 15 a2 10 mov ms, m4
+# CHECK: 1214: b0 f5 a2 10 mov ms, dc5
+# CHECK: 1218: b0 c5 a0 10 mov ms, r6
+# CHECK: 121c: b0 c5 a2 10 mov ms, r22
+# CHECK: 1220: b0 85 a3 10 mov ms, r28
+# CHECK: 1224: b0 6d a0 10 mov ms, p0
+# CHECK: 1228: b0 25 a3 10 mov ms, r25
+# CHECK: 122c: b0 15 a0 10 mov ms, m0
+# CHECK: 1230: b0 35 a2 10 mov ms, dn4
+# CHECK: 1234: b0 e5 a3 10 mov ms, r31
+# CHECK: 1238: b0 75 a0 10 mov ms, dc0
+# CHECK: 123c: b0 45 a0 10 mov ms, r2
+# CHECK: 1240: b0 ed a3 10 mov ms, p7
+# CHECK: 1244: b0 a5 a1 10 mov ms, r13
+# CHECK: 1248: b0 b5 a1 10 mov ms, dn3
+# CHECK: 124c: b0 05 a0 10 mov ms, r0
+# CHECK: 1250: b0 15 a1 10 mov ms, m2
+# CHECK: 1254: b0 35 a3 10 mov ms, dn6
+# CHECK: 1258: b0 75 a1 10 mov ms, dc2
+# CHECK: 125c: b0 c5 a3 10 mov ms, r30
+# CHECK: 1260: b0 d5 a1 10 mov ms, dj3
+# CHECK: 1264: b0 6d a3 10 mov ms, p6
+# CHECK: 1268: b0 6d a1 10 mov ms, p2
+# CHECK: 126c: b0 a5 a3 10 mov ms, r29
+# CHECK: 1270: b0 f5 a3 10 mov ms, dc7
+# CHECK: 1274: b0 d5 a0 10 mov ms, dj1
+# CHECK: 1278: b0 6d a2 10 mov ms, p4
+# CHECK: 127c: b0 85 a0 10 mov ms, r4
+# CHECK: 1280: b0 55 a1 10 mov ms, dj2
+# CHECK: 1284: b0 95 a1 10 mov ms, m3
+# CHECK: 1288: b0 e5 a1 10 mov ms, r15
+# CHECK: 128c: b0 25 a1 10 mov ms, r9
+# CHECK: 1290: b0 ed a0 10 mov ms, p1
+# CHECK: 1294: b0 85 a1 10 mov ms, r12
+# CHECK: 1298: b0 a5 a2 10 mov ms, r21
+# CHECK: 129c: b0 45 a1 10 mov ms, r10
+# CHECK: 12a0: b0 95 a0 10 mov ms, m1
+# CHECK: 12a4: b0 65 a1 10 mov ms, r11
+# CHECK: 12a8: b0 25 a0 10 mov ms, r1
+# CHECK: 12ac: b0 d5 a2 10 mov ms, dj5
+# CHECK: 12b0: b0 c5 a1 10 mov ms, r14
+# CHECK: 12b4: b0 65 a0 10 mov ms, r3
+# CHECK: 12b8: b0 65 a2 10 mov ms, r19
+# CHECK: 12bc: b0 95 a2 10 mov ms, m5
+# CHECK: 12c0: b0 a5 a1 12 mov ms, r13, r28
+# CHECK: 12c4: b0 75 a1 12 mov ms, dc2, r28
+# CHECK: 12c8: b0 55 a2 12 mov ms, dj4, r28
+# CHECK: 12cc: b0 55 a1 12 mov ms, dj2, r28
+# CHECK: 12d0: b0 25 a0 12 mov ms, r1, r28
+# CHECK: 12d4: b0 65 a3 12 mov ms, r27, r28
+# CHECK: 12d8: b0 d5 a1 12 mov ms, dj3, r28
+# CHECK: 12dc: b0 35 a0 12 mov ms, dn0, r28
+# CHECK: 12e0: b0 ed a0 12 mov ms, p1, r28
+# CHECK: 12e4: b0 05 a2 12 mov ms, r16, r28
+# CHECK: 12e8: b0 25 a1 12 mov ms, r9, r28
+# CHECK: 12ec: b0 45 a3 12 mov ms, r26, r28
+# CHECK: 12f0: b0 f5 a2 12 mov ms, dc5, r28
+# CHECK: 12f4: b0 a5 a2 12 mov ms, r21, r28
+# CHECK: 12f8: b0 6d a0 12 mov ms, p0, r28
+# CHECK: 12fc: b0 25 a2 12 mov ms, r17, r28
+# CHECK: 1300: b0 c5 a3 12 mov ms, r30, r28
+# CHECK: 1304: b0 f5 a3 12 mov ms, dc7, r28
+# CHECK: 1308: b0 b5 a0 12 mov ms, dn1, r28
+# CHECK: 130c: b0 15 a2 12 mov ms, m4, r28
+# CHECK: 1310: b0 15 a0 12 mov ms, m0, r28
+# CHECK: 1314: b0 a5 a3 12 mov ms, r29, r28
+# CHECK: 1318: b0 05 a1 12 mov ms, r8, r28
+# CHECK: 131c: b0 75 a0 12 mov ms, dc0, r28
+# CHECK: 1320: b0 45 a1 12 mov ms, r10, r28
+# CHECK: 1324: b0 6d a3 12 mov ms, p6, r28
+# CHECK: 1328: b0 45 a2 12 mov ms, r18, r28
+# CHECK: 132c: b0 75 a3 12 mov ms, dc6, r28
+# CHECK: 1330: b0 a5 a0 12 mov ms, r5, r28
+# CHECK: 1334: b0 55 a0 12 mov ms, dj0, r28
+# CHECK: 1338: b0 b5 a1 12 mov ms, dn3, r28
+# CHECK: 133c: b0 15 a3 12 mov ms, m6, r28
+# CHECK: 1340: b0 35 a2 12 mov ms, dn4, r28
+# CHECK: 1344: b0 e5 a0 12 mov ms, r7, r28
+# CHECK: 1348: b0 05 a0 12 mov ms, r0, r28
+# CHECK: 134c: b0 95 a2 12 mov ms, m5, r28
+# CHECK: 1350: b0 c5 a2 12 mov ms, r22, r28
+# CHECK: 1354: b0 95 a1 12 mov ms, m3, r28
+# CHECK: 1358: b0 85 a2 12 mov ms, r20, r28
+# CHECK: 135c: b0 c5 a0 12 mov ms, r6, r28
+# CHECK: 1360: b0 25 a3 12 mov ms, r25, r28
+# CHECK: 1364: b0 b5 a2 12 mov ms, dn5, r28
+# CHECK: 1368: b0 f5 a1 12 mov ms, dc3, r28
+# CHECK: 136c: b0 85 a1 12 mov ms, r12, r28
+# CHECK: 1370: b0 d5 a2 12 mov ms, dj5, r28
+# CHECK: 1374: b0 15 a1 12 mov ms, m2, r28
+# CHECK: 1378: b0 6d a2 12 mov ms, p4, r28
+# CHECK: 137c: b0 35 a3 12 mov ms, dn6, r28
+# CHECK: 1380: b0 65 a2 12 mov ms, r19, r28
+# CHECK: 1384: b0 d5 a3 12 mov ms, dj7, r28
+# CHECK: 1388: b0 55 a3 12 mov ms, dj6, r28
+# CHECK: 138c: b0 e5 a1 12 mov ms, r15, r28
+# CHECK: 1390: b0 ed a1 12 mov ms, p3, r28
+# CHECK: 1394: b0 85 a3 12 mov ms, r28, r28
+# CHECK: 1398: b0 95 a0 12 mov ms, m1, r28
+# CHECK: 139c: b0 75 a2 12 mov ms, dc4, r28
+# CHECK: 13a0: b0 e5 a3 12 mov ms, r31, r28
+# CHECK: 13a4: b0 ed a3 12 mov ms, p7, r28
+# CHECK: 13a8: b0 85 a0 12 mov ms, r4, r28
+# CHECK: 13ac: b0 45 a0 12 mov ms, r2, r28
+# CHECK: 13b0: b0 b5 a3 12 mov ms, dn7, r28
+# CHECK: 13b4: b0 65 a1 12 mov ms, r11, r28
+# CHECK: 13b8: b0 ed a2 12 mov ms, p5, r28
+# CHECK: 13bc: b0 6d a1 12 mov ms, p2, r28
+# CHECK: 13c0: b0 65 a0 12 mov ms, r3, r28
+# CHECK: 13c4: b0 e5 a2 12 mov ms, r23, r28
+# CHECK: 13c8: b0 d5 a0 12 mov ms, dj1, r28
+# CHECK: 13cc: b0 05 a3 12 mov ms, r24, r28
+# CHECK: 13d0: b0 c5 a1 12 mov ms, r14, r28
+# CHECK: 13d4: b0 95 a3 12 mov ms, m7, r28
+# CHECK: 13d8: b0 f5 a0 12 mov ms, dc1, r28
+# CHECK: 13dc: b0 35 a1 12 mov ms, dn2, r28
+# CHECK: 13e0: f0 4e 0c 31 mov.d1 r2, r12
+# CHECK: 13e4: f0 8e 9d 31 mov.d1 r3, p7
+# CHECK: 13e8: f0 0e 1b 38 mov.d1 r16, dc6
+# CHECK: 13ec: f0 8e 92 3c mov.d1 r25, srssign1
+# CHECK: 13f0: f0 0e 82 3d mov.d1 r27, dj0
+# CHECK: 13f4: f0 8e 95 3b mov.d1 r23, p5
+# CHECK: 13f8: f0 8e 94 36 mov.d1 r13, upssign1
+# CHECK: 13fc: f0 4e 9b 30 mov.d1 r1, r27
+# CHECK: 1400: f0 8e 90 3f mov.d1 r31, packsign1
+# CHECK: 1404: f0 8e 88 3a mov.d1 r21, vaddsign0
+# CHECK: 1408: f0 0e 0a 34 mov.d1 r8, dj2
+# CHECK: 140c: f0 8e 86 34 mov.d1 r9, unpacksign0
+# CHECK: 1410: f0 0e 95 3e mov.d1 r29, dn5
+# CHECK: 1414: f0 8e 11 35 mov.d1 r10, p4
+# CHECK: 1418: f0 0e 85 38 mov.d1 r17, dn1
+# CHECK: 141c: f0 4e 90 35 mov.d1 r11, r16
+# CHECK: 1420: f0 4e 03 30 mov.d1 r0, r3
+# CHECK: 1424: f0 8e 16 3c mov.d1 r24, unpacksign1
+# CHECK: 1428: f0 0e 0e 3e mov.d1 r28, dj3
+# CHECK: 142c: f0 0e 80 37 mov.d1 r15, m0
+# CHECK: 1430: f0 0e 0f 3f mov.d1 r30, dc3
+# CHECK: 1434: f0 0e 03 32 mov.d1 r4, dc0
+# CHECK: 1438: f0 8e 02 36 mov.d1 r12, srssign0
+# CHECK: 143c: f0 8e 99 32 mov.d1 r5, p6
+# CHECK: 1440: f0 0e 13 39 mov.d1 r18, dc4
+# CHECK: 1444: f0 0e 01 3a mov.d1 r20, dn0
+# CHECK: 1448: f0 8e 00 3b mov.d1 r22, packsign0
+# CHECK: 144c: f0 4e 19 3d mov.d1 r26, r25
+# CHECK: 1450: f0 4e 80 33 mov.d1 r7, r0
+# CHECK: 1454: f0 4e 16 37 mov.d1 r14, r22
+# CHECK: 1458: f0 4e 07 33 mov.d1 r6, r7
+# CHECK: 145c: f0 0e 98 39 mov.d1 r19, m6
+# CHECK: 1460: f0 0e 06 31 mov.d1 r2, dj1
+# CHECK: 1464: f0 4e 94 31 mov.d1 r3, r20
+# CHECK: 1468: f0 8e 0f 38 mov.d1 r16, lc
+# CHECK: 146c: f0 8e 83 3c mov.d1 r25, s0
+# CHECK: 1470: f0 4e 9c 3d mov.d1 r27, r28
+# CHECK: 1474: f0 4e 8d 3b mov.d1 r23, r13
+# CHECK: 1478: f0 0e 8d 36 mov.d1 r13, dn3
+# CHECK: 147c: f0 8e 8b 30 mov.d1 r1, s1
+# CHECK: 1480: f0 4e 85 3f mov.d1 r31, r5
+# CHECK: 1484: f0 0e 90 3a mov.d1 r21, m4
+# CHECK: 1488: f0 4e 1d 34 mov.d1 r8, r29
+# CHECK: 148c: f0 4e 91 34 mov.d1 r9, r17
+# CHECK: 1490: f0 0e 94 3e mov.d1 r29, m5
+# CHECK: 1494: f0 0e 12 35 mov.d1 r10, dj4
+# CHECK: 1498: f0 4e 9a 38 mov.d1 r17, r26
+# CHECK: 149c: f0 0e 8c 35 mov.d1 r11, m3
+# CHECK: 14a0: f0 4e 04 30 mov.d1 r0, r4
+# CHECK: 14a4: f0 0e 07 3c mov.d1 r24, dc1
+# CHECK: 14a8: f0 0e 0b 3e mov.d1 r28, dc2
+# CHECK: 14ac: f0 0e 89 37 mov.d1 r15, dn2
+# CHECK: 14b0: f0 8e 13 3f mov.d1 r30, s2
+# CHECK: 14b4: f0 8e 01 32 mov.d1 r4, p0
+# CHECK: 14b8: f0 4e 06 36 mov.d1 r12, r6
+# CHECK: 14bc: f0 4e 82 32 mov.d1 r5, r2
+# CHECK: 14c0: f0 4e 0e 39 mov.d1 r18, r14
+# CHECK: 14c4: f0 0e 04 3a mov.d1 r20, m1
+# CHECK: 14c8: f0 4e 0b 3b mov.d1 r22, r11
+# CHECK: 14cc: f0 0e 16 3d mov.d1 r26, dj5
+# CHECK: 14d0: f0 4e 93 33 mov.d1 r7, r19
+# CHECK: 14d4: f0 8e 04 37 mov.d1 r14, upssign0
+# CHECK: 14d8: f0 4e 1e 33 mov.d1 r6, r30
+# CHECK: 14dc: f0 4e 89 39 mov.d1 r19, r9
+# CHECK: 14e0: f0 4e 12 31 mov.d1 r2, r18
+# CHECK: 14e4: f0 8e 9b 31 mov.d1 r3, s3
+# CHECK: 14e8: f0 0e 19 38 mov.d1 r16, dn6
+# CHECK: 14ec: f0 4e 88 3c mov.d1 r25, r8
+# CHECK: 14f0: f0 8e 8d 3d mov.d1 r27, p3
+# CHECK: 14f4: f0 4e 98 3b mov.d1 r23, r24
+# CHECK: 14f8: f0 ce 88 36 mov.d1 r13, sp
+# CHECK: 14fc: f0 0e 9d 30 mov.d1 r1, dn7
+# CHECK: 1500: f0 8e 97 3f mov.d1 r31, le
+# CHECK: 1504: f0 ce 80 3a mov.d1 r21, ls
+# CHECK: 1508: f0 0e 1f 34 mov.d1 r8, dc7
+# CHECK: 150c: f0 0e 97 34 mov.d1 r9, dc5
+# CHECK: 1510: f0 4e 81 3e mov.d1 r29, r1
+# CHECK: 1514: f0 8e 1f 35 mov.d1 r10, lr
+# CHECK: 1518: f0 0e 9a 38 mov.d1 r17, dj6
+# CHECK: 151c: f0 4e 8a 35 mov.d1 r11, r10
+# CHECK: 1520: f0 0e 1e 30 mov.d1 r0, dj7
+# CHECK: 1524: f0 4e 17 3c mov.d1 r24, r23
+# CHECK: 1528: f0 4e 1f 3e mov.d1 r28, r31
+# CHECK: 152c: f0 8e 98 37 mov.d1 r15, vaddsign1
+# CHECK: 1530: f0 0e 11 3f mov.d1 r30, dn4
+# CHECK: 1534: f0 0e 1c 32 mov.d1 r4, m7
+# CHECK: 1538: f0 8e 07 36 mov.d1 r12, core_id
+# CHECK: 153c: f0 4e 8f 32 mov.d1 r5, r15
+# CHECK: 1540: f0 0e 08 39 mov.d1 r18, m2
+# CHECK: 1544: f0 8e 09 3a mov.d1 r20, p2
+# CHECK: 1548: f0 4e 15 3b mov.d1 r22, r21
+# CHECK: 154c: f0 8e 05 3d mov.d1 r26, p1
+# CHECK: 1550: f0 6e 10 3d mov.d2 r26, r16
+# CHECK: 1554: f0 ae 06 3c mov.d2 r24, unpacksign0
+# CHECK: 1558: f0 ae 10 32 mov.d2 r4, packsign1
+# CHECK: 155c: f0 2e 02 35 mov.d2 r10, dj0
+# CHECK: 1560: f0 ee 80 31 mov.d2 r3, ls
+# CHECK: 1564: f0 2e 8e 33 mov.d2 r7, dj3
+# CHECK: 1568: f0 2e 9a 32 mov.d2 r5, dj6
+# CHECK: 156c: f0 2e 9e 3a mov.d2 r21, dj7
+# CHECK: 1570: f0 6e 18 36 mov.d2 r12, r24
+# CHECK: 1574: f0 ae 1f 31 mov.d2 r2, lr
+# CHECK: 1578: f0 2e 9d 3e mov.d2 r29, dn7
+# CHECK: 157c: f0 ae 11 33 mov.d2 r6, p4
+# CHECK: 1580: f0 ae 8f 36 mov.d2 r13, lc
+# CHECK: 1584: f0 ee 08 3e mov.d2 r28, sp
+# CHECK: 1588: f0 2e 96 35 mov.d2 r11, dj5
+# CHECK: 158c: f0 6e 11 3a mov.d2 r20, r17
+# CHECK: 1590: f0 2e 00 34 mov.d2 r8, m0
+# CHECK: 1594: f0 6e 99 30 mov.d2 r1, r25
+# CHECK: 1598: f0 ae 80 3b mov.d2 r23, packsign0
+# CHECK: 159c: f0 6e 04 38 mov.d2 r16, r4
+# CHECK: 15a0: f0 6e 8b 3f mov.d2 r31, r11
+# CHECK: 15a4: f0 2e 9b 38 mov.d2 r17, dc6
+# CHECK: 15a8: f0 2e 88 39 mov.d2 r19, m2
+# CHECK: 15ac: f0 ae 09 39 mov.d2 r18, p2
+# CHECK: 15b0: f0 6e 82 3c mov.d2 r25, r2
+# CHECK: 15b4: f0 ae 13 3f mov.d2 r30, s2
+# CHECK: 15b8: f0 6e 1e 37 mov.d2 r14, r30
+# CHECK: 15bc: f0 2e 9f 3d mov.d2 r27, dc7
+# CHECK: 15c0: f0 2e 12 3b mov.d2 r22, dj4
+# CHECK: 15c4: f0 2e 9c 37 mov.d2 r15, m7
+# CHECK: 15c8: f0 2e 01 30 mov.d2 r0, dn0
+# CHECK: 15cc: f0 ae 88 34 mov.d2 r9, vaddsign0
+# CHECK: 15d0: f0 6e 0e 3d mov.d2 r26, r14
+# CHECK: 15d4: f0 6e 15 3c mov.d2 r24, r21
+# CHECK: 15d8: f0 6e 1c 32 mov.d2 r4, r28
+# CHECK: 15dc: f0 2e 18 35 mov.d2 r10, m6
+# CHECK: 15e0: f0 6e 97 31 mov.d2 r3, r23
+# CHECK: 15e4: f0 ae 84 33 mov.d2 r7, upssign0
+# CHECK: 15e8: f0 6e 9d 32 mov.d2 r5, r29
+# CHECK: 15ec: f0 2e 8f 3a mov.d2 r21, dc3
+# CHECK: 15f0: f0 2e 04 36 mov.d2 r12, m1
+# CHECK: 15f4: f0 ae 07 31 mov.d2 r2, core_id
+# CHECK: 15f8: f0 6e 81 3e mov.d2 r29, r1
+# CHECK: 15fc: f0 ae 18 33 mov.d2 r6, vaddsign1
+# CHECK: 1600: f0 6e 8c 36 mov.d2 r13, r12
+# CHECK: 1604: f0 6e 05 3e mov.d2 r28, r5
+# CHECK: 1608: f0 2e 86 35 mov.d2 r11, dj1
+# CHECK: 160c: f0 6e 09 3a mov.d2 r20, r9
+# CHECK: 1610: f0 6e 1a 34 mov.d2 r8, r26
+# CHECK: 1614: f0 6e 9f 30 mov.d2 r1, r31
+# CHECK: 1618: f0 ae 99 3b mov.d2 r23, p6
+# CHECK: 161c: f0 6e 0f 38 mov.d2 r16, r15
+# CHECK: 1620: f0 ae 94 3f mov.d2 r31, upssign1
+# CHECK: 1624: f0 ae 8d 38 mov.d2 r17, p3
+# CHECK: 1628: f0 2e 94 39 mov.d2 r19, m5
+# CHECK: 162c: f0 2e 0b 39 mov.d2 r18, dc2
+# CHECK: 1630: f0 ae 82 3c mov.d2 r25, srssign0
+# CHECK: 1634: f0 6e 14 3f mov.d2 r30, r20
+# CHECK: 1638: f0 6e 1b 37 mov.d2 r14, r27
+# CHECK: 163c: f0 6e 80 3d mov.d2 r27, r0
+# CHECK: 1640: f0 ae 01 3b mov.d2 r22, p0
+# CHECK: 1644: f0 6e 8a 37 mov.d2 r15, r10
+# CHECK: 1648: f0 ae 15 30 mov.d2 r0, p5
+# CHECK: 164c: f0 6e 8d 34 mov.d2 r9, r13
+# CHECK: 1650: f0 2e 0c 3d mov.d2 r26, m3
+# CHECK: 1654: f0 2e 13 3c mov.d2 r24, dc4
+# CHECK: 1658: f0 2e 19 32 mov.d2 r4, dn6
+# CHECK: 165c: f0 6e 03 35 mov.d2 r10, r3
+# CHECK: 1660: f0 ae 8b 31 mov.d2 r3, s1
+# CHECK: 1664: f0 6e 96 33 mov.d2 r7, r22
+# CHECK: 1668: f0 6e 86 32 mov.d2 r5, r6
+# CHECK: 166c: f0 2e 97 3a mov.d2 r21, dc5
+# CHECK: 1670: f0 2e 07 36 mov.d2 r12, dc1
+# CHECK: 1674: f0 ae 17 31 mov.d2 r2, le
+# CHECK: 1678: f0 2e 83 3e mov.d2 r29, dc0
+# CHECK: 167c: f0 ae 03 33 mov.d2 r6, s0
+# CHECK: 1680: f0 6e 93 36 mov.d2 r13, r19
+# CHECK: 1684: f0 2e 10 3e mov.d2 r28, m4
+# CHECK: 1688: f0 ae 85 35 mov.d2 r11, p1
+# CHECK: 168c: f0 6e 07 3a mov.d2 r20, r7
+# CHECK: 1690: f0 2e 09 34 mov.d2 r8, dn2
+# CHECK: 1694: f0 ae 9d 30 mov.d2 r1, p7
+# CHECK: 1698: f0 2e 95 3b mov.d2 r23, dn5
+# CHECK: 169c: f0 6e 08 38 mov.d2 r16, r8
+# CHECK: 16a0: f0 2e 85 3f mov.d2 r31, dn1
+# CHECK: 16a4: f0 ae 92 38 mov.d2 r17, srssign1
+# CHECK: 16a8: f0 ae 96 39 mov.d2 r19, unpacksign1
+# CHECK: 16ac: f0 6e 12 39 mov.d2 r18, r18
+# CHECK: 16b0: f0 2e 8d 3c mov.d2 r25, dn3
+# CHECK: 16b4: f0 ae 1b 3f mov.d2 r30, s3
+# CHECK: 16b8: f0 2e 0a 37 mov.d2 r14, dj2
+# CHECK: 16bc: f0 2e 91 3d mov.d2 r27, dn4
+# CHECK: 16c0: f0 0e b5 3c mov.d3 r25, dn5
+# CHECK: 16c4: f0 0e 2b 3b mov.d3 r22, dc2
+# CHECK: 16c8: f0 4e 35 3e mov.d3 r28, r21
+# CHECK: 16cc: f0 4e aa 32 mov.d3 r5, r10
+# CHECK: 16d0: f0 0e b2 37 mov.d3 r15, dj4
+# CHECK: 16d4: f0 4e 30 33 mov.d3 r6, r16
+# CHECK: 16d8: f0 4e 31 3d mov.d3 r26, r17
+# CHECK: 16dc: f0 4e bf 33 mov.d3 r7, r31
+# CHECK: 16e0: f0 4e 26 30 mov.d3 r0, r6
+# CHECK: 16e4: f0 8e b0 3b mov.d3 r23, packsign1
+# CHECK: 16e8: f0 4e 27 3c mov.d3 r24, r7
+# CHECK: 16ec: f0 4e 39 3f mov.d3 r30, r25
+# CHECK: 16f0: f0 0e a6 34 mov.d3 r9, dj1
+# CHECK: 16f4: f0 0e be 30 mov.d3 r1, dj7
+# CHECK: 16f8: f0 8e b4 3f mov.d3 r31, upssign1
+# CHECK: 16fc: f0 8e 31 38 mov.d3 r16, p4
+# CHECK: 1700: f0 8e af 3e mov.d3 r29, lc
+# CHECK: 1704: f0 0e a4 35 mov.d3 r11, m1
+# CHECK: 1708: f0 4e ae 3a mov.d3 r21, r14
+# CHECK: 170c: f0 0e b4 39 mov.d3 r19, m5
+# CHECK: 1710: f0 8e 3b 32 mov.d3 r4, s3
+# CHECK: 1714: f0 8e 37 35 mov.d3 r10, le
+# CHECK: 1718: f0 8e 2d 31 mov.d3 r2, p3
+# CHECK: 171c: f0 0e b0 36 mov.d3 r13, m4
+# CHECK: 1720: f0 4e 3e 39 mov.d3 r18, r30
+# CHECK: 1724: f0 4e 21 37 mov.d3 r14, r1
+# CHECK: 1728: f0 0e af 38 mov.d3 r17, dc3
+# CHECK: 172c: f0 0e b1 3d mov.d3 r27, dn4
+# CHECK: 1730: f0 4e 20 3a mov.d3 r20, r0
+# CHECK: 1734: f0 8e a8 31 mov.d3 r3, vaddsign0
+# CHECK: 1738: f0 4e 29 34 mov.d3 r8, r9
+# CHECK: 173c: f0 0e 23 36 mov.d3 r12, dc0
+# CHECK: 1740: f0 8e b3 3c mov.d3 r25, s2
+# CHECK: 1744: f0 8e 38 3b mov.d3 r22, vaddsign1
+# CHECK: 1748: f0 4e 34 3e mov.d3 r28, r20
+# CHECK: 174c: f0 0e b6 32 mov.d3 r5, dj5
+# CHECK: 1750: f0 8e b6 37 mov.d3 r15, unpacksign1
+# CHECK: 1754: f0 0e 38 33 mov.d3 r6, m6
+# CHECK: 1758: f0 8e 39 3d mov.d3 r26, p6
+# CHECK: 175c: f0 0e ba 33 mov.d3 r7, dj6
+# CHECK: 1760: f0 0e 29 30 mov.d3 r0, dn2
+# CHECK: 1764: f0 0e a5 3b mov.d3 r23, dn1
+# CHECK: 1768: f0 8e 2b 3c mov.d3 r24, s1
+# CHECK: 176c: f0 0e 2a 3f mov.d3 r30, dj2
+# CHECK: 1770: f0 4e b3 34 mov.d3 r9, r19
+# CHECK: 1774: f0 4e b2 30 mov.d3 r1, r18
+# CHECK: 1778: f0 8e a2 3f mov.d3 r31, srssign0
+# CHECK: 177c: f0 4e 25 38 mov.d3 r16, r5
+# CHECK: 1780: f0 8e a3 3e mov.d3 r29, s0
+# CHECK: 1784: f0 8e a9 35 mov.d3 r11, p2
+# CHECK: 1788: f0 8e a5 3a mov.d3 r21, p1
+# CHECK: 178c: f0 ce a0 39 mov.d3 r19, ls
+# CHECK: 1790: f0 0e 3b 32 mov.d3 r4, dc6
+# CHECK: 1794: f0 0e 28 35 mov.d3 r10, m2
+# CHECK: 1798: f0 8e 21 31 mov.d3 r2, p0
+# CHECK: 179c: f0 0e ac 36 mov.d3 r13, m3
+# CHECK: 17a0: f0 0e 3c 39 mov.d3 r18, m7
+# CHECK: 17a4: f0 4e 2c 37 mov.d3 r14, r12
+# CHECK: 17a8: f0 0e a1 38 mov.d3 r17, dn0
+# CHECK: 17ac: f0 4e ab 3d mov.d3 r27, r11
+# CHECK: 17b0: f0 4e 24 3a mov.d3 r20, r4
+# CHECK: 17b4: f0 8e bf 31 mov.d3 r3, lr
+# CHECK: 17b8: f0 4e 23 34 mov.d3 r8, r3
+# CHECK: 17bc: f0 4e 3b 36 mov.d3 r12, r27
+# CHECK: 17c0: f0 0e b7 3c mov.d3 r25, dc5
+# CHECK: 17c4: f0 8e 26 3b mov.d3 r22, unpacksign0
+# CHECK: 17c8: f0 0e 2d 3e mov.d3 r28, dn3
+# CHECK: 17cc: f0 4e ba 32 mov.d3 r5, r26
+# CHECK: 17d0: f0 8e bd 37 mov.d3 r15, p7
+# CHECK: 17d4: f0 4e 36 33 mov.d3 r6, r22
+# CHECK: 17d8: f0 4e 37 3d mov.d3 r26, r23
+# CHECK: 17dc: f0 ce a8 33 mov.d3 r7, sp
+# CHECK: 17e0: f0 0e 27 30 mov.d3 r0, dc1
+# CHECK: 17e4: f0 4e a2 3b mov.d3 r23, r2
+# CHECK: 17e8: f0 0e 33 3c mov.d3 r24, dc4
+# CHECK: 17ec: f0 0e 39 3f mov.d3 r30, dn6
+# CHECK: 17f0: f0 4e a8 34 mov.d3 r9, r8
+# CHECK: 17f4: f0 0e a0 30 mov.d3 r1, m0
+# CHECK: 17f8: f0 0e a2 3f mov.d3 r31, dj0
+# CHECK: 17fc: f0 4e 3d 38 mov.d3 r16, r29
+# CHECK: 1800: f0 8e a7 3e mov.d3 r29, core_id
+# CHECK: 1804: f0 0e bd 35 mov.d3 r11, dn7
+# CHECK: 1808: f0 4e af 3a mov.d3 r21, r15
+# CHECK: 180c: f0 8e b5 39 mov.d3 r19, p5
+# CHECK: 1810: f0 4e 3c 32 mov.d3 r4, r28
+# CHECK: 1814: f0 8e 20 35 mov.d3 r10, packsign0
+# CHECK: 1818: f0 0e 3f 31 mov.d3 r2, dc7
+# CHECK: 181c: f0 8e b2 36 mov.d3 r13, srssign1
+# CHECK: 1820: f0 0e 2e 39 mov.d3 r18, dj3
+# CHECK: 1824: f0 4e 2d 37 mov.d3 r14, r13
+# CHECK: 1828: f0 4e b8 38 mov.d3 r17, r24
+# CHECK: 182c: f0 8e a4 3d mov.d3 r27, upssign0
+# CHECK: 1830: f0 6e 24 3f mov.d4 r30, r4
+# CHECK: 1834: f0 2e 2e 3c mov.d4 r24, dj3
+# CHECK: 1838: f0 6e aa 32 mov.d4 r5, r10
+# CHECK: 183c: f0 2e b0 38 mov.d4 r17, m4
+# CHECK: 1840: f0 ae b9 31 mov.d4 r3, p6
+# CHECK: 1844: f0 2e 20 36 mov.d4 r12, m0
+# CHECK: 1848: f0 6e 2c 30 mov.d4 r0, r12
+# CHECK: 184c: f0 6e b2 3d mov.d4 r27, r18
+# CHECK: 1850: f0 2e be 33 mov.d4 r7, dj7
+# CHECK: 1854: f0 2e 3b 39 mov.d4 r18, dc6
+# CHECK: 1858: f0 6e 2b 31 mov.d4 r2, r11
+# CHECK: 185c: f0 6e b9 3b mov.d4 r23, r25
+# CHECK: 1860: f0 2e 2c 3e mov.d4 r28, m3
+# CHECK: 1864: f0 ae 27 37 mov.d4 r14, core_id
+# CHECK: 1868: f0 ae af 3f mov.d4 r31, lc
+# CHECK: 186c: f0 6e b4 3c mov.d4 r25, r20
+# CHECK: 1870: f0 6e 3e 32 mov.d4 r4, r30
+# CHECK: 1874: f0 2e a9 39 mov.d4 r19, dn2
+# CHECK: 1878: f0 6e ba 3a mov.d4 r21, r26
+# CHECK: 187c: f0 6e 29 38 mov.d4 r16, r9
+# CHECK: 1880: f0 ee 20 3b mov.d4 r22, ls
+# CHECK: 1884: f0 6e b8 36 mov.d4 r13, r24
+# CHECK: 1888: f0 2e 33 34 mov.d4 r8, dc4
+# CHECK: 188c: f0 6e 33 35 mov.d4 r10, r19
+# CHECK: 1890: f0 2e a5 30 mov.d4 r1, dn1
+# CHECK: 1894: f0 6e 31 3a mov.d4 r20, r17
+# CHECK: 1898: f0 ae a9 34 mov.d4 r9, p2
+# CHECK: 189c: f0 6e 36 3d mov.d4 r26, r22
+# CHECK: 18a0: f0 ae b3 37 mov.d4 r15, s2
+# CHECK: 18a4: f0 ae bd 35 mov.d4 r11, p7
+# CHECK: 18a8: f0 2e a2 3e mov.d4 r29, dj0
+# CHECK: 18ac: f0 2e 2f 33 mov.d4 r6, dc3
+# CHECK: 18b0: f0 2e 36 3f mov.d4 r30, dj5
+# CHECK: 18b4: f0 6e 26 3c mov.d4 r24, r6
+# CHECK: 18b8: f0 2e a8 32 mov.d4 r5, m2
+# CHECK: 18bc: f0 6e bf 38 mov.d4 r17, r31
+# CHECK: 18c0: f0 ae ab 31 mov.d4 r3, s1
+# CHECK: 18c4: f0 6e 3c 36 mov.d4 r12, r28
+# CHECK: 18c8: f0 2e 35 30 mov.d4 r0, dn5
+# CHECK: 18cc: f0 ae a8 3d mov.d4 r27, vaddsign0
+# CHECK: 18d0: f0 ae a1 33 mov.d4 r7, p0
+# CHECK: 18d4: f0 2e 27 39 mov.d4 r18, dc1
+# CHECK: 18d8: f0 2e 3d 31 mov.d4 r2, dn7
+# CHECK: 18dc: f0 2e b9 3b mov.d4 r23, dn6
+# CHECK: 18e0: f0 ae 30 3e mov.d4 r28, packsign1
+# CHECK: 18e4: f0 6e 20 37 mov.d4 r14, r0
+# CHECK: 18e8: f0 6e bb 3f mov.d4 r31, r27
+# CHECK: 18ec: f0 6e a8 3c mov.d4 r25, r8
+# CHECK: 18f0: f0 6e 35 32 mov.d4 r4, r21
+# CHECK: 18f4: f0 2e a4 39 mov.d4 r19, m1
+# CHECK: 18f8: f0 6e ad 3a mov.d4 r21, r13
+# CHECK: 18fc: f0 ae 3b 38 mov.d4 r16, s3
+# CHECK: 1900: f0 2e 2a 3b mov.d4 r22, dj2
+# CHECK: 1904: f0 ae b4 36 mov.d4 r13, upssign1
+# CHECK: 1908: f0 6e 37 34 mov.d4 r8, r23
+# CHECK: 190c: f0 2e 38 35 mov.d4 r10, m6
+# CHECK: 1910: f0 ae bf 30 mov.d4 r1, lr
+# CHECK: 1914: f0 6e 23 3a mov.d4 r20, r3
+# CHECK: 1918: f0 ae a5 34 mov.d4 r9, p1
+# CHECK: 191c: f0 ae 37 3d mov.d4 r26, le
+# CHECK: 1920: f0 6e ae 37 mov.d4 r15, r14
+# CHECK: 1924: f0 2e a3 35 mov.d4 r11, dc0
+# CHECK: 1928: f0 2e bc 3e mov.d4 r29, m7
+# CHECK: 192c: f0 6e 25 33 mov.d4 r6, r5
+# CHECK: 1930: f0 ae 23 3f mov.d4 r30, s0
+# CHECK: 1934: f0 2e 21 3c mov.d4 r24, dn0
+# CHECK: 1938: f0 ee a8 32 mov.d4 r5, sp
+# CHECK: 193c: f0 6e bd 38 mov.d4 r17, r29
+# CHECK: 1940: f0 2e bf 31 mov.d4 r3, dc7
+# CHECK: 1944: f0 ae 20 36 mov.d4 r12, packsign0
+# CHECK: 1948: f0 ae 32 30 mov.d4 r0, srssign1
+# CHECK: 194c: f0 2e a6 3d mov.d4 r27, dj1
+# CHECK: 1950: f0 2e b2 33 mov.d4 r7, dj4
+# CHECK: 1954: f0 ae 38 39 mov.d4 r18, vaddsign1
+# CHECK: 1958: f0 ae 24 31 mov.d4 r2, upssign0
+# CHECK: 195c: f0 2e ad 3b mov.d4 r23, dn3
+# CHECK: 1960: f0 ae 26 3e mov.d4 r28, unpacksign0
+# CHECK: 1964: f0 6e 22 37 mov.d4 r14, r2
+# CHECK: 1968: f0 2e b1 3f mov.d4 r31, dn4
+# CHECK: 196c: f0 ae b1 3c mov.d4 r25, p4
+# CHECK: 1970: f0 ae 36 32 mov.d4 r4, unpacksign1
+# CHECK: 1974: f0 2e b4 39 mov.d4 r19, m5
+# CHECK: 1978: f0 2e ba 3a mov.d4 r21, dj6
+# CHECK: 197c: f0 ae 35 38 mov.d4 r16, p5
+# CHECK: 1980: f0 6e 2f 3b mov.d4 r22, r15
+# CHECK: 1984: f0 6e a7 36 mov.d4 r13, r7
+# CHECK: 1988: f0 ae 22 34 mov.d4 r8, srssign0
+# CHECK: 198c: f0 6e 21 35 mov.d4 r10, r1
+# CHECK: 1990: f0 ae ad 30 mov.d4 r1, p3
+# CHECK: 1994: f0 2e 37 3a mov.d4 r20, dc5
+# CHECK: 1998: f0 6e b0 34 mov.d4 r9, r16
+# CHECK: 199c: f0 2e 2b 3d mov.d4 r26, dc2
+# CHECK: 19a0: f0 0e c2 3a mov.d5 r21, dj0
+# CHECK: 19a4: f0 0e d7 33 mov.d5 r7, dc5
+# CHECK: 19a8: f0 0e c7 38 mov.d5 r17, dc1
+# CHECK: 19ac: f0 8e d3 31 mov.d5 r3, s2
+# CHECK: 19b0: f0 4e 5a 3a mov.d5 r20, r26
+# CHECK: 19b4: f0 0e d0 34 mov.d5 r9, m4
+# CHECK: 19b8: f0 4e 51 37 mov.d5 r14, r17
+# CHECK: 19bc: f0 ce 48 35 mov.d5 r10, sp
+# CHECK: 19c0: f0 0e 46 3e mov.d5 r28, dj1
+# CHECK: 19c4: f0 0e cb 37 mov.d5 r15, dc2
+# CHECK: 19c8: f0 4e 4a 34 mov.d5 r8, r10
+# CHECK: 19cc: f0 0e 58 39 mov.d5 r18, m6
+# CHECK: 19d0: f0 8e 4d 31 mov.d5 r2, p3
+# CHECK: 19d4: f0 4e d3 30 mov.d5 r1, r19
+# CHECK: 19d8: f0 4e 4f 3d mov.d5 r26, r15
+# CHECK: 19dc: f0 4e 43 30 mov.d5 r0, r3
+# CHECK: 19e0: f0 0e 5f 3b mov.d5 r22, dc7
+# CHECK: 19e4: f0 8e d5 3b mov.d5 r23, p5
+# CHECK: 19e8: f0 8e db 32 mov.d5 r5, s3
+# CHECK: 19ec: f0 8e 40 3c mov.d5 r24, packsign0
+# CHECK: 19f0: f0 4e de 3c mov.d5 r25, r30
+# CHECK: 19f4: f0 4e 57 3f mov.d5 r30, r23
+# CHECK: 19f8: f0 0e c3 35 mov.d5 r11, dc0
+# CHECK: 19fc: f0 8e d0 36 mov.d5 r13, packsign1
+# CHECK: 1a00: f0 0e cc 3d mov.d5 r27, m3
+# CHECK: 1a04: f0 8e c4 39 mov.d5 r19, upssign0
+# CHECK: 1a08: f0 0e de 3e mov.d5 r29, dj7
+# CHECK: 1a0c: f0 ce 40 32 mov.d5 r4, ls
+# CHECK: 1a10: f0 4e 4c 38 mov.d5 r16, r12
+# CHECK: 1a14: f0 8e 47 33 mov.d5 r6, core_id
+# CHECK: 1a18: f0 8e 46 36 mov.d5 r12, unpacksign0
+# CHECK: 1a1c: f0 4e c4 3f mov.d5 r31, r4
+# CHECK: 1a20: f0 8e cb 3a mov.d5 r21, s1
+# CHECK: 1a24: f0 4e c5 33 mov.d5 r7, r5
+# CHECK: 1a28: f0 0e c0 38 mov.d5 r17, m0
+# CHECK: 1a2c: f0 0e d2 31 mov.d5 r3, dj4
+# CHECK: 1a30: f0 8e 49 3a mov.d5 r20, p2
+# CHECK: 1a34: f0 8e d9 34 mov.d5 r9, p6
+# CHECK: 1a38: f0 0e 51 37 mov.d5 r14, dn4
+# CHECK: 1a3c: f0 0e 49 35 mov.d5 r10, dn2
+# CHECK: 1a40: f0 8e 43 3e mov.d5 r28, s0
+# CHECK: 1a44: f0 8e c8 37 mov.d5 r15, vaddsign0
+# CHECK: 1a48: f0 0e 56 34 mov.d5 r8, dj5
+# CHECK: 1a4c: f0 0e 5b 39 mov.d5 r18, dc6
+# CHECK: 1a50: f0 8e 56 31 mov.d5 r2, unpacksign1
+# CHECK: 1a54: f0 8e d4 30 mov.d5 r1, upssign1
+# CHECK: 1a58: f0 4e 42 3d mov.d5 r26, r2
+# CHECK: 1a5c: f0 4e 48 30 mov.d5 r0, r8
+# CHECK: 1a60: f0 8e 52 3b mov.d5 r22, srssign1
+# CHECK: 1a64: f0 0e d3 3b mov.d5 r23, dc4
+# CHECK: 1a68: f0 0e cf 32 mov.d5 r5, dc3
+# CHECK: 1a6c: f0 0e 5a 3c mov.d5 r24, dj6
+# CHECK: 1a70: f0 4e dc 3c mov.d5 r25, r28
+# CHECK: 1a74: f0 4e 5f 3f mov.d5 r30, r31
+# CHECK: 1a78: f0 4e d8 35 mov.d5 r11, r24
+# CHECK: 1a7c: f0 4e d2 36 mov.d5 r13, r18
+# CHECK: 1a80: f0 0e c5 3d mov.d5 r27, dn1
+# CHECK: 1a84: f0 4e ce 39 mov.d5 r19, r14
+# CHECK: 1a88: f0 8e dd 3e mov.d5 r29, p7
+# CHECK: 1a8c: f0 8e 58 32 mov.d5 r4, vaddsign1
+# CHECK: 1a90: f0 0e 4d 38 mov.d5 r16, dn3
+# CHECK: 1a94: f0 4e 5b 33 mov.d5 r6, r27
+# CHECK: 1a98: f0 8e 57 36 mov.d5 r12, le
+# CHECK: 1a9c: f0 8e c5 3f mov.d5 r31, p1
+# CHECK: 1aa0: f0 4e cd 3a mov.d5 r21, r13
+# CHECK: 1aa4: f0 4e c7 33 mov.d5 r7, r7
+# CHECK: 1aa8: f0 4e d9 38 mov.d5 r17, r25
+# CHECK: 1aac: f0 0e dc 31 mov.d5 r3, m7
+# CHECK: 1ab0: f0 4e 4b 3a mov.d5 r20, r11
+# CHECK: 1ab4: f0 4e dd 34 mov.d5 r9, r29
+# CHECK: 1ab8: f0 4e 41 37 mov.d5 r14, r1
+# CHECK: 1abc: f0 4e 46 35 mov.d5 r10, r6
+# CHECK: 1ac0: f0 0e 48 3e mov.d5 r28, m2
+# CHECK: 1ac4: f0 8e cf 37 mov.d5 r15, lc
+# CHECK: 1ac8: f0 4e 50 34 mov.d5 r8, r16
+# CHECK: 1acc: f0 0e 41 39 mov.d5 r18, dn0
+# CHECK: 1ad0: f0 8e 51 31 mov.d5 r2, p4
+# CHECK: 1ad4: f0 0e d5 30 mov.d5 r1, dn5
+# CHECK: 1ad8: f0 8e 41 3d mov.d5 r26, p0
+# CHECK: 1adc: f0 8e 5f 30 mov.d5 r0, lr
+# CHECK: 1ae0: f0 4e 40 3b mov.d5 r22, r0
+# CHECK: 1ae4: f0 4e d6 3b mov.d5 r23, r22
+# CHECK: 1ae8: f0 4e d4 32 mov.d5 r5, r20
+# CHECK: 1aec: f0 0e 4a 3c mov.d5 r24, dj2
+# CHECK: 1af0: f0 0e d4 3c mov.d5 r25, m5
+# CHECK: 1af4: f0 4e 49 3f mov.d5 r30, r9
+# CHECK: 1af8: f0 8e c2 35 mov.d5 r11, srssign0
+# CHECK: 1afc: f0 0e d9 36 mov.d5 r13, dn6
+# CHECK: 1b00: f0 0e c4 3d mov.d5 r27, m1
+# CHECK: 1b04: f0 0e ce 39 mov.d5 r19, dj3
+# CHECK: 1b08: f0 4e d5 3e mov.d5 r29, r21
+# CHECK: 1b0c: f0 0e 5d 32 mov.d5 r4, dn7
+# CHECK: 1b10: f0 2e 51 36 mov.d6 r12, dn4
+# CHECK: 1b14: f0 6e d7 36 mov.d6 r13, r23
+# CHECK: 1b18: f0 6e c3 3a mov.d6 r21, r3
+# CHECK: 1b1c: f0 ee c0 3b mov.d6 r23, ls
+# CHECK: 1b20: f0 6e d6 39 mov.d6 r19, r22
+# CHECK: 1b24: f0 6e 45 3c mov.d6 r24, r5
+# CHECK: 1b28: f0 6e c8 3e mov.d6 r29, r8
+# CHECK: 1b2c: f0 6e 4f 3f mov.d6 r30, r15
+# CHECK: 1b30: f0 ae c4 38 mov.d6 r17, upssign0
+# CHECK: 1b34: f0 2e 59 31 mov.d6 r2, dn6
+# CHECK: 1b38: f0 6e c7 3f mov.d6 r31, r7
+# CHECK: 1b3c: f0 ae 51 3b mov.d6 r22, p4
+# CHECK: 1b40: f0 2e 57 32 mov.d6 r4, dc5
+# CHECK: 1b44: f0 6e dd 3d mov.d6 r27, r29
+# CHECK: 1b48: f0 6e d1 37 mov.d6 r15, r17
+# CHECK: 1b4c: f0 ae d7 31 mov.d6 r3, le
+# CHECK: 1b50: f0 ae 5b 39 mov.d6 r18, s3
+# CHECK: 1b54: f0 6e 54 3d mov.d6 r26, r20
+# CHECK: 1b58: f0 2e c1 34 mov.d6 r9, dn0
+# CHECK: 1b5c: f0 ae c7 33 mov.d6 r7, core_id
+# CHECK: 1b60: f0 6e 58 3a mov.d6 r20, r24
+# CHECK: 1b64: f0 2e 5c 35 mov.d6 r10, m7
+# CHECK: 1b68: f0 ee c8 35 mov.d6 r11, sp
+# CHECK: 1b6c: f0 6e 4e 38 mov.d6 r16, r14
+# CHECK: 1b70: f0 2e cf 32 mov.d6 r5, dc3
+# CHECK: 1b74: f0 2e c2 3c mov.d6 r25, dj0
+# CHECK: 1b78: f0 2e 45 37 mov.d6 r14, dn1
+# CHECK: 1b7c: f0 6e c0 30 mov.d6 r1, r0
+# CHECK: 1b80: f0 ae 5d 30 mov.d6 r0, p7
+# CHECK: 1b84: f0 2e 58 34 mov.d6 r8, m6
+# CHECK: 1b88: f0 6e 50 3e mov.d6 r28, r16
+# CHECK: 1b8c: f0 6e 4d 33 mov.d6 r6, r13
+# CHECK: 1b90: f0 2e 4e 36 mov.d6 r12, dj3
+# CHECK: 1b94: f0 ae c9 36 mov.d6 r13, p2
+# CHECK: 1b98: f0 ae d2 3a mov.d6 r21, srssign1
+# CHECK: 1b9c: f0 2e d3 3b mov.d6 r23, dc4
+# CHECK: 1ba0: f0 6e ca 39 mov.d6 r19, r10
+# CHECK: 1ba4: f0 6e 49 3c mov.d6 r24, r9
+# CHECK: 1ba8: f0 ae d5 3e mov.d6 r29, p5
+# CHECK: 1bac: f0 ae 56 3f mov.d6 r30, unpacksign1
+# CHECK: 1bb0: f0 6e dc 38 mov.d6 r17, r28
+# CHECK: 1bb4: f0 2e 5a 31 mov.d6 r2, dj6
+# CHECK: 1bb8: f0 ae cd 3f mov.d6 r31, p3
+# CHECK: 1bbc: f0 2e 54 3b mov.d6 r22, m5
+# CHECK: 1bc0: f0 2e 52 32 mov.d6 r4, dj4
+# CHECK: 1bc4: f0 2e c3 3d mov.d6 r27, dc0
+# CHECK: 1bc8: f0 2e c0 37 mov.d6 r15, m0
+# CHECK: 1bcc: f0 6e d9 31 mov.d6 r3, r25
+# CHECK: 1bd0: f0 6e 4b 39 mov.d6 r18, r11
+# CHECK: 1bd4: f0 ae 5f 3d mov.d6 r26, lr
+# CHECK: 1bd8: f0 ae cf 34 mov.d6 r9, lc
+# CHECK: 1bdc: f0 6e db 33 mov.d6 r7, r27
+# CHECK: 1be0: f0 6e 4c 3a mov.d6 r20, r12
+# CHECK: 1be4: f0 2e 4d 35 mov.d6 r10, dn3
+# CHECK: 1be8: f0 2e db 35 mov.d6 r11, dc6
+# CHECK: 1bec: f0 ae 58 38 mov.d6 r16, vaddsign1
+# CHECK: 1bf0: f0 6e df 32 mov.d6 r5, r31
+# CHECK: 1bf4: f0 ae c0 3c mov.d6 r25, packsign0
+# CHECK: 1bf8: f0 ae 45 37 mov.d6 r14, p1
+# CHECK: 1bfc: f0 6e de 30 mov.d6 r1, r30
+# CHECK: 1c00: f0 2e 4c 30 mov.d6 r0, m3
+# CHECK: 1c04: f0 ae 48 34 mov.d6 r8, vaddsign0
+# CHECK: 1c08: f0 2e 46 3e mov.d6 r28, dj1
+# CHECK: 1c0c: f0 ae 54 33 mov.d6 r6, upssign1
+# CHECK: 1c10: f0 6e 46 36 mov.d6 r12, r6
+# CHECK: 1c14: f0 6e da 36 mov.d6 r13, r26
+# CHECK: 1c18: f0 ae c6 3a mov.d6 r21, unpacksign0
+# CHECK: 1c1c: f0 ae c2 3b mov.d6 r23, srssign0
+# CHECK: 1c20: f0 2e c8 39 mov.d6 r19, m2
+# CHECK: 1c24: f0 6e 53 3c mov.d6 r24, r19
+# CHECK: 1c28: f0 2e c4 3e mov.d6 r29, m1
+# CHECK: 1c2c: f0 2e 55 3f mov.d6 r30, dn5
+# CHECK: 1c30: f0 ae d3 38 mov.d6 r17, s2
+# CHECK: 1c34: f0 2e 5e 31 mov.d6 r2, dj7
+# CHECK: 1c38: f0 2e c9 3f mov.d6 r31, dn2
+# CHECK: 1c3c: f0 ae 43 3b mov.d6 r22, s0
+# CHECK: 1c40: f0 2e 47 32 mov.d6 r4, dc1
+# CHECK: 1c44: f0 ae cb 3d mov.d6 r27, s1
+# CHECK: 1c48: f0 2e d6 37 mov.d6 r15, dj5
+# CHECK: 1c4c: f0 ae d0 31 mov.d6 r3, packsign1
+# CHECK: 1c50: f0 ae 41 39 mov.d6 r18, p0
+# CHECK: 1c54: f0 2e 5f 3d mov.d6 r26, dc7
+# CHECK: 1c58: f0 2e dd 34 mov.d6 r9, dn7
+# CHECK: 1c5c: f0 2e cb 33 mov.d6 r7, dc2
+# CHECK: 1c60: f0 6e 42 3a mov.d6 r20, r2
+# CHECK: 1c64: f0 6e 55 35 mov.d6 r10, r21
+# CHECK: 1c68: f0 ae d9 35 mov.d6 r11, p6
+# CHECK: 1c6c: f0 6e 44 38 mov.d6 r16, r4
+# CHECK: 1c70: f0 6e d2 32 mov.d6 r5, r18
+# CHECK: 1c74: f0 6e c1 3c mov.d6 r25, r1
+# CHECK: 1c78: f0 2e 50 37 mov.d6 r14, m4
+# CHECK: 1c7c: f0 2e ca 30 mov.d6 r1, dj2
+# CHECK: 1c80: 30 7e 01 08 mov.nb r5, ss
+# CHECK: 1c84: 30 3e 01 08 mov.nb r4, ss
+# CHECK: 1c88: 30 7e 02 08 mov.nb r9, ss
+# CHECK: 1c8c: 30 3e 06 08 mov.nb r24, ss
+# CHECK: 1c90: 30 fe 04 08 mov.nb r19, ss
+# CHECK: 1c94: 30 3e 04 08 mov.nb r16, ss
+# CHECK: 1c98: 30 fe 06 08 mov.nb r27, ss
+# CHECK: 1c9c: 30 7e 04 08 mov.nb r17, ss
+# CHECK: 1ca0: 30 fe 02 08 mov.nb r11, ss
+# CHECK: 1ca4: 30 fe 01 08 mov.nb r7, ss
+# CHECK: 1ca8: 30 7e 05 08 mov.nb r21, ss
+# CHECK: 1cac: 30 3e 07 08 mov.nb r28, ss
+# CHECK: 1cb0: 30 7e 03 08 mov.nb r13, ss
+# CHECK: 1cb4: 30 3e 02 08 mov.nb r8, ss
+# CHECK: 1cb8: 30 fe 03 08 mov.nb r15, ss
+# CHECK: 1cbc: 30 fe 00 08 mov.nb r3, ss
+# CHECK: 1cc0: 30 3e 05 08 mov.nb r20, ss
+# CHECK: 1cc4: 30 7e 06 08 mov.nb r25, ss
+# CHECK: 1cc8: 30 be 04 08 mov.nb r18, ss
+# CHECK: 1ccc: 30 be 05 08 mov.nb r22, ss
+# CHECK: 1cd0: 30 7e 07 08 mov.nb r29, ss
+# CHECK: 1cd4: 30 be 06 08 mov.nb r26, ss
+# CHECK: 1cd8: 30 7e 00 08 mov.nb r1, ss
+# CHECK: 1cdc: 30 be 00 08 mov.nb r2, ss
+# CHECK: 1ce0: 30 be 01 08 mov.nb r6, ss
+# CHECK: 1ce4: 30 fe 05 08 mov.nb r23, ss
+# CHECK: 1ce8: 30 be 02 08 mov.nb r10, ss
+# CHECK: 1cec: 30 3e 00 08 mov.nb r0, ss
+# CHECK: 1cf0: 30 fe 07 08 mov.nb r31, ss
+# CHECK: 1cf4: 30 3e 03 08 mov.nb r12, ss
+# CHECK: 1cf8: 30 be 03 08 mov.nb r14, ss
+# CHECK: 1cfc: 30 be 07 08 mov.nb r30, ss
+# CHECK: 1d00: b0 d5 a1 14 mov.nb ms, dj3
+# CHECK: 1d04: b0 d5 a3 14 mov.nb ms, dj7
+# CHECK: 1d08: b0 f5 a1 14 mov.nb ms, dc3
+# CHECK: 1d0c: b0 65 a0 14 mov.nb ms, r3
+# CHECK: 1d10: b0 95 a1 14 mov.nb ms, m3
+# CHECK: 1d14: b0 b5 a1 14 mov.nb ms, dn3
+# CHECK: 1d18: b0 75 a0 14 mov.nb ms, dc0
+# CHECK: 1d1c: b0 a5 a3 14 mov.nb ms, r29
+# CHECK: 1d20: b0 e5 a1 14 mov.nb ms, r15
+# CHECK: 1d24: b0 35 a1 14 mov.nb ms, dn2
+# CHECK: 1d28: b0 f5 a3 14 mov.nb ms, dc7
+# CHECK: 1d2c: b0 6d a3 14 mov.nb ms, p6
+# CHECK: 1d30: b0 65 a1 14 mov.nb ms, r11
+# CHECK: 1d34: b0 25 a2 14 mov.nb ms, r17
+# CHECK: 1d38: b0 15 a1 14 mov.nb ms, m2
+# CHECK: 1d3c: b0 6d a0 14 mov.nb ms, p0
+# CHECK: 1d40: b0 45 a0 14 mov.nb ms, r2
+# CHECK: 1d44: b0 b5 a0 14 mov.nb ms, dn1
+# CHECK: 1d48: b0 75 a1 14 mov.nb ms, dc2
+# CHECK: 1d4c: b0 15 a3 14 mov.nb ms, m6
+# CHECK: 1d50: b0 85 a0 14 mov.nb ms, r4
+# CHECK: 1d54: b0 e5 a2 14 mov.nb ms, r23
+# CHECK: 1d58: b0 05 a1 14 mov.nb ms, r8
+# CHECK: 1d5c: b0 55 a1 14 mov.nb ms, dj2
+# CHECK: 1d60: b0 ed a0 14 mov.nb ms, p1
+# CHECK: 1d64: b0 75 a2 14 mov.nb ms, dc4
+# CHECK: 1d68: b0 95 a0 14 mov.nb ms, m1
+# CHECK: 1d6c: b0 85 a1 14 mov.nb ms, r12
+# CHECK: 1d70: b0 95 a2 14 mov.nb ms, m5
+# CHECK: 1d74: b0 55 a0 14 mov.nb ms, dj0
+# CHECK: 1d78: b0 c5 a2 14 mov.nb ms, r22
+# CHECK: 1d7c: b0 25 a1 14 mov.nb ms, r9
+# CHECK: 1d80: b0 6d a1 14 mov.nb ms, p2
+# CHECK: 1d84: b0 05 a2 14 mov.nb ms, r16
+# CHECK: 1d88: b0 35 a0 14 mov.nb ms, dn0
+# CHECK: 1d8c: b0 15 a0 14 mov.nb ms, m0
+# CHECK: 1d90: b0 ed a2 14 mov.nb ms, p5
+# CHECK: 1d94: b0 15 a2 14 mov.nb ms, m4
+# CHECK: 1d98: b0 05 a0 14 mov.nb ms, r0
+# CHECK: 1d9c: b0 45 a2 14 mov.nb ms, r18
+# CHECK: 1da0: b0 25 a0 14 mov.nb ms, r1
+# CHECK: 1da4: b0 c5 a3 14 mov.nb ms, r30
+# CHECK: 1da8: b0 ed a1 14 mov.nb ms, p3
+# CHECK: 1dac: b0 65 a2 14 mov.nb ms, r19
+# CHECK: 1db0: b0 e5 a3 14 mov.nb ms, r31
+# CHECK: 1db4: b0 b5 a3 14 mov.nb ms, dn7
+# CHECK: 1db8: b0 75 a3 14 mov.nb ms, dc6
+# CHECK: 1dbc: b0 35 a3 14 mov.nb ms, dn6
+# CHECK: 1dc0: b0 a5 a0 14 mov.nb ms, r5
+# CHECK: 1dc4: b0 65 a3 14 mov.nb ms, r27
+# CHECK: 1dc8: b0 35 a2 14 mov.nb ms, dn4
+# CHECK: 1dcc: b0 d5 a0 14 mov.nb ms, dj1
+# CHECK: 1dd0: b0 55 a3 14 mov.nb ms, dj6
+# CHECK: 1dd4: b0 a5 a2 14 mov.nb ms, r21
+# CHECK: 1dd8: b0 85 a3 14 mov.nb ms, r28
+# CHECK: 1ddc: b0 b5 a2 14 mov.nb ms, dn5
+# CHECK: 1de0: b0 a5 a1 14 mov.nb ms, r13
+# CHECK: 1de4: b0 85 a2 14 mov.nb ms, r20
+# CHECK: 1de8: b0 c5 a1 14 mov.nb ms, r14
+# CHECK: 1dec: b0 ed a3 14 mov.nb ms, p7
+# CHECK: 1df0: b0 45 a1 14 mov.nb ms, r10
+# CHECK: 1df4: b0 45 a3 14 mov.nb ms, r26
+# CHECK: 1df8: b0 25 a3 14 mov.nb ms, r25
+# CHECK: 1dfc: b0 55 a2 14 mov.nb ms, dj4
+# CHECK: 1e00: b0 05 a3 14 mov.nb ms, r24
+# CHECK: 1e04: b0 95 a3 14 mov.nb ms, m7
+# CHECK: 1e08: b0 f5 a2 14 mov.nb ms, dc5
+# CHECK: 1e0c: b0 f5 a0 14 mov.nb ms, dc1
+# CHECK: 1e10: b0 6d a2 14 mov.nb ms, p4
+# CHECK: 1e14: b0 c5 a0 14 mov.nb ms, r6
+# CHECK: 1e18: b0 d5 a2 14 mov.nb ms, dj5
+# CHECK: 1e1c: b0 e5 a0 14 mov.nb ms, r7
+# CHECK: 1e20: b0 e5 a2 16 mov.nb ms, r23, r28
+# CHECK: 1e24: b0 a5 a0 16 mov.nb ms, r5, r28
+# CHECK: 1e28: b0 c5 a3 16 mov.nb ms, r30, r28
+# CHECK: 1e2c: b0 75 a1 16 mov.nb ms, dc2, r28
+# CHECK: 1e30: b0 85 a3 16 mov.nb ms, r28, r28
+# CHECK: 1e34: b0 05 a0 16 mov.nb ms, r0, r28
+# CHECK: 1e38: b0 15 a0 16 mov.nb ms, m0, r28
+# CHECK: 1e3c: b0 6d a2 16 mov.nb ms, p4, r28
+# CHECK: 1e40: b0 35 a0 16 mov.nb ms, dn0, r28
+# CHECK: 1e44: b0 15 a3 16 mov.nb ms, m6, r28
+# CHECK: 1e48: b0 95 a0 16 mov.nb ms, m1, r28
+# CHECK: 1e4c: b0 05 a1 16 mov.nb ms, r8, r28
+# CHECK: 1e50: b0 25 a3 16 mov.nb ms, r25, r28
+# CHECK: 1e54: b0 b5 a1 16 mov.nb ms, dn3, r28
+# CHECK: 1e58: b0 85 a0 16 mov.nb ms, r4, r28
+# CHECK: 1e5c: b0 ed a0 16 mov.nb ms, p1, r28
+# CHECK: 1e60: b0 45 a3 16 mov.nb ms, r26, r28
+# CHECK: 1e64: b0 55 a0 16 mov.nb ms, dj0, r28
+# CHECK: 1e68: b0 ed a1 16 mov.nb ms, p3, r28
+# CHECK: 1e6c: b0 15 a2 16 mov.nb ms, m4, r28
+# CHECK: 1e70: b0 ed a3 16 mov.nb ms, p7, r28
+# CHECK: 1e74: b0 f5 a3 16 mov.nb ms, dc7, r28
+# CHECK: 1e78: b0 85 a1 16 mov.nb ms, r12, r28
+# CHECK: 1e7c: b0 35 a3 16 mov.nb ms, dn6, r28
+# CHECK: 1e80: b0 55 a3 16 mov.nb ms, dj6, r28
+# CHECK: 1e84: b0 55 a2 16 mov.nb ms, dj4, r28
+# CHECK: 1e88: b0 45 a2 16 mov.nb ms, r18, r28
+# CHECK: 1e8c: b0 35 a2 16 mov.nb ms, dn4, r28
+# CHECK: 1e90: b0 a5 a2 16 mov.nb ms, r21, r28
+# CHECK: 1e94: b0 65 a2 16 mov.nb ms, r19, r28
+# CHECK: 1e98: b0 a5 a3 16 mov.nb ms, r29, r28
+# CHECK: 1e9c: b0 d5 a0 16 mov.nb ms, dj1, r28
+# CHECK: 1ea0: b0 25 a2 16 mov.nb ms, r17, r28
+# CHECK: 1ea4: b0 35 a1 16 mov.nb ms, dn2, r28
+# CHECK: 1ea8: b0 05 a3 16 mov.nb ms, r24, r28
+# CHECK: 1eac: b0 f5 a1 16 mov.nb ms, dc3, r28
+# CHECK: 1eb0: b0 45 a0 16 mov.nb ms, r2, r28
+# CHECK: 1eb4: b0 d5 a3 16 mov.nb ms, dj7, r28
+# CHECK: 1eb8: b0 25 a0 16 mov.nb ms, r1, r28
+# CHECK: 1ebc: b0 f5 a2 16 mov.nb ms, dc5, r28
+# CHECK: 1ec0: b0 95 a3 16 mov.nb ms, m7, r28
+# CHECK: 1ec4: b0 15 a1 16 mov.nb ms, m2, r28
+# CHECK: 1ec8: b0 f5 a0 16 mov.nb ms, dc1, r28
+# CHECK: 1ecc: b0 6d a3 16 mov.nb ms, p6, r28
+# CHECK: 1ed0: b0 65 a3 16 mov.nb ms, r27, r28
+# CHECK: 1ed4: b0 b5 a0 16 mov.nb ms, dn1, r28
+# CHECK: 1ed8: b0 a5 a1 16 mov.nb ms, r13, r28
+# CHECK: 1edc: b0 b5 a3 16 mov.nb ms, dn7, r28
+# CHECK: 1ee0: b0 e5 a0 16 mov.nb ms, r7, r28
+# CHECK: 1ee4: b0 45 a1 16 mov.nb ms, r10, r28
+# CHECK: 1ee8: b0 ed a2 16 mov.nb ms, p5, r28
+# CHECK: 1eec: b0 25 a1 16 mov.nb ms, r9, r28
+# CHECK: 1ef0: b0 c5 a0 16 mov.nb ms, r6, r28
+# CHECK: 1ef4: b0 75 a3 16 mov.nb ms, dc6, r28
+# CHECK: 1ef8: b0 b5 a2 16 mov.nb ms, dn5, r28
+# CHECK: 1efc: b0 55 a1 16 mov.nb ms, dj2, r28
+# CHECK: 1f00: b0 c5 a1 16 mov.nb ms, r14, r28
+# CHECK: 1f04: b0 c5 a2 16 mov.nb ms, r22, r28
+# CHECK: 1f08: b0 6d a0 16 mov.nb ms, p0, r28
+# CHECK: 1f0c: b0 e5 a1 16 mov.nb ms, r15, r28
+# CHECK: 1f10: b0 6d a1 16 mov.nb ms, p2, r28
+# CHECK: 1f14: b0 85 a2 16 mov.nb ms, r20, r28
+# CHECK: 1f18: b0 05 a2 16 mov.nb ms, r16, r28
+# CHECK: 1f1c: b0 95 a1 16 mov.nb ms, m3, r28
+# CHECK: 1f20: b0 75 a2 16 mov.nb ms, dc4, r28
+# CHECK: 1f24: b0 d5 a2 16 mov.nb ms, dj5, r28
+# CHECK: 1f28: b0 d5 a1 16 mov.nb ms, dj3, r28
+# CHECK: 1f2c: b0 e5 a3 16 mov.nb ms, r31, r28
+# CHECK: 1f30: b0 75 a0 16 mov.nb ms, dc0, r28
+# CHECK: 1f34: b0 65 a0 16 mov.nb ms, r3, r28
+# CHECK: 1f38: b0 95 a2 16 mov.nb ms, m5, r28
+# CHECK: 1f3c: b0 65 a1 16 mov.nb ms, r11, r28
+# CHECK: 1f40: b0 25 a0 15 mov.nb.tlast ms, r1
+# CHECK: 1f44: b0 25 a1 15 mov.nb.tlast ms, r9
+# CHECK: 1f48: b0 ed a0 15 mov.nb.tlast ms, p1
+# CHECK: 1f4c: b0 c5 a0 15 mov.nb.tlast ms, r6
+# CHECK: 1f50: b0 45 a1 15 mov.nb.tlast ms, r10
+# CHECK: 1f54: b0 6d a1 15 mov.nb.tlast ms, p2
+# CHECK: 1f58: b0 e5 a3 15 mov.nb.tlast ms, r31
+# CHECK: 1f5c: b0 25 a3 15 mov.nb.tlast ms, r25
+# CHECK: 1f60: b0 85 a1 15 mov.nb.tlast ms, r12
+# CHECK: 1f64: b0 75 a3 15 mov.nb.tlast ms, dc6
+# CHECK: 1f68: b0 15 a3 15 mov.nb.tlast ms, m6
+# CHECK: 1f6c: b0 05 a0 15 mov.nb.tlast ms, r0
+# CHECK: 1f70: b0 6d a2 15 mov.nb.tlast ms, p4
+# CHECK: 1f74: b0 65 a1 15 mov.nb.tlast ms, r11
+# CHECK: 1f78: b0 65 a2 15 mov.nb.tlast ms, r19
+# CHECK: 1f7c: b0 d5 a3 15 mov.nb.tlast ms, dj7
+# CHECK: 1f80: b0 15 a0 15 mov.nb.tlast ms, m0
+# CHECK: 1f84: b0 95 a0 15 mov.nb.tlast ms, m1
+# CHECK: 1f88: b0 d5 a1 15 mov.nb.tlast ms, dj3
+# CHECK: 1f8c: b0 e5 a1 15 mov.nb.tlast ms, r15
+# CHECK: 1f90: b0 55 a2 15 mov.nb.tlast ms, dj4
+# CHECK: 1f94: b0 65 a3 15 mov.nb.tlast ms, r27
+# CHECK: 1f98: b0 f5 a1 15 mov.nb.tlast ms, dc3
+# CHECK: 1f9c: b0 c5 a3 15 mov.nb.tlast ms, r30
+# CHECK: 1fa0: b0 15 a2 15 mov.nb.tlast ms, m4
+# CHECK: 1fa4: b0 a5 a0 15 mov.nb.tlast ms, r5
+# CHECK: 1fa8: b0 75 a2 15 mov.nb.tlast ms, dc4
+# CHECK: 1fac: b0 75 a1 15 mov.nb.tlast ms, dc2
+# CHECK: 1fb0: b0 d5 a0 15 mov.nb.tlast ms, dj1
+# CHECK: 1fb4: b0 b5 a1 15 mov.nb.tlast ms, dn3
+# CHECK: 1fb8: b0 85 a3 15 mov.nb.tlast ms, r28
+# CHECK: 1fbc: b0 55 a1 15 mov.nb.tlast ms, dj2
+# CHECK: 1fc0: b0 65 a0 15 mov.nb.tlast ms, r3
+# CHECK: 1fc4: b0 a5 a1 15 mov.nb.tlast ms, r13
+# CHECK: 1fc8: b0 b5 a2 15 mov.nb.tlast ms, dn5
+# CHECK: 1fcc: b0 f5 a2 15 mov.nb.tlast ms, dc5
+# CHECK: 1fd0: b0 c5 a2 15 mov.nb.tlast ms, r22
+# CHECK: 1fd4: b0 a5 a2 15 mov.nb.tlast ms, r21
+# CHECK: 1fd8: b0 95 a3 15 mov.nb.tlast ms, m7
+# CHECK: 1fdc: b0 e5 a0 15 mov.nb.tlast ms, r7
+# CHECK: 1fe0: b0 15 a1 15 mov.nb.tlast ms, m2
+# CHECK: 1fe4: b0 95 a2 15 mov.nb.tlast ms, m5
+# CHECK: 1fe8: b0 55 a0 15 mov.nb.tlast ms, dj0
+# CHECK: 1fec: b0 f5 a0 15 mov.nb.tlast ms, dc1
+# CHECK: 1ff0: b0 35 a0 15 mov.nb.tlast ms, dn0
+# CHECK: 1ff4: b0 55 a3 15 mov.nb.tlast ms, dj6
+# CHECK: 1ff8: b0 b5 a3 15 mov.nb.tlast ms, dn7
+# CHECK: 1ffc: b0 45 a0 15 mov.nb.tlast ms, r2
+# CHECK: 2000: b0 05 a3 15 mov.nb.tlast ms, r24
+# CHECK: 2004: b0 35 a2 15 mov.nb.tlast ms, dn4
+# CHECK: 2008: b0 c5 a1 15 mov.nb.tlast ms, r14
+# CHECK: 200c: b0 d5 a2 15 mov.nb.tlast ms, dj5
+# CHECK: 2010: b0 f5 a3 15 mov.nb.tlast ms, dc7
+# CHECK: 2014: b0 6d a0 15 mov.nb.tlast ms, p0
+# CHECK: 2018: b0 85 a0 15 mov.nb.tlast ms, r4
+# CHECK: 201c: b0 ed a1 15 mov.nb.tlast ms, p3
+# CHECK: 2020: b0 a5 a3 15 mov.nb.tlast ms, r29
+# CHECK: 2024: b0 45 a3 15 mov.nb.tlast ms, r26
+# CHECK: 2028: b0 45 a2 15 mov.nb.tlast ms, r18
+# CHECK: 202c: b0 35 a3 15 mov.nb.tlast ms, dn6
+# CHECK: 2030: b0 75 a0 15 mov.nb.tlast ms, dc0
+# CHECK: 2034: b0 ed a2 15 mov.nb.tlast ms, p5
+# CHECK: 2038: b0 05 a2 15 mov.nb.tlast ms, r16
+# CHECK: 203c: b0 95 a1 15 mov.nb.tlast ms, m3
+# CHECK: 2040: b0 b5 a0 15 mov.nb.tlast ms, dn1
+# CHECK: 2044: b0 35 a1 15 mov.nb.tlast ms, dn2
+# CHECK: 2048: b0 ed a3 15 mov.nb.tlast ms, p7
+# CHECK: 204c: b0 05 a1 15 mov.nb.tlast ms, r8
+# CHECK: 2050: b0 6d a3 15 mov.nb.tlast ms, p6
+# CHECK: 2054: b0 25 a2 15 mov.nb.tlast ms, r17
+# CHECK: 2058: b0 e5 a2 15 mov.nb.tlast ms, r23
+# CHECK: 205c: b0 85 a2 15 mov.nb.tlast ms, r20
+# CHECK: 2060: b0 45 a0 11 mov.tlast ms, r2
+# CHECK: 2064: b0 85 a1 11 mov.tlast ms, r12
+# CHECK: 2068: b0 c5 a1 11 mov.tlast ms, r14
+# CHECK: 206c: b0 25 a3 11 mov.tlast ms, r25
+# CHECK: 2070: b0 45 a3 11 mov.tlast ms, r26
+# CHECK: 2074: b0 85 a3 11 mov.tlast ms, r28
+# CHECK: 2078: b0 e5 a2 11 mov.tlast ms, r23
+# CHECK: 207c: b0 ed a0 11 mov.tlast ms, p1
+# CHECK: 2080: b0 95 a0 11 mov.tlast ms, m1
+# CHECK: 2084: b0 d5 a1 11 mov.tlast ms, dj3
+# CHECK: 2088: b0 05 a3 11 mov.tlast ms, r24
+# CHECK: 208c: b0 c5 a2 11 mov.tlast ms, r22
+# CHECK: 2090: b0 75 a0 11 mov.tlast ms, dc0
+# CHECK: 2094: b0 f5 a2 11 mov.tlast ms, dc5
+# CHECK: 2098: b0 75 a3 11 mov.tlast ms, dc6
+# CHECK: 209c: b0 15 a2 11 mov.tlast ms, m4
+# CHECK: 20a0: b0 6d a3 11 mov.tlast ms, p6
+# CHECK: 20a4: b0 15 a3 11 mov.tlast ms, m6
+# CHECK: 20a8: b0 d5 a3 11 mov.tlast ms, dj7
+# CHECK: 20ac: b0 35 a0 11 mov.tlast ms, dn0
+# CHECK: 20b0: b0 25 a0 11 mov.tlast ms, r1
+# CHECK: 20b4: b0 65 a2 11 mov.tlast ms, r19
+# CHECK: 20b8: b0 55 a2 11 mov.tlast ms, dj4
+# CHECK: 20bc: b0 75 a2 11 mov.tlast ms, dc4
+# CHECK: 20c0: b0 b5 a3 11 mov.tlast ms, dn7
+# CHECK: 20c4: b0 45 a1 11 mov.tlast ms, r10
+# CHECK: 20c8: b0 b5 a0 11 mov.tlast ms, dn1
+# CHECK: 20cc: b0 c5 a3 11 mov.tlast ms, r30
+# CHECK: 20d0: b0 f5 a0 11 mov.tlast ms, dc1
+# CHECK: 20d4: b0 25 a1 11 mov.tlast ms, r9
+# CHECK: 20d8: b0 55 a0 11 mov.tlast ms, dj0
+# CHECK: 20dc: b0 6d a2 11 mov.tlast ms, p4
+# CHECK: 20e0: b0 05 a0 11 mov.tlast ms, r0
+# CHECK: 20e4: b0 65 a3 11 mov.tlast ms, r27
+# CHECK: 20e8: b0 65 a1 11 mov.tlast ms, r11
+# CHECK: 20ec: b0 e5 a3 11 mov.tlast ms, r31
+# CHECK: 20f0: b0 f5 a3 11 mov.tlast ms, dc7
+# CHECK: 20f4: b0 35 a1 11 mov.tlast ms, dn2
+# CHECK: 20f8: b0 6d a1 11 mov.tlast ms, p2
+# CHECK: 20fc: b0 ed a3 11 mov.tlast ms, p7
+# CHECK: 2100: b0 d5 a0 11 mov.tlast ms, dj1
+# CHECK: 2104: b0 95 a2 11 mov.tlast ms, m5
+# CHECK: 2108: b0 85 a2 11 mov.tlast ms, r20
+# CHECK: 210c: b0 a5 a1 11 mov.tlast ms, r13
+# CHECK: 2110: b0 f5 a1 11 mov.tlast ms, dc3
+# CHECK: 2114: b0 95 a1 11 mov.tlast ms, m3
+# CHECK: 2118: b0 05 a1 11 mov.tlast ms, r8
+# CHECK: 211c: b0 6d a0 11 mov.tlast ms, p0
+# CHECK: 2120: b0 05 a2 11 mov.tlast ms, r16
+# CHECK: 2124: b0 55 a1 11 mov.tlast ms, dj2
+# CHECK: 2128: b0 55 a3 11 mov.tlast ms, dj6
+# CHECK: 212c: b0 75 a1 11 mov.tlast ms, dc2
+# CHECK: 2130: b0 ed a1 11 mov.tlast ms, p3
+# CHECK: 2134: b0 85 a0 11 mov.tlast ms, r4
+# CHECK: 2138: b0 e5 a1 11 mov.tlast ms, r15
+# CHECK: 213c: b0 35 a3 11 mov.tlast ms, dn6
+# CHECK: 2140: b0 45 a2 11 mov.tlast ms, r18
+# CHECK: 2144: b0 a5 a2 11 mov.tlast ms, r21
+# CHECK: 2148: b0 e5 a0 11 mov.tlast ms, r7
+# CHECK: 214c: b0 c5 a0 11 mov.tlast ms, r6
+# CHECK: 2150: b0 35 a2 11 mov.tlast ms, dn4
+# CHECK: 2154: b0 95 a3 11 mov.tlast ms, m7
+# CHECK: 2158: b0 ed a2 11 mov.tlast ms, p5
+# CHECK: 215c: b0 15 a0 11 mov.tlast ms, m0
+# CHECK: 2160: b0 d5 a2 11 mov.tlast ms, dj5
+# CHECK: 2164: b0 a5 a0 11 mov.tlast ms, r5
+# CHECK: 2168: b0 25 a2 11 mov.tlast ms, r17
+# CHECK: 216c: b0 65 a0 11 mov.tlast ms, r3
+# CHECK: 2170: b0 a5 a3 11 mov.tlast ms, r29
+# CHECK: 2174: b0 b5 a1 11 mov.tlast ms, dn3
+# CHECK: 2178: b0 b5 a2 11 mov.tlast ms, dn5
+# CHECK: 217c: b0 15 a1 11 mov.tlast ms, m2

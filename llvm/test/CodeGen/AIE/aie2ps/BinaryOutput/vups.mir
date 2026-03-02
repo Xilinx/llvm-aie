@@ -1,0 +1,374 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VUPS_2x_mv_ups_w2b_upsSign0
+    $bmhh2 = VUPS_2x_mv_ups_w2b_upsSign0 $wl9, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmhl2 = VUPS_2x_mv_ups_w2b_upsSign0 $wl6, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmhh4 = VUPS_2x_mv_ups_w2b_upsSign0 $wh8, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmlh1 = VUPS_2x_mv_ups_w2b_upsSign0 $wh6, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmll6 = VUPS_2x_mv_ups_w2b_upsSign0 $wh1, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmhh6 = VUPS_2x_mv_ups_w2b_upsSign0 $wh0, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmhl1 = VUPS_2x_mv_ups_w2b_upsSign0 $wl5, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmhh3 = VUPS_2x_mv_ups_w2b_upsSign0 $wh3, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmhh5 = VUPS_2x_mv_ups_w2b_upsSign0 $wh5, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmlh5 = VUPS_2x_mv_ups_w2b_upsSign0 $wh2, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmll3 = VUPS_2x_mv_ups_w2b_upsSign0 $wh11, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmll2 = VUPS_2x_mv_ups_w2b_upsSign0 $wl1, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmll5 = VUPS_2x_mv_ups_w2b_upsSign0 $wl8, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmhl5 = VUPS_2x_mv_ups_w2b_upsSign0 $wl4, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmhh0 = VUPS_2x_mv_ups_w2b_upsSign0 $wl0, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmlh3 = VUPS_2x_mv_ups_w2b_upsSign0 $wl11, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmlh4 = VUPS_2x_mv_ups_w2b_upsSign0 $wl3, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmhl0 = VUPS_2x_mv_ups_w2b_upsSign0 $wh7, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmhh7 = VUPS_2x_mv_ups_w2b_upsSign0 $wl2, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmhh1 = VUPS_2x_mv_ups_w2b_upsSign0 $wh10, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmlh6 = VUPS_2x_mv_ups_w2b_upsSign0 $wh9, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmll0 = VUPS_2x_mv_ups_w2b_upsSign0 $wh4, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmll4 = VUPS_2x_mv_ups_w2b_upsSign0 $wl7, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmhl3 = VUPS_2x_mv_ups_w2b_upsSign0 $wl10, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmhl7 = VUPS_2x_mv_ups_w2b_upsSign0 $wl9, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmll1 = VUPS_2x_mv_ups_w2b_upsSign0 $wl6, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmlh2 = VUPS_2x_mv_ups_w2b_upsSign0 $wh8, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmhl6 = VUPS_2x_mv_ups_w2b_upsSign0 $wh6, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmhl4 = VUPS_2x_mv_ups_w2b_upsSign0 $wh1, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmll7 = VUPS_2x_mv_ups_w2b_upsSign0 $wh0, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmlh7 = VUPS_2x_mv_ups_w2b_upsSign0 $wl5, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmlh0 = VUPS_2x_mv_ups_w2b_upsSign0 $wh3, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+
+    ; VUPS_2x_mv_ups_w2b_upsSign1
+    $bmll0 = VUPS_2x_mv_ups_w2b_upsSign1 $wl5, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmhh2 = VUPS_2x_mv_ups_w2b_upsSign1 $wl1, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmll1 = VUPS_2x_mv_ups_w2b_upsSign1 $wh7, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmhh7 = VUPS_2x_mv_ups_w2b_upsSign1 $wh11, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmlh3 = VUPS_2x_mv_ups_w2b_upsSign1 $wh6, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmlh2 = VUPS_2x_mv_ups_w2b_upsSign1 $wh2, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmll5 = VUPS_2x_mv_ups_w2b_upsSign1 $wh0, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmll4 = VUPS_2x_mv_ups_w2b_upsSign1 $wh8, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmlh1 = VUPS_2x_mv_ups_w2b_upsSign1 $wl10, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmlh7 = VUPS_2x_mv_ups_w2b_upsSign1 $wl11, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmlh5 = VUPS_2x_mv_ups_w2b_upsSign1 $wh5, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmhh5 = VUPS_2x_mv_ups_w2b_upsSign1 $wl2, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmhl2 = VUPS_2x_mv_ups_w2b_upsSign1 $wh3, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmhh3 = VUPS_2x_mv_ups_w2b_upsSign1 $wl0, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmhh4 = VUPS_2x_mv_ups_w2b_upsSign1 $wh9, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmhl3 = VUPS_2x_mv_ups_w2b_upsSign1 $wl7, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmhh0 = VUPS_2x_mv_ups_w2b_upsSign1 $wl3, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmlh6 = VUPS_2x_mv_ups_w2b_upsSign1 $wl6, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmll3 = VUPS_2x_mv_ups_w2b_upsSign1 $wl8, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmhl6 = VUPS_2x_mv_ups_w2b_upsSign1 $wh1, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmhh1 = VUPS_2x_mv_ups_w2b_upsSign1 $wl4, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmll2 = VUPS_2x_mv_ups_w2b_upsSign1 $wl9, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmhh6 = VUPS_2x_mv_ups_w2b_upsSign1 $wh4, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmhl7 = VUPS_2x_mv_ups_w2b_upsSign1 $wh10, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmlh0 = VUPS_2x_mv_ups_w2b_upsSign1 $wl5, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmll6 = VUPS_2x_mv_ups_w2b_upsSign1 $wl1, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmll7 = VUPS_2x_mv_ups_w2b_upsSign1 $wh7, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmhl1 = VUPS_2x_mv_ups_w2b_upsSign1 $wh11, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmhl0 = VUPS_2x_mv_ups_w2b_upsSign1 $wh6, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmlh4 = VUPS_2x_mv_ups_w2b_upsSign1 $wh2, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmhl5 = VUPS_2x_mv_ups_w2b_upsSign1 $wh0, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmhl4 = VUPS_2x_mv_ups_w2b_upsSign1 $wh8, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+
+    ; VUPS_2x_mv_ups_x2c_upsSign0
+    $cmh5 = VUPS_2x_mv_ups_x2c_upsSign0 $x10, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml3 = VUPS_2x_mv_ups_x2c_upsSign0 $x5, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml0 = VUPS_2x_mv_ups_x2c_upsSign0 $x6, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh0 = VUPS_2x_mv_ups_x2c_upsSign0 $x3, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh2 = VUPS_2x_mv_ups_x2c_upsSign0 $x4, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh3 = VUPS_2x_mv_ups_x2c_upsSign0 $x7, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml2 = VUPS_2x_mv_ups_x2c_upsSign0 $x1, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh6 = VUPS_2x_mv_ups_x2c_upsSign0 $x0, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml6 = VUPS_2x_mv_ups_x2c_upsSign0 $x11, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml1 = VUPS_2x_mv_ups_x2c_upsSign0 $x9, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml4 = VUPS_2x_mv_ups_x2c_upsSign0 $x2, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml5 = VUPS_2x_mv_ups_x2c_upsSign0 $x8, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml7 = VUPS_2x_mv_ups_x2c_upsSign0 $x10, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh1 = VUPS_2x_mv_ups_x2c_upsSign0 $x5, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh4 = VUPS_2x_mv_ups_x2c_upsSign0 $x6, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh7 = VUPS_2x_mv_ups_x2c_upsSign0 $x3, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+
+    ; VUPS_2x_mv_ups_x2c_upsSign1
+    $cmh4 = VUPS_2x_mv_ups_x2c_upsSign1 $x6, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml7 = VUPS_2x_mv_ups_x2c_upsSign1 $x8, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh2 = VUPS_2x_mv_ups_x2c_upsSign1 $x5, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh1 = VUPS_2x_mv_ups_x2c_upsSign1 $x3, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml6 = VUPS_2x_mv_ups_x2c_upsSign1 $x0, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml3 = VUPS_2x_mv_ups_x2c_upsSign1 $x4, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml5 = VUPS_2x_mv_ups_x2c_upsSign1 $x10, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh5 = VUPS_2x_mv_ups_x2c_upsSign1 $x1, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml2 = VUPS_2x_mv_ups_x2c_upsSign1 $x7, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml0 = VUPS_2x_mv_ups_x2c_upsSign1 $x11, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh3 = VUPS_2x_mv_ups_x2c_upsSign1 $x2, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml4 = VUPS_2x_mv_ups_x2c_upsSign1 $x9, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh7 = VUPS_2x_mv_ups_x2c_upsSign1 $x6, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml1 = VUPS_2x_mv_ups_x2c_upsSign1 $x8, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh6 = VUPS_2x_mv_ups_x2c_upsSign1 $x5, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh0 = VUPS_2x_mv_ups_x2c_upsSign1 $x3, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+
+    ; VUPS_4x_mv_ups_w2c_upsSign0
+    $cmh1 = VUPS_4x_mv_ups_w2c_upsSign0 $wl9, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml6 = VUPS_4x_mv_ups_w2c_upsSign0 $wl8, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml5 = VUPS_4x_mv_ups_w2c_upsSign0 $wl0, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml7 = VUPS_4x_mv_ups_w2c_upsSign0 $wh3, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml2 = VUPS_4x_mv_ups_w2c_upsSign0 $wl3, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh7 = VUPS_4x_mv_ups_w2c_upsSign0 $wh5, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml0 = VUPS_4x_mv_ups_w2c_upsSign0 $wh2, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh4 = VUPS_4x_mv_ups_w2c_upsSign0 $wl2, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh6 = VUPS_4x_mv_ups_w2c_upsSign0 $wh11, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh5 = VUPS_4x_mv_ups_w2c_upsSign0 $wh6, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh0 = VUPS_4x_mv_ups_w2c_upsSign0 $wh7, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml1 = VUPS_4x_mv_ups_w2c_upsSign0 $wl6, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh2 = VUPS_4x_mv_ups_w2c_upsSign0 $wh9, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh3 = VUPS_4x_mv_ups_w2c_upsSign0 $wl4, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml3 = VUPS_4x_mv_ups_w2c_upsSign0 $wl10, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml4 = VUPS_4x_mv_ups_w2c_upsSign0 $wl1, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh1 = VUPS_4x_mv_ups_w2c_upsSign0 $wh10, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml6 = VUPS_4x_mv_ups_w2c_upsSign0 $wh8, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml5 = VUPS_4x_mv_ups_w2c_upsSign0 $wl11, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml7 = VUPS_4x_mv_ups_w2c_upsSign0 $wh1, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml2 = VUPS_4x_mv_ups_w2c_upsSign0 $wh0, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh7 = VUPS_4x_mv_ups_w2c_upsSign0 $wh4, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml0 = VUPS_4x_mv_ups_w2c_upsSign0 $wl5, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh4 = VUPS_4x_mv_ups_w2c_upsSign0 $wl7, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+
+    ; VUPS_4x_mv_ups_w2c_upsSign1
+    $cmh1 = VUPS_4x_mv_ups_w2c_upsSign1 $wh5, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh4 = VUPS_4x_mv_ups_w2c_upsSign1 $wl7, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh0 = VUPS_4x_mv_ups_w2c_upsSign1 $wl3, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml2 = VUPS_4x_mv_ups_w2c_upsSign1 $wh7, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh7 = VUPS_4x_mv_ups_w2c_upsSign1 $wl1, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh3 = VUPS_4x_mv_ups_w2c_upsSign1 $wh11, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh6 = VUPS_4x_mv_ups_w2c_upsSign1 $wl11, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml1 = VUPS_4x_mv_ups_w2c_upsSign1 $wl5, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml0 = VUPS_4x_mv_ups_w2c_upsSign1 $wh8, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml6 = VUPS_4x_mv_ups_w2c_upsSign1 $wh0, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml4 = VUPS_4x_mv_ups_w2c_upsSign1 $wl8, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml5 = VUPS_4x_mv_ups_w2c_upsSign1 $wh10, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh5 = VUPS_4x_mv_ups_w2c_upsSign1 $wl10, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml3 = VUPS_4x_mv_ups_w2c_upsSign1 $wh1, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh2 = VUPS_4x_mv_ups_w2c_upsSign1 $wl6, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml7 = VUPS_4x_mv_ups_w2c_upsSign1 $wh3, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh1 = VUPS_4x_mv_ups_w2c_upsSign1 $wl9, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh4 = VUPS_4x_mv_ups_w2c_upsSign1 $wh9, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh0 = VUPS_4x_mv_ups_w2c_upsSign1 $wh4, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml2 = VUPS_4x_mv_ups_w2c_upsSign1 $wh2, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh7 = VUPS_4x_mv_ups_w2c_upsSign1 $wl2, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh3 = VUPS_4x_mv_ups_w2c_upsSign1 $wl0, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh6 = VUPS_4x_mv_ups_w2c_upsSign1 $wh6, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml1 = VUPS_4x_mv_ups_w2c_upsSign1 $wl4, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+
+    ; VUPS_4x_mv_ups_x2d_upsSign0
+    $dm2 = VUPS_4x_mv_ups_x2d_upsSign0 $x8, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $dm5 = VUPS_4x_mv_ups_x2d_upsSign0 $x7, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $dm6 = VUPS_4x_mv_ups_x2d_upsSign0 $x0, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $dm7 = VUPS_4x_mv_ups_x2d_upsSign0 $x9, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $dm1 = VUPS_4x_mv_ups_x2d_upsSign0 $x11, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $dm0 = VUPS_4x_mv_ups_x2d_upsSign0 $x4, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $dm4 = VUPS_4x_mv_ups_x2d_upsSign0 $x6, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $dm3 = VUPS_4x_mv_ups_x2d_upsSign0 $x5, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $dm2 = VUPS_4x_mv_ups_x2d_upsSign0 $x1, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $dm5 = VUPS_4x_mv_ups_x2d_upsSign0 $x10, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $dm6 = VUPS_4x_mv_ups_x2d_upsSign0 $x2, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $dm7 = VUPS_4x_mv_ups_x2d_upsSign0 $x3, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+
+    ; VUPS_4x_mv_ups_x2d_upsSign1
+    $dm2 = VUPS_4x_mv_ups_x2d_upsSign1 $x11, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $dm5 = VUPS_4x_mv_ups_x2d_upsSign1 $x6, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $dm0 = VUPS_4x_mv_ups_x2d_upsSign1 $x1, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $dm4 = VUPS_4x_mv_ups_x2d_upsSign1 $x4, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $dm6 = VUPS_4x_mv_ups_x2d_upsSign1 $x0, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $dm3 = VUPS_4x_mv_ups_x2d_upsSign1 $x7, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $dm1 = VUPS_4x_mv_ups_x2d_upsSign1 $x10, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $dm7 = VUPS_4x_mv_ups_x2d_upsSign1 $x2, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $dm2 = VUPS_4x_mv_ups_x2d_upsSign1 $x8, $s3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $dm5 = VUPS_4x_mv_ups_x2d_upsSign1 $x9, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $dm0 = VUPS_4x_mv_ups_x2d_upsSign1 $x3, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $dm4 = VUPS_4x_mv_ups_x2d_upsSign1 $x5, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+...
+
+# CHECK: 0: f0 95 a4 35 vups.2x bmhh2, wl9, s1, upssign0
+# CHECK: 4: f0 95 19 35 vups.2x bmhl2, wl6, s3, upssign0
+# CHECK: 8: f0 15 a3 39 vups.2x bmhh4, wh8, s2, upssign0
+# CHECK: c: f0 15 9a 32 vups.2x bmlh1, wh6, s0, upssign0
+# CHECK: 10: f0 95 06 3c vups.2x bmll6, wh1, s1, upssign0
+# CHECK: 14: f0 95 83 3d vups.2x bmhh6, wh0, s3, upssign0
+# CHECK: 18: f0 15 15 33 vups.2x bmhl1, wl5, s2, upssign0
+# CHECK: 1c: f0 15 8e 37 vups.2x bmhh3, wh3, s0, upssign0
+# CHECK: 20: f0 95 96 3b vups.2x bmhh5, wh5, s1, upssign0
+# CHECK: 24: f0 95 8b 3a vups.2x bmlh5, wh2, s3, upssign0
+# CHECK: 28: f0 15 2f 36 vups.2x bmll3, wh11, s2, upssign0
+# CHECK: 2c: f0 15 04 34 vups.2x bmll2, wl1, s0, upssign0
+# CHECK: 30: f0 95 20 3a vups.2x bmll5, wl8, s1, upssign0
+# CHECK: 34: f0 95 11 3b vups.2x bmhl5, wl4, s3, upssign0
+# CHECK: 38: f0 15 81 31 vups.2x bmhh0, wl0, s2, upssign0
+# CHECK: 3c: f0 15 ac 36 vups.2x bmlh3, wl11, s0, upssign0
+# CHECK: 40: f0 95 8c 38 vups.2x bmlh4, wl3, s1, upssign0
+# CHECK: 44: f0 95 1f 31 vups.2x bmhl0, wh7, s3, upssign0
+# CHECK: 48: f0 15 89 3f vups.2x bmhh7, wl2, s2, upssign0
+# CHECK: 4c: f0 15 aa 33 vups.2x bmhh1, wh10, s0, upssign0
+# CHECK: 50: f0 95 a6 3c vups.2x bmlh6, wh9, s1, upssign0
+# CHECK: 54: f0 95 13 30 vups.2x bmll0, wh4, s3, upssign0
+# CHECK: 58: f0 15 1d 38 vups.2x bmll4, wl7, s2, upssign0
+# CHECK: 5c: f0 15 28 37 vups.2x bmhl3, wl10, s0, upssign0
+# CHECK: 60: f0 95 24 3f vups.2x bmhl7, wl9, s1, upssign0
+# CHECK: 64: f0 95 19 32 vups.2x bmll1, wl6, s3, upssign0
+# CHECK: 68: f0 15 a3 34 vups.2x bmlh2, wh8, s2, upssign0
+# CHECK: 6c: f0 15 1a 3d vups.2x bmhl6, wh6, s0, upssign0
+# CHECK: 70: f0 95 06 39 vups.2x bmhl4, wh1, s1, upssign0
+# CHECK: 74: f0 95 03 3e vups.2x bmll7, wh0, s3, upssign0
+# CHECK: 78: f0 15 95 3e vups.2x bmlh7, wl5, s2, upssign0
+# CHECK: 7c: f0 15 8e 30 vups.2x bmlh0, wh3, s0, upssign0
+# CHECK: 80: f0 55 14 30 vups.2x bmll0, wl5, s0, upssign1
+# CHECK: 84: f0 d5 84 35 vups.2x bmhh2, wl1, s1, upssign1
+# CHECK: 88: f0 d5 1f 32 vups.2x bmll1, wh7, s3, upssign1
+# CHECK: 8c: f0 55 af 3f vups.2x bmhh7, wh11, s2, upssign1
+# CHECK: 90: f0 55 9a 36 vups.2x bmlh3, wh6, s0, upssign1
+# CHECK: 94: f0 d5 8a 34 vups.2x bmlh2, wh2, s1, upssign1
+# CHECK: 98: f0 d5 03 3a vups.2x bmll5, wh0, s3, upssign1
+# CHECK: 9c: f0 55 23 38 vups.2x bmll4, wh8, s2, upssign1
+# CHECK: a0: f0 55 a8 32 vups.2x bmlh1, wl10, s0, upssign1
+# CHECK: a4: f0 d5 ac 3e vups.2x bmlh7, wl11, s1, upssign1
+# CHECK: a8: f0 d5 97 3a vups.2x bmlh5, wh5, s3, upssign1
+# CHECK: ac: f0 55 89 3b vups.2x bmhh5, wl2, s2, upssign1
+# CHECK: b0: f0 55 0e 35 vups.2x bmhl2, wh3, s0, upssign1
+# CHECK: b4: f0 d5 80 37 vups.2x bmhh3, wl0, s1, upssign1
+# CHECK: b8: f0 d5 a7 39 vups.2x bmhh4, wh9, s3, upssign1
+# CHECK: bc: f0 55 1d 37 vups.2x bmhl3, wl7, s2, upssign1
+# CHECK: c0: f0 55 8c 31 vups.2x bmhh0, wl3, s0, upssign1
+# CHECK: c4: f0 d5 98 3c vups.2x bmlh6, wl6, s1, upssign1
+# CHECK: c8: f0 d5 21 36 vups.2x bmll3, wl8, s3, upssign1
+# CHECK: cc: f0 55 07 3d vups.2x bmhl6, wh1, s2, upssign1
+# CHECK: d0: f0 55 90 33 vups.2x bmhh1, wl4, s0, upssign1
+# CHECK: d4: f0 d5 24 34 vups.2x bmll2, wl9, s1, upssign1
+# CHECK: d8: f0 d5 93 3d vups.2x bmhh6, wh4, s3, upssign1
+# CHECK: dc: f0 55 2b 3f vups.2x bmhl7, wh10, s2, upssign1
+# CHECK: e0: f0 55 94 30 vups.2x bmlh0, wl5, s0, upssign1
+# CHECK: e4: f0 d5 04 3c vups.2x bmll6, wl1, s1, upssign1
+# CHECK: e8: f0 d5 1f 3e vups.2x bmll7, wh7, s3, upssign1
+# CHECK: ec: f0 55 2f 33 vups.2x bmhl1, wh11, s2, upssign1
+# CHECK: f0: f0 55 1a 31 vups.2x bmhl0, wh6, s0, upssign1
+# CHECK: f4: f0 d5 8a 38 vups.2x bmlh4, wh2, s1, upssign1
+# CHECK: f8: f0 d5 03 3b vups.2x bmhl5, wh0, s3, upssign1
+# CHECK: fc: f0 55 23 39 vups.2x bmhl4, wh8, s2, upssign1
+# CHECK: 100: f0 0d 29 3b vups.2x cmh5, x10, s2, upssign0
+# CHECK: 104: f0 8d 14 36 vups.2x cml3, x5, s1, upssign0
+# CHECK: 108: f0 8d 19 30 vups.2x cml0, x6, s3, upssign0
+# CHECK: 10c: f0 0d 0c 31 vups.2x cmh0, x3, s0, upssign0
+# CHECK: 110: f0 0d 11 35 vups.2x cmh2, x4, s2, upssign0
+# CHECK: 114: f0 8d 1c 37 vups.2x cmh3, x7, s1, upssign0
+# CHECK: 118: f0 8d 05 34 vups.2x cml2, x1, s3, upssign0
+# CHECK: 11c: f0 0d 00 3d vups.2x cmh6, x0, s0, upssign0
+# CHECK: 120: f0 0d 2d 3c vups.2x cml6, x11, s2, upssign0
+# CHECK: 124: f0 8d 24 32 vups.2x cml1, x9, s1, upssign0
+# CHECK: 128: f0 8d 09 38 vups.2x cml4, x2, s3, upssign0
+# CHECK: 12c: f0 0d 20 3a vups.2x cml5, x8, s0, upssign0
+# CHECK: 130: f0 0d 29 3e vups.2x cml7, x10, s2, upssign0
+# CHECK: 134: f0 8d 14 33 vups.2x cmh1, x5, s1, upssign0
+# CHECK: 138: f0 8d 19 39 vups.2x cmh4, x6, s3, upssign0
+# CHECK: 13c: f0 0d 0c 3f vups.2x cmh7, x3, s0, upssign0
+# CHECK: 140: f0 4d 18 39 vups.2x cmh4, x6, s0, upssign1
+# CHECK: 144: f0 4d 21 3e vups.2x cml7, x8, s2, upssign1
+# CHECK: 148: f0 cd 15 35 vups.2x cmh2, x5, s3, upssign1
+# CHECK: 14c: f0 cd 0c 33 vups.2x cmh1, x3, s1, upssign1
+# CHECK: 150: f0 4d 00 3c vups.2x cml6, x0, s0, upssign1
+# CHECK: 154: f0 4d 11 36 vups.2x cml3, x4, s2, upssign1
+# CHECK: 158: f0 cd 29 3a vups.2x cml5, x10, s3, upssign1
+# CHECK: 15c: f0 cd 04 3b vups.2x cmh5, x1, s1, upssign1
+# CHECK: 160: f0 4d 1c 34 vups.2x cml2, x7, s0, upssign1
+# CHECK: 164: f0 4d 2d 30 vups.2x cml0, x11, s2, upssign1
+# CHECK: 168: f0 cd 09 37 vups.2x cmh3, x2, s3, upssign1
+# CHECK: 16c: f0 cd 24 38 vups.2x cml4, x9, s1, upssign1
+# CHECK: 170: f0 4d 18 3f vups.2x cmh7, x6, s0, upssign1
+# CHECK: 174: f0 4d 21 32 vups.2x cml1, x8, s2, upssign1
+# CHECK: 178: f0 cd 15 3d vups.2x cmh6, x5, s3, upssign1
+# CHECK: 17c: f0 cd 0c 31 vups.2x cmh0, x3, s1, upssign1
+# CHECK: 180: f0 35 25 33 vups.4x cmh1, wl9, s2, upssign0
+# CHECK: 184: f0 b5 20 3c vups.4x cml6, wl8, s1, upssign0
+# CHECK: 188: f0 35 00 3a vups.4x cml5, wl0, s0, upssign0
+# CHECK: 18c: f0 b5 0f 3e vups.4x cml7, wh3, s3, upssign0
+# CHECK: 190: f0 35 0d 34 vups.4x cml2, wl3, s2, upssign0
+# CHECK: 194: f0 b5 16 3f vups.4x cmh7, wh5, s1, upssign0
+# CHECK: 198: f0 35 0a 30 vups.4x cml0, wh2, s0, upssign0
+# CHECK: 19c: f0 b5 09 39 vups.4x cmh4, wl2, s3, upssign0
+# CHECK: 1a0: f0 35 2f 3d vups.4x cmh6, wh11, s2, upssign0
+# CHECK: 1a4: f0 b5 1a 3b vups.4x cmh5, wh6, s1, upssign0
+# CHECK: 1a8: f0 35 1e 31 vups.4x cmh0, wh7, s0, upssign0
+# CHECK: 1ac: f0 b5 19 32 vups.4x cml1, wl6, s3, upssign0
+# CHECK: 1b0: f0 35 27 35 vups.4x cmh2, wh9, s2, upssign0
+# CHECK: 1b4: f0 b5 10 37 vups.4x cmh3, wl4, s1, upssign0
+# CHECK: 1b8: f0 35 28 36 vups.4x cml3, wl10, s0, upssign0
+# CHECK: 1bc: f0 b5 05 38 vups.4x cml4, wl1, s3, upssign0
+# CHECK: 1c0: f0 35 2b 33 vups.4x cmh1, wh10, s2, upssign0
+# CHECK: 1c4: f0 b5 22 3c vups.4x cml6, wh8, s1, upssign0
+# CHECK: 1c8: f0 35 2c 3a vups.4x cml5, wl11, s0, upssign0
+# CHECK: 1cc: f0 b5 07 3e vups.4x cml7, wh1, s3, upssign0
+# CHECK: 1d0: f0 35 03 34 vups.4x cml2, wh0, s2, upssign0
+# CHECK: 1d4: f0 b5 12 3f vups.4x cmh7, wh4, s1, upssign0
+# CHECK: 1d8: f0 35 14 30 vups.4x cml0, wl5, s0, upssign0
+# CHECK: 1dc: f0 b5 1d 39 vups.4x cmh4, wl7, s3, upssign0
+# CHECK: 1e0: f0 f5 17 33 vups.4x cmh1, wh5, s3, upssign1
+# CHECK: 1e4: f0 75 1c 39 vups.4x cmh4, wl7, s0, upssign1
+# CHECK: 1e8: f0 75 0d 31 vups.4x cmh0, wl3, s2, upssign1
+# CHECK: 1ec: f0 f5 1e 34 vups.4x cml2, wh7, s1, upssign1
+# CHECK: 1f0: f0 f5 05 3f vups.4x cmh7, wl1, s3, upssign1
+# CHECK: 1f4: f0 75 2e 37 vups.4x cmh3, wh11, s0, upssign1
+# CHECK: 1f8: f0 75 2d 3d vups.4x cmh6, wl11, s2, upssign1
+# CHECK: 1fc: f0 f5 14 32 vups.4x cml1, wl5, s1, upssign1
+# CHECK: 200: f0 f5 23 30 vups.4x cml0, wh8, s3, upssign1
+# CHECK: 204: f0 75 02 3c vups.4x cml6, wh0, s0, upssign1
+# CHECK: 208: f0 75 21 38 vups.4x cml4, wl8, s2, upssign1
+# CHECK: 20c: f0 f5 2a 3a vups.4x cml5, wh10, s1, upssign1
+# CHECK: 210: f0 f5 29 3b vups.4x cmh5, wl10, s3, upssign1
+# CHECK: 214: f0 75 06 36 vups.4x cml3, wh1, s0, upssign1
+# CHECK: 218: f0 75 19 35 vups.4x cmh2, wl6, s2, upssign1
+# CHECK: 21c: f0 f5 0e 3e vups.4x cml7, wh3, s1, upssign1
+# CHECK: 220: f0 f5 25 33 vups.4x cmh1, wl9, s3, upssign1
+# CHECK: 224: f0 75 26 39 vups.4x cmh4, wh9, s0, upssign1
+# CHECK: 228: f0 75 13 31 vups.4x cmh0, wh4, s2, upssign1
+# CHECK: 22c: f0 f5 0a 34 vups.4x cml2, wh2, s1, upssign1
+# CHECK: 230: f0 f5 09 3f vups.4x cmh7, wl2, s3, upssign1
+# CHECK: 234: f0 75 00 37 vups.4x cmh3, wl0, s0, upssign1
+# CHECK: 238: f0 75 1b 3d vups.4x cmh6, wh6, s2, upssign1
+# CHECK: 23c: f0 f5 10 32 vups.4x cml1, wl4, s1, upssign1
+# CHECK: 240: f0 2d 20 34 vups.4x dm2, x8, s0, upssign0
+# CHECK: 244: f0 ad 1d 3a vups.4x dm5, x7, s3, upssign0
+# CHECK: 248: f0 ad 00 3c vups.4x dm6, x0, s1, upssign0
+# CHECK: 24c: f0 2d 25 3e vups.4x dm7, x9, s2, upssign0
+# CHECK: 250: f0 2d 2c 32 vups.4x dm1, x11, s0, upssign0
+# CHECK: 254: f0 ad 11 30 vups.4x dm0, x4, s3, upssign0
+# CHECK: 258: f0 ad 18 38 vups.4x dm4, x6, s1, upssign0
+# CHECK: 25c: f0 2d 15 36 vups.4x dm3, x5, s2, upssign0
+# CHECK: 260: f0 2d 04 34 vups.4x dm2, x1, s0, upssign0
+# CHECK: 264: f0 ad 29 3a vups.4x dm5, x10, s3, upssign0
+# CHECK: 268: f0 ad 08 3c vups.4x dm6, x2, s1, upssign0
+# CHECK: 26c: f0 2d 0d 3e vups.4x dm7, x3, s2, upssign0
+# CHECK: 270: f0 ed 2d 34 vups.4x dm2, x11, s3, upssign1
+# CHECK: 274: f0 6d 19 3a vups.4x dm5, x6, s2, upssign1
+# CHECK: 278: f0 6d 04 30 vups.4x dm0, x1, s0, upssign1
+# CHECK: 27c: f0 ed 10 38 vups.4x dm4, x4, s1, upssign1
+# CHECK: 280: f0 ed 01 3c vups.4x dm6, x0, s3, upssign1
+# CHECK: 284: f0 6d 1d 36 vups.4x dm3, x7, s2, upssign1
+# CHECK: 288: f0 6d 28 32 vups.4x dm1, x10, s0, upssign1
+# CHECK: 28c: f0 ed 08 3e vups.4x dm7, x2, s1, upssign1
+# CHECK: 290: f0 ed 21 34 vups.4x dm2, x8, s3, upssign1
+# CHECK: 294: f0 6d 25 3a vups.4x dm5, x9, s2, upssign1
+# CHECK: 298: f0 6d 0c 30 vups.4x dm0, x3, s0, upssign1
+# CHECK: 29c: f0 ed 14 38 vups.4x dm4, x5, s1, upssign1

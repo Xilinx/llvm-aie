@@ -1,0 +1,718 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16
+    $wl11 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmlh4, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wl10 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmlh0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wh9 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmll3, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wl3 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmlh3, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wl4 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmhh6, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wh11 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmhh1, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wl7 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmhl4, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wh8 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmlh6, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wh5 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmhl5, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wl8 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmlh7, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wh10 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmll5, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wl2 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmll1, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wh3 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmhh2, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wl5 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmhl0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wh6 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmhl6, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wh0 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmhh0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wl0 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmhl2, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wh2 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmlh2, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wh7 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmhl7, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wl1 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmhh3, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wl6 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmlh1, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wl9 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmll6, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wh4 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmhl1, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wh1 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmll7, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wl11 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmll4, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wl10 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmlh5, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wh9 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmll0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wl3 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmll2, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wl4 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmhh4, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wh11 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmhh5, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wl7 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmhl3, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wh8 = VCONV_bf16_fp32_mv_conv_mv_w_srs_bf16 $bmhh7, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+
+    ; VCONV_bf16_fp32_mv_conv_mv_x_srs_bf16
+    $x9 = VCONV_bf16_fp32_mv_conv_mv_x_srs_bf16 $cmh7, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x2 = VCONV_bf16_fp32_mv_conv_mv_x_srs_bf16 $cmh0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x6 = VCONV_bf16_fp32_mv_conv_mv_x_srs_bf16 $cmh2, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x1 = VCONV_bf16_fp32_mv_conv_mv_x_srs_bf16 $cml4, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x11 = VCONV_bf16_fp32_mv_conv_mv_x_srs_bf16 $cml3, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x3 = VCONV_bf16_fp32_mv_conv_mv_x_srs_bf16 $cml6, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x8 = VCONV_bf16_fp32_mv_conv_mv_x_srs_bf16 $cml5, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x4 = VCONV_bf16_fp32_mv_conv_mv_x_srs_bf16 $cml1, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x0 = VCONV_bf16_fp32_mv_conv_mv_x_srs_bf16 $cml7, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x7 = VCONV_bf16_fp32_mv_conv_mv_x_srs_bf16 $cmh3, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x10 = VCONV_bf16_fp32_mv_conv_mv_x_srs_bf16 $cml0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x5 = VCONV_bf16_fp32_mv_conv_mv_x_srs_bf16 $cmh5, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x9 = VCONV_bf16_fp32_mv_conv_mv_x_srs_bf16 $cmh4, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x2 = VCONV_bf16_fp32_mv_conv_mv_x_srs_bf16 $cmh1, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x6 = VCONV_bf16_fp32_mv_conv_mv_x_srs_bf16 $cml2, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x1 = VCONV_bf16_fp32_mv_conv_mv_x_srs_bf16 $cmh6, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+
+    ; VCONV_bf16_fp32_mv_mcd_bf16_cm
+    VCONV_bf16_fp32_mv_mcd_bf16_cm $cmh7, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_bf16_fp32_mv_mcd_bf16_cm $cmh3, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_bf16_fp32_mv_mcd_bf16_cm $cmh2, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_bf16_fp32_mv_mcd_bf16_cm $cml6, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_bf16_fp32_mv_mcd_bf16_cm $cmh4, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_bf16_fp32_mv_mcd_bf16_cm $cml7, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_bf16_fp32_mv_mcd_bf16_cm $cml3, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_bf16_fp32_mv_mcd_bf16_cm $cmh6, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_bf16_fp32_mv_mcd_bf16_cm $cml0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_bf16_fp32_mv_mcd_bf16_cm $cml4, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_bf16_fp32_mv_mcd_bf16_cm $cmh1, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_bf16_fp32_mv_mcd_bf16_cm $cml2, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_bf16_fp32_mv_mcd_bf16_cm $cmh5, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_bf16_fp32_mv_mcd_bf16_cm $cmh0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_bf16_fp32_mv_mcd_bf16_cm $cml5, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_bf16_fp32_mv_mcd_bf16_cm $cml1, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+
+    ; VCONV_bf8_fp32
+    $wl11 = VCONV_bf8_fp32 $cmh0, $s0, implicit-def $srf2fflags, implicit $crbf8conf, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wl9 = VCONV_bf8_fp32 $cml1, $s2, implicit-def $srf2fflags, implicit $crbf8conf, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wh1 = VCONV_bf8_fp32 $cml4, $s1, implicit-def $srf2fflags, implicit $crbf8conf, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wh7 = VCONV_bf8_fp32 $cml0, $s3, implicit-def $srf2fflags, implicit $crbf8conf, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wl1 = VCONV_bf8_fp32 $cmh7, $s0, implicit-def $srf2fflags, implicit $crbf8conf, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wl8 = VCONV_bf8_fp32 $cmh6, $s2, implicit-def $srf2fflags, implicit $crbf8conf, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wl10 = VCONV_bf8_fp32 $cml6, $s1, implicit-def $srf2fflags, implicit $crbf8conf, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wl7 = VCONV_bf8_fp32 $cml7, $s3, implicit-def $srf2fflags, implicit $crbf8conf, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wl3 = VCONV_bf8_fp32 $cmh2, $s0, implicit-def $srf2fflags, implicit $crbf8conf, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wh4 = VCONV_bf8_fp32 $cmh4, $s2, implicit-def $srf2fflags, implicit $crbf8conf, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wh9 = VCONV_bf8_fp32 $cmh3, $s1, implicit-def $srf2fflags, implicit $crbf8conf, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wl4 = VCONV_bf8_fp32 $cmh5, $s3, implicit-def $srf2fflags, implicit $crbf8conf, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wh11 = VCONV_bf8_fp32 $cml5, $s0, implicit-def $srf2fflags, implicit $crbf8conf, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wh2 = VCONV_bf8_fp32 $cml3, $s2, implicit-def $srf2fflags, implicit $crbf8conf, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wh3 = VCONV_bf8_fp32 $cmh1, $s1, implicit-def $srf2fflags, implicit $crbf8conf, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wl0 = VCONV_bf8_fp32 $cml2, $s3, implicit-def $srf2fflags, implicit $crbf8conf, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wh10 = VCONV_bf8_fp32 $cmh0, $s0, implicit-def $srf2fflags, implicit $crbf8conf, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wl5 = VCONV_bf8_fp32 $cml1, $s2, implicit-def $srf2fflags, implicit $crbf8conf, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wl2 = VCONV_bf8_fp32 $cml4, $s1, implicit-def $srf2fflags, implicit $crbf8conf, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wl6 = VCONV_bf8_fp32 $cml0, $s3, implicit-def $srf2fflags, implicit $crbf8conf, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wh6 = VCONV_bf8_fp32 $cmh7, $s0, implicit-def $srf2fflags, implicit $crbf8conf, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wh0 = VCONV_bf8_fp32 $cmh6, $s2, implicit-def $srf2fflags, implicit $crbf8conf, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wh5 = VCONV_bf8_fp32 $cml6, $s1, implicit-def $srf2fflags, implicit $crbf8conf, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $wh8 = VCONV_bf8_fp32 $cml7, $s3, implicit-def $srf2fflags, implicit $crbf8conf, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+
+    ; VCONV_fp16_fp32_mv_mcd_fp16_cm
+    VCONV_fp16_fp32_mv_mcd_fp16_cm $cml6, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_fp16_fp32_mv_mcd_fp16_cm $cml1, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_fp16_fp32_mv_mcd_fp16_cm $cmh1, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_fp16_fp32_mv_mcd_fp16_cm $cml7, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_fp16_fp32_mv_mcd_fp16_cm $cmh2, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_fp16_fp32_mv_mcd_fp16_cm $cml2, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_fp16_fp32_mv_mcd_fp16_cm $cml4, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_fp16_fp32_mv_mcd_fp16_cm $cml0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_fp16_fp32_mv_mcd_fp16_cm $cmh3, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_fp16_fp32_mv_mcd_fp16_cm $cml5, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_fp16_fp32_mv_mcd_fp16_cm $cml3, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_fp16_fp32_mv_mcd_fp16_cm $cmh7, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_fp16_fp32_mv_mcd_fp16_cm $cmh6, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_fp16_fp32_mv_mcd_fp16_cm $cmh4, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_fp16_fp32_mv_mcd_fp16_cm $cmh5, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+    VCONV_fp16_fp32_mv_mcd_fp16_cm $cmh0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crmcden, implicit $crrnd
+
+    ; VCONV_fp16_fp32_mv_x_srs_fp16
+    $x7 = VCONV_fp16_fp32_mv_x_srs_fp16 $cmh5, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x10 = VCONV_fp16_fp32_mv_x_srs_fp16 $cml3, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x0 = VCONV_fp16_fp32_mv_x_srs_fp16 $cmh6, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x8 = VCONV_fp16_fp32_mv_x_srs_fp16 $cml6, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x6 = VCONV_fp16_fp32_mv_x_srs_fp16 $cmh4, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x11 = VCONV_fp16_fp32_mv_x_srs_fp16 $cmh0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x9 = VCONV_fp16_fp32_mv_x_srs_fp16 $cml7, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x5 = VCONV_fp16_fp32_mv_x_srs_fp16 $cml1, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x4 = VCONV_fp16_fp32_mv_x_srs_fp16 $cml5, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x2 = VCONV_fp16_fp32_mv_x_srs_fp16 $cmh2, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x3 = VCONV_fp16_fp32_mv_x_srs_fp16 $cmh3, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x1 = VCONV_fp16_fp32_mv_x_srs_fp16 $cml0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x7 = VCONV_fp16_fp32_mv_x_srs_fp16 $cmh7, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x10 = VCONV_fp16_fp32_mv_x_srs_fp16 $cml4, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x0 = VCONV_fp16_fp32_mv_x_srs_fp16 $cml2, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+    $x8 = VCONV_fp16_fp32_mv_x_srs_fp16 $cmh1, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfpconvsat, implicit $crrnd
+
+    ; VCONV_fp32_bf16_alu
+    $cmh4 = VCONV_fp32_bf16_alu implicit $crscden
+    $cml3 = VCONV_fp32_bf16_alu implicit $crscden
+    $cml2 = VCONV_fp32_bf16_alu implicit $crscden
+    $cmh1 = VCONV_fp32_bf16_alu implicit $crscden
+    $cml5 = VCONV_fp32_bf16_alu implicit $crscden
+    $cmh2 = VCONV_fp32_bf16_alu implicit $crscden
+    $cmh0 = VCONV_fp32_bf16_alu implicit $crscden
+    $cml6 = VCONV_fp32_bf16_alu implicit $crscden
+    $cmh3 = VCONV_fp32_bf16_alu implicit $crscden
+    $cml4 = VCONV_fp32_bf16_alu implicit $crscden
+    $cmh7 = VCONV_fp32_bf16_alu implicit $crscden
+    $cml0 = VCONV_fp32_bf16_alu implicit $crscden
+    $cmh5 = VCONV_fp32_bf16_alu implicit $crscden
+    $cml7 = VCONV_fp32_bf16_alu implicit $crscden
+    $cml1 = VCONV_fp32_bf16_alu implicit $crscden
+    $cmh6 = VCONV_fp32_bf16_alu implicit $crscden
+
+    ; VCONV_fp32_bf16_mv_mv_w_ups_bf16
+    $bmlh0 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wh5
+    $bmlh2 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wh10
+    $bmhh4 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wl3
+    $bmhl2 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wl5
+    $bmll1 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wh6
+    $bmhh0 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wh0
+    $bmhl5 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wh8
+    $bmhl7 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wl7
+    $bmlh3 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wl6
+    $bmhh3 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wh9
+    $bmhl0 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wh11
+    $bmll2 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wh7
+    $bmlh4 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wh1
+    $bmll7 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wl10
+    $bmlh6 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wl11
+    $bmhh5 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wl9
+    $bmll6 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wh2
+    $bmlh5 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wh3
+    $bmll3 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wl4
+    $bmlh1 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wh4
+    $bmhl4 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wl8
+    $bmll5 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wl0
+    $bmll4 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wl1
+    $bmhh7 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wl2
+    $bmhh1 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wh5
+    $bmhh6 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wh10
+    $bmhh2 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wl3
+    $bmhl6 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wl5
+    $bmlh7 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wh6
+    $bmhl1 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wh0
+    $bmhl3 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wh8
+    $bmll0 = VCONV_fp32_bf16_mv_mv_w_ups_bf16 $wl7
+
+    ; VCONV_fp32_bf16_mv_mv_x_ups_f16
+    $cml3 = VCONV_fp32_bf16_mv_mv_x_ups_f16 $x8
+    $cml1 = VCONV_fp32_bf16_mv_mv_x_ups_f16 $x10
+    $cml4 = VCONV_fp32_bf16_mv_mv_x_ups_f16 $x9
+    $cmh4 = VCONV_fp32_bf16_mv_mv_x_ups_f16 $x0
+    $cml6 = VCONV_fp32_bf16_mv_mv_x_ups_f16 $x7
+    $cmh6 = VCONV_fp32_bf16_mv_mv_x_ups_f16 $x3
+    $cmh7 = VCONV_fp32_bf16_mv_mv_x_ups_f16 $x5
+    $cml5 = VCONV_fp32_bf16_mv_mv_x_ups_f16 $x4
+    $cmh2 = VCONV_fp32_bf16_mv_mv_x_ups_f16 $x1
+    $cml7 = VCONV_fp32_bf16_mv_mv_x_ups_f16 $x11
+    $cml2 = VCONV_fp32_bf16_mv_mv_x_ups_f16 $x6
+    $cml0 = VCONV_fp32_bf16_mv_mv_x_ups_f16 $x2
+    $cmh5 = VCONV_fp32_bf16_mv_mv_x_ups_f16 $x8
+    $cmh0 = VCONV_fp32_bf16_mv_mv_x_ups_f16 $x10
+    $cmh1 = VCONV_fp32_bf16_mv_mv_x_ups_f16 $x9
+    $cmh3 = VCONV_fp32_bf16_mv_mv_x_ups_f16 $x0
+
+    ; VCONV_fp32_fp16_alu
+    $cmh1 = VCONV_fp32_fp16_alu implicit $crscden
+    $cmh7 = VCONV_fp32_fp16_alu implicit $crscden
+    $cmh6 = VCONV_fp32_fp16_alu implicit $crscden
+    $cml7 = VCONV_fp32_fp16_alu implicit $crscden
+    $cmh4 = VCONV_fp32_fp16_alu implicit $crscden
+    $cmh5 = VCONV_fp32_fp16_alu implicit $crscden
+    $cml2 = VCONV_fp32_fp16_alu implicit $crscden
+    $cml0 = VCONV_fp32_fp16_alu implicit $crscden
+    $cmh3 = VCONV_fp32_fp16_alu implicit $crscden
+    $cml5 = VCONV_fp32_fp16_alu implicit $crscden
+    $cml6 = VCONV_fp32_fp16_alu implicit $crscden
+    $cmh0 = VCONV_fp32_fp16_alu implicit $crscden
+    $cml4 = VCONV_fp32_fp16_alu implicit $crscden
+    $cmh2 = VCONV_fp32_fp16_alu implicit $crscden
+    $cml3 = VCONV_fp32_fp16_alu implicit $crscden
+    $cml1 = VCONV_fp32_fp16_alu implicit $crscden
+
+    ; VCONV_fp32_fp16_mv
+    $cml7 = VCONV_fp32_fp16_mv $x6
+    $cml2 = VCONV_fp32_fp16_mv $x11
+    $cmh6 = VCONV_fp32_fp16_mv $x3
+    $cmh5 = VCONV_fp32_fp16_mv $x2
+    $cml3 = VCONV_fp32_fp16_mv $x9
+    $cml4 = VCONV_fp32_fp16_mv $x8
+    $cml1 = VCONV_fp32_fp16_mv $x1
+    $cmh1 = VCONV_fp32_fp16_mv $x0
+    $cmh3 = VCONV_fp32_fp16_mv $x7
+    $cmh2 = VCONV_fp32_fp16_mv $x5
+    $cml5 = VCONV_fp32_fp16_mv $x10
+    $cmh7 = VCONV_fp32_fp16_mv $x4
+    $cmh0 = VCONV_fp32_fp16_mv $x6
+    $cmh4 = VCONV_fp32_fp16_mv $x11
+    $cml6 = VCONV_fp32_fp16_mv $x3
+    $cml0 = VCONV_fp32_fp16_mv $x2
+
+    ; VCONV_fp8_fp32
+    $wh9 = VCONV_fp8_fp32 $cml2, $s3, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfp8conf, implicit $crfpconvsat, implicit $crrnd
+    $wl11 = VCONV_fp8_fp32 $cml6, $s2, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfp8conf, implicit $crfpconvsat, implicit $crrnd
+    $wl2 = VCONV_fp8_fp32 $cmh6, $s1, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfp8conf, implicit $crfpconvsat, implicit $crrnd
+    $wh4 = VCONV_fp8_fp32 $cmh5, $s0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfp8conf, implicit $crfpconvsat, implicit $crrnd
+    $wl4 = VCONV_fp8_fp32 $cmh7, $s3, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfp8conf, implicit $crfpconvsat, implicit $crrnd
+    $wh7 = VCONV_fp8_fp32 $cmh2, $s2, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfp8conf, implicit $crfpconvsat, implicit $crrnd
+    $wh1 = VCONV_fp8_fp32 $cmh0, $s1, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfp8conf, implicit $crfpconvsat, implicit $crrnd
+    $wl1 = VCONV_fp8_fp32 $cml0, $s0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfp8conf, implicit $crfpconvsat, implicit $crrnd
+    $wh11 = VCONV_fp8_fp32 $cml1, $s3, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfp8conf, implicit $crfpconvsat, implicit $crrnd
+    $wl6 = VCONV_fp8_fp32 $cml7, $s2, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfp8conf, implicit $crfpconvsat, implicit $crrnd
+    $wl10 = VCONV_fp8_fp32 $cmh4, $s1, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfp8conf, implicit $crfpconvsat, implicit $crrnd
+    $wh10 = VCONV_fp8_fp32 $cmh3, $s0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfp8conf, implicit $crfpconvsat, implicit $crrnd
+    $wl3 = VCONV_fp8_fp32 $cml4, $s3, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfp8conf, implicit $crfpconvsat, implicit $crrnd
+    $wh2 = VCONV_fp8_fp32 $cml5, $s2, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfp8conf, implicit $crfpconvsat, implicit $crrnd
+    $wh0 = VCONV_fp8_fp32 $cmh1, $s1, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfp8conf, implicit $crfpconvsat, implicit $crrnd
+    $wh3 = VCONV_fp8_fp32 $cml3, $s0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfp8conf, implicit $crfpconvsat, implicit $crrnd
+    $wh8 = VCONV_fp8_fp32 $cml2, $s3, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfp8conf, implicit $crfpconvsat, implicit $crrnd
+    $wl5 = VCONV_fp8_fp32 $cml6, $s2, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfp8conf, implicit $crfpconvsat, implicit $crrnd
+    $wl7 = VCONV_fp8_fp32 $cmh6, $s1, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfp8conf, implicit $crfpconvsat, implicit $crrnd
+    $wl9 = VCONV_fp8_fp32 $cmh5, $s0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfp8conf, implicit $crfpconvsat, implicit $crrnd
+    $wh5 = VCONV_fp8_fp32 $cmh7, $s3, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfp8conf, implicit $crfpconvsat, implicit $crrnd
+    $wh6 = VCONV_fp8_fp32 $cmh2, $s2, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfp8conf, implicit $crfpconvsat, implicit $crrnd
+    $wl0 = VCONV_fp8_fp32 $cmh0, $s1, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfp8conf, implicit $crfpconvsat, implicit $crrnd
+    $wl8 = VCONV_fp8_fp32 $cml0, $s0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crfp8conf, implicit $crfpconvsat, implicit $crrnd
+
+    ; VCONV_mx4_fp32
+    $fewh4 = VCONV_mx4_fp32 $dm4, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewh0 = VCONV_mx4_fp32 $dm5, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewh3 = VCONV_mx4_fp32 $dm3, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewh6 = VCONV_mx4_fp32 $dm2, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewl1 = VCONV_mx4_fp32 $dm7, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewh5 = VCONV_mx4_fp32 $dm1, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewh1 = VCONV_mx4_fp32 $dm0, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewl11 = VCONV_mx4_fp32 $dm6, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewl6 = VCONV_mx4_fp32 $dm4, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewl5 = VCONV_mx4_fp32 $dm5, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewl7 = VCONV_mx4_fp32 $dm3, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewl8 = VCONV_mx4_fp32 $dm2, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewl10 = VCONV_mx4_fp32 $dm7, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewl2 = VCONV_mx4_fp32 $dm1, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewh9 = VCONV_mx4_fp32 $dm0, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewh2 = VCONV_mx4_fp32 $dm6, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewl9 = VCONV_mx4_fp32 $dm4, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewh8 = VCONV_mx4_fp32 $dm5, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewl4 = VCONV_mx4_fp32 $dm3, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewl3 = VCONV_mx4_fp32 $dm2, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewh11 = VCONV_mx4_fp32 $dm7, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewl0 = VCONV_mx4_fp32 $dm1, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewh7 = VCONV_mx4_fp32 $dm0, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewh10 = VCONV_mx4_fp32 $dm6, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+
+    ; VCONV_mx6_fp32
+    $fewl7 = VCONV_mx6_fp32 $dm7, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewl2 = VCONV_mx6_fp32 $dm0, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewl0 = VCONV_mx6_fp32 $dm5, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewh4 = VCONV_mx6_fp32 $dm1, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewh8 = VCONV_mx6_fp32 $dm6, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewl9 = VCONV_mx6_fp32 $dm4, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewh9 = VCONV_mx6_fp32 $dm3, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewh6 = VCONV_mx6_fp32 $dm2, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewh3 = VCONV_mx6_fp32 $dm7, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewh1 = VCONV_mx6_fp32 $dm0, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewl6 = VCONV_mx6_fp32 $dm5, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewl10 = VCONV_mx6_fp32 $dm1, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewl4 = VCONV_mx6_fp32 $dm6, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewl5 = VCONV_mx6_fp32 $dm4, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewh7 = VCONV_mx6_fp32 $dm3, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewl1 = VCONV_mx6_fp32 $dm2, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewh10 = VCONV_mx6_fp32 $dm7, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewl11 = VCONV_mx6_fp32 $dm0, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewh5 = VCONV_mx6_fp32 $dm5, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewl3 = VCONV_mx6_fp32 $dm1, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewh0 = VCONV_mx6_fp32 $dm6, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewl8 = VCONV_mx6_fp32 $dm4, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewh2 = VCONV_mx6_fp32 $dm3, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $fewh11 = VCONV_mx6_fp32 $dm2, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+
+    ; VCONV_mx9_fp32
+    $ex10 = VCONV_mx9_fp32 $dm0, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $ex5 = VCONV_mx9_fp32 $dm1, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $ex3 = VCONV_mx9_fp32 $dm7, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $ex11 = VCONV_mx9_fp32 $dm3, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $ex4 = VCONV_mx9_fp32 $dm4, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $ex1 = VCONV_mx9_fp32 $dm2, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $ex7 = VCONV_mx9_fp32 $dm5, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $ex2 = VCONV_mx9_fp32 $dm6, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $ex0 = VCONV_mx9_fp32 $dm0, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $ex8 = VCONV_mx9_fp32 $dm1, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $ex9 = VCONV_mx9_fp32 $dm7, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+    $ex6 = VCONV_mx9_fp32 $dm3, implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
+
+    ; VCONV_s32_bf16_fp32
+    $x4 = VCONV_s32_bf16_fp32 $bmhh0, $s0, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x6 = VCONV_s32_bf16_fp32 $bmlh1, $s3, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x9 = VCONV_s32_bf16_fp32 $bmhl5, $s2, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x7 = VCONV_s32_bf16_fp32 $bmhh1, $s1, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x11 = VCONV_s32_bf16_fp32 $bmlh2, $s0, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x0 = VCONV_s32_bf16_fp32 $bmll7, $s3, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x10 = VCONV_s32_bf16_fp32 $bmll5, $s2, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x2 = VCONV_s32_bf16_fp32 $bmhh3, $s1, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x1 = VCONV_s32_bf16_fp32 $bmlh7, $s0, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x8 = VCONV_s32_bf16_fp32 $bmhl4, $s3, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x3 = VCONV_s32_bf16_fp32 $bmlh6, $s2, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x5 = VCONV_s32_bf16_fp32 $bmlh4, $s1, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x4 = VCONV_s32_bf16_fp32 $bmll4, $s0, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x6 = VCONV_s32_bf16_fp32 $bmhh7, $s3, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x9 = VCONV_s32_bf16_fp32 $bmhl2, $s2, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x7 = VCONV_s32_bf16_fp32 $bmll1, $s1, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x11 = VCONV_s32_bf16_fp32 $bmll2, $s0, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x0 = VCONV_s32_bf16_fp32 $bmhh6, $s3, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x10 = VCONV_s32_bf16_fp32 $bmhh5, $s2, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x2 = VCONV_s32_bf16_fp32 $bmhh4, $s1, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x1 = VCONV_s32_bf16_fp32 $bmhl3, $s0, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x8 = VCONV_s32_bf16_fp32 $bmll3, $s3, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x3 = VCONV_s32_bf16_fp32 $bmll0, $s2, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x5 = VCONV_s32_bf16_fp32 $bmhl1, $s1, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x4 = VCONV_s32_bf16_fp32 $bmhh2, $s0, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x6 = VCONV_s32_bf16_fp32 $bmll6, $s3, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x9 = VCONV_s32_bf16_fp32 $bmhl7, $s2, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x7 = VCONV_s32_bf16_fp32 $bmlh0, $s1, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x11 = VCONV_s32_bf16_fp32 $bmhl0, $s0, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x0 = VCONV_s32_bf16_fp32 $bmlh5, $s3, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x10 = VCONV_s32_bf16_fp32 $bmhl6, $s2, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+    $x2 = VCONV_s32_bf16_fp32 $bmlh3, $s1, implicit-def $srf2fflags, implicit-def $srf2iflags, implicit $crf2fmask, implicit $crf2imask, implicit $crfpconvsat, implicit $crrnd
+...
+
+# CHECK: 0: f0 35 96 15 vconv.bf16.fp32 wl11, bmlh4
+# CHECK: 4: f0 35 14 15 vconv.bf16.fp32 wl10, bmlh0
+# CHECK: 8: f0 95 d5 14 vconv.bf16.fp32 wh9, bmll3
+# CHECK: c: f0 b5 95 11 vconv.bf16.fp32 wl3, bmlh3
+# CHECK: 10: f0 75 17 12 vconv.bf16.fp32 wl4, bmhh6
+# CHECK: 14: f0 f5 d4 15 vconv.bf16.fp32 wh11, bmhh1
+# CHECK: 18: f0 55 96 13 vconv.bf16.fp32 wl7, bmhl4
+# CHECK: 1c: f0 35 57 14 vconv.bf16.fp32 wh8, bmlh6
+# CHECK: 20: f0 d5 d6 12 vconv.bf16.fp32 wh5, bmhl5
+# CHECK: 24: f0 b5 17 14 vconv.bf16.fp32 wl8, bmlh7
+# CHECK: 28: f0 95 56 15 vconv.bf16.fp32 wh10, bmll5
+# CHECK: 2c: f0 95 14 11 vconv.bf16.fp32 wl2, bmll1
+# CHECK: 30: f0 75 d5 11 vconv.bf16.fp32 wh3, bmhh2
+# CHECK: 34: f0 55 94 12 vconv.bf16.fp32 wl5, bmhl0
+# CHECK: 38: f0 55 57 13 vconv.bf16.fp32 wh6, bmhl6
+# CHECK: 3c: f0 75 54 10 vconv.bf16.fp32 wh0, bmhh0
+# CHECK: 40: f0 55 15 10 vconv.bf16.fp32 wl0, bmhl2
+# CHECK: 44: f0 35 55 11 vconv.bf16.fp32 wh2, bmlh2
+# CHECK: 48: f0 d5 d7 13 vconv.bf16.fp32 wh7, bmhl7
+# CHECK: 4c: f0 f5 95 10 vconv.bf16.fp32 wl1, bmhh3
+# CHECK: 50: f0 b5 14 13 vconv.bf16.fp32 wl6, bmlh1
+# CHECK: 54: f0 15 97 14 vconv.bf16.fp32 wl9, bmll6
+# CHECK: 58: f0 d5 54 12 vconv.bf16.fp32 wh4, bmhl1
+# CHECK: 5c: f0 95 d7 10 vconv.bf16.fp32 wh1, bmll7
+# CHECK: 60: f0 15 96 15 vconv.bf16.fp32 wl11, bmll4
+# CHECK: 64: f0 b5 16 15 vconv.bf16.fp32 wl10, bmlh5
+# CHECK: 68: f0 15 d4 14 vconv.bf16.fp32 wh9, bmll0
+# CHECK: 6c: f0 15 95 11 vconv.bf16.fp32 wl3, bmll2
+# CHECK: 70: f0 75 16 12 vconv.bf16.fp32 wl4, bmhh4
+# CHECK: 74: f0 f5 d6 15 vconv.bf16.fp32 wh11, bmhh5
+# CHECK: 78: f0 d5 95 13 vconv.bf16.fp32 wl7, bmhl3
+# CHECK: 7c: f0 f5 57 14 vconv.bf16.fp32 wh8, bmhh7
+# CHECK: 80: f0 d5 93 14 vconv.bf16.fp32 x9, cmh7
+# CHECK: 84: f0 55 10 11 vconv.bf16.fp32 x2, cmh0
+# CHECK: 88: f0 55 11 13 vconv.bf16.fp32 x6, cmh2
+# CHECK: 8c: f0 15 92 10 vconv.bf16.fp32 x1, cml4
+# CHECK: 90: f0 95 91 15 vconv.bf16.fp32 x11, cml3
+# CHECK: 94: f0 15 93 11 vconv.bf16.fp32 x3, cml6
+# CHECK: 98: f0 95 12 14 vconv.bf16.fp32 x8, cml5
+# CHECK: 9c: f0 95 10 12 vconv.bf16.fp32 x4, cml1
+# CHECK: a0: f0 95 13 10 vconv.bf16.fp32 x0, cml7
+# CHECK: a4: f0 d5 91 13 vconv.bf16.fp32 x7, cmh3
+# CHECK: a8: f0 15 10 15 vconv.bf16.fp32 x10, cml0
+# CHECK: ac: f0 d5 92 12 vconv.bf16.fp32 x5, cmh5
+# CHECK: b0: f0 55 92 14 vconv.bf16.fp32 x9, cmh4
+# CHECK: b4: f0 d5 10 11 vconv.bf16.fp32 x2, cmh1
+# CHECK: b8: f0 15 11 13 vconv.bf16.fp32 x6, cml2
+# CHECK: bc: f0 55 93 10 vconv.bf16.fp32 x1, cmh6
+# CHECK: c0: b0 f2 03 10 vconv.bf16.fp32 mcd, cmh7
+# CHECK: c4: b0 f2 01 10 vconv.bf16.fp32 mcd, cmh3
+# CHECK: c8: b0 72 01 10 vconv.bf16.fp32 mcd, cmh2
+# CHECK: cc: b0 32 03 10 vconv.bf16.fp32 mcd, cml6
+# CHECK: d0: b0 72 02 10 vconv.bf16.fp32 mcd, cmh4
+# CHECK: d4: b0 b2 03 10 vconv.bf16.fp32 mcd, cml7
+# CHECK: d8: b0 b2 01 10 vconv.bf16.fp32 mcd, cml3
+# CHECK: dc: b0 72 03 10 vconv.bf16.fp32 mcd, cmh6
+# CHECK: e0: b0 32 00 10 vconv.bf16.fp32 mcd, cml0
+# CHECK: e4: b0 32 02 10 vconv.bf16.fp32 mcd, cml4
+# CHECK: e8: b0 f2 00 10 vconv.bf16.fp32 mcd, cmh1
+# CHECK: ec: b0 32 01 10 vconv.bf16.fp32 mcd, cml2
+# CHECK: f0: b0 f2 02 10 vconv.bf16.fp32 mcd, cmh5
+# CHECK: f4: b0 72 00 10 vconv.bf16.fp32 mcd, cmh0
+# CHECK: f8: b0 b2 02 10 vconv.bf16.fp32 mcd, cml5
+# CHECK: fc: b0 b2 00 10 vconv.bf16.fp32 mcd, cml1
+# CHECK: 100: 70 41 80 15 vconv.bf8.fp32 wl11, cmh0, s0
+# CHECK: 104: 70 91 80 14 vconv.bf8.fp32 wl9, cml1, s2
+# CHECK: 108: 70 09 c2 10 vconv.bf8.fp32 wh1, cml4, s1
+# CHECK: 10c: 70 19 c0 13 vconv.bf8.fp32 wh7, cml0, s3
+# CHECK: 110: 70 c1 83 10 vconv.bf8.fp32 wl1, cmh7, s0
+# CHECK: 114: 70 51 03 14 vconv.bf8.fp32 wl8, cmh6, s2
+# CHECK: 118: 70 09 03 15 vconv.bf8.fp32 wl10, cml6, s1
+# CHECK: 11c: 70 99 83 13 vconv.bf8.fp32 wl7, cml7, s3
+# CHECK: 120: 70 41 81 11 vconv.bf8.fp32 wl3, cmh2, s0
+# CHECK: 124: 70 51 42 12 vconv.bf8.fp32 wh4, cmh4, s2
+# CHECK: 128: 70 c9 c1 14 vconv.bf8.fp32 wh9, cmh3, s1
+# CHECK: 12c: 70 d9 02 12 vconv.bf8.fp32 wl4, cmh5, s3
+# CHECK: 130: 70 81 c2 15 vconv.bf8.fp32 wh11, cml5, s0
+# CHECK: 134: 70 91 41 11 vconv.bf8.fp32 wh2, cml3, s2
+# CHECK: 138: 70 c9 c0 11 vconv.bf8.fp32 wh3, cmh1, s1
+# CHECK: 13c: 70 19 01 10 vconv.bf8.fp32 wl0, cml2, s3
+# CHECK: 140: 70 41 40 15 vconv.bf8.fp32 wh10, cmh0, s0
+# CHECK: 144: 70 91 80 12 vconv.bf8.fp32 wl5, cml1, s2
+# CHECK: 148: 70 09 02 11 vconv.bf8.fp32 wl2, cml4, s1
+# CHECK: 14c: 70 19 00 13 vconv.bf8.fp32 wl6, cml0, s3
+# CHECK: 150: 70 c1 43 13 vconv.bf8.fp32 wh6, cmh7, s0
+# CHECK: 154: 70 51 43 10 vconv.bf8.fp32 wh0, cmh6, s2
+# CHECK: 158: 70 09 c3 12 vconv.bf8.fp32 wh5, cml6, s1
+# CHECK: 15c: 70 99 43 14 vconv.bf8.fp32 wh8, cml7, s3
+# CHECK: 160: b0 0a 03 10 vconv.fp16.fp32 mcd, cml6
+# CHECK: 164: b0 8a 00 10 vconv.fp16.fp32 mcd, cml1
+# CHECK: 168: b0 ca 00 10 vconv.fp16.fp32 mcd, cmh1
+# CHECK: 16c: b0 8a 03 10 vconv.fp16.fp32 mcd, cml7
+# CHECK: 170: b0 4a 01 10 vconv.fp16.fp32 mcd, cmh2
+# CHECK: 174: b0 0a 01 10 vconv.fp16.fp32 mcd, cml2
+# CHECK: 178: b0 0a 02 10 vconv.fp16.fp32 mcd, cml4
+# CHECK: 17c: b0 0a 00 10 vconv.fp16.fp32 mcd, cml0
+# CHECK: 180: b0 ca 01 10 vconv.fp16.fp32 mcd, cmh3
+# CHECK: 184: b0 8a 02 10 vconv.fp16.fp32 mcd, cml5
+# CHECK: 188: b0 8a 01 10 vconv.fp16.fp32 mcd, cml3
+# CHECK: 18c: b0 ca 03 10 vconv.fp16.fp32 mcd, cmh7
+# CHECK: 190: b0 4a 03 10 vconv.fp16.fp32 mcd, cmh6
+# CHECK: 194: b0 4a 02 10 vconv.fp16.fp32 mcd, cmh4
+# CHECK: 198: b0 ca 02 10 vconv.fp16.fp32 mcd, cmh5
+# CHECK: 19c: b0 4a 00 10 vconv.fp16.fp32 mcd, cmh0
+# CHECK: 1a0: b0 ea 82 13 vconv.fp16.fp32 x7, cmh5
+# CHECK: 1a4: b0 aa 01 15 vconv.fp16.fp32 x10, cml3
+# CHECK: 1a8: b0 6a 03 10 vconv.fp16.fp32 x0, cmh6
+# CHECK: 1ac: b0 2a 03 14 vconv.fp16.fp32 x8, cml6
+# CHECK: 1b0: b0 6a 02 13 vconv.fp16.fp32 x6, cmh4
+# CHECK: 1b4: b0 6a 80 15 vconv.fp16.fp32 x11, cmh0
+# CHECK: 1b8: b0 aa 83 14 vconv.fp16.fp32 x9, cml7
+# CHECK: 1bc: b0 aa 80 12 vconv.fp16.fp32 x5, cml1
+# CHECK: 1c0: b0 aa 02 12 vconv.fp16.fp32 x4, cml5
+# CHECK: 1c4: b0 6a 01 11 vconv.fp16.fp32 x2, cmh2
+# CHECK: 1c8: b0 ea 81 11 vconv.fp16.fp32 x3, cmh3
+# CHECK: 1cc: b0 2a 80 10 vconv.fp16.fp32 x1, cml0
+# CHECK: 1d0: b0 ea 83 13 vconv.fp16.fp32 x7, cmh7
+# CHECK: 1d4: b0 2a 02 15 vconv.fp16.fp32 x10, cml4
+# CHECK: 1d8: b0 2a 01 10 vconv.fp16.fp32 x0, cml2
+# CHECK: 1dc: b0 ea 00 14 vconv.fp16.fp32 x8, cmh1
+# CHECK: 1e0: 30 80 cc 22 vconv.fp32.bf16 cmh4, scd
+# CHECK: 1e4: 30 00 cb 22 vconv.fp32.bf16 cml3, scd
+# CHECK: 1e8: 30 00 ca 22 vconv.fp32.bf16 cml2, scd
+# CHECK: 1ec: 30 80 c9 22 vconv.fp32.bf16 cmh1, scd
+# CHECK: 1f0: 30 00 cd 22 vconv.fp32.bf16 cml5, scd
+# CHECK: 1f4: 30 80 ca 22 vconv.fp32.bf16 cmh2, scd
+# CHECK: 1f8: 30 80 c8 22 vconv.fp32.bf16 cmh0, scd
+# CHECK: 1fc: 30 00 ce 22 vconv.fp32.bf16 cml6, scd
+# CHECK: 200: 30 80 cb 22 vconv.fp32.bf16 cmh3, scd
+# CHECK: 204: 30 00 cc 22 vconv.fp32.bf16 cml4, scd
+# CHECK: 208: 30 80 cf 22 vconv.fp32.bf16 cmh7, scd
+# CHECK: 20c: 30 00 c8 22 vconv.fp32.bf16 cml0, scd
+# CHECK: 210: 30 80 cd 22 vconv.fp32.bf16 cmh5, scd
+# CHECK: 214: 30 00 cf 22 vconv.fp32.bf16 cml7, scd
+# CHECK: 218: 30 00 c9 22 vconv.fp32.bf16 cml1, scd
+# CHECK: 21c: 30 80 ce 22 vconv.fp32.bf16 cmh6, scd
+# CHECK: 220: f0 8b 97 30 vconv.fp32.bf16 bmlh0, wh5
+# CHECK: 224: f0 8b ab 34 vconv.fp32.bf16 bmlh2, wh10
+# CHECK: 228: f0 8b 8d 39 vconv.fp32.bf16 bmhh4, wl3
+# CHECK: 22c: f0 8b 15 35 vconv.fp32.bf16 bmhl2, wl5
+# CHECK: 230: f0 8b 1b 32 vconv.fp32.bf16 bmll1, wh6
+# CHECK: 234: f0 8b 83 31 vconv.fp32.bf16 bmhh0, wh0
+# CHECK: 238: f0 8b 23 3b vconv.fp32.bf16 bmhl5, wh8
+# CHECK: 23c: f0 8b 1d 3f vconv.fp32.bf16 bmhl7, wl7
+# CHECK: 240: f0 8b 99 36 vconv.fp32.bf16 bmlh3, wl6
+# CHECK: 244: f0 8b a7 37 vconv.fp32.bf16 bmhh3, wh9
+# CHECK: 248: f0 8b 2f 31 vconv.fp32.bf16 bmhl0, wh11
+# CHECK: 24c: f0 8b 1f 34 vconv.fp32.bf16 bmll2, wh7
+# CHECK: 250: f0 8b 87 38 vconv.fp32.bf16 bmlh4, wh1
+# CHECK: 254: f0 8b 29 3e vconv.fp32.bf16 bmll7, wl10
+# CHECK: 258: f0 8b ad 3c vconv.fp32.bf16 bmlh6, wl11
+# CHECK: 25c: f0 8b a5 3b vconv.fp32.bf16 bmhh5, wl9
+# CHECK: 260: f0 8b 0b 3c vconv.fp32.bf16 bmll6, wh2
+# CHECK: 264: f0 8b 8f 3a vconv.fp32.bf16 bmlh5, wh3
+# CHECK: 268: f0 8b 11 36 vconv.fp32.bf16 bmll3, wl4
+# CHECK: 26c: f0 8b 93 32 vconv.fp32.bf16 bmlh1, wh4
+# CHECK: 270: f0 8b 21 39 vconv.fp32.bf16 bmhl4, wl8
+# CHECK: 274: f0 8b 01 3a vconv.fp32.bf16 bmll5, wl0
+# CHECK: 278: f0 8b 05 38 vconv.fp32.bf16 bmll4, wl1
+# CHECK: 27c: f0 8b 89 3f vconv.fp32.bf16 bmhh7, wl2
+# CHECK: 280: f0 8b 97 33 vconv.fp32.bf16 bmhh1, wh5
+# CHECK: 284: f0 8b ab 3d vconv.fp32.bf16 bmhh6, wh10
+# CHECK: 288: f0 8b 8d 35 vconv.fp32.bf16 bmhh2, wl3
+# CHECK: 28c: f0 8b 15 3d vconv.fp32.bf16 bmhl6, wl5
+# CHECK: 290: f0 8b 9b 3e vconv.fp32.bf16 bmlh7, wh6
+# CHECK: 294: f0 8b 03 33 vconv.fp32.bf16 bmhl1, wh0
+# CHECK: 298: f0 8b 23 37 vconv.fp32.bf16 bmhl3, wh8
+# CHECK: 29c: f0 8b 1d 30 vconv.fp32.bf16 bmll0, wl7
+# CHECK: 2a0: f0 cb 20 36 vconv.fp32.bf16 cml3, x8
+# CHECK: 2a4: f0 cb 28 32 vconv.fp32.bf16 cml1, x10
+# CHECK: 2a8: f0 cb 24 38 vconv.fp32.bf16 cml4, x9
+# CHECK: 2ac: f0 cb 00 39 vconv.fp32.bf16 cmh4, x0
+# CHECK: 2b0: f0 cb 1c 3c vconv.fp32.bf16 cml6, x7
+# CHECK: 2b4: f0 cb 0c 3d vconv.fp32.bf16 cmh6, x3
+# CHECK: 2b8: f0 cb 14 3f vconv.fp32.bf16 cmh7, x5
+# CHECK: 2bc: f0 cb 10 3a vconv.fp32.bf16 cml5, x4
+# CHECK: 2c0: f0 cb 04 35 vconv.fp32.bf16 cmh2, x1
+# CHECK: 2c4: f0 cb 2c 3e vconv.fp32.bf16 cml7, x11
+# CHECK: 2c8: f0 cb 18 34 vconv.fp32.bf16 cml2, x6
+# CHECK: 2cc: f0 cb 08 30 vconv.fp32.bf16 cml0, x2
+# CHECK: 2d0: f0 cb 20 3b vconv.fp32.bf16 cmh5, x8
+# CHECK: 2d4: f0 cb 28 31 vconv.fp32.bf16 cmh0, x10
+# CHECK: 2d8: f0 cb 24 33 vconv.fp32.bf16 cmh1, x9
+# CHECK: 2dc: f0 cb 00 37 vconv.fp32.bf16 cmh3, x0
+# CHECK: 2e0: 30 c0 c9 22 vconv.fp32.fp16 cmh1, scd
+# CHECK: 2e4: 30 c0 cf 22 vconv.fp32.fp16 cmh7, scd
+# CHECK: 2e8: 30 c0 ce 22 vconv.fp32.fp16 cmh6, scd
+# CHECK: 2ec: 30 40 cf 22 vconv.fp32.fp16 cml7, scd
+# CHECK: 2f0: 30 c0 cc 22 vconv.fp32.fp16 cmh4, scd
+# CHECK: 2f4: 30 c0 cd 22 vconv.fp32.fp16 cmh5, scd
+# CHECK: 2f8: 30 40 ca 22 vconv.fp32.fp16 cml2, scd
+# CHECK: 2fc: 30 40 c8 22 vconv.fp32.fp16 cml0, scd
+# CHECK: 300: 30 c0 cb 22 vconv.fp32.fp16 cmh3, scd
+# CHECK: 304: 30 40 cd 22 vconv.fp32.fp16 cml5, scd
+# CHECK: 308: 30 40 ce 22 vconv.fp32.fp16 cml6, scd
+# CHECK: 30c: 30 c0 c8 22 vconv.fp32.fp16 cmh0, scd
+# CHECK: 310: 30 40 cc 22 vconv.fp32.fp16 cml4, scd
+# CHECK: 314: 30 c0 ca 22 vconv.fp32.fp16 cmh2, scd
+# CHECK: 318: 30 40 cb 22 vconv.fp32.fp16 cml3, scd
+# CHECK: 31c: 30 40 c9 22 vconv.fp32.fp16 cml1, scd
+# CHECK: 320: f0 cb 1a 3e vconv.fp32.fp16 cml7, x6
+# CHECK: 324: f0 cb 2e 34 vconv.fp32.fp16 cml2, x11
+# CHECK: 328: f0 cb 0e 3d vconv.fp32.fp16 cmh6, x3
+# CHECK: 32c: f0 cb 0a 3b vconv.fp32.fp16 cmh5, x2
+# CHECK: 330: f0 cb 26 36 vconv.fp32.fp16 cml3, x9
+# CHECK: 334: f0 cb 22 38 vconv.fp32.fp16 cml4, x8
+# CHECK: 338: f0 cb 06 32 vconv.fp32.fp16 cml1, x1
+# CHECK: 33c: f0 cb 02 33 vconv.fp32.fp16 cmh1, x0
+# CHECK: 340: f0 cb 1e 37 vconv.fp32.fp16 cmh3, x7
+# CHECK: 344: f0 cb 16 35 vconv.fp32.fp16 cmh2, x5
+# CHECK: 348: f0 cb 2a 3a vconv.fp32.fp16 cml5, x10
+# CHECK: 34c: f0 cb 12 3f vconv.fp32.fp16 cmh7, x4
+# CHECK: 350: f0 cb 1a 31 vconv.fp32.fp16 cmh0, x6
+# CHECK: 354: f0 cb 2e 39 vconv.fp32.fp16 cmh4, x11
+# CHECK: 358: f0 cb 0e 3c vconv.fp32.fp16 cml6, x3
+# CHECK: 35c: f0 cb 0a 30 vconv.fp32.fp16 cml0, x2
+# CHECK: 360: 70 1d c1 14 vconv.fp8.fp32 wh9, cml2, s3
+# CHECK: 364: 70 15 83 15 vconv.fp8.fp32 wl11, cml6, s2
+# CHECK: 368: 70 4d 03 11 vconv.fp8.fp32 wl2, cmh6, s1
+# CHECK: 36c: 70 c5 42 12 vconv.fp8.fp32 wh4, cmh5, s0
+# CHECK: 370: 70 dd 03 12 vconv.fp8.fp32 wl4, cmh7, s3
+# CHECK: 374: 70 55 c1 13 vconv.fp8.fp32 wh7, cmh2, s2
+# CHECK: 378: 70 4d c0 10 vconv.fp8.fp32 wh1, cmh0, s1
+# CHECK: 37c: 70 05 80 10 vconv.fp8.fp32 wl1, cml0, s0
+# CHECK: 380: 70 9d c0 15 vconv.fp8.fp32 wh11, cml1, s3
+# CHECK: 384: 70 95 03 13 vconv.fp8.fp32 wl6, cml7, s2
+# CHECK: 388: 70 4d 02 15 vconv.fp8.fp32 wl10, cmh4, s1
+# CHECK: 38c: 70 c5 41 15 vconv.fp8.fp32 wh10, cmh3, s0
+# CHECK: 390: 70 1d 82 11 vconv.fp8.fp32 wl3, cml4, s3
+# CHECK: 394: 70 95 42 11 vconv.fp8.fp32 wh2, cml5, s2
+# CHECK: 398: 70 cd 40 10 vconv.fp8.fp32 wh0, cmh1, s1
+# CHECK: 39c: 70 85 c1 11 vconv.fp8.fp32 wh3, cml3, s0
+# CHECK: 3a0: 70 1d 41 14 vconv.fp8.fp32 wh8, cml2, s3
+# CHECK: 3a4: 70 15 83 12 vconv.fp8.fp32 wl5, cml6, s2
+# CHECK: 3a8: 70 4d 83 13 vconv.fp8.fp32 wl7, cmh6, s1
+# CHECK: 3ac: 70 c5 82 14 vconv.fp8.fp32 wl9, cmh5, s0
+# CHECK: 3b0: 70 dd c3 12 vconv.fp8.fp32 wh5, cmh7, s3
+# CHECK: 3b4: 70 55 41 13 vconv.fp8.fp32 wh6, cmh2, s2
+# CHECK: 3b8: 70 4d 00 10 vconv.fp8.fp32 wl0, cmh0, s1
+# CHECK: 3bc: 70 05 00 14 vconv.fp8.fp32 wl8, cml0, s0
+# CHECK: 3c0: f0 15 43 12 vconv.mx4.fp32 fewh4, dm4
+# CHECK: 3c4: f0 55 43 10 vconv.mx4.fp32 fewh0, dm5
+# CHECK: 3c8: f0 d5 c2 11 vconv.mx4.fp32 fewh3, dm3
+# CHECK: 3cc: f0 95 42 13 vconv.mx4.fp32 fewh6, dm2
+# CHECK: 3d0: f0 d5 83 10 vconv.mx4.fp32 fewl1, dm7
+# CHECK: 3d4: f0 55 c2 12 vconv.mx4.fp32 fewh5, dm1
+# CHECK: 3d8: f0 15 c2 10 vconv.mx4.fp32 fewh1, dm0
+# CHECK: 3dc: f0 95 83 15 vconv.mx4.fp32 fewl11, dm6
+# CHECK: 3e0: f0 15 03 13 vconv.mx4.fp32 fewl6, dm4
+# CHECK: 3e4: f0 55 83 12 vconv.mx4.fp32 fewl5, dm5
+# CHECK: 3e8: f0 d5 82 13 vconv.mx4.fp32 fewl7, dm3
+# CHECK: 3ec: f0 95 02 14 vconv.mx4.fp32 fewl8, dm2
+# CHECK: 3f0: f0 d5 03 15 vconv.mx4.fp32 fewl10, dm7
+# CHECK: 3f4: f0 55 02 11 vconv.mx4.fp32 fewl2, dm1
+# CHECK: 3f8: f0 15 c2 14 vconv.mx4.fp32 fewh9, dm0
+# CHECK: 3fc: f0 95 43 11 vconv.mx4.fp32 fewh2, dm6
+# CHECK: 400: f0 15 83 14 vconv.mx4.fp32 fewl9, dm4
+# CHECK: 404: f0 55 43 14 vconv.mx4.fp32 fewh8, dm5
+# CHECK: 408: f0 d5 02 12 vconv.mx4.fp32 fewl4, dm3
+# CHECK: 40c: f0 95 82 11 vconv.mx4.fp32 fewl3, dm2
+# CHECK: 410: f0 d5 c3 15 vconv.mx4.fp32 fewh11, dm7
+# CHECK: 414: f0 55 02 10 vconv.mx4.fp32 fewl0, dm1
+# CHECK: 418: f0 15 c2 13 vconv.mx4.fp32 fewh7, dm0
+# CHECK: 41c: f0 95 43 15 vconv.mx4.fp32 fewh10, dm6
+# CHECK: 420: f0 d5 81 13 vconv.mx6.fp32 fewl7, dm7
+# CHECK: 424: f0 15 00 11 vconv.mx6.fp32 fewl2, dm0
+# CHECK: 428: f0 55 01 10 vconv.mx6.fp32 fewl0, dm5
+# CHECK: 42c: f0 55 40 12 vconv.mx6.fp32 fewh4, dm1
+# CHECK: 430: f0 95 41 14 vconv.mx6.fp32 fewh8, dm6
+# CHECK: 434: f0 15 81 14 vconv.mx6.fp32 fewl9, dm4
+# CHECK: 438: f0 d5 c0 14 vconv.mx6.fp32 fewh9, dm3
+# CHECK: 43c: f0 95 40 13 vconv.mx6.fp32 fewh6, dm2
+# CHECK: 440: f0 d5 c1 11 vconv.mx6.fp32 fewh3, dm7
+# CHECK: 444: f0 15 c0 10 vconv.mx6.fp32 fewh1, dm0
+# CHECK: 448: f0 55 01 13 vconv.mx6.fp32 fewl6, dm5
+# CHECK: 44c: f0 55 00 15 vconv.mx6.fp32 fewl10, dm1
+# CHECK: 450: f0 95 01 12 vconv.mx6.fp32 fewl4, dm6
+# CHECK: 454: f0 15 81 12 vconv.mx6.fp32 fewl5, dm4
+# CHECK: 458: f0 d5 c0 13 vconv.mx6.fp32 fewh7, dm3
+# CHECK: 45c: f0 95 80 10 vconv.mx6.fp32 fewl1, dm2
+# CHECK: 460: f0 d5 41 15 vconv.mx6.fp32 fewh10, dm7
+# CHECK: 464: f0 15 80 15 vconv.mx6.fp32 fewl11, dm0
+# CHECK: 468: f0 55 c1 12 vconv.mx6.fp32 fewh5, dm5
+# CHECK: 46c: f0 55 80 11 vconv.mx6.fp32 fewl3, dm1
+# CHECK: 470: f0 95 41 10 vconv.mx6.fp32 fewh0, dm6
+# CHECK: 474: f0 15 01 14 vconv.mx6.fp32 fewl8, dm4
+# CHECK: 478: f0 d5 40 11 vconv.mx6.fp32 fewh2, dm3
+# CHECK: 47c: f0 95 c0 15 vconv.mx6.fp32 fewh11, dm2
+# CHECK: 480: f0 15 5c 15 vconv.mx9.fp32 ex10, dm0
+# CHECK: 484: f0 55 dc 12 vconv.mx9.fp32 ex5, dm1
+# CHECK: 488: f0 d5 dd 11 vconv.mx9.fp32 ex3, dm7
+# CHECK: 48c: f0 d5 dc 15 vconv.mx9.fp32 ex11, dm3
+# CHECK: 490: f0 15 5d 12 vconv.mx9.fp32 ex4, dm4
+# CHECK: 494: f0 95 dc 10 vconv.mx9.fp32 ex1, dm2
+# CHECK: 498: f0 55 dd 13 vconv.mx9.fp32 ex7, dm5
+# CHECK: 49c: f0 95 5d 11 vconv.mx9.fp32 ex2, dm6
+# CHECK: 4a0: f0 15 5c 10 vconv.mx9.fp32 ex0, dm0
+# CHECK: 4a4: f0 55 5c 14 vconv.mx9.fp32 ex8, dm1
+# CHECK: 4a8: f0 d5 dd 14 vconv.mx9.fp32 ex9, dm7
+# CHECK: 4ac: f0 d5 5c 13 vconv.mx9.fp32 ex6, dm3
+# CHECK: 4b0: f0 75 60 12 vconv.s32.bf16.fp32 x4, bmhh0, s0
+# CHECK: 4b4: f0 b5 78 13 vconv.s32.bf16.fp32 x6, bmlh1, s3
+# CHECK: 4b8: f0 d5 f2 14 vconv.s32.bf16.fp32 x9, bmhl5, s2
+# CHECK: 4bc: f0 f5 e8 13 vconv.s32.bf16.fp32 x7, bmhh1, s1
+# CHECK: 4c0: f0 35 e1 15 vconv.s32.bf16.fp32 x11, bmlh2, s0
+# CHECK: 4c4: f0 95 7b 10 vconv.s32.bf16.fp32 x0, bmll7, s3
+# CHECK: 4c8: f0 95 72 15 vconv.s32.bf16.fp32 x10, bmll5, s2
+# CHECK: 4cc: f0 f5 69 11 vconv.s32.bf16.fp32 x2, bmhh3, s1
+# CHECK: 4d0: f0 b5 e3 10 vconv.s32.bf16.fp32 x1, bmlh7, s0
+# CHECK: 4d4: f0 55 7a 14 vconv.s32.bf16.fp32 x8, bmhl4, s3
+# CHECK: 4d8: f0 35 f3 11 vconv.s32.bf16.fp32 x3, bmlh6, s2
+# CHECK: 4dc: f0 35 ea 12 vconv.s32.bf16.fp32 x5, bmlh4, s1
+# CHECK: 4e0: f0 15 62 12 vconv.s32.bf16.fp32 x4, bmll4, s0
+# CHECK: 4e4: f0 f5 7b 13 vconv.s32.bf16.fp32 x6, bmhh7, s3
+# CHECK: 4e8: f0 55 f1 14 vconv.s32.bf16.fp32 x9, bmhl2, s2
+# CHECK: 4ec: f0 95 e8 13 vconv.s32.bf16.fp32 x7, bmll1, s1
+# CHECK: 4f0: f0 15 e1 15 vconv.s32.bf16.fp32 x11, bmll2, s0
+# CHECK: 4f4: f0 75 7b 10 vconv.s32.bf16.fp32 x0, bmhh6, s3
+# CHECK: 4f8: f0 f5 72 15 vconv.s32.bf16.fp32 x10, bmhh5, s2
+# CHECK: 4fc: f0 75 6a 11 vconv.s32.bf16.fp32 x2, bmhh4, s1
+# CHECK: 500: f0 d5 e1 10 vconv.s32.bf16.fp32 x1, bmhl3, s0
+# CHECK: 504: f0 95 79 14 vconv.s32.bf16.fp32 x8, bmll3, s3
+# CHECK: 508: f0 15 f0 11 vconv.s32.bf16.fp32 x3, bmll0, s2
+# CHECK: 50c: f0 d5 e8 12 vconv.s32.bf16.fp32 x5, bmhl1, s1
+# CHECK: 510: f0 75 61 12 vconv.s32.bf16.fp32 x4, bmhh2, s0
+# CHECK: 514: f0 15 7b 13 vconv.s32.bf16.fp32 x6, bmll6, s3
+# CHECK: 518: f0 d5 f3 14 vconv.s32.bf16.fp32 x9, bmhl7, s2
+# CHECK: 51c: f0 35 e8 13 vconv.s32.bf16.fp32 x7, bmlh0, s1
+# CHECK: 520: f0 55 e0 15 vconv.s32.bf16.fp32 x11, bmhl0, s0
+# CHECK: 524: f0 b5 7a 10 vconv.s32.bf16.fp32 x0, bmlh5, s3
+# CHECK: 528: f0 55 73 15 vconv.s32.bf16.fp32 x10, bmhl6, s2
+# CHECK: 52c: f0 b5 69 11 vconv.s32.bf16.fp32 x2, bmlh3, s1

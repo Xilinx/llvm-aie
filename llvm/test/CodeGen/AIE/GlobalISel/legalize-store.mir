@@ -4,10 +4,11 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
-# RUN: llc -mtriple aie2 -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
-# RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -mtriple aie -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s --check-prefixes=CHECK,AIE2
+# RUN: llc -mtriple aie2 -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s --check-prefixes=CHECK,AIE2
+# RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s --check-prefixes=CHECK,AIE2
+# RUN: llc -mtriple aie2ps -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s --check-prefixes=CHECK,AIE2PS
 
 ---
 name: test_store_s32
@@ -65,16 +66,25 @@ body: |
   bb.0:
     liveins: $r6, $r7, $p0
 
-    ; CHECK-LABEL: name: test_store_s64
-    ; CHECK: liveins: $r6, $r7, $p0
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r6
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r7
-    ; CHECK-NEXT: G_STORE [[COPY1]](s32), [[COPY]](p0) :: (store (s32), align 8)
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s20)
-    ; CHECK-NEXT: G_STORE [[COPY2]](s32), [[PTR_ADD]](p0) :: (store (s32) into unknown-address + 4)
+    ; AIE2-LABEL: name: test_store_s64
+    ; AIE2: liveins: $r6, $r7, $p0
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; AIE2-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2-NEXT: G_STORE [[COPY1]](s32), [[COPY]](p0) :: (store (s32), align 8)
+    ; AIE2-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
+    ; AIE2-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s20)
+    ; AIE2-NEXT: G_STORE [[COPY2]](s32), [[PTR_ADD]](p0) :: (store (s32) into unknown-address + 4)
+    ;
+    ; AIE2PS-LABEL: name: test_store_s64
+    ; AIE2PS: liveins: $r6, $r7, $p0
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r6
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r7
+    ; AIE2PS-NEXT: [[MV:%[0-9]+]]:_(s64) = G_MERGE_VALUES [[COPY1]](s32), [[COPY2]](s32)
+    ; AIE2PS-NEXT: G_STORE [[MV]](s64), [[COPY]](p0) :: (store (s64))
     %0:_(p0) = COPY $p0
     %1:_(s32) = COPY $r6
     %2:_(s32) = COPY $r7

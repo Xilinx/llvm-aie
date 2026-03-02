@@ -4,9 +4,10 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2p -run-pass=regbankselect -regbankselect-greedy %s -verify-machineinstrs -o - | FileCheck %s -check-prefixes=COMMON,GREEDY
 # RUN: llc -mtriple aie2p -run-pass=regbankselect -regbankselect-fast %s -verify-machineinstrs -o - | FileCheck %s -check-prefixes=COMMON,FAST
+# RUN: llc -mtriple aie2ps -run-pass=regbankselect -regbankselect-fast %s -verify-machineinstrs -o - | FileCheck %s -check-prefixes=COMMON,AIE2PS
 ---
 name:           test_unmerge_2x256_to_s256
 legalized:       true
@@ -193,10 +194,20 @@ name:            test_unmerge_v16s32_implicit
 legalized: true
 body:             |
   bb.1.entry:
-    ; COMMON-LABEL: name: test_unmerge_v16s32_implicit
-    ; COMMON: [[DEF:%[0-9]+]]:accregbank(<16 x s64>) = G_IMPLICIT_DEF
-    ; COMMON-NEXT: [[UV:%[0-9]+]]:accregbank(<8 x s64>), [[UV1:%[0-9]+]]:accregbank(<8 x s64>) = G_UNMERGE_VALUES [[DEF]](<16 x s64>)
-    ; COMMON-NEXT: PseudoRET implicit $lr, implicit [[UV1]](<8 x s64>)
+    ; GREEDY-LABEL: name: test_unmerge_v16s32_implicit
+    ; GREEDY: [[DEF:%[0-9]+]]:accregbank(<16 x s64>) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[UV:%[0-9]+]]:accregbank(<8 x s64>), [[UV1:%[0-9]+]]:accregbank(<8 x s64>) = G_UNMERGE_VALUES [[DEF]](<16 x s64>)
+    ; GREEDY-NEXT: PseudoRET implicit $lr, implicit [[UV1]](<8 x s64>)
+    ;
+    ; FAST-LABEL: name: test_unmerge_v16s32_implicit
+    ; FAST: [[DEF:%[0-9]+]]:accregbank(<16 x s64>) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[UV:%[0-9]+]]:accregbank(<8 x s64>), [[UV1:%[0-9]+]]:accregbank(<8 x s64>) = G_UNMERGE_VALUES [[DEF]](<16 x s64>)
+    ; FAST-NEXT: PseudoRET implicit $lr, implicit [[UV1]](<8 x s64>)
+    ;
+    ; AIE2PS-LABEL: name: test_unmerge_v16s32_implicit
+    ; AIE2PS: [[DEF:%[0-9]+]]:vregbank(<16 x s64>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[UV:%[0-9]+]]:vregbank(<8 x s64>), [[UV1:%[0-9]+]]:vregbank(<8 x s64>) = G_UNMERGE_VALUES [[DEF]](<16 x s64>)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[UV1]](<8 x s64>)
     %0:_(<16 x s64>) = G_IMPLICIT_DEF
     %1:_(<8 x s64>), %2:_(<8 x s64>) = G_UNMERGE_VALUES %0(<16 x s64>)
     PseudoRET implicit $lr, implicit %2
@@ -238,9 +249,48 @@ body:             |
     ; FAST-NEXT: [[UV:%[0-9]+]]:accregbank(<8 x s64>), [[UV1:%[0-9]+]]:accregbank(<8 x s64>) = G_UNMERGE_VALUES [[COPY1]](<16 x s64>)
     ; FAST-NEXT: $bmll1 = COPY [[UV]](<8 x s64>)
     ; FAST-NEXT: PseudoRET implicit $lr, implicit $bmll1
+    ;
+    ; AIE2PS-LABEL: name: test_unmerge_v16s32_used_by_acc
+    ; AIE2PS: [[COPY:%[0-9]+]]:vregbank(<32 x s32>) = COPY $y0
+    ; AIE2PS-NEXT: [[BITCAST:%[0-9]+]]:vregbank(<16 x s64>) = G_BITCAST [[COPY]](<32 x s32>)
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:accregbank(<16 x s64>) = COPY [[BITCAST]](<16 x s64>)
+    ; AIE2PS-NEXT: [[UV:%[0-9]+]]:accregbank(<8 x s64>), [[UV1:%[0-9]+]]:accregbank(<8 x s64>) = G_UNMERGE_VALUES [[COPY1]](<16 x s64>)
+    ; AIE2PS-NEXT: $bmll1 = COPY [[UV]](<8 x s64>)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $bmll1
     %0:_(<32 x s32>) = COPY $y0
     %1:_(<16 x s64>) = G_BITCAST %0(<32 x s32>)
     %2:_(<8 x s64>), %3:_(<8 x s64>) = G_UNMERGE_VALUES %1(<16 x s64>)
     $bmll1 = COPY %2(<8 x s64>)
     PseudoRET implicit $lr, implicit $bmll1
+...
+
+---
+name:           test_unmerge_2x32_to_s32
+legalized:       true
+body:             |
+  bb.0.entry:
+    liveins: $l0
+    ; COMMON-LABEL: name: test_unmerge_2x32_to_s32
+    ; COMMON: liveins: $l0
+    ; COMMON-NEXT: {{  $}}
+    ; COMMON-NEXT: [[DEF:%[0-9]+]]:gprregbank(<2 x s32>) = G_IMPLICIT_DEF
+    ; COMMON-NEXT: [[UV:%[0-9]+]]:gprregbank(s32), [[UV1:%[0-9]+]]:gprregbank(s32) = G_UNMERGE_VALUES [[DEF]](<2 x s32>)
+    ; COMMON-NEXT: PseudoRET implicit $lr, implicit [[UV]](s32), implicit [[UV1]](s32)
+    %0:_(<2 x s32>) = G_IMPLICIT_DEF
+    %1:_(s32), %2:_(s32) = G_UNMERGE_VALUES %0(<2 x s32>)
+    PseudoRET implicit $lr, implicit %1, implicit %2
+...
+
+---
+name:            test_unmerge_64
+legalized: true
+body:             |
+  bb.1.entry:
+    ; COMMON-LABEL: name: test_unmerge_64
+    ; COMMON: [[COPY:%[0-9]+]]:gprregbank(s64) = COPY $l0
+    ; COMMON-NEXT: [[UV:%[0-9]+]]:gprregbank(s32), [[UV1:%[0-9]+]]:gprregbank(s32) = G_UNMERGE_VALUES [[COPY]](s64)
+    ; COMMON-NEXT: PseudoRET implicit $lr, implicit [[UV1]](s32)
+    %0:_(s64) = COPY $l0
+    %1:_(s32), %2:_(s32) = G_UNMERGE_VALUES %0(s64)
+    PseudoRET implicit $lr, implicit %2
 ...

@@ -4,10 +4,11 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2 %s
 # RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2P %s
+# RUN: llc -mtriple aie2ps -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2PS %s
 
 ---
 name: select_s32
@@ -34,6 +35,15 @@ body: |
     ; AIE2P-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r8
     ; AIE2P-NEXT: [[SEL_NEZ:%[0-9]+]]:er = SEL_NEZ [[COPY1]], [[COPY2]], [[COPY]]
     ; AIE2P-NEXT: $r0 = COPY [[SEL_NEZ]]
+    ;
+    ; AIE2PS-LABEL: name: select_s32
+    ; AIE2PS: liveins: $r6, $r7, $r8
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mr27_select = COPY $r6
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:mlockid_reg = COPY $r8
+    ; AIE2PS-NEXT: [[SEL_NEZ:%[0-9]+]]:mlockid_reg = SEL_NEZ [[COPY1]], [[COPY2]], [[COPY]]
+    ; AIE2PS-NEXT: $r0 = COPY [[SEL_NEZ]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = COPY $r8
@@ -70,6 +80,17 @@ body: |
     ; AIE2P-NEXT: [[COPY4:%[0-9]+]]:er = COPY [[COPY2]]
     ; AIE2P-NEXT: [[SEL_NEZ:%[0-9]+]]:er = SEL_NEZ [[COPY3]], [[COPY4]], [[COPY]]
     ; AIE2P-NEXT: $p0 = COPY [[SEL_NEZ]]
+    ;
+    ; AIE2PS-LABEL: name: select_p0
+    ; AIE2PS: liveins: $p0, $p1, $r6
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mr27_select = COPY $r6
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:ep = COPY $p1
+    ; AIE2PS-NEXT: [[COPY3:%[0-9]+]]:mlockid_reg = COPY [[COPY1]]
+    ; AIE2PS-NEXT: [[COPY4:%[0-9]+]]:mlockid_reg = COPY [[COPY2]]
+    ; AIE2PS-NEXT: [[SEL_NEZ:%[0-9]+]]:mlockid_reg = SEL_NEZ [[COPY3]], [[COPY4]], [[COPY]]
+    ; AIE2PS-NEXT: $p0 = COPY [[SEL_NEZ]]
     %0:gprregbank(s32) = COPY $r6
     %1:ptrregbank(p0) = COPY $p0
     %2:ptrregbank(p0) = COPY $p1
@@ -107,6 +128,17 @@ body: |
     ; AIE2P-NEXT: [[VSEL_32_:%[0-9]+]]:vec512 = VSEL_32 [[COPY1]], [[COPY2]], [[ADD_add_r_ri]]
     ; AIE2P-NEXT: $x0 = COPY [[VSEL_32_]]
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit $x0
+    ;
+    ; AIE2PS-LABEL: name: select_v512
+    ; AIE2PS: liveins: $r0, $x2, $x4
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r0
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x2
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:vec512 = COPY $x4
+    ; AIE2PS-NEXT: [[ADD_add_r_ri:%[0-9]+]]:mrs16m = ADD_add_r_ri [[COPY]], -1, implicit-def dead $srcarry
+    ; AIE2PS-NEXT: [[VSEL_32_:%[0-9]+]]:vec512 = VSEL_32 [[COPY1]], [[COPY2]], [[ADD_add_r_ri]], implicit $crbf8conf, implicit $crfp8conf
+    ; AIE2PS-NEXT: $x0 = COPY [[VSEL_32_]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $x0
     %4:gprregbank(s32) = COPY $r0
     %5:gprregbank(s32) = G_ASSERT_ZEXT %4:gprregbank, 1
     %2:vregbank(<16 x s32>) = COPY $x2

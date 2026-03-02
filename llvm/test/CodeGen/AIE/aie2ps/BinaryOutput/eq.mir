@@ -1,0 +1,88 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; EQ
+    $r0 = EQ $r21, $r22
+    $r2 = EQ $r6, $r6
+    $r8 = EQ $r0, $r5
+    $r23 = EQ $r22, $r31
+    $r13 = EQ $r10, $r11
+    $r20 = EQ $r19, $r28
+    $r12 = EQ $r16, $r16
+    $r1 = EQ $r12, $r20
+    $r10 = EQ $r29, $r12
+    $r29 = EQ $r9, $r9
+    $r7 = EQ $r11, $r17
+    $r14 = EQ $r14, $r10
+    $r26 = EQ $r30, $r24
+    $r30 = EQ $r15, $r15
+    $r3 = EQ $r1, $r7
+    $r9 = EQ $r8, $r4
+    $r4 = EQ $r2, $r18
+    $r24 = EQ $r5, $r14
+    $r5 = EQ $r20, $r26
+    $r25 = EQ $r13, $r8
+    $r21 = EQ $r26, $r1
+    $r17 = EQ $r23, $r2
+    $r6 = EQ $r31, $r0
+    $r27 = EQ $r17, $r19
+    $r16 = EQ $r28, $r25
+    $r28 = EQ $r4, $r29
+    $r15 = EQ $r25, $r21
+    $r31 = EQ $r27, $r30
+    $r11 = EQ $r7, $r3
+    $r22 = EQ $r24, $r27
+    $r19 = EQ $r18, $r13
+    $r18 = EQ $r3, $r23
+...
+
+# CHECK: 0: b0 67 41 25 eq r0, r21, r22
+# CHECK: 4: b0 67 84 21 eq r2, r6, r6
+# CHECK: 8: b0 57 10 20 eq r8, r0, r5
+# CHECK: c: b0 f7 af 25 eq r23, r22, r31
+# CHECK: 10: b0 b7 9a 22 eq r13, r10, r11
+# CHECK: 14: b0 c7 e9 24 eq r20, r19, r28
+# CHECK: 18: b0 07 19 24 eq r12, r16, r16
+# CHECK: 1c: b0 47 03 23 eq r1, r12, r20
+# CHECK: 20: b0 c7 54 27 eq r10, r29, r12
+# CHECK: 24: b0 97 7a 22 eq r29, r9, r9
+# CHECK: 28: b0 17 cf 22 eq r7, r11, r17
+# CHECK: 2c: b0 a7 9c 23 eq r14, r14, r10
+# CHECK: 30: b0 87 b5 27 eq r26, r30, r24
+# CHECK: 34: b0 f7 fc 23 eq r30, r15, r15
+# CHECK: 38: b0 77 46 20 eq r3, r1, r7
+# CHECK: 3c: b0 47 12 22 eq r9, r8, r4
+# CHECK: 40: b0 27 89 20 eq r4, r2, r18
+# CHECK: 44: b0 e7 70 21 eq r24, r5, r14
+# CHECK: 48: b0 a7 0b 25 eq r5, r20, r26
+# CHECK: 4c: b0 87 72 23 eq r25, r13, r8
+# CHECK: 50: b0 17 aa 26 eq r21, r26, r1
+# CHECK: 54: b0 27 e2 25 eq r17, r23, r2
+# CHECK: 58: b0 07 cc 27 eq r6, r31, r0
+# CHECK: 5c: b0 37 77 24 eq r27, r17, r19
+# CHECK: 60: b0 97 21 27 eq r16, r28, r25
+# CHECK: 64: b0 d7 39 21 eq r28, r4, r29
+# CHECK: 68: b0 57 5f 26 eq r15, r25, r21
+# CHECK: 6c: b0 e7 ff 26 eq r31, r27, r30
+# CHECK: 70: b0 37 d6 21 eq r11, r7, r3
+# CHECK: 74: b0 b7 2d 26 eq r22, r24, r27
+# CHECK: 78: b0 d7 a6 24 eq r19, r18, r13
+# CHECK: 7c: b0 77 e5 20 eq r18, r3, r23

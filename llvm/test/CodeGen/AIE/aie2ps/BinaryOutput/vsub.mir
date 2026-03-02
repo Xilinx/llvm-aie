@@ -1,0 +1,736 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# TODO: llc %llcflags --filetype=asm -o %t2
+# TODO: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# TODO: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VSUB_16
+    $x10 = VSUB_16 $x7, $x9, implicit $crbf8conf, implicit $crfp8conf
+    $x4 = VSUB_16 $x11, $x7, implicit $crbf8conf, implicit $crfp8conf
+    $x3 = VSUB_16 $x5, $x8, implicit $crbf8conf, implicit $crfp8conf
+    $x0 = VSUB_16 $x8, $x5, implicit $crbf8conf, implicit $crfp8conf
+    $x5 = VSUB_16 $x9, $x1, implicit $crbf8conf, implicit $crfp8conf
+    $x7 = VSUB_16 $x3, $x10, implicit $crbf8conf, implicit $crfp8conf
+    $x6 = VSUB_16 $x1, $x4, implicit $crbf8conf, implicit $crfp8conf
+    $x11 = VSUB_16 $x10, $x2, implicit $crbf8conf, implicit $crfp8conf
+    $x2 = VSUB_16 $x4, $x6, implicit $crbf8conf, implicit $crfp8conf
+    $x1 = VSUB_16 $x2, $x0, implicit $crbf8conf, implicit $crfp8conf
+    $x9 = VSUB_16 $x6, $x11, implicit $crbf8conf, implicit $crfp8conf
+    $x8 = VSUB_16 $x0, $x3, implicit $crbf8conf, implicit $crfp8conf
+
+    ; VSUB_32
+    $x10 = VSUB_32 $x11, $x0, implicit $crbf8conf, implicit $crfp8conf
+    $x3 = VSUB_32 $x8, $x2, implicit $crbf8conf, implicit $crfp8conf
+    $x8 = VSUB_32 $x0, $x11, implicit $crbf8conf, implicit $crfp8conf
+    $x5 = VSUB_32 $x5, $x5, implicit $crbf8conf, implicit $crfp8conf
+    $x11 = VSUB_32 $x10, $x6, implicit $crbf8conf, implicit $crfp8conf
+    $x4 = VSUB_32 $x2, $x9, implicit $crbf8conf, implicit $crfp8conf
+    $x6 = VSUB_32 $x4, $x3, implicit $crbf8conf, implicit $crfp8conf
+    $x0 = VSUB_32 $x7, $x4, implicit $crbf8conf, implicit $crfp8conf
+    $x2 = VSUB_32 $x9, $x10, implicit $crbf8conf, implicit $crfp8conf
+    $x1 = VSUB_32 $x6, $x8, implicit $crbf8conf, implicit $crfp8conf
+    $x7 = VSUB_32 $x1, $x7, implicit $crbf8conf, implicit $crfp8conf
+    $x9 = VSUB_32 $x3, $x1, implicit $crbf8conf, implicit $crfp8conf
+
+    ; VSUB_8
+    $x7 = VSUB_8 $x0, $x7, implicit $crbf8conf, implicit $crfp8conf
+    $x4 = VSUB_8 $x8, $x9, implicit $crbf8conf, implicit $crfp8conf
+    $x2 = VSUB_8 $x10, $x2, implicit $crbf8conf, implicit $crfp8conf
+    $x6 = VSUB_8 $x7, $x4, implicit $crbf8conf, implicit $crfp8conf
+    $x0 = VSUB_8 $x5, $x11, implicit $crbf8conf, implicit $crfp8conf
+    $x11 = VSUB_8 $x4, $x0, implicit $crbf8conf, implicit $crfp8conf
+    $x3 = VSUB_8 $x6, $x6, implicit $crbf8conf, implicit $crfp8conf
+    $x5 = VSUB_8 $x1, $x3, implicit $crbf8conf, implicit $crfp8conf
+    $x9 = VSUB_8 $x11, $x8, implicit $crbf8conf, implicit $crfp8conf
+    $x10 = VSUB_8 $x9, $x5, implicit $crbf8conf, implicit $crfp8conf
+    $x8 = VSUB_8 $x2, $x1, implicit $crbf8conf, implicit $crfp8conf
+    $x1 = VSUB_8 $x3, $x10, implicit $crbf8conf, implicit $crfp8conf
+
+    ; VSUB_GE_16_vaddSign0
+    $x3, $r16 = VSUB_GE_16_vaddSign0 $x3, $x0, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x2, $r16 = VSUB_GE_16_vaddSign0 $x8, $x9, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x9, $r16 = VSUB_GE_16_vaddSign0 $x9, $x3, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x10, $r16 = VSUB_GE_16_vaddSign0 $x1, $x10, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x11, $r16 = VSUB_GE_16_vaddSign0 $x5, $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x1, $r16 = VSUB_GE_16_vaddSign0 $x6, $x7, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x5, $r16 = VSUB_GE_16_vaddSign0 $x7, $x5, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x7, $r16 = VSUB_GE_16_vaddSign0 $x0, $x4, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x4, $r16 = VSUB_GE_16_vaddSign0 $x10, $x11, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x6, $r16 = VSUB_GE_16_vaddSign0 $x4, $x2, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x8, $r16 = VSUB_GE_16_vaddSign0 $x11, $x6, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x0, $r16 = VSUB_GE_16_vaddSign0 $x2, $x8, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+
+    ; VSUB_GE_16_vaddSign1
+    $x7, $r16 = VSUB_GE_16_vaddSign1 $x6, $x10, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x0, $r16 = VSUB_GE_16_vaddSign1 $x10, $x11, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x3, $r16 = VSUB_GE_16_vaddSign1 $x0, $x2, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x1, $r16 = VSUB_GE_16_vaddSign1 $x8, $x3, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x11, $r16 = VSUB_GE_16_vaddSign1 $x1, $x6, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x9, $r16 = VSUB_GE_16_vaddSign1 $x2, $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x5, $r16 = VSUB_GE_16_vaddSign1 $x5, $x8, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x4, $r16 = VSUB_GE_16_vaddSign1 $x3, $x9, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x10, $r16 = VSUB_GE_16_vaddSign1 $x7, $x5, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x6, $r16 = VSUB_GE_16_vaddSign1 $x4, $x4, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x8, $r16 = VSUB_GE_16_vaddSign1 $x11, $x7, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x2, $r16 = VSUB_GE_16_vaddSign1 $x9, $x0, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+
+    ; VSUB_GE_32_vaddSign0
+    $x5, $r16 = VSUB_GE_32_vaddSign0 $x10, $x10, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x1, $r16 = VSUB_GE_32_vaddSign0 $x5, $x8, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x10, $r16 = VSUB_GE_32_vaddSign0 $x6, $x6, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x3, $r16 = VSUB_GE_32_vaddSign0 $x7, $x9, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x8, $r16 = VSUB_GE_32_vaddSign0 $x3, $x0, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x9, $r16 = VSUB_GE_32_vaddSign0 $x2, $x7, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x11, $r16 = VSUB_GE_32_vaddSign0 $x4, $x5, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x6, $r16 = VSUB_GE_32_vaddSign0 $x11, $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x4, $r16 = VSUB_GE_32_vaddSign0 $x1, $x11, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x0, $r16 = VSUB_GE_32_vaddSign0 $x9, $x4, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x7, $r16 = VSUB_GE_32_vaddSign0 $x8, $x3, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x2, $r16 = VSUB_GE_32_vaddSign0 $x0, $x2, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+
+    ; VSUB_GE_32_vaddSign1
+    $x4, $r16 = VSUB_GE_32_vaddSign1 $x8, $x9, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x7, $r16 = VSUB_GE_32_vaddSign1 $x6, $x11, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x1, $r16 = VSUB_GE_32_vaddSign1 $x3, $x6, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x3, $r16 = VSUB_GE_32_vaddSign1 $x2, $x8, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x5, $r16 = VSUB_GE_32_vaddSign1 $x4, $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x8, $r16 = VSUB_GE_32_vaddSign1 $x11, $x4, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x10, $r16 = VSUB_GE_32_vaddSign1 $x10, $x7, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x11, $r16 = VSUB_GE_32_vaddSign1 $x1, $x3, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x2, $r16 = VSUB_GE_32_vaddSign1 $x9, $x2, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x0, $r16 = VSUB_GE_32_vaddSign1 $x5, $x10, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x9, $r16 = VSUB_GE_32_vaddSign1 $x7, $x0, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x6, $r16 = VSUB_GE_32_vaddSign1 $x0, $x5, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+
+    ; VSUB_GE_8_vaddSign0
+    $x3, $l8 = VSUB_GE_8_vaddSign0 $x3, $x7, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x0, $l8 = VSUB_GE_8_vaddSign0 $x0, $x0, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x11, $l8 = VSUB_GE_8_vaddSign0 $x7, $x11, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x4, $l8 = VSUB_GE_8_vaddSign0 $x1, $x6, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x8, $l8 = VSUB_GE_8_vaddSign0 $x2, $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x7, $l8 = VSUB_GE_8_vaddSign0 $x5, $x4, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x1, $l8 = VSUB_GE_8_vaddSign0 $x9, $x3, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x9, $l8 = VSUB_GE_8_vaddSign0 $x4, $x10, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x5, $l8 = VSUB_GE_8_vaddSign0 $x6, $x9, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x10, $l8 = VSUB_GE_8_vaddSign0 $x8, $x2, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x6, $l8 = VSUB_GE_8_vaddSign0 $x11, $x8, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x2, $l8 = VSUB_GE_8_vaddSign0 $x10, $x5, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+
+    ; VSUB_GE_8_vaddSign1
+    $x4, $l8 = VSUB_GE_8_vaddSign1 $x6, $x11, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x1, $l8 = VSUB_GE_8_vaddSign1 $x0, $x9, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x9, $l8 = VSUB_GE_8_vaddSign1 $x7, $x8, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x6, $l8 = VSUB_GE_8_vaddSign1 $x2, $x3, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x7, $l8 = VSUB_GE_8_vaddSign1 $x11, $x6, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x5, $l8 = VSUB_GE_8_vaddSign1 $x10, $x5, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x0, $l8 = VSUB_GE_8_vaddSign1 $x5, $x10, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x8, $l8 = VSUB_GE_8_vaddSign1 $x4, $x0, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x2, $l8 = VSUB_GE_8_vaddSign1 $x3, $x2, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x10, $l8 = VSUB_GE_8_vaddSign1 $x1, $x4, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x3, $l8 = VSUB_GE_8_vaddSign1 $x9, $x7, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x11, $l8 = VSUB_GE_8_vaddSign1 $x8, $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+
+    ; VSUB_LT_16_vaddSign0
+    $x1, $r16 = VSUB_LT_16_vaddSign0 $x7, $x7, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x2, $r16 = VSUB_LT_16_vaddSign0 $x10, $x5, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x11, $r16 = VSUB_LT_16_vaddSign0 $x5, $x9, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x5, $r16 = VSUB_LT_16_vaddSign0 $x11, $x11, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x8, $r16 = VSUB_LT_16_vaddSign0 $x2, $x3, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x10, $r16 = VSUB_LT_16_vaddSign0 $x0, $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x6, $r16 = VSUB_LT_16_vaddSign0 $x3, $x2, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x4, $r16 = VSUB_LT_16_vaddSign0 $x1, $x8, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x3, $r16 = VSUB_LT_16_vaddSign0 $x8, $x10, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x7, $r16 = VSUB_LT_16_vaddSign0 $x9, $x4, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x0, $r16 = VSUB_LT_16_vaddSign0 $x4, $x0, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x9, $r16 = VSUB_LT_16_vaddSign0 $x6, $x6, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+
+    ; VSUB_LT_16_vaddSign1
+    $x5, $r16 = VSUB_LT_16_vaddSign1 $x1, $x3, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x3, $r16 = VSUB_LT_16_vaddSign1 $x7, $x10, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x11, $r16 = VSUB_LT_16_vaddSign1 $x6, $x4, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x4, $r16 = VSUB_LT_16_vaddSign1 $x11, $x6, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x2, $r16 = VSUB_LT_16_vaddSign1 $x2, $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x7, $r16 = VSUB_LT_16_vaddSign1 $x8, $x11, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x1, $r16 = VSUB_LT_16_vaddSign1 $x0, $x8, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x6, $r16 = VSUB_LT_16_vaddSign1 $x9, $x0, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x0, $r16 = VSUB_LT_16_vaddSign1 $x5, $x2, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x9, $r16 = VSUB_LT_16_vaddSign1 $x4, $x5, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x10, $r16 = VSUB_LT_16_vaddSign1 $x10, $x7, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x8, $r16 = VSUB_LT_16_vaddSign1 $x3, $x9, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+
+    ; VSUB_LT_32_vaddSign0
+    $x1, $r16 = VSUB_LT_32_vaddSign0 $x4, $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x8, $r16 = VSUB_LT_32_vaddSign0 $x2, $x3, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x5, $r16 = VSUB_LT_32_vaddSign0 $x7, $x4, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x0, $r16 = VSUB_LT_32_vaddSign0 $x1, $x6, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x3, $r16 = VSUB_LT_32_vaddSign0 $x9, $x5, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x10, $r16 = VSUB_LT_32_vaddSign0 $x10, $x0, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x4, $r16 = VSUB_LT_32_vaddSign0 $x6, $x10, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x11, $r16 = VSUB_LT_32_vaddSign0 $x0, $x11, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x7, $r16 = VSUB_LT_32_vaddSign0 $x5, $x2, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x9, $r16 = VSUB_LT_32_vaddSign0 $x3, $x9, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x2, $r16 = VSUB_LT_32_vaddSign0 $x8, $x7, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x6, $r16 = VSUB_LT_32_vaddSign0 $x11, $x8, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+
+    ; VSUB_LT_32_vaddSign1
+    $x9, $r16 = VSUB_LT_32_vaddSign1 $x11, $x10, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x7, $r16 = VSUB_LT_32_vaddSign1 $x9, $x0, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x10, $r16 = VSUB_LT_32_vaddSign1 $x10, $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x4, $r16 = VSUB_LT_32_vaddSign1 $x5, $x4, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x1, $r16 = VSUB_LT_32_vaddSign1 $x0, $x5, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x5, $r16 = VSUB_LT_32_vaddSign1 $x8, $x6, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x8, $r16 = VSUB_LT_32_vaddSign1 $x6, $x8, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x11, $r16 = VSUB_LT_32_vaddSign1 $x7, $x3, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x3, $r16 = VSUB_LT_32_vaddSign1 $x1, $x11, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x2, $r16 = VSUB_LT_32_vaddSign1 $x3, $x9, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x6, $r16 = VSUB_LT_32_vaddSign1 $x2, $x2, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x0, $r16 = VSUB_LT_32_vaddSign1 $x4, $x7, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+
+    ; VSUB_LT_8_vaddSign0
+    $x6, $l8 = VSUB_LT_8_vaddSign0 $x2, $x8, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x11, $l8 = VSUB_LT_8_vaddSign0 $x10, $x5, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x9, $l8 = VSUB_LT_8_vaddSign0 $x9, $x7, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x3, $l8 = VSUB_LT_8_vaddSign0 $x8, $x2, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x10, $l8 = VSUB_LT_8_vaddSign0 $x1, $x3, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x1, $l8 = VSUB_LT_8_vaddSign0 $x11, $x9, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x5, $l8 = VSUB_LT_8_vaddSign0 $x5, $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x7, $l8 = VSUB_LT_8_vaddSign0 $x7, $x11, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x8, $l8 = VSUB_LT_8_vaddSign0 $x4, $x6, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x4, $l8 = VSUB_LT_8_vaddSign0 $x6, $x10, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x0, $l8 = VSUB_LT_8_vaddSign0 $x3, $x0, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x2, $l8 = VSUB_LT_8_vaddSign0 $x0, $x4, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+
+    ; VSUB_LT_8_vaddSign1
+    $x6, $l8 = VSUB_LT_8_vaddSign1 $x3, $x0, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x7, $l8 = VSUB_LT_8_vaddSign1 $x9, $x8, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x1, $l8 = VSUB_LT_8_vaddSign1 $x2, $x9, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x9, $l8 = VSUB_LT_8_vaddSign1 $x4, $x10, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x5, $l8 = VSUB_LT_8_vaddSign1 $x7, $x5, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x2, $l8 = VSUB_LT_8_vaddSign1 $x8, $x3, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x3, $l8 = VSUB_LT_8_vaddSign1 $x1, $x4, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x0, $l8 = VSUB_LT_8_vaddSign1 $x10, $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x11, $l8 = VSUB_LT_8_vaddSign1 $x0, $x11, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x8, $l8 = VSUB_LT_8_vaddSign1 $x11, $x7, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x10, $l8 = VSUB_LT_8_vaddSign1 $x5, $x6, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x4, $l8 = VSUB_LT_8_vaddSign1 $x6, $x2, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+
+    ; VSUB_vacc
+    $dm0 = VSUB_vacc $dm6, $dm6, $r12
+    $dm3 = VSUB_vacc $dm3, $dm1, $r8
+    $dm4 = VSUB_vacc $dm5, $dm5, $r15
+    $dm7 = VSUB_vacc $dm1, $dm0, $r10
+    $dm6 = VSUB_vacc $dm7, $dm3, $r11
+    $dm2 = VSUB_vacc $dm4, $dm2, $r13
+    $dm5 = VSUB_vacc $dm0, $dm7, $r14
+    $dm1 = VSUB_vacc $dm2, $dm4, $r9
+
+    ; VSUB_vacc_half
+    $cml0 = VSUB_vacc_half $cml2, $cml6, $r15
+    $cml4 = VSUB_vacc_half $cml6, $cml1, $r8
+    $cml7 = VSUB_vacc_half $cml7, $cml7, $r11
+    $cml6 = VSUB_vacc_half $cml0, $cml3, $r13
+    $cml2 = VSUB_vacc_half $cml1, $cml4, $r9
+    $cml3 = VSUB_vacc_half $cml4, $cml5, $r14
+    $cml5 = VSUB_vacc_half $cml5, $cml0, $r10
+    $cml1 = VSUB_vacc_half $cml3, $cml2, $r12
+
+    ; VSUB_vacc_scd_add_scd_incr
+    $dm2, $r31 = VSUB_vacc_scd_add_scd_incr $dm7, $r31, $r15, implicit $crscden
+    $dm0, $r31 = VSUB_vacc_scd_add_scd_incr $dm5, $r31, $r12, implicit $crscden
+    $dm4, $r31 = VSUB_vacc_scd_add_scd_incr $dm2, $r31, $r9, implicit $crscden
+    $dm6, $r31 = VSUB_vacc_scd_add_scd_incr $dm1, $r31, $r10, implicit $crscden
+    $dm3, $r31 = VSUB_vacc_scd_add_scd_incr $dm3, $r31, $r13, implicit $crscden
+    $dm7, $r31 = VSUB_vacc_scd_add_scd_incr $dm0, $r31, $r11, implicit $crscden
+    $dm1, $r31 = VSUB_vacc_scd_add_scd_incr $dm4, $r31, $r14, implicit $crscden
+    $dm5, $r31 = VSUB_vacc_scd_add_scd_incr $dm6, $r31, $r8, implicit $crscden
+
+    ; VSUB_vacc_scd_add_scd_noincr
+    $dm4 = VSUB_vacc_scd_add_scd_noincr $dm1, $r31, $r11, implicit $crscden
+    $dm3 = VSUB_vacc_scd_add_scd_noincr $dm4, $r31, $r15, implicit $crscden
+    $dm2 = VSUB_vacc_scd_add_scd_noincr $dm0, $r31, $r13, implicit $crscden
+    $dm1 = VSUB_vacc_scd_add_scd_noincr $dm5, $r31, $r12, implicit $crscden
+    $dm6 = VSUB_vacc_scd_add_scd_noincr $dm3, $r31, $r10, implicit $crscden
+    $dm7 = VSUB_vacc_scd_add_scd_noincr $dm7, $r31, $r8, implicit $crscden
+    $dm5 = VSUB_vacc_scd_add_scd_noincr $dm2, $r31, $r14, implicit $crscden
+    $dm0 = VSUB_vacc_scd_add_scd_noincr $dm6, $r31, $r9, implicit $crscden
+
+    ; VSUB_vacc_scd_half_add_scd_incr_half
+    $cml6, $r31 = VSUB_vacc_scd_half_add_scd_incr_half $cml7, $r31, $r11, implicit $crscden
+    $cml7, $r31 = VSUB_vacc_scd_half_add_scd_incr_half $cml3, $r31, $r10, implicit $crscden
+    $cml2, $r31 = VSUB_vacc_scd_half_add_scd_incr_half $cml5, $r31, $r8, implicit $crscden
+    $cml5, $r31 = VSUB_vacc_scd_half_add_scd_incr_half $cml4, $r31, $r15, implicit $crscden
+    $cml0, $r31 = VSUB_vacc_scd_half_add_scd_incr_half $cml2, $r31, $r9, implicit $crscden
+    $cml3, $r31 = VSUB_vacc_scd_half_add_scd_incr_half $cml6, $r31, $r12, implicit $crscden
+    $cml1, $r31 = VSUB_vacc_scd_half_add_scd_incr_half $cml0, $r31, $r14, implicit $crscden
+    $cml4, $r31 = VSUB_vacc_scd_half_add_scd_incr_half $cml1, $r31, $r13, implicit $crscden
+
+    ; VSUB_vacc_scd_half_add_scd_noincr_half
+    $cml7 = VSUB_vacc_scd_half_add_scd_noincr_half $cml5, $r31, $r9, implicit $crscden
+    $cml1 = VSUB_vacc_scd_half_add_scd_noincr_half $cml4, $r31, $r10, implicit $crscden
+    $cml0 = VSUB_vacc_scd_half_add_scd_noincr_half $cml7, $r31, $r11, implicit $crscden
+    $cml5 = VSUB_vacc_scd_half_add_scd_noincr_half $cml2, $r31, $r8, implicit $crscden
+    $cml4 = VSUB_vacc_scd_half_add_scd_noincr_half $cml0, $r31, $r15, implicit $crscden
+    $cml2 = VSUB_vacc_scd_half_add_scd_noincr_half $cml6, $r31, $r12, implicit $crscden
+    $cml3 = VSUB_vacc_scd_half_add_scd_noincr_half $cml3, $r31, $r13, implicit $crscden
+    $cml6 = VSUB_vacc_scd_half_add_scd_noincr_half $cml1, $r31, $r14, implicit $crscden
+
+    ; VSUB_f_vacc_fp
+    $dm6 = VSUB_f_vacc_fp $dm4, $dm6, $r9, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VSUB_f_vacc_fp $dm7, $dm0, $r15, implicit-def $srfpflags, implicit $crfpmask
+    $dm4 = VSUB_f_vacc_fp $dm2, $dm3, $r11, implicit-def $srfpflags, implicit $crfpmask
+    $dm1 = VSUB_f_vacc_fp $dm1, $dm4, $r13, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VSUB_f_vacc_fp $dm3, $dm5, $r10, implicit-def $srfpflags, implicit $crfpmask
+    $dm7 = VSUB_f_vacc_fp $dm5, $dm2, $r8, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VSUB_f_vacc_fp $dm0, $dm7, $r12, implicit-def $srfpflags, implicit $crfpmask
+    $dm5 = VSUB_f_vacc_fp $dm6, $dm1, $r14, implicit-def $srfpflags, implicit $crfpmask
+
+    ; VSUB_f_vacc_fp_scd_add_scd_incr
+    $dm4, $r31 = VSUB_f_vacc_fp_scd_add_scd_incr $dm3, $r31, $r12, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $dm7, $r31 = VSUB_f_vacc_fp_scd_add_scd_incr $dm4, $r31, $r9, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $dm5, $r31 = VSUB_f_vacc_fp_scd_add_scd_incr $dm6, $r31, $r13, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $dm2, $r31 = VSUB_f_vacc_fp_scd_add_scd_incr $dm1, $r31, $r15, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $dm1, $r31 = VSUB_f_vacc_fp_scd_add_scd_incr $dm7, $r31, $r14, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $dm0, $r31 = VSUB_f_vacc_fp_scd_add_scd_incr $dm2, $r31, $r11, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $dm6, $r31 = VSUB_f_vacc_fp_scd_add_scd_incr $dm0, $r31, $r8, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $dm3, $r31 = VSUB_f_vacc_fp_scd_add_scd_incr $dm5, $r31, $r10, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+
+    ; VSUB_f_vacc_fp_scd_add_scd_noincr
+    $dm1 = VSUB_f_vacc_fp_scd_add_scd_noincr $dm5, $r31, $r9, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $dm0 = VSUB_f_vacc_fp_scd_add_scd_noincr $dm4, $r31, $r13, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $dm7 = VSUB_f_vacc_fp_scd_add_scd_noincr $dm1, $r31, $r11, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $dm3 = VSUB_f_vacc_fp_scd_add_scd_noincr $dm7, $r31, $r10, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $dm5 = VSUB_f_vacc_fp_scd_add_scd_noincr $dm2, $r31, $r8, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $dm2 = VSUB_f_vacc_fp_scd_add_scd_noincr $dm0, $r31, $r14, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $dm4 = VSUB_f_vacc_fp_scd_add_scd_noincr $dm6, $r31, $r15, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $dm6 = VSUB_f_vacc_fp_scd_add_scd_noincr $dm3, $r31, $r12, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+
+    ; VSUB_f_vacc_half_fp
+    $cml3 = VSUB_f_vacc_half_fp $cml5, $cml4, $r10, implicit-def $srfpflags, implicit $crfpmask
+    $cml6 = VSUB_f_vacc_half_fp $cml0, $cml7, $r14, implicit-def $srfpflags, implicit $crfpmask
+    $cml4 = VSUB_f_vacc_half_fp $cml2, $cml5, $r15, implicit-def $srfpflags, implicit $crfpmask
+    $cml0 = VSUB_f_vacc_half_fp $cml7, $cml3, $r11, implicit-def $srfpflags, implicit $crfpmask
+    $cml1 = VSUB_f_vacc_half_fp $cml1, $cml1, $r8, implicit-def $srfpflags, implicit $crfpmask
+    $cml7 = VSUB_f_vacc_half_fp $cml4, $cml2, $r9, implicit-def $srfpflags, implicit $crfpmask
+    $cml2 = VSUB_f_vacc_half_fp $cml6, $cml0, $r12, implicit-def $srfpflags, implicit $crfpmask
+    $cml5 = VSUB_f_vacc_half_fp $cml3, $cml6, $r13, implicit-def $srfpflags, implicit $crfpmask
+
+    ; VSUB_f_vacc_half_fp_scd_add_scd_incr_half
+    $cml1, $r31 = VSUB_f_vacc_half_fp_scd_add_scd_incr_half $cml6, $r31, $r9, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $cml6, $r31 = VSUB_f_vacc_half_fp_scd_add_scd_incr_half $cml4, $r31, $r13, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $cml3, $r31 = VSUB_f_vacc_half_fp_scd_add_scd_incr_half $cml7, $r31, $r12, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $cml0, $r31 = VSUB_f_vacc_half_fp_scd_add_scd_incr_half $cml0, $r31, $r15, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $cml5, $r31 = VSUB_f_vacc_half_fp_scd_add_scd_incr_half $cml3, $r31, $r11, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $cml4, $r31 = VSUB_f_vacc_half_fp_scd_add_scd_incr_half $cml1, $r31, $r8, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $cml2, $r31 = VSUB_f_vacc_half_fp_scd_add_scd_incr_half $cml5, $r31, $r14, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $cml7, $r31 = VSUB_f_vacc_half_fp_scd_add_scd_incr_half $cml2, $r31, $r10, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+
+    ; VSUB_f_vacc_half_fp_scd_add_scd_noincr_half
+    $cml3 = VSUB_f_vacc_half_fp_scd_add_scd_noincr_half $cml0, $r31, $r8, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $cml2 = VSUB_f_vacc_half_fp_scd_add_scd_noincr_half $cml1, $r31, $r12, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $cml5 = VSUB_f_vacc_half_fp_scd_add_scd_noincr_half $cml5, $r31, $r15, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $cml4 = VSUB_f_vacc_half_fp_scd_add_scd_noincr_half $cml7, $r31, $r14, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $cml0 = VSUB_f_vacc_half_fp_scd_add_scd_noincr_half $cml6, $r31, $r10, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $cml6 = VSUB_f_vacc_half_fp_scd_add_scd_noincr_half $cml4, $r31, $r11, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $cml7 = VSUB_f_vacc_half_fp_scd_add_scd_noincr_half $cml3, $r31, $r9, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $cml1 = VSUB_f_vacc_half_fp_scd_add_scd_noincr_half $cml2, $r31, $r13, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+
+    ; VSUB_mx6_vacc_fp_bfp13
+    $dm1 = VSUB_mx6_vacc_fp_bfp13 $dm1, $dm6, $r8, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VSUB_mx6_vacc_fp_bfp13 $dm4, $dm0, $r12, implicit-def $srfpflags, implicit $crfpmask
+    $dm6 = VSUB_mx6_vacc_fp_bfp13 $dm0, $dm4, $r14, implicit-def $srfpflags, implicit $crfpmask
+    $dm4 = VSUB_mx6_vacc_fp_bfp13 $dm7, $dm2, $r11, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VSUB_mx6_vacc_fp_bfp13 $dm6, $dm3, $r9, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VSUB_mx6_vacc_fp_bfp13 $dm2, $dm5, $r10, implicit-def $srfpflags, implicit $crfpmask
+    $dm7 = VSUB_mx6_vacc_fp_bfp13 $dm5, $dm7, $r15, implicit-def $srfpflags, implicit $crfpmask
+    $dm5 = VSUB_mx6_vacc_fp_bfp13 $dm3, $dm1, $r13, implicit-def $srfpflags, implicit $crfpmask
+
+    ; VSUB_mx6_vacc_fp_bfp13_scd_add_scd_incr
+    $dm7, $r31 = VSUB_mx6_vacc_fp_bfp13_scd_add_scd_incr $dm2, $r31, $r13, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $dm3, $r31 = VSUB_mx6_vacc_fp_bfp13_scd_add_scd_incr $dm4, $r31, $r10, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $dm0, $r31 = VSUB_mx6_vacc_fp_bfp13_scd_add_scd_incr $dm6, $r31, $r14, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $dm6, $r31 = VSUB_mx6_vacc_fp_bfp13_scd_add_scd_incr $dm3, $r31, $r8, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $dm4, $r31 = VSUB_mx6_vacc_fp_bfp13_scd_add_scd_incr $dm0, $r31, $r11, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $dm1, $r31 = VSUB_mx6_vacc_fp_bfp13_scd_add_scd_incr $dm5, $r31, $r15, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $dm2, $r31 = VSUB_mx6_vacc_fp_bfp13_scd_add_scd_incr $dm7, $r31, $r9, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $dm5, $r31 = VSUB_mx6_vacc_fp_bfp13_scd_add_scd_incr $dm1, $r31, $r12, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+
+    ; VSUB_mx6_vacc_fp_bfp13_scd_add_scd_noincr
+    $dm1 = VSUB_mx6_vacc_fp_bfp13_scd_add_scd_noincr $dm5, $r31, $r10, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $dm2 = VSUB_mx6_vacc_fp_bfp13_scd_add_scd_noincr $dm4, $r31, $r11, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $dm7 = VSUB_mx6_vacc_fp_bfp13_scd_add_scd_noincr $dm6, $r31, $r12, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $dm3 = VSUB_mx6_vacc_fp_bfp13_scd_add_scd_noincr $dm7, $r31, $r14, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $dm5 = VSUB_mx6_vacc_fp_bfp13_scd_add_scd_noincr $dm0, $r31, $r15, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $dm0 = VSUB_mx6_vacc_fp_bfp13_scd_add_scd_noincr $dm2, $r31, $r9, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $dm6 = VSUB_mx6_vacc_fp_bfp13_scd_add_scd_noincr $dm1, $r31, $r13, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $dm4 = VSUB_mx6_vacc_fp_bfp13_scd_add_scd_noincr $dm3, $r31, $r8, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+
+    ; VSUB_mx6_vacc_half_fp_bfp13
+    $cml1 = VSUB_mx6_vacc_half_fp_bfp13 $cml0, $cml0, $r12, implicit-def $srfpflags, implicit $crfpmask
+    $cml6 = VSUB_mx6_vacc_half_fp_bfp13 $cml1, $cml5, $r15, implicit-def $srfpflags, implicit $crfpmask
+    $cml2 = VSUB_mx6_vacc_half_fp_bfp13 $cml6, $cml7, $r10, implicit-def $srfpflags, implicit $crfpmask
+    $cml7 = VSUB_mx6_vacc_half_fp_bfp13 $cml4, $cml2, $r13, implicit-def $srfpflags, implicit $crfpmask
+    $cml3 = VSUB_mx6_vacc_half_fp_bfp13 $cml2, $cml6, $r11, implicit-def $srfpflags, implicit $crfpmask
+    $cml4 = VSUB_mx6_vacc_half_fp_bfp13 $cml3, $cml1, $r8, implicit-def $srfpflags, implicit $crfpmask
+    $cml5 = VSUB_mx6_vacc_half_fp_bfp13 $cml5, $cml4, $r9, implicit-def $srfpflags, implicit $crfpmask
+    $cml0 = VSUB_mx6_vacc_half_fp_bfp13 $cml7, $cml3, $r14, implicit-def $srfpflags, implicit $crfpmask
+
+    ; VSUB_mx6_vacc_half_fp_bfp13_scd_add_scd_incr_half
+    $cml3, $r31 = VSUB_mx6_vacc_half_fp_bfp13_scd_add_scd_incr_half $cml1, $r31, $r10, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $cml6, $r31 = VSUB_mx6_vacc_half_fp_bfp13_scd_add_scd_incr_half $cml4, $r31, $r9, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $cml5, $r31 = VSUB_mx6_vacc_half_fp_bfp13_scd_add_scd_incr_half $cml5, $r31, $r15, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $cml1, $r31 = VSUB_mx6_vacc_half_fp_bfp13_scd_add_scd_incr_half $cml3, $r31, $r8, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $cml7, $r31 = VSUB_mx6_vacc_half_fp_bfp13_scd_add_scd_incr_half $cml6, $r31, $r12, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $cml2, $r31 = VSUB_mx6_vacc_half_fp_bfp13_scd_add_scd_incr_half $cml7, $r31, $r11, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $cml4, $r31 = VSUB_mx6_vacc_half_fp_bfp13_scd_add_scd_incr_half $cml2, $r31, $r13, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $cml0, $r31 = VSUB_mx6_vacc_half_fp_bfp13_scd_add_scd_incr_half $cml0, $r31, $r14, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+
+    ; VSUB_mx6_vacc_half_fp_bfp13_scd_add_scd_noincr_half
+    $cml5 = VSUB_mx6_vacc_half_fp_bfp13_scd_add_scd_noincr_half $cml2, $r31, $r10, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $cml3 = VSUB_mx6_vacc_half_fp_bfp13_scd_add_scd_noincr_half $cml7, $r31, $r14, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $cml0 = VSUB_mx6_vacc_half_fp_bfp13_scd_add_scd_noincr_half $cml4, $r31, $r15, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $cml2 = VSUB_mx6_vacc_half_fp_bfp13_scd_add_scd_noincr_half $cml6, $r31, $r12, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $cml7 = VSUB_mx6_vacc_half_fp_bfp13_scd_add_scd_noincr_half $cml5, $r31, $r8, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $cml1 = VSUB_mx6_vacc_half_fp_bfp13_scd_add_scd_noincr_half $cml3, $r31, $r9, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $cml4 = VSUB_mx6_vacc_half_fp_bfp13_scd_add_scd_noincr_half $cml0, $r31, $r13, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+    $cml6 = VSUB_mx6_vacc_half_fp_bfp13_scd_add_scd_noincr_half $cml1, $r31, $r11, implicit-def $srfpflags, implicit $crfpmask, implicit $crscden
+...
+
+# CHECK: 0: f0 be 79 3a vsub.16 x10, x7, x9
+# CHECK: 4: f0 be b7 34 vsub.16 x4, x11, x7
+# CHECK: 8: f0 be 58 33 vsub.16 x3, x5, x8
+# CHECK: c: f0 be 85 30 vsub.16 x0, x8, x5
+# CHECK: 10: f0 be 91 35 vsub.16 x5, x9, x1
+# CHECK: 14: f0 be 3a 37 vsub.16 x7, x3, x10
+# CHECK: 18: f0 be 14 36 vsub.16 x6, x1, x4
+# CHECK: 1c: f0 be a2 3b vsub.16 x11, x10, x2
+# CHECK: 20: f0 be 46 32 vsub.16 x2, x4, x6
+# CHECK: 24: f0 be 20 31 vsub.16 x1, x2, x0
+# CHECK: 28: f0 be 6b 39 vsub.16 x9, x6, x11
+# CHECK: 2c: f0 be 03 38 vsub.16 x8, x0, x3
+# CHECK: 30: f0 de b0 3a vsub.32 x10, x11, x0
+# CHECK: 34: f0 de 82 33 vsub.32 x3, x8, x2
+# CHECK: 38: f0 de 0b 38 vsub.32 x8, x0, x11
+# CHECK: 3c: f0 de 55 35 vsub.32 x5, x5, x5
+# CHECK: 40: f0 de a6 3b vsub.32 x11, x10, x6
+# CHECK: 44: f0 de 29 34 vsub.32 x4, x2, x9
+# CHECK: 48: f0 de 43 36 vsub.32 x6, x4, x3
+# CHECK: 4c: f0 de 74 30 vsub.32 x0, x7, x4
+# CHECK: 50: f0 de 9a 32 vsub.32 x2, x9, x10
+# CHECK: 54: f0 de 68 31 vsub.32 x1, x6, x8
+# CHECK: 58: f0 de 17 37 vsub.32 x7, x1, x7
+# CHECK: 5c: f0 de 31 39 vsub.32 x9, x3, x1
+# CHECK: 60: f0 9e 07 37 vsub.8 x7, x0, x7
+# CHECK: 64: f0 9e 89 34 vsub.8 x4, x8, x9
+# CHECK: 68: f0 9e a2 32 vsub.8 x2, x10, x2
+# CHECK: 6c: f0 9e 74 36 vsub.8 x6, x7, x4
+# CHECK: 70: f0 9e 5b 30 vsub.8 x0, x5, x11
+# CHECK: 74: f0 9e 40 3b vsub.8 x11, x4, x0
+# CHECK: 78: f0 9e 66 33 vsub.8 x3, x6, x6
+# CHECK: 7c: f0 9e 13 35 vsub.8 x5, x1, x3
+# CHECK: 80: f0 9e b8 39 vsub.8 x9, x11, x8
+# CHECK: 84: f0 9e 95 3a vsub.8 x10, x9, x5
+# CHECK: 88: f0 9e 21 38 vsub.8 x8, x2, x1
+# CHECK: 8c: f0 9e 3a 31 vsub.8 x1, x3, x10
+# CHECK: 90: b0 50 30 33 vsub_ge.16 x3, r16, x3, x0, vaddsign0
+# CHECK: 94: b0 50 89 32 vsub_ge.16 x2, r16, x8, x9, vaddsign0
+# CHECK: 98: b0 50 93 39 vsub_ge.16 x9, r16, x9, x3, vaddsign0
+# CHECK: 9c: b0 50 1a 3a vsub_ge.16 x10, r16, x1, x10, vaddsign0
+# CHECK: a0: b0 50 51 3b vsub_ge.16 x11, r16, x5, x1, vaddsign0
+# CHECK: a4: b0 50 67 31 vsub_ge.16 x1, r16, x6, x7, vaddsign0
+# CHECK: a8: b0 50 75 35 vsub_ge.16 x5, r16, x7, x5, vaddsign0
+# CHECK: ac: b0 50 04 37 vsub_ge.16 x7, r16, x0, x4, vaddsign0
+# CHECK: b0: b0 50 ab 34 vsub_ge.16 x4, r16, x10, x11, vaddsign0
+# CHECK: b4: b0 50 42 36 vsub_ge.16 x6, r16, x4, x2, vaddsign0
+# CHECK: b8: b0 50 b6 38 vsub_ge.16 x8, r16, x11, x6, vaddsign0
+# CHECK: bc: b0 50 28 30 vsub_ge.16 x0, r16, x2, x8, vaddsign0
+# CHECK: c0: b0 54 6a 37 vsub_ge.16 x7, r16, x6, x10, vaddsign1
+# CHECK: c4: b0 54 ab 30 vsub_ge.16 x0, r16, x10, x11, vaddsign1
+# CHECK: c8: b0 54 02 33 vsub_ge.16 x3, r16, x0, x2, vaddsign1
+# CHECK: cc: b0 54 83 31 vsub_ge.16 x1, r16, x8, x3, vaddsign1
+# CHECK: d0: b0 54 16 3b vsub_ge.16 x11, r16, x1, x6, vaddsign1
+# CHECK: d4: b0 54 21 39 vsub_ge.16 x9, r16, x2, x1, vaddsign1
+# CHECK: d8: b0 54 58 35 vsub_ge.16 x5, r16, x5, x8, vaddsign1
+# CHECK: dc: b0 54 39 34 vsub_ge.16 x4, r16, x3, x9, vaddsign1
+# CHECK: e0: b0 54 75 3a vsub_ge.16 x10, r16, x7, x5, vaddsign1
+# CHECK: e4: b0 54 44 36 vsub_ge.16 x6, r16, x4, x4, vaddsign1
+# CHECK: e8: b0 54 b7 38 vsub_ge.16 x8, r16, x11, x7, vaddsign1
+# CHECK: ec: b0 54 90 32 vsub_ge.16 x2, r16, x9, x0, vaddsign1
+# CHECK: f0: b0 10 aa 35 vsub_ge.32 x5, r16, x10, x10, vaddsign0
+# CHECK: f4: b0 10 58 31 vsub_ge.32 x1, r16, x5, x8, vaddsign0
+# CHECK: f8: b0 10 66 3a vsub_ge.32 x10, r16, x6, x6, vaddsign0
+# CHECK: fc: b0 10 79 33 vsub_ge.32 x3, r16, x7, x9, vaddsign0
+# CHECK: 100: b0 10 30 38 vsub_ge.32 x8, r16, x3, x0, vaddsign0
+# CHECK: 104: b0 10 27 39 vsub_ge.32 x9, r16, x2, x7, vaddsign0
+# CHECK: 108: b0 10 45 3b vsub_ge.32 x11, r16, x4, x5, vaddsign0
+# CHECK: 10c: b0 10 b1 36 vsub_ge.32 x6, r16, x11, x1, vaddsign0
+# CHECK: 110: b0 10 1b 34 vsub_ge.32 x4, r16, x1, x11, vaddsign0
+# CHECK: 114: b0 10 94 30 vsub_ge.32 x0, r16, x9, x4, vaddsign0
+# CHECK: 118: b0 10 83 37 vsub_ge.32 x7, r16, x8, x3, vaddsign0
+# CHECK: 11c: b0 10 02 32 vsub_ge.32 x2, r16, x0, x2, vaddsign0
+# CHECK: 120: b0 14 89 34 vsub_ge.32 x4, r16, x8, x9, vaddsign1
+# CHECK: 124: b0 14 6b 37 vsub_ge.32 x7, r16, x6, x11, vaddsign1
+# CHECK: 128: b0 14 36 31 vsub_ge.32 x1, r16, x3, x6, vaddsign1
+# CHECK: 12c: b0 14 28 33 vsub_ge.32 x3, r16, x2, x8, vaddsign1
+# CHECK: 130: b0 14 41 35 vsub_ge.32 x5, r16, x4, x1, vaddsign1
+# CHECK: 134: b0 14 b4 38 vsub_ge.32 x8, r16, x11, x4, vaddsign1
+# CHECK: 138: b0 14 a7 3a vsub_ge.32 x10, r16, x10, x7, vaddsign1
+# CHECK: 13c: b0 14 13 3b vsub_ge.32 x11, r16, x1, x3, vaddsign1
+# CHECK: 140: b0 14 92 32 vsub_ge.32 x2, r16, x9, x2, vaddsign1
+# CHECK: 144: b0 14 5a 30 vsub_ge.32 x0, r16, x5, x10, vaddsign1
+# CHECK: 148: b0 14 70 39 vsub_ge.32 x9, r16, x7, x0, vaddsign1
+# CHECK: 14c: b0 14 05 36 vsub_ge.32 x6, r16, x0, x5, vaddsign1
+# CHECK: 150: b0 90 37 33 vsub_ge.8 x3, r17:r16, x3, x7, vaddsign0
+# CHECK: 154: b0 90 00 30 vsub_ge.8 x0, r17:r16, x0, x0, vaddsign0
+# CHECK: 158: b0 90 7b 3b vsub_ge.8 x11, r17:r16, x7, x11, vaddsign0
+# CHECK: 15c: b0 90 16 34 vsub_ge.8 x4, r17:r16, x1, x6, vaddsign0
+# CHECK: 160: b0 90 21 38 vsub_ge.8 x8, r17:r16, x2, x1, vaddsign0
+# CHECK: 164: b0 90 54 37 vsub_ge.8 x7, r17:r16, x5, x4, vaddsign0
+# CHECK: 168: b0 90 93 31 vsub_ge.8 x1, r17:r16, x9, x3, vaddsign0
+# CHECK: 16c: b0 90 4a 39 vsub_ge.8 x9, r17:r16, x4, x10, vaddsign0
+# CHECK: 170: b0 90 69 35 vsub_ge.8 x5, r17:r16, x6, x9, vaddsign0
+# CHECK: 174: b0 90 82 3a vsub_ge.8 x10, r17:r16, x8, x2, vaddsign0
+# CHECK: 178: b0 90 b8 36 vsub_ge.8 x6, r17:r16, x11, x8, vaddsign0
+# CHECK: 17c: b0 90 a5 32 vsub_ge.8 x2, r17:r16, x10, x5, vaddsign0
+# CHECK: 180: b0 94 6b 34 vsub_ge.8 x4, r17:r16, x6, x11, vaddsign1
+# CHECK: 184: b0 94 09 31 vsub_ge.8 x1, r17:r16, x0, x9, vaddsign1
+# CHECK: 188: b0 94 78 39 vsub_ge.8 x9, r17:r16, x7, x8, vaddsign1
+# CHECK: 18c: b0 94 23 36 vsub_ge.8 x6, r17:r16, x2, x3, vaddsign1
+# CHECK: 190: b0 94 b6 37 vsub_ge.8 x7, r17:r16, x11, x6, vaddsign1
+# CHECK: 194: b0 94 a5 35 vsub_ge.8 x5, r17:r16, x10, x5, vaddsign1
+# CHECK: 198: b0 94 5a 30 vsub_ge.8 x0, r17:r16, x5, x10, vaddsign1
+# CHECK: 19c: b0 94 40 38 vsub_ge.8 x8, r17:r16, x4, x0, vaddsign1
+# CHECK: 1a0: b0 94 32 32 vsub_ge.8 x2, r17:r16, x3, x2, vaddsign1
+# CHECK: 1a4: b0 94 14 3a vsub_ge.8 x10, r17:r16, x1, x4, vaddsign1
+# CHECK: 1a8: b0 94 97 33 vsub_ge.8 x3, r17:r16, x9, x7, vaddsign1
+# CHECK: 1ac: b0 94 81 3b vsub_ge.8 x11, r17:r16, x8, x1, vaddsign1
+# CHECK: 1b0: b0 48 77 31 vsub_lt.16 x1, r16, x7, x7, vaddsign0
+# CHECK: 1b4: b0 48 a5 32 vsub_lt.16 x2, r16, x10, x5, vaddsign0
+# CHECK: 1b8: b0 48 59 3b vsub_lt.16 x11, r16, x5, x9, vaddsign0
+# CHECK: 1bc: b0 48 bb 35 vsub_lt.16 x5, r16, x11, x11, vaddsign0
+# CHECK: 1c0: b0 48 23 38 vsub_lt.16 x8, r16, x2, x3, vaddsign0
+# CHECK: 1c4: b0 48 01 3a vsub_lt.16 x10, r16, x0, x1, vaddsign0
+# CHECK: 1c8: b0 48 32 36 vsub_lt.16 x6, r16, x3, x2, vaddsign0
+# CHECK: 1cc: b0 48 18 34 vsub_lt.16 x4, r16, x1, x8, vaddsign0
+# CHECK: 1d0: b0 48 8a 33 vsub_lt.16 x3, r16, x8, x10, vaddsign0
+# CHECK: 1d4: b0 48 94 37 vsub_lt.16 x7, r16, x9, x4, vaddsign0
+# CHECK: 1d8: b0 48 40 30 vsub_lt.16 x0, r16, x4, x0, vaddsign0
+# CHECK: 1dc: b0 48 66 39 vsub_lt.16 x9, r16, x6, x6, vaddsign0
+# CHECK: 1e0: b0 4c 13 35 vsub_lt.16 x5, r16, x1, x3, vaddsign1
+# CHECK: 1e4: b0 4c 7a 33 vsub_lt.16 x3, r16, x7, x10, vaddsign1
+# CHECK: 1e8: b0 4c 64 3b vsub_lt.16 x11, r16, x6, x4, vaddsign1
+# CHECK: 1ec: b0 4c b6 34 vsub_lt.16 x4, r16, x11, x6, vaddsign1
+# CHECK: 1f0: b0 4c 21 32 vsub_lt.16 x2, r16, x2, x1, vaddsign1
+# CHECK: 1f4: b0 4c 8b 37 vsub_lt.16 x7, r16, x8, x11, vaddsign1
+# CHECK: 1f8: b0 4c 08 31 vsub_lt.16 x1, r16, x0, x8, vaddsign1
+# CHECK: 1fc: b0 4c 90 36 vsub_lt.16 x6, r16, x9, x0, vaddsign1
+# CHECK: 200: b0 4c 52 30 vsub_lt.16 x0, r16, x5, x2, vaddsign1
+# CHECK: 204: b0 4c 45 39 vsub_lt.16 x9, r16, x4, x5, vaddsign1
+# CHECK: 208: b0 4c a7 3a vsub_lt.16 x10, r16, x10, x7, vaddsign1
+# CHECK: 20c: b0 4c 39 38 vsub_lt.16 x8, r16, x3, x9, vaddsign1
+# CHECK: 210: b0 08 41 31 vsub_lt.32 x1, r16, x4, x1, vaddsign0
+# CHECK: 214: b0 08 23 38 vsub_lt.32 x8, r16, x2, x3, vaddsign0
+# CHECK: 218: b0 08 74 35 vsub_lt.32 x5, r16, x7, x4, vaddsign0
+# CHECK: 21c: b0 08 16 30 vsub_lt.32 x0, r16, x1, x6, vaddsign0
+# CHECK: 220: b0 08 95 33 vsub_lt.32 x3, r16, x9, x5, vaddsign0
+# CHECK: 224: b0 08 a0 3a vsub_lt.32 x10, r16, x10, x0, vaddsign0
+# CHECK: 228: b0 08 6a 34 vsub_lt.32 x4, r16, x6, x10, vaddsign0
+# CHECK: 22c: b0 08 0b 3b vsub_lt.32 x11, r16, x0, x11, vaddsign0
+# CHECK: 230: b0 08 52 37 vsub_lt.32 x7, r16, x5, x2, vaddsign0
+# CHECK: 234: b0 08 39 39 vsub_lt.32 x9, r16, x3, x9, vaddsign0
+# CHECK: 238: b0 08 87 32 vsub_lt.32 x2, r16, x8, x7, vaddsign0
+# CHECK: 23c: b0 08 b8 36 vsub_lt.32 x6, r16, x11, x8, vaddsign0
+# CHECK: 240: b0 0c ba 39 vsub_lt.32 x9, r16, x11, x10, vaddsign1
+# CHECK: 244: b0 0c 90 37 vsub_lt.32 x7, r16, x9, x0, vaddsign1
+# CHECK: 248: b0 0c a1 3a vsub_lt.32 x10, r16, x10, x1, vaddsign1
+# CHECK: 24c: b0 0c 54 34 vsub_lt.32 x4, r16, x5, x4, vaddsign1
+# CHECK: 250: b0 0c 05 31 vsub_lt.32 x1, r16, x0, x5, vaddsign1
+# CHECK: 254: b0 0c 86 35 vsub_lt.32 x5, r16, x8, x6, vaddsign1
+# CHECK: 258: b0 0c 68 38 vsub_lt.32 x8, r16, x6, x8, vaddsign1
+# CHECK: 25c: b0 0c 73 3b vsub_lt.32 x11, r16, x7, x3, vaddsign1
+# CHECK: 260: b0 0c 1b 33 vsub_lt.32 x3, r16, x1, x11, vaddsign1
+# CHECK: 264: b0 0c 39 32 vsub_lt.32 x2, r16, x3, x9, vaddsign1
+# CHECK: 268: b0 0c 22 36 vsub_lt.32 x6, r16, x2, x2, vaddsign1
+# CHECK: 26c: b0 0c 47 30 vsub_lt.32 x0, r16, x4, x7, vaddsign1
+# CHECK: 270: b0 88 28 36 vsub_lt.8 x6, r17:r16, x2, x8, vaddsign0
+# CHECK: 274: b0 88 a5 3b vsub_lt.8 x11, r17:r16, x10, x5, vaddsign0
+# CHECK: 278: b0 88 97 39 vsub_lt.8 x9, r17:r16, x9, x7, vaddsign0
+# CHECK: 27c: b0 88 82 33 vsub_lt.8 x3, r17:r16, x8, x2, vaddsign0
+# CHECK: 280: b0 88 13 3a vsub_lt.8 x10, r17:r16, x1, x3, vaddsign0
+# CHECK: 284: b0 88 b9 31 vsub_lt.8 x1, r17:r16, x11, x9, vaddsign0
+# CHECK: 288: b0 88 51 35 vsub_lt.8 x5, r17:r16, x5, x1, vaddsign0
+# CHECK: 28c: b0 88 7b 37 vsub_lt.8 x7, r17:r16, x7, x11, vaddsign0
+# CHECK: 290: b0 88 46 38 vsub_lt.8 x8, r17:r16, x4, x6, vaddsign0
+# CHECK: 294: b0 88 6a 34 vsub_lt.8 x4, r17:r16, x6, x10, vaddsign0
+# CHECK: 298: b0 88 30 30 vsub_lt.8 x0, r17:r16, x3, x0, vaddsign0
+# CHECK: 29c: b0 88 04 32 vsub_lt.8 x2, r17:r16, x0, x4, vaddsign0
+# CHECK: 2a0: b0 8c 30 36 vsub_lt.8 x6, r17:r16, x3, x0, vaddsign1
+# CHECK: 2a4: b0 8c 98 37 vsub_lt.8 x7, r17:r16, x9, x8, vaddsign1
+# CHECK: 2a8: b0 8c 29 31 vsub_lt.8 x1, r17:r16, x2, x9, vaddsign1
+# CHECK: 2ac: b0 8c 4a 39 vsub_lt.8 x9, r17:r16, x4, x10, vaddsign1
+# CHECK: 2b0: b0 8c 75 35 vsub_lt.8 x5, r17:r16, x7, x5, vaddsign1
+# CHECK: 2b4: b0 8c 83 32 vsub_lt.8 x2, r17:r16, x8, x3, vaddsign1
+# CHECK: 2b8: b0 8c 14 33 vsub_lt.8 x3, r17:r16, x1, x4, vaddsign1
+# CHECK: 2bc: b0 8c a1 30 vsub_lt.8 x0, r17:r16, x10, x1, vaddsign1
+# CHECK: 2c0: b0 8c 0b 3b vsub_lt.8 x11, r17:r16, x0, x11, vaddsign1
+# CHECK: 2c4: b0 8c b7 38 vsub_lt.8 x8, r17:r16, x11, x7, vaddsign1
+# CHECK: 2c8: b0 8c 56 3a vsub_lt.8 x10, r17:r16, x5, x6, vaddsign1
+# CHECK: 2cc: b0 8c 62 34 vsub_lt.8 x4, r17:r16, x6, x2, vaddsign1
+# CHECK: 2d0: 90 b5 01 80 vsub dm0, dm6, dm6, r12
+# CHECK: 2d4: 90 5d 00 0c vsub dm3, dm3, dm1, r8
+# CHECK: 2d8: 90 6d 01 f0 vsub dm4, dm5, dm5, r15
+# CHECK: 2dc: 90 0d 00 5c vsub dm7, dm1, dm0, r10
+# CHECK: 2e0: 90 fd 00 78 vsub dm6, dm7, dm3, r11
+# CHECK: 2e4: 90 a5 00 a8 vsub dm2, dm4, dm2, r13
+# CHECK: 2e8: 90 c5 01 d4 vsub dm5, dm0, dm7, r14
+# CHECK: 2ec: 90 15 01 24 vsub dm1, dm2, dm4, r9
+# CHECK: 2f0: 90 95 11 e0 vsub cml0, cml2, cml6, r15
+# CHECK: 2f4: 90 75 10 10 vsub cml4, cml6, cml1, r8
+# CHECK: 2f8: 90 fd 11 7c vsub cml7, cml7, cml7, r11
+# CHECK: 2fc: 90 c5 10 b8 vsub cml6, cml0, cml3, r13
+# CHECK: 300: 90 0d 11 28 vsub cml2, cml1, cml4, r9
+# CHECK: 304: 90 65 11 cc vsub cml3, cml4, cml5, r14
+# CHECK: 308: 90 2d 10 54 vsub cml5, cml5, cml0, r10
+# CHECK: 30c: 90 9d 10 84 vsub cml1, cml3, cml2, r12
+# CHECK: 310: 90 3d 08 e8 vsub dm2, dm7, scd[r31++], r15
+# CHECK: 314: 90 2d 08 80 vsub dm0, dm5, scd[r31++], r12
+# CHECK: 318: 90 15 08 30 vsub dm4, dm2, scd[r31++], r9
+# CHECK: 31c: 90 0d 08 58 vsub dm6, dm1, scd[r31++], r10
+# CHECK: 320: 90 1d 08 ac vsub dm3, dm3, scd[r31++], r13
+# CHECK: 324: 90 05 08 7c vsub dm7, dm0, scd[r31++], r11
+# CHECK: 328: 90 25 08 c4 vsub dm1, dm4, scd[r31++], r14
+# CHECK: 32c: 90 35 08 14 vsub dm5, dm6, scd[r31++], r8
+# CHECK: 330: 90 0d 06 70 vsub dm4, dm1, scd[r31], r11
+# CHECK: 334: 90 25 06 ec vsub dm3, dm4, scd[r31], r15
+# CHECK: 338: 90 05 06 a8 vsub dm2, dm0, scd[r31], r13
+# CHECK: 33c: 90 2d 06 84 vsub dm1, dm5, scd[r31], r12
+# CHECK: 340: 90 1d 06 58 vsub dm6, dm3, scd[r31], r10
+# CHECK: 344: 90 3d 06 1c vsub dm7, dm7, scd[r31], r8
+# CHECK: 348: 90 15 06 d4 vsub dm5, dm2, scd[r31], r14
+# CHECK: 34c: 90 35 06 20 vsub dm0, dm6, scd[r31], r9
+# CHECK: 350: 90 3d 18 78 vsub cml6, cml7, scd[r31++], r11
+# CHECK: 354: 90 1d 18 5c vsub cml7, cml3, scd[r31++], r10
+# CHECK: 358: 90 2d 18 08 vsub cml2, cml5, scd[r31++], r8
+# CHECK: 35c: 90 25 18 f4 vsub cml5, cml4, scd[r31++], r15
+# CHECK: 360: 90 15 18 20 vsub cml0, cml2, scd[r31++], r9
+# CHECK: 364: 90 35 18 8c vsub cml3, cml6, scd[r31++], r12
+# CHECK: 368: 90 05 18 c4 vsub cml1, cml0, scd[r31++], r14
+# CHECK: 36c: 90 0d 18 b0 vsub cml4, cml1, scd[r31++], r13
+# CHECK: 370: 90 2d 16 3c vsub cml7, cml5, scd[r31], r9
+# CHECK: 374: 90 25 16 44 vsub cml1, cml4, scd[r31], r10
+# CHECK: 378: 90 3d 16 60 vsub cml0, cml7, scd[r31], r11
+# CHECK: 37c: 90 15 16 14 vsub cml5, cml2, scd[r31], r8
+# CHECK: 380: 90 05 16 f0 vsub cml4, cml0, scd[r31], r15
+# CHECK: 384: 90 35 16 88 vsub cml2, cml6, scd[r31], r12
+# CHECK: 388: 90 1d 16 ac vsub cml3, cml3, scd[r31], r13
+# CHECK: 38c: 90 0d 16 d8 vsub cml6, cml1, scd[r31], r14
+# CHECK: 390: 90 a5 21 38 vsub.f dm6, dm4, dm6, r9
+# CHECK: 394: 90 3d 20 e0 vsub.f dm0, dm7, dm0, r15
+# CHECK: 398: 90 d5 20 70 vsub.f dm4, dm2, dm3, r11
+# CHECK: 39c: 90 0d 21 a4 vsub.f dm1, dm1, dm4, r13
+# CHECK: 3a0: 90 5d 21 4c vsub.f dm3, dm3, dm5, r10
+# CHECK: 3a4: 90 ad 20 1c vsub.f dm7, dm5, dm2, r8
+# CHECK: 3a8: 90 c5 21 88 vsub.f dm2, dm0, dm7, r12
+# CHECK: 3ac: 90 75 20 d4 vsub.f dm5, dm6, dm1, r14
+# CHECK: 3b0: 90 1d 28 90 vsub.f dm4, dm3, scd[r31++], r12
+# CHECK: 3b4: 90 25 28 3c vsub.f dm7, dm4, scd[r31++], r9
+# CHECK: 3b8: 90 35 28 b4 vsub.f dm5, dm6, scd[r31++], r13
+# CHECK: 3bc: 90 0d 28 e8 vsub.f dm2, dm1, scd[r31++], r15
+# CHECK: 3c0: 90 3d 28 c4 vsub.f dm1, dm7, scd[r31++], r14
+# CHECK: 3c4: 90 15 28 60 vsub.f dm0, dm2, scd[r31++], r11
+# CHECK: 3c8: 90 05 28 18 vsub.f dm6, dm0, scd[r31++], r8
+# CHECK: 3cc: 90 2d 28 4c vsub.f dm3, dm5, scd[r31++], r10
+# CHECK: 3d0: 90 2d 26 24 vsub.f dm1, dm5, scd[r31], r9
+# CHECK: 3d4: 90 25 26 a0 vsub.f dm0, dm4, scd[r31], r13
+# CHECK: 3d8: 90 0d 26 7c vsub.f dm7, dm1, scd[r31], r11
+# CHECK: 3dc: 90 3d 26 4c vsub.f dm3, dm7, scd[r31], r10
+# CHECK: 3e0: 90 15 26 14 vsub.f dm5, dm2, scd[r31], r8
+# CHECK: 3e4: 90 05 26 c8 vsub.f dm2, dm0, scd[r31], r14
+# CHECK: 3e8: 90 35 26 f0 vsub.f dm4, dm6, scd[r31], r15
+# CHECK: 3ec: 90 1d 26 98 vsub.f dm6, dm3, scd[r31], r12
+# CHECK: 3f0: 90 2d 31 4c vsub.f cml3, cml5, cml4, r10
+# CHECK: 3f4: 90 c5 31 d8 vsub.f cml6, cml0, cml7, r14
+# CHECK: 3f8: 90 55 31 f0 vsub.f cml4, cml2, cml5, r15
+# CHECK: 3fc: 90 fd 30 60 vsub.f cml0, cml7, cml3, r11
+# CHECK: 400: 90 4d 30 04 vsub.f cml1, cml1, cml1, r8
+# CHECK: 404: 90 a5 30 3c vsub.f cml7, cml4, cml2, r9
+# CHECK: 408: 90 35 30 88 vsub.f cml2, cml6, cml0, r12
+# CHECK: 40c: 90 9d 31 b4 vsub.f cml5, cml3, cml6, r13
+# CHECK: 410: 90 35 38 24 vsub.f cml1, cml6, scd[r31++], r9
+# CHECK: 414: 90 25 38 b8 vsub.f cml6, cml4, scd[r31++], r13
+# CHECK: 418: 90 3d 38 8c vsub.f cml3, cml7, scd[r31++], r12
+# CHECK: 41c: 90 05 38 e0 vsub.f cml0, cml0, scd[r31++], r15
+# CHECK: 420: 90 1d 38 74 vsub.f cml5, cml3, scd[r31++], r11
+# CHECK: 424: 90 0d 38 10 vsub.f cml4, cml1, scd[r31++], r8
+# CHECK: 428: 90 2d 38 c8 vsub.f cml2, cml5, scd[r31++], r14
+# CHECK: 42c: 90 15 38 5c vsub.f cml7, cml2, scd[r31++], r10
+# CHECK: 430: 90 05 36 0c vsub.f cml3, cml0, scd[r31], r8
+# CHECK: 434: 90 0d 36 88 vsub.f cml2, cml1, scd[r31], r12
+# CHECK: 438: 90 2d 36 f4 vsub.f cml5, cml5, scd[r31], r15
+# CHECK: 43c: 90 3d 36 d0 vsub.f cml4, cml7, scd[r31], r14
+# CHECK: 440: 90 35 36 40 vsub.f cml0, cml6, scd[r31], r10
+# CHECK: 444: 90 25 36 78 vsub.f cml6, cml4, scd[r31], r11
+# CHECK: 448: 90 1d 36 3c vsub.f cml7, cml3, scd[r31], r9
+# CHECK: 44c: 90 15 36 a4 vsub.f cml1, cml2, scd[r31], r13
+# CHECK: 450: 90 8d 41 04 vsub.mx6 dm1, dm1, dm6, r8
+# CHECK: 454: 90 25 40 88 vsub.mx6 dm2, dm4, dm0, r12
+# CHECK: 458: 90 05 41 d8 vsub.mx6 dm6, dm0, dm4, r14
+# CHECK: 45c: 90 bd 40 70 vsub.mx6 dm4, dm7, dm2, r11
+# CHECK: 460: 90 f5 40 2c vsub.mx6 dm3, dm6, dm3, r9
+# CHECK: 464: 90 55 41 40 vsub.mx6 dm0, dm2, dm5, r10
+# CHECK: 468: 90 ed 41 fc vsub.mx6 dm7, dm5, dm7, r15
+# CHECK: 46c: 90 5d 40 b4 vsub.mx6 dm5, dm3, dm1, r13
+# CHECK: 470: 90 15 48 bc vsub.mx6 dm7, dm2, scd[r31++], r13
+# CHECK: 474: 90 25 48 4c vsub.mx6 dm3, dm4, scd[r31++], r10
+# CHECK: 478: 90 35 48 c0 vsub.mx6 dm0, dm6, scd[r31++], r14
+# CHECK: 47c: 90 1d 48 18 vsub.mx6 dm6, dm3, scd[r31++], r8
+# CHECK: 480: 90 05 48 70 vsub.mx6 dm4, dm0, scd[r31++], r11
+# CHECK: 484: 90 2d 48 e4 vsub.mx6 dm1, dm5, scd[r31++], r15
+# CHECK: 488: 90 3d 48 28 vsub.mx6 dm2, dm7, scd[r31++], r9
+# CHECK: 48c: 90 0d 48 94 vsub.mx6 dm5, dm1, scd[r31++], r12
+# CHECK: 490: 90 2d 46 44 vsub.mx6 dm1, dm5, scd[r31], r10
+# CHECK: 494: 90 25 46 68 vsub.mx6 dm2, dm4, scd[r31], r11
+# CHECK: 498: 90 35 46 9c vsub.mx6 dm7, dm6, scd[r31], r12
+# CHECK: 49c: 90 3d 46 cc vsub.mx6 dm3, dm7, scd[r31], r14
+# CHECK: 4a0: 90 05 46 f4 vsub.mx6 dm5, dm0, scd[r31], r15
+# CHECK: 4a4: 90 15 46 20 vsub.mx6 dm0, dm2, scd[r31], r9
+# CHECK: 4a8: 90 0d 46 b8 vsub.mx6 dm6, dm1, scd[r31], r13
+# CHECK: 4ac: 90 1d 46 10 vsub.mx6 dm4, dm3, scd[r31], r8
+# CHECK: 4b0: 90 05 50 84 vsub.mx6 cml1, cml0, cml0, r12
+# CHECK: 4b4: 90 4d 51 f8 vsub.mx6 cml6, cml1, cml5, r15
+# CHECK: 4b8: 90 f5 51 48 vsub.mx6 cml2, cml6, cml7, r10
+# CHECK: 4bc: 90 a5 50 bc vsub.mx6 cml7, cml4, cml2, r13
+# CHECK: 4c0: 90 95 51 6c vsub.mx6 cml3, cml2, cml6, r11
+# CHECK: 4c4: 90 5d 50 10 vsub.mx6 cml4, cml3, cml1, r8
+# CHECK: 4c8: 90 2d 51 34 vsub.mx6 cml5, cml5, cml4, r9
+# CHECK: 4cc: 90 fd 50 c0 vsub.mx6 cml0, cml7, cml3, r14
+# CHECK: 4d0: 90 0d 58 4c vsub.mx6 cml3, cml1, scd[r31++], r10
+# CHECK: 4d4: 90 25 58 38 vsub.mx6 cml6, cml4, scd[r31++], r9
+# CHECK: 4d8: 90 2d 58 f4 vsub.mx6 cml5, cml5, scd[r31++], r15
+# CHECK: 4dc: 90 1d 58 04 vsub.mx6 cml1, cml3, scd[r31++], r8
+# CHECK: 4e0: 90 35 58 9c vsub.mx6 cml7, cml6, scd[r31++], r12
+# CHECK: 4e4: 90 3d 58 68 vsub.mx6 cml2, cml7, scd[r31++], r11
+# CHECK: 4e8: 90 15 58 b0 vsub.mx6 cml4, cml2, scd[r31++], r13
+# CHECK: 4ec: 90 05 58 c0 vsub.mx6 cml0, cml0, scd[r31++], r14
+# CHECK: 4f0: 90 15 56 54 vsub.mx6 cml5, cml2, scd[r31], r10
+# CHECK: 4f4: 90 3d 56 cc vsub.mx6 cml3, cml7, scd[r31], r14
+# CHECK: 4f8: 90 25 56 e0 vsub.mx6 cml0, cml4, scd[r31], r15
+# CHECK: 4fc: 90 35 56 88 vsub.mx6 cml2, cml6, scd[r31], r12
+# CHECK: 500: 90 2d 56 1c vsub.mx6 cml7, cml5, scd[r31], r8
+# CHECK: 504: 90 1d 56 24 vsub.mx6 cml1, cml3, scd[r31], r9
+# CHECK: 508: 90 05 56 b0 vsub.mx6 cml4, cml0, scd[r31], r13
+# CHECK: 50c: 90 0d 56 78 vsub.mx6 cml6, cml1, scd[r31], r11

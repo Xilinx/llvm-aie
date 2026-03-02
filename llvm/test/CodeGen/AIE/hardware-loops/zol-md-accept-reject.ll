@@ -2,11 +2,13 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 
 ; RUN: llc -O2 -stop-after=hardware-loops -mtriple=aie2 \
 ; RUN:    --enable-aie-zero-overhead-loops %s -o - | FileCheck %s
 ; RUN: llc -O2 -stop-after=hardware-loops -mtriple=aie2p \
+; RUN:    --enable-aie-zero-overhead-loops %s -o - | FileCheck %s
+; RUN: llc -O2 -stop-after=hardware-loops -mtriple=aie2ps \
 ; RUN:    --enable-aie-zero-overhead-loops %s -o - | FileCheck %s
 
 ; This test checks the behavior of the TTI heuristic that prevents the generation of ZOL

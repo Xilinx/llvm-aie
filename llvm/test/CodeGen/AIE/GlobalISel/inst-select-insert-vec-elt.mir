@@ -4,9 +4,10 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2
 # RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2P
+# RUN: llc -mtriple aie2ps -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2PS
 ---
 name:            512bit_const_idx
 legalized:       true
@@ -34,6 +35,16 @@ body:             |
     ; AIE2P-NEXT: [[VINSERT_32_mR29_insert:%[0-9]+]]:vec512 = VINSERT_32_mR29_insert [[COPY]], [[MOV_RLC_imm11_pseudo]], [[COPY1]]
     ; AIE2P-NEXT: $x3 = COPY [[VINSERT_32_mR29_insert]]
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit $x3
+    ;
+    ; AIE2PS-LABEL: name: 512bit_const_idx
+    ; AIE2PS: liveins: $x0, $r0
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r0
+    ; AIE2PS-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mr29_insert = MOV_RLC_imm11_pseudo 8
+    ; AIE2PS-NEXT: [[VINSERT_32_mR29_insert:%[0-9]+]]:vec512 = VINSERT_32_mR29_insert [[COPY]], [[MOV_RLC_imm11_pseudo]], [[COPY1]]
+    ; AIE2PS-NEXT: $x3 = COPY [[VINSERT_32_mR29_insert]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $x3
     %0:vregbank(<16 x s32>) = COPY $x0
     %1:gprregbank(s32) = COPY $r0
     %2:gprregbank(s32) = G_CONSTANT i32 8
@@ -69,6 +80,16 @@ body:             |
     ; AIE2P-NEXT: [[VINSERT_8_mR29_insert:%[0-9]+]]:vec512 = VINSERT_8_mR29_insert [[COPY]], [[COPY2]], [[COPY1]]
     ; AIE2P-NEXT: $x3 = COPY [[VINSERT_8_mR29_insert]]
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit $x3
+    ;
+    ; AIE2PS-LABEL: name: 512bit_dyn_idx
+    ; AIE2PS: liveins: $x0, $r0, $r1
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r0
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:mr29_insert = COPY $r1
+    ; AIE2PS-NEXT: [[VINSERT_8_mR29_insert:%[0-9]+]]:vec512 = VINSERT_8_mR29_insert [[COPY]], [[COPY2]], [[COPY1]]
+    ; AIE2PS-NEXT: $x3 = COPY [[VINSERT_8_mR29_insert]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit $x3
     %0:vregbank(<64 x s8>) = COPY $x0
     %1:gprregbank(s32) = COPY $r0
     %2:gprregbank(s32) = COPY $r1

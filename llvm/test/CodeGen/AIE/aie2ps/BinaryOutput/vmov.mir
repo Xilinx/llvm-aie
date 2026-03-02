@@ -1,0 +1,1234 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# TODO: llc %llcflags --filetype=asm -o %t2
+# TODO: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# TODO: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VMOV_0_mv_scd_cm
+    $cmh3 = VMOV_0_mv_scd_cm implicit $crscden
+    $cmh1 = VMOV_0_mv_scd_cm implicit $crscden
+    $cml6 = VMOV_0_mv_scd_cm implicit $crscden
+    $cmh7 = VMOV_0_mv_scd_cm implicit $crscden
+    $cml1 = VMOV_0_mv_scd_cm implicit $crscden
+    $cmh4 = VMOV_0_mv_scd_cm implicit $crscden
+    $cml7 = VMOV_0_mv_scd_cm implicit $crscden
+    $cml2 = VMOV_0_mv_scd_cm implicit $crscden
+    $cmh2 = VMOV_0_mv_scd_cm implicit $crscden
+    $cml4 = VMOV_0_mv_scd_cm implicit $crscden
+    $cml5 = VMOV_0_mv_scd_cm implicit $crscden
+    $cmh6 = VMOV_0_mv_scd_cm implicit $crscden
+    $cmh5 = VMOV_0_mv_scd_cm implicit $crscden
+    $cmh0 = VMOV_0_mv_scd_cm implicit $crscden
+    $cml0 = VMOV_0_mv_scd_cm implicit $crscden
+    $cml3 = VMOV_0_mv_scd_cm implicit $crscden
+
+    ; VMOV_0_mv_scd_dm_imm
+    $dm4 = VMOV_0_mv_scd_dm_imm implicit $crscden
+    $dm5 = VMOV_0_mv_scd_dm_imm implicit $crscden
+    $dm3 = VMOV_0_mv_scd_dm_imm implicit $crscden
+    $dm7 = VMOV_0_mv_scd_dm_imm implicit $crscden
+    $dm2 = VMOV_0_mv_scd_dm_imm implicit $crscden
+    $dm1 = VMOV_0_mv_scd_dm_imm implicit $crscden
+    $dm6 = VMOV_0_mv_scd_dm_imm implicit $crscden
+    $dm0 = VMOV_0_mv_scd_dm_imm implicit $crscden
+
+    ; VMOV_1_mv_scd_cm
+    $cmh6 = VMOV_1_mv_scd_cm implicit $crscden
+    $cml0 = VMOV_1_mv_scd_cm implicit $crscden
+    $cml5 = VMOV_1_mv_scd_cm implicit $crscden
+    $cmh0 = VMOV_1_mv_scd_cm implicit $crscden
+    $cmh2 = VMOV_1_mv_scd_cm implicit $crscden
+    $cml3 = VMOV_1_mv_scd_cm implicit $crscden
+    $cml1 = VMOV_1_mv_scd_cm implicit $crscden
+    $cmh1 = VMOV_1_mv_scd_cm implicit $crscden
+    $cmh4 = VMOV_1_mv_scd_cm implicit $crscden
+    $cmh3 = VMOV_1_mv_scd_cm implicit $crscden
+    $cml2 = VMOV_1_mv_scd_cm implicit $crscden
+    $cml7 = VMOV_1_mv_scd_cm implicit $crscden
+    $cml6 = VMOV_1_mv_scd_cm implicit $crscden
+    $cml4 = VMOV_1_mv_scd_cm implicit $crscden
+    $cmh7 = VMOV_1_mv_scd_cm implicit $crscden
+    $cmh5 = VMOV_1_mv_scd_cm implicit $crscden
+
+    ; VMOV_1_mv_scd_dm_imm
+    $dm0 = VMOV_1_mv_scd_dm_imm implicit $crscden
+    $dm1 = VMOV_1_mv_scd_dm_imm implicit $crscden
+    $dm2 = VMOV_1_mv_scd_dm_imm implicit $crscden
+    $dm6 = VMOV_1_mv_scd_dm_imm implicit $crscden
+    $dm3 = VMOV_1_mv_scd_dm_imm implicit $crscden
+    $dm4 = VMOV_1_mv_scd_dm_imm implicit $crscden
+    $dm7 = VMOV_1_mv_scd_dm_imm implicit $crscden
+    $dm5 = VMOV_1_mv_scd_dm_imm implicit $crscden
+
+    ; VMOV_2
+    $dm1 = VMOV_2 implicit $crscden
+    $dm7 = VMOV_2 implicit $crscden
+    $dm3 = VMOV_2 implicit $crscden
+    $dm2 = VMOV_2 implicit $crscden
+    $dm4 = VMOV_2 implicit $crscden
+    $dm5 = VMOV_2 implicit $crscden
+    $dm0 = VMOV_2 implicit $crscden
+    $dm6 = VMOV_2 implicit $crscden
+
+    ; VMOV_3
+    $dm7 = VMOV_3 implicit $crscden
+    $dm6 = VMOV_3 implicit $crscden
+    $dm3 = VMOV_3 implicit $crscden
+    $dm0 = VMOV_3 implicit $crscden
+    $dm5 = VMOV_3 implicit $crscden
+    $dm4 = VMOV_3 implicit $crscden
+    $dm1 = VMOV_3 implicit $crscden
+    $dm2 = VMOV_3 implicit $crscden
+
+    ; VMOV_D_vmov
+    $dm6 = VMOV_D_vmov $dm1
+    $dm2 = VMOV_D_vmov $dm6
+    $dm0 = VMOV_D_vmov $dm0
+    $dm5 = VMOV_D_vmov $dm5
+    $dm1 = VMOV_D_vmov $dm3
+    $dm4 = VMOV_D_vmov $dm2
+    $dm7 = VMOV_D_vmov $dm7
+    $dm3 = VMOV_D_vmov $dm4
+
+    ; VMOV_D_vmov_half
+    $cml1 = VMOV_D_vmov_half $cml6
+    $cml3 = VMOV_D_vmov_half $cml5
+    $cml7 = VMOV_D_vmov_half $cml2
+    $cml4 = VMOV_D_vmov_half $cml1
+    $cml5 = VMOV_D_vmov_half $cml4
+    $cml2 = VMOV_D_vmov_half $cml7
+    $cml6 = VMOV_D_vmov_half $cml3
+    $cml0 = VMOV_D_vmov_half $cml0
+
+    ; VMOV_alu_mv_alu_mv_scd_bm
+    $bmll2 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmlh5 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmlh3 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmhl2 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmhl7 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmlh7 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmll5 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmhl3 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmll4 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmhl1 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmhh6 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmll1 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmhh4 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmhl0 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmhh0 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmhl4 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmlh0 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmll0 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmll3 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmhh1 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmlh2 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmll7 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmll6 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmhh5 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmhh3 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmhl6 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmhh7 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmlh6 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmlh1 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmhl5 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmhh2 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+    $bmlh4 = VMOV_alu_mv_alu_mv_scd_bm implicit $crscden
+
+    ; VMOV_alu_mv_alu_mv_scd_cmh_dyn
+    $cmh1, $r31 = VMOV_alu_mv_alu_mv_scd_cmh_dyn $r31, implicit $crscden
+    $cmh2, $r31 = VMOV_alu_mv_alu_mv_scd_cmh_dyn $r31, implicit $crscden
+    $cmh0, $r31 = VMOV_alu_mv_alu_mv_scd_cmh_dyn $r31, implicit $crscden
+    $cmh6, $r31 = VMOV_alu_mv_alu_mv_scd_cmh_dyn $r31, implicit $crscden
+    $cmh7, $r31 = VMOV_alu_mv_alu_mv_scd_cmh_dyn $r31, implicit $crscden
+    $cmh4, $r31 = VMOV_alu_mv_alu_mv_scd_cmh_dyn $r31, implicit $crscden
+    $cmh3, $r31 = VMOV_alu_mv_alu_mv_scd_cmh_dyn $r31, implicit $crscden
+    $cmh5, $r31 = VMOV_alu_mv_alu_mv_scd_cmh_dyn $r31, implicit $crscden
+
+    ; VMOV_alu_mv_alu_mv_scd_cmh_reg
+    $cmh1 = VMOV_alu_mv_alu_mv_scd_cmh_reg $r31, implicit $crscden
+    $cmh0 = VMOV_alu_mv_alu_mv_scd_cmh_reg $r31, implicit $crscden
+    $cmh5 = VMOV_alu_mv_alu_mv_scd_cmh_reg $r31, implicit $crscden
+    $cmh3 = VMOV_alu_mv_alu_mv_scd_cmh_reg $r31, implicit $crscden
+    $cmh2 = VMOV_alu_mv_alu_mv_scd_cmh_reg $r31, implicit $crscden
+    $cmh4 = VMOV_alu_mv_alu_mv_scd_cmh_reg $r31, implicit $crscden
+    $cmh7 = VMOV_alu_mv_alu_mv_scd_cmh_reg $r31, implicit $crscden
+    $cmh6 = VMOV_alu_mv_alu_mv_scd_cmh_reg $r31, implicit $crscden
+
+    ; VMOV_alu_mv_alu_mv_scd_cml_dyn
+    $cml6, $r31 = VMOV_alu_mv_alu_mv_scd_cml_dyn $r31, implicit $crscden
+    $cml7, $r31 = VMOV_alu_mv_alu_mv_scd_cml_dyn $r31, implicit $crscden
+    $cml4, $r31 = VMOV_alu_mv_alu_mv_scd_cml_dyn $r31, implicit $crscden
+    $cml0, $r31 = VMOV_alu_mv_alu_mv_scd_cml_dyn $r31, implicit $crscden
+    $cml2, $r31 = VMOV_alu_mv_alu_mv_scd_cml_dyn $r31, implicit $crscden
+    $cml3, $r31 = VMOV_alu_mv_alu_mv_scd_cml_dyn $r31, implicit $crscden
+    $cml5, $r31 = VMOV_alu_mv_alu_mv_scd_cml_dyn $r31, implicit $crscden
+    $cml1, $r31 = VMOV_alu_mv_alu_mv_scd_cml_dyn $r31, implicit $crscden
+
+    ; VMOV_alu_mv_alu_mv_scd_cml_reg
+    $cml4 = VMOV_alu_mv_alu_mv_scd_cml_reg $r31, implicit $crscden
+    $cml6 = VMOV_alu_mv_alu_mv_scd_cml_reg $r31, implicit $crscden
+    $cml5 = VMOV_alu_mv_alu_mv_scd_cml_reg $r31, implicit $crscden
+    $cml0 = VMOV_alu_mv_alu_mv_scd_cml_reg $r31, implicit $crscden
+    $cml2 = VMOV_alu_mv_alu_mv_scd_cml_reg $r31, implicit $crscden
+    $cml3 = VMOV_alu_mv_alu_mv_scd_cml_reg $r31, implicit $crscden
+    $cml1 = VMOV_alu_mv_alu_mv_scd_cml_reg $r31, implicit $crscden
+    $cml7 = VMOV_alu_mv_alu_mv_scd_cml_reg $r31, implicit $crscden
+
+    ; VMOV_alu_mv_alu_mv_scd_dm_dyn
+    $dm1, $r31 = VMOV_alu_mv_alu_mv_scd_dm_dyn $r31, implicit $crscden
+    $dm5, $r31 = VMOV_alu_mv_alu_mv_scd_dm_dyn $r31, implicit $crscden
+    $dm7, $r31 = VMOV_alu_mv_alu_mv_scd_dm_dyn $r31, implicit $crscden
+    $dm3, $r31 = VMOV_alu_mv_alu_mv_scd_dm_dyn $r31, implicit $crscden
+    $dm4, $r31 = VMOV_alu_mv_alu_mv_scd_dm_dyn $r31, implicit $crscden
+    $dm0, $r31 = VMOV_alu_mv_alu_mv_scd_dm_dyn $r31, implicit $crscden
+    $dm2, $r31 = VMOV_alu_mv_alu_mv_scd_dm_dyn $r31, implicit $crscden
+    $dm6, $r31 = VMOV_alu_mv_alu_mv_scd_dm_dyn $r31, implicit $crscden
+
+    ; VMOV_alu_mv_alu_mv_scd_dm_reg
+    $dm3 = VMOV_alu_mv_alu_mv_scd_dm_reg $r31, implicit $crscden
+    $dm7 = VMOV_alu_mv_alu_mv_scd_dm_reg $r31, implicit $crscden
+    $dm1 = VMOV_alu_mv_alu_mv_scd_dm_reg $r31, implicit $crscden
+    $dm0 = VMOV_alu_mv_alu_mv_scd_dm_reg $r31, implicit $crscden
+    $dm2 = VMOV_alu_mv_alu_mv_scd_dm_reg $r31, implicit $crscden
+    $dm4 = VMOV_alu_mv_alu_mv_scd_dm_reg $r31, implicit $crscden
+    $dm5 = VMOV_alu_mv_alu_mv_scd_dm_reg $r31, implicit $crscden
+    $dm6 = VMOV_alu_mv_alu_mv_scd_dm_reg $r31, implicit $crscden
+
+    ; VMOV_alu_mv_alu_mv_scd_x
+    $x4 = VMOV_alu_mv_alu_mv_scd_x implicit $crscden
+    $x0 = VMOV_alu_mv_alu_mv_scd_x implicit $crscden
+    $x7 = VMOV_alu_mv_alu_mv_scd_x implicit $crscden
+    $x5 = VMOV_alu_mv_alu_mv_scd_x implicit $crscden
+    $x10 = VMOV_alu_mv_alu_mv_scd_x implicit $crscden
+    $x1 = VMOV_alu_mv_alu_mv_scd_x implicit $crscden
+    $x3 = VMOV_alu_mv_alu_mv_scd_x implicit $crscden
+    $x9 = VMOV_alu_mv_alu_mv_scd_x implicit $crscden
+    $x2 = VMOV_alu_mv_alu_mv_scd_x implicit $crscden
+    $x6 = VMOV_alu_mv_alu_mv_scd_x implicit $crscden
+    $x11 = VMOV_alu_mv_alu_mv_scd_x implicit $crscden
+    $x8 = VMOV_alu_mv_alu_mv_scd_x implicit $crscden
+
+    ; VMOV_alu_mv_mv_mv_cm
+    $cml7 = VMOV_alu_mv_mv_mv_cm $cmh7
+    $cmh2 = VMOV_alu_mv_mv_mv_cm $cmh3
+    $cmh5 = VMOV_alu_mv_mv_mv_cm $cmh5
+    $cml4 = VMOV_alu_mv_mv_mv_cm $cmh6
+    $cmh4 = VMOV_alu_mv_mv_mv_cm $cmh4
+    $cmh7 = VMOV_alu_mv_mv_mv_cm $cml3
+    $cml5 = VMOV_alu_mv_mv_mv_cm $cml2
+    $cmh1 = VMOV_alu_mv_mv_mv_cm $cml1
+    $cml2 = VMOV_alu_mv_mv_mv_cm $cml5
+    $cmh6 = VMOV_alu_mv_mv_mv_cm $cml7
+    $cml3 = VMOV_alu_mv_mv_mv_cm $cmh2
+    $cml0 = VMOV_alu_mv_mv_mv_cm $cmh0
+    $cml1 = VMOV_alu_mv_mv_mv_cm $cmh1
+    $cml6 = VMOV_alu_mv_mv_mv_cm $cml6
+    $cmh3 = VMOV_alu_mv_mv_mv_cm $cml0
+    $cmh0 = VMOV_alu_mv_mv_mv_cm $cml4
+
+    ; VMOV_alu_mv_mv_mv_ee
+    $e3 = VMOV_alu_mv_mv_mv_ee $e5
+    $e0 = VMOV_alu_mv_mv_mv_ee $e9
+    $e11 = VMOV_alu_mv_mv_mv_ee $e2
+    $e9 = VMOV_alu_mv_mv_mv_ee $e0
+    $e2 = VMOV_alu_mv_mv_mv_ee $e4
+    $e4 = VMOV_alu_mv_mv_mv_ee $e10
+    $e5 = VMOV_alu_mv_mv_mv_ee $e11
+    $e6 = VMOV_alu_mv_mv_mv_ee $e3
+    $e7 = VMOV_alu_mv_mv_mv_ee $e7
+    $e1 = VMOV_alu_mv_mv_mv_ee $e6
+    $e8 = VMOV_alu_mv_mv_mv_ee $e1
+    $e10 = VMOV_alu_mv_mv_mv_ee $e8
+
+    ; VMOV_alu_mv_mv_mv_eg
+    $egh2 = VMOV_alu_mv_mv_mv_eg $egh0
+    $egl9 = VMOV_alu_mv_mv_mv_eg $egh10
+    $egl7 = VMOV_alu_mv_mv_mv_eg $egl5
+    $egh1 = VMOV_alu_mv_mv_mv_eg $egl8
+    $egh3 = VMOV_alu_mv_mv_mv_eg $egl2
+    $egl5 = VMOV_alu_mv_mv_mv_eg $egh7
+    $egl2 = VMOV_alu_mv_mv_mv_eg $egl6
+    $egh9 = VMOV_alu_mv_mv_mv_eg $egh3
+    $egh8 = VMOV_alu_mv_mv_mv_eg $egh5
+    $egl8 = VMOV_alu_mv_mv_mv_eg $egh1
+    $egh0 = VMOV_alu_mv_mv_mv_eg $egl7
+    $egh11 = VMOV_alu_mv_mv_mv_eg $egh11
+    $egh10 = VMOV_alu_mv_mv_mv_eg $egl10
+    $egl11 = VMOV_alu_mv_mv_mv_eg $egl9
+    $egl1 = VMOV_alu_mv_mv_mv_eg $egh6
+    $egh5 = VMOV_alu_mv_mv_mv_eg $egl1
+    $egl10 = VMOV_alu_mv_mv_mv_eg $egh4
+    $egl3 = VMOV_alu_mv_mv_mv_eg $egh8
+    $egl4 = VMOV_alu_mv_mv_mv_eg $egh2
+    $egh6 = VMOV_alu_mv_mv_mv_eg $egh9
+    $egl0 = VMOV_alu_mv_mv_mv_eg $egl3
+    $egl6 = VMOV_alu_mv_mv_mv_eg $egl0
+    $egh7 = VMOV_alu_mv_mv_mv_eg $egl4
+    $egh4 = VMOV_alu_mv_mv_mv_eg $egl11
+
+    ; VMOV_alu_mv_mv_mv_eg2
+    $eg4 = VMOV_alu_mv_mv_mv_eg2 $eg10
+    $eg9 = VMOV_alu_mv_mv_mv_eg2 $eg11
+    $eg5 = VMOV_alu_mv_mv_mv_eg2 $eg7
+    $eg3 = VMOV_alu_mv_mv_mv_eg2 $eg8
+    $eg2 = VMOV_alu_mv_mv_mv_eg2 $eg0
+    $eg1 = VMOV_alu_mv_mv_mv_eg2 $eg9
+    $eg0 = VMOV_alu_mv_mv_mv_eg2 $eg1
+    $eg10 = VMOV_alu_mv_mv_mv_eg2 $eg4
+    $eg8 = VMOV_alu_mv_mv_mv_eg2 $eg3
+    $eg11 = VMOV_alu_mv_mv_mv_eg2 $eg2
+    $eg6 = VMOV_alu_mv_mv_mv_eg2 $eg5
+    $eg7 = VMOV_alu_mv_mv_mv_eg2 $eg6
+
+    ; VMOV_alu_mv_mv_mv_eg2_to_w
+    $wh0 = VMOV_alu_mv_mv_mv_eg2_to_w $eg3
+    $wl9 = VMOV_alu_mv_mv_mv_eg2_to_w $eg4
+    $wl1 = VMOV_alu_mv_mv_mv_eg2_to_w $eg0
+    $wh1 = VMOV_alu_mv_mv_mv_eg2_to_w $eg5
+    $wl2 = VMOV_alu_mv_mv_mv_eg2_to_w $eg10
+    $wh7 = VMOV_alu_mv_mv_mv_eg2_to_w $eg1
+    $wl0 = VMOV_alu_mv_mv_mv_eg2_to_w $eg9
+    $wl10 = VMOV_alu_mv_mv_mv_eg2_to_w $eg2
+    $wh11 = VMOV_alu_mv_mv_mv_eg2_to_w $eg11
+    $wh2 = VMOV_alu_mv_mv_mv_eg2_to_w $eg8
+    $wh10 = VMOV_alu_mv_mv_mv_eg2_to_w $eg7
+    $wh9 = VMOV_alu_mv_mv_mv_eg2_to_w $eg6
+    $wh5 = VMOV_alu_mv_mv_mv_eg2_to_w $eg3
+    $wh8 = VMOV_alu_mv_mv_mv_eg2_to_w $eg4
+    $wh4 = VMOV_alu_mv_mv_mv_eg2_to_w $eg0
+    $wl7 = VMOV_alu_mv_mv_mv_eg2_to_w $eg5
+    $wl6 = VMOV_alu_mv_mv_mv_eg2_to_w $eg10
+    $wl3 = VMOV_alu_mv_mv_mv_eg2_to_w $eg1
+    $wl8 = VMOV_alu_mv_mv_mv_eg2_to_w $eg9
+    $wl4 = VMOV_alu_mv_mv_mv_eg2_to_w $eg2
+    $wh6 = VMOV_alu_mv_mv_mv_eg2_to_w $eg11
+    $wl11 = VMOV_alu_mv_mv_mv_eg2_to_w $eg8
+    $wl5 = VMOV_alu_mv_mv_mv_eg2_to_w $eg7
+    $wh3 = VMOV_alu_mv_mv_mv_eg2_to_w $eg6
+
+    ; VMOV_alu_mv_mv_mv_egw
+    $ewl4 = VMOV_alu_mv_mv_mv_egw $ewl3
+    $ewl0 = VMOV_alu_mv_mv_mv_egw $ewh8
+    $ewl1 = VMOV_alu_mv_mv_mv_egw $ewh4
+    $ewh8 = VMOV_alu_mv_mv_mv_egw $ewl0
+    $ewh4 = VMOV_alu_mv_mv_mv_egw $ewl4
+    $ewh11 = VMOV_alu_mv_mv_mv_egw $ewh7
+    $ewh6 = VMOV_alu_mv_mv_mv_egw $ewh1
+    $ewl10 = VMOV_alu_mv_mv_mv_egw $ewl2
+    $ewh10 = VMOV_alu_mv_mv_mv_egw $ewh10
+    $ewh0 = VMOV_alu_mv_mv_mv_egw $ewh2
+    $ewh3 = VMOV_alu_mv_mv_mv_egw $ewh11
+    $ewl7 = VMOV_alu_mv_mv_mv_egw $ewl8
+    $ewl9 = VMOV_alu_mv_mv_mv_egw $ewl1
+    $ewl2 = VMOV_alu_mv_mv_mv_egw $ewl9
+    $ewh2 = VMOV_alu_mv_mv_mv_egw $ewh9
+    $ewh9 = VMOV_alu_mv_mv_mv_egw $ewl11
+    $ewl3 = VMOV_alu_mv_mv_mv_egw $ewh0
+    $ewh1 = VMOV_alu_mv_mv_mv_egw $ewl6
+    $ewh5 = VMOV_alu_mv_mv_mv_egw $ewh3
+    $ewh7 = VMOV_alu_mv_mv_mv_egw $ewl5
+    $ewl6 = VMOV_alu_mv_mv_mv_egw $ewl10
+    $ewl5 = VMOV_alu_mv_mv_mv_egw $ewh6
+    $ewl8 = VMOV_alu_mv_mv_mv_egw $ewh5
+    $ewl11 = VMOV_alu_mv_mv_mv_egw $ewl7
+
+    ; VMOV_alu_mv_mv_mv_egx
+    $ex0 = VMOV_alu_mv_mv_mv_egx $ex7
+    $ex1 = VMOV_alu_mv_mv_mv_egx $ex5
+    $ex2 = VMOV_alu_mv_mv_mv_egx $ex1
+    $ex9 = VMOV_alu_mv_mv_mv_egx $ex4
+    $ex10 = VMOV_alu_mv_mv_mv_egx $ex3
+    $ex5 = VMOV_alu_mv_mv_mv_egx $ex10
+    $ex3 = VMOV_alu_mv_mv_mv_egx $ex0
+    $ex8 = VMOV_alu_mv_mv_mv_egx $ex6
+    $ex4 = VMOV_alu_mv_mv_mv_egx $ex11
+    $ex7 = VMOV_alu_mv_mv_mv_egx $ex2
+    $ex11 = VMOV_alu_mv_mv_mv_egx $ex9
+    $ex6 = VMOV_alu_mv_mv_mv_egx $ex8
+
+    ; VMOV_alu_mv_mv_mv_f
+    $fl7 = VMOV_alu_mv_mv_mv_f $fl7
+    $fl0 = VMOV_alu_mv_mv_mv_f $fh8
+    $fl1 = VMOV_alu_mv_mv_mv_f $fl8
+    $fh9 = VMOV_alu_mv_mv_mv_f $fl2
+    $fl11 = VMOV_alu_mv_mv_mv_f $fl4
+    $fh1 = VMOV_alu_mv_mv_mv_f $fh9
+    $fh3 = VMOV_alu_mv_mv_mv_f $fh0
+    $fh11 = VMOV_alu_mv_mv_mv_f $fl10
+    $fh4 = VMOV_alu_mv_mv_mv_f $fh2
+    $fl5 = VMOV_alu_mv_mv_mv_f $fh5
+    $fh0 = VMOV_alu_mv_mv_mv_f $fh4
+    $fh7 = VMOV_alu_mv_mv_mv_f $fl5
+    $fh10 = VMOV_alu_mv_mv_mv_f $fl6
+    $fl3 = VMOV_alu_mv_mv_mv_f $fh7
+    $fh8 = VMOV_alu_mv_mv_mv_f $fl3
+    $fh5 = VMOV_alu_mv_mv_mv_f $fh1
+    $fl6 = VMOV_alu_mv_mv_mv_f $fh3
+    $fl4 = VMOV_alu_mv_mv_mv_f $fh11
+    $fh6 = VMOV_alu_mv_mv_mv_f $fh10
+    $fl2 = VMOV_alu_mv_mv_mv_f $fh6
+    $fl8 = VMOV_alu_mv_mv_mv_f $fl11
+    $fl9 = VMOV_alu_mv_mv_mv_f $fl0
+    $fl10 = VMOV_alu_mv_mv_mv_f $fl1
+    $fh2 = VMOV_alu_mv_mv_mv_f $fl9
+
+    ; VMOV_alu_mv_mv_mv_f_to_l
+    $l10 = VMOV_alu_mv_mv_mv_f_to_l $fh8
+    $l3 = VMOV_alu_mv_mv_mv_f_to_l $fl4
+    $l9 = VMOV_alu_mv_mv_mv_f_to_l $fh6
+    $l14 = VMOV_alu_mv_mv_mv_f_to_l $fl9
+    $l2 = VMOV_alu_mv_mv_mv_f_to_l $fh2
+    $l7 = VMOV_alu_mv_mv_mv_f_to_l $fh3
+    $l0 = VMOV_alu_mv_mv_mv_f_to_l $fl5
+    $l4 = VMOV_alu_mv_mv_mv_f_to_l $fl0
+    $l12 = VMOV_alu_mv_mv_mv_f_to_l $fh4
+    $l11 = VMOV_alu_mv_mv_mv_f_to_l $fh9
+    $l15 = VMOV_alu_mv_mv_mv_f_to_l $fl3
+    $l8 = VMOV_alu_mv_mv_mv_f_to_l $fl8
+    $l6 = VMOV_alu_mv_mv_mv_f_to_l $fl11
+    $l1 = VMOV_alu_mv_mv_mv_f_to_l $fl7
+    $l13 = VMOV_alu_mv_mv_mv_f_to_l $fh0
+    $l5 = VMOV_alu_mv_mv_mv_f_to_l $fh10
+    $l10 = VMOV_alu_mv_mv_mv_f_to_l $fh1
+    $l3 = VMOV_alu_mv_mv_mv_f_to_l $fl2
+    $l9 = VMOV_alu_mv_mv_mv_f_to_l $fh7
+    $l14 = VMOV_alu_mv_mv_mv_f_to_l $fl10
+    $l2 = VMOV_alu_mv_mv_mv_f_to_l $fh11
+    $l7 = VMOV_alu_mv_mv_mv_f_to_l $fl1
+    $l0 = VMOV_alu_mv_mv_mv_f_to_l $fh5
+    $l4 = VMOV_alu_mv_mv_mv_f_to_l $fl6
+
+    ; VMOV_alu_mv_mv_mv_few
+    $fewl5 = VMOV_alu_mv_mv_mv_few $fewh0
+    $fewl0 = VMOV_alu_mv_mv_mv_few $fewh3
+    $fewl1 = VMOV_alu_mv_mv_mv_few $fewh9
+    $fewh3 = VMOV_alu_mv_mv_mv_few $fewh10
+    $fewh4 = VMOV_alu_mv_mv_mv_few $fewh11
+    $fewl9 = VMOV_alu_mv_mv_mv_few $fewl4
+    $fewl2 = VMOV_alu_mv_mv_mv_few $fewh1
+    $fewh10 = VMOV_alu_mv_mv_mv_few $fewl0
+    $fewl11 = VMOV_alu_mv_mv_mv_few $fewh2
+    $fewh1 = VMOV_alu_mv_mv_mv_few $fewh7
+    $fewh7 = VMOV_alu_mv_mv_mv_few $fewl7
+    $fewl4 = VMOV_alu_mv_mv_mv_few $fewl9
+    $fewh11 = VMOV_alu_mv_mv_mv_few $fewh4
+    $fewh6 = VMOV_alu_mv_mv_mv_few $fewl2
+    $fewh5 = VMOV_alu_mv_mv_mv_few $fewl11
+    $fewl3 = VMOV_alu_mv_mv_mv_few $fewh8
+    $fewh2 = VMOV_alu_mv_mv_mv_few $fewh5
+    $fewl10 = VMOV_alu_mv_mv_mv_few $fewh6
+    $fewl8 = VMOV_alu_mv_mv_mv_few $fewl5
+    $fewh8 = VMOV_alu_mv_mv_mv_few $fewl3
+    $fewh9 = VMOV_alu_mv_mv_mv_few $fewl8
+    $fewl7 = VMOV_alu_mv_mv_mv_few $fewl6
+    $fewl6 = VMOV_alu_mv_mv_mv_few $fewl1
+    $fewh0 = VMOV_alu_mv_mv_mv_few $fewl10
+
+    ; VMOV_alu_mv_mv_mv_fex
+    $fex11 = VMOV_alu_mv_mv_mv_fex $fex7
+    $fex5 = VMOV_alu_mv_mv_mv_fex $fex10
+    $fex8 = VMOV_alu_mv_mv_mv_fex $fex1
+    $fex10 = VMOV_alu_mv_mv_mv_fex $fex9
+    $fex1 = VMOV_alu_mv_mv_mv_fex $fex11
+    $fex3 = VMOV_alu_mv_mv_mv_fex $fex3
+    $fex7 = VMOV_alu_mv_mv_mv_fex $fex8
+    $fex9 = VMOV_alu_mv_mv_mv_fex $fex4
+    $fex6 = VMOV_alu_mv_mv_mv_fex $fex6
+    $fex4 = VMOV_alu_mv_mv_mv_fex $fex0
+    $fex0 = VMOV_alu_mv_mv_mv_fex $fex5
+    $fex2 = VMOV_alu_mv_mv_mv_fex $fex2
+
+    ; VMOV_alu_mv_mv_mv_ff
+    $f7 = VMOV_alu_mv_mv_mv_ff $f2
+    $f10 = VMOV_alu_mv_mv_mv_ff $f6
+    $f5 = VMOV_alu_mv_mv_mv_ff $f5
+    $f11 = VMOV_alu_mv_mv_mv_ff $f8
+    $f1 = VMOV_alu_mv_mv_mv_ff $f0
+    $f6 = VMOV_alu_mv_mv_mv_ff $f11
+    $f8 = VMOV_alu_mv_mv_mv_ff $f9
+    $f2 = VMOV_alu_mv_mv_mv_ff $f4
+    $f4 = VMOV_alu_mv_mv_mv_ff $f3
+    $f0 = VMOV_alu_mv_mv_mv_ff $f7
+    $f9 = VMOV_alu_mv_mv_mv_ff $f1
+    $f3 = VMOV_alu_mv_mv_mv_ff $f10
+
+    ; VMOV_alu_mv_mv_mv_gg
+    $g6 = VMOV_alu_mv_mv_mv_gg $g3
+    $g1 = VMOV_alu_mv_mv_mv_gg $g7
+    $g8 = VMOV_alu_mv_mv_mv_gg $g5
+    $g9 = VMOV_alu_mv_mv_mv_gg $g2
+    $g7 = VMOV_alu_mv_mv_mv_gg $g11
+    $g3 = VMOV_alu_mv_mv_mv_gg $g9
+    $g4 = VMOV_alu_mv_mv_mv_gg $g6
+    $g11 = VMOV_alu_mv_mv_mv_gg $g10
+    $g5 = VMOV_alu_mv_mv_mv_gg $g0
+    $g2 = VMOV_alu_mv_mv_mv_gg $g8
+    $g0 = VMOV_alu_mv_mv_mv_gg $g4
+    $g10 = VMOV_alu_mv_mv_mv_gg $g1
+
+    ; VMOV_alu_mv_mv_mv_l_to_f
+    $fl1 = VMOV_alu_mv_mv_mv_l_to_f $l10
+    $fh2 = VMOV_alu_mv_mv_mv_l_to_f $l3
+    $fh3 = VMOV_alu_mv_mv_mv_l_to_f $l5
+    $fl7 = VMOV_alu_mv_mv_mv_l_to_f $l4
+    $fh5 = VMOV_alu_mv_mv_mv_l_to_f $l11
+    $fh8 = VMOV_alu_mv_mv_mv_l_to_f $l7
+    $fh4 = VMOV_alu_mv_mv_mv_l_to_f $l9
+    $fh9 = VMOV_alu_mv_mv_mv_l_to_f $l13
+    $fl0 = VMOV_alu_mv_mv_mv_l_to_f $l14
+    $fl6 = VMOV_alu_mv_mv_mv_l_to_f $l12
+    $fl11 = VMOV_alu_mv_mv_mv_l_to_f $l0
+    $fl5 = VMOV_alu_mv_mv_mv_l_to_f $l1
+    $fh1 = VMOV_alu_mv_mv_mv_l_to_f $l2
+    $fh6 = VMOV_alu_mv_mv_mv_l_to_f $l15
+    $fl4 = VMOV_alu_mv_mv_mv_l_to_f $l6
+    $fl9 = VMOV_alu_mv_mv_mv_l_to_f $l8
+    $fh7 = VMOV_alu_mv_mv_mv_l_to_f $l10
+    $fl10 = VMOV_alu_mv_mv_mv_l_to_f $l3
+    $fl8 = VMOV_alu_mv_mv_mv_l_to_f $l5
+    $fh10 = VMOV_alu_mv_mv_mv_l_to_f $l4
+    $fh11 = VMOV_alu_mv_mv_mv_l_to_f $l11
+    $fl2 = VMOV_alu_mv_mv_mv_l_to_f $l7
+    $fl3 = VMOV_alu_mv_mv_mv_l_to_f $l9
+    $fh0 = VMOV_alu_mv_mv_mv_l_to_f $l13
+
+    ; VMOV_alu_mv_mv_mv_w
+    $wh5 = VMOV_alu_mv_mv_mv_w $wh6
+    $wl5 = VMOV_alu_mv_mv_mv_w $wh7
+    $wl11 = VMOV_alu_mv_mv_mv_w $wh5
+    $wl9 = VMOV_alu_mv_mv_mv_w $wl8
+    $wl6 = VMOV_alu_mv_mv_mv_w $wl2
+    $wl7 = VMOV_alu_mv_mv_mv_w $wh9
+    $wh1 = VMOV_alu_mv_mv_mv_w $wh11
+    $wl10 = VMOV_alu_mv_mv_mv_w $wh1
+    $wl8 = VMOV_alu_mv_mv_mv_w $wh8
+    $wh6 = VMOV_alu_mv_mv_mv_w $wh10
+    $wh8 = VMOV_alu_mv_mv_mv_w $wh4
+    $wl1 = VMOV_alu_mv_mv_mv_w $wl6
+    $wh4 = VMOV_alu_mv_mv_mv_w $wl10
+    $wh3 = VMOV_alu_mv_mv_mv_w $wl11
+    $wh2 = VMOV_alu_mv_mv_mv_w $wl7
+    $wh0 = VMOV_alu_mv_mv_mv_w $wl4
+    $wh11 = VMOV_alu_mv_mv_mv_w $wl0
+    $wl4 = VMOV_alu_mv_mv_mv_w $wl3
+    $wh10 = VMOV_alu_mv_mv_mv_w $wl9
+    $wl0 = VMOV_alu_mv_mv_mv_w $wh0
+    $wh9 = VMOV_alu_mv_mv_mv_w $wl1
+    $wh7 = VMOV_alu_mv_mv_mv_w $wh2
+    $wl2 = VMOV_alu_mv_mv_mv_w $wl5
+    $wl3 = VMOV_alu_mv_mv_mv_w $wh3
+
+    ; VMOV_alu_mv_mv_mv_w_to_eg2
+    $eg9 = VMOV_alu_mv_mv_mv_w_to_eg2 $wl7
+    $eg0 = VMOV_alu_mv_mv_mv_w_to_eg2 $wh4
+    $eg7 = VMOV_alu_mv_mv_mv_w_to_eg2 $wh9
+    $eg8 = VMOV_alu_mv_mv_mv_w_to_eg2 $wl0
+    $eg2 = VMOV_alu_mv_mv_mv_w_to_eg2 $wh5
+    $eg3 = VMOV_alu_mv_mv_mv_w_to_eg2 $wl6
+    $eg6 = VMOV_alu_mv_mv_mv_w_to_eg2 $wl11
+    $eg11 = VMOV_alu_mv_mv_mv_w_to_eg2 $wl1
+    $eg1 = VMOV_alu_mv_mv_mv_w_to_eg2 $wh8
+    $eg10 = VMOV_alu_mv_mv_mv_w_to_eg2 $wl10
+    $eg5 = VMOV_alu_mv_mv_mv_w_to_eg2 $wl9
+    $eg4 = VMOV_alu_mv_mv_mv_w_to_eg2 $wh0
+    $eg9 = VMOV_alu_mv_mv_mv_w_to_eg2 $wh7
+    $eg0 = VMOV_alu_mv_mv_mv_w_to_eg2 $wh11
+    $eg7 = VMOV_alu_mv_mv_mv_w_to_eg2 $wh3
+    $eg8 = VMOV_alu_mv_mv_mv_w_to_eg2 $wh2
+    $eg2 = VMOV_alu_mv_mv_mv_w_to_eg2 $wl3
+    $eg3 = VMOV_alu_mv_mv_mv_w_to_eg2 $wl4
+    $eg6 = VMOV_alu_mv_mv_mv_w_to_eg2 $wl5
+    $eg11 = VMOV_alu_mv_mv_mv_w_to_eg2 $wl2
+    $eg1 = VMOV_alu_mv_mv_mv_w_to_eg2 $wh6
+    $eg10 = VMOV_alu_mv_mv_mv_w_to_eg2 $wl8
+    $eg5 = VMOV_alu_mv_mv_mv_w_to_eg2 $wh10
+    $eg4 = VMOV_alu_mv_mv_mv_w_to_eg2 $wh1
+
+    ; VMOV_alu_mv_mv_mv_x
+    $bmll0 = VMOV_alu_mv_mv_mv_x $bmll3
+    $bmlh5 = VMOV_alu_mv_mv_mv_x $bmll7
+    $x5 = VMOV_alu_mv_mv_mv_x $x3
+    $bmhl6 = VMOV_alu_mv_mv_mv_x $bmlh3
+    $bmlh7 = VMOV_alu_mv_mv_mv_x $bmll1
+    $bmll2 = VMOV_alu_mv_mv_mv_x $x11
+    $bmll7 = VMOV_alu_mv_mv_mv_x $bmhl0
+    $bmhh4 = VMOV_alu_mv_mv_mv_x $bmhh6
+    $bmll5 = VMOV_alu_mv_mv_mv_x $bmll6
+    $bmhl4 = VMOV_alu_mv_mv_mv_x $x8
+    $lfl0 = VMOV_alu_mv_mv_mv_x $bmll5
+    $x4 = VMOV_alu_mv_mv_mv_x $lfe
+    $x6 = VMOV_alu_mv_mv_mv_x $bmhh0
+    $bmhl2 = VMOV_alu_mv_mv_mv_x $bmll4
+    $bmlh1 = VMOV_alu_mv_mv_mv_x $bmhl5
+    $x0 = VMOV_alu_mv_mv_mv_x $bmhh1
+    $bmhh5 = VMOV_alu_mv_mv_mv_x $bmlh0
+    $bmlh4 = VMOV_alu_mv_mv_mv_x $sfh
+    $x8 = VMOV_alu_mv_mv_mv_x $x0
+    $sfl = VMOV_alu_mv_mv_mv_x $bmhh4
+    $bmhh2 = VMOV_alu_mv_mv_mv_x $bmll2
+    $lfl1 = VMOV_alu_mv_mv_mv_x $sfl
+    $bmlh3 = VMOV_alu_mv_mv_mv_x $x6
+    $x1 = VMOV_alu_mv_mv_mv_x $bmhh7
+    $bmhh1 = VMOV_alu_mv_mv_mv_x $bmhl7
+    $lfh1 = VMOV_alu_mv_mv_mv_x $bmhh5
+    $lfh0 = VMOV_alu_mv_mv_mv_x $bmlh2
+    $x7 = VMOV_alu_mv_mv_mv_x $bmlh4
+    $bmhh7 = VMOV_alu_mv_mv_mv_x $bmlh7
+    $x11 = VMOV_alu_mv_mv_mv_x $x2
+    $bmll6 = VMOV_alu_mv_mv_mv_x $x4
+    $bmlh0 = VMOV_alu_mv_mv_mv_x $bmlh5
+    $x2 = VMOV_alu_mv_mv_mv_x $x7
+    $x10 = VMOV_alu_mv_mv_mv_x $bmhl1
+    $lfe = VMOV_alu_mv_mv_mv_x $lfh0
+    $bmhl1 = VMOV_alu_mv_mv_mv_x $bmlh6
+    $bmll4 = VMOV_alu_mv_mv_mv_x $x9
+    $bmhh3 = VMOV_alu_mv_mv_mv_x $bmhh3
+    $bmll3 = VMOV_alu_mv_mv_mv_x $bmhl3
+    $bmlh6 = VMOV_alu_mv_mv_mv_x $lfl1
+    $bmhl7 = VMOV_alu_mv_mv_mv_x $bmll0
+    $bmhl5 = VMOV_alu_mv_mv_mv_x $bmhl2
+    $x9 = VMOV_alu_mv_mv_mv_x $x10
+    $bmhl0 = VMOV_alu_mv_mv_mv_x $bmhh2
+    $bmhl3 = VMOV_alu_mv_mv_mv_x $x1
+    $x3 = VMOV_alu_mv_mv_mv_x $lfl0
+    $sfh = VMOV_alu_mv_mv_mv_x $lfh1
+    $bmhh6 = VMOV_alu_mv_mv_mv_x $x5
+    $bmhh0 = VMOV_alu_mv_mv_mv_x $bmhl4
+    $bmll1 = VMOV_alu_mv_mv_mv_x $bmhl6
+    $bmlh2 = VMOV_alu_mv_mv_mv_x $bmlh1
+
+    ; VMOV_st_mv_mcd_bm
+    VMOV_st_mv_mcd_bm $bmll3, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmlh4, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmlh3, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmll1, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmhh2, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmll0, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmll5, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmll4, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmll7, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmhh4, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmhl5, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmhh1, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmlh1, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmhl4, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmlh7, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmlh5, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmlh6, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmhh7, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmhl2, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmhl1, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmhl7, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmhh0, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmhl0, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmhh3, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmhh6, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmll2, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmhl3, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmhl6, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmhh5, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmlh2, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmll6, implicit $crmcden
+    VMOV_st_mv_mcd_bm $bmlh0, implicit $crmcden
+
+    ; VMOV_st_mv_mcd_x
+    VMOV_st_mv_mcd_x $x2, implicit $crmcden
+    VMOV_st_mv_mcd_x $x1, implicit $crmcden
+    VMOV_st_mv_mcd_x $x8, implicit $crmcden
+    VMOV_st_mv_mcd_x $x7, implicit $crmcden
+    VMOV_st_mv_mcd_x $x10, implicit $crmcden
+    VMOV_st_mv_mcd_x $x5, implicit $crmcden
+    VMOV_st_mv_mcd_x $x0, implicit $crmcden
+    VMOV_st_mv_mcd_x $x4, implicit $crmcden
+    VMOV_st_mv_mcd_x $x3, implicit $crmcden
+    VMOV_st_mv_mcd_x $x9, implicit $crmcden
+    VMOV_st_mv_mcd_x $x11, implicit $crmcden
+    VMOV_st_mv_mcd_x $x6, implicit $crmcden
+...
+
+# CHECK: 0: 30 80 4b 22 vmov.0 cmh3, scd
+# CHECK: 4: 30 80 49 22 vmov.0 cmh1, scd
+# CHECK: 8: 30 00 4e 22 vmov.0 cml6, scd
+# CHECK: c: 30 80 4f 22 vmov.0 cmh7, scd
+# CHECK: 10: 30 00 49 22 vmov.0 cml1, scd
+# CHECK: 14: 30 80 4c 22 vmov.0 cmh4, scd
+# CHECK: 18: 30 00 4f 22 vmov.0 cml7, scd
+# CHECK: 1c: 30 00 4a 22 vmov.0 cml2, scd
+# CHECK: 20: 30 80 4a 22 vmov.0 cmh2, scd
+# CHECK: 24: 30 00 4c 22 vmov.0 cml4, scd
+# CHECK: 28: 30 00 4d 22 vmov.0 cml5, scd
+# CHECK: 2c: 30 80 4e 22 vmov.0 cmh6, scd
+# CHECK: 30: 30 80 4d 22 vmov.0 cmh5, scd
+# CHECK: 34: 30 80 48 22 vmov.0 cmh0, scd
+# CHECK: 38: 30 00 48 22 vmov.0 cml0, scd
+# CHECK: 3c: 30 00 4b 22 vmov.0 cml3, scd
+# CHECK: 40: 30 00 4c 26 vmov.0 dm4, scd
+# CHECK: 44: 30 00 4d 26 vmov.0 dm5, scd
+# CHECK: 48: 30 00 4b 26 vmov.0 dm3, scd
+# CHECK: 4c: 30 00 4f 26 vmov.0 dm7, scd
+# CHECK: 50: 30 00 4a 26 vmov.0 dm2, scd
+# CHECK: 54: 30 00 49 26 vmov.0 dm1, scd
+# CHECK: 58: 30 00 4e 26 vmov.0 dm6, scd
+# CHECK: 5c: 30 00 48 26 vmov.0 dm0, scd
+# CHECK: 60: 30 c0 4e 22 vmov.1 cmh6, scd
+# CHECK: 64: 30 40 48 22 vmov.1 cml0, scd
+# CHECK: 68: 30 40 4d 22 vmov.1 cml5, scd
+# CHECK: 6c: 30 c0 48 22 vmov.1 cmh0, scd
+# CHECK: 70: 30 c0 4a 22 vmov.1 cmh2, scd
+# CHECK: 74: 30 40 4b 22 vmov.1 cml3, scd
+# CHECK: 78: 30 40 49 22 vmov.1 cml1, scd
+# CHECK: 7c: 30 c0 49 22 vmov.1 cmh1, scd
+# CHECK: 80: 30 c0 4c 22 vmov.1 cmh4, scd
+# CHECK: 84: 30 c0 4b 22 vmov.1 cmh3, scd
+# CHECK: 88: 30 40 4a 22 vmov.1 cml2, scd
+# CHECK: 8c: 30 40 4f 22 vmov.1 cml7, scd
+# CHECK: 90: 30 40 4e 22 vmov.1 cml6, scd
+# CHECK: 94: 30 40 4c 22 vmov.1 cml4, scd
+# CHECK: 98: 30 c0 4f 22 vmov.1 cmh7, scd
+# CHECK: 9c: 30 c0 4d 22 vmov.1 cmh5, scd
+# CHECK: a0: 30 40 48 26 vmov.1 dm0, scd
+# CHECK: a4: 30 40 49 26 vmov.1 dm1, scd
+# CHECK: a8: 30 40 4a 26 vmov.1 dm2, scd
+# CHECK: ac: 30 40 4e 26 vmov.1 dm6, scd
+# CHECK: b0: 30 40 4b 26 vmov.1 dm3, scd
+# CHECK: b4: 30 40 4c 26 vmov.1 dm4, scd
+# CHECK: b8: 30 40 4f 26 vmov.1 dm7, scd
+# CHECK: bc: 30 40 4d 26 vmov.1 dm5, scd
+# CHECK: c0: 30 80 49 26 vmov.2 dm1, scd
+# CHECK: c4: 30 80 4f 26 vmov.2 dm7, scd
+# CHECK: c8: 30 80 4b 26 vmov.2 dm3, scd
+# CHECK: cc: 30 80 4a 26 vmov.2 dm2, scd
+# CHECK: d0: 30 80 4c 26 vmov.2 dm4, scd
+# CHECK: d4: 30 80 4d 26 vmov.2 dm5, scd
+# CHECK: d8: 30 80 48 26 vmov.2 dm0, scd
+# CHECK: dc: 30 80 4e 26 vmov.2 dm6, scd
+# CHECK: e0: 30 c0 4f 26 vmov.3 dm7, scd
+# CHECK: e4: 30 c0 4e 26 vmov.3 dm6, scd
+# CHECK: e8: 30 c0 4b 26 vmov.3 dm3, scd
+# CHECK: ec: 30 c0 48 26 vmov.3 dm0, scd
+# CHECK: f0: 30 c0 4d 26 vmov.3 dm5, scd
+# CHECK: f4: 30 c0 4c 26 vmov.3 dm4, scd
+# CHECK: f8: 30 c0 49 26 vmov.3 dm1, scd
+# CHECK: fc: 30 c0 4a 26 vmov.3 dm2, scd
+# CHECK: 100: 10 0d 02 18 vmov.d dm6, dm1
+# CHECK: 104: 10 35 02 08 vmov.d dm2, dm6
+# CHECK: 108: 10 05 02 00 vmov.d dm0, dm0
+# CHECK: 10c: 10 2d 02 14 vmov.d dm5, dm5
+# CHECK: 110: 10 1d 02 04 vmov.d dm1, dm3
+# CHECK: 114: 10 15 02 10 vmov.d dm4, dm2
+# CHECK: 118: 10 3d 02 1c vmov.d dm7, dm7
+# CHECK: 11c: 10 25 02 0c vmov.d dm3, dm4
+# CHECK: 120: 10 35 12 04 vmov.d cml1, cml6
+# CHECK: 124: 10 2d 12 0c vmov.d cml3, cml5
+# CHECK: 128: 10 15 12 1c vmov.d cml7, cml2
+# CHECK: 12c: 10 0d 12 10 vmov.d cml4, cml1
+# CHECK: 130: 10 25 12 14 vmov.d cml5, cml4
+# CHECK: 134: 10 3d 12 08 vmov.d cml2, cml7
+# CHECK: 138: 10 1d 12 18 vmov.d cml6, cml3
+# CHECK: 13c: 10 05 12 00 vmov.d cml0, cml0
+# CHECK: 140: 30 00 4a 20 vmov bmll2, scd
+# CHECK: 144: 30 40 4d 20 vmov bmlh5, scd
+# CHECK: 148: 30 40 4b 20 vmov bmlh3, scd
+# CHECK: 14c: 30 80 4a 20 vmov bmhl2, scd
+# CHECK: 150: 30 80 4f 20 vmov bmhl7, scd
+# CHECK: 154: 30 40 4f 20 vmov bmlh7, scd
+# CHECK: 158: 30 00 4d 20 vmov bmll5, scd
+# CHECK: 15c: 30 80 4b 20 vmov bmhl3, scd
+# CHECK: 160: 30 00 4c 20 vmov bmll4, scd
+# CHECK: 164: 30 80 49 20 vmov bmhl1, scd
+# CHECK: 168: 30 c0 4e 20 vmov bmhh6, scd
+# CHECK: 16c: 30 00 49 20 vmov bmll1, scd
+# CHECK: 170: 30 c0 4c 20 vmov bmhh4, scd
+# CHECK: 174: 30 80 48 20 vmov bmhl0, scd
+# CHECK: 178: 30 c0 48 20 vmov bmhh0, scd
+# CHECK: 17c: 30 80 4c 20 vmov bmhl4, scd
+# CHECK: 180: 30 40 48 20 vmov bmlh0, scd
+# CHECK: 184: 30 00 48 20 vmov bmll0, scd
+# CHECK: 188: 30 00 4b 20 vmov bmll3, scd
+# CHECK: 18c: 30 c0 49 20 vmov bmhh1, scd
+# CHECK: 190: 30 40 4a 20 vmov bmlh2, scd
+# CHECK: 194: 30 00 4f 20 vmov bmll7, scd
+# CHECK: 198: 30 00 4e 20 vmov bmll6, scd
+# CHECK: 19c: 30 c0 4d 20 vmov bmhh5, scd
+# CHECK: 1a0: 30 c0 4b 20 vmov bmhh3, scd
+# CHECK: 1a4: 30 80 4e 20 vmov bmhl6, scd
+# CHECK: 1a8: 30 c0 4f 20 vmov bmhh7, scd
+# CHECK: 1ac: 30 40 4e 20 vmov bmlh6, scd
+# CHECK: 1b0: 30 40 49 20 vmov bmlh1, scd
+# CHECK: 1b4: 30 80 4d 20 vmov bmhl5, scd
+# CHECK: 1b8: 30 c0 4a 20 vmov bmhh2, scd
+# CHECK: 1bc: 30 40 4c 20 vmov bmlh4, scd
+# CHECK: 1c0: 30 00 c9 24 vmov cmh1, scd, r31++
+# CHECK: 1c4: 30 00 ca 24 vmov cmh2, scd, r31++
+# CHECK: 1c8: 30 00 c8 24 vmov cmh0, scd, r31++
+# CHECK: 1cc: 30 00 ce 24 vmov cmh6, scd, r31++
+# CHECK: 1d0: 30 00 cf 24 vmov cmh7, scd, r31++
+# CHECK: 1d4: 30 00 cc 24 vmov cmh4, scd, r31++
+# CHECK: 1d8: 30 00 cb 24 vmov cmh3, scd, r31++
+# CHECK: 1dc: 30 00 cd 24 vmov cmh5, scd, r31++
+# CHECK: 1e0: 30 00 c9 20 vmov cmh1, scd, r31
+# CHECK: 1e4: 30 00 c8 20 vmov cmh0, scd, r31
+# CHECK: 1e8: 30 00 cd 20 vmov cmh5, scd, r31
+# CHECK: 1ec: 30 00 cb 20 vmov cmh3, scd, r31
+# CHECK: 1f0: 30 00 ca 20 vmov cmh2, scd, r31
+# CHECK: 1f4: 30 00 cc 20 vmov cmh4, scd, r31
+# CHECK: 1f8: 30 00 cf 20 vmov cmh7, scd, r31
+# CHECK: 1fc: 30 00 ce 20 vmov cmh6, scd, r31
+# CHECK: 200: 30 00 4e 27 vmov cml6, scd, r31++
+# CHECK: 204: 30 00 4f 27 vmov cml7, scd, r31++
+# CHECK: 208: 30 00 4c 27 vmov cml4, scd, r31++
+# CHECK: 20c: 30 00 48 27 vmov cml0, scd, r31++
+# CHECK: 210: 30 00 4a 27 vmov cml2, scd, r31++
+# CHECK: 214: 30 00 4b 27 vmov cml3, scd, r31++
+# CHECK: 218: 30 00 4d 27 vmov cml5, scd, r31++
+# CHECK: 21c: 30 00 49 27 vmov cml1, scd, r31++
+# CHECK: 220: 30 00 4c 23 vmov cml4, scd, r31
+# CHECK: 224: 30 00 4e 23 vmov cml6, scd, r31
+# CHECK: 228: 30 00 4d 23 vmov cml5, scd, r31
+# CHECK: 22c: 30 00 48 23 vmov cml0, scd, r31
+# CHECK: 230: 30 00 4a 23 vmov cml2, scd, r31
+# CHECK: 234: 30 00 4b 23 vmov cml3, scd, r31
+# CHECK: 238: 30 00 49 23 vmov cml1, scd, r31
+# CHECK: 23c: 30 00 4f 23 vmov cml7, scd, r31
+# CHECK: 240: 30 00 49 25 vmov dm1, scd, r31++
+# CHECK: 244: 30 00 4d 25 vmov dm5, scd, r31++
+# CHECK: 248: 30 00 4f 25 vmov dm7, scd, r31++
+# CHECK: 24c: 30 00 4b 25 vmov dm3, scd, r31++
+# CHECK: 250: 30 00 4c 25 vmov dm4, scd, r31++
+# CHECK: 254: 30 00 48 25 vmov dm0, scd, r31++
+# CHECK: 258: 30 00 4a 25 vmov dm2, scd, r31++
+# CHECK: 25c: 30 00 4e 25 vmov dm6, scd, r31++
+# CHECK: 260: 30 00 4b 21 vmov dm3, scd, r31
+# CHECK: 264: 30 00 4f 21 vmov dm7, scd, r31
+# CHECK: 268: 30 00 49 21 vmov dm1, scd, r31
+# CHECK: 26c: 30 00 48 21 vmov dm0, scd, r31
+# CHECK: 270: 30 00 4a 21 vmov dm2, scd, r31
+# CHECK: 274: 30 00 4c 21 vmov dm4, scd, r31
+# CHECK: 278: 30 00 4d 21 vmov dm5, scd, r31
+# CHECK: 27c: 30 00 4e 21 vmov dm6, scd, r31
+# CHECK: 280: 30 00 4a 24 vmov x4, scd
+# CHECK: 284: 30 00 48 24 vmov x0, scd
+# CHECK: 288: 30 80 4b 24 vmov x7, scd
+# CHECK: 28c: 30 80 4a 24 vmov x5, scd
+# CHECK: 290: 30 00 4d 24 vmov x10, scd
+# CHECK: 294: 30 80 48 24 vmov x1, scd
+# CHECK: 298: 30 80 49 24 vmov x3, scd
+# CHECK: 29c: 30 80 4c 24 vmov x9, scd
+# CHECK: 2a0: 30 00 49 24 vmov x2, scd
+# CHECK: 2a4: 30 00 4b 24 vmov x6, scd
+# CHECK: 2a8: 30 80 4d 24 vmov x11, scd
+# CHECK: 2ac: 30 00 4c 24 vmov x8, scd
+# CHECK: 2b0: f0 6b 3d 3e vmov cml7, cmh7
+# CHECK: 2b4: f0 6b 1d 35 vmov cmh2, cmh3
+# CHECK: 2b8: f0 6b 2d 3b vmov cmh5, cmh5
+# CHECK: 2bc: f0 6b 35 38 vmov cml4, cmh6
+# CHECK: 2c0: f0 6b 25 39 vmov cmh4, cmh4
+# CHECK: 2c4: f0 6b 19 3f vmov cmh7, cml3
+# CHECK: 2c8: f0 6b 11 3a vmov cml5, cml2
+# CHECK: 2cc: f0 6b 09 33 vmov cmh1, cml1
+# CHECK: 2d0: f0 6b 29 34 vmov cml2, cml5
+# CHECK: 2d4: f0 6b 39 3d vmov cmh6, cml7
+# CHECK: 2d8: f0 6b 15 36 vmov cml3, cmh2
+# CHECK: 2dc: f0 6b 05 30 vmov cml0, cmh0
+# CHECK: 2e0: f0 6b 0d 32 vmov cml1, cmh1
+# CHECK: 2e4: f0 6b 31 3c vmov cml6, cml6
+# CHECK: 2e8: f0 6b 01 37 vmov cmh3, cml0
+# CHECK: 2ec: f0 6b 21 31 vmov cmh0, cml4
+# CHECK: 2f0: f0 1b 50 33 vmov e3, e5
+# CHECK: 2f4: f0 1b 90 30 vmov e0, e9
+# CHECK: 2f8: f0 1b 20 3b vmov e11, e2
+# CHECK: 2fc: f0 1b 00 39 vmov e9, e0
+# CHECK: 300: f0 1b 40 32 vmov e2, e4
+# CHECK: 304: f0 1b a0 34 vmov e4, e10
+# CHECK: 308: f0 1b b0 35 vmov e5, e11
+# CHECK: 30c: f0 1b 30 36 vmov e6, e3
+# CHECK: 310: f0 1b 70 37 vmov e7, e7
+# CHECK: 314: f0 1b 60 31 vmov e1, e6
+# CHECK: 318: f0 1b 10 38 vmov e8, e1
+# CHECK: 31c: f0 1b 80 3a vmov e10, e8
+# CHECK: 320: f0 6b 87 32 vmov egh2, egh0
+# CHECK: 324: f0 6b 57 39 vmov egl9, egh10
+# CHECK: 328: f0 6b 2b 37 vmov egl7, egl5
+# CHECK: 32c: f0 6b c3 31 vmov egh1, egl8
+# CHECK: 330: f0 6b 93 33 vmov egh3, egl2
+# CHECK: 334: f0 6b 3f 35 vmov egl5, egh7
+# CHECK: 338: f0 6b 33 32 vmov egl2, egl6
+# CHECK: 33c: f0 6b 9f 39 vmov egh9, egh3
+# CHECK: 340: f0 6b af 38 vmov egh8, egh5
+# CHECK: 344: f0 6b 0f 38 vmov egl8, egh1
+# CHECK: 348: f0 6b bb 30 vmov egh0, egl7
+# CHECK: 34c: f0 6b df 3b vmov egh11, egh11
+# CHECK: 350: f0 6b d3 3a vmov egh10, egl10
+# CHECK: 354: f0 6b 4b 3b vmov egl11, egl9
+# CHECK: 358: f0 6b 37 31 vmov egl1, egh6
+# CHECK: 35c: f0 6b 8b 35 vmov egh5, egl1
+# CHECK: 360: f0 6b 27 3a vmov egl10, egh4
+# CHECK: 364: f0 6b 47 33 vmov egl3, egh8
+# CHECK: 368: f0 6b 17 34 vmov egl4, egh2
+# CHECK: 36c: f0 6b cf 36 vmov egh6, egh9
+# CHECK: 370: f0 6b 1b 30 vmov egl0, egl3
+# CHECK: 374: f0 6b 03 36 vmov egl6, egl0
+# CHECK: 378: f0 6b a3 37 vmov egh7, egl4
+# CHECK: 37c: f0 6b db 34 vmov egh4, egl11
+# CHECK: 380: f0 1b a8 34 vmov eg4, eg10
+# CHECK: 384: f0 1b b8 39 vmov eg9, eg11
+# CHECK: 388: f0 1b 78 35 vmov eg5, eg7
+# CHECK: 38c: f0 1b 88 33 vmov eg3, eg8
+# CHECK: 390: f0 1b 08 32 vmov eg2, eg0
+# CHECK: 394: f0 1b 98 31 vmov eg1, eg9
+# CHECK: 398: f0 1b 18 30 vmov eg0, eg1
+# CHECK: 39c: f0 1b 48 3a vmov eg10, eg4
+# CHECK: 3a0: f0 1b 38 38 vmov eg8, eg3
+# CHECK: 3a4: f0 1b 28 3b vmov eg11, eg2
+# CHECK: 3a8: f0 1b 58 36 vmov eg6, eg5
+# CHECK: 3ac: f0 1b 68 37 vmov eg7, eg6
+# CHECK: 3b0: f0 eb 99 30 vmov wh0, eg3
+# CHECK: 3b4: f0 eb 21 39 vmov wl9, eg4
+# CHECK: 3b8: f0 eb 01 31 vmov wl1, eg0
+# CHECK: 3bc: f0 eb a9 31 vmov wh1, eg5
+# CHECK: 3c0: f0 eb 51 32 vmov wl2, eg10
+# CHECK: 3c4: f0 eb 89 37 vmov wh7, eg1
+# CHECK: 3c8: f0 eb 49 30 vmov wl0, eg9
+# CHECK: 3cc: f0 eb 11 3a vmov wl10, eg2
+# CHECK: 3d0: f0 eb d9 3b vmov wh11, eg11
+# CHECK: 3d4: f0 eb c1 32 vmov wh2, eg8
+# CHECK: 3d8: f0 eb b9 3a vmov wh10, eg7
+# CHECK: 3dc: f0 eb b1 39 vmov wh9, eg6
+# CHECK: 3e0: f0 eb 99 35 vmov wh5, eg3
+# CHECK: 3e4: f0 eb a1 38 vmov wh8, eg4
+# CHECK: 3e8: f0 eb 81 34 vmov wh4, eg0
+# CHECK: 3ec: f0 eb 29 37 vmov wl7, eg5
+# CHECK: 3f0: f0 eb 51 36 vmov wl6, eg10
+# CHECK: 3f4: f0 eb 09 33 vmov wl3, eg1
+# CHECK: 3f8: f0 eb 49 38 vmov wl8, eg9
+# CHECK: 3fc: f0 eb 11 34 vmov wl4, eg2
+# CHECK: 400: f0 eb d9 36 vmov wh6, eg11
+# CHECK: 404: f0 eb 41 3b vmov wl11, eg8
+# CHECK: 408: f0 eb 39 35 vmov wl5, eg7
+# CHECK: 40c: f0 eb b1 33 vmov wh3, eg6
+# CHECK: 410: f0 ab 18 34 vmov ewl4, ewl3
+# CHECK: 414: f0 ab 44 30 vmov ewl0, ewh8
+# CHECK: 418: f0 ab 24 31 vmov ewl1, ewh4
+# CHECK: 41c: f0 ab 80 38 vmov ewh8, ewl0
+# CHECK: 420: f0 ab a0 34 vmov ewh4, ewl4
+# CHECK: 424: f0 ab bc 3b vmov ewh11, ewh7
+# CHECK: 428: f0 ab 8c 36 vmov ewh6, ewh1
+# CHECK: 42c: f0 ab 10 3a vmov ewl10, ewl2
+# CHECK: 430: f0 ab d4 3a vmov ewh10, ewh10
+# CHECK: 434: f0 ab 94 30 vmov ewh0, ewh2
+# CHECK: 438: f0 ab dc 33 vmov ewh3, ewh11
+# CHECK: 43c: f0 ab 40 37 vmov ewl7, ewl8
+# CHECK: 440: f0 ab 08 39 vmov ewl9, ewl1
+# CHECK: 444: f0 ab 48 32 vmov ewl2, ewl9
+# CHECK: 448: f0 ab cc 32 vmov ewh2, ewh9
+# CHECK: 44c: f0 ab d8 39 vmov ewh9, ewl11
+# CHECK: 450: f0 ab 04 33 vmov ewl3, ewh0
+# CHECK: 454: f0 ab b0 31 vmov ewh1, ewl6
+# CHECK: 458: f0 ab 9c 35 vmov ewh5, ewh3
+# CHECK: 45c: f0 ab a8 37 vmov ewh7, ewl5
+# CHECK: 460: f0 ab 50 36 vmov ewl6, ewl10
+# CHECK: 464: f0 ab 34 35 vmov ewl5, ewh6
+# CHECK: 468: f0 ab 2c 38 vmov ewl8, ewh5
+# CHECK: 46c: f0 ab 38 3b vmov ewl11, ewl7
+# CHECK: 470: f0 1b 74 30 vmov ex0, ex7
+# CHECK: 474: f0 1b 54 31 vmov ex1, ex5
+# CHECK: 478: f0 1b 14 32 vmov ex2, ex1
+# CHECK: 47c: f0 1b 44 39 vmov ex9, ex4
+# CHECK: 480: f0 1b 34 3a vmov ex10, ex3
+# CHECK: 484: f0 1b a4 35 vmov ex5, ex10
+# CHECK: 488: f0 1b 04 33 vmov ex3, ex0
+# CHECK: 48c: f0 1b 64 38 vmov ex8, ex6
+# CHECK: 490: f0 1b b4 34 vmov ex4, ex11
+# CHECK: 494: f0 1b 24 37 vmov ex7, ex2
+# CHECK: 498: f0 1b 94 3b vmov ex11, ex9
+# CHECK: 49c: f0 1b 84 36 vmov ex6, ex8
+# CHECK: 4a0: f0 ab 3a 37 vmov fl7, fl7
+# CHECK: 4a4: f0 ab 46 30 vmov fl0, fh8
+# CHECK: 4a8: f0 ab 42 31 vmov fl1, fl8
+# CHECK: 4ac: f0 ab 92 39 vmov fh9, fl2
+# CHECK: 4b0: f0 ab 22 3b vmov fl11, fl4
+# CHECK: 4b4: f0 ab ce 31 vmov fh1, fh9
+# CHECK: 4b8: f0 ab 86 33 vmov fh3, fh0
+# CHECK: 4bc: f0 ab d2 3b vmov fh11, fl10
+# CHECK: 4c0: f0 ab 96 34 vmov fh4, fh2
+# CHECK: 4c4: f0 ab 2e 35 vmov fl5, fh5
+# CHECK: 4c8: f0 ab a6 30 vmov fh0, fh4
+# CHECK: 4cc: f0 ab aa 37 vmov fh7, fl5
+# CHECK: 4d0: f0 ab b2 3a vmov fh10, fl6
+# CHECK: 4d4: f0 ab 3e 33 vmov fl3, fh7
+# CHECK: 4d8: f0 ab 9a 38 vmov fh8, fl3
+# CHECK: 4dc: f0 ab 8e 35 vmov fh5, fh1
+# CHECK: 4e0: f0 ab 1e 36 vmov fl6, fh3
+# CHECK: 4e4: f0 ab 5e 34 vmov fl4, fh11
+# CHECK: 4e8: f0 ab d6 36 vmov fh6, fh10
+# CHECK: 4ec: f0 ab 36 32 vmov fl2, fh6
+# CHECK: 4f0: f0 ab 5a 38 vmov fl8, fl11
+# CHECK: 4f4: f0 ab 02 39 vmov fl9, fl0
+# CHECK: 4f8: f0 ab 0a 3a vmov fl10, fl1
+# CHECK: 4fc: f0 ab ca 32 vmov fh2, fl9
+# CHECK: 500: f0 eb 8d 3a vmov r21:r20, fh8
+# CHECK: 504: f0 eb 45 33 vmov r7:r6, fl4
+# CHECK: 508: f0 eb 6d 39 vmov r19:r18, fh6
+# CHECK: 50c: f0 eb 95 3e vmov r29:r28, fl9
+# CHECK: 510: f0 eb 2d 32 vmov r5:r4, fh2
+# CHECK: 514: f0 eb 3d 37 vmov r15:r14, fh3
+# CHECK: 518: f0 eb 55 30 vmov r1:r0, fl5
+# CHECK: 51c: f0 eb 05 34 vmov r9:r8, fl0
+# CHECK: 520: f0 eb 4d 3c vmov r25:r24, fh4
+# CHECK: 524: f0 eb 9d 3b vmov r23:r22, fh9
+# CHECK: 528: f0 eb 35 3f vmov r31:r30, fl3
+# CHECK: 52c: f0 eb 85 38 vmov r17:r16, fl8
+# CHECK: 530: f0 eb b5 36 vmov r13:r12, fl11
+# CHECK: 534: f0 eb 75 31 vmov r3:r2, fl7
+# CHECK: 538: f0 eb 0d 3d vmov r27:r26, fh0
+# CHECK: 53c: f0 eb ad 35 vmov r11:r10, fh10
+# CHECK: 540: f0 eb 1d 3a vmov r21:r20, fh1
+# CHECK: 544: f0 eb 25 33 vmov r7:r6, fl2
+# CHECK: 548: f0 eb 7d 39 vmov r19:r18, fh7
+# CHECK: 54c: f0 eb a5 3e vmov r29:r28, fl10
+# CHECK: 550: f0 eb bd 32 vmov r5:r4, fh11
+# CHECK: 554: f0 eb 15 37 vmov r15:r14, fl1
+# CHECK: 558: f0 eb 5d 30 vmov r1:r0, fh5
+# CHECK: 55c: f0 eb 65 34 vmov r9:r8, fl6
+# CHECK: 560: f0 ab 05 35 vmov fewl5, fewh0
+# CHECK: 564: f0 ab 1d 30 vmov fewl0, fewh3
+# CHECK: 568: f0 ab 4d 31 vmov fewl1, fewh9
+# CHECK: 56c: f0 ab d5 33 vmov fewh3, fewh10
+# CHECK: 570: f0 ab dd 34 vmov fewh4, fewh11
+# CHECK: 574: f0 ab 21 39 vmov fewl9, fewl4
+# CHECK: 578: f0 ab 0d 32 vmov fewl2, fewh1
+# CHECK: 57c: f0 ab 81 3a vmov fewh10, fewl0
+# CHECK: 580: f0 ab 15 3b vmov fewl11, fewh2
+# CHECK: 584: f0 ab bd 31 vmov fewh1, fewh7
+# CHECK: 588: f0 ab b9 37 vmov fewh7, fewl7
+# CHECK: 58c: f0 ab 49 34 vmov fewl4, fewl9
+# CHECK: 590: f0 ab a5 3b vmov fewh11, fewh4
+# CHECK: 594: f0 ab 91 36 vmov fewh6, fewl2
+# CHECK: 598: f0 ab d9 35 vmov fewh5, fewl11
+# CHECK: 59c: f0 ab 45 33 vmov fewl3, fewh8
+# CHECK: 5a0: f0 ab ad 32 vmov fewh2, fewh5
+# CHECK: 5a4: f0 ab 35 3a vmov fewl10, fewh6
+# CHECK: 5a8: f0 ab 29 38 vmov fewl8, fewl5
+# CHECK: 5ac: f0 ab 99 38 vmov fewh8, fewl3
+# CHECK: 5b0: f0 ab c1 39 vmov fewh9, fewl8
+# CHECK: 5b4: f0 ab 31 37 vmov fewl7, fewl6
+# CHECK: 5b8: f0 ab 09 36 vmov fewl6, fewl1
+# CHECK: 5bc: f0 ab d1 30 vmov fewh0, fewl10
+# CHECK: 5c0: f0 1b 7c 3b vmov fex11, fex7
+# CHECK: 5c4: f0 1b ac 35 vmov fex5, fex10
+# CHECK: 5c8: f0 1b 1c 38 vmov fex8, fex1
+# CHECK: 5cc: f0 1b 9c 3a vmov fex10, fex9
+# CHECK: 5d0: f0 1b bc 31 vmov fex1, fex11
+# CHECK: 5d4: f0 1b 3c 33 vmov fex3, fex3
+# CHECK: 5d8: f0 1b 8c 37 vmov fex7, fex8
+# CHECK: 5dc: f0 1b 4c 39 vmov fex9, fex4
+# CHECK: 5e0: f0 1b 6c 36 vmov fex6, fex6
+# CHECK: 5e4: f0 1b 0c 34 vmov fex4, fex0
+# CHECK: 5e8: f0 1b 5c 30 vmov fex0, fex5
+# CHECK: 5ec: f0 1b 2c 32 vmov fex2, fex2
+# CHECK: 5f0: f0 1b 22 37 vmov f7, f2
+# CHECK: 5f4: f0 1b 62 3a vmov f10, f6
+# CHECK: 5f8: f0 1b 52 35 vmov f5, f5
+# CHECK: 5fc: f0 1b 82 3b vmov f11, f8
+# CHECK: 600: f0 1b 02 31 vmov f1, f0
+# CHECK: 604: f0 1b b2 36 vmov f6, f11
+# CHECK: 608: f0 1b 92 38 vmov f8, f9
+# CHECK: 60c: f0 1b 42 32 vmov f2, f4
+# CHECK: 610: f0 1b 32 34 vmov f4, f3
+# CHECK: 614: f0 1b 72 30 vmov f0, f7
+# CHECK: 618: f0 1b 12 39 vmov f9, f1
+# CHECK: 61c: f0 1b a2 33 vmov f3, f10
+# CHECK: 620: f0 1b 3a 36 vmov g6, g3
+# CHECK: 624: f0 1b 7a 31 vmov g1, g7
+# CHECK: 628: f0 1b 5a 38 vmov g8, g5
+# CHECK: 62c: f0 1b 2a 39 vmov g9, g2
+# CHECK: 630: f0 1b ba 37 vmov g7, g11
+# CHECK: 634: f0 1b 9a 33 vmov g3, g9
+# CHECK: 638: f0 1b 6a 34 vmov g4, g6
+# CHECK: 63c: f0 1b aa 3b vmov g11, g10
+# CHECK: 640: f0 1b 0a 35 vmov g5, g0
+# CHECK: 644: f0 1b 8a 32 vmov g2, g8
+# CHECK: 648: f0 1b 4a 30 vmov g0, g4
+# CHECK: 64c: f0 1b 1a 3a vmov g10, g1
+# CHECK: 650: f0 eb 53 31 vmov fl1, r21:r20
+# CHECK: 654: f0 eb 9b 32 vmov fh2, r7:r6
+# CHECK: 658: f0 eb ab 33 vmov fh3, r11:r10
+# CHECK: 65c: f0 eb 23 37 vmov fl7, r9:r8
+# CHECK: 660: f0 eb db 35 vmov fh5, r23:r22
+# CHECK: 664: f0 eb bb 38 vmov fh8, r15:r14
+# CHECK: 668: f0 eb cb 34 vmov fh4, r19:r18
+# CHECK: 66c: f0 eb eb 39 vmov fh9, r27:r26
+# CHECK: 670: f0 eb 73 30 vmov fl0, r29:r28
+# CHECK: 674: f0 eb 63 36 vmov fl6, r25:r24
+# CHECK: 678: f0 eb 03 3b vmov fl11, r1:r0
+# CHECK: 67c: f0 eb 0b 35 vmov fl5, r3:r2
+# CHECK: 680: f0 eb 93 31 vmov fh1, r5:r4
+# CHECK: 684: f0 eb fb 36 vmov fh6, r31:r30
+# CHECK: 688: f0 eb 33 34 vmov fl4, r13:r12
+# CHECK: 68c: f0 eb 43 39 vmov fl9, r17:r16
+# CHECK: 690: f0 eb d3 37 vmov fh7, r21:r20
+# CHECK: 694: f0 eb 1b 3a vmov fl10, r7:r6
+# CHECK: 698: f0 eb 2b 38 vmov fl8, r11:r10
+# CHECK: 69c: f0 eb a3 3a vmov fh10, r9:r8
+# CHECK: 6a0: f0 eb db 3b vmov fh11, r23:r22
+# CHECK: 6a4: f0 eb 3b 32 vmov fl2, r15:r14
+# CHECK: 6a8: f0 eb 4b 33 vmov fl3, r19:r18
+# CHECK: 6ac: f0 eb eb 30 vmov fh0, r27:r26
+# CHECK: 6b0: f0 f3 9a 35 vmov wh5, wh6
+# CHECK: 6b4: f0 f3 1e 35 vmov wl5, wh7
+# CHECK: 6b8: f0 f3 16 3b vmov wl11, wh5
+# CHECK: 6bc: f0 f3 20 39 vmov wl9, wl8
+# CHECK: 6c0: f0 f3 08 36 vmov wl6, wl2
+# CHECK: 6c4: f0 f3 26 37 vmov wl7, wh9
+# CHECK: 6c8: f0 f3 ae 31 vmov wh1, wh11
+# CHECK: 6cc: f0 f3 06 3a vmov wl10, wh1
+# CHECK: 6d0: f0 f3 22 38 vmov wl8, wh8
+# CHECK: 6d4: f0 f3 aa 36 vmov wh6, wh10
+# CHECK: 6d8: f0 f3 92 38 vmov wh8, wh4
+# CHECK: 6dc: f0 f3 18 31 vmov wl1, wl6
+# CHECK: 6e0: f0 f3 a8 34 vmov wh4, wl10
+# CHECK: 6e4: f0 f3 ac 33 vmov wh3, wl11
+# CHECK: 6e8: f0 f3 9c 32 vmov wh2, wl7
+# CHECK: 6ec: f0 f3 90 30 vmov wh0, wl4
+# CHECK: 6f0: f0 f3 80 3b vmov wh11, wl0
+# CHECK: 6f4: f0 f3 0c 34 vmov wl4, wl3
+# CHECK: 6f8: f0 f3 a4 3a vmov wh10, wl9
+# CHECK: 6fc: f0 f3 02 30 vmov wl0, wh0
+# CHECK: 700: f0 f3 84 39 vmov wh9, wl1
+# CHECK: 704: f0 f3 8a 37 vmov wh7, wh2
+# CHECK: 708: f0 f3 14 32 vmov wl2, wl5
+# CHECK: 70c: f0 f3 0e 33 vmov wl3, wh3
+# CHECK: 710: f0 eb 77 39 vmov eg9, wl7
+# CHECK: 714: f0 eb 4f 30 vmov eg0, wh4
+# CHECK: 718: f0 eb 9f 37 vmov eg7, wh9
+# CHECK: 71c: f0 eb 07 38 vmov eg8, wl0
+# CHECK: 720: f0 eb 5f 32 vmov eg2, wh5
+# CHECK: 724: f0 eb 67 33 vmov eg3, wl6
+# CHECK: 728: f0 eb b7 36 vmov eg6, wl11
+# CHECK: 72c: f0 eb 17 3b vmov eg11, wl1
+# CHECK: 730: f0 eb 8f 31 vmov eg1, wh8
+# CHECK: 734: f0 eb a7 3a vmov eg10, wl10
+# CHECK: 738: f0 eb 97 35 vmov eg5, wl9
+# CHECK: 73c: f0 eb 0f 34 vmov eg4, wh0
+# CHECK: 740: f0 eb 7f 39 vmov eg9, wh7
+# CHECK: 744: f0 eb bf 30 vmov eg0, wh11
+# CHECK: 748: f0 eb 3f 37 vmov eg7, wh3
+# CHECK: 74c: f0 eb 2f 38 vmov eg8, wh2
+# CHECK: 750: f0 eb 37 32 vmov eg2, wl3
+# CHECK: 754: f0 eb 47 33 vmov eg3, wl4
+# CHECK: 758: f0 eb 57 36 vmov eg6, wl5
+# CHECK: 75c: f0 eb 27 3b vmov eg11, wl2
+# CHECK: 760: f0 eb 6f 31 vmov eg1, wh6
+# CHECK: 764: f0 eb 87 3a vmov eg10, wl8
+# CHECK: 768: f0 eb af 35 vmov eg5, wh10
+# CHECK: 76c: f0 eb 1f 34 vmov eg4, wh1
+# CHECK: 770: f0 0b 18 30 vmov bmll0, bmll3
+# CHECK: 774: f0 0b b8 3a vmov bmlh5, bmll7
+# CHECK: 778: f0 0b 4d 35 vmov x5, x3
+# CHECK: 77c: f0 0b 1a 3d vmov bmhl6, bmlh3
+# CHECK: 780: f0 0b 88 3e vmov bmlh7, bmll1
+# CHECK: 784: f0 0b 2d 34 vmov bmll2, x11
+# CHECK: 788: f0 0b 04 3e vmov bmll7, bmhl0
+# CHECK: 78c: f0 0b b6 39 vmov bmhh4, bmhh6
+# CHECK: 790: f0 0b 30 3a vmov bmll5, bmll6
+# CHECK: 794: f0 0b 21 39 vmov bmhl4, x8
+# CHECK: 798: f0 0b e8 32 vmov lfl0, bmll5
+# CHECK: 79c: f0 0b 53 34 vmov x4, lfe
+# CHECK: 7a0: f0 0b 46 36 vmov x6, bmhh0
+# CHECK: 7a4: f0 0b 20 35 vmov bmhl2, bmll4
+# CHECK: 7a8: f0 0b ac 32 vmov bmlh1, bmhl5
+# CHECK: 7ac: f0 0b 4e 30 vmov x0, bmhh1
+# CHECK: 7b0: f0 0b 82 3b vmov bmhh5, bmlh0
+# CHECK: 7b4: f0 0b b3 38 vmov bmlh4, sfh
+# CHECK: 7b8: f0 0b 41 38 vmov x8, x0
+# CHECK: 7bc: f0 0b e6 36 vmov sfl, bmhh4
+# CHECK: 7c0: f0 0b 90 35 vmov bmhh2, bmll2
+# CHECK: 7c4: f0 0b db 3a vmov lfl1, sfl
+# CHECK: 7c8: f0 0b 99 36 vmov bmlh3, x6
+# CHECK: 7cc: f0 0b 7e 31 vmov x1, bmhh7
+# CHECK: 7d0: f0 0b bc 33 vmov bmhh1, bmhl7
+# CHECK: 7d4: f0 0b ee 38 vmov lfh1, bmhh5
+# CHECK: 7d8: f0 0b d2 30 vmov lfh0, bmlh2
+# CHECK: 7dc: f0 0b 62 37 vmov x7, bmlh4
+# CHECK: 7e0: f0 0b ba 3f vmov bmhh7, bmlh7
+# CHECK: 7e4: f0 0b 49 3b vmov x11, x2
+# CHECK: 7e8: f0 0b 11 3c vmov bmll6, x4
+# CHECK: 7ec: f0 0b aa 30 vmov bmlh0, bmlh5
+# CHECK: 7f0: f0 0b 5d 32 vmov x2, x7
+# CHECK: 7f4: f0 0b 4c 3a vmov x10, bmhl1
+# CHECK: 7f8: f0 0b c3 34 vmov lfe, lfh0
+# CHECK: 7fc: f0 0b 32 33 vmov bmhl1, bmlh6
+# CHECK: 800: f0 0b 25 38 vmov bmll4, x9
+# CHECK: 804: f0 0b 9e 37 vmov bmhh3, bmhh3
+# CHECK: 808: f0 0b 1c 36 vmov bmll3, bmhl3
+# CHECK: 80c: f0 0b ab 3c vmov bmlh6, lfl1
+# CHECK: 810: f0 0b 00 3f vmov bmhl7, bmll0
+# CHECK: 814: f0 0b 14 3b vmov bmhl5, bmhl2
+# CHECK: 818: f0 0b 69 39 vmov x9, x10
+# CHECK: 81c: f0 0b 16 31 vmov bmhl0, bmhh2
+# CHECK: 820: f0 0b 05 37 vmov bmhl3, x1
+# CHECK: 824: f0 0b 4b 33 vmov x3, lfl0
+# CHECK: 828: f0 0b e3 3c vmov sfh, lfh1
+# CHECK: 82c: f0 0b 95 3d vmov bmhh6, x5
+# CHECK: 830: f0 0b a4 31 vmov bmhh0, bmhl4
+# CHECK: 834: f0 0b 34 32 vmov bmll1, bmhl6
+# CHECK: 838: f0 0b 8a 34 vmov bmlh2, bmlh1
+# CHECK: 83c: b0 85 c1 10 vmov mcd, bmll3
+# CHECK: 840: b0 25 c2 10 vmov mcd, bmlh4
+# CHECK: 844: b0 a5 c1 10 vmov mcd, bmlh3
+# CHECK: 848: b0 85 c0 10 vmov mcd, bmll1
+# CHECK: 84c: b0 65 c1 10 vmov mcd, bmhh2
+# CHECK: 850: b0 05 c0 10 vmov mcd, bmll0
+# CHECK: 854: b0 85 c2 10 vmov mcd, bmll5
+# CHECK: 858: b0 05 c2 10 vmov mcd, bmll4
+# CHECK: 85c: b0 85 c3 10 vmov mcd, bmll7
+# CHECK: 860: b0 65 c2 10 vmov mcd, bmhh4
+# CHECK: 864: b0 c5 c2 10 vmov mcd, bmhl5
+# CHECK: 868: b0 e5 c0 10 vmov mcd, bmhh1
+# CHECK: 86c: b0 a5 c0 10 vmov mcd, bmlh1
+# CHECK: 870: b0 45 c2 10 vmov mcd, bmhl4
+# CHECK: 874: b0 a5 c3 10 vmov mcd, bmlh7
+# CHECK: 878: b0 a5 c2 10 vmov mcd, bmlh5
+# CHECK: 87c: b0 25 c3 10 vmov mcd, bmlh6
+# CHECK: 880: b0 e5 c3 10 vmov mcd, bmhh7
+# CHECK: 884: b0 45 c1 10 vmov mcd, bmhl2
+# CHECK: 888: b0 c5 c0 10 vmov mcd, bmhl1
+# CHECK: 88c: b0 c5 c3 10 vmov mcd, bmhl7
+# CHECK: 890: b0 65 c0 10 vmov mcd, bmhh0
+# CHECK: 894: b0 45 c0 10 vmov mcd, bmhl0
+# CHECK: 898: b0 e5 c1 10 vmov mcd, bmhh3
+# CHECK: 89c: b0 65 c3 10 vmov mcd, bmhh6
+# CHECK: 8a0: b0 05 c1 10 vmov mcd, bmll2
+# CHECK: 8a4: b0 c5 c1 10 vmov mcd, bmhl3
+# CHECK: 8a8: b0 45 c3 10 vmov mcd, bmhl6
+# CHECK: 8ac: b0 e5 c2 10 vmov mcd, bmhh5
+# CHECK: 8b0: b0 25 c1 10 vmov mcd, bmlh2
+# CHECK: 8b4: b0 05 c3 10 vmov mcd, bmll6
+# CHECK: 8b8: b0 25 c0 10 vmov mcd, bmlh0
+# CHECK: 8bc: b0 85 e0 10 vmov mcd, x2
+# CHECK: 8c0: b0 45 e0 10 vmov mcd, x1
+# CHECK: 8c4: b0 05 e2 10 vmov mcd, x8
+# CHECK: 8c8: b0 c5 e1 10 vmov mcd, x7
+# CHECK: 8cc: b0 85 e2 10 vmov mcd, x10
+# CHECK: 8d0: b0 45 e1 10 vmov mcd, x5
+# CHECK: 8d4: b0 05 e0 10 vmov mcd, x0
+# CHECK: 8d8: b0 05 e1 10 vmov mcd, x4
+# CHECK: 8dc: b0 c5 e0 10 vmov mcd, x3
+# CHECK: 8e0: b0 45 e2 10 vmov mcd, x9
+# CHECK: 8e4: b0 c5 e2 10 vmov mcd, x11
+# CHECK: 8e8: b0 85 e1 10 vmov mcd, x6

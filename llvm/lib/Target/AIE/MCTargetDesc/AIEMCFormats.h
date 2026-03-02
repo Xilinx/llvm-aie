@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 // Utility classes to interface the generated Formats from CodeGenFormat with
@@ -54,6 +54,11 @@ public:
   enum AIE2PSlotKind : int {
 #define GET_FORMATS_SLOTKINDS
 #include "AIE2PGenFormats.inc"
+#undef GET_FORMATS_SLOTKINDS
+  };
+  enum AIE2PSSlotKind : int {
+#define GET_FORMATS_SLOTKINDS
+#include "AIE2PSGenFormats.inc"
 #undef GET_FORMATS_SLOTKINDS
   };
 
@@ -429,6 +434,19 @@ public:
 };
 
 class AIE2PMCFormats : public AIEBaseMCFormats {
+public:
+  const std::vector<unsigned int> *
+  getAlternateInstsOpcode(unsigned int Opcode) const override;
+  std::optional<unsigned int>
+  getFormatDescIndex(unsigned int Opcode) const override;
+  const MCSlotInfo *getSlotInfo(const MCSlotKind Kind) const override;
+  const MCFormatDesc *getMCFormats() const override;
+  const PacketFormats &getPacketFormats() const override;
+  ArrayRef<bool> getIsFormatAvailable() const override;
+  SmallVector<MCSlotKind, 2> getLoadSlotKinds() const override;
+};
+
+class AIE2PSMCFormats : public AIEBaseMCFormats {
 public:
   const std::vector<unsigned int> *
   getAlternateInstsOpcode(unsigned int Opcode) const override;

@@ -3,7 +3,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # core_files list contains the headers shared by all platforms.
 # Please consider adding new platform specific headers
@@ -47,11 +47,13 @@ set(core_files
 
 set(aie_files
   aiebase_chess.h
+  aiebase_resources.h
   aiebase_typedefs.h
   aie_addlog.h
   aiev1intrin.h
   aiev2intrin.h
   aie2pintrin.h
+  aie2psintrin.h
   )
 # aiev1
 set(aiev1_files
@@ -108,6 +110,32 @@ set(aie2p_files
   aie2p/aie2p_nlf.h
   aie2p/aie2p_nlf_vector.h
   aie2p/aie2p_aie_api_compat.h
+  )
+# aie2ps
+set(aie2ps_files
+  aie2ps/aie2ps_defines.h
+  aie2ps/aie2ps_enums.h
+  aie2ps/aie2ps_pp.h
+  aie2ps/aie2ps_upd_ext.h
+  aie2ps/aie2ps_undef.h
+  aie2ps/aie2ps_scl2vec.h
+  aie2ps/aie2ps_addlog.h
+  aie2ps/aie2ps_scalar.h
+  aie2ps/aie2ps_locks.h
+  aie2ps/aie2ps_cnvf2f.h
+  aie2ps/aie2ps_nlf.h
+  aie2ps/aie2ps_set_mode.h
+  aie2ps/aie2ps_ups.h
+  aie2ps/aie2ps_srs.h
+  aie2ps/aie2ps_vmult.h
+  aie2ps/aie2ps_vmult_emulated.h
+  aie2ps/aie2ps_vmult_float_emulated.h
+  aie2ps/aie2ps_vadd.h
+  aie2ps/aie2ps_streams.h
+  aie2ps/aie2ps_addr.h
+  aie2ps/aie2ps_nlf_vector.h
+  aie2ps/aie2ps_ldst.h
+  aie2ps/aie2ps_aie_api_compat.h
   )
 
 set(arm_common_files
@@ -493,7 +521,7 @@ endfunction(clang_generate_header)
 foreach( f ${files} ${cuda_wrapper_files} ${cuda_wrapper_bits_files}
            ${ppc_wrapper_files} ${openmp_wrapper_files} ${zos_wrapper_files} ${hlsl_files}
 	         ${llvm_libc_wrapper_files} ${llvm_offload_wrapper_files}
-           ${aiev1_files} ${aiev2_files} ${aie2p_files})
+           ${aiev1_files} ${aiev2_files} ${aie2p_files} ${aie2ps_files})
   copy_header_to_output_dir(${CMAKE_CURRENT_SOURCE_DIR} ${f})
 endforeach( f )
 
@@ -687,6 +715,11 @@ install(
   DESTINATION ${header_install_dir}/aie2p
   COMPONENT clang-resource-headers)
 
+install(
+  FILES ${aie2ps_files}
+  DESTINATION ${header_install_dir}/aie2ps
+  COMPONENT clang-resource-headers)
+
 #############################################################
 # Install rules for separate header lists
 install(
@@ -866,6 +899,27 @@ install(
   DESTINATION ${header_install_dir}
   EXCLUDE_FROM_ALL
   COMPONENT windows-resource-headers)
+
+install(
+  FILES ${aiev1_files}
+  DESTINATION ${header_install_dir}/aiev1
+  COMPONENT clang-resource-headers)
+
+install(
+  FILES ${aiev2_files}
+  DESTINATION ${header_install_dir}/aiev2
+  COMPONENT clang-resource-headers)
+
+install(
+  FILES ${aie2p_files}
+  DESTINATION ${header_install_dir}/aie2p
+  COMPONENT clang-resource-headers)
+
+install(
+  FILES ${aie2ps_files}
+  DESTINATION ${header_install_dir}/aie2ps
+  COMPONENT clang-resource-headers)
+
 #############################################################
 
 if (NOT LLVM_ENABLE_IDE)

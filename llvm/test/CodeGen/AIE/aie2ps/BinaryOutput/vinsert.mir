@@ -1,0 +1,486 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# TODO: llc %llcflags --filetype=asm -o %t2
+# TODO: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# TODO: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VINSERT_16_mIdxImm0
+    $x5 = VINSERT_16_mIdxImm0 $x7, $r13
+    $x7 = VINSERT_16_mIdxImm0 $x10, $r7
+    $x4 = VINSERT_16_mIdxImm0 $x5, $r25
+    $x2 = VINSERT_16_mIdxImm0 $x11, $r24
+    $x0 = VINSERT_16_mIdxImm0 $x1, $r27
+    $x9 = VINSERT_16_mIdxImm0 $x0, $r12
+    $x1 = VINSERT_16_mIdxImm0 $x6, $r6
+    $x6 = VINSERT_16_mIdxImm0 $x3, $r1
+    $x8 = VINSERT_16_mIdxImm0 $x2, $r23
+    $x10 = VINSERT_16_mIdxImm0 $x4, $r0
+    $x3 = VINSERT_16_mIdxImm0 $x9, $r14
+    $x11 = VINSERT_16_mIdxImm0 $x8, $r31
+    $x5 = VINSERT_16_mIdxImm0 $x7, $r2
+    $x7 = VINSERT_16_mIdxImm0 $x10, $r30
+    $x4 = VINSERT_16_mIdxImm0 $x5, $r11
+    $x2 = VINSERT_16_mIdxImm0 $x11, $r22
+    $x0 = VINSERT_16_mIdxImm0 $x1, $r5
+    $x9 = VINSERT_16_mIdxImm0 $x0, $r20
+    $x1 = VINSERT_16_mIdxImm0 $x6, $r16
+    $x6 = VINSERT_16_mIdxImm0 $x3, $r9
+    $x8 = VINSERT_16_mIdxImm0 $x2, $r17
+    $x10 = VINSERT_16_mIdxImm0 $x4, $r18
+    $x3 = VINSERT_16_mIdxImm0 $x9, $r3
+    $x11 = VINSERT_16_mIdxImm0 $x8, $r4
+    $x5 = VINSERT_16_mIdxImm0 $x7, $r29
+    $x7 = VINSERT_16_mIdxImm0 $x10, $r21
+    $x4 = VINSERT_16_mIdxImm0 $x5, $r28
+    $x2 = VINSERT_16_mIdxImm0 $x11, $r19
+    $x0 = VINSERT_16_mIdxImm0 $x1, $r8
+    $x9 = VINSERT_16_mIdxImm0 $x0, $r26
+    $x1 = VINSERT_16_mIdxImm0 $x6, $r15
+    $x6 = VINSERT_16_mIdxImm0 $x3, $r10
+
+    ; VINSERT_16_mR29_insert
+    $x7 = VINSERT_16_mR29_insert $x0, $r29, $r8
+    $x10 = VINSERT_16_mR29_insert $x1, $r29, $r3
+    $x2 = VINSERT_16_mR29_insert $x7, $r29, $r5
+    $x4 = VINSERT_16_mR29_insert $x6, $r29, $r20
+    $x9 = VINSERT_16_mR29_insert $x10, $r29, $r28
+    $x3 = VINSERT_16_mR29_insert $x2, $r29, $r0
+    $x0 = VINSERT_16_mR29_insert $x9, $r29, $r14
+    $x11 = VINSERT_16_mR29_insert $x11, $r29, $r26
+    $x8 = VINSERT_16_mR29_insert $x3, $r29, $r9
+    $x6 = VINSERT_16_mR29_insert $x5, $r29, $r18
+    $x5 = VINSERT_16_mR29_insert $x4, $r29, $r19
+    $x1 = VINSERT_16_mR29_insert $x8, $r29, $r12
+    $x7 = VINSERT_16_mR29_insert $x0, $r29, $r21
+    $x10 = VINSERT_16_mR29_insert $x1, $r29, $r6
+    $x2 = VINSERT_16_mR29_insert $x7, $r29, $r31
+    $x4 = VINSERT_16_mR29_insert $x6, $r29, $r23
+    $x9 = VINSERT_16_mR29_insert $x10, $r29, $r22
+    $x3 = VINSERT_16_mR29_insert $x2, $r29, $r17
+    $x0 = VINSERT_16_mR29_insert $x9, $r29, $r29
+    $x11 = VINSERT_16_mR29_insert $x11, $r29, $r30
+    $x8 = VINSERT_16_mR29_insert $x3, $r29, $r25
+    $x6 = VINSERT_16_mR29_insert $x5, $r29, $r1
+    $x5 = VINSERT_16_mR29_insert $x4, $r29, $r2
+    $x1 = VINSERT_16_mR29_insert $x8, $r29, $r13
+    $x7 = VINSERT_16_mR29_insert $x0, $r29, $r15
+    $x10 = VINSERT_16_mR29_insert $x1, $r29, $r4
+    $x2 = VINSERT_16_mR29_insert $x7, $r29, $r16
+    $x4 = VINSERT_16_mR29_insert $x6, $r29, $r10
+    $x9 = VINSERT_16_mR29_insert $x10, $r29, $r27
+    $x3 = VINSERT_16_mR29_insert $x2, $r29, $r7
+    $x0 = VINSERT_16_mR29_insert $x9, $r29, $r24
+    $x11 = VINSERT_16_mR29_insert $x11, $r29, $r11
+
+    ; VINSERT_32_mIdxImm0
+    $x10 = VINSERT_32_mIdxImm0 $x5, $r20
+    $x3 = VINSERT_32_mIdxImm0 $x1, $r15
+    $x5 = VINSERT_32_mIdxImm0 $x9, $r23
+    $x8 = VINSERT_32_mIdxImm0 $x11, $r3
+    $x2 = VINSERT_32_mIdxImm0 $x0, $r1
+    $x0 = VINSERT_32_mIdxImm0 $x4, $r5
+    $x9 = VINSERT_32_mIdxImm0 $x6, $r26
+    $x7 = VINSERT_32_mIdxImm0 $x8, $r30
+    $x4 = VINSERT_32_mIdxImm0 $x2, $r17
+    $x6 = VINSERT_32_mIdxImm0 $x7, $r16
+    $x1 = VINSERT_32_mIdxImm0 $x10, $r4
+    $x11 = VINSERT_32_mIdxImm0 $x3, $r13
+    $x10 = VINSERT_32_mIdxImm0 $x5, $r18
+    $x3 = VINSERT_32_mIdxImm0 $x1, $r7
+    $x5 = VINSERT_32_mIdxImm0 $x9, $r25
+    $x8 = VINSERT_32_mIdxImm0 $x11, $r31
+    $x2 = VINSERT_32_mIdxImm0 $x0, $r9
+    $x0 = VINSERT_32_mIdxImm0 $x4, $r2
+    $x9 = VINSERT_32_mIdxImm0 $x6, $r10
+    $x7 = VINSERT_32_mIdxImm0 $x8, $r19
+    $x4 = VINSERT_32_mIdxImm0 $x2, $r0
+    $x6 = VINSERT_32_mIdxImm0 $x7, $r28
+    $x1 = VINSERT_32_mIdxImm0 $x10, $r24
+    $x11 = VINSERT_32_mIdxImm0 $x3, $r12
+    $x10 = VINSERT_32_mIdxImm0 $x5, $r22
+    $x3 = VINSERT_32_mIdxImm0 $x1, $r8
+    $x5 = VINSERT_32_mIdxImm0 $x9, $r21
+    $x8 = VINSERT_32_mIdxImm0 $x11, $r6
+    $x2 = VINSERT_32_mIdxImm0 $x0, $r27
+    $x0 = VINSERT_32_mIdxImm0 $x4, $r14
+    $x9 = VINSERT_32_mIdxImm0 $x6, $r11
+    $x7 = VINSERT_32_mIdxImm0 $x8, $r29
+
+    ; VINSERT_32_mR29_insert
+    $x1 = VINSERT_32_mR29_insert $x10, $r29, $r26
+    $x6 = VINSERT_32_mR29_insert $x4, $r29, $r23
+    $x8 = VINSERT_32_mR29_insert $x8, $r29, $r4
+    $x2 = VINSERT_32_mR29_insert $x11, $r29, $r3
+    $x10 = VINSERT_32_mR29_insert $x5, $r29, $r27
+    $x4 = VINSERT_32_mR29_insert $x7, $r29, $r6
+    $x3 = VINSERT_32_mR29_insert $x1, $r29, $r7
+    $x0 = VINSERT_32_mR29_insert $x0, $r29, $r25
+    $x7 = VINSERT_32_mR29_insert $x3, $r29, $r19
+    $x11 = VINSERT_32_mR29_insert $x9, $r29, $r2
+    $x5 = VINSERT_32_mR29_insert $x2, $r29, $r5
+    $x9 = VINSERT_32_mR29_insert $x6, $r29, $r12
+    $x1 = VINSERT_32_mR29_insert $x10, $r29, $r0
+    $x6 = VINSERT_32_mR29_insert $x4, $r29, $r20
+    $x8 = VINSERT_32_mR29_insert $x8, $r29, $r30
+    $x2 = VINSERT_32_mR29_insert $x11, $r29, $r1
+    $x10 = VINSERT_32_mR29_insert $x5, $r29, $r10
+    $x4 = VINSERT_32_mR29_insert $x7, $r29, $r18
+    $x3 = VINSERT_32_mR29_insert $x1, $r29, $r31
+    $x0 = VINSERT_32_mR29_insert $x0, $r29, $r29
+    $x7 = VINSERT_32_mR29_insert $x3, $r29, $r11
+    $x11 = VINSERT_32_mR29_insert $x9, $r29, $r8
+    $x5 = VINSERT_32_mR29_insert $x2, $r29, $r22
+    $x9 = VINSERT_32_mR29_insert $x6, $r29, $r9
+    $x1 = VINSERT_32_mR29_insert $x10, $r29, $r17
+    $x6 = VINSERT_32_mR29_insert $x4, $r29, $r15
+    $x8 = VINSERT_32_mR29_insert $x8, $r29, $r28
+    $x2 = VINSERT_32_mR29_insert $x11, $r29, $r21
+    $x10 = VINSERT_32_mR29_insert $x5, $r29, $r24
+    $x4 = VINSERT_32_mR29_insert $x7, $r29, $r16
+    $x3 = VINSERT_32_mR29_insert $x1, $r29, $r13
+    $x0 = VINSERT_32_mR29_insert $x0, $r29, $r14
+
+    ; VINSERT_64_mIdxImm0
+    $x7 = VINSERT_64_mIdxImm0 $x2, $l13
+    $x8 = VINSERT_64_mIdxImm0 $x7, $l6
+    $x9 = VINSERT_64_mIdxImm0 $x10, $l15
+    $x3 = VINSERT_64_mIdxImm0 $x5, $l14
+    $x2 = VINSERT_64_mIdxImm0 $x0, $l11
+    $x11 = VINSERT_64_mIdxImm0 $x6, $l12
+    $x10 = VINSERT_64_mIdxImm0 $x3, $l0
+    $x1 = VINSERT_64_mIdxImm0 $x9, $l3
+    $x5 = VINSERT_64_mIdxImm0 $x11, $l7
+    $x6 = VINSERT_64_mIdxImm0 $x1, $l10
+    $x4 = VINSERT_64_mIdxImm0 $x8, $l9
+    $x0 = VINSERT_64_mIdxImm0 $x4, $l2
+    $x7 = VINSERT_64_mIdxImm0 $x2, $l4
+    $x8 = VINSERT_64_mIdxImm0 $x7, $l5
+    $x9 = VINSERT_64_mIdxImm0 $x10, $l8
+    $x3 = VINSERT_64_mIdxImm0 $x5, $l1
+
+    ; VINSERT_64_mR29_insert
+    $x7 = VINSERT_64_mR29_insert $x3, $r29, $l13
+    $x10 = VINSERT_64_mR29_insert $x0, $r29, $l10
+    $x5 = VINSERT_64_mR29_insert $x7, $r29, $l1
+    $x3 = VINSERT_64_mR29_insert $x10, $r29, $l3
+    $x8 = VINSERT_64_mR29_insert $x9, $r29, $l12
+    $x1 = VINSERT_64_mR29_insert $x6, $r29, $l5
+    $x0 = VINSERT_64_mR29_insert $x5, $r29, $l9
+    $x9 = VINSERT_64_mR29_insert $x4, $r29, $l8
+    $x11 = VINSERT_64_mR29_insert $x2, $r29, $l7
+    $x6 = VINSERT_64_mR29_insert $x8, $r29, $l0
+    $x2 = VINSERT_64_mR29_insert $x1, $r29, $l6
+    $x4 = VINSERT_64_mR29_insert $x11, $r29, $l14
+    $x7 = VINSERT_64_mR29_insert $x3, $r29, $l15
+    $x10 = VINSERT_64_mR29_insert $x0, $r29, $l2
+    $x5 = VINSERT_64_mR29_insert $x7, $r29, $l11
+    $x3 = VINSERT_64_mR29_insert $x10, $r29, $l4
+
+    ; VINSERT_8_mIdxImm0
+    $x6 = VINSERT_8_mIdxImm0 $x1, $r9
+    $x11 = VINSERT_8_mIdxImm0 $x10, $r10
+    $x2 = VINSERT_8_mIdxImm0 $x3, $r0
+    $x10 = VINSERT_8_mIdxImm0 $x4, $r28
+    $x7 = VINSERT_8_mIdxImm0 $x11, $r6
+    $x4 = VINSERT_8_mIdxImm0 $x5, $r7
+    $x3 = VINSERT_8_mIdxImm0 $x7, $r25
+    $x0 = VINSERT_8_mIdxImm0 $x0, $r14
+    $x5 = VINSERT_8_mIdxImm0 $x6, $r17
+    $x8 = VINSERT_8_mIdxImm0 $x2, $r3
+    $x1 = VINSERT_8_mIdxImm0 $x9, $r19
+    $x9 = VINSERT_8_mIdxImm0 $x8, $r8
+    $x6 = VINSERT_8_mIdxImm0 $x1, $r1
+    $x11 = VINSERT_8_mIdxImm0 $x10, $r30
+    $x2 = VINSERT_8_mIdxImm0 $x3, $r20
+    $x10 = VINSERT_8_mIdxImm0 $x4, $r13
+    $x7 = VINSERT_8_mIdxImm0 $x11, $r5
+    $x4 = VINSERT_8_mIdxImm0 $x5, $r31
+    $x3 = VINSERT_8_mIdxImm0 $x7, $r23
+    $x0 = VINSERT_8_mIdxImm0 $x0, $r12
+    $x5 = VINSERT_8_mIdxImm0 $x6, $r22
+    $x8 = VINSERT_8_mIdxImm0 $x2, $r11
+    $x1 = VINSERT_8_mIdxImm0 $x9, $r4
+    $x9 = VINSERT_8_mIdxImm0 $x8, $r24
+    $x6 = VINSERT_8_mIdxImm0 $x1, $r18
+    $x11 = VINSERT_8_mIdxImm0 $x10, $r16
+    $x2 = VINSERT_8_mIdxImm0 $x3, $r2
+    $x10 = VINSERT_8_mIdxImm0 $x4, $r29
+    $x7 = VINSERT_8_mIdxImm0 $x11, $r26
+    $x4 = VINSERT_8_mIdxImm0 $x5, $r27
+    $x3 = VINSERT_8_mIdxImm0 $x7, $r21
+    $x0 = VINSERT_8_mIdxImm0 $x0, $r15
+
+    ; VINSERT_8_mR29_insert
+    $x0 = VINSERT_8_mR29_insert $x7, $r29, $r2
+    $x6 = VINSERT_8_mR29_insert $x6, $r29, $r19
+    $x1 = VINSERT_8_mR29_insert $x4, $r29, $r20
+    $x9 = VINSERT_8_mR29_insert $x5, $r29, $r27
+    $x8 = VINSERT_8_mR29_insert $x3, $r29, $r30
+    $x10 = VINSERT_8_mR29_insert $x2, $r29, $r26
+    $x2 = VINSERT_8_mR29_insert $x1, $r29, $r11
+    $x11 = VINSERT_8_mR29_insert $x0, $r29, $r29
+    $x5 = VINSERT_8_mR29_insert $x10, $r29, $r3
+    $x7 = VINSERT_8_mR29_insert $x8, $r29, $r23
+    $x3 = VINSERT_8_mR29_insert $x9, $r29, $r5
+    $x4 = VINSERT_8_mR29_insert $x11, $r29, $r10
+    $x0 = VINSERT_8_mR29_insert $x7, $r29, $r18
+    $x6 = VINSERT_8_mR29_insert $x6, $r29, $r9
+    $x1 = VINSERT_8_mR29_insert $x4, $r29, $r13
+    $x9 = VINSERT_8_mR29_insert $x5, $r29, $r22
+    $x8 = VINSERT_8_mR29_insert $x3, $r29, $r15
+    $x10 = VINSERT_8_mR29_insert $x2, $r29, $r0
+    $x2 = VINSERT_8_mR29_insert $x1, $r29, $r7
+    $x11 = VINSERT_8_mR29_insert $x0, $r29, $r4
+    $x5 = VINSERT_8_mR29_insert $x10, $r29, $r25
+    $x7 = VINSERT_8_mR29_insert $x8, $r29, $r6
+    $x3 = VINSERT_8_mR29_insert $x9, $r29, $r8
+    $x4 = VINSERT_8_mR29_insert $x11, $r29, $r17
+    $x0 = VINSERT_8_mR29_insert $x7, $r29, $r28
+    $x6 = VINSERT_8_mR29_insert $x6, $r29, $r31
+    $x1 = VINSERT_8_mR29_insert $x4, $r29, $r14
+    $x9 = VINSERT_8_mR29_insert $x5, $r29, $r12
+    $x8 = VINSERT_8_mR29_insert $x3, $r29, $r1
+    $x10 = VINSERT_8_mR29_insert $x2, $r29, $r24
+    $x2 = VINSERT_8_mR29_insert $x1, $r29, $r21
+    $x11 = VINSERT_8_mR29_insert $x0, $r29, $r16
+...
+
+# CHECK: 0: f0 56 73 35 vinsert.16 x5, x7, #0, r13
+# CHECK: 4: f0 d6 a1 37 vinsert.16 x7, x10, #0, r7
+# CHECK: 8: f0 56 56 34 vinsert.16 x4, x5, #0, r25
+# CHECK: c: f0 16 b6 32 vinsert.16 x2, x11, #0, r24
+# CHECK: 10: f0 d6 16 30 vinsert.16 x0, x1, #0, r27
+# CHECK: 14: f0 16 03 39 vinsert.16 x9, x0, #0, r12
+# CHECK: 18: f0 96 61 31 vinsert.16 x1, x6, #0, r6
+# CHECK: 1c: f0 56 30 36 vinsert.16 x6, x3, #0, r1
+# CHECK: 20: f0 d6 25 38 vinsert.16 x8, x2, #0, r23
+# CHECK: 24: f0 16 40 3a vinsert.16 x10, x4, #0, r0
+# CHECK: 28: f0 96 93 33 vinsert.16 x3, x9, #0, r14
+# CHECK: 2c: f0 d6 87 3b vinsert.16 x11, x8, #0, r31
+# CHECK: 30: f0 96 70 35 vinsert.16 x5, x7, #0, r2
+# CHECK: 34: f0 96 a7 37 vinsert.16 x7, x10, #0, r30
+# CHECK: 38: f0 d6 52 34 vinsert.16 x4, x5, #0, r11
+# CHECK: 3c: f0 96 b5 32 vinsert.16 x2, x11, #0, r22
+# CHECK: 40: f0 56 11 30 vinsert.16 x0, x1, #0, r5
+# CHECK: 44: f0 16 05 39 vinsert.16 x9, x0, #0, r20
+# CHECK: 48: f0 16 64 31 vinsert.16 x1, x6, #0, r16
+# CHECK: 4c: f0 56 32 36 vinsert.16 x6, x3, #0, r9
+# CHECK: 50: f0 56 24 38 vinsert.16 x8, x2, #0, r17
+# CHECK: 54: f0 96 44 3a vinsert.16 x10, x4, #0, r18
+# CHECK: 58: f0 d6 90 33 vinsert.16 x3, x9, #0, r3
+# CHECK: 5c: f0 16 81 3b vinsert.16 x11, x8, #0, r4
+# CHECK: 60: f0 56 77 35 vinsert.16 x5, x7, #0, r29
+# CHECK: 64: f0 56 a5 37 vinsert.16 x7, x10, #0, r21
+# CHECK: 68: f0 16 57 34 vinsert.16 x4, x5, #0, r28
+# CHECK: 6c: f0 d6 b4 32 vinsert.16 x2, x11, #0, r19
+# CHECK: 70: f0 16 12 30 vinsert.16 x0, x1, #0, r8
+# CHECK: 74: f0 96 06 39 vinsert.16 x9, x0, #0, r26
+# CHECK: 78: f0 d6 63 31 vinsert.16 x1, x6, #0, r15
+# CHECK: 7c: f0 96 32 36 vinsert.16 x6, x3, #0, r10
+# CHECK: 80: f0 16 0a 37 vinsert.16 x7, x0, r29, r8
+# CHECK: 84: f0 d6 18 3a vinsert.16 x10, x1, r29, r3
+# CHECK: 88: f0 56 79 32 vinsert.16 x2, x7, r29, r5
+# CHECK: 8c: f0 16 6d 34 vinsert.16 x4, x6, r29, r20
+# CHECK: 90: f0 16 af 39 vinsert.16 x9, x10, r29, r28
+# CHECK: 94: f0 16 28 33 vinsert.16 x3, x2, r29, r0
+# CHECK: 98: f0 96 9b 30 vinsert.16 x0, x9, r29, r14
+# CHECK: 9c: f0 96 be 3b vinsert.16 x11, x11, r29, r26
+# CHECK: a0: f0 56 3a 38 vinsert.16 x8, x3, r29, r9
+# CHECK: a4: f0 96 5c 36 vinsert.16 x6, x5, r29, r18
+# CHECK: a8: f0 d6 4c 35 vinsert.16 x5, x4, r29, r19
+# CHECK: ac: f0 16 8b 31 vinsert.16 x1, x8, r29, r12
+# CHECK: b0: f0 56 0d 37 vinsert.16 x7, x0, r29, r21
+# CHECK: b4: f0 96 19 3a vinsert.16 x10, x1, r29, r6
+# CHECK: b8: f0 d6 7f 32 vinsert.16 x2, x7, r29, r31
+# CHECK: bc: f0 d6 6d 34 vinsert.16 x4, x6, r29, r23
+# CHECK: c0: f0 96 ad 39 vinsert.16 x9, x10, r29, r22
+# CHECK: c4: f0 56 2c 33 vinsert.16 x3, x2, r29, r17
+# CHECK: c8: f0 56 9f 30 vinsert.16 x0, x9, r29, r29
+# CHECK: cc: f0 96 bf 3b vinsert.16 x11, x11, r29, r30
+# CHECK: d0: f0 56 3e 38 vinsert.16 x8, x3, r29, r25
+# CHECK: d4: f0 56 58 36 vinsert.16 x6, x5, r29, r1
+# CHECK: d8: f0 96 48 35 vinsert.16 x5, x4, r29, r2
+# CHECK: dc: f0 56 8b 31 vinsert.16 x1, x8, r29, r13
+# CHECK: e0: f0 d6 0b 37 vinsert.16 x7, x0, r29, r15
+# CHECK: e4: f0 16 19 3a vinsert.16 x10, x1, r29, r4
+# CHECK: e8: f0 16 7c 32 vinsert.16 x2, x7, r29, r16
+# CHECK: ec: f0 96 6a 34 vinsert.16 x4, x6, r29, r10
+# CHECK: f0: f0 d6 ae 39 vinsert.16 x9, x10, r29, r27
+# CHECK: f4: f0 d6 29 33 vinsert.16 x3, x2, r29, r7
+# CHECK: f8: f0 16 9e 30 vinsert.16 x0, x9, r29, r24
+# CHECK: fc: f0 d6 ba 3b vinsert.16 x11, x11, r29, r11
+# CHECK: 100: f0 26 55 3a vinsert.32 x10, x5, #0, r20
+# CHECK: 104: f0 e6 13 33 vinsert.32 x3, x1, #0, r15
+# CHECK: 108: f0 e6 95 35 vinsert.32 x5, x9, #0, r23
+# CHECK: 10c: f0 e6 b0 38 vinsert.32 x8, x11, #0, r3
+# CHECK: 110: f0 66 00 32 vinsert.32 x2, x0, #0, r1
+# CHECK: 114: f0 66 41 30 vinsert.32 x0, x4, #0, r5
+# CHECK: 118: f0 a6 66 39 vinsert.32 x9, x6, #0, r26
+# CHECK: 11c: f0 a6 87 37 vinsert.32 x7, x8, #0, r30
+# CHECK: 120: f0 66 24 34 vinsert.32 x4, x2, #0, r17
+# CHECK: 124: f0 26 74 36 vinsert.32 x6, x7, #0, r16
+# CHECK: 128: f0 26 a1 31 vinsert.32 x1, x10, #0, r4
+# CHECK: 12c: f0 66 33 3b vinsert.32 x11, x3, #0, r13
+# CHECK: 130: f0 a6 54 3a vinsert.32 x10, x5, #0, r18
+# CHECK: 134: f0 e6 11 33 vinsert.32 x3, x1, #0, r7
+# CHECK: 138: f0 66 96 35 vinsert.32 x5, x9, #0, r25
+# CHECK: 13c: f0 e6 b7 38 vinsert.32 x8, x11, #0, r31
+# CHECK: 140: f0 66 02 32 vinsert.32 x2, x0, #0, r9
+# CHECK: 144: f0 a6 40 30 vinsert.32 x0, x4, #0, r2
+# CHECK: 148: f0 a6 62 39 vinsert.32 x9, x6, #0, r10
+# CHECK: 14c: f0 e6 84 37 vinsert.32 x7, x8, #0, r19
+# CHECK: 150: f0 26 20 34 vinsert.32 x4, x2, #0, r0
+# CHECK: 154: f0 26 77 36 vinsert.32 x6, x7, #0, r28
+# CHECK: 158: f0 26 a6 31 vinsert.32 x1, x10, #0, r24
+# CHECK: 15c: f0 26 33 3b vinsert.32 x11, x3, #0, r12
+# CHECK: 160: f0 a6 55 3a vinsert.32 x10, x5, #0, r22
+# CHECK: 164: f0 26 12 33 vinsert.32 x3, x1, #0, r8
+# CHECK: 168: f0 66 95 35 vinsert.32 x5, x9, #0, r21
+# CHECK: 16c: f0 a6 b1 38 vinsert.32 x8, x11, #0, r6
+# CHECK: 170: f0 e6 06 32 vinsert.32 x2, x0, #0, r27
+# CHECK: 174: f0 a6 43 30 vinsert.32 x0, x4, #0, r14
+# CHECK: 178: f0 e6 62 39 vinsert.32 x9, x6, #0, r11
+# CHECK: 17c: f0 66 87 37 vinsert.32 x7, x8, #0, r29
+# CHECK: 180: f0 a6 ae 31 vinsert.32 x1, x10, r29, r26
+# CHECK: 184: f0 e6 4d 36 vinsert.32 x6, x4, r29, r23
+# CHECK: 188: f0 26 89 38 vinsert.32 x8, x8, r29, r4
+# CHECK: 18c: f0 e6 b8 32 vinsert.32 x2, x11, r29, r3
+# CHECK: 190: f0 e6 5e 3a vinsert.32 x10, x5, r29, r27
+# CHECK: 194: f0 a6 79 34 vinsert.32 x4, x7, r29, r6
+# CHECK: 198: f0 e6 19 33 vinsert.32 x3, x1, r29, r7
+# CHECK: 19c: f0 66 0e 30 vinsert.32 x0, x0, r29, r25
+# CHECK: 1a0: f0 e6 3c 37 vinsert.32 x7, x3, r29, r19
+# CHECK: 1a4: f0 a6 98 3b vinsert.32 x11, x9, r29, r2
+# CHECK: 1a8: f0 66 29 35 vinsert.32 x5, x2, r29, r5
+# CHECK: 1ac: f0 26 6b 39 vinsert.32 x9, x6, r29, r12
+# CHECK: 1b0: f0 26 a8 31 vinsert.32 x1, x10, r29, r0
+# CHECK: 1b4: f0 26 4d 36 vinsert.32 x6, x4, r29, r20
+# CHECK: 1b8: f0 a6 8f 38 vinsert.32 x8, x8, r29, r30
+# CHECK: 1bc: f0 66 b8 32 vinsert.32 x2, x11, r29, r1
+# CHECK: 1c0: f0 a6 5a 3a vinsert.32 x10, x5, r29, r10
+# CHECK: 1c4: f0 a6 7c 34 vinsert.32 x4, x7, r29, r18
+# CHECK: 1c8: f0 e6 1f 33 vinsert.32 x3, x1, r29, r31
+# CHECK: 1cc: f0 66 0f 30 vinsert.32 x0, x0, r29, r29
+# CHECK: 1d0: f0 e6 3a 37 vinsert.32 x7, x3, r29, r11
+# CHECK: 1d4: f0 26 9a 3b vinsert.32 x11, x9, r29, r8
+# CHECK: 1d8: f0 a6 2d 35 vinsert.32 x5, x2, r29, r22
+# CHECK: 1dc: f0 66 6a 39 vinsert.32 x9, x6, r29, r9
+# CHECK: 1e0: f0 66 ac 31 vinsert.32 x1, x10, r29, r17
+# CHECK: 1e4: f0 e6 4b 36 vinsert.32 x6, x4, r29, r15
+# CHECK: 1e8: f0 26 8f 38 vinsert.32 x8, x8, r29, r28
+# CHECK: 1ec: f0 66 bd 32 vinsert.32 x2, x11, r29, r21
+# CHECK: 1f0: f0 26 5e 3a vinsert.32 x10, x5, r29, r24
+# CHECK: 1f4: f0 26 7c 34 vinsert.32 x4, x7, r29, r16
+# CHECK: 1f8: f0 66 1b 33 vinsert.32 x3, x1, r29, r13
+# CHECK: 1fc: f0 a6 0b 30 vinsert.32 x0, x0, r29, r14
+# CHECK: 200: f0 b6 26 37 vinsert.64 x7, x2, #0, r27:r26
+# CHECK: 204: f0 36 73 38 vinsert.64 x8, x7, #0, r13:r12
+# CHECK: 208: f0 b6 a7 39 vinsert.64 x9, x10, #0, r31:r30
+# CHECK: 20c: f0 36 57 33 vinsert.64 x3, x5, #0, r29:r28
+# CHECK: 210: f0 b6 05 32 vinsert.64 x2, x0, #0, r23:r22
+# CHECK: 214: f0 36 66 3b vinsert.64 x11, x6, #0, r25:r24
+# CHECK: 218: f0 36 30 3a vinsert.64 x10, x3, #0, r1:r0
+# CHECK: 21c: f0 b6 91 31 vinsert.64 x1, x9, #0, r7:r6
+# CHECK: 220: f0 b6 b3 35 vinsert.64 x5, x11, #0, r15:r14
+# CHECK: 224: f0 36 15 36 vinsert.64 x6, x1, #0, r21:r20
+# CHECK: 228: f0 b6 84 34 vinsert.64 x4, x8, #0, r19:r18
+# CHECK: 22c: f0 36 41 30 vinsert.64 x0, x4, #0, r5:r4
+# CHECK: 230: f0 36 22 37 vinsert.64 x7, x2, #0, r9:r8
+# CHECK: 234: f0 b6 72 38 vinsert.64 x8, x7, #0, r11:r10
+# CHECK: 238: f0 36 a4 39 vinsert.64 x9, x10, #0, r17:r16
+# CHECK: 23c: f0 b6 50 33 vinsert.64 x3, x5, #0, r3:r2
+# CHECK: 240: f0 b6 3e 37 vinsert.64 x7, x3, r29, r27:r26
+# CHECK: 244: f0 36 0d 3a vinsert.64 x10, x0, r29, r21:r20
+# CHECK: 248: f0 b6 78 35 vinsert.64 x5, x7, r29, r3:r2
+# CHECK: 24c: f0 b6 a9 33 vinsert.64 x3, x10, r29, r7:r6
+# CHECK: 250: f0 36 9e 38 vinsert.64 x8, x9, r29, r25:r24
+# CHECK: 254: f0 b6 6a 31 vinsert.64 x1, x6, r29, r11:r10
+# CHECK: 258: f0 b6 5c 30 vinsert.64 x0, x5, r29, r19:r18
+# CHECK: 25c: f0 36 4c 39 vinsert.64 x9, x4, r29, r17:r16
+# CHECK: 260: f0 b6 2b 3b vinsert.64 x11, x2, r29, r15:r14
+# CHECK: 264: f0 36 88 36 vinsert.64 x6, x8, r29, r1:r0
+# CHECK: 268: f0 36 1b 32 vinsert.64 x2, x1, r29, r13:r12
+# CHECK: 26c: f0 36 bf 34 vinsert.64 x4, x11, r29, r29:r28
+# CHECK: 270: f0 b6 3f 37 vinsert.64 x7, x3, r29, r31:r30
+# CHECK: 274: f0 36 09 3a vinsert.64 x10, x0, r29, r5:r4
+# CHECK: 278: f0 b6 7d 35 vinsert.64 x5, x7, r29, r23:r22
+# CHECK: 27c: f0 36 aa 33 vinsert.64 x3, x10, r29, r9:r8
+# CHECK: 280: f0 46 12 36 vinsert.8 x6, x1, #0, r9
+# CHECK: 284: f0 86 a2 3b vinsert.8 x11, x10, #0, r10
+# CHECK: 288: f0 06 30 32 vinsert.8 x2, x3, #0, r0
+# CHECK: 28c: f0 06 47 3a vinsert.8 x10, x4, #0, r28
+# CHECK: 290: f0 86 b1 37 vinsert.8 x7, x11, #0, r6
+# CHECK: 294: f0 c6 51 34 vinsert.8 x4, x5, #0, r7
+# CHECK: 298: f0 46 76 33 vinsert.8 x3, x7, #0, r25
+# CHECK: 29c: f0 86 03 30 vinsert.8 x0, x0, #0, r14
+# CHECK: 2a0: f0 46 64 35 vinsert.8 x5, x6, #0, r17
+# CHECK: 2a4: f0 c6 20 38 vinsert.8 x8, x2, #0, r3
+# CHECK: 2a8: f0 c6 94 31 vinsert.8 x1, x9, #0, r19
+# CHECK: 2ac: f0 06 82 39 vinsert.8 x9, x8, #0, r8
+# CHECK: 2b0: f0 46 10 36 vinsert.8 x6, x1, #0, r1
+# CHECK: 2b4: f0 86 a7 3b vinsert.8 x11, x10, #0, r30
+# CHECK: 2b8: f0 06 35 32 vinsert.8 x2, x3, #0, r20
+# CHECK: 2bc: f0 46 43 3a vinsert.8 x10, x4, #0, r13
+# CHECK: 2c0: f0 46 b1 37 vinsert.8 x7, x11, #0, r5
+# CHECK: 2c4: f0 c6 57 34 vinsert.8 x4, x5, #0, r31
+# CHECK: 2c8: f0 c6 75 33 vinsert.8 x3, x7, #0, r23
+# CHECK: 2cc: f0 06 03 30 vinsert.8 x0, x0, #0, r12
+# CHECK: 2d0: f0 86 65 35 vinsert.8 x5, x6, #0, r22
+# CHECK: 2d4: f0 c6 22 38 vinsert.8 x8, x2, #0, r11
+# CHECK: 2d8: f0 06 91 31 vinsert.8 x1, x9, #0, r4
+# CHECK: 2dc: f0 06 86 39 vinsert.8 x9, x8, #0, r24
+# CHECK: 2e0: f0 86 14 36 vinsert.8 x6, x1, #0, r18
+# CHECK: 2e4: f0 06 a4 3b vinsert.8 x11, x10, #0, r16
+# CHECK: 2e8: f0 86 30 32 vinsert.8 x2, x3, #0, r2
+# CHECK: 2ec: f0 46 47 3a vinsert.8 x10, x4, #0, r29
+# CHECK: 2f0: f0 86 b6 37 vinsert.8 x7, x11, #0, r26
+# CHECK: 2f4: f0 c6 56 34 vinsert.8 x4, x5, #0, r27
+# CHECK: 2f8: f0 46 75 33 vinsert.8 x3, x7, #0, r21
+# CHECK: 2fc: f0 c6 03 30 vinsert.8 x0, x0, #0, r15
+# CHECK: 300: f0 86 78 30 vinsert.8 x0, x7, r29, r2
+# CHECK: 304: f0 c6 6c 36 vinsert.8 x6, x6, r29, r19
+# CHECK: 308: f0 06 4d 31 vinsert.8 x1, x4, r29, r20
+# CHECK: 30c: f0 c6 5e 39 vinsert.8 x9, x5, r29, r27
+# CHECK: 310: f0 86 3f 38 vinsert.8 x8, x3, r29, r30
+# CHECK: 314: f0 86 2e 3a vinsert.8 x10, x2, r29, r26
+# CHECK: 318: f0 c6 1a 32 vinsert.8 x2, x1, r29, r11
+# CHECK: 31c: f0 46 0f 3b vinsert.8 x11, x0, r29, r29
+# CHECK: 320: f0 c6 a8 35 vinsert.8 x5, x10, r29, r3
+# CHECK: 324: f0 c6 8d 37 vinsert.8 x7, x8, r29, r23
+# CHECK: 328: f0 46 99 33 vinsert.8 x3, x9, r29, r5
+# CHECK: 32c: f0 86 ba 34 vinsert.8 x4, x11, r29, r10
+# CHECK: 330: f0 86 7c 30 vinsert.8 x0, x7, r29, r18
+# CHECK: 334: f0 46 6a 36 vinsert.8 x6, x6, r29, r9
+# CHECK: 338: f0 46 4b 31 vinsert.8 x1, x4, r29, r13
+# CHECK: 33c: f0 86 5d 39 vinsert.8 x9, x5, r29, r22
+# CHECK: 340: f0 c6 3b 38 vinsert.8 x8, x3, r29, r15
+# CHECK: 344: f0 06 28 3a vinsert.8 x10, x2, r29, r0
+# CHECK: 348: f0 c6 19 32 vinsert.8 x2, x1, r29, r7
+# CHECK: 34c: f0 06 09 3b vinsert.8 x11, x0, r29, r4
+# CHECK: 350: f0 46 ae 35 vinsert.8 x5, x10, r29, r25
+# CHECK: 354: f0 86 89 37 vinsert.8 x7, x8, r29, r6
+# CHECK: 358: f0 06 9a 33 vinsert.8 x3, x9, r29, r8
+# CHECK: 35c: f0 46 bc 34 vinsert.8 x4, x11, r29, r17
+# CHECK: 360: f0 06 7f 30 vinsert.8 x0, x7, r29, r28
+# CHECK: 364: f0 c6 6f 36 vinsert.8 x6, x6, r29, r31
+# CHECK: 368: f0 86 4b 31 vinsert.8 x1, x4, r29, r14
+# CHECK: 36c: f0 06 5b 39 vinsert.8 x9, x5, r29, r12
+# CHECK: 370: f0 46 38 38 vinsert.8 x8, x3, r29, r1
+# CHECK: 374: f0 06 2e 3a vinsert.8 x10, x2, r29, r24
+# CHECK: 378: f0 46 1d 32 vinsert.8 x2, x1, r29, r21
+# CHECK: 37c: f0 06 0c 3b vinsert.8 x11, x0, r29, r16

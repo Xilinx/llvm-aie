@@ -1,0 +1,362 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VGE_16_vaddSign0
+    $r18 = VGE_16_vaddSign0 $x4, $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r30 = VGE_16_vaddSign0 $x0, $x3, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r29 = VGE_16_vaddSign0 $x7, $x7, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r26 = VGE_16_vaddSign0 $x8, $x6, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r24 = VGE_16_vaddSign0 $x1, $x9, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r19 = VGE_16_vaddSign0 $x10, $x0, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r23 = VGE_16_vaddSign0 $x9, $x11, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r16 = VGE_16_vaddSign0 $x3, $x5, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r31 = VGE_16_vaddSign0 $x5, $x2, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r17 = VGE_16_vaddSign0 $x11, $x4, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r21 = VGE_16_vaddSign0 $x6, $x10, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r20 = VGE_16_vaddSign0 $x2, $x8, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r28 = VGE_16_vaddSign0 $x4, $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r25 = VGE_16_vaddSign0 $x0, $x3, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r27 = VGE_16_vaddSign0 $x7, $x7, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r22 = VGE_16_vaddSign0 $x8, $x6, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+
+    ; VGE_16_vaddSign1
+    $r26 = VGE_16_vaddSign1 $x10, $x11, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r30 = VGE_16_vaddSign1 $x9, $x2, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r27 = VGE_16_vaddSign1 $x1, $x9, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r17 = VGE_16_vaddSign1 $x2, $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r18 = VGE_16_vaddSign1 $x5, $x3, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r21 = VGE_16_vaddSign1 $x4, $x4, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r23 = VGE_16_vaddSign1 $x7, $x10, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r28 = VGE_16_vaddSign1 $x3, $x7, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r16 = VGE_16_vaddSign1 $x6, $x5, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r31 = VGE_16_vaddSign1 $x11, $x8, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r24 = VGE_16_vaddSign1 $x8, $x0, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r25 = VGE_16_vaddSign1 $x0, $x6, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r19 = VGE_16_vaddSign1 $x10, $x11, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r20 = VGE_16_vaddSign1 $x9, $x2, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r22 = VGE_16_vaddSign1 $x1, $x9, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r29 = VGE_16_vaddSign1 $x2, $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+
+    ; VGE_32_vaddSign0
+    $r31 = VGE_32_vaddSign0 $x7, $x10, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r20 = VGE_32_vaddSign0 $x10, $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r24 = VGE_32_vaddSign0 $x9, $x2, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r17 = VGE_32_vaddSign0 $x6, $x7, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r18 = VGE_32_vaddSign0 $x2, $x0, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r19 = VGE_32_vaddSign0 $x5, $x6, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r23 = VGE_32_vaddSign0 $x11, $x3, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r22 = VGE_32_vaddSign0 $x0, $x11, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r25 = VGE_32_vaddSign0 $x1, $x9, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r16 = VGE_32_vaddSign0 $x3, $x4, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r28 = VGE_32_vaddSign0 $x8, $x5, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r30 = VGE_32_vaddSign0 $x4, $x8, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r21 = VGE_32_vaddSign0 $x7, $x10, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r29 = VGE_32_vaddSign0 $x10, $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r27 = VGE_32_vaddSign0 $x9, $x2, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $r26 = VGE_32_vaddSign0 $x6, $x7, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+
+    ; VGE_32_vaddSign1
+    $r20 = VGE_32_vaddSign1 $x7, $x11, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r18 = VGE_32_vaddSign1 $x11, $x9, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r19 = VGE_32_vaddSign1 $x4, $x5, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r29 = VGE_32_vaddSign1 $x10, $x2, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r30 = VGE_32_vaddSign1 $x9, $x8, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r26 = VGE_32_vaddSign1 $x5, $x4, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r25 = VGE_32_vaddSign1 $x0, $x6, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r28 = VGE_32_vaddSign1 $x6, $x7, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r24 = VGE_32_vaddSign1 $x1, $x10, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r22 = VGE_32_vaddSign1 $x8, $x3, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r31 = VGE_32_vaddSign1 $x3, $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r16 = VGE_32_vaddSign1 $x2, $x0, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r17 = VGE_32_vaddSign1 $x7, $x11, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r23 = VGE_32_vaddSign1 $x11, $x9, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r21 = VGE_32_vaddSign1 $x4, $x5, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $r27 = VGE_32_vaddSign1 $x10, $x2, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+
+    ; VGE_8_vaddSign0
+    $l1 = VGE_8_vaddSign0 $x8, $x7, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $l15 = VGE_8_vaddSign0 $x5, $x8, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $l14 = VGE_8_vaddSign0 $x0, $x10, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $l10 = VGE_8_vaddSign0 $x7, $x5, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $l2 = VGE_8_vaddSign0 $x2, $x6, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $l6 = VGE_8_vaddSign0 $x11, $x9, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $l11 = VGE_8_vaddSign0 $x4, $x11, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $l5 = VGE_8_vaddSign0 $x1, $x3, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $l12 = VGE_8_vaddSign0 $x9, $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $l3 = VGE_8_vaddSign0 $x3, $x0, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $l4 = VGE_8_vaddSign0 $x6, $x4, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $l0 = VGE_8_vaddSign0 $x10, $x2, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $l8 = VGE_8_vaddSign0 $x8, $x7, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $l9 = VGE_8_vaddSign0 $x5, $x8, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $l13 = VGE_8_vaddSign0 $x0, $x10, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $l7 = VGE_8_vaddSign0 $x7, $x5, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+
+    ; VGE_8_vaddSign1
+    $l12 = VGE_8_vaddSign1 $x9, $x9, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $l7 = VGE_8_vaddSign1 $x2, $x5, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $l6 = VGE_8_vaddSign1 $x0, $x2, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $l14 = VGE_8_vaddSign1 $x8, $x6, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $l13 = VGE_8_vaddSign1 $x7, $x3, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $l4 = VGE_8_vaddSign1 $x11, $x8, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $l9 = VGE_8_vaddSign1 $x4, $x11, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $l3 = VGE_8_vaddSign1 $x6, $x4, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $l1 = VGE_8_vaddSign1 $x10, $x7, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $l8 = VGE_8_vaddSign1 $x5, $x10, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $l5 = VGE_8_vaddSign1 $x1, $x0, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $l11 = VGE_8_vaddSign1 $x3, $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $l15 = VGE_8_vaddSign1 $x9, $x9, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $l10 = VGE_8_vaddSign1 $x2, $x5, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $l0 = VGE_8_vaddSign1 $x0, $x2, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $l2 = VGE_8_vaddSign1 $x8, $x6, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+
+    ; VGE_bf16
+    $r25 = VGE_bf16 $x7, $x5, implicit $crbf8conf, implicit $crfp8conf
+    $r31 = VGE_bf16 $x8, $x3, implicit $crbf8conf, implicit $crfp8conf
+    $r29 = VGE_bf16 $x3, $x7, implicit $crbf8conf, implicit $crfp8conf
+    $r30 = VGE_bf16 $x10, $x0, implicit $crbf8conf, implicit $crfp8conf
+    $r23 = VGE_bf16 $x11, $x9, implicit $crbf8conf, implicit $crfp8conf
+    $r18 = VGE_bf16 $x0, $x11, implicit $crbf8conf, implicit $crfp8conf
+    $r26 = VGE_bf16 $x6, $x10, implicit $crbf8conf, implicit $crfp8conf
+    $r19 = VGE_bf16 $x1, $x8, implicit $crbf8conf, implicit $crfp8conf
+    $r16 = VGE_bf16 $x5, $x1, implicit $crbf8conf, implicit $crfp8conf
+    $r22 = VGE_bf16 $x4, $x2, implicit $crbf8conf, implicit $crfp8conf
+    $r17 = VGE_bf16 $x9, $x6, implicit $crbf8conf, implicit $crfp8conf
+    $r21 = VGE_bf16 $x2, $x4, implicit $crbf8conf, implicit $crfp8conf
+    $r27 = VGE_bf16 $x7, $x5, implicit $crbf8conf, implicit $crfp8conf
+    $r20 = VGE_bf16 $x8, $x3, implicit $crbf8conf, implicit $crfp8conf
+    $r28 = VGE_bf16 $x3, $x7, implicit $crbf8conf, implicit $crfp8conf
+    $r24 = VGE_bf16 $x10, $x0, implicit $crbf8conf, implicit $crfp8conf
+
+    ; VGE_bf8
+    $l13 = VGE_bf8 $x4, $x9, implicit $crbf8conf, implicit $crfp8conf
+    $l9 = VGE_bf8 $x11, $x3, implicit $crbf8conf, implicit $crfp8conf
+    $l1 = VGE_bf8 $x9, $x1, implicit $crbf8conf, implicit $crfp8conf
+    $l2 = VGE_bf8 $x1, $x4, implicit $crbf8conf, implicit $crfp8conf
+    $l4 = VGE_bf8 $x3, $x6, implicit $crbf8conf, implicit $crfp8conf
+    $l11 = VGE_bf8 $x7, $x5, implicit $crbf8conf, implicit $crfp8conf
+    $l0 = VGE_bf8 $x6, $x0, implicit $crbf8conf, implicit $crfp8conf
+    $l6 = VGE_bf8 $x2, $x7, implicit $crbf8conf, implicit $crfp8conf
+    $l14 = VGE_bf8 $x5, $x11, implicit $crbf8conf, implicit $crfp8conf
+    $l15 = VGE_bf8 $x10, $x10, implicit $crbf8conf, implicit $crfp8conf
+    $l10 = VGE_bf8 $x0, $x2, implicit $crbf8conf, implicit $crfp8conf
+    $l8 = VGE_bf8 $x8, $x8, implicit $crbf8conf, implicit $crfp8conf
+    $l5 = VGE_bf8 $x4, $x9, implicit $crbf8conf, implicit $crfp8conf
+    $l12 = VGE_bf8 $x11, $x3, implicit $crbf8conf, implicit $crfp8conf
+    $l7 = VGE_bf8 $x9, $x1, implicit $crbf8conf, implicit $crfp8conf
+    $l3 = VGE_bf8 $x1, $x4, implicit $crbf8conf, implicit $crfp8conf
+
+    ; VGE_fp16
+    $r31 = VGE_fp16 $x3, $x11, implicit $crbf8conf, implicit $crfp8conf
+    $r17 = VGE_fp16 $x2, $x7, implicit $crbf8conf, implicit $crfp8conf
+    $r30 = VGE_fp16 $x10, $x9, implicit $crbf8conf, implicit $crfp8conf
+    $r20 = VGE_fp16 $x1, $x6, implicit $crbf8conf, implicit $crfp8conf
+    $r22 = VGE_fp16 $x0, $x0, implicit $crbf8conf, implicit $crfp8conf
+    $r27 = VGE_fp16 $x7, $x5, implicit $crbf8conf, implicit $crfp8conf
+    $r23 = VGE_fp16 $x6, $x3, implicit $crbf8conf, implicit $crfp8conf
+    $r18 = VGE_fp16 $x5, $x1, implicit $crbf8conf, implicit $crfp8conf
+    $r28 = VGE_fp16 $x9, $x4, implicit $crbf8conf, implicit $crfp8conf
+    $r24 = VGE_fp16 $x4, $x10, implicit $crbf8conf, implicit $crfp8conf
+    $r29 = VGE_fp16 $x11, $x2, implicit $crbf8conf, implicit $crfp8conf
+    $r21 = VGE_fp16 $x8, $x8, implicit $crbf8conf, implicit $crfp8conf
+    $r25 = VGE_fp16 $x3, $x11, implicit $crbf8conf, implicit $crfp8conf
+    $r26 = VGE_fp16 $x2, $x7, implicit $crbf8conf, implicit $crfp8conf
+    $r16 = VGE_fp16 $x10, $x9, implicit $crbf8conf, implicit $crfp8conf
+    $r19 = VGE_fp16 $x1, $x6, implicit $crbf8conf, implicit $crfp8conf
+
+    ; VGE_fp8
+    $l9 = VGE_fp8 $x3, $x1, implicit $crbf8conf, implicit $crfp8conf
+    $l12 = VGE_fp8 $x9, $x5, implicit $crbf8conf, implicit $crfp8conf
+    $l14 = VGE_fp8 $x4, $x8, implicit $crbf8conf, implicit $crfp8conf
+    $l3 = VGE_fp8 $x2, $x0, implicit $crbf8conf, implicit $crfp8conf
+    $l11 = VGE_fp8 $x10, $x7, implicit $crbf8conf, implicit $crfp8conf
+    $l4 = VGE_fp8 $x7, $x11, implicit $crbf8conf, implicit $crfp8conf
+    $l15 = VGE_fp8 $x11, $x4, implicit $crbf8conf, implicit $crfp8conf
+    $l1 = VGE_fp8 $x8, $x3, implicit $crbf8conf, implicit $crfp8conf
+    $l13 = VGE_fp8 $x5, $x2, implicit $crbf8conf, implicit $crfp8conf
+    $l6 = VGE_fp8 $x6, $x6, implicit $crbf8conf, implicit $crfp8conf
+    $l7 = VGE_fp8 $x1, $x9, implicit $crbf8conf, implicit $crfp8conf
+    $l10 = VGE_fp8 $x0, $x10, implicit $crbf8conf, implicit $crfp8conf
+    $l0 = VGE_fp8 $x3, $x1, implicit $crbf8conf, implicit $crfp8conf
+    $l2 = VGE_fp8 $x9, $x5, implicit $crbf8conf, implicit $crfp8conf
+    $l8 = VGE_fp8 $x4, $x8, implicit $crbf8conf, implicit $crfp8conf
+    $l5 = VGE_fp8 $x2, $x0, implicit $crbf8conf, implicit $crfp8conf
+...
+
+# CHECK: 0: f0 92 41 32 vge.16 r18, x4, x1, vaddsign0
+# CHECK: 4: f0 92 03 3e vge.16 r30, x0, x3, vaddsign0
+# CHECK: 8: f0 92 77 3d vge.16 r29, x7, x7, vaddsign0
+# CHECK: c: f0 92 86 3a vge.16 r26, x8, x6, vaddsign0
+# CHECK: 10: f0 92 19 38 vge.16 r24, x1, x9, vaddsign0
+# CHECK: 14: f0 92 a0 33 vge.16 r19, x10, x0, vaddsign0
+# CHECK: 18: f0 92 9b 37 vge.16 r23, x9, x11, vaddsign0
+# CHECK: 1c: f0 92 35 30 vge.16 r16, x3, x5, vaddsign0
+# CHECK: 20: f0 92 52 3f vge.16 r31, x5, x2, vaddsign0
+# CHECK: 24: f0 92 b4 31 vge.16 r17, x11, x4, vaddsign0
+# CHECK: 28: f0 92 6a 35 vge.16 r21, x6, x10, vaddsign0
+# CHECK: 2c: f0 92 28 34 vge.16 r20, x2, x8, vaddsign0
+# CHECK: 30: f0 92 41 3c vge.16 r28, x4, x1, vaddsign0
+# CHECK: 34: f0 92 03 39 vge.16 r25, x0, x3, vaddsign0
+# CHECK: 38: f0 92 77 3b vge.16 r27, x7, x7, vaddsign0
+# CHECK: 3c: f0 92 86 36 vge.16 r22, x8, x6, vaddsign0
+# CHECK: 40: f0 d2 ab 3a vge.16 r26, x10, x11, vaddsign1
+# CHECK: 44: f0 d2 92 3e vge.16 r30, x9, x2, vaddsign1
+# CHECK: 48: f0 d2 19 3b vge.16 r27, x1, x9, vaddsign1
+# CHECK: 4c: f0 d2 21 31 vge.16 r17, x2, x1, vaddsign1
+# CHECK: 50: f0 d2 53 32 vge.16 r18, x5, x3, vaddsign1
+# CHECK: 54: f0 d2 44 35 vge.16 r21, x4, x4, vaddsign1
+# CHECK: 58: f0 d2 7a 37 vge.16 r23, x7, x10, vaddsign1
+# CHECK: 5c: f0 d2 37 3c vge.16 r28, x3, x7, vaddsign1
+# CHECK: 60: f0 d2 65 30 vge.16 r16, x6, x5, vaddsign1
+# CHECK: 64: f0 d2 b8 3f vge.16 r31, x11, x8, vaddsign1
+# CHECK: 68: f0 d2 80 38 vge.16 r24, x8, x0, vaddsign1
+# CHECK: 6c: f0 d2 06 39 vge.16 r25, x0, x6, vaddsign1
+# CHECK: 70: f0 d2 ab 33 vge.16 r19, x10, x11, vaddsign1
+# CHECK: 74: f0 d2 92 34 vge.16 r20, x9, x2, vaddsign1
+# CHECK: 78: f0 d2 19 36 vge.16 r22, x1, x9, vaddsign1
+# CHECK: 7c: f0 d2 21 3d vge.16 r29, x2, x1, vaddsign1
+# CHECK: 80: f0 a2 7a 3f vge.32 r31, x7, x10, vaddsign0
+# CHECK: 84: f0 a2 a1 34 vge.32 r20, x10, x1, vaddsign0
+# CHECK: 88: f0 a2 92 38 vge.32 r24, x9, x2, vaddsign0
+# CHECK: 8c: f0 a2 67 31 vge.32 r17, x6, x7, vaddsign0
+# CHECK: 90: f0 a2 20 32 vge.32 r18, x2, x0, vaddsign0
+# CHECK: 94: f0 a2 56 33 vge.32 r19, x5, x6, vaddsign0
+# CHECK: 98: f0 a2 b3 37 vge.32 r23, x11, x3, vaddsign0
+# CHECK: 9c: f0 a2 0b 36 vge.32 r22, x0, x11, vaddsign0
+# CHECK: a0: f0 a2 19 39 vge.32 r25, x1, x9, vaddsign0
+# CHECK: a4: f0 a2 34 30 vge.32 r16, x3, x4, vaddsign0
+# CHECK: a8: f0 a2 85 3c vge.32 r28, x8, x5, vaddsign0
+# CHECK: ac: f0 a2 48 3e vge.32 r30, x4, x8, vaddsign0
+# CHECK: b0: f0 a2 7a 35 vge.32 r21, x7, x10, vaddsign0
+# CHECK: b4: f0 a2 a1 3d vge.32 r29, x10, x1, vaddsign0
+# CHECK: b8: f0 a2 92 3b vge.32 r27, x9, x2, vaddsign0
+# CHECK: bc: f0 a2 67 3a vge.32 r26, x6, x7, vaddsign0
+# CHECK: c0: f0 e2 7b 34 vge.32 r20, x7, x11, vaddsign1
+# CHECK: c4: f0 e2 b9 32 vge.32 r18, x11, x9, vaddsign1
+# CHECK: c8: f0 e2 45 33 vge.32 r19, x4, x5, vaddsign1
+# CHECK: cc: f0 e2 a2 3d vge.32 r29, x10, x2, vaddsign1
+# CHECK: d0: f0 e2 98 3e vge.32 r30, x9, x8, vaddsign1
+# CHECK: d4: f0 e2 54 3a vge.32 r26, x5, x4, vaddsign1
+# CHECK: d8: f0 e2 06 39 vge.32 r25, x0, x6, vaddsign1
+# CHECK: dc: f0 e2 67 3c vge.32 r28, x6, x7, vaddsign1
+# CHECK: e0: f0 e2 1a 38 vge.32 r24, x1, x10, vaddsign1
+# CHECK: e4: f0 e2 83 36 vge.32 r22, x8, x3, vaddsign1
+# CHECK: e8: f0 e2 31 3f vge.32 r31, x3, x1, vaddsign1
+# CHECK: ec: f0 e2 20 30 vge.32 r16, x2, x0, vaddsign1
+# CHECK: f0: f0 e2 7b 31 vge.32 r17, x7, x11, vaddsign1
+# CHECK: f4: f0 e2 b9 37 vge.32 r23, x11, x9, vaddsign1
+# CHECK: f8: f0 e2 45 35 vge.32 r21, x4, x5, vaddsign1
+# CHECK: fc: f0 e2 a2 3b vge.32 r27, x10, x2, vaddsign1
+# CHECK: 100: f0 82 87 31 vge.8 r3:r2, x8, x7, vaddsign0
+# CHECK: 104: f0 82 58 3f vge.8 r31:r30, x5, x8, vaddsign0
+# CHECK: 108: f0 82 0a 3e vge.8 r29:r28, x0, x10, vaddsign0
+# CHECK: 10c: f0 82 75 3a vge.8 r21:r20, x7, x5, vaddsign0
+# CHECK: 110: f0 82 26 32 vge.8 r5:r4, x2, x6, vaddsign0
+# CHECK: 114: f0 82 b9 36 vge.8 r13:r12, x11, x9, vaddsign0
+# CHECK: 118: f0 82 4b 3b vge.8 r23:r22, x4, x11, vaddsign0
+# CHECK: 11c: f0 82 13 35 vge.8 r11:r10, x1, x3, vaddsign0
+# CHECK: 120: f0 82 91 3c vge.8 r25:r24, x9, x1, vaddsign0
+# CHECK: 124: f0 82 30 33 vge.8 r7:r6, x3, x0, vaddsign0
+# CHECK: 128: f0 82 64 34 vge.8 r9:r8, x6, x4, vaddsign0
+# CHECK: 12c: f0 82 a2 30 vge.8 r1:r0, x10, x2, vaddsign0
+# CHECK: 130: f0 82 87 38 vge.8 r17:r16, x8, x7, vaddsign0
+# CHECK: 134: f0 82 58 39 vge.8 r19:r18, x5, x8, vaddsign0
+# CHECK: 138: f0 82 0a 3d vge.8 r27:r26, x0, x10, vaddsign0
+# CHECK: 13c: f0 82 75 37 vge.8 r15:r14, x7, x5, vaddsign0
+# CHECK: 140: f0 c2 99 3c vge.8 r25:r24, x9, x9, vaddsign1
+# CHECK: 144: f0 c2 25 37 vge.8 r15:r14, x2, x5, vaddsign1
+# CHECK: 148: f0 c2 02 36 vge.8 r13:r12, x0, x2, vaddsign1
+# CHECK: 14c: f0 c2 86 3e vge.8 r29:r28, x8, x6, vaddsign1
+# CHECK: 150: f0 c2 73 3d vge.8 r27:r26, x7, x3, vaddsign1
+# CHECK: 154: f0 c2 b8 34 vge.8 r9:r8, x11, x8, vaddsign1
+# CHECK: 158: f0 c2 4b 39 vge.8 r19:r18, x4, x11, vaddsign1
+# CHECK: 15c: f0 c2 64 33 vge.8 r7:r6, x6, x4, vaddsign1
+# CHECK: 160: f0 c2 a7 31 vge.8 r3:r2, x10, x7, vaddsign1
+# CHECK: 164: f0 c2 5a 38 vge.8 r17:r16, x5, x10, vaddsign1
+# CHECK: 168: f0 c2 10 35 vge.8 r11:r10, x1, x0, vaddsign1
+# CHECK: 16c: f0 c2 31 3b vge.8 r23:r22, x3, x1, vaddsign1
+# CHECK: 170: f0 c2 99 3f vge.8 r31:r30, x9, x9, vaddsign1
+# CHECK: 174: f0 c2 25 3a vge.8 r21:r20, x2, x5, vaddsign1
+# CHECK: 178: f0 c2 02 30 vge.8 r1:r0, x0, x2, vaddsign1
+# CHECK: 17c: f0 c2 86 32 vge.8 r5:r4, x8, x6, vaddsign1
+# CHECK: 180: f0 5d 75 39 vge.bf16 r25, x7, x5
+# CHECK: 184: f0 5d 83 3f vge.bf16 r31, x8, x3
+# CHECK: 188: f0 5d 37 3d vge.bf16 r29, x3, x7
+# CHECK: 18c: f0 5d a0 3e vge.bf16 r30, x10, x0
+# CHECK: 190: f0 5d b9 37 vge.bf16 r23, x11, x9
+# CHECK: 194: f0 5d 0b 32 vge.bf16 r18, x0, x11
+# CHECK: 198: f0 5d 6a 3a vge.bf16 r26, x6, x10
+# CHECK: 19c: f0 5d 18 33 vge.bf16 r19, x1, x8
+# CHECK: 1a0: f0 5d 51 30 vge.bf16 r16, x5, x1
+# CHECK: 1a4: f0 5d 42 36 vge.bf16 r22, x4, x2
+# CHECK: 1a8: f0 5d 96 31 vge.bf16 r17, x9, x6
+# CHECK: 1ac: f0 5d 24 35 vge.bf16 r21, x2, x4
+# CHECK: 1b0: f0 5d 75 3b vge.bf16 r27, x7, x5
+# CHECK: 1b4: f0 5d 83 34 vge.bf16 r20, x8, x3
+# CHECK: 1b8: f0 5d 37 3c vge.bf16 r28, x3, x7
+# CHECK: 1bc: f0 5d a0 38 vge.bf16 r24, x10, x0
+# CHECK: 1c0: f0 43 49 3d vge.bf8 r27:r26, x4, x9
+# CHECK: 1c4: f0 43 b3 39 vge.bf8 r19:r18, x11, x3
+# CHECK: 1c8: f0 43 91 31 vge.bf8 r3:r2, x9, x1
+# CHECK: 1cc: f0 43 14 32 vge.bf8 r5:r4, x1, x4
+# CHECK: 1d0: f0 43 36 34 vge.bf8 r9:r8, x3, x6
+# CHECK: 1d4: f0 43 75 3b vge.bf8 r23:r22, x7, x5
+# CHECK: 1d8: f0 43 60 30 vge.bf8 r1:r0, x6, x0
+# CHECK: 1dc: f0 43 27 36 vge.bf8 r13:r12, x2, x7
+# CHECK: 1e0: f0 43 5b 3e vge.bf8 r29:r28, x5, x11
+# CHECK: 1e4: f0 43 aa 3f vge.bf8 r31:r30, x10, x10
+# CHECK: 1e8: f0 43 02 3a vge.bf8 r21:r20, x0, x2
+# CHECK: 1ec: f0 43 88 38 vge.bf8 r17:r16, x8, x8
+# CHECK: 1f0: f0 43 49 35 vge.bf8 r11:r10, x4, x9
+# CHECK: 1f4: f0 43 b3 3c vge.bf8 r25:r24, x11, x3
+# CHECK: 1f8: f0 43 91 37 vge.bf8 r15:r14, x9, x1
+# CHECK: 1fc: f0 43 14 33 vge.bf8 r7:r6, x1, x4
+# CHECK: 200: f0 dd 3b 3f vge.fp16 r31, x3, x11
+# CHECK: 204: f0 dd 27 31 vge.fp16 r17, x2, x7
+# CHECK: 208: f0 dd a9 3e vge.fp16 r30, x10, x9
+# CHECK: 20c: f0 dd 16 34 vge.fp16 r20, x1, x6
+# CHECK: 210: f0 dd 00 36 vge.fp16 r22, x0, x0
+# CHECK: 214: f0 dd 75 3b vge.fp16 r27, x7, x5
+# CHECK: 218: f0 dd 63 37 vge.fp16 r23, x6, x3
+# CHECK: 21c: f0 dd 51 32 vge.fp16 r18, x5, x1
+# CHECK: 220: f0 dd 94 3c vge.fp16 r28, x9, x4
+# CHECK: 224: f0 dd 4a 38 vge.fp16 r24, x4, x10
+# CHECK: 228: f0 dd b2 3d vge.fp16 r29, x11, x2
+# CHECK: 22c: f0 dd 88 35 vge.fp16 r21, x8, x8
+# CHECK: 230: f0 dd 3b 39 vge.fp16 r25, x3, x11
+# CHECK: 234: f0 dd 27 3a vge.fp16 r26, x2, x7
+# CHECK: 238: f0 dd a9 30 vge.fp16 r16, x10, x9
+# CHECK: 23c: f0 dd 16 33 vge.fp16 r19, x1, x6
+# CHECK: 240: f0 c3 31 39 vge.fp8 r19:r18, x3, x1
+# CHECK: 244: f0 c3 95 3c vge.fp8 r25:r24, x9, x5
+# CHECK: 248: f0 c3 48 3e vge.fp8 r29:r28, x4, x8
+# CHECK: 24c: f0 c3 20 33 vge.fp8 r7:r6, x2, x0
+# CHECK: 250: f0 c3 a7 3b vge.fp8 r23:r22, x10, x7
+# CHECK: 254: f0 c3 7b 34 vge.fp8 r9:r8, x7, x11
+# CHECK: 258: f0 c3 b4 3f vge.fp8 r31:r30, x11, x4
+# CHECK: 25c: f0 c3 83 31 vge.fp8 r3:r2, x8, x3
+# CHECK: 260: f0 c3 52 3d vge.fp8 r27:r26, x5, x2
+# CHECK: 264: f0 c3 66 36 vge.fp8 r13:r12, x6, x6
+# CHECK: 268: f0 c3 19 37 vge.fp8 r15:r14, x1, x9
+# CHECK: 26c: f0 c3 0a 3a vge.fp8 r21:r20, x0, x10
+# CHECK: 270: f0 c3 31 30 vge.fp8 r1:r0, x3, x1
+# CHECK: 274: f0 c3 95 32 vge.fp8 r5:r4, x9, x5
+# CHECK: 278: f0 c3 48 38 vge.fp8 r17:r16, x4, x8
+# CHECK: 27c: f0 c3 20 35 vge.fp8 r11:r10, x2, x0

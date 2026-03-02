@@ -681,7 +681,8 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
         EltTy->isSpecificBuiltinType(BuiltinType::ACCFLOAT)) {
       uint64_t Size = getContext().getTypeSize(Ty);
       const llvm::Triple &TT = getTarget().getTriple();
-      if (TT.getArch() == llvm::Triple::aie2p) {
+      if (TT.getArch() == llvm::Triple::aie2p ||
+          TT.getArch() == llvm::Triple::aie2ps) {
         if (EltTy->isSpecificBuiltinType(BuiltinType::ACCFLOAT)) {
           ResultType = llvm::FixedVectorType::get(
               llvm::Type::getFloatTy(getLLVMContext()), Size / 32);

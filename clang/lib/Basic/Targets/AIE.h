@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -35,6 +35,10 @@ static const char *const DataLayoutStringAIE2P =
     "e-m:e-p:20:32-i1:8:32-i8:8:32-i16:16:32-"
     "i32:32:32-f32:32:32-i64:32-f64:32-a:0:32-n32";
 
+static const char *const DataLayoutStringAIE2PS =
+    "e-m:e-p:20:32-i1:8:32-i8:8:32-i16:16:32-"
+    "i32:32:32-f32:32:32-i64:32-f64:32-a:0:32-n32";
+
 class LLVM_LIBRARY_VISIBILITY AIETargetInfo : public TargetInfo {
 
   // TODO aie1 is currently named as aie, perhaps we should change the
@@ -47,6 +51,9 @@ class LLVM_LIBRARY_VISIBILITY AIETargetInfo : public TargetInfo {
   }
   static bool isAIE2P(const llvm::Triple &TT) {
     return TT.getArch() == llvm::Triple::aie2p;
+  }
+  static bool isAIE2PS(const llvm::Triple &TT) {
+    return TT.getArch() == llvm::Triple::aie2ps;
   }
 
 public:
@@ -61,9 +68,9 @@ public:
     IntPtrType = SignedInt;
     UseZeroLengthBitfieldAlignment = true;
 
-    // On AIE2p, vector types have a maximum alignment of 64 bytes,
+    // On AIE2p and AIE2ps, vector types have a maximum alignment of 64 bytes,
     // whereas on AIE1 and AIE2, the maximum alignment is 32 bytes.
-    if (isAIE2P(getTriple()))
+    if (isAIE2P(getTriple()) || isAIE2PS(getTriple()))
       MaxVectorAlign = 512;
     else
       MaxVectorAlign = 256;
@@ -76,16 +83,29 @@ public:
       DataLayout = DataLayoutStringAIE2;
     else if (isAIE2P(getTriple()))
       DataLayout = DataLayoutStringAIE2P;
+    else if (isAIE2PS(getTriple()))
+      DataLayout = DataLayoutStringAIE2PS;
     resetDataLayout(DataLayout);
 
     if (hasBFloat16Type()) {
       BFloat16Width = BFloat16Align = 16;
       BFloat16Format = &llvm::APFloat::BFloat();
     }
+    if (hasFloat16Type()) {
+      HalfWidth = HalfAlign = 16;
+      HalfFormat = &llvm::APFloat::IEEEhalf();
+    }
   }
 
   bool isAddressSpaceSupersetOf(LangAS A, LangAS B) const override {
     return A == LangAS::Default && isTargetAddressSpace(B);
+  }
+
+  void adjust(DiagnosticsEngine &Diags, LangOptions &Opts) override {
+    TargetInfo::adjust(Diags, Opts);
+    // Enable native half type operations when we have legal half type support
+    if (hasLegalHalfType())
+      Opts.NativeHalfType = true;
   }
 
   void getTargetDefines(const LangOptions &Opts,
@@ -117,11 +137,13 @@ public:
   }
   bool hasBitIntType() const override { return true; }
   bool hasBFloat16Type() const override {
-    return isAIE2(getTriple()) || isAIE2P(getTriple());
+    return isAIE2(getTriple()) || isAIE2P(getTriple()) || isAIE2PS(getTriple());
   }
+  bool hasFloat16Type() const override { return isAIE2PS(getTriple()); }
+  bool hasLegalHalfType() const override { return hasFloat16Type(); }
   bool hasInt128Type() const override { return isAIE2(getTriple()); }
   bool isCLZForZeroUndef() const override {
-    if (isAIE2(getTriple()) || isAIE2P(getTriple()))
+    if (isAIE2(getTriple()) || isAIE2P(getTriple()) || isAIE2PS(getTriple()))
       return false;
     return true;
   }

@@ -1,0 +1,53 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -mtriple=aie2ps -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+
+---
+name:      tied_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    $l0, $p0, $dc0, $dc4 = LDA_3D_dml_lda_scalar_L $p0, $d0_3d
+    $r4, $p1, $dc1, $dc5 = LDA_3D_dms_lda_scalar $p1, $d1_3d
+    $r4, $p2, $dc2, $dc6 = LDA_3D_s16 $p2, $d2_3d
+    $r4, $p3, $dc3, $dc7 = LDA_3D_s8 $p3, $d3_3d
+    $r4, $p0, $dc0, $dc4 = LDA_3D_u16 $p0, $d0_3d
+    $r4, $p1, $dc1, $dc5 = LDA_3D_u8 $p1, $d1_3d
+    $r0, $p2, $dc2, $dc6 = LDA_TM_3D $p2, $d2_3d
+...
+
+---
+name:      virtual_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    %0:ep = COPY $p0
+    %10:eds = COPY $d0_3d
+    $l0, %20:ep, %21:edcl, %22:edch = LDA_3D_dml_lda_scalar_L %0, %10
+    $r4, %30:ep, %31:edcl, %32:edch = LDA_3D_dms_lda_scalar %0, %10
+    $r4, %40:ep, %41:edcl, %42:edch = LDA_3D_s16 %0, %10
+    $r4, %50:ep, %51:edcl, %52:edch = LDA_3D_s8 %0, %10
+    $r4, %60:ep, %61:edcl, %62:edch = LDA_3D_u16 %0, %10
+    $r4, %70:ep, %71:edcl, %72:edch = LDA_3D_u8 %0, %10
+    $r0, %80:ep, %81:edcl, %82:edch = LDA_TM_3D %0, %10
+...
+
+---
+name:      tied_nok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-COUNT-7: Bad machine code: Tied physical registers must match
+    $l0, $p0, $dc7, $dc3 = LDA_3D_dml_lda_scalar_L $p0, $d0_3d
+    $r4, $p1, $dc0, $dc4 = LDA_3D_dms_lda_scalar $p1, $d1_3d
+    $r4, $p2, $dc1, $dc5 = LDA_3D_s16 $p2, $d2_3d
+    $r4, $p3, $dc2, $dc6 = LDA_3D_s8 $p3, $d3_3d
+    $r4, $p0, $dc3, $dc7 = LDA_3D_u16 $p0, $d0_3d
+    $r4, $p1, $dc4, $dc0 = LDA_3D_u8 $p1, $d1_3d
+    $r0, $p2, $dc5, $dc1 = LDA_TM_3D $p2, $d2_3d
+...

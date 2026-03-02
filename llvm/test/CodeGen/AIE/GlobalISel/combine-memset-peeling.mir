@@ -4,10 +4,11 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2p  -run-pass=aie2p-prelegalizer-combiner -verify-machineinstrs -o - %s  | FileCheck %s
 # RUN: llc -mtriple aie2p  -start-before=aie2p-prelegalizer-combiner \
 # RUN:      -stop-after=legalizer -verify-machineinstrs -o - %s  | FileCheck %s --check-prefix=LEGALIZED
+# RUN: llc -mtriple aie2ps  -run-pass=aie2ps-prelegalizer-combiner -verify-machineinstrs -o - %s  | FileCheck %s
 
 ---
 name:            just_realign

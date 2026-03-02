@@ -54,6 +54,8 @@ set(_llvm_distribution_components
   runtimes-aie2-none-unknown-elf
   builtins-aie2p-none-unknown-elf
   runtimes-aie2p-none-unknown-elf
+  builtins-aie2ps-none-unknown-elf
+  runtimes-aie2ps-none-unknown-elf
   ${LLVM_TOOLCHAIN_TOOLS})
 
 option(LLVM_BUILD_LLVM_DYLIB "" OFF)

@@ -4,9 +4,10 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2 -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck --check-prefixes=CHECK,AIE2 %s
 # RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck --check-prefixes=CHECK,AIE2P %s
+# RUN: llc -mtriple aie2ps -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck --check-prefixes=CHECK,AIE2PS %s
 
 ---
 name:            test_build_vector_32
@@ -484,6 +485,24 @@ body:           |
     ; AIE2P-NEXT: [[FRAME_INDEX:%[0-9]+]]:_(p0) = G_FRAME_INDEX %stack.0
     ; AIE2P-NEXT: G_STORE [[AIE_UNPAD_VECTOR]](<4 x s32>), [[FRAME_INDEX]](p0) :: (store (<4 x s32>))
     ; AIE2P-NEXT: PseudoRET implicit $lr
+    ;
+    ; AIE2PS-LABEL: name: test_build_vector_32bit_128
+    ; AIE2PS: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 42
+    ; AIE2PS-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 19
+    ; AIE2PS-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 32
+    ; AIE2PS-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 12
+    ; AIE2PS-NEXT: [[DEF:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[AIE_ADD_VECTOR_ELT_HI:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI [[DEF]], [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_ADD_VECTOR_ELT_HI1:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI [[AIE_ADD_VECTOR_ELT_HI]], [[C1]](s32)
+    ; AIE2PS-NEXT: [[AIE_ADD_VECTOR_ELT_HI2:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI [[AIE_ADD_VECTOR_ELT_HI1]], [[C2]](s32)
+    ; AIE2PS-NEXT: [[AIE_ADD_VECTOR_ELT_HI3:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI [[AIE_ADD_VECTOR_ELT_HI2]], [[C3]](s32)
+    ; AIE2PS-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; AIE2PS-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 48
+    ; AIE2PS-NEXT: [[INT:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2ps.vshift.I512.I512), [[AIE_ADD_VECTOR_ELT_HI3]](<16 x s32>), [[AIE_ADD_VECTOR_ELT_HI3]](<16 x s32>), [[C4]](s32), [[C5]](s32)
+    ; AIE2PS-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<4 x s32>) = G_AIE_UNPAD_VECTOR [[INT]](<16 x s32>)
+    ; AIE2PS-NEXT: [[FRAME_INDEX:%[0-9]+]]:_(p0) = G_FRAME_INDEX %stack.0
+    ; AIE2PS-NEXT: G_STORE [[AIE_UNPAD_VECTOR]](<4 x s32>), [[FRAME_INDEX]](p0) :: (store (<4 x s32>))
+    ; AIE2PS-NEXT: PseudoRET implicit $lr
     %2:_(s32) = G_CONSTANT i32 42
     %3:_(s32) = G_CONSTANT i32 19
     %4:_(s32) = G_CONSTANT i32 32

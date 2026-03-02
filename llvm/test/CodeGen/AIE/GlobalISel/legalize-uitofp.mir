@@ -2,9 +2,10 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2 -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck -DVER=2 --check-prefix=COMMON --check-prefix=AIE2 %s
 # RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck -DVER=2p --check-prefix=COMMON --check-prefix=AIE2P %s
+# RUN: llc -mtriple aie2ps -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck -DVER=2ps --check-prefix=COMMON --check-prefix=AIE2PS %s
 
 ---
 name: test_uitofp_s32_to_s32
@@ -104,6 +105,7 @@ body: |
     ; AIE2-NEXT: [[BITCAST:%[0-9]+]]:_(<8 x s64>) = G_BITCAST [[AIE_INSERT_VECTOR_ELT]](<16 x s32>)
     ; AIE2-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), [[BITCAST]](<8 x s64>)
     ; AIE2P-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.v16accfloat.to.v16bf16), [[AIE_INSERT_VECTOR_ELT]](<16 x s32>)
+    ; AIE2PS-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2ps.v16accfloat.to.v16bf16), [[AIE_INSERT_VECTOR_ELT]](<16 x s32>)
     ; COMMON-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s16>) = G_IMPLICIT_DEF
     ; COMMON-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[INT]](<16 x s16>), [[DEF1]](<16 x s16>)
     ; COMMON-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS]](<32 x s16>), [[C1]](s32)
@@ -191,6 +193,7 @@ body: |
     ; AIE2-NEXT: [[BITCAST:%[0-9]+]]:_(<8 x s64>) = G_BITCAST [[AIE_INSERT_VECTOR_ELT]](<16 x s32>)
     ; AIE2-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), [[BITCAST]](<8 x s64>)
     ; AIE2P-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.v16accfloat.to.v16bf16), [[AIE_INSERT_VECTOR_ELT]](<16 x s32>)
+    ; AIE2PS-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2ps.v16accfloat.to.v16bf16), [[AIE_INSERT_VECTOR_ELT]](<16 x s32>)
     ; COMMON-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s16>) = G_IMPLICIT_DEF
     ; COMMON-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[INT]](<16 x s16>), [[DEF1]](<16 x s16>)
     ; COMMON-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS]](<32 x s16>), [[C1]](s32)
@@ -278,6 +281,7 @@ body: |
     ; AIE2-NEXT: [[BITCAST:%[0-9]+]]:_(<8 x s64>) = G_BITCAST [[AIE_INSERT_VECTOR_ELT]](<16 x s32>)
     ; AIE2-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), [[BITCAST]](<8 x s64>)
     ; AIE2P-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.v16accfloat.to.v16bf16), [[AIE_INSERT_VECTOR_ELT]](<16 x s32>)
+    ; AIE2PS-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2ps.v16accfloat.to.v16bf16), [[AIE_INSERT_VECTOR_ELT]](<16 x s32>)
     ; COMMON-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s16>) = G_IMPLICIT_DEF
     ; COMMON-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[INT]](<16 x s16>), [[DEF1]](<16 x s16>)
     ; COMMON-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS]](<32 x s16>), [[C1]](s32)
@@ -394,6 +398,7 @@ body: |
     ; AIE2-NEXT: [[BITCAST:%[0-9]+]]:_(<8 x s64>) = G_BITCAST [[AIE_INSERT_VECTOR_ELT]](<16 x s32>)
     ; AIE2-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), [[BITCAST]](<8 x s64>)
     ; AIE2P-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.v16accfloat.to.v16bf16), [[AIE_INSERT_VECTOR_ELT]](<16 x s32>)
+    ; AIE2PS-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2ps.v16accfloat.to.v16bf16), [[AIE_INSERT_VECTOR_ELT]](<16 x s32>)
     ; COMMON-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s16>) = G_IMPLICIT_DEF
     ; COMMON-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[INT]](<16 x s16>), [[DEF1]](<16 x s16>)
     ; COMMON-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS]](<32 x s16>), [[C]](s32)

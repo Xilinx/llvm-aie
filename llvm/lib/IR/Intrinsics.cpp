@@ -18,6 +18,7 @@
 #include "llvm/IR/IntrinsicsAIE.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
 #include "llvm/IR/IntrinsicsAIE2P.h"
+#include "llvm/IR/IntrinsicsAIE2PS.h"
 #include "llvm/IR/IntrinsicsAMDGPU.h"
 #include "llvm/IR/IntrinsicsARM.h"
 #include "llvm/IR/IntrinsicsBPF.h"
@@ -388,6 +389,27 @@ DecodeIITType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
   case IIT_EMPTYSTRUCT:
     OutputTable.push_back(IITDescriptor::get(IITDescriptor::Struct, 0));
     return;
+  case IIT_STRUCT16:
+    ++StructElts;
+    [[fallthrough]];
+  case IIT_STRUCT15:
+    ++StructElts;
+    [[fallthrough]];
+  case IIT_STRUCT14:
+    ++StructElts;
+    [[fallthrough]];
+  case IIT_STRUCT13:
+    ++StructElts;
+    [[fallthrough]];
+  case IIT_STRUCT12:
+    ++StructElts;
+    [[fallthrough]];
+  case IIT_STRUCT11:
+    ++StructElts;
+    [[fallthrough]];
+  case IIT_STRUCT10:
+    ++StructElts;
+    [[fallthrough]];
   case IIT_STRUCT9:
     ++StructElts;
     [[fallthrough]];

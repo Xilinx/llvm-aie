@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -103,6 +103,7 @@ bool AIEAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIEAsmPrinter() {
   RegisterAsmPrinter<AIEAsmPrinter> X(getTheAIETarget());
   RegisterAsmPrinter<AIE2AsmPrinter> Y(getTheAIE2Target());
-  // FIXME using AIE2AsmPrinter for AIE2P target
+  // FIXME using AIE2AsmPrinter for AIE2P and AIE2PS target
   RegisterAsmPrinter<AIE2AsmPrinter> A(getTheAIE2PTarget());
+  RegisterAsmPrinter<AIE2AsmPrinter> B(getTheAIE2PSTarget());
 }

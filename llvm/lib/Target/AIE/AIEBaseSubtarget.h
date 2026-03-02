@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -52,6 +52,7 @@ public:
   bool isAIE1() const { return (TargetTriple.isAIE1()); }
   bool isAIE2() const { return (TargetTriple.isAIE2()); }
   bool isAIE2P() const { return (TargetTriple.isAIE2P()); }
+  bool isAIE2PS() const { return (TargetTriple.isAIE2PS()); }
   virtual ~AIEBaseSubtarget() = default;
 
   // This is meant as an override of TargetSubtargetInfo::overrideSchedPolicy

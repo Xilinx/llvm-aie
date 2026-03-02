@@ -4,8 +4,9 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s --check-prefixes=CHECK,AIE2P
+# RUN: llc -mtriple aie2ps -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s --check-prefixes=CHECK,AIE2PS
 
 ---
 name:            test_v64acc32
@@ -2794,51 +2795,84 @@ body:             |
   bb.1.entry:
     liveins:  $p0
 
-    ; CHECK-LABEL: name: test_v8acc32_unaligned
-    ; CHECK: liveins: $p0
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<4 x s64>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<4 x s64>) = COPY [[DEF]](<4 x s64>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF]](<4 x s64>), [[COPY1]](<4 x s64>)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS]](<8 x s64>), [[C]](s32)
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(<4 x s64>) = COPY [[DEF]](<4 x s64>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF]](<4 x s64>), [[COPY2]](<4 x s64>)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT1:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS1]](<8 x s64>), [[C1]](s32)
-    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:_(<4 x s64>) = COPY [[DEF]](<4 x s64>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF]](<4 x s64>), [[COPY3]](<4 x s64>)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT2:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS2]](<8 x s64>), [[C2]](s32)
-    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
-    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:_(<4 x s64>) = COPY [[DEF]](<4 x s64>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF]](<4 x s64>), [[COPY4]](<4 x s64>)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT3:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS3]](<8 x s64>), [[C3]](s32)
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(s32), [[UV1:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
-    ; CHECK-NEXT: G_STORE [[UV]](s32), [[COPY]](p0) :: (store (s32), align 16)
-    ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C4]](s20)
-    ; CHECK-NEXT: G_STORE [[UV1]](s32), [[PTR_ADD]](p0) :: (store (s32) into unknown-address + 4)
-    ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
-    ; CHECK-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C5]](s20)
-    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(s32), [[UV3:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT1]](s64)
-    ; CHECK-NEXT: G_STORE [[UV2]](s32), [[PTR_ADD1]](p0) :: (store (s32) into unknown-address + 8, align 8)
-    ; CHECK-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD1]], [[C4]](s20)
-    ; CHECK-NEXT: G_STORE [[UV3]](s32), [[PTR_ADD2]](p0) :: (store (s32) into unknown-address + 12)
-    ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
-    ; CHECK-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C6]](s20)
-    ; CHECK-NEXT: [[UV4:%[0-9]+]]:_(s32), [[UV5:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT2]](s64)
-    ; CHECK-NEXT: G_STORE [[UV4]](s32), [[PTR_ADD3]](p0) :: (store (s32) into unknown-address + 16, align 16)
-    ; CHECK-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD3]], [[C4]](s20)
-    ; CHECK-NEXT: G_STORE [[UV5]](s32), [[PTR_ADD4]](p0) :: (store (s32) into unknown-address + 20)
-    ; CHECK-NEXT: [[C7:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
-    ; CHECK-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C7]](s20)
-    ; CHECK-NEXT: [[UV6:%[0-9]+]]:_(s32), [[UV7:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT3]](s64)
-    ; CHECK-NEXT: G_STORE [[UV6]](s32), [[PTR_ADD5]](p0) :: (store (s32) into unknown-address + 24, align 8)
-    ; CHECK-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD5]], [[C4]](s20)
-    ; CHECK-NEXT: G_STORE [[UV7]](s32), [[PTR_ADD6]](p0) :: (store (s32) into unknown-address + 28)
-    ; CHECK-NEXT: PseudoRET implicit $lr
+    ; AIE2P-LABEL: name: test_v8acc32_unaligned
+    ; AIE2P: liveins: $p0
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; AIE2P-NEXT: [[DEF:%[0-9]+]]:_(<4 x s64>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:_(<4 x s64>) = COPY [[DEF]](<4 x s64>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF]](<4 x s64>), [[COPY1]](<4 x s64>)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS]](<8 x s64>), [[C]](s32)
+    ; AIE2P-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; AIE2P-NEXT: [[COPY2:%[0-9]+]]:_(<4 x s64>) = COPY [[DEF]](<4 x s64>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF]](<4 x s64>), [[COPY2]](<4 x s64>)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT1:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS1]](<8 x s64>), [[C1]](s32)
+    ; AIE2P-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; AIE2P-NEXT: [[COPY3:%[0-9]+]]:_(<4 x s64>) = COPY [[DEF]](<4 x s64>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF]](<4 x s64>), [[COPY3]](<4 x s64>)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT2:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS2]](<8 x s64>), [[C2]](s32)
+    ; AIE2P-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; AIE2P-NEXT: [[COPY4:%[0-9]+]]:_(<4 x s64>) = COPY [[DEF]](<4 x s64>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF]](<4 x s64>), [[COPY4]](<4 x s64>)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT3:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS3]](<8 x s64>), [[C3]](s32)
+    ; AIE2P-NEXT: [[UV:%[0-9]+]]:_(s32), [[UV1:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV]](s32), [[COPY]](p0) :: (store (s32), align 16)
+    ; AIE2P-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
+    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C4]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV1]](s32), [[PTR_ADD]](p0) :: (store (s32) into unknown-address + 4)
+    ; AIE2P-NEXT: [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+    ; AIE2P-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C5]](s20)
+    ; AIE2P-NEXT: [[UV2:%[0-9]+]]:_(s32), [[UV3:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT1]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV2]](s32), [[PTR_ADD1]](p0) :: (store (s32) into unknown-address + 8, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD1]], [[C4]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV3]](s32), [[PTR_ADD2]](p0) :: (store (s32) into unknown-address + 12)
+    ; AIE2P-NEXT: [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
+    ; AIE2P-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C6]](s20)
+    ; AIE2P-NEXT: [[UV4:%[0-9]+]]:_(s32), [[UV5:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT2]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV4]](s32), [[PTR_ADD3]](p0) :: (store (s32) into unknown-address + 16, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD3]], [[C4]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV5]](s32), [[PTR_ADD4]](p0) :: (store (s32) into unknown-address + 20)
+    ; AIE2P-NEXT: [[C7:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
+    ; AIE2P-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C7]](s20)
+    ; AIE2P-NEXT: [[UV6:%[0-9]+]]:_(s32), [[UV7:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT3]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV6]](s32), [[PTR_ADD5]](p0) :: (store (s32) into unknown-address + 24, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD5]], [[C4]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV7]](s32), [[PTR_ADD6]](p0) :: (store (s32) into unknown-address + 28)
+    ; AIE2P-NEXT: PseudoRET implicit $lr
+    ;
+    ; AIE2PS-LABEL: name: test_v8acc32_unaligned
+    ; AIE2PS: liveins: $p0
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; AIE2PS-NEXT: [[DEF:%[0-9]+]]:_(<4 x s64>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:_(<4 x s64>) = COPY [[DEF]](<4 x s64>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF]](<4 x s64>), [[COPY1]](<4 x s64>)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS]](<8 x s64>), [[C]](s32)
+    ; AIE2PS-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:_(<4 x s64>) = COPY [[DEF]](<4 x s64>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF]](<4 x s64>), [[COPY2]](<4 x s64>)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT1:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS1]](<8 x s64>), [[C1]](s32)
+    ; AIE2PS-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; AIE2PS-NEXT: [[COPY3:%[0-9]+]]:_(<4 x s64>) = COPY [[DEF]](<4 x s64>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF]](<4 x s64>), [[COPY3]](<4 x s64>)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT2:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS2]](<8 x s64>), [[C2]](s32)
+    ; AIE2PS-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; AIE2PS-NEXT: [[COPY4:%[0-9]+]]:_(<4 x s64>) = COPY [[DEF]](<4 x s64>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF]](<4 x s64>), [[COPY4]](<4 x s64>)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT3:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS3]](<8 x s64>), [[C3]](s32)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64), [[COPY]](p0) :: (store (s64), align 16)
+    ; AIE2PS-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+    ; AIE2PS-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C4]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT1]](s64), [[PTR_ADD]](p0) :: (store (s64) into unknown-address + 8)
+    ; AIE2PS-NEXT: [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
+    ; AIE2PS-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C5]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT2]](s64), [[PTR_ADD1]](p0) :: (store (s64) into unknown-address + 16, align 16)
+    ; AIE2PS-NEXT: [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
+    ; AIE2PS-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C6]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT3]](s64), [[PTR_ADD2]](p0) :: (store (s64) into unknown-address + 24)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr
     %0:_(p0) = COPY $p0
     %1:_(<4 x s64>) = G_IMPLICIT_DEF
     G_STORE %1(<4 x s64>), %0(p0) :: (store (<4 x s64>), align 16)
@@ -2851,51 +2885,84 @@ body:             |
   bb.1.entry:
     liveins:  $p0
 
-    ; CHECK-LABEL: name: test_v4acc64_unaligned
-    ; CHECK: liveins: $p0
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<4 x s64>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<4 x s64>) = COPY [[DEF]](<4 x s64>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF]](<4 x s64>), [[COPY1]](<4 x s64>)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS]](<8 x s64>), [[C]](s32)
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(<4 x s64>) = COPY [[DEF]](<4 x s64>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF]](<4 x s64>), [[COPY2]](<4 x s64>)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT1:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS1]](<8 x s64>), [[C1]](s32)
-    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:_(<4 x s64>) = COPY [[DEF]](<4 x s64>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF]](<4 x s64>), [[COPY3]](<4 x s64>)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT2:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS2]](<8 x s64>), [[C2]](s32)
-    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
-    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:_(<4 x s64>) = COPY [[DEF]](<4 x s64>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF]](<4 x s64>), [[COPY4]](<4 x s64>)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT3:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS3]](<8 x s64>), [[C3]](s32)
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(s32), [[UV1:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
-    ; CHECK-NEXT: G_STORE [[UV]](s32), [[COPY]](p0) :: (store (s32), align 16)
-    ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C4]](s20)
-    ; CHECK-NEXT: G_STORE [[UV1]](s32), [[PTR_ADD]](p0) :: (store (s32) into unknown-address + 4)
-    ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
-    ; CHECK-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C5]](s20)
-    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(s32), [[UV3:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT1]](s64)
-    ; CHECK-NEXT: G_STORE [[UV2]](s32), [[PTR_ADD1]](p0) :: (store (s32) into unknown-address + 8, align 8)
-    ; CHECK-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD1]], [[C4]](s20)
-    ; CHECK-NEXT: G_STORE [[UV3]](s32), [[PTR_ADD2]](p0) :: (store (s32) into unknown-address + 12)
-    ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
-    ; CHECK-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C6]](s20)
-    ; CHECK-NEXT: [[UV4:%[0-9]+]]:_(s32), [[UV5:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT2]](s64)
-    ; CHECK-NEXT: G_STORE [[UV4]](s32), [[PTR_ADD3]](p0) :: (store (s32) into unknown-address + 16, align 16)
-    ; CHECK-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD3]], [[C4]](s20)
-    ; CHECK-NEXT: G_STORE [[UV5]](s32), [[PTR_ADD4]](p0) :: (store (s32) into unknown-address + 20)
-    ; CHECK-NEXT: [[C7:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
-    ; CHECK-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C7]](s20)
-    ; CHECK-NEXT: [[UV6:%[0-9]+]]:_(s32), [[UV7:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT3]](s64)
-    ; CHECK-NEXT: G_STORE [[UV6]](s32), [[PTR_ADD5]](p0) :: (store (s32) into unknown-address + 24, align 8)
-    ; CHECK-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD5]], [[C4]](s20)
-    ; CHECK-NEXT: G_STORE [[UV7]](s32), [[PTR_ADD6]](p0) :: (store (s32) into unknown-address + 28)
-    ; CHECK-NEXT: PseudoRET implicit $lr
+    ; AIE2P-LABEL: name: test_v4acc64_unaligned
+    ; AIE2P: liveins: $p0
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; AIE2P-NEXT: [[DEF:%[0-9]+]]:_(<4 x s64>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:_(<4 x s64>) = COPY [[DEF]](<4 x s64>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF]](<4 x s64>), [[COPY1]](<4 x s64>)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS]](<8 x s64>), [[C]](s32)
+    ; AIE2P-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; AIE2P-NEXT: [[COPY2:%[0-9]+]]:_(<4 x s64>) = COPY [[DEF]](<4 x s64>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF]](<4 x s64>), [[COPY2]](<4 x s64>)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT1:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS1]](<8 x s64>), [[C1]](s32)
+    ; AIE2P-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; AIE2P-NEXT: [[COPY3:%[0-9]+]]:_(<4 x s64>) = COPY [[DEF]](<4 x s64>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF]](<4 x s64>), [[COPY3]](<4 x s64>)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT2:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS2]](<8 x s64>), [[C2]](s32)
+    ; AIE2P-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; AIE2P-NEXT: [[COPY4:%[0-9]+]]:_(<4 x s64>) = COPY [[DEF]](<4 x s64>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF]](<4 x s64>), [[COPY4]](<4 x s64>)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT3:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS3]](<8 x s64>), [[C3]](s32)
+    ; AIE2P-NEXT: [[UV:%[0-9]+]]:_(s32), [[UV1:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV]](s32), [[COPY]](p0) :: (store (s32), align 16)
+    ; AIE2P-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
+    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C4]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV1]](s32), [[PTR_ADD]](p0) :: (store (s32) into unknown-address + 4)
+    ; AIE2P-NEXT: [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+    ; AIE2P-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C5]](s20)
+    ; AIE2P-NEXT: [[UV2:%[0-9]+]]:_(s32), [[UV3:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT1]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV2]](s32), [[PTR_ADD1]](p0) :: (store (s32) into unknown-address + 8, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD1]], [[C4]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV3]](s32), [[PTR_ADD2]](p0) :: (store (s32) into unknown-address + 12)
+    ; AIE2P-NEXT: [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
+    ; AIE2P-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C6]](s20)
+    ; AIE2P-NEXT: [[UV4:%[0-9]+]]:_(s32), [[UV5:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT2]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV4]](s32), [[PTR_ADD3]](p0) :: (store (s32) into unknown-address + 16, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD3]], [[C4]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV5]](s32), [[PTR_ADD4]](p0) :: (store (s32) into unknown-address + 20)
+    ; AIE2P-NEXT: [[C7:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
+    ; AIE2P-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C7]](s20)
+    ; AIE2P-NEXT: [[UV6:%[0-9]+]]:_(s32), [[UV7:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT3]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV6]](s32), [[PTR_ADD5]](p0) :: (store (s32) into unknown-address + 24, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD5]], [[C4]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV7]](s32), [[PTR_ADD6]](p0) :: (store (s32) into unknown-address + 28)
+    ; AIE2P-NEXT: PseudoRET implicit $lr
+    ;
+    ; AIE2PS-LABEL: name: test_v4acc64_unaligned
+    ; AIE2PS: liveins: $p0
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; AIE2PS-NEXT: [[DEF:%[0-9]+]]:_(<4 x s64>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:_(<4 x s64>) = COPY [[DEF]](<4 x s64>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF]](<4 x s64>), [[COPY1]](<4 x s64>)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS]](<8 x s64>), [[C]](s32)
+    ; AIE2PS-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:_(<4 x s64>) = COPY [[DEF]](<4 x s64>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF]](<4 x s64>), [[COPY2]](<4 x s64>)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT1:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS1]](<8 x s64>), [[C1]](s32)
+    ; AIE2PS-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; AIE2PS-NEXT: [[COPY3:%[0-9]+]]:_(<4 x s64>) = COPY [[DEF]](<4 x s64>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF]](<4 x s64>), [[COPY3]](<4 x s64>)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT2:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS2]](<8 x s64>), [[C2]](s32)
+    ; AIE2PS-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; AIE2PS-NEXT: [[COPY4:%[0-9]+]]:_(<4 x s64>) = COPY [[DEF]](<4 x s64>)
+    ; AIE2PS-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF]](<4 x s64>), [[COPY4]](<4 x s64>)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT3:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS3]](<8 x s64>), [[C3]](s32)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64), [[COPY]](p0) :: (store (s64), align 16)
+    ; AIE2PS-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+    ; AIE2PS-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C4]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT1]](s64), [[PTR_ADD]](p0) :: (store (s64) into unknown-address + 8)
+    ; AIE2PS-NEXT: [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
+    ; AIE2PS-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C5]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT2]](s64), [[PTR_ADD1]](p0) :: (store (s64) into unknown-address + 16, align 16)
+    ; AIE2PS-NEXT: [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
+    ; AIE2PS-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C6]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT3]](s64), [[PTR_ADD2]](p0) :: (store (s64) into unknown-address + 24)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr
     %0:_(p0) = COPY $p0
     %1:_(<4 x s64>) = G_IMPLICIT_DEF
     G_STORE %1(<4 x s64>), %0(p0) :: (store (<4 x s64>), align 16)
@@ -2908,75 +2975,120 @@ body:             |
   bb.1.entry:
     liveins:  $p0
 
-    ; CHECK-LABEL: name: test_v16acc32_unaligned
-    ; CHECK: liveins: $p0
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<8 x s64>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C]](s32)
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT1:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C1]](s32)
-    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT2:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C2]](s32)
-    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT3:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C3]](s32)
-    ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT4:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C4]](s32)
-    ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 5
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT5:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C5]](s32)
-    ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 6
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT6:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C6]](s32)
-    ; CHECK-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT7:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C7]](s32)
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(s32), [[UV1:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
-    ; CHECK-NEXT: G_STORE [[UV]](s32), [[COPY]](p0) :: (store (s32), align 16)
-    ; CHECK-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV1]](s32), [[PTR_ADD]](p0) :: (store (s32) into unknown-address + 4)
-    ; CHECK-NEXT: [[C9:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
-    ; CHECK-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C9]](s20)
-    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(s32), [[UV3:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT1]](s64)
-    ; CHECK-NEXT: G_STORE [[UV2]](s32), [[PTR_ADD1]](p0) :: (store (s32) into unknown-address + 8, align 8)
-    ; CHECK-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD1]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV3]](s32), [[PTR_ADD2]](p0) :: (store (s32) into unknown-address + 12)
-    ; CHECK-NEXT: [[C10:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
-    ; CHECK-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C10]](s20)
-    ; CHECK-NEXT: [[UV4:%[0-9]+]]:_(s32), [[UV5:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT2]](s64)
-    ; CHECK-NEXT: G_STORE [[UV4]](s32), [[PTR_ADD3]](p0) :: (store (s32) into unknown-address + 16, align 16)
-    ; CHECK-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD3]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV5]](s32), [[PTR_ADD4]](p0) :: (store (s32) into unknown-address + 20)
-    ; CHECK-NEXT: [[C11:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
-    ; CHECK-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C11]](s20)
-    ; CHECK-NEXT: [[UV6:%[0-9]+]]:_(s32), [[UV7:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT3]](s64)
-    ; CHECK-NEXT: G_STORE [[UV6]](s32), [[PTR_ADD5]](p0) :: (store (s32) into unknown-address + 24, align 8)
-    ; CHECK-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD5]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV7]](s32), [[PTR_ADD6]](p0) :: (store (s32) into unknown-address + 28)
-    ; CHECK-NEXT: [[C12:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; CHECK-NEXT: [[PTR_ADD7:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C12]](s20)
-    ; CHECK-NEXT: [[UV8:%[0-9]+]]:_(s32), [[UV9:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT4]](s64)
-    ; CHECK-NEXT: G_STORE [[UV8]](s32), [[PTR_ADD7]](p0) :: (store (s32) into unknown-address + 32, align 16)
-    ; CHECK-NEXT: [[PTR_ADD8:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD7]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV9]](s32), [[PTR_ADD8]](p0) :: (store (s32) into unknown-address + 36)
-    ; CHECK-NEXT: [[C13:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
-    ; CHECK-NEXT: [[PTR_ADD9:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C13]](s20)
-    ; CHECK-NEXT: [[UV10:%[0-9]+]]:_(s32), [[UV11:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT5]](s64)
-    ; CHECK-NEXT: G_STORE [[UV10]](s32), [[PTR_ADD9]](p0) :: (store (s32) into unknown-address + 40, align 8)
-    ; CHECK-NEXT: [[PTR_ADD10:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD9]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV11]](s32), [[PTR_ADD10]](p0) :: (store (s32) into unknown-address + 44)
-    ; CHECK-NEXT: [[C14:%[0-9]+]]:_(s20) = G_CONSTANT i20 48
-    ; CHECK-NEXT: [[PTR_ADD11:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C14]](s20)
-    ; CHECK-NEXT: [[UV12:%[0-9]+]]:_(s32), [[UV13:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT6]](s64)
-    ; CHECK-NEXT: G_STORE [[UV12]](s32), [[PTR_ADD11]](p0) :: (store (s32) into unknown-address + 48, align 16)
-    ; CHECK-NEXT: [[PTR_ADD12:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD11]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV13]](s32), [[PTR_ADD12]](p0) :: (store (s32) into unknown-address + 52)
-    ; CHECK-NEXT: [[C15:%[0-9]+]]:_(s20) = G_CONSTANT i20 56
-    ; CHECK-NEXT: [[PTR_ADD13:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C15]](s20)
-    ; CHECK-NEXT: [[UV14:%[0-9]+]]:_(s32), [[UV15:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT7]](s64)
-    ; CHECK-NEXT: G_STORE [[UV14]](s32), [[PTR_ADD13]](p0) :: (store (s32) into unknown-address + 56, align 8)
-    ; CHECK-NEXT: [[PTR_ADD14:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD13]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV15]](s32), [[PTR_ADD14]](p0) :: (store (s32) into unknown-address + 60)
-    ; CHECK-NEXT: PseudoRET implicit $lr
+    ; AIE2P-LABEL: name: test_v16acc32_unaligned
+    ; AIE2P: liveins: $p0
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; AIE2P-NEXT: [[DEF:%[0-9]+]]:_(<8 x s64>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C]](s32)
+    ; AIE2P-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT1:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C1]](s32)
+    ; AIE2P-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT2:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C2]](s32)
+    ; AIE2P-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT3:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C3]](s32)
+    ; AIE2P-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT4:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C4]](s32)
+    ; AIE2P-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 5
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT5:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C5]](s32)
+    ; AIE2P-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 6
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT6:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C6]](s32)
+    ; AIE2P-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT7:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C7]](s32)
+    ; AIE2P-NEXT: [[UV:%[0-9]+]]:_(s32), [[UV1:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV]](s32), [[COPY]](p0) :: (store (s32), align 16)
+    ; AIE2P-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
+    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV1]](s32), [[PTR_ADD]](p0) :: (store (s32) into unknown-address + 4)
+    ; AIE2P-NEXT: [[C9:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+    ; AIE2P-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C9]](s20)
+    ; AIE2P-NEXT: [[UV2:%[0-9]+]]:_(s32), [[UV3:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT1]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV2]](s32), [[PTR_ADD1]](p0) :: (store (s32) into unknown-address + 8, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD1]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV3]](s32), [[PTR_ADD2]](p0) :: (store (s32) into unknown-address + 12)
+    ; AIE2P-NEXT: [[C10:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
+    ; AIE2P-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C10]](s20)
+    ; AIE2P-NEXT: [[UV4:%[0-9]+]]:_(s32), [[UV5:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT2]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV4]](s32), [[PTR_ADD3]](p0) :: (store (s32) into unknown-address + 16, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD3]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV5]](s32), [[PTR_ADD4]](p0) :: (store (s32) into unknown-address + 20)
+    ; AIE2P-NEXT: [[C11:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
+    ; AIE2P-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C11]](s20)
+    ; AIE2P-NEXT: [[UV6:%[0-9]+]]:_(s32), [[UV7:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT3]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV6]](s32), [[PTR_ADD5]](p0) :: (store (s32) into unknown-address + 24, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD5]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV7]](s32), [[PTR_ADD6]](p0) :: (store (s32) into unknown-address + 28)
+    ; AIE2P-NEXT: [[C12:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
+    ; AIE2P-NEXT: [[PTR_ADD7:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C12]](s20)
+    ; AIE2P-NEXT: [[UV8:%[0-9]+]]:_(s32), [[UV9:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT4]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV8]](s32), [[PTR_ADD7]](p0) :: (store (s32) into unknown-address + 32, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD8:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD7]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV9]](s32), [[PTR_ADD8]](p0) :: (store (s32) into unknown-address + 36)
+    ; AIE2P-NEXT: [[C13:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
+    ; AIE2P-NEXT: [[PTR_ADD9:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C13]](s20)
+    ; AIE2P-NEXT: [[UV10:%[0-9]+]]:_(s32), [[UV11:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT5]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV10]](s32), [[PTR_ADD9]](p0) :: (store (s32) into unknown-address + 40, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD10:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD9]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV11]](s32), [[PTR_ADD10]](p0) :: (store (s32) into unknown-address + 44)
+    ; AIE2P-NEXT: [[C14:%[0-9]+]]:_(s20) = G_CONSTANT i20 48
+    ; AIE2P-NEXT: [[PTR_ADD11:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C14]](s20)
+    ; AIE2P-NEXT: [[UV12:%[0-9]+]]:_(s32), [[UV13:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT6]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV12]](s32), [[PTR_ADD11]](p0) :: (store (s32) into unknown-address + 48, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD12:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD11]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV13]](s32), [[PTR_ADD12]](p0) :: (store (s32) into unknown-address + 52)
+    ; AIE2P-NEXT: [[C15:%[0-9]+]]:_(s20) = G_CONSTANT i20 56
+    ; AIE2P-NEXT: [[PTR_ADD13:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C15]](s20)
+    ; AIE2P-NEXT: [[UV14:%[0-9]+]]:_(s32), [[UV15:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT7]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV14]](s32), [[PTR_ADD13]](p0) :: (store (s32) into unknown-address + 56, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD14:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD13]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV15]](s32), [[PTR_ADD14]](p0) :: (store (s32) into unknown-address + 60)
+    ; AIE2P-NEXT: PseudoRET implicit $lr
+    ;
+    ; AIE2PS-LABEL: name: test_v16acc32_unaligned
+    ; AIE2PS: liveins: $p0
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; AIE2PS-NEXT: [[DEF:%[0-9]+]]:_(<8 x s64>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C]](s32)
+    ; AIE2PS-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT1:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C1]](s32)
+    ; AIE2PS-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT2:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C2]](s32)
+    ; AIE2PS-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT3:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C3]](s32)
+    ; AIE2PS-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT4:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C4]](s32)
+    ; AIE2PS-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 5
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT5:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C5]](s32)
+    ; AIE2PS-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 6
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT6:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C6]](s32)
+    ; AIE2PS-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT7:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C7]](s32)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64), [[COPY]](p0) :: (store (s64), align 16)
+    ; AIE2PS-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+    ; AIE2PS-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C8]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT1]](s64), [[PTR_ADD]](p0) :: (store (s64) into unknown-address + 8)
+    ; AIE2PS-NEXT: [[C9:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
+    ; AIE2PS-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C9]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT2]](s64), [[PTR_ADD1]](p0) :: (store (s64) into unknown-address + 16, align 16)
+    ; AIE2PS-NEXT: [[C10:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
+    ; AIE2PS-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C10]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT3]](s64), [[PTR_ADD2]](p0) :: (store (s64) into unknown-address + 24)
+    ; AIE2PS-NEXT: [[C11:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
+    ; AIE2PS-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C11]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT4]](s64), [[PTR_ADD3]](p0) :: (store (s64) into unknown-address + 32, align 16)
+    ; AIE2PS-NEXT: [[C12:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
+    ; AIE2PS-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C12]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT5]](s64), [[PTR_ADD4]](p0) :: (store (s64) into unknown-address + 40)
+    ; AIE2PS-NEXT: [[C13:%[0-9]+]]:_(s20) = G_CONSTANT i20 48
+    ; AIE2PS-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C13]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT6]](s64), [[PTR_ADD5]](p0) :: (store (s64) into unknown-address + 48, align 16)
+    ; AIE2PS-NEXT: [[C14:%[0-9]+]]:_(s20) = G_CONSTANT i20 56
+    ; AIE2PS-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C14]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT7]](s64), [[PTR_ADD6]](p0) :: (store (s64) into unknown-address + 56)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr
     %0:_(p0) = COPY $p0
     %1:_(<8 x s64>) = G_IMPLICIT_DEF
     G_STORE %1(<8 x s64>), %0(p0) :: (store (<8 x s64>), align 16)
@@ -2989,75 +3101,120 @@ body:             |
   bb.1.entry:
     liveins:  $p0
 
-    ; CHECK-LABEL: name: test_v8acc64_unaligned
-    ; CHECK: liveins: $p0
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<8 x s64>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C]](s32)
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT1:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C1]](s32)
-    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT2:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C2]](s32)
-    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT3:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C3]](s32)
-    ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT4:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C4]](s32)
-    ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 5
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT5:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C5]](s32)
-    ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 6
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT6:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C6]](s32)
-    ; CHECK-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT7:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C7]](s32)
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(s32), [[UV1:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
-    ; CHECK-NEXT: G_STORE [[UV]](s32), [[COPY]](p0) :: (store (s32), align 16)
-    ; CHECK-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV1]](s32), [[PTR_ADD]](p0) :: (store (s32) into unknown-address + 4)
-    ; CHECK-NEXT: [[C9:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
-    ; CHECK-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C9]](s20)
-    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(s32), [[UV3:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT1]](s64)
-    ; CHECK-NEXT: G_STORE [[UV2]](s32), [[PTR_ADD1]](p0) :: (store (s32) into unknown-address + 8, align 8)
-    ; CHECK-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD1]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV3]](s32), [[PTR_ADD2]](p0) :: (store (s32) into unknown-address + 12)
-    ; CHECK-NEXT: [[C10:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
-    ; CHECK-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C10]](s20)
-    ; CHECK-NEXT: [[UV4:%[0-9]+]]:_(s32), [[UV5:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT2]](s64)
-    ; CHECK-NEXT: G_STORE [[UV4]](s32), [[PTR_ADD3]](p0) :: (store (s32) into unknown-address + 16, align 16)
-    ; CHECK-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD3]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV5]](s32), [[PTR_ADD4]](p0) :: (store (s32) into unknown-address + 20)
-    ; CHECK-NEXT: [[C11:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
-    ; CHECK-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C11]](s20)
-    ; CHECK-NEXT: [[UV6:%[0-9]+]]:_(s32), [[UV7:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT3]](s64)
-    ; CHECK-NEXT: G_STORE [[UV6]](s32), [[PTR_ADD5]](p0) :: (store (s32) into unknown-address + 24, align 8)
-    ; CHECK-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD5]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV7]](s32), [[PTR_ADD6]](p0) :: (store (s32) into unknown-address + 28)
-    ; CHECK-NEXT: [[C12:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; CHECK-NEXT: [[PTR_ADD7:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C12]](s20)
-    ; CHECK-NEXT: [[UV8:%[0-9]+]]:_(s32), [[UV9:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT4]](s64)
-    ; CHECK-NEXT: G_STORE [[UV8]](s32), [[PTR_ADD7]](p0) :: (store (s32) into unknown-address + 32, align 16)
-    ; CHECK-NEXT: [[PTR_ADD8:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD7]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV9]](s32), [[PTR_ADD8]](p0) :: (store (s32) into unknown-address + 36)
-    ; CHECK-NEXT: [[C13:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
-    ; CHECK-NEXT: [[PTR_ADD9:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C13]](s20)
-    ; CHECK-NEXT: [[UV10:%[0-9]+]]:_(s32), [[UV11:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT5]](s64)
-    ; CHECK-NEXT: G_STORE [[UV10]](s32), [[PTR_ADD9]](p0) :: (store (s32) into unknown-address + 40, align 8)
-    ; CHECK-NEXT: [[PTR_ADD10:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD9]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV11]](s32), [[PTR_ADD10]](p0) :: (store (s32) into unknown-address + 44)
-    ; CHECK-NEXT: [[C14:%[0-9]+]]:_(s20) = G_CONSTANT i20 48
-    ; CHECK-NEXT: [[PTR_ADD11:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C14]](s20)
-    ; CHECK-NEXT: [[UV12:%[0-9]+]]:_(s32), [[UV13:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT6]](s64)
-    ; CHECK-NEXT: G_STORE [[UV12]](s32), [[PTR_ADD11]](p0) :: (store (s32) into unknown-address + 48, align 16)
-    ; CHECK-NEXT: [[PTR_ADD12:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD11]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV13]](s32), [[PTR_ADD12]](p0) :: (store (s32) into unknown-address + 52)
-    ; CHECK-NEXT: [[C15:%[0-9]+]]:_(s20) = G_CONSTANT i20 56
-    ; CHECK-NEXT: [[PTR_ADD13:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C15]](s20)
-    ; CHECK-NEXT: [[UV14:%[0-9]+]]:_(s32), [[UV15:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT7]](s64)
-    ; CHECK-NEXT: G_STORE [[UV14]](s32), [[PTR_ADD13]](p0) :: (store (s32) into unknown-address + 56, align 8)
-    ; CHECK-NEXT: [[PTR_ADD14:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD13]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV15]](s32), [[PTR_ADD14]](p0) :: (store (s32) into unknown-address + 60)
-    ; CHECK-NEXT: PseudoRET implicit $lr
+    ; AIE2P-LABEL: name: test_v8acc64_unaligned
+    ; AIE2P: liveins: $p0
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; AIE2P-NEXT: [[DEF:%[0-9]+]]:_(<8 x s64>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C]](s32)
+    ; AIE2P-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT1:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C1]](s32)
+    ; AIE2P-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT2:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C2]](s32)
+    ; AIE2P-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT3:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C3]](s32)
+    ; AIE2P-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT4:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C4]](s32)
+    ; AIE2P-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 5
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT5:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C5]](s32)
+    ; AIE2P-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 6
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT6:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C6]](s32)
+    ; AIE2P-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT7:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C7]](s32)
+    ; AIE2P-NEXT: [[UV:%[0-9]+]]:_(s32), [[UV1:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV]](s32), [[COPY]](p0) :: (store (s32), align 16)
+    ; AIE2P-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
+    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV1]](s32), [[PTR_ADD]](p0) :: (store (s32) into unknown-address + 4)
+    ; AIE2P-NEXT: [[C9:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+    ; AIE2P-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C9]](s20)
+    ; AIE2P-NEXT: [[UV2:%[0-9]+]]:_(s32), [[UV3:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT1]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV2]](s32), [[PTR_ADD1]](p0) :: (store (s32) into unknown-address + 8, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD1]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV3]](s32), [[PTR_ADD2]](p0) :: (store (s32) into unknown-address + 12)
+    ; AIE2P-NEXT: [[C10:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
+    ; AIE2P-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C10]](s20)
+    ; AIE2P-NEXT: [[UV4:%[0-9]+]]:_(s32), [[UV5:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT2]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV4]](s32), [[PTR_ADD3]](p0) :: (store (s32) into unknown-address + 16, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD3]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV5]](s32), [[PTR_ADD4]](p0) :: (store (s32) into unknown-address + 20)
+    ; AIE2P-NEXT: [[C11:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
+    ; AIE2P-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C11]](s20)
+    ; AIE2P-NEXT: [[UV6:%[0-9]+]]:_(s32), [[UV7:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT3]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV6]](s32), [[PTR_ADD5]](p0) :: (store (s32) into unknown-address + 24, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD5]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV7]](s32), [[PTR_ADD6]](p0) :: (store (s32) into unknown-address + 28)
+    ; AIE2P-NEXT: [[C12:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
+    ; AIE2P-NEXT: [[PTR_ADD7:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C12]](s20)
+    ; AIE2P-NEXT: [[UV8:%[0-9]+]]:_(s32), [[UV9:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT4]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV8]](s32), [[PTR_ADD7]](p0) :: (store (s32) into unknown-address + 32, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD8:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD7]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV9]](s32), [[PTR_ADD8]](p0) :: (store (s32) into unknown-address + 36)
+    ; AIE2P-NEXT: [[C13:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
+    ; AIE2P-NEXT: [[PTR_ADD9:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C13]](s20)
+    ; AIE2P-NEXT: [[UV10:%[0-9]+]]:_(s32), [[UV11:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT5]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV10]](s32), [[PTR_ADD9]](p0) :: (store (s32) into unknown-address + 40, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD10:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD9]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV11]](s32), [[PTR_ADD10]](p0) :: (store (s32) into unknown-address + 44)
+    ; AIE2P-NEXT: [[C14:%[0-9]+]]:_(s20) = G_CONSTANT i20 48
+    ; AIE2P-NEXT: [[PTR_ADD11:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C14]](s20)
+    ; AIE2P-NEXT: [[UV12:%[0-9]+]]:_(s32), [[UV13:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT6]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV12]](s32), [[PTR_ADD11]](p0) :: (store (s32) into unknown-address + 48, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD12:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD11]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV13]](s32), [[PTR_ADD12]](p0) :: (store (s32) into unknown-address + 52)
+    ; AIE2P-NEXT: [[C15:%[0-9]+]]:_(s20) = G_CONSTANT i20 56
+    ; AIE2P-NEXT: [[PTR_ADD13:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C15]](s20)
+    ; AIE2P-NEXT: [[UV14:%[0-9]+]]:_(s32), [[UV15:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT7]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV14]](s32), [[PTR_ADD13]](p0) :: (store (s32) into unknown-address + 56, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD14:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD13]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV15]](s32), [[PTR_ADD14]](p0) :: (store (s32) into unknown-address + 60)
+    ; AIE2P-NEXT: PseudoRET implicit $lr
+    ;
+    ; AIE2PS-LABEL: name: test_v8acc64_unaligned
+    ; AIE2PS: liveins: $p0
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; AIE2PS-NEXT: [[DEF:%[0-9]+]]:_(<8 x s64>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C]](s32)
+    ; AIE2PS-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT1:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C1]](s32)
+    ; AIE2PS-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT2:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C2]](s32)
+    ; AIE2PS-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT3:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C3]](s32)
+    ; AIE2PS-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT4:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C4]](s32)
+    ; AIE2PS-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 5
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT5:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C5]](s32)
+    ; AIE2PS-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 6
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT6:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C6]](s32)
+    ; AIE2PS-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT7:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C7]](s32)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64), [[COPY]](p0) :: (store (s64), align 16)
+    ; AIE2PS-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+    ; AIE2PS-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C8]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT1]](s64), [[PTR_ADD]](p0) :: (store (s64) into unknown-address + 8)
+    ; AIE2PS-NEXT: [[C9:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
+    ; AIE2PS-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C9]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT2]](s64), [[PTR_ADD1]](p0) :: (store (s64) into unknown-address + 16, align 16)
+    ; AIE2PS-NEXT: [[C10:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
+    ; AIE2PS-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C10]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT3]](s64), [[PTR_ADD2]](p0) :: (store (s64) into unknown-address + 24)
+    ; AIE2PS-NEXT: [[C11:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
+    ; AIE2PS-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C11]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT4]](s64), [[PTR_ADD3]](p0) :: (store (s64) into unknown-address + 32, align 16)
+    ; AIE2PS-NEXT: [[C12:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
+    ; AIE2PS-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C12]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT5]](s64), [[PTR_ADD4]](p0) :: (store (s64) into unknown-address + 40)
+    ; AIE2PS-NEXT: [[C13:%[0-9]+]]:_(s20) = G_CONSTANT i20 48
+    ; AIE2PS-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C13]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT6]](s64), [[PTR_ADD5]](p0) :: (store (s64) into unknown-address + 48, align 16)
+    ; AIE2PS-NEXT: [[C14:%[0-9]+]]:_(s20) = G_CONSTANT i20 56
+    ; AIE2PS-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C14]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT7]](s64), [[PTR_ADD6]](p0) :: (store (s64) into unknown-address + 56)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr
     %0:_(p0) = COPY $p0
     %1:_(<8 x s64>) = G_IMPLICIT_DEF
     G_STORE %1(<8 x s64>), %0(p0) :: (store (<8 x s64>), align 16)
@@ -3070,132 +3227,210 @@ body:             |
   bb.1.entry:
     liveins:  $p0
 
-    ; CHECK-LABEL: name: test_v32acc32_unaligned
-    ; CHECK: liveins: $p0
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<16 x s64>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<8 x s64>), [[UV1:%[0-9]+]]:_(<8 x s64>) = G_UNMERGE_VALUES [[DEF]](<16 x s64>)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C]](s32)
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT1:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C1]](s32)
-    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT2:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C2]](s32)
-    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT3:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C3]](s32)
-    ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT4:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C4]](s32)
-    ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 5
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT5:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C5]](s32)
-    ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 6
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT6:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C6]](s32)
-    ; CHECK-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT7:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C7]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT8:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT9:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C1]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT10:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C2]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT11:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C3]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT12:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C4]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT13:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C5]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT14:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C6]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT15:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C7]](s32)
-    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(s32), [[UV3:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
-    ; CHECK-NEXT: G_STORE [[UV2]](s32), [[COPY]](p0) :: (store (s32), align 16)
-    ; CHECK-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV3]](s32), [[PTR_ADD]](p0) :: (store (s32) into unknown-address + 4)
-    ; CHECK-NEXT: [[C9:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
-    ; CHECK-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C9]](s20)
-    ; CHECK-NEXT: [[UV4:%[0-9]+]]:_(s32), [[UV5:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT1]](s64)
-    ; CHECK-NEXT: G_STORE [[UV4]](s32), [[PTR_ADD1]](p0) :: (store (s32) into unknown-address + 8, align 8)
-    ; CHECK-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD1]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV5]](s32), [[PTR_ADD2]](p0) :: (store (s32) into unknown-address + 12)
-    ; CHECK-NEXT: [[C10:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
-    ; CHECK-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C10]](s20)
-    ; CHECK-NEXT: [[UV6:%[0-9]+]]:_(s32), [[UV7:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT2]](s64)
-    ; CHECK-NEXT: G_STORE [[UV6]](s32), [[PTR_ADD3]](p0) :: (store (s32) into unknown-address + 16, align 16)
-    ; CHECK-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD3]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV7]](s32), [[PTR_ADD4]](p0) :: (store (s32) into unknown-address + 20)
-    ; CHECK-NEXT: [[C11:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
-    ; CHECK-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C11]](s20)
-    ; CHECK-NEXT: [[UV8:%[0-9]+]]:_(s32), [[UV9:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT3]](s64)
-    ; CHECK-NEXT: G_STORE [[UV8]](s32), [[PTR_ADD5]](p0) :: (store (s32) into unknown-address + 24, align 8)
-    ; CHECK-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD5]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV9]](s32), [[PTR_ADD6]](p0) :: (store (s32) into unknown-address + 28)
-    ; CHECK-NEXT: [[C12:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; CHECK-NEXT: [[PTR_ADD7:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C12]](s20)
-    ; CHECK-NEXT: [[UV10:%[0-9]+]]:_(s32), [[UV11:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT4]](s64)
-    ; CHECK-NEXT: G_STORE [[UV10]](s32), [[PTR_ADD7]](p0) :: (store (s32) into unknown-address + 32, align 16)
-    ; CHECK-NEXT: [[PTR_ADD8:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD7]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV11]](s32), [[PTR_ADD8]](p0) :: (store (s32) into unknown-address + 36)
-    ; CHECK-NEXT: [[C13:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
-    ; CHECK-NEXT: [[PTR_ADD9:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C13]](s20)
-    ; CHECK-NEXT: [[UV12:%[0-9]+]]:_(s32), [[UV13:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT5]](s64)
-    ; CHECK-NEXT: G_STORE [[UV12]](s32), [[PTR_ADD9]](p0) :: (store (s32) into unknown-address + 40, align 8)
-    ; CHECK-NEXT: [[PTR_ADD10:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD9]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV13]](s32), [[PTR_ADD10]](p0) :: (store (s32) into unknown-address + 44)
-    ; CHECK-NEXT: [[C14:%[0-9]+]]:_(s20) = G_CONSTANT i20 48
-    ; CHECK-NEXT: [[PTR_ADD11:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C14]](s20)
-    ; CHECK-NEXT: [[UV14:%[0-9]+]]:_(s32), [[UV15:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT6]](s64)
-    ; CHECK-NEXT: G_STORE [[UV14]](s32), [[PTR_ADD11]](p0) :: (store (s32) into unknown-address + 48, align 16)
-    ; CHECK-NEXT: [[PTR_ADD12:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD11]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV15]](s32), [[PTR_ADD12]](p0) :: (store (s32) into unknown-address + 52)
-    ; CHECK-NEXT: [[C15:%[0-9]+]]:_(s20) = G_CONSTANT i20 56
-    ; CHECK-NEXT: [[PTR_ADD13:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C15]](s20)
-    ; CHECK-NEXT: [[UV16:%[0-9]+]]:_(s32), [[UV17:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT7]](s64)
-    ; CHECK-NEXT: G_STORE [[UV16]](s32), [[PTR_ADD13]](p0) :: (store (s32) into unknown-address + 56, align 8)
-    ; CHECK-NEXT: [[PTR_ADD14:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD13]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV17]](s32), [[PTR_ADD14]](p0) :: (store (s32) into unknown-address + 60)
-    ; CHECK-NEXT: [[C16:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
-    ; CHECK-NEXT: [[PTR_ADD15:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C16]](s20)
-    ; CHECK-NEXT: [[UV18:%[0-9]+]]:_(s32), [[UV19:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT8]](s64)
-    ; CHECK-NEXT: G_STORE [[UV18]](s32), [[PTR_ADD15]](p0) :: (store (s32) into unknown-address + 64, align 16)
-    ; CHECK-NEXT: [[PTR_ADD16:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD15]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV19]](s32), [[PTR_ADD16]](p0) :: (store (s32) into unknown-address + 68)
-    ; CHECK-NEXT: [[C17:%[0-9]+]]:_(s20) = G_CONSTANT i20 72
-    ; CHECK-NEXT: [[PTR_ADD17:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C17]](s20)
-    ; CHECK-NEXT: [[UV20:%[0-9]+]]:_(s32), [[UV21:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT9]](s64)
-    ; CHECK-NEXT: G_STORE [[UV20]](s32), [[PTR_ADD17]](p0) :: (store (s32) into unknown-address + 72, align 8)
-    ; CHECK-NEXT: [[PTR_ADD18:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD17]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV21]](s32), [[PTR_ADD18]](p0) :: (store (s32) into unknown-address + 76)
-    ; CHECK-NEXT: [[C18:%[0-9]+]]:_(s20) = G_CONSTANT i20 80
-    ; CHECK-NEXT: [[PTR_ADD19:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C18]](s20)
-    ; CHECK-NEXT: [[UV22:%[0-9]+]]:_(s32), [[UV23:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT10]](s64)
-    ; CHECK-NEXT: G_STORE [[UV22]](s32), [[PTR_ADD19]](p0) :: (store (s32) into unknown-address + 80, align 16)
-    ; CHECK-NEXT: [[PTR_ADD20:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD19]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV23]](s32), [[PTR_ADD20]](p0) :: (store (s32) into unknown-address + 84)
-    ; CHECK-NEXT: [[C19:%[0-9]+]]:_(s20) = G_CONSTANT i20 88
-    ; CHECK-NEXT: [[PTR_ADD21:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C19]](s20)
-    ; CHECK-NEXT: [[UV24:%[0-9]+]]:_(s32), [[UV25:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT11]](s64)
-    ; CHECK-NEXT: G_STORE [[UV24]](s32), [[PTR_ADD21]](p0) :: (store (s32) into unknown-address + 88, align 8)
-    ; CHECK-NEXT: [[PTR_ADD22:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD21]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV25]](s32), [[PTR_ADD22]](p0) :: (store (s32) into unknown-address + 92)
-    ; CHECK-NEXT: [[C20:%[0-9]+]]:_(s20) = G_CONSTANT i20 96
-    ; CHECK-NEXT: [[PTR_ADD23:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C20]](s20)
-    ; CHECK-NEXT: [[UV26:%[0-9]+]]:_(s32), [[UV27:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT12]](s64)
-    ; CHECK-NEXT: G_STORE [[UV26]](s32), [[PTR_ADD23]](p0) :: (store (s32) into unknown-address + 96, align 16)
-    ; CHECK-NEXT: [[PTR_ADD24:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD23]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV27]](s32), [[PTR_ADD24]](p0) :: (store (s32) into unknown-address + 100)
-    ; CHECK-NEXT: [[C21:%[0-9]+]]:_(s20) = G_CONSTANT i20 104
-    ; CHECK-NEXT: [[PTR_ADD25:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C21]](s20)
-    ; CHECK-NEXT: [[UV28:%[0-9]+]]:_(s32), [[UV29:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT13]](s64)
-    ; CHECK-NEXT: G_STORE [[UV28]](s32), [[PTR_ADD25]](p0) :: (store (s32) into unknown-address + 104, align 8)
-    ; CHECK-NEXT: [[PTR_ADD26:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD25]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV29]](s32), [[PTR_ADD26]](p0) :: (store (s32) into unknown-address + 108)
-    ; CHECK-NEXT: [[C22:%[0-9]+]]:_(s20) = G_CONSTANT i20 112
-    ; CHECK-NEXT: [[PTR_ADD27:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C22]](s20)
-    ; CHECK-NEXT: [[UV30:%[0-9]+]]:_(s32), [[UV31:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT14]](s64)
-    ; CHECK-NEXT: G_STORE [[UV30]](s32), [[PTR_ADD27]](p0) :: (store (s32) into unknown-address + 112, align 16)
-    ; CHECK-NEXT: [[PTR_ADD28:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD27]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV31]](s32), [[PTR_ADD28]](p0) :: (store (s32) into unknown-address + 116)
-    ; CHECK-NEXT: [[C23:%[0-9]+]]:_(s20) = G_CONSTANT i20 120
-    ; CHECK-NEXT: [[PTR_ADD29:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C23]](s20)
-    ; CHECK-NEXT: [[UV32:%[0-9]+]]:_(s32), [[UV33:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT15]](s64)
-    ; CHECK-NEXT: G_STORE [[UV32]](s32), [[PTR_ADD29]](p0) :: (store (s32) into unknown-address + 120, align 8)
-    ; CHECK-NEXT: [[PTR_ADD30:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD29]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV33]](s32), [[PTR_ADD30]](p0) :: (store (s32) into unknown-address + 124)
-    ; CHECK-NEXT: PseudoRET implicit $lr
+    ; AIE2P-LABEL: name: test_v32acc32_unaligned
+    ; AIE2P: liveins: $p0
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; AIE2P-NEXT: [[DEF:%[0-9]+]]:_(<16 x s64>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; AIE2P-NEXT: [[UV:%[0-9]+]]:_(<8 x s64>), [[UV1:%[0-9]+]]:_(<8 x s64>) = G_UNMERGE_VALUES [[DEF]](<16 x s64>)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C]](s32)
+    ; AIE2P-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT1:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C1]](s32)
+    ; AIE2P-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT2:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C2]](s32)
+    ; AIE2P-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT3:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C3]](s32)
+    ; AIE2P-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT4:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C4]](s32)
+    ; AIE2P-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 5
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT5:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C5]](s32)
+    ; AIE2P-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 6
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT6:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C6]](s32)
+    ; AIE2P-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT7:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C7]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT8:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT9:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C1]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT10:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C2]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT11:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C3]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT12:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C4]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT13:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C5]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT14:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C6]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT15:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C7]](s32)
+    ; AIE2P-NEXT: [[UV2:%[0-9]+]]:_(s32), [[UV3:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV2]](s32), [[COPY]](p0) :: (store (s32), align 16)
+    ; AIE2P-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
+    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV3]](s32), [[PTR_ADD]](p0) :: (store (s32) into unknown-address + 4)
+    ; AIE2P-NEXT: [[C9:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+    ; AIE2P-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C9]](s20)
+    ; AIE2P-NEXT: [[UV4:%[0-9]+]]:_(s32), [[UV5:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT1]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV4]](s32), [[PTR_ADD1]](p0) :: (store (s32) into unknown-address + 8, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD1]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV5]](s32), [[PTR_ADD2]](p0) :: (store (s32) into unknown-address + 12)
+    ; AIE2P-NEXT: [[C10:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
+    ; AIE2P-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C10]](s20)
+    ; AIE2P-NEXT: [[UV6:%[0-9]+]]:_(s32), [[UV7:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT2]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV6]](s32), [[PTR_ADD3]](p0) :: (store (s32) into unknown-address + 16, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD3]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV7]](s32), [[PTR_ADD4]](p0) :: (store (s32) into unknown-address + 20)
+    ; AIE2P-NEXT: [[C11:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
+    ; AIE2P-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C11]](s20)
+    ; AIE2P-NEXT: [[UV8:%[0-9]+]]:_(s32), [[UV9:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT3]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV8]](s32), [[PTR_ADD5]](p0) :: (store (s32) into unknown-address + 24, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD5]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV9]](s32), [[PTR_ADD6]](p0) :: (store (s32) into unknown-address + 28)
+    ; AIE2P-NEXT: [[C12:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
+    ; AIE2P-NEXT: [[PTR_ADD7:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C12]](s20)
+    ; AIE2P-NEXT: [[UV10:%[0-9]+]]:_(s32), [[UV11:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT4]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV10]](s32), [[PTR_ADD7]](p0) :: (store (s32) into unknown-address + 32, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD8:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD7]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV11]](s32), [[PTR_ADD8]](p0) :: (store (s32) into unknown-address + 36)
+    ; AIE2P-NEXT: [[C13:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
+    ; AIE2P-NEXT: [[PTR_ADD9:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C13]](s20)
+    ; AIE2P-NEXT: [[UV12:%[0-9]+]]:_(s32), [[UV13:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT5]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV12]](s32), [[PTR_ADD9]](p0) :: (store (s32) into unknown-address + 40, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD10:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD9]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV13]](s32), [[PTR_ADD10]](p0) :: (store (s32) into unknown-address + 44)
+    ; AIE2P-NEXT: [[C14:%[0-9]+]]:_(s20) = G_CONSTANT i20 48
+    ; AIE2P-NEXT: [[PTR_ADD11:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C14]](s20)
+    ; AIE2P-NEXT: [[UV14:%[0-9]+]]:_(s32), [[UV15:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT6]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV14]](s32), [[PTR_ADD11]](p0) :: (store (s32) into unknown-address + 48, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD12:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD11]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV15]](s32), [[PTR_ADD12]](p0) :: (store (s32) into unknown-address + 52)
+    ; AIE2P-NEXT: [[C15:%[0-9]+]]:_(s20) = G_CONSTANT i20 56
+    ; AIE2P-NEXT: [[PTR_ADD13:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C15]](s20)
+    ; AIE2P-NEXT: [[UV16:%[0-9]+]]:_(s32), [[UV17:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT7]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV16]](s32), [[PTR_ADD13]](p0) :: (store (s32) into unknown-address + 56, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD14:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD13]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV17]](s32), [[PTR_ADD14]](p0) :: (store (s32) into unknown-address + 60)
+    ; AIE2P-NEXT: [[C16:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
+    ; AIE2P-NEXT: [[PTR_ADD15:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C16]](s20)
+    ; AIE2P-NEXT: [[UV18:%[0-9]+]]:_(s32), [[UV19:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT8]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV18]](s32), [[PTR_ADD15]](p0) :: (store (s32) into unknown-address + 64, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD16:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD15]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV19]](s32), [[PTR_ADD16]](p0) :: (store (s32) into unknown-address + 68)
+    ; AIE2P-NEXT: [[C17:%[0-9]+]]:_(s20) = G_CONSTANT i20 72
+    ; AIE2P-NEXT: [[PTR_ADD17:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C17]](s20)
+    ; AIE2P-NEXT: [[UV20:%[0-9]+]]:_(s32), [[UV21:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT9]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV20]](s32), [[PTR_ADD17]](p0) :: (store (s32) into unknown-address + 72, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD18:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD17]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV21]](s32), [[PTR_ADD18]](p0) :: (store (s32) into unknown-address + 76)
+    ; AIE2P-NEXT: [[C18:%[0-9]+]]:_(s20) = G_CONSTANT i20 80
+    ; AIE2P-NEXT: [[PTR_ADD19:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C18]](s20)
+    ; AIE2P-NEXT: [[UV22:%[0-9]+]]:_(s32), [[UV23:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT10]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV22]](s32), [[PTR_ADD19]](p0) :: (store (s32) into unknown-address + 80, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD20:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD19]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV23]](s32), [[PTR_ADD20]](p0) :: (store (s32) into unknown-address + 84)
+    ; AIE2P-NEXT: [[C19:%[0-9]+]]:_(s20) = G_CONSTANT i20 88
+    ; AIE2P-NEXT: [[PTR_ADD21:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C19]](s20)
+    ; AIE2P-NEXT: [[UV24:%[0-9]+]]:_(s32), [[UV25:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT11]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV24]](s32), [[PTR_ADD21]](p0) :: (store (s32) into unknown-address + 88, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD22:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD21]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV25]](s32), [[PTR_ADD22]](p0) :: (store (s32) into unknown-address + 92)
+    ; AIE2P-NEXT: [[C20:%[0-9]+]]:_(s20) = G_CONSTANT i20 96
+    ; AIE2P-NEXT: [[PTR_ADD23:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C20]](s20)
+    ; AIE2P-NEXT: [[UV26:%[0-9]+]]:_(s32), [[UV27:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT12]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV26]](s32), [[PTR_ADD23]](p0) :: (store (s32) into unknown-address + 96, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD24:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD23]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV27]](s32), [[PTR_ADD24]](p0) :: (store (s32) into unknown-address + 100)
+    ; AIE2P-NEXT: [[C21:%[0-9]+]]:_(s20) = G_CONSTANT i20 104
+    ; AIE2P-NEXT: [[PTR_ADD25:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C21]](s20)
+    ; AIE2P-NEXT: [[UV28:%[0-9]+]]:_(s32), [[UV29:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT13]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV28]](s32), [[PTR_ADD25]](p0) :: (store (s32) into unknown-address + 104, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD26:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD25]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV29]](s32), [[PTR_ADD26]](p0) :: (store (s32) into unknown-address + 108)
+    ; AIE2P-NEXT: [[C22:%[0-9]+]]:_(s20) = G_CONSTANT i20 112
+    ; AIE2P-NEXT: [[PTR_ADD27:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C22]](s20)
+    ; AIE2P-NEXT: [[UV30:%[0-9]+]]:_(s32), [[UV31:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT14]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV30]](s32), [[PTR_ADD27]](p0) :: (store (s32) into unknown-address + 112, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD28:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD27]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV31]](s32), [[PTR_ADD28]](p0) :: (store (s32) into unknown-address + 116)
+    ; AIE2P-NEXT: [[C23:%[0-9]+]]:_(s20) = G_CONSTANT i20 120
+    ; AIE2P-NEXT: [[PTR_ADD29:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C23]](s20)
+    ; AIE2P-NEXT: [[UV32:%[0-9]+]]:_(s32), [[UV33:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT15]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV32]](s32), [[PTR_ADD29]](p0) :: (store (s32) into unknown-address + 120, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD30:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD29]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV33]](s32), [[PTR_ADD30]](p0) :: (store (s32) into unknown-address + 124)
+    ; AIE2P-NEXT: PseudoRET implicit $lr
+    ;
+    ; AIE2PS-LABEL: name: test_v32acc32_unaligned
+    ; AIE2PS: liveins: $p0
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; AIE2PS-NEXT: [[DEF:%[0-9]+]]:_(<16 x s64>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; AIE2PS-NEXT: [[UV:%[0-9]+]]:_(<8 x s64>), [[UV1:%[0-9]+]]:_(<8 x s64>) = G_UNMERGE_VALUES [[DEF]](<16 x s64>)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C]](s32)
+    ; AIE2PS-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT1:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C1]](s32)
+    ; AIE2PS-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT2:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C2]](s32)
+    ; AIE2PS-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT3:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C3]](s32)
+    ; AIE2PS-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT4:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C4]](s32)
+    ; AIE2PS-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 5
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT5:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C5]](s32)
+    ; AIE2PS-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 6
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT6:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C6]](s32)
+    ; AIE2PS-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT7:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C7]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT8:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT9:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C1]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT10:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C2]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT11:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C3]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT12:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C4]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT13:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C5]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT14:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C6]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT15:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C7]](s32)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64), [[COPY]](p0) :: (store (s64), align 16)
+    ; AIE2PS-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+    ; AIE2PS-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C8]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT1]](s64), [[PTR_ADD]](p0) :: (store (s64) into unknown-address + 8)
+    ; AIE2PS-NEXT: [[C9:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
+    ; AIE2PS-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C9]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT2]](s64), [[PTR_ADD1]](p0) :: (store (s64) into unknown-address + 16, align 16)
+    ; AIE2PS-NEXT: [[C10:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
+    ; AIE2PS-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C10]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT3]](s64), [[PTR_ADD2]](p0) :: (store (s64) into unknown-address + 24)
+    ; AIE2PS-NEXT: [[C11:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
+    ; AIE2PS-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C11]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT4]](s64), [[PTR_ADD3]](p0) :: (store (s64) into unknown-address + 32, align 16)
+    ; AIE2PS-NEXT: [[C12:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
+    ; AIE2PS-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C12]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT5]](s64), [[PTR_ADD4]](p0) :: (store (s64) into unknown-address + 40)
+    ; AIE2PS-NEXT: [[C13:%[0-9]+]]:_(s20) = G_CONSTANT i20 48
+    ; AIE2PS-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C13]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT6]](s64), [[PTR_ADD5]](p0) :: (store (s64) into unknown-address + 48, align 16)
+    ; AIE2PS-NEXT: [[C14:%[0-9]+]]:_(s20) = G_CONSTANT i20 56
+    ; AIE2PS-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C14]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT7]](s64), [[PTR_ADD6]](p0) :: (store (s64) into unknown-address + 56)
+    ; AIE2PS-NEXT: [[C15:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
+    ; AIE2PS-NEXT: [[PTR_ADD7:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C15]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT8]](s64), [[PTR_ADD7]](p0) :: (store (s64) into unknown-address + 64, align 16)
+    ; AIE2PS-NEXT: [[C16:%[0-9]+]]:_(s20) = G_CONSTANT i20 72
+    ; AIE2PS-NEXT: [[PTR_ADD8:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C16]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT9]](s64), [[PTR_ADD8]](p0) :: (store (s64) into unknown-address + 72)
+    ; AIE2PS-NEXT: [[C17:%[0-9]+]]:_(s20) = G_CONSTANT i20 80
+    ; AIE2PS-NEXT: [[PTR_ADD9:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C17]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT10]](s64), [[PTR_ADD9]](p0) :: (store (s64) into unknown-address + 80, align 16)
+    ; AIE2PS-NEXT: [[C18:%[0-9]+]]:_(s20) = G_CONSTANT i20 88
+    ; AIE2PS-NEXT: [[PTR_ADD10:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C18]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT11]](s64), [[PTR_ADD10]](p0) :: (store (s64) into unknown-address + 88)
+    ; AIE2PS-NEXT: [[C19:%[0-9]+]]:_(s20) = G_CONSTANT i20 96
+    ; AIE2PS-NEXT: [[PTR_ADD11:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C19]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT12]](s64), [[PTR_ADD11]](p0) :: (store (s64) into unknown-address + 96, align 16)
+    ; AIE2PS-NEXT: [[C20:%[0-9]+]]:_(s20) = G_CONSTANT i20 104
+    ; AIE2PS-NEXT: [[PTR_ADD12:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C20]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT13]](s64), [[PTR_ADD12]](p0) :: (store (s64) into unknown-address + 104)
+    ; AIE2PS-NEXT: [[C21:%[0-9]+]]:_(s20) = G_CONSTANT i20 112
+    ; AIE2PS-NEXT: [[PTR_ADD13:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C21]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT14]](s64), [[PTR_ADD13]](p0) :: (store (s64) into unknown-address + 112, align 16)
+    ; AIE2PS-NEXT: [[C22:%[0-9]+]]:_(s20) = G_CONSTANT i20 120
+    ; AIE2PS-NEXT: [[PTR_ADD14:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C22]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT15]](s64), [[PTR_ADD14]](p0) :: (store (s64) into unknown-address + 120)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr
     %0:_(p0) = COPY $p0
     %1:_(<16 x s64>) = G_IMPLICIT_DEF
     G_STORE %1(<16 x s64>), %0(p0) :: (store (<16 x s64>), align 16)
@@ -3208,132 +3443,210 @@ body:             |
   bb.1.entry:
     liveins:  $p0
 
-    ; CHECK-LABEL: name: test_v16acc64_unaligned
-    ; CHECK: liveins: $p0
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<16 x s64>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<8 x s64>), [[UV1:%[0-9]+]]:_(<8 x s64>) = G_UNMERGE_VALUES [[DEF]](<16 x s64>)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C]](s32)
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT1:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C1]](s32)
-    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT2:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C2]](s32)
-    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT3:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C3]](s32)
-    ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT4:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C4]](s32)
-    ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 5
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT5:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C5]](s32)
-    ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 6
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT6:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C6]](s32)
-    ; CHECK-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT7:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C7]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT8:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT9:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C1]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT10:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C2]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT11:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C3]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT12:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C4]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT13:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C5]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT14:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C6]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT15:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C7]](s32)
-    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(s32), [[UV3:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
-    ; CHECK-NEXT: G_STORE [[UV2]](s32), [[COPY]](p0) :: (store (s32), align 16)
-    ; CHECK-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV3]](s32), [[PTR_ADD]](p0) :: (store (s32) into unknown-address + 4)
-    ; CHECK-NEXT: [[C9:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
-    ; CHECK-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C9]](s20)
-    ; CHECK-NEXT: [[UV4:%[0-9]+]]:_(s32), [[UV5:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT1]](s64)
-    ; CHECK-NEXT: G_STORE [[UV4]](s32), [[PTR_ADD1]](p0) :: (store (s32) into unknown-address + 8, align 8)
-    ; CHECK-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD1]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV5]](s32), [[PTR_ADD2]](p0) :: (store (s32) into unknown-address + 12)
-    ; CHECK-NEXT: [[C10:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
-    ; CHECK-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C10]](s20)
-    ; CHECK-NEXT: [[UV6:%[0-9]+]]:_(s32), [[UV7:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT2]](s64)
-    ; CHECK-NEXT: G_STORE [[UV6]](s32), [[PTR_ADD3]](p0) :: (store (s32) into unknown-address + 16, align 16)
-    ; CHECK-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD3]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV7]](s32), [[PTR_ADD4]](p0) :: (store (s32) into unknown-address + 20)
-    ; CHECK-NEXT: [[C11:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
-    ; CHECK-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C11]](s20)
-    ; CHECK-NEXT: [[UV8:%[0-9]+]]:_(s32), [[UV9:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT3]](s64)
-    ; CHECK-NEXT: G_STORE [[UV8]](s32), [[PTR_ADD5]](p0) :: (store (s32) into unknown-address + 24, align 8)
-    ; CHECK-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD5]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV9]](s32), [[PTR_ADD6]](p0) :: (store (s32) into unknown-address + 28)
-    ; CHECK-NEXT: [[C12:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; CHECK-NEXT: [[PTR_ADD7:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C12]](s20)
-    ; CHECK-NEXT: [[UV10:%[0-9]+]]:_(s32), [[UV11:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT4]](s64)
-    ; CHECK-NEXT: G_STORE [[UV10]](s32), [[PTR_ADD7]](p0) :: (store (s32) into unknown-address + 32, align 16)
-    ; CHECK-NEXT: [[PTR_ADD8:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD7]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV11]](s32), [[PTR_ADD8]](p0) :: (store (s32) into unknown-address + 36)
-    ; CHECK-NEXT: [[C13:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
-    ; CHECK-NEXT: [[PTR_ADD9:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C13]](s20)
-    ; CHECK-NEXT: [[UV12:%[0-9]+]]:_(s32), [[UV13:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT5]](s64)
-    ; CHECK-NEXT: G_STORE [[UV12]](s32), [[PTR_ADD9]](p0) :: (store (s32) into unknown-address + 40, align 8)
-    ; CHECK-NEXT: [[PTR_ADD10:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD9]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV13]](s32), [[PTR_ADD10]](p0) :: (store (s32) into unknown-address + 44)
-    ; CHECK-NEXT: [[C14:%[0-9]+]]:_(s20) = G_CONSTANT i20 48
-    ; CHECK-NEXT: [[PTR_ADD11:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C14]](s20)
-    ; CHECK-NEXT: [[UV14:%[0-9]+]]:_(s32), [[UV15:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT6]](s64)
-    ; CHECK-NEXT: G_STORE [[UV14]](s32), [[PTR_ADD11]](p0) :: (store (s32) into unknown-address + 48, align 16)
-    ; CHECK-NEXT: [[PTR_ADD12:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD11]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV15]](s32), [[PTR_ADD12]](p0) :: (store (s32) into unknown-address + 52)
-    ; CHECK-NEXT: [[C15:%[0-9]+]]:_(s20) = G_CONSTANT i20 56
-    ; CHECK-NEXT: [[PTR_ADD13:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C15]](s20)
-    ; CHECK-NEXT: [[UV16:%[0-9]+]]:_(s32), [[UV17:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT7]](s64)
-    ; CHECK-NEXT: G_STORE [[UV16]](s32), [[PTR_ADD13]](p0) :: (store (s32) into unknown-address + 56, align 8)
-    ; CHECK-NEXT: [[PTR_ADD14:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD13]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV17]](s32), [[PTR_ADD14]](p0) :: (store (s32) into unknown-address + 60)
-    ; CHECK-NEXT: [[C16:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
-    ; CHECK-NEXT: [[PTR_ADD15:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C16]](s20)
-    ; CHECK-NEXT: [[UV18:%[0-9]+]]:_(s32), [[UV19:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT8]](s64)
-    ; CHECK-NEXT: G_STORE [[UV18]](s32), [[PTR_ADD15]](p0) :: (store (s32) into unknown-address + 64, align 16)
-    ; CHECK-NEXT: [[PTR_ADD16:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD15]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV19]](s32), [[PTR_ADD16]](p0) :: (store (s32) into unknown-address + 68)
-    ; CHECK-NEXT: [[C17:%[0-9]+]]:_(s20) = G_CONSTANT i20 72
-    ; CHECK-NEXT: [[PTR_ADD17:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C17]](s20)
-    ; CHECK-NEXT: [[UV20:%[0-9]+]]:_(s32), [[UV21:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT9]](s64)
-    ; CHECK-NEXT: G_STORE [[UV20]](s32), [[PTR_ADD17]](p0) :: (store (s32) into unknown-address + 72, align 8)
-    ; CHECK-NEXT: [[PTR_ADD18:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD17]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV21]](s32), [[PTR_ADD18]](p0) :: (store (s32) into unknown-address + 76)
-    ; CHECK-NEXT: [[C18:%[0-9]+]]:_(s20) = G_CONSTANT i20 80
-    ; CHECK-NEXT: [[PTR_ADD19:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C18]](s20)
-    ; CHECK-NEXT: [[UV22:%[0-9]+]]:_(s32), [[UV23:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT10]](s64)
-    ; CHECK-NEXT: G_STORE [[UV22]](s32), [[PTR_ADD19]](p0) :: (store (s32) into unknown-address + 80, align 16)
-    ; CHECK-NEXT: [[PTR_ADD20:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD19]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV23]](s32), [[PTR_ADD20]](p0) :: (store (s32) into unknown-address + 84)
-    ; CHECK-NEXT: [[C19:%[0-9]+]]:_(s20) = G_CONSTANT i20 88
-    ; CHECK-NEXT: [[PTR_ADD21:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C19]](s20)
-    ; CHECK-NEXT: [[UV24:%[0-9]+]]:_(s32), [[UV25:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT11]](s64)
-    ; CHECK-NEXT: G_STORE [[UV24]](s32), [[PTR_ADD21]](p0) :: (store (s32) into unknown-address + 88, align 8)
-    ; CHECK-NEXT: [[PTR_ADD22:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD21]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV25]](s32), [[PTR_ADD22]](p0) :: (store (s32) into unknown-address + 92)
-    ; CHECK-NEXT: [[C20:%[0-9]+]]:_(s20) = G_CONSTANT i20 96
-    ; CHECK-NEXT: [[PTR_ADD23:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C20]](s20)
-    ; CHECK-NEXT: [[UV26:%[0-9]+]]:_(s32), [[UV27:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT12]](s64)
-    ; CHECK-NEXT: G_STORE [[UV26]](s32), [[PTR_ADD23]](p0) :: (store (s32) into unknown-address + 96, align 16)
-    ; CHECK-NEXT: [[PTR_ADD24:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD23]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV27]](s32), [[PTR_ADD24]](p0) :: (store (s32) into unknown-address + 100)
-    ; CHECK-NEXT: [[C21:%[0-9]+]]:_(s20) = G_CONSTANT i20 104
-    ; CHECK-NEXT: [[PTR_ADD25:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C21]](s20)
-    ; CHECK-NEXT: [[UV28:%[0-9]+]]:_(s32), [[UV29:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT13]](s64)
-    ; CHECK-NEXT: G_STORE [[UV28]](s32), [[PTR_ADD25]](p0) :: (store (s32) into unknown-address + 104, align 8)
-    ; CHECK-NEXT: [[PTR_ADD26:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD25]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV29]](s32), [[PTR_ADD26]](p0) :: (store (s32) into unknown-address + 108)
-    ; CHECK-NEXT: [[C22:%[0-9]+]]:_(s20) = G_CONSTANT i20 112
-    ; CHECK-NEXT: [[PTR_ADD27:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C22]](s20)
-    ; CHECK-NEXT: [[UV30:%[0-9]+]]:_(s32), [[UV31:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT14]](s64)
-    ; CHECK-NEXT: G_STORE [[UV30]](s32), [[PTR_ADD27]](p0) :: (store (s32) into unknown-address + 112, align 16)
-    ; CHECK-NEXT: [[PTR_ADD28:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD27]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV31]](s32), [[PTR_ADD28]](p0) :: (store (s32) into unknown-address + 116)
-    ; CHECK-NEXT: [[C23:%[0-9]+]]:_(s20) = G_CONSTANT i20 120
-    ; CHECK-NEXT: [[PTR_ADD29:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C23]](s20)
-    ; CHECK-NEXT: [[UV32:%[0-9]+]]:_(s32), [[UV33:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT15]](s64)
-    ; CHECK-NEXT: G_STORE [[UV32]](s32), [[PTR_ADD29]](p0) :: (store (s32) into unknown-address + 120, align 8)
-    ; CHECK-NEXT: [[PTR_ADD30:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD29]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV33]](s32), [[PTR_ADD30]](p0) :: (store (s32) into unknown-address + 124)
-    ; CHECK-NEXT: PseudoRET implicit $lr
+    ; AIE2P-LABEL: name: test_v16acc64_unaligned
+    ; AIE2P: liveins: $p0
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; AIE2P-NEXT: [[DEF:%[0-9]+]]:_(<16 x s64>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; AIE2P-NEXT: [[UV:%[0-9]+]]:_(<8 x s64>), [[UV1:%[0-9]+]]:_(<8 x s64>) = G_UNMERGE_VALUES [[DEF]](<16 x s64>)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C]](s32)
+    ; AIE2P-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT1:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C1]](s32)
+    ; AIE2P-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT2:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C2]](s32)
+    ; AIE2P-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT3:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C3]](s32)
+    ; AIE2P-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT4:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C4]](s32)
+    ; AIE2P-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 5
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT5:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C5]](s32)
+    ; AIE2P-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 6
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT6:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C6]](s32)
+    ; AIE2P-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT7:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C7]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT8:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT9:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C1]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT10:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C2]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT11:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C3]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT12:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C4]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT13:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C5]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT14:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C6]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT15:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C7]](s32)
+    ; AIE2P-NEXT: [[UV2:%[0-9]+]]:_(s32), [[UV3:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV2]](s32), [[COPY]](p0) :: (store (s32), align 16)
+    ; AIE2P-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
+    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV3]](s32), [[PTR_ADD]](p0) :: (store (s32) into unknown-address + 4)
+    ; AIE2P-NEXT: [[C9:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+    ; AIE2P-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C9]](s20)
+    ; AIE2P-NEXT: [[UV4:%[0-9]+]]:_(s32), [[UV5:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT1]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV4]](s32), [[PTR_ADD1]](p0) :: (store (s32) into unknown-address + 8, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD1]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV5]](s32), [[PTR_ADD2]](p0) :: (store (s32) into unknown-address + 12)
+    ; AIE2P-NEXT: [[C10:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
+    ; AIE2P-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C10]](s20)
+    ; AIE2P-NEXT: [[UV6:%[0-9]+]]:_(s32), [[UV7:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT2]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV6]](s32), [[PTR_ADD3]](p0) :: (store (s32) into unknown-address + 16, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD3]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV7]](s32), [[PTR_ADD4]](p0) :: (store (s32) into unknown-address + 20)
+    ; AIE2P-NEXT: [[C11:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
+    ; AIE2P-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C11]](s20)
+    ; AIE2P-NEXT: [[UV8:%[0-9]+]]:_(s32), [[UV9:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT3]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV8]](s32), [[PTR_ADD5]](p0) :: (store (s32) into unknown-address + 24, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD5]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV9]](s32), [[PTR_ADD6]](p0) :: (store (s32) into unknown-address + 28)
+    ; AIE2P-NEXT: [[C12:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
+    ; AIE2P-NEXT: [[PTR_ADD7:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C12]](s20)
+    ; AIE2P-NEXT: [[UV10:%[0-9]+]]:_(s32), [[UV11:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT4]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV10]](s32), [[PTR_ADD7]](p0) :: (store (s32) into unknown-address + 32, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD8:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD7]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV11]](s32), [[PTR_ADD8]](p0) :: (store (s32) into unknown-address + 36)
+    ; AIE2P-NEXT: [[C13:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
+    ; AIE2P-NEXT: [[PTR_ADD9:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C13]](s20)
+    ; AIE2P-NEXT: [[UV12:%[0-9]+]]:_(s32), [[UV13:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT5]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV12]](s32), [[PTR_ADD9]](p0) :: (store (s32) into unknown-address + 40, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD10:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD9]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV13]](s32), [[PTR_ADD10]](p0) :: (store (s32) into unknown-address + 44)
+    ; AIE2P-NEXT: [[C14:%[0-9]+]]:_(s20) = G_CONSTANT i20 48
+    ; AIE2P-NEXT: [[PTR_ADD11:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C14]](s20)
+    ; AIE2P-NEXT: [[UV14:%[0-9]+]]:_(s32), [[UV15:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT6]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV14]](s32), [[PTR_ADD11]](p0) :: (store (s32) into unknown-address + 48, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD12:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD11]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV15]](s32), [[PTR_ADD12]](p0) :: (store (s32) into unknown-address + 52)
+    ; AIE2P-NEXT: [[C15:%[0-9]+]]:_(s20) = G_CONSTANT i20 56
+    ; AIE2P-NEXT: [[PTR_ADD13:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C15]](s20)
+    ; AIE2P-NEXT: [[UV16:%[0-9]+]]:_(s32), [[UV17:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT7]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV16]](s32), [[PTR_ADD13]](p0) :: (store (s32) into unknown-address + 56, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD14:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD13]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV17]](s32), [[PTR_ADD14]](p0) :: (store (s32) into unknown-address + 60)
+    ; AIE2P-NEXT: [[C16:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
+    ; AIE2P-NEXT: [[PTR_ADD15:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C16]](s20)
+    ; AIE2P-NEXT: [[UV18:%[0-9]+]]:_(s32), [[UV19:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT8]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV18]](s32), [[PTR_ADD15]](p0) :: (store (s32) into unknown-address + 64, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD16:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD15]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV19]](s32), [[PTR_ADD16]](p0) :: (store (s32) into unknown-address + 68)
+    ; AIE2P-NEXT: [[C17:%[0-9]+]]:_(s20) = G_CONSTANT i20 72
+    ; AIE2P-NEXT: [[PTR_ADD17:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C17]](s20)
+    ; AIE2P-NEXT: [[UV20:%[0-9]+]]:_(s32), [[UV21:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT9]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV20]](s32), [[PTR_ADD17]](p0) :: (store (s32) into unknown-address + 72, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD18:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD17]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV21]](s32), [[PTR_ADD18]](p0) :: (store (s32) into unknown-address + 76)
+    ; AIE2P-NEXT: [[C18:%[0-9]+]]:_(s20) = G_CONSTANT i20 80
+    ; AIE2P-NEXT: [[PTR_ADD19:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C18]](s20)
+    ; AIE2P-NEXT: [[UV22:%[0-9]+]]:_(s32), [[UV23:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT10]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV22]](s32), [[PTR_ADD19]](p0) :: (store (s32) into unknown-address + 80, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD20:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD19]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV23]](s32), [[PTR_ADD20]](p0) :: (store (s32) into unknown-address + 84)
+    ; AIE2P-NEXT: [[C19:%[0-9]+]]:_(s20) = G_CONSTANT i20 88
+    ; AIE2P-NEXT: [[PTR_ADD21:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C19]](s20)
+    ; AIE2P-NEXT: [[UV24:%[0-9]+]]:_(s32), [[UV25:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT11]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV24]](s32), [[PTR_ADD21]](p0) :: (store (s32) into unknown-address + 88, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD22:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD21]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV25]](s32), [[PTR_ADD22]](p0) :: (store (s32) into unknown-address + 92)
+    ; AIE2P-NEXT: [[C20:%[0-9]+]]:_(s20) = G_CONSTANT i20 96
+    ; AIE2P-NEXT: [[PTR_ADD23:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C20]](s20)
+    ; AIE2P-NEXT: [[UV26:%[0-9]+]]:_(s32), [[UV27:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT12]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV26]](s32), [[PTR_ADD23]](p0) :: (store (s32) into unknown-address + 96, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD24:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD23]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV27]](s32), [[PTR_ADD24]](p0) :: (store (s32) into unknown-address + 100)
+    ; AIE2P-NEXT: [[C21:%[0-9]+]]:_(s20) = G_CONSTANT i20 104
+    ; AIE2P-NEXT: [[PTR_ADD25:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C21]](s20)
+    ; AIE2P-NEXT: [[UV28:%[0-9]+]]:_(s32), [[UV29:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT13]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV28]](s32), [[PTR_ADD25]](p0) :: (store (s32) into unknown-address + 104, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD26:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD25]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV29]](s32), [[PTR_ADD26]](p0) :: (store (s32) into unknown-address + 108)
+    ; AIE2P-NEXT: [[C22:%[0-9]+]]:_(s20) = G_CONSTANT i20 112
+    ; AIE2P-NEXT: [[PTR_ADD27:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C22]](s20)
+    ; AIE2P-NEXT: [[UV30:%[0-9]+]]:_(s32), [[UV31:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT14]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV30]](s32), [[PTR_ADD27]](p0) :: (store (s32) into unknown-address + 112, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD28:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD27]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV31]](s32), [[PTR_ADD28]](p0) :: (store (s32) into unknown-address + 116)
+    ; AIE2P-NEXT: [[C23:%[0-9]+]]:_(s20) = G_CONSTANT i20 120
+    ; AIE2P-NEXT: [[PTR_ADD29:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C23]](s20)
+    ; AIE2P-NEXT: [[UV32:%[0-9]+]]:_(s32), [[UV33:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT15]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV32]](s32), [[PTR_ADD29]](p0) :: (store (s32) into unknown-address + 120, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD30:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD29]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV33]](s32), [[PTR_ADD30]](p0) :: (store (s32) into unknown-address + 124)
+    ; AIE2P-NEXT: PseudoRET implicit $lr
+    ;
+    ; AIE2PS-LABEL: name: test_v16acc64_unaligned
+    ; AIE2PS: liveins: $p0
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; AIE2PS-NEXT: [[DEF:%[0-9]+]]:_(<16 x s64>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; AIE2PS-NEXT: [[UV:%[0-9]+]]:_(<8 x s64>), [[UV1:%[0-9]+]]:_(<8 x s64>) = G_UNMERGE_VALUES [[DEF]](<16 x s64>)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C]](s32)
+    ; AIE2PS-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT1:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C1]](s32)
+    ; AIE2PS-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT2:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C2]](s32)
+    ; AIE2PS-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT3:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C3]](s32)
+    ; AIE2PS-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT4:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C4]](s32)
+    ; AIE2PS-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 5
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT5:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C5]](s32)
+    ; AIE2PS-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 6
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT6:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C6]](s32)
+    ; AIE2PS-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT7:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV]](<8 x s64>), [[C7]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT8:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT9:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C1]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT10:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C2]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT11:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C3]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT12:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C4]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT13:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C5]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT14:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C6]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT15:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV1]](<8 x s64>), [[C7]](s32)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64), [[COPY]](p0) :: (store (s64), align 16)
+    ; AIE2PS-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+    ; AIE2PS-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C8]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT1]](s64), [[PTR_ADD]](p0) :: (store (s64) into unknown-address + 8)
+    ; AIE2PS-NEXT: [[C9:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
+    ; AIE2PS-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C9]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT2]](s64), [[PTR_ADD1]](p0) :: (store (s64) into unknown-address + 16, align 16)
+    ; AIE2PS-NEXT: [[C10:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
+    ; AIE2PS-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C10]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT3]](s64), [[PTR_ADD2]](p0) :: (store (s64) into unknown-address + 24)
+    ; AIE2PS-NEXT: [[C11:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
+    ; AIE2PS-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C11]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT4]](s64), [[PTR_ADD3]](p0) :: (store (s64) into unknown-address + 32, align 16)
+    ; AIE2PS-NEXT: [[C12:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
+    ; AIE2PS-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C12]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT5]](s64), [[PTR_ADD4]](p0) :: (store (s64) into unknown-address + 40)
+    ; AIE2PS-NEXT: [[C13:%[0-9]+]]:_(s20) = G_CONSTANT i20 48
+    ; AIE2PS-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C13]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT6]](s64), [[PTR_ADD5]](p0) :: (store (s64) into unknown-address + 48, align 16)
+    ; AIE2PS-NEXT: [[C14:%[0-9]+]]:_(s20) = G_CONSTANT i20 56
+    ; AIE2PS-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C14]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT7]](s64), [[PTR_ADD6]](p0) :: (store (s64) into unknown-address + 56)
+    ; AIE2PS-NEXT: [[C15:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
+    ; AIE2PS-NEXT: [[PTR_ADD7:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C15]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT8]](s64), [[PTR_ADD7]](p0) :: (store (s64) into unknown-address + 64, align 16)
+    ; AIE2PS-NEXT: [[C16:%[0-9]+]]:_(s20) = G_CONSTANT i20 72
+    ; AIE2PS-NEXT: [[PTR_ADD8:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C16]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT9]](s64), [[PTR_ADD8]](p0) :: (store (s64) into unknown-address + 72)
+    ; AIE2PS-NEXT: [[C17:%[0-9]+]]:_(s20) = G_CONSTANT i20 80
+    ; AIE2PS-NEXT: [[PTR_ADD9:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C17]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT10]](s64), [[PTR_ADD9]](p0) :: (store (s64) into unknown-address + 80, align 16)
+    ; AIE2PS-NEXT: [[C18:%[0-9]+]]:_(s20) = G_CONSTANT i20 88
+    ; AIE2PS-NEXT: [[PTR_ADD10:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C18]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT11]](s64), [[PTR_ADD10]](p0) :: (store (s64) into unknown-address + 88)
+    ; AIE2PS-NEXT: [[C19:%[0-9]+]]:_(s20) = G_CONSTANT i20 96
+    ; AIE2PS-NEXT: [[PTR_ADD11:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C19]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT12]](s64), [[PTR_ADD11]](p0) :: (store (s64) into unknown-address + 96, align 16)
+    ; AIE2PS-NEXT: [[C20:%[0-9]+]]:_(s20) = G_CONSTANT i20 104
+    ; AIE2PS-NEXT: [[PTR_ADD12:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C20]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT13]](s64), [[PTR_ADD12]](p0) :: (store (s64) into unknown-address + 104)
+    ; AIE2PS-NEXT: [[C21:%[0-9]+]]:_(s20) = G_CONSTANT i20 112
+    ; AIE2PS-NEXT: [[PTR_ADD13:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C21]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT14]](s64), [[PTR_ADD13]](p0) :: (store (s64) into unknown-address + 112, align 16)
+    ; AIE2PS-NEXT: [[C22:%[0-9]+]]:_(s20) = G_CONSTANT i20 120
+    ; AIE2PS-NEXT: [[PTR_ADD14:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C22]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT15]](s64), [[PTR_ADD14]](p0) :: (store (s64) into unknown-address + 120)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr
     %0:_(p0) = COPY $p0
     %1:_(<16 x s64>) = G_IMPLICIT_DEF
     G_STORE %1(<16 x s64>), %0(p0) :: (store (<16 x s64>), align 16)
@@ -3638,246 +3951,390 @@ body:             |
   bb.1.entry:
     liveins: $p0
 
-    ; CHECK-LABEL: name: test_v32acc64_unaligned
-    ; CHECK: liveins: $p0
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<32 x s64>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<16 x s64>), [[UV1:%[0-9]+]]:_(<16 x s64>) = G_UNMERGE_VALUES [[DEF]](<32 x s64>)
-    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(<8 x s64>), [[UV3:%[0-9]+]]:_(<8 x s64>) = G_UNMERGE_VALUES [[UV]](<16 x s64>)
-    ; CHECK-NEXT: [[UV4:%[0-9]+]]:_(<8 x s64>), [[UV5:%[0-9]+]]:_(<8 x s64>) = G_UNMERGE_VALUES [[UV1]](<16 x s64>)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<8 x s64>), [[C]](s32)
-    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT1:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<8 x s64>), [[C1]](s32)
-    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT2:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<8 x s64>), [[C2]](s32)
-    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT3:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<8 x s64>), [[C3]](s32)
-    ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT4:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<8 x s64>), [[C4]](s32)
-    ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 5
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT5:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<8 x s64>), [[C5]](s32)
-    ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 6
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT6:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<8 x s64>), [[C6]](s32)
-    ; CHECK-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT7:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<8 x s64>), [[C7]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT8:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV3]](<8 x s64>), [[C]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT9:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV3]](<8 x s64>), [[C1]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT10:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV3]](<8 x s64>), [[C2]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT11:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV3]](<8 x s64>), [[C3]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT12:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV3]](<8 x s64>), [[C4]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT13:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV3]](<8 x s64>), [[C5]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT14:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV3]](<8 x s64>), [[C6]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT15:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV3]](<8 x s64>), [[C7]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT16:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV4]](<8 x s64>), [[C]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT17:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV4]](<8 x s64>), [[C1]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT18:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV4]](<8 x s64>), [[C2]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT19:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV4]](<8 x s64>), [[C3]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT20:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV4]](<8 x s64>), [[C4]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT21:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV4]](<8 x s64>), [[C5]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT22:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV4]](<8 x s64>), [[C6]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT23:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV4]](<8 x s64>), [[C7]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT24:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV5]](<8 x s64>), [[C]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT25:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV5]](<8 x s64>), [[C1]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT26:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV5]](<8 x s64>), [[C2]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT27:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV5]](<8 x s64>), [[C3]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT28:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV5]](<8 x s64>), [[C4]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT29:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV5]](<8 x s64>), [[C5]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT30:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV5]](<8 x s64>), [[C6]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT31:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV5]](<8 x s64>), [[C7]](s32)
-    ; CHECK-NEXT: [[UV6:%[0-9]+]]:_(s32), [[UV7:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
-    ; CHECK-NEXT: G_STORE [[UV6]](s32), [[COPY]](p0) :: (store (s32), align 16)
-    ; CHECK-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
-    ; CHECK-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV7]](s32), [[PTR_ADD]](p0) :: (store (s32) into unknown-address + 4)
-    ; CHECK-NEXT: [[C9:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
-    ; CHECK-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C9]](s20)
-    ; CHECK-NEXT: [[UV8:%[0-9]+]]:_(s32), [[UV9:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT1]](s64)
-    ; CHECK-NEXT: G_STORE [[UV8]](s32), [[PTR_ADD1]](p0) :: (store (s32) into unknown-address + 8, align 8)
-    ; CHECK-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD1]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV9]](s32), [[PTR_ADD2]](p0) :: (store (s32) into unknown-address + 12)
-    ; CHECK-NEXT: [[C10:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
-    ; CHECK-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C10]](s20)
-    ; CHECK-NEXT: [[UV10:%[0-9]+]]:_(s32), [[UV11:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT2]](s64)
-    ; CHECK-NEXT: G_STORE [[UV10]](s32), [[PTR_ADD3]](p0) :: (store (s32) into unknown-address + 16, align 16)
-    ; CHECK-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD3]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV11]](s32), [[PTR_ADD4]](p0) :: (store (s32) into unknown-address + 20)
-    ; CHECK-NEXT: [[C11:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
-    ; CHECK-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C11]](s20)
-    ; CHECK-NEXT: [[UV12:%[0-9]+]]:_(s32), [[UV13:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT3]](s64)
-    ; CHECK-NEXT: G_STORE [[UV12]](s32), [[PTR_ADD5]](p0) :: (store (s32) into unknown-address + 24, align 8)
-    ; CHECK-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD5]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV13]](s32), [[PTR_ADD6]](p0) :: (store (s32) into unknown-address + 28)
-    ; CHECK-NEXT: [[C12:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; CHECK-NEXT: [[PTR_ADD7:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C12]](s20)
-    ; CHECK-NEXT: [[UV14:%[0-9]+]]:_(s32), [[UV15:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT4]](s64)
-    ; CHECK-NEXT: G_STORE [[UV14]](s32), [[PTR_ADD7]](p0) :: (store (s32) into unknown-address + 32, align 16)
-    ; CHECK-NEXT: [[PTR_ADD8:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD7]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV15]](s32), [[PTR_ADD8]](p0) :: (store (s32) into unknown-address + 36)
-    ; CHECK-NEXT: [[C13:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
-    ; CHECK-NEXT: [[PTR_ADD9:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C13]](s20)
-    ; CHECK-NEXT: [[UV16:%[0-9]+]]:_(s32), [[UV17:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT5]](s64)
-    ; CHECK-NEXT: G_STORE [[UV16]](s32), [[PTR_ADD9]](p0) :: (store (s32) into unknown-address + 40, align 8)
-    ; CHECK-NEXT: [[PTR_ADD10:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD9]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV17]](s32), [[PTR_ADD10]](p0) :: (store (s32) into unknown-address + 44)
-    ; CHECK-NEXT: [[C14:%[0-9]+]]:_(s20) = G_CONSTANT i20 48
-    ; CHECK-NEXT: [[PTR_ADD11:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C14]](s20)
-    ; CHECK-NEXT: [[UV18:%[0-9]+]]:_(s32), [[UV19:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT6]](s64)
-    ; CHECK-NEXT: G_STORE [[UV18]](s32), [[PTR_ADD11]](p0) :: (store (s32) into unknown-address + 48, align 16)
-    ; CHECK-NEXT: [[PTR_ADD12:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD11]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV19]](s32), [[PTR_ADD12]](p0) :: (store (s32) into unknown-address + 52)
-    ; CHECK-NEXT: [[C15:%[0-9]+]]:_(s20) = G_CONSTANT i20 56
-    ; CHECK-NEXT: [[PTR_ADD13:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C15]](s20)
-    ; CHECK-NEXT: [[UV20:%[0-9]+]]:_(s32), [[UV21:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT7]](s64)
-    ; CHECK-NEXT: G_STORE [[UV20]](s32), [[PTR_ADD13]](p0) :: (store (s32) into unknown-address + 56, align 8)
-    ; CHECK-NEXT: [[PTR_ADD14:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD13]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV21]](s32), [[PTR_ADD14]](p0) :: (store (s32) into unknown-address + 60)
-    ; CHECK-NEXT: [[C16:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
-    ; CHECK-NEXT: [[PTR_ADD15:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C16]](s20)
-    ; CHECK-NEXT: [[UV22:%[0-9]+]]:_(s32), [[UV23:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT8]](s64)
-    ; CHECK-NEXT: G_STORE [[UV22]](s32), [[PTR_ADD15]](p0) :: (store (s32) into unknown-address + 64, align 16)
-    ; CHECK-NEXT: [[PTR_ADD16:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD15]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV23]](s32), [[PTR_ADD16]](p0) :: (store (s32) into unknown-address + 68)
-    ; CHECK-NEXT: [[C17:%[0-9]+]]:_(s20) = G_CONSTANT i20 72
-    ; CHECK-NEXT: [[PTR_ADD17:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C17]](s20)
-    ; CHECK-NEXT: [[UV24:%[0-9]+]]:_(s32), [[UV25:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT9]](s64)
-    ; CHECK-NEXT: G_STORE [[UV24]](s32), [[PTR_ADD17]](p0) :: (store (s32) into unknown-address + 72, align 8)
-    ; CHECK-NEXT: [[PTR_ADD18:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD17]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV25]](s32), [[PTR_ADD18]](p0) :: (store (s32) into unknown-address + 76)
-    ; CHECK-NEXT: [[C18:%[0-9]+]]:_(s20) = G_CONSTANT i20 80
-    ; CHECK-NEXT: [[PTR_ADD19:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C18]](s20)
-    ; CHECK-NEXT: [[UV26:%[0-9]+]]:_(s32), [[UV27:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT10]](s64)
-    ; CHECK-NEXT: G_STORE [[UV26]](s32), [[PTR_ADD19]](p0) :: (store (s32) into unknown-address + 80, align 16)
-    ; CHECK-NEXT: [[PTR_ADD20:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD19]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV27]](s32), [[PTR_ADD20]](p0) :: (store (s32) into unknown-address + 84)
-    ; CHECK-NEXT: [[C19:%[0-9]+]]:_(s20) = G_CONSTANT i20 88
-    ; CHECK-NEXT: [[PTR_ADD21:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C19]](s20)
-    ; CHECK-NEXT: [[UV28:%[0-9]+]]:_(s32), [[UV29:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT11]](s64)
-    ; CHECK-NEXT: G_STORE [[UV28]](s32), [[PTR_ADD21]](p0) :: (store (s32) into unknown-address + 88, align 8)
-    ; CHECK-NEXT: [[PTR_ADD22:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD21]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV29]](s32), [[PTR_ADD22]](p0) :: (store (s32) into unknown-address + 92)
-    ; CHECK-NEXT: [[C20:%[0-9]+]]:_(s20) = G_CONSTANT i20 96
-    ; CHECK-NEXT: [[PTR_ADD23:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C20]](s20)
-    ; CHECK-NEXT: [[UV30:%[0-9]+]]:_(s32), [[UV31:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT12]](s64)
-    ; CHECK-NEXT: G_STORE [[UV30]](s32), [[PTR_ADD23]](p0) :: (store (s32) into unknown-address + 96, align 16)
-    ; CHECK-NEXT: [[PTR_ADD24:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD23]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV31]](s32), [[PTR_ADD24]](p0) :: (store (s32) into unknown-address + 100)
-    ; CHECK-NEXT: [[C21:%[0-9]+]]:_(s20) = G_CONSTANT i20 104
-    ; CHECK-NEXT: [[PTR_ADD25:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C21]](s20)
-    ; CHECK-NEXT: [[UV32:%[0-9]+]]:_(s32), [[UV33:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT13]](s64)
-    ; CHECK-NEXT: G_STORE [[UV32]](s32), [[PTR_ADD25]](p0) :: (store (s32) into unknown-address + 104, align 8)
-    ; CHECK-NEXT: [[PTR_ADD26:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD25]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV33]](s32), [[PTR_ADD26]](p0) :: (store (s32) into unknown-address + 108)
-    ; CHECK-NEXT: [[C22:%[0-9]+]]:_(s20) = G_CONSTANT i20 112
-    ; CHECK-NEXT: [[PTR_ADD27:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C22]](s20)
-    ; CHECK-NEXT: [[UV34:%[0-9]+]]:_(s32), [[UV35:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT14]](s64)
-    ; CHECK-NEXT: G_STORE [[UV34]](s32), [[PTR_ADD27]](p0) :: (store (s32) into unknown-address + 112, align 16)
-    ; CHECK-NEXT: [[PTR_ADD28:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD27]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV35]](s32), [[PTR_ADD28]](p0) :: (store (s32) into unknown-address + 116)
-    ; CHECK-NEXT: [[C23:%[0-9]+]]:_(s20) = G_CONSTANT i20 120
-    ; CHECK-NEXT: [[PTR_ADD29:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C23]](s20)
-    ; CHECK-NEXT: [[UV36:%[0-9]+]]:_(s32), [[UV37:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT15]](s64)
-    ; CHECK-NEXT: G_STORE [[UV36]](s32), [[PTR_ADD29]](p0) :: (store (s32) into unknown-address + 120, align 8)
-    ; CHECK-NEXT: [[PTR_ADD30:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD29]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV37]](s32), [[PTR_ADD30]](p0) :: (store (s32) into unknown-address + 124)
-    ; CHECK-NEXT: [[C24:%[0-9]+]]:_(s20) = G_CONSTANT i20 128
-    ; CHECK-NEXT: [[PTR_ADD31:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C24]](s20)
-    ; CHECK-NEXT: [[UV38:%[0-9]+]]:_(s32), [[UV39:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT16]](s64)
-    ; CHECK-NEXT: G_STORE [[UV38]](s32), [[PTR_ADD31]](p0) :: (store (s32) into unknown-address + 128, align 16)
-    ; CHECK-NEXT: [[PTR_ADD32:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD31]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV39]](s32), [[PTR_ADD32]](p0) :: (store (s32) into unknown-address + 132)
-    ; CHECK-NEXT: [[C25:%[0-9]+]]:_(s20) = G_CONSTANT i20 136
-    ; CHECK-NEXT: [[PTR_ADD33:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C25]](s20)
-    ; CHECK-NEXT: [[UV40:%[0-9]+]]:_(s32), [[UV41:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT17]](s64)
-    ; CHECK-NEXT: G_STORE [[UV40]](s32), [[PTR_ADD33]](p0) :: (store (s32) into unknown-address + 136, align 8)
-    ; CHECK-NEXT: [[PTR_ADD34:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD33]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV41]](s32), [[PTR_ADD34]](p0) :: (store (s32) into unknown-address + 140)
-    ; CHECK-NEXT: [[C26:%[0-9]+]]:_(s20) = G_CONSTANT i20 144
-    ; CHECK-NEXT: [[PTR_ADD35:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C26]](s20)
-    ; CHECK-NEXT: [[UV42:%[0-9]+]]:_(s32), [[UV43:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT18]](s64)
-    ; CHECK-NEXT: G_STORE [[UV42]](s32), [[PTR_ADD35]](p0) :: (store (s32) into unknown-address + 144, align 16)
-    ; CHECK-NEXT: [[PTR_ADD36:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD35]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV43]](s32), [[PTR_ADD36]](p0) :: (store (s32) into unknown-address + 148)
-    ; CHECK-NEXT: [[C27:%[0-9]+]]:_(s20) = G_CONSTANT i20 152
-    ; CHECK-NEXT: [[PTR_ADD37:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C27]](s20)
-    ; CHECK-NEXT: [[UV44:%[0-9]+]]:_(s32), [[UV45:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT19]](s64)
-    ; CHECK-NEXT: G_STORE [[UV44]](s32), [[PTR_ADD37]](p0) :: (store (s32) into unknown-address + 152, align 8)
-    ; CHECK-NEXT: [[PTR_ADD38:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD37]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV45]](s32), [[PTR_ADD38]](p0) :: (store (s32) into unknown-address + 156)
-    ; CHECK-NEXT: [[C28:%[0-9]+]]:_(s20) = G_CONSTANT i20 160
-    ; CHECK-NEXT: [[PTR_ADD39:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C28]](s20)
-    ; CHECK-NEXT: [[UV46:%[0-9]+]]:_(s32), [[UV47:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT20]](s64)
-    ; CHECK-NEXT: G_STORE [[UV46]](s32), [[PTR_ADD39]](p0) :: (store (s32) into unknown-address + 160, align 16)
-    ; CHECK-NEXT: [[PTR_ADD40:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD39]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV47]](s32), [[PTR_ADD40]](p0) :: (store (s32) into unknown-address + 164)
-    ; CHECK-NEXT: [[C29:%[0-9]+]]:_(s20) = G_CONSTANT i20 168
-    ; CHECK-NEXT: [[PTR_ADD41:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C29]](s20)
-    ; CHECK-NEXT: [[UV48:%[0-9]+]]:_(s32), [[UV49:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT21]](s64)
-    ; CHECK-NEXT: G_STORE [[UV48]](s32), [[PTR_ADD41]](p0) :: (store (s32) into unknown-address + 168, align 8)
-    ; CHECK-NEXT: [[PTR_ADD42:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD41]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV49]](s32), [[PTR_ADD42]](p0) :: (store (s32) into unknown-address + 172)
-    ; CHECK-NEXT: [[C30:%[0-9]+]]:_(s20) = G_CONSTANT i20 176
-    ; CHECK-NEXT: [[PTR_ADD43:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C30]](s20)
-    ; CHECK-NEXT: [[UV50:%[0-9]+]]:_(s32), [[UV51:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT22]](s64)
-    ; CHECK-NEXT: G_STORE [[UV50]](s32), [[PTR_ADD43]](p0) :: (store (s32) into unknown-address + 176, align 16)
-    ; CHECK-NEXT: [[PTR_ADD44:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD43]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV51]](s32), [[PTR_ADD44]](p0) :: (store (s32) into unknown-address + 180)
-    ; CHECK-NEXT: [[C31:%[0-9]+]]:_(s20) = G_CONSTANT i20 184
-    ; CHECK-NEXT: [[PTR_ADD45:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C31]](s20)
-    ; CHECK-NEXT: [[UV52:%[0-9]+]]:_(s32), [[UV53:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT23]](s64)
-    ; CHECK-NEXT: G_STORE [[UV52]](s32), [[PTR_ADD45]](p0) :: (store (s32) into unknown-address + 184, align 8)
-    ; CHECK-NEXT: [[PTR_ADD46:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD45]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV53]](s32), [[PTR_ADD46]](p0) :: (store (s32) into unknown-address + 188)
-    ; CHECK-NEXT: [[C32:%[0-9]+]]:_(s20) = G_CONSTANT i20 192
-    ; CHECK-NEXT: [[PTR_ADD47:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C32]](s20)
-    ; CHECK-NEXT: [[UV54:%[0-9]+]]:_(s32), [[UV55:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT24]](s64)
-    ; CHECK-NEXT: G_STORE [[UV54]](s32), [[PTR_ADD47]](p0) :: (store (s32) into unknown-address + 192, align 16)
-    ; CHECK-NEXT: [[PTR_ADD48:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD47]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV55]](s32), [[PTR_ADD48]](p0) :: (store (s32) into unknown-address + 196)
-    ; CHECK-NEXT: [[C33:%[0-9]+]]:_(s20) = G_CONSTANT i20 200
-    ; CHECK-NEXT: [[PTR_ADD49:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C33]](s20)
-    ; CHECK-NEXT: [[UV56:%[0-9]+]]:_(s32), [[UV57:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT25]](s64)
-    ; CHECK-NEXT: G_STORE [[UV56]](s32), [[PTR_ADD49]](p0) :: (store (s32) into unknown-address + 200, align 8)
-    ; CHECK-NEXT: [[PTR_ADD50:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD49]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV57]](s32), [[PTR_ADD50]](p0) :: (store (s32) into unknown-address + 204)
-    ; CHECK-NEXT: [[C34:%[0-9]+]]:_(s20) = G_CONSTANT i20 208
-    ; CHECK-NEXT: [[PTR_ADD51:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C34]](s20)
-    ; CHECK-NEXT: [[UV58:%[0-9]+]]:_(s32), [[UV59:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT26]](s64)
-    ; CHECK-NEXT: G_STORE [[UV58]](s32), [[PTR_ADD51]](p0) :: (store (s32) into unknown-address + 208, align 16)
-    ; CHECK-NEXT: [[PTR_ADD52:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD51]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV59]](s32), [[PTR_ADD52]](p0) :: (store (s32) into unknown-address + 212)
-    ; CHECK-NEXT: [[C35:%[0-9]+]]:_(s20) = G_CONSTANT i20 216
-    ; CHECK-NEXT: [[PTR_ADD53:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C35]](s20)
-    ; CHECK-NEXT: [[UV60:%[0-9]+]]:_(s32), [[UV61:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT27]](s64)
-    ; CHECK-NEXT: G_STORE [[UV60]](s32), [[PTR_ADD53]](p0) :: (store (s32) into unknown-address + 216, align 8)
-    ; CHECK-NEXT: [[PTR_ADD54:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD53]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV61]](s32), [[PTR_ADD54]](p0) :: (store (s32) into unknown-address + 220)
-    ; CHECK-NEXT: [[C36:%[0-9]+]]:_(s20) = G_CONSTANT i20 224
-    ; CHECK-NEXT: [[PTR_ADD55:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C36]](s20)
-    ; CHECK-NEXT: [[UV62:%[0-9]+]]:_(s32), [[UV63:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT28]](s64)
-    ; CHECK-NEXT: G_STORE [[UV62]](s32), [[PTR_ADD55]](p0) :: (store (s32) into unknown-address + 224, align 16)
-    ; CHECK-NEXT: [[PTR_ADD56:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD55]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV63]](s32), [[PTR_ADD56]](p0) :: (store (s32) into unknown-address + 228)
-    ; CHECK-NEXT: [[C37:%[0-9]+]]:_(s20) = G_CONSTANT i20 232
-    ; CHECK-NEXT: [[PTR_ADD57:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C37]](s20)
-    ; CHECK-NEXT: [[UV64:%[0-9]+]]:_(s32), [[UV65:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT29]](s64)
-    ; CHECK-NEXT: G_STORE [[UV64]](s32), [[PTR_ADD57]](p0) :: (store (s32) into unknown-address + 232, align 8)
-    ; CHECK-NEXT: [[PTR_ADD58:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD57]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV65]](s32), [[PTR_ADD58]](p0) :: (store (s32) into unknown-address + 236)
-    ; CHECK-NEXT: [[C38:%[0-9]+]]:_(s20) = G_CONSTANT i20 240
-    ; CHECK-NEXT: [[PTR_ADD59:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C38]](s20)
-    ; CHECK-NEXT: [[UV66:%[0-9]+]]:_(s32), [[UV67:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT30]](s64)
-    ; CHECK-NEXT: G_STORE [[UV66]](s32), [[PTR_ADD59]](p0) :: (store (s32) into unknown-address + 240, align 16)
-    ; CHECK-NEXT: [[PTR_ADD60:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD59]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV67]](s32), [[PTR_ADD60]](p0) :: (store (s32) into unknown-address + 244)
-    ; CHECK-NEXT: [[C39:%[0-9]+]]:_(s20) = G_CONSTANT i20 248
-    ; CHECK-NEXT: [[PTR_ADD61:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C39]](s20)
-    ; CHECK-NEXT: [[UV68:%[0-9]+]]:_(s32), [[UV69:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT31]](s64)
-    ; CHECK-NEXT: G_STORE [[UV68]](s32), [[PTR_ADD61]](p0) :: (store (s32) into unknown-address + 248, align 8)
-    ; CHECK-NEXT: [[PTR_ADD62:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD61]], [[C8]](s20)
-    ; CHECK-NEXT: G_STORE [[UV69]](s32), [[PTR_ADD62]](p0) :: (store (s32) into unknown-address + 252)
-    ; CHECK-NEXT: PseudoRET implicit $lr
+    ; AIE2P-LABEL: name: test_v32acc64_unaligned
+    ; AIE2P: liveins: $p0
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; AIE2P-NEXT: [[DEF:%[0-9]+]]:_(<32 x s64>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; AIE2P-NEXT: [[UV:%[0-9]+]]:_(<16 x s64>), [[UV1:%[0-9]+]]:_(<16 x s64>) = G_UNMERGE_VALUES [[DEF]](<32 x s64>)
+    ; AIE2P-NEXT: [[UV2:%[0-9]+]]:_(<8 x s64>), [[UV3:%[0-9]+]]:_(<8 x s64>) = G_UNMERGE_VALUES [[UV]](<16 x s64>)
+    ; AIE2P-NEXT: [[UV4:%[0-9]+]]:_(<8 x s64>), [[UV5:%[0-9]+]]:_(<8 x s64>) = G_UNMERGE_VALUES [[UV1]](<16 x s64>)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<8 x s64>), [[C]](s32)
+    ; AIE2P-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT1:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<8 x s64>), [[C1]](s32)
+    ; AIE2P-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT2:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<8 x s64>), [[C2]](s32)
+    ; AIE2P-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT3:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<8 x s64>), [[C3]](s32)
+    ; AIE2P-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT4:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<8 x s64>), [[C4]](s32)
+    ; AIE2P-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 5
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT5:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<8 x s64>), [[C5]](s32)
+    ; AIE2P-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 6
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT6:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<8 x s64>), [[C6]](s32)
+    ; AIE2P-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT7:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<8 x s64>), [[C7]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT8:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV3]](<8 x s64>), [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT9:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV3]](<8 x s64>), [[C1]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT10:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV3]](<8 x s64>), [[C2]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT11:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV3]](<8 x s64>), [[C3]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT12:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV3]](<8 x s64>), [[C4]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT13:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV3]](<8 x s64>), [[C5]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT14:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV3]](<8 x s64>), [[C6]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT15:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV3]](<8 x s64>), [[C7]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT16:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV4]](<8 x s64>), [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT17:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV4]](<8 x s64>), [[C1]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT18:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV4]](<8 x s64>), [[C2]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT19:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV4]](<8 x s64>), [[C3]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT20:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV4]](<8 x s64>), [[C4]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT21:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV4]](<8 x s64>), [[C5]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT22:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV4]](<8 x s64>), [[C6]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT23:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV4]](<8 x s64>), [[C7]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT24:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV5]](<8 x s64>), [[C]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT25:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV5]](<8 x s64>), [[C1]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT26:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV5]](<8 x s64>), [[C2]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT27:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV5]](<8 x s64>), [[C3]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT28:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV5]](<8 x s64>), [[C4]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT29:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV5]](<8 x s64>), [[C5]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT30:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV5]](<8 x s64>), [[C6]](s32)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT31:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV5]](<8 x s64>), [[C7]](s32)
+    ; AIE2P-NEXT: [[UV6:%[0-9]+]]:_(s32), [[UV7:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV6]](s32), [[COPY]](p0) :: (store (s32), align 16)
+    ; AIE2P-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 4
+    ; AIE2P-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV7]](s32), [[PTR_ADD]](p0) :: (store (s32) into unknown-address + 4)
+    ; AIE2P-NEXT: [[C9:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+    ; AIE2P-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C9]](s20)
+    ; AIE2P-NEXT: [[UV8:%[0-9]+]]:_(s32), [[UV9:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT1]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV8]](s32), [[PTR_ADD1]](p0) :: (store (s32) into unknown-address + 8, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD1]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV9]](s32), [[PTR_ADD2]](p0) :: (store (s32) into unknown-address + 12)
+    ; AIE2P-NEXT: [[C10:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
+    ; AIE2P-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C10]](s20)
+    ; AIE2P-NEXT: [[UV10:%[0-9]+]]:_(s32), [[UV11:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT2]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV10]](s32), [[PTR_ADD3]](p0) :: (store (s32) into unknown-address + 16, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD3]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV11]](s32), [[PTR_ADD4]](p0) :: (store (s32) into unknown-address + 20)
+    ; AIE2P-NEXT: [[C11:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
+    ; AIE2P-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C11]](s20)
+    ; AIE2P-NEXT: [[UV12:%[0-9]+]]:_(s32), [[UV13:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT3]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV12]](s32), [[PTR_ADD5]](p0) :: (store (s32) into unknown-address + 24, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD5]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV13]](s32), [[PTR_ADD6]](p0) :: (store (s32) into unknown-address + 28)
+    ; AIE2P-NEXT: [[C12:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
+    ; AIE2P-NEXT: [[PTR_ADD7:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C12]](s20)
+    ; AIE2P-NEXT: [[UV14:%[0-9]+]]:_(s32), [[UV15:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT4]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV14]](s32), [[PTR_ADD7]](p0) :: (store (s32) into unknown-address + 32, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD8:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD7]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV15]](s32), [[PTR_ADD8]](p0) :: (store (s32) into unknown-address + 36)
+    ; AIE2P-NEXT: [[C13:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
+    ; AIE2P-NEXT: [[PTR_ADD9:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C13]](s20)
+    ; AIE2P-NEXT: [[UV16:%[0-9]+]]:_(s32), [[UV17:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT5]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV16]](s32), [[PTR_ADD9]](p0) :: (store (s32) into unknown-address + 40, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD10:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD9]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV17]](s32), [[PTR_ADD10]](p0) :: (store (s32) into unknown-address + 44)
+    ; AIE2P-NEXT: [[C14:%[0-9]+]]:_(s20) = G_CONSTANT i20 48
+    ; AIE2P-NEXT: [[PTR_ADD11:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C14]](s20)
+    ; AIE2P-NEXT: [[UV18:%[0-9]+]]:_(s32), [[UV19:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT6]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV18]](s32), [[PTR_ADD11]](p0) :: (store (s32) into unknown-address + 48, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD12:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD11]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV19]](s32), [[PTR_ADD12]](p0) :: (store (s32) into unknown-address + 52)
+    ; AIE2P-NEXT: [[C15:%[0-9]+]]:_(s20) = G_CONSTANT i20 56
+    ; AIE2P-NEXT: [[PTR_ADD13:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C15]](s20)
+    ; AIE2P-NEXT: [[UV20:%[0-9]+]]:_(s32), [[UV21:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT7]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV20]](s32), [[PTR_ADD13]](p0) :: (store (s32) into unknown-address + 56, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD14:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD13]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV21]](s32), [[PTR_ADD14]](p0) :: (store (s32) into unknown-address + 60)
+    ; AIE2P-NEXT: [[C16:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
+    ; AIE2P-NEXT: [[PTR_ADD15:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C16]](s20)
+    ; AIE2P-NEXT: [[UV22:%[0-9]+]]:_(s32), [[UV23:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT8]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV22]](s32), [[PTR_ADD15]](p0) :: (store (s32) into unknown-address + 64, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD16:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD15]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV23]](s32), [[PTR_ADD16]](p0) :: (store (s32) into unknown-address + 68)
+    ; AIE2P-NEXT: [[C17:%[0-9]+]]:_(s20) = G_CONSTANT i20 72
+    ; AIE2P-NEXT: [[PTR_ADD17:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C17]](s20)
+    ; AIE2P-NEXT: [[UV24:%[0-9]+]]:_(s32), [[UV25:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT9]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV24]](s32), [[PTR_ADD17]](p0) :: (store (s32) into unknown-address + 72, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD18:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD17]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV25]](s32), [[PTR_ADD18]](p0) :: (store (s32) into unknown-address + 76)
+    ; AIE2P-NEXT: [[C18:%[0-9]+]]:_(s20) = G_CONSTANT i20 80
+    ; AIE2P-NEXT: [[PTR_ADD19:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C18]](s20)
+    ; AIE2P-NEXT: [[UV26:%[0-9]+]]:_(s32), [[UV27:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT10]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV26]](s32), [[PTR_ADD19]](p0) :: (store (s32) into unknown-address + 80, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD20:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD19]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV27]](s32), [[PTR_ADD20]](p0) :: (store (s32) into unknown-address + 84)
+    ; AIE2P-NEXT: [[C19:%[0-9]+]]:_(s20) = G_CONSTANT i20 88
+    ; AIE2P-NEXT: [[PTR_ADD21:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C19]](s20)
+    ; AIE2P-NEXT: [[UV28:%[0-9]+]]:_(s32), [[UV29:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT11]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV28]](s32), [[PTR_ADD21]](p0) :: (store (s32) into unknown-address + 88, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD22:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD21]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV29]](s32), [[PTR_ADD22]](p0) :: (store (s32) into unknown-address + 92)
+    ; AIE2P-NEXT: [[C20:%[0-9]+]]:_(s20) = G_CONSTANT i20 96
+    ; AIE2P-NEXT: [[PTR_ADD23:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C20]](s20)
+    ; AIE2P-NEXT: [[UV30:%[0-9]+]]:_(s32), [[UV31:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT12]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV30]](s32), [[PTR_ADD23]](p0) :: (store (s32) into unknown-address + 96, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD24:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD23]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV31]](s32), [[PTR_ADD24]](p0) :: (store (s32) into unknown-address + 100)
+    ; AIE2P-NEXT: [[C21:%[0-9]+]]:_(s20) = G_CONSTANT i20 104
+    ; AIE2P-NEXT: [[PTR_ADD25:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C21]](s20)
+    ; AIE2P-NEXT: [[UV32:%[0-9]+]]:_(s32), [[UV33:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT13]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV32]](s32), [[PTR_ADD25]](p0) :: (store (s32) into unknown-address + 104, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD26:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD25]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV33]](s32), [[PTR_ADD26]](p0) :: (store (s32) into unknown-address + 108)
+    ; AIE2P-NEXT: [[C22:%[0-9]+]]:_(s20) = G_CONSTANT i20 112
+    ; AIE2P-NEXT: [[PTR_ADD27:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C22]](s20)
+    ; AIE2P-NEXT: [[UV34:%[0-9]+]]:_(s32), [[UV35:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT14]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV34]](s32), [[PTR_ADD27]](p0) :: (store (s32) into unknown-address + 112, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD28:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD27]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV35]](s32), [[PTR_ADD28]](p0) :: (store (s32) into unknown-address + 116)
+    ; AIE2P-NEXT: [[C23:%[0-9]+]]:_(s20) = G_CONSTANT i20 120
+    ; AIE2P-NEXT: [[PTR_ADD29:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C23]](s20)
+    ; AIE2P-NEXT: [[UV36:%[0-9]+]]:_(s32), [[UV37:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT15]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV36]](s32), [[PTR_ADD29]](p0) :: (store (s32) into unknown-address + 120, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD30:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD29]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV37]](s32), [[PTR_ADD30]](p0) :: (store (s32) into unknown-address + 124)
+    ; AIE2P-NEXT: [[C24:%[0-9]+]]:_(s20) = G_CONSTANT i20 128
+    ; AIE2P-NEXT: [[PTR_ADD31:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C24]](s20)
+    ; AIE2P-NEXT: [[UV38:%[0-9]+]]:_(s32), [[UV39:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT16]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV38]](s32), [[PTR_ADD31]](p0) :: (store (s32) into unknown-address + 128, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD32:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD31]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV39]](s32), [[PTR_ADD32]](p0) :: (store (s32) into unknown-address + 132)
+    ; AIE2P-NEXT: [[C25:%[0-9]+]]:_(s20) = G_CONSTANT i20 136
+    ; AIE2P-NEXT: [[PTR_ADD33:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C25]](s20)
+    ; AIE2P-NEXT: [[UV40:%[0-9]+]]:_(s32), [[UV41:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT17]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV40]](s32), [[PTR_ADD33]](p0) :: (store (s32) into unknown-address + 136, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD34:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD33]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV41]](s32), [[PTR_ADD34]](p0) :: (store (s32) into unknown-address + 140)
+    ; AIE2P-NEXT: [[C26:%[0-9]+]]:_(s20) = G_CONSTANT i20 144
+    ; AIE2P-NEXT: [[PTR_ADD35:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C26]](s20)
+    ; AIE2P-NEXT: [[UV42:%[0-9]+]]:_(s32), [[UV43:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT18]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV42]](s32), [[PTR_ADD35]](p0) :: (store (s32) into unknown-address + 144, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD36:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD35]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV43]](s32), [[PTR_ADD36]](p0) :: (store (s32) into unknown-address + 148)
+    ; AIE2P-NEXT: [[C27:%[0-9]+]]:_(s20) = G_CONSTANT i20 152
+    ; AIE2P-NEXT: [[PTR_ADD37:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C27]](s20)
+    ; AIE2P-NEXT: [[UV44:%[0-9]+]]:_(s32), [[UV45:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT19]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV44]](s32), [[PTR_ADD37]](p0) :: (store (s32) into unknown-address + 152, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD38:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD37]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV45]](s32), [[PTR_ADD38]](p0) :: (store (s32) into unknown-address + 156)
+    ; AIE2P-NEXT: [[C28:%[0-9]+]]:_(s20) = G_CONSTANT i20 160
+    ; AIE2P-NEXT: [[PTR_ADD39:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C28]](s20)
+    ; AIE2P-NEXT: [[UV46:%[0-9]+]]:_(s32), [[UV47:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT20]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV46]](s32), [[PTR_ADD39]](p0) :: (store (s32) into unknown-address + 160, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD40:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD39]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV47]](s32), [[PTR_ADD40]](p0) :: (store (s32) into unknown-address + 164)
+    ; AIE2P-NEXT: [[C29:%[0-9]+]]:_(s20) = G_CONSTANT i20 168
+    ; AIE2P-NEXT: [[PTR_ADD41:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C29]](s20)
+    ; AIE2P-NEXT: [[UV48:%[0-9]+]]:_(s32), [[UV49:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT21]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV48]](s32), [[PTR_ADD41]](p0) :: (store (s32) into unknown-address + 168, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD42:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD41]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV49]](s32), [[PTR_ADD42]](p0) :: (store (s32) into unknown-address + 172)
+    ; AIE2P-NEXT: [[C30:%[0-9]+]]:_(s20) = G_CONSTANT i20 176
+    ; AIE2P-NEXT: [[PTR_ADD43:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C30]](s20)
+    ; AIE2P-NEXT: [[UV50:%[0-9]+]]:_(s32), [[UV51:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT22]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV50]](s32), [[PTR_ADD43]](p0) :: (store (s32) into unknown-address + 176, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD44:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD43]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV51]](s32), [[PTR_ADD44]](p0) :: (store (s32) into unknown-address + 180)
+    ; AIE2P-NEXT: [[C31:%[0-9]+]]:_(s20) = G_CONSTANT i20 184
+    ; AIE2P-NEXT: [[PTR_ADD45:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C31]](s20)
+    ; AIE2P-NEXT: [[UV52:%[0-9]+]]:_(s32), [[UV53:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT23]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV52]](s32), [[PTR_ADD45]](p0) :: (store (s32) into unknown-address + 184, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD46:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD45]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV53]](s32), [[PTR_ADD46]](p0) :: (store (s32) into unknown-address + 188)
+    ; AIE2P-NEXT: [[C32:%[0-9]+]]:_(s20) = G_CONSTANT i20 192
+    ; AIE2P-NEXT: [[PTR_ADD47:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C32]](s20)
+    ; AIE2P-NEXT: [[UV54:%[0-9]+]]:_(s32), [[UV55:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT24]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV54]](s32), [[PTR_ADD47]](p0) :: (store (s32) into unknown-address + 192, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD48:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD47]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV55]](s32), [[PTR_ADD48]](p0) :: (store (s32) into unknown-address + 196)
+    ; AIE2P-NEXT: [[C33:%[0-9]+]]:_(s20) = G_CONSTANT i20 200
+    ; AIE2P-NEXT: [[PTR_ADD49:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C33]](s20)
+    ; AIE2P-NEXT: [[UV56:%[0-9]+]]:_(s32), [[UV57:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT25]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV56]](s32), [[PTR_ADD49]](p0) :: (store (s32) into unknown-address + 200, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD50:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD49]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV57]](s32), [[PTR_ADD50]](p0) :: (store (s32) into unknown-address + 204)
+    ; AIE2P-NEXT: [[C34:%[0-9]+]]:_(s20) = G_CONSTANT i20 208
+    ; AIE2P-NEXT: [[PTR_ADD51:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C34]](s20)
+    ; AIE2P-NEXT: [[UV58:%[0-9]+]]:_(s32), [[UV59:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT26]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV58]](s32), [[PTR_ADD51]](p0) :: (store (s32) into unknown-address + 208, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD52:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD51]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV59]](s32), [[PTR_ADD52]](p0) :: (store (s32) into unknown-address + 212)
+    ; AIE2P-NEXT: [[C35:%[0-9]+]]:_(s20) = G_CONSTANT i20 216
+    ; AIE2P-NEXT: [[PTR_ADD53:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C35]](s20)
+    ; AIE2P-NEXT: [[UV60:%[0-9]+]]:_(s32), [[UV61:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT27]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV60]](s32), [[PTR_ADD53]](p0) :: (store (s32) into unknown-address + 216, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD54:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD53]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV61]](s32), [[PTR_ADD54]](p0) :: (store (s32) into unknown-address + 220)
+    ; AIE2P-NEXT: [[C36:%[0-9]+]]:_(s20) = G_CONSTANT i20 224
+    ; AIE2P-NEXT: [[PTR_ADD55:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C36]](s20)
+    ; AIE2P-NEXT: [[UV62:%[0-9]+]]:_(s32), [[UV63:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT28]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV62]](s32), [[PTR_ADD55]](p0) :: (store (s32) into unknown-address + 224, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD56:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD55]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV63]](s32), [[PTR_ADD56]](p0) :: (store (s32) into unknown-address + 228)
+    ; AIE2P-NEXT: [[C37:%[0-9]+]]:_(s20) = G_CONSTANT i20 232
+    ; AIE2P-NEXT: [[PTR_ADD57:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C37]](s20)
+    ; AIE2P-NEXT: [[UV64:%[0-9]+]]:_(s32), [[UV65:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT29]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV64]](s32), [[PTR_ADD57]](p0) :: (store (s32) into unknown-address + 232, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD58:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD57]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV65]](s32), [[PTR_ADD58]](p0) :: (store (s32) into unknown-address + 236)
+    ; AIE2P-NEXT: [[C38:%[0-9]+]]:_(s20) = G_CONSTANT i20 240
+    ; AIE2P-NEXT: [[PTR_ADD59:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C38]](s20)
+    ; AIE2P-NEXT: [[UV66:%[0-9]+]]:_(s32), [[UV67:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT30]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV66]](s32), [[PTR_ADD59]](p0) :: (store (s32) into unknown-address + 240, align 16)
+    ; AIE2P-NEXT: [[PTR_ADD60:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD59]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV67]](s32), [[PTR_ADD60]](p0) :: (store (s32) into unknown-address + 244)
+    ; AIE2P-NEXT: [[C39:%[0-9]+]]:_(s20) = G_CONSTANT i20 248
+    ; AIE2P-NEXT: [[PTR_ADD61:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C39]](s20)
+    ; AIE2P-NEXT: [[UV68:%[0-9]+]]:_(s32), [[UV69:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT31]](s64)
+    ; AIE2P-NEXT: G_STORE [[UV68]](s32), [[PTR_ADD61]](p0) :: (store (s32) into unknown-address + 248, align 8)
+    ; AIE2P-NEXT: [[PTR_ADD62:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD61]], [[C8]](s20)
+    ; AIE2P-NEXT: G_STORE [[UV69]](s32), [[PTR_ADD62]](p0) :: (store (s32) into unknown-address + 252)
+    ; AIE2P-NEXT: PseudoRET implicit $lr
+    ;
+    ; AIE2PS-LABEL: name: test_v32acc64_unaligned
+    ; AIE2PS: liveins: $p0
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; AIE2PS-NEXT: [[DEF:%[0-9]+]]:_(<32 x s64>) = G_IMPLICIT_DEF
+    ; AIE2PS-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; AIE2PS-NEXT: [[UV:%[0-9]+]]:_(<16 x s64>), [[UV1:%[0-9]+]]:_(<16 x s64>) = G_UNMERGE_VALUES [[DEF]](<32 x s64>)
+    ; AIE2PS-NEXT: [[UV2:%[0-9]+]]:_(<8 x s64>), [[UV3:%[0-9]+]]:_(<8 x s64>) = G_UNMERGE_VALUES [[UV]](<16 x s64>)
+    ; AIE2PS-NEXT: [[UV4:%[0-9]+]]:_(<8 x s64>), [[UV5:%[0-9]+]]:_(<8 x s64>) = G_UNMERGE_VALUES [[UV1]](<16 x s64>)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<8 x s64>), [[C]](s32)
+    ; AIE2PS-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT1:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<8 x s64>), [[C1]](s32)
+    ; AIE2PS-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT2:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<8 x s64>), [[C2]](s32)
+    ; AIE2PS-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT3:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<8 x s64>), [[C3]](s32)
+    ; AIE2PS-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT4:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<8 x s64>), [[C4]](s32)
+    ; AIE2PS-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 5
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT5:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<8 x s64>), [[C5]](s32)
+    ; AIE2PS-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 6
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT6:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<8 x s64>), [[C6]](s32)
+    ; AIE2PS-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT7:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV2]](<8 x s64>), [[C7]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT8:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV3]](<8 x s64>), [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT9:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV3]](<8 x s64>), [[C1]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT10:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV3]](<8 x s64>), [[C2]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT11:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV3]](<8 x s64>), [[C3]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT12:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV3]](<8 x s64>), [[C4]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT13:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV3]](<8 x s64>), [[C5]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT14:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV3]](<8 x s64>), [[C6]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT15:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV3]](<8 x s64>), [[C7]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT16:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV4]](<8 x s64>), [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT17:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV4]](<8 x s64>), [[C1]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT18:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV4]](<8 x s64>), [[C2]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT19:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV4]](<8 x s64>), [[C3]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT20:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV4]](<8 x s64>), [[C4]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT21:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV4]](<8 x s64>), [[C5]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT22:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV4]](<8 x s64>), [[C6]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT23:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV4]](<8 x s64>), [[C7]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT24:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV5]](<8 x s64>), [[C]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT25:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV5]](<8 x s64>), [[C1]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT26:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV5]](<8 x s64>), [[C2]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT27:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV5]](<8 x s64>), [[C3]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT28:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV5]](<8 x s64>), [[C4]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT29:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV5]](<8 x s64>), [[C5]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT30:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV5]](<8 x s64>), [[C6]](s32)
+    ; AIE2PS-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT31:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[UV5]](<8 x s64>), [[C7]](s32)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64), [[COPY]](p0) :: (store (s64), align 16)
+    ; AIE2PS-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+    ; AIE2PS-NEXT: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C8]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT1]](s64), [[PTR_ADD]](p0) :: (store (s64) into unknown-address + 8)
+    ; AIE2PS-NEXT: [[C9:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
+    ; AIE2PS-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C9]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT2]](s64), [[PTR_ADD1]](p0) :: (store (s64) into unknown-address + 16, align 16)
+    ; AIE2PS-NEXT: [[C10:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
+    ; AIE2PS-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C10]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT3]](s64), [[PTR_ADD2]](p0) :: (store (s64) into unknown-address + 24)
+    ; AIE2PS-NEXT: [[C11:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
+    ; AIE2PS-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C11]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT4]](s64), [[PTR_ADD3]](p0) :: (store (s64) into unknown-address + 32, align 16)
+    ; AIE2PS-NEXT: [[C12:%[0-9]+]]:_(s20) = G_CONSTANT i20 40
+    ; AIE2PS-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C12]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT5]](s64), [[PTR_ADD4]](p0) :: (store (s64) into unknown-address + 40)
+    ; AIE2PS-NEXT: [[C13:%[0-9]+]]:_(s20) = G_CONSTANT i20 48
+    ; AIE2PS-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C13]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT6]](s64), [[PTR_ADD5]](p0) :: (store (s64) into unknown-address + 48, align 16)
+    ; AIE2PS-NEXT: [[C14:%[0-9]+]]:_(s20) = G_CONSTANT i20 56
+    ; AIE2PS-NEXT: [[PTR_ADD6:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C14]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT7]](s64), [[PTR_ADD6]](p0) :: (store (s64) into unknown-address + 56)
+    ; AIE2PS-NEXT: [[C15:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
+    ; AIE2PS-NEXT: [[PTR_ADD7:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C15]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT8]](s64), [[PTR_ADD7]](p0) :: (store (s64) into unknown-address + 64, align 16)
+    ; AIE2PS-NEXT: [[C16:%[0-9]+]]:_(s20) = G_CONSTANT i20 72
+    ; AIE2PS-NEXT: [[PTR_ADD8:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C16]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT9]](s64), [[PTR_ADD8]](p0) :: (store (s64) into unknown-address + 72)
+    ; AIE2PS-NEXT: [[C17:%[0-9]+]]:_(s20) = G_CONSTANT i20 80
+    ; AIE2PS-NEXT: [[PTR_ADD9:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C17]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT10]](s64), [[PTR_ADD9]](p0) :: (store (s64) into unknown-address + 80, align 16)
+    ; AIE2PS-NEXT: [[C18:%[0-9]+]]:_(s20) = G_CONSTANT i20 88
+    ; AIE2PS-NEXT: [[PTR_ADD10:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C18]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT11]](s64), [[PTR_ADD10]](p0) :: (store (s64) into unknown-address + 88)
+    ; AIE2PS-NEXT: [[C19:%[0-9]+]]:_(s20) = G_CONSTANT i20 96
+    ; AIE2PS-NEXT: [[PTR_ADD11:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C19]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT12]](s64), [[PTR_ADD11]](p0) :: (store (s64) into unknown-address + 96, align 16)
+    ; AIE2PS-NEXT: [[C20:%[0-9]+]]:_(s20) = G_CONSTANT i20 104
+    ; AIE2PS-NEXT: [[PTR_ADD12:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C20]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT13]](s64), [[PTR_ADD12]](p0) :: (store (s64) into unknown-address + 104)
+    ; AIE2PS-NEXT: [[C21:%[0-9]+]]:_(s20) = G_CONSTANT i20 112
+    ; AIE2PS-NEXT: [[PTR_ADD13:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C21]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT14]](s64), [[PTR_ADD13]](p0) :: (store (s64) into unknown-address + 112, align 16)
+    ; AIE2PS-NEXT: [[C22:%[0-9]+]]:_(s20) = G_CONSTANT i20 120
+    ; AIE2PS-NEXT: [[PTR_ADD14:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C22]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT15]](s64), [[PTR_ADD14]](p0) :: (store (s64) into unknown-address + 120)
+    ; AIE2PS-NEXT: [[C23:%[0-9]+]]:_(s20) = G_CONSTANT i20 128
+    ; AIE2PS-NEXT: [[PTR_ADD15:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C23]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT16]](s64), [[PTR_ADD15]](p0) :: (store (s64) into unknown-address + 128, align 16)
+    ; AIE2PS-NEXT: [[C24:%[0-9]+]]:_(s20) = G_CONSTANT i20 136
+    ; AIE2PS-NEXT: [[PTR_ADD16:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C24]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT17]](s64), [[PTR_ADD16]](p0) :: (store (s64) into unknown-address + 136)
+    ; AIE2PS-NEXT: [[C25:%[0-9]+]]:_(s20) = G_CONSTANT i20 144
+    ; AIE2PS-NEXT: [[PTR_ADD17:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C25]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT18]](s64), [[PTR_ADD17]](p0) :: (store (s64) into unknown-address + 144, align 16)
+    ; AIE2PS-NEXT: [[C26:%[0-9]+]]:_(s20) = G_CONSTANT i20 152
+    ; AIE2PS-NEXT: [[PTR_ADD18:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C26]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT19]](s64), [[PTR_ADD18]](p0) :: (store (s64) into unknown-address + 152)
+    ; AIE2PS-NEXT: [[C27:%[0-9]+]]:_(s20) = G_CONSTANT i20 160
+    ; AIE2PS-NEXT: [[PTR_ADD19:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C27]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT20]](s64), [[PTR_ADD19]](p0) :: (store (s64) into unknown-address + 160, align 16)
+    ; AIE2PS-NEXT: [[C28:%[0-9]+]]:_(s20) = G_CONSTANT i20 168
+    ; AIE2PS-NEXT: [[PTR_ADD20:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C28]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT21]](s64), [[PTR_ADD20]](p0) :: (store (s64) into unknown-address + 168)
+    ; AIE2PS-NEXT: [[C29:%[0-9]+]]:_(s20) = G_CONSTANT i20 176
+    ; AIE2PS-NEXT: [[PTR_ADD21:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C29]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT22]](s64), [[PTR_ADD21]](p0) :: (store (s64) into unknown-address + 176, align 16)
+    ; AIE2PS-NEXT: [[C30:%[0-9]+]]:_(s20) = G_CONSTANT i20 184
+    ; AIE2PS-NEXT: [[PTR_ADD22:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C30]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT23]](s64), [[PTR_ADD22]](p0) :: (store (s64) into unknown-address + 184)
+    ; AIE2PS-NEXT: [[C31:%[0-9]+]]:_(s20) = G_CONSTANT i20 192
+    ; AIE2PS-NEXT: [[PTR_ADD23:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C31]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT24]](s64), [[PTR_ADD23]](p0) :: (store (s64) into unknown-address + 192, align 16)
+    ; AIE2PS-NEXT: [[C32:%[0-9]+]]:_(s20) = G_CONSTANT i20 200
+    ; AIE2PS-NEXT: [[PTR_ADD24:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C32]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT25]](s64), [[PTR_ADD24]](p0) :: (store (s64) into unknown-address + 200)
+    ; AIE2PS-NEXT: [[C33:%[0-9]+]]:_(s20) = G_CONSTANT i20 208
+    ; AIE2PS-NEXT: [[PTR_ADD25:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C33]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT26]](s64), [[PTR_ADD25]](p0) :: (store (s64) into unknown-address + 208, align 16)
+    ; AIE2PS-NEXT: [[C34:%[0-9]+]]:_(s20) = G_CONSTANT i20 216
+    ; AIE2PS-NEXT: [[PTR_ADD26:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C34]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT27]](s64), [[PTR_ADD26]](p0) :: (store (s64) into unknown-address + 216)
+    ; AIE2PS-NEXT: [[C35:%[0-9]+]]:_(s20) = G_CONSTANT i20 224
+    ; AIE2PS-NEXT: [[PTR_ADD27:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C35]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT28]](s64), [[PTR_ADD27]](p0) :: (store (s64) into unknown-address + 224, align 16)
+    ; AIE2PS-NEXT: [[C36:%[0-9]+]]:_(s20) = G_CONSTANT i20 232
+    ; AIE2PS-NEXT: [[PTR_ADD28:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C36]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT29]](s64), [[PTR_ADD28]](p0) :: (store (s64) into unknown-address + 232)
+    ; AIE2PS-NEXT: [[C37:%[0-9]+]]:_(s20) = G_CONSTANT i20 240
+    ; AIE2PS-NEXT: [[PTR_ADD29:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C37]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT30]](s64), [[PTR_ADD29]](p0) :: (store (s64) into unknown-address + 240, align 16)
+    ; AIE2PS-NEXT: [[C38:%[0-9]+]]:_(s20) = G_CONSTANT i20 248
+    ; AIE2PS-NEXT: [[PTR_ADD30:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C38]](s20)
+    ; AIE2PS-NEXT: G_STORE [[AIE_SEXT_EXTRACT_VECTOR_ELT31]](s64), [[PTR_ADD30]](p0) :: (store (s64) into unknown-address + 248)
+    ; AIE2PS-NEXT: PseudoRET implicit $lr
     %0:_(p0) = COPY $p0
     %1:_(<32 x s64>) = G_IMPLICIT_DEF
     G_STORE %1(<32 x s64>), %0(p0) :: (store (<32 x s64>), align 16)

@@ -1,0 +1,94 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VCLR_vclr
+    $dm5 = VCLR_vclr
+    $dm1 = VCLR_vclr
+    $dm6 = VCLR_vclr
+    $dm0 = VCLR_vclr
+    $dm7 = VCLR_vclr
+    $dm2 = VCLR_vclr
+    $dm4 = VCLR_vclr
+    $dm3 = VCLR_vclr
+
+    ; VCLR_vclr_half
+    $cml1 = VCLR_vclr_half
+    $cml6 = VCLR_vclr_half
+    $cml7 = VCLR_vclr_half
+    $cml3 = VCLR_vclr_half
+    $cml2 = VCLR_vclr_half
+    $cml0 = VCLR_vclr_half
+    $cml4 = VCLR_vclr_half
+    $cml5 = VCLR_vclr_half
+
+    ; VCLR_f_vclr_fp
+    $dm6 = VCLR_f_vclr_fp
+    $dm4 = VCLR_f_vclr_fp
+    $dm0 = VCLR_f_vclr_fp
+    $dm3 = VCLR_f_vclr_fp
+    $dm7 = VCLR_f_vclr_fp
+    $dm2 = VCLR_f_vclr_fp
+    $dm5 = VCLR_f_vclr_fp
+    $dm1 = VCLR_f_vclr_fp
+
+    ; VCLR_f_vclr_half_fp
+    $cml5 = VCLR_f_vclr_half_fp
+    $cml6 = VCLR_f_vclr_half_fp
+    $cml0 = VCLR_f_vclr_half_fp
+    $cml3 = VCLR_f_vclr_half_fp
+    $cml2 = VCLR_f_vclr_half_fp
+    $cml7 = VCLR_f_vclr_half_fp
+    $cml4 = VCLR_f_vclr_half_fp
+    $cml1 = VCLR_f_vclr_half_fp
+...
+
+# CHECK: 0: 10 05 0a 14 vclr dm5
+# CHECK: 4: 10 05 0a 04 vclr dm1
+# CHECK: 8: 10 05 0a 18 vclr dm6
+# CHECK: c: 10 05 0a 00 vclr dm0
+# CHECK: 10: 10 05 0a 1c vclr dm7
+# CHECK: 14: 10 05 0a 08 vclr dm2
+# CHECK: 18: 10 05 0a 10 vclr dm4
+# CHECK: 1c: 10 05 0a 0c vclr dm3
+# CHECK: 20: 10 05 1a 04 vclr cml1
+# CHECK: 24: 10 05 1a 18 vclr cml6
+# CHECK: 28: 10 05 1a 1c vclr cml7
+# CHECK: 2c: 10 05 1a 0c vclr cml3
+# CHECK: 30: 10 05 1a 08 vclr cml2
+# CHECK: 34: 10 05 1a 00 vclr cml0
+# CHECK: 38: 10 05 1a 10 vclr cml4
+# CHECK: 3c: 10 05 1a 14 vclr cml5
+# CHECK: 40: 90 ff 1f 18 vclr.f dm6
+# CHECK: 44: 90 ff 1f 10 vclr.f dm4
+# CHECK: 48: 90 ff 1f 00 vclr.f dm0
+# CHECK: 4c: 90 ff 1f 0c vclr.f dm3
+# CHECK: 50: 90 ff 1f 1c vclr.f dm7
+# CHECK: 54: 90 ff 1f 08 vclr.f dm2
+# CHECK: 58: 90 ff 1f 14 vclr.f dm5
+# CHECK: 5c: 90 ff 1f 04 vclr.f dm1
+# CHECK: 60: 90 ff 17 14 vclr.f cml5
+# CHECK: 64: 90 ff 17 18 vclr.f cml6
+# CHECK: 68: 90 ff 17 00 vclr.f cml0
+# CHECK: 6c: 90 ff 17 0c vclr.f cml3
+# CHECK: 70: 90 ff 17 08 vclr.f cml2
+# CHECK: 74: 90 ff 17 1c vclr.f cml7
+# CHECK: 78: 90 ff 17 10 vclr.f cml4
+# CHECK: 7c: 90 ff 17 04 vclr.f cml1

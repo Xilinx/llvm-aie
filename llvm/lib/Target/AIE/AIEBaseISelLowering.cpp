@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -18,6 +18,7 @@
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
 #include "MCTargetDesc/AIEMCTargetDesc.h"
 #include "MCTargetDesc/aie2p/AIE2PMCTargetDesc.h"
+#include "MCTargetDesc/aie2ps/AIE2PSMCTargetDesc.h"
 #include "llvm/MC/MCRegister.h"
 using namespace llvm;
 
@@ -46,7 +47,7 @@ AIEBaseTargetLowering::AIEBaseTargetLowering(const TargetMachine &TM,
   // Arguments are 32-bit aligned on the stack
   setMinStackArgumentAlignment(getStackArgumentAlignment());
 
-  if (Subtarget.isAIE2() || Subtarget.isAIE2P()) {
+  if (Subtarget.isAIE2() || Subtarget.isAIE2P() || Subtarget.isAIE2PS()) {
     MaxStoresPerMemset = 32;
     MaxStoresPerMemsetOptSize = 16;
     MaxStoresPerMemcpy = 32;
@@ -326,6 +327,335 @@ static bool CC_AIE2P_Handle_Consecutive_Regs(unsigned ValNo, MVT ValVT,
   return CC_AIE2P_BFP16(ValNo, ValVT, LocVT, LocInfo, ArgFlags, State);
 }
 
+enum MXRegSizes {
+  MXReg320 = 320,
+  MXReg640 = 640,
+  MXReg1280 = 1280,
+  MXReg384 = 384,
+  MXReg768 = 768,
+  MXReg1536 = 1536,
+  MXReg2560 = 2560
+};
+
+namespace {
+
+const std::array<std::array<MCPhysReg, 3>, 24> RegSet320BitMX9 = {
+    {{AIE2PS::wl0, AIE2PS::gl0, AIE2PS::el0},
+     {AIE2PS::wh0, AIE2PS::gh0, AIE2PS::eh0},
+     {AIE2PS::wl1, AIE2PS::gl1, AIE2PS::el1},
+     {AIE2PS::wh1, AIE2PS::gh1, AIE2PS::eh1},
+     {AIE2PS::wl2, AIE2PS::gl2, AIE2PS::el2},
+     {AIE2PS::wh2, AIE2PS::gh2, AIE2PS::eh2},
+     {AIE2PS::wl3, AIE2PS::gl3, AIE2PS::el3},
+     {AIE2PS::wh3, AIE2PS::gh3, AIE2PS::eh3},
+     {AIE2PS::wl4, AIE2PS::gl4, AIE2PS::el4},
+     {AIE2PS::wh4, AIE2PS::gh4, AIE2PS::eh4},
+     {AIE2PS::wl5, AIE2PS::gl5, AIE2PS::el5},
+     {AIE2PS::wh5, AIE2PS::gh5, AIE2PS::eh5},
+     {AIE2PS::wl6, AIE2PS::gl6, AIE2PS::el6},
+     {AIE2PS::wh6, AIE2PS::gh6, AIE2PS::eh6},
+     {AIE2PS::wl7, AIE2PS::gl7, AIE2PS::el7},
+     {AIE2PS::wh7, AIE2PS::gh7, AIE2PS::eh7},
+     {AIE2PS::wl8, AIE2PS::gl8, AIE2PS::el8},
+     {AIE2PS::wh8, AIE2PS::gh8, AIE2PS::eh8},
+     {AIE2PS::wl9, AIE2PS::gl9, AIE2PS::el9},
+     {AIE2PS::wh9, AIE2PS::gh9, AIE2PS::eh9},
+     {AIE2PS::wl10, AIE2PS::gl10, AIE2PS::el10},
+     {AIE2PS::wh10, AIE2PS::gh10, AIE2PS::eh10},
+     {AIE2PS::wl11, AIE2PS::gl11, AIE2PS::el11},
+     {AIE2PS::wh11, AIE2PS::gh11, AIE2PS::eh11}}};
+
+const std::array<std::array<MCPhysReg, 3>, 12> RegSet640BitMX9 = {
+    {{AIE2PS::x0, AIE2PS::g0, AIE2PS::e0},
+     {AIE2PS::x2, AIE2PS::g2, AIE2PS::e2},
+     {AIE2PS::x4, AIE2PS::g4, AIE2PS::e4},
+     {AIE2PS::x6, AIE2PS::g6, AIE2PS::e6},
+     {AIE2PS::x8, AIE2PS::g8, AIE2PS::e8},
+     {AIE2PS::x10, AIE2PS::g10, AIE2PS::e10},
+     {AIE2PS::x1, AIE2PS::g1, AIE2PS::e1},
+     {AIE2PS::x3, AIE2PS::g3, AIE2PS::e3},
+     {AIE2PS::x5, AIE2PS::g5, AIE2PS::e5},
+     {AIE2PS::x7, AIE2PS::g7, AIE2PS::e7},
+     {AIE2PS::x9, AIE2PS::g9, AIE2PS::e9},
+     {AIE2PS::x11, AIE2PS::g11, AIE2PS::e11}}};
+
+const std::array<std::array<MCPhysReg, 6>, 6> RegSet1280BitMX9 = {{
+    {AIE2PS::x0, AIE2PS::x1, AIE2PS::g0, AIE2PS::g1, AIE2PS::e0, AIE2PS::e1},
+    {AIE2PS::x2, AIE2PS::x3, AIE2PS::g2, AIE2PS::g3, AIE2PS::e2, AIE2PS::e3},
+    {AIE2PS::x4, AIE2PS::x5, AIE2PS::g4, AIE2PS::g5, AIE2PS::e4, AIE2PS::e5},
+    {AIE2PS::x6, AIE2PS::x7, AIE2PS::g6, AIE2PS::g7, AIE2PS::e6, AIE2PS::e7},
+    {AIE2PS::x8, AIE2PS::x9, AIE2PS::g8, AIE2PS::g9, AIE2PS::e8, AIE2PS::e9},
+    {AIE2PS::x10, AIE2PS::x11, AIE2PS::g10, AIE2PS::g11, AIE2PS::e10,
+     AIE2PS::e11},
+}};
+
+const std::array<std::array<MCPhysReg, 12>, 3> RegSet2560BitMX9 = {{
+    {AIE2PS::x0, AIE2PS::x1, AIE2PS::x2, AIE2PS::x3, AIE2PS::g0, AIE2PS::g1,
+     AIE2PS::g2, AIE2PS::g3, AIE2PS::e0, AIE2PS::e1, AIE2PS::e2, AIE2PS::e3},
+    {AIE2PS::x4, AIE2PS::x5, AIE2PS::x6, AIE2PS::x7, AIE2PS::g4, AIE2PS::g5,
+     AIE2PS::g6, AIE2PS::g7, AIE2PS::e4, AIE2PS::e5, AIE2PS::e6, AIE2PS::e7},
+    {AIE2PS::x8, AIE2PS::x9, AIE2PS::x10, AIE2PS::x11, AIE2PS::g8, AIE2PS::g9,
+     AIE2PS::g10, AIE2PS::g11, AIE2PS::e8, AIE2PS::e9, AIE2PS::e10,
+     AIE2PS::e11},
+}};
+
+const std::array<std::array<MCPhysReg, 4>, 24> RegSet384BitMX6 = {
+    {{AIE2PS::wl0, AIE2PS::fl0, AIE2PS::gl0, AIE2PS::el0},
+     {AIE2PS::wh0, AIE2PS::fh0, AIE2PS::gh0, AIE2PS::eh0},
+     {AIE2PS::wl2, AIE2PS::fl2, AIE2PS::gl2, AIE2PS::el2},
+     {AIE2PS::wh2, AIE2PS::fh2, AIE2PS::gh2, AIE2PS::eh2},
+     {AIE2PS::wl4, AIE2PS::fl4, AIE2PS::gl4, AIE2PS::el4},
+     {AIE2PS::wh4, AIE2PS::fh4, AIE2PS::gh4, AIE2PS::eh4},
+     {AIE2PS::wl6, AIE2PS::fl6, AIE2PS::gl6, AIE2PS::el6},
+     {AIE2PS::wh6, AIE2PS::fh6, AIE2PS::gh6, AIE2PS::eh6},
+     {AIE2PS::wl8, AIE2PS::fl8, AIE2PS::gl8, AIE2PS::el8},
+     {AIE2PS::wh8, AIE2PS::fh8, AIE2PS::gh8, AIE2PS::eh8},
+     {AIE2PS::wl10, AIE2PS::fl10, AIE2PS::gl10, AIE2PS::el10},
+     {AIE2PS::wh10, AIE2PS::fh10, AIE2PS::gh10, AIE2PS::eh10},
+     {AIE2PS::wl1, AIE2PS::fl1, AIE2PS::gl1, AIE2PS::el1},
+     {AIE2PS::wh1, AIE2PS::fh1, AIE2PS::gh1, AIE2PS::eh1},
+     {AIE2PS::wl3, AIE2PS::fl3, AIE2PS::gl3, AIE2PS::el3},
+     {AIE2PS::wh3, AIE2PS::fh3, AIE2PS::gh3, AIE2PS::eh3},
+     {AIE2PS::wl5, AIE2PS::fl5, AIE2PS::gl5, AIE2PS::el5},
+     {AIE2PS::wh5, AIE2PS::fh5, AIE2PS::gh5, AIE2PS::eh5},
+     {AIE2PS::wl7, AIE2PS::fl7, AIE2PS::gl7, AIE2PS::el7},
+     {AIE2PS::wh7, AIE2PS::fh7, AIE2PS::gh7, AIE2PS::eh7},
+     {AIE2PS::wl9, AIE2PS::fl9, AIE2PS::gl9, AIE2PS::el9},
+     {AIE2PS::wh9, AIE2PS::fh9, AIE2PS::gh9, AIE2PS::eh9},
+     {AIE2PS::wl11, AIE2PS::fl11, AIE2PS::gl11, AIE2PS::el11},
+     {AIE2PS::wh11, AIE2PS::fh11, AIE2PS::gh11, AIE2PS::eh11}}};
+
+const std::array<std::array<MCPhysReg, 8>, 12> RegSet768BitMX6 = {{
+    {AIE2PS::wl0, AIE2PS::wh0, AIE2PS::fl0, AIE2PS::fh0, AIE2PS::gl0,
+     AIE2PS::gh0, AIE2PS::el0, AIE2PS::eh0},
+    {AIE2PS::wl2, AIE2PS::wh2, AIE2PS::fl2, AIE2PS::fh2, AIE2PS::gl2,
+     AIE2PS::gh2, AIE2PS::el2, AIE2PS::eh2},
+    {AIE2PS::wl4, AIE2PS::wh4, AIE2PS::fl4, AIE2PS::fh4, AIE2PS::gl4,
+     AIE2PS::gh4, AIE2PS::el4, AIE2PS::eh4},
+    {AIE2PS::wl6, AIE2PS::wh6, AIE2PS::fl6, AIE2PS::fh6, AIE2PS::gl6,
+     AIE2PS::gh6, AIE2PS::el6, AIE2PS::eh6},
+    {AIE2PS::wl8, AIE2PS::wh8, AIE2PS::fl8, AIE2PS::fh8, AIE2PS::gl8,
+     AIE2PS::gh8, AIE2PS::el8, AIE2PS::eh8},
+    {AIE2PS::wl10, AIE2PS::wh10, AIE2PS::fl10, AIE2PS::fh10, AIE2PS::gl10,
+     AIE2PS::gh10, AIE2PS::el10, AIE2PS::eh10},
+    {AIE2PS::wl1, AIE2PS::wh1, AIE2PS::fl1, AIE2PS::fh1, AIE2PS::gl1,
+     AIE2PS::gh1, AIE2PS::el1, AIE2PS::eh1},
+    {AIE2PS::wl3, AIE2PS::wh3, AIE2PS::fl3, AIE2PS::fh3, AIE2PS::gl3,
+     AIE2PS::gh3, AIE2PS::el3, AIE2PS::eh3},
+    {AIE2PS::wl5, AIE2PS::wh5, AIE2PS::fl5, AIE2PS::fh5, AIE2PS::gl5,
+     AIE2PS::gh5, AIE2PS::el5, AIE2PS::eh5},
+    {AIE2PS::wl7, AIE2PS::wh7, AIE2PS::fl7, AIE2PS::fh7, AIE2PS::gl7,
+     AIE2PS::gh7, AIE2PS::el7, AIE2PS::eh7},
+    {AIE2PS::wl9, AIE2PS::wh9, AIE2PS::fl9, AIE2PS::fh9, AIE2PS::gl9,
+     AIE2PS::gh9, AIE2PS::el9, AIE2PS::eh9},
+    {AIE2PS::wl11, AIE2PS::wh11, AIE2PS::fl11, AIE2PS::fh11, AIE2PS::gl11,
+     AIE2PS::gh11, AIE2PS::el11, AIE2PS::eh11},
+}};
+
+const std::array<std::array<MCPhysReg, 16>, 6> RegSet1536BitMX6 = {
+    {{AIE2PS::wl0, AIE2PS::wh0, AIE2PS::wl1, AIE2PS::wh1, AIE2PS::fl0,
+      AIE2PS::fh0, AIE2PS::fl1, AIE2PS::fh1, AIE2PS::gl0, AIE2PS::gh0,
+      AIE2PS::gl1, AIE2PS::gh1, AIE2PS::el0, AIE2PS::eh0, AIE2PS::el1,
+      AIE2PS::eh1},
+     {AIE2PS::wl2, AIE2PS::wh2, AIE2PS::wl3, AIE2PS::wh3, AIE2PS::fl2,
+      AIE2PS::fh2, AIE2PS::fl3, AIE2PS::fh3, AIE2PS::gl2, AIE2PS::gh2,
+      AIE2PS::gl3, AIE2PS::gh3, AIE2PS::el2, AIE2PS::eh2, AIE2PS::el3,
+      AIE2PS::eh3},
+     {AIE2PS::wl4, AIE2PS::wh4, AIE2PS::wl5, AIE2PS::wh5, AIE2PS::fl4,
+      AIE2PS::fh4, AIE2PS::fl5, AIE2PS::fh5, AIE2PS::gl4, AIE2PS::gh4,
+      AIE2PS::gl5, AIE2PS::gh5, AIE2PS::el4, AIE2PS::eh4, AIE2PS::el5,
+      AIE2PS::eh5},
+     {AIE2PS::wl6, AIE2PS::wh6, AIE2PS::wl7, AIE2PS::wh7, AIE2PS::fl6,
+      AIE2PS::fh6, AIE2PS::fl7, AIE2PS::fh7, AIE2PS::gl6, AIE2PS::gh6,
+      AIE2PS::gl7, AIE2PS::gh7, AIE2PS::el6, AIE2PS::eh6, AIE2PS::el7,
+      AIE2PS::eh7},
+     {AIE2PS::wl8, AIE2PS::wh8, AIE2PS::wl9, AIE2PS::wh9, AIE2PS::fl8,
+      AIE2PS::fh8, AIE2PS::fl9, AIE2PS::fh9, AIE2PS::gl8, AIE2PS::gh8,
+      AIE2PS::gl9, AIE2PS::gh9, AIE2PS::el8, AIE2PS::eh8, AIE2PS::el9,
+      AIE2PS::eh9},
+     {AIE2PS::wl10, AIE2PS::wh10, AIE2PS::wl11, AIE2PS::wh11, AIE2PS::fl10,
+      AIE2PS::fh10, AIE2PS::fl11, AIE2PS::fh11, AIE2PS::gl10, AIE2PS::gh10,
+      AIE2PS::gl11, AIE2PS::gh11, AIE2PS::el10, AIE2PS::eh10, AIE2PS::el11,
+      AIE2PS::eh11}}};
+
+template <size_t M, size_t N>
+std::optional<std::array<MCPhysReg, M>>
+AllocateMXReg(CCState &State, std::array<std::array<MCPhysReg, M>, N> RegSet) {
+  for (const auto &RegList : RegSet) {
+    if (!State.AllocateRegBlock(RegList, M).empty())
+      return RegList;
+  }
+  return std::nullopt;
+}
+
+static bool
+AllocateMXTyArgsToRegister(CCState &State,
+                           SmallVectorImpl<CCValAssign> &PendingMembers,
+                           ArrayRef<MCPhysReg> AllocatedRegSet) {
+  unsigned NumElts = PendingMembers.size();
+  assert(AllocatedRegSet.size() == NumElts &&
+         "Number of elements mismatch in BFP type calling convention");
+  for (unsigned int Idx = 0; Idx < NumElts; Idx++) {
+    auto AllocatedReg = AllocatedRegSet[Idx];
+    auto MemberLoc = PendingMembers[Idx];
+    MemberLoc.convertToReg(AllocatedReg);
+    State.addLoc(MemberLoc);
+  }
+  State.getPendingLocs().clear();
+  return true;
+}
+
+// gets the allocated stack size for MX types as per ABI.
+unsigned getABIMXTypesStackSizeInBytes(unsigned MXRegSize) {
+  switch (MXRegSize) {
+  case MXReg320:
+  case MXReg384:
+    return 64;
+  case MXReg640:
+  case MXReg768:
+    return 128;
+  case MXReg1280:
+  case MXReg1536:
+    return 192;
+  case MXReg2560:
+    return 320;
+  default:
+    llvm_unreachable("Illegal MX register size!");
+  }
+}
+
+unsigned getNumOfElemFromAIE2PSMXType(unsigned MXRegSize) {
+  switch (MXRegSize) {
+  case MXReg320:
+  case MXReg640:
+    return 3;
+  case MXReg1280:
+    return 6;
+  case MXReg2560:
+    return 12;
+  case MXReg384:
+    return 4;
+  case MXReg768:
+    return 8;
+  case MXReg1536:
+    return 16;
+  default:
+    return 0;
+  }
+}
+unsigned getAIE2PSAlignmentInBytesFromRegSize(unsigned RegSize) {
+  switch (RegSize) {
+  case 32:
+  case 64:
+    return 4;
+  case 128:
+    return 16;
+  case 256:
+  case 512:
+  case 1024:
+  case 2048:
+    return 32;
+  default:
+    llvm_unreachable("Illegal register size!");
+  }
+}
+
+// Allocate stack to MX type and should match the ABI. As per ABI, MX
+// register is copied to contiguous memory, the key is where to start from or
+// size of the stack. For example, v64mx9 is of size 80 bytes(640 bits), but as
+// per ABI it takes 128 bytes. i.e. in a single stack frame, the offset has to
+// be -128. Hence we allocate extra stack, but do not link to any mx type
+// members. Also, we allocate members in the opposite direction as they appear
+// in struct to match with ABI
+bool AllocateMXTyArgsToStack(CCState &State,
+                             SmallVectorImpl<CCValAssign> &PendingMembers,
+                             unsigned RegSize /*In Bits*/) {
+  unsigned NumElts = PendingMembers.size();
+  std::vector<unsigned> StackOffset;
+  // Create dummy stack to satisfy ABI
+  State.AllocateStack(getABIMXTypesStackSizeInBytes(RegSize) - (RegSize / 8),
+                      Align(4 /*Default alignment*/));
+  for (int Idx = NumElts - 1; Idx >= 0; Idx--) {
+    auto MemberLoc = PendingMembers[Idx];
+    auto SizeInBytes = MemberLoc.getLocVT().getSizeInBits() / 8;
+    StackOffset.push_back(State.AllocateStack(
+        SizeInBytes,
+        Align(getAIE2PSAlignmentInBytesFromRegSize(SizeInBytes * 8))));
+  }
+  for (unsigned Idx = 0; Idx < NumElts; Idx++) {
+    auto MemberLoc = PendingMembers[Idx];
+    MemberLoc.convertToMem(StackOffset[NumElts - (Idx + 1)]);
+    State.addLoc(MemberLoc);
+  }
+  State.getPendingLocs().clear();
+  return true;
+}
+
+unsigned
+getPendingCCValAssignSize(SmallVectorImpl<CCValAssign> &PendingMembers) {
+  unsigned Size = 0;
+  for (auto It : PendingMembers)
+    Size += It.getLocVT().getSizeInBits();
+  return Size;
+}
+
+bool matchBFPTypeSize(SmallVectorImpl<CCValAssign> &PendingMembers) {
+  unsigned Size = getPendingCCValAssignSize(PendingMembers);
+  return getNumOfElemFromAIE2PSMXType(Size) == PendingMembers.size();
+}
+} // namespace
+
+static bool CC_AIE2PS_BFP(unsigned ValNo, MVT ValVT, MVT LocVT,
+                          CCValAssign::LocInfo LocInfo,
+                          ISD::ArgFlagsTy ArgFlags, CCState &State) {
+  SmallVectorImpl<CCValAssign> &PendingMembers = State.getPendingLocs();
+  // Add the current argument to pending list
+  PendingMembers.push_back(
+      CCValAssign::getPending(ValNo, ValVT, LocVT, LocInfo));
+  unsigned NumElts = PendingMembers.size();
+  assert(NumElts <= 16 && "Not a BFP type!");
+
+  if (NumElts < 3 || !matchBFPTypeSize(PendingMembers)) {
+    // Minimum elements in a bfp type is 3 for aie2ps.
+    return true;
+  }
+
+  auto allocate = [&](auto &RegSet, unsigned RegSize) {
+    auto Reg = AllocateMXReg(State, RegSet);
+    if (Reg) {
+      return AllocateMXTyArgsToRegister(State, PendingMembers, *Reg);
+    }
+    return AllocateMXTyArgsToStack(State, PendingMembers, RegSize);
+  };
+
+  switch (getPendingCCValAssignSize(PendingMembers)) {
+  case MXReg320:
+    return allocate(RegSet320BitMX9, MXReg320);
+  case MXReg640:
+    return allocate(RegSet640BitMX9, MXReg640);
+  case MXReg1280:
+    return allocate(RegSet1280BitMX9, MXReg1280);
+  case MXReg2560:
+    return allocate(RegSet2560BitMX9, MXReg2560);
+  case MXReg384:
+    return allocate(RegSet384BitMX6, MXReg384);
+  case MXReg768:
+    return allocate(RegSet768BitMX6, MXReg768);
+  case MXReg1536:
+    return allocate(RegSet1536BitMX6, MXReg1536);
+  default:
+    return false;
+  }
+}
+
+static bool CC_AIE2PS_Handle_Consecutive_Regs(unsigned ValNo, MVT ValVT,
+                                              MVT LocVT,
+                                              CCValAssign::LocInfo LocInfo,
+                                              ISD::ArgFlagsTy ArgFlags,
+                                              CCState &State) {
+  return CC_AIE2PS_BFP(ValNo, ValVT, LocVT, LocInfo, ArgFlags, State);
+}
+
 static bool CC_AIE2P_Handle_Split_Arg(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
                                       CCValAssign::LocInfo &LocInfo,
                                       ISD::ArgFlagsTy &ArgFlags,
@@ -424,14 +754,26 @@ static bool CC_AIE_Handle_V2I32_Ret(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
   return true;
 }
 
+static bool CC_AIE2PS_Handle_Split_Arg(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
+                                       CCValAssign::LocInfo &LocInfo,
+                                       ISD::ArgFlagsTy &ArgFlags,
+                                       CCState &State) {
+  return Handle_Split_Arg(ValNo, ValVT, LocVT, LocInfo, ArgFlags, State,
+                          {AIE2PS::r0, AIE2PS::r1, AIE2PS::r2, AIE2PS::r3,
+                           AIE2PS::r4, AIE2PS::r5, AIE2PS::r6, AIE2PS::r7});
+}
+
 #include "AIE2GenCallingConv.inc"
 #include "AIE2PGenCallingConv.inc"
+#include "AIE2PSGenCallingConv.inc"
 #include "AIEGenCallingConv.inc"
 CCAssignFn *AIEBaseTargetLowering::CCAssignFnForCall(bool IsVarArg) const {
   if (Subtarget.isAIE2())
     return IsVarArg ? CC_AIE2_Stack : CC_AIE2;
   else if (Subtarget.isAIE2P())
     return IsVarArg ? CC_AIE2P_Stack : CC_AIE2P;
+  else if (Subtarget.isAIE2PS())
+    return IsVarArg ? CC_AIE2PS_Stack : CC_AIE2PS;
   else
     return IsVarArg ? CC_AIE_Stack : CC_AIE;
 }
@@ -441,6 +783,8 @@ CCAssignFn *AIEBaseTargetLowering::CCAssignFnForReturn() const {
     return RetCC_AIE2;
   else if (Subtarget.isAIE2P())
     return RetCC_AIE2P;
+  else if (Subtarget.isAIE2PS())
+    return RetCC_AIE2PS;
   else
     return RetCC_AIE;
 }
@@ -529,11 +873,11 @@ bool AIEBaseTargetLowering::isEligibleForTailCallOptimization(
 LLT AIEBaseTargetLowering::getOptimalMemOpLLT(
     const MemOp &Op, const AttributeList &FuncAttributes) const {
 
-  if (Subtarget.isAIE2P()) {
+  if (Subtarget.isAIE2P() || Subtarget.isAIE2PS()) {
     if (AllowVecRegMemOps && Op.size() >= 64 && Op.isAligned(Align(64)))
       return LLT::fixed_vector(16, 32);
   }
-  if (Subtarget.isAIE2() || Subtarget.isAIE2P()) {
+  if (Subtarget.isAIE2() || Subtarget.isAIE2P() || Subtarget.isAIE2PS()) {
     if (AllowVecRegMemOps && Op.size() >= 32 && Op.isAligned(Align(32)))
       return LLT::fixed_vector(8, 32);
     if (AllowVecRegMemOps && Op.size() >= 16 && Op.isAligned(Align(16)))

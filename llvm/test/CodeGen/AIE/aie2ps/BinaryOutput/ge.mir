@@ -1,0 +1,88 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; GE
+    $r18 = GE $r31, $r0
+    $r23 = GE $r21, $r25
+    $r4 = GE $r0, $r10
+    $r29 = GE $r24, $r27
+    $r5 = GE $r7, $r17
+    $r1 = GE $r2, $r3
+    $r14 = GE $r17, $r7
+    $r12 = GE $r5, $r26
+    $r3 = GE $r10, $r15
+    $r27 = GE $r29, $r22
+    $r2 = GE $r11, $r28
+    $r7 = GE $r28, $r23
+    $r16 = GE $r18, $r18
+    $r21 = GE $r27, $r11
+    $r9 = GE $r16, $r9
+    $r15 = GE $r3, $r16
+    $r13 = GE $r1, $r12
+    $r17 = GE $r14, $r14
+    $r24 = GE $r23, $r19
+    $r28 = GE $r25, $r24
+    $r11 = GE $r22, $r5
+    $r25 = GE $r30, $r30
+    $r30 = GE $r20, $r13
+    $r19 = GE $r12, $r20
+    $r6 = GE $r13, $r8
+    $r20 = GE $r6, $r29
+    $r22 = GE $r15, $r1
+    $r10 = GE $r8, $r2
+    $r0 = GE $r19, $r31
+    $r8 = GE $r26, $r4
+    $r31 = GE $r9, $r21
+    $r26 = GE $r4, $r6
+...
+
+# CHECK: 0: b0 09 e4 27 ge r18, r31, r0
+# CHECK: 4: b0 99 6f 25 ge r23, r21, r25
+# CHECK: 8: b0 a9 08 20 ge r4, r0, r10
+# CHECK: c: b0 b9 3b 26 ge r29, r24, r27
+# CHECK: 10: b0 19 cb 21 ge r5, r7, r17
+# CHECK: 14: b0 39 82 20 ge r1, r2, r3
+# CHECK: 18: b0 79 5c 24 ge r14, r17, r7
+# CHECK: 1c: b0 a9 59 21 ge r12, r5, r26
+# CHECK: 20: b0 f9 86 22 ge r3, r10, r15
+# CHECK: 24: b0 69 77 27 ge r27, r29, r22
+# CHECK: 28: b0 c9 c5 22 ge r2, r11, r28
+# CHECK: 2c: b0 79 0f 27 ge r7, r28, r23
+# CHECK: 30: b0 29 a1 24 ge r16, r18, r18
+# CHECK: 34: b0 b9 ea 26 ge r21, r27, r11
+# CHECK: 38: b0 99 12 24 ge r9, r16, r9
+# CHECK: 3c: b0 09 df 20 ge r15, r3, r16
+# CHECK: 40: b0 c9 5a 20 ge r13, r1, r12
+# CHECK: 44: b0 e9 a2 23 ge r17, r14, r14
+# CHECK: 48: b0 39 f1 25 ge r24, r23, r19
+# CHECK: 4c: b0 89 79 26 ge r28, r25, r24
+# CHECK: 50: b0 59 96 25 ge r11, r22, r5
+# CHECK: 54: b0 e9 b3 27 ge r25, r30, r30
+# CHECK: 58: b0 d9 3c 25 ge r30, r20, r13
+# CHECK: 5c: b0 49 27 23 ge r19, r12, r20
+# CHECK: 60: b0 89 4c 23 ge r6, r13, r8
+# CHECK: 64: b0 d9 a9 21 ge r20, r6, r29
+# CHECK: 68: b0 19 ec 23 ge r22, r15, r1
+# CHECK: 6c: b0 29 14 22 ge r10, r8, r2
+# CHECK: 70: b0 f9 c1 24 ge r0, r19, r31
+# CHECK: 74: b0 49 90 26 ge r8, r26, r4
+# CHECK: 78: b0 59 7f 22 ge r31, r9, r21
+# CHECK: 7c: b0 69 34 21 ge r26, r4, r6

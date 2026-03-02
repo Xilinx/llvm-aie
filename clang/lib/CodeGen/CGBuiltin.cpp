@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -51,6 +51,7 @@
 #include "llvm/IR/IntrinsicsAIE.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
 #include "llvm/IR/IntrinsicsAIE2P.h"
+#include "llvm/IR/IntrinsicsAIE2PS.h"
 #include "llvm/IR/IntrinsicsAMDGPU.h"
 #include "llvm/IR/IntrinsicsARM.h"
 #include "llvm/IR/IntrinsicsBPF.h"
@@ -6658,6 +6659,8 @@ static Value *EmitTargetArchBuiltinExpr(CodeGenFunction *CGF,
     return CGF->EmitAIE2BuiltinExpr(BuiltinID, E, Arch);
   case llvm::Triple::aie2p:
     return CGF->EmitAIE2PBuiltinExpr(BuiltinID, E, Arch);
+  case llvm::Triple::aie2ps:
+    return CGF->EmitAIE2PSBuiltinExpr(BuiltinID, E, Arch);
   case llvm::Triple::spirv:
     return CGF->EmitSPIRVBuiltinExpr(BuiltinID, E);
   case llvm::Triple::spirv64:
@@ -23790,6 +23793,158 @@ static llvm::Intrinsic::ID getAIE2PIntrinsicFunction(unsigned BuiltinID) {
   return Intrinsic::not_intrinsic;
 }
 
+static llvm::Intrinsic::ID getAIE2PSIntrinsicFunction(unsigned BuiltinID) {
+  switch (BuiltinID) {
+  case AIE::BI__builtin_aie2ps_get_ss:
+    return Intrinsic::aie2ps_get_ss;
+  case AIE::BI__builtin_aie2ps_get_ss_nb:
+    return Intrinsic::aie2ps_get_ss_nb;
+  case AIE::BI__builtin_aie2ps_put_ms_nb:
+    return Intrinsic::aie2ps_put_ms_nb;
+  case AIE::BI__builtin_aie2ps_scd_expand_ACC1024_incr:
+    return Intrinsic::aie2ps_scd_expand_ACC1024_incr;
+  case AIE::BI__builtin_aie2ps_scd_expand_ACC2048_incr:
+    return Intrinsic::aie2ps_scd_expand_ACC2048_incr;
+  case AIE::BI__builtin_aie2ps_add_2d:
+    return Intrinsic::aie2ps_add_2d;
+  case AIE::BI__builtin_aie2ps_add_3d:
+    return Intrinsic::aie2ps_add_3d;
+  case AIE::BI__builtin_aie2ps_vshuffle_BFP640_BFP640_BFP640:
+    return Intrinsic::aie2ps_vshuffle_BFP640_BFP640_BFP640;
+  case AIE::BI__builtin_aie2ps_vshuffle_BFP768_BFP768_BFP768:
+    return Intrinsic::aie2ps_vshuffle_BFP768_BFP768_BFP768;
+  case AIE::BI__builtin_aie2ps_divstep:
+    return Intrinsic::aie2ps_divs;
+  case AIE::BI__builtin_aie2ps_v64accfloat_to_v64mx4:
+    return Intrinsic::aie2ps_v64accfloat_to_v64mx4;
+  case AIE::BI__builtin_aie2ps_v64accfloat_to_v64mx6:
+    return Intrinsic::aie2ps_v64accfloat_to_v64mx6;
+  case AIE::BI__builtin_aie2ps_v64accfloat_to_v64mx9:
+    return Intrinsic::aie2ps_v64accfloat_to_v64mx9;
+  case AIE::BI__builtin_aie2ps_vabs_gtz8:
+    return Intrinsic::aie2ps_vabs_gtz8;
+  case AIE::BI__builtin_aie2ps_vabs_gtz16:
+    return Intrinsic::aie2ps_vabs_gtz16;
+  case AIE::BI__builtin_aie2ps_vabs_gtz32:
+    return Intrinsic::aie2ps_vabs_gtz32;
+  case AIE::BI__builtin_aie2ps_vbneg_ltz8:
+    return Intrinsic::aie2ps_vbneg_ltz8;
+  case AIE::BI__builtin_aie2ps_vbneg_ltz16:
+    return Intrinsic::aie2ps_vbneg_ltz16;
+  case AIE::BI__builtin_aie2ps_vbneg_ltz32:
+    return Intrinsic::aie2ps_vbneg_ltz32;
+  case AIE::BI__builtin_aie2ps_vmaxdiff_lt8:
+    return Intrinsic::aie2ps_vmaxdiff_lt8;
+  case AIE::BI__builtin_aie2ps_vmaxdiff_lt16:
+    return Intrinsic::aie2ps_vmaxdiff_lt16;
+  case AIE::BI__builtin_aie2ps_vmaxdiff_lt32:
+    return Intrinsic::aie2ps_vmaxdiff_lt32;
+  case AIE::BI__builtin_aie2ps_vmax_lt8:
+    return Intrinsic::aie2ps_vmax_lt8;
+  case AIE::BI__builtin_aie2ps_vmax_ltfloat8:
+    return Intrinsic::aie2ps_vmax_ltfloat8;
+  case AIE::BI__builtin_aie2ps_vmax_ltbfloat8:
+    return Intrinsic::aie2ps_vmax_ltbfloat8;
+  case AIE::BI__builtin_aie2ps_vmax_lt16:
+    return Intrinsic::aie2ps_vmax_lt16;
+  case AIE::BI__builtin_aie2ps_vmax_lt32:
+    return Intrinsic::aie2ps_vmax_lt32;
+  case AIE::BI__builtin_aie2ps_vmax_ltbfloat16:
+    return Intrinsic::aie2ps_vmax_ltbfloat16;
+  case AIE::BI__builtin_aie2ps_vmax_ltfloat16:
+    return Intrinsic::aie2ps_vmax_ltfloat16;
+  case AIE::BI__builtin_aie2ps_vmin_ge8:
+    return Intrinsic::aie2ps_vmin_ge8;
+  case AIE::BI__builtin_aie2ps_vmin_gefloat8:
+    return Intrinsic::aie2ps_vmin_gefloat8;
+  case AIE::BI__builtin_aie2ps_vmin_gebfloat8:
+    return Intrinsic::aie2ps_vmin_gebfloat8;
+  case AIE::BI__builtin_aie2ps_vmin_ge16:
+    return Intrinsic::aie2ps_vmin_ge16;
+  case AIE::BI__builtin_aie2ps_vmin_ge32:
+    return Intrinsic::aie2ps_vmin_ge32;
+  case AIE::BI__builtin_aie2ps_vmin_gefloat16:
+    return Intrinsic::aie2ps_vmin_gefloat16;
+  case AIE::BI__builtin_aie2ps_vmin_gebfloat16:
+    return Intrinsic::aie2ps_vmin_gebfloat16;
+  case AIE::BI__builtin_aie2ps_vneg_gtz8:
+    return Intrinsic::aie2ps_vneg_gtz8;
+  case AIE::BI__builtin_aie2ps_vneg_gtz16:
+    return Intrinsic::aie2ps_vneg_gtz16;
+  case AIE::BI__builtin_aie2ps_vneg_gtz32:
+    return Intrinsic::aie2ps_vneg_gtz32;
+  case AIE::BI__builtin_aie2ps_vsub_ge8:
+    return Intrinsic::aie2ps_vsub_ge8;
+  case AIE::BI__builtin_aie2ps_vsub_ge16:
+    return Intrinsic::aie2ps_vsub_ge16;
+  case AIE::BI__builtin_aie2ps_vsub_ge32:
+    return Intrinsic::aie2ps_vsub_ge32;
+  case AIE::BI__builtin_aie2ps_vsub_lt8:
+    return Intrinsic::aie2ps_vsub_lt8;
+  case AIE::BI__builtin_aie2ps_vsub_lt16:
+    return Intrinsic::aie2ps_vsub_lt16;
+  case AIE::BI__builtin_aie2ps_vsub_lt32:
+    return Intrinsic::aie2ps_vsub_lt32;
+  case AIE::BI__builtin_aie2ps_fifo_ld_fill:
+    return Intrinsic::aie2ps_fifo_ld_fill;
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_512_unaligned:
+    return Intrinsic::aie2ps_fifo_ld_pop_512_unaligned;
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_BFP640:
+    return Intrinsic::aie2ps_fifo_ld_pop_BFP640;
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_BFP768:
+    return Intrinsic::aie2ps_fifo_ld_pop_BFP768;
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_1d_512_unaligned:
+    return Intrinsic::aie2ps_fifo_ld_pop_1d_unaligned;
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_1d_BFP640:
+    return Intrinsic::aie2ps_fifo_ld_pop_1d_BFP640;
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_1d_BFP768:
+    return Intrinsic::aie2ps_fifo_ld_pop_1d_BFP768;
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_2d_512_unaligned:
+    return Intrinsic::aie2ps_fifo_ld_pop_2d_unaligned;
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_2d_BFP640:
+    return Intrinsic::aie2ps_fifo_ld_pop_2d_BFP640;
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_2d_BFP768:
+    return Intrinsic::aie2ps_fifo_ld_pop_2d_BFP768;
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_3d_512_unaligned:
+    return Intrinsic::aie2ps_fifo_ld_pop_3d_unaligned;
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_3d_BFP640:
+    return Intrinsic::aie2ps_fifo_ld_pop_3d_BFP640;
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_3d_BFP768:
+    return Intrinsic::aie2ps_fifo_ld_pop_3d_BFP768;
+  case AIE::BI__builtin_aie2ps_fifo_ld_fillx:
+    return Intrinsic::aie2ps_fifo_ld_fillx;
+  case AIE::BI__builtin_aie2ps_fifo_ld_popx:
+    return Intrinsic::aie2ps_fifo_ld_popx;
+  case AIE::BI__builtin_aie2ps_fifo_st_push_512:
+    return Intrinsic::aie2ps_fifo_st_push_512;
+  case AIE::BI__builtin_aie2ps_fifo_st_push_BFP384:
+    return Intrinsic::aie2ps_fifo_st_push_BFP384;
+  case AIE::BI__builtin_aie2ps_fifo_st_push_BFP640:
+    return Intrinsic::aie2ps_fifo_st_push_BFP640;
+  case AIE::BI__builtin_aie2ps_fifo_st_push_BFP768:
+    return Intrinsic::aie2ps_fifo_st_push_BFP768;
+  case AIE::BI__builtin_aie2ps_fifo_st_flush:
+    return Intrinsic::aie2ps_fifo_st_flush;
+  case AIE::BI__builtin_aie2ps_fifo_st_flush_1d_byte:
+    return Intrinsic::aie2ps_fifo_st_flush_1d;
+  case AIE::BI__builtin_aie2ps_fifo_st_flush_2d_byte:
+    return Intrinsic::aie2ps_fifo_st_flush_2d;
+  case AIE::BI__builtin_aie2ps_fifo_st_flush_3d_byte:
+    return Intrinsic::aie2ps_fifo_st_flush_3d;
+  case AIE::BI__builtin_aie2ps_fifo_st_flush_conv:
+    return Intrinsic::aie2ps_fifo_st_flush_conv;
+  case AIE::BI__builtin_aie2ps_fifo_st_flush_conv_1d_byte:
+    return Intrinsic::aie2ps_fifo_st_flush_1d_conv;
+  case AIE::BI__builtin_aie2ps_fifo_st_flush_conv_2d_byte:
+    return Intrinsic::aie2ps_fifo_st_flush_2d_conv;
+  case AIE::BI__builtin_aie2ps_fifo_st_flush_conv_3d_byte:
+    return Intrinsic::aie2ps_fifo_st_flush_3d_conv;
+  default:
+    break;
+  }
+  return Intrinsic::not_intrinsic;
+}
+
 static llvm::Intrinsic::ID
 getAIEIntrinsicFunction(unsigned BuiltinID, llvm::Triple::ArchType Arch) {
   switch (Arch) {
@@ -23799,6 +23954,8 @@ getAIEIntrinsicFunction(unsigned BuiltinID, llvm::Triple::ArchType Arch) {
     return getAIE2IntrinsicFunction(BuiltinID);
   case llvm::Triple::aie2p:
     return getAIE2PIntrinsicFunction(BuiltinID);
+  case llvm::Triple::aie2ps:
+    return getAIE2PSIntrinsicFunction(BuiltinID);
   default:
     break;
   }
@@ -23848,7 +24005,8 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
 
   switch (BuiltinID) {
   case AIE::BI__builtin_aiev2_add_2d:
-  case AIE::BI__builtin_aie2p_add_2d: {
+  case AIE::BI__builtin_aie2p_add_2d:
+  case AIE::BI__builtin_aie2ps_add_2d: {
     // Custom lowering is used for addr intrinsics to introduce truncation
     // from i32 to i20 and to handle multiple outputs returned by these
     // intrinsics and Zext from i20 back to i32 for count parameter
@@ -23874,7 +24032,8 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
     return Builder.CreateExtractValue(Val, 0);
   }
   case AIE::BI__builtin_aiev2_add_3d:
-  case AIE::BI__builtin_aie2p_add_3d: {
+  case AIE::BI__builtin_aie2p_add_3d:
+  case AIE::BI__builtin_aie2ps_add_3d: {
     SmallVector<Value *, 8> Ops;
     Ops.push_back(EmitScalarExpr(E->getArg(0)));
     for (unsigned i = 1, e = E->getNumArgs(); i != e; i++) {
@@ -23904,6 +24063,7 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
   }
   case AIE::BI__builtin_aiev2_put_ms_nb:
   case AIE::BI__builtin_aie2p_put_ms_nb:
+  case AIE::BI__builtin_aie2ps_put_ms_nb:
   case AIE::BI__builtin_aiev2_put_ms_nb_packet_header:
   case AIE::BI__builtin_aiev2_put_ms_nb_ctrl_packet_header: {
     SmallVector<Value *, 2> Ops;
@@ -23976,7 +24136,43 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
   case AIE::BI__builtin_aie2p_get_ss:
   case AIE::BI__builtin_aie2p_get_ss_nb:
   case AIE::BI__builtin_aie2p_scd_expand_ACC1024_incr:
-  case AIE::BI__builtin_aie2p_scd_expand_ACC2048_incr: {
+  case AIE::BI__builtin_aie2p_scd_expand_ACC2048_incr:
+  case AIE::BI__builtin_aie2ps_vabs_gtz8:
+  case AIE::BI__builtin_aie2ps_vabs_gtz16:
+  case AIE::BI__builtin_aie2ps_vabs_gtz32:
+  case AIE::BI__builtin_aie2ps_vbneg_ltz8:
+  case AIE::BI__builtin_aie2ps_vbneg_ltz16:
+  case AIE::BI__builtin_aie2ps_vbneg_ltz32:
+  case AIE::BI__builtin_aie2ps_vmaxdiff_lt8:
+  case AIE::BI__builtin_aie2ps_vmaxdiff_lt16:
+  case AIE::BI__builtin_aie2ps_vmaxdiff_lt32:
+  case AIE::BI__builtin_aie2ps_vmax_lt8:
+  case AIE::BI__builtin_aie2ps_vmax_ltfloat8:
+  case AIE::BI__builtin_aie2ps_vmax_ltbfloat8:
+  case AIE::BI__builtin_aie2ps_vmax_lt16:
+  case AIE::BI__builtin_aie2ps_vmax_lt32:
+  case AIE::BI__builtin_aie2ps_vmax_ltbfloat16:
+  case AIE::BI__builtin_aie2ps_vmax_ltfloat16:
+  case AIE::BI__builtin_aie2ps_vmin_ge8:
+  case AIE::BI__builtin_aie2ps_vmin_gefloat8:
+  case AIE::BI__builtin_aie2ps_vmin_gebfloat8:
+  case AIE::BI__builtin_aie2ps_vmin_ge16:
+  case AIE::BI__builtin_aie2ps_vmin_ge32:
+  case AIE::BI__builtin_aie2ps_vmin_gefloat16:
+  case AIE::BI__builtin_aie2ps_vmin_gebfloat16:
+  case AIE::BI__builtin_aie2ps_vneg_gtz8:
+  case AIE::BI__builtin_aie2ps_vneg_gtz16:
+  case AIE::BI__builtin_aie2ps_vneg_gtz32:
+  case AIE::BI__builtin_aie2ps_vsub_ge8:
+  case AIE::BI__builtin_aie2ps_vsub_ge16:
+  case AIE::BI__builtin_aie2ps_vsub_ge32:
+  case AIE::BI__builtin_aie2ps_vsub_lt8:
+  case AIE::BI__builtin_aie2ps_vsub_lt16:
+  case AIE::BI__builtin_aie2ps_vsub_lt32:
+  case AIE::BI__builtin_aie2ps_get_ss:
+  case AIE::BI__builtin_aie2ps_get_ss_nb:
+  case AIE::BI__builtin_aie2ps_scd_expand_ACC1024_incr:
+  case AIE::BI__builtin_aie2ps_scd_expand_ACC2048_incr: {
     SmallVector<Value *, 3> Ops;
     // Skip the last argument, it's actually an output
     for (unsigned I = 0; I < E->getNumArgs() - 1; I++)
@@ -23997,7 +24193,8 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
     return Builder.CreateExtractValue(Val, 0);
   }
   case AIE::BI__builtin_aiev2_divstep:
-  case AIE::BI__builtin_aie2p_divstep: {
+  case AIE::BI__builtin_aie2p_divstep:
+  case AIE::BI__builtin_aie2ps_divstep: {
 
     SmallVector<Value *, 3> Ops;
     for (unsigned I = 0; I < E->getNumArgs(); I++)
@@ -24074,7 +24271,13 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
   case AIE::BI__builtin_aie2p_fifo_st_push_544_bfp16:
   case AIE::BI__builtin_aie2p_fifo_st_push_576_bfp16:
   case AIE::BI__builtin_aie2p_fifo_st_flush_conv:
-  case AIE::BI__builtin_aie2p_fifo_st_flush: {
+  case AIE::BI__builtin_aie2p_fifo_st_flush:
+  case AIE::BI__builtin_aie2ps_fifo_st_push_512:
+  case AIE::BI__builtin_aie2ps_fifo_st_push_BFP384:
+  case AIE::BI__builtin_aie2ps_fifo_st_push_BFP640:
+  case AIE::BI__builtin_aie2ps_fifo_st_push_BFP768:
+  case AIE::BI__builtin_aie2ps_fifo_st_flush_conv:
+  case AIE::BI__builtin_aie2ps_fifo_st_flush: {
     SmallVector<Value *, 3> Ops;
     for (unsigned I = 0; I < E->getNumArgs(); I++)
       Ops.push_back(EmitScalarExpr(E->getArg(I)));
@@ -24094,19 +24297,32 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
 
     Value *FifoAddr = nullptr;
     Value *PosAddr = nullptr;
-    if (BuiltinID == AIE::BI__builtin_aie2p_fifo_st_flush ||
-        BuiltinID == AIE::BI__builtin_aie2p_fifo_st_flush_conv) {
+    switch (BuiltinID) {
+    case AIE::BI__builtin_aie2p_fifo_st_flush:
+    case AIE::BI__builtin_aie2p_fifo_st_flush_conv:
+    case AIE::BI__builtin_aie2ps_fifo_st_flush:
+    case AIE::BI__builtin_aie2ps_fifo_st_flush_conv:
+    case AIE::BI__builtin_aie2ps_fifo_st_push_BFP384:
+    case AIE::BI__builtin_aie2ps_fifo_st_push_BFP640:
+    case AIE::BI__builtin_aie2ps_fifo_st_push_BFP768: {
       FifoAddr = EmitLValue(E->getArg(1)).getPointer(*this);
       PosAddr = EmitLValue(E->getArg(2)).getPointer(*this);
-    } else if (BuiltinID == AIE::BI__builtin_aie2p_fifo_st_push_512_bfp16) {
+      break;
+    }
+    case AIE::BI__builtin_aie2p_fifo_st_push_512_bfp16:
+    case AIE::BI__builtin_aie2ps_fifo_st_push_512: {
       FifoAddr = EmitLValue(E->getArg(2)).getPointer(*this);
       PosAddr = EmitLValue(E->getArg(3)).getPointer(*this);
-    } else {
-      assert(BuiltinID == AIE::BI__builtin_aie2p_fifo_st_push_576_bfp16 ||
-             BuiltinID == AIE::BI__builtin_aie2p_fifo_st_push_544_bfp16 &&
-                 "Unexpected BuiltinID");
+      break;
+    }
+    case AIE::BI__builtin_aie2p_fifo_st_push_576_bfp16:
+    case AIE::BI__builtin_aie2p_fifo_st_push_544_bfp16: {
       FifoAddr = EmitLValue(E->getArg(3)).getPointer(*this);
       PosAddr = EmitLValue(E->getArg(4)).getPointer(*this);
+      break;
+    }
+    default:
+      llvm_unreachable("Unexpected BuiltinID");
     }
 
     Builder.CreateDefaultAlignedStore(Fifo, FifoAddr);
@@ -24118,20 +24334,32 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
   case AIE::BI__builtin_aie2p_fifo_st_flush_conv_2d_byte:
   case AIE::BI__builtin_aie2p_fifo_st_flush_2d_byte:
   case AIE::BI__builtin_aie2p_fifo_st_flush_conv_3d_byte:
-  case AIE::BI__builtin_aie2p_fifo_st_flush_3d_byte: {
+  case AIE::BI__builtin_aie2p_fifo_st_flush_3d_byte:
+  case AIE::BI__builtin_aie2ps_fifo_st_flush_conv_1d_byte:
+  case AIE::BI__builtin_aie2ps_fifo_st_flush_1d_byte:
+  case AIE::BI__builtin_aie2ps_fifo_st_flush_conv_2d_byte:
+  case AIE::BI__builtin_aie2ps_fifo_st_flush_2d_byte:
+  case AIE::BI__builtin_aie2ps_fifo_st_flush_conv_3d_byte:
+  case AIE::BI__builtin_aie2ps_fifo_st_flush_3d_byte: {
     SmallVector<Value *, 3> Ops;
     unsigned NumAddrIncs = 0;
     switch (BuiltinID) {
     case AIE::BI__builtin_aie2p_fifo_st_flush_1d_byte:
     case AIE::BI__builtin_aie2p_fifo_st_flush_conv_1d_byte:
+    case AIE::BI__builtin_aie2ps_fifo_st_flush_1d_byte:
+    case AIE::BI__builtin_aie2ps_fifo_st_flush_conv_1d_byte:
       NumAddrIncs = 1;
       break;
     case AIE::BI__builtin_aie2p_fifo_st_flush_2d_byte:
     case AIE::BI__builtin_aie2p_fifo_st_flush_conv_2d_byte:
+    case AIE::BI__builtin_aie2ps_fifo_st_flush_2d_byte:
+    case AIE::BI__builtin_aie2ps_fifo_st_flush_conv_2d_byte:
       NumAddrIncs = 4;
       break;
     case AIE::BI__builtin_aie2p_fifo_st_flush_3d_byte:
     case AIE::BI__builtin_aie2p_fifo_st_flush_conv_3d_byte:
+    case AIE::BI__builtin_aie2ps_fifo_st_flush_3d_byte:
+    case AIE::BI__builtin_aie2ps_fifo_st_flush_conv_3d_byte:
       NumAddrIncs = 7;
       break;
     default:
@@ -24163,15 +24391,22 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
     Value *FifoAddr = EmitLValue(E->getArg(1)).getPointer(*this);
     Value *PosAddr = EmitLValue(E->getArg(2)).getPointer(*this);
 
-    if (BuiltinID == AIE::BI__builtin_aie2p_fifo_st_flush_2d_byte ||
-        BuiltinID == AIE::BI__builtin_aie2p_fifo_st_flush_conv_2d_byte) {
+    switch (BuiltinID) {
+    case AIE::BI__builtin_aie2p_fifo_st_flush_2d_byte:
+    case AIE::BI__builtin_aie2p_fifo_st_flush_conv_2d_byte:
+    case AIE::BI__builtin_aie2ps_fifo_st_flush_2d_byte:
+    case AIE::BI__builtin_aie2ps_fifo_st_flush_conv_2d_byte: {
       Value *Count1 =
           Builder.CreateZExt(Builder.CreateExtractValue(Val, 3),
                              llvm::Type::getInt32Ty(getLLVMContext()));
       Value *Count1Addr = EmitLValue(E->getArg(5)).getPointer(*this);
       Builder.CreateDefaultAlignedStore(Count1, Count1Addr);
-    } else if (BuiltinID == AIE::BI__builtin_aie2p_fifo_st_flush_3d_byte ||
-               BuiltinID == AIE::BI__builtin_aie2p_fifo_st_flush_conv_3d_byte) {
+      break;
+    }
+    case AIE::BI__builtin_aie2p_fifo_st_flush_3d_byte:
+    case AIE::BI__builtin_aie2p_fifo_st_flush_conv_3d_byte:
+    case AIE::BI__builtin_aie2ps_fifo_st_flush_3d_byte:
+    case AIE::BI__builtin_aie2ps_fifo_st_flush_conv_3d_byte: {
       Value *Count1 =
           Builder.CreateZExt(Builder.CreateExtractValue(Val, 3),
                              llvm::Type::getInt32Ty(getLLVMContext()));
@@ -24185,6 +24420,8 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
           EmitLValue(E->getArg(E->getNumArgs() - 2)).getPointer(*this);
       Builder.CreateDefaultAlignedStore(Count1, Count1Addr);
       Builder.CreateDefaultAlignedStore(Count2, Count2Addr);
+      break;
+    }
     }
 
     Builder.CreateDefaultAlignedStore(Fifo, FifoAddr);
@@ -24192,7 +24429,9 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
     return Builder.CreateDefaultAlignedStore(Ptr, PtrAddr);
   }
   case AIE::BI__builtin_aie2p_fifo_ld_fillx:
-  case AIE::BI__builtin_aie2p_fifo_ld_fill: {
+  case AIE::BI__builtin_aie2p_fifo_ld_fill:
+  case AIE::BI__builtin_aie2ps_fifo_ld_fillx:
+  case AIE::BI__builtin_aie2ps_fifo_ld_fill: {
     SmallVector<Value *, 3> Ops;
     for (unsigned I = 0; I < E->getNumArgs(); I++)
       Ops.push_back(EmitScalarExpr(E->getArg(I)));
@@ -24212,7 +24451,8 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
     Value *FifoAddr = EmitLValue(E->getArg(1)).getPointer(*this);
     Value *PosAddr = EmitLValue(E->getArg(2)).getPointer(*this);
 
-    if (BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_fillx) {
+    if (BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_fillx ||
+        BuiltinID == AIE::BI__builtin_aie2ps_fifo_ld_fillx) {
       Value *Extra = Builder.CreateExtractValue(Val, 3);
       Value *ExtraAddr = EmitLValue(E->getArg(3)).getPointer(*this);
       Builder.CreateDefaultAlignedStore(Extra, ExtraAddr);
@@ -24226,16 +24466,26 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
   case AIE::BI__builtin_aie2p_fifo_ld_popx:
   case AIE::BI__builtin_aie2p_fifo_ld_pop_1d_512_unaligned:
   case AIE::BI__builtin_aie2p_fifo_ld_pop_2d_512_unaligned:
-  case AIE::BI__builtin_aie2p_fifo_ld_pop_3d_512_unaligned: {
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_3d_512_unaligned:
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_512_unaligned:
+  case AIE::BI__builtin_aie2ps_fifo_ld_popx:
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_1d_512_unaligned:
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_2d_512_unaligned:
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_3d_512_unaligned: {
     SmallVector<Value *, 3> Ops;
     unsigned NumAddrIncs = 0;
-    if (BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_pop_1d_512_unaligned) {
+    if (BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_pop_1d_512_unaligned ||
+        BuiltinID == AIE::BI__builtin_aie2ps_fifo_ld_pop_1d_512_unaligned) {
       NumAddrIncs = 1;
     } else if (BuiltinID ==
-               AIE::BI__builtin_aie2p_fifo_ld_pop_2d_512_unaligned) {
+                   AIE::BI__builtin_aie2p_fifo_ld_pop_2d_512_unaligned ||
+               BuiltinID ==
+                   AIE::BI__builtin_aie2ps_fifo_ld_pop_2d_512_unaligned) {
       NumAddrIncs = 4;
     } else if (BuiltinID ==
-               AIE::BI__builtin_aie2p_fifo_ld_pop_3d_512_unaligned) {
+                   AIE::BI__builtin_aie2p_fifo_ld_pop_3d_512_unaligned ||
+               BuiltinID ==
+                   AIE::BI__builtin_aie2ps_fifo_ld_pop_3d_512_unaligned) {
       NumAddrIncs = 7;
     }
 
@@ -24265,14 +24515,17 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
     Value *FifoAddr = EmitLValue(E->getArg(1)).getPointer(*this);
     Value *PosAddr = EmitLValue(E->getArg(2)).getPointer(*this);
 
-    if (BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_pop_2d_512_unaligned) {
+    if (BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_pop_2d_512_unaligned ||
+        BuiltinID == AIE::BI__builtin_aie2ps_fifo_ld_pop_2d_512_unaligned) {
       Value *Count1 =
           Builder.CreateZExt(Builder.CreateExtractValue(Val, 4),
                              llvm::Type::getInt32Ty(getLLVMContext()));
       Value *Count1Addr = EmitLValue(E->getArg(5)).getPointer(*this);
       Builder.CreateDefaultAlignedStore(Count1, Count1Addr);
     } else if (BuiltinID ==
-               AIE::BI__builtin_aie2p_fifo_ld_pop_3d_512_unaligned) {
+                   AIE::BI__builtin_aie2p_fifo_ld_pop_3d_512_unaligned ||
+               BuiltinID ==
+                   AIE::BI__builtin_aie2ps_fifo_ld_pop_3d_512_unaligned) {
       Value *Count1 =
           Builder.CreateZExt(Builder.CreateExtractValue(Val, 4),
                              llvm::Type::getInt32Ty(getLLVMContext()));
@@ -24287,7 +24540,8 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
       Builder.CreateDefaultAlignedStore(Count2, Count2Addr);
     }
 
-    if (BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_popx) {
+    if (BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_popx ||
+        BuiltinID == AIE::BI__builtin_aie2ps_fifo_ld_popx) {
       Value *Extra = Builder.CreateExtractValue(Val, 4);
       Value *ExtraAddr = EmitLValue(E->getArg(3)).getPointer(*this);
       Builder.CreateDefaultAlignedStore(Extra, ExtraAddr);
@@ -24305,28 +24559,77 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
   case AIE::BI__builtin_aie2p_fifo_ld_pop_3d_576_bfp16:
   case AIE::BI__builtin_aie2p_fifo_ld_pop_3d_544_bfp16:
   case AIE::BI__builtin_aie2p_fifo_ld_pop_544_bfp16:
-  case AIE::BI__builtin_aie2p_fifo_ld_pop_576_bfp16: {
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_576_bfp16:
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_BFP640:
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_BFP768:
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_1d_BFP640:
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_1d_BFP768:
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_2d_BFP640:
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_2d_BFP768:
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_3d_BFP640:
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_3d_BFP768: {
     SmallVector<Value *, 3> Ops;
     unsigned NumAddrIncs = 0;
     unsigned NumOutIncs = 0;
-    if (BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_pop_1d_544_bfp16 ||
-        BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_pop_1d_576_bfp16) {
+    unsigned MXStructCount = 0;
+    switch (BuiltinID) {
+    case AIE::BI__builtin_aie2p_fifo_ld_pop_1d_544_bfp16:
+    case AIE::BI__builtin_aie2p_fifo_ld_pop_1d_576_bfp16:
+    case AIE::BI__builtin_aie2ps_fifo_ld_pop_1d_BFP640:
+    case AIE::BI__builtin_aie2ps_fifo_ld_pop_1d_BFP768: {
       NumAddrIncs = 1;
       NumOutIncs = 0;
-    } else if (BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_pop_2d_576_bfp16 ||
-               BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_pop_2d_544_bfp16) {
+      break;
+    }
+    case AIE::BI__builtin_aie2p_fifo_ld_pop_2d_576_bfp16:
+    case AIE::BI__builtin_aie2p_fifo_ld_pop_2d_544_bfp16:
+    case AIE::BI__builtin_aie2ps_fifo_ld_pop_2d_BFP640:
+    case AIE::BI__builtin_aie2ps_fifo_ld_pop_2d_BFP768: {
       NumAddrIncs = 4;
       NumOutIncs = 1;
-    } else if (BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_pop_3d_576_bfp16 ||
-               BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_pop_3d_544_bfp16) {
+      break;
+    }
+    case AIE::BI__builtin_aie2p_fifo_ld_pop_3d_576_bfp16:
+    case AIE::BI__builtin_aie2p_fifo_ld_pop_3d_544_bfp16:
+    case AIE::BI__builtin_aie2ps_fifo_ld_pop_3d_BFP640:
+    case AIE::BI__builtin_aie2ps_fifo_ld_pop_3d_BFP768: {
       NumAddrIncs = 7;
       NumOutIncs = 2;
+      break;
+    }
+    }
+    // Determine number of MX struct elements the intrinsic returns
+    switch (BuiltinID) {
+    case AIE::BI__builtin_aie2p_fifo_ld_pop_1d_544_bfp16:
+    case AIE::BI__builtin_aie2p_fifo_ld_pop_1d_576_bfp16:
+    case AIE::BI__builtin_aie2p_fifo_ld_pop_2d_576_bfp16:
+    case AIE::BI__builtin_aie2p_fifo_ld_pop_2d_544_bfp16:
+    case AIE::BI__builtin_aie2p_fifo_ld_pop_3d_576_bfp16:
+    case AIE::BI__builtin_aie2p_fifo_ld_pop_3d_544_bfp16:
+    case AIE::BI__builtin_aie2p_fifo_ld_pop_544_bfp16:
+    case AIE::BI__builtin_aie2p_fifo_ld_pop_576_bfp16:
+      MXStructCount = 2;
+      break;
+    case AIE::BI__builtin_aie2ps_fifo_ld_pop_BFP640:
+    case AIE::BI__builtin_aie2ps_fifo_ld_pop_1d_BFP640:
+    case AIE::BI__builtin_aie2ps_fifo_ld_pop_2d_BFP640:
+    case AIE::BI__builtin_aie2ps_fifo_ld_pop_3d_BFP640:
+      MXStructCount = 3;
+      break;
+    case AIE::BI__builtin_aie2ps_fifo_ld_pop_BFP768:
+    case AIE::BI__builtin_aie2ps_fifo_ld_pop_1d_BFP768:
+    case AIE::BI__builtin_aie2ps_fifo_ld_pop_2d_BFP768:
+    case AIE::BI__builtin_aie2ps_fifo_ld_pop_3d_BFP768:
+      MXStructCount = 8;
+      break;
+    default:
+      llvm_unreachable("Unexpected BuiltinID");
     }
 
-    for (unsigned I = 0; I < E->getNumArgs() - NumAddrIncs - 2; I++)
+    for (unsigned I = 0; I < E->getNumArgs() - NumAddrIncs - MXStructCount; I++)
       Ops.push_back(EmitScalarExpr(E->getArg(I)));
-    for (unsigned I = E->getNumArgs() - NumAddrIncs - 2,
-                  NA = E->getNumArgs() - 2;
+    for (unsigned I = E->getNumArgs() - NumAddrIncs - MXStructCount,
+                  NA = E->getNumArgs() - MXStructCount;
          I < NA; I++) {
       Ops.push_back(
           Builder.CreateTrunc(EmitScalarExpr(E->getArg(I)),
@@ -24341,48 +24644,99 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
     insertImplicitCasts(Ops, *F->getFunctionType(), Builder);
     Value *Val = Builder.CreateCall(F, Ops);
 
-    Value *Ptr = Builder.CreateExtractValue(Val, 0);
-    Value *Fifo = Builder.CreateExtractValue(Val, 1);
-    Value *Pos = Builder.CreateExtractValue(Val, 2);
-    Value *PtrAddr = EmitLValue(E->getArg(0)).getPointer(*this);
-    Value *FifoAddr = EmitLValue(E->getArg(1)).getPointer(*this);
-    Value *PosAddr = EmitLValue(E->getArg(2)).getPointer(*this);
+    for (unsigned I = 0; I < E->getNumArgs() - NumAddrIncs - MXStructCount;
+         I++) {
+      Value *EltVal = Builder.CreateExtractValue(Val, I);
+      Value *EltAddr = EmitLValue(E->getArg(I)).getPointer(*this);
+      Builder.CreateDefaultAlignedStore(EltVal, EltAddr);
+    }
 
-    Value *Mantissa = Builder.CreateExtractValue(Val, 3 + NumOutIncs);
-    Value *Exponent = Builder.CreateExtractValue(Val, 4 + NumOutIncs);
-    Value *MantissaAddr =
-        EmitLValue(E->getArg(E->getNumArgs() - 2)).getPointer(*this);
-    Value *ExponentAddr =
-        EmitLValue(E->getArg(E->getNumArgs() - 1)).getPointer(*this);
-
-    if (BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_pop_2d_576_bfp16 ||
-        BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_pop_2d_544_bfp16) {
-      Value *Count1 =
-          Builder.CreateZExt(Builder.CreateExtractValue(Val, 3),
-                             llvm::Type::getInt32Ty(getLLVMContext()));
-      Value *Count1Addr = EmitLValue(E->getArg(5)).getPointer(*this);
-      Builder.CreateDefaultAlignedStore(Count1, Count1Addr);
-    } else if (BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_pop_3d_576_bfp16 ||
-               BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_pop_3d_544_bfp16) {
+    switch (BuiltinID) {
+    case AIE::BI__builtin_aie2p_fifo_ld_pop_2d_576_bfp16:
+    case AIE::BI__builtin_aie2p_fifo_ld_pop_2d_544_bfp16:
+    case AIE::BI__builtin_aie2ps_fifo_ld_pop_2d_BFP640:
+    case AIE::BI__builtin_aie2ps_fifo_ld_pop_2d_BFP768: {
       Value *Count1 =
           Builder.CreateZExt(Builder.CreateExtractValue(Val, 3),
                              llvm::Type::getInt32Ty(getLLVMContext()));
       Value *Count1Addr =
-          EmitLValue(E->getArg(E->getNumArgs() - 5 - 2)).getPointer(*this);
+          EmitLValue(E->getArg(E->getNumArgs() - 2 - MXStructCount))
+              .getPointer(*this);
+      Builder.CreateDefaultAlignedStore(Count1, Count1Addr);
+      break;
+    }
+    case AIE::BI__builtin_aie2p_fifo_ld_pop_3d_576_bfp16:
+    case AIE::BI__builtin_aie2p_fifo_ld_pop_3d_544_bfp16:
+    case AIE::BI__builtin_aie2ps_fifo_ld_pop_3d_BFP640:
+    case AIE::BI__builtin_aie2ps_fifo_ld_pop_3d_BFP768: {
+      Value *Count1 =
+          Builder.CreateZExt(Builder.CreateExtractValue(Val, 3),
+                             llvm::Type::getInt32Ty(getLLVMContext()));
+      Value *Count1Addr =
+          EmitLValue(E->getArg(E->getNumArgs() - 5 - MXStructCount))
+              .getPointer(*this);
       Value *Count2 =
           Builder.CreateZExt(Builder.CreateExtractValue(Val, 4),
                              llvm::Type::getInt32Ty(getLLVMContext()));
       Value *Count2Addr =
-          EmitLValue(E->getArg(E->getNumArgs() - 2 - 2)).getPointer(*this);
+          EmitLValue(E->getArg(E->getNumArgs() - 2 - MXStructCount))
+              .getPointer(*this);
       Builder.CreateDefaultAlignedStore(Count1, Count1Addr);
       Builder.CreateDefaultAlignedStore(Count2, Count2Addr);
+      break;
+    }
     }
 
-    Builder.CreateDefaultAlignedStore(Fifo, FifoAddr);
-    Builder.CreateDefaultAlignedStore(Pos, PosAddr);
-    Builder.CreateDefaultAlignedStore(Mantissa, MantissaAddr);
-    Builder.CreateDefaultAlignedStore(Exponent, ExponentAddr);
-    return Builder.CreateDefaultAlignedStore(Ptr, PtrAddr);
+    // Tracks the last store to return
+    Value *LastStore = nullptr;
+    // The intrinsic returns an struct of MX type. So, extract each element
+    // and store it in corresponding addr.
+    for (unsigned I = 0; I < MXStructCount; I++) {
+      Value *EltVal = Builder.CreateExtractValue(Val, 3 + NumOutIncs + I);
+      unsigned ArgInd = E->getNumArgs() - MXStructCount + I;
+      Value *EltAddr = EmitLValue(E->getArg(ArgInd)).getPointer(*this);
+      LastStore = Builder.CreateDefaultAlignedStore(EltVal, EltAddr);
+    }
+    return LastStore;
+  }
+  case AIE::BI__builtin_aie2ps_vshuffle_BFP640_BFP640_BFP640:
+  case AIE::BI__builtin_aie2ps_vshuffle_BFP768_BFP768_BFP768:
+  case AIE::BI__builtin_aie2ps_v64accfloat_to_v64mx4:
+  case AIE::BI__builtin_aie2ps_v64accfloat_to_v64mx6:
+  case AIE::BI__builtin_aie2ps_v64accfloat_to_v64mx9: {
+    SmallVector<Value *, 3> Ops;
+    unsigned MXStructCount = 0;
+    // Determine number of MX struct elements the intrinsic returns
+    if (BuiltinID == AIE::BI__builtin_aie2ps_vshuffle_BFP640_BFP640_BFP640 ||
+        BuiltinID == AIE::BI__builtin_aie2ps_v64accfloat_to_v64mx9) {
+      MXStructCount = 3;
+    } else if (BuiltinID == AIE::BI__builtin_aie2ps_v64accfloat_to_v64mx4 ||
+               BuiltinID == AIE::BI__builtin_aie2ps_v64accfloat_to_v64mx6) {
+      MXStructCount = 4;
+    } else if (BuiltinID ==
+               AIE::BI__builtin_aie2ps_vshuffle_BFP768_BFP768_BFP768) {
+      MXStructCount = 8;
+    }
+
+    for (unsigned I = 0; I < E->getNumArgs() - MXStructCount; I++)
+      Ops.push_back(EmitScalarExpr(E->getArg(I)));
+
+    llvm::Intrinsic::ID IntrinsicID = getAIEIntrinsicFunction(BuiltinID, Arch);
+    assert(IntrinsicID != Intrinsic::not_intrinsic);
+    Function *F = CGM.getIntrinsic(IntrinsicID);
+    Value *Val = Builder.CreateCall(F, Ops);
+    // Tracks the last store to return
+    Value *LastStore = nullptr;
+
+    // The intrinsic returns an struct of MX type. So, extract each element and
+    // store it in corresponding addr.
+    for (unsigned I = 0; I < MXStructCount; I++) {
+      Value *EltVal = Builder.CreateExtractValue(Val, I);
+      unsigned ArgInd = E->getNumArgs() - MXStructCount + I;
+      Value *EltAddr = EmitLValue(E->getArg(ArgInd)).getPointer(*this);
+      LastStore = Builder.CreateDefaultAlignedStore(EltVal, EltAddr);
+    }
+    return LastStore;
   }
   default:
     break;
@@ -24599,5 +24953,89 @@ Value *CodeGenFunction::EmitAIE2PBuiltinExpr(unsigned BuiltinID,
     break;
   }
 
+  return nullptr;
+}
+
+Value *CodeGenFunction::EmitAIE2PSBuiltinExpr(unsigned BuiltinID,
+                                              const CallExpr *E,
+                                              llvm::Triple::ArchType Arch) {
+  switch (BuiltinID) {
+  case AIE::BI__builtin_aie2ps_get_ss:
+  case AIE::BI__builtin_aie2ps_get_ss_nb:
+  case AIE::BI__builtin_aie2ps_put_ms_nb:
+  case AIE::BI__builtin_aie2ps_scd_expand_ACC1024_incr:
+  case AIE::BI__builtin_aie2ps_scd_expand_ACC2048_incr:
+  case AIE::BI__builtin_aie2ps_add_2d:
+  case AIE::BI__builtin_aie2ps_add_3d:
+  case AIE::BI__builtin_aie2ps_vshuffle_BFP640_BFP640_BFP640:
+  case AIE::BI__builtin_aie2ps_vshuffle_BFP768_BFP768_BFP768:
+  case AIE::BI__builtin_aie2ps_v64accfloat_to_v64mx4:
+  case AIE::BI__builtin_aie2ps_v64accfloat_to_v64mx6:
+  case AIE::BI__builtin_aie2ps_v64accfloat_to_v64mx9:
+  case AIE::BI__builtin_aie2ps_vabs_gtz8:
+  case AIE::BI__builtin_aie2ps_vabs_gtz16:
+  case AIE::BI__builtin_aie2ps_vabs_gtz32:
+  case AIE::BI__builtin_aie2ps_vbneg_ltz8:
+  case AIE::BI__builtin_aie2ps_vbneg_ltz16:
+  case AIE::BI__builtin_aie2ps_vbneg_ltz32:
+  case AIE::BI__builtin_aie2ps_vmaxdiff_lt8:
+  case AIE::BI__builtin_aie2ps_vmaxdiff_lt16:
+  case AIE::BI__builtin_aie2ps_vmaxdiff_lt32:
+  case AIE::BI__builtin_aie2ps_vmax_lt8:
+  case AIE::BI__builtin_aie2ps_vmax_ltfloat8:
+  case AIE::BI__builtin_aie2ps_vmax_ltbfloat8:
+  case AIE::BI__builtin_aie2ps_vmax_lt16:
+  case AIE::BI__builtin_aie2ps_vmax_lt32:
+  case AIE::BI__builtin_aie2ps_vmax_ltbfloat16:
+  case AIE::BI__builtin_aie2ps_vmax_ltfloat16:
+  case AIE::BI__builtin_aie2ps_vmin_ge8:
+  case AIE::BI__builtin_aie2ps_vmin_gefloat8:
+  case AIE::BI__builtin_aie2ps_vmin_gebfloat8:
+  case AIE::BI__builtin_aie2ps_vmin_ge16:
+  case AIE::BI__builtin_aie2ps_vmin_ge32:
+  case AIE::BI__builtin_aie2ps_vmin_gefloat16:
+  case AIE::BI__builtin_aie2ps_vmin_gebfloat16:
+  case AIE::BI__builtin_aie2ps_vneg_gtz8:
+  case AIE::BI__builtin_aie2ps_vneg_gtz16:
+  case AIE::BI__builtin_aie2ps_vneg_gtz32:
+  case AIE::BI__builtin_aie2ps_vsub_ge8:
+  case AIE::BI__builtin_aie2ps_vsub_ge16:
+  case AIE::BI__builtin_aie2ps_vsub_ge32:
+  case AIE::BI__builtin_aie2ps_vsub_lt8:
+  case AIE::BI__builtin_aie2ps_vsub_lt16:
+  case AIE::BI__builtin_aie2ps_vsub_lt32:
+  case AIE::BI__builtin_aie2ps_divstep:
+  case AIE::BI__builtin_aie2ps_fifo_ld_fill:
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_512_unaligned:
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_BFP640:
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_BFP768:
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_1d_512_unaligned:
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_1d_BFP640:
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_1d_BFP768:
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_2d_512_unaligned:
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_2d_BFP640:
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_2d_BFP768:
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_3d_512_unaligned:
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_3d_BFP640:
+  case AIE::BI__builtin_aie2ps_fifo_ld_pop_3d_BFP768:
+  case AIE::BI__builtin_aie2ps_fifo_ld_fillx:
+  case AIE::BI__builtin_aie2ps_fifo_ld_popx:
+  case AIE::BI__builtin_aie2ps_fifo_st_push_512:
+  case AIE::BI__builtin_aie2ps_fifo_st_push_BFP384:
+  case AIE::BI__builtin_aie2ps_fifo_st_push_BFP640:
+  case AIE::BI__builtin_aie2ps_fifo_st_push_BFP768:
+  case AIE::BI__builtin_aie2ps_fifo_st_flush:
+  case AIE::BI__builtin_aie2ps_fifo_st_flush_1d_byte:
+  case AIE::BI__builtin_aie2ps_fifo_st_flush_2d_byte:
+  case AIE::BI__builtin_aie2ps_fifo_st_flush_3d_byte:
+  case AIE::BI__builtin_aie2ps_fifo_st_flush_conv:
+  case AIE::BI__builtin_aie2ps_fifo_st_flush_conv_1d_byte:
+  case AIE::BI__builtin_aie2ps_fifo_st_flush_conv_2d_byte:
+  case AIE::BI__builtin_aie2ps_fifo_st_flush_conv_3d_byte: {
+    return this->EmitAIEBuiltinExpr(BuiltinID, E, Arch);
+  }
+  default:
+    break;
+  }
   return nullptr;
 }

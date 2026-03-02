@@ -1,0 +1,88 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; MAC
+    $r7 = MAC $r7, $r28, $r3
+    $r20 = MAC $r20, $r20, $r11
+    $r23 = MAC $r23, $r9, $r10
+    $r14 = MAC $r14, $r23, $r29
+    $r9 = MAC $r9, $r15, $r7
+    $r6 = MAC $r6, $r2, $r1
+    $r1 = MAC $r1, $r4, $r23
+    $r28 = MAC $r28, $r19, $r5
+    $r31 = MAC $r31, $r3, $r19
+    $r19 = MAC $r19, $r24, $r27
+    $r4 = MAC $r4, $r25, $r9
+    $r11 = MAC $r11, $r6, $r12
+    $r22 = MAC $r22, $r26, $r21
+    $r10 = MAC $r10, $r13, $r15
+    $r16 = MAC $r16, $r22, $r4
+    $r5 = MAC $r5, $r1, $r26
+    $r3 = MAC $r3, $r11, $r6
+    $r18 = MAC $r18, $r21, $r14
+    $r15 = MAC $r15, $r18, $r17
+    $r26 = MAC $r26, $r14, $r2
+    $r30 = MAC $r30, $r16, $r30
+    $r29 = MAC $r29, $r31, $r28
+    $r8 = MAC $r8, $r10, $r0
+    $r12 = MAC $r12, $r0, $r18
+    $r0 = MAC $r0, $r8, $r22
+    $r13 = MAC $r13, $r7, $r20
+    $r24 = MAC $r24, $r17, $r24
+    $r2 = MAC $r2, $r30, $r13
+    $r17 = MAC $r17, $r12, $r16
+    $r21 = MAC $r21, $r5, $r25
+    $r25 = MAC $r25, $r29, $r31
+    $r27 = MAC $r27, $r27, $r8
+...
+
+# CHECK: 0: 30 36 0e 27 mac r7, r7, r28, r3
+# CHECK: 4: 30 b6 28 25 mac r20, r20, r20, r11
+# CHECK: 8: 30 a6 6e 22 mac r23, r23, r9, r10
+# CHECK: c: 30 d6 dd 25 mac r14, r14, r23, r29
+# CHECK: 10: 30 76 d2 23 mac r9, r9, r15, r7
+# CHECK: 14: 30 16 8c 20 mac r6, r6, r2, r1
+# CHECK: 18: 30 76 03 21 mac r1, r1, r4, r23
+# CHECK: 1c: 30 56 f8 24 mac r28, r28, r19, r5
+# CHECK: 20: 30 36 ff 20 mac r31, r31, r3, r19
+# CHECK: 24: 30 b6 27 26 mac r19, r19, r24, r27
+# CHECK: 28: 30 96 48 26 mac r4, r4, r25, r9
+# CHECK: 2c: 30 c6 96 21 mac r11, r11, r6, r12
+# CHECK: 30: 30 56 ad 26 mac r22, r22, r26, r21
+# CHECK: 34: 30 f6 54 23 mac r10, r10, r13, r15
+# CHECK: 38: 30 46 a0 25 mac r16, r16, r22, r4
+# CHECK: 3c: 30 a6 4b 20 mac r5, r5, r1, r26
+# CHECK: 40: 30 66 c6 22 mac r3, r3, r11, r6
+# CHECK: 44: 30 e6 64 25 mac r18, r18, r21, r14
+# CHECK: 48: 30 16 9f 24 mac r15, r15, r18, r17
+# CHECK: 4c: 30 26 b4 23 mac r26, r26, r14, r2
+# CHECK: 50: 30 e6 3d 24 mac r30, r30, r16, r30
+# CHECK: 54: 30 c6 fb 27 mac r29, r29, r31, r28
+# CHECK: 58: 30 06 90 22 mac r8, r8, r10, r0
+# CHECK: 5c: 30 26 19 20 mac r12, r12, r0, r18
+# CHECK: 60: 30 66 01 22 mac r0, r0, r8, r22
+# CHECK: 64: 30 46 db 21 mac r13, r13, r7, r20
+# CHECK: 68: 30 86 71 24 mac r24, r24, r17, r24
+# CHECK: 6c: 30 d6 84 27 mac r2, r2, r30, r13
+# CHECK: 70: 30 06 23 23 mac r17, r17, r12, r16
+# CHECK: 74: 30 96 6b 21 mac r21, r21, r5, r25
+# CHECK: 78: 30 f6 73 27 mac r25, r25, r29, r31
+# CHECK: 7c: 30 86 f6 26 mac r27, r27, r27, r8

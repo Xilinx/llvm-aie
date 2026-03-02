@@ -1,0 +1,66 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -mtriple=aie2ps -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+
+---
+name:      tied_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    $x0, $p0, $lf0, $r24, $dc0 = VLDA_POP_2D_dmx_lda_fifo_x $p0, $lf0, $r24, $d0, implicit-def $srfifo_uf
+    $ex0, $p1, $lf1, $r25, $dc1 = VLDA_POP_2D_dmx_lda_fifo_ex_bfp16 $p1, $lf1, $r25, $d1, implicit-def $srfifo_uf
+    $fex0, $p0, $lf0, $r24, $dc2 = VLDA_POP_2D_dmx_lda_fifo_fex_bfp13 $p0, $lf0, $r24, $d2, implicit-def $srfifo_uf
+    $x0, $p1, $lf1, $r25, $dc3 = VLDB_POP_2D_dmx_ldb_fifo_x $p1, $lf1, $r25, $d3, implicit-def $srfifo_uf
+    $ex0, $p0, $lf0, $r24, $dc0 = VLDB_POP_2D_dmx_ldb_fifo_ex_bfp16 $p0, $lf0, $r24, $d0, implicit-def $srfifo_uf
+    $fex0, $p1, $lf1, $r25, $dc1 = VLDB_POP_2D_dmx_ldb_fifo_fex_bfp13 $p1, $lf1, $r25, $d1, implicit-def $srfifo_uf
+    $x0, $p0, $lf0, $r24, $dc2 = VLD_POP_512_2D_pseudo $p0, $lf0, $r24, $d2, implicit-def $srfifo_uf
+    $ex0, $p1, $lf1, $r25, $dc3 = VLD_POP_640_2D_pseudo $p1, $lf1, $r25, $d3, implicit-def $srfifo_uf
+    $fex0, $p0, $lf0, $r24, $dc0 = VLD_POP_768_2D_pseudo $p0, $lf0, $r24, $d0, implicit-def $srfifo_uf
+    $ex0, $p1, $lf1, $r25, $dc1 = VLDA_POP_s_2D $p1, $lf1, $r25, $d1, implicit-def $srfifo_uf
+    $ex0, $p0, $lf0, $r24, $dc2 = VLDB_POP_s_2D $p0, $lf0, $r24, $d2, implicit-def $srfifo_uf
+    $ex0, $p1, $lf1, $r25, $dc3 = VLD_POP_s_2D_pseudo $p1, $lf1, $r25, $d3, implicit-def $srfifo_uf
+    $fex0, $p0, $lf0, $r24, $dc0 = VLDA_POP_mx4_2D $p0, $lf0, $r24, $d0, implicit-def $srfifo_uf
+    $fex0, $p1, $lf1, $r25, $dc1 = VLDB_POP_mx4_2D $p1, $lf1, $r25, $d1, implicit-def $srfifo_uf
+    $fex0, $p0, $lf0, $r24, $dc2 = VLD_POP_mx4_2D_pseudo $p0, $lf0, $r24, $d2, implicit-def $srfifo_uf
+...
+
+---
+name:      virtual_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    %0:eps = COPY $p0
+    %1:eldfiforeg = COPY $lf0
+    %2:mref2a = COPY $r24
+    %3:ed = COPY $d0
+    $x0, %10:eps, %11:eldfiforeg, %12:mref2a, %13:edc = VLDA_POP_2D_dmx_lda_fifo_x %0, %1, %2, %3, implicit-def $srfifo_uf
+    $ex0, %20:eps, %21:eldfiforeg, %22:mref2a, %23:edc = VLDA_POP_2D_dmx_lda_fifo_ex_bfp16 %0, %1, %2, %3, implicit-def $srfifo_uf
+...
+
+---
+name:      tied_nok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-COUNT-15: *** Bad machine code: Tied physical registers must match ***
+    $x0, $p0, $lf0, $r24, $dc7 = VLDA_POP_2D_dmx_lda_fifo_x $p0, $lf0, $r24, $d0, implicit-def $srfifo_uf
+    $ex0, $p1, $lf1, $r25, $dc0 = VLDA_POP_2D_dmx_lda_fifo_ex_bfp16 $p1, $lf1, $r25, $d1, implicit-def $srfifo_uf
+    $fex0, $p0, $lf0, $r24, $dc1 = VLDA_POP_2D_dmx_lda_fifo_fex_bfp13 $p0, $lf0, $r24, $d2, implicit-def $srfifo_uf
+    $x0, $p1, $lf1, $r25, $dc2 = VLDB_POP_2D_dmx_ldb_fifo_x $p1, $lf1, $r25, $d3, implicit-def $srfifo_uf
+    $ex0, $p0, $lf0, $r24, $dc3 = VLDB_POP_2D_dmx_ldb_fifo_ex_bfp16 $p0, $lf0, $r24, $d0, implicit-def $srfifo_uf
+    $fex0, $p1, $lf1, $r25, $dc4 = VLDB_POP_2D_dmx_ldb_fifo_fex_bfp13 $p1, $lf1, $r25, $d1, implicit-def $srfifo_uf
+    $x0, $p0, $lf0, $r24, $dc5 = VLD_POP_512_2D_pseudo $p0, $lf0, $r24, $d2, implicit-def $srfifo_uf
+    $ex0, $p1, $lf1, $r25, $dc6 = VLD_POP_640_2D_pseudo $p1, $lf1, $r25, $d3, implicit-def $srfifo_uf
+    $fex0, $p0, $lf0, $r24, $dc7 = VLD_POP_768_2D_pseudo $p0, $lf0, $r24, $d0, implicit-def $srfifo_uf
+    $ex0, $p1, $lf1, $r25, $dc0 = VLDA_POP_s_2D $p1, $lf1, $r25, $d1, implicit-def $srfifo_uf
+    $ex0, $p0, $lf0, $r24, $dc1 = VLDB_POP_s_2D $p0, $lf0, $r24, $d2, implicit-def $srfifo_uf
+    $ex0, $p1, $lf1, $r25, $dc2 = VLD_POP_s_2D_pseudo $p1, $lf1, $r25, $d3, implicit-def $srfifo_uf
+    $fex0, $p0, $lf0, $r24, $dc3 = VLDA_POP_mx4_2D $p0, $lf0, $r24, $d0, implicit-def $srfifo_uf
+    $fex0, $p1, $lf1, $r25, $dc4 = VLDB_POP_mx4_2D $p1, $lf1, $r25, $d1, implicit-def $srfifo_uf
+    $fex0, $p0, $lf0, $r24, $dc5 = VLD_POP_mx4_2D_pseudo $p0, $lf0, $r24, $d2, implicit-def $srfifo_uf
+...

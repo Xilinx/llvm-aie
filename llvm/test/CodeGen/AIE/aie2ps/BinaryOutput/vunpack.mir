@@ -1,0 +1,174 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VUNPACK_mv_unpack_w_unpackSign0
+    $x1 = VUNPACK_mv_unpack_w_unpackSign0 $wl1, implicit $crunpacksize, implicit $unpacksign0
+    $x3 = VUNPACK_mv_unpack_w_unpackSign0 $wh1, implicit $crunpacksize, implicit $unpacksign0
+    $x4 = VUNPACK_mv_unpack_w_unpackSign0 $wh5, implicit $crunpacksize, implicit $unpacksign0
+    $x10 = VUNPACK_mv_unpack_w_unpackSign0 $wl10, implicit $crunpacksize, implicit $unpacksign0
+    $x9 = VUNPACK_mv_unpack_w_unpackSign0 $wh10, implicit $crunpacksize, implicit $unpacksign0
+    $x11 = VUNPACK_mv_unpack_w_unpackSign0 $wh9, implicit $crunpacksize, implicit $unpacksign0
+    $x0 = VUNPACK_mv_unpack_w_unpackSign0 $wl0, implicit $crunpacksize, implicit $unpacksign0
+    $x8 = VUNPACK_mv_unpack_w_unpackSign0 $wl3, implicit $crunpacksize, implicit $unpacksign0
+    $x6 = VUNPACK_mv_unpack_w_unpackSign0 $wl4, implicit $crunpacksize, implicit $unpacksign0
+    $x2 = VUNPACK_mv_unpack_w_unpackSign0 $wl11, implicit $crunpacksize, implicit $unpacksign0
+    $x7 = VUNPACK_mv_unpack_w_unpackSign0 $wh8, implicit $crunpacksize, implicit $unpacksign0
+    $x5 = VUNPACK_mv_unpack_w_unpackSign0 $wl9, implicit $crunpacksize, implicit $unpacksign0
+    $x1 = VUNPACK_mv_unpack_w_unpackSign0 $wh3, implicit $crunpacksize, implicit $unpacksign0
+    $x3 = VUNPACK_mv_unpack_w_unpackSign0 $wh6, implicit $crunpacksize, implicit $unpacksign0
+    $x4 = VUNPACK_mv_unpack_w_unpackSign0 $wl5, implicit $crunpacksize, implicit $unpacksign0
+    $x10 = VUNPACK_mv_unpack_w_unpackSign0 $wh11, implicit $crunpacksize, implicit $unpacksign0
+    $x9 = VUNPACK_mv_unpack_w_unpackSign0 $wl2, implicit $crunpacksize, implicit $unpacksign0
+    $x11 = VUNPACK_mv_unpack_w_unpackSign0 $wh7, implicit $crunpacksize, implicit $unpacksign0
+    $x0 = VUNPACK_mv_unpack_w_unpackSign0 $wl6, implicit $crunpacksize, implicit $unpacksign0
+    $x8 = VUNPACK_mv_unpack_w_unpackSign0 $wl7, implicit $crunpacksize, implicit $unpacksign0
+    $x6 = VUNPACK_mv_unpack_w_unpackSign0 $wl8, implicit $crunpacksize, implicit $unpacksign0
+    $x2 = VUNPACK_mv_unpack_w_unpackSign0 $wh4, implicit $crunpacksize, implicit $unpacksign0
+    $x7 = VUNPACK_mv_unpack_w_unpackSign0 $wh2, implicit $crunpacksize, implicit $unpacksign0
+    $x5 = VUNPACK_mv_unpack_w_unpackSign0 $wh0, implicit $crunpacksize, implicit $unpacksign0
+
+    ; VUNPACK_mv_unpack_w_unpackSign1
+    $x6 = VUNPACK_mv_unpack_w_unpackSign1 $wh7, implicit $crunpacksize, implicit $unpacksign1
+    $x2 = VUNPACK_mv_unpack_w_unpackSign1 $wl10, implicit $crunpacksize, implicit $unpacksign1
+    $x7 = VUNPACK_mv_unpack_w_unpackSign1 $wl4, implicit $crunpacksize, implicit $unpacksign1
+    $x8 = VUNPACK_mv_unpack_w_unpackSign1 $wl3, implicit $crunpacksize, implicit $unpacksign1
+    $x10 = VUNPACK_mv_unpack_w_unpackSign1 $wh9, implicit $crunpacksize, implicit $unpacksign1
+    $x5 = VUNPACK_mv_unpack_w_unpackSign1 $wl7, implicit $crunpacksize, implicit $unpacksign1
+    $x0 = VUNPACK_mv_unpack_w_unpackSign1 $wh0, implicit $crunpacksize, implicit $unpacksign1
+    $x3 = VUNPACK_mv_unpack_w_unpackSign1 $wl6, implicit $crunpacksize, implicit $unpacksign1
+    $x11 = VUNPACK_mv_unpack_w_unpackSign1 $wh10, implicit $crunpacksize, implicit $unpacksign1
+    $x1 = VUNPACK_mv_unpack_w_unpackSign1 $wh2, implicit $crunpacksize, implicit $unpacksign1
+    $x9 = VUNPACK_mv_unpack_w_unpackSign1 $wh4, implicit $crunpacksize, implicit $unpacksign1
+    $x4 = VUNPACK_mv_unpack_w_unpackSign1 $wh5, implicit $crunpacksize, implicit $unpacksign1
+    $x6 = VUNPACK_mv_unpack_w_unpackSign1 $wl11, implicit $crunpacksize, implicit $unpacksign1
+    $x2 = VUNPACK_mv_unpack_w_unpackSign1 $wh6, implicit $crunpacksize, implicit $unpacksign1
+    $x7 = VUNPACK_mv_unpack_w_unpackSign1 $wh8, implicit $crunpacksize, implicit $unpacksign1
+    $x8 = VUNPACK_mv_unpack_w_unpackSign1 $wl2, implicit $crunpacksize, implicit $unpacksign1
+    $x10 = VUNPACK_mv_unpack_w_unpackSign1 $wl9, implicit $crunpacksize, implicit $unpacksign1
+    $x5 = VUNPACK_mv_unpack_w_unpackSign1 $wl8, implicit $crunpacksize, implicit $unpacksign1
+    $x0 = VUNPACK_mv_unpack_w_unpackSign1 $wl5, implicit $crunpacksize, implicit $unpacksign1
+    $x3 = VUNPACK_mv_unpack_w_unpackSign1 $wl0, implicit $crunpacksize, implicit $unpacksign1
+    $x11 = VUNPACK_mv_unpack_w_unpackSign1 $wh11, implicit $crunpacksize, implicit $unpacksign1
+    $x1 = VUNPACK_mv_unpack_w_unpackSign1 $wh3, implicit $crunpacksize, implicit $unpacksign1
+    $x9 = VUNPACK_mv_unpack_w_unpackSign1 $wh1, implicit $crunpacksize, implicit $unpacksign1
+    $x4 = VUNPACK_mv_unpack_w_unpackSign1 $wl1, implicit $crunpacksize, implicit $unpacksign1
+
+    ; VUNPACK_mv_unpack_x_unpackSign0
+    $y4 = VUNPACK_mv_unpack_x_unpackSign0 $x4, implicit $crunpacksize, implicit $unpacksign0
+    $y0 = VUNPACK_mv_unpack_x_unpackSign0 $x1, implicit $crunpacksize, implicit $unpacksign0
+    $y5 = VUNPACK_mv_unpack_x_unpackSign0 $x8, implicit $crunpacksize, implicit $unpacksign0
+    $y2 = VUNPACK_mv_unpack_x_unpackSign0 $x3, implicit $crunpacksize, implicit $unpacksign0
+    $y3 = VUNPACK_mv_unpack_x_unpackSign0 $x7, implicit $crunpacksize, implicit $unpacksign0
+    $y1 = VUNPACK_mv_unpack_x_unpackSign0 $x6, implicit $crunpacksize, implicit $unpacksign0
+    $y4 = VUNPACK_mv_unpack_x_unpackSign0 $x10, implicit $crunpacksize, implicit $unpacksign0
+    $y0 = VUNPACK_mv_unpack_x_unpackSign0 $x0, implicit $crunpacksize, implicit $unpacksign0
+    $y5 = VUNPACK_mv_unpack_x_unpackSign0 $x11, implicit $crunpacksize, implicit $unpacksign0
+    $y2 = VUNPACK_mv_unpack_x_unpackSign0 $x5, implicit $crunpacksize, implicit $unpacksign0
+    $y3 = VUNPACK_mv_unpack_x_unpackSign0 $x2, implicit $crunpacksize, implicit $unpacksign0
+    $y1 = VUNPACK_mv_unpack_x_unpackSign0 $x9, implicit $crunpacksize, implicit $unpacksign0
+
+    ; VUNPACK_mv_unpack_x_unpackSign1
+    $y3 = VUNPACK_mv_unpack_x_unpackSign1 $x6, implicit $crunpacksize, implicit $unpacksign1
+    $y0 = VUNPACK_mv_unpack_x_unpackSign1 $x9, implicit $crunpacksize, implicit $unpacksign1
+    $y1 = VUNPACK_mv_unpack_x_unpackSign1 $x7, implicit $crunpacksize, implicit $unpacksign1
+    $y4 = VUNPACK_mv_unpack_x_unpackSign1 $x5, implicit $crunpacksize, implicit $unpacksign1
+    $y5 = VUNPACK_mv_unpack_x_unpackSign1 $x1, implicit $crunpacksize, implicit $unpacksign1
+    $y2 = VUNPACK_mv_unpack_x_unpackSign1 $x10, implicit $crunpacksize, implicit $unpacksign1
+    $y3 = VUNPACK_mv_unpack_x_unpackSign1 $x4, implicit $crunpacksize, implicit $unpacksign1
+    $y0 = VUNPACK_mv_unpack_x_unpackSign1 $x0, implicit $crunpacksize, implicit $unpacksign1
+    $y1 = VUNPACK_mv_unpack_x_unpackSign1 $x11, implicit $crunpacksize, implicit $unpacksign1
+    $y4 = VUNPACK_mv_unpack_x_unpackSign1 $x2, implicit $crunpacksize, implicit $unpacksign1
+    $y5 = VUNPACK_mv_unpack_x_unpackSign1 $x8, implicit $crunpacksize, implicit $unpacksign1
+    $y2 = VUNPACK_mv_unpack_x_unpackSign1 $x3, implicit $crunpacksize, implicit $unpacksign1
+...
+
+# CHECK: 0: 30 50 88 70 vunpack x1, wl1, unpacksign0
+# CHECK: 4: 30 d0 c8 70 vunpack x3, wh1, unpacksign0
+# CHECK: 8: 30 10 c9 72 vunpack x4, wh5, unpacksign0
+# CHECK: c: 30 90 0a 75 vunpack x10, wl10, unpacksign0
+# CHECK: 10: 30 50 4a 75 vunpack x9, wh10, unpacksign0
+# CHECK: 14: 30 d0 ca 74 vunpack x11, wh9, unpacksign0
+# CHECK: 18: 30 10 08 70 vunpack x0, wl0, unpacksign0
+# CHECK: 1c: 30 10 8a 71 vunpack x8, wl3, unpacksign0
+# CHECK: 20: 30 90 09 72 vunpack x6, wl4, unpacksign0
+# CHECK: 24: 30 90 88 75 vunpack x2, wl11, unpacksign0
+# CHECK: 28: 30 d0 49 74 vunpack x7, wh8, unpacksign0
+# CHECK: 2c: 30 50 89 74 vunpack x5, wl9, unpacksign0
+# CHECK: 30: 30 50 c8 71 vunpack x1, wh3, unpacksign0
+# CHECK: 34: 30 d0 48 73 vunpack x3, wh6, unpacksign0
+# CHECK: 38: 30 10 89 72 vunpack x4, wl5, unpacksign0
+# CHECK: 3c: 30 90 ca 75 vunpack x10, wh11, unpacksign0
+# CHECK: 40: 30 50 0a 71 vunpack x9, wl2, unpacksign0
+# CHECK: 44: 30 d0 ca 73 vunpack x11, wh7, unpacksign0
+# CHECK: 48: 30 10 08 73 vunpack x0, wl6, unpacksign0
+# CHECK: 4c: 30 10 8a 73 vunpack x8, wl7, unpacksign0
+# CHECK: 50: 30 90 09 74 vunpack x6, wl8, unpacksign0
+# CHECK: 54: 30 90 48 72 vunpack x2, wh4, unpacksign0
+# CHECK: 58: 30 d0 49 71 vunpack x7, wh2, unpacksign0
+# CHECK: 5c: 30 50 49 70 vunpack x5, wh0, unpacksign0
+# CHECK: 60: 30 b0 c9 73 vunpack x6, wh7, unpacksign1
+# CHECK: 64: 30 b0 08 75 vunpack x2, wl10, unpacksign1
+# CHECK: 68: 30 f0 09 72 vunpack x7, wl4, unpacksign1
+# CHECK: 6c: 30 30 8a 71 vunpack x8, wl3, unpacksign1
+# CHECK: 70: 30 b0 ca 74 vunpack x10, wh9, unpacksign1
+# CHECK: 74: 30 70 89 73 vunpack x5, wl7, unpacksign1
+# CHECK: 78: 30 30 48 70 vunpack x0, wh0, unpacksign1
+# CHECK: 7c: 30 f0 08 73 vunpack x3, wl6, unpacksign1
+# CHECK: 80: 30 f0 4a 75 vunpack x11, wh10, unpacksign1
+# CHECK: 84: 30 70 48 71 vunpack x1, wh2, unpacksign1
+# CHECK: 88: 30 70 4a 72 vunpack x9, wh4, unpacksign1
+# CHECK: 8c: 30 30 c9 72 vunpack x4, wh5, unpacksign1
+# CHECK: 90: 30 b0 89 75 vunpack x6, wl11, unpacksign1
+# CHECK: 94: 30 b0 48 73 vunpack x2, wh6, unpacksign1
+# CHECK: 98: 30 f0 49 74 vunpack x7, wh8, unpacksign1
+# CHECK: 9c: 30 30 0a 71 vunpack x8, wl2, unpacksign1
+# CHECK: a0: 30 b0 8a 74 vunpack x10, wl9, unpacksign1
+# CHECK: a4: 30 70 09 74 vunpack x5, wl8, unpacksign1
+# CHECK: a8: 30 30 88 72 vunpack x0, wl5, unpacksign1
+# CHECK: ac: 30 f0 08 70 vunpack x3, wl0, unpacksign1
+# CHECK: b0: 30 f0 ca 75 vunpack x11, wh11, unpacksign1
+# CHECK: b4: 30 70 c8 71 vunpack x1, wh3, unpacksign1
+# CHECK: b8: 30 70 ca 70 vunpack x9, wh1, unpacksign1
+# CHECK: bc: 30 30 89 70 vunpack x4, wl1, unpacksign1
+# CHECK: c0: 30 10 1a 72 vunpack y4, x4, unpacksign0
+# CHECK: c4: 30 10 98 70 vunpack y0, x1, unpacksign0
+# CHECK: c8: 30 90 1a 74 vunpack y5, x8, unpacksign0
+# CHECK: cc: 30 10 99 71 vunpack y2, x3, unpacksign0
+# CHECK: d0: 30 90 99 73 vunpack y3, x7, unpacksign0
+# CHECK: d4: 30 90 18 73 vunpack y1, x6, unpacksign0
+# CHECK: d8: 30 10 1a 75 vunpack y4, x10, unpacksign0
+# CHECK: dc: 30 10 18 70 vunpack y0, x0, unpacksign0
+# CHECK: e0: 30 90 9a 75 vunpack y5, x11, unpacksign0
+# CHECK: e4: 30 10 99 72 vunpack y2, x5, unpacksign0
+# CHECK: e8: 30 90 19 71 vunpack y3, x2, unpacksign0
+# CHECK: ec: 30 90 98 74 vunpack y1, x9, unpacksign0
+# CHECK: f0: 30 b0 19 73 vunpack y3, x6, unpacksign1
+# CHECK: f4: 30 30 98 74 vunpack y0, x9, unpacksign1
+# CHECK: f8: 30 b0 98 73 vunpack y1, x7, unpacksign1
+# CHECK: fc: 30 30 9a 72 vunpack y4, x5, unpacksign1
+# CHECK: 100: 30 b0 9a 70 vunpack y5, x1, unpacksign1
+# CHECK: 104: 30 30 19 75 vunpack y2, x10, unpacksign1
+# CHECK: 108: 30 b0 19 72 vunpack y3, x4, unpacksign1
+# CHECK: 10c: 30 30 18 70 vunpack y0, x0, unpacksign1
+# CHECK: 110: 30 b0 98 75 vunpack y1, x11, unpacksign1
+# CHECK: 114: 30 30 1a 71 vunpack y4, x2, unpacksign1
+# CHECK: 118: 30 b0 1a 74 vunpack y5, x8, unpacksign1
+# CHECK: 11c: 30 30 99 71 vunpack y2, x3, unpacksign1

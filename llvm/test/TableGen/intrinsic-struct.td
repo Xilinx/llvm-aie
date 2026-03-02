@@ -6,17 +6,17 @@
 
 include "llvm/IR/Intrinsics.td"
 
-// Make sure we can return up to 9 values.
-// CHECK-ENUM: returns_9_results = {{[0-9]+}}, // llvm.returns.9.results
-def int_returns_9_results : Intrinsic<
-                              !listsplat(llvm_anyint_ty, 9),
-                              [], [], "llvm.returns.9.results">;
+// Make sure we can return up to 16 values.
+// CHECK-ENUM: returns_16_results = {{[0-9]+}}, // llvm.returns.16.results
+def int_returns_16_results : Intrinsic<
+                              !listsplat(llvm_anyint_ty, 16),
+                              [], [], "llvm.returns.16.results">;
 
 #ifdef ENABLE_ERROR
-// CHECK-ERROR: error: intrinsics can only return upto 9 values, 'int_returns_10_results' returns 10 values
-// CHECK-ERROR-NEXT: def int_returns_10_results : Intrinsic<
-def int_returns_10_results : Intrinsic<
-                              !listsplat(llvm_anyint_ty, 10),
-                              [], [], "llvm.returns.10.results">;
+// CHECK-ERROR: error: intrinsics can only return upto 16 values, 'int_returns_17_results' returns 17 values
+// CHECK-ERROR-NEXT: def int_returns_17_results : Intrinsic<
+def int_returns_17_results : Intrinsic<
+                              !listsplat(llvm_anyint_ty, 17),
+                              [], [], "llvm.returns.17.results">;
 
 #endif

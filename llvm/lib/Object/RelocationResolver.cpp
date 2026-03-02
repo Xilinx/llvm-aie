@@ -131,6 +131,28 @@ static bool supportsAIE2P(uint64_t Type) {
   }
 }
 
+static uint64_t resolveAIE2PS(uint64_t Type, uint64_t Offset, uint64_t S,
+                              uint64_t LocData, int64_t Addend) {
+  switch (Type) {
+  case ELF::R_AIE_0:
+    return (S + Addend);
+  case ELF::R_AIE_134:
+    return (S + Addend);
+  default:
+    llvm_unreachable("Invalid relocation type");
+  }
+}
+
+static bool supportsAIE2PS(uint64_t Type) {
+  switch (Type) {
+  case ELF::R_AIE_0:
+  case ELF::R_AIE_134:
+    return true;
+  default:
+    return false;
+  }
+}
+
 static uint64_t resolveAIE2P(uint64_t Type, uint64_t Offset, uint64_t S,
                              uint64_t LocData, int64_t Addend) {
   switch (Type) {
@@ -905,6 +927,8 @@ getRelocationResolver(const ObjectFile &Obj) {
       return {supportsAIE2, resolveAIE2};
     case Triple::aie2p:
       return {supportsAIE2P, resolveAIE2P};
+    case Triple::aie2ps:
+      return {supportsAIE2PS, resolveAIE2PS};
     case Triple::arm:
     case Triple::armeb:
       return {supportsARM, resolveARM};

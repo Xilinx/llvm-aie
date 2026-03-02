@@ -4,8 +4,9 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: opt -mtriple=aie2p -passes=load-store-vectorizer -S < %s | FileCheck %s
+; RUN: opt -mtriple=aie2ps -passes=load-store-vectorizer -S < %s | FileCheck %s
 
   define dso_local void @_Z16four_byte_storesP2B4(ptr nocapture writeonly initializes((0, 4)) %B) {
 ; CHECK-LABEL: @_Z16four_byte_storesP2B4(

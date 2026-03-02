@@ -8,6 +8,7 @@
 # RUN: llc -mtriple aie -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE1 %s
 # RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2 %s
 # RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2P %s
+# RUN: llc -mtriple aie2ps -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2PS %s
 
 ---
 name: icmp_s32_ne
@@ -40,6 +41,14 @@ body: |
     ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
     ; AIE2P-NEXT: [[NE:%[0-9]+]]:er = NE [[COPY]], [[COPY1]]
     ; AIE2P-NEXT: $r0 = COPY [[NE]]
+    ;
+    ; AIE2PS-LABEL: name: icmp_s32_ne
+    ; AIE2PS: liveins: $r6, $r7
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
+    ; AIE2PS-NEXT: [[NE:%[0-9]+]]:mlockid_reg = NE [[COPY]], [[COPY1]]
+    ; AIE2PS-NEXT: $r0 = COPY [[NE]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = G_ICMP intpred(ne), %0(s32), %1
@@ -81,6 +90,15 @@ body: |
     ; AIE2P-NEXT: [[NEZ1:%[0-9]+]]:er = NEZ [[COPY]]
     ; AIE2P-NEXT: $r0 = COPY [[NEZ]]
     ; AIE2P-NEXT: $r1 = COPY [[NEZ1]]
+    ;
+    ; AIE2PS-LABEL: name: icmp_s32_nez
+    ; AIE2PS: liveins: $r6
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[NEZ:%[0-9]+]]:mlockid_reg = NEZ [[COPY]]
+    ; AIE2PS-NEXT: [[NEZ1:%[0-9]+]]:mlockid_reg = NEZ [[COPY]]
+    ; AIE2PS-NEXT: $r0 = COPY [[NEZ]]
+    ; AIE2PS-NEXT: $r1 = COPY [[NEZ1]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = G_CONSTANT i32 0
     %2:gprregbank(s32) = G_ICMP intpred(ne), %0(s32), %1
@@ -120,6 +138,14 @@ body: |
     ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
     ; AIE2P-NEXT: [[EQ:%[0-9]+]]:er = EQ [[COPY]], [[COPY1]]
     ; AIE2P-NEXT: $r0 = COPY [[EQ]]
+    ;
+    ; AIE2PS-LABEL: name: icmp_s32_eq
+    ; AIE2PS: liveins: $r6, $r7
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
+    ; AIE2PS-NEXT: [[EQ:%[0-9]+]]:mlockid_reg = EQ [[COPY]], [[COPY1]]
+    ; AIE2PS-NEXT: $r0 = COPY [[EQ]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = G_ICMP intpred(eq), %0(s32), %1
@@ -161,6 +187,15 @@ body: |
     ; AIE2P-NEXT: [[EQZ1:%[0-9]+]]:er = EQZ [[COPY]]
     ; AIE2P-NEXT: $r0 = COPY [[EQZ]]
     ; AIE2P-NEXT: $r1 = COPY [[EQZ1]]
+    ;
+    ; AIE2PS-LABEL: name: icmp_s32_eqz
+    ; AIE2PS: liveins: $r6
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[EQZ:%[0-9]+]]:mlockid_reg = EQZ [[COPY]]
+    ; AIE2PS-NEXT: [[EQZ1:%[0-9]+]]:mlockid_reg = EQZ [[COPY]]
+    ; AIE2PS-NEXT: $r0 = COPY [[EQZ]]
+    ; AIE2PS-NEXT: $r1 = COPY [[EQZ1]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = G_CONSTANT i32 0
     %2:gprregbank(s32) = G_ICMP intpred(eq), %0(s32), %1
@@ -200,6 +235,14 @@ body: |
     ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
     ; AIE2P-NEXT: [[LT:%[0-9]+]]:er = LT [[COPY]], [[COPY1]]
     ; AIE2P-NEXT: $r0 = COPY [[LT]]
+    ;
+    ; AIE2PS-LABEL: name: icmp_s32_slt
+    ; AIE2PS: liveins: $r6, $r7
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
+    ; AIE2PS-NEXT: [[LT:%[0-9]+]]:mlockid_reg = LT [[COPY]], [[COPY1]]
+    ; AIE2PS-NEXT: $r0 = COPY [[LT]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = G_ICMP intpred(slt), %0(s32), %1
@@ -237,6 +280,14 @@ body: |
     ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
     ; AIE2P-NEXT: [[LTU:%[0-9]+]]:er = LTU [[COPY]], [[COPY1]]
     ; AIE2P-NEXT: $r0 = COPY [[LTU]]
+    ;
+    ; AIE2PS-LABEL: name: icmp_s32_ult
+    ; AIE2PS: liveins: $r6, $r7
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
+    ; AIE2PS-NEXT: [[LTU:%[0-9]+]]:mlockid_reg = LTU [[COPY]], [[COPY1]]
+    ; AIE2PS-NEXT: $r0 = COPY [[LTU]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = G_ICMP intpred(ult), %0(s32), %1
@@ -274,6 +325,14 @@ body: |
     ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
     ; AIE2P-NEXT: [[GE:%[0-9]+]]:er = GE [[COPY1]], [[COPY]]
     ; AIE2P-NEXT: $r0 = COPY [[GE]]
+    ;
+    ; AIE2PS-LABEL: name: icmp_s32_sle
+    ; AIE2PS: liveins: $r6, $r7
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
+    ; AIE2PS-NEXT: [[GE:%[0-9]+]]:mlockid_reg = GE [[COPY1]], [[COPY]]
+    ; AIE2PS-NEXT: $r0 = COPY [[GE]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = G_ICMP intpred(sle), %0(s32), %1
@@ -311,6 +370,14 @@ body: |
     ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
     ; AIE2P-NEXT: [[GEU:%[0-9]+]]:er = GEU [[COPY1]], [[COPY]]
     ; AIE2P-NEXT: $r0 = COPY [[GEU]]
+    ;
+    ; AIE2PS-LABEL: name: icmp_s32_ule
+    ; AIE2PS: liveins: $r6, $r7
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
+    ; AIE2PS-NEXT: [[GEU:%[0-9]+]]:mlockid_reg = GEU [[COPY1]], [[COPY]]
+    ; AIE2PS-NEXT: $r0 = COPY [[GEU]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = G_ICMP intpred(ule), %0(s32), %1
@@ -348,6 +415,14 @@ body: |
     ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
     ; AIE2P-NEXT: [[LT:%[0-9]+]]:er = LT [[COPY1]], [[COPY]]
     ; AIE2P-NEXT: $r0 = COPY [[LT]]
+    ;
+    ; AIE2PS-LABEL: name: icmp_s32_sgt
+    ; AIE2PS: liveins: $r6, $r7
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
+    ; AIE2PS-NEXT: [[LT:%[0-9]+]]:mlockid_reg = LT [[COPY1]], [[COPY]]
+    ; AIE2PS-NEXT: $r0 = COPY [[LT]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = G_ICMP intpred(sgt), %0(s32), %1
@@ -385,6 +460,14 @@ body: |
     ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
     ; AIE2P-NEXT: [[LTU:%[0-9]+]]:er = LTU [[COPY1]], [[COPY]]
     ; AIE2P-NEXT: $r0 = COPY [[LTU]]
+    ;
+    ; AIE2PS-LABEL: name: icmp_s32_ugt
+    ; AIE2PS: liveins: $r6, $r7
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
+    ; AIE2PS-NEXT: [[LTU:%[0-9]+]]:mlockid_reg = LTU [[COPY1]], [[COPY]]
+    ; AIE2PS-NEXT: $r0 = COPY [[LTU]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = G_ICMP intpred(ugt), %0(s32), %1
@@ -422,6 +505,14 @@ body: |
     ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
     ; AIE2P-NEXT: [[GE:%[0-9]+]]:er = GE [[COPY]], [[COPY1]]
     ; AIE2P-NEXT: $r0 = COPY [[GE]]
+    ;
+    ; AIE2PS-LABEL: name: icmp_s32_sge
+    ; AIE2PS: liveins: $r6, $r7
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
+    ; AIE2PS-NEXT: [[GE:%[0-9]+]]:mlockid_reg = GE [[COPY]], [[COPY1]]
+    ; AIE2PS-NEXT: $r0 = COPY [[GE]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = G_ICMP intpred(sge), %0(s32), %1
@@ -459,6 +550,14 @@ body: |
     ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
     ; AIE2P-NEXT: [[GEU:%[0-9]+]]:er = GEU [[COPY]], [[COPY1]]
     ; AIE2P-NEXT: $r0 = COPY [[GEU]]
+    ;
+    ; AIE2PS-LABEL: name: icmp_s32_uge
+    ; AIE2PS: liveins: $r6, $r7
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
+    ; AIE2PS-NEXT: [[GEU:%[0-9]+]]:mlockid_reg = GEU [[COPY]], [[COPY1]]
+    ; AIE2PS-NEXT: $r0 = COPY [[GEU]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = G_ICMP intpred(uge), %0(s32), %1
@@ -502,6 +601,16 @@ body: |
     ; AIE2P-NEXT: [[COPY3:%[0-9]+]]:er = COPY [[COPY1]]
     ; AIE2P-NEXT: [[NE:%[0-9]+]]:er = NE [[COPY2]], [[COPY3]]
     ; AIE2P-NEXT: $r0 = COPY [[NE]]
+    ;
+    ; AIE2PS-LABEL: name: icmp_p0_ne
+    ; AIE2PS: liveins: $p0, $p1
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p1
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:mlockid_reg = COPY [[COPY]]
+    ; AIE2PS-NEXT: [[COPY3:%[0-9]+]]:mlockid_reg = COPY [[COPY1]]
+    ; AIE2PS-NEXT: [[NE:%[0-9]+]]:mlockid_reg = NE [[COPY2]], [[COPY3]]
+    ; AIE2PS-NEXT: $r0 = COPY [[NE]]
     %0:ptrregbank(p0) = COPY $p0
     %1:ptrregbank(p0) = COPY $p1
     %2:gprregbank(p0) = COPY %0
@@ -546,6 +655,15 @@ body: |
     ; AIE2P-NEXT: [[NEZ1:%[0-9]+]]:er = NEZ [[COPY]]
     ; AIE2P-NEXT: $r0 = COPY [[NEZ]]
     ; AIE2P-NEXT: $r1 = COPY [[NEZ1]]
+    ;
+    ; AIE2PS-LABEL: name: icmp_p0_nez
+    ; AIE2PS: liveins: $p0
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $p0
+    ; AIE2PS-NEXT: [[NEZ:%[0-9]+]]:mlockid_reg = NEZ [[COPY]]
+    ; AIE2PS-NEXT: [[NEZ1:%[0-9]+]]:mlockid_reg = NEZ [[COPY]]
+    ; AIE2PS-NEXT: $r0 = COPY [[NEZ]]
+    ; AIE2PS-NEXT: $r1 = COPY [[NEZ1]]
     %0:gprregbank(p0) = COPY $p0
     %1:gprregbank(p0) = G_CONSTANT i20 0
     %2:gprregbank(s32) = G_ICMP intpred(ne), %0, %1
@@ -591,6 +709,16 @@ body: |
     ; AIE2P-NEXT: [[COPY3:%[0-9]+]]:er = COPY [[COPY1]]
     ; AIE2P-NEXT: [[EQ:%[0-9]+]]:er = EQ [[COPY2]], [[COPY3]]
     ; AIE2P-NEXT: $r0 = COPY [[EQ]]
+    ;
+    ; AIE2PS-LABEL: name: icmp_p0_eq
+    ; AIE2PS: liveins: $p0, $p1
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p1
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:mlockid_reg = COPY [[COPY]]
+    ; AIE2PS-NEXT: [[COPY3:%[0-9]+]]:mlockid_reg = COPY [[COPY1]]
+    ; AIE2PS-NEXT: [[EQ:%[0-9]+]]:mlockid_reg = EQ [[COPY2]], [[COPY3]]
+    ; AIE2PS-NEXT: $r0 = COPY [[EQ]]
     %0:ptrregbank(p0) = COPY $p0
     %1:ptrregbank(p0) = COPY $p1
     %2:gprregbank(p0) = COPY %0
@@ -634,6 +762,15 @@ body: |
     ; AIE2P-NEXT: [[EQZ1:%[0-9]+]]:er = EQZ [[COPY]]
     ; AIE2P-NEXT: $r0 = COPY [[EQZ]]
     ; AIE2P-NEXT: $r1 = COPY [[EQZ1]]
+    ;
+    ; AIE2PS-LABEL: name: icmp_p0_eqz
+    ; AIE2PS: liveins: $p0
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $p0
+    ; AIE2PS-NEXT: [[EQZ:%[0-9]+]]:mlockid_reg = EQZ [[COPY]]
+    ; AIE2PS-NEXT: [[EQZ1:%[0-9]+]]:mlockid_reg = EQZ [[COPY]]
+    ; AIE2PS-NEXT: $r0 = COPY [[EQZ]]
+    ; AIE2PS-NEXT: $r1 = COPY [[EQZ1]]
     %0:gprregbank(p0) = COPY $p0
     %1:gprregbank(p0) = G_CONSTANT i20 0
     %2:gprregbank(s32) = G_ICMP intpred(eq), %0, %1
@@ -679,6 +816,16 @@ body: |
     ; AIE2P-NEXT: [[COPY3:%[0-9]+]]:er = COPY [[COPY1]]
     ; AIE2P-NEXT: [[LTU:%[0-9]+]]:er = LTU [[COPY2]], [[COPY3]]
     ; AIE2P-NEXT: $r0 = COPY [[LTU]]
+    ;
+    ; AIE2PS-LABEL: name: icmp_p0_ult
+    ; AIE2PS: liveins: $p0, $p1
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p1
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:mlockid_reg = COPY [[COPY]]
+    ; AIE2PS-NEXT: [[COPY3:%[0-9]+]]:mlockid_reg = COPY [[COPY1]]
+    ; AIE2PS-NEXT: [[LTU:%[0-9]+]]:mlockid_reg = LTU [[COPY2]], [[COPY3]]
+    ; AIE2PS-NEXT: $r0 = COPY [[LTU]]
     %0:ptrregbank(p0) = COPY $p0
     %1:ptrregbank(p0) = COPY $p1
     %2:gprregbank(p0) = COPY %0
@@ -724,6 +871,16 @@ body: |
     ; AIE2P-NEXT: [[COPY3:%[0-9]+]]:er = COPY [[COPY1]]
     ; AIE2P-NEXT: [[GEU:%[0-9]+]]:er = GEU [[COPY3]], [[COPY2]]
     ; AIE2P-NEXT: $r0 = COPY [[GEU]]
+    ;
+    ; AIE2PS-LABEL: name: icmp_p0_ule
+    ; AIE2PS: liveins: $p0, $p1
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p1
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:mlockid_reg = COPY [[COPY]]
+    ; AIE2PS-NEXT: [[COPY3:%[0-9]+]]:mlockid_reg = COPY [[COPY1]]
+    ; AIE2PS-NEXT: [[GEU:%[0-9]+]]:mlockid_reg = GEU [[COPY3]], [[COPY2]]
+    ; AIE2PS-NEXT: $r0 = COPY [[GEU]]
     %0:ptrregbank(p0) = COPY $p0
     %1:ptrregbank(p0) = COPY $p1
     %2:gprregbank(p0) = COPY %0
@@ -769,6 +926,16 @@ body: |
     ; AIE2P-NEXT: [[COPY3:%[0-9]+]]:er = COPY [[COPY1]]
     ; AIE2P-NEXT: [[LTU:%[0-9]+]]:er = LTU [[COPY3]], [[COPY2]]
     ; AIE2P-NEXT: $r0 = COPY [[LTU]]
+    ;
+    ; AIE2PS-LABEL: name: icmp_p0_ugt
+    ; AIE2PS: liveins: $p0, $p1
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p1
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:mlockid_reg = COPY [[COPY]]
+    ; AIE2PS-NEXT: [[COPY3:%[0-9]+]]:mlockid_reg = COPY [[COPY1]]
+    ; AIE2PS-NEXT: [[LTU:%[0-9]+]]:mlockid_reg = LTU [[COPY3]], [[COPY2]]
+    ; AIE2PS-NEXT: $r0 = COPY [[LTU]]
     %0:ptrregbank(p0) = COPY $p0
     %1:ptrregbank(p0) = COPY $p1
     %2:gprregbank(p0) = COPY %0
@@ -814,6 +981,16 @@ body: |
     ; AIE2P-NEXT: [[COPY3:%[0-9]+]]:er = COPY [[COPY1]]
     ; AIE2P-NEXT: [[GEU:%[0-9]+]]:er = GEU [[COPY2]], [[COPY3]]
     ; AIE2P-NEXT: $r0 = COPY [[GEU]]
+    ;
+    ; AIE2PS-LABEL: name: icmp_p0_uge
+    ; AIE2PS: liveins: $p0, $p1
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p1
+    ; AIE2PS-NEXT: [[COPY2:%[0-9]+]]:mlockid_reg = COPY [[COPY]]
+    ; AIE2PS-NEXT: [[COPY3:%[0-9]+]]:mlockid_reg = COPY [[COPY1]]
+    ; AIE2PS-NEXT: [[GEU:%[0-9]+]]:mlockid_reg = GEU [[COPY2]], [[COPY3]]
+    ; AIE2PS-NEXT: $r0 = COPY [[GEU]]
     %0:ptrregbank(p0) = COPY $p0
     %1:ptrregbank(p0) = COPY $p1
     %2:gprregbank(p0) = COPY %0

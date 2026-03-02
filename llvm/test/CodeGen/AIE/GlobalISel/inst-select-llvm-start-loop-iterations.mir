@@ -4,9 +4,10 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2
 # RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2P
+# RUN: llc -mtriple aie2ps -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2PS
 
 ---
 name:            llvm_start_loop_iterations_static
@@ -27,6 +28,12 @@ body: |
     ; AIE2P-NEXT: {{  $}}
     ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 9
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[MOV_RLC_imm11_pseudo]]
+    ;
+    ; AIE2PS-LABEL: name: llvm_start_loop_iterations_static
+    ; AIE2PS: liveins: $r0
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 9
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[MOV_RLC_imm11_pseudo]]
     %0:gprregbank(s32) = G_CONSTANT i32 10
     %1:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.start.loop.iterations), %0(s32)
     PseudoRET implicit $lr, implicit %1
@@ -54,6 +61,13 @@ body: |
     ; AIE2P-NEXT: [[COPY:%[0-9]+]]:er = COPY $r0
     ; AIE2P-NEXT: [[ADD_NC_mv_add_ri:%[0-9]+]]:er = ADD_NC_mv_add_ri [[COPY]], -1
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[ADD_NC_mv_add_ri]]
+    ;
+    ; AIE2PS-LABEL: name: llvm_start_loop_iterations_dynamic
+    ; AIE2PS: liveins: $r0
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r0
+    ; AIE2PS-NEXT: [[ADDM_NC_mv_add_ri:%[0-9]+]]:er = ADDM_NC_mv_add_ri [[COPY]], -1
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[ADDM_NC_mv_add_ri]]
     %0:gprregbank(s32) = COPY $r0
     %1:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.start.loop.iterations), %0(s32)
     PseudoRET implicit $lr, implicit %1

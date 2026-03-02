@@ -35,6 +35,7 @@ class Target;
 Target &getTheAIETarget();
 Target &getTheAIE2Target();
 Target &getTheAIE2PTarget();
+Target &getTheAIE2PSTarget();
 
 MCCodeEmitter *createAIEMCCodeEmitter(const MCInstrInfo &MCII,
                                         MCContext &Ctx);

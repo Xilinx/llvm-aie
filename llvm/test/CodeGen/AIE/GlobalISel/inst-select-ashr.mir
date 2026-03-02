@@ -6,6 +6,9 @@
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2
+# RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2P
+# RUN: llc -mtriple aie2ps -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2PS
 
 ---
 name: ashr_s32
@@ -24,6 +27,36 @@ body: |
     ; CHECK-NEXT: [[SUB:%[0-9]+]]:gpr = SUB [[MOV_U20_]], [[COPY1]]
     ; CHECK-NEXT: [[ASHL:%[0-9]+]]:gpr = ASHL [[COPY]], [[SUB]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[ASHL]]
+    ;
+    ; AIE2-LABEL: name: ashr_s32
+    ; AIE2: liveins: $r6, $r7
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
+    ; AIE2-NEXT: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 0
+    ; AIE2-NEXT: [[SUB:%[0-9]+]]:er = SUB [[MOV_RLC_imm10_pseudo]], [[COPY1]], implicit-def dead $srcarry
+    ; AIE2-NEXT: [[ASHL:%[0-9]+]]:er = ASHL [[COPY]], [[SUB]]
+    ; AIE2-NEXT: PseudoRET implicit $lr, implicit [[ASHL]]
+    ;
+    ; AIE2P-LABEL: name: ashr_s32
+    ; AIE2P: liveins: $r6, $r7
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
+    ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
+    ; AIE2P-NEXT: [[SUB:%[0-9]+]]:er = SUB [[MOV_RLC_imm11_pseudo]], [[COPY1]], implicit-def dead $srcarry
+    ; AIE2P-NEXT: [[ASHL:%[0-9]+]]:er = ASHL [[COPY]], [[SUB]]
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[ASHL]]
+    ;
+    ; AIE2PS-LABEL: name: ashr_s32
+    ; AIE2PS: liveins: $r6, $r7
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[COPY1:%[0-9]+]]:mlockid_reg = COPY $r7
+    ; AIE2PS-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 0
+    ; AIE2PS-NEXT: [[SUB:%[0-9]+]]:mlockid_reg = SUB [[MOV_RLC_imm11_pseudo]], [[COPY1]], implicit-def dead $srcarry
+    ; AIE2PS-NEXT: [[ASHL:%[0-9]+]]:mlockid_reg = ASHL [[COPY]], [[SUB]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[ASHL]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = G_ASHR %0, %1
@@ -49,6 +82,30 @@ body: |
     ; CHECK-NEXT: [[SUB:%[0-9]+]]:gpr = SUB [[MOV_U20_1]], [[MOV_U20_]]
     ; CHECK-NEXT: [[ASHL:%[0-9]+]]:gpr = ASHL [[COPY]], [[SUB]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[ASHL]]
+    ;
+    ; AIE2-LABEL: name: ashr_const
+    ; AIE2: liveins: $r6
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2-NEXT: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo -16
+    ; AIE2-NEXT: [[ASHL:%[0-9]+]]:er = ASHL [[COPY]], [[MOV_RLC_imm10_pseudo]]
+    ; AIE2-NEXT: PseudoRET implicit $lr, implicit [[ASHL]]
+    ;
+    ; AIE2P-LABEL: name: ashr_const
+    ; AIE2P: liveins: $r6
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo -16
+    ; AIE2P-NEXT: [[ASHL:%[0-9]+]]:er = ASHL [[COPY]], [[MOV_RLC_imm11_pseudo]]
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[ASHL]]
+    ;
+    ; AIE2PS-LABEL: name: ashr_const
+    ; AIE2PS: liveins: $r6
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo -16
+    ; AIE2PS-NEXT: [[ASHL:%[0-9]+]]:mlockid_reg = ASHL [[COPY]], [[MOV_RLC_imm11_pseudo]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[ASHL]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = G_CONSTANT i32 16
     %2:gprregbank(s32) = G_ASHR %0, %1
@@ -72,6 +129,30 @@ body: |
     ; CHECK-NEXT: [[SUB:%[0-9]+]]:gpr = SUB [[MOV_U20_]], [[MOV_S12_]]
     ; CHECK-NEXT: [[ASHL:%[0-9]+]]:gpr = ASHL [[COPY]], [[SUB]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[ASHL]]
+    ;
+    ; AIE2-LABEL: name: ashr_const_negative
+    ; AIE2: liveins: $r6
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2-NEXT: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 16
+    ; AIE2-NEXT: [[ASHL:%[0-9]+]]:er = ASHL [[COPY]], [[MOV_RLC_imm10_pseudo]]
+    ; AIE2-NEXT: PseudoRET implicit $lr, implicit [[ASHL]]
+    ;
+    ; AIE2P-LABEL: name: ashr_const_negative
+    ; AIE2P: liveins: $r6
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2P-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 16
+    ; AIE2P-NEXT: [[ASHL:%[0-9]+]]:er = ASHL [[COPY]], [[MOV_RLC_imm11_pseudo]]
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[ASHL]]
+    ;
+    ; AIE2PS-LABEL: name: ashr_const_negative
+    ; AIE2PS: liveins: $r6
+    ; AIE2PS-NEXT: {{  $}}
+    ; AIE2PS-NEXT: [[COPY:%[0-9]+]]:mlockid_reg = COPY $r6
+    ; AIE2PS-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mlockid_reg = MOV_RLC_imm11_pseudo 16
+    ; AIE2PS-NEXT: [[ASHL:%[0-9]+]]:mlockid_reg = ASHL [[COPY]], [[MOV_RLC_imm11_pseudo]]
+    ; AIE2PS-NEXT: PseudoRET implicit $lr, implicit [[ASHL]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = G_CONSTANT i32 -16
     %2:gprregbank(s32) = G_ASHR %0, %1

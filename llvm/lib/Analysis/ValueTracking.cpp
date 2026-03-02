@@ -9,7 +9,7 @@
 // This file contains routines that help analyze properties that chains of
 // computations have.
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -60,6 +60,7 @@
 #include "llvm/IR/IntrinsicsAArch64.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
 #include "llvm/IR/IntrinsicsAIE2P.h"
+#include "llvm/IR/IntrinsicsAIE2PS.h"
 #include "llvm/IR/IntrinsicsAMDGPU.h"
 #include "llvm/IR/IntrinsicsRISCV.h"
 #include "llvm/IR/IntrinsicsX86.h"
@@ -6815,6 +6816,43 @@ static const Value *getUnderlyingObjectAIEIntrinsic(const Value *V) {
       case Intrinsic::aie2p_fifo_st_push_512_bfp16:
       case Intrinsic::aie2p_fifo_st_push_544_bfp16:
       case Intrinsic::aie2p_fifo_st_push_576_bfp16:
+      // AIE2PS 2D/3D addressing
+      case Intrinsic::aie2ps_add_2d:
+      case Intrinsic::aie2ps_add_3d:
+      // AIE2PS fifo ld fill
+      case Intrinsic::aie2ps_fifo_ld_fill:
+      case Intrinsic::aie2ps_fifo_ld_fillx:
+      // AIE2PS fifo ld pop unaligned
+      case Intrinsic::aie2ps_fifo_ld_pop_512_unaligned:
+      case Intrinsic::aie2ps_fifo_ld_pop_1d_unaligned:
+      case Intrinsic::aie2ps_fifo_ld_pop_2d_unaligned:
+      case Intrinsic::aie2ps_fifo_ld_pop_3d_unaligned:
+      // AIE2PS fifo ld pop BFP640
+      case Intrinsic::aie2ps_fifo_ld_pop_BFP640:
+      case Intrinsic::aie2ps_fifo_ld_pop_1d_BFP640:
+      case Intrinsic::aie2ps_fifo_ld_pop_2d_BFP640:
+      case Intrinsic::aie2ps_fifo_ld_pop_3d_BFP640:
+      // AIE2PS fifo ld pop BFP768
+      case Intrinsic::aie2ps_fifo_ld_pop_BFP768:
+      case Intrinsic::aie2ps_fifo_ld_pop_1d_BFP768:
+      case Intrinsic::aie2ps_fifo_ld_pop_2d_BFP768:
+      case Intrinsic::aie2ps_fifo_ld_pop_3d_BFP768:
+      case Intrinsic::aie2ps_fifo_ld_popx:
+      // AIE2PS fifo st flush
+      case Intrinsic::aie2ps_fifo_st_flush:
+      case Intrinsic::aie2ps_fifo_st_flush_1d:
+      case Intrinsic::aie2ps_fifo_st_flush_2d:
+      case Intrinsic::aie2ps_fifo_st_flush_3d:
+      // AIE2PS fifo st flush conv
+      case Intrinsic::aie2ps_fifo_st_flush_conv:
+      case Intrinsic::aie2ps_fifo_st_flush_1d_conv:
+      case Intrinsic::aie2ps_fifo_st_flush_2d_conv:
+      case Intrinsic::aie2ps_fifo_st_flush_3d_conv:
+      // AIE2PS fifo st push
+      case Intrinsic::aie2ps_fifo_st_push_512:
+      case Intrinsic::aie2ps_fifo_st_push_BFP384:
+      case Intrinsic::aie2ps_fifo_st_push_BFP640:
+      case Intrinsic::aie2ps_fifo_st_push_BFP768:
         return II->getArgOperand(0);
       }
     }

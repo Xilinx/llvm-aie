@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -331,6 +331,13 @@ def IIT_V6 : IIT_Vec<6, 60>;
 def IIT_V10 : IIT_Vec<10, 61>;
 def IIT_I20 : IIT_Int<20, 62>;
 def IIT_I48 : IIT_Int<48, 63>;
+def IIT_STRUCT10 : IIT_Base<64>;
+def IIT_STRUCT11 : IIT_Base<65>;
+def IIT_STRUCT12 : IIT_Base<66>;
+def IIT_STRUCT13 : IIT_Base<67>;
+def IIT_STRUCT14 : IIT_Base<68>;
+def IIT_STRUCT15 : IIT_Base<69>;
+def IIT_STRUCT16 : IIT_Base<70>;
 }
 
 defvar IIT_all_FixedTypes = !filter(iit, IIT_all,
@@ -350,6 +357,13 @@ defvar IIT_RetNumbers = [
   [IIT_STRUCT7.Number],
   [IIT_STRUCT8.Number],
   [IIT_STRUCT9.Number],
+  [IIT_STRUCT10.Number],
+  [IIT_STRUCT11.Number],
+  [IIT_STRUCT12.Number],
+  [IIT_STRUCT13.Number],
+  [IIT_STRUCT14.Number],
+  [IIT_STRUCT15.Number],
+  [IIT_STRUCT16.Number],
 ];
 
 //===----------------------------------------------------------------------===//
@@ -573,6 +587,8 @@ def llvm_v4f16_ty      : LLVMType<v4f16>;    //  4 x half (__fp16)
 def llvm_v8f16_ty      : LLVMType<v8f16>;    //  8 x half (__fp16)
 def llvm_v16f16_ty     : LLVMType<v16f16>;   // 16 x half (__fp16)
 def llvm_v32f16_ty     : LLVMType<v32f16>;   // 32 x half (__fp16)
+def llvm_v64f16_ty     : LLVMType<v64f16>;   // 64 x half (__fp16)
+def llvm_bf16_ty       : LLVMType<bf16>;     //  bfloat (__bf16)
 def llvm_v2bf16_ty     : LLVMType<v2bf16>;   //  2 x bfloat (__bf16)
 def llvm_v4bf16_ty     : LLVMType<v4bf16>;   //  4 x bfloat (__bf16)
 def llvm_v8bf16_ty     : LLVMType<v8bf16>;   //  8 x bfloat (__bf16)
@@ -2820,6 +2836,7 @@ include "llvm/IR/IntrinsicsAArch64.td"
 include "llvm/IR/IntrinsicsAIE.td"
 include "llvm/IR/IntrinsicsAIE2.td"
 include "llvm/IR/IntrinsicsAIE2P.td"
+include "llvm/IR/IntrinsicsAIE2PS.td"
 include "llvm/IR/IntrinsicsXCore.td"
 include "llvm/IR/IntrinsicsHexagon.td"
 include "llvm/IR/IntrinsicsNVVM.td"

@@ -1,0 +1,178 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2ps -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2ps -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VABS_GTZ16_vaddSign0
+    $x8, $r16 = VABS_GTZ16_vaddSign0 $x8, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x7, $r16 = VABS_GTZ16_vaddSign0 $x3, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x3, $r16 = VABS_GTZ16_vaddSign0 $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x4, $r16 = VABS_GTZ16_vaddSign0 $x2, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x1, $r16 = VABS_GTZ16_vaddSign0 $x5, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x11, $r16 = VABS_GTZ16_vaddSign0 $x11, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x9, $r16 = VABS_GTZ16_vaddSign0 $x4, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x5, $r16 = VABS_GTZ16_vaddSign0 $x9, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x10, $r16 = VABS_GTZ16_vaddSign0 $x6, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x6, $r16 = VABS_GTZ16_vaddSign0 $x7, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x0, $r16 = VABS_GTZ16_vaddSign0 $x10, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x2, $r16 = VABS_GTZ16_vaddSign0 $x0, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+
+    ; VABS_GTZ16_vaddSign1
+    $x9, $r16 = VABS_GTZ16_vaddSign1 $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x10, $r16 = VABS_GTZ16_vaddSign1 $x4, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x0, $r16 = VABS_GTZ16_vaddSign1 $x11, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x1, $r16 = VABS_GTZ16_vaddSign1 $x7, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x6, $r16 = VABS_GTZ16_vaddSign1 $x5, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x11, $r16 = VABS_GTZ16_vaddSign1 $x8, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x2, $r16 = VABS_GTZ16_vaddSign1 $x2, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x8, $r16 = VABS_GTZ16_vaddSign1 $x3, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x4, $r16 = VABS_GTZ16_vaddSign1 $x0, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x3, $r16 = VABS_GTZ16_vaddSign1 $x10, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x5, $r16 = VABS_GTZ16_vaddSign1 $x9, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x7, $r16 = VABS_GTZ16_vaddSign1 $x6, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+
+    ; VABS_GTZ32_vaddSign0
+    $x9, $r16 = VABS_GTZ32_vaddSign0 $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x1, $r16 = VABS_GTZ32_vaddSign0 $x8, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x2, $r16 = VABS_GTZ32_vaddSign0 $x4, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x11, $r16 = VABS_GTZ32_vaddSign0 $x0, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x3, $r16 = VABS_GTZ32_vaddSign0 $x3, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x7, $r16 = VABS_GTZ32_vaddSign0 $x5, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x6, $r16 = VABS_GTZ32_vaddSign0 $x11, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x8, $r16 = VABS_GTZ32_vaddSign0 $x7, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x0, $r16 = VABS_GTZ32_vaddSign0 $x10, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x5, $r16 = VABS_GTZ32_vaddSign0 $x6, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x10, $r16 = VABS_GTZ32_vaddSign0 $x2, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x4, $r16 = VABS_GTZ32_vaddSign0 $x9, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+
+    ; VABS_GTZ32_vaddSign1
+    $x2, $r16 = VABS_GTZ32_vaddSign1 $x5, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x6, $r16 = VABS_GTZ32_vaddSign1 $x11, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x4, $r16 = VABS_GTZ32_vaddSign1 $x10, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x7, $r16 = VABS_GTZ32_vaddSign1 $x8, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x10, $r16 = VABS_GTZ32_vaddSign1 $x9, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x9, $r16 = VABS_GTZ32_vaddSign1 $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x3, $r16 = VABS_GTZ32_vaddSign1 $x4, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x5, $r16 = VABS_GTZ32_vaddSign1 $x2, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x8, $r16 = VABS_GTZ32_vaddSign1 $x7, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x0, $r16 = VABS_GTZ32_vaddSign1 $x3, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x1, $r16 = VABS_GTZ32_vaddSign1 $x6, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x11, $r16 = VABS_GTZ32_vaddSign1 $x0, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+
+    ; VABS_GTZ8_vaddSign0
+    $x6, $l8 = VABS_GTZ8_vaddSign0 $x10, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x3, $l8 = VABS_GTZ8_vaddSign0 $x8, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x4, $l8 = VABS_GTZ8_vaddSign0 $x2, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x9, $l8 = VABS_GTZ8_vaddSign0 $x11, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x10, $l8 = VABS_GTZ8_vaddSign0 $x4, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x1, $l8 = VABS_GTZ8_vaddSign0 $x0, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x11, $l8 = VABS_GTZ8_vaddSign0 $x3, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x2, $l8 = VABS_GTZ8_vaddSign0 $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x5, $l8 = VABS_GTZ8_vaddSign0 $x7, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x8, $l8 = VABS_GTZ8_vaddSign0 $x9, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x0, $l8 = VABS_GTZ8_vaddSign0 $x5, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+    $x7, $l8 = VABS_GTZ8_vaddSign0 $x6, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign0
+
+    ; VABS_GTZ8_vaddSign1
+    $x2, $l8 = VABS_GTZ8_vaddSign1 $x9, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x7, $l8 = VABS_GTZ8_vaddSign1 $x5, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x1, $l8 = VABS_GTZ8_vaddSign1 $x2, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x9, $l8 = VABS_GTZ8_vaddSign1 $x8, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x6, $l8 = VABS_GTZ8_vaddSign1 $x6, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x8, $l8 = VABS_GTZ8_vaddSign1 $x3, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x3, $l8 = VABS_GTZ8_vaddSign1 $x11, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x11, $l8 = VABS_GTZ8_vaddSign1 $x4, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x4, $l8 = VABS_GTZ8_vaddSign1 $x10, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x0, $l8 = VABS_GTZ8_vaddSign1 $x7, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x5, $l8 = VABS_GTZ8_vaddSign1 $x0, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+    $x10, $l8 = VABS_GTZ8_vaddSign1 $x1, implicit $crbf8conf, implicit $crfp8conf, implicit $vaddsign1
+...
+
+# CHECK: 0: f0 cb 85 38 vabs_gtz16 x8, r16, x8, vaddsign0
+# CHECK: 4: f0 cb 35 37 vabs_gtz16 x7, r16, x3, vaddsign0
+# CHECK: 8: f0 cb 15 33 vabs_gtz16 x3, r16, x1, vaddsign0
+# CHECK: c: f0 cb 25 34 vabs_gtz16 x4, r16, x2, vaddsign0
+# CHECK: 10: f0 cb 55 31 vabs_gtz16 x1, r16, x5, vaddsign0
+# CHECK: 14: f0 cb b5 3b vabs_gtz16 x11, r16, x11, vaddsign0
+# CHECK: 18: f0 cb 45 39 vabs_gtz16 x9, r16, x4, vaddsign0
+# CHECK: 1c: f0 cb 95 35 vabs_gtz16 x5, r16, x9, vaddsign0
+# CHECK: 20: f0 cb 65 3a vabs_gtz16 x10, r16, x6, vaddsign0
+# CHECK: 24: f0 cb 75 36 vabs_gtz16 x6, r16, x7, vaddsign0
+# CHECK: 28: f0 cb a5 30 vabs_gtz16 x0, r16, x10, vaddsign0
+# CHECK: 2c: f0 cb 05 32 vabs_gtz16 x2, r16, x0, vaddsign0
+# CHECK: 30: f0 cb 17 39 vabs_gtz16 x9, r16, x1, vaddsign1
+# CHECK: 34: f0 cb 47 3a vabs_gtz16 x10, r16, x4, vaddsign1
+# CHECK: 38: f0 cb b7 30 vabs_gtz16 x0, r16, x11, vaddsign1
+# CHECK: 3c: f0 cb 77 31 vabs_gtz16 x1, r16, x7, vaddsign1
+# CHECK: 40: f0 cb 57 36 vabs_gtz16 x6, r16, x5, vaddsign1
+# CHECK: 44: f0 cb 87 3b vabs_gtz16 x11, r16, x8, vaddsign1
+# CHECK: 48: f0 cb 27 32 vabs_gtz16 x2, r16, x2, vaddsign1
+# CHECK: 4c: f0 cb 37 38 vabs_gtz16 x8, r16, x3, vaddsign1
+# CHECK: 50: f0 cb 07 34 vabs_gtz16 x4, r16, x0, vaddsign1
+# CHECK: 54: f0 cb a7 33 vabs_gtz16 x3, r16, x10, vaddsign1
+# CHECK: 58: f0 cb 97 35 vabs_gtz16 x5, r16, x9, vaddsign1
+# CHECK: 5c: f0 cb 67 37 vabs_gtz16 x7, r16, x6, vaddsign1
+# CHECK: 60: f0 cb 11 39 vabs_gtz32 x9, r16, x1, vaddsign0
+# CHECK: 64: f0 cb 81 31 vabs_gtz32 x1, r16, x8, vaddsign0
+# CHECK: 68: f0 cb 41 32 vabs_gtz32 x2, r16, x4, vaddsign0
+# CHECK: 6c: f0 cb 01 3b vabs_gtz32 x11, r16, x0, vaddsign0
+# CHECK: 70: f0 cb 31 33 vabs_gtz32 x3, r16, x3, vaddsign0
+# CHECK: 74: f0 cb 51 37 vabs_gtz32 x7, r16, x5, vaddsign0
+# CHECK: 78: f0 cb b1 36 vabs_gtz32 x6, r16, x11, vaddsign0
+# CHECK: 7c: f0 cb 71 38 vabs_gtz32 x8, r16, x7, vaddsign0
+# CHECK: 80: f0 cb a1 30 vabs_gtz32 x0, r16, x10, vaddsign0
+# CHECK: 84: f0 cb 61 35 vabs_gtz32 x5, r16, x6, vaddsign0
+# CHECK: 88: f0 cb 21 3a vabs_gtz32 x10, r16, x2, vaddsign0
+# CHECK: 8c: f0 cb 91 34 vabs_gtz32 x4, r16, x9, vaddsign0
+# CHECK: 90: f0 cb 53 32 vabs_gtz32 x2, r16, x5, vaddsign1
+# CHECK: 94: f0 cb b3 36 vabs_gtz32 x6, r16, x11, vaddsign1
+# CHECK: 98: f0 cb a3 34 vabs_gtz32 x4, r16, x10, vaddsign1
+# CHECK: 9c: f0 cb 83 37 vabs_gtz32 x7, r16, x8, vaddsign1
+# CHECK: a0: f0 cb 93 3a vabs_gtz32 x10, r16, x9, vaddsign1
+# CHECK: a4: f0 cb 13 39 vabs_gtz32 x9, r16, x1, vaddsign1
+# CHECK: a8: f0 cb 43 33 vabs_gtz32 x3, r16, x4, vaddsign1
+# CHECK: ac: f0 cb 23 35 vabs_gtz32 x5, r16, x2, vaddsign1
+# CHECK: b0: f0 cb 73 38 vabs_gtz32 x8, r16, x7, vaddsign1
+# CHECK: b4: f0 cb 33 30 vabs_gtz32 x0, r16, x3, vaddsign1
+# CHECK: b8: f0 cb 63 31 vabs_gtz32 x1, r16, x6, vaddsign1
+# CHECK: bc: f0 cb 03 3b vabs_gtz32 x11, r16, x0, vaddsign1
+# CHECK: c0: f0 cb a9 36 vabs_gtz8 x6, r17:r16, x10, vaddsign0
+# CHECK: c4: f0 cb 89 33 vabs_gtz8 x3, r17:r16, x8, vaddsign0
+# CHECK: c8: f0 cb 29 34 vabs_gtz8 x4, r17:r16, x2, vaddsign0
+# CHECK: cc: f0 cb b9 39 vabs_gtz8 x9, r17:r16, x11, vaddsign0
+# CHECK: d0: f0 cb 49 3a vabs_gtz8 x10, r17:r16, x4, vaddsign0
+# CHECK: d4: f0 cb 09 31 vabs_gtz8 x1, r17:r16, x0, vaddsign0
+# CHECK: d8: f0 cb 39 3b vabs_gtz8 x11, r17:r16, x3, vaddsign0
+# CHECK: dc: f0 cb 19 32 vabs_gtz8 x2, r17:r16, x1, vaddsign0
+# CHECK: e0: f0 cb 79 35 vabs_gtz8 x5, r17:r16, x7, vaddsign0
+# CHECK: e4: f0 cb 99 38 vabs_gtz8 x8, r17:r16, x9, vaddsign0
+# CHECK: e8: f0 cb 59 30 vabs_gtz8 x0, r17:r16, x5, vaddsign0
+# CHECK: ec: f0 cb 69 37 vabs_gtz8 x7, r17:r16, x6, vaddsign0
+# CHECK: f0: f0 cb 9b 32 vabs_gtz8 x2, r17:r16, x9, vaddsign1
+# CHECK: f4: f0 cb 5b 37 vabs_gtz8 x7, r17:r16, x5, vaddsign1
+# CHECK: f8: f0 cb 2b 31 vabs_gtz8 x1, r17:r16, x2, vaddsign1
+# CHECK: fc: f0 cb 8b 39 vabs_gtz8 x9, r17:r16, x8, vaddsign1
+# CHECK: 100: f0 cb 6b 36 vabs_gtz8 x6, r17:r16, x6, vaddsign1
+# CHECK: 104: f0 cb 3b 38 vabs_gtz8 x8, r17:r16, x3, vaddsign1
+# CHECK: 108: f0 cb bb 33 vabs_gtz8 x3, r17:r16, x11, vaddsign1
+# CHECK: 10c: f0 cb 4b 3b vabs_gtz8 x11, r17:r16, x4, vaddsign1
+# CHECK: 110: f0 cb ab 34 vabs_gtz8 x4, r17:r16, x10, vaddsign1
+# CHECK: 114: f0 cb 7b 30 vabs_gtz8 x0, r17:r16, x7, vaddsign1
+# CHECK: 118: f0 cb 0b 35 vabs_gtz8 x5, r17:r16, x0, vaddsign1
+# CHECK: 11c: f0 cb 1b 3a vabs_gtz8 x10, r17:r16, x1, vaddsign1

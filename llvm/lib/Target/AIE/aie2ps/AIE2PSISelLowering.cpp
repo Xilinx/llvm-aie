@@ -1,0 +1,162 @@
+//===-- AIE2PSISelLowering.cpp - AIE2ps IR Lowering Interface ---*- C++ -*-===//
+//
+// This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
+//
+//===----------------------------------------------------------------------===//
+//
+// This file defines the AIE2ps-specific interfaces used to lower IR to MIR.
+//
+//===----------------------------------------------------------------------===//
+
+#include "AIE2PSISelLowering.h"
+#include "AIEBaseSubtarget.h"
+#include "MCTargetDesc/aie2ps/AIE2PSMCTargetDesc.h"
+#include "llvm/IR/IntrinsicsAIE2PS.h"
+
+using namespace llvm;
+
+#define DEBUG_TYPE "aie-lower"
+
+AIE2PSTargetLowering::AIE2PSTargetLowering(const TargetMachine &TM,
+                                           const AIEBaseSubtarget &STI)
+    : AIEBaseTargetLowering(TM, STI) {
+  const TargetRegisterInfo *TRI = Subtarget.getRegisterInfo();
+
+  // We already define in .td which types are legal for each register class.
+  // Let's re-use the information.
+  for (unsigned i = 0; i != MVT::VALUETYPE_SIZE; ++i) {
+    MVT Ty = MVT::SimpleValueType(i);
+    // As a base rule, a type will be legal if there is a register class which
+    // can natively hold it. Note that the class selected below does not matter
+    // for a GlobalISel flow, since the selection is RegisterBank-based.
+    const auto *RCIt =
+        find_if(TRI->regclasses(), [Ty, TRI](const TargetRegisterClass *RC) {
+          return TRI->isTypeLegalForClass(*RC, Ty);
+        });
+    // Add 128-bit RegClass as unavailable regclass for the 128-bit value type
+    // as this RegClass is not supported natively
+    if (RCIt != TRI->regclass_end() && !Ty.is128BitVector()) {
+      addRegisterClass(Ty, *RCIt);
+    }
+  }
+  computeRegisterProperties(STI.getRegisterInfo());
+  setStackPointerRegisterToSaveRestore(AIE2PS::sp);
+}
+
+MVT AIE2PSTargetLowering::getRegisterTypeForCallingConvAssignment(
+    LLVMContext &Context, CallingConv::ID CC, EVT VT) const {
+  // 128-bit vectors are passed in 256-bit W registers
+  if (VT.isSimple() && VT.is128BitVector())
+    return getRegisterType(VT.getSimpleVT());
+
+  return AIEBaseTargetLowering::getRegisterTypeForCallingConvAssignment(Context,
+                                                                        CC, VT);
+}
+
+MVT AIE2PSTargetLowering::getRegisterTypeForCallingConv(LLVMContext &Context,
+                                                        CallingConv::ID CC,
+                                                        EVT VT) const {
+  // 128-bits registers aren't considered legal because AIE2P only has vector
+  // ops for 256+ bits vectors. However, for ABI compatibility reasons, we still
+  // want to keep those vectors as is, because they are passed differently
+  // compared to 256-bits vectors.
+  if (VT.isSimple() && VT.is128BitVector())
+    return VT.getSimpleVT();
+
+  return AIEBaseTargetLowering::getRegisterTypeForCallingConv(Context, CC, VT);
+}
+
+TargetLoweringBase::LegalizeTypeAction
+AIE2PSTargetLowering::getPreferredVectorAction(MVT VT) const {
+  if (VT.is128BitVector())
+    return TypeWidenVector;
+
+  return TargetLoweringBase::getPreferredVectorAction(VT);
+}
+
+namespace {
+// Returns true if type name matches with a MX type name
+bool isMXTyName(StringRef TyName) {
+  std::vector<llvm::StringRef> MXTyNamesuffixes = {
+      "struct.v32mx9",  "struct.v64mx9",  "struct.v128mx9", "struct.v256mx9",
+      "struct.v64mx6",  "struct.v128mx6", "struct.v256mx6", "struct.v64mx4",
+      "struct.v128mx4", "struct.v256mx4"};
+
+  // check if TyName ends with a given suffix
+  auto checkSuffix = [&](llvm::StringRef MXTyNamesuffixes) {
+    return TyName.ends_with(MXTyNamesuffixes);
+  };
+
+  return llvm::any_of(MXTyNamesuffixes, checkSuffix);
+}
+} // namespace
+bool AIE2PSTargetLowering::functionArgumentNeedsConsecutiveRegisters(
+    Type *Ty, CallingConv::ID CallConv, bool isVarArg,
+    const DataLayout &DL) const {
+  StructType *STy = dyn_cast<StructType>(Ty);
+  if (!STy || STy->isLiteral())
+    return false;
+  if (isMXTyName(STy->getName())) {
+    return true;
+  }
+  return false;
+}
+
+bool AIE2PSTargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
+                                              const CallInst &I,
+                                              MachineFunction &MF,
+                                              unsigned Intrinsic) const {
+  switch (Intrinsic) {
+  case Intrinsic::aie2ps_fifo_ld_fill:
+  case Intrinsic::aie2ps_fifo_ld_fillx:
+  case Intrinsic::aie2ps_fifo_ld_popx:
+  case Intrinsic::aie2ps_fifo_ld_pop_512_unaligned:
+  case Intrinsic::aie2ps_fifo_ld_pop_1d_unaligned:
+  case Intrinsic::aie2ps_fifo_ld_pop_2d_unaligned:
+  case Intrinsic::aie2ps_fifo_ld_pop_3d_unaligned:
+  case Intrinsic::aie2ps_fifo_ld_pop_BFP640:
+  case Intrinsic::aie2ps_fifo_ld_pop_BFP768:
+  case Intrinsic::aie2ps_fifo_ld_pop_1d_BFP640:
+  case Intrinsic::aie2ps_fifo_ld_pop_1d_BFP768:
+  case Intrinsic::aie2ps_fifo_ld_pop_2d_BFP640:
+  case Intrinsic::aie2ps_fifo_ld_pop_2d_BFP768:
+  case Intrinsic::aie2ps_fifo_ld_pop_3d_BFP640:
+  case Intrinsic::aie2ps_fifo_ld_pop_3d_BFP768:
+    // The HW does a 512-bit load from somewhere between addr-63 and addr+128
+    // depending on the FIFO availability and the input alignment.
+    // A conservative access range would be [addr-64, addr+192)
+    // To be safe, we prefer "unknown-size".
+    Info.memVT = MVT::Other;
+    Info.ptrVal = I.getArgOperand(0);
+    Info.align = Align(1); // Can we somehow recover the original alignment?
+    Info.flags = MachineMemOperand::MOLoad;
+    return true;
+
+  case Intrinsic::aie2ps_fifo_st_push_512:
+  case Intrinsic::aie2ps_fifo_st_push_BFP384:
+  case Intrinsic::aie2ps_fifo_st_push_BFP640:
+  case Intrinsic::aie2ps_fifo_st_push_BFP768:
+  case Intrinsic::aie2ps_fifo_st_flush:
+  case Intrinsic::aie2ps_fifo_st_flush_1d:
+  case Intrinsic::aie2ps_fifo_st_flush_2d:
+  case Intrinsic::aie2ps_fifo_st_flush_3d:
+  case Intrinsic::aie2ps_fifo_st_flush_conv:
+  case Intrinsic::aie2ps_fifo_st_flush_1d_conv:
+  case Intrinsic::aie2ps_fifo_st_flush_2d_conv:
+  case Intrinsic::aie2ps_fifo_st_flush_3d_conv:
+    // The HW does a 512-bit store at somewhere between addr and addr-128
+    // depending on the FIFO availability.
+    // A conservative access range would be [addr-128, addr+64)
+    // To be safe, we prefer "unknown-size".
+    Info.memVT = MVT::Other;
+    Info.ptrVal = I.getArgOperand(0);
+    Info.align = Align(4); // Can we somehow recover the original alignment?
+    Info.flags = MachineMemOperand::MOStore;
+    return true;
+  }
+  return false;
+}

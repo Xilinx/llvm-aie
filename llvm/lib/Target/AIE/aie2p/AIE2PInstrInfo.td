@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -20,18 +20,6 @@ include "AIEBaseInstrInfo.td"
 include "aie2p/AIE2PInstrFormats.td"
 include "aie2p/AIE2PCompositeFormats.td"
 include "aie2p/AIE2PImmOperands.td"
-
-// An operand for target addresses. A simple imm20 cannot be used as it isn't
-// compatible with the `bb` SDNode, which prevents writing patterns.
-def cpmaddr : Operand<OtherVT> {
-  let MCOperandPredicate = [{
-    int64_t Imm;
-    if (MCOp.evaluateAsConstantImm(Imm))
-      return isUInt<20>(Imm);
-    return MCOp.isBareSymbolRef();
-  }];
-}
-
 include "AIE2PRegOperandDef.td"
 include "aie2p/AIE2PGenInstrInfo.td"
 
