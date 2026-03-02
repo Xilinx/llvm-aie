@@ -182,6 +182,12 @@ jobs:
         MATRIX_OS: ${{ matrix.OS }}
         MATRIX_ARCH: ${{ matrix.ARCH }}
 
+    - name: Set up MSVC dev environment
+      if: ${{ matrix.OS == 'windows-2022' }}
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x64
+
     - uses: makslevental/mlir-wheels/actions/setup_ccache@d77bf5dc69c46a8c2738b44528749768888eb361
       id: setup_ccache
       with:
