@@ -3176,10 +3176,9 @@ bool AIE2PInstructionSelector::canCombineUNPACKLoad(MachineInstr &MemOp,
 
 bool AIE2PInstructionSelector::selectG_AIE_LOAD_UNPACK(
     MachineInstr &UNPACKI, MachineRegisterInfo &MRI) {
-  Register LoadResult = (std::next(UNPACKI.uses().begin()))->getReg();
+  Register LoadResult = UNPACKI.getOperand(2).getReg();
   MachineInstr *LoadOp = getDefIgnoringCopiesAndBitcasts(LoadResult, MRI);
-  // Should we build the instruction at load's position?
-  bool ShouldAdvanceOp = false;
+  MachineInstr *InsertionPoint = &UNPACKI;
 
   assert(LoadOp && "Expected SSA.");
 
@@ -3190,7 +3189,7 @@ bool AIE2PInstructionSelector::selectG_AIE_LOAD_UNPACK(
     // If we cannot delay the load, we can try to advance the combined
     // instruction to the load's position.
     if (canAdvanceOp(*LoadOp, UNPACKI, MRI))
-      ShouldAdvanceOp = true;
+      InsertionPoint = LoadOp;
     else
       return false;
   }
@@ -3216,11 +3215,7 @@ bool AIE2PInstructionSelector::selectG_AIE_LOAD_UNPACK(
 
   assert(LSO && "Unexpected VLDB.UNPACK combine failure");
 
-  if (ShouldAdvanceOp)
-    MIB.setInstr(*LoadOp);
-  else
-    MIB.setInstr(UNPACKI);
-
+  MIB.setInstr(*InsertionPoint);
   // Selects the size of the UNPACK instructions
   // 0 – Source is 4 bits
   // 1 – Source is 8 bits

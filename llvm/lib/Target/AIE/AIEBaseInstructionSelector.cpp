@@ -766,15 +766,15 @@ bool AIEBaseInstructionSelector::canCombineCONVLoad(MachineInstr &MemOp,
 
 bool AIEBaseInstructionSelector::selectG_AIE_LOAD_CONV(
     MachineInstr &CONVI, MachineRegisterInfo &MRI) {
-  Register LoadResult = (std::next(CONVI.uses().begin()))->getReg();
+  Register LoadResult = CONVI.getOperand(2).getReg();
   MachineInstr *LoadOp = getDefIgnoringCopiesAndBitcasts(LoadResult, MRI);
   assert(LoadOp && "Expected SSA.");
-  bool ShouldAdvanceOp = false;
+  MachineInstr *InsertionPoint = &CONVI;
 
   // We can try to advance the combined
   // instruction to the load's position.
   if (canAdvanceOp(*LoadOp, CONVI, MRI)) {
-    ShouldAdvanceOp = true;
+    InsertionPoint = LoadOp;
   } else if (!canDelayMemOp(*LoadOp, CONVI, MRI)) {
     // Do not try to combine if one of the load's defs is used by another
     // instruction between the load and the VCONV or if there is a store
@@ -786,15 +786,14 @@ bool AIEBaseInstructionSelector::selectG_AIE_LOAD_CONV(
       LoadOp->getParent() != CONVI.getParent() || !MRI.hasOneUse(LoadResult))
     return false;
 
-  if (ShouldAdvanceOp)
-    MIB.setInstr(*LoadOp);
+  MIB.setInstr(*InsertionPoint);
 
   std::optional<AddressingModeInfo> AMI =
       getOrDefineAddressingRegister(*LoadOp, MRI);
 
   if (!AMI) {
-    // Restore to the correct position.
-    MIB.setInstr(CONVI);
+    if (InsertionPoint != &CONVI)
+      MIB.setInstr(CONVI);
     return false;
   }
 
