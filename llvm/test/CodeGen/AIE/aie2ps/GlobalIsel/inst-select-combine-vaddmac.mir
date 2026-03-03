@@ -28,10 +28,8 @@ body:             |
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc2048 = COPY $dm0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc2048 = COPY $dm1
     ; CHECK-NEXT: [[COPY4:%[0-9]+]]:mrv8 = COPY $r0
-    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mrv8 = MOV_RLC_imm11_pseudo 0
-    ; CHECK-NEXT: [[VMAC_vmac_vmul_cm_core_X_X:%[0-9]+]]:acc2048 = VMAC_vmac_vmul_cm_core_X_X [[COPY2]], [[COPY]], [[COPY1]], [[COPY4]]
-    ; CHECK-NEXT: [[VADD_vacc:%[0-9]+]]:acc2048 = VADD_vacc [[VMAC_vmac_vmul_cm_core_X_X]], [[COPY3]], [[MOV_RLC_imm11_pseudo]]
-    ; CHECK-NEXT: $dm0 = COPY [[VADD_vacc]]
+    ; CHECK-NEXT: [[VADDMAC_vaddmac_vmul_cm_core_X_X:%[0-9]+]]:acc2048 = VADDMAC_vaddmac_vmul_cm_core_X_X [[COPY2]], [[COPY3]], [[COPY]], [[COPY1]], [[COPY4]]
+    ; CHECK-NEXT: $dm0 = COPY [[VADDMAC_vaddmac_vmul_cm_core_X_X]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $dm0
     %0:vregbank(<32 x s16>) = COPY $x0
     %1:vregbank(<32 x s16>) = COPY $x2
@@ -64,10 +62,8 @@ body:             |
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc2048 = COPY $dm0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc2048 = COPY $dm1
     ; CHECK-NEXT: [[COPY4:%[0-9]+]]:mrv8 = COPY $r0
-    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mrv8 = MOV_RLC_imm11_pseudo 0
-    ; CHECK-NEXT: [[VMAC_vmac_vmul_cm_core_Y_Y:%[0-9]+]]:acc2048 = VMAC_vmac_vmul_cm_core_Y_Y [[COPY2]], [[COPY]], [[COPY1]], [[COPY4]]
-    ; CHECK-NEXT: [[VADD_vacc:%[0-9]+]]:acc2048 = VADD_vacc [[VMAC_vmac_vmul_cm_core_Y_Y]], [[COPY3]], [[MOV_RLC_imm11_pseudo]]
-    ; CHECK-NEXT: $dm0 = COPY [[VADD_vacc]]
+    ; CHECK-NEXT: [[VADDMAC_vaddmac_vmul_cm_core_Y_Y:%[0-9]+]]:acc2048 = VADDMAC_vaddmac_vmul_cm_core_Y_Y [[COPY2]], [[COPY3]], [[COPY]], [[COPY1]], [[COPY4]]
+    ; CHECK-NEXT: $dm0 = COPY [[VADDMAC_vaddmac_vmul_cm_core_Y_Y]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $dm0
     %0:vregbank(<64 x s16>) = COPY $y0
     %1:vregbank(<64 x s16>) = COPY $y2
@@ -100,10 +96,8 @@ body:             |
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc2048 = COPY $dm0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc2048 = COPY $dm1
     ; CHECK-NEXT: [[COPY4:%[0-9]+]]:mrv8 = COPY $r0
-    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mrv8 = MOV_RLC_imm11_pseudo 0
-    ; CHECK-NEXT: [[VMSC_vmac_vmul_cm_core_X_X:%[0-9]+]]:acc2048 = VMSC_vmac_vmul_cm_core_X_X [[COPY2]], [[COPY]], [[COPY1]], [[COPY4]]
-    ; CHECK-NEXT: [[VADD_vacc:%[0-9]+]]:acc2048 = VADD_vacc [[VMSC_vmac_vmul_cm_core_X_X]], [[COPY3]], [[MOV_RLC_imm11_pseudo]]
-    ; CHECK-NEXT: $dm0 = COPY [[VADD_vacc]]
+    ; CHECK-NEXT: [[VADDMSC_vaddmac_vmul_cm_core_X_X:%[0-9]+]]:acc2048 = VADDMSC_vaddmac_vmul_cm_core_X_X [[COPY2]], [[COPY3]], [[COPY]], [[COPY1]], [[COPY4]]
+    ; CHECK-NEXT: $dm0 = COPY [[VADDMSC_vaddmac_vmul_cm_core_X_X]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $dm0
     %0:vregbank(<32 x s16>) = COPY $x0
     %1:vregbank(<32 x s16>) = COPY $x2
@@ -136,10 +130,9 @@ body:             |
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc2048 = COPY $dm0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc2048 = COPY $dm1
     ; CHECK-NEXT: [[COPY4:%[0-9]+]]:mrv8 = COPY $r0
-    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mrv8 = MOV_RLC_imm11_pseudo 0
     ; CHECK-NEXT: [[VMAC_f_vmac_bf_vmul_bf_core_Y_Y:%[0-9]+]]:acc2048 = VMAC_f_vmac_bf_vmul_bf_core_Y_Y [[COPY2]], [[COPY]], [[COPY1]], [[COPY4]], implicit-def dead $srfpflags, implicit $crbf8conf, implicit $crfp8conf, implicit $crfpmask
-    ; CHECK-NEXT: [[VADD_f_vacc_fp:%[0-9]+]]:acc2048 = VADD_f_vacc_fp [[VMAC_f_vmac_bf_vmul_bf_core_Y_Y]], [[COPY3]], [[MOV_RLC_imm11_pseudo]], implicit-def dead $srfpflags, implicit $crfpmask
-    ; CHECK-NEXT: $dm0 = COPY [[VADD_f_vacc_fp]]
+    ; CHECK-NEXT: [[VADDMAC_f_vaddmac_bf_vmul_bf_core_Y_Y:%[0-9]+]]:acc2048 = VADDMAC_f_vaddmac_bf_vmul_bf_core_Y_Y [[COPY2]], [[COPY3]], [[COPY]], [[COPY1]], [[COPY4]], implicit-def dead $srfpflags, implicit $crbf8conf, implicit $crfp8conf, implicit $crfpmask
+    ; CHECK-NEXT: $dm0 = COPY [[VADDMAC_f_vaddmac_bf_vmul_bf_core_Y_Y]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $dm0
     %0:vregbank(<64 x s16>) = COPY $y0
     %1:vregbank(<64 x s16>) = COPY $y2
@@ -171,10 +164,9 @@ body:             |
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc2048 = COPY $dm0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc2048 = COPY $dm1
     ; CHECK-NEXT: [[COPY4:%[0-9]+]]:mrv8 = COPY $r0
-    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mrv8 = MOV_RLC_imm11_pseudo 0
     ; CHECK-NEXT: [[VMSC_f_vmac_bf_vmul_bf_core_Y_Y:%[0-9]+]]:acc2048 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y [[COPY2]], [[COPY]], [[COPY1]], [[COPY4]], implicit-def dead $srfpflags, implicit $crbf8conf, implicit $crfp8conf, implicit $crfpmask
-    ; CHECK-NEXT: [[VADD_f_vacc_fp:%[0-9]+]]:acc2048 = VADD_f_vacc_fp [[VMSC_f_vmac_bf_vmul_bf_core_Y_Y]], [[COPY3]], [[MOV_RLC_imm11_pseudo]], implicit-def dead $srfpflags, implicit $crfpmask
-    ; CHECK-NEXT: $dm0 = COPY [[VADD_f_vacc_fp]]
+    ; CHECK-NEXT: [[VADDMSC_f_vaddmac_bf_vmul_bf_core_Y_Y:%[0-9]+]]:acc2048 = VADDMSC_f_vaddmac_bf_vmul_bf_core_Y_Y [[COPY2]], [[COPY3]], [[COPY]], [[COPY1]], [[COPY4]], implicit-def dead $srfpflags, implicit $crbf8conf, implicit $crfp8conf, implicit $crfpmask
+    ; CHECK-NEXT: $dm0 = COPY [[VADDMSC_f_vaddmac_bf_vmul_bf_core_Y_Y]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $dm0
     %0:vregbank(<64 x s16>) = COPY $y0
     %1:vregbank(<64 x s16>) = COPY $y2
@@ -206,10 +198,9 @@ body:             |
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:ecml = COPY $cml0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:ecml = COPY $cml1
     ; CHECK-NEXT: [[COPY4:%[0-9]+]]:mrv8 = COPY $r0
-    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mrv8 = MOV_RLC_imm11_pseudo 0
     ; CHECK-NEXT: [[VMAC_f_vmac_bf_half_vmul_bf_half_core_X_X:%[0-9]+]]:ecml = VMAC_f_vmac_bf_half_vmul_bf_half_core_X_X [[COPY2]], [[COPY]], [[COPY1]], [[COPY4]], implicit-def dead $srfpflags, implicit $crbf8conf, implicit $crfp8conf, implicit $crfpmask
-    ; CHECK-NEXT: [[VADD_f_vacc_half_fp:%[0-9]+]]:ecml = VADD_f_vacc_half_fp [[VMAC_f_vmac_bf_half_vmul_bf_half_core_X_X]], [[COPY3]], [[MOV_RLC_imm11_pseudo]], implicit-def dead $srfpflags, implicit $crfpmask
-    ; CHECK-NEXT: $cml0 = COPY [[VADD_f_vacc_half_fp]]
+    ; CHECK-NEXT: [[VADDMAC_f_vaddmac_bf_half_vmul_bf_half_core_X_X:%[0-9]+]]:ecml = VADDMAC_f_vaddmac_bf_half_vmul_bf_half_core_X_X [[COPY2]], [[COPY3]], [[COPY]], [[COPY1]], [[COPY4]], implicit-def dead $srfpflags, implicit $crbf8conf, implicit $crfp8conf, implicit $crfpmask
+    ; CHECK-NEXT: $cml0 = COPY [[VADDMAC_f_vaddmac_bf_half_vmul_bf_half_core_X_X]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $cml0
     %0:vregbank(<32 x s16>) = COPY $x0
     %1:vregbank(<32 x s16>) = COPY $x2
@@ -241,10 +232,9 @@ body:             |
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:ecml = COPY $cml0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:ecml = COPY $cml1
     ; CHECK-NEXT: [[COPY4:%[0-9]+]]:mrv8 = COPY $r0
-    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mrv8 = MOV_RLC_imm11_pseudo 0
     ; CHECK-NEXT: [[VMSC_f_vmac_bf_half_vmul_bf_half_core_X_X:%[0-9]+]]:ecml = VMSC_f_vmac_bf_half_vmul_bf_half_core_X_X [[COPY2]], [[COPY]], [[COPY1]], [[COPY4]], implicit-def dead $srfpflags, implicit $crbf8conf, implicit $crfp8conf, implicit $crfpmask
-    ; CHECK-NEXT: [[VADD_f_vacc_half_fp:%[0-9]+]]:ecml = VADD_f_vacc_half_fp [[VMSC_f_vmac_bf_half_vmul_bf_half_core_X_X]], [[COPY3]], [[MOV_RLC_imm11_pseudo]], implicit-def dead $srfpflags, implicit $crfpmask
-    ; CHECK-NEXT: $cml0 = COPY [[VADD_f_vacc_half_fp]]
+    ; CHECK-NEXT: [[VADDMSC_f_vaddmac_bf_half_vmul_bf_half_core_X_X:%[0-9]+]]:ecml = VADDMSC_f_vaddmac_bf_half_vmul_bf_half_core_X_X [[COPY2]], [[COPY3]], [[COPY]], [[COPY1]], [[COPY4]], implicit-def dead $srfpflags, implicit $crbf8conf, implicit $crfp8conf, implicit $crfpmask
+    ; CHECK-NEXT: $cml0 = COPY [[VADDMSC_f_vaddmac_bf_half_vmul_bf_half_core_X_X]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $cml0
     %0:vregbank(<32 x s16>) = COPY $x0
     %1:vregbank(<32 x s16>) = COPY $x2
