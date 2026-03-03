@@ -211,6 +211,15 @@ protected:
   bool selectG_AIE_LOAD_CONV(MachineInstr &CONVI, MachineRegisterInfo &MRI);
   bool selectVCONV(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectStartLoop(MachineInstr &I, MachineRegisterInfo &MRI);
+  virtual std::optional<LoadStoreOpcodes>
+  getCombinedOpcodeUNPACKLoad(const MachineInstr &MemOp,
+                              const MachineInstr &CombOp,
+                              std::optional<APInt> Immediate, bool IsSigned);
+  virtual bool canCombineUNPACKLoad(MachineInstr &MemOp, MachineInstr &CombOp,
+                                    MachineRegisterInfo &MRI);
+  virtual void selectUnpackSizeCtrlRegister(MachineInstr &UNPACKI);
+  virtual std::optional<Register> getUnpackSignRegister() const;
+  bool selectG_AIE_LOAD_UNPACK(MachineInstr &UNPACKI, MachineRegisterInfo &MRI);
 
 protected:
   MachineIRBuilder MIB;
