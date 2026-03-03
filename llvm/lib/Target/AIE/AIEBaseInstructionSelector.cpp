@@ -842,6 +842,95 @@ AIEBaseInstructionSelector::getCombinedOpcodeCONVLoad(
   return {};
 }
 
+std::optional<LoadStoreOpcodes>
+AIEBaseInstructionSelector::getCombinedOpcodeUNPACKLoad(
+    const MachineInstr &MemOp, const MachineInstr &CombOp,
+    std::optional<APInt> Immediate, bool IsSigned) {
+  return {};
+}
+
+bool AIEBaseInstructionSelector::canCombineUNPACKLoad(
+    MachineInstr &MemOp, MachineInstr &CombOp, MachineRegisterInfo &MRI) {
+  const Register LoadResult = MemOp.defs().begin()->getReg();
+  if (MemOp.getParent() != CombOp.getParent() || !MRI.hasOneUse(LoadResult))
+    return false;
+
+  const bool IsSigned = false;
+  return getCombinedOpcodeUNPACKLoad(MemOp, CombOp, {}, IsSigned).has_value();
+}
+
+void AIEBaseInstructionSelector::selectUnpackSizeCtrlRegister(MachineInstr &) {
+  llvm_unreachable("Target must override selectUnpackSizeCtrlRegister");
+}
+
+std::optional<Register>
+AIEBaseInstructionSelector::getUnpackSignRegister() const {
+  return std::nullopt;
+}
+
+bool AIEBaseInstructionSelector::selectG_AIE_LOAD_UNPACK(
+    MachineInstr &UNPACKI, MachineRegisterInfo &MRI) {
+  if (!getUnpackSignRegister())
+    return false;
+
+  const Register LoadResult = UNPACKI.getOperand(2).getReg();
+  MachineInstr *LoadOp = getDefIgnoringCopiesAndBitcasts(LoadResult, MRI);
+  MachineInstr *InsertionPoint = &UNPACKI;
+
+  assert(LoadOp && "Expected SSA.");
+
+  if (!canDelayMemOp(*LoadOp, UNPACKI, MRI)) {
+    if (canAdvanceOp(*LoadOp, UNPACKI, MRI))
+      InsertionPoint = LoadOp;
+    else
+      return false;
+  }
+
+  if (!canCombineUNPACKLoad(*LoadOp, UNPACKI, MRI))
+    return false;
+
+  std::optional<AddressingModeInfo> AMI =
+      getOrDefineAddressingRegister(*LoadOp, MRI);
+  if (!AMI)
+    return false;
+
+  const Register DstReg = UNPACKI.getOperand(0).getReg();
+  const Register SignReg = UNPACKI.getOperand(3).getReg();
+
+  const auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI);
+  const bool ConstantSign = SignVal.has_value();
+  std::optional<LoadStoreOpcodes> LSO =
+      getCombinedOpcodeUNPACKLoad(*LoadOp, UNPACKI, AMI->ImmediateOffset,
+                                  ConstantSign && SignVal->Value == 0x1);
+
+  assert(LSO && "Unexpected VLDB.UNPACK combine failure");
+
+  MIB.setInstr(*InsertionPoint);
+  selectUnpackSizeCtrlRegister(UNPACKI);
+
+  auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
+
+  NewInstr.addDef(DstReg);
+
+  for (auto *Def = std::next(LoadOp->defs().begin());
+       Def != LoadOp->defs().end(); ++Def) {
+    NewInstr.addDef(Def->getReg());
+  }
+
+  addAddressingMode(NewInstr, *AMI, LSO->FitsImmediateRange, false, MRI);
+
+  NewInstr.cloneMemRefs(*LoadOp);
+
+  if (!ConstantSign)
+    setUnsetCtrlRegister(MIB, *NewInstr, MRI, *getUnpackSignRegister(),
+                         SignReg);
+
+  UNPACKI.eraseFromParent();
+  makeDeadMI(*LoadOp, MRI);
+
+  return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
+}
+
 // Make an instruction trivially dead by creating and distributing new virtual
 // registers to its defs.
 // Erasing the load instruction breaks later on in the selection code. That is
