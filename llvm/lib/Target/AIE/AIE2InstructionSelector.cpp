@@ -728,10 +728,9 @@ bool AIE2InstructionSelector::canCombineUNPACKLoad(MachineInstr &MemOp,
 
 bool AIE2InstructionSelector::selectG_AIE_LOAD_UNPACK(
     MachineInstr &UNPACKI, MachineRegisterInfo &MRI) {
-  Register LoadResult = (std::next(UNPACKI.uses().begin()))->getReg();
+  Register LoadResult = UNPACKI.getOperand(2).getReg();
   MachineInstr *LoadOp = getDefIgnoringCopiesAndBitcasts(LoadResult, MRI);
-  // Should we build the instruction at load's position?
-  bool ShouldAdvanceOp = false;
+  MachineInstr *InsertionPoint = &UNPACKI;
 
   assert(LoadOp && "Expected SSA.");
 
@@ -742,7 +741,7 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_UNPACK(
     // If we cannot delay the load, we can try to advance the combined
     // instruction to the load's position.
     if (canAdvanceOp(*LoadOp, UNPACKI, MRI))
-      ShouldAdvanceOp = true;
+      InsertionPoint = LoadOp;
     else
       return false;
   }
@@ -764,8 +763,7 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_UNPACK(
   Register DstReg = UNPACKI.getOperand(0).getReg();
   Register SignReg = UNPACKI.getOperand(3).getReg();
 
-  if (ShouldAdvanceOp)
-    MIB.setInstr(*LoadOp);
+  MIB.setInstr(*InsertionPoint);
 
   auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
 
@@ -1843,7 +1841,7 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
                                                    MachineRegisterInfo &MRI) {
 
   // First use is the G_INTRINSIC_W_SIDE_EFFECTS ID
-  Register LoadResult = (std::next(UPSI.uses().begin()))->getReg();
+  Register LoadResult = UPSI.getOperand(2).getReg();
   MachineInstr *LoadOp = getDefIgnoringCopiesAndBitcasts(LoadResult, MRI);
 
   assert(LoadOp && "Expected SSA.");
