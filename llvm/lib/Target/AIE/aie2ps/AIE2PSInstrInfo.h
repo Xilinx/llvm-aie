@@ -105,6 +105,7 @@ public:
                                 APInt &Val) const override;
   unsigned getScalarMovOpcode(Register DstReg, Register SrcReg) const override;
 
+  bool isLock(unsigned Opc) const override;
   bool isCall(unsigned Opc) const override;
   bool jumpsToUnknown(unsigned Opcode) const override;
   bool isIConst(unsigned Opc) const override;
