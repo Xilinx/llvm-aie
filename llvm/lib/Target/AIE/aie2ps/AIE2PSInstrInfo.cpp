@@ -811,6 +811,11 @@ bool AIE2PSInstrInfo::isLock(unsigned Opc) const {
   return false;
 }
 
+std::optional<unsigned>
+AIE2PSInstrInfo::getDoneLatency(const unsigned Opc) const {
+  return (Opc == AIE2PS::DONE) ? std::optional<unsigned>(6) : std::nullopt;
+}
+
 unsigned AIE2PSInstrInfo::getCallOpcode(const MachineFunction &CallerF,
                                         bool IsIndirect,
                                         bool IsTailCall) const {
