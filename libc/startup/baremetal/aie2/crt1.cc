@@ -3,12 +3,14 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 
 #if __AIEARCH__ == 20
 #include "aiev2intrin.h"
 #elif __AIEARCH__ == 21
 #include "aie2pintrin.h"
+#elif __AIEARCH__ == 22
+#include "aie2psintrin.h"
 #else
 #error "Unsupported __AIEARCH__ version"
 #endif
