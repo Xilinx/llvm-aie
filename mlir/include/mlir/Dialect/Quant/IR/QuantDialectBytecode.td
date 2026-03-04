@@ -15,6 +15,7 @@
 #ifndef QUANT_BYTECODE
 #define QUANT_BYTECODE
 
+include "mlir/IR/BuiltinDialectBytecode.td"
 include "mlir/IR/BytecodeBase.td"
 
 def DoubleAPFloat:
@@ -83,6 +84,21 @@ def UniformQuantizedPerAxisType: DialectType<(type
   }];
 }
 
+def UniformQuantizedSubChannelType
+    : DialectType<(type VarInt:$flags, Type:$storageType, Type:$expressedType,
+          SignedVarInt:$storageTypeMin, SignedVarInt:$storageTypeMax,
+          Array<SignedVarIntList>:$quantizedDimensions,
+          Array<SignedVarIntList>:$blockSizes, DenseElementsAttr:$scales,
+          DenseElementsAttr:$zeroPoints)> {
+  // Note: builder order differs from bytecode.
+  let cBuilder = [{
+      get<$_resultType>(context, flags, storageType, expressedType, scales,
+        zeroPoints, llvm::to_vector(llvm::map_range(quantizedDimensions,
+        [](int64_t dim) { return static_cast<int32_t>(dim);})), blockSizes,
+        storageTypeMin, storageTypeMax)
+  }];
+}
+
 def BlockFloatQuantizedType: DialectType<(type
   WithGetter<"static_cast<uint32_t>($_attrType.getBlockMode())", VarInt>:$blockMode,
   VarInt:$axis
@@ -97,15 +113,10 @@ def BlockFloatQuantizedType: DialectType<(type
 /// compatibility with older bytecode.
 
 def QuantDialectTypes : DialectTypes<"Quant"> {
-  let elems = [
-    ReservedOrDead,
-    AnyQuantizedType,
-    AnyQuantizedTypeWithExpressedType,
-    CalibratedQuantizedType,
-    UniformQuantizedType,
-    UniformQuantizedPerAxisType,
-    BlockFloatQuantizedType
-  ];
+  let elems = [ReservedOrDead, AnyQuantizedType,
+               AnyQuantizedTypeWithExpressedType, CalibratedQuantizedType,
+               UniformQuantizedType, UniformQuantizedPerAxisType,
+               UniformQuantizedSubChannelType, BlockFloatQuantizedType];
 }
 
 #endif // QUANT_BYTECODE
