@@ -348,7 +348,7 @@ void materializeSlots(const SlotMapping &SlotToBanks, MachineBasicBlock &MBB,
 
 void staticallyMaterializeMultiSlotInstructions(MachineBasicBlock &MBB,
                                                 const AIEHazardRecognizer &HR,
-                                                bool MaterializeAll) {
+                                                bool MaterializePipeline) {
   LLVM_DEBUG(dbgs() << "Statically Assigning multi slot pseudos for "
                     << MBB.getName() << "\n");
 
@@ -368,7 +368,7 @@ void staticallyMaterializeMultiSlotInstructions(MachineBasicBlock &MBB,
     applyRoundRobinSlotAssignment(MBB, TII);
   }
 
-  if (MaterializeAll) {
+  if (MaterializePipeline) {
     materializeToMinimizeSlotTotals(MBB, TII);
   }
 }

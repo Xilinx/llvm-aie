@@ -23,8 +23,8 @@ namespace llvm::AIE {
 /// Statically assign and materialize Slots to multi-slot pseudo MachineInstr in
 /// \p MBB .
 /// FIXME: Currently we are only handling multi-slot memory load pseudos.
-void staticallyMaterializeMultiSlotInstructions(MachineBasicBlock &MBB,
-                                                const AIEHazardRecognizer &HR,
-                                                bool MaterializeAll = false);
+void staticallyMaterializeMultiSlotInstructions(
+    MachineBasicBlock &MBB, const AIEHazardRecognizer &HR,
+    bool MaterializePipeline = false);
 
 } // namespace llvm::AIE
