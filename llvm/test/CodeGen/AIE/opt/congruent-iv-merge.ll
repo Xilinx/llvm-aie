@@ -18,10 +18,12 @@ define void @separate_load_store(ptr %arr, i32 %n) {
 ; CHECK:       loop:
 ; CHECK-NEXT:    [[I:%.*]] = phi i32 [ 0, [[ENTRY:%.*]] ], [ [[I_NEXT:%.*]], [[LOOP]] ]
 ; CHECK-NEXT:    [[STORE_PTR:%.*]] = phi ptr [ [[ARR:%.*]], [[ENTRY]] ], [ [[STORE_PTR_NEXT:%.*]], [[LOOP]] ]
+; CHECK-NEXT:    [[STORE_PTR1:%.*]] = phi ptr [ [[ARR]], [[ENTRY]] ], [ [[STORE_PTR_NEXT1:%.*]], [[LOOP]] ]
 ; CHECK-NEXT:    [[VAL:%.*]] = load i32, ptr [[STORE_PTR]], align 4
 ; CHECK-NEXT:    [[RESULT:%.*]] = add i32 [[VAL]], 1
-; CHECK-NEXT:    store i32 [[RESULT]], ptr [[STORE_PTR]], align 4
+; CHECK-NEXT:    store i32 [[RESULT]], ptr [[STORE_PTR1]], align 4
 ; CHECK-NEXT:    [[STORE_PTR_NEXT]] = getelementptr i32, ptr [[STORE_PTR]], i32 1
+; CHECK-NEXT:    [[STORE_PTR_NEXT1]] = getelementptr i32, ptr [[STORE_PTR1]], i32 1
 ; CHECK-NEXT:    [[I_NEXT]] = add nuw i32 [[I]], 1
 ; CHECK-NEXT:    [[EXITCOND:%.*]] = icmp ne i32 [[I_NEXT]], [[UMAX]]
 ; CHECK-NEXT:    br i1 [[EXITCOND]], label [[LOOP]], label [[EXIT:%.*]]
