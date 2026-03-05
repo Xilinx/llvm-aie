@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the MLIR AsmPrinter class, which is used to implement
@@ -1109,12 +1112,26 @@ void AliasInitializer::initializeAliases(
     return lhs.second < rhs.second;
   });
 
+  llvm::StringSet<> usedNames;
+  for (auto &[symbol, aliasInfo] : unprocessedAliases)
+    if (aliasInfo.alias)
+      usedNames.insert(*aliasInfo.alias);
+
+  const auto tryClaimName = [&usedNames](StringRef alias,
+                                         unsigned index) -> bool {
+    return usedNames.insert((alias + Twine(index)).str()).second;
+  };
+
   llvm::StringMap<unsigned> nameCounts;
   for (auto &[symbol, aliasInfo] : unprocessedAliases) {
     if (!aliasInfo.alias)
       continue;
     StringRef alias = *aliasInfo.alias;
     unsigned nameIndex = nameCounts[alias]++;
+
+    while (nameIndex > 0 && !tryClaimName(alias, nameIndex))
+      nameIndex = nameCounts[alias]++;
+
     symbolToAlias.insert(
         {symbol, SymbolAlias(alias, nameIndex, aliasInfo.isType,
                              aliasInfo.canBeDeferred)});
@@ -1206,8 +1223,7 @@ void AliasInitializer::generateAlias(T symbol, InProgressAliasInfo &alias,
 
   SmallString<16> tempBuffer;
   StringRef name =
-      sanitizeIdentifier(nameBuffer, tempBuffer, /*allowedPunctChars=*/"$_-",
-                         /*allowTrailingDigit=*/false);
+      sanitizeIdentifier(nameBuffer, tempBuffer, /*allowedPunctChars=*/"$_-");
   name = name.copy(aliasAllocator);
   alias = InProgressAliasInfo(name);
 }
