@@ -12,10 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AIE2TargetMachine.h"
-#include "AIE2TargetTransformInfo.h"
+#include "AIE2CommonTargetMachine.h"
 #include "AIEDumpArtifacts.h"
 #include "AIEMachineFunctionInfo.h"
+#include "aie2/AIE2TargetTransformInfo.h"
 #include "llvm/CodeGen/GlobalISel/IRTranslator.h"
 #include "llvm/CodeGen/GlobalISel/InstructionSelect.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -257,8 +257,8 @@ AIE2TargetMachine::getAddressSpaceForPseudoSourceKind(unsigned Kind) const {
   case PseudoSourceValue::FixedStack:
     return StackAddrSpace;
   case AIETargetPSV::AIETileMem:
-    return static_cast<unsigned>(AIE2::AddressSpaces::TM);
+    return static_cast<unsigned>(AIE2X::AddressSpaces::TM);
   default:
-    return static_cast<unsigned>(AIE2::AddressSpaces::none);
+    return static_cast<unsigned>(AIE2X::AddressSpaces::none);
   }
 }

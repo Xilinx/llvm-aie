@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -12,12 +12,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_LIB_TARGET_AIE_AIE2TARGETMACHINE_H
-#define LLVM_LIB_TARGET_AIE_AIE2TARGETMACHINE_H
+#ifndef LLVM_LIB_TARGET_AIE_AIE2COMMONTARGETMACHINE_H
+#define LLVM_LIB_TARGET_AIE_AIE2COMMONTARGETMACHINE_H
 
-#include "AIE2Subtarget.h"
+// FIXME: Subtarget is being reorganized in a separate project
 #include "AIEBaseTargetMachine.h"
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
+#include "aie2/AIE2Subtarget.h"
 
 extern llvm::cl::opt<bool> EnableSubregRenaming;
 namespace llvm {

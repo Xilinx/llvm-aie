@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -12,10 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AIE2RegisterInfo.h"
 #include "AIEBaseDisassembler.h"
 #include "AIEDisassemblerPP.h"
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
+#include "aie2/AIE2RegisterInfo.h"
 #include "llvm/MC/MCDecoderOps.h"
 #include "llvm/MC/MCDisassembler/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"

@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -74,8 +74,7 @@ AIE2PostLegalizerGenericCombinerImpl::AIE2PostLegalizerGenericCombinerImpl(
     MachineFunction &MF, CombinerInfo &CInfo, const TargetPassConfig *TPC,
     GISelKnownBits &KB, GISelCSEInfo *CSEInfo,
     const AIE2PostLegalizerGenericCombinerImplRuleConfig &RuleConfig,
-    const AIE2Subtarget &STI,
-    MachineDominatorTree *MDT,
+    const AIE2Subtarget &STI, MachineDominatorTree *MDT,
     const LegalizerInfo *LI)
     : Combiner(MF, CInfo, TPC, &KB, CSEInfo),
       Helper(Observer, B, /*IsPostLegalize*/ false, &KB, MDT, LI),
@@ -85,7 +84,6 @@ AIE2PostLegalizerGenericCombinerImpl::AIE2PostLegalizerGenericCombinerImpl(
 #undef GET_GICOMBINER_CONSTRUCTOR_INITS
 {
 }
-
 
 class AIE2PostLegalizerGenericCombiner : public MachineFunctionPass {
 public:
@@ -116,7 +114,6 @@ private:
 };
 } // end anonymous namespace
 
-
 AIE2PostLegalizerGenericCombiner::AIE2PostLegalizerGenericCombiner()
     : MachineFunctionPass(ID) {
   initializeAIE2PostLegalizerGenericCombinerPass(
@@ -145,13 +142,14 @@ bool AIE2PostLegalizerGenericCombiner::runOnMachineFunction(
   const auto *LI = ST.getLegalizerInfo();
 
   GISelKnownBits *KB = &getAnalysis<GISelKnownBitsAnalysis>().get(MF);
-  MachineDominatorTree *MDT = &getAnalysis<MachineDominatorTreeWrapperPass>().getDomTree();
+  MachineDominatorTree *MDT =
+      &getAnalysis<MachineDominatorTreeWrapperPass>().getDomTree();
 
   CombinerInfo CInfo(/*AllowIllegalOps*/ true, /*ShouldLegalizeIllegal*/ false,
                      /*LegalizerInfo*/ nullptr, EnableOpt, F.hasOptSize(),
                      F.hasMinSize());
   AIE2PostLegalizerGenericCombinerImpl Impl(MF, CInfo, TPC, *KB, CSEInfo,
-                                        RuleConfig, ST, MDT, LI);
+                                            RuleConfig, ST, MDT, LI);
   return Impl.combineMachineInstrs();
 }
 

@@ -17,6 +17,7 @@
 #include "AIEBundle.h"
 #include "InstPrinter/AIEInstPrinter.h"
 #include "llvm/Analysis/MemoryLocation.h"
+#include "llvm/Analysis/OptimizationRemarkEmitter.h"
 #include "llvm/BinaryFormat/ELF.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
@@ -24,6 +25,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSectionELF.h"
@@ -35,7 +37,11 @@
 #include "llvm/Target/TargetLoweringObjectFile.h"
 using namespace llvm;
 
-#define DEBUG_TYPE "asm-printer"
+#define DEBUG_TYPE "aie-asm-printer"
+
+AIEBaseAsmPrinter::AIEBaseAsmPrinter(TargetMachine &TM,
+                                     std::unique_ptr<MCStreamer> Streamer)
+    : AsmPrinter(TM, std::move(Streamer)), MCRI(TM.getMCRegisterInfo()) {}
 
 void AIEBaseAsmPrinter::EmitToStreamer(MCStreamer &S, const MCInst &Inst) {
   // This searches for SymbolRefs in sub-instruction operands to register them
@@ -310,4 +316,77 @@ void AIEBaseAsmPrinter::emitXXStructorList(const DataLayout &DL,
   for (Structor &S : Structors) {
     emitXXStructor(DL, S.Func);
   }
+}
+
+bool AIEBaseAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
+                                        const char *ExtraCode,
+                                        raw_ostream &OS) {
+  // First try the generic code, which knows about modifiers like 'c' and 'n'.
+  if (!AsmPrinter::PrintAsmOperand(MI, OpNo, ExtraCode, OS))
+    return false;
+
+  const MachineOperand &MO = MI->getOperand(OpNo);
+  switch (MO.getType()) {
+  case MachineOperand::MO_Immediate:
+    OS << MO.getImm();
+    return false;
+  case MachineOperand::MO_Register:
+    OS << MCRI->getName(MO.getReg());
+    return false;
+  default:
+    break;
+  }
+
+  return true;
+}
+
+bool AIEBaseAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
+                                              unsigned OpNo,
+                                              const char *ExtraCode,
+                                              raw_ostream &OS) {
+  if (!ExtraCode) {
+    const MachineOperand &MO = MI->getOperand(OpNo);
+    // For now, we only support register memory operands in registers and
+    // assume there is no addend
+    if (!MO.isReg())
+      return true;
+
+    OS << "0(" << MCRI->getName(MO.getReg()) << ")";
+    return false;
+  }
+
+  return AsmPrinter::PrintAsmMemoryOperand(MI, OpNo, ExtraCode, OS);
+}
+
+void AIEBaseAsmPrinter::emitBundleCount(const MachineBasicBlock &MBB) {
+  unsigned BundleCount = 0;
+  unsigned ByteCount = 0;
+  auto *TII = static_cast<const AIEBaseInstrInfo *>(
+      MBB.getParent()->getSubtarget().getInstrInfo());
+  for (auto &MI : MBB) {
+    if (!MI.isBundle())
+      continue;
+
+    BundleCount++;
+    ByteCount += TII->getAIEMachineBundleSize(MI);
+  }
+
+  if (BundleCount == 0) {
+    // encountered empty MBB, no need to dump Bundle info, this could be an
+    // empty back-edge
+    return;
+  }
+
+  ORE->emit([&]() {
+    return MachineOptimizationRemarkAnalysis(DEBUG_TYPE, "analysis",
+                                             MBB.begin()->getDebugLoc(), &MBB)
+           << ore::NV("BasicBlock", MBB.getName())
+           << ore::NV("BundleCount", BundleCount)
+           << ore::NV("ByteCount", ByteCount);
+  });
+}
+
+void AIEBaseAsmPrinter::emitBasicBlockStart(const MachineBasicBlock &MBB) {
+  emitBundleCount(MBB);
+  AsmPrinter::emitBasicBlockStart(MBB);
 }

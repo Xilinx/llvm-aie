@@ -1,26 +1,27 @@
-//===-- AIE2AddrSpace.h - Define Address Space for AIEngine V2 ---*- C++-*-===//
+//===-- AIE2CommonAddrSpace.h - AIE2 Common Address Space -------*- C++-*-===//
 //
 // This file is licensed under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
-// This file declares the AIEngine V2 Address Space and DM banks
+// This file declares the common Address Space and DM banks shared across
+// AIE2 variants (AIE2, AIE2P, AIE2PS).
 //
 //===----------------------------------------------------------------------===//
+
+#ifndef LLVM_SUPPORT_AIE2COMMONADDRSPACE_H
+#define LLVM_SUPPORT_AIE2COMMONADDRSPACE_H
 
 #include "AIEBaseAddrSpaceInfo.h"
 #include <bitset>
 
-#ifndef LLVM_SUPPORT_AIE2ADDRSPACE_H
-#define LLVM_SUPPORT_AIE2ADDRSPACE_H
-
 namespace llvm {
 
-namespace AIE2 {
+namespace AIE2X {
 
 enum class AddressSpaces {
   none, // Default address space
@@ -43,14 +44,15 @@ enum class AddressSpaces {
 
 enum class AIEBanks { A, B, C, D, TileMemory };
 
-} // end namespace AIE2
+} // end namespace AIE2X
 
-class AIE2AddrSpaceInfo final : public AIEBaseAddrSpaceInfo {
+/// Common address space information shared across AIE2 variants
+class AIE2CommonAddrSpaceInfo : public AIEBaseAddrSpaceInfo {
 
 public:
   MemoryBankBits getDefaultMemoryBank() const override {
     std::bitset<32> MemoryBanks;
-    using namespace AIE2;
+    using namespace AIE2X;
     MemoryBanks.set(static_cast<unsigned>(AIEBanks::A))
         .set(static_cast<unsigned>(AIEBanks::B))
         .set(static_cast<unsigned>(AIEBanks::C))
@@ -61,7 +63,7 @@ public:
   MemoryBankBits
   getMemoryBanksFromAddressSpace(unsigned AddrSpace) const override {
     std::bitset<32> MemoryBanks;
-    using namespace AIE2;
+    using namespace AIE2X;
     switch (static_cast<AddressSpaces>(AddrSpace)) {
     case AddressSpaces::a:
       MemoryBanks.set(static_cast<unsigned>(AIEBanks::A));
@@ -113,4 +115,4 @@ public:
 
 } // end namespace llvm
 
-#endif // LLVM_SUPPORT_AIE2ADDRSPACE_H
+#endif // LLVM_SUPPORT_AIE2COMMONADDRSPACE_H

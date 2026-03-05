@@ -21,6 +21,7 @@
 #include "AIERegMemEventTracker.h"
 #include "Utils/AIELoopUtils.h"
 #include "aie1/AIE1Subtarget.h"
+#include "aie2/AIE2Subtarget.h"
 #include "aie2p/AIE2PSubtarget.h"
 #include "aie2ps/AIE2PSSubtarget.h"
 #include "llvm/CodeGen/MachineInstr.h"

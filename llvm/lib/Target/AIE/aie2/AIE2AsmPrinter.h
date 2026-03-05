@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -21,9 +21,6 @@
 namespace llvm {
 
 class AIE2AsmPrinter : public AIEBaseAsmPrinter {
-  // Dump Bundle Count to Optimization Remarks
-  void emitBundleCount(const MachineBasicBlock &MBB);
-
 public:
   explicit AIE2AsmPrinter(TargetMachine &TM,
                           std::unique_ptr<MCStreamer> Streamer)
@@ -31,21 +28,19 @@ public:
 
   StringRef getPassName() const override { return "AIE2 Assembly Printer"; }
 
-  bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
-                       const char *ExtraCode, raw_ostream &OS) override;
-  bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
-                             const char *ExtraCode, raw_ostream &OS) override;
-
   bool lowerPseudoInstExpansion(const MachineInstr *MI, MCInst &Inst) override;
 
   // Wrapper needed for tblgenned pseudo lowering.
   bool lowerOperand(const MachineOperand &MO, MCOperand &MCOp) const;
-
-  void emitBasicBlockStart(const MachineBasicBlock &MBB) override;
 };
 
 AsmPrinter *createAIE2AsmPrinterPass(TargetMachine &TM,
                                      std::unique_ptr<MCStreamer> &&Streamer);
+
+void RegisterAIE2AsmPrinter();
+void RegisterAIE2PAsmPrinter();
+void RegisterAIE2PSAsmPrinter();
+
 } // namespace llvm
 
 #endif // #define LLVM_LIB_TARGET_AIE2_AIE2ASMPRINTER_H

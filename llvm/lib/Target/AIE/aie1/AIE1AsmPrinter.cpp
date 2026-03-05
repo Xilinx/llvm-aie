@@ -13,9 +13,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "AIE1AsmPrinter.h"
 #include "AIE.h"
 #include "AIE1TargetMachine.h"
-#include "AIE2AsmPrinter.h"
 #include "AIEBaseAsmPrinter.h"
 #include "InstPrinter/AIEInstPrinter.h"
 #include "llvm/CodeGen/AsmPrinter.h"
@@ -43,11 +43,6 @@ public:
 
   StringRef getPassName() const override { return "AIE Assembly Printer"; }
 
-  bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
-                       const char *ExtraCode, raw_ostream &OS) override;
-  bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
-                             const char *ExtraCode, raw_ostream &OS) override;
-
   bool lowerPseudoInstExpansion(const MachineInstr *MI, MCInst &Inst) override;
 
   // Wrapper needed for tblgenned pseudo lowering.
@@ -61,49 +56,7 @@ public:
 // instructions) auto-generated.
 #include "AIEGenMCPseudoLowering.inc"
 
-bool AIEAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
-                                    const char *ExtraCode, raw_ostream &OS) {
-  // First try the generic code, which knows about modifiers like 'c' and 'n'.
-  if (!AsmPrinter::PrintAsmOperand(MI, OpNo, ExtraCode, OS))
-    return false;
-
-  const MachineOperand &MO = MI->getOperand(OpNo);
-  switch (MO.getType()) {
-  case MachineOperand::MO_Immediate:
-    OS << MO.getImm();
-    return false;
-  case MachineOperand::MO_Register:
-    OS << AIEInstPrinter::getRegisterName(MO.getReg());
-    return false;
-  default:
-    break;
-  }
-
-  return true;
-}
-
-bool AIEAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
-                                          const char *ExtraCode,
-                                          raw_ostream &OS) {
-  if (!ExtraCode) {
-    const MachineOperand &MO = MI->getOperand(OpNo);
-    // For now, we only support register memory operands in registers and
-    // assume there is no addend
-    if (!MO.isReg())
-      return true;
-
-    OS << "0(" << AIEInstPrinter::getRegisterName(MO.getReg()) << ")";
-    return false;
-  }
-
-  return AsmPrinter::PrintAsmMemoryOperand(MI, OpNo, ExtraCode, OS);
-}
-
-// Force static initialization.
-extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIEAsmPrinter() {
+// Registration function called from AIEAsmPrinterInit.cpp
+void llvm::RegisterAIE1AsmPrinter() {
   RegisterAsmPrinter<AIEAsmPrinter> X(getTheAIETarget());
-  RegisterAsmPrinter<AIE2AsmPrinter> Y(getTheAIE2Target());
-  // FIXME using AIE2AsmPrinter for AIE2P and AIE2PS target
-  RegisterAsmPrinter<AIE2AsmPrinter> A(getTheAIE2PTarget());
-  RegisterAsmPrinter<AIE2AsmPrinter> B(getTheAIE2PSTarget());
 }

@@ -14,15 +14,17 @@
 
 #ifndef LLVM_LIB_TARGET_AIE2PS_AIE2PSSUBTARGET_H
 #define LLVM_LIB_TARGET_AIE2PS_AIE2PSSUBTARGET_H
+#include "AIE2CommonAddrSpace.h"
 #include "AIE2PS.h"
 #include "AIE2PSFrameLowering.h"
 #include "AIE2PSISelLowering.h"
 #include "AIE2PSInstrInfo.h"
 #include "AIE2PSRegisterInfo.h"
-#include "AIE2Subtarget.h"
+#include "AIEBaseSubtarget.h"
 #include "llvm/CodeGen/GlobalISel/CallLowering.h"
 #include "llvm/CodeGen/GlobalISel/InstructionSelector.h"
 #include "llvm/CodeGen/GlobalISel/LegalizerInfo.h"
+#include "llvm/CodeGen/SelectionDAGTargetInfo.h"
 
 #define GET_SUBTARGETINFO_HEADER
 #include "AIE2PSGenSubtargetInfo.inc"
@@ -33,8 +35,7 @@ class StringRef;
 class AIE2PSSubtarget : public AIE2PSGenSubtargetInfo, public AIEBaseSubtarget {
   virtual void anchor();
   std::string CPUName;
-  // FIXME: Do we need a custom AIE2PSAddrSpaceInfo?
-  AIE2AddrSpaceInfo AddrSpaceInfo;
+  AIE2CommonAddrSpaceInfo AddrSpaceInfo;
   AIE2PSFrameLowering FrameLowering;
   AIE2PSInstrInfo InstrInfo;
   AIE2PSRegisterInfo RegInfo;

@@ -4,13 +4,13 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
-#include "AIE2.h"
-#include "AIE2InstrInfo.h"
 #include "AIEHazardRecognizer.h"
 #include "MCTargetDesc/AIEFormat.h"
+#include "aie2/AIE2.h"
+#include "aie2/AIE2InstrInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/ResourceScoreboard.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"

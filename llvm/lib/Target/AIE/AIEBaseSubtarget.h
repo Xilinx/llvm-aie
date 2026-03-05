@@ -49,6 +49,16 @@ public:
   virtual const AIEBaseInstrInfo *getInstrInfo() const = 0;
   virtual const AIEBaseAddrSpaceInfo &getAddrSpaceInfo() const = 0;
   AIEABI::ABI getTargetABI() const { return TargetABI; }
+
+  /// Find the target operand flags that describe how a global value should be
+  /// referenced for the current subtarget.
+  unsigned classifyGlobalReference(const GlobalValue *GV,
+                                   const TargetMachine &TM) const {
+    if (!TM.shouldAssumeDSOLocal(GV)) {
+      return AIEII::MO_GLOBAL;
+    }
+    return AIEII::MO_None;
+  }
   bool isAIE1() const { return (TargetTriple.isAIE1()); }
   bool isAIE2() const { return (TargetTriple.isAIE2()); }
   bool isAIE2P() const { return (TargetTriple.isAIE2P()); }

@@ -15,7 +15,7 @@
 #ifndef LLVM_LIB_TARGET_AIE2_AIE2SUBTARGET_H
 #define LLVM_LIB_TARGET_AIE2_AIE2SUBTARGET_H
 #include "AIE2.h"
-#include "AIE2AddrSpace.h"
+#include "AIE2CommonAddrSpace.h"
 #include "AIE2FrameLowering.h"
 #include "AIE2ISelLowering.h"
 #include "AIE2InstrInfo.h"
@@ -39,7 +39,7 @@ class StringRef;
 class AIE2Subtarget : public AIE2GenSubtargetInfo, public AIEBaseSubtarget {
   virtual void anchor();
   std::string CPUName;
-  AIE2AddrSpaceInfo AddrSpaceInfo;
+  AIE2CommonAddrSpaceInfo AddrSpaceInfo;
   AIE2FrameLowering FrameLowering;
   AIE2InstrInfo InstrInfo;
   AIE2RegisterInfo RegInfo;
