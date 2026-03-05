@@ -179,8 +179,9 @@ body:             |
     ; CHECK: liveins: $cml0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:acc1024 = COPY $cml0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:acc2048 = COPY [[COPY]]
-    ; CHECK-NEXT: $dm0 = COPY [[COPY1]]
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:acc512 = COPY [[COPY]].sub_512_acc_lo
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:acc2048 = REG_SEQUENCE [[COPY1]], %subreg.sub_512_acc_lo
+    ; CHECK-NEXT: $dm0 = COPY [[REG_SEQUENCE]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $dm0
     %0:acc1024 = COPY $cml0
     %1:acc512 = COPY %0.sub_512_acc_lo
