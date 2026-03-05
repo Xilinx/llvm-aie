@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -63,6 +63,12 @@ static cl::opt<unsigned>
 static cl::opt<unsigned> PreferSwpOverUnroll(
     "aie-prefer-swp-over-unroll", cl::Hidden, cl::init(9),
     cl::desc("Aim for pipelining if MinIterCount is at least this value."));
+
+static cl::opt<bool> MergeCongruentIVs(
+    "aie-merge-congruent-ivs", cl::Hidden, cl::init(false),
+    cl::desc("Override AIE's default behavior for congruent IV merging. "
+             "When set, allows merging even when IVs have separate load/store "
+             "uses."));
 
 bool AIETTICommon::isLoweredToCall(const Function *F) {
 
@@ -295,4 +301,78 @@ InstructionCost AIETTICommon::getMemoryOpCost(unsigned Opcode, Type *Src,
 
   // For aligned loads, return invalid to let the base implementation handle it
   return InstructionCost::getInvalid();
+}
+
+// Standalone helper function for AIE congruent IV merging decision
+bool llvm::shouldMergeCongruentIVsImpl(const PHINode *IV1, const PHINode *IV2) {
+  // Check if command-line override is set
+  if (MergeCongruentIVs)
+    return true; // Use explicit override value
+
+  // AIE-specific rule: Keep separate pointer IVs when one is used for loads
+  // and the other for stores. This enables better instruction scheduling and
+  // allows independent address generation units to work in parallel.
+
+  // Helper to analyze if a pointer IV is used for loads and/or stores
+  auto AnalyzePointerUses = [](const PHINode *IV) -> std::pair<bool, bool> {
+    bool HasLoads = false;
+    bool HasStores = false;
+
+    SmallPtrSet<const Value *, 16> Visited;
+    SmallVector<const Value *, 16> Worklist;
+    Worklist.push_back(IV);
+    Visited.insert(IV);
+
+    while (!Worklist.empty()) {
+      const Value *V = Worklist.pop_back_val();
+
+      for (const Use &U : V->uses()) {
+        const User *Usr = U.getUser();
+
+        if (auto *LI = dyn_cast<LoadInst>(Usr)) {
+          HasLoads |= LI->getPointerOperand() == V;
+        } else if (auto *SI = dyn_cast<StoreInst>(Usr)) {
+          HasStores |= SI->getPointerOperand() == V;
+        } else if (isa<GetElementPtrInst>(Usr) || isa<BitCastInst>(Usr)) {
+          if (Visited.insert(Usr).second)
+            Worklist.push_back(Usr);
+        }
+
+        // Early exit: if we found both loads and stores, no need to continue
+        if (HasLoads && HasStores)
+          return {true, true};
+      }
+    }
+
+    return {HasLoads, HasStores};
+  };
+
+  // Analyze IV1 first
+  auto [IV1HasLoads, IV1HasStores] = AnalyzePointerUses(IV1);
+
+  // Early return: If IV1 has both loads and stores, it can't be separated
+  if (IV1HasLoads && IV1HasStores)
+    return true; // OK to merge - IV1 is mixed
+
+  // Early return: If IV1 has neither loads nor stores, merge is OK
+  if (!IV1HasLoads && !IV1HasStores)
+    return true;
+
+  // IV1 is pure (only loads OR only stores), check IV2
+  auto [IV2HasLoads, IV2HasStores] = AnalyzePointerUses(IV2);
+
+  // Don't merge if they're separated: one load-only, other store-only
+  if (IV1HasLoads && !IV1HasStores && IV2HasStores && !IV2HasLoads) {
+    LLVM_DEBUG(dbgs() << "AIE TTI: Not merging congruent IVs - "
+                      << "keeping separate load/store pointers\n");
+    return false;
+  }
+
+  if (IV1HasStores && !IV1HasLoads && IV2HasLoads && !IV2HasStores) {
+    LLVM_DEBUG(dbgs() << "AIE TTI: Not merging congruent IVs - "
+                      << "keeping separate load/store pointers\n");
+    return false;
+  }
+
+  return true; // OK to merge in all other cases
 }
