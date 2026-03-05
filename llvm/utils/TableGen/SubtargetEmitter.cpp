@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -27,6 +27,7 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/MC/MCSchedule.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
@@ -44,6 +45,11 @@
 using namespace llvm;
 
 #define DEBUG_TYPE "subtarget-emitter"
+
+static cl::opt<std::string>
+    STIBaseClass("base-subtargetinfo-class",
+                 cl::desc("Base SubtargetInfo class to derive from"),
+                 cl::value_desc("Base class"), cl::init("TargetSubtargetInfo"));
 
 namespace {
 
@@ -2142,7 +2148,7 @@ void SubtargetEmitter::run(raw_ostream &OS) {
      << "unsigned resolveVariantSchedClassImpl(unsigned SchedClass,"
      << " const MCInst *MI, const MCInstrInfo *MCII, unsigned CPUID);\n"
      << "} // end namespace " << Target << "_MC\n\n";
-  OS << "struct " << ClassName << " : public TargetSubtargetInfo {\n"
+  OS << "struct " << ClassName << " : public " << STIBaseClass << " {\n"
      << "  explicit " << ClassName << "(const Triple &TT, StringRef CPU, "
      << "StringRef TuneCPU, StringRef FS);\n"
      << "public:\n"
@@ -2198,10 +2204,10 @@ void SubtargetEmitter::run(raw_ostream &OS) {
      << "StringRef TuneCPU, StringRef FS)\n";
 
   if (Target == "AArch64")
-    OS << "  : TargetSubtargetInfo(TT, AArch64::resolveCPUAlias(CPU),\n"
+    OS << "  : " << STIBaseClass << "(TT, AArch64::resolveCPUAlias(CPU),\n"
        << "                        AArch64::resolveCPUAlias(TuneCPU), FS, ";
   else
-    OS << "  : TargetSubtargetInfo(TT, CPU, TuneCPU, FS, ";
+    OS << "  : " << STIBaseClass << "(TT, CPU, TuneCPU, FS, ";
   if (NumNames)
     OS << "ArrayRef(" << Target << "Names, " << NumNames << "), ";
   else
