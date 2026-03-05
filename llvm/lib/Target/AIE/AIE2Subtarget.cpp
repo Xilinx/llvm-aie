@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -45,7 +45,7 @@ AIE2Subtarget &AIE2Subtarget::initializeSubtargetDependencies(
 AIE2Subtarget::AIE2Subtarget(const Triple &TT, StringRef CPU, StringRef TuneCPU,
                              StringRef FS, StringRef ABIName,
                              const TargetMachine &TM)
-    : AIE2GenSubtargetInfo(TT, CPU, TuneCPU, FS), AIEBaseSubtarget(TT),
+    : AIE2GenSubtargetInfo(TT, CPU, TuneCPU, FS),
       FrameLowering(initializeSubtargetDependencies(TT, CPU, FS, ABIName)),
       InstrInfo(), RegInfo(getHwMode()),
       TLInfo(TM, initializeSubtargetDependencies(TT, CPU, FS, ABIName)),

@@ -44,7 +44,7 @@ AIE2PSSubtarget &AIE2PSSubtarget::initializeSubtargetDependencies(
 AIE2PSSubtarget::AIE2PSSubtarget(const Triple &TT, StringRef CPU,
                                  StringRef TuneCPU, StringRef FS,
                                  StringRef ABIName, const TargetMachine &TM)
-    : AIE2PSGenSubtargetInfo(TT, CPU, TuneCPU, FS), AIEBaseSubtarget(TT),
+    : AIE2PSGenSubtargetInfo(TT, CPU, TuneCPU, FS),
       FrameLowering(initializeSubtargetDependencies(TT, CPU, FS, ABIName)),
       InstrInfo(), RegInfo(getHwMode()),
       TLInfo(TM, initializeSubtargetDependencies(TT, CPU, FS, ABIName)),
