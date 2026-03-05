@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -22,16 +22,16 @@ def ptr0 : PtrValueType<i20, 0>;
 // Registers, calling conventions, instruction descriptions.
 //===----------------------------------------------------------------------===//
 
-include "AIE2RegisterInfo.td"
-include "AIE2Schedule.td"
-include "AIE2CallingConv.td"
-include "AIE2RegisterBanks.td"
+include "aie2/AIE2RegisterInfo.td"
+include "aie2/AIE2Schedule.td"
+include "aie2/AIE2CallingConv.td"
+include "aie2/AIE2RegisterBanks.td"
 
 class AIEGenericInstruction : GenericInstruction {
   let Namespace = "AIE2";
 }
 include "AIEInstrGISel.td"
-include "AIE2InstrInfo.td"
+include "aie2/AIE2InstrInfo.td"
 
 include "AIECombine.td"
 

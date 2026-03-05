@@ -24,7 +24,7 @@ tablegen(LLVM AIEGenRegisterInfo.inc -gen-register-info -base-registerinfo-class
 tablegen(LLVM AIEGenSubtargetInfo.inc -gen-subtarget)
 #tablegen(LLVM AIEGenSystemOperands.inc -gen-searchable-tables)
 #aie2
-set(LLVM_TARGET_DEFINITIONS AIE2.td)
+set(LLVM_TARGET_DEFINITIONS aie2/AIE2.td)
 tablegen(LLVM AIE2GenAsmMatcher.inc -gen-asm-matcher)
 tablegen(LLVM AIE2GenAsmWriter.inc -gen-asm-writer)
 tablegen(LLVM AIE2GenPreLegalizerGICombiner.inc -gen-global-isel-combiner
@@ -73,7 +73,7 @@ tablegen(LLVM AIE2PGenAsmMatcher.inc -gen-asm-matcher)
 tablegen(LLVM AIE2PGenVarInstructionItin.inc -gen-aie-alternate-itinerary-emitter)
 
 # aie2ps 
-set(LLVM_TARGET_DEFINITIONS AIE2PS.td)
+set(LLVM_TARGET_DEFINITIONS aie2ps/AIE2PS.td)
 tablegen(LLVM AIE2PSGenInstrInfo.inc -gen-instr-info -base-instrinfo-class AIEBaseInstrInfo)
 tablegen(LLVM AIE2PSGenRegisterInfo.inc -gen-register-info -base-registerinfo-class AIEBaseRegisterInfo)
 tablegen(LLVM AIE2PSGenRegisterBank.inc -gen-register-bank -base-register-bank-class AIEBaseRegisterBankInfo)

@@ -42,7 +42,7 @@ let Namespace = "AIE2PS" in
 }
 
 // Include manually written file defining a target's slot instruction
-include "AIE2PSSlotInclude.td"
+include "aie2ps/AIE2PSSlotInclude.td"
 
 class AIE2PSInst<dag outs, dag ins, string opcodestr, string argstr>
     : AIEBaseInst <outs, ins, [], opcodestr, argstr, "AIE2PS"> {}

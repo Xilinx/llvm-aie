@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -46,7 +46,7 @@ class AIE2VReg<bits<4> Enc, string n, list<Register> subregs = []> : Register<n>
   let SubRegs = subregs;
 }
 
-include "AIE2GenRegisterInfo.td"
+include "aie2/AIE2GenRegisterInfo.td"
 
 def VEC128 : AIE2Vector128RegisterClass<(add mQQm, mQQa, mQQs)>;
 def VEC256 : AIE2Vector256RegisterClass<(add mWm, mWa, mWb, mWs)>;

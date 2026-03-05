@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //* Automatically generated file, do not edit! *
@@ -1136,7 +1136,7 @@ class AIE2PS__instr128__lda__ldb__st__alu__mv__vec<dag slot_ins>
  let instr128 = {lda, ldb, st, alu, mv, 0b1, vec};
 }
 
-include "AIE2PSCompositeFormatsInclude.td"
+include "aie2ps/AIE2PSCompositeFormatsInclude.td"
 
 def I32_LDA : AIE2PS__instr32__lda<(ins lda_slot:$lda)>;
 def I32_LDB : AIE2PS__instr32__ldb<(ins ldb_slot:$ldb)>;

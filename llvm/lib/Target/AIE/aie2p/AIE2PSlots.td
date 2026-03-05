@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===---------------------------------------------------------------------===//
 //* Automatically generated file, do not edit! *
@@ -42,7 +42,7 @@ let Namespace = "AIE2P" in
 }
 
 // Include manually written file defining a target's slot instruction
-include "AIE2PSlotInclude.td"
+include "aie2p/AIE2PSlotInclude.td"
 
 class AIE2PInst<dag outs, dag ins, string opcodestr, string argstr>
     : AIEBaseInst <outs, ins, [], opcodestr, argstr, "AIE2P"> {}

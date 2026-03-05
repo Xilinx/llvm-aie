@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -361,13 +361,13 @@ class AIE2_ag_no_imm__ag_pstm_3d : AIE2_ag_no_imm, AIE_HasTiedSubregister {
   let ag_no_imm = {ptr, 0b0, mod, 0b11};
 }
 
-include "AIE2RegOperandDef.td"
-include "AIE2InstrFormats.td"
-include "AIE2GenInstrInfo.td"
-include "AIE2CompositeFormats.td"
+include "aie2/AIE2RegOperandDef.td"
+include "aie2/AIE2InstrFormats.td"
+include "aie2/AIE2GenInstrInfo.td"
+include "aie2/AIE2CompositeFormats.td"
 // Manual fixes to the auto-generated files
-include "AIE2GenFixupInstrInfo.td"
-include "AIE2MultiSlotPseudoInstrInfo.td"
+include "aie2/AIE2GenFixupInstrInfo.td"
+include "aie2/AIE2MultiSlotPseudoInstrInfo.td"
 
 //Intrinsics
 let Itinerary = II_EVENT, hasSideEffects = 1, mayLoad = 0, mayStore = 0 in {
@@ -626,4 +626,4 @@ foreach instr = [VST_3D_SRS_D8_S32, VST_3D_SRS_D16_S64, VST_3D_SRS_D16_S32,
                  PADDA_3D, PADDB_3D, PADDS_3D] in
     def instr # _split : Split3DInstr<instr, /*opidx=*/4>;
 
-include "AIE2InstrPatterns.td"
+include "aie2/AIE2InstrPatterns.td"
