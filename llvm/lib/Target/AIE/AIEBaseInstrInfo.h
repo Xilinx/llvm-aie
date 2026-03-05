@@ -252,6 +252,9 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
     llvm_unreachable(
         "Target didn't implement getGenericBroadcastVectorOpcode!");
   }
+  /// Return true if the target has a native 1024-bit broadcast instruction.
+  /// Defaults to false so targets must opt-in.
+  virtual bool supportsNative1024Broadcast() const { return false; }
   /// Return the opcode to be used for select between the words of two vectors.
   virtual unsigned getGenericVSelOpcode() const {
     llvm_unreachable("Target didn't implement getGenericVSelOpcode!");

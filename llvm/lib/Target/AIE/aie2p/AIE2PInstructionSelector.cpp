@@ -156,13 +156,11 @@ private:
                        std::optional<APInt> Immediate, bool IsSigned);
   bool canCombineSRS(MachineInstr &MemOp, MachineInstr &CombOp,
                      MachineRegisterInfo &MRI);
-  bool selectG_AIE_LOAD_UNPACK(MachineInstr &UNPACKI, MachineRegisterInfo &MRI);
-  std::optional<LoadStoreOpcodes>
-  getCombinedOpcodeUNPACKLoad(const MachineInstr &MemOp,
-                              const MachineInstr &CombOp,
-                              std::optional<APInt> Immediate, bool IsSigned);
-  bool canCombineUNPACKLoad(MachineInstr &MemOp, MachineInstr &CombOp,
-                            MachineRegisterInfo &MRI);
+  std::optional<LoadStoreOpcodes> getCombinedOpcodeUNPACKLoad(
+      const MachineInstr &MemOp, const MachineInstr &CombOp,
+      std::optional<APInt> Immediate, bool IsSigned) override;
+  void selectUnpackSizeCtrlRegister(MachineInstr &UNPACKI) override;
+  std::optional<Register> getUnpackSignRegister() const override;
 
   const AIE2PInstrInfo &TII;
   const AIE2PRegisterInfo &TRI;
@@ -585,17 +583,25 @@ bool AIE2PInstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
                                                     MachineRegisterInfo &MRI,
                                                     unsigned crUPSModeVal) {
 
-  // First use is the G_INTRINSIC_W_SIDE_EFFECTS ID
-  Register LoadResult = (std::next(UPSI.uses().begin()))->getReg();
+  // Operand 0 is the def, operand 1 is the intrinsic ID, operand 2 is the
+  // source register (loaded value).
+  Register LoadResult = UPSI.getOperand(2).getReg();
   MachineInstr *LoadOp = getDefIgnoringCopiesAndBitcasts(LoadResult, MRI);
+  MachineInstr *InsertionPoint = &UPSI;
 
   assert(LoadOp && "Expected SSA.");
 
   // Do not try to combine if one of the load's defs is used by another
   // instruction between the load and the VUPS or if there is a store
   // between the load and the VUPS.
-  if (!canDelayMemOp(*LoadOp, UPSI, MRI))
-    return false;
+  if (!canDelayMemOp(*LoadOp, UPSI, MRI)) {
+    // If we cannot delay the load, we can try to advance the combined
+    // instruction to the load's position.
+    if (canAdvanceOp(*LoadOp, UPSI, MRI, /*SideEffectsAreChecked=*/true))
+      InsertionPoint = LoadOp;
+    else
+      return false;
+  }
 
   if (!canCombineUPS(*LoadOp, UPSI, MRI))
     return false;
@@ -633,7 +639,7 @@ bool AIE2PInstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
   // Selects the mode of the accumulator for UPS instructions
   // 0 – 32-bit accumulator lane
   // 1 – 64-bit accumulator lane
-  MIB.setInstr(UPSI);
+  MIB.setInstr(*InsertionPoint);
   setCtrlRegister(MIB, AIE2P::crUPSMode, crUPSModeVal);
 
   auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
@@ -3153,69 +3159,8 @@ AIE2PInstructionSelector::getCombinedOpcodeUNPACKLoad(
   return {};
 }
 
-bool AIE2PInstructionSelector::canCombineUNPACKLoad(MachineInstr &MemOp,
-                                                    MachineInstr &CombOp,
-                                                    MachineRegisterInfo &MRI) {
-  Register LoadResult = MemOp.defs().begin()->getReg();
-  if (MemOp.getParent() != CombOp.getParent() || !MRI.hasOneUse(LoadResult))
-    return false;
-
-  const std::optional<APInt> NoImmediate = {};
-  const bool IsSigned = false;
-  return getCombinedOpcodeUNPACKLoad(MemOp, CombOp, NoImmediate, IsSigned)
-      .has_value();
-}
-
-bool AIE2PInstructionSelector::selectG_AIE_LOAD_UNPACK(
-    MachineInstr &UNPACKI, MachineRegisterInfo &MRI) {
-  Register LoadResult = (std::next(UNPACKI.uses().begin()))->getReg();
-  MachineInstr *LoadOp = getDefIgnoringCopiesAndBitcasts(LoadResult, MRI);
-  // Should we build the instruction at load's position?
-  bool ShouldAdvanceOp = false;
-
-  assert(LoadOp && "Expected SSA.");
-
-  // Do not try to combine if one of the load's defs is used by another
-  // instruction between the load and the VUNPACK or if there is a store
-  // between the load and the VUNPACK.
-  if (!canDelayMemOp(*LoadOp, UNPACKI, MRI)) {
-    // If we cannot delay the load, we can try to advance the combined
-    // instruction to the load's position.
-    if (canAdvanceOp(*LoadOp, UNPACKI, MRI))
-      ShouldAdvanceOp = true;
-    else
-      return false;
-  }
-
-  if (!canCombineUNPACKLoad(*LoadOp, UNPACKI, MRI))
-    return false;
-
-  std::optional<AddressingModeInfo> AMI =
-      getOrDefineAddressingRegister(*LoadOp, MRI);
-  if (!AMI)
-    return false;
-
-  Register DstReg = UNPACKI.getOperand(0).getReg();
-  // In this case of G_INTRINSIC operand 1 is target intrinsic
-  // In this case the operand 2 is the source register which is the loaded value
-  Register SignReg = UNPACKI.getOperand(3).getReg();
-
-  auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI);
-  bool ConstantSign = SignVal ? true : false;
-  std::optional<LoadStoreOpcodes> LSO = getCombinedOpcodeUNPACKLoad(
-      *LoadOp, UNPACKI, AMI->ImmediateOffset,
-      ConstantSign ? SignVal.value().Value == 0x1 : false);
-
-  assert(LSO && "Unexpected VLDB.UNPACK combine failure");
-
-  if (ShouldAdvanceOp)
-    MIB.setInstr(*LoadOp);
-  else
-    MIB.setInstr(UNPACKI);
-
-  // Selects the size of the UNPACK instructions
-  // 0 – Source is 4 bits
-  // 1 – Source is 8 bits
+void AIE2PInstructionSelector::selectUnpackSizeCtrlRegister(
+    MachineInstr &UNPACKI) {
   switch (cast<GIntrinsic>(UNPACKI).getIntrinsicID()) {
   case Intrinsic::aie2p_unpack_I512_I8_I4:
   case Intrinsic::aie2p_unpack_I1024_I8_I4:
@@ -3224,28 +3169,15 @@ bool AIE2PInstructionSelector::selectG_AIE_LOAD_UNPACK(
   case Intrinsic::aie2p_unpack_I512_I16_I8:
   case Intrinsic::aie2p_unpack_I1024_I16_I8:
     setCtrlRegister(MIB, AIE2P::crUnpackSize, 1);
+    break;
+  default:
+    break;
   }
+}
 
-  auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
-
-  NewInstr.addDef(DstReg);
-
-  for (auto *Def = std::next(LoadOp->defs().begin());
-       Def != LoadOp->defs().end(); ++Def) {
-    NewInstr.addDef(Def->getReg());
-  }
-
-  addAddressingMode(NewInstr, *AMI, LSO->FitsImmediateRange, false, MRI);
-
-  NewInstr.cloneMemRefs(*LoadOp);
-
-  if (!ConstantSign)
-    setUnsetCtrlRegister(MIB, *NewInstr, MRI, AIE2P::unpackSign0, SignReg);
-
-  UNPACKI.eraseFromParent();
-  makeDeadMI(*LoadOp, MRI);
-
-  return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
+std::optional<Register>
+AIE2PInstructionSelector::getUnpackSignRegister() const {
+  return AIE2P::unpackSign0;
 }
 
 bool AIE2PInstructionSelector::selectG_AIE_BROADCAST_VECTOR(
@@ -3650,7 +3582,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeUPS(
 bool AIE2PInstructionSelector::canCombineUPS(MachineInstr &LoadOp,
                                              MachineInstr &UPSI,
                                              MachineRegisterInfo &MRI) {
-  Register LoadResult = (std::next(UPSI.uses().begin()))->getReg();
+  Register LoadResult = UPSI.getOperand(2).getReg();
   if (LoadOp.getParent() != UPSI.getParent() || !MRI.hasOneUse(LoadResult)) {
     return false;
   }

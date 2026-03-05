@@ -146,10 +146,10 @@ private:
                         bool Is32Lanes);
   bool canCombinePACK(MachineInstr &MemOp, MachineInstr &CombOp);
   bool canCombineUNPACKLoad(MachineInstr &MemOp, MachineInstr &CombOp,
-                            MachineRegisterInfo &MRI);
+                            MachineRegisterInfo &MRI) override;
   std::optional<LoadStoreOpcodes> getCombinedOpcodeUNPACKLoad(
       const MachineInstr &MemOp, const MachineInstr &CombOp,
-      std::optional<APInt> Immediate, MachineRegisterInfo &MRI);
+      std::optional<APInt> Immediate, bool IsSigned) override;
 
   // const AIE2TargetMachine &TM;
   const AIE2InstrInfo &TII;
@@ -629,7 +629,7 @@ bool AIE2InstructionSelector::selectVPACK(MachineInstr &I,
 std::optional<LoadStoreOpcodes>
 AIE2InstructionSelector::getCombinedOpcodeUNPACKLoad(
     const MachineInstr &MemOp, const MachineInstr &CombOp,
-    std::optional<APInt> Immediate, MachineRegisterInfo &MRI) {
+    std::optional<APInt> Immediate, bool IsSigned) {
 
   const bool NoImmediate = false;
   if (CombOp.getOpcode() != AIE2::G_INTRINSIC ||
@@ -645,10 +645,8 @@ AIE2InstructionSelector::getCombinedOpcodeUNPACKLoad(
   assert(getLoadStoreSize(MemOp) == 256 && "Unexpected VLDA.UNPACK size");
 
   unsigned ISelOpcode;
-  Register SignReg = CombOp.getOperand(3).getReg();
 
-  auto Sign = getIConstantVRegValWithLookThrough(SignReg, MRI);
-  if (Sign && Sign->Value.getZExtValue()) {
+  if (IsSigned) {
     if (cast<GIntrinsic>(CombOp).getIntrinsicID() ==
         Intrinsic::aie2_unpack_I8_I4) {
       switch (MemOp.getOpcode()) {
@@ -722,16 +720,21 @@ bool AIE2InstructionSelector::canCombineUNPACKLoad(MachineInstr &MemOp,
                                                    MachineInstr &CombOp,
                                                    MachineRegisterInfo &MRI) {
   const std::optional<APInt> NoImmediate = {};
-  return getCombinedOpcodeUNPACKLoad(MemOp, CombOp, NoImmediate, MRI)
+
+  // Determine if the operation is signed by checking the SignReg
+  Register SignReg = CombOp.getOperand(3).getReg();
+  auto Sign = getIConstantVRegValWithLookThrough(SignReg, MRI);
+  bool IsSigned = Sign && Sign->Value.getZExtValue();
+
+  return getCombinedOpcodeUNPACKLoad(MemOp, CombOp, NoImmediate, IsSigned)
       .has_value();
 }
 
 bool AIE2InstructionSelector::selectG_AIE_LOAD_UNPACK(
     MachineInstr &UNPACKI, MachineRegisterInfo &MRI) {
-  Register LoadResult = (std::next(UNPACKI.uses().begin()))->getReg();
+  Register LoadResult = UNPACKI.getOperand(2).getReg();
   MachineInstr *LoadOp = getDefIgnoringCopiesAndBitcasts(LoadResult, MRI);
-  // Should we build the instruction at load's position?
-  bool ShouldAdvanceOp = false;
+  MachineInstr *InsertionPoint = &UNPACKI;
 
   assert(LoadOp && "Expected SSA.");
 
@@ -742,7 +745,7 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_UNPACK(
     // If we cannot delay the load, we can try to advance the combined
     // instruction to the load's position.
     if (canAdvanceOp(*LoadOp, UNPACKI, MRI))
-      ShouldAdvanceOp = true;
+      InsertionPoint = LoadOp;
     else
       return false;
   }
@@ -756,16 +759,19 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_UNPACK(
   if (!AMI)
     return false;
 
+  // Determine if the operation is signed by checking the SignReg
+  Register SignReg = UNPACKI.getOperand(3).getReg();
+  auto Sign = getIConstantVRegValWithLookThrough(SignReg, MRI);
+  bool IsSigned = Sign && Sign->Value.getZExtValue();
+
   std::optional<LoadStoreOpcodes> LSO = getCombinedOpcodeUNPACKLoad(
-      AMI->MemI, UNPACKI, AMI->ImmediateOffset, MRI);
+      AMI->MemI, UNPACKI, AMI->ImmediateOffset, IsSigned);
 
   assert(LSO && "Unexpected VLDB.UNPACK combine failure");
 
   Register DstReg = UNPACKI.getOperand(0).getReg();
-  Register SignReg = UNPACKI.getOperand(3).getReg();
 
-  if (ShouldAdvanceOp)
-    MIB.setInstr(*LoadOp);
+  MIB.setInstr(*InsertionPoint);
 
   auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
 
@@ -1843,7 +1849,7 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
                                                    MachineRegisterInfo &MRI) {
 
   // First use is the G_INTRINSIC_W_SIDE_EFFECTS ID
-  Register LoadResult = (std::next(UPSI.uses().begin()))->getReg();
+  Register LoadResult = UPSI.getOperand(2).getReg();
   MachineInstr *LoadOp = getDefIgnoringCopiesAndBitcasts(LoadResult, MRI);
 
   assert(LoadOp && "Expected SSA.");

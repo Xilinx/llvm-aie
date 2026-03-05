@@ -1,4 +1,4 @@
-// Modifications (c) Copyright 2025 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 // RUN: mlir-opt -emit-bytecode %s | mlir-opt | FileCheck %s
 
@@ -80,4 +80,14 @@ module @parseBlockFloatQuantized attributes {
 module @parseBlockFloatQuantizedWithExpressed attributes {
   // CHECK: bytecode.test = !quant.block_float<mode=BFP16, axis=2>
   bytecode.test = !quant.block_float<mode=BFP16, axis=2>
+} {}
+
+//===----------------------------------------------------------------------===//
+// UniformQuantizedSubChannel
+//===----------------------------------------------------------------------===//
+
+// CHECK-LABEL: parseUniformSubChannel
+module @parseUniformSubChannel attributes {
+  // CHECK: !quant.uniform<i8:f32:{0:1, 1:2}, {{\{}}{2.000000e+00:10, 3.000000e+00:20}, {4.000000e+00:30, 5.000000e+00:40}}>
+  bytecode.test = !quant.uniform<i8:f32:{0:1, 1:2}, {{2.0:10, 3.0:20}, {4.0:30, 5.0:40}}>
 } {}

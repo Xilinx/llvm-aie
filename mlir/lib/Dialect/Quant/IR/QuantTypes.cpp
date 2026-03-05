@@ -156,7 +156,7 @@ QuantizedType::getQuantizedElementType(Type primitiveOrContainerType) {
 
 Type QuantizedType::castFromStorageType(Type candidateType) {
   if (candidateType == getStorageType()) {
-    // i.e. i32 -> quant<"uniform[i8:f32]{1.0}">
+    // i.e. i8 -> quant<"uniform[i8:f32]{1.0}">
     return *this;
   }
   if (llvm::isa<RankedTensorType>(candidateType)) {
@@ -166,11 +166,11 @@ Type QuantizedType::castFromStorageType(Type candidateType) {
         getStorageType());
   }
   if (llvm::isa<UnrankedTensorType>(candidateType)) {
-    // i.e. tensor<i8> -> tensor<!quant<"uniform[i8:f32]{1.0}">>
+    // i.e. tensor<xi8> -> tensor<x!quant<"uniform[i8:f32]{1.0}">>
     return UnrankedTensorType::get(getStorageType());
   }
   if (llvm::isa<VectorType>(candidateType)) {
-    // i.e. tensor<4xi8> -> tensor<4x!quant<"uniform[i8:f32]{1.0}">>
+    // i.e. vector<4xi8> -> vector<4x!quant<"uniform[i8:f32]{1.0}">>
     return VectorType::get(llvm::cast<VectorType>(candidateType).getShape(),
                            getStorageType());
   }
@@ -536,6 +536,123 @@ ArrayRef<int64_t> UniformQuantizedPerAxisType::getZeroPoints() const {
 
 int32_t UniformQuantizedPerAxisType::getQuantizedDimension() const {
   return getImpl()->quantizedDimension;
+}
+
+UniformQuantizedSubChannelType UniformQuantizedSubChannelType::get(
+    unsigned flags, Type storageType, Type expressedType,
+    DenseElementsAttr scales, DenseElementsAttr zeroPoints,
+    ArrayRef<int32_t> quantizedDimensions, ArrayRef<int64_t> blockSizes,
+    int64_t storageTypeMin, int64_t storageTypeMax) {
+  return Base::get(storageType.getContext(), flags, storageType, expressedType,
+                   scales, zeroPoints, quantizedDimensions, blockSizes,
+                   storageTypeMin, storageTypeMax);
+}
+
+UniformQuantizedSubChannelType UniformQuantizedSubChannelType::getChecked(
+    function_ref<InFlightDiagnostic()> emitError, unsigned flags,
+    Type storageType, Type expressedType, DenseElementsAttr scales,
+    DenseElementsAttr zeroPoints, ArrayRef<int32_t> quantizedDimensions,
+    ArrayRef<int64_t> blockSizes, int64_t storageTypeMin,
+    int64_t storageTypeMax) {
+  return Base::getChecked(emitError, storageType.getContext(), flags,
+                          storageType, expressedType, scales, zeroPoints,
+                          quantizedDimensions, blockSizes, storageTypeMin,
+                          storageTypeMax);
+}
+
+LogicalResult UniformQuantizedSubChannelType::verifyInvariants(
+    function_ref<InFlightDiagnostic()> emitError, unsigned flags,
+    Type storageType, Type expressedType, DenseElementsAttr scales,
+    DenseElementsAttr zeroPoints, ArrayRef<int32_t> quantizedDimensions,
+    ArrayRef<int64_t> blockSizes, int64_t storageTypeMin,
+    int64_t storageTypeMax) {
+  if (failed(QuantizedType::verifyInvariants(emitError, flags, storageType,
+                                             expressedType, storageTypeMin,
+                                             storageTypeMax))) {
+    return failure();
+  }
+
+  // Uniform quantization requires fully expressed parameters, including
+  // expressed type.
+  if (!expressedType)
+    return emitError() << "uniform quantization requires expressed type";
+
+  // Verify that the expressed type is floating point.
+  // If this restriction is ever eliminated, the parser/printer must be
+  // extended.
+  if (!llvm::isa<FloatType>(expressedType))
+    return emitError() << "expressed type must be floating point";
+
+  // Verify scale type to match expressedType.
+  if (scales.getType().getElementType() != expressedType) {
+    return emitError() << "type of scale values "
+                       << scales.getType().getElementType()
+                       << " must match the expressed type " << expressedType;
+  }
+
+  // Verify zero-point type to match storageType.
+  if (zeroPoints.getType().getElementType() != storageType) {
+    return emitError() << "type of zero point values "
+                       << zeroPoints.getType().getElementType()
+                       << " must match the storage type " << storageType;
+  }
+
+  // Ensure that the shape of scales and zeroPoints match.
+  if (scales.getType().getShape() != zeroPoints.getType().getShape())
+    return emitError() << "shape of scales and zeroPoints ("
+                       << scales.getType().getShape() << " vs "
+                       << zeroPoints.getType().getShape() << ") does not match";
+
+  // Ensure that the number of quantized-dimensions and block-sizes match.
+  if (quantizedDimensions.size() != blockSizes.size())
+    return emitError() << "number of quantized dimensions and block sizes ("
+                       << scales.size() << " vs " << zeroPoints.size()
+                       << ") does not match";
+
+  // Verify quantized dimension.
+  for (auto quantizedDimension : quantizedDimensions) {
+    if (quantizedDimension < 0)
+      return emitError() << "illegal quantized dimension: "
+                         << quantizedDimension;
+  }
+
+  // Verify block sizes.
+  for (auto blockSize : blockSizes) {
+    if (blockSize <= 0)
+      return emitError() << "illegal block size: " << blockSize;
+  }
+
+  return success();
+}
+
+DenseElementsAttr UniformQuantizedSubChannelType::getScales() const {
+  return getImpl()->getScales();
+}
+
+DenseElementsAttr UniformQuantizedSubChannelType::getZeroPoints() const {
+  return getImpl()->getZeroPoints();
+}
+
+ArrayRef<int32_t>
+UniformQuantizedSubChannelType::getQuantizedDimensions() const {
+  return getImpl()->getQuantizedDimensions();
+}
+
+ArrayRef<int64_t> UniformQuantizedSubChannelType::getBlockSizes() const {
+  return getImpl()->getBlockSizes();
+}
+
+const SmallVector<std::pair<int32_t, int64_t>>
+UniformQuantizedSubChannelType::getBlockSizeInfo() const {
+  SmallVector<std::pair<int32_t, int64_t>> result;
+  result.reserve(getQuantizedDimensions().size());
+
+  for (auto [dim, size] :
+       llvm::zip(getQuantizedDimensions(), getBlockSizes())) {
+    result.push_back({dim, size});
+  }
+
+  return result;
 }
 
 CalibratedQuantizedType CalibratedQuantizedType::get(Type expressedType,

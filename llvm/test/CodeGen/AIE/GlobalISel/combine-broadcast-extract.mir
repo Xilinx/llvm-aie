@@ -6,6 +6,7 @@
 #
 # (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple=aie2p -run-pass=aie2p-postlegalizer-custom-combiner -global-isel %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple=aie2ps -run-pass=aie2ps-postlegalizer-custom-combiner -global-isel %s -verify-machineinstrs -o - | FileCheck %s
 
 # Check that the combiner correctly optimizes a simple extract→broadcast→extract pattern.
 # The broadcast is fed by an extract from position 0, and only position 0 is extracted

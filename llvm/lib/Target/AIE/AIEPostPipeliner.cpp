@@ -1363,7 +1363,7 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval,
   Info.init(NInstr);
 
   LLVM_DEBUG(for (int I = 0; I < NInstr; I++) {
-    dbgs() << I << " " << NoDebug(*DAG->SUnits[I].getInstr());
+    dbgs() << I << " " << NoDebug(*DAG->SUnits[I].getInstr()) << "\n";
   });
   LLVM_DEBUG(dumpGraph(Info, DAG));
 

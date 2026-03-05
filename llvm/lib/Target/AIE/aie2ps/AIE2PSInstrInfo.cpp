@@ -794,6 +794,28 @@ bool AIE2PSInstrInfo::isIConst(unsigned Opc) const {
   }
 }
 
+bool AIE2PSInstrInfo::isLock(unsigned Opc) const {
+  switch (Opc) {
+  default:
+    break;
+  case AIE2PS::ACQ_mLockId_imm:
+  case AIE2PS::ACQ_mLockId_reg:
+  case AIE2PS::ACQ_COND_mLockId_imm:
+  case AIE2PS::ACQ_COND_mLockId_reg:
+  case AIE2PS::REL_mLockId_imm:
+  case AIE2PS::REL_mLockId_reg:
+  case AIE2PS::REL_COND_mLockId_imm:
+  case AIE2PS::REL_COND_mLockId_reg:
+    return true;
+  }
+  return false;
+}
+
+std::optional<unsigned>
+AIE2PSInstrInfo::getDoneLatency(const unsigned Opc) const {
+  return (Opc == AIE2PS::DONE) ? std::optional<unsigned>(6) : std::nullopt;
+}
+
 unsigned AIE2PSInstrInfo::getCallOpcode(const MachineFunction &CallerF,
                                         bool IsIndirect,
                                         bool IsTailCall) const {
