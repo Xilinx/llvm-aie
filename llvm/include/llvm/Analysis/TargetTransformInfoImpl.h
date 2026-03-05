@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -379,6 +379,10 @@ public:
   bool isTruncateFree(Type *Ty1, Type *Ty2) const { return false; }
 
   bool isProfitableToHoist(Instruction *I) const { return true; }
+
+  bool shouldMergeCongruentIVs(const PHINode *IV1, const PHINode *IV2) const {
+    return true; // Default: always merge (preserves current behavior)
+  }
 
   bool useAA() const { return false; }
 
