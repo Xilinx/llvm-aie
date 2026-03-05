@@ -1,3 +1,6 @@
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+
 // RUN: mlir-opt --split-input-file -canonicalize="test-convergence" %s | FileCheck %s
 
 // CHECK-LABEL: @argmax_nofold
@@ -1644,3 +1647,111 @@ func.func @canonicalize_select_to_clamp_i8_and_i64_pat2(%arg0: tensor<13x21x3xi8
   %3 = tosa.select %2, %1, %arg1: ( tensor<13x21x3xi1>, tensor<13x21x3xi64>, tensor<13x21x3xi64>) -> tensor<13x21x3xi64>
   return %3  :  tensor<13x21x3xi64>
 }
+
+// -----
+
+func.func @concat_reshape_fusion_axis0_to_axis1(
+    %arg0: tensor<1x256x100x100xf32>,
+    %arg1: tensor<1x256x100x100xf32>,
+    %arg2: tensor<1x256x100x100xf32>,
+    %arg3: tensor<1x256x100x100xf32>) -> tensor<1x1024x100x100xf32> {
+  %0 = tosa.concat %arg0, %arg1, %arg2, %arg3 {axis = 0 : i32} : (tensor<1x256x100x100xf32>, tensor<1x256x100x100xf32>, tensor<1x256x100x100xf32>, tensor<1x256x100x100xf32>) -> tensor<4x256x100x100xf32>
+  %1 = tosa.reshape %0 {new_shape = array<i64: 1, 1024, 100, 100>} : (tensor<4x256x100x100xf32>) -> tensor<1x1024x100x100xf32>
+  return %1 : tensor<1x1024x100x100xf32>
+}
+// CHECK-LABEL: @concat_reshape_fusion_axis0_to_axis1
+// CHECK-SAME: %[[X0:.*]]: tensor<1x256x100x100xf32>, %[[X1:.*]]: tensor<1x256x100x100xf32>, %[[X2:.*]]: tensor<1x256x100x100xf32>, %[[X3:.*]]: tensor<1x256x100x100xf32>
+// CHECK: %[[RES:.*]] = tosa.concat %[[X0]], %[[X1]], %[[X2]], %[[X3]] {axis = 1 : i32} : (tensor<1x256x100x100xf32>, tensor<1x256x100x100xf32>, tensor<1x256x100x100xf32>, tensor<1x256x100x100xf32>) -> tensor<1x1024x100x100xf32>
+// CHECK: return %[[RES]] : tensor<1x1024x100x100xf32>
+
+// -----
+
+func.func @concat_reshape_fusion_axis1_to_axis0(
+    %arg0: tensor<1x4x2xf32>, %arg1: tensor<1x4x2xf32>) -> tensor<2x4x2xf32> {
+  %0 = tosa.concat %arg0, %arg1 {axis = 1 : i32} : (tensor<1x4x2xf32>, tensor<1x4x2xf32>) -> tensor<1x8x2xf32>
+  %1 = tosa.reshape %0 {new_shape = array<i64: 2, 4, 2>} : (tensor<1x8x2xf32>) -> tensor<2x4x2xf32>
+  return %1 : tensor<2x4x2xf32>
+}
+// CHECK-LABEL: @concat_reshape_fusion_axis1_to_axis0
+// CHECK-SAME: %[[X0:.*]]: tensor<1x4x2xf32>, %[[X1:.*]]: tensor<1x4x2xf32>
+// CHECK: %[[RES:.*]] = tosa.concat %[[X0]], %[[X1]] {axis = 0 : i32} : (tensor<1x4x2xf32>, tensor<1x4x2xf32>) -> tensor<2x4x2xf32>
+// CHECK: return %[[RES]] : tensor<2x4x2xf32>
+
+// -----
+
+func.func @concat_reshape_fusion_non_adjacent(
+    %arg0: tensor<1x1x64xf32>,
+    %arg1: tensor<1x1x64xf32>,
+    %arg2: tensor<1x1x64xf32>) -> tensor<1x1x192xf32> {
+  %0 = tosa.concat %arg0, %arg1, %arg2 {axis = 0 : i32} : (tensor<1x1x64xf32>, tensor<1x1x64xf32>, tensor<1x1x64xf32>) -> tensor<3x1x64xf32>
+  %1 = tosa.reshape %0 {new_shape = array<i64: 1, 1, 192>} : (tensor<3x1x64xf32>) -> tensor<1x1x192xf32>
+  return %1 : tensor<1x1x192xf32>
+}
+// CHECK-LABEL: @concat_reshape_fusion_non_adjacent
+// CHECK-SAME: %[[X0:.*]]: tensor<1x1x64xf32>, %[[X1:.*]]: tensor<1x1x64xf32>, %[[X2:.*]]: tensor<1x1x64xf32>
+// CHECK: %[[RES:.*]] = tosa.concat %[[X0]], %[[X1]], %[[X2]] {axis = 2 : i32} : (tensor<1x1x64xf32>, tensor<1x1x64xf32>, tensor<1x1x64xf32>) -> tensor<1x1x192xf32>
+// CHECK: return %[[RES]] : tensor<1x1x192xf32>
+
+// -----
+
+func.func @concat_reshape_fusion_dim_in_range_not_one(
+    %arg0: tensor<2x3xf32>, %arg1: tensor<2x3xf32>) -> tensor<2x6xf32> {
+  %0 = tosa.concat %arg0, %arg1 {axis = 0 : i32} : (tensor<2x3xf32>, tensor<2x3xf32>) -> tensor<4x3xf32>
+  %1 = tosa.reshape %0 {new_shape = array<i64: 2, 6>} : (tensor<4x3xf32>) -> tensor<2x6xf32>
+  return %1 : tensor<2x6xf32>
+}
+// CHECK-LABEL: @concat_reshape_fusion_dim_in_range_not_one
+// CHECK: tosa.concat
+// CHECK: tosa.reshape
+
+// -----
+
+func.func @concat_reshape_fusion_non_adjacent_intermediate_not_one(
+    %arg0: tensor<1x3x4xf32>, %arg1: tensor<1x3x4xf32>) -> tensor<1x3x8xf32> {
+  %0 = tosa.concat %arg0, %arg1 {axis = 0 : i32} : (tensor<1x3x4xf32>, tensor<1x3x4xf32>) -> tensor<2x3x4xf32>
+  %1 = tosa.reshape %0 {new_shape = array<i64: 1, 3, 8>} : (tensor<2x3x4xf32>) -> tensor<1x3x8xf32>
+  return %1 : tensor<1x3x8xf32>
+}
+// CHECK-LABEL: @concat_reshape_fusion_non_adjacent_intermediate_not_one
+// CHECK: tosa.concat
+// CHECK: tosa.reshape
+
+// -----
+
+func.func @concat_reshape_fusion_rank_change(
+    %arg0: tensor<1x256x100xf32>, %arg1: tensor<1x256x100xf32>) -> tensor<512x100xf32> {
+  %0 = tosa.concat %arg0, %arg1 {axis = 0 : i32} : (tensor<1x256x100xf32>, tensor<1x256x100xf32>) -> tensor<2x256x100xf32>
+  %1 = tosa.reshape %0 {new_shape = array<i64: 512, 100>} : (tensor<2x256x100xf32>) -> tensor<512x100xf32>
+  return %1 : tensor<512x100xf32>
+}
+// CHECK-LABEL: @concat_reshape_fusion_rank_change
+// CHECK: tosa.concat
+// CHECK: tosa.reshape
+
+// -----
+
+// Negative test: concat has multiple uses, so the reshape cannot be folded.
+func.func @concat_reshape_fusion_multi_use(
+    %arg0: tensor<1x256x100xf32>,
+    %arg1: tensor<1x256x100xf32>) -> (tensor<1x512x100xf32>, tensor<2x256x100xf32>) {
+  %0 = tosa.concat %arg0, %arg1 {axis = 0 : i32} : (tensor<1x256x100xf32>, tensor<1x256x100xf32>) -> tensor<2x256x100xf32>
+  %1 = tosa.reshape %0 {new_shape = array<i64: 1, 512, 100>} : (tensor<2x256x100xf32>) -> tensor<1x512x100xf32>
+  return %1, %0 : tensor<1x512x100xf32>, tensor<2x256x100xf32>
+}
+// CHECK-LABEL: @concat_reshape_fusion_multi_use
+// CHECK: tosa.concat
+// CHECK: tosa.reshape
+
+// -----
+
+// Negative test: reshape changes more than two dimensions.
+func.func @concat_reshape_fusion_multi_dim_reshape(
+    %arg0: tensor<1x4x2xf32>,
+    %arg1: tensor<1x4x2xf32>) -> tensor<2x2x4xf32> {
+  %0 = tosa.concat %arg0, %arg1 {axis = 0 : i32} : (tensor<1x4x2xf32>, tensor<1x4x2xf32>) -> tensor<2x4x2xf32>
+  %1 = tosa.reshape %0 {new_shape = array<i64: 2, 2, 4>} : (tensor<2x4x2xf32>) -> tensor<2x2x4xf32>
+  return %1 : tensor<2x2x4xf32>
+}
+// CHECK-LABEL: @concat_reshape_fusion_multi_dim_reshape
+// CHECK: tosa.concat
+// CHECK: tosa.reshape
