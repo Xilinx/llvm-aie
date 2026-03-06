@@ -14,7 +14,7 @@ tablegen(LLVM AIEGenCallingConv.inc -gen-callingconv)
 #tablegen(LLVM AIEGenCompressInstEmitter.inc -gen-compress-inst-emitter)
 tablegen(LLVM AIEGenDAGISel.inc -gen-dag-isel)
 tablegen(LLVM AIEGenDisassemblerTables.inc -gen-disassembler)
-tablegen(LLVM AIEGenGlobalISel.inc -gen-global-isel)
+tablegen(LLVM AIEGenGlobalISel.inc -gen-global-isel -gisel-subtarget-class AIEBaseSubtarget)
 tablegen(LLVM AIEGenFormats.inc -gen-instr-format)
 tablegen(LLVM AIEGenInstrInfo.inc -gen-instr-info -base-instrinfo-class AIEBaseInstrInfo)
 tablegen(LLVM AIEGenMCCodeEmitter.inc -gen-emitter)
@@ -27,11 +27,11 @@ tablegen(LLVM AIEGenSubtargetInfo.inc -gen-subtarget -base-subtargetinfo-class A
 set(LLVM_TARGET_DEFINITIONS AIE2.td)
 tablegen(LLVM AIE2GenAsmMatcher.inc -gen-asm-matcher)
 tablegen(LLVM AIE2GenAsmWriter.inc -gen-asm-writer)
-tablegen(LLVM AIE2GenPreLegalizerGICombiner.inc -gen-global-isel-combiner
+tablegen(LLVM AIE2GenPreLegalizerGICombiner.inc -gen-global-isel-combiner -gisel-subtarget-class AIEBaseSubtarget
               -combiners="AIE2PreLegalizerCombiner")
-tablegen(LLVM AIE2GenPostLegalizerGIGenericCombiner.inc -gen-global-isel-combiner
+tablegen(LLVM AIE2GenPostLegalizerGIGenericCombiner.inc -gen-global-isel-combiner -gisel-subtarget-class AIEBaseSubtarget
               -combiners="AIE2PostLegalizerGenericCombiner")
-tablegen(LLVM AIE2GenPostLegalizerGICustomCombiner.inc -gen-global-isel-combiner
+tablegen(LLVM AIE2GenPostLegalizerGICustomCombiner.inc -gen-global-isel-combiner -gisel-subtarget-class AIEBaseSubtarget
               -combiners="AIE2PostLegalizerCustomCombiner")
 tablegen(LLVM AIE2GenCallingConv.inc -gen-callingconv)
 tablegen(LLVM AIE2GenDisassemblerTables.inc -gen-disassembler)
@@ -46,7 +46,7 @@ tablegen(LLVM AIE2GenMCPseudoLowering.inc -gen-pseudo-lowering)
 tablegen(LLVM AIE2GenRegisterBank.inc -gen-register-bank -base-register-bank-class AIEBaseRegisterBankInfo)
 tablegen(LLVM AIE2GenRegisterInfo.inc -gen-register-info -base-registerinfo-class AIEBaseRegisterInfo)
 tablegen(LLVM AIE2GenSubtargetInfo.inc -gen-subtarget -base-subtargetinfo-class AIEBaseSubtarget)
-tablegen(LLVM AIE2GenGlobalISel.inc -gen-global-isel --warn-on-skipped-patterns)
+tablegen(LLVM AIE2GenGlobalISel.inc -gen-global-isel -gisel-subtarget-class AIEBaseSubtarget --warn-on-skipped-patterns)
 
 #aie2p
 set(LLVM_TARGET_DEFINITIONS AIE2P.td)
@@ -58,16 +58,16 @@ tablegen(LLVM AIE2PGenMemoryCycles.inc -gen-aie-memory-cycles)
 tablegen(LLVM AIE2PGenPreSchedLowering.inc -gen-aie-presched-lowering)
 tablegen(LLVM AIE2PGenSplitInstrTables.inc -gen-aie-split-instr-tables)
 tablegen(LLVM AIE2PGenRegisterBank.inc -gen-register-bank -base-register-bank-class AIEBaseRegisterBankInfo)
-tablegen(LLVM AIE2PGenGlobalISel.inc -gen-global-isel --warn-on-skipped-patterns)
+tablegen(LLVM AIE2PGenGlobalISel.inc -gen-global-isel -gisel-subtarget-class AIEBaseSubtarget --warn-on-skipped-patterns)
 tablegen(LLVM AIE2PGenAsmWriter.inc -gen-asm-writer)
 tablegen(LLVM AIE2PGenFormats.inc -gen-instr-format)
 tablegen(LLVM AIE2PGenMCCodeEmitter.inc -gen-emitter)
 tablegen(LLVM AIE2PGenDisassemblerTables.inc -gen-disassembler)
-tablegen(LLVM AIE2PGenPreLegalizerGICombiner.inc -gen-global-isel-combiner
+tablegen(LLVM AIE2PGenPreLegalizerGICombiner.inc -gen-global-isel-combiner -gisel-subtarget-class AIEBaseSubtarget
               -combiners="AIE2PPreLegalizerCombiner")
-tablegen(LLVM AIE2PGenPostLegalizerGIGenericCombiner.inc -gen-global-isel-combiner
+tablegen(LLVM AIE2PGenPostLegalizerGIGenericCombiner.inc -gen-global-isel-combiner -gisel-subtarget-class AIEBaseSubtarget
               -combiners="AIE2PPostLegalizerGenericCombiner")
-tablegen(LLVM AIE2PGenPostLegalizerGICustomCombiner.inc -gen-global-isel-combiner
+tablegen(LLVM AIE2PGenPostLegalizerGICustomCombiner.inc -gen-global-isel-combiner -gisel-subtarget-class AIEBaseSubtarget
               -combiners="AIE2PPostLegalizerCustomCombiner")
 tablegen(LLVM AIE2PGenAsmMatcher.inc -gen-asm-matcher)
 tablegen(LLVM AIE2PGenVarInstructionItin.inc -gen-aie-alternate-itinerary-emitter)
@@ -78,7 +78,7 @@ tablegen(LLVM AIE2PSGenInstrInfo.inc -gen-instr-info -base-instrinfo-class AIEBa
 tablegen(LLVM AIE2PSGenRegisterInfo.inc -gen-register-info -base-registerinfo-class AIEBaseRegisterInfo)
 tablegen(LLVM AIE2PSGenRegisterBank.inc -gen-register-bank -base-register-bank-class AIEBaseRegisterBankInfo)
 tablegen(LLVM AIE2PSGenCallingConv.inc -gen-callingconv)
-tablegen(LLVM AIE2PSGenGlobalISel.inc -gen-global-isel --warn-on-skipped-patterns)
+tablegen(LLVM AIE2PSGenGlobalISel.inc -gen-global-isel -gisel-subtarget-class AIEBaseSubtarget --warn-on-skipped-patterns)
 tablegen(LLVM AIE2PSGenSubtargetInfo.inc -gen-subtarget -base-subtargetinfo-class AIEBaseSubtarget)
 tablegen(LLVM AIE2PSGenMemoryCycles.inc -gen-aie-memory-cycles)
 tablegen(LLVM AIE2PSGenPreSchedLowering.inc -gen-aie-presched-lowering)
@@ -88,11 +88,11 @@ tablegen(LLVM AIE2PSGenMCCodeEmitter.inc -gen-emitter)
 tablegen(LLVM AIE2PSGenAsmWriter.inc -gen-asm-writer)
 tablegen(LLVM AIE2PSGenVarInstructionItin.inc -gen-aie-alternate-itinerary-emitter)
 tablegen(LLVM AIE2PSGenDisassemblerTables.inc -gen-disassembler)
-tablegen(LLVM AIE2PSGenPreLegalizerGICombiner.inc -gen-global-isel-combiner
+tablegen(LLVM AIE2PSGenPreLegalizerGICombiner.inc -gen-global-isel-combiner -gisel-subtarget-class AIEBaseSubtarget
               -combiners="AIE2PSPreLegalizerCombiner")
-tablegen(LLVM AIE2PSGenPostLegalizerGIGenericCombiner.inc -gen-global-isel-combiner
+tablegen(LLVM AIE2PSGenPostLegalizerGIGenericCombiner.inc -gen-global-isel-combiner -gisel-subtarget-class AIEBaseSubtarget
               -combiners="AIE2PSPostLegalizerGenericCombiner")
-tablegen(LLVM AIE2PSGenPostLegalizerGICustomCombiner.inc -gen-global-isel-combiner
+tablegen(LLVM AIE2PSGenPostLegalizerGICustomCombiner.inc -gen-global-isel-combiner -gisel-subtarget-class AIEBaseSubtarget
               -combiners="AIE2PSPostLegalizerCustomCombiner")
 tablegen(LLVM AIE2PSGenAsmMatcher.inc -gen-asm-matcher)
 
