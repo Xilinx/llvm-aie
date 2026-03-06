@@ -146,10 +146,10 @@ private:
                         bool Is32Lanes);
   bool canCombinePACK(MachineInstr &MemOp, MachineInstr &CombOp);
   bool canCombineUNPACKLoad(MachineInstr &MemOp, MachineInstr &CombOp,
-                            MachineRegisterInfo &MRI) override;
+                            MachineRegisterInfo &MRI);
   std::optional<LoadStoreOpcodes> getCombinedOpcodeUNPACKLoad(
       const MachineInstr &MemOp, const MachineInstr &CombOp,
-      std::optional<APInt> Immediate, bool IsSigned) override;
+      std::optional<APInt> Immediate, MachineRegisterInfo &MRI);
 
   // const AIE2TargetMachine &TM;
   const AIE2InstrInfo &TII;
@@ -629,7 +629,7 @@ bool AIE2InstructionSelector::selectVPACK(MachineInstr &I,
 std::optional<LoadStoreOpcodes>
 AIE2InstructionSelector::getCombinedOpcodeUNPACKLoad(
     const MachineInstr &MemOp, const MachineInstr &CombOp,
-    std::optional<APInt> Immediate, bool IsSigned) {
+    std::optional<APInt> Immediate, MachineRegisterInfo &MRI) {
 
   const bool NoImmediate = false;
   if (CombOp.getOpcode() != AIE2::G_INTRINSIC ||
@@ -645,8 +645,10 @@ AIE2InstructionSelector::getCombinedOpcodeUNPACKLoad(
   assert(getLoadStoreSize(MemOp) == 256 && "Unexpected VLDA.UNPACK size");
 
   unsigned ISelOpcode;
+  Register SignReg = CombOp.getOperand(3).getReg();
 
-  if (IsSigned) {
+  auto Sign = getIConstantVRegValWithLookThrough(SignReg, MRI);
+  if (Sign && Sign->Value.getZExtValue()) {
     if (cast<GIntrinsic>(CombOp).getIntrinsicID() ==
         Intrinsic::aie2_unpack_I8_I4) {
       switch (MemOp.getOpcode()) {
@@ -720,13 +722,7 @@ bool AIE2InstructionSelector::canCombineUNPACKLoad(MachineInstr &MemOp,
                                                    MachineInstr &CombOp,
                                                    MachineRegisterInfo &MRI) {
   const std::optional<APInt> NoImmediate = {};
-
-  // Determine if the operation is signed by checking the SignReg
-  Register SignReg = CombOp.getOperand(3).getReg();
-  auto Sign = getIConstantVRegValWithLookThrough(SignReg, MRI);
-  bool IsSigned = Sign && Sign->Value.getZExtValue();
-
-  return getCombinedOpcodeUNPACKLoad(MemOp, CombOp, NoImmediate, IsSigned)
+  return getCombinedOpcodeUNPACKLoad(MemOp, CombOp, NoImmediate, MRI)
       .has_value();
 }
 
@@ -759,17 +755,13 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_UNPACK(
   if (!AMI)
     return false;
 
-  // Determine if the operation is signed by checking the SignReg
-  Register SignReg = UNPACKI.getOperand(3).getReg();
-  auto Sign = getIConstantVRegValWithLookThrough(SignReg, MRI);
-  bool IsSigned = Sign && Sign->Value.getZExtValue();
-
   std::optional<LoadStoreOpcodes> LSO = getCombinedOpcodeUNPACKLoad(
-      AMI->MemI, UNPACKI, AMI->ImmediateOffset, IsSigned);
+      AMI->MemI, UNPACKI, AMI->ImmediateOffset, MRI);
 
   assert(LSO && "Unexpected VLDB.UNPACK combine failure");
 
   Register DstReg = UNPACKI.getOperand(0).getReg();
+  Register SignReg = UNPACKI.getOperand(3).getReg();
 
   MIB.setInstr(*InsertionPoint);
 

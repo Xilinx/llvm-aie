@@ -690,6 +690,8 @@ bool modifyStoreFlush(MachineBasicBlock &MBB, MachineRegisterInfo &MRI) {
 static bool combineSubRegCopyToSuperregCopy(MachineBasicBlock &MBB,
                                             MachineRegisterInfo &MRI) {
   const TargetInstrInfo *TII = MBB.getParent()->getSubtarget().getInstrInfo();
+  auto &TRI =
+      *static_cast<const AIEBaseRegisterInfo *>(MRI.getTargetRegisterInfo());
   bool Changed = false;
 
   for (MachineInstr &MI : make_early_inc_range(reverse(MBB))) {
@@ -739,6 +741,23 @@ static bool combineSubRegCopyToSuperregCopy(MachineBasicBlock &MBB,
     }
 
     if (CommonSrcReg) {
+      Register DstReg = MI.getOperand(0).getReg();
+      const TargetRegisterClass *DstRC = MRI.getRegClass(DstReg);
+
+      if (CommonSrcReg.isPhysical()) {
+        if (!DstRC->contains(CommonSrcReg)) {
+          LLVM_DEBUG(llvm::dbgs()
+                     << "Physical src reg not in dst reg class. Skip\n");
+          continue;
+        }
+      } else {
+        const TargetRegisterClass *SrcRC = MRI.getRegClass(CommonSrcReg);
+        if (TRI.getRegSizeInBits(*DstRC) != TRI.getRegSizeInBits(*SrcRC)) {
+          LLVM_DEBUG(llvm::dbgs() << "Size mismatch. Skip\n");
+          continue;
+        }
+      }
+
       LLVM_DEBUG(llvm::dbgs() << "Folding ");
       LLVM_DEBUG(MI.dump());
       LLVM_DEBUG(llvm::dbgs() << "into superreg COPY\n");

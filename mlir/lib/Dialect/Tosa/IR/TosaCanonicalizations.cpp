@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // \file
@@ -103,10 +106,124 @@ struct SelfConcatToTile : public OpRewritePattern<tosa::ConcatOp> {
   }
 };
 
+// Folds reshape(concat(inputs, axis=a)) -> concat(inputs, axis=a') when the
+// reshape merely transfers a factor of N (the number of inputs) from one
+// dimension to another without reordering data.
+//
+// Example: 4 inputs of 1x256x100x100, concat axis=0
+//   concat -> 4x256x100x100, reshape -> 1x1024x100x100
+// becomes:
+//   concat axis=1 -> 1x1024x100x100  (reshape eliminated)
+struct ConcatReshapeFusion : public OpRewritePattern<ConcatOp> {
+  using OpRewritePattern<ConcatOp>::OpRewritePattern;
+
+  LogicalResult matchAndRewrite(ConcatOp concatOp,
+                                PatternRewriter &rewriter) const override {
+    if (!concatOp.getResult().hasOneUse())
+      return rewriter.notifyMatchFailure(concatOp,
+                                         "Concat must have a single use");
+
+    auto reshapeOp =
+        dyn_cast<ReshapeOp>(*concatOp.getResult().getUsers().begin());
+    if (!reshapeOp)
+      return rewriter.notifyMatchFailure(
+          concatOp, "Sole user of concat is not a reshape");
+
+    const auto concatType = dyn_cast<ShapedType>(concatOp.getType());
+    if (!concatType || !concatType.hasStaticShape())
+      return rewriter.notifyMatchFailure(
+          concatOp, "Concat result must be statically shaped");
+
+    const ArrayRef<int64_t> concatOutputShape = concatType.getShape();
+    const ArrayRef<int64_t> reshapeShape = reshapeOp.getNewShape();
+    const size_t rank = concatOutputShape.size();
+
+    if (reshapeShape.size() != rank)
+      return rewriter.notifyMatchFailure(
+          concatOp, "Reshape changes rank, cannot fuse into concat");
+
+    // Find exactly two axes that differ between concat output and reshape
+    // target. One must be the current concat axis (dim divided by N), the other
+    // becomes the new concat axis (dim multiplied by N). The new axis can be
+    // either before or after the old one.
+    const size_t origConcatAxis = concatOp.getAxis();
+    int64_t newConcatAxis = -1;
+    for (size_t i = 0; i < rank; ++i) {
+      if (concatOutputShape[i] == reshapeShape[i])
+        continue;
+      if (i == origConcatAxis)
+        continue;
+      if (newConcatAxis != -1)
+        return rewriter.notifyMatchFailure(
+            concatOp, "Reshape changes more than two dimensions, cannot fuse");
+      newConcatAxis = i;
+    }
+
+    if (concatOutputShape[origConcatAxis] == reshapeShape[origConcatAxis])
+      return rewriter.notifyMatchFailure(
+          concatOp, "Reshape does not change the concat axis dimension");
+
+    if (newConcatAxis == -1)
+      return rewriter.notifyMatchFailure(concatOp,
+                                         "Did not find a new concat axis");
+
+    const int64_t numInputs = concatOp.getInput1().size();
+
+    if (concatOutputShape[origConcatAxis] !=
+        reshapeShape[origConcatAxis] * numInputs)
+      return rewriter.notifyMatchFailure(
+          concatOp, "Factor transferred from old to new axis does not match "
+                    "number of inputs");
+
+    assert(reshapeShape[newConcatAxis] ==
+           concatOutputShape[newConcatAxis] * numInputs);
+
+    const int64_t concatAxisSize = reshapeShape[origConcatAxis];
+    for (const Value input : concatOp.getInput1()) {
+      const auto inputType = dyn_cast<ShapedType>(input.getType());
+      if (!inputType || !inputType.hasStaticShape())
+        return rewriter.notifyMatchFailure(
+            concatOp, "All concat inputs must be statically shaped");
+      if (inputType.getDimSize(origConcatAxis) != concatAxisSize)
+        return rewriter.notifyMatchFailure(
+            concatOp,
+            "Not all inputs have the same size along the concat axis");
+    }
+
+    // All input dimensions in the range [min(orig, new), max(orig, new))
+    // must be 1. The lower/outer bound is inclusive because that dimension is
+    // the outer dim in a row-major layout; if it were > 1, changing the concat
+    // axis would interleave data from different inputs. The upper/inner bound
+    // is exclusive because it is the innermost of the two axes, so its elements
+    // are contiguous in memory, no matter the size of the dimension.
+    const auto firstInputType =
+        cast<ShapedType>(concatOp.getInput1().front().getType());
+    const int64_t start =
+        std::min(static_cast<int64_t>(origConcatAxis), newConcatAxis);
+    const int64_t end =
+        std::max(static_cast<int64_t>(origConcatAxis), newConcatAxis);
+    for (int64_t k = start; k < end; ++k) {
+      if (firstInputType.getDimSize(k) != 1)
+        return rewriter.notifyMatchFailure(
+            concatOp,
+            "Dimensions in [min(orig, new), max(orig, new)) are not all 1");
+    }
+
+    auto newConcatOp = rewriter.create<ConcatOp>(
+        rewriter.getFusedLoc({concatOp.getLoc(), reshapeOp.getLoc()}),
+        reshapeOp.getType(), concatOp.getInput1(), newConcatAxis);
+    rewriter.replaceOp(reshapeOp, newConcatOp.getResult());
+    // Concat has single user and it's safe to erase.
+    rewriter.eraseOp(concatOp);
+    return success();
+  }
+};
+
 void ConcatOp::getCanonicalizationPatterns(RewritePatternSet &results,
                                            MLIRContext *context) {
   results.add<ConcatOptimization>(context);
   results.add<SelfConcatToTile>(context);
+  results.add<ConcatReshapeFusion>(context);
 }
 
 struct FuseChainedTile : public OpRewritePattern<tosa::TileOp> {

@@ -42,7 +42,7 @@ protected:
 
     // COFF-ARM64 is not supported yet
     auto Triple = JTMB->getTargetTriple();
-    if (Triple.isOSBinFormatCOFF() && Triple.isAArch64())
+    if (Triple.isOSBinFormatCOFF())
       GTEST_SKIP();
 
     // SystemZ is not supported yet.
