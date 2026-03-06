@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -13,8 +13,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AIE2TargetMachine.h"
+#include "AIE2InstrInfo.h"
+#include "AIECombinerBase.h"
 #include "AIECombinerHelper.h"
+#include "AIECombiners.h"
 #include "AIELegalizerHelper.h"
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
 #include "llvm/CodeGen/GlobalISel/CSEInfo.h"
@@ -26,8 +28,6 @@
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
 #include "llvm/InitializePasses.h"
-
-#define DEBUG_TYPE "aie2-prelegalizer-combiner"
 
 #define GET_GICOMBINER_DEPS
 #include "AIE2GenPreLegalizerGICombiner.inc"
@@ -47,12 +47,9 @@ namespace {
 #include "AIE2GenPreLegalizerGICombiner.inc"
 #undef GET_GICOMBINER_TYPES
 
-class AIE2PreLegalizerCombinerImpl : public Combiner {
+class AIE2PreLegalizerCombinerImpl
+    : public AIECombinerBase<AIE2PreLegalizerCombinerImplRuleConfig> {
 protected:
-  // TODO: Make CombinerHelper methods const.
-  mutable CombinerHelper Helper;
-  const AIE2PreLegalizerCombinerImplRuleConfig &RuleConfig;
-  const AIE2Subtarget &STI;
   std::map<unsigned, Register>
   getVectorInsertIndices(MachineInstr *CurMI, unsigned SclSrcBits,
                          MachineRegisterInfo &MRI) const;
@@ -64,7 +61,7 @@ public:
       MachineFunction &MF, CombinerInfo &CInfo, const TargetPassConfig *TPC,
       GISelKnownBits &KB, GISelCSEInfo *CSEInfo,
       const AIE2PreLegalizerCombinerImplRuleConfig &RuleConfig,
-      const AIE2Subtarget &STI, MachineDominatorTree *MDT,
+      const AIEBaseSubtarget &STI, MachineDominatorTree *MDT,
       const LegalizerInfo *LI);
 
   static const char *getName() { return "AIE2PreLegalizerCombiner"; }
@@ -97,11 +94,10 @@ AIE2PreLegalizerCombinerImpl::AIE2PreLegalizerCombinerImpl(
     MachineFunction &MF, CombinerInfo &CInfo, const TargetPassConfig *TPC,
     GISelKnownBits &KB, GISelCSEInfo *CSEInfo,
     const AIE2PreLegalizerCombinerImplRuleConfig &RuleConfig,
-    const AIE2Subtarget &STI, MachineDominatorTree *MDT,
+    const AIEBaseSubtarget &STI, MachineDominatorTree *MDT,
     const LegalizerInfo *LI)
-    : Combiner(MF, CInfo, TPC, &KB, CSEInfo),
-      Helper(Observer, B, /*IsPreLegalize*/ true, &KB, MDT, LI),
-      RuleConfig(RuleConfig), STI(STI),
+    : AIECombinerBase(MF, CInfo, TPC, KB, CSEInfo, RuleConfig, STI, MDT, LI,
+                      /*IsPreLegalize=*/true),
 #define GET_GICOMBINER_CONSTRUCTOR_INITS
 #include "AIE2GenPreLegalizerGICombiner.inc"
 #undef GET_GICOMBINER_CONSTRUCTOR_INITS
@@ -447,83 +443,19 @@ bool AIE2PreLegalizerCombinerImpl::tryCombineAll(MachineInstr &MI) const {
 
   return false;
 }
-
-class AIE2PreLegalizerCombiner : public MachineFunctionPass {
-public:
-  static char ID;
-
-  AIE2PreLegalizerCombiner();
-
-  StringRef getPassName() const override { return "AIE2PreLegalizerCombiner"; }
-
-  bool runOnMachineFunction(MachineFunction &MF) override;
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.addRequired<TargetPassConfig>();
-    AU.setPreservesCFG();
-    getSelectionDAGFallbackAnalysisUsage(AU);
-    AU.addRequired<GISelKnownBitsAnalysis>();
-    AU.addPreserved<GISelKnownBitsAnalysis>();
-    AU.addRequired<MachineDominatorTreeWrapperPass>();
-    AU.addPreserved<MachineDominatorTreeWrapperPass>();
-    AU.addRequired<GISelCSEAnalysisWrapperPass>();
-    AU.addPreserved<GISelCSEAnalysisWrapperPass>();
-    MachineFunctionPass::getAnalysisUsage(AU);
-  }
-
-private:
-  AIE2PreLegalizerCombinerImplRuleConfig RuleConfig;
-};
 } // end anonymous namespace
 
-AIE2PreLegalizerCombiner::AIE2PreLegalizerCombiner() : MachineFunctionPass(ID) {
-  initializeAIE2PreLegalizerCombinerPass(*PassRegistry::getPassRegistry());
-  if (!RuleConfig.parseCommandLineOption())
-    report_fatal_error("Invalid rule identifier");
+std::unique_ptr<Combiner> createAIE2PreLegalizerCombinerImpl(
+    MachineFunction &MF, CombinerInfo &CInfo, const TargetPassConfig *TPC,
+    GISelKnownBits &KB, GISelCSEInfo *CSEInfo, const AIEBaseSubtarget &STI,
+    MachineDominatorTree *MDT, const LegalizerInfo *LI) {
+  static AIE2PreLegalizerCombinerImplRuleConfig RuleConfig;
+  static bool Parsed = [] {
+    if (!RuleConfig.parseCommandLineOption())
+      report_fatal_error("Invalid rule identifier");
+    return true;
+  }();
+  (void)Parsed;
+  return std::make_unique<AIE2PreLegalizerCombinerImpl>(
+      MF, CInfo, TPC, KB, CSEInfo, RuleConfig, STI, MDT, LI);
 }
-
-bool AIE2PreLegalizerCombiner::runOnMachineFunction(MachineFunction &MF) {
-  if (MF.getProperties().hasProperty(
-          MachineFunctionProperties::Property::FailedISel))
-    return false;
-  auto *TPC = &getAnalysis<TargetPassConfig>();
-
-  // Enable CSE.
-  GISelCSEAnalysisWrapper &Wrapper =
-      getAnalysis<GISelCSEAnalysisWrapperPass>().getCSEWrapper();
-  auto *CSEInfo = &Wrapper.get(TPC->getCSEConfig());
-
-  const Function &F = MF.getFunction();
-  bool EnableOpt =
-      MF.getTarget().getOptLevel() != CodeGenOptLevel::None && !skipFunction(F);
-
-  const AIE2Subtarget &ST = MF.getSubtarget<AIE2Subtarget>();
-  const auto *LI = ST.getLegalizerInfo();
-
-  GISelKnownBits *KB = &getAnalysis<GISelKnownBitsAnalysis>().get(MF);
-  MachineDominatorTree *MDT = &getAnalysis<MachineDominatorTreeWrapperPass>().getDomTree();
-
-  CombinerInfo CInfo(/*AllowIllegalOps*/ true, /*ShouldLegalizeIllegal*/ false,
-                     /*LegalizerInfo*/ nullptr, EnableOpt, F.hasOptSize(),
-                     F.hasMinSize());
-  AIE2PreLegalizerCombinerImpl Impl(MF, CInfo, TPC, *KB, CSEInfo,
-                                        RuleConfig, ST, MDT, LI);
-  return Impl.combineMachineInstrs();
-}
-
-char AIE2PreLegalizerCombiner::ID = 0;
-INITIALIZE_PASS_BEGIN(AIE2PreLegalizerCombiner, DEBUG_TYPE,
-                      "Combine AIE2 machine instrs before legalization", false,
-                      false)
-INITIALIZE_PASS_DEPENDENCY(TargetPassConfig)
-INITIALIZE_PASS_DEPENDENCY(GISelKnownBitsAnalysis)
-INITIALIZE_PASS_DEPENDENCY(GISelCSEAnalysisWrapperPass)
-INITIALIZE_PASS_END(AIE2PreLegalizerCombiner, DEBUG_TYPE,
-                    "Combine AIE2 machine instrs before legalization", false,
-                    false)
-
-namespace llvm {
-FunctionPass *createAIE2PreLegalizerCombiner() {
-  return new AIE2PreLegalizerCombiner();
-}
-} // end namespace llvm

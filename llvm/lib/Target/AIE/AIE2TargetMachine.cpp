@@ -14,6 +14,7 @@
 
 #include "AIE2TargetMachine.h"
 #include "AIE2TargetTransformInfo.h"
+#include "AIECombiners.h"
 #include "AIEDumpArtifacts.h"
 #include "AIEMachineFunctionInfo.h"
 #include "llvm/CodeGen/GlobalISel/IRTranslator.h"
@@ -87,18 +88,18 @@ void AIE2PassConfig::addPreEmitPass() {}
 void AIE2PassConfig::addPreLegalizeMachineIR() {
   addPass(createAIEAddressSpaceFlattening());
   if (getOptLevel() != CodeGenOptLevel::None)
-    addPass(createAIE2PreLegalizerCombiner());
+    addPass(createAIEPreLegalizerCombiner());
   addPass(createAIEEliminateDuplicatePHI());
 }
 
 void AIE2PassConfig::addPreRegBankSelect() {
   if (getOptLevel() != CodeGenOptLevel::None) {
-    addPass(createAIE2PostLegalizerGenericCombiner());
+    addPass(createAIEPostLegalizerGenericCombiner());
     if (EnableAddressChaining)
       addPass(createAIEClusterBaseAddress());
     if (EnableGlobalPtrModOptimizer)
       addPass(createAIEPtrModOptimizer());
-    addPass(createAIE2PostLegalizerCustomCombiner());
+    addPass(createAIEPostLegalizerCustomCombiner());
   }
 }
 

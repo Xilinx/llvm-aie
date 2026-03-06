@@ -6,7 +6,7 @@
 #
 # (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 
-# RUN: llc -mtriple aie2p -verify-machineinstrs -run-pass=aie2p-postlegalizer-custom-combiner -o - %s  | FileCheck %s
+# RUN: llc -mtriple aie2p -verify-machineinstrs -run-pass=aie-postlegalizer-custom-combiner -o - %s  | FileCheck %s
 
 ---
 name:            test_sext_extract_from_broadcast

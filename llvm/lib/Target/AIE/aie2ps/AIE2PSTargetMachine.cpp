@@ -14,6 +14,7 @@
 
 #include "AIE2PSTargetMachine.h"
 #include "AIE2PSTargetTransformInfo.h"
+#include "AIECombiners.h"
 #include "AIESuperRegUtils.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 
@@ -56,19 +57,19 @@ public:
 
 void AIE2PSPassConfig::addPreRegBankSelect() {
   if (getOptLevel() != CodeGenOptLevel::None) {
-    addPass(createAIE2PSPostLegalizerGenericCombiner());
+    addPass(createAIEPostLegalizerGenericCombiner());
     if (EnableAddressChaining)
       addPass(createAIEClusterBaseAddress());
     if (EnableGlobalPtrModOptimizer)
       addPass(createAIEPtrModOptimizer());
-    addPass(createAIE2PSPostLegalizerCustomCombiner());
+    addPass(createAIEPostLegalizerCustomCombiner());
   }
 }
 
 void AIE2PSPassConfig::addPreLegalizeMachineIR() {
   addPass(createAIEAddressSpaceFlattening());
   if (getOptLevel() != CodeGenOptLevel::None)
-    addPass(createAIE2PSPreLegalizerCombiner());
+    addPass(createAIEPreLegalizerCombiner());
   addPass(createAIEEliminateDuplicatePHI());
 }
 
