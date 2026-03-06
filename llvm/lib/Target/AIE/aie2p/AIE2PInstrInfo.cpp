@@ -18,6 +18,7 @@
 #include "AIE2PSubtarget.h"
 #include "AIE2PTargetMachine.h"
 #include "AIEBaseInstrInfo.h"
+#include "AIEGenericOpcode.h"
 #include "AIEHazardRecognizer.h"
 #include "AIEMachineFunctionInfo.h"
 #include "AIEMachineScheduler.h"
@@ -46,11 +47,27 @@ using namespace llvm;
 #include "AIE2PGenVarInstructionItin.inc"
 
 namespace {
+/// Verify that LLVM generic opcodes and AIE generic opcodes have identical
+/// enum values in AIEBase and this target's namespace. This ensures shared
+/// code using AIE::G_AIE_* constants works correctly across all subtargets.
+/// Terminates via report_fatal_error on the first mismatch, in all build modes.
+void verifyOpcodeParity() {
+#undef HANDLE_TARGET_OPCODE
+#undef HANDLE_TARGET_OPCODE_MARKER
+#define HANDLE_TARGET_OPCODE(OPC) AIE_CHECK_OPCODE_(AIEBase, AIE2P, OPC)
+#define HANDLE_TARGET_OPCODE_MARKER(IDENT, OPC)
+#include "llvm/Support/TargetOpcodes.def"
+
+#define AIE_GENERIC_OPCODE(OPC) AIE_CHECK_OPCODE_(AIEBase, AIE2P, OPC)
+#include "AIEGenericOpcodeList.def"
+}
+
 const AIE2PMCFormats AIE2PFormats;
 } // namespace
 
 AIE2PInstrInfo::AIE2PInstrInfo()
     : AIE2PGenInstrInfo(AIE2P::ADJCALLSTACKUP, AIE2P::ADJCALLSTACKDOWN) {
+  verifyOpcodeParity();
   FormatInterface = &AIE2PFormats;
   FuncUnitWrapper::setFormatInterface(FormatInterface);
 }

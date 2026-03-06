@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -14,6 +14,7 @@
 
 #include "AIE1InstrInfo.h"
 #include "AIE.h"
+#include "AIEGenericOpcode.h"
 #include "AIEHazardRecognizerPRAS.h"
 #include "MCTargetDesc/AIEMCFormats.h"
 #include "llvm/ADT/SmallVector.h"
@@ -33,11 +34,27 @@ using namespace llvm;
 #include "AIEGenInstrInfo.inc"
 
 namespace {
+/// Verify that LLVM generic opcodes and AIE generic opcodes have identical
+/// enum values in AIEBase and this target's namespace. This ensures shared
+/// code using AIE::G_AIE_* constants works correctly across all subtargets.
+/// Terminates via report_fatal_error on the first mismatch, in all build modes.
+void verifyOpcodeParity() {
+#undef HANDLE_TARGET_OPCODE
+#undef HANDLE_TARGET_OPCODE_MARKER
+#define HANDLE_TARGET_OPCODE(OPC) AIE_CHECK_OPCODE_(AIEBase, AIE, OPC)
+#define HANDLE_TARGET_OPCODE_MARKER(IDENT, OPC)
+#include "llvm/Support/TargetOpcodes.def"
+
+#define AIE_GENERIC_OPCODE(OPC) AIE_CHECK_OPCODE_(AIEBase, AIE, OPC)
+#include "AIEGenericOpcodeList.def"
+}
+
 const AIEMCFormats AIE1Formats;
 } // namespace
 
 AIEInstrInfo::AIEInstrInfo()
     : AIEGenInstrInfo(AIE::ADJCALLSTACKUP, AIE::ADJCALLSTACKDOWN) {
+  verifyOpcodeParity();
   FormatInterface = &AIE1Formats;
   FuncUnitWrapper::setFormatInterface(FormatInterface);
 }
