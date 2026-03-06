@@ -53,7 +53,7 @@ struct AIE2PSRegisterInfo : public AIE2PSGenRegisterInfo {
   bool isTypeLegalForClass(const TargetRegisterClass &RC, LLT T) const override;
   const TargetRegisterClass *
   getGPRRegClass(const MachineFunction &MF) const override;
-  Register getControlRegister(unsigned Idx) const;
+  Register getControlRegister(unsigned Idx) const override;
 
   /// Given a register bank and operand type, return the smallest register class
   /// that can hold a value on that bank.
@@ -71,7 +71,7 @@ struct AIE2PSRegisterInfo : public AIE2PSGenRegisterInfo {
   unsigned getPTRRegBankID() const override;
 
   unsigned matchControlRegisterBitwidth(Register CtrlReg,
-                                        unsigned SrcConstVal) const;
+                                        unsigned SrcConstVal) const override;
 
   void getTargetSubRegs(std::vector<unsigned> &, unsigned Size,
                         const RegisterBank &RB) const override;

@@ -54,12 +54,6 @@ public:
   Register getMSStatusReg() const override;
   Register getPackSignCReg() const override;
   Register getUnpackSignCReg() const override;
-  unsigned getGenericAddVectorEltOpcode() const override;
-  unsigned getGenericInsertVectorEltOpcode() const override;
-  unsigned getGenericExtractVectorEltOpcode(bool SignExt) const override;
-  unsigned getGenericPadVectorOpcode() const override;
-  unsigned getGenericUnpadVectorOpcode() const override;
-  unsigned getGenericBroadcastVectorOpcode() const override;
   unsigned getCycleSeparatorOpcode() const override;
   bool isLock(unsigned Opc) const override;
   std::optional<unsigned> getDoneLatency(unsigned) const override;

@@ -1085,51 +1085,6 @@ unsigned AIE2PSInstrInfo::getBasicVectorBitSize() const { return 512; }
 
 unsigned AIE2PSInstrInfo::getMaxSupportedLdStIncSize() const { return 2048; }
 
-unsigned AIE2PSInstrInfo::getGenericAddVectorEltOpcode() const {
-  return AIE2PS::G_AIE_ADD_VECTOR_ELT_HI;
-}
-
-unsigned AIE2PSInstrInfo::getGenericInsertVectorEltOpcode() const {
-  return AIE2PS::G_AIE_INSERT_VECTOR_ELT;
-}
-
-unsigned AIE2PSInstrInfo::getGenericExtractVectorEltOpcode(bool SignExt) const {
-  return SignExt ? AIE2PS::G_AIE_SEXT_EXTRACT_VECTOR_ELT
-                 : AIE2PS::G_AIE_ZEXT_EXTRACT_VECTOR_ELT;
-}
-
-unsigned AIE2PSInstrInfo::getGenericUnpadVectorOpcode() const {
-  return AIE2PS::G_AIE_UNPAD_VECTOR;
-}
-
-unsigned AIE2PSInstrInfo::getGenericPadVectorOpcode() const {
-  return AIE2PS::G_AIE_PAD_VECTOR_UNDEF;
-}
-
-unsigned AIE2PSInstrInfo::getGenericBroadcastVectorOpcode() const {
-  return AIE2PS::G_AIE_BROADCAST_VECTOR;
-}
-
-unsigned AIE2PSInstrInfo::getGenericVSelOpcode() const {
-  return AIE2PS::G_AIE_VSEL;
-}
-
-unsigned AIE2PSInstrInfo::getGenericVShiftOpcode() const {
-  return AIE2PS::G_AIE_VSHIFT_RIGHT;
-}
-
-unsigned AIE2PSInstrInfo::getGenericShuffleVectorOpcode() const {
-  return AIE2PS::G_AIE_SHUFFLE_VECTOR;
-}
-
-unsigned AIE2PSInstrInfo::getGenericExtractSubvectorOpcode() const {
-  return AIE2PS::G_AIE_EXTRACT_SUBVECTOR;
-}
-
-unsigned AIE2PSInstrInfo::getGenericIntegerComparisonOpcode() const {
-  return AIE2PS::G_AIE_VECTOR_ICMP;
-}
-
 // Note: Some pseudos like spill/reload are already expanded in
 // eliminateFrameIndex.
 bool AIE2PSInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {

@@ -78,17 +78,13 @@ const LLT S16 = LLT::scalar(16);
 const LLT S32 = LLT::scalar(32);
 const LLT V32S16 = LLT::fixed_vector(32, 16);
 
-const llvm::AIEBaseInstrInfo &getAIETII(MachineIRBuilder &B) {
-  return static_cast<const AIEBaseInstrInfo &>(B.getTII());
-}
-
 bool isGenericExtractOpcode(unsigned Opc, const AIEBaseInstrInfo &TII) {
   // Check if it's either SEXT or ZEXT extract
-  const unsigned ExtractSextOpc = TII.getGenericExtractVectorEltOpcode(true);
+  const unsigned ExtractSextOpc = AIE::G_AIE_SEXT_EXTRACT_VECTOR_ELT;
   if (Opc == ExtractSextOpc) {
     return true;
   }
-  const unsigned ExtractZextOpc = TII.getGenericExtractVectorEltOpcode(false);
+  const unsigned ExtractZextOpc = AIE::G_AIE_ZEXT_EXTRACT_VECTOR_ELT;
   return Opc == ExtractZextOpc;
 }
 
@@ -174,10 +170,9 @@ Register buildInsertInUndef(MachineIRBuilder &B, Register Src, LLT VecTy) {
   if (MRI->getType(Src) != S32) {
     Src = B.buildAnyExt(S32, Src).getReg(0);
   }
-  const AIEBaseInstrInfo &TII = getAIETII(B);
   const Register IdxReg = B.buildConstant(S32, 0).getReg(0);
   const Register UndefVec = B.buildUndef(VecTy).getReg(0);
-  const unsigned InsertEltOpc = TII.getGenericInsertVectorEltOpcode();
+  const unsigned InsertEltOpc = AIE::G_AIE_INSERT_VECTOR_ELT;
   return B.buildInstr(InsertEltOpc, {VecTy}, {UndefVec, Src, IdxReg}).getReg(0);
 }
 
@@ -186,9 +181,8 @@ Register buildBroadcast(MachineIRBuilder &B, Register Src, LLT VecTy) {
   if (MRI->getType(Src) != S32) {
     Src = B.buildAnyExt(S32, Src).getReg(0);
   }
-  const AIEBaseInstrInfo &TII = getAIETII(B);
-  const unsigned InsertEltOpc = TII.getGenericBroadcastVectorOpcode();
-  return B.buildInstr(InsertEltOpc, {VecTy}, {Src}).getReg(0);
+  const unsigned BroadcastOpc = AIE::G_AIE_BROADCAST_VECTOR;
+  return B.buildInstr(BroadcastOpc, {VecTy}, {Src}).getReg(0);
 }
 
 Register buildScalarAsVector(MachineIRBuilder &B, Register Src, LLT VecTy) {
@@ -228,11 +222,8 @@ Register buildWidenMulScalarAsVector(MachineIRBuilder &B, Register Lft,
 Register buildGetFirstElement(MachineIRBuilder &B, Register Vec) {
   auto *MRI = B.getMRI();
   const LLT DstTy = MRI->getType(Vec).getElementType();
-  const AIEBaseInstrInfo &TII = getAIETII(B);
   const Register Index = B.buildConstant(S32, 0).getReg(0);
-  return B
-      .buildInstr(TII.getGenericExtractVectorEltOpcode(/*SignExt*/ true),
-                  {DstTy}, {Vec, Index})
+  return B.buildInstr(AIE::G_AIE_SEXT_EXTRACT_VECTOR_ELT, {DstTy}, {Vec, Index})
       .getReg(0);
 }
 
@@ -1070,8 +1061,8 @@ void llvm::applyLdStInc(MachineInstr &MemI, MachineRegisterInfo &MRI,
 // %2:_(<16 x s32>) = COPY %0
 bool llvm::matchAddVecEltUndef(MachineInstr &MI, MachineRegisterInfo &MRI,
                                const TargetInstrInfo &TII) {
-  const AIEBaseInstrInfo &AIETII = (const AIEBaseInstrInfo &)TII;
-  assert(MI.getOpcode() == AIETII.getGenericAddVectorEltOpcode() &&
+  auto AddVecEltOpc = AIE::G_AIE_ADD_VECTOR_ELT_HI;
+  assert(AddVecEltOpc && MI.getOpcode() == AddVecEltOpc &&
          "Expected a G_AIE_ADD_VECTOR_ELT_HI");
   const MachineInstr *SrcVecDef =
       getDefIgnoringCopies(MI.getOperand(1).getReg(), MRI);
@@ -1284,9 +1275,8 @@ void llvm::applyExtractVecEltAndExt(MachineInstr &MI, MachineRegisterInfo &MRI,
   const Register SrcReg0 = MI.getOperand(1).getReg();
   const Register SrcReg1 = MI.getOperand(2).getReg();
   const LLT S32 = LLT::scalar(32);
-  const AIEBaseInstrInfo &AIETII = (const AIEBaseInstrInfo &)B.getTII();
-  const unsigned Opcode =
-      AIETII.getGenericExtractVectorEltOpcode(/*sign ext*/ IsSignedExt);
+  const unsigned Opcode = IsSignedExt ? AIE::G_AIE_SEXT_EXTRACT_VECTOR_ELT
+                                      : AIE::G_AIE_ZEXT_EXTRACT_VECTOR_ELT;
   const Register ExtractElt32BitDst = MRI.createGenericVirtualRegister(S32);
   B.buildInstr(Opcode, {ExtractElt32BitDst}, {SrcReg0, SrcReg1});
 
@@ -1395,6 +1385,7 @@ static void buildUnmergeVector(MachineIRBuilder &B, MachineRegisterInfo &MRI,
 static void buildBroadcastVector(MachineIRBuilder &B, MachineRegisterInfo &MRI,
                                  Register SrcReg, Register DstVecReg) {
   const AIEBaseInstrInfo &AIETII = (const AIEBaseInstrInfo &)B.getTII();
+  const unsigned BroadcastOpc = AIE::G_AIE_BROADCAST_VECTOR;
   const LLT SrcTy = MRI.getType(SrcReg);
   const LLT DstVecTy = MRI.getType(DstVecReg);
   const unsigned DstVecSize = DstVecTy.getSizeInBits();
@@ -1423,15 +1414,13 @@ static void buildBroadcastVector(MachineIRBuilder &B, MachineRegisterInfo &MRI,
       (DstVecSize == 1024 && SupportsNative1024Broadcast);
   if (CanBroadcastDirectly) {
     // Build the G_AIE_BROADCAST_VECTOR instruction directly.
-    B.buildInstr(AIETII.getGenericBroadcastVectorOpcode(), {DstVecReg},
-                 {SrcReg});
+    B.buildInstr(BroadcastOpc, {DstVecReg}, {SrcReg});
   } else if (DstVecSize == 2048 && SupportsNative1024Broadcast) {
     const unsigned DstElmtSize = DstVecTy.getElementType().getSizeInBits();
     const unsigned DstVec1024BitLen = 1024 / DstElmtSize;
     Register DstVec1024BitReg = MRI.createGenericVirtualRegister(
         LLT::fixed_vector(DstVec1024BitLen, DstElmtSize));
-    B.buildInstr(AIETII.getGenericBroadcastVectorOpcode(), {DstVec1024BitReg},
-                 {SrcReg});
+    B.buildInstr(BroadcastOpc, {DstVec1024BitReg}, {SrcReg});
     B.buildConcatVectors({DstVecReg}, {DstVec1024BitReg, DstVec1024BitReg});
   } else {
     const unsigned DstElmtSize = DstVecTy.getElementType().getSizeInBits();
@@ -1444,8 +1433,7 @@ static void buildBroadcastVector(MachineIRBuilder &B, MachineRegisterInfo &MRI,
         LLT::fixed_vector(DstVec512BitLen, DstElmtSize));
 
     // Build the G_AIE_BROADCAST_VECTOR instruction for the 512-bit vector.
-    B.buildInstr(AIETII.getGenericBroadcastVectorOpcode(), {DstVec512BitReg},
-                 {SrcReg});
+    B.buildInstr(BroadcastOpc, {DstVec512BitReg}, {SrcReg});
     if (DstVecSize == 128 || DstVecSize == 256) {
       const unsigned NumSubVectors = 512 / DstVecSize;
       // Unmerge the 512-bit vector into the 128/256-bit destination vector.
@@ -1646,10 +1634,10 @@ void llvm::applyUnpadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                             MachineIRBuilder &B,
                             GISelChangeObserver &Observer) {
   B.setInstrAndDebugLoc(MI);
-  const AIEBaseInstrInfo &AIETII = (const AIEBaseInstrInfo &)B.getTII();
+  const unsigned UnpadOpc = AIE::G_AIE_UNPAD_VECTOR;
   Register DstReg = MI.getOperand(0).getReg();
   Register SrcReg = MI.getOperand(MI.getNumDefs()).getReg();
-  B.buildInstr(AIETII.getGenericUnpadVectorOpcode(), {DstReg}, {SrcReg});
+  B.buildInstr(UnpadOpc, {DstReg}, {SrcReg});
   Observer.erasingInstr(MI);
   MI.eraseFromParent();
 }
@@ -1725,10 +1713,9 @@ void llvm::applyPadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                           MachineIRBuilder &B, Register MatchedInputVector,
                           GISelChangeObserver &Observer) {
   B.setInstrAndDebugLoc(MI);
-  const AIEBaseInstrInfo &AIETII = (const AIEBaseInstrInfo &)B.getTII();
+  const unsigned PadOpc = AIE::G_AIE_PAD_VECTOR_UNDEF;
   Register DstReg = MI.getOperand(0).getReg();
-  B.buildInstr(AIETII.getGenericPadVectorOpcode(), {DstReg},
-               {MatchedInputVector});
+  B.buildInstr(PadOpc, {DstReg}, {MatchedInputVector});
   Observer.erasingInstr(MI);
   MI.eraseFromParent();
 }
@@ -2336,12 +2323,15 @@ bool llvm::matchShuffleToVSel(MachineInstr &MI, MachineRegisterInfo &MRI,
     return false;
   }
 
-  MatchInfo = [=, &MRI, &TII](MachineIRBuilder &B) {
+  auto VSelOpc = AIE::G_AIE_VSEL;
+  if (!VSelOpc)
+    return false;
+
+  MatchInfo = [=, &MRI](MachineIRBuilder &B) {
     const unsigned ScalarSize =
         NumDstElems == DoubleScalarRegSize ? DoubleScalarRegSize : 32;
     MachineInstrBuilder MaskReg =
         B.buildConstant(LLT::scalar(ScalarSize), DstMask);
-    const unsigned VSelOpc = TII.getGenericVSelOpcode();
     if (NumDstElems == NumSrcElems)
       B.buildInstr(VSelOpc, {DstReg}, {Src1Reg, Src2Reg, MaskReg});
     else { // NumDstElems < NumSrcElems
@@ -2432,7 +2422,7 @@ buildExtractSubvector(MachineIRBuilder &B, MachineRegisterInfo &MRI,
   const unsigned ScalarRegSize = TII.getScalarRegSize();
   const unsigned BasicVectorBitSize = TII.getBasicVectorBitSize();
 
-  const unsigned Opc = TII.getGenericExtractSubvectorOpcode();
+  const unsigned Opc = AIE::G_AIE_EXTRACT_SUBVECTOR;
   const LLT SrcTy = MRI.getType(SrcVecReg);
   const LLT DstTy = MRI.getType(DstVecReg);
   const unsigned SrcTySize = SrcTy.getSizeInBits();
@@ -2535,7 +2525,7 @@ static bool matchShuffleToAIEExtractSubvec(
   if (!checkExtractSubvectorPrerequisites(TII, DstTy, Src1Ty))
     return false;
 
-  const unsigned Opc = TII.getGenericExtractSubvectorOpcode();
+  const unsigned Opc = AIE::G_AIE_EXTRACT_SUBVECTOR;
 
   // Natively supported source vector type
   if (Src1TySize == ExtractSubvecNativeSrcSize) {
@@ -3079,8 +3069,7 @@ bool llvm::matchMostlySequentialShuffleWithInsertions(MachineInstr &MI,
     Register InsertSrc;
     if (IsShrinking) {
       InsertSrc = MRI.createGenericVirtualRegister(DstTy);
-      const AIEBaseInstrInfo &TII = getAIETII(B);
-      B.buildInstr(TII.getGenericUnpadVectorOpcode(), {InsertSrc}, {Src1Reg});
+      B.buildInstr(AIE::G_AIE_UNPAD_VECTOR, {InsertSrc}, {Src1Reg});
     } else {
       InsertSrc = Src1Reg;
     }
@@ -3327,12 +3316,13 @@ bool llvm::matchShuffleBcstToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
     return false;
 
   ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
-  const AIEBaseInstrInfo &AIETII = (const AIEBaseInstrInfo &)TII;
+  auto BcstOpc = AIE::G_AIE_BROADCAST_VECTOR;
+  if (!BcstOpc)
+    return false;
   MachineInstr *Src1Vec = MRI.getVRegDef(Src1Reg);
   MachineInstr *Src2Vec = MRI.getVRegDef(Src2Reg);
-  unsigned BcstOpcode = AIETII.getGenericBroadcastVectorOpcode();
-  bool IsSrc1Bcst = (Src1Vec->getOpcode() == BcstOpcode);
-  bool IsSrc2Bcst = (Src2Vec->getOpcode() == BcstOpcode);
+  bool IsSrc1Bcst = (Src1Vec->getOpcode() == BcstOpc);
+  bool IsSrc2Bcst = (Src2Vec->getOpcode() == BcstOpc);
 
   // Check if the first or second source is defined by a Broadcast.
   if (!IsSrc1Bcst && !IsSrc2Bcst)
@@ -3487,7 +3477,8 @@ bool llvm::matchBroadcastToShl(MachineInstr &MI, MachineRegisterInfo &MRI,
 
   const MachineInstr *DefAmtMI = MRI.getVRegDef(SrcReg2);
 
-  if (DefAmtMI->getOpcode() != TII.getGenericBroadcastVectorOpcode())
+  const unsigned BroadcastOpc = AIE::G_AIE_BROADCAST_VECTOR;
+  if (DefAmtMI->getOpcode() != BroadcastOpc)
     return false;
 
   auto CstSrc =
@@ -4631,8 +4622,8 @@ MachineInstr *getBcstFeedByAssertExtVecExtr(MachineInstr &MI,
     // Could not find G_ASSERT_[S/Z]EXT
     return nullptr;
 
-  MachineInstr *BcstMI =
-      GetSingleNonDbgUser(*AnyExtMI, TII.getGenericBroadcastVectorOpcode());
+  const unsigned BroadcastOpc = AIE::G_AIE_BROADCAST_VECTOR;
+  MachineInstr *BcstMI = GetSingleNonDbgUser(*AnyExtMI, BroadcastOpc);
   return BcstMI;
 }
 } // namespace
@@ -4685,7 +4676,7 @@ bool llvm::matchExtractBroadcastToScalar(MachineInstr &MI,
     return false;
 
   // Check if source is G_AIE_BROADCAST_VECTOR
-  if (SrcMI->getOpcode() != TII.getGenericBroadcastVectorOpcode())
+  if (SrcMI->getOpcode() != AIE::G_AIE_BROADCAST_VECTOR)
     return false;
 
   // Get the scalar that was broadcast
@@ -4703,8 +4694,7 @@ bool llvm::matchExtractBroadcastToScalar(MachineInstr &MI,
   const unsigned ElemSize = VecTy.getScalarSizeInBits();
 
   // Determine if this is a sign-extending or zero-extending extract
-  const bool IsSext =
-      MI.getOpcode() == TII.getGenericExtractVectorEltOpcode(/*SignExt=*/true);
+  const bool IsSext = MI.getOpcode() == AIE::G_AIE_SEXT_EXTRACT_VECTOR_ELT;
 
   MatchInfo = [DstReg, BroadcastSrcReg, ElemSize, IsSext,
                DstTy](MachineIRBuilder &B) {
@@ -4770,7 +4760,8 @@ bool llvm::matchInsertExtractVectorEltToCopy(MachineInstr &MI,
                                              MachineRegisterInfo &MRI,
                                              const AIEBaseInstrInfo &TII,
                                              BuildFnTy &MatchInfo) {
-  assert(MI.getOpcode() == TII.getGenericInsertVectorEltOpcode() &&
+  auto InsertOpc = AIE::G_AIE_INSERT_VECTOR_ELT;
+  assert(InsertOpc && MI.getOpcode() == InsertOpc &&
          "Expected G_AIE_INSERT_VECTOR_ELT");
 
   // Get the insert operands
@@ -4846,7 +4837,8 @@ bool llvm::matchBroadcastExtractToCopy(MachineInstr &MI,
                                        MachineRegisterInfo &MRI,
                                        const AIEBaseInstrInfo &TII,
                                        BuildFnTy &MatchInfo) {
-  assert(MI.getOpcode() == TII.getGenericBroadcastVectorOpcode() &&
+  auto BroadcastOpc = AIE::G_AIE_BROADCAST_VECTOR;
+  assert(BroadcastOpc && MI.getOpcode() == BroadcastOpc &&
          "Expected G_AIE_BROADCAST_VECTOR");
 
   // 1. Verify broadcast source is extract from position 0
@@ -4893,7 +4885,8 @@ bool llvm::matchVSelToUnmergeConcatOrCopy(MachineInstr &MI,
                                           MachineRegisterInfo &MRI,
                                           const AIEBaseInstrInfo &TII,
                                           BuildFnTy &MatchInfo) {
-  assert(MI.getOpcode() == TII.getGenericVSelOpcode() && "Expected G_AIE_VSEL");
+  auto VSelOpc = AIE::G_AIE_VSEL;
+  assert(VSelOpc && MI.getOpcode() == VSelOpc && "Expected G_AIE_VSEL");
 
   const Register DstReg = MI.getOperand(0).getReg();
   const Register Src1Reg = MI.getOperand(1).getReg();

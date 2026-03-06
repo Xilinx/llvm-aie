@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -25,13 +25,13 @@ def ptr0 : PtrValueType<i20, 0>;
 include "aie1/AIE1RegisterInfo.td"
 include "aie1/AIE1Schedule.td"
 include "aie1/AIE1CallingConv.td"
-include "aie1/AIE1InstrInfo.td"
 include "aie1/AIE1RegisterBanks.td"
 
 class AIEGenericInstruction : GenericInstruction {
   let Namespace = "AIE";
 }
 include "AIEInstrGISel.td"
+include "aie1/AIE1InstrInfo.td"
 
 //===----------------------------------------------------------------------===//
 // AIEngine processors supported.

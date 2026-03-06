@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===--------------------------------------------------------------------===//
 //
@@ -136,8 +136,8 @@ bool AIE2PPreLegalizerCombinerImpl::tryCombineAll(MachineInstr &MI) const {
     }
     break;
   }
-  case AIE2P::G_AIE_ZEXT_EXTRACT_VECTOR_ELT:
-  case AIE2P::G_AIE_SEXT_EXTRACT_VECTOR_ELT: {
+  case AIE::G_AIE_ZEXT_EXTRACT_VECTOR_ELT:
+  case AIE::G_AIE_SEXT_EXTRACT_VECTOR_ELT: {
     const LLT SrcVecTy = MRI.getType(MI.getOperand(1).getReg());
     const unsigned BasicVecSize = STI.getInstrInfo()->getBasicVectorBitSize();
     if (SrcVecTy.getSizeInBits() != BasicVecSize) {
@@ -209,7 +209,8 @@ bool AIE2PPreLegalizerCombiner::runOnMachineFunction(MachineFunction &MF) {
   const auto *LI = ST.getLegalizerInfo();
 
   GISelKnownBits *KB = &getAnalysis<GISelKnownBitsAnalysis>().get(MF);
-  MachineDominatorTree *MDT = &getAnalysis<MachineDominatorTreeWrapperPass>().getDomTree();
+  MachineDominatorTree *MDT =
+      &getAnalysis<MachineDominatorTreeWrapperPass>().getDomTree();
 
   CombinerInfo CInfo(/*AllowIllegalOps*/ true, /*ShouldLegalizeIllegal*/ false,
                      /*LegalizerInfo*/ nullptr, EnableOpt, F.hasOptSize(),

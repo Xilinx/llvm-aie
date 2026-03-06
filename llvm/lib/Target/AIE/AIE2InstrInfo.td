@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -368,6 +368,7 @@ include "AIE2CompositeFormats.td"
 // Manual fixes to the auto-generated files
 include "AIE2GenFixupInstrInfo.td"
 include "AIE2MultiSlotPseudoInstrInfo.td"
+include "AIESharedPseudos.td"
 
 //Intrinsics
 let Itinerary = II_EVENT, hasSideEffects = 1, mayLoad = 0, mayStore = 0 in {
@@ -380,13 +381,8 @@ let Itinerary = II_RET, hasDelaySlot = true, Uses = [lr],
   def RET : AIE2_jump_return_inst_alu <(outs), (ins), "ret lr", ""> ;
 }
 
-let isMeta = true, hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
-  def DelayedSchedBarrier : Pseudo<(outs), (ins)>;
-}
-
-let isMeta = true, hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
-  def CYCLE_SEPARATOR : Pseudo<(outs), (ins)>;
-}
+def DelayedSchedBarrier : AIEDelayedSchedBarrier;
+def CYCLE_SEPARATOR     : AIECycleSeparator;
 
 // Pseudo instructions for VLD.SPARSE to be expanded after RA. 
 // They allow us to keep QW registers as non allocatable to avoid 
@@ -492,12 +488,8 @@ def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_CallSeqStart,
                            [SDNPHasChain, SDNPOutGlue]>;
 def callseq_end   : SDNode<"ISD::CALLSEQ_END", SDT_CallSeqEnd,
                            [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
-// Pessimistically assume the stack pointer will be clobbered
-let Defs = [SP], Uses = [SP],
-    hasSideEffects=false, mayLoad=false, mayStore=false in {
-  def ADJCALLSTACKUP   : Pseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2)>;
-  def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2)>;
-}
+def ADJCALLSTACKUP   : AIEAdjCallStackUp<SP>;
+def ADJCALLSTACKDOWN : AIEAdjCallStackDown<SP>;
 
 // NOPs for each VLIW Slot
 let Itinerary = II_NOP, hasSideEffects = 0, mayLoad = 0, mayStore = 0, isSlotNOP = true in {
@@ -549,27 +541,12 @@ def ST_DS_SPILL : Pseudo<(outs ), (ins eDS:$src, imm12x4:$imm), "st_ds_spill", "
 
 // Loop related Pseudos
 // JNZD loops
-let hasSideEffects = 0, mayLoad = 0, mayStore = 0, Defs = [srCarry] in
-def LoopDec :
-    Pseudo<(outs eR:$dst), (ins eR:$src), "loop_dec", "${dst}, ${src}">;
-
-let hasSideEffects = 0,  mayLoad = 0, mayStore = 0, isBranch = 1, isIndirectBranch = 1, isTerminator = true in
-def LoopJNZ :
-    Pseudo<(outs), (ins eR:$tc, eP:$target), "loop_jnz", "${tc}, ${target}">;
+def LoopDec : AIELoopDec;
+def LoopJNZ : AIELoopJNZ;
 
 // Zero overhead loops
-let hasSideEffects = true, mayLoad = false, mayStore = false,
-    isNotDuplicable = true in {
-  def LoopStart : Pseudo<(outs), (ins eR:$src, simm6:$adj), "loop_start", "${src}, ${adj}">;
-
-  // PseudoLoopEnd represents the terminator of a ZOL. You can view it as a
-  // conditional branch to the loop body. We make this a meta instruction,
-  // since it doesn't need to be emitted itself, it only carries info for
-  // its predecessor bundle
-  let isBranch = true,  isTerminator = true, isMeta = true in
-    def PseudoLoopEnd : Pseudo<(outs), (ins addr20:$lastInstr, addr20:$target),
-      "pseudo_loop_end", "${lastInstr}, ${target}">;
-}
+def LoopStart     : AIELoopStart<simm6>;
+def PseudoLoopEnd : AIEPseudoLoopEnd<addr20>;
 
 // Pseudo Copy
 // Target specific impl. of isCopyInstrImp causes the MOVE to be deleted, the Pseudo is

@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 /// \file
@@ -244,18 +244,18 @@ void AIE2RegisterBankInfo::setAIEGenericInstrMapping(
     const MachineInstr &MI, SmallVector<unsigned, 4> &OpSize,
     SmallVector<PartialMappingIdx, 4> &OpRegBankIdx) const {
   switch (MI.getOpcode()) {
-  case AIE2::G_AIE_OFFSET_STORE:
-  case AIE2::G_AIE_OFFSET_LOAD:
-  case AIE2::G_AIE_OFFSET_ZEXTLOAD:
-  case AIE2::G_AIE_OFFSET_SEXTLOAD: {
+  case AIE::G_AIE_OFFSET_STORE:
+  case AIE::G_AIE_OFFSET_LOAD:
+  case AIE::G_AIE_OFFSET_ZEXTLOAD:
+  case AIE::G_AIE_OFFSET_SEXTLOAD: {
     // Offset is operand #2
     OpRegBankIdx[2] = PMI_MOD;
     break;
   }
-  case AIE2::G_AIE_POSTINC_STORE:
-  case AIE2::G_AIE_POSTINC_LOAD:
-  case AIE2::G_AIE_POSTINC_ZEXTLOAD:
-  case AIE2::G_AIE_POSTINC_SEXTLOAD: {
+  case AIE::G_AIE_POSTINC_STORE:
+  case AIE::G_AIE_POSTINC_LOAD:
+  case AIE::G_AIE_POSTINC_ZEXTLOAD:
+  case AIE::G_AIE_POSTINC_SEXTLOAD: {
     // Offset is operand #3
     OpRegBankIdx[3] = PMI_MOD;
     break;

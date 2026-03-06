@@ -228,60 +228,9 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual unsigned getCycleSeparatorOpcode() const {
     llvm_unreachable("Target didn't implement getCycleSeparatorOpcode");
   }
-  /// Return the opcode to be used for pushing a vector element at the MSB
-  /// position in a vector
-  virtual unsigned getGenericAddVectorEltOpcode() const {
-    llvm_unreachable("Target didn't implement getGenericAddVectorEltOpcode");
-  }
-  /// Return the opcode to be used for inserting a vector element at an
-  /// arbitrary position in a vector
-  virtual unsigned getGenericInsertVectorEltOpcode() const {
-    llvm_unreachable("Target didn't implement getGenericInsertVectorEltOpcode");
-  }
-  /// Return the opcode to be used for extracting a vector element
-  /// \param signExt True if the extracted element shall be sign extended
-  virtual unsigned getGenericExtractVectorEltOpcode(bool SignExt) const {
-    llvm_unreachable(
-        "Target didn't implement getGenericExtractVectorEltOpcode");
-  }
-  /// Return the opcode to be used for padding undefined values in the high bits
-  /// of a vector
-  virtual unsigned getGenericPadVectorOpcode() const {
-    llvm_unreachable("Target didn't implement getGenericPadVectorOpcode");
-  }
-  /// Return the opcode to be used for extracting a smaller vector by ignoring
-  /// the high bits
-  virtual unsigned getGenericUnpadVectorOpcode() const {
-    llvm_unreachable("Target didn't implement getGenericUnpadVectorOpcode");
-  }
-  virtual unsigned getGenericBroadcastVectorOpcode() const {
-    llvm_unreachable(
-        "Target didn't implement getGenericBroadcastVectorOpcode!");
-  }
   /// Return true if the target has a native 1024-bit broadcast instruction.
   /// Defaults to false so targets must opt-in.
   virtual bool supportsNative1024Broadcast() const { return false; }
-  /// Return the opcode to be used for select between the words of two vectors.
-  virtual unsigned getGenericVSelOpcode() const {
-    llvm_unreachable("Target didn't implement getGenericVSelOpcode!");
-  }
-  virtual unsigned getGenericVShiftOpcode() const {
-    llvm_unreachable("Target didn't implement getGenericVShiftOpcode!");
-  }
-  virtual unsigned getGenericShuffleVectorOpcode() const {
-    llvm_unreachable("Target didn't implement getGenericShuffleVectorOpcode!");
-  }
-  /// Return the opcode to be used for subvector extraction.
-  virtual unsigned getGenericExtractSubvectorOpcode() const {
-    llvm_unreachable(
-        "Target didn't implement getGenericExtractSubvectorOpcode!");
-  }
-  /// Return the opcode to be used for integer comparison.
-  virtual unsigned getGenericIntegerComparisonOpcode() const {
-    llvm_unreachable(
-        "Target didn't implement getGenericIntegerComparisonOpcode!");
-  }
-
   /// Check whether Opc represents a lock instruction
   virtual bool isLock(unsigned Opc) const { return false; }
 

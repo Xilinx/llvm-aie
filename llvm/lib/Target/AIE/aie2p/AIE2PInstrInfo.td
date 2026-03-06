@@ -22,17 +22,12 @@ include "aie2p/AIE2PCompositeFormats.td"
 include "aie2p/AIE2PImmOperands.td"
 include "AIE2PRegOperandDef.td"
 include "aie2p/AIE2PGenInstrInfo.td"
+include "AIESharedPseudos.td"
 
-let isMeta = true, hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
-  def DelayedSchedBarrier : Pseudo<(outs), (ins)>;
-}
+def DelayedSchedBarrier : AIEDelayedSchedBarrier;
 
-// Pessimistically assume the stack pointer will be clobbered
-let Defs = [sp], Uses = [sp],
-    hasSideEffects=false, mayLoad=false, mayStore=false in {
-  def ADJCALLSTACKUP   : Pseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2)>;
-  def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2)>;
-}
+def ADJCALLSTACKUP   : AIEAdjCallStackUp<sp>;
+def ADJCALLSTACKDOWN : AIEAdjCallStackDown<sp>;
 
 
 // Pre-scheduling pseudo instruction for RET
@@ -63,27 +58,12 @@ let hasNoSchedulingInfo = true, hasSideEffects = true, mayLoad = false, mayStore
 
 // Loop related Pseudos
 // JNZD loops
-let hasSideEffects = 0, mayLoad = 0, mayStore = 0, Defs = [srCarry] in
-def LoopDec :
-    Pseudo<(outs eR:$dst), (ins eR:$src), "loop_dec", "${dst}, ${src}">;
-
-let hasSideEffects = 0,  mayLoad = 0, mayStore = 0, isBranch = 1, isIndirectBranch = 1, isTerminator = true in
-def LoopJNZ :
-    Pseudo<(outs), (ins eR:$tc, eP:$target), "loop_jnz", "${tc}, ${target}">;
+def LoopDec : AIELoopDec;
+def LoopJNZ : AIELoopJNZ;
 
 // Zero overhead loops
-let hasSideEffects = true, mayLoad = false, mayStore = false,
-    isNotDuplicable = true in {
-  def LoopStart : Pseudo<(outs), (ins eR:$src, c6s:$adj), "loop_start", "${src}, ${adj}">;
-
-  // PseudoLoopEnd represents the terminator of a ZOL. You can view it as a
-  // conditional branch to the loop body. We make this a meta instruction,
-  // since it doesn't need to be emitted itself, it only carries info for
-  // its predecessor bundle
-  let isBranch = true,  isTerminator = true, isMeta = true in
-    def PseudoLoopEnd : Pseudo<(outs), (ins cpmaddr:$lastInstr, cpmaddr:$target),
-      "pseudo_loop_end", "${lastInstr}, ${target}">;
-}
+def LoopStart     : AIELoopStart<c6s>;
+def PseudoLoopEnd : AIEPseudoLoopEnd<cpmaddr>;
 // Pseudo Copy
 // Target specific impl. of isCopyInstrImp causes the MOVE to be deleted, the Pseudo is
 // kind of work around so that its not deleted
@@ -92,9 +72,7 @@ let Itinerary = II_MOV_alu_mv_mv_mv_scl, hasSideEffects = 0,  mayLoad = 0, maySt
       Pseudo<(outs OP_mMvSclDst:$mMvSclDst), (ins OP_mMvSclSrc:$mMvSclSrc), "copy","$mMvSclDst, $mMvSclSrc">;
 }
 
-let isMeta = true, hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
-  def CYCLE_SEPARATOR : Pseudo<(outs), (ins)>;
-}
+def CYCLE_SEPARATOR : AIECycleSeparator;
 
 // Pseudo instructions for branches. Those are used by ISel and carry the right
 // attributes for optimizations to work. They get expanded right before post-RA

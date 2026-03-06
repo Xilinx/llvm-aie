@@ -5,7 +5,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 /// \file
@@ -251,10 +251,10 @@ AIE2PRegisterBankInfo::getInstrAlternativeMappings(
   const MachineRegisterInfo &MRI = MF.getRegInfo();
   switch (MI.getOpcode()) {
   case TargetOpcode::G_LOAD:
-  case AIE2P::G_AIE_OFFSET_LOAD:
-  case AIE2P::G_AIE_POSTINC_LOAD:
-  case AIE2P::G_AIE_POSTINC_2D_LOAD:
-  case AIE2P::G_AIE_POSTINC_3D_LOAD: {
+  case AIE::G_AIE_OFFSET_LOAD:
+  case AIE::G_AIE_POSTINC_LOAD:
+  case AIE::G_AIE_POSTINC_2D_LOAD:
+  case AIE::G_AIE_POSTINC_3D_LOAD: {
     const unsigned NumOperands = MI.getNumOperands();
     const unsigned FirstSrcIdx = MI.getNumExplicitDefs();
     unsigned MappingID = 1;
@@ -308,10 +308,10 @@ AIE2PRegisterBankInfo::getInstrAlternativeMappings(
     return AltMappings;
   }
   case TargetOpcode::G_STORE:
-  case AIE2P::G_AIE_OFFSET_STORE:
-  case AIE2P::G_AIE_POSTINC_STORE:
-  case AIE2P::G_AIE_POSTINC_2D_STORE:
-  case AIE2P::G_AIE_POSTINC_3D_STORE: {
+  case AIE::G_AIE_OFFSET_STORE:
+  case AIE::G_AIE_POSTINC_STORE:
+  case AIE::G_AIE_POSTINC_2D_STORE:
+  case AIE::G_AIE_POSTINC_3D_STORE: {
     const unsigned NumOperands = MI.getNumOperands();
     // Select the operand index for VecReg.
     const unsigned VecRegOpIdx = MI.getNumExplicitDefs();
@@ -1112,10 +1112,10 @@ AIE2PRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     return AIEBaseRegisterBankInfo::getInstrMapping(MI);
   }
   case TargetOpcode::G_LOAD:
-  case AIE2P::G_AIE_OFFSET_LOAD:
-  case AIE2P::G_AIE_POSTINC_LOAD:
-  case AIE2P::G_AIE_POSTINC_2D_LOAD:
-  case AIE2P::G_AIE_POSTINC_3D_LOAD: {
+  case AIE::G_AIE_OFFSET_LOAD:
+  case AIE::G_AIE_POSTINC_LOAD:
+  case AIE::G_AIE_POSTINC_2D_LOAD:
+  case AIE::G_AIE_POSTINC_3D_LOAD: {
     bool isAccRegMapping = false;
     bool isFifoPhysRegMapping = false;
 
@@ -1172,10 +1172,10 @@ AIE2PRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     return AIEBaseRegisterBankInfo::getInstrMapping(MI);
   }
   case TargetOpcode::G_STORE:
-  case AIE2P::G_AIE_OFFSET_STORE:
-  case AIE2P::G_AIE_POSTINC_STORE:
-  case AIE2P::G_AIE_POSTINC_2D_STORE:
-  case AIE2P::G_AIE_POSTINC_3D_STORE: {
+  case AIE::G_AIE_OFFSET_STORE:
+  case AIE::G_AIE_POSTINC_STORE:
+  case AIE::G_AIE_POSTINC_2D_STORE:
+  case AIE::G_AIE_POSTINC_3D_STORE: {
     // Select the operand index for VecReg.
     const unsigned VecRegOpIdx = MI.getNumExplicitDefs();
     Register VecReg = MI.getOperand(VecRegOpIdx).getReg();
@@ -1229,24 +1229,24 @@ void AIE2PRegisterBankInfo::setAIEGenericInstrMapping(
   const MachineFunction &MF = *MI.getParent()->getParent();
   const MachineRegisterInfo &MRI = MF.getRegInfo();
   switch (MI.getOpcode()) {
-  case AIE2P::G_AIE_OFFSET_STORE:
-  case AIE2P::G_AIE_OFFSET_LOAD:
-  case AIE2P::G_AIE_OFFSET_ZEXTLOAD:
-  case AIE2P::G_AIE_OFFSET_SEXTLOAD: {
+  case AIE::G_AIE_OFFSET_STORE:
+  case AIE::G_AIE_OFFSET_LOAD:
+  case AIE::G_AIE_OFFSET_ZEXTLOAD:
+  case AIE::G_AIE_OFFSET_SEXTLOAD: {
     // Offset is operand #2
     OpRegBankIdx[2] = PMI_MOD;
     break;
   }
-  case AIE2P::G_AIE_POSTINC_STORE:
-  case AIE2P::G_AIE_POSTINC_LOAD:
-  case AIE2P::G_AIE_POSTINC_ZEXTLOAD:
-  case AIE2P::G_AIE_POSTINC_SEXTLOAD: {
+  case AIE::G_AIE_POSTINC_STORE:
+  case AIE::G_AIE_POSTINC_LOAD:
+  case AIE::G_AIE_POSTINC_ZEXTLOAD:
+  case AIE::G_AIE_POSTINC_SEXTLOAD: {
     // Offset is operand #3
     OpRegBankIdx[3] = PMI_MOD;
     break;
   }
-  case AIE2P::G_AIE_UNPAD_VECTOR:
-  case AIE2P::G_AIE_PAD_VECTOR_UNDEF: {
+  case AIE::G_AIE_UNPAD_VECTOR:
+  case AIE::G_AIE_PAD_VECTOR_UNDEF: {
     // Pad/Unpad typically pads/discards 128-/256-bit, which is only supported
     // on the vector register bank
     Register SrcReg0 = MI.getOperand(1).getReg();
@@ -1257,7 +1257,7 @@ void AIE2PRegisterBankInfo::setAIEGenericInstrMapping(
     OpRegBankIdx[1] = getVecPartialMappingIdx(SrcType0);
     break;
   }
-  case AIE2P::G_AIE_ADD_VECTOR_ELT_HI: {
+  case AIE::G_AIE_ADD_VECTOR_ELT_HI: {
     Register DstReg = MI.getOperand(0).getReg();
     Register SrcReg0 = MI.getOperand(1).getReg();
     LLT DstType = MRI.getType(DstReg);
@@ -1268,7 +1268,7 @@ void AIE2PRegisterBankInfo::setAIEGenericInstrMapping(
     OpRegBankIdx[1] = getVecPartialMappingIdx(SrcType0);
     break;
   }
-  case AIE2P::G_AIE_BROADCAST_VECTOR: {
+  case AIE::G_AIE_BROADCAST_VECTOR: {
     Register DstReg = MI.getOperand(0).getReg();
     LLT DstType = MRI.getType(DstReg);
     unsigned Size = DstType.getSizeInBits();
@@ -1282,7 +1282,7 @@ void AIE2PRegisterBankInfo::setAIEGenericInstrMapping(
     break;
   }
 
-  case AIE2P::G_AIE_INSERT_VECTOR_ELT: {
+  case AIE::G_AIE_INSERT_VECTOR_ELT: {
     LLT DstType = MRI.getType(MI.getOperand(0).getReg());
     LLT SrcType = MRI.getType(MI.getOperand(1).getReg());
     assert(DstType == SrcType);

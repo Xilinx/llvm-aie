@@ -1906,51 +1906,6 @@ bool AIE2PInstrInfo::isOffsetInImmediateRange(
   }
 }
 
-unsigned AIE2PInstrInfo::getGenericAddVectorEltOpcode() const {
-  return AIE2P::G_AIE_ADD_VECTOR_ELT_HI;
-}
-
-unsigned AIE2PInstrInfo::getGenericInsertVectorEltOpcode() const {
-  return AIE2P::G_AIE_INSERT_VECTOR_ELT;
-}
-
-unsigned AIE2PInstrInfo::getGenericExtractVectorEltOpcode(bool SignExt) const {
-  return SignExt ? AIE2P::G_AIE_SEXT_EXTRACT_VECTOR_ELT
-                 : AIE2P::G_AIE_ZEXT_EXTRACT_VECTOR_ELT;
-}
-
-unsigned AIE2PInstrInfo::getGenericPadVectorOpcode() const {
-  return AIE2P::G_AIE_PAD_VECTOR_UNDEF;
-}
-
-unsigned AIE2PInstrInfo::getGenericUnpadVectorOpcode() const {
-  return AIE2P::G_AIE_UNPAD_VECTOR;
-}
-
-unsigned AIE2PInstrInfo::getGenericBroadcastVectorOpcode() const {
-  return AIE2P::G_AIE_BROADCAST_VECTOR;
-}
-
-unsigned AIE2PInstrInfo::getGenericVSelOpcode() const {
-  return AIE2P::G_AIE_VSEL;
-}
-
-unsigned AIE2PInstrInfo::getGenericVShiftOpcode() const {
-  return AIE2P::G_AIE_VSHIFT_RIGHT;
-}
-
-unsigned AIE2PInstrInfo::getGenericShuffleVectorOpcode() const {
-  return AIE2P::G_AIE_SHUFFLE_VECTOR;
-}
-
-unsigned AIE2PInstrInfo::getGenericExtractSubvectorOpcode() const {
-  return AIE2P::G_AIE_EXTRACT_SUBVECTOR;
-}
-
-unsigned AIE2PInstrInfo::getGenericIntegerComparisonOpcode() const {
-  return AIE2P::G_AIE_VECTOR_ICMP;
-}
-
 Register AIE2PInstrInfo::getSSStatusReg() const { return AIE2P::srSS0; }
 
 Register AIE2PInstrInfo::getMSStatusReg() const { return AIE2P::srMS0; }

@@ -211,7 +211,10 @@ bool AIELegalizerHelper::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
   Register Src = MRI.createGenericVirtualRegister(VecTy);
   MIRBuilder.buildUndef(Src);
 
-  const AIEBaseInstrInfo *II = ST.getInstrInfo();
+  auto AddVecEltOpc = AIE::G_AIE_ADD_VECTOR_ELT_HI;
+  if (!AddVecEltOpc)
+    return false;
+
   MachineOperand *OperandEnd = std::prev(MI.operands_end());
   for (auto &Operand : drop_begin(MI.operands(), 1)) {
     Register EltReg = Operand.getReg();
@@ -231,8 +234,7 @@ bool AIELegalizerHelper::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
       EltReg = EltReg32;
     }
 
-    MIRBuilder.buildInstr(II->getGenericAddVectorEltOpcode(), {Dst},
-                          {Src, EltReg});
+    MIRBuilder.buildInstr(AddVecEltOpc, {Dst}, {Src, EltReg});
     Src = Dst;
   }
 
@@ -262,11 +264,13 @@ bool AIELegalizerHelper::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
         .addUse(NewSrc1)
         .addUse(Zero)
         .addUse(ShiftConstant);
+    auto UnpadOpc = AIE::G_AIE_UNPAD_VECTOR;
+    if (!UnpadOpc)
+      return false;
     Register NewSrc2 =
         EltSize == 32 ? Vec512Reg
                       : MIRBuilder.buildBitcast(VecTy, Vec512Reg).getReg(0);
-    MIRBuilder.buildInstr(II->getGenericUnpadVectorOpcode(), {DstReg},
-                          {NewSrc2});
+    MIRBuilder.buildInstr(UnpadOpc, {DstReg}, {NewSrc2});
   }
 
   MI.eraseFromParent();
@@ -290,8 +294,11 @@ bool AIELegalizerHelper::legalizeG_UNMERGE_VALUES_128bit(
 
   assert(MI.getNumOperands() == 3 &&
          "Expected G_UNMERGE_VALUES of 256-bit vector to 2 x 128-bit vector");
-  const AIEBaseInstrInfo *II = ST.getInstrInfo();
-  const unsigned UnpadOpc = II->getGenericUnpadVectorOpcode();
+  auto UnpadOpc = AIE::G_AIE_UNPAD_VECTOR;
+  auto VShiftOpc = AIE::G_AIE_VSHIFT_RIGHT;
+  if (!UnpadOpc || !VShiftOpc)
+    return false;
+
   const Register SrcReg = MI.getOperand(MI.getNumOperands() - 1).getReg();
   const Register DstRegLow = MI.getOperand(0).getReg();
   const Register DstRegHigh = MI.getOperand(1).getReg();
@@ -319,7 +326,6 @@ bool AIELegalizerHelper::legalizeG_UNMERGE_VALUES_128bit(
   auto ImplicitDef512 = MIRBuilder.buildUndef(Vec512);
 
   // Now create the VSHIFT
-  const unsigned VShiftOpc = II->getGenericVShiftOpcode();
   auto VShift = MIRBuilder.buildInstr(VShiftOpc, {Vec512},
                                       {ConcatValue, ImplicitDef512, ShiftAmt});
 
@@ -368,8 +374,6 @@ bool AIELegalizerHelper::legalizeG_UNMERGE_VALUES(LegalizerHelper &Helper,
                                                   MachineInstr &MI) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
   MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
-  const AIEBaseInstrInfo *II = ST.getInstrInfo();
-
   const Register FirstReg = MI.getOperand(0).getReg();
   const Register LastReg = MI.getOperand(MI.getNumOperands() - 1).getReg();
   const LLT FirstTy = MRI.getType(FirstReg);
@@ -391,10 +395,13 @@ bool AIELegalizerHelper::legalizeG_UNMERGE_VALUES(LegalizerHelper &Helper,
   // Pad vectors of 128-bit vectors to 256-bit
   Register TargetReg = LastReg;
   if (LastTy.getSizeInBits() == 128) {
+    auto PadOpc = AIE::G_AIE_PAD_VECTOR_UNDEF;
+    if (!PadOpc)
+      return false;
     const LLT NewRegTy =
         LLT::fixed_vector(LastTy.getNumElements() * 2, LastTy.getScalarType());
     const Register NewReg = MRI.createGenericVirtualRegister(NewRegTy);
-    MIRBuilder.buildInstr(II->getGenericPadVectorOpcode(), {NewReg}, {LastReg});
+    MIRBuilder.buildInstr(PadOpc, {NewReg}, {LastReg});
     TargetReg = NewReg;
   }
 
@@ -760,14 +767,18 @@ bool AIELegalizerHelper::legalizeG_EXTRACT_VECTOR_ELT(LegalizerHelper &Helper,
              "G_EXTRACT_VECTOR_ELT of s128 not supported for the target");
       /// We can use vshuffle + pad/unpad instruction to select extract s128
       /// from <2 x s128>
-      const AIEBaseInstrInfo *II = ST.getInstrInfo();
+      auto PadOpc = AIE::G_AIE_PAD_VECTOR_UNDEF;
+      auto ShuffleOpc = AIE::G_AIE_SHUFFLE_VECTOR;
+      auto UnpadOpc = AIE::G_AIE_UNPAD_VECTOR;
+      if (!PadOpc || !ShuffleOpc || !UnpadOpc)
+        return false;
+
       const LLT V64S8 = LLT::fixed_vector(64, 8);
       const LLT V32S8 = LLT::fixed_vector(32, 8);
       const LLT V16S8 = LLT::fixed_vector(16, 8);
       // Step 1: Prepare the src1(SrcVecReg) for vshuffle
       const Register RegSrcBitcast = MRI.createGenericVirtualRegister(V32S8);
       MIRBuilder.buildBitcast(RegSrcBitcast, SrcVecReg);
-      const unsigned PadOpc = II->getGenericPadVectorOpcode();
       const Register RegSrcPadded =
           MIRBuilder.buildInstr(PadOpc, {V64S8}, {RegSrcBitcast}).getReg(0);
       // Step 2: Create an undef src2 for vshuffle
@@ -794,24 +805,21 @@ bool AIELegalizerHelper::legalizeG_EXTRACT_VECTOR_ELT(LegalizerHelper &Helper,
             MIRBuilder.buildConstant(S32, ModeHiValue).getReg(0);
         MIRBuilder.buildSelect(ModeReg, IdxReg, ModeHiReg, ModeLoReg);
         // step 4: Create vshuffle.
-        ShuffleOrCopyInstr =
-            MIRBuilder.buildInstr(II->getGenericShuffleVectorOpcode(), {V64S8},
-                                  {RegSrcPadded, RegUndef, ModeReg});
+        ShuffleOrCopyInstr = MIRBuilder.buildInstr(
+            ShuffleOpc, {V64S8}, {RegSrcPadded, RegUndef, ModeReg});
       } else {
         const unsigned LaneIdx = IdxVal->Value.getZExtValue();
         MIRBuilder.buildConstant(ModeReg, ModeHiValue);
         // step 4: Create vshuffle. For LaneIdx 0, we don't have to use the
         // shuffle, padded register itself is enough.
         if (LaneIdx) {
-          ShuffleOrCopyInstr =
-              MIRBuilder.buildInstr(II->getGenericShuffleVectorOpcode(),
-                                    {V64S8}, {RegSrcPadded, RegUndef, ModeReg});
+          ShuffleOrCopyInstr = MIRBuilder.buildInstr(
+              ShuffleOpc, {V64S8}, {RegSrcPadded, RegUndef, ModeReg});
         } else {
           ShuffleOrCopyInstr = MIRBuilder.buildCopy({V64S8}, {RegSrcPadded});
         }
       }
 
-      const unsigned UnpadOpc = II->getGenericUnpadVectorOpcode();
       // Finally, unpad the 512-bit result to 128-bit
       auto UnpadInstr =
           MIRBuilder.buildInstr(UnpadOpc, {V16S8}, {ShuffleOrCopyInstr});
@@ -838,16 +846,14 @@ bool AIELegalizerHelper::legalizeG_EXTRACT_VECTOR_ELT(LegalizerHelper &Helper,
     if (SrcVecEltTy == S8 || SrcVecEltTy == S16) {
       const Register ExtEltDstReg = MRI.createGenericVirtualRegister(S32);
       const Register ExtDstReg = MRI.createGenericVirtualRegister(S32);
-      ExtractInstr = MIRBuilder.buildInstr(
-          II->getGenericExtractVectorEltOpcode(/*SignExt*/ true),
-          {ExtEltDstReg}, {SrcVecReg, IdxReg});
+      ExtractInstr = MIRBuilder.buildInstr(AIE::G_AIE_SEXT_EXTRACT_VECTOR_ELT,
+                                           {ExtEltDstReg}, {SrcVecReg, IdxReg});
       MIRBuilder.buildAssertInstr(TargetOpcode::G_ASSERT_SEXT, ExtDstReg,
                                   ExtEltDstReg, SrcVecEltTy.getSizeInBits());
       MIRBuilder.buildTrunc(DstReg, ExtDstReg);
     } else {
-      ExtractInstr = MIRBuilder.buildInstr(
-          II->getGenericExtractVectorEltOpcode(/*SignExt*/ true), {DstReg},
-          {SrcVecReg, IdxReg});
+      ExtractInstr = MIRBuilder.buildInstr(AIE::G_AIE_SEXT_EXTRACT_VECTOR_ELT,
+                                           {DstReg}, {SrcVecReg, IdxReg});
     }
     MI.eraseFromParent();
 
@@ -891,7 +897,7 @@ bool AIELegalizerHelper::legalizeG_INSERT_VECTOR_ELT(LegalizerHelper &Helper,
     }
     return NewValReg;
   };
-  const AIEBaseInstrInfo *II = ST.getInstrInfo();
+  auto InsertEltOpc = AIE::G_AIE_INSERT_VECTOR_ELT;
   switch (DstVecSize) {
   case 64: {
     if (DstVecTy != V2S32) {
@@ -917,14 +923,15 @@ bool AIELegalizerHelper::legalizeG_INSERT_VECTOR_ELT(LegalizerHelper &Helper,
     break;
   }
   case 256: {
+    if (!InsertEltOpc)
+      return false;
     const unsigned MultiplyFactor = 512 / DstVecSize;
     const LLT New512Ty = DstVecTy.multiplyElements(MultiplyFactor);
     Register New512 = emitPadUndefVector(MRI, MIRBuilder, New512Ty, SrcVecReg);
     Register ScalarSrc = ClampScalarSrc(ValReg);
     Register NewDstReg =
         MIRBuilder
-            .buildInstr(II->getGenericInsertVectorEltOpcode(), {New512Ty},
-                        {New512, ScalarSrc, IdxReg})
+            .buildInstr(InsertEltOpc, {New512Ty}, {New512, ScalarSrc, IdxReg})
             .getReg(0);
 
     SmallVector<Register, 4> Regs;
@@ -936,8 +943,10 @@ bool AIELegalizerHelper::legalizeG_INSERT_VECTOR_ELT(LegalizerHelper &Helper,
     break;
   }
   case 512: {
+    if (!InsertEltOpc)
+      return false;
     Register ScalarSrc = ClampScalarSrc(ValReg);
-    MIRBuilder.buildInstr(II->getGenericInsertVectorEltOpcode(), {DstVecReg},
+    MIRBuilder.buildInstr(InsertEltOpc, {DstVecReg},
                           {SrcVecReg, ScalarSrc, IdxReg});
     break;
   }
@@ -1451,8 +1460,9 @@ bool AIELegalizerHelper::legalizeG_FMUL(LegalizerHelper &Helper,
   SrcRHS = MIRBuilder.buildAnyExt(S32, SrcRHS).getReg(0);
 
   const LLT BroadcastVecLLT = V32BF16;
-  const unsigned BroadcastOpc =
-      ST.getInstrInfo()->getGenericBroadcastVectorOpcode();
+  auto BroadcastOpc = AIE::G_AIE_BROADCAST_VECTOR;
+  if (!BroadcastOpc)
+    return false;
 
   SrcLHS = MIRBuilder.buildInstr(BroadcastOpc, {BroadcastVecLLT}, {SrcLHS})
                .getReg(0);
@@ -1464,8 +1474,7 @@ bool AIELegalizerHelper::legalizeG_FMUL(LegalizerHelper &Helper,
           .getReg(0);
 
   const Register IdxReg = MIRBuilder.buildConstant(S32, 0).getReg(0);
-  const unsigned ExtractEltOpc =
-      ST.getInstrInfo()->getGenericExtractVectorEltOpcode(/*SignExt=*/false);
+  const unsigned ExtractEltOpc = AIE::G_AIE_ZEXT_EXTRACT_VECTOR_ELT;
   Res = MIRBuilder.buildInstr(ExtractEltOpc, {S32}, {Res, IdxReg}).getReg(0);
   Res = MIRBuilder.buildAssertInstr(TargetOpcode::G_ASSERT_ZEXT, {S32}, Res, 16)
             .getReg(0);
@@ -1493,8 +1502,9 @@ bool AIELegalizerHelper::legalizeG_FADD_G_FSUB(LegalizerHelper &Helper,
   const Register IdxReg = MIRBuilder.buildConstant(S32, 0).getReg(0);
   const Register UndefVec = MIRBuilder.buildUndef(InsertVecLLT).getReg(0);
 
-  const unsigned InsertEltOpc =
-      ST.getInstrInfo()->getGenericInsertVectorEltOpcode();
+  auto InsertEltOpc = AIE::G_AIE_INSERT_VECTOR_ELT;
+  if (!InsertEltOpc)
+    return false;
   SrcLHS =
       MIRBuilder
           .buildInstr(InsertEltOpc, {InsertVecLLT}, {UndefVec, SrcLHS, IdxReg})
@@ -1522,8 +1532,7 @@ bool AIELegalizerHelper::legalizeG_FADD_G_FSUB(LegalizerHelper &Helper,
     Res = MIRBuilder.buildUnmerge(V16S32, Res).getReg(0);
   }
 
-  const unsigned ExtractEltOpc =
-      ST.getInstrInfo()->getGenericExtractVectorEltOpcode(/*SignExt*/ true);
+  const unsigned ExtractEltOpc = AIE::G_AIE_SEXT_EXTRACT_VECTOR_ELT;
   MIRBuilder.buildInstr(ExtractEltOpc, {DstReg}, {Res, IdxReg});
 
   MI.eraseFromParent();
@@ -1610,7 +1619,12 @@ bool AIELegalizerHelper::legalizeG_CONCAT_VECTORS_128bit(
     LegalizerHelper &Helper, MachineInstr &MI) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
   MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
-  const AIEBaseInstrInfo *TII = ST.getInstrInfo();
+  auto PadOpc = AIE::G_AIE_PAD_VECTOR_UNDEF;
+  auto VShiftOpc = AIE::G_AIE_VSHIFT_RIGHT;
+  auto VSelOpc = AIE::G_AIE_VSEL;
+  auto UnpadOpc = AIE::G_AIE_UNPAD_VECTOR;
+  if (!PadOpc || !VShiftOpc || !VSelOpc || !UnpadOpc)
+    return false;
 
   const Register DstReg = MI.getOperand(0).getReg();
   const Register Src0 = MI.getOperand(1).getReg();
@@ -1627,7 +1641,6 @@ bool AIELegalizerHelper::legalizeG_CONCAT_VECTORS_128bit(
 
   // Step 1: Pad both 128-bit inputs to 512-bit
   const LLT Vec512Ty = Src0Ty.multiplyElements(4);
-  const unsigned PadOpc = TII->getGenericPadVectorOpcode();
 
   const Register Src0_512 =
       MIRBuilder.buildInstr(PadOpc, {Vec512Ty}, {Src0}).getReg(0);
@@ -1652,7 +1665,6 @@ bool AIELegalizerHelper::legalizeG_CONCAT_VECTORS_128bit(
   const Register ShiftAmt = MIRBuilder.buildConstant(S32, 48).getReg(0);
   const Register Undef512_S32 = MIRBuilder.buildUndef(Vec16S32).getReg(0);
 
-  const unsigned VShiftOpc = TII->getGenericVShiftOpcode();
   const Register Shifted =
       MIRBuilder
           .buildInstr(VShiftOpc, {Vec16S32},
@@ -1664,7 +1676,6 @@ bool AIELegalizerHelper::legalizeG_CONCAT_VECTORS_128bit(
   // [127:0] from second operand (when operating on <16 x s32> vectors)
   const Register SelIdx = MIRBuilder.buildConstant(S32, 15).getReg(0);
 
-  const unsigned VSelOpc = TII->getGenericVSelOpcode();
   const Register Result512_S32 =
       MIRBuilder
           .buildInstr(VSelOpc, {Vec16S32}, {Shifted, Src0_512_S32, SelIdx})
@@ -1676,7 +1687,6 @@ bool AIELegalizerHelper::legalizeG_CONCAT_VECTORS_128bit(
                    : Result512_S32;
 
   // Step 6: Extract the 256-bit result
-  const unsigned UnpadOpc = TII->getGenericUnpadVectorOpcode();
   MIRBuilder.buildInstr(UnpadOpc, {DstReg}, {Result512});
 
   MI.eraseFromParent();
@@ -1935,8 +1945,10 @@ bool AIELegalizerHelper::legalizeG_TRUNC(LegalizerHelper &Helper,
   assert(SrcVecSize == 256 && "Expected G_TRUNC input vector size is 256!");
 
   const AIEBaseInstrInfo *TII = ST.getInstrInfo();
-  const unsigned PadOpc = TII->getGenericPadVectorOpcode();
-  const unsigned UnpadOpc = TII->getGenericUnpadVectorOpcode();
+  auto PadOpc = AIE::G_AIE_PAD_VECTOR_UNDEF;
+  auto UnpadOpc = AIE::G_AIE_UNPAD_VECTOR;
+  if (!PadOpc || !UnpadOpc)
+    return false;
 
   const LLT NewPadRegTy = LLT::fixed_vector(
       TII->getBasicVectorBitSize() / SrcVecTy.getScalarType().getSizeInBits(),
@@ -1967,8 +1979,9 @@ bool AIELegalizerHelper::legalizeG_ICMP(LegalizerHelper &Helper,
   LLT DstType = MRI.getType(DstReg);
   const bool IsResult16Bit = DstType.getSizeInBits() == 16;
 
-  const unsigned ICmpOpcode =
-      ST.getInstrInfo()->getGenericIntegerComparisonOpcode();
+  auto ICmpOpcode = AIE::G_AIE_VECTOR_ICMP;
+  if (!ICmpOpcode)
+    return false;
 
   // Result will be padded.
   if (IsResult16Bit)

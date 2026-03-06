@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -237,7 +237,7 @@ bool AIE2PreLegalizerCombinerImpl::tryToCombineVectorInserts(
       LLT::fixed_vector(DstRegBits / SclSrcBits, SclSrcBits));
 
   MIRBuilder.buildBuildVectorTrunc(DstRegTrunc, Regs);
-  MIRBuilder.buildInstr(AIE2::G_AIE_PAD_VECTOR_UNDEF, {DstRegPad},
+  MIRBuilder.buildInstr(AIE::G_AIE_PAD_VECTOR_UNDEF, {DstRegPad},
                         {DstRegTrunc});
   // Avoid bitcast if types match, use copy instead
   if (MRI.getType(DstRegPad) == MRI.getType(DstReg))
@@ -356,9 +356,8 @@ bool AIE2PreLegalizerCombinerImpl::tryToCombineVExtractElt(
   if (!isTruncExtToS20Sequence(DstReg, SignVal.value(), SrcEltSize))
     return false;
 
-  auto *TII = static_cast<const AIE2InstrInfo *>(STI.getInstrInfo());
-  const unsigned Opcode =
-      TII->getGenericExtractVectorEltOpcode(SignVal.value());
+  const unsigned Opcode = SignVal.value() ? AIE::G_AIE_SEXT_EXTRACT_VECTOR_ELT
+                                          : AIE::G_AIE_ZEXT_EXTRACT_VECTOR_ELT;
   const unsigned AssertExtOpcode = SignVal.value()
                                        ? TargetOpcode::G_ASSERT_SEXT
                                        : TargetOpcode::G_ASSERT_ZEXT;
@@ -429,8 +428,8 @@ bool AIE2PreLegalizerCombinerImpl::tryCombineAll(MachineInstr &MI) const {
   case TargetOpcode::G_INTRINSIC: {
     return tryToCombineIntrinsic(MI);
   }
-  case AIE2::G_AIE_ZEXT_EXTRACT_VECTOR_ELT:
-  case AIE2::G_AIE_SEXT_EXTRACT_VECTOR_ELT: {
+  case AIE::G_AIE_ZEXT_EXTRACT_VECTOR_ELT:
+  case AIE::G_AIE_SEXT_EXTRACT_VECTOR_ELT: {
     const LLT SrcVecTy = MRI.getType(MI.getOperand(1).getReg());
     const unsigned BasicVecSize = STI.getInstrInfo()->getBasicVectorBitSize();
     if (SrcVecTy.getSizeInBits() != BasicVecSize) {
@@ -501,13 +500,14 @@ bool AIE2PreLegalizerCombiner::runOnMachineFunction(MachineFunction &MF) {
   const auto *LI = ST.getLegalizerInfo();
 
   GISelKnownBits *KB = &getAnalysis<GISelKnownBitsAnalysis>().get(MF);
-  MachineDominatorTree *MDT = &getAnalysis<MachineDominatorTreeWrapperPass>().getDomTree();
+  MachineDominatorTree *MDT =
+      &getAnalysis<MachineDominatorTreeWrapperPass>().getDomTree();
 
   CombinerInfo CInfo(/*AllowIllegalOps*/ true, /*ShouldLegalizeIllegal*/ false,
                      /*LegalizerInfo*/ nullptr, EnableOpt, F.hasOptSize(),
                      F.hasMinSize());
-  AIE2PreLegalizerCombinerImpl Impl(MF, CInfo, TPC, *KB, CSEInfo,
-                                        RuleConfig, ST, MDT, LI);
+  AIE2PreLegalizerCombinerImpl Impl(MF, CInfo, TPC, *KB, CSEInfo, RuleConfig,
+                                    ST, MDT, LI);
   return Impl.combineMachineInstrs();
 }
 

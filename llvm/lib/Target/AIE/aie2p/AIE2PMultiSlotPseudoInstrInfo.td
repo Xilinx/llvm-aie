@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===---------------------------------------------------------------------===//
 
@@ -18,7 +18,7 @@
 let mayLoad = false, mayStore = false, hasSideEffects = false, Itinerary = II_PADDA_pstm_nrm_imm in {
   let Constraints = "$ptr = $res" in {
     def PADD_mod_pseudo : MultiSlot_Pseudo< (outs eP:$res), (ins eP:$ptr, eM:$mod),
-                          "padd_mod_pseudo", "[$ptr], $mod", 
+                          "padd_mod_pseudo", "[$ptr], $mod",
                           [PADDA_pstm_nrm, PADDB_pstm_nrm, PADDS_pstm_nrm] >;
     def PADD_imm_pseudo : MultiSlot_Pseudo< (outs eP:$res), (ins eP:$ptr, c10s_step64:$imm),
                           "padd_imm_pseudo", "[$ptr], $imm", 

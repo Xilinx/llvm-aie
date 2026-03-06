@@ -293,27 +293,27 @@ bool AIE2PInstructionSelector::select(MachineInstr &I) {
     return selectG_LOAD(I, MRI);
   case G_STORE:
     return selectG_STORE(I, MRI);
-  case AIE2P::G_AIE_OFFSET_LOAD:
-  case AIE2P::G_AIE_OFFSET_SEXTLOAD:
-  case AIE2P::G_AIE_OFFSET_ZEXTLOAD:
-  case AIE2P::G_AIE_POSTINC_LOAD:
-  case AIE2P::G_AIE_POSTINC_SEXTLOAD:
-  case AIE2P::G_AIE_POSTINC_ZEXTLOAD:
-  case AIE2P::G_AIE_POSTINC_2D_LOAD:
-  case AIE2P::G_AIE_POSTINC_2D_SEXTLOAD:
-  case AIE2P::G_AIE_POSTINC_2D_ZEXTLOAD:
-  case AIE2P::G_AIE_POSTINC_3D_LOAD:
-  case AIE2P::G_AIE_POSTINC_3D_SEXTLOAD:
-  case AIE2P::G_AIE_POSTINC_3D_ZEXTLOAD:
-  case AIE2P::G_AIE_OFFSET_STORE:
-  case AIE2P::G_AIE_POSTINC_STORE:
-  case AIE2P::G_AIE_POSTINC_2D_STORE:
-  case AIE2P::G_AIE_POSTINC_3D_STORE:
+  case AIE::G_AIE_OFFSET_LOAD:
+  case AIE::G_AIE_OFFSET_SEXTLOAD:
+  case AIE::G_AIE_OFFSET_ZEXTLOAD:
+  case AIE::G_AIE_POSTINC_LOAD:
+  case AIE::G_AIE_POSTINC_SEXTLOAD:
+  case AIE::G_AIE_POSTINC_ZEXTLOAD:
+  case AIE::G_AIE_POSTINC_2D_LOAD:
+  case AIE::G_AIE_POSTINC_2D_SEXTLOAD:
+  case AIE::G_AIE_POSTINC_2D_ZEXTLOAD:
+  case AIE::G_AIE_POSTINC_3D_LOAD:
+  case AIE::G_AIE_POSTINC_3D_SEXTLOAD:
+  case AIE::G_AIE_POSTINC_3D_ZEXTLOAD:
+  case AIE::G_AIE_OFFSET_STORE:
+  case AIE::G_AIE_POSTINC_STORE:
+  case AIE::G_AIE_POSTINC_2D_STORE:
+  case AIE::G_AIE_POSTINC_3D_STORE:
     return selectG_AIE_LOAD_STORE(I, MRI);
-  case AIE2P::G_AIE_PAD_VECTOR_UNDEF:
+  case AIE::G_AIE_PAD_VECTOR_UNDEF:
     return selectG_AIE_PAD_VECTOR_UNDEF(I, I.getOperand(0), I.getOperand(1),
                                         MRI, MF);
-  case AIE2P::G_AIE_UNPAD_VECTOR:
+  case AIE::G_AIE_UNPAD_VECTOR:
     return selectG_AIE_UNPAD_VECTOR(I, I.getOperand(0).getReg(),
                                     I.getOperand(1).getReg(), MRI, MF);
   case G_INTRINSIC_W_SIDE_EFFECTS:
@@ -434,7 +434,7 @@ bool AIE2PInstructionSelector::select(MachineInstr &I) {
     return selectLRegSequence(MIB, I, MRI);
   case G_UNMERGE_VALUES:
     return selectG_UNMERGE_VALUES(MIB, I, MRI);
-  case AIE2P::G_AIE_BROADCAST_VECTOR:
+  case AIE::G_AIE_BROADCAST_VECTOR:
     return selectG_AIE_BROADCAST_VECTOR(I, MRI);
   default:
     return selectImpl(I, *CoverageInfo);
@@ -837,37 +837,36 @@ AIE2PInstructionSelector::getOrDefineAddressingRegister(
                               /*PtrOp=*/MemI.getOperand(1),
                               /*OffsetReg=*/{},
                               /*ImmediateOffset=*/APInt::getZero(32)};
-  case AIE2P::G_AIE_OFFSET_STORE:
-  case AIE2P::G_AIE_OFFSET_LOAD:
-  case AIE2P::G_AIE_OFFSET_ZEXTLOAD:
-  case AIE2P::G_AIE_OFFSET_SEXTLOAD:
+  case AIE::G_AIE_OFFSET_STORE:
+  case AIE::G_AIE_OFFSET_LOAD:
+  case AIE::G_AIE_OFFSET_ZEXTLOAD:
+  case AIE::G_AIE_OFFSET_SEXTLOAD:
     return createAddressModeInfo(MemI,
                                  /*SrcDstOp=*/MemI.getOperand(0),
                                  /*PtrOp=*/MemI.getOperand(1),
                                  /*OffsetReg=*/MemI.getOperand(2).getReg(),
                                  MRI);
-  case AIE2P::G_AIE_POSTINC_STORE:
+  case AIE::G_AIE_POSTINC_STORE:
     return createAddressModeInfo(MemI,
                                  /*SrcDstOp=*/MemI.getOperand(1),
                                  /*PtrOp=*/MemI.getOperand(2),
                                  /*OffsetReg=*/MemI.getOperand(3).getReg(),
                                  MRI);
-  case AIE2P::G_AIE_POSTINC_LOAD:
-  case AIE2P::G_AIE_POSTINC_SEXTLOAD:
-  case AIE2P::G_AIE_POSTINC_ZEXTLOAD:
+  case AIE::G_AIE_POSTINC_LOAD:
+  case AIE::G_AIE_POSTINC_SEXTLOAD:
+  case AIE::G_AIE_POSTINC_ZEXTLOAD:
     return createAddressModeInfo(MemI,
                                  /*SrcDstOp=*/MemI.getOperand(0),
                                  /*PtrOp=*/MemI.getOperand(2),
                                  /*OffsetReg=*/MemI.getOperand(3).getReg(),
                                  MRI);
-  case AIE2P::G_AIE_POSTINC_2D_STORE:
-  case AIE2P::G_AIE_POSTINC_2D_SEXTLOAD:
-  case AIE2P::G_AIE_POSTINC_2D_ZEXTLOAD:
-  case AIE2P::G_AIE_POSTINC_2D_LOAD: {
-    MachineOperand &SrcDstOp =
-        (MemI.getOpcode() == AIE2P::G_AIE_POSTINC_2D_STORE)
-            ? MemI.getOperand(2)
-            : MemI.getOperand(0);
+  case AIE::G_AIE_POSTINC_2D_STORE:
+  case AIE::G_AIE_POSTINC_2D_SEXTLOAD:
+  case AIE::G_AIE_POSTINC_2D_ZEXTLOAD:
+  case AIE::G_AIE_POSTINC_2D_LOAD: {
+    MachineOperand &SrcDstOp = (MemI.getOpcode() == AIE::G_AIE_POSTINC_2D_STORE)
+                                   ? MemI.getOperand(2)
+                                   : MemI.getOperand(0);
     Register ModifierReg = MemI.getOperand(4).getReg();
     Register IncrReg = MemI.getOperand(5).getReg();
     Register SizeReg = MemI.getOperand(6).getReg();
@@ -879,14 +878,13 @@ AIE2PInstructionSelector::getOrDefineAddressingRegister(
                                  /*PtrOp=*/MemI.getOperand(3),
                                  /*OffsetReg=*/DReg, MRI);
   } break;
-  case AIE2P::G_AIE_POSTINC_3D_STORE:
-  case AIE2P::G_AIE_POSTINC_3D_SEXTLOAD:
-  case AIE2P::G_AIE_POSTINC_3D_ZEXTLOAD:
-  case AIE2P::G_AIE_POSTINC_3D_LOAD: {
-    MachineOperand &SrcDstOp =
-        (MemI.getOpcode() == AIE2P::G_AIE_POSTINC_3D_STORE)
-            ? MemI.getOperand(3)
-            : MemI.getOperand(0);
+  case AIE::G_AIE_POSTINC_3D_STORE:
+  case AIE::G_AIE_POSTINC_3D_SEXTLOAD:
+  case AIE::G_AIE_POSTINC_3D_ZEXTLOAD:
+  case AIE::G_AIE_POSTINC_3D_LOAD: {
+    MachineOperand &SrcDstOp = (MemI.getOpcode() == AIE::G_AIE_POSTINC_3D_STORE)
+                                   ? MemI.getOperand(3)
+                                   : MemI.getOperand(0);
     Register ModifierReg = MemI.getOperand(5).getReg();
     Register Incr1Reg = MemI.getOperand(6).getReg();
     Register Incr2Reg = MemI.getOperand(7).getReg();
@@ -1009,7 +1007,7 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
     }
     break;
   }
-  case AIE2P::G_AIE_OFFSET_LOAD: {
+  case AIE::G_AIE_OFFSET_LOAD: {
     if (LoadStoreSize == 128) {
       assert(RBID == AIE2P::VRegBankID &&
              "128-bit vectors should be in the Vector Register Bank");
@@ -1071,7 +1069,7 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
     }
   }
     [[fallthrough]];
-  case AIE2P::G_AIE_OFFSET_SEXTLOAD: {
+  case AIE::G_AIE_OFFSET_SEXTLOAD: {
     if (LoadStoreSize == 16) {
       ISelOpcode =
           FitsImmediateRange ? AIE2P::LDA_s16_idx_imm : AIE2P::LDA_s16_idx;
@@ -1084,7 +1082,7 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
     }
     break;
   }
-  case AIE2P::G_AIE_OFFSET_ZEXTLOAD: {
+  case AIE::G_AIE_OFFSET_ZEXTLOAD: {
     if (LoadStoreSize == 16) {
       ISelOpcode =
           FitsImmediateRange ? AIE2P::LDA_u16_idx_imm : AIE2P::LDA_u16_idx;
@@ -1097,7 +1095,7 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
     }
     break;
   }
-  case AIE2P::G_AIE_POSTINC_LOAD: {
+  case AIE::G_AIE_POSTINC_LOAD: {
     if (LoadStoreSize == 128) {
       assert(RBID == AIE2P::VRegBankID &&
              "128-bit vectors should be in the Vector Register Bank");
@@ -1144,7 +1142,7 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
     }
   }
     [[fallthrough]];
-  case AIE2P::G_AIE_POSTINC_SEXTLOAD: {
+  case AIE::G_AIE_POSTINC_SEXTLOAD: {
     if (LoadStoreSize == 16) {
       ISelOpcode = FitsImmediateRange ? AIE2P::LDA_s16_pstm_nrm_imm
                                       : AIE2P::LDA_s16_pstm_nrm;
@@ -1157,7 +1155,7 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
     }
     break;
   }
-  case AIE2P::G_AIE_POSTINC_ZEXTLOAD: {
+  case AIE::G_AIE_POSTINC_ZEXTLOAD: {
     if (LoadStoreSize == 16) {
       ISelOpcode = FitsImmediateRange ? AIE2P::LDA_u16_pstm_nrm_imm
                                       : AIE2P::LDA_u16_pstm_nrm;
@@ -1170,7 +1168,7 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
     }
     break;
   }
-  case AIE2P::G_AIE_POSTINC_2D_LOAD: {
+  case AIE::G_AIE_POSTINC_2D_LOAD: {
     if (LoadStoreSize == 128) {
       assert(RBID == AIE2P::VRegBankID &&
              "128-bit vectors should be in the Vector Register Bank");
@@ -1202,7 +1200,7 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
     }
   }
     [[fallthrough]];
-  case AIE2P::G_AIE_POSTINC_2D_SEXTLOAD:
+  case AIE::G_AIE_POSTINC_2D_SEXTLOAD:
     if (LoadStoreSize == 16) {
       return {/*ISelOpcode=*/AIE2P::LDA_2D_s16, NoImmediate,
               /*OffsetOpcode=*/{}};
@@ -1212,7 +1210,7 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
               /*OffsetOpcode=*/{}};
     }
     break;
-  case AIE2P::G_AIE_POSTINC_2D_ZEXTLOAD:
+  case AIE::G_AIE_POSTINC_2D_ZEXTLOAD:
     if (LoadStoreSize == 16) {
       return {/*ISelOpcode=*/AIE2P::LDA_2D_u16, NoImmediate,
               /*OffsetOpcode=*/{}};
@@ -1222,7 +1220,7 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
               /*OffsetOpcode=*/{}};
     }
     break;
-  case AIE2P::G_AIE_POSTINC_3D_LOAD: {
+  case AIE::G_AIE_POSTINC_3D_LOAD: {
     if (LoadStoreSize == 128) {
       assert(RBID == AIE2P::VRegBankID &&
              "128-bit vectors should be in the Vector Register Bank");
@@ -1254,7 +1252,7 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
     }
   }
     [[fallthrough]];
-  case AIE2P::G_AIE_POSTINC_3D_SEXTLOAD:
+  case AIE::G_AIE_POSTINC_3D_SEXTLOAD:
     if (LoadStoreSize == 16) {
       return {/*ISelOpcode=*/AIE2P::LDA_3D_s16, NoImmediate,
               /*OffsetOpcode=*/{}};
@@ -1264,7 +1262,7 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
               /*OffsetOpcode=*/{}};
     }
     break;
-  case AIE2P::G_AIE_POSTINC_3D_ZEXTLOAD:
+  case AIE::G_AIE_POSTINC_3D_ZEXTLOAD:
     if (LoadStoreSize == 16) {
       return {/*ISelOpcode=*/AIE2P::LDA_3D_u16, NoImmediate,
               /*OffsetOpcode=*/{}};
@@ -1362,7 +1360,7 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
     }
     break;
   }
-  case AIE2P::G_AIE_OFFSET_STORE: {
+  case AIE::G_AIE_OFFSET_STORE: {
     if (LoadStoreSize == 128) {
       assert(RBID == AIE2P::VRegBankID &&
              "128-bit vectors should be in the Vector Register Bank");
@@ -1433,7 +1431,7 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
     }
     break;
   }
-  case AIE2P::G_AIE_POSTINC_STORE: {
+  case AIE::G_AIE_POSTINC_STORE: {
     RBID = deriveRegBankID(I.getOperand(1).getReg(), MRI, RBI);
     if (LoadStoreSize == 128) {
       assert(RBID == AIE2P::VRegBankID &&
@@ -1490,7 +1488,7 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
     }
     break;
   }
-  case AIE2P::G_AIE_POSTINC_2D_STORE: {
+  case AIE::G_AIE_POSTINC_2D_STORE: {
     RBID = deriveRegBankID(I.getOperand(2).getReg(), MRI, RBI);
     if (LoadStoreSize == 128) {
       assert(RBID == AIE2P::VRegBankID &&
@@ -1534,7 +1532,7 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
     }
     break;
   }
-  case AIE2P::G_AIE_POSTINC_3D_STORE: {
+  case AIE::G_AIE_POSTINC_3D_STORE: {
     RBID = deriveRegBankID(I.getOperand(3).getReg(), MRI, RBI);
     if (LoadStoreSize == 128) {
       assert(RBID == AIE2P::VRegBankID &&
@@ -1639,9 +1637,9 @@ bool AIE2PInstructionSelector::selectWideG_AIE_LOAD_STORE(
   SmallVector<MachineInstrBuilder, 4> SplitInstrs;
   switch (AMI.MemI.getOpcode()) {
   case AIE2P::G_STORE:
-  case AIE2P::G_AIE_POSTINC_STORE:
-  case AIE2P::G_AIE_POSTINC_2D_STORE:
-  case AIE2P::G_AIE_POSTINC_3D_STORE: {
+  case AIE::G_AIE_POSTINC_STORE:
+  case AIE::G_AIE_POSTINC_2D_STORE:
+  case AIE::G_AIE_POSTINC_3D_STORE: {
     // Split Offsets first and then perform the postinc.
     // For consistency, also handle G_STORE in the same manner.
     for (int SubRegIdx = SplitFactor - 1; SubRegIdx >= 0; SubRegIdx--) {
@@ -1669,7 +1667,7 @@ bool AIE2PInstructionSelector::selectWideG_AIE_LOAD_STORE(
     handleSplitMemOperands(SplitInstrs);
     break;
   }
-  case AIE2P::G_AIE_OFFSET_STORE: {
+  case AIE::G_AIE_OFFSET_STORE: {
     if (!LSO.FitsImmediateRange) {
       // Emit an PTR_ADD to evaluate the offset
       insertPtrAddForOffset(MRI, AMI.MemI);
@@ -1713,9 +1711,9 @@ bool AIE2PInstructionSelector::selectWideG_AIE_LOAD_STORE(
     break;
   }
   case AIE2P::G_LOAD:
-  case AIE2P::G_AIE_POSTINC_LOAD:
-  case AIE2P::G_AIE_POSTINC_2D_LOAD:
-  case AIE2P::G_AIE_POSTINC_3D_LOAD: {
+  case AIE::G_AIE_POSTINC_LOAD:
+  case AIE::G_AIE_POSTINC_2D_LOAD:
+  case AIE::G_AIE_POSTINC_3D_LOAD: {
     // Split Offsets first and then perform the postinc.
     // For consistency, also handle G_LOAD in the same manner.
     for (int SubRegIdx = SplitFactor - 1; SubRegIdx >= 0; SubRegIdx--) {
@@ -1748,7 +1746,7 @@ bool AIE2PInstructionSelector::selectWideG_AIE_LOAD_STORE(
     handleSplitMemOperands(SplitInstrs);
     break;
   }
-  case AIE2P::G_AIE_OFFSET_LOAD: {
+  case AIE::G_AIE_OFFSET_LOAD: {
     if (!LSO.FitsImmediateRange) {
       // Emit an PTR_ADD to evaluate the offset
       insertPtrAddForOffset(MRI, AMI.MemI);
@@ -2225,7 +2223,7 @@ static bool getVLDA_CONVOpcode(const MachineInstr &MemOp,
       ISelOpcode = AIE2P::VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_idx_imm;
     FitsImmediateRange = true;
     return true;
-  case AIE2P::G_AIE_OFFSET_LOAD:
+  case AIE::G_AIE_OFFSET_LOAD:
     if (getLoadStoreSize(MemOp) == 256) {
       FitsImmediateRange = checkSignedImmediateRange<4, 32>(Immediate);
       ISelOpcode = FitsImmediateRange
@@ -2238,7 +2236,7 @@ static bool getVLDA_CONVOpcode(const MachineInstr &MemOp,
                        : AIE2P::VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_idx;
     }
     return true;
-  case AIE2P::G_AIE_POSTINC_LOAD:
+  case AIE::G_AIE_POSTINC_LOAD:
     if (getLoadStoreSize(MemOp) == 256) {
       FitsImmediateRange = checkSignedImmediateRange<4, 32>(Immediate);
       ISelOpcode = FitsImmediateRange
@@ -2251,14 +2249,14 @@ static bool getVLDA_CONVOpcode(const MachineInstr &MemOp,
                        : AIE2P::VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_pstm_nrm;
     }
     return true;
-  case AIE2P::G_AIE_POSTINC_2D_LOAD:
+  case AIE::G_AIE_POSTINC_2D_LOAD:
     if (getLoadStoreSize(MemOp) == 256)
       ISelOpcode = AIE2P::VLDA_2D_CONV_fp32_bf16_dmw_lda_ups_bf;
     else if (getLoadStoreSize(MemOp) == 512)
       ISelOpcode = AIE2P::VLDA_2D_CONV_fp32_bf16_dmx_lda_ups_bf;
     FitsImmediateRange = false;
     return true;
-  case AIE2P::G_AIE_POSTINC_3D_LOAD:
+  case AIE::G_AIE_POSTINC_3D_LOAD:
     if (getLoadStoreSize(MemOp) == 256)
       ISelOpcode = AIE2P::VLDA_3D_CONV_fp32_bf16_dmw_lda_ups_bf;
     else if (getLoadStoreSize(MemOp) == 512)
@@ -2334,7 +2332,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodePACK(
             AlwaysFitsImmediateRange, /*OffsetOpcode=*/{}};
       }
       break;
-    case AIE2P::G_AIE_OFFSET_STORE:
+    case AIE::G_AIE_OFFSET_STORE:
       switch (CombOpIntrinsicID) {
       case Intrinsic::aie2p_pack_I512_I8_I16:
       case Intrinsic::aie2p_pack_I512_I4_I8:
@@ -2354,7 +2352,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodePACK(
                                 /*OffsetOpcode=*/{}};
       }
       break;
-    case AIE2P::G_AIE_POSTINC_STORE:
+    case AIE::G_AIE_POSTINC_STORE:
       switch (CombOpIntrinsicID) {
       case Intrinsic::aie2p_pack_I512_I8_I16:
       case Intrinsic::aie2p_pack_I512_I4_I8:
@@ -2374,7 +2372,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodePACK(
                                 /*OffsetOpcode=*/{}};
       }
       break;
-    case AIE2P::G_AIE_POSTINC_2D_STORE:
+    case AIE::G_AIE_POSTINC_2D_STORE:
       switch (CombOpIntrinsicID) {
       case Intrinsic::aie2p_pack_I512_I8_I16:
       case Intrinsic::aie2p_pack_I512_I4_I8:
@@ -2390,7 +2388,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodePACK(
             /*OffsetOpcode=*/{}};
       }
       break;
-    case AIE2P::G_AIE_POSTINC_3D_STORE:
+    case AIE::G_AIE_POSTINC_3D_STORE:
       switch (CombOpIntrinsicID) {
       case Intrinsic::aie2p_pack_I512_I8_I16:
       case Intrinsic::aie2p_pack_I512_I4_I8:
@@ -2425,7 +2423,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodePACK(
             AlwaysFitsImmediateRange, /*OffsetOpcode=*/{}};
       }
       break;
-    case AIE2P::G_AIE_OFFSET_STORE:
+    case AIE::G_AIE_OFFSET_STORE:
       switch (CombOpIntrinsicID) {
       case Intrinsic::aie2p_pack_I512_I8_I16:
       case Intrinsic::aie2p_pack_I512_I4_I8:
@@ -2445,7 +2443,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodePACK(
                                 /*OffsetOpcode=*/{}};
       }
       break;
-    case AIE2P::G_AIE_POSTINC_STORE:
+    case AIE::G_AIE_POSTINC_STORE:
       switch (CombOpIntrinsicID) {
       case Intrinsic::aie2p_pack_I512_I8_I16:
       case Intrinsic::aie2p_pack_I512_I4_I8:
@@ -2465,7 +2463,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodePACK(
                                 /*OffsetOpcode=*/{}};
       }
       break;
-    case AIE2P::G_AIE_POSTINC_2D_STORE:
+    case AIE::G_AIE_POSTINC_2D_STORE:
       switch (CombOpIntrinsicID) {
       case Intrinsic::aie2p_pack_I512_I8_I16:
       case Intrinsic::aie2p_pack_I512_I4_I8:
@@ -2481,7 +2479,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodePACK(
             /*OffsetOpcode=*/{}};
       }
       break;
-    case AIE2P::G_AIE_POSTINC_3D_STORE:
+    case AIE::G_AIE_POSTINC_3D_STORE:
       switch (CombOpIntrinsicID) {
       case Intrinsic::aie2p_pack_I512_I8_I16:
       case Intrinsic::aie2p_pack_I512_I4_I8:
@@ -2631,7 +2629,7 @@ AIE2PInstructionSelector::getCombinedOpcodeCONVStore(
       ISelOpcode = AIE2P::VST_CONV_bf16_fp32_dmx_sts_srs_bf_idx_imm;
     return LoadStoreOpcodes{ISelOpcode, AlwaysFitsImmediateRange,
                             /*OffsetOpcode=*/{}};
-  case AIE2P::G_AIE_OFFSET_STORE:
+  case AIE::G_AIE_OFFSET_STORE:
     if (getLoadStoreSize(MemOp) == 256) {
       FitsImmediateRange = checkSignedImmediateRange<4, 32>(Immediate);
       ISelOpcode = FitsImmediateRange
@@ -2645,7 +2643,7 @@ AIE2PInstructionSelector::getCombinedOpcodeCONVStore(
     }
     return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                             /*OffsetOpcode=*/{}};
-  case AIE2P::G_AIE_POSTINC_STORE:
+  case AIE::G_AIE_POSTINC_STORE:
     if (getLoadStoreSize(MemOp) == 256) {
       FitsImmediateRange = checkSignedImmediateRange<4, 32>(Immediate);
       ISelOpcode = FitsImmediateRange
@@ -2659,14 +2657,14 @@ AIE2PInstructionSelector::getCombinedOpcodeCONVStore(
     }
     return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                             /*OffsetOpcode=*/{}};
-  case AIE2P::G_AIE_POSTINC_2D_STORE:
+  case AIE::G_AIE_POSTINC_2D_STORE:
     if (getLoadStoreSize(MemOp) == 256)
       ISelOpcode = AIE2P::VST_2D_CONV_bf16_fp32_dmw_sts_srs_bf;
     else /* getLoadStoreSize(MemOp) == 512 */
       ISelOpcode = AIE2P::VST_2D_CONV_bf16_fp32_dmx_sts_srs_bf;
     return LoadStoreOpcodes{ISelOpcode, NoImmediate,
                             /*OffsetOpcode=*/{}};
-  case AIE2P::G_AIE_POSTINC_3D_STORE:
+  case AIE::G_AIE_POSTINC_3D_STORE:
     if (getLoadStoreSize(MemOp) == 256)
       ISelOpcode = AIE2P::VST_3D_CONV_bf16_fp32_dmw_sts_srs_bf;
     else /* getLoadStoreSize(MemOp) == 512 */
@@ -2780,7 +2778,7 @@ AIE2PInstructionSelector::getCombinedOpcodeUNPACKLoad(
             {}};
       }
       break;
-    case AIE2P::G_AIE_OFFSET_LOAD:
+    case AIE::G_AIE_OFFSET_LOAD:
       switch (CombOpInstID) {
       case Intrinsic::aie2p_unpack_I1024_I8_I4:
       case Intrinsic::aie2p_unpack_I1024_I16_I8:
@@ -2798,7 +2796,7 @@ AIE2PInstructionSelector::getCombinedOpcodeUNPACKLoad(
         return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange, {}};
       }
       break;
-    case AIE2P::G_AIE_POSTINC_LOAD:
+    case AIE::G_AIE_POSTINC_LOAD:
       switch (CombOpInstID) {
       case Intrinsic::aie2p_unpack_I1024_I8_I4:
       case Intrinsic::aie2p_unpack_I1024_I16_I8:
@@ -2818,7 +2816,7 @@ AIE2PInstructionSelector::getCombinedOpcodeUNPACKLoad(
         return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange, {}};
       }
       break;
-    case AIE2P::G_AIE_POSTINC_2D_LOAD:
+    case AIE::G_AIE_POSTINC_2D_LOAD:
       switch (CombOpInstID) {
       case Intrinsic::aie2p_unpack_I1024_I8_I4:
       case Intrinsic::aie2p_unpack_I1024_I16_I8:
@@ -2830,7 +2828,7 @@ AIE2PInstructionSelector::getCombinedOpcodeUNPACKLoad(
             AIE2P::VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1, NoImmediate, {}};
       }
       break;
-    case AIE2P::G_AIE_POSTINC_3D_LOAD:
+    case AIE::G_AIE_POSTINC_3D_LOAD:
       switch (CombOpInstID) {
       case Intrinsic::aie2p_unpack_I1024_I8_I4:
       case Intrinsic::aie2p_unpack_I1024_I16_I8:
@@ -2861,7 +2859,7 @@ AIE2PInstructionSelector::getCombinedOpcodeUNPACKLoad(
             {}};
       }
       break;
-    case AIE2P::G_AIE_OFFSET_LOAD:
+    case AIE::G_AIE_OFFSET_LOAD:
       switch (CombOpInstID) {
       case Intrinsic::aie2p_unpack_I1024_I8_I4:
       case Intrinsic::aie2p_unpack_I1024_I16_I8:
@@ -2879,7 +2877,7 @@ AIE2PInstructionSelector::getCombinedOpcodeUNPACKLoad(
         return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange, {}};
       }
       break;
-    case AIE2P::G_AIE_POSTINC_LOAD:
+    case AIE::G_AIE_POSTINC_LOAD:
       switch (CombOpInstID) {
       case Intrinsic::aie2p_unpack_I1024_I8_I4:
       case Intrinsic::aie2p_unpack_I1024_I16_I8:
@@ -2899,7 +2897,7 @@ AIE2PInstructionSelector::getCombinedOpcodeUNPACKLoad(
         return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange, {}};
       }
       break;
-    case AIE2P::G_AIE_POSTINC_2D_LOAD:
+    case AIE::G_AIE_POSTINC_2D_LOAD:
       switch (CombOpInstID) {
       case Intrinsic::aie2p_unpack_I1024_I8_I4:
       case Intrinsic::aie2p_unpack_I1024_I16_I8:
@@ -2911,7 +2909,7 @@ AIE2PInstructionSelector::getCombinedOpcodeUNPACKLoad(
             AIE2P::VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0, NoImmediate, {}};
       }
       break;
-    case AIE2P::G_AIE_POSTINC_3D_LOAD:
+    case AIE::G_AIE_POSTINC_3D_LOAD:
       switch (CombOpInstID) {
       case Intrinsic::aie2p_unpack_I1024_I8_I4:
       case Intrinsic::aie2p_unpack_I1024_I16_I8:
@@ -3029,7 +3027,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeUPS(
         }
       }
       break;
-    case AIE2P::G_AIE_OFFSET_LOAD:
+    case AIE::G_AIE_OFFSET_LOAD:
       if (getLoadStoreSize(MemOp) == 512) {
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
         case Intrinsic::aie2p_acc32_v32_I512_ups:
@@ -3070,7 +3068,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeUPS(
         }
       }
       break;
-    case AIE2P::G_AIE_POSTINC_LOAD:
+    case AIE::G_AIE_POSTINC_LOAD:
       if (getLoadStoreSize(MemOp) == 512) {
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
         case Intrinsic::aie2p_acc32_v32_I512_ups:
@@ -3115,7 +3113,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeUPS(
         }
       }
       break;
-    case AIE2P::G_AIE_POSTINC_2D_LOAD:
+    case AIE::G_AIE_POSTINC_2D_LOAD:
       if (getLoadStoreSize(MemOp) == 512) {
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
         case Intrinsic::aie2p_acc32_v32_I512_ups:
@@ -3144,7 +3142,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeUPS(
         }
       }
       break;
-    case AIE2P::G_AIE_POSTINC_3D_LOAD:
+    case AIE::G_AIE_POSTINC_3D_LOAD:
       if (getLoadStoreSize(MemOp) == 512) {
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
         case Intrinsic::aie2p_acc32_v32_I512_ups:
@@ -3210,7 +3208,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeUPS(
         }
       }
       break;
-    case AIE2P::G_AIE_OFFSET_LOAD:
+    case AIE::G_AIE_OFFSET_LOAD:
       if (getLoadStoreSize(MemOp) == 512) {
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
         case Intrinsic::aie2p_acc32_v32_I512_ups:
@@ -3251,7 +3249,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeUPS(
         }
       }
       break;
-    case AIE2P::G_AIE_POSTINC_LOAD:
+    case AIE::G_AIE_POSTINC_LOAD:
       if (getLoadStoreSize(MemOp) == 512) {
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
         case Intrinsic::aie2p_acc32_v32_I512_ups:
@@ -3296,7 +3294,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeUPS(
         }
       }
       break;
-    case AIE2P::G_AIE_POSTINC_2D_LOAD:
+    case AIE::G_AIE_POSTINC_2D_LOAD:
       if (getLoadStoreSize(MemOp) == 512) {
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
         case Intrinsic::aie2p_acc32_v32_I512_ups:
@@ -3325,7 +3323,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeUPS(
         }
       }
       break;
-    case AIE2P::G_AIE_POSTINC_3D_LOAD:
+    case AIE::G_AIE_POSTINC_3D_LOAD:
       if (getLoadStoreSize(MemOp) == 512) {
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
         case Intrinsic::aie2p_acc32_v32_I512_ups:
@@ -3428,7 +3426,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeSRS(
         }
       }
       break;
-    case AIE2P::G_AIE_OFFSET_STORE:
+    case AIE::G_AIE_OFFSET_STORE:
       if (Is512BitMemOp) {
         switch (CombOpIntrinsicID) {
         case Intrinsic::aie2p_I512_v64_acc32_srs:
@@ -3469,7 +3467,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeSRS(
         }
       }
       break;
-    case AIE2P::G_AIE_POSTINC_STORE:
+    case AIE::G_AIE_POSTINC_STORE:
       if (Is512BitMemOp) {
         switch (CombOpIntrinsicID) {
         case Intrinsic::aie2p_I512_v64_acc32_srs:
@@ -3514,7 +3512,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeSRS(
         }
       }
       break;
-    case AIE2P::G_AIE_POSTINC_2D_STORE:
+    case AIE::G_AIE_POSTINC_2D_STORE:
       if (Is512BitMemOp) {
         switch (CombOpIntrinsicID) {
         case Intrinsic::aie2p_I512_v64_acc32_srs:
@@ -3543,7 +3541,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeSRS(
         }
       }
       break;
-    case AIE2P::G_AIE_POSTINC_3D_STORE:
+    case AIE::G_AIE_POSTINC_3D_STORE:
       if (Is512BitMemOp) {
         switch (CombOpIntrinsicID) {
         case Intrinsic::aie2p_I512_v64_acc32_srs:
@@ -3605,7 +3603,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeSRS(
         }
       }
       break;
-    case AIE2P::G_AIE_OFFSET_STORE:
+    case AIE::G_AIE_OFFSET_STORE:
       if (Is512BitMemOp) {
         switch (CombOpIntrinsicID) {
         case Intrinsic::aie2p_I512_v64_acc32_srs:
@@ -3646,7 +3644,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeSRS(
         }
       }
       break;
-    case AIE2P::G_AIE_POSTINC_STORE:
+    case AIE::G_AIE_POSTINC_STORE:
       if (Is512BitMemOp) {
         switch (CombOpIntrinsicID) {
         case Intrinsic::aie2p_I512_v64_acc32_srs:
@@ -3691,7 +3689,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeSRS(
         }
       }
       break;
-    case AIE2P::G_AIE_POSTINC_2D_STORE:
+    case AIE::G_AIE_POSTINC_2D_STORE:
       if (Is512BitMemOp) {
         switch (CombOpIntrinsicID) {
         case Intrinsic::aie2p_I512_v64_acc32_srs:
@@ -3720,7 +3718,7 @@ std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodeSRS(
         }
       }
       break;
-    case AIE2P::G_AIE_POSTINC_3D_STORE:
+    case AIE::G_AIE_POSTINC_3D_STORE:
       if (Is512BitMemOp) {
         switch (CombOpIntrinsicID) {
         case Intrinsic::aie2p_I512_v64_acc32_srs:
