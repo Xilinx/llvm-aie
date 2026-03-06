@@ -939,3 +939,12 @@ bool AIEBaseSubtarget::enableWindowScheduler() const {
 unsigned AIEBaseSubtarget::getCriticalPathLimit() const {
   return IfConversionCritPathLimit;
 }
+
+unsigned
+AIEBaseSubtarget::classifyGlobalReference(const GlobalValue *GV,
+                                          const TargetMachine &TM) const {
+  if (!TM.shouldAssumeDSOLocal(GV)) {
+    return AIEII::MO_GLOBAL;
+  }
+  return AIEII::MO_None;
+}
