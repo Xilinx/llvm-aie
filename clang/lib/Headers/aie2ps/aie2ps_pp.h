@@ -751,9 +751,9 @@
       a.tileShiftG3, a.exponentE0, a.exponentE1, a.exponentE2, a.exponentE3
 #define UNPACK_V64MX9(a) a.mantissa, a.tileShift, a.exponent
 #define UNPACK_V256MX9(a)                                                      \
-  a.mantissaX0, a.mantissaX1, a.mantissaX2, a.mantissaX3, a.tileShiftG0,       \
-      a.tileShiftG1, a.tileShiftG2, a.tileShiftG3, a.exponentE0, a.exponentE1, \
-      a.exponentE2, a.exponentE3
+  a.l.mantissaX0, a.l.mantissaX1, a.h.mantissaX0, a.h.mantissaX1,              \
+      a.l.tileShiftG0, a.l.tileShiftG1, a.h.tileShiftG0, a.h.tileShiftG1,      \
+      a.l.exponentE0, a.l.exponentE1, a.h.exponentE0, a.h.exponentE1
 
 #define IS_MX4_VARIANT(V)                                                      \
   PP_CMP(V, VARIANT_BFP13xBFP13_1_4x16_16x16T_v128mx4_v256mx4)
