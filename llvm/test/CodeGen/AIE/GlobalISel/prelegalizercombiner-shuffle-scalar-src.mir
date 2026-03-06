@@ -11,7 +11,7 @@
 # - matchShuffleToVecBroadcast: treats scalar as 1-element source
 # - matchShuffleToVecEltBroadcast: broadcasts scalar directly when index is 0
 #
-# RUN: llc -mtriple aie2p -run-pass=aie2p-prelegalizer-combiner -verify-machineinstrs %s -o - | FileCheck %s
+# RUN: llc -mtriple aie2p -run-pass=aie-prelegalizer-combiner -verify-machineinstrs %s -o - | FileCheck %s
 
 # Test matchShuffleToVecBroadcast with scalar s64 source (64-bit).
 # The s64 is broadcast by bitcasting to <2 x s32>, broadcasting, and concatenating.

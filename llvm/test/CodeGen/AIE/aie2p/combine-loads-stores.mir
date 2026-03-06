@@ -4,8 +4,8 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie2p  --start-before=aie2p-postlegalizer-generic-combiner  --stop-after=aie2p-postlegalizer-custom-combiner -verify-machineinstrs -o - %s  | FileCheck %s
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -mtriple aie2p  --start-before=aie-postlegalizer-generic-combiner  --stop-after=aie-postlegalizer-custom-combiner -verify-machineinstrs -o - %s  | FileCheck %s
 
 ---
 name:            load_to_preinc

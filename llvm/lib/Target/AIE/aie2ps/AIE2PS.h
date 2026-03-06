@@ -28,15 +28,7 @@ InstructionSelector *
 createAIE2PSInstructionSelector(const AIE2PSTargetMachine &, AIE2PSSubtarget &,
                                 AIE2PSRegisterBankInfo &);
 
-FunctionPass *createAIE2PSPreLegalizerCombiner();
-void initializeAIE2PSPreLegalizerCombinerPass(PassRegistry &);
-
-FunctionPass *createAIE2PSPostLegalizerGenericCombiner();
-void initializeAIE2PSPostLegalizerGenericCombinerPass(PassRegistry &);
-
-FunctionPass *createAIE2PSPostLegalizerCustomCombiner();
 FunctionPass *createAIE2PSConvertFP16ScalarOperationPass();
-void initializeAIE2PSPostLegalizerCustomCombinerPass(PassRegistry &);
 void initializeAIE2PSConvertFP16ScalarOperationPassPass(PassRegistry &);
 } // namespace llvm
 

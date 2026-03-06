@@ -4,9 +4,9 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie2p  -run-pass=aie2p-prelegalizer-combiner -verify-machineinstrs -o - %s  | FileCheck %s
-# RUN: llc -mtriple aie2p  -start-before=aie2p-prelegalizer-combiner \
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -mtriple aie2p  -run-pass=aie-prelegalizer-combiner -verify-machineinstrs -o - %s  | FileCheck %s
+# RUN: llc -mtriple aie2p  -start-before=aie-prelegalizer-combiner \
 # RUN:      -stop-after=legalizer -verify-machineinstrs -o - %s  | FileCheck %s --check-prefix=LEGALIZED
 --- |
   declare void @llvm.memset.p0.i64(ptr nocapture writeonly, i8, i64, i1 immarg) #0

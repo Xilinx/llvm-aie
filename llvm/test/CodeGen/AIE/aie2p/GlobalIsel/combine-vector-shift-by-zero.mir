@@ -4,10 +4,10 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie2p -run-pass=aie2p-prelegalizer-combiner %s \
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -mtriple aie2p -run-pass=aie-prelegalizer-combiner %s \
 # RUN:         -verify-machineinstrs -o - | FileCheck %s --check-prefix=ENABLED-COMBINE
-# RUN: llc -mtriple aie2p -run-pass=aie2p-prelegalizer-combiner \
+# RUN: llc -mtriple aie2p -run-pass=aie-prelegalizer-combiner \
 # RUN:        -aie-combine-vec-shift-by-zero=false %s \
 # RUN:        -verify-machineinstrs -o - | FileCheck %s --check-prefix=DISABLED-COMBINE
 

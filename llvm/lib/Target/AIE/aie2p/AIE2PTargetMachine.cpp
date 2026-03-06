@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -14,6 +14,7 @@
 
 #include "AIE2PTargetMachine.h"
 #include "AIE2PTargetTransformInfo.h"
+#include "AIECombiners.h"
 #include "AIESuperRegUtils.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
@@ -48,18 +49,18 @@ AIE2PTargetMachine::AIE2PTargetMachine(const Target &T, const Triple &TT,
 void AIE2PPassConfig::addPreLegalizeMachineIR() {
   addPass(createAIEAddressSpaceFlattening());
   if (getOptLevel() != CodeGenOptLevel::None)
-    addPass(createAIE2PPreLegalizerCombiner());
+    addPass(createAIEPreLegalizerCombiner());
   addPass(createAIEEliminateDuplicatePHI());
 }
 
 void AIE2PPassConfig::addPreRegBankSelect() {
   if (getOptLevel() != CodeGenOptLevel::None) {
-    addPass(createAIE2PPostLegalizerGenericCombiner());
+    addPass(createAIEPostLegalizerGenericCombiner());
     if (EnableAddressChaining)
       addPass(createAIEClusterBaseAddress());
     if (EnableGlobalPtrModOptimizer)
       addPass(createAIEPtrModOptimizer());
-    addPass(createAIE2PPostLegalizerCustomCombiner());
+    addPass(createAIEPostLegalizerCustomCombiner());
   }
 }
 
@@ -89,7 +90,7 @@ static bool onlyAllocate3D2DRegisters(const TargetRegisterInfo &TRI,
 
 static bool onlyAllocateMRegisters(const TargetRegisterInfo &TRI,
                                    const MachineRegisterInfo &MRI,
-                                  const Register &R) {
+                                   const Register &R) {
   return AIE2P::eMRegClass.hasSubClassEq(MRI.getRegClass(R));
 }
 

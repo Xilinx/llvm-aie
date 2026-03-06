@@ -17,6 +17,7 @@
 #include "AIE.h"
 #include "AIE2TargetMachine.h"
 #include "AIEBaseAliasAnalysis.h"
+#include "AIECombiners.h"
 #include "AIEMachineFunctionInfo.h"
 #include "AIEMachineScheduler.h"
 #include "AIETargetObjectFile.h"
@@ -150,15 +151,9 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETarget() {
   initializeAIEEliminateDuplicatePHIPass(*PR);
   initializeAIEClusterBaseAddressPass(*PR);
   initializeAIEPtrModOptimizerPass(*PR);
-  initializeAIE2PreLegalizerCombinerPass(*PR);
-  initializeAIE2PPreLegalizerCombinerPass(*PR);
-  initializeAIE2PSPreLegalizerCombinerPass(*PR);
-  initializeAIE2PostLegalizerGenericCombinerPass(*PR);
-  initializeAIE2PPostLegalizerGenericCombinerPass(*PR);
-  initializeAIE2PSPostLegalizerGenericCombinerPass(*PR);
-  initializeAIE2PostLegalizerCustomCombinerPass(*PR);
-  initializeAIE2PPostLegalizerCustomCombinerPass(*PR);
-  initializeAIE2PSPostLegalizerCustomCombinerPass(*PR);
+  initializeAIEPreLegalizerCombinerPass(*PR);
+  initializeAIEPostLegalizerGenericCombinerPass(*PR);
+  initializeAIEPostLegalizerCustomCombinerPass(*PR);
   initializeAIEPostSelectOptimizePass(*PR);
   initializeAIEPseudoBranchExpansionPass(*PR);
   initializeAIESubRegConstrainerPass(*PR);
@@ -199,8 +194,7 @@ AIEBaseTargetMachine::AIEBaseTargetMachine(const Target &T, const Triple &TT,
                                            CodeGenOptLevel OL, bool JIT)
     : CodeGenTargetMachineImpl(T, computeDataLayout(TT), TT, CPU, FS, Options,
                                getEffectiveRelocModel(TT, RM),
-                               getEffectiveCodeModel(CM, CodeModel::Small),
-                               OL),
+                               getEffectiveCodeModel(CM, CodeModel::Small), OL),
       TLOF(std::make_unique<AIEELFTargetObjectFile>()) {
   initAsmInfo();
   EnableCustomAliasAnalysis = EnableCustomAliasAnalysisOpt;

@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===--------------------------------------------------------------------===//
 //
@@ -13,8 +13,9 @@
 //
 //===--------------------------------------------------------------------===//
 
-#include "AIE2PTargetMachine.h"
+#include "AIECombinerBase.h"
 #include "AIECombinerHelper.h"
+#include "AIECombiners.h"
 #include "llvm/CodeGen/GlobalISel/CSEInfo.h"
 #include "llvm/CodeGen/GlobalISel/Combiner.h"
 #include "llvm/CodeGen/GlobalISel/CombinerHelper.h"
@@ -34,23 +35,17 @@ using namespace llvm;
 
 extern cl::opt<bool> EnableGlobalPtrModOptimizer;
 
-static const char AIE2P_POSTLEGALIZER_CUSTOM_COMBINER[] =
-    "AIE2P Post Legalizer Custom Combiner";
-
 namespace {
 
 #define GET_GICOMBINER_TYPES
 #include "AIE2PGenPostLegalizerGICustomCombiner.inc"
 #undef GET_GICOMBINER_TYPES
 
-class AIE2PPostLegalizerCustomCombinerImpl : public Combiner {
+class AIE2PPostLegalizerCustomCombinerImpl
+    : public AIECombinerBase<AIE2PPostLegalizerCustomCombinerImplRuleConfig> {
 protected:
-  // TODO: Make CombinerHelper methods const.
-  mutable CombinerHelper Helper;
   AIE::FoundCombiners EmptyGlobalCombiner;
   AIE::FoundCombiners *GlobalCombiners = nullptr;
-  const AIE2PPostLegalizerCustomCombinerImplRuleConfig &RuleConfig;
-  const AIE2PSubtarget &STI;
 
 public:
   AIE2PPostLegalizerCustomCombinerImpl(
@@ -58,7 +53,7 @@ public:
       GISelKnownBits &KB, GISelCSEInfo *CSEInfo,
       AIE::FoundCombiners *GlobalCombiner,
       const AIE2PPostLegalizerCustomCombinerImplRuleConfig &RuleConfig,
-      const AIE2PSubtarget &STI, MachineDominatorTree *MDT,
+      const AIEBaseSubtarget &STI, MachineDominatorTree *MDT,
       const LegalizerInfo *LI);
 
   static const char *getName() { return "AIE2PPostLegalizerCustomCombiner"; }
@@ -80,11 +75,11 @@ AIE2PPostLegalizerCustomCombinerImpl::AIE2PPostLegalizerCustomCombinerImpl(
     GISelKnownBits &KB, GISelCSEInfo *CSEInfo,
     AIE::FoundCombiners *GlobalCombiner,
     const AIE2PPostLegalizerCustomCombinerImplRuleConfig &RuleConfig,
-    const AIE2PSubtarget &STI, MachineDominatorTree *MDT,
+    const AIEBaseSubtarget &STI, MachineDominatorTree *MDT,
     const LegalizerInfo *LI)
-    : Combiner(MF, CInfo, TPC, &KB, CSEInfo),
-      Helper(Observer, B, /*IsPostLegalize*/ false, &KB, MDT, LI),
-      GlobalCombiners(GlobalCombiner), RuleConfig(RuleConfig), STI(STI),
+    : AIECombinerBase(MF, CInfo, TPC, KB, CSEInfo, RuleConfig, STI, MDT, LI,
+                      /*IsPreLegalize=*/false),
+      GlobalCombiners(GlobalCombiner),
 #define GET_GICOMBINER_CONSTRUCTOR_INITS
 #include "AIE2PGenPostLegalizerGICustomCombiner.inc"
 #undef GET_GICOMBINER_CONSTRUCTOR_INITS
@@ -92,100 +87,20 @@ AIE2PPostLegalizerCustomCombinerImpl::AIE2PPostLegalizerCustomCombinerImpl(
   if (!GlobalCombiner)
     GlobalCombiners = &EmptyGlobalCombiner;
 }
-
-class AIE2PPostLegalizerCustomCombiner : public MachineFunctionPass {
-public:
-  static char ID;
-  AIE2PPostLegalizerCustomCombiner();
-
-  StringRef getPassName() const override {
-    return AIE2P_POSTLEGALIZER_CUSTOM_COMBINER;
-  }
-
-  bool runOnMachineFunction(MachineFunction &MF) override;
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.addRequired<TargetPassConfig>();
-    AU.setPreservesCFG();
-    getSelectionDAGFallbackAnalysisUsage(AU);
-    AU.addRequired<GISelKnownBitsAnalysis>();
-    AU.addPreserved<GISelKnownBitsAnalysis>();
-    AU.addRequired<MachineDominatorTreeWrapperPass>();
-    AU.addPreserved<MachineDominatorTreeWrapperPass>();
-    AU.addRequired<GISelCSEAnalysisWrapperPass>();
-    AU.addPreserved<GISelCSEAnalysisWrapperPass>();
-    if (EnableGlobalPtrModOptimizer) {
-      AU.addRequired<AIEPtrModOptimizer>();
-    }
-    MachineFunctionPass::getAnalysisUsage(AU);
-  }
-
-private:
-  AIE2PPostLegalizerCustomCombinerImplRuleConfig RuleConfig;
-};
 } // end anonymous namespace
 
-AIE2PPostLegalizerCustomCombiner::AIE2PPostLegalizerCustomCombiner()
-    : MachineFunctionPass(ID) {
-  initializeAIE2PPostLegalizerCustomCombinerPass(
-      *PassRegistry::getPassRegistry());
-  if (!RuleConfig.parseCommandLineOption())
-    report_fatal_error("Invalid rule identifier");
+std::unique_ptr<Combiner> createAIE2PPostLegalizerCustomCombinerImpl(
+    MachineFunction &MF, CombinerInfo &CInfo, const TargetPassConfig *TPC,
+    GISelKnownBits &KB, GISelCSEInfo *CSEInfo,
+    AIE::FoundCombiners *GlobalCombiners, const AIEBaseSubtarget &STI,
+    MachineDominatorTree *MDT, const LegalizerInfo *LI) {
+  static AIE2PPostLegalizerCustomCombinerImplRuleConfig RuleConfig;
+  static bool Parsed = [] {
+    if (!RuleConfig.parseCommandLineOption())
+      report_fatal_error("Invalid rule identifier");
+    return true;
+  }();
+  (void)Parsed;
+  return std::make_unique<AIE2PPostLegalizerCustomCombinerImpl>(
+      MF, CInfo, TPC, KB, CSEInfo, GlobalCombiners, RuleConfig, STI, MDT, LI);
 }
-
-bool AIE2PPostLegalizerCustomCombiner::runOnMachineFunction(
-    MachineFunction &MF) {
-  if (MF.getProperties().hasProperty(
-          MachineFunctionProperties::Property::FailedISel))
-    return false;
-  auto *TPC = &getAnalysis<TargetPassConfig>();
-
-  // Enable CSE.
-  GISelCSEAnalysisWrapper &Wrapper =
-      getAnalysis<GISelCSEAnalysisWrapperPass>().getCSEWrapper();
-  auto *CSEInfo = &Wrapper.get(TPC->getCSEConfig());
-
-  const Function &F = MF.getFunction();
-  bool EnableOpt =
-      MF.getTarget().getOptLevel() != CodeGenOptLevel::None && !skipFunction(F);
-
-  const AIE2PSubtarget &ST = MF.getSubtarget<AIE2PSubtarget>();
-  const auto *LI = ST.getLegalizerInfo();
-
-  GISelKnownBits *KB = &getAnalysis<GISelKnownBitsAnalysis>().get(MF);
-  MachineDominatorTree *MDT = &getAnalysis<MachineDominatorTreeWrapperPass>().getDomTree();
-
-  AIE::FoundCombiners *AIEGlobalPtrIncResults = nullptr;
-  if (auto *PtrModOptPass = getAnalysisIfAvailable<AIEPtrModOptimizer>())
-    AIEGlobalPtrIncResults = PtrModOptPass->getGlobalPtrCombiners();
-
-  CombinerInfo CInfo(/*AllowIllegalOps*/ true, /*ShouldLegalizeIllegal*/ false,
-                     /*LegalizerInfo*/ nullptr, EnableOpt, F.hasOptSize(),
-                     F.hasMinSize());
-  AIE2PPostLegalizerCustomCombinerImpl Impl(MF, CInfo, TPC, *KB, CSEInfo,
-                                            AIEGlobalPtrIncResults, RuleConfig,
-                                            ST, MDT, LI);
-  bool Changed = Impl.combineMachineInstrs();
-
-  // Now that all combining iterations are complete, it's safe to delete
-  // the instructions that were removed (but not erased) during combining.
-  if (AIEGlobalPtrIncResults)
-    AIEGlobalPtrIncResults->finalizeDeferredDeletes(MF);
-
-  return Changed;
-}
-
-char AIE2PPostLegalizerCustomCombiner::ID = 0;
-INITIALIZE_PASS_BEGIN(AIE2PPostLegalizerCustomCombiner, DEBUG_TYPE,
-                      AIE2P_POSTLEGALIZER_CUSTOM_COMBINER, false, false)
-INITIALIZE_PASS_DEPENDENCY(TargetPassConfig)
-INITIALIZE_PASS_DEPENDENCY(GISelKnownBitsAnalysis)
-INITIALIZE_PASS_DEPENDENCY(GISelCSEAnalysisWrapperPass)
-INITIALIZE_PASS_END(AIE2PPostLegalizerCustomCombiner, DEBUG_TYPE,
-                    AIE2P_POSTLEGALIZER_CUSTOM_COMBINER, false, false)
-
-namespace llvm {
-FunctionPass *createAIE2PPostLegalizerCustomCombiner() {
-  return new AIE2PPostLegalizerCustomCombiner();
-}
-} // end namespace llvm

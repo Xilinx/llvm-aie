@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -34,16 +34,10 @@ class MachineInstr;
 class MachineOperand;
 class PassRegistry;
 
-FunctionPass *createAIE2PreLegalizerCombiner();
-FunctionPass *createAIE2PostLegalizerCustomCombiner();
-FunctionPass *createAIE2PostLegalizerGenericCombiner();
 InstructionSelector *createAIE2InstructionSelector(const AIE2TargetMachine &,
                                                    AIE2Subtarget &,
                                                    AIE2RegisterBankInfo &);
 
-void initializeAIE2PreLegalizerCombinerPass(PassRegistry &);
-void initializeAIE2PostLegalizerCustomCombinerPass(PassRegistry &);
-void initializeAIE2PostLegalizerGenericCombinerPass(PassRegistry &);
 } // namespace llvm
 
 #endif

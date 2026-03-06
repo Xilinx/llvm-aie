@@ -6,7 +6,7 @@
 #
 # (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck --check-prefix=LEGALIZER %s
-# RUN: llc -mtriple aie2p -start-before=legalizer -stop-after=aie2p-postlegalizer-generic-combiner %s \
+# RUN: llc -mtriple aie2p -start-before=legalizer -stop-after=aie-postlegalizer-generic-combiner %s \
 # RUN:          -verify-machineinstrs -o - | FileCheck --check-prefix=AFTER-POST-COMBINER %s
 # RUN: llc -mtriple aie2ps -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck --check-prefix=LEGALIZER %s
 

@@ -5,9 +5,9 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie2 -run-pass=aie2-prelegalizer-combiner %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2
-# RUN: llc -mtriple aie2p -run-pass=aie2p-prelegalizer-combiner %s -verify-machineinstrs -o - | FileCheck %s  --check-prefix=AIE2P
-# RUN: llc -mtriple aie2ps -run-pass=aie2ps-prelegalizer-combiner  %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2PS
+# RUN: llc -mtriple aie2 -run-pass=aie-prelegalizer-combiner %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2
+# RUN: llc -mtriple aie2p -run-pass=aie-prelegalizer-combiner %s -verify-machineinstrs -o - | FileCheck %s  --check-prefix=AIE2P
+# RUN: llc -mtriple aie2ps -run-pass=aie-prelegalizer-combiner  %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=AIE2PS
 
 --- |
   @data = dso_local local_unnamed_addr global [2 x i32] [i32 10, i32 20], align 4

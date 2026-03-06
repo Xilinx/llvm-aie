@@ -6,7 +6,7 @@
 #
 # (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 #
-# RUN: llc -mtriple aie2ps -run-pass=aie2ps-prelegalizer-combiner  %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2ps -run-pass=aie-prelegalizer-combiner  %s -verify-machineinstrs -o - | FileCheck %s
 
 ---
 name: shuffle_vector_to_concat_vector1

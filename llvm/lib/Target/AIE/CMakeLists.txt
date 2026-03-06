@@ -160,6 +160,9 @@ add_llvm_target(AIECodeGen
    AIE2PostLegalizerCustomCombiner.cpp
    AIE2PostLegalizerGenericCombiner.cpp
    AIE2PreLegalizerCombiner.cpp
+   AIEPostLegalizerCustomCombiner.cpp
+   AIEPostLegalizerGenericCombiner.cpp
+   AIEPreLegalizerCombiner.cpp
    AIE2RegisterBankInfo.cpp
    AIE2RegisterInfo.cpp
    AIE2Subtarget.cpp
