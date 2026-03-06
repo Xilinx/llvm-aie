@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // Function declarations for TOSA numerical support functions and quantization
@@ -25,6 +28,12 @@ namespace tosa {
 //===----------------------------------------------------------------------===//
 // Utility functions to support quantization handling in Tosa.
 //===----------------------------------------------------------------------===//
+
+/// Returns true if the type is a quantized type.
+bool isQuantizedType(Type type);
+
+/// Returns true if the value has a quantized type.
+bool hasQuantizedType(Value value);
 
 /// From a scale value, computes multiplier and shift values
 /// for 16 or 32-bit scale widths.

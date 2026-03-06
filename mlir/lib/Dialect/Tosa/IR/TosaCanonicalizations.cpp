@@ -1820,6 +1820,10 @@ OpFoldResult TransposeOp::fold(FoldAdaptor adaptor) {
 
 OpFoldResult tosa::LogOp::fold(FoldAdaptor adaptor) {
   auto input = getInput1();
+
+  if (hasQuantizedType(input))
+    return {};
+
   // Element-wise log(exp(x)) = x
   if (auto op = input.getDefiningOp<tosa::ExpOp>()) {
     return op.getInput1();
@@ -1830,6 +1834,10 @@ OpFoldResult tosa::LogOp::fold(FoldAdaptor adaptor) {
 
 OpFoldResult tosa::ExpOp::fold(FoldAdaptor adaptor) {
   auto input = getInput1();
+
+  if (hasQuantizedType(input))
+    return {};
+
   // Element-wise exp(log(x)) = x
   if (auto op = input.getDefiningOp<tosa::LogOp>()) {
     return op.getInput1();
@@ -1840,6 +1848,10 @@ OpFoldResult tosa::ExpOp::fold(FoldAdaptor adaptor) {
 
 OpFoldResult tosa::NegateOp::fold(FoldAdaptor adaptor) {
   auto input = getInput1();
+
+  if (hasQuantizedType(input))
+    return {};
+
   // Element-wise negate(negate(x)) = x
   if (auto op = input.getDefiningOp<tosa::NegateOp>()) {
     return op.getInput1();
@@ -1850,6 +1862,7 @@ OpFoldResult tosa::NegateOp::fold(FoldAdaptor adaptor) {
 
 OpFoldResult tosa::AbsOp::fold(FoldAdaptor adaptor) {
   auto input = getInput1();
+
   // Element-wise abs(abs(x)) = abs(x)
   if (auto op = input.getDefiningOp<tosa::AbsOp>()) {
     return input;
