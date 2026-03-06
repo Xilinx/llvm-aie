@@ -3785,7 +3785,8 @@ bool llvm::matchNarrowTruncLoad(MachineInstr &MI, MachineRegisterInfo &MRI,
 
   // We should have a G_LOAD feeding interesting truncations.
   const Register DstReg = MI.getOperand(0).getReg();
-  if (!all_of(MRI.use_instructions(DstReg), IsProfitableTruncToS20))
+  if (MRI.use_nodbg_empty(DstReg) ||
+      !all_of(MRI.use_instructions(DstReg), IsProfitableTruncToS20))
     return false;
 
   MatchInfo = [=, &MI, &MRI, &Observer](MachineIRBuilder &B) {
