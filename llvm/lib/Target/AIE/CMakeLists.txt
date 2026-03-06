@@ -96,6 +96,10 @@ tablegen(LLVM AIE2PSGenPostLegalizerGICustomCombiner.inc -gen-global-isel-combin
               -combiners="AIE2PSPostLegalizerCustomCombiner")
 tablegen(LLVM AIE2PSGenAsmMatcher.inc -gen-asm-matcher)
 
+#aie-base-target (shared AIE:: namespace for generic opcodes)
+set(LLVM_TARGET_DEFINITIONS AIEBaseTarget.td)
+tablegen(LLVM AIEBaseTargetGenInstrInfo.inc -gen-instr-info)
+
 add_public_tablegen_target(AIECommonTableGen)
 
 add_llvm_target(AIECodeGen

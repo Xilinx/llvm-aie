@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -2408,6 +2408,21 @@ def ADJCALLSTACKUP   : Pseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2),
 def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2),
                               [(callseq_end timm:$amt1, timm:$amt2)]>;
 }
+
+// Shared pseudo instructions for opcode parity with AIE2/AIE2P.
+def CYCLE_SEPARATOR  : Pseudo<(outs), (ins), []> {
+  let isMeta = true;
+  let hasSideEffects = false;
+  let mayLoad = false;
+  let mayStore = false;
+}
+def DelayedSchedBarrier : Pseudo<(outs), (ins), []> {
+  let isMeta = true;
+  let hasSideEffects = false;
+  let mayLoad = false;
+  let mayStore = false;
+}
+
 
 let hasDelaySlot = 1, Itinerary = II_RET in
 let isBarrier = 1, isReturn = 1, isTerminator = 1, Uses = [lr] in

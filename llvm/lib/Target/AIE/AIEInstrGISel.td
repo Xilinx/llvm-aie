@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -110,8 +110,8 @@ def G_AIE_UNPAD_VECTOR : AIEGenericInstruction {
   let hasSideEffects = false;
 }
 
-// Select between the words of two vectors. The selection is performed between 
-// each word in the position corresponding to the bit position in 
+// Select between the words of two vectors. The selection is performed between
+// each word in the position corresponding to the bit position in
 // the sel parameter.
 def G_AIE_VSEL : AIEGenericInstruction {
   let OutOperandList = (outs type0:$dst);
@@ -127,14 +127,14 @@ def G_AIE_VSHIFT_RIGHT : AIEGenericInstruction {
   let hasSideEffects = false;
 }
 
-// Extract 32-bit or 64-bit subvector. The native source type1 is 512 bits. 
+// Extract 32-bit or 64-bit subvector. The native source type1 is 512 bits.
 def G_AIE_EXTRACT_SUBVECTOR : AIEGenericInstruction {
   let OutOperandList = (outs type0:$dst);
   let InOperandList = (ins type1:$src, type2:$idx);
   let hasSideEffects = false;
 }
 
-// Corresponds to AIE shuffle vector. 
+// Corresponds to AIE shuffle vector.
 def G_AIE_SHUFFLE_VECTOR : AIEGenericInstruction {
   let OutOperandList = (outs type0:$dst);
   let InOperandList = (ins type0:$src0, type0:$src1, type1:$mode);
