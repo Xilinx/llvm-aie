@@ -65,12 +65,6 @@ public:
     AIEBaseSubtarget::adjustSchedDependency(InstrItins, Def, DefOpIdx, Use,
                                             UseOpIdx, Dep);
   }
-  void getPostRAMutations(std::vector<std::unique_ptr<ScheduleDAGMutation>>
-                              &Mutations) const override {
-    Mutations =
-        AIEBaseSubtarget::getPostRAMutationsImpl(getTargetTriple(), nullptr);
-  }
-
   bool enableSubRegLiveness() const override { return true; }
 
   void ParseSubtargetFeatures(StringRef CPU, StringRef TuneCPU, StringRef FS);
