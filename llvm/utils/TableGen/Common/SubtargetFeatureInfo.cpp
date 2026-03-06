@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "SubtargetFeatureInfo.h"
@@ -98,11 +101,11 @@ void SubtargetFeatureInfo::emitNameTable(
 }
 
 void SubtargetFeatureInfo::emitComputeAvailableFeatures(
-    StringRef TargetName, StringRef ClassName, StringRef FuncName,
+    StringRef SubtargetClassName, StringRef ClassName, StringRef FuncName,
     const SubtargetFeatureInfoMap &SubtargetFeatures, raw_ostream &OS,
     StringRef ExtraParams, const std::map<std::string, unsigned> *HwModes) {
   OS << "PredicateBitset " << ClassName << "::\n"
-     << FuncName << "(const " << TargetName << "Subtarget *Subtarget";
+     << FuncName << "(const " << SubtargetClassName << " *Subtarget";
   if (!ExtraParams.empty())
     OS << ", " << ExtraParams;
   OS << ") const {\n";

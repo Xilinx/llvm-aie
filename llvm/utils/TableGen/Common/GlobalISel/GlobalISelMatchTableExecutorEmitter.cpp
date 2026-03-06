@@ -4,13 +4,28 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "GlobalISelMatchTableExecutorEmitter.h"
 #include "GlobalISelMatchTable.h"
+#include "llvm/Support/CommandLine.h"
 
 using namespace llvm;
 using namespace llvm::gi;
+
+static cl::opt<std::string>
+    GISelSubtargetClass("gisel-subtarget-class",
+                        cl::desc("Subtarget class name for GISel emitters"),
+                        cl::init(""));
+
+static std::string getSubtargetClassName(const CodeGenTarget &Target) {
+  if (!GISelSubtargetClass.empty())
+    return GISelSubtargetClass;
+  return (Target.getName() + "Subtarget").str();
+}
 
 void GlobalISelMatchTableExecutorEmitter::emitSubtargetFeatureBitsetImpl(
     raw_ostream &OS, ArrayRef<RuleMatcher> Rules) {
@@ -31,20 +46,21 @@ void GlobalISelMatchTableExecutorEmitter::emitSubtargetFeatureBitsetImpl(
                  return X.second.mustRecomputePerFunction();
                });
 
+  const std::string STIClassName = getSubtargetClassName(getTarget());
   SubtargetFeatureInfo::emitComputeAvailableFeatures(
-      getTarget().getName(), getClassName(), "computeAvailableModuleFeatures",
+      STIClassName, getClassName(), "computeAvailableModuleFeatures",
       ModuleFeatures, OS, "", &HwModes);
 
   OS << "void " << getClassName()
      << "::setupGeneratedPerFunctionState(MachineFunction &MF) {\n"
         "  AvailableFunctionFeatures = computeAvailableFunctionFeatures("
         "(const "
-     << getTarget().getName()
-     << "Subtarget *)&MF.getSubtarget(), &MF);\n"
+     << STIClassName
+     << " *)&MF.getSubtarget(), &MF);\n"
         "}\n";
 
   SubtargetFeatureInfo::emitComputeAvailableFeatures(
-      getTarget().getName(), getClassName(), "computeAvailableFunctionFeatures",
+      STIClassName, getClassName(), "computeAvailableFunctionFeatures",
       FunctionFeatures, OS, "const MachineFunction *MF");
 
   // Emit a table containing the PredicateBitsets objects needed by the matcher
@@ -261,11 +277,11 @@ void GlobalISelMatchTableExecutorEmitter::emitPredicatesDecl(
      << "  return AvailableModuleFeatures | AvailableFunctionFeatures;\n"
      << "}\n"
      << "PredicateBitset\n"
-     << "computeAvailableModuleFeatures(const " << getTarget().getName()
-     << "Subtarget *Subtarget) const;\n"
+     << "computeAvailableModuleFeatures(const "
+     << getSubtargetClassName(getTarget()) << " *Subtarget) const;\n"
      << "PredicateBitset\n"
-     << "computeAvailableFunctionFeatures(const " << getTarget().getName()
-     << "Subtarget *Subtarget,\n"
+     << "computeAvailableFunctionFeatures(const "
+     << getSubtargetClassName(getTarget()) << " *Subtarget,\n"
      << "                                 const MachineFunction *MF) const;\n"
      << "void setupGeneratedPerFunctionState(MachineFunction &MF) override;\n"
      << "#endif // ifdef " << IfDefName << "\n";
