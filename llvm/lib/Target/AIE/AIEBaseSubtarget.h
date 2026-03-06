@@ -81,6 +81,11 @@ public:
   bool enableWindowScheduler() const override;
 
   unsigned getCriticalPathLimit() const override;
+  unsigned classifyGlobalReference(const GlobalValue *GV,
+                                   const TargetMachine &TM) const;
+
+  // All AIE targets need post scheduling for correct instruction timing
+  bool forcePostRAScheduling() const override { return true; }
 };
 } // namespace llvm
 

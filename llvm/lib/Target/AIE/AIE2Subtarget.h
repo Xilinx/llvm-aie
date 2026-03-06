@@ -58,7 +58,6 @@ public:
 
   bool enableMachineScheduler() const override { return true; }
   bool enablePostRAMachineScheduler() const override { return true; }
-  bool forcePostRAScheduling() const override { return true; }
   bool useAA() const override { return true; }
   bool enableEarlyIfConversion() const override { return true; }
 
@@ -97,14 +96,6 @@ public:
   }
 
   bool enableSubRegLiveness() const override { return true; }
-
-  unsigned classifyGlobalReference(const GlobalValue *GV,
-                                   const TargetMachine &TM) const {
-    if (!TM.shouldAssumeDSOLocal(GV)) {
-      return AIEII::MO_GLOBAL;
-    }
-    return AIEII::MO_None;
-  }
 
 protected:
   std::unique_ptr<CallLowering> CallLoweringInfo;

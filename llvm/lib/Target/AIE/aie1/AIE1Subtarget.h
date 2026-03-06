@@ -61,7 +61,6 @@ public:
   }
 
   bool enableMachineScheduler() const override { return false; }
-  bool forcePostRAScheduling() const override { return true; }
 
   void overrideSchedPolicy(MachineSchedPolicy &Policy,
                            unsigned NumRegionInstrs) const override {}
