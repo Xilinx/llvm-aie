@@ -190,4 +190,51 @@ bool hasUnrollPragma(const Loop *L) {
   return false;
 }
 
+/// Check if this block is a post-SWP candidate.
+bool isPostSWPCandidate(const AIEBaseInstrInfo &TII,
+                        const MachineBasicBlock *MBB) {
+
+  if (!isSingleMBBLoop(MBB))
+    return false;
+
+  const MachineInstr &Terminator = *MBB->getFirstTerminator();
+  if (!TII.isHardwareLoopEnd(Terminator.getOpcode()))
+    return false;
+
+  if (Terminator.getOperand(1).getMBB() != MBB)
+    return false;
+
+  auto GetLoopStartBlock =
+      [&](const MachineBasicBlock *LoopBlock) -> const MachineBasicBlock * {
+    const MachineBasicBlock *LoopStartBlock = nullptr;
+    for (auto *Pred : LoopBlock->predecessors()) {
+      if (Pred == LoopBlock)
+        continue;
+      if (LoopStartBlock)
+        return nullptr;
+      LoopStartBlock = Pred;
+    }
+    return LoopStartBlock;
+  };
+
+  auto LoopStartBlock = GetLoopStartBlock(MBB);
+  if (!LoopStartBlock)
+    return false;
+
+  auto FindLoopStart =
+      [&](const MachineBasicBlock &Block) -> const MachineInstr * {
+    for (auto &MI : reverse(Block)) {
+      if (TII.isHardwareLoopStart(MI.getOpcode()))
+        return &MI;
+    }
+    return nullptr;
+  };
+
+  auto Init = FindLoopStart(*LoopStartBlock);
+  if (!Init)
+    return false;
+
+  return Init->getOperand(1).getImm() == 0;
+}
+
 } // namespace llvm::AIELoopUtils

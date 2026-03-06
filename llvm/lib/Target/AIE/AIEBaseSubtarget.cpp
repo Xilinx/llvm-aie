@@ -62,6 +62,11 @@ static cl::opt<bool> ForcePostPipeliner(
     cl::desc(
         "Force using AIE's post-pipeliner instead of the MachinePipeliner"),
     cl::init(false), cl::Hidden);
+
+static cl::opt<bool> PreSchedPostSWPCandidates(
+    "aie-presched-postpipeliner-candidates",
+    cl::desc("Run pre-scheduler over potential postpipeliner candidates"),
+    cl::init(true), cl::Hidden);
 // These are debugging/testing options.
 
 // aie-latency-margin defines the latency that will be given to ExitSU edges.
@@ -957,4 +962,9 @@ bool AIEBaseSubtarget::enableWindowScheduler() const {
 
 unsigned AIEBaseSubtarget::getCriticalPathLimitImpl() const {
   return IfConversionCritPathLimit;
+}
+
+/// Whether to enable the pre-RA MachineScheduler for Post SWP candidates.
+bool AIEBaseSubtarget::shouldPreSchedPostSWPCandidates() const {
+  return PreSchedPostSWPCandidates;
 }

@@ -97,6 +97,9 @@ public:
   /// Returns the critical path limit that EarlyIfConversion should use
   /// when deciding about a specific conversion - common implementation.
   unsigned getCriticalPathLimitImpl() const;
+
+  /// Whether to enable the pre-RA MachineScheduler for Post SWP candidates.
+  virtual bool shouldPreSchedPostSWPCandidates() const;
 };
 } // namespace llvm
 

@@ -14,6 +14,7 @@
 #ifndef LLVM_LIB_TARGET_AIE_UTILS_AIELOOPUTILS_H
 #define LLVM_LIB_TARGET_AIE_UTILS_AIELOOPUTILS_H
 
+#include "AIEBaseInstrInfo.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 
@@ -69,6 +70,10 @@ bool hasUnrollEnablePragma(const MDNode *LoopID);
 bool hasUnrollCountPragma(const MDNode *LoopID);
 
 bool hasUnrollPragma(const Loop *L);
+
+/// Check if this block is a post-SWP candidate.
+bool isPostSWPCandidate(const AIEBaseInstrInfo &TII,
+                        const MachineBasicBlock *MBB);
 
 } // namespace llvm::AIELoopUtils
 

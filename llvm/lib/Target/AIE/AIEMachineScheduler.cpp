@@ -91,10 +91,6 @@ static cl::opt<bool> UseLoopHeuristics(
     "aie-loop-sched-heuristics", cl::init(true),
     cl::desc("Use special picking heuristics when scheduling a loop region"));
 
-static cl::opt<bool> PreSchedFollowsSkipPipeliner(
-    "aie-presched-follows-skip-pipeliner", cl::init(true),
-    cl::desc("Don't run the prescheduler if the pipeliner is skipped"));
-
 namespace {
 // A sentinel value to represent an unknown SUnit.
 const constexpr unsigned UnknownSUNum = ~0;
@@ -1105,11 +1101,19 @@ MachineBasicBlock *AIEPreRASchedStrategy::nextBlock() {
   auto Skip = [](MachineBasicBlock *Block) {
     if (!Block)
       return false;
-    bool PrePipelinerDisabled =
-        AIELoopUtils::getPipelinerDisabled(*Block) ||
-        !Block->getParent()->getSubtarget().enableMachinePipeliner();
-    return PreSchedFollowsSkipPipeliner &&
-           AIELoopUtils::isSingleMBBLoop(Block) && PrePipelinerDisabled;
+
+    auto *TII = static_cast<const AIEBaseInstrInfo *>(
+        Block->getParent()->getSubtarget().getInstrInfo());
+    const AIEBaseSubtarget &STI = AIEBaseSubtarget::get(*Block->getParent());
+
+    if (AIELoopUtils::isPostSWPCandidate(*TII, Block)) {
+      bool ShouldSkip = !STI.shouldPreSchedPostSWPCandidates();
+      LLVM_DEBUG(dbgs() << "Skip pre-sched of post-SWP candidate "
+                        << Block->getName() << ":" << ShouldSkip << "\n");
+      return ShouldSkip;
+    }
+
+    return false;
   };
 
   do {
