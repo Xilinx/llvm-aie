@@ -2320,7 +2320,6 @@ v64acc32 test_addmac_elem_64_conf(v64uint8 a, int sgn_x, v64int8 b, int sgn_y,
   return addmac_elem_64_conf(a, sgn_x, b, sgn_y, acc1, acc2, zero_acc1, shift16,
                              sub_mul, sub_acc1, sub_acc2);
 }
-//
 // CHECK-LABEL: define dso_local inreg noundef <64 x i32> @_Z24test_addmsc_elem_64_confDv64_hiDv64_aiDv64_u7__acc32S1_iiiii(
 // CHECK-SAME: <64 x i8> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x i8> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x i32> inreg noundef [[ACC1:%.*]], <64 x i32> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SHIFT16:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
@@ -38218,23 +38217,25 @@ v64accfloat test_addmsc_8x8_8x8_conf(v64bfloat8 a, int sgn_x, v64bfloat8 b,
 // CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z20test_mul_4x16_16x16T6v64mx97v256mx9(
 // CHECK-SAME: [[STRUCT_V64MX9:%.*]] [[A_COERCE:%.*]], [[STRUCT_V256MX9:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 3
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 5
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 6
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 7
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 8
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 9
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 10
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 11
-// CHECK-NEXT:    [[TMP15:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.mul.conf(<16 x i32> [[TMP0]], <2 x i32> [[TMP1]], <2 x i32> [[TMP2]], <16 x i32> [[TMP3]], <16 x i32> [[TMP4]], <16 x i32> [[TMP5]], <16 x i32> [[TMP6]], <2 x i32> [[TMP7]], <2 x i32> [[TMP8]], <2 x i32> [[TMP9]], <2 x i32> [[TMP10]], <2 x i32> [[TMP11]], <2 x i32> [[TMP12]], <2 x i32> [[TMP13]], <2 x i32> [[TMP14]], i32 972)
-// CHECK-NEXT:    ret <64 x float> [[TMP15]]
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9:%.*]] [[TMP0]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 5
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT17_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT19_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT21_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT23_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT25_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT27_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 5
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.mul.conf(<16 x i32> [[TMP2]], <2 x i32> [[TMP3]], <2 x i32> [[TMP4]], <16 x i32> [[DOTFCA_0_EXTRACT_I]], <16 x i32> [[DOTFCA_1_EXTRACT_I]], <16 x i32> [[DOTFCA_0_EXTRACT17_I]], <16 x i32> [[DOTFCA_1_EXTRACT19_I]], <2 x i32> [[DOTFCA_2_EXTRACT_I]], <2 x i32> [[DOTFCA_3_EXTRACT_I]], <2 x i32> [[DOTFCA_2_EXTRACT21_I]], <2 x i32> [[DOTFCA_3_EXTRACT23_I]], <2 x i32> [[DOTFCA_4_EXTRACT_I]], <2 x i32> [[DOTFCA_5_EXTRACT_I]], <2 x i32> [[DOTFCA_4_EXTRACT25_I]], <2 x i32> [[DOTFCA_5_EXTRACT27_I]], i32 972)
+// CHECK-NEXT:    ret <64 x float> [[TMP5]]
 //
 v64accfloat test_mul_4x16_16x16T(v64mx9 a, v256mx9 b) {
   return mul_4x16_16x16T(a, b);
@@ -38242,23 +38243,25 @@ v64accfloat test_mul_4x16_16x16T(v64mx9 a, v256mx9 b) {
 // CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z23test_negmul_4x16_16x16T6v64mx97v256mx9(
 // CHECK-SAME: [[STRUCT_V64MX9:%.*]] [[A_COERCE:%.*]], [[STRUCT_V256MX9:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 3
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 5
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 6
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 7
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 8
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 9
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 10
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 11
-// CHECK-NEXT:    [[TMP15:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.negmul.conf(<16 x i32> [[TMP0]], <2 x i32> [[TMP1]], <2 x i32> [[TMP2]], <16 x i32> [[TMP3]], <16 x i32> [[TMP4]], <16 x i32> [[TMP5]], <16 x i32> [[TMP6]], <2 x i32> [[TMP7]], <2 x i32> [[TMP8]], <2 x i32> [[TMP9]], <2 x i32> [[TMP10]], <2 x i32> [[TMP11]], <2 x i32> [[TMP12]], <2 x i32> [[TMP13]], <2 x i32> [[TMP14]], i32 972)
-// CHECK-NEXT:    ret <64 x float> [[TMP15]]
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9:%.*]] [[TMP0]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 5
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT17_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT19_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT21_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT23_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT25_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT27_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 5
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.negmul.conf(<16 x i32> [[TMP2]], <2 x i32> [[TMP3]], <2 x i32> [[TMP4]], <16 x i32> [[DOTFCA_0_EXTRACT_I]], <16 x i32> [[DOTFCA_1_EXTRACT_I]], <16 x i32> [[DOTFCA_0_EXTRACT17_I]], <16 x i32> [[DOTFCA_1_EXTRACT19_I]], <2 x i32> [[DOTFCA_2_EXTRACT_I]], <2 x i32> [[DOTFCA_3_EXTRACT_I]], <2 x i32> [[DOTFCA_2_EXTRACT21_I]], <2 x i32> [[DOTFCA_3_EXTRACT23_I]], <2 x i32> [[DOTFCA_4_EXTRACT_I]], <2 x i32> [[DOTFCA_5_EXTRACT_I]], <2 x i32> [[DOTFCA_4_EXTRACT25_I]], <2 x i32> [[DOTFCA_5_EXTRACT27_I]], i32 972)
+// CHECK-NEXT:    ret <64 x float> [[TMP5]]
 //
 v64accfloat test_negmul_4x16_16x16T(v64mx9 a, v256mx9 b) {
   return negmul_4x16_16x16T(a, b);
@@ -38266,23 +38269,25 @@ v64accfloat test_negmul_4x16_16x16T(v64mx9 a, v256mx9 b) {
 // CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z20test_mac_4x16_16x16T6v64mx97v256mx9Dv64_u10__accfloat(
 // CHECK-SAME: [[STRUCT_V64MX9:%.*]] [[A_COERCE:%.*]], [[STRUCT_V256MX9:%.*]] [[B_COERCE:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 3
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 5
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 6
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 7
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 8
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 9
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 10
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 11
-// CHECK-NEXT:    [[TMP15:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.mac.conf(<16 x i32> [[TMP0]], <2 x i32> [[TMP1]], <2 x i32> [[TMP2]], <16 x i32> [[TMP3]], <16 x i32> [[TMP4]], <16 x i32> [[TMP5]], <16 x i32> [[TMP6]], <2 x i32> [[TMP7]], <2 x i32> [[TMP8]], <2 x i32> [[TMP9]], <2 x i32> [[TMP10]], <2 x i32> [[TMP11]], <2 x i32> [[TMP12]], <2 x i32> [[TMP13]], <2 x i32> [[TMP14]], <64 x float> [[ACC]], i32 972)
-// CHECK-NEXT:    ret <64 x float> [[TMP15]]
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9:%.*]] [[TMP0]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 5
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT17_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT19_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT21_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT23_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT25_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT27_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 5
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.mac.conf(<16 x i32> [[TMP2]], <2 x i32> [[TMP3]], <2 x i32> [[TMP4]], <16 x i32> [[DOTFCA_0_EXTRACT_I]], <16 x i32> [[DOTFCA_1_EXTRACT_I]], <16 x i32> [[DOTFCA_0_EXTRACT17_I]], <16 x i32> [[DOTFCA_1_EXTRACT19_I]], <2 x i32> [[DOTFCA_2_EXTRACT_I]], <2 x i32> [[DOTFCA_3_EXTRACT_I]], <2 x i32> [[DOTFCA_2_EXTRACT21_I]], <2 x i32> [[DOTFCA_3_EXTRACT23_I]], <2 x i32> [[DOTFCA_4_EXTRACT_I]], <2 x i32> [[DOTFCA_5_EXTRACT_I]], <2 x i32> [[DOTFCA_4_EXTRACT25_I]], <2 x i32> [[DOTFCA_5_EXTRACT27_I]], <64 x float> [[ACC]], i32 972)
+// CHECK-NEXT:    ret <64 x float> [[TMP5]]
 //
 v64accfloat test_mac_4x16_16x16T(v64mx9 a, v256mx9 b, v64accfloat acc) {
   return mac_4x16_16x16T(a, b, acc);
@@ -38290,23 +38295,25 @@ v64accfloat test_mac_4x16_16x16T(v64mx9 a, v256mx9 b, v64accfloat acc) {
 // CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z20test_msc_4x16_16x16T6v64mx97v256mx9Dv64_u10__accfloat(
 // CHECK-SAME: [[STRUCT_V64MX9:%.*]] [[A_COERCE:%.*]], [[STRUCT_V256MX9:%.*]] [[B_COERCE:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 3
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 5
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 6
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 7
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 8
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 9
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 10
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 11
-// CHECK-NEXT:    [[TMP15:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.msc.conf(<16 x i32> [[TMP0]], <2 x i32> [[TMP1]], <2 x i32> [[TMP2]], <16 x i32> [[TMP3]], <16 x i32> [[TMP4]], <16 x i32> [[TMP5]], <16 x i32> [[TMP6]], <2 x i32> [[TMP7]], <2 x i32> [[TMP8]], <2 x i32> [[TMP9]], <2 x i32> [[TMP10]], <2 x i32> [[TMP11]], <2 x i32> [[TMP12]], <2 x i32> [[TMP13]], <2 x i32> [[TMP14]], <64 x float> [[ACC]], i32 972)
-// CHECK-NEXT:    ret <64 x float> [[TMP15]]
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9:%.*]] [[TMP0]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 5
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT17_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT19_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT21_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT23_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT25_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT27_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 5
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.msc.conf(<16 x i32> [[TMP2]], <2 x i32> [[TMP3]], <2 x i32> [[TMP4]], <16 x i32> [[DOTFCA_0_EXTRACT_I]], <16 x i32> [[DOTFCA_1_EXTRACT_I]], <16 x i32> [[DOTFCA_0_EXTRACT17_I]], <16 x i32> [[DOTFCA_1_EXTRACT19_I]], <2 x i32> [[DOTFCA_2_EXTRACT_I]], <2 x i32> [[DOTFCA_3_EXTRACT_I]], <2 x i32> [[DOTFCA_2_EXTRACT21_I]], <2 x i32> [[DOTFCA_3_EXTRACT23_I]], <2 x i32> [[DOTFCA_4_EXTRACT_I]], <2 x i32> [[DOTFCA_5_EXTRACT_I]], <2 x i32> [[DOTFCA_4_EXTRACT25_I]], <2 x i32> [[DOTFCA_5_EXTRACT27_I]], <64 x float> [[ACC]], i32 972)
+// CHECK-NEXT:    ret <64 x float> [[TMP5]]
 //
 v64accfloat test_msc_4x16_16x16T(v64mx9 a, v256mx9 b, v64accfloat acc) {
   return msc_4x16_16x16T(a, b, acc);
@@ -38314,23 +38321,25 @@ v64accfloat test_msc_4x16_16x16T(v64mx9 a, v256mx9 b, v64accfloat acc) {
 // CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z23test_addmac_4x16_16x16T6v64mx97v256mx9Dv64_u10__accfloatS1_(
 // CHECK-SAME: [[STRUCT_V64MX9:%.*]] [[A_COERCE:%.*]], [[STRUCT_V256MX9:%.*]] [[B_COERCE:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 3
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 5
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 6
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 7
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 8
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 9
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 10
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 11
-// CHECK-NEXT:    [[TMP15:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.addmac.conf(<16 x i32> [[TMP0]], <2 x i32> [[TMP1]], <2 x i32> [[TMP2]], <16 x i32> [[TMP3]], <16 x i32> [[TMP4]], <16 x i32> [[TMP5]], <16 x i32> [[TMP6]], <2 x i32> [[TMP7]], <2 x i32> [[TMP8]], <2 x i32> [[TMP9]], <2 x i32> [[TMP10]], <2 x i32> [[TMP11]], <2 x i32> [[TMP12]], <2 x i32> [[TMP13]], <2 x i32> [[TMP14]], <64 x float> [[ACC1]], <64 x float> [[ACC2]], i32 972)
-// CHECK-NEXT:    ret <64 x float> [[TMP15]]
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9:%.*]] [[TMP0]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 5
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT17_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT19_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT21_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT23_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT25_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT27_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 5
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.addmac.conf(<16 x i32> [[TMP2]], <2 x i32> [[TMP3]], <2 x i32> [[TMP4]], <16 x i32> [[DOTFCA_0_EXTRACT_I]], <16 x i32> [[DOTFCA_1_EXTRACT_I]], <16 x i32> [[DOTFCA_0_EXTRACT17_I]], <16 x i32> [[DOTFCA_1_EXTRACT19_I]], <2 x i32> [[DOTFCA_2_EXTRACT_I]], <2 x i32> [[DOTFCA_3_EXTRACT_I]], <2 x i32> [[DOTFCA_2_EXTRACT21_I]], <2 x i32> [[DOTFCA_3_EXTRACT23_I]], <2 x i32> [[DOTFCA_4_EXTRACT_I]], <2 x i32> [[DOTFCA_5_EXTRACT_I]], <2 x i32> [[DOTFCA_4_EXTRACT25_I]], <2 x i32> [[DOTFCA_5_EXTRACT27_I]], <64 x float> [[ACC1]], <64 x float> [[ACC2]], i32 972)
+// CHECK-NEXT:    ret <64 x float> [[TMP5]]
 //
 v64accfloat test_addmac_4x16_16x16T(v64mx9 a, v256mx9 b, v64accfloat acc1,
                                     v64accfloat acc2) {
@@ -38339,23 +38348,25 @@ v64accfloat test_addmac_4x16_16x16T(v64mx9 a, v256mx9 b, v64accfloat acc1,
 // CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z23test_addmsc_4x16_16x16T6v64mx97v256mx9Dv64_u10__accfloatS1_(
 // CHECK-SAME: [[STRUCT_V64MX9:%.*]] [[A_COERCE:%.*]], [[STRUCT_V256MX9:%.*]] [[B_COERCE:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 3
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 5
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 6
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 7
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 8
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 9
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 10
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 11
-// CHECK-NEXT:    [[TMP15:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.addmsc.conf(<16 x i32> [[TMP0]], <2 x i32> [[TMP1]], <2 x i32> [[TMP2]], <16 x i32> [[TMP3]], <16 x i32> [[TMP4]], <16 x i32> [[TMP5]], <16 x i32> [[TMP6]], <2 x i32> [[TMP7]], <2 x i32> [[TMP8]], <2 x i32> [[TMP9]], <2 x i32> [[TMP10]], <2 x i32> [[TMP11]], <2 x i32> [[TMP12]], <2 x i32> [[TMP13]], <2 x i32> [[TMP14]], <64 x float> [[ACC1]], <64 x float> [[ACC2]], i32 972)
-// CHECK-NEXT:    ret <64 x float> [[TMP15]]
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9:%.*]] [[TMP0]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 5
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT17_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT19_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT21_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT23_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT25_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT27_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 5
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.addmsc.conf(<16 x i32> [[TMP2]], <2 x i32> [[TMP3]], <2 x i32> [[TMP4]], <16 x i32> [[DOTFCA_0_EXTRACT_I]], <16 x i32> [[DOTFCA_1_EXTRACT_I]], <16 x i32> [[DOTFCA_0_EXTRACT17_I]], <16 x i32> [[DOTFCA_1_EXTRACT19_I]], <2 x i32> [[DOTFCA_2_EXTRACT_I]], <2 x i32> [[DOTFCA_3_EXTRACT_I]], <2 x i32> [[DOTFCA_2_EXTRACT21_I]], <2 x i32> [[DOTFCA_3_EXTRACT23_I]], <2 x i32> [[DOTFCA_4_EXTRACT_I]], <2 x i32> [[DOTFCA_5_EXTRACT_I]], <2 x i32> [[DOTFCA_4_EXTRACT25_I]], <2 x i32> [[DOTFCA_5_EXTRACT27_I]], <64 x float> [[ACC1]], <64 x float> [[ACC2]], i32 972)
+// CHECK-NEXT:    ret <64 x float> [[TMP5]]
 //
 v64accfloat test_addmsc_4x16_16x16T(v64mx9 a, v256mx9 b, v64accfloat acc1,
                                     v64accfloat acc2) {
@@ -38364,27 +38375,29 @@ v64accfloat test_addmsc_4x16_16x16T(v64mx9 a, v256mx9 b, v64accfloat acc1,
 // CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z20test_mul_4x16_16x16T6v64mx9i7v256mx9i(
 // CHECK-SAME: [[STRUCT_V64MX9:%.*]] [[A_COERCE:%.*]], i32 noundef [[SGN_X:%.*]], [[STRUCT_V256MX9:%.*]] [[B_COERCE:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 3
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 5
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 6
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 7
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 8
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 9
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 10
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 11
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9:%.*]] [[TMP0]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 5
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT17_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT19_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT21_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT23_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT25_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT27_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 5
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL21_I_I:%.*]] = shl i32 [[SGN_Y]], 8
 // CHECK-NEXT:    [[OR12_I_I:%.*]] = or i32 [[SHL20_I_I]], [[SHL21_I_I]]
 // CHECK-NEXT:    [[OR25_I_I:%.*]] = or disjoint i32 [[OR12_I_I]], 204
-// CHECK-NEXT:    [[TMP15:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.mul.conf(<16 x i32> [[TMP0]], <2 x i32> [[TMP1]], <2 x i32> [[TMP2]], <16 x i32> [[TMP3]], <16 x i32> [[TMP4]], <16 x i32> [[TMP5]], <16 x i32> [[TMP6]], <2 x i32> [[TMP7]], <2 x i32> [[TMP8]], <2 x i32> [[TMP9]], <2 x i32> [[TMP10]], <2 x i32> [[TMP11]], <2 x i32> [[TMP12]], <2 x i32> [[TMP13]], <2 x i32> [[TMP14]], i32 [[OR25_I_I]])
-// CHECK-NEXT:    ret <64 x float> [[TMP15]]
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.mul.conf(<16 x i32> [[TMP2]], <2 x i32> [[TMP3]], <2 x i32> [[TMP4]], <16 x i32> [[DOTFCA_0_EXTRACT_I]], <16 x i32> [[DOTFCA_1_EXTRACT_I]], <16 x i32> [[DOTFCA_0_EXTRACT17_I]], <16 x i32> [[DOTFCA_1_EXTRACT19_I]], <2 x i32> [[DOTFCA_2_EXTRACT_I]], <2 x i32> [[DOTFCA_3_EXTRACT_I]], <2 x i32> [[DOTFCA_2_EXTRACT21_I]], <2 x i32> [[DOTFCA_3_EXTRACT23_I]], <2 x i32> [[DOTFCA_4_EXTRACT_I]], <2 x i32> [[DOTFCA_5_EXTRACT_I]], <2 x i32> [[DOTFCA_4_EXTRACT25_I]], <2 x i32> [[DOTFCA_5_EXTRACT27_I]], i32 [[OR25_I_I]])
+// CHECK-NEXT:    ret <64 x float> [[TMP5]]
 //
 v64accfloat test_mul_4x16_16x16T(v64mx9 a, int sgn_x, v256mx9 b, int sgn_y) {
   return mul_4x16_16x16T(a, sgn_x, b, sgn_y);
@@ -38392,27 +38405,29 @@ v64accfloat test_mul_4x16_16x16T(v64mx9 a, int sgn_x, v256mx9 b, int sgn_y) {
 // CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z23test_negmul_4x16_16x16T6v64mx9i7v256mx9i(
 // CHECK-SAME: [[STRUCT_V64MX9:%.*]] [[A_COERCE:%.*]], i32 noundef [[SGN_X:%.*]], [[STRUCT_V256MX9:%.*]] [[B_COERCE:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 3
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 5
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 6
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 7
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 8
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 9
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 10
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 11
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9:%.*]] [[TMP0]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 5
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT17_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT19_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT21_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT23_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT25_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT27_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 5
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL21_I_I:%.*]] = shl i32 [[SGN_Y]], 8
 // CHECK-NEXT:    [[OR12_I_I:%.*]] = or i32 [[SHL20_I_I]], [[SHL21_I_I]]
 // CHECK-NEXT:    [[OR25_I_I:%.*]] = or disjoint i32 [[OR12_I_I]], 204
-// CHECK-NEXT:    [[TMP15:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.negmul.conf(<16 x i32> [[TMP0]], <2 x i32> [[TMP1]], <2 x i32> [[TMP2]], <16 x i32> [[TMP3]], <16 x i32> [[TMP4]], <16 x i32> [[TMP5]], <16 x i32> [[TMP6]], <2 x i32> [[TMP7]], <2 x i32> [[TMP8]], <2 x i32> [[TMP9]], <2 x i32> [[TMP10]], <2 x i32> [[TMP11]], <2 x i32> [[TMP12]], <2 x i32> [[TMP13]], <2 x i32> [[TMP14]], i32 [[OR25_I_I]])
-// CHECK-NEXT:    ret <64 x float> [[TMP15]]
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.negmul.conf(<16 x i32> [[TMP2]], <2 x i32> [[TMP3]], <2 x i32> [[TMP4]], <16 x i32> [[DOTFCA_0_EXTRACT_I]], <16 x i32> [[DOTFCA_1_EXTRACT_I]], <16 x i32> [[DOTFCA_0_EXTRACT17_I]], <16 x i32> [[DOTFCA_1_EXTRACT19_I]], <2 x i32> [[DOTFCA_2_EXTRACT_I]], <2 x i32> [[DOTFCA_3_EXTRACT_I]], <2 x i32> [[DOTFCA_2_EXTRACT21_I]], <2 x i32> [[DOTFCA_3_EXTRACT23_I]], <2 x i32> [[DOTFCA_4_EXTRACT_I]], <2 x i32> [[DOTFCA_5_EXTRACT_I]], <2 x i32> [[DOTFCA_4_EXTRACT25_I]], <2 x i32> [[DOTFCA_5_EXTRACT27_I]], i32 [[OR25_I_I]])
+// CHECK-NEXT:    ret <64 x float> [[TMP5]]
 //
 v64accfloat test_negmul_4x16_16x16T(v64mx9 a, int sgn_x, v256mx9 b, int sgn_y) {
   return negmul_4x16_16x16T(a, sgn_x, b, sgn_y);
@@ -38420,27 +38435,29 @@ v64accfloat test_negmul_4x16_16x16T(v64mx9 a, int sgn_x, v256mx9 b, int sgn_y) {
 // CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z20test_mac_4x16_16x16T6v64mx9i7v256mx9iDv64_u10__accfloat(
 // CHECK-SAME: [[STRUCT_V64MX9:%.*]] [[A_COERCE:%.*]], i32 noundef [[SGN_X:%.*]], [[STRUCT_V256MX9:%.*]] [[B_COERCE:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 3
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 5
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 6
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 7
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 8
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 9
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 10
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 11
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9:%.*]] [[TMP0]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 5
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT17_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT19_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT21_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT23_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT25_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT27_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 5
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL21_I_I:%.*]] = shl i32 [[SGN_Y]], 8
 // CHECK-NEXT:    [[OR12_I_I:%.*]] = or i32 [[SHL20_I_I]], [[SHL21_I_I]]
 // CHECK-NEXT:    [[OR25_I_I:%.*]] = or disjoint i32 [[OR12_I_I]], 204
-// CHECK-NEXT:    [[TMP15:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.mac.conf(<16 x i32> [[TMP0]], <2 x i32> [[TMP1]], <2 x i32> [[TMP2]], <16 x i32> [[TMP3]], <16 x i32> [[TMP4]], <16 x i32> [[TMP5]], <16 x i32> [[TMP6]], <2 x i32> [[TMP7]], <2 x i32> [[TMP8]], <2 x i32> [[TMP9]], <2 x i32> [[TMP10]], <2 x i32> [[TMP11]], <2 x i32> [[TMP12]], <2 x i32> [[TMP13]], <2 x i32> [[TMP14]], <64 x float> [[ACC]], i32 [[OR25_I_I]])
-// CHECK-NEXT:    ret <64 x float> [[TMP15]]
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.mac.conf(<16 x i32> [[TMP2]], <2 x i32> [[TMP3]], <2 x i32> [[TMP4]], <16 x i32> [[DOTFCA_0_EXTRACT_I]], <16 x i32> [[DOTFCA_1_EXTRACT_I]], <16 x i32> [[DOTFCA_0_EXTRACT17_I]], <16 x i32> [[DOTFCA_1_EXTRACT19_I]], <2 x i32> [[DOTFCA_2_EXTRACT_I]], <2 x i32> [[DOTFCA_3_EXTRACT_I]], <2 x i32> [[DOTFCA_2_EXTRACT21_I]], <2 x i32> [[DOTFCA_3_EXTRACT23_I]], <2 x i32> [[DOTFCA_4_EXTRACT_I]], <2 x i32> [[DOTFCA_5_EXTRACT_I]], <2 x i32> [[DOTFCA_4_EXTRACT25_I]], <2 x i32> [[DOTFCA_5_EXTRACT27_I]], <64 x float> [[ACC]], i32 [[OR25_I_I]])
+// CHECK-NEXT:    ret <64 x float> [[TMP5]]
 //
 v64accfloat test_mac_4x16_16x16T(v64mx9 a, int sgn_x, v256mx9 b, int sgn_y,
                                  v64accfloat acc) {
@@ -38449,27 +38466,29 @@ v64accfloat test_mac_4x16_16x16T(v64mx9 a, int sgn_x, v256mx9 b, int sgn_y,
 // CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z20test_msc_4x16_16x16T6v64mx9i7v256mx9iDv64_u10__accfloat(
 // CHECK-SAME: [[STRUCT_V64MX9:%.*]] [[A_COERCE:%.*]], i32 noundef [[SGN_X:%.*]], [[STRUCT_V256MX9:%.*]] [[B_COERCE:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 3
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 5
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 6
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 7
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 8
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 9
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 10
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 11
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9:%.*]] [[TMP0]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 5
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT17_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT19_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT21_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT23_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT25_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT27_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 5
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL21_I_I:%.*]] = shl i32 [[SGN_Y]], 8
 // CHECK-NEXT:    [[OR12_I_I:%.*]] = or i32 [[SHL20_I_I]], [[SHL21_I_I]]
 // CHECK-NEXT:    [[OR25_I_I:%.*]] = or disjoint i32 [[OR12_I_I]], 204
-// CHECK-NEXT:    [[TMP15:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.msc.conf(<16 x i32> [[TMP0]], <2 x i32> [[TMP1]], <2 x i32> [[TMP2]], <16 x i32> [[TMP3]], <16 x i32> [[TMP4]], <16 x i32> [[TMP5]], <16 x i32> [[TMP6]], <2 x i32> [[TMP7]], <2 x i32> [[TMP8]], <2 x i32> [[TMP9]], <2 x i32> [[TMP10]], <2 x i32> [[TMP11]], <2 x i32> [[TMP12]], <2 x i32> [[TMP13]], <2 x i32> [[TMP14]], <64 x float> [[ACC]], i32 [[OR25_I_I]])
-// CHECK-NEXT:    ret <64 x float> [[TMP15]]
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.msc.conf(<16 x i32> [[TMP2]], <2 x i32> [[TMP3]], <2 x i32> [[TMP4]], <16 x i32> [[DOTFCA_0_EXTRACT_I]], <16 x i32> [[DOTFCA_1_EXTRACT_I]], <16 x i32> [[DOTFCA_0_EXTRACT17_I]], <16 x i32> [[DOTFCA_1_EXTRACT19_I]], <2 x i32> [[DOTFCA_2_EXTRACT_I]], <2 x i32> [[DOTFCA_3_EXTRACT_I]], <2 x i32> [[DOTFCA_2_EXTRACT21_I]], <2 x i32> [[DOTFCA_3_EXTRACT23_I]], <2 x i32> [[DOTFCA_4_EXTRACT_I]], <2 x i32> [[DOTFCA_5_EXTRACT_I]], <2 x i32> [[DOTFCA_4_EXTRACT25_I]], <2 x i32> [[DOTFCA_5_EXTRACT27_I]], <64 x float> [[ACC]], i32 [[OR25_I_I]])
+// CHECK-NEXT:    ret <64 x float> [[TMP5]]
 //
 v64accfloat test_msc_4x16_16x16T(v64mx9 a, int sgn_x, v256mx9 b, int sgn_y,
                                  v64accfloat acc) {
@@ -38478,27 +38497,29 @@ v64accfloat test_msc_4x16_16x16T(v64mx9 a, int sgn_x, v256mx9 b, int sgn_y,
 // CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z23test_addmac_4x16_16x16T6v64mx9i7v256mx9iDv64_u10__accfloatS1_(
 // CHECK-SAME: [[STRUCT_V64MX9:%.*]] [[A_COERCE:%.*]], i32 noundef [[SGN_X:%.*]], [[STRUCT_V256MX9:%.*]] [[B_COERCE:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 3
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 5
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 6
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 7
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 8
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 9
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 10
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 11
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9:%.*]] [[TMP0]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 5
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT17_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT19_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT21_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT23_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT25_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT27_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 5
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL21_I_I:%.*]] = shl i32 [[SGN_Y]], 8
 // CHECK-NEXT:    [[OR12_I_I:%.*]] = or i32 [[SHL20_I_I]], [[SHL21_I_I]]
 // CHECK-NEXT:    [[OR25_I_I:%.*]] = or disjoint i32 [[OR12_I_I]], 204
-// CHECK-NEXT:    [[TMP15:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.addmac.conf(<16 x i32> [[TMP0]], <2 x i32> [[TMP1]], <2 x i32> [[TMP2]], <16 x i32> [[TMP3]], <16 x i32> [[TMP4]], <16 x i32> [[TMP5]], <16 x i32> [[TMP6]], <2 x i32> [[TMP7]], <2 x i32> [[TMP8]], <2 x i32> [[TMP9]], <2 x i32> [[TMP10]], <2 x i32> [[TMP11]], <2 x i32> [[TMP12]], <2 x i32> [[TMP13]], <2 x i32> [[TMP14]], <64 x float> [[ACC1]], <64 x float> [[ACC2]], i32 [[OR25_I_I]])
-// CHECK-NEXT:    ret <64 x float> [[TMP15]]
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.addmac.conf(<16 x i32> [[TMP2]], <2 x i32> [[TMP3]], <2 x i32> [[TMP4]], <16 x i32> [[DOTFCA_0_EXTRACT_I]], <16 x i32> [[DOTFCA_1_EXTRACT_I]], <16 x i32> [[DOTFCA_0_EXTRACT17_I]], <16 x i32> [[DOTFCA_1_EXTRACT19_I]], <2 x i32> [[DOTFCA_2_EXTRACT_I]], <2 x i32> [[DOTFCA_3_EXTRACT_I]], <2 x i32> [[DOTFCA_2_EXTRACT21_I]], <2 x i32> [[DOTFCA_3_EXTRACT23_I]], <2 x i32> [[DOTFCA_4_EXTRACT_I]], <2 x i32> [[DOTFCA_5_EXTRACT_I]], <2 x i32> [[DOTFCA_4_EXTRACT25_I]], <2 x i32> [[DOTFCA_5_EXTRACT27_I]], <64 x float> [[ACC1]], <64 x float> [[ACC2]], i32 [[OR25_I_I]])
+// CHECK-NEXT:    ret <64 x float> [[TMP5]]
 //
 v64accfloat test_addmac_4x16_16x16T(v64mx9 a, int sgn_x, v256mx9 b, int sgn_y,
                                     v64accfloat acc1, v64accfloat acc2) {
@@ -38507,27 +38528,29 @@ v64accfloat test_addmac_4x16_16x16T(v64mx9 a, int sgn_x, v256mx9 b, int sgn_y,
 // CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z23test_addmsc_4x16_16x16T6v64mx9i7v256mx9iDv64_u10__accfloatS1_(
 // CHECK-SAME: [[STRUCT_V64MX9:%.*]] [[A_COERCE:%.*]], i32 noundef [[SGN_X:%.*]], [[STRUCT_V256MX9:%.*]] [[B_COERCE:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 3
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 5
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 6
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 7
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 8
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 9
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 10
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 11
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9:%.*]] [[TMP0]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 5
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT17_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT19_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT21_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT23_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT25_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT27_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 5
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL21_I_I:%.*]] = shl i32 [[SGN_Y]], 8
 // CHECK-NEXT:    [[OR12_I_I:%.*]] = or i32 [[SHL20_I_I]], [[SHL21_I_I]]
 // CHECK-NEXT:    [[OR25_I_I:%.*]] = or disjoint i32 [[OR12_I_I]], 204
-// CHECK-NEXT:    [[TMP15:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.addmsc.conf(<16 x i32> [[TMP0]], <2 x i32> [[TMP1]], <2 x i32> [[TMP2]], <16 x i32> [[TMP3]], <16 x i32> [[TMP4]], <16 x i32> [[TMP5]], <16 x i32> [[TMP6]], <2 x i32> [[TMP7]], <2 x i32> [[TMP8]], <2 x i32> [[TMP9]], <2 x i32> [[TMP10]], <2 x i32> [[TMP11]], <2 x i32> [[TMP12]], <2 x i32> [[TMP13]], <2 x i32> [[TMP14]], <64 x float> [[ACC1]], <64 x float> [[ACC2]], i32 [[OR25_I_I]])
-// CHECK-NEXT:    ret <64 x float> [[TMP15]]
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.addmsc.conf(<16 x i32> [[TMP2]], <2 x i32> [[TMP3]], <2 x i32> [[TMP4]], <16 x i32> [[DOTFCA_0_EXTRACT_I]], <16 x i32> [[DOTFCA_1_EXTRACT_I]], <16 x i32> [[DOTFCA_0_EXTRACT17_I]], <16 x i32> [[DOTFCA_1_EXTRACT19_I]], <2 x i32> [[DOTFCA_2_EXTRACT_I]], <2 x i32> [[DOTFCA_3_EXTRACT_I]], <2 x i32> [[DOTFCA_2_EXTRACT21_I]], <2 x i32> [[DOTFCA_3_EXTRACT23_I]], <2 x i32> [[DOTFCA_4_EXTRACT_I]], <2 x i32> [[DOTFCA_5_EXTRACT_I]], <2 x i32> [[DOTFCA_4_EXTRACT25_I]], <2 x i32> [[DOTFCA_5_EXTRACT27_I]], <64 x float> [[ACC1]], <64 x float> [[ACC2]], i32 [[OR25_I_I]])
+// CHECK-NEXT:    ret <64 x float> [[TMP5]]
 //
 v64accfloat test_addmsc_4x16_16x16T(v64mx9 a, int sgn_x, v256mx9 b, int sgn_y,
                                     v64accfloat acc1, v64accfloat acc2) {
@@ -38536,25 +38559,27 @@ v64accfloat test_addmsc_4x16_16x16T(v64mx9 a, int sgn_x, v256mx9 b, int sgn_y,
 // CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z25test_mul_4x16_16x16T_conf6v64mx97v256mx9i(
 // CHECK-SAME: [[STRUCT_V64MX9:%.*]] [[A_COERCE:%.*]], [[STRUCT_V256MX9:%.*]] [[B_COERCE:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 3
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 5
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 6
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 7
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 8
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 9
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 10
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 11
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9:%.*]] [[TMP0]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 5
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT17_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT19_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT21_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT23_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT25_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT27_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 5
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
 // CHECK-NEXT:    [[OR25_I_I:%.*]] = or disjoint i32 [[SHL2_I_I]], 972
-// CHECK-NEXT:    [[TMP15:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.mul.conf(<16 x i32> [[TMP0]], <2 x i32> [[TMP1]], <2 x i32> [[TMP2]], <16 x i32> [[TMP3]], <16 x i32> [[TMP4]], <16 x i32> [[TMP5]], <16 x i32> [[TMP6]], <2 x i32> [[TMP7]], <2 x i32> [[TMP8]], <2 x i32> [[TMP9]], <2 x i32> [[TMP10]], <2 x i32> [[TMP11]], <2 x i32> [[TMP12]], <2 x i32> [[TMP13]], <2 x i32> [[TMP14]], i32 [[OR25_I_I]])
-// CHECK-NEXT:    ret <64 x float> [[TMP15]]
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.mul.conf(<16 x i32> [[TMP2]], <2 x i32> [[TMP3]], <2 x i32> [[TMP4]], <16 x i32> [[DOTFCA_0_EXTRACT_I]], <16 x i32> [[DOTFCA_1_EXTRACT_I]], <16 x i32> [[DOTFCA_0_EXTRACT17_I]], <16 x i32> [[DOTFCA_1_EXTRACT19_I]], <2 x i32> [[DOTFCA_2_EXTRACT_I]], <2 x i32> [[DOTFCA_3_EXTRACT_I]], <2 x i32> [[DOTFCA_2_EXTRACT21_I]], <2 x i32> [[DOTFCA_3_EXTRACT23_I]], <2 x i32> [[DOTFCA_4_EXTRACT_I]], <2 x i32> [[DOTFCA_5_EXTRACT_I]], <2 x i32> [[DOTFCA_4_EXTRACT25_I]], <2 x i32> [[DOTFCA_5_EXTRACT27_I]], i32 [[OR25_I_I]])
+// CHECK-NEXT:    ret <64 x float> [[TMP5]]
 //
 v64accfloat test_mul_4x16_16x16T_conf(v64mx9 a, v256mx9 b, int sub_mul) {
   return mul_4x16_16x16T_conf(a, b, sub_mul);
@@ -38562,25 +38587,27 @@ v64accfloat test_mul_4x16_16x16T_conf(v64mx9 a, v256mx9 b, int sub_mul) {
 // CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z28test_negmul_4x16_16x16T_conf6v64mx97v256mx9i(
 // CHECK-SAME: [[STRUCT_V64MX9:%.*]] [[A_COERCE:%.*]], [[STRUCT_V256MX9:%.*]] [[B_COERCE:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 3
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 5
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 6
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 7
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 8
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 9
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 10
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 11
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9:%.*]] [[TMP0]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 5
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT17_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT19_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT21_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT23_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT25_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT27_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 5
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
 // CHECK-NEXT:    [[OR25_I_I:%.*]] = or disjoint i32 [[SHL2_I_I]], 972
-// CHECK-NEXT:    [[TMP15:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.negmul.conf(<16 x i32> [[TMP0]], <2 x i32> [[TMP1]], <2 x i32> [[TMP2]], <16 x i32> [[TMP3]], <16 x i32> [[TMP4]], <16 x i32> [[TMP5]], <16 x i32> [[TMP6]], <2 x i32> [[TMP7]], <2 x i32> [[TMP8]], <2 x i32> [[TMP9]], <2 x i32> [[TMP10]], <2 x i32> [[TMP11]], <2 x i32> [[TMP12]], <2 x i32> [[TMP13]], <2 x i32> [[TMP14]], i32 [[OR25_I_I]])
-// CHECK-NEXT:    ret <64 x float> [[TMP15]]
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.negmul.conf(<16 x i32> [[TMP2]], <2 x i32> [[TMP3]], <2 x i32> [[TMP4]], <16 x i32> [[DOTFCA_0_EXTRACT_I]], <16 x i32> [[DOTFCA_1_EXTRACT_I]], <16 x i32> [[DOTFCA_0_EXTRACT17_I]], <16 x i32> [[DOTFCA_1_EXTRACT19_I]], <2 x i32> [[DOTFCA_2_EXTRACT_I]], <2 x i32> [[DOTFCA_3_EXTRACT_I]], <2 x i32> [[DOTFCA_2_EXTRACT21_I]], <2 x i32> [[DOTFCA_3_EXTRACT23_I]], <2 x i32> [[DOTFCA_4_EXTRACT_I]], <2 x i32> [[DOTFCA_5_EXTRACT_I]], <2 x i32> [[DOTFCA_4_EXTRACT25_I]], <2 x i32> [[DOTFCA_5_EXTRACT27_I]], i32 [[OR25_I_I]])
+// CHECK-NEXT:    ret <64 x float> [[TMP5]]
 //
 v64accfloat test_negmul_4x16_16x16T_conf(v64mx9 a, v256mx9 b, int sub_mul) {
   return negmul_4x16_16x16T_conf(a, b, sub_mul);
@@ -38588,28 +38615,30 @@ v64accfloat test_negmul_4x16_16x16T_conf(v64mx9 a, v256mx9 b, int sub_mul) {
 // CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z25test_mac_4x16_16x16T_conf6v64mx97v256mx9Dv64_u10__accfloatiii(
 // CHECK-SAME: [[STRUCT_V64MX9:%.*]] [[A_COERCE:%.*]], [[STRUCT_V256MX9:%.*]] [[B_COERCE:%.*]], <64 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 3
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 5
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 6
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 7
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 8
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 9
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 10
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 11
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9:%.*]] [[TMP0]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 5
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT17_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT19_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT21_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT23_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT25_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT27_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 5
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
 // CHECK-NEXT:    [[SHL4_I_I:%.*]] = shl i32 [[SUB_ACC1]], 12
 // CHECK-NEXT:    [[OR3_I_I:%.*]] = or i32 [[ZERO_ACC]], [[SHL2_I_I]]
 // CHECK-NEXT:    [[OR9_I_I:%.*]] = or i32 [[OR3_I_I]], [[SHL4_I_I]]
 // CHECK-NEXT:    [[OR25_I_I:%.*]] = or i32 [[OR9_I_I]], 972
-// CHECK-NEXT:    [[TMP15:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.mac.conf(<16 x i32> [[TMP0]], <2 x i32> [[TMP1]], <2 x i32> [[TMP2]], <16 x i32> [[TMP3]], <16 x i32> [[TMP4]], <16 x i32> [[TMP5]], <16 x i32> [[TMP6]], <2 x i32> [[TMP7]], <2 x i32> [[TMP8]], <2 x i32> [[TMP9]], <2 x i32> [[TMP10]], <2 x i32> [[TMP11]], <2 x i32> [[TMP12]], <2 x i32> [[TMP13]], <2 x i32> [[TMP14]], <64 x float> [[ACC]], i32 [[OR25_I_I]])
-// CHECK-NEXT:    ret <64 x float> [[TMP15]]
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.mac.conf(<16 x i32> [[TMP2]], <2 x i32> [[TMP3]], <2 x i32> [[TMP4]], <16 x i32> [[DOTFCA_0_EXTRACT_I]], <16 x i32> [[DOTFCA_1_EXTRACT_I]], <16 x i32> [[DOTFCA_0_EXTRACT17_I]], <16 x i32> [[DOTFCA_1_EXTRACT19_I]], <2 x i32> [[DOTFCA_2_EXTRACT_I]], <2 x i32> [[DOTFCA_3_EXTRACT_I]], <2 x i32> [[DOTFCA_2_EXTRACT21_I]], <2 x i32> [[DOTFCA_3_EXTRACT23_I]], <2 x i32> [[DOTFCA_4_EXTRACT_I]], <2 x i32> [[DOTFCA_5_EXTRACT_I]], <2 x i32> [[DOTFCA_4_EXTRACT25_I]], <2 x i32> [[DOTFCA_5_EXTRACT27_I]], <64 x float> [[ACC]], i32 [[OR25_I_I]])
+// CHECK-NEXT:    ret <64 x float> [[TMP5]]
 //
 v64accfloat test_mac_4x16_16x16T_conf(v64mx9 a, v256mx9 b, v64accfloat acc,
                                       int zero_acc, int sub_mul, int sub_acc1) {
@@ -38618,28 +38647,30 @@ v64accfloat test_mac_4x16_16x16T_conf(v64mx9 a, v256mx9 b, v64accfloat acc,
 // CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z25test_msc_4x16_16x16T_conf6v64mx97v256mx9Dv64_u10__accfloatiii(
 // CHECK-SAME: [[STRUCT_V64MX9:%.*]] [[A_COERCE:%.*]], [[STRUCT_V256MX9:%.*]] [[B_COERCE:%.*]], <64 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 3
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 5
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 6
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 7
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 8
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 9
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 10
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 11
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9:%.*]] [[TMP0]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 5
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT17_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT19_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT21_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT23_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT25_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT27_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 5
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
 // CHECK-NEXT:    [[SHL4_I_I:%.*]] = shl i32 [[SUB_ACC1]], 12
 // CHECK-NEXT:    [[OR3_I_I:%.*]] = or i32 [[ZERO_ACC]], [[SHL2_I_I]]
 // CHECK-NEXT:    [[OR9_I_I:%.*]] = or i32 [[OR3_I_I]], [[SHL4_I_I]]
 // CHECK-NEXT:    [[OR25_I_I:%.*]] = or i32 [[OR9_I_I]], 972
-// CHECK-NEXT:    [[TMP15:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.msc.conf(<16 x i32> [[TMP0]], <2 x i32> [[TMP1]], <2 x i32> [[TMP2]], <16 x i32> [[TMP3]], <16 x i32> [[TMP4]], <16 x i32> [[TMP5]], <16 x i32> [[TMP6]], <2 x i32> [[TMP7]], <2 x i32> [[TMP8]], <2 x i32> [[TMP9]], <2 x i32> [[TMP10]], <2 x i32> [[TMP11]], <2 x i32> [[TMP12]], <2 x i32> [[TMP13]], <2 x i32> [[TMP14]], <64 x float> [[ACC]], i32 [[OR25_I_I]])
-// CHECK-NEXT:    ret <64 x float> [[TMP15]]
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.msc.conf(<16 x i32> [[TMP2]], <2 x i32> [[TMP3]], <2 x i32> [[TMP4]], <16 x i32> [[DOTFCA_0_EXTRACT_I]], <16 x i32> [[DOTFCA_1_EXTRACT_I]], <16 x i32> [[DOTFCA_0_EXTRACT17_I]], <16 x i32> [[DOTFCA_1_EXTRACT19_I]], <2 x i32> [[DOTFCA_2_EXTRACT_I]], <2 x i32> [[DOTFCA_3_EXTRACT_I]], <2 x i32> [[DOTFCA_2_EXTRACT21_I]], <2 x i32> [[DOTFCA_3_EXTRACT23_I]], <2 x i32> [[DOTFCA_4_EXTRACT_I]], <2 x i32> [[DOTFCA_5_EXTRACT_I]], <2 x i32> [[DOTFCA_4_EXTRACT25_I]], <2 x i32> [[DOTFCA_5_EXTRACT27_I]], <64 x float> [[ACC]], i32 [[OR25_I_I]])
+// CHECK-NEXT:    ret <64 x float> [[TMP5]]
 //
 v64accfloat test_msc_4x16_16x16T_conf(v64mx9 a, v256mx9 b, v64accfloat acc,
                                       int zero_acc, int sub_mul, int sub_acc1) {
@@ -38648,21 +38679,23 @@ v64accfloat test_msc_4x16_16x16T_conf(v64mx9 a, v256mx9 b, v64accfloat acc,
 // CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z28test_addmac_4x16_16x16T_conf6v64mx97v256mx9Dv64_u10__accfloatS1_iiii(
 // CHECK-SAME: [[STRUCT_V64MX9:%.*]] [[A_COERCE:%.*]], [[STRUCT_V256MX9:%.*]] [[B_COERCE:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 3
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 5
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 6
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 7
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 8
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 9
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 10
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 11
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9:%.*]] [[TMP0]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 5
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT17_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT19_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT21_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT23_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT25_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT27_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 5
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
 // CHECK-NEXT:    [[SHL4_I_I:%.*]] = shl i32 [[SUB_ACC1]], 12
 // CHECK-NEXT:    [[SHL6_I_I:%.*]] = shl i32 [[SUB_ACC2]], 13
@@ -38670,8 +38703,8 @@ v64accfloat test_msc_4x16_16x16T_conf(v64mx9 a, v256mx9 b, v64accfloat acc,
 // CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[OR3_I_I]], [[SHL4_I_I]]
 // CHECK-NEXT:    [[OR9_I_I:%.*]] = or i32 [[OR5_I_I]], [[SHL6_I_I]]
 // CHECK-NEXT:    [[OR25_I_I:%.*]] = or i32 [[OR9_I_I]], 972
-// CHECK-NEXT:    [[TMP15:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.addmac.conf(<16 x i32> [[TMP0]], <2 x i32> [[TMP1]], <2 x i32> [[TMP2]], <16 x i32> [[TMP3]], <16 x i32> [[TMP4]], <16 x i32> [[TMP5]], <16 x i32> [[TMP6]], <2 x i32> [[TMP7]], <2 x i32> [[TMP8]], <2 x i32> [[TMP9]], <2 x i32> [[TMP10]], <2 x i32> [[TMP11]], <2 x i32> [[TMP12]], <2 x i32> [[TMP13]], <2 x i32> [[TMP14]], <64 x float> [[ACC1]], <64 x float> [[ACC2]], i32 [[OR25_I_I]])
-// CHECK-NEXT:    ret <64 x float> [[TMP15]]
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.addmac.conf(<16 x i32> [[TMP2]], <2 x i32> [[TMP3]], <2 x i32> [[TMP4]], <16 x i32> [[DOTFCA_0_EXTRACT_I]], <16 x i32> [[DOTFCA_1_EXTRACT_I]], <16 x i32> [[DOTFCA_0_EXTRACT17_I]], <16 x i32> [[DOTFCA_1_EXTRACT19_I]], <2 x i32> [[DOTFCA_2_EXTRACT_I]], <2 x i32> [[DOTFCA_3_EXTRACT_I]], <2 x i32> [[DOTFCA_2_EXTRACT21_I]], <2 x i32> [[DOTFCA_3_EXTRACT23_I]], <2 x i32> [[DOTFCA_4_EXTRACT_I]], <2 x i32> [[DOTFCA_5_EXTRACT_I]], <2 x i32> [[DOTFCA_4_EXTRACT25_I]], <2 x i32> [[DOTFCA_5_EXTRACT27_I]], <64 x float> [[ACC1]], <64 x float> [[ACC2]], i32 [[OR25_I_I]])
+// CHECK-NEXT:    ret <64 x float> [[TMP5]]
 //
 v64accfloat test_addmac_4x16_16x16T_conf(v64mx9 a, v256mx9 b, v64accfloat acc1,
                                          v64accfloat acc2, int zero_acc1,
@@ -38683,21 +38716,23 @@ v64accfloat test_addmac_4x16_16x16T_conf(v64mx9 a, v256mx9 b, v64accfloat acc1,
 // CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z28test_addmsc_4x16_16x16T_conf6v64mx97v256mx9Dv64_u10__accfloatS1_iiii(
 // CHECK-SAME: [[STRUCT_V64MX9:%.*]] [[A_COERCE:%.*]], [[STRUCT_V256MX9:%.*]] [[B_COERCE:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 3
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 5
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 6
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 7
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 8
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 9
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 10
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 11
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9:%.*]] [[TMP0]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 5
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT17_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT19_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT21_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT23_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT25_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT27_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 5
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
 // CHECK-NEXT:    [[SHL4_I_I:%.*]] = shl i32 [[SUB_ACC1]], 12
 // CHECK-NEXT:    [[SHL6_I_I:%.*]] = shl i32 [[SUB_ACC2]], 13
@@ -38705,8 +38740,8 @@ v64accfloat test_addmac_4x16_16x16T_conf(v64mx9 a, v256mx9 b, v64accfloat acc1,
 // CHECK-NEXT:    [[OR5_I_I:%.*]] = or i32 [[OR3_I_I]], [[SHL4_I_I]]
 // CHECK-NEXT:    [[OR9_I_I:%.*]] = or i32 [[OR5_I_I]], [[SHL6_I_I]]
 // CHECK-NEXT:    [[OR25_I_I:%.*]] = or i32 [[OR9_I_I]], 972
-// CHECK-NEXT:    [[TMP15:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.addmsc.conf(<16 x i32> [[TMP0]], <2 x i32> [[TMP1]], <2 x i32> [[TMP2]], <16 x i32> [[TMP3]], <16 x i32> [[TMP4]], <16 x i32> [[TMP5]], <16 x i32> [[TMP6]], <2 x i32> [[TMP7]], <2 x i32> [[TMP8]], <2 x i32> [[TMP9]], <2 x i32> [[TMP10]], <2 x i32> [[TMP11]], <2 x i32> [[TMP12]], <2 x i32> [[TMP13]], <2 x i32> [[TMP14]], <64 x float> [[ACC1]], <64 x float> [[ACC2]], i32 [[OR25_I_I]])
-// CHECK-NEXT:    ret <64 x float> [[TMP15]]
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.addmsc.conf(<16 x i32> [[TMP2]], <2 x i32> [[TMP3]], <2 x i32> [[TMP4]], <16 x i32> [[DOTFCA_0_EXTRACT_I]], <16 x i32> [[DOTFCA_1_EXTRACT_I]], <16 x i32> [[DOTFCA_0_EXTRACT17_I]], <16 x i32> [[DOTFCA_1_EXTRACT19_I]], <2 x i32> [[DOTFCA_2_EXTRACT_I]], <2 x i32> [[DOTFCA_3_EXTRACT_I]], <2 x i32> [[DOTFCA_2_EXTRACT21_I]], <2 x i32> [[DOTFCA_3_EXTRACT23_I]], <2 x i32> [[DOTFCA_4_EXTRACT_I]], <2 x i32> [[DOTFCA_5_EXTRACT_I]], <2 x i32> [[DOTFCA_4_EXTRACT25_I]], <2 x i32> [[DOTFCA_5_EXTRACT27_I]], <64 x float> [[ACC1]], <64 x float> [[ACC2]], i32 [[OR25_I_I]])
+// CHECK-NEXT:    ret <64 x float> [[TMP5]]
 //
 v64accfloat test_addmsc_4x16_16x16T_conf(v64mx9 a, v256mx9 b, v64accfloat acc1,
                                          v64accfloat acc2, int zero_acc1,
@@ -38718,29 +38753,31 @@ v64accfloat test_addmsc_4x16_16x16T_conf(v64mx9 a, v256mx9 b, v64accfloat acc1,
 // CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z25test_mul_4x16_16x16T_conf6v64mx9i7v256mx9ii(
 // CHECK-SAME: [[STRUCT_V64MX9:%.*]] [[A_COERCE:%.*]], i32 noundef [[SGN_X:%.*]], [[STRUCT_V256MX9:%.*]] [[B_COERCE:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 3
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 5
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 6
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 7
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 8
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 9
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 10
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 11
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9:%.*]] [[TMP0]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 5
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT17_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT19_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT21_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT23_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT25_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT27_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 5
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL21_I_I:%.*]] = shl i32 [[SGN_Y]], 8
 // CHECK-NEXT:    [[OR12_I_I:%.*]] = or i32 [[SHL20_I_I]], [[SHL21_I_I]]
 // CHECK-NEXT:    [[OR15_I_I:%.*]] = or i32 [[OR12_I_I]], [[SHL2_I_I]]
 // CHECK-NEXT:    [[OR25_I_I:%.*]] = or disjoint i32 [[OR15_I_I]], 204
-// CHECK-NEXT:    [[TMP15:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.mul.conf(<16 x i32> [[TMP0]], <2 x i32> [[TMP1]], <2 x i32> [[TMP2]], <16 x i32> [[TMP3]], <16 x i32> [[TMP4]], <16 x i32> [[TMP5]], <16 x i32> [[TMP6]], <2 x i32> [[TMP7]], <2 x i32> [[TMP8]], <2 x i32> [[TMP9]], <2 x i32> [[TMP10]], <2 x i32> [[TMP11]], <2 x i32> [[TMP12]], <2 x i32> [[TMP13]], <2 x i32> [[TMP14]], i32 [[OR25_I_I]])
-// CHECK-NEXT:    ret <64 x float> [[TMP15]]
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.mul.conf(<16 x i32> [[TMP2]], <2 x i32> [[TMP3]], <2 x i32> [[TMP4]], <16 x i32> [[DOTFCA_0_EXTRACT_I]], <16 x i32> [[DOTFCA_1_EXTRACT_I]], <16 x i32> [[DOTFCA_0_EXTRACT17_I]], <16 x i32> [[DOTFCA_1_EXTRACT19_I]], <2 x i32> [[DOTFCA_2_EXTRACT_I]], <2 x i32> [[DOTFCA_3_EXTRACT_I]], <2 x i32> [[DOTFCA_2_EXTRACT21_I]], <2 x i32> [[DOTFCA_3_EXTRACT23_I]], <2 x i32> [[DOTFCA_4_EXTRACT_I]], <2 x i32> [[DOTFCA_5_EXTRACT_I]], <2 x i32> [[DOTFCA_4_EXTRACT25_I]], <2 x i32> [[DOTFCA_5_EXTRACT27_I]], i32 [[OR25_I_I]])
+// CHECK-NEXT:    ret <64 x float> [[TMP5]]
 //
 v64accfloat test_mul_4x16_16x16T_conf(v64mx9 a, int sgn_x, v256mx9 b, int sgn_y,
                                       int sub_mul) {
@@ -38749,29 +38786,31 @@ v64accfloat test_mul_4x16_16x16T_conf(v64mx9 a, int sgn_x, v256mx9 b, int sgn_y,
 // CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z28test_negmul_4x16_16x16T_conf6v64mx9i7v256mx9ii(
 // CHECK-SAME: [[STRUCT_V64MX9:%.*]] [[A_COERCE:%.*]], i32 noundef [[SGN_X:%.*]], [[STRUCT_V256MX9:%.*]] [[B_COERCE:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 3
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 5
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 6
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 7
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 8
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 9
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 10
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 11
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9:%.*]] [[TMP0]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 5
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT17_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT19_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT21_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT23_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT25_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT27_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 5
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
 // CHECK-NEXT:    [[SHL21_I_I:%.*]] = shl i32 [[SGN_Y]], 8
 // CHECK-NEXT:    [[OR12_I_I:%.*]] = or i32 [[SHL20_I_I]], [[SHL21_I_I]]
 // CHECK-NEXT:    [[OR15_I_I:%.*]] = or i32 [[OR12_I_I]], [[SHL2_I_I]]
 // CHECK-NEXT:    [[OR25_I_I:%.*]] = or disjoint i32 [[OR15_I_I]], 204
-// CHECK-NEXT:    [[TMP15:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.negmul.conf(<16 x i32> [[TMP0]], <2 x i32> [[TMP1]], <2 x i32> [[TMP2]], <16 x i32> [[TMP3]], <16 x i32> [[TMP4]], <16 x i32> [[TMP5]], <16 x i32> [[TMP6]], <2 x i32> [[TMP7]], <2 x i32> [[TMP8]], <2 x i32> [[TMP9]], <2 x i32> [[TMP10]], <2 x i32> [[TMP11]], <2 x i32> [[TMP12]], <2 x i32> [[TMP13]], <2 x i32> [[TMP14]], i32 [[OR25_I_I]])
-// CHECK-NEXT:    ret <64 x float> [[TMP15]]
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.negmul.conf(<16 x i32> [[TMP2]], <2 x i32> [[TMP3]], <2 x i32> [[TMP4]], <16 x i32> [[DOTFCA_0_EXTRACT_I]], <16 x i32> [[DOTFCA_1_EXTRACT_I]], <16 x i32> [[DOTFCA_0_EXTRACT17_I]], <16 x i32> [[DOTFCA_1_EXTRACT19_I]], <2 x i32> [[DOTFCA_2_EXTRACT_I]], <2 x i32> [[DOTFCA_3_EXTRACT_I]], <2 x i32> [[DOTFCA_2_EXTRACT21_I]], <2 x i32> [[DOTFCA_3_EXTRACT23_I]], <2 x i32> [[DOTFCA_4_EXTRACT_I]], <2 x i32> [[DOTFCA_5_EXTRACT_I]], <2 x i32> [[DOTFCA_4_EXTRACT25_I]], <2 x i32> [[DOTFCA_5_EXTRACT27_I]], i32 [[OR25_I_I]])
+// CHECK-NEXT:    ret <64 x float> [[TMP5]]
 //
 v64accfloat test_negmul_4x16_16x16T_conf(v64mx9 a, int sgn_x, v256mx9 b,
                                          int sgn_y, int sub_mul) {
@@ -38780,21 +38819,23 @@ v64accfloat test_negmul_4x16_16x16T_conf(v64mx9 a, int sgn_x, v256mx9 b,
 // CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z25test_mac_4x16_16x16T_conf6v64mx9i7v256mx9iDv64_u10__accfloatiii(
 // CHECK-SAME: [[STRUCT_V64MX9:%.*]] [[A_COERCE:%.*]], i32 noundef [[SGN_X:%.*]], [[STRUCT_V256MX9:%.*]] [[B_COERCE:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 3
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 5
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 6
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 7
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 8
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 9
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 10
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 11
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9:%.*]] [[TMP0]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 5
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT17_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT19_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT21_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT23_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT25_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT27_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 5
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
 // CHECK-NEXT:    [[SHL4_I_I:%.*]] = shl i32 [[SUB_ACC1]], 12
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -38804,8 +38845,8 @@ v64accfloat test_negmul_4x16_16x16T_conf(v64mx9 a, int sgn_x, v256mx9 b,
 // CHECK-NEXT:    [[OR12_I_I:%.*]] = or i32 [[OR9_I_I]], [[SHL2_I_I]]
 // CHECK-NEXT:    [[OR15_I_I:%.*]] = or i32 [[OR12_I_I]], [[SHL4_I_I]]
 // CHECK-NEXT:    [[OR25_I_I:%.*]] = or i32 [[OR15_I_I]], 204
-// CHECK-NEXT:    [[TMP15:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.mac.conf(<16 x i32> [[TMP0]], <2 x i32> [[TMP1]], <2 x i32> [[TMP2]], <16 x i32> [[TMP3]], <16 x i32> [[TMP4]], <16 x i32> [[TMP5]], <16 x i32> [[TMP6]], <2 x i32> [[TMP7]], <2 x i32> [[TMP8]], <2 x i32> [[TMP9]], <2 x i32> [[TMP10]], <2 x i32> [[TMP11]], <2 x i32> [[TMP12]], <2 x i32> [[TMP13]], <2 x i32> [[TMP14]], <64 x float> [[ACC]], i32 [[OR25_I_I]])
-// CHECK-NEXT:    ret <64 x float> [[TMP15]]
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.mac.conf(<16 x i32> [[TMP2]], <2 x i32> [[TMP3]], <2 x i32> [[TMP4]], <16 x i32> [[DOTFCA_0_EXTRACT_I]], <16 x i32> [[DOTFCA_1_EXTRACT_I]], <16 x i32> [[DOTFCA_0_EXTRACT17_I]], <16 x i32> [[DOTFCA_1_EXTRACT19_I]], <2 x i32> [[DOTFCA_2_EXTRACT_I]], <2 x i32> [[DOTFCA_3_EXTRACT_I]], <2 x i32> [[DOTFCA_2_EXTRACT21_I]], <2 x i32> [[DOTFCA_3_EXTRACT23_I]], <2 x i32> [[DOTFCA_4_EXTRACT_I]], <2 x i32> [[DOTFCA_5_EXTRACT_I]], <2 x i32> [[DOTFCA_4_EXTRACT25_I]], <2 x i32> [[DOTFCA_5_EXTRACT27_I]], <64 x float> [[ACC]], i32 [[OR25_I_I]])
+// CHECK-NEXT:    ret <64 x float> [[TMP5]]
 //
 v64accfloat test_mac_4x16_16x16T_conf(v64mx9 a, int sgn_x, v256mx9 b, int sgn_y,
                                       v64accfloat acc, int zero_acc,
@@ -38816,21 +38857,23 @@ v64accfloat test_mac_4x16_16x16T_conf(v64mx9 a, int sgn_x, v256mx9 b, int sgn_y,
 // CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z25test_msc_4x16_16x16T_conf6v64mx9i7v256mx9iDv64_u10__accfloatiii(
 // CHECK-SAME: [[STRUCT_V64MX9:%.*]] [[A_COERCE:%.*]], i32 noundef [[SGN_X:%.*]], [[STRUCT_V256MX9:%.*]] [[B_COERCE:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 3
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 5
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 6
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 7
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 8
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 9
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 10
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 11
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9:%.*]] [[TMP0]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 5
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT17_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT19_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT21_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT23_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT25_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT27_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 5
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
 // CHECK-NEXT:    [[SHL4_I_I:%.*]] = shl i32 [[SUB_ACC1]], 12
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -38840,8 +38883,8 @@ v64accfloat test_mac_4x16_16x16T_conf(v64mx9 a, int sgn_x, v256mx9 b, int sgn_y,
 // CHECK-NEXT:    [[OR12_I_I:%.*]] = or i32 [[OR9_I_I]], [[SHL2_I_I]]
 // CHECK-NEXT:    [[OR15_I_I:%.*]] = or i32 [[OR12_I_I]], [[SHL4_I_I]]
 // CHECK-NEXT:    [[OR25_I_I:%.*]] = or i32 [[OR15_I_I]], 204
-// CHECK-NEXT:    [[TMP15:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.msc.conf(<16 x i32> [[TMP0]], <2 x i32> [[TMP1]], <2 x i32> [[TMP2]], <16 x i32> [[TMP3]], <16 x i32> [[TMP4]], <16 x i32> [[TMP5]], <16 x i32> [[TMP6]], <2 x i32> [[TMP7]], <2 x i32> [[TMP8]], <2 x i32> [[TMP9]], <2 x i32> [[TMP10]], <2 x i32> [[TMP11]], <2 x i32> [[TMP12]], <2 x i32> [[TMP13]], <2 x i32> [[TMP14]], <64 x float> [[ACC]], i32 [[OR25_I_I]])
-// CHECK-NEXT:    ret <64 x float> [[TMP15]]
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.msc.conf(<16 x i32> [[TMP2]], <2 x i32> [[TMP3]], <2 x i32> [[TMP4]], <16 x i32> [[DOTFCA_0_EXTRACT_I]], <16 x i32> [[DOTFCA_1_EXTRACT_I]], <16 x i32> [[DOTFCA_0_EXTRACT17_I]], <16 x i32> [[DOTFCA_1_EXTRACT19_I]], <2 x i32> [[DOTFCA_2_EXTRACT_I]], <2 x i32> [[DOTFCA_3_EXTRACT_I]], <2 x i32> [[DOTFCA_2_EXTRACT21_I]], <2 x i32> [[DOTFCA_3_EXTRACT23_I]], <2 x i32> [[DOTFCA_4_EXTRACT_I]], <2 x i32> [[DOTFCA_5_EXTRACT_I]], <2 x i32> [[DOTFCA_4_EXTRACT25_I]], <2 x i32> [[DOTFCA_5_EXTRACT27_I]], <64 x float> [[ACC]], i32 [[OR25_I_I]])
+// CHECK-NEXT:    ret <64 x float> [[TMP5]]
 //
 v64accfloat test_msc_4x16_16x16T_conf(v64mx9 a, int sgn_x, v256mx9 b, int sgn_y,
                                       v64accfloat acc, int zero_acc,
@@ -38852,21 +38895,23 @@ v64accfloat test_msc_4x16_16x16T_conf(v64mx9 a, int sgn_x, v256mx9 b, int sgn_y,
 // CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z28test_addmac_4x16_16x16T_conf6v64mx9i7v256mx9iDv64_u10__accfloatS1_iiii(
 // CHECK-SAME: [[STRUCT_V64MX9:%.*]] [[A_COERCE:%.*]], i32 noundef [[SGN_X:%.*]], [[STRUCT_V256MX9:%.*]] [[B_COERCE:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 3
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 5
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 6
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 7
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 8
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 9
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 10
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 11
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9:%.*]] [[TMP0]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 5
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT17_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT19_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT21_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT23_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT25_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT27_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 5
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
 // CHECK-NEXT:    [[SHL4_I_I:%.*]] = shl i32 [[SUB_ACC1]], 12
 // CHECK-NEXT:    [[SHL6_I_I:%.*]] = shl i32 [[SUB_ACC2]], 13
@@ -38878,8 +38923,8 @@ v64accfloat test_msc_4x16_16x16T_conf(v64mx9 a, int sgn_x, v256mx9 b, int sgn_y,
 // CHECK-NEXT:    [[OR12_I_I:%.*]] = or i32 [[OR9_I_I]], [[SHL4_I_I]]
 // CHECK-NEXT:    [[OR15_I_I:%.*]] = or i32 [[OR12_I_I]], [[SHL6_I_I]]
 // CHECK-NEXT:    [[OR25_I_I:%.*]] = or i32 [[OR15_I_I]], 204
-// CHECK-NEXT:    [[TMP15:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.addmac.conf(<16 x i32> [[TMP0]], <2 x i32> [[TMP1]], <2 x i32> [[TMP2]], <16 x i32> [[TMP3]], <16 x i32> [[TMP4]], <16 x i32> [[TMP5]], <16 x i32> [[TMP6]], <2 x i32> [[TMP7]], <2 x i32> [[TMP8]], <2 x i32> [[TMP9]], <2 x i32> [[TMP10]], <2 x i32> [[TMP11]], <2 x i32> [[TMP12]], <2 x i32> [[TMP13]], <2 x i32> [[TMP14]], <64 x float> [[ACC1]], <64 x float> [[ACC2]], i32 [[OR25_I_I]])
-// CHECK-NEXT:    ret <64 x float> [[TMP15]]
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.addmac.conf(<16 x i32> [[TMP2]], <2 x i32> [[TMP3]], <2 x i32> [[TMP4]], <16 x i32> [[DOTFCA_0_EXTRACT_I]], <16 x i32> [[DOTFCA_1_EXTRACT_I]], <16 x i32> [[DOTFCA_0_EXTRACT17_I]], <16 x i32> [[DOTFCA_1_EXTRACT19_I]], <2 x i32> [[DOTFCA_2_EXTRACT_I]], <2 x i32> [[DOTFCA_3_EXTRACT_I]], <2 x i32> [[DOTFCA_2_EXTRACT21_I]], <2 x i32> [[DOTFCA_3_EXTRACT23_I]], <2 x i32> [[DOTFCA_4_EXTRACT_I]], <2 x i32> [[DOTFCA_5_EXTRACT_I]], <2 x i32> [[DOTFCA_4_EXTRACT25_I]], <2 x i32> [[DOTFCA_5_EXTRACT27_I]], <64 x float> [[ACC1]], <64 x float> [[ACC2]], i32 [[OR25_I_I]])
+// CHECK-NEXT:    ret <64 x float> [[TMP5]]
 //
 v64accfloat test_addmac_4x16_16x16T_conf(v64mx9 a, int sgn_x, v256mx9 b,
                                          int sgn_y, v64accfloat acc1,
@@ -38892,21 +38937,23 @@ v64accfloat test_addmac_4x16_16x16T_conf(v64mx9 a, int sgn_x, v256mx9 b,
 // CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z28test_addmsc_4x16_16x16T_conf6v64mx9i7v256mx9iDv64_u10__accfloatS1_iiii(
 // CHECK-SAME: [[STRUCT_V64MX9:%.*]] [[A_COERCE:%.*]], i32 noundef [[SGN_X:%.*]], [[STRUCT_V256MX9:%.*]] [[B_COERCE:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 3
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 5
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 6
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 7
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 8
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 9
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 10
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 11
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 0
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX9]] [[B_COERCE]], 1
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V64MX9]] [[A_COERCE]], 2
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9:%.*]] [[TMP0]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP0]], 5
+// CHECK-NEXT:    [[DOTFCA_0_EXTRACT17_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_EXTRACT19_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_2_EXTRACT21_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 2
+// CHECK-NEXT:    [[DOTFCA_3_EXTRACT23_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 3
+// CHECK-NEXT:    [[DOTFCA_4_EXTRACT25_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 4
+// CHECK-NEXT:    [[DOTFCA_5_EXTRACT27_I:%.*]] = extractvalue [[STRUCT_V128MX9]] [[TMP1]], 5
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
 // CHECK-NEXT:    [[SHL4_I_I:%.*]] = shl i32 [[SUB_ACC1]], 12
 // CHECK-NEXT:    [[SHL6_I_I:%.*]] = shl i32 [[SUB_ACC2]], 13
@@ -38918,8 +38965,8 @@ v64accfloat test_addmac_4x16_16x16T_conf(v64mx9 a, int sgn_x, v256mx9 b,
 // CHECK-NEXT:    [[OR12_I_I:%.*]] = or i32 [[OR9_I_I]], [[SHL4_I_I]]
 // CHECK-NEXT:    [[OR15_I_I:%.*]] = or i32 [[OR12_I_I]], [[SHL6_I_I]]
 // CHECK-NEXT:    [[OR25_I_I:%.*]] = or i32 [[OR15_I_I]], 204
-// CHECK-NEXT:    [[TMP15:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.addmsc.conf(<16 x i32> [[TMP0]], <2 x i32> [[TMP1]], <2 x i32> [[TMP2]], <16 x i32> [[TMP3]], <16 x i32> [[TMP4]], <16 x i32> [[TMP5]], <16 x i32> [[TMP6]], <2 x i32> [[TMP7]], <2 x i32> [[TMP8]], <2 x i32> [[TMP9]], <2 x i32> [[TMP10]], <2 x i32> [[TMP11]], <2 x i32> [[TMP12]], <2 x i32> [[TMP13]], <2 x i32> [[TMP14]], <64 x float> [[ACC1]], <64 x float> [[ACC2]], i32 [[OR25_I_I]])
-// CHECK-NEXT:    ret <64 x float> [[TMP15]]
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.BFP640.BFP2560.ACC2048.bf.addmsc.conf(<16 x i32> [[TMP2]], <2 x i32> [[TMP3]], <2 x i32> [[TMP4]], <16 x i32> [[DOTFCA_0_EXTRACT_I]], <16 x i32> [[DOTFCA_1_EXTRACT_I]], <16 x i32> [[DOTFCA_0_EXTRACT17_I]], <16 x i32> [[DOTFCA_1_EXTRACT19_I]], <2 x i32> [[DOTFCA_2_EXTRACT_I]], <2 x i32> [[DOTFCA_3_EXTRACT_I]], <2 x i32> [[DOTFCA_2_EXTRACT21_I]], <2 x i32> [[DOTFCA_3_EXTRACT23_I]], <2 x i32> [[DOTFCA_4_EXTRACT_I]], <2 x i32> [[DOTFCA_5_EXTRACT_I]], <2 x i32> [[DOTFCA_4_EXTRACT25_I]], <2 x i32> [[DOTFCA_5_EXTRACT27_I]], <64 x float> [[ACC1]], <64 x float> [[ACC2]], i32 [[OR25_I_I]])
+// CHECK-NEXT:    ret <64 x float> [[TMP5]]
 //
 v64accfloat test_addmsc_4x16_16x16T_conf(v64mx9 a, int sgn_x, v256mx9 b,
                                          int sgn_y, v64accfloat acc1,
