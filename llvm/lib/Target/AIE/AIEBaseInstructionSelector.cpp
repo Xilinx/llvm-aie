@@ -339,6 +339,12 @@ AIEBaseInstructionSelector::setCtrlRegister(MachineIRBuilder &MIB,
   return MIB.buildInstr(Opcode, {CRReg}, {}).addImm(Val);
 }
 
+MachineInstrBuilder AIEBaseInstructionSelector::setStatusRegister(
+    MachineIRBuilder &MIB, Register StatusReg, unsigned Val) {
+  auto Opcode = TII.getSetStatusRegisterOpcode();
+  return MIB.buildInstr(Opcode, {StatusReg}, {}).addImm(Val);
+}
+
 void AIEBaseInstructionSelector::addSplitMemOperands(
     MachineInstr &I, MachineInstrBuilder &Higher, MachineInstrBuilder &Lower,
     unsigned Offset, unsigned SplitFactor) {
@@ -829,6 +835,149 @@ bool AIEBaseInstructionSelector::selectVCONV(MachineInstr &I,
   return selectImpl(I, *CoverageInfo);
 }
 
+bool AIEBaseInstructionSelector::selectG_AIE_LOAD_UNPACK(
+    MachineInstr &UNPACKI, MachineRegisterInfo &MRI) {
+  Register LoadResult = (std::next(UNPACKI.uses().begin()))->getReg();
+  MachineInstr *LoadOp = getDefIgnoringCopiesAndBitcasts(LoadResult, MRI);
+  if (!LoadOp)
+    return false;
+
+  // Should we build the instruction at load's position?
+  bool ShouldAdvanceOp = false;
+
+  // Do not try to combine if one of the load's defs is used by another
+  // instruction between the load and the VUNPACK or if there is a store
+  // between the load and the VUNPACK.
+  if (!canDelayMemOp(*LoadOp, UNPACKI, MRI)) {
+    // If we cannot delay the load, we can try to advance the combined
+    // instruction to the load's position.
+    if (canAdvanceOp(*LoadOp, UNPACKI, MRI))
+      ShouldAdvanceOp = true;
+    else
+      return false;
+  }
+
+  if (!canCombineUNPACKLoad(*LoadOp, UNPACKI, MRI))
+    return false;
+
+  std::optional<AddressingModeInfo> AddrModeInfo =
+      getOrDefineAddressingRegister(*LoadOp, MRI);
+  if (!AddrModeInfo)
+    return false;
+
+  Register DstReg = UNPACKI.getOperand(0).getReg();
+  // In this case of G_INTRINSIC operand 1 is target intrinsic
+  // In this case the operand 2 is the source register which is the loaded value
+  Register SignReg = UNPACKI.getOperand(3).getReg();
+
+  auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI);
+  bool ConstantSign = SignVal.has_value();
+  std::optional<LoadStoreOpcodes> LSO = getCombinedOpcodeUNPACKLoad(
+      *LoadOp, UNPACKI, AddrModeInfo->ImmediateOffset,
+      ConstantSign ? SignVal.value().Value == 0x1 : false);
+
+  assert(LSO && "Unexpected VLDB.UNPACK combine failure");
+
+  if (ShouldAdvanceOp)
+    MIB.setInstr(*LoadOp);
+  else
+    MIB.setInstr(UNPACKI);
+
+  setUnpackSizeRegister(MIB, cast<GIntrinsic>(UNPACKI).getIntrinsicID());
+
+  auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
+
+  NewInstr.addDef(DstReg);
+
+  for (auto *Def = std::next(LoadOp->defs().begin());
+       Def != LoadOp->defs().end(); ++Def) {
+    NewInstr.addDef(Def->getReg());
+  }
+
+  addAddressingMode(NewInstr, *AddrModeInfo, LSO->FitsImmediateRange, false,
+                    MRI);
+
+  NewInstr.cloneMemRefs(*LoadOp);
+
+  if (!ConstantSign)
+    setUnsetCtrlRegister(MIB, *NewInstr, MRI, TRI.getUnpackSignCtrlReg(),
+                         SignReg);
+
+  UNPACKI.eraseFromParent();
+  makeDeadMI(*LoadOp, MRI);
+
+  return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
+}
+
+bool AIEBaseInstructionSelector::selectG_AIE_STORE_PACK(
+    MachineInstr &StoreI, MachineRegisterInfo &MRI) {
+
+  Register PackResult = (StoreI.uses().begin())->getReg();
+  MachineInstr *PackOp = getDefIgnoringCopiesAndBitcasts(PackResult, MRI);
+
+  if (!canCombinePACK(StoreI, *PackOp, MRI))
+    return false;
+
+  std::optional<AddressingModeInfo> AddrModeInfo =
+      getOrDefineAddressingRegister(StoreI, MRI);
+  if (!AddrModeInfo)
+    return false;
+
+  // Note: Operand 1 is the ID of the intrinsic
+  Register SrcReg = PackOp->getOperand(2).getReg();
+  Register SignReg = PackOp->getOperand(3).getReg();
+
+  unsigned MemOpLoadStoreSize = getLoadStoreSize(StoreI);
+  TypeSize SrcRegSize = MRI.getType(SrcReg).getSizeInBits();
+  assert(((MemOpLoadStoreSize == 256 && SrcRegSize == 512) ||
+          (MemOpLoadStoreSize == 512 && SrcRegSize == 1024)) &&
+         "Unexpected VST.PACK size");
+
+  auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI);
+  bool ConstantSign = SignVal ? true : false;
+  // SignVal = 1 for signed and 0 for dynamically signed
+  std::optional<LoadStoreOpcodes> LSO = getCombinedOpcodePACK(
+      StoreI, *PackOp, AddrModeInfo->ImmediateOffset,
+      ConstantSign ? SignVal.value().Value == 0x1 : false);
+
+  assert(LSO && "Unexpected VST.PACK combine failure");
+
+  // Note: the output size (I8 or I4) is not encoded as part of the instruction,
+  // but it is read from the crPackSize register.
+  auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
+
+  for (auto Def : StoreI.defs())
+    NewInstr.addDef(Def.getReg());
+
+  NewInstr.addUse(SrcReg);
+
+  addAddressingMode(NewInstr, *AddrModeInfo, LSO->FitsImmediateRange, false,
+                    MRI);
+
+  NewInstr.cloneMemRefs(StoreI);
+
+  // Set the crPackSize before NewInstr
+  // Selects the size of the Pack instructions
+  // 0 – Destination is 4 bits
+  // 1 – Destination is 8 bits
+  Register PackSizeReg = TRI.getPackSizeCtrlReg();
+  if (PackSizeReg.isValid()) {
+    const bool Is8Bit =
+        isPackI8Intrinsic(cast<GIntrinsic>(PackOp)->getIntrinsicID());
+    auto Opcode = TII.getMvSclMultiSlotPseudoOpcode();
+    MIB.setInstr(*NewInstr);
+    MIB.buildInstr(Opcode, {PackSizeReg}, {}).addImm((unsigned)Is8Bit);
+  }
+
+  Register PackSignReg = TRI.getPackSignCtrlReg();
+  if (!ConstantSign && PackSignReg.isValid())
+    setUnsetCtrlRegister(MIB, *NewInstr, MRI, PackSignReg, SignReg);
+
+  StoreI.eraseFromParent();
+  makeDeadMI(*PackOp, MRI);
+  return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
+}
+
 std::optional<AddressingModeInfo>
 AIEBaseInstructionSelector::getOrDefineAddressingRegister(
     MachineInstr &MemI, MachineRegisterInfo &MRI) {
@@ -1077,6 +1226,38 @@ bool AIEBaseInstructionSelector::selectExtractI128(MachineInstr &I,
   return true;
 }
 
+// Build Instruction to set control register
+bool AIEBaseInstructionSelector::selectSetControlRegister(
+    MachineInstr &I, MachineRegisterInfo &MRI) {
+
+  const Register IdxReg = I.getOperand(1).getReg();
+  const Register SrcReg = I.getOperand(2).getReg();
+
+  // Check if the argument is constant for register map index.
+  const auto Idx = getIConstantVRegValWithLookThroughOrFail(
+      IdxReg, MRI, "Expected const value for control register map index.");
+
+  const Register CtrlReg = TRI.getControlRegister(Idx.Value.getZExtValue());
+
+  // Handle const input val for control regs.
+  if (const auto Src = getIConstantVRegValWithLookThrough(SrcReg, MRI)) {
+    const unsigned SrcConstVal =
+        TRI.matchControlRegisterBitwidth(CtrlReg, Src->Value.getZExtValue());
+
+    MachineInstrBuilder MI = setCtrlRegister(MIB, CtrlReg, SrcConstVal);
+    I.eraseFromParent();
+    return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+  }
+
+  auto CopyInstr =
+      MIB.buildInstr(TargetOpcode::COPY, {CtrlReg}, {}).addReg(SrcReg);
+  if (!selectCopy(*CopyInstr, MRI))
+    return false;
+
+  I.eraseFromParent();
+  return true;
+}
+
 bool AIEBaseInstructionSelector::selectG_AIE_UNPAD_VECTOR(
     MachineInstr &I, Register DstReg, Register SrcReg, MachineRegisterInfo &MRI,
     MachineFunction &MF) {
@@ -1133,6 +1314,33 @@ bool AIEBaseInstructionSelector::selectSetI128(MachineInstr &I,
   return true;
 }
 
+// Build Instruction to get control register
+bool AIEBaseInstructionSelector::selectGetControlRegister(
+    MachineInstr &I, MachineRegisterInfo &MRI) {
+
+  const Register DstReg = I.getOperand(0).getReg();
+  // In this case of G_INTRINSIC operand 1 is target intrinsic
+  const Register IdxReg = I.getOperand(2).getReg();
+
+  // Check if the argument is constant for register map index.
+  const auto Idx = getIConstantVRegValWithLookThroughOrFail(
+      IdxReg, MRI, "Expected const value for control register map index.");
+
+  const Register CtrlReg = TRI.getControlRegister(Idx.Value.getZExtValue());
+  const MachineFunction &MF = *I.getParent()->getParent();
+
+  if (!RBI.constrainGenericRegister(DstReg, *TRI.getGPRRegClass(MF), MRI))
+    return false;
+
+  auto CopyInstr =
+      MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {}).addReg(CtrlReg);
+  if (!selectCopy(*CopyInstr, MRI))
+    return false;
+
+  I.eraseFromParent();
+  return true;
+}
+
 bool AIEBaseInstructionSelector::selectG_AIE_PAD_VECTOR_UNDEF(
     MachineInstr &I, MachineOperand &DstReg, MachineOperand &SrcReg,
     MachineRegisterInfo &MRI, MachineFunction &MF) {
@@ -1152,6 +1360,269 @@ bool AIEBaseInstructionSelector::selectG_AIE_PAD_VECTOR_UNDEF(
   constrainOperandRegClass(MF, TRI, MRI, TII, RBI, I, OutRC, DstReg);
   MIB.buildInstr(TargetOpcode::REG_SEQUENCE, {DstReg}, {SrcReg})
       .addImm(getSub256LoIdx());
+
   I.eraseFromParent();
   return true;
+}
+
+// Build Instruction to set status register
+bool AIEBaseInstructionSelector::selectSetStatusRegister(
+    MachineInstr &I, MachineRegisterInfo &MRI) {
+
+  const Register IdxReg = I.getOperand(1).getReg();
+  const Register SrcReg = I.getOperand(2).getReg();
+
+  // Check if the argument is constant for register map index.
+  const auto Idx = getIConstantVRegValWithLookThroughOrFail(
+      IdxReg, MRI, "Expected const value for status register map index.");
+
+  const Register StatusReg = TRI.getStatusRegister(Idx.Value.getZExtValue());
+
+  // Handle const input val for status regs.
+  if (const auto Src = getIConstantVRegValWithLookThrough(SrcReg, MRI)) {
+    const unsigned SrcConstVal =
+        TRI.matchStatusRegisterBitwidth(StatusReg, Src->Value.getZExtValue());
+
+    MachineInstrBuilder MI = setStatusRegister(MIB, StatusReg, SrcConstVal);
+    I.eraseFromParent();
+    return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+  }
+
+  auto CopyInstr =
+      MIB.buildInstr(TargetOpcode::COPY, {StatusReg}, {}).addReg(SrcReg);
+  if (!selectCopy(*CopyInstr, MRI))
+    return false;
+
+  I.eraseFromParent();
+  return true;
+}
+
+// Build Instruction to get status register
+bool AIEBaseInstructionSelector::selectGetStatusRegister(
+    MachineInstr &I, MachineRegisterInfo &MRI) {
+
+  const Register DstReg = I.getOperand(0).getReg();
+  // In this case of G_INTRINSIC operand 1 is target intrinsic
+  const Register IdxReg = I.getOperand(2).getReg();
+
+  // Check if the argument is constant for register map index.
+  const auto Idx = getIConstantVRegValWithLookThroughOrFail(
+      IdxReg, MRI, "Expected const value for status register map index.");
+
+  const Register StatusReg = TRI.getStatusRegister(Idx.Value.getZExtValue());
+  const MachineFunction &MF = *I.getParent()->getParent();
+
+  if (!RBI.constrainGenericRegister(DstReg, *TRI.getGPRRegClass(MF), MRI))
+    return false;
+
+  auto CopyInstr =
+      MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {}).addReg(StatusReg);
+  if (!selectCopy(*CopyInstr, MRI))
+    return false;
+
+  I.eraseFromParent();
+  return true;
+}
+
+bool AIEBaseInstructionSelector::selectVUPS(
+    MachineInstr &I, MachineRegisterInfo &MRI,
+    std::optional<unsigned> crUPSModeVal) {
+  // First try to match UPS combine
+  if (selectG_AIE_LOAD_UPS(I, MRI, crUPSModeVal))
+    return true;
+
+  const Register DstReg = I.getOperand(0).getReg();
+  // In this case of G_INTRINSIC_W_SIDE_EFFECTS operand 1 is target intrinsic
+  const Register SrcReg = I.getOperand(2).getReg();
+  const Register ShftReg = I.getOperand(3).getReg();
+  const Register SignReg = I.getOperand(4).getReg();
+
+  if (crUPSModeVal.has_value()) {
+    // Selects the mode of the accumulator for UPS instructions
+    // 0 – 32-bit accumulator lane
+    // 1 – 64-bit accumulator lane
+    MIB.setInstr(I);
+    setCtrlRegister(MIB, TII.getUPSModeControlRegister(), *crUPSModeVal);
+  }
+
+  if (const auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI)) {
+    // Handle constant sign through instruction patterns
+    return selectImpl(I, *CoverageInfo);
+  }
+
+  const unsigned OpCode = TII.getOpCode(I);
+  MachineInstrBuilder MI =
+      MIB.buildInstr(OpCode, {DstReg}, {}).addReg(SrcReg).addReg(ShftReg);
+
+  setUnsetCtrlRegister(MIB, *MI, MRI, TII.getUPSSignControlRegister(), SignReg);
+
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+}
+
+bool AIEBaseInstructionSelector::selectG_AIE_STORE_SRS(
+    MachineInstr &StoreI, MachineRegisterInfo &MRI) {
+  Register SrsResult = (StoreI.uses().begin())->getReg();
+  MachineInstr *SrsOp = getDefIgnoringCopiesAndBitcasts(SrsResult, MRI);
+
+  assert(SrsOp && "Expected SSA.");
+
+  if (!canCombineSRS(StoreI, *SrsOp, MRI))
+    return false;
+
+  std::optional<AddressingModeInfo> AddrModeInfo =
+      getOrDefineAddressingRegister(StoreI, MRI);
+  if (!AddrModeInfo)
+    return false;
+
+  // Note: Operand 1 is the ID of the intrinsic
+  Register SrcReg = SrsOp->getOperand(2).getReg();
+  Register ShftReg = SrsOp->getOperand(3).getReg();
+  Register SignReg = SrsOp->getOperand(4).getReg();
+
+  auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI);
+  bool ConstantSign = SignVal.has_value();
+  // SignVal = 1 for signed and 0 for unsigned
+  std::optional<LoadStoreOpcodes> LSO =
+      getCombinedOpcodeSRS(StoreI, *SrsOp, AddrModeInfo->ImmediateOffset,
+                           ConstantSign ? SignVal->Value == 0x1 : false);
+
+  assert(LSO && "Unexpected VST.SRS combine failure");
+
+  // Set SRS mode control register if needed
+  MIB.setInstr(StoreI);
+  std::optional<unsigned> SRSMode =
+      getSRSModeForIntrinsic(cast<GIntrinsic>(SrsOp)->getIntrinsicID());
+  if (SRSMode)
+    setCtrlRegister(MIB, TRI.getSRSModeCtrlReg(), *SRSMode);
+
+  auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
+
+  for (auto Def : StoreI.defs())
+    NewInstr.addDef(Def.getReg());
+
+  NewInstr.addUse(SrcReg);
+  NewInstr.addUse(ShftReg);
+
+  addAddressingMode(NewInstr, *AddrModeInfo, LSO->FitsImmediateRange, false,
+                    MRI);
+
+  NewInstr.cloneMemRefs(StoreI);
+
+  if (!ConstantSign)
+    setUnsetCtrlRegister(MIB, *NewInstr, MRI, TRI.getSRSSignCtrlReg(), SignReg);
+
+  makeDeadMI(*SrsOp, MRI);
+  StoreI.eraseFromParent();
+  return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
+}
+
+// FIFO Store selection helpers - shared implementation for AIE2P and AIE4
+bool AIEBaseInstructionSelector::selectVST_FIFO_Push(MachineInstr &I,
+                                                     MachineRegisterInfo &MRI) {
+  const unsigned Opcode = TII.getOpCode(I);
+  const Register PtrOut = I.getOperand(0).getReg();
+  const Register FifoOut = I.getOperand(1).getReg();
+  const Register AvailOut = I.getOperand(2).getReg();
+  const Register PtrIn = I.getOperand(4).getReg();
+  const Register VecIn = I.getOperand(5).getReg();
+  const Register FifoIn = I.getOperand(6).getReg();
+  const Register AvailIn = I.getOperand(7).getReg();
+
+  auto MI = MIB.buildInstr(Opcode, {FifoOut, PtrOut, AvailOut},
+                           {FifoIn, VecIn, PtrIn, AvailIn});
+  MI.cloneMemRefs(I);
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+}
+
+bool AIEBaseInstructionSelector::selectVST_FIFO_Flush(
+    MachineInstr &I, MachineRegisterInfo &MRI) {
+  const unsigned Opcode = TII.getOpCode(I);
+  const Register PtrOut = I.getOperand(0).getReg();
+  const Register FifoOut = I.getOperand(1).getReg();
+  const Register AvailOut = I.getOperand(2).getReg();
+  const Register PtrIn = I.getOperand(4).getReg();
+  const Register FifoIn = I.getOperand(5).getReg();
+  const Register AvailIn = I.getOperand(6).getReg();
+
+  auto MI = MIB.buildInstr(Opcode, {FifoOut, PtrOut, AvailOut},
+                           {FifoIn, PtrIn, AvailIn});
+  MI.cloneMemRefs(I);
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+}
+
+bool AIEBaseInstructionSelector::selectVST_FIFO_Flush1D(
+    MachineInstr &I, MachineRegisterInfo &MRI) {
+  const unsigned Opcode = TII.getOpCode(I);
+  const Register PtrOut = I.getOperand(0).getReg();
+  const Register FifoOut = I.getOperand(1).getReg();
+  const Register AvailOut = I.getOperand(2).getReg();
+  const Register PtrIn = I.getOperand(4).getReg();
+  const Register FifoIn = I.getOperand(5).getReg();
+  const Register AvailIn = I.getOperand(6).getReg();
+  const Register OffsetReg = I.getOperand(7).getReg();
+
+  auto MI = MIB.buildInstr(Opcode, {FifoOut, PtrOut, AvailOut},
+                           {FifoIn, PtrIn, AvailIn, OffsetReg});
+  MI.cloneMemRefs(I);
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+}
+
+bool AIEBaseInstructionSelector::selectVST_FIFO_Flush2D(
+    MachineInstr &I, MachineRegisterInfo &MRI) {
+  const unsigned Opcode = TII.getOpCode(I);
+  const Register PtrOut = I.getOperand(0).getReg();
+  const Register FifoOut = I.getOperand(1).getReg();
+  const Register AvailOut = I.getOperand(2).getReg();
+  const Register CountOut1Reg = I.getOperand(3).getReg();
+  const Register PtrIn = I.getOperand(5).getReg();
+  const Register FifoIn = I.getOperand(6).getReg();
+  const Register AvailIn = I.getOperand(7).getReg();
+  const Register OffsetReg = I.getOperand(8).getReg();
+  const Register SizeReg = I.getOperand(9).getReg();
+  const Register CountIn1Reg = I.getOperand(10).getReg();
+  const Register IncrReg = I.getOperand(11).getReg();
+
+  const Register DReg =
+      createDRegSequence(OffsetReg, IncrReg, SizeReg, CountIn1Reg, MRI);
+
+  auto MI = MIB.buildInstr(Opcode, {FifoOut, PtrOut, AvailOut, CountOut1Reg},
+                           {FifoIn, PtrIn, AvailIn, DReg});
+  MI.cloneMemRefs(I);
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+}
+
+bool AIEBaseInstructionSelector::selectVST_FIFO_Flush3D(
+    MachineInstr &I, MachineRegisterInfo &MRI) {
+  const unsigned Opcode = TII.getOpCode(I);
+  const Register PtrOut = I.getOperand(0).getReg();
+  const Register FifoOut = I.getOperand(1).getReg();
+  const Register AvailOut = I.getOperand(2).getReg();
+  const Register CountOut1Reg = I.getOperand(3).getReg();
+  const Register CountOut2Reg = I.getOperand(4).getReg();
+  const Register PtrIn = I.getOperand(6).getReg();
+  const Register FifoIn = I.getOperand(7).getReg();
+  const Register AvailIn = I.getOperand(8).getReg();
+  const Register OffsetReg = I.getOperand(9).getReg();
+  const Register Size1Reg = I.getOperand(10).getReg();
+  const Register CountIn1Reg = I.getOperand(11).getReg();
+  const Register Incr1Reg = I.getOperand(12).getReg();
+  const Register Size2Reg = I.getOperand(13).getReg();
+  const Register CountIn2Reg = I.getOperand(14).getReg();
+  const Register Incr2Reg = I.getOperand(15).getReg();
+
+  const Register DSReg =
+      createDSRegSequence(OffsetReg, Incr1Reg, Incr2Reg, Size1Reg, CountIn1Reg,
+                          Size2Reg, CountIn2Reg, MRI);
+
+  auto MI = MIB.buildInstr(
+      Opcode, {FifoOut, PtrOut, AvailOut, CountOut1Reg, CountOut2Reg},
+      {FifoIn, PtrIn, AvailIn, DSReg});
+  MI.cloneMemRefs(I);
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
 }

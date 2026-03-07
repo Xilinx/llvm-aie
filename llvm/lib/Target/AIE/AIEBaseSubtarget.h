@@ -20,9 +20,9 @@
 #include "Utils/AIEBaseInfo.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/ScheduleDAGMutation.h"
+#include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/CodeGenTypes/MachineValueType.h"
 #include "llvm/MC/MCInstrItineraries.h"
-#include "llvm/TargetParser/Triple.h"
 
 namespace llvm {
 
@@ -35,39 +35,35 @@ class ScheduleDAGMutation;
 class SUnit;
 class SDep;
 
-class AIEBaseSubtarget {
-private:
-  Triple TargetTriple;
+class AIEBaseSubtarget : public TargetSubtargetInfo {
   AIEABI::ABI TargetABI = AIEABI::ABI_VITIS;
 
 public:
-  AIEBaseSubtarget(const Triple &TT) : TargetTriple(TT) {}
+  using TargetSubtargetInfo::TargetSubtargetInfo;
 
   static const AIEBaseSubtarget &get(const MachineFunction &MF);
-  virtual const TargetRegisterInfo *getRegisterInfo() const = 0;
-  virtual const TargetFrameLowering *getFrameLowering() const = 0;
-  virtual const AIEBaseInstrInfo *getInstrInfo() const = 0;
+  const AIEBaseInstrInfo *getInstrInfo() const override = 0;
   virtual const AIEBaseAddrSpaceInfo &getAddrSpaceInfo() const = 0;
   AIEABI::ABI getTargetABI() const { return TargetABI; }
-  bool isAIE1() const { return (TargetTriple.isAIE1()); }
-  bool isAIE2() const { return (TargetTriple.isAIE2()); }
-  bool isAIE2P() const { return (TargetTriple.isAIE2P()); }
-  bool isAIE2PS() const { return (TargetTriple.isAIE2PS()); }
-  virtual ~AIEBaseSubtarget() = default;
+  bool isAIE1() const { return getTargetTriple().isAIE1(); }
+  bool isAIE2() const { return getTargetTriple().isAIE2(); }
+  bool isAIE2P() const { return getTargetTriple().isAIE2P(); }
+  bool isAIE2PS() const { return getTargetTriple().isAIE2PS(); }
 
-  // This is meant as an override of TargetSubtargetInfo::overrideSchedPolicy
-  // but AIEBaseSubtarget does not derive from that class...
-  void overrideSchedPolicyBase(MachineSchedPolicy &Policy,
-                               unsigned NumRegionInstrs) const;
+  void getSMSMutations(std::vector<std::unique_ptr<ScheduleDAGMutation>>
+                           &Mutations) const override {
+    Mutations = AIEBaseSubtarget::getSMSMutationsImpl(getTargetTriple());
+  }
+  void getPostRAMutations(std::vector<std::unique_ptr<ScheduleDAGMutation>>
+                              &Mutations) const override {
+    Mutations =
+        AIEBaseSubtarget::getPostRAMutationsImpl(getTargetTriple(), nullptr);
+  }
 
-  // Perform target-specific adjustments to the latency of a schedule
-  // dependency.
-  // If a pair of operands is associated with the schedule dependency, DefOpIdx
-  // and UseOpIdx are the indices of the operands in Def and Use, respectively.
-  // Otherwise, either may be -1.
-  // This is the shared code of a virtual method in TargetSubtargetInfo. We
-  // can't directly override here, since we don't inherit it. Instead we
-  // separately override a wrapper calling this implementation in AIE1 and AIE2
+  void overrideSchedPolicy(MachineSchedPolicy &Policy,
+                           unsigned NumRegionInstrs) const override;
+
+  using TargetSubtargetInfo::adjustSchedDependency;
   void adjustSchedDependency(const InstrItineraryData &Itineraries, SUnit *Def,
                              int DefOpIdx, SUnit *Use, int UseOpIdx,
                              SDep &Dep) const;
@@ -90,13 +86,16 @@ public:
 
   /// Whether to enable the pre-RA MachinePipeliner. This can be disabled to let
   /// the post-RA pipeliner handle the scheduling.
-  bool enableMachinePipeliner() const;
+  bool enableMachinePipeliner() const override;
 
-  bool enableWindowScheduler() const;
+  bool enableWindowScheduler() const override;
 
-  /// Returns the critical path limit that EarlyIfConversion should use
-  /// when deciding about a specific conversion - common implementation.
-  unsigned getCriticalPathLimitImpl() const;
+  unsigned getCriticalPathLimit() const override;
+  unsigned classifyGlobalReference(const GlobalValue *GV,
+                                   const TargetMachine &TM) const;
+
+  // All AIE targets need post scheduling for correct instruction timing
+  bool forcePostRAScheduling() const override { return true; }
 };
 } // namespace llvm
 

@@ -20,9 +20,6 @@
 #include "AIEMaxLatencyFinder.h"
 #include "AIERegMemEventTracker.h"
 #include "Utils/AIELoopUtils.h"
-#include "aie1/AIE1Subtarget.h"
-#include "aie2p/AIE2PSubtarget.h"
-#include "aie2ps/AIE2PSSubtarget.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
@@ -108,8 +105,8 @@ SDep &getBackwardEdge(const SUnit &SrcSU, const SDep &E) {
 
 } // namespace
 
-void AIEBaseSubtarget::overrideSchedPolicyBase(MachineSchedPolicy &Policy,
-                                               unsigned NumRegionInstrs) const {
+void AIEBaseSubtarget::overrideSchedPolicy(MachineSchedPolicy &Policy,
+                                           unsigned NumRegionInstrs) const {
   // The default policy is to avoid tracking pressure for "small regions". For
   // AIE, it is critical to estimate the pressure everywhere, especially small
   // loops. Spills are very expensive.
@@ -157,24 +154,8 @@ void AIEBaseSubtarget::adjustSchedDependency(
   }
 }
 
-// Note: AIEBaseSubtarget is not derived from TargetSubtargetInfo.
-// It is glued in through multiple inheritance of the AIE classes, so we go down
-// from TargetSubtargetInfo, and then up to AIEBaseSubTarget.
-// Someone should build the base class injection in tablegen.
 const AIEBaseSubtarget &AIEBaseSubtarget::get(const MachineFunction &MF) {
-  if (MF.getTarget().getTargetTriple().isAIE1())
-    return static_cast<const AIEBaseSubtarget &>(
-        MF.getSubtarget<AIESubtarget>());
-  if (MF.getTarget().getTargetTriple().isAIE2())
-    return static_cast<const AIEBaseSubtarget &>(
-        MF.getSubtarget<AIE2Subtarget>());
-  if (MF.getTarget().getTargetTriple().isAIE2P())
-    return static_cast<const AIEBaseSubtarget &>(
-        MF.getSubtarget<AIE2PSubtarget>());
-  if (MF.getTarget().getTargetTriple().isAIE2PS())
-    return static_cast<const AIEBaseSubtarget &>(
-        MF.getSubtarget<AIE2PSSubtarget>());
-  llvm_unreachable("Unknown subtarget");
+  return static_cast<const AIEBaseSubtarget &>(MF.getSubtarget());
 }
 
 namespace {
@@ -955,6 +936,15 @@ bool AIEBaseSubtarget::enableWindowScheduler() const {
   return false;
 }
 
-unsigned AIEBaseSubtarget::getCriticalPathLimitImpl() const {
+unsigned AIEBaseSubtarget::getCriticalPathLimit() const {
   return IfConversionCritPathLimit;
+}
+
+unsigned
+AIEBaseSubtarget::classifyGlobalReference(const GlobalValue *GV,
+                                          const TargetMachine &TM) const {
+  if (!TM.shouldAssumeDSOLocal(GV)) {
+    return AIEII::MO_GLOBAL;
+  }
+  return AIEII::MO_None;
 }

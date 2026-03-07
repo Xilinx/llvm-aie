@@ -213,6 +213,12 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual unsigned getMvSclMultiSlotPseudoOpcode() const {
     llvm_unreachable("Target didn't implement getMvSclOpcode");
   }
+  /// Return the opcode to set a status register with an immediate value.
+  /// Targets should override this to provide the correct opcode.
+  virtual unsigned getSetStatusRegisterOpcode() const {
+    // Fallback to multi-slot pseudo move if target doesn't override.
+    return getMvSclMultiSlotPseudoOpcode();
+  }
   /// Return the 3-address integer ADD opcode
   virtual unsigned getAddSclOpcode() const {
     llvm_unreachable("Target didn't implement getAddSclOpcode");
@@ -390,6 +396,12 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   }
   virtual Register getVaddSignControlRegister() const {
     llvm_unreachable("Target didn't implement vaddSign control register");
+  }
+  virtual Register getUPSModeControlRegister() const {
+    llvm_unreachable("Target didn't implement UPSMode control register");
+  }
+  virtual Register getUPSSignControlRegister() const {
+    llvm_unreachable("Target didn't implement UPSSign control register");
   }
   // Opcodes related to hardware loop handling
   virtual bool isHardwareLoopDec(unsigned Opcode) const;

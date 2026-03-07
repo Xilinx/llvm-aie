@@ -71,7 +71,8 @@ struct AIE2PRegisterInfo : public AIE2PGenRegisterInfo {
       const MachineOperand &MO, const MachineRegisterInfo &MRI) const override;
 
   Register getStackPointerRegister() const override;
-  Register getControlRegister(unsigned Idx) const;
+  Register getControlRegister(unsigned Idx) const override;
+  Register getStatusRegister(unsigned Idx) const override;
 
   const TargetRegisterClass *
   getLargestLegalSuperClass(const TargetRegisterClass *RC,
@@ -110,6 +111,17 @@ struct AIE2PRegisterInfo : public AIE2PGenRegisterInfo {
                       unsigned SubReg, const TargetRegisterClass *DstRC,
                       unsigned DstSubReg, const TargetRegisterClass *NewRC,
                       LiveIntervals &LIS) const override;
+
+  unsigned matchControlRegisterBitwidth(Register CtrlReg,
+                                        unsigned SrcConstVal) const override;
+  unsigned matchStatusRegisterBitwidth(Register StatusReg,
+                                       unsigned SrcConstVal) const override;
+
+  Register getUnpackSignCtrlReg() const override;
+  Register getPackSignCtrlReg() const override;
+  Register getPackSizeCtrlReg() const override;
+  Register getSRSSignCtrlReg() const override;
+  Register getSRSModeCtrlReg() const override;
 };
 } // namespace llvm
 

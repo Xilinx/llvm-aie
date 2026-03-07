@@ -78,6 +78,31 @@ struct AIEBaseRegisterInfo : public TargetRegisterInfo {
     llvm_unreachable("Target didn't implement isReservedStickyReg!");
   }
 
+  /// Returns the control register used for UNPACK sign control
+  virtual Register getUnpackSignCtrlReg() const {
+    llvm_unreachable("Target didn't implement getUnpackSignCtrlReg!");
+  }
+
+  /// Returns the control register used for PACK sign control
+  virtual Register getPackSignCtrlReg() const {
+    llvm_unreachable("Target didn't implement getPackSignCtrlReg!");
+  }
+
+  /// Returns the control register used for PACK size control
+  virtual Register getPackSizeCtrlReg() const {
+    llvm_unreachable("Target didn't implement getPackSizeCtrlReg!");
+  }
+
+  /// Returns the control register used for SRS sign control
+  virtual Register getSRSSignCtrlReg() const {
+    llvm_unreachable("Target didn't implement getSRSSignCtrlReg!");
+  }
+
+  /// Returns the control register used for SRS mode control
+  virtual Register getSRSModeCtrlReg() const {
+    llvm_unreachable("Target didn't implement getSRSModeCtrlReg!");
+  }
+
   /// Given a register bank and operand type, return the smallest register class
   /// that can hold a value on that bank.
   virtual const TargetRegisterClass &
@@ -110,6 +135,21 @@ struct AIEBaseRegisterInfo : public TargetRegisterInfo {
                       unsigned SubReg, const TargetRegisterClass *DstRC,
                       unsigned DstSubReg, const TargetRegisterClass *NewRC,
                       LiveIntervals &LIS) const override;
+
+  virtual unsigned matchControlRegisterBitwidth(Register CtrlReg,
+                                                unsigned SrcConstVal) const {
+    llvm_unreachable("Target didn't implement matchControlRegisterBitwidth!");
+  }
+  virtual Register getControlRegister(unsigned Idx) const {
+    llvm_unreachable("Target didn't implement getControlRegister!");
+  }
+  virtual Register getStatusRegister(unsigned Idx) const {
+    llvm_unreachable("Target didn't implement getStatusRegister!");
+  }
+  virtual unsigned matchStatusRegisterBitwidth(Register StatusReg,
+                                               unsigned SrcConstVal) const {
+    llvm_unreachable("Target didn't implement matchStatusRegisterBitwidth!");
+  }
 };
 
 template <int N, unsigned step> bool isEncodableAsNegativeInt(int Value) {
