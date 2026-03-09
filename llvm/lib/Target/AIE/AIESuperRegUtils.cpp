@@ -25,28 +25,29 @@
 
 namespace llvm::AIESuperRegUtils {
 
+bool isExpandableRegister(Register Reg, const MachineRegisterInfo &MRI,
+                          const AIEBaseRegisterInfo &TRI) {
+  if (Reg.isPhysical())
+    return false;
+
+  auto &SubRegSplit = TRI.getSubRegSplit(MRI.getRegClass(Reg)->getID());
+  return SubRegSplit.size() > 1;
+}
+
 /// Returns the subreg indices that can be used to rewrite \p Reg into smaller
 /// regs. Returns {} if the rewrite isn't possible.
 SmallSet<int, 8> getRewritableSubRegs(Register Reg,
                                       const MachineRegisterInfo &MRI,
                                       const AIEBaseRegisterInfo &TRI,
                                       std::set<Register> &VisitedVRegs) {
-  if (Reg.isPhysical()) {
-    // TODO: One could use collectSubRegs() in AIEBaseInstrInfo.cpp
-    // But given that MOD registers are not part of the ABI, they should
-    // not appear as physical registers before RA.
-    LLVM_DEBUG(dbgs() << "  Cannot rewrite physreg " << printReg(Reg, &TRI)
-                      << "\n");
-    return {};
-  }
 
-  auto &SubRegSplit = TRI.getSubRegSplit(MRI.getRegClass(Reg)->getID());
-  if (SubRegSplit.size() <= 1) {
-    // Register does not have multiple subregs to be rewritten into.
+  if (!isExpandableRegister(Reg, MRI, TRI)) {
     LLVM_DEBUG(dbgs() << "  Cannot rewrite " << printReg(Reg, &TRI, 0, &MRI)
                       << ": no sub-reg split\n");
     return {};
   }
+
+  auto &SubRegSplit = TRI.getSubRegSplit(MRI.getRegClass(Reg)->getID());
 
   VisitedVRegs.insert(Reg);
   SmallSet<int, 8> UsedSubRegs;
