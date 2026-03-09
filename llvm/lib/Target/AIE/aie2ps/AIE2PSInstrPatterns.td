@@ -546,6 +546,49 @@ def : Pat<(int_aie2ps_I512_I512_ACC2048_mac_conf VEC512:$s1, VEC512:$s2, ACC2048
 def : Pat<(int_aie2ps_I512_I512_ACC2048_mul_conf VEC512:$s1, VEC512:$s2, eR:$conf),
            (VMUL_vmul_vmul_cm_core_X_X VEC512:$s1, VEC512:$s2, eR:$conf)>;
 
+// Instruction Combining: Fuse MUL + ADD -> VADDMAC/VADDMSC
+// When a MAC/MSC result feeds into an ADD(ZeroAddConf), the multiply and
+// both accumulations are performed by a single VADDMAC/VADDMSC instruction.
+//
+// Integer patterns use VAddMacMscBitconvertPats because AIE2PS integer
+// MAC intrinsics return v64i32 while ADD intrinsics use v32i64 for ACC2048.
+
+// Integer patterns
+defm : VAddMacMscBitconvertPats<int_aie2ps_ACC2048_add_conf,
+  int_aie2ps_I512_I512_ACC2048_mac_conf, int_aie2ps_I512_I512_ACC2048_msc_conf,
+  VEC512, VEC512, ACC2048, eR,
+  VADDMAC_vaddmac_vmul_cm_core_X_X,
+  VADDMSC_vaddmac_vmul_cm_core_X_X, v32i64>;
+defm : VAddMacMscBitconvertPats<int_aie2ps_ACC2048_add_conf,
+  int_aie2ps_I1024_I1024_ACC2048_mac_conf, int_aie2ps_I1024_I1024_ACC2048_msc_conf,
+  VEC1024, VEC1024, ACC2048, eR,
+  VADDMAC_vaddmac_vmul_cm_core_Y_Y,
+  VADDMSC_vaddmac_vmul_cm_core_Y_Y, v32i64>;
+defm : VAddMacMscBitconvertPats<int_aie2ps_ACC2048_add_conf,
+  int_aie2ps_I512_I1024_ACC2048_mac_conf, int_aie2ps_I512_I1024_ACC2048_msc_conf,
+  VEC512, VEC1024, ACC2048, eR,
+  VADDMAC_vaddmac_vmul_cm_core_X_Y,
+  VADDMSC_vaddmac_vmul_cm_core_X_Y, v32i64>;
+defm : VAddMacMscBitconvertPats<int_aie2ps_ACC2048_add_conf,
+  int_aie2ps_I1024_I512_ACC2048_mac_conf, int_aie2ps_I1024_I512_ACC2048_msc_conf,
+  VEC1024, VEC512, ACC2048, eR,
+  VADDMAC_vaddmac_vmul_cm_core_Y_X,
+  VADDMSC_vaddmac_vmul_cm_core_Y_X, v32i64>;
+
+// BF16 patterns (HasInaccessibleMem=1 for FP state access)
+defm : VAddMacMscPats<int_aie2ps_ACC2048_accfloat_add_conf,
+  int_aie2ps_bf16_I1024_bf16_I1024_ACC2048_bf_mac_conf,
+  int_aie2ps_bf16_I1024_bf16_I1024_ACC2048_bf_msc_conf,
+  VEC1024, VEC1024, ACC2048, eR,
+  VADDMAC_f_vaddmac_bf_vmul_bf_core_Y_Y,
+  VADDMSC_f_vaddmac_bf_vmul_bf_core_Y_Y, /*HasInaccessibleMem=*/1>;
+defm : VAddMacMscPats<int_aie2ps_ACC1024_accfloat_add_conf,
+  int_aie2ps_bf16_I512_bf16_I512_ACC1024_bf_mac_conf,
+  int_aie2ps_bf16_I512_bf16_I512_ACC1024_bf_msc_conf,
+  VEC512, VEC512, ACC1024, eR,
+  VADDMAC_f_vaddmac_bf_half_vmul_bf_half_core_X_X,
+  VADDMSC_f_vaddmac_bf_half_vmul_bf_half_core_X_X, /*HasInaccessibleMem=*/1>;
+
 // FP8 VMUL/VMAC Intrinsics
 def : PatInaccessibleMem<(int_aie2ps_fp8_I512_fp8_I512_ACC2048_bf_addmac_conf VEC512:$s1, VEC512:$s2, ACC2048:$acc1, ACC2048:$acc2, eR:$conf),
            (VADDMAC_f_vaddmac_bf_vmul_bf_core_X_X ACC2048:$acc1, ACC2048:$acc2, VEC512:$s1, VEC512:$s2, eR:$conf)>;

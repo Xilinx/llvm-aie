@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -343,6 +343,45 @@ def : Pat<(int_aie2p_I512_I512_ACC1024_mac_conf VEC512:$s1, VEC512:$s2, ACC1024:
 
 def : Pat<(int_aie2p_I512_I512_ACC1024_mul_conf VEC512:$s1, VEC512:$s2, eR:$acc),
            (EXTRACT_SUBREG (VMUL_vmul_cm_core_X_X VEC512:$s1, VEC512:$s2, eR:$acc), sub_1024_acc_lo)>;
+
+// Instruction Combining: Fuse MUL + ADD -> VADDMAC/VADDMSC
+// When a MAC/MSC result feeds into an ADD(ZeroAddConf), the multiply and
+// both accumulations are performed by a single VADDMAC/VADDMSC instruction.
+
+// Integer patterns (no FP state access)
+defm : VAddMacMscPats<int_aie2p_ACC2048_add_conf,
+  int_aie2p_I512_I512_ACC2048_mac_conf, int_aie2p_I512_I512_ACC2048_msc_conf,
+  VEC512, VEC512, ACC2048, eR,
+  VADDMAC_vmac_cm2_add_reg_vmul_cm_core_X_X,
+  VADDMSC_vmac_cm2_add_reg_vmul_cm_core_X_X>;
+defm : VAddMacMscPats<int_aie2p_ACC2048_add_conf,
+  int_aie2p_I1024_I1024_ACC2048_mac_conf, int_aie2p_I1024_I1024_ACC2048_msc_conf,
+  VEC1024, VEC1024, ACC2048, eR,
+  VADDMAC_vmac_cm2_add_reg_vmul_cm_core_Y_Y,
+  VADDMSC_vmac_cm2_add_reg_vmul_cm_core_Y_Y>;
+defm : VAddMacMscPats<int_aie2p_ACC2048_add_conf,
+  int_aie2p_I512_I1024_ACC2048_mac_conf, int_aie2p_I512_I1024_ACC2048_msc_conf,
+  VEC512, VEC1024, ACC2048, eR,
+  VADDMAC_vmac_cm2_add_reg_vmul_cm_core_X_Y,
+  VADDMSC_vmac_cm2_add_reg_vmul_cm_core_X_Y>;
+defm : VAddMacMscPats<int_aie2p_ACC2048_add_conf,
+  int_aie2p_I1024_I512_ACC2048_mac_conf, int_aie2p_I1024_I512_ACC2048_msc_conf,
+  VEC1024, VEC512, ACC2048, eR,
+  VADDMAC_vmac_cm2_add_reg_vmul_cm_core_Y_X,
+  VADDMSC_vmac_cm2_add_reg_vmul_cm_core_Y_X>;
+
+// BF16 MAC+ADD / MSC+ADD patterns (HasInaccessibleMem=1 for FP state access)
+defm : VAddMacMscPats<int_aie2p_ACC2048_accfloat_add_conf,
+  int_aie2p_I512_I512_ACC2048_bf_mac_conf, int_aie2p_I512_I512_ACC2048_bf_msc_conf,
+  VEC512, VEC512, ACC2048, eR,
+  VADDMAC_f_vaddmac_bf_vmac_cm2_add_reg_vmul_bf_core_X_X,
+  VADDMSC_f_vaddmac_bf_vmac_cm2_add_reg_vmul_bf_core_X_X, /*HasInaccessibleMem=*/1>;
+defm : VAddMacMscPats<int_aie2p_ACC2048_accfloat_add_conf,
+  int_aie2p_I1024_I1024_ACC2048_bf_mac_conf, int_aie2p_I1024_I1024_ACC2048_bf_msc_conf,
+  VEC1024, VEC1024, ACC2048, eR,
+  VADDMAC_f_vaddmac_bf_vmac_cm2_add_reg_vmul_bf_core_Y_Y,
+  VADDMSC_f_vaddmac_bf_vmac_cm2_add_reg_vmul_bf_core_Y_Y, /*HasInaccessibleMem=*/1>;
+
 
 
 def : Pat<(int_aie2p_I512_I512_ACC2048_addmac_conf VEC512:$s1, VEC512:$s2, ACC2048:$acc1, ACC2048:$acc2, eR:$acc),

@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -1440,6 +1440,11 @@ bool TargetTransformInfo::hasActiveVectorLength(unsigned Opcode, Type *DataType,
 bool TargetTransformInfo::isProfitableToSinkOperands(
     Instruction *I, SmallVectorImpl<Use *> &OpsToSink) const {
   return TTIImpl->isProfitableToSinkOperands(I, OpsToSink);
+}
+
+bool TargetTransformInfo::shouldMergeCongruentIVs(const PHINode *IV1,
+                                                  const PHINode *IV2) const {
+  return TTIImpl->shouldMergeCongruentIVs(IV1, IV2);
 }
 
 bool TargetTransformInfo::isVectorShiftByScalarCheap(Type *Ty) const {
