@@ -3,7 +3,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc -verify-machineinstrs --mtriple=aie2p  %s \
 # RUN:     --start-before=postmisched -o - | FileCheck %s
@@ -141,8 +141,7 @@
   ; CHECK-NEXT:  .LBB1_2: // %for.cond2.preheader
   ; CHECK-NEXT:    // =>This Loop Header: Depth=1
   ; CHECK-NEXT:    // Child Loop BB1_3 Depth 2
-  ; CHECK-NEXT:    padda [p1], m0; nopb ; nopxm
-  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    padda [p1], m0; nopb ; nopxm ; nops
   ; CHECK-NEXT:    vldb wl2, [p1], #32
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop

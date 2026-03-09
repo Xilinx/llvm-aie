@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc --mtriple=aie2p --start-before=postmisched %s -o - | FileCheck %s
 
@@ -16,15 +16,14 @@
   ; CHECK-LABEL: _Z1fPii:
   ; CHECK:         .p2align 4
   ; CHECK-NEXT:  // %bb.0: // %entry
-  ; CHECK-NEXT:    mova m0, #4; nopb ; nopxm
+  ; CHECK-NEXT:    mova m0, #4; nopb ; nopxm ; nops
   ; CHECK-NEXT:    mova dn0, #16; mov m1, m0
-  ; CHECK-NEXT:    mova r1, #4; mov dn1, dn0
-  ; CHECK-NEXT:    mova dc1, #0; movs p1, p0; add.nc lc, r1, #-3
+  ; CHECK-NEXT:    mova dc1, #0; movs p1, p0; mov dn1, dn0
   ; CHECK-NEXT:    movs dj1, m0; mov dc0, dc1
   ; CHECK-NEXT:    lda.2d r1, [p1], d1
-  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    movxm ls, #.LBB0_1
-  ; CHECK-NEXT:    lda.2d r1, [p1], d1; movxm le, #.L_LEnd0
+  ; CHECK-NEXT:    mova r1, #4; movxm le, #.L_LEnd0
+  ; CHECK-NEXT:    lda.2d r1, [p1], d1; add.nc lc, r1, #-3
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    lda.2d r1, [p1], d1; nopb ; nops ; movx r0, #10; nopm ; nopv

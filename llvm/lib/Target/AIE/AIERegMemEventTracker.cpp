@@ -15,23 +15,38 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIERegMemEventTracker.h"
+#include <cassert>
 
 using namespace llvm;
 
-const std::map<MCRegister, unsigned> &
+namespace {
+// Helper function to identify event-like instructions (side effects without
+// register/memory dependencies)
+bool isEventLikeInstruction(const MachineInstr &MI,
+                            const AIEBaseInstrInfo *TII) {
+  auto UseOrDefReg = [](const MachineInstr &MI) {
+    return llvm::any_of(MI.operands(),
+                        [](const MachineOperand &MO) { return MO.isReg(); });
+  };
+
+  return MI.hasUnmodeledSideEffects() && !MI.mayLoadOrStore() &&
+         !TII->isLock(MI.getOpcode()) && !UseOrDefReg(MI);
+}
+} // namespace
+
+const std::map<MCRegister, int> &
 AIERegMemEventTracker::getRegToCycleMap(bool IsDef) const {
   return IsDef ? RegisterToCycleDef : RegisterToCycleUse;
 }
 
-std::map<MCRegister, unsigned> &
-AIERegMemEventTracker::getRegToCycleMap(bool IsDef) {
-  return const_cast<std::map<MCRegister, unsigned> &>(
+std::map<MCRegister, int> &AIERegMemEventTracker::getRegToCycleMap(bool IsDef) {
+  return const_cast<std::map<MCRegister, int> &>(
       const_cast<const AIERegMemEventTracker *>(this)->getRegToCycleMap(IsDef));
 }
 
-void AIERegMemEventTracker::updateUseDefMaxCycle(Register Reg, unsigned Latency,
+void AIERegMemEventTracker::updateUseDefMaxCycle(Register Reg, int Latency,
                                                  bool IsDef) {
-  std::map<MCRegister, unsigned> &RegisterToCycle = getRegToCycleMap(IsDef);
+  std::map<MCRegister, int> &RegisterToCycle = getRegToCycleMap(IsDef);
   MCRegister MCReg = Reg.asMCReg();
   auto EmplacePair = RegisterToCycle.emplace(MCReg, Latency);
   if (!EmplacePair.second) {
@@ -40,10 +55,141 @@ void AIERegMemEventTracker::updateUseDefMaxCycle(Register Reg, unsigned Latency,
   }
 }
 
+void AIERegMemEventTracker::updateLastStoreCycle(int StoreCycle) {
+  LastStoreCycle = std::max(LastStoreCycle, StoreCycle);
+}
+
+void AIERegMemEventTracker::updateLastGlobalMemoryAccessCycle(
+    int MemAccessCycle) {
+  LastMemoryAccessCycle = std::max(LastMemoryAccessCycle, MemAccessCycle);
+}
+
+void AIERegMemEventTracker::updateFirstGlobalMemoryAccessCycle(
+    int MemAccessCycle) {
+  FirstMemoryAccessCycle = std::max(FirstMemoryAccessCycle, MemAccessCycle);
+}
+
+void AIERegMemEventTracker::updateFirstMemCycle(int Cycle, bool IsStore) {
+  if (IsStore) {
+    FirstStoreCycle = std::max(FirstStoreCycle, Cycle);
+  } else {
+    FirstLoadCycle = std::max(FirstLoadCycle, Cycle);
+  }
+}
+
+void AIERegMemEventTracker::addPerInstructionLastStoreCycle(int LastStoreCycle,
+                                                            MachineInstr *MI) {
+  MemoryCycleToStoreInstrs[LastStoreCycle].push_back(MI);
+}
+
+void AIERegMemEventTracker::addPerInstructionFirstMemCycle(int FirstMemCycle,
+                                                           MachineInstr *MI,
+                                                           bool IsStore) {
+  if (IsStore) {
+    MemoryCycleToStoreInstrs[FirstMemCycle].push_back(MI);
+  } else {
+    MemoryCycleToLoadInstrs[FirstMemCycle].push_back(MI);
+  }
+}
+
+int AIERegMemEventTracker::getMaxAliasingMemCycle(const MachineInstr &MI,
+                                                  bool IsStore) const {
+  const auto &MemMap =
+      IsStore ? MemoryCycleToStoreInstrs : MemoryCycleToLoadInstrs;
+  int MaxCycle = IsStore ? 0 : INT_MIN;
+
+  for (const auto &[Cycle, MemOps] : MemMap) {
+    for (const MachineInstr *MemOp : MemOps) {
+      // Part-word memory operations have special semantics, treat
+      // conservatively For other operations, use AA to check if they may alias
+      // with MI
+      if (TII->isPartWordMemoryInst(*MemOp) ||
+          MI.mayAlias(AA, *MemOp, /*UseTBAA=*/true)) {
+        MaxCycle = std::max(MaxCycle, Cycle);
+      }
+    }
+  }
+  return (MaxCycle == INT_MIN) ? 0 : MaxCycle;
+}
+
+unsigned AIERegMemEventTracker::checkMemoryDependency(unsigned CurrentMax,
+                                                      int MemoryCycle,
+                                                      int MIMemoryCycle,
+                                                      bool IsBackward) const {
+  if (MemoryCycle > INT_MIN && MemoryCycle < INT_MAX) {
+    const int MemoryDep = IsBackward ? (MemoryCycle + MIMemoryCycle + 1)
+                                     : (MemoryCycle - MIMemoryCycle + 1);
+    return std::max(CurrentMax, (unsigned)std::max(0, MemoryDep));
+  }
+  return CurrentMax;
+}
+
+unsigned AIERegMemEventTracker::checkRegisterDependencies(
+    unsigned CurrentMax, const MachineInstr &MI, bool IsBackward) const {
+  unsigned MaxLatency = CurrentMax;
+
+  for (unsigned OpNum = 0; OpNum < MI.getNumOperands(); OpNum++) {
+    const MachineOperand &MO = MI.getOperand(OpNum);
+    if (!MO.isReg())
+      continue;
+    // Get operand cycle if needed
+    auto OptCycle =
+        InstrItins->getOperandCycle(MI.getDesc().getSchedClass(), OpNum);
+    unsigned OperandCycle = OptCycle ? *OptCycle : 0 /*implicit-def*/;
+
+    auto SafeDistance = [this, OperandCycle,
+                         IsBackward](const MachineOperand &MO, bool IsDef) {
+      const std::map<MCRegister, int> &RegToCycle =
+          IsDef ? RegisterToCycleDef : RegisterToCycleUse;
+      int CurrMaxLatency = 0;
+      for (MCRegAliasIterator Ali(MO.getReg(), TRI, true); Ali.isValid();
+           ++Ali) {
+        auto RegCycle = RegToCycle.find(*Ali);
+        if (RegCycle != RegToCycle.end()) {
+          const int RegCycleValue = RegCycle->second;
+          int ThisOperandLatency = IsBackward
+                                       ? RegCycleValue + OperandCycle + 1
+                                       : RegCycleValue - OperandCycle + 1;
+          CurrMaxLatency = std::max(ThisOperandLatency, CurrMaxLatency);
+        }
+      }
+      return CurrMaxLatency;
+    };
+
+    const int DistFromLastWrite = SafeDistance(MO, /*IsDef*/ true);
+    const int DistFromLastRead =
+        MO.isDef() ? SafeDistance(MO, /*IsDef*/ false) : 0;
+
+    // Only use positive distances
+    if (DistFromLastWrite > 0)
+      MaxLatency =
+          std::max(MaxLatency, static_cast<unsigned>(DistFromLastWrite));
+    if (DistFromLastRead > 0)
+      MaxLatency =
+          std::max(MaxLatency, static_cast<unsigned>(DistFromLastRead));
+  }
+  return MaxLatency;
+}
+
+unsigned AIERegMemEventTracker::checkEventLikeInstruction(
+    unsigned CurrentMax, const MachineInstr &MI, bool IsBackward) const {
+  if (isEventLikeInstruction(MI, TII)) {
+    unsigned RegionSize = IsBackward ? BotFixedRegionSize : TopFixedRegionSize;
+    return std::max(CurrentMax, RegionSize);
+  }
+  return CurrentMax;
+}
+
 void AIERegMemEventTracker::computeUseDefForward(
     ArrayRef<AIE::MachineBundle> Bundles, bool InSeparateRegion) {
   int Cycle = 0;
   const int TotalCycles = Bundles.size();
+
+  // Track top-fixed region size (only for the first call, not separate region)
+  if (!InSeparateRegion) {
+    TopFixedRegionSize = TotalCycles;
+  }
+
   for (const auto &Bundle : Bundles) {
     for (MachineInstr *BundledMI : Bundle.getInstrs()) {
       const unsigned SchedClass = BundledMI->getDesc().getSchedClass();
@@ -73,7 +219,7 @@ void AIERegMemEventTracker::computeUseDefForward(
           int MemAccessCycle = Cycle + *OptLastMemCycle - 1;
           if (InSeparateRegion)
             MemAccessCycle = MemAccessCycle - TotalCycles;
-          updateLastMemoryAccessCycle(MemAccessCycle);
+          updateLastGlobalMemoryAccessCycle(MemAccessCycle);
         }
       }
 
@@ -101,109 +247,183 @@ void AIERegMemEventTracker::computeUseDefForward(
   }
 }
 
-unsigned
-AIERegMemEventTracker::getSafeOperandsDistance(const MachineInstr &MI) const {
+void AIERegMemEventTracker::computeUseDefBackward(
+    ArrayRef<AIE::MachineBundle> Bundles, bool InSeparateRegion) {
+  const int TotalCycles = Bundles.size();
+
+  // Track bot-fixed region size (only for the first call, not separate region)
+  if (!InSeparateRegion) {
+    BotFixedRegionSize = TotalCycles;
+  }
+
+  // Count progressively from 0 as we iterate backward through bundles
+  // Cycle represents the distance from ExitSU for each bundle
+  int Cycle = 0;
+
+  for (const auto &Bundle : reverse(Bundles)) {
+    // First bundle processed (last in forward order) is at Cycle = 0 (closest
+    // to ExitSU) Last bundle processed (first in forward order) is at Cycle =
+    // TotalCycles - 1 (farthest from ExitSU)
+
+    for (MachineInstr *BundledMI : Bundle.getInstrs()) {
+      const unsigned SchedClass = BundledMI->getDesc().getSchedClass();
+
+      // Track loads for AA-based dependencies
+      if (BundledMI->mayLoad()) {
+        auto OptFirstMemCycle = TII->getFirstMemoryCycle(SchedClass);
+        assert(OptFirstMemCycle && "Load instruction without MemoryCycles");
+        const int FirstMemCycle = *OptFirstMemCycle;
+        int FirstLoadFromEnd = Cycle - FirstMemCycle + 1;
+        if (InSeparateRegion)
+          FirstLoadFromEnd = FirstLoadFromEnd - TotalCycles;
+
+        // Track all loads, including those with negative cycles
+        updateFirstMemCycle(FirstLoadFromEnd, /*IsStore=*/false);
+        // Precise: track per-instruction for AA
+        addPerInstructionFirstMemCycle(FirstLoadFromEnd, BundledMI,
+                                       /*IsStore=*/false);
+      }
+
+      // Track stores for AA-based dependencies
+      if (BundledMI->mayStore()) {
+        auto OptFirstMemCycle = TII->getFirstMemoryCycle(SchedClass);
+        assert(OptFirstMemCycle && "Store instruction without MemoryCycles");
+        const int FirstMemCycle = *OptFirstMemCycle;
+        int FirstStoreFromEnd = Cycle - FirstMemCycle + 1;
+        if (InSeparateRegion)
+          FirstStoreFromEnd = FirstStoreFromEnd - TotalCycles;
+
+        // Track all stores, including those with negative cycles
+        updateFirstMemCycle(FirstStoreFromEnd, /*IsStore=*/true);
+        // Precise: track per-instruction for AA
+        addPerInstructionFirstMemCycle(FirstStoreFromEnd, BundledMI,
+                                       /*IsStore=*/true);
+      }
+
+      // Track all memory operations for lock dependencies
+      if (BundledMI->mayLoadOrStore()) {
+        auto OptFirstMemCycle = TII->getFirstMemoryCycle(SchedClass);
+        if (OptFirstMemCycle) {
+          int MemAccessFromEnd = Cycle - *OptFirstMemCycle + 1;
+          if (InSeparateRegion)
+            MemAccessFromEnd = MemAccessFromEnd - TotalCycles;
+          // Track all memory accesses, including negative cycles
+          updateFirstGlobalMemoryAccessCycle(MemAccessFromEnd);
+        }
+      }
+
+      // Track register operands
+      for (unsigned OpNum = 0; OpNum < BundledMI->getNumOperands(); OpNum++) {
+        const MachineOperand &MO = BundledMI->getOperand(OpNum);
+        if (!MO.isReg())
+          continue;
+        const bool IsDef = MO.isDef();
+        std::optional<unsigned> OptMOCycle =
+            InstrItins->getOperandCycle(SchedClass, OpNum);
+        assert(OptMOCycle);
+        const int OperandCycle = *OptMOCycle;
+
+        // Calculate when the operand event occurs
+        const int EventCycle = Cycle - OperandCycle;
+
+        if (InSeparateRegion) {
+          const int EventCycleInPrevRegion = EventCycle - TotalCycles;
+          // Track even if negative - represents events in the previous region
+          updateUseDefMaxCycle(MO.getReg(), EventCycleInPrevRegion, IsDef);
+        } else {
+          // Track even if negative - represents events very close to ExitSU
+          updateUseDefMaxCycle(MO.getReg(), EventCycle, IsDef);
+        }
+      }
+    }
+    Cycle++; // Increment as we go backward through bundles
+  }
+}
+
+unsigned AIERegMemEventTracker::getSafeOperandsDistanceFromTop(
+    const MachineInstr &MI) const {
   unsigned MaxLatency = 0;
 
-  // Firstly, estimate safe memory distancies in case of load and stores
-  // operations.
+  // Check for event-like instructions
+  MaxLatency = checkEventLikeInstruction(MaxLatency, MI, /*IsTop=*/false);
+
+  // Memory dependencies from top
   if (MI.mayLoadOrStore()) {
     auto MemoryPipelineStage =
         MI.isBundle() ? TII->getMinFirstMemoryCycle()
                       : TII->getFirstMemoryCycle(MI.getDesc().getSchedClass());
     assert(MemoryPipelineStage.value() >= 1 && "Execution stages start at 0");
-    // Here, we calculate this initial latency.
-    // For example, if we have LastStoreCycle = 21 (absolute) and this
-    // instruction FirstMemoryCycle = 5 (relative to the start cycle of this
-    // instruction), then this instruction should start earliest at cycle 18,
-    // to be able to start the FirstMemoryCycle (absolute) at cycle 22. In
-    // this case: 21 - (5 - 1) + 1 = 18. Be aware that we need to cap to zero
-    // when it is negative.
     const int MIMemoryCycle = MemoryPipelineStage.value() - 1;
 
-    if (AA) {
-      // Precise: Only consider stores that may alias with MI
-      const int MaxAliasingStoreCycle = getMaxAliasingStoreCycle(MI);
-      const int MemoryDep = MaxAliasingStoreCycle - MIMemoryCycle + 1;
-      MaxLatency = std::max(MemoryDep, 0);
-    } else {
-      // Conservative: Use global LastStoreCycle
-      const int MemoryDep = getLastStoreCycle() - MIMemoryCycle + 1;
-      MaxLatency = std::max(MemoryDep, 0);
-    }
+    // Check stores in top-fixed (RAW for loads, WAR for stores)
+    const int StoreCycle =
+        AA ? getMaxAliasingMemCycle(MI, /*IsStore=*/true) : getLastStoreCycle();
+    MaxLatency =
+        checkMemoryDependency(MaxLatency, StoreCycle, MIMemoryCycle, false);
   }
 
   // Lock instructions stall the core. All preceding memory operations must
   // complete before the core stalls.
   if (TII->isLock(MI.getOpcode())) {
-    const int CoreStallCycle = TII->getCoreStallCycleAfterLock();
-    const int MIStallCycle = CoreStallCycle - 1;
-    const int MemDep = getLastMemoryAccessCycle() - MIStallCycle + 1;
-    MaxLatency =
-        std::max(MaxLatency, static_cast<unsigned>(std::max(MemDep, 0)));
+    if (getLastMemoryAccessCycle() > INT_MIN) {
+      const int CoreStallCycle = TII->getCoreStallCycleAfterLock();
+      const int MIStallCycle = CoreStallCycle - 1;
+      const int MemDep = getLastMemoryAccessCycle() - MIStallCycle + 1;
+      MaxLatency =
+          std::max(MaxLatency, static_cast<unsigned>(std::max(MemDep, 0)));
+    }
   }
 
-  for (const MachineOperand &MO : MI.operands()) {
-    if (!MO.isReg())
-      continue;
+  // Register dependencies from top
+  MaxLatency =
+      checkRegisterDependencies(MaxLatency, MI, /*AddOperandCycle=*/false);
 
-    auto SafeDistance = [&](const std::map<MCRegister, unsigned> &RegToCycle) {
-      unsigned CurrMaxLatency = 0;
-      for (MCRegAliasIterator Ali(MO.getReg(), TRI, true); Ali.isValid();
-           ++Ali) {
-        auto RegCycle = RegToCycle.find(*Ali);
-        if (RegCycle != RegToCycle.end()) {
-          CurrMaxLatency = std::max(RegCycle->second, CurrMaxLatency);
-        }
-      }
-      return CurrMaxLatency;
-    };
-
-    // Here, we need to take care of two scenarios:
-    // * For MO.isDef() == true:
-    //  - We look to RegDef cycles to detect WAW deps.
-    //  - We look to RegUse cycles to detect WAR deps.
-    // * For MO.isDef() == false we look to RegDef cycles to detect RAW
-    // deps.
-    // For each instruction, we can have all deps, but we are interested
-    // in the worst one in terms of cycles.
-    const unsigned DistFromLastWrite =
-        SafeDistance(getRegToCycleMap(/*IsDef*/ true));
-    // When we have an use, we don't care about RAR deps.
-    const unsigned DistFromLastRead =
-        MO.isDef() ? SafeDistance(getRegToCycleMap(/*IsDef*/ false)) : 0;
-    MaxLatency = std::max({MaxLatency, DistFromLastWrite, DistFromLastRead});
-  }
   return MaxLatency;
 }
 
-void AIERegMemEventTracker::updateLastStoreCycle(int StoreCycle) {
-  LastStoreCycle = std::max(LastStoreCycle, StoreCycle);
-}
-
-void AIERegMemEventTracker::addPerInstructionLastStoreCycle(int LastStoreCycle,
-                                                            MachineInstr *MI) {
-  MemoryCycleToStoreInstrs[LastStoreCycle].push_back(MI);
-}
-
-int AIERegMemEventTracker::getMaxAliasingStoreCycle(
+unsigned AIERegMemEventTracker::getSafeOperandsDistanceFromBottom(
     const MachineInstr &MI) const {
-  int MaxAliasingStoreCycle = 0;
-  for (const auto &[Cycle, Stores] : MemoryCycleToStoreInstrs) {
-    for (const MachineInstr *Store : Stores) {
-      // Part-word stores (e.g., byte/half-word) have read-modify-write
-      // behavior and must be treated conservatively. For other stores,
-      // use alias analysis to check if they may alias with MI. If either
-      // condition is true, we need to enforce a dependency.
-      if (TII->isPartWordMemoryInst(*Store) ||
-          MI.mayAlias(AA, *Store, /*UseTBAA=*/true)) {
-        MaxAliasingStoreCycle = std::max(MaxAliasingStoreCycle, Cycle);
-      }
+  unsigned MaxLatency = 0;
+
+  // Check for event-like instructions
+  MaxLatency = checkEventLikeInstruction(MaxLatency, MI, /*IsBackward=*/true);
+
+  // Memory dependencies from bottom
+  if (MI.mayLoadOrStore()) {
+    auto MemoryPipelineStage =
+        MI.isBundle() ? TII->getMinLastMemoryCycle()
+                      : TII->getLastMemoryCycle(MI.getDesc().getSchedClass());
+    assert(MemoryPipelineStage.value() >= 1 && "Execution stages start at 0");
+    const int MIMemoryCycle = MemoryPipelineStage.value() - 1;
+
+    if (MI.mayStore()) {
+      // Free store: check loads in bot-fixed (WAR dependency)
+      const int LoadCycle = AA ? getMaxAliasingMemCycle(MI, /*IsStore=*/false)
+                               : getFirstMemCycle(/*IsStore=*/false);
+      MaxLatency =
+          checkMemoryDependency(MaxLatency, LoadCycle, MIMemoryCycle, true);
+    }
+
+    // Free load/store: check stores in bot-fixed (RAW dependency)
+    const int LoadStoreCycle = AA ? getMaxAliasingMemCycle(MI, /*IsStore=*/true)
+                                  : getFirstMemCycle(/*IsStore=*/true);
+    MaxLatency =
+        checkMemoryDependency(MaxLatency, LoadStoreCycle, MIMemoryCycle, true);
+  }
+  // Lock instructions: all subsequent memory operations must wait
+  if (TII->isLock(MI.getOpcode())) {
+    if (getFirstMemoryAccessCycle() > INT_MIN) {
+      const int CoreResumeCycle = TII->getCoreResumeCycleAfterLock();
+      const int MemCycle = getFirstMemoryAccessCycle();
+      MaxLatency = std::max(
+          MaxLatency,
+          static_cast<unsigned>(std::max(MemCycle + CoreResumeCycle + 1, 0)));
     }
   }
-  return MaxAliasingStoreCycle;
-}
 
-void AIERegMemEventTracker::updateLastMemoryAccessCycle(int MemAccessCycle) {
-  LastMemoryAccessCycle = std::max(LastMemoryAccessCycle, MemAccessCycle);
+  // Register dependencies from bottom
+  MaxLatency =
+      checkRegisterDependencies(MaxLatency, MI, /*AddOperandCycle=*/true);
+
+  return MaxLatency;
 }
