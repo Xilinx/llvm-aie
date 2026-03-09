@@ -70,11 +70,13 @@ public:
   bool selectVPACK(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVINSERT(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_AIE_STORE_CONV(MachineInstr &StoreI, MachineRegisterInfo &MRI);
-  bool selectG_AIE_STORE_SRS(MachineInstr &StoreI, MachineRegisterInfo &MRI);
-  bool selectG_AIE_STORE_PACK(MachineInstr &StoreI, MachineRegisterInfo &MRI);
+  bool selectG_AIE_STORE_SRS(MachineInstr &StoreI,
+                             MachineRegisterInfo &MRI) override;
+  bool selectG_AIE_STORE_PACK(MachineInstr &StoreI,
+                              MachineRegisterInfo &MRI) override;
   bool selectG_AIE_LOAD_UNPACK(MachineInstr &UNPACKI, MachineRegisterInfo &MRI);
   bool selectG_AIE_LOAD_UPS(MachineInstr &UPSI, MachineRegisterInfo &MRI,
-                            unsigned crUPSModeVal);
+                            std::optional<unsigned> crUPSModeVal) override;
   bool selectVSHUFFLEBFP640(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVSHUFFLEBFP768(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectV64AccFloatToV64MX9(MachineInstr &I, MachineRegisterInfo &MRI);
@@ -328,20 +330,19 @@ private:
                              std::optional<APInt> Immediate) final;
   std::optional<LoadStoreOpcodes>
   getCombinedOpcodeSRS(const MachineInstr &MemOp, const MachineInstr &CombOp,
-                       std::optional<APInt> Immediate, bool IsSigned);
+                       std::optional<APInt> Immediate, bool IsSigned) override;
   bool canCombineSRS(MachineInstr &MemOp, MachineInstr &CombOp,
-                     MachineRegisterInfo &MRI);
+                     MachineRegisterInfo &MRI) override;
   std::optional<LoadStoreOpcodes>
   getCombinedOpcodePACK(const MachineInstr &MemOp, const MachineInstr &CombOp,
-                        std::optional<APInt> Immediate, bool IsSigned);
+                        std::optional<APInt> Immediate, bool IsSigned) override;
   bool canCombinePACK(MachineInstr &MemOp, MachineInstr &CombOp,
-                      MachineRegisterInfo &MRI);
-  std::optional<LoadStoreOpcodes>
-  getCombinedOpcodeUNPACKLoad(const MachineInstr &MemOp,
-                              const MachineInstr &CombOp,
-                              std::optional<APInt> Immediate, bool IsSigned);
+                      MachineRegisterInfo &MRI) override;
+  std::optional<LoadStoreOpcodes> getCombinedOpcodeUNPACKLoad(
+      const MachineInstr &MemOp, const MachineInstr &CombOp,
+      std::optional<APInt> Immediate, bool IsSigned) override;
   bool canCombineUNPACKLoad(MachineInstr &MemOp, MachineInstr &CombOp,
-                            MachineRegisterInfo &MRI);
+                            MachineRegisterInfo &MRI) override;
   std::optional<LoadStoreOpcodes>
   getCombinedOpcodeUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
                        std::optional<APInt> Immediate, bool IsSigned);
@@ -4250,9 +4251,9 @@ bool AIE2PSInstructionSelector::canCombineUPS(MachineInstr &LoadOp,
   return getCombinedOpcodeUPS(LoadOp, UPSI, NoImmediate, IsSigned).has_value();
 }
 
-bool AIE2PSInstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
-                                                     MachineRegisterInfo &MRI,
-                                                     unsigned crUPSModeVal) {
+bool AIE2PSInstructionSelector::selectG_AIE_LOAD_UPS(
+    MachineInstr &UPSI, MachineRegisterInfo &MRI,
+    std::optional<unsigned> crUPSModeVal) {
   // First use is the G_INTRINSIC_W_SIDE_EFFECTS ID
   Register LoadResult = (std::next(UPSI.uses().begin()))->getReg();
   MachineInstr *LoadOp = getDefIgnoringCopiesAndBitcasts(LoadResult, MRI);
@@ -4298,11 +4299,13 @@ bool AIE2PSInstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
            (DstRegSize != 1024 || DstRegSize != 2048))) &&
          "Unexpected VLDA.UPS size");
 
+  if (!crUPSModeVal.has_value())
+    return false;
   // Selects the mode of the accumulator for UPS instructions
   // 0 – 32-bit accumulator lane
   // 1 – 64-bit accumulator lane
   MIB.setInstr(UPSI);
-  setCtrlRegister(MIB, AIE2PS::crUPSMode, crUPSModeVal);
+  setCtrlRegister(MIB, AIE2PS::crUPSMode, *crUPSModeVal);
 
   auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
 
