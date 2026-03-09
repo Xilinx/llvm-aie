@@ -5,7 +5,7 @@
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 #
 # RUN: llc --mtriple=aie2 --start-before=postmisched --debug-only=sched-blocks \
-# RUN: --aie-loop-aware=1 %s -o /dev/null |& FileCheck %s
+# RUN: --aie-loop-aware=1 %s -o /dev/null 2>&1 | FileCheck %s
 # REQUIRES: asserts
 
 # Check that a loop that has a loop as epilogue isn't considered a loop
