@@ -262,24 +262,23 @@ body: |
     ; COMMON: liveins: $r1
     ; COMMON-NEXT: {{  $}}
     ; COMMON-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r1
-    ; COMMON-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 31
-    ; COMMON-NEXT: [[SHL:%[0-9]+]]:_(s32) = G_SHL [[COPY]], [[C]](s32)
-    ; COMMON-NEXT: [[ASHR:%[0-9]+]]:_(s32) = G_ASHR [[SHL]], [[C]](s32)
+    ; COMMON-NEXT: [[C_ZERO:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; COMMON-NEXT: [[C_NEG_ONE:%[0-9]+]]:_(s32) = G_CONSTANT i32 -1
+    ; COMMON-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[COPY]](s32), [[C_NEG_ONE]], [[C_ZERO]]
     ; COMMON-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
-    ; COMMON-NEXT: $r1 = COPY [[ASHR]](s32)
+    ; COMMON-NEXT: $r1 = COPY [[SELECT]](s32)
     ; COMMON-NEXT: PseudoJL &__floatsisf, csr_aie[[VER]], implicit-def $lr, implicit $r1, implicit-def $r0
     ; COMMON-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r0
     ; COMMON-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
     ; COMMON-NEXT: [[DEF:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
-    ; COMMON-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
-    ; COMMON-NEXT: [[AIE_INSERT_VECTOR_ELT:%[0-9]+]]:_(<16 x s32>) = G_AIE_INSERT_VECTOR_ELT [[DEF]], [[COPY1]](s32), [[C1]](s32)
+    ; COMMON-NEXT: [[AIE_INSERT_VECTOR_ELT:%[0-9]+]]:_(<16 x s32>) = G_AIE_INSERT_VECTOR_ELT [[DEF]], [[COPY1]](s32), [[C_ZERO]](s32)
     ; AIE2-NEXT: [[BITCAST:%[0-9]+]]:_(<8 x s64>) = G_BITCAST [[AIE_INSERT_VECTOR_ELT]](<16 x s32>)
     ; AIE2-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), [[BITCAST]](<8 x s64>)
     ; AIE2P-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.v16accfloat.to.v16bf16), [[AIE_INSERT_VECTOR_ELT]](<16 x s32>)
     ; AIE2PS-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2ps.v16accfloat.to.v16bf16), [[AIE_INSERT_VECTOR_ELT]](<16 x s32>)
     ; COMMON-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s16>) = G_IMPLICIT_DEF
     ; COMMON-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[INT]](<16 x s16>), [[DEF1]](<16 x s16>)
-    ; COMMON-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS]](<32 x s16>), [[C1]](s32)
+    ; COMMON-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS]](<32 x s16>), [[C_ZERO]](s32)
     ; COMMON-NEXT: [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[AIE_SEXT_EXTRACT_VECTOR_ELT]], 16
     ; COMMON-NEXT: $r0 = COPY [[ASSERT_SEXT]](s32)
     %0:_(s32) = COPY $r1
@@ -299,11 +298,11 @@ body: |
     ; COMMON: liveins: $r1
     ; COMMON-NEXT: {{  $}}
     ; COMMON-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r1
-    ; COMMON-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 31
-    ; COMMON-NEXT: [[SHL:%[0-9]+]]:_(s32) = G_SHL [[COPY]], [[C]](s32)
-    ; COMMON-NEXT: [[ASHR:%[0-9]+]]:_(s32) = G_ASHR [[SHL]], [[C]](s32)
+    ; COMMON-NEXT: [[C_ZERO:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; COMMON-NEXT: [[C_NEG_ONE:%[0-9]+]]:_(s32) = G_CONSTANT i32 -1
+    ; COMMON-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[COPY]](s32), [[C_NEG_ONE]], [[C_ZERO]]
     ; COMMON-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
-    ; COMMON-NEXT: $r1 = COPY [[ASHR]](s32)
+    ; COMMON-NEXT: $r1 = COPY [[SELECT]](s32)
     ; COMMON-NEXT: PseudoJL &__floatsisf, csr_aie[[VER]], implicit-def $lr, implicit $r1, implicit-def $r0
     ; COMMON-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r0
     ; COMMON-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
@@ -324,11 +323,11 @@ body: |
     ; COMMON: liveins: $r1
     ; COMMON-NEXT: {{  $}}
     ; COMMON-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r1
-    ; COMMON-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 31
-    ; COMMON-NEXT: [[SHL:%[0-9]+]]:_(s32) = G_SHL [[COPY]], [[C]](s32)
-    ; COMMON-NEXT: [[ASHR:%[0-9]+]]:_(s32) = G_ASHR [[SHL]], [[C]](s32)
+    ; COMMON-NEXT: [[C_ZERO:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; COMMON-NEXT: [[C_NEG_ONE:%[0-9]+]]:_(s32) = G_CONSTANT i32 -1
+    ; COMMON-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[COPY]](s32), [[C_NEG_ONE]], [[C_ZERO]]
     ; COMMON-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
-    ; COMMON-NEXT: $r2 = COPY [[ASHR]](s32)
+    ; COMMON-NEXT: $r2 = COPY [[SELECT]](s32)
     ; COMMON-NEXT: PseudoJL &__floatsidf, csr_aie[[VER]], implicit-def $lr, implicit $r2, implicit-def $r0, implicit-def $r1
     ; COMMON-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r0
     ; COMMON-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r1

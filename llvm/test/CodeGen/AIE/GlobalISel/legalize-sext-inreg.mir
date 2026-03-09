@@ -19,10 +19,10 @@ body: |
     ; CHECK: liveins: $r6
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 31
-    ; CHECK-NEXT: [[SHL:%[0-9]+]]:_(s32) = G_SHL [[COPY]], [[C]](s32)
-    ; CHECK-NEXT: [[ASHR:%[0-9]+]]:_(s32) = G_ASHR [[SHL]], [[C]](s32)
-    ; CHECK-NEXT: $r0 = COPY [[ASHR]](s32)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 -1
+    ; CHECK-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[COPY]](s32), [[C1]], [[C]]
+    ; CHECK-NEXT: $r0 = COPY [[SELECT]](s32)
     %0:_(s32) = COPY $r6
     %1:_(s32) = G_SEXT_INREG %0, 1
     $r0 = COPY %1
