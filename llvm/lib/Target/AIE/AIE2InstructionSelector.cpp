@@ -61,9 +61,7 @@ public:
   bool selectG_GLOBAL_VALUE(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_LOAD(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_STORE(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectGetControlRegister(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectReadTM(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectSetControlRegister(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVEXTRACT(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVSRS(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVUNPACK(MachineInstr &I, MachineRegisterInfo &MRI);
@@ -71,13 +69,12 @@ public:
   std::optional<AddressingModeInfo>
   getOrDefineAddressingRegister(MachineInstr &MemI,
                                 MachineRegisterInfo &MRI) final;
-  bool selectG_AIE_LOAD_UNPACK(MachineInstr &StoreI, MachineRegisterInfo &MRI);
-  bool selectG_AIE_LOAD_UPS(MachineInstr &StoreI, MachineRegisterInfo &MRI);
+  bool selectG_AIE_LOAD_UPS(MachineInstr &StoreI, MachineRegisterInfo &MRI,
+                            std::optional<unsigned> crUPSModeVal) override;
   bool select512BitG_AIE_LOAD_UPS(MachineInstr &UPSI, LoadStoreOpcodes &LSO,
                                   AddressingModeInfo &AMI, Register DstReg,
                                   Register ShftReg, Register SignReg,
                                   bool ConstantSign, MachineRegisterInfo &MRI);
-  bool selectVUPS(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectWriteTM(MachineInstr &I, MachineRegisterInfo &MRI);
   LoadStoreOpcodes getLoadStoreOpcode(const MachineInstr &I,
                                       const MachineRegisterInfo &MRI,
@@ -87,13 +84,15 @@ public:
   bool select512BitG_AIE_LOAD_STORE(MachineInstr &I, LoadStoreOpcodes &LSO,
                                     AddressingModeInfo &AMI,
                                     MachineRegisterInfo &MRI);
-  bool selectG_AIE_STORE_SRS(MachineInstr &StoreI, MachineRegisterInfo &MRI);
+  bool selectG_AIE_STORE_SRS(MachineInstr &StoreI,
+                             MachineRegisterInfo &MRI) override;
   bool select512BitG_AIE_STORE_SRS(LoadStoreOpcodes &LSO,
                                    AddressingModeInfo &AMI, Register SrcReg,
                                    Register ShftReg, Register SignReg,
                                    bool ConstantSign, MachineRegisterInfo &MRI);
   bool selectG_AIE_STORE_CONV(MachineInstr &StoreI, MachineRegisterInfo &MRI);
-  bool selectG_AIE_STORE_PACK(MachineInstr &StoreI, MachineRegisterInfo &MRI);
+  bool selectG_AIE_STORE_PACK(MachineInstr &StoreI,
+                              MachineRegisterInfo &MRI) override;
   bool selectStartLoop(MachineInstr &I, MachineRegisterInfo &MRI);
 
   unsigned getSub256LoIdx() const override { return AIE2::sub_256_lo; }
@@ -142,14 +141,14 @@ private:
   bool canCombineSRSUPS(MachineInstr &MemOp, MachineInstr &CombOp);
   std::optional<LoadStoreOpcodes>
   getCombinedOpcodePACK(const MachineInstr &MemOp, const MachineInstr &CombOp,
-                        std::optional<APInt> Immediate, bool IsSigned,
-                        bool Is32Lanes);
-  bool canCombinePACK(MachineInstr &MemOp, MachineInstr &CombOp);
+                        std::optional<APInt> Immediate, bool IsSigned) override;
+  bool canCombinePACK(MachineInstr &MemOp, MachineInstr &CombOp,
+                      MachineRegisterInfo &MRI) override;
   bool canCombineUNPACKLoad(MachineInstr &MemOp, MachineInstr &CombOp,
-                            MachineRegisterInfo &MRI);
+                            MachineRegisterInfo &MRI) override;
   std::optional<LoadStoreOpcodes> getCombinedOpcodeUNPACKLoad(
       const MachineInstr &MemOp, const MachineInstr &CombOp,
-      std::optional<APInt> Immediate, MachineRegisterInfo &MRI);
+      std::optional<APInt> Immediate, bool IsSigned) override;
 
   // const AIE2TargetMachine &TM;
   const AIE2InstrInfo &TII;
@@ -629,7 +628,8 @@ bool AIE2InstructionSelector::selectVPACK(MachineInstr &I,
 std::optional<LoadStoreOpcodes>
 AIE2InstructionSelector::getCombinedOpcodeUNPACKLoad(
     const MachineInstr &MemOp, const MachineInstr &CombOp,
-    std::optional<APInt> Immediate, MachineRegisterInfo &MRI) {
+    std::optional<APInt> Immediate, bool IsSigned) {
+  const MachineRegisterInfo &MRI = MemOp.getMF()->getRegInfo();
 
   const bool NoImmediate = false;
   if (CombOp.getOpcode() != AIE2::G_INTRINSIC ||
@@ -721,79 +721,14 @@ AIE2InstructionSelector::getCombinedOpcodeUNPACKLoad(
 bool AIE2InstructionSelector::canCombineUNPACKLoad(MachineInstr &MemOp,
                                                    MachineInstr &CombOp,
                                                    MachineRegisterInfo &MRI) {
+  Register LoadResult = MemOp.defs().begin()->getReg();
+  if (MemOp.getParent() != CombOp.getParent() || !MRI.hasOneUse(LoadResult))
+    return false;
+
   const std::optional<APInt> NoImmediate = {};
-  return getCombinedOpcodeUNPACKLoad(MemOp, CombOp, NoImmediate, MRI)
+  const bool IsSigned = false;
+  return getCombinedOpcodeUNPACKLoad(MemOp, CombOp, NoImmediate, IsSigned)
       .has_value();
-}
-
-bool AIE2InstructionSelector::selectG_AIE_LOAD_UNPACK(
-    MachineInstr &UNPACKI, MachineRegisterInfo &MRI) {
-  Register LoadResult = UNPACKI.getOperand(2).getReg();
-  MachineInstr *LoadOp = getDefIgnoringCopiesAndBitcasts(LoadResult, MRI);
-  MachineInstr *InsertionPoint = &UNPACKI;
-
-  assert(LoadOp && "Expected SSA.");
-
-  // Do not try to combine if one of the load's defs is used by another
-  // instruction between the load and the VUNPACK or if there is a store
-  // between the load and the VUNPACK.
-  if (!canDelayMemOp(*LoadOp, UNPACKI, MRI)) {
-    // If we cannot delay the load, we can try to advance the combined
-    // instruction to the load's position.
-    if (canAdvanceOp(*LoadOp, UNPACKI, MRI))
-      InsertionPoint = LoadOp;
-    else
-      return false;
-  }
-
-  if (!canCombineUNPACKLoad(*LoadOp, UNPACKI, MRI) ||
-      LoadOp->getParent() != UNPACKI.getParent() || !MRI.hasOneUse(LoadResult))
-    return false;
-
-  std::optional<AddressingModeInfo> AMI =
-      getOrDefineAddressingRegister(*LoadOp, MRI);
-  if (!AMI)
-    return false;
-
-  std::optional<LoadStoreOpcodes> LSO = getCombinedOpcodeUNPACKLoad(
-      AMI->MemI, UNPACKI, AMI->ImmediateOffset, MRI);
-
-  assert(LSO && "Unexpected VLDB.UNPACK combine failure");
-
-  Register DstReg = UNPACKI.getOperand(0).getReg();
-  Register SignReg = UNPACKI.getOperand(3).getReg();
-
-  MIB.setInstr(*InsertionPoint);
-
-  auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
-
-  NewInstr.addDef(DstReg);
-
-  for (auto *Def = std::next(AMI->MemI.defs().begin());
-       Def != AMI->MemI.defs().end(); ++Def) {
-    NewInstr.addDef(Def->getReg());
-  }
-
-  addAddressingMode(NewInstr, *AMI, LSO->FitsImmediateRange, false, MRI);
-
-  NewInstr.cloneMemRefs(AMI->MemI);
-
-  auto ConstantSign = getIConstantVRegValWithLookThrough(SignReg, MRI);
-  if (!ConstantSign)
-    setUnsetCtrlRegister(MIB, *NewInstr, MRI, AIE2::crUnpackSign, SignReg);
-
-  UNPACKI.eraseFromParent();
-
-  // Erasing the load instruction breaks later on in the selection code. That is
-  // because we keep an iterator on erased instructions. This breaks while
-  // trying to eliminate a trivially dead instruction which requires access to
-  // its memory operands which have been erased, thus leading to a seg fault. To
-  // remedy this, we keep the load to be removed by the trivial dead code
-  // elimination and we make sure to assign a new virtual register definition to
-  // its live operands to respect SSA.
-  makeDeadMI(*LoadOp, MRI);
-
-  return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
 }
 
 std::optional<LoadStoreOpcodes>
@@ -1837,8 +1772,9 @@ bool AIE2InstructionSelector::select512BitG_AIE_LOAD_UPS(
   }
 }
 
-bool AIE2InstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
-                                                   MachineRegisterInfo &MRI) {
+bool AIE2InstructionSelector::selectG_AIE_LOAD_UPS(
+    MachineInstr &UPSI, MachineRegisterInfo &MRI,
+    std::optional<unsigned> crUPSModeVal) {
 
   // First use is the G_INTRINSIC_W_SIDE_EFFECTS ID
   Register LoadResult = UPSI.getOperand(2).getReg();
@@ -1905,33 +1841,6 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
   UPSI.eraseFromParent();
   AMI->MemI.eraseFromParent();
   return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
-}
-
-bool AIE2InstructionSelector::selectVUPS(MachineInstr &I,
-                                         MachineRegisterInfo &MRI) {
-  // First try to match UPS combine
-  if (selectG_AIE_LOAD_UPS(I, MRI))
-    return true;
-
-  Register DstReg = I.getOperand(0).getReg();
-  // In this case of G_INTRINSIC_W_SIDE_EFFECTS operand 1 is target intrinsic
-  Register SrcReg = I.getOperand(2).getReg();
-  Register ShftReg = I.getOperand(3).getReg();
-  Register SignReg = I.getOperand(4).getReg();
-
-  if (auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI)) {
-    // Handle constant sign through instruction patterns
-    return selectImpl(I, *CoverageInfo);
-  }
-
-  unsigned OpCode = TII.getOpCode(I);
-  MachineInstrBuilder MI =
-      MIB.buildInstr(OpCode, {DstReg}, {}).addReg(SrcReg).addReg(ShftReg);
-
-  setUnsetCtrlRegister(MIB, *MI, MRI, AIE2::crUPSSign, SignReg);
-
-  I.eraseFromParent();
-  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
 }
 
 bool AIE2InstructionSelector::selectVSRS(MachineInstr &I,
@@ -2090,84 +1999,6 @@ Register AIE2InstructionSelector::createDSRegSequence(
                            MI->getOperand(13));
 
   return MI.getReg(0);
-}
-
-// Build Instruction to get control register
-bool AIE2InstructionSelector::selectGetControlRegister(
-    MachineInstr &I, MachineRegisterInfo &MRI) {
-
-  Register DstReg = I.getOperand(0).getReg();
-  // In this case of G_INTRINSIC operand 1 is target intrinsic
-  Register IdxReg = I.getOperand(2).getReg();
-  Register CtrlReg;
-
-  // Check if the argument is constant for register map index.
-  if (auto Idx = getIConstantVRegValWithLookThrough(IdxReg, MRI))
-    CtrlReg = TRI.getControlRegister(Idx->Value.getZExtValue());
-  else
-    llvm_unreachable("Expected const value for control register map index.");
-
-  if (!RBI.constrainGenericRegister(DstReg, AIE2::eRRegClass, MRI))
-    return false;
-
-  auto CopyInstr =
-      MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {}).addReg(CtrlReg);
-  if (!selectCopy(*CopyInstr, MRI)) {
-    return false;
-  }
-  I.eraseFromParent();
-  return true;
-}
-
-// Build Instruction to set control register
-bool AIE2InstructionSelector::selectSetControlRegister(
-    MachineInstr &I, MachineRegisterInfo &MRI) {
-
-  Register IdxReg = I.getOperand(1).getReg();
-  Register SrcReg = I.getOperand(2).getReg();
-  Register CtrlReg;
-
-  // Check if the argument is constant for register map index.
-  if (auto Idx = getIConstantVRegValWithLookThrough(IdxReg, MRI))
-    CtrlReg = TRI.getControlRegister(Idx->Value.getZExtValue());
-  else
-    llvm_unreachable("Expected const value for control register map index.");
-
-  // Handle const input val for control regs.
-  if (auto Src = getIConstantVRegValWithLookThrough(SrcReg, MRI)) {
-    unsigned SrcConstVal = Src->Value.getZExtValue();
-    /* Modulo by width of control regs.
-       To constrain the max possible value in the register
-       according to register width.
-    */
-    switch (CtrlReg) {
-    case AIE2::crSat:
-      SrcConstVal = SrcConstVal % (1 << 2);
-      break;
-    case AIE2::crRnd:
-      SrcConstVal = SrcConstVal % (1 << 4);
-      break;
-    case AIE2::crF2FMask:
-    case AIE2::crF2IMask:
-    case AIE2::crFPMask:
-      SrcConstVal = SrcConstVal % (1 << 5);
-      break;
-    default:
-      break;
-    }
-
-    MachineInstrBuilder MI = setCtrlRegister(MIB, CtrlReg, SrcConstVal);
-    I.eraseFromParent();
-    return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
-  }
-
-  auto CopyInstr =
-      MIB.buildInstr(TargetOpcode::COPY, {CtrlReg}, {}).addReg(SrcReg);
-  if (!selectCopy(*CopyInstr, MRI))
-    return false;
-
-  I.eraseFromParent();
-  return true;
 }
 
 bool AIE2InstructionSelector::selectWriteTM(MachineInstr &I,
@@ -2743,7 +2574,7 @@ LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
 
 std::optional<LoadStoreOpcodes> AIE2InstructionSelector::getCombinedOpcodePACK(
     const MachineInstr &MemOp, const MachineInstr &CombOp,
-    std::optional<APInt> Immediate, bool IsSigned, bool Is32Lanes) {
+    std::optional<APInt> Immediate, bool IsSigned) {
   const bool AlwaysFitsImmediateRange = true;
 
   if (CombOp.getOpcode() != AIE2::G_INTRINSIC_W_SIDE_EFFECTS ||
@@ -2754,6 +2585,10 @@ std::optional<LoadStoreOpcodes> AIE2InstructionSelector::getCombinedOpcodePACK(
     return {};
 
   assert(getLoadStoreSize(MemOp) == 256 && "Unexpected VST.PACK size");
+
+  // Determine lane size from intrinsic type
+  bool Is32Lanes =
+      cast<GIntrinsic>(CombOp).getIntrinsicID() == Intrinsic::aie2_pack_I8_I16;
 
   unsigned ISelOpcode;
   bool FitsImmediateRange = false;
@@ -2894,13 +2729,13 @@ std::optional<LoadStoreOpcodes> AIE2InstructionSelector::getCombinedOpcodePACK(
 }
 
 bool AIE2InstructionSelector::canCombinePACK(MachineInstr &MemOp,
-                                             MachineInstr &CombOp) {
+                                             MachineInstr &CombOp,
+                                             MachineRegisterInfo &MRI) {
 
   std::optional<APInt> NoImmediate = {};
   bool IsSigned = true;
-  bool Is32Lanes = true;
 
-  return getCombinedOpcodePACK(MemOp, CombOp, NoImmediate, IsSigned, Is32Lanes)
+  return getCombinedOpcodePACK(MemOp, CombOp, NoImmediate, IsSigned)
       .has_value();
 }
 
@@ -2912,17 +2747,14 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_PACK(MachineInstr &StoreI,
 
   assert(PackOp && "Expected SSA.");
 
-  if (!canCombinePACK(StoreI, *PackOp) ||
+  if (!canCombinePACK(StoreI, *PackOp, MRI) ||
       StoreI.getParent() != PackOp->getParent() || !MRI.hasOneUse(PackResult))
     return false;
 
-  std::optional<AddressingModeInfo> AMI =
+  std::optional<AddressingModeInfo> AddrModeInfo =
       getOrDefineAddressingRegister(StoreI, MRI);
-  if (!AMI)
+  if (!AddrModeInfo)
     return false;
-
-  bool Is32Lanes =
-      cast<GIntrinsic>(PackOp)->getIntrinsicID() == Intrinsic::aie2_pack_I8_I16;
 
   // Note: Operand 1 is the ID of the intrinsic
   Register SrcReg = PackOp->getOperand(2).getReg();
@@ -2932,12 +2764,12 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_PACK(MachineInstr &StoreI,
   bool ConstantSign = false;
   if (auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI)) {
     // SignVal = 1 for signed and 0 for dynamically signed
-    LSO = getCombinedOpcodePACK(StoreI, *PackOp, AMI->ImmediateOffset,
-                                SignVal.value().Value == 0x1, Is32Lanes);
+    LSO = getCombinedOpcodePACK(StoreI, *PackOp, AddrModeInfo->ImmediateOffset,
+                                SignVal.value().Value == 0x1);
     ConstantSign = true;
   } else {
-    LSO = getCombinedOpcodePACK(StoreI, *PackOp, AMI->ImmediateOffset, false,
-                                Is32Lanes);
+    LSO = getCombinedOpcodePACK(StoreI, *PackOp, AddrModeInfo->ImmediateOffset,
+                                false);
   }
 
   assert(LSO && "Unexpected VST.PACK combine failure");
@@ -2947,7 +2779,8 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_PACK(MachineInstr &StoreI,
   for (auto Def : StoreI.defs())
     NewInstr.addDef(Def.getReg());
 
-  addAddressingMode(NewInstr, *AMI, LSO->FitsImmediateRange, false, MRI);
+  addAddressingMode(NewInstr, *AddrModeInfo, LSO->FitsImmediateRange, false,
+                    MRI);
 
   NewInstr.addUse(SrcReg);
 

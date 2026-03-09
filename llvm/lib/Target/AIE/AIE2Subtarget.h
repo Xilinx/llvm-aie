@@ -58,7 +58,6 @@ public:
 
   bool enableMachineScheduler() const override { return true; }
   bool enablePostRAMachineScheduler() const override { return true; }
-  bool forcePostRAScheduling() const override { return true; }
   bool useAA() const override { return true; }
   bool enableEarlyIfConversion() const override { return true; }
 
@@ -86,25 +85,8 @@ public:
     AIEBaseSubtarget::adjustSchedDependency(InstrItins, Def, DefOpIdx, Use,
                                             UseOpIdx, Dep);
   }
-  void getPostRAMutations(std::vector<std::unique_ptr<ScheduleDAGMutation>>
-                              &Mutations) const override {
-    Mutations =
-        AIEBaseSubtarget::getPostRAMutationsImpl(getTargetTriple(), nullptr);
-  }
-  void getSMSMutations(std::vector<std::unique_ptr<ScheduleDAGMutation>>
-                           &Mutations) const override {
-    Mutations = AIEBaseSubtarget::getSMSMutationsImpl(getTargetTriple());
-  }
 
   bool enableSubRegLiveness() const override { return true; }
-
-  unsigned classifyGlobalReference(const GlobalValue *GV,
-                                   const TargetMachine &TM) const {
-    if (!TM.shouldAssumeDSOLocal(GV)) {
-      return AIEII::MO_GLOBAL;
-    }
-    return AIEII::MO_None;
-  }
 
 protected:
   std::unique_ptr<CallLowering> CallLoweringInfo;

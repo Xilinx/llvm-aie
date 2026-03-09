@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains the implementation of the scalar evolution expander,
@@ -1785,6 +1788,14 @@ SCEVExpander::replaceCongruentIVs(Loop *L, const DominatorTree *DT,
     // sense.
     if (OrigPhiRef->getType()->isPointerTy() != Phi->getType()->isPointerTy())
       continue;
+
+    // Check target-specific preference
+    if (TTI && !TTI->shouldMergeCongruentIVs(Phi, OrigPhiRef)) {
+      SCEV_DEBUG_WITH_TYPE(
+          DebugType, dbgs() << "INDVARS: Skipping congruent iv merge due to "
+                            << "target preference: " << *Phi << '\n');
+      continue;
+    }
 
     replaceCongruentIVInc(Phi, OrigPhiRef, L, DT, DeadInsts);
     SCEV_DEBUG_WITH_TYPE(DebugType,

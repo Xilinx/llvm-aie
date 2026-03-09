@@ -104,6 +104,8 @@ public:
                             unsigned DefaultCRVal = 0);
   MachineInstrBuilder setCtrlRegister(MachineIRBuilder &MIB, Register CRReg,
                                       unsigned Val);
+  MachineInstrBuilder setStatusRegister(MachineIRBuilder &MIB,
+                                        Register StatusReg, unsigned Val);
   AddressingModeInfo createAddressModeInfo(MachineInstr &MemI,
                                            MachineOperand &SrcDstOp,
                                            MachineOperand &PtrOp,
@@ -211,6 +213,74 @@ protected:
   bool selectG_AIE_LOAD_CONV(MachineInstr &CONVI, MachineRegisterInfo &MRI);
   bool selectVCONV(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectStartLoop(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectSetControlRegister(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectGetControlRegister(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectSetStatusRegister(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectGetStatusRegister(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectVUPS(MachineInstr &I, MachineRegisterInfo &MRI,
+                  std::optional<unsigned> crUPSModeVal = std::nullopt);
+  virtual bool selectG_AIE_LOAD_UPS(MachineInstr &StoreI,
+                                    MachineRegisterInfo &MRI,
+                                    std::optional<unsigned> crUPSModeVal) {
+    return false;
+  }
+  virtual bool setUnpackSizeRegister(MachineIRBuilder &MIB,
+                                     Intrinsic::ID IntrinsicID) {
+    return false;
+  }
+  virtual bool canCombineUNPACKLoad(MachineInstr &MemOp, MachineInstr &CombOp,
+                                    MachineRegisterInfo &MRI) = 0;
+  virtual std::optional<LoadStoreOpcodes> getCombinedOpcodeUNPACKLoad(
+      const MachineInstr &MemOp, const MachineInstr &CombOp,
+      std::optional<APInt> Immediate, bool IsSigned) = 0;
+  bool selectG_AIE_LOAD_UNPACK(MachineInstr &UNPACKI, MachineRegisterInfo &MRI);
+
+  // Virtual methods for PACK combine
+  virtual bool canCombinePACK(MachineInstr &MemOp, MachineInstr &CombOp,
+                              MachineRegisterInfo &MRI) {
+    return false;
+  }
+  virtual std::optional<LoadStoreOpcodes>
+  getCombinedOpcodePACK(const MachineInstr &MemOp, const MachineInstr &CombOp,
+                        std::optional<APInt> Immediate, bool IsSigned) {
+    return {};
+  }
+  /// Returns true if the intrinsic produces 8-bit output (vs 4-bit).
+  virtual bool isPackI8Intrinsic(Intrinsic::ID IntrinsicID) const {
+    llvm_unreachable("Target didn't implement isPackI8Intrinsic!");
+  }
+  virtual bool selectG_AIE_STORE_PACK(MachineInstr &StoreI,
+                                      MachineRegisterInfo &MRI);
+
+  /// Shared implementation for G_AIE_STORE_SRS selection.
+  /// Returns true if SRS combine was successful.
+  virtual bool selectG_AIE_STORE_SRS(MachineInstr &StoreI,
+                                     MachineRegisterInfo &MRI);
+
+  /// Check if SRS combine is possible. Override in derived classes.
+  virtual bool canCombineSRS(MachineInstr &MemOp, MachineInstr &CombOp,
+                             MachineRegisterInfo &MRI) {
+    return false;
+  }
+
+  /// Get combined opcode for SRS store. Override in derived classes.
+  virtual std::optional<LoadStoreOpcodes>
+  getCombinedOpcodeSRS(const MachineInstr &MemOp, const MachineInstr &CombOp,
+                       std::optional<APInt> Immediate, bool IsSigned) {
+    return std::nullopt;
+  }
+
+  /// Get SRS mode (0 for 32-bit acc, 1 for 64-bit acc) based on intrinsic.
+  virtual std::optional<unsigned> getSRSModeForIntrinsic(Intrinsic::ID ID) {
+    return std::nullopt;
+  }
+
+  // FIFO store selection helpers - common implementation for derived classes
+  bool selectVST_FIFO_Push(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectVST_FIFO_Flush(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectVST_FIFO_Flush1D(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectVST_FIFO_Flush2D(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectVST_FIFO_Flush3D(MachineInstr &I, MachineRegisterInfo &MRI);
 
 protected:
   MachineIRBuilder MIB;
@@ -255,6 +325,19 @@ inline MachineMemOperand *getTileMemOperand(MachineInstr &I,
   const auto *MFI = MF->getInfo<AIEMachineFunctionInfo>();
   MachinePointerInfo PtrInfo = MachinePointerInfo(MFI->getTileMemory());
   return MF->getMachineMemOperand(PtrInfo, Mode, 4, Align(4));
+}
+
+/// Get a constant VReg value or call llvm_unreachable with the provided message
+/// \param VReg The virtual register to lookup
+/// \param MRI The machine register info
+/// \param ErrorMsg The error message to display if constant is not found
+/// \return The ValueAndVReg containing the constant value
+inline ValueAndVReg getIConstantVRegValWithLookThroughOrFail(
+    Register VReg, const MachineRegisterInfo &MRI, const char *ErrorMsg) {
+  auto Result = getIConstantVRegValWithLookThrough(VReg, MRI);
+  if (!Result)
+    llvm_unreachable(ErrorMsg);
+  return *Result;
 }
 
 } // namespace llvm

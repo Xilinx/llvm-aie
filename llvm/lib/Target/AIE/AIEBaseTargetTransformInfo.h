@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -23,6 +23,13 @@
 #include "llvm/CodeGen/BasicTTIImpl.h"
 
 namespace llvm {
+
+// Forward declarations
+class PHINode;
+
+// Standalone helper function for congruent IV analysis
+bool shouldMergeCongruentIVsImpl(const PHINode *IV1, const PHINode *IV2);
+
 /// This is just a bunch of shared methods that can be easily reused.
 /// It is foreseen that some of them may be overridden in derived classes used
 /// by the actual TTIImpl classes
@@ -113,6 +120,18 @@ public:
     // considered by default by the pass.
     // Default return of allowsMisalignedMemoryAccesses is false.
     return ChainSizeInBytes >= 4;
+  }
+
+  /// Congruent IVs are induction variables that have the same SCEV expression,
+  /// meaning they start at the same value and increment by the same amount each
+  /// iteration. Normally, LLVM merges congruent IVs to reduce register pressure
+  /// and eliminate redundant computations.
+  /// For AIE targets, determine if congruent IVs should be merged.
+  /// AIE prefers to keep separate pointer IVs when one is used for loads
+  /// and the other for stores, as this enables better instruction scheduling
+  /// and utilization of independent address generation units.
+  bool shouldMergeCongruentIVs(const PHINode *IV1, const PHINode *IV2) const {
+    return shouldMergeCongruentIVsImpl(IV1, IV2);
   }
 };
 

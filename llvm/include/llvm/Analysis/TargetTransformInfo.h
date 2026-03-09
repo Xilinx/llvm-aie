@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -56,6 +56,7 @@ class InterleavedAccessInfo;
 class IntrinsicInst;
 class LoadInst;
 class Loop;
+class PHINode;
 class LoopInfo;
 class LoopVectorizationLegality;
 class ProfileSummaryInfo;
@@ -1834,6 +1835,11 @@ public:
   bool isProfitableToSinkOperands(Instruction *I,
                                   SmallVectorImpl<Use *> &Ops) const;
 
+  /// Return true if congruent IVs should be merged. Targets can implement
+  /// custom logic to decide when merging is beneficial based on usage patterns,
+  /// cost models, or architectural constraints.
+  bool shouldMergeCongruentIVs(const PHINode *IV1, const PHINode *IV2) const;
+
   /// Return true if it's significantly cheaper to shift a vector by a uniform
   /// scalar than by an amount which will vary across each lane. On x86 before
   /// AVX2 for example, there is a "psllw" instruction for the former case, but
@@ -2043,6 +2049,8 @@ public:
   virtual bool LSRWithInstrQueries() = 0;
   virtual bool isTruncateFree(Type *Ty1, Type *Ty2) = 0;
   virtual bool isProfitableToHoist(Instruction *I) = 0;
+  virtual bool shouldMergeCongruentIVs(const PHINode *IV1,
+                                       const PHINode *IV2) const = 0;
   virtual bool useAA() = 0;
   virtual bool isTypeLegal(Type *Ty) = 0;
   virtual unsigned getRegUsageForType(Type *Ty) = 0;
@@ -2629,6 +2637,10 @@ public:
   }
   bool isProfitableToHoist(Instruction *I) override {
     return Impl.isProfitableToHoist(I);
+  }
+  bool shouldMergeCongruentIVs(const PHINode *IV1,
+                               const PHINode *IV2) const override {
+    return Impl.shouldMergeCongruentIVs(IV1, IV2);
   }
   bool useAA() override { return Impl.useAA(); }
   bool isTypeLegal(Type *Ty) override { return Impl.isTypeLegal(Ty); }

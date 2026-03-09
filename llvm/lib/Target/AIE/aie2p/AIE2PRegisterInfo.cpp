@@ -432,28 +432,32 @@ Register AIE2PRegisterInfo::getControlRegister(unsigned Idx) const {
       {21, AIE2P::crMCDEn},
       {22, AIE2P::crFPNlfMask},
       {23, AIE2P::crFPCnvFx2FlMask},
-      {24, AIE2P::crFPCnvFl2FxMask},
-      {25, AIE2P::srCarry},
-      {26, AIE2P::srSS0},
-      {27, AIE2P::srMS0},
-      {28, AIE2P::srSRS_of},
-      {29, AIE2P::srUPS_of},
-      {30, AIE2P::srSparse_of},
-      {31, AIE2P::srFifo_of},
-      {32, AIE2P::srFifo_uf},
-      {33, AIE2P::srFPFlags},
-      {34, AIE2P::srF2IFlags},
-      {35, AIE2P::srF2FFlags},
-      {36, AIE2P::srF2BFlags},
-      {37, AIE2P::srFPNlf},
-      {38, AIE2P::srFPCnvFx2Fl},
-      {39, AIE2P::srFPCnvFl2Fx}
+      {24, AIE2P::crFPCnvFl2FxMask}
 
   };
 
   if (ControlRegisterMap.find(Idx) != ControlRegisterMap.end())
     return ControlRegisterMap[Idx];
   llvm_unreachable("Unexpected key for control register.");
+}
+
+Register AIE2PRegisterInfo::getStatusRegister(unsigned Idx) const {
+  // Status Register Map. Keys based on encoding.
+  static std::unordered_map<unsigned, Register> StatusRegisterMap = {
+      {25, AIE2P::srCarry},     {26, AIE2P::srSS0},
+      {27, AIE2P::srMS0},       {28, AIE2P::srSRS_of},
+      {29, AIE2P::srUPS_of},    {30, AIE2P::srSparse_of},
+      {31, AIE2P::srFifo_of},   {32, AIE2P::srFifo_uf},
+      {33, AIE2P::srFPFlags},   {34, AIE2P::srF2IFlags},
+      {35, AIE2P::srF2FFlags},  {36, AIE2P::srF2BFlags},
+      {37, AIE2P::srFPNlf},     {38, AIE2P::srFPCnvFx2Fl},
+      {39, AIE2P::srFPCnvFl2Fx}
+
+  };
+
+  if (StatusRegisterMap.find(Idx) != StatusRegisterMap.end())
+    return StatusRegisterMap[Idx];
+  llvm_unreachable("Unexpected key for status register.");
 }
 
 const TargetRegisterClass *
@@ -649,4 +653,95 @@ bool AIE2PRegisterInfo::shouldCoalesce(
 
   return TargetRegisterInfo::shouldCoalesce(MI, SrcRC, SubReg, DstRC, DstSubReg,
                                             NewRC, LIS);
+}
+
+unsigned
+AIE2PRegisterInfo::matchControlRegisterBitwidth(Register CtrlReg,
+                                                unsigned SrcConstVal) const {
+  // Modulo by width of control regs. To constrain the max possible value in
+  // the register according to register width.
+  switch (CtrlReg) {
+  case AIE2P::crSRSMode:
+  case AIE2P::crUPSMode:
+  case AIE2P::crUnpackSize:
+  case AIE2P::crPackSize:
+  case AIE2P::srsSign0:
+  case AIE2P::srsSign1:
+  case AIE2P::upsSign0:
+  case AIE2P::upsSign1:
+  case AIE2P::packSign0:
+  case AIE2P::packSign1:
+  case AIE2P::unpackSign0:
+  case AIE2P::unpackSign1:
+  case AIE2P::vaddSign0:
+  case AIE2P::vaddSign1:
+  case AIE2P::crSCDEn:
+  case AIE2P::crMCDEn:
+    return SrcConstVal % (1 << 1);
+  case AIE2P::crSat:
+    return SrcConstVal % (1 << 2);
+  case AIE2P::crRnd:
+    return SrcConstVal % (1 << 4);
+  case AIE2P::crF2FMask:
+  case AIE2P::crF2IMask:
+  case AIE2P::crFPMask:
+  case AIE2P::crF2BMask:
+    return SrcConstVal % (1 << 5);
+  case AIE2P::crFPNlfMask:
+  case AIE2P::crFPCnvFx2FlMask:
+  case AIE2P::crFPCnvFl2FxMask:
+    return SrcConstVal % (1 << 8);
+  default:
+    llvm_unreachable("Unknown control register.");
+  }
+}
+
+unsigned
+AIE2PRegisterInfo::matchStatusRegisterBitwidth(Register StatusReg,
+                                               unsigned SrcConstVal) const {
+  // Modulo by width of status regs. To constrain the max possible value in
+  // the register according to register width.
+  switch (StatusReg) {
+  case AIE2P::srCarry:
+  case AIE2P::srSRS_of:
+  case AIE2P::srUPS_of:
+  case AIE2P::srSparse_of:
+  case AIE2P::srFifo_of:
+  case AIE2P::srFifo_uf:
+    return SrcConstVal % (1 << 1);
+  case AIE2P::srFPFlags:
+  case AIE2P::srF2IFlags:
+  case AIE2P::srF2FFlags:
+  case AIE2P::srF2BFlags:
+    return SrcConstVal % (1 << 5);
+  case AIE2P::srFPNlf:
+  case AIE2P::srFPCnvFx2Fl:
+  case AIE2P::srFPCnvFl2Fx:
+    return SrcConstVal % (1 << 8);
+  case AIE2P::srSS0:
+  case AIE2P::srMS0:
+    return SrcConstVal;
+  default:
+    llvm_unreachable("Unknown status register.");
+  }
+}
+
+Register AIE2PRegisterInfo::getUnpackSignCtrlReg() const {
+  return AIE2P::unpackSign0;
+}
+
+Register AIE2PRegisterInfo::getPackSignCtrlReg() const {
+  return AIE2P::packSign0;
+}
+
+Register AIE2PRegisterInfo::getPackSizeCtrlReg() const {
+  return AIE2P::crPackSize;
+}
+
+Register AIE2PRegisterInfo::getSRSSignCtrlReg() const {
+  return AIE2P::srsSign0;
+}
+
+Register AIE2PRegisterInfo::getSRSModeCtrlReg() const {
+  return AIE2P::crSRSMode;
 }

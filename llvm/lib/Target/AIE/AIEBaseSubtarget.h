@@ -50,6 +50,16 @@ public:
   bool isAIE2P() const { return getTargetTriple().isAIE2P(); }
   bool isAIE2PS() const { return getTargetTriple().isAIE2PS(); }
 
+  void getSMSMutations(std::vector<std::unique_ptr<ScheduleDAGMutation>>
+                           &Mutations) const override {
+    Mutations = AIEBaseSubtarget::getSMSMutationsImpl(getTargetTriple());
+  }
+  void getPostRAMutations(std::vector<std::unique_ptr<ScheduleDAGMutation>>
+                              &Mutations) const override {
+    Mutations =
+        AIEBaseSubtarget::getPostRAMutationsImpl(getTargetTriple(), nullptr);
+  }
+
   void overrideSchedPolicy(MachineSchedPolicy &Policy,
                            unsigned NumRegionInstrs) const override;
 
@@ -81,6 +91,11 @@ public:
   bool enableWindowScheduler() const override;
 
   unsigned getCriticalPathLimit() const override;
+  unsigned classifyGlobalReference(const GlobalValue *GV,
+                                   const TargetMachine &TM) const;
+
+  // All AIE targets need post scheduling for correct instruction timing
+  bool forcePostRAScheduling() const override { return true; }
 };
 } // namespace llvm
 

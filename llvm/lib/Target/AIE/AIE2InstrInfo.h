@@ -99,6 +99,7 @@ public:
                            TypeSize Size) const override;
   unsigned getOpCode(MachineInstr &MI) const override;
   Register getVaddSignControlRegister() const override;
+  Register getUPSSignControlRegister() const override;
 
   virtual std::optional<ZOLSupport> getZOLSupport() const override;
   virtual std::optional<JNZDSupport> getJNZDSupport() const override;

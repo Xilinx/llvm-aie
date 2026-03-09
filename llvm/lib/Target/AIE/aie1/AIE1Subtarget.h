@@ -61,7 +61,6 @@ public:
   }
 
   bool enableMachineScheduler() const override { return false; }
-  bool forcePostRAScheduling() const override { return true; }
 
   void overrideSchedPolicy(MachineSchedPolicy &Policy,
                            unsigned NumRegionInstrs) const override {}
@@ -93,11 +92,6 @@ public:
                         const TargetSchedModel *SchedModel) const override {
     AIEBaseSubtarget::adjustSchedDependency(InstrItins, Def, DefOpIdx, Use,
                                             UseOpIdx, Dep);
-  }
-  void getPostRAMutations(std::vector<std::unique_ptr<ScheduleDAGMutation>>
-                              &Mutations) const override {
-    Mutations =
-        AIEBaseSubtarget::getPostRAMutationsImpl(getTargetTriple(), nullptr);
   }
 
 protected:

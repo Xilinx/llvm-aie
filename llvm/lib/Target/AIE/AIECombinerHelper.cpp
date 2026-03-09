@@ -10,9 +10,8 @@
 
 #include "AIECombinerHelper.h"
 #include "AIE.h"
-#include "AIE2TargetMachine.h"
 #include "AIEBaseInstrInfo.h"
-#include "MCTargetDesc/AIE2MCTargetDesc.h"
+#include "AIEBaseSubtarget.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/VectorUtils.h"
@@ -1237,8 +1236,9 @@ bool llvm::matchGlobalValOffset(MachineInstr &MI, MachineRegisterInfo &MRI,
   // transform %g = G_GLOBAL_VALUE @a, for any other case return false
   if (GlobalOp.getOffset() != 0)
     return false;
-  unsigned OpFlags = MF.getSubtarget<AIE2Subtarget>().classifyGlobalReference(
-      GV, MF.getTarget());
+  unsigned OpFlags =
+      MF.getSubtarget<AIEBaseSubtarget>().classifyGlobalReference(
+          GV, MF.getTarget());
   if (OpFlags != AIEII::MO_None)
     return false;
 
