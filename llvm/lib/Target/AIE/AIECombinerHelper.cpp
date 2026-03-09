@@ -420,6 +420,96 @@ bool isUseOf(const MachineInstr &MI, const MachineInstr &Def) {
   return false;
 }
 
+bool llvm::matchUnpadUnmerge(MachineInstr &UnpadMI, MachineRegisterInfo &MRI,
+                             const AIEBaseInstrInfo &TII,
+                             CombinerHelper &Helper,
+                             GISelChangeObserver &Observer,
+                             BuildFnTy &MatchInfo) {
+  assert(UnpadMI.getOpcode() == TII.getGenericUnpadVectorOpcode() &&
+         "Expected G_AIE_UNPAD_VECTOR");
+
+  // 1. Get UNPAD operands and types
+  const Register UnpadDst = UnpadMI.getOperand(0).getReg();
+  const Register UnpadSrc = UnpadMI.getOperand(1).getReg();
+  const LLT UnpadDstTy = MRI.getType(UnpadDst);
+
+  // 2. Find G_UNMERGE_VALUES on same source
+  MachineInstr *UnmergeMI = nullptr;
+  for (MachineInstr &UseMI : MRI.use_nodbg_instructions(UnpadSrc)) {
+    if (UseMI.getOpcode() == TargetOpcode::G_UNMERGE_VALUES) {
+      UnmergeMI = &UseMI;
+      break;
+    }
+  }
+
+  if (!UnmergeMI)
+    return false;
+
+  // 3. Verify type compatibility
+  const unsigned NumUnmergeOutputs = UnmergeMI->getNumDefs();
+  const LLT UnmergeDst0Ty = MRI.getType(UnmergeMI->getOperand(0).getReg());
+
+  // UNPAD output must match first UNMERGE output
+  if (UnpadDstTy != UnmergeDst0Ty)
+    return false;
+
+  // Collect all UNMERGE output registers
+  SmallVector<Register, 4> UnmergeDsts;
+  for (unsigned I = 0; I < NumUnmergeOutputs; ++I) {
+    UnmergeDsts.push_back(UnmergeMI->getOperand(I).getReg());
+  }
+
+  // 4. Check dominance (one must dominate the other)
+  const bool UnpadDominates = Helper.dominates(UnpadMI, *UnmergeMI);
+  const bool UnmergeDominates = Helper.dominates(*UnmergeMI, UnpadMI);
+
+  if (!UnpadDominates && !UnmergeDominates)
+    return false;
+
+  // 5. Build the transformation lambda
+  MatchInfo = [UnpadDominates, &UnpadMI, UnmergeMI, UnpadDst, UnpadSrc,
+               UnmergeDsts, UnmergeDst0Ty, NumUnmergeOutputs, &MRI,
+               &Observer](MachineIRBuilder &B) {
+    if (UnpadDominates) {
+      // Case 1: UNPAD dominates UNMERGE
+      // Create new UNMERGE at UNPAD location
+      B.setInstr(UnpadMI);
+      SmallVector<Register, 4> NewDsts;
+      for (unsigned I = 0; I < NumUnmergeOutputs; ++I) {
+        NewDsts.push_back(MRI.createGenericVirtualRegister(UnmergeDst0Ty));
+      }
+      B.buildUnmerge(NewDsts, UnpadSrc);
+
+      // Create copy to UNPAD destination
+      B.buildCopy(UnpadDst, NewDsts[0]);
+
+      // Create copies at UNMERGE location for its users
+      B.setInsertPt(*UnmergeMI->getParent(), UnmergeMI->getIterator());
+      for (unsigned I = 0; I < NumUnmergeOutputs; ++I) {
+        B.buildCopy(UnmergeDsts[I], NewDsts[I]);
+      }
+
+      // Erase both original instructions
+      Observer.erasingInstr(*UnmergeMI);
+      UnmergeMI->eraseFromParent();
+      Observer.erasingInstr(UnpadMI);
+      UnpadMI.eraseFromParent();
+
+    } else {
+      // Case 2: UNMERGE dominates UNPAD
+      // Simply copy from first UNMERGE result to UNPAD destination
+      B.setInstr(UnpadMI);
+      B.buildCopy(UnpadDst, UnmergeDsts[0]);
+
+      // Erase UNPAD
+      Observer.erasingInstr(UnpadMI);
+      UnpadMI.eraseFromParent();
+    }
+  };
+
+  return true;
+}
+
 ///  Check for dead \a InBetweenMI MI and copy-like instructions that can be
 ///  coalesced once \a MemI and \a Dest are combined.
 bool isNonCoalesceableUseOf(const MachineInstr &MemI,
@@ -1654,6 +1744,586 @@ void llvm::applyUnpadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
   MI.eraseFromParent();
 }
 
+/// Analyze which elements of a vector register are actually used by examining
+/// all uses of the register. Returns the maximum element index accessed.
+/// \param Reg The register to analyze
+/// \param MRI Machine register info
+/// \param TII Target instruction info
+/// \return The maximum element index that is accessed, or std::nullopt if
+///         the usage pattern is too complex to analyze
+std::optional<unsigned>
+llvm::getMaxUsedVectorElement(Register Reg, MachineRegisterInfo &MRI,
+                              const AIEBaseInstrInfo &TII) {
+
+  // Handler for VSEL operations: Check which elements are selected via the mask
+  auto HandleVSel = [&](const MachineInstr &User) -> std::optional<unsigned> {
+    const Register MaskReg = User.getOperand(3).getReg();
+    const auto MaskVal = getIConstantVRegVal(MaskReg, MRI);
+
+    // Can't analyze non-constant mask
+    if (!MaskVal)
+      return std::nullopt;
+
+    const uint64_t Mask = MaskVal->getZExtValue();
+    if (Mask == 0)
+      return 0; // No elements selected
+
+    // Return the highest set bit in the mask
+    return 63 - llvm::countl_zero(Mask);
+  };
+
+  // Handler for UNMERGE operations: Check which outputs are used
+  auto HandleUnmerge =
+      [&](const MachineInstr &User) -> std::optional<unsigned> {
+    const LLT SrcTy = MRI.getType(Reg);
+    const unsigned NumElems = SrcTy.getNumElements();
+    const unsigned NumDefs = User.getNumDefs();
+    const unsigned ElemsPerDef = NumElems / NumDefs;
+
+    unsigned MaxElem = 0;
+    for (unsigned I = 0; I < NumDefs; I++) {
+      if (!MRI.use_empty(User.getOperand(I).getReg())) {
+        MaxElem = std::max(MaxElem, (I + 1) * ElemsPerDef - 1);
+      }
+    }
+    return MaxElem;
+  };
+
+  // Handler for EXTRACT_VECTOR_ELT operations: Direct element access
+  auto HandleExtract =
+      [&](const MachineInstr &User) -> std::optional<unsigned> {
+    const Register IdxReg = User.getOperand(2).getReg();
+    const auto Idx = getIConstantVRegVal(IdxReg, MRI);
+
+    // Can't analyze non-constant index
+    if (!Idx)
+      return std::nullopt;
+
+    return static_cast<unsigned>(Idx->getZExtValue());
+  };
+
+  unsigned MaxElement = 0;
+
+  for (const MachineInstr &User : MRI.use_nodbg_instructions(Reg)) {
+    const unsigned Opcode = User.getOpcode();
+
+    std::optional<unsigned> Result = std::nullopt;
+
+    if (Opcode == TII.getGenericVSelOpcode()) {
+      Result = HandleVSel(User);
+    } else if (Opcode == TargetOpcode::G_UNMERGE_VALUES) {
+      Result = HandleUnmerge(User);
+    } else if (Opcode == TargetOpcode::G_EXTRACT_VECTOR_ELT ||
+               isGenericExtractOpcode(Opcode, TII)) {
+      Result = HandleExtract(User);
+    }
+
+    // If any handler couldn't analyze, bail out
+    if (!Result)
+      return std::nullopt;
+
+    MaxElement = std::max(MaxElement, *Result);
+  }
+
+  return MaxElement;
+}
+
+/// Match a chain of G_AIE_VSHIFT_RIGHT operations that
+/// results in padding with zeros.
+/// Transforms:
+///   %concat = G_CONCAT_VECTORS %src(<8 x s32>), %A(<8 x s32>)
+///   %shift1 = G_AIE_VSHIFT_RIGHT %concat, %B, 16
+///   %shift2 = G_AIE_VSHIFT_RIGHT %C, %shift1, 48
+/// Into:
+///   %zero_broadcast = G_AIE_BROADCAST_VECTOR %zero_scalar
+///   %zero_lo, %zero_hi = G_UNMERGE_VALUES %zero_broadcast
+///   %result = G_CONCAT_VECTORS %src, %zero_hi
+bool llvm::matchVShiftChainToZeroPad(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                     const AIEBaseInstrInfo &TII,
+                                     BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TII.getGenericVShiftOpcode() &&
+         "Expected G_AIE_VSHIFT_RIGHT");
+
+  // Get second operand (should be first VSHIFT)
+  const Register Src2 = MI.getOperand(2).getReg();
+  const MachineInstr *FirstShift = getDefIgnoringCopies(Src2, MRI);
+  if (!FirstShift || FirstShift->getOpcode() != TII.getGenericVShiftOpcode())
+    return false;
+
+  // Get shift amounts
+  const auto Shift1Amt =
+      getIConstantVRegVal(FirstShift->getOperand(3).getReg(), MRI);
+  const auto Shift2Amt = getIConstantVRegVal(MI.getOperand(3).getReg(), MRI);
+
+  if (!Shift1Amt || !Shift2Amt)
+    return false;
+
+  // Get the data source from first VSHIFT
+  const Register DataSrc = FirstShift->getOperand(1).getReg();
+  const Register DstReg = MI.getOperand(0).getReg();
+
+  // Calculate expected shift amounts based on vector sizes
+  const LLT DataSrcTy = MRI.getType(DataSrc);
+  const unsigned SrcSizeInBytes = DataSrcTy.getSizeInBits() / 8;
+
+  // Calculate expected shift amounts:
+  // First shift: adds padding (quarter of source size)
+  const unsigned ExpectedShift1 = SrcSizeInBytes / 4;
+  // Second shift: brings in zeros (1.5x source size)
+  const unsigned ExpectedShift2 = (SrcSizeInBytes + SrcSizeInBytes / 2) / 2;
+
+  // Verify the pattern matches expected shifts
+  if (*Shift1Amt != ExpectedShift1 || *Shift2Amt != ExpectedShift2)
+    return false;
+
+  // Build replacement
+  MatchInfo = [=, &MRI, &TII](MachineIRBuilder &B) {
+    const LLT DstTy = MRI.getType(DstReg);
+    const LLT HalfTy = DstTy.divide(2);
+    const unsigned NumElems = DstTy.getNumElements();
+    const unsigned HalfElems = NumElems / 2;
+
+    // Analyze usage to determine if we need zeros or can use G_IMPLICIT_DEF
+    const auto MaxUsed = getMaxUsedVectorElement(DstReg, MRI, TII);
+
+    Register UpperHalf;
+    if (MaxUsed && *MaxUsed < HalfElems) {
+      // Only lower half is used - can use G_IMPLICIT_DEF for upper half
+      const Register UndefVec = B.buildUndef(DstTy).getReg(0);
+      const Register UndefLower = MRI.createGenericVirtualRegister(HalfTy);
+      const Register UndefUpper = MRI.createGenericVirtualRegister(HalfTy);
+      B.buildUnmerge({UndefLower, UndefUpper}, UndefVec);
+      UpperHalf = UndefUpper;
+    } else {
+      // Upper half might be used - need actual zeros
+      const Register ZeroScalar = B.buildConstant(LLT::scalar(32), 0).getReg(0);
+      const Register ZeroBroadcast = MRI.createGenericVirtualRegister(DstTy);
+      B.buildInstr(TII.getGenericBroadcastVectorOpcode(), {ZeroBroadcast},
+                   {ZeroScalar});
+
+      const Register ZeroLower = MRI.createGenericVirtualRegister(HalfTy);
+      const Register ZeroUpper = MRI.createGenericVirtualRegister(HalfTy);
+      B.buildUnmerge({ZeroLower, ZeroUpper}, ZeroBroadcast);
+      UpperHalf = ZeroUpper;
+    }
+
+    // Extract lower half from DataSrc
+    const Register Dummy = MRI.createGenericVirtualRegister(HalfTy);
+    const Register LowerHalf = MRI.createGenericVirtualRegister(HalfTy);
+    B.buildUnmerge({LowerHalf, Dummy}, DataSrc);
+
+    // CONCAT data with upper half (either G_IMPLICIT_DEF or zeros)
+    B.buildConcatVectors(DstReg, {LowerHalf, UpperHalf});
+  };
+
+  return true;
+}
+
+/// Match G_AIE_UNPAD_VECTOR fed by G_AIE_PAD_VECTOR_UNDEF and combine to COPY.
+/// Transforms:
+///   %padded:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF %src(<8 x s32>)
+///   %dst:_(<8 x s32>) = G_AIE_UNPAD_VECTOR %padded(<16 x s32>)
+/// Into:
+///   %dst:_(<8 x s32>) = COPY %src(<8 x s32>)
+bool llvm::matchPadUnpadToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
+                               const AIEBaseInstrInfo &TII,
+                               BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TII.getGenericUnpadVectorOpcode() &&
+         "Expected G_AIE_UNPAD_VECTOR");
+
+  // Get the source of the unpad operation
+  Register UnpadDst = MI.getOperand(0).getReg();
+  Register UnpadSrc = MI.getOperand(1).getReg();
+
+  // Check if source is G_AIE_PAD_VECTOR_UNDEF
+  MachineInstr *PadMI = MRI.getVRegDef(UnpadSrc);
+  if (!PadMI || PadMI->getOpcode() != TII.getGenericPadVectorOpcode())
+    return false;
+
+  Register PadSrc = PadMI->getOperand(1).getReg();
+
+  // Type validation: ensure input of PAD matches output of UNPAD
+  LLT PadSrcTy = MRI.getType(PadSrc);
+  LLT UnpadDstTy = MRI.getType(UnpadDst);
+
+  if (PadSrcTy != UnpadDstTy)
+    return false;
+
+  // Verify types are legal for these operations
+  LLT PadDstTy = MRI.getType(PadMI->getOperand(0).getReg());
+  if (!TII.isLegalTypeToPad(PadSrcTy) || !TII.isLegalTypeToUnpad(PadDstTy))
+    return false;
+
+  // Build the lambda that will create the copy
+  MatchInfo = [=](MachineIRBuilder &B) { B.buildCopy(UnpadDst, PadSrc); };
+
+  return true;
+}
+
+/// Match G_AIE_UNPAD_VECTOR fed by G_AIE_PAD_VECTOR_UNDEF where the types
+/// don't match exactly, allowing fusion into a single G_AIE_PAD_VECTOR_UNDEF.
+/// Transforms:
+///   %padded:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF %src(<4 x s32>)
+///   %dst:_(<8 x s32>) = G_AIE_UNPAD_VECTOR %padded(<16 x s32>)
+/// Into:
+///   %dst:_(<8 x s32>) = G_AIE_PAD_VECTOR_UNDEF %src(<4 x s32>)
+bool llvm::matchPadUnpadFusion(MachineInstr &MI, MachineRegisterInfo &MRI,
+                               const AIEBaseInstrInfo &TII,
+                               BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TII.getGenericUnpadVectorOpcode() &&
+         "Expected G_AIE_UNPAD_VECTOR");
+
+  // Get the source of the unpad operation
+  Register UnpadDst = MI.getOperand(0).getReg();
+  Register UnpadSrc = MI.getOperand(1).getReg();
+
+  // Check if source is G_AIE_PAD_VECTOR_UNDEF
+  MachineInstr *PadMI = MRI.getVRegDef(UnpadSrc);
+  if (!PadMI || PadMI->getOpcode() != TII.getGenericPadVectorOpcode())
+    return false;
+
+  Register PadSrc = PadMI->getOperand(1).getReg();
+
+  // Get the types
+  LLT PadSrcTy = MRI.getType(PadSrc);
+  LLT PadDstTy = MRI.getType(PadMI->getOperand(0).getReg());
+  LLT UnpadDstTy = MRI.getType(UnpadDst);
+
+  // If input and output types match, this should be handled by
+  // matchPadUnpadToCopy which creates a COPY
+  if (PadSrcTy == UnpadDstTy)
+    return false;
+
+  // Verify that we can legally pad from PadSrc to UnpadDst
+  if (!TII.isLegalTypeToPad(PadSrcTy) || !TII.isLegalTypeToUnpad(UnpadDstTy))
+    return false;
+
+  // Verify the intermediate type is also legal
+  if (!TII.isLegalTypeToUnpad(PadDstTy))
+    return false;
+
+  // Build the lambda that will create the fused pad
+  MatchInfo = [=, &TII](MachineIRBuilder &B) {
+    B.buildInstr(TII.getGenericPadVectorOpcode(), {UnpadDst}, {PadSrc});
+  };
+
+  return true;
+}
+
+/// Match G_AIE_PAD_VECTOR_UNDEF fed by another G_AIE_PAD_VECTOR_UNDEF.
+/// Transforms:
+///   %intermediate:_(<8 x s32>) = G_AIE_PAD_VECTOR_UNDEF %src(<4 x s32>)
+///   %dst:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF %intermediate(<8 x s32>)
+/// Into:
+///   %dst:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF %src(<4 x s32>)
+bool llvm::matchPadPadFusion(MachineInstr &MI, MachineRegisterInfo &MRI,
+                             const AIEBaseInstrInfo &TII,
+                             BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TII.getGenericPadVectorOpcode() &&
+         "Expected G_AIE_PAD_VECTOR_UNDEF");
+
+  const Register OuterDst = MI.getOperand(0).getReg();
+  const Register OuterSrc = MI.getOperand(1).getReg();
+
+  // Check if source is also G_AIE_PAD_VECTOR_UNDEF
+  MachineInstr *InnerPadMI = MRI.getVRegDef(OuterSrc);
+  if (!InnerPadMI || InnerPadMI->getOpcode() != TII.getGenericPadVectorOpcode())
+    return false;
+
+  const Register InnerSrc = InnerPadMI->getOperand(1).getReg();
+
+  // Get types
+  const LLT InnerSrcTy = MRI.getType(InnerSrc);
+  const LLT OuterDstTy = MRI.getType(OuterDst);
+
+  // Verify we can legally pad directly from inner source to outer destination
+  if (!TII.isLegalTypeToPad(InnerSrcTy) || !TII.isLegalTypeToUnpad(OuterDstTy))
+    return false;
+
+  // Build the fused PAD
+  MatchInfo = [=, &TII](MachineIRBuilder &B) {
+    B.buildInstr(TII.getGenericPadVectorOpcode(), {OuterDst}, {InnerSrc});
+  };
+
+  return true;
+}
+
+/// Match G_AIE_UNPAD_VECTOR fed by another G_AIE_UNPAD_VECTOR.
+/// Transforms:
+///   %intermediate:_(<8 x s32>) = G_AIE_UNPAD_VECTOR %src(<16 x s32>)
+///   %dst:_(<4 x s32>) = G_AIE_UNPAD_VECTOR %intermediate(<8 x s32>)
+/// Into:
+///   %dst:_(<4 x s32>) = G_AIE_UNPAD_VECTOR %src(<16 x s32>)
+bool llvm::matchUnpadUnpadFusion(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                 const AIEBaseInstrInfo &TII,
+                                 BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TII.getGenericUnpadVectorOpcode() &&
+         "Expected G_AIE_UNPAD_VECTOR");
+
+  const Register OuterDst = MI.getOperand(0).getReg();
+  const Register OuterSrc = MI.getOperand(1).getReg();
+
+  // Check if source is also G_AIE_UNPAD_VECTOR
+  MachineInstr *InnerUnpadMI = MRI.getVRegDef(OuterSrc);
+  if (!InnerUnpadMI ||
+      InnerUnpadMI->getOpcode() != TII.getGenericUnpadVectorOpcode())
+    return false;
+
+  const Register InnerSrc = InnerUnpadMI->getOperand(1).getReg();
+
+  // Get types
+  const LLT InnerSrcTy = MRI.getType(InnerSrc);
+  const LLT OuterDstTy = MRI.getType(OuterDst);
+
+  // Verify we can legally unpad directly from inner source to outer destination
+  if (!TII.isLegalTypeToUnpad(InnerSrcTy) || !TII.isLegalTypeToPad(OuterDstTy))
+    return false;
+
+  // Build the fused UNPAD
+  MatchInfo = [=, &TII](MachineIRBuilder &B) {
+    B.buildInstr(TII.getGenericUnpadVectorOpcode(), {OuterDst}, {InnerSrc});
+  };
+
+  return true;
+}
+
+/// Match G_AIE_UNPAD_VECTOR fed by G_CONCAT_VECTORS where UNPAD discards
+/// upper elements, allowing fusion into a smaller G_CONCAT_VECTORS.
+/// Transforms:
+///   %concat:_(<16 x s32>) = G_CONCAT_VECTORS %a(<4 x s32>), %b(<4 x s32>),
+///                                            %c(<4 x s32>), %d(<4 x s32>)
+///   %dst:_(<8 x s32>) = G_AIE_UNPAD_VECTOR %concat(<16 x s32>)
+/// Into:
+///   %dst:_(<8 x s32>) = G_CONCAT_VECTORS %a(<4 x s32>), %b(<4 x s32>)
+bool llvm::matchConcatUnpadFusion(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                  const AIEBaseInstrInfo &TII,
+                                  BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TII.getGenericUnpadVectorOpcode() &&
+         "Expected G_AIE_UNPAD_VECTOR");
+
+  // Get UNPAD operands
+  const Register UnpadDst = MI.getOperand(0).getReg();
+  const Register UnpadSrc = MI.getOperand(1).getReg();
+
+  // Check if source is G_CONCAT_VECTORS
+  MachineInstr *ConcatMI = MRI.getVRegDef(UnpadSrc);
+  if (!ConcatMI || ConcatMI->getOpcode() != TargetOpcode::G_CONCAT_VECTORS)
+    return false;
+
+  // Get types
+  const LLT UnpadDstTy = MRI.getType(UnpadDst);
+  const LLT ConcatDstTy = MRI.getType(UnpadSrc);
+  const LLT ConcatSrcTy = MRI.getType(ConcatMI->getOperand(1).getReg());
+
+  const unsigned UnpadElements = UnpadDstTy.getNumElements();
+  const unsigned ConcatOpElements = ConcatSrcTy.getNumElements();
+
+  // Verify element counts align
+  // This ensures the UNPAD output size is an exact multiple of each CONCAT
+  // operand size, so we can cleanly extract complete operands.
+  // Example: If UNPAD outputs 8 elements and each CONCAT operand has 4
+  //          elements, then 8 % 4 = 0 (aligned), and we need exactly 2
+  //          operands.
+  // Counter-example: If UNPAD outputs 8 elements but each CONCAT operand has
+  //                  3 elements, then 8 % 3 = 2 (NOT aligned), and we can't
+  //                  cleanly extract 8 elements using 3-element chunks.
+  if (UnpadElements % ConcatOpElements != 0)
+    return false;
+
+  const unsigned NumNeededOps = UnpadElements / ConcatOpElements;
+  const unsigned TotalConcatOps = ConcatMI->getNumOperands() - 1; // -1 for def
+
+  // Must discard at least one operand to be beneficial
+  if (NumNeededOps >= TotalConcatOps)
+    return false;
+
+  // Verify CONCAT has only one use (the UNPAD)
+  if (!MRI.hasOneNonDBGUse(UnpadSrc))
+    return false;
+
+  // Verify types are legal
+  if (!TII.isLegalTypeToUnpad(ConcatDstTy))
+    return false;
+
+  // Build the transformation lambda
+  MatchInfo = [=](MachineIRBuilder &B) {
+    SmallVector<Register, 4> NeededOps;
+    for (unsigned I = 0; I < NumNeededOps; I++) {
+      NeededOps.push_back(ConcatMI->getOperand(I + 1).getReg());
+    }
+    B.buildConcatVectors(UnpadDst, NeededOps);
+  };
+
+  return true;
+}
+
+/// Match G_CONCAT_VECTORS with nested CONCAT or PAD operands that can be
+/// flattened into a single CONCAT.
+/// Transforms:
+///   %a:_(<8 x s32>) = G_CONCAT_VECTORS %x(<4 x s32>), %y(<4 x s32>)
+///   %b:_(<8 x s32>) = G_AIE_PAD_VECTOR_UNDEF %z(<4 x s32>)
+///   %dst:_(<16 x s32>) = G_CONCAT_VECTORS %a(<8 x s32>), %b(<8 x s32>)
+/// Into:
+///   %dst:_(<16 x s32>) = G_CONCAT_VECTORS %x(<4 x s32>), %y(<4 x s32>),
+///                                         %z(<4 x s32>), <undefined>
+bool llvm::matchFlattenNestedConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                    const AIEBaseInstrInfo &TII,
+                                    BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TargetOpcode::G_CONCAT_VECTORS &&
+         "Expected G_CONCAT_VECTORS");
+
+  const Register DstReg = MI.getOperand(0).getReg();
+  const LLT DstTy = MRI.getType(DstReg);
+  const unsigned DstElements = DstTy.getNumElements();
+
+  // Collect flattened operands and track if we found nesting (always with
+  // padding)
+  SmallVector<Register, 8> FlattenedOps;
+  unsigned TotalElements = 0;
+  bool FoundNestingToFlatten = false;
+  // Process each operand of the outer CONCAT
+  for (unsigned I = 1; I < MI.getNumOperands(); ++I) {
+    const Register OpReg = MI.getOperand(I).getReg();
+    MachineInstr *OpMI = MRI.getVRegDef(OpReg);
+    const LLT OpTy = MRI.getType(OpReg);
+    const unsigned OpElements = OpTy.getNumElements();
+
+    if (OpMI->getOpcode() == TargetOpcode::G_CONCAT_VECTORS) {
+      // Nested CONCAT - flatten by extracting all its operands
+      for (unsigned J = 1; J < OpMI->getNumOperands(); ++J) {
+        const Register SubOp = OpMI->getOperand(J).getReg();
+        const LLT SubOpTy = MRI.getType(SubOp);
+
+        FlattenedOps.push_back(SubOp);
+        TotalElements += SubOpTy.getNumElements();
+      }
+    } else if (OpMI->getOpcode() == TII.getGenericPadVectorOpcode()) {
+      // PAD - unwrap to source and mark padding needed
+      // Flat only if we have a pad.
+      FoundNestingToFlatten = true;
+      const Register PadSrc = OpMI->getOperand(1).getReg();
+      const LLT PadSrcTy = MRI.getType(PadSrc);
+      const unsigned PadSrcElements = PadSrcTy.getNumElements();
+
+      FlattenedOps.push_back(PadSrc);
+      TotalElements += PadSrcElements;
+
+      // Calculate padding in terms of sub-vectors
+      // The sub-vector size is the PAD source size
+      const unsigned SubVecElements = PadSrcElements;
+      const unsigned NumSubVecs = OpElements / SubVecElements;
+      const unsigned PaddingSubVecs = NumSubVecs - 1;
+
+      for (unsigned K = 0; K < PaddingSubVecs; ++K) {
+        FlattenedOps.push_back(
+            Register()); // One undefined sub-vector placeholder
+      }
+      TotalElements += PaddingSubVecs * SubVecElements;
+    } else {
+      // Regular operand - keep as-is
+
+      FlattenedOps.push_back(OpReg);
+      TotalElements += OpElements;
+    }
+  }
+
+  // Must have found at least one nested structure to flatten
+  if (!FoundNestingToFlatten)
+    return false;
+
+  // Verify total elements match destination
+  if (TotalElements != DstElements)
+    return false;
+
+  // Verify all valid operands in FlattenedOps have the same type
+  // and ensure we have at least one valid operand
+  LLT SubVecTy;
+  bool FoundValidOp = false;
+  for (const Register Op : FlattenedOps) {
+    if (Op.isValid()) {
+      const LLT OpTy = MRI.getType(Op);
+      if (!FoundValidOp) {
+        SubVecTy = OpTy;
+        FoundValidOp = true;
+      } else if (OpTy != SubVecTy) {
+        // Type mismatch in flattened operands - can't create valid CONCAT
+        return false;
+      }
+    }
+  }
+
+  // Must have at least one valid operand
+  if (!FoundValidOp)
+    return false;
+
+  // Build the transformation lambda
+  // All validation is complete - this lambda is guaranteed to succeed
+  MatchInfo = [=](MachineIRBuilder &B) {
+    SmallVector<Register, 8> FinalOps;
+
+    // Build final operand list, creating undefined for placeholders
+    for (const Register Op : FlattenedOps) {
+      if (!Op.isValid()) {
+        // Create undefined for padding with the same type as other operands
+        FinalOps.push_back(B.buildUndef(SubVecTy).getReg(0));
+      } else {
+        FinalOps.push_back(Op);
+      }
+    }
+
+    B.buildConcatVectors(DstReg, FinalOps);
+  };
+
+  return true;
+}
+
+/// Match G_AIE_PAD_VECTOR_UNDEF fed by G_AIE_UNPAD_VECTOR and combine to COPY.
+/// Transforms:
+///   %unpadded:_(<4 x s32>) = G_AIE_UNPAD_VECTOR %src(<16 x s32>)
+///   %dst:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF %unpadded(<4 x s32>)
+/// Into:
+///   %dst:_(<16 x s32>) = COPY %src(<16 x s32>)
+bool llvm::matchUnpadPadToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
+                               const AIEBaseInstrInfo &TII,
+                               BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TII.getGenericPadVectorOpcode() &&
+         "Expected G_AIE_PAD_VECTOR_UNDEF");
+
+  // Get the source of the pad operation
+  Register PadDst = MI.getOperand(0).getReg();
+  Register PadSrc = MI.getOperand(1).getReg();
+
+  // Check if source is G_AIE_UNPAD_VECTOR
+  MachineInstr *UnpadMI = MRI.getVRegDef(PadSrc);
+  if (!UnpadMI || UnpadMI->getOpcode() != TII.getGenericUnpadVectorOpcode())
+    return false;
+
+  Register UnpadSrc = UnpadMI->getOperand(1).getReg();
+
+  // Type validation: ensure output of UNPAD matches input of PAD
+  LLT UnpadDstTy = MRI.getType(UnpadMI->getOperand(0).getReg());
+  LLT PadSrcTy = MRI.getType(PadSrc);
+
+  if (UnpadDstTy != PadSrcTy)
+    return false;
+
+  // Verify input of UNPAD matches output of PAD
+  LLT UnpadSrcTy = MRI.getType(UnpadSrc);
+  LLT PadDstTy = MRI.getType(PadDst);
+
+  if (UnpadSrcTy != PadDstTy)
+    return false;
+
+  // Verify types are legal for these operations
+  if (!TII.isLegalTypeToPad(PadSrcTy) || !TII.isLegalTypeToUnpad(UnpadSrcTy))
+    return false;
+
+  // Build the lambda that will create the copy
+  MatchInfo = [=](MachineIRBuilder &B) { B.buildCopy(PadDst, UnpadSrc); };
+
+  return true;
+}
+
 // Match something like:
 // %0:_(s32), %1:_(s32), %2:_(s32), %3:_(s32) = G_UNMERGE_VALUES %10(<4 x s32>)
 // %4:_(s32) = G_IMPLICIT_DEF
@@ -1837,6 +2507,83 @@ void llvm::applyUnmergeConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
 
   Observer.erasingInstr(MI);
   MI.eraseFromParent();
+}
+
+/// Match duplicate vector operations with identical operands for CSE
+/// optimization.
+///
+/// Currently handles: G_CONCAT_VECTORS
+///
+/// This combiner can be extended to other pure vector operations after proper
+/// testing, such as:
+/// - G_AIE_UNPAD_VECTOR: Extracts lower elements from a padded vector
+/// - G_AIE_PAD_VECTOR_UNDEF: Pads a vector with undefined upper elements
+///
+/// The implementation is already general enough to support these operations.
+/// To extend, simply add the desired opcodes to the wip_match_opcode list in
+/// the combine_cse_vector_ops rule in AIECombine.td.
+///
+/// Algorithm:
+/// Uses MRI to efficiently find potential duplicates by checking all users of
+/// the first input operand. For each candidate with matching opcode and operand
+/// count, verifies all operands match exactly. If a dominating duplicate is
+/// found, replaces the current operation with a copy from the earlier result.
+///
+/// \param MI The instruction to check for duplication
+/// \param MRI Machine register info for querying definitions and uses
+/// \param Helper Combiner helper for dominance checks
+/// \param MatchInfo Output parameter - register to copy from if match found
+/// \return true if a dominating duplicate was found
+bool llvm::matchCSEVectorOp(MachineInstr &MI, MachineRegisterInfo &MRI,
+                            CombinerHelper &Helper, Register &MatchInfo) {
+  const unsigned Opcode = MI.getOpcode();
+
+  // The tablegen rule filters to only the supported opcodes:
+  // G_CONCAT_VECTORS.
+  // We don't need to assert here since the match pattern guarantees this
+
+  const unsigned NumOps = MI.getNumOperands();
+  if (NumOps < 2)
+    return false;
+
+  // Get the first input operand (operand 1 for all these operations)
+  const Register FirstInput = MI.getOperand(1).getReg();
+
+  // Check all users of the first input register to find potential duplicates
+  for (MachineInstr &UserMI : MRI.use_nodbg_instructions(FirstInput)) {
+    // Must be the same opcode
+    if (UserMI.getOpcode() != Opcode)
+      continue;
+
+    // Skip the current instruction itself
+    if (&UserMI == &MI)
+      continue;
+
+    // Check if operand count matches
+    if (UserMI.getNumOperands() != NumOps)
+      continue;
+
+    // Check if all input operands match (starting from operand 1)
+    bool AllMatch = true;
+    for (unsigned i = 1; i < NumOps; ++i) {
+      if (UserMI.getOperand(i).getReg() != MI.getOperand(i).getReg()) {
+        AllMatch = false;
+        break;
+      }
+    }
+
+    if (!AllMatch)
+      continue;
+
+    // Check dominance: UserMI must dominate MI for safe CSE
+    if (Helper.dominates(UserMI, MI)) {
+      // Found a dominating duplicate - return its result register
+      MatchInfo = UserMI.getOperand(0).getReg();
+      return true;
+    }
+  }
+
+  return false;
 }
 
 /// This function tracks chain of vector updates using .upd vector intrinsic.

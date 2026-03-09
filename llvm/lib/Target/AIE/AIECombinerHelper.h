@@ -223,6 +223,9 @@ void applyUnmergeConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
                         std::pair<MachineInstr *, unsigned> &MatchInfo,
                         GISelChangeObserver &Observer);
 
+bool matchCSEVectorOp(MachineInstr &MI, MachineRegisterInfo &MRI,
+                      CombinerHelper &Helper, Register &MatchInfo);
+
 bool matchUpdToConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
                       const AIEBaseInstrInfo &TII,
                       std::map<unsigned, Register> &IndexRegMap);
@@ -358,6 +361,47 @@ bool matchBroadcastExtractToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
 bool matchVSelToUnmergeConcatOrCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
                                     const AIEBaseInstrInfo &TII,
                                     BuildFnTy &MatchInfo);
+
+bool matchVShiftChainToZeroPad(MachineInstr &MI, MachineRegisterInfo &MRI,
+                               const AIEBaseInstrInfo &TII,
+                               BuildFnTy &MatchInfo);
+
+/// Analyze which elements of a vector register are actually used by examining
+/// all uses of the register.
+/// \param Reg The register to analyze
+/// \param MRI Machine register info
+/// \param TII Target instruction info
+/// \return The maximum element index that is accessed, or std::nullopt if
+///         the usage pattern is too complex to analyze
+std::optional<unsigned> getMaxUsedVectorElement(Register Reg,
+                                                MachineRegisterInfo &MRI,
+                                                const AIEBaseInstrInfo &TII);
+
+bool matchPadUnpadToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
+                         const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
+
+bool matchUnpadPadToCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
+                         const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
+
+bool matchUnpadUnmerge(MachineInstr &MI, MachineRegisterInfo &MRI,
+                       const AIEBaseInstrInfo &TII, CombinerHelper &Helper,
+                       GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
+
+bool matchPadUnpadFusion(MachineInstr &MI, MachineRegisterInfo &MRI,
+                         const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
+
+bool matchPadPadFusion(MachineInstr &MI, MachineRegisterInfo &MRI,
+                       const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
+
+bool matchUnpadUnpadFusion(MachineInstr &MI, MachineRegisterInfo &MRI,
+                           const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
+
+bool matchConcatUnpadFusion(MachineInstr &MI, MachineRegisterInfo &MRI,
+                            const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
+
+bool matchFlattenNestedConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
+                              const AIEBaseInstrInfo &TII,
+                              BuildFnTy &MatchInfo);
 
 } // namespace llvm
 

@@ -107,6 +107,69 @@ def combine_unpad_vector : GICombineRule<
   (apply [{ applyUnpadVector(*${root}, MRI, B, Observer); }])
 >;
 
+def combine_vshift_chain_to_zero_pad : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_AIE_VSHIFT_RIGHT): $root,
+  [{ return matchVShiftChainToZeroPad(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])
+>;
+
+def combine_pad_unpad_to_copy : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_AIE_UNPAD_VECTOR): $root,
+  [{ return matchPadUnpadToCopy(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])
+>;
+
+def combine_unpad_pad_to_copy : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_AIE_PAD_VECTOR_UNDEF): $root,
+  [{ return matchUnpadPadToCopy(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])
+>;
+
+def combine_unpad_unmerge : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_AIE_UNPAD_VECTOR): $root,
+  [{ return matchUnpadUnmerge(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), Helper, Observer, ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])
+>;
+
+def combine_pad_unpad_fusion : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_AIE_UNPAD_VECTOR): $root,
+  [{ return matchPadUnpadFusion(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])
+>;
+
+def combine_pad_pad_fusion : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_AIE_PAD_VECTOR_UNDEF): $root,
+  [{ return matchPadPadFusion(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])
+>;
+
+def combine_unpad_unpad_fusion : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_AIE_UNPAD_VECTOR): $root,
+  [{ return matchUnpadUnpadFusion(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])
+>;
+
+def combine_concat_unpad_fusion : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_AIE_UNPAD_VECTOR): $root,
+  [{ return matchConcatUnpadFusion(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])
+>;
+
+def combine_flatten_nested_concat : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_CONCAT_VECTORS): $root,
+  [{ return matchFlattenNestedConcat(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])
+>;
+
 def combine_vector_broadcast : GICombineRule<
   (defs root:$root, combine_splat_vector_matchdata:$matchinfo),
   (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
@@ -285,6 +348,10 @@ def combine_trunc_load : GICombineRule<
 def aie_additional_combines : GICombineGroup<[
   combine_unpad_vector,
   combine_pad_vector,
+  combine_pad_unpad_to_copy,
+  combine_unpad_pad_to_copy,
+  combine_pad_pad_fusion,
+  combine_unpad_unpad_fusion,
   combine_narrow_phi_node_s20,
   combine_globalval_offset,
   combine_extract_vector_elt_and_zsa_ext,
@@ -322,7 +389,12 @@ def aie2p_additional_combines : GICombineGroup<[
   combine_vector_shuffle_to_extract_insert_elt_to_broadcast,
   combine_bitcast_unmerge_swap,
   combine_phi_bitcast_swap,
-  combine_vsel_to_unmerge_concat
+  combine_vsel_to_unmerge_concat,
+  combine_vshift_chain_to_zero_pad,
+  combine_unpad_unmerge,
+  combine_pad_unpad_fusion,
+  combine_concat_unpad_fusion,
+  combine_flatten_nested_concat
 ]>;
 
 def AIE2PreLegalizerCombiner
@@ -420,6 +492,18 @@ def combine_offset_load_store_share_ptradd : GICombineRule<
   (apply [{ applyOffsetLoadStoreSharePtrAdd(*${root}, MRI, B, ${matchinfo}, Observer); }])
 >;
 
+def combine_cse_vector_ops_matchdata: GIDefMatchData<"Register">;
+def combine_cse_vector_ops : GICombineRule<
+  (defs root:$root, combine_cse_vector_ops_matchdata:$matchinfo),
+  (match (wip_match_opcode G_CONCAT_VECTORS):$root,
+         [{ return matchCSEVectorOp(*${root}, MRI, Helper, ${matchinfo}); }]),
+  (apply [{ 
+    B.setInstrAndDebugLoc(*${root});
+    B.buildCopy(${root}->getOperand(0).getReg(), ${matchinfo});
+    Observer.erasingInstr(*${root});
+    ${root}->eraseFromParent();
+  }])
+>;
 
 def combine_global_load_store_increment : GICombineRule <
   (defs root:$root),
@@ -451,7 +535,11 @@ def aie2_postlegalizer_custom_combines : GICombineGroup<[
 // Post-legalizer custom combines for AIE2P and more recent targets (AIE2PS, etc.).
 def aie2p_plus_postlegalizer_custom_combines : GICombineGroup<[
   combine_extract_vector_assert_combine,
-  combine_extract_broadcast_to_scalar
+  combine_extract_broadcast_to_scalar,
+  combine_vshift_chain_to_zero_pad,
+  combine_pad_unpad_to_copy,
+  combine_unpad_pad_to_copy,
+  combine_cse_vector_ops
 ]>;
 
 def AIE2PostLegalizerCustomCombiner

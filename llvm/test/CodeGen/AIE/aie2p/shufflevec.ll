@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -O2 -mtriple=aie2p -verify-machineinstrs --issue-limit=1 %s -o - | FileCheck %s
 
 define <8 x i32> @test_shuffle_vector_to_concat_vector_8x32_v4x32(<4 x i32> noundef %a, <4 x i32> noundef %b) {
@@ -596,8 +596,8 @@ define <16 x i32> @shuffle_vector_to_unmerge_concat_lo_hi(<16 x i32> noundef %a,
 ; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    vmov wl0, wh2 // Delay Slot 3
-; CHECK-NEXT:    vmov wh0, wl2 // Delay Slot 2
+; CHECK-NEXT:    vmov wh0, wl2 // Delay Slot 3
+; CHECK-NEXT:    vmov wl0, wh2 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %shuffle = shufflevector <16 x i32> %a, <16 x i32> %b, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
@@ -791,14 +791,12 @@ define <16 x i32> @shuffle_concat_extracted_subvectors_vecToExtract_sameSize1(<1
 define <16 x i32> @shuffle_concat_extracted_subvectors_vecToExtract_sameSize2(<16 x i32> %a, <16 x i32> %b) {
 ; CHECK-LABEL: shuffle_concat_extracted_subvectors_vecToExtract_sameSize2:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    mova r0, #48; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    mova r16, #15; nopx
-; CHECK-NEXT:    vshift x0, x0, x2, r0
+; CHECK-NEXT:    mova r0, #48; nopxm
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vshift x4, x0, x2, r0 // Delay Slot 5
-; CHECK-NEXT:    vsel.32 x0, x0, x2, r16 // Delay Slot 4
-; CHECK-NEXT:    vsel.32 x4, x4, x2, r16 // Delay Slot 3
-; CHECK-NEXT:    vmov wh0, wl4 // Delay Slot 2
+; CHECK-NEXT:    mova r16, #15 // Delay Slot 5
+; CHECK-NEXT:    vshift x0, x0, x2, r0 // Delay Slot 4
+; CHECK-NEXT:    vsel.32 x0, x0, x2, r16 // Delay Slot 3
+; CHECK-NEXT:    vmov wh0, wl0 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
   %shuffle = shufflevector <16 x i32> %a, <16 x i32> %b, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 0, i32 1, i32 2, i32 3, i32 undef, i32 1, i32 2, i32 3, i32 0, i32 1, i32 2, i32 3>
   ret <16 x i32> %shuffle
@@ -827,14 +825,11 @@ define <16 x i32> @shuffle_concat_extracted_subvectors_vecToExtract_DiffSize1(<1
 define <16 x i32> @shuffle_concat_extracted_subvectors_vecToExtract_DiffSize2(<16 x i32> %a, <16 x i32> %b) {
 ; CHECK-LABEL: shuffle_concat_extracted_subvectors_vecToExtract_DiffSize2:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    mova r0, #16; nopx
-; CHECK-NEXT:    mova r16, #15
-; CHECK-NEXT:    vshift x0, x4, x0, r0
-; CHECK-NEXT:    mova r0, #48
-; CHECK-NEXT:    vshift x0, x0, x0, r0
-; CHECK-NEXT:    vsel.32 x0, x0, x4, r16
+; CHECK-NEXT:    mova r0, #48; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    mova r16, #15; nopx
+; CHECK-NEXT:    vmov x0, x4
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vmov wl4, wh4 // Delay Slot 5
+; CHECK-NEXT:    vmov wl4, wh0 // Delay Slot 5
 ; CHECK-NEXT:    vshift x2, x0, x2, r0 // Delay Slot 4
 ; CHECK-NEXT:    vsel.32 x2, x2, x4, r16 // Delay Slot 3
 ; CHECK-NEXT:    vmov wh0, wl2 // Delay Slot 2
