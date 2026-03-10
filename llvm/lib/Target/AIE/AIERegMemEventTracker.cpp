@@ -247,7 +247,16 @@ int AIERegMemEventTracker::checkLockDependency(int CurrSafeDistance,
 int AIERegMemEventTracker::eventCycle(int Cycle, int Delay, bool IsBackward,
                                       bool InSeparateRegion,
                                       int TotalCycles) const {
+  // Cycle is the instruction's distance from the tracking anchor (EntrySU for
+  // forward, ExitSU for backward). Delay is how many cycles after issue the
+  // event occurs.
+  //   Forward:  the event is Delay cycles further from EntrySU → add.
+  //   Backward: the event is Delay cycles closer to ExitSU → subtract.
   int Event = IsBackward ? (Cycle - Delay) : (Cycle + Delay);
+  // When projecting events from a separate region (e.g. a loop body into an
+  // adjacent block), shift by -TotalCycles so that cycle 0 represents the
+  // boundary between the two regions. Positive values extend into the adjacent
+  // block; negative values remain inside the source region.
   if (InSeparateRegion)
     Event -= TotalCycles;
   return Event;
@@ -283,8 +292,12 @@ void AIERegMemEventTracker::processInstruction(MachineInstr *BundledMI,
     assert(OptMOCycle);
     const int RegEvent = eventCycle(Cycle, static_cast<int>(*OptMOCycle),
                                     IsBackward, InSeparateRegion, TotalCycles);
-    // Forward: only track events that extend past the region boundary.
-    // Backward: always track (negative values represent nearby events).
+    // When processing a separate region, eventCycle shifts events so that
+    // cycle 0 is the region boundary:
+    //   Forward (projecting into epilogue): events with RegEvent <= 0 completed
+    //     before the epilogue starts and cannot cause hazards — skip them.
+    //   Backward (projecting into preheader): events with negative RegEvent are
+    //     close to the boundary and still constrain the preheader — keep them.
     if (IsBackward || !InSeparateRegion || RegEvent > 0)
       updateUseDefMaxCycle(MO.getReg(), RegEvent, MO.isDef());
   }
