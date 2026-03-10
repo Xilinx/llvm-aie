@@ -1219,6 +1219,9 @@ static const ConfigStrategy::Configuration Heuristics[] = {
 bool PostPipeliner::tryApproaches() {
   DEBUG_SUMMARY(dbgs() << "-- MinLength=" << MinLength << "\n");
   StringRef Letters = TII->getFormatInterface()->getSlotLetters();
+
+  // Track which schedule lengths have already been dumped to avoid
+  // redundant interval output when multiple strategies share the same length.
   SmallSet<int, 3> DumpedLengths;
   DumpedLengths.insert(MinLength);
   int HeuristicIndex = 0;
@@ -1226,8 +1229,14 @@ bool PostPipeliner::tryApproaches() {
     if (Heuristic >= 0 && Heuristic != HeuristicIndex++) {
       continue;
     }
-    ConfigStrategy S(*DAG, Info, MinLength + Config.ExtraStages * II,
-                     Config.TopDown, Config.Alternate, Config.Components);
+    // Each strategy may target a different schedule length based on its
+    // ExtraStages setting. Dump the intervals once per unique length.
+    int StrategyLength = MinLength + Config.ExtraStages * II;
+    if (DumpedLengths.insert(StrategyLength).second) {
+      DEBUG_SUMMARY(dumpIntervals(Info, StrategyLength, II, Letters));
+    }
+    ConfigStrategy S(*DAG, Info, StrategyLength, Config.TopDown,
+                     Config.Alternate, Config.Components);
     resetSchedule(/*FullReset=*/true);
     for (int Run = 0; Run < Config.Runs && Run < HeuristicRuns; Run++) {
       DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name() << " run=" << Run
@@ -1246,7 +1255,13 @@ bool PostPipeliner::tryApproaches() {
     }
     DEBUG_SUMMARY(dbgs() << "    Strategy " << S.name() << " failed\n");
   }
-  IterCountSlackStrategy Relaxed(*DAG, Info, MinLength + II);
+  // Try a relaxed strategy with one additional stage worth of slack,
+  // giving more freedom for placement at the cost of higher stage count.
+  int RelaxedLength = MinLength + II;
+  if (DumpedLengths.insert(RelaxedLength).second) {
+    DEBUG_SUMMARY(dumpIntervals(Info, RelaxedLength, II, Letters));
+  }
+  IterCountSlackStrategy Relaxed(*DAG, Info, RelaxedLength);
   resetSchedule(/*FullReset=*/true);
   if (scheduleWithStrategy(Relaxed)) {
     return true;
