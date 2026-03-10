@@ -9,6 +9,7 @@
 
 # RUN: llc -mtriple aie2 -run-pass=aie-preisel-combiner -verify-machineinstrs %s -o - | FileCheck %s
 # RUN: llc -mtriple aie2p -run-pass=aie-preisel-combiner -verify-machineinstrs %s -o - | FileCheck %s
+# RUN: llc -mtriple aie2ps -run-pass=aie-preisel-combiner -verify-machineinstrs %s -o - | FileCheck %s
 
 
 # Cross bank copy of an undef can be simplified to an implicit def.

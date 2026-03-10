@@ -54,6 +54,9 @@
 ; AIE-O0-NEXT:      Legalizer
 ; AIE-O0-NEXT:      RegBankSelect
 ; AIE-O0-NEXT:      Analysis for ComputingKnownBits
+; AIE-O0-NEXT:      MachineDominator Tree Construction
+; AIE-O0-NEXT:      Analysis containing CSE Info
+; AIE-O0-NEXT:      AIE Pre-ISel Combiner
 ; AIE-O0-NEXT:      InstructionSelect
 ; AIE-O0-NEXT:      ResetMachineFunction
 ; AIE-O0-NEXT:      Finalize ISel and expand pseudo-instructions
@@ -191,6 +194,9 @@
 ; AIE-O1-NEXT:      AIE Post Legalizer Custom Combiner
 ; AIE-O1-NEXT:      RegBankSelect
 ; AIE-O1-NEXT:      Analysis for ComputingKnownBits
+; AIE-O1-NEXT:      MachineDominator Tree Construction
+; AIE-O1-NEXT:      Analysis containing CSE Info
+; AIE-O1-NEXT:      AIE Pre-ISel Combiner
 ; AIE-O1-NEXT:      Lazy Branch Probability Analysis
 ; AIE-O1-NEXT:      Lazy Block Frequency Analysis
 ; AIE-O1-NEXT:      InstructionSelect
@@ -412,6 +418,9 @@
 ; AIE-O23-NEXT:      AIE Post Legalizer Custom Combiner
 ; AIE-O23-NEXT:      RegBankSelect
 ; AIE-O23-NEXT:      Analysis for ComputingKnownBits
+; AIE-O23-NEXT:      MachineDominator Tree Construction
+; AIE-O23-NEXT:      Analysis containing CSE Info
+; AIE-O23-NEXT:      AIE Pre-ISel Combiner
 ; AIE-O23-NEXT:      Lazy Branch Probability Analysis
 ; AIE-O23-NEXT:      Lazy Block Frequency Analysis
 ; AIE-O23-NEXT:      InstructionSelect
