@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file provides Sema routines for C++ overloading.
@@ -1996,12 +1999,17 @@ static bool IsFloatingPointConversion(Sema &S, QualType FromType,
   // if their representation is different until there is back end support
   // We of course allow this conversion if long double is really double.
 
-  // Conversions between bfloat16 and float16 are currently not supported.
-  if ((FromType->isBFloat16Type() &&
-       (ToType->isFloat16Type() || ToType->isHalfType())) ||
-      (ToType->isBFloat16Type() &&
-       (FromType->isFloat16Type() || FromType->isHalfType())))
-    return false;
+  // Conversions between bfloat16 and float16 are currently not supported,
+  // except for aie2ps target which has hardware support for these conversions.
+  llvm::Triple::ArchType Arch = S.Context.getTargetInfo().getTriple().getArch();
+  bool AllowBF16FP16Conversion = (Arch == llvm::Triple::aie2ps);
+  if (!AllowBF16FP16Conversion) {
+    if ((FromType->isBFloat16Type() &&
+         (ToType->isFloat16Type() || ToType->isHalfType())) ||
+        (ToType->isBFloat16Type() &&
+         (FromType->isFloat16Type() || FromType->isHalfType())))
+      return false;
+  }
 
   // Conversions between IEEE-quad and IBM-extended semantics are not
   // permitted.
