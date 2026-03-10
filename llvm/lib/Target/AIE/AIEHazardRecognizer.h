@@ -62,6 +62,18 @@ using ResourceSet = StaticBitSet<TotalNumResources>;
 
 // To be merged with AIEResourceCycle
 class FuncUnitWrapper {
+public:
+  enum class ConflictKind {
+    None,
+    Slot,
+    MemoryBank,
+    MemoryObject,
+    FuncUnitRequired,
+    FuncUnitReserved,
+    Format
+  };
+
+private:
   /// The format interface to interpret bundle constraints
   static const AIEBaseMCFormats *FormatInterface;
   /// Architecture-specific single-letter abbreviations for slots
@@ -83,6 +95,9 @@ class FuncUnitWrapper {
 
   /// The occupied pointer objects
   MemoryObjectsBits MemObjectsBits = 0;
+
+  /// Identify the first resource conflict between this wrapper and \p Other.
+  ConflictKind getConflictKind(const FuncUnitWrapper &Other) const;
 
 public:
   /// IssueCount - Count instructions issued in this cycle.
@@ -128,6 +143,12 @@ public:
 
   FuncUnitWrapper &operator|=(const FuncUnitWrapper &Other);
   bool conflict(const FuncUnitWrapper &Other) const;
+
+#ifndef NDEBUG
+  /// Return a human-readable description of the first resource conflict
+  /// between this wrapper and \p Other. Only for debug logging.
+  std::string describeConflict(const FuncUnitWrapper &Other) const;
+#endif
 };
 
 struct MemoryObjectEnumerator {
@@ -139,6 +160,16 @@ private:
 
 public:
   std::optional<unsigned> getObjectNumber(const Value *Object);
+};
+
+/// Extracted MI metadata needed for conflict checking and description.
+struct MIResourceParams {
+  unsigned SchedClass;
+  SlotBits SlotSet;
+  SlotBits ConflictSet;
+  MemoryBankBits Banks;
+  MemoryObjectsBits ObjBits;
+  SmallVector<int, 2> MemCycles;
 };
 
 /// This Hazard Recognizer is primarily intended to work together
@@ -271,6 +302,15 @@ public:
   bool checkConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
                      MachineInstr &MI, int DeltaCycles) const;
 
+#ifndef NDEBUG
+  /// Return a human-readable description of the first resource conflict
+  /// detected between \p MI and the current \p Scoreboard state at
+  /// \p DeltaCycles. Only intended for debug logging.
+  std::string
+  getConflictDescription(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                         MachineInstr &MI, int DeltaCycles) const;
+#endif
+
 protected:
   ScheduleHazardRecognizer::HazardType getHazardType(const MCInstrDesc &Desc,
                                                      int DeltaCycles) const;
@@ -281,6 +321,11 @@ protected:
                 MemoryBankBits MemoryBanks, uint64_t MemObjectsBits,
                 SmallVector<int, 2> MemoryAccessCycles, int DeltaCycles,
                 std::optional<int> FUDepthLimit);
+
+  static bool
+  checkConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                const InstrItineraryData *ItinData, const MIResourceParams &P,
+                int DeltaCycles, std::optional<int> FUDepthLimit);
 
   static void enterResources(ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
                              const InstrItineraryData *ItinData,

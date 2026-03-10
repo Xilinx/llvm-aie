@@ -140,22 +140,112 @@ FuncUnitWrapper &FuncUnitWrapper::operator|=(const FuncUnitWrapper &Other) {
   return *this;
 }
 
-bool FuncUnitWrapper::conflict(const FuncUnitWrapper &Other) const {
-  if ((Slots & Other.Slots) != 0 || (MemoryBanks & Other.MemoryBanks) != 0 ||
-      (MemObjectsBits & Other.MemObjectsBits) != 0 ||
-      (Conflicts & Other.Slots) != 0 || (Slots & Other.Conflicts) != 0 ||
-      Required.overlap(Other.Required) || Reserved.overlap(Other.Required) ||
-      Required.overlap(Other.Reserved)) {
+FuncUnitWrapper::ConflictKind
+FuncUnitWrapper::getConflictKind(const FuncUnitWrapper &Other) const {
+  if ((Slots & Other.Slots) != 0 || (Conflicts & Other.Slots) != 0 ||
+      (Slots & Other.Conflicts) != 0)
+    return ConflictKind::Slot;
 
-    return true;
-  }
+  if ((MemoryBanks & Other.MemoryBanks) != 0)
+    return ConflictKind::MemoryBank;
+
+  if ((MemObjectsBits & Other.MemObjectsBits) != 0)
+    return ConflictKind::MemoryObject;
+
+  if (Required.overlap(Other.Required))
+    return ConflictKind::FuncUnitRequired;
+
+  if (Reserved.overlap(Other.Required) || Required.overlap(Other.Reserved))
+    return ConflictKind::FuncUnitReserved;
 
   // Note: Don't check formats unless both have occupied slots.
   // This allows representing a blocked cycle (Slots = ~0) without knowing
   // the slot and format details.
-  return Slots && Other.Slots &&
-         !FormatInterface->isFormatAvailable(Slots | Other.Slots);
+  if (Slots && Other.Slots &&
+      !FormatInterface->isFormatAvailable(Slots | Other.Slots))
+    return ConflictKind::Format;
+
+  return ConflictKind::None;
 }
+
+bool FuncUnitWrapper::conflict(const FuncUnitWrapper &Other) const {
+  return getConflictKind(Other) != ConflictKind::None;
+}
+
+#ifndef NDEBUG
+/// Format the set bits of \p Bits as a human-readable string. When
+/// \p Letters is non-empty, each set bit is represented by its
+/// corresponding letter; otherwise bits are listed as comma-separated
+/// numeric indices wrapped in braces.
+static std::string describeBits(uint64_t Bits, StringRef Letters,
+                                int NumBits = 10) {
+  if (!Letters.empty())
+    NumBits = Letters.size();
+  std::string Desc;
+  Desc.reserve(NumBits);
+  std::bitset<64> BitSet(Bits);
+  for (int J = 0; J < NumBits; J++) {
+    if (!BitSet.test(J))
+      continue;
+    if (!Letters.empty()) {
+      Desc += Letters[J];
+    } else {
+      if (!Desc.empty())
+        Desc += ",";
+      Desc += std::to_string(J);
+    }
+  }
+  if (Letters.empty() && !Desc.empty())
+    Desc = "{" + Desc + "}";
+  return Desc;
+}
+
+/// Format the intersection of resource sets \p A and \p B as a
+/// brace-enclosed, comma-separated list of overlapping resource indices.
+static std::string describeResourceSet(const ResourceSet &A,
+                                       const ResourceSet &B) {
+  std::string Desc;
+  Desc.reserve(A.getNumBits() * 3);
+  for (int J = 0; J < A.getNumBits(); J++) {
+    if (!A.contains(J) || !B.contains(J))
+      continue;
+    if (!Desc.empty())
+      Desc += ",";
+    Desc += std::to_string(J);
+  }
+  if (!Desc.empty())
+    Desc = "{" + Desc + "}";
+  return Desc;
+}
+
+std::string
+FuncUnitWrapper::describeConflict(const FuncUnitWrapper &Other) const {
+  switch (getConflictKind(Other)) {
+  case ConflictKind::None:
+    return "None";
+  case ConflictKind::Slot: {
+    const SlotBits Overlap = (Slots & Other.Slots) | (Conflicts & Other.Slots) |
+                             (Slots & Other.Conflicts);
+    return "Slot " + describeBits(Overlap, SlotLetters);
+  }
+  case ConflictKind::MemoryBank:
+    return "MemoryBank " + describeBits(MemoryBanks & Other.MemoryBanks, {});
+  case ConflictKind::MemoryObject:
+    return "MemoryObject " +
+           describeBits(MemObjectsBits & Other.MemObjectsBits, {});
+  case ConflictKind::FuncUnitRequired:
+    return "FuncUnit Required " + describeResourceSet(Required, Other.Required);
+  case ConflictKind::FuncUnitReserved:
+    if (Reserved.overlap(Other.Required))
+      return "FuncUnit Reserved " +
+             describeResourceSet(Reserved, Other.Required);
+    return "FuncUnit Reserved " + describeResourceSet(Required, Other.Reserved);
+  case ConflictKind::Format:
+    return "Format " + describeBits(Slots | Other.Slots, SlotLetters);
+  }
+  llvm_unreachable("Unhandled ConflictKind");
+}
+#endif
 
 namespace {
 
@@ -558,20 +648,85 @@ ScheduleHazardRecognizer::HazardType AIEHazardRecognizer::getHazardType(
       FUDepthLimit));
 }
 
+namespace {
+/// Gather the resource parameters for \p MI that are needed for conflict
+/// checking and description.
+MIResourceParams getMIResourceParams(const AIEHazardRecognizer &HR,
+                                     const AIEBaseInstrInfo &TII,
+                                     MachineInstr &MI,
+                                     bool IgnoreUnknownSlotSets) {
+  const MCInstrDesc &Desc = MI.getDesc();
+  const unsigned SchedClass =
+      TII.getSchedClass(Desc, MI.operands(), MI.getMF()->getRegInfo());
+  return {SchedClass,
+          getSlotSet(Desc, *TII.getFormatInterface(), IgnoreUnknownSlotSets),
+          getConflictSet(Desc, *TII.getFormatInterface()),
+          HR.getMemoryBanks(&MI),
+          HR.getMemoryObjectsBits(&MI),
+          TII.getMemoryCycles(SchedClass)};
+}
+
+/// Walk the three conflict checks (slot, memory, funcunit stages) and call
+/// \p OnConflict on the first conflict found. Returns true if a conflict was
+/// found. \p OnConflict receives the proposed and existing FuncUnitWrappers.
+/// When checkConflict passes a no-op lambda, the compiler optimizes it away
+/// completely — zero overhead vs. hand-written code.
+template <typename OnConflictT>
+bool findConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                  const InstrItineraryData *ItinData, const MIResourceParams &P,
+                  int DeltaCycles, std::optional<int> FUDepthLimit,
+                  OnConflictT OnConflict) {
+  // Verify format hazards
+  FuncUnitWrapper EmissionCycle(P.SlotSet, P.ConflictSet);
+  if (EmissionCycle.conflict(Scoreboard[DeltaCycles])) {
+    OnConflict(EmissionCycle, Scoreboard[DeltaCycles]);
+    return true;
+  }
+
+  // Verify memory bank and shared object hazards
+  if (!P.MemCycles.empty()) {
+    const FuncUnitWrapper MemoryAccessCycle(0, 0, P.Banks, P.ObjBits);
+    for (int Cycles : P.MemCycles) {
+      // MemoryAccessCycles starts counting from 1, so we need to subtract 1
+      const int AccessCycle = DeltaCycles + Cycles - 1;
+      assert(Scoreboard.isInRange(AccessCycle));
+      if (MemoryAccessCycle.conflict(Scoreboard[AccessCycle])) {
+        LLVM_DEBUG(dbgs() << "*** Memory bank/Object conflict in cycle="
+                          << AccessCycle << ":\n";
+                   MemoryAccessCycle.dump(); dbgs() << "\n");
+        OnConflict(MemoryAccessCycle, Scoreboard[AccessCycle]);
+        return true;
+      }
+    }
+  }
+
+  // Note that DeltaCycles will be negative for bottom-up scheduling.
+  bool Found = false;
+  anyStage(
+      ItinData->getStages(P.SchedClass),
+      [&](int Cycle, const FuncUnitWrapper &ThisCycle) {
+        const int StageCycle = DeltaCycles + Cycle;
+        assert(Scoreboard.isInRange(StageCycle));
+        if (ThisCycle.conflict(Scoreboard[StageCycle])) {
+          LLVM_DEBUG(dbgs() << "*** Hazard in cycle=" << StageCycle
+                            << " EC=" << StageCycle - DeltaCycles << ":\n";
+                     ThisCycle.dump(); dbgs() << "\n");
+          OnConflict(ThisCycle, Scoreboard[StageCycle]);
+          Found = true;
+          return true;
+        }
+        return false;
+      },
+      FUDepthLimit);
+  return Found;
+}
+} // namespace
+
 bool AIEHazardRecognizer::checkConflict(
     const ResourceScoreboard<FuncUnitWrapper> &Scoreboard, MachineInstr &MI,
     int DeltaCycles) const {
-  const MCInstrDesc &Desc = MI.getDesc();
-  const unsigned SchedClass =
-      TII->getSchedClass(Desc, MI.operands(), MI.getMF()->getRegInfo());
-  const MemoryBankBits MemoryBanks = getMemoryBanks(&MI);
-  const MemoryObjectsBits MemObjectsBits = getMemoryObjectsBits(&MI);
-  return checkConflict(
-      Scoreboard, ItinData, SchedClass,
-      getSlotSet(Desc, *TII->getFormatInterface(), IgnoreUnknownSlotSets),
-      getConflictSet(Desc, *TII->getFormatInterface()), MemoryBanks,
-      MemObjectsBits, TII->getMemoryCycles(SchedClass), DeltaCycles,
-      std::nullopt);
+  auto P = getMIResourceParams(*this, *TII, MI, IgnoreUnknownSlotSets);
+  return checkConflict(Scoreboard, ItinData, P, DeltaCycles, std::nullopt);
 }
 
 bool AIEHazardRecognizer::checkConflict(
@@ -580,51 +735,34 @@ bool AIEHazardRecognizer::checkConflict(
     SlotBits ConflictSet, MemoryBankBits MemoryBanks,
     MemoryObjectsBits MemObjectsBits, SmallVector<int, 2> MemoryAccessCycles,
     int DeltaCycles, std::optional<int> FUDepthLimit) {
-
-  // Verify format hazards
-  FuncUnitWrapper EmissionCycle(SlotSet, ConflictSet);
-  if (EmissionCycle.conflict(Scoreboard[DeltaCycles]))
-    return true;
-
-  // Verify memory bank and shared object hazards
-  if (!MemoryAccessCycles.empty()) {
-    const SlotBits Slots = 0;
-    const SlotBits Conflicts = 0;
-    FuncUnitWrapper MemoryAccessCycle(Slots, Conflicts, MemoryBanks,
-                                      MemObjectsBits);
-
-    for (auto Cycles : MemoryAccessCycles) {
-      // MemoryAccessCycles starts counting from 1, so we need to subtract 1
-      int AccessCycle = DeltaCycles + Cycles - 1;
-      assert(Scoreboard.isInRange(AccessCycle));
-      if (MemoryAccessCycle.conflict(Scoreboard[AccessCycle])) {
-        LLVM_DEBUG(dbgs() << "*** Memory bank/Object conflict in cycle="
-                          << AccessCycle << ":\n";
-                   MemoryAccessCycle.dump(); dbgs() << "\n");
-        return true;
-      }
-    }
-  }
-
-  // Note that DeltaCycles will be negative for bottom-up scheduling.
-
-  /// Check ThisCycle for a conflict at Cycle relative to the start of the
-  /// itinerary.
-  FuncUnitWrapperAction CycleConflict =
-      [&Scoreboard, DeltaCycles](int Cycle, const FuncUnitWrapper &ThisCycle) {
-        const int StageCycle = DeltaCycles + Cycle;
-        assert(Scoreboard.isInRange(StageCycle));
-        if (ThisCycle.conflict(Scoreboard[StageCycle])) {
-          LLVM_DEBUG(dbgs() << "*** Hazard in cycle=" << StageCycle
-                            << " EC=" << StageCycle - DeltaCycles << ":\n";
-                     ThisCycle.dump(); dbgs() << "\n");
-          return true;
-        }
-        return false;
-      };
-
-  return anyStage(ItinData->getStages(SchedClass), CycleConflict, FUDepthLimit);
+  MIResourceParams P{SchedClass,  SlotSet,        ConflictSet,
+                     MemoryBanks, MemObjectsBits, MemoryAccessCycles};
+  return findConflict(Scoreboard, ItinData, P, DeltaCycles, FUDepthLimit,
+                      [](const FuncUnitWrapper &, const FuncUnitWrapper &) {});
 }
+
+bool AIEHazardRecognizer::checkConflict(
+    const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+    const InstrItineraryData *ItinData, const MIResourceParams &P,
+    int DeltaCycles, std::optional<int> FUDepthLimit) {
+  return findConflict(Scoreboard, ItinData, P, DeltaCycles, FUDepthLimit,
+                      [](const FuncUnitWrapper &, const FuncUnitWrapper &) {});
+}
+
+#ifndef NDEBUG
+std::string AIEHazardRecognizer::getConflictDescription(
+    const ResourceScoreboard<FuncUnitWrapper> &TheScoreboard, MachineInstr &MI,
+    int DeltaCycles) const {
+  auto P = getMIResourceParams(*this, *TII, MI, IgnoreUnknownSlotSets);
+  std::string Desc;
+  findConflict(
+      TheScoreboard, ItinData, P, DeltaCycles, std::nullopt,
+      [&](const FuncUnitWrapper &Proposed, const FuncUnitWrapper &Existing) {
+        Desc = Proposed.describeConflict(Existing);
+      });
+  return Desc.empty() ? "Unknown" : Desc;
+}
+#endif
 
 void AIEHazardRecognizer::emitInScoreboard(
     const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,

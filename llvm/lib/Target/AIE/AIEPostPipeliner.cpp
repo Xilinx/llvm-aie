@@ -65,6 +65,9 @@ std::optional<int> PostPipelinerStrategy::fitInInterval(
     if (!HR.checkConflict(Scoreboard, MI, Mod)) {
       return C;
     }
+    DEBUG_FULL(dbgs() << "    Trying cycle " << C << " (" << Mod
+                      << "): " << HR.getConflictDescription(Scoreboard, MI, Mod)
+                      << " conflict at modulo cycle " << Mod << "\n");
   }
 
   return std::nullopt;
@@ -788,7 +791,8 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
     // ModCycle + PipelineDepth
     const int Horizon =
         std::min(II + PipelineDepth, ScoreboardSize - PipelineDepth);
-    LLVM_DEBUG(dbgs() << "  Emit in " << Cycle << "\n");
+    LLVM_DEBUG(dbgs() << "  Emit in cycle " << Actual << " (" << ModCycle
+                      << ")\n");
     int Iter = 0;
     while (Cycle < Horizon) {
       if (HR.checkConflict(Scoreboard, *MI, Cycle)) {
