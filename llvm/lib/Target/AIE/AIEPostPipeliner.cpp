@@ -26,6 +26,7 @@
 #include "llvm/Transforms/Utils/LoopUtils.h"
 #include <limits>
 #include <string>
+#include <tuple>
 
 #define DEBUG_TYPE "postpipeliner"
 #define DEBUG_SUMMARY(X) DEBUG_WITH_TYPE("postpipeliner-summary", X)
@@ -1217,6 +1218,33 @@ static const ConfigStrategy::Configuration Heuristics[] = {
     {1, false, false, 1, {Prio::NodeNum}}, // pure bottom up
 };
 
+/// Counts non-empty bundles and instruction copies in the prolog and epilog.
+class PrologEpilogCounter : public PipelineScheduleVisitor {
+  bool InPrologOrEpilog = false;
+  bool BundleHasInstr = false;
+  int NonEmptyBundles = 0;
+  int InstrCopies = 0;
+
+  void startPrologue() override { InPrologOrEpilog = true; }
+  void startLoop() override { InPrologOrEpilog = false; }
+  void startEpilogue() override { InPrologOrEpilog = true; }
+  void startBundle() override { BundleHasInstr = false; }
+  void addToBundle(MachineInstr *) override {
+    if (!InPrologOrEpilog)
+      return;
+    InstrCopies++;
+    BundleHasInstr = true;
+  }
+  void endBundle() override {
+    if (InPrologOrEpilog && BundleHasInstr)
+      NonEmptyBundles++;
+  }
+
+public:
+  int getNonEmptyBundles() const { return NonEmptyBundles; }
+  int getInstrCopies() const { return InstrCopies; }
+};
+
 /// Snapshot of a valid schedule, used to track the best solution found
 /// across multiple heuristic strategies within a single II.
 struct ScheduleSnapshot {
@@ -1224,6 +1252,8 @@ struct ScheduleSnapshot {
   int Length;
   int NStages;
   int NPrologueStages;
+  int NonEmptyBundles;
+  int InstrCopies;
 };
 
 bool PostPipeliner::tryApproaches() {
@@ -1231,24 +1261,36 @@ bool PostPipeliner::tryApproaches() {
 
   std::optional<ScheduleSnapshot> BestSolution;
   int BestNStages = std::numeric_limits<int>::max();
-  int BestLength = std::numeric_limits<int>::max();
+  int BestBundles = std::numeric_limits<int>::max();
+  int BestCopies = std::numeric_limits<int>::max();
 
   // Save the current schedule if it improves on the best found so far.
+  // Comparison priority: fewer NStages > fewer non-empty prolog/epilog
+  // bundles > fewer instruction copies.
   // Returns true when the result is optimal (NStages == 1), meaning no
   // further improvement is possible.
   auto SaveIfBetter = [&]() -> bool {
-    const bool IsBetter = NStages < BestNStages ||
-                          (NStages == BestNStages && Info.Length < BestLength);
+    PrologEpilogCounter Counter;
+    visitPipelineSchedule(Counter);
+    const int Bundles = Counter.getNonEmptyBundles();
+    const int Copies = Counter.getInstrCopies();
+
+    const bool IsBetter = std::tie(NStages, Bundles, Copies) <
+                          std::tie(BestNStages, BestBundles, BestCopies);
     if (IsBetter) {
       BestNStages = NStages;
-      BestLength = Info.Length;
+      BestBundles = Bundles;
+      BestCopies = Copies;
       BestSolution =
           ScheduleSnapshot{{Info.Nodes.begin(), Info.Nodes.begin() + NInstr},
                            Info.Length,
                            NStages,
-                           NPrologueStages};
-      DEBUG_SUMMARY(dbgs() << "    New best: NS=" << NStages << " Length="
-                           << Info.Length << " II=" << II << "\n");
+                           NPrologueStages,
+                           Bundles,
+                           Copies};
+      DEBUG_SUMMARY(dbgs() << "    New best: NS=" << NStages
+                           << " Bundles=" << Bundles << " Copies=" << Copies
+                           << " II=" << II << "\n");
     }
     return BestNStages == 1;
   };
@@ -1315,7 +1357,9 @@ bool PostPipeliner::tryApproaches() {
     NStages = BestSolution->NStages;
     NPrologueStages = BestSolution->NPrologueStages;
     DEBUG_SUMMARY(dbgs() << "=== II=" << II << " Best NS=" << NStages
-                         << " Length=" << Info.Length << " ===\n");
+                         << " Bundles=" << BestSolution->NonEmptyBundles
+                         << " Copies=" << BestSolution->InstrCopies
+                         << " ===\n");
     return true;
   }
 
