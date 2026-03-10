@@ -77,15 +77,23 @@ private:
 
   std::map<MCRegister, int> &getRegToCycleMap(bool IsDef);
 
+  /// Memory cycle APIs (getFirstMemoryCycle/getLastMemoryCycle) return 1-based
+  /// pipeline stage numbers: stage 1 is the first execution cycle after issue.
+  /// These helpers convert to 0-based delays from the issue cycle, consistent
+  /// with the register operand convention (getOperandCycle returns 0-based).
+  /// E.g., a memory operation at stage 5 touches memory 4 cycles after issue.
+  int firstMemoryDelay(unsigned SchedClass) const;
+  int lastMemoryDelay(unsigned SchedClass) const;
+  int minFirstMemoryDelay() const;
+  int minLastMemoryDelay() const;
+
   int getFirstMemCycle(bool IsStore) const;
 
   int getLastMemCycle(bool IsStore) const;
 
-  void updateUseDefMaxCycle(Register Reg, int Latency, bool IsDef);
+  void updateUseDefMaxCycle(Register Reg, int EventCycle, bool IsDef);
 
-  void updateLastStoreCycle(int LastStoreCycle);
-
-  void updateLastLoadCycle(int LastLoadCycle);
+  void updateLastMemCycle(int Cycle, bool IsStore);
 
   void updateFirstMemCycle(int Cycle, bool IsStore);
 
@@ -93,20 +101,26 @@ private:
 
   int getLastMemoryAccessCycle() const;
 
-  void addPerInstructionLastMemCycle(int LastMemCycle, MachineInstr *MI);
-
-  void addPerInstructionFirstMemCycle(int FirstMemCycle, MachineInstr *MI);
+  void addPerInstructionMemCycle(int MemCycle, MachineInstr *MI);
 
   int getMaxAliasingMemCycle(const MachineInstr &MI, bool IsStore) const;
 
-  int checkMemoryDependency(int CurrentMax, int MemoryCycle, int MIMemoryCycle,
-                            bool IsBackward) const;
+  int getMinSafeDistance(int CurrSafeDistance, int StoredCycle, int EventDelay,
+                         bool IsBackward) const;
 
-  int checkRegisterDependencies(int CurrentMax, const MachineInstr &MI,
+  int checkRegisterDependencies(int CurrSafeDistance, const MachineInstr &MI,
                                 bool IsBackward) const;
 
-  int checkEventLikeInstruction(int CurrentMax, const MachineInstr &MI,
+  int checkEventLikeInstruction(int CurrSafeDistance, const MachineInstr &MI,
                                 bool IsBackward) const;
+
+  int checkLoadStoreDependencies(int CurrSafeDistance, const MachineInstr &MI,
+                                 bool IsBackward) const;
+
+  int checkLockDependency(int CurrSafeDistance, const MachineInstr &MI,
+                          bool IsBackward) const;
+
+  int getSafeOperandsDistance(const MachineInstr &MI, bool IsBackward) const;
 
   unsigned getBotFixedRegionSize() const { return BotFixedRegionSize; }
 };
