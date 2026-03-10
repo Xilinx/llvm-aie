@@ -47,6 +47,11 @@ static cl::opt<int> PresetII("aie-postpipeliner-target-ii",
                              cl::desc("II for which to allow the solver"),
                              cl::init(0), cl::Hidden);
 
+static cl::opt<bool> OptimizeStages(
+    "aie-postpipeliner-optimize-stages",
+    cl::desc("Continue searching for fewer stages after first success"),
+    cl::init(true), cl::Hidden);
+
 PipelineScheduleVisitor::~PipelineScheduleVisitor() {}
 
 std::optional<int> PostPipelinerStrategy::fitInInterval(
@@ -1212,10 +1217,47 @@ static const ConfigStrategy::Configuration Heuristics[] = {
     {1, false, false, 1, {Prio::NodeNum}}, // pure bottom up
 };
 
+/// Snapshot of a valid schedule, used to track the best solution found
+/// across multiple heuristic strategies within a single II.
+struct ScheduleSnapshot {
+  std::vector<NodeInfo> Nodes;
+  int Length;
+  int NStages;
+  int NPrologueStages;
+};
+
 bool PostPipeliner::tryApproaches() {
   DEBUG_SUMMARY(dbgs() << "-- MinLength=" << MinLength << "\n");
+
+  std::optional<ScheduleSnapshot> BestSolution;
+  int BestNStages = std::numeric_limits<int>::max();
+  int BestLength = std::numeric_limits<int>::max();
+
+  // Save the current schedule if it improves on the best found so far.
+  // Returns true when the result is optimal (NStages == 1), meaning no
+  // further improvement is possible.
+  auto SaveIfBetter = [&]() -> bool {
+    const bool IsBetter = NStages < BestNStages ||
+                          (NStages == BestNStages && Info.Length < BestLength);
+    if (IsBetter) {
+      BestNStages = NStages;
+      BestLength = Info.Length;
+      BestSolution =
+          ScheduleSnapshot{{Info.Nodes.begin(), Info.Nodes.begin() + NInstr},
+                           Info.Length,
+                           NStages,
+                           NPrologueStages};
+      DEBUG_SUMMARY(dbgs() << "    New best: NS=" << NStages << " Length="
+                           << Info.Length << " II=" << II << "\n");
+    }
+    return BestNStages == 1;
+  };
+
+  bool FoundOptimal = false;
   int HeuristicIndex = 0;
   for (const auto &Config : Heuristics) {
+    if (FoundOptimal)
+      break;
     if (Heuristic >= 0 && Heuristic != HeuristicIndex++) {
       continue;
     }
@@ -1229,7 +1271,8 @@ bool PostPipeliner::tryApproaches() {
         DEBUG_SUMMARY(dbgs()
                       << "    Strategy " << S.name() << " run=" << Run
                       << " found NS=" << NStages << " II=" << II << "\n");
-        return true;
+        FoundOptimal = SaveIfBetter() || !OptimizeStages;
+        break;
       }
       if (!S.checkAndResetChanged()) {
         // If nothing changed, there's no use in rerunning.
@@ -1239,26 +1282,41 @@ bool PostPipeliner::tryApproaches() {
     }
     DEBUG_SUMMARY(dbgs() << "    Strategy " << S.name() << " failed\n");
   }
-  IterCountSlackStrategy Relaxed(*DAG, Info, MinLength + II);
-  resetSchedule(/*FullReset=*/true);
-  if (scheduleWithStrategy(Relaxed)) {
-    return true;
+
+  if (!FoundOptimal) {
+    IterCountSlackStrategy Relaxed(*DAG, Info, MinLength + II);
+    resetSchedule(/*FullReset=*/true);
+    if (scheduleWithStrategy(Relaxed)) {
+      FoundOptimal = SaveIfBetter() || !OptimizeStages;
+    }
   }
 
   // TargetII is the OK from the user to spend some time reaching this II.
   // Therefore, if we haven't found a solution yet, bring in the big guns.
-  if (II == TargetII) {
+  if (!FoundOptimal && II == TargetII) {
     const SolverData Data = createSolverData();
     int NS = MinLength / II;
     if (solve(Data, NS, false)) {
-      return true;
+      FoundOptimal = SaveIfBetter() || !OptimizeStages;
     }
-    if (NS == MinTripCount) {
+    if (!FoundOptimal && NS == MinTripCount) {
       // Only try this at the boundary case
       if (solve(Data, NS + 1, true)) {
-        return true;
+        SaveIfBetter();
       }
     }
+  }
+
+  if (BestSolution) {
+    // Restore the best solution found across all strategies.
+    for (int I = 0; I < NInstr; I++)
+      Info[I] = BestSolution->Nodes[I];
+    Info.Length = BestSolution->Length;
+    NStages = BestSolution->NStages;
+    NPrologueStages = BestSolution->NPrologueStages;
+    DEBUG_SUMMARY(dbgs() << "=== II=" << II << " Best NS=" << NStages
+                         << " Length=" << Info.Length << " ===\n");
+    return true;
   }
 
   DEBUG_SUMMARY(dbgs() << "=== II=" << II << " Failed ===\n");
