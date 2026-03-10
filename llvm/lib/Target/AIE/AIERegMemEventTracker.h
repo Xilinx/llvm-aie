@@ -28,6 +28,11 @@ namespace llvm {
 // Helper class to track the last read and write cycles of every register. Those
 // cycles can then be used to create dependencies to unscheduled successor
 // instructions.
+//
+// Each instance is used in a single direction (forward or backward). Forward
+// tracking records events from EntrySU; backward tracking records events from
+// ExitSU. The member variables are shared between directions because a given
+// instance only ever calls computeUseDef in one direction.
 class AIERegMemEventTracker {
 public:
   AIERegMemEventTracker(const InstrItineraryData *Itins,
@@ -54,24 +59,19 @@ public:
   unsigned getSafeOperandsDistanceFromBottom(const MachineInstr &MI) const;
 
 private:
-  using fixed_iterator = MachineBasicBlock::iterator;
   const InstrItineraryData *InstrItins;
   const TargetRegisterInfo *TRI;
   const AIEBaseInstrInfo *TII;
   AAResults *AA;
 
-  // Forward tracking data structures (use int for consistency with backward)
   std::map<MCRegister, int> RegisterToCycleDef;
   std::map<MCRegister, int> RegisterToCycleUse;
-  int FirstLoadCycle = INT_MIN;
-  int FirstStoreCycle = INT_MIN;
-  int LastStoreCycle = INT_MIN;
-  int LastLoadCycle = INT_MIN;
+  int StoreCycle = INT_MIN;
+  int LoadCycle = INT_MIN;
   std::map<int, std::vector<MachineInstr *>> MemoryCycleToStoreInstrs;
   std::map<int, std::vector<MachineInstr *>> MemoryCycleToLoadInstrs;
 
-  unsigned BotFixedRegionSize = 0;
-  unsigned TopFixedRegionSize = 0;
+  unsigned FixedRegionSize = 0;
 
   const std::map<MCRegister, int> &getRegToCycleMap(bool IsDef) const;
 
@@ -87,19 +87,19 @@ private:
   int minFirstMemoryDelay() const;
   int minLastMemoryDelay() const;
 
-  int getFirstMemCycle(bool IsStore) const;
+  /// Return the memory delay appropriate for the given direction.
+  /// Forward uses lastMemoryDelay (tracking completion), backward uses
+  /// firstMemoryDelay (tracking start from end).
+  int memoryDelay(unsigned SchedClass, bool IsBackward) const;
+  int minMemoryDelay(bool IsBackward) const;
 
-  int getLastMemCycle(bool IsStore) const;
+  int getMemCycle(bool IsStore) const;
 
   void updateUseDefMaxCycle(Register Reg, int EventCycle, bool IsDef);
 
-  void updateLastMemCycle(int Cycle, bool IsStore);
+  void updateMemCycle(int Cycle, bool IsStore);
 
-  void updateFirstMemCycle(int Cycle, bool IsStore);
-
-  int getFirstMemoryAccessCycle() const;
-
-  int getLastMemoryAccessCycle() const;
+  int getMemoryAccessCycle() const;
 
   void addPerInstructionMemCycle(int MemCycle, MachineInstr *MI);
 
@@ -111,8 +111,8 @@ private:
   int checkRegisterDependencies(int CurrSafeDistance, const MachineInstr &MI,
                                 bool IsBackward) const;
 
-  int checkEventLikeInstruction(int CurrSafeDistance, const MachineInstr &MI,
-                                bool IsBackward) const;
+  int checkEventLikeInstruction(int CurrSafeDistance,
+                                const MachineInstr &MI) const;
 
   int checkLoadStoreDependencies(int CurrSafeDistance, const MachineInstr &MI,
                                  bool IsBackward) const;
@@ -122,7 +122,23 @@ private:
 
   int getSafeOperandsDistance(const MachineInstr &MI, bool IsBackward) const;
 
-  unsigned getBotFixedRegionSize() const { return BotFixedRegionSize; }
+  /// Compute the cycle at which an event with the given Delay from its issue
+  /// cycle occurs, relative to the tracking anchor (EntrySU or ExitSU).
+  ///   Forward:  event = Cycle + Delay  (later issue → later event)
+  ///   Backward: event = Cycle - Delay  (earlier issue → earlier event)
+  /// When processing a separate region (e.g. the loop body projected into an
+  /// adjacent block), the event is shifted back by TotalCycles to express it
+  /// in the adjacent block's coordinate system.
+  int eventCycle(int Cycle, int Delay, bool IsBackward, bool InSeparateRegion,
+                 int TotalCycles) const;
+
+  /// Record all register and memory events for a single instruction at the
+  /// given Cycle position. Called once per instruction from
+  /// computeUseDefForward / computeUseDefBackward. For each event (register
+  /// operand read/write or memory access), computes the event cycle and updates
+  /// the tracking state.
+  void processInstruction(MachineInstr *BundledMI, int Cycle, bool IsBackward,
+                          bool InSeparateRegion, int TotalCycles);
 };
 
 } // end namespace llvm

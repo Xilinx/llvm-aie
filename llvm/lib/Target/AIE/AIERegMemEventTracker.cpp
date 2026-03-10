@@ -1,4 +1,4 @@
-//===- AIERegMemEventTracker.h - Register event tracker -..------*- C++ -*-===//
+//===- AIERegMemEventTracker.cpp - Register event tracker -------*- C++ -*-===//
 //
 // This file is licensed under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -68,6 +68,16 @@ int AIERegMemEventTracker::minLastMemoryDelay() const {
   return memoryCycleToDelay(TII->getMinLastMemoryCycle());
 }
 
+int AIERegMemEventTracker::memoryDelay(unsigned SchedClass,
+                                       bool IsBackward) const {
+  return IsBackward ? firstMemoryDelay(SchedClass)
+                    : lastMemoryDelay(SchedClass);
+}
+
+int AIERegMemEventTracker::minMemoryDelay(bool IsBackward) const {
+  return IsBackward ? minFirstMemoryDelay() : minLastMemoryDelay();
+}
+
 void AIERegMemEventTracker::updateUseDefMaxCycle(Register Reg, int EventCycle,
                                                  bool IsDef) {
   auto [It, Inserted] =
@@ -76,34 +86,19 @@ void AIERegMemEventTracker::updateUseDefMaxCycle(Register Reg, int EventCycle,
     It->second = std::max(It->second, EventCycle);
 }
 
-void AIERegMemEventTracker::updateLastMemCycle(int Cycle, bool IsStore) {
+void AIERegMemEventTracker::updateMemCycle(int Cycle, bool IsStore) {
   if (IsStore)
-    LastStoreCycle = std::max(LastStoreCycle, Cycle);
+    StoreCycle = std::max(StoreCycle, Cycle);
   else
-    LastLoadCycle = std::max(LastLoadCycle, Cycle);
+    LoadCycle = std::max(LoadCycle, Cycle);
 }
 
-int AIERegMemEventTracker::getFirstMemCycle(bool IsStore) const {
-  return IsStore ? FirstStoreCycle : FirstLoadCycle;
+int AIERegMemEventTracker::getMemCycle(bool IsStore) const {
+  return IsStore ? StoreCycle : LoadCycle;
 }
 
-int AIERegMemEventTracker::getLastMemCycle(bool IsStore) const {
-  return IsStore ? LastStoreCycle : LastLoadCycle;
-}
-
-int AIERegMemEventTracker::getLastMemoryAccessCycle() const {
-  return std::max(LastStoreCycle, LastLoadCycle);
-}
-
-int AIERegMemEventTracker::getFirstMemoryAccessCycle() const {
-  return std::max(FirstStoreCycle, FirstLoadCycle);
-}
-
-void AIERegMemEventTracker::updateFirstMemCycle(int Cycle, bool IsStore) {
-  if (IsStore)
-    FirstStoreCycle = std::max(FirstStoreCycle, Cycle);
-  else
-    FirstLoadCycle = std::max(FirstLoadCycle, Cycle);
+int AIERegMemEventTracker::getMemoryAccessCycle() const {
+  return std::max(StoreCycle, LoadCycle);
 }
 
 void AIERegMemEventTracker::addPerInstructionMemCycle(int MemCycle,
@@ -118,13 +113,13 @@ int AIERegMemEventTracker::getMaxAliasingMemCycle(const MachineInstr &MI,
                                                   bool IsStore) const {
   const auto &MemMap =
       IsStore ? MemoryCycleToStoreInstrs : MemoryCycleToLoadInstrs;
-  int MaxCycle = IsStore ? 0 : INT_MIN;
+  int MaxCycle = INT_MIN;
 
   for (const auto &[Cycle, MemOps] : MemMap) {
     for (const MachineInstr *MemOp : MemOps) {
       // Part-word memory operations have special semantics, treat
-      // conservatively For other operations, use AA to check if they may alias
-      // with MI
+      // conservatively. For other operations, use AA to check if they may alias
+      // with MI.
       if (TII->isPartWordMemoryInst(*MemOp) ||
           MI.mayAlias(AA, *MemOp, /*UseTBAA=*/true)) {
         MaxCycle = std::max(MaxCycle, Cycle);
@@ -167,7 +162,6 @@ int AIERegMemEventTracker::checkRegisterDependencies(int CurrSafeDistance,
     const MachineOperand &MO = MI.getOperand(OpNum);
     if (!MO.isReg())
       continue;
-    // Get operand cycle if needed
     auto OptCycle =
         InstrItins->getOperandCycle(MI.getDesc().getSchedClass(), OpNum);
     unsigned OperandCycle = OptCycle ? *OptCycle : 0 /*implicit-def*/;
@@ -197,14 +191,11 @@ int AIERegMemEventTracker::checkRegisterDependencies(int CurrSafeDistance,
   return CurrSafeDistance;
 }
 
-int AIERegMemEventTracker::checkEventLikeInstruction(int CurrSafeDistance,
-                                                     const MachineInstr &MI,
-                                                     bool IsBackward) const {
+int AIERegMemEventTracker::checkEventLikeInstruction(
+    int CurrSafeDistance, const MachineInstr &MI) const {
   if (!isEventLikeInstruction(MI, TII))
     return CurrSafeDistance;
-
-  unsigned RegionSize = IsBackward ? BotFixedRegionSize : TopFixedRegionSize;
-  return std::max(CurrSafeDistance, static_cast<int>(RegionSize));
+  return std::max(CurrSafeDistance, static_cast<int>(FixedRegionSize));
 }
 
 int AIERegMemEventTracker::checkLoadStoreDependencies(int CurrSafeDistance,
@@ -213,40 +204,23 @@ int AIERegMemEventTracker::checkLoadStoreDependencies(int CurrSafeDistance,
   if (!MI.mayLoadOrStore())
     return CurrSafeDistance;
 
-  // Forward (epilogue): use FirstMemoryCycle - the free instruction's earliest
-  // memory touch must come after the stored last memory event.
-  // Backward (prologue): use LastMemoryCycle - the free instruction's latest
-  // memory touch must be farther from ExitSU than the stored first memory
-  // event.
   const int MIMemoryDelay = [&]() {
     if (MI.isBundle())
-      return IsBackward ? minLastMemoryDelay() : minFirstMemoryDelay();
-    unsigned SchedClass = MI.getDesc().getSchedClass();
-    return IsBackward ? lastMemoryDelay(SchedClass)
-                      : firstMemoryDelay(SchedClass);
+      return minMemoryDelay(IsBackward);
+    return memoryDelay(MI.getDesc().getSchedClass(), IsBackward);
   }();
 
-  // Get the relevant stored cycle for a given memory type.
-  // Forward: stored values are last-touch cycles (getLastMemCycle).
-  // Backward: stored values are first-touch cycles (getFirstMemCycle).
-  auto GetFixedMemCycle = [this, IsBackward](bool IsStore) {
-    return IsBackward ? getFirstMemCycle(IsStore) : getLastMemCycle(IsStore);
-  };
-
   if (MI.mayStore()) {
-    // Free store: check WAR dependency against loads in the fixed region
-    const int LoadCycle = AA ? getMaxAliasingMemCycle(MI, /*IsStore=*/false)
-                             : GetFixedMemCycle(/*IsStore=*/false);
-    CurrSafeDistance = getMinSafeDistance(CurrSafeDistance, LoadCycle,
+    const int LdCycle = AA ? getMaxAliasingMemCycle(MI, /*IsStore=*/false)
+                           : getMemCycle(/*IsStore=*/false);
+    CurrSafeDistance = getMinSafeDistance(CurrSafeDistance, LdCycle,
                                           MIMemoryDelay, IsBackward);
   }
 
-  // Free load/store: check RAW (for loads) or WAW (for stores) against stores
-  // in the fixed region
-  const int StoreCycle = AA ? getMaxAliasingMemCycle(MI, /*IsStore=*/true)
-                            : GetFixedMemCycle(/*IsStore=*/true);
-  CurrSafeDistance = getMinSafeDistance(CurrSafeDistance, StoreCycle,
-                                        MIMemoryDelay, IsBackward);
+  const int StCycle = AA ? getMaxAliasingMemCycle(MI, /*IsStore=*/true)
+                         : getMemCycle(/*IsStore=*/true);
+  CurrSafeDistance =
+      getMinSafeDistance(CurrSafeDistance, StCycle, MIMemoryDelay, IsBackward);
 
   return CurrSafeDistance;
 }
@@ -257,8 +231,7 @@ int AIERegMemEventTracker::checkLockDependency(int CurrSafeDistance,
   if (!TII->isLock(MI.getOpcode()))
     return CurrSafeDistance;
 
-  const int MemAccessCycle =
-      IsBackward ? getFirstMemoryAccessCycle() : getLastMemoryAccessCycle();
+  const int MemAccessCycle = getMemoryAccessCycle();
   if (MemAccessCycle <= INT_MIN)
     return CurrSafeDistance;
 
@@ -271,51 +244,64 @@ int AIERegMemEventTracker::checkLockDependency(int CurrSafeDistance,
                             IsBackward);
 }
 
-void AIERegMemEventTracker::computeUseDefForward(
-    ArrayRef<AIE::MachineBundle> Bundles, bool InSeparateRegion) {
-  int Cycle = 0;
-  const int TotalCycles = Bundles.size();
+int AIERegMemEventTracker::eventCycle(int Cycle, int Delay, bool IsBackward,
+                                      bool InSeparateRegion,
+                                      int TotalCycles) const {
+  int Event = IsBackward ? (Cycle - Delay) : (Cycle + Delay);
+  if (InSeparateRegion)
+    Event -= TotalCycles;
+  return Event;
+}
 
-  // Track top-fixed region size (only for the first call, not separate region)
-  if (!InSeparateRegion) {
-    TopFixedRegionSize = TotalCycles;
+void AIERegMemEventTracker::processInstruction(MachineInstr *BundledMI,
+                                               int Cycle, bool IsBackward,
+                                               bool InSeparateRegion,
+                                               int TotalCycles) {
+  const unsigned SchedClass = BundledMI->getDesc().getSchedClass();
+
+  // Track when this instruction touches memory. Forward tracking records the
+  // last (completion) cycle; backward tracking records the first (start) cycle.
+  if (BundledMI->mayLoadOrStore()) {
+    const int MemEvent = eventCycle(Cycle, memoryDelay(SchedClass, IsBackward),
+                                    IsBackward, InSeparateRegion, TotalCycles);
+
+    if (BundledMI->mayLoad())
+      updateMemCycle(MemEvent, /*IsStore=*/false);
+    if (BundledMI->mayStore())
+      updateMemCycle(MemEvent, /*IsStore=*/true);
+
+    addPerInstructionMemCycle(MemEvent, BundledMI);
   }
 
+  // Track when each register operand is read or written.
+  for (unsigned OpNum = 0; OpNum < BundledMI->getNumOperands(); OpNum++) {
+    const MachineOperand &MO = BundledMI->getOperand(OpNum);
+    if (!MO.isReg())
+      continue;
+    std::optional<unsigned> OptMOCycle =
+        InstrItins->getOperandCycle(SchedClass, OpNum);
+    assert(OptMOCycle);
+    const int RegEvent = eventCycle(Cycle, static_cast<int>(*OptMOCycle),
+                                    IsBackward, InSeparateRegion, TotalCycles);
+    // Forward: only track events that extend past the region boundary.
+    // Backward: always track (negative values represent nearby events).
+    if (IsBackward || !InSeparateRegion || RegEvent > 0)
+      updateUseDefMaxCycle(MO.getReg(), RegEvent, MO.isDef());
+  }
+}
+
+void AIERegMemEventTracker::computeUseDefForward(
+    ArrayRef<AIE::MachineBundle> Bundles, bool InSeparateRegion) {
+  const int TotalCycles = Bundles.size();
+
+  if (!InSeparateRegion)
+    FixedRegionSize = TotalCycles;
+
+  int Cycle = 0;
   for (const auto &Bundle : Bundles) {
-    for (MachineInstr *BundledMI : Bundle.getInstrs()) {
-      const unsigned SchedClass = BundledMI->getDesc().getSchedClass();
-
-      // Track memory operations (loads and stores)
-      if (BundledMI->mayLoadOrStore()) {
-        int LastMemCycle = Cycle + lastMemoryDelay(SchedClass);
-        if (InSeparateRegion)
-          LastMemCycle = LastMemCycle - TotalCycles;
-
-        // Update appropriate cycle tracker(s)
-        if (BundledMI->mayLoad())
-          updateLastMemCycle(LastMemCycle, /*IsStore=*/false);
-        if (BundledMI->mayStore())
-          updateLastMemCycle(LastMemCycle, /*IsStore=*/true);
-
-        // Track memory instructions by their completion cycle for AA
-        addPerInstructionMemCycle(LastMemCycle, BundledMI);
-      }
-
-      for (unsigned OpNum = 0; OpNum < BundledMI->getNumOperands(); OpNum++) {
-        const MachineOperand &MO = BundledMI->getOperand(OpNum);
-        if (!MO.isReg())
-          continue;
-        const bool IsDef = MO.isDef();
-        std::optional<unsigned> OptMOCycle =
-            InstrItins->getOperandCycle(SchedClass, OpNum);
-        assert(OptMOCycle);
-        const int OperandCycle = *OptMOCycle;
-        const int EventCycle =
-            Cycle + OperandCycle - (InSeparateRegion ? TotalCycles : 0);
-        if (!InSeparateRegion || EventCycle > 0)
-          updateUseDefMaxCycle(MO.getReg(), EventCycle, IsDef);
-      }
-    }
+    for (MachineInstr *BundledMI : Bundle.getInstrs())
+      processInstruction(BundledMI, Cycle, /*IsBackward=*/false,
+                         InSeparateRegion, TotalCycles);
     Cycle++;
   }
 }
@@ -324,56 +310,15 @@ void AIERegMemEventTracker::computeUseDefBackward(
     ArrayRef<AIE::MachineBundle> Bundles, bool InSeparateRegion) {
   const int TotalCycles = Bundles.size();
 
-  // Track bot-fixed region size (only for the first call, not separate region)
-  if (!InSeparateRegion) {
-    BotFixedRegionSize = TotalCycles;
-  }
+  if (!InSeparateRegion)
+    FixedRegionSize = TotalCycles;
 
-  // Count progressively from 0 as we iterate backward through bundles
-  // Cycle represents the distance from ExitSU for each bundle
   int Cycle = 0;
-
   for (const auto &Bundle : reverse(Bundles)) {
-    // First bundle processed (last in forward order) is at Cycle = 0 (closest
-    // to ExitSU) Last bundle processed (first in forward order) is at Cycle =
-    // TotalCycles - 1 (farthest from ExitSU)
-
-    for (MachineInstr *BundledMI : Bundle.getInstrs()) {
-      const unsigned SchedClass = BundledMI->getDesc().getSchedClass();
-
-      // Track memory operations (loads and stores)
-      if (BundledMI->mayLoadOrStore()) {
-        int FirstMemFromEnd = Cycle - firstMemoryDelay(SchedClass);
-        if (InSeparateRegion)
-          FirstMemFromEnd = FirstMemFromEnd - TotalCycles;
-
-        // Update appropriate cycle tracker(s)
-        if (BundledMI->mayLoad())
-          updateFirstMemCycle(FirstMemFromEnd, /*IsStore=*/false);
-        if (BundledMI->mayStore())
-          updateFirstMemCycle(FirstMemFromEnd, /*IsStore=*/true);
-
-        // Track memory instructions by their start cycle for AA
-        addPerInstructionMemCycle(FirstMemFromEnd, BundledMI);
-      }
-
-      // Track register operands
-      for (unsigned OpNum = 0; OpNum < BundledMI->getNumOperands(); OpNum++) {
-        const MachineOperand &MO = BundledMI->getOperand(OpNum);
-        if (!MO.isReg())
-          continue;
-        const bool IsDef = MO.isDef();
-        std::optional<unsigned> OptMOCycle =
-            InstrItins->getOperandCycle(SchedClass, OpNum);
-        assert(OptMOCycle);
-        const int OperandCycle = *OptMOCycle;
-
-        const int EventCycle =
-            Cycle - OperandCycle - (InSeparateRegion ? TotalCycles : 0);
-        updateUseDefMaxCycle(MO.getReg(), EventCycle, IsDef);
-      }
-    }
-    Cycle++; // Increment as we go backward through bundles
+    for (MachineInstr *BundledMI : Bundle.getInstrs())
+      processInstruction(BundledMI, Cycle, /*IsBackward=*/true,
+                         InSeparateRegion, TotalCycles);
+    Cycle++;
   }
 }
 
@@ -381,8 +326,7 @@ int AIERegMemEventTracker::getSafeOperandsDistance(const MachineInstr &MI,
                                                    bool IsBackward) const {
   int CurrSafeDistance = 0;
 
-  CurrSafeDistance =
-      checkEventLikeInstruction(CurrSafeDistance, MI, IsBackward);
+  CurrSafeDistance = checkEventLikeInstruction(CurrSafeDistance, MI);
   CurrSafeDistance =
       checkLoadStoreDependencies(CurrSafeDistance, MI, IsBackward);
   CurrSafeDistance = checkLockDependency(CurrSafeDistance, MI, IsBackward);
