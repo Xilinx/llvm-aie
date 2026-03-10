@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -18,6 +18,7 @@
 #define LLVM_CODEGEN_RESOURCESCOREBOARD_H
 
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
 #include <vector>
@@ -164,18 +165,19 @@ public:
     }
   }
 
-  // Print the full scoreboard .
-  void dumpFull() const {
+  /// Print the full scoreboard with cycle numbers. When \p II (Initiation
+  /// Interval) is positive, insert blank lines at II boundaries to visually
+  /// separate modulo stages.
+  void dumpFull(int II = 0) const {
     int First = firstOccupied();
     int Last = lastOccupied();
     for (int C = First; C <= Last; C++) {
       const RC &Cycle = (*this)[C];
-      if (C == 0) {
-        dbgs() << ">";
-      }
-      dbgs() << "\t";
-      Cycle.dump();
+      dbgs() << (C == 0 ? ">" : " ") << format("%3d", C) << ":\t";
+      Cycle.dump("     ");
       dbgs() << "\n";
+      if (II > 0 && C % II == II - 1)
+        dbgs() << "\n";
     }
   }
 

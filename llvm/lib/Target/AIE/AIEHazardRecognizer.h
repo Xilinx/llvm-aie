@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 // This file defines the hazard recognizer for scheduling on AIE.
@@ -122,8 +122,9 @@ public:
   /// dumping purposes, quite literally saying "this looks the same"
   bool operator==(const FuncUnitWrapper &Other) const;
 
-  /// Dump a readable version
-  void dump() const;
+  /// Dump a readable version. \p ContinuationIndent is prepended to
+  /// continuation lines (e.g. Reserved resources) for proper alignment.
+  void dump(StringRef ContinuationIndent = "") const;
 
   FuncUnitWrapper &operator|=(const FuncUnitWrapper &Other);
   bool conflict(const FuncUnitWrapper &Other) const;

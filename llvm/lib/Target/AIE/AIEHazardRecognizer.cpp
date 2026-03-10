@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -69,7 +69,7 @@ bool FuncUnitWrapper::operator==(const FuncUnitWrapper &Other) const {
          MemObjectsBits == Other.MemObjectsBits;
 }
 
-void FuncUnitWrapper::dump() const {
+void FuncUnitWrapper::dump(StringRef ContinuationIndent) const {
   const char *const Digits = "0123456789";
   const char *const Spacer = "-|";
 
@@ -103,7 +103,7 @@ void FuncUnitWrapper::dump() const {
   PrintResource(" MemObjectsBits : ", MemObjectsBits);
   if (Reserved.empty())
     return;
-  PrintFU("\n\t   Rsrv : ", Reserved);
+  PrintFU("\n" + ContinuationIndent.str() + "\t   Rsrv : ", Reserved);
 }
 
 void FuncUnitWrapper::clearResources() {

@@ -805,7 +805,7 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
     scheduleNode(SU, Actual, Strategy);
     Info.commitCycle(N);
 
-    DEBUG_FULL(dbgs() << "Scoreboard\n"; Scoreboard.dumpFull(););
+    DEBUG_FULL(dbgs() << "Scoreboard\n"; Scoreboard.dumpFull(II););
   }
 
   const bool Success = checkStages();
