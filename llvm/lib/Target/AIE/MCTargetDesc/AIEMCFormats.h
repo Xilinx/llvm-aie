@@ -16,6 +16,7 @@
 
 #include "AIEFormat.h"
 #include "llvm/ADT/APInt.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrDesc.h"
@@ -390,6 +391,10 @@ public:
 
   virtual const MCSlotInfo *getSlotInfo(const MCSlotKind Kind) const = 0;
 
+  /// Return single-letter abbreviations for each slot, indexed by slot bit
+  /// position. Override in subclasses with different slot layouts.
+  virtual StringRef getSlotLetters() const { return "XABLMNSV"; }
+
   virtual const MCFormatDesc *getMCFormats() const = 0;
 
   virtual const PacketFormats &getPacketFormats() const = 0;
@@ -415,6 +420,7 @@ public:
   std::optional<unsigned int>
   getFormatDescIndex(unsigned int Opcode) const override;
   const MCSlotInfo *getSlotInfo(const MCSlotKind Kind) const override;
+  StringRef getSlotLetters() const override;
   const MCFormatDesc *getMCFormats() const override;
   ArrayRef<bool> getIsFormatAvailable() const override;
   const PacketFormats &getPacketFormats() const override;

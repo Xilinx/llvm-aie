@@ -641,23 +641,22 @@ void dumpGraph(const ScheduleInfo &Info, ScheduleDAGInstrs *DAG) {
   dbgs() << "}\n";
 }
 
-char slotLetter(const SlotCounts &Slots) {
-  // Slots are sorted by name in tablegen.
-  // alu, lda, ldb, lng, mov, nop, st, vec
-  const char *const L = "XABLMNSVW9";
-
+/// Return the single-letter abbreviation for the first occupied slot in
+/// \p Slots, or '*' if no slot is occupied.
+char slotLetter(const SlotCounts &Slots, StringRef Letters) {
+  assert(Letters.size() >= 10);
   for (int I = 0; I < 10; I++) {
     if (Slots[I] > 0) {
-      return L[I];
+      return Letters[I];
     }
   }
   return '*';
 }
 
 void dumpSchedule(const ScheduleInfo &Info, int MinLength, int II,
-                  std::function<bool(int I, int K)> Select) {
+                  StringRef Letters, std::function<bool(int I, int K)> Select) {
   for (int K = 0; K < Info.NInstr; K++) {
-    char S = slotLetter(Info[K].Slots);
+    char S = slotLetter(Info[K].Slots, Letters);
     std::string Head = "SU" + std::to_string(K);
     dbgs() << Head;
     for (int I = Head.length() - 6; I < MinLength; I++) {
@@ -674,21 +673,22 @@ void dumpSchedule(const ScheduleInfo &Info, int MinLength, int II,
   }
 }
 
-void dumpIntervals(const ScheduleInfo &Info, int MinLength, int II) {
+void dumpIntervals(const ScheduleInfo &Info, int MinLength, int II,
+                   StringRef Letters) {
   dbgs() << "Intervals:\n";
-  dumpSchedule(Info, MinLength, II, [&](int I, int K) {
+  dumpSchedule(Info, MinLength, II, Letters, [&](int I, int K) {
     return I >= Info[K].Earliest && I <= MinLength + Info[K].Latest;
   });
 }
 
-void dumpCycles(const ScheduleInfo &Info, int II) {
+void dumpCycles(const ScheduleInfo &Info, int II, StringRef Letters) {
   int FullStageLength = 0;
   while (FullStageLength < Info.Length) {
     FullStageLength += II;
   }
 
   dbgs() << "Cycles:\n";
-  dumpSchedule(Info, FullStageLength, II,
+  dumpSchedule(Info, FullStageLength, II, Letters,
                [&](int I, int K) { return I == Info[K].Cycle; });
 }
 } // namespace
@@ -811,7 +811,8 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
   const bool Success = checkStages();
   DEBUG_SUMMARY(dbgs() << "==== First iteration scheduled by "
                        << Strategy.name() << "====\n");
-  DEBUG_SUMMARY(dumpCycles(Info, II));
+  DEBUG_SUMMARY(
+      dumpCycles(Info, II, TII->getFormatInterface()->getSlotLetters()));
   return Success;
 }
 
@@ -1217,6 +1218,9 @@ static const ConfigStrategy::Configuration Heuristics[] = {
 
 bool PostPipeliner::tryApproaches() {
   DEBUG_SUMMARY(dbgs() << "-- MinLength=" << MinLength << "\n");
+  StringRef Letters = TII->getFormatInterface()->getSlotLetters();
+  SmallSet<int, 3> DumpedLengths;
+  DumpedLengths.insert(MinLength);
   int HeuristicIndex = 0;
   for (const auto &Config : Heuristics) {
     if (Heuristic >= 0 && Heuristic != HeuristicIndex++) {
@@ -1331,10 +1335,8 @@ bool PostPipeliner::applySolver(const SolverData &Data, SWPSolver &Solver,
   // order to save solver time. We extract the cycles, and make a final check
   // for all constraints using a dedicated strategy.
   auto Schedule = Solver.getSUCycles();
-  DEBUG_SUMMARY(dbgs() << "Solver found "; for (auto C
-                                                : Schedule) dbgs()
-                                           << C << ", ";
-                dbgs() << "\n";);
+  DEBUG_SUMMARY(dbgs() << "Solver found ";
+                for (auto C : Schedule) dbgs() << C << ", "; dbgs() << "\n";);
   CheckFixedSchedule S{*DAG, Info, II * NS, Schedule};
   resetSchedule(/*FullReset=*/true);
   DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name() << "\n");
@@ -1383,7 +1385,8 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval,
     });
     return false;
   }
-  LLVM_DEBUG(dumpIntervals(Info, MinLength, II));
+  LLVM_DEBUG(dumpIntervals(Info, MinLength, II,
+                           TII->getFormatInterface()->getSlotLetters()));
   if (!tryApproaches()) {
     More.emit([&]() {
       return MachineOptimizationRemarkMissed("postpipeliner", "schedule",

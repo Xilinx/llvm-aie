@@ -64,6 +64,8 @@ using ResourceSet = StaticBitSet<TotalNumResources>;
 class FuncUnitWrapper {
   /// The format interface to interpret bundle constraints
   static const AIEBaseMCFormats *FormatInterface;
+  /// Architecture-specific single-letter abbreviations for slots
+  static StringRef SlotLetters;
 
   /// Bitset of the required resources
   ResourceSet Required;
@@ -98,6 +100,8 @@ public:
         Slots(Slots), MemoryBanks(MemoryBanks), MemObjectsBits(MemObjectsBits) {
   }
 
+  /// Initialize the format interface and derive slot letter abbreviations
+  /// from it. Must be called before slot-aware debug output is used.
   static void setFormatInterface(const AIEBaseMCFormats *Formats);
 
   /// Check whether this cycle is empty

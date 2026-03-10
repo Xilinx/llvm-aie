@@ -55,10 +55,13 @@ const MCSlotKind AIEInstFormat::getSlot() const {
   return SlotsMap.begin()->SlotKind;
 }
 
-
 /***************** AIEMCFormats *******************/
 
 const MCFormatDesc *AIEMCFormats::getMCFormats() const { return AIE::Formats; }
+
+// Slots sorted by name: alu, instr16, lda, ldb, lng, mv0, mv1, mv1ssb,
+// st, veca, vecm, vecshft, vecshrt, vecstrm
+StringRef AIEMCFormats::getSlotLetters() const { return "XIABLMmbSVWFTG"; }
 
 const PacketFormats &AIEMCFormats::getPacketFormats() const { return Formats; }
 

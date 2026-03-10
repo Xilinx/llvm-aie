@@ -27,6 +27,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/WithColor.h"
 #include "llvm/Support/raw_ostream.h"
+#include <bitset>
 #include <cassert>
 #include <climits>
 #include <limits>
@@ -55,8 +56,10 @@ static cl::opt<bool>
                              cl::desc("Recognize pointer hazards"));
 
 const AIEBaseMCFormats *FuncUnitWrapper::FormatInterface = nullptr;
+StringRef FuncUnitWrapper::SlotLetters;
 void FuncUnitWrapper::setFormatInterface(const AIEBaseMCFormats *Formats) {
   FormatInterface = Formats;
+  SlotLetters = Formats ? Formats->getSlotLetters() : StringRef();
 }
 
 bool FuncUnitWrapper::operator==(const FuncUnitWrapper &Other) const {
@@ -76,14 +79,26 @@ void FuncUnitWrapper::dump() const {
     for (int J = FU.getNumBits() - 1; J >= 0; J--)
       dbgs() << (FU.contains(J) ? Digits[J % 10] : Spacer[J % 10 == 0]);
   };
-  auto PrintResource = [&](const std::string &ResourceName, uint64_t Resource) {
+  auto PrintResource = [&](const std::string &ResourceName, uint64_t Resource,
+                           int NumBits = 10) {
     dbgs() << ResourceName;
-    for (int J = 9; J >= 0; J--)
-      dbgs() << ((Resource & (1ULL << J)) ? Digits[J] : '-');
+    std::bitset<64> Bits(Resource);
+    for (int J = NumBits - 1; J >= 0; J--)
+      dbgs() << (Bits.test(J) ? Digits[J % 10] : '-');
+  };
+  auto PrintSlots = [&](const std::string &ResourceName, uint64_t Resource) {
+    assert(!SlotLetters.empty());
+    dbgs() << ResourceName;
+    std::bitset<64> Bits(Resource);
+    for (int J = (int)SlotLetters.size() - 1; J >= 0; J--)
+      dbgs() << (Bits.test(J) ? SlotLetters[J] : '-');
   };
 
   PrintFU("Req     : ", Required);
-  PrintResource(" Slots : ", Slots);
+  if (!SlotLetters.empty())
+    PrintSlots(" Slots : ", Slots);
+  else
+    PrintResource(" Slots : ", Slots);
   PrintResource(" Memorybanks : ", MemoryBanks);
   PrintResource(" MemObjectsBits : ", MemObjectsBits);
   if (Reserved.empty())
