@@ -8,9 +8,9 @@
 # all_of on an empty use set returns true and the combiner narrows the load, 
 # then re-processes and crashes building G_ZEXT(s20, s20).
 #
-# RUN: llc -mtriple aie2 -run-pass=aie2-prelegalizer-combiner %s -o - | FileCheck %s
-# RUN: llc -mtriple aie2p -run-pass=aie2p-prelegalizer-combiner %s -o - | FileCheck %s
-# RUN: llc -mtriple aie2ps -run-pass=aie2ps-prelegalizer-combiner %s -o - | FileCheck %s
+# RUN: llc -mtriple aie2 -run-pass=aie-prelegalizer-combiner %s -o - | FileCheck %s
+# RUN: llc -mtriple aie2p -run-pass=aie-prelegalizer-combiner %s -o - | FileCheck %s
+# RUN: llc -mtriple aie2ps -run-pass=aie-prelegalizer-combiner %s -o - | FileCheck %s
 
 ---
 name:            G_LOAD_no_trunc_user
