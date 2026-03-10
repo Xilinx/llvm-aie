@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -668,18 +668,7 @@ __attribute__((aligned(8)));
 
 // 2560 bit
 struct v256mx9 {
-  v16int32 mantissaX0;
-  v16int32 mantissaX1;
-  v16int32 mantissaX2;
-  v16int32 mantissaX3;
-  v2int32 tileShiftG0;
-  v2int32 tileShiftG1;
-  v2int32 tileShiftG2;
-  v2int32 tileShiftG3;
-  v2int32 exponentE0;
-  v2int32 exponentE1;
-  v2int32 exponentE2;
-  v2int32 exponentE3;
+  struct v128mx9 l, h;
 } __attribute__((packed)) __attribute__((return_in_regs))
 __attribute__((aligned(8)));
 

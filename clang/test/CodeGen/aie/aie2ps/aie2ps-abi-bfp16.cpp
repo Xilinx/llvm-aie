@@ -120,40 +120,10 @@ extern "C" {
 // CHECK-NEXT:    [[TMP0:%.*]] = alloca [[STRUCT_V256MX9]], align 8
 // CHECK-NEXT:    [[TMP1:%.*]] = getelementptr inbounds nuw [[STRUCT_V256MX9]], ptr [[TMP0]], i32 0, i32 0
 // CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V256MX9]] [[DOTCOERCE]], 0
-// CHECK-NEXT:    store <16 x i32> [[TMP2]], ptr [[TMP1]], align 8
+// CHECK-NEXT:    store [[STRUCT_V128MX9:%.*]] [[TMP2]], ptr [[TMP1]], align 8
 // CHECK-NEXT:    [[TMP3:%.*]] = getelementptr inbounds nuw [[STRUCT_V256MX9]], ptr [[TMP0]], i32 0, i32 1
 // CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V256MX9]] [[DOTCOERCE]], 1
-// CHECK-NEXT:    store <16 x i32> [[TMP4]], ptr [[TMP3]], align 8
-// CHECK-NEXT:    [[TMP5:%.*]] = getelementptr inbounds nuw [[STRUCT_V256MX9]], ptr [[TMP0]], i32 0, i32 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX9]] [[DOTCOERCE]], 2
-// CHECK-NEXT:    store <16 x i32> [[TMP6]], ptr [[TMP5]], align 8
-// CHECK-NEXT:    [[TMP7:%.*]] = getelementptr inbounds nuw [[STRUCT_V256MX9]], ptr [[TMP0]], i32 0, i32 3
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue [[STRUCT_V256MX9]] [[DOTCOERCE]], 3
-// CHECK-NEXT:    store <16 x i32> [[TMP8]], ptr [[TMP7]], align 8
-// CHECK-NEXT:    [[TMP9:%.*]] = getelementptr inbounds nuw [[STRUCT_V256MX9]], ptr [[TMP0]], i32 0, i32 4
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue [[STRUCT_V256MX9]] [[DOTCOERCE]], 4
-// CHECK-NEXT:    store <2 x i32> [[TMP10]], ptr [[TMP9]], align 8
-// CHECK-NEXT:    [[TMP11:%.*]] = getelementptr inbounds nuw [[STRUCT_V256MX9]], ptr [[TMP0]], i32 0, i32 5
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue [[STRUCT_V256MX9]] [[DOTCOERCE]], 5
-// CHECK-NEXT:    store <2 x i32> [[TMP12]], ptr [[TMP11]], align 8
-// CHECK-NEXT:    [[TMP13:%.*]] = getelementptr inbounds nuw [[STRUCT_V256MX9]], ptr [[TMP0]], i32 0, i32 6
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue [[STRUCT_V256MX9]] [[DOTCOERCE]], 6
-// CHECK-NEXT:    store <2 x i32> [[TMP14]], ptr [[TMP13]], align 8
-// CHECK-NEXT:    [[TMP15:%.*]] = getelementptr inbounds nuw [[STRUCT_V256MX9]], ptr [[TMP0]], i32 0, i32 7
-// CHECK-NEXT:    [[TMP16:%.*]] = extractvalue [[STRUCT_V256MX9]] [[DOTCOERCE]], 7
-// CHECK-NEXT:    store <2 x i32> [[TMP16]], ptr [[TMP15]], align 8
-// CHECK-NEXT:    [[TMP17:%.*]] = getelementptr inbounds nuw [[STRUCT_V256MX9]], ptr [[TMP0]], i32 0, i32 8
-// CHECK-NEXT:    [[TMP18:%.*]] = extractvalue [[STRUCT_V256MX9]] [[DOTCOERCE]], 8
-// CHECK-NEXT:    store <2 x i32> [[TMP18]], ptr [[TMP17]], align 8
-// CHECK-NEXT:    [[TMP19:%.*]] = getelementptr inbounds nuw [[STRUCT_V256MX9]], ptr [[TMP0]], i32 0, i32 9
-// CHECK-NEXT:    [[TMP20:%.*]] = extractvalue [[STRUCT_V256MX9]] [[DOTCOERCE]], 9
-// CHECK-NEXT:    store <2 x i32> [[TMP20]], ptr [[TMP19]], align 8
-// CHECK-NEXT:    [[TMP21:%.*]] = getelementptr inbounds nuw [[STRUCT_V256MX9]], ptr [[TMP0]], i32 0, i32 10
-// CHECK-NEXT:    [[TMP22:%.*]] = extractvalue [[STRUCT_V256MX9]] [[DOTCOERCE]], 10
-// CHECK-NEXT:    store <2 x i32> [[TMP22]], ptr [[TMP21]], align 8
-// CHECK-NEXT:    [[TMP23:%.*]] = getelementptr inbounds nuw [[STRUCT_V256MX9]], ptr [[TMP0]], i32 0, i32 11
-// CHECK-NEXT:    [[TMP24:%.*]] = extractvalue [[STRUCT_V256MX9]] [[DOTCOERCE]], 11
-// CHECK-NEXT:    store <2 x i32> [[TMP24]], ptr [[TMP23]], align 8
+// CHECK-NEXT:    store [[STRUCT_V128MX9]] [[TMP4]], ptr [[TMP3]], align 8
 // CHECK-NEXT:    ret void
 //
     void pass_v256mx9(v256mx9) {}
@@ -162,18 +132,20 @@ extern "C" {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[RETVAL:%.*]] = alloca [[STRUCT_V256MX9:%.*]], align 8
 // CHECK-NEXT:    call void @llvm.memset.p0.i64(ptr align 8 [[RETVAL]], i8 0, i64 320, i1 false)
-// CHECK-NEXT:    [[MANTISSAX0:%.*]] = getelementptr inbounds nuw [[STRUCT_V256MX9]], ptr [[RETVAL]], i32 0, i32 0
-// CHECK-NEXT:    [[MANTISSAX1:%.*]] = getelementptr inbounds nuw [[STRUCT_V256MX9]], ptr [[RETVAL]], i32 0, i32 1
-// CHECK-NEXT:    [[MANTISSAX2:%.*]] = getelementptr inbounds nuw [[STRUCT_V256MX9]], ptr [[RETVAL]], i32 0, i32 2
-// CHECK-NEXT:    [[MANTISSAX3:%.*]] = getelementptr inbounds nuw [[STRUCT_V256MX9]], ptr [[RETVAL]], i32 0, i32 3
-// CHECK-NEXT:    [[TILESHIFTG0:%.*]] = getelementptr inbounds nuw [[STRUCT_V256MX9]], ptr [[RETVAL]], i32 0, i32 4
-// CHECK-NEXT:    [[TILESHIFTG1:%.*]] = getelementptr inbounds nuw [[STRUCT_V256MX9]], ptr [[RETVAL]], i32 0, i32 5
-// CHECK-NEXT:    [[TILESHIFTG2:%.*]] = getelementptr inbounds nuw [[STRUCT_V256MX9]], ptr [[RETVAL]], i32 0, i32 6
-// CHECK-NEXT:    [[TILESHIFTG3:%.*]] = getelementptr inbounds nuw [[STRUCT_V256MX9]], ptr [[RETVAL]], i32 0, i32 7
-// CHECK-NEXT:    [[EXPONENTE0:%.*]] = getelementptr inbounds nuw [[STRUCT_V256MX9]], ptr [[RETVAL]], i32 0, i32 8
-// CHECK-NEXT:    [[EXPONENTE1:%.*]] = getelementptr inbounds nuw [[STRUCT_V256MX9]], ptr [[RETVAL]], i32 0, i32 9
-// CHECK-NEXT:    [[EXPONENTE2:%.*]] = getelementptr inbounds nuw [[STRUCT_V256MX9]], ptr [[RETVAL]], i32 0, i32 10
-// CHECK-NEXT:    [[EXPONENTE3:%.*]] = getelementptr inbounds nuw [[STRUCT_V256MX9]], ptr [[RETVAL]], i32 0, i32 11
+// CHECK-NEXT:    [[L:%.*]] = getelementptr inbounds nuw [[STRUCT_V256MX9]], ptr [[RETVAL]], i32 0, i32 0
+// CHECK-NEXT:    [[MANTISSAX0:%.*]] = getelementptr inbounds nuw [[STRUCT_V128MX9:%.*]], ptr [[L]], i32 0, i32 0
+// CHECK-NEXT:    [[MANTISSAX1:%.*]] = getelementptr inbounds nuw [[STRUCT_V128MX9]], ptr [[L]], i32 0, i32 1
+// CHECK-NEXT:    [[TILESHIFTG0:%.*]] = getelementptr inbounds nuw [[STRUCT_V128MX9]], ptr [[L]], i32 0, i32 2
+// CHECK-NEXT:    [[TILESHIFTG1:%.*]] = getelementptr inbounds nuw [[STRUCT_V128MX9]], ptr [[L]], i32 0, i32 3
+// CHECK-NEXT:    [[EXPONENTE0:%.*]] = getelementptr inbounds nuw [[STRUCT_V128MX9]], ptr [[L]], i32 0, i32 4
+// CHECK-NEXT:    [[EXPONENTE1:%.*]] = getelementptr inbounds nuw [[STRUCT_V128MX9]], ptr [[L]], i32 0, i32 5
+// CHECK-NEXT:    [[H:%.*]] = getelementptr inbounds nuw [[STRUCT_V256MX9]], ptr [[RETVAL]], i32 0, i32 1
+// CHECK-NEXT:    [[MANTISSAX01:%.*]] = getelementptr inbounds nuw [[STRUCT_V128MX9]], ptr [[H]], i32 0, i32 0
+// CHECK-NEXT:    [[MANTISSAX12:%.*]] = getelementptr inbounds nuw [[STRUCT_V128MX9]], ptr [[H]], i32 0, i32 1
+// CHECK-NEXT:    [[TILESHIFTG03:%.*]] = getelementptr inbounds nuw [[STRUCT_V128MX9]], ptr [[H]], i32 0, i32 2
+// CHECK-NEXT:    [[TILESHIFTG14:%.*]] = getelementptr inbounds nuw [[STRUCT_V128MX9]], ptr [[H]], i32 0, i32 3
+// CHECK-NEXT:    [[EXPONENTE05:%.*]] = getelementptr inbounds nuw [[STRUCT_V128MX9]], ptr [[H]], i32 0, i32 4
+// CHECK-NEXT:    [[EXPONENTE16:%.*]] = getelementptr inbounds nuw [[STRUCT_V128MX9]], ptr [[H]], i32 0, i32 5
 // CHECK-NEXT:    [[TMP0:%.*]] = load [[STRUCT_V256MX9]], ptr [[RETVAL]], align 8
 // CHECK-NEXT:    ret [[STRUCT_V256MX9]] [[TMP0]]
 //

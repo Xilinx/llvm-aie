@@ -5,7 +5,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -2294,19 +2294,13 @@ INTRINSIC(v64bfp16p) extract_v64bfp16p(v128bfp16p a, int idx) {
 // v256mx9
 INTRINSIC(v256mx9) insert(v256mx9 v, int idx, v128mx9 vsub) {
   if (idx == 0)
-    return {vsub.mantissaX0,  vsub.mantissaX1,  v.mantissaX2,  v.mantissaX3,
-            vsub.tileShiftG0, vsub.tileShiftG1, v.tileShiftG2, v.tileShiftG3,
-            vsub.exponentE0,  vsub.exponentE1,  v.exponentE2,  v.exponentE3};
-  return {v.mantissaX0,  v.mantissaX1,  vsub.mantissaX0,  vsub.mantissaX1,
-          v.tileShiftG0, v.tileShiftG1, vsub.tileShiftG0, vsub.tileShiftG1,
-          v.exponentE0,  v.exponentE1,  vsub.exponentE0,  vsub.exponentE1};
+    return {vsub, v.h};
+  return {v.l, vsub};
 }
 INTRINSIC(v128mx9) extract_v128mx9(v256mx9 v, int idx) {
   if (idx == 0)
-    return {v.mantissaX0,  v.mantissaX1, v.tileShiftG0,
-            v.tileShiftG1, v.exponentE0, v.exponentE1};
-  return {v.mantissaX2,  v.mantissaX3, v.tileShiftG2,
-          v.tileShiftG3, v.exponentE2, v.exponentE3};
+    return v.l;
+  return v.h;
 }
 INTRINSIC(v128bfp16p) extract_v128bfp16p(v256bfp16p a, int idx) {
   return extract_v128mx9(a, idx);
