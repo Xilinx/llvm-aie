@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 
 ; RUN: opt -passes=instcombine -S < %s | FileCheck %s
 
@@ -26,8 +26,7 @@ entry:
 define ptr @load_intPtrType_to_ptr(ptr %x) {
 ; CHECK-LABEL: @load_intPtrType_to_ptr(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[B1:%.*]] = load i20, ptr [[X:%.*]], align 4
-; CHECK-NEXT:    [[C:%.*]] = inttoptr i20 [[B1]] to ptr
+; CHECK-NEXT:    [[C:%.*]] = load ptr, ptr [[X:%.*]], align 4
 ; CHECK-NEXT:    ret ptr [[C]]
 ;
 entry:
