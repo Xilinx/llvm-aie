@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -179,7 +179,8 @@ unsigned tryRegionAlignment(MultiBlockRegion &PadRegion, unsigned PadBytes,
   return PadBytes;
 }
 
-void padRegion(MultiBlockRegion &PadRegion, const unsigned AlignOffset) {
+void padRegionForAlignment(MultiBlockRegion &PadRegion,
+                           const unsigned AlignOffset) {
   const AIEBaseInstrInfo &TII = PadRegion.getTII();
 
   const unsigned MachineBlockAlignment = TII.getMachineBlockAlignmentBytes();
@@ -248,8 +249,9 @@ void verifyAlignment(MachineFunction &MF) {
 
 void padRegions(std::vector<MultiBlockRegion> &AllRegions) {
   for (auto [Idx, Region] : enumerate(AllRegions)) {
-    LLVM_DEBUG(dbgs() << "Aligning Region " << Idx << "\n");
-    padRegion(Region, Region.getRegionSize());
+    LLVM_DEBUG(dbgs() << "Padding Region " << Idx << " to align the next"
+                      << "\n");
+    padRegionForAlignment(Region, Region.getRegionSize());
   }
 }
 

@@ -1216,7 +1216,7 @@ AIEBaseInstrInfo::getSlotOpcode(const MCSlotKind Slot,
 
 std::vector<MachineBasicBlock::iterator>
 AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
-  std::vector<MachineBasicBlock::iterator> AlignCandidates;
+  std::vector<MachineBasicBlock::iterator> AlignmentBoundaries;
 
   unsigned DelaySlot = 0;
   // LoopSetupDistance will be set to number of instructions (7). In
@@ -1285,14 +1285,14 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
         DelaySlot--;
         if (DelaySlot == 0)
           /* Region + 1 => RegionEnd */
-          AlignCandidates.emplace_back(std::next(MI));
+          AlignmentBoundaries.emplace_back(std::next(MI));
       }
 
       // Create regions of singleton bundle for schedule margin bundles,
       // alignment algorithm will force fill each bundle to the correct number
       // of bits to fulfill the alignment requirement of the region.
       if (LoopPaddingInBytes > 0) {
-        AlignCandidates.emplace_back(MI);
+        AlignmentBoundaries.emplace_back(MI);
         const int BundleSize = getAIEMachineBundleSize(MI);
         LoopPaddingInBytes -= (MBBAlignment - BundleSize);
       }
@@ -1334,7 +1334,7 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
       while (PrevNonMetaMI->isMetaInstruction())
         PrevNonMetaMI = std::prev(PrevNonMetaMI);
 
-      AlignCandidates.emplace_back(PrevNonMetaMI);
+      AlignmentBoundaries.emplace_back(PrevNonMetaMI);
     } else if (!MI->isMetaInstruction()) {
       // Single instruction, there should not be any
       // after Bundle Finalization Pass.
@@ -1345,8 +1345,8 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
   if (LoopPaddingInBytes > 0)
     llvm_unreachable("LoopStart/LoopBody: insufficient padding!\n");
 
-  AlignCandidates.emplace_back(MBB.end());
-  return AlignCandidates;
+  AlignmentBoundaries.emplace_back(MBB.end());
+  return AlignmentBoundaries;
 }
 
 bool AIEBaseInstrInfo::isNativeS20Consumer(
