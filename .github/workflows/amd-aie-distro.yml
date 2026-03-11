@@ -331,7 +331,8 @@ jobs:
       uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # 4.6.0
       with:
         path: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}/wheelhouse/*.whl
-        name: build_artifact
+        # Matrix legs must upload to unique artifact names
+        name: build_artifact-${{ matrix.OS }}-${{ matrix.ARCH }}
 
   upload_distro_wheels:
 
@@ -348,10 +349,11 @@ jobs:
     steps:
       - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # 4.1.8
         with:
-          # unpacks default artifact into dist/
-          # if `name: artifact` is omitted, the action will create extra parent dir
-          name: build_artifact
+          # Unpacks all per-platform artifacts into dist/
+          pattern: build_artifact-*
           path: dist
+          # If omitted, the action will create extra parent dirs
+          merge-multiple: true
 
       - name: Release current commit
         uses: ncipollo/release-action@v1.12.0
