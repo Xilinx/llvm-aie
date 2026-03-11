@@ -60,6 +60,16 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
     // The distance between setup and the start of the loop, in units
     // of bundles.
     unsigned LoopSetupDistance;
+    // Minimum distance in bytes from any JUMP instruction to the
+    // end-of-loop label. 0 means no additional constraint beyond
+    // LoopSetupDistance. When set, delay slot bundles of branches
+    // preceding a ZOL preheader are forced to full alignment boundaries.
+    // Any remaining gap could be padded in the preheader but that is not needed
+    // at the moment since the last bundle of the loop body is always aligned.
+    unsigned JumpToLoopEndDistanceInBytes = 0;
+    // If true, the loop setup distance is enforced as a byte distance:
+    // bundles between setup and LEND are elongated to alignment boundaries.
+    bool LoopSetupRequiresByteDistance = true;
   };
 
   class JNZDSupport {
@@ -342,6 +352,9 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
 
   /// Check whether Opc represents a JL/JAL instruction.
   virtual bool isCall(unsigned Opc) const { return false; }
+
+  // Check if the MII points to a BUNDLE which contains a branch instruction
+  bool isJumpBundle(MachineBasicBlock::iterator MII) const;
 
   // Detect instructions that induce control flow to unknown targets,
   // in particular after pseudo expansion, where they are no longer

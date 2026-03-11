@@ -325,6 +325,17 @@ bool AIEBaseInstrInfo::isCallBundle(MachineBasicBlock::iterator MII) const {
   return IsReturnAddr;
 }
 
+bool AIEBaseInstrInfo::isJumpBundle(MachineBasicBlock::iterator MII) const {
+  MachineBasicBlock::const_instr_iterator I = ++MII->getIterator();
+  MachineBasicBlock::instr_iterator E = MII->getParent()->instr_end();
+  while (I != E && I->isInsideBundle()) {
+    if (I->hasDelaySlot())
+      return true;
+    ++I;
+  }
+  return false;
+}
+
 bool AIEBaseInstrInfo::isZOLTripCountDef(const MachineInstr &MI,
                                          bool Pristine) const {
   auto ZOLSupport = getZOLSupport();
@@ -463,8 +474,7 @@ unsigned AIEBaseInstrInfo::getRegionSizeInBytes(
     Size += getAIEMachineBundleSize(It);
   }
   LLVM_DEBUG(dbgs() << "---Region End---\n");
-  LLVM_DEBUG(dbgs() << "Region Size"
-                    << " " << Size << "\n");
+  LLVM_DEBUG(dbgs() << "Region Size" << " " << Size << "\n");
   return Size;
 }
 
@@ -1219,17 +1229,61 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
   std::vector<MachineBasicBlock::iterator> AlignmentBoundaries;
 
   unsigned DelaySlot = 0;
-  // LoopSetupDistance will be set to number of instructions (7). In
-  // PostRAScheduler, this is enforced by setting the exit latency in the
+  // LoopSetupDistance is the number of bundles between setup and LEND.
+  // In PostRAScheduler, this is enforced by setting the exit latency in the
   // scheduler dag mutator.
   int LoopPaddingInBytes = 0;
   bool IsCall = false;
   auto ZOLSupport = getZOLSupport();
   const unsigned ZOLSetupToLoopEndDist =
       ZOLSupport.has_value() ? ZOLSupport->LoopSetupDistance : 0;
+  const bool LoopSetupRequiresByteDistance =
+      ZOLSupport && ZOLSupport->LoopSetupRequiresByteDistance;
   const unsigned LoopSetupSizeInBytes =
-      getMachineBlockAlignmentBytes() * ZOLSetupToLoopEndDist;
+      LoopSetupRequiresByteDistance
+          ? getMachineBlockAlignmentBytes() * ZOLSetupToLoopEndDist
+          : 0;
   const unsigned MBBAlignment = getMachineBlockAlignmentBytes();
+
+  const unsigned JumpToLENDBytes =
+      ZOLSupport ? ZOLSupport->JumpToLoopEndDistanceInBytes : 0;
+
+  // Byte-based counter for padding delay slot bundles of branches near
+  // ZOL. Works like LoopPaddingInBytes: each bundle absorbs up to
+  // (MBBAlignment - BundleSize) bytes until the deficit is covered.
+  int JumpPaddingInBytes = 0;
+
+  // Check if this MBB can have a branch that reaches a ZOL body within
+  // JumpToLoopEndDistanceInBytes. Scan forward in layout order; any block
+  // whose single successor is a ZOL body is a candidate preheader. This
+  // handles jumps not only in the immediate predecessor of the preheader
+  // but in any block within range of LEND.
+  bool IsGuardOfZOL = false;
+  MachineBasicBlock *GuardPreheader = nullptr;
+  MachineBasicBlock *GuardZOLBody = nullptr;
+  unsigned GuardIntermediateBlocksSize = 0;
+  if (JumpToLENDBytes > 0) {
+    unsigned AccumulatedSize = 0;
+    for (auto NextIt = std::next(MBB.getIterator()),
+              EndIt = MBB.getParent()->end();
+         NextIt != EndIt; ++NextIt) {
+      MachineBasicBlock &NextMBB = *NextIt;
+      if (NextMBB.succ_size() == 1 &&
+          NextMBB.getFirstTerminator() == NextMBB.end()) {
+        MachineBasicBlock *PossibleBody = *NextMBB.successors().begin();
+        if (isZOLBody(*PossibleBody)) {
+          IsGuardOfZOL = true;
+          GuardPreheader = &NextMBB;
+          GuardZOLBody = PossibleBody;
+          GuardIntermediateBlocksSize = AccumulatedSize;
+          break;
+        }
+      }
+      AccumulatedSize += getMBBSizeInBytes(NextMBB);
+      if (AccumulatedSize >= JumpToLENDBytes)
+        break;
+    }
+  }
 
   auto GetPostZOLSetupRegionSize =
       [this](MachineBasicBlock &LoopMBB) -> std::pair<unsigned, unsigned> {
@@ -1297,9 +1351,36 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
         LoopPaddingInBytes -= (MBBAlignment - BundleSize);
       }
 
+      // Pad delay slot bundles of branches near ZOL to meet the
+      // jump-to-LEND byte distance. Only pads as many bundles as needed.
+      if (JumpPaddingInBytes > 0) {
+        AlignmentBoundaries.emplace_back(MI);
+        const int BundleSize = getAIEMachineBundleSize(MI);
+        JumpPaddingInBytes -= (MBBAlignment - BundleSize);
+      }
+
       if (IsCall)
         DelaySlot = getNumDelaySlots(*MI);
 
+      // When a branch is found and there is a ZOL body within
+      // JumpToLENDBytes (possibly with intermediate blocks), compute
+      // the distance from this branch to LEND and pad delay slots to
+      // cover the deficit.
+      if (IsGuardOfZOL && isJumpBundle(MI)) {
+        unsigned DistToEnd =
+            getRegionSizeInBytes(llvm::make_range(MI, MBB.end()));
+        unsigned PreheaderSize = getMBBSizeInBytes(*GuardPreheader);
+        unsigned LoopBodySize = LoopSizeExcludingLastBundle(*GuardZOLBody);
+        int Deficit = static_cast<int>(JumpToLENDBytes) -
+                      static_cast<int>(DistToEnd + GuardIntermediateBlocksSize +
+                                       PreheaderSize + LoopBodySize);
+        if (Deficit > 0) {
+          JumpPaddingInBytes = Deficit;
+          AlignmentBoundaries.emplace_back(MI);
+          const int BundleSize = getAIEMachineBundleSize(MI);
+          JumpPaddingInBytes -= (MBBAlignment - BundleSize);
+        }
+      }
       // Distance in terms of fully-expanded bundles that loop setup should
       // maintain. We force each of these bundles to an alignment boundary.
       if (ZOLSupport && isZOLSetupBundle(MI) && isLastZOLSetupBundleInMBB(MI)) {
