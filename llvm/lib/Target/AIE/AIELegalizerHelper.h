@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 /// \file
@@ -27,19 +27,28 @@ class GICmp;
 
 class AIELegalizerHelper {
   const AIEBaseSubtarget &ST;
+  const LLT S1 = LLT::scalar(1);
+  const LLT S8 = LLT::scalar(8);
   const LLT S16 = LLT::scalar(16);
   const LLT S32 = LLT::scalar(32);
+  const LLT S64 = LLT::scalar(64);
+  const LLT S20 = LLT::scalar(20);
+  const LLT P0_20 = LLT::pointer(0, 20);
   const LLT V2S16 = LLT::fixed_vector(2, 16);
   const LLT V2S32 = LLT::fixed_vector(2, 32);
   const LLT V8ACC64 = LLT::fixed_vector(8, 64);
+  const LLT V16S8 = LLT::fixed_vector(16, 8);
   const LLT V16S16 = LLT::fixed_vector(16, 16);
   const LLT V16BF16 = LLT::fixed_vector(16, 16);
   const LLT V16S32 = LLT::fixed_vector(16, 32);
   const LLT V16FP32 = LLT::fixed_vector(16, 32);
+  const LLT V32S1 = LLT::fixed_vector(32, 1);
+  const LLT V32S8 = LLT::fixed_vector(32, 8);
   const LLT V32S16 = LLT::fixed_vector(32, 16);
   const LLT V32BF16 = LLT::fixed_vector(32, 16);
   const LLT V32FP32 = LLT::fixed_vector(32, 32);
   const LLT V32ACC32 = LLT::fixed_vector(32, 32);
+  const LLT V64S8 = LLT::fixed_vector(64, 8);
   const LLT V64FP32 = LLT::fixed_vector(64, 32);
 
 public:

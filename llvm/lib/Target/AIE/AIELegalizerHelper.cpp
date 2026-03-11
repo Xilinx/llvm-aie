@@ -84,7 +84,6 @@ bool AIELegalizerHelper::pack32BitVector(LegalizerHelper &Helper,
   assert(SourceRegTy.getSizeInBits() == 32 &&
          "cannot pack vectors larger or smaller than 32-bit");
 
-  const LLT S32 = LLT::scalar(32);
   unsigned Offset = 0;
   Register DstCastReg = MRI.createGenericVirtualRegister(S32);
 
@@ -225,8 +224,7 @@ bool AIELegalizerHelper::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
     // vpush takes 32/64-bit operands so we sign extend the input variable. This
     // is required here since we don't have 8 or 16-bit registers.
     if (DstVecEltTy.getSizeInBits() < 32 && EltRegTy.getSizeInBits() != 32) {
-      const Register EltReg32 =
-          MRI.createGenericVirtualRegister(LLT::scalar(32));
+      const Register EltReg32 = MRI.createGenericVirtualRegister(S32);
       MIRBuilder.buildAnyExt({EltReg32}, {EltReg});
       EltReg = EltReg32;
     }
@@ -248,9 +246,8 @@ bool AIELegalizerHelper::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
   } else if (DstVecSize == 128) {
     Register Vec512Reg = MRI.createGenericVirtualRegister(V16S32);
 
-    Register Zero = MIRBuilder.buildConstant(LLT::scalar(32), 0).getReg(0);
-    Register ShiftConstant =
-        MIRBuilder.buildConstant(LLT::scalar(32), 48).getReg(0);
+    Register Zero = MIRBuilder.buildConstant(S32, 0).getReg(0);
+    Register ShiftConstant = MIRBuilder.buildConstant(S32, 48).getReg(0);
 
     Register NewSrc1 =
         EltSize == 32 ? Src : MIRBuilder.buildBitcast(V16S32, Src).getReg(0);
@@ -303,7 +300,7 @@ bool AIELegalizerHelper::legalizeG_UNMERGE_VALUES_128bit(
   // To extract the higher 128-bit, we need to shift them to the lower position,
   // then unpad again.
   // We need to shift the upper 128-bit content by 16-byte (128-bit)
-  auto ShiftAmt = MIRBuilder.buildConstant(LLT::scalar(32), 16);
+  auto ShiftAmt = MIRBuilder.buildConstant(S32, 16);
 
   // VSHIFT operates on 512-bit inputs. We need to pad the 256-bit source
   // operand to 512-bit
@@ -408,7 +405,7 @@ bool AIELegalizerHelper::legalizeG_UNMERGE_VALUES(LegalizerHelper &Helper,
     // We build the constant ourselves since the default behaviour
     // of the builtin is to create 64-bit constants.
     const MachineInstrBuilder CurrentIndex =
-        MIRBuilder.buildConstant(LLT::scalar(32), Index);
+        MIRBuilder.buildConstant(S32, Index);
     MIRBuilder.buildExtractVectorElement(Current, TargetReg, CurrentIndex);
   }
 
@@ -503,8 +500,6 @@ bool AIELegalizerHelper::legalize_G_STORE(LegalizerHelper &Helper,
   Register DstReg = StoreI.getOperand(0).getReg();
   LLT DestLLT = MRI.getType(DstReg);
 
-  const LLT S20 = LLT::scalar(20);
-
   GISelObserverWrapper DummyObserver;
   MachineIRBuilder HelperBuilder(StoreI, DummyObserver);
   DummyObserver.changedInstr(StoreI);
@@ -565,7 +560,7 @@ bool AIELegalizerHelper::legalizeG_VAARG(LegalizerHelper &Helper,
 
   // Compute the address of the current VAARG by subtracting its size
   // from the previous VAARG address.
-  LLT IntTy = LLT::scalar(32);
+  LLT IntTy = S32;
   auto Offset = MIRBuilder.buildConstant(IntTy, -ArgSize);
   auto NewVAList = MIRBuilder.buildPtrAdd(PtrTy, VAList.getReg(0), Offset);
 
@@ -591,12 +586,11 @@ bool AIELegalizerHelper::legalizeMemCalls(
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
   LLVMContext &Ctx = MIRBuilder.getMF().getFunction().getContext();
   MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
-  Register ResultReg = MRI.createGenericVirtualRegister(LLT::pointer(0, 20));
+  Register ResultReg = MRI.createGenericVirtualRegister(P0_20);
 
   RTLIB::Libcall LibEntry = RTLIB::UNKNOWN_LIBCALL;
   PointerType *VoidPtrTy = PointerType::get(Ctx, 0);
   IntegerType *IntTy = Type::getInt32Ty(Ctx);
-  LLT S32 = LLT::scalar(32);
 
   SmallVector<CallLowering::ArgInfo, 3> Args;
   Args.emplace_back(MI.getOperand(0).getReg(), VoidPtrTy, 0);
@@ -644,8 +638,6 @@ bool AIELegalizerHelper::legalizeG_BRJT(LegalizerHelper &Helper,
                                         MachineInstr &MI) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
   MachineFunction &MF = MIRBuilder.getMF();
-  LLT S32 = LLT::scalar(32);
-  LLT P0 = LLT::pointer(0, 20);
   unsigned EntrySize = MF.getJumpTableInfo()->getEntrySize(MF.getDataLayout());
 
   auto CopyIndexTo32 = MIRBuilder.buildZExt(S32, MI.getOperand(2));
@@ -653,11 +645,11 @@ bool AIELegalizerHelper::legalizeG_BRJT(LegalizerHelper &Helper,
   auto LShift = MIRBuilder.buildShl(S32, CopyIndexTo32->getOperand(0),
                                     ConstantShift->getOperand(0));
   auto PtrAdd =
-      MIRBuilder.buildPtrAdd(P0, MI.getOperand(0), LShift->getOperand(0));
+      MIRBuilder.buildPtrAdd(P0_20, MI.getOperand(0), LShift->getOperand(0));
   auto *MMO = MF.getMachineMemOperand(
-      MachinePointerInfo(), MachineMemOperand::MOLoad, P0,
+      MachinePointerInfo(), MachineMemOperand::MOLoad, P0_20,
       Align(MF.getJumpTableInfo()->getEntryAlignment(MF.getDataLayout())));
-  auto LoadAddress = MIRBuilder.buildLoad(P0, PtrAdd->getOperand(0), *MMO);
+  auto LoadAddress = MIRBuilder.buildLoad(P0_20, PtrAdd->getOperand(0), *MMO);
   MIRBuilder.buildBrIndirect(LoadAddress->getOperand(0).getReg());
 
   MI.eraseFromParent();
@@ -689,15 +681,14 @@ bool AIELegalizerHelper::legalizeG_JUMP_TABLE(LegalizerHelper &Helper,
 bool AIELegalizerHelper::legalizeG_DYN_STACKALLOC(LegalizerHelper &Helper,
                                                   MachineInstr &MI) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
-  const LLT P0 = LLT::pointer(0, 20);
   Register Dst = MI.getOperand(0).getReg();
   auto Size = MI.getOperand(1);
   Register SPReg =
       Helper.getTargetLowering().getStackPointerRegisterToSaveRestore();
 
-  auto SPTmp = MIRBuilder.buildCopy(P0, SPReg);
+  auto SPTmp = MIRBuilder.buildCopy(P0_20, SPReg);
   MIRBuilder.buildCopy(Dst, SPTmp);
-  SPTmp = MIRBuilder.buildPtrAdd(P0, SPTmp, Size);
+  SPTmp = MIRBuilder.buildPtrAdd(P0_20, SPTmp, Size);
   MIRBuilder.buildCopy(SPReg, SPTmp);
 
   MI.removeFromParent();
@@ -755,7 +746,6 @@ bool AIELegalizerHelper::legalizeG_EXTRACT_VECTOR_ELT(LegalizerHelper &Helper,
     return legalizeG_EXTRACT_VECTOR_ELT_TO_UNMERGE_VALUES(Helper, MI);
   }
 
-  const LLT S32 = LLT::scalar(32);
   switch (SrcVecSize) {
   case 64: {
     assert(SrcVecTy == V2S32 && "Unexpected 64bit vector!");
@@ -782,9 +772,6 @@ bool AIELegalizerHelper::legalizeG_EXTRACT_VECTOR_ELT(LegalizerHelper &Helper,
       /// We can use vshuffle + pad/unpad instruction to select extract s128
       /// from <2 x s128>
       const AIEBaseInstrInfo *II = ST.getInstrInfo();
-      const LLT V64S8 = LLT::fixed_vector(64, 8);
-      const LLT V32S8 = LLT::fixed_vector(32, 8);
-      const LLT V16S8 = LLT::fixed_vector(16, 8);
       // Step 1: Prepare the src1(SrcVecReg) for vshuffle
       const Register RegSrcBitcast = MRI.createGenericVirtualRegister(V32S8);
       MIRBuilder.buildBitcast(RegSrcBitcast, SrcVecReg);
@@ -843,9 +830,6 @@ bool AIELegalizerHelper::legalizeG_EXTRACT_VECTOR_ELT(LegalizerHelper &Helper,
   case 512:
   case 1024:
   case 2048: {
-    const LLT S8 = LLT::scalar(8);
-    const LLT S16 = LLT::scalar(16);
-    const LLT S64 = LLT::scalar(64);
     if (!(ST.isAIE2P() || ST.isAIE2PS())) {
       assert(SrcVecSize != 2048 && "Not expected 2048 vector type!");
       assert(SrcVecEltTy != S64 && "Not expected 64-bit elmt type vector!");
@@ -901,12 +885,11 @@ bool AIELegalizerHelper::legalizeG_INSERT_VECTOR_ELT(LegalizerHelper &Helper,
   const Register IdxReg = MI.getOperand(3).getReg();
   const LLT DstVecTy = MRI.getType(DstVecReg);
   const unsigned DstVecSize = DstVecTy.getSizeInBits();
-  const LLT S32 = LLT::scalar(32);
 
   auto ClampScalarSrc = [&](Register SrcReg) {
     Register NewValReg = SrcReg;
     const LLT ValTy = MRI.getType(SrcReg);
-    if (ValTy == LLT::scalar(8) || ValTy == LLT::scalar(16)) {
+    if (ValTy == S8 || ValTy == S16) {
       NewValReg = MRI.createGenericVirtualRegister(S32);
       MIRBuilder.buildAnyExt(NewValReg, SrcReg);
     }
@@ -1114,7 +1097,7 @@ bool AIELegalizerHelper::legalizeG_FCMP_FP32_FP64(
 
   SmallVector<Register, 2> Results;
   for (auto &[LibEntry, Predicate] : Libcalls) {
-    auto LibcallResult = MRI.createGenericVirtualRegister(LLT::scalar(32));
+    auto LibcallResult = MRI.createGenericVirtualRegister(S32);
     auto Status = createLibcall(MIRBuilder, LibEntry, {LibcallResult, RetTy, 0},
                                 {{MI.getOperand(2).getReg(), ArgTy, 0},
                                  {MI.getOperand(3).getReg(), ArgTy, 0}},
@@ -1131,7 +1114,7 @@ bool AIELegalizerHelper::legalizeG_FCMP_FP32_FP64(
     CmpInst::Predicate IDestPred = Predicate;
     // Compare against 0. Example, a ole b is transformed to ole(a, b) <= 0
     assert(CmpInst::isIntPredicate(IDestPred) && "Expected Int Predicate");
-    auto Zero = MIRBuilder.buildConstant(LLT::scalar(32), 0);
+    auto Zero = MIRBuilder.buildConstant(S32, 0);
     MIRBuilder.buildICmp(IDestPred, NewDstReg, LibcallResult, Zero);
     Results.push_back(NewDstReg);
   }
@@ -1259,8 +1242,6 @@ bool AIELegalizerHelper::legalizeG_FCMP(
 
   assert(LHSSize == 16 && "Expected bf16 operands for FCmp");
 
-  const LLT S32 = LLT::scalar(32);
-
   bool SwapOperands = false, PromoteToFP32 = false;
   const unsigned FCmpIntrID =
       getFCmpIntrID(ST, FPred, SwapOperands, PromoteToFP32);
@@ -1359,12 +1340,12 @@ bool AIELegalizerHelper::legalizeG_FPTRUNC(LegalizerHelper &Helper,
   LLT SrcTy = MRI.getType(SrcReg);
 
   // We only handle single precision to bfloat16 conversion
-  if (DstTy != LLT::scalar(16) || SrcTy != LLT::scalar(32))
+  if (DstTy != S16 || SrcTy != S32)
     return false;
 
   Register Vec512Reg = MRI.createGenericVirtualRegister(V16S32);
   Register Vec512Undef = MRI.createGenericVirtualRegister(V16S32);
-  Register IdxReg = MRI.createGenericVirtualRegister(LLT::scalar(32));
+  Register IdxReg = MRI.createGenericVirtualRegister(S32);
   MIRBuilder.buildUndef(Vec512Undef);
   MIRBuilder.buildConstant(IdxReg, 0);
   MIRBuilder.buildInstr(TargetOpcode::G_INSERT_VECTOR_ELT, {Vec512Reg},
@@ -1399,15 +1380,13 @@ bool AIELegalizerHelper::legalizeG_FPEXT(LegalizerHelper &Helper,
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
   MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
 
-  LLT S32 = LLT::scalar(32);
-
   Register DstReg = MI.getOperand(0).getReg();
   Register SrcReg = MI.getOperand(1).getReg();
   LLT DstTy = MRI.getType(DstReg);
   LLT SrcTy = MRI.getType(SrcReg);
 
   // We only handle bfloat16 to single precision conversion
-  if (DstTy != LLT::scalar(32) || SrcTy != LLT::scalar(16))
+  if (DstTy != S32 || SrcTy != S16)
     return false;
 
   Register AnyExt = MIRBuilder.buildAnyExt(S32, SrcReg).getReg(0);
@@ -1427,22 +1406,21 @@ bool AIELegalizerHelper::legalizeG_FABS(LegalizerHelper &Helper,
   Register DstReg = MI.getOperand(0).getReg();
   Register SrcReg = MI.getOperand(1).getReg();
   LLT SrcTy = MRI.getType(SrcReg);
-  if (SrcTy == LLT::scalar(64)) {
-    Register SrcLSB = MRI.createGenericVirtualRegister(LLT::scalar(32));
-    Register SrcMSB = MRI.createGenericVirtualRegister(LLT::scalar(32));
-    Register AndDst = MRI.createGenericVirtualRegister(LLT::scalar(32));
+  if (SrcTy == S64) {
+    Register SrcLSB = MRI.createGenericVirtualRegister(S32);
+    Register SrcMSB = MRI.createGenericVirtualRegister(S32);
+    Register AndDst = MRI.createGenericVirtualRegister(S32);
 
     MIRBuilder.buildInstr(TargetOpcode::G_UNMERGE_VALUES, {SrcLSB, SrcMSB},
                           {SrcReg});
-    auto Ones = MIRBuilder.buildConstant(LLT::scalar(32), 0x7fffffff);
+    auto Ones = MIRBuilder.buildConstant(S32, 0x7fffffff);
     MIRBuilder.buildAnd(AndDst, SrcMSB, Ones);
     MIRBuilder.buildInstr(TargetOpcode::G_MERGE_VALUES, {DstReg},
                           {SrcLSB, AndDst});
-  } else if (SrcTy == LLT::scalar(32)) {
-    auto Ones = MIRBuilder.buildConstant(LLT::scalar(32), 0x7fffffff);
+  } else if (SrcTy == S32) {
+    auto Ones = MIRBuilder.buildConstant(S32, 0x7fffffff);
     MIRBuilder.buildAnd(DstReg, SrcReg, Ones);
-  } else if (SrcTy == LLT::scalar(16)) {
-    const LLT S32 = LLT::scalar(32);
+  } else if (SrcTy == S16) {
     auto AnyExt = MIRBuilder.buildAnyExt(S32, SrcReg);
     auto Ones = MIRBuilder.buildConstant(S32, 0x7fff);
     auto And = MIRBuilder.buildAnd(S32, AnyExt, Ones);
@@ -1560,13 +1538,11 @@ bool AIELegalizerHelper::legalizeLoopDecrement(LegalizerHelper &Helper,
   MIRBuilder.setInsertPt(*MI.getParent(), ++MI.getIterator());
 
   Register OrigDst = MI.getOperand(0).getReg();
-  Register NewDst =
-      MIRBuilder.getMRI()->createGenericVirtualRegister(LLT::scalar(32));
+  Register NewDst = MIRBuilder.getMRI()->createGenericVirtualRegister(S32);
   // NOTE: we don't inform the observer about this change as we do not want to
   // revisit this instruction
   MI.getOperand(0).setReg(NewDst);
-  Register ZExtValueReg =
-      MIRBuilder.buildAssertZExt(LLT::scalar(32), NewDst, 1).getReg(0);
+  Register ZExtValueReg = MIRBuilder.buildAssertZExt(S32, NewDst, 1).getReg(0);
   MIRBuilder.buildAnyExtOrTrunc(OrigDst, ZExtValueReg);
   return true;
 }
@@ -1659,24 +1635,23 @@ bool AIELegalizerHelper::legalizeG_CONCAT_VECTORS_128bit(
   // G_AIE_VSEL's behavior depends on the element type. The select mask "15"
   // is designed for 32-bit elements, so we must bitcast to <16 x s32> before
   // using G_AIE_VSEL, then bitcast back to the original element type.
-  const LLT Vec16S32 = LLT::fixed_vector(16, 32);
   const bool NeedsBitcast = (Vec512Ty.getElementType().getSizeInBits() != 32);
 
   const Register Src0_512_S32 =
-      NeedsBitcast ? MIRBuilder.buildBitcast(Vec16S32, Src0_512).getReg(0)
+      NeedsBitcast ? MIRBuilder.buildBitcast(V16S32, Src0_512).getReg(0)
                    : Src0_512;
   const Register Src1_512_S32 =
-      NeedsBitcast ? MIRBuilder.buildBitcast(Vec16S32, Src1_512).getReg(0)
+      NeedsBitcast ? MIRBuilder.buildBitcast(V16S32, Src1_512).getReg(0)
                    : Src1_512;
 
   // Step 3: Shift src1 48 bytes to the right
   const Register ShiftAmt = MIRBuilder.buildConstant(S32, 48).getReg(0);
-  const Register Undef512_S32 = MIRBuilder.buildUndef(Vec16S32).getReg(0);
+  const Register Undef512_S32 = MIRBuilder.buildUndef(V16S32).getReg(0);
 
   const unsigned VShiftOpc = TII->getGenericVShiftOpcode();
   const Register Shifted =
       MIRBuilder
-          .buildInstr(VShiftOpc, {Vec16S32},
+          .buildInstr(VShiftOpc, {V16S32},
                       {Undef512_S32, Src1_512_S32, ShiftAmt})
           .getReg(0);
 
@@ -1687,8 +1662,7 @@ bool AIELegalizerHelper::legalizeG_CONCAT_VECTORS_128bit(
 
   const unsigned VSelOpc = TII->getGenericVSelOpcode();
   const Register Result512_S32 =
-      MIRBuilder
-          .buildInstr(VSelOpc, {Vec16S32}, {Shifted, Src0_512_S32, SelIdx})
+      MIRBuilder.buildInstr(VSelOpc, {V16S32}, {Shifted, Src0_512_S32, SelIdx})
           .getReg(0);
 
   // Step 5: Bitcast back to original element type if needed
@@ -1758,23 +1732,17 @@ bool AIELegalizerHelper::legalizeG_BITCAST(LegalizerHelper &Helper,
   assert(DstTy.getSizeInBits() == 16 && SrcTy.getSizeInBits() == 16 &&
          "Expected to legalize 16-bit G_BITCAST");
   if (DstTy.isVector()) {
-    const Register TmpReg32A =
-        MRI.createGenericVirtualRegister(LLT::scalar(32));
+    const Register TmpReg32A = MRI.createGenericVirtualRegister(S32);
     MIRBuilder.buildAnyExt({TmpReg32A}, {SrcReg});
-    const Register TmpReg32B =
-        MRI.createGenericVirtualRegister(LLT::scalar(32));
-    MIRBuilder.buildShl(TmpReg32B, TmpReg32A,
-                        MIRBuilder.buildConstant(LLT::scalar(32), 8));
-    const Register TmpReg32C =
-        MRI.createGenericVirtualRegister(LLT::scalar(32));
+    const Register TmpReg32B = MRI.createGenericVirtualRegister(S32);
+    MIRBuilder.buildShl(TmpReg32B, TmpReg32A, MIRBuilder.buildConstant(S32, 8));
+    const Register TmpReg32C = MRI.createGenericVirtualRegister(S32);
     MIRBuilder.buildAnd(TmpReg32C, TmpReg32B,
-                        MIRBuilder.buildConstant(LLT::scalar(32), 0xFF0000));
-    const Register TmpReg32D =
-        MRI.createGenericVirtualRegister(LLT::scalar(32));
+                        MIRBuilder.buildConstant(S32, 0xFF0000));
+    const Register TmpReg32D = MRI.createGenericVirtualRegister(S32);
     MIRBuilder.buildAnd(TmpReg32D, TmpReg32A,
-                        MIRBuilder.buildConstant(LLT::scalar(32), 0xFF));
-    const Register TmpReg32E =
-        MRI.createGenericVirtualRegister(LLT::scalar(32));
+                        MIRBuilder.buildConstant(S32, 0xFF));
+    const Register TmpReg32E = MRI.createGenericVirtualRegister(S32);
     MIRBuilder.buildOr(TmpReg32E, TmpReg32D, TmpReg32C);
 
     const Register TmpReg2x16 = MRI.createGenericVirtualRegister(V2S16);
@@ -1784,7 +1752,7 @@ bool AIELegalizerHelper::legalizeG_BITCAST(LegalizerHelper &Helper,
   } else {
     const Register TmpReg2x16 = MRI.createGenericVirtualRegister(V2S16);
     MIRBuilder.buildAnyExt({TmpReg2x16}, {SrcReg});
-    const Register TmpReg32 = MRI.createGenericVirtualRegister(LLT::scalar(32));
+    const Register TmpReg32 = MRI.createGenericVirtualRegister(S32);
     MIRBuilder.buildBitcast({TmpReg32}, {TmpReg2x16});
     MIRBuilder.buildTrunc(DstReg, TmpReg32);
   }
@@ -1993,22 +1961,19 @@ bool AIELegalizerHelper::legalizeG_ICMP(LegalizerHelper &Helper,
 
   // Result will be padded.
   if (IsResult16Bit)
-    DstType = LLT::fixed_vector(32, 1);
+    DstType = V32S1;
 
   const Register NewDstReg = MRI.createGenericVirtualRegister(DstType);
 
   MIRBuilder.buildInstr(ICmpOpcode, {NewDstReg}, {Pred, Src0Reg, Src1Reg});
 
   if (IsResult16Bit) {
-    const Register NewDstRegScalar =
-        MRI.createGenericVirtualRegister(LLT::scalar(32));
+    const Register NewDstRegScalar = MRI.createGenericVirtualRegister(S32);
     MIRBuilder.buildBitcast(NewDstRegScalar, NewDstReg);
-    const Register NewDstRegAssert =
-        MRI.createGenericVirtualRegister(LLT::scalar(32));
+    const Register NewDstRegAssert = MRI.createGenericVirtualRegister(S32);
     MIRBuilder.buildAssertInstr(TargetOpcode::G_ASSERT_ZEXT, NewDstRegAssert,
                                 NewDstRegScalar, 16);
-    const Register NewDstTrunc =
-        MRI.createGenericVirtualRegister(LLT::scalar(16));
+    const Register NewDstTrunc = MRI.createGenericVirtualRegister(S16);
     MIRBuilder.buildTrunc(NewDstTrunc, NewDstRegAssert);
     MIRBuilder.buildBitcast(DstReg, NewDstTrunc);
   } else {
