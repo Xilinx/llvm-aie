@@ -1,0 +1,202 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -mtriple=aie2p -start-before=greedy %s -o /dev/null --filetype=obj
+
+# Verify that staged register allocation does not produce an invalid
+# rematerialization of a MOV_PD_imm11_pseudo into a composed eds (3D)
+# register. The bug occurs when rewriteSuperReg (in AIESuperRegUtils) rewrites
+# sub-register definitions in-place (stripping sub-register indices), leaving
+# stale VNInfos in ancestor intervals. A later Greedy pass traces back via
+# VRM.getOriginal(), finds the rewritten instruction (now a scalar def), and
+# rematerializes it as a full eds-class def, producing a register class
+# mismatch (e.g. renamable $d3_3d = MOV_PD_imm11_pseudo 128).
+
+---
+name:            stale_remat_test
+alignment:       32
+tracksRegLiveness: true
+noPhis:          true
+frameInfo:
+  isFrameAddressTaken: false
+  isReturnAddressTaken: false
+  hasStackMap:     false
+  hasPatchPoint:   false
+  stackSize:       0
+  offsetAdjustment: 0
+  maxAlignment:    1
+  adjustsStack:    true
+  hasCalls:        true
+  stackProtector:  ''
+  functionContext: ''
+  maxCallFrameSize: 4294967295
+  cvBytesOfCalleeSavedRegisters: 0
+  hasOpaqueSPAdjustment: false
+  hasVAStart:      false
+  hasMustTailInVarArgFunc: false
+  hasTailCall:     false
+  isCalleeSavedInfoValid: false
+  localFrameSize:  0
+  savePoint:       ''
+  restorePoint:    ''
+body:             |
+  bb.0:
+    successors: %bb.1(0x80000000)
+    liveins: $r0
+  
+    undef %103.sub_dim_size:eds = MOV_PD_imm11_pseudo 0
+    %18:erf2 = MOV_RLC_imm11_pseudo 0
+    %103.sub_dim_stride:eds = MOV_PD_imm11_pseudo 128
+    %7:vec512 = VBCST_32 %18
+    %139:ep_as_32bit = MOV_PD_imm11_pseudo 0
+    %16:vec512 = VBCST_32 %18
+    %28:vec512 = VBCST_32 %18
+    undef %89.sub_mod:ed = MOV_PD_imm11_pseudo 1
+    $p0 = MOV_PD_imm11_pseudo 0
+    %1:er = COPY $r0
+    ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    PseudoJL_IND %139, csr_aie2p, implicit-def $lr, implicit killed $p0
+    ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    %85:er = MOV_RLC_imm11_pseudo 1
+    undef %127.sub_mod:eds = COPY %103.sub_dim_size
+    %127.sub_dim_stride:eds = COPY %103.sub_dim_size
+    %127.sub_hi_dim_then_sub_dim_stride:eds = COPY %103.sub_dim_size
+    %127.sub_dim_count:eds = COPY %103.sub_dim_size
+    %127.sub_hi_dim_then_sub_dim_count:eds = COPY %103.sub_dim_size
+    %127.sub_dim_size:eds = COPY %103.sub_dim_size
+    %127.sub_hi_dim_then_sub_dim_size:eds = COPY %103.sub_dim_size
+  
+  bb.1:
+    successors: %bb.2(0x04000000), %bb.1(0x7c000000)
+  
+    %84:er = XOR %1, %85
+    %3:ep = MOV_PD_imm11_pseudo 0
+    %81:er = AND %84, %85
+    %140:eds = COPY %127
+    %3:ep, dead %140.sub_dim_count:eds, dead %140.sub_hi_dim_then_sub_dim_count:eds = PADD_3D_pseudo_split %3, %140.sub_mod, %140.sub_dim_size, %140.sub_dim_stride, %140.sub_dim_count, undef %140.sub_hi_dim_then_sub_mod, %140.sub_hi_dim_then_sub_dim_size, %140.sub_hi_dim_then_sub_dim_stride, %140.sub_hi_dim_then_sub_dim_count
+    VST_dmx_sts_x_idx_imm %7, %3, 0 :: (store (<64 x s16>))
+    PseudoJNZ %81, %bb.1
+    PseudoJ_jump_imm %bb.2
+  
+  bb.2:
+    successors: %bb.3(0x80000000)
+  
+    %87:er = MOV_RLC_imm11_pseudo 1
+    %80:er = AND %1, %87
+    %103.sub_mod:eds = COPY %103.sub_dim_size
+    undef %121.sub_dim_stride:eds = COPY %103.sub_dim_size
+    %133:ep_as_32bit = MOV_PD_imm11_pseudo 0
+    %121.sub_hi_dim_then_sub_dim_stride:eds = COPY %103.sub_dim_size
+    %121.sub_dim_count:eds = COPY %103.sub_dim_size
+    undef %117.sub_dim_stride:eds = COPY %103.sub_dim_size
+    %117.sub_hi_dim_then_sub_dim_stride:eds = COPY %103.sub_dim_size
+    undef %112.sub_dim_stride:eds = COPY %103.sub_dim_size
+    %134:ep_as_32bit = MOV_PD_imm11_pseudo 0
+    %112.sub_hi_dim_then_sub_dim_stride:eds = COPY %103.sub_dim_size
+    undef %107.sub_dim_stride:eds = COPY %103.sub_dim_size
+    %107.sub_hi_dim_then_sub_dim_count:eds = COPY %103.sub_dim_size
+    %117.sub_hi_dim_then_sub_dim_count:eds = COPY %103.sub_dim_size
+    %117.sub_dim_count:eds = COPY %103.sub_dim_size
+    %112.sub_dim_count:eds = COPY %103.sub_dim_size
+  
+  bb.3:
+    successors: %bb.5(0x40000000), %bb.4(0x40000000)
+  
+    PseudoJNZ %80, %bb.5
+    PseudoJ_jump_imm %bb.4
+  
+  bb.4:
+    successors: %bb.5(0x80000000)
+  
+    %126:erf2 = COPY %18
+  
+  bb.5:
+    successors: %bb.7(0x40000000), %bb.6(0x40000000)
+  
+    %121.sub_mod:eds = COPY %103.sub_mod
+    %20:ep = MOV_PD_imm11_pseudo 0
+    %121.sub_dim_size:eds = COPY %103.sub_dim_size
+    %121.sub_hi_dim_then_sub_dim_size:eds = COPY %103.sub_dim_size
+    %121.sub_hi_dim_then_sub_dim_count:eds = COPY %107.sub_hi_dim_then_sub_dim_count
+    %141:eds = COPY %121
+    dead %20:ep, %141.sub_dim_count:eds, %141.sub_hi_dim_then_sub_dim_count:eds = PADD_3D_pseudo_split %20, %141.sub_mod, %141.sub_dim_size, %141.sub_dim_stride, %141.sub_dim_count, undef %141.sub_hi_dim_then_sub_mod, %141.sub_hi_dim_then_sub_dim_size, %141.sub_hi_dim_then_sub_dim_stride, %141.sub_hi_dim_then_sub_dim_count
+    %117.sub_mod:eds = COPY %103.sub_mod
+    %117.sub_dim_size:eds = COPY %103.sub_dim_size
+    %117.sub_hi_dim_then_sub_dim_size:eds = COPY %103.sub_dim_size
+    dead %133:ep_as_32bit, %117.sub_dim_count:eds, %117.sub_hi_dim_then_sub_dim_count:eds = PADD_3D_pseudo_split %133, %117.sub_mod, %117.sub_dim_size, %117.sub_dim_stride, %117.sub_dim_count, undef %117.sub_hi_dim_then_sub_mod, %117.sub_hi_dim_then_sub_dim_size, %117.sub_hi_dim_then_sub_dim_stride, %117.sub_hi_dim_then_sub_dim_count
+    %112.sub_hi_dim_then_sub_dim_count:eds = COPY %103.sub_dim_size
+    %112.sub_mod:eds = COPY %103.sub_mod
+    %31:ep = MOV_PD_imm11_pseudo 0
+    %112.sub_dim_size:eds = COPY %103.sub_dim_size
+    %112.sub_hi_dim_then_sub_dim_size:eds = COPY %103.sub_dim_size
+    %98:eds = COPY %112
+    dead %31:ep, %98.sub_dim_count:eds, %98.sub_hi_dim_then_sub_dim_count:eds = PADD_3D_pseudo_split %31, %98.sub_mod, %98.sub_dim_size, %98.sub_dim_stride, %98.sub_dim_count, undef %98.sub_hi_dim_then_sub_mod, %98.sub_hi_dim_then_sub_dim_size, %98.sub_hi_dim_then_sub_dim_stride, %98.sub_hi_dim_then_sub_dim_count
+    %107.sub_hi_dim_then_sub_dim_stride:eds = COPY %103.sub_dim_size
+    %34:ep = MOV_PD_imm11_pseudo 0
+    %107.sub_mod:eds = COPY %103.sub_mod
+    %107.sub_dim_size:eds = COPY %103.sub_dim_size
+    %107.sub_dim_count:eds = COPY %141.sub_dim_count
+    %107.sub_hi_dim_then_sub_dim_size:eds = COPY %103.sub_dim_size
+    %107.sub_hi_dim_then_sub_dim_count:eds = COPY %112.sub_hi_dim_then_sub_dim_count
+    dead %34:ep, %107.sub_dim_count:eds, %107.sub_hi_dim_then_sub_dim_count:eds = PADD_3D_pseudo_split %34, %107.sub_mod, %107.sub_dim_size, %107.sub_dim_stride, %107.sub_dim_count, undef %107.sub_hi_dim_then_sub_mod, %107.sub_hi_dim_then_sub_dim_size, %107.sub_hi_dim_then_sub_dim_stride, %107.sub_hi_dim_then_sub_dim_count
+    VST_dmx_sts_x_idx_imm %28, %134, 0 :: (store (<32 x s16>))
+    %103.sub_hi_dim_then_sub_dim_stride:eds = COPY %103.sub_dim_size
+    %103.sub_dim_count:eds = COPY %117.sub_dim_count
+    %103.sub_hi_dim_then_sub_dim_size:eds = COPY %103.sub_dim_size
+    %103.sub_hi_dim_then_sub_dim_count:eds = COPY %112.sub_hi_dim_then_sub_dim_count
+    PseudoJNZ %80, %bb.7
+    PseudoJ_jump_imm %bb.6
+  
+  bb.6:
+    successors: %bb.7(0x80000000)
+  
+    %102:erf2 = COPY %18
+  
+  bb.7:
+    successors: %bb.8(0x04000000), %bb.3(0x7c000000)
+  
+    %133:ep_as_32bit = MOV_PD_imm11_pseudo 0
+    %77:er = XOR %1, %87
+    %133:ep_as_32bit, %103.sub_dim_count:eds, %103.sub_hi_dim_then_sub_dim_count:eds = PADD_3D_pseudo_split %133, %103.sub_mod, %103.sub_dim_size, %103.sub_dim_stride, %103.sub_dim_count, undef %103.sub_hi_dim_then_sub_mod, %103.sub_hi_dim_then_sub_dim_size, %103.sub_hi_dim_then_sub_dim_stride, %103.sub_hi_dim_then_sub_dim_count
+    %44:ep = MOV_PD_imm11_pseudo 0
+    %74:er = AND %77, %87
+    %98.sub_hi_dim_then_sub_dim_stride:eds = COPY %103.sub_dim_size
+    %98.sub_hi_dim_then_sub_dim_count:eds = COPY %103.sub_dim_size
+    %98.sub_mod:eds = COPY %103.sub_mod
+    %98.sub_dim_size:eds = COPY %103.sub_dim_size
+    %98.sub_dim_stride:eds = COPY %103.sub_dim_stride
+    %98.sub_hi_dim_then_sub_dim_size:eds = COPY %103.sub_dim_size
+    dead %44:ep, %98.sub_dim_count:eds, %98.sub_hi_dim_then_sub_dim_count:eds = PADD_3D_pseudo_split %44, %98.sub_mod, %98.sub_dim_size, %98.sub_dim_stride, %98.sub_dim_count, undef %98.sub_hi_dim_then_sub_mod, %98.sub_hi_dim_then_sub_dim_size, %98.sub_hi_dim_then_sub_dim_stride, %98.sub_hi_dim_then_sub_dim_count
+    undef %92.sub_dim_count:eds = COPY %103.sub_dim_size
+    %92.sub_hi_dim_then_sub_dim_count:eds = COPY %103.sub_dim_size
+    %134:ep_as_32bit = MOV_PD_imm11_pseudo 0
+    %92.sub_mod:eds = COPY %103.sub_mod
+    %92.sub_dim_size:eds = COPY %103.sub_dim_size
+    %92.sub_dim_stride:eds = COPY %98.sub_hi_dim_then_sub_dim_stride
+    %92.sub_hi_dim_then_sub_dim_size:eds = COPY %103.sub_dim_size
+    %92.sub_hi_dim_then_sub_dim_stride:eds = COPY %98.sub_hi_dim_then_sub_dim_stride
+    %134:ep_as_32bit, dead %92.sub_dim_count:eds, dead %92.sub_hi_dim_then_sub_dim_count:eds = PADD_3D_pseudo_split %134, %92.sub_mod, %92.sub_dim_size, %92.sub_dim_stride, %92.sub_dim_count, undef %92.sub_hi_dim_then_sub_mod, %92.sub_hi_dim_then_sub_dim_size, %92.sub_hi_dim_then_sub_dim_stride, %92.sub_hi_dim_then_sub_dim_count
+    %112.sub_dim_count:eds = COPY %98.sub_dim_count
+    %117.sub_hi_dim_then_sub_dim_count:eds = COPY %89.sub_mod
+    %117.sub_dim_count:eds = COPY %103.sub_dim_count
+    PseudoJNZ %74, %bb.3
+    PseudoJ_jump_imm %bb.8
+  
+  bb.8:
+    successors: %bb.9(0x80000000)
+  
+    %89.sub_dim_stride:ed = COPY %89.sub_mod
+    %89.sub_dim_count:ed = COPY %103.sub_dim_size
+    %89.sub_dim_size:ed = COPY %103.sub_dim_size
+  
+  bb.9:
+    successors: %bb.9(0x80000000)
+  
+    %148:ed = COPY %89
+    %139:ep_as_32bit, dead %148.sub_dim_count:ed = PADD_2D_pseudo_split %139, %148.sub_mod, %148.sub_dim_size, %148.sub_dim_stride, %148.sub_dim_count
+    PseudoJ_jump_imm %bb.9
+
+...
