@@ -16,7 +16,10 @@
 #ifndef LLVM_LIB_TARGET_AIE_UTILS_AIEMACHINEINSTRPRINT_H
 #define LLVM_LIB_TARGET_AIE_UTILS_AIEMACHINEINSTRPRINT_H
 
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/TargetInstrInfo.h"
+#include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace llvm::AIE {
@@ -43,20 +46,28 @@ inline raw_ostream &operator<<(raw_ostream &OS, const NoDebug &ND) {
   return OS;
 }
 
-/// Helper class to print just the opcode of a MachineInstr.
+/// Helper class to print just the opcode name of a MachineInstr.
 ///
 /// Usage:
 ///   dbgs() << OpcodeOnly(MI);
+///   dbgs() << OpcodeOnly(MI, 10);  // Clip to 10 characters
 ///
 class OpcodeOnly {
   const MachineInstr &MI;
+  unsigned MaxLength;
 
 public:
-  explicit OpcodeOnly(MachineInstr &MI) : MI(MI) {}
+  explicit OpcodeOnly(MachineInstr &MI, unsigned MaxLength = 0)
+      : MI(MI), MaxLength(MaxLength) {}
 
   void print(raw_ostream &OS) const {
-    MI.print(OS, /*IsStandalone=*/true, /*SkipOpers=*/true,
-             /*SkipDebugLoc=*/true, /*AddNewLine=*/false);
+    const auto *TII = MI.getMF()->getSubtarget().getInstrInfo();
+    StringRef Name = TII->getName(MI.getOpcode());
+    if (MaxLength > 0 && Name.size() > MaxLength) {
+      OS << Name.substr(0, MaxLength);
+    } else {
+      OS << Name;
+    }
   }
 };
 
