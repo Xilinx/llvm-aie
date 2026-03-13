@@ -16,13 +16,13 @@
 #include "AIEBaseAsmPrinter.h"
 #include "AIEBundle.h"
 #include "InstPrinter/AIEInstPrinter.h"
+#include "Utils/AIEMachineBasicBlockUtils.h"
 #include "llvm/Analysis/MemoryLocation.h"
 #include "llvm/BinaryFormat/ELF.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCInst.h"
@@ -221,19 +221,10 @@ void AIEBaseAsmPrinter::emitInstruction(const MachineInstr *MI) {
 // print labels for those.
 bool AIEBaseAsmPrinter::isBlockOnlyReachableByFallthrough(
     const MachineBasicBlock *MBB) const {
-  if (!AsmPrinter::isBlockOnlyReachableByFallthrough(MBB))
+  // Delegate to the shared AIE utility, which handles the AIE-specific
+  // fallthrough logic.
+  if (!AIEMachineBasicBlockUtils::isBlockOnlyReachableByFallthrough(MBB))
     return false;
-
-  // Not fall-through if BB is part of jump table.
-  auto JumpsToBB = [MBB](const MachineJumpTableEntry &JTE) {
-    return find(JTE.MBBs, MBB) != JTE.MBBs.end();
-  };
-  const MachineJumpTableInfo *JTI = MBB->getParent()->getJumpTableInfo();
-  if (JTI && any_of(JTI->getJumpTables(), JumpsToBB)) {
-    LLVM_DEBUG(dbgs() << "// MBB " << MBB->getName()
-                      << " address taken by jumptable\n");
-    return false;
-  }
 
   // Conservatively assume MBB isn't fall-through if its address is used
   // anywhere in the function.
