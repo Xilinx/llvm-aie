@@ -8,8 +8,10 @@
 //
 //===----------------------------------------------------------------------===//
 #include "AIEMachineBasicBlockUtils.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBundle.h"
+#include "llvm/CodeGen/MachineJumpTableInfo.h"
 
 namespace llvm::AIEMachineBasicBlockUtils {
 
@@ -35,7 +37,21 @@ bool isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) {
   if (Pred->empty())
     return isBlockOnlyReachableByFallthrough(Pred);
 
+  // On AIE, branches are not marked as terminators, as there will be regular
+  // instructions scheduled in the branch delay slots. Thus, we need to check
+  // whether a basic block is part of a jump table and conservatively not
+  // consider it to be only reachable as a fall-through.
+  auto JumpsToBB = [MBB](const MachineJumpTableEntry &JTE) {
+    return is_contained(JTE.MBBs, MBB);
+  };
+  const MachineJumpTableInfo *JTI = MBB->getParent()->getJumpTableInfo();
+  if (JTI && any_of(JTI->getJumpTables(), JumpsToBB)) {
+    return false;
+  }
+
   // Check the terminators in the previous blocks
+  // NOTE: for targets that use delay slot filling (all except AIE1),
+  // branch instructions are not terminators, thus the code below is dead.
   for (const auto &MI : Pred->terminators()) {
     // If it is not a simple branch, we are in a table somewhere.
     if (!MI.isBranch() || MI.isIndirectBranch())

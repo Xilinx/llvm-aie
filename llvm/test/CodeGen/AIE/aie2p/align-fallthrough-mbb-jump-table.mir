@@ -30,9 +30,12 @@ body:             |
   ; CHECK-NEXT:   BUNDLE implicit-def $r3, implicit killed $p2 {
   ; CHECK-NEXT:     renamable $r3 = LDA_s8_idx_imm killed renamable $p2, 0 :: (dereferenceable load (s8))
   ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPS
   ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit killed $r3 {
+  ; CHECK-NEXT:     NOPX
   ; CHECK-NEXT:     renamable $x0 = VBCST_8 killed renamable $r3
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $r1 {
@@ -100,7 +103,11 @@ body:             |
   ; CHECK-NEXT:   liveins: $p0, $p1, $r0, $r1, $x0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   BUNDLE implicit-def $r27, implicit $r1, implicit $r0 {
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPB
   ; CHECK-NEXT:     renamable $r27 = LTU renamable $r1, renamable $r0
+  ; CHECK-NEXT:     NOPM
+  ; CHECK-NEXT:     NOPS
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $ls {
   ; CHECK-NEXT:     $ls = MOVXM %bb.3
