@@ -792,9 +792,11 @@ void AIE2PSInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     // Helper to create store MMO with proper offset and size for a sub-register
     unsigned ByteOffset = 0;
     auto CreateSubRegStoreMMO = [&](unsigned SubRegIdx) {
-      const unsigned BitsPerByte = 8;
-      unsigned ByteSize =
-          divideCeil(TRI->getSubRegIdxSize(SubRegIdx), BitsPerByte);
+      const TargetRegisterClass *SubRC = RC;
+      if (!SubRC)
+        SubRC = TRI->getMinimalPhysRegClass(SrcReg);
+      SubRC = TRI->getSubRegisterClass(SubRC, SubRegIdx);
+      unsigned ByteSize = TRI->getSpillSize(*SubRC);
       MachinePointerInfo PtrInfo =
           MachinePointerInfo::getFixedStack(MF, FI, ByteOffset);
       ByteOffset += ByteSize;
@@ -963,9 +965,11 @@ void AIE2PSInstrInfo::loadRegFromStackSlot(
     // Helper to create load MMO with proper offset and size for a sub-register
     unsigned ByteOffset = 0;
     auto CreateSubRegLoadMMO = [&](unsigned SubRegIdx) {
-      const unsigned BitsPerByte = 8;
-      unsigned ByteSize =
-          divideCeil(TRI->getSubRegIdxSize(SubRegIdx), BitsPerByte);
+      const TargetRegisterClass *SubRC = RC;
+      if (!SubRC)
+        SubRC = TRI->getMinimalPhysRegClass(DstReg);
+      SubRC = TRI->getSubRegisterClass(SubRC, SubRegIdx);
+      unsigned ByteSize = TRI->getSpillSize(*SubRC);
       MachinePointerInfo PtrInfo =
           MachinePointerInfo::getFixedStack(MF, FI, ByteOffset);
       ByteOffset += ByteSize;
