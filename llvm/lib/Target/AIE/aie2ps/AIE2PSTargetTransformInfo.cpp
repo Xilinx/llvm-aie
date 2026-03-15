@@ -9,11 +9,31 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIE2PSTargetTransformInfo.h"
+#include "Utils/AIEIRUtils.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/IR/IntrinsicsAIE2PS.h"
+#include "llvm/Transforms/InstCombine/InstCombiner.h"
 
 using namespace llvm;
 
 #define DEBUG_TYPE "aie2pstti"
+
+bool AIE2PSTTICommon::isVectorExtractIntrinsicID(Intrinsic::ID ID) const {
+  return ID == Intrinsic::aie2ps_inv || ID == Intrinsic::aie2ps_invsqrt ||
+         ID == Intrinsic::aie2ps_put_ms;
+}
+
+bool AIE2PSTTICommon::isGetSSIntrinsicID(Intrinsic::ID ID) const {
+  return ID == Intrinsic::aie2ps_get_ss;
+}
+
+void AIE2PSTTIImpl::getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
+                                            TTI::UnrollingPreferences &UP,
+                                            OptimizationRemarkEmitter *ORE) {
+  BaseT::getUnrollingPreferences(L, SE, UP, ORE);
+  Common.adjustUnrollingPreferences(L, SE, UP, ORE);
+  Common.applyLoopIdiomUnrolling(L, UP);
+}
 
 bool AIE2PSTTIImpl::isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
                                              AssumptionCache &AC,
