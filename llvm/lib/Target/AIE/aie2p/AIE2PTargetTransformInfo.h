@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -24,11 +24,18 @@
 namespace llvm {
 class Loop;
 class ScalarEvolution;
+
+class AIE2PTTICommon : public AIETTICommon {
+public:
+  bool isVectorExtractIntrinsicID(Intrinsic::ID ID) const override;
+  bool isGetSSIntrinsicID(Intrinsic::ID ID) const override;
+};
+
 class AIE2PTTIImpl : public AIEBaseTTIImpl<AIE2PTTIImpl> {
   typedef AIEBaseTTIImpl<AIE2PTTIImpl> BaseT;
   typedef TargetTransformInfo TTI;
   friend BaseT;
-  AIETTICommon Common;
+  AIE2PTTICommon Common;
 
 public:
   explicit AIE2PTTIImpl(const AIE2PTargetMachine *TM, const Function &F)

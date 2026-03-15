@@ -21,10 +21,12 @@
 #include "aie1/AIE1Subtarget.h" // For AIEBaseSubTarget
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/BasicTTIImpl.h"
+#include "llvm/IR/Intrinsics.h"
 
 namespace llvm {
 
 // Forward declarations
+class Loop;
 class PHINode;
 
 // Standalone helper function for congruent IV analysis
@@ -38,9 +40,21 @@ public:
   virtual ~AIETTICommon() = default;
   virtual bool isLoweredToCall(const Function *F);
   virtual bool isAllowedInZOL(llvm::Instruction &Instr);
+
+  virtual bool isVectorExtractIntrinsicID(Intrinsic::ID ID) const {
+    return false;
+  }
+  virtual bool isGetSSIntrinsicID(Intrinsic::ID ID) const { return false; }
+
+  bool isVectorExtractIntrinsicSequence(const Instruction &I) const;
+  bool isGetSSExtractInsertVectorSequence(const Instruction &I) const;
+  bool isScalarizedVectorOpIdiomLoop(const Loop *L) const;
+  static bool isScalarLoop(const Loop *L);
+
   void adjustUnrollingPreferences(Loop *L, ScalarEvolution &SE,
                                   TTI::UnrollingPreferences &UP,
                                   OptimizationRemarkEmitter *ORE);
+  void applyLoopIdiomUnrolling(Loop *L, TTI::UnrollingPreferences &UP) const;
   bool isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
                                 AssumptionCache &AC, TargetLibraryInfo *LibInfo,
                                 HardwareLoopInfo &HWLoopInfo);
