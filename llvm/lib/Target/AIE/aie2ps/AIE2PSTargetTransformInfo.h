@@ -24,17 +24,27 @@
 namespace llvm {
 class Loop;
 class ScalarEvolution;
+
+class AIE2PSTTICommon : public AIETTICommon {
+public:
+  bool isVectorExtractIntrinsicID(Intrinsic::ID ID) const override;
+  bool isGetSSIntrinsicID(Intrinsic::ID ID) const override;
+};
+
 class AIE2PSTTIImpl : public AIEBaseTTIImpl<AIE2PSTTIImpl> {
   typedef AIEBaseTTIImpl<AIE2PSTTIImpl> BaseT;
   typedef TargetTransformInfo TTI;
   friend BaseT;
-  AIETTICommon Common;
+  AIE2PSTTICommon Common;
 
 public:
   explicit AIE2PSTTIImpl(const AIE2PSTargetMachine *TM, const Function &F)
       : BaseT(TM, F.getParent()->getDataLayout(),
               (const AIESubtarget *)TM->getSubtargetImpl(F)) {}
 
+  void getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
+                               TTI::UnrollingPreferences &UP,
+                               OptimizationRemarkEmitter *ORE);
   bool isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
                                 AssumptionCache &AC, TargetLibraryInfo *LibInfo,
                                 HardwareLoopInfo &HWLoopInfo);
