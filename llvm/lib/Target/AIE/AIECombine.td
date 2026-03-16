@@ -69,6 +69,14 @@ def combine_symmetric_build_vector : GICombineRule<
   (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])
 >;
 
+def combine_alternating_build_vector_matchdata: GIDefMatchData<"AIEAlternatingBuildVectorMatchData">;
+def combine_alternating_build_vector : GICombineRule<
+  (defs root:$root, combine_alternating_build_vector_matchdata:$matchinfo),
+  (match (wip_match_opcode G_BUILD_VECTOR): $root,
+  [{ return matchAlternatingBuildVector(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ applyAlternatingBuildVector(*${root}, MRI, B, ${matchinfo}, Observer); }])
+>;
+
 def combine_splat_vector_matchdata: GIDefMatchData<"std::pair<Register, Register>">;
 def combine_splat_vector : GICombineRule<
   (defs root:$root, combine_splat_vector_matchdata:$matchinfo),
@@ -289,6 +297,7 @@ def aie_additional_combines : GICombineGroup<[
   combine_globalval_offset,
   combine_extract_vector_elt_and_zsa_ext,
   combine_splat_vector,
+  combine_alternating_build_vector,
   combine_concat_to_pad_vector,
   combine_single_diff_build_vector,
   combine_symmetric_build_vector,
