@@ -87,6 +87,19 @@ struct AIESingleDiffLaneBuildVectorMatchData {
   unsigned DifferingIndex;
 };
 
+/// Match data for combine_alternating_build_vector.
+/// Describes a G_BUILD_VECTOR whose operands form a repeating sub-pattern of
+/// length Period. The Period elements are packed into a single scalar of
+/// MergedBits width and then broadcast into the full vector.
+struct AIEAlternatingBuildVectorMatchData {
+  /// Destination register of the G_BUILD_VECTOR.
+  Register DstVecReg;
+  /// The repeating period element registers (length = Period).
+  SmallVector<Register, 4> PeriodElts;
+  /// Width in bits of the merged scalar (= ElemBits * Period).
+  unsigned MergedBits;
+};
+
 /// \return whether Concat-Unmerge-PHI combine pattern based on  \p ConcatI is
 /// found.
 bool matchConcatUnmergePhis(MachineInstr &ConcatI, MachineRegisterInfo &MRI,
@@ -362,6 +375,19 @@ bool matchVSelToUnmergeConcatOrCopy(MachineInstr &MI, MachineRegisterInfo &MRI,
 bool matchCopyOfImplicitDef(MachineInstr &MI, MachineRegisterInfo &MRI);
 void applyCopyOfImplicitDef(MachineInstr &MI, MachineRegisterInfo &MRI,
                             MachineIRBuilder &B, GISelChangeObserver &Observer);
+
+/// Match a G_BUILD_VECTOR whose operands form a repeating sub-pattern of
+/// length Period (e.g., [a, b, a, b, ...] for Period=2). The Period elements
+/// are packed into a merged scalar and then broadcast via
+/// G_AIE_BROADCAST_VECTOR to avoid full scalarization.
+/// Only matches vectors >= 128 bits. Skips pure splats (Period=1).
+bool matchAlternatingBuildVector(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                 const AIEBaseInstrInfo &TII,
+                                 AIEAlternatingBuildVectorMatchData &MatchInfo);
+void applyAlternatingBuildVector(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                 MachineIRBuilder &B,
+                                 AIEAlternatingBuildVectorMatchData &MatchInfo,
+                                 GISelChangeObserver &Observer);
 
 } // namespace llvm
 

@@ -5002,3 +5002,110 @@ bool llvm::matchVSelToUnmergeConcatOrCopy(MachineInstr &MI,
 
   return false;
 }
+
+//===----------------------------------------------------------------------===//
+// combine_alternating_build_vector
+//===----------------------------------------------------------------------===//
+
+bool llvm::matchAlternatingBuildVector(
+    MachineInstr &MI, MachineRegisterInfo &MRI, const AIEBaseInstrInfo &TII,
+    AIEAlternatingBuildVectorMatchData &MatchInfo) {
+  assert(MI.getOpcode() == TargetOpcode::G_BUILD_VECTOR &&
+         "Expected a G_BUILD_VECTOR");
+
+  const Register DstVecReg = MI.getOperand(0).getReg();
+  const LLT DstVecTy = MRI.getType(DstVecReg);
+
+  // Only handle vectors >= 128 bits. Smaller vectors are kept in GPRs.
+  if (!DstVecTy.isVector() || DstVecTy.getSizeInBits() < 128)
+    return false;
+
+  const unsigned ElemBits = DstVecTy.getElementType().getSizeInBits();
+  const unsigned NumElts = DstVecTy.getNumElements();
+
+  // Detect the minimum repeating period using a single forward pass.
+  // This mirrors the sawtooth pattern used for vshuffle masks (MaskMatch):
+  // the i-th operand's "index" within the period equals i % Period.
+  // We start at Period=1 and double whenever a mismatch falls exactly at the
+  // period boundary (i.e., the first position that would need to repeat).
+  unsigned Period = 1;
+  for (unsigned I = 1; I < NumElts; ++I) {
+    if (MI.getOperand(1 + I).getReg() ==
+        MI.getOperand(1 + (I % Period)).getReg())
+      continue;
+    // A mismatch anywhere other than the period boundary means the sequence
+    // is not a sawtooth-style repetition; bail out.
+    if (I != Period)
+      return false;
+    // Double the period and check that the merged scalar stays within 32 bits.
+    Period *= 2;
+    // For now, only handle packed scalars of at most 32 bits.
+    if (Period * ElemBits > 32)
+      return false;
+  }
+
+  // Period==1 means all operands are identical - a pure splat. Those are
+  // handled more efficiently by matchSplatVector.
+  if (Period == 1)
+    return false;
+
+  MatchInfo.DstVecReg = DstVecReg;
+  MatchInfo.PeriodElts.clear();
+  for (unsigned I = 0; I < Period; ++I)
+    MatchInfo.PeriodElts.push_back(MI.getOperand(1 + I).getReg());
+  MatchInfo.MergedBits = Period * ElemBits;
+  return true;
+}
+
+void llvm::applyAlternatingBuildVector(
+    MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B,
+    AIEAlternatingBuildVectorMatchData &MatchInfo,
+    GISelChangeObserver &Observer) {
+  B.setInstrAndDebugLoc(MI);
+
+  const Register DstVecReg = MatchInfo.DstVecReg;
+  const LLT DstVecTy = MRI.getType(DstVecReg);
+  const unsigned NumElts = DstVecTy.getNumElements();
+  const unsigned ElemBits = DstVecTy.getElementType().getSizeInBits();
+  const unsigned Period = MatchInfo.PeriodElts.size();
+  const unsigned MergedBits = MatchInfo.MergedBits;
+  const LLT MergedScalarTy = LLT::scalar(MergedBits);
+
+  // Step 1: Pack the Period elements into a merged scalar using Horner's
+  // scheme, evaluating from the highest element down to elem[0]:
+  //   packed = ((...((elem[P-1] << B) | elem[P-2]) << B | ...) << B) | elem[0]
+  //
+  // This reuses a single shift constant at every step.  The top element
+  // (PeriodElts[Period-1]) only needs G_ANYEXT: after (Period-1) left shifts
+  // its upper bits overflow MergedBits and are naturally discarded.  All
+  // lower elements need G_ZEXT to avoid polluting the bits above them.
+  Register ShiftConst = B.buildConstant(MergedScalarTy, ElemBits).getReg(0);
+  Register PackedReg =
+      B.buildAnyExt(MergedScalarTy, MatchInfo.PeriodElts[Period - 1]).getReg(0);
+  for (int I = (int)Period - 2; I >= 0; --I) {
+    Register Shifted =
+        B.buildShl(MergedScalarTy, PackedReg, ShiftConst).getReg(0);
+    Register ExtElt =
+        B.buildZExt(MergedScalarTy, MatchInfo.PeriodElts[I]).getReg(0);
+    PackedReg = B.buildOr(MergedScalarTy, Shifted, ExtElt).getReg(0);
+  }
+
+  // Step 2: Broadcast the merged scalar into an intermediate vector whose
+  // element type is MergedBits. The intermediate vector has the same total
+  // bit-width as the destination.
+  const unsigned NumGroups = NumElts / Period; // = DstBits / MergedBits
+  const LLT IntermediateVecTy = LLT::fixed_vector(NumGroups, MergedBits);
+  Register IntermediateVecReg =
+      MRI.createGenericVirtualRegister(IntermediateVecTy);
+  buildBroadcastVector(B, MRI, PackedReg, IntermediateVecReg);
+
+  // Step 3: Bitcast the intermediate vector back to the original destination
+  // type (<NumElts x ElemBits>).
+  if (IntermediateVecTy == DstVecTy)
+    B.buildCopy(DstVecReg, IntermediateVecReg);
+  else
+    B.buildBitcast(DstVecReg, IntermediateVecReg);
+
+  Observer.erasingInstr(MI);
+  MI.eraseFromParent();
+}
