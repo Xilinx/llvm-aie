@@ -27,7 +27,7 @@ float16 test_minus_const() {
     return -value;
 }
 
-// CHECK-LABEL: define dso_local noundef half @_Z19test_minus_variableDF16_(
+// CHECK-LABEL: define dso_local noundef half @_Z19test_minus_variable7float16(
 // CHECK-SAME: half noundef [[A:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  [[ENTRY:.*:]]
 // CHECK-NEXT:    [[FNEG:%.*]] = fneg half [[A]]
@@ -48,7 +48,7 @@ float16 test_bf16_to_f16(bfloat16 a) {
   return a;
 }
 
-// CHECK-LABEL: define dso_local noundef bfloat @_Z16test_f16_to_bf16DF16_(
+// CHECK-LABEL: define dso_local noundef bfloat @_Z16test_f16_to_bf167float16(
 // CHECK-SAME: half noundef [[A:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  [[ENTRY:.*:]]
 // CHECK-NEXT:    [[FPEXT:%.*]] = fpext half [[A]] to float

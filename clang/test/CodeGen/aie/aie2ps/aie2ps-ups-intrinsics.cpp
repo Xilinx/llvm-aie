@@ -101,7 +101,7 @@ v32acc64 test_ups_to_v32acc64_no_sign(v32int16 a, int shft) {
 }
 
 
-// CHECK-LABEL: @_Z23test_ups_to_v16accfloatDv16_DF16_(
+// CHECK-LABEL: @_Z23test_ups_to_v16accfloatDv16_7float16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x float> @llvm.aie2ps.v16float16.to.v16accfloat(<16 x half> [[A:%.*]])
 // CHECK-NEXT:    ret <16 x float> [[TMP0]]
@@ -110,7 +110,7 @@ v16accfloat test_ups_to_v16accfloat(v16float16 a) {
   return to_v16accfloat(a);
 }
 
-// CHECK-LABEL: @_Z23test_ups_to_v32accfloatDv32_DF16_(
+// CHECK-LABEL: @_Z23test_ups_to_v32accfloatDv32_7float16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.v32float16.to.v32accfloat(<32 x half> [[A:%.*]])
 // CHECK-NEXT:    ret <32 x float> [[TMP0]]
@@ -119,7 +119,7 @@ v32accfloat test_ups_to_v32accfloat(v32float16 a) {
   return to_v32accfloat(a);
 }
 
-// CHECK-LABEL: @_Z8test_upsDv16_DF16_(
+// CHECK-LABEL: @_Z8test_upsDv16_7float16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x float> @llvm.aie2ps.v16float16.to.v16accfloat(<16 x half> [[A:%.*]])
 // CHECK-NEXT:    ret <16 x float> [[TMP0]]
@@ -128,7 +128,7 @@ v16accfloat test_ups(v16float16 a) {
   return ups(a);
 }
 
-// CHECK-LABEL: @_Z8test_upsDv32_DF16_(
+// CHECK-LABEL: @_Z8test_upsDv32_7float16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.v32float16.to.v32accfloat(<32 x half> [[A:%.*]])
 // CHECK-NEXT:    ret <32 x float> [[TMP0]]

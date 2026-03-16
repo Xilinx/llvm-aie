@@ -11,7 +11,7 @@
 
 // RUN: %clang -O2 %s --target=aie2ps -nostdlibinc -S -emit-llvm -o - | FileCheck %s
 
-// CHECK-LABEL: define dso_local noundef half @_Z12test_float16DF16_(
+// CHECK-LABEL: define dso_local noundef half @_Z12test_float167float16(
 // CHECK-SAME: half noundef returned [[A:%.*]]) local_unnamed_addr #[[ATTR0:[0-9]+]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    ret half [[A]]
@@ -92,7 +92,7 @@ v256float8 test_v256float8(v256float8 a) {
  return a;
 }
 
-// CHECK-LABEL: define dso_local noundef <2 x half> @_Z14test_v2float16Dv2_DF16_(
+// CHECK-LABEL: define dso_local noundef <2 x half> @_Z14test_v2float16Dv2_7float16(
 // CHECK-SAME: <2 x half> noundef returned [[A:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    ret <2 x half> [[A]]
@@ -100,7 +100,7 @@ v256float8 test_v256float8(v256float8 a) {
 v2float16 test_v2float16(v2float16 a) {
  return a;
 }
-// CHECK-LABEL: define dso_local noundef <4 x half> @_Z14test_v4float16Dv4_DF16_(
+// CHECK-LABEL: define dso_local noundef <4 x half> @_Z14test_v4float16Dv4_7float16(
 // CHECK-SAME: <4 x half> noundef returned [[A:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    ret <4 x half> [[A]]
@@ -108,7 +108,7 @@ v2float16 test_v2float16(v2float16 a) {
 v4float16 test_v4float16(v4float16 a) {
  return a;
 }
-// CHECK-LABEL: define dso_local noundef <8 x half> @_Z14test_v8float16Dv8_DF16_(
+// CHECK-LABEL: define dso_local noundef <8 x half> @_Z14test_v8float16Dv8_7float16(
 // CHECK-SAME: <8 x half> noundef returned [[A:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    ret <8 x half> [[A]]
@@ -116,7 +116,7 @@ v4float16 test_v4float16(v4float16 a) {
 v8float16 test_v8float16(v8float16 a) {
  return a;
 }
-// CHECK-LABEL: define dso_local noundef <16 x half> @_Z15test_v16float16Dv16_DF16_(
+// CHECK-LABEL: define dso_local noundef <16 x half> @_Z15test_v16float16Dv16_7float16(
 // CHECK-SAME: <16 x half> noundef returned [[A:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    ret <16 x half> [[A]]
@@ -124,7 +124,7 @@ v8float16 test_v8float16(v8float16 a) {
 v16float16 test_v16float16(v16float16 a) {
  return a;
 }
-// CHECK-LABEL: define dso_local noundef <32 x half> @_Z15test_v32float16Dv32_DF16_(
+// CHECK-LABEL: define dso_local noundef <32 x half> @_Z15test_v32float16Dv32_7float16(
 // CHECK-SAME: <32 x half> noundef returned [[A:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    ret <32 x half> [[A]]
@@ -132,7 +132,7 @@ v16float16 test_v16float16(v16float16 a) {
 v32float16 test_v32float16(v32float16 a) {
  return a;
 }
-// CHECK-LABEL: define dso_local noundef <64 x half> @_Z15test_v64float16Dv64_DF16_(
+// CHECK-LABEL: define dso_local noundef <64 x half> @_Z15test_v64float16Dv64_7float16(
 // CHECK-SAME: <64 x half> noundef returned [[A:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    ret <64 x half> [[A]]
@@ -140,7 +140,7 @@ v32float16 test_v32float16(v32float16 a) {
 v64float16 test_v64float16(v64float16 a) {
  return a;
 }
-// CHECK-LABEL: define dso_local noundef <128 x half> @_Z16test_v128float16Dv128_DF16_(
+// CHECK-LABEL: define dso_local noundef <128 x half> @_Z16test_v128float16Dv128_7float16(
 // CHECK-SAME: <128 x half> noundef returned [[A:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    ret <128 x half> [[A]]

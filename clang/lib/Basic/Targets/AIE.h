@@ -152,6 +152,12 @@ public:
   const char *getBFloat16Mangling() const override { return "8bfloat16"; }
 
   bool treatBFloat16AsVendorType() const override { return true; }
+
+  /// We treat the builtin _Float16 type as a vendor extension type.
+  /// Mangle the type name using its user visible name, "float16".
+  const char *getFloat16Mangling() const override { return "7float16"; }
+
+  bool treatFloat16AsVendorType() const override { return true; }
 };
 
 } // namespace targets
