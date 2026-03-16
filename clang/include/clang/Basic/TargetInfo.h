@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -830,6 +830,13 @@ public:
   /// Returns whether to treat bfloat as a vendor extension type for the purpose
   /// of Itanium C++ name mangling compression rules
   virtual bool treatBFloat16AsVendorType() const { return false; }
+
+  /// Return the mangled code of _Float16.
+  virtual const char *getFloat16Mangling() const { return "DF16_"; }
+
+  /// Returns whether to treat _Float16 as a vendor extension type for the
+  /// purpose of Itanium C++ name mangling compression rules
+  virtual bool treatFloat16AsVendorType() const { return false; }
 
   /// Return the value for the C99 FLT_EVAL_METHOD macro.
   virtual LangOptions::FPEvalMethodKind getFPEvalMethod() const {
