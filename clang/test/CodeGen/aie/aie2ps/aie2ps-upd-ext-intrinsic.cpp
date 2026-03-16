@@ -10,7 +10,7 @@
 // RUN: %clang -O2 %s --target=aie2ps -nostdlibinc -S -emit-llvm -o - | FileCheck %s
 
 
-// CHECK-LABEL: @_Z23test_extract_v16float16Dv32_DF16_i(
+// CHECK-LABEL: @_Z23test_extract_v16float16Dv32_7float16i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x half> [[A:%.*]] to <16 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = and i32 [[IDX:%.*]], 1
@@ -18,17 +18,17 @@
 // CHECK-NEXT:    br i1 [[CMP_I_I]], label [[IF_THEN_I_I:%.*]], label [[IF_ELSE_I_I:%.*]]
 // CHECK:       if.then.i.i:
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    br label [[_ZL18EXTRACT_V16FLOAT16DV32_DF16_I_EXIT:%.*]]
+// CHECK-NEXT:    br label [[_ZL18EXTRACT_V16FLOAT16DV32_7FLOAT16I_EXIT:%.*]]
 // CHECK:       if.else.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <8 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    br label [[_ZL18EXTRACT_V16FLOAT16DV32_DF16_I_EXIT]]
-// CHECK:       _ZL18extract_v16float16Dv32_DF16_i.exit:
+// CHECK-NEXT:    br label [[_ZL18EXTRACT_V16FLOAT16DV32_7FLOAT16I_EXIT]]
+// CHECK:       _ZL18extract_v16float16Dv32_7float16i.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <8 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE1_I_I]], [[IF_ELSE_I_I]] ]
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <8 x i32> [[RETVAL_0_I_I]] to <16 x half>
 // CHECK-NEXT:    ret <16 x half> [[TMP2]]
 //
 v16float16 test_extract_v16float16 (v32float16 a, int idx) { return extract_v16float16(a, idx); }
-// CHECK-LABEL: @_Z11test_insertDv32_DF16_iDv16_DF16_(
+// CHECK-LABEL: @_Z11test_insertDv32_7float16iDv16_S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x half> [[A:%.*]] to <16 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <16 x half> [[B:%.*]] to <8 x i32>
@@ -38,17 +38,17 @@ v16float16 test_extract_v16float16 (v32float16 a, int idx) { return extract_v16f
 // CHECK-NEXT:    br i1 [[CMP_I_I]], label [[IF_THEN_I_I:%.*]], label [[IF_END_I_I:%.*]]
 // CHECK:       if.then.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <16 x i32> [[SHUFFLE_I_I]], <16 x i32> [[TMP0]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-// CHECK-NEXT:    br label [[_ZL6INSERTDV32_DF16_IDV16_DF16__EXIT:%.*]]
+// CHECK-NEXT:    br label [[_ZL6INSERTDV32_7FLOAT16IDV16_S__EXIT:%.*]]
 // CHECK:       if.end.i.i:
 // CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> [[SHUFFLE_I_I]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23>
-// CHECK-NEXT:    br label [[_ZL6INSERTDV32_DF16_IDV16_DF16__EXIT]]
-// CHECK:       _ZL6insertDv32_DF16_iDv16_DF16_.exit:
+// CHECK-NEXT:    br label [[_ZL6INSERTDV32_7FLOAT16IDV16_S__EXIT]]
+// CHECK:       _ZL6insertDv32_7float16iDv16_S_.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <16 x i32> [ [[SHUFFLE1_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE2_I_I]], [[IF_END_I_I]] ]
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast <16 x i32> [[RETVAL_0_I_I]] to <32 x half>
 // CHECK-NEXT:    ret <32 x half> [[TMP3]]
 //
 v32float16 test_insert (v32float16 a, int idx, v16float16 b) { return insert(a, idx, b); }
-// CHECK-LABEL: @_Z19test_set_v32float16iDv16_DF16_(
+// CHECK-LABEL: @_Z19test_set_v32float16iDv16_7float16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x half> [[B:%.*]] to <8 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = and i32 [[IDX:%.*]], 1
@@ -56,17 +56,17 @@ v32float16 test_insert (v32float16 a, int idx, v16float16 b) { return insert(a, 
 // CHECK-NEXT:    br i1 [[CMP_I_I]], label [[IF_THEN_I_I:%.*]], label [[IF_ELSE_I_I:%.*]]
 // CHECK:       if.then.i.i:
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <8 x i32> [[TMP0]], <8 x i32> undef, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    br label [[_ZL14SET_V32FLOAT16IDV16_DF16__EXIT:%.*]]
+// CHECK-NEXT:    br label [[_ZL14SET_V32FLOAT16IDV16_7FLOAT16_EXIT:%.*]]
 // CHECK:       if.else.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <8 x i32> [[TMP0]], <8 x i32> undef, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    br label [[_ZL14SET_V32FLOAT16IDV16_DF16__EXIT]]
-// CHECK:       _ZL14set_v32float16iDv16_DF16_.exit:
+// CHECK-NEXT:    br label [[_ZL14SET_V32FLOAT16IDV16_7FLOAT16_EXIT]]
+// CHECK:       _ZL14set_v32float16iDv16_7float16.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <16 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE1_I_I]], [[IF_ELSE_I_I]] ]
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <16 x i32> [[RETVAL_0_I_I]] to <32 x half>
 // CHECK-NEXT:    ret <32 x half> [[TMP2]]
 //
 v32float16 test_set_v32float16 (int idx, v16float16 b) { return set_v32float16(idx, b); }
-// CHECK-LABEL: @_Z11test_concatDv16_DF16_S_(
+// CHECK-LABEL: @_Z11test_concatDv16_7float16S0_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x half> [[A0:%.*]] to <8 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <16 x half> [[A1:%.*]] to <8 x i32>
@@ -217,7 +217,7 @@ v64float8 test_set_v64float8 (int idx, v32float8 b) { return set_v64float8(idx, 
 // CHECK-NEXT:    ret void
 //
 v64float8 test_concat (v32float8 a0, v32float8 a1) { return concat(a0, a1); }
-// CHECK-LABEL: @_Z23test_extract_v16float16Dv64_DF16_i(
+// CHECK-LABEL: @_Z23test_extract_v16float16Dv64_7float16i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x half> [[A:%.*]] to <32 x i32>
 // CHECK-NEXT:    [[REM_I_I:%.*]] = srem i32 [[IDX:%.*]], 4
@@ -228,23 +228,23 @@ v64float8 test_concat (v32float8 a0, v32float8 a1) { return concat(a0, a1); }
 // CHECK-NEXT:    ]
 // CHECK:       if.then.i.i:
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <32 x i32> [[TMP0]], <32 x i32> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    br label [[_ZL18EXTRACT_V16FLOAT16DV64_DF16_I_EXIT:%.*]]
+// CHECK-NEXT:    br label [[_ZL18EXTRACT_V16FLOAT16DV64_7FLOAT16I_EXIT:%.*]]
 // CHECK:       if.then3.i.i:
 // CHECK-NEXT:    [[SHUFFLE4_I_I:%.*]] = shufflevector <32 x i32> [[TMP0]], <32 x i32> poison, <8 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    br label [[_ZL18EXTRACT_V16FLOAT16DV64_DF16_I_EXIT]]
+// CHECK-NEXT:    br label [[_ZL18EXTRACT_V16FLOAT16DV64_7FLOAT16I_EXIT]]
 // CHECK:       if.then8.i.i:
 // CHECK-NEXT:    [[SHUFFLE9_I_I:%.*]] = shufflevector <32 x i32> [[TMP0]], <32 x i32> poison, <8 x i32> <i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23>
-// CHECK-NEXT:    br label [[_ZL18EXTRACT_V16FLOAT16DV64_DF16_I_EXIT]]
+// CHECK-NEXT:    br label [[_ZL18EXTRACT_V16FLOAT16DV64_7FLOAT16I_EXIT]]
 // CHECK:       if.else.i.i:
 // CHECK-NEXT:    [[SHUFFLE10_I_I:%.*]] = shufflevector <32 x i32> [[TMP0]], <32 x i32> poison, <8 x i32> <i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-// CHECK-NEXT:    br label [[_ZL18EXTRACT_V16FLOAT16DV64_DF16_I_EXIT]]
-// CHECK:       _ZL18extract_v16float16Dv64_DF16_i.exit:
+// CHECK-NEXT:    br label [[_ZL18EXTRACT_V16FLOAT16DV64_7FLOAT16I_EXIT]]
+// CHECK:       _ZL18extract_v16float16Dv64_7float16i.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <8 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE4_I_I]], [[IF_THEN3_I_I]] ], [ [[SHUFFLE9_I_I]], [[IF_THEN8_I_I]] ], [ [[SHUFFLE10_I_I]], [[IF_ELSE_I_I]] ]
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <8 x i32> [[RETVAL_0_I_I]] to <16 x half>
 // CHECK-NEXT:    ret <16 x half> [[TMP1]]
 //
 v16float16 test_extract_v16float16 (v64float16 a, int idx) { return extract_v16float16(a, idx); }
-// CHECK-LABEL: @_Z11test_insertDv64_DF16_iDv16_DF16_(
+// CHECK-LABEL: @_Z11test_insertDv64_7float16iDv16_S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x half> [[A:%.*]] to <32 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <16 x half> [[B:%.*]] to <8 x i32>
@@ -258,23 +258,23 @@ v16float16 test_extract_v16float16 (v64float16 a, int idx) { return extract_v16f
 // CHECK-NEXT:    ]
 // CHECK:       if.then.i.i:
 // CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <32 x i32> [[SHUFFLE1_I_I]], <32 x i32> [[TMP0]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 40, i32 41, i32 42, i32 43, i32 44, i32 45, i32 46, i32 47, i32 48, i32 49, i32 50, i32 51, i32 52, i32 53, i32 54, i32 55, i32 56, i32 57, i32 58, i32 59, i32 60, i32 61, i32 62, i32 63>
-// CHECK-NEXT:    br label [[_ZL6INSERTDV64_DF16_IDV16_DF16__EXIT:%.*]]
+// CHECK-NEXT:    br label [[_ZL6INSERTDV64_7FLOAT16IDV16_S__EXIT:%.*]]
 // CHECK:       if.then5.i.i:
 // CHECK-NEXT:    [[SHUFFLE6_I_I:%.*]] = shufflevector <32 x i32> [[SHUFFLE1_I_I]], <32 x i32> [[TMP0]], <32 x i32> <i32 32, i32 33, i32 34, i32 35, i32 36, i32 37, i32 38, i32 39, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 48, i32 49, i32 50, i32 51, i32 52, i32 53, i32 54, i32 55, i32 56, i32 57, i32 58, i32 59, i32 60, i32 61, i32 62, i32 63>
-// CHECK-NEXT:    br label [[_ZL6INSERTDV64_DF16_IDV16_DF16__EXIT]]
+// CHECK-NEXT:    br label [[_ZL6INSERTDV64_7FLOAT16IDV16_S__EXIT]]
 // CHECK:       if.then10.i.i:
 // CHECK-NEXT:    [[SHUFFLE11_I_I:%.*]] = shufflevector <32 x i32> [[SHUFFLE1_I_I]], <32 x i32> [[TMP0]], <32 x i32> <i32 32, i32 33, i32 34, i32 35, i32 36, i32 37, i32 38, i32 39, i32 40, i32 41, i32 42, i32 43, i32 44, i32 45, i32 46, i32 47, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 56, i32 57, i32 58, i32 59, i32 60, i32 61, i32 62, i32 63>
-// CHECK-NEXT:    br label [[_ZL6INSERTDV64_DF16_IDV16_DF16__EXIT]]
+// CHECK-NEXT:    br label [[_ZL6INSERTDV64_7FLOAT16IDV16_S__EXIT]]
 // CHECK:       if.else.i.i:
 // CHECK-NEXT:    [[SHUFFLE12_I_I:%.*]] = shufflevector <32 x i32> [[SHUFFLE1_I_I]], <32 x i32> [[TMP0]], <32 x i32> <i32 32, i32 33, i32 34, i32 35, i32 36, i32 37, i32 38, i32 39, i32 40, i32 41, i32 42, i32 43, i32 44, i32 45, i32 46, i32 47, i32 48, i32 49, i32 50, i32 51, i32 52, i32 53, i32 54, i32 55, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    br label [[_ZL6INSERTDV64_DF16_IDV16_DF16__EXIT]]
-// CHECK:       _ZL6insertDv64_DF16_iDv16_DF16_.exit:
+// CHECK-NEXT:    br label [[_ZL6INSERTDV64_7FLOAT16IDV16_S__EXIT]]
+// CHECK:       _ZL6insertDv64_7float16iDv16_S_.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <32 x i32> [ [[SHUFFLE2_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE6_I_I]], [[IF_THEN5_I_I]] ], [ [[SHUFFLE11_I_I]], [[IF_THEN10_I_I]] ], [ [[SHUFFLE12_I_I]], [[IF_ELSE_I_I]] ]
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <32 x i32> [[RETVAL_0_I_I]] to <64 x half>
 // CHECK-NEXT:    ret <64 x half> [[TMP2]]
 //
 v64float16 test_insert (v64float16 a, int idx, v16float16 b) { return insert(a, idx, b); }
-// CHECK-LABEL: @_Z19test_set_v64float16iDv16_DF16_(
+// CHECK-LABEL: @_Z19test_set_v64float16iDv16_7float16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x half> [[B:%.*]] to <8 x i32>
 // CHECK-NEXT:    [[REM_I_I:%.*]] = srem i32 [[IDX:%.*]], 4
@@ -286,26 +286,26 @@ v64float16 test_insert (v64float16 a, int idx, v16float16 b) { return insert(a, 
 // CHECK:       if.then.i.i:
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <8 x i32> [[TMP0]], <8 x i32> undef, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <16 x i32> [[SHUFFLE_I_I]], <16 x i32> undef, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-// CHECK-NEXT:    br label [[_ZL14SET_V64FLOAT16IDV16_DF16__EXIT:%.*]]
+// CHECK-NEXT:    br label [[_ZL14SET_V64FLOAT16IDV16_7FLOAT16_EXIT:%.*]]
 // CHECK:       if.then4.i.i:
 // CHECK-NEXT:    [[SHUFFLE5_I_I:%.*]] = shufflevector <8 x i32> [[TMP0]], <8 x i32> undef, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
 // CHECK-NEXT:    [[SHUFFLE6_I_I:%.*]] = shufflevector <16 x i32> [[SHUFFLE5_I_I]], <16 x i32> undef, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-// CHECK-NEXT:    br label [[_ZL14SET_V64FLOAT16IDV16_DF16__EXIT]]
+// CHECK-NEXT:    br label [[_ZL14SET_V64FLOAT16IDV16_7FLOAT16_EXIT]]
 // CHECK:       if.then10.i.i:
 // CHECK-NEXT:    [[SHUFFLE11_I_I:%.*]] = shufflevector <8 x i32> [[TMP0]], <8 x i32> undef, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
 // CHECK-NEXT:    [[SHUFFLE12_I_I:%.*]] = shufflevector <16 x i32> [[SHUFFLE11_I_I]], <16 x i32> undef, <32 x i32> <i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    br label [[_ZL14SET_V64FLOAT16IDV16_DF16__EXIT]]
+// CHECK-NEXT:    br label [[_ZL14SET_V64FLOAT16IDV16_7FLOAT16_EXIT]]
 // CHECK:       if.else.i.i:
 // CHECK-NEXT:    [[SHUFFLE13_I_I:%.*]] = shufflevector <8 x i32> [[TMP0]], <8 x i32> undef, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
 // CHECK-NEXT:    [[SHUFFLE14_I_I:%.*]] = shufflevector <16 x i32> [[SHUFFLE13_I_I]], <16 x i32> undef, <32 x i32> <i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    br label [[_ZL14SET_V64FLOAT16IDV16_DF16__EXIT]]
-// CHECK:       _ZL14set_v64float16iDv16_DF16_.exit:
+// CHECK-NEXT:    br label [[_ZL14SET_V64FLOAT16IDV16_7FLOAT16_EXIT]]
+// CHECK:       _ZL14set_v64float16iDv16_7float16.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <32 x i32> [ [[SHUFFLE1_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE6_I_I]], [[IF_THEN4_I_I]] ], [ [[SHUFFLE12_I_I]], [[IF_THEN10_I_I]] ], [ [[SHUFFLE14_I_I]], [[IF_ELSE_I_I]] ]
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <32 x i32> [[RETVAL_0_I_I]] to <64 x half>
 // CHECK-NEXT:    ret <64 x half> [[TMP1]]
 //
 v64float16 test_set_v64float16 (int idx, v16float16 b) { return set_v64float16(idx, b); }
-// CHECK-LABEL: @_Z11test_concatDv16_DF16_S_S_S_(
+// CHECK-LABEL: @_Z11test_concatDv16_7float16S0_S0_S0_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x half> [[A0:%.*]] to <8 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <16 x half> [[A1:%.*]] to <8 x i32>
@@ -318,7 +318,7 @@ v64float16 test_set_v64float16 (int idx, v16float16 b) { return set_v64float16(i
 // CHECK-NEXT:    ret <64 x half> [[TMP4]]
 //
 v64float16 test_concat (v16float16 a0, v16float16 a1, v16float16 a2, v16float16 a3) { return concat(a0, a1, a2, a3); }
-// CHECK-LABEL: @_Z23test_extract_v32float16Dv64_DF16_i(
+// CHECK-LABEL: @_Z23test_extract_v32float16Dv64_7float16i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x half> [[A:%.*]] to <32 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = and i32 [[IDX:%.*]], 1
@@ -326,17 +326,17 @@ v64float16 test_concat (v16float16 a0, v16float16 a1, v16float16 a2, v16float16 
 // CHECK-NEXT:    br i1 [[CMP_I_I]], label [[IF_THEN_I_I:%.*]], label [[IF_ELSE_I_I:%.*]]
 // CHECK:       if.then.i.i:
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <32 x i32> [[TMP0]], <32 x i32> poison, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    br label [[_ZL18EXTRACT_V32FLOAT16DV64_DF16_I_EXIT:%.*]]
+// CHECK-NEXT:    br label [[_ZL18EXTRACT_V32FLOAT16DV64_7FLOAT16I_EXIT:%.*]]
 // CHECK:       if.else.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <32 x i32> [[TMP0]], <32 x i32> poison, <16 x i32> <i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-// CHECK-NEXT:    br label [[_ZL18EXTRACT_V32FLOAT16DV64_DF16_I_EXIT]]
-// CHECK:       _ZL18extract_v32float16Dv64_DF16_i.exit:
+// CHECK-NEXT:    br label [[_ZL18EXTRACT_V32FLOAT16DV64_7FLOAT16I_EXIT]]
+// CHECK:       _ZL18extract_v32float16Dv64_7float16i.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <16 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE1_I_I]], [[IF_ELSE_I_I]] ]
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <16 x i32> [[RETVAL_0_I_I]] to <32 x half>
 // CHECK-NEXT:    ret <32 x half> [[TMP2]]
 //
 v32float16 test_extract_v32float16 (v64float16 a, int idx) { return extract_v32float16(a, idx); }
-// CHECK-LABEL: @_Z11test_insertDv64_DF16_iDv32_DF16_(
+// CHECK-LABEL: @_Z11test_insertDv64_7float16iDv32_S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x half> [[A:%.*]] to <32 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <32 x half> [[B:%.*]] to <16 x i32>
@@ -346,17 +346,17 @@ v32float16 test_extract_v32float16 (v64float16 a, int idx) { return extract_v32f
 // CHECK-NEXT:    br i1 [[CMP_I_I]], label [[IF_THEN_I_I:%.*]], label [[IF_END_I_I:%.*]]
 // CHECK:       if.then.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <32 x i32> [[SHUFFLE_I_I]], <32 x i32> [[TMP0]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 48, i32 49, i32 50, i32 51, i32 52, i32 53, i32 54, i32 55, i32 56, i32 57, i32 58, i32 59, i32 60, i32 61, i32 62, i32 63>
-// CHECK-NEXT:    br label [[_ZL6INSERTDV64_DF16_IDV32_DF16__EXIT:%.*]]
+// CHECK-NEXT:    br label [[_ZL6INSERTDV64_7FLOAT16IDV32_S__EXIT:%.*]]
 // CHECK:       if.end.i.i:
 // CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <32 x i32> [[TMP0]], <32 x i32> [[SHUFFLE_I_I]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 32, i32 33, i32 34, i32 35, i32 36, i32 37, i32 38, i32 39, i32 40, i32 41, i32 42, i32 43, i32 44, i32 45, i32 46, i32 47>
-// CHECK-NEXT:    br label [[_ZL6INSERTDV64_DF16_IDV32_DF16__EXIT]]
-// CHECK:       _ZL6insertDv64_DF16_iDv32_DF16_.exit:
+// CHECK-NEXT:    br label [[_ZL6INSERTDV64_7FLOAT16IDV32_S__EXIT]]
+// CHECK:       _ZL6insertDv64_7float16iDv32_S_.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <32 x i32> [ [[SHUFFLE1_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE2_I_I]], [[IF_END_I_I]] ]
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast <32 x i32> [[RETVAL_0_I_I]] to <64 x half>
 // CHECK-NEXT:    ret <64 x half> [[TMP3]]
 //
 v64float16 test_insert (v64float16 a, int idx, v32float16 b) { return insert(a, idx, b); }
-// CHECK-LABEL: @_Z19test_set_v64float16iDv32_DF16_(
+// CHECK-LABEL: @_Z19test_set_v64float16iDv32_7float16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x half> [[B:%.*]] to <16 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = and i32 [[IDX:%.*]], 1
@@ -364,17 +364,17 @@ v64float16 test_insert (v64float16 a, int idx, v32float16 b) { return insert(a, 
 // CHECK-NEXT:    br i1 [[CMP_I_I]], label [[IF_THEN_I_I:%.*]], label [[IF_ELSE_I_I:%.*]]
 // CHECK:       if.then.i.i:
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> undef, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-// CHECK-NEXT:    br label [[_ZL14SET_V64FLOAT16IDV32_DF16__EXIT:%.*]]
+// CHECK-NEXT:    br label [[_ZL14SET_V64FLOAT16IDV32_7FLOAT16_EXIT:%.*]]
 // CHECK:       if.else.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> undef, <32 x i32> <i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    br label [[_ZL14SET_V64FLOAT16IDV32_DF16__EXIT]]
-// CHECK:       _ZL14set_v64float16iDv32_DF16_.exit:
+// CHECK-NEXT:    br label [[_ZL14SET_V64FLOAT16IDV32_7FLOAT16_EXIT]]
+// CHECK:       _ZL14set_v64float16iDv32_7float16.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <32 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE1_I_I]], [[IF_ELSE_I_I]] ]
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <32 x i32> [[RETVAL_0_I_I]] to <64 x half>
 // CHECK-NEXT:    ret <64 x half> [[TMP2]]
 //
 v64float16 test_set_v64float16 (int idx, v32float16 b) { return set_v64float16(idx, b); }
-// CHECK-LABEL: @_Z11test_concatDv32_DF16_S_(
+// CHECK-LABEL: @_Z11test_concatDv32_7float16S0_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x half> [[A0:%.*]] to <16 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <32 x half> [[A1:%.*]] to <16 x i32>
@@ -745,7 +745,7 @@ v128float8 test_set_v128float8 (int idx, v64float8 b) { return set_v128float8(id
 //
 v128float8 test_concat (v64float8 a0, v64float8 a1) { return concat(a0, a1); }
 
-// CHECK-LABEL: @_Z22test_extract_v8float16Dv32_DF16_i(
+// CHECK-LABEL: @_Z22test_extract_v8float16Dv32_7float16i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x half> [[A:%.*]] to <16 x i32>
 // CHECK-NEXT:    [[REM_I_I:%.*]] = srem i32 [[IDX:%.*]], 4
@@ -756,23 +756,23 @@ v128float8 test_concat (v64float8 a0, v64float8 a1) { return concat(a0, a1); }
 // CHECK-NEXT:    ]
 // CHECK:       if.then.i.i:
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
-// CHECK-NEXT:    br label [[_ZL17EXTRACT_V8FLOAT16DV32_DF16_I_EXIT:%.*]]
+// CHECK-NEXT:    br label [[_ZL17EXTRACT_V8FLOAT16DV32_7FLOAT16I_EXIT:%.*]]
 // CHECK:       if.then3.i.i:
 // CHECK-NEXT:    [[SHUFFLE4_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    br label [[_ZL17EXTRACT_V8FLOAT16DV32_DF16_I_EXIT]]
+// CHECK-NEXT:    br label [[_ZL17EXTRACT_V8FLOAT16DV32_7FLOAT16I_EXIT]]
 // CHECK:       if.then8.i.i:
 // CHECK-NEXT:    [[SHUFFLE9_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 8, i32 9, i32 10, i32 11>
-// CHECK-NEXT:    br label [[_ZL17EXTRACT_V8FLOAT16DV32_DF16_I_EXIT]]
+// CHECK-NEXT:    br label [[_ZL17EXTRACT_V8FLOAT16DV32_7FLOAT16I_EXIT]]
 // CHECK:       if.else.i.i:
 // CHECK-NEXT:    [[SHUFFLE10_I_I:%.*]] = shufflevector <16 x i32> [[TMP0]], <16 x i32> poison, <4 x i32> <i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    br label [[_ZL17EXTRACT_V8FLOAT16DV32_DF16_I_EXIT]]
-// CHECK:       _ZL17extract_v8float16Dv32_DF16_i.exit:
+// CHECK-NEXT:    br label [[_ZL17EXTRACT_V8FLOAT16DV32_7FLOAT16I_EXIT]]
+// CHECK:       _ZL17extract_v8float16Dv32_7float16i.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <4 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE4_I_I]], [[IF_THEN3_I_I]] ], [ [[SHUFFLE9_I_I]], [[IF_THEN8_I_I]] ], [ [[SHUFFLE10_I_I]], [[IF_ELSE_I_I]] ]
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <4 x i32> [[RETVAL_0_I_I]] to <8 x half>
 // CHECK-NEXT:    ret <8 x half> [[TMP1]]
 //
 v8float16 test_extract_v8float16 ( v32float16 a, int idx ) { return extract_v8float16(a, idx); }
-// CHECK-LABEL: @_Z19test_set_v32float16iDv8_DF16_(
+// CHECK-LABEL: @_Z19test_set_v32float16iDv8_7float16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <8 x half> [[A:%.*]] to <4 x i32>
 // CHECK-NEXT:    [[REM_I_I:%.*]] = srem i32 [[IDX:%.*]], 4
@@ -784,26 +784,26 @@ v8float16 test_extract_v8float16 ( v32float16 a, int idx ) { return extract_v8fl
 // CHECK:       if.then.i.i:
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <4 x i32> [[TMP0]], <4 x i32> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <8 x i32> [[SHUFFLE_I_I]], <8 x i32> undef, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    br label [[_ZL14SET_V32FLOAT16IDV8_DF16__EXIT:%.*]]
+// CHECK-NEXT:    br label [[_ZL14SET_V32FLOAT16IDV8_7FLOAT16_EXIT:%.*]]
 // CHECK:       if.then4.i.i:
 // CHECK-NEXT:    [[SHUFFLE5_I_I:%.*]] = shufflevector <4 x i32> [[TMP0]], <4 x i32> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 0, i32 1, i32 2, i32 3>
 // CHECK-NEXT:    [[SHUFFLE6_I_I:%.*]] = shufflevector <8 x i32> [[SHUFFLE5_I_I]], <8 x i32> undef, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    br label [[_ZL14SET_V32FLOAT16IDV8_DF16__EXIT]]
+// CHECK-NEXT:    br label [[_ZL14SET_V32FLOAT16IDV8_7FLOAT16_EXIT]]
 // CHECK:       if.then10.i.i:
 // CHECK-NEXT:    [[SHUFFLE11_I_I:%.*]] = shufflevector <4 x i32> [[TMP0]], <4 x i32> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
 // CHECK-NEXT:    [[SHUFFLE12_I_I:%.*]] = shufflevector <8 x i32> [[SHUFFLE11_I_I]], <8 x i32> undef, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    br label [[_ZL14SET_V32FLOAT16IDV8_DF16__EXIT]]
+// CHECK-NEXT:    br label [[_ZL14SET_V32FLOAT16IDV8_7FLOAT16_EXIT]]
 // CHECK:       if.else.i.i:
 // CHECK-NEXT:    [[SHUFFLE13_I_I:%.*]] = shufflevector <4 x i32> [[TMP0]], <4 x i32> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 0, i32 1, i32 2, i32 3>
 // CHECK-NEXT:    [[SHUFFLE14_I_I:%.*]] = shufflevector <8 x i32> [[SHUFFLE13_I_I]], <8 x i32> undef, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    br label [[_ZL14SET_V32FLOAT16IDV8_DF16__EXIT]]
-// CHECK:       _ZL14set_v32float16iDv8_DF16_.exit:
+// CHECK-NEXT:    br label [[_ZL14SET_V32FLOAT16IDV8_7FLOAT16_EXIT]]
+// CHECK:       _ZL14set_v32float16iDv8_7float16.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <16 x i32> [ [[SHUFFLE1_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE6_I_I]], [[IF_THEN4_I_I]] ], [ [[SHUFFLE12_I_I]], [[IF_THEN10_I_I]] ], [ [[SHUFFLE14_I_I]], [[IF_ELSE_I_I]] ]
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <16 x i32> [[RETVAL_0_I_I]] to <32 x half>
 // CHECK-NEXT:    ret <32 x half> [[TMP1]]
 //
 v32float16 test_set_v32float16 ( int idx, v8float16 a ) { return set_v32float16(idx, a); }
-// CHECK-LABEL: @_Z22test_extract_v8float16Dv16_DF16_i(
+// CHECK-LABEL: @_Z22test_extract_v8float16Dv16_7float16i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x half> [[A:%.*]] to <8 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = and i32 [[IDX:%.*]], 1
@@ -811,17 +811,17 @@ v32float16 test_set_v32float16 ( int idx, v8float16 a ) { return set_v32float16(
 // CHECK-NEXT:    br i1 [[CMP_I_I]], label [[IF_THEN_I_I:%.*]], label [[IF_ELSE_I_I:%.*]]
 // CHECK:       if.then.i.i:
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <8 x i32> [[TMP0]], <8 x i32> poison, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
-// CHECK-NEXT:    br label [[_ZL17EXTRACT_V8FLOAT16DV16_DF16_I_EXIT:%.*]]
+// CHECK-NEXT:    br label [[_ZL17EXTRACT_V8FLOAT16DV16_7FLOAT16I_EXIT:%.*]]
 // CHECK:       if.else.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <8 x i32> [[TMP0]], <8 x i32> poison, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    br label [[_ZL17EXTRACT_V8FLOAT16DV16_DF16_I_EXIT]]
-// CHECK:       _ZL17extract_v8float16Dv16_DF16_i.exit:
+// CHECK-NEXT:    br label [[_ZL17EXTRACT_V8FLOAT16DV16_7FLOAT16I_EXIT]]
+// CHECK:       _ZL17extract_v8float16Dv16_7float16i.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <4 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE1_I_I]], [[IF_ELSE_I_I]] ]
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <4 x i32> [[RETVAL_0_I_I]] to <8 x half>
 // CHECK-NEXT:    ret <8 x half> [[TMP2]]
 //
 v8float16 test_extract_v8float16 ( v16float16 a, int idx ) { return extract_v8float16(a, idx); }
-// CHECK-LABEL: @_Z19test_set_v16float16iDv8_DF16_(
+// CHECK-LABEL: @_Z19test_set_v16float16iDv8_7float16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <8 x half> [[A:%.*]] to <4 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = and i32 [[IDX:%.*]], 1
@@ -829,17 +829,17 @@ v8float16 test_extract_v8float16 ( v16float16 a, int idx ) { return extract_v8fl
 // CHECK-NEXT:    br i1 [[CMP_I_I]], label [[IF_THEN_I_I:%.*]], label [[IF_ELSE_I_I:%.*]]
 // CHECK:       if.then.i.i:
 // CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <4 x i32> [[TMP0]], <4 x i32> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
-// CHECK-NEXT:    br label [[_ZL14SET_V16FLOAT16IDV8_DF16__EXIT:%.*]]
+// CHECK-NEXT:    br label [[_ZL14SET_V16FLOAT16IDV8_7FLOAT16_EXIT:%.*]]
 // CHECK:       if.else.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <4 x i32> [[TMP0]], <4 x i32> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 0, i32 1, i32 2, i32 3>
-// CHECK-NEXT:    br label [[_ZL14SET_V16FLOAT16IDV8_DF16__EXIT]]
-// CHECK:       _ZL14set_v16float16iDv8_DF16_.exit:
+// CHECK-NEXT:    br label [[_ZL14SET_V16FLOAT16IDV8_7FLOAT16_EXIT]]
+// CHECK:       _ZL14set_v16float16iDv8_7float16.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <8 x i32> [ [[SHUFFLE_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE1_I_I]], [[IF_ELSE_I_I]] ]
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <8 x i32> [[RETVAL_0_I_I]] to <16 x half>
 // CHECK-NEXT:    ret <16 x half> [[TMP2]]
 //
 v16float16 test_set_v16float16 (int idx, v8float16 a ) { return set_v16float16(idx, a); }
-// CHECK-LABEL: @_Z11test_insertDv32_DF16_iDv8_DF16_(
+// CHECK-LABEL: @_Z11test_insertDv32_7float16iDv8_S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x half> [[V:%.*]] to <16 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <8 x half> [[B:%.*]] to <4 x i32>
@@ -853,23 +853,23 @@ v16float16 test_set_v16float16 (int idx, v8float16 a ) { return set_v16float16(i
 // CHECK-NEXT:    ]
 // CHECK:       if.then.i.i:
 // CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <16 x i32> [[SHUFFLE1_I_I]], <16 x i32> [[TMP0]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-// CHECK-NEXT:    br label [[_ZL6INSERTDV32_DF16_IDV8_DF16__EXIT:%.*]]
+// CHECK-NEXT:    br label [[_ZL6INSERTDV32_7FLOAT16IDV8_S__EXIT:%.*]]
 // CHECK:       if.then5.i.i:
 // CHECK-NEXT:    [[SHUFFLE6_I_I:%.*]] = shufflevector <16 x i32> [[SHUFFLE1_I_I]], <16 x i32> [[TMP0]], <16 x i32> <i32 16, i32 17, i32 18, i32 19, i32 0, i32 1, i32 2, i32 3, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-// CHECK-NEXT:    br label [[_ZL6INSERTDV32_DF16_IDV8_DF16__EXIT]]
+// CHECK-NEXT:    br label [[_ZL6INSERTDV32_7FLOAT16IDV8_S__EXIT]]
 // CHECK:       if.then10.i.i:
 // CHECK-NEXT:    [[SHUFFLE11_I_I:%.*]] = shufflevector <16 x i32> [[SHUFFLE1_I_I]], <16 x i32> [[TMP0]], <16 x i32> <i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 0, i32 1, i32 2, i32 3, i32 28, i32 29, i32 30, i32 31>
-// CHECK-NEXT:    br label [[_ZL6INSERTDV32_DF16_IDV8_DF16__EXIT]]
+// CHECK-NEXT:    br label [[_ZL6INSERTDV32_7FLOAT16IDV8_S__EXIT]]
 // CHECK:       if.else.i.i:
 // CHECK-NEXT:    [[SHUFFLE12_I_I:%.*]] = shufflevector <16 x i32> [[SHUFFLE1_I_I]], <16 x i32> [[TMP0]], <16 x i32> <i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 0, i32 1, i32 2, i32 3>
-// CHECK-NEXT:    br label [[_ZL6INSERTDV32_DF16_IDV8_DF16__EXIT]]
-// CHECK:       _ZL6insertDv32_DF16_iDv8_DF16_.exit:
+// CHECK-NEXT:    br label [[_ZL6INSERTDV32_7FLOAT16IDV8_S__EXIT]]
+// CHECK:       _ZL6insertDv32_7float16iDv8_S_.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <16 x i32> [ [[SHUFFLE2_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE6_I_I]], [[IF_THEN5_I_I]] ], [ [[SHUFFLE11_I_I]], [[IF_THEN10_I_I]] ], [ [[SHUFFLE12_I_I]], [[IF_ELSE_I_I]] ]
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <16 x i32> [[RETVAL_0_I_I]] to <32 x half>
 // CHECK-NEXT:    ret <32 x half> [[TMP2]]
 //
 v32float16 test_insert (v32float16 v, int idx, v8float16 b ) { return insert(v, idx, b); }
-// CHECK-LABEL: @_Z11test_insertDv16_DF16_iDv8_DF16_(
+// CHECK-LABEL: @_Z11test_insertDv16_7float16iDv8_S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x half> [[A:%.*]] to <8 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <8 x half> [[B:%.*]] to <4 x i32>
@@ -879,17 +879,17 @@ v32float16 test_insert (v32float16 v, int idx, v8float16 b ) { return insert(v, 
 // CHECK-NEXT:    br i1 [[CMP_I_I]], label [[IF_THEN_I_I:%.*]], label [[IF_ELSE_I_I:%.*]]
 // CHECK:       if.then.i.i:
 // CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <8 x i32> [[SHUFFLE_I_I]], <8 x i32> [[TMP0]], <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    br label [[_ZL6INSERTDV16_DF16_IDV8_DF16__EXIT:%.*]]
+// CHECK-NEXT:    br label [[_ZL6INSERTDV16_7FLOAT16IDV8_S__EXIT:%.*]]
 // CHECK:       if.else.i.i:
 // CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <8 x i32> [[TMP0]], <8 x i32> [[SHUFFLE_I_I]], <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 8, i32 9, i32 10, i32 11>
-// CHECK-NEXT:    br label [[_ZL6INSERTDV16_DF16_IDV8_DF16__EXIT]]
-// CHECK:       _ZL6insertDv16_DF16_iDv8_DF16_.exit:
+// CHECK-NEXT:    br label [[_ZL6INSERTDV16_7FLOAT16IDV8_S__EXIT]]
+// CHECK:       _ZL6insertDv16_7float16iDv8_S_.exit:
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = phi <8 x i32> [ [[SHUFFLE1_I_I]], [[IF_THEN_I_I]] ], [ [[SHUFFLE2_I_I]], [[IF_ELSE_I_I]] ]
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast <8 x i32> [[RETVAL_0_I_I]] to <16 x half>
 // CHECK-NEXT:    ret <16 x half> [[TMP3]]
 //
 v16float16 test_insert (v16float16 a, int idx, v8float16 b ) { return insert(a, idx, b); }
-// CHECK-LABEL: @_Z11test_concatDv8_DF16_S_(
+// CHECK-LABEL: @_Z11test_concatDv8_7float16S0_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <8 x half> [[V0:%.*]] to <4 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <8 x half> [[V1:%.*]] to <4 x i32>
@@ -898,7 +898,7 @@ v16float16 test_insert (v16float16 a, int idx, v8float16 b ) { return insert(a, 
 // CHECK-NEXT:    ret <16 x half> [[TMP2]]
 //
 v16float16 test_concat (v8float16 v0, v8float16 v1 ) { return concat(v0, v1); }
-// CHECK-LABEL: @_Z11test_concatDv8_DF16_S_S_S_(
+// CHECK-LABEL: @_Z11test_concatDv8_7float16S0_S0_S0_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <8 x half> [[V0:%.*]] to <4 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <8 x half> [[V1:%.*]] to <4 x i32>
@@ -1119,6 +1119,7 @@ v32float8 test_set_v32float8 (int idx, v16float8 a ) { return set_v32float8(idx,
 
 
 
+//
 // CHECK-LABEL: @_Z11test_insert10v64bfloat8i10v16bfloat8(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFLOAT8:%.*]] [[V_COERCE:%.*]], 0

@@ -60,7 +60,7 @@ v64bfloat16 test_get_scd_v64bfloat16(int en) { return get_scd_v64bfloat16(en); }
 //
 v64float16 test_get_scd_v64float16(int en) { return get_scd_v64float16(en); }
 
-// CHECK-LABEL: define dso_local void @_Z12test_put_mcdDv32_DF16_i(
+// CHECK-LABEL: define dso_local void @_Z12test_put_mcdDv32_7float16i(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[EN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x half> [[A]] to <16 x i32>
@@ -89,7 +89,7 @@ void test_put_mcd(v64float8 a, int en) { put_mcd(a, en); }
 //
 void test_put_mcd(v64bfloat8 a, int en) { put_mcd(a, en); }
 
-// CHECK-LABEL: define dso_local void @_Z12test_put_mcdDv64_DF16_i(
+// CHECK-LABEL: define dso_local void @_Z12test_put_mcdDv64_7float16i(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[EN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x half> [[A]] to <32 x i32>
@@ -113,7 +113,7 @@ void test_put_mcd(v64float16 a, int en) { put_mcd(a, en); }
 //
 void test_put_mcd(v64bfloat16 a, int en) { put_mcd(a, en); }
 
-// CHECK-LABEL: define dso_local void @_Z11test_put_msDv2_DF16_i(
+// CHECK-LABEL: define dso_local void @_Z11test_put_msDv2_7float16i(
 // CHECK-SAME: <2 x half> noundef [[VAL:%.*]], i32 noundef [[TLAST:%.*]]) local_unnamed_addr #[[ATTR2:[0-9]+]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x half> [[VAL]] to i32
@@ -122,7 +122,7 @@ void test_put_mcd(v64bfloat16 a, int en) { put_mcd(a, en); }
 //
 void test_put_ms(v2float16 val, int tlast) { put_ms(val, tlast); }
 
-// CHECK-LABEL: define dso_local void @_Z11test_put_msDv2_DF16_(
+// CHECK-LABEL: define dso_local void @_Z11test_put_msDv2_7float16(
 // CHECK-SAME: <2 x half> noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x half> [[VAL]] to i32
@@ -131,7 +131,7 @@ void test_put_ms(v2float16 val, int tlast) { put_ms(val, tlast); }
 //
 void test_put_ms(v2float16 val) { put_ms(val); }
 
-// CHECK-LABEL: define dso_local void @_Z14test_put_ms_nbDv2_DF16_iRb(
+// CHECK-LABEL: define dso_local void @_Z14test_put_ms_nbDv2_7float16iRb(
 // CHECK-SAME: <2 x half> noundef [[VAL:%.*]], i32 noundef [[TLAST:%.*]], ptr nocapture nonnull writeonly align 1 dereferenceable(1) initializes((0, 1)) [[SUCCESS:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x half> [[VAL]] to i32
@@ -145,7 +145,7 @@ void test_put_ms_nb(v2float16 val, int tlast, bool &success) {
   put_ms_nb(val, tlast, success);
 }
 
-// CHECK-LABEL: define dso_local void @_Z14test_put_ms_nbDv2_DF16_Rb(
+// CHECK-LABEL: define dso_local void @_Z14test_put_ms_nbDv2_7float16Rb(
 // CHECK-SAME: <2 x half> noundef [[VAL:%.*]], ptr nocapture nonnull writeonly align 1 dereferenceable(1) initializes((0, 1)) [[SUCCESS:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x half> [[VAL]] to i32
@@ -157,7 +157,7 @@ void test_put_ms_nb(v2float16 val, int tlast, bool &success) {
 //
 void test_put_ms_nb(v2float16 val, bool &success) { put_ms_nb(val, success); }
 
-// CHECK-LABEL: define dso_local void @_Z11test_put_msDv8_DF16_(
+// CHECK-LABEL: define dso_local void @_Z11test_put_msDv8_7float16(
 // CHECK-SAME: <8 x half> noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <8 x half> [[VAL]] to <4 x i32>
@@ -173,7 +173,7 @@ void test_put_ms_nb(v2float16 val, bool &success) { put_ms_nb(val, success); }
 //
 void test_put_ms(v8float16 val) { put_ms(val); }
 
-// CHECK-LABEL: define dso_local void @_Z11test_put_msDv8_DF16_i(
+// CHECK-LABEL: define dso_local void @_Z11test_put_msDv8_7float16i(
 // CHECK-SAME: <8 x half> noundef [[VAL:%.*]], i32 noundef [[TLAST:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <8 x half> [[VAL]] to <4 x i32>
@@ -221,7 +221,7 @@ void test_put_ms(v8bfloat16 val) { put_ms(val); }
 //
 void test_put_ms(v8bfloat16 val, int tlast) { put_ms(val, tlast); }
 
-// CHECK-LABEL: define dso_local void @_Z11test_put_msDv16_DF16_(
+// CHECK-LABEL: define dso_local void @_Z11test_put_msDv16_7float16(
 // CHECK-SAME: <16 x half> noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x half> [[VAL]] to <8 x i32>
@@ -245,7 +245,7 @@ void test_put_ms(v8bfloat16 val, int tlast) { put_ms(val, tlast); }
 //
 void test_put_ms(v16float16 val) { put_ms(val); }
 
-// CHECK-LABEL: define dso_local void @_Z11test_put_msDv16_DF16_i(
+// CHECK-LABEL: define dso_local void @_Z11test_put_msDv16_7float16i(
 // CHECK-SAME: <16 x half> noundef [[VAL:%.*]], i32 noundef [[TLAST:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x half> [[VAL]] to <8 x i32>
@@ -269,7 +269,7 @@ void test_put_ms(v16float16 val) { put_ms(val); }
 //
 void test_put_ms(v16float16 val, int tlast) { put_ms(val, tlast); }
 
-// CHECK-LABEL: define dso_local void @_Z11test_put_msDv32_DF16_(
+// CHECK-LABEL: define dso_local void @_Z11test_put_msDv32_7float16(
 // CHECK-SAME: <32 x half> noundef [[VAL:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x half> [[VAL]] to <16 x i32>
@@ -309,7 +309,7 @@ void test_put_ms(v16float16 val, int tlast) { put_ms(val, tlast); }
 //
 void test_put_ms(v32float16 val) { put_ms(val); }
 
-// CHECK-LABEL: define dso_local void @_Z11test_put_msDv32_DF16_i(
+// CHECK-LABEL: define dso_local void @_Z11test_put_msDv32_7float16i(
 // CHECK-SAME: <32 x half> noundef [[VAL:%.*]], i32 noundef [[TLAST:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x half> [[VAL]] to <16 x i32>
@@ -349,7 +349,7 @@ void test_put_ms(v32float16 val) { put_ms(val); }
 //
 void test_put_ms(v32float16 val, int tlast) { put_ms(val, tlast); }
 
-// CHECK-LABEL: define dso_local void @_Z11test_put_msDv64_DF16_ii(
+// CHECK-LABEL: define dso_local void @_Z11test_put_msDv64_7float16ii(
 // CHECK-SAME: <64 x half> noundef [[VAL:%.*]], i32 noundef [[EN:%.*]], i32 noundef [[TLAST:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x half> [[VAL]] to <32 x i32>
@@ -431,7 +431,6 @@ void test_put_ms(v64float16 val, int en, int tlast) { put_ms(val, en, tlast); }
 //
 v2float16 test_get_ss_v2float16() { return get_ss_v2float16(); }
 
-//
 // CHECK-LABEL: define dso_local noundef <2 x half> @_Z21test_get_ss_v2float16Rb(
 // CHECK-SAME: ptr nocapture nonnull writeonly align 1 dereferenceable(1) initializes((0, 1)) [[TLAST:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // CHECK-NEXT:  entry:

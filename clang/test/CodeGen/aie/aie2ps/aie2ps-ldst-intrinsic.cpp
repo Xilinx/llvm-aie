@@ -496,7 +496,7 @@ v64bfloat8 test_fifo_ld_popx(v64bfloat8 *&p, fifo_state_t &s, int step,
 v64bfloat8 test_fifo_ld_popx(v64bfloat8 *&p, fifo_state_t &s) {
   return fifo_ld_popx(p, s);
 }
-// AIE2PS-LABEL: define dso_local void @_Z18test_fifo_ld_resetRPU3AS5Dv32_DF16_R12fifo_state_t(
+// AIE2PS-LABEL: define dso_local void @_Z18test_fifo_ld_resetRPU3AS5Dv32_7float16R12fifo_state_t(
 // AIE2PS-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) initializes((128, 132)) [[S:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
@@ -515,7 +515,7 @@ v64bfloat8 test_fifo_ld_popx(v64bfloat8 *&p, fifo_state_t &s) {
 void test_fifo_ld_reset(v32float16 __aie_dm_resource_a *&p, fifo_state_t &s) {
   fifo_ld_reset(p, s);
 }
-// AIE2PS-LABEL: define dso_local void @_Z17test_fifo_ld_fillRPU3AS5Dv32_DF16_R12fifo_state_t(
+// AIE2PS-LABEL: define dso_local void @_Z17test_fifo_ld_fillRPU3AS5Dv32_7float16R12fifo_state_t(
 // AIE2PS-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
@@ -534,7 +534,7 @@ void test_fifo_ld_reset(v32float16 __aie_dm_resource_a *&p, fifo_state_t &s) {
 void test_fifo_ld_fill(v32float16 __aie_dm_resource_a *&p, fifo_state_t &s) {
   fifo_ld_fill(p, s);
 }
-// AIE2PS-LABEL: define dso_local noundef <32 x half> @_Z16test_fifo_ld_popRPU3AS5Dv32_DF16_R12fifo_state_t(
+// AIE2PS-LABEL: define dso_local noundef <32 x half> @_Z16test_fifo_ld_popRPU3AS5Dv32_7float16R12fifo_state_t(
 // AIE2PS-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
@@ -556,7 +556,7 @@ v32float16 test_fifo_ld_pop(v32float16 __aie_dm_resource_a *&p,
                             fifo_state_t &s) {
   return fifo_ld_pop(p, s);
 }
-// AIE2PS-LABEL: define dso_local noundef <32 x half> @_Z24test_fifo_ld_pop_1d_byteRPU3AS5Dv32_DF16_R12fifo_state_ti(
+// AIE2PS-LABEL: define dso_local noundef <32 x half> @_Z24test_fifo_ld_pop_1d_byteRPU3AS5Dv32_7float16R12fifo_state_ti(
 // AIE2PS-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]], i32 noundef [[OFF:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
@@ -579,7 +579,7 @@ v32float16 test_fifo_ld_pop_1d_byte(v32float16 __aie_dm_resource_a *&p,
                                     fifo_state_t &s, int off) {
   return fifo_ld_pop_1d_byte(p, s, off);
 }
-// AIE2PS-LABEL: define dso_local noundef <32 x half> @_Z24test_fifo_ld_pop_2d_byteRPU3AS5Dv32_DF16_R12fifo_state_tiiRii(
+// AIE2PS-LABEL: define dso_local noundef <32 x half> @_Z24test_fifo_ld_pop_2d_byteRPU3AS5Dv32_7float16R12fifo_state_tiiRii(
 // AIE2PS-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]], i32 noundef [[OFF:%.*]], i32 noundef [[SIZE1:%.*]], ptr nocapture nonnull align 4 dereferenceable(4) [[COUNT1:%.*]], i32 noundef [[INC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
@@ -610,7 +610,7 @@ v32float16 test_fifo_ld_pop_2d_byte(v32float16 __aie_dm_resource_a *&p,
                                     addr_t &count1, int inc1) {
   return fifo_ld_pop_2d_byte(p, s, off, size1, count1, inc1);
 }
-// AIE2PS-LABEL: define dso_local noundef <32 x half> @_Z24test_fifo_ld_pop_3d_byteRPU3AS5Dv32_DF16_R12fifo_state_tiiRiiiS5_i(
+// AIE2PS-LABEL: define dso_local noundef <32 x half> @_Z24test_fifo_ld_pop_3d_byteRPU3AS5Dv32_7float16R12fifo_state_tiiRiiiS6_i(
 // AIE2PS-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]], i32 noundef [[OFF:%.*]], i32 noundef [[SIZE1:%.*]], ptr nocapture nonnull align 4 dereferenceable(4) [[COUNT1:%.*]], i32 noundef [[INC1:%.*]], i32 noundef [[SIZE2:%.*]], ptr nocapture nonnull align 4 dereferenceable(4) [[COUNT2:%.*]], i32 noundef [[INC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
@@ -650,7 +650,7 @@ v32float16 test_fifo_ld_pop_3d_byte(v32float16 __aie_dm_resource_a *&p,
   return fifo_ld_pop_3d_byte(p, s, off, size1, count1, inc1, size2, count2,
                              inc2);
 }
-// AIE2PS-LABEL: define dso_local noundef <32 x half> @_Z17test_fifo_ld_popxRPDv32_DF16_R12fifo_state_tii(
+// AIE2PS-LABEL: define dso_local noundef <32 x half> @_Z17test_fifo_ld_popxRPDv32_7float16R12fifo_state_tii(
 // AIE2PS-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]], i32 noundef [[STEP:%.*]], i32 noundef [[MASK:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
@@ -678,7 +678,7 @@ v32float16 test_fifo_ld_popx(v32float16 *&p, fifo_state_t &s, int step,
                              int mask) {
   return fifo_ld_popx(p, s, step, mask);
 }
-// AIE2PS-LABEL: define dso_local noundef <32 x half> @_Z17test_fifo_ld_popxRPDv32_DF16_R12fifo_state_t(
+// AIE2PS-LABEL: define dso_local noundef <32 x half> @_Z17test_fifo_ld_popxRPDv32_7float16R12fifo_state_t(
 // AIE2PS-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
@@ -2170,7 +2170,6 @@ void test_fifo_st_flush_bare_3d_byte(v64float8 *restrict &p, fifo_state_t &s,
 void test_fifo_st_flush_conv(v64float8 *restrict &p, fifo_state_t &s) {
   fifo_st_flush_conv(p, s);
 }
-//
 // AIE2PS-LABEL: define dso_local void @_Z31test_fifo_st_flush_conv_1d_byteRrP9v64float8R12fifo_state_ti(
 // AIE2PS-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]], i32 noundef [[OFF:%.*]]) local_unnamed_addr #[[ATTR5]] {
 // AIE2PS-NEXT:  entry:
@@ -2192,6 +2191,7 @@ void test_fifo_st_flush_conv_1d_byte(v64float8 *restrict &p, fifo_state_t &s,
                                      int off) {
   fifo_st_flush_conv_1d_byte(p, s, off);
 }
+//
 // AIE2PS-LABEL: define dso_local void @_Z31test_fifo_st_flush_conv_2d_byteRrP9v64float8R12fifo_state_tiiRii(
 // AIE2PS-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]], i32 noundef [[OFF:%.*]], i32 noundef [[SIZE1:%.*]], ptr nocapture nonnull align 4 dereferenceable(4) [[COUNT1:%.*]], i32 noundef [[INC1:%.*]]) local_unnamed_addr #[[ATTR5]] {
 // AIE2PS-NEXT:  entry:
@@ -2259,7 +2259,7 @@ void test_fifo_st_flush_conv_3d_byte(v64float8 *restrict &p, fifo_state_t &s,
   fifo_st_flush_conv_3d_byte(p, s, off, size1, count1, inc1, size2, count2,
                              inc2);
 }
-// AIE2PS-LABEL: define dso_local void @_Z18test_fifo_st_resetPDv32_DF16_S_RS0_RDv32_iRi(
+// AIE2PS-LABEL: define dso_local void @_Z18test_fifo_st_resetPDv32_7float16S0_RS1_RDv32_iRi(
 // AIE2PS-SAME: ptr noalias [[P:%.*]], <32 x half> noundef [[V:%.*]], ptr nocapture nonnull writeonly align 4 dereferenceable(4) initializes((0, 3)) [[P_O:%.*]], ptr nocapture nonnull writeonly align 64 dereferenceable(128) initializes((0, 128)) [[FIFO_O:%.*]], ptr nocapture nonnull writeonly align 4 dereferenceable(4) initializes((0, 4)) [[POS_O:%.*]]) local_unnamed_addr #[[ATTR4]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = bitcast <32 x half> [[V]] to <16 x i32>
@@ -2276,7 +2276,7 @@ void test_fifo_st_reset(v32float16 *restrict p, v32float16 v, v32float16 *&p_o,
                         sparse_fifo_t &fifo_o, int &pos_o) {
   fifo_st_reset(p, v, p_o, fifo_o, pos_o);
 }
-// AIE2PS-LABEL: define dso_local void @_Z18test_fifo_st_resetRrPDv32_DF16_S_R12fifo_state_t(
+// AIE2PS-LABEL: define dso_local void @_Z18test_fifo_st_resetRrPDv32_7float16S0_R12fifo_state_t(
 // AIE2PS-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], <32 x half> noundef [[V:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) initializes((128, 132)) [[S:%.*]]) local_unnamed_addr #[[ATTR5]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
@@ -2297,7 +2297,7 @@ void test_fifo_st_reset(v32float16 *restrict &p, v32float16 v,
                         fifo_state_t &s) {
   fifo_st_reset(p, v, s);
 }
-// AIE2PS-LABEL: define dso_local void @_Z17test_fifo_st_pushRrPDv32_DF16_S_R12fifo_state_t(
+// AIE2PS-LABEL: define dso_local void @_Z17test_fifo_st_pushRrPDv32_7float16S0_R12fifo_state_t(
 // AIE2PS-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], <32 x half> noundef [[V:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]]) local_unnamed_addr #[[ATTR5]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
@@ -2317,7 +2317,7 @@ void test_fifo_st_reset(v32float16 *restrict &p, v32float16 v,
 void test_fifo_st_push(v32float16 *restrict &p, v32float16 v, fifo_state_t &s) {
   fifo_st_push(p, v, s);
 }
-// AIE2PS-LABEL: define dso_local void @_Z18test_fifo_st_flushRrPDv32_DF16_R12fifo_state_t(
+// AIE2PS-LABEL: define dso_local void @_Z18test_fifo_st_flushRrPDv32_7float16R12fifo_state_t(
 // AIE2PS-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]]) local_unnamed_addr #[[ATTR5]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
@@ -2336,7 +2336,7 @@ void test_fifo_st_push(v32float16 *restrict &p, v32float16 v, fifo_state_t &s) {
 void test_fifo_st_flush(v32float16 *restrict &p, fifo_state_t &s) {
   fifo_st_flush(p, s);
 }
-// AIE2PS-LABEL: define dso_local void @_Z26test_fifo_st_flush_1d_byteRrPDv32_DF16_R12fifo_state_ti(
+// AIE2PS-LABEL: define dso_local void @_Z26test_fifo_st_flush_1d_byteRrPDv32_7float16R12fifo_state_ti(
 // AIE2PS-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]], i32 noundef [[OFF:%.*]]) local_unnamed_addr #[[ATTR5]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
@@ -2357,7 +2357,7 @@ void test_fifo_st_flush_1d_byte(v32float16 *restrict &p, fifo_state_t &s,
                                 int off) {
   fifo_st_flush_1d_byte(p, s, off);
 }
-// AIE2PS-LABEL: define dso_local void @_Z26test_fifo_st_flush_2d_byteRrPDv32_DF16_R12fifo_state_tiiRii(
+// AIE2PS-LABEL: define dso_local void @_Z26test_fifo_st_flush_2d_byteRrPDv32_7float16R12fifo_state_tiiRii(
 // AIE2PS-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]], i32 noundef [[OFF:%.*]], i32 noundef [[SIZE1:%.*]], ptr nocapture nonnull align 4 dereferenceable(4) [[COUNT1:%.*]], i32 noundef [[INC1:%.*]]) local_unnamed_addr #[[ATTR5]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
@@ -2385,7 +2385,7 @@ void test_fifo_st_flush_2d_byte(v32float16 *restrict &p, fifo_state_t &s,
                                 int off, int size1, addr_t &count1, int inc1) {
   fifo_st_flush_2d_byte(p, s, off, size1, count1, inc1);
 }
-// AIE2PS-LABEL: define dso_local void @_Z26test_fifo_st_flush_3d_byteRrPDv32_DF16_R12fifo_state_tiiRiiiS5_i(
+// AIE2PS-LABEL: define dso_local void @_Z26test_fifo_st_flush_3d_byteRrPDv32_7float16R12fifo_state_tiiRiiiS6_i(
 // AIE2PS-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]], i32 noundef [[OFF:%.*]], i32 noundef [[SIZE1:%.*]], ptr nocapture nonnull align 4 dereferenceable(4) [[COUNT1:%.*]], i32 noundef [[INC1:%.*]], i32 noundef [[SIZE2:%.*]], ptr nocapture nonnull align 4 dereferenceable(4) [[COUNT2:%.*]], i32 noundef [[INC2:%.*]]) local_unnamed_addr #[[ATTR5]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
@@ -2421,7 +2421,7 @@ void test_fifo_st_flush_3d_byte(v32float16 *restrict &p, fifo_state_t &s,
                                 int size2, addr_t &count2, int inc2) {
   fifo_st_flush_3d_byte(p, s, off, size1, count1, inc1, size2, count2, inc2);
 }
-// AIE2PS-LABEL: define dso_local void @_Z23test_fifo_st_flush_bareRrPDv32_DF16_R12fifo_state_t(
+// AIE2PS-LABEL: define dso_local void @_Z23test_fifo_st_flush_bareRrPDv32_7float16R12fifo_state_t(
 // AIE2PS-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]]) local_unnamed_addr #[[ATTR5]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
@@ -2440,7 +2440,7 @@ void test_fifo_st_flush_3d_byte(v32float16 *restrict &p, fifo_state_t &s,
 void test_fifo_st_flush_bare(v32float16 *restrict &p, fifo_state_t &s) {
   fifo_st_flush_bare(p, s);
 }
-// AIE2PS-LABEL: define dso_local void @_Z31test_fifo_st_flush_bare_1d_byteRrPDv32_DF16_R12fifo_state_ti(
+// AIE2PS-LABEL: define dso_local void @_Z31test_fifo_st_flush_bare_1d_byteRrPDv32_7float16R12fifo_state_ti(
 // AIE2PS-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]], i32 noundef [[OFF:%.*]]) local_unnamed_addr #[[ATTR5]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
@@ -2461,7 +2461,7 @@ void test_fifo_st_flush_bare_1d_byte(v32float16 *restrict &p, fifo_state_t &s,
                                      int off) {
   fifo_st_flush_bare_1d_byte(p, s, off);
 }
-// AIE2PS-LABEL: define dso_local void @_Z31test_fifo_st_flush_bare_2d_byteRrPDv32_DF16_R12fifo_state_tiiRii(
+// AIE2PS-LABEL: define dso_local void @_Z31test_fifo_st_flush_bare_2d_byteRrPDv32_7float16R12fifo_state_tiiRii(
 // AIE2PS-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]], i32 noundef [[OFF:%.*]], i32 noundef [[SIZE1:%.*]], ptr nocapture nonnull align 4 dereferenceable(4) [[COUNT1:%.*]], i32 noundef [[INC1:%.*]]) local_unnamed_addr #[[ATTR5]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
@@ -2490,7 +2490,7 @@ void test_fifo_st_flush_bare_2d_byte(v32float16 *restrict &p, fifo_state_t &s,
                                      int inc1) {
   fifo_st_flush_bare_2d_byte(p, s, off, size1, count1, inc1);
 }
-// AIE2PS-LABEL: define dso_local void @_Z31test_fifo_st_flush_bare_3d_byteRrPDv32_DF16_R12fifo_state_tiiRiiiS5_i(
+// AIE2PS-LABEL: define dso_local void @_Z31test_fifo_st_flush_bare_3d_byteRrPDv32_7float16R12fifo_state_tiiRiiiS6_i(
 // AIE2PS-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]], i32 noundef [[OFF:%.*]], i32 noundef [[SIZE1:%.*]], ptr nocapture nonnull align 4 dereferenceable(4) [[COUNT1:%.*]], i32 noundef [[INC1:%.*]], i32 noundef [[SIZE2:%.*]], ptr nocapture nonnull align 4 dereferenceable(4) [[COUNT2:%.*]], i32 noundef [[INC2:%.*]]) local_unnamed_addr #[[ATTR5]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
@@ -2528,7 +2528,7 @@ void test_fifo_st_flush_bare_3d_byte(v32float16 *restrict &p, fifo_state_t &s,
   fifo_st_flush_bare_3d_byte(p, s, off, size1, count1, inc1, size2, count2,
                              inc2);
 }
-// AIE2PS-LABEL: define dso_local void @_Z23test_fifo_st_flush_convRrPDv32_DF16_R12fifo_state_t(
+// AIE2PS-LABEL: define dso_local void @_Z23test_fifo_st_flush_convRrPDv32_7float16R12fifo_state_t(
 // AIE2PS-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]]) local_unnamed_addr #[[ATTR5]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
@@ -2547,7 +2547,7 @@ void test_fifo_st_flush_bare_3d_byte(v32float16 *restrict &p, fifo_state_t &s,
 void test_fifo_st_flush_conv(v32float16 *restrict &p, fifo_state_t &s) {
   fifo_st_flush_conv(p, s);
 }
-// AIE2PS-LABEL: define dso_local void @_Z31test_fifo_st_flush_conv_1d_byteRrPDv32_DF16_R12fifo_state_ti(
+// AIE2PS-LABEL: define dso_local void @_Z31test_fifo_st_flush_conv_1d_byteRrPDv32_7float16R12fifo_state_ti(
 // AIE2PS-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]], i32 noundef [[OFF:%.*]]) local_unnamed_addr #[[ATTR5]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
@@ -2568,7 +2568,7 @@ void test_fifo_st_flush_conv_1d_byte(v32float16 *restrict &p, fifo_state_t &s,
                                      int off) {
   fifo_st_flush_conv_1d_byte(p, s, off);
 }
-// AIE2PS-LABEL: define dso_local void @_Z31test_fifo_st_flush_conv_2d_byteRrPDv32_DF16_R12fifo_state_tiiRii(
+// AIE2PS-LABEL: define dso_local void @_Z31test_fifo_st_flush_conv_2d_byteRrPDv32_7float16R12fifo_state_tiiRii(
 // AIE2PS-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]], i32 noundef [[OFF:%.*]], i32 noundef [[SIZE1:%.*]], ptr nocapture nonnull align 4 dereferenceable(4) [[COUNT1:%.*]], i32 noundef [[INC1:%.*]]) local_unnamed_addr #[[ATTR5]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128
@@ -2597,7 +2597,7 @@ void test_fifo_st_flush_conv_2d_byte(v32float16 *restrict &p, fifo_state_t &s,
                                      int inc1) {
   fifo_st_flush_conv_2d_byte(p, s, off, size1, count1, inc1);
 }
-// AIE2PS-LABEL: define dso_local void @_Z31test_fifo_st_flush_conv_3d_byteRrPDv32_DF16_R12fifo_state_tiiRiiiS5_i(
+// AIE2PS-LABEL: define dso_local void @_Z31test_fifo_st_flush_conv_3d_byteRrPDv32_7float16R12fifo_state_tiiRiiiS6_i(
 // AIE2PS-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], ptr nocapture nonnull align 64 dereferenceable(256) [[S:%.*]], i32 noundef [[OFF:%.*]], i32 noundef [[SIZE1:%.*]], ptr nocapture nonnull align 4 dereferenceable(4) [[COUNT1:%.*]], i32 noundef [[INC1:%.*]], i32 noundef [[SIZE2:%.*]], ptr nocapture nonnull align 4 dereferenceable(4) [[COUNT2:%.*]], i32 noundef [[INC2:%.*]]) local_unnamed_addr #[[ATTR5]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds nuw i8, ptr [[S]], i20 128

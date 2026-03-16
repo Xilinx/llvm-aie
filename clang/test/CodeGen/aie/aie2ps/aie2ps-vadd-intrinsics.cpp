@@ -176,7 +176,8 @@ test_max_lt_v32bfloat16(v32bfloat16 a, v32bfloat16 b, unsigned int &cmp) {
 }
 
 v32float16
-// CHECK-COMMON-LABEL: @_Z22test_max_lt_v32float16Dv32_DF16_S_Rj(
+//
+// CHECK-COMMON-LABEL: @_Z22test_max_lt_v32float16Dv32_7float16S0_Rj(
 // CHECK-COMMON-NEXT:  entry:
 // CHECK-COMMON-NEXT:    [[TMP0:%.*]] = tail call { <32 x half>, i32 } @llvm.aie2ps.vmax.ltfloat16(<32 x half> [[A:%.*]], <32 x half> [[B:%.*]])
 // CHECK-COMMON-NEXT:    [[TMP1:%.*]] = extractvalue { <32 x half>, i32 } [[TMP0]], 1

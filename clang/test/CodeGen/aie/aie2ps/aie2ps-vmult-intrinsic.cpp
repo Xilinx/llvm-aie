@@ -2112,7 +2112,6 @@ v64acc32 test_addmsc_elem_64(v64uint8 a, int sgn_x, v64int8 b, int sgn_y,
 v64acc32 test_mul_elem_64_conf(v64uint8 a, v64int8 b, int sub_mul) {
   return mul_elem_64_conf(a, b, sub_mul);
 }
-//
 // CHECK-LABEL: define dso_local inreg noundef <64 x i32> @_Z24test_negmul_elem_64_confDv64_hDv64_ai(
 // CHECK-SAME: <64 x i8> noundef [[A:%.*]], <64 x i8> noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
@@ -2320,6 +2319,7 @@ v64acc32 test_addmac_elem_64_conf(v64uint8 a, int sgn_x, v64int8 b, int sgn_y,
   return addmac_elem_64_conf(a, sgn_x, b, sgn_y, acc1, acc2, zero_acc1, shift16,
                              sub_mul, sub_acc1, sub_acc2);
 }
+//
 // CHECK-LABEL: define dso_local inreg noundef <64 x i32> @_Z24test_addmsc_elem_64_confDv64_hiDv64_aiDv64_u7__acc32S1_iiiii(
 // CHECK-SAME: <64 x i8> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x i8> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x i32> inreg noundef [[ACC1:%.*]], <64 x i32> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SHIFT16:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
@@ -30598,7 +30598,7 @@ v32accfloat test_addmsc_4x8_8x8_conf(v32bfloat16 a, int sgn_x, v64bfloat16 b,
 
 ;
 
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mul_elem_64Dv64_8bfloat16Dv64_DF16_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mul_elem_64Dv64_8bfloat16Dv64_7float16(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.bf16.I1024.fp16.I1024.ACC2048.bf.mul.conf(<64 x bfloat> [[A]], <64 x half> [[B]], i32 16777276)
@@ -30607,7 +30607,7 @@ v32accfloat test_addmsc_4x8_8x8_conf(v32bfloat16 a, int sgn_x, v64bfloat16 b,
 v64accfloat test_mul_elem_64(v64bfloat16 a, v64float16 b) {
   return mul_elem_64(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_negmul_elem_64Dv64_8bfloat16Dv64_DF16_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_negmul_elem_64Dv64_8bfloat16Dv64_7float16(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.bf16.I1024.fp16.I1024.ACC2048.bf.negmul.conf(<64 x bfloat> [[A]], <64 x half> [[B]], i32 16777276)
@@ -30616,7 +30616,7 @@ v64accfloat test_mul_elem_64(v64bfloat16 a, v64float16 b) {
 v64accfloat test_negmul_elem_64(v64bfloat16 a, v64float16 b) {
   return negmul_elem_64(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mac_elem_64Dv64_8bfloat16Dv64_DF16_Dv64_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mac_elem_64Dv64_8bfloat16Dv64_7float16Dv64_u10__accfloat(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.bf16.I1024.fp16.I1024.ACC2048.bf.mac.conf(<64 x bfloat> [[A]], <64 x half> [[B]], <64 x float> [[ACC]], i32 16777276)
@@ -30625,7 +30625,7 @@ v64accfloat test_negmul_elem_64(v64bfloat16 a, v64float16 b) {
 v64accfloat test_mac_elem_64(v64bfloat16 a, v64float16 b, v64accfloat acc) {
   return mac_elem_64(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_msc_elem_64Dv64_8bfloat16Dv64_DF16_Dv64_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_msc_elem_64Dv64_8bfloat16Dv64_7float16Dv64_u10__accfloat(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.bf16.I1024.fp16.I1024.ACC2048.bf.msc.conf(<64 x bfloat> [[A]], <64 x half> [[B]], <64 x float> [[ACC]], i32 16777276)
@@ -30634,7 +30634,7 @@ v64accfloat test_mac_elem_64(v64bfloat16 a, v64float16 b, v64accfloat acc) {
 v64accfloat test_msc_elem_64(v64bfloat16 a, v64float16 b, v64accfloat acc) {
   return msc_elem_64(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmac_elem_64Dv64_8bfloat16Dv64_DF16_Dv64_u10__accfloatS2_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmac_elem_64Dv64_8bfloat16Dv64_7float16Dv64_u10__accfloatS3_(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.bf16.I1024.fp16.I1024.ACC2048.bf.addmac.conf(<64 x bfloat> [[A]], <64 x half> [[B]], <64 x float> [[ACC1]], <64 x float> [[ACC2]], i32 16777276)
@@ -30644,7 +30644,7 @@ v64accfloat test_addmac_elem_64(v64bfloat16 a, v64float16 b, v64accfloat acc1,
                                 v64accfloat acc2) {
   return addmac_elem_64(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmsc_elem_64Dv64_8bfloat16Dv64_DF16_Dv64_u10__accfloatS2_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmsc_elem_64Dv64_8bfloat16Dv64_7float16Dv64_u10__accfloatS3_(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.bf16.I1024.fp16.I1024.ACC2048.bf.addmsc.conf(<64 x bfloat> [[A]], <64 x half> [[B]], <64 x float> [[ACC1]], <64 x float> [[ACC2]], i32 16777276)
@@ -30654,7 +30654,7 @@ v64accfloat test_addmsc_elem_64(v64bfloat16 a, v64float16 b, v64accfloat acc1,
                                 v64accfloat acc2) {
   return addmsc_elem_64(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mul_elem_64Dv64_8bfloat16iDv64_DF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mul_elem_64Dv64_8bfloat16iDv64_7float16i(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -30668,7 +30668,7 @@ v64accfloat test_mul_elem_64(v64bfloat16 a, int sgn_x, v64float16 b,
                              int sgn_y) {
   return mul_elem_64(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_negmul_elem_64Dv64_8bfloat16iDv64_DF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_negmul_elem_64Dv64_8bfloat16iDv64_7float16i(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -30682,7 +30682,7 @@ v64accfloat test_negmul_elem_64(v64bfloat16 a, int sgn_x, v64float16 b,
                                 int sgn_y) {
   return negmul_elem_64(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mac_elem_64Dv64_8bfloat16iDv64_DF16_iDv64_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mac_elem_64Dv64_8bfloat16iDv64_7float16iDv64_u10__accfloat(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -30696,7 +30696,7 @@ v64accfloat test_mac_elem_64(v64bfloat16 a, int sgn_x, v64float16 b, int sgn_y,
                              v64accfloat acc) {
   return mac_elem_64(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_msc_elem_64Dv64_8bfloat16iDv64_DF16_iDv64_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_msc_elem_64Dv64_8bfloat16iDv64_7float16iDv64_u10__accfloat(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -30710,7 +30710,7 @@ v64accfloat test_msc_elem_64(v64bfloat16 a, int sgn_x, v64float16 b, int sgn_y,
                              v64accfloat acc) {
   return msc_elem_64(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmac_elem_64Dv64_8bfloat16iDv64_DF16_iDv64_u10__accfloatS2_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmac_elem_64Dv64_8bfloat16iDv64_7float16iDv64_u10__accfloatS3_(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -30724,7 +30724,7 @@ v64accfloat test_addmac_elem_64(v64bfloat16 a, int sgn_x, v64float16 b,
                                 int sgn_y, v64accfloat acc1, v64accfloat acc2) {
   return addmac_elem_64(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmsc_elem_64Dv64_8bfloat16iDv64_DF16_iDv64_u10__accfloatS2_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmsc_elem_64Dv64_8bfloat16iDv64_7float16iDv64_u10__accfloatS3_(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -30738,7 +30738,7 @@ v64accfloat test_addmsc_elem_64(v64bfloat16 a, int sgn_x, v64float16 b,
                                 int sgn_y, v64accfloat acc1, v64accfloat acc2) {
   return addmsc_elem_64(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mul_elem_64_confDv64_8bfloat16Dv64_DF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mul_elem_64_confDv64_8bfloat16Dv64_7float16i(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -30749,7 +30749,7 @@ v64accfloat test_addmsc_elem_64(v64bfloat16 a, int sgn_x, v64float16 b,
 v64accfloat test_mul_elem_64_conf(v64bfloat16 a, v64float16 b, int sub_mul) {
   return mul_elem_64_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_negmul_elem_64_confDv64_8bfloat16Dv64_DF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_negmul_elem_64_confDv64_8bfloat16Dv64_7float16i(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -30760,7 +30760,7 @@ v64accfloat test_mul_elem_64_conf(v64bfloat16 a, v64float16 b, int sub_mul) {
 v64accfloat test_negmul_elem_64_conf(v64bfloat16 a, v64float16 b, int sub_mul) {
   return negmul_elem_64_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mac_elem_64_confDv64_8bfloat16Dv64_DF16_Dv64_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mac_elem_64_confDv64_8bfloat16Dv64_7float16Dv64_u10__accfloatiii(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <64 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -30775,7 +30775,7 @@ v64accfloat test_mac_elem_64_conf(v64bfloat16 a, v64float16 b, v64accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return mac_elem_64_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_msc_elem_64_confDv64_8bfloat16Dv64_DF16_Dv64_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_msc_elem_64_confDv64_8bfloat16Dv64_7float16Dv64_u10__accfloatiii(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <64 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -30790,7 +30790,7 @@ v64accfloat test_msc_elem_64_conf(v64bfloat16 a, v64float16 b, v64accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return msc_elem_64_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmac_elem_64_confDv64_8bfloat16Dv64_DF16_Dv64_u10__accfloatS2_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmac_elem_64_confDv64_8bfloat16Dv64_7float16Dv64_u10__accfloatS3_iiii(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -30810,7 +30810,7 @@ v64accfloat test_addmac_elem_64_conf(v64bfloat16 a, v64float16 b,
   return addmac_elem_64_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmsc_elem_64_confDv64_8bfloat16Dv64_DF16_Dv64_u10__accfloatS2_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmsc_elem_64_confDv64_8bfloat16Dv64_7float16Dv64_u10__accfloatS3_iiii(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -30830,7 +30830,7 @@ v64accfloat test_addmsc_elem_64_conf(v64bfloat16 a, v64float16 b,
   return addmsc_elem_64_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mul_elem_64_confDv64_8bfloat16iDv64_DF16_ii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mul_elem_64_confDv64_8bfloat16iDv64_7float16ii(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -30846,7 +30846,7 @@ v64accfloat test_mul_elem_64_conf(v64bfloat16 a, int sgn_x, v64float16 b,
                                   int sgn_y, int sub_mul) {
   return mul_elem_64_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_negmul_elem_64_confDv64_8bfloat16iDv64_DF16_ii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_negmul_elem_64_confDv64_8bfloat16iDv64_7float16ii(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -30862,7 +30862,7 @@ v64accfloat test_negmul_elem_64_conf(v64bfloat16 a, int sgn_x, v64float16 b,
                                      int sgn_y, int sub_mul) {
   return negmul_elem_64_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mac_elem_64_confDv64_8bfloat16iDv64_DF16_iDv64_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mac_elem_64_confDv64_8bfloat16iDv64_7float16iDv64_u10__accfloatiii(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -30882,7 +30882,7 @@ v64accfloat test_mac_elem_64_conf(v64bfloat16 a, int sgn_x, v64float16 b,
                                   int sub_mul, int sub_acc1) {
   return mac_elem_64_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_msc_elem_64_confDv64_8bfloat16iDv64_DF16_iDv64_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_msc_elem_64_confDv64_8bfloat16iDv64_7float16iDv64_u10__accfloatiii(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -30902,7 +30902,7 @@ v64accfloat test_msc_elem_64_conf(v64bfloat16 a, int sgn_x, v64float16 b,
                                   int sub_mul, int sub_acc1) {
   return msc_elem_64_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmac_elem_64_confDv64_8bfloat16iDv64_DF16_iDv64_u10__accfloatS2_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmac_elem_64_confDv64_8bfloat16iDv64_7float16iDv64_u10__accfloatS3_iiii(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -30926,7 +30926,7 @@ v64accfloat test_addmac_elem_64_conf(v64bfloat16 a, int sgn_x, v64float16 b,
   return addmac_elem_64_conf(a, sgn_x, b, sgn_y, acc1, acc2, zero_acc1, sub_mul,
                              sub_acc1, sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmsc_elem_64_confDv64_8bfloat16iDv64_DF16_iDv64_u10__accfloatS2_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmsc_elem_64_confDv64_8bfloat16iDv64_7float16iDv64_u10__accfloatS3_iiii(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -30953,7 +30953,7 @@ v64accfloat test_addmsc_elem_64_conf(v64bfloat16 a, int sgn_x, v64float16 b,
 
 ;
 
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_elem_32Dv32_8bfloat16Dv32_DF16_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_elem_32Dv32_8bfloat16Dv32_7float16(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], <32 x half> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.bf16.I512.fp16.I512.ACC1024.bf.mul.conf(<32 x bfloat> [[A]], <32 x half> [[B]], i32 16777276)
@@ -30962,7 +30962,7 @@ v64accfloat test_addmsc_elem_64_conf(v64bfloat16 a, int sgn_x, v64float16 b,
 v32accfloat test_mul_elem_32(v32bfloat16 a, v32float16 b) {
   return mul_elem_32(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_elem_32Dv32_8bfloat16Dv32_DF16_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_elem_32Dv32_8bfloat16Dv32_7float16(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], <32 x half> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.bf16.I512.fp16.I512.ACC1024.bf.negmul.conf(<32 x bfloat> [[A]], <32 x half> [[B]], i32 16777276)
@@ -30971,7 +30971,7 @@ v32accfloat test_mul_elem_32(v32bfloat16 a, v32float16 b) {
 v32accfloat test_negmul_elem_32(v32bfloat16 a, v32float16 b) {
   return negmul_elem_32(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_elem_32Dv32_8bfloat16Dv32_DF16_Dv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_elem_32Dv32_8bfloat16Dv32_7float16Dv32_u10__accfloat(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], <32 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.bf16.I512.fp16.I512.ACC1024.bf.mac.conf(<32 x bfloat> [[A]], <32 x half> [[B]], <32 x float> [[ACC]], i32 16777276)
@@ -30980,7 +30980,7 @@ v32accfloat test_negmul_elem_32(v32bfloat16 a, v32float16 b) {
 v32accfloat test_mac_elem_32(v32bfloat16 a, v32float16 b, v32accfloat acc) {
   return mac_elem_32(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_elem_32Dv32_8bfloat16Dv32_DF16_Dv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_elem_32Dv32_8bfloat16Dv32_7float16Dv32_u10__accfloat(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], <32 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.bf16.I512.fp16.I512.ACC1024.bf.msc.conf(<32 x bfloat> [[A]], <32 x half> [[B]], <32 x float> [[ACC]], i32 16777276)
@@ -30989,7 +30989,7 @@ v32accfloat test_mac_elem_32(v32bfloat16 a, v32float16 b, v32accfloat acc) {
 v32accfloat test_msc_elem_32(v32bfloat16 a, v32float16 b, v32accfloat acc) {
   return msc_elem_32(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_elem_32Dv32_8bfloat16Dv32_DF16_Dv32_u10__accfloatS2_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_elem_32Dv32_8bfloat16Dv32_7float16Dv32_u10__accfloatS3_(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], <32 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.bf16.I512.fp16.I512.ACC1024.bf.addmac.conf(<32 x bfloat> [[A]], <32 x half> [[B]], <32 x float> [[ACC1]], <32 x float> [[ACC2]], i32 16777276)
@@ -30999,7 +30999,7 @@ v32accfloat test_addmac_elem_32(v32bfloat16 a, v32float16 b, v32accfloat acc1,
                                 v32accfloat acc2) {
   return addmac_elem_32(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_elem_32Dv32_8bfloat16Dv32_DF16_Dv32_u10__accfloatS2_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_elem_32Dv32_8bfloat16Dv32_7float16Dv32_u10__accfloatS3_(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], <32 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.bf16.I512.fp16.I512.ACC1024.bf.addmsc.conf(<32 x bfloat> [[A]], <32 x half> [[B]], <32 x float> [[ACC1]], <32 x float> [[ACC2]], i32 16777276)
@@ -31009,7 +31009,7 @@ v32accfloat test_addmsc_elem_32(v32bfloat16 a, v32float16 b, v32accfloat acc1,
                                 v32accfloat acc2) {
   return addmsc_elem_32(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_elem_32Dv32_8bfloat16iDv32_DF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_elem_32Dv32_8bfloat16iDv32_7float16i(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -31023,7 +31023,7 @@ v32accfloat test_mul_elem_32(v32bfloat16 a, int sgn_x, v32float16 b,
                              int sgn_y) {
   return mul_elem_32(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_elem_32Dv32_8bfloat16iDv32_DF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_elem_32Dv32_8bfloat16iDv32_7float16i(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -31037,7 +31037,7 @@ v32accfloat test_negmul_elem_32(v32bfloat16 a, int sgn_x, v32float16 b,
                                 int sgn_y) {
   return negmul_elem_32(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_elem_32Dv32_8bfloat16iDv32_DF16_iDv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_elem_32Dv32_8bfloat16iDv32_7float16iDv32_u10__accfloat(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -31051,7 +31051,7 @@ v32accfloat test_mac_elem_32(v32bfloat16 a, int sgn_x, v32float16 b, int sgn_y,
                              v32accfloat acc) {
   return mac_elem_32(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_elem_32Dv32_8bfloat16iDv32_DF16_iDv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_elem_32Dv32_8bfloat16iDv32_7float16iDv32_u10__accfloat(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -31065,7 +31065,7 @@ v32accfloat test_msc_elem_32(v32bfloat16 a, int sgn_x, v32float16 b, int sgn_y,
                              v32accfloat acc) {
   return msc_elem_32(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_elem_32Dv32_8bfloat16iDv32_DF16_iDv32_u10__accfloatS2_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_elem_32Dv32_8bfloat16iDv32_7float16iDv32_u10__accfloatS3_(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -31079,7 +31079,7 @@ v32accfloat test_addmac_elem_32(v32bfloat16 a, int sgn_x, v32float16 b,
                                 int sgn_y, v32accfloat acc1, v32accfloat acc2) {
   return addmac_elem_32(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_elem_32Dv32_8bfloat16iDv32_DF16_iDv32_u10__accfloatS2_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_elem_32Dv32_8bfloat16iDv32_7float16iDv32_u10__accfloatS3_(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -31093,7 +31093,7 @@ v32accfloat test_addmsc_elem_32(v32bfloat16 a, int sgn_x, v32float16 b,
                                 int sgn_y, v32accfloat acc1, v32accfloat acc2) {
   return addmsc_elem_32(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_elem_32_confDv32_8bfloat16Dv32_DF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_elem_32_confDv32_8bfloat16Dv32_7float16i(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], <32 x half> noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31104,7 +31104,7 @@ v32accfloat test_addmsc_elem_32(v32bfloat16 a, int sgn_x, v32float16 b,
 v32accfloat test_mul_elem_32_conf(v32bfloat16 a, v32float16 b, int sub_mul) {
   return mul_elem_32_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_elem_32_confDv32_8bfloat16Dv32_DF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_elem_32_confDv32_8bfloat16Dv32_7float16i(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], <32 x half> noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31115,7 +31115,7 @@ v32accfloat test_mul_elem_32_conf(v32bfloat16 a, v32float16 b, int sub_mul) {
 v32accfloat test_negmul_elem_32_conf(v32bfloat16 a, v32float16 b, int sub_mul) {
   return negmul_elem_32_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_elem_32_confDv32_8bfloat16Dv32_DF16_Dv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_elem_32_confDv32_8bfloat16Dv32_7float16Dv32_u10__accfloatiii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], <32 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31130,7 +31130,7 @@ v32accfloat test_mac_elem_32_conf(v32bfloat16 a, v32float16 b, v32accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return mac_elem_32_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_elem_32_confDv32_8bfloat16Dv32_DF16_Dv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_elem_32_confDv32_8bfloat16Dv32_7float16Dv32_u10__accfloatiii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], <32 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31145,7 +31145,7 @@ v32accfloat test_msc_elem_32_conf(v32bfloat16 a, v32float16 b, v32accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return msc_elem_32_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_elem_32_confDv32_8bfloat16Dv32_DF16_Dv32_u10__accfloatS2_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_elem_32_confDv32_8bfloat16Dv32_7float16Dv32_u10__accfloatS3_iiii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], <32 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31165,7 +31165,7 @@ v32accfloat test_addmac_elem_32_conf(v32bfloat16 a, v32float16 b,
   return addmac_elem_32_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_elem_32_confDv32_8bfloat16Dv32_DF16_Dv32_u10__accfloatS2_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_elem_32_confDv32_8bfloat16Dv32_7float16Dv32_u10__accfloatS3_iiii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], <32 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31185,7 +31185,7 @@ v32accfloat test_addmsc_elem_32_conf(v32bfloat16 a, v32float16 b,
   return addmsc_elem_32_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_elem_32_confDv32_8bfloat16iDv32_DF16_ii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_elem_32_confDv32_8bfloat16iDv32_7float16ii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31201,7 +31201,7 @@ v32accfloat test_mul_elem_32_conf(v32bfloat16 a, int sgn_x, v32float16 b,
                                   int sgn_y, int sub_mul) {
   return mul_elem_32_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_elem_32_confDv32_8bfloat16iDv32_DF16_ii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_elem_32_confDv32_8bfloat16iDv32_7float16ii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31217,7 +31217,7 @@ v32accfloat test_negmul_elem_32_conf(v32bfloat16 a, int sgn_x, v32float16 b,
                                      int sgn_y, int sub_mul) {
   return negmul_elem_32_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_elem_32_confDv32_8bfloat16iDv32_DF16_iDv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_elem_32_confDv32_8bfloat16iDv32_7float16iDv32_u10__accfloatiii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31237,7 +31237,7 @@ v32accfloat test_mac_elem_32_conf(v32bfloat16 a, int sgn_x, v32float16 b,
                                   int sub_mul, int sub_acc1) {
   return mac_elem_32_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_elem_32_confDv32_8bfloat16iDv32_DF16_iDv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_elem_32_confDv32_8bfloat16iDv32_7float16iDv32_u10__accfloatiii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31257,7 +31257,7 @@ v32accfloat test_msc_elem_32_conf(v32bfloat16 a, int sgn_x, v32float16 b,
                                   int sub_mul, int sub_acc1) {
   return msc_elem_32_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_elem_32_confDv32_8bfloat16iDv32_DF16_iDv32_u10__accfloatS2_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_elem_32_confDv32_8bfloat16iDv32_7float16iDv32_u10__accfloatS3_iiii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31281,7 +31281,7 @@ v32accfloat test_addmac_elem_32_conf(v32bfloat16 a, int sgn_x, v32float16 b,
   return addmac_elem_32_conf(a, sgn_x, b, sgn_y, acc1, acc2, zero_acc1, sub_mul,
                              sub_acc1, sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_elem_32_confDv32_8bfloat16iDv32_DF16_iDv32_u10__accfloatS2_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_elem_32_confDv32_8bfloat16iDv32_7float16iDv32_u10__accfloatS3_iiii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31308,7 +31308,7 @@ v32accfloat test_addmsc_elem_32_conf(v32bfloat16 a, int sgn_x, v32float16 b,
 
 ;
 
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_4x8_8x8Dv32_8bfloat16Dv64_DF16_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_4x8_8x8Dv32_8bfloat16Dv64_7float16(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.bf16.I512.fp16.I1024.ACC1024.bf.mul.conf(<32 x bfloat> [[A]], <64 x half> [[B]], i32 16777308)
@@ -31317,7 +31317,7 @@ v32accfloat test_addmsc_elem_32_conf(v32bfloat16 a, int sgn_x, v32float16 b,
 v32accfloat test_mul_4x8_8x8(v32bfloat16 a, v64float16 b) {
   return mul_4x8_8x8(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_4x8_8x8Dv32_8bfloat16Dv64_DF16_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_4x8_8x8Dv32_8bfloat16Dv64_7float16(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.bf16.I512.fp16.I1024.ACC1024.bf.negmul.conf(<32 x bfloat> [[A]], <64 x half> [[B]], i32 16777308)
@@ -31326,7 +31326,7 @@ v32accfloat test_mul_4x8_8x8(v32bfloat16 a, v64float16 b) {
 v32accfloat test_negmul_4x8_8x8(v32bfloat16 a, v64float16 b) {
   return negmul_4x8_8x8(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_4x8_8x8Dv32_8bfloat16Dv64_DF16_Dv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_4x8_8x8Dv32_8bfloat16Dv64_7float16Dv32_u10__accfloat(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.bf16.I512.fp16.I1024.ACC1024.bf.mac.conf(<32 x bfloat> [[A]], <64 x half> [[B]], <32 x float> [[ACC]], i32 16777308)
@@ -31335,7 +31335,7 @@ v32accfloat test_negmul_4x8_8x8(v32bfloat16 a, v64float16 b) {
 v32accfloat test_mac_4x8_8x8(v32bfloat16 a, v64float16 b, v32accfloat acc) {
   return mac_4x8_8x8(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_4x8_8x8Dv32_8bfloat16Dv64_DF16_Dv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_4x8_8x8Dv32_8bfloat16Dv64_7float16Dv32_u10__accfloat(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.bf16.I512.fp16.I1024.ACC1024.bf.msc.conf(<32 x bfloat> [[A]], <64 x half> [[B]], <32 x float> [[ACC]], i32 16777308)
@@ -31344,7 +31344,7 @@ v32accfloat test_mac_4x8_8x8(v32bfloat16 a, v64float16 b, v32accfloat acc) {
 v32accfloat test_msc_4x8_8x8(v32bfloat16 a, v64float16 b, v32accfloat acc) {
   return msc_4x8_8x8(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_4x8_8x8Dv32_8bfloat16Dv64_DF16_Dv32_u10__accfloatS2_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_4x8_8x8Dv32_8bfloat16Dv64_7float16Dv32_u10__accfloatS3_(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.bf16.I512.fp16.I1024.ACC1024.bf.addmac.conf(<32 x bfloat> [[A]], <64 x half> [[B]], <32 x float> [[ACC1]], <32 x float> [[ACC2]], i32 16777308)
@@ -31354,7 +31354,7 @@ v32accfloat test_addmac_4x8_8x8(v32bfloat16 a, v64float16 b, v32accfloat acc1,
                                 v32accfloat acc2) {
   return addmac_4x8_8x8(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_4x8_8x8Dv32_8bfloat16Dv64_DF16_Dv32_u10__accfloatS2_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_4x8_8x8Dv32_8bfloat16Dv64_7float16Dv32_u10__accfloatS3_(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.bf16.I512.fp16.I1024.ACC1024.bf.addmsc.conf(<32 x bfloat> [[A]], <64 x half> [[B]], <32 x float> [[ACC1]], <32 x float> [[ACC2]], i32 16777308)
@@ -31364,7 +31364,7 @@ v32accfloat test_addmsc_4x8_8x8(v32bfloat16 a, v64float16 b, v32accfloat acc1,
                                 v32accfloat acc2) {
   return addmsc_4x8_8x8(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_4x8_8x8Dv32_8bfloat16iDv64_DF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_4x8_8x8Dv32_8bfloat16iDv64_7float16i(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -31378,7 +31378,7 @@ v32accfloat test_mul_4x8_8x8(v32bfloat16 a, int sgn_x, v64float16 b,
                              int sgn_y) {
   return mul_4x8_8x8(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_4x8_8x8Dv32_8bfloat16iDv64_DF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_4x8_8x8Dv32_8bfloat16iDv64_7float16i(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -31392,7 +31392,7 @@ v32accfloat test_negmul_4x8_8x8(v32bfloat16 a, int sgn_x, v64float16 b,
                                 int sgn_y) {
   return negmul_4x8_8x8(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_4x8_8x8Dv32_8bfloat16iDv64_DF16_iDv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_4x8_8x8Dv32_8bfloat16iDv64_7float16iDv32_u10__accfloat(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -31406,7 +31406,7 @@ v32accfloat test_mac_4x8_8x8(v32bfloat16 a, int sgn_x, v64float16 b, int sgn_y,
                              v32accfloat acc) {
   return mac_4x8_8x8(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_4x8_8x8Dv32_8bfloat16iDv64_DF16_iDv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_4x8_8x8Dv32_8bfloat16iDv64_7float16iDv32_u10__accfloat(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -31420,7 +31420,7 @@ v32accfloat test_msc_4x8_8x8(v32bfloat16 a, int sgn_x, v64float16 b, int sgn_y,
                              v32accfloat acc) {
   return msc_4x8_8x8(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_4x8_8x8Dv32_8bfloat16iDv64_DF16_iDv32_u10__accfloatS2_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_4x8_8x8Dv32_8bfloat16iDv64_7float16iDv32_u10__accfloatS3_(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -31434,7 +31434,7 @@ v32accfloat test_addmac_4x8_8x8(v32bfloat16 a, int sgn_x, v64float16 b,
                                 int sgn_y, v32accfloat acc1, v32accfloat acc2) {
   return addmac_4x8_8x8(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_4x8_8x8Dv32_8bfloat16iDv64_DF16_iDv32_u10__accfloatS2_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_4x8_8x8Dv32_8bfloat16iDv64_7float16iDv32_u10__accfloatS3_(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -31448,7 +31448,7 @@ v32accfloat test_addmsc_4x8_8x8(v32bfloat16 a, int sgn_x, v64float16 b,
                                 int sgn_y, v32accfloat acc1, v32accfloat acc2) {
   return addmsc_4x8_8x8(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_4x8_8x8_confDv32_8bfloat16Dv64_DF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_4x8_8x8_confDv32_8bfloat16Dv64_7float16i(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31459,7 +31459,7 @@ v32accfloat test_addmsc_4x8_8x8(v32bfloat16 a, int sgn_x, v64float16 b,
 v32accfloat test_mul_4x8_8x8_conf(v32bfloat16 a, v64float16 b, int sub_mul) {
   return mul_4x8_8x8_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_4x8_8x8_confDv32_8bfloat16Dv64_DF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_4x8_8x8_confDv32_8bfloat16Dv64_7float16i(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31470,7 +31470,7 @@ v32accfloat test_mul_4x8_8x8_conf(v32bfloat16 a, v64float16 b, int sub_mul) {
 v32accfloat test_negmul_4x8_8x8_conf(v32bfloat16 a, v64float16 b, int sub_mul) {
   return negmul_4x8_8x8_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_4x8_8x8_confDv32_8bfloat16Dv64_DF16_Dv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_4x8_8x8_confDv32_8bfloat16Dv64_7float16Dv32_u10__accfloatiii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31485,7 +31485,7 @@ v32accfloat test_mac_4x8_8x8_conf(v32bfloat16 a, v64float16 b, v32accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return mac_4x8_8x8_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_4x8_8x8_confDv32_8bfloat16Dv64_DF16_Dv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_4x8_8x8_confDv32_8bfloat16Dv64_7float16Dv32_u10__accfloatiii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31500,7 +31500,7 @@ v32accfloat test_msc_4x8_8x8_conf(v32bfloat16 a, v64float16 b, v32accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return msc_4x8_8x8_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_4x8_8x8_confDv32_8bfloat16Dv64_DF16_Dv32_u10__accfloatS2_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_4x8_8x8_confDv32_8bfloat16Dv64_7float16Dv32_u10__accfloatS3_iiii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31520,7 +31520,7 @@ v32accfloat test_addmac_4x8_8x8_conf(v32bfloat16 a, v64float16 b,
   return addmac_4x8_8x8_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_4x8_8x8_confDv32_8bfloat16Dv64_DF16_Dv32_u10__accfloatS2_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_4x8_8x8_confDv32_8bfloat16Dv64_7float16Dv32_u10__accfloatS3_iiii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31540,7 +31540,7 @@ v32accfloat test_addmsc_4x8_8x8_conf(v32bfloat16 a, v64float16 b,
   return addmsc_4x8_8x8_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_4x8_8x8_confDv32_8bfloat16iDv64_DF16_ii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_4x8_8x8_confDv32_8bfloat16iDv64_7float16ii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31556,7 +31556,7 @@ v32accfloat test_mul_4x8_8x8_conf(v32bfloat16 a, int sgn_x, v64float16 b,
                                   int sgn_y, int sub_mul) {
   return mul_4x8_8x8_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_4x8_8x8_confDv32_8bfloat16iDv64_DF16_ii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_4x8_8x8_confDv32_8bfloat16iDv64_7float16ii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31572,7 +31572,7 @@ v32accfloat test_negmul_4x8_8x8_conf(v32bfloat16 a, int sgn_x, v64float16 b,
                                      int sgn_y, int sub_mul) {
   return negmul_4x8_8x8_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_4x8_8x8_confDv32_8bfloat16iDv64_DF16_iDv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_4x8_8x8_confDv32_8bfloat16iDv64_7float16iDv32_u10__accfloatiii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31592,7 +31592,7 @@ v32accfloat test_mac_4x8_8x8_conf(v32bfloat16 a, int sgn_x, v64float16 b,
                                   int sub_mul, int sub_acc1) {
   return mac_4x8_8x8_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_4x8_8x8_confDv32_8bfloat16iDv64_DF16_iDv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_4x8_8x8_confDv32_8bfloat16iDv64_7float16iDv32_u10__accfloatiii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31612,7 +31612,7 @@ v32accfloat test_msc_4x8_8x8_conf(v32bfloat16 a, int sgn_x, v64float16 b,
                                   int sub_mul, int sub_acc1) {
   return msc_4x8_8x8_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_4x8_8x8_confDv32_8bfloat16iDv64_DF16_iDv32_u10__accfloatS2_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_4x8_8x8_confDv32_8bfloat16iDv64_7float16iDv32_u10__accfloatS3_iiii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31636,7 +31636,7 @@ v32accfloat test_addmac_4x8_8x8_conf(v32bfloat16 a, int sgn_x, v64float16 b,
   return addmac_4x8_8x8_conf(a, sgn_x, b, sgn_y, acc1, acc2, zero_acc1, sub_mul,
                              sub_acc1, sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_4x8_8x8_confDv32_8bfloat16iDv64_DF16_iDv32_u10__accfloatS2_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_4x8_8x8_confDv32_8bfloat16iDv64_7float16iDv32_u10__accfloatS3_iiii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31663,7 +31663,7 @@ v32accfloat test_addmsc_4x8_8x8_conf(v32bfloat16 a, int sgn_x, v64float16 b,
 
 ;
 
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mul_elem_64Dv64_DF16_Dv64_8bfloat16(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mul_elem_64Dv64_7float16Dv64_8bfloat16(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], <64 x bfloat> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.fp16.I1024.bf16.I1024.ACC2048.bf.mul.conf(<64 x half> [[A]], <64 x bfloat> [[B]], i32 33554492)
@@ -31672,7 +31672,7 @@ v32accfloat test_addmsc_4x8_8x8_conf(v32bfloat16 a, int sgn_x, v64float16 b,
 v64accfloat test_mul_elem_64(v64float16 a, v64bfloat16 b) {
   return mul_elem_64(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_negmul_elem_64Dv64_DF16_Dv64_8bfloat16(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_negmul_elem_64Dv64_7float16Dv64_8bfloat16(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], <64 x bfloat> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.fp16.I1024.bf16.I1024.ACC2048.bf.negmul.conf(<64 x half> [[A]], <64 x bfloat> [[B]], i32 33554492)
@@ -31681,7 +31681,7 @@ v64accfloat test_mul_elem_64(v64float16 a, v64bfloat16 b) {
 v64accfloat test_negmul_elem_64(v64float16 a, v64bfloat16 b) {
   return negmul_elem_64(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mac_elem_64Dv64_DF16_Dv64_8bfloat16Dv64_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mac_elem_64Dv64_7float16Dv64_8bfloat16Dv64_u10__accfloat(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], <64 x bfloat> noundef [[B:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.fp16.I1024.bf16.I1024.ACC2048.bf.mac.conf(<64 x half> [[A]], <64 x bfloat> [[B]], <64 x float> [[ACC]], i32 33554492)
@@ -31690,7 +31690,7 @@ v64accfloat test_negmul_elem_64(v64float16 a, v64bfloat16 b) {
 v64accfloat test_mac_elem_64(v64float16 a, v64bfloat16 b, v64accfloat acc) {
   return mac_elem_64(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_msc_elem_64Dv64_DF16_Dv64_8bfloat16Dv64_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_msc_elem_64Dv64_7float16Dv64_8bfloat16Dv64_u10__accfloat(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], <64 x bfloat> noundef [[B:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.fp16.I1024.bf16.I1024.ACC2048.bf.msc.conf(<64 x half> [[A]], <64 x bfloat> [[B]], <64 x float> [[ACC]], i32 33554492)
@@ -31699,7 +31699,7 @@ v64accfloat test_mac_elem_64(v64float16 a, v64bfloat16 b, v64accfloat acc) {
 v64accfloat test_msc_elem_64(v64float16 a, v64bfloat16 b, v64accfloat acc) {
   return msc_elem_64(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmac_elem_64Dv64_DF16_Dv64_8bfloat16Dv64_u10__accfloatS2_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmac_elem_64Dv64_7float16Dv64_8bfloat16Dv64_u10__accfloatS3_(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], <64 x bfloat> noundef [[B:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.fp16.I1024.bf16.I1024.ACC2048.bf.addmac.conf(<64 x half> [[A]], <64 x bfloat> [[B]], <64 x float> [[ACC1]], <64 x float> [[ACC2]], i32 33554492)
@@ -31709,7 +31709,7 @@ v64accfloat test_addmac_elem_64(v64float16 a, v64bfloat16 b, v64accfloat acc1,
                                 v64accfloat acc2) {
   return addmac_elem_64(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmsc_elem_64Dv64_DF16_Dv64_8bfloat16Dv64_u10__accfloatS2_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmsc_elem_64Dv64_7float16Dv64_8bfloat16Dv64_u10__accfloatS3_(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], <64 x bfloat> noundef [[B:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.fp16.I1024.bf16.I1024.ACC2048.bf.addmsc.conf(<64 x half> [[A]], <64 x bfloat> [[B]], <64 x float> [[ACC1]], <64 x float> [[ACC2]], i32 33554492)
@@ -31719,7 +31719,7 @@ v64accfloat test_addmsc_elem_64(v64float16 a, v64bfloat16 b, v64accfloat acc1,
                                 v64accfloat acc2) {
   return addmsc_elem_64(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mul_elem_64Dv64_DF16_iDv64_8bfloat16i(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mul_elem_64Dv64_7float16iDv64_8bfloat16i(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -31733,7 +31733,7 @@ v64accfloat test_mul_elem_64(v64float16 a, int sgn_x, v64bfloat16 b,
                              int sgn_y) {
   return mul_elem_64(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_negmul_elem_64Dv64_DF16_iDv64_8bfloat16i(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_negmul_elem_64Dv64_7float16iDv64_8bfloat16i(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -31747,7 +31747,7 @@ v64accfloat test_negmul_elem_64(v64float16 a, int sgn_x, v64bfloat16 b,
                                 int sgn_y) {
   return negmul_elem_64(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mac_elem_64Dv64_DF16_iDv64_8bfloat16iDv64_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mac_elem_64Dv64_7float16iDv64_8bfloat16iDv64_u10__accfloat(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -31761,7 +31761,7 @@ v64accfloat test_mac_elem_64(v64float16 a, int sgn_x, v64bfloat16 b, int sgn_y,
                              v64accfloat acc) {
   return mac_elem_64(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_msc_elem_64Dv64_DF16_iDv64_8bfloat16iDv64_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_msc_elem_64Dv64_7float16iDv64_8bfloat16iDv64_u10__accfloat(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -31775,7 +31775,7 @@ v64accfloat test_msc_elem_64(v64float16 a, int sgn_x, v64bfloat16 b, int sgn_y,
                              v64accfloat acc) {
   return msc_elem_64(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmac_elem_64Dv64_DF16_iDv64_8bfloat16iDv64_u10__accfloatS2_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmac_elem_64Dv64_7float16iDv64_8bfloat16iDv64_u10__accfloatS3_(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -31789,7 +31789,7 @@ v64accfloat test_addmac_elem_64(v64float16 a, int sgn_x, v64bfloat16 b,
                                 int sgn_y, v64accfloat acc1, v64accfloat acc2) {
   return addmac_elem_64(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmsc_elem_64Dv64_DF16_iDv64_8bfloat16iDv64_u10__accfloatS2_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmsc_elem_64Dv64_7float16iDv64_8bfloat16iDv64_u10__accfloatS3_(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -31803,7 +31803,7 @@ v64accfloat test_addmsc_elem_64(v64float16 a, int sgn_x, v64bfloat16 b,
                                 int sgn_y, v64accfloat acc1, v64accfloat acc2) {
   return addmsc_elem_64(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mul_elem_64_confDv64_DF16_Dv64_8bfloat16i(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mul_elem_64_confDv64_7float16Dv64_8bfloat16i(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], <64 x bfloat> noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31814,7 +31814,7 @@ v64accfloat test_addmsc_elem_64(v64float16 a, int sgn_x, v64bfloat16 b,
 v64accfloat test_mul_elem_64_conf(v64float16 a, v64bfloat16 b, int sub_mul) {
   return mul_elem_64_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_negmul_elem_64_confDv64_DF16_Dv64_8bfloat16i(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_negmul_elem_64_confDv64_7float16Dv64_8bfloat16i(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], <64 x bfloat> noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31825,7 +31825,7 @@ v64accfloat test_mul_elem_64_conf(v64float16 a, v64bfloat16 b, int sub_mul) {
 v64accfloat test_negmul_elem_64_conf(v64float16 a, v64bfloat16 b, int sub_mul) {
   return negmul_elem_64_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mac_elem_64_confDv64_DF16_Dv64_8bfloat16Dv64_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mac_elem_64_confDv64_7float16Dv64_8bfloat16Dv64_u10__accfloatiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], <64 x bfloat> noundef [[B:%.*]], <64 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31840,7 +31840,7 @@ v64accfloat test_mac_elem_64_conf(v64float16 a, v64bfloat16 b, v64accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return mac_elem_64_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_msc_elem_64_confDv64_DF16_Dv64_8bfloat16Dv64_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_msc_elem_64_confDv64_7float16Dv64_8bfloat16Dv64_u10__accfloatiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], <64 x bfloat> noundef [[B:%.*]], <64 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31855,7 +31855,7 @@ v64accfloat test_msc_elem_64_conf(v64float16 a, v64bfloat16 b, v64accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return msc_elem_64_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmac_elem_64_confDv64_DF16_Dv64_8bfloat16Dv64_u10__accfloatS2_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmac_elem_64_confDv64_7float16Dv64_8bfloat16Dv64_u10__accfloatS3_iiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], <64 x bfloat> noundef [[B:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31875,7 +31875,7 @@ v64accfloat test_addmac_elem_64_conf(v64float16 a, v64bfloat16 b,
   return addmac_elem_64_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmsc_elem_64_confDv64_DF16_Dv64_8bfloat16Dv64_u10__accfloatS2_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmsc_elem_64_confDv64_7float16Dv64_8bfloat16Dv64_u10__accfloatS3_iiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], <64 x bfloat> noundef [[B:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31895,7 +31895,7 @@ v64accfloat test_addmsc_elem_64_conf(v64float16 a, v64bfloat16 b,
   return addmsc_elem_64_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mul_elem_64_confDv64_DF16_iDv64_8bfloat16ii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mul_elem_64_confDv64_7float16iDv64_8bfloat16ii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31911,7 +31911,7 @@ v64accfloat test_mul_elem_64_conf(v64float16 a, int sgn_x, v64bfloat16 b,
                                   int sgn_y, int sub_mul) {
   return mul_elem_64_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_negmul_elem_64_confDv64_DF16_iDv64_8bfloat16ii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_negmul_elem_64_confDv64_7float16iDv64_8bfloat16ii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31927,7 +31927,7 @@ v64accfloat test_negmul_elem_64_conf(v64float16 a, int sgn_x, v64bfloat16 b,
                                      int sgn_y, int sub_mul) {
   return negmul_elem_64_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mac_elem_64_confDv64_DF16_iDv64_8bfloat16iDv64_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mac_elem_64_confDv64_7float16iDv64_8bfloat16iDv64_u10__accfloatiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31947,7 +31947,7 @@ v64accfloat test_mac_elem_64_conf(v64float16 a, int sgn_x, v64bfloat16 b,
                                   int sub_mul, int sub_acc1) {
   return mac_elem_64_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_msc_elem_64_confDv64_DF16_iDv64_8bfloat16iDv64_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_msc_elem_64_confDv64_7float16iDv64_8bfloat16iDv64_u10__accfloatiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31967,7 +31967,7 @@ v64accfloat test_msc_elem_64_conf(v64float16 a, int sgn_x, v64bfloat16 b,
                                   int sub_mul, int sub_acc1) {
   return msc_elem_64_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmac_elem_64_confDv64_DF16_iDv64_8bfloat16iDv64_u10__accfloatS2_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmac_elem_64_confDv64_7float16iDv64_8bfloat16iDv64_u10__accfloatS3_iiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -31991,7 +31991,7 @@ v64accfloat test_addmac_elem_64_conf(v64float16 a, int sgn_x, v64bfloat16 b,
   return addmac_elem_64_conf(a, sgn_x, b, sgn_y, acc1, acc2, zero_acc1, sub_mul,
                              sub_acc1, sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmsc_elem_64_confDv64_DF16_iDv64_8bfloat16iDv64_u10__accfloatS2_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmsc_elem_64_confDv64_7float16iDv64_8bfloat16iDv64_u10__accfloatS3_iiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32018,7 +32018,7 @@ v64accfloat test_addmsc_elem_64_conf(v64float16 a, int sgn_x, v64bfloat16 b,
 
 ;
 
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_elem_32Dv32_DF16_Dv32_8bfloat16(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_elem_32Dv32_7float16Dv32_8bfloat16(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <32 x bfloat> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.bf16.I512.ACC1024.bf.mul.conf(<32 x half> [[A]], <32 x bfloat> [[B]], i32 33554492)
@@ -32027,7 +32027,7 @@ v64accfloat test_addmsc_elem_64_conf(v64float16 a, int sgn_x, v64bfloat16 b,
 v32accfloat test_mul_elem_32(v32float16 a, v32bfloat16 b) {
   return mul_elem_32(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_elem_32Dv32_DF16_Dv32_8bfloat16(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_elem_32Dv32_7float16Dv32_8bfloat16(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <32 x bfloat> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.bf16.I512.ACC1024.bf.negmul.conf(<32 x half> [[A]], <32 x bfloat> [[B]], i32 33554492)
@@ -32036,7 +32036,7 @@ v32accfloat test_mul_elem_32(v32float16 a, v32bfloat16 b) {
 v32accfloat test_negmul_elem_32(v32float16 a, v32bfloat16 b) {
   return negmul_elem_32(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_elem_32Dv32_DF16_Dv32_8bfloat16Dv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_elem_32Dv32_7float16Dv32_8bfloat16Dv32_u10__accfloat(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <32 x bfloat> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.bf16.I512.ACC1024.bf.mac.conf(<32 x half> [[A]], <32 x bfloat> [[B]], <32 x float> [[ACC]], i32 33554492)
@@ -32045,7 +32045,7 @@ v32accfloat test_negmul_elem_32(v32float16 a, v32bfloat16 b) {
 v32accfloat test_mac_elem_32(v32float16 a, v32bfloat16 b, v32accfloat acc) {
   return mac_elem_32(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_elem_32Dv32_DF16_Dv32_8bfloat16Dv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_elem_32Dv32_7float16Dv32_8bfloat16Dv32_u10__accfloat(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <32 x bfloat> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.bf16.I512.ACC1024.bf.msc.conf(<32 x half> [[A]], <32 x bfloat> [[B]], <32 x float> [[ACC]], i32 33554492)
@@ -32054,7 +32054,7 @@ v32accfloat test_mac_elem_32(v32float16 a, v32bfloat16 b, v32accfloat acc) {
 v32accfloat test_msc_elem_32(v32float16 a, v32bfloat16 b, v32accfloat acc) {
   return msc_elem_32(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_elem_32Dv32_DF16_Dv32_8bfloat16Dv32_u10__accfloatS2_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_elem_32Dv32_7float16Dv32_8bfloat16Dv32_u10__accfloatS3_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <32 x bfloat> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.bf16.I512.ACC1024.bf.addmac.conf(<32 x half> [[A]], <32 x bfloat> [[B]], <32 x float> [[ACC1]], <32 x float> [[ACC2]], i32 33554492)
@@ -32064,7 +32064,7 @@ v32accfloat test_addmac_elem_32(v32float16 a, v32bfloat16 b, v32accfloat acc1,
                                 v32accfloat acc2) {
   return addmac_elem_32(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_elem_32Dv32_DF16_Dv32_8bfloat16Dv32_u10__accfloatS2_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_elem_32Dv32_7float16Dv32_8bfloat16Dv32_u10__accfloatS3_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <32 x bfloat> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.bf16.I512.ACC1024.bf.addmsc.conf(<32 x half> [[A]], <32 x bfloat> [[B]], <32 x float> [[ACC1]], <32 x float> [[ACC2]], i32 33554492)
@@ -32074,7 +32074,7 @@ v32accfloat test_addmsc_elem_32(v32float16 a, v32bfloat16 b, v32accfloat acc1,
                                 v32accfloat acc2) {
   return addmsc_elem_32(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_elem_32Dv32_DF16_iDv32_8bfloat16i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_elem_32Dv32_7float16iDv32_8bfloat16i(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -32088,7 +32088,7 @@ v32accfloat test_mul_elem_32(v32float16 a, int sgn_x, v32bfloat16 b,
                              int sgn_y) {
   return mul_elem_32(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_elem_32Dv32_DF16_iDv32_8bfloat16i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_elem_32Dv32_7float16iDv32_8bfloat16i(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -32102,7 +32102,7 @@ v32accfloat test_negmul_elem_32(v32float16 a, int sgn_x, v32bfloat16 b,
                                 int sgn_y) {
   return negmul_elem_32(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_elem_32Dv32_DF16_iDv32_8bfloat16iDv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_elem_32Dv32_7float16iDv32_8bfloat16iDv32_u10__accfloat(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -32116,7 +32116,7 @@ v32accfloat test_mac_elem_32(v32float16 a, int sgn_x, v32bfloat16 b, int sgn_y,
                              v32accfloat acc) {
   return mac_elem_32(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_elem_32Dv32_DF16_iDv32_8bfloat16iDv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_elem_32Dv32_7float16iDv32_8bfloat16iDv32_u10__accfloat(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -32130,7 +32130,7 @@ v32accfloat test_msc_elem_32(v32float16 a, int sgn_x, v32bfloat16 b, int sgn_y,
                              v32accfloat acc) {
   return msc_elem_32(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_elem_32Dv32_DF16_iDv32_8bfloat16iDv32_u10__accfloatS2_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_elem_32Dv32_7float16iDv32_8bfloat16iDv32_u10__accfloatS3_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -32144,7 +32144,7 @@ v32accfloat test_addmac_elem_32(v32float16 a, int sgn_x, v32bfloat16 b,
                                 int sgn_y, v32accfloat acc1, v32accfloat acc2) {
   return addmac_elem_32(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_elem_32Dv32_DF16_iDv32_8bfloat16iDv32_u10__accfloatS2_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_elem_32Dv32_7float16iDv32_8bfloat16iDv32_u10__accfloatS3_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -32158,7 +32158,7 @@ v32accfloat test_addmsc_elem_32(v32float16 a, int sgn_x, v32bfloat16 b,
                                 int sgn_y, v32accfloat acc1, v32accfloat acc2) {
   return addmsc_elem_32(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_elem_32_confDv32_DF16_Dv32_8bfloat16i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_elem_32_confDv32_7float16Dv32_8bfloat16i(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <32 x bfloat> noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32169,7 +32169,7 @@ v32accfloat test_addmsc_elem_32(v32float16 a, int sgn_x, v32bfloat16 b,
 v32accfloat test_mul_elem_32_conf(v32float16 a, v32bfloat16 b, int sub_mul) {
   return mul_elem_32_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_elem_32_confDv32_DF16_Dv32_8bfloat16i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_elem_32_confDv32_7float16Dv32_8bfloat16i(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <32 x bfloat> noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32180,7 +32180,7 @@ v32accfloat test_mul_elem_32_conf(v32float16 a, v32bfloat16 b, int sub_mul) {
 v32accfloat test_negmul_elem_32_conf(v32float16 a, v32bfloat16 b, int sub_mul) {
   return negmul_elem_32_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_elem_32_confDv32_DF16_Dv32_8bfloat16Dv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_elem_32_confDv32_7float16Dv32_8bfloat16Dv32_u10__accfloatiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <32 x bfloat> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32195,7 +32195,7 @@ v32accfloat test_mac_elem_32_conf(v32float16 a, v32bfloat16 b, v32accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return mac_elem_32_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_elem_32_confDv32_DF16_Dv32_8bfloat16Dv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_elem_32_confDv32_7float16Dv32_8bfloat16Dv32_u10__accfloatiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <32 x bfloat> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32210,7 +32210,7 @@ v32accfloat test_msc_elem_32_conf(v32float16 a, v32bfloat16 b, v32accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return msc_elem_32_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_elem_32_confDv32_DF16_Dv32_8bfloat16Dv32_u10__accfloatS2_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_elem_32_confDv32_7float16Dv32_8bfloat16Dv32_u10__accfloatS3_iiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <32 x bfloat> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32230,7 +32230,7 @@ v32accfloat test_addmac_elem_32_conf(v32float16 a, v32bfloat16 b,
   return addmac_elem_32_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_elem_32_confDv32_DF16_Dv32_8bfloat16Dv32_u10__accfloatS2_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_elem_32_confDv32_7float16Dv32_8bfloat16Dv32_u10__accfloatS3_iiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <32 x bfloat> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32250,7 +32250,7 @@ v32accfloat test_addmsc_elem_32_conf(v32float16 a, v32bfloat16 b,
   return addmsc_elem_32_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_elem_32_confDv32_DF16_iDv32_8bfloat16ii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_elem_32_confDv32_7float16iDv32_8bfloat16ii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32266,7 +32266,7 @@ v32accfloat test_mul_elem_32_conf(v32float16 a, int sgn_x, v32bfloat16 b,
                                   int sgn_y, int sub_mul) {
   return mul_elem_32_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_elem_32_confDv32_DF16_iDv32_8bfloat16ii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_elem_32_confDv32_7float16iDv32_8bfloat16ii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32282,7 +32282,7 @@ v32accfloat test_negmul_elem_32_conf(v32float16 a, int sgn_x, v32bfloat16 b,
                                      int sgn_y, int sub_mul) {
   return negmul_elem_32_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_elem_32_confDv32_DF16_iDv32_8bfloat16iDv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_elem_32_confDv32_7float16iDv32_8bfloat16iDv32_u10__accfloatiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32302,7 +32302,7 @@ v32accfloat test_mac_elem_32_conf(v32float16 a, int sgn_x, v32bfloat16 b,
                                   int sub_mul, int sub_acc1) {
   return mac_elem_32_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_elem_32_confDv32_DF16_iDv32_8bfloat16iDv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_elem_32_confDv32_7float16iDv32_8bfloat16iDv32_u10__accfloatiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32322,7 +32322,7 @@ v32accfloat test_msc_elem_32_conf(v32float16 a, int sgn_x, v32bfloat16 b,
                                   int sub_mul, int sub_acc1) {
   return msc_elem_32_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_elem_32_confDv32_DF16_iDv32_8bfloat16iDv32_u10__accfloatS2_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_elem_32_confDv32_7float16iDv32_8bfloat16iDv32_u10__accfloatS3_iiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32346,7 +32346,7 @@ v32accfloat test_addmac_elem_32_conf(v32float16 a, int sgn_x, v32bfloat16 b,
   return addmac_elem_32_conf(a, sgn_x, b, sgn_y, acc1, acc2, zero_acc1, sub_mul,
                              sub_acc1, sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_elem_32_confDv32_DF16_iDv32_8bfloat16iDv32_u10__accfloatS2_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_elem_32_confDv32_7float16iDv32_8bfloat16iDv32_u10__accfloatS3_iiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32373,7 +32373,7 @@ v32accfloat test_addmsc_elem_32_conf(v32float16 a, int sgn_x, v32bfloat16 b,
 
 ;
 
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_4x8_8x8Dv32_DF16_Dv64_8bfloat16(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_4x8_8x8Dv32_7float16Dv64_8bfloat16(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <64 x bfloat> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.bf16.I1024.ACC1024.bf.mul.conf(<32 x half> [[A]], <64 x bfloat> [[B]], i32 33554524)
@@ -32382,7 +32382,7 @@ v32accfloat test_addmsc_elem_32_conf(v32float16 a, int sgn_x, v32bfloat16 b,
 v32accfloat test_mul_4x8_8x8(v32float16 a, v64bfloat16 b) {
   return mul_4x8_8x8(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_4x8_8x8Dv32_DF16_Dv64_8bfloat16(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_4x8_8x8Dv32_7float16Dv64_8bfloat16(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <64 x bfloat> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.bf16.I1024.ACC1024.bf.negmul.conf(<32 x half> [[A]], <64 x bfloat> [[B]], i32 33554524)
@@ -32391,7 +32391,7 @@ v32accfloat test_mul_4x8_8x8(v32float16 a, v64bfloat16 b) {
 v32accfloat test_negmul_4x8_8x8(v32float16 a, v64bfloat16 b) {
   return negmul_4x8_8x8(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_4x8_8x8Dv32_DF16_Dv64_8bfloat16Dv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_4x8_8x8Dv32_7float16Dv64_8bfloat16Dv32_u10__accfloat(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <64 x bfloat> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.bf16.I1024.ACC1024.bf.mac.conf(<32 x half> [[A]], <64 x bfloat> [[B]], <32 x float> [[ACC]], i32 33554524)
@@ -32400,7 +32400,7 @@ v32accfloat test_negmul_4x8_8x8(v32float16 a, v64bfloat16 b) {
 v32accfloat test_mac_4x8_8x8(v32float16 a, v64bfloat16 b, v32accfloat acc) {
   return mac_4x8_8x8(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_4x8_8x8Dv32_DF16_Dv64_8bfloat16Dv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_4x8_8x8Dv32_7float16Dv64_8bfloat16Dv32_u10__accfloat(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <64 x bfloat> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.bf16.I1024.ACC1024.bf.msc.conf(<32 x half> [[A]], <64 x bfloat> [[B]], <32 x float> [[ACC]], i32 33554524)
@@ -32409,7 +32409,7 @@ v32accfloat test_mac_4x8_8x8(v32float16 a, v64bfloat16 b, v32accfloat acc) {
 v32accfloat test_msc_4x8_8x8(v32float16 a, v64bfloat16 b, v32accfloat acc) {
   return msc_4x8_8x8(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_4x8_8x8Dv32_DF16_Dv64_8bfloat16Dv32_u10__accfloatS2_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_4x8_8x8Dv32_7float16Dv64_8bfloat16Dv32_u10__accfloatS3_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <64 x bfloat> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.bf16.I1024.ACC1024.bf.addmac.conf(<32 x half> [[A]], <64 x bfloat> [[B]], <32 x float> [[ACC1]], <32 x float> [[ACC2]], i32 33554524)
@@ -32419,7 +32419,7 @@ v32accfloat test_addmac_4x8_8x8(v32float16 a, v64bfloat16 b, v32accfloat acc1,
                                 v32accfloat acc2) {
   return addmac_4x8_8x8(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_4x8_8x8Dv32_DF16_Dv64_8bfloat16Dv32_u10__accfloatS2_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_4x8_8x8Dv32_7float16Dv64_8bfloat16Dv32_u10__accfloatS3_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <64 x bfloat> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.bf16.I1024.ACC1024.bf.addmsc.conf(<32 x half> [[A]], <64 x bfloat> [[B]], <32 x float> [[ACC1]], <32 x float> [[ACC2]], i32 33554524)
@@ -32429,7 +32429,7 @@ v32accfloat test_addmsc_4x8_8x8(v32float16 a, v64bfloat16 b, v32accfloat acc1,
                                 v32accfloat acc2) {
   return addmsc_4x8_8x8(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_4x8_8x8Dv32_DF16_iDv64_8bfloat16i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_4x8_8x8Dv32_7float16iDv64_8bfloat16i(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -32443,7 +32443,7 @@ v32accfloat test_mul_4x8_8x8(v32float16 a, int sgn_x, v64bfloat16 b,
                              int sgn_y) {
   return mul_4x8_8x8(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_4x8_8x8Dv32_DF16_iDv64_8bfloat16i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_4x8_8x8Dv32_7float16iDv64_8bfloat16i(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -32457,7 +32457,7 @@ v32accfloat test_negmul_4x8_8x8(v32float16 a, int sgn_x, v64bfloat16 b,
                                 int sgn_y) {
   return negmul_4x8_8x8(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_4x8_8x8Dv32_DF16_iDv64_8bfloat16iDv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_4x8_8x8Dv32_7float16iDv64_8bfloat16iDv32_u10__accfloat(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -32471,7 +32471,7 @@ v32accfloat test_mac_4x8_8x8(v32float16 a, int sgn_x, v64bfloat16 b, int sgn_y,
                              v32accfloat acc) {
   return mac_4x8_8x8(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_4x8_8x8Dv32_DF16_iDv64_8bfloat16iDv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_4x8_8x8Dv32_7float16iDv64_8bfloat16iDv32_u10__accfloat(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -32485,7 +32485,7 @@ v32accfloat test_msc_4x8_8x8(v32float16 a, int sgn_x, v64bfloat16 b, int sgn_y,
                              v32accfloat acc) {
   return msc_4x8_8x8(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_4x8_8x8Dv32_DF16_iDv64_8bfloat16iDv32_u10__accfloatS2_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_4x8_8x8Dv32_7float16iDv64_8bfloat16iDv32_u10__accfloatS3_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -32499,7 +32499,7 @@ v32accfloat test_addmac_4x8_8x8(v32float16 a, int sgn_x, v64bfloat16 b,
                                 int sgn_y, v32accfloat acc1, v32accfloat acc2) {
   return addmac_4x8_8x8(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_4x8_8x8Dv32_DF16_iDv64_8bfloat16iDv32_u10__accfloatS2_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_4x8_8x8Dv32_7float16iDv64_8bfloat16iDv32_u10__accfloatS3_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -32513,7 +32513,7 @@ v32accfloat test_addmsc_4x8_8x8(v32float16 a, int sgn_x, v64bfloat16 b,
                                 int sgn_y, v32accfloat acc1, v32accfloat acc2) {
   return addmsc_4x8_8x8(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_4x8_8x8_confDv32_DF16_Dv64_8bfloat16i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_4x8_8x8_confDv32_7float16Dv64_8bfloat16i(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <64 x bfloat> noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32524,7 +32524,7 @@ v32accfloat test_addmsc_4x8_8x8(v32float16 a, int sgn_x, v64bfloat16 b,
 v32accfloat test_mul_4x8_8x8_conf(v32float16 a, v64bfloat16 b, int sub_mul) {
   return mul_4x8_8x8_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_4x8_8x8_confDv32_DF16_Dv64_8bfloat16i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_4x8_8x8_confDv32_7float16Dv64_8bfloat16i(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <64 x bfloat> noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32535,7 +32535,7 @@ v32accfloat test_mul_4x8_8x8_conf(v32float16 a, v64bfloat16 b, int sub_mul) {
 v32accfloat test_negmul_4x8_8x8_conf(v32float16 a, v64bfloat16 b, int sub_mul) {
   return negmul_4x8_8x8_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_4x8_8x8_confDv32_DF16_Dv64_8bfloat16Dv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_4x8_8x8_confDv32_7float16Dv64_8bfloat16Dv32_u10__accfloatiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <64 x bfloat> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32550,7 +32550,7 @@ v32accfloat test_mac_4x8_8x8_conf(v32float16 a, v64bfloat16 b, v32accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return mac_4x8_8x8_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_4x8_8x8_confDv32_DF16_Dv64_8bfloat16Dv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_4x8_8x8_confDv32_7float16Dv64_8bfloat16Dv32_u10__accfloatiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <64 x bfloat> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32565,7 +32565,7 @@ v32accfloat test_msc_4x8_8x8_conf(v32float16 a, v64bfloat16 b, v32accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return msc_4x8_8x8_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_4x8_8x8_confDv32_DF16_Dv64_8bfloat16Dv32_u10__accfloatS2_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_4x8_8x8_confDv32_7float16Dv64_8bfloat16Dv32_u10__accfloatS3_iiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <64 x bfloat> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32585,7 +32585,7 @@ v32accfloat test_addmac_4x8_8x8_conf(v32float16 a, v64bfloat16 b,
   return addmac_4x8_8x8_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_4x8_8x8_confDv32_DF16_Dv64_8bfloat16Dv32_u10__accfloatS2_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_4x8_8x8_confDv32_7float16Dv64_8bfloat16Dv32_u10__accfloatS3_iiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <64 x bfloat> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32605,7 +32605,7 @@ v32accfloat test_addmsc_4x8_8x8_conf(v32float16 a, v64bfloat16 b,
   return addmsc_4x8_8x8_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_4x8_8x8_confDv32_DF16_iDv64_8bfloat16ii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_4x8_8x8_confDv32_7float16iDv64_8bfloat16ii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32621,7 +32621,7 @@ v32accfloat test_mul_4x8_8x8_conf(v32float16 a, int sgn_x, v64bfloat16 b,
                                   int sgn_y, int sub_mul) {
   return mul_4x8_8x8_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_4x8_8x8_confDv32_DF16_iDv64_8bfloat16ii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_4x8_8x8_confDv32_7float16iDv64_8bfloat16ii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32637,7 +32637,7 @@ v32accfloat test_negmul_4x8_8x8_conf(v32float16 a, int sgn_x, v64bfloat16 b,
                                      int sgn_y, int sub_mul) {
   return negmul_4x8_8x8_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_4x8_8x8_confDv32_DF16_iDv64_8bfloat16iDv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_4x8_8x8_confDv32_7float16iDv64_8bfloat16iDv32_u10__accfloatiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32657,7 +32657,7 @@ v32accfloat test_mac_4x8_8x8_conf(v32float16 a, int sgn_x, v64bfloat16 b,
                                   int sub_mul, int sub_acc1) {
   return mac_4x8_8x8_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_4x8_8x8_confDv32_DF16_iDv64_8bfloat16iDv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_4x8_8x8_confDv32_7float16iDv64_8bfloat16iDv32_u10__accfloatiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32677,7 +32677,7 @@ v32accfloat test_msc_4x8_8x8_conf(v32float16 a, int sgn_x, v64bfloat16 b,
                                   int sub_mul, int sub_acc1) {
   return msc_4x8_8x8_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_4x8_8x8_confDv32_DF16_iDv64_8bfloat16iDv32_u10__accfloatS2_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_4x8_8x8_confDv32_7float16iDv64_8bfloat16iDv32_u10__accfloatS3_iiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32701,7 +32701,7 @@ v32accfloat test_addmac_4x8_8x8_conf(v32float16 a, int sgn_x, v64bfloat16 b,
   return addmac_4x8_8x8_conf(a, sgn_x, b, sgn_y, acc1, acc2, zero_acc1, sub_mul,
                              sub_acc1, sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_4x8_8x8_confDv32_DF16_iDv64_8bfloat16iDv32_u10__accfloatS2_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_4x8_8x8_confDv32_7float16iDv64_8bfloat16iDv32_u10__accfloatS3_iiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x bfloat> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32728,7 +32728,7 @@ v32accfloat test_addmsc_4x8_8x8_conf(v32float16 a, int sgn_x, v64bfloat16 b,
 
 ;
 
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mul_elem_64Dv64_DF16_S_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mul_elem_64Dv64_7float16S0_(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.fp16.I1024.fp16.I1024.ACC2048.bf.mul.conf(<64 x half> [[A]], <64 x half> [[B]], i32 60)
@@ -32737,7 +32737,7 @@ v32accfloat test_addmsc_4x8_8x8_conf(v32float16 a, int sgn_x, v64bfloat16 b,
 v64accfloat test_mul_elem_64(v64float16 a, v64float16 b) {
   return mul_elem_64(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_negmul_elem_64Dv64_DF16_S_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_negmul_elem_64Dv64_7float16S0_(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.fp16.I1024.fp16.I1024.ACC2048.bf.negmul.conf(<64 x half> [[A]], <64 x half> [[B]], i32 60)
@@ -32746,7 +32746,7 @@ v64accfloat test_mul_elem_64(v64float16 a, v64float16 b) {
 v64accfloat test_negmul_elem_64(v64float16 a, v64float16 b) {
   return negmul_elem_64(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mac_elem_64Dv64_DF16_S_Dv64_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mac_elem_64Dv64_7float16S0_Dv64_u10__accfloat(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.fp16.I1024.fp16.I1024.ACC2048.bf.mac.conf(<64 x half> [[A]], <64 x half> [[B]], <64 x float> [[ACC]], i32 60)
@@ -32755,7 +32755,7 @@ v64accfloat test_negmul_elem_64(v64float16 a, v64float16 b) {
 v64accfloat test_mac_elem_64(v64float16 a, v64float16 b, v64accfloat acc) {
   return mac_elem_64(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_msc_elem_64Dv64_DF16_S_Dv64_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_msc_elem_64Dv64_7float16S0_Dv64_u10__accfloat(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.fp16.I1024.fp16.I1024.ACC2048.bf.msc.conf(<64 x half> [[A]], <64 x half> [[B]], <64 x float> [[ACC]], i32 60)
@@ -32764,7 +32764,7 @@ v64accfloat test_mac_elem_64(v64float16 a, v64float16 b, v64accfloat acc) {
 v64accfloat test_msc_elem_64(v64float16 a, v64float16 b, v64accfloat acc) {
   return msc_elem_64(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmac_elem_64Dv64_DF16_S_Dv64_u10__accfloatS0_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmac_elem_64Dv64_7float16S0_Dv64_u10__accfloatS1_(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.fp16.I1024.fp16.I1024.ACC2048.bf.addmac.conf(<64 x half> [[A]], <64 x half> [[B]], <64 x float> [[ACC1]], <64 x float> [[ACC2]], i32 60)
@@ -32774,7 +32774,7 @@ v64accfloat test_addmac_elem_64(v64float16 a, v64float16 b, v64accfloat acc1,
                                 v64accfloat acc2) {
   return addmac_elem_64(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmsc_elem_64Dv64_DF16_S_Dv64_u10__accfloatS0_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmsc_elem_64Dv64_7float16S0_Dv64_u10__accfloatS1_(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.fp16.I1024.fp16.I1024.ACC2048.bf.addmsc.conf(<64 x half> [[A]], <64 x half> [[B]], <64 x float> [[ACC1]], <64 x float> [[ACC2]], i32 60)
@@ -32784,7 +32784,7 @@ v64accfloat test_addmsc_elem_64(v64float16 a, v64float16 b, v64accfloat acc1,
                                 v64accfloat acc2) {
   return addmsc_elem_64(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mul_elem_64Dv64_DF16_iS_i(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mul_elem_64Dv64_7float16iS0_i(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -32797,7 +32797,7 @@ v64accfloat test_addmsc_elem_64(v64float16 a, v64float16 b, v64accfloat acc1,
 v64accfloat test_mul_elem_64(v64float16 a, int sgn_x, v64float16 b, int sgn_y) {
   return mul_elem_64(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_negmul_elem_64Dv64_DF16_iS_i(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_negmul_elem_64Dv64_7float16iS0_i(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -32811,7 +32811,7 @@ v64accfloat test_negmul_elem_64(v64float16 a, int sgn_x, v64float16 b,
                                 int sgn_y) {
   return negmul_elem_64(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mac_elem_64Dv64_DF16_iS_iDv64_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mac_elem_64Dv64_7float16iS0_iDv64_u10__accfloat(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -32825,7 +32825,7 @@ v64accfloat test_mac_elem_64(v64float16 a, int sgn_x, v64float16 b, int sgn_y,
                              v64accfloat acc) {
   return mac_elem_64(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_msc_elem_64Dv64_DF16_iS_iDv64_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_msc_elem_64Dv64_7float16iS0_iDv64_u10__accfloat(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -32839,7 +32839,7 @@ v64accfloat test_msc_elem_64(v64float16 a, int sgn_x, v64float16 b, int sgn_y,
                              v64accfloat acc) {
   return msc_elem_64(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmac_elem_64Dv64_DF16_iS_iDv64_u10__accfloatS0_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmac_elem_64Dv64_7float16iS0_iDv64_u10__accfloatS1_(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -32853,7 +32853,7 @@ v64accfloat test_addmac_elem_64(v64float16 a, int sgn_x, v64float16 b,
                                 int sgn_y, v64accfloat acc1, v64accfloat acc2) {
   return addmac_elem_64(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmsc_elem_64Dv64_DF16_iS_iDv64_u10__accfloatS0_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmsc_elem_64Dv64_7float16iS0_iDv64_u10__accfloatS1_(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -32867,7 +32867,7 @@ v64accfloat test_addmsc_elem_64(v64float16 a, int sgn_x, v64float16 b,
                                 int sgn_y, v64accfloat acc1, v64accfloat acc2) {
   return addmsc_elem_64(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mul_elem_64_confDv64_DF16_S_i(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mul_elem_64_confDv64_7float16S0_i(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32878,7 +32878,7 @@ v64accfloat test_addmsc_elem_64(v64float16 a, int sgn_x, v64float16 b,
 v64accfloat test_mul_elem_64_conf(v64float16 a, v64float16 b, int sub_mul) {
   return mul_elem_64_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_negmul_elem_64_confDv64_DF16_S_i(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_negmul_elem_64_confDv64_7float16S0_i(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32889,7 +32889,7 @@ v64accfloat test_mul_elem_64_conf(v64float16 a, v64float16 b, int sub_mul) {
 v64accfloat test_negmul_elem_64_conf(v64float16 a, v64float16 b, int sub_mul) {
   return negmul_elem_64_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mac_elem_64_confDv64_DF16_S_Dv64_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mac_elem_64_confDv64_7float16S0_Dv64_u10__accfloatiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <64 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32904,7 +32904,7 @@ v64accfloat test_mac_elem_64_conf(v64float16 a, v64float16 b, v64accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return mac_elem_64_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_msc_elem_64_confDv64_DF16_S_Dv64_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_msc_elem_64_confDv64_7float16S0_Dv64_u10__accfloatiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <64 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32919,7 +32919,7 @@ v64accfloat test_msc_elem_64_conf(v64float16 a, v64float16 b, v64accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return msc_elem_64_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmac_elem_64_confDv64_DF16_S_Dv64_u10__accfloatS0_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmac_elem_64_confDv64_7float16S0_Dv64_u10__accfloatS1_iiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32939,7 +32939,7 @@ v64accfloat test_addmac_elem_64_conf(v64float16 a, v64float16 b,
   return addmac_elem_64_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmsc_elem_64_confDv64_DF16_S_Dv64_u10__accfloatS0_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmsc_elem_64_confDv64_7float16S0_Dv64_u10__accfloatS1_iiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32959,7 +32959,7 @@ v64accfloat test_addmsc_elem_64_conf(v64float16 a, v64float16 b,
   return addmsc_elem_64_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mul_elem_64_confDv64_DF16_iS_ii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mul_elem_64_confDv64_7float16iS0_ii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32975,7 +32975,7 @@ v64accfloat test_mul_elem_64_conf(v64float16 a, int sgn_x, v64float16 b,
                                   int sgn_y, int sub_mul) {
   return mul_elem_64_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_negmul_elem_64_confDv64_DF16_iS_ii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_negmul_elem_64_confDv64_7float16iS0_ii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -32991,7 +32991,7 @@ v64accfloat test_negmul_elem_64_conf(v64float16 a, int sgn_x, v64float16 b,
                                      int sgn_y, int sub_mul) {
   return negmul_elem_64_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mac_elem_64_confDv64_DF16_iS_iDv64_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mac_elem_64_confDv64_7float16iS0_iDv64_u10__accfloatiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -33011,7 +33011,7 @@ v64accfloat test_mac_elem_64_conf(v64float16 a, int sgn_x, v64float16 b,
                                   int sub_mul, int sub_acc1) {
   return mac_elem_64_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_msc_elem_64_confDv64_DF16_iS_iDv64_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_msc_elem_64_confDv64_7float16iS0_iDv64_u10__accfloatiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -33031,7 +33031,7 @@ v64accfloat test_msc_elem_64_conf(v64float16 a, int sgn_x, v64float16 b,
                                   int sub_mul, int sub_acc1) {
   return msc_elem_64_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmac_elem_64_confDv64_DF16_iS_iDv64_u10__accfloatS0_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmac_elem_64_confDv64_7float16iS0_iDv64_u10__accfloatS1_iiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -33055,7 +33055,7 @@ v64accfloat test_addmac_elem_64_conf(v64float16 a, int sgn_x, v64float16 b,
   return addmac_elem_64_conf(a, sgn_x, b, sgn_y, acc1, acc2, zero_acc1, sub_mul,
                              sub_acc1, sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmsc_elem_64_confDv64_DF16_iS_iDv64_u10__accfloatS0_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmsc_elem_64_confDv64_7float16iS0_iDv64_u10__accfloatS1_iiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -33082,7 +33082,7 @@ v64accfloat test_addmsc_elem_64_conf(v64float16 a, int sgn_x, v64float16 b,
 
 ;
 
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_elem_32Dv32_DF16_S_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_elem_32Dv32_7float16S0_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <32 x half> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.fp16.I512.ACC1024.bf.mul.conf(<32 x half> [[A]], <32 x half> [[B]], i32 60)
@@ -33091,7 +33091,7 @@ v64accfloat test_addmsc_elem_64_conf(v64float16 a, int sgn_x, v64float16 b,
 v32accfloat test_mul_elem_32(v32float16 a, v32float16 b) {
   return mul_elem_32(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_elem_32Dv32_DF16_S_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_elem_32Dv32_7float16S0_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <32 x half> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.fp16.I512.ACC1024.bf.negmul.conf(<32 x half> [[A]], <32 x half> [[B]], i32 60)
@@ -33100,7 +33100,7 @@ v32accfloat test_mul_elem_32(v32float16 a, v32float16 b) {
 v32accfloat test_negmul_elem_32(v32float16 a, v32float16 b) {
   return negmul_elem_32(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_elem_32Dv32_DF16_S_Dv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_elem_32Dv32_7float16S0_Dv32_u10__accfloat(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <32 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.fp16.I512.ACC1024.bf.mac.conf(<32 x half> [[A]], <32 x half> [[B]], <32 x float> [[ACC]], i32 60)
@@ -33109,7 +33109,7 @@ v32accfloat test_negmul_elem_32(v32float16 a, v32float16 b) {
 v32accfloat test_mac_elem_32(v32float16 a, v32float16 b, v32accfloat acc) {
   return mac_elem_32(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_elem_32Dv32_DF16_S_Dv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_elem_32Dv32_7float16S0_Dv32_u10__accfloat(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <32 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.fp16.I512.ACC1024.bf.msc.conf(<32 x half> [[A]], <32 x half> [[B]], <32 x float> [[ACC]], i32 60)
@@ -33118,7 +33118,7 @@ v32accfloat test_mac_elem_32(v32float16 a, v32float16 b, v32accfloat acc) {
 v32accfloat test_msc_elem_32(v32float16 a, v32float16 b, v32accfloat acc) {
   return msc_elem_32(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_elem_32Dv32_DF16_S_Dv32_u10__accfloatS0_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_elem_32Dv32_7float16S0_Dv32_u10__accfloatS1_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <32 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.fp16.I512.ACC1024.bf.addmac.conf(<32 x half> [[A]], <32 x half> [[B]], <32 x float> [[ACC1]], <32 x float> [[ACC2]], i32 60)
@@ -33128,7 +33128,7 @@ v32accfloat test_addmac_elem_32(v32float16 a, v32float16 b, v32accfloat acc1,
                                 v32accfloat acc2) {
   return addmac_elem_32(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_elem_32Dv32_DF16_S_Dv32_u10__accfloatS0_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_elem_32Dv32_7float16S0_Dv32_u10__accfloatS1_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <32 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.fp16.I512.ACC1024.bf.addmsc.conf(<32 x half> [[A]], <32 x half> [[B]], <32 x float> [[ACC1]], <32 x float> [[ACC2]], i32 60)
@@ -33138,7 +33138,7 @@ v32accfloat test_addmsc_elem_32(v32float16 a, v32float16 b, v32accfloat acc1,
                                 v32accfloat acc2) {
   return addmsc_elem_32(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_elem_32Dv32_DF16_iS_i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_elem_32Dv32_7float16iS0_i(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -33151,7 +33151,7 @@ v32accfloat test_addmsc_elem_32(v32float16 a, v32float16 b, v32accfloat acc1,
 v32accfloat test_mul_elem_32(v32float16 a, int sgn_x, v32float16 b, int sgn_y) {
   return mul_elem_32(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_elem_32Dv32_DF16_iS_i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_elem_32Dv32_7float16iS0_i(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -33165,7 +33165,7 @@ v32accfloat test_negmul_elem_32(v32float16 a, int sgn_x, v32float16 b,
                                 int sgn_y) {
   return negmul_elem_32(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_elem_32Dv32_DF16_iS_iDv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_elem_32Dv32_7float16iS0_iDv32_u10__accfloat(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -33179,7 +33179,7 @@ v32accfloat test_mac_elem_32(v32float16 a, int sgn_x, v32float16 b, int sgn_y,
                              v32accfloat acc) {
   return mac_elem_32(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_elem_32Dv32_DF16_iS_iDv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_elem_32Dv32_7float16iS0_iDv32_u10__accfloat(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -33193,7 +33193,7 @@ v32accfloat test_msc_elem_32(v32float16 a, int sgn_x, v32float16 b, int sgn_y,
                              v32accfloat acc) {
   return msc_elem_32(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_elem_32Dv32_DF16_iS_iDv32_u10__accfloatS0_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_elem_32Dv32_7float16iS0_iDv32_u10__accfloatS1_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -33207,7 +33207,7 @@ v32accfloat test_addmac_elem_32(v32float16 a, int sgn_x, v32float16 b,
                                 int sgn_y, v32accfloat acc1, v32accfloat acc2) {
   return addmac_elem_32(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_elem_32Dv32_DF16_iS_iDv32_u10__accfloatS0_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_elem_32Dv32_7float16iS0_iDv32_u10__accfloatS1_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -33221,7 +33221,7 @@ v32accfloat test_addmsc_elem_32(v32float16 a, int sgn_x, v32float16 b,
                                 int sgn_y, v32accfloat acc1, v32accfloat acc2) {
   return addmsc_elem_32(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_elem_32_confDv32_DF16_S_i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_elem_32_confDv32_7float16S0_i(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <32 x half> noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -33232,7 +33232,7 @@ v32accfloat test_addmsc_elem_32(v32float16 a, int sgn_x, v32float16 b,
 v32accfloat test_mul_elem_32_conf(v32float16 a, v32float16 b, int sub_mul) {
   return mul_elem_32_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_elem_32_confDv32_DF16_S_i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_elem_32_confDv32_7float16S0_i(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <32 x half> noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -33243,7 +33243,7 @@ v32accfloat test_mul_elem_32_conf(v32float16 a, v32float16 b, int sub_mul) {
 v32accfloat test_negmul_elem_32_conf(v32float16 a, v32float16 b, int sub_mul) {
   return negmul_elem_32_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_elem_32_confDv32_DF16_S_Dv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_elem_32_confDv32_7float16S0_Dv32_u10__accfloatiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <32 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -33258,7 +33258,7 @@ v32accfloat test_mac_elem_32_conf(v32float16 a, v32float16 b, v32accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return mac_elem_32_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_elem_32_confDv32_DF16_S_Dv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_elem_32_confDv32_7float16S0_Dv32_u10__accfloatiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <32 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -33273,7 +33273,7 @@ v32accfloat test_msc_elem_32_conf(v32float16 a, v32float16 b, v32accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return msc_elem_32_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_elem_32_confDv32_DF16_S_Dv32_u10__accfloatS0_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_elem_32_confDv32_7float16S0_Dv32_u10__accfloatS1_iiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <32 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -33293,7 +33293,7 @@ v32accfloat test_addmac_elem_32_conf(v32float16 a, v32float16 b,
   return addmac_elem_32_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_elem_32_confDv32_DF16_S_Dv32_u10__accfloatS0_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_elem_32_confDv32_7float16S0_Dv32_u10__accfloatS1_iiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <32 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -33313,7 +33313,7 @@ v32accfloat test_addmsc_elem_32_conf(v32float16 a, v32float16 b,
   return addmsc_elem_32_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_elem_32_confDv32_DF16_iS_ii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_elem_32_confDv32_7float16iS0_ii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -33329,7 +33329,7 @@ v32accfloat test_mul_elem_32_conf(v32float16 a, int sgn_x, v32float16 b,
                                   int sgn_y, int sub_mul) {
   return mul_elem_32_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_elem_32_confDv32_DF16_iS_ii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_elem_32_confDv32_7float16iS0_ii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -33345,7 +33345,7 @@ v32accfloat test_negmul_elem_32_conf(v32float16 a, int sgn_x, v32float16 b,
                                      int sgn_y, int sub_mul) {
   return negmul_elem_32_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_elem_32_confDv32_DF16_iS_iDv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_elem_32_confDv32_7float16iS0_iDv32_u10__accfloatiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -33365,7 +33365,7 @@ v32accfloat test_mac_elem_32_conf(v32float16 a, int sgn_x, v32float16 b,
                                   int sub_mul, int sub_acc1) {
   return mac_elem_32_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_elem_32_confDv32_DF16_iS_iDv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_elem_32_confDv32_7float16iS0_iDv32_u10__accfloatiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -33385,7 +33385,7 @@ v32accfloat test_msc_elem_32_conf(v32float16 a, int sgn_x, v32float16 b,
                                   int sub_mul, int sub_acc1) {
   return msc_elem_32_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_elem_32_confDv32_DF16_iS_iDv32_u10__accfloatS0_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_elem_32_confDv32_7float16iS0_iDv32_u10__accfloatS1_iiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -33409,7 +33409,7 @@ v32accfloat test_addmac_elem_32_conf(v32float16 a, int sgn_x, v32float16 b,
   return addmac_elem_32_conf(a, sgn_x, b, sgn_y, acc1, acc2, zero_acc1, sub_mul,
                              sub_acc1, sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_elem_32_confDv32_DF16_iS_iDv32_u10__accfloatS0_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_elem_32_confDv32_7float16iS0_iDv32_u10__accfloatS1_iiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <32 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -33436,7 +33436,7 @@ v32accfloat test_addmsc_elem_32_conf(v32float16 a, int sgn_x, v32float16 b,
 
 ;
 
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_4x8_8x8Dv32_DF16_Dv64_DF16_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_4x8_8x8Dv32_7float16Dv64_S_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.fp16.I1024.ACC1024.bf.mul.conf(<32 x half> [[A]], <64 x half> [[B]], i32 92)
@@ -33445,7 +33445,7 @@ v32accfloat test_addmsc_elem_32_conf(v32float16 a, int sgn_x, v32float16 b,
 v32accfloat test_mul_4x8_8x8(v32float16 a, v64float16 b) {
   return mul_4x8_8x8(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_4x8_8x8Dv32_DF16_Dv64_DF16_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_4x8_8x8Dv32_7float16Dv64_S_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.fp16.I1024.ACC1024.bf.negmul.conf(<32 x half> [[A]], <64 x half> [[B]], i32 92)
@@ -33454,7 +33454,7 @@ v32accfloat test_mul_4x8_8x8(v32float16 a, v64float16 b) {
 v32accfloat test_negmul_4x8_8x8(v32float16 a, v64float16 b) {
   return negmul_4x8_8x8(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_4x8_8x8Dv32_DF16_Dv64_DF16_Dv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_4x8_8x8Dv32_7float16Dv64_S_Dv32_u10__accfloat(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.fp16.I1024.ACC1024.bf.mac.conf(<32 x half> [[A]], <64 x half> [[B]], <32 x float> [[ACC]], i32 92)
@@ -33463,7 +33463,7 @@ v32accfloat test_negmul_4x8_8x8(v32float16 a, v64float16 b) {
 v32accfloat test_mac_4x8_8x8(v32float16 a, v64float16 b, v32accfloat acc) {
   return mac_4x8_8x8(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_4x8_8x8Dv32_DF16_Dv64_DF16_Dv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_4x8_8x8Dv32_7float16Dv64_S_Dv32_u10__accfloat(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.fp16.I1024.ACC1024.bf.msc.conf(<32 x half> [[A]], <64 x half> [[B]], <32 x float> [[ACC]], i32 92)
@@ -33472,7 +33472,7 @@ v32accfloat test_mac_4x8_8x8(v32float16 a, v64float16 b, v32accfloat acc) {
 v32accfloat test_msc_4x8_8x8(v32float16 a, v64float16 b, v32accfloat acc) {
   return msc_4x8_8x8(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_4x8_8x8Dv32_DF16_Dv64_DF16_Dv32_u10__accfloatS1_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_4x8_8x8Dv32_7float16Dv64_S_Dv32_u10__accfloatS2_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.fp16.I1024.ACC1024.bf.addmac.conf(<32 x half> [[A]], <64 x half> [[B]], <32 x float> [[ACC1]], <32 x float> [[ACC2]], i32 92)
@@ -33482,7 +33482,7 @@ v32accfloat test_addmac_4x8_8x8(v32float16 a, v64float16 b, v32accfloat acc1,
                                 v32accfloat acc2) {
   return addmac_4x8_8x8(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_4x8_8x8Dv32_DF16_Dv64_DF16_Dv32_u10__accfloatS1_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_4x8_8x8Dv32_7float16Dv64_S_Dv32_u10__accfloatS2_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.fp16.I1024.ACC1024.bf.addmsc.conf(<32 x half> [[A]], <64 x half> [[B]], <32 x float> [[ACC1]], <32 x float> [[ACC2]], i32 92)
@@ -33492,7 +33492,7 @@ v32accfloat test_addmsc_4x8_8x8(v32float16 a, v64float16 b, v32accfloat acc1,
                                 v32accfloat acc2) {
   return addmsc_4x8_8x8(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_4x8_8x8Dv32_DF16_iDv64_DF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_4x8_8x8Dv32_7float16iDv64_S_i(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -33505,7 +33505,7 @@ v32accfloat test_addmsc_4x8_8x8(v32float16 a, v64float16 b, v32accfloat acc1,
 v32accfloat test_mul_4x8_8x8(v32float16 a, int sgn_x, v64float16 b, int sgn_y) {
   return mul_4x8_8x8(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_4x8_8x8Dv32_DF16_iDv64_DF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_4x8_8x8Dv32_7float16iDv64_S_i(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -33519,7 +33519,7 @@ v32accfloat test_negmul_4x8_8x8(v32float16 a, int sgn_x, v64float16 b,
                                 int sgn_y) {
   return negmul_4x8_8x8(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_4x8_8x8Dv32_DF16_iDv64_DF16_iDv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_4x8_8x8Dv32_7float16iDv64_S_iDv32_u10__accfloat(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -33533,7 +33533,7 @@ v32accfloat test_mac_4x8_8x8(v32float16 a, int sgn_x, v64float16 b, int sgn_y,
                              v32accfloat acc) {
   return mac_4x8_8x8(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_4x8_8x8Dv32_DF16_iDv64_DF16_iDv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_4x8_8x8Dv32_7float16iDv64_S_iDv32_u10__accfloat(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -33547,7 +33547,7 @@ v32accfloat test_msc_4x8_8x8(v32float16 a, int sgn_x, v64float16 b, int sgn_y,
                              v32accfloat acc) {
   return msc_4x8_8x8(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_4x8_8x8Dv32_DF16_iDv64_DF16_iDv32_u10__accfloatS1_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_4x8_8x8Dv32_7float16iDv64_S_iDv32_u10__accfloatS2_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -33561,7 +33561,7 @@ v32accfloat test_addmac_4x8_8x8(v32float16 a, int sgn_x, v64float16 b,
                                 int sgn_y, v32accfloat acc1, v32accfloat acc2) {
   return addmac_4x8_8x8(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_4x8_8x8Dv32_DF16_iDv64_DF16_iDv32_u10__accfloatS1_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_4x8_8x8Dv32_7float16iDv64_S_iDv32_u10__accfloatS2_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -33575,7 +33575,7 @@ v32accfloat test_addmsc_4x8_8x8(v32float16 a, int sgn_x, v64float16 b,
                                 int sgn_y, v32accfloat acc1, v32accfloat acc2) {
   return addmsc_4x8_8x8(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_4x8_8x8_confDv32_DF16_Dv64_DF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_4x8_8x8_confDv32_7float16Dv64_S_i(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -33586,7 +33586,7 @@ v32accfloat test_addmsc_4x8_8x8(v32float16 a, int sgn_x, v64float16 b,
 v32accfloat test_mul_4x8_8x8_conf(v32float16 a, v64float16 b, int sub_mul) {
   return mul_4x8_8x8_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_4x8_8x8_confDv32_DF16_Dv64_DF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_4x8_8x8_confDv32_7float16Dv64_S_i(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -33597,7 +33597,7 @@ v32accfloat test_mul_4x8_8x8_conf(v32float16 a, v64float16 b, int sub_mul) {
 v32accfloat test_negmul_4x8_8x8_conf(v32float16 a, v64float16 b, int sub_mul) {
   return negmul_4x8_8x8_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_4x8_8x8_confDv32_DF16_Dv64_DF16_Dv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_4x8_8x8_confDv32_7float16Dv64_S_Dv32_u10__accfloatiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -33612,7 +33612,7 @@ v32accfloat test_mac_4x8_8x8_conf(v32float16 a, v64float16 b, v32accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return mac_4x8_8x8_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_4x8_8x8_confDv32_DF16_Dv64_DF16_Dv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_4x8_8x8_confDv32_7float16Dv64_S_Dv32_u10__accfloatiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -33627,7 +33627,7 @@ v32accfloat test_msc_4x8_8x8_conf(v32float16 a, v64float16 b, v32accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return msc_4x8_8x8_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_4x8_8x8_confDv32_DF16_Dv64_DF16_Dv32_u10__accfloatS1_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_4x8_8x8_confDv32_7float16Dv64_S_Dv32_u10__accfloatS2_iiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -33647,7 +33647,7 @@ v32accfloat test_addmac_4x8_8x8_conf(v32float16 a, v64float16 b,
   return addmac_4x8_8x8_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_4x8_8x8_confDv32_DF16_Dv64_DF16_Dv32_u10__accfloatS1_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_4x8_8x8_confDv32_7float16Dv64_S_Dv32_u10__accfloatS2_iiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], <64 x half> noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -33667,7 +33667,7 @@ v32accfloat test_addmsc_4x8_8x8_conf(v32float16 a, v64float16 b,
   return addmsc_4x8_8x8_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_4x8_8x8_confDv32_DF16_iDv64_DF16_ii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_4x8_8x8_confDv32_7float16iDv64_S_ii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -33683,7 +33683,7 @@ v32accfloat test_mul_4x8_8x8_conf(v32float16 a, int sgn_x, v64float16 b,
                                   int sgn_y, int sub_mul) {
   return mul_4x8_8x8_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_4x8_8x8_confDv32_DF16_iDv64_DF16_ii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_4x8_8x8_confDv32_7float16iDv64_S_ii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -33699,7 +33699,7 @@ v32accfloat test_negmul_4x8_8x8_conf(v32float16 a, int sgn_x, v64float16 b,
                                      int sgn_y, int sub_mul) {
   return negmul_4x8_8x8_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_4x8_8x8_confDv32_DF16_iDv64_DF16_iDv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_4x8_8x8_confDv32_7float16iDv64_S_iDv32_u10__accfloatiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -33719,7 +33719,7 @@ v32accfloat test_mac_4x8_8x8_conf(v32float16 a, int sgn_x, v64float16 b,
                                   int sub_mul, int sub_acc1) {
   return mac_4x8_8x8_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_4x8_8x8_confDv32_DF16_iDv64_DF16_iDv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_4x8_8x8_confDv32_7float16iDv64_S_iDv32_u10__accfloatiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -33739,7 +33739,7 @@ v32accfloat test_msc_4x8_8x8_conf(v32float16 a, int sgn_x, v64float16 b,
                                   int sub_mul, int sub_acc1) {
   return msc_4x8_8x8_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_4x8_8x8_confDv32_DF16_iDv64_DF16_iDv32_u10__accfloatS1_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_4x8_8x8_confDv32_7float16iDv64_S_iDv32_u10__accfloatS2_iiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -33763,7 +33763,7 @@ v32accfloat test_addmac_4x8_8x8_conf(v32float16 a, int sgn_x, v64float16 b,
   return addmac_4x8_8x8_conf(a, sgn_x, b, sgn_y, acc1, acc2, zero_acc1, sub_mul,
                              sub_acc1, sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_4x8_8x8_confDv32_DF16_iDv64_DF16_iDv32_u10__accfloatS1_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_4x8_8x8_confDv32_7float16iDv64_S_iDv32_u10__accfloatS2_iiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], <64 x half> noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -34144,7 +34144,7 @@ v32accfloat test_addmsc_elem_32_conf(v32bfloat16 a, int sgn_x, bfloat16 b,
 
 ;
 
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_elem_32Dv32_8bfloat16DF16_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_elem_32Dv32_8bfloat167float16(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], half noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.bf16.I512.fp16.ACC1024.bf.mul.conf(<32 x bfloat> [[A]], half [[B]], i32 16777276)
@@ -34153,7 +34153,7 @@ v32accfloat test_addmsc_elem_32_conf(v32bfloat16 a, int sgn_x, bfloat16 b,
 v32accfloat test_mul_elem_32(v32bfloat16 a, float16 b) {
   return mul_elem_32(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_elem_32Dv32_8bfloat16DF16_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_elem_32Dv32_8bfloat167float16(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], half noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.bf16.I512.fp16.ACC1024.bf.negmul.conf(<32 x bfloat> [[A]], half [[B]], i32 16777276)
@@ -34162,7 +34162,7 @@ v32accfloat test_mul_elem_32(v32bfloat16 a, float16 b) {
 v32accfloat test_negmul_elem_32(v32bfloat16 a, float16 b) {
   return negmul_elem_32(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_elem_32Dv32_8bfloat16DF16_Dv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_elem_32Dv32_8bfloat167float16Dv32_u10__accfloat(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], half noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.bf16.I512.fp16.ACC1024.bf.mac.conf(<32 x bfloat> [[A]], half [[B]], <32 x float> [[ACC]], i32 16777276)
@@ -34171,7 +34171,7 @@ v32accfloat test_negmul_elem_32(v32bfloat16 a, float16 b) {
 v32accfloat test_mac_elem_32(v32bfloat16 a, float16 b, v32accfloat acc) {
   return mac_elem_32(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_elem_32Dv32_8bfloat16DF16_Dv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_elem_32Dv32_8bfloat167float16Dv32_u10__accfloat(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], half noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.bf16.I512.fp16.ACC1024.bf.msc.conf(<32 x bfloat> [[A]], half [[B]], <32 x float> [[ACC]], i32 16777276)
@@ -34180,7 +34180,7 @@ v32accfloat test_mac_elem_32(v32bfloat16 a, float16 b, v32accfloat acc) {
 v32accfloat test_msc_elem_32(v32bfloat16 a, float16 b, v32accfloat acc) {
   return msc_elem_32(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_elem_32Dv32_8bfloat16DF16_Dv32_u10__accfloatS1_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_elem_32Dv32_8bfloat167float16Dv32_u10__accfloatS2_(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], half noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.bf16.I512.fp16.ACC1024.bf.addmac.conf(<32 x bfloat> [[A]], half [[B]], <32 x float> [[ACC1]], <32 x float> [[ACC2]], i32 16777276)
@@ -34190,7 +34190,7 @@ v32accfloat test_addmac_elem_32(v32bfloat16 a, float16 b, v32accfloat acc1,
                                 v32accfloat acc2) {
   return addmac_elem_32(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_elem_32Dv32_8bfloat16DF16_Dv32_u10__accfloatS1_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_elem_32Dv32_8bfloat167float16Dv32_u10__accfloatS2_(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], half noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.bf16.I512.fp16.ACC1024.bf.addmsc.conf(<32 x bfloat> [[A]], half [[B]], <32 x float> [[ACC1]], <32 x float> [[ACC2]], i32 16777276)
@@ -34200,7 +34200,7 @@ v32accfloat test_addmsc_elem_32(v32bfloat16 a, float16 b, v32accfloat acc1,
                                 v32accfloat acc2) {
   return addmsc_elem_32(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_elem_32Dv32_8bfloat16iDF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_elem_32Dv32_8bfloat16i7float16i(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -34213,7 +34213,7 @@ v32accfloat test_addmsc_elem_32(v32bfloat16 a, float16 b, v32accfloat acc1,
 v32accfloat test_mul_elem_32(v32bfloat16 a, int sgn_x, float16 b, int sgn_y) {
   return mul_elem_32(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_elem_32Dv32_8bfloat16iDF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_elem_32Dv32_8bfloat16i7float16i(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -34227,7 +34227,7 @@ v32accfloat test_negmul_elem_32(v32bfloat16 a, int sgn_x, float16 b,
                                 int sgn_y) {
   return negmul_elem_32(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_elem_32Dv32_8bfloat16iDF16_iDv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_elem_32Dv32_8bfloat16i7float16iDv32_u10__accfloat(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -34241,7 +34241,7 @@ v32accfloat test_mac_elem_32(v32bfloat16 a, int sgn_x, float16 b, int sgn_y,
                              v32accfloat acc) {
   return mac_elem_32(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_elem_32Dv32_8bfloat16iDF16_iDv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_elem_32Dv32_8bfloat16i7float16iDv32_u10__accfloat(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -34255,7 +34255,7 @@ v32accfloat test_msc_elem_32(v32bfloat16 a, int sgn_x, float16 b, int sgn_y,
                              v32accfloat acc) {
   return msc_elem_32(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_elem_32Dv32_8bfloat16iDF16_iDv32_u10__accfloatS1_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_elem_32Dv32_8bfloat16i7float16iDv32_u10__accfloatS2_(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -34269,7 +34269,7 @@ v32accfloat test_addmac_elem_32(v32bfloat16 a, int sgn_x, float16 b, int sgn_y,
                                 v32accfloat acc1, v32accfloat acc2) {
   return addmac_elem_32(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_elem_32Dv32_8bfloat16iDF16_iDv32_u10__accfloatS1_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_elem_32Dv32_8bfloat16i7float16iDv32_u10__accfloatS2_(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -34283,7 +34283,7 @@ v32accfloat test_addmsc_elem_32(v32bfloat16 a, int sgn_x, float16 b, int sgn_y,
                                 v32accfloat acc1, v32accfloat acc2) {
   return addmsc_elem_32(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_elem_32_confDv32_8bfloat16DF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_elem_32_confDv32_8bfloat167float16i(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], half noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -34294,7 +34294,7 @@ v32accfloat test_addmsc_elem_32(v32bfloat16 a, int sgn_x, float16 b, int sgn_y,
 v32accfloat test_mul_elem_32_conf(v32bfloat16 a, float16 b, int sub_mul) {
   return mul_elem_32_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_elem_32_confDv32_8bfloat16DF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_elem_32_confDv32_8bfloat167float16i(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], half noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -34305,7 +34305,7 @@ v32accfloat test_mul_elem_32_conf(v32bfloat16 a, float16 b, int sub_mul) {
 v32accfloat test_negmul_elem_32_conf(v32bfloat16 a, float16 b, int sub_mul) {
   return negmul_elem_32_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_elem_32_confDv32_8bfloat16DF16_Dv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_elem_32_confDv32_8bfloat167float16Dv32_u10__accfloatiii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], half noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -34320,7 +34320,7 @@ v32accfloat test_mac_elem_32_conf(v32bfloat16 a, float16 b, v32accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return mac_elem_32_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_elem_32_confDv32_8bfloat16DF16_Dv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_elem_32_confDv32_8bfloat167float16Dv32_u10__accfloatiii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], half noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -34335,7 +34335,7 @@ v32accfloat test_msc_elem_32_conf(v32bfloat16 a, float16 b, v32accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return msc_elem_32_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_elem_32_confDv32_8bfloat16DF16_Dv32_u10__accfloatS1_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_elem_32_confDv32_8bfloat167float16Dv32_u10__accfloatS2_iiii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], half noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -34354,7 +34354,7 @@ v32accfloat test_addmac_elem_32_conf(v32bfloat16 a, float16 b, v32accfloat acc1,
   return addmac_elem_32_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_elem_32_confDv32_8bfloat16DF16_Dv32_u10__accfloatS1_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_elem_32_confDv32_8bfloat167float16Dv32_u10__accfloatS2_iiii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], half noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -34373,7 +34373,7 @@ v32accfloat test_addmsc_elem_32_conf(v32bfloat16 a, float16 b, v32accfloat acc1,
   return addmsc_elem_32_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_elem_32_confDv32_8bfloat16iDF16_ii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_elem_32_confDv32_8bfloat16i7float16ii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -34389,7 +34389,7 @@ v32accfloat test_mul_elem_32_conf(v32bfloat16 a, int sgn_x, float16 b,
                                   int sgn_y, int sub_mul) {
   return mul_elem_32_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_elem_32_confDv32_8bfloat16iDF16_ii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_elem_32_confDv32_8bfloat16i7float16ii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -34405,7 +34405,7 @@ v32accfloat test_negmul_elem_32_conf(v32bfloat16 a, int sgn_x, float16 b,
                                      int sgn_y, int sub_mul) {
   return negmul_elem_32_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_elem_32_confDv32_8bfloat16iDF16_iDv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_elem_32_confDv32_8bfloat16i7float16iDv32_u10__accfloatiii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -34425,7 +34425,7 @@ v32accfloat test_mac_elem_32_conf(v32bfloat16 a, int sgn_x, float16 b,
                                   int sub_mul, int sub_acc1) {
   return mac_elem_32_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_elem_32_confDv32_8bfloat16iDF16_iDv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_elem_32_confDv32_8bfloat16i7float16iDv32_u10__accfloatiii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -34445,7 +34445,7 @@ v32accfloat test_msc_elem_32_conf(v32bfloat16 a, int sgn_x, float16 b,
                                   int sub_mul, int sub_acc1) {
   return msc_elem_32_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_elem_32_confDv32_8bfloat16iDF16_iDv32_u10__accfloatS1_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_elem_32_confDv32_8bfloat16i7float16iDv32_u10__accfloatS2_iiii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -34469,7 +34469,7 @@ v32accfloat test_addmac_elem_32_conf(v32bfloat16 a, int sgn_x, float16 b,
   return addmac_elem_32_conf(a, sgn_x, b, sgn_y, acc1, acc2, zero_acc1, sub_mul,
                              sub_acc1, sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_elem_32_confDv32_8bfloat16iDF16_iDv32_u10__accfloatS1_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_elem_32_confDv32_8bfloat16i7float16iDv32_u10__accfloatS2_iiii(
 // CHECK-SAME: <32 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -34496,7 +34496,7 @@ v32accfloat test_addmsc_elem_32_conf(v32bfloat16 a, int sgn_x, float16 b,
 
 ;
 
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_elem_32Dv32_DF16_8bfloat16(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_elem_32Dv32_7float168bfloat16(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], bfloat noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.bf16.ACC1024.bf.mul.conf(<32 x half> [[A]], bfloat [[B]], i32 33554492)
@@ -34505,7 +34505,7 @@ v32accfloat test_addmsc_elem_32_conf(v32bfloat16 a, int sgn_x, float16 b,
 v32accfloat test_mul_elem_32(v32float16 a, bfloat16 b) {
   return mul_elem_32(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_elem_32Dv32_DF16_8bfloat16(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_elem_32Dv32_7float168bfloat16(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], bfloat noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.bf16.ACC1024.bf.negmul.conf(<32 x half> [[A]], bfloat [[B]], i32 33554492)
@@ -34514,7 +34514,7 @@ v32accfloat test_mul_elem_32(v32float16 a, bfloat16 b) {
 v32accfloat test_negmul_elem_32(v32float16 a, bfloat16 b) {
   return negmul_elem_32(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_elem_32Dv32_DF16_8bfloat16Dv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_elem_32Dv32_7float168bfloat16Dv32_u10__accfloat(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], bfloat noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.bf16.ACC1024.bf.mac.conf(<32 x half> [[A]], bfloat [[B]], <32 x float> [[ACC]], i32 33554492)
@@ -34523,7 +34523,7 @@ v32accfloat test_negmul_elem_32(v32float16 a, bfloat16 b) {
 v32accfloat test_mac_elem_32(v32float16 a, bfloat16 b, v32accfloat acc) {
   return mac_elem_32(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_elem_32Dv32_DF16_8bfloat16Dv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_elem_32Dv32_7float168bfloat16Dv32_u10__accfloat(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], bfloat noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.bf16.ACC1024.bf.msc.conf(<32 x half> [[A]], bfloat [[B]], <32 x float> [[ACC]], i32 33554492)
@@ -34532,7 +34532,7 @@ v32accfloat test_mac_elem_32(v32float16 a, bfloat16 b, v32accfloat acc) {
 v32accfloat test_msc_elem_32(v32float16 a, bfloat16 b, v32accfloat acc) {
   return msc_elem_32(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_elem_32Dv32_DF16_8bfloat16Dv32_u10__accfloatS1_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_elem_32Dv32_7float168bfloat16Dv32_u10__accfloatS2_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], bfloat noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.bf16.ACC1024.bf.addmac.conf(<32 x half> [[A]], bfloat [[B]], <32 x float> [[ACC1]], <32 x float> [[ACC2]], i32 33554492)
@@ -34542,7 +34542,7 @@ v32accfloat test_addmac_elem_32(v32float16 a, bfloat16 b, v32accfloat acc1,
                                 v32accfloat acc2) {
   return addmac_elem_32(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_elem_32Dv32_DF16_8bfloat16Dv32_u10__accfloatS1_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_elem_32Dv32_7float168bfloat16Dv32_u10__accfloatS2_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], bfloat noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.bf16.ACC1024.bf.addmsc.conf(<32 x half> [[A]], bfloat [[B]], <32 x float> [[ACC1]], <32 x float> [[ACC2]], i32 33554492)
@@ -34552,7 +34552,7 @@ v32accfloat test_addmsc_elem_32(v32float16 a, bfloat16 b, v32accfloat acc1,
                                 v32accfloat acc2) {
   return addmsc_elem_32(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_elem_32Dv32_DF16_i8bfloat16i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_elem_32Dv32_7float16i8bfloat16i(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], bfloat noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -34565,7 +34565,7 @@ v32accfloat test_addmsc_elem_32(v32float16 a, bfloat16 b, v32accfloat acc1,
 v32accfloat test_mul_elem_32(v32float16 a, int sgn_x, bfloat16 b, int sgn_y) {
   return mul_elem_32(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_elem_32Dv32_DF16_i8bfloat16i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_elem_32Dv32_7float16i8bfloat16i(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], bfloat noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -34579,7 +34579,7 @@ v32accfloat test_negmul_elem_32(v32float16 a, int sgn_x, bfloat16 b,
                                 int sgn_y) {
   return negmul_elem_32(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_elem_32Dv32_DF16_i8bfloat16iDv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_elem_32Dv32_7float16i8bfloat16iDv32_u10__accfloat(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], bfloat noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -34593,7 +34593,7 @@ v32accfloat test_mac_elem_32(v32float16 a, int sgn_x, bfloat16 b, int sgn_y,
                              v32accfloat acc) {
   return mac_elem_32(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_elem_32Dv32_DF16_i8bfloat16iDv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_elem_32Dv32_7float16i8bfloat16iDv32_u10__accfloat(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], bfloat noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -34607,7 +34607,7 @@ v32accfloat test_msc_elem_32(v32float16 a, int sgn_x, bfloat16 b, int sgn_y,
                              v32accfloat acc) {
   return msc_elem_32(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_elem_32Dv32_DF16_i8bfloat16iDv32_u10__accfloatS1_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_elem_32Dv32_7float16i8bfloat16iDv32_u10__accfloatS2_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], bfloat noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -34621,7 +34621,7 @@ v32accfloat test_addmac_elem_32(v32float16 a, int sgn_x, bfloat16 b, int sgn_y,
                                 v32accfloat acc1, v32accfloat acc2) {
   return addmac_elem_32(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_elem_32Dv32_DF16_i8bfloat16iDv32_u10__accfloatS1_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_elem_32Dv32_7float16i8bfloat16iDv32_u10__accfloatS2_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], bfloat noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -34635,7 +34635,7 @@ v32accfloat test_addmsc_elem_32(v32float16 a, int sgn_x, bfloat16 b, int sgn_y,
                                 v32accfloat acc1, v32accfloat acc2) {
   return addmsc_elem_32(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_elem_32_confDv32_DF16_8bfloat16i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_elem_32_confDv32_7float168bfloat16i(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], bfloat noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -34646,7 +34646,7 @@ v32accfloat test_addmsc_elem_32(v32float16 a, int sgn_x, bfloat16 b, int sgn_y,
 v32accfloat test_mul_elem_32_conf(v32float16 a, bfloat16 b, int sub_mul) {
   return mul_elem_32_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_elem_32_confDv32_DF16_8bfloat16i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_elem_32_confDv32_7float168bfloat16i(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], bfloat noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -34657,7 +34657,7 @@ v32accfloat test_mul_elem_32_conf(v32float16 a, bfloat16 b, int sub_mul) {
 v32accfloat test_negmul_elem_32_conf(v32float16 a, bfloat16 b, int sub_mul) {
   return negmul_elem_32_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_elem_32_confDv32_DF16_8bfloat16Dv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_elem_32_confDv32_7float168bfloat16Dv32_u10__accfloatiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], bfloat noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -34672,7 +34672,7 @@ v32accfloat test_mac_elem_32_conf(v32float16 a, bfloat16 b, v32accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return mac_elem_32_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_elem_32_confDv32_DF16_8bfloat16Dv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_elem_32_confDv32_7float168bfloat16Dv32_u10__accfloatiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], bfloat noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -34687,7 +34687,7 @@ v32accfloat test_msc_elem_32_conf(v32float16 a, bfloat16 b, v32accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return msc_elem_32_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_elem_32_confDv32_DF16_8bfloat16Dv32_u10__accfloatS1_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_elem_32_confDv32_7float168bfloat16Dv32_u10__accfloatS2_iiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], bfloat noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -34706,7 +34706,7 @@ v32accfloat test_addmac_elem_32_conf(v32float16 a, bfloat16 b, v32accfloat acc1,
   return addmac_elem_32_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_elem_32_confDv32_DF16_8bfloat16Dv32_u10__accfloatS1_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_elem_32_confDv32_7float168bfloat16Dv32_u10__accfloatS2_iiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], bfloat noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -34725,7 +34725,7 @@ v32accfloat test_addmsc_elem_32_conf(v32float16 a, bfloat16 b, v32accfloat acc1,
   return addmsc_elem_32_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_elem_32_confDv32_DF16_i8bfloat16ii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_elem_32_confDv32_7float16i8bfloat16ii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], bfloat noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -34741,7 +34741,7 @@ v32accfloat test_mul_elem_32_conf(v32float16 a, int sgn_x, bfloat16 b,
                                   int sgn_y, int sub_mul) {
   return mul_elem_32_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_elem_32_confDv32_DF16_i8bfloat16ii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_elem_32_confDv32_7float16i8bfloat16ii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], bfloat noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -34757,7 +34757,7 @@ v32accfloat test_negmul_elem_32_conf(v32float16 a, int sgn_x, bfloat16 b,
                                      int sgn_y, int sub_mul) {
   return negmul_elem_32_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_elem_32_confDv32_DF16_i8bfloat16iDv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_elem_32_confDv32_7float16i8bfloat16iDv32_u10__accfloatiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], bfloat noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -34777,7 +34777,7 @@ v32accfloat test_mac_elem_32_conf(v32float16 a, int sgn_x, bfloat16 b,
                                   int sub_mul, int sub_acc1) {
   return mac_elem_32_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_elem_32_confDv32_DF16_i8bfloat16iDv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_elem_32_confDv32_7float16i8bfloat16iDv32_u10__accfloatiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], bfloat noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -34797,7 +34797,7 @@ v32accfloat test_msc_elem_32_conf(v32float16 a, int sgn_x, bfloat16 b,
                                   int sub_mul, int sub_acc1) {
   return msc_elem_32_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_elem_32_confDv32_DF16_i8bfloat16iDv32_u10__accfloatS1_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_elem_32_confDv32_7float16i8bfloat16iDv32_u10__accfloatS2_iiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], bfloat noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -34821,7 +34821,7 @@ v32accfloat test_addmac_elem_32_conf(v32float16 a, int sgn_x, bfloat16 b,
   return addmac_elem_32_conf(a, sgn_x, b, sgn_y, acc1, acc2, zero_acc1, sub_mul,
                              sub_acc1, sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_elem_32_confDv32_DF16_i8bfloat16iDv32_u10__accfloatS1_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_elem_32_confDv32_7float16i8bfloat16iDv32_u10__accfloatS2_iiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], bfloat noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -34848,7 +34848,7 @@ v32accfloat test_addmsc_elem_32_conf(v32float16 a, int sgn_x, bfloat16 b,
 
 ;
 
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_elem_32Dv32_DF16_DF16_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_elem_32Dv32_7float16S_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], half noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.fp16.ACC1024.bf.mul.conf(<32 x half> [[A]], half [[B]], i32 60)
@@ -34857,7 +34857,7 @@ v32accfloat test_addmsc_elem_32_conf(v32float16 a, int sgn_x, bfloat16 b,
 v32accfloat test_mul_elem_32(v32float16 a, float16 b) {
   return mul_elem_32(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_elem_32Dv32_DF16_DF16_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_elem_32Dv32_7float16S_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], half noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.fp16.ACC1024.bf.negmul.conf(<32 x half> [[A]], half [[B]], i32 60)
@@ -34866,7 +34866,7 @@ v32accfloat test_mul_elem_32(v32float16 a, float16 b) {
 v32accfloat test_negmul_elem_32(v32float16 a, float16 b) {
   return negmul_elem_32(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_elem_32Dv32_DF16_DF16_Dv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_elem_32Dv32_7float16S_Dv32_u10__accfloat(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], half noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.fp16.ACC1024.bf.mac.conf(<32 x half> [[A]], half [[B]], <32 x float> [[ACC]], i32 60)
@@ -34875,7 +34875,7 @@ v32accfloat test_negmul_elem_32(v32float16 a, float16 b) {
 v32accfloat test_mac_elem_32(v32float16 a, float16 b, v32accfloat acc) {
   return mac_elem_32(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_elem_32Dv32_DF16_DF16_Dv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_elem_32Dv32_7float16S_Dv32_u10__accfloat(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], half noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.fp16.ACC1024.bf.msc.conf(<32 x half> [[A]], half [[B]], <32 x float> [[ACC]], i32 60)
@@ -34884,7 +34884,7 @@ v32accfloat test_mac_elem_32(v32float16 a, float16 b, v32accfloat acc) {
 v32accfloat test_msc_elem_32(v32float16 a, float16 b, v32accfloat acc) {
   return msc_elem_32(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_elem_32Dv32_DF16_DF16_Dv32_u10__accfloatS0_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_elem_32Dv32_7float16S_Dv32_u10__accfloatS1_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], half noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.fp16.ACC1024.bf.addmac.conf(<32 x half> [[A]], half [[B]], <32 x float> [[ACC1]], <32 x float> [[ACC2]], i32 60)
@@ -34894,7 +34894,7 @@ v32accfloat test_addmac_elem_32(v32float16 a, float16 b, v32accfloat acc1,
                                 v32accfloat acc2) {
   return addmac_elem_32(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_elem_32Dv32_DF16_DF16_Dv32_u10__accfloatS0_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_elem_32Dv32_7float16S_Dv32_u10__accfloatS1_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], half noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2ps.fp16.I512.fp16.ACC1024.bf.addmsc.conf(<32 x half> [[A]], half [[B]], <32 x float> [[ACC1]], <32 x float> [[ACC2]], i32 60)
@@ -34904,7 +34904,7 @@ v32accfloat test_addmsc_elem_32(v32float16 a, float16 b, v32accfloat acc1,
                                 v32accfloat acc2) {
   return addmsc_elem_32(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_elem_32Dv32_DF16_iDF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mul_elem_32Dv32_7float16iS_i(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -34917,7 +34917,7 @@ v32accfloat test_addmsc_elem_32(v32float16 a, float16 b, v32accfloat acc1,
 v32accfloat test_mul_elem_32(v32float16 a, int sgn_x, float16 b, int sgn_y) {
   return mul_elem_32(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_elem_32Dv32_DF16_iDF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_negmul_elem_32Dv32_7float16iS_i(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -34930,7 +34930,7 @@ v32accfloat test_mul_elem_32(v32float16 a, int sgn_x, float16 b, int sgn_y) {
 v32accfloat test_negmul_elem_32(v32float16 a, int sgn_x, float16 b, int sgn_y) {
   return negmul_elem_32(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_elem_32Dv32_DF16_iDF16_iDv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_mac_elem_32Dv32_7float16iS_iDv32_u10__accfloat(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -34944,7 +34944,7 @@ v32accfloat test_mac_elem_32(v32float16 a, int sgn_x, float16 b, int sgn_y,
                              v32accfloat acc) {
   return mac_elem_32(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_elem_32Dv32_DF16_iDF16_iDv32_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z16test_msc_elem_32Dv32_7float16iS_iDv32_u10__accfloat(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -34958,7 +34958,7 @@ v32accfloat test_msc_elem_32(v32float16 a, int sgn_x, float16 b, int sgn_y,
                              v32accfloat acc) {
   return msc_elem_32(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_elem_32Dv32_DF16_iDF16_iDv32_u10__accfloatS0_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmac_elem_32Dv32_7float16iS_iDv32_u10__accfloatS1_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -34972,7 +34972,7 @@ v32accfloat test_addmac_elem_32(v32float16 a, int sgn_x, float16 b, int sgn_y,
                                 v32accfloat acc1, v32accfloat acc2) {
   return addmac_elem_32(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_elem_32Dv32_DF16_iDF16_iDv32_u10__accfloatS0_(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z19test_addmsc_elem_32Dv32_7float16iS_iDv32_u10__accfloatS1_(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -34986,7 +34986,7 @@ v32accfloat test_addmsc_elem_32(v32float16 a, int sgn_x, float16 b, int sgn_y,
                                 v32accfloat acc1, v32accfloat acc2) {
   return addmsc_elem_32(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_elem_32_confDv32_DF16_DF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_elem_32_confDv32_7float16S_i(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], half noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -34997,7 +34997,7 @@ v32accfloat test_addmsc_elem_32(v32float16 a, int sgn_x, float16 b, int sgn_y,
 v32accfloat test_mul_elem_32_conf(v32float16 a, float16 b, int sub_mul) {
   return mul_elem_32_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_elem_32_confDv32_DF16_DF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_elem_32_confDv32_7float16S_i(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], half noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -35008,7 +35008,7 @@ v32accfloat test_mul_elem_32_conf(v32float16 a, float16 b, int sub_mul) {
 v32accfloat test_negmul_elem_32_conf(v32float16 a, float16 b, int sub_mul) {
   return negmul_elem_32_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_elem_32_confDv32_DF16_DF16_Dv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_elem_32_confDv32_7float16S_Dv32_u10__accfloatiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], half noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -35023,7 +35023,7 @@ v32accfloat test_mac_elem_32_conf(v32float16 a, float16 b, v32accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return mac_elem_32_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_elem_32_confDv32_DF16_DF16_Dv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_elem_32_confDv32_7float16S_Dv32_u10__accfloatiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], half noundef [[B:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -35038,7 +35038,7 @@ v32accfloat test_msc_elem_32_conf(v32float16 a, float16 b, v32accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return msc_elem_32_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_elem_32_confDv32_DF16_DF16_Dv32_u10__accfloatS0_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_elem_32_confDv32_7float16S_Dv32_u10__accfloatS1_iiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], half noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -35057,7 +35057,7 @@ v32accfloat test_addmac_elem_32_conf(v32float16 a, float16 b, v32accfloat acc1,
   return addmac_elem_32_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_elem_32_confDv32_DF16_DF16_Dv32_u10__accfloatS0_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_elem_32_confDv32_7float16S_Dv32_u10__accfloatS1_iiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], half noundef [[B:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -35076,7 +35076,7 @@ v32accfloat test_addmsc_elem_32_conf(v32float16 a, float16 b, v32accfloat acc1,
   return addmsc_elem_32_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_elem_32_confDv32_DF16_iDF16_ii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mul_elem_32_confDv32_7float16iS_ii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -35092,7 +35092,7 @@ v32accfloat test_mul_elem_32_conf(v32float16 a, int sgn_x, float16 b, int sgn_y,
                                   int sub_mul) {
   return mul_elem_32_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_elem_32_confDv32_DF16_iDF16_ii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_negmul_elem_32_confDv32_7float16iS_ii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -35108,7 +35108,7 @@ v32accfloat test_negmul_elem_32_conf(v32float16 a, int sgn_x, float16 b,
                                      int sgn_y, int sub_mul) {
   return negmul_elem_32_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_elem_32_confDv32_DF16_iDF16_iDv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_mac_elem_32_confDv32_7float16iS_iDv32_u10__accfloatiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -35128,7 +35128,7 @@ v32accfloat test_mac_elem_32_conf(v32float16 a, int sgn_x, float16 b, int sgn_y,
                                   int sub_acc1) {
   return mac_elem_32_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_elem_32_confDv32_DF16_iDF16_iDv32_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z21test_msc_elem_32_confDv32_7float16iS_iDv32_u10__accfloatiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -35148,7 +35148,7 @@ v32accfloat test_msc_elem_32_conf(v32float16 a, int sgn_x, float16 b, int sgn_y,
                                   int sub_acc1) {
   return msc_elem_32_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_elem_32_confDv32_DF16_iDF16_iDv32_u10__accfloatS0_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmac_elem_32_confDv32_7float16iS_iDv32_u10__accfloatS1_iiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -35172,7 +35172,7 @@ v32accfloat test_addmac_elem_32_conf(v32float16 a, int sgn_x, float16 b,
   return addmac_elem_32_conf(a, sgn_x, b, sgn_y, acc1, acc2, zero_acc1, sub_mul,
                              sub_acc1, sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_elem_32_confDv32_DF16_iDF16_iDv32_u10__accfloatS0_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z24test_addmsc_elem_32_confDv32_7float16iS_iDv32_u10__accfloatS1_iiii(
 // CHECK-SAME: <32 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -35553,7 +35553,7 @@ v64accfloat test_addmsc_elem_64_conf(v64bfloat16 a, int sgn_x, bfloat16 b,
 
 ;
 
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mul_elem_64Dv64_8bfloat16DF16_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mul_elem_64Dv64_8bfloat167float16(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], half noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.bf16.I1024.fp16.ACC2048.bf.mul.conf(<64 x bfloat> [[A]], half [[B]], i32 16777276)
@@ -35562,7 +35562,7 @@ v64accfloat test_addmsc_elem_64_conf(v64bfloat16 a, int sgn_x, bfloat16 b,
 v64accfloat test_mul_elem_64(v64bfloat16 a, float16 b) {
   return mul_elem_64(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_negmul_elem_64Dv64_8bfloat16DF16_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_negmul_elem_64Dv64_8bfloat167float16(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], half noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.bf16.I1024.fp16.ACC2048.bf.negmul.conf(<64 x bfloat> [[A]], half [[B]], i32 16777276)
@@ -35571,7 +35571,7 @@ v64accfloat test_mul_elem_64(v64bfloat16 a, float16 b) {
 v64accfloat test_negmul_elem_64(v64bfloat16 a, float16 b) {
   return negmul_elem_64(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mac_elem_64Dv64_8bfloat16DF16_Dv64_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mac_elem_64Dv64_8bfloat167float16Dv64_u10__accfloat(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], half noundef [[B:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.bf16.I1024.fp16.ACC2048.bf.mac.conf(<64 x bfloat> [[A]], half [[B]], <64 x float> [[ACC]], i32 16777276)
@@ -35580,7 +35580,7 @@ v64accfloat test_negmul_elem_64(v64bfloat16 a, float16 b) {
 v64accfloat test_mac_elem_64(v64bfloat16 a, float16 b, v64accfloat acc) {
   return mac_elem_64(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_msc_elem_64Dv64_8bfloat16DF16_Dv64_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_msc_elem_64Dv64_8bfloat167float16Dv64_u10__accfloat(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], half noundef [[B:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.bf16.I1024.fp16.ACC2048.bf.msc.conf(<64 x bfloat> [[A]], half [[B]], <64 x float> [[ACC]], i32 16777276)
@@ -35589,7 +35589,7 @@ v64accfloat test_mac_elem_64(v64bfloat16 a, float16 b, v64accfloat acc) {
 v64accfloat test_msc_elem_64(v64bfloat16 a, float16 b, v64accfloat acc) {
   return msc_elem_64(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmac_elem_64Dv64_8bfloat16DF16_Dv64_u10__accfloatS1_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmac_elem_64Dv64_8bfloat167float16Dv64_u10__accfloatS2_(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], half noundef [[B:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.bf16.I1024.fp16.ACC2048.bf.addmac.conf(<64 x bfloat> [[A]], half [[B]], <64 x float> [[ACC1]], <64 x float> [[ACC2]], i32 16777276)
@@ -35599,7 +35599,7 @@ v64accfloat test_addmac_elem_64(v64bfloat16 a, float16 b, v64accfloat acc1,
                                 v64accfloat acc2) {
   return addmac_elem_64(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmsc_elem_64Dv64_8bfloat16DF16_Dv64_u10__accfloatS1_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmsc_elem_64Dv64_8bfloat167float16Dv64_u10__accfloatS2_(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], half noundef [[B:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.bf16.I1024.fp16.ACC2048.bf.addmsc.conf(<64 x bfloat> [[A]], half [[B]], <64 x float> [[ACC1]], <64 x float> [[ACC2]], i32 16777276)
@@ -35609,7 +35609,7 @@ v64accfloat test_addmsc_elem_64(v64bfloat16 a, float16 b, v64accfloat acc1,
                                 v64accfloat acc2) {
   return addmsc_elem_64(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mul_elem_64Dv64_8bfloat16iDF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mul_elem_64Dv64_8bfloat16i7float16i(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -35622,7 +35622,7 @@ v64accfloat test_addmsc_elem_64(v64bfloat16 a, float16 b, v64accfloat acc1,
 v64accfloat test_mul_elem_64(v64bfloat16 a, int sgn_x, float16 b, int sgn_y) {
   return mul_elem_64(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_negmul_elem_64Dv64_8bfloat16iDF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_negmul_elem_64Dv64_8bfloat16i7float16i(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -35636,7 +35636,7 @@ v64accfloat test_negmul_elem_64(v64bfloat16 a, int sgn_x, float16 b,
                                 int sgn_y) {
   return negmul_elem_64(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mac_elem_64Dv64_8bfloat16iDF16_iDv64_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mac_elem_64Dv64_8bfloat16i7float16iDv64_u10__accfloat(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -35650,7 +35650,7 @@ v64accfloat test_mac_elem_64(v64bfloat16 a, int sgn_x, float16 b, int sgn_y,
                              v64accfloat acc) {
   return mac_elem_64(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_msc_elem_64Dv64_8bfloat16iDF16_iDv64_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_msc_elem_64Dv64_8bfloat16i7float16iDv64_u10__accfloat(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -35664,7 +35664,7 @@ v64accfloat test_msc_elem_64(v64bfloat16 a, int sgn_x, float16 b, int sgn_y,
                              v64accfloat acc) {
   return msc_elem_64(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmac_elem_64Dv64_8bfloat16iDF16_iDv64_u10__accfloatS1_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmac_elem_64Dv64_8bfloat16i7float16iDv64_u10__accfloatS2_(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -35678,7 +35678,7 @@ v64accfloat test_addmac_elem_64(v64bfloat16 a, int sgn_x, float16 b, int sgn_y,
                                 v64accfloat acc1, v64accfloat acc2) {
   return addmac_elem_64(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmsc_elem_64Dv64_8bfloat16iDF16_iDv64_u10__accfloatS1_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmsc_elem_64Dv64_8bfloat16i7float16iDv64_u10__accfloatS2_(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -35692,7 +35692,7 @@ v64accfloat test_addmsc_elem_64(v64bfloat16 a, int sgn_x, float16 b, int sgn_y,
                                 v64accfloat acc1, v64accfloat acc2) {
   return addmsc_elem_64(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mul_elem_64_confDv64_8bfloat16DF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mul_elem_64_confDv64_8bfloat167float16i(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], half noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -35703,7 +35703,7 @@ v64accfloat test_addmsc_elem_64(v64bfloat16 a, int sgn_x, float16 b, int sgn_y,
 v64accfloat test_mul_elem_64_conf(v64bfloat16 a, float16 b, int sub_mul) {
   return mul_elem_64_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_negmul_elem_64_confDv64_8bfloat16DF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_negmul_elem_64_confDv64_8bfloat167float16i(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], half noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -35714,7 +35714,7 @@ v64accfloat test_mul_elem_64_conf(v64bfloat16 a, float16 b, int sub_mul) {
 v64accfloat test_negmul_elem_64_conf(v64bfloat16 a, float16 b, int sub_mul) {
   return negmul_elem_64_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mac_elem_64_confDv64_8bfloat16DF16_Dv64_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mac_elem_64_confDv64_8bfloat167float16Dv64_u10__accfloatiii(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], half noundef [[B:%.*]], <64 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -35729,7 +35729,7 @@ v64accfloat test_mac_elem_64_conf(v64bfloat16 a, float16 b, v64accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return mac_elem_64_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_msc_elem_64_confDv64_8bfloat16DF16_Dv64_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_msc_elem_64_confDv64_8bfloat167float16Dv64_u10__accfloatiii(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], half noundef [[B:%.*]], <64 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -35744,7 +35744,7 @@ v64accfloat test_msc_elem_64_conf(v64bfloat16 a, float16 b, v64accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return msc_elem_64_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmac_elem_64_confDv64_8bfloat16DF16_Dv64_u10__accfloatS1_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmac_elem_64_confDv64_8bfloat167float16Dv64_u10__accfloatS2_iiii(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], half noundef [[B:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -35763,7 +35763,7 @@ v64accfloat test_addmac_elem_64_conf(v64bfloat16 a, float16 b, v64accfloat acc1,
   return addmac_elem_64_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmsc_elem_64_confDv64_8bfloat16DF16_Dv64_u10__accfloatS1_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmsc_elem_64_confDv64_8bfloat167float16Dv64_u10__accfloatS2_iiii(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], half noundef [[B:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -35782,7 +35782,7 @@ v64accfloat test_addmsc_elem_64_conf(v64bfloat16 a, float16 b, v64accfloat acc1,
   return addmsc_elem_64_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mul_elem_64_confDv64_8bfloat16iDF16_ii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mul_elem_64_confDv64_8bfloat16i7float16ii(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -35798,7 +35798,7 @@ v64accfloat test_mul_elem_64_conf(v64bfloat16 a, int sgn_x, float16 b,
                                   int sgn_y, int sub_mul) {
   return mul_elem_64_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_negmul_elem_64_confDv64_8bfloat16iDF16_ii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_negmul_elem_64_confDv64_8bfloat16i7float16ii(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -35814,7 +35814,7 @@ v64accfloat test_negmul_elem_64_conf(v64bfloat16 a, int sgn_x, float16 b,
                                      int sgn_y, int sub_mul) {
   return negmul_elem_64_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mac_elem_64_confDv64_8bfloat16iDF16_iDv64_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mac_elem_64_confDv64_8bfloat16i7float16iDv64_u10__accfloatiii(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -35834,7 +35834,7 @@ v64accfloat test_mac_elem_64_conf(v64bfloat16 a, int sgn_x, float16 b,
                                   int sub_mul, int sub_acc1) {
   return mac_elem_64_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_msc_elem_64_confDv64_8bfloat16iDF16_iDv64_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_msc_elem_64_confDv64_8bfloat16i7float16iDv64_u10__accfloatiii(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -35854,7 +35854,7 @@ v64accfloat test_msc_elem_64_conf(v64bfloat16 a, int sgn_x, float16 b,
                                   int sub_mul, int sub_acc1) {
   return msc_elem_64_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmac_elem_64_confDv64_8bfloat16iDF16_iDv64_u10__accfloatS1_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmac_elem_64_confDv64_8bfloat16i7float16iDv64_u10__accfloatS2_iiii(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -35878,7 +35878,7 @@ v64accfloat test_addmac_elem_64_conf(v64bfloat16 a, int sgn_x, float16 b,
   return addmac_elem_64_conf(a, sgn_x, b, sgn_y, acc1, acc2, zero_acc1, sub_mul,
                              sub_acc1, sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmsc_elem_64_confDv64_8bfloat16iDF16_iDv64_u10__accfloatS1_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmsc_elem_64_confDv64_8bfloat16i7float16iDv64_u10__accfloatS2_iiii(
 // CHECK-SAME: <64 x bfloat> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -35905,7 +35905,7 @@ v64accfloat test_addmsc_elem_64_conf(v64bfloat16 a, int sgn_x, float16 b,
 
 ;
 
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mul_elem_64Dv64_DF16_8bfloat16(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mul_elem_64Dv64_7float168bfloat16(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], bfloat noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.fp16.I1024.bf16.ACC2048.bf.mul.conf(<64 x half> [[A]], bfloat [[B]], i32 33554492)
@@ -35914,7 +35914,7 @@ v64accfloat test_addmsc_elem_64_conf(v64bfloat16 a, int sgn_x, float16 b,
 v64accfloat test_mul_elem_64(v64float16 a, bfloat16 b) {
   return mul_elem_64(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_negmul_elem_64Dv64_DF16_8bfloat16(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_negmul_elem_64Dv64_7float168bfloat16(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], bfloat noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.fp16.I1024.bf16.ACC2048.bf.negmul.conf(<64 x half> [[A]], bfloat [[B]], i32 33554492)
@@ -35923,7 +35923,7 @@ v64accfloat test_mul_elem_64(v64float16 a, bfloat16 b) {
 v64accfloat test_negmul_elem_64(v64float16 a, bfloat16 b) {
   return negmul_elem_64(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mac_elem_64Dv64_DF16_8bfloat16Dv64_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mac_elem_64Dv64_7float168bfloat16Dv64_u10__accfloat(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], bfloat noundef [[B:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.fp16.I1024.bf16.ACC2048.bf.mac.conf(<64 x half> [[A]], bfloat [[B]], <64 x float> [[ACC]], i32 33554492)
@@ -35932,7 +35932,7 @@ v64accfloat test_negmul_elem_64(v64float16 a, bfloat16 b) {
 v64accfloat test_mac_elem_64(v64float16 a, bfloat16 b, v64accfloat acc) {
   return mac_elem_64(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_msc_elem_64Dv64_DF16_8bfloat16Dv64_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_msc_elem_64Dv64_7float168bfloat16Dv64_u10__accfloat(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], bfloat noundef [[B:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.fp16.I1024.bf16.ACC2048.bf.msc.conf(<64 x half> [[A]], bfloat [[B]], <64 x float> [[ACC]], i32 33554492)
@@ -35941,7 +35941,7 @@ v64accfloat test_mac_elem_64(v64float16 a, bfloat16 b, v64accfloat acc) {
 v64accfloat test_msc_elem_64(v64float16 a, bfloat16 b, v64accfloat acc) {
   return msc_elem_64(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmac_elem_64Dv64_DF16_8bfloat16Dv64_u10__accfloatS1_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmac_elem_64Dv64_7float168bfloat16Dv64_u10__accfloatS2_(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], bfloat noundef [[B:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.fp16.I1024.bf16.ACC2048.bf.addmac.conf(<64 x half> [[A]], bfloat [[B]], <64 x float> [[ACC1]], <64 x float> [[ACC2]], i32 33554492)
@@ -35951,7 +35951,7 @@ v64accfloat test_addmac_elem_64(v64float16 a, bfloat16 b, v64accfloat acc1,
                                 v64accfloat acc2) {
   return addmac_elem_64(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmsc_elem_64Dv64_DF16_8bfloat16Dv64_u10__accfloatS1_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmsc_elem_64Dv64_7float168bfloat16Dv64_u10__accfloatS2_(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], bfloat noundef [[B:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.fp16.I1024.bf16.ACC2048.bf.addmsc.conf(<64 x half> [[A]], bfloat [[B]], <64 x float> [[ACC1]], <64 x float> [[ACC2]], i32 33554492)
@@ -35961,7 +35961,7 @@ v64accfloat test_addmsc_elem_64(v64float16 a, bfloat16 b, v64accfloat acc1,
                                 v64accfloat acc2) {
   return addmsc_elem_64(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mul_elem_64Dv64_DF16_i8bfloat16i(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mul_elem_64Dv64_7float16i8bfloat16i(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], bfloat noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -35974,7 +35974,7 @@ v64accfloat test_addmsc_elem_64(v64float16 a, bfloat16 b, v64accfloat acc1,
 v64accfloat test_mul_elem_64(v64float16 a, int sgn_x, bfloat16 b, int sgn_y) {
   return mul_elem_64(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_negmul_elem_64Dv64_DF16_i8bfloat16i(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_negmul_elem_64Dv64_7float16i8bfloat16i(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], bfloat noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -35988,7 +35988,7 @@ v64accfloat test_negmul_elem_64(v64float16 a, int sgn_x, bfloat16 b,
                                 int sgn_y) {
   return negmul_elem_64(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mac_elem_64Dv64_DF16_i8bfloat16iDv64_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mac_elem_64Dv64_7float16i8bfloat16iDv64_u10__accfloat(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], bfloat noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -36002,7 +36002,7 @@ v64accfloat test_mac_elem_64(v64float16 a, int sgn_x, bfloat16 b, int sgn_y,
                              v64accfloat acc) {
   return mac_elem_64(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_msc_elem_64Dv64_DF16_i8bfloat16iDv64_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_msc_elem_64Dv64_7float16i8bfloat16iDv64_u10__accfloat(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], bfloat noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -36016,7 +36016,7 @@ v64accfloat test_msc_elem_64(v64float16 a, int sgn_x, bfloat16 b, int sgn_y,
                              v64accfloat acc) {
   return msc_elem_64(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmac_elem_64Dv64_DF16_i8bfloat16iDv64_u10__accfloatS1_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmac_elem_64Dv64_7float16i8bfloat16iDv64_u10__accfloatS2_(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], bfloat noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -36030,7 +36030,7 @@ v64accfloat test_addmac_elem_64(v64float16 a, int sgn_x, bfloat16 b, int sgn_y,
                                 v64accfloat acc1, v64accfloat acc2) {
   return addmac_elem_64(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmsc_elem_64Dv64_DF16_i8bfloat16iDv64_u10__accfloatS1_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmsc_elem_64Dv64_7float16i8bfloat16iDv64_u10__accfloatS2_(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], bfloat noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -36044,7 +36044,7 @@ v64accfloat test_addmsc_elem_64(v64float16 a, int sgn_x, bfloat16 b, int sgn_y,
                                 v64accfloat acc1, v64accfloat acc2) {
   return addmsc_elem_64(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mul_elem_64_confDv64_DF16_8bfloat16i(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mul_elem_64_confDv64_7float168bfloat16i(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], bfloat noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -36055,7 +36055,7 @@ v64accfloat test_addmsc_elem_64(v64float16 a, int sgn_x, bfloat16 b, int sgn_y,
 v64accfloat test_mul_elem_64_conf(v64float16 a, bfloat16 b, int sub_mul) {
   return mul_elem_64_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_negmul_elem_64_confDv64_DF16_8bfloat16i(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_negmul_elem_64_confDv64_7float168bfloat16i(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], bfloat noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -36066,7 +36066,7 @@ v64accfloat test_mul_elem_64_conf(v64float16 a, bfloat16 b, int sub_mul) {
 v64accfloat test_negmul_elem_64_conf(v64float16 a, bfloat16 b, int sub_mul) {
   return negmul_elem_64_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mac_elem_64_confDv64_DF16_8bfloat16Dv64_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mac_elem_64_confDv64_7float168bfloat16Dv64_u10__accfloatiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], bfloat noundef [[B:%.*]], <64 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -36081,7 +36081,7 @@ v64accfloat test_mac_elem_64_conf(v64float16 a, bfloat16 b, v64accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return mac_elem_64_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_msc_elem_64_confDv64_DF16_8bfloat16Dv64_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_msc_elem_64_confDv64_7float168bfloat16Dv64_u10__accfloatiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], bfloat noundef [[B:%.*]], <64 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -36096,7 +36096,7 @@ v64accfloat test_msc_elem_64_conf(v64float16 a, bfloat16 b, v64accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return msc_elem_64_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmac_elem_64_confDv64_DF16_8bfloat16Dv64_u10__accfloatS1_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmac_elem_64_confDv64_7float168bfloat16Dv64_u10__accfloatS2_iiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], bfloat noundef [[B:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -36115,7 +36115,7 @@ v64accfloat test_addmac_elem_64_conf(v64float16 a, bfloat16 b, v64accfloat acc1,
   return addmac_elem_64_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmsc_elem_64_confDv64_DF16_8bfloat16Dv64_u10__accfloatS1_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmsc_elem_64_confDv64_7float168bfloat16Dv64_u10__accfloatS2_iiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], bfloat noundef [[B:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -36134,7 +36134,7 @@ v64accfloat test_addmsc_elem_64_conf(v64float16 a, bfloat16 b, v64accfloat acc1,
   return addmsc_elem_64_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mul_elem_64_confDv64_DF16_i8bfloat16ii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mul_elem_64_confDv64_7float16i8bfloat16ii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], bfloat noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -36150,7 +36150,7 @@ v64accfloat test_mul_elem_64_conf(v64float16 a, int sgn_x, bfloat16 b,
                                   int sgn_y, int sub_mul) {
   return mul_elem_64_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_negmul_elem_64_confDv64_DF16_i8bfloat16ii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_negmul_elem_64_confDv64_7float16i8bfloat16ii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], bfloat noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -36166,7 +36166,7 @@ v64accfloat test_negmul_elem_64_conf(v64float16 a, int sgn_x, bfloat16 b,
                                      int sgn_y, int sub_mul) {
   return negmul_elem_64_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mac_elem_64_confDv64_DF16_i8bfloat16iDv64_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mac_elem_64_confDv64_7float16i8bfloat16iDv64_u10__accfloatiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], bfloat noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -36186,7 +36186,7 @@ v64accfloat test_mac_elem_64_conf(v64float16 a, int sgn_x, bfloat16 b,
                                   int sub_mul, int sub_acc1) {
   return mac_elem_64_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_msc_elem_64_confDv64_DF16_i8bfloat16iDv64_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_msc_elem_64_confDv64_7float16i8bfloat16iDv64_u10__accfloatiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], bfloat noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -36206,7 +36206,7 @@ v64accfloat test_msc_elem_64_conf(v64float16 a, int sgn_x, bfloat16 b,
                                   int sub_mul, int sub_acc1) {
   return msc_elem_64_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmac_elem_64_confDv64_DF16_i8bfloat16iDv64_u10__accfloatS1_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmac_elem_64_confDv64_7float16i8bfloat16iDv64_u10__accfloatS2_iiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], bfloat noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -36230,7 +36230,7 @@ v64accfloat test_addmac_elem_64_conf(v64float16 a, int sgn_x, bfloat16 b,
   return addmac_elem_64_conf(a, sgn_x, b, sgn_y, acc1, acc2, zero_acc1, sub_mul,
                              sub_acc1, sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmsc_elem_64_confDv64_DF16_i8bfloat16iDv64_u10__accfloatS1_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmsc_elem_64_confDv64_7float16i8bfloat16iDv64_u10__accfloatS2_iiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], bfloat noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -36257,7 +36257,7 @@ v64accfloat test_addmsc_elem_64_conf(v64float16 a, int sgn_x, bfloat16 b,
 
 ;
 
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mul_elem_64Dv64_DF16_DF16_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mul_elem_64Dv64_7float16S_(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], half noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.fp16.I1024.fp16.ACC2048.bf.mul.conf(<64 x half> [[A]], half [[B]], i32 60)
@@ -36266,7 +36266,7 @@ v64accfloat test_addmsc_elem_64_conf(v64float16 a, int sgn_x, bfloat16 b,
 v64accfloat test_mul_elem_64(v64float16 a, float16 b) {
   return mul_elem_64(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_negmul_elem_64Dv64_DF16_DF16_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_negmul_elem_64Dv64_7float16S_(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], half noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.fp16.I1024.fp16.ACC2048.bf.negmul.conf(<64 x half> [[A]], half [[B]], i32 60)
@@ -36275,7 +36275,7 @@ v64accfloat test_mul_elem_64(v64float16 a, float16 b) {
 v64accfloat test_negmul_elem_64(v64float16 a, float16 b) {
   return negmul_elem_64(a, b);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mac_elem_64Dv64_DF16_DF16_Dv64_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mac_elem_64Dv64_7float16S_Dv64_u10__accfloat(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], half noundef [[B:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.fp16.I1024.fp16.ACC2048.bf.mac.conf(<64 x half> [[A]], half [[B]], <64 x float> [[ACC]], i32 60)
@@ -36284,7 +36284,7 @@ v64accfloat test_negmul_elem_64(v64float16 a, float16 b) {
 v64accfloat test_mac_elem_64(v64float16 a, float16 b, v64accfloat acc) {
   return mac_elem_64(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_msc_elem_64Dv64_DF16_DF16_Dv64_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_msc_elem_64Dv64_7float16S_Dv64_u10__accfloat(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], half noundef [[B:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.fp16.I1024.fp16.ACC2048.bf.msc.conf(<64 x half> [[A]], half [[B]], <64 x float> [[ACC]], i32 60)
@@ -36293,7 +36293,7 @@ v64accfloat test_mac_elem_64(v64float16 a, float16 b, v64accfloat acc) {
 v64accfloat test_msc_elem_64(v64float16 a, float16 b, v64accfloat acc) {
   return msc_elem_64(a, b, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmac_elem_64Dv64_DF16_DF16_Dv64_u10__accfloatS0_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmac_elem_64Dv64_7float16S_Dv64_u10__accfloatS1_(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], half noundef [[B:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.fp16.I1024.fp16.ACC2048.bf.addmac.conf(<64 x half> [[A]], half [[B]], <64 x float> [[ACC1]], <64 x float> [[ACC2]], i32 60)
@@ -36303,7 +36303,7 @@ v64accfloat test_addmac_elem_64(v64float16 a, float16 b, v64accfloat acc1,
                                 v64accfloat acc2) {
   return addmac_elem_64(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmsc_elem_64Dv64_DF16_DF16_Dv64_u10__accfloatS0_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmsc_elem_64Dv64_7float16S_Dv64_u10__accfloatS1_(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], half noundef [[B:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x float> @llvm.aie2ps.fp16.I1024.fp16.ACC2048.bf.addmsc.conf(<64 x half> [[A]], half [[B]], <64 x float> [[ACC1]], <64 x float> [[ACC2]], i32 60)
@@ -36313,7 +36313,7 @@ v64accfloat test_addmsc_elem_64(v64float16 a, float16 b, v64accfloat acc1,
                                 v64accfloat acc2) {
   return addmsc_elem_64(a, b, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mul_elem_64Dv64_DF16_iDF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mul_elem_64Dv64_7float16iS_i(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -36326,7 +36326,7 @@ v64accfloat test_addmsc_elem_64(v64float16 a, float16 b, v64accfloat acc1,
 v64accfloat test_mul_elem_64(v64float16 a, int sgn_x, float16 b, int sgn_y) {
   return mul_elem_64(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_negmul_elem_64Dv64_DF16_iDF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_negmul_elem_64Dv64_7float16iS_i(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -36339,7 +36339,7 @@ v64accfloat test_mul_elem_64(v64float16 a, int sgn_x, float16 b, int sgn_y) {
 v64accfloat test_negmul_elem_64(v64float16 a, int sgn_x, float16 b, int sgn_y) {
   return negmul_elem_64(a, sgn_x, b, sgn_y);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mac_elem_64Dv64_DF16_iDF16_iDv64_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_mac_elem_64Dv64_7float16iS_iDv64_u10__accfloat(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -36353,7 +36353,7 @@ v64accfloat test_mac_elem_64(v64float16 a, int sgn_x, float16 b, int sgn_y,
                              v64accfloat acc) {
   return mac_elem_64(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_msc_elem_64Dv64_DF16_iDF16_iDv64_u10__accfloat(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z16test_msc_elem_64Dv64_7float16iS_iDv64_u10__accfloat(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -36367,7 +36367,7 @@ v64accfloat test_msc_elem_64(v64float16 a, int sgn_x, float16 b, int sgn_y,
                              v64accfloat acc) {
   return msc_elem_64(a, sgn_x, b, sgn_y, acc);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmac_elem_64Dv64_DF16_iDF16_iDv64_u10__accfloatS0_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmac_elem_64Dv64_7float16iS_iDv64_u10__accfloatS1_(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -36381,7 +36381,7 @@ v64accfloat test_addmac_elem_64(v64float16 a, int sgn_x, float16 b, int sgn_y,
                                 v64accfloat acc1, v64accfloat acc2) {
   return addmac_elem_64(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmsc_elem_64Dv64_DF16_iDF16_iDv64_u10__accfloatS0_(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z19test_addmsc_elem_64Dv64_7float16iS_iDv64_u10__accfloatS1_(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL20_I_I:%.*]] = shl i32 [[SGN_X]], 9
@@ -36395,7 +36395,7 @@ v64accfloat test_addmsc_elem_64(v64float16 a, int sgn_x, float16 b, int sgn_y,
                                 v64accfloat acc1, v64accfloat acc2) {
   return addmsc_elem_64(a, sgn_x, b, sgn_y, acc1, acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mul_elem_64_confDv64_DF16_DF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mul_elem_64_confDv64_7float16S_i(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], half noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -36406,7 +36406,7 @@ v64accfloat test_addmsc_elem_64(v64float16 a, int sgn_x, float16 b, int sgn_y,
 v64accfloat test_mul_elem_64_conf(v64float16 a, float16 b, int sub_mul) {
   return mul_elem_64_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_negmul_elem_64_confDv64_DF16_DF16_i(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_negmul_elem_64_confDv64_7float16S_i(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], half noundef [[B:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -36417,7 +36417,7 @@ v64accfloat test_mul_elem_64_conf(v64float16 a, float16 b, int sub_mul) {
 v64accfloat test_negmul_elem_64_conf(v64float16 a, float16 b, int sub_mul) {
   return negmul_elem_64_conf(a, b, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mac_elem_64_confDv64_DF16_DF16_Dv64_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mac_elem_64_confDv64_7float16S_Dv64_u10__accfloatiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], half noundef [[B:%.*]], <64 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -36432,7 +36432,7 @@ v64accfloat test_mac_elem_64_conf(v64float16 a, float16 b, v64accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return mac_elem_64_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_msc_elem_64_confDv64_DF16_DF16_Dv64_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_msc_elem_64_confDv64_7float16S_Dv64_u10__accfloatiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], half noundef [[B:%.*]], <64 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -36447,7 +36447,7 @@ v64accfloat test_msc_elem_64_conf(v64float16 a, float16 b, v64accfloat acc,
                                   int zero_acc, int sub_mul, int sub_acc1) {
   return msc_elem_64_conf(a, b, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmac_elem_64_confDv64_DF16_DF16_Dv64_u10__accfloatS0_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmac_elem_64_confDv64_7float16S_Dv64_u10__accfloatS1_iiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], half noundef [[B:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -36466,7 +36466,7 @@ v64accfloat test_addmac_elem_64_conf(v64float16 a, float16 b, v64accfloat acc1,
   return addmac_elem_64_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmsc_elem_64_confDv64_DF16_DF16_Dv64_u10__accfloatS0_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmsc_elem_64_confDv64_7float16S_Dv64_u10__accfloatS1_iiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], half noundef [[B:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -36485,7 +36485,7 @@ v64accfloat test_addmsc_elem_64_conf(v64float16 a, float16 b, v64accfloat acc1,
   return addmsc_elem_64_conf(a, b, acc1, acc2, zero_acc1, sub_mul, sub_acc1,
                              sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mul_elem_64_confDv64_DF16_iDF16_ii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mul_elem_64_confDv64_7float16iS_ii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -36501,7 +36501,7 @@ v64accfloat test_mul_elem_64_conf(v64float16 a, int sgn_x, float16 b, int sgn_y,
                                   int sub_mul) {
   return mul_elem_64_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_negmul_elem_64_confDv64_DF16_iDF16_ii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_negmul_elem_64_confDv64_7float16iS_ii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], i32 noundef [[SUB_MUL:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -36517,7 +36517,7 @@ v64accfloat test_negmul_elem_64_conf(v64float16 a, int sgn_x, float16 b,
                                      int sgn_y, int sub_mul) {
   return negmul_elem_64_conf(a, sgn_x, b, sgn_y, sub_mul);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mac_elem_64_confDv64_DF16_iDF16_iDv64_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_mac_elem_64_confDv64_7float16iS_iDv64_u10__accfloatiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -36537,7 +36537,7 @@ v64accfloat test_mac_elem_64_conf(v64float16 a, int sgn_x, float16 b, int sgn_y,
                                   int sub_acc1) {
   return mac_elem_64_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_msc_elem_64_confDv64_DF16_iDF16_iDv64_u10__accfloatiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z21test_msc_elem_64_confDv64_7float16iS_iDv64_u10__accfloatiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC:%.*]], i32 noundef [[ZERO_ACC:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -36557,7 +36557,7 @@ v64accfloat test_msc_elem_64_conf(v64float16 a, int sgn_x, float16 b, int sgn_y,
                                   int sub_acc1) {
   return msc_elem_64_conf(a, sgn_x, b, sgn_y, acc, zero_acc, sub_mul, sub_acc1);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmac_elem_64_confDv64_DF16_iDF16_iDv64_u10__accfloatS0_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmac_elem_64_confDv64_7float16iS_iDv64_u10__accfloatS1_iiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
@@ -36581,7 +36581,7 @@ v64accfloat test_addmac_elem_64_conf(v64float16 a, int sgn_x, float16 b,
   return addmac_elem_64_conf(a, sgn_x, b, sgn_y, acc1, acc2, zero_acc1, sub_mul,
                              sub_acc1, sub_acc2);
 }
-// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmsc_elem_64_confDv64_DF16_iDF16_iDv64_u10__accfloatS0_iiii(
+// CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z24test_addmsc_elem_64_confDv64_7float16iS_iDv64_u10__accfloatS1_iiii(
 // CHECK-SAME: <64 x half> noundef [[A:%.*]], i32 noundef [[SGN_X:%.*]], half noundef [[B:%.*]], i32 noundef [[SGN_Y:%.*]], <64 x float> inreg noundef [[ACC1:%.*]], <64 x float> inreg noundef [[ACC2:%.*]], i32 noundef [[ZERO_ACC1:%.*]], i32 noundef [[SUB_MUL:%.*]], i32 noundef [[SUB_ACC1:%.*]], i32 noundef [[SUB_ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[SHL2_I_I:%.*]] = shl i32 [[SUB_MUL]], 11
