@@ -185,9 +185,12 @@ void AIETTICommon::adjustUnrollingPreferences(Loop *L, ScalarEvolution &SE,
   }
 }
 
+static bool isVectorReshuffleLoop(const Loop *L);
+
 void AIETTICommon::applyLoopIdiomUnrolling(
     Loop *L, TTI::UnrollingPreferences &UP) const {
-  if (isScalarizedVectorOpIdiomLoop(L) || isScalarLoop(L)) {
+  if (isScalarizedVectorOpIdiomLoop(L) || isScalarLoop(L) ||
+      isVectorReshuffleLoop(L)) {
     UP.Threshold = LoopIdiomUnrollingThreshold;
   } else if (UnrollOnlyLoopsWithPragma && !AIELoopUtils::hasUnrollPragma(L)) {
     UP.Threshold = 0;
@@ -247,6 +250,54 @@ bool AIETTICommon::isScalarizedVectorOpIdiomLoop(const Loop *L) const {
   }
 
   return IsVectorLoopIdiom;
+}
+
+// Detects pure vector element reshuffling loops whose bodies collapse
+// entirely after full unrolling (extractelement/insertelement become
+// shufflevector, index math gets constant-folded, loop control is
+// eliminated). Any instruction not on the whitelist below disqualifies
+// the loop to avoid unrolling arithmetic-heavy bodies.
+//
+// Whitelisted instructions (potentially zero cost):
+//   - PHINode           : IV and vector accumulators
+//   - Terminator        : loop back-edge (br)
+//   - ExtractElementInst: reading source vector elements
+//   - InsertElementInst : writing destination vector elements
+//   - BinaryOperator<i> : integer index arithmetic (add, or, shl, ...)
+//   - ICmpInst          : loop exit condition
+//   - CastInst<i>       : integer index casts (zext, sext, trunc)
+//   - BitCastInst       : zero-cost type reinterpretation on any type
+static bool isVectorReshuffleLoop(const Loop *L) {
+  if (L->getNumBlocks() != 1)
+    return false;
+
+  const BasicBlock *LoopBlock = L->getHeader();
+  bool HasExtractInsertPair = false;
+
+  for (const auto &I : *LoopBlock) {
+    if (isa<PHINode>(I) || I.isTerminator())
+      continue;
+    if (isa<ExtractElementInst>(I))
+      continue;
+    if (const auto *Ins = dyn_cast<InsertElementInst>(&I)) {
+      const Value *Val = Ins->getOperand(1);
+      if (const auto *BC = dyn_cast<BitCastInst>(Val))
+        Val = BC->getOperand(0);
+      HasExtractInsertPair |= isa<ExtractElementInst>(Val);
+      continue;
+    }
+    if (isa<BinaryOperator>(I) && I.getType()->isIntegerTy())
+      continue;
+    if (isa<ICmpInst>(I))
+      continue;
+    if (isa<BitCastInst>(I))
+      continue;
+    if (isa<CastInst>(I) && I.getType()->isIntegerTy())
+      continue;
+    return false;
+  }
+
+  return HasExtractInsertPair;
 }
 
 bool AIETTICommon::isScalarLoop(const Loop *L) {
