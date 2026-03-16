@@ -1376,9 +1376,6 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
                                        PreheaderSize + LoopBodySize);
         if (Deficit > 0) {
           JumpPaddingInBytes = Deficit;
-          AlignmentBoundaries.emplace_back(MI);
-          const int BundleSize = getAIEMachineBundleSize(MI);
-          JumpPaddingInBytes -= (MBBAlignment - BundleSize);
         }
       }
       // Distance in terms of fully-expanded bundles that loop setup should
