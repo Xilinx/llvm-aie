@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -2934,6 +2934,13 @@ static bool isTypeSubstitutable(Qualifiers Quals, const Type *Ty,
     // candidates for substitution
     return TI->treatBFloat16AsVendorType();
   }
+  if (Ty->isSpecificBuiltinType(BuiltinType::Float16)) {
+    const TargetInfo *TI =
+        Ctx.getLangOpts().OpenMP && Ctx.getLangOpts().OpenMPIsTargetDevice
+            ? Ctx.getAuxTargetInfo()
+            : &Ctx.getTargetInfo();
+    return TI->treatFloat16AsVendorType();
+  }
   if (Ty->isOpenCLSpecificType())
     return true;
   // From Clang 18.0 we correctly treat SVE types as substitution candidates.
@@ -3256,9 +3263,16 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
   case BuiltinType::Int128:
     Out << 'n';
     break;
-  case BuiltinType::Float16:
-    Out << "DF16_";
+  case BuiltinType::Float16: {
+    const TargetInfo *TI =
+        ((getASTContext().getLangOpts().OpenMP &&
+          getASTContext().getLangOpts().OpenMPIsTargetDevice) ||
+         getASTContext().getLangOpts().SYCLIsDevice)
+            ? getASTContext().getAuxTargetInfo()
+            : &getASTContext().getTargetInfo();
+    Out << TI->getFloat16Mangling();
     break;
+  }
   case BuiltinType::ShortAccum:
     Out << "DAs";
     break;
