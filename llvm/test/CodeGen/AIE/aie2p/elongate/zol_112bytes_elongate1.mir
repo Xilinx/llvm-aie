@@ -4,10 +4,16 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 
-# RUN: llc -mtriple aie2p -run-pass=aie-machine-alignment %s -verify-machineinstrs -o - | FileCheck %s
-
+# RUN: llc -mtriple=aie2p -run-pass=aie-machine-alignment -debug-only=aie-machine-alignment -verify-machineinstrs -o - %s 2>%t.dbg \
+# RUN:   | FileCheck %s
+# RUN: FileCheck %s --check-prefix=DBG < %t.dbg
+#
+# zol_elongated_preheader_plus_1_LoopBundles_ge112bytes
+# DBG: setup-to-loopend distance (MBB 1): 138 bytes
+# empty_MBB_After_zol_elongated_preheader_plus_1_LoopBundles_ge112bytes
+# DBG: setup-to-loopend distance (MBB 1): 138 bytes
 ---
 name:            zol_elongated_preheader_plus_1_LoopBundles_ge112bytes
 alignment:       16
