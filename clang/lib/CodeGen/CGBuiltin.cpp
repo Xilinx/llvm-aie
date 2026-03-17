@@ -24305,10 +24305,19 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
       PosAddr = EmitLValue(E->getArg(2)).getPointer(*this);
       break;
     }
-    default:
+    case AIE::BI__builtin_aie2p_fifo_st_flush:
+    case AIE::BI__builtin_aie2p_fifo_st_flush_conv:
+    case AIE::BI__builtin_aie2p_fifo_st_push_512_bfp16:
+    case AIE::BI__builtin_aie2p_fifo_st_push_576_bfp16:
+    case AIE::BI__builtin_aie2p_fifo_st_push_544_bfp16:
+    case AIE::BI__builtin_aie2ps_fifo_st_push_512:
+    case AIE::BI__builtin_aie2ps_fifo_st_flush:
+    case AIE::BI__builtin_aie2ps_fifo_st_flush_conv:
       FifoAddr = EmitLValue(E->getArg(E->getNumArgs() - 2)).getPointer(*this);
       PosAddr = EmitLValue(E->getArg(E->getNumArgs() - 1)).getPointer(*this);
       break;
+    default:
+      llvm_unreachable("Unexpected BuiltinID");
     }
 
     Builder.CreateDefaultAlignedStore(Fifo, FifoAddr);
