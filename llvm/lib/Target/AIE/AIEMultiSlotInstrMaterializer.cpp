@@ -18,6 +18,7 @@
 #include "AIESlotStatistics.h"
 #include "AIESlotUtils.h"
 #include "Utils/AIELoopUtils.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -290,6 +291,80 @@ void materializeMSP(MachineInstr *MSP, SlotStatistics &Statistics,
   LLVM_DEBUG(dbgs() << "New Fixed:\n" << Statistics.Fixed << "\n");
 }
 
+/// A slot has reached its fair share when:
+///
+///   Fixed(S) * NumAlternatives >= InitialTotal(S)
+///
+/// where InitialTotal = Fixed + Free (precomputed before materialization).
+/// This checks whether the current Fixed count, scaled by the number of
+/// alternatives, meets or exceeds the initial total for that slot -- i.e.,
+/// whether this slot has received its proportional share of instructions.
+///
+/// \return whether any alternative slot of the current MSP has reached its
+/// fair-share threshold. The threshold is computed from the initial (pre-
+/// materialization) statistics to provide a stable target, while the
+/// comparison uses the current Fixed counts which grow as MSPs are assigned.
+bool hasAlternativeReachedThreshold(const SlotStatistics &Statistics,
+                                    const SlotCounts &InitialTotal,
+                                    ArrayRef<unsigned> Alternatives,
+                                    const AIEBaseMCFormats *Formats) {
+  const int N = Alternatives.size();
+  for (const unsigned AltOpc : Alternatives) {
+    const int S = static_cast<int>(Formats->getSlotKind(AltOpc));
+    const int ScaledFixed = Statistics.Fixed.at(S) * N;
+    const bool HasLoopBodyPressure = InitialTotal.at(S) > 0;
+    const bool ReachedFairShare = ScaledFixed >= InitialTotal.at(S);
+    if (HasLoopBodyPressure && ReachedFairShare)
+      return true;
+  }
+  return false;
+}
+
+/// Remove neighbor bias for slots that have reached their fair-share threshold.
+///
+/// When any alternative slot of the current MSP reaches its threshold, bias is
+/// removed for ALL alternative slots of that MSP. This prevents a deadlock
+/// where the biased slot never accumulates Fixed because instructions are
+/// pushed away from it: once one slot has its fair share, the remaining MSPs
+/// should balance based on loop body pressure alone.
+void removeReachedNeighborBias(const SlotStatistics &Statistics,
+                               SlotCounts &NeighborFixed,
+                               const SlotCounts &InitialTotal,
+                               ArrayRef<unsigned> Alternatives,
+                               const AIEBaseMCFormats *Formats) {
+  // Remove bias for slots with no loop body pressure.
+  for (int S = 0; S < NeighborFixed.size(); ++S) {
+    const bool HasBias = NeighborFixed.at(S) != 0;
+    const bool HasLoopBodyPressure = InitialTotal.at(S) != 0;
+    if (!HasBias || HasLoopBodyPressure)
+      continue;
+    LLVM_DEBUG(dbgs() << "Removing neighbor bias for slot " << S
+                      << " (no loop body pressure)"
+                      << " [Fixed=" << Statistics.Fixed.at(S) << "]\n");
+    NeighborFixed[S] = 0;
+  }
+
+  if (!hasAlternativeReachedThreshold(Statistics, InitialTotal, Alternatives,
+                                      Formats)) {
+    return;
+  }
+
+  // Remove bias for ALL alternative slots so remaining MSPs can balance.
+  const int N = Alternatives.size();
+  for (const unsigned AltOpc : Alternatives) {
+    const int S = static_cast<int>(Formats->getSlotKind(AltOpc));
+    const bool HasBias = NeighborFixed.at(S) != 0;
+    if (!HasBias)
+      continue;
+    LLVM_DEBUG(dbgs() << "Removing neighbor bias for slot " << S
+                      << " (alternative reached fair share)"
+                      << " [Fixed=" << Statistics.Fixed.at(S)
+                      << " InitialTotal=" << InitialTotal.at(S)
+                      << " NumAlternatives=" << N << "]\n");
+    NeighborFixed[S] = 0;
+  }
+}
+
 void materializeToMinimizeSlotTotals(MachineBasicBlock &MBB,
                                      const AIEBaseInstrInfo *TII) {
   SlotStatistics Statistics = computeSlotStatistics(MBB, TII);
@@ -297,6 +372,10 @@ void materializeToMinimizeSlotTotals(MachineBasicBlock &MBB,
                     << "\n");
 
   SlotCounts NeighborFixed;
+  // Precompute the initial total slot pressure (Fixed + Free) before
+  // materialization. This provides a stable baseline for the fair-share
+  // threshold that does not shift as MSPs are materialized.
+  const SlotCounts InitialTotal = Statistics.Fixed + Statistics.Free;
   if (const auto *Preheader =
           AIELoopUtils::getDedicatedFallThroughPreheader(MBB)) {
     const SlotStatistics PreheaderStats =
@@ -316,10 +395,13 @@ void materializeToMinimizeSlotTotals(MachineBasicBlock &MBB,
   LLVM_DEBUG(Statistics.dump());
   LLVM_DEBUG(dbgs() << "----\n");
 
-  // This is still pretty greedy. Just materialize each instruction
-  // based on the current total slotcounts.
   for (auto *MSP : Statistics.MSPs) {
+    const auto *Alternatives =
+        Formats->getAlternateInstsOpcode(MSP->getOpcode());
     materializeMSP(MSP, Statistics, NeighborFixed, TII);
+    if (Alternatives)
+      removeReachedNeighborBias(Statistics, NeighborFixed, InitialTotal,
+                                *Alternatives, Formats);
   }
 }
 
