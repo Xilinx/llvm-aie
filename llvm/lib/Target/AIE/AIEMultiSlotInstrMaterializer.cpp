@@ -17,6 +17,7 @@
 #include "AIEHazardRecognizer.h"
 #include "AIESlotStatistics.h"
 #include "AIESlotUtils.h"
+#include "Utils/AIELoopUtils.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -241,8 +242,8 @@ bool applyRoundRobinSlotAssignment(MachineBasicBlock &MBB,
 }
 
 void materializeMSP(MachineInstr *MSP, SlotStatistics &Statistics,
+                    const SlotCounts &NeighborFixed,
                     const AIEBaseInstrInfo *TII) {
-
   const SlotCounts Counts = Statistics.MSPSlotCounts[MSP];
   const AIEBaseMCFormats *Formats = TII->getFormatInterface();
   const auto *Alternatives = Formats->getAlternateInstsOpcode(MSP->getOpcode());
@@ -252,14 +253,14 @@ void materializeMSP(MachineInstr *MSP, SlotStatistics &Statistics,
     return static_cast<int>(Formats->getSlotKind(Opc));
   };
 
-  // Compare conflict-aware slot pressure: prefer the slot whose primary
-  // index has lower Fixed utilization, breaking ties by lower Free.
-  // Fixed and Free already use conflict sets, so they reflect cross-slot
-  // interference (e.g. Lng blocking Alu and Mv).
-  auto Better = [&Statistics](int A, int B) {
-    if (Statistics.Fixed.at(A) == Statistics.Fixed.at(B))
-      return Statistics.Free.at(A) < Statistics.Free.at(B);
-    return Statistics.Fixed.at(A) < Statistics.Fixed.at(B);
+  // Select the slot with lower pressure. Fixed and NeighborFixed are summed
+  // for a combined comparison. Free is the final tiebreaker.
+  auto Better = [&](int A, int B) -> bool {
+    const int CombinedA = Statistics.Fixed.at(A) + NeighborFixed.at(A);
+    const int CombinedB = Statistics.Fixed.at(B) + NeighborFixed.at(B);
+    if (CombinedA != CombinedB)
+      return CombinedA < CombinedB;
+    return Statistics.Free.at(A) < Statistics.Free.at(B);
   };
 
   // Iterate only over the primary slots of the MSP's alternatives.
@@ -292,12 +293,23 @@ void materializeMSP(MachineInstr *MSP, SlotStatistics &Statistics,
 void materializeToMinimizeSlotTotals(MachineBasicBlock &MBB,
                                      const AIEBaseInstrInfo *TII) {
   SlotStatistics Statistics = computeSlotStatistics(MBB, TII);
-  // Sort the list by increasing alternative count
-  llvm::sort(Statistics.MSPs, [Formats = TII->getFormatInterface()](
-                                  MachineInstr *A, MachineInstr *B) {
-    auto *AltA = Formats->getAlternateInstsOpcode(A->getOpcode());
-    auto *AltB = Formats->getAlternateInstsOpcode(B->getOpcode());
+  LLVM_DEBUG(dbgs() << "Materializing multi-slot pseudos for " << MBB.getName()
+                    << "\n");
 
+  SlotCounts NeighborFixed;
+  if (const auto *Preheader =
+          AIELoopUtils::getDedicatedFallThroughPreheader(MBB)) {
+    const SlotStatistics PreheaderStats =
+        computeSlotStatistics(const_cast<MachineBasicBlock &>(*Preheader), TII);
+    NeighborFixed = PreheaderStats.Fixed;
+    LLVM_DEBUG(dbgs() << "Neighbor Fixed:\n  " << NeighborFixed << "\n");
+  }
+
+  const AIEBaseMCFormats *Formats = TII->getFormatInterface();
+  // Sort the list by increasing alternative count
+  llvm::sort(Statistics.MSPs, [Formats](MachineInstr *A, MachineInstr *B) {
+    const auto *AltA = Formats->getAlternateInstsOpcode(A->getOpcode());
+    const auto *AltB = Formats->getAlternateInstsOpcode(B->getOpcode());
     return AltA->size() < AltB->size();
   });
   LLVM_DEBUG(dbgs() << "Statistics:\n");
@@ -307,7 +319,7 @@ void materializeToMinimizeSlotTotals(MachineBasicBlock &MBB,
   // This is still pretty greedy. Just materialize each instruction
   // based on the current total slotcounts.
   for (auto *MSP : Statistics.MSPs) {
-    materializeMSP(MSP, Statistics, TII);
+    materializeMSP(MSP, Statistics, NeighborFixed, TII);
   }
 }
 
