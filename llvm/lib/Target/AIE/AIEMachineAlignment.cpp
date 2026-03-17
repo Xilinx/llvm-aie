@@ -11,9 +11,12 @@
 #include "AIEMachineAlignment.h"
 #include "AIE.h"
 #include "AIEBundle.h"
+#include "Utils/AIELoopUtils.h"
 #include "Utils/AIEMachineBasicBlockUtils.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/Support/Debug.h"
 
 using namespace llvm;
 using namespace AIEMachineBasicBlockUtils;
@@ -247,6 +250,115 @@ void verifyAlignment(MachineFunction &MF) {
   assert(Alignment % TII.getMachineBlockAlignmentBytes() == 0);
 }
 
+/// For each ZOL (zero-overhead loop) body, compute and print the distance in
+/// bytes from the PC of the last setup instruction (in the preheader) to the
+/// PC of the loop end instruction. Also print the distance from every jump
+/// (in blocks that have the loop as successor, excluding the loop body) to the
+/// loop end.
+void verifyDistanceToLoopEnd(MachineFunction &MF) {
+  const AIEBaseInstrInfo &TII = *getTII(MF);
+  auto ZOLSupport = TII.getZOLSupport();
+  if (!ZOLSupport)
+    return;
+  if (!ZOLSupport->LoopSetupRequiresByteDistance &&
+      ZOLSupport->JumpToLoopEndDistanceInBytes == 0)
+    return;
+
+  // Compute start offset (in bytes from function start) of each MBB in layout
+  // order.
+  DenseMap<const MachineBasicBlock *, unsigned> MBBStartOffset;
+  unsigned Offset = 0;
+  for (MachineBasicBlock &MBB : MF) {
+    MBBStartOffset[&MBB] = Offset;
+    Offset += TII.getMBBSizeInBytes(MBB);
+  }
+
+  for (MachineBasicBlock &MBB : MF) {
+    if (!TII.isZOLBody(MBB))
+      continue;
+    MachineBasicBlock *Preheader =
+        AIELoopUtils::getDedicatedFallThroughPreheader(MBB);
+    if (!Preheader)
+      continue;
+
+    auto LastInstr = MBB.getLastNonDebugInstr();
+    if (LastInstr == MBB.end())
+      continue;
+    unsigned BytesToLoopEndStart = 0;
+    for (auto MI = MBB.begin(); MI != LastInstr; ++MI)
+      BytesToLoopEndStart += TII.getAIEMachineBundleSize(MI);
+    unsigned LoopEndPC = MBBStartOffset[&MBB] + BytesToLoopEndStart;
+
+    if (ZOLSupport->LoopSetupRequiresByteDistance) {
+      unsigned BytesToLastSetupStart = 0;
+      MachineBasicBlock::const_iterator LastSetupBundle = Preheader->end();
+      for (auto MI = Preheader->begin(), E = Preheader->end(); MI != E; ++MI) {
+        if (MI->isBundle() && TII.isZOLSetupBundle(MI) &&
+            TII.isLastZOLSetupBundleInMBB(MI)) {
+          LastSetupBundle = MI;
+          break;
+        }
+        BytesToLastSetupStart += TII.getAIEMachineBundleSize(MI);
+      }
+      if (LastSetupBundle != Preheader->end()) {
+        unsigned LastSetupPC =
+            MBBStartOffset[Preheader] + BytesToLastSetupStart;
+        unsigned SetupToLoopEndDist = LoopEndPC - LastSetupPC;
+        LLVM_DEBUG(dbgs() << "setup-to-loopend distance (MBB "
+                          << MBB.getNumber() << "): " << SetupToLoopEndDist
+                          << " bytes\n");
+        unsigned MinSetupDist =
+            TII.getMachineBlockAlignmentBytes() * ZOLSupport->LoopSetupDistance;
+        assert(SetupToLoopEndDist >= MinSetupDist &&
+               "Setup to Loop End distance is below minimum required");
+      }
+    }
+
+    if (ZOLSupport->JumpToLoopEndDistanceInBytes > 0) {
+      // Find the last jump (closest to loop end) elsewhere in the function that
+      // has the preheader or ZOL body as successor (exclude the ZOL body
+      // itself).
+      for (MachineBasicBlock &OtherMBB : MF) {
+        if (&OtherMBB == &MBB)
+          continue;
+        bool HasLoopAsSuccessor = false;
+        for (MachineBasicBlock *Succ : OtherMBB.successors()) {
+          if (Succ == Preheader || Succ == &MBB) {
+            HasLoopAsSuccessor = true;
+            break;
+          }
+        }
+        if (!HasLoopAsSuccessor)
+          continue;
+        unsigned BytesToLastJumpStart = 0;
+        bool FoundJump = false;
+        unsigned CurrentOffset = 0;
+        for (auto MI = OtherMBB.begin(), E = OtherMBB.end(); MI != E; ++MI) {
+          if (MI->isBundle() && TII.isJumpBundle(MI)) {
+            unsigned JumpPC = MBBStartOffset[&OtherMBB] + CurrentOffset;
+            if (JumpPC < LoopEndPC) {
+              FoundJump = true;
+              BytesToLastJumpStart = CurrentOffset;
+            }
+          }
+          CurrentOffset += TII.getAIEMachineBundleSize(MI);
+        }
+        if (FoundJump) {
+          unsigned JumpPC = MBBStartOffset[&OtherMBB] + BytesToLastJumpStart;
+          unsigned JumpToLoopEndDist = LoopEndPC - JumpPC;
+          LLVM_DEBUG(dbgs() << "jump-to-loopend distance (ZOL body MBB "
+                            << MBB.getNumber() << ", jump in MBB "
+                            << OtherMBB.getNumber()
+                            << "): " << JumpToLoopEndDist << " bytes\n");
+          assert(JumpToLoopEndDist >=
+                     ZOLSupport->JumpToLoopEndDistanceInBytes &&
+                 "Jump to Loop End distance is below minimum required");
+        }
+      }
+    }
+  }
+}
+
 void padRegions(std::vector<MultiBlockRegion> &AllRegions) {
   for (auto [Idx, Region] : enumerate(AllRegions)) {
     LLVM_DEBUG(dbgs() << "Padding Region " << Idx << " to align the next"
@@ -307,6 +419,8 @@ bool AIEMachineAlignment::runOnMachineFunction(MachineFunction &MF) {
   padRegions(CollectedRegions);
 
   verifyAlignment(MF);
+
+  verifyDistanceToLoopEnd(MF);
 
   return true;
 }
