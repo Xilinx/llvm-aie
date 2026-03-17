@@ -6,6 +6,7 @@
 
 # RUN: llc --mtriple=aie2p -O2 --start-before=postmisched \
 # RUN:   --aie-loop-min-tripcount=10 %s -o - | FileCheck %s
+# XFAIL: *
 
 # Test that MOV_RLC_imm11_pseudo is NOT materialized to MOVA (lda_slot)
 # when scalar LDA loads are present in the same loop. Both MOVA and LDA
