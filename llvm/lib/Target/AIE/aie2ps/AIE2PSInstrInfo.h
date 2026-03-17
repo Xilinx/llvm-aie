@@ -122,6 +122,7 @@ public:
   unsigned getBasicVecRegSize() const override;
 
   unsigned getBasicVectorBitSize() const override;
+  unsigned getMaxVectorBitSize() const override;
   unsigned getMaxSupportedLdStIncSize() const override;
 
   unsigned getMachineBlockAlignmentBytes() const override { return 16; }

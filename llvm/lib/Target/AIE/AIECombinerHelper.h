@@ -342,6 +342,9 @@ bool matchPeelMemset(MachineInstr &MI, MachineRegisterInfo &MRI,
 bool matchSequentialStores(GStore &MI, MachineRegisterInfo &MRI,
                            GISelChangeObserver &Observer, BuildFnTy &MatchInfo);
 
+bool matchSplitConcatStore(MachineInstr &MI, MachineRegisterInfo &MRI,
+                           const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
+
 bool matchNarrowTruncLoad(MachineInstr &Phi, MachineRegisterInfo &MRI,
                           CombinerHelper &Helper, GISelChangeObserver &Observer,
                           BuildFnTy &MatchInfo);

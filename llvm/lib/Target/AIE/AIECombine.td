@@ -346,6 +346,12 @@ def combine_pack_stores_into_memset : GICombineRule<
          [{ return matchSequentialStores(cast<GStore>(*${root}), MRI, Observer, ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
 
+def combine_split_concat_store : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_STORE, G_AIE_OFFSET_STORE, G_AIE_POSTINC_STORE): $root,
+         [{ return matchSplitConcatStore(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFnNoErase(*${root}, ${matchinfo}); }])>;
+
 def combine_trunc_load : GICombineRule<
   (defs root:$root, build_fn_matchinfo:$matchinfo),
   (match (wip_match_opcode G_LOAD): $root,
@@ -543,7 +549,8 @@ def aie_postlegalizer_custom_shared_combines : GICombineGroup<[
   combine_offset_load_store_ptradd,
   combine_offset_load_store_share_ptradd,
   combine_add_vector_elt_undef,
-  combine_insert_extract_vector_elt_to_copy
+  combine_insert_extract_vector_elt_to_copy,
+  combine_split_concat_store
 ]>;
 
 def aie2_postlegalizer_custom_combines : GICombineGroup<[

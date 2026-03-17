@@ -1420,6 +1420,8 @@ unsigned AIE2PSInstrInfo::getBasicVecRegSize() const { return 256; }
 
 unsigned AIE2PSInstrInfo::getBasicVectorBitSize() const { return 512; }
 
+unsigned AIE2PSInstrInfo::getMaxVectorBitSize() const { return 2048; }
+
 unsigned AIE2PSInstrInfo::getMaxSupportedLdStIncSize() const { return 2048; }
 
 unsigned AIE2PSInstrInfo::getGenericAddVectorEltOpcode() const {
