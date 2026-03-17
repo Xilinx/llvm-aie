@@ -5277,6 +5277,82 @@ static void makeStoreDead(GStore *StMI, const TargetInstrInfo &TII,
   StMI->addOperand(MachineOperand::CreateReg(DataReg, false));
 }
 
+// Split a store of a G_CONCAT_VECTORS result into two half-sized stores.
+// This allows each half to be stored independently, avoiding the creation of
+// a wide value that may require a more constrained register class.
+// Handles G_STORE, G_AIE_OFFSET_STORE and G_AIE_POSTINC_STORE.
+//   store (G_CONCAT_VECTORS lo, hi), ptr
+// becomes:
+//   store hi, ptr + halfsize
+//   store lo, ptr
+bool llvm::matchSplitConcatStore(MachineInstr &StMI, MachineRegisterInfo &MRI,
+                                 const AIEBaseInstrInfo &TII,
+                                 BuildFnTy &MatchInfo) {
+  // Only G_AIE_POSTINC_STORE has an explicit def (the updated pointer).
+  const bool IsPostIncStore = StMI.getNumExplicitDefs() > 0;
+  // G_STORE is the only target-independent opcode matched; the remaining
+  // non-postinc case is G_AIE_OFFSET_STORE.
+  const bool IsOffsetStore =
+      !IsPostIncStore && StMI.getOpcode() != TargetOpcode::G_STORE;
+
+  const unsigned DataOpIdx = IsPostIncStore ? 1 : 0;
+  const unsigned PtrOpIdx = IsPostIncStore ? 2 : 1;
+
+  const Register DataReg = StMI.getOperand(DataOpIdx).getReg();
+  MachineInstr *const ConcatI = MRI.getVRegDef(DataReg);
+
+  // Only match stores of two-operand G_CONCAT_VECTORS at or above the target's
+  // maximum vector size, with a single use (the store itself).
+  if (!ConcatI || ConcatI->getOpcode() != TargetOpcode::G_CONCAT_VECTORS ||
+      ConcatI->getNumOperands() != 3)
+    return false;
+  if (MRI.getType(DataReg).getSizeInBits() < TII.getMaxVectorBitSize() ||
+      !MRI.hasOneNonDBGUse(DataReg))
+    return false;
+
+  const Register LoReg = ConcatI->getOperand(1).getReg();
+  const Register HiReg = ConcatI->getOperand(2).getReg();
+  const LLT HalfTy = MRI.getType(LoReg);
+  const unsigned HalfSizeBytes = HalfTy.getSizeInBytes();
+  const Register PtrReg = StMI.getOperand(PtrOpIdx).getReg();
+  const LLT PtrTy = MRI.getType(PtrReg);
+
+  MatchInfo = [=, &MRI, &StMI](MachineIRBuilder &B) {
+    MachineMemOperand *const MMO = *StMI.memoperands_begin();
+
+    // Compute the effective base pointer.
+    // For G_AIE_OFFSET_STORE, incorporate the offset into the base pointer.
+    // For G_AIE_POSTINC_STORE, the post-increment is handled separately below.
+    Register BasePtrReg = PtrReg;
+    if (IsOffsetStore) {
+      Register OffsetReg = StMI.getOperand(2).getReg();
+      BasePtrReg = B.buildPtrAdd(PtrTy, PtrReg, OffsetReg).getReg(0);
+    }
+    // Store upper half at base + halfsize first.
+    auto HiPtr = B.buildPtrAdd(PtrTy, BasePtrReg,
+                               B.buildConstant(LLT::scalar(20), HalfSizeBytes));
+    B.buildStore(HiReg, HiPtr.getReg(0),
+                 *B.getMF().getMachineMemOperand(MMO, HalfSizeBytes, HalfTy));
+    // Store lower half at base pointer last, so that the addressing mode
+    // combiner can merge a potential post-increment with it.
+    B.buildStore(LoReg, BasePtrReg,
+                 *B.getMF().getMachineMemOperand(MMO, 0, HalfTy));
+
+    // For G_AIE_POSTINC_STORE, emit a G_PTR_ADD to produce the updated pointer
+    // that replaces the post-increment output. The address combiner can later
+    // fold this into one of the half-sized stores.
+    if (IsPostIncStore) {
+      Register PostIncOut = StMI.getOperand(0).getReg();
+      Register IncrReg = StMI.getOperand(3).getReg();
+      B.buildPtrAdd(PostIncOut, PtrReg, IncrReg);
+    }
+
+    // The dead G_CONCAT_VECTORS will be cleaned up by DCE.
+    StMI.eraseFromParent();
+  };
+  return true;
+}
+
 // This combiner tries to pack sequential zero stores into memsets.
 // The goal is to reach an optimal number of stores provided we
 // use it synergically with the memset expand combiner.
