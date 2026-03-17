@@ -18,9 +18,8 @@ body:             |
   ; CHECK-NEXT:   liveins: $p0, $r0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   BUNDLE implicit-def $x6, implicit-def $wl6, implicit-def $wh6, implicit-def $p0, implicit killed $p0 {
-  ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     renamable $x6, renamable $p0 = VLDB_dmx_ldb_x_pstm_nrm_imm killed renamable $p0, 0 :: (load (<32 x s16>))
-  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPX
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $r0, implicit-def dead $srcarry, implicit killed $r0 {
   ; CHECK-NEXT:     renamable $r0 = ADD_add_r_ri killed renamable $r0, -1, implicit-def dead $srcarry
@@ -38,8 +37,11 @@ body:             |
   ; CHECK-NEXT:     MOVXM_lng_cg_ls_abs 0, implicit-def $ls
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit-def $p0, implicit-def $le, implicit killed $p0 {
+  ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     renamable $x1, renamable $p0 = VLDB_dmx_ldb_x_pstm_nrm_imm killed renamable $p0, 128 :: (load (<32 x s16>))
+  ; CHECK-NEXT:     NOPS
   ; CHECK-NEXT:     MOVXM_lng_cg_le_abs <mcsymbol .L_1120>, implicit-def $le
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit-def $p0, implicit-def $r0, implicit-def dead $srcarry, implicit killed $p0, implicit killed $r0 {
   ; CHECK-NEXT:     NOPA
@@ -64,20 +66,13 @@ body:             |
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit-def $p0, implicit-def $r0, implicit-def dead $srcarry, implicit killed $p0, implicit killed $r0 {
-  ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     renamable $x0, renamable $p0 = VLDB_dmx_ldb_x_pstm_nrm_imm killed renamable $p0, 64 :: (load (<32 x s16>))
-  ; CHECK-NEXT:     NOPS
   ; CHECK-NEXT:     renamable $r0 = ADD_add_r_ri killed renamable $r0, -1, implicit-def dead $srcarry
   ; CHECK-NEXT:     NOPM
-  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $x2, implicit-def $wl2, implicit-def $wh2, implicit-def $p0, implicit-def $x4, implicit-def $wl4, implicit-def $wh4, implicit killed $p0, implicit $x6, implicit killed $x0, implicit $crbf8conf, implicit $crfp8conf {
-  ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     renamable $x2, renamable $p0 = VLDB_dmx_ldb_x_pstm_nrm_imm killed renamable $p0, 64 :: (load (<32 x s16>))
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPX
   ; CHECK-NEXT:     renamable $x4 = VADD_16 renamable $x6, killed renamable $x0, implicit $crbf8conf, implicit $crfp8conf
-  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit-def $p0, implicit killed $p0 {
   ; CHECK-NEXT:     renamable $x1, renamable $p0 = VLDB_dmx_ldb_x_pstm_nrm_imm killed renamable $p0, 128 :: (load (<32 x s16>))
@@ -213,9 +208,8 @@ body:             |
   ; CHECK-NEXT:   liveins: $p0, $r0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   BUNDLE implicit-def $x6, implicit-def $wl6, implicit-def $wh6, implicit-def $p0, implicit killed $p0 {
-  ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     renamable $x6, renamable $p0 = VLDB_dmx_ldb_x_pstm_nrm_imm killed renamable $p0, 0 :: (load (<32 x s16>))
-  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPX
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $r0, implicit-def dead $srcarry, implicit killed $r0 {
   ; CHECK-NEXT:     renamable $r0 = ADD_add_r_ri killed renamable $r0, -1, implicit-def dead $srcarry
@@ -233,8 +227,11 @@ body:             |
   ; CHECK-NEXT:     MOVXM_lng_cg_ls_abs 0, implicit-def $ls
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit-def $p0, implicit-def $le, implicit killed $p0 {
+  ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     renamable $x1, renamable $p0 = VLDB_dmx_ldb_x_pstm_nrm_imm killed renamable $p0, 128 :: (load (<32 x s16>))
+  ; CHECK-NEXT:     NOPS
   ; CHECK-NEXT:     MOVXM_lng_cg_le_abs <mcsymbol .L_1120>, implicit-def $le
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit-def $p0, implicit-def $r0, implicit-def dead $srcarry, implicit killed $p0, implicit killed $r0 {
   ; CHECK-NEXT:     NOPA
@@ -259,20 +256,13 @@ body:             |
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit-def $p0, implicit-def $r0, implicit-def dead $srcarry, implicit killed $p0, implicit killed $r0 {
-  ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     renamable $x0, renamable $p0 = VLDB_dmx_ldb_x_pstm_nrm_imm killed renamable $p0, 64 :: (load (<32 x s16>))
-  ; CHECK-NEXT:     NOPS
   ; CHECK-NEXT:     renamable $r0 = ADD_add_r_ri killed renamable $r0, -1, implicit-def dead $srcarry
   ; CHECK-NEXT:     NOPM
-  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $x2, implicit-def $wl2, implicit-def $wh2, implicit-def $p0, implicit-def $x4, implicit-def $wl4, implicit-def $wh4, implicit killed $p0, implicit $x6, implicit killed $x0, implicit $crbf8conf, implicit $crfp8conf {
-  ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     renamable $x2, renamable $p0 = VLDB_dmx_ldb_x_pstm_nrm_imm killed renamable $p0, 64 :: (load (<32 x s16>))
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPX
   ; CHECK-NEXT:     renamable $x4 = VADD_16 renamable $x6, killed renamable $x0, implicit $crbf8conf, implicit $crfp8conf
-  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit-def $p0, implicit killed $p0 {
   ; CHECK-NEXT:     renamable $x1, renamable $p0 = VLDB_dmx_ldb_x_pstm_nrm_imm killed renamable $p0, 128 :: (load (<32 x s16>))

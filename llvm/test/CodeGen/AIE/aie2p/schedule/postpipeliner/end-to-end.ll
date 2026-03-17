@@ -16,10 +16,9 @@
 define <32 x i16> @zol(i32 %n, ptr %p) {
 ; CHECK-LABEL: zol:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    add.nc lc, r0, #-7
+; CHECK-NEXT:    nopa ; nopx ; add.nc lc, r0, #-7
 ; CHECK-NEXT:    movxm ls, #.LBB0_1
-; CHECK-NEXT:    movxm le, #.L_LEnd0
-; CHECK-NEXT:    nopa ; vldb x4, [p0], #64; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; vldb x4, [p0], #64; nops ; movxm le, #.L_LEnd0; nopv
 ; CHECK-NEXT:    nopa ; vldb x4, [p0], #64; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; vldb x4, [p0], #64; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; vldb x4, [p0], #64; nops ; nopxm ; nopv

@@ -105,9 +105,10 @@ body:             |
   ; CHECK-NEXT:   BUNDLE implicit-def $r27, implicit $r1, implicit $r0 {
   ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPS
   ; CHECK-NEXT:     renamable $r27 = LTU renamable $r1, renamable $r0
   ; CHECK-NEXT:     NOPM
-  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $ls {
   ; CHECK-NEXT:     $ls = MOVXM %bb.3
@@ -116,6 +117,7 @@ body:             |
   ; CHECK-NEXT:     $le = MOVXM <mcsymbol .L_LEnd3>
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $r0, implicit killed $r0, implicit killed $r1, implicit killed $r27 {
+  ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     renamable $r0 = SEL_NEZ killed renamable $r0, killed renamable $r1, killed renamable $r27
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $r1, implicit-def $r0, implicit-def dead $srcarry, implicit killed $r0 {
@@ -129,7 +131,12 @@ body:             |
   ; CHECK-NEXT:     renamable $r0 = nuw nsw ADD_add_r_ri killed renamable $r0, 1, implicit-def dead $srcarry
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $lc, implicit killed $r0 {
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPX
   ; CHECK-NEXT:     $lc = ADD_NC_mv_add_ri killed $r0, 0
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
@@ -174,13 +181,10 @@ body:             |
   ; CHECK-NEXT:   BUNDLE {
   ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPXM
-  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:     NOPX
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $x4, implicit-def $wl4, implicit-def $wh4, implicit-def dead $l8, implicit $x0, implicit killed $x2, implicit $vaddsign0 {
   ; CHECK-NEXT:     renamable $x4, dead renamable $l8 = VMIN_GE_8_vaddSign0 renamable $x0, killed renamable $x2, implicit $vaddsign0
@@ -227,8 +231,10 @@ body:             |
   ; CHECK-NEXT:   BUNDLE implicit-def $r27, implicit $r1, implicit $r0 {
   ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPS
   ; CHECK-NEXT:     renamable $r27 = LTU renamable $r1, renamable $r0
   ; CHECK-NEXT:     NOPM
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $ls {
   ; CHECK-NEXT:     $ls = MOVXM %bb.6
@@ -251,7 +257,12 @@ body:             |
   ; CHECK-NEXT:     renamable $x4 = VBCST_8 killed renamable $r2
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $lc, implicit killed $r0 {
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPX
   ; CHECK-NEXT:     $lc = ADD_NC_mv_add_ri killed $r0, 0
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.6:
@@ -294,14 +305,10 @@ body:             |
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPXM
-  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPX
+  ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $l0, implicit-def $r0, implicit-def $r1, implicit $x0, implicit killed $x6, implicit $vaddsign0 {
   ; CHECK-NEXT:     renamable $l0 = VLT_8_vaddSign0 renamable $x0, killed renamable $x6, implicit $vaddsign0

@@ -33,15 +33,15 @@
   ; CHECK-NEXT:  .LBB0_2: // %for.cond2.preheader
   ; CHECK-NEXT:    // =>This Loop Header: Depth=1
   ; CHECK-NEXT:    // Child Loop BB0_3 Depth 2
-  ; CHECK-NEXT:    nopa ; vldb wl2, [p1], #32; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopx
+  ; CHECK-NEXT:    vldb wl2, [p1], #32; nopx
+  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vldb wl2, [p1], #32
+  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    add.nc lc, r1, #-3
-  ; CHECK-NEXT:    movxm ls, #.LBB0_3
-  ; CHECK-NEXT:    movxm le, #.L_LEnd0; vmul.f dm0, x2, x0, r2
-  ; CHECK-NEXT:    nopa ; vldb wl2, [p1], #32; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    movxm ls, #.LBB0_3; vmul.f dm0, x2, x0, r2
+  ; CHECK-NEXT:    nopa ; vldb wl2, [p1], #32; nops ; movxm le, #.L_LEnd0; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; vmul.f dm0, x2, x0, r2
@@ -141,16 +141,16 @@
   ; CHECK-NEXT:  .LBB1_2: // %for.cond2.preheader
   ; CHECK-NEXT:    // =>This Loop Header: Depth=1
   ; CHECK-NEXT:    // Child Loop BB1_3 Depth 2
-  ; CHECK-NEXT:    padda [p1], m0; nopb ; nopxm ; nops
-  ; CHECK-NEXT:    vldb wl2, [p1], #32
+  ; CHECK-NEXT:    padda [p1], m0; nopb ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vldb wl2, [p1], #32; nopx
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vldb wl2, [p1], #32
+  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    add.nc lc, r1, #-3
-  ; CHECK-NEXT:    movxm ls, #.LBB1_3
-  ; CHECK-NEXT:    movxm le, #.L_LEnd1; vmul.f dm0, x2, x0, r2
-  ; CHECK-NEXT:    nopa ; vldb wl2, [p1], #32; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    movxm ls, #.LBB1_3; vmul.f dm0, x2, x0, r2
+  ; CHECK-NEXT:    nopa ; vldb wl2, [p1], #32; nops ; movxm le, #.L_LEnd1; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    padda [p0], m0; nopb ; nops ; nopxm ; vmul.f dm0, x2, x0, r2
@@ -252,9 +252,9 @@
   ; CHECK-NEXT:  .LBB2_2: // %for.cond2.preheader
   ; CHECK-NEXT:    // =>This Loop Header: Depth=1
   ; CHECK-NEXT:    // Child Loop BB2_3 Depth 2
-  ; CHECK-NEXT:    add.nc lc, r1, #0
+  ; CHECK-NEXT:    nopa ; nopx ; add.nc lc, r1, #0
   ; CHECK-NEXT:    movxm ls, #.LBB2_3
-  ; CHECK-NEXT:    movxm le, #.L_LEnd2
+  ; CHECK-NEXT:    nopa ; nopb ; nops ; movxm le, #.L_LEnd2; nopv
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB2_3: // %for.body5
   ; CHECK-NEXT:    // Parent Loop BB2_2 Depth=1
@@ -263,8 +263,8 @@
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    nopa ; nopb ; nopxm ; nops
+  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vmul.f dm0, x2, x0, r2
   ; CHECK-NEXT:    nop
@@ -353,9 +353,9 @@
   ; CHECK-NEXT:  .LBB3_2: // %for.cond2.preheader
   ; CHECK-NEXT:    // =>This Loop Header: Depth=1
   ; CHECK-NEXT:    // Child Loop BB3_3 Depth 2
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; add.nc lc, r1, #0; nopv
+  ; CHECK-NEXT:    nopa ; nopx ; add.nc lc, r1, #0
   ; CHECK-NEXT:    movxm ls, #.LBB3_3
-  ; CHECK-NEXT:    padda [p1], m0; movxm le, #.L_LEnd3
+  ; CHECK-NEXT:    padda [p1], m0; nopb ; nops ; movxm le, #.L_LEnd3; nopv
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB3_3: // %for.body5
   ; CHECK-NEXT:    // Parent Loop BB3_2 Depth=1
@@ -364,8 +364,8 @@
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    nopa ; nopb ; nopxm ; nops
+  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vmul.f dm0, x2, x0, r2
   ; CHECK-NEXT:    nop

@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc -mtriple aie2 -run-pass=aie-machine-alignment %s -verify-machineinstrs -o - | FileCheck %s
 
@@ -15,13 +15,15 @@ body:             |
 
     ; CHECK-LABEL: name: LoopStartBlock_Different_Insns_Order
     ; CHECK: BUNDLE implicit-def $r1, implicit-def $r2, implicit-def $lc, implicit $p0, implicit $r0 {
-    ; CHECK-NEXT:   renamable $r1 = LDA_dms_lda_idx_imm renamable $p0, 0
     ; CHECK-NEXT:   NOPB
+    ; CHECK-NEXT:   renamable $r1 = LDA_dms_lda_idx_imm renamable $p0, 0
+    ; CHECK-NEXT:   NOPS
     ; CHECK-NEXT:   renamable $r2 = MOVX_alu_cg 0
     ; CHECK-NEXT:   $lc = MOV_mv_scl $r0
-    ; CHECK-NEXT:   NOPS
+    ; CHECK-NEXT:   NOPV
     ; CHECK-NEXT: }
     ; CHECK-NEXT: BUNDLE implicit-def $r3 {
+    ; CHECK-NEXT:   NOPX
     ; CHECK-NEXT:   renamable $r3 = MOV_mv_cg 2
     ; CHECK-NEXT: }
     ; CHECK-NEXT: BUNDLE implicit-def $le {
@@ -31,13 +33,10 @@ body:             |
     ; CHECK-NEXT:   NOP
     ; CHECK-NEXT: }
     ; CHECK-NEXT: BUNDLE implicit-def $ls {
+    ; CHECK-NEXT:   NOPB
+    ; CHECK-NEXT:   NOPA
+    ; CHECK-NEXT:   NOPS
     ; CHECK-NEXT:   $ls = MOVXM_lng_cg 0
-    ; CHECK-NEXT: }
-    ; CHECK-NEXT: BUNDLE {
-    ; CHECK-NEXT:   NOPB
-    ; CHECK-NEXT:   NOPA
-    ; CHECK-NEXT:   NOPS
-    ; CHECK-NEXT:   NOPXM
     ; CHECK-NEXT:   NOPV
     ; CHECK-NEXT: }
     ; CHECK-NEXT: BUNDLE {
@@ -76,11 +75,13 @@ body:             |
     ; CHECK-NEXT:   NOPV
     ; CHECK-NEXT: }
     ; CHECK-NEXT: BUNDLE {
-    ; CHECK-NEXT:   NOPB
     ; CHECK-NEXT:   NOPA
-    ; CHECK-NEXT:   NOPS
+    ; CHECK-NEXT:   NOPB
     ; CHECK-NEXT:   NOPXM
-    ; CHECK-NEXT:   NOPV
+    ; CHECK-NEXT:   NOPS
+    ; CHECK-NEXT: }
+    ; CHECK-NEXT: BUNDLE {
+    ; CHECK-NEXT:   NOP
     ; CHECK-NEXT: }
     BUNDLE implicit-def $r1, implicit-def $r2, implicit-def $lc, implicit $p0, implicit $r0 {
       renamable $r1 = LDA_dms_lda_idx_imm renamable $p0, 0

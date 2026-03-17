@@ -3,7 +3,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc --mtriple=aie2 -O2 --run-pass=postmisched --aie-loop-min-tripcount=16 --aie-addrspace-none-is-safe %s -o - | FileCheck %s
 
@@ -21,8 +21,10 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $lc = ADD_NC $r0, -7
   ; CHECK-NEXT:   $ls = MOVXM_lng_cg %bb.2
-  ; CHECK-NEXT:   $le = MOVXM_lng_cg <mcsymbol .L_LEnd0>
-  ; CHECK-NEXT:   $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm killed $p0, $m0
+  ; CHECK-NEXT:   BUNDLE implicit-def $x6, implicit-def $wl6, implicit-def $wh6, implicit-def $p0, implicit-def $le, implicit killed $p0, implicit $m0 {
+  ; CHECK-NEXT:     $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm killed $p0, $m0
+  ; CHECK-NEXT:     $le = MOVXM_lng_cg <mcsymbol .L_LEnd0>
+  ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm killed $p0, $m0
   ; CHECK-NEXT:   $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm killed $p0, $m0
   ; CHECK-NEXT:   $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm killed $p0, $m0
@@ -104,14 +106,14 @@ body:             |
   ; CHECK-NEXT:   liveins: $p0, $p1, $r0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $lc = ADD_NC $r0, -8
-  ; CHECK-NEXT:   $ls = MOVXM_lng_cg %bb.2
-  ; CHECK-NEXT:   BUNDLE implicit-def $wl4, implicit-def $p0, implicit-def $le, implicit killed $p0, implicit $m0 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $wl4, implicit-def $p0, implicit-def $ls, implicit killed $p0, implicit $m0 {
   ; CHECK-NEXT:     $wl4, $p0 = VLDA_dmw_lda_w_ag_pstm_nrm_imm killed $p0, $m0
-  ; CHECK-NEXT:     $le = MOVXM_lng_cg <mcsymbol .L_LEnd0>
+  ; CHECK-NEXT:     $ls = MOVXM_lng_cg %bb.2
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $wl4, implicit-def $p0, implicit-def $x6, implicit-def $wl6, implicit-def $wh6, implicit killed $p0, implicit $m0 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $wl4, implicit-def $p0, implicit-def $x6, implicit-def $wl6, implicit-def $wh6, implicit-def $le, implicit killed $p0, implicit $m0 {
   ; CHECK-NEXT:     $wl4, $p0 = VLDA_dmw_lda_w_ag_pstm_nrm_imm killed $p0, $m0
   ; CHECK-NEXT:     $x6 = VUNPACK_S16_S8 internal $wl4
+  ; CHECK-NEXT:     $le = MOVXM_lng_cg <mcsymbol .L_LEnd0>
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $wl4, implicit-def $p0, implicit-def $x6, implicit-def $wl6, implicit-def $wh6, implicit killed $p0, implicit $m0 {
   ; CHECK-NEXT:     $wl4, $p0 = VLDA_dmw_lda_w_ag_pstm_nrm_imm killed $p0, $m0
@@ -215,10 +217,10 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $lc = ADD_NC $r0, -7
   ; CHECK-NEXT:   $ls = MOVXM_lng_cg %bb.2
-  ; CHECK-NEXT:   $le = MOVXM_lng_cg <mcsymbol .L_LEnd0>
-  ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $wl6, implicit-def $p0, implicit killed $p0 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $wl6, implicit-def $p0, implicit-def $le, implicit killed $p0 {
   ; CHECK-NEXT:     $wh6 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32 :: (load (<16 x s16>))
   ; CHECK-NEXT:     $wl6, $p0 = VLDB_dmw_ldb_ag_pstm_nrm_imm killed $p0, 64 :: (load (<16 x s16>))
+  ; CHECK-NEXT:     $le = MOVXM_lng_cg <mcsymbol .L_LEnd0>
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $wl6, implicit-def $p0, implicit killed $p0 {
   ; CHECK-NEXT:     $wh6 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32 :: (load (<16 x s16>))
@@ -321,19 +323,19 @@ body:             |
   ; CHECK-NEXT:   $bmh2 = VLDA_UPS_S32_S16_ag_idx_imm $s0, $p2, 32, implicit-def $srups_of, implicit $crsat
   ; CHECK-NEXT:   $bml2 = VLDA_UPS_S32_S16_ag_idx_imm $s0, killed $p2, 0, implicit-def $srups_of, implicit $crsat
   ; CHECK-NEXT:   $wh6 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32
-  ; CHECK-NEXT:   BUNDLE implicit-def $wl6, implicit-def $p0, implicit-def $lc, implicit killed $p0, implicit $m0, implicit killed $r0 {
-  ; CHECK-NEXT:     $wl6, $p0 = VLDA_dmw_lda_w_ag_pstm_nrm_imm killed $p0, $m0
+  ; CHECK-NEXT:   $wl6, $p0 = VLDA_dmw_lda_w_ag_pstm_nrm_imm killed $p0, $m0
+  ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $lc, implicit $p0, implicit killed $r0 {
+  ; CHECK-NEXT:     $wh6 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32
   ; CHECK-NEXT:     $lc = ADD_NC killed $r0, -5
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $ls, implicit $p0 {
-  ; CHECK-NEXT:     $wh6 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32
+  ; CHECK-NEXT:   BUNDLE implicit-def $wl6, implicit-def $p0, implicit-def $ls, implicit killed $p0, implicit $m0 {
+  ; CHECK-NEXT:     $wl6, $p0 = VLDA_dmw_lda_w_ag_pstm_nrm_imm killed $p0, $m0
   ; CHECK-NEXT:     $ls = MOVXM_lng_cg %bb.2
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $wl6, implicit-def $p0, implicit-def $le, implicit killed $p0, implicit $m0 {
-  ; CHECK-NEXT:     $wl6, $p0 = VLDA_dmw_lda_w_ag_pstm_nrm_imm killed $p0, $m0
+  ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $le, implicit $p0 {
+  ; CHECK-NEXT:     $wh6 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32
   ; CHECK-NEXT:     $le = MOVXM_lng_cg <mcsymbol .L_LEnd0>
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   $wh6 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32
   ; CHECK-NEXT:   $wl6, $p0 = VLDA_dmw_lda_w_ag_pstm_nrm_imm killed $p0, $m0
   ; CHECK-NEXT:   BUNDLE implicit-def $wh6, implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit $p0, implicit killed $r1 {
   ; CHECK-NEXT:     $wh6 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32
@@ -450,10 +452,13 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   ACQ_mLockId_imm 49, killed renamable $r18
   ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   $lc = ADD_NC $r0, -7
   ; CHECK-NEXT:   $ls = MOVXM_lng_cg %bb.2
-  ; CHECK-NEXT:   $le = MOVXM_lng_cg <mcsymbol .L_LEnd0>
-  ; CHECK-NEXT:   $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm killed $p0, $m0
+  ; CHECK-NEXT:   BUNDLE implicit-def $x6, implicit-def $wl6, implicit-def $wh6, implicit-def $p0, implicit-def $le, implicit killed $p0, implicit $m0 {
+  ; CHECK-NEXT:     $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm killed $p0, $m0
+  ; CHECK-NEXT:     $le = MOVXM_lng_cg <mcsymbol .L_LEnd0>
+  ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm killed $p0, $m0
   ; CHECK-NEXT:   $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm killed $p0, $m0
   ; CHECK-NEXT:   $x6, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm killed $p0, $m0

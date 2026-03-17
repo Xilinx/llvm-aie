@@ -312,8 +312,8 @@ class RegionEndEdges : public ScheduleDAGMutation {
           ZOLBundlesCount = TII->getZOLBundlesCount(*LoopSucc) - 1;
         }
         if (ZOLBundlesCount < ZOLSupport->LoopSetupDistance)
-          EdgeLatency = std::max(EdgeLatency, ZOLSupport->LoopSetupDistance +
-                                                  1 - ZOLBundlesCount);
+          EdgeLatency = std::max(EdgeLatency, ZOLSupport->LoopSetupDistance -
+                                                  ZOLBundlesCount);
       }
       ExitDep.setLatency(EdgeLatency);
       DAG->ExitSU.addPred(ExitDep, /*Required=*/true);

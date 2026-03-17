@@ -126,9 +126,6 @@ body:             |
   ; CHECK-NEXT:   BUNDLE {
   ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOP
-  ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $r0 {
   ; CHECK-NEXT:     renamable $r0 = MOVA_lda_cg 0
   ; CHECK-NEXT:   }

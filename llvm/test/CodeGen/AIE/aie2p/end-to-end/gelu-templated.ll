@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -mtriple=aie2p %s -o - | FileCheck %s
 
 ; Test that the use of llvm.loop.pipeline.initiationinterval can force pre-swp to accepted
@@ -17,7 +17,7 @@
 define void @gelu_fn(ptr noalias %ifm, ptr noalias %ofm, ptr nonnull align 64 dereferenceable(64) %params) {
 ; CHECK-LABEL: gelu_fn:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], #64; nopb ; nopxm
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], #64; nopb ; nopx
 ; CHECK-NEXT:    movxm r0, #16544
 ; CHECK-NEXT:    vbcst.16 x6, r0
 ; CHECK-NEXT:    lda r1, [p2, #0]; movxm r0, #17280
@@ -51,20 +51,20 @@ define void @gelu_fn(ptr noalias %ifm, ptr noalias %ofm, ptr nonnull align 64 de
 ; CHECK-NEXT:    vconv.bf16.fp32 x5, cml3; vmul.f dm4, x5, x4, r2
 ; CHECK-NEXT:    vconv.bf16.fp32 x7, cml1; movxm ls, #.LBB0_1; vadd.f dm2, dm2, dm0, r0
 ; CHECK-NEXT:    mova r4, #-5; nopb ; vfloor.s32.bf16 x3, wh8, s0; movxm le, #.L_LEnd0; vmul.f dm3, x5, x4, r2
-; CHECK-NEXT:    mova r1, #2; nopb ; vconv.bf16.fp32 x10, cml4; lshl r4, r1, r4; vbcst.16 x6, r3; vmul.f dm4, x7, x2, r2
+; CHECK-NEXT:    mova r1, #2; vconv.bf16.fp32 x10, cml4; lshl r4, r1, r4; vmul.f dm4, x7, x2, r2
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], #64; vshuffle x1, x1, x3, r1
 ; CHECK-NEXT:    vfloor.s32.bf16 x9, wl10, s0; vmin_ge.16 x3, r16, x1, x0, vaddsign1
-; CHECK-NEXT:    vfloor.s32.bf16 x3, wh10, s0; add.nc lc, r4, #-7
-; CHECK-NEXT:    nopa ; nopb ; vconv.bf16.fp32 x8, cml4; nopx ; vmax_lt.16 x11, r16, x3, x6, vaddsign1; nopv
-; CHECK-NEXT:    padda [p1], m0; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vfloor.s32.bf16 x3, wh10, s0; vbcst.16 x6, r3
+; CHECK-NEXT:    vconv.bf16.fp32 x8, cml4; vmax_lt.16 x11, r16, x3, x6, vaddsign1
+; CHECK-NEXT:    padda [p1], m0; nopb ; nops ; nopx ; add.nc lc, r4, #-7; nopv
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    nopa ; nopb ; vconv.bf16.fp32 x10, cml2; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; vadd.f dm2, dm4, dm0, r0
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p0], #64; nopb ; vconv.bf16.fp32 x7, cml4; nopx ; vmov cml4, cml1; vmul.f dm4, x10, x2, r2
 ; CHECK-NEXT:    nopa ; nopb ; vst x11, [p1], #64; nopx ; vshuffle x1, x9, x3, r1; nopv
-; CHECK-NEXT:    vfloor.s32.bf16 x3, wh8, s0; vmin_ge.16 x5, r16, x1, x0, vaddsign1
-; CHECK-NEXT:    vfloor.s32.bf16 x9, wl8, s0; vmax_lt.16 x11, r16, x5, x6, vaddsign1
+; CHECK-NEXT:    nopa ; nopb ; vfloor.s32.bf16 x3, wh8, s0; nopx ; vmin_ge.16 x5, r16, x1, x0, vaddsign1; nopv
+; CHECK-NEXT:    nopa ; nopb ; vfloor.s32.bf16 x9, wl8, s0; nopx ; vmax_lt.16 x11, r16, x5, x6, vaddsign1; nopv
 ; CHECK-NEXT:  .L_LEnd0:
 ; CHECK-NEXT:    nopa ; nopb ; vconv.bf16.fp32 x8, cml3; nopxm ; vmul.f dm3, x7, x4, r2
 ; CHECK-NEXT:  // %bb.2:
