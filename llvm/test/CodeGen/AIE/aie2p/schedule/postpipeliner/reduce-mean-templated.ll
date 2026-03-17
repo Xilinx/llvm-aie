@@ -18,16 +18,16 @@
 define void @reduceMeanTemplated(ptr noalias %ifm, ptr addrspace(6) noalias %ofm) {
 ; CHECK-LABEL: reduceMeanTemplated:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    mova dj2, #128; mov m0, #0
-; CHECK-NEXT:    vlda bmlh3, [p1, #64]; movs p3, p1; nopx ; mov p2, p1
+; CHECK-NEXT:    mova dj2, #128; nopx ; mov m0, #0
+; CHECK-NEXT:    vlda bmlh3, [p1, #64]; movs p3, p1; mov p2, p1
 ; CHECK-NEXT:    movs m1, m0; mov dj1, dj2
 ; CHECK-NEXT:    movs dn1, m0; mov dc1, m0
 ; CHECK-NEXT:    vlda.2d bmll3, [p1], d1
 ; CHECK-NEXT:    vlda bmlh3, [p1, #64]; movxm ls, #.LBB0_1; vclr dm0
 ; CHECK-NEXT:    movxm le, #.L_LEnd0
-; CHECK-NEXT:    mova r0, #0; movx r1, #1; mov dj0, m0
-; CHECK-NEXT:    vlda.2d bmll3, [p1], d1; movs dj4, m0; add.nc lc, r1, #-3; vadd.f dm4, dm3, dm0, r0
-; CHECK-NEXT:    vlda bmlh3, [p1, #64]; nopb ; movs dc2, m0; nopx ; vbcst.32 x0, r0; nopv
+; CHECK-NEXT:    mova r0, #0; mov dj0, m0
+; CHECK-NEXT:    vlda.2d bmll3, [p1], d1; nopb ; movs dj4, m0; movx r1, #1; vbcst.32 x0, r0; vadd.f dm4, dm3, dm0, r0
+; CHECK-NEXT:    vlda bmlh3, [p1, #64]; nopb ; movs dc2, m0; nopx ; add.nc lc, r1, #-3; nopv
 ; CHECK-NEXT:    nopa ; nopb ; movs dc0, m0; nopx ; mov dn0, m0; nopv
 ; CHECK-NEXT:    nopa ; nopb ; movs dc4, m0; nopx ; mov dn4, m0; nopv
 ; CHECK-NEXT:    vlda.2d bmll3, [p1], d1; nopb ; movs m2, m0; nopx ; mov dn2, m0; vadd.f dm4, dm3, dm0, r0

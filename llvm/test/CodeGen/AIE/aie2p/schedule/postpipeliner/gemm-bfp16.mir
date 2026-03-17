@@ -17,7 +17,7 @@
   ; CHECK-LABEL: gemm:
   ; CHECK:         .p2align 4
   ; CHECK-NEXT:  // %bb.0: // %entry
-  ; CHECK-NEXT:    vldb.3d x2, [p6], d0; mov p5, p6
+  ; CHECK-NEXT:    nopa ; vldb.3d x2, [p6], d0; nops ; nopx ; mov p5, p6; nopv
   ; CHECK-NEXT:    padda [p5], m4; vldb x4, [p5, #64]; mov p3, p7
   ; CHECK-NEXT:    vlda.3d.conv.fp32.bf16 cml4, [p7], d1; vldb x6, [p5], #64
   ; CHECK-NEXT:    vlda.conv.fp32.bf16 cmh4, [p3, #64]; vldb x8, [p5, #0]
@@ -34,13 +34,13 @@
   ; CHECK-NEXT:    vlda.conv.fp32.bf16 cmh4, [p3, #0]
   ; CHECK-NEXT:    add.nc lc, r0, #-1
   ; CHECK-NEXT:    movxm ls, #.LBB0_1
-  ; CHECK-NEXT:    vconv.bfp16ebs8.fp32 ex6, dm4; movxm le, #.L_LEnd0
+  ; CHECK-NEXT:    nopa ; nopb ; vconv.bfp16ebs8.fp32 ex6, dm4; movxm le, #.L_LEnd0; nopv
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_1: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-  ; CHECK-NEXT:    nopa ; vldb.3d x2, [p6], d0; nops ; nopx ; mov p5, p6; nopv
-  ; CHECK-NEXT:    padda [p5], m4; vldb x4, [p5, #64]; vconv.bfp16ebs8.fp32 ex4, dm4; nopx ; mov p3, p7; nopv
-  ; CHECK-NEXT:    vlda.3d.conv.fp32.bf16 cml4, [p7], d1; vldb x6, [p5], #64; nopx
+  ; CHECK-NEXT:    vldb.3d x2, [p6], d0; mov p5, p6
+  ; CHECK-NEXT:    padda [p5], m4; vldb x4, [p5, #64]; vconv.bfp16ebs8.fp32 ex4, dm4; mov p3, p7
+  ; CHECK-NEXT:    vlda.3d.conv.fp32.bf16 cml4, [p7], d1; vldb x6, [p5], #64
   ; CHECK-NEXT:    vlda.conv.fp32.bf16 cmh4, [p3, #64]; vldb x8, [p5, #0]; vconv.bfp16ebs8.fp32 ex8, dm4; vmac.f dm3, dm3, ex2, ex6, r3
   ; CHECK-NEXT:    paddb [p3], m5
   ; CHECK-NEXT:    vmac.f dm2, dm2, ex2, ex4, r3

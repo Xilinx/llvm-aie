@@ -6,14 +6,8 @@
 #
 # (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 
-# RUN: llc -mtriple=aie2p -run-pass=aie-machine-alignment -debug-only=aie-machine-alignment -verify-machineinstrs -o - %s 2>%t.dbg \
-# RUN:   | FileCheck %s
-# RUN: FileCheck %s --check-prefix=DBG < %t.dbg
-#
-# zol_elongated_preheader_plus_1_LoopBundles_ge112bytes
-# DBG: setup-to-loopend distance (MBB 1): 138 bytes
-# empty_MBB_After_zol_elongated_preheader_plus_1_LoopBundles_ge112bytes
-# DBG: setup-to-loopend distance (MBB 1): 138 bytes
+# RUN: llc -mtriple aie2p -run-pass=aie-machine-alignment %s -verify-machineinstrs -o - | FileCheck %s
+
 ---
 name:            zol_elongated_preheader_plus_1_LoopBundles_ge112bytes
 alignment:       16
@@ -24,9 +18,8 @@ body:             |
   ; CHECK-NEXT:   liveins: $p0, $r0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   BUNDLE implicit-def $x6, implicit-def $wl6, implicit-def $wh6, implicit-def $p0, implicit killed $p0 {
-  ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     renamable $x6, renamable $p0 = VLDB_dmx_ldb_x_pstm_nrm_imm killed renamable $p0, 0 :: (load (<32 x s16>))
-  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPX
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $r0, implicit-def dead $srcarry, implicit killed $r0 {
   ; CHECK-NEXT:     renamable $r0 = ADD_add_r_ri killed renamable $r0, -1, implicit-def dead $srcarry
@@ -44,8 +37,11 @@ body:             |
   ; CHECK-NEXT:     $ls = MOVXM %bb.1
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit-def $p0, implicit-def $le, implicit killed $p0 {
+  ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     renamable $x1, renamable $p0 = VLDB_dmx_ldb_x_pstm_nrm_imm killed renamable $p0, 128 :: (load (<32 x s16>))
+  ; CHECK-NEXT:     NOPS
   ; CHECK-NEXT:     $le = MOVXM <mcsymbol .L_LEnd0>
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit-def $p0, implicit-def $r0, implicit-def dead $srcarry, implicit killed $p0, implicit killed $r0 {
   ; CHECK-NEXT:     NOPA
@@ -70,20 +66,13 @@ body:             |
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit-def $p0, implicit-def $r0, implicit-def dead $srcarry, implicit killed $p0, implicit killed $r0 {
-  ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     renamable $x0, renamable $p0 = VLDB_dmx_ldb_x_pstm_nrm_imm killed renamable $p0, 64 :: (load (<32 x s16>))
-  ; CHECK-NEXT:     NOPS
   ; CHECK-NEXT:     renamable $r0 = ADD_add_r_ri killed renamable $r0, -1, implicit-def dead $srcarry
   ; CHECK-NEXT:     NOPM
-  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $x2, implicit-def $wl2, implicit-def $wh2, implicit-def $p0, implicit-def $x4, implicit-def $wl4, implicit-def $wh4, implicit killed $p0, implicit $x6, implicit killed $x0 {
-  ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     renamable $x2, renamable $p0 = VLDB_dmx_ldb_x_pstm_nrm_imm killed renamable $p0, 64 :: (load (<32 x s16>))
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPX
   ; CHECK-NEXT:     renamable $x4 = VADD_16 renamable $x6, killed renamable $x0
-  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit-def $p0, implicit killed $p0 {
   ; CHECK-NEXT:     renamable $x1, renamable $p0 = VLDB_dmx_ldb_x_pstm_nrm_imm killed renamable $p0, 128 :: (load (<32 x s16>))
@@ -219,9 +208,8 @@ body:             |
   ; CHECK-NEXT:   liveins: $p0, $r0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   BUNDLE implicit-def $x6, implicit-def $wl6, implicit-def $wh6, implicit-def $p0, implicit killed $p0 {
-  ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     renamable $x6, renamable $p0 = VLDB_dmx_ldb_x_pstm_nrm_imm killed renamable $p0, 0 :: (load (<32 x s16>))
-  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPX
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $r0, implicit-def dead $srcarry, implicit killed $r0 {
   ; CHECK-NEXT:     renamable $r0 = ADD_add_r_ri killed renamable $r0, -1, implicit-def dead $srcarry
@@ -239,8 +227,11 @@ body:             |
   ; CHECK-NEXT:     $ls = MOVXM %bb.1
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit-def $p0, implicit-def $le, implicit killed $p0 {
+  ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     renamable $x1, renamable $p0 = VLDB_dmx_ldb_x_pstm_nrm_imm killed renamable $p0, 128 :: (load (<32 x s16>))
+  ; CHECK-NEXT:     NOPS
   ; CHECK-NEXT:     $le = MOVXM <mcsymbol .L_LEnd0>
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit-def $p0, implicit-def $r0, implicit-def dead $srcarry, implicit killed $p0, implicit killed $r0 {
   ; CHECK-NEXT:     NOPA
@@ -265,20 +256,13 @@ body:             |
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit-def $p0, implicit-def $r0, implicit-def dead $srcarry, implicit killed $p0, implicit killed $r0 {
-  ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     renamable $x0, renamable $p0 = VLDB_dmx_ldb_x_pstm_nrm_imm killed renamable $p0, 64 :: (load (<32 x s16>))
-  ; CHECK-NEXT:     NOPS
   ; CHECK-NEXT:     renamable $r0 = ADD_add_r_ri killed renamable $r0, -1, implicit-def dead $srcarry
   ; CHECK-NEXT:     NOPM
-  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $x2, implicit-def $wl2, implicit-def $wh2, implicit-def $p0, implicit-def $x4, implicit-def $wl4, implicit-def $wh4, implicit killed $p0, implicit $x6, implicit killed $x0 {
-  ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     renamable $x2, renamable $p0 = VLDB_dmx_ldb_x_pstm_nrm_imm killed renamable $p0, 64 :: (load (<32 x s16>))
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPX
   ; CHECK-NEXT:     renamable $x4 = VADD_16 renamable $x6, killed renamable $x0
-  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit-def $p0, implicit killed $p0 {
   ; CHECK-NEXT:     renamable $x1, renamable $p0 = VLDB_dmx_ldb_x_pstm_nrm_imm killed renamable $p0, 128 :: (load (<32 x s16>))

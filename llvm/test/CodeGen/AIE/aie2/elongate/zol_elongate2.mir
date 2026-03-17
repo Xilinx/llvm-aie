@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc -mtriple aie2 -run-pass=aie-machine-alignment %s -verify-machineinstrs -o - | FileCheck %s
 --- |
@@ -549,14 +549,11 @@ body:             |
   ; CHECK-NEXT:   liveins: $p0, $p1, $r1, $r2, $r3, $r4, $r7
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   BUNDLE implicit $r3 {
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:     JZ renamable $r3, %bb.8
-  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPX
+  ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
   ; CHECK-NEXT:     NOP
@@ -586,13 +583,10 @@ body:             |
   ; CHECK-NEXT:     $ls = MOVXM_lng_cg %bb.7
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPS
   ; CHECK-NEXT:     $le = MOVXM_lng_cg <mcsymbol .L_1120>
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPXM
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
@@ -618,8 +612,10 @@ body:             |
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
   ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPB
   ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE {
+  ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
   ; CHECK-NEXT:     NOP

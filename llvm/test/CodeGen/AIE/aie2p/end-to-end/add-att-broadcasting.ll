@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -mtriple=aie2p --aie-reg-rewrite-mode=latencyaware %s -o - | FileCheck %s
 
 ; Test postSWP capabilities related to AddAttributeBroadcasting
@@ -22,7 +22,7 @@ declare <32 x bfloat> @llvm.aie2p.v32accfloat.to.v32bf16(<32 x float>) #1
 define dso_local void @add_attribute_bcast(ptr noalias %ifm2, ptr noalias %ifm1, ptr noalias %params, i32 %div16, ptr noalias %ofm) {
 ; CHECK-LABEL: add_attribute_bcast:
 ; CHECK:       // %bb.0: // %newFuncRoot
-; CHECK-NEXT:    mova dj0, #32
+; CHECK-NEXT:    mova dj0, #32; nopxm
 ; CHECK-NEXT:    lda m0, [p2, dj0]
 ; CHECK-NEXT:    mova dj0, #36
 ; CHECK-NEXT:    lda m1, [p2, dj0]
@@ -36,10 +36,10 @@ define dso_local void @add_attribute_bcast(ptr noalias %ifm2, ptr noalias %ifm1,
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml0, [p0], m1
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml3, [p1], m0
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p1], m0; movx r1, #60
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cml2, [p0], m1; add.nc lc, r0, #-3; vadd.f dm4, dm1, dm2, r1
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cml0, [p0], m1; movxm ls, #.LBB0_1
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cml3, [p1], m0; movxm le, #.L_LEnd0; vadd.f dm3, dm3, dm0, r1
-; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p1], m0; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml2, [p0], m1; vadd.f dm4, dm1, dm2, r1
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml0, [p0], m1; add.nc lc, r0, #-3
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml3, [p1], m0; movxm ls, #.LBB0_1; vadd.f dm3, dm3, dm0, r1
+; CHECK-NEXT:    vlda.conv.fp32.bf16 cml1, [p1], m0; nopb ; nops ; movxm le, #.L_LEnd0; nopv
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml2, [p0], m1; nopb ; nops ; nopxm ; vadd.f dm4, dm1, dm2, r1
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml0, [p0], m1; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    vlda.conv.fp32.bf16 cml3, [p1], m0; nopb ; vst.conv.bf16.fp32 cml4, [p3], #64; nopxm ; vadd.f dm3, dm3, dm0, r1

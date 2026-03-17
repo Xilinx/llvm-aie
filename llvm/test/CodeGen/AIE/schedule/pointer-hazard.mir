@@ -17,16 +17,16 @@
   ; CHECK-LABEL: _Z16scale_vectorizedPsS_ii:
   ; CHECK:         .p2align 4
   ; CHECK-NEXT:  // %bb.0: // %entry
-  ; CHECK-NEXT:    nopa ; event #0
+  ; CHECK-NEXT:    nopa ; event #0; nopm
   ; CHECK-NEXT:    vldb wh2, [p0, #32]
   ; CHECK-NEXT:    vlda wl2, [p0], #64
   ; CHECK-NEXT:    vldb wh2, [p0, #32]
   ; CHECK-NEXT:    vlda wl2, [p0], #64
-  ; CHECK-NEXT:    mova r2, #-5; vldb wh2, [p0, #32]; movxm ls, #.LBB0_1
-  ; CHECK-NEXT:    vlda wl2, [p0], #64; movxm le, #.L_LEnd0
-  ; CHECK-NEXT:    vldb wh2, [p0, #32]; lshl r1, r1, r2; vbcst.16 x0, r0
-  ; CHECK-NEXT:    vlda wl2, [p0], #64; movx r0, #824; add.nc lc, r1, #-7
-  ; CHECK-NEXT:    vldb wh2, [p0, #32]; nopa ; nops ; nopxm ; vmul cm0, x2, x0, r0
+  ; CHECK-NEXT:    mova r2, #-5; vldb wh2, [p0, #32]; vbcst.16 x0, r0
+  ; CHECK-NEXT:    vlda wl2, [p0], #64; movxm ls, #.LBB0_1
+  ; CHECK-NEXT:    mova r0, #824; vldb wh2, [p0, #32]; movxm le, #.L_LEnd0
+  ; CHECK-NEXT:    vlda wl2, [p0], #64; lshl r1, r1, r2
+  ; CHECK-NEXT:    vldb wh2, [p0, #32]; nopa ; nops ; nopx ; add.nc lc, r1, #-7; vmul cm0, x2, x0, r0
   ; CHECK-NEXT:    nopb ; vlda wl2, [p0], #64; nops ; nopxm ; nopv
   ; CHECK-NEXT:    vldb wh2, [p0, #32]; nopa ; nops ; nopxm ; vmul cm0, x2, x0, r0
   ; CHECK-NEXT:    nopb ; vlda wl2, [p0], #64; nops ; movx r3, #0; nopm ; nopv

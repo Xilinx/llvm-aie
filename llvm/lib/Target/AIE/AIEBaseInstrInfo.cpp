@@ -431,8 +431,12 @@ AIEBaseInstrInfo::getPostZOLRegionSizeInfo(MachineBasicBlock &MBB) const {
     if (MI.isDebugInstr())
       continue;
 
-    if (isZOLSetupBundle(&MI) && isLastZOLSetupBundleInMBB(&MI))
+    // We iterate backwards so this is the last setup bundle in the block.
+    if (isZOLSetupBundle(&MI)) {
+      BundleCount++;
+      Size += getAIEMachineBundleSize(MI);
       break;
+    }
 
     if (MI.isBundle())
       BundleCount++;
@@ -1403,6 +1407,13 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
           const int NeededPadding =
               LoopSetupSizeInBytes - LoopSize - PostZOLSize;
           LoopPaddingInBytes = std::min(AvailablePaddingSpace, NeededPadding);
+          // Align the last setup bundle. Given the minimum LoopSetupDistance
+          // number of bundles afterwards, sufficient padding is guaranteed.
+          if (LoopPaddingInBytes > 0) {
+            AlignmentBoundaries.emplace_back(MI);
+            const int BundleSize = getAIEMachineBundleSize(MI);
+            LoopPaddingInBytes -= (MBBAlignment - BundleSize);
+          }
         }
       }
     } else if (isHardwareLoopEnd(MI->getOpcode())) {

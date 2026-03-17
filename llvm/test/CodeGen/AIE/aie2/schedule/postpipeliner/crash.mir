@@ -3,7 +3,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc --mtriple=aie2 -O2 --start-before=postmisched %s -o - | FileCheck %s
 
@@ -17,9 +17,9 @@
   ; CHECK:         .p2align 4
   ; CHECK-NEXT:  // %bb.0: // %entry
   ; CHECK-NEXT:    nopb ; nopa ; nops ; movxm ls, #.LBB0_1; nopv
-  ; CHECK-NEXT:    movxm le, #.L_LEnd0
+  ; CHECK-NEXT:    nopa ; movxm le, #.L_LEnd0
   ; CHECK-NEXT:    mova r0, #8; mov p2, p0
-  ; CHECK-NEXT:    add.nc lc, r0, #0
+  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; add.nc lc, r0, #0; nopv
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_1: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
@@ -28,8 +28,8 @@
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    nopa ; nopb ; nopxm ; nops
+  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    nopb ; nopa ; st r0, [p0, #0]; nopxm ; nopv
   ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup

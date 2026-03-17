@@ -24,9 +24,12 @@ body:             |
   ; CHECK-NEXT:   BUNDLE implicit-def $r1 {
   ; CHECK-NEXT:     $r1 = MOVA 0
   ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPS
   ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $r1, implicit killed $r1, implicit $r0 {
+  ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     $r1 = GE killed $r1, $r0
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit killed $r1 {
@@ -60,13 +63,10 @@ body:             |
   ; CHECK-NEXT:     $ls = MOVXM %bb.2
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $le {
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPS
   ; CHECK-NEXT:     $le = MOVXM <mcsymbol .L_LEnd0>
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPXM
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
@@ -100,9 +100,11 @@ body:             |
   ; CHECK-NEXT:   BUNDLE {
   ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPS
   ; CHECK-NEXT:     NOPXM
-  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE {
+  ; CHECK-NEXT:     NOP
   ; CHECK-NEXT:   }
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2 (align 16):

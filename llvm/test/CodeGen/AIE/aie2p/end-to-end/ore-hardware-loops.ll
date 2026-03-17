@@ -32,7 +32,7 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ; REMARKS-NEXT: Args:
 ; REMARKS-NEXT:   - BasicBlock:      entry
 ; REMARKS-NEXT:   - BundleCount:     '20'
-; REMARKS-NEXT:   - ByteCount:       '160'
+; REMARKS-NEXT:   - ByteCount:       '144'
 ; REMARKS-NEXT: ...
 ; REMARKS-NEXT: --- !Analysis
 ; REMARKS-NEXT: Pass:            aie-asm-printer
@@ -55,8 +55,8 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ;
 ; ASM-LABEL: convert_bf16_to_bfp16:
 ; ASM:       // %bb.0: // %entry
-; ASM-NEXT:    lda r0, [p2, #0]; nopb ; nops ; nopx ; mov m0, #4; nopv
-; ASM-NEXT:    padda [p2], m0; nopx
+; ASM-NEXT:    lda r0, [p2, #0]; mov m0, #4
+; ASM-NEXT:    padda [p2], m0
 ; ASM-NEXT:    lda dn0, [p2], #4
 ; ASM-NEXT:    lda m1, [p2, #0]
 ; ASM-NEXT:    nop
@@ -68,10 +68,10 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ; ASM-NEXT:    vldb.pop.512.2d x4, [p0, lf0, r24, d1]
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    lda m0, [p2, #4]; vldb.fill.512 [p0, lf0, r24]
-; ASM-NEXT:    vlda.pop.512 x6, [p0, lf0, r24]; movxm ls, #.LBB0_1
-; ASM-NEXT:    vldb.pop.512.2d x4, [p0, lf0, r24, d1]; movxm le, #.L_LEnd0
-; ASM-NEXT:    add.nc lc, r0, #-3
-; ASM-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; nops ; nopxm ; nopv
+; ASM-NEXT:    vlda.pop.512 x6, [p0, lf0, r24]
+; ASM-NEXT:    vldb.pop.512.2d x4, [p0, lf0, r24, d1]; movxm ls, #.LBB0_1
+; ASM-NEXT:    movxm le, #.L_LEnd0
+; ASM-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; nops ; nopx ; add.nc lc, r0, #-3; nopv
 ; ASM-NEXT:    vlda.pop.512 x6, [p0, lf0, r24]; nopb ; nops ; nopx ; vconv.fp32.bf16 cml1, x6; nopv
 ; ASM-NEXT:    nopa ; vldb.pop.512.2d x4, [p0, lf0, r24, d1]; nops ; nopx ; vconv.fp32.bf16 cmh1, x4; nopv
 ; ASM-NEXT:    nopa ; nopb ; movs dc0, dj0; nopx ; mov p2, p1; nopv

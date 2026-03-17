@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2025-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc -mtriple aie2p -run-pass=aie-machine-alignment %s -verify-machineinstrs -o - | FileCheck %s
 
@@ -19,26 +19,19 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   BUNDLE {
   ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPS
   ; CHECK-NEXT:     $ls = MOVXM %bb.1
-  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     $le = MOVXM <mcsymbol .L_LEnd0>
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
+  ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     $x3, $p0, $dc0, $dc4 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 killed $p0, $d0_3d, implicit $crunpacksize, implicit $unpacksign1 :: (load (<32 x s8>))
+  ; CHECK-NEXT:     NOPX
   ; CHECK-NEXT:     $lc = ADD_NC_mv_add_ri killed $r7, -3
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     NOPA
-  ; CHECK-NEXT:     NOPB
-  ; CHECK-NEXT:     NOPS
-  ; CHECK-NEXT:     NOPX
   ; CHECK-NEXT:     $crunpacksize = MOV_alu_mv_mv_mv_cg 1
-  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
   ; CHECK-NEXT:     $x1, $p3, $dc2 = VLDA_2D_dmx_lda_x killed $p3, $d2 :: (load (<32 x s16>))

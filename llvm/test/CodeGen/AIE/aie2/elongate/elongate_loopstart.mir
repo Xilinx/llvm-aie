@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2 -run-pass=postmisched %topdown-multi %s -verify-machineinstrs -o - | FileCheck %s
 # The test is adding scheduler margin of 7-cycles afer the start block
 
@@ -22,7 +22,6 @@ body:             |
     ; CHECK-NEXT: $ls = MOVXM_lng_cg 0
     ; CHECK-NEXT: $le = MOVXM_lng_cg <mcsymbol .L_1120>
     ; CHECK-NEXT: renamable $r3 = MOV_mv_cg 2
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP

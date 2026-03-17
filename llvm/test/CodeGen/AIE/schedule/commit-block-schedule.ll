@@ -18,10 +18,9 @@ define void @test_commit_block_schedule(i1 %0) {
 ; CHECK-NEXT:  .LBB0_1: // %for.body41
 ; CHECK-NEXT:    // =>This Loop Header: Depth=1
 ; CHECK-NEXT:    // Child Loop BB0_2 Depth 2
-; CHECK-NEXT:    add.nc lc, r2, #0
+; CHECK-NEXT:    nopa ; nopx ; add.nc lc, r2, #0
 ; CHECK-NEXT:    movxm ls, #.LBB0_2
-; CHECK-NEXT:    movxm le, #.L_LEnd0
-; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; nopb ; nops ; movxm le, #.L_LEnd0; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vmov cml2, cml0; nopv

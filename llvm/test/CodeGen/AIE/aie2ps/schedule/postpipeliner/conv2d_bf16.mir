@@ -67,20 +67,22 @@ body:             |
   ; CHECK-NEXT:     renamable $x10, renamable $p1 = VLDA_dmx_lda_x_ld_pstm_nrm_imm killed renamable $p1, 64, debug-location !6 :: (load (<16 x s32>), addrspace 6)
   ; CHECK-NEXT:     $x1, $p0, $lf0, $r24 = VLDB_POP_dmx_ldb_fifo_x_normal_pop killed $p0, killed $lf0, killed $r24, debug-location !6 :: (load unknown-size, align 1)
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $x11, implicit-def $wl11, implicit-def $wh11, implicit-def $p1, implicit-def $p0, implicit-def $dc1, implicit-def $dc5, implicit-def $lc, implicit killed $p1, implicit killed $p0, implicit $d1_3d, implicit killed $r5, debug-location !6 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $x11, implicit-def $wl11, implicit-def $wh11, implicit-def $p1, implicit-def $p0, implicit-def $dc1, implicit-def $dc5, implicit killed $p1, implicit killed $p0, implicit $d1_3d, debug-location !6 {
   ; CHECK-NEXT:     renamable $x11, renamable $p1 = VLDA_dmx_lda_x_ld_pstm_nrm_imm killed renamable $p1, 64, debug-location !6 :: (load (<16 x s32>), addrspace 6)
   ; CHECK-NEXT:     $p0, $dc1, $dc5 = PADDS_3D killed $p0, $d1_3d, debug-location !6
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE implicit-def $x5, implicit-def $wl5, implicit-def $wh5, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $lfe, implicit-def $srfifo_uf, implicit-def $lc, implicit $r30, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $lfe, implicit killed $r5, debug-location !6 {
+  ; CHECK-NEXT:     $x5, $p0, $lf0, $r24 = VLDB_POPX $r30, $r30, killed $p0, killed $lf0, killed $r24, implicit-def $lfe, implicit-def $srfifo_uf, implicit killed $lfe, debug-location !6 :: (load unknown-size, align 1)
   ; CHECK-NEXT:     $lc = ADD_NC_add_lc_ri killed $r5, -2, debug-location !6
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $x5, implicit-def $wl5, implicit-def $wh5, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $lfe, implicit-def $srfifo_uf, implicit-def $ls, implicit $r30, implicit killed $p0, implicit killed $lf0, implicit killed $r24, implicit killed $lfe, debug-location !6 {
-  ; CHECK-NEXT:     $x5, $p0, $lf0, $r24 = VLDB_POPX $r30, $r30, killed $p0, killed $lf0, killed $r24, implicit-def $lfe, implicit-def $srfifo_uf, implicit killed $lfe, debug-location !6 :: (load unknown-size, align 1)
+  ; CHECK-NEXT:   BUNDLE implicit-def $x3, implicit-def $wl3, implicit-def $wh3, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $ls, implicit killed $p0, implicit killed $lf0, implicit killed $r24, debug-location !6 {
+  ; CHECK-NEXT:     $x3, $p0, $lf0, $r24 = VLDA_POP_dmx_lda_fifo_x_normal_pop killed $p0, killed $lf0, killed $r24, debug-location !6 :: (load unknown-size, align 1)
   ; CHECK-NEXT:     MOVXM_lng_cg_ls_abs %bb.2, implicit-def $ls, debug-location !6
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $x3, implicit-def $wl3, implicit-def $wh3, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $le, implicit killed $p0, implicit killed $lf0, implicit killed $r24, debug-location !6 {
-  ; CHECK-NEXT:     $x3, $p0, $lf0, $r24 = VLDA_POP_dmx_lda_fifo_x_normal_pop killed $p0, killed $lf0, killed $r24, debug-location !6 :: (load unknown-size, align 1)
+  ; CHECK-NEXT:   BUNDLE implicit-def $x6, implicit-def $wl6, implicit-def $wh6, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit-def $le, implicit killed $p0, implicit killed $lf0, implicit killed $r24, debug-location !6 {
+  ; CHECK-NEXT:     $x6, $p0, $lf0, $r24 = VLDB_POP_dmx_ldb_fifo_x_normal_pop killed $p0, killed $lf0, killed $r24, debug-location !6 :: (load unknown-size, align 1)
   ; CHECK-NEXT:     MOVXM_lng_cg_le_abs <mcsymbol .L_LEnd0>, implicit-def $le, debug-location !6
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   $x6, $p0, $lf0, $r24 = VLDB_POP_dmx_ldb_fifo_x_normal_pop killed $p0, killed $lf0, killed $r24, debug-location !6 :: (load unknown-size, align 1)
   ; CHECK-NEXT:   BUNDLE implicit-def $x10, implicit-def $wl10, implicit-def $wh10, implicit-def $p1, implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit-def $p0, implicit-def $lf0, implicit-def $lfl0, implicit-def $lfh0, implicit-def $r24, implicit killed $p1, implicit killed $p0, implicit killed $lf0, implicit killed $r24, debug-location !6 {
   ; CHECK-NEXT:     renamable $x10, renamable $p1 = VLDA_dmx_lda_x_ld_pstm_nrm_imm killed renamable $p1, 64, debug-location !6 :: (load (<16 x s32>), addrspace 6)
   ; CHECK-NEXT:     $x1, $p0, $lf0, $r24 = VLDB_POP_dmx_ldb_fifo_x_normal_pop killed $p0, killed $lf0, killed $r24, debug-location !6 :: (load unknown-size, align 1)

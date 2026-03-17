@@ -216,7 +216,7 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-NEXT:  .LBB0_1: // %outer.loop.header
 ; ZOL-NEXT:    // =>This Loop Header: Depth=1
 ; ZOL-NEXT:    // Child Loop BB0_2 Depth 2
-; ZOL-NEXT:    vlda.ups.s32.s16 bmh0, s0, [p2, #32]; nopb ; nopxm ; nops
+; ZOL-NEXT:    vlda.ups.s32.s16 bmh0, s0, [p2, #32]; nopx
 ; ZOL-NEXT:    vlda.ups.s32.s16 bml0, s0, [p2], m5
 ; ZOL-NEXT:    vlda.ups.s32.s16 bmh1, s0, [p2, #32]; mov m7, p5
 ; ZOL-NEXT:    vlda.ups.s32.s16 bml1, s0, [p2], m7
@@ -239,15 +239,15 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-NEXT:    vldb wh1, [p1], #32; add r0, r1, #33; mov r1, p0
 ; ZOL-NEXT:    vldb wl10, [p1], #32; vshuffle x7, x4, x2, r2
 ; ZOL-NEXT:    vldb wh10, [p1], #32; vshuffle x9, x7, x0, r8
-; ZOL-NEXT:    and r1, r1, r9; add.nc lc, r5, #-2
+; ZOL-NEXT:    nopb ; nopa ; nops ; and r1, r1, r9; add.nc lc, r5, #-2; nopv
 ; ZOL-NEXT:  .LBB0_2: // %inner.loop
 ; ZOL-NEXT:    // Parent Loop BB0_1 Depth=1
 ; ZOL-NEXT:    // => This Inner Loop Header: Depth=2
 ; ZOL-NEXT:    nopb ; nopa ; nops ; nopx ; vshuffle x9, x4, x2, r3; vmac cm1, cm1, x9, x6, r4
 ; ZOL-NEXT:    vldb wl5, [p0], m6; nopa ; nops ; nopx ; vshift.align x4, x4, s1, x5, r0; vmac cm7, cm7, x9, x8, r4
-; ZOL-NEXT:    vldb wh5, [p0], m6; nopa ; nops ; nopx ; vshift.align x2, x2, s1, x3, r0; nopv
-; ZOL-NEXT:    nopb ; vlda wl3, [p0], m6; nops ; nopx ; vshuffle x11, x9, x0, r8; vmac cm0, cm0, x7, x6, r4
-; ZOL-NEXT:    nopb ; vlda.3d wh3, [p0], d0; nops ; nopx ; vshuffle x7, x4, x2, r2; vmac cm4, cm4, x7, x8, r4
+; ZOL-NEXT:    nopa ; vldb wh5, [p0], m6; nopx ; vshift.align x2, x2, s1, x3, r0
+; ZOL-NEXT:    vlda wl3, [p0], m6; vshuffle x11, x9, x0, r8; vmac cm0, cm0, x7, x6, r4
+; ZOL-NEXT:    vlda.3d wh3, [p0], d0; vshuffle x7, x4, x2, r2; vmac cm4, cm4, x7, x8, r4
 ; ZOL-NEXT:    vldb wl1, [p1], #32; vshuffle x9, x7, x0, r8; vmac cm2, cm2, x9, x6, r4
 ; ZOL-NEXT:    vldb wh1, [p1], #32; vmov x6, x1; vmac cm5, cm5, x9, x8, r4
 ; ZOL-NEXT:    vldb wl10, [p1], #32; add r0, r1, #33; mov r1, p0; vmac cm3, cm3, x11, x6, r4

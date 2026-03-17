@@ -77,7 +77,7 @@ define void @add2d(ptr noalias %params, ptr noalias %ifm1_data, ptr noalias %ifm
 ; ASM-NEXT:    mova r1, #0 // Delay Slot 1
 ; ASM-NEXT:  .LBB0_2: // %entry.new
 ; ASM-NEXT:    nopb ; vlda.ups.s32.d8 cm0, s1, [p1], m1; nops ; nopx ; mov dc0, #0; nopv
-; ASM-NEXT:    vlda.ups.s32.d8 cm2, s1, [p1], m1; mov dc4, dc0
+; ASM-NEXT:    vlda.ups.s32.d8 cm2, s1, [p1], m1; nopx ; mov dc4, dc0
 ; ASM-NEXT:    vlda.3d.ups.s32.d8 cm8, s1, [p2], d0
 ; ASM-NEXT:    vlda.ups.s32.d8 cm3, s1, [p1], m1
 ; ASM-NEXT:    vlda.3d.ups.s32.d8 cm6, s1, [p2], d0; mov crUPSSign, r4
@@ -89,15 +89,15 @@ define void @add2d(ptr noalias %params, ptr noalias %ifm1_data, ptr noalias %ifm
 ; ASM-NEXT:    mova r2, #-2; add r0, r0, #-4
 ; ASM-NEXT:    lshl r0, r0, r2; mov crSRSSign, r6
 ; ASM-NEXT:    add r0, r0, #1; mov s0, r5
-; ASM-NEXT:    add.nc lc, r0, #-1
+; ASM-NEXT:    nopb ; nopa ; nops ; nopx ; add.nc lc, r0, #-1; nopv
 ; ASM-NEXT:  .LBB0_3: // %for.body
 ; ASM-NEXT:    // =>This Inner Loop Header: Depth=1
 ; ASM-NEXT:    nopb ; nopa ; nops ; nopxm ; vadd cm0, cm8, cm0, r1
 ; ASM-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
 ; ASM-NEXT:    nopb ; vlda.3d.ups.s32.d8 cm8, s1, [p2], d0; nops ; nopxm ; vadd cm2, cm6, cm2, r1
-; ASM-NEXT:    nopb ; vlda.3d.ups.s32.d8 cm6, s1, [p2], d0; nops ; nopxm ; nopv
-; ASM-NEXT:    nopb ; vlda.ups.s32.d8 cm0, s1, [p1], m1; nops ; nopxm ; vadd cm3, cm5, cm3, r1
-; ASM-NEXT:    vlda.3d.ups.s32.d8 cm5, s1, [p2], d0; vst.srs.d8.s32 cm0, s0, [p3], #32; nopx ; vadd cm7, cm1, cm4, r1
+; ASM-NEXT:    vlda.3d.ups.s32.d8 cm6, s1, [p2], d0; nopxm
+; ASM-NEXT:    vlda.ups.s32.d8 cm0, s1, [p1], m1; vadd cm3, cm5, cm3, r1
+; ASM-NEXT:    vlda.3d.ups.s32.d8 cm5, s1, [p2], d0; vst.srs.d8.s32 cm0, s0, [p3], #32; vadd cm7, cm1, cm4, r1
 ; ASM-NEXT:    vlda.ups.s32.d8 cm2, s1, [p1], m1
 ; ASM-NEXT:    vlda.3d.ups.s32.d8 cm1, s1, [p2], d0
 ; ASM-NEXT:    vlda.ups.s32.d8 cm3, s1, [p1], m1; vst.srs.d8.s32 cm2, s0, [p3], #32

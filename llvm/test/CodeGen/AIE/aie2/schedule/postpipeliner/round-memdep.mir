@@ -3,7 +3,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc --mtriple=aie2 -O2 --start-before=postmisched %s -o - | FileCheck %s
 
@@ -20,7 +20,7 @@
   ; CHECK-LABEL: round:
   ; CHECK:         .p2align 4
   ; CHECK-NEXT:  // %bb.0: // %entry
-  ; CHECK-NEXT:    mova r1, #0
+  ; CHECK-NEXT:    mova r1, #0; nopb ; nopx
   ; CHECK-NEXT:    ge r1, r1, r0
   ; CHECK-NEXT:    jnz r1, #.LBB0_4
   ; CHECK-NEXT:    nop // Delay Slot 5
@@ -35,10 +35,10 @@
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vlda.ups.s32.s8 cm0, s0, [p0], #32
   ; CHECK-NEXT:    vlda.ups.s32.s8 cm1, s0, [p0], #32
+  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    add.nc lc, r0, #-4
-  ; CHECK-NEXT:    movxm ls, #.LBB0_2
-  ; CHECK-NEXT:    vlda.ups.s32.s8 cm0, s0, [p0], #32; movxm le, #.L_LEnd0
-  ; CHECK-NEXT:    nopb ; vlda.ups.s32.s8 cm1, s0, [p0], #32; vsrs.s8.s32 wh0, cm0, s1; nopxm ; nopv
+  ; CHECK-NEXT:    vlda.ups.s32.s8 cm0, s0, [p0], #32; movxm ls, #.LBB0_2
+  ; CHECK-NEXT:    nopb ; vlda.ups.s32.s8 cm1, s0, [p0], #32; vsrs.s8.s32 wh0, cm0, s1; movxm le, #.L_LEnd0; nopv
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; nopa ; vsrs.s8.s32 wh2, cm1, s1; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; vlda.ups.s32.s8 cm0, s0, [p0], #32; nops ; nopxm ; nopv
