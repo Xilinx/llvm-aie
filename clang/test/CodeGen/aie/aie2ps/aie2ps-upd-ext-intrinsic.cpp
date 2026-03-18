@@ -2015,22 +2015,10 @@ v64uint4 test_extract_v64uint4 (v256mx6 m, int idx) { return extract_v64uint4(m,
 // CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX6]] [[M_COERCE]], 0
 // CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V256MX6]] [[M_COERCE]], 3
 // CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX6]] [[M_COERCE]], 2
-// CHECK-NEXT:    [[TEMP0_0_I:%.*]] = select i1 [[CMP_I]], <8 x i32> [[TMP1]], <8 x i32> [[TMP3]]
 // CHECK-NEXT:    [[TEMP1_0_I:%.*]] = select i1 [[CMP_I]], <8 x i32> [[TMP0]], <8 x i32> [[TMP2]]
-// CHECK-NEXT:    br label [[FOR_BODY_I:%.*]]
-// CHECK:       for.body.i:
-// CHECK-NEXT:    [[I_012_I:%.*]] = phi i32 [ 0, [[ENTRY:%.*]] ], [ [[INC_I:%.*]], [[FOR_BODY_I]] ]
-// CHECK-NEXT:    [[RES_011_I:%.*]] = phi <16 x i32> [ undef, [[ENTRY]] ], [ [[VECINS3_I:%.*]], [[FOR_BODY_I]] ]
-// CHECK-NEXT:    [[VECEXT_I:%.*]] = extractelement <8 x i32> [[TEMP0_0_I]], i32 [[I_012_I]]
-// CHECK-NEXT:    [[VECINS_I:%.*]] = insertelement <16 x i32> [[RES_011_I]], i32 [[VECEXT_I]], i32 [[I_012_I]]
-// CHECK-NEXT:    [[VECEXT2_I:%.*]] = extractelement <8 x i32> [[TEMP1_0_I]], i32 [[I_012_I]]
-// CHECK-NEXT:    [[ADD_I:%.*]] = or disjoint i32 [[I_012_I]], 8
-// CHECK-NEXT:    [[VECINS3_I]] = insertelement <16 x i32> [[VECINS_I]], i32 [[VECEXT2_I]], i32 [[ADD_I]]
-// CHECK-NEXT:    [[INC_I]] = add nuw nsw i32 [[I_012_I]], 1
-// CHECK-NEXT:    [[EXITCOND_NOT_I:%.*]] = icmp eq i32 [[INC_I]], 8
-// CHECK-NEXT:    br i1 [[EXITCOND_NOT_I]], label [[_ZL17EXTRACT_V128UINT47V256MX6I_EXIT:%.*]], label [[FOR_BODY_I]], !llvm.loop [[LOOP113:![0-9]+]]
-// CHECK:       _ZL17extract_v128uint47v256mx6i.exit:
-// CHECK-NEXT:    [[TMP4:%.*]] = bitcast <16 x i32> [[VECINS3_I]] to <64 x i8>
+// CHECK-NEXT:    [[TEMP0_0_I:%.*]] = select i1 [[CMP_I]], <8 x i32> [[TMP1]], <8 x i32> [[TMP3]]
+// CHECK-NEXT:    [[SHUFFLE_I_I_I:%.*]] = shufflevector <8 x i32> [[TEMP0_0_I]], <8 x i32> [[TEMP1_0_I]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+// CHECK-NEXT:    [[TMP4:%.*]] = bitcast <16 x i32> [[SHUFFLE_I_I_I]] to <64 x i8>
 // CHECK-NEXT:    ret <64 x i8> [[TMP4]]
 //
 v128uint4 test_extract_v128uint4 (v256mx6 m, int idx) { return extract_v128uint4(m, idx); }
@@ -2090,30 +2078,18 @@ v128uint4 test_extract_v128uint4 (v256mx6 m, int idx) { return extract_v128uint4
 v256mx6 test_update (v256mx6 s, int idx, v64uint4 m) { return update(s, idx, m); }
 // CHECK-LABEL: @_Z11test_update7v256mx6iDv64_DU8_(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[M:%.*]] to <16 x i32>
-// CHECK-NEXT:    br label [[FOR_BODY_I:%.*]]
-// CHECK:       for.body.i:
-// CHECK-NEXT:    [[I_017_I:%.*]] = phi i32 [ 0, [[ENTRY:%.*]] ], [ [[INC_I:%.*]], [[FOR_BODY_I]] ]
-// CHECK-NEXT:    [[TEMP1_016_I:%.*]] = phi <8 x i32> [ undef, [[ENTRY]] ], [ [[VECINS3_I:%.*]], [[FOR_BODY_I]] ]
-// CHECK-NEXT:    [[TEMP0_015_I:%.*]] = phi <8 x i32> [ undef, [[ENTRY]] ], [ [[VECINS_I:%.*]], [[FOR_BODY_I]] ]
-// CHECK-NEXT:    [[VECEXT_I:%.*]] = extractelement <16 x i32> [[TMP0]], i32 [[I_017_I]]
-// CHECK-NEXT:    [[VECINS_I]] = insertelement <8 x i32> [[TEMP0_015_I]], i32 [[VECEXT_I]], i32 [[I_017_I]]
-// CHECK-NEXT:    [[ADD_I:%.*]] = or disjoint i32 [[I_017_I]], 8
-// CHECK-NEXT:    [[VECEXT2_I:%.*]] = extractelement <16 x i32> [[TMP0]], i32 [[ADD_I]]
-// CHECK-NEXT:    [[VECINS3_I]] = insertelement <8 x i32> [[TEMP1_016_I]], i32 [[VECEXT2_I]], i32 [[I_017_I]]
-// CHECK-NEXT:    [[INC_I]] = add nuw nsw i32 [[I_017_I]], 1
-// CHECK-NEXT:    [[EXITCOND_NOT_I:%.*]] = icmp eq i32 [[INC_I]], 8
-// CHECK-NEXT:    br i1 [[EXITCOND_NOT_I]], label [[_ZL6UPDATE7V256MX6IDV64_DU8__EXIT:%.*]], label [[FOR_BODY_I]], !llvm.loop [[LOOP115:![0-9]+]]
-// CHECK:       _ZL6update7v256mx6iDv64_DU8_.exit:
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX6:%.*]] [[S_COERCE:%.*]], 3
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V256MX6]] [[S_COERCE]], 2
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX6]] [[S_COERCE]], 1
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX6:%.*]] [[S_COERCE:%.*]], 1
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX6]] [[S_COERCE]], 2
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V256MX6]] [[S_COERCE]], 3
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <64 x i8> [[M:%.*]] to <16 x i32>
+// CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP3]], <16 x i32> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+// CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <16 x i32> [[TMP3]], <16 x i32> poison, <8 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+// CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX:%.*]], 0
 // CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V256MX6]] [[S_COERCE]], 0
-// CHECK-NEXT:    [[CMP4_I:%.*]] = icmp eq i32 [[IDX:%.*]], 0
-// CHECK-NEXT:    [[TEMP0_0__I:%.*]] = select i1 [[CMP4_I]], <8 x i32> [[VECINS_I]], <8 x i32> [[TMP4]]
-// CHECK-NEXT:    [[TEMP1_0__I:%.*]] = select i1 [[CMP4_I]], <8 x i32> [[VECINS3_I]], <8 x i32> [[TMP3]]
-// CHECK-NEXT:    [[DOTTEMP0_0_I:%.*]] = select i1 [[CMP4_I]], <8 x i32> [[TMP2]], <8 x i32> [[VECINS_I]]
-// CHECK-NEXT:    [[DOTTEMP1_0_I:%.*]] = select i1 [[CMP4_I]], <8 x i32> [[TMP1]], <8 x i32> [[VECINS3_I]]
+// CHECK-NEXT:    [[COND_I:%.*]] = select i1 [[CMP_I]], <8 x i32> [[SHUFFLE_I_I]], <8 x i32> [[TMP4]]
+// CHECK-NEXT:    [[COND7_I:%.*]] = select i1 [[CMP_I]], <8 x i32> [[SHUFFLE1_I_I]], <8 x i32> [[TMP0]]
+// CHECK-NEXT:    [[COND13_I:%.*]] = select i1 [[CMP_I]], <8 x i32> [[TMP1]], <8 x i32> [[SHUFFLE_I_I]]
+// CHECK-NEXT:    [[COND19_I:%.*]] = select i1 [[CMP_I]], <8 x i32> [[TMP2]], <8 x i32> [[SHUFFLE1_I_I]]
 // CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX6]] [[S_COERCE]], 15
 // CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX6]] [[S_COERCE]], 14
 // CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX6]] [[S_COERCE]], 13
@@ -2126,10 +2102,10 @@ v256mx6 test_update (v256mx6 s, int idx, v64uint4 m) { return update(s, idx, m);
 // CHECK-NEXT:    [[TMP14:%.*]] = extractvalue [[STRUCT_V256MX6]] [[S_COERCE]], 6
 // CHECK-NEXT:    [[TMP15:%.*]] = extractvalue [[STRUCT_V256MX6]] [[S_COERCE]], 5
 // CHECK-NEXT:    [[TMP16:%.*]] = extractvalue [[STRUCT_V256MX6]] [[S_COERCE]], 4
-// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] poison, <8 x i32> [[TEMP0_0__I]], 0
-// CHECK-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] [[DOTFCA_0_INSERT_I]], <8 x i32> [[TEMP1_0__I]], 1
-// CHECK-NEXT:    [[DOTFCA_2_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] [[DOTFCA_1_INSERT_I]], <8 x i32> [[DOTTEMP0_0_I]], 2
-// CHECK-NEXT:    [[DOTFCA_3_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] [[DOTFCA_2_INSERT_I]], <8 x i32> [[DOTTEMP1_0_I]], 3
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] poison, <8 x i32> [[COND_I]], 0
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] [[DOTFCA_0_INSERT_I]], <8 x i32> [[COND7_I]], 1
+// CHECK-NEXT:    [[DOTFCA_2_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] [[DOTFCA_1_INSERT_I]], <8 x i32> [[COND13_I]], 2
+// CHECK-NEXT:    [[DOTFCA_3_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] [[DOTFCA_2_INSERT_I]], <8 x i32> [[COND19_I]], 3
 // CHECK-NEXT:    [[DOTFCA_4_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] [[DOTFCA_3_INSERT_I]], <2 x i32> [[TMP16]], 4
 // CHECK-NEXT:    [[DOTFCA_5_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] [[DOTFCA_4_INSERT_I]], <2 x i32> [[TMP15]], 5
 // CHECK-NEXT:    [[DOTFCA_6_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX6]] [[DOTFCA_5_INSERT_I]], <2 x i32> [[TMP14]], 6
@@ -2888,22 +2864,10 @@ v64uint4 test_extract_v64uint4 (v256mx4 m, int idx) { return extract_v64uint4(m,
 // CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX4]] [[M_COERCE]], 0
 // CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V256MX4]] [[M_COERCE]], 3
 // CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX4]] [[M_COERCE]], 2
-// CHECK-NEXT:    [[TEMP0_0_I:%.*]] = select i1 [[CMP_I]], <8 x i32> [[TMP1]], <8 x i32> [[TMP3]]
 // CHECK-NEXT:    [[TEMP1_0_I:%.*]] = select i1 [[CMP_I]], <8 x i32> [[TMP0]], <8 x i32> [[TMP2]]
-// CHECK-NEXT:    br label [[FOR_BODY_I:%.*]]
-// CHECK:       for.body.i:
-// CHECK-NEXT:    [[I_012_I:%.*]] = phi i32 [ 0, [[ENTRY:%.*]] ], [ [[INC_I:%.*]], [[FOR_BODY_I]] ]
-// CHECK-NEXT:    [[RES_011_I:%.*]] = phi <16 x i32> [ undef, [[ENTRY]] ], [ [[VECINS3_I:%.*]], [[FOR_BODY_I]] ]
-// CHECK-NEXT:    [[VECEXT_I:%.*]] = extractelement <8 x i32> [[TEMP0_0_I]], i32 [[I_012_I]]
-// CHECK-NEXT:    [[VECINS_I:%.*]] = insertelement <16 x i32> [[RES_011_I]], i32 [[VECEXT_I]], i32 [[I_012_I]]
-// CHECK-NEXT:    [[VECEXT2_I:%.*]] = extractelement <8 x i32> [[TEMP1_0_I]], i32 [[I_012_I]]
-// CHECK-NEXT:    [[ADD_I:%.*]] = or disjoint i32 [[I_012_I]], 8
-// CHECK-NEXT:    [[VECINS3_I]] = insertelement <16 x i32> [[VECINS_I]], i32 [[VECEXT2_I]], i32 [[ADD_I]]
-// CHECK-NEXT:    [[INC_I]] = add nuw nsw i32 [[I_012_I]], 1
-// CHECK-NEXT:    [[EXITCOND_NOT_I:%.*]] = icmp eq i32 [[INC_I]], 8
-// CHECK-NEXT:    br i1 [[EXITCOND_NOT_I]], label [[_ZL17EXTRACT_V128UINT47V256MX4I_EXIT:%.*]], label [[FOR_BODY_I]], !llvm.loop [[LOOP116:![0-9]+]]
-// CHECK:       _ZL17extract_v128uint47v256mx4i.exit:
-// CHECK-NEXT:    [[TMP4:%.*]] = bitcast <16 x i32> [[VECINS3_I]] to <64 x i8>
+// CHECK-NEXT:    [[TEMP0_0_I:%.*]] = select i1 [[CMP_I]], <8 x i32> [[TMP1]], <8 x i32> [[TMP3]]
+// CHECK-NEXT:    [[SHUFFLE_I_I_I:%.*]] = shufflevector <8 x i32> [[TEMP0_0_I]], <8 x i32> [[TEMP1_0_I]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+// CHECK-NEXT:    [[TMP4:%.*]] = bitcast <16 x i32> [[SHUFFLE_I_I_I]] to <64 x i8>
 // CHECK-NEXT:    ret <64 x i8> [[TMP4]]
 //
 v128uint4 test_extract_v128uint4 (v256mx4 m, int idx) { return extract_v128uint4(m, idx); }
@@ -2963,30 +2927,18 @@ v128uint4 test_extract_v128uint4 (v256mx4 m, int idx) { return extract_v128uint4
 v256mx4 test_update (v256mx4 s, int idx, v64uint4 m) { return update(s, idx, m); }
 // CHECK-LABEL: @_Z11test_update7v256mx4iDv64_DU8_(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[M:%.*]] to <16 x i32>
-// CHECK-NEXT:    br label [[FOR_BODY_I:%.*]]
-// CHECK:       for.body.i:
-// CHECK-NEXT:    [[I_017_I:%.*]] = phi i32 [ 0, [[ENTRY:%.*]] ], [ [[INC_I:%.*]], [[FOR_BODY_I]] ]
-// CHECK-NEXT:    [[TEMP1_016_I:%.*]] = phi <8 x i32> [ undef, [[ENTRY]] ], [ [[VECINS3_I:%.*]], [[FOR_BODY_I]] ]
-// CHECK-NEXT:    [[TEMP0_015_I:%.*]] = phi <8 x i32> [ undef, [[ENTRY]] ], [ [[VECINS_I:%.*]], [[FOR_BODY_I]] ]
-// CHECK-NEXT:    [[VECEXT_I:%.*]] = extractelement <16 x i32> [[TMP0]], i32 [[I_017_I]]
-// CHECK-NEXT:    [[VECINS_I]] = insertelement <8 x i32> [[TEMP0_015_I]], i32 [[VECEXT_I]], i32 [[I_017_I]]
-// CHECK-NEXT:    [[ADD_I:%.*]] = or disjoint i32 [[I_017_I]], 8
-// CHECK-NEXT:    [[VECEXT2_I:%.*]] = extractelement <16 x i32> [[TMP0]], i32 [[ADD_I]]
-// CHECK-NEXT:    [[VECINS3_I]] = insertelement <8 x i32> [[TEMP1_016_I]], i32 [[VECEXT2_I]], i32 [[I_017_I]]
-// CHECK-NEXT:    [[INC_I]] = add nuw nsw i32 [[I_017_I]], 1
-// CHECK-NEXT:    [[EXITCOND_NOT_I:%.*]] = icmp eq i32 [[INC_I]], 8
-// CHECK-NEXT:    br i1 [[EXITCOND_NOT_I]], label [[_ZL6UPDATE7V256MX4IDV64_DU8__EXIT:%.*]], label [[FOR_BODY_I]], !llvm.loop [[LOOP117:![0-9]+]]
-// CHECK:       _ZL6update7v256mx4iDv64_DU8_.exit:
-// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX4:%.*]] [[S_COERCE:%.*]], 3
-// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V256MX4]] [[S_COERCE]], 2
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue [[STRUCT_V256MX4]] [[S_COERCE]], 1
+// CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256MX4:%.*]] [[S_COERCE:%.*]], 1
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V256MX4]] [[S_COERCE]], 2
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue [[STRUCT_V256MX4]] [[S_COERCE]], 3
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <64 x i8> [[M:%.*]] to <16 x i32>
+// CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i32> [[TMP3]], <16 x i32> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+// CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <16 x i32> [[TMP3]], <16 x i32> poison, <8 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+// CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX:%.*]], 0
 // CHECK-NEXT:    [[TMP4:%.*]] = extractvalue [[STRUCT_V256MX4]] [[S_COERCE]], 0
-// CHECK-NEXT:    [[CMP4_I:%.*]] = icmp eq i32 [[IDX:%.*]], 0
-// CHECK-NEXT:    [[TEMP0_0__I:%.*]] = select i1 [[CMP4_I]], <8 x i32> [[VECINS_I]], <8 x i32> [[TMP4]]
-// CHECK-NEXT:    [[TEMP1_0__I:%.*]] = select i1 [[CMP4_I]], <8 x i32> [[VECINS3_I]], <8 x i32> [[TMP3]]
-// CHECK-NEXT:    [[DOTTEMP0_0_I:%.*]] = select i1 [[CMP4_I]], <8 x i32> [[TMP2]], <8 x i32> [[VECINS_I]]
-// CHECK-NEXT:    [[DOTTEMP1_0_I:%.*]] = select i1 [[CMP4_I]], <8 x i32> [[TMP1]], <8 x i32> [[VECINS3_I]]
+// CHECK-NEXT:    [[COND_I:%.*]] = select i1 [[CMP_I]], <8 x i32> [[SHUFFLE_I_I]], <8 x i32> [[TMP4]]
+// CHECK-NEXT:    [[COND7_I:%.*]] = select i1 [[CMP_I]], <8 x i32> [[SHUFFLE1_I_I]], <8 x i32> [[TMP0]]
+// CHECK-NEXT:    [[COND13_I:%.*]] = select i1 [[CMP_I]], <8 x i32> [[TMP1]], <8 x i32> [[SHUFFLE_I_I]]
+// CHECK-NEXT:    [[COND19_I:%.*]] = select i1 [[CMP_I]], <8 x i32> [[TMP2]], <8 x i32> [[SHUFFLE1_I_I]]
 // CHECK-NEXT:    [[TMP5:%.*]] = extractvalue [[STRUCT_V256MX4]] [[S_COERCE]], 15
 // CHECK-NEXT:    [[TMP6:%.*]] = extractvalue [[STRUCT_V256MX4]] [[S_COERCE]], 14
 // CHECK-NEXT:    [[TMP7:%.*]] = extractvalue [[STRUCT_V256MX4]] [[S_COERCE]], 13
@@ -2999,10 +2951,10 @@ v256mx4 test_update (v256mx4 s, int idx, v64uint4 m) { return update(s, idx, m);
 // CHECK-NEXT:    [[TMP14:%.*]] = extractvalue [[STRUCT_V256MX4]] [[S_COERCE]], 6
 // CHECK-NEXT:    [[TMP15:%.*]] = extractvalue [[STRUCT_V256MX4]] [[S_COERCE]], 5
 // CHECK-NEXT:    [[TMP16:%.*]] = extractvalue [[STRUCT_V256MX4]] [[S_COERCE]], 4
-// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] poison, <8 x i32> [[TEMP0_0__I]], 0
-// CHECK-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] [[DOTFCA_0_INSERT_I]], <8 x i32> [[TEMP1_0__I]], 1
-// CHECK-NEXT:    [[DOTFCA_2_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] [[DOTFCA_1_INSERT_I]], <8 x i32> [[DOTTEMP0_0_I]], 2
-// CHECK-NEXT:    [[DOTFCA_3_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] [[DOTFCA_2_INSERT_I]], <8 x i32> [[DOTTEMP1_0_I]], 3
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] poison, <8 x i32> [[COND_I]], 0
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] [[DOTFCA_0_INSERT_I]], <8 x i32> [[COND7_I]], 1
+// CHECK-NEXT:    [[DOTFCA_2_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] [[DOTFCA_1_INSERT_I]], <8 x i32> [[COND13_I]], 2
+// CHECK-NEXT:    [[DOTFCA_3_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] [[DOTFCA_2_INSERT_I]], <8 x i32> [[COND19_I]], 3
 // CHECK-NEXT:    [[DOTFCA_4_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] [[DOTFCA_3_INSERT_I]], <2 x i32> [[TMP16]], 4
 // CHECK-NEXT:    [[DOTFCA_5_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] [[DOTFCA_4_INSERT_I]], <2 x i32> [[TMP15]], 5
 // CHECK-NEXT:    [[DOTFCA_6_INSERT_I:%.*]] = insertvalue [[STRUCT_V256MX4]] [[DOTFCA_5_INSERT_I]], <2 x i32> [[TMP14]], 6

@@ -2629,11 +2629,8 @@ INTRINSIC(v128uint4) extract_v128uint4(v256mx6 v, int idx) {
     temp0 = v.mantissaX2;
     temp1 = v.mantissaX3;
   }
-  for (int i = 0; i < 8; i++) {
-    res[i] = temp0[i];
-    res[i + 8] = temp1[i];
-  }
 
+  res = concat(temp0, temp1);
   return (v128uint4)res;
 }
 
@@ -2662,28 +2659,18 @@ INTRINSIC(v128uint4) extract_v128uint4(v256mx4 v, int idx) {
     temp0 = v.mantissaX2;
     temp1 = v.mantissaX3;
   }
-  for (int i = 0; i < 8; i++) {
-    res[i] = temp0[i];
-    res[i + 8] = temp1[i];
-  }
+  res = concat(temp0, temp1);
 
   return (v128uint4)res;
 }
 
 INTRINSIC(v256mx6) update(v256mx6 s, int idx, v128uint4 m) {
-  v8int32 temp0;
-  v8int32 temp1;
-  for (int i = 0; i < 8; i++) {
-    temp0[i] = ((v16int32)m)[i];
-    temp1[i] = ((v16int32)m)[i + 8];
-  }
-  if (idx == 0) {
-    s.mantissaX0 = temp0;
-    s.mantissaX1 = temp1;
-  } else {
-    s.mantissaX2 = temp0;
-    s.mantissaX3 = temp1;
-  }
+  v8int32 temp0 = extract_256_512((v16int32)m, 0);
+  v8int32 temp1 = extract_256_512((v16int32)m, 1);
+  s.mantissaX0 = idx == 0 ? temp0 : s.mantissaX0;
+  s.mantissaX1 = idx == 0 ? temp1 : s.mantissaX1;
+  s.mantissaX2 = idx == 0 ? s.mantissaX2 : temp0;
+  s.mantissaX3 = idx == 0 ? s.mantissaX3 : temp1;
   return s;
 }
 
@@ -2701,19 +2688,12 @@ INTRINSIC(v256mx6) update(v256mx6 s, int idx, v64uint4 m) {
 }
 
 INTRINSIC(v256mx4) update(v256mx4 s, int idx, v128uint4 m) {
-  v8int32 temp0;
-  v8int32 temp1;
-  for (int i = 0; i < 8; i++) {
-    temp0[i] = ((v16int32)m)[i];
-    temp1[i] = ((v16int32)m)[i + 8];
-  }
-  if (idx == 0) {
-    s.mantissaX0 = temp0;
-    s.mantissaX1 = temp1;
-  } else {
-    s.mantissaX2 = temp0;
-    s.mantissaX3 = temp1;
-  }
+  v8int32 temp0 = extract_256_512((v16int32)m, 0);
+  v8int32 temp1 = extract_256_512((v16int32)m, 1);
+  s.mantissaX0 = idx == 0 ? temp0 : s.mantissaX0;
+  s.mantissaX1 = idx == 0 ? temp1 : s.mantissaX1;
+  s.mantissaX2 = idx == 0 ? s.mantissaX2 : temp0;
+  s.mantissaX3 = idx == 0 ? s.mantissaX3 : temp1;
   return s;
 }
 
