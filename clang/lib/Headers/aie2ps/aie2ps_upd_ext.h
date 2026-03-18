@@ -2413,18 +2413,25 @@ INTRINSIC(v256mx6) update(v256mx6 s, int idx, int m) {
   switch (idx) {
   case 0:
     s.exponentE0 = m;
+    break;
   case 1:
     s.exponentE1 = m;
+    break;
   case 2:
     s.exponentE2 = m;
+    break;
   case 3:
     s.exponentE3 = m;
+    break;
   case 4:
     s.tileShiftG0 = m;
+    break;
   case 5:
     s.tileShiftG1 = m;
+    break;
   case 6:
     s.tileShiftG2 = m;
+    break;
   default:
     s.tileShiftG3 = m;
   }
@@ -2436,15 +2443,19 @@ INTRINSIC(v256mx6) update(v256mx6 s, int idx, v8int8 m) {
   case 0:
     s.exponentE0 = ((v2int32)m)[0];
     s.exponentE1 = ((v2int32)m)[1];
+    break;
   case 1:
     s.exponentE2 = ((v2int32)m)[0];
     s.exponentE3 = ((v2int32)m)[1];
+    break;
   case 2:
     s.tileShiftG0 = ((v2int32)m)[0];
     s.tileShiftG1 = ((v2int32)m)[1];
+    break;
   default:
     s.tileShiftG2 = ((v2int32)m)[0];
     s.tileShiftG3 = ((v2int32)m)[1];
+    break;
   }
   return s;
 }
@@ -2479,18 +2490,25 @@ INTRINSIC(v256mx4) update(v256mx4 s, int idx, int m) {
   switch (idx) {
   case 0:
     s.exponentE0 = m;
+    break;
   case 1:
     s.exponentE1 = m;
+    break;
   case 2:
     s.exponentE2 = m;
+    break;
   case 3:
     s.exponentE3 = m;
+    break;
   case 4:
     s.tileShiftG0 = m;
+    break;
   case 5:
     s.tileShiftG1 = m;
+    break;
   case 6:
     s.tileShiftG2 = m;
+    break;
   default:
     s.tileShiftG3 = m;
   }
@@ -2502,12 +2520,15 @@ INTRINSIC(v256mx4) update(v256mx4 s, int idx, v8int8 m) {
   case 0:
     s.exponentE0 = ((v2int32)m)[0];
     s.exponentE1 = ((v2int32)m)[1];
+    break;
   case 1:
     s.exponentE2 = ((v2int32)m)[0];
     s.exponentE3 = ((v2int32)m)[1];
+    break;
   case 2:
     s.tileShiftG0 = ((v2int32)m)[0];
     s.tileShiftG1 = ((v2int32)m)[1];
+    break;
   default:
     s.tileShiftG2 = ((v2int32)m)[0];
     s.tileShiftG3 = ((v2int32)m)[1];
