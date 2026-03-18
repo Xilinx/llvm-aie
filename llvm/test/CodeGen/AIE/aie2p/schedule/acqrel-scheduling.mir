@@ -31,11 +31,12 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: acq_then_store
-    ; CHECK: ACQ_mLockId_imm 0, killed $r0
+    ; CHECK: BUNDLE implicit killed $r6, implicit killed $p0, implicit killed $r0 {
+    ; CHECK-NEXT:   ST_dms_sts_idx_imm killed $r6, killed $p0, 0
+    ; CHECK-NEXT:   ACQ_mLockId_imm 0, killed $r0
+    ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: ST_dms_sts_idx_imm killed $r6, killed $p0, 0
     ; CHECK-NEXT: NOP
     ACQ_mLockId_imm 0, $r0
     ST_dms_sts_idx_imm $r6, $p0, 0
@@ -47,11 +48,12 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: rel_then_store
-    ; CHECK: REL_mLockId_imm 0, killed $r0
+    ; CHECK: BUNDLE implicit killed $r6, implicit killed $p0, implicit killed $r0 {
+    ; CHECK-NEXT:   ST_dms_sts_idx_imm killed $r6, killed $p0, 0
+    ; CHECK-NEXT:   REL_mLockId_imm 0, killed $r0
+    ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: ST_dms_sts_idx_imm killed $r6, killed $p0, 0
     ; CHECK-NEXT: NOP
     REL_mLockId_imm 0, $r0
     ST_dms_sts_idx_imm $r6, $p0, 0
@@ -71,11 +73,12 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: ACQ_mLockId_imm 0, killed $r0
+    ; CHECK-NEXT: BUNDLE implicit killed $r6, implicit killed $p0, implicit killed $r0 {
+    ; CHECK-NEXT:   ST_dms_sts_idx_imm killed $r6, killed $p0, 4
+    ; CHECK-NEXT:   ACQ_mLockId_imm 0, killed $r0
+    ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: ST_dms_sts_idx_imm killed $r6, killed $p0, 4
     ; CHECK-NEXT: NOP
     ST_dms_sts_idx_imm $r6, $p0, 0
     ACQ_mLockId_imm 0, $r0
@@ -92,11 +95,12 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: REL_mLockId_imm 0, killed $r0
+    ; CHECK-NEXT: BUNDLE implicit killed $r6, implicit killed $p0, implicit killed $r0 {
+    ; CHECK-NEXT:   ST_dms_sts_idx_imm killed $r6, killed $p0, 4
+    ; CHECK-NEXT:   REL_mLockId_imm 0, killed $r0
+    ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: ST_dms_sts_idx_imm killed $r6, killed $p0, 4
     ; CHECK-NEXT: NOP
     ST_dms_sts_idx_imm $r6, $p0, 0
     REL_mLockId_imm 0, $r0
@@ -113,11 +117,10 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: acq_then_load
-    ; CHECK: ACQ_mLockId_imm 0, killed $r0
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $r6 = LDA_dms_lda_idx_imm killed $p1, 0
+    ; CHECK: BUNDLE implicit-def $r6, implicit killed $p1, implicit killed $r0 {
+    ; CHECK-NEXT:   $r6 = LDA_dms_lda_idx_imm killed $p1, 0
+    ; CHECK-NEXT:   ACQ_mLockId_imm 0, killed $r0
+    ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -134,11 +137,10 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: rel_then_load
-    ; CHECK: REL_mLockId_imm 0, killed $r0
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $r6 = LDA_dms_lda_idx_imm killed $p1, 0
+    ; CHECK: BUNDLE implicit-def $r6, implicit killed $p1, implicit killed $r0 {
+    ; CHECK-NEXT:   $r6 = LDA_dms_lda_idx_imm killed $p1, 0
+    ; CHECK-NEXT:   REL_mLockId_imm 0, killed $r0
+    ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP

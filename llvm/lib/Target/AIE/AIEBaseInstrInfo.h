@@ -656,6 +656,10 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual int getCoreStallCycleAfterLock() const;
   /// Return cycles for core to resume after lock instruction.
   virtual int getCoreResumeCycleAfterLock() const;
+  /// Return true if the target supports lock no_fence semantics: when a
+  /// lock has no in-flight memory predecessor, no forward latency to subsequent
+  /// memory ops is required.
+  virtual bool hasLockNoFenceSemantics() const { return false; }
 
   /// Return the schedclass for the given instruction descriptor based on
   /// operand regclass.

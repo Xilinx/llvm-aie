@@ -403,8 +403,12 @@ unsigned AIERegMemEventTracker::getSafeOperandsDistanceFromBottom(
     MaxLatency =
         checkMemoryDependency(MaxLatency, LoadStoreCycle, MIMemoryCycle, true);
   }
-  // Lock instructions: all subsequent memory operations must wait
-  if (TII->isLock(MI.getOpcode())) {
+  // Lock instructions: all subsequent memory operations must wait.
+  // lock no_fence: for targets that support it, no forward latency is
+  // needed — LockDelays already enforces MEM->lock gaps large enough to drain
+  // the pipeline before the lock issues, so no memory is ever in-flight at
+  // lock issue time.
+  if (TII->isLock(MI.getOpcode()) && !TII->hasLockNoFenceSemantics()) {
     if (getFirstMemoryAccessCycle() > INT_MIN) {
       const int CoreResumeCycle = TII->getCoreResumeCycleAfterLock();
       const int MemCycle = getFirstMemoryAccessCycle();
