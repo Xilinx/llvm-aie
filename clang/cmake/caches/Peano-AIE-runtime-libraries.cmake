@@ -3,7 +3,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # This file sets up the common options used for building the AIE compiler
 # runtime libraries.
@@ -77,4 +77,14 @@ foreach(target ${LLVM_BUILTIN_TARGETS})
   set(RUNTIMES_${target}_LIBCXXABI_USE_LLVM_UNWINDER OFF CACHE STRING "")
   set(RUNTIMES_${target}_LIBCXXABI_HEADER_ONLY ON CACHE STRING "")
   set(RUNTIMES_${target}_LIBCXXABI_INCLUDE_TESTS OFF CACHE STRING "")
+
+  # Only build builtins from compiler-rt; disable all other subprojects
+  set(RUNTIMES_${target}_COMPILER_RT_BUILD_SANITIZERS OFF CACHE BOOL "")
+  set(RUNTIMES_${target}_COMPILER_RT_BUILD_XRAY OFF CACHE BOOL "")
+  set(RUNTIMES_${target}_COMPILER_RT_BUILD_LIBFUZZER OFF CACHE BOOL "")
+  set(RUNTIMES_${target}_COMPILER_RT_BUILD_PROFILE OFF CACHE BOOL "")
+  set(RUNTIMES_${target}_COMPILER_RT_BUILD_CTX_PROFILE OFF CACHE BOOL "")
+  set(RUNTIMES_${target}_COMPILER_RT_BUILD_MEMPROF OFF CACHE BOOL "")
+  set(RUNTIMES_${target}_COMPILER_RT_BUILD_ORC OFF CACHE BOOL "")
+  set(RUNTIMES_${target}_COMPILER_RT_BUILD_GWP_ASAN OFF CACHE BOOL "")
 endforeach()
