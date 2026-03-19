@@ -50,12 +50,11 @@ set(aie_files
   aiebase_resources.h
   aiebase_typedefs.h
   aie_addlog.h
-  aiev1intrin.h
-  aiev2intrin.h
-  aie2pintrin.h
-  aie2psintrin.h
   )
 # aiev1
+set(aiev1_intrin_h
+  aiev1intrin.h
+  )
 set(aiev1_files
   aiev1/aiev1_undef.h
   aiev1/aiev1_upd_ext.h
@@ -66,6 +65,9 @@ set(aiev1_files
   aiev1/aiev1_vcmp.h
   )
 # aiev2 files
+set(aiev2_intrin_h
+  aiev2intrin.h
+  )
 set(aiev2_files
   aiev2/aiev2_enums.h
   aiev2/aiev2_scalar.h
@@ -89,6 +91,9 @@ set(aiev2_files
   aiev2/aiev2_aie_api_compat.h
   )
 # aie2p
+set(aie2p_intrin_h
+  aie2pintrin.h
+  )
 set(aie2p_files
   aie2p/aie2p_upd_ext.h
   aie2p/aie2p_ldst.h
@@ -112,6 +117,9 @@ set(aie2p_files
   aie2p/aie2p_aie_api_compat.h
   )
 # aie2ps
+set(aie2ps_intrin_h
+  aie2psintrin.h
+  )
 set(aie2ps_files
   aie2ps/aie2ps_defines.h
   aie2ps/aie2ps_enums.h
@@ -402,6 +410,10 @@ set(utility_files
 set(files
   ${core_files}
   ${aie_files}
+  ${aiev1_intrin_h}
+  ${aiev2_intrin_h}
+  ${aie2p_intrin_h}
+  ${aie2ps_intrin_h}
   ${arm_common_files}
   ${arm_only_files}
   ${aarch64_only_files}
@@ -604,6 +616,11 @@ add_dependencies("clang-resource-headers"
                  "arm-resource-headers"
                  "aarch64-resource-headers"
                  "cuda-resource-headers"
+                 "aie-resource-headers"
+                 "aiev1-resource-headers"
+                 "aiev2-resource-headers"
+                 "aie2p-resource-headers"
+                 "aie2ps-resource-headers"
                  "hexagon-resource-headers"
                  "hip-resource-headers"
                  "hlsl-resource-headers"
@@ -631,6 +648,11 @@ add_header_target("arm-resource-headers" "${arm_only_files};${arm_only_generated
 add_header_target("aarch64-resource-headers" "${aarch64_only_files};${aarch64_only_generated_files}")
 add_header_target("cuda-resource-headers" "${cuda_files};${cuda_wrapper_files};${cuda_wrapper_bits_files}")
 add_header_target("hexagon-resource-headers" "${hexagon_files}")
+add_header_target("aie-resource-headers" "${aie_files}")
+add_header_target("aiev1-resource-headers" "${aiev1_intrin_h};${aiev1_files}")
+add_header_target("aiev2-resource-headers" "${aiev2_intrin_h};${aiev2_files}")
+add_header_target("aie2p-resource-headers" "${aie2p_intrin_h};${aie2p_files}")
+add_header_target("aie2ps-resource-headers" "${aie2ps_intrin_h};${aie2ps_files}")
 add_header_target("hip-resource-headers" "${hip_files}")
 add_header_target("loongarch-resource-headers" "${loongarch_files}")
 add_header_target("mips-resource-headers" "${mips_msa_files}")
@@ -771,6 +793,60 @@ install(
   COMPONENT hexagon-resource-headers)
 
 install(
+  FILES ${aie_files}
+  DESTINATION ${header_install_dir}
+  EXCLUDE_FROM_ALL
+  COMPONENT aie-resource-headers)
+
+install(
+  FILES ${aiev1_intrin_h}
+  DESTINATION ${header_install_dir}
+  EXCLUDE_FROM_ALL
+  COMPONENT aiev1-resource-headers)
+
+install(
+  FILES ${aiev1_files}
+  DESTINATION ${header_install_dir}/aiev1
+  EXCLUDE_FROM_ALL
+  COMPONENT aiev1-resource-headers)
+
+install(
+  FILES ${aiev2_intrin_h}
+  DESTINATION ${header_install_dir}
+  EXCLUDE_FROM_ALL
+  COMPONENT aiev2-resource-headers)
+
+install(
+  FILES ${aiev2_files}
+  DESTINATION ${header_install_dir}/aiev2
+  EXCLUDE_FROM_ALL
+  COMPONENT aiev2-resource-headers)
+
+install(
+  FILES ${aie2p_intrin_h}
+  DESTINATION ${header_install_dir}
+  EXCLUDE_FROM_ALL
+  COMPONENT aie2p-resource-headers)
+
+install(
+  FILES ${aie2p_files}
+  DESTINATION ${header_install_dir}/aie2p
+  EXCLUDE_FROM_ALL
+  COMPONENT aie2p-resource-headers)
+
+install(
+  FILES ${aie2ps_intrin_h}
+  DESTINATION ${header_install_dir}
+  EXCLUDE_FROM_ALL
+  COMPONENT aie2ps-resource-headers)
+
+install(
+  FILES ${aie2ps_files}
+  DESTINATION ${header_install_dir}/aie2ps
+  EXCLUDE_FROM_ALL
+  COMPONENT aie2ps-resource-headers)
+
+install(
   FILES ${hip_files}
   DESTINATION ${header_install_dir}
   EXCLUDE_FROM_ALL
@@ -900,26 +976,6 @@ install(
   EXCLUDE_FROM_ALL
   COMPONENT windows-resource-headers)
 
-install(
-  FILES ${aiev1_files}
-  DESTINATION ${header_install_dir}/aiev1
-  COMPONENT clang-resource-headers)
-
-install(
-  FILES ${aiev2_files}
-  DESTINATION ${header_install_dir}/aiev2
-  COMPONENT clang-resource-headers)
-
-install(
-  FILES ${aie2p_files}
-  DESTINATION ${header_install_dir}/aie2p
-  COMPONENT clang-resource-headers)
-
-install(
-  FILES ${aie2ps_files}
-  DESTINATION ${header_install_dir}/aie2ps
-  COMPONENT clang-resource-headers)
-
 #############################################################
 
 if (NOT LLVM_ENABLE_IDE)
@@ -945,6 +1001,26 @@ if (NOT LLVM_ENABLE_IDE)
   add_llvm_install_targets(install-hexagon-resource-headers
                            DEPENDS hexagon-resource-headers
                            COMPONENT hexagon-resource-headers)
+  add_llvm_install_targets(install-aie-resource-headers
+                           DEPENDS aie-resource-headers
+                           COMPONENT aie-resource-headers)
+  add_llvm_install_targets(install-aiev1-resource-headers
+                           DEPENDS aiev1-resource-headers
+                           COMPONENT aiev1-resource-headers)
+  add_llvm_install_targets(install-aiev2-resource-headers
+                           DEPENDS aiev2-resource-headers
+                           COMPONENT aiev2-resource-headers)
+  add_llvm_install_targets(install-aie2p-resource-headers
+                           DEPENDS aie2p-resource-headers
+                           COMPONENT aie2p-resource-headers)
+  add_llvm_install_targets(install-aie2ps-resource-headers
+                           DEPENDS aie2ps-resource-headers
+                           COMPONENT aie2ps-resource-headers)
+  # Ensure base aie headers are always installed alongside any aie sub-target
+  add_dependencies(install-aiev1-resource-headers install-aie-resource-headers)
+  add_dependencies(install-aiev2-resource-headers install-aie-resource-headers)
+  add_dependencies(install-aie2p-resource-headers install-aie-resource-headers)
+  add_dependencies(install-aie2ps-resource-headers install-aie-resource-headers)
   add_llvm_install_targets(install-hip-resource-headers
                            DEPENDS hip-resource-headers
                            COMPONENT hip-resource-headers)
