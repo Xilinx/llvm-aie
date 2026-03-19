@@ -55,6 +55,8 @@ foreach(target ${LLVM_BUILTIN_TARGETS})
   # disable new/delete in both libcxx and libcxxabi to work around missing alloc/free in libc
   set(RUNTIMES_${target}_LIBCXX_ENABLE_NEW_DELETE_DEFINITIONS OFF CACHE STRING "")
   set(RUNTIMES_${target}_LIBCXX_HEADER_ONLY ON CACHE STRING "")
+  # Do not install C++03 frozen headers
+  set(RUNTIMES_${target}_LIBCXX_INSTALL_CXX03_HEADERS OFF CACHE BOOL "")
   set(RUNTIMES_${target}_LIBCXX_INCLUDE_BENCHMARKS OFF CACHE STRING "")
   set(RUNTIMES_${target}_LIBCXX_INCLUDE_TESTS OFF CACHE STRING "")
   set(RUNTIMES_${target}_LIBCXX_EXTRA_SITE_DEFINES "_LIBCPP_REMOVE_TRANSITIVE_INCLUDES" CACHE STRING "")
