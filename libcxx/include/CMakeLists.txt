@@ -2116,8 +2116,14 @@ add_dependencies(cxx-headers generate-cxx-headers)
 target_include_directories(cxx-headers INTERFACE ${LIBCXX_GENERATED_INCLUDE_TARGET_DIR}
                                                  ${LIBCXX_GENERATED_INCLUDE_DIR})
 
+option(LIBCXX_INSTALL_CXX03_HEADERS "Install C++03 frozen headers" ON)
+
 if (LIBCXX_INSTALL_HEADERS)
-  foreach(file ${files})
+  set(_install_files ${files})
+  if (NOT LIBCXX_INSTALL_CXX03_HEADERS)
+    list(FILTER _install_files EXCLUDE REGEX "^__cxx03")
+  endif()
+  foreach(file ${_install_files})
     get_filename_component(dir ${file} DIRECTORY)
     install(FILES ${file}
       DESTINATION "${LIBCXX_INSTALL_INCLUDE_DIR}/${dir}"
