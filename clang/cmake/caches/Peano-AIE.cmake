@@ -3,7 +3,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 
 # This file sets up a CMakeCache for the Peano AIE toolchain build.
 
@@ -49,7 +49,11 @@ set(LLVM_TOOLCHAIN_TOOLS
 set(_llvm_distribution_components
   clang
   lld
-  clang-resource-headers
+  core-resource-headers
+  aiev2-resource-headers
+  aie2p-resource-headers
+  aie2ps-resource-headers
+  x86-resource-headers
   builtins-aie2-none-unknown-elf
   runtimes-aie2-none-unknown-elf
   builtins-aie2p-none-unknown-elf
