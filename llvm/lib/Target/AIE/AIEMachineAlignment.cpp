@@ -282,8 +282,6 @@ void verifyDistanceToLoopEnd(MachineFunction &MF) {
       continue;
 
     auto LastInstr = MBB.getLastNonDebugInstr();
-    if (LastInstr == MBB.end())
-      continue;
     unsigned BytesToLoopEndStart = 0;
     for (auto MI = MBB.begin(); MI != LastInstr; ++MI)
       BytesToLoopEndStart += TII.getAIEMachineBundleSize(MI);
@@ -330,7 +328,7 @@ void verifyDistanceToLoopEnd(MachineFunction &MF) {
         }
         if (!HasLoopAsSuccessor)
           continue;
-        unsigned BytesToLastJumpStart = 0;
+        unsigned BytesToClosestJumpStart = 0;
         bool FoundJump = false;
         unsigned CurrentOffset = 0;
         for (auto MI = OtherMBB.begin(), E = OtherMBB.end(); MI != E; ++MI) {
@@ -338,13 +336,13 @@ void verifyDistanceToLoopEnd(MachineFunction &MF) {
             unsigned JumpPC = MBBStartOffset[&OtherMBB] + CurrentOffset;
             if (JumpPC < LoopEndPC) {
               FoundJump = true;
-              BytesToLastJumpStart = CurrentOffset;
+              BytesToClosestJumpStart = CurrentOffset;
             }
           }
           CurrentOffset += TII.getAIEMachineBundleSize(MI);
         }
         if (FoundJump) {
-          unsigned JumpPC = MBBStartOffset[&OtherMBB] + BytesToLastJumpStart;
+          unsigned JumpPC = MBBStartOffset[&OtherMBB] + BytesToClosestJumpStart;
           unsigned JumpToLoopEndDist = LoopEndPC - JumpPC;
           LLVM_DEBUG(dbgs() << "jump-to-loopend distance (ZOL body MBB "
                             << MBB.getNumber() << ", jump in MBB "
