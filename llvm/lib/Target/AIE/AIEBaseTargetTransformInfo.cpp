@@ -35,6 +35,12 @@ static cl::opt<bool>
                 cl::desc("Enable true zero overhead hardware loops on AIE"),
                 cl::init(true), cl::Hidden);
 
+/// We currently override MinIterCountHLReject == 1 to
+/// a) remove loop guards and
+/// b) disable HW loop generation
+/// todo: separate loop guard removal from disabling HW Loops.
+/// Note: Any Itercount provided by the user > 0 removes the loop guard in the
+/// middle-end.
 static cl::opt<int> MinIterCountHLReject(
     "aie-hardware-loops-minitercount", cl::Hidden, cl::init(1),
     cl::desc("Minimum trip count threshold for HL rejection"));
