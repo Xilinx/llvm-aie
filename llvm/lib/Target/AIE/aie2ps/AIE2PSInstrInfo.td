@@ -149,7 +149,7 @@ let hasSideEffects = 0, Uses = [sp] in {
 // can streamline the code and improve readability.
 let mayLoad = false, mayStore = true in {
 def ST_R_SPILL : Pseudo<(outs ), (ins OP_mSclSt:$src, c12n_step4:$imm), "st_r_spill", "$src, [sp, $imm]">;
-def ST_L_SPILL : Pseudo<(outs ), (ins OP_mlSts:$src, c13n_step8:$imm), "st_l_spill", "$src, [sp, $imm]">;
+def ST_L_SPILL : Pseudo<(outs ), (ins eL:$src, c13n_step8:$imm), "st_l_spill", "$src, [sp, $imm]">;
 def ST_D_SPILL : Pseudo<(outs ), (ins eD:$src, c12n_step4:$imm), "st_d_spill", "$src, [sp, $imm]">;
 def ST_DS_SPILL : Pseudo<(outs ), (ins eDS:$src, c12n_step4:$imm), "st_ds_spill", "$src, [sp, $imm]">;
 
