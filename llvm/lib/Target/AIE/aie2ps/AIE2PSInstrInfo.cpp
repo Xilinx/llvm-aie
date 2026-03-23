@@ -466,17 +466,8 @@ AIE2PSInstrInfo::getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
             {AIE2PS::ST_dms_sts_scalar_spill, AIE2PS::sub_dim_stride},
             {AIE2PS::ST_dms_sts_scalar_spill, AIE2PS::sub_dim_count}};
   case AIE2PS::ST_DS_SPILL:
-    return {
-        {AIE2PS::ST_dms_sts_scalar_spill, AIE2PS::sub_mod},
-        {AIE2PS::ST_dms_sts_scalar_spill, AIE2PS::sub_dim_size},
-        {AIE2PS::ST_dms_sts_scalar_spill, AIE2PS::sub_dim_stride},
-        {AIE2PS::ST_dms_sts_scalar_spill, AIE2PS::sub_dim_count},
-        {AIE2PS::ST_dms_sts_scalar_spill, AIE2PS::sub_hi_dim_then_sub_mod},
-        {AIE2PS::ST_dms_sts_scalar_spill, AIE2PS::sub_hi_dim_then_sub_dim_size},
-        {AIE2PS::ST_dms_sts_scalar_spill,
-         AIE2PS::sub_hi_dim_then_sub_dim_stride},
-        {AIE2PS::ST_dms_sts_scalar_spill,
-         AIE2PS::sub_hi_dim_then_sub_dim_count}};
+    return {{AIE2PS::ST_D_SPILL, AIE2PS::sub_lo_dim},
+            {AIE2PS::ST_D_SPILL, AIE2PS::sub_hi_dim}};
   case AIE2PS::VST_V_SPILL:
     return {{AIE2PS::VST_128_dmv_sts_w_spill}};
   case AIE2PS::VST_W_SPILL:
@@ -505,17 +496,8 @@ AIE2PSInstrInfo::getSpillPseudoExpandInfo(const TargetRegisterInfo &TRI,
             {AIE2PS::LDA_dms_lda_scalar_spill, AIE2PS::sub_dim_stride},
             {AIE2PS::LDA_dms_lda_scalar_spill, AIE2PS::sub_dim_count}};
   case AIE2PS::LDA_DS_SPILL:
-    return {{AIE2PS::LDA_dms_lda_scalar_spill, AIE2PS::sub_mod},
-            {AIE2PS::LDA_dms_lda_scalar_spill, AIE2PS::sub_dim_size},
-            {AIE2PS::LDA_dms_lda_scalar_spill, AIE2PS::sub_dim_stride},
-            {AIE2PS::LDA_dms_lda_scalar_spill, AIE2PS::sub_dim_count},
-            {AIE2PS::LDA_dms_lda_scalar_spill, AIE2PS::sub_hi_dim_then_sub_mod},
-            {AIE2PS::LDA_dms_lda_scalar_spill,
-             AIE2PS::sub_hi_dim_then_sub_dim_size},
-            {AIE2PS::LDA_dms_lda_scalar_spill,
-             AIE2PS::sub_hi_dim_then_sub_dim_stride},
-            {AIE2PS::LDA_dms_lda_scalar_spill,
-             AIE2PS::sub_hi_dim_then_sub_dim_count}};
+    return {{AIE2PS::LDA_D_SPILL, AIE2PS::sub_lo_dim},
+            {AIE2PS::LDA_D_SPILL, AIE2PS::sub_hi_dim}};
   case AIE2PS::VLDA_V_SPILL:
     return {{AIE2PS::VLDA_128_dmv_lda_w_spill}};
   case AIE2PS::VLDA_W_SPILL:
@@ -579,9 +561,9 @@ void AIE2PSInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                TRI, VReg, Flags);
   };
 
-  if (regClassMatches(AIE2PS::mSclStRegClass, RC, SrcReg)) {
+  if (regClassMatches(AIE2PS::eRRegClass, RC, SrcReg)) {
     Opcode = AIE2PS::ST_R_SPILL;
-  } else if (regClassMatches(AIE2PS::mlStsRegClass, RC, SrcReg)) {
+  } else if (regClassMatches(AIE2PS::eLRegClass, RC, SrcReg)) {
     Opcode = AIE2PS::ST_L_SPILL;
   } else if (regClassMatches(AIE2PS::eDRegClass, RC, SrcReg)) {
     Opcode = AIE2PS::ST_D_SPILL;
@@ -603,6 +585,9 @@ void AIE2PSInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     return bounceViaRegClass(&AIE2PS::VEC512RegClass);
   } else if (regClassMatches(AIE2PS::FIFO1024RegClass, RC, SrcReg)) {
     return bounceViaRegClass(&AIE2PS::VEC1024RegClass);
+  } else if (regClassMatches(AIE2PS::mSclStRegClass, RC, SrcReg)) {
+    // Anything that can be stored in a scalar register can use R_SPILL.
+    Opcode = AIE2PS::ST_R_SPILL;
   } else if (regClassMatches(AIE2PS::eSRegClass, RC, SrcReg) ||
              regClassMatches(AIE2PS::spill_eS_to_eRRegClass, RC, SrcReg)) {
     // Can't spill these directly.  Need to bounce through a GPR.
@@ -654,9 +639,9 @@ void AIE2PSInstrInfo::loadRegFromStackSlot(
     return;
   };
 
-  if (regClassMatches(AIE2PS::mSclStRegClass, RC, DstReg)) {
+  if (regClassMatches(AIE2PS::eRRegClass, RC, DstReg)) {
     Opcode = AIE2PS::LDA_R_SPILL;
-  } else if (regClassMatches(AIE2PS::mlStsRegClass, RC, DstReg)) {
+  } else if (regClassMatches(AIE2PS::eLRegClass, RC, DstReg)) {
     Opcode = AIE2PS::LDA_L_SPILL;
   } else if (regClassMatches(AIE2PS::eDRegClass, RC, DstReg)) {
     Opcode = AIE2PS::LDA_D_SPILL;
@@ -678,6 +663,9 @@ void AIE2PSInstrInfo::loadRegFromStackSlot(
     return bounceViaRegClass(&AIE2PS::VEC512RegClass);
   } else if (regClassMatches(AIE2PS::FIFO1024RegClass, RC, DstReg)) {
     return bounceViaRegClass(&AIE2PS::VEC1024RegClass);
+  } else if (regClassMatches(AIE2PS::mLdaSclRegClass, RC, DstReg)) {
+    // Anything that can be loaded into a scalar register can use R_SPILL.
+    Opcode = AIE2PS::LDA_R_SPILL;
   } else if (regClassMatches(AIE2PS::eSRegClass, RC, DstReg) ||
              regClassMatches(AIE2PS::spill_eS_to_eRRegClass, RC, DstReg)) {
     // Can't spill these directly.  Need to bounce through a GPR.
