@@ -2022,6 +2022,15 @@ FailureOr<ast::ConstraintRef> Parser::parseArgOrResultConstraint() {
 // - equality operators
 // - logical and
 // - logical or
+
+// MSVC 2022 (v14.40) miscompiles the switch/loop patterns in the expression
+// parsing functions under /O2, causing arithmetic operators and tuple syntax
+// to be incorrectly rejected. Disable optimization until an MSVC fix is
+// available.
+#ifdef _MSC_VER
+#pragma optimize("", off)
+#endif
+
 FailureOr<ast::Expr *> Parser::parseExpr() { return parseLogicalOrExpr(); }
 
 FailureOr<ast::Expr *> Parser::parseLogicalOrExpr() {
@@ -2832,6 +2841,10 @@ FailureOr<ast::Expr *> Parser::parseTupleExpr() {
     return failure();
   return createTupleExpr(loc, elements, elementNames);
 }
+
+#ifdef _MSC_VER
+#pragma optimize("", on)
+#endif
 
 FailureOr<ast::Expr *> Parser::parseTypeExpr() {
   SMRange loc = curToken.getLoc();
