@@ -63,3 +63,19 @@ InstructionCost AIE2PSTTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src,
 
   return Cost;
 }
+
+std::optional<Instruction *>
+AIE2PSTTIImpl::instCombineIntrinsic(InstCombiner &IC, IntrinsicInst &II) const {
+  Intrinsic::ID IID = II.getIntrinsicID();
+  switch (IID) {
+  default:
+    break;
+  case Intrinsic::aie2ps_vsel16:
+    if (AIEIRUtils::isUpperPartOfResultDiscarded(II))
+      return AIEIRUtils::instCombineDemandedBits(IC, II, 16, 2);
+    break;
+  case Intrinsic::aie2ps_vsel32:
+    return AIEIRUtils::instCombineDemandedBits(IC, II, 16, 2);
+  }
+  return std::nullopt;
+}
