@@ -80,3 +80,69 @@ Constraint Outer() {
   Constraint() {};
   Constraint() => attr<"10">;
 }
+
+// -----
+
+//===----------------------------------------------------------------------===//
+// ValueRange creation inside a Constraint body
+//===----------------------------------------------------------------------===//
+
+// Test building a ValueRange from individual Values via a let statement inside
+// a Constraint body.
+
+// CHECK: Module
+// CHECK: `-UserConstraintDecl {{.*}} Name<Foo> ResultType<ValueRange>
+// CHECK:   `Inputs`
+// CHECK:     |-VariableDecl {{.*}} Name<v1> Type<Value>
+// CHECK:     `-VariableDecl {{.*}} Name<v2> Type<Value>
+// CHECK:   `Results`
+// CHECK:     `-VariableDecl {{.*}} Name<> Type<ValueRange>
+// CHECK:   `-CompoundStmt {{.*}}
+// CHECK:     |-LetStmt
+// CHECK:     | `-VariableDecl {{.*}} Name<r> Type<ValueRange>
+// CHECK:     |   `-RangeExpr {{.*}} Type<ValueRange>
+// CHECK:     |     |-MemberAccessExpr {{.*}} Member<0> Type<Value>
+// CHECK:     |     `-MemberAccessExpr {{.*}} Member<1> Type<Value>
+// CHECK:     `-ReturnStmt
+// CHECK:       `-DeclRefExpr {{.*}} Type<ValueRange>
+// CHECK:         `-VariableDecl {{.*}} Name<r> Type<ValueRange>
+Constraint Foo(v1: Value, v2: Value) -> ValueRange {
+  let r: ValueRange = (v1, v2);
+  return r;
+}
+
+// -----
+
+// Test building a ValueRange from a mix of Value and ValueRange arguments.
+
+// CHECK: Module
+// CHECK: `-UserConstraintDecl {{.*}} Name<Foo> ResultType<ValueRange>
+// CHECK:   `Inputs`
+// CHECK:     |-VariableDecl {{.*}} Name<v> Type<Value>
+// CHECK:     `-VariableDecl {{.*}} Name<vr> Type<ValueRange>
+// CHECK:   `Results`
+// CHECK:     `-VariableDecl {{.*}} Name<> Type<ValueRange>
+// CHECK:   `-CompoundStmt {{.*}}
+// CHECK:     `-ReturnStmt
+// CHECK:       `-RangeExpr {{.*}} Type<ValueRange>
+// CHECK:         |-MemberAccessExpr {{.*}} Member<0> Type<Value>
+// CHECK:         `-MemberAccessExpr {{.*}} Member<1> Type<ValueRange>
+Constraint Foo(v: Value, vr: ValueRange) -> ValueRange => (v, vr);
+
+// -----
+
+// Test building a TypeRange from individual Types inside a Constraint body.
+
+// CHECK: Module
+// CHECK: `-UserConstraintDecl {{.*}} Name<Foo> ResultType<TypeRange>
+// CHECK:   `Inputs`
+// CHECK:     |-VariableDecl {{.*}} Name<t1> Type<Type>
+// CHECK:     `-VariableDecl {{.*}} Name<t2> Type<Type>
+// CHECK:   `Results`
+// CHECK:     `-VariableDecl {{.*}} Name<> Type<TypeRange>
+// CHECK:   `-CompoundStmt {{.*}}
+// CHECK:     `-ReturnStmt
+// CHECK:       `-RangeExpr {{.*}} Type<TypeRange>
+// CHECK:         |-MemberAccessExpr {{.*}} Member<0> Type<Type>
+// CHECK:         `-MemberAccessExpr {{.*}} Member<1> Type<Type>
+Constraint Foo(t1: Type, t2: Type) -> TypeRange => (t1, t2);

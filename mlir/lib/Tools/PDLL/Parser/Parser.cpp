@@ -899,10 +899,11 @@ LogicalResult Parser::convertTupleExpressionTo(
   // Handle conversion to a range.
   auto convertToRange = [&](ArrayRef<ast::Type> allowedElementTypes,
                             ast::RangeType resultTy) -> LogicalResult {
-    // TODO: We currently only allow range conversion within a rewrite context.
-    if (parserContext != ParserContext::Rewrite) {
-      return emitErrorFn()->attachNote("Tuple to Range conversion is currently "
-                                       "only allowed within a rewrite context");
+    if (parserContext != ParserContext::Rewrite &&
+        parserContext != ParserContext::Constraint) {
+      return emitErrorFn()->attachNote(
+          "Tuple to Range conversion is currently only allowed within a "
+          "rewrite or constraint context");
     }
 
     // All of the tuple elements must be allowed types.
