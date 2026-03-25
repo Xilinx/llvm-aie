@@ -278,7 +278,6 @@ v64uint8 test_maxdiff_lt_v64uint8(v64uint8 a, v64uint8 b, bool sgn,
   return maxdiff_lt(a, b, sgn, cmp);
 }
 
-//
 // AIE2-LABEL: @_Z21test_maxdiff_v64uint8Dv64_hS_(
 // AIE2-NEXT:  entry:
 // AIE2-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2.vmaxdiff.lt8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 0)
@@ -349,6 +348,7 @@ v64uint8 test_maxdiff_v64uint8(v64uint8 a, v64uint8 b, bool sgn) {
 // AIE2PS-NEXT:    ret <64 x i8> [[TMP2]]
 //
 v64uint8 test_min_ge_v64uint8(v64uint8 a, v64uint8 b, unsigned long long &cmp) {
+//
   return min_ge(a, b, cmp);
 }
 
@@ -457,6 +457,7 @@ v64uint8 test_max_lt_v64uint8(v64uint8 a, v64uint8 b, unsigned long long &cmp) {
   return max_lt(a, b, cmp);
 }
 
+//
 // AIE2-LABEL: @_Z20test_max_lt_v64uint8Dv64_hS_bRy(
 // AIE2-NEXT:  entry:
 // AIE2-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
@@ -699,7 +700,6 @@ v64uint8 test_abs_gtz_v64uint8(v64uint8 a, unsigned long long &cmp) {
   return abs_gtz(a, cmp);
 }
 
-//
 // AIE2-LABEL: @_Z21test_abs_gtz_v64uint8Dv64_hbRy(
 // AIE2-NEXT:  entry:
 // AIE2-NEXT:    [[CONV_I:%.*]] = zext i1 [[SGN:%.*]] to i32
@@ -731,7 +731,6 @@ v64uint8 test_abs_gtz_v64uint8(v64uint8 a, bool sgn, unsigned long long &cmp) {
   return abs_gtz(a, sgn, cmp);
 }
 
-//
 // CHECK-COMMON-LABEL: @_Z17test_abs_v64uint8Dv64_h(
 // CHECK-COMMON-NEXT:  entry:
 // CHECK-COMMON-NEXT:    ret <64 x i8> [[A:%.*]]
@@ -781,6 +780,7 @@ v64uint8 test_abs_v64uint8(v64uint8 a, bool sgn) { return abs(a, sgn); }
 //
 unsigned long long test_lt_v64uint8(v64uint8 a, v64uint8 b) { return lt(a, b); }
 
+//
 // AIE2-LABEL: @_Z16test_ge_v64uint8Dv64_hS_(
 // AIE2-NEXT:  entry:
 // AIE2-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2.vge8(<64 x i8> [[A:%.*]], <64 x i8> [[B:%.*]], i32 0)
@@ -1153,6 +1153,7 @@ v64int8 test_addsub_v64int8(v64int8 a, v64int8 b, unsigned long long as) {
   return addsub(a, b, as);
 }
 
+//
 // AIE2-LABEL: @_Z20test_neg_gtz_v64int8Dv64_aRy(
 // AIE2-NEXT:  entry:
 // AIE2-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <2 x i32> } @llvm.aie2.vneg.gtz8(<64 x i8> [[A:%.*]])
@@ -7021,7 +7022,7 @@ unsigned int test_ge(v16float v1, v16float v2) {
 // AIE2PS-NEXT:    store i32 [[AND_I_I]], ptr [[CMP:%.*]], align 4, !tbaa [[TBAA6]]
 // AIE2PS-NEXT:    [[TMP11:%.*]] = bitcast <16 x float> [[V1]] to <16 x i32>
 // AIE2PS-NEXT:    [[TMP12:%.*]] = bitcast <16 x float> [[V2]] to <16 x i32>
-// AIE2PS-NEXT:    [[TMP13:%.*]] = tail call <16 x i32> @llvm.aie2ps.vsel32(<16 x i32> [[TMP11]], <16 x i32> [[TMP12]], i32 [[AND_I_I]])
+// AIE2PS-NEXT:    [[TMP13:%.*]] = tail call <16 x i32> @llvm.aie2ps.vsel32(<16 x i32> [[TMP11]], <16 x i32> [[TMP12]], i32 [[TMP10]])
 // AIE2PS-NEXT:    [[TMP14:%.*]] = bitcast <16 x i32> [[TMP13]] to <16 x float>
 // AIE2PS-NEXT:    ret <16 x float> [[TMP14]]
 //
@@ -7087,10 +7088,9 @@ v16float test_min_ge(v16float v1, v16float v2, unsigned int &cmp) {
 // AIE2PS-NEXT:    [[SHUFFLE1_I_I_I_I:%.*]] = shufflevector <16 x i32> [[SHUFFLE_I_I_I_I]], <16 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
 // AIE2PS-NEXT:    [[TMP9:%.*]] = bitcast <16 x i32> [[SHUFFLE1_I_I_I_I]] to <32 x bfloat>
 // AIE2PS-NEXT:    [[TMP10:%.*]] = tail call noundef i32 @llvm.aie2ps.vgebfloat16(<32 x bfloat> [[TMP9]], <32 x bfloat> zeroinitializer)
-// AIE2PS-NEXT:    [[AND_I_I:%.*]] = and i32 [[TMP10]], 65535
 // AIE2PS-NEXT:    [[TMP11:%.*]] = bitcast <16 x float> [[V1]] to <16 x i32>
 // AIE2PS-NEXT:    [[TMP12:%.*]] = bitcast <16 x float> [[V2]] to <16 x i32>
-// AIE2PS-NEXT:    [[TMP13:%.*]] = tail call <16 x i32> @llvm.aie2ps.vsel32(<16 x i32> [[TMP11]], <16 x i32> [[TMP12]], i32 [[AND_I_I]])
+// AIE2PS-NEXT:    [[TMP13:%.*]] = tail call <16 x i32> @llvm.aie2ps.vsel32(<16 x i32> [[TMP11]], <16 x i32> [[TMP12]], i32 [[TMP10]])
 // AIE2PS-NEXT:    [[TMP14:%.*]] = bitcast <16 x i32> [[TMP13]] to <16 x float>
 // AIE2PS-NEXT:    ret <16 x float> [[TMP14]]
 //
@@ -7236,10 +7236,9 @@ v16float test_abs(v16float v1) { return abs(v1); }
 // AIE2PS-NEXT:    [[SHUFFLE1_I_I_I_I:%.*]] = shufflevector <16 x i32> [[SHUFFLE_I_I_I_I]], <16 x i32> <i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
 // AIE2PS-NEXT:    [[TMP10:%.*]] = bitcast <16 x i32> [[SHUFFLE1_I_I_I_I]] to <32 x bfloat>
 // AIE2PS-NEXT:    [[TMP11:%.*]] = tail call noundef i32 @llvm.aie2ps.vgebfloat16(<32 x bfloat> [[TMP10]], <32 x bfloat> zeroinitializer)
-// AIE2PS-NEXT:    [[AND_I_I:%.*]] = and i32 [[TMP11]], 65535
 // AIE2PS-NEXT:    [[TMP12:%.*]] = bitcast <16 x float> [[V1]] to <16 x i32>
 // AIE2PS-NEXT:    [[TMP13:%.*]] = bitcast <16 x float> [[V2]] to <16 x i32>
-// AIE2PS-NEXT:    [[TMP14:%.*]] = tail call noundef <16 x i32> @llvm.aie2ps.vsel32(<16 x i32> [[TMP12]], <16 x i32> [[TMP13]], i32 [[AND_I_I]])
+// AIE2PS-NEXT:    [[TMP14:%.*]] = tail call noundef <16 x i32> @llvm.aie2ps.vsel32(<16 x i32> [[TMP12]], <16 x i32> [[TMP13]], i32 [[TMP11]])
 // AIE2PS-NEXT:    [[TMP15:%.*]] = bitcast <16 x i32> [[TMP14]] to <16 x float>
 // AIE2PS-NEXT:    ret <16 x float> [[TMP15]]
 //
