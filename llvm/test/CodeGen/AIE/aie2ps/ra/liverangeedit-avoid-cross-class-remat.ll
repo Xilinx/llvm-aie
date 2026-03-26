@@ -3,11 +3,13 @@
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
 ; (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
-; RUN:  not --crash llc -mtriple=aie2ps -stop-before=virtregrewriter %s -o - 2>&1 | FileCheck %s
+; RUN: llc -mtriple=aie2ps -stop-before=virtregrewriter %s -o - | FileCheck %s
 
-; Without the fix, this test crashes during register allocation when attempting
-; to rematerialize an instruction with incompatible register classes.
-; CHECK: Running pass 'Greedy Register Allocator'
+; This test verifies that rematerialization validation correctly handles
+; register class compatibility. Without the fix, this would crash during
+; register allocation when attempting to rematerialize an instruction with
+; incompatible register classes.
+; CHECK: name: remat_cross_class_test
 
 define void @remat_cross_class_test() {
 entry:

@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -81,6 +81,57 @@ bool LiveRangeEdit::checkRematerializable(VNInfo *VNI,
   return true;
 }
 
+/// Check if the defining instruction is suitable for rematerialization.
+/// Returns true if the instruction can be rematerialized, false otherwise.
+static bool isRematerializableDefInstr(const MachineInstr *DefMI,
+                                       Register Original, const VirtRegMap *VRM,
+                                       const MachineRegisterInfo &MRI,
+                                       const TargetInstrInfo &TII) {
+  // Find the operand that defines a register with Original as its ancestor
+  const MachineOperand *DefMO = nullptr;
+  for (const MachineOperand &MO : DefMI->defs()) {
+    if (MO.isReg() && MO.getReg().isVirtual()) {
+      // Check if this def's original register is our Original
+      if (VRM->getOriginal(MO.getReg()) == Original) {
+        DefMO = &MO;
+        break;
+      }
+    }
+  }
+
+  if (!DefMO) {
+    LLVM_DEBUG({
+      dbgs() << "  No def operand traces back to "
+             << printReg(Original, MRI.getTargetRegisterInfo(), 0, &MRI)
+             << " (stale VNInfo after rewriting)\n";
+    });
+    return false;
+  }
+
+  // The instruction at OrigVNI->def may no longer define a register
+  // compatible with Original. This can happen when the SplitEditor
+  // transfers a def to a split product, and that product is later
+  // rewritten in-place (e.g., by a super-register rewriter that strips
+  // sub-register indices, changing the register class). Check the
+  // instruction descriptor's operand constraint rather than the current
+  // virtual register, and skip if Original's class is not contained in
+  // the instruction's def class.
+  //
+  // However, if the def operand has a subreg index, this indicates a
+  // partial def of the original register, which may be valid for
+  // rematerialization regardless of register class constraints, depending on
+  // the remaining analysis.
+  if (!DefMO->getSubReg()) {
+    const TargetRegisterClass *DefRC =
+        TII.getRegClass(DefMI->getDesc(), DefMO->getOperandNo(),
+                        MRI.getTargetRegisterInfo(), *DefMI->getMF());
+    if (DefRC && !DefRC->hasSubClassEq(MRI.getRegClass(Original)))
+      return false;
+  }
+
+  return true;
+}
+
 void LiveRangeEdit::scanRemattable() {
   for (VNInfo *VNI : getParent().valnos) {
     if (VNI->isUnused())
@@ -93,6 +144,10 @@ void LiveRangeEdit::scanRemattable() {
     MachineInstr *DefMI = LIS.getInstructionFromIndex(OrigVNI->def);
     if (!DefMI)
       continue;
+
+    if (!isRematerializableDefInstr(DefMI, Original, VRM, MRI, TII))
+      continue;
+
     checkRematerializable(OrigVNI, DefMI);
   }
   ScannedRemattable = true;
