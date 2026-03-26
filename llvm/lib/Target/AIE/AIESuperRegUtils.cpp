@@ -376,16 +376,6 @@ void rewriteSuperReg(Register Reg, std::optional<Register> AssignedPhysReg,
   // Step 4: Remove the original register's live interval
   LIS.removeInterval(Reg);
 
-  // Step 4b: Clear stale ancestor live intervals. The operand rewrite in
-  // step 3 modified instructions in-place (e.g., stripping sub-register
-  // indices). Any ancestor register in the VRM split chain still has VNInfos
-  // pointing to those instruction slots. If a later Greedy pass traces back
-  // via VRM.getOriginal(), it would find a stale instruction and could produce
-  // an invalid rematerialization. Clearing the ancestor interval prevents this.
-  Register Original = VRM.getOriginal(Reg);
-  if (Original != Reg && LIS.hasInterval(Original))
-    LIS.getInterval(Original).clear();
-
   // Step 5: Filter out empty subregisters
   markEffectiveEmptyCopiesDead(SubRegToVReg, MRI, TRI, LIS);
 
