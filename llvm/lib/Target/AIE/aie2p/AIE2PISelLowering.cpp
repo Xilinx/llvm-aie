@@ -17,14 +17,37 @@
 #include "MCTargetDesc/aie2p/AIE2PMCTargetDesc.h"
 #include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/IR/IntrinsicsAIE2P.h"
+#include "llvm/IR/RuntimeLibcalls.h"
 
 using namespace llvm;
 
 #define DEBUG_TYPE "aie-lower"
 
+extern cl::opt<bool> VecCCLibcalls;
+
 AIE2PTargetLowering::AIE2PTargetLowering(const TargetMachine &TM,
                                          const AIEBaseSubtarget &STI)
     : AIEBaseTargetLowering(TM, STI) {
+
+  if (VecCCLibcalls) {
+    setLibcallCallingConv(RTLIB::SINTTOFP_I32_F32,
+                          CallingConv::AIE_PreserveAll_Vec);
+    setLibcallCallingConv(RTLIB::SINTTOFP_I32_F64,
+                          CallingConv::AIE_PreserveAll_Vec);
+    setLibcallCallingConv(RTLIB::SINTTOFP_I64_F32,
+                          CallingConv::AIE_PreserveAll_Vec);
+    setLibcallCallingConv(RTLIB::SINTTOFP_I64_F64,
+                          CallingConv::AIE_PreserveAll_Vec);
+    setLibcallCallingConv(RTLIB::SDIV_I32, CallingConv::AIE_PreserveAll_Vec);
+    setLibcallCallingConv(RTLIB::SDIV_I64, CallingConv::AIE_PreserveAll_Vec);
+    setLibcallCallingConv(RTLIB::UDIV_I32, CallingConv::AIE_PreserveAll_Vec);
+    setLibcallCallingConv(RTLIB::UDIV_I64, CallingConv::AIE_PreserveAll_Vec);
+    setLibcallCallingConv(RTLIB::SREM_I32, CallingConv::AIE_PreserveAll_Vec);
+    setLibcallCallingConv(RTLIB::SREM_I64, CallingConv::AIE_PreserveAll_Vec);
+    setLibcallCallingConv(RTLIB::UREM_I32, CallingConv::AIE_PreserveAll_Vec);
+    setLibcallCallingConv(RTLIB::UREM_I64, CallingConv::AIE_PreserveAll_Vec);
+  }
+
   const TargetRegisterInfo *TRI = Subtarget.getRegisterInfo();
 
   // We already define in .td which types are legal for each register class.
