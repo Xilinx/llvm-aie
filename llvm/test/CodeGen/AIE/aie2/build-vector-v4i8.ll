@@ -16,21 +16,22 @@ define void @build_v4i8_from_ptrs(ptr nocapture readonly %p0, ptr nocapture read
 ; CHECK-LABEL: build_v4i8_from_ptrs:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    lda.u8 r0, [p1, #0]; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    lda.u8 r2, [p0, #0]; nopx
-; CHECK-NEXT:    lda.u8 r4, [p2, #0]
+; CHECK-NEXT:    lda.u8 r2, [p0, #0]
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    lda.s8 r4, [p2, #0]
+; CHECK-NEXT:    lda.s8 r6, [p3, #0]
 ; CHECK-NEXT:    mova r16, #8
-; CHECK-NEXT:    lda.u8 r6, [p3, #0]
+; CHECK-NEXT:    movx r29, #2
 ; CHECK-NEXT:    lshl r0, r0, r16
 ; CHECK-NEXT:    or r0, r2, r0
-; CHECK-NEXT:    mova r2, #16
-; CHECK-NEXT:    lshl r2, r4, r2
-; CHECK-NEXT:    or r0, r0, r2
+; CHECK-NEXT:    vinsert.32 x0, x0, #0, r0
+; CHECK-NEXT:    vinsert.8 x0, x0, r29, r4
+; CHECK-NEXT:    mova r29, #3
+; CHECK-NEXT:    vinsert.8 x0, x0, r29, r6
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    mova r2, #24 // Delay Slot 5
-; CHECK-NEXT:    lshl r2, r6, r2 // Delay Slot 4
-; CHECK-NEXT:    or r0, r0, r2 // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    vextract.32 r0, x0, #0, vaddsign1 // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    st r0, [p4, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -50,19 +51,20 @@ entry:
 define void @build_v4i8_from_scalars(i8 %a, i8 %b, i8 %c, i8 %d, ptr nocapture writeonly %dst) {
 ; CHECK-LABEL: build_v4i8_from_scalars:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; extend.u8 r0, r0; nopm
-; CHECK-NEXT:    extend.u8 r4, r1
-; CHECK-NEXT:    extend.u8 r2, r2
+; CHECK-NEXT:    nopa ; extend.u8 r4, r1; nopm
+; CHECK-NEXT:    extend.u8 r0, r0
 ; CHECK-NEXT:    mova r6, #8
+; CHECK-NEXT:    mova r29, #2
 ; CHECK-NEXT:    lshl r4, r4, r6
 ; CHECK-NEXT:    or r0, r0, r4
-; CHECK-NEXT:    mova r4, #16
-; CHECK-NEXT:    lshl r2, r2, r4
-; CHECK-NEXT:    or r0, r0, r2
+; CHECK-NEXT:    vinsert.32 x0, x0, #0, r0
+; CHECK-NEXT:    vinsert.8 x0, x0, r29, r2
+; CHECK-NEXT:    mova r29, #3
+; CHECK-NEXT:    vinsert.8 x0, x0, r29, r3
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    mova r2, #24 // Delay Slot 5
-; CHECK-NEXT:    lshl r2, r3, r2 // Delay Slot 4
-; CHECK-NEXT:    or r0, r0, r2 // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    vextract.32 r0, x0, #0, vaddsign1 // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    st r0, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:

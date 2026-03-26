@@ -73,6 +73,62 @@ static Register emitPadUndefVector(MachineRegisterInfo &MRI,
   return NewSrcReg;
 }
 
+/// Hybrid scalar+vector lowering for <4 x s8> build_vector.
+/// Packs bytes 0,1 via scalar shift+OR (2 ALU ops), then uses vinsert.32
+/// to place the packed half into a 512-bit vector, vinsert.8 for bytes 2,3,
+/// and vextr.32 to read back the packed 32-bit word (4 MV ops).
+/// This keeps both ALU and MV slot usage within the 4-slot budget.
+bool AIELegalizerHelper::pack4xi8Vector(LegalizerHelper &Helper,
+                                        MachineInstr &MI,
+                                        Register DstReg) const {
+  MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+
+  const LLT V16S32 = LLT::fixed_vector(16, 32);
+  const LLT V64S8 = LLT::fixed_vector(64, 8);
+
+  // Extract the 4 byte operands.
+  Register B0 = MI.getOperand(1).getReg();
+  Register B1 = MI.getOperand(2).getReg();
+  Register B2 = MI.getOperand(3).getReg();
+  Register B3 = MI.getOperand(4).getReg();
+
+  // Zero-extend bytes 0,1 to s32 for the scalar shift+OR path.
+  // Bytes 2,3 are passed as s8 to G_INSERT_VECTOR_ELT, which widens them.
+  auto Ext0 = MIRBuilder.buildZExt(S32, B0);
+  auto Ext1 = MIRBuilder.buildZExt(S32, B1);
+
+  // Pack bytes 0,1 into lower 16 bits of a scalar register (2 ALU ops).
+  auto C8 = MIRBuilder.buildConstant(S32, 8);
+  auto Shl1 = MIRBuilder.buildShl(S32, Ext1, C8);
+  auto Lo16 = MIRBuilder.buildOr(S32, Ext0, Shl1);
+
+  // Place packed lower half into 512-bit vector at word position 0.
+  auto Undef = MIRBuilder.buildUndef(V16S32);
+  auto C0 = MIRBuilder.buildConstant(S32, 0);
+  auto V0 = MIRBuilder.buildInsertVectorElement(V16S32, Undef, Lo16, C0);
+
+  // Bitcast to <64 x s8> for byte-level insertion.
+  auto V0i8 = MIRBuilder.buildBitcast(V64S8, V0);
+
+  // Insert bytes 2 and 3 at byte positions 2 and 3.
+  // Pass the original s8 operands — the G_INSERT_VECTOR_ELT custom legalizer
+  // will widen them to s32 via ClampScalarSrc.
+  auto C2 = MIRBuilder.buildConstant(S32, 2);
+  auto V1i8 = MIRBuilder.buildInsertVectorElement(V64S8, V0i8, B2, C2);
+
+  auto C3 = MIRBuilder.buildConstant(S32, 3);
+  auto V2i8 = MIRBuilder.buildInsertVectorElement(V64S8, V1i8, B3, C3);
+
+  // Extract the packed 32-bit word from the vector.
+  auto V2 = MIRBuilder.buildBitcast(V16S32, V2i8);
+  auto Packed = MIRBuilder.buildExtractVectorElement(S32, V2, C0);
+
+  // Bitcast s32 result to <4 x s8> destination.
+  MIRBuilder.buildBitcast(DstReg, Packed);
+  MI.eraseFromParent();
+  return true;
+}
+
 bool AIELegalizerHelper::pack32BitVector(LegalizerHelper &Helper,
                                          MachineInstr &MI,
                                          Register SourceReg) const {
@@ -83,6 +139,13 @@ bool AIELegalizerHelper::pack32BitVector(LegalizerHelper &Helper,
   const Register DstReg = MI.getOperand(0).getReg();
   assert(SourceRegTy.getSizeInBits() == 32 &&
          "cannot pack vectors larger or smaller than 32-bit");
+
+  // Hybrid scalar+vector lowering for <4 x i8> to reduce ALU slot pressure.
+  // Only applies to G_BUILD_VECTOR (s8 operands), not G_BUILD_VECTOR_TRUNC
+  // (s32 operands) which falls through to the generic scalar shift/OR path.
+  if (SourceRegTy == LLT::fixed_vector(4, 8) &&
+      MRI.getType(MI.getOperand(1).getReg()) == LLT::scalar(8))
+    return pack4xi8Vector(Helper, MI, DstReg);
 
   unsigned Offset = 0;
   Register DstCastReg = MRI.createGenericVirtualRegister(S32);

@@ -15,7 +15,6 @@
 
 // --- v4int8 vector + bitcast approach, 3D pointer loads ---
 
-//
 // CHECK-LABEL: define dso_local void @_Z18pack_bytes_v4i8_3dPciiRiiiS0_iPi(
 // CHECK-SAME: ptr [[PTR:%.*]], i32 noundef [[OFF:%.*]], i32 noundef [[SIZE1:%.*]], ptr nocapture nonnull align 4 dereferenceable(4) [[COUNT1:%.*]], i32 noundef [[INC1:%.*]], i32 noundef [[SIZE2:%.*]], ptr nocapture nonnull align 4 dereferenceable(4) [[COUNT2:%.*]], i32 noundef [[INC2:%.*]], ptr nocapture writeonly initializes((0, 4)) [[DST:%.*]]) local_unnamed_addr #[[ATTR0:[0-9]+]] {
 // CHECK-NEXT:  [[ENTRY:.*:]]

@@ -93,6 +93,8 @@ public:
   bool legalizeBinOp(LegalizerHelper &Helper, MachineInstr &MI) const;
 
   // Helper functions for legalization
+  bool pack4xi8Vector(LegalizerHelper &Helper, MachineInstr &MI,
+                      Register DstReg) const;
   bool pack32BitVector(LegalizerHelper &Helper, MachineInstr &MI,
                        Register SourceReg) const;
   bool unpackVector(LegalizerHelper &Helper, MachineInstr &MI,
