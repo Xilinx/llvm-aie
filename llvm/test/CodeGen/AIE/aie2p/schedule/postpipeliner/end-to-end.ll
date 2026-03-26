@@ -26,7 +26,6 @@ define <32 x i16> @zol(i32 %n, ptr %p) {
 ; CHECK-NEXT:    nopa ; vldb x4, [p0], #64; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; vldb x4, [p0], #64; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; vldb x4, [p0], #64; nops ; nopxm ; nopv
-; CHECK-NEXT:    // implicit-def: $x6
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:  .L_LEnd0:

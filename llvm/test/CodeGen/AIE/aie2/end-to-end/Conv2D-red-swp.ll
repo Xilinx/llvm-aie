@@ -80,8 +80,6 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; DCL-NEXT:    st m7, [sp, #-32] // 4-byte Folded Spill
 ; DCL-NEXT:    st dn7, [sp, #-28] // 4-byte Folded Spill
 ; DCL-NEXT:    mova r9, #31; st dj7, [sp, #-24]; movx r8, #11 // 4-byte Folded Spill
-; DCL-NEXT:    // implicit-def: $x4
-; DCL-NEXT:    // implicit-def: $x2
 ; DCL-NEXT:  .LBB0_1: // %outer.loop.header
 ; DCL-NEXT:    // =>This Loop Header: Depth=1
 ; DCL-NEXT:    // Child Loop BB0_2 Depth 2
@@ -215,8 +213,6 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-NEXT:    st m7, [sp, #-32] // 4-byte Folded Spill
 ; ZOL-NEXT:    st dn7, [sp, #-28] // 4-byte Folded Spill
 ; ZOL-NEXT:    mova r9, #31; st dj7, [sp, #-24]; movx r8, #11 // 4-byte Folded Spill
-; ZOL-NEXT:    // implicit-def: $x4
-; ZOL-NEXT:    // implicit-def: $x2
 ; ZOL-NEXT:  .LBB0_1: // %outer.loop.header
 ; ZOL-NEXT:    // =>This Loop Header: Depth=1
 ; ZOL-NEXT:    // Child Loop BB0_2 Depth 2

@@ -24,7 +24,6 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ; CHECK-NEXT:    movx r24, #0
 ; CHECK-NEXT:    mova dj0, #0; mov r26, r24
 ; CHECK-NEXT:    vldb.fill.512 [p0, lf0, r24]; mov dj1, dj0
-; CHECK-NEXT:    // kill: def $p0 killed $p0 def $lf0
 ; CHECK-NEXT:    vlda.pop.512 x6, [p0, lf0, r24]; movs dc1, dj0; mov dn1, dn0
 ; CHECK-NEXT:    vldb.pop.512.2d x4, [p0, lf0, r24, d1]
 ; CHECK-NEXT:    nop
@@ -36,7 +35,6 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ; CHECK-NEXT:    vlda.pop.512 x6, [p0, lf0, r24]; nopb ; nops ; nopx ; vconv.fp32.bf16 cml1, x6; nopv
 ; CHECK-NEXT:    nopa ; vldb.pop.512.2d x4, [p0, lf0, r24, d1]; nops ; nopx ; vconv.fp32.bf16 cmh1, x4; nopv
 ; CHECK-NEXT:    nopa ; nopb ; movs dc0, dj0; nopx ; mov p2, p1; nopv
-; CHECK-NEXT:    // implicit-def: $sf
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; vst.push.576.conv.bfp16ebs8.fp32 dm1, [p2, sf, r26]; nopxm ; nopv

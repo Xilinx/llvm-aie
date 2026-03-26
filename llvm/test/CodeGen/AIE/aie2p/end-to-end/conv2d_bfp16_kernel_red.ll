@@ -43,12 +43,10 @@ define dso_local void @conv2d_bfp16.for.body90.i(<32 x i32> %fW.sroa.0.1489.i, i
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova r25, #0; st p7, [sp, #-60]; mov dc4, #0 // 4-byte Folded Spill
 ; CHECK-NEXT:    lda m1, [p6], #-12; vldb.fill.512 [p1, lf1, r25]; mov dn0, p3
-; CHECK-NEXT:    // kill: def $p1 killed $p1 def $lf1
 ; CHECK-NEXT:    lda p7, [p6], #-4; vldb.fill.512 [p1, lf1, r25]; movs dj0, p4; mov dn4, p5
 ; CHECK-NEXT:    lda r3, [p6], #-4; vldb.pop.576 ex9, [p1, lf1, r25]; movs dc0, dc4; mov m0, p2
 ; CHECK-NEXT:    lda r2, [p6, #0]; vldb.pop.576.3d ex7, [p1, lf1, r25, d0]; movx r24, #0
 ; CHECK-NEXT:    vlda.fill.512 [p0, lf0, r24]; vldb.fill.512 [p1, lf1, r25]
-; CHECK-NEXT:    // kill: def $p0 killed $p0 def $lf0
 ; CHECK-NEXT:    vlda.pop.576 ex5, [p0, lf0, r24]; vldb.fill.512 [p1, lf1, r25]; add r1, r6, #-1
 ; CHECK-NEXT:    lda p6, [p6, #-4]; vldb.pop.576 ex9, [p1, lf1, r25]; movxm ls, #.LBB0_1
 ; CHECK-NEXT:    vlda.pop.576 ex3, [p0, lf0, r24, m1]; vldb.pop.576.3d ex7, [p1, lf1, r25, d0]; movxm le, #.L_LEnd0

@@ -15,7 +15,7 @@ target triple = "aie2p"
 define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32> noundef %b, <16 x i8> noundef %c, <16 x i16> noundef %d, <8 x i32> noundef %e, <4 x i64> inreg noundef %f, <8 x i64> inreg noundef %g, <16 x i32> noundef %h) #0 {
 ; CHECK-LABEL: test_load_store_unaligned:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; paddxm [sp], #576
+; CHECK-NEXT:    nopa ; nopb ; paddxm [sp], #576; nops
 ; CHECK-NEXT:    st p7, [sp, #-20] // 4-byte Folded Spill
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    padda [p0], #-128
@@ -128,6 +128,9 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    vextract.8 r6, x4, #6, vaddsign1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
+; CHECK-NEXT:    st r8, [sp, #-32] // 4-byte Folded Spill
+; CHECK-NEXT:    st r9, [sp, #-28] // 4-byte Folded Spill
+; CHECK-NEXT:    st p6, [sp, #-24] // 4-byte Folded Spill
 ; CHECK-NEXT:    st.s8 r7, [p1, #7]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -183,10 +186,6 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vextract.8 r22, x4, #14, vaddsign1
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    st r8, [sp, #-32] // 4-byte Folded Spill
-; CHECK-NEXT:    st r9, [sp, #-28] // 4-byte Folded Spill
-; CHECK-NEXT:    st p6, [sp, #-24] // 4-byte Folded Spill
 ; CHECK-NEXT:    mova dj0, #15
 ; CHECK-NEXT:    st.s8 r23, [p1, dj0]
 ; CHECK-NEXT:    nop
@@ -246,7 +245,6 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    mov p7, r8
 ; CHECK-NEXT:    st r0, [p7, #0]
 ; CHECK-NEXT:    st.s16 r7, [p3, #14]
-; CHECK-NEXT:    // implicit-def: $bmll0
 ; CHECK-NEXT:    vmov x0, bmll0
 ; CHECK-NEXT:    mov p4, sp
 ; CHECK-NEXT:    mov r30, p0
@@ -304,15 +302,12 @@ define dso_local void @test_load_store_unaligned(<8 x i16> noundef %a, <4 x i32>
 ; CHECK-NEXT:    st r7, [p7, #28]
 ; CHECK-NEXT:    st.s16 r22, [p3, dj0]
 ; CHECK-NEXT:    vextract.64 r1:r0, x0, #0, vaddsign1
-; CHECK-NEXT:    // implicit-def: $bmll0
 ; CHECK-NEXT:    vmov x0, bmll0
 ; CHECK-NEXT:    vextract.64 r3:r2, x0, #1, vaddsign1
-; CHECK-NEXT:    // implicit-def: $bmll0
 ; CHECK-NEXT:    vmov x0, bmll0
 ; CHECK-NEXT:    vextract.64 r5:r4, x0, #2, vaddsign1
 ; CHECK-NEXT:    mova dj0, #30
 ; CHECK-NEXT:    st.s16 r23, [p3, dj0]
-; CHECK-NEXT:    // implicit-def: $bmll0
 ; CHECK-NEXT:    vmov x0, bmll0
 ; CHECK-NEXT:    mov p7, r31
 ; CHECK-NEXT:    vextract.64 r7:r6, x0, #3, vaddsign1
