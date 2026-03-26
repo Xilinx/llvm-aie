@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -O2 -mtriple=aie2 --enable-pipeliner=0 %s -o - | FileCheck %s --check-prefix=ASM
 ; RUN: llc -O2 -mtriple=aie2 --enable-pipeliner=0 %s -o - --debug-only=machine-scheduler  \
 ; RUN:    2>&1 | %imisched -d - \
@@ -70,8 +70,6 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ASM-NEXT:    mov dc7, dj3
 ; ASM-NEXT:    lda r29, [p6, #0]; movx r8, #11; mov r27, dj3
 ; ASM-NEXT:    lda r28, [p6, #-4]; movx r9, #31; mov m3, r24
-; ASM-NEXT:    // implicit-def: $x1
-; ASM-NEXT:    // implicit-def: $x3
 ; ASM-NEXT:  .LBB0_1: // %outer.loop.header
 ; ASM-NEXT:    // =>This Loop Header: Depth=1
 ; ASM-NEXT:    // Child Loop BB0_2 Depth 2

@@ -31,7 +31,6 @@ body:             |
     ; CHECK-NEXT: $dj4 = MOV_alu_mv_mv_mv_scl killed $r6
     ; CHECK-NEXT: $dc4 = MOV_alu_mv_mv_mv_scl killed $r7
     ; CHECK-NEXT: $p0, $dc0, $dc4 = PADDA_3D killed $p0, $d0_3d
-    ; CHECK-NEXT: dead renamable $m4 = KILL killed $r4
     ; CHECK-NEXT: $p0, dead $dc0, $dc4 = PADDA_3D killed $p0, killed $d0_3d
     ; CHECK-NEXT: DelayedSchedBarrier implicit killed renamable $p0, implicit killed renamable $dc4
     %0:em =  COPY $r0
@@ -230,7 +229,6 @@ body:             |
   ; CHECK-NEXT:   $dj4 = MOV_alu_mv_mv_mv_scl killed $r6
   ; CHECK-NEXT:   $dc4 = MOV_alu_mv_mv_mv_scl killed $r7
   ; CHECK-NEXT:   $p0, $dc0, $dc4 = PADDA_3D killed $p0, $d0_3d
-  ; CHECK-NEXT:   dead renamable $m4 = KILL killed $r4
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
@@ -296,7 +294,6 @@ body:             |
   ; CHECK-NEXT:   $dj4 = MOV_alu_mv_mv_mv_scl killed $r6
   ; CHECK-NEXT:   $dc4 = MOV_alu_mv_mv_mv_scl killed $r7
   ; CHECK-NEXT:   $p0, $dc0, $dc4 = PADDA_3D killed $p0, $d0_3d
-  ; CHECK-NEXT:   dead renamable $m4 = KILL killed $r4
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:

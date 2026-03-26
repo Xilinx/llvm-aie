@@ -722,8 +722,30 @@ void AIEPostRASchedStrategy::schedNode(SUnit *SU, bool IsTopNode) {
   }
 }
 
+static void removeMetaInstructions(MachineFunction &MF) {
+  // Remove KILL and IMPLICIT_DEF pseudo-instructions before scheduling. These
+  // meta instructions confuse the dependence analysis: their defs absorb the
+  // entries in the Defs/Uses maps inside buildEdges, breaking direct dependency
+  // edges between real instructions. For example:
+  //   $r0 = MOV ...          (Insn A)
+  //   $r0 = KILL $r0         (Insn B)
+  //   $r0 = ADD ...          (Insn C)
+  // Insn B causes buildEdges to create A->B->C instead of a direct A->C
+  // output dependence. Since these are zero-latency meta instructions that
+  // emit no code, the transitive chain allows A and C to be placed in the
+  // same VLIW bundle, which is incorrect. IMPLICIT_DEF has the same problem
+  // when its def sits between two real writers of the same register.
+  // Removing KILL before VLIW scheduling is the same approach used by the
+  // Hexagon packetizer (HexagonVLIWPacketizer.cpp).
+  for (MachineBasicBlock &MBB : MF)
+    for (MachineInstr &MI : llvm::make_early_inc_range(MBB))
+      if (MI.isKill() || MI.isImplicitDef())
+        MI.eraseFromParent();
+}
+
 void AIEPostRASchedStrategy::enterFunction(MachineFunction *MF) {
   LLVM_DEBUG(dbgs() << "enterFunction " << MF->getName() << "\n");
+  removeMetaInstructions(*MF);
   InterBlock.enterFunction(MF);
 }
 

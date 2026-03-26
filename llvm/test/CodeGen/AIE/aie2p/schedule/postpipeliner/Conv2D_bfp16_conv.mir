@@ -52,7 +52,6 @@
   ; CONSERVATIVE-NEXT:    nopa ; nopb ; nops ; nopx ; vconv.fp32.bf16 cml0, x0; nopv
   ; CONSERVATIVE-NEXT:    nopa ; nopb ; nops ; nopx ; vconv.fp32.bf16 cmh0, x2; nopv
   ; CONSERVATIVE-NEXT:    nopa ; nopb ; nops ; nopx ; mov dc0, dj0; nopv
-  ; CONSERVATIVE-NEXT:    // implicit-def: $sf
   ; CONSERVATIVE-NEXT:    .p2align 4
   ; CONSERVATIVE-NEXT:  .LBB0_2: // =>This Inner Loop Header: Depth=1
   ; CONSERVATIVE-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; vst.push.576.conv.bfp16ebs8.fp32 dm0, [p2, sf, r26]; nopxm ; nopv
@@ -124,7 +123,6 @@
   ; OPTIMISTIC-NEXT:    nopa ; vldb.pop.512 x0, [p0, lf0, r24]; nops ; nopx ; vconv.fp32.bf16 cml0, x0; nopv
   ; OPTIMISTIC-NEXT:    nopa ; vldb.pop.512.2d x2, [p0, lf0, r24, d1]; nops ; nopx ; vconv.fp32.bf16 cmh0, x2; nopv
   ; OPTIMISTIC-NEXT:    nopa ; nopb ; nops ; nopx ; mov dc0, dj0; nopv
-  ; OPTIMISTIC-NEXT:    // implicit-def: $sf
   ; OPTIMISTIC-NEXT:    .p2align 4
   ; OPTIMISTIC-NEXT:  .LBB0_2: // =>This Inner Loop Header: Depth=1
   ; OPTIMISTIC-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; vst.push.576.conv.bfp16ebs8.fp32 dm0, [p2, sf, r26]; nopxm ; nopv
