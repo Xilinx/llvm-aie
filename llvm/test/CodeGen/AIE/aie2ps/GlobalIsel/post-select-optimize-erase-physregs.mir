@@ -34,8 +34,6 @@ body:             |
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edm = COPY $dm0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:es = COPY $s0
     ; CHECK-NEXT: $srssign0 = COPY [[COPY]]
-    ; CHECK-NEXT: $srssign0 = MOVX_mvx_cr_imm 0
-    ; CHECK-NEXT: $srssign0 = COPY [[COPY]]
     ; CHECK-NEXT: $x2 = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY1]], [[COPY2]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
     ; CHECK-NEXT: $srssign0 = MOVX_mvx_cr_imm 0
     %1:er = COPY $r1
@@ -64,13 +62,10 @@ body:             |
     ; CHECK: liveins: $r0, $r1, $dm0, $s0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:er = COPY $r0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r1
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:edm = COPY $dm0
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:es = COPY $s0
-    ; CHECK-NEXT: $srssign0 = COPY [[COPY1]]
-    ; CHECK-NEXT: $srssign0 = MOVX_mvx_cr_imm 0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edm = COPY $dm0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:es = COPY $s0
     ; CHECK-NEXT: $srssign0 = COPY [[COPY]]
-    ; CHECK-NEXT: $x2 = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY2]], [[COPY3]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
+    ; CHECK-NEXT: $x2 = VSRS_4x_mv_x_srs_dm_srsSign0 [[COPY1]], [[COPY2]], implicit-def $srsrs_of, implicit $crrnd, implicit $crsrsmode, implicit $crsat, implicit $srssign0
     ; CHECK-NEXT: $srssign0 = MOVX_mvx_cr_imm 0
     %0:er = COPY $r0
     %1:er = COPY $r1
