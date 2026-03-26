@@ -617,7 +617,8 @@ bool AIE2PSRegisterInfo::isReservedStickyReg(MCRegister PhysReg) const {
 }
 
 bool AIE2PSRegisterInfo::isSimplifiableReservedReg(MCRegister PhysReg) const {
-  return SimplifyCRSRRegs && AIE2PS::mSCmRegClass.contains(PhysReg);
+  return SimplifyCRSRRegs && (AIE2PS::mSCmRegClass.contains(PhysReg) ||
+                              AIE2PS::mCRm_fileRegClass.contains(PhysReg));
 }
 
 bool AIE2PSRegisterInfo::isVecOrAccRegClass(
