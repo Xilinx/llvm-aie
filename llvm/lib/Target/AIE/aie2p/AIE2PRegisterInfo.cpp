@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/CodeGen/TargetFrameLowering.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
+#include "llvm/IR/CallingConv.h"
 #include "llvm/Support/ErrorHandling.h"
 
 #define GET_REGINFO_TARGET_DESC
@@ -283,8 +284,13 @@ AIE2PRegisterInfo::getPointerRegClass(const MachineFunction &MF,
 
 const uint32_t *
 AIE2PRegisterInfo::getCallPreservedMask(const MachineFunction &MF,
-                                        CallingConv::ID /*CC*/) const {
-  return CSR_AIE2P_RegMask;
+                                        CallingConv::ID CC) const {
+  switch (CC) {
+  case CallingConv::AIE_PreserveAll_Vec:
+    return CSR_AIE2P_Vec_RegMask;
+  default:
+    return CSR_AIE2P_RegMask;
+  }
 }
 
 bool AIE2PRegisterInfo::isTypeLegalForClass(const TargetRegisterClass &RC,
