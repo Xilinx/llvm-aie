@@ -373,9 +373,11 @@ bool AIEWawRegRewriter::reAllocate(OriginalAllocation &Candidates,
   BitVector UsedUnits(TRI->getNumRegUnits());
   for (auto &[MO, Org] : Candidates) {
     auto VReg = MO->getReg();
-    if (!replaceReg(VReg, Registers, UsedUnits))
-      LLVM_DEBUG(dbgs() << "Renaming " << printReg(VReg, TRI, 0, MRI)
-                        << " failed\n");
+    if (replaceReg(VReg, Registers, UsedUnits))
+      continue;
+
+    LLVM_DEBUG(dbgs() << "Renaming " << printReg(VReg, TRI, 0, MRI)
+                      << " failed\n");
     Success = false;
   }
   return Success;
