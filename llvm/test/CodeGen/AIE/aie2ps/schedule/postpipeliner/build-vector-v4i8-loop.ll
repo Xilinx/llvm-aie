@@ -12,37 +12,43 @@
 ;
 ; RUN: llc -O2 -mtriple=aie2ps %s -o - | FileCheck %s
 
-define void @build_v4i8_loop(ptr %p0, ptr %p1, ptr %p2, ptr %p3, ptr %dst) {
+define void @build_v4i8_loop(ptr noalias %p0, ptr noalias %p1, ptr noalias %p2, ptr noalias %p3, ptr noalias %dst) {
 ; CHECK-LABEL: build_v4i8_loop:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; nops ; movxm ls, #.LBB0_1; nopv
-; CHECK-NEXT:    mova r1, #32; movxm le, #.L_LEnd0
-; CHECK-NEXT:    mova r0, #8; add.nc lc, r1, #0
+; CHECK-NEXT:    mova r1, #32; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    lda.u8 r6, [p1], #1; nopb ; movxm ls, #.LBB0_1
+; CHECK-NEXT:    lda.u8 r2, [p0], #1; movxm le, #.L_LEnd0
+; CHECK-NEXT:    lda.s8 r4, [p2], #1; add.nc lc, r1, #-1; mov r0, #8
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    lda.u8 r2, [p1], #1; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    lda.u8 r4, [p0], #1; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    lda.s8 r6, [p2], #1; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    lda.s8 r16, [p3], #1; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    mova r29, #2; nopb ; nopxm ; nops
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    lshl r2, r2, r0
-; CHECK-NEXT:    or r2, r4, r2
-; CHECK-NEXT:    vinsert.32 x0, x0, #0, r2
-; CHECK-NEXT:    movx r29, #3; vinsert.8 x2, x0, r29, r6
+; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; nopb ; nops ; lshl r6, r6, r0; nopm ; nopv
+; CHECK-NEXT:    or r6, r2, r6
+; CHECK-NEXT:    movx r29, #2; vinsert.32 x0, x0, #0, r6
+; CHECK-NEXT:    mova r29, #3; vinsert.8 x2, x0, r29, r4
 ; CHECK-NEXT:    vinsert.8 x4, x2, r29, r16
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vextract.32 r2, x4, #0, vaddsign1
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    lda.u8 r6, [p1], #1; vextract.32 r16, x4, #0, vaddsign1
+; CHECK-NEXT:    lda.u8 r2, [p0], #1
 ; CHECK-NEXT:  .L_LEnd0:
-; CHECK-NEXT:    nopa ; nopb ; st r2, [p4], #4; nopxm ; nopv
-; CHECK-NEXT:  // %bb.2: // %for.exit
-; CHECK-NEXT:    nopa ; ret lr
+; CHECK-NEXT:    lda.s8 r4, [p2], #1; nopb ; st r16, [p4], #4; nopxm ; nopv
+; CHECK-NEXT:  // %bb.2:
+; CHECK-NEXT:    lda.s8 r16, [p3], #1; nopb ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopx
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    lshl r0, r6, r0
+; CHECK-NEXT:    or r0, r2, r0
+; CHECK-NEXT:    movx r29, #2; vinsert.32 x0, x0, #0, r0
+; CHECK-NEXT:    mova r29, #3; vinsert.8 x0, x0, r29, r4
+; CHECK-NEXT:    ret lr; vinsert.8 x0, x0, r29, r16
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    vextract.32 r0, x0, #0, vaddsign1 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    st r0, [p4], #4 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   br label %for.body
