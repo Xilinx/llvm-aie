@@ -3,8 +3,6 @@
 ; RUN: llc < %s -mtriple aarch64-unknown-unknown -mattr=+bf16 | FileCheck %s --check-prefixes=CHECK,CHECK-BF16,CHECK-SD
 ; RUN: llc < %s -mtriple aarch64-unknown-unknown -mattr=+bf16,+fullfp16 -global-isel -global-isel-abort=2 2>&1 | FileCheck %s --check-prefixes=CHECK,CHECK-BF16,CHECK-GI
 
-; XFAIL: llvm-aie-regression
-
 ; CHECK-GI:       warning: Instruction selection used fallback path for test_fadd
 ; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for test_fsub
 ; CHECK-GI-NEXT:  warning: Instruction selection used fallback path for test_fmul

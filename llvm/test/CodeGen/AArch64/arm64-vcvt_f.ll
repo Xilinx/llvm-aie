@@ -11,9 +11,6 @@
 ; RUN:          -mtriple=arm64-eabi -aarch64-neon-syntax=apple \
 ; RUN:          | FileCheck %s --check-prefixes=GISEL,FALLBACK
 
-; Fails due to revert of 6b695846602b2d6aa66e5aae2f5db8eceb4bd41b
-; XFAIL: llvm-aie-regression
-
 ; FALLBACK-NOT: remark{{.*}}G_FPEXT{{.*}}(in function: test_vcvt_f64_f32)
 ; FALLBACK-NOT: remark{{.*}}fpext{{.*}}(in function: test_vcvt_f64_f32)
 define <2 x double> @test_vcvt_f64_f32(<2 x float> %x) nounwind readnone ssp {
