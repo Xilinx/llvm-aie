@@ -365,12 +365,97 @@ void removeReachedNeighborBias(const SlotStatistics &Statistics,
   }
 }
 
+/// Materialize a single MSP to the opcode assigned by the dry-run.
+void materializeMSPToAssigned(MachineInstr *MSP, unsigned AssignedOpcode,
+                              SlotStatistics &Statistics,
+                              const AIEBaseInstrInfo *TII) {
+  const SlotCounts MSPCounts = Statistics.MSPSlotCounts[MSP];
+  LLVM_DEBUG(dbgs() << "Materializing (ideal) " << *MSP);
+  MSP->setDesc(TII->get(AssignedOpcode));
+  Statistics.Fixed +=
+      SlotStatistics::Unit * getConflictCounts(AssignedOpcode, TII);
+  Statistics.Free -= MSPCounts;
+  LLVM_DEBUG(dbgs() << "           to " << *MSP);
+}
+
 void materializeToMinimizeSlotTotals(MachineBasicBlock &MBB,
                                      const AIEBaseInstrInfo *TII) {
   SlotStatistics Statistics = computeSlotStatistics(MBB, TII);
   LLVM_DEBUG(dbgs() << "Materializing multi-slot pseudos for " << MBB.getName()
                     << "\n");
 
+  const AIEBaseMCFormats *Formats = TII->getFormatInterface();
+
+  // Compute primary-only slot counts for fixed (non-pseudo) instructions.
+  SlotCounts FixedPrimary;
+  for (auto &MI : MBB) {
+    if (!TII->isMultiSlotPseudo(MI))
+      FixedPrimary += SlotStatistics::Unit * getSlotCounts(MI.getOpcode(), TII);
+  }
+
+  // Compute ideal ResMII: greedily assign each MSP to the lowest-primary slot.
+  {
+    SlotCounts DryRun = FixedPrimary;
+    auto SlotOf = [Formats](unsigned Opc) {
+      return static_cast<int>(Formats->getSlotKind(Opc));
+    };
+
+    // Dry-run: greedily assign each MSP to the lowest-primary slot,
+    // saving the chosen opcodes for direct application.
+    DenseMap<MachineInstr *, unsigned> IdealAssignment;
+    for (auto *MSP : Statistics.MSPs) {
+      const auto *Alts = Formats->getAlternateInstsOpcode(MSP->getOpcode());
+      if (!Alts || Alts->empty())
+        continue;
+      // Pick the alternative with the lowest primary count, but only
+      // among slots that already have fixed instructions. This avoids
+      // spilling into unused slots (like LNG) that have pathological
+      // scheduling properties.
+      unsigned BestOpc = 0;
+      int BestSlot = -1;
+      for (unsigned AltOpc : *Alts) {
+        int S = SlotOf(AltOpc);
+        if (FixedPrimary.at(S) == 0)
+          continue; // Skip empty slots.
+        if (BestSlot < 0 || DryRun.at(S) < DryRun.at(BestSlot)) {
+          BestSlot = S;
+          BestOpc = AltOpc;
+        }
+      }
+      // Fallback: if no alternative has a non-empty fixed slot, pick the
+      // lowest overall.
+      if (BestSlot < 0) {
+        BestOpc = Alts->front();
+        BestSlot = SlotOf(BestOpc);
+        for (unsigned AltOpc : *Alts) {
+          int S = SlotOf(AltOpc);
+          if (DryRun.at(S) < DryRun.at(BestSlot)) {
+            BestSlot = S;
+            BestOpc = AltOpc;
+          }
+        }
+      }
+      DryRun[BestSlot] += SlotStatistics::Unit;
+      IdealAssignment[MSP] = BestOpc;
+    }
+    int IdealResMII = DryRun.max() / SlotStatistics::Unit;
+    LLVM_DEBUG(dbgs() << "IdealResMII=" << IdealResMII << "\n");
+    LLVM_DEBUG(dbgs() << "FixedPrimary:\n  " << FixedPrimary << "\n");
+
+    // If any fixed-only slot already reached the ideal ResMII, the
+    // neighbor-aware heuristic risks polluting saturated slots. Apply
+    // the ideal assignment directly instead.
+    int FixedResMII = FixedPrimary.max() / SlotStatistics::Unit;
+    if (FixedResMII >= IdealResMII) {
+      LLVM_DEBUG(dbgs() << "FixedResMII(" << FixedResMII << ") >= IdealResMII("
+                        << IdealResMII << "), using ideal assignment\n");
+      for (auto *MSP : Statistics.MSPs)
+        materializeMSPToAssigned(MSP, IdealAssignment[MSP], Statistics, TII);
+      return;
+    }
+  }
+
+  // Default path: neighbor-aware materialization.
   SlotCounts NeighborFixed;
   // Precompute the initial total slot pressure (Fixed + Free) before
   // materialization. This provides a stable baseline for the fair-share
@@ -384,7 +469,6 @@ void materializeToMinimizeSlotTotals(MachineBasicBlock &MBB,
     LLVM_DEBUG(dbgs() << "Neighbor Fixed:\n  " << NeighborFixed << "\n");
   }
 
-  const AIEBaseMCFormats *Formats = TII->getFormatInterface();
   // Sort the list by increasing alternative count
   llvm::sort(Statistics.MSPs, [Formats](MachineInstr *A, MachineInstr *B) {
     const auto *AltA = Formats->getAlternateInstsOpcode(A->getOpcode());
