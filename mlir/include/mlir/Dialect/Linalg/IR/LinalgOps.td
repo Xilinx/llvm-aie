@@ -157,7 +157,7 @@ def Linalg_SoftmaxOp : Linalg_Op<"softmax",
 }
 
 def Linalg_WinogradFilterTransformOp : Linalg_Op<"winograd_filter_transform",
-    [AllElementTypesMatch<["filter", "output"]>,
+    [AllElementTypesMatch<["filter", "output"]>, DestinationStyleOpInterface,
      DeclareOpInterfaceMethods<TilingInterface,
       ["getIterationDomain",
        "getLoopIteratorTypes",
@@ -222,12 +222,13 @@ def Linalg_WinogradFilterTransformOp : Linalg_Op<"winograd_filter_transform",
     int64_t getFilterCDim() {
       return 3;
     }
+    MutableOperandRange getDpsInitsMutable() { return getOutputMutable(); }
   }];
   let hasVerifier = 1;
 }
 
 def Linalg_WinogradInputTransformOp : Linalg_Op<"winograd_input_transform",
-    [AllElementTypesMatch<["input", "output"]>,
+    [AllElementTypesMatch<["input", "output"]>, DestinationStyleOpInterface,
      DeclareOpInterfaceMethods<TilingInterface,
       ["getIterationDomain",
        "getLoopIteratorTypes",
@@ -310,6 +311,7 @@ def Linalg_WinogradInputTransformOp : Linalg_Op<"winograd_input_transform",
     int64_t getOutputCDim() {
       return 5;
     }
+    MutableOperandRange getDpsInitsMutable() { return getOutputMutable(); }
   }];
   let hasVerifier = 1;
 }
