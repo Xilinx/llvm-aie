@@ -2401,6 +2401,7 @@ void GlobalISelEmitter::run(raw_ostream &OS) {
           .str(),
       OS);
   std::vector<RuleMatcher> Rules;
+  const bool targetSupportsBF16Type = Target.getName().starts_with("AIE");
   // Look through the SelectionDAG patterns we found, possibly emitting some.
   for (const PatternToMatch &Pat : CGP.ptms()) {
     ++NumPatternTotal;
@@ -2411,7 +2412,7 @@ void GlobalISelEmitter::run(raw_ostream &OS) {
     // Skip any patterns containing BF16 types, as GISel cannot currently tell
     // the difference between fp16 and bf16. FIXME: This can be removed once
     // BF16 is supported properly.
-    if (hasBFloatType(Pat.getSrcPattern()))
+    if (hasBFloatType(Pat.getSrcPattern()) && !targetSupportsBF16Type)
       continue;
 
     auto MatcherOrErr = runOnPattern(Pat);
