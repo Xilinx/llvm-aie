@@ -21,7 +21,7 @@
 v32float16 test_get_scd_v32float16(int en) { return get_scd_v32float16(en); }
 
 // CHECK-LABEL: define dso_local void @_Z22test_get_scd_v64float8i(
-// CHECK-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], i32 noundef [[EN:%.*]]) local_unnamed_addr #[[ATTR1:[0-9]+]] {
+// CHECK-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], i32 noundef [[EN:%.*]]) local_unnamed_addr #[[ATTR1:[0-9]+]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call <16 x i32> @llvm.aie2ps.scd.read.vec(i32 [[EN]])
 // CHECK-NEXT:    store <16 x i32> [[TMP0]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA2:![0-9]+]], !alias.scope [[META5:![0-9]+]]
@@ -30,7 +30,7 @@ v32float16 test_get_scd_v32float16(int en) { return get_scd_v32float16(en); }
 v64float8 test_get_scd_v64float8(int en) { return get_scd_v64float8(en); }
 
 // CHECK-LABEL: define dso_local void @_Z23test_get_scd_v64bfloat8i(
-// CHECK-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], i32 noundef [[EN:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// CHECK-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], i32 noundef [[EN:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call <16 x i32> @llvm.aie2ps.scd.read.vec(i32 [[EN]])
 // CHECK-NEXT:    store <16 x i32> [[TMP0]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA2]], !alias.scope [[META8:![0-9]+]]
@@ -132,7 +132,7 @@ void test_put_ms(v2float16 val, int tlast) { put_ms(val, tlast); }
 void test_put_ms(v2float16 val) { put_ms(val); }
 
 // CHECK-LABEL: define dso_local void @_Z14test_put_ms_nbDv2_7float16iRb(
-// CHECK-SAME: <2 x half> noundef [[VAL:%.*]], i32 noundef [[TLAST:%.*]], ptr nocapture nonnull writeonly align 1 dereferenceable(1) initializes((0, 1)) [[SUCCESS:%.*]]) local_unnamed_addr #[[ATTR2]] {
+// CHECK-SAME: <2 x half> noundef [[VAL:%.*]], i32 noundef [[TLAST:%.*]], ptr nonnull writeonly align 1 captures(none) dereferenceable(1) initializes((0, 1)) [[SUCCESS:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x half> [[VAL]] to i32
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2ps.put.ms.nb(i32 [[TMP0]], i32 [[TLAST]])
@@ -146,7 +146,7 @@ void test_put_ms_nb(v2float16 val, int tlast, bool &success) {
 }
 
 // CHECK-LABEL: define dso_local void @_Z14test_put_ms_nbDv2_7float16Rb(
-// CHECK-SAME: <2 x half> noundef [[VAL:%.*]], ptr nocapture nonnull writeonly align 1 dereferenceable(1) initializes((0, 1)) [[SUCCESS:%.*]]) local_unnamed_addr #[[ATTR2]] {
+// CHECK-SAME: <2 x half> noundef [[VAL:%.*]], ptr nonnull writeonly align 1 captures(none) dereferenceable(1) initializes((0, 1)) [[SUCCESS:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x half> [[VAL]] to i32
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2ps.put.ms.nb(i32 [[TMP0]], i32 0)
@@ -432,7 +432,7 @@ void test_put_ms(v64float16 val, int en, int tlast) { put_ms(val, en, tlast); }
 v2float16 test_get_ss_v2float16() { return get_ss_v2float16(); }
 
 // CHECK-LABEL: define dso_local noundef <2 x half> @_Z21test_get_ss_v2float16Rb(
-// CHECK-SAME: ptr nocapture nonnull writeonly align 1 dereferenceable(1) initializes((0, 1)) [[TLAST:%.*]]) local_unnamed_addr #[[ATTR2]] {
+// CHECK-SAME: ptr nonnull writeonly align 1 captures(none) dereferenceable(1) initializes((0, 1)) [[TLAST:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call { i32, i32 } @llvm.aie2ps.get.ss()
 // CHECK-NEXT:    [[TMP1:%.*]] = extractvalue { i32, i32 } [[TMP0]], 1
@@ -446,7 +446,7 @@ v2float16 test_get_ss_v2float16() { return get_ss_v2float16(); }
 v2float16 test_get_ss_v2float16(bool &tlast) { return get_ss_v2float16(tlast); }
 
 // CHECK-LABEL: define dso_local noundef <2 x half> @_Z24test_get_ss_nb_v2float16Rb(
-// CHECK-SAME: ptr nocapture nonnull writeonly align 1 dereferenceable(1) initializes((0, 1)) [[SUCCESS:%.*]]) local_unnamed_addr #[[ATTR2]] {
+// CHECK-SAME: ptr nonnull writeonly align 1 captures(none) dereferenceable(1) initializes((0, 1)) [[SUCCESS:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call { i32, i32 } @llvm.aie2ps.get.ss.nb()
 // CHECK-NEXT:    [[TMP1:%.*]] = extractvalue { i32, i32 } [[TMP0]], 1
@@ -461,7 +461,7 @@ v2float16 test_get_ss_v2float16(bool &tlast) { return get_ss_v2float16(tlast); }
 v2float16 test_get_ss_nb_v2float16(bool &success) { return get_ss_nb_v2float16(success); }
 
 // CHECK-LABEL: define dso_local noundef <2 x half> @_Z24test_get_ss_nb_v2float16RbS_(
-// CHECK-SAME: ptr nocapture nonnull writeonly align 1 dereferenceable(1) initializes((0, 1)) [[SUCCESS:%.*]], ptr nocapture nonnull writeonly align 1 dereferenceable(1) initializes((0, 1)) [[TLAST:%.*]]) local_unnamed_addr #[[ATTR2]] {
+// CHECK-SAME: ptr nonnull writeonly align 1 captures(none) dereferenceable(1) initializes((0, 1)) [[SUCCESS:%.*]], ptr nonnull writeonly align 1 captures(none) dereferenceable(1) initializes((0, 1)) [[TLAST:%.*]]) local_unnamed_addr #[[ATTR2]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call { i32, i32 } @llvm.aie2ps.get.ss.nb()
 // CHECK-NEXT:    [[TMP1:%.*]] = extractvalue { i32, i32 } [[TMP0]], 1
