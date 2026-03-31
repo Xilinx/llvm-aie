@@ -1908,6 +1908,11 @@ public:
 
   /// @}
 
+  /// Collect kernel launch bounds for \p F into \p LB.
+  void collectKernelLaunchBounds(
+      const Function &F,
+      SmallVectorImpl<std::pair<StringRef, int64_t>> &LB) const;
+
 private:
   /// The abstract base class used to type erase specific TTI
   /// implementations.
@@ -2350,6 +2355,9 @@ public:
   virtual unsigned getMaxNumArgs() const = 0;
   virtual unsigned getNumBytesToPadGlobalArray(unsigned Size,
                                                Type *ArrayType) const = 0;
+  virtual void collectKernelLaunchBounds(
+      const Function &F,
+      SmallVectorImpl<std::pair<StringRef, int64_t>> &LB) const = 0;
 };
 
 template <typename T>
@@ -3204,6 +3212,12 @@ public:
   unsigned getNumBytesToPadGlobalArray(unsigned Size,
                                        Type *ArrayType) const override {
     return Impl.getNumBytesToPadGlobalArray(Size, ArrayType);
+  }
+
+  void collectKernelLaunchBounds(
+      const Function &F,
+      SmallVectorImpl<std::pair<StringRef, int64_t>> &LB) const override {
+    Impl.collectKernelLaunchBounds(F, LB);
   }
 };
 

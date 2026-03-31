@@ -374,6 +374,11 @@ void PassBuilder::invokeVectorizerStartEPCallbacks(FunctionPassManager &FPM,
   for (auto &C : VectorizerStartEPCallbacks)
     C(FPM, Level);
 }
+void PassBuilder::invokeVectorizerEndEPCallbacks(FunctionPassManager &FPM,
+                                                 OptimizationLevel Level) {
+  for (auto &C : VectorizerEndEPCallbacks)
+    C(FPM, Level);
+}
 void PassBuilder::invokeOptimizerEarlyEPCallbacks(ModulePassManager &MPM,
                                                   OptimizationLevel Level,
                                                   ThinOrFullLTOPhase Phase) {
@@ -1555,6 +1560,8 @@ PassBuilder::buildModuleOptimizationPipeline(OptimizationLevel Level,
 
   addVectorPasses(Level, OptimizePM, /* IsFullLTO */ false);
 
+  invokeVectorizerEndEPCallbacks(OptimizePM, Level);
+
   // LoopSink pass sinks instructions hoisted by LICM, which serves as a
   // canonicalization pass that enables other optimizations. As a result,
   // LoopSink pass needs to be a very late IR pass to avoid undoing LICM
@@ -2067,6 +2074,8 @@ PassBuilder::buildLTODefaultPipeline(OptimizationLevel Level,
   MainFPM.addPass(MoveAutoInitPass());
   MainFPM.addPass(MergedLoadStoreMotionPass());
 
+  invokeVectorizerStartEPCallbacks(MainFPM, Level);
+
   LoopPassManager LPM;
   if (EnableLoopFlatten && Level.getSpeedupLevel() > 1)
     LPM.addPass(LoopFlattenPass());
@@ -2086,6 +2095,8 @@ PassBuilder::buildLTODefaultPipeline(OptimizationLevel Level,
   MainFPM.addPass(LoopDistributePass());
 
   addVectorPasses(Level, MainFPM, /* IsFullLTO */ true);
+
+  invokeVectorizerEndEPCallbacks(MainFPM, Level);
 
   // Run the OpenMPOpt CGSCC pass again late.
   MPM.addPass(createModuleToPostOrderCGSCCPassAdaptor(
@@ -2248,6 +2259,13 @@ PassBuilder::buildO0DefaultPipeline(OptimizationLevel Level,
   if (!VectorizerStartEPCallbacks.empty()) {
     FunctionPassManager FPM;
     invokeVectorizerStartEPCallbacks(FPM, Level);
+    if (!FPM.isEmpty())
+      MPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));
+  }
+
+  if (!VectorizerEndEPCallbacks.empty()) {
+    FunctionPassManager FPM;
+    invokeVectorizerEndEPCallbacks(FPM, Level);
     if (!FPM.isEmpty())
       MPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));
   }
