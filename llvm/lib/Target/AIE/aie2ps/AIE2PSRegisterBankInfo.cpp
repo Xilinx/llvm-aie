@@ -883,6 +883,37 @@ AIE2PSRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   SmallVector<PartialMappingIdx, 4> OpRegBankIdx(NumOperands);
 
   switch (Opc) {
+  case TargetOpcode::G_PHI: {
+    // Handle PHI nodes for vector types >= 512 bits
+    const Register DstReg = MI.getOperand(0).getReg();
+    const LLT DstType = MRI.getType(DstReg);
+
+    // Only handle vector PHIs >= 512 bits
+    if (!(DstType.isVector() && DstType.getSizeInBits() >= 512))
+      return AIEBaseRegisterBankInfo::getInstrMapping(MI);
+
+    // Check if PHI result prefers accumulator bank
+    const auto PreferredRegBank =
+        getPreferredRegBankForVectorTy(MRI, TRI, DstReg);
+    PartialMappingIdx BankIdx;
+
+    if (PreferredRegBank && *PreferredRegBank == &AIE2PS::AccRegBank) {
+      BankIdx = getAccPartialMappingIdx(DstType);
+    } else if (PreferredRegBank && *PreferredRegBank == &AIE2PS::FifoRegBank) {
+      BankIdx = getFifoPartialMappingIdx(DstType);
+    } else {
+      BankIdx = getVecPartialMappingIdx(DstType);
+    }
+
+    // For PHI nodes, we only map the definition (operand 0)
+    // The mapping framework handles PHI as copy-like instructions
+    const unsigned DstSize = DstType.getSizeInBits();
+    const ValueMapping *ValMapping = getValueMapping(BankIdx, DstSize);
+
+    return getInstructionMapping(DefaultMappingID, Cost,
+                                 getOperandsMapping({ValMapping}),
+                                 /*NumOperands*/ 1);
+  }
   case TargetOpcode::G_BITCAST: {
     // Check if that G_BITCAST feeds acc instructions.
     Register DstReg = MI.getOperand(0).getReg();
