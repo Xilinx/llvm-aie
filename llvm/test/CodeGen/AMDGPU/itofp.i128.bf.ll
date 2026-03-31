@@ -12,9 +12,6 @@
 
 ; GISEL: unable to translate instruction: fptrunc
 
-; Fails due to revert of 6b695846602b2d6aa66e5aae2f5db8eceb4bd41b
-; XFAIL: llvm-aie-regression
-
 define bfloat @sitofp_i128_to_bf16(i128 %x) {
 ; GCN-LABEL: sitofp_i128_to_bf16:
 ; GCN:       ; %bb.0: ; %itofp-entry

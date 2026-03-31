@@ -17,9 +17,6 @@
 ; RUN: llc -mtriple=r600 -mcpu=redwood < %s | FileCheck -check-prefix=R600 %s
 ; RUN: llc -mtriple=r600 -mcpu=cayman < %s | FileCheck -check-prefix=CM %s
 
-; Fails due to revert of 6b695846602b2d6aa66e5aae2f5db8eceb4bd41b
-; XFAIL: llvm-aie-regression
-
 define amdgpu_kernel void @s_log2_f32(ptr addrspace(1) %out, float %in) {
 ; SI-SDAG-LABEL: s_log2_f32:
 ; SI-SDAG:       ; %bb.0:
