@@ -44,7 +44,7 @@ v16bfloat8 test_v16bfloat8(v16bfloat8 a) {
  return a;
 }
 // CHECK-LABEL: define dso_local void @_Z15test_v32bfloat810v32bfloat8(
-// CHECK-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V32BFLOAT8:%.*]]) align 32 initializes((0, 32)) [[AGG_RESULT:%.*]], [[STRUCT_V32BFLOAT8]] [[A_COERCE:%.*]]) local_unnamed_addr #[[ATTR1:[0-9]+]] {
+// CHECK-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V32BFLOAT8:%.*]]) align 32 captures(none) initializes((0, 32)) [[AGG_RESULT:%.*]], [[STRUCT_V32BFLOAT8]] [[A_COERCE:%.*]]) local_unnamed_addr #[[ATTR1:[0-9]+]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V32BFLOAT8]] [[A_COERCE]], 0
 // CHECK-NEXT:    store <32 x i8> [[TMP0]], ptr [[AGG_RESULT]], align 32, !tbaa [[TBAA2:![0-9]+]]
@@ -54,7 +54,7 @@ v32bfloat8 test_v32bfloat8(v32bfloat8 a) {
  return a;
 }
 // CHECK-LABEL: define dso_local void @_Z15test_v64bfloat810v64bfloat8(
-// CHECK-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[A_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// CHECK-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[A_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFLOAT8]] [[A_COERCE]], 0
 // CHECK-NEXT:    store <64 x i8> [[TMP0]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA2]]
@@ -64,7 +64,7 @@ v64bfloat8 test_v64bfloat8(v64bfloat8 a) {
  return a;
 }
 // CHECK-LABEL: define dso_local void @_Z16test_v128bfloat811v128bfloat8(
-// CHECK-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V128BFLOAT8:%.*]]) align 64 initializes((0, 128)) [[AGG_RESULT:%.*]], [[STRUCT_V128BFLOAT8]] [[A_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// CHECK-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V128BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 128)) [[AGG_RESULT:%.*]], [[STRUCT_V128BFLOAT8]] [[A_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V128BFLOAT8]] [[A_COERCE]], 0
 // CHECK-NEXT:    store <128 x i8> [[TMP0]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA2]]
@@ -74,7 +74,7 @@ v128bfloat8 test_v128bfloat8(v128bfloat8 a) {
  return a;
 }
 // CHECK-LABEL: define dso_local void @_Z16test_v256bfloat811v256bfloat8(
-// CHECK-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V256BFLOAT8:%.*]]) align 64 initializes((0, 256)) [[AGG_RESULT:%.*]], [[STRUCT_V256BFLOAT8]] [[A_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// CHECK-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V256BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 256)) [[AGG_RESULT:%.*]], [[STRUCT_V256BFLOAT8]] [[A_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V256BFLOAT8]] [[A_COERCE]], 0
 // CHECK-NEXT:    store <64 x i32> [[TMP0]], ptr [[AGG_RESULT]], align 64, !tbaa [[TBAA2]]

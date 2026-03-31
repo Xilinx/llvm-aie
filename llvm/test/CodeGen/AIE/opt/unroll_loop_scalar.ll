@@ -19,7 +19,7 @@
 
 define void @_Z4testv(ptr dead_on_unwind noalias nocapture writable sret(%"struct1") align 4 %agg.result) {
 ; CHECK-LABEL: define void @_Z4testv(
-; CHECK-SAME: ptr dead_on_unwind noalias nocapture writable sret([[STRUCT1:%.*]]) align 4 [[AGG_RESULT:%.*]]) {
+; CHECK-SAME: ptr dead_on_unwind noalias writable sret([[STRUCT1:%.*]]) align 4 captures(none) [[AGG_RESULT:%.*]]) {
 ; CHECK-NEXT:  entry:
 ; CHECK-NEXT:    [[REF_TMP_I:%.*]] = alloca [[STRUCT2:%.*]], align 4
 ; CHECK-NEXT:    store i64 429496729601, ptr [[REF_TMP_I]], align 4

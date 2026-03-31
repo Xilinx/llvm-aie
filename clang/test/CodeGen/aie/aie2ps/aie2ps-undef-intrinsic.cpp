@@ -174,13 +174,13 @@ v16bfloat16 test_undef_v16bfloat16() { return undef_v16bfloat16(); }
 //
 v16float16 test_undef_v16float16() { return undef_v16float16(); }
 // CHECK-LABEL: define dso_local void @_Z21test_undef_v32bfloat8v(
-// CHECK-SAME: ptr dead_on_unwind noalias nocapture readnone sret([[STRUCT_V32BFLOAT8:%.*]]) align 32 [[AGG_RESULT:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-SAME: ptr dead_on_unwind noalias readnone sret([[STRUCT_V32BFLOAT8:%.*]]) align 32 captures(none) [[AGG_RESULT:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    ret void
 //
 v32bfloat8 test_undef_v32bfloat8() { return undef_v32bfloat8(); }
 // CHECK-LABEL: define dso_local void @_Z20test_undef_v32float8v(
-// CHECK-SAME: ptr dead_on_unwind noalias nocapture readnone sret([[STRUCT_V32FLOAT8:%.*]]) align 32 [[AGG_RESULT:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-SAME: ptr dead_on_unwind noalias readnone sret([[STRUCT_V32FLOAT8:%.*]]) align 32 captures(none) [[AGG_RESULT:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    ret void
 //
@@ -291,13 +291,13 @@ v32bfloat16 test_undef_v32bfloat16() { return undef_v32bfloat16(); }
 //
 v32float16 test_undef_v32float16() { return undef_v32float16(); }
 // CHECK-LABEL: define dso_local void @_Z21test_undef_v64bfloat8v(
-// CHECK-SAME: ptr dead_on_unwind noalias nocapture readnone sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 [[AGG_RESULT:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-SAME: ptr dead_on_unwind noalias readnone sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) [[AGG_RESULT:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    ret void
 //
 v64bfloat8 test_undef_v64bfloat8() { return undef_v64bfloat8(); }
 // CHECK-LABEL: define dso_local void @_Z20test_undef_v64float8v(
-// CHECK-SAME: ptr dead_on_unwind noalias nocapture readnone sret([[STRUCT_V64FLOAT8:%.*]]) align 64 [[AGG_RESULT:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-SAME: ptr dead_on_unwind noalias readnone sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) [[AGG_RESULT:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    ret void
 //
@@ -408,13 +408,13 @@ v64bfloat16 test_undef_v64bfloat16() { return undef_v64bfloat16(); }
 //
 v64float16 test_undef_v64float16() { return undef_v64float16(); }
 // CHECK-LABEL: define dso_local void @_Z22test_undef_v128bfloat8v(
-// CHECK-SAME: ptr dead_on_unwind noalias nocapture readnone sret([[STRUCT_V128BFLOAT8:%.*]]) align 64 [[AGG_RESULT:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-SAME: ptr dead_on_unwind noalias readnone sret([[STRUCT_V128BFLOAT8:%.*]]) align 64 captures(none) [[AGG_RESULT:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    ret void
 //
 v128bfloat8 test_undef_v128bfloat8() { return undef_v128bfloat8(); }
 // CHECK-LABEL: define dso_local void @_Z21test_undef_v128float8v(
-// CHECK-SAME: ptr dead_on_unwind noalias nocapture readnone sret([[STRUCT_V128FLOAT8:%.*]]) align 64 [[AGG_RESULT:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-SAME: ptr dead_on_unwind noalias readnone sret([[STRUCT_V128FLOAT8:%.*]]) align 64 captures(none) [[AGG_RESULT:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    ret void
 //
