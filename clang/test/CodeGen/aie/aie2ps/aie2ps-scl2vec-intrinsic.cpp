@@ -27,7 +27,7 @@ v32float16 test_shiftx(v32float16 a, v32float16 b, int pre, unsigned int shift) 
 
 //
 // AIE2PS-LABEL: define dso_local void @_Z11test_shiftx9v64float8S_ij(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[A_COERCE:%.*]], [[STRUCT_V64FLOAT8]] [[B_COERCE:%.*]], i32 noundef [[PRE:%.*]], i32 noundef [[SHIFT:%.*]]) local_unnamed_addr #[[ATTR1:[0-9]+]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[A_COERCE:%.*]], [[STRUCT_V64FLOAT8]] [[B_COERCE:%.*]], i32 noundef [[PRE:%.*]], i32 noundef [[SHIFT:%.*]]) local_unnamed_addr #[[ATTR1:[0-9]+]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64FLOAT8]] [[A_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64FLOAT8]] [[B_COERCE]], 0
@@ -42,7 +42,7 @@ v64float8 test_shiftx(v64float8 a, v64float8 b, int pre, unsigned int shift) {
 }
 
 // AIE2PS-LABEL: define dso_local void @_Z11test_shiftx10v64bfloat8S_ij(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[A_COERCE:%.*]], [[STRUCT_V64BFLOAT8]] [[B_COERCE:%.*]], i32 noundef [[PRE:%.*]], i32 noundef [[SHIFT:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[A_COERCE:%.*]], [[STRUCT_V64BFLOAT8]] [[B_COERCE:%.*]], i32 noundef [[PRE:%.*]], i32 noundef [[SHIFT:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFLOAT8]] [[A_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64BFLOAT8]] [[B_COERCE]], 0
@@ -71,7 +71,7 @@ v32float16 test_shift_bytes(v32float16 a, v32float16 b, unsigned int shift) {
 
 //
 // AIE2PS-LABEL: define dso_local void @_Z16test_shift_bytes9v64float8S_j(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[A_COERCE:%.*]], [[STRUCT_V64FLOAT8]] [[B_COERCE:%.*]], i32 noundef [[SHIFT:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[A_COERCE:%.*]], [[STRUCT_V64FLOAT8]] [[B_COERCE:%.*]], i32 noundef [[SHIFT:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64FLOAT8]] [[A_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64FLOAT8]] [[B_COERCE]], 0
@@ -86,7 +86,7 @@ v64float8 test_shift_bytes(v64float8 a, v64float8 b, unsigned int shift) {
 }
 
 // AIE2PS-LABEL: define dso_local void @_Z16test_shift_bytes10v64bfloat8S_j(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[A_COERCE:%.*]], [[STRUCT_V64BFLOAT8]] [[B_COERCE:%.*]], i32 noundef [[SHIFT:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[A_COERCE:%.*]], [[STRUCT_V64BFLOAT8]] [[B_COERCE:%.*]], i32 noundef [[SHIFT:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFLOAT8]] [[A_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64BFLOAT8]] [[B_COERCE]], 0
@@ -115,7 +115,7 @@ v32float16 test_shift(v32float16 a, v32float16 b, unsigned int shft) {
 }
 
 // AIE2PS-LABEL: define dso_local void @_Z10test_shift9v64float8S_j(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[A_COERCE:%.*]], [[STRUCT_V64FLOAT8]] [[B_COERCE:%.*]], i32 noundef [[SHFT:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[A_COERCE:%.*]], [[STRUCT_V64FLOAT8]] [[B_COERCE:%.*]], i32 noundef [[SHFT:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64FLOAT8]] [[A_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64FLOAT8]] [[B_COERCE]], 0
@@ -130,7 +130,7 @@ v64float8 test_shift(v64float8 a, v64float8 b, unsigned int shft) {
 }
 
 // AIE2PS-LABEL: define dso_local void @_Z10test_shift10v64bfloat8S_j(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[A_COERCE:%.*]], [[STRUCT_V64BFLOAT8]] [[B_COERCE:%.*]], i32 noundef [[SHFT:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[A_COERCE:%.*]], [[STRUCT_V64BFLOAT8]] [[B_COERCE:%.*]], i32 noundef [[SHFT:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFLOAT8]] [[A_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64BFLOAT8]] [[B_COERCE]], 0
@@ -160,7 +160,7 @@ v32float16 test_shiftr_elem(v32float16 v, float16 s) {
 }
 
 // AIE2PS-LABEL: define dso_local void @_Z16test_shiftr_elem9v64float86float8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[V_COERCE:%.*]], [[STRUCT_FLOAT8:%.*]] [[S_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[V_COERCE:%.*]], [[STRUCT_FLOAT8:%.*]] [[S_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_FLOAT8]] [[S_COERCE]], 0
 // AIE2PS-NEXT:    [[SPLAT_SPLATINSERT_I_I_I:%.*]] = insertelement <64 x i8> poison, i8 [[TMP0]], i64 0
@@ -177,7 +177,7 @@ v64float8 test_shiftr_elem(v64float8 v, float8 s) {
 }
 
 // AIE2PS-LABEL: define dso_local void @_Z16test_shiftr_elem10v64bfloat87bfloat8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[V_COERCE:%.*]], [[STRUCT_BFLOAT8:%.*]] [[S_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[V_COERCE:%.*]], [[STRUCT_BFLOAT8:%.*]] [[S_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_BFLOAT8]] [[S_COERCE]], 0
 // AIE2PS-NEXT:    [[SPLAT_SPLATINSERT_I_I_I:%.*]] = insertelement <64 x i8> poison, i8 [[TMP0]], i64 0
@@ -209,7 +209,7 @@ v32float16 test_shiftl_elem(v32float16 v, float16 s) {
 }
 
 // AIE2PS-LABEL: define dso_local void @_Z16test_shiftl_elem9v64float86float8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[V_COERCE:%.*]], [[STRUCT_FLOAT8:%.*]] [[S_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[V_COERCE:%.*]], [[STRUCT_FLOAT8:%.*]] [[S_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_FLOAT8]] [[S_COERCE]], 0
 // AIE2PS-NEXT:    [[SPLAT_SPLATINSERT_I_I_I:%.*]] = insertelement <64 x i8> poison, i8 [[TMP0]], i64 0
@@ -226,7 +226,7 @@ v64float8 test_shiftl_elem(v64float8 v, float8 s) {
 }
 
 // AIE2PS-LABEL: define dso_local void @_Z16test_shiftl_elem10v64bfloat87bfloat8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[V_COERCE:%.*]], [[STRUCT_BFLOAT8:%.*]] [[S_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[V_COERCE:%.*]], [[STRUCT_BFLOAT8:%.*]] [[S_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_BFLOAT8]] [[S_COERCE]], 0
 // AIE2PS-NEXT:    [[SPLAT_SPLATINSERT_I_I_I:%.*]] = insertelement <64 x i8> poison, i8 [[TMP0]], i64 0
@@ -547,7 +547,7 @@ v32float16 test_broadcast_to_v32float16(v4float16 b){
 v32float16 test_broadcast_one_to_v32float16() { return broadcast_one_to_v32float16(); }
 
 // AIE2PS-LABEL: define dso_local void @_Z27test_broadcast_to_v64float86float8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_FLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_FLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_FLOAT8]] [[B_COERCE]], 0
 // AIE2PS-NEXT:    [[SPLAT_SPLATINSERT_I_I_I:%.*]] = insertelement <64 x i8> poison, i8 [[TMP0]], i64 0
@@ -560,7 +560,7 @@ v64float8 test_broadcast_to_v64float8(float8 b){
 }
 
 // AIE2PS-LABEL: define dso_local void @_Z27test_broadcast_to_v64float88v2float8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V2FLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V2FLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V2FLOAT8]] [[B_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <2 x i8> [[TMP0]] to i16
@@ -574,7 +574,7 @@ v64float8 test_broadcast_to_v64float8(v2float8 b){
 }
 
 // AIE2PS-LABEL: define dso_local void @_Z27test_broadcast_to_v64float88v4float8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V4FLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V4FLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V4FLOAT8]] [[B_COERCE]], 0
 // AIE2PS-NEXT:    [[SPLAT_SPLATINSERT_I_I:%.*]] = insertelement <16 x i32> poison, i32 [[TMP0]], i64 0
@@ -587,7 +587,7 @@ v64float8 test_broadcast_to_v64float8(v4float8 b){
 }
 
 // AIE2PS-LABEL: define dso_local void @_Z27test_broadcast_to_v64float88v8float8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V8FLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V8FLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V8FLOAT8]] [[B_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <8 x i8> [[TMP0]] to <2 x i32>
@@ -600,7 +600,7 @@ v64float8 test_broadcast_to_v64float8(v8float8 b){
 }
 
 // AIE2PS-LABEL: define dso_local void @_Z28test_broadcast_to_v64bfloat87bfloat8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_BFLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_BFLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_BFLOAT8]] [[B_COERCE]], 0
 // AIE2PS-NEXT:    [[SPLAT_SPLATINSERT_I_I_I:%.*]] = insertelement <64 x i8> poison, i8 [[TMP0]], i64 0
@@ -613,7 +613,7 @@ v64bfloat8 test_broadcast_to_v64bfloat8(bfloat8 b){
 }
 
 // AIE2PS-LABEL: define dso_local void @_Z28test_broadcast_to_v64bfloat89v2bfloat8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V2BFLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V2BFLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V2BFLOAT8]] [[B_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <2 x i8> [[TMP0]] to i16
@@ -627,7 +627,7 @@ v64bfloat8 test_broadcast_to_v64bfloat8(v2bfloat8 b){
 }
 
 // AIE2PS-LABEL: define dso_local void @_Z28test_broadcast_to_v64bfloat89v4bfloat8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V4BFLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V4BFLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V4BFLOAT8]] [[B_COERCE]], 0
 // AIE2PS-NEXT:    [[SPLAT_SPLATINSERT_I_I:%.*]] = insertelement <16 x i32> poison, i32 [[TMP0]], i64 0
@@ -640,7 +640,7 @@ v64bfloat8 test_broadcast_to_v64bfloat8(v4bfloat8 b){
 }
 
 // AIE2PS-LABEL: define dso_local void @_Z28test_broadcast_to_v64bfloat89v8bfloat8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V8BFLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V8BFLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V8BFLOAT8]] [[B_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <8 x i8> [[TMP0]] to <2 x i32>
@@ -664,7 +664,7 @@ v32float16 test_broadcast_float16(float16 b){
 }
 
 // AIE2PS-LABEL: define dso_local void @_Z21test_broadcast_float86float8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_FLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_FLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_FLOAT8]] [[B_COERCE]], 0
 // AIE2PS-NEXT:    [[SPLAT_SPLATINSERT_I_I:%.*]] = insertelement <64 x i8> poison, i8 [[TMP0]], i64 0
@@ -677,7 +677,7 @@ v64float8 test_broadcast_float8(float8 b){
 }
 
 // AIE2PS-LABEL: define dso_local void @_Z22test_broadcast_bfloat87bfloat8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_BFLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_BFLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_BFLOAT8]] [[B_COERCE]], 0
 // AIE2PS-NEXT:    [[SPLAT_SPLATINSERT_I_I:%.*]] = insertelement <64 x i8> poison, i8 [[TMP0]], i64 0
@@ -702,7 +702,7 @@ v32float16 test_broadcast_elem(v32float16 v, int idx){
 }
 
 // AIE2PS-LABEL: define dso_local void @_Z19test_broadcast_elem9v64float8i(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64FLOAT8]] [[V_COERCE]], 0
 // AIE2PS-NEXT:    [[VECEXT_I_I_I:%.*]] = extractelement <64 x i8> [[TMP0]], i32 [[IDX]]
@@ -716,7 +716,7 @@ v64float8 test_broadcast_elem(v64float8 v, int idx){
 }
 
 // AIE2PS-LABEL: define dso_local void @_Z19test_broadcast_elem10v64bfloat8i(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFLOAT8]] [[V_COERCE]], 0
 // AIE2PS-NEXT:    [[VECEXT_I_I_I:%.*]] = extractelement <64 x i8> [[TMP0]], i32 [[IDX]]
@@ -800,7 +800,7 @@ v32float16 test_upd_elem(v32float16 v, int idx, float16 b) {
   }
 
 // AIE2PS-LABEL: define dso_local void @_Z13test_upd_elem9v64float8i6float8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_FLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_FLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64FLOAT8]] [[V_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_FLOAT8]] [[B_COERCE]], 0
@@ -813,7 +813,7 @@ v32float16 test_upd_elem(v32float16 v, int idx, float16 b) {
   }
 
 // AIE2PS-LABEL: define dso_local void @_Z13test_upd_elem9v64float8i8v2float8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_V2FLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_V2FLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64FLOAT8]] [[V_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V2FLOAT8]] [[B_COERCE]], 0
@@ -828,7 +828,7 @@ v32float16 test_upd_elem(v32float16 v, int idx, float16 b) {
   }
 
 // AIE2PS-LABEL: define dso_local void @_Z13test_upd_elem9v64float8i8v4float8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_V4FLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_V4FLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64FLOAT8]] [[V_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V4FLOAT8]] [[B_COERCE]], 0
@@ -842,7 +842,7 @@ v32float16 test_upd_elem(v32float16 v, int idx, float16 b) {
   }
 
 // AIE2PS-LABEL: define dso_local void @_Z13test_upd_elem9v64float8i8v8float8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_V8FLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_V8FLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64FLOAT8]] [[V_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V8FLOAT8]] [[B_COERCE]], 0
@@ -862,7 +862,7 @@ v32float16 test_upd_elem(v32float16 v, int idx, float16 b) {
   }
 
 // AIE2PS-LABEL: define dso_local void @_Z13test_upd_elem10v64bfloat8i7bfloat8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_BFLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_BFLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFLOAT8]] [[V_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_BFLOAT8]] [[B_COERCE]], 0
@@ -875,7 +875,7 @@ v32float16 test_upd_elem(v32float16 v, int idx, float16 b) {
   }
 
 // AIE2PS-LABEL: define dso_local void @_Z13test_upd_elem10v64bfloat8i9v2bfloat8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_V2BFLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_V2BFLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFLOAT8]] [[V_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V2BFLOAT8]] [[B_COERCE]], 0
@@ -890,7 +890,7 @@ v32float16 test_upd_elem(v32float16 v, int idx, float16 b) {
   }
 
 // AIE2PS-LABEL: define dso_local void @_Z13test_upd_elem10v64bfloat8i9v4bfloat8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_V4BFLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_V4BFLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFLOAT8]] [[V_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V4BFLOAT8]] [[B_COERCE]], 0
@@ -904,7 +904,7 @@ v32float16 test_upd_elem(v32float16 v, int idx, float16 b) {
   }
 
 // AIE2PS-LABEL: define dso_local void @_Z13test_upd_elem10v64bfloat8i9v8bfloat8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_V8BFLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_V8BFLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFLOAT8]] [[V_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V8BFLOAT8]] [[B_COERCE]], 0
@@ -1027,7 +1027,7 @@ v32float16 test_insert(v32float16 v, int idx, mask64 b) {
 }
 
 // AIE2PS-LABEL: define dso_local void @_Z11test_insert9v64float8i6float8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_FLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_FLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64FLOAT8]] [[V_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_FLOAT8]] [[B_COERCE]], 0
@@ -1039,7 +1039,7 @@ v64float8 test_insert(v64float8 v, int idx, float8 b) {
   return insert(v, idx, b);
 }
 // AIE2PS-LABEL: define dso_local void @_Z11test_insert9v64float8i8v2float8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_V2FLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_V2FLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64FLOAT8]] [[V_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V2FLOAT8]] [[B_COERCE]], 0
@@ -1053,7 +1053,7 @@ v64float8 test_insert(v64float8 v, int idx, v2float8 b) {
   return insert(v, idx, b);
 }
 // AIE2PS-LABEL: define dso_local void @_Z11test_insert9v64float8i8v4float8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_V4FLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_V4FLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64FLOAT8]] [[V_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V4FLOAT8]] [[B_COERCE]], 0
@@ -1066,7 +1066,7 @@ v64float8 test_insert(v64float8 v, int idx, v4float8 b) {
   return insert(v, idx, b);
 }
 // AIE2PS-LABEL: define dso_local void @_Z11test_insert9v64float8i8v8float8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_V8FLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_V8FLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64FLOAT8]] [[V_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V8FLOAT8]] [[B_COERCE]], 0
@@ -1085,7 +1085,7 @@ v64float8 test_insert(v64float8 v, int idx, v8float8 b) {
   return insert(v, idx, b);
 }
 // AIE2PS-LABEL: define dso_local void @_Z11test_insert9v64float8iDv2_j(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], <2 x i32> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], <2 x i32> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64FLOAT8]] [[V_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <64 x i8> [[TMP0]] to <16 x i32>
@@ -1103,7 +1103,7 @@ v64float8 test_insert(v64float8 v, int idx, mask64 b) {
 }
 
 // AIE2PS-LABEL: define dso_local void @_Z11test_insert10v64bfloat8i7bfloat8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_BFLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_BFLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFLOAT8]] [[V_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_BFLOAT8]] [[B_COERCE]], 0
@@ -1115,7 +1115,7 @@ v64bfloat8 test_insert(v64bfloat8 v, int idx, bfloat8 b) {
   return insert(v, idx, b);
 }
 // AIE2PS-LABEL: define dso_local void @_Z11test_insert10v64bfloat8i9v2bfloat8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_V2BFLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_V2BFLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFLOAT8]] [[V_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V2BFLOAT8]] [[B_COERCE]], 0
@@ -1129,7 +1129,7 @@ v64bfloat8 test_insert(v64bfloat8 v, int idx, v2bfloat8 b) {
   return insert(v, idx, b);
 }
 // AIE2PS-LABEL: define dso_local void @_Z11test_insert10v64bfloat8i9v4bfloat8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_V4BFLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_V4BFLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFLOAT8]] [[V_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V4BFLOAT8]] [[B_COERCE]], 0
@@ -1142,7 +1142,7 @@ v64bfloat8 test_insert(v64bfloat8 v, int idx, v4bfloat8 b) {
   return insert(v, idx, b);
 }
 // AIE2PS-LABEL: define dso_local void @_Z11test_insert10v64bfloat8i9v8bfloat8(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_V8BFLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], [[STRUCT_V8BFLOAT8:%.*]] [[B_COERCE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFLOAT8]] [[V_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V8BFLOAT8]] [[B_COERCE]], 0
@@ -1161,7 +1161,7 @@ v64bfloat8 test_insert(v64bfloat8 v, int idx, v8bfloat8 b) {
   return insert(v, idx, b);
 }
 // AIE2PS-LABEL: define dso_local void @_Z11test_insert10v64bfloat8iDv2_j(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], <2 x i32> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[V_COERCE:%.*]], i32 noundef [[IDX:%.*]], <2 x i32> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFLOAT8]] [[V_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <64 x i8> [[TMP0]] to <16 x i32>
@@ -1192,7 +1192,7 @@ v32float16 test_shuffle(v32float16 a, v32float16 b, unsigned int mode) {
 }
 
 // AIE2PS-LABEL: define dso_local void @_Z12test_shuffle9v64float8S_j(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[A_COERCE:%.*]], [[STRUCT_V64FLOAT8]] [[B_COERCE:%.*]], i32 noundef [[MODE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[A_COERCE:%.*]], [[STRUCT_V64FLOAT8]] [[B_COERCE:%.*]], i32 noundef [[MODE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64FLOAT8]] [[A_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64FLOAT8]] [[B_COERCE]], 0
@@ -1249,7 +1249,7 @@ v16int32 test_shuffle_s64(mask64 b, unsigned int mode) {
 }
 
 // AIE2PS-LABEL: define dso_local void @_Z12test_shuffle10v64bfloat8S_j(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[A_COERCE:%.*]], [[STRUCT_V64BFLOAT8]] [[B_COERCE:%.*]], i32 noundef [[MODE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[A_COERCE:%.*]], [[STRUCT_V64BFLOAT8]] [[B_COERCE:%.*]], i32 noundef [[MODE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFLOAT8]] [[A_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = extractvalue [[STRUCT_V64BFLOAT8]] [[B_COERCE]], 0
@@ -1276,7 +1276,7 @@ v32float16 test_shuffle(v32float16 a, unsigned int mode) {
 }
 
 // AIE2PS-LABEL: define dso_local void @_Z12test_shuffle9v64float8j(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[A_COERCE:%.*]], i32 noundef [[MODE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64FLOAT8]] [[A_COERCE:%.*]], i32 noundef [[MODE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64FLOAT8]] [[A_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <64 x i8> [[TMP0]] to <16 x i32>
@@ -1289,7 +1289,7 @@ v64float8 test_shuffle(v64float8 a, unsigned int mode) {
 }
 
 // AIE2PS-LABEL: define dso_local void @_Z12test_shuffle10v64bfloat8j(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[A_COERCE:%.*]], i32 noundef [[MODE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_V64BFLOAT8]] [[A_COERCE:%.*]], i32 noundef [[MODE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_V64BFLOAT8]] [[A_COERCE]], 0
 // AIE2PS-NEXT:    [[TMP1:%.*]] = bitcast <64 x i8> [[TMP0]] to <16 x i32>
@@ -1315,7 +1315,7 @@ v32float16 test_shuffle_float16(float16 b, unsigned int mode) {
 }
 
 // AIE2PS-LABEL: define dso_local void @_Z19test_shuffle_float86float8j(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_FLOAT8:%.*]] [[B_COERCE:%.*]], i32 noundef [[MODE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64FLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_FLOAT8:%.*]] [[B_COERCE:%.*]], i32 noundef [[MODE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_FLOAT8]] [[B_COERCE]], 0
 // AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i8 [[TMP0]] to i32
@@ -1328,7 +1328,7 @@ v64float8 test_shuffle_float8(float8 b, unsigned int mode) {
 }
 
 // AIE2PS-LABEL: define dso_local void @_Z20test_shuffle_bfloat87bfloat8j(
-// AIE2PS-SAME: ptr dead_on_unwind noalias nocapture writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_BFLOAT8:%.*]] [[B_COERCE:%.*]], i32 noundef [[MODE:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// AIE2PS-SAME: ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_V64BFLOAT8:%.*]]) align 64 captures(none) initializes((0, 64)) [[AGG_RESULT:%.*]], [[STRUCT_BFLOAT8:%.*]] [[B_COERCE:%.*]], i32 noundef [[MODE:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2PS-NEXT:  entry:
 // AIE2PS-NEXT:    [[TMP0:%.*]] = extractvalue [[STRUCT_BFLOAT8]] [[B_COERCE]], 0
 // AIE2PS-NEXT:    [[CONV_I:%.*]] = zext i8 [[TMP0]] to i32

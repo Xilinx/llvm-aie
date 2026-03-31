@@ -33,7 +33,7 @@ v8acc32 v8accfloat_to_v8acc32_implicit(v8accfloat a) {
 }
 
 // CHECK-LABEL: define {{[^@]*}}void @v8accfloat_assign_to_v8acc32
-// CHECK-SAME: (ptr nocapture writeonly initializes((0, 32)) [[A:%.*]], ptr nocapture readonly [[B:%.*]]) local_unnamed_addr #[[ATTR1:[0-9]+]] {
+// CHECK-SAME: (ptr writeonly captures(none) initializes((0, 32)) [[A:%.*]], ptr readonly captures(none) [[B:%.*]]) local_unnamed_addr #[[ATTR1:[0-9]+]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = load <4 x i64>, ptr [[B]], align 32, !tbaa [[TBAA2:![0-9]+]]
 // CHECK-NEXT:    store <4 x i64> [[TMP0]], ptr [[A]], align 32, !tbaa [[TBAA2]]
@@ -64,7 +64,7 @@ v8int32 v8accfloat_to_v8int32_implicit(v8accfloat a) {
 }
 
 // CHECK-LABEL: define {{[^@]*}}void @v8accfloat_assign_to_v8int32
-// CHECK-SAME: (ptr nocapture writeonly initializes((0, 32)) [[A:%.*]], ptr nocapture readonly [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// CHECK-SAME: (ptr writeonly captures(none) initializes((0, 32)) [[A:%.*]], ptr readonly captures(none) [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = load <4 x i64>, ptr [[B]], align 32, !tbaa [[TBAA2]]
 // CHECK-NEXT:    store <4 x i64> [[TMP0]], ptr [[A]], align 32, !tbaa [[TBAA2]]

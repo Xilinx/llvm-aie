@@ -13,7 +13,7 @@
 // RUN: %clang -O1 --target=aie2p -nostdlibinc -S -emit-llvm %s -o - | FileCheck %s
 
 // CHECK-LABEL: define dso_local noundef i32 @_Z6squarePU3AS5iS0_(
-// CHECK-SAME: ptr addrspace(5) nocapture readonly [[NUM:%.*]], ptr addrspace(5) nocapture writeonly initializes((0, 4)) [[MEM:%.*]]) local_unnamed_addr #[[ATTR0:[0-9]+]] {
+// CHECK-SAME: ptr addrspace(5) readonly captures(none) [[NUM:%.*]], ptr addrspace(5) writeonly captures(none) initializes((0, 4)) [[MEM:%.*]]) local_unnamed_addr #[[ATTR0:[0-9]+]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = load i32, ptr addrspace(5) [[NUM]], align 4, !tbaa [[TBAA2:![0-9]+]]
 // CHECK-NEXT:    [[MUL:%.*]] = mul nsw i32 [[TMP0]], [[TMP0]]
@@ -26,7 +26,7 @@ int square(int __aie_dm_resource_a *num, int __aie_dm_resource_a *mem) {
 }
 
 // CHECK-LABEL: define dso_local noundef i32 @_Z6squarePU3AS6iS0_(
-// CHECK-SAME: ptr addrspace(6) nocapture readonly [[NUM:%.*]], ptr addrspace(6) nocapture writeonly initializes((0, 4)) [[MEM:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-SAME: ptr addrspace(6) readonly captures(none) [[NUM:%.*]], ptr addrspace(6) writeonly captures(none) initializes((0, 4)) [[MEM:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = load i32, ptr addrspace(6) [[NUM]], align 4, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[MUL:%.*]] = mul nsw i32 [[TMP0]], [[TMP0]]
@@ -39,7 +39,7 @@ int square(int __aie_dm_resource_b *num, int __aie_dm_resource_b *mem) {
 }
 
 // CHECK-LABEL: define dso_local noundef i32 @_Z6squarePU3AS7i(
-// CHECK-SAME: ptr addrspace(7) nocapture readonly [[NUM:%.*]]) local_unnamed_addr #[[ATTR1:[0-9]+]] {
+// CHECK-SAME: ptr addrspace(7) readonly captures(none) [[NUM:%.*]]) local_unnamed_addr #[[ATTR1:[0-9]+]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = load i32, ptr addrspace(7) [[NUM]], align 4, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[MUL:%.*]] = mul nsw i32 [[TMP0]], [[TMP0]]
@@ -51,7 +51,7 @@ int square(int __aie_dm_resource_c *num) {
 
 
 // CHECK-LABEL: define dso_local noundef i32 @_Z6squarePU3AS8i(
-// CHECK-SAME: ptr addrspace(8) nocapture readonly [[NUM:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// CHECK-SAME: ptr addrspace(8) readonly captures(none) [[NUM:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = load i32, ptr addrspace(8) [[NUM]], align 4, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[MUL:%.*]] = mul nsw i32 [[TMP0]], [[TMP0]]
@@ -62,7 +62,7 @@ int square(int __aie_dm_resource_d *num) {
 }
 
 // CHECK-LABEL: define dso_local noundef i32 @_Z6squarePU3AS9i(
-// CHECK-SAME: ptr addrspace(9) nocapture readonly [[NUM:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// CHECK-SAME: ptr addrspace(9) readonly captures(none) [[NUM:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = load i32, ptr addrspace(9) [[NUM]], align 4, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[MUL:%.*]] = mul nsw i32 [[TMP0]], [[TMP0]]
@@ -73,7 +73,7 @@ int square(int __aie_dm_resource_ab *num) {
 }
 
 // CHECK-LABEL: define dso_local noundef i32 @_Z6squarePU4AS10i(
-// CHECK-SAME: ptr addrspace(10) nocapture readonly [[NUM:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// CHECK-SAME: ptr addrspace(10) readonly captures(none) [[NUM:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = load i32, ptr addrspace(10) [[NUM]], align 4, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[MUL:%.*]] = mul nsw i32 [[TMP0]], [[TMP0]]
@@ -84,7 +84,7 @@ int square(int __aie_dm_resource_ac *num) {
 }
 
 // CHECK-LABEL: define dso_local noundef i32 @_Z6squarePU4AS11i(
-// CHECK-SAME: ptr addrspace(11) nocapture readonly [[NUM:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// CHECK-SAME: ptr addrspace(11) readonly captures(none) [[NUM:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = load i32, ptr addrspace(11) [[NUM]], align 4, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[MUL:%.*]] = mul nsw i32 [[TMP0]], [[TMP0]]
@@ -95,7 +95,7 @@ int square(int __aie_dm_resource_ad *num) {
 }
 
 // CHECK-LABEL: define dso_local noundef i32 @_Z6squarePU4AS12i(
-// CHECK-SAME: ptr addrspace(12) nocapture readonly [[NUM:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// CHECK-SAME: ptr addrspace(12) readonly captures(none) [[NUM:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = load i32, ptr addrspace(12) [[NUM]], align 4, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[MUL:%.*]] = mul nsw i32 [[TMP0]], [[TMP0]]
@@ -106,7 +106,7 @@ int square(int __aie_dm_resource_bc *num) {
 }
 
 // CHECK-LABEL: define dso_local noundef i32 @_Z6squarePU4AS13i(
-// CHECK-SAME: ptr addrspace(13) nocapture readonly [[NUM:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// CHECK-SAME: ptr addrspace(13) readonly captures(none) [[NUM:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = load i32, ptr addrspace(13) [[NUM]], align 4, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[MUL:%.*]] = mul nsw i32 [[TMP0]], [[TMP0]]
@@ -117,7 +117,7 @@ int square(int __aie_dm_resource_bd *num) {
 }
 
 // CHECK-LABEL: define dso_local noundef i32 @_Z6squarePU4AS14i(
-// CHECK-SAME: ptr addrspace(14) nocapture readonly [[NUM:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// CHECK-SAME: ptr addrspace(14) readonly captures(none) [[NUM:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = load i32, ptr addrspace(14) [[NUM]], align 4, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[MUL:%.*]] = mul nsw i32 [[TMP0]], [[TMP0]]
@@ -128,7 +128,7 @@ int square(int __aie_dm_resource_cd *num) {
 }
 
 // CHECK-LABEL: define dso_local noundef i32 @_Z6squarePU4AS15i(
-// CHECK-SAME: ptr addrspace(15) nocapture readonly [[NUM:%.*]]) local_unnamed_addr #[[ATTR1]] {
+// CHECK-SAME: ptr addrspace(15) readonly captures(none) [[NUM:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = load i32, ptr addrspace(15) [[NUM]], align 4, !tbaa [[TBAA2]]
 // CHECK-NEXT:    [[MUL:%.*]] = mul nsw i32 [[TMP0]], [[TMP0]]
