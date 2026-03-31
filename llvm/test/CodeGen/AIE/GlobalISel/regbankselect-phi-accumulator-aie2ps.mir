@@ -24,10 +24,8 @@ body: |
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:vregbank(<16 x s32>) = G_PHI [[AIE_BROADCAST_VECTOR]](<16 x s32>), %bb.0, [[AIE_BROADCAST_VECTOR]](<16 x s32>), %bb.0
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:accregbank(<16 x s32>) = COPY [[PHI]](<16 x s32>)
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:accregbank(<16 x s32>) = COPY [[PHI]](<16 x s32>)
-  ; CHECK-NEXT:   [[CONCAT_VECTORS:%[0-9]+]]:accregbank(<32 x s32>) = G_CONCAT_VECTORS [[COPY]](<16 x s32>), [[COPY1]](<16 x s32>)
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:accregbank(<16 x s32>) = G_PHI [[AIE_BROADCAST_VECTOR]](<16 x s32>), %bb.0, [[AIE_BROADCAST_VECTOR]](<16 x s32>), %bb.0
+  ; CHECK-NEXT:   [[CONCAT_VECTORS:%[0-9]+]]:accregbank(<32 x s32>) = G_CONCAT_VECTORS [[PHI]](<16 x s32>), [[PHI]](<16 x s32>)
   ; CHECK-NEXT:   [[INT:%[0-9]+]]:accregbank(<32 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2ps.ACC1024.accfloat.add.conf), [[CONCAT_VECTORS]](<32 x s32>), [[CONCAT_VECTORS]](<32 x s32>), 60
   ; CHECK-NEXT:   [[UV:%[0-9]+]]:accregbank(<16 x s32>), [[UV1:%[0-9]+]]:accregbank(<16 x s32>) = G_UNMERGE_VALUES [[INT]](<32 x s32>)
   ; CHECK-NEXT: {{  $}}
