@@ -444,39 +444,95 @@ typedef int32_t v64int32 __attribute__((__vector_size__(256)))
 __attribute__((aligned(__MIN_ALIGNMENT_256)));
 
 /*
-Unaligned vector types are defined as an empty struct.
+Unaligned vector types are defined as a struct with one unused int member.
+This gives the struct a 4-byte size for correct word-sized offset
+computations.
 These types are used to overload the unaligned load intrinsics and
 represent pointers to the memory location where the unaligned vector is
 to be loaded from (e.g. v256bfp16ebs16_sparse_unaligned *& is used instead of
 v256bfp16ebs16_sparse_unaligned).
 */
-struct v512uint4_sparse_unaligned {};
-struct v256uint4_sparse_unaligned {};
-struct v256uint8_sparse_unaligned {};
-struct v128uint8_sparse_unaligned {};
-struct v128uint16_sparse_unaligned {};
-struct v64uint16_sparse_unaligned {};
-struct v512int4_sparse_unaligned {};
-struct v256int4_sparse_unaligned {};
-struct v256int8_sparse_unaligned {};
-struct v128int8_sparse_unaligned {};
-struct v128int16_sparse_unaligned {};
-struct v64int16_sparse_unaligned {};
-struct v256bfp16ebs16_sparse_unaligned {};
-struct v256bfp16ebs8_sparse_unaligned {};
-struct v128bfp16ebs16_sparse_unaligned {};
-struct v128bfp16ebs8_sparse_unaligned {};
-struct v128bfp16ebs16_unaligned {};
-struct v128bfp16ebs8_unaligned {};
-struct v64bfp16ebs16_unaligned {};
-struct v64bfp16ebs8_unaligned {};
-struct v64mx9_unaligned {};
-struct v128mx6_unaligned {};
-struct v64mx6_unaligned {};
-struct v128mx4_unaligned {};
-struct v64mx4_unaligned {};
-struct v256mx6_unaligned {};
-struct v256mx4_unaligned {};
+struct v512uint4_sparse_unaligned {
+  int _d;
+};
+struct v256uint4_sparse_unaligned {
+  int _d;
+};
+struct v256uint8_sparse_unaligned {
+  int _d;
+};
+struct v128uint8_sparse_unaligned {
+  int _d;
+};
+struct v128uint16_sparse_unaligned {
+  int _d;
+};
+struct v64uint16_sparse_unaligned {
+  int _d;
+};
+struct v512int4_sparse_unaligned {
+  int _d;
+};
+struct v256int4_sparse_unaligned {
+  int _d;
+};
+struct v256int8_sparse_unaligned {
+  int _d;
+};
+struct v128int8_sparse_unaligned {
+  int _d;
+};
+struct v128int16_sparse_unaligned {
+  int _d;
+};
+struct v64int16_sparse_unaligned {
+  int _d;
+};
+struct v256bfp16ebs16_sparse_unaligned {
+  int _d;
+};
+struct v256bfp16ebs8_sparse_unaligned {
+  int _d;
+};
+struct v128bfp16ebs16_sparse_unaligned {
+  int _d;
+};
+struct v128bfp16ebs8_sparse_unaligned {
+  int _d;
+};
+struct v128bfp16ebs16_unaligned {
+  int _d;
+};
+struct v128bfp16ebs8_unaligned {
+  int _d;
+};
+struct v64bfp16ebs16_unaligned {
+  int _d;
+};
+struct v64bfp16ebs8_unaligned {
+  int _d;
+};
+struct v64mx9_unaligned {
+  int _d;
+};
+struct v128mx6_unaligned {
+  int _d;
+};
+struct v64mx6_unaligned {
+  int _d;
+};
+struct v128mx4_unaligned {
+  int _d;
+};
+struct v64mx4_unaligned {
+  int _d;
+};
+struct v256mx6_unaligned {
+  int _d;
+};
+struct v256mx4_unaligned {
+  int _d;
+};
 
 typedef v32int32 sparse_fifo_t;
 struct fifo_state_t {
