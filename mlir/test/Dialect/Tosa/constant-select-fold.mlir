@@ -99,16 +99,28 @@ func.func @select_fold_2d() -> tensor<2x3xi32> {
 
 // -----
 
+// Gather negative-index normalization: the full chain folds end-to-end.
+// indices = [-1, 2, -3, 0], axis_dim_size = 5
+//   offset       = indices + 5          = [4, 7, 2, 5]
+//   isNonNeg     = indices >= 0         = [false, true, false, true]
+//   normalized   = select(isNonNeg, indices, offset) = [4, 2, 2, 0]
+//   cast_to_ui32 = cast(normalized)     = [4, 2, 2, 0] : ui32
 // CHECK-LABEL: @select_fold_generic
-func.func @select_fold_generic() -> tensor<4xi32> {
-  // CHECK: [[RES:]] = "tosa.const"() <{value = dense<[4, 2, 2, 0]>
+func.func @select_fold_generic() -> tensor<4xui32> {
+  // CHECK: [[RES:]] = "tosa.const"() <{value = dense<[4, 2, 2, 0]> : tensor<4xui32>}>
+  // CHECK-NOT: tosa.add
+  // CHECK-NOT: tosa.greater_equal
   // CHECK-NOT: tosa.select
+  // CHECK-NOT: tosa.cast
   // CHECK: return [[RES]]
-  %pred = "tosa.const"() {value = dense<[0, 1, 0, 1]> : tensor<4xi1>} : () -> tensor<4xi1>
   %indices = "tosa.const"() {value = dense<[-1, 2, -3, 0]> : tensor<4xi32>} : () -> tensor<4xi32>
-  %offset = "tosa.const"() {value = dense<[4, 7, 2, 5]> : tensor<4xi32>} : () -> tensor<4xi32>
-  %0 = tosa.select %pred, %indices, %offset : (tensor<4xi1>, tensor<4xi32>, tensor<4xi32>) -> tensor<4xi32>
-  return %0 : tensor<4xi32>
+  %axis_dim = "tosa.const"() {value = dense<5> : tensor<4xi32>} : () -> tensor<4xi32>
+  %zero = "tosa.const"() {value = dense<0> : tensor<4xi32>} : () -> tensor<4xi32>
+  %offset = tosa.add %indices, %axis_dim : (tensor<4xi32>, tensor<4xi32>) -> tensor<4xi32>
+  %is_non_neg = tosa.greater_equal %indices, %zero : (tensor<4xi32>, tensor<4xi32>) -> tensor<4xi1>
+  %normalized = tosa.select %is_non_neg, %indices, %offset : (tensor<4xi1>, tensor<4xi32>, tensor<4xi32>) -> tensor<4xi32>
+  %result = tosa.cast %normalized : (tensor<4xi32>) -> tensor<4xui32>
+  return %result : tensor<4xui32>
 }
 
 // -----

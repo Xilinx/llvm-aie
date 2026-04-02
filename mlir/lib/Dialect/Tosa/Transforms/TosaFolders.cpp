@@ -1484,18 +1484,23 @@ struct TosaFoldConstantSelect : public TosaFoldConstantBase<SelectOp> {
     matchPattern(onTrueVal, m_Constant(&onTrueAttr));
     matchPattern(onFalseVal, m_Constant(&onFalseAttr));
 
-    if (foldSplatOrSingleUseOnly && !isa<SplatElementsAttr>(predAttr) &&
-        !isa<SplatElementsAttr>(onTrueAttr) &&
-        !isa<SplatElementsAttr>(onFalseAttr) && !predVal.hasOneUse() &&
-        !onTrueVal.hasOneUse() && !onFalseVal.hasOneUse()) {
-      return rewriter.notifyMatchFailure(
-          op, "Select will only be folded if at least one input is splat or "
-              "has a single use");
+    if (foldSplatOrSingleUseOnly) {
+      auto isCheapToFold = [](Value val, DenseElementsAttr attr) {
+        return isa<SplatElementsAttr>(attr) || val.hasOneUse();
+      };
+      if (!isCheapToFold(predVal, predAttr) ||
+          !isCheapToFold(onTrueVal, onTrueAttr) ||
+          !isCheapToFold(onFalseVal, onFalseAttr))
+        return rewriter.notifyMatchFailure(
+            op, "Select will only be folded if each input is either splat or "
+                "has a single use");
     }
 
     auto outputType = cast<TensorType>(op.getType());
-    if (!outputType.hasStaticShape())
-      return rewriter.notifyMatchFailure(op, "result type shape is not static");
+    if (!outputType.hasStaticShape() || !predAttr.getType().hasStaticShape() ||
+        !onTrueAttr.getType().hasStaticShape() ||
+        !onFalseAttr.getType().hasStaticShape())
+      return rewriter.notifyMatchFailure(op, "all shapes must be static");
 
     DenseElementsAttr resultAttr;
     if (isa<IntegerType>(outputType.getElementType()))
