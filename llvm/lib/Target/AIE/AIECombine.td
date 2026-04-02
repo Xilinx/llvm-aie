@@ -542,9 +542,13 @@ def aie2_postlegalizer_custom_combines : GICombineGroup<[
 ]>;
 
 // Post-legalizer custom combines for AIE2P and more recent targets (AIE2PS, etc.).
-def aie2p_plus_postlegalizer_custom_combines : GICombineGroup<[
+def aie2p_plus_postlegalizer_custom_shared_combines : GICombineGroup<[
   combine_extract_vector_assert_combine,
-  combine_extract_broadcast_to_scalar
+  combine_extract_broadcast_to_scalar,
+  combine_vshift_chain_to_copy,
+  combine_pad_unpad_to_copy,
+  combine_unpad_pad_to_copy,
+  combine_cse_vector_ops
 ]>;
 
 def AIE2PostLegalizerCustomCombiner
@@ -553,22 +557,8 @@ def AIE2PostLegalizerCustomCombiner
 }
 
 def AIE2PPostLegalizerCustomCombiner
-    : GICombiner<"AIE2PPostLegalizerCustomCombinerImpl", [  
-                                                            combine_broadcast_extract_to_copy,
-                                                            combine_extract_vector_assert_combine,
-                                                            combine_extract_broadcast_to_scalar,
-                                                            combine_global_load_store_increment,
-                                                            combine_load_store_increment,
-                                                            ptr_add_immed_chain,
-                                                            combine_offset_load_store_ptradd,
-                                                            combine_offset_load_store_share_ptradd,
-                                                            combine_add_vector_elt_undef,
-                                                            combine_insert_extract_vector_elt_to_copy,
-                                                            combine_vshift_chain_to_copy,
-                                                            combine_pad_unpad_to_copy,
-                                                            combine_unpad_pad_to_copy,
-                                                            combine_cse_vector_ops
-                                                             ]> {
+    : GICombiner<"AIE2PPostLegalizerCustomCombinerImpl",
+                 [aie_postlegalizer_custom_shared_combines, aie2p_plus_postlegalizer_custom_shared_combines]> {
 }
 
 def AIE2PSPreLegalizerCombiner
@@ -583,7 +573,7 @@ def AIE2PSPostLegalizerGenericCombiner
 
 def AIE2PSPostLegalizerCustomCombiner
     : GICombiner<"AIE2PSPostLegalizerCustomCombinerImpl",
-                 [aie_postlegalizer_custom_shared_combines, aie2p_plus_postlegalizer_custom_combines]> {
+                 [aie_postlegalizer_custom_shared_combines, aie2p_plus_postlegalizer_custom_shared_combines]> {
 }
 
 def combine_copy_of_implicit_def : GICombineRule<
