@@ -1457,6 +1457,12 @@ TargetTransformInfo::getNumBytesToPadGlobalArray(unsigned Size,
   return TTIImpl->getNumBytesToPadGlobalArray(Size, ArrayType);
 }
 
+void TargetTransformInfo::collectKernelLaunchBounds(
+    const Function &F,
+    SmallVectorImpl<std::pair<StringRef, int64_t>> &LB) const {
+  return TTIImpl->collectKernelLaunchBounds(F, LB);
+}
+
 TargetTransformInfo::Concept::~Concept() = default;
 
 TargetIRAnalysis::TargetIRAnalysis() : TTICallback(&getDefaultTTI) {}

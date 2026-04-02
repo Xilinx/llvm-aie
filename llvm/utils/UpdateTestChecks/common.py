@@ -43,6 +43,7 @@ DEFAULT_VERSION = 5
 SUPPORTED_ANALYSES = {
     "Branch Probability Analysis",
     "Cost Model Analysis",
+    "Dependence Analysis",
     "Loop Access Analysis",
     "Scalar Evolution Analysis",
 }
