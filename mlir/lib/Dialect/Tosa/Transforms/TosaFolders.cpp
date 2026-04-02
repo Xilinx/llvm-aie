@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -1438,6 +1438,86 @@ struct TosaFoldConstantEqual
   }
 };
 
+template <typename ValType>
+DenseElementsAttr foldSelectWithValueType(DenseElementsAttr predAttr,
+                                          DenseElementsAttr onTrueAttr,
+                                          DenseElementsAttr onFalseAttr,
+                                          TensorType outputType) {
+  auto targetShape = outputType.getShape();
+  auto predShape = predAttr.getType().getShape();
+  auto onTrueShape = onTrueAttr.getType().getShape();
+  auto onFalseShape = onFalseAttr.getType().getShape();
+  auto targetSize = outputType.getNumElements();
+
+  auto predIt = predAttr.getValues<APInt>();
+  auto onTrueIt = onTrueAttr.getValues<ValType>();
+  auto onFalseIt = onFalseAttr.getValues<ValType>();
+
+  SmallVector<ValType> result;
+  result.reserve(targetSize);
+  for (int64_t i = 0; i < targetSize; ++i) {
+    auto pOff = getBroadcastedOffset(targetShape, predShape, i);
+    auto tOff = getBroadcastedOffset(targetShape, onTrueShape, i);
+    auto fOff = getBroadcastedOffset(targetShape, onFalseShape, i);
+    result.push_back(predIt[pOff].getBoolValue() ? onTrueIt[tOff]
+                                                 : onFalseIt[fOff]);
+  }
+  return DenseElementsAttr::get(outputType, result);
+}
+
+struct TosaFoldConstantSelect : public TosaFoldConstantBase<SelectOp> {
+  using TosaFoldConstantBase::TosaFoldConstantBase;
+
+  LogicalResult matchAndRewrite(SelectOp op,
+                                PatternRewriter &rewriter) const override {
+    auto predVal = op.getPred();
+    auto onTrueVal = op.getOnTrue();
+    auto onFalseVal = op.getOnFalse();
+
+    if (failed(notifyIfNoTosaDenseConstantTensor(predVal, op, rewriter)) ||
+        failed(notifyIfNoTosaDenseConstantTensor(onTrueVal, op, rewriter)) ||
+        failed(notifyIfNoTosaDenseConstantTensor(onFalseVal, op, rewriter)))
+      return failure();
+
+    DenseElementsAttr predAttr, onTrueAttr, onFalseAttr;
+    matchPattern(predVal, m_Constant(&predAttr));
+    matchPattern(onTrueVal, m_Constant(&onTrueAttr));
+    matchPattern(onFalseVal, m_Constant(&onFalseAttr));
+
+    if (foldSplatOrSingleUseOnly) {
+      auto isCheapToFold = [](Value val, DenseElementsAttr attr) {
+        return isa<SplatElementsAttr>(attr) || val.hasOneUse();
+      };
+      if (!isCheapToFold(predVal, predAttr) ||
+          !isCheapToFold(onTrueVal, onTrueAttr) ||
+          !isCheapToFold(onFalseVal, onFalseAttr))
+        return rewriter.notifyMatchFailure(
+            op, "Select will only be folded if each input is either splat or "
+                "has a single use");
+    }
+
+    auto outputType = cast<TensorType>(op.getType());
+    if (!outputType.hasStaticShape() || !predAttr.getType().hasStaticShape() ||
+        !onTrueAttr.getType().hasStaticShape() ||
+        !onFalseAttr.getType().hasStaticShape())
+      return rewriter.notifyMatchFailure(op, "all shapes must be static");
+
+    DenseElementsAttr resultAttr;
+    if (isa<IntegerType>(outputType.getElementType()))
+      resultAttr = foldSelectWithValueType<APInt>(predAttr, onTrueAttr,
+                                                  onFalseAttr, outputType);
+    else if (isa<FloatType>(outputType.getElementType()))
+      resultAttr = foldSelectWithValueType<APFloat>(predAttr, onTrueAttr,
+                                                    onFalseAttr, outputType);
+    else
+      return rewriter.notifyMatchFailure(
+          op, "Unsupported element type for select folding");
+
+    rewriter.replaceOpWithNewOp<ConstOp>(op, resultAttr.getType(), resultAttr);
+    return success();
+  }
+};
+
 struct TosaFoldConstantMinimum
     : public TosaFoldConstantBinary<TosaFoldConstantMinimum, MinimumOp> {
   using TosaFoldConstantBinary<TosaFoldConstantMinimum,
@@ -2296,6 +2376,7 @@ void mlir::tosa::populateTosaFoldConstantPatterns(
   patterns.add<TosaFoldConstantGreaterEqual>(ctx,
                                              options.foldSplatOrSingleUseOnly);
   patterns.add<TosaFoldConstantEqual>(ctx, options.foldSplatOrSingleUseOnly);
+  patterns.add<TosaFoldConstantSelect>(ctx, options.foldSplatOrSingleUseOnly);
   patterns.add<TosaFoldConstantMinimum>(ctx, options.foldSplatOrSingleUseOnly);
   patterns.add<TosaFoldConstantMaximum>(ctx, options.foldSplatOrSingleUseOnly);
   patterns.add<TosaFoldConstantPad>(ctx, options.foldSplatOrSingleUseOnly);
