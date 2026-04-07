@@ -548,6 +548,26 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual std::optional<PseudoBranchExpandInfo>
   getPseudoBranchExpandInfo(const MachineInstr &MI) const;
 
+  //===------------------------------------------------------------------===//
+  // Redundant exact widen/narrow conversion elimination support
+  //===------------------------------------------------------------------===//
+  // Each entry describes a reversible pair of intrinsics for exact
+  // widen/narrow conversions (e.g., bf16 <-> accfloat, int16 <-> int32).
+  // The conversion must be exact (no rounding) in both directions.
+  //   ToNarrowIntrinsicID : wide → narrow (e.g., accfloat → bf16)
+  //   ToWideIntrinsicID   : narrow → wide (e.g., bf16 → accfloat)
+  struct WidenNarrowConversionPair {
+    unsigned ToNarrowIntrinsicID;
+    unsigned ToWideIntrinsicID;
+  };
+
+  /// Return the list of target-specific exact widen/narrow conversion pairs.
+  /// The default implementation returns an empty list; targets that support
+  /// redundant-conversion elimination should override it.
+  /// Note: Only include pairs where both conversions are exact (no rounding).
+  virtual llvm::ArrayRef<WidenNarrowConversionPair>
+  getWidenNarrowConversionPairs() const;
+
   // Shared code
   void insertNoop(MachineBasicBlock &MBB,
                   MachineBasicBlock::iterator MI) const override;
