@@ -211,7 +211,7 @@ parseFunctionOp(OpAsmParser &parser, OperationState &result, bool allowVariadic,
 
   // Add the attributes to the function arguments.
   assert(resultAttrs.size() == resultTypes.size());
-  function_interface_impl::addArgAndResultAttrs(
+  call_interface_impl::addArgAndResultAttrs(
       builder, result, entryArgs, resultAttrs, argAttrsName, resAttrsName);
 
   // Parse the optional function body. The printer will not print the body if
