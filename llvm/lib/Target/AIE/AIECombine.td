@@ -514,6 +514,18 @@ def combine_cse_vector_ops : GICombineRule<
   }])
 >;
 
+// Eliminate redundant widen <-> narrow conversion pairs.
+// Pattern: narrow -> wide -> narrow becomes COPY
+// Note: This optimization applies to exact conversions (no rounding occurs),
+// making the round-trip conversion (narrow -> wide -> narrow) a no-op that can
+// be safely eliminated. Examples include bf16 <-> accfloat conversions.
+def combine_redundant_widen_narrow_conversion : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_INTRINSIC_W_SIDE_EFFECTS):$root,
+         [{ return matchRedundantWidenNarrowConversion(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])
+>;
+
 def combine_global_load_store_increment : GICombineRule <
   (defs root:$root),
   (match (wip_match_opcode G_LOAD, G_ZEXTLOAD, G_SEXTLOAD, G_STORE):$root,
@@ -548,7 +560,8 @@ def aie2p_plus_postlegalizer_custom_shared_combines : GICombineGroup<[
   combine_vshift_chain_to_copy,
   combine_pad_unpad_to_copy,
   combine_unpad_pad_to_copy,
-  combine_cse_vector_ops
+  combine_cse_vector_ops,
+  combine_redundant_widen_narrow_conversion
 ]>;
 
 def AIE2PostLegalizerCustomCombiner
