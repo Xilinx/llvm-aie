@@ -20,6 +20,20 @@
 using namespace clang;
 using namespace clang::targets;
 
+static constexpr int NumBuiltins =
+    clang::AIE::LastTSBuiltin - Builtin::FirstTSBuiltin;
+
+static constexpr llvm::StringTable BuiltinStrings =
+    CLANG_BUILTIN_STR_TABLE_START
+#define BUILTIN CLANG_BUILTIN_STR_TABLE
+#include "clang/Basic/BuiltinsAIE.def"
+    ;
+
+static constexpr auto BuiltinInfos = Builtin::MakeInfos<NumBuiltins>({
+#define BUILTIN CLANG_BUILTIN_ENTRY
+#include "clang/Basic/BuiltinsAIE.def"
+});
+
 void AIETargetInfo::getTargetDefines(const LangOptions &Opts,
                                      MacroBuilder &Builder) const {
   Builder.defineMacro("__aie__");
@@ -29,19 +43,6 @@ void AIETargetInfo::getTargetDefines(const LangOptions &Opts,
   Builder.defineMacro("__ELF__");
 }
 
-static constexpr Builtin::Info BuiltinInfo[] = {
-#define BUILTIN(ID, TYPE, ATTRS)                                               \
-  {#ID, TYPE, ATTRS, nullptr, HeaderDesc::NO_HEADER, ALL_LANGUAGES},
-// #define LANGBUILTIN(ID, TYPE, ATTRS, LANG)                                     \
-//   {#ID, TYPE, ATTRS, nullptr, LANG, nullptr},
-// #define LIBBUILTIN(ID, TYPE, ATTRS, HEADER)                                    \
-//   {#ID, TYPE, ATTRS, HEADER, ALL_LANGUAGES, nullptr},
-// #define TARGET_HEADER_BUILTIN(ID, TYPE, ATTRS, HEADER, LANGS, FEATURE)         \
-//   {#ID, TYPE, ATTRS, HEADER, LANGS, FEATURE},
-#include "clang/Basic/BuiltinsAIE.def"
-};
-
-ArrayRef<Builtin::Info> AIETargetInfo::getTargetBuiltins() const {
-  return llvm::ArrayRef(BuiltinInfo,
-                        clang::AIE::LastTSBuiltin - Builtin::FirstTSBuiltin);
+llvm::SmallVector<Builtin::InfosShard> AIETargetInfo::getTargetBuiltins() const {
+  return {{&BuiltinStrings, BuiltinInfos}};
 }
