@@ -2243,6 +2243,16 @@ AIE2PSInstrInfo::getRegOffsetSpillInstrInfoFromImmOffset(
 
 using AbstractOp = AIEBaseInstrInfo::AbstractOp;
 
+ArrayRef<AIEBaseInstrInfo::WidenNarrowConversionPair>
+AIE2PSInstrInfo::getWidenNarrowConversionPairs() const {
+  using namespace Intrinsic;
+  static const WidenNarrowConversionPair Pairs[] = {
+      {aie2ps_v16accfloat_to_v16bf16, aie2ps_v16bf16_to_v16accfloat},
+      {aie2ps_v32accfloat_to_v32bf16, aie2ps_v32bf16_to_v32accfloat},
+  };
+  return Pairs;
+}
+
 std::optional<const AbstractOp>
 AIE2PSInstrInfo::parseAbstractOp(const MachineInstr &MI) const {
 
