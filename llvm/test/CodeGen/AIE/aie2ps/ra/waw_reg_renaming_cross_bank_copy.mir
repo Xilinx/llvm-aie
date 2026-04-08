@@ -37,11 +37,11 @@ body:             |
   ; CHECK-NEXT:   liveins: $p0, $r1, $x0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   renamable $r0 = COPY renamable $p0
-  ; CHECK-NEXT:   renamable $r0 = AND killed renamable $r0, renamable $r1
-  ; CHECK-NEXT:   renamable $r2 = COPY renamable $p0
-  ; CHECK-NEXT:   renamable $r2 = AND killed renamable $r2, renamable $r1
-  ; CHECK-NEXT:   renamable $r4 = AND killed renamable $r0, killed renamable $r2
-  ; CHECK-NEXT:   dead renamable $r6 = AND killed renamable $r4, renamable $r1
+  ; CHECK-NEXT:   renamable $r2 = AND killed renamable $r0, renamable $r1
+  ; CHECK-NEXT:   renamable $r4 = COPY renamable $p0
+  ; CHECK-NEXT:   renamable $r6 = AND killed renamable $r4, renamable $r1
+  ; CHECK-NEXT:   renamable $r16 = AND killed renamable $r2, killed renamable $r6
+  ; CHECK-NEXT:   dead renamable $r18 = AND killed renamable $r16, renamable $r1
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:

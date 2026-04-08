@@ -5,7 +5,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 # unit test for the WAW register renaming pass and check edge cases
 # RUN: llc -mtriple=aie2 -verify-machineinstrs --start-before=greedy --stop-after=virtregrewriter %s -o - | FileCheck %s
 
@@ -365,10 +365,10 @@ body:             |
   ; CHECK-NEXT:   renamable $wh2 = COPY $wl0
   ; CHECK-NEXT:   renamable $bmh0 = VCONV_FP32_BF16 renamable $wl2
   ; CHECK-NEXT:   $bml1 = VMAC_F_vmac_bm_core_dense killed renamable $bmh0, killed renamable $x2, renamable $x2, $r6, implicit-def dead $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   renamable $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0
-  ; CHECK-NEXT:   renamable $wh2 = COPY $wl0
-  ; CHECK-NEXT:   renamable $bmh1 = VCONV_FP32_BF16 renamable $wl2
-  ; CHECK-NEXT:   $bml2 = VMAC_F_vmac_bm_core_dense killed renamable $bmh1, killed renamable $x2, renamable $x2, $r6, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $wl4 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0
+  ; CHECK-NEXT:   renamable $wh4 = COPY $wl0
+  ; CHECK-NEXT:   renamable $bmh1 = VCONV_FP32_BF16 renamable $wl4
+  ; CHECK-NEXT:   $bml2 = VMAC_F_vmac_bm_core_dense killed renamable $bmh1, killed renamable $x4, renamable $x4, $r6, implicit-def dead $srfpflags, implicit $crfpmask
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:

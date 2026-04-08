@@ -62,6 +62,7 @@ static cl::opt<bool> AggressiveReAlloc(
     "aie-aggressive-realloc", cl::Hidden, cl::init(false),
     cl::desc("Aggressively de-allocate live-through registers to favor "
              "loop-local registers"));
+
 static cl::opt<bool> GPRRealloc("aie-gpr-realloc", cl::Hidden, cl::init(false),
                                 cl::desc("Re-allocate GPRs as well"));
 
@@ -328,8 +329,15 @@ AIEWawRegRewriter::getVRegWithCopies(const MachineBasicBlock &MBB) const {
         continue;
 
       unsigned VRegIndex = Reg.virtRegIndex();
-      if (TII->isCopyInstr(MI).has_value())
-        VRegs.push_back(VRegIndex);
+      // Same-bank copies can be folded, so don't rename them
+      if (const auto DestSource = TII->isCopyInstr(MI)) {
+        const Register SrcReg = DestSource->Source->getReg();
+        const bool IsSameBankVRegCopy =
+            SrcReg.isVirtual() &&
+            MRI->getRegClass(Reg) == MRI->getRegClass(SrcReg);
+        if (IsSameBankVRegCopy)
+          VRegs.push_back(VRegIndex);
+      }
 
       if (VRegIndex > MaxVReg)
         MaxVReg = VRegIndex;
