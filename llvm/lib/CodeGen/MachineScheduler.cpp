@@ -225,8 +225,6 @@ class MachineSchedulerBase : public MachineSchedContext,
 public:
   MachineSchedulerBase(char &ID): MachineFunctionPass(ID) {}
 
-  void print(raw_ostream &O, const Module* = nullptr) const override;
-
 protected:
   void scheduleRegions(ScheduleDAGInstrs &Scheduler, bool FixKillFlags);
 };
@@ -670,10 +668,6 @@ void MachineSchedulerBase::scheduleRegions(ScheduleDAGInstrs &Scheduler,
       Scheduler.fixupKills(*MBB);
   }
   Scheduler.finalizeSchedule();
-}
-
-void MachineSchedulerBase::print(raw_ostream &O, const Module* m) const {
-  // unimplemented
 }
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
