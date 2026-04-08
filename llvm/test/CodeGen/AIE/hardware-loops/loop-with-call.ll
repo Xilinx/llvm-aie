@@ -392,13 +392,13 @@ define void @__addsf3_lowered_to_call(ptr %a) {
 ; AIE2-NEXT:    nop
 ; AIE2-NEXT:    mov r29, r22
 ; AIE2-NEXT:    vinsert.32 x0, x0, r29, r0
-; AIE2-NEXT:    vmov bmh0, x0; vadd.f bmh0, bmh0, bmh1, r20
+; AIE2-NEXT:    vmov bmh0, x0; vadd.f bmh1, bmh0, bmh1, r20
 ; AIE2-NEXT:    nop
 ; AIE2-NEXT:    xor r0, r17, r21
 ; AIE2-NEXT:    st.s16 r18, [p6, #0]; jnz r0, #.LBB3_1
 ; AIE2-NEXT:    nop // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
-; AIE2-NEXT:    vconv.bf16.fp32 wl2, bmh0 // Delay Slot 3
+; AIE2-NEXT:    vconv.bf16.fp32 wl2, bmh1 // Delay Slot 3
 ; AIE2-NEXT:    nop // Delay Slot 2
 ; AIE2-NEXT:    mova r17, #1; vextract.s16 r18, x2, r16 // Delay Slot 1
 ; AIE2-NEXT:  // %bb.2: // %for.cond.cleanup
@@ -443,15 +443,15 @@ define void @__addsf3_lowered_to_call(ptr %a) {
 ; AIE2P-NEXT:    vlda bmlh1, [sp, #-128] // 64-byte Folded Reload
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
-; AIE2P-NEXT:    vmov bmlh0, x5
+; AIE2P-NEXT:    vmov bmlh2, x5
 ; AIE2P-NEXT:    nop
-; AIE2P-NEXT:    vinsert.32 x4, x1, #0, r0; vadd.f dm1, dm0, dm1, r12
-; AIE2P-NEXT:    vmov bmll0, x4
+; AIE2P-NEXT:    vinsert.32 x4, x1, #0, r0; vadd.f dm3, dm2, dm1, r12
+; AIE2P-NEXT:    vmov bmll2, x4
 ; AIE2P-NEXT:    xor r0, r8, r9
 ; AIE2P-NEXT:    st.s16 r10, [p6, #0]; jnz r0, #.LBB3_1
 ; AIE2P-NEXT:    nop // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
-; AIE2P-NEXT:    vconv.bf16.fp32 wl6, bmll1 // Delay Slot 3
+; AIE2P-NEXT:    vconv.bf16.fp32 wl6, bmll3 // Delay Slot 3
 ; AIE2P-NEXT:    nop // Delay Slot 2
 ; AIE2P-NEXT:    mova r8, #1; vextract.16 r10, x6, #0, vaddsign1 // Delay Slot 1
 ; AIE2P-NEXT:  // %bb.2: // %for.cond.cleanup
