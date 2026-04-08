@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2026 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the Statement and Block portions of the Parser
@@ -2535,9 +2538,9 @@ StmtResult Parser::ParsePragmaLoopHint(StmtVector &Stmts,
       continue;
 
     ArgsUnion ArgHints[] = {Hint.PragmaNameLoc, Hint.OptionLoc, Hint.StateLoc,
-                            ArgsUnion(Hint.ValueExpr)};
+                            ArgsUnion(Hint.ValueExpr), Hint.ValueIdentLoc};
     TempAttrs.addNew(Hint.PragmaNameLoc->Ident, Hint.Range, nullptr,
-                     Hint.PragmaNameLoc->Loc, ArgHints, 4,
+                     Hint.PragmaNameLoc->Loc, ArgHints, 5,
                      ParsedAttr::Form::Pragma());
   }
 

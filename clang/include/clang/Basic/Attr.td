@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -4374,6 +4374,21 @@ def LoopHint : Attr {
 
   let Documentation = [LoopHintDocs, UnrollHintDocs];
   let HasCustomParsing = 1;
+}
+
+
+/// Generic loop hint pragma.
+/// Used by #pragma clang loop hint(key) or hint(key, value).
+/// Emits llvm.loop.hint.<key> metadata, optionally with an integer or
+/// string value.
+def GenericLoopHint : Attr {
+  let Spellings = [];
+  let Args = [StringArgument<"Hint">,
+              ExprArgument<"ValueExpr", /*optional=*/1>,
+              StringArgument<"ValueStr", /*optional=*/1>];
+  let SemaHandler = 0;
+  let HasCustomParsing = 1;
+  let Documentation = [Undocumented];
 }
 
 /// The HLSL loop attributes

@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -1478,10 +1478,13 @@ bool Parser::HandlePragmaLoopHint(LoopHint &Hint) {
   // Verify loop hint has an argument.
   if (Toks[0].is(tok::eof)) {
     ConsumeAnnotationToken();
-    Diag(Toks[0].getLocation(), diag::err_pragma_loop_missing_argument)
-        << /*StateArgument=*/StateOption
-        << /*FullKeyword=*/(OptionUnroll || OptionUnrollAndJam)
-        << /*AssumeSafetyKeyword=*/AssumeSafetyArg;
+    if (OptionInfo && OptionInfo->isStr("hint"))
+      Diag(Toks[0].getLocation(), diag::err_pragma_hint_missing_key);
+    else
+      Diag(Toks[0].getLocation(), diag::err_pragma_loop_missing_argument)
+          << /*StateArgument=*/StateOption
+          << /*FullKeyword=*/(OptionUnroll || OptionUnrollAndJam)
+          << /*AssumeSafetyKeyword=*/AssumeSafetyArg;
     return false;
   }
 
@@ -1581,6 +1584,68 @@ bool Parser::HandlePragmaLoopHint(LoopHint &Hint) {
       // Argument is a constant expression with an integer type.
       Hint.ValueExpr = R.get();
     }
+  } else if (OptionInfo && OptionInfo->isStr("hint")) {
+    // Parse hint(key) or hint(key, value) where value is integer or
+    // identifier.
+    PP.EnterTokenStream(Toks, /*DisableMacroExpansion=*/false,
+                        /*IsReinject=*/false);
+    ConsumeAnnotationToken();
+
+    IdentifierInfo *KeyInfo = Tok.getIdentifierInfo();
+    if (!KeyInfo) {
+      Diag(Tok.getLocation(), diag::err_expected) << tok::identifier;
+      while (Tok.isNot(tok::eof))
+        ConsumeAnyToken();
+      ConsumeToken();
+      return false;
+    }
+
+    // Accumulate hyphen-separated identifiers into a single key string,
+    // e.g. hint(aie-gpr-realloc, 1) -> key "aie-gpr-realloc".
+    SourceLocation KeyLoc = Tok.getLocation();
+    std::string HintKey = KeyInfo->getName().str();
+    PP.Lex(Tok);
+    while (Tok.is(tok::minus)) {
+      PP.Lex(Tok);
+      if (IdentifierInfo *NextId = Tok.getIdentifierInfo()) {
+        HintKey += "-";
+        HintKey += NextId->getName();
+        PP.Lex(Tok);
+      } else
+        break;
+    }
+    IdentifierInfo &MergedKey = PP.getIdentifierTable().get(HintKey);
+    Hint.StateLoc = IdentifierLoc::create(Actions.Context, KeyLoc, &MergedKey);
+
+    // Optionally parse a comma followed by an integer or identifier value.
+    if (Tok.is(tok::comma)) {
+      PP.Lex(Tok);
+      if (IdentifierInfo *ValIdent = Tok.getIdentifierInfo()) {
+        // String-typed value (e.g. hint(key, ident)).
+        Hint.ValueIdentLoc =
+            IdentifierLoc::create(Actions.Context, Tok.getLocation(), ValIdent);
+        PP.Lex(Tok);
+      } else {
+        ExprResult R = ParseConstantExpression();
+        if (R.isInvalid() ||
+            Actions.CheckLoopHintExpr(R.get(), Toks[0].getLocation(),
+                                      /*AllowZero=*/true)) {
+          while (Tok.isNot(tok::eof))
+            ConsumeAnyToken();
+          ConsumeToken();
+          return false;
+        }
+        Hint.ValueExpr = R.get();
+      }
+    }
+
+    if (Tok.isNot(tok::eof)) {
+      Diag(Tok.getLocation(), diag::warn_pragma_extra_tokens_at_eol)
+          << PragmaLoopHintString(Info->PragmaName, Info->Option);
+      while (Tok.isNot(tok::eof))
+        ConsumeAnyToken();
+    }
+    ConsumeToken(); // Consume the eof terminator.
   } else {
     // Enter constant expression including eof terminator into token stream.
     PP.EnterTokenStream(Toks, /*DisableMacroExpansion=*/false,
@@ -3660,6 +3725,7 @@ void PragmaLoopHintHandler::HandlePragma(Preprocessor &PP,
                            .Case("pipeline_initiation_interval", true)
                            .Case("min_iteration_count", true)
                            .Case("max_iteration_count", true)
+                           .Case("hint", true)
                            .Default(false);
     if (!OptionValid) {
       PP.Diag(Tok.getLocation(), diag::err_pragma_loop_invalid_option)

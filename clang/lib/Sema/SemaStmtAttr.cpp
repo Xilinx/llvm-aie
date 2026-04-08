@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -43,8 +43,7 @@ static Attr *handleFallThroughAttr(Sema &S, Stmt *St, const ParsedAttr &A,
 
   // If this is spelled as the standard C++17 attribute, but not in C++17, warn
   // about using it as an extension.
-  if (!S.getLangOpts().CPlusPlus17 && A.isCXX11Attribute() &&
-      !A.getScopeName())
+  if (!S.getLangOpts().CPlusPlus17 && A.isCXX11Attribute() && !A.getScopeName())
     S.Diag(A.getLoc(), diag::ext_cxx17_attr) << A;
 
   FnScope->setHasFallthroughStmt();
@@ -80,6 +79,7 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const ParsedAttr &A,
   IdentifierLoc *OptionLoc = A.getArgAsIdent(1);
   IdentifierLoc *StateLoc = A.getArgAsIdent(2);
   Expr *ValueExpr = A.getArgAsExpr(3);
+  IdentifierLoc *ValueIdentLoc = A.getArgAsIdent(4);
 
   StringRef PragmaName =
       llvm::StringSwitch<StringRef>(PragmaNameLoc->Ident->getName())
@@ -128,6 +128,20 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const ParsedAttr &A,
       SetHints(LoopHintAttr::UnrollAndJamCount, LoopHintAttr::Numeric);
     else
       SetHints(LoopHintAttr::UnrollAndJam, LoopHintAttr::Enable);
+  } else if (OptionLoc && OptionLoc->Ident && OptionLoc->Ident->isStr("hint")) {
+    // #pragma clang loop hint(key) or hint(key, value)
+    assert(StateLoc && StateLoc->Ident && "hint must have a key string.");
+    StringRef HintKey = StateLoc->Ident->getName();
+    if (ValueExpr && !ValueExpr->isValueDependent()) {
+      if (S.CheckLoopHintExpr(ValueExpr, St->getBeginLoc(),
+                              /*AllowZero=*/true))
+        return nullptr;
+    }
+    StringRef ValueStr;
+    if (ValueIdentLoc && ValueIdentLoc->Ident)
+      ValueStr = ValueIdentLoc->Ident->getName();
+    return GenericLoopHintAttr::CreateImplicit(S.Context, HintKey, ValueExpr,
+                                               ValueStr, A);
   } else {
     // #pragma clang loop ...
     assert(OptionLoc && OptionLoc->Ident &&
