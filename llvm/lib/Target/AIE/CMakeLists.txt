@@ -150,6 +150,7 @@ add_llvm_target(AIECodeGen
    AIEMIRFormatter.cpp
    AIEMultiSlotInstrMaterializer.cpp
    AIEPostPipeliner.cpp
+   AIEPostRegAlloc.cpp
    AIEPostSelectOptimize.cpp
    AIEPseudoBranchExpansion.cpp
    AIEPtrModOptimizer.cpp
