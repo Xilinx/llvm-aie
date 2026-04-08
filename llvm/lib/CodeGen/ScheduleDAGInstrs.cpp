@@ -492,7 +492,7 @@ void ScheduleDAGInstrs::addVRegDefDeps(SUnit *SU, unsigned OperIdx) {
   }
 
   // Shortcut: Singly defined vregs do not have output/anti dependencies.
-  if (MRI.hasOneDef(Reg))
+  if (AbandonSingleDefs && MRI.hasOneDef(Reg))
     return;
 
   // Add output dependence to the next nearest defs of this vreg.
@@ -868,7 +868,8 @@ void ScheduleDAGInstrs::buildSchedGraph(AAResults *AA,
 
 void ScheduleDAGInstrs::buildEdges(AAResults *AA, RegPressureTracker *RPTracker,
                                    PressureDiffs *PDiffs, LiveIntervals *LIS,
-                                   bool TrackLaneMasks) {
+                                   bool TrackLaneMasks,
+                                   bool AbandonSingleDefs) {
 
   const TargetSubtargetInfo &ST = MF.getSubtarget();
   bool UseAA = EnableAASchedMI.getNumOccurrences() > 0 ? EnableAASchedMI
@@ -877,6 +878,7 @@ void ScheduleDAGInstrs::buildEdges(AAResults *AA, RegPressureTracker *RPTracker,
     AAForDep.emplace(*AA);
   BarrierChain = nullptr;
   this->TrackLaneMasks = TrackLaneMasks;
+  this->AbandonSingleDefs = AbandonSingleDefs;
 
   if (PDiffs)
     PDiffs->init(SUnits.size());
