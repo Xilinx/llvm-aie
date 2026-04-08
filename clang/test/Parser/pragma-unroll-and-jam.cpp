@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //---------------------------------------------------------------------------///
 // RUN: %clang_cc1 -std=c++11 -verify %s
@@ -76,7 +76,7 @@ void test(int *List, int Length, int Value) {
   }
 
 // pragma clang unroll_and_jam is disabled for the moment
-/* expected-error {{invalid option 'unroll_and_jam'; expected vectorize, vectorize_width, interleave, interleave_count, unroll, unroll_count, pipeline, pipeline_initiation_interval, min_iteration_count, max_iteration_count, vectorize_predicate, or distribute}} */ #pragma clang loop unroll_and_jam(4)
+/* expected-error {{invalid option 'unroll_and_jam'; expected vectorize, vectorize_width, interleave, interleave_count, unroll, unroll_count, pipeline, pipeline_initiation_interval, min_iteration_count, max_iteration_count, vectorize_predicate, distribute, or hint}} */ #pragma clang loop unroll_and_jam(4)
   for (int i = 0; i < Length; i++) {
     for (int j = 0; j < Length; j++) {
       List[i * Length + j] = Value;

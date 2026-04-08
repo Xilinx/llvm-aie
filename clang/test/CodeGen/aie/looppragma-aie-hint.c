@@ -5,7 +5,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 // --------------------------------------------------------------------------///
 // RUN: %clang --target=aie2ps -S -emit-llvm %s -o - | FileCheck %s
 
@@ -47,6 +47,7 @@
 int test_bool_hint(int *p, int n) {
   int s = 0;
   #pragma clang loop min_iteration_count(2)
+  #pragma clang loop hint(no_predication)
   for (int i = 0; i < n; i++) {
     s += *p++;
   }
@@ -83,7 +84,7 @@ int test_bool_hint(int *p, int n) {
 // CHECK-NEXT:    [[TMP5:%.*]] = load i32, ptr [[I]], align 4
 // CHECK-NEXT:    [[INC:%.*]] = add nsw i32 [[TMP5]], 1
 // CHECK-NEXT:    store i32 [[INC]], ptr [[I]], align 4
-// CHECK-NEXT:    br label %[[FOR_COND]], !llvm.loop [[LOOP5:![0-9]+]]
+// CHECK-NEXT:    br label %[[FOR_COND]], !llvm.loop [[LOOP6:![0-9]+]]
 // CHECK:       [[FOR_END]]:
 // CHECK-NEXT:    [[TMP6:%.*]] = load i32, ptr [[S]], align 4
 // CHECK-NEXT:    ret i32 [[TMP6]]
@@ -91,6 +92,7 @@ int test_bool_hint(int *p, int n) {
 int test_int_hint(int *p, int n) {
   int s = 0;
   #pragma clang loop min_iteration_count(4)
+  #pragma clang loop hint(swp_ii, 4)
   for (int i = 0; i < n; i++) {
     s += *p++;
   }
@@ -127,7 +129,7 @@ int test_int_hint(int *p, int n) {
 // CHECK-NEXT:    [[TMP5:%.*]] = load i32, ptr [[I]], align 4
 // CHECK-NEXT:    [[INC:%.*]] = add nsw i32 [[TMP5]], 1
 // CHECK-NEXT:    store i32 [[INC]], ptr [[I]], align 4
-// CHECK-NEXT:    br label %[[FOR_COND]], !llvm.loop [[LOOP7:![0-9]+]]
+// CHECK-NEXT:    br label %[[FOR_COND]], !llvm.loop [[LOOP9:![0-9]+]]
 // CHECK:       [[FOR_END]]:
 // CHECK-NEXT:    [[TMP6:%.*]] = load i32, ptr [[S]], align 4
 // CHECK-NEXT:    ret i32 [[TMP6]]
@@ -135,21 +137,168 @@ int test_int_hint(int *p, int n) {
 int test_multi_hint(int *p, int n) {
   int s = 0;
   #pragma clang loop min_iteration_count(3) max_iteration_count(6)
+  #pragma clang loop hint(no_predication)
+  #pragma clang loop hint(target_ii, 8)
   for (int i = 0; i < n; i++) {
     s += *p++;
   }
   return s;
 }
+
+// CHECK-LABEL: define dso_local i32 @test_string_hint(
+// CHECK-SAME: ptr [[P:%.*]], i32 noundef [[N:%.*]]) #[[ATTR0]] {
+// CHECK-NEXT:  [[ENTRY:.*:]]
+// CHECK-NEXT:    [[P_ADDR:%.*]] = alloca ptr, align 4
+// CHECK-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
+// CHECK-NEXT:    [[S:%.*]] = alloca i32, align 4
+// CHECK-NEXT:    [[I:%.*]] = alloca i32, align 4
+// CHECK-NEXT:    store ptr [[P]], ptr [[P_ADDR]], align 4
+// CHECK-NEXT:    store i32 [[N]], ptr [[N_ADDR]], align 4
+// CHECK-NEXT:    store i32 0, ptr [[S]], align 4
+// CHECK-NEXT:    store i32 0, ptr [[I]], align 4
+// CHECK-NEXT:    br label %[[FOR_COND:.*]]
+// CHECK:       [[FOR_COND]]:
+// CHECK-NEXT:    [[TMP0:%.*]] = load i32, ptr [[I]], align 4
+// CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[N_ADDR]], align 4
+// CHECK-NEXT:    [[CMP:%.*]] = icmp slt i32 [[TMP0]], [[TMP1]]
+// CHECK-NEXT:    br i1 [[CMP]], label %[[FOR_BODY:.*]], label %[[FOR_END:.*]]
+// CHECK:       [[FOR_BODY]]:
+// CHECK-NEXT:    [[TMP2:%.*]] = load ptr, ptr [[P_ADDR]], align 4
+// CHECK-NEXT:    [[INCDEC_PTR:%.*]] = getelementptr inbounds nuw i32, ptr [[TMP2]], i32 1
+// CHECK-NEXT:    store ptr [[INCDEC_PTR]], ptr [[P_ADDR]], align 4
+// CHECK-NEXT:    [[TMP3:%.*]] = load i32, ptr [[TMP2]], align 4
+// CHECK-NEXT:    [[TMP4:%.*]] = load i32, ptr [[S]], align 4
+// CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP4]], [[TMP3]]
+// CHECK-NEXT:    store i32 [[ADD]], ptr [[S]], align 4
+// CHECK-NEXT:    br label %[[FOR_INC:.*]]
+// CHECK:       [[FOR_INC]]:
+// CHECK-NEXT:    [[TMP5:%.*]] = load i32, ptr [[I]], align 4
+// CHECK-NEXT:    [[INC:%.*]] = add nsw i32 [[TMP5]], 1
+// CHECK-NEXT:    store i32 [[INC]], ptr [[I]], align 4
+// CHECK-NEXT:    br label %[[FOR_COND]], !llvm.loop [[LOOP12:![0-9]+]]
+// CHECK:       [[FOR_END]]:
+// CHECK-NEXT:    [[TMP6:%.*]] = load i32, ptr [[S]], align 4
+// CHECK-NEXT:    ret i32 [[TMP6]]
+//
+int test_string_hint(int *p, int n) {
+  int s = 0;
+  #pragma clang loop hint(use_pipeliner, pre)
+  for (int i = 0; i < n; i++) {
+    s += *p++;
+  }
+  return s;
+}
+
+// CHECK-LABEL: define dso_local i32 @test_zero_hint(
+// CHECK-SAME: ptr [[P:%.*]], i32 noundef [[N:%.*]]) #[[ATTR0]] {
+// CHECK-NEXT:  [[ENTRY:.*:]]
+// CHECK-NEXT:    [[P_ADDR:%.*]] = alloca ptr, align 4
+// CHECK-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
+// CHECK-NEXT:    [[S:%.*]] = alloca i32, align 4
+// CHECK-NEXT:    [[I:%.*]] = alloca i32, align 4
+// CHECK-NEXT:    store ptr [[P]], ptr [[P_ADDR]], align 4
+// CHECK-NEXT:    store i32 [[N]], ptr [[N_ADDR]], align 4
+// CHECK-NEXT:    store i32 0, ptr [[S]], align 4
+// CHECK-NEXT:    store i32 0, ptr [[I]], align 4
+// CHECK-NEXT:    br label %[[FOR_COND:.*]]
+// CHECK:       [[FOR_COND]]:
+// CHECK-NEXT:    [[TMP0:%.*]] = load i32, ptr [[I]], align 4
+// CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[N_ADDR]], align 4
+// CHECK-NEXT:    [[CMP:%.*]] = icmp slt i32 [[TMP0]], [[TMP1]]
+// CHECK-NEXT:    br i1 [[CMP]], label %[[FOR_BODY:.*]], label %[[FOR_END:.*]]
+// CHECK:       [[FOR_BODY]]:
+// CHECK-NEXT:    [[TMP2:%.*]] = load ptr, ptr [[P_ADDR]], align 4
+// CHECK-NEXT:    [[INCDEC_PTR:%.*]] = getelementptr inbounds nuw i32, ptr [[TMP2]], i32 1
+// CHECK-NEXT:    store ptr [[INCDEC_PTR]], ptr [[P_ADDR]], align 4
+// CHECK-NEXT:    [[TMP3:%.*]] = load i32, ptr [[TMP2]], align 4
+// CHECK-NEXT:    [[TMP4:%.*]] = load i32, ptr [[S]], align 4
+// CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP4]], [[TMP3]]
+// CHECK-NEXT:    store i32 [[ADD]], ptr [[S]], align 4
+// CHECK-NEXT:    br label %[[FOR_INC:.*]]
+// CHECK:       [[FOR_INC]]:
+// CHECK-NEXT:    [[TMP5:%.*]] = load i32, ptr [[I]], align 4
+// CHECK-NEXT:    [[INC:%.*]] = add nsw i32 [[TMP5]], 1
+// CHECK-NEXT:    store i32 [[INC]], ptr [[I]], align 4
+// CHECK-NEXT:    br label %[[FOR_COND]], !llvm.loop [[LOOP14:![0-9]+]]
+// CHECK:       [[FOR_END]]:
+// CHECK-NEXT:    [[TMP6:%.*]] = load i32, ptr [[S]], align 4
+// CHECK-NEXT:    ret i32 [[TMP6]]
+//
+int test_zero_hint(int *p, int n) {
+  int s = 0;
+  #pragma clang loop hint(no_predication, 0)
+  for (int i = 0; i < n; i++) {
+    s += *p++;
+  }
+  return s;
+}
+// Hyphenated keys: identifiers separated by minus signs are merged
+// into a single key string, e.g. aie-gpr-realloc.
+// CHECK-LABEL: define dso_local i32 @test_hyphenated_hint(
+// CHECK-SAME: ptr [[P:%.*]], i32 noundef [[N:%.*]]) #[[ATTR0]] {
+// CHECK-NEXT:  [[ENTRY:.*:]]
+// CHECK-NEXT:    [[P_ADDR:%.*]] = alloca ptr, align 4
+// CHECK-NEXT:    [[N_ADDR:%.*]] = alloca i32, align 4
+// CHECK-NEXT:    [[S:%.*]] = alloca i32, align 4
+// CHECK-NEXT:    [[I:%.*]] = alloca i32, align 4
+// CHECK-NEXT:    store ptr [[P]], ptr [[P_ADDR]], align 4
+// CHECK-NEXT:    store i32 [[N]], ptr [[N_ADDR]], align 4
+// CHECK-NEXT:    store i32 0, ptr [[S]], align 4
+// CHECK-NEXT:    store i32 0, ptr [[I]], align 4
+// CHECK-NEXT:    br label %[[FOR_COND:.*]]
+// CHECK:       [[FOR_COND]]:
+// CHECK-NEXT:    [[TMP0:%.*]] = load i32, ptr [[I]], align 4
+// CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[N_ADDR]], align 4
+// CHECK-NEXT:    [[CMP:%.*]] = icmp slt i32 [[TMP0]], [[TMP1]]
+// CHECK-NEXT:    br i1 [[CMP]], label %[[FOR_BODY:.*]], label %[[FOR_END:.*]]
+// CHECK:       [[FOR_BODY]]:
+// CHECK-NEXT:    [[TMP2:%.*]] = load ptr, ptr [[P_ADDR]], align 4
+// CHECK-NEXT:    [[INCDEC_PTR:%.*]] = getelementptr inbounds nuw i32, ptr [[TMP2]], i32 1
+// CHECK-NEXT:    store ptr [[INCDEC_PTR]], ptr [[P_ADDR]], align 4
+// CHECK-NEXT:    [[TMP3:%.*]] = load i32, ptr [[TMP2]], align 4
+// CHECK-NEXT:    [[TMP4:%.*]] = load i32, ptr [[S]], align 4
+// CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP4]], [[TMP3]]
+// CHECK-NEXT:    store i32 [[ADD]], ptr [[S]], align 4
+// CHECK-NEXT:    br label %[[FOR_INC:.*]]
+// CHECK:       [[FOR_INC]]:
+// CHECK-NEXT:    [[TMP5:%.*]] = load i32, ptr [[I]], align 4
+// CHECK-NEXT:    [[INC:%.*]] = add nsw i32 [[TMP5]], 1
+// CHECK-NEXT:    store i32 [[INC]], ptr [[I]], align 4
+// CHECK-NEXT:    br label %[[FOR_COND]], !llvm.loop [[LOOP16:![0-9]+]]
+// CHECK:       [[FOR_END]]:
+// CHECK-NEXT:    [[TMP6:%.*]] = load i32, ptr [[S]], align 4
+// CHECK-NEXT:    ret i32 [[TMP6]]
+//
+int test_hyphenated_hint(int *p, int n) {
+  int s = 0;
+  #pragma clang loop hint(aie-realloc-loopaware, 1)
+  #pragma clang loop hint(aie-gpr-realloc, 1)
+  for (int i = 0; i < n; i++) {
+    s += *p++;
+  }
+  return s;
+}
+
 //.
 // CHECK: attributes #[[ATTR0]] = { noinline nounwind optnone "no-builtin-memcpy" "no-builtin-memmove" "no-builtin-memset" "no-trapping-math"="true" "stack-protector-buffer-size"="8" }
 //.
 // CHECK: [[META0:![0-9]+]] = !{i32 1, !"wchar_size", i32 4}
 // CHECK: [[META1:![0-9]+]] = !{!"{{.*}}clang version {{.*}}"}
-// CHECK: [[LOOP2]] = distinct !{[[LOOP2]], [[META3:![0-9]+]], [[META4:![0-9]+]]}
+// CHECK: [[LOOP2]] = distinct !{[[LOOP2]], [[META3:![0-9]+]], [[META4:![0-9]+]], [[META5:![0-9]+]]}
 // CHECK: [[META3]] = !{!"llvm.loop.mustprogress"}
 // CHECK: [[META4]] = !{!"llvm.loop.itercount.range", i64 2}
-// CHECK: [[LOOP5]] = distinct !{[[LOOP5]], [[META3]], [[META6:![0-9]+]]}
-// CHECK: [[META6]] = !{!"llvm.loop.itercount.range", i64 4}
-// CHECK: [[LOOP7]] = distinct !{[[LOOP7]], [[META3]], [[META8:![0-9]+]]}
-// CHECK: [[META8]] = !{!"llvm.loop.itercount.range", i64 3, i64 6}
+// CHECK: [[META5]] = !{!"llvm.loop.hint.no_predication"}
+// CHECK: [[LOOP6]] = distinct !{[[LOOP6]], [[META3]], [[META7:![0-9]+]], [[META8:![0-9]+]]}
+// CHECK: [[META7]] = !{!"llvm.loop.itercount.range", i64 4}
+// CHECK: [[META8]] = !{!"llvm.loop.hint.swp_ii", i64 4}
+// CHECK: [[LOOP9]] = distinct !{[[LOOP9]], [[META3]], [[META10:![0-9]+]], [[META5]], [[META11:![0-9]+]]}
+// CHECK: [[META10]] = !{!"llvm.loop.itercount.range", i64 3, i64 6}
+// CHECK: [[META11]] = !{!"llvm.loop.hint.target_ii", i64 8}
+// CHECK: [[LOOP12]] = distinct !{[[LOOP12]], [[META3]], [[META13:![0-9]+]]}
+// CHECK: [[META13]] = !{!"llvm.loop.hint.use_pipeliner", !"pre"}
+// CHECK: [[LOOP14]] = distinct !{[[LOOP14]], [[META3]], [[META15:![0-9]+]]}
+// CHECK: [[META15]] = !{!"llvm.loop.hint.no_predication", i64 0}
+// CHECK: [[LOOP16]] = distinct !{[[LOOP16]], [[META3]], [[META17:![0-9]+]], [[META18:![0-9]+]]}
+// CHECK: [[META17]] = !{!"llvm.loop.hint.aie-realloc-loopaware", i64 1}
+// CHECK: [[META18]] = !{!"llvm.loop.hint.aie-gpr-realloc", i64 1}
 //.

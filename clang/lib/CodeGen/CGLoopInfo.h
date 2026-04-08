@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -22,6 +22,7 @@
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Support/Compiler.h"
+#include <variant>
 
 namespace llvm {
 class BasicBlock;
@@ -93,6 +94,12 @@ struct LoopAttributes {
 
   /// Value for whether the loop is required to make progress.
   bool MustProgress;
+
+  /// Generic loop hints: pairs of (key, optional value).
+  /// Value can be empty (bool hint), integer, or string.
+  /// Emitted as llvm.loop.hint.<key> metadata.
+  using GenericHintValue = std::variant<std::monostate, int64_t, std::string>;
+  llvm::SmallVector<std::pair<std::string, GenericHintValue>, 2> GenericHints;
 };
 
 /// Information used when generating a structured loop.
@@ -304,6 +311,12 @@ public:
   /// Set values for iteration count
   void setRangeLwb(int64_t C) { StagedAttrs.IterationCount.Lwb = C; }
   void setRangeUpb(int64_t C) { StagedAttrs.IterationCount.Upb = C; }
+
+  /// Add a generic loop hint.
+  void addGenericHint(llvm::StringRef Key,
+                      LoopAttributes::GenericHintValue Value) {
+    StagedAttrs.GenericHints.emplace_back(Key.str(), std::move(Value));
+  }
 
   /// Set no progress for the next loop pushed.
   void setMustProgress(bool P) { StagedAttrs.MustProgress = P; }

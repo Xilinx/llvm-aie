@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -464,6 +464,23 @@ MDNode *LoopInfo::createMetadata(
     LoopProperties.push_back(MDNode::get(Ctx, {Vals, NumMD}));
   }
 
+  // Emit generic loop hint metadata.
+  for (const auto &[Key, Value] : Attrs.GenericHints) {
+    const std::string MDName = "llvm.loop.hint." + Key;
+    if (const auto *IntVal = std::get_if<int64_t>(&Value)) {
+      Metadata *Vals[] = {MDString::get(Ctx, MDName),
+                          ConstantAsMetadata::get(ConstantInt::get(
+                              llvm::Type::getInt64Ty(Ctx), *IntVal))};
+      LoopProperties.push_back(MDNode::get(Ctx, Vals));
+    } else if (const auto *StrVal = std::get_if<std::string>(&Value)) {
+      Metadata *Vals[] = {MDString::get(Ctx, MDName),
+                          MDString::get(Ctx, *StrVal)};
+      LoopProperties.push_back(MDNode::get(Ctx, Vals));
+    } else {
+      LoopProperties.push_back(MDNode::get(Ctx, MDString::get(Ctx, MDName)));
+    }
+  }
+
   LoopProperties.insert(LoopProperties.end(), AdditionalLoopProperties.begin(),
                         AdditionalLoopProperties.end());
   return createFullUnrollMetadata(Attrs, LoopProperties, HasUserTransforms);
@@ -496,6 +513,7 @@ void LoopAttributes::clear() {
   CodeAlign = 0;
   IterationCount = {};
   MustProgress = false;
+  GenericHints.clear();
 }
 
 LoopInfo::LoopInfo(BasicBlock *Header, const LoopAttributes &Attrs,
@@ -521,7 +539,8 @@ LoopInfo::LoopInfo(BasicBlock *Header, const LoopAttributes &Attrs,
       Attrs.UnrollEnable == LoopAttributes::Unspecified &&
       Attrs.UnrollAndJamEnable == LoopAttributes::Unspecified &&
       Attrs.DistributeEnable == LoopAttributes::Unspecified &&
-      Attrs.CodeAlign == 0 && !StartLoc && !EndLoc && !Attrs.MustProgress)
+      Attrs.CodeAlign == 0 && !StartLoc && !EndLoc && !Attrs.MustProgress &&
+      Attrs.GenericHints.empty())
     return;
 
   TempLoopID = MDNode::getTemporary(Header->getContext(), {});
@@ -631,6 +650,19 @@ void LoopInfoStack::push(BasicBlock *Header, clang::ASTContext &Ctx,
     const OpenCLUnrollHintAttr *OpenCLHint =
         dyn_cast<OpenCLUnrollHintAttr>(Attr);
     const HLSLLoopHintAttr *HLSLLoopHint = dyn_cast<HLSLLoopHintAttr>(Attr);
+    // Handle Generic loop hints separately.
+    if (const auto *GenericHint = dyn_cast<GenericLoopHintAttr>(Attr)) {
+      LoopAttributes::GenericHintValue Value;
+      if (const auto *ValueExpr = GenericHint->getValueExpr()) {
+        llvm::APSInt ValueAPS = ValueExpr->EvaluateKnownConstInt(Ctx);
+        Value = ValueAPS.getSExtValue();
+      } else if (!GenericHint->getValueStr().empty()) {
+        Value = GenericHint->getValueStr().str();
+      }
+      addGenericHint(GenericHint->getHint(), std::move(Value));
+      continue;
+    }
+
     // Skip non loop hint attributes
     if (!LH && !OpenCLHint && !HLSLLoopHint) {
       continue;

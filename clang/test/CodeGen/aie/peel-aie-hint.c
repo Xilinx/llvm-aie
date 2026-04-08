@@ -5,10 +5,10 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 // --------------------------------------------------------------------------///
 
-// Verify that loop metadata survives loop peeling and that
+// Verify that hint metadata survives loop peeling and that
 // iteration counts are adjusted correctly.
 
 // RUN: %clang --target=aie2ps -O2 -mllvm --unroll-force-peel-count=2 -S -emit-llvm %s -o - | FileCheck %s
@@ -40,6 +40,7 @@ int bool_hint_peel(int n, int *p) {
   int s = 0;
   #pragma clang loop min_iteration_count(28)
   #pragma clang loop max_iteration_count(37)
+  #pragma clang loop hint(no_predication)
   for (int i = 0; i < n; i++) {
     s += p[i];
   }
@@ -67,12 +68,13 @@ int bool_hint_peel(int n, int *p) {
 // CHECK-NEXT:    [[ADD]] = add nsw i32 [[TMP4]], [[S_04]]
 // CHECK-NEXT:    [[INC]] = add nuw nsw i32 [[I_05]], 1
 // CHECK-NEXT:    [[EXITCOND_NOT:%.*]] = icmp eq i32 [[INC]], [[N]]
-// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY]], !llvm.loop [[LOOP10:![0-9]+]]
+// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY]], !llvm.loop [[LOOP11:![0-9]+]]
 //
 int int_hint_peel(int n, int *p) {
   int s = 0;
   #pragma clang loop min_iteration_count(28)
   #pragma clang loop max_iteration_count(37)
+  #pragma clang loop hint(swp_ii, 3)
   for (int i = 0; i < n; i++) {
     s += p[i];
   }
@@ -100,12 +102,48 @@ int int_hint_peel(int n, int *p) {
 // CHECK-NEXT:    [[ADD]] = add nsw i32 [[TMP4]], [[S_04]]
 // CHECK-NEXT:    [[INC]] = add nuw nsw i32 [[I_05]], 1
 // CHECK-NEXT:    [[EXITCOND_NOT:%.*]] = icmp eq i32 [[INC]], [[N]]
-// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY]], !llvm.loop [[LOOP11:![0-9]+]]
+// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY]], !llvm.loop [[LOOP13:![0-9]+]]
 //
 int multi_hint_peel(int n, int *p) {
   int s = 0;
   #pragma clang loop min_iteration_count(28)
   #pragma clang loop max_iteration_count(37)
+  #pragma clang loop hint(no_predication)
+  #pragma clang loop hint(target_ii, 5)
+  for (int i = 0; i < n; i++) {
+    s += p[i];
+  }
+  return s;
+}
+
+// CHECK-LABEL: define dso_local i32 @string_hint_peel(
+// CHECK-SAME: i32 noundef [[N:%.*]], ptr readonly captures(none) [[P:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  [[FOR_BODY_PEEL_NEXT6:.*]]:
+// CHECK-NEXT:    [[TMP0:%.*]] = icmp sgt i32 [[N]], 27
+// CHECK-NEXT:    tail call void @llvm.assume(i1 [[TMP0]])
+// CHECK-NEXT:    [[ARRAYIDX_PEEL8:%.*]] = getelementptr inbounds nuw i8, ptr [[P]], i20 4
+// CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[ARRAYIDX_PEEL8]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[P]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[ADD_PEEL9:%.*]] = add nsw i32 [[TMP1]], [[TMP2]]
+// CHECK-NEXT:    br label %[[FOR_BODY:.*]]
+// CHECK:       [[FOR_COND_CLEANUP:.*]]:
+// CHECK-NEXT:    ret i32 [[ADD:%.*]]
+// CHECK:       [[FOR_BODY]]:
+// CHECK-NEXT:    [[I_05:%.*]] = phi i32 [ 2, %[[FOR_BODY_PEEL_NEXT6]] ], [ [[INC:%.*]], %[[FOR_BODY]] ]
+// CHECK-NEXT:    [[S_04:%.*]] = phi i32 [ [[ADD_PEEL9]], %[[FOR_BODY_PEEL_NEXT6]] ], [ [[ADD]], %[[FOR_BODY]] ]
+// CHECK-NEXT:    [[TMP3:%.*]] = trunc i32 [[I_05]] to i20
+// CHECK-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds i32, ptr [[P]], i20 [[TMP3]]
+// CHECK-NEXT:    [[TMP4:%.*]] = load i32, ptr [[ARRAYIDX]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[ADD]] = add nsw i32 [[TMP4]], [[S_04]]
+// CHECK-NEXT:    [[INC]] = add nuw nsw i32 [[I_05]], 1
+// CHECK-NEXT:    [[EXITCOND_NOT:%.*]] = icmp eq i32 [[INC]], [[N]]
+// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY]], !llvm.loop [[LOOP15:![0-9]+]]
+//
+int string_hint_peel(int n, int *p) {
+  int s = 0;
+  #pragma clang loop min_iteration_count(28)
+  #pragma clang loop max_iteration_count(37)
+  #pragma clang loop hint(use_pipeliner, pre)
   for (int i = 0; i < n; i++) {
     s += p[i];
   }
@@ -121,10 +159,15 @@ int multi_hint_peel(int n, int *p) {
 // CHECK: [[META3]] = !{!"int", [[META4:![0-9]+]], i64 0}
 // CHECK: [[META4]] = !{!"omnipotent char", [[META5:![0-9]+]], i64 0}
 // CHECK: [[META5]] = !{!"Simple C/C++ TBAA"}
-// CHECK: [[LOOP6]] = distinct !{[[LOOP6]], [[META7:![0-9]+]], [[META8:![0-9]+]], [[META9:![0-9]+]]}
-// CHECK: [[META7]] = !{!"llvm.loop.peeled.count", i32 2}
-// CHECK: [[META8]] = !{!"llvm.loop.itercount.range", i32 26, i32 35}
-// CHECK: [[META9]] = !{!"llvm.loop.unroll.disable"}
-// CHECK: [[LOOP10]] = distinct !{[[LOOP10]], [[META7]], [[META8]], [[META9]]}
-// CHECK: [[LOOP11]] = distinct !{[[LOOP11]], [[META7]], [[META8]], [[META9]]}
+// CHECK: [[LOOP6]] = distinct !{[[LOOP6]], [[META7:![0-9]+]], [[META8:![0-9]+]], [[META9:![0-9]+]], [[META10:![0-9]+]]}
+// CHECK: [[META7]] = !{!"llvm.loop.hint.no_predication"}
+// CHECK: [[META8]] = !{!"llvm.loop.peeled.count", i32 2}
+// CHECK: [[META9]] = !{!"llvm.loop.itercount.range", i32 26, i32 35}
+// CHECK: [[META10]] = !{!"llvm.loop.unroll.disable"}
+// CHECK: [[LOOP11]] = distinct !{[[LOOP11]], [[META12:![0-9]+]], [[META8]], [[META9]], [[META10]]}
+// CHECK: [[META12]] = !{!"llvm.loop.hint.swp_ii", i64 3}
+// CHECK: [[LOOP13]] = distinct !{[[LOOP13]], [[META7]], [[META14:![0-9]+]], [[META8]], [[META9]], [[META10]]}
+// CHECK: [[META14]] = !{!"llvm.loop.hint.target_ii", i64 5}
+// CHECK: [[LOOP15]] = distinct !{[[LOOP15]], [[META16:![0-9]+]], [[META8]], [[META9]], [[META10]]}
+// CHECK: [[META16]] = !{!"llvm.loop.hint.use_pipeliner", !"pre"}
 //.

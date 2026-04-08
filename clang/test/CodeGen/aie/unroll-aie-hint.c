@@ -5,10 +5,10 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2026 Advanced Micro Devices, Inc. or its affiliates
 // --------------------------------------------------------------------------///
 
-// Verify that loop metadata survives loop unrolling and that
+// Verify that hint metadata survives loop unrolling and that
 // iteration counts are adjusted correctly.
 
 // RUN: %clang --target=aie2ps -O2 -S -emit-llvm %s -o - | FileCheck %s
@@ -71,6 +71,7 @@ int bool_hint_unroll(int n, int *p) {
   int s = 0;
   #pragma clang loop unroll_count(4)
   #pragma clang loop min_iteration_count(28)
+  #pragma clang loop hint(no_predication)
   for (int i = 0; i < n; i++) {
     s += p[i];
   }
@@ -99,7 +100,7 @@ int bool_hint_unroll(int n, int *p) {
 // CHECK-NEXT:    [[INC_EPIL]] = add nuw nsw i32 [[I_05_EPIL]], 1
 // CHECK-NEXT:    [[EPIL_ITER_NEXT]] = add i32 [[EPIL_ITER]], 1
 // CHECK-NEXT:    [[EPIL_ITER_CMP_NOT:%.*]] = icmp eq i32 [[EPIL_ITER_NEXT]], [[XTRAITER]]
-// CHECK-NEXT:    br i1 [[EPIL_ITER_CMP_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY_EPIL]], !llvm.loop [[LOOP10:![0-9]+]]
+// CHECK-NEXT:    br i1 [[EPIL_ITER_CMP_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY_EPIL]], !llvm.loop [[LOOP11:![0-9]+]]
 // CHECK:       [[FOR_COND_CLEANUP]]:
 // CHECK-NEXT:    [[ADD_LCSSA:%.*]] = phi i32 [ [[ADD_3]], %[[FOR_COND_CLEANUP_UNR_LCSSA]] ], [ [[ADD_EPIL]], %[[FOR_BODY_EPIL]] ]
 // CHECK-NEXT:    ret i32 [[ADD_LCSSA]]
@@ -129,12 +130,13 @@ int bool_hint_unroll(int n, int *p) {
 // CHECK-NEXT:    [[INC_3]] = add nuw nsw i32 [[I_05]], 4
 // CHECK-NEXT:    [[NITER_NEXT_3]] = add nuw nsw i32 [[NITER]], 4
 // CHECK-NEXT:    [[NITER_NCMP_3:%.*]] = icmp eq i32 [[NITER_NEXT_3]], [[UNROLL_ITER]]
-// CHECK-NEXT:    br i1 [[NITER_NCMP_3]], label %[[FOR_COND_CLEANUP_UNR_LCSSA]], label %[[FOR_BODY]], !llvm.loop [[LOOP11:![0-9]+]]
+// CHECK-NEXT:    br i1 [[NITER_NCMP_3]], label %[[FOR_COND_CLEANUP_UNR_LCSSA]], label %[[FOR_BODY]], !llvm.loop [[LOOP12:![0-9]+]]
 //
 int int_hint_unroll(int n, int *p) {
   int s = 0;
   #pragma clang loop unroll_count(4)
   #pragma clang loop min_iteration_count(28)
+  #pragma clang loop hint(swp_ii, 3)
   for (int i = 0; i < n; i++) {
     s += p[i];
   }
@@ -163,7 +165,7 @@ int int_hint_unroll(int n, int *p) {
 // CHECK-NEXT:    [[INC_EPIL]] = add nuw nsw i32 [[I_05_EPIL]], 1
 // CHECK-NEXT:    [[EPIL_ITER_NEXT]] = add i32 [[EPIL_ITER]], 1
 // CHECK-NEXT:    [[EPIL_ITER_CMP_NOT:%.*]] = icmp eq i32 [[EPIL_ITER_NEXT]], [[XTRAITER]]
-// CHECK-NEXT:    br i1 [[EPIL_ITER_CMP_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY_EPIL]], !llvm.loop [[LOOP12:![0-9]+]]
+// CHECK-NEXT:    br i1 [[EPIL_ITER_CMP_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY_EPIL]], !llvm.loop [[LOOP14:![0-9]+]]
 // CHECK:       [[FOR_COND_CLEANUP]]:
 // CHECK-NEXT:    [[ADD_LCSSA:%.*]] = phi i32 [ [[ADD_3]], %[[FOR_COND_CLEANUP_UNR_LCSSA]] ], [ [[ADD_EPIL]], %[[FOR_BODY_EPIL]] ]
 // CHECK-NEXT:    ret i32 [[ADD_LCSSA]]
@@ -193,12 +195,79 @@ int int_hint_unroll(int n, int *p) {
 // CHECK-NEXT:    [[INC_3]] = add nuw nsw i32 [[I_05]], 4
 // CHECK-NEXT:    [[NITER_NEXT_3]] = add nuw nsw i32 [[NITER]], 4
 // CHECK-NEXT:    [[NITER_NCMP_3:%.*]] = icmp eq i32 [[NITER_NEXT_3]], [[UNROLL_ITER]]
-// CHECK-NEXT:    br i1 [[NITER_NCMP_3]], label %[[FOR_COND_CLEANUP_UNR_LCSSA]], label %[[FOR_BODY]], !llvm.loop [[LOOP13:![0-9]+]]
+// CHECK-NEXT:    br i1 [[NITER_NCMP_3]], label %[[FOR_COND_CLEANUP_UNR_LCSSA]], label %[[FOR_BODY]], !llvm.loop [[LOOP15:![0-9]+]]
 //
 int multi_hint_unroll(int n, int *p) {
   int s = 0;
   #pragma clang loop unroll_count(4)
   #pragma clang loop min_iteration_count(28)
+  #pragma clang loop hint(no_predication)
+  #pragma clang loop hint(target_ii, 5)
+  for (int i = 0; i < n; i++) {
+    s += p[i];
+  }
+  return s;
+}
+
+// CHECK-LABEL: define dso_local i32 @string_hint_unroll(
+// CHECK-SAME: i32 noundef [[N:%.*]], ptr readonly captures(none) [[P:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  [[ENTRY:.*]]:
+// CHECK-NEXT:    [[TMP0:%.*]] = icmp sgt i32 [[N]], 27
+// CHECK-NEXT:    tail call void @llvm.assume(i1 [[TMP0]])
+// CHECK-NEXT:    [[XTRAITER:%.*]] = and i32 [[N]], 3
+// CHECK-NEXT:    [[UNROLL_ITER:%.*]] = and i32 [[N]], 2147483644
+// CHECK-NEXT:    br label %[[FOR_BODY:.*]]
+// CHECK:       [[FOR_COND_CLEANUP_UNR_LCSSA:.*]]:
+// CHECK-NEXT:    [[LCMP_MOD_NOT:%.*]] = icmp eq i32 [[XTRAITER]], 0
+// CHECK-NEXT:    br i1 [[LCMP_MOD_NOT]], label %[[FOR_COND_CLEANUP:.*]], label %[[FOR_BODY_EPIL:.*]]
+// CHECK:       [[FOR_BODY_EPIL]]:
+// CHECK-NEXT:    [[I_05_EPIL:%.*]] = phi i32 [ [[INC_EPIL:%.*]], %[[FOR_BODY_EPIL]] ], [ [[INC_3:%.*]], %[[FOR_COND_CLEANUP_UNR_LCSSA]] ]
+// CHECK-NEXT:    [[S_04_EPIL:%.*]] = phi i32 [ [[ADD_EPIL:%.*]], %[[FOR_BODY_EPIL]] ], [ [[ADD_3:%.*]], %[[FOR_COND_CLEANUP_UNR_LCSSA]] ]
+// CHECK-NEXT:    [[EPIL_ITER:%.*]] = phi i32 [ [[EPIL_ITER_NEXT:%.*]], %[[FOR_BODY_EPIL]] ], [ 0, %[[FOR_COND_CLEANUP_UNR_LCSSA]] ]
+// CHECK-NEXT:    [[TMP1:%.*]] = trunc i32 [[I_05_EPIL]] to i20
+// CHECK-NEXT:    [[ARRAYIDX_EPIL:%.*]] = getelementptr inbounds i32, ptr [[P]], i20 [[TMP1]]
+// CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[ARRAYIDX_EPIL]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[ADD_EPIL]] = add nsw i32 [[TMP2]], [[S_04_EPIL]]
+// CHECK-NEXT:    [[INC_EPIL]] = add nuw nsw i32 [[I_05_EPIL]], 1
+// CHECK-NEXT:    [[EPIL_ITER_NEXT]] = add i32 [[EPIL_ITER]], 1
+// CHECK-NEXT:    [[EPIL_ITER_CMP_NOT:%.*]] = icmp eq i32 [[EPIL_ITER_NEXT]], [[XTRAITER]]
+// CHECK-NEXT:    br i1 [[EPIL_ITER_CMP_NOT]], label %[[FOR_COND_CLEANUP]], label %[[FOR_BODY_EPIL]], !llvm.loop [[LOOP17:![0-9]+]]
+// CHECK:       [[FOR_COND_CLEANUP]]:
+// CHECK-NEXT:    [[ADD_LCSSA:%.*]] = phi i32 [ [[ADD_3]], %[[FOR_COND_CLEANUP_UNR_LCSSA]] ], [ [[ADD_EPIL]], %[[FOR_BODY_EPIL]] ]
+// CHECK-NEXT:    ret i32 [[ADD_LCSSA]]
+// CHECK:       [[FOR_BODY]]:
+// CHECK-NEXT:    [[I_05:%.*]] = phi i32 [ 0, %[[ENTRY]] ], [ [[INC_3]], %[[FOR_BODY]] ]
+// CHECK-NEXT:    [[S_04:%.*]] = phi i32 [ 0, %[[ENTRY]] ], [ [[ADD_3]], %[[FOR_BODY]] ]
+// CHECK-NEXT:    [[NITER:%.*]] = phi i32 [ 0, %[[ENTRY]] ], [ [[NITER_NEXT_3:%.*]], %[[FOR_BODY]] ]
+// CHECK-NEXT:    [[TMP3:%.*]] = trunc i32 [[I_05]] to i20
+// CHECK-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds i32, ptr [[P]], i20 [[TMP3]]
+// CHECK-NEXT:    [[TMP4:%.*]] = load i32, ptr [[ARRAYIDX]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP4]], [[S_04]]
+// CHECK-NEXT:    [[INC:%.*]] = or disjoint i32 [[I_05]], 1
+// CHECK-NEXT:    [[TMP5:%.*]] = trunc i32 [[INC]] to i20
+// CHECK-NEXT:    [[ARRAYIDX_1:%.*]] = getelementptr inbounds i32, ptr [[P]], i20 [[TMP5]]
+// CHECK-NEXT:    [[TMP6:%.*]] = load i32, ptr [[ARRAYIDX_1]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[ADD_1:%.*]] = add nsw i32 [[TMP6]], [[ADD]]
+// CHECK-NEXT:    [[INC_1:%.*]] = or disjoint i32 [[I_05]], 2
+// CHECK-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC_1]] to i20
+// CHECK-NEXT:    [[ARRAYIDX_2:%.*]] = getelementptr inbounds i32, ptr [[P]], i20 [[TMP7]]
+// CHECK-NEXT:    [[TMP8:%.*]] = load i32, ptr [[ARRAYIDX_2]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[ADD_2:%.*]] = add nsw i32 [[TMP8]], [[ADD_1]]
+// CHECK-NEXT:    [[INC_2:%.*]] = or disjoint i32 [[I_05]], 3
+// CHECK-NEXT:    [[TMP9:%.*]] = trunc i32 [[INC_2]] to i20
+// CHECK-NEXT:    [[ARRAYIDX_3:%.*]] = getelementptr inbounds i32, ptr [[P]], i20 [[TMP9]]
+// CHECK-NEXT:    [[TMP10:%.*]] = load i32, ptr [[ARRAYIDX_3]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[ADD_3]] = add nsw i32 [[TMP10]], [[ADD_2]]
+// CHECK-NEXT:    [[INC_3]] = add nuw nsw i32 [[I_05]], 4
+// CHECK-NEXT:    [[NITER_NEXT_3]] = add nuw nsw i32 [[NITER]], 4
+// CHECK-NEXT:    [[NITER_NCMP_3:%.*]] = icmp eq i32 [[NITER_NEXT_3]], [[UNROLL_ITER]]
+// CHECK-NEXT:    br i1 [[NITER_NCMP_3]], label %[[FOR_COND_CLEANUP_UNR_LCSSA]], label %[[FOR_BODY]], !llvm.loop [[LOOP18:![0-9]+]]
+//
+int string_hint_unroll(int n, int *p) {
+  int s = 0;
+  #pragma clang loop unroll_count(4)
+  #pragma clang loop min_iteration_count(28)
+  #pragma clang loop hint(use_pipeliner, pre)
   for (int i = 0; i < n; i++) {
     s += p[i];
   }
@@ -216,10 +285,16 @@ int multi_hint_unroll(int n, int *p) {
 // CHECK: [[META5]] = !{!"Simple C/C++ TBAA"}
 // CHECK: [[LOOP6]] = distinct !{[[LOOP6]], [[META7:![0-9]+]]}
 // CHECK: [[META7]] = !{!"llvm.loop.unroll.disable"}
-// CHECK: [[LOOP8]] = distinct !{[[LOOP8]], [[META9:![0-9]+]], [[META7]]}
-// CHECK: [[META9]] = !{!"llvm.loop.itercount.range", i32 7}
-// CHECK: [[LOOP10]] = distinct !{[[LOOP10]], [[META7]]}
-// CHECK: [[LOOP11]] = distinct !{[[LOOP11]], [[META9]], [[META7]]}
-// CHECK: [[LOOP12]] = distinct !{[[LOOP12]], [[META7]]}
-// CHECK: [[LOOP13]] = distinct !{[[LOOP13]], [[META9]], [[META7]]}
+// CHECK: [[LOOP8]] = distinct !{[[LOOP8]], [[META9:![0-9]+]], [[META10:![0-9]+]], [[META7]]}
+// CHECK: [[META9]] = !{!"llvm.loop.hint.no_predication"}
+// CHECK: [[META10]] = !{!"llvm.loop.itercount.range", i32 7}
+// CHECK: [[LOOP11]] = distinct !{[[LOOP11]], [[META7]]}
+// CHECK: [[LOOP12]] = distinct !{[[LOOP12]], [[META13:![0-9]+]], [[META10]], [[META7]]}
+// CHECK: [[META13]] = !{!"llvm.loop.hint.swp_ii", i64 3}
+// CHECK: [[LOOP14]] = distinct !{[[LOOP14]], [[META7]]}
+// CHECK: [[LOOP15]] = distinct !{[[LOOP15]], [[META9]], [[META16:![0-9]+]], [[META10]], [[META7]]}
+// CHECK: [[META16]] = !{!"llvm.loop.hint.target_ii", i64 5}
+// CHECK: [[LOOP17]] = distinct !{[[LOOP17]], [[META7]]}
+// CHECK: [[LOOP18]] = distinct !{[[LOOP18]], [[META19:![0-9]+]], [[META10]], [[META7]]}
+// CHECK: [[META19]] = !{!"llvm.loop.hint.use_pipeliner", !"pre"}
 //.
