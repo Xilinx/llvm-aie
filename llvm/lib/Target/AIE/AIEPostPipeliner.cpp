@@ -567,37 +567,87 @@ int PostPipeliner::computeMinScheduleLength() const {
 
 namespace {
 
+const char *getEdgeColor(SDep::Kind Kind) {
+  switch (Kind) {
+  case SDep::Data:
+    return "red";
+  case SDep::Output:
+    return "black";
+  case SDep::Anti:
+    return "blue";
+  case SDep::Order:
+    return "green";
+  }
+  return "gray";
+}
+
 void dumpGraph(const ScheduleInfo &Info, ScheduleDAGInstrs *DAG) {
   dbgs() << "digraph {\n";
   const auto *TRI = DAG->MF.getSubtarget().getRegisterInfo();
 
-  // Prescan backedge destinations and declare them to have a different shape.
-  for (int K = 0; K < Info.NInstr; K++) {
-    int K2 = K + Info.NInstr;
-    auto &SU = DAG->SUnits[K2];
-    if (any_of(SU.Preds, [Limit = Info.NInstr, K](const SDep &Dep) {
-          int P = Dep.getSUnit()->NodeNum;
-          return P < Limit && P != K;
-        })) {
-      dbgs() << "\tSU" << K2 << "_" << K << "[shape=rectangle]\n";
+  // Collect backedge sources and destinations for mirroring.
+  SmallVector<std::tuple<int, int, int, SDep::Kind>, 16> Lcds;
+  SmallSet<int, 16> LcdSrc;
+  SmallSet<int, 16> LcdDst;
+
+  for (int S = 0; S < Info.NInstr; S++) {
+    const SUnit &SU = DAG->SUnits[S];
+    for (const SDep &Dep : SU.Succs) {
+      const int D = Dep.getSUnit()->NodeNum;
+      if (D < Info.NInstr) {
+        continue;
+      }
+      const int D0 = D % Info.NInstr;
+      if (D0 == S) {
+        continue;
+      }
+      // This is a backedge from S to D in the next iteration.
+      // Add it to the Lcds, and register src and dst nodes.
+      Lcds.emplace_back(S, D0, Dep.getSignedLatency(), Dep.getKind());
+      LcdSrc.insert(S);
+      LcdDst.insert(D0);
     }
+  }
+
+  // Create rectangle nodes representing split sources and destinations.
+  for (const auto &Src : LcdSrc) {
+    dbgs() << format("\tSU%d_src [shape=rectangle, label=SU%d]\n", Src, Src);
+  }
+  for (const auto &Dst : LcdDst) {
+    dbgs() << format("\tSU%d_dst [shape=rectangle, label=SU%d]\n", Dst, Dst);
+  }
+
+  // Add node labels with interval information (Depth and Height) and opcode.
+  for (int K = 0; K < Info.NInstr; K++) {
+    const SUnit &SU = DAG->SUnits[K];
+    const int Depth = SU.getDepth();
+    const int Height = SU.getHeight();
+
+    dbgs() << "\tSU" << K << " [label=\"SU" << K << "\\n"
+           << OpcodeOnly(*SU.getInstr(), 10) << "\\n[" << Depth << "," << Height
+           << "]\\n"
+           << "\"]\n";
+  }
+
+  for (const auto &[Src, Dst, Latency, Kind] : Lcds) {
+    // Create an edge from the split source to the destination.
+    dbgs() << format("\tSU%d_src -> SU%d [label=%d, color=%s]\n", Src, Dst,
+                     Latency, getEdgeColor(Kind));
+    // Create an edge from the source to the split destination
+    dbgs() << format("\tSU%d -> SU%d_dst [label=%d, color=%s]\n", Src, Dst,
+                     Latency, getEdgeColor(Kind));
   }
 
   for (int K = 0; K < Info.NInstr; K++) {
     auto &SU = DAG->SUnits[K];
     for (auto &Dep : SU.Succs) {
       auto *Succ = Dep.getSUnit();
-      int S = Succ->NodeNum;
-      if (S % Info.NInstr == K || Succ->isBoundaryNode()) {
+      const int S = Succ->NodeNum;
+      if (S > Info.NInstr || S % Info.NInstr == K || Succ->isBoundaryNode()) {
         continue;
       }
 
-      dbgs() << "\tSU" << K << " -> "
-             << "SU" << S;
-
-      if (S >= Info.NInstr) {
-        dbgs() << "_" << S % Info.NInstr;
-      }
+      dbgs() << "\tSU" << K << " -> " << "SU" << S;
       dbgs() << " [ label=\"" << Dep.getSignedLatency();
       switch (Dep.getKind()) {
       case SDep::Data:
@@ -614,27 +664,7 @@ void dumpGraph(const ScheduleInfo &Info, ScheduleDAGInstrs *DAG) {
       case SDep::Order:
         break;
       }
-      dbgs() << "\"";
-      switch (Dep.getKind()) {
-      case SDep::Data:
-        dbgs() << " color=red ";
-        break;
-      case SDep::Output:
-        dbgs() << " color=black ";
-        break;
-      case SDep::Anti:
-        dbgs() << " color=blue ";
-        break;
-      case SDep::Order:
-        dbgs() << " color=green ";
-        break;
-      }
-      dbgs() << "] ";
-
-      dbgs() << " # L=" << Dep.getSignedLatency();
-      if (Dep.getKind() == SDep::Output) {
-        dbgs() << " WAW";
-      }
+      dbgs() << "\" color=" << getEdgeColor(Dep.getKind()) << " ] ";
       dbgs() << "\n";
     }
   }
@@ -1368,9 +1398,10 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval,
   LLVM_DEBUG(for (int I = 0; I < NInstr; I++) {
     dbgs() << I << " " << NoDebug(*DAG->SUnits[I].getInstr()) << "\n";
   });
-  LLVM_DEBUG(dumpGraph(Info, DAG));
 
   computeLoopCarriedParameters();
+
+  LLVM_DEBUG(dumpGraph(Info, DAG));
 
   auto *BB = TheDAG.getBB();
   auto DbgLoc = BB->begin()->getDebugLoc();
