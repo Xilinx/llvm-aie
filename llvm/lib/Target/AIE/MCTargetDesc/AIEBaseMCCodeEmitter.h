@@ -141,12 +141,12 @@ void getSImmOpValueXStep(const MCInst &MI, unsigned OpNo, APInt &Op,
     }
     if (Imm & hexValue)
       report_fatal_error("immediate operand value " + Twine(Imm) +
-                         " is not a multiple of " + Twine(step),
+                             " is not a multiple of " + Twine(step),
                          /*GenCrashDiag=*/false);
     if (Imm < Min || Imm > Max)
       report_fatal_error("immediate operand value " + Twine(Imm) +
-                         " is out of range [" + Twine(Min) + ", " +
-                         Twine(Max) + "]",
+                             " is out of range [" + Twine(Min) + ", " +
+                             Twine(Max) + "]",
                          /*GenCrashDiag=*/false);
     Imm >>= FixedZeroBits;
     Op = Imm;
