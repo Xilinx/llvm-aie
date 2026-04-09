@@ -4,11 +4,11 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2026 Advanced Micro Devices, Inc. or its affiliates
 
-# RUN: llc -mtriple aie2 -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
-# RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
-# RUN: llc -mtriple aie2ps -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2 -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2 %s
+# RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2P %s
+# RUN: llc -mtriple aie2ps -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2PS %s
 
 # This test checks legalization of the saturated operations for ADD and SUB
 # in signed and unsigned variants
@@ -16,22 +16,55 @@
 ---
 name:            uaddsat
 body:             |
-  ; CHECK-LABEL: name: uaddsat
-  ; CHECK: bb.0:
-  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
-  ; CHECK-NEXT:   liveins: $r0, $r1
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY $r1
-  ; CHECK-NEXT:   [[ADD:%[0-9]+]]:_(s32) = G_ADD [[COPY]], [[COPY1]]
-  ; CHECK-NEXT:   [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(ult), [[ADD]](s32), [[COPY1]]
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(s32) = COPY [[ADD]](s32)
-  ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 -1
-  ; CHECK-NEXT:   [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP]](s32), [[C]], [[COPY2]]
-  ; CHECK-NEXT:   $r0 = COPY [[SELECT]](s32)
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.1:
-  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $r0
+  ; AIE2-LABEL: name: uaddsat
+  ; AIE2: bb.0:
+  ; AIE2-NEXT:   successors: %bb.1(0x80000000)
+  ; AIE2-NEXT:   liveins: $r0, $r1
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
+  ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY $r1
+  ; AIE2-NEXT:   [[ADD:%[0-9]+]]:_(s32) = G_ADD [[COPY]], [[COPY1]]
+  ; AIE2-NEXT:   [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(ult), [[ADD]](s32), [[COPY1]]
+  ; AIE2-NEXT:   [[COPY2:%[0-9]+]]:_(s32) = COPY [[ADD]](s32)
+  ; AIE2-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 -1
+  ; AIE2-NEXT:   [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP]](s32), [[C]], [[COPY2]]
+  ; AIE2-NEXT:   $r0 = COPY [[SELECT]](s32)
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT: bb.1:
+  ; AIE2-NEXT:   PseudoRET implicit $lr, implicit $r0
+  ;
+  ; AIE2P-LABEL: name: uaddsat
+  ; AIE2P: bb.0:
+  ; AIE2P-NEXT:   successors: %bb.1(0x80000000)
+  ; AIE2P-NEXT:   liveins: $r0, $r1
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
+  ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY $r1
+  ; AIE2P-NEXT:   [[ADD:%[0-9]+]]:_(s32) = G_ADD [[COPY]], [[COPY1]]
+  ; AIE2P-NEXT:   [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(ult), [[ADD]](s32), [[COPY1]]
+  ; AIE2P-NEXT:   [[COPY2:%[0-9]+]]:_(s32) = COPY [[ADD]](s32)
+  ; AIE2P-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 -1
+  ; AIE2P-NEXT:   [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP]](s32), [[C]], [[COPY2]]
+  ; AIE2P-NEXT:   $r0 = COPY [[SELECT]](s32)
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT: bb.1:
+  ; AIE2P-NEXT:   PseudoRET implicit $lr, implicit $r0
+  ;
+  ; AIE2PS-LABEL: name: uaddsat
+  ; AIE2PS: bb.0:
+  ; AIE2PS-NEXT:   successors: %bb.1(0x80000000)
+  ; AIE2PS-NEXT:   liveins: $r0, $r1
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
+  ; AIE2PS-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY $r1
+  ; AIE2PS-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 -1
+  ; AIE2PS-NEXT:   [[XOR:%[0-9]+]]:_(s32) = G_XOR [[COPY]], [[C]]
+  ; AIE2PS-NEXT:   [[UMIN:%[0-9]+]]:_(s32) = G_UMIN [[XOR]], [[COPY1]]
+  ; AIE2PS-NEXT:   [[ADD:%[0-9]+]]:_(s32) = G_ADD [[COPY]], [[UMIN]]
+  ; AIE2PS-NEXT:   $r0 = COPY [[ADD]](s32)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.1:
+  ; AIE2PS-NEXT:   PseudoRET implicit $lr, implicit $r0
   bb.1:
     liveins: $r0, $r1
     %3:_(s32) = COPY $r0
@@ -45,21 +78,51 @@ body:             |
 ---
 name:            usubsat
 body:             |
-  ; CHECK-LABEL: name: usubsat
-  ; CHECK: bb.0:
-  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
-  ; CHECK-NEXT:   liveins: $r0, $r1
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY $r1
-  ; CHECK-NEXT:   [[SUB:%[0-9]+]]:_(s32) = G_SUB [[COPY]], [[COPY1]]
-  ; CHECK-NEXT:   [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(ult), [[COPY]](s32), [[COPY1]]
-  ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
-  ; CHECK-NEXT:   [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP]](s32), [[C]], [[SUB]]
-  ; CHECK-NEXT:   $r0 = COPY [[SELECT]](s32)
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.1:
-  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $r0
+  ; AIE2-LABEL: name: usubsat
+  ; AIE2: bb.0:
+  ; AIE2-NEXT:   successors: %bb.1(0x80000000)
+  ; AIE2-NEXT:   liveins: $r0, $r1
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
+  ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY $r1
+  ; AIE2-NEXT:   [[SUB:%[0-9]+]]:_(s32) = G_SUB [[COPY]], [[COPY1]]
+  ; AIE2-NEXT:   [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(ult), [[COPY]](s32), [[COPY1]]
+  ; AIE2-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+  ; AIE2-NEXT:   [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP]](s32), [[C]], [[SUB]]
+  ; AIE2-NEXT:   $r0 = COPY [[SELECT]](s32)
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT: bb.1:
+  ; AIE2-NEXT:   PseudoRET implicit $lr, implicit $r0
+  ;
+  ; AIE2P-LABEL: name: usubsat
+  ; AIE2P: bb.0:
+  ; AIE2P-NEXT:   successors: %bb.1(0x80000000)
+  ; AIE2P-NEXT:   liveins: $r0, $r1
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
+  ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY $r1
+  ; AIE2P-NEXT:   [[SUB:%[0-9]+]]:_(s32) = G_SUB [[COPY]], [[COPY1]]
+  ; AIE2P-NEXT:   [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(ult), [[COPY]](s32), [[COPY1]]
+  ; AIE2P-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+  ; AIE2P-NEXT:   [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP]](s32), [[C]], [[SUB]]
+  ; AIE2P-NEXT:   $r0 = COPY [[SELECT]](s32)
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT: bb.1:
+  ; AIE2P-NEXT:   PseudoRET implicit $lr, implicit $r0
+  ;
+  ; AIE2PS-LABEL: name: usubsat
+  ; AIE2PS: bb.0:
+  ; AIE2PS-NEXT:   successors: %bb.1(0x80000000)
+  ; AIE2PS-NEXT:   liveins: $r0, $r1
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
+  ; AIE2PS-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY $r1
+  ; AIE2PS-NEXT:   [[UMIN:%[0-9]+]]:_(s32) = G_UMIN [[COPY]], [[COPY1]]
+  ; AIE2PS-NEXT:   [[SUB:%[0-9]+]]:_(s32) = G_SUB [[COPY]], [[UMIN]]
+  ; AIE2PS-NEXT:   $r0 = COPY [[SUB]](s32)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.1:
+  ; AIE2PS-NEXT:   PseudoRET implicit $lr, implicit $r0
   bb.1:
     liveins: $r0, $r1
     %3:_(s32) = COPY $r0
@@ -73,28 +136,73 @@ body:             |
 ---
 name:            saddsat
 body:             |
-  ; CHECK-LABEL: name: saddsat
-  ; CHECK: bb.0:
-  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
-  ; CHECK-NEXT:   liveins: $r0, $r1
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY $r1
-  ; CHECK-NEXT:   [[ADD:%[0-9]+]]:_(s32) = G_ADD [[COPY]], [[COPY1]]
-  ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
-  ; CHECK-NEXT:   [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[ADD]](s32), [[COPY]]
-  ; CHECK-NEXT:   [[ICMP1:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[COPY1]](s32), [[C]]
-  ; CHECK-NEXT:   [[XOR:%[0-9]+]]:_(s32) = G_XOR [[ICMP1]], [[ICMP]]
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(s32) = COPY [[ADD]](s32)
-  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 31
-  ; CHECK-NEXT:   [[ASHR:%[0-9]+]]:_(s32) = G_ASHR [[COPY2]], [[C1]](s32)
-  ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 -2147483648
-  ; CHECK-NEXT:   [[ADD1:%[0-9]+]]:_(s32) = G_ADD [[ASHR]], [[C2]]
-  ; CHECK-NEXT:   [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[XOR]](s32), [[ADD1]], [[COPY2]]
-  ; CHECK-NEXT:   $r0 = COPY [[SELECT]](s32)
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.1:
-  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $r0
+  ; AIE2-LABEL: name: saddsat
+  ; AIE2: bb.0:
+  ; AIE2-NEXT:   successors: %bb.1(0x80000000)
+  ; AIE2-NEXT:   liveins: $r0, $r1
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
+  ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY $r1
+  ; AIE2-NEXT:   [[ADD:%[0-9]+]]:_(s32) = G_ADD [[COPY]], [[COPY1]]
+  ; AIE2-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+  ; AIE2-NEXT:   [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[ADD]](s32), [[COPY]]
+  ; AIE2-NEXT:   [[ICMP1:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[COPY1]](s32), [[C]]
+  ; AIE2-NEXT:   [[XOR:%[0-9]+]]:_(s32) = G_XOR [[ICMP1]], [[ICMP]]
+  ; AIE2-NEXT:   [[COPY2:%[0-9]+]]:_(s32) = COPY [[ADD]](s32)
+  ; AIE2-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 31
+  ; AIE2-NEXT:   [[ASHR:%[0-9]+]]:_(s32) = G_ASHR [[COPY2]], [[C1]](s32)
+  ; AIE2-NEXT:   [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 -2147483648
+  ; AIE2-NEXT:   [[ADD1:%[0-9]+]]:_(s32) = G_ADD [[ASHR]], [[C2]]
+  ; AIE2-NEXT:   [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[XOR]](s32), [[ADD1]], [[COPY2]]
+  ; AIE2-NEXT:   $r0 = COPY [[SELECT]](s32)
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT: bb.1:
+  ; AIE2-NEXT:   PseudoRET implicit $lr, implicit $r0
+  ;
+  ; AIE2P-LABEL: name: saddsat
+  ; AIE2P: bb.0:
+  ; AIE2P-NEXT:   successors: %bb.1(0x80000000)
+  ; AIE2P-NEXT:   liveins: $r0, $r1
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
+  ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY $r1
+  ; AIE2P-NEXT:   [[ADD:%[0-9]+]]:_(s32) = G_ADD [[COPY]], [[COPY1]]
+  ; AIE2P-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+  ; AIE2P-NEXT:   [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[ADD]](s32), [[COPY]]
+  ; AIE2P-NEXT:   [[ICMP1:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[COPY1]](s32), [[C]]
+  ; AIE2P-NEXT:   [[XOR:%[0-9]+]]:_(s32) = G_XOR [[ICMP1]], [[ICMP]]
+  ; AIE2P-NEXT:   [[COPY2:%[0-9]+]]:_(s32) = COPY [[ADD]](s32)
+  ; AIE2P-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 31
+  ; AIE2P-NEXT:   [[ASHR:%[0-9]+]]:_(s32) = G_ASHR [[COPY2]], [[C1]](s32)
+  ; AIE2P-NEXT:   [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 -2147483648
+  ; AIE2P-NEXT:   [[ADD1:%[0-9]+]]:_(s32) = G_ADD [[ASHR]], [[C2]]
+  ; AIE2P-NEXT:   [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[XOR]](s32), [[ADD1]], [[COPY2]]
+  ; AIE2P-NEXT:   $r0 = COPY [[SELECT]](s32)
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT: bb.1:
+  ; AIE2P-NEXT:   PseudoRET implicit $lr, implicit $r0
+  ;
+  ; AIE2PS-LABEL: name: saddsat
+  ; AIE2PS: bb.0:
+  ; AIE2PS-NEXT:   successors: %bb.1(0x80000000)
+  ; AIE2PS-NEXT:   liveins: $r0, $r1
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
+  ; AIE2PS-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY $r1
+  ; AIE2PS-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 2147483647
+  ; AIE2PS-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 -2147483648
+  ; AIE2PS-NEXT:   [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+  ; AIE2PS-NEXT:   [[SMAX:%[0-9]+]]:_(s32) = G_SMAX [[COPY]], [[C2]]
+  ; AIE2PS-NEXT:   [[SUB:%[0-9]+]]:_(s32) = G_SUB [[C]], [[SMAX]]
+  ; AIE2PS-NEXT:   [[SMIN:%[0-9]+]]:_(s32) = G_SMIN [[COPY]], [[C2]]
+  ; AIE2PS-NEXT:   [[SUB1:%[0-9]+]]:_(s32) = G_SUB [[C1]], [[SMIN]]
+  ; AIE2PS-NEXT:   [[SMAX1:%[0-9]+]]:_(s32) = G_SMAX [[SUB1]], [[COPY1]]
+  ; AIE2PS-NEXT:   [[SMIN1:%[0-9]+]]:_(s32) = G_SMIN [[SMAX1]], [[SUB]]
+  ; AIE2PS-NEXT:   [[ADD:%[0-9]+]]:_(s32) = G_ADD [[COPY]], [[SMIN1]]
+  ; AIE2PS-NEXT:   $r0 = COPY [[ADD]](s32)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.1:
+  ; AIE2PS-NEXT:   PseudoRET implicit $lr, implicit $r0
   bb.1:
     liveins: $r0, $r1
     %3:_(s32) = COPY $r0
@@ -108,28 +216,73 @@ body:             |
 ---
 name:            ssubsat
 body:             |
-  ; CHECK-LABEL: name: ssubsat
-  ; CHECK: bb.0:
-  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
-  ; CHECK-NEXT:   liveins: $r0, $r1
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY $r1
-  ; CHECK-NEXT:   [[SUB:%[0-9]+]]:_(s32) = G_SUB [[COPY]], [[COPY1]]
-  ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
-  ; CHECK-NEXT:   [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[SUB]](s32), [[COPY]]
-  ; CHECK-NEXT:   [[ICMP1:%[0-9]+]]:_(s32) = G_ICMP intpred(sgt), [[COPY1]](s32), [[C]]
-  ; CHECK-NEXT:   [[XOR:%[0-9]+]]:_(s32) = G_XOR [[ICMP1]], [[ICMP]]
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(s32) = COPY [[SUB]](s32)
-  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 31
-  ; CHECK-NEXT:   [[ASHR:%[0-9]+]]:_(s32) = G_ASHR [[COPY2]], [[C1]](s32)
-  ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 -2147483648
-  ; CHECK-NEXT:   [[ADD:%[0-9]+]]:_(s32) = G_ADD [[ASHR]], [[C2]]
-  ; CHECK-NEXT:   [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[XOR]](s32), [[ADD]], [[COPY2]]
-  ; CHECK-NEXT:   $r0 = COPY [[SELECT]](s32)
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.1:
-  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $r0
+  ; AIE2-LABEL: name: ssubsat
+  ; AIE2: bb.0:
+  ; AIE2-NEXT:   successors: %bb.1(0x80000000)
+  ; AIE2-NEXT:   liveins: $r0, $r1
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
+  ; AIE2-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY $r1
+  ; AIE2-NEXT:   [[SUB:%[0-9]+]]:_(s32) = G_SUB [[COPY]], [[COPY1]]
+  ; AIE2-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+  ; AIE2-NEXT:   [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[SUB]](s32), [[COPY]]
+  ; AIE2-NEXT:   [[ICMP1:%[0-9]+]]:_(s32) = G_ICMP intpred(sgt), [[COPY1]](s32), [[C]]
+  ; AIE2-NEXT:   [[XOR:%[0-9]+]]:_(s32) = G_XOR [[ICMP1]], [[ICMP]]
+  ; AIE2-NEXT:   [[COPY2:%[0-9]+]]:_(s32) = COPY [[SUB]](s32)
+  ; AIE2-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 31
+  ; AIE2-NEXT:   [[ASHR:%[0-9]+]]:_(s32) = G_ASHR [[COPY2]], [[C1]](s32)
+  ; AIE2-NEXT:   [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 -2147483648
+  ; AIE2-NEXT:   [[ADD:%[0-9]+]]:_(s32) = G_ADD [[ASHR]], [[C2]]
+  ; AIE2-NEXT:   [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[XOR]](s32), [[ADD]], [[COPY2]]
+  ; AIE2-NEXT:   $r0 = COPY [[SELECT]](s32)
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT: bb.1:
+  ; AIE2-NEXT:   PseudoRET implicit $lr, implicit $r0
+  ;
+  ; AIE2P-LABEL: name: ssubsat
+  ; AIE2P: bb.0:
+  ; AIE2P-NEXT:   successors: %bb.1(0x80000000)
+  ; AIE2P-NEXT:   liveins: $r0, $r1
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
+  ; AIE2P-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY $r1
+  ; AIE2P-NEXT:   [[SUB:%[0-9]+]]:_(s32) = G_SUB [[COPY]], [[COPY1]]
+  ; AIE2P-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+  ; AIE2P-NEXT:   [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[SUB]](s32), [[COPY]]
+  ; AIE2P-NEXT:   [[ICMP1:%[0-9]+]]:_(s32) = G_ICMP intpred(sgt), [[COPY1]](s32), [[C]]
+  ; AIE2P-NEXT:   [[XOR:%[0-9]+]]:_(s32) = G_XOR [[ICMP1]], [[ICMP]]
+  ; AIE2P-NEXT:   [[COPY2:%[0-9]+]]:_(s32) = COPY [[SUB]](s32)
+  ; AIE2P-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 31
+  ; AIE2P-NEXT:   [[ASHR:%[0-9]+]]:_(s32) = G_ASHR [[COPY2]], [[C1]](s32)
+  ; AIE2P-NEXT:   [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 -2147483648
+  ; AIE2P-NEXT:   [[ADD:%[0-9]+]]:_(s32) = G_ADD [[ASHR]], [[C2]]
+  ; AIE2P-NEXT:   [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[XOR]](s32), [[ADD]], [[COPY2]]
+  ; AIE2P-NEXT:   $r0 = COPY [[SELECT]](s32)
+  ; AIE2P-NEXT: {{  $}}
+  ; AIE2P-NEXT: bb.1:
+  ; AIE2P-NEXT:   PseudoRET implicit $lr, implicit $r0
+  ;
+  ; AIE2PS-LABEL: name: ssubsat
+  ; AIE2PS: bb.0:
+  ; AIE2PS-NEXT:   successors: %bb.1(0x80000000)
+  ; AIE2PS-NEXT:   liveins: $r0, $r1
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
+  ; AIE2PS-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY $r1
+  ; AIE2PS-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 2147483647
+  ; AIE2PS-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 -2147483648
+  ; AIE2PS-NEXT:   [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 -1
+  ; AIE2PS-NEXT:   [[SMAX:%[0-9]+]]:_(s32) = G_SMAX [[COPY]], [[C2]]
+  ; AIE2PS-NEXT:   [[SUB:%[0-9]+]]:_(s32) = G_SUB [[SMAX]], [[C]]
+  ; AIE2PS-NEXT:   [[SMIN:%[0-9]+]]:_(s32) = G_SMIN [[COPY]], [[C2]]
+  ; AIE2PS-NEXT:   [[SUB1:%[0-9]+]]:_(s32) = G_SUB [[SMIN]], [[C1]]
+  ; AIE2PS-NEXT:   [[SMAX1:%[0-9]+]]:_(s32) = G_SMAX [[SUB]], [[COPY1]]
+  ; AIE2PS-NEXT:   [[SMIN1:%[0-9]+]]:_(s32) = G_SMIN [[SMAX1]], [[SUB1]]
+  ; AIE2PS-NEXT:   [[SUB2:%[0-9]+]]:_(s32) = G_SUB [[COPY]], [[SMIN1]]
+  ; AIE2PS-NEXT:   $r0 = COPY [[SUB2]](s32)
+  ; AIE2PS-NEXT: {{  $}}
+  ; AIE2PS-NEXT: bb.1:
+  ; AIE2PS-NEXT:   PseudoRET implicit $lr, implicit $r0
   bb.1:
     liveins: $r0, $r1
     %3:_(s32) = COPY $r0
